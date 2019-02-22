@@ -1,6 +1,7 @@
 import os, sys, copy, shutil, subprocess, shlex
 import time
 import datetime
+import socket
 from threading import Thread
 import sconsconfig.utils as utils
 from sconsconfig.utils import conv
@@ -807,7 +808,14 @@ class Package(object):
     if self.static:
       ctx.env.PrependUnique(CCFLAGS = '-static')
       ctx.env.PrependUnique(LINKFLAGS = '-static')
-      
+     
+    ## hack:
+    #import socket
+    #if socket.gethostname() == 'cmcs09':
+    #  print("! ! ! ! ! ! ! ! ! CCFLAG for mpi.h set manually in Package.py ! ! ! ! ! ! ! ! !")
+    #  ctx.env.PrependUnique(CCFLAGS = "('-I', '/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2')")
+    #  #ctx.env.PrependUnique(CCFLAGS = '-I/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2')
+ 
     if self.link_flags is not None:
       ctx.Log("  link_flags is set, use additional link flags: {}\n".format(self.link_flags))
       ctx.env.PrependUnique(LINKFLAGS = self.link_flags)
@@ -854,7 +862,19 @@ class Package(object):
     if not res[0]:
       ctx.Log("Compile/Run failed.\n");
       ctx.Log("Output: \""+str(ctx.lastTarget)+"\"\n")
-      env_restore(ctx.env, bkp)
+ 
+      disable_checks = False
+      if ctx.env.get('DISABLE_CHECKS', []):
+        disable_checks = True
+      name = self.name
+      upp = name.upper()
+      if ctx.env.get(upp + '_DISABLE_CHECKS', []):
+        ctx.Log('Disable checks because '+upp + '_DISABLE_CHECKS is set.\n')
+        disable_checks = True
+      if disable_checks:
+        res = (True,'')
+      else:
+        env_restore(ctx.env, bkp)
     else:
       ctx.Log("Compile/Run succeeded.\n");
       ctx.Log("Program output: \""+res[1]+"\"\n")
@@ -1012,8 +1032,11 @@ class Package(object):
 
         system_inc_dirs = []
         for inc_dir in inc_sub_dirs:
-          system_inc_dirs.append(('-isystem', inc_dir))     # -isystem is the same is -I for gcc, except it suppresses warning (useful for dependencies)
-            
+          if socket.gethostname() == 'cmcs09':
+            system_inc_dirs.append(('-I', inc_dir))
+          else:
+            system_inc_dirs.append(('-isystem', inc_dir))     # -isystem is the same is -I for gcc, except it suppresses warning (useful for dependencies)            
+
         if self.set_rpath:
           bkp = env_setup(ctx.env,
                   #CPPPATH=ctx.env.get('CPPPATH', []) + inc_sub_dirs,

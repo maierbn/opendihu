@@ -2,6 +2,7 @@
 import sys, os
 from Package import Package
 import subprocess
+import socket
 
 class MPI(Package):
 
@@ -37,6 +38,10 @@ int main(int argc, char* argv[])
       ctx.Message('Not checking for MPI ... ')
       ctx.Result(True)
       return True
+   # elif socket.gethostname() == 'cmcs09':
+   #   ctx.Message('Host cmcs09: Not checking for MPI ... ')
+   #   ctx.Result(True)
+   #   return True 
         
     env = ctx.env
     ctx.Message('Checking for MPI ...           ')
@@ -93,7 +98,7 @@ int main(int argc, char* argv[])
     if use_showme:
       try:
         # try to get compiler and linker flags from mpicc, this directly has the needed includes paths
-        
+        ctx.Message("Checking MPI "+str(ctx.env["mpiCC"])+" --showme") 
         cflags = subprocess.check_output("{} --showme:compile".format(ctx.env["mpiCC"]), shell=True)
         ldflags = subprocess.check_output("{} --showme:link".format(ctx.env["mpiCC"]), shell=True)
 
@@ -108,7 +113,13 @@ int main(int argc, char* argv[])
 
         env.MergeFlags(cflags)
         env.MergeFlags(ldflags)
-        
+
+        if ctx.env.get('MPI_DISABLE_CHECKS', []):
+           ctx.Log('Disable checks because MPI_DISABLE_CHECKS is set')
+           ctx.Result(True)
+           return True
+
+
         res = self.try_link(ctx)
         use_mpi_dir = False
         

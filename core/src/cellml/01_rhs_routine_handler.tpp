@@ -15,6 +15,32 @@
 #include <dlfcn.h>
 #include <ctime>
 
+std::string timeToString_dmy( const tm* const time )
+{   // to format: %d/%m/%Y %H:%M:%S
+  std::string date;
+
+  date += std::to_string( time->tm_mday) + "/"
+       +  std::to_string( time->tm_mon + 1 ) + "/"
+       +  std::to_string( time->tm_year + 1900 ) + " ";
+  if( time->tm_hour < 10 )
+  {
+      date += "0";
+  }
+  date += std::to_string( time->tm_hour ) + ":";
+   if( time->tm_min < 10 )
+  {
+      date += "0";
+  }
+  date += std::to_string( time->tm_min ) + ":";
+  if( time->tm_sec < 10 )
+  {
+      date += "0";
+  }
+  date += std::to_string( time->tm_sec );
+  return date;
+}
+
+
 // forward declaration
 template <int nStates,typename FunctionSpaceType>
 class CellmlAdapter;
@@ -67,12 +93,12 @@ initializeRhsRoutine()
          LOG(ERROR) << "Could not create a gpu version for CellML RHS.";
       }
       sourceFilenameToUse = gpuSourceFilename;
-
-      std::string compilerFlags = this->specificSettings_.getOptionString("compilerFlags", "-fPIC -fopenmp -finstrument-functions -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared ");
+ //"-fPIC -fopenmp -finstrument-functions -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared "
+      std::string compilerFlags = this->specificSettings_.getOptionString("compilerFlags", "-ta=host,tesla,time");
 
 #ifdef NDEBUG
       std::stringstream s;
-      s << C_COMPILER_COMMAND << " -O3 " << compilerFlags << " ";
+      s << C_COMPILER_COMMAND << " -fast " << compilerFlags << " ";
       compileCommandOptions = s.str();
 #else
       std::stringstream s;
@@ -441,7 +467,7 @@ createSimdSourceFile(std::string &simdSourceFilename)
 
         auto t = std::time(nullptr);
         auto tm = *std::localtime(&t);
-        simdSource << std::endl << "/* This function was created by opendihu at " << std::put_time(&tm, "%d/%m/%Y %H:%M:%S")
+        simdSource << std::endl << "/* This function was created by opendihu at " << timeToString_dmy(&tm)  //std::put_time(&tm, "%d/%m/%Y %H:%M:%S")
           << ".\n * It is designed for " << this->nInstances_ << " instances of the CellML problem. */" << std::endl
           << "void computeCellMLRightHandSide("
           << "void *context, double t, double *states, double *rates, double *algebraics, double *parameters)" << std::endl << "{" << std::endl;
@@ -785,7 +811,7 @@ createGPUSourceFile(std::string &gpuSourceFilename)
 
         auto t = std::time(nullptr);
         auto tm = *std::localtime(&t);
-        gpuSource << std::endl << "/* This function was created by opendihu at " << std::put_time(&tm, "%d/%m/%Y %H:%M:%S")
+        gpuSource << std::endl << "/* This function was created by opendihu at " << timeToString_dmy(&tm)   //std::put_time(&tm, "%d/%m/%Y %H:%M:%S")
           << ".\n * It is designed for " << this->nInstances_ << " instances of the CellML problem. */" << std::endl
           << "void computeGPUCellMLRightHandSide("
           << "void *context, double t, double *states, double *rates, double *algebraics, double *parameters)" << std::endl << "{" << std::endl << "#pragma omp target" << std::endl << "{" << std::endl;
@@ -950,8 +976,8 @@ createGPUSourceFile(std::string &gpuSourceFilename)
             << "  /* " << line << "*/" << std::endl;
         }
         else
-        {
-          gpuSource << std::endl << "#pragma omp teams distribute parallel for" << std::endl << "  for (int i = 0; i < " << this->nInstances_ << "; i++)" << std::endl
+        { // gang worker vector 
+          gpuSource << std::endl << "#pragma acc parallel loop independent" << std::endl << "  for (int i = 0; i < " << this->nInstances_ << "; i++)" << std::endl
             << "  {" << std::endl << "    ";
 
           VLOG(2) << "parsed " << entries.size() << " entries";

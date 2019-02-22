@@ -26,7 +26,6 @@ LAPACK_DOWNLOAD=True
 # PETSc, this downloads and installs MUMPS (direct solver package) and its dependencies PT-Scotch, SCAlapack, ParMETIS, METIS
 PETSC_DOWNLOAD=True
 PETSC_REBUILD=False#True#False
-PETSC_DISABLE_CHECKS=True
 #PETSC_DIR="/usr/local/home/kraemer/opendihu/dependencies/petsc/install"
 
 # Python 3.6
@@ -101,6 +100,9 @@ try:
     #cc="/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/bin/mpicc"
     #CC=mpiCC
     MPI_DISABLE_CHECKS=True
+    PETSC_DISABLE_CHECKS=True
+    GOOGLETEST_DISABLE_CHECKS=True
+
 
 except:
   pass

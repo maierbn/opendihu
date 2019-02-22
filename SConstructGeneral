@@ -34,13 +34,6 @@ opendihu_home = Dir('.').srcnode().abspath  # opendihu home directory is where t
 
 #
 # Select the packages we want to use in the configuration.
-##
-#
-# if on cmcs09 then turn off MPI.
-if socket.gethostname() == 'cmcs09':
-  MPI_used=False
-else:
-  MPI_used=True
 #
 sconsconfig.select(
     packages.MPI(required=True),     # This searches for the MPI implementation
@@ -92,8 +85,8 @@ vars.Add(BoolVariable('USE_HPL', 'Compile with -hpl option.', False))
 vars.Add(BoolVariable('USE_MEGAMOL', 'Use additional linker flags to link to the megamol source file.', False))
 vars.Add('cc', help='The c compiler', default='gcc')
 vars.Add('CC', help='The c++ compiler', default='g++')
-if socket.gethostname() != 'cmcs09':
-  vars.Add('mpiCC', help='The mpic++ compiler wrapper', default='mpic++')
+#if socket.gethostname() != 'cmcs09':
+vars.Add('mpiCC', help='The mpic++ compiler wrapper', default='mpic++')
 vars.Add('cmake', help='The cmake executable', default='cmake')
     
 # Add options from any packages we want to use.
@@ -219,7 +212,7 @@ else:
   if os.environ.get("PE_ENV") == "CRAY":
     env.MergeFlags('-O3')   # fastest with cray (same performance as -02)
   elif socket.gethostname() == 'cmcs09':
-    env.MergeFlags('-fast -acc -ta=host,tesla,time -Minfo=accel -noswitcherror -std=c++14') # for PGI (pgcc and pgc++), could also use '-fastsse'.
+    env.MergeFlags('-O3 -fastsse -acc -ta=host,tesla,time -Minfo=accel -noswitcherror -std=c++14 -Mvect=simd') # for PGI (pgcc and pgc++), could also use '-fastsse'.
   else:
     env.MergeFlags('-Ofast')   # fastest with GNU and Intel
   

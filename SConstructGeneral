@@ -43,7 +43,7 @@ else:
   MPI_used=True
 #
 sconsconfig.select(
-    #packages.MPI(required=MPI_used),     # This downloads and compiles OpenMPI, but it is recommended to use the system MPI by setting the path in user-variables.scons.py
+    packages.MPI(required=True),     # This searches for the MPI implementation
     packages.LAPACK(required=True),  # This downloads and compiles OpenBLAS which implements the interfaces of both LAPACK and BLAS
     #packages.bison(required=False),   # parser generater needed by PTScotch which is needed by MUMPS which is needed by Petsc
     #packages.flex(required=False),    # "Fast Lexical Analyzer" needed by PTScotch which is needed by MUMPS which is needed by Petsc
@@ -230,7 +230,7 @@ else:
       env.MergeFlags('-finstrument-functions')   # instrument functions for pat_run,  works with GNU and Intel
 
 # flags to always include, except with cray compiler
-if os.environ.get("PE_ENV") != "CRAY" and MPI_used == "True":
+if os.environ.get("PE_ENV") != "CRAY" and "pgi" not in env["cc"]:
   env.MergeFlags('-Wunused-variable')   # always warn about unused variables
   env.MergeFlags('-std=c++14 -fopenmp -march=native')
 
@@ -251,7 +251,7 @@ env.Append(CPPPATH = [os.path.join(opendihu_home, 'core/src')])
 
 #print(env.Dump())
 # output compilers
-if MPI_used==True:
+if "mpiCC" in env:
   print("Compilers: C: {}, C++: {}, MPI: {}".format(env['CC'],env['CXX'],env['mpiCC']))
 else:
   print("Compilers: C: {}, C++: {}, MPI: -- ".format(env['CC'],env['CXX']))

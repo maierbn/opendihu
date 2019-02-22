@@ -292,37 +292,16 @@ std::string DihuContext::versionText()
   versionTextStr << ", Cray";
 #elif defined __GNUC__
   versionTextStr << ", GCC";
+#elif defined __PGI
+  versionTextStr << ", PGI";  
 #endif
 #ifdef __VERSION__
   versionTextStr << " " << __VERSION__;
+#elif defined __PGIC__
+  versionTextStr << " " << __PGIC__;
 #endif
 
   return versionTextStr.str();
-}
-
-std::string timeToString_ymd( const tm* const time )
-{   // to format: %Y/%m/%d %H:%M:%S
-  std::string date;
-    
-  date += std::to_string( time->tm_year + 1900 ) + "/"
-       +  std::to_string( time->tm_mon + 1 ) + "/"
-       +  std::to_string( time->tm_mday ) + " ";
-  if( time->tm_hour < 10 )
-  {
-      date += "0";
-  }
-  date += std::to_string( time->tm_hour ) + ":";
-   if( time->tm_min < 10 )
-  {
-      date += "0";
-  }
-  date += std::to_string( time->tm_min ) + ":";
-  if( time->tm_sec < 10 )
-  {
-      date += "0";
-  }
-  date += std::to_string( time->tm_sec );
-  return date;
 }
 
 std::string DihuContext::metaText()
@@ -333,7 +312,7 @@ std::string DihuContext::metaText()
   auto t = std::time(nullptr);
   auto tm = *std::localtime(&t);
   // metaTextStr << "current time: " << std::put_time(&tm, "%Y/%m/%d %H:%M:%S") << ", hostname: ";
-  std::string tm_string = timeToString_ymd(&tm);
+  std::string tm_string = StringUtility::timeToString(&tm);
   metaTextStr << "current time: " << tm_string << ", hostname: ";
 
   // host name

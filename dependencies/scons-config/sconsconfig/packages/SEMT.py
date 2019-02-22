@@ -20,7 +20,7 @@ class SEMT(Package):
     #self.build_flags = "-DSEMT_DISABLE_PRINT"
     self.check_text = r'''
 
-#if __cplusplus >= 201103L
+#if __cplusplus >= 201103L && defined __PGI
 __attribute__((weak))
 void operator delete(void * ptr, unsigned long){ ::operator delete(ptr);}
 __attribute__((weak))

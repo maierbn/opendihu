@@ -63,7 +63,8 @@ void PythonFile::write(DataType& data, int timeStepNo, double currentTime)
     }
 
     // open file, to see if directory needs to be created
-    std::ofstream ofile = openFile(filename);
+    std::ofstream ofile;
+    openFile(ofile, filename);
     if (ofile.is_open())
       ofile.close();
 

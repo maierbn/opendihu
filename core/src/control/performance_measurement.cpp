@@ -26,31 +26,6 @@ PerformanceMeasurement::Measurement::Measurement() :
 {
 }
 
-std::string timeToString_ymd( const tm* const time )
-{   // to format: %Y/%m/%d %H:%M:%S
-  std::string date;
-
-  date += std::to_string( time->tm_year + 1900 ) + "/"
-       +  std::to_string( time->tm_mon + 1 ) + "/"
-       +  std::to_string( time->tm_mday ) + " ";
-  if( time->tm_hour < 10 )
-  {
-      date += "0";
-  }
-  date += std::to_string( time->tm_hour ) + ":";
-   if( time->tm_min < 10 )
-  {
-      date += "0";
-  }
-  date += std::to_string( time->tm_min ) + ":";
-  if( time->tm_sec < 10 )
-  {
-      date += "0";
-  }
-  date += std::to_string( time->tm_sec );
-  return date;
-}
-
 void PerformanceMeasurement::start(std::string name)
 {
   std::map<std::string, Measurement>::iterator iter = measurements_.find(name);
@@ -133,7 +108,7 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
   auto t = std::time(nullptr);
   auto tm = *std::localtime(&t);
   //data << std::put_time(&tm, "%Y/%m/%d %H:%M:%S") << ";";
-  data << timeToString_ymd(&tm) << ";";
+  data << StringUtility::timeToString(&tm) << ";";
 
   // host name
   char hostname[MAXHOSTNAMELEN+1];
@@ -194,7 +169,6 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
     std::ofstream file;
     if (ownRankNo == 0)
     {
-      //file = OutputWriter::Generic::openFile(filename.str(), true);
       OutputWriter::Generic::openFile(file, filename.str(), true);
       file.close();
     }
@@ -231,7 +205,7 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
   else  // standard POSIX output
   {
     // open log file
-    std::ofstream file; // = OutputWriter::Generic::openFile(filename.str(), true);
+    std::ofstream file;
     OutputWriter::Generic::openFile(file, filename.str(), true);
 
     if (outputHeader)

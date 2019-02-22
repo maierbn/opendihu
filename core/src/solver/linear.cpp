@@ -27,12 +27,10 @@ Linear::Linear(PythonConfig specificSettings, MPI_Comm mpiCommunicator, std::str
   PetscErrorCode ierr = KSPCreate (mpiCommunicator, ksp_.get()); CHKERRV(ierr);
 
   // parse the solver and preconditioner types from settings
-  KSPType kspType;
-  PCType pcType;
-  parseSolverTypes(kspType, pcType);
+  parseSolverTypes();
 
   // set solver type
-  ierr = KSPSetType(*ksp_, kspType); CHKERRV(ierr);
+  ierr = KSPSetType(*ksp_, kspType_); CHKERRV(ierr);
 
   // set options from command line, this overrides the python config
   ierr = KSPSetFromOptions(*ksp_); CHKERRV(ierr);
@@ -42,10 +40,10 @@ Linear::Linear(PythonConfig specificSettings, MPI_Comm mpiCommunicator, std::str
   ierr = KSPGetPC(*ksp_, &pc); CHKERRV(ierr);
 
   // set type of preconditioner
-  ierr = PCSetType(pc, pcType); CHKERRV(ierr);
+  ierr = PCSetType(pc, pcType_); CHKERRV(ierr);
 
   // for multigrid set number of levels to 5
-  if (pcType == std::string(PCGAMG))
+  if (pcType_ == std::string(PCGAMG))
   {
     int nLevels = 5;
     ierr = PCMGSetLevels(pc, nLevels, NULL); CHKERRV(ierr);
@@ -67,7 +65,7 @@ Linear::Linear(PythonConfig specificSettings, MPI_Comm mpiCommunicator, std::str
   residualNormLogKey_ = residualNormLogKey.str();
 }
 
-void Linear::parseSolverTypes(KSPType &kspType, PCType &pcType)
+void Linear::parseSolverTypes()
 {
   // parse solver type
   std::string solverType = this->specificSettings_.getOptionString("solverType", "gmres");
@@ -76,70 +74,70 @@ void Linear::parseSolverTypes(KSPType &kspType, PCType &pcType)
   std::string preconditionerType = this->specificSettings_.getOptionString("preconditionerType", "none");
 
   // all pc types: https://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/PC/PCType.html
-  pcType = PCNONE;
+  pcType_ = PCNONE;
   if (preconditionerType == "jacobi")
   {
-    pcType = PCJACOBI;
+    pcType_ = PCJACOBI;
   }
   else if (preconditionerType == "sor")
   {
-    pcType = PCSOR;
+    pcType_ = PCSOR;
   }
   else if (preconditionerType == "lu")
   {
-    pcType = PCLU;
+    pcType_ = PCLU;
   }
   else if (preconditionerType == "ilu")
   {
-    pcType = PCILU;
+    pcType_ = PCILU;
   }
   else if (preconditionerType == "gamg")
   {
-    pcType = PCGAMG;
+    pcType_ = PCGAMG;
   }
 
   // all ksp types: https://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/KSP/KSPType.html#KSPType
-  kspType = KSPGMRES;
+  kspType_ = KSPGMRES;
   if (solverType == "richardson")
   {
-    kspType = KSPRICHARDSON ;
+    kspType_ = KSPRICHARDSON ;
   }
   else if (solverType == "chebyshev")
   {
-    kspType = KSPCHEBYSHEV;
+    kspType_ = KSPCHEBYSHEV;
   }
   else if (solverType == "cg")
   {
-    kspType = KSPCG;
+    kspType_ = KSPCG;
   }
   else if (solverType == "preonly")
   {
-    kspType = KSPPREONLY;
+    kspType_ = KSPPREONLY;
   }
   else if (solverType == "lu")
   {
-    kspType = KSPPREONLY;
-    pcType = PCLU;
+    kspType_ = KSPPREONLY;
+    pcType_ = PCLU;
   }
   else if (solverType == "cholesky")
   {
-    kspType = KSPPREONLY;
-    pcType = PCCHOLESKY;
+    kspType_ = KSPPREONLY;
+    pcType_ = PCCHOLESKY;
   }
   else if (solverType == "gamg")
   {
-    kspType = KSPPREONLY;
-    pcType = PCGAMG;
+    kspType_ = KSPPREONLY;
+    pcType_ = PCGAMG;
   }
   else if (solverType == "jacobi")
   {
-    kspType = KSPPREONLY;
-    pcType = PCJACOBI;
+    kspType_ = KSPPREONLY;
+    pcType_ = PCJACOBI;
   }
   else if (solverType == "sor")
   {
-    kspType = KSPPREONLY;
-    pcType = PCSOR;
+    kspType_ = KSPPREONLY;
+    pcType_ = PCSOR;
   }
 
   std::stringstream optionKey;
@@ -174,6 +172,30 @@ void Linear::solve(Vec rightHandSide, Vec solution, std::string message)
   KSPConvergedReason convergedReason;
   ierr = KSPGetConvergedReason(*ksp_, &convergedReason); CHKERRV(ierr);
   ierr = VecGetSize(rightHandSide, &nDofsGlobal); CHKERRV(ierr);
+
+  if (kspType_ == PCLU)
+  {
+
+    if (!residual_)
+    {
+      temporaryVectorLeft_ = std::make_shared<Vec>();     ///< temporary vector for computation of residual for direct solvers
+      temporaryVectorRight_ = std::make_shared<Vec>();    ///< temporary vector for computation of residual for direct solvers
+      residual_ = std::make_shared<Vec>();    ///< residual vector for direct solvers
+
+      Mat systemMatrix;
+      ierr = KSPGetOperators(*ksp_, &systemMatrix, NULL); CHKERRV(ierr);
+      ierr = MatCreateVecs(systemMatrix, &(*temporaryVectorRight_), &(*temporaryVectorLeft_)); CHKERRV(ierr);
+
+      LOG(DEBUG) << "create temporary vectors";
+    }
+    LOG(DEBUG) << "compute residual";
+
+    // compute residual
+    ierr = KSPBuildResidual(*ksp_, *temporaryVectorLeft_, *temporaryVectorRight_, &(*residual_)); CHKERRV(ierr);
+
+    // compute norm of residual
+    ierr = VecNorm(*residual_, NORM_2, &residualNorm); CHKERRV(ierr);
+  }
 
   if (message != "")
   {

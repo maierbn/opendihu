@@ -29,7 +29,7 @@ emg_preconditioner_type = "none"
 emg_initial_guess_nonzero = False
 
 # timing parameters
-stimulation_frequency = 10000*1e-3 # stimulations per ms, number before 1e-3 factor is in Hertz
+stimulation_frequency = 1000*1e-3 # stimulations per ms, number before 1e-3 factor is in Hertz
 dt_1D = 1e-3                      # timestep width of diffusion
 dt_0D = 1.5e-3                      # timestep width of ODEs
 dt_3D = 3e-3                      # overall timestep width of splitting
@@ -41,9 +41,9 @@ output_timestep = 1e0             # timestep for output files
 #cellml_file = "../../input/shorten.cpp"
 cellml_file = "../../input/hodgkin_huxley_1952.c"
 
-fiber_file = "../../input/3000fibers.bin"
-fiber_file = "../../input/7x7fibers.bin"
-#fiber_file = "../../input/15x15fibers.bin"
+#fiber_file = "../../input/3000fibers.bin"
+#fiber_file = "../../input/7x7fibers.bin"
+fiber_file = "../../input/15x15fibers.bin"
 #fiber_file = "../../input/49fibers.bin"
 load_data_from_file = False
 debug_output = False

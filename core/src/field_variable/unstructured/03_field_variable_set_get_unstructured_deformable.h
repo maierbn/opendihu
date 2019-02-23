@@ -41,7 +41,15 @@ public:
 
   //! get all values
   //! @param onlyNodalValues: if this is true, for Hermite only the non-derivative values are retrieved
+  void getValuesWithGhosts(std::array<std::vector<double>,nComponents> &values, bool onlyNodalValues=false) const;
+
+  //! get all values
+  //! @param onlyNodalValues: if this is true, for Hermite only the non-derivative values are retrieved
   void getValuesWithoutGhosts(std::vector<std::array<double,nComponents>> &values, bool onlyNodalValues=false) const;
+
+  //! get all values
+  //! @param onlyNodalValues: if this is true, for Hermite only the non-derivative values are retrieved
+  void getValuesWithoutGhosts(std::array<std::vector<double>,nComponents> &values, bool onlyNodalValues=false) const;
 
   //! for a specific component, get values from their local dof no.s, as array, therefore templated by the number of elements, N, to retrieve
   template<int N>

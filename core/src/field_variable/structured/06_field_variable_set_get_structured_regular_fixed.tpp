@@ -270,6 +270,33 @@ getValuesWithoutGhosts(std::vector<std::array<double,nComponents>> &values, bool
   }
 }
 
+//! get all values
+//! @param onlyNodalValues: if this is true, for Hermite only the non-derivative values are retrieved
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetRegularFixed<FunctionSpaceType,nComponents>::
+getValuesWithoutGhosts(std::array<std::vector<double>,nComponents> &values, bool onlyNodalValues) const
+{
+  // determine the number of values to be retrived which is lower than the number of dofs for Hermite with only nodal values
+  dof_no_t nValues = this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts();
+  if (onlyNodalValues)
+  {
+    const int nDofsPerNode = FunctionSpaceType::nDofsPerNode();
+    nValues /= nDofsPerNode;
+  }
+
+  // loop over components and get data component-wise
+  for (int componentNo = 0; componentNo < nComponents; componentNo++)
+  {
+    // resize output vector
+    std::size_t previousSize = values[componentNo].size();
+    values[componentNo].resize(previousSize+nValues);
+    VLOG(2) << "Field variable regular fixed, getValues, resize values vector to " << previousSize+nValues << " entries.";
+
+    // get values into buffer
+    getValuesWithoutGhosts(componentNo, values[componentNo], onlyNodalValues);
+  }
+}
+
 //! for a specific component, get values from their local dof no.s
 template<typename FunctionSpaceType, int nComponents>
 template<int N>

@@ -48,6 +48,12 @@ public:
   //! return the data object
   Data &data();
 
+  //! get a reference to the first timestepping object
+  TimeStepping1 &timeStepping1();
+
+  //! get a reference to the second timestepping object
+  TimeStepping2 &timeStepping2();
+
   //! output the given data for debugging
   std::string getString(TransferableSolutionDataType &data);
 

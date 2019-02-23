@@ -20,16 +20,20 @@ class HeunAdaptiv:
 {
 public:
 
-
   //! constructor
   HeunAdaptiv(DihuContext context);
+
+  //! initialize the data object
+  virtual void initialize();
 
   //! advance simulation by the given time span [startTime_, endTime_] with given numberTimeSteps, data in solution is used, afterwards new data is in solution
   void advanceTimeSpan();
 
   //! run the simulation
   void run();
+
 private:
+
   // Allowed tolerance
   double tolerance_;
 
@@ -39,6 +43,7 @@ private:
   ///< this is the time step width at the and of the time stepping, saved because the actual time step width may be set smaller to exactly reach timeSpan
   double savedTimeStepWidth_;
 };
+
 }  // namespace
 
 #include "time_stepping_scheme/heun_adaptiv.tpp"

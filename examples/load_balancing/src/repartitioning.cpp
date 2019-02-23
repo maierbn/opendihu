@@ -15,8 +15,8 @@ int main(int argc, char *argv[])
   DihuContext settings(argc, argv);
   
   // define problem
-  Control::LoadBalancing<
-    Control::MultipleInstances<
+  Control::MultipleInstances<
+    Control::LoadBalancing<
       OperatorSplitting::Strang<
         TimeSteppingScheme::HeunAdaptiv<
           CellmlAdapter<

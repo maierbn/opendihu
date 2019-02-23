@@ -12,7 +12,16 @@ template<typename DiscretizableInTime>
 Heun<DiscretizableInTime>::Heun(DihuContext context) :
   TimeSteppingExplicit<DiscretizableInTime>(context, "Heun")
 {
-  this->data_ = std::make_shared<Data::TimeSteppingHeun<typename DiscretizableInTime::FunctionSpace, DiscretizableInTime::nComponents()>>(context);  // create data object for heun
+}
+
+template<typename DiscretizableInTime>
+void Heun<DiscretizableInTime>::initialize()
+{
+  LOG(TRACE) << "Heun::initialize";
+
+  this->data_ = std::make_shared<Data::TimeSteppingHeun<typename DiscretizableInTime::FunctionSpace, DiscretizableInTime::nComponents()>>(this->context_);  // create data object for heun
+
+  TimeSteppingSchemeOde<DiscretizableInTime>::initialize();
 }
 
 template<typename DiscretizableInTime>

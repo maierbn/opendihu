@@ -15,12 +15,22 @@
 namespace Control
 {
 
+bool outputInitialize_ = true;
+
 template<typename TimeSteppingScheme>
 MultipleInstances<TimeSteppingScheme>::
 MultipleInstances(DihuContext context) :
   context_(context["MultipleInstances"]), specificSettings_(context_.getPythonConfig()),
   data_(context_), outputInitializeThisInstance_(false)
 {
+// #ifdef HAVE_PAT
+  // PAT_record(PAT_STATE_OFF);
+  // std::string label = "initialization";
+  // PAT_region_begin(1, label.c_str());
+  // LOG(INFO) << "PAT_region_begin(" << label << ")";
+// #endif
+
+
   std::vector<std::string> configKeys;
   specificSettings_.getKeys(configKeys);
   LOG(DEBUG) << "initialize outputWriterManager_, keys: " << configKeys;

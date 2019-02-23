@@ -15,36 +15,9 @@
 #include <dlfcn.h>
 #include <ctime>
 
-std::string timeToString_dmy( const tm* const time )
-{   // to format: %d/%m/%Y %H:%M:%S
-  std::string date;
-
-  date += std::to_string( time->tm_mday) + "/"
-       +  std::to_string( time->tm_mon + 1 ) + "/"
-       +  std::to_string( time->tm_year + 1900 ) + " ";
-  if( time->tm_hour < 10 )
-  {
-      date += "0";
-  }
-  date += std::to_string( time->tm_hour ) + ":";
-   if( time->tm_min < 10 )
-  {
-      date += "0";
-  }
-  date += std::to_string( time->tm_min ) + ":";
-  if( time->tm_sec < 10 )
-  {
-      date += "0";
-  }
-  date += std::to_string( time->tm_sec );
-  return date;
-}
-
-
 // forward declaration
 template <int nStates,typename FunctionSpaceType>
 class CellmlAdapter;
-
 
 template<int nStates, typename FunctionSpaceType>
 void RhsRoutineHandler<nStates,FunctionSpaceType>::

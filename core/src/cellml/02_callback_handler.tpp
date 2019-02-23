@@ -12,6 +12,17 @@
 
 template<int nStates, typename FunctionSpaceType>
 CallbackHandler<nStates,FunctionSpaceType>::
+CallbackHandler(DihuContext context, bool noNewOutputWriter) :
+  RhsRoutineHandler<nStates,FunctionSpaceType>(context, noNewOutputWriter),
+  DiscretizableInTime(),
+  setParameters_(NULL), setSpecificParameters_(NULL), setSpecificStates_(NULL), handleResult_(NULL),
+  pythonSetParametersFunction_(NULL), pythonSetSpecificParametersFunction_(NULL), pythonSetSpecificStatesFunction_(NULL), pythonHandleResultFunction_(NULL),
+  pySetFunctionAdditionalParameter_(NULL), pyHandleResultFunctionAdditionalParameter_(NULL), pyGlobalNaturalDofsList_(NULL)
+{
+}
+
+template<int nStates, typename FunctionSpaceType>
+CallbackHandler<nStates,FunctionSpaceType>::
 CallbackHandler(DihuContext context) :
   RhsRoutineHandler<nStates,FunctionSpaceType>(context),
   DiscretizableInTime(),
@@ -25,10 +36,22 @@ template<int nStates, typename FunctionSpaceType>
 CallbackHandler<nStates,FunctionSpaceType>::
 ~CallbackHandler()
 {
+  clearPyObjects();
+}
+
+template<int nStates, typename FunctionSpaceType>
+void CallbackHandler<nStates,FunctionSpaceType>::
+clearPyObjects()
+{
+  // Py_CLEAR has no effect if the variable is NULL
   Py_CLEAR(pythonSetParametersFunction_);
   Py_CLEAR(pythonSetSpecificParametersFunction_);
   Py_CLEAR(pythonSetSpecificStatesFunction_);
   Py_CLEAR(pythonHandleResultFunction_);
+
+  Py_CLEAR(pySetFunctionAdditionalParameter_);
+  Py_CLEAR(pyHandleResultFunctionAdditionalParameter_);
+  Py_CLEAR(pyGlobalNaturalDofsList_);
 }
 
 template<int nStates, typename FunctionSpaceType>

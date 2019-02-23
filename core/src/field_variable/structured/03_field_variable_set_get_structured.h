@@ -36,6 +36,10 @@ public:
   //! @param onlyNodalValues: if this is true, for Hermite only the non-derivative values are retrieved
   void getValuesWithoutGhosts(std::vector<std::array<double,nComponents>> &values, bool onlyNodalValues=false) const;
 
+  //! get all values
+  //! @param onlyNodalValues: if this is true, for Hermite only the non-derivative values are retrieved
+  void getValuesWithoutGhosts(std::array<std::vector<double>,nComponents> &values, bool onlyNodalValues=false) const;
+
   //! for a specific component, get values from their local dof no.s, as array, therefore templated by the number of elements, N, to retrieve
   template<int N>
   void getValues(int componentNo, std::array<dof_no_t,N> dofLocalNo, std::array<double,N> &values) const;
@@ -105,6 +109,9 @@ public:
 
   //! set values for the all component for all local dofs, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
   void setValuesWithoutGhosts(const std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode=INSERT_VALUES);
+
+  //! set values for the all component for all local dofs, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
+  void setValuesWithoutGhosts(const std::array<std::vector<double>,nComponents> &values, InsertMode petscInsertMode=INSERT_VALUES);
 
   //! set value to zero for all dofs
   void zeroEntries();

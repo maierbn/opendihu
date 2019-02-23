@@ -12,17 +12,28 @@ template<typename DiscretizableInTime>
 HeunAdaptiv<DiscretizableInTime>::HeunAdaptiv(DihuContext context) :
   TimeSteppingExplicit<DiscretizableInTime>(context, "HeunAdaptiv")
 {
-  // create data object for heun
-  this->data_ = std::make_shared<Data::TimeSteppingHeun<typename DiscretizableInTime::FunctionSpace, DiscretizableInTime::nComponents()>>(context);
+  // Note, the data_ object has to be created in the initialize function
 
   //read allowed tolerance from settings
   tolerance_ = this->specificSettings_.getOptionDouble("tolerance", 0.1, PythonUtility::Positive);
 
   //read delta from settings
- delta_ = this->specificSettings_.getOptionDouble("delta", 0.1, PythonUtility::Positive);
+  delta_ = this->specificSettings_.getOptionDouble("delta", 0.1, PythonUtility::Positive);
 
   // backup time step width, initialized as -1 and less then timespan/2
   savedTimeStepWidth_ = -1;
+}
+
+template<typename DiscretizableInTime>
+void HeunAdaptiv<DiscretizableInTime>::initialize()
+{
+  LOG(TRACE) << "HeunAdaptiv::initialize";
+
+  // create data object for heun
+  this->data_ = std::make_shared<Data::TimeSteppingHeun<typename DiscretizableInTime::FunctionSpace, DiscretizableInTime::nComponents()>>(this->context_);
+
+  // call the parent initialize
+  TimeSteppingSchemeOde<DiscretizableInTime>::initialize();
 }
 
 template<typename DiscretizableInTime>

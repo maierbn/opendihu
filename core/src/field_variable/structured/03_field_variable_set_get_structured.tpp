@@ -128,6 +128,36 @@ getValuesWithoutGhosts(std::vector<std::array<double,nComponents>> &values, bool
   }
 }
 
+//! get all values
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
+getValuesWithoutGhosts(std::array<std::vector<double>,nComponents> &values, bool onlyNodalValues) const
+{
+  assert(this->values_);
+
+  // determine the number of values to be retrived which is lower than the number of dofs for Hermite with only nodal values
+  dof_no_t nValues = this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts();
+  if (onlyNodalValues)
+  {
+    const int nDofsPerNode = FunctionSpaceType::nDofsPerNode();
+    nValues /= nDofsPerNode;
+  }
+
+  // loop over components and get data component-wise
+  std::vector<double> buffer(nValues);
+  for (int componentNo = 0; componentNo < nComponents; componentNo++)
+  {
+    std::size_t previousSize = values[componentNo].size();
+    values[componentNo].resize(previousSize+nValues);
+
+    // resize output vector
+    VLOG(2) << "Field variable structured, getValues, resize values vector to " << previousSize+nValues << " entries.";
+
+    // get values into buffer
+    this->values_->getValues(componentNo, nValues, this->functionSpace_->meshPartition()->dofNosLocal(onlyNodalValues).data(), values[componentNo].data());
+  }
+}
+
 //! for a specific component, get values from their local dof no.s
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
@@ -341,7 +371,6 @@ setValues(int componentNo, const std::vector<dof_no_t> &dofNosLocal, const std::
 {
   assert(componentNo >= 0 && componentNo < nComponents);
   assert(this->values_);
-  assert(dofNosLocal.size() == values.size());
 
   // set the values for the given component
   this->values_->setValues(componentNo, dofNosLocal.size(), dofNosLocal.data(), values.data(), petscInsertMode);
@@ -449,7 +478,7 @@ setValuesWithoutGhosts(int componentNo, const std::vector<double> &values, Inser
   assert(componentNo >= 0 && componentNo < nComponents);
   assert(values.size() == this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts());
   assert(this->values_);
- 
+
   // set the values, this is the same call as setValuesWithGhosts, but the number of values is smaller and therefore the last dofs which are the ghosts are not touched
   this->values_->setValues(componentNo, values.size(), this->functionSpace_->meshPartition()->dofNosLocal().data(), values.data(), petscInsertMode);
 }
@@ -472,9 +501,26 @@ setValuesWithoutGhosts(const std::vector<std::array<double,nComponents>> &values
     LOG(FATAL) << "setValuesWithoutGhosts: values.size: " << values.size() << " != " << this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts();
   }
   assert(values.size() == this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts());
-  
+
   // set the values, this is the same call as setValuesWithGhosts, but the number of values is smaller and therefore the last dofs which are the ghosts are not touched
   this->setValues(values.size(), this->functionSpace_->meshPartition()->dofNosLocal(), values, petscInsertMode);
+}
+
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
+setValuesWithoutGhosts(const std::array<std::vector<double>,nComponents> &values, InsertMode petscInsertMode)
+{
+  for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
+  {
+    if (values[componentIndex].size() != this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts())
+    {
+      LOG(FATAL) << "setValuesWithoutGhosts: values.size: " << values[componentIndex].size() << " != " << this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts();
+    }
+    assert(values[componentIndex].size() == this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts());
+
+    // set the values, this is the same call as setValuesWithGhosts, but the number of values is smaller and therefore the last dofs which are the ghosts are not touched
+    this->setValues(componentIndex, this->functionSpace_->meshPartition()->dofNosLocal(), values[componentIndex], petscInsertMode);
+  }
 }
 
 //! set value to zero for all dofs

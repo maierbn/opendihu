@@ -8,10 +8,10 @@ class Transfer {
 public:
     
 //!Restriction step of the multigrid method
-void restriction(std::vector<double> *values);
+void restriction(std::vector<double> *valuesFine, std::vector<double> *valuesCoarse);
 
 //!prolongation step of the multigrid method
-void prolongation(std::vector<double> *values);
+void prolongation(std::vector<double> *valuesCoarse, std::vector<double> *valuesFine);
 
 };
 

@@ -64,7 +64,8 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
     s << filenameBaseWithPath << ".pvtr";
 
     // open file
-    std::ofstream file = Paraview::openFile(s.str());
+    std::ofstream file;
+    Paraview::openFile(file, s.str());
 
     LOG(DEBUG) << "Write PRectilinearGrid, file \"" << s.str() << "\".";
 
@@ -163,7 +164,8 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
 
 
   // open file
-  std::ofstream file = Paraview::openFile(s.str());
+  std::ofstream file;
+  Paraview::openFile(file, s.str());
 
   LOG(DEBUG) << "Write RectilinearGrid, file \"" << s.str() << "\".";
 
@@ -341,7 +343,8 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
     s << filenameBaseWithPath << ".pvts";
 
     // open file
-    std::ofstream file = Paraview::openFile(s.str());
+    std::ofstream file;
+    Paraview::openFile(file, s.str());
 
     LOG(DEBUG) << "Write PStructuredGrid, file \"" << s.str() << "\".";
 
@@ -429,7 +432,8 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   }
 
   // open file
-  std::ofstream file = Paraview::openFile(s.str());
+  std::ofstream file;
+  Paraview::openFile(file, s.str());
 
   LOG(DEBUG) << "Write StructuredGrid, file \"" << s.str() << "\".";
 
@@ -505,7 +509,8 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   s << filename << ".vtu";
 
   // open file
-  std::ofstream file = Paraview::openFile(s.str());
+  std::ofstream file;
+  Paraview::openFile(file, s.str());
 
   LOG(DEBUG) << "Write UnstructuredGrid, file \"" << s.str() << "\".";
 

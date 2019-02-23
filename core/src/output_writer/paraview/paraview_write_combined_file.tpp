@@ -414,7 +414,8 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
   if (ownRankNo == 0)
   {
     // open file to ensure that directory exists and file is writable
-    std::ofstream file = Generic::openFile(filenameStr);
+    std::ofstream file;
+    Generic::openFile(file, filenameStr);
 
     // close and delete file
     file.close();
@@ -728,7 +729,8 @@ void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType 
       if (ownRankNo == 0)
       {
         // open file to ensure that directory exists and file is writable
-        std::ofstream file = Generic::openFile(filenameStr);
+        std::ofstream file;
+        Generic::openFile(file, filenameStr);
 
         // close and delete file
         file.close();

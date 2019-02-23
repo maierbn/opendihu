@@ -467,7 +467,7 @@ createSimdSourceFile(std::string &simdSourceFilename)
 
         auto t = std::time(nullptr);
         auto tm = *std::localtime(&t);
-        simdSource << std::endl << "/* This function was created by opendihu at " << timeToString_dmy(&tm)  //std::put_time(&tm, "%d/%m/%Y %H:%M:%S")
+        simdSource << std::endl << "/* This function was created by opendihu at " << StringUtility::timeToString(&tm)  //std::put_time(&tm, "%d/%m/%Y %H:%M:%S")
           << ".\n * It is designed for " << this->nInstances_ << " instances of the CellML problem. */" << std::endl
           << "void computeCellMLRightHandSide("
           << "void *context, double t, double *states, double *rates, double *algebraics, double *parameters)" << std::endl << "{" << std::endl;
@@ -692,7 +692,8 @@ createSimdSourceFile(std::string &simdSourceFilename)
     s << simdSourceFilename << "." << rankNoWorldCommunicator << ".c";  // .c suffix is needed such that cray compiler knowns that it is c code
     simdSourceFilename = s.str();
 
-    std::ofstream simdSourceFile = OutputWriter::Generic::openFile(simdSourceFilename.c_str());
+    std::ofstream simdSourceFile;
+    OutputWriter::Generic::openFile(simdSourceFile, simdSourceFilename.c_str());
     if (!simdSourceFile.is_open())
     {
       LOG(ERROR) << "Could not write to file \"" << simdSourceFilename << "\".";
@@ -811,7 +812,7 @@ createGPUSourceFile(std::string &gpuSourceFilename)
 
         auto t = std::time(nullptr);
         auto tm = *std::localtime(&t);
-        gpuSource << std::endl << "/* This function was created by opendihu at " << timeToString_dmy(&tm)   //std::put_time(&tm, "%d/%m/%Y %H:%M:%S")
+        gpuSource << std::endl << "/* This function was created by opendihu at " <<  StringUtility::timeToString(&tm)   //std::put_time(&tm, "%d/%m/%Y %H:%M:%S")
           << ".\n * It is designed for " << this->nInstances_ << " instances of the CellML problem. */" << std::endl
           << "void computeGPUCellMLRightHandSide("
           << "void *context, double t, double *states, double *rates, double *algebraics, double *parameters)" << std::endl << "{" << std::endl << "#pragma omp target" << std::endl << "{" << std::endl;
@@ -1031,7 +1032,8 @@ createGPUSourceFile(std::string &gpuSourceFilename)
       gpuSourceFilename = this->specificSettings_.getOptionString("gpuSourceFilename", "");
     }
 
-    std::ofstream gpuSourceFile = OutputWriter::Generic::openFile(gpuSourceFilename.c_str());
+    std::ofstream gpuSourceFile;
+    OutputWriter::Generic::openFile(gpuSourceFile, gpuSourceFilename.c_str());
     if (!gpuSourceFile.is_open())
     {
       LOG(ERROR) << "Could not write to file \"" << gpuSourceFilename << "\".";

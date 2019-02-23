@@ -98,7 +98,7 @@ int main(int argc, char* argv[])
     if use_showme:
       try:
         # try to get compiler and linker flags from mpicc, this directly has the needed includes paths
-        ctx.Message("Checking MPI "+str(ctx.env["mpiCC"])+" --showme") 
+        #ctx.Message("Checking MPI "+str(ctx.env["mpiCC"])+" --showme") 
         cflags = subprocess.check_output("{} --showme:compile".format(ctx.env["mpiCC"]), shell=True)
         ldflags = subprocess.check_output("{} --showme:link".format(ctx.env["mpiCC"]), shell=True)
 

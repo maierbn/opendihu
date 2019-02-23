@@ -30,10 +30,15 @@ advanceTimeSpan()
   // debugging output of matrices
   //this->timestepping_.data_->print();
   
-  Vec &solution = this->fullTimestepping_.data().solution()->valuesGlobal();   // vector of all components in struct-of-array order, as needed by CellML
-  Vec &redSolution = this->data().solution()->valuesGlobal();
+  // input to this method is the reduced solution vector in this->data().solution()
+  typedef typename TimeSteppingImplicitType::Data::FieldVariableType FieldVariable;   // field variable type of the full function space with all components
+  std::shared_ptr<FieldVariable> solutionFull = this->fullTimestepping_.data().solution();
+
+  Vec solution = solutionFull->valuesGlobal();   // vector of all components in struct-of-array order, as needed by CellML
+  Vec redSolution = this->data().solution()->valuesGlobal();
   
-  Mat &basis = this->dataMOR_->basis()->valuesGlobal();
+  Mat basis = this->dataMOR_->basis()->valuesGlobal();
+  Mat basisTransp = this->dataMOR_->basisTransp()->valuesGlobal();
   
   // loop over time steps
   double currentTime = this->startTime_;
@@ -49,11 +54,22 @@ advanceTimeSpan()
     timeStepNo++;
     currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;   
     
-    VLOG(1) << "starting from solution: " << *this->fullTimestepping_.data().solution();                   
-    
+    VLOG(1) << "starting from reduced solution: " << *this->data().solution();
+
+    // transfer to full-order space
+    this->MatMultFull(basis, redSolution, solution);
+
+    VLOG(1) << "computed full solution: " << *solutionFull;
+
     // adjust the full-order rhs vector such that boundary conditions are satisfied
-    this->fullTimestepping_.dirichletBoundaryConditions()->applyInRightHandSide(this->fullTimestepping_.data().solution(), this->fullTimestepping_.dataImplicit().boundaryConditionsRightHandSideSummand());
-    
+    this->fullTimestepping_.dirichletBoundaryConditions()->applyInRightHandSide(
+      solutionFull, this->fullTimestepping_.dataImplicit().boundaryConditionsRightHandSideSummand());
+
+    VLOG(2) << "applied Dirichlet boundary conditions: " << *solutionFull;
+
+    // transfer to reduced space
+    this->MatMultReduced(basisTransp, solution, redSolution);
+
     // advance computed value
     // solve A_R*z^{t+1} = z^{t} for z^{t+1} where A_R is the reduced system matrix, solveLinearSystem(b,x)
     this->solveLinearSystem(redSolution, redSolution);
@@ -72,10 +88,7 @@ advanceTimeSpan()
      }
     */
     
-    // transfer to full-order space
-    this->MatMultFull(basis,redSolution,solution);       
-    
-    VLOG(1) << "solution after integration: " << *this->fullTimestepping_.data().solution();
+    VLOG(1) << "solution after integration: " << *this->data().solution();
     
     // stop duration measurement
     if (this->durationLogKey_ != "")

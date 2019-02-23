@@ -40,11 +40,11 @@ namespace ModelOrderReduction
     //! Map to the full order space. Modification to MatMult in case that size of vector y does not match to the rows of the matrix.
     virtual void MatMultFull(Mat mat,Vec x,Vec y);
     
-    std::shared_ptr<DataMOR> dataMOR_;
+    std::shared_ptr<DataMOR> dataMOR_;    //< contains matrices basis and reduced matrices
     int nReducedBases_;    
-    int nRowsSnapshots_; // rows of the snapshot matrix
+    int nRowsSnapshots_; //< number of rows of the snapshot matrix
     
-    PythonConfig specificSettingsMOR_; // python object containing the value of the python config dict with corresponding key
+    PythonConfig specificSettingsMOR_; //< python object containing the value of the python config dict with corresponding key
     bool initialized_;
   };
 

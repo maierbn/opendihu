@@ -676,6 +676,7 @@ restoreValuesContiguous()
     return;
   }
 
+  // assert that the valuesContiguous_ is being used
   assert(valuesContiguous_ != PETSC_NULL);
   if (this->currentRepresentation_ != Partition::values_representation_t::representationContiguous)
   {
@@ -683,11 +684,12 @@ restoreValuesContiguous()
       << Partition::valuesRepresentationString[this->currentRepresentation_] << ", probably without previous getValuesContiguous()";
   }
 
+  // copy values from component vectors to contiguous vector
   PetscErrorCode ierr;
   const double *valuesDataContiguous;
   ierr = VecGetArrayRead(valuesContiguous_, &valuesDataContiguous); CHKERRV(ierr);
 
-  // copy values from component vectors to contiguous vector
+  // loop over components
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
   {
     double *valuesDataComponent;

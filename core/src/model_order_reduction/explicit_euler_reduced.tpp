@@ -25,16 +25,23 @@ namespace ModelOrderReduction
     LOG(DEBUG) << "ReducedOrderExplicitEuler::advanceTimeSpan(), timeSpan=" << timeSpan<< ", timeStepWidth=" << this->timeStepWidth_
       << " n steps: " << this->numberTimeSteps_;
     
+    VLOG(1) << "full-order solution: " << *this->fullTimestepping_.data().solution();
+    VLOG(1) << "reduced solution: " << *this->data().solution();
+
+    PetscErrorCode ierr;
+
     // debugging output of matrices
     //this->fullTimestepping_.data().print();
     
-    Vec &solution = this->fullTimestepping_.data().solution()->getValuesContiguous();   // vector of all components in struct-of-array order, as needed by CellML
-    Vec &increment = this->fullTimestepping_.data().increment()->getValuesContiguous();
-    Vec &redSolution = this->data().solution()->valuesGlobal();
-    Vec &redIncrement = this->data().increment()->valuesGlobal();
+    typedef typename TimeSteppingExplicitType::Data::FieldVariableType FieldVariable;   // field variable type of the full function space with all components
+
+    std::shared_ptr<FieldVariable> solutionFull = this->fullTimestepping_.data().solution();
+    std::shared_ptr<FieldVariable> incrementFull = this->fullTimestepping_.data().increment();
+    Vec redSolution = this->data().solution()->valuesGlobal();
+    Vec redIncrement = this->data().increment()->valuesGlobal();
         
-    Mat &basis = this->dataMOR_->basis()->valuesGlobal();
-    Mat &basisTransp = this->dataMOR_->basisTransp()->valuesGlobal();
+    Mat basis = this->dataMOR_->basis()->valuesGlobal();
+    Mat basisTransp = this->dataMOR_->basisTransp()->valuesGlobal();
     
     // loop over time steps
     double currentTime = this->startTime_;
@@ -48,27 +55,38 @@ namespace ModelOrderReduction
       }
                  
       // full state recovery
-      //required in case of operator splitting because only the reduced solutions is transfered.
-      this->MatMultFull(basis, redSolution, solution);
+      //required in case of operator splitting because only the reduced solutions is transferred.
+      this->MatMultFull(basis, redSolution, solutionFull->valuesGlobal());
             
       VLOG(1) << "starting from full-order solution: " << *this->fullTimestepping_.data().solution();
       
+      // transform solutionFull to contiguous representation that is needed for cellml
+      Vec solutionFullContiguous = solutionFull->getValuesContiguous();     // vector of all components in struct-of-array order, as needed by CellML
+      Vec incrementFullContiguous = incrementFull->getValuesContiguous();
+
       // advance computed value
       // compute next delta_u = f(u)
-      this->evaluateTimesteppingRightHandSideExplicit(solution, increment, timeStepNo, currentTime);
-      
-      VLOG(2) << "computed full-order increment: " << *this->fullTimestepping_.data().increment() << ", dt=" << this->timeStepWidth_;             
-      
-      // reduction step
+      this->evaluateTimesteppingRightHandSideExplicit(solutionFullContiguous, incrementFullContiguous, timeStepNo, currentTime);
+
+      // integrate, y += dt * delta_u
+      ierr = VecAXPY(solutionFullContiguous, this->timeStepWidth_, incrementFullContiguous); CHKERRV(ierr);
+
+      // transform solutionFull back from the contiguous representation that was needed for cellml
+      solutionFull->restoreValuesContiguous();
+      incrementFull->restoreValuesContiguous();
+
+      VLOG(2) << "computed full-order increment: " << *this->fullTimestepping_.data().increment() << ", dt=" << this->timeStepWidth_;
+
+      // reduction of solution
       // solution may has been changed inside evaluateTimesteppingRightHandSideExplicit in case of 
       // the stimulation in electrophysiology examples. Therefore, the reduced solution has to be updated.
-      this->MatMultReduced(basisTransp, solution, redSolution);
+      this->MatMultReduced(basisTransp, solutionFull->valuesGlobal(), redSolution);
       
       VLOG(2) << "reduced solution before adding the reduced increment" << *this->data().solution();
       
-      // reduction step
+      // reduction of increment
       // modified version of MatMult for MOR
-      this->MatMultReduced(basisTransp, increment, redIncrement);
+      this->MatMultReduced(basisTransp, incrementFull->valuesGlobal(), redIncrement);
       
       VLOG(2) << "reduced increment: " << *this->data().increment() << ", dt=" << this->timeStepWidth_;             
       
@@ -83,17 +101,13 @@ namespace ModelOrderReduction
       
       // write the current output values of the full-order timestepping
       // full state recovery
-      this->MatMultFull(basis, redSolution , solution);
+      this->MatMultFull(basis, redSolution, solutionFull->valuesGlobal());
       this->fullTimestepping_.outputWriterManager().writeOutput(this->fullTimestepping_.data(), timeStepNo, currentTime);
       
       // write the current output values of the (reduced) timestepping
       this->outputWriterManager().writeOutput(*this->data_, timeStepNo, currentTime);
                   
     }
-    
-    this->fullTimestepping_.data().solution()->restoreValuesContiguous();
-    this->fullTimestepping_.data().increment()->restoreValuesContiguous();
-    
   }
   
   template<typename TimeSteppingExplicitType>

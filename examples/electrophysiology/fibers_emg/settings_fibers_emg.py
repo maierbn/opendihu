@@ -329,7 +329,7 @@ if rank_no == 0:
     mu_no = get_motor_unit_no(fiber_no_index)
     first_stimulation_info.append([fiber_no_index,mu_no,first_stimulation])
   
-  first_stimulation_info.sort(key=lambda x: 1e5+1e-5*x[1]+1e-10*x[0] if x[2] is None else x[2]+1e-5*x[1]+1e-10*x[0])
+  first_stimulation_info.sort(key=lambda x: 1e6+1e-6*x[1]+1e-12*x[0] if x[2] is None else x[2]+1e-6*x[1]+1e-12*x[0])
   
   print("First stimulation times")
   print("    Time  MU fibers")

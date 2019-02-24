@@ -308,11 +308,19 @@ firing_times = np.genfromtxt(firing_times_file)
 # for debugging output show when the first 20 fibers will fire
 if rank_no == 0:
   print("Debugging output about fiber firing: Taking input from file \"{}\"".format(firing_times_file))
+  import timeit
+  t_start = timeit.default_timer()
   
   first_stimulation_info = []
   
   n_firing_times = np.size(firing_times,0)
   for fiber_no_index in range(n_fibers_total):
+    if fiber_no_index % 100 == 0:
+      t_intermediate = timeit.default_timer()
+      if t_intermediate - t_start > 100:
+        print("Note: break after {}/{} fibers ({:.0f}%) because it already took {:.3f}s".format(fiber_no_index,n_fibers_total,100.0*fiber_no_index/(n_fibers_total-1.),t_intermediate - t_start))
+        break
+    
     first_stimulation = None
     for current_time in np.linspace(0,1./stimulation_frequency*n_firing_times,n_firing_times):
       if fiber_gets_stimulated(fiber_no_index, stimulation_frequency, current_time):
@@ -337,10 +345,16 @@ if rank_no == 0:
       fibers.append(fiber_no)
     else:
       if last_time is not None:
-        print("{:8.2f} {:3} {}".format(last_time,last_mu_no,str(fibers)))
+        if len(fibers) > 10:
+          print("{:8.2f} {:3} {} (only showing first 10, {} total)".format(last_time,last_mu_no,str(fibers[0:10]),len(fibers)))
+        else:
+          print("{:8.2f} {:3} {}".format(last_time,last_mu_no,str(fibers)))
         n_stimulated_mus += 1
       else:
-        print("never stimulated: MU {:3}, fibers {}".format(last_mu_no,str(fibers)))
+        if len(fibers) > 10:
+          print("  never stimulated: MU {:3}, fibers {} (only showing first 10, {} total)".format(last_mu_no,str(fibers[0:10]),len(fibers)))
+        else:
+          print("  never stimulated: MU {:3}, fibers {}".format(last_mu_no,str(fibers)))
         n_not_stimulated_mus += 1
       fibers = [fiber_no]
 
@@ -349,6 +363,9 @@ if rank_no == 0:
     
   print("stimulated MUs: {}, not stimulated MUs: {}".format(n_stimulated_mus,n_not_stimulated_mus))
 
+  t_end = timeit.default_timer()
+  print("duration of assembling this list: {:.3f} s\n".format(t_end-t_start))  
+  
 # compute partitioning
 if rank_no == 0:
   if n_ranks != n_subdomains_x*n_subdomains_y*n_subdomains_z:

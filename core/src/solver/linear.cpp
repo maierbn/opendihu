@@ -192,8 +192,6 @@ void Linear::solve(Vec rightHandSide, Vec solution, std::string message)
     // compute residual
     ierr = KSPBuildResidual(*ksp_, *temporaryVectorLeft_, *temporaryVectorRight_, &(*residual_)); CHKERRV(ierr);
 
-    LOG(INFO) << "r: " << PetscUtility::getStringVector(*residual_);
-
     // compute norm of residual
     ierr = VecNorm(*residual_, NORM_2, &residualNorm); CHKERRV(ierr);
   }

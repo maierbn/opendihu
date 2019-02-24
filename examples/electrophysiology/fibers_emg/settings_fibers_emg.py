@@ -42,8 +42,8 @@ output_timestep = 1e0             # timestep for output files
 cellml_file = "../../input/hodgkin_huxley_1952.c"
 
 #fiber_file = "../../input/3000fibers.bin"
-#fiber_file = "../../input/7x7fibers.bin"
-fiber_file = "../../input/15x15fibers.bin"
+fiber_file = "../../input/7x7fibers.bin"
+#fiber_file = "../../input/15x15fibers.bin"
 #fiber_file = "../../input/49fibers.bin"
 load_data_from_file = False
 debug_output = False
@@ -596,9 +596,12 @@ for i in range(n_fibers_total):
     "nodePositions": fiber_node_positions,
     "inputMeshIsGlobal": False,
     "nRanks": [n_subdomains_z],
-    "setHermiteDerivatives": False,
-    "logKey": "Fiber{}".format(i)
+    "setHermiteDerivatives": False
   }
+  
+  # only add log key for fiber 0
+  if i == 0:
+    meshes["MeshFiber_{}".format(i)]["logKey"] = "Fiber{}".format(i)
   
 meshes["3Dmesh"] = {
   "nElements": n_elements,
@@ -766,6 +769,7 @@ config = {
       "StaticBidomainSolver": {
         "timeStepWidth": dt_bidomain,
         "timeStepOutputInterval": 50,
+        "durationLogKey": "duration_bidomain",
         "solverName": "activationSolver",
 #        "inputIsGlobal": True,
         "initialGuessNonzero": emg_initial_guess_nonzero,

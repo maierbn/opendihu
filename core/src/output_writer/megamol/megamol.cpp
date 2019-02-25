@@ -44,7 +44,7 @@ Generic(context, settings)
 
 void MegaMol::notifyMegaMol()
 {
-  if (context_.partitionManager()->rankNoCommWorld() == 0 && context_.zmqSocket())
+  if (DihuContext::ownRankNoCommWorld() == 0 && context_.zmqSocket())
   {
     std::stringstream message;
     //message << "return mmHelp()";

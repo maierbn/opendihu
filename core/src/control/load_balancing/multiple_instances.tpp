@@ -94,7 +94,7 @@ MultipleInstances(DihuContext context) :
   std::vector<std::tuple<std::shared_ptr<Partition::RankSubset>, bool, PythonConfig>> instanceData(nInstances_);  // <rankSubset, computeOnThisRank, instanceConfig>
 
   int ownRankNo = this->context_.ownRankNo();  // this may not be from MPI_COMM_WORLD but the context's communicator
-  int nRanksThisContext = this->context_.rankSubset()->size(); //this->context_.partitionManager()->nRanksCommWorld();
+  int nRanksThisContext = this->context_.rankSubset()->size();
   std::vector<std::shared_ptr<Partition::RankSubset>> rankSubsets;
 
   // parse the rank lists for all instances

@@ -13,6 +13,7 @@ namespace Partition
 template<typename Iter>
 RankSubset::RankSubset(Iter ranksBegin, Iter ranksEnd, std::shared_ptr<RankSubset> parentRankSubset) : ownRankNo_(-1), nCommunicatorsSplit_(0)
 {
+  isWorldCommunicator_ = false;
   MPI_Comm parentCommunicator = MPI_COMM_WORLD;
   if (parentRankSubset)
   {

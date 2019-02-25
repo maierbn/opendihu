@@ -1,5 +1,7 @@
 #include "field_variable/08_field_variable_vector.h"
 
+#include "control/dihu_context.h"
+
 namespace FieldVariable
 {
 
@@ -88,13 +90,12 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
 
       gradPhiWorldSpace /= nSummands[dofNo];
 
-      int rankNo;
-      MPIUtility::handleReturnValue (MPI_Comm_rank(MPI_COMM_WORLD, &rankNo));
-
       // add value to gradient field variable
       if (VLOG_IS_ON(2))
       {
-        if ((rankNo == 0 && dofNo == 150) || (rankNo == 1 && dofNo == 0))
+        int rankNo = DihuContext::ownRankNoCommWorld();
+
+          if ((rankNo == 0 && dofNo == 150) || (rankNo == 1 && dofNo == 0))
         {
           LOG(DEBUG) << "dofNo " << dofNo << " gradPhiWorldSpace: " << gradPhiWorldSpace << ", nSummands[dofNo]: " << nSummands[dofNo]
             << ",geometryValues: " << geometryValues << ", for this dof: " << geometryValues[dofIndex];

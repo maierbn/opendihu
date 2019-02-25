@@ -57,14 +57,22 @@ void DihuContext::initializeLogging(int argc, char *argv[])
   conf.setToDefault();
 
   int rankNo;
-  MPIUtility::handleReturnValue (MPI_Comm_rank(MPI_COMM_WORLD, &rankNo));
-  
+  MPIUtility::handleReturnValue (MPI_Comm_rank(MPI_COMM_WORLD, &rankNo));   // get the rank in the MPI_COMM_WORLD communicator
+
   // set prefix for output that includes current rank no
   std::string prefix;
   if (nRanksCommWorld_ > 1)
   {
     std::stringstream s;
-    s << rankNo << "/" << nRanksCommWorld_ << " ";
+    // if there is renumbering of ranks, output both rank nos
+    if (rankNo != ownRankNoCommWorld_)
+    {
+      s << "(" << rankNo << ")" << ownRankNoCommWorld_ << "/" << nRanksCommWorld_ << " ";
+    }
+    else
+    {
+      s << rankNo << "/" << nRanksCommWorld_ << " ";
+    }
     prefix = s.str();
   }
   
@@ -86,7 +94,7 @@ void DihuContext::initializeLogging(int argc, char *argv[])
   if (nRanksCommWorld_ > 1)
   {
     std::stringstream s;
-    s << logFilesPath << rankNo << "_opendihu.log";
+    s << logFilesPath << ownRankNoCommWorld_ << "_opendihu.log";
     conf.setGlobally(el::ConfigurationType::Filename, s.str());
 
     // truncate logfile
@@ -124,7 +132,7 @@ void DihuContext::initializeLogging(int argc, char *argv[])
            +"\n\nFatal error: %msg\n"+separator+ANSI_COLOR_RESET+"\n");
 
   // disable output for ranks != 0
-  if (rankNo > 0)
+  if (ownRankNoCommWorld_ > 0)
   {
     conf.set(el::Level::Info, el::ConfigurationType::Enabled, "false");
     conf.set(el::Level::Warning, el::ConfigurationType::Enabled, "false");

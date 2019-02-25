@@ -47,6 +47,8 @@ std::string DihuContext::pythonScriptText_ = "";
 std::shared_ptr<std::thread> DihuContext::megamolThread_ = nullptr;
 std::vector<char *> DihuContext::megamolArgv_;
 std::vector<std::string> DihuContext::megamolArguments_;
+std::array<int,3> DihuContext::nSubdomainsForRankReordering_;
+bool DihuContext::rankReorderingEnabled_ = false;
 
 #ifdef HAVE_ADIOS
 std::shared_ptr<adios2::ADIOS> DihuContext::adios_ = nullptr;  ///< adios context option
@@ -54,7 +56,8 @@ std::shared_ptr<adios2::IO> DihuContext::io_ = nullptr;        ///< IO object of
 #endif
 bool DihuContext::initialized_ = false;
 int DihuContext::nObjects_ = 0;   ///< number of objects of DihuContext, if the last object gets destroyed, call MPI_Finalize
-int DihuContext::nRanksCommWorld_ = 0;   ///< number of objects of DihuContext, if the last object gets destroyed, call MPI_Finalize
+int DihuContext::nRanksCommWorld_ = 0;   ///< number of MPI ranks in MPI_COMM_WORLD
+int DihuContext::ownRankNoCommWorld_ = 0;  ///< own MPI rank no in MPI_COMM_WORLD
 
 void handleSignal(int signalNo)
 {
@@ -63,8 +66,7 @@ void handleSignal(int signalNo)
   Control::PerformanceMeasurement::setParameter("exit",signalName);
   Control::PerformanceMeasurement::writeLogFile();
 
-  int rankNo = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rankNo);
+  int rankNo = DihuContext::ownRankNoCommWorld();
   LOG(INFO) << "Rank " << rankNo << " received signal " << sys_siglist[signalNo]
     << " (" << signalNo << "): " << signalName;
   if (signalNo != SIGRTMIN)
@@ -131,11 +133,25 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
     // initialize MPI, this is necessary to be able to call PetscFinalize without MPI shutting down
     MPI_Init(&argc, &argv);
 
-    // get global number of MPI ranks
-    MPIUtility::handleReturnValue (MPI_Comm_size(MPI_COMM_WORLD, &nRanksCommWorld_));
+    rankSubset_ = std::make_shared<Partition::RankSubset>();   // create rankSubset with all ranks, i.e. MPI_COMM_WORLD
+
+    initializeRankReordering(argc, argv);
+
+    nRanksCommWorld_ = rankSubset_->size();
+    ownRankNoCommWorld_ = rankSubset_->ownRankNo();
+
+    // get global number of MPI ranks and own rank no
+    //MPIUtility::handleReturnValue (MPI_Comm_size(MPI_COMM_WORLD, &nRanksCommWorld_));
+    //MPIUtility::handleReturnValue (MPI_Comm_rank(MPI_COMM_WORLD, &ownRankNoCommWorld_));
 
     // load configuration from file if it exits
     initializeLogging(argc, argv);
+
+    if (rankReorderingEnabled_)
+    {
+      LOG(WARNING) << "Rank reordering is enabled!";
+      LOG(DEBUG) << "subdomains for rank reordering: " << nSubdomainsForRankReordering_;
+    }
 
     // configure PETSc to abort on errorm
     PetscOptionsSetValue(NULL, "-on_error_abort", "");
@@ -203,8 +219,6 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
     {
       loadPythonScriptFromFile(Control::settingsFileName);
     }
-
-    rankSubset_ = std::make_shared<Partition::RankSubset>();   // create rankSubset with all ranks, i.e. MPI_COMM_WORLD
 
     // start megamol console
     LOG(DEBUG) << "initializeMegaMol";
@@ -323,10 +337,21 @@ std::string DihuContext::metaText()
   return metaTextStr.str();
 }
 
+int DihuContext::ownRankNoCommWorld()
+{
+  return ownRankNoCommWorld_;
+}
+
 int DihuContext::ownRankNo()
 {
   return rankSubset_->ownRankNo();
 }
+
+int DihuContext::nRanksCommWorld()
+{
+  return nRanksCommWorld_;
+}
+
 
 std::shared_ptr<Mesh::Manager> DihuContext::meshManager()
 {

@@ -96,9 +96,10 @@ parser.add_argument('--dt_0D',                    type=float, help='The timestep
 parser.add_argument('--dt_1D',                    type=float, help='The timestep for the 1D model.', default=dt_1D)
 parser.add_argument('--dt_3D',                    type=float, help='The timestep for the splitting.', default=dt_3D)
 parser.add_argument('--dt_bidomain',              type=float, help='The timestep for the bidomain model.', default=dt_bidomain)
-parser.add_argument('--v',                        help='Enable full verbosity')
-parser.add_argument('-v',                         help='enable verbosity level')
-parser.add_argument('-vmodule',                   help='enable verbosity level')
+parser.add_argument('--v',                        help='Enable full verbosity in c++ code')
+parser.add_argument('-v',                         help='Enable verbosity level in c++ code', action="store_true")
+parser.add_argument('-vmodule',                   help='Enable verbosity level for given file in c++ code')
+parser.add_argument('--rank_reordering',          help='Enable rank reordering in the c++ code', action="store_true")
  
 # parse arguments and assign values to global variables
 args = parser.parse_args(args=sys.argv[:-2])

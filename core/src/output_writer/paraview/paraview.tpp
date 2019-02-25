@@ -189,13 +189,9 @@ void Paraview::writeParaviewPartitionFieldVariable(FieldVariableType &geometryFi
 
     std::string stringData;
 
-    // get own rank no
-    int ownRankNoCommWorld = 0;
-    MPIUtility::handleReturnValue(MPI_Comm_rank(MPI_COMM_WORLD, &ownRankNoCommWorld));
-
     const node_no_t nNodesLocal = geometryField.functionSpace()->meshPartition()->nNodesLocalWithGhosts();
 
-    std::vector<double> values(nNodesLocal, (double)ownRankNoCommWorld);
+    std::vector<double> values(nNodesLocal, (double)DihuContext::ownRankNoCommWorld());
 
     if (binaryOutput)
     {

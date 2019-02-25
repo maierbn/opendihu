@@ -69,7 +69,7 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
 
   const bool combined = true;   /// if the output is using MPI Output
 
-  int ownRankNo = DihuContext::partitionManager()->rankNoCommWorld();
+  int ownRankNo = DihuContext::ownRankNoCommWorld();
 
   // determine file name
   std::stringstream filename;

@@ -68,8 +68,17 @@ public:
   //! return the partition manager object that creates partitionings
   static std::shared_ptr<Partition::Manager> partitionManager();
 
-  //! get the own MPI rank no in the world communicator
+  //! get the own MPI rank no in the communicator of this context
   int ownRankNo();
+
+  //! get the own MPI rank no in the world communicator
+  static int ownRankNoCommWorld();
+
+  //! number of ranks in the world communicator
+  static int nRanksCommWorld();
+
+  //! apply a permutation to the comm world rank no
+  static void reorderRankNoCommWorld(int &rankNo);
 
   //! get the rank subset of this context, this may not be the same as MPI_COMM_WORLD
   std::shared_ptr<Partition::RankSubset> rankSubset() const;
@@ -109,6 +118,9 @@ private:
   //! initialize the library used for network communication with MegaMol
   void initializeZMQ();
 
+  //! initialize the rank reordering of MPI ranks, such that z coordinate is increasing fastest
+  void initializeRankReordering(int argc, char *argv[]);
+
   PythonConfig pythonConfig_;    ///< the top level python config dictionary of the current context (i.e. may be a sub-dict of the global config)
   std::shared_ptr<Partition::RankSubset> rankSubset_; ///< the ranks that collectively run the code where this context is valid
 
@@ -119,6 +131,7 @@ private:
   static std::shared_ptr<Partition::Manager> partitionManager_;  ///< partition manager object that creates and manages partitionings
   
   static int nRanksCommWorld_;   ///< number of ranks in MPI_COMM_WORLD
+  static int ownRankNoCommWorld_;  ///< the own rank no in MPI_COMM_WORLD, using MPI_COMM_WORLD should be avoided in the program, instead use this global variable
   static bool initialized_;  ///< if MPI, Petsc and easyloggingPP is already initialized. This needs to be done only once in the program.
   static int nObjects_;   ///< number of objects of DihuContext, if the last object gets destroyed, call MPI_Finalize or MPI_Barrier, depending on doNotFinalizeMpi
   static std::string pythonScriptText_;  ///< the text of the python config script
@@ -126,6 +139,9 @@ private:
   static std::vector<char *> megamolArgv_;   ///< the arguments use for the megamol instance
   static std::vector<std::string> megamolArguments_;  ///< the string data of the megamol arguments
   bool doNotFinalizeMpi_;  ///< when the last object gets destroyed, either MPI_Finalize() is called (should be used) or MPI_Barrier (only needed in testcases where MPI context needs to be used for the next test cases)
+
+  static bool rankReorderingEnabled_;       ///< if MPI rank reordering should be done such that z direction is increasing fastest
+  static std::array<int,3> nSubdomainsForRankReordering_;    ///< number of subdomains in x,y,z direction, only used if reordering of MPI ranks is done (for fibers_emg example only)
 
 #ifdef HAVE_ADIOS
   static std::shared_ptr<adios2::ADIOS> adios_;  ///< adios context option

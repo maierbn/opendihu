@@ -172,7 +172,7 @@ generateParallelMesh()
   std::array<bool,4> subdomainIsAtBorder;
 
   // only rank 0 creates the first border points
-  if (this->context_.partitionManager()->rankNoCommWorld() == 0)
+  if (DihuContext::ownRankNoCommWorld() == 0)
   {
     // run python script to generate loops for the whole volume
     // run stl_create_rings.create_rings

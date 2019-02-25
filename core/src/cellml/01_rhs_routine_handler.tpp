@@ -145,7 +145,7 @@ initializeRhsRoutine()
     {
       // compile the library at one rank
       // get the global rank no, needed for the output filenames
-      int rankNoWorldCommunicator = DihuContext::partitionManager()->rankNoCommWorld();
+      int rankNoWorldCommunicator = DihuContext::ownRankNoCommWorld();
 
       // gather what number of instances all ranks have
       int nRanksCommunicator = this->functionSpace_->meshPartition()->nRanks();
@@ -677,7 +677,7 @@ createSimdSourceFile(std::string &simdSourceFilename)
     // add .rankNoWorldCommunicator to simd source filename
     s.str("");
     // get the global rank no, needed for the output filenames
-    int rankNoWorldCommunicator = DihuContext::partitionManager()->rankNoCommWorld();
+    int rankNoWorldCommunicator = DihuContext::ownRankNoCommWorld();
     s << simdSourceFilename << "." << rankNoWorldCommunicator << ".c";  // .c suffix is needed such that cray compiler knowns that it is c code
     simdSourceFilename = s.str();
 

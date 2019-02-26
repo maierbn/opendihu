@@ -197,6 +197,79 @@ getValuesWithoutGhosts(int componentNo, std::vector<double> &values, bool onlyNo
   }
 }
 
+//! get all values
+//! @param onlyNodalValues: if this is true, for Hermite only the non-derivative values are retrieved
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetRegularFixed<FunctionSpaceType,nComponents>::
+getValuesWithGhosts(std::vector<std::array<double,nComponents>> &values, bool onlyNodalValues) const
+{
+  assert(this->values_);
+
+  // determine the number of values to be retrived which is lower than the number of dofs for Hermite with only nodal values
+  dof_no_t nValues = this->functionSpace_->meshPartition()->nDofsLocalWithGhosts();
+  if (onlyNodalValues)
+  {
+    const int nDofsPerNode = FunctionSpaceType::nDofsPerNode();
+    nValues /= nDofsPerNode;
+  }
+
+  // resize output vector
+  VLOG(2) << "Field variable structured, getValues, resize values vector to " << nValues << " entries.";
+
+  std::size_t previousSize = values.size();
+  values.resize(previousSize+nValues);
+
+  // loop over components and get data component-wise
+  std::vector<double> buffer;
+  for (int componentNo = 0; componentNo < nComponents; componentNo++)
+  {
+    // get values into buffer
+    getValuesWithGhosts(componentNo, buffer, onlyNodalValues);
+    assert(nValues == buffer.size());
+
+    // copy values from buffer to output vector
+    for (int valueIndex = 0; valueIndex < nValues; valueIndex++)
+    {
+      values[previousSize+valueIndex][componentNo] = buffer[valueIndex];
+    }
+  }
+}
+
+//! get all values
+//! @param onlyNodalValues: if this is true, for Hermite only the non-derivative values are retrieved
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetRegularFixed<FunctionSpaceType,nComponents>::
+getValuesWithoutGhosts(std::vector<std::array<double,nComponents>> &values, bool onlyNodalValues) const
+{
+  // determine the number of values to be retrived which is lower than the number of dofs for Hermite with only nodal values
+  dof_no_t nValues = this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts();
+  if (onlyNodalValues)
+  {
+    const int nDofsPerNode = FunctionSpaceType::nDofsPerNode();
+    nValues /= nDofsPerNode;
+  }
+
+  // resize output vector
+  std::size_t previousSize = values.size();
+  values.resize(previousSize+nValues);
+  VLOG(2) << "Field variable regular fixed, getValues, resize values vector to " << previousSize+nValues << " entries.";
+
+  // loop over components and get data component-wise
+  std::vector<double> buffer;
+  for (int componentNo = 0; componentNo < nComponents; componentNo++)
+  {
+    // get values into buffer
+    getValuesWithoutGhosts(componentNo, buffer, onlyNodalValues);
+    assert(nValues == buffer.size());
+
+    // copy values from buffer to output vector
+    for (int valueIndex = 0; valueIndex < nValues; valueIndex++)
+    {
+      values[previousSize+valueIndex][componentNo] = buffer[valueIndex];
+    }
+  }
+}
+
 //! for a specific component, get values from their local dof no.s
 template<typename FunctionSpaceType, int nComponents>
 template<int N>
@@ -486,4 +559,4 @@ setValues(FieldVariable<FunctionSpaceType,nComponents> &rhs)
   this->values_->setValues(*rhs.partitionedPetscVec());
 }
 
-};
+}  // namespace

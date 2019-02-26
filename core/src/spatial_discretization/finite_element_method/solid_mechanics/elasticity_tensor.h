@@ -26,5 +26,5 @@ protected:
 
 };
 
-};  // namespace
+} // namespace
 

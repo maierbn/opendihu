@@ -27,8 +27,6 @@ getValue(node_no_t dofLocalNo) const
   }
 
   // for geometry field compute the entries, this does not work for ghost dofs
-  const node_no_t nLocalNodesInXDirection = this->functionSpace_->nNodesLocalWithoutGhosts(0);
-  const node_no_t nLocalNodesInYDirection = this->functionSpace_->nNodesLocalWithoutGhosts(1);
   const int nDofsPerNode = FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::nDofsPerNode();
   
   int nodeNoLocal = int(dofLocalNo / nDofsPerNode);
@@ -48,13 +46,13 @@ getValue(node_no_t dofLocalNo) const
     value[0] = coordinates[0] * this->functionSpace_->meshWidth();
 
     // y direction
-    value[1] = coordinates[0] * this->functionSpace_->meshWidth();
+    value[1] = coordinates[1] * this->functionSpace_->meshWidth();
 
     // z direction
-    value[2] = coordinates[0] * this->functionSpace_->meshWidth();
+    value[2] = coordinates[2] * this->functionSpace_->meshWidth();
   }
   
   return value;
 }
 
-};
+}  // namespace

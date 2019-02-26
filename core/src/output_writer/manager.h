@@ -32,6 +32,6 @@ protected:
   std::list<std::shared_ptr<Generic>> outputWriter_;    ///< list of active output writers
 };
 
-};    // namespace OutputWriter
+}  // namespace OutputWriter
 
 #include "output_writer/manager.tpp"

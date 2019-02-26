@@ -168,4 +168,4 @@ samplingPoints()
   };
 }
 
-};  // namespace
+} // namespace

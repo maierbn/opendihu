@@ -45,4 +45,4 @@ setInverseLumpedMassMatrix()
   VLOG(2) << *this->data_.inverseLumpedMassMatrix();
 }
 
-};    // namespace
+}  // namespace

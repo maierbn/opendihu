@@ -62,5 +62,5 @@ collectMeshNames(TupleType currentFieldVariableTuple, std::set<std::string> &mes
   return false;  // do not break iteration
 }
 
-};  //namespace ExfileLoopOverTuple
-};  //namespace OutputWriter
+}  // namespace ExfileLoopOverTuple
+}  // namespace OutputWriter

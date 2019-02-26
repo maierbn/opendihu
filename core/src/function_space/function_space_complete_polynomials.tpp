@@ -32,4 +32,4 @@ getElementDofNosLocal(element_no_t elementNo, std::vector<dof_no_t> &globalDofNo
   std::iota(globalDofNos.begin(), globalDofNos.end(), elementNo*nDofsPerElement);
 }
 
-};  // namespace
+} // namespace

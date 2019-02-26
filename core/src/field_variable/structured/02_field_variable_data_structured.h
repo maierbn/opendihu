@@ -87,7 +87,7 @@ public:
   virtual void unifyMappings(std::shared_ptr<ElementToNodeMapping> elementToNodeMapping, const int nDofsPerNode){}
 
   //! eliminate duplicate elementToDof and exfileRepresentation objects in components of two field variables (this and one other)
-  virtual void unifyMappings(std::shared_ptr<FieldVariableBase<FunctionSpaceType>> fieldVariable2){}
+  virtual void unifyMappings(std::shared_ptr<FieldVariableBaseFunctionSpace<FunctionSpaceType>> fieldVariable2){}
 
   //! initialize PETSc vector with size of total number of dofs for all components of this field variable
   virtual void initializeValuesVector(){}
@@ -112,6 +112,6 @@ protected:
   std::shared_ptr<PartitionedPetscVec<FunctionSpaceType,nComponents_>> values_ = nullptr;          ///< Petsc vector containing the values, the values for the components are stored as struct of array, e.g. (comp1val1, comp1val2, comp1val3, ..., comp2val1, comp2val2, comp2val3, ...). Dof ordering proceeds fastest over dofs of a node, then over nodes, node numbering is along whole domain, fastes in x, then in y,z direction.
 };
 
-};  // namespace
+} // namespace
 
 #include "field_variable/structured/02_field_variable_data_structured.tpp"

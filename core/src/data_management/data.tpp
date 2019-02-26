@@ -68,6 +68,13 @@ initialize()
 
 template<typename FunctionSpaceType>
 void Data<FunctionSpaceType>::
+reset()
+{
+  this->initialized_ = false;
+}
+
+template<typename FunctionSpaceType>
+void Data<FunctionSpaceType>::
 setRankSubset(Partition::RankSubset rankSubset)
 {
   rankSubset_ = std::make_shared<Partition::RankSubset>(rankSubset);

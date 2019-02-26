@@ -806,5 +806,5 @@ config = {
   StiffnessMatrixTester::checkDirichletBCInSolution(equationDiscretized, dirichletBC);
 }
 
-};
+}  // namespace
 

@@ -23,6 +23,9 @@ bool Solver::configEquals(PythonConfig config)
   return false;
 }
 
+std::string Solver::name()
+{
+  return name_;
+}
 
-
-};  // namespace
+} // namespace

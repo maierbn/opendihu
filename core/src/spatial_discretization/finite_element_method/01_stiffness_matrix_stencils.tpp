@@ -979,4 +979,4 @@ setStiffnessMatrix()
 
 
 
-};    // namespace
+}  // namespace

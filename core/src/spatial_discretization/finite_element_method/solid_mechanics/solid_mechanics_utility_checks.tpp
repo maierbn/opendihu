@@ -72,4 +72,4 @@ void checkInverseIsCorrect(const Tensor2<D> &rightCauchyGreen, Tensor2<D> &inver
   }
 }
 
-};  // namespace
+} // namespace

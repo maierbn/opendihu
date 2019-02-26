@@ -4,116 +4,147 @@
 #include "utility/python_utility.h"
 #include "utility/petsc_utility.h"
 #include<petscmat.h>
-
+#include "mesh/mesh_manager.h"
+#include "function_space/function_space.h"
 #include "time_stepping_scheme/time_stepping_scheme.h"
+#include "time_stepping_scheme/time_stepping_scheme_ode.h"
+#include "data_management/time_stepping/time_stepping.h"
 
 namespace ModelOrderReduction
 {
-template<typename TimeSteppingType>
-TimeSteppingSchemeOdeReduced<TimeSteppingType>::
-TimeSteppingSchemeOdeReduced(DihuContext context):
+  template<typename TimeSteppingType>
+  TimeSteppingSchemeOdeReduced<TimeSteppingType>::
+  TimeSteppingSchemeOdeReduced(DihuContext context, std::string name):
   MORBase<typename TimeSteppingType::FunctionSpace>(context["ModelOrderReduction"]),
-  TimeSteppingScheme(context["ModelOrderReduction"]),
-  timestepping_(context["ModelOrderReduction"]), initialized_(false)
-{  
-  this->specificSettings_ = this->context_.getPythonConfig();
-
-  // initialize output writers
-  this->outputWriterManager_.initialize(this->context_, timestepping_.specificSettings());
-  
-  if (VLOG_IS_ON(1))
-  {
-    VLOG(1) << "specificSettings in TimeSteppingSchemeOdeReduced:";
-    PythonUtility::printDict(this->specificSettings_.pyObject());
-  }
-}
-
-template<typename TimesteppingType>
-std::shared_ptr<FieldVariable::FieldVariable<::FunctionSpace::Generic,1>> &TimeSteppingSchemeOdeReduced<TimesteppingType>::
-solution()
-{  
-  return this->data_->redSolution();
-}
-
-template<typename TimeSteppingType>
-void TimeSteppingSchemeOdeReduced<TimeSteppingType>::setInitialValues()
-{
-  PetscErrorCode ierr;
-  
-  Vec &solution = this->timestepping_.data().solution()->getValuesContiguous();
-  Vec &redSolution=this->data_->redSolution()->getValuesContiguous();
-  Mat &basisTransp = this->data_->basisTransp()->valuesGlobal();
-  
-  // reduction step
-  ierr=MatMult(basisTransp, solution, redSolution); CHKERRV(ierr);   
-}
-
-template<typename TimeSteppingType>
-void TimeSteppingSchemeOdeReduced<TimeSteppingType>::
-initialize()
-{
-  if (initialized_)
-    return;
-  
-  LOG(TRACE) << "TimeSteppingSchemeOdeReduced::initialize()";
-  
-  this->timestepping_.initialize();
-  
-  this->startTime_=timestepping_.startTime();
-  this->endTime_=timestepping_.endTime();
-  this->timeStepWidth_=timestepping_.timeStepWidth();
-  this->numberTimeSteps_=timestepping_.numberTimeSteps();
-  this->timeStepOutputInterval_=timestepping_.timeStepOutputInterval();
-  
-  LOG(DEBUG) << "timestepping_.timeStepOutputInterval() in TimeSteppingSchemeOdeReduced::initialize", timestepping_.timeStepOutputInterval();
-  
-  this->nReducedBases_ = specificSettings_.getOptionInt("nReducedBases", 10, PythonUtility::Positive);
-  
-  std::array<element_no_t, 1> nElements({this -> nReducedBases_ - 1});
-  std::array<double, 1> physicalExtent({0.0});
-  
-  // create the functionspace for the reduced order
-  std::shared_ptr<::FunctionSpace::Generic> functionSpaceRed 
-    = context_.meshManager()->createFunctionSpace<::FunctionSpace::Generic>("functionSpaceReduced", nElements, physicalExtent);
-  
-  //assert(this->data_);
-  this->data_->setFunctionSpace(functionSpaceRed);
-  this->data_->setFullFunctionSpace(timestepping_.discretizableInTime().data().functionSpace());
-  this->data_->initialize();
-  
-  MORBase<typename TimeSteppingType::FunctionSpace>::initialize();
-  
-  setInitialValues();
+  ::TimeSteppingScheme::TimeSteppingSchemeOdeBase<::FunctionSpace::Generic,1>(context["ModelOrderReduction"],name),
+    fullTimestepping_(context["ModelOrderReduction"]), initialized_(false)
+  {  
+    this->specificSettingsMOR_ = this->context_.getPythonConfig();
     
-  initialized_=true;
-}
+    if (this->specificSettingsMOR_.hasKey("nReducedBases"))
+    {
+      this->nReducedBases_ = this->specificSettingsMOR_.getOptionInt("nReducedBases", 10, PythonUtility::Positive);
+      LOG(DEBUG) << "nReducedBases: " << this->nReducedBases_;
+    }
+    
+    if (this->specificSettingsMOR_.hasKey("nRowsSnapshots"))
+    {
+      this->nRowsSnapshots_ = this->specificSettingsMOR_.getOptionInt("nRowsSnapshots", 10, PythonUtility::Positive);
+      LOG(DEBUG) << "nRowsSnapshots: " << this->nRowsSnapshots_;
+    }
+    
+    std::array<element_no_t, 1> nElementsRed({this -> nReducedBases_});
+    std::array<element_no_t, 1> nElementsRows({this -> nRowsSnapshots_});
+    std::array<double, 1> physicalExtent({0.0}); 
+    
+    typedef ::FunctionSpace::Generic GenericFunctionSpace;
+    
+    if(this->context_.meshManager()->hasFunctionSpace("functionSpaceReduced"))
+    {
+      // take the existing function space
+      this->functionSpaceRed = this->context_.meshManager()->template functionSpace<GenericFunctionSpace>("functionSpaceReduced");
+    }
+    else
+    {
+      // create the functionspace for the reduced order
+      this->functionSpaceRed = this->context_.meshManager()->template createFunctionSpace<GenericFunctionSpace>("functionSpaceReduced", nElementsRed, physicalExtent);
+      LOG(DEBUG) << "functionSpaceRed";
+    }
+    
+    if(this->context_.meshManager()->hasFunctionSpace("functionSpaceRowsSnapshots"))
+    {
+      // take the existing function space
+      this->functionSpaceRowsSnapshots = this->context_.meshManager()->template functionSpace<GenericFunctionSpace>("functionSpaceRowsSnapshots");
+    }
+    else
+    {
+      this->functionSpaceRowsSnapshots = this->context_.meshManager()->template createFunctionSpace<GenericFunctionSpace>("functionSpaceRowsSnapshots", nElementsRows, physicalExtent);        
+      LOG(DEBUG) << "functionSpaceRowsSnapshots";
+    }
+    
+    this->data_ = std::make_shared <::Data::TimeStepping<::FunctionSpace::Generic,1>>(context); // create data object
 
-template<typename TimeSteppingType>
-void TimeSteppingSchemeOdeReduced<TimeSteppingType>::
-run()
-{
-  // initialize
-  this->initialize();
-  
-  // do simulations
-  this->advanceTimeSpan();    
-}
-  
-template<typename TimeSteppingType>
-void TimeSteppingSchemeOdeReduced<TimeSteppingType>::
-reset()
-{
-  TimeSteppingScheme::reset();
-  timestepping_.reset();
-  
-  initialized_ = false;
-}
-  
+  }
+
+  template<typename TimeSteppingType>
+  void TimeSteppingSchemeOdeReduced<TimeSteppingType>::setInitialValues()
+  {  
+    LOG(TRACE) << "TimeSteppingSchemeOdeReduced::setInitialValues()";
+    
+    Vec &solution = this->fullTimestepping_.data().solution()->getValuesContiguous();
+    Vec &redSolution= this->data().solution()->valuesGlobal();
+    Mat &basisTransp = this->dataMOR_->basisTransp()->valuesGlobal();
+    
+    PetscInt mat_sz_1, mat_sz_2;
+    PetscInt solution_sz, redSolution_sz;
+    
+    VecGetSize(solution,&solution_sz);
+    VecGetSize(redSolution,&redSolution_sz);
+    MatGetSize(basisTransp,&mat_sz_1,&mat_sz_2);
+    
+    VLOG(2) << "setInitialValues() solution_size: " << solution_sz;
+    VLOG(2) << "setInitialValues() redSolution_size: " << redSolution_sz; 
+    VLOG(2) << "setInitialValues() mat_sz_1: " << mat_sz_1 << " mat_sz_2: " << mat_sz_2 ;
+    
+    // reduction step
+    this->MatMultReduced(basisTransp, solution, redSolution);
+
+    VLOG(2) << "computed reduced solution: " << *this->data().solution();
+  }
+
+  template<typename TimeSteppingType>
+  void TimeSteppingSchemeOdeReduced<TimeSteppingType>::
+  initialize()
+  {
+    if (initialized_)
+      return;
+    
+    LOG(TRACE) << "TimeSteppingSchemeOdeReduced::initialize()";
+    
+    this->fullTimestepping_.initialize();
+
+    ::TimeSteppingScheme::TimeSteppingSchemeOdeBase<::FunctionSpace::Generic,1>::initialize(); 
+
+    this->dataMOR_->setFunctionSpace(this->functionSpaceRed);
+    this->dataMOR_->setFunctionSpaceRows(this->functionSpaceRowsSnapshots);
+    
+    assert(functionSpaceRowsSnapshots->meshPartition());   // assert that the function space was retrieved correctly
+    this->data_->setFunctionSpace(functionSpaceRowsSnapshots);
+    this->data().setOutputComponentNo(0);
+    this->data_->initialize();
+    
+    MORBase<typename TimeSteppingType::FunctionSpace>::initialize();  
+    
+    setInitialValues(); //necessary for the explicit scheme
+
+    VLOG(1) << "initialized full-order solution: " << *this->fullTimestepping_.data().solution();
+
+    initialized_ = true;
+  }
+
+  template<typename TimeSteppingType>
+  void TimeSteppingSchemeOdeReduced<TimeSteppingType>::
+  run()
+  {
+    // initialize
+    this->initialize();
+    
+    // do simulations
+    this->advanceTimeSpan();    
+  }
+    
   template<typename TimeSteppingType>
   bool TimeSteppingSchemeOdeReduced<TimeSteppingType>::
   knowsMeshType()
   {
     return false;
+  }
+
+  template<typename TimeSteppingType>
+  TimeSteppingType TimeSteppingSchemeOdeReduced<TimeSteppingType>::
+  fullTimestepping()
+  {
+    return fullTimestepping_;
   }
   
 } //namespace

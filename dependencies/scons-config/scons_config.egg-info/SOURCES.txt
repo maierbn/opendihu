@@ -9,6 +9,7 @@ scons_config.egg-info/top_level.txt
 sconsconfig/__init__.py
 sconsconfig/setup.py
 sconsconfig/data/patches/rapidxml.patch
+sconsconfig/packages/ADIOS.py
 sconsconfig/packages/AntTweakBar.py
 sconsconfig/packages/Base64.py
 sconsconfig/packages/CUDA.py
@@ -24,6 +25,7 @@ sconsconfig/packages/LAPACK.py
 sconsconfig/packages/METIS.py
 sconsconfig/packages/MPI.py
 sconsconfig/packages/Matplotlib.py
+sconsconfig/packages/MegaMol.py
 sconsconfig/packages/MySQL.py
 sconsconfig/packages/NLopt.py
 sconsconfig/packages/NumpyC.py
@@ -57,6 +59,7 @@ sconsconfig/packages/libsndfile.py
 sconsconfig/packages/libusb.py
 sconsconfig/packages/libxml2.py
 sconsconfig/packages/pugixml.py
+sconsconfig/packages/pythonPackages.py
 sconsconfig/packages/rapidxml.py
 sconsconfig/packages/re2.py
 sconsconfig/packages/sqlite3.py

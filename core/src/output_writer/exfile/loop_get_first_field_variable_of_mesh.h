@@ -56,8 +56,8 @@ typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value &
 getFirstFieldVariableOfMesh(CurrentFieldVariableType currentFieldVariable, std::string meshName,
                                 std::shared_ptr<FieldVariableType> &firstFieldVariableOfMesh);
 
-};  //namespace ExfileLoopOverTuple
+}  // namespace ExfileLoopOverTuple
 
-};  //namespace OutputWriter
+}  // namespace OutputWriter
 
 #include "output_writer/exfile/loop_get_first_field_variable_of_mesh.tpp"

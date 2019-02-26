@@ -4,7 +4,7 @@ namespace FunctionSpace
 {
 
 template<typename MeshType,typename BasisFunctionType>
-std::shared_ptr<typename FunctionSpaceGeometryData<MeshType,BasisFunctionType>::FieldVariableBaseType>
+std::shared_ptr<typename FunctionSpaceGeometryData<MeshType,BasisFunctionType>::FieldVariableBaseFunctionSpaceType>
 FunctionSpaceGeometryData<MeshType,BasisFunctionType>::
 fieldVariable(std::string name)
 {
@@ -26,4 +26,4 @@ getDofNoLocal(std::array<global_no_t,MeshType::dim()> coordinatesGlobal, int nod
   return -1;
 }
 
-};  // namespace
+} // namespace

@@ -63,7 +63,7 @@ public:
 
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
   //! the transfer is done by the solution_vector_mapping class
-  TransferableSolutionDataType getSolutionForTransferInOperatorSplitting();
+  TransferableSolutionDataType getSolutionForTransfer();
 
   //! field variables that will be output by outputWriters
   typedef std::tuple<
@@ -73,6 +73,9 @@ public:
 
   //! get pointers to all field variables that can be written by output writers
   OutputFieldVariables getOutputFieldVariables();
+
+  //! output the given data for debugging
+  std::string getString(TransferableSolutionDataType &data);
 
 protected:
 
@@ -85,6 +88,7 @@ protected:
   
   int outputComponentNo_;   ///< the component no. of the component of the field variable that will be transferred to the other part of the operator when an operator splitting is used
   double prefactor_;        ///< a factor with which the solution will be scaled when transferred in an operator splitting
+  std::string debuggingName_;   ///< a name identifier only used for debugging
 
 private:
   //! get maximum number of expected non-zeros in the system matrix

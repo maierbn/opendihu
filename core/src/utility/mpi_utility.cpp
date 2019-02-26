@@ -33,17 +33,17 @@ void handleReturnValue(int returnValue, std::string descriptor, MPI_Status *stat
     return;
   
   int stringLength = 200000;
-  char errorString[stringLength];
-  MPI_Error_string(returnValue, errorString, &stringLength);
+  std::vector<char> errorString(stringLength);
+  MPI_Error_string(returnValue, errorString.data(), &stringLength);
   errorString[stringLength] = '\0';
   
   if (!descriptor.empty())
   {
-    LOG(ERROR) << "Error in " << descriptor << ": " << std::string(errorString);
+    LOG(ERROR) << "Error in " << descriptor << ": " << std::string(errorString.begin(), errorString.begin()+stringLength);
   }
   else 
   {
-    LOG(ERROR) << "Error in MPI function: " << std::string(errorString);
+    LOG(ERROR) << "Error in MPI function: " << std::string(errorString.begin(), errorString.begin()+stringLength);
   }
 }
  

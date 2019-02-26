@@ -4,34 +4,34 @@ namespace FieldVariable
 {
 
 template<typename FunctionSpaceType>
-FieldVariableBase<FunctionSpaceType>::
-FieldVariableBase() : functionSpace_(nullptr)
+FieldVariableBaseFunctionSpace<FunctionSpaceType>::
+FieldVariableBaseFunctionSpace() : functionSpace_(nullptr)
 {
 }
 
 template<typename FunctionSpaceType>
-std::shared_ptr<FunctionSpaceType> FieldVariableBase<FunctionSpaceType>::
+std::shared_ptr<FunctionSpaceType> FieldVariableBaseFunctionSpace<FunctionSpaceType>::
 functionSpace()
 {
   return functionSpace_;
 }
 
 template<typename FunctionSpaceType>
-std::string FieldVariableBase<FunctionSpaceType>::
+std::string FieldVariableBaseFunctionSpace<FunctionSpaceType>::
 name() const
 {
   return this->name_;
 }
 
 template<typename FunctionSpaceType>
-bool FieldVariableBase<FunctionSpaceType>::
+bool FieldVariableBaseFunctionSpace<FunctionSpaceType>::
 isGeometryField() const
 {
   return this->isGeometryField_;
 }
 
 template<typename FunctionSpaceType>
-void FieldVariableBase<FunctionSpaceType>::
+void FieldVariableBaseFunctionSpace<FunctionSpaceType>::
 checkNansInfs(int componentNo) const
 {
   // get all local values without ghosts for the given componentNo
@@ -67,7 +67,7 @@ checkNansInfs(int componentNo) const
 
 //! get the number of dofs
 template<typename FunctionSpaceType>
-dof_no_t FieldVariableBase<FunctionSpaceType>::
+dof_no_t FieldVariableBaseFunctionSpace<FunctionSpaceType>::
 nDofsLocalWithoutGhosts() const
 {
   return this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts();
@@ -75,7 +75,7 @@ nDofsLocalWithoutGhosts() const
 
 //! get the number of dofs
 template<typename FunctionSpaceType>
-dof_no_t FieldVariableBase<FunctionSpaceType>::
+dof_no_t FieldVariableBaseFunctionSpace<FunctionSpaceType>::
 nDofsGlobal() const
 {
   return this->functionSpace_->meshPartition()->nDofsGlobal();

@@ -56,7 +56,7 @@ public:
 
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
   //! the transfer is done by the solution_vector_mapping class
-  TransferableSolutionDataType getSolutionForTransferInOperatorSplitting();
+  TransferableSolutionDataType getSolutionForTransfer();
 
 protected:
 
@@ -66,6 +66,6 @@ protected:
   TimeSteppingScheme timeSteppingScheme_;   ///< the underlying timestepping method that is controlled by this class, e.g. Heun
 };
 
-};
+}  // namespace
 
 #include "control/load_balancing/load_balancing.tpp"

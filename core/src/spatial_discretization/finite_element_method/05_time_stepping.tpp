@@ -142,11 +142,11 @@ knowsMeshType()
 template<typename FunctionSpaceType, typename QuadratureType, typename Term>
 typename FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::TransferableSolutionDataType
 FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
-getSolutionForTransferInOperatorSplitting()
+getSolutionForTransfer()
 {
   // check for nans or infs
   //this->data_->solution()->checkNanInf();
-  return this->data_->getSolutionForTransferInOperatorSplitting();
+  return this->data_->getSolutionForTransfer();
 }
 
 template<typename FunctionSpaceType, typename QuadratureType, typename Term>

@@ -14,7 +14,7 @@ template<typename FunctionSpaceType>
 std::shared_ptr<FunctionSpaceType> Manager::functionSpace(PythonConfig settings)
 {
   LOG(DEBUG) << "querying Mesh::Manager::functionSpace, type " << typeid(FunctionSpaceType).name();
-
+  
   // if mesh was already created earlier
   if (settings.hasKey("meshName"))
   {
@@ -22,14 +22,14 @@ std::shared_ptr<FunctionSpaceType> Manager::functionSpace(PythonConfig settings)
     if (hasFunctionSpaceOfType<FunctionSpaceType>(meshName))
     {
       LOG(DEBUG) << "Mesh with meshName \"" << meshName << "\" requested, found and type matches, type is " << typeid(functionSpaces_[meshName]).name()
-        << ", cast to " << typeid(FunctionSpaceType).name();
+      << ", cast to " << typeid(FunctionSpaceType).name();
       return std::static_pointer_cast<FunctionSpaceType>(functionSpaces_[meshName]);
     }
     else if (meshConfiguration_.find(meshName) != meshConfiguration_.end())
     {
       // mesh was preconfigured, create new mesh from stored meshConfiguration
       LOG(DEBUG) << "Mesh configuration for \"" << meshName << "\" found and requested, will be created now. "
-        << "Type is " << typeid(FunctionSpaceType).name() << ".";
+      << "Type is " << typeid(FunctionSpaceType).name() << ".";
       
       // get mesh configuration that was parsed earlier
       PythonConfig meshConfiguration = meshConfiguration_.at(meshName);
@@ -41,19 +41,19 @@ std::shared_ptr<FunctionSpaceType> Manager::functionSpace(PythonConfig settings)
         meshName = newMeshName.str();
         LOG(INFO) << "Create a mesh with name \"" << meshName << "\".";
       }
-
+      
       // create new mesh and initialize
       std::shared_ptr<FunctionSpaceType> functionSpace = createFunctionSpace<FunctionSpaceType>(meshName, meshConfiguration);
-
+      
       std::string logKey;
       if (meshConfiguration.hasKey("logKey"))
       {
         logKey = meshConfiguration.getOptionString("logKey", "");
       }
 
-      Control::PerformanceMeasurement::setParameter(std::string("nDofs") + logKey, functionSpace->nDofsGlobal());
-      Control::PerformanceMeasurement::setParameter(std::string("nNodes") + logKey, functionSpace->nNodesGlobal());
-      Control::PerformanceMeasurement::setParameter(std::string("nElements") + logKey, functionSpace->nElementsGlobal());
+      Control::PerformanceMeasurement::setParameter(std::string("~nDofs") + logKey, functionSpace->nDofsGlobal());
+      Control::PerformanceMeasurement::setParameter(std::string("~nNodes") + logKey, functionSpace->nNodesGlobal());
+      Control::PerformanceMeasurement::setParameter(std::string("~nElements") + logKey, functionSpace->nElementsGlobal());
 
       return functionSpace;
     }
@@ -66,7 +66,7 @@ std::shared_ptr<FunctionSpaceType> Manager::functionSpace(PythonConfig settings)
   {
     LOG(DEBUG) << "Config does not contain meshName.";
   }
-
+  
   // if there was no name given for the mesh
   
   // create new mesh, store as anonymous object
@@ -76,18 +76,36 @@ std::shared_ptr<FunctionSpaceType> Manager::functionSpace(PythonConfig settings)
   
   // create mesh and initialize
   std::shared_ptr<FunctionSpaceType> functionSpace = createFunctionSpace<FunctionSpaceType>(anonymousName.str(), settings);
-
+  
   std::string logKey;
   if (settings.hasKey("logKey"))
   {
     logKey = settings.getOptionString("logKey", "");
   }
-
+  
   Control::PerformanceMeasurement::setParameter(std::string("nDofs") + logKey, functionSpace->nDofsGlobal());
   Control::PerformanceMeasurement::setParameter(std::string("nNodes") + logKey, functionSpace->nNodesGlobal());
   Control::PerformanceMeasurement::setParameter(std::string("nElements") + logKey, functionSpace->nElementsGlobal());
-
+  
   return functionSpace;
+}
+
+//! return previously created mesh or create on the fly
+template<typename FunctionSpaceType>
+std::shared_ptr<FunctionSpaceType> Manager::functionSpace(std::string meshName)
+{
+  LOG(DEBUG) << "querying Mesh::Manager::functionSpace, type " << typeid(FunctionSpaceType).name();
+
+  // if mesh was already created earlier
+  if (functionSpaces_.find(meshName) != functionSpaces_.end())
+  {
+    return std::static_pointer_cast<FunctionSpaceType>(functionSpaces_[meshName]);
+  }
+  else
+  {
+    LOG(ERROR) << "FunctionSpace with meshName \"" << meshName << "\" does not exist.";
+  }
+  return std::static_pointer_cast<FunctionSpaceType>(functionSpaces_.begin()->second);
 }
 
 //! create a mesh not from python config but directly by calling an appropriate construtor. 
@@ -104,7 +122,19 @@ std::shared_ptr<FunctionSpaceType> Manager::createFunctionSpace(std::string name
   LOG(DEBUG) << "Create new mesh with type " << typeid(FunctionSpaceType).name() << " and name \"" <<name << "\".";
 
   // create mesh and initialize
-  std::shared_ptr<FunctionSpaceType> functionSpace = std::make_shared<FunctionSpaceType>(this->partitionManager_, std::forward<Args>(args)...);
+  std::shared_ptr<FunctionSpaceType> functionSpace;
+
+  // check if node positions from file are available
+  if (nodePositionsFromFile_.find(name) != nodePositionsFromFile_.end())
+  {
+    std::vector<double> &nodePositions = nodePositionsFromFile_[name].data;
+    functionSpace = std::make_shared<FunctionSpaceType>(this->partitionManager_, nodePositions, std::forward<Args>(args)...);
+  }
+  else
+  {
+    // construct normally
+    functionSpace = std::make_shared<FunctionSpaceType>(this->partitionManager_, std::forward<Args>(args)...);
+  }
 
   functionSpace->setMeshName(name);
   functionSpace->initialize();
@@ -147,8 +177,8 @@ std::shared_ptr<FunctionSpaceType> Manager::createFunctionSpaceWithGivenMeshPart
 template<typename FunctionSpaceType>
 bool Manager::hasFunctionSpaceOfType(std::string meshName)
 {
-  LOG(DEBUG) << "hasMesh(" << meshName << "): " << (functionSpaces_.find(meshName) != functionSpaces_.end());
-  LOG(DEBUG) << "meshes size: " << functionSpaces_.size();
+  VLOG(1) << "hasMesh(" << meshName << "): " << (functionSpaces_.find(meshName) != functionSpaces_.end());
+  VLOG(1) << "meshes size: " << functionSpaces_.size();
 
   if (functionSpaces_.find(meshName) != functionSpaces_.end()) // if mesh is found by name
   {

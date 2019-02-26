@@ -30,7 +30,7 @@ public:
   using ComputeXiApproximation<MeshType,BasisFunctionType>::ComputeXiApproximation;
 
   //! check if the point lies inside the element, if yes, return true and set xi to the value of the point
-  bool pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType::dim()> &xi);
+  bool pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType::dim()> &xi, double xiTolerance = 1e-4);
 };
 
 /** Partial specialization for 1D StructuredRegularFixed meshes
@@ -45,7 +45,7 @@ public:
   using FunctionSpaceFieldVariable<Mesh::StructuredRegularFixedOfDimension<1>,BasisFunctionType>::FunctionSpaceFieldVariable;
 
   //! check if the point lies inside the element, if yes, return true and set xi to the value of the point
-  bool pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,1> &xi);
+  bool pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,1> &xi, double xiTolerance = 1e-4);
 };
 
 /** Partial specialization for 2D StructuredRegularFixed meshes
@@ -60,7 +60,7 @@ public:
   using FunctionSpaceFieldVariable<Mesh::StructuredRegularFixedOfDimension<2>,BasisFunctionType>::FunctionSpaceFieldVariable;
 
   //! check if the point lies inside the element, if yes, return true and set xi to the value of the point
-  bool pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,2> &xi);
+  bool pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,2> &xi, double xiTolerance = 1e-4);
 };
 
 /** Partial specialization for 3D StructuredRegularFixed meshes
@@ -75,7 +75,7 @@ public:
   using FunctionSpaceFieldVariable<Mesh::StructuredRegularFixedOfDimension<3>,BasisFunctionType>::FunctionSpaceFieldVariable;
 
   //! check if the point lies inside the element, if yes, return true and set xi to the value of the point
-  bool pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,3> &xi);
+  bool pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,3> &xi, double xiTolerance = 1e-4);
 };
 
 /** Partial specialization for 1D deformable meshes and linear shape functions
@@ -90,7 +90,7 @@ public:
   using FunctionSpaceFieldVariable<MeshType,BasisFunction::LagrangeOfOrder<1>>::FunctionSpaceFieldVariable;
 
   //! check if the point lies inside the element, if yes, return true and set xi to the value of the point
-  bool pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,1> &xi);
+  bool pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,1> &xi, double xiTolerance = 1e-4);
 };
 
 /** Partial specialization for 2D deformable meshes and linear shape functions
@@ -105,7 +105,7 @@ public:
   using FunctionSpaceFieldVariable<MeshType,BasisFunction::LagrangeOfOrder<1>>::FunctionSpaceFieldVariable;
 
   //! check if the point lies inside the element, if yes, return true and set xi to the value of the point
-  bool pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,2> &xi);
+  bool pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,2> &xi, double xiTolerance = 1e-4);
 };
 
 // --------------------------------------------------

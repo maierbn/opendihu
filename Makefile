@@ -23,13 +23,17 @@ purge: clean
 	rm -rf core/build_release
 
 purge_dependencies:
-	cd dependencies; rm -rf base64/ bzip2/ cython/ easyloggingpp/ googletest/ lapack/ matplotlib/ numpyc/ petsc/ python/ scipy/ semt/; cd -
+	cd dependencies; rm -rf base64/ bzip2/ cython/ easyloggingpp/ googletest/ lapack/ matplotlib/ numpyc/ petsc/ python/ scipy/ semt/ pythonpackages; cd -
 
 rebuild: purge_dependencies purge clean debug release
 
+# on hazel hen rebuild everying including dependencies
 rebuild_hazelhen:
 	rm -rf dependencies/easyloggingpp/install dependencies/easyloggingpp/src dependencies/python/install dependencies/python/src  dependencies/base64/install dependencies/base64/src dependencies/numpyc/install dependencies/numpyc/src dependencies/semt/src dependencies/semt/install && rm -rf core/build_release && $(python) dependencies/scons/scons.py BUILD_TYPE=RELEASE; cd dependencies/matplotlib && ../python/install/bin/pip3 install *.whl
 
+doc:
+	cd doc/doxygen; doxygen
+	
 # the following targets are just for convenience and could also be deleted
 release_without_tests:
 	$(python) dependencies/scons/scons.py BUILD_TYPE=RELEASE no_tests=True
@@ -40,7 +44,7 @@ system_testing:
 solid_mechanics:
 	cd testing/system_testing/tests/solid_mechanics && python ../../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
 
-multiple_fibers:
+multiple_fibers_system_testing:
 	cd testing/system_testing/tests/multiple_fibers && python ../../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
 
 streamline_tracer:
@@ -78,3 +82,12 @@ parallel_fiber_estimation:
 
 load_balancing:
 	cd examples/load_balancing && python ../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+
+multiple_fibers:
+	cd examples/electrophysiology/multiple_fibers && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+	
+multiple_fibers_cubes_partitioning:
+	cd examples/electrophysiology/multiple_fibers_cubes_partitioning && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+	
+fibers_emg:
+	cd examples/electrophysiology/fibers_emg && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG

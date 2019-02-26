@@ -4,6 +4,7 @@
 
 #include <list>
 #include <sstream>
+#include <sys/stat.h>  // stat() to check if file exists
 
 #include "utility/python_utility.h"
 #include "utility/petsc_utility.h"
@@ -135,72 +136,85 @@ initializeRhsRoutine()
       }
     }
 
-    int rankNoWorldCommunicator = DihuContext::ownRankNo();
-
-    // gather what number of instances all ranks have
-    int nRanksCommunicator = this->functionSpace_->meshPartition()->nRanks();
-    int ownRankNoCommunicator = this->functionSpace_->meshPartition()->ownRankNo();
-    std::vector<int> nInstancesRanks(nRanksCommunicator);
-
-    LOG(DEBUG) << "Communicator has " << nRanksCommunicator << " ranks";
-
-    nInstancesRanks[ownRankNoCommunicator] = this->nInstances_;
-
-    MPIUtility::handleReturnValue(MPI_Allgather(MPI_IN_PLACE, 0, MPI_DATATYPE_NULL, nInstancesRanks.data(),
-                                                1, MPI_INT, this->functionSpace_->meshPartition()->mpiCommunicator()), "MPI_Allgather");
-
-    // determine if this rank should do compilation, such that each nInstances is compiled only once, by the rank with lowest number
-    int i = 0;
-    int rankWhichCompilesLibrary = 0;
-    for (std::vector<int>::iterator iter = nInstancesRanks.begin(); iter != nInstancesRanks.end(); iter++, i++)
+    // check if the library already exists by a previous compilation
+    struct stat buffer;
+    if (stat(libraryFilename.c_str(), &buffer) == 0)
     {
-      if (*iter == this->nInstances_)
-      {
-        rankWhichCompilesLibrary = i;
-        break;
-      }
-    }
-
-    LOG(DEBUG) << "library will be compiled on rank " << rankWhichCompilesLibrary;
-
-    if (rankWhichCompilesLibrary == ownRankNoCommunicator)
-    {
-      LOG(DEBUG) << "compile on this rank";
-
-      if (libraryFilename.find("/") != std::string::npos)
-      {
-        std::string path = libraryFilename.substr(0, libraryFilename.rfind("/"));
-        int ret = system((std::string("mkdir -p ")+path).c_str());
-
-        if (ret != 0)
-        {
-          LOG(ERROR) << "Could not create path \"" << path << "\".";
-        }
-      }
-
-      std::stringstream compileCommand;
-
-      // compile library to filename with "*.rankNoWorldCommunicator", then wait (different wait times for ranks), then rename file to without "*.rankNoWorldCommunicator"
-      compileCommand << compileCommandOptions
-        << " -o " << libraryFilename << "." << rankNoWorldCommunicator << " " << sourceFilenameToUse
-        //<< " && sleep " << int((rankNoWorldCommunicator%100)/10+1)
-        << " && mv " << libraryFilename << "." << rankNoWorldCommunicator << " " << libraryFilename;
-
-      int ret = system(compileCommand.str().c_str());
-      if (ret != 0)
-      {
-        LOG(ERROR) << "Compilation failed. Command: \"" << compileCommand.str() << "\".";
-        libraryFilename = "";
-      }
-      else
-      {
-        LOG(DEBUG) << "Compilation successful. Command: \"" << compileCommand.str() << "\".";
-      }
+      LOG(DEBUG) << "Library \"" << libraryFilename << "\" already exists.";
     }
     else
     {
-      LOG(DEBUG) << "we are the wrong rank, do not compile library "
-        << "wait until library has been compiled";
+      // compile the library at one rank
+      // get the global rank no, needed for the output filenames
+      int rankNoWorldCommunicator = DihuContext::partitionManager()->rankNoCommWorld();
+
+      // gather what number of instances all ranks have
+      int nRanksCommunicator = this->functionSpace_->meshPartition()->nRanks();
+      int ownRankNoCommunicator = this->functionSpace_->meshPartition()->ownRankNo();
+      std::vector<int> nInstancesRanks(nRanksCommunicator);
+      nInstancesRanks[ownRankNoCommunicator] = this->nInstances_;
+
+      LOG(DEBUG) << "ownRankNoCommunicator: " << ownRankNoCommunicator << ", Communicator has " << nRanksCommunicator << " ranks, nInstancesRanks: " << nInstancesRanks;
+      MPI_Barrier(this->functionSpace_->meshPartition()->mpiCommunicator());
+
+
+
+      MPIUtility::handleReturnValue(MPI_Allgather(MPI_IN_PLACE, 0, MPI_DATATYPE_NULL, nInstancesRanks.data(),
+                                                  1, MPI_INT, this->functionSpace_->meshPartition()->mpiCommunicator()), "MPI_Allgather");
+
+      // determine if this rank should do compilation, such that each nInstances is compiled only once, by the rank with lowest number
+      int i = 0;
+      int rankWhichCompilesLibrary = 0;
+      for (std::vector<int>::iterator iter = nInstancesRanks.begin(); iter != nInstancesRanks.end(); iter++, i++)
+      {
+        if (*iter == this->nInstances_)
+        {
+          rankWhichCompilesLibrary = i;
+          break;
+        }
+      }
+
+      LOG(DEBUG) << "library will be compiled on rank " << rankWhichCompilesLibrary;
+
+      if (rankWhichCompilesLibrary == ownRankNoCommunicator)
+      {
+        LOG(DEBUG) << "compile on this rank";
+
+        if (libraryFilename.find("/") != std::string::npos)
+        {
+          std::string path = libraryFilename.substr(0, libraryFilename.rfind("/"));
+          int ret = system((std::string("mkdir -p ")+path).c_str());
+
+          if (ret != 0)
+          {
+            LOG(ERROR) << "Could not create path \"" << path << "\".";
+          }
+        }
+
+        std::stringstream compileCommand;
+
+        // compile library to filename with "*.rankNoWorldCommunicator", then wait (different wait times for ranks), then rename file to without "*.rankNoWorldCommunicator"
+        compileCommand << compileCommandOptions
+          << " -o " << libraryFilename << "." << rankNoWorldCommunicator << " " << sourceFilenameToUse
+          //<< " && sleep " << int((rankNoWorldCommunicator%100)/10+1)
+          << " && mv " << libraryFilename << "." << rankNoWorldCommunicator << " " << libraryFilename;
+
+        int ret = system(compileCommand.str().c_str());
+        if (ret != 0)
+        {
+          LOG(ERROR) << "Compilation failed. Command: \"" << compileCommand.str() << "\".";
+          libraryFilename = "";
+        }
+        else
+        {
+          LOG(DEBUG) << "Compilation successful. Command: \"" << compileCommand.str() << "\".";
+        }
+      }
+      else
+      {
+        LOG(DEBUG) << "we are the wrong rank, do not compile library "
+          << "wait until library has been compiled";
+      }
     }
 
     // barrier to wait until the one rank that compiles the library has finished
@@ -593,9 +607,13 @@ createSimdSourceFile(std::string &simdSourceFilename)
         }
         else
         {
-          // add pragma omp here
-          simdSource << std::endl << "  for (int i = 0; i < " << this->nInstances_ << "; i++)" << std::endl
-            << "  {" << std::endl << "    ";
+          simdSource << std::endl
+            << "#ifndef TEST_WITHOUT_PRAGMAS" << std::endl
+            << "  #pragma omp for simd" << std::endl
+            << "#endif" << std::endl
+            << "  for (int i = 0; i < " << this->nInstances_ << "; i++)" << std::endl
+            << "  {" << std::endl
+            << "    ";
 
           VLOG(2) << "parsed " << entries.size() << " entries";
 
@@ -643,7 +661,8 @@ createSimdSourceFile(std::string &simdSourceFilename)
 
     // add .rankNoWorldCommunicator to simd source filename
     s.str("");
-    int rankNoWorldCommunicator = DihuContext::ownRankNo();
+    // get the global rank no, needed for the output filenames
+    int rankNoWorldCommunicator = DihuContext::partitionManager()->rankNoCommWorld();
     s << simdSourceFilename << "." << rankNoWorldCommunicator << ".c";  // .c suffix is needed such that cray compiler knowns that it is c code
     simdSourceFilename = s.str();
 

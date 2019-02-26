@@ -5,7 +5,7 @@ class googletest(Package):
 
     def __init__(self, **kwargs):
         defaults = {
-            'download_url': 'https://github.com/google/googletest/archive/master.zip',
+            'download_url': 'https://github.com/google/googletest/archive/release-1.8.1.zip',
         }
         defaults.update(kwargs)
         super(googletest, self).__init__(**defaults)
@@ -50,10 +50,14 @@ int main(int argc, char **argv) {
           
         self.libs = ["gtest"]
         self.headers = ["gtest/gtest.h"]
-
+        self.extra_libs=[
+          [],
+          ['pthread']
+        ]
+        
     def check(self, ctx):
         env = ctx.env
-        ctx.Message('Checking for googletest ... ')
+        ctx.Message('Checking for googletest ...    ')
         self.check_options(env)
 
         res = super(googletest, self).check(ctx)

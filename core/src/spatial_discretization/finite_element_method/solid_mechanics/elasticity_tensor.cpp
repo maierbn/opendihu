@@ -589,4 +589,4 @@ getEntry(int k, int l, int r, int s)
   return this->operator[](getEntryNo(k,l,r,s));
 }
 
-};    // namespace
+}  // namespace

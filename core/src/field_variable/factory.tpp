@@ -7,7 +7,7 @@ namespace FieldVariable
 
 template<typename FunctionSpaceType>
 template <typename ...Args>
-std::shared_ptr<FieldVariableBase<FunctionSpaceType>> Factory<FunctionSpaceType>::
+std::shared_ptr<FieldVariableBaseFunctionSpace<FunctionSpaceType>> Factory<FunctionSpaceType>::
 makeShared(const int nComponents, Args && ...args)
 {
   switch (nComponents)
@@ -25,11 +25,11 @@ makeShared(const int nComponents, Args && ...args)
       break;
   }
   return nullptr;
-};
+}
 
 template<typename FunctionSpaceType>
 template<typename FieldVariableType>
-std::shared_ptr<FieldVariableBase<FunctionSpaceType>> Factory<FunctionSpaceType>::
+std::shared_ptr<FieldVariableBaseFunctionSpace<FunctionSpaceType>> Factory<FunctionSpaceType>::
 createFromFieldVariable(FieldVariableType &fieldVariable, std::string name, std::vector<std::string> componentNames)
 {
   const int nComponents = componentNames.size();
@@ -61,4 +61,4 @@ createFromFieldVariable(FieldVariableType &fieldVariable, std::string name, std:
   return nullptr;
 }
 
-};  // namespace
+} // namespace

@@ -12,6 +12,9 @@ class PartitionedPetscMatBase
 {
 public:
   
+  typedef RowsFunctionSpaceType RowsFunctionSpace;
+  typedef ColumnsFunctionSpaceType ColumnsFunctionSpace;
+  
   //! constructor
   PartitionedPetscMatBase(std::shared_ptr<Partition::MeshPartition<RowsFunctionSpaceType>> meshPartitionRows,
                           std::shared_ptr<Partition::MeshPartition<ColumnsFunctionSpaceType>> meshPartitionColumns, std::string name);
@@ -45,6 +48,12 @@ public:
     
   //! output matrix to stream, the operator<< is also overloaded to use this method
   virtual void output(std::ostream &stream) const = 0;
+  
+  //! get the mesh partition of rows
+  std::shared_ptr<Partition::MeshPartition<RowsFunctionSpaceType>> meshPartitionRows();
+  
+  //! get the mesh partion of columns
+  std::shared_ptr<Partition::MeshPartition<ColumnsFunctionSpaceType>> meshPartitionColumns();
   
 protected:
  

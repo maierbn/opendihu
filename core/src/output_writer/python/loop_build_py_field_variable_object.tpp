@@ -110,5 +110,5 @@ buildPyFieldVariableObject(TupleType currentFieldVariableTuple, int &fieldVariab
   return false;  // do not break iteration
 }
 
-};  //namespace ExfileLoopOverTuple
-};  //namespace OutputWriter
+}  // namespace ExfileLoopOverTuple
+}  // namespace OutputWriter

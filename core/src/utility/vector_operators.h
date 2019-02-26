@@ -42,6 +42,10 @@ std::array<double,nComponents> operator*(double lambda, std::array<double,nCompo
 template<std::size_t nComponents>
 std::array<double,nComponents> operator*(std::array<double,nComponents> vector, double lambda);
 
+//! vector*scalar multiplication
+template<typename T>
+std::vector<T> operator*(std::vector<T> vector, double lambda);
+
 //! component-wise vector multiplication
 template<std::size_t nComponents>
 std::array<double,nComponents> operator*(std::array<double,nComponents> vector1, std::array<double,nComponents> vector2); // component-wise multiplication
@@ -88,6 +92,18 @@ std::ostream &operator<<(std::ostream &stream, const std::map<T1,T2> &map);
 //! output operator for sets of arbitrary type
 template<typename T>
 std::ostream &operator<<(std::ostream &stream, const std::set<T> &set);
+
+//! output operators for tuples or arbitrary type
+template <size_t index, typename... T>
+typename std::enable_if<(index >= sizeof...(T))>::type
+  getString(std::ostream &stream, const std::tuple<T...> &tuple);
+
+template <size_t index, typename... T>
+typename std::enable_if<(index < sizeof...(T))>::type
+  getString(std::ostream &stream, const std::tuple<T...> &tuple);
+
+template <typename... T>
+std::ostream &operator<<(std::ostream& stream, const std::tuple<T...> &tuple);
 
 //! output operator for PETSc matrices
 //std::ostream &operator<<(std::ostream &stream, const Mat &mat);

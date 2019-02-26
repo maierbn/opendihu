@@ -116,4 +116,4 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
   //LOG(DEBUG) << "gradientField: " << *gradientField;
 }
 
-};  // namespace
+} // namespace

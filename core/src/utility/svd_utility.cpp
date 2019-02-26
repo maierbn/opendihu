@@ -235,3 +235,4 @@ void SvdUtility::getMatrixProduct(double a[], double b[], double c[], int rowsA,
 		}
 	}
 }
+

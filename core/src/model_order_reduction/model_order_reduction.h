@@ -52,4 +52,4 @@ namespace ModelOrderReduction
 }  // namespace
 
 
-#include "model_order_reduction/mor.tpp"
+#include "model_order_reduction/model_order_reduction.tpp"

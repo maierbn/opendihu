@@ -1,4 +1,4 @@
-#include "model_order_reduction/mor.h"
+#include "model_order_reduction/model_order_reduction.h"
 #include "data_management/data.h"
 //#include <petscmat.h>
 #include <array>

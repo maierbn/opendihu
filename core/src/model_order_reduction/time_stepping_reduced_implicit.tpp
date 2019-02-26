@@ -39,7 +39,7 @@ initialize()
   initializeLinearSolver();
   
   // set matrix used for linear system and preconditioner to ksp context
-  Mat redSystemMatrix = this->dataMOR_->redSystemMatrix()->valuesGlobal();
+  Mat &redSystemMatrix = this->dataMOR_->redSystemMatrix()->valuesGlobal();
   assert(this->ksp_);
   PetscErrorCode ierr;
   ierr = KSPSetOperators(*ksp_, redSystemMatrix, redSystemMatrix); CHKERRV(ierr);

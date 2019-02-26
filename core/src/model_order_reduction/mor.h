@@ -41,6 +41,7 @@ namespace ModelOrderReduction
     virtual void MatMultFull(Mat mat,Vec x,Vec y);
     
     std::shared_ptr<DataMOR> dataMOR_; //< contains matrices basis and reduced matrices
+
     int nReducedBases_;    
     int nRowsSnapshots_; //< number of rows of the snapshot matrix
     

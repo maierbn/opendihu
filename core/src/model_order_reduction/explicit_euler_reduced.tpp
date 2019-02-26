@@ -23,18 +23,18 @@ namespace ModelOrderReduction
     double timeSpan = this->endTime_ - this->startTime_;
     
     LOG(DEBUG) << "ReducedOrderExplicitEuler::advanceTimeSpan(), timeSpan=" << timeSpan<< ", timeStepWidth=" << this->timeStepWidth_
-      << " n steps: " << this->numberTimeSteps_;
-    
+      << " n steps: " << this->numberTimeSteps_;       
+
     // debugging output of matrices
     //this->fullTimestepping_.data().print();
     
-    Vec solution = this->fullTimestepping_.data().solution()->getValuesContiguous();   // vector of all components in struct-of-array order, as needed by CellML
-    Vec increment = this->fullTimestepping_.data().increment()->getValuesContiguous();
-    Vec redSolution = this->data().solution()->valuesGlobal();
-    Vec redIncrement = this->data().increment()->valuesGlobal();
+    Vec &solution = this->fullTimestepping_.data().solution()->getValuesContiguous();   // vector of all components in struct-of-array order, as needed by CellML
+    Vec &increment = this->fullTimestepping_.data().increment()->getValuesContiguous();
+    Vec &redSolution = this->data().solution()->valuesGlobal();
+    Vec &redIncrement = this->data().increment()->valuesGlobal();
         
-    Mat basis = this->dataMOR_->basis()->valuesGlobal();
-    Mat basisTransp = this->dataMOR_->basisTransp()->valuesGlobal();    
+    Mat &basis = this->dataMOR_->basis()->valuesGlobal();
+    Mat &basisTransp = this->dataMOR_->basisTransp()->valuesGlobal();    
     
     // loop over time steps
     double currentTime = this->startTime_;
@@ -48,7 +48,7 @@ namespace ModelOrderReduction
       }
                  
       // full state recovery
-      //required in case of operator splitting because only the reduced solutions is transfered.
+      //required in case of operator splitting because only the reduced solutions is transferred.
       this->MatMultFull(basis, redSolution, solution);
             
       VLOG(1) << "starting from full-order solution: " << *this->fullTimestepping_.data().solution();     
@@ -83,6 +83,7 @@ namespace ModelOrderReduction
       
       // write the current output values of the full-order timestepping
       // full state recovery
+
       this->MatMultFull(basis, redSolution , solution);
       VLOG(1) << "solution after integration" << *this->fullTimestepping_.data().solution(); 
       
@@ -95,7 +96,6 @@ namespace ModelOrderReduction
     
     this->fullTimestepping_.data().solution()->restoreValuesContiguous();
     this->fullTimestepping_.data().increment()->restoreValuesContiguous();
-    
   }
   
   template<typename TimeSteppingExplicitType>

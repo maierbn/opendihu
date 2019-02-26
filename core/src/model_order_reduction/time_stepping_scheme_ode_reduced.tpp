@@ -24,13 +24,13 @@ namespace ModelOrderReduction
     if (this->specificSettingsMOR_.hasKey("nReducedBases"))
     {
       this->nReducedBases_ = this->specificSettingsMOR_.getOptionInt("nReducedBases", 10, PythonUtility::Positive);
-      LOG(TRACE) << "nReducedBases: " << this->nReducedBases_;
+      LOG(DEBUG) << "nReducedBases: " << this->nReducedBases_;
     }
     
     if (this->specificSettingsMOR_.hasKey("nRowsSnapshots"))
     {
       this->nRowsSnapshots_ = this->specificSettingsMOR_.getOptionInt("nRowsSnapshots", 10, PythonUtility::Positive);
-      LOG(TRACE) << "nRowsSnapshots: " << this->nRowsSnapshots_;
+      LOG(DEBUG) << "nRowsSnapshots: " << this->nRowsSnapshots_;
     }
     
     std::array<element_no_t, 1> nElementsRed({this -> nReducedBases_});
@@ -42,24 +42,24 @@ namespace ModelOrderReduction
     if(this->context_.meshManager()->hasFunctionSpace("functionSpaceReduced"))
     {
       // take the existing function space
-      this->functionSpaceRed= this->context_.meshManager()->template functionSpace<GenericFunctionSpace>("functionSpaceReduced");
+      this->functionSpaceRed = this->context_.meshManager()->template functionSpace<GenericFunctionSpace>("functionSpaceReduced");
     }
     else
     {
       // create the functionspace for the reduced order
-      this->functionSpaceRed= this->context_.meshManager()->template createFunctionSpace<GenericFunctionSpace>("functionSpaceReduced", nElementsRed, physicalExtent);         
-      LOG(TRACE) << "functionSpaceRed";
+      this->functionSpaceRed = this->context_.meshManager()->template createFunctionSpace<GenericFunctionSpace>("functionSpaceReduced", nElementsRed, physicalExtent);
+      LOG(DEBUG) << "functionSpaceRed";
     }
     
     if(this->context_.meshManager()->hasFunctionSpace("functionSpaceRowsSnapshots"))
     {
       // take the existing function space
-      this->functionSpaceRowsSnapshots= this->context_.meshManager()->template functionSpace<GenericFunctionSpace>("functionSpaceRowsSnapshots");
+      this->functionSpaceRowsSnapshots = this->context_.meshManager()->template functionSpace<GenericFunctionSpace>("functionSpaceRowsSnapshots");
     }
     else
     {
       this->functionSpaceRowsSnapshots = this->context_.meshManager()->template createFunctionSpace<GenericFunctionSpace>("functionSpaceRowsSnapshots", nElementsRows, physicalExtent);        
-      LOG(TRACE) << "functionSpaceRowsSnapshots";
+      LOG(DEBUG) << "functionSpaceRowsSnapshots";
     }
     
     this->data_ = std::make_shared <::Data::TimeStepping<::FunctionSpace::Generic,1>>(context); // create data object
@@ -69,10 +69,11 @@ namespace ModelOrderReduction
   template<typename TimeSteppingType>
   void TimeSteppingSchemeOdeReduced<TimeSteppingType>::setInitialValues()
   {  
+    LOG(TRACE) << "TimeSteppingSchemeOdeReduced::setInitialValues()";
     
-    Vec solution = this->fullTimestepping_.data().solution()->getValuesContiguous();
-    Vec redSolution= this->data().solution()->valuesGlobal();
-    Mat basisTransp = this->dataMOR_->basisTransp()->valuesGlobal();
+    Vec &solution = this->fullTimestepping_.data().solution()->getValuesContiguous();
+    Vec &redSolution= this->data().solution()->valuesGlobal();
+    Mat &basisTransp = this->dataMOR_->basisTransp()->valuesGlobal();
     
     PetscInt mat_sz_1, mat_sz_2;
     PetscInt solution_sz, redSolution_sz;
@@ -86,7 +87,9 @@ namespace ModelOrderReduction
     VLOG(2) << "setInitialValues() mat_sz_1: " << mat_sz_1 << " mat_sz_2: " << mat_sz_2 ;
     
     // reduction step
-    this->MatMultReduced(basisTransp, solution, redSolution);  
+    this->MatMultReduced(basisTransp, solution, redSolution);
+
+    VLOG(2) << "computed reduced solution: " << *this->data().solution();
   }
 
   template<typename TimeSteppingType>
@@ -99,7 +102,7 @@ namespace ModelOrderReduction
     LOG(TRACE) << "TimeSteppingSchemeOdeReduced::initialize()";
     
     this->fullTimestepping_.initialize();
-    
+
     ::TimeSteppingScheme::TimeSteppingSchemeOdeBase<::FunctionSpace::Generic,1>::initialize(); 
 
     this->dataMOR_->setFunctionSpace(this->functionSpaceRed);
@@ -113,8 +116,10 @@ namespace ModelOrderReduction
     MORBase<typename TimeSteppingType::FunctionSpace>::initialize();  
     
     setInitialValues(); //necessary for the explicit scheme
-      
-    initialized_=true;
+
+    VLOG(1) << "initialized full-order solution: " << *this->fullTimestepping_.data().solution();
+
+    initialized_ = true;
   }
 
   template<typename TimeSteppingType>

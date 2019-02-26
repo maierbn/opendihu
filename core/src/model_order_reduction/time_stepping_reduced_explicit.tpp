@@ -19,14 +19,16 @@ namespace ModelOrderReduction
   void TimeSteppingSchemeOdeReducedExplicit<TimeSteppingExplicitType>::
   initialize()
   {
-    if (this->initialized_)
-      return;
-    
     LOG(TRACE) << "TimeSteppingSchemeOdeReducedExplicit::initialize()";
+    if (this->initialized_)
+    {
+      LOG(DEBUG) << "TimeSteppingSchemeOdeReducedExplicit is already initialized";
+      return;
+    }
     
     TimeSteppingSchemeOdeReduced<TimeSteppingExplicitType>::initialize(); 
     
-    this->initialized_=true;
+    this->initialized_ = true;
   }
   
   template<typename TimeSteppingExplicitType>

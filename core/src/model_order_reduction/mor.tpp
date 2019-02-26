@@ -96,6 +96,7 @@ namespace ModelOrderReduction
     {
       if(mat_sz_2 > vec_sz) // mat_sz_2 includes all components must be greater than only one variable (transmembrane potential)
       {
+
         //LOG(TRACE) << "MatMultReduced";
         
         // columns of mat (transpose of the basis vector) are in fact equal to the 

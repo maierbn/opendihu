@@ -30,11 +30,11 @@ advanceTimeSpan()
   // debugging output of matrices
   //this->timestepping_.data_->print();
   
-  Vec solution = this->fullTimestepping_.data().solution()->getValuesContiguous();   // vector of all components in struct-of-array order, as needed by CellML
-  Vec redSolution = this->data().solution()->valuesGlobal();
+  Vec &solution = this->fullTimestepping_.data().solution()->valuesGlobal();   // vector of all components in struct-of-array order, as needed by CellML
+  Vec &redSolution = this->data().solution()->valuesGlobal();
   
-  Mat basis = this->dataMOR_->basis()->valuesGlobal();
-  Mat basisTransp = this->dataMOR_->basisTransp()->valuesGlobal();
+  Mat &basis = this->dataMOR_->basis()->valuesGlobal();
+  //Mat &basisTransp = this->dataMOR_->basisTransp()->valuesGlobal();
   
   // loop over time steps
   double currentTime = this->startTime_;
@@ -56,10 +56,9 @@ advanceTimeSpan()
     VLOG(1) << "starting from solution: " << *this->fullTimestepping_.data().solution();    
     
     // adjust the full-order rhs vector such that boundary conditions are satisfied
-    this->fullTimestepping_.dirichletBoundaryConditions()->applyInRightHandSide(this->fullTimestepping_.data().solution(), this->fullTimestepping_.dataImplicit().boundaryConditionsRightHandSideSummand());
-    
+    //this->fullTimestepping_.dirichletBoundaryConditions()->applyInRightHandSide(this->fullTimestepping_.data().solution(), this->fullTimestepping_.dataImplicit().boundaryConditionsRightHandSideSummand());    
     // In case, the solution is changed after applying the boundary condition
-    this->MatMultReduced(basisTransp, solution, redSolution);      
+    //this->MatMultReduced(basisTransp, this->fullTimestepping_.data().solution()->valuesGlobal(), redSolution);      
     
     // advance computed value
     // solve A_R*z^{t+1} = z^{t} for z^{t+1} where A_R is the reduced system matrix, solveLinearSystem(b,x)
@@ -85,8 +84,6 @@ advanceTimeSpan()
       Control::PerformanceMeasurement::start(this->durationLogKey_);
     
   }
-  
-  this->fullTimestepping_.data().solution()->restoreValuesContiguous();
   
   // stop duration measurement
   if (this->durationLogKey_ != "")

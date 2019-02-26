@@ -126,7 +126,7 @@ namespace ModelOrderReduction
         for(int i=0; i<mat_sz_1; i++)
         {
           ierr=MatGetRow(mat,i,NULL,NULL,&mat_row);  CHKERRV(ierr); // can take only the rows of the current processor
-          ierr=VecSetValuesLocal(mat_row_vec,vec_sz,idx,mat_row,INSERT_VALUES); CHKERRV(ierr);
+          ierr=VecSetValues(mat_row_vec,vec_sz,idx,mat_row,INSERT_VALUES); CHKERRV(ierr);
           VecAssemblyBegin(mat_row_vec);
           VecAssemblyEnd(mat_row_vec);
           
@@ -138,7 +138,7 @@ namespace ModelOrderReduction
         VecAssemblyEnd(y);    
     }
     else
-      LOG(ERROR) << "smaller size of the out put vector in matrix vector multiplication.";
+      LOG(ERROR) << "smaller size of the out put vector " << vec_sz << "than matrix size " <<  mat_sz_2 << " in matrix vector multiplication.";
     }
   }
 
@@ -189,14 +189,14 @@ namespace ModelOrderReduction
       for(int i=0; i<vec_sz; i++) // not all rows of the mat (basis) would be multiplied because size of y (full-order solution) could be smaller than rows of mat.
       {
         ierr=MatGetRow(mat,i,NULL,NULL,&mat_row);  CHKERRV(ierr);      
-        ierr=VecSetValuesLocal(mat_row_vec,mat_sz_2,idx_2,mat_row,INSERT_VALUES); CHKERRV(ierr);
+        ierr=VecSetValues(mat_row_vec,mat_sz_2,idx_2,mat_row,INSERT_VALUES); CHKERRV(ierr);
         VecAssemblyBegin(mat_row_vec);
         VecAssemblyEnd(mat_row_vec);
         
         ierr=VecTDot(mat_row_vec,x,&val[i]);  CHKERRV(ierr);
       }
       
-      ierr=VecSetValuesLocal(y,vec_sz,idx,val,INSERT_VALUES); CHKERRV(ierr); // would it work for parallel!?
+      ierr=VecSetValues(y,vec_sz,idx,val,INSERT_VALUES); CHKERRV(ierr); // would it work for parallel!?
       VecAssemblyBegin(y);
       VecAssemblyEnd(y);
     }

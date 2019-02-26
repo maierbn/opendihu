@@ -7,8 +7,8 @@ import sys
 
 end_time = 20   # [ms] end time of simulation
 n_elements = 100 # elements of pysical mesh
-n_total=403 # rows of the snapshot matrix
-n_reduced=403 # number of reduced bases, columns of the left singular vector
+n_total = 403 # rows of the snapshot matrix
+n_reduced = 403 # number of reduced bases, columns of the left singular vector
 
 # global parameters
 PMax = 7.3              # maximum stress [N/cm^2]
@@ -24,7 +24,7 @@ stimulation_frequency = 10.0      # stimulations per ms
 dt_1D = 1e-3                      # timestep width of diffusion
 dt_0D = 1e-3                      # timestep width of ODEs
 dt_3D = 1e-3                      # overall timestep width of splitting
-output_timestep = 1e-1             # timestep for output files
+output_timestep = 1e0            # timestep for output files
 
 # input files
 #cellml_file = "../../input/shorten_ocallaghan_davidson_soboleva_2007.c"
@@ -186,7 +186,7 @@ config = {
     },
     "MeshFibreReduced": {
       "nElements": n_total,
-      "physicalExtent": 0.0,
+      "physicalExtent": n_elements/10.,
       "logKey": "Fiber",
       "inputMeshIsGlobal": True,
     },

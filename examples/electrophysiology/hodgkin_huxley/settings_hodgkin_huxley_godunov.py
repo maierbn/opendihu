@@ -22,7 +22,7 @@ stimulation_frequency = 10.0      # stimulations per ms
 dt_1D = 1e-3                      # timestep width of diffusion
 dt_0D = 1e-3                      # timestep width of ODEs
 dt_3D = 1e-3                      # overall timestep width of splitting
-output_timestep = 1e0             # timestep for output files
+output_timestep = 1e0            # timestep for output files
 
 # input files
 #cellml_file = "../../input/shorten_ocallaghan_davidson_soboleva_2007.c"
@@ -232,7 +232,7 @@ config = {
         },
         
         "OutputWriter" : [
-          #{"format": "PythonFile", "outputInterval": 1e4, "filename": "out/states", "binary": True, "onlyNodalValues": True},
+          {"format": "PythonFile", "outputInterval": int(1./dt_0D*output_timestep), "filename": "out/states", "binary": True, "onlyNodalValues": True},
         ],
       },
     },

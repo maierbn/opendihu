@@ -76,9 +76,11 @@ solveMG()
   
   
  for (int i = 0; i<numCycles_; i++)
- {
-  finiteElement1_.solveMG();
-
+ {  
+    //Vec residual1;
+    
+    finiteElement1_.solveMG();
+    //finiteElement1_.getResidual(&residual1);
     //transfer
     //--------
     // in case we need access to each element
@@ -89,7 +91,7 @@ solveMG()
     solution1->getValuesWithoutGhosts(values1);
     
     //restriction
-    Transfer::restriction(&values1);
+    Transfer::restriction(&values1,&values2);
    
     solution2->setValuesWithoutGhosts(values1);
     //solution2->startGhostManipulation();    
@@ -102,7 +104,7 @@ solveMG()
     solution2->getValuesWithoutGhosts(values2);
     
     //prolongation
-    Transfer::prolongation(&values2);
+    Transfer::prolongation(&values2,&values1);
     
     solution1->setValuesWithoutGhosts(values2);
     //solution1->startGhostManipulation();    

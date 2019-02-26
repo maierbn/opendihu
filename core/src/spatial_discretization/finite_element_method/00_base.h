@@ -45,9 +45,15 @@ public:
   
   //! solve finite element linear system with multigrid method
   virtual void solveMG();
+  
+  //! get the residualNorm
+  void getResidual(Vec *residual);
+  
+  
 
   friend class StiffnessMatrixTester;    ///< a class used for testing
 protected:
+  //
   std::shared_ptr<KSP> kspMG_;
   //! read in rhs values from config and creates a FE rhs vector out of it
   virtual void setRightHandSide() = 0;

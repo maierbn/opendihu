@@ -273,7 +273,7 @@ solveMG()
 		ierr = KSPSolve(*kspMG_, data_.rightHandSide()->valuesGlobal(), data_.solution()->valuesGlobal()); CHKERRV(ierr);
 
 		int numberOfIterations = 0;
-		PetscReal residualNorm = 0.0;
+        PetscReal residualNorm = 0.0;
 		ierr = KSPGetIterationNumber(*kspMG_, &numberOfIterations); CHKERRV(ierr);
 		ierr = KSPGetResidualNorm(*kspMG_, &residualNorm); CHKERRV(ierr);
 
@@ -339,6 +339,14 @@ solveMG()
 	
 	outputWriterManager_.writeOutput(data_);
 
+}
+
+template<typename FunctionSpaceType,typename QuadratureType,typename Term>
+void FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Term>::
+getResidual(Vec *residual)
+{
+    
+    KSPBuildResidual(*kspMG_,NULL,NULL,residual);
 }
 
 template<typename FunctionSpaceType,typename QuadratureType>

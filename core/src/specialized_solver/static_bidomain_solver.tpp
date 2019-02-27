@@ -111,8 +111,11 @@ initialize()
 
   // initialize the finite element class, from which only the stiffness matrix is needed
   // diffusion object without prefactor, for normal diffusion (1st multidomain eq.)
+
+  // initialize(direction, spatiallyVaryingPrefactor, useAdditionalDiffusionTensor)
   finiteElementMethodDiffusionTransmembrane_.initialize(data_.fiberDirection(), nullptr);
-  // direction, spatiallyVaryingPrefactor, useAdditionalDiffusionTensor=false
+
+  // direction, spatiallyVaryingPrefactor, useAdditionalDiffusionTensor=true
   finiteElementMethodDiffusionExtracellular_.initialize(data_.fiberDirection(), nullptr, true);
 
   // initialize the matrix to be used for computing the rhs

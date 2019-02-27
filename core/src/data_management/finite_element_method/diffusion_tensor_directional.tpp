@@ -64,12 +64,12 @@ diffusionTensor(element_no_t elementNoLocal, const std::array<double,FunctionSpa
   }
 
   VLOG(3) << "directionVector: " << directionVector;
-  //LOG(DEBUG) << "diffusionTensor before rotation: " << diffusionTensor;
+  VLOG(2) << "diffusionTensor before rotation: " << diffusionTensor;
 
   // rotate diffusion tensor in fiber direction
   MathUtility::rotateMatrix(diffusionTensor, directionVector);
 
-  //LOG(DEBUG) << "diffusionTensor after rotation: " << diffusionTensor;
+  VLOG(2) << "diffusionTensor after rotation: " << diffusionTensor;
 
   // if there is a relative factor
   if (spatiallyVaryingPrefactor_)

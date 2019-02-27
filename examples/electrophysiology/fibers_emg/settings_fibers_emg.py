@@ -1,6 +1,7 @@
 # Multiple 1D fibers (monodomain) with 3D EMG (static bidomain), biceps geometry
-# arguments: <scenario_name> <n_subdomains_x> <n_subdomains_y> <n_subdomains_z> <diffusion_solver_type>
+# arguments: -help
 #
+# if fiber_file=cuboid.bin, it uses a small cuboid test example
 
 end_time = 100.0
 
@@ -24,7 +25,7 @@ diffusion_solver_type = "cg"
 diffusion_preconditioner_type = "none"
 potential_flow_solver_type = "gmres"
 potential_flow_preconditioner_type = "none"
-emg_solver_type = "lu"
+emg_solver_type = "gmres"
 emg_preconditioner_type = "none"
 emg_initial_guess_nonzero = False
 
@@ -33,8 +34,8 @@ stimulation_frequency = 1000*1e-3 # stimulations per ms, number before 1e-3 fact
 dt_1D = 1e-3                      # timestep width of diffusion
 dt_0D = 1.5e-3                      # timestep width of ODEs
 dt_3D = 3e-3                      # overall timestep width of splitting
-dt_bidomain = 1e0                # time step width for bidomain equation
-output_timestep = 1e0             # timestep for output files
+dt_bidomain = 1e-1                # time step width for bidomain equation
+output_timestep = 1e-1             # timestep for output files
 
 # input files
 #cellml_file = "../../input/shorten_ocallaghan_davidson_soboleva_2007.c"
@@ -132,13 +133,13 @@ own_subdomain_coordinate_z = (int)(rank_no / n_subdomains_xy)
 # generate cuboid fiber file
 if fiber_file == "cuboid.bin":
   
-  size_x = 1.0
-  size_y = 1.0
-  size_z = 10.0
+  size_x = 1e-1
+  size_y = 1e-1
+  size_z = 0.2
   
-  n_fibers_x = 2
+  n_fibers_x = 4
   n_fibers_y = n_fibers_x
-  n_points_whole_fiber = 100
+  n_points_whole_fiber = 20
   
   if rank_no == 0:
     print("create cuboid.bin with size [{},{},{}], n points [{},{},{}]".format(size_x, size_y, size_z, n_fibers_x, n_fibers_y, n_points_whole_fiber))
@@ -829,15 +830,15 @@ config = {
             "prefactor": 1.0,
             "inputMeshIsGlobal": True,
             "dirichletBoundaryConditions": {},
-            "diffusionTensor": [                 # fiber direction is (1,0,0)
+            "diffusionTensor": [      # sigma_i           # fiber direction is (1,0,0)
               8.93, 0, 0,
               0, 0.893, 0,
               0, 0, 0.893
             ], 
-            "extracellularDiffusionTensor": [
+            "extracellularDiffusionTensor": [      # sigma_e
               6.7, 0, 0,
               0, 6.7, 0,
-              0, 0, 6.7
+              0, 0, 6.7,
             ],
           },
         },

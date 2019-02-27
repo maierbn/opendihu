@@ -9,6 +9,7 @@
 #include "time_stepping_scheme/time_stepping_scheme.h"
 #include "time_stepping_scheme/time_stepping_scheme_ode.h"
 #include "data_management/time_stepping/time_stepping.h"
+#include "control/python_config.h"
 
 namespace ModelOrderReduction
 {
@@ -19,8 +20,9 @@ namespace ModelOrderReduction
   ::TimeSteppingScheme::TimeSteppingSchemeOdeBase<::FunctionSpace::Generic,1>(context["ModelOrderReduction"],name),
     fullTimestepping_(context["ModelOrderReduction"]), initialized_(false)
   {  
-    this->specificSettingsMOR_ = this->context_.getPythonConfig();
+    this->specificSettingsMOR_ = context["ModelOrderReduction"].getPythonConfig();
     
+    LOG(DEBUG) << this->specificSettingsMOR_;
     if (this->specificSettingsMOR_.hasKey("nReducedBases"))
     {
       this->nReducedBases_ = this->specificSettingsMOR_.getOptionInt("nReducedBases", 10, PythonUtility::Positive);
@@ -47,6 +49,7 @@ namespace ModelOrderReduction
     else
     {
       // create the functionspace for the reduced order
+      LOG(DEBUG) << "nElementsRed: " << nElementsRed;
       this->functionSpaceRed = this->context_.meshManager()->template createFunctionSpace<GenericFunctionSpace>("functionSpaceReduced", nElementsRed, physicalExtent);
       LOG(DEBUG) << "functionSpaceRed";
     }

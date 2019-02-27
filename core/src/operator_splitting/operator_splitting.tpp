@@ -130,6 +130,22 @@ data()
   return timeStepping1_.data();
 }
 
+//! get a reference to the first timestepping object
+template<typename TimeStepping1, typename TimeStepping2>
+TimeStepping1 &OperatorSplitting<TimeStepping1, TimeStepping2>::
+timeStepping1()
+{
+  return timeStepping1_;
+}
+
+//! get a reference to the second timestepping object
+template<typename TimeStepping1, typename TimeStepping2>
+TimeStepping2 &OperatorSplitting<TimeStepping1, TimeStepping2>::
+timeStepping2()
+{
+  return timeStepping2_;
+}
+
 //! output the given data for debugging
 template<typename TimeStepping1, typename TimeStepping2>
 std::string OperatorSplitting<TimeStepping1, TimeStepping2>::

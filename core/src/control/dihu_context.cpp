@@ -292,9 +292,13 @@ std::string DihuContext::versionText()
   versionTextStr << ", Cray";
 #elif defined __GNUC__
   versionTextStr << ", GCC";
+#elif defined __PGI
+  versionTextStr << ", PGI";  
 #endif
 #ifdef __VERSION__
   versionTextStr << " " << __VERSION__;
+#elif defined __PGIC__
+  versionTextStr << " " << __PGIC__;
 #endif
 
   return versionTextStr.str();
@@ -307,7 +311,9 @@ std::string DihuContext::metaText()
   // time stamp
   auto t = std::time(nullptr);
   auto tm = *std::localtime(&t);
-  metaTextStr << "current time: " << std::put_time(&tm, "%Y/%m/%d %H:%M:%S") << ", hostname: ";
+  // metaTextStr << "current time: " << std::put_time(&tm, "%Y/%m/%d %H:%M:%S") << ", hostname: ";
+  std::string tm_string = StringUtility::timeToString(&tm);
+  metaTextStr << "current time: " << tm_string << ", hostname: ";
 
   // host name
   char hostname[MAXHOSTNAMELEN+1];

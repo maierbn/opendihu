@@ -13,7 +13,7 @@ template<typename DiscretizableInTime>
 ExplicitEuler<DiscretizableInTime>::ExplicitEuler(DihuContext context) :
   TimeSteppingExplicit<DiscretizableInTime>(context, "ExplicitEuler")
 {
-  this->data_ = std::make_shared <Data::TimeStepping<typename DiscretizableInTime::FunctionSpace, DiscretizableInTime::nComponents()>>(context); // create data object for explicit euler
+  this->data_ = std::make_shared <Data::TimeStepping<typename DiscretizableInTime::FunctionSpace, DiscretizableInTime::nComponents()>>(this->context_); // create data object for explicit euler
 }
 
 template<typename DiscretizableInTime>

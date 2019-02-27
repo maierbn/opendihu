@@ -27,11 +27,19 @@ public:
 protected:
 
   //! parse the solver and preconditioner type from settings
-  void parseSolverTypes(KSPType &kspType, PCType &pcType);
+  void parseSolverTypes();
 
   std::shared_ptr<KSP> ksp_;   ///< the PETSc KSP (Krylov subspace) object
   double relativeTolerance_;    ///< relative solver tolerance
   long int maxIterations_;     ///< maximum number of iterations
+
+  KSPType kspType_;    ///< the solver type
+  PCType pcType_;      ///< the preconditioner type
+
+  std::shared_ptr<Vec> temporaryVectorLeft_;     ///< temporary vector for computation of residual for direct solvers
+  std::shared_ptr<Vec> temporaryVectorRight_;    ///< temporary vector for computation of residual for direct solvers
+  std::shared_ptr<Vec> residual_;    ///< residual vector for direct solvers
+
 
   std::string nIterationsLogKey_;  ///< the keyword for the log with which the number of iterations will be stored
   std::string residualNormLogKey_;  ///< the keyword for the log with which the residual norm gets stored

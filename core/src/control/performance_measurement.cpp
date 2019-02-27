@@ -11,6 +11,7 @@
 #include <string>
 #include <sys/param.h>
 #include <iomanip>
+//#include <stdlib.h>  //was only for function getenv()
 
 #include "output_writer/generic.h"
 
@@ -66,6 +67,8 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
 
   parseStatusInformation();
 
+  //char *PGI_used = getenv("PGI");
+  //const bool combined = (PGI_used==NULL ? true : false);
   const bool combined = true;   /// if the output is using MPI Output
 
   int ownRankNo = DihuContext::partitionManager()->rankNoCommWorld();
@@ -104,7 +107,8 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
   // time stamp
   auto t = std::time(nullptr);
   auto tm = *std::localtime(&t);
-  data << std::put_time(&tm, "%Y/%m/%d %H:%M:%S") << ";";
+  //data << std::put_time(&tm, "%Y/%m/%d %H:%M:%S") << ";";
+  data << StringUtility::timeToString(&tm) << ";";
 
   // host name
   char hostname[MAXHOSTNAMELEN+1];
@@ -165,7 +169,7 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
     std::ofstream file;
     if (ownRankNo == 0)
     {
-      file = OutputWriter::Generic::openFile(filename.str(), true);
+      OutputWriter::Generic::openFile(file, filename.str(), true);
       file.close();
     }
 
@@ -201,7 +205,8 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
   else  // standard POSIX output
   {
     // open log file
-    std::ofstream file = OutputWriter::Generic::openFile(filename.str(), true);
+    std::ofstream file;
+    OutputWriter::Generic::openFile(file, filename.str(), true);
 
     if (outputHeader)
     {

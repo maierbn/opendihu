@@ -83,7 +83,7 @@ There are optional dependencies that allow compilation of opendihu. But they may
   (+ various python packages)
 ```
 * To get started you find some examples in the `examples` directory. Also the system tests under `testing/system_testing/tests` might be useful.
-* To build an example, `ct` into an subdirectory under `examples`, e.g. `examples/laplace2d`. In this directory run `scons`. 
+* To build an example, `cd` into an subdirectory under `examples`, e.g. `examples/laplace2d`. In this directory run `scons`. 
   For this to work you either need to install `scons` on your system (e.g. `sudo apt install scons` on ubuntu). Or you use the given `scons` in the `dependencies` directory: 
 ```
   python2.7 ../../dependencies/scons/scons.py 

@@ -414,7 +414,8 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
   if (ownRankNo == 0)
   {
     // open file to ensure that directory exists and file is writable
-    std::ofstream file = Generic::openFile(filenameStr);
+    std::ofstream file;
+    Generic::openFile(file, filenameStr);
 
     // close and delete file
     file.close();
@@ -489,7 +490,8 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
   std::vector<std::stringstream> outputFileParts(nOutputFileParts);
   int outputFilePartNo = 0;
   outputFileParts[outputFilePartNo] << "<?xml version=\"1.0\"?>" << std::endl
-    << "<!-- " << DihuContext::versionText() << " " << DihuContext::metaText() << "-->" << std::endl
+    << "<!-- " << DihuContext::versionText() << " " << DihuContext::metaText()
+    << ", currentTime: " << this->currentTime_ << ", timeStepNo: " << this->timeStepNo_ << " -->" << std::endl
     << "<VTKFile type=\"PolyData\" version=\"1.0\" byte_order=\"LittleEndian\">" << std::endl    // intel cpus are LittleEndian
     << std::string(1, '\t') << "<PolyData>" << std::endl;
 
@@ -727,7 +729,8 @@ void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType 
       if (ownRankNo == 0)
       {
         // open file to ensure that directory exists and file is writable
-        std::ofstream file = Generic::openFile(filenameStr);
+        std::ofstream file;
+        Generic::openFile(file, filenameStr);
 
         // close and delete file
         file.close();
@@ -835,7 +838,8 @@ void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType 
       std::vector<std::stringstream> outputFileParts(nOutputFileParts);
       int outputFilePartNo = 0;
       outputFileParts[outputFilePartNo] << "<?xml version=\"1.0\"?>" << std::endl
-        << "<!-- " << DihuContext::versionText() << " " << DihuContext::metaText() << "-->" << std::endl
+        << "<!-- " << DihuContext::versionText() << " " << DihuContext::metaText()
+        << ", currentTime: " << this->currentTime_ << ", timeStepNo: " << this->timeStepNo_ << " -->" << std::endl
         << "<VTKFile type=\"UnstructuredGrid\" version=\"1.0\" byte_order=\"LittleEndian\">" << std::endl    // intel cpus are LittleEndian
         << std::string(1, '\t') << "<UnstructuredGrid>" << std::endl;
 

@@ -2,7 +2,7 @@
 # arguments: <scenario_name> <n_subdomains_x> <n_subdomains_y> <n_subdomains_z> <diffusion_solver_type>
 #
 
-end_time = 1.0
+end_time = 100.0
 
 import numpy as np
 import matplotlib 
@@ -21,41 +21,45 @@ Cm = 0.58               # membrane capacitance [uF/cm^2]
 innervation_zone_width = 1.  # cm
 innervation_zone_width = 0.  # cm
 diffusion_solver_type = "cg"
+diffusion_preconditioner_type = "none"
 potential_flow_solver_type = "gmres"
-emg_solver_type = "cg"
+potential_flow_preconditioner_type = "none"
+emg_solver_type = "lu"
+emg_preconditioner_type = "none"
+emg_initial_guess_nonzero = False
 
 # timing parameters
-stimulation_frequency = 10.0      # stimulations per ms
+stimulation_frequency = 1000*1e-3 # stimulations per ms, number before 1e-3 factor is in Hertz
 dt_1D = 1e-3                      # timestep width of diffusion
-dt_0D = 3e-3                      # timestep width of ODEs
+dt_0D = 1.5e-3                      # timestep width of ODEs
 dt_3D = 3e-3                      # overall timestep width of splitting
-dt_bidomain = 1e-3                # time step width for bidomain equation
-output_timestep = 4e-1             # timestep for output files
+dt_bidomain = 1e0                # time step width for bidomain equation
+output_timestep = 1e0             # timestep for output files
 
 # input files
 #cellml_file = "../../input/shorten_ocallaghan_davidson_soboleva_2007.c"
 #cellml_file = "../../input/shorten.cpp"
 cellml_file = "../../input/hodgkin_huxley_1952.c"
 
-fiber_file = "../../input/3000fibers.bin"
-fiber_file = "../../input/7x7fibers.bin"
-#fiber_file = "../../input/15x15fibers.bin"
+#fiber_file = "../../input/3000fibers.bin"
+#fiber_file = "../../input/7x7fibers.bin"
+fiber_file = "../../input/15x15fibers.bin"
 #fiber_file = "../../input/49fibers.bin"
 load_data_from_file = False
 debug_output = False
 
 fiber_distribution_file = "../../input/MU_fibre_distribution_3780.txt"
-#firing_times_file = "../../input/MU_firing_times_real.txt"
-firing_times_file = "../../input/MU_firing_times_immediately.txt"
+firing_times_file = "../../input/MU_firing_times_real.txt"
+#firing_times_file = "../../input/MU_firing_times_immediately.txt"
 
 #print("prefactor: ",Conductivity/(Am*Cm))
 #print("numpy path: ",np.__path__)
 
 # partitioning
 # this has to match the total number of processes
-n_subdomains_x = 2   # example values for 4 processes
-n_subdomains_y = 1
-n_subdomains_z = 2
+n_subdomains_x = 5   # example values for 4 processes
+n_subdomains_y = 5
+n_subdomains_z = 5
 
 # stride for sampling the 3D elements from the fiber data
 # here any number is possible
@@ -75,9 +79,13 @@ parser.add_argument('--n_subdomains', nargs=3,    type=int, help='Number of subd
 parser.add_argument('--n_subdomains_x', '-x',     type=int, help='Number of subdomains in x direction.', default=n_subdomains_x)
 parser.add_argument('--n_subdomains_y', '-y',     type=int, help='Number of subdomains in y direction.', default=n_subdomains_y)
 parser.add_argument('--n_subdomains_z', '-z',     type=int, help='Number of subdomains in z direction.', default=n_subdomains_z)
-parser.add_argument('--diffusion_solver_type',    help='The solver for the diffusion.', default=diffusion_solver_type, choices=["gmres","cg","lu","gamg","richardson","chebyshev","cholesky","jacobi","sor"])
-parser.add_argument('--potential_flow_solver_type', help='The solver for the potential flow (non-spd matrix).', default=potential_flow_solver_type, choices=["gmres","cg","lu","gamg","richardson","chebyshev","cholesky","jacobi","sor"])
-parser.add_argument('--emg_solver_type',          help='The solver for the static bidomain.', default=emg_solver_type, choices=["gmres","cg","lu","gamg","richardson","chebyshev","cholesky","jacobi","sor"])
+parser.add_argument('--diffusion_solver_type',    help='The solver for the diffusion.', default=diffusion_solver_type, choices=["gmres","cg","lu","gamg","richardson","chebyshev","cholesky","jacobi","sor","preonly"])
+parser.add_argument('--diffusion_preconditioner_type',    help='The preconditioner for the diffusion.', default=diffusion_preconditioner_type, choices=["jacobi","sor","lu","ilu","gamg","none"])
+parser.add_argument('--potential_flow_solver_type', help='The solver for the potential flow (non-spd matrix).', default=potential_flow_solver_type, choices=["gmres","cg","lu","gamg","richardson","chebyshev","cholesky","jacobi","sor","preonly"])
+parser.add_argument('--potential_flow_preconditioner_type',    help='The preconditioner for the potential flow.', default=potential_flow_preconditioner_type, choices=["jacobi","sor","lu","ilu","gamg","none"])
+parser.add_argument('--emg_solver_type',          help='The solver for the static bidomain.', default=emg_solver_type, choices=["gmres","cg","lu","gamg","richardson","chebyshev","cholesky","jacobi","sor","preonly"])
+parser.add_argument('--emg_preconditioner_type',  help='The preconditioner for the static bidomain.', default=emg_preconditioner_type, choices=["jacobi","sor","lu","ilu","gamg","none"])
+parser.add_argument('--emg_initial_guess_nonzero',  help='It the initial guess for the emg linear system should be set to the previous solution.', default=False, action='store_true')
 parser.add_argument('--fiber_file',               help='The filename of the file that contains the fiber data.', default=fiber_file)
 parser.add_argument('--cellml_file',              help='The filename of the file that contains the cellml model.', default=cellml_file)
 parser.add_argument('--fiber_distribution_file',  help='The filename of the file that contains the MU firing times.', default=fiber_distribution_file)
@@ -88,6 +96,9 @@ parser.add_argument('--dt_0D',                    type=float, help='The timestep
 parser.add_argument('--dt_1D',                    type=float, help='The timestep for the 1D model.', default=dt_1D)
 parser.add_argument('--dt_3D',                    type=float, help='The timestep for the splitting.', default=dt_3D)
 parser.add_argument('--dt_bidomain',              type=float, help='The timestep for the bidomain model.', default=dt_bidomain)
+parser.add_argument('--v',                        help='Enable full verbosity')
+parser.add_argument('-v',                         help='enable verbosity level')
+parser.add_argument('-vmodule',                   help='enable verbosity level')
  
 # parse arguments and assign values to global variables
 args = parser.parse_args(args=sys.argv[:-2])
@@ -101,9 +112,9 @@ if rank_no == 0:
   print("scenario_name: {},  n_subdomains: {} {} {},  n_ranks: {},  end_time: {}".format(scenario_name, n_subdomains_x, n_subdomains_y, n_subdomains_z, n_ranks, end_time))
   print("dt_0D:           {}, diffusion_solver_type:      {}".format(dt_0D, diffusion_solver_type))
   print("dt_1D:           {}, potential_flow_solver_type: {}".format(dt_1D, potential_flow_solver_type))
-  print("dt_3D:           {}, emg_solver_type:            {}".format(dt_3D, emg_solver_type))
+  print("dt_3D:           {}, emg_solver_type:            {}, emg_initial_guess_nonzero: {}".format(dt_3D, emg_solver_type, emg_initial_guess_nonzero))
   print("dt_bidomain:     {}".format(dt_bidomain))
-  print("output_timestep: {}".format(output_timestep))
+  print("output_timestep: {}  stimulation_frequency: {} 1/ms = {} Hz".format(output_timestep, stimulation_frequency, stimulation_frequency*1e3))
   print("fiber_file:              {}".format(fiber_file))
   print("cellml_file:             {}".format(cellml_file))
   print("fiber_distribution_file: {}".format(fiber_distribution_file))
@@ -134,13 +145,21 @@ def get_motor_unit_no(fiber_no):
   return int(fiber_distribution[fiber_no % len(fiber_distribution)]-1)
 
 def fiber_gets_stimulated(fiber_no, frequency, current_time):
+  """
+  determine if fiber fiber_no gets stimulated at simulation time current_time
+  """
 
   # determine motor unit
-  mu_no = (int)(get_motor_unit_no(fiber_no)*0.8)
+  alpha = 1.0   # 0.8
+  mu_no = (int)(get_motor_unit_no(fiber_no)*alpha)
   
   # determine if fiber fires now
-  index = int(current_time * frequency)
+  index = int(np.round(current_time * frequency))
   n_firing_times = np.size(firing_times,0)
+  
+  #if firing_times[index % n_firing_times, mu_no] == 1:
+    #print("{}: fiber {} is mu {}, t = {}, row: {}, stimulated: {} {}".format(rank_no, fiber_no, mu_no, current_time, (index % n_firing_times), firing_times[index % n_firing_times, mu_no], "true" if firing_times[index % n_firing_times, mu_no] == 1 else "false"))
+  
   return firing_times[index % n_firing_times, mu_no] == 1
   
 def set_parameters_null(n_nodes_global, time_step_no, current_time, parameters, dof_nos_global, fiber_no):
@@ -219,6 +238,12 @@ def set_specific_states(n_nodes_global, time_step_no, current_time, states, fibe
     innervation_zone_width_n_nodes = innervation_zone_width*100  # 100 nodes per cm
     innervation_node_global = int(n_nodes_global / 2)  # + np.random.randint(-innervation_zone_width_n_nodes/2,innervation_zone_width_n_nodes/2+1)
     nodes_to_stimulate_global = [innervation_node_global]
+    if innervation_node_global > 0:
+      nodes_to_stimulate_global.insert(0, innervation_node_global-1)
+    if innervation_node_global < n_nodes_global-1:
+      nodes_to_stimulate_global.append(innervation_node_global+1)
+    if rank_no == 0:
+      print("t: {}, stimulate fiber {} at nodes {}".format(current_time, fiber_no, nodes_to_stimulate_global))
 
     for node_no_global in nodes_to_stimulate_global:
       states[(node_no_global,0,0)] = 20.0   # key: ((x,y,z),nodal_dof_index,state_no)
@@ -283,17 +308,64 @@ firing_times = np.genfromtxt(firing_times_file)
 # for debugging output show when the first 20 fibers will fire
 if rank_no == 0:
   print("Debugging output about fiber firing: Taking input from file \"{}\"".format(firing_times_file))
+  import timeit
+  t_start = timeit.default_timer()
+  
+  first_stimulation_info = []
   
   n_firing_times = np.size(firing_times,0)
-  for fiber_no_index in range(min(n_fibers_total,20)):
+  for fiber_no_index in range(n_fibers_total):
+    if fiber_no_index % 100 == 0:
+      t_intermediate = timeit.default_timer()
+      if t_intermediate - t_start > 100:
+        print("Note: break after {}/{} fibers ({:.0f}%) because it already took {:.3f}s".format(fiber_no_index,n_fibers_total,100.0*fiber_no_index/(n_fibers_total-1.),t_intermediate - t_start))
+        break
+    
     first_stimulation = None
     for current_time in np.linspace(0,1./stimulation_frequency*n_firing_times,n_firing_times):
       if fiber_gets_stimulated(fiber_no_index, stimulation_frequency, current_time):
         first_stimulation = current_time
         break
+    mu_no = get_motor_unit_no(fiber_no_index)
+    first_stimulation_info.append([fiber_no_index,mu_no,first_stimulation])
   
-    print("   Fiber {} is of MU {} and will be stimulated for the first time at {}".format(fiber_no_index, get_motor_unit_no(fiber_no_index), first_stimulation))
+  first_stimulation_info.sort(key=lambda x: 1e5+1e-5*x[1]+1e-10*x[0] if x[2] is None else x[2]+1e-5*x[1]+1e-10*x[0])
+  
+  print("First stimulation times")
+  print("    Time  MU fibers")
+  n_stimulated_mus = 0
+  n_not_stimulated_mus = 0
+  fibers = []
+  last_time = 0
+  last_mu_no = first_stimulation_info[0][1]
+  for stimulation_info in first_stimulation_info:
+    mu_no = stimulation_info[1]
+    fiber_no = stimulation_info[0]
+    if mu_no == last_mu_no:
+      fibers.append(fiber_no)
+    else:
+      if last_time is not None:
+        if len(fibers) > 10:
+          print("{:8.2f} {:3} {} (only showing first 10, {} total)".format(last_time,last_mu_no,str(fibers[0:10]),len(fibers)))
+        else:
+          print("{:8.2f} {:3} {}".format(last_time,last_mu_no,str(fibers)))
+        n_stimulated_mus += 1
+      else:
+        if len(fibers) > 10:
+          print("  never stimulated: MU {:3}, fibers {} (only showing first 10, {} total)".format(last_mu_no,str(fibers[0:10]),len(fibers)))
+        else:
+          print("  never stimulated: MU {:3}, fibers {}".format(last_mu_no,str(fibers)))
+        n_not_stimulated_mus += 1
+      fibers = [fiber_no]
 
+    last_time = stimulation_info[2]
+    last_mu_no = mu_no
+    
+  print("stimulated MUs: {}, not stimulated MUs: {}".format(n_stimulated_mus,n_not_stimulated_mus))
+
+  t_end = timeit.default_timer()
+  print("duration of assembling this list: {:.3f} s\n".format(t_end-t_start))  
+  
 # compute partitioning
 if rank_no == 0:
   if n_ranks != n_subdomains_x*n_subdomains_y*n_subdomains_z:
@@ -307,7 +379,7 @@ n_points_per_subdomain_z = (int)(np.ceil(n_points_whole_fiber / n_subdomains_z))
 if rank_no == 0:
   print("diffusion solver type: {}".format(diffusion_solver_type))
   print("{} ranks, partitioning: x{} x y{} x z{}".format(n_ranks, n_subdomains_x, n_subdomains_y, n_subdomains_z))
-  print("{} x {} fibers, per partition: {} x {}, {} points per fiber".format(n_fibers_x, n_fibers_y, n_fibers_per_subdomain_x, n_fibers_per_subdomain_y, n_points_whole_fiber))
+  print("{} x {} = {} fibers, per partition: {} x {} = {}, {} points per fiber".format(n_fibers_x, n_fibers_y, n_fibers_total, n_fibers_per_subdomain_x, n_fibers_per_subdomain_y, n_fibers_per_subdomain_x*n_fibers_per_subdomain_y, n_points_whole_fiber))
 
 # define helper functions for fiber numbering
 
@@ -545,7 +617,7 @@ for i in range(n_global_points_x*n_global_points_y):
   potential_flow_dirichlet_bc[i] = 0.0
   potential_flow_dirichlet_bc[(n_global_points_z-1)*n_global_points_x*n_global_points_y + i] = 1.0
     
-if rank_no == 0 and n_ranks < 10:
+if rank_no == 0 and n_ranks < 10 and False:
   print("rank configuration: ")
   
   for subdomain_coordinate_y in range(n_subdomains_y):
@@ -570,24 +642,24 @@ config = {
       "maxIterations": 1e4,
       "relativeTolerance": 1e-10,
       "solverType": diffusion_solver_type,
-      "preconditionerType": "none",
+      "preconditionerType": diffusion_preconditioner_type,
     },
     "potentialFlowSolver": {
       "relativeTolerance": 1e-10,
       "maxIterations": 10000,
       "solverType": potential_flow_solver_type,
-      "preconditionerType": "none"
+      "preconditionerType": potential_flow_preconditioner_type,
     },
     "activationSolver": {
-      "relativeTolerance": 1e-5,
+      "relativeTolerance": 1e-2,
       "maxIterations": 10000,
       "solverType": emg_solver_type,
-      "preconditionerType": "none"
+      "preconditionerType": emg_preconditioner_type,
     }
   },
   "Coupling": {
-    "timeStepWidth": dt_3D,  # 1e-1
-    "logTimeStepWidthAsKey": "dt_3D",
+    "timeStepWidth": dt_bidomain,  # 1e-1
+    "logTimeStepWidthAsKey": "dt_bidomain",
     "durationLogKey": "duration_total",
     "timeStepOutputInterval" : 10,
     "endTime": end_time,
@@ -632,8 +704,8 @@ config = {
                       #"setSpecificParametersFunction": set_specific_parameters,    # callback function that sets parameters like stimulation current
                       #"setSpecificParametersCallInterval": int(1./stimulation_frequency/dt_0D),     # set_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
                       "setSpecificStatesFunction": set_specific_states,    # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
-                      "setSpecificStatesCallInterval": int(1./stimulation_frequency/dt_0D),     # set_specific_states should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
-                      "additionalArgument": i,
+                      "setSpecificStatesCallInterval": 2*int(1./stimulation_frequency/dt_0D),     # set_specific_states should be called stimulation_frequency times per ms, the factor 2 is needed because every Heun step includes two calls to rhs
+                      "additionalArgument": fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y),
                       
                       "outputStateIndex": 0,     # state 0 = Vm, rate 28 = gamma
                       "parametersUsedAsIntermediate": parameters_used_as_intermediate,  #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
@@ -695,7 +767,8 @@ config = {
         "timeStepWidth": dt_bidomain,
         "timeStepOutputInterval": 50,
         "solverName": "activationSolver",
-        "inputIsGlobal": True,
+#        "inputIsGlobal": True,
+        "initialGuessNonzero": emg_initial_guess_nonzero,
         "PotentialFlow": {
           "FiniteElementMethod" : {  
             "meshName": "3Dmesh",
@@ -713,19 +786,19 @@ config = {
             "inputMeshIsGlobal": True,
             "dirichletBoundaryConditions": {},
             "diffusionTensor": [                 # fiber direction is (1,0,0)
-              1, 0, 0,
-              0, 1, 0,
-              0, 0, 1
+              8.93, 0, 0,
+              0, 0.893, 0,
+              0, 0, 0.893
             ], 
             "extracellularDiffusionTensor": [
-              2, 0, 0,
-              0, 1, 0,
-              0, 0, 1
+              6.7, 0, 0,
+              0, 6.7, 0,
+              0, 0, 6.7
             ],
           },
         },
         "OutputWriter" : [
-          {"format": "Paraview", "outputInterval": int(1./dt_3D*output_timestep), "filename": "out/" + scenario_name + "/emg", "binary": True, "fixedFormat": False, "combineFiles": True},
+          {"format": "Paraview", "outputInterval": int(1./dt_bidomain*output_timestep), "filename": "out/" + scenario_name + "/emg", "binary": True, "fixedFormat": False, "combineFiles": True},
           #{"format": "Paraview", "outputInterval": int(1./dt_3D*output_timestep), "filename": "out/3d_txt", "binary": False, "fixedFormat": False, "combineFiles": True},
         ],
       }

@@ -15,13 +15,13 @@ namespace TimeSteppingScheme
  *
  */
 template<typename DiscretizableInTime>
-class Heun :
+class HeunAdaptiv:
   public TimeSteppingExplicit<DiscretizableInTime>, public Runnable
 {
 public:
 
   //! constructor
-  Heun(DihuContext context);
+  HeunAdaptiv(DihuContext context);
 
   //! initialize the data object
   virtual void initialize();
@@ -31,8 +31,19 @@ public:
 
   //! run the simulation
   void run();
+
+private:
+
+  // Allowed tolerance
+  double tolerance_;
+
+  // delta to prevent very small timeStepWidth_
+  double delta_;
+
+  ///< this is the time step width at the and of the time stepping, saved because the actual time step width may be set smaller to exactly reach timeSpan
+  double savedTimeStepWidth_;
 };
 
 }  // namespace
 
-#include "time_stepping_scheme/heun.tpp"
+#include "time_stepping_scheme/heun_adaptiv.tpp"

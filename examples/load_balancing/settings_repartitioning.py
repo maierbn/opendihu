@@ -1,7 +1,7 @@
 # 2 fibers, biceps, example for load_balancing
 #
 
-end_time = 50.0     # end time for the simulation
+end_time = 10.0     # end time for the simulation
 
 import numpy as np
 import pickle
@@ -57,44 +57,6 @@ def fiber_gets_stimulated(fiber_no, frequency, current_time):
   
   return firing_times[index % n_firing_times, mu_no] == 1
   
-def set_parameters(n_nodes_global, time_step_no, current_time, parameters, dof_nos_global, fiber_no):
-  """
-  This function sets the stimulation current when the fiber will fire.
-  :param n_nodes_global: number of global nodes of the fiber
-  :param time_step_no:  the index of the time step in the simulation, integer value
-  :param current_time:  the current simulation time as double
-  :param parameters:    a list of parameter values for the nodes, changes made to the list will be used by the simulation
-  :param dof_nos_global: for every local degree of freedom no. the global dof no., i.e. this is a local to global mapping
-  :param fiber_no:      the no. of the fiber (here 0 or 1). It is the value that was set by "setParametersFunctionAdditionalParameter"
-  """ 
-  
-  # determine if fiber gets stimulated at the current time
-  is_fiber_gets_stimulated = fiber_gets_stimulated(fiber_no, stimulation_frequency, current_time)
-  
-  # determine nodes to stimulate (center node, left and right neighbour)
-  innervation_zone_width_n_nodes = innervation_zone_width*100  # 100 nodes per cm
-  innervation_node_global = int(n_nodes_global / 2)  # + np.random.randint(-innervation_zone_width_n_nodes/2,innervation_zone_width_n_nodes/2+1)
-  nodes_to_stimulate_global = [innervation_node_global]
-  if innervation_node_global > 0:
-    nodes_to_stimulate_global.insert(0, innervation_node_global-1)
-  if innervation_node_global < n_nodes_global-1:
-    nodes_to_stimulate_global.append(innervation_node_global+1)
-  
-  # stimulation value
-  if is_fiber_gets_stimulated:
-    stimulation_current = 400.
-  else:
-    stimulation_current = 0.
-  
-  first_dof_global = dof_nos_global[0]
-  last_dof_global = dof_nos_global[-1]
-    
-  for node_no_global in nodes_to_stimulate_global:
-    if first_dof_global <= node_no_global <= last_dof_global:
-      # get local no for global no (1D)
-      dof_no_local = node_no_global - first_dof_global
-      parameters[dof_no_local] = stimulation_current
-   
 # callback function that can set states, i.e. prescribed values for stimulation
 def set_specific_states(n_nodes_global, time_step_no, current_time, states, fiber_no):
   
@@ -186,16 +148,21 @@ config = {
     {
       "ranks": ranks[i],
       
-      # config for strang splitting
-      "StrangSplitting": {
+      "LoadBalancing": {
         "timeStepWidth": dt_3D,  # 1e-1
         "logTimeStepWidthAsKey": "dt_3D",
         "durationLogKey": "duration_total",
-        "timeStepOutputInterval" : 1000,
+        "timeStepOutputInterval" : 1,
         "endTime": end_time,
-
-        "Term1": {      # CellML
-          "LoadBalancing": {
+      
+        # config for strang splitting
+        "StrangSplitting": {
+          "timeStepWidth": dt_3D,  # 1e-1
+          "logTimeStepWidthAsKey": "dt_3D",
+          "durationLogKey": "duration_total",
+          "timeStepOutputInterval" : 1000,
+          "endTime": end_time,
+          "Term1": {      # CellML
             "HeunAdaptiv" : {
               "timeStepWidth": dt_0D,  # 5e-5
               "tolerance": 1e-2,
@@ -229,35 +196,35 @@ config = {
               },
             },
           },
-        },
-        
-        "Term2": {     # Diffusion
-          "ImplicitEuler" : {
-            "initialValues": [],
-            #"numberTimeSteps": 1,
-            "timeStepWidth": dt_1D,  # 1e-5
-            "logTimeStepWidthAsKey": "dt_1D",
-            "durationLogKey": "duration_1D",
-            "timeStepOutputInterval": 1e4,
-            "dirichletBoundaryConditions": {0: -75, -1: -75},      # set first and last value of fiber to -75
-            "inputMeshIsGlobal": True,
-            "solverName": "implicitSolver",
-            "FiniteElementMethod" : {
-              "maxIterations": 1e4,
-              "relativeTolerance": 1e-10,
+          
+          "Term2": {     # Diffusion
+            "ImplicitEuler" : {
+              "initialValues": [],
+              #"numberTimeSteps": 1,
+              "timeStepWidth": dt_1D,  # 1e-5
+              "logTimeStepWidthAsKey": "dt_1D",
+              "durationLogKey": "duration_1D",
+              "timeStepOutputInterval": 1e4,
+              "dirichletBoundaryConditions": {0: -75, -1: -75},      # set first and last value of fiber to -75
               "inputMeshIsGlobal": True,
-              "meshName": "MeshFiber"+str(i),
-              "prefactor": Conductivity/(Am*Cm),
               "solverName": "implicitSolver",
+              "FiniteElementMethod" : {
+                "maxIterations": 1e4,
+                "relativeTolerance": 1e-10,
+                "inputMeshIsGlobal": True,
+                "meshName": "MeshFiber"+str(i),
+                "prefactor": Conductivity/(Am*Cm),
+                "solverName": "implicitSolver",
+              },
+              "OutputWriter" : [
+                {"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/fiber_"+str(i), "binary": True, "fixedFormat": False, "combineFiles": False},
+                #{"format": "Paraview", "outputInterval": 1./dt_1D*output_timestep, "filename": "out/fiber_"+str(i)+"_txt", "binary": False, "fixedFormat": False},
+                #{"format": "ExFile", "filename": "out/fiber_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "sphereSize": "0.02*0.02*0.02"},
+                #{"format": "PythonFile", "filename": "out/fiber_"+str(i), "outputInterval": int(1./dt_1D*output_timestep), "binary":True, "onlyNodalValues":True},
+              ]
             },
-            "OutputWriter" : [
-              {"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/fiber_"+str(i), "binary": True, "fixedFormat": False, "combineFiles": False},
-              #{"format": "Paraview", "outputInterval": 1./dt_1D*output_timestep, "filename": "out/fiber_"+str(i)+"_txt", "binary": False, "fixedFormat": False},
-              #{"format": "ExFile", "filename": "out/fiber_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "sphereSize": "0.02*0.02*0.02"},
-              #{"format": "PythonFile", "filename": "out/fiber_"+str(i), "outputInterval": int(1./dt_1D*output_timestep), "binary":True, "onlyNodalValues":True},
-            ]
           },
-        },
+        }
       }
     }
     for i in range(2)

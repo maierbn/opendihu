@@ -109,7 +109,8 @@ void DihuContext::initializeLogging(int argc, char *argv[])
 
   // set format of outputs
   conf.set(el::Level::Debug, el::ConfigurationType::Format, prefix+"DEBUG: %msg");
-  conf.set(el::Level::Trace, el::ConfigurationType::Format, prefix+"TRACE: %msg");
+  conf.set(el::Level::Trace, el::ConfigurationType::Format, prefix+"TRACE: %msg (" ANSI_COLOR_LIGHT_GRAY "%func" ANSI_COLOR_RESET " at "
+    ANSI_COLOR_LIGHT_GRAY "%loc" ANSI_COLOR_RESET ")");
   conf.set(el::Level::Verbose, el::ConfigurationType::Format, ANSI_COLOR_LIGHT_WHITE "" + prefix+"VERB%vlevel: %msg" ANSI_COLOR_RESET);
   conf.set(el::Level::Warning, el::ConfigurationType::Format,
   //         prefix+"WARN : %loc %func: \n" ANSI_COLOR_YELLOW "Warning: " ANSI_COLOR_RESET "%msg");

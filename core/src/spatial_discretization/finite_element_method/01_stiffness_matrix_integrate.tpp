@@ -11,9 +11,6 @@
 
 namespace SpatialDiscretization
 {
-
-bool outputAssemble3DStiffnessMatrix_ = true;
-
 // 1D,2D,3D stiffness matrix of Deformable mesh
 template<typename FunctionSpaceType,typename QuadratureType,typename Term,typename Dummy1, typename Dummy2, typename Dummy3>
 void FiniteElementMethodMatrix<FunctionSpaceType,QuadratureType,Term,Dummy1,Dummy2,Dummy3>::

@@ -943,9 +943,8 @@ output(std::ostream &stream)
 {
 #ifndef NDEBUG
   // this method gets all local non-ghost values and outputs them to stream, only on rank 0
-  PetscMPIInt ownRankNo, nRanks;
-  MPIUtility::handleReturnValue(MPI_Comm_rank(this->meshPartition_->mpiCommunicator(), &ownRankNo), "MPI_Comm_rank");
-  MPIUtility::handleReturnValue(MPI_Comm_size(this->meshPartition_->mpiCommunicator(), &nRanks), "MPI_Comm_size");
+  PetscMPIInt ownRankNo = this->meshPartition_->ownRankNo();
+  PetscMPIInt nRanks = this->meshPartition_->nRanks();
 
   int componentNo = 0;
   Vec vector = vectorLocal_[componentNo];

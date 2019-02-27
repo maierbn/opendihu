@@ -7,6 +7,8 @@
 #include "utility/vector_operators.h"
 #include "easylogging++.h"
 
+class DihuContext;   // forward declaration
+
 namespace Partition 
 {
   
@@ -15,14 +17,18 @@ RankSubset::RankSubset(Iter ranksBegin, Iter ranksEnd, std::shared_ptr<RankSubse
 {
   isWorldCommunicator_ = false;
   MPI_Comm parentCommunicator = MPI_COMM_WORLD;
+  int ownRankParentCommunicator = 0;
   if (parentRankSubset)
   {
     parentCommunicator = parentRankSubset->mpiCommunicator();
+    ownRankParentCommunicator = parentRankSubset->ownRankNo();
+  }
+  else
+  {
+    // get the own rank in the parent communicator which is MPI_COMM_WORLD
+    MPIUtility::handleReturnValue(MPI_Comm_rank(MPI_COMM_WORLD, &ownRankParentCommunicator), "MPI_Comm_rank");
   }
 
-  // get the own rank in the communicator
-  int ownRankParentCommunicator = 0;
-  MPIUtility::handleReturnValue(MPI_Comm_rank(parentCommunicator, &ownRankParentCommunicator), "MPI_Comm_rank");
   int color = MPI_UNDEFINED;
   
   std::copy(ranksBegin, ranksEnd, std::inserter(rankNo_, rankNo_.begin()));

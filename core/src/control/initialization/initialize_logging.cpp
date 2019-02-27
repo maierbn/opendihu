@@ -56,23 +56,12 @@ void DihuContext::initializeLogging(int argc, char *argv[])
   el::Configurations conf;
   conf.setToDefault();
 
-  int rankNo;
-  MPIUtility::handleReturnValue (MPI_Comm_rank(MPI_COMM_WORLD, &rankNo));   // get the rank in the MPI_COMM_WORLD communicator
-
   // set prefix for output that includes current rank no
   std::string prefix;
   if (nRanksCommWorld_ > 1)
   {
     std::stringstream s;
-    // if there is renumbering of ranks, output both rank nos
-    if (rankNo != ownRankNoCommWorld_)
-    {
-      s << "(" << rankNo << ")" << ownRankNoCommWorld_ << "/" << nRanksCommWorld_ << " ";
-    }
-    else
-    {
-      s << rankNo << "/" << nRanksCommWorld_ << " ";
-    }
+    s << rankNoCommWorld_ << "/" << nRanksCommWorld_ << " ";
     prefix = s.str();
   }
   

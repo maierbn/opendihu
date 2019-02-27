@@ -47,8 +47,6 @@ std::string DihuContext::pythonScriptText_ = "";
 std::shared_ptr<std::thread> DihuContext::megamolThread_ = nullptr;
 std::vector<char *> DihuContext::megamolArgv_;
 std::vector<std::string> DihuContext::megamolArguments_;
-std::array<int,3> DihuContext::nSubdomainsForRankReordering_;
-bool DihuContext::rankReorderingEnabled_ = false;
 
 #ifdef HAVE_ADIOS
 std::shared_ptr<adios2::ADIOS> DihuContext::adios_ = nullptr;  ///< adios context option
@@ -135,23 +133,11 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
 
     rankSubset_ = std::make_shared<Partition::RankSubset>();   // create rankSubset with all ranks, i.e. MPI_COMM_WORLD
 
-    initializeRankReordering(argc, argv);
-
     nRanksCommWorld_ = rankSubset_->size();
     ownRankNoCommWorld_ = rankSubset_->ownRankNo();
 
-    // get global number of MPI ranks and own rank no
-    //MPIUtility::handleReturnValue (MPI_Comm_size(MPI_COMM_WORLD, &nRanksCommWorld_));
-    //MPIUtility::handleReturnValue (MPI_Comm_rank(MPI_COMM_WORLD, &ownRankNoCommWorld_));
-
     // load configuration from file if it exits
     initializeLogging(argc, argv);
-
-    if (rankReorderingEnabled_)
-    {
-      LOG(WARNING) << "Rank reordering is enabled!";
-      LOG(DEBUG) << "subdomains for rank reordering: " << nSubdomainsForRankReordering_;
-    }
 
     // configure PETSc to abort on errorm
     PetscOptionsSetValue(NULL, "-on_error_abort", "");

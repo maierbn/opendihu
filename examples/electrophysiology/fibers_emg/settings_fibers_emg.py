@@ -129,6 +129,45 @@ own_subdomain_coordinate_z = (int)(rank_no / n_subdomains_xy)
 
 #print("rank: {}/{}".format(rank_no,n_ranks))
 
+# generate cuboid fiber file
+if fiber_file == "cuboid.bin":
+  
+  size_x = 1.0
+  size_y = 1.0
+  size_z = 10.0
+  
+  n_fibers_x = 2
+  n_fibers_y = n_fibers_x
+  n_points_whole_fiber = 100
+  
+  if rank_no == 0:
+    print("create cuboid.bin with size [{},{},{}], n points [{},{},{}]".format(size_x, size_y, size_z, n_fibers_x, n_fibers_y, n_points_whole_fiber))
+    
+    # write header
+    with open(fiber_file, "wb") as outfile:
+      
+      # write header
+      header_str = "opendihu self-generated cuboid  "
+      outfile.write(struct.pack('32s',bytes(header_str, 'utf-8')))   # 32 bytes
+      outfile.write(struct.pack('i', 40))  # header length
+      outfile.write(struct.pack('i', n_fibers_x*n_fibers_x))   # n_fibers
+      outfile.write(struct.pack('i', n_points_whole_fiber))   # n_points_whole_fiber
+      outfile.write(struct.pack('i', 0))   # nBorderPointsXNew
+      outfile.write(struct.pack('i', 0))   # nBorderPointsZNew
+      outfile.write(struct.pack('i', 0))   # nFineGridFibers_
+      outfile.write(struct.pack('i', 1))   # nRanks
+      outfile.write(struct.pack('i', 1))   # nRanksZ
+      outfile.write(struct.pack('i', 0))   # nFibersPerRank
+      outfile.write(struct.pack('i', 0))   # date
+    
+      # loop over points
+      for z in range(n_points_whole_fiber):
+        for y in range(n_fibers_x):
+          for x in range(n_fibers_x):
+            point = [x*(float)(size_x)/(n_fibers_x-1), y*(float)(size_y)/(n_fibers_y-1), z*(float)(size_z)/(n_points_whole_fiber-1)]
+            outfile.write(struct.pack('3d', point[0], point[1], point[2]))   # data point
+    
+
 # set values for cellml model
 if "shorten" in cellml_file:
   parameters_used_as_intermediate = [32]

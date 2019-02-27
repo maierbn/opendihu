@@ -62,7 +62,6 @@ RankSubset::RankSubset(int singleRank, std::shared_ptr<RankSubset> parentRankSub
   {
     // get the own current MPI rank from the MPI_COMM_WORLD
     MPIUtility::handleReturnValue(MPI_Comm_rank(parentCommunicator, &ownRankParentCommunicator), "MPI_Comm_rank");
-    DihuContext::reorderRankNoCommWorld(ownRankParentCommunicator);
   }
   int color = MPI_UNDEFINED;
 
@@ -169,16 +168,16 @@ element_no_t RankSubset::ownRankNo()
   {
     // get the own rank id in this communicator
     MPIUtility::handleReturnValue(MPI_Comm_rank(mpiCommunicator_, &ownRankNo_), "MPI_Comm_rank");
-    if (isWorldCommunicator_)
-    {
-      DihuContext::reorderRankNoCommWorld(ownRankNo_);
-    }
   }
   return ownRankNo_;
 }
 
 MPI_Comm RankSubset::mpiCommunicator() const
 {
+  if (mpiCommunicator_ == MPI_COMM_NULL)
+  {
+    LOG(ERROR) << "Accessing NULL communicator";
+  }
   return mpiCommunicator_;
 }
 

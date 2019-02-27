@@ -61,7 +61,7 @@ void DihuContext::initializeLogging(int argc, char *argv[])
   if (nRanksCommWorld_ > 1)
   {
     std::stringstream s;
-    s << rankNoCommWorld_ << "/" << nRanksCommWorld_ << " ";
+    s << ownRankNoCommWorld_ << "/" << nRanksCommWorld_ << " ";
     prefix = s.str();
   }
   

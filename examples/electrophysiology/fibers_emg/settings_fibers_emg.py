@@ -161,9 +161,9 @@ if fiber_file == "cuboid.bin":
       outfile.write(struct.pack('i', 0))   # date
     
       # loop over points
-      for z in range(n_points_whole_fiber):
-        for y in range(n_fibers_x):
-          for x in range(n_fibers_x):
+      for y in range(n_fibers_x):
+        for x in range(n_fibers_x):
+          for z in range(n_points_whole_fiber):
             point = [x*(float)(size_x)/(n_fibers_x-1), y*(float)(size_y)/(n_fibers_y-1), z*(float)(size_z)/(n_points_whole_fiber-1)]
             outfile.write(struct.pack('3d', point[0], point[1], point[2]))   # data point
     

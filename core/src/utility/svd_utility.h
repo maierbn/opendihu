@@ -15,7 +15,7 @@ class SvdUtility
  public:
   static vector<double> getSVD(vector<double> aData, int m, int n);
 
-  static void getSVD(double a[], int m, int n, double* u, double* s, double* vt);
+  static void getSVD(double a[], int cols, int rows, double* u, double* sigmas, double* vTransposed, double* sigma);
 
   static vector<double> readCSV(string filename);
 
@@ -34,4 +34,8 @@ class SvdUtility
   static void printMatrix(string name, double a[], int rows, int columns);
 
   static void getMatrixProduct(double a[], double b[], double c[], int rowsA, int colsA_rowsB, int colsB);
+
+  static void transposeMatrix(double a[], double b[], int rows, int cols);
+
+  static void getMatrixInverse(double a[], int order);
 };

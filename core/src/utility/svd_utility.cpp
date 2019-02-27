@@ -1,5 +1,7 @@
 #include "utility/svd_utility.h"
 
+#include <petscmat.h>
+
 #include <iostream>
 #include <vector>
 #include <string>
@@ -54,30 +56,37 @@ std::vector<double> SvdUtility::getSVD(vector<double> aData, int m, int n)
 
 // takes input data as double array and writes Sigma, U and V transposed as output parameter double arrays
 // m columns, n rows
-void SvdUtility::getSVD(double a[], int m, int n, double u[], double s[], double vt[])
+void SvdUtility::getSVD(double a[], int cols, int rows, double u[], double sigmas[], double vTransposed[], double sigma[])
 {
 	//double a[aData.size()];
 	//copy(aData.begin(), aData.end());
 
 	//std::cout << m << " columns, " << n << " rows" << endl;
 
-	int lda = m, ldu = m, ldvt = n;
+	int min = std::min(cols, rows);
+	int lda = rows, ldu = rows, ldvt = min;
 	int matrix_order = LAPACK_COL_MAJOR;
-	int minmn = std::min(m, n) - 1;
-	double superb[minmn];
+	double superb[min];
 
-	int info = LAPACKE_dgesvd(matrix_order, 's', 's', m, n, a, lda, s, u, ldu, vt, ldvt, superb);
+	int info = LAPACKE_dgesvd(matrix_order, 'a', 'a', rows, cols, a, lda, sigmas, u, ldu, vTransposed, ldvt, superb);
 
 	std::cout << "info: " << info << endl << endl;
-	/*
-	std::cout << "Left singular vectors:" << endl;
 
-	for(int i=0;i<m*n;++i)
+	for (int row = 0; row < min; ++row)
 	{
-	  std::cout << u[i] << endl;
+		for (int column = 0; column < min; ++column)
+		{
+			if (row == column)
+			{
+				sigma[row + column * min] = sigmas[row];
+			} 
+			else
+			{
+				sigma[row + column * min] = 0;
+			}
+			
+		}
 	}
-	*/
-	//std::cout << "getSVD done" << endl;
 }
 
 // reads CSV cell by cell as vector
@@ -222,7 +231,7 @@ void SvdUtility::printMatrix(string name, double a[], int rows, int columns)
 // takes two matrices a and b as double arrays, performs matrix multiplication and writes the resulting matrix c as double array
 void SvdUtility::getMatrixProduct(double a[], double b[], double c[], int rowsA, int colsA_rowsB, int colsB)
 {
-	// LAPACKE_dgemm('n', 'n', rowsA, colsB, colsA_rowsB, 1, a, rowsA, b, colsA_rowsB, 0, c, rowsA);
+	//dgemm('n', 'n', rowsA, colsB, colsA_rowsB, 1, a, rowsA, b, colsA_rowsB, 0, c, rowsA);
 
 	for (int column = 0; column < colsB; ++column)
 	{
@@ -234,4 +243,26 @@ void SvdUtility::getMatrixProduct(double a[], double b[], double c[], int rowsA,
 			}
 		}
 	}
+}
+
+void SvdUtility::transposeMatrix(double a[], double b[], int rows, int cols)
+{
+	for (int column = 0; column < cols; ++column)
+	{
+		for (int row = 0; row < rows; ++row)
+		{
+			b[row * cols + column] = a[column * rows + row];
+		}
+	}
+}
+
+void SvdUtility::getMatrixInverse(double a[], int order)
+{
+	int matrix_order = LAPACK_COL_MAJOR;
+	int ipiv[order];
+	for (int i = 1; i <= order; ++i)
+	{
+		ipiv[i] = i;
+	}
+	LAPACKE_dgetri(matrix_order, order, a, order, ipiv);
 }

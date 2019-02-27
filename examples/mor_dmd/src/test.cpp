@@ -14,10 +14,18 @@ int main(int argc, char *argv[])
 	//int rowCount = SvdUtility::getCSVRowCount("./out/data.csv");
 	//int columnCount = SvdUtility::getCSVColumnCount("./out/data.csv");
 
-	double varepsilon1 = 0.3;
+	double varepsilon1 = 0;
+
+	int j = 3;
+	int k = 3;
+	double v[j * k] = {
+		1, -1,  0,
+		0, -2,  1, 
+		1,  0, -1
+	};
 
 	// [J,K]=size(V);
-	int j = 6;
+	/*int j = 6;
 	int k = 5;
 	// 5x6
 	double v[j * k] = {
@@ -26,7 +34,7 @@ int main(int argc, char *argv[])
 			  9.83,  5.04,  4.86,  8.83,  9.80, -8.99,
 			  5.45, -0.27,  4.85,  0.74, 10.00, -6.02,
 			  3.16,  7.98,  3.01,  5.80,  4.27, -5.31
-	};
+	};*/
 
 	SvdUtility::printMatrix("V", v, j, k);
 
@@ -53,33 +61,34 @@ int main(int argc, char *argv[])
 			  9.84,  0.15, -8.99, -6.02, -5.31
 	};*/
 
-	// print input matrix sizes, j columns, k rows
+	// print input matrix sizes, j cols, k rows
 	std::cout << "J = " << j << endl << "K = " << k << endl << endl;
 
 	// n=length(sigmas);
 	int n = std::min(j, k);
 
-	// m > n — Only the first n columns of U are computed, and S is n - by - n.
-	// m = n — svd(A, 'econ') is equivalent to svd(A).
-	// m < n — Only the first m columns of V are computed, and S is m - by - m.
-	int columnsU = j;
-	int columnsTT = k;
+	// m > n ï¿½ Only the first n cols of U are computed, and S is n - by - n.
+	// m = n ï¿½ svd(A, 'econ') is equivalent to svd(A).
+	// m < n ï¿½ Only the first m cols of V are computed, and S is m - by - m.
+	int colsU = j;
+	int colsTTransposed = k;
 
 	if (j > k) {
-		columnsU = k;
+		colsU = k;
 	}
 	else if (j < k) {
-		columnsTT = j;
+		colsTTransposed = j;
 	}
 
 	// [U,Sigma,T]=svd(V,'econ');
-	double u[j * columnsU];
+	double u[j * colsU];
 	double sigmas[n];
-	double tT[k * columnsTT];
-	SvdUtility::getSVD(v, j, k, u, sigmas, tT);
+	double tTransposed[k * colsTTransposed];
+	double sigma[n * n];
+	SvdUtility::getSVD(v, j, k, u, sigmas, tTransposed, sigma);
 
 	// sigmas=diag(Sigma);
-	double sigma[n * n] = {};
+	/*double sigma[n * n] = {};
 	for (int row = 0; row < n; ++row)
 	{
 		for (int column = 0; column < n; ++column)
@@ -89,12 +98,12 @@ int main(int argc, char *argv[])
 				sigma[row + column * n] = sigmas[row];
 			} 
 		}
-	}
+	}*/
 
 	// print resulting matrices
-	SvdUtility::printMatrix("U", u, j, columnsU);
+	SvdUtility::printMatrix("U", u, j, colsU);
 	SvdUtility::printMatrix("Sigma", sigma, n, n);
-	SvdUtility::printMatrix("T^T", tT, k, columnsTT);
+	SvdUtility::printMatrix("T^T", tTransposed, k, colsTTransposed);
 
 	// NormS=norm(sigmas,2);
 	double normS = SvdUtility::getEuclideanNorm(sigmas, n, n);
@@ -111,87 +120,59 @@ int main(int argc, char *argv[])
 	}
 	std::cout << "kk = " << kk << endl << endl;
 
-	// hatT=Sigma(1:kk,1:kk)*T(..1:kk)'
-	double hatT[kk * columnsTT] = {};
+	// hatT=Sigma(1:kk,1:kk)*T(:,1:kk)'
+	double hatT[kk * colsTTransposed] = {};
 	SvdUtility::resizeMatrix(sigma, sigma, n, n, 0, kk - 1, 0, kk - 1);
-	SvdUtility::resizeMatrix(tT, tT, k, columnsTT, 0, kk - 1, 0, columnsTT - 1);
+	SvdUtility::resizeMatrix(tTransposed, tTransposed, k, colsTTransposed, 0, kk - 1, 0, colsTTransposed - 1);
 	SvdUtility::printMatrix("Sigma(1:kk,1:kk)", sigma, kk, kk);
-	SvdUtility::printMatrix("T(..1:kk)", tT, kk, columnsTT);
-	SvdUtility::getMatrixProduct(sigma, tT, hatT, kk, kk, columnsTT);
-	SvdUtility::printMatrix("hatT", hatT, kk, columnsTT);
+	SvdUtility::printMatrix("T(..1:kk)", tTransposed, kk, colsTTransposed);
+	SvdUtility::getMatrixProduct(sigma, tTransposed, hatT, kk, kk, colsTTransposed);
+	SvdUtility::printMatrix("hatT", hatT, kk, colsTTransposed);
 
+	// [N,K]=size(hatT);
 	n = kk;
-	k = columnsTT;
+	k = colsTTransposed;
  
-	int minKN = std::min(k, n);
-
-	int columnsHatU1 = k;
-	int columnsHatU2 = n;
-
-	if (k > n) {
-		columnsHatU1 = n;
+	// [hatU1,hatSigma,hatU2]=svd(hatT(:,1:K-1),'econ');
+	int min = std::min(k - 1, n);
+	int colsHatU1 = n;
+	int colsHatU2Transposed = n;s
+	/*if (k - 1 < n) {
+		colsHatU1 = k - 1;
 	}
-	else if (k < n) {
-		columnsHatU2 = k;
-	}
-	double hatU1[k * columnsHatU1];
-	double hatSigma[minKN];
-	double hatU2[n * columnsHatU2];
-	std::cout << "N = " << n << endl << "K = " << k << endl;
-	SvdUtility::resizeMatrix(hatT, hatT, n, k, 0, n - 1, 0, k - 2);
-	SvdUtility::getSVD(hatT, k, n, hatU1, hatSigma, hatU2);
-	SvdUtility::printMatrix("hatSigma", hatSigma, minKN, 1);
-	/**
-					// N = kk, K = rowCount
+	else if (k - 1 > n) {
+		colsHatU2Transposed = n;
+	}*/
+	double hatU1[n * colsHatU1];
+	double hatSigmas[min];
+	double hatSigma[min * min];
+	double hatU2Transposed[k - 1 * colsHatU2Transposed];
+	double hatT0[n * k - 1];
+	std::cout << "N = " << n << endl << "K = " << k << endl << endl;
+	SvdUtility::resizeMatrix(hatT, hatT0, n, k, 0, n - 1, 0, k - 2);
+	SvdUtility::printMatrix("hatT(:,1..K-1)", hatT0, n, k - 1);
+	SvdUtility::getSVD(hatT0, k - 1, n, hatU1, hatSigmas, hatU2Transposed, hatSigma);
+	SvdUtility::printMatrix("hatU1", hatU1, n, colsHatU1);
+	SvdUtility::printMatrix("hatSigma", hatSigma, min, min);
+	SvdUtility::printMatrix("hatU2Transposed", hatU2Transposed, k - 1, colsHatU2Transposed);
 
-					std::cout << "hatT0" << endl;
-					double hatT0[kk * (rowCount - 1)];
-					for (int i = 0; i < kk; ++i)
-					{
-						for (int j = 0; j < rowCount - 1; ++j)
-						{
-							hatT0[j + i * (rowCount - 1)] = hatT[j + i * rowCount];
-							std::cout << hatT0[j + i * (rowCount - 1)] << " ";
-						}
-						std::cout << endl;
-					}
-					std::cout << endl;
+	// hatR=hatT(:,2:K)*hatU2*inv(hatSigma)*hatU1';
+	double hatT1[n * k - 1];
+	//double hatR[n * k];
+	double hatU2[colsHatU2Transposed * k - 1];
+	double hatT1xHatU2[n * n];
+	SvdUtility::resizeMatrix(hatT, hatT1, n, k, 0, n - 1, 1, k - 1);
+	SvdUtility::printMatrix("hatT(:,2:K)", hatT1, n, k - 1);
+	SvdUtility::transposeMatrix(hatU2Transposed, hatU2, k - 1, colsHatU2Transposed);
+	SvdUtility::printMatrix("hatU2", hatU2, colsHatU2Transposed, k - 1);
+	SvdUtility::getMatrixProduct(hatT1, hatU2, hatT1xHatU2, n, colsHatU2Transposed, n);
+	SvdUtility::printMatrix("hatT1xHatU2", hatT1xHatU2, n, n);
+	SvdUtility::getMatrixInverse(hatSigma, min);
+	SvdUtility::printMatrix("hatSigmaInverse", hatSigma, min, min);
+	//SvdUtility::getMatrixProduct(hatT1xHatU2, hatSigmaInverted, xHatSigmaInverted, n, n, n);
 
-					n = std::min(kk, rowCount - 1);
-					double hatU1[(rowCount - 1) * (rowCount - 1)];
-					double hatSigma[n];
-					double hatU2Transposed[kk * kk];
-					SvdUtility::getSVD(hatT0, rowCount - 1, kk, hatU1, hatSigma, hatU2Transposed);
-
-					std::cout << "hatU1" << endl;
-					for (int i = 0; i < rowCount - 1; ++i)
-					{
-						for (int j = 0; j < rowCount - 1; ++j)
-						{
-							std::cout << hatU1[j + i * rowCount] << " ";
-						}
-						std::cout << endl;
-					}
-
-					std::cout << endl;
-
-					std::cout << "hatSigma" << endl;
-					for (int i = 0; i < n; ++i)
-					{
-						std::cout << hatSigma[i] << " ";
-					}
-					std::cout << endl << endl;
-
-					std::cout << "hatU2Transposed" << endl;
-					for (int i = 0; i < kk; ++i)
-					{
-						for (int j = 0; j < kk; ++j)
-						{
-							std::cout << hatU2Transposed[j + i * kk] << " ";
-						}
-						std::cout << endl;
-					}
-			**/
+	
+	
 			/*
 			for(std::vector<double>::iterator it = result.begin(); it!=result.end(); ++it)
 			{

@@ -78,4 +78,4 @@ callCallback(PyObject *callback, OutputFieldVariablesType fieldVariables,
   Py_DECREF(pyArglist);
 }
 
-};
+}  // namespace

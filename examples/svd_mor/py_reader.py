@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
@@ -261,4 +262,3 @@ def get_component_names(data, field_variable_name):
       for components in field_variable['components']:
         result.append(components['name'])
   return result
-  

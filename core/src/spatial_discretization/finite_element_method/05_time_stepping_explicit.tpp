@@ -36,18 +36,14 @@ computeInverseMassMatrixTimesRightHandSide(Vec &result)
   ierr = KSPSetOperators(*ksp_, massMatrix->valuesGlobal(), massMatrix->valuesGlobal()); CHKERRV(ierr);
 
   // solve the system, KSP assumes the initial guess is to be zero (and thus zeros it out before solving)
-  ierr = KSPSolve(*ksp_, rightHandSide, result); CHKERRV(ierr);
-
-  int numberOfIterations = 0;
-  PetscReal residualNorm = 0.0;
-  ierr = KSPGetIterationNumber(*ksp_, &numberOfIterations); CHKERRV(ierr);
-  ierr = KSPGetResidualNorm(*ksp_, &residualNorm); CHKERRV(ierr);
-
-  KSPConvergedReason convergedReason;
-  ierr = KSPGetConvergedReason(*ksp_, &convergedReason); CHKERRV(ierr);
-
-  VLOG(1) << "Rhs (" << this->data_.rightHandSide()->nDofsGlobal() << " global dofs) recovered in " << numberOfIterations << " iterations, residual norm " << residualNorm
-    << ": " << PetscUtility::getStringLinearConvergedReason(convergedReason);
+  if (VLOG_IS_ON(1))
+  {
+    this->linearSolver_->solve(rightHandSide, result, "Rhs recovered");
+  }
+  else
+  {
+    this->linearSolver_->solve(rightHandSide, result);
+  }
 }
 
 template<typename FunctionSpaceType, typename QuadratureType, typename Term>

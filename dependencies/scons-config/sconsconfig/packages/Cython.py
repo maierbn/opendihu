@@ -42,7 +42,7 @@ class Cython(Package):
         
     def check(self, ctx):
         env = ctx.env
-        ctx.Message('Checking for Cython ... ')
+        ctx.Message('Checking for Cython ...        ')
         self.check_options(env)
 
         res = super(Cython, self).check(ctx)

@@ -38,17 +38,25 @@ collectMeshProperties(CurrentFieldVariableType currentFieldVariable, const Outpu
 
 
   /*
-  int dimensionality;    ///< D=1: object is a VTK "Line", D=2, D=3: object is a VTK "Poly"
+  int dimensionality;    ///< D=1: object is a VTK "Line", D=2, D=3: object should be represented by an unstructured grid
   global_no_t nPoints;   ///< the number of points needed for representing the mesh
   global_no_t nCells;    ///< the number of VTK "cells", i.e. "Lines" or "Polys", which is the opendihu number of "elements"
+  std::vector<node_no_t> nNodesLocalWithGhosts;   ///< local number of nodes including ghosts, for all dimensions
 
   std::vector<std::pair<std::string,int>> pointDataArrays;   ///< <name,nComponents> of PointData DataArray elements
   */
-  meshProperties[meshName].dimensionality = currentFieldVariable->functionSpace()->dim();
+  int dimensionality = currentFieldVariable->functionSpace()->dim();
+  meshProperties[meshName].dimensionality = dimensionality;
   meshProperties[meshName].nPointsLocal = currentFieldVariable->functionSpace()->nNodesLocalWithGhosts();
   meshProperties[meshName].nCellsLocal = currentFieldVariable->functionSpace()->nElementsLocal();
   meshProperties[meshName].nPointsGlobal = currentFieldVariable->functionSpace()->nNodesGlobal();
   meshProperties[meshName].nCellsGlobal = currentFieldVariable->functionSpace()->nElementsGlobal();
+  meshProperties[meshName].nNodesLocalWithGhosts.resize(dimensionality);
+
+  for (int dimensionIndex = 0; dimensionIndex < dimensionality; dimensionIndex++)
+  {
+    meshProperties[meshName].nNodesLocalWithGhosts[dimensionIndex] = currentFieldVariable->functionSpace()->meshPartition()->nNodesLocalWithGhosts(dimensionIndex);
+  }
 
   if (!currentFieldVariable->isGeometryField())
   {
@@ -85,5 +93,5 @@ collectMeshProperties(TupleType currentFieldVariableTuple, const OutputFieldVari
   return false;  // do not break iteration 
 }
 
-};  //namespace ParaviewLoopOverTuple
-};  //namespace OutputWriter
+}  // namespace ParaviewLoopOverTuple
+}  // namespace OutputWriter

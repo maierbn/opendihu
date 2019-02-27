@@ -38,4 +38,4 @@ void checkSymmetry(double Cbar[3][3][3][3], std::string name)
   }
 }
 
-};  // namespace
+} // namespace

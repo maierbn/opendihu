@@ -9,4 +9,4 @@ template<typename FunctionSpaceType,int nComponents>
 class FieldVariableSetGet
 {};
 
-}; // namespace
+}  // namespace

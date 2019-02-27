@@ -70,21 +70,6 @@ class PETSc(Package):
           # on hazel hen login node do not run MPI test program because this is not possible (only compile)
           self.run = False
           
-        # Setup the build handler. This needs bison installed.
-        self.set_build_handler([
-            #'PATH=${PATH}:${DEPENDENCIES_DIR}/bison/install/bin \
-            './configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=no \
-            --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
-            --with-mpi-dir=${MPI_DIR}\
-            --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch \
-            COPTFLAGS=-O3\
-            CXXOPTFLAGS=-O3\
-            FOPTFLAGS=-O3',
-            'make all',     # do not add -j option, because it is not supported by Makefile of PETSc
-            'echo "sleep 3 s" && sleep 3',
-            'make install',
-            'make test',
-        ])
         
         self.number_output_lines = 4121
         
@@ -95,11 +80,43 @@ class PETSc(Package):
           return True
       
         env = ctx.env
-        ctx.Message('Checking for PETSc ... ')
+        
+        
+        # debugging build handler 
+        if self.have_option(env, "PETSC_DEBUG"):
+          # debug build with MUMPS
+          print("PETSc debugging build is on!")
+          self.set_build_handler([
+            #'PATH=${PATH}:${DEPENDENCIES_DIR}/bison/install/bin \
+            './configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=yes \
+            --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
+            --with-mpi-dir=${MPI_DIR}\
+            --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch | tee out.txt',
+            '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt',
+            '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt)',
+          ])
+        else:
+          # standard release build with MUMPS
+          # This needs bison installed
+          self.set_build_handler([
+              #'PATH=${PATH}:${DEPENDENCIES_DIR}/bison/install/bin \
+              './configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=no \
+              --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
+              --with-mpi-dir=${MPI_DIR}\
+              --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch\
+              COPTFLAGS=-O3\
+              CXXOPTFLAGS=-O3\
+              FOPTFLAGS=-O3 | tee out.txt',
+            '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt',
+            '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt)',
+          ])
+        
+        ctx.Message('Checking for PETSc ...         ')
         self.check_options(env)
 
         res = super(PETSc, self).check(ctx, loc_callback=find_conf)
-        
+        self.check_required(res[0], ctx)
+      
         # if installation of petsc fails, retry without mumps
         if not res[0]:
           ctx.Log('Retry without MUMPS\n')
@@ -110,26 +127,38 @@ class PETSc(Package):
             Package.one_shot_options.remove('PETSC_REBUILD')
           
           # Setup the build handler.
-          self.set_build_handler([
-              './configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=no \
+          
+          
+          if self.have_option(env, "PETSC_DEBUG"):
+            # debug build, without MUMPS
+            self.set_build_handler([
+                '$./configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=yes \
+                --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
+                --with-mpi-dir=${MPI_DIR} | tee out.txt',
+            '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt',
+            '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt)',
+            ])
+          else:
+            # release build without MUMPS
+            self.set_build_handler([
+              '$./configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=no \
               --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
               --with-mpi-dir=${MPI_DIR}\
+<<<<<<< HEAD
             --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch \
+=======
+              --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch \
+>>>>>>> d8a5b78011aad22ec787df902680ff4021e76fb2
               COPTFLAGS=-O3\
               CXXOPTFLAGS=-O3\
-              FOPTFLAGS=-O3',
-              'make all',     # do not add -j option, because it is not supported by Makefile of PETSc
-              'echo "sleep 3 s" && sleep 3',
-              'make install',
-              'make test',
-          ])
+              FOPTFLAGS=-O3 | tee out.txt',
+            '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt',
+            '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt)',
+            ])
           
           self.number_output_lines = 3990
           
-          self.check_options(env)
-
           res = super(PETSc, self).check(ctx, loc_callback=find_conf)
-
           self.check_required(res[0], ctx)
         
         ctx.Result(res[0])

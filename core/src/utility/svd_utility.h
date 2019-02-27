@@ -12,6 +12,7 @@ using namespace std;
 
 class SvdUtility
 {
+
  public:
   static vector<double> getSVD(vector<double> aData, int m, int n);
 
@@ -35,7 +36,10 @@ class SvdUtility
 
   static void getMatrixProduct(double a[], double b[], double c[], int rowsA, int colsA_rowsB, int colsB);
 
+<<<<<<< HEAD
   static void transposeMatrix(double a[], double b[], int rows, int cols);
 
   static void getMatrixInverse(double a[], int order);
+=======
+>>>>>>> d8a5b78011aad22ec787df902680ff4021e76fb2
 };

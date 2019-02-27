@@ -7,7 +7,8 @@ class MPI(Package):
 
   def __init__(self, **kwargs):
     defaults = {
-      'download_url': 'http://www.mcs.anl.gov/research/projects/mpich2/downloads/tarballs/1.4.1p1/mpich2-1.4.1p1.tar.gz',
+      #'download_url': 'http://www.mcs.anl.gov/research/projects/mpich2/downloads/tarballs/1.4.1p1/mpich2-1.4.1p1.tar.gz',
+      'download_url': 'https://download.open-mpi.org/release/open-mpi/v3.0/openmpi-3.0.3.tar.gz'
     }
     defaults.update(kwargs)
     super(MPI, self).__init__(**defaults)
@@ -38,7 +39,7 @@ int main(int argc, char* argv[])
       return True
         
     env = ctx.env
-    ctx.Message('Checking for MPI ... ')
+    ctx.Message('Checking for MPI ...           ')
     self.check_options(env)
 
     self.headers = ['mpi.h']
@@ -60,12 +61,28 @@ int main(int argc, char* argv[])
       ['dl', 'pthread'],
       ['dl', 'pthread', 'rt']
     ]
+    
+    # standard build handler
     self.set_build_handler([
       'mkdir -p ${PREFIX}',
-      'cd ${SOURCE_DIR} && ./configure --prefix=${PREFIX} CC='+env["cc"]+' CXX='+env["CC"]+' && make && make install',
+      'cd ${SOURCE_DIR} && ./configure --prefix=${PREFIX} CC='+ctx.env["CC"]+' CXX='+ctx.env["CXX"]+' && make && make install',
     ])
+    
+    # debugging build handler 
+    if self.have_option(env, "MPI_DEBUG"):
+      self.set_build_handler([
+        'mkdir -p ${PREFIX}',
+        'cd ${SOURCE_DIR} && ./configure --prefix=${PREFIX} CC='+ctx.env["CC"]+' CXX='+ctx.env["CXX"]+' --enable-debug --enable-memchecker && make && make install',
+      ])
+      self.number_output_lines = 16106
+      
     use_showme = True
     use_mpi_dir = False
+    
+    if self.have_option(env, "MPI_IGNORE_MPICC"):
+      use_showme = False
+      use_mpi_dir = True
+      res = (False,None)
     
     # on hazel hen login node do not run MPI test program because this is not possible (only compile)
     if os.environ.get("PE_ENV") is not None:
@@ -106,6 +123,8 @@ int main(int argc, char* argv[])
     self.check_required(res[0], ctx)
     
     if not res[0]:
+      print("build with build handler")
+      
       # build with build handler
       res = super(MPI, self).check(ctx)
     

@@ -23,4 +23,4 @@ public:
   virtual Vec3 getGeometry(node_no_t dofNo) const = 0;
 };
 
-};    // namespace
+}  // namespace

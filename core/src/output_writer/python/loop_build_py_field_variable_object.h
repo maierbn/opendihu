@@ -54,8 +54,8 @@ typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value &
 buildPyFieldVariableObject(CurrentFieldVariableType currentFieldVariable, int &fieldVariableIndex, std::string meshName, 
                            PyObject *pyData, bool onlyNodalValues, std::shared_ptr<Mesh::Mesh> &mesh);
 
-};  //namespace ExfileLoopOverTuple
+}  // namespace ExfileLoopOverTuple
 
-};  //namespace OutputWriter
+}  // namespace OutputWriter
 
 #include "output_writer/python/loop_build_py_field_variable_object.tpp"

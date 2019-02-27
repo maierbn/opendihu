@@ -36,6 +36,6 @@ public:
   static ValueType computeIntegral(const typename std::array<ValueType,ClenshawCurtis<NumberIntegrationPoints>::numberEvaluations()> &evaluations);
 };
 
-};   // namespace
+}  // namespace
 
 #include "quadrature/clenshaw_curtis.tpp"

@@ -37,4 +37,4 @@ std::string Hermite::getBasisFunctionString()
   return std::string("Hermite");
 }
 
-};  //namespace
+}  // namespace

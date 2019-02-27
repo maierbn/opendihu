@@ -64,7 +64,7 @@ private:
   static PyObject *buildPyElementalDofsObject(std::shared_ptr<Mesh::Mesh> meshBase, bool onlyNodalValues);
 };
 
-};  // namespace
+} // namespace
 
 #include "output_writer/python/python_structured_regular_fixed.tpp"
 #include "output_writer/python/python_structured_deformable.tpp"

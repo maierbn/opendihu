@@ -17,12 +17,12 @@ int main(int argc, char *argv[])
   LOG(DEBUG)<<std::string(80, '=');
   
   OperatorSplitting::Godunov<
-    ModelOrderReduction::TimeSteppingReducedExplicit<
+    ModelOrderReduction::ExplicitEulerReduced<
       TimeSteppingScheme::ExplicitEuler<
         CellmlAdapter<4>
       >
     >,
-    ModelOrderReduction::TimeSteppingReducedImplicit<
+    ModelOrderReduction::ImplicitEulerReduced< //! Diffusion term not to be used with the explicit timestepping. The reduced mass and stiffness matrices are not implemented.
       TimeSteppingScheme::ImplicitEuler<
         SpatialDiscretization::FiniteElementMethod<
           Mesh::StructuredRegularFixedOfDimension<1>,

@@ -10,9 +10,9 @@ int main(int argc, char *argv[])
   // initialize everything, handle arguments and parse settings from input file
   DihuContext settings(argc, argv);
   
-  PyObject *topLevelSettings = settings.getPythonConfig();
+  PythonConfig topLevelSettings = settings.getPythonConfig(); 
   
-  if(PythonUtility::hasKey(topLevelSettings, "ExplicitEuler"))
+  if(topLevelSettings.hasKey("ExplicitEuler"))
   {
     LOG(INFO) << "ExplicitEuler";
     
@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
   
     return EXIT_SUCCESS;
   } 
-  else if(PythonUtility::hasKey(topLevelSettings, "ImplicitEuler"))
+  else if(topLevelSettings.hasKey("ImplicitEuler"))
   {
     LOG(INFO) << "ImplicitEuler";
     
@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
     
     return EXIT_SUCCESS;
   }
-  else if(PythonUtility::hasKey(topLevelSettings, "CrankNicolson"))
+  else if(topLevelSettings.hasKey("CrankNicolson"))
   {
     LOG(INFO) << "CrankNicolson";
     

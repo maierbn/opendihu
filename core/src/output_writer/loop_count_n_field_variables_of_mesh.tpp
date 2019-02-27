@@ -67,5 +67,5 @@ countNFieldVariablesOfMesh(TupleType currentFieldVariableTuple, std::string mesh
   return false;  // do not break iteration
 }
 
-};  //namespace LoopOverTuple
-};  //namespace OutputWriter
+}  // namespace LoopOverTuple
+}  // namespace OutputWriter

@@ -12,11 +12,11 @@ namespace FieldVariable
  */
 template<typename FunctionSpaceType, int nComponentsValue>
 class FieldVariableComponents :
-  public FieldVariableBase<FunctionSpaceType>
+  public FieldVariableBaseFunctionSpace<FunctionSpaceType>
 {
 public:
   //! inherited constructor
-  using FieldVariableBase<FunctionSpaceType>::FieldVariableBase;
+  using FieldVariableBaseFunctionSpace<FunctionSpaceType>::FieldVariableBaseFunctionSpace;
 
   //! get the component names
   const std::array<std::string,nComponentsValue> &componentNames() const;
@@ -41,5 +41,5 @@ protected:
   std::array<std::string,nComponentsValue> componentNames_;   ///< names of the components, e.g. "x","y","z"
 };
 
-}; // namespace
+}  // namespace
 #include "field_variable/01_field_variable_components.tpp"

@@ -3,6 +3,7 @@
 *.a
 **/*.so
 */.sconf_temp*
+**/*bp*
 config.log
 build_debug
 build_release

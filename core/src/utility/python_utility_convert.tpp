@@ -40,6 +40,23 @@ struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
       }
       return result;
     }
+    else if (PyTuple_Check(object))
+    {
+      int i = 0;
+      int iEnd = std::min((int)PyTuple_Size(object), nComponents);
+
+      for (;i < iEnd; i++)
+      {
+        result[i] = PythonUtility::convertFromPython<ValueType>::get(PyTuple_GetItem(object, (Py_ssize_t)i), defaultValue[i]);
+      }
+
+      // fill rest of values with default values
+      for (;i < nComponents; i++)
+      {
+        result[i] = defaultValue[i];
+      }
+      return result;
+    }
     /*
   #ifdef HAVE_NUMPYC
     else if (PyArray_Check(object))
@@ -113,6 +130,23 @@ struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
       for (;i < iEnd; i++)
       {
         result[i] = PythonUtility::convertFromPython<ValueType>::get(PyList_GetItem(object, (Py_ssize_t)i), defaultValue[i]);
+      }
+
+      // fill rest of values with default values
+      for (;i < nComponents; i++)
+      {
+        result[i] = defaultValue[i];
+      }
+      return result;
+    }
+    else if (PyTuple_Check(object))
+    {
+      int i = 0;
+      int iEnd = std::min((global_no_t)PyTuple_Size(object), nComponents);
+
+      for (;i < iEnd; i++)
+      {
+        result[i] = PythonUtility::convertFromPython<ValueType>::get(PyTuple_GetItem(object, (Py_ssize_t)i), defaultValue[i]);
       }
 
       // fill rest of values with default values
@@ -204,6 +238,23 @@ struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
       }
       return result;
     }
+    else if (PyTuple_Check(object))
+    {
+      int i = 0;
+      int iEnd = std::min((unsigned long)PyTuple_Size(object), nComponents);
+
+      for (;i < iEnd; i++)
+      {
+        result[i] = PythonUtility::convertFromPython<ValueType>::get(PyTuple_GetItem(object, (Py_ssize_t)i), defaultValue[i]);
+      }
+
+      // fill rest of values with default values
+      for (;i < nComponents; i++)
+      {
+        result[i] = defaultValue[i];
+      }
+      return result;
+    }
     /*
   #ifdef HAVE_NUMPYC
     else if (PyArray_Check(object))
@@ -273,6 +324,7 @@ struct PythonUtility::convertFromPython<std::vector<ValueType>>
     {
       int nEntries = (int)PyList_Size(object);
       result.resize(nEntries);
+      LOG(DEBUG) << "nEntries: " << nEntries;
 
       for (int i = 0; i < nEntries; i++)
       {
@@ -663,6 +715,54 @@ struct PythonUtility::convertFromPython<std::size_t>
   static std::size_t get(PyObject *object)
   {
     return convertFromPython<std::size_t>::get(object, 0);
+  }
+};
+
+//partial specialization for long long which is also MPI_Offset
+template<>
+struct PythonUtility::convertFromPython<long long>
+{
+  //! convert a python object to its corresponding c type, with type checking, if conversion is not possible, use defaultValue
+  static long long get(PyObject *object, long long defaultValue)
+  {
+    if (object == NULL)
+      return defaultValue;
+
+    // start critical section for python API calls
+    // PythonUtility::GlobalInterpreterLock lock;
+
+    if (PyLong_Check(object))
+    {
+      long long valueLong = PyLong_AsLongLong(object);
+      return valueLong;
+    }
+    else if (PyFloat_Check(object))
+    {
+      double valueDouble = PyFloat_AsDouble(object);
+
+      if (double((long long)(valueDouble)) != valueDouble)      // if value is not e.g. 2.0
+      {
+        LOG(WARNING) << "convertFromPython: object is no long long: " << object;
+      }
+
+      return (long long)(valueDouble);
+    }
+    else if (PyUnicode_Check(object))
+    {
+      std::string valueString = pyUnicodeToString(object);
+      return atoi(valueString.c_str());
+    }
+    else
+    {
+      LOG(WARNING) << "convertFromPython: object is no long long: " << object;
+    }
+    return defaultValue;
+  }
+
+  //! convert a python object to its corresponding c type, with type checking, if conversion is not possible use trivial default value (0 or 0.0 or "")
+  static long long get(PyObject *object)
+  {
+    return convertFromPython<long long>::get(object, 0);
   }
 };
 

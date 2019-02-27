@@ -74,4 +74,4 @@ void Generic::appendRankNo(std::stringstream &str, int nRanks, int ownRankNo)
   str << "." << std::setw(nCharacters) << std::setfill('0') << ownRankNo;
 }
 
-};
+}  // namespace

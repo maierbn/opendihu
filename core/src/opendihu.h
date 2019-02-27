@@ -1,6 +1,7 @@
 // This file includes all header files that may be needed from an example
 #include "utility/python_utility.h"
 
+#include "control/coupling.h"
 #include "control/dihu_context.h"
 #include "control/multiple_instances.h"
 #include "control/load_balancing/load_balancing.h"
@@ -26,16 +27,19 @@
 #include "time_stepping_scheme/explicit_euler.h"
 #include "time_stepping_scheme/implicit_euler.h"
 #include "time_stepping_scheme/heun.h"
-#include "time_stepping_scheme/multidomain_solver.h"
+#include "specialized_solver/multidomain_solver.h"
+#include "specialized_solver/static_bidomain_solver.h"
 
 #include "spatial_discretization/finite_element_method/05_time_stepping.h"
 
 //#include "model_order_reduction/mor.h"
-#include "model_order_reduction/time_stepping_scheme_ode_reduced_explicit.h"
-//#include "model_order_reduction/time_stepping_scheme_ode_reduced_implicit.h"
+//#include "model_order_reduction/time_stepping_reduced_explicit.h"
+//#include "model_order_reduction/time_stepping_reduced_implicit.h"
+#include "model_order_reduction/explicit_euler_reduced.h"
+#include "model_order_reduction/implicit_euler_reduced.h"
 
 #include "postprocessing/streamline_tracer.h"
-#include "postprocessing/parallel_fiber_estimation.h"
+#include "postprocessing/parallel_fiber_estimation/parallel_fiber_estimation.h"
 
 #include "cellml/03_cellml_adapter.h"
 

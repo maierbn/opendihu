@@ -97,4 +97,4 @@ void Exfile::write(DataType& data, int timeStepNo, double currentTime)
   outputComFile();
 }
 
-};
+}  // namespace

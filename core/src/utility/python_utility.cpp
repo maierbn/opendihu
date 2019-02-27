@@ -834,8 +834,77 @@ void PythonUtility::getOptionVector(const PyObject *settings, std::string keyStr
 
 void PythonUtility::checkForError()
 {
+
   if (PyErr_Occurred())
   {
+    LOG(ERROR) << "Python exception";
+
+    PyObject *type = NULL, *value = NULL, *traceback = NULL;
+    PyErr_Fetch(&type, &value, &traceback);
+    //PyErr_GetExcInfo(&type, &value, &traceback);
+    //PyErr_NormalizeException(&type, &value, &traceback);
+
+    if (type == NULL && value == NULL && traceback == NULL)
+      LOG(INFO) << "Error indicator is not set";
+
+    PyObject* strType = PyObject_Str(type);
+    PyObject* reprType = PyObject_Repr(type);
+    if (strType != NULL && reprType != NULL)
+      LOG(INFO) << "type: " << convertFromPython<std::string>::get(strType) << ", " << convertFromPython<std::string>::get(reprType);
+
+    PyObject* strValue = PyObject_Str(value);
+    PyObject* reprValue = PyObject_Repr(value);
+    if (strValue != NULL && reprValue != NULL)
+      LOG(ERROR) << convertFromPython<std::string>::get(strValue);
+
+    Py_XDECREF(strType);
+    Py_XDECREF(strValue);
+    Py_XDECREF(reprType);
+    Py_XDECREF(reprValue);
+
+    // call sys.exc_info()
+
+    static PyObject *tracebackModule = PyImport_ImportModule("traceback");
+    if (tracebackModule == NULL)
+    {
+      LOG(DEBUG) << "Failed to import traceback module.";
+    }
+
+    static PyObject *functionFormatException = PyObject_GetAttrString(tracebackModule, "format_exception");
+    if (functionFormatException == NULL)
+    {
+      LOG(DEBUG) << "Failed to load format_exception function.";
+    }
+
+    PyObject* returnValue = PyObject_CallFunctionObjArgs(functionFormatException, type, value, traceback, NULL);
+    if (returnValue != NULL)
+    {
+      std::vector<std::string> result = convertFromPython<std::vector<std::string>>::get(returnValue);
+      std::stringstream str;
+      for (std::vector<std::string>::iterator resultIter = result.begin(); resultIter != result.end(); resultIter++)
+      {
+        str << *resultIter;
+      }
+      LOG(ERROR) << str.str();
+
+
+      PyObject *strValue = PyObject_Str(returnValue);
+
+      if (strValue != NULL)
+      {
+        LOG(INFO) << convertFromPython<std::string>::get(strValue);
+      }
+      else
+      {
+        LOG(DEBUG) << "(exception could not be converted to string)";
+      }
+    }
+    else
+    {
+      LOG(DEBUG) << "(format_exception did not return a valid result)";
+    }
+
+    PyErr_Restore(type, value, traceback);
     PyErr_Print();
     PyErr_Clear();
   }

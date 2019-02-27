@@ -28,6 +28,14 @@ public:
   //! @param onlyNodalValues: if this is true, for Hermite only the non-derivative values are retrieved
   void getValuesWithoutGhosts(int componentNo, std::vector<double> &values, bool onlyNodalValues=false) const;
 
+  //! get all values
+  //! @param onlyNodalValues: if this is true, for Hermite only the non-derivative values are retrieved
+  void getValuesWithGhosts(std::vector<std::array<double,nComponents>> &values, bool onlyNodalValues=false) const;
+
+  //! get all values
+  //! @param onlyNodalValues: if this is true, for Hermite only the non-derivative values are retrieved
+  void getValuesWithoutGhosts(std::vector<std::array<double,nComponents>> &values, bool onlyNodalValues=false) const;
+
   //! for a specific component, get values from their local dof no.s, as array, therefore templated by the number of elements, N, to retrieve
   template<int N>
   void getValues(int componentNo, std::array<dof_no_t,N> dofLocalNo, std::array<double,N> &values) const;
@@ -67,6 +75,13 @@ public:
   //! set the values for the given component from the other field variable
   void setValues(int componentNo, std::shared_ptr<FieldVariable<FunctionSpaceType,1>> fieldVariable);
 
+  //! set values for a given components for given dofs
+  void setValues(int componentNo, const std::vector<dof_no_t> &dofNosLocal, const std::vector<double> &values, InsertMode petscInsertMode=INSERT_VALUES);
+
+  //! set values for a given components for given dofs
+  template<int N>
+  void setValues(int componentNo, const std::array<dof_no_t,N> &dofNosLocal, const std::array<double,N> &values, InsertMode petscInsertMode=INSERT_VALUES);
+
   //! set values for all components for dofs, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
   void setValues(const std::vector<dof_no_t> &dofNosLocal, const std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode=INSERT_VALUES);
 
@@ -95,6 +110,6 @@ public:
   void zeroEntries();
 };
 
-};  // namespace
+} // namespace
 
 #include "field_variable/structured/03_field_variable_set_get_structured.tpp"

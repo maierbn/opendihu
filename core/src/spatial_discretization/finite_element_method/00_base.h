@@ -14,7 +14,10 @@ namespace SpatialDiscretization
  * Further classes derive from this base class and add special functionality such as setting stiffness matrix, rhs and timestepping
  */
 template<typename FunctionSpaceType,typename QuadratureType,typename Term>
-class FiniteElementMethodBase : public SpatialDiscretization, public Runnable
+class FiniteElementMethodBase :
+  public SpatialDiscretization,
+  public Runnable,
+  public Multipliable
 {
 public:
   //! constructor, if function space is not given, create new one according to settings
@@ -30,6 +33,9 @@ public:
 
   //! initialize for use as laplace or poisson equation, not for timestepping
   virtual void initialize();
+
+  //! reset to pre-initialized state, this deallocates all data and sets initialized_ to false such that a new call to initialize() is necessary
+  void reset();
 
   //! set the subset of ranks that will compute the work
   void setRankSubset(Partition::RankSubset rankSubset);
@@ -96,6 +102,6 @@ public:
 };
 
 
-};  // namespace
+} // namespace
 
 #include "spatial_discretization/finite_element_method/00_base.tpp"

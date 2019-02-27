@@ -24,16 +24,38 @@ FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, Pyt
   this->noGeometryField_ = noGeometryField;
 }
 
+// constructor
 template<int D,typename BasisFunctionType>
 FunctionSpaceDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
-FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, const std::vector<Vec3> &localNodePositions, const std::array<element_no_t,D> nElementsPerCoordinateDirection) :
+FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, std::vector<double> &localNodePositions, PythonConfig specificSettings, bool noGeometryField) :
+  FunctionSpaceDofsNodesStructured<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>(partitionManager, specificSettings)
+{
+  LOG(DEBUG) << "constructor FunctionSpaceDofsNodes StructuredDeformable, noGeometryField_=" << this->noGeometryField_;
+
+  localNodePositions_ = localNodePositions;
+  LOG(DEBUG) << "store " << localNodePositions_.size() << " node positions";
+
+  this->noGeometryField_ = noGeometryField;
+}
+
+template<int D,typename BasisFunctionType>
+FunctionSpaceDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
+FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, const std::vector<Vec3> &localNodePositions,
+                       const std::array<element_no_t,D> nElementsPerCoordinateDirectionLocal, const std::array<int,D> nRanksPerCoordinateDirection) :
   FunctionSpaceDofsNodesStructured<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>(partitionManager, NULL)
 {
   LOG(DEBUG) << "constructor FunctionSpaceDofsNodes StructuredDeformable, from " << localNodePositions.size() << " localNodePositions";
  
   this->noGeometryField_ = false;
-  this->nElementsPerCoordinateDirectionLocal_ = nElementsPerCoordinateDirection;
-  LOG(DEBUG) << "set number of elements per coordinate direction: " << this->nElementsPerCoordinateDirectionLocal_;
+  this->nElementsPerCoordinateDirectionLocal_ = nElementsPerCoordinateDirectionLocal;
+  this->nRanks_ = nRanksPerCoordinateDirection;
+  this->forcePartitioningCreationFromLocalNumberOfElements_ = true;     // this is defined in 03_function_space_partition.h
+
+  // forcePartitioningCreationFromLocalNumberOfElements_ is set to true, this means that the partitioning is created considering
+  // this->nElementsPerCoordinateDirectionLocal_ and not depending on values of inputMeshIsGlobal
+
+  LOG(DEBUG) << "set local number of elements per coordinate direction: " << this->nElementsPerCoordinateDirectionLocal_ << ", nRanks: " << this->nRanks_;
+  LOG(DEBUG) << "set forcePartitioningCreationFromLocalNumberOfElements_ to true";
 
   localNodePositions_.reserve(localNodePositions.size() * D);
 
@@ -76,6 +98,9 @@ initialize()
   
   // assign values of geometry field
   this->setGeometryFieldValues();
+
+  // set initalized_ to true which indicates that initialize has been called
+  this->initialized_ = true;
 }
 
 // read in config nodes
@@ -139,6 +164,13 @@ parseNodePositionsFromSettings(PythonConfig specificSettings)
     if (nodesStoredAsLists)
     {
       node_no_t nNodesInList = PyList_Size(nodePositionsListPy);
+
+      if (nNodesInList != nNodes)
+      {
+        LOG(ERROR) << specificSettings.getStringPath() << "[\"nodePositions\"]: Number of nodes in list (" << nNodesInList << ") "
+          << "does not match expected number of the mesh (" << nNodes << "). inputMeshIsGlobal is " << std::boolalpha << inputMeshIsGlobal;
+      }
+
       node_no_t nodeNo = 0;
       for (; nodeNo < nNodesInList; nodeNo++)
       {
@@ -350,7 +382,6 @@ setGeometryFieldValues()
       geometryValuesIndex++;
     }
   }
-
   // set values for node positions as geometry field 
   this->geometryField_->setValuesWithoutGhosts(geometryValues);
   this->geometryField_->finishGhostManipulation();
@@ -365,4 +396,4 @@ setGeometryFieldValues()
   VLOG(1) << "setGeometryField, geometryValues: " << geometryValues;
 }
 
-};  // namespace
+} // namespace

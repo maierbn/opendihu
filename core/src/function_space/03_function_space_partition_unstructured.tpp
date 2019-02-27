@@ -34,6 +34,9 @@ initialize()
   
   this->meshPartition_ = this->partitionManager_->template createPartitioningUnstructured<FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>(
     this->nElementsGlobal(), this->nNodesGlobal(), this->nDofsGlobal());
+
+  // set initalized_ to true which indicates that initialize has been called
+  this->initialized_ = true;
 }
 
-};  // namespace
+} // namespace

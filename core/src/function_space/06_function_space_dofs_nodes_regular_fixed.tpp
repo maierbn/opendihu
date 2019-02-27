@@ -20,7 +20,20 @@ FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, Pyt
 {
   this->meshWidth_ = 0;
   // meshWidth will be initialized in initialize
+}
 
+template<int D,typename BasisFunctionType>
+FunctionSpaceDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::
+FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, std::vector<double> &null, PythonConfig specificSettings) :
+  FunctionSpaceDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::FunctionSpaceDofsNodes(partitionManager, specificSettings)
+{
+}
+
+template<int D,typename BasisFunctionType>
+FunctionSpaceDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::
+FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, std::vector<double> &null, std::array<element_no_t, D> nElements, std::array<double, D> physicalExtent) :
+  FunctionSpaceDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::FunctionSpaceDofsNodes(partitionManager, nElements, physicalExtent)
+{
 }
 
 template<int D,typename BasisFunctionType>
@@ -133,6 +146,9 @@ initialize()
   this->geometryField_ = std::make_shared<GeometryFieldType>(thisMesh, "geometry", componentNames, true);
   
   // no need to set values of the geometry field, because there is no data explicitly stored
+
+  // set initalized_ to true which indicates that initialize has been called
+  this->initialized_ = true;
 }
 
 template<int D,typename BasisFunctionType>
@@ -143,4 +159,4 @@ meshWidth() const
 }
 
 
-};  // namespace
+} // namespace

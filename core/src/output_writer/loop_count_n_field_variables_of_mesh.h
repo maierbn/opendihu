@@ -55,8 +55,8 @@ typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value &
 countNFieldVariablesOfMesh(CurrentFieldVariableType currentFieldVariable, std::string meshName, 
                            int &nFieldVariablesOfMesh);
 
-};  //namespace LoopOverTuple
+}  // namespace LoopOverTuple
 
-};  //namespace OutputWriter
+}  // namespace OutputWriter
 
 #include "output_writer/loop_count_n_field_variables_of_mesh.tpp"

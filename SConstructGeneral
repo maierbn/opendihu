@@ -42,18 +42,21 @@ sconsconfig.select(
     packages.PETSc(required=True),   # Petsc depends on LAPACK/BLAS and bison
     #packages.bzip2(required=False),
     packages.Python(required=True),  # This compiles python 3.6 from source to be able to embedd the python interpreter in opendihu. All further python packages are installed in this installation tree under dependencies/python/install
-    packages.Cython(required=False), # Cython is a dependency for the numpy C API
-    packages.NumpyC(required=False), # The numpy C API. Numpy is needed such that the python config files that are parsed by opendihu can load the numpy package. This needs to be compiled from source and linked to the same LAPACK/BLAS package that also opendihu uses, otherwise there will be errors.
-    packages.SciPy(required=False),  # Scipy to also make it available in the config python files. This just installs from a whl using pip, so no extra compilation.
-    packages.Matplotlib(required=False),   # Matplotlib, again to make it available in the config python files, where you could generate plots in callbacks as the simulation is running. This also installs from a whl using pip, so no extra compilation.
-    packages.NumpySTL(required=False),   # numpy-stl, used for manipulation of stl meshes in fiber test case
-    packages.SvgPath(required=False),   # svg.path python package for manipulating svg paths
+    #packages.Cython(required=False), # Cython is a dependency for the numpy C API
+    #packages.NumpyC(required=False), # The numpy C API. Numpy is needed such that the python config files that are parsed by opendihu can load the numpy package. This needs to be compiled from source and linked to the same LAPACK/BLAS package that also opendihu uses, otherwise there will be errors.
+    #packages.SciPy(required=False),  # Scipy to also make it available in the config python files. This just installs from a whl using pip, so no extra compilation.
+    #packages.Matplotlib(required=False),   # Matplotlib, again to make it available in the config python files, where you could generate plots in callbacks as the simulation is running. This also installs from a whl using pip, so no extra compilation.
+    #packages.NumpySTL(required=False),   # numpy-stl, used for manipulation of stl meshes in fiber test case
+    #packages.SvgPath(required=False),   # svg.path python package for manipulating svg paths
+    packages.pythonPackages(required=False),   # all further python utils that can be installed via pip
     packages.Base64(required=True),  # Base64 is an encoding library that is needed for binary VTK output.
     packages.googletest(required=False),   # This is the testing framework.
     #packages.libxml2(required=True),
     #packages.Sphinx(required=True),
     #packages.libcellml(required=True),          # relies on libxml2 and SWIG
-    packages.SEMT(required=True),    # This is a small C++ symbolic differentiation toolbox that is used for solid mechanics.
+    packages.SEMT(required=True),           # This is a small C++ symbolic differentiation toolbox that is used for solid mechanics.
+    packages.MegaMol(required=False),       # Adds the MegaMol visualization framework
+    packages.ADIOS(required=False),       # ADIOS
     packages.EasyLoggingPP(required=True),      # This is the logging library, it has to be the last package to be included because it contains a source (.c) file that needs to be compiled and linked to opendihu and somehow otherwise scons-config does not work.
 )
 
@@ -78,9 +81,11 @@ vars.Add(BoolVariable('no_tests', 'Do not compile and run tests.', 0))
 vars.Add(BoolVariable('no_examples', 'Do not compile examples.', 0))
 vars.Add(BoolVariable('USE_CRAY_PAT', 'Compile with craypat regions.', False))
 vars.Add(BoolVariable('USE_HPL', 'Compile with -hpl option.', False))
+vars.Add(BoolVariable('USE_MEGAMOL', 'Use additional linker flags to link to the megamol source file.', False))
 vars.Add('cc', help='The c compiler', default='gcc')
 vars.Add('CC', help='The c++ compiler', default='g++')
 vars.Add('mpiCC', help='The mpic++ compiler wrapper', default='mpic++')
+vars.Add('cmake', help='The cmake executable', default='cmake')
     
 # Add options from any packages we want to use.
 sconsconfig.add_options(vars)
@@ -115,6 +120,8 @@ if ARGUMENTS.get('VERBOSE') != '1' and tty_available:
 # set compiler, "CC" is C++, "cc" is C
 env['CXX'] = env['CC']
 env['CC'] = env['cc']
+if not 'cmake' in env:
+  env['cmake'] = 'cmake'
 
 # Create configuration environment, passing the set of custom tests.
 sconf = env.Configure(custom_tests=sconsconfig.custom_tests)
@@ -174,7 +181,9 @@ if env["BUILD_TYPE"] == "debug":
   # debug build
   variant_dir = os.path.join(path_where_to_call_sconscript,"build_debug")           # output folder for build
   env.MergeFlags('-ftemplate-backtrace-limit=0 -fstack-check')
-  env.MergeFlags('-Werror -Wall -Wno-sign-compare -Wno-error=sign-compare')
+  if not env["USE_MEGAMOL"]:
+    env.MergeFlags('-Werror')
+  env.MergeFlags('-Wall -Wpedantic -Wno-sign-compare -Wno-error=sign-compare')
   env.MergeFlags('-DDEBUG -ggdb3 -g3 -Og -pg  -DELPP_FEATURE_CRASH_LOG')   # gcc flags, will be sorted automatically into linker and compiler flags
   env.Append(LIBPATH = [os.path.join(opendihu_home, 'core/build_debug')])   # add debug version of opendihu library
   env.Prepend(LIBS = ['opendihud'])
@@ -223,7 +232,7 @@ env.MergeFlags("-lpthread -ldl -lutil -lm")
 
 # add defines that are used in the code
 env.Append(CPPDEFINES = {'-DOPENDIHU_HOME': '\\"'+str(opendihu_home)+'\\"'})   # add define of the directory where this file is located
-env.Append(CPPDEFINES = {'-DC_COMPILER_COMMAND': '\\"'+env["CC"]+'\\"'})   # add define of the directory where this file is located
+env.Append(CPPDEFINES = {'-DC_COMPILER_COMMAND': '\\"'+env["CC"]+'\\"'})   # add compile command, e.g. g++
 env.Append(CPPDEFINES = "-DELPP_NO_DEFAULT_LOG_FILE")  # disable creation of the "myeasylog.log" default log file
 
 # Set the include path for header files

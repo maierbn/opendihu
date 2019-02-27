@@ -54,8 +54,8 @@ typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value &
 checkIfNewExnodeHeaderNecessary(CurrentFieldVariableType currentFieldVariable, std::string meshName, 
                                 element_no_t currentNodeGlobalNo, bool &newHeaderNecessary);
 
-};  //namespace ExfileLoopOverTuple
+}  // namespace ExfileLoopOverTuple
 
-};  //namespace OutputWriter
+}  // namespace OutputWriter
 
 #include "output_writer/exfile/loop_check_if_new_exnode_header_necessary.tpp"

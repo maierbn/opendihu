@@ -1136,4 +1136,4 @@ getElasticityEntry(std::array<double, 21> &elasticity, int k, int l, int r, int 
   return elasticity[getElasticityEntryNo(k,l,r,s)];
 }
 */
-};    // namespace
+}  // namespace

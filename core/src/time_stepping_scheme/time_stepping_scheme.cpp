@@ -87,7 +87,7 @@ void TimeSteppingScheme::initialize()
     setNumberTimeSteps(numberTimeSteps);
   }
 
-  LOG(INFO) << "Time span: [" << startTime_ << "," << endTime_ << "], Number of time steps: " << numberTimeSteps_
+  LOG(DEBUG) << "Time span: [" << startTime_ << "," << endTime_ << "], Number of time steps: " << numberTimeSteps_
     << ", time step width: " << timeStepWidth_;
 
   // log timeStepWidth as the key that is given by "logTimeStepWidthAsKey"
@@ -97,7 +97,7 @@ void TimeSteppingScheme::initialize()
     Control::PerformanceMeasurement::setParameter(timeStepWidthKey, timeStepWidth_);
   }
 
-  if (specificSettings_.hasKey("logTimeStepWidthAsKey"))
+  if (specificSettings_.hasKey("durationLogKey"))
   {
     this->durationLogKey_ = specificSettings_.getOptionString("durationLogKey", "");
   }
@@ -122,7 +122,7 @@ double TimeSteppingScheme::endTime()
   return endTime_;
 }
 
-double TimeSteppingScheme::numberTimeSteps()
+int TimeSteppingScheme::numberTimeSteps()
 {
   return numberTimeSteps_;
 }
@@ -137,4 +137,11 @@ PythonConfig TimeSteppingScheme::specificSettings()
   return specificSettings_;
 }
 
-};  // namespace
+OutputWriter::Manager TimeSteppingScheme::outputWriterManager()
+{
+  return outputWriterManager_;
+}
+
+
+}  // namespace
+

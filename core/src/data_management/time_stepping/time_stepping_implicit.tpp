@@ -26,6 +26,7 @@ createPetscObjects()
   this->boundaryConditionsRightHandSideSummand_ = this->functionSpace_->template createFieldVariable<nComponents>("boundaryConditionsRightHandSideSummand");
   this->systemRightHandSide_ = this->functionSpace_->template createFieldVariable<nComponents>("systemRightHandSide");
 
+  this->debuggingName_ = "Implicit";
   VLOG(1) << "initial values " << *this->boundaryConditionsRightHandSideSummand_;
 }
 

@@ -57,8 +57,8 @@ typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value &
 outputExelem(CurrentFieldVariableType currentFieldVariable, const OutputFieldVariablesType &fieldVariables, std::string meshName, 
              std::ofstream &file, std::shared_ptr<Mesh::Mesh> &mesh);
 
-};  //namespace ExfileLoopOverTuple
+}  // namespace ExfileLoopOverTuple
 
-};  //namespace OutputWriter
+}  // namespace OutputWriter
 
 #include "output_writer/exfile/loop_output_exelem.tpp"

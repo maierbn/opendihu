@@ -38,6 +38,17 @@ initialize()
   LOG(DEBUG) << "Data::FiniteElementsBase::initialize";
   Data<FunctionSpaceType>::initialize();
 }
+template<typename FunctionSpaceType>
+void FiniteElementsBase<FunctionSpaceType>::
+reset()
+{
+  LOG(DEBUG) << "Data::FiniteElementsBase::reset";
+  // set initalize_ to false
+  Data<FunctionSpaceType>::reset();
+
+  // deallocate Petsc matrices
+  this->stiffnessMatrix_ = nullptr;
+}
 
 template<typename FunctionSpaceType>
 void FiniteElementsBase<FunctionSpaceType>::
@@ -133,7 +144,7 @@ solution()
 
 template<typename FunctionSpaceType>
 typename FiniteElementsBase<FunctionSpaceType>::TransferableSolutionDataType FiniteElementsBase<FunctionSpaceType>::
-getSolutionForTransferInOperatorSplitting()
+getSolutionForTransfer()
 {
   LOG(INFO) << "retutrn FiniteElementsBase solution";
   return this->solution_;

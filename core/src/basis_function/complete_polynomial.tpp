@@ -52,4 +52,4 @@ getBasisFunctionString()
   return std::string("CompletePolynomial");
 }
 
-};  // namespace
+} // namespace

@@ -57,8 +57,8 @@ typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value &
 outputPointData(CurrentFieldVariableType currentFieldVariable, const OutputFieldVariablesType &fieldVariables, std::string meshName, 
                 std::ofstream &file, bool binaryOutput, bool fixedFormat, bool onlyParallelDatasetElement);
 
-};  //namespace ParaviewLoopOverTuple
+}  // namespace ParaviewLoopOverTuple
 
-};  //namespace OutputWriter
+}  // namespace OutputWriter
 
 #include "output_writer/paraview/loop_output_point_data.tpp"

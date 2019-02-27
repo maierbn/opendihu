@@ -3,4 +3,4 @@
 namespace Control
 {
 std::string settingsFileName = "";
-};
+}  // namespace

@@ -1435,4 +1435,4 @@ writeOutput()
 #endif
 }
 
-};    // namespace
+}  // namespace

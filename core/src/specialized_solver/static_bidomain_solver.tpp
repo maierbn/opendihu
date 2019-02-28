@@ -168,6 +168,9 @@ solveLinearSystem()
   Vec rightHandSide = data_.transmembraneFlow()->valuesGlobal();
   Vec solution = data_.extraCellularPotential()->valuesGlobal();
 
+  // check if there are nans
+  data_.transmembraneFlow()->checkNansInfs();
+
   // solve the system, KSPSolve(ksp,b,x)
 #ifndef NDEBUG
   this->linearSolver_->solve(rightHandSide, solution);

@@ -95,6 +95,10 @@ void Linear::parseSolverTypes()
   {
     pcType_ = PCGAMG;
   }
+  else if (preconditionerType != "none" && preconditionerType != "")
+  {
+    pcType_ = preconditionerType.c_str();
+  }
 
   // all ksp types: https://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/KSP/KSPType.html#KSPType
   kspType_ = KSPGMRES;
@@ -109,6 +113,10 @@ void Linear::parseSolverTypes()
   else if (solverType == "cg")
   {
     kspType_ = KSPCG;
+  }
+  else if (solverType == "bcgs")
+  {
+    kspType_ = KSPBCGS;
   }
   else if (solverType == "preonly")
   {
@@ -138,6 +146,10 @@ void Linear::parseSolverTypes()
   {
     kspType_ = KSPPREONLY;
     pcType_ = PCSOR;
+  }
+  else if (solverType != "")
+  {
+    kspType_ = solverType.c_str();
   }
 
   std::stringstream optionKey;

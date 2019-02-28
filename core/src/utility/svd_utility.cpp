@@ -69,9 +69,7 @@ void SvdUtility::getSVD(double a[], int cols, int rows, double u[], double sigma
 	double superb[min];
 
 	int info = LAPACKE_dgesvd(matrix_order, 'a', 'a', rows, cols, a, lda, sigmas, u, ldu, vTransposed, ldvt, superb);
-
-	LAPACKE_dgesvd()
-
+	
 	std::cout << "info: " << info << endl << endl;
 
 	for (int row = 0; row < min; ++row)

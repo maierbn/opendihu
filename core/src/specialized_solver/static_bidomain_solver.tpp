@@ -195,7 +195,7 @@ debugDumpData()
   MatNorm(finiteElementMethodDiffusionExtracellular_.data().stiffnessMatrix()->valuesGlobal(), NORM_FROBENIUS, &normFrobenius);
 
   std::stringstream filename;
-  filename << "norm_" << counter;
+  filename << "norm_" << counter << ".txt";
   std::ofstream file0;
   file0.open(filename.str().c_str(), std::ios::out | std::ios::app);
 
@@ -204,7 +204,7 @@ debugDumpData()
 
 
   filename.str("");
-  filename << "rhs_" << counter;
+  filename << "rhs_" << counter << ".bin";
   std::ofstream file;
   file.open(filename.str().c_str(), std::ios::out | std::ios::trunc | std::ios::binary);
 
@@ -227,7 +227,7 @@ debugDumpData()
 
 
   filename.str("");
-  filename << "initial_value_" << counter;
+  filename << "initial_value_" << counter << ".bin";
   file.open(filename.str().c_str(), std::ios::out | std::ios::trunc | std::ios::binary);
 
   if (file.is_open())

@@ -51,12 +51,12 @@ checkNansInfs(int componentNo) const
 
   if (nNans > 0)
   {
-    LOG(WARNING) << "Solution contains " << nNans << " Nans, out of " << values.size() << " total values";
+    LOG(ERROR) << "Solution contains " << nNans << " Nans, out of " << values.size() << " total values";
   }
 
   if (nHighValues > 0)
   {
-    LOG(WARNING) << "Solution contains " << nHighValues << " high values with absolute value > 1e100, out of " << values.size() << " total values";
+    LOG(ERROR) << "Solution contains " << nHighValues << " high values with absolute value > 1e100, out of " << values.size() << " total values";
   }
 
   if (nNans == values.size())

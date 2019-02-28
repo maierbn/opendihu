@@ -171,12 +171,82 @@ solveLinearSystem()
   // check if there are nans
   data_.transmembraneFlow()->checkNansInfs();
 
+  // dump vectors to be able to later check values
+  debugDumpData();
+
   // solve the system, KSPSolve(ksp,b,x)
 #ifndef NDEBUG
   this->linearSolver_->solve(rightHandSide, solution);
 #else
   this->linearSolver_->solve(rightHandSide, solution, "Linear system of bidomain problem solved");
 #endif
+}
+
+//! return whether the underlying discretizableInTime object has a specified mesh type and is not independent of the mesh type
+template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
+void StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
+debugDumpData()
+{
+  static int counter = 0;
+
+  // compute matrix norm
+  double norm1, normFrobenius;
+  MatNorm(finiteElementMethodDiffusionExtracellular_.data().stiffnessMatrix()->valuesGlobal(), NORM_1, &norm1);
+  MatNorm(finiteElementMethodDiffusionExtracellular_.data().stiffnessMatrix()->valuesGlobal(), NORM_FROBENIUS, &normFrobenius);
+
+  std::stringstream filename;
+  filename << "norm_" << counter;
+  std::ofstream file0;
+  file0.open(filename.str().c_str(), std::ios::out | std::ios::app);
+
+  file0 << norm1 << ";" << normFrobenius << std::endl;
+  file0.close();
+
+
+  filename.str("");
+  filename << "rhs_" << counter;
+  std::ofstream file;
+  file.open(filename.str().c_str(), std::ios::out | std::ios::trunc | std::ios::binary);
+
+  if (file.is_open())
+  {
+    std::vector<double> values;
+    data_.transmembraneFlow()->getValuesWithoutGhosts(values);
+
+    // loop over rhs vector
+    for (int i = 0; i < values.size(); i++)
+    {
+      file.write((char *)(&values[i]), 8);
+    }
+    file.close();
+  }
+  else
+  {
+    LOG(INFO) << "Could not open file";
+  }
+
+
+  filename.str("");
+  filename << "initial_value_" << counter;
+  file.open(filename.str().c_str(), std::ios::out | std::ios::trunc | std::ios::binary);
+
+  if (file.is_open())
+  {
+    std::vector<double> values;
+    data_.extraCellularPotential()->getValuesWithoutGhosts(values);
+
+    // loop over rhs vector
+    for (int i = 0; i < values.size(); i++)
+    {
+      file.write((char *)(&values[i]), 8);
+    }
+    file.close();
+  }
+  else
+  {
+    LOG(INFO) << "Could not open file";
+  }
+  counter++;
 }
 
 //! return whether the underlying discretizableInTime object has a specified mesh type and is not independent of the mesh type

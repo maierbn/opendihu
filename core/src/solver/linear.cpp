@@ -95,6 +95,10 @@ void Linear::parseSolverTypes()
   {
     pcType_ = PCGAMG;
   }
+  else if (preconditionerType == "none")
+  {
+    pcType_ = PCNONE;
+  }
   else if (preconditionerType != "none" && preconditionerType != "")
   {
     pcType_ = preconditionerType.c_str();
@@ -145,6 +149,11 @@ void Linear::parseSolverTypes()
   else if (solverType == "sor")
   {
     kspType_ = KSPPREONLY;
+    pcType_ = PCSOR;
+  }
+  else if (solverType == "gmres")
+  {
+    kspType_ = KSPGMRES;
     pcType_ = PCSOR;
   }
   else if (solverType != "")

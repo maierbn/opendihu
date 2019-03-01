@@ -52,6 +52,9 @@ diffusionTensor(element_no_t elementNoLocal, const std::array<double,FunctionSpa
   // get the interpolated value at xi coordinates inside the element
   Vec3 directionVector = functionSpace->template interpolateValueInElement<3>(elementalValues,xi);
 
+  if (std::isnan(directionVector[0]) || std::isnan(directionVector[1]) || std::isnan(directionVector[2]))
+    directionVector = Vec3({0.0,0.0,1.0});
+
   MathUtility::Matrix<D,D> diffusionTensor = this->diffusionTensor_;
 
   // if the extracellular diffusion tensor should be added
@@ -67,7 +70,7 @@ diffusionTensor(element_no_t elementNoLocal, const std::array<double,FunctionSpa
   //VLOG(2) << "diffusionTensor before rotation: " << diffusionTensor;
 
   // rotate diffusion tensor in fiber direction
-  //MathUtility::rotateMatrix(diffusionTensor, directionVector);
+  MathUtility::rotateMatrix(diffusionTensor, directionVector);
 
   //VLOG(2) << "diffusionTensor after rotation: " << diffusionTensor;
 

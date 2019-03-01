@@ -12,7 +12,7 @@
 //#define USE_CHECKPOINT_BORDER_POINTS
 //#define USE_CHECKPOINT_MESH
 //#define WRITE_CHECKPOINT_MESH
-#define WRITE_CHECKPOINT_BORDER_POINTS
+//#define WRITE_CHECKPOINT_BORDER_POINTS
 //#define WRITE_CHECKPOINT_GHOST_MESH
 //#define USE_CHECKPOINT_GHOST_MESH
 
@@ -635,6 +635,8 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
 
   LOG(DEBUG) << "create subdomains";
 
+  MPI_Barrier(MPI_COMM_WORLD);
+
   // create subdomains
   // create new rank subset i.e. a new MPI communicator
   int nRanksPerCoordinateDirectionPreviously = nRanksPerCoordinateDirection_[0];
@@ -643,7 +645,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
   int nRanks = nRanksPerCoordinateDirection_[0] * nRanksPerCoordinateDirection_[1] * nRanksPerCoordinateDirection_[2];
   std::vector<int> ranks(nRanks);
   std::iota(ranks.begin(), ranks.end(), 0);
-  currentRankSubset_ = std::make_shared<Partition::RankSubset>(ranks.begin(), ranks.end());
+  currentRankSubset_ = std::make_shared<Partition::RankSubset>(ranks.begin(), ranks.end(), context_.rankSubset());
 
   LOG(DEBUG) << "refineSubdomainsOnThisRank: " << refineSubdomainsOnThisRank << ", rankSubset: " << *currentRankSubset_;
 

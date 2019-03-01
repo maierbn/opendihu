@@ -155,7 +155,7 @@ bool RankSubset::ownRankIsContained() const
 
 element_no_t RankSubset::ownRankNo()
 {
-  if (ownRankNo_ == -1)
+  if (ownRankNo_ == -1 && mpiCommunicator_ != MPI_COMM_NULL)
   {
     // get the own rank id in this communicator
     MPIUtility::handleReturnValue(MPI_Comm_rank(mpiCommunicator_, &ownRankNo_), "MPI_Comm_rank");

@@ -61,6 +61,14 @@ void PerformanceMeasurement::stop(std::string name, int numberAccumulated)
   }
 }
 
+std::string PerformanceMeasurement::getParameter(std::string key)
+{
+  if (parameters_.find(key) == parameters_.end())
+    return "";
+
+  return parameters_[key];
+}
+
 void PerformanceMeasurement::writeLogFile(std::string logFileName)
 {
   //LOG(DEBUG) << "PerformanceMeasurement::writeLogFile \"" << logFileName;

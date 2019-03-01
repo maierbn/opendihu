@@ -5,6 +5,7 @@
 #include "utility/python_utility.h"
 #include "utility/petsc_utility.h"
 #include "data_management/specialized_solver/multidomain.h"
+#include "control/performance_measurement.h"
 
 namespace TimeSteppingScheme
 {
@@ -190,21 +191,27 @@ debugDumpData()
   static int counter = 0;
 
   // compute matrix norm
-  double norm1, normFrobenius;
+  double norm1, normFrobenius, normInfinity;
   MatNorm(finiteElementMethodDiffusionExtracellular_.data().stiffnessMatrix()->valuesGlobal(), NORM_1, &norm1);
   MatNorm(finiteElementMethodDiffusionExtracellular_.data().stiffnessMatrix()->valuesGlobal(), NORM_FROBENIUS, &normFrobenius);
+  MatNorm(finiteElementMethodDiffusionExtracellular_.data().stiffnessMatrix()->valuesGlobal(), NORM_INFINITY, &normInfinity);
+
+  double directionNorm;
+  VecNorm(data_.fiberDirection()->valuesGlobal(), NORM_2, &directionNorm);
+
 
   std::stringstream filename;
   filename << "norm_" << counter << ".txt";
   std::ofstream file0;
   file0.open(filename.str().c_str(), std::ios::out | std::ios::app);
 
-  file0 << norm1 << ";" << normFrobenius << std::endl;
+  file0 << Control::PerformanceMeasurement::getParameter("scenarioName") << ";" << DihuContext::ownRankNoCommWorld() << "/" << DihuContext::nRanksCommWorld() << ";"
+    << norm1 << ";" << normFrobenius << ";" << normInfinity << ";directionNorm;" << directionNorm<< std::endl;
   file0.close();
 
 
   filename.str("");
-  filename << "rhs_" << counter << ".bin";
+  filename << "rhs_" << Control::PerformanceMeasurement::getParameter("scenarioName") << "_" << counter << "." << DihuContext::ownRankNoCommWorld() << ".bin";
   std::ofstream file;
   file.open(filename.str().c_str(), std::ios::out | std::ios::trunc | std::ios::binary);
 
@@ -227,7 +234,7 @@ debugDumpData()
 
 
   filename.str("");
-  filename << "initial_value_" << counter << ".bin";
+  filename << "initial_value_" << Control::PerformanceMeasurement::getParameter("scenarioName") << "_" << counter << "." << DihuContext::ownRankNoCommWorld() << ".bin";
   file.open(filename.str().c_str(), std::ios::out | std::ios::trunc | std::ios::binary);
 
   if (file.is_open())

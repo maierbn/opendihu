@@ -1,8 +1,13 @@
+#include "opendihu.h"
+#include "utility/svd_utility.h"
+
 #include <iostream>
 #include <cstdlib>
 #include <vector>
-#include "opendihu.h"
-#include "utility/svd_utility.h"
+#include <complex>
+#include <math.h>
+
+// using namespace std;
 
 int main(int argc, char *argv[])
 {
@@ -14,21 +19,43 @@ int main(int argc, char *argv[])
 	//int rowCount = SvdUtility::getCSVRowCount("./out/data.csv");
 	//int columnCount = SvdUtility::getCSVColumnCount("./out/data.csv");
 
-	double varepsilon1 = 0;
+	double varepsilon1 = 0.1;
+	double deltat = 0.01;
 
-	int j = 3;
+	// simple square matrix
+	/*int j = 3;
 	int k = 3;
-	double v[j * k] = {
+	double v[] {
+	1, -1,  0,
+	0, -2,  1,
+	1,  0, -1
+	};*/
+
+	// simple wide and short matrix
+	/*int j = 3;
+	int k = 4;
+	double v[] {
 		1, -1,  0,
-		0, -2,  1, 
-		1,  0, -1
-	};
+		0, -2,  1,
+		1,  0, -1,
+		2,  0,  0
+	};*/
+
+	// simple high and narrow matrix
+	/*int j = 4;
+	int k = 3;
+	double v[] {
+	1, -1,  0, 2,
+	0, -2,  1, 0,
+	1,  0, -1, 0
+	};*/
 
 	// [J,K]=size(V);
+
+	// complex high and narrow matrix
 	/*int j = 6;
 	int k = 5;
-	// 5x6
-	double v[j * k] = {
+	double v[] {
 			  8.79,  6.11, -9.15,  9.57, -3.49,  9.84,
 			  9.93,  6.91, -7.93,  1.64,  4.02,  0.15,
 			  9.83,  5.04,  4.86,  8.83,  9.80, -8.99,
@@ -36,9 +63,7 @@ int main(int argc, char *argv[])
 			  3.16,  7.98,  3.01,  5.80,  4.27, -5.31
 	};*/
 
-	SvdUtility::printMatrix("V", v, j, k);
-
-	// 5x5
+	// complex square matrix
 	/*int j = 5;
 	int k = 5;
 	double v[j * k] = {
@@ -49,61 +74,39 @@ int main(int argc, char *argv[])
 			  3.16,  7.98,  3.01,  5.80,  4.27
 	};*/
 
-	// 6x5
-	/*int j = 5;
+	// complex wide and short matrix
+	int j = 5;
 	int k = 6;
-	double v[j * k] = {
+	double v[]{
 			  8.79,  6.11, -9.15,  9.57, -3.49,
 			  9.93,  6.91, -7.93,  1.64,  4.02,
 			  9.83,  5.04,  4.86,  8.83,  9.80,
 			  5.45, -0.27,  4.85,  0.74, 10.00,
 			  3.16,  7.98,  3.01,  5.80,  4.27,
 			  9.84,  0.15, -8.99, -6.02, -5.31
-	};*/
+	};
 
-	// print input matrix sizes, j cols, k rows
-	std::cout << "J = " << j << endl << "K = " << k << endl << endl;
+	// print input matrix sizes, j rows, k cols
+	std::cout << "J = rows = " << j << endl << "K = cols =  " << k << endl << endl;
+	SvdUtility::printMatrix("V", v, j, k);
 
 	// n=length(sigmas);
 	int n = std::min(j, k);
 
-	// m > n � Only the first n cols of U are computed, and S is n - by - n.
-	// m = n � svd(A, 'econ') is equivalent to svd(A).
-	// m < n � Only the first m cols of V are computed, and S is m - by - m.
-	int colsU = j;
-	int colsTTransposed = k;
+	// J > K => only the first K cols of U are computed
+	double* u = new double[j * n];
 
-	if (j > k) {
-		colsU = k;
-	}
-	else if (j < k) {
-		colsTTransposed = j;
-	}
+	// J < K => only the first J rows of T^T are computed
+	double* tTransposed = new double[n * k];
+
+	double* sigmas = new double[n];
+	double* sigma = new double[n * n];
 
 	// [U,Sigma,T]=svd(V,'econ');
-	double u[j * colsU];
-	double sigmas[n];
-	double tTransposed[k * colsTTransposed];
-	double sigma[n * n];
 	SvdUtility::getSVD(v, j, k, u, sigmas, tTransposed, sigma);
-
-	// sigmas=diag(Sigma);
-	/*double sigma[n * n] = {};
-	for (int row = 0; row < n; ++row)
-	{
-		for (int column = 0; column < n; ++column)
-		{
-			if (row == column)
-			{
-				sigma[row + column * n] = sigmas[row];
-			} 
-		}
-	}*/
-
-	// print resulting matrices
-	SvdUtility::printMatrix("U", u, j, colsU);
+	SvdUtility::printMatrix("U", u, j, n);
 	SvdUtility::printMatrix("Sigma", sigma, n, n);
-	SvdUtility::printMatrix("T^T", tTransposed, k, colsTTransposed);
+	SvdUtility::printMatrix("T'", tTransposed, n, k);
 
 	// NormS=norm(sigmas,2);
 	double normS = SvdUtility::getEuclideanNorm(sigmas, n, n);
@@ -118,61 +121,138 @@ int main(int argc, char *argv[])
 			kk += 1;
 		}
 	}
-	std::cout << "kk = " << kk << endl << endl;
 
-	// hatT=Sigma(1:kk,1:kk)*T(:,1:kk)'
-	double hatT[kk * colsTTransposed] = {};
-	SvdUtility::resizeMatrix(sigma, sigma, n, n, 0, kk - 1, 0, kk - 1);
-	SvdUtility::resizeMatrix(tTransposed, tTransposed, k, colsTTransposed, 0, kk - 1, 0, colsTTransposed - 1);
-	SvdUtility::printMatrix("Sigma(1:kk,1:kk)", sigma, kk, kk);
-	SvdUtility::printMatrix("T(..1:kk)", tTransposed, kk, colsTTransposed);
-	SvdUtility::getMatrixProduct(sigma, tTransposed, hatT, kk, kk, colsTTransposed);
-	SvdUtility::printMatrix("hatT", hatT, kk, colsTTransposed);
+	// Sigma(1:kk,1:kk)
+	double* sigmaOneToN = new double[kk * kk];
+	SvdUtility::resizeMatrix(sigma, sigmaOneToN, n, kk, 0, kk - 1);
+	SvdUtility::printMatrix("Sigma(1:N,1:N)", sigmaOneToN, kk, kk);
+
+	// T(:,1:n)'
+	double* tOneToNTransposed = new double[kk * k];
+	SvdUtility::resizeMatrix(tTransposed, tOneToNTransposed, n, kk, 0, k - 1);
+	SvdUtility::printMatrix("T(:,1:N)^T", tOneToNTransposed, kk, k);
 
 	// [N,K]=size(hatT);
 	n = kk;
-	k = colsTTransposed;
- 
-	// [hatU1,hatSigma,hatU2]=svd(hatT(:,1:K-1),'econ');
-	int min = std::min(k - 1, n);
-	int colsHatU1 = n;
-	int colsHatU2Transposed = n;s
-	/*if (k - 1 < n) {
-		colsHatU1 = k - 1;
-	}
-	else if (k - 1 > n) {
-		colsHatU2Transposed = n;
-	}*/
-	double hatU1[n * colsHatU1];
-	double hatSigmas[min];
-	double hatSigma[min * min];
-	double hatU2Transposed[k - 1 * colsHatU2Transposed];
-	double hatT0[n * k - 1];
-	std::cout << "N = " << n << endl << "K = " << k << endl << endl;
-	SvdUtility::resizeMatrix(hatT, hatT0, n, k, 0, n - 1, 0, k - 2);
+	std::cout << "N = rows = " << kk << endl << "K = cols = " << k << endl << endl;
+
+	// hatT=Sigma(1:n,1:n)*T(:,1:n)'
+	double* hatT = new double[n * k];
+	SvdUtility::getMatrixProduct(sigmaOneToN, tOneToNTransposed, hatT, n, n, k, false);
+	SvdUtility::printMatrix("hatT", hatT, n, k);
+
+	int min = std::min(n, k - 1);
+
+	// N > K => only the first N cols of hatU1 are computed
+	double* hatU1 = new double[n * min];
+
+	// N < K => only the first K rows of hatU2' are computed
+	double* hatU2Transposed = new double[min * (k - 1)];
+
+	double* hatSigmas = new double[min];
+	double* hatSigma = new double[min * min];
+
+	// hatT(:, 1 : K - 1)
+	double* hatT0 = new double[n * (k - 1)];
+	SvdUtility::resizeMatrix(hatT, hatT0, n, n, 0, k - 2);
 	SvdUtility::printMatrix("hatT(:,1..K-1)", hatT0, n, k - 1);
-	SvdUtility::getSVD(hatT0, k - 1, n, hatU1, hatSigmas, hatU2Transposed, hatSigma);
-	SvdUtility::printMatrix("hatU1", hatU1, n, colsHatU1);
+
+	// [hatU1,hatSigma,hatU2]=svd(hatT(:,1:K-1),'econ');
+	SvdUtility::getSVD(hatT0, n, k - 1, hatU1, hatSigmas, hatU2Transposed, hatSigma);
+	SvdUtility::printMatrix("hatU1", hatU1, n, min);
 	SvdUtility::printMatrix("hatSigma", hatSigma, min, min);
-	SvdUtility::printMatrix("hatU2Transposed", hatU2Transposed, k - 1, colsHatU2Transposed);
+	SvdUtility::printMatrix("hatU2Transposed", hatU2Transposed, min, k - 1);
 
-	// hatR=hatT(:,2:K)*hatU2*inv(hatSigma)*hatU1';
-	double hatT1[n * k - 1];
-	//double hatR[n * k];
-	double hatU2[colsHatU2Transposed * k - 1];
-	double hatT1xHatU2[n * n];
-	SvdUtility::resizeMatrix(hatT, hatT1, n, k, 0, n - 1, 1, k - 1);
+	// hatT(:,2:K)
+	double* hatT1 = new double[n * (k - 1)];
+	SvdUtility::resizeMatrix(hatT, hatT1, n, n, 1, k - 1);
 	SvdUtility::printMatrix("hatT(:,2:K)", hatT1, n, k - 1);
-	SvdUtility::transposeMatrix(hatU2Transposed, hatU2, k - 1, colsHatU2Transposed);
-	SvdUtility::printMatrix("hatU2", hatU2, colsHatU2Transposed, k - 1);
-	SvdUtility::getMatrixProduct(hatT1, hatU2, hatT1xHatU2, n, colsHatU2Transposed, n);
-	SvdUtility::printMatrix("hatT1xHatU2", hatT1xHatU2, n, n);
+
+	// hatU2	
+	double* hatU2 = new double[(k - 1) * min];
+	SvdUtility::transposeMatrix(hatU2Transposed, hatU2, min, k - 1);
+	SvdUtility::printMatrix("hatU2", hatU2, k - 1, min);
+
+	// hatT(:,2:K)*hatU2
+	double* xHatU2 = new double[n * min];
+	SvdUtility::getMatrixProduct(hatT1, hatU2, xHatU2, n, k - 1, min, false);
+	SvdUtility::printMatrix("xHatU2", xHatU2, n, min);
+
+	// inv(hatSigma)
 	SvdUtility::getMatrixInverse(hatSigma, min);
-	SvdUtility::printMatrix("hatSigmaInverse", hatSigma, min, min);
-	//SvdUtility::getMatrixProduct(hatT1xHatU2, hatSigmaInverted, xHatSigmaInverted, n, n, n);
+	SvdUtility::printMatrix("hatSigma^-1", hatSigma, min, min);
+
+	// hatT(:,2:K)*hatU2*inv(hatSigma)
+	double* xHatSigmaInverse = new double[n * min];
+	SvdUtility::getMatrixProduct(xHatU2, hatSigma, xHatSigmaInverse, n, min, min, false);
+	SvdUtility::printMatrix("xHatSigmaInverse", xHatSigmaInverse, n, min);
+
+	// hatU1'
+	double* hatU1Transposed = new double[min * n];
+	SvdUtility::transposeMatrix(hatU1, hatU1Transposed, n, min);
+	SvdUtility::printMatrix("hatU1^T", hatU1Transposed, min, n);
+
+	// hatR=hatT(:,2:K)*hatU2*inv(hatSigma)*hatU1'
+	double* hatR = new double[n * n];
+	SvdUtility::getMatrixProduct(xHatSigmaInverse, hatU1Transposed, hatR, n, min, n, false);
+	SvdUtility::printMatrix("hatR", hatR, n, n);
+
+	// double array hatR to complex double array hatRComplex
+	double _Complex* hatRComplex = new double _Complex[n * n];
+	for (int col = 0; col < n; ++col)
+	{
+		for (int row = 0; row < n; ++row)
+		{
+			hatRComplex[col * n + row] = hatR[col * n + row];
+		}
+	}
+
+	// [Q,MM]=eig(hatR)
+	// eigenvalues=diag(MM)
+	double _Complex* eigenvalues = new double _Complex[n];
+	double _Complex* q = new double _Complex[n * n];
+	double _Complex* mm = new double _Complex[n * n];
+	for (int i = 0; i < n; ++i)
+	{
+		mm[i * n + i] = eigenvalues[i];
+	}
+	SvdUtility::getEigen(hatRComplex, n, eigenvalues, q);
+	SvdUtility::printMatrix("eigenvalues", eigenvalues, n, 1);
+	SvdUtility::printMatrix("Q", q, n, n);
+	//SvdUtility::printMatrix("MM", mm, n, n);
+
+	// M=length(eigenvalues)
+	//int m = n;
+
+	// qq=log(eigenvalues)
+	// deltas=real(qq)/Deltat
+	// omegas=imag(qq)/Deltat
+	double _Complex* qq = new double _Complex[n];
+	double* deltas = new double[n];
+	double* omegas = new double[n];
+	for (int i = 0; i < n; ++i)
+	{
+		qq[i] = ::clog(eigenvalues[i]);
+		deltas[i] = creal(qq[i]) / deltat;
+		omegas[i] = cimag(qq[i]) / deltat;
+	}
+	SvdUtility::printMatrix("qq", qq, n, 1);
+	SvdUtility::printMatrix("deltas", deltas, n, 1);
+	SvdUtility::printMatrix("omegas", omegas, n, 1);
+
+	/*double* mmm = new double[m * k * m];
+	double* bb = new double[m * k];
+
+	for (int i = 0; i < k, ++i)
+	{
+
+	}
+
+	SvdUtility::printMatrix("Mm", mmm, m * k, m);
+	SvdUtility::printMatrix("Bb", bb, m * k, 1);*/
 
 	
-	
+
 			/*
 			for(std::vector<double>::iterator it = result.begin(); it!=result.end(); ++it)
 			{

@@ -6,6 +6,7 @@
 #include <vector>
 #include <string>
 #include <fstream>
+
 using namespace std;
 
 // applies SVD and returns V transposed
@@ -23,7 +24,7 @@ std::vector<double> SvdUtility::getSVD(vector<double> aData, int m, int n)
 
 
 
-	double a[aData.size()];
+	double* a = new double[aData.size()];
 	copy(aData.begin(), aData.end(), a);
 	// Spalten    Zeilen
 	// int m = 6, n = 5;
@@ -40,11 +41,14 @@ std::vector<double> SvdUtility::getSVD(vector<double> aData, int m, int n)
 	int matrix_order = LAPACK_COL_MAJOR;
 	//int matrix_order = LAPACK_ROW_MAJOR;
 	int minmn = std::min(m, n) - 1;
-	double s[n], u[ldu*m], vt[ldvt*n], superb[minmn];
+	double* s = new double[n];
+	double* u = new double[ldu*m];
+	double* vt = new double[ldvt*n];
+	double* superb = new double[minmn];
 
 	int info = LAPACKE_dgesvd(matrix_order, 'a', 'a', m, n, a, lda, s, u, ldu, vt, ldvt, superb);
 
-	std::cout << "info: " << info << endl;
+	cout << "info: " << info << endl;
 
 	for (int i = 0; i < ldvt*n; i++)
 	{
@@ -56,33 +60,28 @@ std::vector<double> SvdUtility::getSVD(vector<double> aData, int m, int n)
 
 // takes input data as double array and writes Sigma, U and V transposed as output parameter double arrays
 // m columns, n rows
-void SvdUtility::getSVD(double a[], int cols, int rows, double u[], double sigmas[], double vTransposed[], double sigma[])
+void SvdUtility::getSVD(double a[], int rows, int cols, double u[], double sigmas[], double vTransposed[], double sigma[])
 {
-	//double a[aData.size()];
-	//copy(aData.begin(), aData.end());
-
-	//std::cout << m << " columns, " << n << " rows" << endl;
-
 	int min = std::min(cols, rows);
 	int lda = rows, ldu = rows, ldvt = min;
 	int matrix_order = LAPACK_COL_MAJOR;
-	double superb[min];
+	double* superb = new double[min];
 
-	int info = LAPACKE_dgesvd(matrix_order, 'a', 'a', rows, cols, a, lda, sigmas, u, ldu, vTransposed, ldvt, superb);
-	
-	std::cout << "info: " << info << endl << endl;
+	int info = LAPACKE_dgesvd(matrix_order, 's', 's', rows, cols, a, lda, sigmas, u, ldu, vTransposed, ldvt, superb);
+
+	cout << "info: " << info << endl << endl;
 
 	for (int row = 0; row < min; ++row)
 	{
-		for (int column = 0; column < min; ++column)
+		for (int col = 0; col < min; ++col)
 		{
-			if (row == column)
+			if (row == col)
 			{
-				sigma[row + column * min] = sigmas[row];
+				sigma[row + col * min] = sigmas[row];
 			} 
 			else
 			{
-				sigma[row + column * min] = 0;
+				sigma[row + col * min] = 0;
 			}
 			
 		}
@@ -194,66 +193,102 @@ double SvdUtility::getEuclideanNorm(double input[], int size, int range)
 }
 
 // takes matrix a as double array, resizes it to the specified region and writes the resulting matrix in b as double array
-void SvdUtility::resizeMatrix(double a[], double b[], int originalRows, int originalColumns, int firstRow, int lastRow, int firstColumn, int lastColumn)
+void SvdUtility::resizeMatrix(double a[], double b[], int oldRows, int newRows, int firstCol, int lastCol)
 {
-	int rows = lastRow - firstRow + 1;
-	for (int column = 0; column < lastColumn - firstColumn + 1; ++column)
+	for (int col = 0; col < lastCol - firstCol + 1; ++col)
 	{
-		for (int row = 0; row < rows; ++row)
+		for (int row = 0; row < newRows; ++row)
 		{
-			b[row + column * rows] = a[originalRows * (firstColumn + column) + firstRow + row];
+			b[col * newRows + row] = a[(firstCol + col) * oldRows + row];
+			// cout << "column = " << col << endl << "row = " << row << endl << "a[" << (firstCol + col) * oldRows + row << "] = " << a[(firstCol + col) * oldRows + row] << endl << "b[" << col * newRows + row << "] = " << b[col * newRows + row] << endl << endl;
 		}
 	}
 }
 
-void SvdUtility::printMatrix(string name, double a[], int rows, int columns)
+void SvdUtility::printMatrix(string name, double a[], int rows, int cols)
 {
-	std::cout << name << endl;
+	cout << name << endl;
 	for (int row = 0; row < rows; ++row)
 	{
-		for (int column = 0; column < columns; ++column)
+		for (int col = 0; col < cols; ++col)
 		{
-			if (a[column * rows + row] >= 0)
+			if (a[col * rows + row] >= 0)
 			{
-				std::cout << " ";
+				cout << " ";
 			}
-			std::cout << a[column * rows + row];
-			if (column < columns - 1)
+			cout << a[col * rows + row];
+			if (col < cols - 1)
 			{
-				std::cout << " ";
+				cout << " ";
 			}
 		}
-		std::cout << endl;
+		cout << endl;
 	}
-	std::cout << endl;
+	cout << endl;
+}
+
+void SvdUtility::printMatrix(string name, double _Complex a[], int rows, int cols)
+{
+	cout << name << endl;
+	for (int row = 0; row < rows; ++row)
+	{
+		for (int col = 0; col < cols; ++col)
+		{
+			if (creal(a[col * rows + row]) >= 0)
+			{
+				cout << " ";
+			}
+			cout << creal(a[col * rows + row]);
+			if (cimag(a[col * rows + row]) < 0)
+			{
+				cout << " - " << -cimag(a[col * rows + row]) << "i";
+			} 
+			else
+			{
+				cout << " + " << cimag(a[col * rows + row]) << "i";
+			}
+			if (col < cols - 1)
+			{
+				cout << " ";
+			}
+		}
+		cout << endl;
+	}
+	cout << endl;
 }
 
 // takes two matrices a and b as double arrays, performs matrix multiplication and writes the resulting matrix c as double array
-void SvdUtility::getMatrixProduct(double a[], double b[], double c[], int rowsA, int colsA_rowsB, int colsB)
+void SvdUtility::getMatrixProduct(double a[], double b[], double c[], int rowsA, int colsA_rowsB, int colsB, bool trans)
 {
-	//dgemm('n', 'n', rowsA, colsB, colsA_rowsB, 1, a, rowsA, b, colsA_rowsB, 0, c, rowsA);
-
-	cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans, rowsA, colsB, colsA_rowsB, 1, a, rowsA, b, colsA_rowsB, 0, c, rowsA);
-
-	/*for (int column = 0; column < colsB; ++column)
+	if (trans)
 	{
-		for (int row = 0; row < rowsA; ++row)
-		{
-			for (int cell = 0; cell < colsA_rowsB; ++cell)
-			{
-				c[row + column * rowsA] += a[row + cell * rowsA] * b[cell + column * colsA_rowsB];
-			}
-		}
-	}*/
+		cblas_dgemm(CblasColMajor, CblasNoTrans, CblasTrans, rowsA, colsB, colsA_rowsB, 1, a, rowsA, b, colsA_rowsB, 0, c, rowsA);
+	}
+	else
+	{
+
+		cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans, rowsA, colsB, colsA_rowsB, 1, a, rowsA, b, colsA_rowsB, 0, c, rowsA);
+	}
 }
+
+// takes one squre matrix input as complex double array, raises it to the exponent (>0) power and stores the resulting matrix output as complex double array
+/*void SvdUtility::getMatrixPower(double _Complex input[], double _Complex output[], int order, int exponent)
+{
+	output = input;
+	for (int i = 1; i < exponent; ++i)
+	{
+		cblas_zgemm(CblasColMajor, CblasNoTrans, CblasNoTrans, order, order, order, 1, output, order, input, order, 0, output, order);
+	}
+}*/
 
 void SvdUtility::transposeMatrix(double a[], double b[], int rows, int cols)
 {
-	for (int column = 0; column < cols; ++column)
+	for (int col = 0; col < cols; ++col)
 	{
 		for (int row = 0; row < rows; ++row)
 		{
-			b[row * cols + column] = a[column * rows + row];
+			b[row * cols + col] = a[col * rows + row];
+			//cout << "column = " << col << endl << "row = " << row << endl << "a[" << col * rows + row << "] = " << a[col * rows + row] << endl << "b[" << row * cols + col << "] = " << b[row * cols + col] << endl << endl;
 		}
 	}
 }
@@ -261,10 +296,15 @@ void SvdUtility::transposeMatrix(double a[], double b[], int rows, int cols)
 void SvdUtility::getMatrixInverse(double a[], int order)
 {
 	int matrix_order = LAPACK_COL_MAJOR;
-	int ipiv[order];
+	int* ipiv = new int[order];
 	for (int i = 1; i <= order; ++i)
 	{
-		ipiv[i] = i;
+		ipiv[i - 1] = i;
 	}
 	LAPACKE_dgetri(matrix_order, order, a, order, ipiv);
+}
+
+void SvdUtility::getEigen(double _Complex input[], int order, double _Complex eigenvalues[], double _Complex eigenvectors[])
+{
+	LAPACKE_zgeev(LAPACK_COL_MAJOR, 'N', 'V', order, input, order, eigenvalues, input, 1, eigenvectors, order);
 }

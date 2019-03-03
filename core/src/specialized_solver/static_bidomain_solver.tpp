@@ -173,7 +173,7 @@ solveLinearSystem()
   data_.transmembraneFlow()->checkNansInfs();
 
   // dump vectors to be able to later check values
-  debugDumpData();
+  //debugDumpData();
 
   // solve the system, KSPSolve(ksp,b,x)
 #ifndef NDEBUG

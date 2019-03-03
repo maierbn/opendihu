@@ -1220,6 +1220,9 @@ interpolateFineFibersFromFile()
 {
   // open existing file to read
 
+  bool waitIfFileGetsBig = specificSettings_.getOptionBool("waitIfFileGetsBig", true);
+
+
   struct stat statBuffer;
   int rc = stat(resultFilename_.c_str(), &statBuffer);
   if (rc != 0)
@@ -1233,13 +1236,23 @@ interpolateFineFibersFromFile()
 
   std::stringstream newFilename;
 
-  // check if old file name is like "7x7fibers"
+  // check if old file name is like "path/7x7fibers"
   bool filenameHasXFormat = false;
+
+  std::string fileBase = resultFilename_;
+  std::string path = "";
+
+  if (fileBase.find("/") != std::string::npos)
+  {
+    path = fileBase.substr(0, fileBase.rfind("/")+1);
+    fileBase = fileBase.substr(fileBase.rfind("/")+1);
+  }
+
   bool xFound = false;
   int suffixPos = 0;
-  for(int i = 0; i < resultFilename_.size(); i++)
+  for(int i = 0; i < fileBase.size(); i++)
   {
-    if (!isdigit(resultFilename_[i]))
+    if (!isdigit(fileBase[i]))
     {
       if (xFound)
       {
@@ -1247,7 +1260,7 @@ interpolateFineFibersFromFile()
         filenameHasXFormat = true;
         break;
       }
-      if (resultFilename_[i] == 'x')
+      if (fileBase[i] == 'x')
       {
         xFound = true;
       }
@@ -1297,7 +1310,7 @@ interpolateFineFibersFromFile()
 
   if (filenameHasXFormat)
   {
-    newFilename << nFibersNewX << "x" << nFibersNewX  << resultFilename_.substr(suffixPos);
+    newFilename << path << nFibersNewX << "x" << nFibersNewX  << fileBase.substr(suffixPos);
   }
   else
   {
@@ -1323,7 +1336,7 @@ interpolateFineFibersFromFile()
   long long nGibiBytes = nBytes / (long long)(1024) / (long long)(1024) / (long long)(1024);
   LOG(INFO) << "estimated size: " << nGibiBytes << " GiB";
 
-  if (nGibiBytes >= 1)
+  if (nGibiBytes >= 1 && waitIfFileGetsBig)
   {
     LOG(INFO) << "Press any key to continue . . .";
     std::cin.get();
@@ -1378,6 +1391,7 @@ interpolateFineFibersFromFile()
   {
     for (int fiberIndexX = 0; fiberIndexX != nFibersNewX; fiberIndexX++)
     {
+      // index of bottom left fiber in old file
       int oldFiberIndexX = (int)(fiberIndexX / (nFineGridFibers_+1));
       int oldFiberIndexY = (int)(fiberIndexY / (nFineGridFibers_+1));
 
@@ -1403,7 +1417,13 @@ interpolateFineFibersFromFile()
       else
       {
         // if fiber is no key fiber, read 4 neighbouring fibers and interpolate
-        // determine indices
+        // *     *
+        //  \   /
+        //    o
+        //  /   \
+        // x     *     // x = oldFiberIndex
+        //
+        // determine indices of 4 neighbouring fibers
         int oldFiberIndex[4] = {
           oldFiberIndexY * nFibersOldX + oldFiberIndexX,
           oldFiberIndexY * nFibersOldX + (oldFiberIndexX+1),
@@ -1411,11 +1431,13 @@ interpolateFineFibersFromFile()
           (oldFiberIndexY+1) * nFibersOldX + (oldFiberIndexX+1)
         };
 
+        // check if fiber is contained in file
         std::array<bool,4> edgeFiberIsValid({true,true,true,true});
         for (int i = 0; i < 4; i++)
         {
-          std::size_t fileEndPos = 32+headerLength + (oldFiberIndex[i]+1)*fiberDataSize;
-          if (fileEndPos > fileOldSize)
+          // check if end of data for fiber is beyond end of file
+          std::size_t oldFiberEndPosInFile = 32+headerLength + (oldFiberIndex[i]+1)*fiberDataSize;
+          if (oldFiberEndPosInFile > fileOldSize)
           {
             edgeFiberIsValid[i] = false;
             continue;
@@ -1431,9 +1453,13 @@ interpolateFineFibersFromFile()
 
         // 2 3
         // 0 1
-        if (!edgeFiberIsValid[2] || !edgeFiberIsValid[3])
+        if (!edgeFiberIsValid[2] && !edgeFiberIsValid[3])
         {
           alpha1 = 0.0;
+        }
+        if (!edgeFiberIsValid[1] && !edgeFiberIsValid[3])
+        {
+          alpha0 = 0.0;
         }
 
         VLOG(1) << "(" << fiberIndexX << "," << fiberIndexY << ") alpha: " << alpha0 << "," << alpha1;

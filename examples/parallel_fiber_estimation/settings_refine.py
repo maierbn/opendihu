@@ -1,18 +1,27 @@
 # parallel fiber estimation, Laplace 3D
 #
-# command arguments: <name>
+# command arguments: <nFineGridFibers> <input_filename>
 
 import numpy as np
 import sys
 import pickle
 
-name = ""
+print("args:",sys.argv)
 
-if len(sys.argv) > 0:
-  if "check_results.py" not in sys.argv[0]:
-    name = sys.argv[0]
+nFineGridFibers = 1
+if len(sys.argv) > 0+2:
+  nFineGridFibers = (int)(sys.argv[0])
     
-    #print("name: \"{}\"".format(name))
+input_filename = "7x7fibers.bin"
+if len(sys.argv) > 1+2:
+  input_filename = sys.argv[1]
+    
+if nFineGridFibers == 0:
+  print("Error, nFineGridFibers is 0")
+  exit
+
+print("input_filename: \"{}\"".format(input_filename))
+print("nFineGridFibers: {}".format(nFineGridFibers))
 
 bc = {}
 
@@ -25,12 +34,13 @@ config = {
   },
   "ParallelFiberEstimation" : {
     "stlFilename": "../../../testing/system_testing/tests/fibers/meshes/biceps_full.stl",
-    "resultFilename": "7x7fibers.bin",
+    "resultFilename": input_filename,
+    "waitIfFileGetsBig": False,
     "bottomZClip":  72.0,   # 82 (72), bottom z value of the muscle volume  
     "topZClip": 220.0,      # 250 (220), top z value of the muscle volume
     "nElementsXPerSubdomain": 4,  # number of elements in x and y-direction per subdomain
     "nElementsZPerSubdomain": 50,  # number of elements in z-direction per subdomain
-    "nFineGridFibers": 86,     # number of additional fine fibers that are interpolated between the main "key" fibers, the key fibers are traced
+    "nFineGridFibers": nFineGridFibers,     # number of additional fine fibers that are interpolated between the main "key" fibers, the key fibers are traced
     "useGradientField": False,    # set to False
     "maxLevel": 2,          # maximum level (1=8 processes, 2=64 processes)
     "lineStepWidth":  0.1,  # line width for tracing of fibers

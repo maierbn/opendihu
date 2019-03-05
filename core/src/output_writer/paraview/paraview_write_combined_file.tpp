@@ -14,6 +14,7 @@
 #include "output_writer/paraview/loop_get_nodal_values.h"
 #include "output_writer/paraview/loop_get_geometry_field_nodal_values.h"
 #include "output_writer/paraview/poly_data_properties_for_mesh.h"
+#include "control/performance_measurement.h"
 
 namespace OutputWriter
 {
@@ -428,10 +429,12 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
   int nPointsGlobal = 0;
   int nLinesGlobal = 0;
 
+  Control::PerformanceMeasurement::start("durationParaview1DReduction");
   MPIUtility::handleReturnValue(MPI_Exscan(&vtkPiece.properties.nCellsLocal, &nCellsPreviousRanks, 1, MPI_INT, MPI_SUM, this->rankSubset_->mpiCommunicator()), "MPI_Exscan");
   MPIUtility::handleReturnValue(MPI_Exscan(&vtkPiece.properties.nPointsLocal, &nPointsPreviousRanks, 1, MPI_INT, MPI_SUM, this->rankSubset_->mpiCommunicator()), "MPI_Exscan");
   MPIUtility::handleReturnValue(MPI_Reduce(&vtkPiece.properties.nPointsLocal, &nPointsGlobal, 1, MPI_INT, MPI_SUM, 0, this->rankSubset_->mpiCommunicator()), "MPI_Reduce");
   MPIUtility::handleReturnValue(MPI_Reduce(&vtkPiece.properties.nCellsLocal, &nLinesGlobal, 1, MPI_INT, MPI_SUM, 0, this->rankSubset_->mpiCommunicator()), "MPI_Reduce");
+  Control::PerformanceMeasurement::stop("durationParaview1DReduction");
 
   // get local data values
   // setup connectivity array
@@ -582,6 +585,8 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
                                               MPI_MODE_WRONLY | MPI_MODE_CREATE,
                                               MPI_INFO_NULL, &fileHandle), "MPI_File_open");
 
+  Control::PerformanceMeasurement::start("durationParaview1DWrite");
+
   // write beginning of file on rank 0
   outputFilePartNo = 0;
 
@@ -647,6 +652,8 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
     MPI_File_set_view(fh, 0, MPI_BYTE, accessPattern, "native", MPI_INFO_NULL);
     MPI_File_write(fh, v, size, MPI_BYTE, MPI_STATUS_IGNORE);
   */
+
+  Control::PerformanceMeasurement::stop("durationParaview1DWrite");
 
   MPIUtility::handleReturnValue(MPI_File_close(&fileHandle), "MPI_File_close");
 }
@@ -743,10 +750,13 @@ void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType 
       int nPointsGlobal = 0;
       int nLinesGlobal = 0;
 
+      Control::PerformanceMeasurement::start("durationParaview3DReduction");
       MPIUtility::handleReturnValue(MPI_Exscan(&polyDataPropertiesForMesh.nCellsLocal, &nCellsPreviousRanks, 1, MPI_INT, MPI_SUM, this->rankSubset_->mpiCommunicator()), "MPI_Exscan");
       MPIUtility::handleReturnValue(MPI_Exscan(&polyDataPropertiesForMesh.nPointsLocal, &nPointsPreviousRanks, 1, MPI_INT, MPI_SUM, this->rankSubset_->mpiCommunicator()), "MPI_Exscan");
       MPIUtility::handleReturnValue(MPI_Reduce(&polyDataPropertiesForMesh.nPointsLocal, &nPointsGlobal, 1, MPI_INT, MPI_SUM, 0, this->rankSubset_->mpiCommunicator()), "MPI_Reduce");
       MPIUtility::handleReturnValue(MPI_Reduce(&polyDataPropertiesForMesh.nCellsLocal, &nLinesGlobal, 1, MPI_INT, MPI_SUM, 0, this->rankSubset_->mpiCommunicator()), "MPI_Reduce");
+
+      Control::PerformanceMeasurement::stop("durationParaview3DReduction");
 
       std::vector<node_no_t> &nNodesLocalWithGhosts = polyDataPropertiesForMesh.nNodesLocalWithGhosts;
       assert(nNodesLocalWithGhosts.size() == 3);
@@ -935,6 +945,8 @@ void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType 
                                                   MPI_MODE_WRONLY | MPI_MODE_CREATE,
                                                   MPI_INFO_NULL, &fileHandle), "MPI_File_open");
 
+      Control::PerformanceMeasurement::start("durationParaview3DWrite");
+
       // write beginning of file on rank 0
       outputFilePartNo = 0;
 
@@ -1012,6 +1024,7 @@ void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType 
         MPI_File_write(fh, v, size, MPI_BYTE, MPI_STATUS_IGNORE);
       */
 
+      Control::PerformanceMeasurement::stop("durationParaview3DWrite");
       MPIUtility::handleReturnValue(MPI_File_close(&fileHandle), "MPI_File_close");
     }
   }

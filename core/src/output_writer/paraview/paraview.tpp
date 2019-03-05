@@ -32,11 +32,18 @@ void Paraview::write(DataType& data, int timeStepNo, double currentTime)
 
   if (combineFiles_)
   {
+    Control::PerformanceMeasurement::start("durationParaview1D");
+
     // create a PolyData file that combines all 1D meshes into one file
     writePolyDataFile<typename DataType::OutputFieldVariables>(data.getOutputFieldVariables(), combined1DMeshes);
 
+    Control::PerformanceMeasurement::stop("durationParaview1D");
+    Control::PerformanceMeasurement::start("durationParaview3D");
+
     // create an UnstructuredMesh file that combines all 3D meshes into one file
     writeCombinedUnstructuredGridFile<typename DataType::OutputFieldVariables>(data.getOutputFieldVariables(), combined3DMeshes);
+
+    Control::PerformanceMeasurement::stop("durationParaview3D");
   }
 
   // output normal files, parallel or if combineFiles_, only the 2D and 3D meshes, combined

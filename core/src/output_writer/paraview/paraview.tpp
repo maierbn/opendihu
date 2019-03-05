@@ -11,6 +11,7 @@
 #include "output_writer/paraview/loop_output.h"
 #include "output_writer/paraview/loop_collect_mesh_properties.h"
 #include "output_writer/paraview/poly_data_properties_for_mesh.h"
+#include "control/performance_measurement.h"
 
 namespace OutputWriter
 {

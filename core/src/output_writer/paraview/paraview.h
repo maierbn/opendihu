@@ -6,6 +6,7 @@
 
 #include "control/types.h"
 #include "output_writer/generic.h"
+#include "output_writer/paraview/poly_data_properties_for_mesh.h"
 
 namespace OutputWriter
 {
@@ -70,6 +71,23 @@ public:
 
 protected:
 
+  /** one VTKPiece is the XML element that will be output as <Piece></Piece>. It is created from one or multiple opendihu meshes
+   */
+  struct VTKPiece
+  {
+    std::set<std::string> meshNamesCombinedMeshes;   ///< the meshNames of the combined meshes, or only one meshName if it is not a merged mesh
+    PolyDataPropertiesForMesh properties;   ///< the properties of the merged mesh
+
+    std::string firstScalarName;   ///< name of the first scalar field variable of the mesh
+    std::string firstVectorName;   ///< name of the first non-scalar field variable of the mesh
+
+    //! constructor, initialize nPoints and nCells to 0
+    VTKPiece();
+
+    //! assign the correct values to firstScalarName and firstVectorName, only if properties has been set
+    void setVTKValues();
+  };
+
   //! write some ascii data to the file as a collective shared operation. Only rank 0 writes, but the other ranks wait and the shared file pointer is incremented.
   void writeAsciiDataShared(MPI_File fileHandle, int ownRankNo, std::string writeBuffer);
 
@@ -87,6 +105,15 @@ protected:
 
   std::vector<int> globalValuesSize_;   ///< cached values used in writeCombinedValuesVector
   std::vector<int> nPreviousValues_;    ///< cached values used in writeCombinedValuesVector
+
+  std::map<std::string, PolyDataPropertiesForMesh> meshPropertiesUnstructuredGridFile_;    ///< mesh information for a combined unstructured grid file (*.vtu), e.g. for 3D data
+  std::map<std::string, PolyDataPropertiesForMesh> meshPropertiesPolyDataFile_;    ///< mesh information for a poly data file (*.vtp), for 1D data
+  VTKPiece vtkPiece_;   ///< the VTKPiece data structure used for PolyDataFile
+
+  int nCellsPreviousRanks_ = 0;   ///< sum of number of cells on other processes with lower rank no.
+  int nPointsPreviousRanks_ = 0;  ///< sum of number of points on other processes with lower rank no.
+  int nPointsGlobal_ = 0;       ///< total number of points on all ranks
+  int nLinesGlobal_ = 0;       ///< total number of lines on all ranks
 };
 
 } // namespace

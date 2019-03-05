@@ -690,8 +690,13 @@ void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType 
 
   bool meshPropertiesInitialized = !meshPropertiesUnstructuredGridFile_.empty();
 
+  if (meshPropertiesInitialized)
+
+    LOG(INFO) << "meshPropertiesUnstructuredGridFile_ already initialized";
+
   if (!meshPropertiesInitialized)
   {
+    LOG(INFO) << "initialize meshPropertiesUnstructuredGridFile_";
     Control::PerformanceMeasurement::start("durationParaview3DInit");
 
     // collect the size data that is needed to compute offsets for parallel file output
@@ -863,15 +868,15 @@ void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType 
       // if next assertion fails, output why for debugging
       if (fieldVariableValues.size() != polyDataPropertiesForMesh.pointDataArrays.size())
       {
-        LOG(DEBUG) << "n field variable values: " << fieldVariableValues.size() << ", n point data arrays: "
+        LOG(INFO) << "n field variable values: " << fieldVariableValues.size() << ", n point data arrays: "
           << polyDataPropertiesForMesh.pointDataArrays.size();
-        LOG(DEBUG) << "mesh name: " << currentMeshName;
+        LOG(INFO) << "mesh name: " << currentMeshName;
         std::stringstream pointDataArraysNames;
         for (int i = 0; i < polyDataPropertiesForMesh.pointDataArrays.size(); i++)
         {
           pointDataArraysNames << polyDataPropertiesForMesh.pointDataArrays[i].first << " ";
         }
-        LOG(DEBUG) << "pointDataArraysNames: " <<  pointDataArraysNames.str();
+        LOG(INFO) << "pointDataArraysNames: " <<  pointDataArraysNames.str();
       }
 
       assert(fieldVariableValues.size() == polyDataPropertiesForMesh.pointDataArrays.size());

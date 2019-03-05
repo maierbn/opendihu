@@ -110,10 +110,13 @@ protected:
   std::map<std::string, PolyDataPropertiesForMesh> meshPropertiesPolyDataFile_;    ///< mesh information for a poly data file (*.vtp), for 1D data
   VTKPiece vtkPiece_;   ///< the VTKPiece data structure used for PolyDataFile
 
-  int nCellsPreviousRanks_ = 0;   ///< sum of number of cells on other processes with lower rank no.
-  int nPointsPreviousRanks_ = 0;  ///< sum of number of points on other processes with lower rank no.
-  int nPointsGlobal_ = 0;       ///< total number of points on all ranks
-  int nLinesGlobal_ = 0;       ///< total number of lines on all ranks
+  int nCellsPreviousRanks1D_ = 0;   ///< sum of number of cells on other processes with lower rank no., for vtp file
+  int nPointsPreviousRanks1D_ = 0;  ///< sum of number of points on other processes with lower rank no., for vtp file
+  int nPointsGlobal1D_ = 0;       ///< total number of points on all ranks, for vtp file
+  int nLinesGlobal1D_ = 0;       ///< total number of lines on all ranks, for vtp file
+  int nCellsPreviousRanks3D_ = 0;   ///< sum of number of cells on other processes with lower rank no., for vtu file
+  int nPointsPreviousRanks3D_ = 0;  ///< sum of number of points on other processes with lower rank no., for vtu file
+  int nPointsGlobal3D_ = 0;       ///< total number of points on all ranks, for vtu file
 };
 
 } // namespace

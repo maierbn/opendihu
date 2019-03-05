@@ -446,17 +446,17 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
   if (!meshPropertiesInitialized)
   {
     // exchange information about offset in terms of nCells and nPoints
-    nCellsPreviousRanks_ = 0;
-    nPointsPreviousRanks_ = 0;
-    nPointsGlobal_ = 0;
-    nLinesGlobal_ = 0;
+    nCellsPreviousRanks1D_ = 0;
+    nPointsPreviousRanks1D_ = 0;
+    nPointsGlobal1D_ = 0;
+    nLinesGlobal1D_ = 0;
 
     Control::PerformanceMeasurement::start("durationParaview1DInit");
     Control::PerformanceMeasurement::start("durationParaview1DReduction");
-    MPIUtility::handleReturnValue(MPI_Exscan(&vtkPiece_.properties.nCellsLocal, &nCellsPreviousRanks_, 1, MPI_INT, MPI_SUM, this->rankSubset_->mpiCommunicator()), "MPI_Exscan");
-    MPIUtility::handleReturnValue(MPI_Exscan(&vtkPiece_.properties.nPointsLocal, &nPointsPreviousRanks_, 1, MPI_INT, MPI_SUM, this->rankSubset_->mpiCommunicator()), "MPI_Exscan");
-    MPIUtility::handleReturnValue(MPI_Reduce(&vtkPiece_.properties.nPointsLocal, &nPointsGlobal_, 1, MPI_INT, MPI_SUM, 0, this->rankSubset_->mpiCommunicator()), "MPI_Reduce");
-    MPIUtility::handleReturnValue(MPI_Reduce(&vtkPiece_.properties.nCellsLocal, &nLinesGlobal_, 1, MPI_INT, MPI_SUM, 0, this->rankSubset_->mpiCommunicator()), "MPI_Reduce");
+    MPIUtility::handleReturnValue(MPI_Exscan(&vtkPiece_.properties.nCellsLocal, &nCellsPreviousRanks1D_, 1, MPI_INT, MPI_SUM, this->rankSubset_->mpiCommunicator()), "MPI_Exscan");
+    MPIUtility::handleReturnValue(MPI_Exscan(&vtkPiece_.properties.nPointsLocal, &nPointsPreviousRanks1D_, 1, MPI_INT, MPI_SUM, this->rankSubset_->mpiCommunicator()), "MPI_Exscan");
+    MPIUtility::handleReturnValue(MPI_Reduce(&vtkPiece_.properties.nPointsLocal, &nPointsGlobal1D_, 1, MPI_INT, MPI_SUM, 0, this->rankSubset_->mpiCommunicator()), "MPI_Reduce");
+    MPIUtility::handleReturnValue(MPI_Reduce(&vtkPiece_.properties.nCellsLocal, &nLinesGlobal1D_, 1, MPI_INT, MPI_SUM, 0, this->rankSubset_->mpiCommunicator()), "MPI_Reduce");
     Control::PerformanceMeasurement::stop("durationParaview1DReduction");
     Control::PerformanceMeasurement::stop("durationParaview1DInit");
   }
@@ -466,15 +466,15 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
   std::vector<int> connectivityValues(2*vtkPiece_.properties.nCellsLocal);
   for (int i = 0; i < vtkPiece_.properties.nCellsLocal; i++)
   {
-    connectivityValues[2*i + 0] = nPointsPreviousRanks_ + i;
-    connectivityValues[2*i + 1] = nPointsPreviousRanks_ + i+1;
+    connectivityValues[2*i + 0] = nPointsPreviousRanks1D_ + i;
+    connectivityValues[2*i + 1] = nPointsPreviousRanks1D_ + i+1;
   }
 
   // setup offset array
   std::vector<int> offsetValues(vtkPiece_.properties.nCellsLocal);
   for (int i = 0; i < vtkPiece_.properties.nCellsLocal; i++)
   {
-    offsetValues[i] = 2*nCellsPreviousRanks_ + 2*i + 1;
+    offsetValues[i] = 2*nCellsPreviousRanks1D_ + 2*i + 1;
   }
 
   // collect all data for the field variables, organized by field variable names
@@ -523,8 +523,8 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
     << "<VTKFile type=\"PolyData\" version=\"1.0\" byte_order=\"LittleEndian\">" << std::endl    // intel cpus are LittleEndian
     << std::string(1, '\t') << "<PolyData>" << std::endl;
 
-  outputFileParts[outputFilePartNo] << std::string(2, '\t') << "<Piece NumberOfPoints=\"" << nPointsGlobal_ << "\" NumberOfVerts=\"0\" "
-    << "NumberOfLines=\"" << nLinesGlobal_ << "\" NumberOfStrips=\"0\" NumberOfPolys=\"0\">" << std::endl
+  outputFileParts[outputFilePartNo] << std::string(2, '\t') << "<Piece NumberOfPoints=\"" << nPointsGlobal1D_ << "\" NumberOfVerts=\"0\" "
+    << "NumberOfLines=\"" << nLinesGlobal1D_ << "\" NumberOfStrips=\"0\" NumberOfPolys=\"0\">" << std::endl
     << std::string(3, '\t') << "<PointData";
 
   if (vtkPiece_.firstScalarName != "")
@@ -690,13 +690,9 @@ void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType 
 
   bool meshPropertiesInitialized = !meshPropertiesUnstructuredGridFile_.empty();
 
-  if (meshPropertiesInitialized)
-
-    LOG(INFO) << "meshPropertiesUnstructuredGridFile_ already initialized";
-
   if (!meshPropertiesInitialized)
   {
-    LOG(INFO) << "initialize meshPropertiesUnstructuredGridFile_";
+    LOG(DEBUG) << "initialize meshPropertiesUnstructuredGridFile_";
     Control::PerformanceMeasurement::start("durationParaview3DInit");
 
     // collect the size data that is needed to compute offsets for parallel file output
@@ -788,17 +784,15 @@ void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType 
       // exchange information about offset in terms of nCells and nPoints
       if (!meshPropertiesInitialized)
       {
-        nCellsPreviousRanks_ = 0;
-        nPointsPreviousRanks_ = 0;
-        nPointsGlobal_ = 0;
-        nLinesGlobal_ = 0;
+        nCellsPreviousRanks3D_ = 0;
+        nPointsPreviousRanks3D_ = 0;
+        nPointsGlobal3D_ = 0;
 
         Control::PerformanceMeasurement::start("durationParaview3DInit");
         Control::PerformanceMeasurement::start("durationParaview3DReduction");
-        MPIUtility::handleReturnValue(MPI_Exscan(&polyDataPropertiesForMesh.nCellsLocal, &nCellsPreviousRanks_, 1, MPI_INT, MPI_SUM, this->rankSubset_->mpiCommunicator()), "MPI_Exscan");
-        MPIUtility::handleReturnValue(MPI_Exscan(&polyDataPropertiesForMesh.nPointsLocal, &nPointsPreviousRanks_, 1, MPI_INT, MPI_SUM, this->rankSubset_->mpiCommunicator()), "MPI_Exscan");
-        MPIUtility::handleReturnValue(MPI_Reduce(&polyDataPropertiesForMesh.nPointsLocal, &nPointsGlobal_, 1, MPI_INT, MPI_SUM, 0, this->rankSubset_->mpiCommunicator()), "MPI_Reduce");
-        MPIUtility::handleReturnValue(MPI_Reduce(&polyDataPropertiesForMesh.nCellsLocal, &nLinesGlobal_, 1, MPI_INT, MPI_SUM, 0, this->rankSubset_->mpiCommunicator()), "MPI_Reduce");
+        MPIUtility::handleReturnValue(MPI_Exscan(&polyDataPropertiesForMesh.nCellsLocal, &nCellsPreviousRanks3D_, 1, MPI_INT, MPI_SUM, this->rankSubset_->mpiCommunicator()), "MPI_Exscan");
+        MPIUtility::handleReturnValue(MPI_Exscan(&polyDataPropertiesForMesh.nPointsLocal, &nPointsPreviousRanks3D_, 1, MPI_INT, MPI_SUM, this->rankSubset_->mpiCommunicator()), "MPI_Exscan");
+        MPIUtility::handleReturnValue(MPI_Reduce(&polyDataPropertiesForMesh.nPointsLocal, &nPointsGlobal3D_, 1, MPI_INT, MPI_SUM, 0, this->rankSubset_->mpiCommunicator()), "MPI_Reduce");
 
         Control::PerformanceMeasurement::stop("durationParaview3DReduction");
         Control::PerformanceMeasurement::stop("durationParaview3DInit");
@@ -817,28 +811,28 @@ void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType 
         {
           for (int indexX = 0; indexX < nNodesLocalWithGhosts[0]-1; indexX++, elementIndex++)
           {
-            connectivityValues[elementIndex*8 + 0] = nPointsPreviousRanks_
+            connectivityValues[elementIndex*8 + 0] = nPointsPreviousRanks3D_
               + indexZ*nNodesLocalWithGhosts[0]*nNodesLocalWithGhosts[1]
               + indexY*nNodesLocalWithGhosts[0] + indexX;
-            connectivityValues[elementIndex*8 + 1] = nPointsPreviousRanks_
+            connectivityValues[elementIndex*8 + 1] = nPointsPreviousRanks3D_
               + indexZ*nNodesLocalWithGhosts[0]*nNodesLocalWithGhosts[1]
               + indexY*nNodesLocalWithGhosts[0] + indexX + 1;
-            connectivityValues[elementIndex*8 + 2] = nPointsPreviousRanks_
+            connectivityValues[elementIndex*8 + 2] = nPointsPreviousRanks3D_
               + indexZ*nNodesLocalWithGhosts[0]*nNodesLocalWithGhosts[1]
               + (indexY+1)*nNodesLocalWithGhosts[0] + indexX + 1;
-            connectivityValues[elementIndex*8 + 3] = nPointsPreviousRanks_
+            connectivityValues[elementIndex*8 + 3] = nPointsPreviousRanks3D_
               + indexZ*nNodesLocalWithGhosts[0]*nNodesLocalWithGhosts[1]
               + (indexY+1)*nNodesLocalWithGhosts[0] + indexX;
-            connectivityValues[elementIndex*8 + 4] = nPointsPreviousRanks_
+            connectivityValues[elementIndex*8 + 4] = nPointsPreviousRanks3D_
               + (indexZ+1)*nNodesLocalWithGhosts[0]*nNodesLocalWithGhosts[1]
               + indexY*nNodesLocalWithGhosts[0] + indexX;
-            connectivityValues[elementIndex*8 + 5] = nPointsPreviousRanks_
+            connectivityValues[elementIndex*8 + 5] = nPointsPreviousRanks3D_
               + (indexZ+1)*nNodesLocalWithGhosts[0]*nNodesLocalWithGhosts[1]
               + indexY*nNodesLocalWithGhosts[0] + indexX + 1;
-            connectivityValues[elementIndex*8 + 6] = nPointsPreviousRanks_
+            connectivityValues[elementIndex*8 + 6] = nPointsPreviousRanks3D_
               + (indexZ+1)*nNodesLocalWithGhosts[0]*nNodesLocalWithGhosts[1]
               + (indexY+1)*nNodesLocalWithGhosts[0] + indexX + 1;
-            connectivityValues[elementIndex*8 + 7] = nPointsPreviousRanks_
+            connectivityValues[elementIndex*8 + 7] = nPointsPreviousRanks3D_
               + (indexZ+1)*nNodesLocalWithGhosts[0]*nNodesLocalWithGhosts[1]
               + (indexY+1)*nNodesLocalWithGhosts[0] + indexX;
           }
@@ -849,7 +843,7 @@ void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType 
       std::vector<int> offsetValues(polyDataPropertiesForMesh.nCellsLocal);
       for (int i = 0; i < polyDataPropertiesForMesh.nCellsLocal; i++)
       {
-        offsetValues[i] = 8*nCellsPreviousRanks_ + 8*i + 8;    // specifies the end, i.e. one after the last, of the last of nodes for each element
+        offsetValues[i] = 8*nCellsPreviousRanks3D_ + 8*i + 8;    // specifies the end, i.e. one after the last, of the last of nodes for each element
       }
 
       // collect all data for the field variables, organized by field variable names
@@ -859,24 +853,21 @@ void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType 
       ParaviewLoopOverTuple::loopGetNodalValues<OutputFieldVariablesType>(fieldVariables, currentMeshName, fieldVariableValues);
 
       // set data for partitioning field variable
-      if (!meshPropertiesInitialized)
-      {
-        assert (!fieldVariableValues.empty());
-        fieldVariableValues["partitioning"].resize(polyDataPropertiesForMesh.nPointsLocal, (double)this->rankSubset_->ownRankNo());
-      }
+      assert (!fieldVariableValues.empty());
+      fieldVariableValues["partitioning"].resize(polyDataPropertiesForMesh.nPointsLocal, (double)this->rankSubset_->ownRankNo());
 
       // if next assertion fails, output why for debugging
       if (fieldVariableValues.size() != polyDataPropertiesForMesh.pointDataArrays.size())
       {
-        LOG(INFO) << "n field variable values: " << fieldVariableValues.size() << ", n point data arrays: "
+        LOG(DEBUG) << "n field variable values: " << fieldVariableValues.size() << ", n point data arrays: "
           << polyDataPropertiesForMesh.pointDataArrays.size();
-        LOG(INFO) << "mesh name: " << currentMeshName;
+        LOG(DEBUG) << "mesh name: " << currentMeshName;
         std::stringstream pointDataArraysNames;
         for (int i = 0; i < polyDataPropertiesForMesh.pointDataArrays.size(); i++)
         {
           pointDataArraysNames << polyDataPropertiesForMesh.pointDataArrays[i].first << " ";
         }
-        LOG(INFO) << "pointDataArraysNames: " <<  pointDataArraysNames.str();
+        LOG(DEBUG) << "pointDataArraysNames: " <<  pointDataArraysNames.str();
       }
 
       assert(fieldVariableValues.size() == polyDataPropertiesForMesh.pointDataArrays.size());
@@ -902,7 +893,7 @@ void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType 
         << "<VTKFile type=\"UnstructuredGrid\" version=\"1.0\" byte_order=\"LittleEndian\">" << std::endl    // intel cpus are LittleEndian
         << std::string(1, '\t') << "<UnstructuredGrid>" << std::endl;
 
-      outputFileParts[outputFilePartNo] << std::string(2, '\t') << "<Piece NumberOfPoints=\"" << nPointsGlobal_
+      outputFileParts[outputFilePartNo] << std::string(2, '\t') << "<Piece NumberOfPoints=\"" << nPointsGlobal3D_
         << "\" NumberOfCells=\"" << polyDataPropertiesForMesh.nCellsGlobal << "\">" << std::endl
         << std::string(3, '\t') << "<PointData";
 

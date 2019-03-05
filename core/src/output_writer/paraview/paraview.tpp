@@ -24,6 +24,8 @@ void Paraview::write(DataType& data, int timeStepNo, double currentTime)
     return;
   }
 
+  Control::PerformanceMeasurement::start("durationParaviewOutput");
+
   std::set<std::string> combined1DMeshes;
   std::set<std::string> combined3DMeshes;
 
@@ -65,6 +67,8 @@ void Paraview::write(DataType& data, int timeStepNo, double currentTime)
     // loop over all field variables and output those that are associated with the mesh given by meshName
     ParaviewLoopOverTuple::loopOutput(data.getOutputFieldVariables(), data.getOutputFieldVariables(), meshName, filenameStart.str(), specificSettings_);
   }
+
+  Control::PerformanceMeasurement::stop("durationParaviewOutput");
 }
 
 template<typename FieldVariableType>

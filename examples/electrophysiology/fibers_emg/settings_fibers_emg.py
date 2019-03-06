@@ -679,7 +679,7 @@ if rank_no == 0 and n_ranks < 10 and False:
             list(range(subdomain_coordinate_y*n_subdomains_x + subdomain_coordinate_x, n_ranks, n_subdomains_x*n_subdomains_y))))
 
 config = {
-  "scenarioName": scenario_name,
+  "scenarioName": scenario_name+"_tol1e-7",
   "Meshes": meshes,
   "MappingsBetweenMeshes": {"MeshFiber_{}".format(i) : "3Dmesh" for i in range(n_fibers_total)},
   "Solvers": {
@@ -696,7 +696,7 @@ config = {
       "preconditionerType": potential_flow_preconditioner_type,
     },
     "activationSolver": {
-      "relativeTolerance": 1e-2,
+      "relativeTolerance": 1e-7,
       "maxIterations": 10000,
       "solverType": emg_solver_type,
       "preconditionerType": emg_preconditioner_type,
@@ -844,7 +844,7 @@ config = {
           },
         },
         "OutputWriter" : [
-          {"format": "Paraview", "outputInterval": int(1./dt_bidomain*output_timestep), "filename": "out/" + scenario_name + "/emg", "binary": True, "fixedFormat": False, "combineFiles": True},
+          #{"format": "Paraview", "outputInterval": int(1./dt_bidomain*output_timestep), "filename": "out/" + scenario_name + "/emg", "binary": True, "fixedFormat": False, "combineFiles": True},
           #{"format": "Paraview", "outputInterval": int(1./dt_3D*output_timestep), "filename": "out/3d_txt", "binary": False, "fixedFormat": False, "combineFiles": True},
         ],
       }

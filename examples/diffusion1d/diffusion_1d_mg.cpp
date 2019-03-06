@@ -11,40 +11,9 @@ int main(int argc, char *argv[])
   DihuContext settings(argc, argv);
   
   PythonConfig topLevelSettings = settings.getPythonConfig();
+ // PythonConfig specificSettings_ = PythonConfig(topLevelSettings, "ExplicitEuler");
 
-  if(topLevelSettings.hasKey("multigrid_Vcycle"))
-  {
-    DihuContext settings_timestepping=settings["multigrid_Vcycle"];
-    PythonConfig topLevelSettings_timeStepping = settings_timestepping.getPythonConfig();
-    
-    if(topLevelSettings_timeStepping.hasKey("ExplicitEuler"))
-    {
-      LOG(INFO) << "ExplicitEuler";
-      
-      OperatorSplitting::multigrid_Vcycle<
-      TimeSteppingScheme::ExplicitEuler<
-      SpatialDiscretization::FiniteElementMethod<
-        Mesh::StructuredRegularFixedOfDimension<1>,
-        BasisFunction::LagrangeOfOrder<>,
-        Quadrature::None,
-        Equation::Dynamic::IsotropicDiffusion
-	>
-	>,
-      TimeSteppingScheme::ExplicitEuler<
-      SpatialDiscretization::FiniteElementMethod<
-      Mesh::StructuredRegularFixedOfDimension<1>,
-      BasisFunction::LagrangeOfOrder<>,
-      Quadrature::None,
-      Equation::Dynamic::IsotropicDiffusion
-      >
-    >
-    > problem(settings);
-  
-    problem.run();
-  
-    return EXIT_SUCCESS;
-   } 
-  else if(topLevelSettings.hasKey("ImplicitEuler"))
+  if(topLevelSettings.hasKey("ImplicitEuler"))
   {
     LOG(INFO) << "ImplicitEuler";
     
@@ -80,8 +49,5 @@ int main(int argc, char *argv[])
   }
   else
     LOG(ERROR) << "No valid time integration scheme in settings.py";
-  }
-  else
-    LOG(ERROR) << "No valid multigrid scheme";
    
 }

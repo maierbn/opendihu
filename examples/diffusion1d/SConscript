@@ -13,8 +13,8 @@ if not env['no_examples']:
   # define the source files
   src_files = [
   "diffusion_1d",
-  "diffusion_1d_pod",
-  "diffusion_1d_MG"
+  #"diffusion_1d_pod",
+  "diffusion_1d_mg"
   ]
 
   # create the main executable

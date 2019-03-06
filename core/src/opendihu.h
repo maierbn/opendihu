@@ -18,8 +18,8 @@
 #include "operator_splitting/godunov.h"
 #include "operator_splitting/strang.h"
 
-#include "multigrid/multigrid.h"
-#include "multigrid/multigrid_Vcycle.h"
+//#include "multigrid/multigrid.h"
+//#include "multigrid/multigrid_Vcycle.h"
 
 #include "spatial_discretization/finite_element_method/finite_element_method.h"
 

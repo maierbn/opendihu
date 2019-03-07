@@ -88,6 +88,7 @@ parser.add_argument('--emg_solver_type',          help='The solver for the stati
 #parser.add_argument('--emg_solver_type',          help='The solver for the static bidomain.', default=emg_solver_type, choices=["gmres","cg","lu","gamg","richardson","chebyshev","cholesky","jacobi","sor","preonly"])
 parser.add_argument('--emg_preconditioner_type',  help='The preconditioner for the static bidomain.', default=emg_preconditioner_type, choices=["jacobi","sor","lu","ilu","gamg","none"])
 parser.add_argument('--emg_initial_guess_nonzero',  help='It the initial guess for the emg linear system should be set to the previous solution.', default=False, action='store_true')
+parser.add_argument('--paraview_output',          help='Enable the paraview output writer.', default=False, action='store_true')
 parser.add_argument('--fiber_file',               help='The filename of the file that contains the fiber data.', default=fiber_file)
 parser.add_argument('--cellml_file',              help='The filename of the file that contains the cellml model.', default=cellml_file)
 parser.add_argument('--fiber_distribution_file',  help='The filename of the file that contains the MU firing times.', default=fiber_distribution_file)
@@ -116,7 +117,7 @@ if rank_no == 0:
   print("dt_0D:           {}, diffusion_solver_type:      {}".format(dt_0D, diffusion_solver_type))
   print("dt_1D:           {}, potential_flow_solver_type: {}".format(dt_1D, potential_flow_solver_type))
   print("dt_3D:           {}, emg_solver_type:            {}, emg_initial_guess_nonzero: {}".format(dt_3D, emg_solver_type, emg_initial_guess_nonzero))
-  print("dt_bidomain:     {}".format(dt_bidomain))
+  print("dt_bidomain:     {},                                    paraview_output: {}".format(dt_bidomain, paraview_output))
   print("output_timestep: {}  stimulation_frequency: {} 1/ms = {} Hz".format(output_timestep, stimulation_frequency, stimulation_frequency*1e3))
   print("fiber_file:              {}".format(fiber_file))
   print("cellml_file:             {}".format(cellml_file))
@@ -168,7 +169,13 @@ if fiber_file == "cuboid.bin":
           for z in range(n_points_whole_fiber):
             point = [x*(float)(size_x)/(n_fibers_x-1), y*(float)(size_y)/(n_fibers_y-1), z*(float)(size_z)/(n_points_whole_fiber-1)]
             outfile.write(struct.pack('3d', point[0], point[1], point[2]))   # data point
-    
+
+# set output writer    
+output_writer_fibers = []
+output_writer_emg = []
+if paraview_output:
+  output_writer_emg.append({"format": "Paraview", "outputInterval": int(1./dt_bidomain*output_timestep), "filename": "out/" + scenario_name + "/emg", "binary": True, "fixedFormat": False, "combineFiles": True})
+  output_writer_fibers.append({"format": "Paraview", "outputInterval": int(1./dt_3D*output_timestep), "filename": "out/" + scenario_name + "/fibers", "binary": True, "fixedFormat": False, "combineFiles": True})
 
 # set values for cellml model
 if "shorten" in cellml_file:
@@ -679,7 +686,7 @@ if rank_no == 0 and n_ranks < 10 and False:
             list(range(subdomain_coordinate_y*n_subdomains_x + subdomain_coordinate_x, n_ranks, n_subdomains_x*n_subdomains_y))))
 
 config = {
-  "scenarioName": scenario_name,
+  "scenarioName": scenario_name+"_tol1e-7",
   "Meshes": meshes,
   "MappingsBetweenMeshes": {"MeshFiber_{}".format(i) : "3Dmesh" for i in range(n_fibers_total)},
   "Solvers": {
@@ -696,7 +703,7 @@ config = {
       "preconditionerType": potential_flow_preconditioner_type,
     },
     "activationSolver": {
-      "relativeTolerance": 1e-2,
+      "relativeTolerance": 1e-7,
       "maxIterations": 10000,
       "solverType": emg_solver_type,
       "preconditionerType": emg_preconditioner_type,
@@ -797,9 +804,7 @@ config = {
                   },
                 } for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y)) \
                     for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x))],
-                "OutputWriter" : [
-                  {"format": "Paraview", "outputInterval": int(1./dt_3D*output_timestep), "filename": "out/" + scenario_name + "/fibers", "binary": True, "fixedFormat": False, "combineFiles": True},
-                ],
+                "OutputWriter" : output_writer_fibers,
               },
             },
           }
@@ -843,10 +848,7 @@ config = {
             ],
           },
         },
-        "OutputWriter" : [
-          {"format": "Paraview", "outputInterval": int(1./dt_bidomain*output_timestep), "filename": "out/" + scenario_name + "/emg", "binary": True, "fixedFormat": False, "combineFiles": True},
-          #{"format": "Paraview", "outputInterval": int(1./dt_3D*output_timestep), "filename": "out/3d_txt", "binary": False, "fixedFormat": False, "combineFiles": True},
-        ],
+        "OutputWriter" : output_writer_emg,
       }
     }
   }

@@ -1,5 +1,6 @@
 # input fiber
-input=/store/software/opendihu/examples/electrophysiology/input/7x7fibers.bin
+#input=/store/software/opendihu/examples/electrophysiology/input/7x7fibers.bin
+input=/data/scratch/maierbn/input/7x7fibers.bin
 
 ./refine ../settings_refine.py 1 $input     # 13
 ./refine ../settings_refine.py 3 $input     # 25

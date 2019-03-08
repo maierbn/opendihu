@@ -125,6 +125,11 @@ if rank_no == 0:
   print("firing_times_file:       {}".format(firing_times_file))
   print("********************************************************************************")
 
+
+if rank_no == 0:
+  import timeit
+  t_start_script = timeit.default_timer()
+
 n_subdomains_xy = n_subdomains_x * n_subdomains_y
 own_subdomain_coordinate_x = rank_no % n_subdomains_x
 own_subdomain_coordinate_y = (int)(rank_no / n_subdomains_x) % n_subdomains_y
@@ -355,7 +360,7 @@ fiber_distribution = np.genfromtxt(fiber_distribution_file, delimiter=" ")
 firing_times = np.genfromtxt(firing_times_file)
 
 # for debugging output show when the first 20 fibers will fire
-if rank_no == 0:
+if rank_no == 0 and False:
   print("Debugging output about fiber firing: Taking input from file \"{}\"".format(firing_times_file))
   import timeit
   t_start = timeit.default_timer()
@@ -421,9 +426,9 @@ if rank_no == 0:
     print("\n\nError! Number of ranks {} does not match given partitioning {} x {} x {} = {}.\n\n".format(n_ranks, n_subdomains_x, n_subdomains_y, n_subdomains_z, n_subdomains_x*n_subdomains_y*n_subdomains_z))
     quit()
   
-n_fibers_per_subdomain_x = (int)(np.ceil(n_fibers_x / n_subdomains_x))
-n_fibers_per_subdomain_y = (int)(np.ceil(n_fibers_y / n_subdomains_y))
-n_points_per_subdomain_z = (int)(np.ceil(n_points_whole_fiber / n_subdomains_z))
+n_fibers_per_subdomain_x = (int)(n_fibers_x / n_subdomains_x)
+n_fibers_per_subdomain_y = (int)(n_fibers_y / n_subdomains_y)
+n_points_per_subdomain_z = (int)(n_points_whole_fiber / n_subdomains_z)
 
 if rank_no == 0:
   print("diffusion solver type: {}".format(diffusion_solver_type))
@@ -431,23 +436,58 @@ if rank_no == 0:
   print("{} x {} = {} fibers, per partition: {} x {} = {}, {} points per fiber".format(n_fibers_x, n_fibers_y, n_fibers_total, n_fibers_per_subdomain_x, n_fibers_per_subdomain_y, n_fibers_per_subdomain_x*n_fibers_per_subdomain_y, n_points_whole_fiber))
 
 # define helper functions for fiber numbering
-
+  
 # number of fibers that are handled inside the subdomain x
 def n_fibers_in_subdomain_x(subdomain_coordinate_x):
-  return min(n_fibers_per_subdomain_x, n_fibers_x-subdomain_coordinate_x*n_fibers_per_subdomain_x)
+  a1 = n_fibers_x - n_subdomains_x*n_fibers_per_subdomain_x              # number of subdomains with high number of fibers
+  a2 = n_subdomains_x - a1                                               # number of subdomains with low number of fibers
+  if subdomain_coordinate_x < a1:
+    return n_fibers_per_subdomain_x + 1      # high number of fibersr
+  else:
+    return n_fibers_per_subdomain_x    # low number of fibers
   
 # number of fibers that are handled inside the subdomain y
 def n_fibers_in_subdomain_y(subdomain_coordinate_y):
-  return min(n_fibers_per_subdomain_y, n_fibers_y-subdomain_coordinate_y*n_fibers_per_subdomain_y)
+  a1 = n_fibers_y - n_subdomains_y*n_fibers_per_subdomain_y              # number of subdomains with high number of fibers
+  a2 = n_subdomains_y - a1                                               # number of subdomains with low number of fibers
+  if subdomain_coordinate_y < a1:
+    return n_fibers_per_subdomain_y + 1     # high number of fibers
+  else:
+    return n_fibers_per_subdomain_y     # low number of fibers
 
 # global fiber no, from subdomain coordinate and coordinate inside the subdomain
 def fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y):
-  return (subdomain_coordinate_y*n_fibers_per_subdomain_y + fiber_in_subdomain_coordinate_y)*n_fibers_x + subdomain_coordinate_x*n_fibers_per_subdomain_x + fiber_in_subdomain_coordinate_x
+  # get number of previous fibers in y direction
+  a1 = n_fibers_y - n_subdomains_y*n_fibers_per_subdomain_y              # number of subdomains with high number of fibers
+  a2 = n_subdomains_y - a1                                               # number of subdomains with low number of fibers
+  
+  if subdomain_coordinate_y < a1:
+    n_fibers_in_y_direction = subdomain_coordinate_y * (n_fibers_per_subdomain_y + 1)
+  else:
+    n_fibers_in_y_direction = a1 * (n_fibers_per_subdomain_y + 1) + (subdomain_coordinate_y-a1) * n_fibers_per_subdomain_y
+  
+  # get number of previous fibers in x direction
+  a1 = n_fibers_x - n_subdomains_x*n_fibers_per_subdomain_x              # number of subdomains with high number of fibers
+  a2 = n_subdomains_x - a1                                               # number of subdomains with low number of fibers
+  
+  if subdomain_coordinate_x < a1:
+    n_fibers_in_x_direction = subdomain_coordinate_x * (n_fibers_per_subdomain_x + 1)
+  else:
+    n_fibers_in_x_direction = a1 * (n_fibers_per_subdomain_x + 1) + (subdomain_coordinate_x-a1) * n_fibers_per_subdomain_x
+  
+  return (n_fibers_in_y_direction + fiber_in_subdomain_coordinate_y)*n_fibers_x + n_fibers_in_x_direction + fiber_in_subdomain_coordinate_x
+
+# number of points that are handled inside the subdomain z
 
 # number of points that are handled inside the subdomain z
 def n_points_in_subdomain_z(subdomain_coordinate_z):
-  return min(n_points_per_subdomain_z, n_points_whole_fiber-subdomain_coordinate_z*n_points_per_subdomain_z)
-  
+  a1 = n_points_whole_fiber - n_subdomains_z*n_points_per_subdomain_z              # number of subdomains with high number of fibers
+  a2 = n_subdomains_z - a1                                               # number of subdomains with low number of fibers
+  if subdomain_coordinate_z < a1:
+    return n_points_per_subdomain_z + 1     # high number of points
+  else:
+    return n_points_per_subdomain_z     # low number of points
+
 def n_sampled_points_in_subdomain_x(subdomain_coordinate_x):
   result = (int)(np.ceil(n_fibers_in_subdomain_x(subdomain_coordinate_x) / sampling_stride_x))
   if subdomain_coordinate_x == n_subdomains_x-1 and (n_fibers_in_subdomain_x(subdomain_coordinate_x)-1) % sampling_stride_x != 0:
@@ -853,3 +893,61 @@ config = {
     }
   }
 }
+
+
+# sanity checking
+if True:
+  # check coupling instances
+  multiple_instances = config["Coupling"]["Term1"]["MultipleInstances"]
+  n_instances = multiple_instances["nInstances"]
+  instances_size = len(multiple_instances["instances"])
+  print("n_instances: {}".format(n_instances))
+
+  print("n subdomains: {} x {}".format(n_subdomains_x, n_subdomains_y))
+  print("n_fibers_per_subdomain_x: {} {}".format(n_fibers_per_subdomain_x, n_fibers_per_subdomain_y))
+
+  for subdomain_coordinate_y in range(n_subdomains_y):
+    print("n_fibers_in_subdomain_y({}) = {}".format(subdomain_coordinate_y, n_fibers_in_subdomain_y(subdomain_coordinate_y)))
+
+  print("--")
+  for subdomain_coordinate_x in range(n_subdomains_x):
+    print("n_fibers_in_subdomain_x({}) = {}".format(subdomain_coordinate_x, n_fibers_in_subdomain_x(subdomain_coordinate_x)))
+  print("--")
+
+  counter = 0
+  for subdomain_coordinate_y in range(n_subdomains_y):
+    for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y)):
+      for subdomain_coordinate_x in range(n_subdomains_x):
+        for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x)):
+          no = fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)
+          if no != counter:
+            print("error: fiber_no({},{},{},{}) = {}, counter = {}".format(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y,no,counter))
+#          else:
+#            print("   ok: fiber_no({},{},{},{}) = {}, counter = {}".format(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y,no,counter))
+
+          counter += 1  # check fiber no
+
+  if n_instances != instances_size or instances_size == 0:
+    print("Error with top-level multiple instances: nInstances: {}, size of instances: {}".format(n_instances, instances_size))
+
+  # loop over inner instances
+  for i in range(n_instances):
+    multiple_instances0 = multiple_instances["instances"][i]["StrangSplitting"]["Term1"]["MultipleInstances"]
+    n_instances0 = multiple_instances0["nInstances"]
+    instances_size0 = len(multiple_instances0["instances"])
+    
+    if n_instances0 != instances_size0 or instances_size0 == 0:
+      print("Error with Term1 {} multiple instances: nInstances: {}, size of instances: {}".format(i ,n_instances0, instances_size0))
+    
+    multiple_instances1 = multiple_instances["instances"][i]["StrangSplitting"]["Term2"]["MultipleInstances"]
+    n_instances1 = multiple_instances1["nInstances"]
+    instances_size1 = len(multiple_instances1["instances"])
+
+    if n_instances1 != instances_size1 or instances_size1 == 0:
+      print("Error with Term2 {} multiple instances: nInstances: {}, size of instances: {}".format(i, n_instances1, instances_size1))
+
+if rank_no == 0:
+  import timeit
+  t_stop_script = timeit.default_timer()
+  print("Parsing python config took {}s".format(t_stop_script - t_start_script))
+

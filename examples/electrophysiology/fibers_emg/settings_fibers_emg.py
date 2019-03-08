@@ -473,7 +473,8 @@ def fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_
   else:
     n_fibers_in_x_direction = a1 * (n_fibers_per_subdomain_x + 1) + (subdomain_coordinate_x-a1) * subdomain_coordinate_x
   
-  return n_fibers_in_y_direction*n_fibers_x + n_fibers_in_x_direction
+  return (n_fibers_in_y_direction + fiber_in_subdomain_coordinate_y)*n_fibers_x 
+    + n_fibers_in_x_direction + fiber_in_subdomain_coordinate_x
 
 # number of points that are handled inside the subdomain z
 def n_points_in_subdomain_z(subdomain_coordinate_z):

@@ -126,6 +126,7 @@ if rank_no == 0:
   print("********************************************************************************")
 
 if rank_no == 0:
+  import timeit
   t_start_script = timeit.default_timer()
   
 n_subdomains_xy = n_subdomains_x * n_subdomains_y

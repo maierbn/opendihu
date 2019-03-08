@@ -473,17 +473,16 @@ def fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_
   else:
     n_fibers_in_x_direction = a1 * (n_fibers_per_subdomain_x + 1) + (subdomain_coordinate_x-a1) * subdomain_coordinate_x
   
-  return (n_fibers_in_y_direction + fiber_in_subdomain_coordinate_y)*n_fibers_x 
-    + n_fibers_in_x_direction + fiber_in_subdomain_coordinate_x
+  return (n_fibers_in_y_direction + fiber_in_subdomain_coordinate_y)*n_fibers_x + n_fibers_in_x_direction + fiber_in_subdomain_coordinate_x
 
 # number of points that are handled inside the subdomain z
 def n_points_in_subdomain_z(subdomain_coordinate_z):
   a1 = n_subdomains_z * (n_points_per_subdomain_z + 1) - n_points_whole_fiber  # number of subdomains with high number of fibers
   a2 = n_subdomains_z - a1                                               # number of subdomains with low number of fibers
   if subdomain_coordinate_z < a1:
-    return n_points_per_subdomain_z + 1     # high number of fibers
+    return n_points_per_subdomain_z + 1     # high number of points
   else:
-    return n_points_per_subdomain_z     # low number of fibers
+    return n_points_per_subdomain_z     # low number of points
   
 def n_sampled_points_in_subdomain_x(subdomain_coordinate_x):
   result = (int)(np.ceil(n_fibers_in_subdomain_x(subdomain_coordinate_x) / sampling_stride_x))

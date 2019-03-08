@@ -438,8 +438,8 @@ if rank_no == 0:
 
 # number of fibers that are handled inside the subdomain x
 def n_fibers_in_subdomain_x(subdomain_coordinate_x):
-  a1 = n_subdomains_x * (n_fibers_per_subdomain_x + 1) - n_fibers_x   # number of subdomains with high number of fibers
-  a2 = n_subdomains_x - a1                                                # number of subdomains with low number of fibers
+  a1 = n_fibers_x - n_subdomains_x*n_fibers_per_subdomain_x              # number of subdomains with high number of fibers
+  a2 = n_subdomains_x - a1                                               # number of subdomains with low number of fibers
   if subdomain_coordinate_x < a1:
     return n_fibers_per_subdomain_x + 1      # high number of fibersr
   else:
@@ -447,7 +447,7 @@ def n_fibers_in_subdomain_x(subdomain_coordinate_x):
   
 # number of fibers that are handled inside the subdomain y
 def n_fibers_in_subdomain_y(subdomain_coordinate_y):
-  a1 = n_subdomains_y * (n_fibers_per_subdomain_y + 1) - n_fibers_y  # number of subdomains with high number of fibers
+  a1 = n_fibers_y - n_subdomains_y*n_fibers_per_subdomain_y              # number of subdomains with high number of fibers
   a2 = n_subdomains_y - a1                                               # number of subdomains with low number of fibers
   if subdomain_coordinate_y < a1:
     return n_fibers_per_subdomain_y + 1     # high number of fibers
@@ -457,28 +457,28 @@ def n_fibers_in_subdomain_y(subdomain_coordinate_y):
 # global fiber no, from subdomain coordinate and coordinate inside the subdomain
 def fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y):
   # get number of previous fibers in y direction
-  a1 = n_subdomains_y * (n_fibers_per_subdomain_y + 1) - n_fibers_y  # number of subdomains with high number of fibers
+  a1 = n_fibers_y - n_subdomains_y*n_fibers_per_subdomain_y              # number of subdomains with high number of fibers
   a2 = n_subdomains_y - a1                                               # number of subdomains with low number of fibers
   
   if subdomain_coordinate_y < a1:
     n_fibers_in_y_direction = subdomain_coordinate_y * (n_fibers_per_subdomain_y + 1)
   else:
-    n_fibers_in_y_direction = a1 * (n_fibers_per_subdomain_y + 1) + (subdomain_coordinate_y-a1) * subdomain_coordinate_y
+    n_fibers_in_y_direction = a1 * (n_fibers_per_subdomain_y + 1) + (subdomain_coordinate_y-a1) * n_fibers_per_subdomain_y
   
   # get number of previous fibers in x direction
-  a1 = n_subdomains_x * (n_fibers_per_subdomain_x + 1) - n_fibers_x  # number of subdomains with high number of fibers
+  a1 = n_fibers_x - n_subdomains_x*n_fibers_per_subdomain_x              # number of subdomains with high number of fibers
   a2 = n_subdomains_x - a1                                               # number of subdomains with low number of fibers
   
   if subdomain_coordinate_x < a1:
     n_fibers_in_x_direction = subdomain_coordinate_x * (n_fibers_per_subdomain_x + 1)
   else:
-    n_fibers_in_x_direction = a1 * (n_fibers_per_subdomain_x + 1) + (subdomain_coordinate_x-a1) * subdomain_coordinate_x
+    n_fibers_in_x_direction = a1 * (n_fibers_per_subdomain_x + 1) + (subdomain_coordinate_x-a1) * n_fibers_per_subdomain_x
   
   return (n_fibers_in_y_direction + fiber_in_subdomain_coordinate_y)*n_fibers_x + n_fibers_in_x_direction + fiber_in_subdomain_coordinate_x
 
 # number of points that are handled inside the subdomain z
 def n_points_in_subdomain_z(subdomain_coordinate_z):
-  a1 = n_subdomains_z * (n_points_per_subdomain_z + 1) - n_points_whole_fiber  # number of subdomains with high number of fibers
+  a1 = n_points_whole_fiber - n_subdomains_z*n_points_per_subdomain_z              # number of subdomains with high number of fibers
   a2 = n_subdomains_z - a1                                               # number of subdomains with low number of fibers
   if subdomain_coordinate_z < a1:
     return n_points_per_subdomain_z + 1     # high number of points
@@ -910,7 +910,19 @@ if False:
     print("n_fibers_in_subdomain_x({}) = {}".format(subdomain_coordinate_x, n_fibers_in_subdomain_x(subdomain_coordinate_x)))
   print("--")
 
-  n_fibers_in_subdomain_y(subdomain_coordinate_y)
+  # check fiber no
+  counter = 0
+  for subdomain_coordinate_y in range(n_subdomains_y):
+    for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y)):
+      for subdomain_coordinate_x in range(n_subdomains_x):
+        for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x)):
+          no = fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)
+          if no != counter:
+            print("error: fiber_no({},{},{},{}) = {}, counter = {}".format(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y,no,counter))
+          else:
+            print("   ok: fiber_no({},{},{},{}) = {}, counter = {}".format(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y,no,counter))
+          counter += 1
+          
 
   if n_instances != instances_size or instances_size == 0:
     print("Error with top-level multiple instances: nInstances: {}, size of instances: {}".format(n_instances, instances_size))

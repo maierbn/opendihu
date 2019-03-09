@@ -945,4 +945,4 @@ if False:
 
 if rank_no == 0:
   t_stop_script = timeit.default_timer()
-  print("Parsing python config took {}s".format(t_stop_script - t_start_script))
+  print("Parsing python config took {:.1f}s".format(t_stop_script - t_start_script))

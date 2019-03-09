@@ -75,16 +75,31 @@ diffusionTensor(element_no_t elementNoLocal, const std::array<double,FunctionSpa
   //VLOG(2) << "diffusionTensor after rotation: " << diffusionTensor;
 
   // if there is a relative factor
+  double spatiallyVaryingPrefactor = 1;
   if (spatiallyVaryingPrefactor_)
   {
     std::array<double,FunctionSpaceType::nDofsPerElement()> spatiallyVaryingPrefactorElementalValues;
     spatiallyVaryingPrefactor_->getElementValues(elementNoLocal, spatiallyVaryingPrefactorElementalValues);
-    double spatiallyVaryingPrefactor = functionSpace->interpolateValueInElement(spatiallyVaryingPrefactorElementalValues, xi);
+    spatiallyVaryingPrefactor = functionSpace->interpolateValueInElement(spatiallyVaryingPrefactorElementalValues, xi);
 
     diffusionTensor *= spatiallyVaryingPrefactor;
     LOG(DEBUG) << "elementNoLocal " << elementNoLocal << ", factor: " << spatiallyVaryingPrefactor << ", scaled diffusionTensor: " << diffusionTensor;
   }
 
+  // check if diffusion tensor contains nan values
+  if (D == 3)
+  {
+    if (std::isnan(diffusionTensor[0]) || std::isnan(diffusionTensor[1]) || std::isnan(diffusionTensor[2])
+      || std::isnan(diffusionTensor[3]) || std::isnan(diffusionTensor[4]) || std::isnan(diffusionTensor[5])
+      || std::isnan(diffusionTensor[6]) || std::isnan(diffusionTensor[6]) || std::isnan(diffusionTensor[7]))
+    {
+      LOG(ERROR) << "Directional diffusion tensor contains nans.";
+      LOG(INFO) << "elementNoLocal: " << elementNoLocal << ", xi: " << xi;
+      LOG(INFO) << "directionVector: " << directionVector << " elemental direction values: " << elementalValues;
+      LOG(INFO) << "diffusionTensor: " << diffusionTensor << ", this->additionalDiffusionTensor: " << this->additionalDiffusionTensor_
+        << ", spatiallyVaryingPrefactor: " << spatiallyVaryingPrefactor;
+     }
+  }
   return diffusionTensor;
 }
 

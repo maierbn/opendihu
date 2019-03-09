@@ -91,7 +91,7 @@ diffusionTensor(element_no_t elementNoLocal, const std::array<double,FunctionSpa
   {
     if (std::isnan(diffusionTensor[0]) || std::isnan(diffusionTensor[1]) || std::isnan(diffusionTensor[2])
       || std::isnan(diffusionTensor[3]) || std::isnan(diffusionTensor[4]) || std::isnan(diffusionTensor[5])
-      || std::isnan(diffusionTensor[6]) || std::isnan(diffusionTensor[6]) || std::isnan(diffusionTensor[7]))
+      || std::isnan(diffusionTensor[6]) || std::isnan(diffusionTensor[7]) || std::isnan(diffusionTensor[8]))
     {
       LOG(ERROR) << "Directional diffusion tensor contains nans.";
       LOG(INFO) << "elementNoLocal: " << elementNoLocal << ", xi: " << xi;
@@ -100,6 +100,30 @@ diffusionTensor(element_no_t elementNoLocal, const std::array<double,FunctionSpa
         << ", spatiallyVaryingPrefactor: " << spatiallyVaryingPrefactor;
      }
   }
+  else if (D == 2)
+  {
+    if (std::isnan(diffusionTensor[0]) || std::isnan(diffusionTensor[1]) || std::isnan(diffusionTensor[2])
+      || std::isnan(diffusionTensor[3]))
+    {
+      LOG(ERROR) << "Directional diffusion tensor contains nans.";
+      LOG(INFO) << "elementNoLocal: " << elementNoLocal << ", xi: " << xi;
+      LOG(INFO) << "directionVector: " << directionVector << " elemental direction values: " << elementalValues;
+      LOG(INFO) << "diffusionTensor: " << diffusionTensor << ", this->additionalDiffusionTensor: " << this->additionalDiffusionTensor_
+        << ", spatiallyVaryingPrefactor: " << spatiallyVaryingPrefactor;
+     }
+  }
+  else if (D == 1)
+  {
+    if (std::isnan(diffusionTensor[0]))
+    {
+      LOG(ERROR) << "Directional diffusion tensor contains nans.";
+      LOG(INFO) << "elementNoLocal: " << elementNoLocal << ", xi: " << xi;
+      LOG(INFO) << "directionVector: " << directionVector << " elemental direction values: " << elementalValues;
+      LOG(INFO) << "diffusionTensor: " << diffusionTensor << ", this->additionalDiffusionTensor: " << this->additionalDiffusionTensor_
+        << ", spatiallyVaryingPrefactor: " << spatiallyVaryingPrefactor;
+     }
+  }
+
   return diffusionTensor;
 }
 

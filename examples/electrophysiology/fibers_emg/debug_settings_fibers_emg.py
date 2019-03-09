@@ -905,6 +905,20 @@ config = {
 
 # sanity checking
 if True:
+  # check 3D mesh
+  node_positions = config["Meshes"]["3Dmesh"]["nodePositions"]
+  
+  offsets = []
+  for [offset,length] in node_positions[1]:
+    offsets.append(offset)
+    
+  print("offsets:")
+  print(sorted(offsets))
+  quit()
+  
+  n_elements = config["Meshes"]["3Dmesh"]["nElements"]
+  
+  
   # check coupling instances
   multiple_instances = config["Coupling"]["Term1"]["MultipleInstances"]
   n_instances = multiple_instances["nInstances"]

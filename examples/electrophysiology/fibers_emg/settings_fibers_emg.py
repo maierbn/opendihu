@@ -100,7 +100,7 @@ parser.add_argument('--dt_0D',                    type=float, help='The timestep
 parser.add_argument('--dt_1D',                    type=float, help='The timestep for the 1D model.', default=dt_1D)
 parser.add_argument('--dt_3D',                    type=float, help='The timestep for the splitting.', default=dt_3D)
 parser.add_argument('--dt_bidomain',              type=float, help='The timestep for the bidomain model.', default=dt_bidomain)
-parser.add_argument('--disable_firing_output',    type=float, help='Disables the initial list of fiber firings.', default=False)
+parser.add_argument('--disable_firing_output',    help='Disables the initial list of fiber firings.', default=False, action='store_true')
 parser.add_argument('--v',                        help='Enable full verbosity in c++ code')
 parser.add_argument('-v',                         help='Enable verbosity level in c++ code', action="store_true")
 parser.add_argument('-vmodule',                   help='Enable verbosity level for given file in c++ code')

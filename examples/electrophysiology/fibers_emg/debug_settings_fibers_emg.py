@@ -125,11 +125,10 @@ if rank_no == 0:
   print("firing_times_file:       {}".format(firing_times_file))
   print("********************************************************************************")
 
-
 if rank_no == 0:
   import timeit
   t_start_script = timeit.default_timer()
-
+  
 n_subdomains_xy = n_subdomains_x * n_subdomains_y
 own_subdomain_coordinate_x = rank_no % n_subdomains_x
 own_subdomain_coordinate_y = (int)(rank_no / n_subdomains_x) % n_subdomains_y
@@ -436,7 +435,7 @@ if rank_no == 0:
   print("{} x {} = {} fibers, per partition: {} x {} = {}, {} points per fiber".format(n_fibers_x, n_fibers_y, n_fibers_total, n_fibers_per_subdomain_x, n_fibers_per_subdomain_y, n_fibers_per_subdomain_x*n_fibers_per_subdomain_y, n_points_whole_fiber))
 
 # define helper functions for fiber numbering
-  
+
 # number of fibers that are handled inside the subdomain x
 def n_fibers_in_subdomain_x(subdomain_coordinate_x):
   a1 = n_fibers_x - n_subdomains_x*n_fibers_per_subdomain_x              # number of subdomains with high number of fibers
@@ -478,8 +477,6 @@ def fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_
   return (n_fibers_in_y_direction + fiber_in_subdomain_coordinate_y)*n_fibers_x + n_fibers_in_x_direction + fiber_in_subdomain_coordinate_x
 
 # number of points that are handled inside the subdomain z
-
-# number of points that are handled inside the subdomain z
 def n_points_in_subdomain_z(subdomain_coordinate_z):
   a1 = n_points_whole_fiber - n_subdomains_z*n_points_per_subdomain_z              # number of subdomains with high number of fibers
   a2 = n_subdomains_z - a1                                               # number of subdomains with low number of fibers
@@ -487,7 +484,7 @@ def n_points_in_subdomain_z(subdomain_coordinate_z):
     return n_points_per_subdomain_z + 1     # high number of points
   else:
     return n_points_per_subdomain_z     # low number of points
-
+  
 def n_sampled_points_in_subdomain_x(subdomain_coordinate_x):
   result = (int)(np.ceil(n_fibers_in_subdomain_x(subdomain_coordinate_x) / sampling_stride_x))
   if subdomain_coordinate_x == n_subdomains_x-1 and (n_fibers_in_subdomain_x(subdomain_coordinate_x)-1) % sampling_stride_x != 0:
@@ -894,7 +891,6 @@ config = {
   }
 }
 
-
 # sanity checking
 if True:
   # check coupling instances
@@ -914,6 +910,7 @@ if True:
     print("n_fibers_in_subdomain_x({}) = {}".format(subdomain_coordinate_x, n_fibers_in_subdomain_x(subdomain_coordinate_x)))
   print("--")
 
+  # check fiber no
   counter = 0
   for subdomain_coordinate_y in range(n_subdomains_y):
     for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y)):

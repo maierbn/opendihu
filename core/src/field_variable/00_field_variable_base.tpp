@@ -41,10 +41,13 @@ checkNansInfs(int componentNo) const
   // determine if there are nans or high values
   int nNans = 0;
   int nHighValues = 0;
+  int nInfs = 0;
   for (int i = 0; i < values.size(); i++)
   {
     if (std::isnan(values[i]))
       nNans++;
+    else if (std::isinf(values[i]))
+      nInfs++;
     else if (fabs(values[i]) > 1e100)
       nHighValues++;
   }
@@ -59,9 +62,14 @@ checkNansInfs(int componentNo) const
     LOG(ERROR) << "Solution contains " << nHighValues << " high values with absolute value > 1e100, out of " << values.size() << " total values";
   }
 
-  if (nNans == values.size())
+  if (nInfs > 0)
   {
-    LOG(FATAL) << "There are only Nans, abort computation.";
+    LOG(ERROR) << "Solution contains " << nInfs << " inf values, out of " << values.size() << " total values";
+  }
+
+  if (nNans+nInfs == values.size())
+  {
+    LOG(FATAL) << "There are only Nans and Infs, abort computation.";
   }
 }
 

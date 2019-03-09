@@ -145,9 +145,9 @@ evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,Term> &data, cons
       //! computes gradPhi[i]^T * T * gradPhi[j] where T is the symmetric transformation matrix
       double integrand = MathUtility::applyTransformation(transformationMatrix, diffusionTensorGradPhiI, gradPhi[j]) * fabs(determinant);
 
-      if (std::isnan(integrand))
+      if (!std::isfinite(integrand))
       {
-        LOG(ERROR) << "Value entry (" << i << "," << j << ") in stiffness matrix is nan. ";
+        LOG(ERROR) << "Value entry (" << i << "," << j << ") in stiffness matrix is nan or inf (" << integrand << "). ";
         std::stringstream s, s2;
         for (int i=0; i<3; i++)
         {

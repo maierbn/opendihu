@@ -53,10 +53,14 @@ void NumpyFileWriter::writeToNumpyFile(std::vector<double> &data, std::string fi
       char c[8];
     };
 
-    if (std::isnan(d))
+    if (!std::isfinite(d))
+    {
       d = 0.0;
+    }
     else
+    {
       d = value;
+    }
 
     if (value > maximum || maximum == 0)
       maximum = value;

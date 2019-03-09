@@ -508,7 +508,7 @@ if not load_data_from_file:
   node_positions_3d_mesh = [fiber_file, []]
 
 # range of points in z direction
-z_point_index_start = own_subdomain_coordinate_z * n_points_per_subdomain_z
+z_point_index_start = n_points_in_previous_subdomains_z(own_subdomain_coordinate_z)
 z_point_index_end = z_point_index_start + n_points_in_subdomain_z(own_subdomain_coordinate_z)
 
 # loop over z point indices

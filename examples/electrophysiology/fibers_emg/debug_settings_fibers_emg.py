@@ -623,11 +623,11 @@ if rank_no == 0:
   print("{} x {} = {} fibers, per partition: {} x {} = {}".format(n_fibers_x, n_fibers_y, n_fibers_total, n_fibers_per_subdomain_x, n_fibers_per_subdomain_y, n_fibers_per_subdomain_x*n_fibers_per_subdomain_y))
   print("{} points per fiber, per partition: {}".format(n_points_whole_fiber, n_points_per_subdomain_z))
   print("number of degrees of freedom:")
-  print("                    1D fiber: {:8d}  (per process: {})".format(n_points_whole_fiber, n_points_per_subdomain_z))
-  print("            0D-1D monodomain: {:8d}  (per process: {})".format(n_points_whole_fiber*4, n_points_per_subdomain_z*4))
-  print(" all fibers 0D-1D monodomain: {:8d}  (per process: {})".format(n_fibers_total*n_points_whole_fiber*4, n_fibers_per_subdomain_x*n_fibers_per_subdomain_y*n_points_per_subdomain_z*4))
-  print("                 3D bidomain: {:8d}  (per process: {})".format(n_points_3D_mesh_global, n_sampled_points_in_subdomain_x(own_subdomain_coordinate_x)*n_sampled_points_in_subdomain_y(own_subdomain_coordinate_y)*n_sampled_points_in_subdomain_z(own_subdomain_coordinate_z)))
-  print("                       total: {:8d}  (per process: {})".format(n_fibers_total*n_points_whole_fiber*4+n_points_3D_mesh_global, n_fibers_per_subdomain_x*n_fibers_per_subdomain_y*n_points_per_subdomain_z*4+n_sampled_points_in_subdomain_x(own_subdomain_coordinate_x)*n_sampled_points_in_subdomain_y(own_subdomain_coordinate_y)*n_sampled_points_in_subdomain_z(own_subdomain_coordinate_z)))
+  print("                    1D fiber: {:10d}  (per process: {})".format(n_points_whole_fiber, n_points_per_subdomain_z))
+  print("            0D-1D monodomain: {:10d}  (per process: {})".format(n_points_whole_fiber*4, n_points_per_subdomain_z*4))
+  print(" all fibers 0D-1D monodomain: {:10d}  (per process: {})".format(n_fibers_total*n_points_whole_fiber*4, n_fibers_per_subdomain_x*n_fibers_per_subdomain_y*n_points_per_subdomain_z*4))
+  print("                 3D bidomain: {:10d}  (per process: {})".format(n_points_3D_mesh_global, n_sampled_points_in_subdomain_x(own_subdomain_coordinate_x)*n_sampled_points_in_subdomain_y(own_subdomain_coordinate_y)*n_sampled_points_in_subdomain_z(own_subdomain_coordinate_z)))
+  print("                       total: {:10d}  (per process: {})".format(n_fibers_total*n_points_whole_fiber*4+n_points_3D_mesh_global, n_fibers_per_subdomain_x*n_fibers_per_subdomain_y*n_points_per_subdomain_z*4+n_sampled_points_in_subdomain_x(own_subdomain_coordinate_x)*n_sampled_points_in_subdomain_y(own_subdomain_coordinate_y)*n_sampled_points_in_subdomain_z(own_subdomain_coordinate_z)))
 
 ###############################
 # determine 1D meshes of fibers

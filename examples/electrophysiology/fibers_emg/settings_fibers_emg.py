@@ -699,23 +699,23 @@ for i in range(n_fibers_total):
     if debug_output:
       print("{}: define mesh \"{}\", n_fiber_elements_on_subdomain: {}, fiber_node_positions: {}".format(rank_no, "MeshFiber_{}".format(i), \
         str(n_fiber_elements_on_subdomain), str(fiber_node_positions)))
+      
+    # define mesh
+    meshes["MeshFiber_{}".format(i)] = {
+      "nElements": n_fiber_elements_on_subdomain,
+      "nodePositions": fiber_node_positions,
+      "inputMeshIsGlobal": False,
+      "nRanks": [n_subdomains_z],
+      "setHermiteDerivatives": False
+    }
     
   else:
     # for fibers that are not computed on own rank, set empty lists for node positions and number of elements
     fiber_node_positions = []
     n_fiber_elements_on_subdomain = []
-  
-  # define mesh
-  meshes["MeshFiber_{}".format(i)] = {
-    "nElements": n_fiber_elements_on_subdomain,
-    "nodePositions": fiber_node_positions,
-    "inputMeshIsGlobal": False,
-    "nRanks": [n_subdomains_z],
-    "setHermiteDerivatives": False
-  }
-  
+
   # only add log key for fiber 0 to prevent too much data in the log files
-  if i == 0:
+  if i == 0 and "MeshFiber_{}".format(i) in meshes:
     meshes["MeshFiber_{}".format(i)]["logKey"] = "Fiber{}".format(i)
   
 if rank_no == 0 and n_ranks < 10 and False:
@@ -767,6 +767,7 @@ config = {
     "Term1": {      # monodomain fibers
       "MultipleInstances": {
         "logKey": "duration_subdomains_xy",
+        "ranksAllComputedInstances": list(range(n_ranks)),
         "nInstances": n_subdomains_xy,
         "instances": 
         [{
@@ -857,7 +858,8 @@ config = {
               },
             },
           }
-        } for subdomain_coordinate_y in range(n_subdomains_y)
+        } if (subdomain_coordinate_x,subdomain_coordinate_y) == (own_subdomain_coordinate_x,own_subdomain_coordinate_y) else None
+        for subdomain_coordinate_y in range(n_subdomains_y)
             for subdomain_coordinate_x in range(n_subdomains_x)]
       }
     },

@@ -76,7 +76,12 @@ Linear::Linear(PythonConfig specificSettings, MPI_Comm mpiCommunicator, std::str
 	ierr = PCMGSetCycleType(pc, cycleType); CHKERRV(ierr);
 	
 	}
-	
+	// set Hypre Options from Python config
+	if (pcType == std::string (PCHYPRE))
+	{
+		std::string hypreOptions = this->specificSettings_.getOptionString("hypreOptions", "-pc_hypre_type boomeramg");
+		 PetscOptionsInsertString(NULL,hypreOptions.c_str());
+	}
 	if (pcType ==  std::string(PCMG))
 	{
 		//TODO
@@ -121,6 +126,11 @@ void Linear::parseSolverTypes(KSPType &kspType, PCType &pcType)
   }else if (preconditionerType == "pcmg")
   {
 	  pcType = PCMG;
+  }
+  else if (preconditionerType == "pchypre")
+  {
+	  pcType = PCHYPRE;
+	  
   }
 
   // all ksp types: https://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/KSP/KSPType.html#KSPType

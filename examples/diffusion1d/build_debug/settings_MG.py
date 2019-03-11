@@ -1,13 +1,15 @@
 # Diffusion 1D
 n = 1000   # number of elements
 dt=0.01
-end_time=1;
+end_time=1
+hypreOptions = "-pc_hypre_type boomeramg"
 
 config = {
   "ImplicitEuler" : {
-    "preconditionerType": "gamg",
+    "preconditionerType": "pchypre",
 	"solverType": "fgmres",
 	"nLevels": 10,
+	"hypreOptions": hypreOptions,
     "initialValues": [2,2,4,5,2,2],
     "numberTimeSteps": 1000,
     "endTime": 1,

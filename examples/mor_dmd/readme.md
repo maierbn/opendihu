@@ -1,0 +1,1 @@
+This directory contains an example of Model Order Reduction utilizing Dynamic Mode Decomposition.

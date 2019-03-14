@@ -15,7 +15,11 @@ Am = 500.0              # surface area to volume ratio [cm^-1]
 Cm = 0.58               # membrane capacitance [uF/cm^2]
 innervation_zone_width = 0.  # cm
 cellml_file = "../../input/hodgkin_huxley_1952.c"
-solver_type = "gmres"
+solver_type = "richardson"
+preconditioner_type = "pchypre"
+
+#hypreOptions = "-pc_hypre_type boomeramg"
+hypreOptions = "-pc_hypre_type boomeramg"
 
 # timing parameters
 stimulation_frequency = 10.0      # stimulations per ms
@@ -188,7 +192,8 @@ config = {
       "maxIterations": 1e4,
       "relativeTolerance": 1e-10,
       "solverType": solver_type,
-      "preconditionerType": "none",
+      "preconditionerType": preconditioner_type,
+      "hypreOptions": hypreOptions,
     }
   },
   "GodunovSplitting": {

@@ -752,7 +752,7 @@ config = {
       "preconditionerType": potential_flow_preconditioner_type,
     },
     "activationSolver": {
-      "relativeTolerance": 1e-7,
+      "relativeTolerance": 1e-100,
       "maxIterations": 10000,
       "solverType": emg_solver_type,
       "preconditionerType": emg_preconditioner_type,

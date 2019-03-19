@@ -345,6 +345,7 @@ void SvdUtility::getMatrixProduct(double _Complex inputA[], double _Complex inpu
 	{
 		for (int row = 0; row < rowsA; ++row)
 		{
+			output[row + col * rowsA] = 0.0;
 			for (int cell = 0; cell < colsA_rowsB; ++cell)
 			{
 				output[row + col * rowsA] += inputA[row + cell * rowsA] * inputB[col * colsA_rowsB + cell];
@@ -389,7 +390,7 @@ void SvdUtility::transposeMatrix(double _Complex input[], double _Complex output
 	{
 		for (int row = 0; row < rows; ++row)
 		{
-			output[row * cols + col] = input[col * rows + row];
+			output[row * cols + col] = creal(input[col * rows + row]) - cimag(input[col * rows + row]) * csqrt(-1.0);
 		}
 	}
 }
@@ -410,7 +411,7 @@ void SvdUtility::getMatrixInverse(double a[], int order)
 
 // takes square complex matrix input (order x order) as double _Complex[]
 // computes eigenvalues and eigenvectors utilizing LAPACKE_zgeev
-// stores eigenvalues (order) and eigenvectors (order x order) each as double _Complex[] array
+// stores eigenvalues (order) and eigenvectors (order x order) each as double _Complex[]
 void SvdUtility::getEigen(double _Complex input[], int order, double _Complex eigenvalues[], double _Complex eigenvectors[])
 {
 	LAPACKE_zgeev(LAPACK_COL_MAJOR, 'N', 'V', order, input, order, eigenvalues, input, 1, eigenvectors, order);

@@ -247,9 +247,9 @@ int main(int argc, char *argv[])
 	{
 		mm[i * n + i] = eigenvalues[i];
 	}
-	// SvdUtility::printMatrix("eigenvalues", eigenvalues, n, 1);
+	SvdUtility::printMatrix("eigenvalues", eigenvalues, n, 1);
 	SvdUtility::printMatrix("Q", q, n, n);
-	// SvdUtility::printMatrix("MM", mm, n, n);
+	SvdUtility::printMatrix("MM", mm, n, n);
 
 	// M=length(eigenvalues)
 	int m = n;
@@ -257,7 +257,7 @@ int main(int argc, char *argv[])
 	// qq=log(eigenvalues)
 	// deltas=real(qq)/Deltat
 	// omegas=imag(qq)/Deltat
-	double _Complex* qq = new double _Complex[n];
+	double _Complex* qq = new double _Complex[m];
 	double* deltas = new double[m];
 	double* omegas = new double[m];
 	for (int i = 0; i < m; ++i)
@@ -307,8 +307,8 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	// SvdUtility::printMatrix("Mm", mmm, m * k, m);
-	// SvdUtility::printMatrix("Bb", bb, m * k, 1);
+	SvdUtility::printMatrix("Mm", mmm, m * k, m);
+	SvdUtility::printMatrix("Bb", bb, m * k, 1);
 
 	// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	// [Ur,Sigmar,Vr]=svd(Mm,'econ')
@@ -321,9 +321,9 @@ int main(int argc, char *argv[])
 
 	// [Ur,Sigmar,Vr]=svd(Mm,'econ')
 	SvdUtility::getSVD(mmm, m * k, m, ur, sigmars, vrTransposed, sigmar);
-	// SvdUtility::printMatrix("Ur", ur, m * k, m);
-	// SvdUtility::printMatrix("Sigmar", sigmar, m, m);
-	// SvdUtility::printMatrix("VrTransposed", vrTransposed, m, m);
+	SvdUtility::printMatrix("Ur", ur, m * k, m);
+	SvdUtility::printMatrix("Sigmar", sigmar, m, m);
+	SvdUtility::printMatrix("VrTransposed", vrTransposed, m, m);
 
 	// %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	// a=Vr*mldivide(Sigmar,Ur'*Bb)
@@ -332,22 +332,23 @@ int main(int argc, char *argv[])
 	// Ur'
 	double _Complex* urTransposed = new double _Complex[m * m * k];
 	SvdUtility::transposeMatrix(ur, urTransposed, m * k, m);
+	SvdUtility::printMatrix("UrTransposed", urTransposed, m, m * k);
 
 	// Ur'*Bb
 	double _Complex* xBb = new double _Complex[m];
 	SvdUtility::getMatrixProduct(urTransposed, bb, xBb, m, m * k, 1);
-	// SvdUtility::printMatrix("Ur'*Bb", xBb, m, 1);
+	SvdUtility::printMatrix("Ur'*Bb", xBb, m, 1);
 
 	// Sigmar\(Ur'*Bb)
 	double _Complex* sigmarComplex = new double _Complex[m * m];
 	SvdUtility::doubleToComplex(sigmar, sigmarComplex, m, m);
 	SvdUtility::getMatrixLeftDivision(sigmarComplex, xBb, m, 1);
-	// SvdUtility::printMatrix("mldivide(Sigmar,Ur'*Bb)", xBb, m, 1);
+	SvdUtility::printMatrix("mldivide(Sigmar,Ur'*Bb)", xBb, m, 1);
 
 	//Vr
 	double _Complex* vr = new double _Complex[m * m];
 	SvdUtility::transposeMatrix(vrTransposed, vr, m, m);
-	// SvdUtility::printMatrix("Vr", vr, m, m);
+	SvdUtility::printMatrix("Vr", vr, m, m);
 
 	// a=Vr*mldivide(Sigmar,Ur'*Bb)
 	double _Complex* a = new double _Complex[m];
@@ -505,7 +506,7 @@ int main(int argc, char *argv[])
 			hatTreconst[row + col * n] = hatTreconstCol[row];
 		}
 	}
-	// SvdUtility::printMatrix("hatTreconst", hatTreconst, n, k);
+	SvdUtility::printMatrix("hatTreconst", hatTreconst, n, k);
 
 	// Vreconst=U*hatTreconst
 	double _Complex* vreconst = new double _Complex[j * k];

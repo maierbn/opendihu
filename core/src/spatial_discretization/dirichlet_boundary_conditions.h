@@ -29,8 +29,8 @@ public:
   void initialize(PythonConfig specificSettings, std::shared_ptr<FunctionSpaceType> functionSpace);
 
   //! initialize directly from given vectors
-  void initialize(std::shared_ptr<FunctionSpaceType> functionSpace, std::vector<ElementWithNodes> &boundaryConditionElements_,
-                  std::vector<dof_no_t> &boundaryConditionNonGhostDofLocalNos_, std::vector<ValueType> &boundaryConditionValues_);
+  void initialize(std::shared_ptr<FunctionSpaceType> functionSpace, std::vector<ElementWithNodes> &boundaryConditionElements,
+                  std::vector<dof_no_t> &boundaryConditionNonGhostDofLocalNos, std::vector<ValueType> &boundaryConditionValues);
 
   //! set the boundary condition dofs to the values
   void applyInVector(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> fieldVariable);

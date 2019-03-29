@@ -88,6 +88,7 @@ initializeBoundaryConditions(bool &externalVirtualWorkIsConstant, const int nLoc
   std::shared_ptr<typename FunctionSpaceType::HighOrderFunctionSpace> functionSpace = data.functionSpace();
 
   // ----- Neumann BC ----------
+  //TODO: use NeumannBoundaryConditions class
   // parse values for traction and body force
   externalVirtualWorkIsConstant = true;
   if (specificSettings.hasKey("tractionReferenceConfiguration"))

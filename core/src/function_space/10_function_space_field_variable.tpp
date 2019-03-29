@@ -200,6 +200,9 @@ getNormal(Mesh::face_t face, std::array<Vec3,FunctionSpaceFunction<MeshType,Basi
   // compute the 3xD jacobian of the parameter space to world space mapping
   std::array<Vec3,D> jacobian = this->computeJacobian(geometryValues, xi);
 
+  LOG(DEBUG) << "geometryValues: " << geometryValues;
+  LOG(DEBUG) << "jacobian: " << jacobian;
+
   std::array<Vec3,3> jacobian3x3 = MathUtility::transformToDxD<3,D>(jacobian);
 
   // compute J F^-T, J = det F, F = jacobian
@@ -215,14 +218,16 @@ getNormal(Mesh::face_t face, std::array<Vec3,FunctionSpaceFunction<MeshType,Basi
 
 template<typename MeshType, typename BasisFunctionType>
 Vec3 FunctionSpaceFieldVariable<MeshType,BasisFunctionType>::
-getNormal(Mesh::face_t face, element_no_t elementNo, std::array<double,MeshType::dim()> xi)
+getNormal(Mesh::face_t face, element_no_t elementNoLocal, std::array<double,MeshType::dim()> xi)
 {
   // compute normal analoguous to nansons formula
   // Nansons formula: ds = J F^-T dS (ds, dS are normal vectors, here ds is in world space, dS is in index space)
 
   // get geometry field values of element
   std::array<Vec3,FunctionSpaceBaseDim<MeshType::dim(),BasisFunctionType>::nDofsPerElement()> geometryValues;
-  this->getElementGeometry(elementNo, geometryValues);
+  this->getElementGeometry(elementNoLocal, geometryValues);
+
+  //LOG(DEBUG) << "elementNoLocal: " << elementNoLocal << ", geometryValues: " << geometryValues;
 
   return getNormal(face, geometryValues, xi);
 }

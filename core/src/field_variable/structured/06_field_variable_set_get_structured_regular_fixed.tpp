@@ -483,13 +483,13 @@ getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nCompo
 //! for a specific component, get the values corresponding to all element-local dofs
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetRegularFixed<FunctionSpaceType,nComponents>::
-getElementValues(int componentNo, element_no_t elementNo, std::array<double,FunctionSpaceType::nDofsPerElement()> &values) const
+getElementValues(int componentNo, element_no_t elementNoLocal, std::array<double,FunctionSpaceType::nDofsPerElement()> &values) const
 {
   // if this is not a geometry field get the stored values
   if (!this->isGeometryField_)
   {
     FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
-      getElementValues(componentNo, elementNo, values);
+      getElementValues(componentNo, elementNoLocal, values);
     return;
   }
 
@@ -497,7 +497,7 @@ getElementValues(int componentNo, element_no_t elementNo, std::array<double,Func
   const int nDofsPerElement = FunctionSpaceType::nDofsPerElement();
 
   // get the element-local dofs of the element
-  std::array<dof_no_t,nDofsPerElement> elementDofs = this->functionSpace_->getElementDofNosLocal(elementNo);
+  std::array<dof_no_t,nDofsPerElement> elementDofs = this->functionSpace_->getElementDofNosLocal(elementNoLocal);
 
   // get the values
   this->template getValues<nDofsPerElement>(componentNo, elementDofs, values);
@@ -506,13 +506,13 @@ getElementValues(int componentNo, element_no_t elementNo, std::array<double,Func
 //! get the values corresponding to all element-local dofs for all components
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetRegularFixed<FunctionSpaceType,nComponents>::
-getElementValues(element_no_t elementNo, std::array<std::array<double,nComponents>,FunctionSpaceType::nDofsPerElement()> &values) const
+getElementValues(element_no_t elementNoLocal, std::array<std::array<double,nComponents>,FunctionSpaceType::nDofsPerElement()> &values) const
 {
   // if this is not a geometry field get the stored values
   if (!this->isGeometryField_)
   {
     FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
-      getElementValues(elementNo, values);
+      getElementValues(elementNoLocal, values);
     return;
   }
 
@@ -520,7 +520,7 @@ getElementValues(element_no_t elementNo, std::array<std::array<double,nComponent
   const int nDofsPerElement = FunctionSpaceType::nDofsPerElement();
 
   // get the element-local dofs of the element
-  std::array<dof_no_t,nDofsPerElement> elementDofs = this->functionSpace_->getElementDofNosLocal(elementNo);
+  std::array<dof_no_t,nDofsPerElement> elementDofs = this->functionSpace_->getElementDofNosLocal(elementNoLocal);
 
   // compute the corresponding geometry values
   this->template getValues<nDofsPerElement>(elementDofs, values);

@@ -29,10 +29,10 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
 
   // count number evaluations for every dof
   // loop over elements
-  for (element_no_t elementNo = 0; elementNo < this->functionSpace_->nElementsLocal(); elementNo++)
+  for (element_no_t elementNoLocal = 0; elementNoLocal < this->functionSpace_->nElementsLocal(); elementNoLocal++)
   {
     // get local dof nos of this element
-    std::array<dof_no_t,nDofsPerElement> elementDofs = this->functionSpace_->getElementDofNosLocal(elementNo);
+    std::array<dof_no_t,nDofsPerElement> elementDofs = this->functionSpace_->getElementDofNosLocal(elementNoLocal);
 
     // loop over dofs in element, where to compute the gradient
     for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
@@ -46,18 +46,18 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
 
   // compute gradient value divided by number of evaluations
   // loop over elements
-  for (element_no_t elementNo = 0; elementNo < this->functionSpace_->nElementsLocal(); elementNo++)
+  for (element_no_t elementNoLocal = 0; elementNoLocal < this->functionSpace_->nElementsLocal(); elementNoLocal++)
   {
     // get local dof nos of this element
-    std::array<dof_no_t,nDofsPerElement> elementDofs = this->functionSpace_->getElementDofNosLocal(elementNo);
+    std::array<dof_no_t,nDofsPerElement> elementDofs = this->functionSpace_->getElementDofNosLocal(elementNoLocal);
 
     // compute gradient at every dof, as continuous to current element (gradients have discontinuities between elements at dofs)
     std::array<double,nDofsPerElement> solutionValues;
-    this->getElementValues(elementNo, solutionValues);
+    this->getElementValues(elementNoLocal, solutionValues);
 
     // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
     std::array<Vec3,nDofsPerElement> geometryValues;
-    this->functionSpace_->getElementGeometry(elementNo, geometryValues);
+    this->functionSpace_->getElementGeometry(elementNoLocal, geometryValues);
 
     std::array<double,D> xi;
 
@@ -75,7 +75,7 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
           xi[i] = double(dofIndex / 4);
       }
 
-      VLOG(2) << "element " << elementNo << " dofIndex " << dofIndex << ", xi " << xi << " g:" << geometryValues;
+      VLOG(2) << "element " << elementNoLocal << " dofIndex " << dofIndex << ", xi " << xi << " g:" << geometryValues;
 
       // compute the 3xD jacobian of the parameter space to world space mapping
       Tensor2<D> jacobianParameterSpace = MathUtility::transformToDxD<D,D>(FunctionSpaceType::computeJacobian(geometryValues, xi));
@@ -109,7 +109,7 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
       //gradientField->setValue(dofNo, test, ADD_VALUES);
 
     }  // dofIndex
-  }  // elementNo
+  }  // elementNoLocal
 
   gradientField->finishGhostManipulation();
   //gradientField->setRepresentationLocal();

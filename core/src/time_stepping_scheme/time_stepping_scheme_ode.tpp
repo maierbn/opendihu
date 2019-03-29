@@ -18,8 +18,8 @@ TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::TimeSteppingSch
 
   //create dirichlet Boundary conditions object
   this->dirichletBoundaryConditions_ = std::make_shared<
-  SpatialDiscretization::DirichletBoundaryConditions<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>
-  >();
+    SpatialDiscretization::DirichletBoundaryConditions<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>
+  >(this->context_);
 }
 
 template<typename DiscretizableInTimeType>
@@ -117,7 +117,8 @@ initialize()
 
   // parse boundary conditions, needs functionSpace set
   // initialize dirichlet boundary conditions object which parses dirichlet boundary condition dofs and values from config
-  this->dirichletBoundaryConditions_->initialize(this->specificSettings_, this->data_->functionSpace());
+  this->dirichletBoundaryConditions_->initialize(this->specificSettings_, this->data_->functionSpace(), "dirichletBoundaryConditions");
+  //TODO: add Neumann BC
 
   // set initial values from settings
 

@@ -340,6 +340,7 @@ setValue(dof_no_t dofLocalNo, const std::array<double,nComponents> &value, Inser
   // prepare lookup indices for PETSc vector values_
   for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
   {
+    LOG(DEBUG) << "set value of \"" << this->name_ << "\" for component " << componentIndex << " to " << value[componentIndex];
     this->values_->setValues(componentIndex, 1, &dofLocalNo, value.data()+componentIndex, petscInsertMode);
   }
 

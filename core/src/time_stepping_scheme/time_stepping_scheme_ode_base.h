@@ -7,7 +7,6 @@
 #include "data_management/data.h"
 #include "data_management/time_stepping/time_stepping.h"
 #include "cellml/03_cellml_adapter.h"
-#include "spatial_discretization/dirichlet_boundary_conditions.h"
 
 namespace TimeSteppingScheme
 {

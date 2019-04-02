@@ -3,6 +3,7 @@
 #include <vector>
 #include "opendihu.h"
 #include "utility/svd_utility.h"
+#include "utility/dmd_utility.h"
 #include <complex>
 
 int main(int argc, char *argv[])
@@ -18,23 +19,23 @@ int main(int argc, char *argv[])
 
 	double* fourTransposed = new double[4];
 */
-	/*double ten[] {
-		2, 3, 5, 7, 11, 13,
-		17, 19, 23, 29
-	};*/
+/*double ten[] {
+	2, 3, 5, 7, 11, 13,
+	17, 19, 23, 29
+};*/
 
-	/*double fifteen[] {
-		2, 3, 5, 7, 11, 13,
-		17, 19, 23, 29,
-		31, 37, 41, 43, 47
-	};*/
+/*double fifteen[] {
+	2, 3, 5, 7, 11, 13,
+	17, 19, 23, 29,
+	31, 37, 41, 43, 47
+};*/
 
-	//double* i = new double[10];
-	//double ii = new double[15];
-	//double iii = new double[6];
-	//double iv = new double[6];
-	//double v = new double[15];
-	//double vi = new double[10];
+//double* i = new double[10];
+//double ii = new double[15];
+//double iii = new double[6];
+//double iv = new double[6];
+//double v = new double[15];
+//double vi = new double[10];
 /*
 	double* test = new double[6];
 
@@ -117,14 +118,15 @@ int main(int argc, char *argv[])
 	SvdUtility::printMatrix("T'", tTransposed1, n1, k1);
 	*/
 
-	double _Complex* matrixA = new double _Complex[3 * 3];
+	/*double _Complex* matrixA = new double _Complex[3 * 3];
 	for (int col = 0; col < 3; ++col)
 	{
 		for (int row = 0; row < 3; ++row)
 		{
 			matrixA[row + col * 3] = csqrt(-1.0) * row + col;
 		}
-	}
+	}*/
+
 	/*double _Complex* matrixB = new double _Complex[3 * 5];
 	for (int col = 0; col < 5; ++col)
 	{
@@ -133,10 +135,10 @@ int main(int argc, char *argv[])
 			matrixB[row + col * 3] = csqrt(-1.0) * col + row;
 		}
 	}*/
-	SvdUtility::printMatrix("matrixA", matrixA, 3, 3);
+	// SvdUtility::printMatrix("matrixA", matrixA, 3, 3);
 	//SvdUtility::printMatrix("matrixB", matrixB, 3, 5);
 
-	double _Complex* matrixC = new double _Complex[3 * 3];
+	/*double _Complex* matrixC = new double _Complex[3 * 3];
 	for (int col = 0; col < 3; ++col)
 	{
 		for (int row = 0; row < 3; ++row)
@@ -146,10 +148,36 @@ int main(int argc, char *argv[])
 	}
 	SvdUtility::printMatrix("matrixC", matrixC, 3, 3);
 	SvdUtility::getMatrixPower(matrixA, matrixC, 3, 0);
-	SvdUtility::printMatrix("matrixC", matrixC, 3, 3);
+	SvdUtility::printMatrix("matrixC", matrixC, 3, 3);*/
 
 	/*double _Complex negOne = csqrt(-1.0) * csqrt(-1.0);
 	std::cout << creal(negOne) << " + " << cimag(negOne) << "i" << endl;*/
+
+	int j = 4;
+	//int k = 4;
+	double v[]{
+		1, -1,  0, 2,
+		0, -2,  1, 0,
+		1,  0, -1, 0,
+		0,  1,  0, 0
+	};
+
+	double _Complex* ev = new double _Complex[j];
+	double _Complex* lev = new double _Complex[j * j];
+
+	DmdUtility::getEigen(v, j, ev, lev);
+
+	DmdUtility::printMatrix("ev", ev, 1, j);
+	DmdUtility::printMatrix("lev", lev, j, j);
+
+	/*for (int i = 0; i < j; ++i)
+	{
+		for (int k = 0; k < j; ++k)
+		{
+			std::cout << lev[2 * k + 2 * i * j] << " + " << lev[2 * k + 2 * i * j + 1] << "i ";
+		}
+		std::cout << endl;
+	}*/
 
 	return EXIT_SUCCESS;
 }

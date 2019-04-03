@@ -115,6 +115,7 @@ setHermiteDerivatives()
     dof_no_t localDofNo = 0;
     for (node_no_t nodeNoLocal = 0; nodeNoLocal < this->nNodesLocalWithoutGhosts(); nodeNoLocal++)
     {
+      assert(localDofNo % this->nDofsPerNode() == 0);
       Vec3 nodePositionCurrent = this->geometryField_->getValue(localDofNo);
 
       // determine distance to neighbouring node in all directions (x-,x+,y-,y+,z-,z+)

@@ -33,7 +33,7 @@ getElementGeometry(element_no_t elementNoLocal, std::array<Vec3, FunctionSpaceBa
 template<typename MeshType,typename BasisFunctionType,typename DummyForTraits>
 void FunctionSpaceGeometry<MeshType,BasisFunctionType,DummyForTraits>::
 extractSurfaceGeometry(const std::array<Vec3, FunctionSpaceBaseDim<MeshType::dim(),BasisFunctionType>::nDofsPerElement()> &geometryVolume, Mesh::face_t face,
-                       std::array<Vec3, FunctionSpaceBaseDim<MeshType::dim()-1,BasisFunctionType>::nDofsPerElement()> &geometrySurface)
+                       std::array<Vec3, FunctionSpaceBaseDim<MeshType::dim()-1,BasisFunctionType>::nNodesPerElement()> &geometrySurface)
 {
   const int D = MeshType::dim();
 
@@ -148,11 +148,9 @@ extractSurfaceGeometry(const std::array<Vec3, FunctionSpaceBaseDim<MeshType::dim
 
   for (int surfaceNodeIndex = 0; surfaceNodeIndex < nNodesSurface; surfaceNodeIndex++)
   {
-    for (int nodalDofIndex = 0; nodalDofIndex < nDofsPerNode; nodalDofIndex++)
-    {
-      int volumeNodeIndex = nodeNosSurface[surfaceNodeIndex];
-      geometrySurface[surfaceNodeIndex*nDofsPerNode + nodalDofIndex] = geometryVolume[volumeNodeIndex*nDofsPerNode + nodalDofIndex];
-    }
+    int nodalDofIndex = 0;
+    int volumeNodeIndex = nodeNosSurface[surfaceNodeIndex];
+    geometrySurface[surfaceNodeIndex] = geometryVolume[volumeNodeIndex*nDofsPerNode + nodalDofIndex];
   }
 }
 

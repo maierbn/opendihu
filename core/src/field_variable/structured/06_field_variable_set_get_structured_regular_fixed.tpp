@@ -89,12 +89,12 @@ getValuesWithGhosts(int componentNo, std::vector<double> &values, bool onlyNodal
           }
         }
 
-        // set derivative of Hermite to 0 for geometry field
+        // set derivative of Hermite for geometry field
         if (!onlyNodalValues)
         {
           for (int dofIndex = 1; dofIndex < nDofsPerNode; dofIndex++)
           {
-            values[vectorIndex++] = 0;
+            values[vectorIndex++] = getGeometryFieldHermiteDerivative(dofIndex, componentNo);
           }
         }
       }
@@ -137,7 +137,7 @@ getValuesWithoutGhosts(int componentNo, std::vector<double> &values, bool onlyNo
     nValues /= nDofsPerNode;
   }
 
-  LOG(DEBUG) << "getValues, n dofs (without ghosts): " << this->functionSpace_->nDofsLocalWithoutGhosts() << ", nValues: " << nValues
+  VLOG(1) << "getValues, n dofs (without ghosts): " << this->functionSpace_->nDofsLocalWithoutGhosts() << ", nValues: " << nValues
     << ", nNodes: " << nLocalNodesInXDirection<< "," <<nLocalNodesInYDirection<< "," <<nLocalNodesInZDirection
     << ", nDofsPerNode: " << nDofsPerNode;
 
@@ -184,12 +184,13 @@ getValuesWithoutGhosts(int componentNo, std::vector<double> &values, bool onlyNo
           }
         }
 
-        // set derivative of Hermite to 0 for geometry field
+        // set derivative of Hermite for geometry field
         if (!onlyNodalValues)
         {
           for (int dofIndex = 1; dofIndex < nDofsPerNode; dofIndex++)
           {
-            values[vectorIndex++] = 0;
+            VLOG(1) << "dofIndex " << dofIndex << ", componentNo " << componentNo << ", hermiteDerivatives: " << getGeometryFieldHermiteDerivative(dofIndex, componentNo);
+            values[vectorIndex++] = getGeometryFieldHermiteDerivative(dofIndex, componentNo);
           }
         }
       }
@@ -241,7 +242,7 @@ template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetRegularFixed<FunctionSpaceType,nComponents>::
 getValuesWithoutGhosts(std::vector<std::array<double,nComponents>> &values, bool onlyNodalValues) const
 {
-  // determine the number of values to be retrived which is lower than the number of dofs for Hermite with only nodal values
+  // determine the number of values to be retrieved, which is lower than the number of dofs for Hermite with only nodal values
   dof_no_t nValues = this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts();
   if (onlyNodalValues)
   {
@@ -322,9 +323,9 @@ getValues(int componentNo, std::array<dof_no_t,N> dofLocalNo, std::array<double,
     int nodeLocalDofIndex = int(dofLocalNo[i] % nDofsPerNode);
     std::array<global_no_t,D> coordinates = this->functionSpace_->meshPartition()->getCoordinatesGlobal(nodeNoLocal);
 
-    if (nodeLocalDofIndex > 0)   // if this is a derivative of Hermite, set to 0
+    if (nodeLocalDofIndex > 0)   // if this is a derivative of Hermite
     {
-      values[i] = 0;
+      values[i] = getGeometryFieldHermiteDerivative(nodeLocalDofIndex, componentNo);
     }
     else
     {
@@ -334,29 +335,28 @@ getValues(int componentNo, std::array<dof_no_t,N> dofLocalNo, std::array<double,
       }
       else if (componentNo == 1)   // y direction
       {
-        if (D < 2)
-        {
-          values[i] = 0;
-        }
-        else
+        if (D >= 2)
         {
           values[i] = coordinates[1] * this->functionSpace_->meshWidth();;
         }
       }
       else  // z direction
       {
-        if (D < 3)
-        {
-          values[i] = 0;
-        }
-        else
+        if (D >= 3)
         {
           values[i] = coordinates[2] * this->functionSpace_->meshWidth();;
         }
       }
     }
+
+    if (componentNo == 2 && D < 3)
+      values[i] = 0;
+
+    if (componentNo == 1 && D < 2)
+      values[i] = 0;
   }
 }
+
 //! for a specific component, get values from their local dof no.s, as vector
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetRegularFixed<FunctionSpaceType,nComponents>::
@@ -372,6 +372,7 @@ getValues(int componentNo, const std::vector<dof_no_t> &dofLocalNo, std::vector<
   // for geometry field compute information
   const int D = FunctionSpaceType::dim();
   const int nDofsPerNode = FunctionSpaceType::nDofsPerNode();
+  assert(nComponents == 3);
 
   // resize result vector
   const int nValues = dofLocalNo.size();
@@ -385,9 +386,9 @@ getValues(int componentNo, const std::vector<dof_no_t> &dofLocalNo, std::vector<
     int nodeLocalDofIndex = int(dofLocalNo[i] % nDofsPerNode);
     std::array<global_no_t,D> coordinates = this->functionSpace_->meshPartition()->getCoordinatesGlobal(nodeNoLocal);
 
-    if (nodeLocalDofIndex > 0)   // if this is a derivative of Hermite, set to 0
+    if (nodeLocalDofIndex > 0)   // if this is a derivative of Hermite
     {
-      values[previousSize+i] = 0;
+      values[previousSize+i] = getGeometryFieldHermiteDerivative(nodeLocalDofIndex, componentNo);
     }
     else
     {
@@ -397,27 +398,25 @@ getValues(int componentNo, const std::vector<dof_no_t> &dofLocalNo, std::vector<
       }
       else if (componentNo == 1)   // y direction
       {
-        if (D < 2)
-        {
-          values[previousSize+i] = 0;
-        }
-        else
+        if (D >= 2)
         {
           values[previousSize+i] = coordinates[1] * this->functionSpace_->meshWidth();
         }
       }
       else  // z direction
       {
-        if (D < 3)
-        {
-          values[previousSize+i] = 0;
-        }
-        else
+        if (D == 3)
         {
           values[previousSize+i] = coordinates[2] * this->functionSpace_->meshWidth();
         }
       }
     }
+
+    if (componentNo == 2 && D < 3)
+      values[previousSize+i] = 0;
+
+    if (componentNo == 1 && D < 2)
+      values[previousSize+i] = 0;
   }
 }
 
@@ -438,9 +437,10 @@ getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nCompo
   // for geometry field compute the entries
   const int nDofsPerNode = FunctionSpaceType::nDofsPerNode();
   const int D = FunctionSpaceType::dim();
+  assert(nComponents == 3);
 
   // loop over entries in values to be filled
-  for (int i=0; i<N; i++)
+  for (int i = 0; i < N; i++)
   {
     int nodeNoLocal = int(dofLocalNo[i] / nDofsPerNode);
     int nodeLocalDofIndex = int(dofLocalNo[i] % nDofsPerNode);
@@ -448,9 +448,13 @@ getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nCompo
 
     if (nodeLocalDofIndex > 0)   // if this is a derivative of Hermite, set to 0
     {
-      values[i][0] = 0;
-      values[i][1] = 0;
-      values[i][2] = 0;
+      values[i][0] = getGeometryFieldHermiteDerivative(nodeLocalDofIndex, 0);
+
+      if (D >= 2)
+        values[i][1] = getGeometryFieldHermiteDerivative(nodeLocalDofIndex, 1);
+
+      if (D == 3)
+        values[i][2] = getGeometryFieldHermiteDerivative(nodeLocalDofIndex, 2);
     }
     else
     {
@@ -458,25 +462,18 @@ getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nCompo
       values[i][0] = coordinates[0] * this->functionSpace_->meshWidth();
 
       // y direction
-      if (D < 2)
-      {
-        values[i][1] = 0;
-      }
-      else
-      {
+      if (D >= 2)
         values[i][1] = coordinates[1] * this->functionSpace_->meshWidth();
-      }
 
       // z direction
-      if (D < 3)
-      {
-        values[i][2] = 0;
-      }
-      else
-      {
+      if (D == 3)
         values[i][2] = coordinates[2] * this->functionSpace_->meshWidth();
-      }
     }
+
+    if (D < 3)
+      values[i][2] = 0;
+    if (D < 2)
+      values[i][1] = 0;
   }
 }
 
@@ -524,6 +521,70 @@ getElementValues(element_no_t elementNoLocal, std::array<std::array<double,nComp
 
   // compute the corresponding geometry values
   this->template getValues<nDofsPerElement>(elementDofs, values);
+}
+
+template<typename FunctionSpaceType, int nComponents>
+double FieldVariableSetGetRegularFixed<FunctionSpaceType,nComponents>::
+getGeometryFieldHermiteDerivative(int nodeLocalDofIndex, int componentNo) const
+{
+  const int D = FunctionSpaceType::dim();
+
+  double value = 0;
+
+  if (D == 1)
+  {
+    // dof x
+    // 0 1
+    // 1 dx
+    if (componentNo == 0 && nodeLocalDofIndex == 1)  // dx
+    {
+      value = this->functionSpace_->meshWidth();
+    }
+  }
+  else if (D == 2)
+  {
+    // dof y x
+    // 0 1*1
+    // 1 1*dx
+    // 2 dy*1
+    // 3 dy*dx
+    // dx = dy = meshWidth
+    if (componentNo == 0 && nodeLocalDofIndex == 1)   // dx
+    {
+      value = this->functionSpace_->meshWidth();
+    }
+    else if (componentNo == 1 && nodeLocalDofIndex == 2)    // dy
+    {
+      value = this->functionSpace_->meshWidth();
+    }
+  }
+  else if (D == 3)
+  {
+    // dof z y x
+    // 0 1*1*1
+    // 1 1*1*dx
+    // 2 1*dy*1
+    // 3 1*dy*dx
+    // 4 dz*1*1
+    // 5 dz*1*dx
+    // 6 dz*dy*1
+    // 7 dz*dy*dx
+    // dx = dy = dz = meshWidth
+    if (componentNo == 0 && nodeLocalDofIndex == 1)   // dx
+    {
+      value = this->functionSpace_->meshWidth();
+    }
+    else if (componentNo == 1 && nodeLocalDofIndex == 2)    // dy
+    {
+      value = this->functionSpace_->meshWidth();
+    }
+    else if (componentNo == 2 && nodeLocalDofIndex == 4)    // dz
+    {
+      value = this->functionSpace_->meshWidth();
+    }
+  }
+
+  return value;
 }
 
 //! for a specific component, get a single value from local dof no.
@@ -574,6 +635,10 @@ getValue(int componentNo, node_no_t dofLocalNo) const
         value = coordinates[2] * this->functionSpace_->meshWidth();
       }
     }
+  }
+  else
+  {
+    value = getGeometryFieldHermiteDerivative(nodeLocalDofIndex, componentNo);
   }
   return value;
 }

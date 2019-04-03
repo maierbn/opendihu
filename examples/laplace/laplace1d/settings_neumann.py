@@ -13,7 +13,7 @@ config = {
     "nodePositions": [[float(i)/(2*n)] for i in range(2*n+1)],
     "elements": [[2*i, 2*i+1, 2*i+2] for i in range(n)],
     "neumannBoundaryConditions": bc,
-    "dirichletBoundaryConditions": {0:0},
+    "dirichletBoundaryConditions": {1:0},
     "relativeTolerance": 1e-15,
     "inputMeshIsGlobal": True,
     "prefactor": 1.0,

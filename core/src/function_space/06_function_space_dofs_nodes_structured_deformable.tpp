@@ -387,7 +387,11 @@ setGeometryFieldValues()
   this->geometryField_->finishGhostManipulation();
 
   // initialize Hermite derivative dofs such that geometry fields becomes "even"
-  bool setHermiteDerivatives = this->specificSettings_.getOptionBool("setHermiteDerivatives", false);
+  bool setHermiteDerivatives = false;
+  if (std::is_same<BasisFunctionType,BasisFunction::Hermite>::value)
+  {
+    setHermiteDerivatives = this->specificSettings_.getOptionBool("setHermiteDerivatives", true);
+  }
   if (setHermiteDerivatives)
   {
     this->setHermiteDerivatives();

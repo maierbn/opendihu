@@ -76,9 +76,9 @@ public:
   //! get all geometry entries for an element
   void getElementGeometry(element_no_t elementNoLocal, std::array<Vec3, FunctionSpaceBaseDim<MeshType::dim(),BasisFunctionType>::nDofsPerElement()> &values);
 
-  //! from the function space geometry, extract geometry data for a surface with has one lower dimensionality
+  //! from the function space geometry, extract geometry data for a surface with has one lower dimensionality, only the nodal dofs are extracted, also for Hermite
   void extractSurfaceGeometry(const std::array<Vec3, FunctionSpaceBaseDim<MeshType::dim(),BasisFunctionType>::nDofsPerElement()> &geometryVolume, Mesh::face_t face,
-                              std::array<Vec3, FunctionSpaceBaseDim<MeshType::dim()-1,BasisFunctionType>::nDofsPerElement()> &geometrySurface);
+                              std::array<Vec3, FunctionSpaceBaseDim<MeshType::dim()-1,BasisFunctionType>::nNodesPerElement()> &geometrySurface);
 
   //! return the internal geometry field variable
   GeometryFieldType &geometryField();

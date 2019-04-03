@@ -42,7 +42,8 @@ protected:
 
   //! parse an object of type ElementWithFaces frorm python config,
   //! example values:  {"element": 1, "face": "0+", "dofVectors:", {0: [tmax,0,0], 1: [tmax,0,0], 2: [tmax,0,0], 3: [tmax,0,0]}}
-  virtual ElementWithFaces parseElementWithFaces(PythonConfig specificSettings, std::shared_ptr<FunctionSpaceType> functionSpace) override;
+  //! if elementNoLocal is != -1, it will be used as value for the local element no, otherwise the value is parsed from config
+  virtual ElementWithFaces parseElementWithFaces(PythonConfig specificSettings, std::shared_ptr<FunctionSpaceType> functionSpace, element_no_t elementNoLocal) override;
 
 };
 
@@ -63,7 +64,8 @@ protected:
 
   //! parse an object of type ElementWithFaces frorm python config,
   //! example values:  {"element": 1, "face": "0+", "dofVectors:", {0: [tmax,0,0], 1: [tmax,0,0], 2: [tmax,0,0], 3: [tmax,0,0]}}
-  virtual ElementWithFaces parseElementWithFaces(PythonConfig specificSettings, std::shared_ptr<FunctionSpaceType> functionSpace) override;
+  //! if elementNoLocal is != -1, it will be used as value for the local element no, otherwise the value is parsed from config
+  virtual ElementWithFaces parseElementWithFaces(PythonConfig specificSettings, std::shared_ptr<FunctionSpaceType> functionSpace, element_no_t elementNoLocal) override;
 
 };
 
@@ -87,7 +89,8 @@ protected:
 
   //! parse an object of type ElementWithFaces frorm python config,
   //! example values:  {"element": 1, "face": "0+", "dofVectors:", {0: [tmax,0,0], 1: [tmax,0,0], 2: [tmax,0,0], 3: [tmax,0,0]}}
-  virtual ElementWithFaces parseElementWithFaces(PythonConfig specificSettings, std::shared_ptr<FunctionSpaceType> functionSpace) override;
+  //! if elementNoLocal is != -1, it will be used as value for the local element no, otherwise the value is parsed from config
+  virtual ElementWithFaces parseElementWithFaces(PythonConfig specificSettings, std::shared_ptr<FunctionSpaceType> functionSpace, element_no_t elementNoLocal) override;
 
 };
 

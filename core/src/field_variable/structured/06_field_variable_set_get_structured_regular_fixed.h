@@ -68,6 +68,10 @@ public:
 
   //! copy the values from another field variable of the same type
   void setValues(FieldVariable<FunctionSpaceType,nComponents> &rhs);
+private:
+
+  //! get the derivative dof value for the geometry field, component componentNo (x,y or z) when using Hermite polynomials
+  double getGeometryFieldHermiteDerivative(int nodeLocalDofIndex, int componentNo) const;
 };
 
 } // namespace

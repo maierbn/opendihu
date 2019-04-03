@@ -12,7 +12,7 @@ int main(int argc, char *argv[])
   
   SpatialDiscretization::FiniteElementMethod<
     Mesh::UnstructuredDeformableOfDimension<2>,
-    BasisFunction::LagrangeOfOrder<2>,
+    BasisFunction::Hermite,
     Quadrature::Gauss<3>,
     Equation::Static::Laplace
   > equationDiscretized(settings);

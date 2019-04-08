@@ -20,7 +20,7 @@ getBasisFunctionIndex1D(int dofIndex, int dimNo)
   VLOG(2) << "D: " << MeshType::dim() << ", nDofsPerNode: " << nDofsPerNode << ", nNodesPerElement1D: " << nNodesPerElement1D;
 
   const int nodeNo = (int)(dofIndex/nDofsPerNode);
-  const int nodalDofIndex = dofIndex % nDofsPerNode;
+  const int nodalDofIndex = dofIndex % nDofsPerNode;    // nodal dof index, counting the D dimensional dofs
 
   int nodeIndexDimension = 0;
   int basisFunctionIndexPerNodeDimension = 0;   // this is always 0 for non-Hermite (because nodalDofIndex is 0, because nDofsPerNode is 1)
@@ -32,11 +32,11 @@ getBasisFunctionIndex1D(int dofIndex, int dimNo)
     nodeIndexDimension = nodeNo % nNodesPerElement1D;
     break;
   case 1:
-    basisFunctionIndexPerNodeDimension = int((dofIndex % MathUtility::sqr(nDofsPerNode1D)) / nDofsPerNode1D);
+    basisFunctionIndexPerNodeDimension = int((nodalDofIndex % MathUtility::sqr(nDofsPerNode1D)) / nDofsPerNode1D);
     nodeIndexDimension = int((nodeNo % MathUtility::sqr(nNodesPerElement1D)) / nNodesPerElement1D);
     break;
   case 2:
-    basisFunctionIndexPerNodeDimension = int(dofIndex / MathUtility::sqr(nDofsPerNode1D));
+    basisFunctionIndexPerNodeDimension = int(nodalDofIndex / MathUtility::sqr(nDofsPerNode1D));
     nodeIndexDimension = int(nodeNo / MathUtility::sqr(nNodesPerElement1D));
     break;
   default:
@@ -53,10 +53,13 @@ template<typename MeshType,typename BasisFunctionType>
 double FunctionSpaceFunction<MeshType,BasisFunctionType>::
 phi(int dofIndex, std::array<double,MeshType::dim()> xi)
 {
+  //VLOG(3) << "  -> phi(dofIndex " << dofIndex << ", xi " << xi << "), dim: " << MeshType::dim();
   double result = 1.0;
   for (int dimNo = 0; dimNo < MeshType::dim(); dimNo++)
   {
     int basisFunctionIndex1D = FunctionSpaceFunction<MeshType,BasisFunctionType>::getBasisFunctionIndex1D(dofIndex, dimNo);
+    //VLOG(3) << "       (dim " << dimNo << ", xi=" << xi[dimNo] << ", basisFunctionIndex1D: " << basisFunctionIndex1D << ", phi: "
+    //  << BasisFunctionType::phi(basisFunctionIndex1D,xi[dimNo]);
     result *= BasisFunctionType::phi(basisFunctionIndex1D,xi[dimNo]);
   }
   return result;

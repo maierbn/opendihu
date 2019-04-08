@@ -9,7 +9,7 @@ neumann_bc = []
 if True:
   for i in range(nx):
     neumann_bc += [
-        {"element": i, "constantValue": 1.0, "face": "1-"},               # bottom
+        {"element": i, "constantValue": -1.0, "face": "1-"},               # bottom
         {"element": (ny-1)*nx + i, "constantValue": 1.0, "face": "1+"},   # top
       ]
 
@@ -17,7 +17,7 @@ if True:
 if False:
   for j in range(ny):
     neumann_bc += [
-        {"element": j*nx, "constantValue": 1, "face": "0-"},            # left
+        {"element": j*nx, "constantValue": -1, "face": "0-"},            # left
         {"element": j*nx + (nx-1), "constantValue": 1, "face": "0+"},   # top
       ]
       

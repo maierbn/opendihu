@@ -3,7 +3,7 @@ n = 5
 
 # Neumann boundary conditions
 bc = [
-  {"element": 0, "constantValue": 1.0, "face": "0-"},
+  {"element": 0, "constantValue": -1.0, "face": "0-"},
   {"element": n-1, "constantValue": 1.0, "face": "0+"}
 ]
 config = {

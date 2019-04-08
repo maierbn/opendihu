@@ -150,7 +150,8 @@ initialize(PythonConfig specificSettings, std::shared_ptr<FunctionSpaceType> fun
 
   for(ElementWithFaces elementWithFaces : boundaryConditionElements_)
   {
-    LOG(DEBUG) << "  elementNoLocal " << elementWithFaces.elementNoLocal << ", face " << Mesh::getString(elementWithFaces.face) << ", dofVectors: " << elementWithFaces.dofVectors;
+    LOG(DEBUG) << "  elementNoLocal " << elementWithFaces.elementNoLocal << ", face " << Mesh::getString(elementWithFaces.face)
+      << ", dofVectors on surface: " << elementWithFaces.dofVectors << ", surfaceDofs on volume: " << elementWithFaces.surfaceDofs;
   }
 
   initializeRhs();

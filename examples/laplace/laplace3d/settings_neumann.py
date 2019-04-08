@@ -3,11 +3,16 @@ import sys
 
 # 3D laplace problem
 
-nx = 1
-ny = 1
-nz = 4
+# run as (both with either local=True or local=False):
+# mpirun -n 2 ./laplace ../settings_neumann.py
+# ./laplace ../settings_neumann.py
 
-local = False
+local = True
+
+nx = 2
+ny = 2
+nz = 5
+
 
 # Neumann boundary conditions
 bc = []
@@ -33,31 +38,40 @@ if not local:
       bc.append({"element": element_no, "constantValue": bc_value, "face": "2+"})
 
 rank_no = (int)(sys.argv[-2])
+n_ranks = (int)(sys.argv[-1])
 
 n_elements = [nx,ny,nz]
 
 # local boundary conditions
 if local:
-  n_elements = [1,1,1]
-  if rank_no == 0:
-    n_elements = [1,1,2]
+  if n_ranks > 1:
+    n_elements = [2,2,2]
+    if rank_no == 0:
+      n_elements = [2,2,3]
 
   # boundary conditions
-  bc = {}
-  if rank_no == 0:
-    bc = {dof:1.0 for dof in range(4)}
-  elif rank_no == 2:
-    bc = {-1-dof:2.0 for dof in range(4)}
+  bc = []
+  for j in range(int(ny)):
+    for i in range(int(nx)):
+      x = i/nx
+      y = j/ny
+      element_no = int(j*nx + i)
+      
+      if rank_no == 0:
+        bc.append({"element": element_no, "constantValue": -1.0, "face": "2-"})
+        
+      if rank_no == n_ranks-1:
+        bc.append({"element": -(nx*ny)+element_no, "constantValue": 1.0, "face": "2+"})
 
 config = {
   "FiniteElementMethod" : {
     "nElements": n_elements,
-    "nRanks": [1,1,3],
+    "nRanks": [1,1,n_ranks],
     "inputMeshIsGlobal": not local,
-    "physicalExtent": [1.0, 1.0, 3.0],
+    "physicalExtent": n_elements,
     "outputInterval": 1.0,
     "prefactor": 1,
-    "dirichletBoundaryConditions": {},
+    "dirichletBoundaryConditions": {0:0} if rank_no == 0 else {},
     "neumannBoundaryConditions": bc,
     "relativeTolerance": 1e-15,
     "solverType": "gmres",

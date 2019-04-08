@@ -254,8 +254,8 @@ parseNodePositionsFromSettings(PythonConfig specificSettings)
     }
   }
   else   // there was no "nodePositions" given in config, use physicalExtent instead
-  {    
-    // if node positions are not given in settings but physicalExtent, fill from that
+  {
+    // if node positions are not given in settings but physicalExtent, generate node positions such that physicalExtent is reached
     std::array<double, D> physicalExtent, meshWidth;
     physicalExtent = specificSettings.getOptionArray<double, D>("physicalExtent", 1.0, PythonUtility::Positive);
 

@@ -357,7 +357,7 @@ parseElementWithFaces(PythonConfig specificSettings, std::shared_ptr<FunctionSpa
   // extract one item of the Neumann BC specification, e.g. {"element": 1, "face": "0+", "dofVectors:", {0: [tmax,0,0], 1: [tmax,0,0], 2: [tmax,0,0], 3: [tmax,0,0]}}
   // nComponents = 1 for flux BC
 
-  const int D = FunctionSpaceType::dim();
+  //const int D = FunctionSpaceType::dim();
   //LOG(TRACE) << "NeumannBoundaryConditions::parseElementWithFaces, D=" << D << ", nComponents=1";
 
   ElementWithFaces result;
@@ -402,7 +402,7 @@ parseElementWithFaces(PythonConfig specificSettings, std::shared_ptr<FunctionSpa
     if (specificSettings.hasKey("constantValue"))
     {
       double constantValue = specificSettings.getOptionDouble("constantValue", 0.0);
-
+/*
       // determine directionFactor
       // if the surface normal is facing in opposite direction of the normal coordinate direction, this is -1, else 1
       VecD<D-1> xiSurface;
@@ -416,9 +416,9 @@ parseElementWithFaces(PythonConfig specificSettings, std::shared_ptr<FunctionSpa
       Vec3 normal = functionSpace->getNormal(result.face, result.elementNoLocal, xi);
       double directionFactor = normal[(int)(result.face)/2];
       VLOG(1) << "normal: " << normal << ", directionFactor: " << directionFactor;
-
+*/
       // for normal flux BC
-      constantVector[0] = constantValue * directionFactor;
+      constantVector[0] = constantValue;
     }
     else if (specificSettings.hasKey("constantVector"))
     {
@@ -523,9 +523,8 @@ parseElementWithFaces(PythonConfig specificSettings, std::shared_ptr<FunctionSpa
 
     if (specificSettings.hasKey("constantValue"))
     {
-      double directionFactor = (result.face == Mesh::face0Minus? -1 : 1);
       double constantValue = specificSettings.getOptionDouble("constantValue", 0.0);
-      constantVector[0] = constantValue * directionFactor;
+      constantVector[0] = constantValue;
     }
     else if (specificSettings.hasKey("constantVector"))
     {

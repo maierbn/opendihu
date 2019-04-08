@@ -482,7 +482,7 @@ output(std::ostream &stream)
       {
         for (int i = 0; i < nDofsLocal; i++)
         {
-          stream << localValues[i] << "  ";
+          stream << localValues[i] << ", ";
         }
       }
       stream << "]" << std::endl;

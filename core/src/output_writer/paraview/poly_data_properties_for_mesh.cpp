@@ -21,6 +21,14 @@ std::ostream &operator<<(std::ostream &stream, PolyDataPropertiesForMesh rhs)
   {
     stream << " [" << pointDataArray.first << "," << pointDataArray.second << "]";
   }
+  stream << ", " << rhs.unstructuredMeshConnectivityValues.size()
+    << ", unstructuredMeshConnectivityValues: ";
+
+  for (int i = 0; i < rhs.unstructuredMeshConnectivityValues.size(); i++)
+  {
+    stream << rhs.unstructuredMeshConnectivityValues[i] << " ";
+  }
+
   stream << ")";
   return stream;
 }

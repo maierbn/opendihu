@@ -239,7 +239,7 @@ config = {
 
   nFails += ::testing::Test::HasFailure();
 }
-/*
+
 TEST(LaplaceTest, SerialEqualsParallelDeformable3DLocal)
 {
   // run serial problem
@@ -467,6 +467,6 @@ config = {
 
   nFails += ::testing::Test::HasFailure();
 }
-*/
+
 }  // namespace
 

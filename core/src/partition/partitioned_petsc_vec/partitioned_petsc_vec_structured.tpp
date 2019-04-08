@@ -265,7 +265,10 @@ getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[])
     str << ") [representation=" << Partition::valuesRepresentationString[this->currentRepresentation_] << "]: ";
     for (int i = 0; i < ni; i++)
     {
-      str << y[i] << " ";
+      if (fabs(y[i]) > 1e-10)
+        str << y[i] << ", ";
+      else
+        str << "0, ";
     }
     str << "]";
     VLOG(3) << str.str();
@@ -1051,7 +1054,7 @@ output(std::ostream &stream)
       for (int rankNo = 0; rankNo < nRanks; rankNo++)
       {
         if (rankNo != 0)
-          stream << ",";
+          stream << ";";
         for (dof_no_t dofNoLocal = 0; dofNoLocal < localSizes[rankNo]; dofNoLocal++)
         {
           if (dofNoLocal == 400)
@@ -1061,7 +1064,7 @@ output(std::ostream &stream)
           }
 
           double value = recvBuffer[rankNo*maxLocalSize + dofNoLocal];
-          stream << "  " << value;
+          stream << " " << value;
         }
       }
       stream << "]," << std::endl;

@@ -4,6 +4,7 @@
 #include "utility/python_utility.h"
 #include "utility/vector_operators.h"
 #include "control/types.h"
+#include "quadrature/gauss.h"
 
 namespace SpatialDiscretization
 {
@@ -31,8 +32,11 @@ initializeRhs()
   const int D = FunctionSpaceType::dim();  // = 2 or 3
   const int nDofsPerElement = FunctionSpaceType::nDofsPerElement();
 
+  // use gauss quadrature with 3 points for surface BCs, theoretically, QuadratureType could be used, but then there would be a partial specialization necessary for Quadrature::None and regular meshes
+  typedef Quadrature::Gauss<3> QuadratureTypeSurface;
+
   // define shortcuts for quadrature
-  typedef Quadrature::TensorProduct<D-1,QuadratureType> QuadratureSurface;
+  typedef Quadrature::TensorProduct<D-1,QuadratureTypeSurface> QuadratureSurface;
 
   // define type to hold evaluations of integrand for result vector
   typedef std::array<double, nDofsPerElement*nComponents> EvaluationsType;

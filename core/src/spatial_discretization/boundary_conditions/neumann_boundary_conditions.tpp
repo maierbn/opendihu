@@ -74,7 +74,7 @@ initializeRhs()
     functionSpace->getElementGeometry(elementNoLocal, geometryVolume);
     functionSpace->extractSurfaceGeometry(geometryVolume, elementIter->face, geometrySurface);
 
-    LOG(DEBUG) << "element no " << elementNoLocal << ", dofVectors: " << elementIter->dofVectors << ", geometryVolume: "
+    VLOG(1) << "element no " << elementNoLocal << ", dofVectors: " << elementIter->dofVectors << ", geometryVolume: "
       << geometryVolume << ", face " << Mesh::getString(elementIter->face) << ", geometrySurface: " << geometrySurface;
 
     // loop over integration points (e.g. gauss points)
@@ -88,7 +88,7 @@ initializeRhs()
       std::array<Vec3,D-1> jacobian = FunctionSpaceSurface::computeJacobian(geometrySurface, xiSurface);
       double integrationFactor = MathUtility::computeIntegrationFactor<D-1>(jacobian);
 
-      LOG(DEBUG) << "   jacobian: " << jacobian;
+      VLOG(1) << "   jacobian: " << jacobian;
 
       // set all entries to 0
       evaluationsArraySurface[samplingPointIndex] = {0.0};
@@ -136,7 +136,7 @@ initializeRhs()
     // integrate all values for result vector entries at once
     EvaluationsType integratedValues = QuadratureSurface::computeIntegral(evaluationsArraySurface);
 
-    LOG(DEBUG) << "evaluationsArraySurface: " << evaluationsArraySurface << ", integratedValues: " << integratedValues;
+    VLOG(1) << "evaluationsArraySurface: " << evaluationsArraySurface << ", integratedValues: " << integratedValues;
 
     // get indices of element-local dofs
     std::array<dof_no_t,nDofsPerElement> dofNosLocal = functionSpace->getElementDofNosLocal(elementNoLocal);
@@ -148,7 +148,7 @@ initializeRhs()
       std::array<double,nComponents> dofValues;
       std::copy(integratedValues.begin() + dofIndex*nComponents, integratedValues.begin() + (dofIndex+1)*nComponents, dofValues.begin());
 
-      LOG(DEBUG) << "set values " << dofValues << " at dof " << dofNosLocal[dofIndex];
+      VLOG(2) << "set values " << dofValues << " at dof " << dofNosLocal[dofIndex];
 
       //! set a single dof (all components) , after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
       //void setValue(dof_no_t dofLocalNo, const std::array<double,nComponents> &value, InsertMode petscInsertMode=INSERT_VALUES);
@@ -206,7 +206,7 @@ initializeRhs()
 
     element_no_t elementNoLocal = elementIter->elementNoLocal;
 
-    LOG(DEBUG) << "element no " << elementNoLocal << ", dofVectors: " << elementIter->dofVectors[0];
+    VLOG(1) << "element no " << elementNoLocal << ", dofVectors: " << elementIter->dofVectors[0];
 
     // check if element no is valid
     if (elementNoLocal < 0 || elementNoLocal > functionSpace->nElementsLocal())
@@ -541,7 +541,7 @@ parseElementWithFaces(PythonConfig specificSettings, std::shared_ptr<FunctionSpa
     FunctionSpaceType::getFaceDofs(result.face, dofIndices);
     // for Hermite we get 2 dofs in dofIndices, only use the first one
 
-    LOG(DEBUG) << "nVolumeDofsBorder on 0D face " << Mesh::getString(result.face) << ": " << dofIndices;
+    VLOG(1) << "nVolumeDofsBorder on 0D face " << Mesh::getString(result.face) << ": " << dofIndices;
 
     result.dofVectors.push_back(std::pair<dof_no_t, VecD<1>>(dofIndices[0], constantVector));
   }

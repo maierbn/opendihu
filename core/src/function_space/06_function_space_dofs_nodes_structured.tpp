@@ -257,6 +257,9 @@ setHermiteDerivatives()
           distance2Plus = nodePositionNeighbour2Plus - nodePositionCurrent;
         }
 
+        VLOG(1) << "node local no. " << nodeNoLocal << ", \"2-\" " << neighbour2MinusNodeNoLocal << " (d: " << distance2Minus
+          << "), \"2+\" " << neighbour2PlusNodeNoLocal << "(d: " << distance2Plus << ")";
+
         // average distance to both neighbours or take single value if there was only one neighbour found (because of end of domain)
         if (neighbour2MinusNodeNoLocal != -1 && neighbour2PlusNodeNoLocal != -1)
         {
@@ -274,6 +277,8 @@ setHermiteDerivatives()
         {
           distance2 = Vec3{1.0};
         }
+
+        VLOG(1) << "   final distance: " << distance2;
       }
 
       // advance localDof No to first non-positional (derivative) value

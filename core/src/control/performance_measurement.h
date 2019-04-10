@@ -20,11 +20,14 @@ public:
 
   //! stop timing measurement for a given keyword, the counter of number of time spans is increased by numberAccumulated
   static void stop(std::string name, int numberAccumulated=1);
-
+  
   //! compute the mean magnitude of the given error vector or matrix and store it under name
   template<typename T>
   static void measureError(std::string name, T differenceVector);
-
+  
+  //! compute sum of numbers
+  static void countNumber(std::string name, int number);
+  
   //! write collected information to a log file
   static void writeLogFile(std::string logFileName = "logs/log");
 
@@ -51,6 +54,7 @@ private:
   };
 
   static std::map<std::string, Measurement> measurements_;   ///< the currently stored measurements
+  static std::map<std::string, int> sums_;   ///< the currently stored sums
   static std::map<std::string,std::string> parameters_;   ///< arbitrary parameters that will be stored in the log
 
 

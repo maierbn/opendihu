@@ -7,7 +7,7 @@
 namespace FunctionSpace
 {
 
-//! get all dof indices, for non-derivative dofs, of a face for 1D
+//! get all dof indices of a face for 1D
 template<typename MeshType,typename BasisFunctionType>
 void FunctionSpaceFaces<MeshType,BasisFunctionType,Mesh::isDim<1,MeshType>> ::
 getFaceDofs(Mesh::face_t face, std::array<dof_no_t,FunctionSpaceBaseDim<1,BasisFunctionType>::nDofsPerNode()> &dofIndices)
@@ -38,7 +38,7 @@ getFaceDofs(Mesh::face_t face, std::array<dof_no_t,FunctionSpaceBaseDim<1,BasisF
   }
 }
 
-//! get all dof indices, for non-derivative dofs, of a face for 2D
+//! get all dof indices of a face for 2D
 template<typename MeshType,typename BasisFunctionType>
 void FunctionSpaceFaces<MeshType,BasisFunctionType,Mesh::isDim<2,MeshType>> ::
 getFaceDofs(Mesh::face_t face, std::array<dof_no_t,FunctionSpaceBaseDim<1,BasisFunctionType>::nNodesPerElement()*FunctionSpaceBaseDim<MeshType::dim(),BasisFunctionType>::nDofsPerNode()> &dofIndices)
@@ -114,7 +114,7 @@ getFaceDofs(Mesh::face_t face, std::array<dof_no_t,FunctionSpaceBaseDim<1,BasisF
   }
 }
 
-//! get all dof indices, for non-derivative dofs, of a face for 3D
+//! get all dof indices of a face for 3D
 template<typename MeshType,typename BasisFunctionType>
 void FunctionSpaceFaces<MeshType,BasisFunctionType,Mesh::isDim<3,MeshType>> ::
 getFaceDofs(Mesh::face_t face, std::array<dof_no_t,FunctionSpaceBaseDim<2,BasisFunctionType>::nNodesPerElement()*FunctionSpaceBaseDim<MeshType::dim(),BasisFunctionType>::nDofsPerNode()> &dofIndices)

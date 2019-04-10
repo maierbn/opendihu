@@ -55,7 +55,8 @@ std::vector<double> SvdUtility::readCSV(string filename)
   ifstream data(filename);
   string line;
   vector<double> parsedCsv;
-  int i, j = 0;
+  int i = 0;
+  int j = 0;
   while(getline(data, line))
   {
     stringstream lineStream(line);

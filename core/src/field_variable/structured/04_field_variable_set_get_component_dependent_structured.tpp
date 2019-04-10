@@ -11,15 +11,15 @@ namespace FieldVariable
 //! get the values corresponding to all element-local dofs for all components
 template<typename FunctionSpaceType>
 void FieldVariableSetGetComponent<FunctionSpaceType,1>::
-getElementValues(element_no_t elementNo, std::array<double,FunctionSpaceType::nDofsPerElement()> &values) const
+getElementValues(element_no_t elementNoLocal, std::array<double,FunctionSpaceType::nDofsPerElement()> &values) const
 {
-  VLOG(2) << "getElementValues element " << elementNo << ", 1 component";
+  VLOG(2) << "getElementValues element " << elementNoLocal << ", 1 component";
   assert(this->values_);
 
   const int nDofsPerElement = FunctionSpaceType::nDofsPerElement();
 
   // prepare lookup indices for PETSc vector values_
-  std::array<dof_no_t,nDofsPerElement> elementDofs = this->functionSpace_->getElementDofNosLocal(elementNo);
+  std::array<dof_no_t,nDofsPerElement> elementDofs = this->functionSpace_->getElementDofNosLocal(elementNoLocal);
 
   this->values_->getValues(0, nDofsPerElement, (PetscInt *)elementDofs.data(), values.data());
 }

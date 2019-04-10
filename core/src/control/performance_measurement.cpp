@@ -62,17 +62,23 @@ void PerformanceMeasurement::stop(std::string name, int numberAccumulated)
   }
 }
 
+std::string PerformanceMeasurement::getParameter(std::string key)
+{
+  if (parameters_.find(key) == parameters_.end())
+    return "";
+
+  return parameters_[key];
+}
+
 void PerformanceMeasurement::writeLogFile(std::string logFileName)
 {
   //LOG(DEBUG) << "PerformanceMeasurement::writeLogFile \"" << logFileName;
 
   parseStatusInformation();
 
-  //char *PGI_used = getenv("PGI");
-  //const bool combined = (PGI_used==NULL ? true : false);
   const bool combined = true;   /// if the output is using MPI Output
 
-  int ownRankNo = DihuContext::partitionManager()->rankNoCommWorld();
+  int ownRankNo = DihuContext::ownRankNoCommWorld();
 
   // determine file name
   std::stringstream filename;
@@ -114,7 +120,6 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
   // time stamp
   auto t = std::time(nullptr);
   auto tm = *std::localtime(&t);
-  //data << std::put_time(&tm, "%Y/%m/%d %H:%M:%S") << ";";
   data << StringUtility::timeToString(&tm) << ";";
 
   // host name
@@ -178,7 +183,7 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
   // write header and data to file
   if (combined)   // MPI output
   {
-    // open log file to create directory
+    // open log file to create directory if needed
     std::ofstream file;
     if (ownRankNo == 0)
     {
@@ -194,10 +199,10 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
     MPI_File fileHandle;
     MPIUtility::handleReturnValue(MPI_File_open(MPI_COMM_WORLD, logFileName.c_str(),
                                                 //MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_UNIQUE_OPEN,
-                                                //MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_APPEND,
-                                                MPI_MODE_WRONLY | MPI_MODE_CREATE,
+                                                MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_APPEND,
                                                 MPI_INFO_NULL, &fileHandle), "MPI_File_open");
 
+    // write header
     // collective blocking write, only rank 0 writes, but afterwards all have the same shared file pointer position
     if (ownRankNo == 0)
     {
@@ -211,8 +216,10 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
       MPIUtility::handleReturnValue(MPI_File_write_ordered(fileHandle, b, 0, MPI_BYTE, &status), "MPI_File_write_ordered", &status);
     }
 
+    // write log line for own rank
     MPIUtility::handleReturnValue(MPI_File_write_ordered(fileHandle, data.str().c_str(), data.str().length(), MPI_BYTE, MPI_STATUS_IGNORE), "MPI_File_write_ordered");
 
+    // close file
     MPIUtility::handleReturnValue(MPI_File_close(&fileHandle), "MPI_File_close");
   }
   else  // standard POSIX output

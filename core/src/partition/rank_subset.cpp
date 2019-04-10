@@ -3,9 +3,10 @@
 #include <numeric>
 #include <algorithm>
 
+#include "easylogging++.h"
 #include "utility/mpi_utility.h"
 #include "utility/vector_operators.h"
-#include "easylogging++.h"
+#include "control/dihu_context.h"
 
 namespace Partition 
 {
@@ -20,10 +21,11 @@ RankSubset::RankSubset() : ownRankNo_(-1)
   MPIUtility::handleReturnValue(MPI_Comm_dup(MPI_COMM_WORLD, &mpiCommunicator_), "MPI_Comm_dup");
   nWorldCommunicatorsSplit++;
   nCommunicatorsSplit_ = 0;
+  isWorldCommunicator_ = true;
 
   if (mpiCommunicator_ == MPI_COMM_NULL)
   {
-    LOG(FATAL) << "Failed to dup MPI_COMM_WORLD";
+    LOG(FATAL) << "Failed to duplicate MPI_COMM_WORLD";
   }
 
   communicatorName_ = "COMM_WORLD";
@@ -47,13 +49,20 @@ RankSubset::RankSubset(int singleRank, std::shared_ptr<RankSubset> parentRankSub
   rankNo_.insert(singleRank);
 
   MPI_Comm parentCommunicator = MPI_COMM_WORLD;
+  int ownRankParentCommunicator = 0;
+  isWorldCommunicator_ = false;
+
+  // if a parent rank subset was given, use it
   if (parentRankSubset)
   {
     parentCommunicator = parentRankSubset->mpiCommunicator();
+    ownRankParentCommunicator = parentRankSubset->ownRankNo();
   }
-  // get the own current MPI rank
-  int ownRankParentCommunicator = 0;
-  MPIUtility::handleReturnValue(MPI_Comm_rank(parentCommunicator, &ownRankParentCommunicator), "MPI_Comm_rank");
+  else
+  {
+    // get the own current MPI rank from the MPI_COMM_WORLD
+    MPIUtility::handleReturnValue(MPI_Comm_rank(parentCommunicator, &ownRankParentCommunicator), "MPI_Comm_rank");
+  }
   int color = MPI_UNDEFINED;
 
   LOG(DEBUG) << "ownRankParentCommunicator: " << ownRankParentCommunicator << ", singleRank for which to create RankSubset: " << singleRank;
@@ -165,6 +174,10 @@ element_no_t RankSubset::ownRankNo()
 
 MPI_Comm RankSubset::mpiCommunicator() const
 {
+  if (mpiCommunicator_ == MPI_COMM_NULL)
+  {
+    LOG(ERROR) << "Accessing NULL communicator";
+  }
   return mpiCommunicator_;
 }
 

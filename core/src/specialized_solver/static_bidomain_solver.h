@@ -58,6 +58,9 @@ protected:
   //! solve the linear system of equations of the implicit scheme with rightHandSide_ and solution_
   void solveLinearSystem();
 
+  //! dump rhs vector
+  void debugDumpData();
+
   DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
   Data data_;  ///< the data object of the multidomain solver which stores all field variables and matrices
 

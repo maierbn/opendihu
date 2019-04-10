@@ -45,9 +45,9 @@ MultipleInstances(DihuContext context) :
   
   // extract the number of instances
   nInstances_ = specificSettings_.getOptionInt("nInstances", 1, PythonUtility::Positive);
-   
+
   // parse all instance configs 
-  std::vector<PythonConfig> instanceConfigs;
+  std::vector<std::shared_ptr<PythonConfig>> instanceConfigs;
   
   // get the config for the first InstancesDataset instance from the list
   PyObject *instanceConfig = specificSettings_.getOptionListBegin<PyObject *>("instances");
@@ -57,7 +57,15 @@ MultipleInstances(DihuContext context) :
       !specificSettings_.getOptionListEnd("instances") && i < nInstances_;
       specificSettings_.template getOptionListNext<PyObject *>("instances", instanceConfig), i++)
   {
-    instanceConfigs.push_back(PythonConfig(specificSettings_, "instances", instanceConfig));
+    if (instanceConfig == Py_None)
+    {
+      instanceConfigs.push_back(nullptr);
+    }
+    else
+    {
+      instanceConfigs.push_back(std::make_shared<PythonConfig>(specificSettings_, "instances", instanceConfig));
+    }
+
     VLOG(3) << "i = " << i << ", instanceConfig = " << instanceConfig;
   }
     
@@ -80,41 +88,51 @@ MultipleInstances(DihuContext context) :
 
   // determine all ranks of all computed instances
   std::set<int> ranksAllComputedInstances;
+
+  // if all ranks are given, parse them
+  if (specificSettings_.hasKey("ranksAllComputedInstances"))
+  {
+    std::vector<int> ranksAllComputedInstancesVector;
+    specificSettings_.getOptionVector("ranksAllComputedInstances", ranksAllComputedInstancesVector);
+    ranksAllComputedInstances.insert(ranksAllComputedInstancesVector.begin(), ranksAllComputedInstancesVector.end());
+  }
+
   nInstancesComputedGlobally_ = 0;
-  std::vector<std::tuple<std::shared_ptr<Partition::RankSubset>, bool, PythonConfig>> instanceData(nInstances_);  // <rankSubset, computeOnThisRank, instanceConfig>
+  std::vector<std::tuple<std::shared_ptr<Partition::RankSubset>, bool, std::shared_ptr<PythonConfig>>> instanceData(nInstances_);  // <rankSubset, computeOnThisRank, instanceConfig>
 
   int ownRankNo = this->context_.ownRankNo();  // this may not be from MPI_COMM_WORLD but the context's communicator
-  int nRanksThisContext = this->context_.rankSubset()->size(); //this->context_.partitionManager()->nRanksCommWorld();
+  int nRanksThisContext = this->context_.rankSubset()->size();
   std::vector<std::shared_ptr<Partition::RankSubset>> rankSubsets;
 
   // parse the rank lists for all instances
   for (int instanceConfigNo = 0; instanceConfigNo < nInstances_; instanceConfigNo++)
   {
-    PythonConfig instanceConfig = instanceConfigs[instanceConfigNo];
+    std::shared_ptr<PythonConfig> instanceConfig = instanceConfigs[instanceConfigNo];
     std::get<2>(instanceData[instanceConfigNo]) = instanceConfig;
    
+    std::shared_ptr<Partition::RankSubset> rankSubset = nullptr;
+    std::vector<int> ranks;
+    bool computeOnThisRank = false;
+
     // extract ranks for this instance
-    if (!instanceConfig.hasKey("ranks"))
+    if (!instanceConfig)
+    {
+      // do nothing
+    }
+    else if (!instanceConfig->hasKey("ranks"))
     {
       LOG(ERROR) << "Instance " << instanceConfigs << " has no \"ranks\" settings.";
-
-      std::get<0>(instanceData[instanceConfigNo]) = nullptr;
-      std::get<1>(instanceData[instanceConfigNo]) = false;
-      continue;
     }
     else 
     {
-      // extract rank list
-      std::vector<int> ranks;
-      instanceConfig.getOptionVector("ranks", ranks);
+      // extract rank list from config
+      instanceConfig->getOptionVector("ranks", ranks);
       std::set<int> rankSet(ranks.begin(), ranks.end());
       LOG(DEBUG) << "instance no. " << instanceConfigNo << " has ranks: " << ranks << ", " << rankSet;
 
       VLOG(2) << "instance " << instanceConfigNo << " on ranks: " << ranks;
 
       // check if own rank is part of ranks list
-      bool computeOnThisRank = false;
-
       bool computeSomewhere = false;
       for (int rank : rankSet)
       {
@@ -137,7 +155,6 @@ MultipleInstances(DihuContext context) :
       VLOG(2) << "compute on this rank: " << std::boolalpha << computeOnThisRank;
 
       // create rank subset
-      std::shared_ptr<Partition::RankSubset> rankSubset = nullptr;
       if (computeOnThisRank)
       {
         LOG(DEBUG) << "instance " << instanceConfigNo << ", compute on this rank";
@@ -153,18 +170,18 @@ MultipleInstances(DihuContext context) :
           break;
         }
       }
-
-      if (!rankSubset)
-      {
-        LOG(DEBUG) << "create new rank subset from ranks " << ranks << " in context " << *this->context_.rankSubset();
-        // The rank subsets have to be created collectively by all ranks in the current context, even if they will not be part of the new communicator!
-        rankSubset = std::make_shared<Partition::RankSubset>(ranks.begin(), ranks.end(), this->context_.rankSubset());
-      }
-      rankSubsets.push_back(rankSubset);
-
-      std::get<0>(instanceData[instanceConfigNo]) = rankSubset;
-      std::get<1>(instanceData[instanceConfigNo]) = computeOnThisRank;
     }
+
+    if (!rankSubset)
+    {
+      LOG(DEBUG) << "create new rank subset from ranks " << ranks << " in context " << *this->context_.rankSubset();
+      // The rank subsets have to be created collectively by all ranks in the current context, even if they will not be part of the new communicator!
+      rankSubset = std::make_shared<Partition::RankSubset>(ranks.begin(), ranks.end(), this->context_.rankSubset());
+    }
+    rankSubsets.push_back(rankSubset);
+
+    std::get<0>(instanceData[instanceConfigNo]) = rankSubset;
+    std::get<1>(instanceData[instanceConfigNo]) = computeOnThisRank;
   }
 
   // create the rank list with all computed instances
@@ -183,7 +200,7 @@ MultipleInstances(DihuContext context) :
   {
     std::shared_ptr<Partition::RankSubset> rankSubset = std::get<0>(instanceData[instanceConfigNo]);
     bool computeOnThisRank = std::get<1>(instanceData[instanceConfigNo]);
-    PythonConfig instanceConfig = std::get<2>(instanceData[instanceConfigNo]);
+    std::shared_ptr<PythonConfig> instanceConfig = std::get<2>(instanceData[instanceConfigNo]);
 
     if (!computeOnThisRank)
     {
@@ -194,7 +211,7 @@ MultipleInstances(DihuContext context) :
     this->context_.partitionManager()->setRankSubsetForNextCreatedPartitioning(rankSubset);
 
     VLOG(1) << "create sub context for instance no " << instanceConfigNo << ", rankSubset: " << *rankSubset;
-    instancesLocal_.emplace_back(context_.createSubContext(instanceConfig, rankSubset));
+    instancesLocal_.emplace_back(context_.createSubContext(*instanceConfig, rankSubset));
   }
 
   nInstancesLocal_ = instancesLocal_.size();

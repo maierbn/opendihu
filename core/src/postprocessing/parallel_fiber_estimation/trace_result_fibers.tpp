@@ -15,7 +15,7 @@ checkTraceFinalFibers()
     level_++;
   }
 
-  int nRanksAvailable = this->context_.partitionManager()->nRanksCommWorld();
+  int nRanksAvailable = this->context_.nRanksCommWorld();
 
   // decide if the algorithm should no more refine the subdomains but trace the final fibers
   bool traceFinalFibers = false;

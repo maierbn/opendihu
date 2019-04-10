@@ -123,7 +123,7 @@ void Manager::loadGeometryFromFile()
   int nodePositionsAreInFileOnRank = -1;   // -1 means there are no nodePositions in a file
   if (!nodePositionsFromFile_.empty())
   {
-    nodePositionsAreInFileOnRank = DihuContext::partitionManager()->rankNoCommWorld();
+    nodePositionsAreInFileOnRank = DihuContext::ownRankNoCommWorld();
   }
   int nodePositionsAreInFileOnRankGlobal = 0;
   MPIUtility::handleReturnValue(MPI_Allreduce(&nodePositionsAreInFileOnRank, &nodePositionsAreInFileOnRankGlobal, 1, MPI_INT, MPI_MAX, mpiCommunicator), "MPI_Allreduce");
@@ -134,7 +134,7 @@ void Manager::loadGeometryFromFile()
   {
     // now nodePositionsAreInFileOnRankGlobal holds a rank that has a file name
     std::string filename;
-    if (DihuContext::partitionManager()->rankNoCommWorld() == nodePositionsAreInFileOnRankGlobal)
+    if (DihuContext::ownRankNoCommWorld() == nodePositionsAreInFileOnRankGlobal)
     {
       filename = nodePositionsFromFile_.begin()->second.filename;
       LOG(DEBUG) << "there is a file on this rank, " << filename;
@@ -201,7 +201,7 @@ void Manager::loadGeometryFromFile()
           if (int(newProgress*10) != int(progress*10))
           {
             progress = newProgress;
-            if (DihuContext::partitionManager()->rankNoCommWorld() == 0)
+            if (DihuContext::ownRankNoCommWorld() == 0)
             {
               std::cout << "\b\b\b\b" << int(progress*100) << "%" << std::flush;
             }
@@ -232,7 +232,7 @@ void Manager::loadGeometryFromFile()
       if (int(newProgress*10) != int(progress*10))
       {
         progress = newProgress;
-        if (DihuContext::partitionManager()->rankNoCommWorld() == 0)
+        if (DihuContext::ownRankNoCommWorld() == 0)
         {
           std::cout << "\b\b\b\b" << int(progress*100) << "%" << std::flush;
         }
@@ -242,7 +242,7 @@ void Manager::loadGeometryFromFile()
       std::vector<double> readBuffer(1);
       MPIUtility::handleReturnValue(MPI_File_read_at_all(fileHandle, 0, readBuffer.data(), 0, MPI_DOUBLE, MPI_STATUS_IGNORE), "MPI_Read_at_all");
     }
-    if (DihuContext::partitionManager()->rankNoCommWorld() == 0)
+    if (DihuContext::ownRankNoCommWorld() == 0)
     {
       std::cout << "\b\b\b\bdone." << std::endl;
     }

@@ -6,7 +6,7 @@
 #include "utility/python_utility.h"
 #include "mesh/face_t.h"
 #include "partition/mesh_partition/01_mesh_partition.h"
-#include "spatial_discretization/dirichlet_boundary_conditions.h"
+#include "spatial_discretization/boundary_conditions/dirichlet_boundary_conditions.h"
 
 // write or load various checkpoints, this is for debugging to only run part of the algorithm on prescribed data
 //#define USE_CHECKPOINT_BORDER_POINTS
@@ -172,7 +172,7 @@ generateParallelMesh()
   std::array<bool,4> subdomainIsAtBorder;
 
   // only rank 0 creates the first border points
-  if (this->context_.partitionManager()->rankNoCommWorld() == 0)
+  if (DihuContext::ownRankNoCommWorld() == 0)
   {
     // run python script to generate loops for the whole volume
     // run stl_create_rings.create_rings

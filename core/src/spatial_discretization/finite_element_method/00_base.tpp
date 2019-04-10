@@ -162,6 +162,7 @@ solve()
   // solve the system
   linearSolver->solve(data_.rightHandSide()->valuesGlobal(), data_.solution()->valuesGlobal(), "Solution obtained");
 
+  VLOG(1) << "solution: " << *data_.solution();
 }
 
 template<typename FunctionSpaceType,typename QuadratureType>

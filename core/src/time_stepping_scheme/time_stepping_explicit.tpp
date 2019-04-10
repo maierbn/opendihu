@@ -4,7 +4,6 @@
 #include <vector>
 
 #include "utility/python_utility.h"
-#include "spatial_discretization/dirichlet_boundary_conditions.h"
 
 namespace TimeSteppingScheme
 {

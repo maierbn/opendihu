@@ -8,7 +8,7 @@ void ParallelFiberEstimation<BasisFunctionType>::
 createDirichletBoundaryConditions(const std::array<int,3> &nElementsPerCoordinateDirectionLocal, std::shared_ptr<SpatialDiscretization::DirichletBoundaryConditions<FunctionSpaceType,1>> &dirichletBoundaryConditions)
 {
   // create dirichlet BC object
-  dirichletBoundaryConditions = std::make_shared<SpatialDiscretization::DirichletBoundaryConditions<FunctionSpaceType,1>>();
+  dirichletBoundaryConditions = std::make_shared<SpatialDiscretization::DirichletBoundaryConditions<FunctionSpaceType,1>>(this->context_);
 
   typedef typename SpatialDiscretization::DirichletBoundaryConditions<FunctionSpaceType,1>::ElementWithNodes ElementWithNodes;
   const int nDofsPerElement1D = FunctionSpace::FunctionSpaceBaseDim<1,BasisFunctionType>::nDofsPerElement();

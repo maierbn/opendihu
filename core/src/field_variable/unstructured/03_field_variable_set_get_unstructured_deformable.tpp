@@ -54,7 +54,36 @@ getValuesWithGhosts(std::vector<std::array<double,nComponents>> &values, bool on
 //! for a specific component, get all values
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
+getValuesWithGhosts(std::array<std::vector<double>,nComponents> &values, bool onlyNodalValues) const
+{
+  std::vector<double> buffer;
+  for (int componentNo = 0; componentNo < nComponents; componentNo++)
+  {
+    // get values into buffer
+    this->component_[componentNo].getValues(buffer, onlyNodalValues);
+
+    values.resize(buffer.size());
+
+    // copy values from buffer to output vector
+    for (int valueIndex = 0; valueIndex < buffer.size(); valueIndex++)
+    {
+      values[componentNo][valueIndex] = buffer[valueIndex];
+    }
+  }
+}
+
+//! for a specific component, get all values
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
 getValuesWithoutGhosts(std::vector<std::array<double,nComponents>> &values, bool onlyNodalValues) const
+{
+  this->getValuesWithGhosts(values, onlyNodalValues);
+}
+
+//! for a specific component, get all values
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
+getValuesWithoutGhosts(std::array<std::vector<double>,nComponents> &values, bool onlyNodalValues) const
 {
   this->getValuesWithGhosts(values, onlyNodalValues);
 }
@@ -311,6 +340,7 @@ setValue(dof_no_t dofLocalNo, const std::array<double,nComponents> &value, Inser
   // prepare lookup indices for PETSc vector values_
   for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
   {
+    LOG(DEBUG) << "set value of \"" << this->name_ << "\" for component " << componentIndex << " to " << value[componentIndex];
     this->values_->setValues(componentIndex, 1, &dofLocalNo, value.data()+componentIndex, petscInsertMode);
   }
 

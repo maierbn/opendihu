@@ -95,6 +95,14 @@ void Linear::parseSolverTypes()
   {
     pcType_ = PCGAMG;
   }
+  else if (preconditionerType == "none")
+  {
+    pcType_ = PCNONE;
+  }
+  else if (preconditionerType != "none" && preconditionerType != "")
+  {
+    pcType_ = preconditionerType.c_str();
+  }
 
   // all ksp types: https://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/KSP/KSPType.html#KSPType
   kspType_ = KSPGMRES;
@@ -109,6 +117,10 @@ void Linear::parseSolverTypes()
   else if (solverType == "cg")
   {
     kspType_ = KSPCG;
+  }
+  else if (solverType == "bcgs")
+  {
+    kspType_ = KSPBCGS;
   }
   else if (solverType == "preonly")
   {
@@ -138,6 +150,15 @@ void Linear::parseSolverTypes()
   {
     kspType_ = KSPPREONLY;
     pcType_ = PCSOR;
+  }
+  else if (solverType == "gmres")
+  {
+    kspType_ = KSPGMRES;
+    pcType_ = PCSOR;
+  }
+  else if (solverType != "")
+  {
+    kspType_ = solverType.c_str();
   }
 
   std::stringstream optionKey;
@@ -191,8 +212,6 @@ void Linear::solve(Vec rightHandSide, Vec solution, std::string message)
 
     // compute residual
     ierr = KSPBuildResidual(*ksp_, *temporaryVectorLeft_, *temporaryVectorRight_, &(*residual_)); CHKERRV(ierr);
-
-    LOG(INFO) << "r: " << PetscUtility::getStringVector(*residual_);
 
     // compute norm of residual
     ierr = VecNorm(*residual_, NORM_2, &residualNorm); CHKERRV(ierr);

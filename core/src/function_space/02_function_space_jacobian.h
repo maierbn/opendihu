@@ -41,6 +41,26 @@ public:
          << " -> " << jacobian[dimNo];
       }
     }
+
+// check for singularity
+#ifndef NDEBUG
+
+    // check if jacobian contains column with all zeros, then output a warning
+    for (int dimNo = 0; dimNo < MeshType::dim(); dimNo++)
+    {
+      if (MathUtility::template normSquared<3>(jacobian[dimNo]) < 1e-12)
+      {
+        LOG(WARNING) << "Jacobian " << jacobian << " is singular (column " << dimNo << "), xi: " << xi << ", geometryField: " << geometryField;
+        LOG(DEBUG) << "Enable debugging output with -vmodule=*jacobian*=3";
+        if (std::is_same<BasisFunctionType,BasisFunction::Hermite>::value)
+        {
+          LOG(DEBUG) << "You are using Hermite polynomials, check if geometry is specified correctly using also the derivative dofs!";
+        }
+        break;
+      }
+    }
+#endif
+
     return jacobian;
   }
 

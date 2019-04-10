@@ -69,19 +69,28 @@ MathUtility::Matrix<nRows,nColumns> operator*(MathUtility::Matrix<nRows,nColumns
   return result;
 }
 
-//! component-wise matrix multiplication
-template<int nRows, int nColumns>
-MathUtility::Matrix<nRows,nColumns> operator*(const MathUtility::Matrix<nRows,nColumns> matrix1, const MathUtility::Matrix<nRows,nColumns> matrix2)
+//! matrix-matrix multiplication
+template<int nRows, int nColumns, int nColumns2>
+MathUtility::Matrix<nRows,nColumns2> operator*(MathUtility::Matrix<nRows,nColumns> matrix1, MathUtility::Matrix<nColumns,nColumns2> matrix2)
 {
-  MathUtility::Matrix<nRows,nColumns> result;
+  MathUtility::Matrix<nRows,nColumns2> result;
 
   //#pragma omp simd
-  for (int i = 0; i < nRows*nColumns; i++)
+  for (int i = 0; i < nRows; i++)
   {
-    result[i] = matrix1[i] * matrix2[i];
+    for (int j = 0; j < nColumns2; j++)
+    {
+      result[i*nColumns2 + j] = 0;
+
+      for (int k = 0; k < nColumns; k++)
+      {
+        result[i*nColumns2 + j] += matrix1[i*nColumns + k] * matrix2[k*nColumns2 + j];
+      }
+    }
   }
   return result;
 }
+
 
 template<int nRows, int nColumns>
 std::ostream &operator<<(std::ostream &stream, MathUtility::Matrix<nRows,nColumns> &matrix)

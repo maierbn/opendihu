@@ -15,7 +15,7 @@ ExplicitEuler<DiscretizableInTime>::ExplicitEuler(DihuContext context) :
   TimeSteppingExplicit<DiscretizableInTime>(context, "ExplicitEuler")
 {
   LOG(TRACE) << "Entering ExplicitEuler constructor";
-  this->data_ = std::make_shared <Data::TimeStepping<typename DiscretizableInTime::FunctionSpace, DiscretizableInTime::nComponents()>>(context); // create data object for explicit euler
+  this->data_ = std::make_shared <Data::TimeStepping<typename DiscretizableInTime::FunctionSpace, DiscretizableInTime::nComponents()>>(this->context_); // create data object for explicit euler
   LOG(TRACE) << "Leaving ExplicitEuler constructor";
   
 }

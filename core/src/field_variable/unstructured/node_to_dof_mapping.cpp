@@ -50,6 +50,10 @@ int NodeToDofMapping::nVersions(node_no_t nodeGlobalNo)
 {
   VLOG(1) << "  NodeToDofMapping::nVersions node " << nodeGlobalNo << ", max: " << nodeDofInformation_.size();
   
+  if (nodeDofInformation_.find(nodeGlobalNo) == nodeDofInformation_.end())
+  {
+    LOG(FATAL) << "Node global " << nodeGlobalNo << " is not contained in any element!";
+  }
   assert (nodeDofInformation_.find(nodeGlobalNo) != nodeDofInformation_.end());
   return nodeDofInformation_[nodeGlobalNo].elementsOfVersion.size();
 }
@@ -71,7 +75,7 @@ std::ostream &operator<<(std::ostream &stream, const NodeToDofMapping &rhs)
   return stream;
 }
 
-std::ostream &operator<<(std::ostream &stream, const NodeToDofMapping::NodeDofInformation::ElementLocalNode &rhs)
+std::ostream &operator<<(std::ostream &stream, const NodeToDofMapping::NodeDofInformation::elementNoLocalde &rhs)
 {
   stream << rhs.elementGlobalNo << "." << rhs.nodeIdx;
   return stream;

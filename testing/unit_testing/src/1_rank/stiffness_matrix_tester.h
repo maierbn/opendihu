@@ -33,22 +33,40 @@ public:
   template<typename MeshType, typename BasisFunctionType, typename QuadratureType, typename EquationType>
   static void compareRhs(
     FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, EquationType> &finiteElementMethod,
-    std::vector<double> &referenceRhs
-                           )
+    std::vector<double> &referenceRhs)
   {
     Vec &rhsVector = finiteElementMethod.data_.rightHandSide()->valuesLocal();
     std::vector<double> rhs;
     PetscUtility::getVectorEntries(rhsVector, rhs);
-    
+
     ASSERT_EQ(rhs.size(), referenceRhs.size()) << "Rhs has wrong number of entries";
     for(unsigned int i=0; i<rhs.size(); i++)
     {
       double difference = fabs(rhs[i] - referenceRhs[i]);
-      EXPECT_LE(difference, 1e-14) << "Rhs entry no. " << i << " differs by " << difference 
+      EXPECT_LE(difference, 1e-14) << "Rhs entry no. " << i << " differs by " << difference
         << ", should be " << referenceRhs[i] << ", but is " << rhs[i];
     }
   }
-  
+
+  template<typename MeshType, typename BasisFunctionType, typename QuadratureType, typename EquationType>
+  static void compareSolution(
+    FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, EquationType> &finiteElementMethod,
+    std::vector<double> &referenceSolution, double tolerance=1e-14)
+  {
+    ASSERT_TRUE(finiteElementMethod.data_.solution() != nullptr) << "Solution vector is not set in finite element method.";
+    Vec &solutionVector = finiteElementMethod.data_.solution()->valuesLocal();
+    std::vector<double> solution;
+    PetscUtility::getVectorEntries(solutionVector, solution);
+
+    ASSERT_EQ(solution.size(), referenceSolution.size()) << "Solution has wrong number of entries";
+    for(unsigned int i=0; i<solution.size(); i++)
+    {
+      double difference = fabs(solution[i] - referenceSolution[i]);
+      EXPECT_LE(difference, tolerance) << "Solution entry no. " << i << " differs by " << difference
+        << ", should be " << referenceSolution[i] << ", but is " << solution[i] << " (tolerance: " << tolerance << ")";
+    }
+  }
+
   template<typename MeshType, typename BasisFunctionType, typename QuadratureType, typename EquationType>
   static void checkDirichletBCInSolution(
     FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, EquationType> &finiteElementMethod,

@@ -15,10 +15,9 @@ int main(int argc, char *argv[])
   DihuContext settings(argc, argv);
   
   // define problem
-  Control::MultipleInstances<
-    OperatorSplitting::Strang<
-      Control::LoadBalancing
-      <
+  Control::LoadBalancing<
+    Control::MultipleInstances<
+      OperatorSplitting::Strang<
         TimeSteppingScheme::HeunAdaptiv<
           CellmlAdapter<
             4,   // 57 for Hodgkin-Huxley
@@ -26,15 +25,15 @@ int main(int argc, char *argv[])
               Mesh::StructuredDeformableOfDimension<1>,
               BasisFunction::LagrangeOfOrder<1>
             >
-          >  
-        >
-      >,
-      TimeSteppingScheme::ImplicitEuler<
-        SpatialDiscretization::FiniteElementMethod<
-          Mesh::StructuredDeformableOfDimension<1>,
-          BasisFunction::LagrangeOfOrder<1>,
-          Quadrature::Gauss<2>,
-          Equation::Dynamic::IsotropicDiffusion
+          >
+        >,
+        TimeSteppingScheme::ImplicitEuler<
+          SpatialDiscretization::FiniteElementMethod<
+            Mesh::StructuredDeformableOfDimension<1>,
+            BasisFunction::LagrangeOfOrder<1>,
+            Quadrature::Gauss<2>,
+            Equation::Dynamic::IsotropicDiffusion
+          >
         >
       >
     >

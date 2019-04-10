@@ -16,7 +16,7 @@ if len(sys.argv) > 3:
     n_subdomains_x = (int)(sys.argv[1])
     n_subdomains_y = (int)(sys.argv[2])
     n_subdomains_z = (int)(sys.argv[3])
-  except:
+  except: 
     pass
 
 if len(sys.argv) > 4:

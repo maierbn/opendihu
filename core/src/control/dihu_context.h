@@ -68,8 +68,14 @@ public:
   //! return the partition manager object that creates partitionings
   static std::shared_ptr<Partition::Manager> partitionManager();
 
-  //! get the own MPI rank no in the world communicator
+  //! get the own MPI rank no in the communicator of this context
   int ownRankNo();
+
+  //! get the own MPI rank no in the world communicator
+  static int ownRankNoCommWorld();
+
+  //! number of ranks in the world communicator
+  static int nRanksCommWorld();
 
   //! get the rank subset of this context, this may not be the same as MPI_COMM_WORLD
   std::shared_ptr<Partition::RankSubset> rankSubset() const;
@@ -119,6 +125,7 @@ private:
   static std::shared_ptr<Partition::Manager> partitionManager_;  ///< partition manager object that creates and manages partitionings
   
   static int nRanksCommWorld_;   ///< number of ranks in MPI_COMM_WORLD
+  static int ownRankNoCommWorld_;  ///< the own rank no in MPI_COMM_WORLD, using MPI_COMM_WORLD should be avoided in the program, instead use this global variable
   static bool initialized_;  ///< if MPI, Petsc and easyloggingPP is already initialized. This needs to be done only once in the program.
   static int nObjects_;   ///< number of objects of DihuContext, if the last object gets destroyed, call MPI_Finalize or MPI_Barrier, depending on doNotFinalizeMpi
   static std::string pythonScriptText_;  ///< the text of the python config script

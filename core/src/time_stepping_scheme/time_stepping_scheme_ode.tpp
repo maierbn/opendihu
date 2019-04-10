@@ -7,149 +7,19 @@
 
 namespace TimeSteppingScheme
 {
-  template<typename FunctionSpaceType, int nComponents>
-  TimeSteppingSchemeOdeBase<FunctionSpaceType,nComponents>::
-  TimeSteppingSchemeOdeBase(DihuContext context, std::string name) :
-  TimeSteppingScheme(context), initialized_(false)
-  {
-    LOG(TRACE) << "constructor of TimeSteppingSchemeOdeBase";
-    //LOG(TRACE) << "   " << getString((PyObject *) (this->context_.getPythonConfig()).pyObject());
-    // get python config
-    LOG(TRACE) << "   [01] get python config";
-    PythonConfig topLevelSettings = this->context_.getPythonConfig();
-    if (not topLevelSettings.hasKey(name))
-      LOG(WARNING) << "         There's no key \"" << name << "\" in your Python config. This might be a problem.";
-    LOG(TRACE) << "   [02] trying to set specific settings \"" << name << "\", derived from topLevelSettings.";
-    this->specificSettings_ = PythonConfig(topLevelSettings, name);
-    LOG(TRACE) << "   [03] initialize output writers";
-    // initialize output writers
-    this->outputWriterManager_.initialize(this->context_, this->specificSettings_);
-    LOG(TRACE) << "  [end] ...leaving";
-  }
-    
-  template<typename FunctionSpaceType, int nComponents>
-  Data::TimeStepping<FunctionSpaceType, nComponents> &TimeSteppingSchemeOdeBase<FunctionSpaceType, nComponents>::
-  data()
-  {
-    return *data_;
-  }
-  
-  template<typename FunctionSpaceType, int nComponents>
-  void TimeSteppingSchemeOdeBase<FunctionSpaceType, nComponents>::
-  setInitialValues()
-  {
-    // set initial values as given in settings, or set to zero if not given
-    std::vector<double> localValues;
-    
-    bool inputMeshIsGlobal = this->specificSettings_.getOptionBool("inputMeshIsGlobal", true);
-    if (inputMeshIsGlobal)
-    {
-      assert(this->data_);
-      assert(this->data_->functionSpace());
-      const int nDofsGlobal = this->data_->functionSpace()->nDofsGlobal();
-      LOG(DEBUG) << "setInitialValues, nDofsGlobal = " << nDofsGlobal;
-      
-      this->specificSettings_.getOptionVector("initialValues", nDofsGlobal, localValues);
-      
-      this->data_->functionSpace()->meshPartition()->extractLocalDofsWithoutGhosts(localValues);
-    }
-    else 
-    {
-      const int nDofsLocal = this->data_->functionSpace()->nDofsLocalWithoutGhosts();
-      this->specificSettings_.getOptionVector("initialValues", nDofsLocal, localValues);
-    }
-    VLOG(1) << "set initial values to " << localValues;
-    
-    // set the first component of the solution variable by the given values
-    data_->solution()->setValuesWithoutGhosts(0, localValues);
-    
-    VLOG(1) << data_->solution();
-  }
-  /*
-   * t *emplate<typename DiscretizableInTimeType>
-   * std::shared_ptr<typename TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::Data::FieldVariableType> TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::
-   * solution()
-   * {
-   * return data_->solution();
-}*/
-  
-  template<typename FunctionSpaceType, int nComponents>
-  typename TimeSteppingSchemeOdeBase<FunctionSpaceType, nComponents>::TransferableSolutionDataType TimeSteppingSchemeOdeBase<FunctionSpaceType, nComponents>::
-  getSolutionForTransfer()
-  {
-    return data_->getSolutionForTransfer();
-  }
-  
-  template<typename FunctionSpaceType, int nComponents>
-  void TimeSteppingSchemeOdeBase<FunctionSpaceType, nComponents>::
-  setRankSubset(Partition::RankSubset rankSubset)
-  {
-    data_->setRankSubset(rankSubset);
-  } 
-  
-  template<typename FunctionSpaceType, int nComponents>
-  void TimeSteppingSchemeOdeBase<FunctionSpaceType, nComponents>::
-  reset()
-  {
-    TimeSteppingScheme::reset();    
-    initialized_ = false;
-  }
-  
-  template<typename FunctionSpaceType, int nComponents>
-  void TimeSteppingSchemeOdeBase<FunctionSpaceType, nComponents>::
-  initialize()
-  {
-    if (initialized_)
-      return;
-    
-    TimeSteppingScheme::initialize();
-    LOG(TRACE) << "TimeSteppingSchemeOdeBase::initialize";
-    
-    initialized_ = true;
-  }
-  
-  template<typename FunctionSpaceType, int nComponents>
-  void TimeSteppingSchemeOdeBase<FunctionSpaceType, nComponents>::
-  run()
-  {
-    LOG(TRACE) << "TimeSteppingSchemeOdeBase::run: initialize()";
-    // initialize
-    this->initialize();
-    
-    LOG(TRACE) << "TimeSteppingSchemeOdeBase::run: advanceTimeSpan()";
-    // do simulations
-    this->advanceTimeSpan();
-    
-    LOG(TRACE) << "end of TimeSteppingSchemeOdeBase::run";
-  }
-  
-  //! output the given data for debugging
-  template<typename FunctionSpaceType, int nComponents>
-  std::string TimeSteppingSchemeOdeBase<FunctionSpaceType, nComponents>::
-  getString(typename TimeSteppingSchemeOdeBase<FunctionSpaceType, nComponents>::TransferableSolutionDataType &data)
-  { 
-    return data_->getString(data);
-  }
-  
-  
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-template<typename DiscretizableInTimeType>
-TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::
-TimeSteppingSchemeOdeBaseDiscretizable(DihuContext context, std::string name) :
-TimeSteppingSchemeOdeBase<typename DiscretizableInTimeType::FunctionSpace,DiscretizableInTimeType::nComponents()>::
-TimeSteppingSchemeOdeBase(context,name), discretizableInTime_(context[name]), initialized_(false)
-{
-  //get python config
-  PythonConfig topLevelSettings = this->context_.getPythonConfig();
-  this->specificSettings_ = PythonConfig(topLevelSettings, name);
 
+template<typename DiscretizableInTimeType>
+TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::TimeSteppingSchemeOdeBaseDiscretizable(DihuContext context, std::string name) :
+  TimeSteppingSchemeOdeBase<typename DiscretizableInTimeType::FunctionSpace,DiscretizableInTimeType::nComponents()>::
+  TimeSteppingSchemeOdeBase(context, name), discretizableInTime_(this->context_), initialized_(false)
+{
   //initialize output writers
   this->outputWriterManager_.initialize(this->context_, this->specificSettings_);
 
   //create dirichlet Boundary conditions object
   this->dirichletBoundaryConditions_ = std::make_shared<
-  SpatialDiscretization::DirichletBoundaryConditions<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>
-  >();
+    SpatialDiscretization::DirichletBoundaryConditions<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>
+  >(this->context_);
 }
 
 template<typename DiscretizableInTimeType>
@@ -207,6 +77,7 @@ reset()
   TimeSteppingSchemeOdeBase<typename DiscretizableInTimeType::FunctionSpace,DiscretizableInTimeType::nComponents()>::
   reset();
   discretizableInTime_.reset();
+  this->data_.reset();
   
   initialized_ = false;
 }
@@ -228,10 +99,12 @@ initialize()
   discretizableInTime_.initialize();
   discretizableInTime_.initializeForImplicitTimeStepping();   // this performs extra initialization for implicit timestepping methods, i.e. it sets the inverse lumped mass matrix
 
+  // retrieve the function space from the discretizable in time object, this is used for the data object
   std::shared_ptr<typename DiscretizableInTimeType::FunctionSpace> functionSpace
     = discretizableInTime_.functionSpace();
 
   assert(functionSpace->meshPartition());   // assert that the function space was retrieved correctly
+  assert(this->data_);
   this->data_->setFunctionSpace(functionSpace);
   
   // set component names in data
@@ -244,7 +117,7 @@ initialize()
 
   // parse boundary conditions, needs functionSpace set
   // initialize dirichlet boundary conditions object which parses dirichlet boundary condition dofs and values from config
-  this->dirichletBoundaryConditions_->initialize(this->specificSettings_, this->data_->functionSpace());
+  this->dirichletBoundaryConditions_->initialize(this->specificSettings_, this->data_->functionSpace(), "dirichletBoundaryConditions");
 
   // set initial values from settings
 

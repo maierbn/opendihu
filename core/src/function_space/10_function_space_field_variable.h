@@ -61,7 +61,7 @@ public:
   Vec3 getNormal(Mesh::face_t face, std::array<Vec3,FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement()> geometryValues, std::array<double,MeshType::dim()> xi);
 
   //! compute the normal in world space, normal to face at xi
-  Vec3 getNormal(Mesh::face_t face, element_no_t elementNo, std::array<double,MeshType::dim()> xi);
+  Vec3 getNormal(Mesh::face_t face, element_no_t elementNoLocal, std::array<double,MeshType::dim()> xi);
 
   //! Compute the inverseJacobian that is needed to transform a gradient vector from parameter space to world space, for an element at a xi position.
   //! This version of the method needs the values of the geometry field, if the jacobian is needed at multiple positions in the same element, these values can be retrieved once and used for all computations of the jacobians.

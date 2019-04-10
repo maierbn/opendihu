@@ -10,6 +10,7 @@
 #include "utility/string_utility.h"
 #include "mesh/structured_regular_fixed.h"
 #include "mesh/mesh_manager.h"
+#include "function_space/function_space.h"
 
 //#include <libcellml>    // libcellml not used here
 
@@ -20,6 +21,68 @@ CellmlAdapter(DihuContext context) :
   Splittable()
 {
   LOG(TRACE) << "CellmlAdapter constructor";
+}
+
+//! constructor from other CellmlAdapter, preserves the outputManager and context
+template<int nStates_, typename FunctionSpaceType>
+CellmlAdapter<nStates_,FunctionSpaceType>::
+CellmlAdapter(const CellmlAdapter &rhs, std::shared_ptr<FunctionSpace> functionSpace) :
+  CallbackHandler<nStates_,FunctionSpaceType>(rhs.context_, true),
+  Splittable()
+{
+  LOG(TRACE) << "CellmlAdapter constructor from rhs";
+
+  this->functionSpace_ = functionSpace;
+  this->outputWriterManager_ = rhs.outputWriterManager_;
+
+  return;
+
+  // copy member variables from rhs
+  this->specificSettings_ = rhs.specificSettings_;
+  this->setParameters_ = rhs.setParameters_;
+  this->setSpecificParameters_ = rhs.setSpecificParameters_;
+  this->setSpecificStates_ = rhs.setSpecificStates_;
+  this->handleResult_ = rhs.handleResult_;
+  this->pythonSetParametersFunction_ = rhs.pythonSetParametersFunction_;
+  this->pythonSetSpecificParametersFunction_ = rhs.pythonSetSpecificParametersFunction_;
+  this->pythonSetSpecificStatesFunction_ = rhs.pythonSetSpecificStatesFunction_;
+  this->pythonHandleResultFunction_ = rhs.pythonHandleResultFunction_;
+  this->pySetFunctionAdditionalParameter_ = rhs.pySetFunctionAdditionalParameter_;
+  this->pyHandleResultFunctionAdditionalParameter_ = rhs.pyHandleResultFunctionAdditionalParameter_;
+  this->pyGlobalNaturalDofsList_ = rhs.pyGlobalNaturalDofsList_;
+
+  this->nInstances_ = this->functionSpace_->nNodesLocalWithoutGhosts();
+  assert(this->nInstances_ > 1);
+
+  // copy member variables from rhs
+  this->parametersUsedAsIntermediate_ = rhs.parametersUsedAsIntermediate_;
+  this->parametersUsedAsConstant_ = rhs.parametersUsedAsConstant_;
+  this->stateNames_ = rhs.stateNames_;
+
+  this->sourceFilename_ = rhs.sourceFilename_;
+  this->nIntermediates_ = rhs.nIntermediates_;
+  this->nParameters_ = rhs.nParameters_;
+  this->nConstants_ = rhs.nConstants_;
+  this->outputStateIndex_ = rhs.outputStateIndex_;
+  this->prefactor_ = rhs.prefactor_;
+  this->internalTimeStepNo_ = rhs.internalTimeStepNo_;
+  this->inputFileTypeOpenCMISS_ = rhs.inputFileTypeOpenCMISS_;
+
+  // allocate data vectors
+  this->intermediates_.resize(this->nIntermediates_*this->nInstances_);
+  this->parameters_.resize(this->nParameters_*this->nInstances_);
+
+  // copy rhs parameter values to parameters, it is assumed that the parameters are the same for every instance
+  for (int instanceNo = 0; instanceNo < this->nInstances_; instanceNo++)
+  {
+    for (int j = 0; j < this->nParameters_; j++)
+    {
+      this->parameters_[j*this->nInstances_ + instanceNo] = rhs.parameters_[j];
+    }
+  }
+
+  LOG(DEBUG) << "Initialize CellML with nInstances = " << this->nInstances_ << ", nParameters_ = " << this->nParameters_
+    << ", nStates = " << nStates << ", nIntermediates = " << this->nIntermediates_;
 }
 
 template<int nStates_, typename FunctionSpaceType>
@@ -90,7 +153,7 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
 
   if (nStatesInput != nStates_*this->nInstances_)
   {
-    LOG(ERROR) << "nStatesInput=" << nStatesInput << ", nStates_=" << nStates_ << ", nInstances=" << this->nInstances_;
+    LOG(ERROR) << "nStatesInput does not match nStates and nInstances! nStatesInput=" << nStatesInput << ", nStates_=" << nStates_ << ", nInstances=" << this->nInstances_;
   }
   assert (nStatesInput == nStates_*this->nInstances_);
   assert (nRates == nStates_*this->nInstances_);

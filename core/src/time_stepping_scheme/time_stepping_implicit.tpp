@@ -16,8 +16,6 @@ template<typename DiscretizableInTimeType>
 TimeSteppingImplicit<DiscretizableInTimeType>::TimeSteppingImplicit(DihuContext context, std::string name) :
 TimeSteppingSchemeOde<DiscretizableInTimeType>(context, name)
 {
-  this->data_ = std::make_shared<Data::TimeSteppingImplicit<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>>(context); // create data object for implicit euler
-  this->dataImplicit_ = std::static_pointer_cast<Data::TimeSteppingImplicit<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>>(this->data_);
 }
 
 template<typename DiscretizableInTimeType>
@@ -26,7 +24,11 @@ initialize()
 {
   if (this->initialized_)
     return;
-  
+
+  // initialize data objects that are needed for TimeSteppingSchemeOde<DiscretizableInTimeType>::initialize();
+  this->data_ = std::make_shared<Data::TimeSteppingImplicit<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>>(this->context_); // create data object for implicit euler
+  this->dataImplicit_ = std::static_pointer_cast<Data::TimeSteppingImplicit<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>>(this->data_);
+
   TimeSteppingSchemeOde<DiscretizableInTimeType>::initialize();
   LOG(TRACE) << "TimeSteppingImplicit::initialize";
 

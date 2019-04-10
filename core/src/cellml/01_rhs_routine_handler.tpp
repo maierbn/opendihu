@@ -20,7 +20,6 @@
 template <int nStates,typename FunctionSpaceType>
 class CellmlAdapter;
 
-
 template<int nStates, typename FunctionSpaceType>
 void RhsRoutineHandler<nStates,FunctionSpaceType>::
 initializeRhsRoutine()
@@ -173,7 +172,7 @@ initializeRhsRoutine()
     {
       // compile the library at one rank
       // get the global rank no, needed for the output filenames
-      int rankNoWorldCommunicator = DihuContext::partitionManager()->rankNoCommWorld();
+      int rankNoWorldCommunicator = DihuContext::ownRankNoCommWorld();
 
       // gather what number of instances all ranks have
       int nRanksCommunicator = this->functionSpace_->meshPartition()->nRanks();
@@ -263,11 +262,27 @@ loadRhsLibrary(std::string libraryFilename)
   if (currentWorkingDirectory[currentWorkingDirectory.length()-1] != '/')
     currentWorkingDirectory += "/";
 
-  void* handle = NULL;
-  for (int i = 0; handle==NULL && i < 50; i++)  // wait maximum 5 seconds for rank 1 to finish
+  void *handle = NULL;
+  for (int i = 0; handle == NULL && i < 50; i++)  // wait maximum 2.5 ms for rank 1 to finish
   {
     handle = dlopen((currentWorkingDirectory+libraryFilename).c_str(), RTLD_LOCAL | RTLD_LAZY);
-    std::this_thread::sleep_for (std::chrono::milliseconds(100));
+    if (i > 30)
+    {
+      std::this_thread::yield();
+    }
+    else if (i > 35)
+    {
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+    else if (i > 40)
+    {
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+    else if (i > 45)
+    {
+      std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    }
+
   }
 
   if (handle)
@@ -689,7 +704,7 @@ createSimdSourceFile(std::string &simdSourceFilename)
     // add .rankNoWorldCommunicator to simd source filename
     s.str("");
     // get the global rank no, needed for the output filenames
-    int rankNoWorldCommunicator = DihuContext::partitionManager()->rankNoCommWorld();
+    int rankNoWorldCommunicator = DihuContext::ownRankNoCommWorld();
     s << simdSourceFilename << "." << rankNoWorldCommunicator << ".c";  // .c suffix is needed such that cray compiler knowns that it is c code
     simdSourceFilename = s.str();
 
@@ -710,7 +725,6 @@ createSimdSourceFile(std::string &simdSourceFilename)
 
   return true;
 }
-
 
 // given a normal cellml source file for rhs routine, create a third file for gpu acceleration. @return: if successful
 template<int nStates, typename FunctionSpaceType>

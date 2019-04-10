@@ -62,4 +62,27 @@ void Paraview::writeCombinedTypesVector(MPI_File fileHandle, int ownRankNo, int 
   }
 }
 
+//! constructor, initialize nPoints and nCells to 0
+Paraview::VTKPiece::VTKPiece()
+{
+  properties.nPointsLocal = 0;
+  properties.nCellsLocal = 0;
+  properties.nPointsGlobal = 0;
+  properties.nCellsGlobal = 0;
+  properties.dimensionality = 0;
+}
+
+//! assign the correct values to firstScalarName and firstVectorName, only if properties has been set
+void Paraview::VTKPiece::setVTKValues()
+{
+  // set values for firstScalarName and firstVectorName from the values in pointDataArrays
+  for (auto pointDataArray : properties.pointDataArrays)
+  {
+    if (firstScalarName == "" && pointDataArray.second == 1)
+      firstScalarName = pointDataArray.first;
+    if (firstVectorName == "" && pointDataArray.second != 1)
+      firstVectorName = pointDataArray.first;
+  }
+}
+
 } // namespace

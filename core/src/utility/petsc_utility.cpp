@@ -8,6 +8,7 @@
 #include "easylogging++.h"
 #include "petscksp.h"
 #include "utility/mpi_utility.h"
+#include "control/dihu_context.h"   // for DihuContext::nRanksCommWorld
 
 // color codes: https://github.com/shiena/ansicolor/blob/master/README.md
 #define ANSI_COLOR_RED     "\x1b[31m"
@@ -136,8 +137,8 @@ std::string getStringMatrix(const Mat& matrix)
   int nRowsGlobal, nColumnsGlobal;
   MatGetSize(matrix, &nRowsGlobal, &nColumnsGlobal);
 
-  PetscMPIInt nRanks;
-  MPIUtility::handleReturnValue(MPI_Comm_size(MPI_COMM_WORLD, &nRanks), "MPI_Comm_size");
+  PetscMPIInt nRanks = DihuContext::nRanksCommWorld();
+  //MPIUtility::handleReturnValue(MPI_Comm_size(MPI_COMM_WORLD, &nRanks), "MPI_Comm_size");
 
   if (nRanks > 1)
   {

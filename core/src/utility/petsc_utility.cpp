@@ -330,7 +330,8 @@ std::string getStringLinearConvergedReason(KSPConvergedReason convergedReason)
   case KSP_DIVERGED_INDEFINITE_MAT:
     return ANSI_COLOR_RED "KSP_DIVERGED_INDEFINITE_MAT" ANSI_COLOR_RESET;
 
-  case KSP_DIVERGED_PCSETUP_FAILED:
+//  case KSP_DIVERGED_PCSETUP_FAILED: // this is old petsc
+  case KSP_DIVERGED_PC_FAILED:  // newer TODO: do this with #ifdef ..
     return ANSI_COLOR_RED "KSP_DIVERGED_PCSETUP_FAILED" ANSI_COLOR_RESET;
 
   default:

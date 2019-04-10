@@ -6,6 +6,7 @@
 #include <petscmat.h>
 #include <petscksp.h>
 #include <petscsnes.h>
+#include <petsccuda.h>
 
 namespace PetscUtility
 {

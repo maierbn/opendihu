@@ -9,14 +9,14 @@ namespace Mesh
 
 MappingBetweenMeshesManager::MappingBetweenMeshesManager(PythonConfig specificSettings) :
   specificSettings_(specificSettings)
-{
-  LOG(TRACE) << "MeshMappingBetweenMeshesManager constructor";
+{ LOG(TRACE) << "   BEFORE this, PythonConfig(specificSettings) constructor should have been called !?";
+  LOG(TRACE) << "   MeshMappingBetweenMeshesManager constructor";
   storeMappingsBetweenMeshes();
 }
 
 void MappingBetweenMeshesManager::storeMappingsBetweenMeshes()
 {
-  LOG(TRACE) << "MeshMappingBetweenMeshesManager::storeMappingsBetweenMeshes";
+  LOG(TRACE) << "      MeshMappingBetweenMeshesManager::storeMappingsBetweenMeshes";
   if (specificSettings_.pyObject())
   {
     std::string keyString("MappingsBetweenMeshes");

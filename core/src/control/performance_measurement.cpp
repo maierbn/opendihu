@@ -175,7 +175,6 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
 
     LOG(DEBUG) << "open MPI file \"" << logFileName << "\".";
 
-
     // open file
     MPI_Barrier(MPI_COMM_WORLD);
     MPI_File fileHandle;
@@ -317,6 +316,7 @@ void PerformanceMeasurement::parseStatusInformation()
    {
      message << s << "s";
    }
+       
    LOG(INFO) << "Total user time: " << message.str();
 }
 

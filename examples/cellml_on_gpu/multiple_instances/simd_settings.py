@@ -21,7 +21,7 @@ tsw=0.001*pow(2,1-It_value)
 et=0.001#1.0
 opiv=1*pow(2,It_value-2)
 hrciv=opiv
-ElemNo=6400
+ElemNo=200
 
 
 config = {
@@ -32,10 +32,8 @@ config = {
     "timeStepWidth": tsw,
     "endTime" : et,#1.0, # 0.1
     "initialValues": [],
-    "timeStepOutputInterval": 50e1, # ignored, see line 31 instead. --aaron
-    #"logTimeStepWidthAsKey": "dt",
+    "timeStepOutputInterval": 50e1,
     "durationLogKey": "duration_timestepping",
-    #"logFileName": "logs/log"+str(ElemNo),
     
     #"OutputWriter" : [
       #{"format": "Callback", "outputInterval": 1e4, "callback": callback},
@@ -44,23 +42,11 @@ config = {
     #],
 
     "CellML" : {
-      "deviceNumber": "1",
-      "openaccClause": "kernels",
       "sourceFilename": "cellml_rhs.c",
-      #"compilerFlags": "-fPIC -shared -acc -fastsse",
-      # use "gpuSourceFilename" if you want gpu offloading
-      "compilerFlags": "-fPIC -ta=host,tesla:managed,cc35,cc60,time,cuda10.0 -shared -acc -I/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/include",# -Minfo=accel",
-      #"openaccClause": "kernels",
-      #"gpuSourceFilename": "gpucodedata.c",
-      "gpuSourceFilename": "gpucodekernels.c",
-      # use "simdSourceFilename" if you want to use simd (might be default..?!)
-      #"simdSourceFilename" : "simdcode.cpp",
-      # use "libraryFilename" if you want to use existing library, needs ("useGivenLibrary": True,) as well
-      #"libraryFilename": "lib/cellml_rhs_101.so", 
-      #"useGivenLibrary":True,
+      "compilerFlags": "-fPIC -shared -acc -fastsse",
+      "simdSourceFilename" : "simdcode.cpp",
       "setParametersFunction": setParameters,
       "setParametersCallInterval": 1,
-       #"handleResultFunction": handleResult,
       "handleResultCallInterval": hrciv,
       "nElements": ElemNo,
 

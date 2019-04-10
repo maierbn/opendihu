@@ -1,12 +1,12 @@
 #include "control/dihu_context.h"
 
 #include <Python.h>  // this has to be the first included header
-#include <python_home.h>  // defines PYTHON_HOME_DIRECTORY
+#include <control/python_home.h>  // defines PYTHON_HOME_DIRECTORY
 #include "control/performance_measurement.h"
 
 void DihuContext::initializePython(int argc, char *argv[], bool explicitConfigFileGiven)
 {
-  LOG(TRACE) << "initialize python";
+  LOG(TRACE) << "initialize python with explicitConfigFileGiven=" << explicitConfigFileGiven;
 
   // set program name of python script
   char const *programName = "opendihu";
@@ -86,6 +86,9 @@ void DihuContext::initializePython(int argc, char *argv[], bool explicitConfigFi
   {
     PythonUtility::printDict(pythonConfig_.pyObject());
   }
+  
+  LOG(DEBUG) << "try printDict:";
+  PythonUtility::printDict(pythonConfig_.pyObject());
 
   // pass reduced list of command line arguments to python script
   PySys_SetArgvEx(nArgumentsToConfig, argumentToConfigWChar, 0);
@@ -113,6 +116,7 @@ void DihuContext::initializePython(int argc, char *argv[], bool explicitConfigFi
 
   const char *version = Py_GetVersion();
   VLOG(2) << "python version: " << version;
+  LOG(TRACE) << "python version: " << version;
 
   const char *platform = Py_GetPlatform();
   VLOG(2) << "python platform: " << platform;
@@ -148,6 +152,7 @@ void DihuContext::loadPythonScriptFromFile(std::string filename)
     file.read(&fileContents[0], fileSize);
 
     LOG(INFO) << "File \"" <<filename << "\" loaded.";
+    LOG(TRACE) << "File \"" <<filename << "\" loaded.";
 
     loadPythonScript(fileContents);
   }
@@ -162,14 +167,14 @@ void DihuContext::loadPythonScript(std::string text)
   int ret = 0;
   LOG(INFO) << std::string(80, '-');
   try
-  {
+  { LOG(TRACE) << "check import";
     // check if numpy module could be loaded
     PyObject *numpyModule = PyImport_ImportModule("numpy");
     if (numpyModule == NULL)
     {
       LOG(ERROR) << "Failed to import numpy.";
     }
-
+    LOG(TRACE) << "execute config script";
     // execute config script
     ret = PyRun_SimpleString(pythonScriptText_.c_str());
 
@@ -194,6 +199,7 @@ void DihuContext::loadPythonScript(std::string text)
     LOG(FATAL) << "An error occured in the python config.";
   }
 
+  LOG(TRACE) << "load main module";
   // load main module and extract config
   PyObject *mainModule = PyImport_AddModule("__main__");
   PyObject *config = PyObject_GetAttrString(mainModule, "config");

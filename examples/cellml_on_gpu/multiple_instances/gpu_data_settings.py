@@ -45,14 +45,12 @@ config = {
 
     "CellML" : {
       "deviceNumber": "1",
-      "openaccClause": "kernels",
       "sourceFilename": "cellml_rhs.c",
-      #"compilerFlags": "-fPIC -shared -acc -fastsse",
       # use "gpuSourceFilename" if you want gpu offloading
       "compilerFlags": "-fPIC -ta=host,tesla:managed,cc35,cc60,time,cuda10.0 -shared -acc -I/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/include",# -Minfo=accel",
-      #"openaccClause": "kernels",
-      #"gpuSourceFilename": "gpucodedata.c",
-      "gpuSourceFilename": "gpucodekernels.c",
+      "openaccClause": "data",
+      "gpuSourceFilename": "gpucodedata.c",
+      #"gpuSourceFilename": "gpucodekernels.c",
       # use "simdSourceFilename" if you want to use simd (might be default..?!)
       #"simdSourceFilename" : "simdcode.cpp",
       # use "libraryFilename" if you want to use existing library, needs ("useGivenLibrary": True,) as well

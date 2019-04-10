@@ -47,8 +47,9 @@ class PETSc(Package):
   
     def __init__(self, **kwargs):
         defaults = {
-            'download_url': 'http://ftp.mcs.anl.gov/pub/petsc/release-snapshots/petsc-lite-3.7.6.tar.gz',
+            'download_url': 'http://ftp.mcs.anl.gov/pub/petsc/petsc-master.tar.gz',
         }
+        #http://ftp.mcs.anl.gov/pub/petsc/release-snapshots/petsc-lite-3.7.6.tar.gz http://ftp.mcs.anl.gov/pub/petsc/petsc-master.tar.gz
         defaults.update(kwargs)
         super(PETSc, self).__init__(**defaults)
         self.sub_dirs = [('include','lib')]
@@ -110,30 +111,29 @@ class PETSc(Package):
                '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt',
                '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt)',
             ])
-          else:                                                                               # # # # # P G I # # # # #
-            #print("WARNING: MPI_DIR is set manually in scons-config/sconsconfig/packages/PETSc.Py." ) # because --with-mpi-dir=${MPI_DIR} does not work
+          else:                                                                # # # # # P G I # # # # #
+#                 --with-cuda=1 --with-cusp=1 -with-cusp-dir=/usr/local/cuda-10.0/include/cusplibrary-0.4.0 \ 
+#                 --with-thrust=1 --with-precision=double --CUDAFLAGS=-arch=sm_35 --CUDAFLAGS=-arch=sm_60 \ 
+                 #  COPTFLAGS=-fast \
+                 #  CXXOPTFLAGS=-fast | tee out.txt',
             print("INFO: setting FLAG '--with-mpiexec' manually in PETSc.Py. ")
             self.set_build_handler([ 
  # don't use CC=$CC nor CXX=$CXX such that compiler can choose mpicc and mpicxx instead
- # --with-mpi=0 -I/usr/local/home/kraemer/opendihu/dependencies/petsc/install/include/petsc/mpiuni\
- # --with-mpi-include=/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/include \ can't use both include and dir.
- # ---with-mpiexec=/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi/bin/mpirun\               
- #'PATH=${PATH}:${DEPENDENCIES_DIR}/bison/install/bin \
- #--CCFLAGS="-I/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/include" \
- #--CFLAGS="-I/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/include" \
- #--CFLAGS="-L/afs/.mathe/home/cmcs/share/environment-modules/Packages/gcc/7.2.0/lib/gcc/x86_64-pc-linux-gnu/7.2.0"\ #might be needed otherwise gcc4.9 libs might end up in config
                 './configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=no \
                 --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so \
                 --with-mpi-dir=${MPI_DIR} \
                 --with-fc=0 \
                 --with-mpiexec=/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi/bin/mpirun \
-                COPTFLAGS=-fast \
-                CXXOPTFLAGS=-fast | tee out.txt',
+                --with-cuda=1 --with-cudac=nvcc  --with-cusp=1 -with-cusp-dir=/usr/local/cuda-10.0/include/cusplibrary-0.4.0 \
+                --with-thrust=1 --with-precision=double --CUDAFLAGS="-arch=sm_35 -ccbin pgc++" \
+               COPTFLAGS=-fast \
+               CXXOPTFLAGS=-fast | tee out.txt',
                '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt',
-               '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt)',
-               #'cp /usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/include/mpi.h /usr/local/home/kraemer/opendihu/dependencies/petsc/install/include/',
-               #'ln -sfn /usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/include /usr/local/home/kraemer/opendihu/dependencies/petsc/install/include/mpiinclude',
+               '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2_b.txt',
+               '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2_b.txt)',
             ])
+
+
         
         ctx.Message('Checking for PETSc ...         ')
         self.check_options(env)

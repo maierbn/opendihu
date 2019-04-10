@@ -83,10 +83,15 @@ vars.Add(BoolVariable('no_examples', 'Do not compile examples.', 0))
 vars.Add(BoolVariable('USE_CRAY_PAT', 'Compile with craypat regions.', False))
 vars.Add(BoolVariable('USE_HPL', 'Compile with -hpl option.', False))
 vars.Add(BoolVariable('USE_MEGAMOL', 'Use additional linker flags to link to the megamol source file.', False))
-vars.Add('cc', help='The c compiler', default='gcc')
-vars.Add('CC', help='The c++ compiler', default='g++')
-#if socket.gethostname() != 'cmcs09':
-vars.Add('mpiCC', help='The mpic++ compiler wrapper', default='mpic++')
+if socket.gethostname() != 'cmcs09':
+  vars.Add('mpiCC', help='The mpic++ compiler wrapper', default='mpic++')
+  vars.Add('cc', help='The c compiler', default='gcc')
+  vars.Add('CC', help='The c++ compiler', default='g++')
+else:
+  vars.Add('mpicc', help='The mpicc compiler wrapper', default='/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/bin/mpicc')
+  vars.Add('mpiCC', help='The mpic++ compiler wrapper', default='/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/bin/mpic++')
+  vars.Add('cc', help='The c compiler', default='pgcc')
+  vars.Add('CC', help='The c++ compiler', default='pgc++')
 vars.Add('cmake', help='The cmake executable', default='cmake')
     
 # Add options from any packages we want to use.
@@ -182,14 +187,19 @@ if os.environ.get("PE_ENV") == None:
 if env["BUILD_TYPE"] == "debug":
   # debug build
   variant_dir = os.path.join(path_where_to_call_sconscript,"build_debug")           # output folder for build
-  env.MergeFlags('-ftemplate-backtrace-limit=0 -fstack-check')
-  if not env["USE_MEGAMOL"]:
-    env.MergeFlags('-Werror')
-  env.MergeFlags('-Wall -Wpedantic -Wno-sign-compare -Wno-error=sign-compare')
-  env.MergeFlags('-DDEBUG -ggdb3 -g3 -Og -pg  -DELPP_FEATURE_CRASH_LOG')   # gcc flags, will be sorted automatically into linker and compiler flags
+  if socket.gethostname() != 'cmcs09':
+    env.MergeFlags('-ftemplate-backtrace-limit=0 -fstack-check')
+    if not env["USE_MEGAMOL"]:
+      env.MergeFlags('-Werror')
+    env.MergeFlags('-Wall -Wpedantic -Wno-sign-compare -Wno-error=sign-compare')
+    env.MergeFlags('-DDEBUG -ggdb3 -g3 -Og -pg  -DELPP_FEATURE_CRASH_LOG')   # gcc flags, will be sorted automatically into linker and compiler flags
+  else: # using pgi compiler here:
+    env.MergeFlags('-O0 -g -ta=host,tesla:cc60,time -Minfo=accel -noswitcherror -std=c++14 -DELPP_FEATURE_CRASH_LOG -laccg -laccapi -laccn -laccg2 -lcudadevice')
+    if not env["USE_MEGAMOL"]:
+      env.MergeFlags('-Werror')
   env.Append(LIBPATH = [os.path.join(opendihu_home, 'core/build_debug')])   # add debug version of opendihu library
   env.Prepend(LIBS = ['opendihud'])
-  
+
 elif env["BUILD_TYPE"] == "releasewithdebuginfo":
   # release with debug info build
   variant_dir = os.path.join(path_where_to_call_sconscript,'build_release_with_debug_info')         # folder of build
@@ -207,12 +217,16 @@ else:
   variant_dir = os.path.join(path_where_to_call_sconscript,'build_release')         # output folder for build
   env.Append(LIBPATH = [os.path.join(opendihu_home, 'core/build_release')])   # add release version of opendihu library
   env.Prepend(LIBS = ['opendihu'])
-  env.MergeFlags('-DELPP_DISABLE_DEBUG_LOGS -DELPP_DISABLE_VERBOSE_LOGS -DELPP_DISABLE_TRACE_LOGS -DNDEBUG')
-  
+  if socket.gethostname() != 'cmcs09':
+    env.MergeFlags('-DELPP_DISABLE_DEBUG_LOGS -DELPP_DISABLE_VERBOSE_LOGS -DELPP_DISABLE_TRACE_LOGS -DNDEBUG')
+  else:
+    env.MergeFlags('-DDEBUG')  
   if os.environ.get("PE_ENV") == "CRAY":
     env.MergeFlags('-O3')   # fastest with cray (same performance as -02)
   elif socket.gethostname() == 'cmcs09':
-    env.MergeFlags('-O3 -fastsse -acc -ta=host,tesla,time -Minfo=accel -noswitcherror -std=c++14 -Mvect=simd') # for PGI (pgcc and pgc++), could also use '-fastsse'.
+    env.MergeFlags('-g -O0 -noswitcherror -std=c++14 -acc -ta=host,tesla:managed,cc35,cc60,time,cuda10.0 -laccg -laccapi -laccn -laccg2 -lcudadevice')
+    #env.MergeFlags('-fastsse -g -noswitcherror -std=c++14 -Mvect=simd -acc -ta=host,tesla:cc60,time -Minfo=accel -laccg -laccapi -laccn -laccg2 -lcudadevice')
+    #env.MergeFlags('-g -noswitcherror -std=c++14') # managed,
   else:
     env.MergeFlags('-Ofast')   # fastest with GNU and Intel
   
@@ -223,7 +237,7 @@ else:
       env.MergeFlags('-finstrument-functions')   # instrument functions for pat_run,  works with GNU and Intel
 
 # flags to always include, except with cray compiler
-if os.environ.get("PE_ENV") != "CRAY" and "pgi" not in env["cc"]:
+if os.environ.get("PE_ENV") != "CRAY" and "pg" not in env["cc"]:
   env.MergeFlags('-Wunused-variable')   # always warn about unused variables
   env.MergeFlags('-std=c++14 -fopenmp -march=native')
 
@@ -236,7 +250,12 @@ env.MergeFlags("-lpthread -ldl -lutil -lm")
 
 # add defines that are used in the code
 env.Append(CPPDEFINES = {'-DOPENDIHU_HOME': '\\"'+str(opendihu_home)+'\\"'})   # add define of the directory where this file is located
-env.Append(CPPDEFINES = {'-DC_COMPILER_COMMAND': '\\"'+env["CC"]+'\\"'})   # add compile command, e.g. g++
+env.Append(CPPDEFINES = {'-DC_COMPILER_COMMAND': '\\"'+env["CC"]+'\\"'})   # add compile command, e.g. gcc
+env.Append(CPPDEFINES = {'-DCPP_COMPILER_COMMAND': '\\"'+env["CXX"]+'\\"'})   # add compile command, e.g. g++
+if socket.gethostname() == 'cmcs09':
+  env.Append(CPPDEFINES = {'-DMPI_C_COMPILER_COMMAND': '\\"/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/bin/mpicc\\"'})
+  env.Append(CPPDEFINES = {'-DMPI_CPP_COMPILER_COMMAND': '\\"/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/bin/mpic++\\"'})  
+
 env.Append(CPPDEFINES = "-DELPP_NO_DEFAULT_LOG_FILE")  # disable creation of the "myeasylog.log" default log file
 
 # Set the include path for header files

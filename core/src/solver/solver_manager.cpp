@@ -6,7 +6,9 @@ namespace Solver
 Manager::Manager(PythonConfig specificSettings) :
   specificSettings_(specificSettings), numberAnonymousSolvers_(0)
 {
+  LOG(DEBUG) << "Entering Manager constructor.";
   storePreconfiguredSolvers();
+  LOG(DEBUG) << "Leaving Manager constructor.";
 }
 
 bool Manager::hasSolver(std::string solverName, MPI_Comm mpiCommunicator)
@@ -58,6 +60,7 @@ void Manager::storePreconfiguredSolvers()
             solverConfiguration_.insert(std::pair<std::string,PythonConfig>(key, PythonConfig(specificSettings_, "Solvers", key, value)));
           }
         }
+        LOG(WARNING)/*DEBUG!*/<< "Extracted dict for solver \"" << key << "\".";
       }
     }
     else
@@ -68,6 +71,11 @@ void Manager::storePreconfiguredSolvers()
         " This is required if you want to use the same solver for multiple objects.";
     }
   }
+  else
+  {
+    LOG(DEBUG) << "  Nothing done in SolverManager::storePreconfiguredSolvers";
+  }
+    LOG(DEBUG) << "Leaving SolverManager::storePreconfiguredSolvers";
 }
 
 }  // namespace

@@ -2,6 +2,7 @@
 
 #include "easylogging++.h"
 
+#include "control/python_home.h"
 #include "utility/python_utility.h"
 #include "output_writer/python_callback/python_callback.h"
 #include "output_writer/python_file/python_file.h"
@@ -14,39 +15,49 @@ namespace OutputWriter
 
 void Manager::initialize(DihuContext context, PythonConfig settings)
 {
+  
+  LOG(TRACE) << "Entering Manager::initialize";
   outputWriter_.clear();
 
-  //VLOG(3) << "initializeOutputWriter, settings=" << settings;
-  //PythonUtility::printDict(settings.pyObject());
-
-  if (settings.hasKey("OutputWriter"))
-  {
-    LOG(DEBUG) << "OutputWriter::Manager::initialize(), settings has key OutputWriter";
-
-    // get the first value from the list
-    PyObject *writerSettings = settings.getOptionListBegin<PyObject *>("OutputWriter");
-
-    // loop over other values
-    for (;
-        !settings.getOptionListEnd("OutputWriter");
-        settings.getOptionListNext<PyObject *>("OutputWriter", writerSettings))
+  //if(PyDict_Check(settings.pyObject()))
+  //{
+    PythonUtility::printDict(settings.pyObject());
+    
+    if (settings.hasKey("OutputWriter"))                    // <<--- if "settings.pyObject()" is not a Python dict, this will crash!
     {
-      if (VLOG_IS_ON(1))
-      {
-        VLOG(1) << "parse outputWriter, settings: " << settings.pyObject() << ", writerSettings: " << writerSettings;
-      }
-      PythonConfig writerConfig(settings, "OutputWriter", writerSettings);
-      createOutputWriterFromSettings(context, writerConfig);
-    }
-  }
-  else
-  {
-    std::vector<std::string> configKeys;
-    settings.getKeys(configKeys);
+      LOG(DEBUG) << "OutputWriter::Manager::initialize(), settings has key OutputWriter";
 
-    LOG(DEBUG) << "Config does not contain \"OutputWriter\". Keys: " << configKeys;
-    //PythonUtility::printDict(settings.pyObject());
-  }
+      // get the first value from the list
+      PyObject *writerSettings = settings.getOptionListBegin<PyObject *>("OutputWriter");
+
+      // loop over other values
+      for (;
+          !settings.getOptionListEnd("OutputWriter");
+          settings.getOptionListNext<PyObject *>("OutputWriter", writerSettings))
+      {
+        if (VLOG_IS_ON(1))
+        {
+          VLOG(1) << "parse outputWriter, settings: " << settings.pyObject() << ", writerSettings: " << writerSettings;
+        }
+        PythonConfig writerConfig(settings, "OutputWriter", writerSettings);
+        createOutputWriterFromSettings(context, writerConfig);
+      }
+    }
+    else
+    {
+      std::vector<std::string> configKeys;
+      LOG(TRACE) << "   getKeys(configKeys)";
+      settings.getKeys(configKeys);
+      LOG(TRACE) << "   ?";
+      LOG(DEBUG) << "Config does not contain \"OutputWriter\". Keys: " << configKeys;
+      //PythonUtility::printDict(settings.pyObject());
+    }
+    LOG(TRACE) << "Leaving Manager::initialize";
+  //}
+  //else
+  //{
+  //  LOG(ERROR) << "Can't initialize manager. PythonConfig \"" << settings << "\" is not a Python Dict.";
+  //}
 }
 
 void Manager::createOutputWriterFromSettings(DihuContext context, PythonConfig settings)

@@ -809,13 +809,6 @@ class Package(object):
       ctx.env.PrependUnique(CCFLAGS = '-static')
       ctx.env.PrependUnique(LINKFLAGS = '-static')
      
-    ## hack:
-    #import socket
-    #if socket.gethostname() == 'cmcs09':
-    #  print("! ! ! ! ! ! ! ! ! CCFLAG for mpi.h set manually in Package.py ! ! ! ! ! ! ! ! !")
-    #  ctx.env.PrependUnique(CCFLAGS = "('-I', '/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2')")
-    #  #ctx.env.PrependUnique(CCFLAGS = '-I/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2')
- 
     if self.link_flags is not None:
       ctx.Log("  link_flags is set, use additional link flags: {}\n".format(self.link_flags))
       ctx.env.PrependUnique(LINKFLAGS = self.link_flags)

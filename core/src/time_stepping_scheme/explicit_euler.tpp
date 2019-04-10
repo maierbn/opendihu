@@ -5,6 +5,7 @@
 
 #include "utility/python_utility.h"
 #include "utility/petsc_utility.h"
+//#include "/usr/local/home/kraemer/opendihu/dependencies/petsc/src/petsc-master/src/vec/vec/impls/seq/seqcuda/cudavecimpl.h"
 
 namespace TimeSteppingScheme
 {
@@ -13,7 +14,10 @@ template<typename DiscretizableInTime>
 ExplicitEuler<DiscretizableInTime>::ExplicitEuler(DihuContext context) :
   TimeSteppingExplicit<DiscretizableInTime>(context, "ExplicitEuler")
 {
+  LOG(TRACE) << "Entering ExplicitEuler constructor";
   this->data_ = std::make_shared <Data::TimeStepping<typename DiscretizableInTime::FunctionSpace, DiscretizableInTime::nComponents()>>(context); // create data object for explicit euler
+  LOG(TRACE) << "Leaving ExplicitEuler constructor";
+  
 }
 
 template<typename DiscretizableInTime>
@@ -40,6 +44,8 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
   double currentTime = this->startTime_;
   for (int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
   {
+    PetscErrorCode ierr{0};
+    
     if (timeStepNo % this->timeStepOutputInterval_ == 0 && timeStepNo > 0)
     {
       LOG(INFO) << "Explicit Euler, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
@@ -47,6 +53,10 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
 
     VLOG(1) << "starting from solution: " << this->data_->solution();
 
+    LOG(WARNING) << "Ready for attachement in explicit_euler.tpp:53";
+    while (timeSpan==0.001)
+    {sleep(5);}
+    
     // advance computed value
     // compute next delta_u = f(u)
     this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
@@ -55,8 +65,15 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
     VLOG(1) << "increment: " << this->data_->increment() << ", dt: " << this->timeStepWidth_;
 
     // integrate, y += dt * delta_u
-    PetscErrorCode ierr;
+    // unfortunately, this can only be used with petsc master branch, GNU compiler and "--with-cuda" (approximately)
+    //if (this->specificSettings_.hasKey("gpu"))
+    //{
+    //  ierr = VecAXPY_SeqCUDA(solution, this->timeStepWidth_, increment); CHKERRV(ierr);
+    //}
+    //else
+    //{
     ierr = VecAXPY(solution, this->timeStepWidth_, increment); CHKERRV(ierr);
+    //}
 
     // advance simulation time
     timeStepNo++;
@@ -89,6 +106,8 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
 template<typename DiscretizableInTime>
 void ExplicitEuler<DiscretizableInTime>::run()
 {
+  LOG(TRACE) << "ExplicitEuler::run start";
   TimeSteppingSchemeOde<DiscretizableInTime>::run();
+  LOG(TRACE) << "ExplicitEuler::run end";
 }
 } // namespace TimeSteppingScheme

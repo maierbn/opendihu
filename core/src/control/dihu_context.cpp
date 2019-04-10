@@ -1,7 +1,7 @@
 #include "control/dihu_context.h"
 
 #include <Python.h>  // this has to be the first included header
-#include <python_home.h>  // defines PYTHON_HOME_DIRECTORY
+#include <control/python_home.h>  // defines PYTHON_HOME_DIRECTORY
 #include <omp.h>
 
 #include <fstream>
@@ -75,6 +75,7 @@ void handleSignal(int signalNo)
   if (signalNo == SIGSEGV)
   {
 #ifndef NDEBUG
+#ifndef __PGI
 #ifdef __GNUC__
     // source: https://stackoverflow.com/questions/77005/how-to-automatically-generate-a-stacktrace-when-my-program-crashes
     void *array[100];
@@ -84,6 +85,7 @@ void handleSignal(int signalNo)
 
     // print stack trace
     backtrace_symbols_fd(array, size, STDERR_FILENO);
+#endif
 #endif
 #endif
   }
@@ -97,6 +99,7 @@ DihuContext::DihuContext(const DihuContext &rhs) : pythonConfig_(rhs.pythonConfi
 {
   nObjects_++;
   VLOG(1) << "DihuContext(a), nObjects = " << nObjects_;
+  LOG(TRACE) << "Invoked DihuContext copy constructor, nObjects = " << nObjects_;
 
   doNotFinalizeMpi_ = rhs.doNotFinalizeMpi_;
 }
@@ -105,6 +108,7 @@ DihuContext::DihuContext(const DihuContext &rhs) : pythonConfig_(rhs.pythonConfi
 DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, PythonConfig pythonConfig, std::shared_ptr<Partition::RankSubset> rankSubset) :
   pythonConfig_(pythonConfig), rankSubset_(rankSubset), doNotFinalizeMpi_(doNotFinalizeMpi)
 {
+  LOG(TRACE) << "NOTE: invoked DihuContext 5-arguments constructor!";
   nObjects_++;
   VLOG(1) << "DihuContext(b), nObjects = " << nObjects_;
 
@@ -118,9 +122,10 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, PythonCo
 DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool settingsFromFile) :
   pythonConfig_(NULL), doNotFinalizeMpi_(doNotFinalizeMpi)
 {
+  LOG(TRACE) << "invoked DihuContext 2-bools-4-arguments constructor";
   nObjects_++;
   VLOG(1) << "DihuContext(c), nObjects = " << nObjects_;
-
+  LOG(WARNING) << "DihuContext(c), nObjects = " << nObjects_;
   if (!initialized_)
   {
 
@@ -137,7 +142,7 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
     // load configuration from file if it exits
     initializeLogging(argc, argv);
 
-    // configure PETSc to abort on errorm
+    // configure PETSc to abort on error
     PetscOptionsSetValue(NULL, "-on_error_abort", "");
 
     // initialize PETSc
@@ -183,13 +188,17 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
 
     // check if the first command line argument is *.py, only then it is treated as config file
     bool explicitConfigFileGiven = false;
+    LOG(WARNING) << "argc > 1: " << (argc > 1);
+    LOG(WARNING) << "settingsFromFile: " << settingsFromFile;
     if (argc > 1 && settingsFromFile)
     {
       std::string firstArgument = argv[1];
+      LOG(WARNING) << "first argument of command line is: " << firstArgument;
       if (firstArgument.rfind(".py") == firstArgument.size() - 3)
       {
         explicitConfigFileGiven = true;
         Control::settingsFileName = argv[1];
+        LOG(DEBUG) << "Using settings from command line argument \"" << argv[1] << "\".";
       }
       else
       {
@@ -207,7 +216,7 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
     rankSubset_ = std::make_shared<Partition::RankSubset>();   // create rankSubset with all ranks, i.e. MPI_COMM_WORLD
 
     // start megamol console
-    LOG(DEBUG) << "initializeMegaMol";
+    LOG(WARNING)/*DEBUG!*/ << "initializeMegaMol";
     initializeMegaMol(argc, argv);
 
     initialized_ = true;
@@ -234,14 +243,18 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
   {
     VLOG(2) << "create solverManagerForThread_";
     // create solver manager for thread 0
+    LOG(DEBUG) << "create solverManagerForThread_[0]";
     solverManagerForThread_[0] = std::make_shared<Solver::Manager>(pythonConfig_);
+    LOG(DEBUG) << "create solverManagerForThread_[1]";
     solverManagerForThread_[1] = std::make_shared<Solver::Manager>(pythonConfig_);
   }
+  LOG(TRACE) << "Leaving DihuContext constructor.";
 }
 
 DihuContext::DihuContext(int argc, char *argv[], std::string pythonSettings, bool doNotFinalizeMpi) :
   DihuContext(argc, argv, doNotFinalizeMpi, false)
 {
+  LOG(TRACE) << "NOTE: invoked DihuContext 1-bool-4-arguments constructor!";
   nObjects_++;
   VLOG(1) << "DihuContext(d), nObjects = " << nObjects_;
   // This constructor is called when creating the context object from unit tests.
@@ -348,6 +361,7 @@ std::shared_ptr<Solver::Manager> DihuContext::solverManager() const
   {
     VLOG(1) << "create solver manager for thread " << threadId;
     // create solver manager
+    LOG(TRACE) << "create solverManagerForThread_[ "<< threadId << " ]";
     solverManagerForThread_[threadId] = std::make_shared<Solver::Manager>(pythonConfig_);
     
     VLOG(1) << "(done)";

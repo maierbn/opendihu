@@ -12,14 +12,21 @@ namespace TimeSteppingScheme
   TimeSteppingSchemeOdeBase(DihuContext context, std::string name) :
   TimeSteppingScheme(context), initialized_(false)
   {
+    LOG(TRACE) << "constructor of TimeSteppingSchemeOdeBase";
+    //LOG(TRACE) << "   " << getString((PyObject *) (this->context_.getPythonConfig()).pyObject());
     // get python config
+    LOG(TRACE) << "   [01] get python config";
     PythonConfig topLevelSettings = this->context_.getPythonConfig();
+    if (not topLevelSettings.hasKey(name))
+      LOG(WARNING) << "         There's no key \"" << name << "\" in your Python config. This might be a problem.";
+    LOG(TRACE) << "   [02] trying to set specific settings \"" << name << "\", derived from topLevelSettings.";
     this->specificSettings_ = PythonConfig(topLevelSettings, name);
-    
+    LOG(TRACE) << "   [03] initialize output writers";
     // initialize output writers
     this->outputWriterManager_.initialize(this->context_, this->specificSettings_);
+    LOG(TRACE) << "  [end] ...leaving";
   }
-  
+    
   template<typename FunctionSpaceType, int nComponents>
   Data::TimeStepping<FunctionSpaceType, nComponents> &TimeSteppingSchemeOdeBase<FunctionSpaceType, nComponents>::
   data()
@@ -105,18 +112,22 @@ namespace TimeSteppingScheme
   void TimeSteppingSchemeOdeBase<FunctionSpaceType, nComponents>::
   run()
   {
+    LOG(TRACE) << "TimeSteppingSchemeOdeBase::run: initialize()";
     // initialize
     this->initialize();
     
+    LOG(TRACE) << "TimeSteppingSchemeOdeBase::run: advanceTimeSpan()";
     // do simulations
     this->advanceTimeSpan();
+    
+    LOG(TRACE) << "end of TimeSteppingSchemeOdeBase::run";
   }
   
   //! output the given data for debugging
   template<typename FunctionSpaceType, int nComponents>
   std::string TimeSteppingSchemeOdeBase<FunctionSpaceType, nComponents>::
   getString(typename TimeSteppingSchemeOdeBase<FunctionSpaceType, nComponents>::TransferableSolutionDataType &data)
-  {
+  { 
     return data_->getString(data);
   }
   

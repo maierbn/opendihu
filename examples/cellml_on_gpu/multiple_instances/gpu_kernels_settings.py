@@ -12,6 +12,7 @@ def setParameters(n_instances, time_step_no, current_time, parameters, *addition
     print("set I_Stim for node {} to 400".format(center_node))
     parameters[center_node] = 400.
     
+    
 xdata = []
 gamma_data = []
 vm_data = []
@@ -21,7 +22,7 @@ tsw=0.001*pow(2,1-It_value)
 et=0.001#1.0
 opiv=1*pow(2,It_value-2)
 hrciv=opiv
-ElemNo=6400
+ElemNo=200
 
 
 config = {
@@ -44,13 +45,13 @@ config = {
     #],
 
     "CellML" : {
-      "deviceNumber": "1",
+      "deviceNumber": "0",
       "openaccClause": "kernels",
       "sourceFilename": "cellml_rhs.c",
       #"compilerFlags": "-fPIC -shared -acc -fastsse",
       # use "gpuSourceFilename" if you want gpu offloading
-      "compilerFlags": "-fPIC -ta=host,tesla:managed,cc35,cc60,time,cuda10.0 -shared -acc -I/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/include",# -Minfo=accel",
-      #"openaccClause": "kernels",
+      "compilerFlags": "-fPIC -ta=host,tesla:cc35,cc60,time,cuda10.0 -shared -acc -I/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/include",# -Minfo=accel",
+      #"openaccClause": "kernels",managed,
       #"gpuSourceFilename": "gpucodedata.c",
       "gpuSourceFilename": "gpucodekernels.c",
       # use "simdSourceFilename" if you want to use simd (might be default..?!)

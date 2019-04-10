@@ -31,3 +31,5 @@ config.py
 **/*.csv
 **/input/*
 **/scaled_mesh*
+core/src/control/python_home.h
+examples/cellml_on_gpu/multiple_instances/cellml_rhs.cpp

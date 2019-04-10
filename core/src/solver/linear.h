@@ -35,6 +35,7 @@ protected:
 
   std::string nIterationsLogKey_;  ///< the keyword for the log with which the number of iterations will be stored
   std::string residualNormLogKey_;  ///< the keyword for the log with which the residual norm gets stored
+  std::string nIterationsTotalLogKey_;  ///< the keyword for the log with which the total number of iterations gets stored
 };
 
 }  // namespace

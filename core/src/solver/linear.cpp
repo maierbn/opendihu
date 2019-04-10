@@ -61,10 +61,14 @@ Linear::Linear(PythonConfig specificSettings, MPI_Comm mpiCommunicator, std::str
   std::stringstream nIterationsLogKey;
   nIterationsLogKey << "nIterations_" << name_;
   nIterationsLogKey_ = nIterationsLogKey.str();
-
+  
   std::stringstream residualNormLogKey;
   residualNormLogKey << "residualNorm_" << name_;
   residualNormLogKey_ = residualNormLogKey.str();
+  
+  std::stringstream nIterationsTotalLogKey;
+  nIterationsTotalLogKey << "nIterationsTotal_" << name_;
+  nIterationsTotalLogKey_ = nIterationsTotalLogKey.str();
 }
 
 void Linear::parseSolverTypes(KSPType &kspType, PCType &pcType)
@@ -184,6 +188,7 @@ void Linear::solve(Vec rightHandSide, Vec solution, std::string message)
   // store parameter values to be logged
   Control::PerformanceMeasurement::setParameter(nIterationsLogKey_, numberOfIterations);
   Control::PerformanceMeasurement::setParameter(residualNormLogKey_, residualNorm);
+  Control::PerformanceMeasurement::countNumber(nIterationsTotalLogKey_, numberOfIterations);
 }
 
 }   //namespace

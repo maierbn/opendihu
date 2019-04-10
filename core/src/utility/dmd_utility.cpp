@@ -8,13 +8,24 @@
 
 int DmdUtility::getSpatComp(double input[], int rows, int cols, double leftSingVec[], double singVal[], double rightSingVec[], double epsilon)
 {
-	SvdUtility::getSVD(input, rows, cols, leftSingVec, singVal, rightSingVec);
+	double* inputCopy = new double[rows * cols];
+	for (int col = 0; col < cols; ++col)
+	{
+		for (int row = 0; row < rows; ++row)
+		{
+			inputCopy[col * rows + row] = input[col * rows + row];
+		}
+	}
+	SvdUtility::getSVD(inputCopy, rows, cols, leftSingVec, singVal, rightSingVec);
 	int min = std::min(rows, cols);
-	double normS = DmdUtility::getL2norm(singVal, min, min);
+	//DmdUtility::printMatrix("U", leftSingVec, rows, min);
+	//DmdUtility::printMatrix("\\Sigma", singVal, min, min);
+	//DmdUtility::printMatrix("V^{-1}", rightSingVec, min, cols);
+	double normS = DmdUtility::getNorm(singVal, min, min);
 	int spatComp = 0;
 	for (int i = 0; i < min; ++i)
 	{
-		if (DmdUtility::getL2norm(singVal, min, min - i) / normS > epsilon)
+		if (DmdUtility::getRangedNorm(singVal, min, min - i) / normS > epsilon)
 		{
 			spatComp += 1;
 		}
@@ -22,10 +33,18 @@ int DmdUtility::getSpatComp(double input[], int rows, int cols, double leftSingV
 	return spatComp;
 }
 
-// takes real vector input with size entries as double[]
-// returns the L2 norm of vector input over the specified range of entries as double
+// takes real matrix input with size entries as double[]
+// returns the square root of sum of squares norm of matrix input as double
+// sqrt(sum from k = size to size - 1 of v[k]^2)
+double DmdUtility::getNorm(double input[], int rows, int cols)
+{
+	return LAPACKE_dlange(LAPACK_COL_MAJOR, 'f', rows, cols, input, rows);
+}
+
+// takes real diagonal matrix input with size entries as double[]
+// returns the square root of sum of squares norm of matrix input over the specified range of entries as double
 // sqrt(sum from k = size - range to size - 1 of v[k]^2)
-double DmdUtility::getL2norm(double input[], int order, int range)
+double DmdUtility::getRangedNorm(double input[], int order, int range)
 {
 	double sum = 0;
 	for (int k = order - range; k < order; ++k)
@@ -36,16 +55,16 @@ double DmdUtility::getL2norm(double input[], int order, int range)
 }
 
 // takes complex vector input with size entries as double _Complex[]
-// returns the L2 norm of vector input over the specified range of entries as double
+// returns the square root of sum of squares norm of vector input over the specified range of entries as double
 // sqrt(sum from k = size - range to size - 1 of Re(v[k])^2 + Im(v[k])^2)
-double DmdUtility::getL2norm(double _Complex input[], int order, int range)
+double DmdUtility::getNorm(double _Complex input[], int order)
 {
-	double _Complex sum = 0;
-	for (int k = order - range; k < order; ++k)
-	{
-		sum += creal(input[k]) * creal(input[k]) + cimag(input[k]) * cimag(input[k]);
-	}
-	return creal(csqrt(sum));
+	return LAPACKE_zlange(LAPACK_COL_MAJOR, 'f', order, 1, input, order);
+}
+
+double DmdUtility::getInfNorm(double input[], int rows, int cols)
+{
+	return LAPACKE_dlange(LAPACK_COL_MAJOR, 'i', rows, cols, input, rows);
 }
 
 void DmdUtility::getReducedSnapshotsMatrix(double sigma[], double rightSingVec[], double hatT[], int min, int cols, int spatComp)
@@ -154,7 +173,7 @@ void DmdUtility::getMatrixMult(double _Complex inputA[], double _Complex inputB[
 // prints name and input entry-wise
 void DmdUtility::printMatrix(std::string name, double input[], int rows, int cols)
 {
-	cout << name << endl;
+	/*cout << name << endl;
 	for (int row = 0; row < rows; ++row)
 	{
 		for (int col = 0; col < cols; ++col)
@@ -171,6 +190,27 @@ void DmdUtility::printMatrix(std::string name, double input[], int rows, int col
 		}
 		cout << endl;
 	}
+	cout << endl;*/
+
+	cout << "    " << name << " =" << endl << "    \\begin{bmatrix*}[r]" << endl << "        " << input[0];
+
+	for (int row = 0; row < rows; ++row)
+	{
+		for (int col = 1; col < cols; ++col)
+		{
+			cout << " & " << input[col * rows + row];
+		}
+
+		if (row < rows - 1)
+		{
+			cout << " \\\\" << endl << "        " << input[row + 1];
+		}
+		else
+		{
+			cout << endl << "    \\end{bmatrix*}" << endl;
+		}
+	}
+
 	cout << endl;
 }
 
@@ -178,7 +218,7 @@ void DmdUtility::printMatrix(std::string name, double input[], int rows, int col
 // prints name and input entry-wise
 void DmdUtility::printMatrix(std::string name, double _Complex input[], int rows, int cols)
 {
-	cout << name << endl;
+	/*cout << name << endl;
 	for (int row = 0; row < rows; ++row)
 	{
 		for (int col = 0; col < cols; ++col)
@@ -203,6 +243,27 @@ void DmdUtility::printMatrix(std::string name, double _Complex input[], int rows
 		}
 		cout << endl;
 	}
+	cout << endl;*/
+
+	cout << "    " << name << " =" << endl << "    \\begin{bmatrix*}[r]" << endl << "        " << creal(input[0]) << " + " << cimag(input[0]) << "i";
+
+	for (int row = 0; row < rows; ++row)
+	{
+		for (int col = 1; col < cols; ++col)
+		{
+			cout << " & " << creal(input[col * rows + row]) << " + " << cimag(input[col * rows + row]) << "i";
+		}
+
+		if (row < rows - 1)
+		{
+			cout << " \\\\" << endl << "        " << creal(input[row + 1]) << " + " << cimag(input[row + 1]) << "i";
+		}
+		else
+		{
+			cout << endl << "    \\end{bmatrix*}" << endl;
+		}
+	}
+
 	cout << endl;
 }
 
@@ -377,10 +438,10 @@ void DmdUtility::getAmplitudes(double snapshots[], double _Complex eigenvalues[]
 	// Mm(1+(k-1)*M:k*M,:)
 	double _Complex* mmmMxM = new double _Complex[rows * rows];
 
-	for (int kay = 0; kay < cols; ++kay)
+	for (int k = 0; k < cols; ++k)
 	{
 		DmdUtility::setZero(mmmMxM, rows, rows);
-		DmdUtility::getMatrixPower(mm, mmPower, rows, kay);
+		DmdUtility::getMatrixPower(mm, mmPower, rows, k);
 		// SvdUtility::printMatrix("MM^(k-1)", mmPower, m, m);
 		// Q*(MM^(k-1))
 		DmdUtility::getMatrixMult(eigenvectors, mmPower, mmmMxM, rows, rows, rows);
@@ -390,9 +451,9 @@ void DmdUtility::getAmplitudes(double snapshots[], double _Complex eigenvalues[]
 		{
 			for (int col = 0; col < rows; ++col)
 			{
-				mmm[row + kay * rows + col * cols * rows] = mmmMxM[row + col * rows];
+				mmm[row + k * rows + col * cols * rows] = mmmMxM[row + col * rows];
 			}
-			bb[row + kay * rows] = snapshots[row + kay * rows];
+			bb[row + k * rows] = snapshots[row + k * rows];
 		}
 	}
 
@@ -513,8 +574,8 @@ void DmdUtility::getDmdModes(double _Complex dmdModes[], double _Complex a[], do
 	{
 		DmdUtility::resizeMatrix(dmdModes, uColm, cols, cols, col, col);
 		DmdUtility::setZero(aca, rows, 1);
-		DmdUtility::getMatrixMult(leftSingVec, uColm, aca, rows, cols, 1);
-		amplitudes[col] = DmdUtility::getL2norm(aca, rows, rows) / sqrt(rows);
+		DmdUtility::getMatrixMult(leftSingVecReduced, uColm, aca, rows, cols, 1);
+		amplitudes[col] = DmdUtility::getNorm(aca, rows) / sqrt(rows);
 	}
 }
 
@@ -577,7 +638,7 @@ int DmdUtility::getSpecComp(double _Complex dmdModes[], double growthRates[], do
 	int specComp = 0;
 	for (int i = 0; i < order; ++i)
 	{
-		if (creal(amplitudes[i] / amplitudes[0]) > epsilon0)
+		if (amplitudes[i] / amplitudes[0] > epsilon0)
 		{
 			specComp += 1;
 		}
@@ -658,6 +719,7 @@ void DmdUtility::reconstructSnapshots(double _Complex dmdModes[], double growthR
 			hatTreconst[row + col * spatComp] = hatTreconstCol[row];
 		}
 	}
+	// DmdUtility::printMatrix("\\hat{T}_\\text{reconst}", hatTreconst, spatComp, cols);
 
 	DmdUtility::getMatrixMult(leftSingVec, hatTreconst, snapshotsReconst, rows, spatComp, cols);
 }
@@ -672,22 +734,4 @@ void DmdUtility::contReconst(double t, double t0, double _Complex dmdModes[], do
 	}
 
 	DmdUtility::getMatrixMult(dmdModes, vv, output, rows, cols, 1);
-}
-
-/*void DmdUtility::readCSV(string file, double output, int rows, int cols)
-{
-
-}*/
-
-int DmdUtility::getCSVRowCount(std::string filename)
-{
-	int count = 0;
-	std::string line;
-
-	/* Creating input filestream */
-	std::ifstream file(filename);
-	while (std::getline(file, line))
-		count++;
-
-	return count;
 }

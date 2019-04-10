@@ -7,52 +7,27 @@
 #include <vector>
 #include <complex>
 #include <math.h>
+//#include <chrono>
 
 // using namespace std;
 
 int main(int argc, char *argv[])
 {
 	// input data
-	std::vector<double> parsedCsv = SvdUtility::readCSV("./out/data.csv");
-	//int rowCount = DmdUtility::getCSVRowCount("data.csv");
-	//std::cout << "rowCount = " << rowCount << endl;
-	int j = SvdUtility::getCSVColumnCount("./out/data.csv");
-	int k = SvdUtility::getCSVRowCount("./out/data.csv");
+	std::string inputData = "./out/Snapshots_total_pointwise.csv";
+
+	std::vector<double> parsedCsv = SvdUtility::readCSV(inputData);
+	int j = SvdUtility::getCSVColumnCount(inputData);
+	int k = SvdUtility::getCSVRowCount(inputData);
 	std::cout << "J = " << j << endl << "K = " << k << endl;
 	double* v = new double[j * k];
 	std::copy(parsedCsv.begin(), parsedCsv.end(), v);
-	//DmdUtility::readCSV(".out/data.csv", v, j, k);
 
-	double epsilon1 = 0.1;
-	double epsilon0 = 0.1;
 	double deltat = 0.1;
+	double epsilon1 = exp(-2);
+	double epsilon0 = exp(-1);
 
-	// complex high and narrow matrix
-	/*int j = 6;
-	int k = 5;
-	double v[] {
-			  8.79,  6.11, -9.15,  9.57, -3.49,  9.84,
-			  9.93,  6.91, -7.93,  1.64,  4.02,  0.15,
-			  9.83,  5.04,  4.86,  8.83,  9.80, -8.99,
-			  5.45, -0.27,  4.85,  0.74, 10.00, -6.02,
-			  3.16,  7.98,  3.01,  5.80,  4.27, -5.31
-	};*/
-
-	// complex wide and short matrix
-	/*int j = 5;
-	int k = 6;
-	double v[]{
-			  8.79,  6.11, -9.15,  9.57, -3.49,
-			  9.93,  6.91, -7.93,  1.64,  4.02,
-			  9.83,  5.04,  4.86,  8.83,  9.80,
-			  5.45, -0.27,  4.85,  0.74, 10.00,
-			  3.16,  7.98,  3.01,  5.80,  4.27,
-			  9.84,  0.15, -8.99, -6.02, -5.31
-	};*/
-
-	// print input matrix sizes, j rows, k cols
-	// std::cout << "J = rows = " << j << endl << "K = cols =  " << k << endl << endl;
-	DmdUtility::printMatrix("V", v, j, k);
+	//DmdUtility::printMatrix("V", v, j, k);
 
 	// %%%%%%%%%%%%%%%%%%%%%%%%%
 	// [U,Sigma,T]=svd(V,'econ')
@@ -85,6 +60,8 @@ int main(int argc, char *argv[])
 	double* hatT = new double[kSpat * k];
 	DmdUtility::getReducedSnapshotsMatrix(sigma, tT, hatT, n, k, kSpat);
 
+	//DmdUtility::printMatrix("\\hat{T}", hatT, kSpat, k);
+
 	// %%%%%%%%%%%%%%%%%%%%%%%%%%
 	// Calculate Koopman operator
 	// %%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -95,6 +72,7 @@ int main(int argc, char *argv[])
 
 	double* hatR = new double[kSpat * kSpat];
 	DmdUtility::getKoopmanOperator(hatT, hatR, kSpat, k);
+	//DmdUtility::printMatrix("\\hat{R}", hatR, kSpat, kSpat);
 
 	// %%%%%%%%%%%%%%%%
 	// [Q,MM]=eig(hatR)
@@ -105,6 +83,9 @@ int main(int argc, char *argv[])
 
 	// [Q,MM]=eig(hatR)
 	DmdUtility::getEigen(hatR, kSpat, eigenvalues, q);
+
+	//DmdUtility::printMatrix("\\Lambda", eigenvalues, kSpat, 0);
+	//DmdUtility::printMatrix("Q", q, kSpat, kSpat);
 
 	// eigenvalues=diag(MM)
 	double _Complex* mm = new double _Complex[kSpat * kSpat];
@@ -121,6 +102,9 @@ int main(int argc, char *argv[])
 
 	DmdUtility::getDeltaOmega(eigenvalues, deltas, omegas, kSpat, deltat);
 
+	//DmdUtility::printMatrix("\\delta", deltas, kSpat, 1);
+	//DmdUtility::printMatrix("\\omega", omegas, kSpat, 1);
+
 	// %%%%%%%%%%%%%%%%%%%%
 	// Calculate amplitudes
 	// %%%%%%%%%%%%%%%%%%%%
@@ -128,6 +112,8 @@ int main(int argc, char *argv[])
 	double _Complex* a = new double _Complex[kSpat];
 
 	DmdUtility::getAmplitudes(hatT, eigenvalues, q, kSpat, k, a);
+
+	// DmdUtility::printMatrix("a", a, kSpat, 1);
 
 	// u=zeros(M:M)
 	double _Complex* uComplex = new double _Complex[kSpat * kSpat];
@@ -138,22 +124,26 @@ int main(int argc, char *argv[])
 
 	DmdUtility::getDmdModes(uComplex, a, q, j, kSpat, u, uOneTokSpat, amplitude);
 
+	// DmdUtility::printMatrix("u", u, kSpat, kSpat);
+
 	// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	// UU=[u;deltas';omegas';amplitude']'
 	// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-	
+
 	// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	// Spectral complexity: number of DMD modes
 	// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 	int kSpec = DmdUtility::getSpecComp(uComplex, deltas, omegas, amplitude, kSpat, epsilon0);
 
+	// DmdUtility::printMatrix("\\alpha", amplitude, kSpat, 1);
+
 	std::cout << "Spectral complexity: number of DMD modes kSpec = " << kSpec << endl << endl;
-	
+
 	// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	// DeltasOmegAmpl=[deltas',omegas',amplitude']
 	// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-	
+
 	double _Complex* uReduced = new double _Complex[kSpat * kSpec];
 	double* deltasReduced = new double[kSpec];
 	double* omegasReduced = new double[kSpec];
@@ -161,29 +151,44 @@ int main(int argc, char *argv[])
 	DmdUtility::getDmdModesGrowthRatesFrequencies(uComplex, deltas, omegas, uReduced, deltasReduced, omegasReduced, kSpat, kSpat, kSpec);
 
 	double* vreconstReal = new double[j * k];
-	
+
 	DmdUtility::reconstructSnapshots(uReduced, deltasReduced, omegasReduced, uOneTokSpat, vreconstReal, j, k, kSpec, kSpat, deltat);
 
 	DmdUtility::printMatrix("Vreconst", vreconstReal, j, k);
 
 	// NormV=norm(V(:),2)
-	//double _Complex normV = SvdUtility::getMatrix2Norm(vreconstReal, j, k);
-	//std::cout << "NormV = " << creal(normV) << endl;
+	double normV = DmdUtility::getNorm(v, j, k);
 
-			/*
-			for(std::vector<double>::iterator it = result.begin(); it!=result.end(); ++it)
-			{
-			  std::cout << ' ' << *it;
-			}
+	double* diff = new double[j * k];
+	DmdUtility::setZero(diff, j, k);
+	for (int row = 0; row < j; ++row)
+	{
+		for (int col = 0; col < k; ++col)
+		{
+			diff[row + col * j] = v[row + col * j] - vreconstReal[row + col * j];
+		}
+	}
 
-			std::cout << "/n" << std::endl;
+	double rms = DmdUtility::getNorm(diff, j, k) / normV;
+	std::cout << "RelativeerrorRMS = " << rms << endl;
+
+	double max = DmdUtility::getInfNorm(diff, j, k) / DmdUtility::getInfNorm(v, j, k);
+	std::cout << "RelativeerrorMax = " << max << endl;
+
+	/*
+	for(std::vector<double>::iterator it = result.begin(); it!=result.end(); ++it)
+	{
+	  std::cout << ' ' << *it;
+	}
+
+	std::cout << "/n" << std::endl;
 
 
-			std::cout << "size Sigma: " << s.size() << std::endl;
-			std::cout << "size U: " << u.size() << std::endl;
-			std::cout << "size V transposed: " << vt.size() << std::endl;
-			SvdUtility::writeCSV("./out/SVDresult.csv", result, columnCount, columnCount);
-			*/
+	std::cout << "size Sigma: " << s.size() << std::endl;
+	std::cout << "size U: " << u.size() << std::endl;
+	std::cout << "size V transposed: " << vt.size() << std::endl;
+	SvdUtility::writeCSV("./out/SVDresult.csv", result, columnCount, columnCount);
+	*/
 
 	return EXIT_SUCCESS;
 }

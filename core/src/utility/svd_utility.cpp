@@ -68,9 +68,9 @@ void SvdUtility::getSVD(double input[], int rows, int cols, double leftSingVec[]
 	double* singVal = new double[min];
 	double* superb = new double[min];
 
-	int info = LAPACKE_dgesvd(LAPACK_COL_MAJOR, 's', 's', rows, cols, input, rows, singVal, leftSingVec, rows, rightSingVecT, min, superb);
+	LAPACKE_dgesvd(LAPACK_COL_MAJOR, 's', 's', rows, cols, input, rows, singVal, leftSingVec, rows, rightSingVecT, min, superb);
 
-	cout << "info: " << info << endl << endl;
+	// cout << "info: " << info << endl << endl;
 
 	// build diagonal matrix sigma from vector singularValues
 	for (int row = 0; row < min; ++row)
@@ -98,9 +98,9 @@ void SvdUtility::getSVD(double _Complex input[], int rows, int cols, double _Com
 	double* singVal = new double[min];
 	double* superb = new double[min];
 
-	int info = LAPACKE_zgesvd(LAPACK_COL_MAJOR, 's', 's', rows, cols, input, rows, singVal, leftSingVec, rows, rightSingVecT, min, superb);
+	LAPACKE_zgesvd(LAPACK_COL_MAJOR, 's', 's', rows, cols, input, rows, singVal, leftSingVec, rows, rightSingVecT, min, superb);
 
-	cout << "info: " << info << endl << endl;
+	// cout << "info: " << info << endl << endl;
 
 	// build diagonal matrix sigma from vector singularValues
 	for (int row = 0; row < min; ++row)

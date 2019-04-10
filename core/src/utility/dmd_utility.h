@@ -11,9 +11,13 @@ class DmdUtility
 public:
 	static int getSpatComp(double input[], int rows, int cols, double leftSingVec[], double sigma[], double rightSingVec[], double epsilon);
 
-	static double getL2norm(double input[], int order, int range);
+	static double getNorm(double input[], int rows, int cols);
 
-	static double getL2norm(double _Complex input[], int order, int range);
+	static double getRangedNorm(double input[], int order, int range);
+
+	static double getNorm(double _Complex input[], int order);
+
+	static double getInfNorm(double input[], int rows, int cols);
 
 	static void getReducedSnapshotsMatrix(double sigma[], double rightSingVec[], double hatT[], int min, int cols, int spatComp);
 
@@ -69,5 +73,5 @@ public:
 
 	static void contReconst(double t, double t0, double _Complex dmdModes[], double growthRates[], double frequencies[], int rows, int cols, double output[]);
 
-	static int getCSVRowCount(std::string filename);
+	//static int getCSVRowCount(std::string filename);
 };

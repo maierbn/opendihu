@@ -1,9 +1,9 @@
-#include "partition/partitioned_petsc_mat/partitioned_petsc_mat_base.h"
+#include "partition/partitioned_petsc_mat/partitioned_petsc_mat_one_component_base.h"
 
 
 template<typename RowsFunctionSpaceType,typename ColumnsFunctionSpaceType>
-PartitionedPetscMatBase<RowsFunctionSpaceType,ColumnsFunctionSpaceType>::
-PartitionedPetscMatBase(std::shared_ptr<Partition::MeshPartition<RowsFunctionSpaceType>> meshPartitionRows,
+PartitionedPetscMatOneComponentBase<RowsFunctionSpaceType,ColumnsFunctionSpaceType>::
+PartitionedPetscMatOneComponentBase(std::shared_ptr<Partition::MeshPartition<RowsFunctionSpaceType>> meshPartitionRows,
                         std::shared_ptr<Partition::MeshPartition<ColumnsFunctionSpaceType>> meshPartitionColumns, std::string name) :
   meshPartitionRows_(meshPartitionRows), meshPartitionColumns_(meshPartitionColumns), name_(name)
 {
@@ -12,7 +12,7 @@ PartitionedPetscMatBase(std::shared_ptr<Partition::MeshPartition<RowsFunctionSpa
 
 template<typename RowsFunctionSpaceType,typename ColumnsFunctionSpaceType>
 std::shared_ptr<Partition::MeshPartition<RowsFunctionSpaceType>>
-PartitionedPetscMatBase<RowsFunctionSpaceType,ColumnsFunctionSpaceType>::  
+PartitionedPetscMatOneComponentBase<RowsFunctionSpaceType,ColumnsFunctionSpaceType>::
 meshPartitionRows()
 {
   return meshPartitionRows_;
@@ -20,7 +20,7 @@ meshPartitionRows()
 
 template<typename RowsFunctionSpaceType,typename ColumnsFunctionSpaceType>
 std::shared_ptr<Partition::MeshPartition<ColumnsFunctionSpaceType>>
-PartitionedPetscMatBase<RowsFunctionSpaceType,ColumnsFunctionSpaceType>::
+PartitionedPetscMatOneComponentBase<RowsFunctionSpaceType,ColumnsFunctionSpaceType>::
 meshPartitionColumns()
 {
   return meshPartitionColumns_;

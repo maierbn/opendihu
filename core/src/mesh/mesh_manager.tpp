@@ -72,7 +72,7 @@ std::shared_ptr<FunctionSpaceType> Manager::functionSpace(PythonConfig settings)
   // create new mesh, store as anonymous object
   std::stringstream anonymousName;
   anonymousName << "anonymous" << numberAnonymousMeshes_++;
-  LOG(DEBUG) << "Create new mesh with type " << typeid(FunctionSpaceType).name() << " and name \"" <<anonymousName.str() << "\".";
+  LOG(DEBUG) << "Create new mesh with type " << typeid(FunctionSpaceType).name() << " and name \"" <<anonymousName.str() << "\" (1).";
   
   // create mesh and initialize
   std::shared_ptr<FunctionSpaceType> functionSpace = createFunctionSpace<FunctionSpaceType>(anonymousName.str(), settings);
@@ -119,7 +119,7 @@ std::shared_ptr<FunctionSpaceType> Manager::createFunctionSpace(std::string name
   }
 
   // create new mesh
-  LOG(DEBUG) << "Create new mesh with type " << typeid(FunctionSpaceType).name() << " and name \"" <<name << "\".";
+  LOG(DEBUG) << "Create new mesh with type " << typeid(FunctionSpaceType).name() << " and name \"" <<name << "\" (2).";
 
   // create mesh and initialize
   std::shared_ptr<FunctionSpaceType> functionSpace;
@@ -157,7 +157,7 @@ std::shared_ptr<FunctionSpaceType> Manager::createFunctionSpaceWithGivenMeshPart
   }
 
   // create new mesh
-  LOG(DEBUG) << "Create new mesh with type " << typeid(FunctionSpaceType).name() << " and name \"" <<name << "\".";
+  LOG(DEBUG) << "Create new mesh with type " << typeid(FunctionSpaceType).name() << " and name \"" <<name << "\" (3).";
 
   // create mesh and initialize
   std::shared_ptr<FunctionSpaceType> functionSpace = std::make_shared<FunctionSpaceType>(this->partitionManager_, std::forward<Args>(args)...);

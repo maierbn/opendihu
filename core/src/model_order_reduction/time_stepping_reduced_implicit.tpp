@@ -29,17 +29,17 @@ initialize()
   
   TimeSteppingSchemeOdeReduced<TimeSteppingImplicitType>::initialize();
   
-  // compute the reduced system matrix
-  setRedSystemMatrix();
-  
   // set the boundary conditions to system matrix, i.e. zero rows and columns of Dirichlet BC dofs and set diagonal to 1
   this->fullTimestepping_.dirichletBoundaryConditions()->applyInSystemMatrix(this->fullTimestepping_.dataImplicit().systemMatrix(), this->fullTimestepping_.dataImplicit().boundaryConditionsRightHandSideSummand());
+  
+  // compute the reduced system matrix
+  setRedSystemMatrix();
   
   // initialize the linear solver that is used for solving the implicit system
   initializeLinearSolver();
   
   // set matrix used for linear system and preconditioner to ksp context
-  Mat redSystemMatrix = this->dataMOR_->redSystemMatrix()->valuesGlobal();
+  Mat &redSystemMatrix = this->dataMOR_->redSystemMatrix()->valuesGlobal();
   assert(this->ksp_);
   PetscErrorCode ierr;
   ierr = KSPSetOperators(*ksp_, redSystemMatrix, redSystemMatrix); CHKERRV(ierr);
@@ -73,6 +73,15 @@ setRedSystemMatrix()
   
   LOG(DEBUG) << "setRedSystemMatrix, nrows_sys: " << nrows_sys << " ncols_sys: " << ncols_sys;
   
+  const PetscScalar *vals_sysmat;
+  PetscMalloc1(nrows_sys,&vals_sysmat);
+  for(int i=0; i<nrows_sys;i++)
+  {
+    MatGetRow(systemMatrix,i,NULL,NULL,&vals_sysmat);
+    for(int j=0; j<ncols_sys; j++)
+      VLOG(2) << "systemMatrix[" << i << "," << j<< "]: " << vals_sysmat[j];
+  }
+  
   if(ncols_bst == nrows_sys)
   {
     //! Reduction of the system matrix in case of compatible row spaces of the system matrix and reduced basis    
@@ -101,18 +110,18 @@ setRedSystemMatrix()
     meshPartitionRows, meshPartitionColumns, 1, "systemMatrix_ext");          
     
     Mat &matrix_ext=systemMatrix_ext->valuesGlobal();    
-    ierr=MatShift(matrix_ext,1); CHKERRV(ierr); // some would be replaced below by insertin values
+    ierr=MatShift(matrix_ext,1); CHKERRV(ierr); // some of the ones would be replaced below by inserting values
     
     PetscScalar *vals;
-    PetscMalloc1(nrows_sys*nrows_sys,&vals);
+    PetscMalloc1(nrows_sys*ncols_sys,&vals);
     
     PetscInt *idx;
     PetscMalloc1(nrows_sys,&idx);
     for( int i=0; i<nrows_sys;i++)
       idx[i]=i;
     
-    ierr=MatGetValues(systemMatrix,nrows_sys,idx,nrows_sys,idx,vals); CHKERRV(ierr);
-    ierr=MatSetValuesLocal(matrix_ext,nrows_sys,idx,nrows_sys,idx,vals,INSERT_VALUES); CHKERRV(ierr); //would replace the extra ones on the diagonal
+    ierr=MatGetValues(systemMatrix,nrows_sys,idx,ncols_sys,idx,vals); CHKERRV(ierr);
+    ierr=MatSetValues(matrix_ext,nrows_sys,idx,ncols_sys,idx,vals,INSERT_VALUES); CHKERRV(ierr); //would replace the extra ones on the diagonal
     
     MatAssemblyBegin(matrix_ext,MAT_FINAL_ASSEMBLY);
     MatAssemblyEnd(matrix_ext,MAT_FINAL_ASSEMBLY);
@@ -125,15 +134,15 @@ setRedSystemMatrix()
     MatMatMult(matrix_ext,basis,MAT_INITIAL_MATRIX,PETSC_DEFAULT,&matrix); CHKERRV(ierr);       
     MatMatMult(basisTransp,matrix,MAT_INITIAL_MATRIX,PETSC_DEFAULT,&redSystemMatrix); CHKERRV(ierr);
     
-    /*
+    
     const PetscScalar *vals_total;    
-    for(int i=0; i<nrows_bs;i++)
+    for(int i=0; i<nrows_bst;i++)
     {
       MatGetRow(redSystemMatrix,i,NULL,NULL,&vals_total);
-      for(int j=0; j<nrows_bs; j++)
-        LOG(DEBUG) << "redSystemMatrix[" << i << "," << j<< "]: " << vals_total[j];
+      for(int j=0; j<ncols_bst; j++)
+        VLOG(2) << "redSystemMatrix[" << i << "," << j<< "]: " << vals_total[j];
     }
-    */
+    
        
   }
   

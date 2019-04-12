@@ -575,7 +575,7 @@ getNeighbourNodeNoLocal(node_no_t nodeNoLocal, Mesh::face_t direction) const
   }
   else if (direction == Mesh::face_t::face1Plus)  // y+ node
   {
-    LOG(DEBUG) << "direction Y+, localX=" << localX << ", localY=" << localY << ", localZ=" << localZ << ", pf" << this->meshPartition()->nNodesLocalWithoutGhosts(1)-1;
+    //LOG(DEBUG) << "direction Y+, localX=" << localX << ", localY=" << localY << ", localZ=" << localZ << ", pf" << this->meshPartition()->nNodesLocalWithoutGhosts(1)-1;
 
     // if the node is at the top row, there is no neighbouring node
     if (localY == this->meshPartition()->nNodesLocalWithGhosts(1)-1)
@@ -631,16 +631,15 @@ getNeighbourNodeNoLocal(node_no_t nodeNoLocal, Mesh::face_t direction) const
       // there is one row of ghost nodes above the current
       node_no_t neighbourNodeNo = this->meshPartition()->nNodesLocalWithoutGhosts();
 
-      LOG(DEBUG) << "direction Z+, localX=" << localX << ", localY=" << localY << ", localZ=" << localZ << ", starting at " << neighbourNodeNo
-        << ", nNodesLocalWithoutGhosts: " << this->meshPartition()->nNodesLocalWithoutGhosts(0) << "," << this->meshPartition()->nNodesLocalWithoutGhosts(1) << "," << this->meshPartition()->nNodesLocalWithoutGhosts(2)
-        << ", hasFullNumberOfNodes: " << this->meshPartition()->hasFullNumberOfNodes(0) << "," << this->meshPartition()->hasFullNumberOfNodes(1) << "," << this->meshPartition()->hasFullNumberOfNodes(2);
+      //LOG(DEBUG) << "direction Z+, localX=" << localX << ", localY=" << localY << ", localZ=" << localZ << ", starting at " << neighbourNodeNo
+      //  << ", nNodesLocalWithoutGhosts: " << this->meshPartition()->nNodesLocalWithoutGhosts(0) << "," << this->meshPartition()->nNodesLocalWithoutGhosts(1) << "," << this->meshPartition()->nNodesLocalWithoutGhosts(2)
+      //  << ", hasFullNumberOfNodes: " << this->meshPartition()->hasFullNumberOfNodes(0) << "," << this->meshPartition()->hasFullNumberOfNodes(1) << "," << this->meshPartition()->hasFullNumberOfNodes(2);
 
       if (this->meshPartition()->hasFullNumberOfNodes(0))
       {
         if (!this->meshPartition()->hasFullNumberOfNodes(1))
         {
           // there are ghosts at y+ and z+
-          LOG(DEBUG) << "a";
           neighbourNodeNo += this->meshPartition()->nNodesLocalWithoutGhosts(0) * this->meshPartition()->nNodesLocalWithoutGhosts(2);
         }
       }
@@ -649,26 +648,22 @@ getNeighbourNodeNoLocal(node_no_t nodeNoLocal, Mesh::face_t direction) const
         if (this->meshPartition()->hasFullNumberOfNodes(1))
         {
           // there are ghosts at x+ and z+
-          LOG(DEBUG) << "B";
           neighbourNodeNo += this->meshPartition()->nNodesLocalWithoutGhosts(1) * this->meshPartition()->nNodesLocalWithoutGhosts(2);
         }
         else
         {
           // there are ghosts at x+, y+ and z+
-          LOG(DEBUG) << "C";
           neighbourNodeNo += (this->meshPartition()->nNodesLocalWithGhosts(0) + this->meshPartition()->nNodesLocalWithGhosts(1) - 1) * this->meshPartition()->nNodesLocalWithoutGhosts(2);
         }
       }
 
       if (this->meshPartition()->hasFullNumberOfNodes(0))
       {
-        LOG(DEBUG) << "D";
         // there are no ghosts at x+
         return neighbourNodeNo + this->meshPartition()->nNodesLocalWithoutGhosts(0)*localY + localX;
       }
       else
       {
-        LOG(DEBUG) << "E";
         // there are ghosts at x+
         return neighbourNodeNo + this->meshPartition()->nNodesLocalWithGhosts(0)*localY + localX;
       }

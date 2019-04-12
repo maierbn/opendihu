@@ -123,19 +123,10 @@ TEST(FaceTest, faceDofsLinearLagrange3D)
   typedef BasisFunction::LagrangeOfOrder<1> BasisFunctionType;
   typedef FunctionSpace::FunctionSpace<MeshType, BasisFunctionType> FunctionSpaceType;
   
-  /*
-  std::string pythonConfig = R"(
-# 3D
-  
-config = {
-  "FiniteElementMethod" : {
-    "dirichletBoundaryConditions": bc,
-  }
-}
-)";
 
+  std::string pythonConfig = "config={}";
   DihuContext settings(argc, argv, pythonConfig);
-  
+  /*
   FiniteElementMethod<
     MeshType,
     BasisFunction::LagrangeOfOrder<1>,
@@ -146,73 +137,81 @@ config = {
   
   std::shared_ptr<MeshType> functionSpace = std::static_ptr_cast<MeshType>(problem->functionSpace());*/
   
-  std::array<dof_no_t, 4> dofIndices1;
-  std::array<dof_no_t, 4> dofIndices1Reference = {0, 2, 4, 6};
+  std::array<dof_no_t, 4> dofIndices1({0});
   FunctionSpaceType::getFaceDofs(Mesh::face_t::face0Minus, dofIndices1);  // 0-
+  std::array<dof_no_t, 4> dofIndices1Reference = {0, 2, 4, 6};
+  LOG(DEBUG) << "0-: " << dofIndices1;
   ASSERT_EQ(dofIndices1, dofIndices1Reference);
   
-  std::array<dof_no_t, 4> dofIndices2;
-  std::array<dof_no_t, 4> dofIndices2Reference = {1, 3, 5, 7};
+  std::array<dof_no_t, 4> dofIndices2({0});
   FunctionSpaceType::getFaceDofs(Mesh::face_t::face0Plus, dofIndices2);  // 0+
+  std::array<dof_no_t, 4> dofIndices2Reference = {1, 3, 5, 7};
+  LOG(DEBUG) << "0+: " << dofIndices2;
   ASSERT_EQ(dofIndices2, dofIndices2Reference);
-  
-  std::array<dof_no_t, 4> dofIndices3;
-  std::array<dof_no_t, 4> dofIndices3Reference = {0, 1, 4, 5};
+
+  std::array<dof_no_t, 4> dofIndices3({0});
   FunctionSpaceType::getFaceDofs(Mesh::face_t::face1Minus, dofIndices3);  // 1-
+
+  std::array<dof_no_t, 4> dofIndices3Reference = {(dof_no_t)0, (dof_no_t)1, (dof_no_t)4, (dof_no_t)5};
+  LOG(DEBUG) << "1-: " << dofIndices3;
   ASSERT_EQ(dofIndices3, dofIndices3Reference);
-  
-  std::array<dof_no_t, 4> dofIndices4;
-  std::array<dof_no_t, 4> dofIndices4Reference = {2, 3, 6, 7};
+
+  std::array<dof_no_t, 4> dofIndices4({0});
   FunctionSpaceType::getFaceDofs(Mesh::face_t::face1Plus, dofIndices4);  // 1+
+  std::array<dof_no_t, 4> dofIndices4Reference = {2, 3, 6, 7};
+  LOG(DEBUG) << "1+: " << dofIndices4;
   ASSERT_EQ(dofIndices4, dofIndices4Reference);
-  
-  std::array<dof_no_t, 4> dofIndices5;
-  std::array<dof_no_t, 4> dofIndices5Reference = {0, 1, 2, 3};
+
+  std::array<dof_no_t, 4> dofIndices5({0});
   FunctionSpaceType::getFaceDofs(Mesh::face_t::face2Minus, dofIndices5);  // 2-
+  std::array<dof_no_t, 4> dofIndices5Reference = {0, 1, 2, 3};
+  LOG(DEBUG) << "2-: " << dofIndices5;
   ASSERT_EQ(dofIndices5, dofIndices5Reference);
-  
-  std::array<dof_no_t, 4> dofIndices6;
-  std::array<dof_no_t, 4> dofIndices6Reference = {4, 5, 6, 7};
+
+  std::array<dof_no_t, 4> dofIndices6({0});
   FunctionSpaceType::getFaceDofs(Mesh::face_t::face2Plus, dofIndices6);  // 2+
+  std::array<dof_no_t, 4> dofIndices6Reference = {4, 5, 6, 7};
+  LOG(DEBUG) << "2+: " << dofIndices6;
   ASSERT_EQ(dofIndices6, dofIndices6Reference);
-  
-  
 }
 
 TEST(FaceTest, faceDofsQuadraticLagrange3D)
 { 
+  std::string pythonConfig = "config={}";
+  DihuContext settings(argc, argv, pythonConfig);
+
   typedef Mesh::UnstructuredDeformableOfDimension<3> MeshType;
   typedef BasisFunction::LagrangeOfOrder<2> BasisFunctionType;
   typedef FunctionSpace::FunctionSpace<MeshType, BasisFunctionType> FunctionSpaceType;
   
   std::array<dof_no_t, 9> dofIndices1;
-  std::array<dof_no_t, 9> dofIndices1Reference = {0, 3, 6, 9, 12, 15, 18, 21, 24};
   FunctionSpaceType::getFaceDofs(Mesh::face_t::face0Minus, dofIndices1);  // 0-
+  std::array<dof_no_t, 9> dofIndices1Reference = {0, 3, 6, 9, 12, 15, 18, 21, 24};
   ASSERT_EQ(dofIndices1, dofIndices1Reference);
   
   std::array<dof_no_t, 9> dofIndices2;
-  std::array<dof_no_t, 9> dofIndices2Reference = {2, 5, 8, 11, 14, 17, 20, 23, 26};
   FunctionSpaceType::getFaceDofs(Mesh::face_t::face0Plus, dofIndices2);  // 0+
+  std::array<dof_no_t, 9> dofIndices2Reference = {2, 5, 8, 11, 14, 17, 20, 23, 26};
   ASSERT_EQ(dofIndices2, dofIndices2Reference);
   
   std::array<dof_no_t, 9> dofIndices3;
-  std::array<dof_no_t, 9> dofIndices3Reference = {0, 1, 2, 9, 10, 11, 18, 19, 20};
   FunctionSpaceType::getFaceDofs(Mesh::face_t::face1Minus, dofIndices3);  // 1-
+  std::array<dof_no_t, 9> dofIndices3Reference = {0, 1, 2, 9, 10, 11, 18, 19, 20};
   ASSERT_EQ(dofIndices3, dofIndices3Reference);
   
   std::array<dof_no_t, 9> dofIndices4;
-  std::array<dof_no_t, 9> dofIndices4Reference = {6, 7, 8, 15, 16, 17, 24, 25, 26};
   FunctionSpaceType::getFaceDofs(Mesh::face_t::face1Plus, dofIndices4);  // 1+
+  std::array<dof_no_t, 9> dofIndices4Reference = {6, 7, 8, 15, 16, 17, 24, 25, 26};
   ASSERT_EQ(dofIndices4, dofIndices4Reference);
   
   std::array<dof_no_t, 9> dofIndices5;
-  std::array<dof_no_t, 9> dofIndices5Reference = {0, 1, 2, 3, 4, 5, 6, 7, 8};
   FunctionSpaceType::getFaceDofs(Mesh::face_t::face2Minus, dofIndices5);  // 2-
+  std::array<dof_no_t, 9> dofIndices5Reference = {0, 1, 2, 3, 4, 5, 6, 7, 8};
   ASSERT_EQ(dofIndices5, dofIndices5Reference);
   
   std::array<dof_no_t, 9> dofIndices6;
-  std::array<dof_no_t, 9> dofIndices6Reference = {18, 19, 20, 21, 22, 23, 24, 25, 26};
   FunctionSpaceType::getFaceDofs(Mesh::face_t::face2Plus, dofIndices6);  // 2+
+  std::array<dof_no_t, 9> dofIndices6Reference = {18, 19, 20, 21, 22, 23, 24, 25, 26};
   ASSERT_EQ(dofIndices6, dofIndices6Reference);
   
 }

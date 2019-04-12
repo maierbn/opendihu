@@ -482,6 +482,8 @@ applyInSystemMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> syst
       global_no_t boundaryConditionColumnDofNoGlobal = this->functionSpace_->meshPartition()->getDofNoGlobalPetsc(boundaryConditionColumnDofNoLocal);
       action[boundaryConditionColumnDofNoGlobal].first = boundaryConditionValue;
       action[boundaryConditionColumnDofNoGlobal].second.insert(rowDofNosGlobalPetsc.begin(), rowDofNosGlobalPetsc.end());
+
+      // do only store action, do not perform yet
       /*
       VLOG(1) << "  dof " << boundaryConditionColumnDofNoLocal << ", BC value: " << boundaryConditionValue;
       PetscInt columnNo = boundaryConditionColumnDofNoLocal;
@@ -505,6 +507,8 @@ applyInSystemMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> syst
 
   VLOG(1) << ownGhostElements_.size() << " ghost elements";
 
+  double debugValue = 0;
+
   // loop over ghost elements
   for (typename std::vector<GhostElement>::iterator ghostElementIter = ownGhostElements_.begin(); ghostElementIter != ownGhostElements_.end(); ghostElementIter++)
   {
@@ -524,24 +528,22 @@ applyInSystemMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> syst
     int i = 0;
     for (std::vector<global_no_t>::iterator columnDofIter = ghostElementIter->boundaryConditionDofsGlobalPetsc.begin(); columnDofIter != ghostElementIter->boundaryConditionDofsGlobalPetsc.end(); columnDofIter++, i++)
     {
-      PetscInt columnDof = *columnDofIter;
+      PetscInt columnDofNoGlobalPetsc = *columnDofIter;
       double boundaryConditionValue = ghostElementIter->boundaryConditionValues[i];
 
-      VLOG(1) << "  dof " << columnDof << " (global PETSc), BC value: " << boundaryConditionValue;
+      VLOG(1) << "  dof " << columnDofNoGlobalPetsc << " (global PETSc), BC value: " << boundaryConditionValue;
 
-      VLOG(1) << "systemMatrix->getValuesGlobalPetscIndexing(" << rowDofsGlobal << "," << columnDof << ")";
+      VLOG(1) << "systemMatrix->getValuesGlobalPetscIndexing(" << rowDofsGlobal << "," << columnDofNoGlobalPetsc << ")";
 
       // store the boundary condition value to action
-      global_no_t boundaryConditionColumnDofNoGlobal = columnDof;
+      global_no_t boundaryConditionColumnDofNoGlobal = columnDofNoGlobalPetsc;
       action[boundaryConditionColumnDofNoGlobal].first = boundaryConditionValue;
       action[boundaryConditionColumnDofNoGlobal].second.insert(rowDofsGlobal.begin(), rowDofsGlobal.end());
-      /*
 
+      // do only store action, do not perform yet
+/*
       std::vector<double> values(rowDofsGlobal.size());
-      systemMatrix->getValuesGlobalPetscIndexing(rowDofsGlobal.size(), rowDofsGlobal.data(), 1, &columnDof, values.data());
-
-
-
+      systemMatrix->getValuesGlobalPetscIndexing(rowDofsGlobal.size(), rowDofsGlobal.data(), 1, &columnDofNoGlobalPetsc, values.data());
 
       // scale values with -boundaryConditionValue
       for (double &v : values)
@@ -553,12 +555,31 @@ applyInSystemMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> syst
 
 
       // subtract values*boundaryConditionValue from boundaryConditionsRightHandSideSummand
-      boundaryConditionsRightHandSideSummand->setValues(rowDofsLocal, values, ADD_VALUES);*/
+      boundaryConditionsRightHandSideSummand->setValues(rowDofsLocal, values, ADD_VALUES);
+      */
     }
   }
 
   VLOG(1) << "actions: " << action;
   VLOG(1) << "rhs summand before: " << *boundaryConditionsRightHandSideSummand;
+
+  // debugging output
+  // std::map<global_no_t, std::pair<double, std::set<global_no_t>>> action; // map[columnNoGlobalPetsc] = <bc value, <rowNosGlobalPetsc>>
+#if 0
+  LOG(DEBUG) << "actions: ";
+  for (std::map<global_no_t, std::pair<double, std::set<global_no_t>>>::iterator actionIter = action.begin(); actionIter != action.end(); actionIter++)
+  {
+    PetscInt columnDofNoGlobalPetsc = actionIter->first;
+    double boundaryConditionValue = actionIter->second.first;
+
+    std::vector<PetscInt> rowDofNoGlobalPetsc(actionIter->second.second.begin(), actionIter->second.second.end());
+
+    if (actionIter->second.second.find(16) != actionIter->second.second.end())
+    {
+      LOG(DEBUG) << "rhs_{16} -= M_{16," << columnDofNoGlobalPetsc << "}*" << boundaryConditionValue;
+    }
+  }
+#endif
 
   // execute actions
   for (std::map<global_no_t, std::pair<double, std::set<global_no_t>>>::iterator actionIter = action.begin(); actionIter != action.end(); actionIter++)
@@ -581,6 +602,20 @@ applyInSystemMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> syst
 
     VLOG(1) << "system matrix, col " << columnDofNoGlobalPetsc << ", rows " << rowDofNoGlobalPetsc << ", values: " << values;
 
+    // debugging output
+#if 0
+    int jj = 0;
+    for (std::vector<PetscInt>::iterator rowDofNosLocalIter = rowDofNosLocal.begin(); rowDofNosLocalIter != rowDofNosLocal.end(); rowDofNosLocalIter++, jj++)
+    {
+      if (rowDofNoGlobalPetsc[jj] == 16)
+      {
+        LOG(DEBUG) << "rhs_{16} -= M_{16," << columnDofNoGlobalPetsc << "}*" << boundaryConditionValue << " = " << values[jj] << "*" << boundaryConditionValue
+           << " = " <<  values[jj]*boundaryConditionValue;
+        debugValue -= values[jj]*boundaryConditionValue;
+      }
+    }
+#endif
+
     // scale values with -boundaryConditionValue
     for (double &v : values)
     {
@@ -595,7 +630,10 @@ applyInSystemMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> syst
     VLOG(1) << " after set values at " << rowDofNosLocal << ": " << *boundaryConditionsRightHandSideSummand;
   }
 
+  LOG(DEBUG) << "sum: " << debugValue;
+  LOG(DEBUG) << "rhs summand afterwards: " << *boundaryConditionsRightHandSideSummand;
   VLOG(1) << "rhs summand afterwards: " << *boundaryConditionsRightHandSideSummand;
+
 
   /*
   struct GhostElement
@@ -622,6 +660,9 @@ applyInRightHandSide(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceT
 {
   //LOG(TRACE) << "DirichletBoundaryConditionsBase::applyInRightHandSide";
 
+  LOG(DEBUG) << "applyInRightHandSide: rightHandSide=" << *rightHandSide;
+  LOG(DEBUG) << "boundaryConditionsRightHandSideSummand=" << *boundaryConditionsRightHandSideSummand;
+
   if (rightHandSide != boundaryConditionsRightHandSideSummand)
   {
     // set rhs += summand, where summand is the helper variable boundaryConditionsRightHandSideSummand
@@ -629,9 +670,14 @@ applyInRightHandSide(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceT
     ierr = VecAXPY(rightHandSide->valuesGlobal(), 1, boundaryConditionsRightHandSideSummand->valuesGlobal()); CHKERRV(ierr);
   }
 
+  LOG(DEBUG) << "rightHandSide after update summand: " << *rightHandSide;
+
   // set boundary condition dofs to prescribed values, only non-ghost dofs
   rightHandSide->setValues(this->boundaryConditionNonGhostDofLocalNos_,
                           this->boundaryConditionValues_, INSERT_VALUES);
+
+
+  LOG(DEBUG) << "rightHandSide after set values: " << *rightHandSide;
 }
 
 

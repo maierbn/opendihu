@@ -34,6 +34,7 @@ advanceTimeSpan()
   Vec &redSolution = this->data().solution()->valuesGlobal();
   
   Mat &basis = this->dataMOR_->basis()->valuesGlobal();
+  //Mat &basisTransp = this->dataMOR_->basisTransp()->valuesGlobal();
   
   // loop over time steps
   double currentTime = this->startTime_;
@@ -49,31 +50,22 @@ advanceTimeSpan()
     timeStepNo++;
     currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;   
     
-    VLOG(1) << "starting from solution: " << *this->fullTimestepping_.data().solution();                   
+    // transfer to full-order space
+    this->MatMultFull(basis,redSolution,solution);
+    
+    VLOG(1) << "starting from solution: " << *this->fullTimestepping_.data().solution();    
     
     // adjust the full-order rhs vector such that boundary conditions are satisfied
-    this->fullTimestepping_.dirichletBoundaryConditions()->applyInRightHandSide(this->fullTimestepping_.data().solution(), this->fullTimestepping_.dataImplicit().boundaryConditionsRightHandSideSummand());
+    //this->fullTimestepping_.dirichletBoundaryConditions()->applyInRightHandSide(this->fullTimestepping_.data().solution(), this->fullTimestepping_.dataImplicit().boundaryConditionsRightHandSideSummand());    
+    // In case, the solution is changed after applying the boundary condition
+    //this->MatMultReduced(basisTransp, this->fullTimestepping_.data().solution()->valuesGlobal(), redSolution);      
     
     // advance computed value
     // solve A_R*z^{t+1} = z^{t} for z^{t+1} where A_R is the reduced system matrix, solveLinearSystem(b,x)
-    this->solveLinearSystem(redSolution, redSolution);
-    
-    /*
-     PetscInt vec_sz;
-     PetscScalar val;
-     
-     VecGetSize(redSolution,&vec_sz);
-     std::cout << "vec_sz in ReducedOrderImplicitEuler: " << vec_sz;
-     
-     for(int i=0; i< vec_sz; i++)
-     {
-      VecGetValues(redSolution,1,&i,&val);
-      LOG(DEBUG) << "redSolution[" << i << "]: " << val;
-     }
-    */
+    this->solveLinearSystem(redSolution, redSolution);       
     
     // transfer to full-order space
-    this->MatMultFull(basis,redSolution,solution);       
+    this->MatMultFull(basis,redSolution,solution);          
     
     VLOG(1) << "solution after integration: " << *this->fullTimestepping_.data().solution();
     

@@ -84,11 +84,11 @@ createPetscObjects()
 {
   LOG(TRACE) << "FiniteElements::createPetscObjects";
 
+  assert(this->functionSpace_);
+
   // get the partitioning from the function space
   std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> meshPartition = this->functionSpace_->meshPartition();
   
-  assert(this->functionSpace_);
-
   // create field variables on local partition
   this->rhs_ = this->functionSpace_->template createFieldVariable<1>("rhs");
   this->solution_ = this->functionSpace_->template createFieldVariable<1>("solution");
@@ -148,7 +148,6 @@ template<typename FunctionSpaceType>
 typename FiniteElementsBase<FunctionSpaceType>::TransferableSolutionDataType FiniteElementsBase<FunctionSpaceType>::
 getSolutionForTransfer()
 {
-  LOG(INFO) << "retutrn FiniteElementsBase solution";
   return this->solution_;
 }
 

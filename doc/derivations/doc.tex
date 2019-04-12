@@ -2001,6 +2001,63 @@ According to Holzapfel \cite{holzapfel2000nonlinear} the required quantities are
   \end{array}
 \end{equation*}
 
+\subsubsection{Linear elasticity}
+For linear elasticity we have $\bfx \approx \bfX$ and
+\begin{equation*}
+  \begin{array}{lll}
+    \bfK \,\bfu = \bff
+  \end{array}
+\end{equation*}
+with right hand side
+\begin{equation*}
+  \begin{array}{lll}
+    \bff = \ds\int_{∂Ω}\bar{T}_a\,δu_a^L\,\phi_L\,\d s
+  \end{array}
+\end{equation*}
+and stiffness matrix
+\begin{equation*}
+  \begin{array}{lll}
+    \bfK = \ds\int_{Ω} \bfsigma : δ\bfeps \, \d \bfx
+  \end{array}
+\end{equation*}
+where $\bfsigma = \mathbb{C} : \bfeps$ with
+\begin{equation*}
+  \begin{array}{lll}
+    \mathbb{C}_{abcd} = K\,δ_{ab}\,δ_{cd} + μ\,(δ_{ac}\,δ_{bd} + δ_{ad}\,δ_{bc} - \dfrac23 δ_{ab}\,δ_{cd}),
+  \end{array}
+\end{equation*}
+with bulk modulus $K$ and shear modulus $μ$.
+Discretization
+\begin{equation*}
+  \begin{array}{lll}
+    \bfu_{a}(\bfx) = u_a^M\,\phi^M(\bfx)\\[4mm]
+    \p{\bfu_{a}(\bfx)}{x_b} = u_a^M\,\p{\phi^M(\bfx)}{x_b}
+  \end{array}
+\end{equation*}
+Strain $\bfeps$ is computed linearly from displacements: 
+\begin{equation*}
+  \begin{array}{lll}
+    \bfeps_{ab}(\bfx) = \dfrac12\left(\p{\bfu_{(b)}(\bfx)}{x_{(a)}} + \p{\bfu_{(a)}(\bfx)}{x_{(b)}}\right) = \dfrac12\left(u_{(b)}^L\,\p{\phi^L(\bfx)}{x_{(a)}} + u_{(a)}^M\,\p{\phi^M(\bfx)}{x_{(b)}}\right)
+  \end{array}
+\end{equation*}
+This results in
+\begin{equation*}
+  \begin{array}{lll}
+    \bfK\,\bfu &= δ\bfeps_{ab}(\bfx):\mathbb{C}_{abcd}:\bfeps_{cd}(\bfx) \\[4mm]
+    &= \mathbb{C}_{abcd}\,\dfrac12\left(δu_{(d)}^L\,\p{\phi^L(\bfx)}{x_{(c)}} + δu_{(c)}^M\,\p{\phi^M(\bfx)}{x_{(d)}}\right)\, \dfrac12\left(u_{(b)}^N\,\p{\phi^N(\bfx)}{x_{(a)}} + u_{(a)}^O\,\p{\phi^O(\bfx)}{x_{(b)}}\right)\\[4mm]
+    &= \dfrac14 \mathbb{C}_{abcd}\,\Big(
+    δu_{(d)}^L\,u_{(b)}^N\,\p{\phi^L(\bfx)}{x_{(c)}}\p{\phi^N(\bfx)}{x_{(a)}}
+    + δu_{(d)}^L\,u_{(a)}^O\,\p{\phi^L(\bfx)}{x_{(c)}}\p{\phi^O(\bfx)}{x_{(b)}}\\[4mm]
+    & + δu_{(c)}^M\,u_{(b)}^N\,\p{\phi^M(\bfx)}{x_{(d)}}\p{\phi^N(\bfx)}{x_{(a)}}
+    + δu_{(c)}^M\,u_{(a)}^O\,\p{\phi^M(\bfx)}{x_{(d)}}\p{\phi^O(\bfx)}{x_{(b)}}\Big)
+  \end{array}
+\end{equation*}
+%\begin{equation*}
+%  \begin{array}{lll}
+%    \bfK_{LM} = \ds\int_{Ω} \mathbb{C}_{abcd} \,\dfrac12\left(\p{\phi^{(M)}_{d}}{x_{c}} + \p{\phi^{(M)}_{c}}{x_{d}}\right) \dfrac12\left(\p{\phi^{(L)}_{b}}{x_{a}} + \p{\phi^{(L)}_{a}}{x_{b}}\right)  \d \bfx
+%  \end{array}
+%\end{equation*}
+
 \subsubsection{Handling of Dirichlet boundary conditions}
 %
 The Newton algorithm to solve the nonlinear equation $f(\bfx) = \bfb$ for $\bfx$ with respect to Dirichlet boundary conditions $\bfx_{i} = \bfx_{0i}$ for $i \in \mathcal{I}$ can be summarized as follows:

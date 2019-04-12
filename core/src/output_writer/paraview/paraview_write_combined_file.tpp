@@ -29,7 +29,7 @@ void Paraview::writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, con
   if (binaryOutput_)
   {
     VLOG(1) << "Paraview::writeCombinedValuesVector, " << values.size() << " values: " << values;
-    LOG(DEBUG) << "rankSubset: " << *this->rankSubset_;
+    VLOG(1) << "rankSubset: " << *this->rankSubset_;
 
     int localValuesSize = values.size() * sizeof(float);  // number of bytes
     int nLocalValues = values.size() + (ownRankNo == 0? 1 : 0);
@@ -756,8 +756,6 @@ void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType 
         polyDataPropertiesForMesh.pointDataArrays.push_back(std::pair<std::string,int>("partitioning", 1));
       }
 
-      LOG(DEBUG) << "polyDataPropertiesForMesh B: " << polyDataPropertiesForMesh;
-
       // determine filename, broadcast from rank 0
       std::stringstream filename;
       filename << this->filenameBaseWithNo_ << ".vtu";
@@ -806,28 +804,25 @@ void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType 
       std::vector<node_no_t> &nNodesLocalWithGhosts = polyDataPropertiesForMesh.nNodesLocalWithGhosts;
       assert(nNodesLocalWithGhosts.size() == 3);
 
-      LOG(DEBUG) << "polyDataPropertiesForMesh C: " << polyDataPropertiesForMesh;
-
       // get local data values
       // setup connectivity array, which gives the node numbers for every element/cell
       std::vector<int> connectivityValues(8*polyDataPropertiesForMesh.nCellsLocal);
 
-      LOG(DEBUG) << "n connectivity values from unstructured: " << polyDataPropertiesForMesh.unstructuredMeshConnectivityValues.size();
-      LOG(DEBUG) << "nCellsLocal: " << polyDataPropertiesForMesh.nCellsLocal;
+      VLOG(1) << "n connectivity values from unstructured: " << polyDataPropertiesForMesh.unstructuredMeshConnectivityValues.size();
+      VLOG(1) << "nCellsLocal: " << polyDataPropertiesForMesh.nCellsLocal;
 
       if (!polyDataPropertiesForMesh.unstructuredMeshConnectivityValues.empty())
       {
         // if connectivity values are already explicitly given, this is the case if we have an unstructured mesh to output
         assert(polyDataPropertiesForMesh.unstructuredMeshConnectivityValues.size() == connectivityValues.size());
-        LOG(DEBUG) << "connectivityValues is initialized to " << connectivityValues.size() << ", values: " << connectivityValues;
-        LOG(DEBUG) << "now copy " << polyDataPropertiesForMesh.unstructuredMeshConnectivityValues.size() << ", values: " << polyDataPropertiesForMesh.unstructuredMeshConnectivityValues;
+
+        VLOG(1) << "connectivityValues is initialized to " << connectivityValues.size() << ", values: " << connectivityValues;
+        VLOG(1) << "now copy " << polyDataPropertiesForMesh.unstructuredMeshConnectivityValues.size() << ", values: " << polyDataPropertiesForMesh.unstructuredMeshConnectivityValues;
         std::copy(polyDataPropertiesForMesh.unstructuredMeshConnectivityValues.begin(), polyDataPropertiesForMesh.unstructuredMeshConnectivityValues.end(), connectivityValues.begin());
       }
       else
       {
         // for structured meshes create connectivity values
-
-      LOG(DEBUG) << "polyDataPropertiesForMesh D: " << polyDataPropertiesForMesh;
 
         element_no_t elementIndex = 0;
         for (int indexZ = 0; indexZ < nNodesLocalWithGhosts[2]-1; indexZ++)
@@ -872,9 +867,9 @@ void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType 
         }
       }
 
-      LOG(DEBUG) << "nPointsPreviousRanks3D_: " << nPointsPreviousRanks3D_;
-      LOG(DEBUG) << "nNodesLocalWithGhosts: " << nNodesLocalWithGhosts[0]-1 << "x" << nNodesLocalWithGhosts[1]-1 << "x" << nNodesLocalWithGhosts[2]-1;
-      LOG(DEBUG) << "connectivity: " << connectivityValues;
+      VLOG(1) << "nPointsPreviousRanks3D_: " << nPointsPreviousRanks3D_;
+      VLOG(1) << "nNodesLocalWithGhosts: " << nNodesLocalWithGhosts[0]-1 << "x" << nNodesLocalWithGhosts[1]-1 << "x" << nNodesLocalWithGhosts[2]-1;
+      VLOG(1) << "connectivity: " << connectivityValues;
 
       // setup offset array
       std::vector<int> offsetValues(polyDataPropertiesForMesh.nCellsLocal);
@@ -913,7 +908,7 @@ void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType 
       std::vector<double> geometryFieldValues;
       ParaviewLoopOverTuple::loopGetGeometryFieldNodalValues<OutputFieldVariablesType>(fieldVariables, currentMeshName, geometryFieldValues);
 
-      LOG(DEBUG) << "currentMeshName: " << currentMeshName << ", rank " << this->rankSubset_->ownRankNo() << ", n geometryFieldValues: " << geometryFieldValues.size();
+      VLOG(1) << "currentMeshName: " << currentMeshName << ", rank " << this->rankSubset_->ownRankNo() << ", n geometryFieldValues: " << geometryFieldValues.size();
       if (geometryFieldValues.size() == 0)
       {
         LOG(FATAL) << "There is no geometry field. You have to provide a geomteryField in the field variables returned by getOutputFieldVariables!";

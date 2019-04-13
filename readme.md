@@ -139,7 +139,7 @@ to rebuild petsc, even if it was already detected. The same options that can be 
 * There will be executables created in the `build_debug` or `build_release` subdirectories. Change into one of these directories and run the program with a settings file as only argument: 
    ```
   ./laplace_regular settings_lagrange_quadratic.py
-  ```.
+  ```
 * Output files in this example (and likewise in the other examples) will be created under the `out` subdirectory. If you look into `out`, you'll find two files: `laplace.py` and `laplace.vtr`.
  
   The `*.vtr` files can be visualized using Paraview. The `*.py` files can be visualized using the plot script in `opendihu/scripts`. 

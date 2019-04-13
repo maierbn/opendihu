@@ -2,18 +2,18 @@
 [![CodeFactor](https://www.codefactor.io/repository/github/maierbn/opendihu/badge/develop)](https://www.codefactor.io/repository/github/maierbn/opendihu/overview/develop)
 
 # Overview
-Opendihu is a software framework solves static and dynamic multi-physics problems, spatially discretized in 1D, 2D and 3D by the finite element method.
+Opendihu is a software framework that solves static and dynamic multi-physics problems, spatially discretized in 1D, 2D and 3D by the finite element method.
 Our core design goals are usability, performance and extensibility.
 
-Usability refers to the process of configuring a given simulation with the python interface, running variants of the simulation and producing output in different file formats. Because of the contained python interpreter reconfiguration is possible at runtime. 
+Good usability refers to the process of configuring a given simulation with the python interface, running variants of the simulation and producing output in helpful file formats. Because of the contained python interpreter reconfiguration is possible at runtime. 
 
-The performance goal is satisfied within the C++ core implementation. The data structures avoid expensive data copy and allow for vectorization. All structured grid functionality is designed for parallel execution. The code was successfully run on 27,000 cores on the supercomputer "Hazel Hen" in Stuttgart.
+The performance goal is satisfied within the C++ core implementation. The data structures avoid expensive data copy and allow for vectorization. All structured grid functionality is designed for parallel execution. We closely build on the parallely efficient [PETSc](https://www.mcs.anl.gov/petsc/) library without overhead. The code was successfully run on 27,000 cores on the supercomputer "Hazel Hen" in Stuttgart.
 
-The framework is extensible to future models. It provides infrastructure to store and manipulate scalar and vector fields, handle input and output, assemble system matrices and interface various PETSc solvers. For example, there is support for CellML, a format for interchanging systems of ordinary equations. 
+The framework is extensible to future models. It provides infrastructure to store and manipulate scalar and vector fields, handle input and output, assemble system matrices and interface various PETSc solvers. For example, there is support for [CellML](https://www.cellml.org/), a format for interchanging systems of ordinary equations. 
 The framework and its applications are constantly extended. However, there are stable releases.
 
 # Installation
-Opendihu is built upon successful, existing open-source projects, like PETSc, Python, Easylogging++, etc. This means that an installation has to provide all these packages, too. 
+Opendihu is built upon existing, successful open-source projects, like PETSc, Python, Easylogging++, etc. This means that an installation has to provide all these packages, too. 
 We include a build system that automatically downloads and builds all needed dependencies. It was successfully tested on Ubuntu 16.04, 18.04 and Debian as well as on the supercomputer Hazel Hen. It should work on other Linux distributions as well. If something fails, usually minor adjustments in the configuration solve the problem.
 
 For users that only want to quickly check the functionality without a lengthy installation process, we provide a docker image of opendihu. This serves all the available functionality, except that parallel execution in docker containers is generally hardly possible. Because this is key to efficiently computing simulations, we recommend the native installation.
@@ -62,7 +62,7 @@ The scons build system needs python2.7. Make sure that the command `python2.7` s
 All other needed dependencies are handled by the `scons` build system. For each dependency you can either specify the path of its installation, if it is already present on your system or do not specify anything and let the build system download, build and install it on its own.
 Note that python3 with numpy, scipy and matplotlib is such a dependency. Opendihu will download and install python3 and these packages.
 
-The installation procedure is later started by the command `scons BUILD_TYPE=debug` for debug build or simply `scons` for release build. There is also a `Makefile` with the default target building debug mode and then release mode. So the recommended way of the first installation is by running
+The installation procedure is later started by the command `scons BUILD_TYPE=debug` for debug build or simply `scons` for release build. There is also a `Makefile` with the default target building debug mode and then release mode. Thus, the recommended way of the first installation is by running
 ```
 make
 ```
@@ -75,40 +75,43 @@ For every dependency package there are variables like
 #PETSC_DOWNLOAD=True
 #PETSC_DIR="~/petsc/install"
 ```
-(Note, `#` means commented out). The first line one would instruct the build system to download and build the package, in this case PETSc, the second line would provide the path to an already existing installation on the system, which would be used. So specify either of those. There are similar options for all packages. You can read about more possibilities in the header of the `user-variables.scons.py` file. 
+(Note, `#` means commented out here, because you shouldn't specify both lines at once). The first line would instruct the build system to download and build the package, in this case PETSc. The second line would provide the path to an already existing installation on the system, which would then be used. Thus, specify either of those. 
 
-The required dependencies, that need to be present in order for opendihu to work, are:
-  Package | Required | Description
-  --------|----------|------------
-  `MPI`   | yes      | *Message Passing Interface*, used for data transfer between processes. This should be your system MPI, if you let opendihu install it for you, [*OpenMPI*](https://www.open-mpi.org/) will chosen.
-  `LAPACK`,`BLAS` | yes | Parallel linear algebra functions, this is a prerequisite to *PETSc*. Opendihu will install [*OpenBLAS*](https://github.com/xianyi/OpenBLAS/wiki).
-  `PETSc` | yes      | Low-level data structures and solvers, see their [website](https://www.mcs.anl.gov/petsc/) for more details.
-  `Python3` | yes    | The [python interpreter](https://www.python.org/), version 3.6.5. We need the development header and source files, therefore it is recommended to let opendihu build python for you, even if your system has python installed.
-  `pythonPackages` | yes  | This is a custom collection of python packages for the python 3 interpreter, that are later available in the python configuration scripts. It consists of `numpy matplotlib scipy numpy-stl svg.path triangle`.
-  [`Easylogging++`](https://github.com/zuhd-org/easyloggingpp) | yes | The used logging library. By default, logs are created in `/tmp/logs/` and output to the standard output.
-  [`Base64`](https://github.com/tkislan/base64) | yes   | An encoding standard and library that is used to create binary VTK output files that can be viewed in Paraview. Base64 encoded data is ASCII characters, the size is 4/3 of the raw binary data. The advantage is that is packed and can be embedded in human-readable `XML` files, which is the concept of VTK files.
-  [`googletest`](https://github.com/google/googletest) | no   | A testing framework, used for unit tests. Opendihu obviously compiles also without unit tests, but it is recommended to have them, especially when developing within the core.
-  [`SEMT`](https://github.com/maierbn/semt) | no     | This is a small C++ symbolic differentiation toolbox that will be used for nonlinear solid mechanics, to derive material laws.
-  [`ADIOS2`](https://adios2.readthedocs.io/en/latest) | no | Binary output file format and library, parallely efficient and self-descriptive. This only installs, if you have a very recent version of `cmake`. It is no problem, if this fails to install as most users won't need it. It is needed for interfacing `MegaMol`.
-  [`MegaMol`](https://megamol.org/) | no    | The parallel visualization framework developed at VISUS, Uni Stuttgart. This installs the official version. To interface with opendihu, you would need a version that is not yet released. Therefore it is fine, if this is not installed.
+There are similar options for all packages. You can read about more possibilities in the header of the `user-variables.scons.py` file. 
+
+The required dependencies that need to be present in order for opendihu to work, are:
+
+| Package | Required | Description |
+| --------|----------|------------ |
+| `MPI`   | yes      | *Message Passing Interface*, used for data transfer between processes. This should be your system MPI, if you let opendihu install it for you, [*OpenMPI*](https://www.open-mpi.org/) will chosen. |
+| `LAPACK`,`BLAS` | yes | Parallel linear algebra functions, this is a prerequisite to *PETSc*. Opendihu will install [*OpenBLAS*](https://github.com/xianyi/OpenBLAS/wiki). |
+| `PETSc` | yes      | Low-level data structures and solvers, see their [website](https://www.mcs.anl.gov/petsc/) for more details. |
+| `Python3` | yes    | The [python interpreter](https://www.python.org/), version 3.6.5. We need the development header and source files, therefore it is recommended to let opendihu build python for you, even if your system has python installed. |
+| `pythonPackages` | yes  | This is a custom collection of python packages for the python 3 interpreter, that are later available in the python configuration scripts. It consists of `numpy matplotlib scipy numpy-stl svg.path triangle`. |
+| [`Easylogging++`](https://github.com/zuhd-org/easyloggingpp) | yes | The used logging library. By default, logs are created in `/tmp/logs/` and output to the standard output. |
+| [`Base64`](https://github.com/tkislan/base64) | yes   | An encoding standard and library that is used to create binary VTK output files that can be viewed in Paraview. Base64 encoded data is ASCII characters, the size is 4/3 of the raw binary data. The advantage is that is packed and can be embedded in human-readable `XML` files, which is the concept of VTK files. |
+| [`googletest`](https://github.com/google/googletest) | no   | A testing framework, used for unit tests. Opendihu obviously compiles also without unit tests, but it is recomme*nded to have them, especially when developing within the core. |
+| [`SEMT`](https://github.com/maierbn/semt) | no     | This is a small C++ symbolic differentiation toolbox that will be used for nonlinear solid mechanics, to derive material laws. |
+| [`ADIOS2`](https://adios2.readthedocs.io/en/latest) | no | Binary output file format and library, parallely efficient and self-descriptive. This only installs, if you have a very recent version of `cmake`. It is no problem, if this fails to install as most users won't need it. It is needed for interfacing `MegaMol`. |
+| [`MegaMol`](https://megamol.org/) | no    | The parallel visualization framework developed at VISUS, Uni Stuttgart. This installs the official version. To interface with opendihu, you would need a version that is not yet released. Therefore it is fine, if this is not installed. |
 
 It is recommended to not let the build system download and build `MPI`, instead you should use your local MPI installation. 
 * On Ubuntu systems, the system MPI directory should already be set correctly by the default value in `user-variables.scons.py`. Now run `make` to see, if MPI will be found.
 * If the MPI location is not detected automatically, you have to specifiy the path. Find out in which path on your system MPI is installed. The required directory contains a `lib` and an `include` subdirectory. It may be located at `/usr/lib/openmpi`, `/usr/lib/mpich`, `/usr/lib/x86_64-linux-gnu/openmpi` or similar.
 * Set this path in `user-variables.scons.py` as value of the variable `MPI_DIR`.
 
-When running `make`, `make debug` or `make release`, the dependencies will be downloaded and installed, and then the debug or release target will be build
+When running `make`, `make debug` or `make release`, the dependencies will be downloaded and installed, and then the debug or release target will be build.
 The installation of dependencies takes several hours. The compilation afterwards completes in some minutes. 
-* If something fails, read the `config.log` file, that will be created. It contains information about the build process. Sometimes it helps to delete the folder of a package in the `dependencies` subdirectory and retry the installation. 
+* If something fails, read the `config.log` file, which will be created. It contains information about the build process. Sometimes it helps to delete the folder of a package in the `dependencies` subdirectory and retry the installation. 
 * The dependencies that were installed successfully will be detected the next time and not installed again. You can force to rebuild selected packages by the `..._REBUILD` option, e.g.
-```
-scons PETSC_REBUILD=True
-```
+  ```
+  scons PETSC_REBUILD=True
+  ```
 to rebuild petsc, even if it was already detected. The same options that can be specified in the `user-variables.scons.py` file can also be given like this on the command line.
 * To also download the package and then install it again, use the `..._REDOWNLOAD` option, like
-```
-scons PETSC_REDOWNLOAD=True
-```
+  ```
+  scons PETSC_REDOWNLOAD=True
+  ```
 * If you call scons directly (instead of using the `make` wrapper), you can either install it on your system or use the scons, that comes with opendihu. It is located in `dependencies/scons/scons.py`. It needs to be run with python 2.7 (not python3). Then it might be useful to define an alias. If you like, you can copy the following to your `~/.bashrc` or `~/.bash_aliases` file:
 ```
 alias scons='<your path>/opendihu/dependencies/scons/scons.py'

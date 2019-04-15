@@ -428,7 +428,8 @@ class Package(object):
     
     # add directory from environment variable "OPENDIHU_HOME"
     if os.environ.get('OPENDIHU_HOME') is not None:
-      dependencies_dir_candidates = [os.path.join(os.environ.get('OPENDIHU_HOME'),'dependencies')] + dependencies_dir_candidates
+      if os.environ.get('OPENDIHU_HOME') != "":
+        dependencies_dir_candidates = [os.path.join(os.environ.get('OPENDIHU_HOME'),'dependencies')] + dependencies_dir_candidates
     
     dependencies_dir = os.path.join(os.getcwd(),'dependencies')
     for directory in dependencies_dir_candidates:

@@ -21,9 +21,9 @@ For users that only want to quickly check the functionality without a lengthy in
 ## Using docker
 Using the docker image you can use the framework directly without having to build and install any dependencies. First install [docker](https://docs.docker.com/install/linux/docker-ce/ubuntu/). Then, start a shell inside the container by the following command:
 ```
-docker run -it maierbn/opendihu_system_testing:latest bash
+docker run -it maierbn/opendihu:latest bash
 ```
-In the container, run `git pull` and `make` to get and compile the latest code.
+In the container, run `cd opendihu`, `git pull` and `make` to get and compile the latest code.
 
 ## Native installation
 In order to use the code for development or for more efficient runs, it is necessary to clone the present repository locally and build and install the framework including all dependencies.

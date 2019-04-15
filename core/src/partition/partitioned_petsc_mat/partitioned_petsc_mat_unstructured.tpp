@@ -245,10 +245,6 @@ void PartitionedPetscMat<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformab
 output(std::ostream &stream) const
 {
   // this method gets all values and outputs them to stream
-  PetscMPIInt ownRankNo, nRanks;
-  MPI_Comm_rank(this->meshPartitionRows_->mpiCommunicator(), &ownRankNo);
-  MPI_Comm_size(this->meshPartitionRows_->mpiCommunicator(), &nRanks);
-  
   // get global size of matrix 
   int nRows, nColumns;
   PetscErrorCode ierr;

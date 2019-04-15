@@ -36,7 +36,7 @@ outputExelem(std::ostream &stream, OutputFieldVariablesType fieldVariables, std:
    Nodes:
            1           2           4           5
 */
-  for(element_no_t elementGlobalNo = 0; elementGlobalNo < nElements; elementGlobalNo++)
+  for (element_no_t elementGlobalNo = 0; elementGlobalNo < nElements; elementGlobalNo++)
   {
     stream << " Element:            " << elementGlobalNo+1 << " 0 0" << std::endl
       << "   Nodes:" << std::endl;
@@ -110,4 +110,4 @@ outputExnode(std::ostream &stream, OutputFieldVariablesType fieldVariables, std:
 }
 
 
-};  //namespace
+}  // namespace

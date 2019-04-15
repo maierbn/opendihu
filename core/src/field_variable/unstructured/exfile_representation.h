@@ -48,4 +48,4 @@ private:
 // output operator
 std::ostream &operator<<(std::ostream &stream, const ExfileRepresentation &rhs);
 
-};  // namespace
+} // namespace

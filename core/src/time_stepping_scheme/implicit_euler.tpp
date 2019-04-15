@@ -35,7 +35,7 @@ void ImplicitEuler<DiscretizableInTimeType>::advanceTimeSpan()
   // loop over time steps
   double currentTime = this->startTime_;
   
-  for(int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
+  for (int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
   {
     if (timeStepNo % this->timeStepOutputInterval_ == 0 && timeStepNo > 0)
     {
@@ -57,7 +57,10 @@ void ImplicitEuler<DiscretizableInTimeType>::advanceTimeSpan()
     // solve A*u^{t+1} = u^{t} for u^{t+1} where A is the system matrix, solveLinearSystem(b,x)
     this->solveLinearSystem(solution, solution);
     
-    VLOG(1) << "new solution: " << *this->data_->solution();
+    if (VLOG_IS_ON(1))
+    {
+      VLOG(1) << "new solution: " << *this->data_->solution();
+    }
 
     // stop duration measurement
     if (this->durationLogKey_ != "")
@@ -104,7 +107,7 @@ setSystemMatrix(double timeStepWidth)
   
   this->dataImplicit_->systemMatrix()->assembly(MAT_FINAL_ASSEMBLY);
   
-  VLOG(1) << *this->dataImplicit_->systemMatrix();
+  //VLOG(1) << *this->dataImplicit_->systemMatrix();
 }
 
-} // namespace TimegSteppingScheme
+} // namespace TimeSteppingScheme

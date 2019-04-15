@@ -28,7 +28,8 @@ void Exfile::outputComFile()
   s <<filenameBase_<< ".com";
   std::string filenameCom = s.str();
   // open file
-  std::ofstream file = openFile(filenameCom);
+  std::ofstream file;
+  openFile(file, filenameCom);
 
   // filename without path
   std::string basename = filenameBase_;
@@ -47,7 +48,7 @@ void Exfile::outputComFile()
     << "# run by cmgui " << basename << ".com" << std::endl << std::endl;
   file << "# read files" << std::endl;
 
-  std::string sphereSize = PythonUtility::getOptionString(this->specificSettings_, "sphereSize", "0.005*0.005*0.01");
+  std::string sphereSize = this->specificSettings_.getOptionString("sphereSize", "0.005*0.005*0.01");
   
   std::string lastMeshName;
   int lastDimensionality = 3;
@@ -125,4 +126,4 @@ void Exfile::outputComFile()
   LOG(INFO) << "File \"" << filenameCom << "\" written.";
 }
 
-};
+}  // namespace

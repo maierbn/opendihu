@@ -47,6 +47,46 @@ double parseNumber(std::string::iterator &iterFileContents, std::string::iterato
   return number;
 }
 
+void removeVaryingContent(std::string &contents)
+{
+  // in paraview output files there is always a comment "<!-- ... -->" with varying content like timestamp. It is different each
+  // run, therefore you cannot compare it to reference values. This functions removes this contents.
+  while(contents.find("<!--") != std::string::npos)
+  {
+    std::size_t pos0 = contents.find("<!--");
+    std::size_t pos1 = contents.find("-->", pos0);
+    contents = contents.substr(0, pos0) + contents.substr(pos1+3);
+  }
+
+  // also remove timestamp and meta information in python files
+  // example: {"version": "opendihu 0.1, build Jan 18 2019 20:51:36, C++ 201402, GCC 7.3.0", "meta": "current time: 2019/01/18 20:57:17, hostname: lapsgs05, n ranks: 4", "meshType" ...
+
+  while(contents.find("\"version") != std::string::npos)
+  {
+    std::size_t pos = contents.find("\"version") + 1;
+    std::size_t startPos = pos;
+    for (int i = 0; i < 7; i++)
+    {
+      pos = contents.find("\"", pos)+1;
+    }
+    pos = contents.find(",", pos)+1;
+    pos = contents.find("\"", pos);
+    contents = contents.substr(0, startPos-1) + contents.substr(pos);
+  }
+  while(contents.find("'version") != std::string::npos)
+  {
+    std::size_t pos = contents.find("'version") + 1;
+    std::size_t startPos = pos;
+    for (int i = 0; i < 7; i++)
+    {
+      pos = contents.find("'", pos)+1;
+    }
+    pos = contents.find(",", pos)+1;
+    pos = contents.find("'", pos);
+    contents = contents.substr(0, startPos-1) + contents.substr(pos);
+  }
+}
+
 void assertFileMatchesContent(std::string filename, std::string referenceContents, std::string referenceContents2)
 {
   // read in generated exnode file 
@@ -73,7 +113,12 @@ void assertFileMatchesContent(std::string filename, std::string referenceContent
   
   // read in file contents
   file.read(&fileContents[0], fileSize);
-  
+
+  // remove parts of the contents that are dependend from version or time
+  removeVaryingContent(fileContents);
+  removeVaryingContent(referenceContents);
+  removeVaryingContent(referenceContents2);
+
   bool referenceContentMatches = true;
   bool referenceContent2Matches = true;
   std::stringstream msg;
@@ -97,7 +142,7 @@ void assertFileMatchesContent(std::string filename, std::string referenceContent
     {
       if(*iterFileContents != *iterReferenceContents)
       {
-        msg << "mismatch at character file: [" << *iterFileContents << "] != reference: [" << *iterReferenceContents << "], pos: " << std::distance(fileContents.begin(),iterFileContents);
+        msg << "mismatch at character, file: [" << *iterFileContents << "] != reference: [" << *iterReferenceContents << "], pos: " << std::distance(fileContents.begin(),iterFileContents) << " ";
         referenceContentMatches = false;
         //VLOG(1) << "mismatch!";
       }
@@ -177,14 +222,14 @@ void assertParallelEqualsSerialOutputFiles(std::vector<std::string> &outputFiles
 
   // prepare command line arguments
   int nCommandLineArguments = outputFilesToCheck.size() + 1;
-  wchar_t *argvWChar[nCommandLineArguments];
+  std::vector<wchar_t *> argvWChar(nCommandLineArguments);
   argvWChar[0] = Py_DecodeLocale(std::string("validate_parallel.py").c_str(), NULL);
   for (int i = 0; i < outputFilesToCheck.size(); i++)
   {
     argvWChar[i+1] = Py_DecodeLocale(outputFilesToCheck[i].c_str(), NULL);
   }
 
-  PySys_SetArgvEx(nCommandLineArguments, argvWChar, 0);
+  PySys_SetArgvEx(nCommandLineArguments, argvWChar.data(), 0);
 
   // wait a bit until files are ready to be opened by the python script
   std::this_thread::sleep_for(std::chrono::milliseconds(20));

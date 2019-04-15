@@ -2,6 +2,9 @@
 
 #include "output_writer/paraview/paraview_writer.h"
 #include "output_writer/paraview/poly_data_properties_for_mesh.h"
+#include "output_writer/paraview/get_connectivity_values_unstructured_mesh.h"
+
+#include "function_space/00_function_space_base_dim.h"
 
 #include <cstdlib>
 
@@ -14,7 +17,7 @@ namespace ParaviewLoopOverTuple
  /** Static recursive loop from 0 to number of entries in the tuple
  * Loop body
  */
-template<typename OutputFieldVariablesType, int i=0>
+template<typename OutputFieldVariablesType, int i>
 inline typename std::enable_if<i < std::tuple_size<OutputFieldVariablesType>::value, void>::type
 loopCollectMeshProperties(const OutputFieldVariablesType &fieldVariables, std::map<std::string,PolyDataPropertiesForMesh> &meshProperties
 )
@@ -34,21 +37,45 @@ typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value &
 collectMeshProperties(CurrentFieldVariableType currentFieldVariable, const OutputFieldVariablesType &fieldVariables,
                            std::map<std::string,PolyDataPropertiesForMesh> &meshProperties)
 {
+  assert(currentFieldVariable->functionSpace());
   std::string meshName = currentFieldVariable->functionSpace()->meshName();
 
 
   /*
-  int dimensionality;    ///< D=1: object is a VTK "Line", D=2, D=3: object is a VTK "Poly"
+  int dimensionality;    ///< D=1: object is a VTK "Line", D=2, D=3: object should be represented by an unstructured grid
   global_no_t nPoints;   ///< the number of points needed for representing the mesh
   global_no_t nCells;    ///< the number of VTK "cells", i.e. "Lines" or "Polys", which is the opendihu number of "elements"
+  std::vector<node_no_t> nNodesLocalWithGhosts;   ///< local number of nodes including ghosts, for all dimensions
 
   std::vector<std::pair<std::string,int>> pointDataArrays;   ///< <name,nComponents> of PointData DataArray elements
   */
-  meshProperties[meshName].dimensionality = currentFieldVariable->functionSpace()->dim();
+  int dimensionality = currentFieldVariable->functionSpace()->dim();
+  meshProperties[meshName].dimensionality = dimensionality;
   meshProperties[meshName].nPointsLocal = currentFieldVariable->functionSpace()->nNodesLocalWithGhosts();
-  meshProperties[meshName].nCellsLocal = currentFieldVariable->functionSpace()->nElementsLocal();
   meshProperties[meshName].nPointsGlobal = currentFieldVariable->functionSpace()->nNodesGlobal();
-  meshProperties[meshName].nCellsGlobal = currentFieldVariable->functionSpace()->nElementsGlobal();
+
+  typedef typename CurrentFieldVariableType::element_type::FunctionSpace FunctionSpaceType;
+  typedef typename FunctionSpaceType::BasisFunction BasisFunction;
+
+  int nNodesPerElement1D = FunctionSpace::FunctionSpaceBaseDim<1, BasisFunction>::nNodesPerElement();
+  int nCellsPerElement = pow(nNodesPerElement1D-1,dimensionality);
+
+  meshProperties[meshName].nCellsGlobal = currentFieldVariable->functionSpace()->nElementsGlobal() * nCellsPerElement;
+  meshProperties[meshName].nCellsLocal = currentFieldVariable->functionSpace()->nElementsLocal() * nCellsPerElement;
+
+  meshProperties[meshName].nNodesLocalWithGhosts.resize(dimensionality);
+
+  for (int dimensionIndex = 0; dimensionIndex < dimensionality; dimensionIndex++)
+  {
+    meshProperties[meshName].nNodesLocalWithGhosts[dimensionIndex] = currentFieldVariable->functionSpace()->meshPartition()->nNodesLocalWithGhosts(dimensionIndex);
+  }
+
+  // for unstructured grids add node nos per element for connectivity array
+  if (meshProperties[meshName].unstructuredMeshConnectivityValues.empty())
+  {
+    GetConnectivityValuesUnstructuredMesh<typename CurrentFieldVariableType::element_type::FunctionSpace>::get(currentFieldVariable->functionSpace(), meshProperties[meshName].unstructuredMeshConnectivityValues);
+  }
+
 
   if (!currentFieldVariable->isGeometryField())
   {
@@ -85,5 +112,5 @@ collectMeshProperties(TupleType currentFieldVariableTuple, const OutputFieldVari
   return false;  // do not break iteration 
 }
 
-};  //namespace ParaviewLoopOverTuple
-};  //namespace OutputWriter
+}  // namespace ParaviewLoopOverTuple
+}  // namespace OutputWriter

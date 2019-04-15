@@ -13,7 +13,7 @@ namespace ParaviewLoopOverTuple
  /** Static recursive loop from 0 to number of entries in the tuple
  * Loop body
  */
-template<typename OutputFieldVariablesType, int i=0>
+template<typename OutputFieldVariablesType, int i>
 inline typename std::enable_if<i < std::tuple_size<OutputFieldVariablesType>::value, void>::type
 loopCollectFieldVariablesNames(const OutputFieldVariablesType &fieldVariables, std::string meshName, 
                                std::vector<std::string> &scalars, std::vector<std::string> &vectors
@@ -79,5 +79,5 @@ collectFieldVariablesNames(TupleType currentFieldVariableTuple, const OutputFiel
   return false;  // do not break iteration 
 }
 
-};  //namespace ParaviewLoopOverTuple
-};  //namespace OutputWriter
+}  // namespace ParaviewLoopOverTuple
+}  // namespace OutputWriter

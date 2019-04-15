@@ -23,7 +23,7 @@ outputExelem(std::ostream &stream, OutputFieldVariablesType fieldVariables, std:
   bool outputHeader = true;
 
   // loop over elements
-  for(element_no_t currentElementGlobalNo = 0; currentElementGlobalNo < nElements; currentElementGlobalNo++)
+  for (element_no_t currentElementGlobalNo = 0; currentElementGlobalNo < nElements; currentElementGlobalNo++)
   {
     // check if a new header is necessary
     if (currentElementGlobalNo > 0)
@@ -75,7 +75,7 @@ outputExnode(std::ostream &stream, OutputFieldVariablesType fieldVariables, std:
   const node_no_t nNodes = mesh->nNodesGlobal();
 
   // loop over all nodes
-  for(node_no_t currentNodeGlobalNo = 0; currentNodeGlobalNo < nNodes; currentNodeGlobalNo++)
+  for (node_no_t currentNodeGlobalNo = 0; currentNodeGlobalNo < nNodes; currentNodeGlobalNo++)
   {
     // check if a new header is necessary
     if (currentNodeGlobalNo > 0)
@@ -107,4 +107,4 @@ outputExnode(std::ostream &stream, OutputFieldVariablesType fieldVariables, std:
 }
 
 
-};  //namespace
+}  // namespace

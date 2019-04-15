@@ -594,6 +594,5 @@ config = {
   equationDiscretized7.run(); 
 }
 */
-};
-
+} // namespace
 

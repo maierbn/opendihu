@@ -7,7 +7,7 @@ namespace FunctionSpace
 
 template<typename LowOrderFunctionSpaceType,typename HighOrderFunctionSpaceType>
 Mixed<LowOrderFunctionSpaceType,HighOrderFunctionSpaceType>::
-Mixed(PyObject *specificSettings) : Mesh::Mesh(specificSettings),
+Mixed(PythonConfig specificSettings) : Mesh::Mesh(specificSettings),
   lowOrderFunctionSpace_(std::make_shared<LowOrderFunctionSpaceType>(specificSettings, true)),
   highOrderFunctionSpace_(std::make_shared<HighOrderFunctionSpaceType>(specificSettings, false))
 {
@@ -56,4 +56,4 @@ highOrderFunctionSpace()
   return highOrderFunctionSpace_;
 }
 
-};  //namespace
+}  // namespace

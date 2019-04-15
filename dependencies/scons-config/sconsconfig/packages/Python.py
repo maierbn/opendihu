@@ -35,7 +35,7 @@ class Python(Package):
             Py_Initialize();
             return EXIT_SUCCESS;
           }
-        '''
+'''
     
         # Setup the build handler.
         self.libs = ["python3.6m"]
@@ -98,7 +98,7 @@ class Python(Package):
 
     def check(self, ctx):
         env = ctx.env
-        ctx.Message('Checking for Python ... ')
+        ctx.Message('Checking for Python ...        ')
         self.check_options(env)
 
         res = super(Python, self).check(ctx)

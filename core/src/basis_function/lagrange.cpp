@@ -50,4 +50,4 @@ phi(int i, double xi)
   return 2*xi*xi - xi;
 }
 
-};  //namespace
+}  // namespace

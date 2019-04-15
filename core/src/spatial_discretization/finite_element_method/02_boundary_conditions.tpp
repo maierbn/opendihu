@@ -31,7 +31,7 @@ applyBoundaryConditions()
 {
   if (!boundaryConditionHandlingEnabled_)
   {
-    if (PythonUtility::hasKey(this->specificSettings_, "dirichletBoundaryConditions"))
+    if (this->specificSettings_.hasKey("dirichletBoundaryConditions"))
     {
       LOG(WARNING) << "You have specified dirichlet boundary conditions in FiniteElementMethod via the key \"dirichletBoundaryConditions\". "
         << "They are not used here, e.g. because the FiniteElementMethod is wrapped by a time stepping scheme. Consider only setting dirichlet boundary conditions in the time stepping scheme.";
@@ -49,14 +49,29 @@ applyBoundaryConditions()
     this->data_.print();
   }
 
+  // handle Neumann boundary conditions
+  if (neumannBoundaryConditions_ == nullptr)
+  {
+    neumannBoundaryConditions_ = std::make_shared<NeumannBoundaryConditions<FunctionSpaceType,QuadratureType,1>>(this->context_);
+    neumannBoundaryConditions_->initialize(this->specificSettings_, this->data_.functionSpace(), "neumannBoundaryConditions");
+
+    VLOG(1) << "neumann BC rhs: " << *neumannBoundaryConditions_->rhs();
+
+  }
+
+  // add rhs, rightHandSide += -1 * rhs
+  PetscErrorCode ierr;
+  ierr = VecAXPY(this->data_.rightHandSide()->valuesGlobal(), -1, neumannBoundaryConditions_->rhs()->valuesGlobal()); CHKERRV(ierr);
+
+
+  // handle Dirichlet boundary conditions
   if (dirichletBoundaryConditions_ == nullptr)
   {
-    dirichletBoundaryConditions_ = std::make_shared<DirichletBoundaryConditions<FunctionSpaceType,1>>();
-    dirichletBoundaryConditions_->initialize(this->specificSettings_, this->data_.functionSpace());
+    dirichletBoundaryConditions_ = std::make_shared<DirichletBoundaryConditions<FunctionSpaceType,1>>(this->context_);
+    dirichletBoundaryConditions_->initialize(this->specificSettings_, this->data_.functionSpace(), "dirichletBoundaryConditions");
   }
 
   // get abbreviations
-  std::shared_ptr<FunctionSpaceType> functionSpace = this->data_.functionSpace();
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> rightHandSide = this->data_.rightHandSide();
   std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> stiffnessMatrix = this->data_.stiffnessMatrix();
 
@@ -73,4 +88,4 @@ applyBoundaryConditions()
   }
 }
 
-};  // namespace
+} // namespace

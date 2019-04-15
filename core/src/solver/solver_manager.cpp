@@ -3,7 +3,7 @@
 namespace Solver
 {
 
-Manager::Manager(PyObject *specificSettings) :
+Manager::Manager(PythonConfig specificSettings) :
   specificSettings_(specificSettings), numberAnonymousSolvers_(0)
 {
   storePreconfiguredSolvers();
@@ -23,33 +23,40 @@ bool Manager::hasSolver(std::string solverName, MPI_Comm mpiCommunicator)
 void Manager::storePreconfiguredSolvers()
 {
   LOG(TRACE) << "SolverManager::storePreconfiguredSolvers";
-  if (specificSettings_)
+  if (specificSettings_.pyObject())
   {
-    if (PythonUtility::hasKey(specificSettings_, "Solvers"))
+    if (specificSettings_.hasKey("Solvers"))
     {
 
       std::string keyString("Solvers");
       std::pair<std::string, PyObject *> dictItem
-        = PythonUtility::getOptionDictBegin<std::string, PyObject *>(specificSettings_, keyString);
+        = specificSettings_.getOptionDictBegin<std::string, PyObject *>(keyString);
 
-      for (; !PythonUtility::getOptionDictEnd(specificSettings_, keyString);
-          PythonUtility::getOptionDictNext<std::string, PyObject *>(specificSettings_, keyString, dictItem))
+      for (; !specificSettings_.getOptionDictEnd(keyString);
+          specificSettings_.getOptionDictNext<std::string, PyObject *>(keyString, dictItem))
       {
         std::string key = dictItem.first;
         PyObject *value = dictItem.second;
 
         if (value == NULL)
         {
-          LOG(WARNING) << "Could not extract dict for solver \"" <<key<< "\".";
+          LOG(WARNING) << "Could not extract dict for solver \"" << key << "\".";
         }
-        else if(!PyDict_Check(value))
+        else if (!PyDict_Check(value))
         {
-          LOG(WARNING) << "Value for solver with name \"" <<key<< "\" should be a dict.";
+          LOG(WARNING) << "Value for solver with name \"" << key << "\" should be a dict.";
         }
         else
         {
-          LOG(DEBUG) << "store solver configuration with key \"" <<key<< "\".";
-          solverConfiguration_[key] = value;
+          LOG(DEBUG) << "store solver configuration with key \"" << key << "\".";
+          if (solverConfiguration_.find(key) != solverConfiguration_.end())
+          {
+            solverConfiguration_.at(key).setPyObject(value);
+          }
+          else
+          {
+            solverConfiguration_.insert(std::pair<std::string,PythonConfig>(key, PythonConfig(specificSettings_, "Solvers", key, value)));
+          }
         }
       }
     }
@@ -63,4 +70,4 @@ void Manager::storePreconfiguredSolvers()
   }
 }
 
-};   // namespace
+}  // namespace

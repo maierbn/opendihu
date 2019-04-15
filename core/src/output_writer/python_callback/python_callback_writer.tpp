@@ -27,7 +27,7 @@ callCallback(PyObject *callback, OutputFieldVariablesType fieldVariables,
   LoopOverTuple::loopCollectMeshNames<OutputFieldVariablesType>(fieldVariables, meshNames);
 
   // start critical section for python API calls
-  PythonUtility::GlobalInterpreterLock lock;
+  // PythonUtility::GlobalInterpreterLock lock;
   
   PyObject *pyDataList = PyList_New((Py_ssize_t)meshNames.size());
   
@@ -78,4 +78,4 @@ callCallback(PyObject *callback, OutputFieldVariablesType fieldVariables,
   Py_DECREF(pyArglist);
 }
 
-};
+}  // namespace

@@ -36,7 +36,7 @@ class FunctionSpaceNodes<MeshType, BasisFunction::CompletePolynomialOfDimensionA
 public:
 
   //! constructor, with second bool argument, inherits from FunctionSpaceFunction
-  FunctionSpaceNodes(PyObject *specificSettings, bool noGeometryField=false);
+  FunctionSpaceNodes(PythonConfig specificSettings, bool noGeometryField=false);
 
   //! get the number of dofs
   dof_no_t nDofsLocal() const;

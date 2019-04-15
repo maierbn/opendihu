@@ -24,11 +24,8 @@ template<typename FunctionSpaceType, typename QuadratureType, typename Term>
 FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
 FiniteElementMethodTimeStepping(DihuContext context, std::shared_ptr<FunctionSpaceType> functionSpace)
   : AssembleRightHandSide<FunctionSpaceType, QuadratureType, Term>(context, functionSpace),
-  DiscretizableInTime(), Splitable(), linearSolver_(nullptr), ksp_(nullptr)
+  DiscretizableInTime(), Splittable(), linearSolver_(nullptr), ksp_(nullptr)
 {
-  // The  object stores the information which component of the solution will be further used.
-  // Because the FEM only has one solution component, set componentNo to 0.
-  this->solutionVectorMapping_->setOutputComponentNo(0);
 }
 
 template<typename FunctionSpaceType, typename QuadratureType, typename Term>
@@ -140,6 +137,16 @@ bool FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
 knowsMeshType()
 {
   return true;
+}
+
+template<typename FunctionSpaceType, typename QuadratureType, typename Term>
+typename FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::TransferableSolutionDataType
+FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
+getSolutionForTransfer()
+{
+  // check for nans or infs
+  //this->data_->solution()->checkNanInf();
+  return this->data_->getSolutionForTransfer();
 }
 
 template<typename FunctionSpaceType, typename QuadratureType, typename Term>

@@ -55,8 +55,8 @@ typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value &
 getValuesAtNode(CurrentFieldVariableType currentFieldVariable, std::string meshName, 
                 element_no_t currentNodeGlobalNo, std::vector<double> &valuesAtNode);
 
-};  //namespace ExfileLoopOverTuple
+}  // namespace ExfileLoopOverTuple
 
-};  //namespace OutputWriter
+}  // namespace OutputWriter
 
 #include "output_writer/exfile/loop_get_values_at_node.tpp"

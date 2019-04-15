@@ -6,7 +6,7 @@
 
 #include "control/types.h"
 #include "output_writer/generic.h"
-#include "data_management/finite_elements.h"
+#include "data_management/finite_element_method/finite_elements.h"
 
 namespace OutputWriter
 {
@@ -16,7 +16,7 @@ class PythonCallback : public Generic
 public:
 
   //! constructor
-  PythonCallback(DihuContext context, PyObject *specificSettings);
+  PythonCallback(DihuContext context, PythonConfig specificSettings);
 
   //! write out solution i.e. call the callback function in this case
   template<typename DataType>
@@ -28,6 +28,6 @@ private:
   bool onlyNodalValues_;  ///< if only nodal values should be output, this omits the derivative values for Hermite ansatz functions, for Lagrange functions it has no effect
 };
 
-};  // namespace
+} // namespace
 
 #include "output_writer/python_callback/python_callback.tpp"

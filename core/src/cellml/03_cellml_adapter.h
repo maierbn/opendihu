@@ -4,7 +4,7 @@
 
 #include <vector>
 
-#include "interfaces/splitable.h"
+#include "interfaces/splittable.h"
 #include "cellml/02_callback_handler.h"
 
 /** This is a class that contains cellml equations and can be used with a time stepping scheme.
@@ -24,19 +24,24 @@
 template <int nStates_, typename FunctionSpaceType=FunctionSpace::Generic>
 class CellmlAdapter :
   public CallbackHandler<nStates_,FunctionSpaceType>,
-  public Splitable
+  public Splittable
 {
 public:
 
-  ///! this class needs to define a function space in which its solution variables live. This does not matter at all for a CellML problem, therefore Generic is sufficient. But when using in an operator splitting with FEM as second operator part, it has to be compatible to that and thus needs to be set correctly.
+  //! this class needs to define a function space in which its solution variables live. This does not matter at all for a CellML problem, therefore Generic is sufficient. But when using in an operator splitting with FEM as second operator part, it has to be compatible to that and thus needs to be set correctly.
   typedef FunctionSpaceType FunctionSpace;   ///< FunctionSpace type
+
+  //! constructor from context object
+  CellmlAdapter(DihuContext context);
+  
+  //! constructor from other CellmlAdapter with new functionSpace (and therefore different number of instances),
+  //! preserves everything else
+  //! initialize does not need to be called afterwards
+  CellmlAdapter(const CellmlAdapter &rhs, std::shared_ptr<FunctionSpace> functionSpace);
 
   //! return nStates_
   static constexpr int nStates();
 
-  ///! constructor
-  CellmlAdapter(DihuContext context);
-  
   //! initialize callback functions and rhs
   void initialize();
   
@@ -48,9 +53,6 @@ public:
 
   //! evaluate rhs
   void evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepNo, double currentTime);
-  
-  //! evaluate rhs
-  //void evaluateTimesteppingRightHandSideImplicit(Vec& input, Vec& output, int timeStepNo, double currentTime);
   
   //! return false because the object is independent of mesh type
   bool knowsMeshType();
@@ -70,6 +72,7 @@ public:
 
   //! if the class should handle Dirichlet boundary conditions, this does not apply here
   void setBoundaryConditionHandlingEnabled(bool boundaryConditionHandlingEnabled){};
+
 };
 
 #include "cellml/03_cellml_adapter.tpp"

@@ -143,14 +143,13 @@ public:
   void setInverseLumpedMassMatrix();
 };
 
+extern bool outputAssemble3DStiffnessMatrix_;   ///< if the message about assembly of the 3D stiffness matrix was printed
 
 
-
-};  // namespace
+} // namespace
 
 #include "spatial_discretization/finite_element_method/01_stiffness_matrix_stencils.tpp"
 #include "spatial_discretization/finite_element_method/01_mass_matrix_stencils.tpp"
-#include "spatial_discretization/finite_element_method/solid_mechanics/02_stiffness_matrix_incompressible.h"
 #include "spatial_discretization/finite_element_method/01_stiffness_matrix_integrate.tpp"
 #include "spatial_discretization/finite_element_method/01_mass_matrix_integrate.tpp"
 #include "spatial_discretization/finite_element_method/01_inverse_lumped_mass_matrix.tpp"

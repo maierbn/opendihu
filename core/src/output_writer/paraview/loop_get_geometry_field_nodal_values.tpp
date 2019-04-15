@@ -14,7 +14,7 @@ namespace ParaviewLoopOverTuple
  /** Static recursive loop from 0 to number of entries in the tuple
  * Loop body
  */
-template<typename OutputFieldVariablesType, int i=0>
+template<typename OutputFieldVariablesType, int i>
 inline typename std::enable_if<i < std::tuple_size<OutputFieldVariablesType>::value, void>::type
 loopGetGeometryFieldNodalValues(const OutputFieldVariablesType &fieldVariables, std::set<std::string> meshNames,
                    std::vector<double> &values
@@ -35,6 +35,11 @@ typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value &
 getGeometryFieldNodalValues(CurrentFieldVariableType currentFieldVariable, const OutputFieldVariablesType &fieldVariables, std::set<std::string> meshNames,
                std::vector<double> &values)
 {
+  VLOG(1) << "getGeometryFieldNodalValues meshNames: " << meshNames
+    << ", own: " << currentFieldVariable->functionSpace()->meshName()
+    << ", fieldVariable name \"" << currentFieldVariable->name() << "\""
+    << ", isGeometryField: " << currentFieldVariable->isGeometryField();
+
   // if mesh name is one of the specified meshNames and it is the geometry field
   if (meshNames.find(currentFieldVariable->functionSpace()->meshName()) != meshNames.end()
     && currentFieldVariable->isGeometryField())
@@ -45,7 +50,9 @@ getGeometryFieldNodalValues(CurrentFieldVariableType currentFieldVariable, const
     // initialize the dofNosLocalNaturalOrdering vector of the meshPartition to be able to get the values in the natural ordering
     currentFieldVariable->functionSpace()->meshPartition()->initializeDofNosLocalNaturalOrdering(currentFieldVariable->functionSpace());
 
-    // get all local values without ghosts for the components
+    VLOG(1) << "nComponents: " << nComponents;
+
+    // get all local values with ghosts for the components
     for (int componentNo = 0; componentNo < nComponents; componentNo++)
     {
       std::vector<double> retrievedLocalValues;
@@ -54,6 +61,8 @@ getGeometryFieldNodalValues(CurrentFieldVariableType currentFieldVariable, const
 
       const int nDofsPerNode = CurrentFieldVariableType::element_type::FunctionSpace::nDofsPerNode();
       const node_no_t nNodesLocal = currentFieldVariable->functionSpace()->meshPartition()->nNodesLocalWithGhosts();
+
+      VLOG(1) << "nNodesLocal: " << nNodesLocal;
 
       // for Hermite only extract the non-derivative values
       componentValues[componentNo].resize(nNodesLocal);
@@ -107,5 +116,5 @@ getGeometryFieldNodalValues(TupleType currentFieldVariableTuple, const OutputFie
   return false;  // do not break iteration
 }
 
-};  //namespace ParaviewLoopOverTuple
-};  //namespace OutputWriter
+}  // namespace ParaviewLoopOverTuple
+}  // namespace OutputWriter

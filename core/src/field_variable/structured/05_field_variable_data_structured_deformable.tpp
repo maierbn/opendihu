@@ -4,8 +4,3 @@
 #include <cassert>
 
 #include "utility/string_utility.h"
-
-namespace FieldVariable
-{
-
-};

@@ -77,10 +77,12 @@ buildPyDataObject(OutputFieldVariablesType fieldVariables,
   LOG(DEBUG) << "PythonStructuredDeformable";
 
   // start critical section for python API calls
-  PythonUtility::GlobalInterpreterLock lock;
+  // PythonUtility::GlobalInterpreterLock lock;
   
   // build python dict that will contain all information and data
-  PyObject *data = Py_BuildValue("{s s, s i, s O, s O, s O, s O, s s, s i, s O, s i, s i, s O, s i, s d}",
+  PyObject *data = Py_BuildValue("{s s, s s, s s, s i, s O, s O, s O, s O, s s, s i, s O, s i, s i, s O, s i, s d}",
+                                 "version", DihuContext::versionText().c_str(),
+                                 "meta", DihuContext::metaText().c_str(),
                                  "meshType", "StructuredDeformable",
                                  "dimension", D, "nElementsGlobal", pyNElementsGlobal, "nElementsLocal", pyNElementsLocal,
                                  "beginNodeGlobalNatural", pyBeginNodeGlobal, "hasFullNumberOfNodes", pyHasFullNumberOfNodes,
@@ -93,4 +95,4 @@ buildPyDataObject(OutputFieldVariablesType fieldVariables,
   return data;
 }
 
-};
+}  // namespace

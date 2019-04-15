@@ -33,7 +33,7 @@ evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,Term> &data, cons
   }
 
   return evaluations;
-};
+}
 
 //integrand for stiffness matrix of laplace operator, 2D
 template<typename EvaluationsType,typename FunctionSpaceType,typename Term>
@@ -71,9 +71,9 @@ evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,Term> &data, cons
 #ifdef DEBUG
   VLOG(3) << "transformationMatrix:";
     std::stringstream s;
-  for(int i=0; i<2; i++)
+  for (int i=0; i<2; i++)
   {
-    for(int j=0; j<2; j++)
+    for (int j=0; j<2; j++)
     {
       s << transformationMatrix[i*2+j] << " ";
     }
@@ -96,7 +96,7 @@ evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,Term> &data, cons
   }
 
   return evaluations;
-};
+}
 
 //integrand for stiffness matrix of laplace operator, 3D
 template<typename EvaluationsType,typename FunctionSpaceType,typename Term>
@@ -113,9 +113,9 @@ evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,Term> &data, cons
 #ifdef DEBUG
   VLOG(3) << "transformationMatrix:";
   std::stringstream s;
-  for(int i=0; i<3; i++)
+  for (int i=0; i<3; i++)
   {
-    for(int j=0; j<3; j++)
+    for (int j=0; j<3; j++)
     {
       s << transformationMatrix[i*3+j] << " ";
     }
@@ -139,6 +139,6 @@ evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,Term> &data, cons
   }
 
   return evaluations;
-};
+}
 
-};  // namespace
+} // namespace

@@ -22,7 +22,7 @@ public:
   //! write paraview file to given filename, only output fieldVariables that are on a mesh with the given meshName 
   static void outputFile(std::string filename, OutputFieldVariablesType fieldVariables, 
                          std::string meshName, std::shared_ptr<FunctionSpaceType> mesh, 
-                         int nFieldVariablesOfMesh, PyObject *specificSettings){}
+                         int nFieldVariablesOfMesh, PythonConfig specificSettings){}
   
 private:
 /*
@@ -55,7 +55,7 @@ public:
   static void outputFile(std::string filename, OutputFieldVariablesType fieldVariables,
                          std::string meshName, 
                          std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>, BasisFunctionType>> mesh, 
-                         int nFieldVariablesOfMesh, PyObject *specificSettings);
+                         int nFieldVariablesOfMesh, PythonConfig specificSettings);
 };
 
 /** Partial specialization for structured mesh.
@@ -69,7 +69,7 @@ public:
   static void outputFile(std::string filename, OutputFieldVariablesType fieldVariables,
                          std::string meshName, 
                          std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>, BasisFunctionType>> mesh, 
-                         int nFieldVariablesOfMesh, PyObject *specificSettings);
+                         int nFieldVariablesOfMesh, PythonConfig specificSettings);
 };
 
 /** Partial specialization for unstructured mesh.
@@ -83,9 +83,9 @@ public:
   static void outputFile(std::string filename, OutputFieldVariablesType fieldVariables,
                          std::string meshName, 
                          std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>> mesh, 
-                         int nFieldVariablesOfMesh, PyObject *specificSettings);
+                         int nFieldVariablesOfMesh, PythonConfig specificSettings);
 };
 
-};  // namespace
+} // namespace
 
 #include "output_writer/paraview/paraview_writer.tpp"

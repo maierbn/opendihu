@@ -1051,4 +1051,4 @@ multiplyRightHandSideWithMassMatrix()
   rightHandSide->finishGhostManipulation();
 }
 
-};
+}  // namespace

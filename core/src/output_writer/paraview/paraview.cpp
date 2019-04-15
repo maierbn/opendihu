@@ -18,12 +18,12 @@
 namespace OutputWriter
 {
 
-Paraview::Paraview(DihuContext context, PyObject *settings) :
+Paraview::Paraview(DihuContext context, PythonConfig settings) :
   Generic(context, settings)
 {
-  binaryOutput_ = PythonUtility::getOptionBool(settings, "binary", true);
-  fixedFormat_ = PythonUtility::getOptionBool(settings, "fixedFormat", true);
-  combineFiles_ = PythonUtility::getOptionBool(settings, "combineFiles", false);
+  binaryOutput_ = settings.getOptionBool("binary", true);
+  fixedFormat_ = settings.getOptionBool("fixedFormat", true);
+  combineFiles_ = settings.getOptionBool("combineFiles", false);
 }
 
 std::string Paraview::encodeBase64Vec(const Vec &vector, bool withEncodedSizePrefix)
@@ -50,16 +50,20 @@ std::string Paraview::convertToAscii(const Vec &vector, bool fixedFormat)
 std::string Paraview::convertToAscii(const std::vector<double> &vector, bool fixedFormat)
 {
   std::stringstream result;
-  for(auto value : vector)
+  for (int i = 0; i < vector.size(); i++)
   {
-    if(fixedFormat)
+    if (fixedFormat)
     {
-      result << std::setw(16) << std::scientific << value << " ";
+      result << std::setw(16) << std::scientific << vector[i] << " ";
     }
     else
     {
-      result << value << " ";
+      result << vector[i] << " ";
     }
+    /*if (i % 3 == 2)   // this breaks validity for paraview but creates better analysable results (1 point per row)
+    {
+      result << std::endl << std::string(5,'\t');
+    }*/
   }
   return result.str();
 }
@@ -67,9 +71,9 @@ std::string Paraview::convertToAscii(const std::vector<double> &vector, bool fix
 std::string Paraview::convertToAscii(const std::vector<int> &vector, bool fixedFormat)
 {
   std::stringstream result;
-  for(auto value : vector)
+  for (auto value : vector)
   {
-    if(fixedFormat)
+    if (fixedFormat)
     {
       result << std::setw(16) << std::scientific << (float)(value) << " ";
     }
@@ -80,4 +84,5 @@ std::string Paraview::convertToAscii(const std::vector<int> &vector, bool fixedF
   }
   return result.str();
 }
-};
+
+}  // namespace

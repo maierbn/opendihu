@@ -13,7 +13,7 @@ namespace FunctionSpace
 {
 template<typename MeshType, typename BasisFunctionType>
 class FunctionSpace;
-};
+}
 
 /** This encapsulates a Petsc Vec, combined with the partition of the mesh.
  *  For each component a local Vec is stored that holds all values of that component.
@@ -147,15 +147,22 @@ public:
   template<int nComponents2>
   void setValues(PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents2> &rhs);
 
-  //! set values of a specific component from another vector, this is the opposite operation to extractComponent
+  //! set values of a specific component from another vector, this is the opposite operation to extractComponentCopy
   void setValues(int componentNo, std::shared_ptr<PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,1>> fieldVariable);
 
   //! set the values for the given component from a petsc Vec, name is only for debugging output
   void setValues(int componentNo, Vec petscVector, std::string name = "");
 
   //! extract a single component, this field variable can have any representation
-  //! It set the representation of extractedFieldVariable to local.
-  void extractComponent(int componentNo, std::shared_ptr<PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,1>> extractedFieldVariable);
+  //! It set the representation of extractedPartitionedPetscVec to local.
+  void extractComponentCopy(int componentNo, std::shared_ptr<PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,1>> extractedPartitionedPetscVec);
+
+  //! extract a component from the shared vector (no copy), this field variable cannot be used any longer and is set to invalid, until restoreExtractedComponent is called.
+  void extractComponentShared(int componentNo, std::shared_ptr<PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,1>> extractedPartitionedPetscVec);
+
+  //! restore the extracted raw array to petsc and make the field variable usable again
+  template<int nComponents2>
+  void restoreExtractedComponent(std::shared_ptr<PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents2>> extractedPartitionedPetscVec);
 
   //! wrapper to the PETSc VecGetValues, acting only on the local data, the indices ix are the local dof nos
   void getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[]);
@@ -208,7 +215,14 @@ protected:
   
   std::array<Vec,nComponents> vectorLocal_;   ///< local vector that holds the local Vecs, is filled by startGhostManipulation and can the be manipulated, afterwards the results need to get copied back by finishGhostManipulation
   std::array<Vec,nComponents> vectorGlobal_;  ///< the global distributed vector that holds the actual data
-  Vec valuesContiguous_ = PETSC_NULL;   ///< global vector that has all values of the components concatenated, i.e. in a "struct of arrays" memory layout
+  Vec valuesContiguous_ = PETSC_NULL;   ///< global vector that has all values of the components concatenated, i.e. in a "struct of arrays" memory layout. This is never used if nComponents = 1
+
+  std::vector<PetscInt> temporaryIndicesVector_;   ///< a temporary vector that will be used whenever indices are to be computed, this avoids creating and deleting local vectors which is time-consuming (found out by perftools on hazelhen)
+
+  const double *extractedData_ = nullptr;   ///< the data array of valuesContiguous_, used when a component is extracted by extractComponentShared, then the representation is set to invalid
+  std::vector<double> savedValues_;   ///< temporary storage of values that would be overwritten by ghost value operations of the extracted field variable
+  Vec savedVectorLocal_;        ///< when this PartitionedPetscVec has nComponents=1 and extractComponentShared is called, there is no valuesContiguous_ vector in use (because it is only one component anyway, replacement is globalVector_[0]). Then the extracted field variable gets copies of the own vectorLocal_ and vectorGlobal_ set, the original pointer vectorLocal_ and vectorGlobal_ are saved in this variable and reset when restoreValuesContiguous is called.
+  Vec savedVectorGlobal_;        ///< when this PartitionedPetscVec has nComponents=1 and extractComponentShared is called, there is no valuesContiguous_ vector in use (because it is only one component anyway, replacement is globalVector_[0]). Then the extracted field variable gets copies of the own vectorLocal_ and vectorGlobal_ set, the original pointer vectorLocal_ and vectorGlobal_ are saved in this variable and reset when restoreValuesContiguous is called.
 };
 
 

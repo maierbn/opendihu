@@ -30,7 +30,7 @@ parseExelemFile(std::string exelemFilename)
   while(!file_exelem.eof())
   {
     getline(file_exelem, line);
-    if(file_exelem.eof())
+    if (file_exelem.eof())
       break;
 
     if (line.find("Element:") != std::string::npos)
@@ -74,7 +74,7 @@ parseExelemFile(std::string exelemFilename)
   {
     // parse line
     getline(file_exelem, line);
-    if(file_exelem.eof())
+    if (file_exelem.eof())
       break;
 
     // check if line contains "Shape."
@@ -88,7 +88,7 @@ parseExelemFile(std::string exelemFilename)
         lineType = elementsFollow;
         VLOG(1) << "elementsFollow";
       }
-      else if(dimension > D)
+      else if (dimension > D)
       {
         LOG(WARNING) << "Exfile contains " << dimension << "D data, UnstructuredDeformable mesh is " << D << "D.";
       }
@@ -96,7 +96,7 @@ parseExelemFile(std::string exelemFilename)
     }
 
     // check if line contains "#Fields="
-    if(lineType == elementsFollow && line.find("#Fields=") != std::string::npos)
+    if (lineType == elementsFollow && line.find("#Fields=") != std::string::npos)
     {
       // parse number of following fields, not used
       //nFields = getNumberAfterString(line, "#Fields=");
@@ -113,7 +113,7 @@ parseExelemFile(std::string exelemFilename)
       {
         // parse whole element block into elementToNode mapping
         this->elementToNodeMapping_->parseElementFromExelemFile(elementContent);
-        for(auto &fieldVariable : this->fieldVariable_)
+        for (auto &fieldVariable : this->fieldVariable_)
         {
           fieldVariable.second->parseElementFromExelemFile(elementContent);
         }
@@ -127,7 +127,7 @@ parseExelemFile(std::string exelemFilename)
     if (lineType == fieldsFollow)
     {
       // if the next field description block begins or a block with elements begins (i.e. the current field description block is finished)
-      if(line.find(nextFieldNo.str()) != std::string::npos || line.find("Element:") != std::string::npos)
+      if (line.find(nextFieldNo.str()) != std::string::npos || line.find("Element:") != std::string::npos)
       {
 
         VLOG(1) << "next field description block begins";
@@ -147,7 +147,7 @@ parseExelemFile(std::string exelemFilename)
           // if the field variable with this name does not exist already, create new field variable object
           if (this->fieldVariable_.find(fieldName) == this->fieldVariable_.end())
           {
-            std::pair<std::string, std::shared_ptr<FieldVariableBaseType>> newEntry
+            std::pair<std::string, std::shared_ptr<FieldVariableBaseFunctionSpaceType>> newEntry
             (
               fieldName,
               FieldVariable::Factory<FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::makeShared(nComponents)
@@ -214,7 +214,7 @@ parseExelemFile(std::string exelemFilename)
         {
           // parse whole element block into elementToNode mapping
           this->elementToNodeMapping_->parseElementFromExelemFile(elementContent);
-          for(auto &fieldVariable : this->fieldVariable_)
+          for (auto &fieldVariable : this->fieldVariable_)
           {
             fieldVariable.second->parseElementFromExelemFile(elementContent);
           }
@@ -232,30 +232,30 @@ parseExelemFile(std::string exelemFilename)
   {
     // parse whole element block into elmeentToNode mapping
     this->elementToNodeMapping_->parseElementFromExelemFile(elementContent);
-    for(auto &fieldVariable : this->fieldVariable_)
+    for (auto &fieldVariable : this->fieldVariable_)
     {
       fieldVariable.second->parseElementFromExelemFile(elementContent);
     }
   }
 
   VLOG(1) << "parsing done";
-  for(auto &fieldVariable : this->fieldVariable_)
+  for (auto &fieldVariable : this->fieldVariable_)
   {
     VLOG(1) <<*fieldVariable.second;
   }
 
   VLOG(1) << "unifyMappings - 1";
   // unify exfile representation variables in field variables such that there is only one shared for all components of a field variable
-  for(auto &fieldVariable : this->fieldVariable_)
+  for (auto &fieldVariable : this->fieldVariable_)
   {
     fieldVariable.second->unifyMappings(this->elementToNodeMapping_, this->nDofsPerNode());
   }
 
   VLOG(1) << "unifyMappings - 2";
   // remove duplicate exfile representation and element to dof mapping entries that are shared among different field variables
-  for(auto &fieldVariable : this->fieldVariable_)
+  for (auto &fieldVariable : this->fieldVariable_)
   {
-    for(auto &fieldVariable2 : this->fieldVariable_)
+    for (auto &fieldVariable2 : this->fieldVariable_)
     {
       if (fieldVariable.first != fieldVariable2.first)
       {
@@ -304,7 +304,7 @@ parseExnodeFile(std::string exnodeFilename)
     this->geometryField_->parseFromExnodeFile(content);
   }
 
-  for(auto &fieldVariable : this->fieldVariable_)
+  for (auto &fieldVariable : this->fieldVariable_)
   {
     // set all values to 0.0
     fieldVariable.second->zeroEntries();
@@ -318,17 +318,17 @@ parseExnodeFile(std::string exnodeFilename)
 
 template<int D,typename BasisFunctionType>
 void FunctionSpaceDataUnstructured<D,BasisFunctionType>::
-remapFieldVariables(PyObject *settings)
+remapFieldVariables(PythonConfig settings)
 {
   // remap name of field variables to different names if specified
-  if (PythonUtility::hasKey(settings, "remap"))
+  if (settings.hasKey("remap"))
   {
     std::string keyString = "remap";
     std::pair<std::string, std::string> dictItem
-      = PythonUtility::getOptionDictBegin<std::string, std::string>(settings, keyString);
+      = settings.getOptionDictBegin<std::string, std::string>(keyString);
 
-    for (; !PythonUtility::getOptionDictEnd(settings, keyString);
-        PythonUtility::getOptionDictNext<std::string, std::string>(settings, keyString, dictItem))
+    for (; !settings.getOptionDictEnd(keyString);
+        settings.getOptionDictNext<std::string, std::string>(keyString, dictItem))
     {
       // remap request field variable from key to value
       std::string key = dictItem.first;
@@ -336,7 +336,7 @@ remapFieldVariables(PyObject *settings)
 
       if (this->fieldVariable_.find(key) != this->fieldVariable_.end())
       {
-        std::shared_ptr<FieldVariableBaseType> fieldVariable = this->fieldVariable_[key];
+        std::shared_ptr<FieldVariableBaseFunctionSpaceType> fieldVariable = this->fieldVariable_[key];
         this->fieldVariable_.erase(key);
         this->fieldVariable_[value] = fieldVariable;
       }
@@ -365,13 +365,13 @@ remapFieldVariables(PyObject *settings)
     bool geometryFieldFound = false;
 
     // search for a geometry field that is named differently
-    for(auto &fieldVariableEntry : this->fieldVariable_)
+    for (auto &fieldVariableEntry : this->fieldVariable_)
     {
       if (fieldVariableEntry.second->isGeometryField())
       {
         LOG(WARNING) << "Remap geometry field variable from \"" << fieldVariableEntry.first << "\" to \"geometry\".";
 
-        std::shared_ptr<FieldVariableBaseType> fieldVariable = fieldVariableEntry.second;
+        std::shared_ptr<FieldVariableBaseFunctionSpaceType> fieldVariable = fieldVariableEntry.second;
         this->fieldVariable_.erase(fieldVariableEntry.first);
         this->geometryField_ = std::static_pointer_cast<FieldVariable::FieldVariable<FunctionSpaceType,3>>(fieldVariable);
 
@@ -381,7 +381,7 @@ remapFieldVariables(PyObject *settings)
     }
 
     // output field variables
-    for(auto &fieldVariableEntry : this->fieldVariable_)
+    for (auto &fieldVariableEntry : this->fieldVariable_)
     {
       VLOG(1) << *fieldVariableEntry.second;
     }
@@ -416,7 +416,7 @@ initializeValuesVector()
     
   VLOG(1) << "initialize values vectors";
   // allocate common values vector for each field variable
-  for(auto &fieldVariable : this->fieldVariable_)
+  for (auto &fieldVariable : this->fieldVariable_)
   {
     fieldVariable.second->initializeValuesVector();
   }
@@ -424,4 +424,4 @@ initializeValuesVector()
   if (geometryField_) 
     this->geometryField_->initializeValuesVector();
 }
-};  // namespace
+} // namespace

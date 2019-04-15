@@ -60,7 +60,7 @@ class NumpySTL(Package):
         self.check_text = check_text
         self.static = False
         
-        if os.environ.get("SITE_PLATFORM_NAME") == "hazelhen":
+        if os.environ.get("PE_ENV") is not None:
           # Setup the build handler.
           self.set_build_handler([
               '$${DEPENDENCIES_DIR}/python/install/bin/pip3 install ${PREFIX}/../numpy_stl-2.3.2-py3-none-any.whl --prefix=${DEPENDENCIES_DIR}/python/install'
@@ -77,7 +77,7 @@ class NumpySTL(Package):
         
     def check(self, ctx):
         env = ctx.env
-        ctx.Message('Checking for Numpy-stl ... ')
+        ctx.Message('Checking for Numpy-stl ...     ')
         self.check_options(env)
 
         res = super(NumpySTL, self).check(ctx)

@@ -13,4 +13,4 @@ public:
   typedef HighOrderQuadratureType HighOrderQuadrature;
 };
 
-};   // namespace
+}  // namespace

@@ -8,6 +8,7 @@
 #include "easylogging++.h"
 #include "petscksp.h"
 #include "utility/mpi_utility.h"
+#include "control/dihu_context.h"   // for DihuContext::nRanksCommWorld
 
 // color codes: https://github.com/shiena/ansicolor/blob/master/README.md
 #define ANSI_COLOR_RED     "\x1b[31m"
@@ -84,6 +85,9 @@ void createVector(Vec& vector, int nEntries, std::string name)
 
 std::string getStringMatrixVector(const Mat& matrix, const Vec& vector)
 {
+#ifdef NDEBUG
+  return std::string("");
+#else
   std::string name;
   char *cName;
   PetscObjectGetName((PetscObject)vector, (const char **)&cName);
@@ -109,7 +113,7 @@ std::string getStringMatrixVector(const Mat& matrix, const Vec& vector)
     s << std::setw(3) << std::setfill(' ') <<i<< "| ";
     for (int j=0; j<nColumns; j++)
     {
-      if(matrixValues[i*nRows + j] == 0.0)
+      if (matrixValues[i*nRows + j] == 0.0)
         s << std::string(5, ' ');
       else
         s << std::setw(4) << std::setfill(' ') << matrixValues[i*nRows + j]<< " ";
@@ -120,17 +124,21 @@ std::string getStringMatrixVector(const Mat& matrix, const Vec& vector)
   s << std::endl;
 
   return s.str();
+#endif
 }
 
 std::string getStringMatrix(const Mat& matrix)
 {
+#ifdef NDEBUG
+  return std::string("");
+#else
   int nRows, nColumns;
   MatGetLocalSize(matrix, &nRows, &nColumns);
   int nRowsGlobal, nColumnsGlobal;
   MatGetSize(matrix, &nRowsGlobal, &nColumnsGlobal);
 
-  PetscMPIInt nRanks;
-  MPIUtility::handleReturnValue(MPI_Comm_size(MPI_COMM_WORLD, &nRanks), "MPI_Comm_size");
+  PetscMPIInt nRanks = DihuContext::nRanksCommWorld();
+  //MPIUtility::handleReturnValue(MPI_Comm_size(MPI_COMM_WORLD, &nRanks), "MPI_Comm_size");
 
   if (nRanks > 1)
   {
@@ -146,10 +154,14 @@ std::string getStringMatrix(const Mat& matrix)
   getMatrixEntries(matrix, matrixValues);
 
   return getStringMatrix(matrixValues, nRows, nColumns, nRowsGlobal, nColumnsGlobal);
+#endif
 }
 
 std::string getStringMatrix(std::vector<double> &matrixValues, int nRows, int nColumns, int nRowsGlobal, int nColumnsGlobal)
 {
+#ifdef NDEBUG
+  return std::string("");
+#else
   const double zeroTolerance = 1e-15;
 
   std::stringstream s;
@@ -169,7 +181,7 @@ std::string getStringMatrix(std::vector<double> &matrixValues, int nRows, int nC
     s << std::setw(4) << std::setfill(' ') <<i<< "| ";
     for (int j=0; j<nColumns; j++)
     {
-      if(fabs(matrixValues[i*nRows + j]) <= zeroTolerance)
+      if (fabs(matrixValues[i*nRows + j]) <= zeroTolerance)
         s << std::string(6, ' ');
       else
         s << std::showpos << std::setw(5) << std::setfill(' ') << std::setprecision(3) << matrixValues[i*nRows + j]<< " ";
@@ -180,10 +192,14 @@ std::string getStringMatrix(std::vector<double> &matrixValues, int nRows, int nC
   s << std::endl;
 
   return s.str();
+#endif
 }
 
 std::string getStringVector(const Vec& vector)
 {
+#ifdef NDEBUG
+  return std::string("");
+#else
   std::vector<double> vectorValues;
   getVectorEntries(vector, vectorValues);
 
@@ -201,10 +217,14 @@ std::string getStringVector(const Vec& vector)
   }
 
   return s.str();
+#endif
 }
 
 std::string getStringSparsityPattern(const Mat& matrix)
 {
+#ifdef NDEBUG
+  return std::string("");
+#else
   int nRows, nColumns;
   MatGetLocalSize(matrix, &nRows, &nColumns);
 
@@ -228,7 +248,7 @@ std::string getStringSparsityPattern(const Mat& matrix)
     s << " ";
     for (int j=0; j<nColumns; j++)
     {
-      if(matrixValues[i*nRows + j] == 0.0)
+      if (matrixValues[i*nRows + j] == 0.0)
         s << " ";
       else
         s << "*";
@@ -237,6 +257,7 @@ std::string getStringSparsityPattern(const Mat& matrix)
   }
   s << std::endl;
   return s.str();
+#endif
 }
 
 void checkDimensionsMatrixVector(Mat &matrix, Vec &input)
@@ -387,4 +408,4 @@ std::string getStringNonlinearConvergedReason(SNESConvergedReason convergedReaso
   return s.str();
 }
 
-}; // namespace
+}  // namespace

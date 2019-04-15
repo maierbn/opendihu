@@ -15,12 +15,25 @@ namespace FunctionSpace
 
 template<int D,typename BasisFunctionType>
 FunctionSpaceDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::
-FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, PyObject *specificSettings) :
-  FunctionSpaceDofsNodesStructured<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::FunctionSpaceDofsNodesStructured(partitionManager, specificSettings), physicalExtent_({0.0})
+FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, PythonConfig specificSettings) :
+  FunctionSpaceDofsNodesStructured<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::FunctionSpaceDofsNodesStructured(partitionManager, specificSettings), physicalExtent_({-1.0})
 {
   this->meshWidth_ = 0;
   // meshWidth will be initialized in initialize
+}
 
+template<int D,typename BasisFunctionType>
+FunctionSpaceDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::
+FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, std::vector<double> &null, PythonConfig specificSettings) :
+  FunctionSpaceDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::FunctionSpaceDofsNodes(partitionManager, specificSettings)
+{
+}
+
+template<int D,typename BasisFunctionType>
+FunctionSpaceDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::
+FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, std::vector<double> &null, std::array<element_no_t, D> nElements, std::array<double, D> physicalExtent) :
+  FunctionSpaceDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::FunctionSpaceDofsNodes(partitionManager, nElements, physicalExtent)
+{
 }
 
 template<int D,typename BasisFunctionType>
@@ -40,28 +53,27 @@ void FunctionSpaceDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunc
 computeMeshWidth()
 {
   // if physicalExtent_ is not yet set
-  if (physicalExtent_[0] == 0.0)
+  if (physicalExtent_[0] < 0.0)
   {
     // only get physicalExtent if it is not a 1-node mesh with 0 elements
     if (D > 1 || this->nElementsPerCoordinateDirectionLocal_[0] != 0 || this->nElementsPerCoordinateDirectionGlobal_[0] != 0)
     {
-      if (PythonUtility::hasKey(this->specificSettings_, "physicalExtend"))
+      if (this->specificSettings_.hasKey("physicalExtend"))
       {
         LOG(ERROR) << "You misspelled \"physicalExtent\" as \"physicalExtend\"!";
       }
       
-      physicalExtent_ = PythonUtility::getOptionArray<double, D>(this->specificSettings_, "physicalExtent", 1.0, PythonUtility::Positive);
+      physicalExtent_ = this->specificSettings_.template getOptionArray<double, D>("physicalExtent", 1.0, PythonUtility::Positive);
     }
     else
     {
-      physicalExtent_[0] = 1.0;
+      physicalExtent_[0] = 0.0;  // set to 0 as a sign that this function space has no real spatial mesh meaning
     }
     VLOG(1) << "get physicalExtent: " << physicalExtent_;
   }
-
   
   std::array<element_no_t, D> nElements;
-  bool inputMeshIsGlobal = PythonUtility::getOptionBool(this->specificSettings_, "inputMeshIsGlobal", true);
+  bool inputMeshIsGlobal = this->specificSettings_.getOptionBool("inputMeshIsGlobal", true);
   if (inputMeshIsGlobal)
   {
     for (int coordinateIndex = 0; coordinateIndex < D; coordinateIndex++)
@@ -89,7 +101,7 @@ computeMeshWidth()
       {
         this->meshWidth_ = meshWidthCurrentDirection;
       }
-      else if(fabs(this->meshWidth_ - meshWidthCurrentDirection) > 1e-14)
+      else if (fabs(this->meshWidth_ - meshWidthCurrentDirection) > 1e-14)
       {
         LOG(ERROR) << "Mesh has no uniform mesh width, use a StructuredDeformableOfDimension<" << D << "> mesh instead.";
         LOG(ERROR) << "mesh width: " << this->meshWidth_ << ", other: " << physicalExtent_[coordinateIndex] << "/" << double(nElements[coordinateIndex] * FunctionSpaceBaseDim<1,BasisFunctionType>::averageNNodesPerElement())
@@ -133,6 +145,10 @@ initialize()
   this->geometryField_ = std::make_shared<GeometryFieldType>(thisMesh, "geometry", componentNames, true);
   
   // no need to set values of the geometry field, because there is no data explicitly stored
+  // the derivative values are appropriately returned by the field variable
+
+  // set initalized_ to true which indicates that initialize has been called
+  this->initialized_ = true;
 }
 
 template<int D,typename BasisFunctionType>
@@ -143,4 +159,4 @@ meshWidth() const
 }
 
 
-};  // namespace
+} // namespace

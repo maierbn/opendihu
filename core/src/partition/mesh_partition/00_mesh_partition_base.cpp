@@ -29,12 +29,17 @@ int MeshPartitionBase::ownRankNo()
   return this->rankSubset_->ownRankNo();
 }
 
+std::shared_ptr<RankSubset> MeshPartitionBase::rankSubset() const
+{
+  return rankSubset_;
+}
+
 MPI_Comm MeshPartitionBase::mpiCommunicator() const
 {
   return rankSubset_->mpiCommunicator();
 }
 
-//! fill the dofLocalNo vectors
+//! fill the dofNosLocal_ vectors
 void MeshPartitionBase::createLocalDofOrderings(dof_no_t nDofsLocal)
 {
   // fill dofNosLocal_ 
@@ -47,6 +52,12 @@ void MeshPartitionBase::createLocalDofOrderings(dof_no_t nDofsLocal)
   // create IS (indexSet) dofNosLocalIS_;
   PetscErrorCode ierr;
   ierr = ISCreateGeneral(PETSC_COMM_SELF, dofNosLocal_.size(), dofNosLocal_.data(), PETSC_COPY_VALUES, &dofNosLocalIS_); CHKERRV(ierr);
+
+  // create IS dofNosLocalNonGhostIS_;
+  LOG(DEBUG) << "create index set for dofs without ghosts, n: " << this->nDofsLocalWithoutGhosts();
+  LOG(DEBUG) << "dofNosLocal: " << dofNosLocal_;
+
+  ierr = ISCreateGeneral(PETSC_COMM_SELF, this->nDofsLocalWithoutGhosts(), dofNosLocal_.data(), PETSC_COPY_VALUES, &dofNosLocalNonGhostIS_); CHKERRV(ierr);
 }
 
 const std::vector<PetscInt> &MeshPartitionBase::dofNosLocal() const
@@ -63,6 +74,11 @@ const std::vector<dof_no_t> &MeshPartitionBase::dofNosLocalNaturalOrdering() con
 const IS &MeshPartitionBase::dofNosLocalIS() const
 {
   return dofNosLocalIS_;
+}
+
+const IS &MeshPartitionBase::dofNosLocalNonGhostIS() const
+{
+  return dofNosLocalNonGhostIS_;
 }
 
 }  // namespace

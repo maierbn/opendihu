@@ -3,6 +3,7 @@
 *.a
 **/*.so
 */.sconf_temp*
+**/*bp*
 config.log
 build_debug
 build_release
@@ -28,3 +29,5 @@ out.py
 **/out.txt
 config.py
 **/*.csv
+**/input/*
+**/scaled_mesh*

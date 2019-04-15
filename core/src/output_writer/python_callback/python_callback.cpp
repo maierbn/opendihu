@@ -9,10 +9,10 @@
 namespace OutputWriter
 {
 
-PythonCallback::PythonCallback(DihuContext context, PyObject *settings) : Generic(context, settings)
+PythonCallback::PythonCallback(DihuContext context, PythonConfig settings) : Generic(context, settings)
 {
-  callback_ = PythonUtility::getOptionPyObject(settings, "callback");
-  onlyNodalValues_ = PythonUtility::getOptionBool(settings, "onlyNodalValues", true);
+  callback_ = settings.getOptionPyObject("callback");
+  onlyNodalValues_ = settings.getOptionBool("onlyNodalValues", true);
 }
 
-};
+}  // namespace

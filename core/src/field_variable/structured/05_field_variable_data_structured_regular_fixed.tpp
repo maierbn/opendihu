@@ -6,4 +6,4 @@
 
 namespace FieldVariable
 {
-};
+}

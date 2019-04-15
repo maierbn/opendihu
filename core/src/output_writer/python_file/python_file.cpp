@@ -9,9 +9,9 @@
 namespace OutputWriter
 {
 
-PythonFile::PythonFile(DihuContext context, PyObject *settings) : Generic(context, settings)
+PythonFile::PythonFile(DihuContext context, PythonConfig settings) : Generic(context, settings)
 {
-  onlyNodalValues_ = PythonUtility::getOptionBool(settings, "onlyNodalValues", true);
+  onlyNodalValues_ = settings.getOptionBool("onlyNodalValues", true);
 }
 
 PyObject *PythonFile::openPythonFileStream(std::string filename, std::string writeFlag)
@@ -30,7 +30,8 @@ PyObject *PythonFile::openPythonFileStream(std::string filename, std::string wri
   PyObject *file = PyObject_CallMethod(ioModule, "open", "ss", filename.c_str(), writeFlag.c_str());
   Py_XDECREF(ioModule);
 
-  LOG(DEBUG) << "file = io.open(" << filename << ", " << writeFlag << ")";
+  LOG(DEBUG) << "write python file \"" << filename << "\".";
+  VLOG(1) << "file = io.open(" << filename << ", " << writeFlag << ")";
 #else
   // python 2.7
   char filenameC[filename.size()+1];
@@ -60,7 +61,7 @@ void PythonFile::outputPyObject(PyObject *file, PyObject *pyData)
   if (jsonModule == NULL)
   {
     jsonModule = PyImport_ImportModule("json");
-    LOG(DEBUG) << "import json";
+    VLOG(1) << "import json";
   }
   if (jsonModule == NULL)
   {
@@ -71,15 +72,15 @@ void PythonFile::outputPyObject(PyObject *file, PyObject *pyData)
     // convert data object to string representation and save in file
     //PyObject *pyDataJson =
     PyObject_CallMethod(jsonModule, "dump", "O, O", pyData, file);
-    LOG(DEBUG) << "json.dump(data, file)";
+    VLOG(1) << "json.dump(data, file)";
 
     PyObject_CallMethod(file, "flush", NULL);
     PyObject_CallMethod(file, "close", NULL);
-    LOG(DEBUG) << "file.close()";
+    VLOG(1) << "file.close()";
   }
 #else
   PyFile_WriteObject(pyData, file, 0);
 #endif
 }
 
-};
+}  // namespace

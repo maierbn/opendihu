@@ -9,22 +9,22 @@
 #include <algorithm>
 #include <array>
 
-#include "control/use_numpy.h"
 #include "utility/vector_operators.h"
+#include "control/settings_file_name.h"
 
 template<typename Key, typename Value>
-std::pair<Key, Value> PythonUtility::getOptionDictBegin(const PyObject *settings, std::string keyString)
+std::pair<Key, Value> PythonUtility::getOptionDictBegin(const PyObject *settings, std::string keyString, std::string pathString)
 {
   std::pair<Key, Value> firstEntry;
 
   if (settings)
   {
     // start critical section for python API calls
-    PythonUtility::GlobalInterpreterLock lock;
+    // PythonUtility::GlobalInterpreterLock lock;
   
     // check if input dictionary contains the key
     PyObject *key = PyUnicode_FromString(keyString.c_str());
-    if(PyDict_Contains((PyObject *)settings, key))
+    if (PyDict_Contains((PyObject *)settings, key))
     {
       //PythonUtility::printDict((PyObject *)settings);
 
@@ -51,17 +51,17 @@ std::pair<Key, Value> PythonUtility::getOptionDictBegin(const PyObject *settings
         }
         else
         {
-          LOG(WARNING) << "Warning: key \"" <<keyString<< "\" is not a dict";
+          LOG(WARNING) << "Warning: " << pathString << "[\"" << keyString << "\"] is not a dict";
         }
       }
       else
       {
-        LOG(WARNING) << "Warning: Entry \"" <<keyString<< "\" is not a dict.";
+        LOG(WARNING) << "Warning: Entry " << pathString << "[\"" << keyString << "\"] is not a dict.";
       }
     }
     else
     {
-      LOG(WARNING) << "Warning: key \"" <<keyString<< "\" not found in dict in config file" << std::endl;
+      LOG(WARNING) << "Warning: " << pathString << "[\"" << keyString << "\"] not set in \"" << Control::settingsFileName << "\"" << std::endl;
     }
   }
 
@@ -69,12 +69,12 @@ std::pair<Key, Value> PythonUtility::getOptionDictBegin(const PyObject *settings
 }
 
 template<typename Key, typename Value>
-void PythonUtility::getOptionDictNext(const PyObject *settings, std::string keyString, std::pair<Key, Value> &nextPair)
+void PythonUtility::getOptionDictNext(const PyObject *settings, std::string keyString, std::string pathString, std::pair<Key, Value> &nextPair)
 {
   itemListIndex++;
 
   // start critical section for python API calls
-  PythonUtility::GlobalInterpreterLock lock;
+  // PythonUtility::GlobalInterpreterLock lock;
   
   if (itemListIndex < PyList_Size(itemList))
   {
@@ -88,16 +88,16 @@ void PythonUtility::getOptionDictNext(const PyObject *settings, std::string keyS
 }
 
 template<typename Value>
-Value PythonUtility::getOptionListBegin(const PyObject *settings, std::string keyString)
+Value PythonUtility::getOptionListBegin(const PyObject *settings, std::string keyString, std::string pathString)
 {
   if (settings)
   {
     // start critical section for python API calls
-    PythonUtility::GlobalInterpreterLock lock;
+    // PythonUtility::GlobalInterpreterLock lock;
   
     // check if input dictionary contains the key
     PyObject *key = PyUnicode_FromString(keyString.c_str());
-    if(PyDict_Contains((PyObject *)settings, key))
+    if (PyDict_Contains((PyObject *)settings, key))
     {
       // check if it is a list
       list = PyDict_GetItem((PyObject *)settings, key);
@@ -115,14 +115,14 @@ Value PythonUtility::getOptionListBegin(const PyObject *settings, std::string ke
       }
       else
       {
-        LOG(WARNING) << "Key \"" <<keyString<< "\" is not a list!";
+        LOG(WARNING) << "" << pathString << "[\"" << keyString << "\"] is not a list!";
         Py_CLEAR(key);
         return convertFromPython<Value>::get(list);
       }
     }
     else
     {
-      LOG(WARNING) << "Warning: key \"" <<keyString<< "\" not found in config file.";
+      LOG(WARNING) << "Warning: " << pathString << "[\"" << keyString << "\"] not found in config file.";
     }
 
     Py_CLEAR(key);
@@ -132,12 +132,12 @@ Value PythonUtility::getOptionListBegin(const PyObject *settings, std::string ke
 }
 
 template<typename Value>
-void PythonUtility::getOptionListNext(const PyObject *settings, std::string keyString, Value &value)
+void PythonUtility::getOptionListNext(const PyObject *settings, std::string keyString, std::string pathString, Value &value)
 {
   listIndex++;
 
   // start critical section for python API calls
-  PythonUtility::GlobalInterpreterLock lock;
+  // PythonUtility::GlobalInterpreterLock lock;
   
   if (listIndex < PyList_Size(list))
   {
@@ -148,16 +148,16 @@ void PythonUtility::getOptionListNext(const PyObject *settings, std::string keyS
 }
 
 template<class ValueType, int D>
-std::array<ValueType, D> PythonUtility::getOptionArray(PyObject* settings, std::string keyString,
+std::array<ValueType, D> PythonUtility::getOptionArray(PyObject* settings, std::string keyString, std::string pathString,
                                                       ValueType defaultValue, ValidityCriterion validityCriterion)
 {
   std::array<ValueType,(int)D> defaultValueArray = {};
   defaultValueArray.fill(defaultValue);
-  return getOptionArray<ValueType,D>(settings, keyString, defaultValueArray, validityCriterion);
+  return PythonUtility::getOptionArray<ValueType,D>(settings, keyString, pathString, defaultValueArray, validityCriterion);
 }
 
 template<class ValueType, int D>
-std::array<ValueType, D> PythonUtility::getOptionArray(PyObject* settings, std::string keyString,
+std::array<ValueType, D> PythonUtility::getOptionArray(PyObject* settings, std::string keyString, std::string pathString,
                                                       std::array<ValueType, D> defaultValue, ValidityCriterion validityCriterion)
 {
   std::array<ValueType, D> result = defaultValue;
@@ -165,11 +165,11 @@ std::array<ValueType, D> PythonUtility::getOptionArray(PyObject* settings, std::
   if (settings)
   {
     // start critical section for python API calls
-    PythonUtility::GlobalInterpreterLock lock;
+    // PythonUtility::GlobalInterpreterLock lock;
   
     // check if input dictionary contains the key
     PyObject *key = PyUnicode_FromString(keyString.c_str());
-    if(PyDict_Contains((PyObject *)settings, key))
+    if (PyDict_Contains((PyObject *)settings, key))
     {
       // extract the value of the key and check its type
       PyObject *value = PyDict_GetItem((PyObject *)settings, key);
@@ -177,7 +177,7 @@ std::array<ValueType, D> PythonUtility::getOptionArray(PyObject* settings, std::
     }
     else
     {
-      LOG(WARNING) << "Warning: key \"" <<keyString<< "\" not found in config, assuming default values " << defaultValue << ".";
+      LOG(WARNING) << "Warning: " << pathString << "[\"" << keyString << "\"] not found in config, assuming default values " << defaultValue << ".";
 
       Py_CLEAR(key);
       return defaultValue;
@@ -193,7 +193,7 @@ std::array<ValueType, D> PythonUtility::getOptionArray(PyObject* settings, std::
       {
        if (result[i] <= 0.0)
        {
-         LOG(WARNING) << "Warning: value " <<result[i]<< " of key \"" <<keyString<< "\" is invalid (not positive). Using default value "
+         LOG(WARNING) << "Warning: Value " <<result[i]<< " of " << pathString << "[\"" << keyString << "\"] is invalid (not positive). Using default value "
            << defaultValue[i]<< ".";
          result[i] = defaultValue[i];
        }
@@ -203,7 +203,7 @@ std::array<ValueType, D> PythonUtility::getOptionArray(PyObject* settings, std::
       {
        if (result[i] < 0.0)
        {
-         LOG(WARNING) << "Warning: value " <<result[i]<< " of key \"" <<keyString<< "\" is invalid (not non-negative). Using default value "
+         LOG(WARNING) << "Warning: Value " <<result[i]<< " of " << pathString << "[\"" << keyString << "\"] is invalid (not non-negative). Using default value "
            << defaultValue[i]<< ".";
          result[i] = defaultValue[i];
        }
@@ -215,7 +215,7 @@ std::array<ValueType, D> PythonUtility::getOptionArray(PyObject* settings, std::
       {
        if (result[i] < 1.0 || result[i] > 3.0)
        {
-         LOG(WARNING) << "Warning: value " <<result[i]<< " of key \"" <<keyString<< "\" is invalid (not between 1 and 3). Using default value "
+         LOG(WARNING) << "Warning: Value " <<result[i]<< " of " << pathString << "[\"" << keyString << "\"] is invalid (not between 1 and 3). Using default value "
            << defaultValue[i]<< ".";
          result[i] = defaultValue[i];
        }
@@ -233,7 +233,7 @@ template<int D>
 PyObject *PythonUtility::convertToPythonList(std::array<long,D> &data)
 {
   // start critical section for python API calls
-  PythonUtility::GlobalInterpreterLock lock;
+  // PythonUtility::GlobalInterpreterLock lock;
 
   PyObject *result = PyList_New((Py_ssize_t)D);
   for (unsigned int i=0; i<D; i++)
@@ -248,7 +248,7 @@ template<int D>
 PyObject *PythonUtility::convertToPythonList(std::array<bool,D> &data)
 {
   // start critical section for python API calls
-  PythonUtility::GlobalInterpreterLock lock;
+  // PythonUtility::GlobalInterpreterLock lock;
 
   PyObject *result = PyList_New((Py_ssize_t)D);
   for (unsigned int i=0; i<D; i++)

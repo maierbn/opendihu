@@ -19,6 +19,10 @@ class MultipleInstances: public Runnable
 {
 public:
 
+  typedef std::vector<typename TimeSteppingScheme::TransferableSolutionDataType> TransferableSolutionDataType;
+  typedef typename TimeSteppingScheme::FunctionSpace FunctionSpace;
+  typedef typename ::Data::MultipleInstances<typename TimeSteppingScheme::FunctionSpace, TimeSteppingScheme> Data;
+
   //! constructor
   MultipleInstances(DihuContext context);
 
@@ -34,28 +38,43 @@ public:
   //! return whether the scheme has a specified mesh type and is not independent of the mesh type
   bool knowsMeshType();
 
-  //! returns the Petsc solution vector
-  Vec &solution();
+  //! return the data object
+  Data &data();
+
+  //! get the data that will be transferred in the operator splitting to the other term of the splitting
+  //! the transfer is done by the solution_vector_mapping class
+  TransferableSolutionDataType getSolutionForTransfer();
 
   //! run solution process
   void run();
 
+  //! reset the objects state
+  void reset();
+
+  //! output the given data for debugging
+  std::string getString(TransferableSolutionDataType &data);
+
 protected:
 
   DihuContext context_; ///< the context object that holds the config for this class
-  PyObject *specificSettings_;    ///< config for this object
+  PythonConfig specificSettings_;    ///< config for this object
   OutputWriter::Manager outputWriterManager_; ///< manager object holding all output writer
 
   int nInstances_; ///< number of instances that are given by config
   int nInstancesComputedGlobally_; ///< number of instances that any process will compute
   std::vector<TimeSteppingScheme> instancesLocal_;   ///< the instances of the problem that are computed on the local rank
   int nInstancesLocal_;   ///< the number of local instances, i.e. the size of the instancesLocal_ vector
-  
+
   std::shared_ptr<Partition::RankSubset> rankSubsetAllComputedInstances_;   ///< the rank nos of all computed instances of this MultipleInstances object
+  std::string logKey_;   ///< the key under which the duration of all instances together is saved in the log
 
-  Data::MultipleInstances<typename TimeSteppingScheme::FunctionSpace, TimeSteppingScheme> data_;  ///< the data object
+  Data data_;  ///< the data object
+
+  bool outputInitializeThisInstance_;   ///< if this instance displays progress of initialization
 };
 
-};
+extern bool outputInitialize_;   ///< if the message about initialization was already printed
+
+}  // namespace
 
 #include "control/multiple_instances.tpp"

@@ -21,6 +21,6 @@ protected:
   void setRightHandSide();
 };
 
-};  // namespace
+} // namespace
 
 #include "spatial_discretization/finite_element_method/04_rhs.tpp"

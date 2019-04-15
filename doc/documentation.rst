@@ -165,3 +165,9 @@ plot out*               # plot all out* files
 validate_parallel.py    # without arguments, checks if the content of all files with corresponding names matches, where some files are serial files like `out.py` and some are parallel files like `out.0.py`, `out.1.py` etc.
 validate_parallel.py out.py out.0.py out.1.py   # do the same but with explicit specification of which files to use.
 ```
+
+# using pat_run with GCC:
+1. needs -finstrument-functions in compile options for all code levels. I.e., core, example code and eventually in cellml runtime compiled code.
+2. modules needed: PrgEnv-gnu, perftools-base, perftools-preload.
+3. aprun command: aprun (aprun opts like -n= ...) pat_run (pat_run options, at least: -gmpi -r -m lite-events. for more, see man pat_run) example_name (example options)
+ for example: ´aprun -n8 pat_run -m lite-events -gmpi -r ./shorten_implicit ../settings.py´

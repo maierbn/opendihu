@@ -13,4 +13,4 @@ void handleReturnValue(int returnValue, std::string descriptor="", MPI_Status *s
 //! Make all processes wait until one sets the local variable 'gdb_resume' to 1 from gdb
 void gdbParallelDebuggingBarrier();
 
-};  // namespace MPIUtility
+} // namespace MPIUtility

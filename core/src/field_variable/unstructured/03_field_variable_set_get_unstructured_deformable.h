@@ -30,17 +30,36 @@ public:
   //! for a specific component, get all values
   //! @param onlyNodalValues: if this is true, for Hermite only the non-derivative values are retrieved
   void getValuesWithGhosts(int componentNo, std::vector<double> &values, bool onlyNodalValues=false) const;
-  
+
   //! for a specific component, get all values
   //! @param onlyNodalValues: if this is true, for Hermite only the non-derivative values are retrieved
   void getValuesWithoutGhosts(int componentNo, std::vector<double> &values, bool onlyNodalValues=false) const;
+
+  //! get all values
+  //! @param onlyNodalValues: if this is true, for Hermite only the non-derivative values are retrieved
+  void getValuesWithGhosts(std::vector<std::array<double,nComponents>> &values, bool onlyNodalValues=false) const;
+
+  //! get all values
+  //! @param onlyNodalValues: if this is true, for Hermite only the non-derivative values are retrieved
+  void getValuesWithGhosts(std::array<std::vector<double>,nComponents> &values, bool onlyNodalValues=false) const;
+
+  //! get all values
+  //! @param onlyNodalValues: if this is true, for Hermite only the non-derivative values are retrieved
+  void getValuesWithoutGhosts(std::vector<std::array<double,nComponents>> &values, bool onlyNodalValues=false) const;
+
+  //! get all values
+  //! @param onlyNodalValues: if this is true, for Hermite only the non-derivative values are retrieved
+  void getValuesWithoutGhosts(std::array<std::vector<double>,nComponents> &values, bool onlyNodalValues=false) const;
 
   //! for a specific component, get values from their local dof no.s, as array, therefore templated by the number of elements, N, to retrieve
   template<int N>
   void getValues(int componentNo, std::array<dof_no_t,N> dofLocalNo, std::array<double,N> &values) const;
 
   //! for a specific component, get values from their local dof no.s, as vector
-  void getValues(int componentNo, std::vector<dof_no_t> dofLocalNo, std::vector<double> &values) const;
+  void getValues(int componentNo, const std::vector<dof_no_t> &dofLocalNo, std::vector<double> &values) const;
+
+  //! get values for all components, from their local dof no.s, as contiguous vector in order [comp0, comp0, comp0, ..., comp1, comp1, ...]
+  void getValues(const std::vector<dof_no_t> &dofLocalNo, std::vector<double> &values) const;
 
   //! get values from their local dof no.s for all components, this eventually does not get all values if there are multiple versions
   template<int N>
@@ -56,13 +75,23 @@ public:
   double getValue(int componentNo, node_no_t dofLocalNo) const;
 
   //! copy the values of a given component to a new single-component field variable
-  void extractComponent(int componentNo, std::shared_ptr<FieldVariable<FunctionSpaceType,1>> extractedFieldVariable);
+  void extractComponentCopy(int componentNo, std::shared_ptr<FieldVariable<FunctionSpaceType,1>> extractedFieldVariable);
+
+  //! extract the specified component from the field variable by using the raw data array in the given field variable. Afterwards this field variable is invalid and can only be used again after restoreExtractedComponent has been called
+  void extractComponentShared(int componentNo, std::shared_ptr<FieldVariable<FunctionSpaceType,1>> extractedFieldVariable);
 
   //! set the values for the given component from a petsc Vec
   void setValues(int componentNo, Vec petscVector);
 
   //! set the values for the given component from the other field variable
   void setValues(int componentNo, std::shared_ptr<FieldVariable<FunctionSpaceType,1>> fieldVariable);
+
+  //! set values for a given components for given dofs
+  void setValues(int componentNo, const std::vector<dof_no_t> &dofNosLocal, const std::vector<double> &values, InsertMode petscInsertMode=INSERT_VALUES);
+
+  //! set values for a given components for given dofs
+  template<int N>
+  void setValues(int componentNo, const std::array<dof_no_t,N> &dofNosLocal, const std::array<double,N> &values, InsertMode petscInsertMode=INSERT_VALUES);
 
   //! copy the values from another field variable of the same type
   void setValues(FieldVariable<FunctionSpaceType,nComponents> &rhs);
@@ -95,6 +124,6 @@ public:
   void zeroEntries();
 };
 
-};  // namespace
+} // namespace
 
 #include "field_variable/unstructured/03_field_variable_set_get_unstructured_deformable.tpp"

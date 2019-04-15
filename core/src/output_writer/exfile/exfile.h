@@ -38,6 +38,6 @@ private:
   std::map<double,std::vector<FilenameWithElementAndNodeCount>> filenamesWithElementAndNodeCount_;   ///< for a given simulation time the filenames without suffix of all previously output exelem files
 };
 
-};  // namespace
+} // namespace
 
 #include "output_writer/exfile/exfile.tpp"

@@ -30,7 +30,7 @@ class FunctionSpacePartitionBase :
 public:
   
   //! constructor
-  FunctionSpacePartitionBase(std::shared_ptr<Partition::Manager> partitionManager, PyObject *specificSettings);
+  FunctionSpacePartitionBase(std::shared_ptr<Partition::Manager> partitionManager, PythonConfig specificSettings);
   
   //! set the partition, call this prior to initialize to not initialize the partition from settings but use the given meshPartition
   void setMeshPartition(std::shared_ptr<Partition::MeshPartition<FunctionSpace<MeshType,BasisFunctionType>,MeshType>> meshPartition);
@@ -44,7 +44,7 @@ public:
 protected:
   std::shared_ptr<Partition::Manager> partitionManager_;  ///< the partition manager object that can create partitions
   std::shared_ptr<Partition::MeshPartition<FunctionSpace<MeshType,BasisFunctionType>,MeshType>> meshPartition_;   ///< the partition information that is stored locally, i.e. the subdomain of the domain decomposition
-
+  bool forcePartitioningCreationFromLocalNumberOfElements_;    ///< if the meshPartition should be created from localNodePositions for StructuredDeformable meshes, ignoring values of config "inputMeshIsGlobal"
 };
 
 /** specialization for structured meshes 

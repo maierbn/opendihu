@@ -49,7 +49,7 @@ config = {
   std::string referenceOutput0 = "{\"meshType\": \"StructuredDeformable\", \"dimension\": 1, \"nElementsGlobal\": [5], \"nElementsLocal\": [3], \"beginNodeGlobalNatural\": [0], \"hasFullNumberOfNodes\": [false], \"basisFunction\": \"Lagrange\", \"basisOrder\": 1, \"onlyNodalValues\": true, \"nRanks\": 2, \"ownRankNo\": 0, \"data\": [{\"name\": \"geometry\", \"components\": [{\"name\": \"x\", \"values\": [0.0, 0.8, 1.6]}, {\"name\": \"y\", \"values\": [0.0, 0.0, 0.0]}, {\"name\": \"z\", \"values\": [0.0, 0.0, 0.0]}]}, {\"name\": \"solution\", \"components\": [{\"name\": \"0\", \"values\": [1.0000000000000004, 0.7999999999999998, 0.6000000000000001]}]}, {\"name\": \"rhs\", \"components\": [{\"name\": \"0\", \"values\": [1.0, -1.25, 0.0]}]}], \"timeStepNo\": -1, \"currentTime\": 0.0}";
   std::string referenceOutput1 = "{\"meshType\": \"StructuredDeformable\", \"dimension\": 1, \"nElementsGlobal\": [5], \"nElementsLocal\": [2], \"beginNodeGlobalNatural\": [3], \"hasFullNumberOfNodes\": [true], \"basisFunction\": \"Lagrange\", \"basisOrder\": 1, \"onlyNodalValues\": true, \"nRanks\": 2, \"ownRankNo\": 1, \"data\": [{\"name\": \"geometry\", \"components\": [{\"name\": \"x\", \"values\": [2.4000000000000004, 3.2, 4.0]}, {\"name\": \"y\", \"values\": [0.0, 0.0, 0.0]}, {\"name\": \"z\", \"values\": [0.0, 0.0, 0.0]}]}, {\"name\": \"solution\", \"components\": [{\"name\": \"0\", \"values\": [0.4000000000000001, 0.1999999999999999, 0.0]}]}, {\"name\": \"rhs\", \"components\": [{\"name\": \"0\", \"values\": [0.0, 0.0, 0.0]}]}], \"timeStepNo\": -1, \"currentTime\": 0.0}";
 
-  if (DihuContext::ownRankNo() == 0)
+  if (settings.ownRankNo() == 0)
   {
     assertFileMatchesContent("out.0.py", referenceOutput0);
     assertFileMatchesContent("out.1.py", referenceOutput1);
@@ -57,7 +57,7 @@ config = {
 
   nFails += ::testing::Test::HasFailure();
 }
-/*
+
 TEST(LaplaceTest, Structured1DQuadratic)
 {
   std::string pythonConfig = R"(
@@ -98,7 +98,7 @@ config = {
   std::string referenceOutput0 = "{\"meshType\": \"StructuredDeformable\", \"dimension\": 1, \"nElementsGlobal\": [5], \"nElementsLocal\": [3], \"beginNodeGlobalNatural\": [0], \"hasFullNumberOfNodes\": [false], \"basisFunction\": \"Lagrange\", \"basisOrder\": 2, \"onlyNodalValues\": true, \"nRanks\": 2, \"ownRankNo\": 0, \"data\": [{\"name\": \"geometry\", \"components\": [{\"name\": \"x\", \"values\": [0.0, 0.4, 0.8, 1.2000000000000002, 1.6, 2.0]}, {\"name\": \"y\", \"values\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}, {\"name\": \"z\", \"values\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}]}, {\"name\": \"solution\", \"components\": [{\"name\": \"0\", \"values\": [1.0000000000000004, 0.8999999999999994, 0.799999999999999, 0.699999999999998, 0.5999999999999972, 0.49999999999999767]}]}, {\"name\": \"rhs\", \"components\": [{\"name\": \"0\", \"values\": [1.0, -3.333333333333333, 0.41666666666666674, 0.0, 0.0, 0.0]}]}], \"timeStepNo\": -1, \"currentTime\": 0.0}";
   std::string referenceOutput1 = "{\"meshType\": \"StructuredDeformable\", \"dimension\": 1, \"nElementsGlobal\": [5], \"nElementsLocal\": [2], \"beginNodeGlobalNatural\": [6], \"hasFullNumberOfNodes\": [true], \"basisFunction\": \"Lagrange\", \"basisOrder\": 2, \"onlyNodalValues\": true, \"nRanks\": 2, \"ownRankNo\": 1, \"data\": [{\"name\": \"geometry\", \"components\": [{\"name\": \"x\", \"values\": [2.4000000000000004, 2.8000000000000003, 3.2, 3.6, 4.0]}, {\"name\": \"y\", \"values\": [0.0, 0.0, 0.0, 0.0, 0.0]}, {\"name\": \"z\", \"values\": [0.0, 0.0, 0.0, 0.0, 0.0]}]}, {\"name\": \"solution\", \"components\": [{\"name\": \"0\", \"values\": [0.39999999999999736, 0.2999999999999976, 0.19999999999999823, 0.09999999999999895, 0.0]}]}, {\"name\": \"rhs\", \"components\": [{\"name\": \"0\", \"values\": [0.0, 0.0, 0.0, 0.0, 0.0]}]}], \"timeStepNo\": -1, \"currentTime\": 0.0}";
 
-  if (DihuContext::ownRankNo() == 0)
+  if (settings.ownRankNo() == 0)
   {
     assertFileMatchesContent("out.0.py", referenceOutput0);
     assertFileMatchesContent("out.1.py", referenceOutput1);
@@ -147,7 +147,7 @@ config = {
   std::string referenceOutput0 = "{\"meshType\": \"StructuredDeformable\", \"dimension\": 1, \"nElementsGlobal\": [5], \"nElementsLocal\": [3], \"beginNodeGlobalNatural\": [0], \"hasFullNumberOfNodes\": [false], \"basisFunction\": \"Hermite\", \"basisOrder\": 3, \"onlyNodalValues\": true, \"nRanks\": 2, \"ownRankNo\": 0, \"data\": [{\"name\": \"geometry\", \"components\": [{\"name\": \"x\", \"values\": [0.0, 0.8, 1.6]}, {\"name\": \"y\", \"values\": [0.0, 0.0, 0.0]}, {\"name\": \"z\", \"values\": [0.0, 0.0, 0.0]}]}, {\"name\": \"solution\", \"components\": [{\"name\": \"0\", \"values\": [1.0000000000000002, 0.8000000000000003, 0.5999999999999999]}]}, {\"name\": \"rhs\", \"components\": [{\"name\": \"0\", \"values\": [1.0, -1.4999999999999993, 0.0]}]}], \"timeStepNo\": -1, \"currentTime\": 0.0}";
   std::string referenceOutput1 = "{\"meshType\": \"StructuredDeformable\", \"dimension\": 1, \"nElementsGlobal\": [5], \"nElementsLocal\": [2], \"beginNodeGlobalNatural\": [3], \"hasFullNumberOfNodes\": [true], \"basisFunction\": \"Hermite\", \"basisOrder\": 3, \"onlyNodalValues\": true, \"nRanks\": 2, \"ownRankNo\": 1, \"data\": [{\"name\": \"geometry\", \"components\": [{\"name\": \"x\", \"values\": [2.4000000000000004, 3.2, 4.0]}, {\"name\": \"y\", \"values\": [0.0, 0.0, 0.0]}, {\"name\": \"z\", \"values\": [0.0, 0.0, 0.0]}]}, {\"name\": \"solution\", \"components\": [{\"name\": \"0\", \"values\": [0.3999999999999998, 0.1999999999999998, 0.0]}]}, {\"name\": \"rhs\", \"components\": [{\"name\": \"0\", \"values\": [0.0, 0.0, 0.0]}]}], \"timeStepNo\": -1, \"currentTime\": 0.0}";
 
-  if (DihuContext::ownRankNo() == 0)
+  if (settings.ownRankNo() == 0)
   {
     assertFileMatchesContent("out.0.py", referenceOutput0);
     assertFileMatchesContent("out.1.py", referenceOutput1);
@@ -197,7 +197,7 @@ config = {
   std::string referenceOutput0 = "{\"meshType\": \"StructuredDeformable\", \"dimension\": 1, \"nElementsGlobal\": [5], \"nElementsLocal\": [3], \"beginNodeGlobalNatural\": [0], \"hasFullNumberOfNodes\": [false], \"basisFunction\": \"Hermite\", \"basisOrder\": 3, \"onlyNodalValues\": false, \"nRanks\": 2, \"ownRankNo\": 0, \"data\": [{\"name\": \"geometry\", \"components\": [{\"name\": \"x\", \"values\": [0.0, 0.0, 0.8, 0.0, 1.6, 0.0]}, {\"name\": \"y\", \"values\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}, {\"name\": \"z\", \"values\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}]}, {\"name\": \"solution\", \"components\": [{\"name\": \"0\", \"values\": [-1.731137919321699e-17, -0.24999999999999994, -2.2431623986420583e-18, -0.05628740946730341, 1.3321963259718046e-18, -0.01267457751408284]}]}, {\"name\": \"rhs\", \"components\": [{\"name\": \"0\", \"values\": [1.3877787807814457e-17, -0.25, -1.3877787807814457e-17, 0.026041666666666668, 0.0, 0.0]}]}], \"timeStepNo\": -1, \"currentTime\": 0.0}";
   std::string referenceOutput1 = "{\"meshType\": \"StructuredDeformable\", \"dimension\": 1, \"nElementsGlobal\": [5], \"nElementsLocal\": [2], \"beginNodeGlobalNatural\": [3], \"hasFullNumberOfNodes\": [true], \"basisFunction\": \"Hermite\", \"basisOrder\": 3, \"onlyNodalValues\": false, \"nRanks\": 2, \"ownRankNo\": 1, \"data\": [{\"name\": \"geometry\", \"components\": [{\"name\": \"x\", \"values\": [2.4000000000000004, 0.0, 3.2, 0.0, 4.0, 0.0]}, {\"name\": \"y\", \"values\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}, {\"name\": \"z\", \"values\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}]}, {\"name\": \"solution\", \"components\": [{\"name\": \"0\", \"values\": [1.2293431050318027e-18, -0.002860618931749887, 1.0301064917240598e-18, -0.000674977500749973, 0.0, -0.0002892760717499882]}]}, {\"name\": \"rhs\", \"components\": [{\"name\": \"0\", \"values\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}]}], \"timeStepNo\": -1, \"currentTime\": 0.0}";
 
-  if (DihuContext::ownRankNo() == 0)
+  if (settings.ownRankNo() == 0)
   {
     assertFileMatchesContent("out.0.py", referenceOutput0);
     assertFileMatchesContent("out.1.py", referenceOutput1);
@@ -257,7 +257,7 @@ config = {
   std::string referenceOutput0 = "{\"meshType\": \"StructuredDeformable\", \"dimension\": 2, \"nElementsGlobal\": [3, 2], \"nElementsLocal\": [2, 2], \"beginNodeGlobalNatural\": [0, 0], \"hasFullNumberOfNodes\": [false, true], \"basisFunction\": \"Lagrange\", \"basisOrder\": 1, \"onlyNodalValues\": true, \"nRanks\": 2, \"ownRankNo\": 0, \"data\": [{\"name\": \"geometry\", \"components\": [{\"name\": \"x\", \"values\": [0.0, 2.0, 0.0, 2.0, 0.0, 2.0]}, {\"name\": \"y\", \"values\": [0.0, 0.0, 2.0, 2.0, 4.0, 4.0]}, {\"name\": \"z\", \"values\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}]}, {\"name\": \"solution\", \"components\": [{\"name\": \"0\", \"values\": [0.0, 1.0000000000000002, 4.242857142857144, 5.971428571428574, 0.0, 10.000000000000005]}]}, {\"name\": \"rhs\", \"components\": [{\"name\": \"0\", \"values\": [0.0, 1.0, -3.666666666666667, -11.000000000000002, 0.0, 10.0]}]}], \"timeStepNo\": -1, \"currentTime\": 0.0}";
   std::string referenceOutput1 = "{\"meshType\": \"StructuredDeformable\", \"dimension\": 2, \"nElementsGlobal\": [3, 2], \"nElementsLocal\": [1, 2], \"beginNodeGlobalNatural\": [2, 0], \"hasFullNumberOfNodes\": [true, true], \"basisFunction\": \"Lagrange\", \"basisOrder\": 1, \"onlyNodalValues\": true, \"nRanks\": 2, \"ownRankNo\": 1, \"data\": [{\"name\": \"geometry\", \"components\": [{\"name\": \"x\", \"values\": [4.0, 6.0, 4.0, 6.0, 4.0, 6.0]}, {\"name\": \"y\", \"values\": [0.0, 0.0, 2.0, 2.0, 4.0, 4.0]}, {\"name\": \"z\", \"values\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}]}, {\"name\": \"solution\", \"components\": [{\"name\": \"0\", \"values\": [2.0000000000000004, 3.0000000000000018, 10.528571428571434, 12.257142857142862, 20.00000000000001, 30.000000000000007]}]}, {\"name\": \"rhs\", \"components\": [{\"name\": \"0\", \"values\": [2.0, 3.0, -22.0, -12.833333333333332, 20.0, 30.0]}]}], \"timeStepNo\": -1, \"currentTime\": 0.0}";
 
-  if (DihuContext::ownRankNo() == 0)
+  if (settings.ownRankNo() == 0)
   {
     assertFileMatchesContent("out2d_p2.0.py", referenceOutput0);
     assertFileMatchesContent("out2d_p2.1.py", referenceOutput1);
@@ -324,7 +324,7 @@ config = {
 
   std::string referenceOutput0 = "{\"meshType\": \"StructuredDeformable\", \"dimension\": 2, \"nElementsGlobal\": [3, 2], \"nElementsLocal\": [3, 2], \"beginNodeGlobalNatural\": [0, 0], \"hasFullNumberOfNodes\": [true, true], \"basisFunction\": \"Lagrange\", \"basisOrder\": 1, \"onlyNodalValues\": true, \"nRanks\": 1, \"ownRankNo\": 0, \"data\": [{\"name\": \"geometry\", \"components\": [{\"name\": \"x\", \"values\": [0.0, 2.0, 4.0, 6.0, 0.0, 2.0, 4.0, 6.0, 0.0, 2.0, 4.0, 6.0]}, {\"name\": \"y\", \"values\": [0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 4.0, 4.0, 4.0, 4.0]}, {\"name\": \"z\", \"values\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}]}, {\"name\": \"solution\", \"components\": [{\"name\": \"0\", \"values\": [0.0, 1.0, 2.0, 3.0, 4.242857142857142, 5.971428571428571, 10.52857142857143, 12.257142857142851, 0.0, 9.999999999999996, 19.999999999999993, 30.000000000000004]}]}, {\"name\": \"rhs\", \"components\": [{\"name\": \"0\", \"values\": [0.0, 1.0, 2.0, 3.0, -3.666666666666667, -11.000000000000002, -22.0, -12.833333333333332, 0.0, 10.0, 20.0, 30.0]}]}], \"timeStepNo\": -1, \"currentTime\": 0.0}";
 
-  if (DihuContext::ownRankNo() == 0)
+  if (settings.ownRankNo() == 0)
   {
     assertFileMatchesContent("out2d_p1.py", referenceOutput0);
   }
@@ -437,7 +437,7 @@ config = {
 
   DihuContext settings(argc, argv, pythonConfig);
 
-  int ownRankNo = DihuContext::ownRankNo();
+  int ownRankNo = settings.ownRankNo();
 
   Control::MultipleInstances<
     SpatialDiscretization::FiniteElementMethod<
@@ -516,8 +516,8 @@ config = {
 
 TEST(LaplaceTest, SerialEqualsParallelRegular2DQuadratic)
 {
-  LOG(INFO) << "wait 3 s";
-  std::this_thread::sleep_for(std::chrono::milliseconds(3000));  // pause execution, such that output files can be closed
+  LOG(INFO) << "wait 1 s";
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));  // pause execution, such that output files can be closed
 
   // run serial problem
   std::string pythonConfig = R"(
@@ -558,7 +558,7 @@ config = {
 
   DihuContext settings(argc, argv, pythonConfig);
 
-  int ownRankNo = DihuContext::ownRankNo();
+  int ownRankNo = settings.ownRankNo();
 
   typedef Control::MultipleInstances<
     SpatialDiscretization::FiniteElementMethod<
@@ -629,8 +629,8 @@ config = {
 
 TEST(LaplaceTest, SerialEqualsParallelRegular2DHermite)
 {
-  LOG(INFO) << "wait 3 s";
-  std::this_thread::sleep_for(std::chrono::milliseconds(3000));  // pause execution, such that output files can be closed
+  LOG(INFO) << "wait 1 s";
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));  // pause execution, such that output files can be closed
 
   // run serial problem
   std::string pythonConfig = R"(
@@ -639,13 +639,67 @@ import numpy as np
 nx = 10   # number of elements in x direction
 ny = 12   # number of elements in y direction
 
+physical_extend_x = 2*nx
+physical_extend_y = 2*ny
+
+n_nodes_x = nx+1
+n_nodes_y = ny+1
+
+# f(x,y) = x^2 - y^2
+# grad f = [2*x; -2*y]
+# f_xx = 2
+# f_yy = -2
+# Δf = 2-2 = 0
+#
+# boundary value
+def f(x,y):
+  return x**2 - y**2
+
+def f_x(x,y):
+  return 2*x
+
+def f_y(x,y):
+  return -2*y
+
+# f_xy is zero
+
 # boundary conditions
 bc = {}
-for i in range(int(nx+1)):
-  x = i/(nx+1.)
-  bc[4*i] = np.sin(x*np.pi)
-  i2 = (nx+1)*ny + i
-  bc[4*i2] = np.sin(x*np.pi)
+# y-, y+
+for i in range(n_nodes_x):
+  x = float(i)/(n_nodes_x-1) * physical_extend_x
+
+  # y-
+  y = 0
+  bc[4*(i)+0] = f(x,y)
+  bc[4*(i)+1] = f_x(x,y)
+  bc[4*(i)+2] = f_y(x,y)
+  bc[4*(i)+3] = 0   # f_xy
+
+  # y+
+  y = physical_extend_y
+  bc[4*((n_nodes_y-1)*n_nodes_x + i)+0] = f(x,y)
+  bc[4*((n_nodes_y-1)*n_nodes_x + i)+1] = f_x(x,y)
+  bc[4*((n_nodes_y-1)*n_nodes_x + i)+2] = f_y(x,y)
+  bc[4*((n_nodes_y-1)*n_nodes_x + i)+3] = 0   # f_xy
+
+# x-, x+
+for j in range(n_nodes_y):
+  y = float(j)/(n_nodes_y-1) * physical_extend_y
+
+  # x-
+  x = 0
+  bc[4*(j*n_nodes_x)+0] = f(x,y)
+  bc[4*(j*n_nodes_x)+1] = f_x(x,y)
+  bc[4*(j*n_nodes_x)+2] = f_y(x,y)
+  bc[4*(j*n_nodes_x)+3] = 0   # f_xy
+
+  # x+
+  x = physical_extend_x
+  bc[4*(j*n_nodes_x + (n_nodes_x-1))+0] = f(x,y)
+  bc[4*(j*n_nodes_x + (n_nodes_x-1))+1] = f_x(x,y)
+  bc[4*(j*n_nodes_x + (n_nodes_x-1))+2] = f_y(x,y)
+  bc[4*(j*n_nodes_x + (n_nodes_x-1))+3] = 0   # f_xy
 
 config = {
   "MultipleInstances": {
@@ -669,7 +723,7 @@ config = {
 
   DihuContext settings(argc, argv, pythonConfig);
 
-  int ownRankNo = DihuContext::ownRankNo();
+  int ownRankNo = settings.ownRankNo();
 
   typedef Control::MultipleInstances<
     SpatialDiscretization::FiniteElementMethod<
@@ -690,13 +744,67 @@ import numpy as np
 nx = 10   # number of elements in x direction
 ny = 12   # number of elements in y direction
 
+physical_extend_x = 2*nx
+physical_extend_y = 2*ny
+
+n_nodes_x = nx+1
+n_nodes_y = ny+1
+
+# f(x,y) = x^2 - y^2
+# grad f = [2*x; -2*y]
+# f_xx = 2
+# f_yy = -2
+# Δf = 2-2 = 0
+#
+# boundary value
+def f(x,y):
+  return x**2 - y**2
+
+def f_x(x,y):
+  return 2*x
+
+def f_y(x,y):
+  return -2*y
+
+# f_xy is zero
+
 # boundary conditions
 bc = {}
-for i in range(int(nx+1)):
-  x = i/(nx+1.)
-  bc[4*i] = np.sin(x*np.pi)
-  i2 = (nx+1)*ny + i
-  bc[4*i2] = np.sin(x*np.pi)
+# y-, y+
+for i in range(n_nodes_x):
+  x = float(i)/(n_nodes_x-1) * physical_extend_x
+
+  # y-
+  y = 0
+  bc[4*(i)+0] = f(x,y)
+  bc[4*(i)+1] = f_x(x,y)
+  bc[4*(i)+2] = f_y(x,y)
+  bc[4*(i)+3] = 0   # f_xy
+
+  # y+
+  y = physical_extend_y
+  bc[4*((n_nodes_y-1)*n_nodes_x + i)+0] = f(x,y)
+  bc[4*((n_nodes_y-1)*n_nodes_x + i)+1] = f_x(x,y)
+  bc[4*((n_nodes_y-1)*n_nodes_x + i)+2] = f_y(x,y)
+  bc[4*((n_nodes_y-1)*n_nodes_x + i)+3] = 0   # f_xy
+
+# x-, x+
+for j in range(n_nodes_y):
+  y = float(j)/(n_nodes_y-1) * physical_extend_y
+
+  # x-
+  x = 0
+  bc[4*(j*n_nodes_x)+0] = f(x,y)
+  bc[4*(j*n_nodes_x)+1] = f_x(x,y)
+  bc[4*(j*n_nodes_x)+2] = f_y(x,y)
+  bc[4*(j*n_nodes_x)+3] = 0   # f_xy
+
+  # x+
+  x = physical_extend_x
+  bc[4*(j*n_nodes_x + (n_nodes_x-1))+0] = f(x,y)
+  bc[4*(j*n_nodes_x + (n_nodes_x-1))+1] = f_x(x,y)
+  bc[4*(j*n_nodes_x + (n_nodes_x-1))+2] = f_y(x,y)
+  bc[4*(j*n_nodes_x + (n_nodes_x-1))+3] = 0   # f_xy
 
 config = {
   "MultipleInstances": {
@@ -741,8 +849,8 @@ config = {
 // 2D structured regular fixed
 TEST(LaplaceTest, SerialEqualsParallelDeformable2DLinear)
 {
-  LOG(INFO) << "wait 3 s";
-  std::this_thread::sleep_for(std::chrono::milliseconds(3000));  // pause execution, such that output files can be closed
+  LOG(INFO) << "wait 1 s";
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));  // pause execution, such that output files can be closed
 
   // run serial problem
   std::string pythonConfig = R"(
@@ -787,7 +895,7 @@ config = {
 
   DihuContext settings(argc, argv, pythonConfig);
 
-  int ownRankNo = DihuContext::ownRankNo();
+  int ownRankNo = settings.ownRankNo();
 
   Control::MultipleInstances<
     SpatialDiscretization::FiniteElementMethod<
@@ -871,8 +979,8 @@ config = {
 
 TEST(LaplaceTest, SerialEqualsParallelDeformable2DQuadratic)
 {
-  LOG(INFO) << "wait 3 s";
-  std::this_thread::sleep_for(std::chrono::milliseconds(3000));  // pause execution, such that output files can be closed
+  LOG(INFO) << "wait 1 s";
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));  // pause execution, such that output files can be closed
 
   // run serial problem
   std::string pythonConfig = R"(
@@ -912,7 +1020,7 @@ config = {
 )";
   DihuContext settings(argc, argv, pythonConfig);
 
-  int ownRankNo = DihuContext::ownRankNo();
+  int ownRankNo = settings.ownRankNo();
 
   typedef Control::MultipleInstances<
     SpatialDiscretization::FiniteElementMethod<
@@ -986,6 +1094,7 @@ config = {
   nFails += ::testing::Test::HasFailure();
 }
 
+
 TEST(LaplaceTest, SerialEqualsParallelDeformable2DHermite)
 {
   // run serial problem
@@ -995,13 +1104,67 @@ import numpy as np
 nx = 10   # number of elements in x direction
 ny = 12   # number of elements in y direction
 
+physical_extend_x = 6.0
+physical_extend_y = 4.0
+
+n_nodes_x = nx+1
+n_nodes_y = ny+1
+
+# f(x,y) = x^2 - y^2
+# grad f = [2*x; -2*y]
+# f_xx = 2
+# f_yy = -2
+# Δf = 2-2 = 0
+#
+# boundary value
+def f(x,y):
+  return x**2 - y**2
+
+def f_x(x,y):
+  return 2*x
+
+def f_y(x,y):
+  return -2*y
+
+# f_xy is zero
+
 # boundary conditions
 bc = {}
-for i in range(int(nx+1)):
-  x = i/(nx+1.)
-  bc[4*i] = np.sin(x*np.pi)
-  i2 = (nx+1)*ny + i
-  bc[4*i2] = np.sin(x*np.pi)
+# y-, y+
+for i in range(n_nodes_x):
+  x = float(i)/(n_nodes_x-1) * physical_extend_x
+
+  # y-
+  y = 0
+  bc[4*(i)+0] = f(x,y)
+  bc[4*(i)+1] = f_x(x,y)
+  bc[4*(i)+2] = f_y(x,y)
+  bc[4*(i)+3] = 0   # f_xy
+
+  # y+
+  y = physical_extend_y
+  bc[4*((n_nodes_y-1)*n_nodes_x + i)+0] = f(x,y)
+  bc[4*((n_nodes_y-1)*n_nodes_x + i)+1] = f_x(x,y)
+  bc[4*((n_nodes_y-1)*n_nodes_x + i)+2] = f_y(x,y)
+  bc[4*((n_nodes_y-1)*n_nodes_x + i)+3] = 0   # f_xy
+
+# x-, x+
+for j in range(n_nodes_y):
+  y = float(j)/(n_nodes_y-1) * physical_extend_y
+
+  # x-
+  x = 0
+  bc[4*(j*n_nodes_x)+0] = f(x,y)
+  bc[4*(j*n_nodes_x)+1] = f_x(x,y)
+  bc[4*(j*n_nodes_x)+2] = f_y(x,y)
+  bc[4*(j*n_nodes_x)+3] = 0   # f_xy
+
+  # x+
+  x = physical_extend_x
+  bc[4*(j*n_nodes_x + (n_nodes_x-1))+0] = f(x,y)
+  bc[4*(j*n_nodes_x + (n_nodes_x-1))+1] = f_x(x,y)
+  bc[4*(j*n_nodes_x + (n_nodes_x-1))+2] = f_y(x,y)
+  bc[4*(j*n_nodes_x + (n_nodes_x-1))+3] = 0   # f_xy
 
 config = {
   "MultipleInstances": {
@@ -1011,7 +1174,7 @@ config = {
       "FiniteElementMethod": {
         "inputMeshIsGlobal": True,
         "nElements": [nx, ny],
-        "physicalExtent": [6.0, 4.0],
+        "physicalExtent": [physical_extend_x, physical_extend_y],
         "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
         "OutputWriter" : [
@@ -1025,13 +1188,13 @@ config = {
 
   DihuContext settings(argc, argv, pythonConfig);
 
-  int ownRankNo = DihuContext::ownRankNo();
+  int ownRankNo = settings.ownRankNo();
 
   typedef Control::MultipleInstances<
     SpatialDiscretization::FiniteElementMethod<
       Mesh::StructuredDeformableOfDimension<2>,
       BasisFunction::Hermite,
-      Quadrature::Gauss<2>,
+      Quadrature::Gauss<3>,
       Equation::Static::Laplace
     >
   > ProblemType;
@@ -1049,13 +1212,67 @@ import numpy as np
 nx = 10   # number of elements in x direction
 ny = 12   # number of elements in y direction
 
+physical_extend_x = 6.0
+physical_extend_y = 4.0
+
+n_nodes_x = nx+1
+n_nodes_y = ny+1
+
+# f(x,y) = x^2 - y^2
+# grad f = [2*x; -2*y]
+# f_xx = 2
+# f_yy = -2
+# Δf = 2-2 = 0
+#
+# boundary value
+def f(x,y):
+  return x**2 - y**2
+
+def f_x(x,y):
+  return 2*x
+
+def f_y(x,y):
+  return -2*y
+
+# f_xy is zero
+
 # boundary conditions
 bc = {}
-for i in range(int(nx+1)):
-  x = i/(nx+1.)
-  bc[4*i] = np.sin(x*np.pi)
-  i2 = (nx+1)*ny + i
-  bc[4*i2] = np.sin(x*np.pi)
+# y-, y+
+for i in range(n_nodes_x):
+  x = float(i)/(n_nodes_x-1) * physical_extend_x
+
+  # y-
+  y = 0
+  bc[4*(i)+0] = f(x,y)
+  bc[4*(i)+1] = f_x(x,y)
+  bc[4*(i)+2] = f_y(x,y)
+  bc[4*(i)+3] = 0   # f_xy
+
+  # y+
+  y = physical_extend_y
+  bc[4*((n_nodes_y-1)*n_nodes_x + i)+0] = f(x,y)
+  bc[4*((n_nodes_y-1)*n_nodes_x + i)+1] = f_x(x,y)
+  bc[4*((n_nodes_y-1)*n_nodes_x + i)+2] = f_y(x,y)
+  bc[4*((n_nodes_y-1)*n_nodes_x + i)+3] = 0   # f_xy
+
+# x-, x+
+for j in range(n_nodes_y):
+  y = float(j)/(n_nodes_y-1) * physical_extend_y
+
+  # x-
+  x = 0
+  bc[4*(j*n_nodes_x)+0] = f(x,y)
+  bc[4*(j*n_nodes_x)+1] = f_x(x,y)
+  bc[4*(j*n_nodes_x)+2] = f_y(x,y)
+  bc[4*(j*n_nodes_x)+3] = 0   # f_xy
+
+  # x+
+  x = physical_extend_x
+  bc[4*(j*n_nodes_x + (n_nodes_x-1))+0] = f(x,y)
+  bc[4*(j*n_nodes_x + (n_nodes_x-1))+1] = f_x(x,y)
+  bc[4*(j*n_nodes_x + (n_nodes_x-1))+2] = f_y(x,y)
+  bc[4*(j*n_nodes_x + (n_nodes_x-1))+3] = 0   # f_xy
 
 config = {
   "MultipleInstances": {
@@ -1065,7 +1282,7 @@ config = {
       "FiniteElementMethod": {
         "inputMeshIsGlobal": True,
         "nElements": [nx, ny],
-        "physicalExtent": [6.0, 4.0],
+        "physicalExtent": [physical_extend_x, physical_extend_y],
         "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
         "OutputWriter" : [
@@ -1137,7 +1354,7 @@ config = {
 
   DihuContext settings(argc, argv, pythonConfig);
 
-  int ownRankNo = DihuContext::ownRankNo();
+  int ownRankNo = settings.ownRankNo();
 
   Control::MultipleInstances<
     SpatialDiscretization::FiniteElementMethod<
@@ -1225,16 +1442,66 @@ nx = 3   # number of elements in x direction
 ny = 2   # number of elements in y direction
 nz = 4   # number of elements in z direction
 
+physical_extend_x = 2*nx
+physical_extend_y = 2*ny
+physical_extend_z = 2*nz
+
+n_dofs_x = 2*nx+1
+n_dofs_y = 2*ny+1
+n_dofs_z = 2*nz+1
+
+# f(x,y,z) = x^2 - 1/2*y^2 - 1/2*z^2
+# grad f = [2*x; -y; -z]
+# Δf = 2-1-1 = 0
+#
+# boundary value
+def solution(x,y,z):
+  return x**2 - 0.5*y**2 - 0.5*z**2
+
+
 # boundary conditions
 bc = {}
-for i in range(int(2*nx+1)):
-  for j in range(int(2*ny+1)):
-    x = i/(2*nx+1.)
-    y = j/(2*ny+1.)
-    bc[j*(2*nx+1)+i] = i
+# z-, z+
+for j in range(n_dofs_y):
+  for i in range(n_dofs_x):
+    x = float(i)/(n_dofs_x-1) * physical_extend_x
+    y = float(j)/(n_dofs_y-1) * physical_extend_y
 
-    i2 = 2*nz*(2*ny+1)*(2*nx+1) + j*(2*nx+1)+i
-    bc[i2] = 10.*i
+    # z-
+    z = 0
+    bc[j*n_dofs_x + i] = solution(x,y,z)
+
+    # z+
+    z = physical_extend_z
+    bc[(n_dofs_z-1)*n_dofs_y*n_dofs_x + j*n_dofs_x + i] = solution(x,y,z)
+
+# y-, y+
+for k in range(n_dofs_z):
+  for i in range(n_dofs_x):
+    x = float(i)/(n_dofs_x-1) * physical_extend_x
+    z = float(k)/(n_dofs_z-1) * physical_extend_z
+
+    # y-
+    y = 0
+    bc[k*n_dofs_y*n_dofs_x + i] = solution(x,y,z)
+
+    # y+
+    y = physical_extend_y
+    bc[k*n_dofs_y*n_dofs_x + (n_dofs_y-1)*n_dofs_x + i] = solution(x,y,z)
+
+# x-, x+
+for k in range(n_dofs_z):
+  for j in range(n_dofs_y):
+    z = float(k)/(n_dofs_z-1) * physical_extend_z
+    y = float(j)/(n_dofs_y-1) * physical_extend_y
+
+    # x-
+    x = 0
+    bc[k*n_dofs_y*n_dofs_x + j*n_dofs_x] = solution(x,y,z)
+
+    # x+
+    x = physical_extend_x
+    bc[k*n_dofs_y*n_dofs_x + j*n_dofs_x + (n_dofs_x-1)] = solution(x,y,z)
 
 config = {
   "MultipleInstances": {
@@ -1244,7 +1511,7 @@ config = {
       "FiniteElementMethod": {
         "inputMeshIsGlobal": True,
         "nElements": [nx, ny, nz],
-        "physicalExtent": [2*nx, 2*ny, 2*nz],
+        "physicalExtent": [physical_extend_x, physical_extend_y, physical_extend_z],
         "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
         "OutputWriter" : [
@@ -1258,7 +1525,7 @@ config = {
 
   DihuContext settings(argc, argv, pythonConfig);
 
-  int ownRankNo = DihuContext::ownRankNo();
+  int ownRankNo = settings.ownRankNo();
 
   typedef Control::MultipleInstances<
     SpatialDiscretization::FiniteElementMethod<
@@ -1282,16 +1549,66 @@ nx = 3   # number of elements in x direction
 ny = 2   # number of elements in y direction
 nz = 4   # number of elements in z direction
 
+physical_extend_x = 2*nx
+physical_extend_y = 2*ny
+physical_extend_z = 2*nz
+
+n_dofs_x = 2*nx+1
+n_dofs_y = 2*ny+1
+n_dofs_z = 2*nz+1
+
+# f(x,y,z) = x^2 - 1/2*y^2 - 1/2*z^2
+# grad f = [2*x; -y; -z]
+# Δf = 2-1-1 = 0
+#
+# boundary value
+def solution(x,y,z):
+  return x**2 - 0.5*y**2 - 0.5*z**2
+
+
 # boundary conditions
 bc = {}
-for i in range(int(2*nx+1)):
-  for j in range(int(2*ny+1)):
-    x = i/(2*nx+1.)
-    y = j/(2*ny+1.)
-    bc[j*(2*nx+1)+i] = i
+# z-, z+
+for j in range(n_dofs_y):
+  for i in range(n_dofs_x):
+    x = float(i)/(n_dofs_x-1) * physical_extend_x
+    y = float(j)/(n_dofs_y-1) * physical_extend_y
 
-    i2 = 2*nz*(2*ny+1)*(2*nx+1) + j*(2*nx+1)+i
-    bc[i2] = 10.*i
+    # z-
+    z = 0
+    bc[j*n_dofs_x + i] = solution(x,y,z)
+
+    # z+
+    z = physical_extend_z
+    bc[(n_dofs_z-1)*n_dofs_y*n_dofs_x + j*n_dofs_x + i] = solution(x,y,z)
+
+# y-, y+
+for k in range(n_dofs_z):
+  for i in range(n_dofs_x):
+    x = float(i)/(n_dofs_x-1) * physical_extend_x
+    z = float(k)/(n_dofs_z-1) * physical_extend_z
+
+    # y-
+    y = 0
+    bc[k*n_dofs_y*n_dofs_x + i] = solution(x,y,z)
+
+    # y+
+    y = physical_extend_y
+    bc[k*n_dofs_y*n_dofs_x + (n_dofs_y-1)*n_dofs_x + i] = solution(x,y,z)
+
+# x-, x+
+for k in range(n_dofs_z):
+  for j in range(n_dofs_y):
+    z = float(k)/(n_dofs_z-1) * physical_extend_z
+    y = float(j)/(n_dofs_y-1) * physical_extend_y
+
+    # x-
+    x = 0
+    bc[k*n_dofs_y*n_dofs_x + j*n_dofs_x] = solution(x,y,z)
+
+    # x+
+    x = physical_extend_x
+    bc[k*n_dofs_y*n_dofs_x + j*n_dofs_x + (n_dofs_x-1)] = solution(x,y,z)
 
 config = {
   "MultipleInstances": {
@@ -1329,123 +1646,120 @@ config = {
   nFails += ::testing::Test::HasFailure();
 }
 
+// Test does not converge and gives slightly different results
+TEST(LaplaceTest, SerialEqualsParallelDeformable3DHermite)
+{
+  // run serial problem
+  std::string pythonConfig = R"(
+# Laplace 3D
+
+nx = 3   # number of elements in x direction
+ny = 2   # number of elements in y direction
+nz = 4   # number of elements in z direction
+
+# boundary conditions
+bc = {}
+for i in range(int(nx+1)):
+  for j in range(int(ny+1)):
+    x = i/(nx+1.)
+    y = j/(ny+1.)
+    bc[8*(j*(nx+1)+i)] = i
+
+    i2 = nz*(ny+1)*(nx+1) + j*(nx+1)+i
+    bc[8*i2] = 10.*i
+
+config = {
+  "MultipleInstances": {
+    "nInstances": 1,
+    "instances": [{
+      "ranks": [0],
+      "FiniteElementMethod": {
+        "inputMeshIsGlobal": True,
+        "nElements": [nx, ny, nz],
+        "physicalExtent": [2*nx, 2*ny, 2*nz],
+        "dirichletBoundaryConditions": bc,
+        "maxIterations": 1e5,
+        "relativeTolerance": 1e-15,
+        "OutputWriter" : [
+          {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
+        ]
+      }
+    }]
+  }
+}
+)";
+
+  DihuContext settings(argc, argv, pythonConfig);
+
+ int ownRankNo = settings.ownRankNo();
+
+  typedef Control::MultipleInstances<
+    SpatialDiscretization::FiniteElementMethod<
+      Mesh::StructuredDeformableOfDimension<3>,
+      BasisFunction::Hermite,
+      Quadrature::Gauss<3>,
+      Equation::Static::Laplace
+    >
+  > ProblemType;
+  ProblemType problemSerial(settings);
+
+  problemSerial.run();
+
+  // run parallel problem
+  std::string pythonConfig2 = R"(
+# Laplace 3D
+
+nx = 3   # number of elements in x direction
+ny = 2   # number of elements in y direction
+nz = 4   # number of elements in z direction
+
+# boundary conditions
+bc = {}
+for i in range(int(nx+1)):
+  for j in range(int(ny+1)):
+    x = i/(nx+1.)
+    y = j/(ny+1.)
+    bc[8*(j*(nx+1)+i)] = i
+
+    i2 = nz*(ny+1)*(nx+1) + j*(nx+1)+i
+    bc[8*i2] = 10.*i
+
+config = {
+  "MultipleInstances": {
+    "nInstances": 1,
+    "instances": [{
+      "ranks": [0,1],
+      "FiniteElementMethod": {
+        "inputMeshIsGlobal": True,
+        "nElements": [nx, ny, nz],
+        "physicalExtent": [2*nx, 2*ny, 2*nz],
+        "dirichletBoundaryConditions": bc,
+        "maxIterations": 1e5,
+        "relativeTolerance": 1e-15,
+        "OutputWriter" : [
+          {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
+        ]
+      }
+    }]
+  }
+}
+)";
 
 
-//  // Test does not converge and gives slightly different results
-// TEST(LaplaceTest, SerialEqualsParallelDeformable3DHermite)
-// {
-//   // run serial problem
-//   std::string pythonConfig = R"(
-// # Laplace 3D
-//
-// nx = 3   # number of elements in x direction
-// ny = 2   # number of elements in y direction
-// nz = 4   # number of elements in z direction
-//
-// # boundary conditions
-// bc = {}
-// for i in range(int(nx+1)):
-//   for j in range(int(ny+1)):
-//     x = i/(nx+1.)
-//     y = j/(ny+1.)
-//     bc[8*(j*(nx+1)+i)] = i
-//
-//     i2 = nz*(ny+1)*(nx+1) + j*(nx+1)+i
-//     bc[8*i2] = 10.*i
-//
-// config = {
-//   "MultipleInstances": {
-//     "nInstances": 1,
-//     "instances": [{
-//       "ranks": [0],
-//       "FiniteElementMethod": {
-//         "inputMeshIsGlobal": True,
-//         "nElements": [nx, ny, nz],
-//         "physicalExtent": [2*nx, 2*ny, 2*nz],
-//         "dirichletBoundaryConditions": bc,
-//         "maxIterations": 1e5,
-//         "relativeTolerance": 1e-15,
-//         "OutputWriter" : [
-//           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
-//         ]
-//       }
-//     }]
-//   }
-// }
-// )";
-//
-//   DihuContext settings(argc, argv, pythonConfig);
-//
-//  int ownRankNo = DihuContext::ownRankNo();
-//
-//   typedef Control::MultipleInstances<
-//     SpatialDiscretization::FiniteElementMethod<
-//       Mesh::StructuredDeformableOfDimension<3>,
-//       BasisFunction::Hermite,
-//       Quadrature::Gauss<2>,
-//       Equation::Static::Laplace
-//     >
-//   > ProblemType;
-//   ProblemType problemSerial(settings);
-//
-//   problemSerial.run();
-//
-//   // run parallel problem
-//   std::string pythonConfig2 = R"(
-// # Laplace 3D
-//
-// nx = 3   # number of elements in x direction
-// ny = 2   # number of elements in y direction
-// nz = 4   # number of elements in z direction
-//
-// # boundary conditions
-// bc = {}
-// for i in range(int(nx+1)):
-//   for j in range(int(ny+1)):
-//     x = i/(nx+1.)
-//     y = j/(ny+1.)
-//     bc[8*(j*(nx+1)+i)] = i
-//
-//     i2 = nz*(ny+1)*(nx+1) + j*(nx+1)+i
-//     bc[8*i2] = 10.*i
-//
-// config = {
-//   "MultipleInstances": {
-//     "nInstances": 1,
-//     "instances": [{
-//       "ranks": [0,1],
-//       "FiniteElementMethod": {
-//         "inputMeshIsGlobal": True,
-//         "nElements": [nx, ny, nz],
-//         "physicalExtent": [2*nx, 2*ny, 2*nz],
-//         "dirichletBoundaryConditions": bc,
-//         "maxIterations": 1e5,
-//         "relativeTolerance": 1e-15,
-//         "OutputWriter" : [
-//           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
-//         ]
-//       }
-//     }]
-//   }
-// }
-// )";
-//
-//
-//   DihuContext settings2(argc, argv, pythonConfig2);
-//
-//   ProblemType problemParallel(settings2);
-//
-//   problemParallel.run();
-//
-//   std::vector<std::string> outputFilesToCheck = {"out.py", "out.0.py", "out.1.py"};
-//   if (ownRankNo == 0)
-//  {
-//    assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
-//  }
-//
-//   nFails += ::testing::Test::HasFailure();
-// }
+  DihuContext settings2(argc, argv, pythonConfig2);
 
+  ProblemType problemParallel(settings2);
+
+  problemParallel.run();
+
+  std::vector<std::string> outputFilesToCheck = {"out.py", "out.0.py", "out.1.py"};
+  if (ownRankNo == 0)
+  {
+    assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
+  }
+
+  nFails += ::testing::Test::HasFailure();
+}
 
 // 3D structured regular fixed
 TEST(LaplaceTest, SerialEqualsParallelRegular3DLinear)
@@ -1491,7 +1805,7 @@ config = {
 
   DihuContext settings(argc, argv, pythonConfig);
 
-  int ownRankNo = DihuContext::ownRankNo();
+  int ownRankNo = settings.ownRankNo();
 
   Control::MultipleInstances<
     SpatialDiscretization::FiniteElementMethod<
@@ -1575,16 +1889,66 @@ nx = 3   # number of elements in x direction
 ny = 2   # number of elements in y direction
 nz = 4   # number of elements in z direction
 
+physical_extend_x = 2*nx
+physical_extend_y = 2*ny
+physical_extend_z = 2*nz
+
+n_dofs_x = 2*nx+1
+n_dofs_y = 2*ny+1
+n_dofs_z = 2*nz+1
+
+# f(x,y,z) = x^2 - 1/2*y^2 - 1/2*z^2
+# grad f = [2*x; -y; -z]
+# Δf = 2-1-1 = 0
+#
+# boundary value
+def solution(x,y,z):
+  return x**2 - 0.5*y**2 - 0.5*z**2
+
+
 # boundary conditions
 bc = {}
-for i in range(int(2*nx+1)):
-  for j in range(int(2*ny+1)):
-    x = i/(2*nx+1.)
-    y = j/(2*ny+1.)
-    bc[j*(2*nx+1)+i] = i
+# z-, z+
+for j in range(n_dofs_y):
+  for i in range(n_dofs_x):
+    x = float(i)/(n_dofs_x-1) * physical_extend_x
+    y = float(j)/(n_dofs_y-1) * physical_extend_y
 
-    i2 = 2*nz*(2*ny+1)*(2*nx+1) + j*(2*nx+1)+i
-    bc[i2] = 10.*i
+    # z-
+    z = 0
+    bc[j*n_dofs_x + i] = solution(x,y,z)
+
+    # z+
+    z = physical_extend_z
+    bc[(n_dofs_z-1)*n_dofs_y*n_dofs_x + j*n_dofs_x + i] = solution(x,y,z)
+
+# y-, y+
+for k in range(n_dofs_z):
+  for i in range(n_dofs_x):
+    x = float(i)/(n_dofs_x-1) * physical_extend_x
+    z = float(k)/(n_dofs_z-1) * physical_extend_z
+
+    # y-
+    y = 0
+    bc[k*n_dofs_y*n_dofs_x + i] = solution(x,y,z)
+
+    # y+
+    y = physical_extend_y
+    bc[k*n_dofs_y*n_dofs_x + (n_dofs_y-1)*n_dofs_x + i] = solution(x,y,z)
+
+# x-, x+
+for k in range(n_dofs_z):
+  for j in range(n_dofs_y):
+    z = float(k)/(n_dofs_z-1) * physical_extend_z
+    y = float(j)/(n_dofs_y-1) * physical_extend_y
+
+    # x-
+    x = 0
+    bc[k*n_dofs_y*n_dofs_x + j*n_dofs_x] = solution(x,y,z)
+
+    # x+
+    x = physical_extend_x
+    bc[k*n_dofs_y*n_dofs_x + j*n_dofs_x + (n_dofs_x-1)] = solution(x,y,z)
 
 config = {
   "MultipleInstances": {
@@ -1594,7 +1958,7 @@ config = {
       "FiniteElementMethod": {
         "inputMeshIsGlobal": True,
         "nElements": [nx, ny, nz],
-        "physicalExtent": [2*nx, 2*ny, 2*nz],
+        "physicalExtent": [physical_extend_x, physical_extend_y, physical_extend_z],
         "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
         "OutputWriter" : [
@@ -1608,7 +1972,7 @@ config = {
 
   DihuContext settings(argc, argv, pythonConfig);
 
-  int ownRankNo = DihuContext::ownRankNo();
+  int ownRankNo = settings.ownRankNo();
 
   typedef Control::MultipleInstances<
     SpatialDiscretization::FiniteElementMethod<
@@ -1632,17 +1996,66 @@ nx = 3   # number of elements in x direction
 ny = 2   # number of elements in y direction
 nz = 4   # number of elements in z direction
 
+physical_extend_x = 2*nx
+physical_extend_y = 2*ny
+physical_extend_z = 2*nz
+
+n_dofs_x = 2*nx+1
+n_dofs_y = 2*ny+1
+n_dofs_z = 2*nz+1
+
+# f(x,y,z) = x^2 - 1/2*y^2 - 1/2*z^2
+# grad f = [2*x; -y; -z]
+# Δf = 2-1-1 = 0
+#
+# boundary value
+def solution(x,y,z):
+  return x**2 - 0.5*y**2 - 0.5*z**2
+
+
 # boundary conditions
 bc = {}
-for i in range(int(2*nx+1)):
-  for j in range(int(2*ny+1)):
-    x = i/(2*nx+1.)
-    y = j/(2*ny+1.)
-    bc[j*(2*nx+1)+i] = i
+# z-, z+
+for j in range(n_dofs_y):
+  for i in range(n_dofs_x):
+    x = float(i)/(n_dofs_x-1) * physical_extend_x
+    y = float(j)/(n_dofs_y-1) * physical_extend_y
 
-    i2 = 2*nz*(2*ny+1)*(2*nx+1) + j*(2*nx+1)+i
-    bc[i2] = 10.*i
+    # z-
+    z = 0
+    bc[j*n_dofs_x + i] = solution(x,y,z)
 
+    # z+
+    z = physical_extend_z
+    bc[(n_dofs_z-1)*n_dofs_y*n_dofs_x + j*n_dofs_x + i] = solution(x,y,z)
+
+# y-, y+
+for k in range(n_dofs_z):
+  for i in range(n_dofs_x):
+    x = float(i)/(n_dofs_x-1) * physical_extend_x
+    z = float(k)/(n_dofs_z-1) * physical_extend_z
+
+    # y-
+    y = 0
+    bc[k*n_dofs_y*n_dofs_x + i] = solution(x,y,z)
+
+    # y+
+    y = physical_extend_y
+    bc[k*n_dofs_y*n_dofs_x + (n_dofs_y-1)*n_dofs_x + i] = solution(x,y,z)
+
+# x-, x+
+for k in range(n_dofs_z):
+  for j in range(n_dofs_y):
+    z = float(k)/(n_dofs_z-1) * physical_extend_z
+    y = float(j)/(n_dofs_y-1) * physical_extend_y
+
+    # x-
+    x = 0
+    bc[k*n_dofs_y*n_dofs_x + j*n_dofs_x] = solution(x,y,z)
+
+    # x+
+    x = physical_extend_x
+    bc[k*n_dofs_y*n_dofs_x + j*n_dofs_x + (n_dofs_x-1)] = solution(x,y,z)
 config = {
   "MultipleInstances": {
     "nInstances": 1,
@@ -1680,118 +2093,326 @@ config = {
 }
 
 
-// // Test does not converge and gives slightly different solutions
-// TEST(LaplaceTest, SerialEqualsParallelRegular3DHermite)
-// {
-//   // run serial problem
-//   std::string pythonConfig = R"(
-// # Laplace 3D
-//
-// nx = 3   # number of elements in x direction
-// ny = 2   # number of elements in y direction
-// nz = 4   # number of elements in z direction
-//
-// # boundary conditions
-// bc = {}
-// for i in range(int(nx+1)):
-//   for j in range(int(ny+1)):
-//     x = i/(nx+1.)
-//     y = j/(ny+1.)
-//     bc[8*(j*(nx+1)+i)] = i
-//
-//     i2 = nz*(ny+1)*(nx+1) + j*(nx+1)+i
-//     bc[8*i2] = 10.*i
-//
-// config = {
-//   "MultipleInstances": {
-//     "nInstances": 1,
-//     "instances": [{
-//       "ranks": [0],
-//       "FiniteElementMethod": {
-//         "inputMeshIsGlobal": True,
-//         "nElements": [nx, ny, nz],
-//         "physicalExtent": [2*nx, 2*ny, 2*nz],
-//         "dirichletBoundaryConditions": bc,
-//         "maxIterations": 1e5,
-//         "relativeTolerance": 1e-15,
-//         "OutputWriter" : [
-//           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
-//         ]
-//       }
-//     }]
-//   }
-// }
-// )";
-//
-//   DihuContext settings(argc, argv, pythonConfig);
-//
-//  int ownRankNo = DihuContext::ownRankNo();
-//
-//   typedef Control::MultipleInstances<
-//     SpatialDiscretization::FiniteElementMethod<
-//       Mesh::StructuredRegularFixedOfDimension<3>,
-//       BasisFunction::Hermite,
-//       Quadrature::Gauss<2>,
-//       Equation::Static::Laplace
-//     >
-//   > ProblemType;
-//   ProblemType problemSerial(settings);
-//
-//   problemSerial.run();
-//
-//   // run parallel problem
-//   std::string pythonConfig2 = R"(
-// # Laplace 3D
-//
-// nx = 3   # number of elements in x direction
-// ny = 2   # number of elements in y direction
-// nz = 4   # number of elements in z direction
-//
-// # boundary conditions
-// bc = {}
-// for i in range(int(nx+1)):
-//   for j in range(int(ny+1)):
-//     x = i/(nx+1.)
-//     y = j/(ny+1.)
-//     bc[8*(j*(nx+1)+i)] = i
-//
-//     i2 = nz*(ny+1)*(nx+1) + j*(nx+1)+i
-//     bc[8*i2] = 10.*i
-//
-// config = {
-//   "MultipleInstances": {
-//     "nInstances": 1,
-//     "instances": [{
-//       "ranks": [0,1],
-//       "FiniteElementMethod": {
-//         "inputMeshIsGlobal": True,
-//         "nElements": [nx, ny, nz],
-//         "physicalExtent": [2*nx, 2*ny, 2*nz],
-//         "dirichletBoundaryConditions": bc,
-//         "maxIterations": 1e5,
-//         "relativeTolerance": 1e-15,
-//         "OutputWriter" : [
-//           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
-//         ]
-//       }
-//     }]
-//   }
-// }
-// )";
-//
-//
-//   DihuContext settings2(argc, argv, pythonConfig2);
-//
-//   ProblemType problemParallel(settings2);
-//
-//   problemParallel.run();
-//
-//   std::vector<std::string> outputFilesToCheck = {"out.py", "out.0.py", "out.1.py"};
-//   if (ownRankNo == 0)
-//  {
-//    assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
-//  }
-//
-//   nFails += ::testing::Test::HasFailure();
-// }
-*/
+// Test does sometimes not converge and gives slightly different solutions
+TEST(LaplaceTest, SerialEqualsParallelRegular3DHermite)
+{
+  // run serial problem
+  std::string pythonConfig = R"(
+# Laplace 3D
+
+nx = 3   # number of elements in x direction
+ny = 2   # number of elements in y direction
+nz = 4   # number of elements in z direction
+
+physical_extend_x = 2*nx
+physical_extend_y = 2*ny
+physical_extend_z = 2*nz
+
+n_nodes_x = nx+1
+n_nodes_y = ny+1
+n_nodes_z = nz+1
+
+# f(x,y,z) = x^2 - 1/2*y^2 - 1/2*z^2
+# grad f = [2*x; -y; -z]
+# f_xx = 2
+# f_xy
+# Δf = 2-1-1 = 0
+#
+# boundary value
+def f(x,y,z):
+  return x**2 - 0.5*y**2 - 0.5*z**2
+
+def f_x(x,y,z):
+  return 2*x
+
+def f_y(x,y,z):
+  return -y
+
+def f_z(x,y,z):
+  return -z
+
+# f_xy, f_xz, f_yz, f_xyz are zero
+
+# boundary conditions
+bc = {}
+# z-, z+
+for j in range(n_nodes_y):
+  for i in range(n_nodes_x):
+    x = float(i)/(n_nodes_x-1) * physical_extend_x
+    y = float(j)/(n_nodes_y-1) * physical_extend_y
+
+    # z-
+    z = 0
+    bc[8*(j*n_nodes_x + i)+0] = f(x,y,z)
+    bc[8*(j*n_nodes_x + i)+1] = f_x(x,y,z)
+    bc[8*(j*n_nodes_x + i)+2] = f_y(x,y,z)
+    bc[8*(j*n_nodes_x + i)+3] = 0   # f_xy
+    bc[8*(j*n_nodes_x + i)+4] = f_z(x,y,z)
+    bc[8*(j*n_nodes_x + i)+5] = 0   # f_zx
+    bc[8*(j*n_nodes_x + i)+6] = 0   # f_zy
+    bc[8*(j*n_nodes_x + i)+7] = 0   # f_zyx
+
+    # z+
+    z = physical_extend_z
+    bc[8*((n_nodes_z-1)*n_nodes_y*n_nodes_x + j*n_nodes_x + i)+0] = f(x,y,z)
+    bc[8*((n_nodes_z-1)*n_nodes_y*n_nodes_x + j*n_nodes_x + i)+1] = f_x(x,y,z)
+    bc[8*((n_nodes_z-1)*n_nodes_y*n_nodes_x + j*n_nodes_x + i)+2] = f_y(x,y,z)
+    bc[8*((n_nodes_z-1)*n_nodes_y*n_nodes_x + j*n_nodes_x + i)+3] = 0   # f_xy
+    bc[8*((n_nodes_z-1)*n_nodes_y*n_nodes_x + j*n_nodes_x + i)+4] = f_z(x,y,z)
+    bc[8*((n_nodes_z-1)*n_nodes_y*n_nodes_x + j*n_nodes_x + i)+5] = 0   # f_zx
+    bc[8*((n_nodes_z-1)*n_nodes_y*n_nodes_x + j*n_nodes_x + i)+6] = 0   # f_zy
+    bc[8*((n_nodes_z-1)*n_nodes_y*n_nodes_x + j*n_nodes_x + i)+7] = 0   # f_zyx
+
+# y-, y+
+for k in range(n_nodes_z):
+  for i in range(n_nodes_x):
+    x = float(i)/(n_nodes_x-1) * physical_extend_x
+    z = float(k)/(n_nodes_z-1) * physical_extend_z
+
+    # y-
+    y = 0
+    bc[8*(k*n_nodes_y*n_nodes_x + i)+0] = f(x,y,z)
+    bc[8*(k*n_nodes_y*n_nodes_x + i)+1] = f_x(x,y,z)
+    bc[8*(k*n_nodes_y*n_nodes_x + i)+2] = f_y(x,y,z)
+    bc[8*(k*n_nodes_y*n_nodes_x + i)+3] = 0   # f_xy
+    bc[8*(k*n_nodes_y*n_nodes_x + i)+4] = f_z(x,y,z)
+    bc[8*(k*n_nodes_y*n_nodes_x + i)+5] = 0   # f_zx
+    bc[8*(k*n_nodes_y*n_nodes_x + i)+6] = 0   # f_zy
+    bc[8*(k*n_nodes_y*n_nodes_x + i)+7] = 0   # f_zyx
+
+    # y+
+    y = physical_extend_y
+    bc[8*(k*n_nodes_y*n_nodes_x + (n_nodes_y-1)*n_nodes_x + i)+0] = f(x,y,z)
+    bc[8*(k*n_nodes_y*n_nodes_x + (n_nodes_y-1)*n_nodes_x + i)+1] = f_x(x,y,z)
+    bc[8*(k*n_nodes_y*n_nodes_x + (n_nodes_y-1)*n_nodes_x + i)+2] = f_y(x,y,z)
+    bc[8*(k*n_nodes_y*n_nodes_x + (n_nodes_y-1)*n_nodes_x + i)+3] = 0   # f_xy
+    bc[8*(k*n_nodes_y*n_nodes_x + (n_nodes_y-1)*n_nodes_x + i)+4] = f_z(x,y,z)
+    bc[8*(k*n_nodes_y*n_nodes_x + (n_nodes_y-1)*n_nodes_x + i)+5] = 0   # f_zx
+    bc[8*(k*n_nodes_y*n_nodes_x + (n_nodes_y-1)*n_nodes_x + i)+6] = 0   # f_zy
+    bc[8*(k*n_nodes_y*n_nodes_x + (n_nodes_y-1)*n_nodes_x + i)+7] = 0   # f_zyx
+
+# x-, x+
+for k in range(n_nodes_z):
+  for j in range(n_nodes_y):
+    z = float(k)/(n_nodes_z-1) * physical_extend_z
+    y = float(j)/(n_nodes_y-1) * physical_extend_y
+
+    # x-
+    x = 0
+    bc[8*(k*n_nodes_y*n_nodes_x + j*n_nodes_x)+0] = f(x,y,z)
+    bc[8*(k*n_nodes_y*n_nodes_x + j*n_nodes_x)+1] = f_x(x,y,z)
+    bc[8*(k*n_nodes_y*n_nodes_x + j*n_nodes_x)+2] = f_y(x,y,z)
+    bc[8*(k*n_nodes_y*n_nodes_x + j*n_nodes_x)+3] = 0   # f_xy
+    bc[8*(k*n_nodes_y*n_nodes_x + j*n_nodes_x)+4] = f_z(x,y,z)
+    bc[8*(k*n_nodes_y*n_nodes_x + j*n_nodes_x)+5] = 0   # f_zx
+    bc[8*(k*n_nodes_y*n_nodes_x + j*n_nodes_x)+6] = 0   # f_zy
+    bc[8*(k*n_nodes_y*n_nodes_x + j*n_nodes_x)+7] = 0   # f_zyx
+
+    # x+
+    x = physical_extend_x
+    bc[8*(k*n_nodes_y*n_nodes_x + j*n_nodes_x + (n_nodes_x-1))+0] = f(x,y,z)
+    bc[8*(k*n_nodes_y*n_nodes_x + j*n_nodes_x + (n_nodes_x-1))+1] = f_x(x,y,z)
+    bc[8*(k*n_nodes_y*n_nodes_x + j*n_nodes_x + (n_nodes_x-1))+2] = f_y(x,y,z)
+    bc[8*(k*n_nodes_y*n_nodes_x + j*n_nodes_x + (n_nodes_x-1))+3] = 0   # f_xy
+    bc[8*(k*n_nodes_y*n_nodes_x + j*n_nodes_x + (n_nodes_x-1))+4] = f_z(x,y,z)
+    bc[8*(k*n_nodes_y*n_nodes_x + j*n_nodes_x + (n_nodes_x-1))+5] = 0   # f_zx
+    bc[8*(k*n_nodes_y*n_nodes_x + j*n_nodes_x + (n_nodes_x-1))+6] = 0   # f_zy
+    bc[8*(k*n_nodes_y*n_nodes_x + j*n_nodes_x + (n_nodes_x-1))+7] = 0   # f_zyx
+
+config = {
+  "MultipleInstances": {
+    "nInstances": 1,
+    "instances": [{
+      "ranks": [0],
+      "FiniteElementMethod": {
+        "inputMeshIsGlobal": True,
+        "nElements": [nx, ny, nz],
+        "physicalExtent": [2*nx, 2*ny, 2*nz],
+        "dirichletBoundaryConditions": bc,
+        "maxIterations": 1e5,
+        "relativeTolerance": 1e-15,
+        "OutputWriter" : [
+          {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
+        ]
+      }
+    }]
+  }
+}
+)";
+
+  DihuContext settings(argc, argv, pythonConfig);
+
+ int ownRankNo = settings.ownRankNo();
+
+  typedef Control::MultipleInstances<
+    SpatialDiscretization::FiniteElementMethod<
+      Mesh::StructuredRegularFixedOfDimension<3>,
+      BasisFunction::Hermite,
+      Quadrature::Gauss<2>,
+      Equation::Static::Laplace
+    >
+  > ProblemType;
+  ProblemType problemSerial(settings);
+
+  problemSerial.run();
+
+  // run parallel problem
+  std::string pythonConfig2 = R"(
+# Laplace 3D
+
+nx = 3   # number of elements in x direction
+ny = 2   # number of elements in y direction
+nz = 4   # number of elements in z direction
+
+physical_extend_x = 2*nx
+physical_extend_y = 2*ny
+physical_extend_z = 2*nz
+
+n_nodes_x = nx+1
+n_nodes_y = ny+1
+n_nodes_z = nz+1
+
+# f(x,y,z) = x^2 - 1/2*y^2 - 1/2*z^2
+# grad f = [2*x; -y; -z]
+# f_xx = 2
+# f_xy
+# Δf = 2-1-1 = 0
+#
+# boundary value
+def f(x,y,z):
+  return x**2 - 0.5*y**2 - 0.5*z**2
+
+def f_x(x,y,z):
+  return 2*x
+
+def f_y(x,y,z):
+  return -y
+
+def f_z(x,y,z):
+  return -z
+
+# f_xy, f_xz, f_yz, f_xyz are zero
+
+# boundary conditions
+bc = {}
+# z-, z+
+for j in range(n_nodes_y):
+  for i in range(n_nodes_x):
+    x = float(i)/(n_nodes_x-1) * physical_extend_x
+    y = float(j)/(n_nodes_y-1) * physical_extend_y
+
+    # z-
+    z = 0
+    bc[8*(j*n_nodes_x + i)+0] = f(x,y,z)
+    bc[8*(j*n_nodes_x + i)+1] = f_x(x,y,z)
+    bc[8*(j*n_nodes_x + i)+2] = f_y(x,y,z)
+    bc[8*(j*n_nodes_x + i)+3] = 0   # f_xy
+    bc[8*(j*n_nodes_x + i)+4] = f_z(x,y,z)
+    bc[8*(j*n_nodes_x + i)+5] = 0   # f_zx
+    bc[8*(j*n_nodes_x + i)+6] = 0   # f_zy
+    bc[8*(j*n_nodes_x + i)+7] = 0   # f_zyx
+
+    # z+
+    z = physical_extend_z
+    bc[8*((n_nodes_z-1)*n_nodes_y*n_nodes_x + j*n_nodes_x + i)+0] = f(x,y,z)
+    bc[8*((n_nodes_z-1)*n_nodes_y*n_nodes_x + j*n_nodes_x + i)+1] = f_x(x,y,z)
+    bc[8*((n_nodes_z-1)*n_nodes_y*n_nodes_x + j*n_nodes_x + i)+2] = f_y(x,y,z)
+    bc[8*((n_nodes_z-1)*n_nodes_y*n_nodes_x + j*n_nodes_x + i)+3] = 0   # f_xy
+    bc[8*((n_nodes_z-1)*n_nodes_y*n_nodes_x + j*n_nodes_x + i)+4] = f_z(x,y,z)
+    bc[8*((n_nodes_z-1)*n_nodes_y*n_nodes_x + j*n_nodes_x + i)+5] = 0   # f_zx
+    bc[8*((n_nodes_z-1)*n_nodes_y*n_nodes_x + j*n_nodes_x + i)+6] = 0   # f_zy
+    bc[8*((n_nodes_z-1)*n_nodes_y*n_nodes_x + j*n_nodes_x + i)+7] = 0   # f_zyx
+
+# y-, y+
+for k in range(n_nodes_z):
+  for i in range(n_nodes_x):
+    x = float(i)/(n_nodes_x-1) * physical_extend_x
+    z = float(k)/(n_nodes_z-1) * physical_extend_z
+
+    # y-
+    y = 0
+    bc[8*(k*n_nodes_y*n_nodes_x + i)+0] = f(x,y,z)
+    bc[8*(k*n_nodes_y*n_nodes_x + i)+1] = f_x(x,y,z)
+    bc[8*(k*n_nodes_y*n_nodes_x + i)+2] = f_y(x,y,z)
+    bc[8*(k*n_nodes_y*n_nodes_x + i)+3] = 0   # f_xy
+    bc[8*(k*n_nodes_y*n_nodes_x + i)+4] = f_z(x,y,z)
+    bc[8*(k*n_nodes_y*n_nodes_x + i)+5] = 0   # f_zx
+    bc[8*(k*n_nodes_y*n_nodes_x + i)+6] = 0   # f_zy
+    bc[8*(k*n_nodes_y*n_nodes_x + i)+7] = 0   # f_zyx
+
+    # y+
+    y = physical_extend_y
+    bc[8*(k*n_nodes_y*n_nodes_x + (n_nodes_y-1)*n_nodes_x + i)+0] = f(x,y,z)
+    bc[8*(k*n_nodes_y*n_nodes_x + (n_nodes_y-1)*n_nodes_x + i)+1] = f_x(x,y,z)
+    bc[8*(k*n_nodes_y*n_nodes_x + (n_nodes_y-1)*n_nodes_x + i)+2] = f_y(x,y,z)
+    bc[8*(k*n_nodes_y*n_nodes_x + (n_nodes_y-1)*n_nodes_x + i)+3] = 0   # f_xy
+    bc[8*(k*n_nodes_y*n_nodes_x + (n_nodes_y-1)*n_nodes_x + i)+4] = f_z(x,y,z)
+    bc[8*(k*n_nodes_y*n_nodes_x + (n_nodes_y-1)*n_nodes_x + i)+5] = 0   # f_zx
+    bc[8*(k*n_nodes_y*n_nodes_x + (n_nodes_y-1)*n_nodes_x + i)+6] = 0   # f_zy
+    bc[8*(k*n_nodes_y*n_nodes_x + (n_nodes_y-1)*n_nodes_x + i)+7] = 0   # f_zyx
+
+# x-, x+
+for k in range(n_nodes_z):
+  for j in range(n_nodes_y):
+    z = float(k)/(n_nodes_z-1) * physical_extend_z
+    y = float(j)/(n_nodes_y-1) * physical_extend_y
+
+    # x-
+    x = 0
+    bc[8*(k*n_nodes_y*n_nodes_x + j*n_nodes_x)+0] = f(x,y,z)
+    bc[8*(k*n_nodes_y*n_nodes_x + j*n_nodes_x)+1] = f_x(x,y,z)
+    bc[8*(k*n_nodes_y*n_nodes_x + j*n_nodes_x)+2] = f_y(x,y,z)
+    bc[8*(k*n_nodes_y*n_nodes_x + j*n_nodes_x)+3] = 0   # f_xy
+    bc[8*(k*n_nodes_y*n_nodes_x + j*n_nodes_x)+4] = f_z(x,y,z)
+    bc[8*(k*n_nodes_y*n_nodes_x + j*n_nodes_x)+5] = 0   # f_zx
+    bc[8*(k*n_nodes_y*n_nodes_x + j*n_nodes_x)+6] = 0   # f_zy
+    bc[8*(k*n_nodes_y*n_nodes_x + j*n_nodes_x)+7] = 0   # f_zyx
+
+    # x+
+    x = physical_extend_x
+    bc[8*(k*n_nodes_y*n_nodes_x + j*n_nodes_x + (n_nodes_x-1))+0] = f(x,y,z)
+    bc[8*(k*n_nodes_y*n_nodes_x + j*n_nodes_x + (n_nodes_x-1))+1] = f_x(x,y,z)
+    bc[8*(k*n_nodes_y*n_nodes_x + j*n_nodes_x + (n_nodes_x-1))+2] = f_y(x,y,z)
+    bc[8*(k*n_nodes_y*n_nodes_x + j*n_nodes_x + (n_nodes_x-1))+3] = 0   # f_xy
+    bc[8*(k*n_nodes_y*n_nodes_x + j*n_nodes_x + (n_nodes_x-1))+4] = f_z(x,y,z)
+    bc[8*(k*n_nodes_y*n_nodes_x + j*n_nodes_x + (n_nodes_x-1))+5] = 0   # f_zx
+    bc[8*(k*n_nodes_y*n_nodes_x + j*n_nodes_x + (n_nodes_x-1))+6] = 0   # f_zy
+    bc[8*(k*n_nodes_y*n_nodes_x + j*n_nodes_x + (n_nodes_x-1))+7] = 0   # f_zyx
+
+config = {
+  "MultipleInstances": {
+    "nInstances": 1,
+    "instances": [{
+      "ranks": [0,1],
+      "FiniteElementMethod": {
+        "inputMeshIsGlobal": True,
+        "nElements": [nx, ny, nz],
+        "physicalExtent": [2*nx, 2*ny, 2*nz],
+        "dirichletBoundaryConditions": bc,
+        "maxIterations": 1e5,
+        "relativeTolerance": 1e-15,
+        "OutputWriter" : [
+          {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
+        ]
+      }
+    }]
+  }
+}
+)";
+
+
+  DihuContext settings2(argc, argv, pythonConfig2);
+
+  ProblemType problemParallel(settings2);
+
+  problemParallel.run();
+
+  std::vector<std::string> outputFilesToCheck = {"out.py", "out.0.py", "out.1.py"};
+  if (ownRankNo == 0)
+ {
+   assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
+ }
+
+  nFails += ::testing::Test::HasFailure();
+}
+// */

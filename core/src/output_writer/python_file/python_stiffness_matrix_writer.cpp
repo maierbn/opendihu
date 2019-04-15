@@ -46,22 +46,26 @@ void NumpyFileWriter::writeToNumpyFile(std::vector<double> &data, std::string fi
 
   // write 8-byte double values and collect the maximum value
   double maximum = 0;
-  for(auto value : data)
+  for (auto value : data)
   {
     union {
       double d = 0.0;
       char c[8];
     };
 
-    if (std::isnan(d))
+    if (!std::isfinite(d))
+    {
       d = 0.0;
+    }
     else
+    {
       d = value;
+    }
 
     if (value > maximum || maximum == 0)
       maximum = value;
 
-    for(int i=0; i<8; i++)
+    for (int i=0; i<8; i++)
     {
       file << c[i];
     }
@@ -95,7 +99,7 @@ void NumpyFileWriter::writeToNumpyFile(std::vector<double> &data, std::string fi
 
     int ret = 1;
     // try 2 times, because sometimes it fails for the first time
-    for(int nTries = 0; ret != 0 && nTries < 2; nTries++)
+    for (int nTries = 0; ret != 0 && nTries < 2; nTries++)
     {
       ret = PyRun_SimpleString(converterScript.str().c_str());
       if (ret != 0)
@@ -164,4 +168,4 @@ void NumpyFileWriter::writeToNumpyFile(std::vector<double> &data, std::string fi
 
 }
 
-};   // namespace
+}  // namespace

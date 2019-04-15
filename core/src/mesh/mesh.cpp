@@ -3,8 +3,8 @@
 namespace Mesh
 {
 
-Mesh::Mesh(PyObject *specificSettings) : 
-  specificSettings_(specificSettings)
+Mesh::Mesh(PythonConfig specificSettings) :
+  specificSettings_(specificSettings), initialized_(false)
 {
 
 }
@@ -19,6 +19,11 @@ void Mesh::setMeshName(std::string meshName)
 std::string Mesh::meshName()
 {
   return meshName_;
+}
+
+bool Mesh::initialized()
+{
+  return initialized_;
 }
 
 }

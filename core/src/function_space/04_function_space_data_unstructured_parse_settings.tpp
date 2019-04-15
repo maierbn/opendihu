@@ -15,7 +15,7 @@ namespace FunctionSpace
 
 template<int D,typename BasisFunctionType>
 void FunctionSpaceDataUnstructured<D,BasisFunctionType>::
-parseFromSettings(PyObject *settings)
+parseFromSettings(PythonConfig settings)
 {
   LOG(TRACE) << "parseFromSettings";
 
@@ -27,12 +27,12 @@ parseFromSettings(PyObject *settings)
   bool listWarningIssued = false;    // if the warning about lists was already shown
 
   // get the first node position from the list
-  PyObject *pyNodePositions = PythonUtility::getOptionListBegin<PyObject *>(settings, "nodePositions");
+  PyObject *pyNodePositions = settings.getOptionListBegin<PyObject *>("nodePositions");
 
   // loop over other entries of list
   for (;
-      !PythonUtility::getOptionListEnd(settings, "nodePositions");
-      PythonUtility::getOptionListNext<PyObject *>(settings, "nodePositions", pyNodePositions))
+      !settings.getOptionListEnd("nodePositions");
+      settings.getOptionListNext<PyObject *>("nodePositions", pyNodePositions))
   {
     if (!PythonUtility::isTypeList(pyNodePositions) && !listWarningIssued)
     {
@@ -61,12 +61,12 @@ parseFromSettings(PyObject *settings)
   //  "elements": [[[0,0], [1,0], [2,1], [3,0]], [next element]]   # each node is [node no, version-at-that-node no] or just node-no then it assumes version no 0
 
   // get the first node position from the list
-  PyObject *pyElement = PythonUtility::getOptionListBegin<PyObject *>(settings, "elements");
+  PyObject *pyElement = settings.getOptionListBegin<PyObject *>("elements");
 
   // loop over other entries of list
   for (;
-      !PythonUtility::getOptionListEnd(settings, "elements");
-      PythonUtility::getOptionListNext<PyObject *>(settings, "elements", pyElement))
+      !settings.getOptionListEnd("elements");
+      settings.getOptionListNext<PyObject *>("elements", pyElement))
   {
     // get the python list that makes up the element, e.g. [[0,0], [1,0], [2,1], [3,0]]
     typedef std::array<PyObject *,this->nNodesPerElement()> PyElementNodes;
@@ -223,4 +223,4 @@ parseFromSettings(PyObject *settings)
   }
 }
 
-};  // namespace
+} // namespace

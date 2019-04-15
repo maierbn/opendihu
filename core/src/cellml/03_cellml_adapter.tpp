@@ -9,8 +9,8 @@
 #include "utility/petsc_utility.h"
 #include "utility/string_utility.h"
 #include "mesh/structured_regular_fixed.h"
-#include "data_management/solution_vector_mapping.h"
 #include "mesh/mesh_manager.h"
+#include "function_space/function_space.h"
 
 //#include <libcellml>    // libcellml not used here
 
@@ -18,9 +18,71 @@ template<int nStates_, typename FunctionSpaceType>
 CellmlAdapter<nStates_,FunctionSpaceType>::
 CellmlAdapter(DihuContext context) :
   CallbackHandler<nStates_,FunctionSpaceType>(context),
-  Splitable()
+  Splittable()
 {
   LOG(TRACE) << "CellmlAdapter constructor";
+}
+
+//! constructor from other CellmlAdapter, preserves the outputManager and context
+template<int nStates_, typename FunctionSpaceType>
+CellmlAdapter<nStates_,FunctionSpaceType>::
+CellmlAdapter(const CellmlAdapter &rhs, std::shared_ptr<FunctionSpace> functionSpace) :
+  CallbackHandler<nStates_,FunctionSpaceType>(rhs.context_, true),
+  Splittable()
+{
+  LOG(TRACE) << "CellmlAdapter constructor from rhs";
+
+  this->functionSpace_ = functionSpace;
+  this->outputWriterManager_ = rhs.outputWriterManager_;
+
+  return;
+
+  // copy member variables from rhs
+  this->specificSettings_ = rhs.specificSettings_;
+  this->setParameters_ = rhs.setParameters_;
+  this->setSpecificParameters_ = rhs.setSpecificParameters_;
+  this->setSpecificStates_ = rhs.setSpecificStates_;
+  this->handleResult_ = rhs.handleResult_;
+  this->pythonSetParametersFunction_ = rhs.pythonSetParametersFunction_;
+  this->pythonSetSpecificParametersFunction_ = rhs.pythonSetSpecificParametersFunction_;
+  this->pythonSetSpecificStatesFunction_ = rhs.pythonSetSpecificStatesFunction_;
+  this->pythonHandleResultFunction_ = rhs.pythonHandleResultFunction_;
+  this->pySetFunctionAdditionalParameter_ = rhs.pySetFunctionAdditionalParameter_;
+  this->pyHandleResultFunctionAdditionalParameter_ = rhs.pyHandleResultFunctionAdditionalParameter_;
+  this->pyGlobalNaturalDofsList_ = rhs.pyGlobalNaturalDofsList_;
+
+  this->nInstances_ = this->functionSpace_->nNodesLocalWithoutGhosts();
+  assert(this->nInstances_ > 1);
+
+  // copy member variables from rhs
+  this->parametersUsedAsIntermediate_ = rhs.parametersUsedAsIntermediate_;
+  this->parametersUsedAsConstant_ = rhs.parametersUsedAsConstant_;
+  this->stateNames_ = rhs.stateNames_;
+
+  this->sourceFilename_ = rhs.sourceFilename_;
+  this->nIntermediates_ = rhs.nIntermediates_;
+  this->nParameters_ = rhs.nParameters_;
+  this->nConstants_ = rhs.nConstants_;
+  this->outputStateIndex_ = rhs.outputStateIndex_;
+  this->prefactor_ = rhs.prefactor_;
+  this->internalTimeStepNo_ = rhs.internalTimeStepNo_;
+  this->inputFileTypeOpenCMISS_ = rhs.inputFileTypeOpenCMISS_;
+
+  // allocate data vectors
+  this->intermediates_.resize(this->nIntermediates_*this->nInstances_);
+  this->parameters_.resize(this->nParameters_*this->nInstances_);
+
+  // copy rhs parameter values to parameters, it is assumed that the parameters are the same for every instance
+  for (int instanceNo = 0; instanceNo < this->nInstances_; instanceNo++)
+  {
+    for (int j = 0; j < this->nParameters_; j++)
+    {
+      this->parameters_[j*this->nInstances_ + instanceNo] = rhs.parameters_[j];
+    }
+  }
+
+  LOG(DEBUG) << "Initialize CellML with nInstances = " << this->nInstances_ << ", nParameters_ = " << this->nParameters_
+    << ", nStates = " << nStates << ", nIntermediates = " << this->nIntermediates_;
 }
 
 template<int nStates_, typename FunctionSpaceType>
@@ -34,6 +96,7 @@ template<int nStates_, typename FunctionSpaceType>
 void CellmlAdapter<nStates_,FunctionSpaceType>::
 reset()
 {
+  this->internalTimeStepNo_ = 0;
 }
   
 template<int nStates_, typename FunctionSpaceType>
@@ -42,6 +105,8 @@ initialize()
 {
   LOG(TRACE) << "CellmlAdapter<nStates_,FunctionSpaceType>::initialize";
 
+  Control::PerformanceMeasurement::start("durationInitCellml");
+
   CellmlAdapterBase<nStates_,FunctionSpaceType>::initialize();
   
   // load rhs routine
@@ -49,14 +114,11 @@ initialize()
 
   this->initializeCallbackFunctions();
   
-  int outputStateIndex = PythonUtility::getOptionInt(this->specificSettings_, "outputStateIndex", 0, PythonUtility::NonNegative);
-  double prefactor = PythonUtility::getOptionDouble(this->specificSettings_, "prefactor", 1.0);
+  Control::PerformanceMeasurement::stop("durationInitCellml");
 
-  // The solutionVectorMapping_ object stores the information which component of the solution will be further used
-  // in methods that use the result of this method, e.g. in operator splitting.
-  // The solutionVectorMapping object also scales the solution after transfer.
-  this->solutionVectorMapping_->setOutputComponentNo(outputStateIndex);
-  this->solutionVectorMapping_->setScalingFactor(prefactor);
+  this->outputStateIndex_ = this->specificSettings_.getOptionInt("outputStateIndex", 0, PythonUtility::NonNegative);
+  this->prefactor_ = this->specificSettings_.getOptionDouble("prefactor", 1.0);
+  this->internalTimeStepNo_ = 0;
 }
 
 template<int nStates_, typename FunctionSpaceType>
@@ -85,10 +147,13 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
   int nStatesInput, nRates;
   ierr = VecGetSize(input, &nStatesInput); CHKERRV(ierr);
   ierr = VecGetSize(output, &nRates); CHKERRV(ierr);
+
   VLOG(1) << "evaluateTimesteppingRightHandSideExplicit, input nStates_: " << nStatesInput << ", output nRates: " << nRates;
+  VLOG(1) << "timeStepNo: " << timeStepNo << ", currentTime: " << currentTime << ", internalTimeStepNo: " << this->internalTimeStepNo_;
+
   if (nStatesInput != nStates_*this->nInstances_)
   {
-    LOG(ERROR) << "nStatesInput=" << nStatesInput << ", nStates_=" << nStates_ << ", nInstances=" << this->nInstances_;
+    LOG(ERROR) << "nStatesInput does not match nStates and nInstances! nStatesInput=" << nStatesInput << ", nStates_=" << nStates_ << ", nInstances=" << this->nInstances_;
   }
   assert (nStatesInput == nStates_*this->nInstances_);
   assert (nRates == nStates_*this->nInstances_);
@@ -96,51 +161,68 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
   //LOG(DEBUG) << " evaluateTimesteppingRightHandSide: nInstances=" << this->nInstances_ << ", nStates_=" << nStates_;
   
   // get new values for parameters, call callback function of python config
-  if (this->setParameters_ && timeStepNo % this->setParametersCallInterval_ == 0)
+  if (this->setParameters_ && this->internalTimeStepNo_ % this->setParametersCallInterval_ == 0)
   {
     // start critical section for python API calls
-    PythonUtility::GlobalInterpreterLock lock;
+    // PythonUtility::GlobalInterpreterLock lock;
     
     VLOG(1) << "call setParameters";
-    this->setParameters_((void *)this, this->nInstances_, timeStepNo, currentTime, this->parameters_);
+    this->setParameters_((void *)this, this->nInstances_, this->internalTimeStepNo_, currentTime, this->parameters_);
+  }
+
+  // get new values for parameters, call callback function of python config
+  if (this->setSpecificParameters_ && this->internalTimeStepNo_ % this->setSpecificParametersCallInterval_ == 0)
+  {
+    // start critical section for python API calls
+    // PythonUtility::GlobalInterpreterLock lock;
+
+    VLOG(1) << "call setSpecificParameters";
+    this->setSpecificParameters_((void *)this, this->nInstances_, this->internalTimeStepNo_, currentTime, this->parameters_);
+  }
+
+  // get new values for parameters, call callback function of python config
+  if (this->setSpecificStates_ && this->internalTimeStepNo_ % this->setSpecificStatesCallInterval_ == 0)
+  {
+    // start critical section for python API calls
+    // PythonUtility::GlobalInterpreterLock lock;
+
+    LOG(DEBUG) << "call setSpecificStates, this->internalTimeStepNo_ = " << this->internalTimeStepNo_ << ", this->setSpecificStatesCallInterval_: " << this->setSpecificStatesCallInterval_;
+    LOG(DEBUG) << "currentTime: " << currentTime << ", call setSpecificStates, this->internalTimeStepNo_ = " << this->internalTimeStepNo_ << ", this->setSpecificStatesCallInterval_: " << this->setSpecificStatesCallInterval_;
+    this->setSpecificStates_((void *)this, this->nInstances_, this->internalTimeStepNo_, currentTime, states);
   }
 
   //              this          STATES, RATES, WANTED,                KNOWN
-  if(this->rhsRoutine_)
+  if (this->rhsRoutine_)
   {
     VLOG(1) << "call rhsRoutine_ with " << this->intermediates_.size() << " intermediates, " << this->parameters_.size() << " parameters";
     VLOG(2) << "intermediates: " << this->intermediates_ << ", parameters: " << this->parameters_;
 
+    //Control::PerformanceMeasurement::start("rhsEvaluationTime");  // commented out because it takes too long in this very inner loop
     // call actual rhs routine from cellml code
     this->rhsRoutine_((void *)this, currentTime, states, rates, this->intermediates_.data(), this->parameters_.data());
+    //Control::PerformanceMeasurement::stop("rhsEvaluationTime");
   }
 
   // handle intermediates, call callback function of python config
-  if (this->handleResult_ && timeStepNo % this->handleResultCallInterval_ == 0)
+  if (this->handleResult_ && this->internalTimeStepNo_ % this->handleResultCallInterval_ == 0)
   {
     int nStatesInput;
     VecGetSize(input, &nStatesInput);
 
     // start critical section for python API calls
-    PythonUtility::GlobalInterpreterLock lock;
+    // PythonUtility::GlobalInterpreterLock lock;
     
     VLOG(1) << "call handleResult with in total " << nStatesInput << " states, " << this->intermediates_.size() << " intermediates";
-    this->handleResult_((void *)this, this->nInstances_, timeStepNo, currentTime, states, this->intermediates_.data());
+    this->handleResult_((void *)this, this->nInstances_, this->internalTimeStepNo_, currentTime, states, this->intermediates_.data());
   }
 
   //PetscUtility::setVector(rates_, output);
   // give control of data back to Petsc
   ierr = VecRestoreArray(input, &states); CHKERRV(ierr);
   ierr = VecRestoreArray(output, &rates); CHKERRV(ierr);
-}
 
-/*
-template<int nStates_, typename FunctionSpaceType>
-void CellmlAdapter<nStates_,FunctionSpaceType>::
-evaluateTimesteppingRightHandSideImplicit(Vec& input, Vec& output, int timeStepNo, double currentTime)
-{
+  this->internalTimeStepNo_++;
 }
-*/
 
 //! return false because the object is independent of mesh type
 template<int nStates_, typename FunctionSpaceType>

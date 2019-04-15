@@ -1,5 +1,7 @@
 import os, sys, copy, shutil, subprocess, shlex
 import time
+import datetime
+import socket
 from threading import Thread
 import sconsconfig.utils as utils
 from sconsconfig.utils import conv
@@ -47,6 +49,7 @@ class Package(object):
   ## Default include/library sub-directories to search.
   DEFAULT_SUB_DIRS = [('include', 'lib'), ('include', 'lib64')]
   one_shot_options = []  # options that should only be applied once per call to scons, e.g. REDOWNLOAD should only happen for the first target, not again for further targets
+  compilers_checked = False  # if the C and CXX compilers have been checked
 
   ##
   # @param[in] required Boolean indicating whether the configuration should fail if this package
@@ -74,12 +77,69 @@ class Package(object):
     self.number_output_lines = False    # number of output lines in typical compilation output (False to disable), used for monitoring compilation progress on stdout
     self.static = False                 # if the compiled test program is a static library
     self.set_rpath = True               # if the rpath in the linker should also be set (dynamic linkage)
+    self.link_flags = None              # additional linker flags that can directly be set by the derived class
+    self.last_build_log = ""            # after performing a build this contains the console output of the build process
     
     self.base_dir = None                # will be set to the base directory that contains "include" and "lib"
     self._used_inc_dirs = None
     self._used_libs = None
-    
 
+
+  def check_compilers(self, ctx):
+    
+    if Package.compilers_checked:
+      return True
+    
+    ctx.Log("CC: {}, CXX: {}\n".format(ctx.env["CC"], ctx.env["CXX"]))
+    for compiler in [ctx.env["CC"], ctx.env["CXX"]]:
+      cmd = "{} --version".format(compiler)
+      
+      ctx.Log("Checking compiler {}\n".format(compiler))
+
+      # Make a file to log stdout from the commands.
+      stdout_log = open('stdout.log', 'w')
+      try:
+        subprocess.check_call(cmd, stdout=stdout_log, stderr=subprocess.STDOUT, shell=True)
+        
+        # get output
+        with file('stdout.log') as f:
+          output = f.read()
+        ctx.Log("$"+cmd+"\n")
+        ctx.Log(output+"\n")
+      except:
+        self.command_running = False
+        stdout_log.close()
+        with file('stdout.log') as f:
+          output = f.read()
+        ctx.Log("Command failed: \n"+output)
+        
+        # try again with "-V" instead of "--version" (for cray compiler)
+        cmd = "{} -V".format(compiler)
+        
+        # Make a file to log stdout from the commands.
+        stdout_log = open('stdout.log', 'w')
+        try:
+          subprocess.check_call(cmd, stdout=stdout_log, stderr=subprocess.STDOUT, shell=True)
+          
+          # get output
+          with file('stdout.log') as f:
+            output = f.read()
+          ctx.Log("$"+cmd+"\n")
+          ctx.Log(output+"\n")
+        except:
+          self.command_running = False
+          stdout_log.close()
+          with file('stdout.log') as f:
+            output = f.read()
+          ctx.Log("Command failed: \n"+output)
+          
+          sys.stdout.write('\nError: Compiler \"{}\" not found. Set the cc and CC variables appropriately.'.format(compiler))
+          ctx.Log('Compiler \"{}\" not found.\n'.format(compiler))
+          return False
+
+    Package.compilers_checked = True
+    return True
+    
   ##
   # TODO: Make more general
   def include_directories(self):
@@ -105,6 +165,10 @@ class Package(object):
     sub_dirs = self.sub_dirs
 
     upp = name.upper()
+
+    # check if compiler works
+    if not self.check_compilers(ctx):
+      return (False, 0)
     
     #ctx.Log("ctx.env.items: "+str(ctx.env.items())+"\n")
     
@@ -202,6 +266,18 @@ class Package(object):
           res = self.try_location_subtree(ctx, cd, **kwargs)
           if res[0]:
             break
+            
+    disable_checks = False
+    if self.have_option(env, "DISABLE_CHECKS"):
+      if ctx.env.get('DISABLE_CHECKS', []):
+        ctx.Log('Disable checks because DISABLE_CHECKS is set')
+        disable_checks = True
+    if self.have_option(env, upp + '_DISABLE_CHECKS'):
+      if ctx.env.get(upp + '_DISABLE_CHECKS', []):
+        ctx.Log('Disable checks because '+upp + '_DISABLE_CHECKS is set')
+        disable_checks = True
+    if disable_checks:
+      res = (True,'')
     return res
 
   def try_location_subtree(self, ctx, base_dirs, **kwargs):
@@ -276,14 +352,20 @@ class Package(object):
   def add_options(self, vars):
     name = self.name
     upp = name.upper()
+    vars.Add(BoolVariable('DISABLE_CHECKS', help='Allow failure of checks for all packages.', default=False))
     vars.Add(upp + '_DIR', help='Location of %s.'%name)
     vars.Add(upp + '_INC_DIR', help='Location of %s header files.'%name)
     vars.Add(upp + '_LIB_DIR', help='Location of %s libraries.'%name)
     vars.Add(upp + '_LIBS', help='%s libraries.'%name)
+    vars.Add(upp + '_DISABLE_CHECKS', help='Allow failure of check for %s.'%name)
     if self.download_url:
       vars.Add(BoolVariable(upp + '_DOWNLOAD', help='Download and use a local copy of %s.'%name, default=False))
       vars.Add(BoolVariable(upp + '_REDOWNLOAD', help='Force update of previously downloaded copy of %s.'%name, default=False))
-      vars.Add(BoolVariable(upp + '_REBUILD', help='Force new build of previously downloaded copy of %s, even if it was installed successfully.'%name, default=False))
+    vars.Add(BoolVariable(upp + '_REBUILD', help='Force new build of previously downloaded copy of %s, even if it was installed successfully.'%name, default=False))
+    vars.Add(BoolVariable('MPI_IGNORE_MPICC', help='Disable retrieving mpi compile information from mpicc --showme.', default=False))
+    vars.Add(BoolVariable('MPI_DEBUG', help='Build MPI with debugging support for memcheck.', default=False))
+    vars.Add(BoolVariable('PETSC_DEBUG', help='Build Petsc with debugging support.', default=False))
+    
     self.options.extend([upp + '_DIR', upp + '_INC_DIR', upp + '_LIB_DIR', upp + '_LIBS', upp + '_DOWNLOAD'])
 
   ## Set the build handler for an architecture and operating system. Pass in None to the handler
@@ -346,7 +428,8 @@ class Package(object):
     
     # add directory from environment variable "OPENDIHU_HOME"
     if os.environ.get('OPENDIHU_HOME') is not None:
-      dependencies_dir_candidates = [os.path.join(os.environ.get('OPENDIHU_HOME'),'dependencies')] + dependencies_dir_candidates
+      if os.environ.get('OPENDIHU_HOME') != "":
+        dependencies_dir_candidates = [os.path.join(os.environ.get('OPENDIHU_HOME'),'dependencies')] + dependencies_dir_candidates
     
     dependencies_dir = os.path.join(os.getcwd(),'dependencies')
     for directory in dependencies_dir_candidates:
@@ -366,7 +449,10 @@ class Package(object):
     ctx.Log("Downloading into " + base_dir + "\n")
 
     # Setup the filename and build directory name and destination directory.
-    filename = self.download_url[self.download_url.rfind('/') + 1:]
+    if self.download_url == "":
+      filename = ""
+    else:
+      filename = self.download_url[self.download_url.rfind('/') + 1:]
     unpack_dir = "src"
     install_dir = os.path.abspath(os.path.join(base_dir, "install"))
     ctx.Log("Building into " + install_dir + "\n")
@@ -381,16 +467,18 @@ class Package(object):
     ctx.Log("  unpack_dir:  ["+unpack_dir+"] (where to unpack)\n")
 
     # Download if the file is not already available.
-    if not os.path.exists(filename) or force_redownload:
-      if not self.auto_download(ctx, filename):
-        os.chdir(old_dir)
-        return (0, '')
+    if filename != "":
+      if not os.path.exists(filename) or force_redownload:
+        if not self.auto_download(ctx, filename):
+          os.chdir(old_dir)
+          return (0, '')
 
     # Unpack if there is not already a build directory by the same name.
-    if not os.path.exists(unpack_dir) or force_redownload:
-      if not self.auto_unpack(ctx, filename, unpack_dir):
-        os.chdir(old_dir)
-        return (0, '')
+    if filename != "":
+      if not os.path.exists(unpack_dir) or force_redownload:
+        if not self.auto_unpack(ctx, filename, unpack_dir):
+          os.chdir(old_dir)
+          return (0, '')
 
     # Move into the build directory. Most archives will place themselves
     # in a single directory which we should then move into.
@@ -402,7 +490,7 @@ class Package(object):
     source_dir = os.getcwd()
     ctx.Log("  source_dir:  ["+source_dir+"] (where the unpacked sources are)\n")
 
-    ctx.Log(" force_redownload: "+str(force_redownload)+", force_rebuild: "+str(force_rebuild)+", not success:"+str(not os.path.exists('scons_build_success'))+"\n")
+    ctx.Log(" force_redownload: "+str(force_redownload)+", force_rebuild: "+str(force_rebuild)+", not success: "+str(not os.path.exists('scons_build_success'))+"\n")
 
     # Build the package.
     if (not os.path.exists('scons_build_success')) or force_redownload or force_rebuild:
@@ -486,6 +574,11 @@ class Package(object):
         import tarfile
         tf = tarfile.open(filename)
         tf.extractall(unpack_dir)
+        
+        # get name of extracted directory
+        entries = os.listdir(unpack_dir)
+        print("top-level files: {}".format(entries))
+        #os.rename(filename_base, unpack_dir)
       except:
         shutil.rmtree(unpack_dir, True)
         try:
@@ -573,12 +666,13 @@ class Package(object):
       ctx.Log("Failed to locate build handler\n")
       return False
 
-    # Make a file to log stdout from the commands.
-    stdout_log = open('stdout.log', 'w')
 
     # Process each command in turn.
     for cmd in handler:
 
+      # Make a file to log stdout from the commands.
+      stdout_log = open('stdout.log', 'w')
+      
       # It's possible to have a tuple, indicating a function and arguments.
       if isinstance(cmd, tuple):
         ctx.Log("Command is a Python function\n")
@@ -625,6 +719,7 @@ class Package(object):
     
         ctx.Log("  $"+cmd+"\n")
 
+        output = ""
         try:
           self.command_running = True
           t = Thread(target=self.monitor_progress, args=(self.number_output_lines,))
@@ -639,21 +734,29 @@ class Package(object):
     
           
           # get output
-          with file('stdout.log') as f:
-            output = f.read()
+          if os.path.exists('stdout.log'):
+            with file('stdout.log') as f:
+              output = f.read()    
+            stdout_log.close()
+            os.remove('stdout.log')
+          self.last_build_log = output
           ctx.Log(output+"\n")
         except:
           self.command_running = False
-          if not allow_errors:
-            stdout_log.close()
+          stdout_log.close()
+          if os.path.exists('stdout.log'):
             with file('stdout.log') as f:
-             output = f.read()
+              output = f.read()
+            stdout_log.close()
+            os.remove('stdout.log')
+          if not allow_errors:
             sys.stdout.write('failed.\n')
             ctx.Log("Command failed: \n"+output)
+            self.last_build_log = output
             return False
-
-    # Don't forget to close the log.
-    stdout_log.close()
+          else:
+            ctx.Log("Command failed (but allowed): \n"+output)
+            self.last_build_log = output
 
     # If it all seemed to work, write a dummy file to indicate this package has been built.
     success = open('scons_build_success', 'w')
@@ -689,9 +792,11 @@ class Package(object):
   ## try to compile (self.run=0) or compile and run (self.run=1) the given code snippet in self.check_text
   # Returns (1,'program output') on success and (0,'') on failure
   def try_link(self, ctx, **kwargs):
-    text = self.check_text
+    text = self.check_text+'\n'   # ensure that file ends with newline for extra picky cray compiler
+    #text = self.check_text+'//'+"{:%Y/%m/%d %H:%m:%S}".format(datetime.datetime.now())+'\n'   # ensure that file ends with newline for extra picky cray compiler
+    
+    
     bkp = env_setup(ctx.env, **kwargs)
-    ctx.env.MergeFlags("-ldl -lm -lX11 -lutil")
     ctx.env.PrependUnique(CCFLAGS = self.build_flags)
     
     # add sources directly to test program
@@ -704,27 +809,47 @@ class Package(object):
     if self.static:
       ctx.env.PrependUnique(CCFLAGS = '-static')
       ctx.env.PrependUnique(LINKFLAGS = '-static')
+     
+    ## hack:
+    #import socket
+    #if socket.gethostname() == 'cmcs09':
+    #  print("! ! ! ! ! ! ! ! ! CCFLAG for mpi.h set manually in Package.py ! ! ! ! ! ! ! ! !")
+    #  ctx.env.PrependUnique(CCFLAGS = "('-I', '/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2')")
+    #  #ctx.env.PrependUnique(CCFLAGS = '-I/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2')
+ 
+    if self.link_flags is not None:
+      ctx.Log("  link_flags is set, use additional link flags: {}\n".format(self.link_flags))
+      ctx.env.PrependUnique(LINKFLAGS = self.link_flags)
       
     # compile with C++14 for cpp test files
     if 'cpp' in self.ext:
-      ctx.env.PrependUnique(CCFLAGS = "-std=c++14")
+      if os.environ.get("PE_ENV") != "CRAY":
+        ctx.env.PrependUnique(CCFLAGS = "-std=c++14")
       
     #ctx.Log(ctx.env.Dump())
-    ctx.Log("  LIBS:     "+str(ctx.env["LIBS"])+"\n")
-    ctx.Log("  LINKFLAGS:"+str(ctx.env["LINKFLAGS"])+"\n")
-    ctx.Log("  LIBPATH:  "+str(ctx.env["LIBPATH"])+"\n")
-    ccflags = ctx.env["CCFLAGS"]
-    for i in ccflags:
-      ctx.Log("  CCFLAGS "+str(i)+"\n")
+    if "LIBS" in ctx.env: ctx.Log("  LIBS:     "+str(ctx.env["LIBS"])+"\n")
+    if "LINKFLAGS" in ctx.env: ctx.Log("  LINKFLAGS:"+str(ctx.env["LINKFLAGS"])+"\n")
+    if "LIBPATH" in ctx.env: ctx.Log("  LIBPATH:  "+str(ctx.env["LIBPATH"])+"\n")
+    if "CC" in ctx.env: ctx.Log("  CC:       "+str(ctx.env["CC"])+"\n")
+    if "CXX" in ctx.env: ctx.Log("  CXX:      "+str(ctx.env["CXX"])+"\n")
+    if "CCFLAGS" in ctx.env: 
+      ccflags = ctx.env["CCFLAGS"]
+      for i in ccflags:
+        ctx.Log("  CCFLAGS: "+str(i)+"\n")
+    ctx.Log("=============")
     #ctx.Log("  CCFLAGS:  "+str(ctx.env["CCFLAGS"])+"\n")    # cannot do str(..CCFLAGS..) when it is a tuple
-    
+        
     # compile / run test program
     if self.run:
       res = ctx.TryRun(text, self.ext)
+      
+      if not res[0] and os.environ.get("PE_ENV") is not None:
+        ctx.Log("Run failed on hazelhen, try again, this time only link")
+        res = (ctx.TryLink(text, self.ext), '')
     else:
       res = (ctx.TryLink(text, self.ext), '')
         
-    # remove C++11 and C++14 flags
+    # remove C++11 and C++14 flags, only for the test program
     if 'cpp' in self.ext:
       ccflags = ctx.env["CCFLAGS"]
       ccflags_new = []
@@ -738,7 +863,19 @@ class Package(object):
     if not res[0]:
       ctx.Log("Compile/Run failed.\n");
       ctx.Log("Output: \""+str(ctx.lastTarget)+"\"\n")
-      env_restore(ctx.env, bkp)
+ 
+      disable_checks = False
+      if ctx.env.get('DISABLE_CHECKS', []):
+        disable_checks = True
+      name = self.name
+      upp = name.upper()
+      if ctx.env.get(upp + '_DISABLE_CHECKS', []):
+        ctx.Log('Disable checks because '+upp + '_DISABLE_CHECKS is set.\n')
+        disable_checks = True
+      if disable_checks:
+        res = (True,'')
+      else:
+        env_restore(ctx.env, bkp)
     else:
       ctx.Log("Compile/Run succeeded.\n");
       ctx.Log("Program output: \""+res[1]+"\"\n")
@@ -763,7 +900,10 @@ class Package(object):
       for e in extra_libs:
         e = conv.to_iter(e)
         # add extra lib
-        e_bkp = env_setup(ctx.env, LIBS=ctx.env.get('LIBS', []) + e, LINKFLAGS=ctx.env['LINKFLAGS'])
+        linkflags = None
+        if 'LINKFLAGS' in ctx.env:
+          linkflags = ctx.env['LINKFLAGS']
+        e_bkp = env_setup(ctx.env, LIBS=ctx.env.get('LIBS', []) + e, LINKFLAGS=linkflags)
         
         # try to link or run program
         res = self.try_link(ctx, **kwargs)
@@ -893,8 +1033,11 @@ class Package(object):
 
         system_inc_dirs = []
         for inc_dir in inc_sub_dirs:
-          system_inc_dirs.append(('-isystem', inc_dir))     # -isystem is the same is -I for gcc, except it suppresses warning (useful for dependencies)
-            
+          if socket.gethostname() == 'cmcs09':
+            system_inc_dirs.append(('-I', inc_dir))
+          else:
+            system_inc_dirs.append(('-isystem', inc_dir))     # -isystem is the same is -I for gcc, except it suppresses warning (useful for dependencies)            
+
         if self.set_rpath:
           bkp = env_setup(ctx.env,
                   #CPPPATH=ctx.env.get('CPPPATH', []) + inc_sub_dirs,
@@ -913,7 +1056,7 @@ class Package(object):
         if res[0]:
           self.base_dir = base # set base directory
           
-          ctx.Log("Combination of (include, lib) directories "+str(inc_sub_dirs) + "," + str(lib_sub_dirs)+" was successful, done with combinations.")
+          ctx.Log("Combination of (include, lib) directories "+str(inc_sub_dirs) + "," + str(lib_sub_dirs)+" was successful, done with combinations.\n")
           return res
           #break
         env_restore(ctx.env, bkp)

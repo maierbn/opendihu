@@ -10,6 +10,6 @@ Import('env')     # import Environment object from calling SConstruct
 # if the option no_tests was given, quit the script
 if not env['no_examples']:
       
-# create the main executable
-env.Program(target = 'multidomain', source = "src/multidomain.cpp")
-env.Program(target = 'multidomain_strang', source = "src/multidomain_strang.cpp")
+  # create the main executable
+  #env.Program(target = 'multidomain', source = "src/multidomain.cpp")
+  env.Program(target = 'multidomain_strang', source = "src/multidomain_strang.cpp")

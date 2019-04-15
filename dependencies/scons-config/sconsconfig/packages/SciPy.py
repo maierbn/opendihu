@@ -100,7 +100,7 @@ class SciPy(Package):
         #     ${DEPENDENCIES_DIR}/python/install/bin/python3 setup.py install --prefix ${DEPENDENCIES_DIR}/python/install',
         #])
         
-        if os.environ.get("SITE_PLATFORM_NAME") == "hazelhen":
+        if os.environ.get("PE_ENV") is not None:
           # build from wheel
           self.set_build_handler([
             '$${DEPENDENCIES_DIR}/python/install/bin/pip3 install ${PREFIX}/../scipy-1.1.0-cp36-cp36m-manylinux1_x86_64.whl --prefix=${DEPENDENCIES_DIR}/python/install'
@@ -117,7 +117,7 @@ class SciPy(Package):
         
     def check(self, ctx):
         env = ctx.env
-        ctx.Message('Checking for Scipy ... ')
+        ctx.Message('Checking for Scipy ...         ')
         self.check_options(env)
 
         res = super(SciPy, self).check(ctx)

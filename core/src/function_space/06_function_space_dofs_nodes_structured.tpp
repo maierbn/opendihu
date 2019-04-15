@@ -111,10 +111,14 @@ setHermiteDerivatives()
   // for Hermite set derivatives as distances between nodes
   if (std::is_same<BasisFunctionType,BasisFunction::Hermite>::value)
   {
+    // ensure that ghost buffers is filled with the correct values
+    this->geometryField_->startGhostManipulation();
+
     // loop over nodes
     dof_no_t localDofNo = 0;
     for (node_no_t nodeNoLocal = 0; nodeNoLocal < this->nNodesLocalWithoutGhosts(); nodeNoLocal++)
     {
+      assert(localDofNo % this->nDofsPerNode() == 0);
       Vec3 nodePositionCurrent = this->geometryField_->getValue(localDofNo);
 
       // determine distance to neighbouring node in all directions (x-,x+,y-,y+,z-,z+)
@@ -148,16 +152,19 @@ setHermiteDerivatives()
         distance0Plus = nodePositionNeighbour0Plus - nodePositionCurrent;
       }
 
+      VLOG(1) << "node local no. " << nodeNoLocal << ", \"0-\" " << neighbour0MinusNodeNoLocal << " (d: " << distance0Minus
+        << "), \"0+\" " << neighbour0PlusNodeNoLocal << "(d: " << distance0Plus << ")";
+
       // average distance to both neighbours or take single value if there was only one neighbour found (because of end of domain)
       if (neighbour0MinusNodeNoLocal != -1 && neighbour0PlusNodeNoLocal != -1)
       {
         distance0 = 0.5*(distance0Minus + distance0Plus);
       }
-      else if(neighbour0MinusNodeNoLocal != -1)
+      else if (neighbour0MinusNodeNoLocal != -1)
       {
         distance0 = distance0Minus;
       }
-      else if(neighbour0PlusNodeNoLocal != -1)
+      else if (neighbour0PlusNodeNoLocal != -1)
       {
         distance0 = distance0Plus;
       }
@@ -165,6 +172,8 @@ setHermiteDerivatives()
       {
         distance0 = Vec3{1.0};
       }
+
+      VLOG(1) << "   final distance: " << distance0;
 
       if (D >= 2)
       {
@@ -195,16 +204,19 @@ setHermiteDerivatives()
           distance1Plus = nodePositionNeighbour1Plus - nodePositionCurrent;
         }
 
+        VLOG(1) << "node local no. " << nodeNoLocal << ", \"1-\" " << neighbour1MinusNodeNoLocal << " (d: " << distance1Minus
+          << "), \"1+\" " << neighbour1PlusNodeNoLocal << "(d: " << distance1Plus << ")";
+
         // average distance to both neighbours or take single value if there was only one neighbour found (because of end of domain)
         if (neighbour1MinusNodeNoLocal != -1 && neighbour1PlusNodeNoLocal != -1)
         {
           distance1 = 0.5*(distance1Minus + distance1Plus);
         }
-        else if(neighbour1MinusNodeNoLocal != -1)
+        else if (neighbour1MinusNodeNoLocal != -1)
         {
           distance1 = distance1Minus;
         }
-        else if(neighbour1PlusNodeNoLocal != -1)
+        else if (neighbour1PlusNodeNoLocal != -1)
         {
           distance1 = distance1Plus;
         }
@@ -213,6 +225,7 @@ setHermiteDerivatives()
           distance1 = Vec3{1.0};
         }
 
+        VLOG(1) << "   final distance: " << distance1;
       }
 
       if (D == 3)
@@ -244,16 +257,19 @@ setHermiteDerivatives()
           distance2Plus = nodePositionNeighbour2Plus - nodePositionCurrent;
         }
 
+        VLOG(1) << "node local no. " << nodeNoLocal << ", \"2-\" " << neighbour2MinusNodeNoLocal << " (d: " << distance2Minus
+          << "), \"2+\" " << neighbour2PlusNodeNoLocal << "(d: " << distance2Plus << ")";
+
         // average distance to both neighbours or take single value if there was only one neighbour found (because of end of domain)
         if (neighbour2MinusNodeNoLocal != -1 && neighbour2PlusNodeNoLocal != -1)
         {
           distance2 = 0.5*(distance2Minus + distance2Plus);
         }
-        else if(neighbour2MinusNodeNoLocal != -1)
+        else if (neighbour2MinusNodeNoLocal != -1)
         {
           distance2 = distance2Minus;
         }
-        else if(neighbour2PlusNodeNoLocal != -1)
+        else if (neighbour2PlusNodeNoLocal != -1)
         {
           distance2 = distance2Plus;
         }
@@ -261,6 +277,8 @@ setHermiteDerivatives()
         {
           distance2 = Vec3{1.0};
         }
+
+        VLOG(1) << "   final distance: " << distance2;
       }
 
       // advance localDof No to first non-positional (derivative) value
@@ -311,4 +329,4 @@ setHermiteDerivatives()
   }
 }
 
-};  // namespace
+} // namespace

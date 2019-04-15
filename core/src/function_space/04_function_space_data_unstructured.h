@@ -17,11 +17,11 @@ template<typename FunctionSpaceType,int nComponents>
 class FieldVariable;
 
 template<typename FunctionSpaceType>
-class FieldVariableBase;
+class FieldVariableBaseFunctionSpace;
 
 template<typename FunctionSpaceType,int nComponents>
 class Component;
-};
+}
 
 namespace FunctionSpace
 {
@@ -38,11 +38,14 @@ class FunctionSpaceDataUnstructured :
 {
 public:
 
-  typedef ::FieldVariable::FieldVariableBase<FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> FieldVariableBaseType;
+  typedef ::FieldVariable::FieldVariableBaseFunctionSpace<FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> FieldVariableBaseFunctionSpaceType;
   typedef FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType> FunctionSpaceType;
 
   //! constructor, it is possible to create a basisOnMesh object without geometry field, e.g. for the lower order mesh of a mixed formulation
-  FunctionSpaceDataUnstructured(std::shared_ptr<Partition::Manager> partitionManager, PyObject *settings, bool noGeometryField=false);
+  FunctionSpaceDataUnstructured(std::shared_ptr<Partition::Manager> partitionManager, PythonConfig settings, bool noGeometryField=false);
+
+  //! constructor, null argument is ignored
+  FunctionSpaceDataUnstructured(std::shared_ptr<Partition::Manager> partitionManager, std::vector<double> &null, PythonConfig settings, bool noGeometryField=false);
 
   //! return the global dof number of element-local dof dofIndex of element elementNo, nElements is the total number of elements
   dof_no_t getDofNo(element_no_t elementNo, int dofIndex) const;
@@ -81,18 +84,18 @@ protected:
   void parseExnodeFile(std::string exnodeFilename);
 
   //! rename field variables if "remap" is specified in config
-  void remapFieldVariables(PyObject *settings);
+  void remapFieldVariables(PythonConfig settings);
 
   //! multiply dof values with scale factors such that scale factor information is completely contained in dof values
   void eliminateScaleFactors();
 
   //! parse the element and node positions from python settings
-  void parseFromSettings(PyObject *settings);
+  void parseFromSettings(PythonConfig settings);
 
   //! initialize the meshPartition of this mesh (by calling FunctionSpacePartition::initialize()), then create the partitioned Petsc vectors in each field variable
   void initializeValuesVector();
   
-  std::map<std::string, std::shared_ptr<FieldVariableBaseType>> fieldVariable_; ///< all non-geometry field field variables that were present in exelem/exnode files
+  std::map<std::string, std::shared_ptr<FieldVariableBaseFunctionSpaceType>> fieldVariable_; ///< all non-geometry field field variables that were present in exelem/exnode files
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> geometryField_ = nullptr;  ///< the geometry field variable
 
   std::shared_ptr<FieldVariable::ElementToNodeMapping> elementToNodeMapping_;   ///< for every element the adjacent nodes and the field variable + dofs for their position

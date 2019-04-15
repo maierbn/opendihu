@@ -49,6 +49,13 @@ nUnknownsGlobal()
 }
 
 template<typename FunctionSpaceType>
+DihuContext &Data<FunctionSpaceType>::
+context()
+{
+  return this->context_;
+}
+
+template<typename FunctionSpaceType>
 void Data<FunctionSpaceType>::
 setFunctionSpace(std::shared_ptr<FunctionSpaceType> functionSpace)
 {
@@ -64,6 +71,13 @@ initialize()
 
   this->createPetscObjects();
   this->initialized_ = true;
+}
+
+template<typename FunctionSpaceType>
+void Data<FunctionSpaceType>::
+reset()
+{
+  this->initialized_ = false;
 }
 
 template<typename FunctionSpaceType>

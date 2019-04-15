@@ -13,12 +13,17 @@
 template<int nStates, typename FunctionSpaceType>
 CellmlAdapterBase<nStates,FunctionSpaceType>::
 CellmlAdapterBase(DihuContext context) :
-  context_(context)
+  context_(context), specificSettings_(PythonConfig(context_.getPythonConfig(), "CellML"))
 {
-  PyObject *topLevelSettings = this->context_.getPythonConfig();
-  specificSettings_ = PythonUtility::getOptionPyObject(topLevelSettings, "CellML");
   outputWriterManager_.initialize(this->context_, specificSettings_);
   LOG(TRACE) << "CellmlAdapterBase constructor";
+}
+
+template<int nStates, typename FunctionSpaceType>
+CellmlAdapterBase<nStates,FunctionSpaceType>::
+CellmlAdapterBase(DihuContext context, bool noNewOutputWriter) :
+  context_(context), specificSettings_(PythonConfig(context_.getPythonConfig(), "CellML"))
+{
 }
 
 template<int nStates, typename FunctionSpaceType>
@@ -34,8 +39,6 @@ nComponents()
   return nStates;
 }
 
-
-
 template<int nStates, typename FunctionSpaceType>
 void CellmlAdapterBase<nStates,FunctionSpaceType>::
 initialize()
@@ -46,25 +49,28 @@ initialize()
   {
     LOG(DEBUG) << "CellmlAdapterBase<nStates,FunctionSpaceType>::initialize querying meshManager for mesh";
     LOG(DEBUG) << "specificSettings_: ";
-    PythonUtility::printDict(specificSettings_);
+    PythonUtility::printDict(specificSettings_.pyObject());
   }
   
   // create a mesh if there is not yet one assigned, function space FunctionSpace::Generic, downcasted to Mesh::Mesh
-  functionSpace_ = context_.meshManager()->functionSpace<FunctionSpaceType>(specificSettings_);  // create initialized mesh
+  if (!functionSpace_)
+  {
+    functionSpace_ = context_.meshManager()->functionSpace<FunctionSpaceType>(specificSettings_);  // create initialized mesh
+  }
   LOG(DEBUG) << "Cellml mesh has " << functionSpace_->nNodesLocalWithoutGhosts() << " local nodes";
 
   //store number of instances
   nInstances_ = functionSpace_->nNodesLocalWithoutGhosts();
 
   stateNames_.resize(nStates);
-  sourceFilename_ = PythonUtility::getOptionString(this->specificSettings_, "sourceFilename", "");
+  sourceFilename_ = this->specificSettings_.getOptionString("sourceFilename", "");
   this->scanSourceFile(this->sourceFilename_, statesInitialValues_);
   
   // add explicitely defined parameters that replace intermediates and constants
   if (!inputFileTypeOpenCMISS_)
   {
-    PythonUtility::getOptionVector(this->specificSettings_, "parametersUsedAsIntermediate", parametersUsedAsIntermediate_);
-    PythonUtility::getOptionVector(this->specificSettings_, "parametersUsedAsConstant", parametersUsedAsConstant_);
+    this->specificSettings_.getOptionVector("parametersUsedAsIntermediate", parametersUsedAsIntermediate_);
+    this->specificSettings_.getOptionVector("parametersUsedAsConstant", parametersUsedAsConstant_);
     nParameters_ += parametersUsedAsIntermediate_.size() + parametersUsedAsConstant_.size();
     
     //LOG(DEBUG) << "parametersUsedAsIntermediate_: " << parametersUsedAsIntermediate_ 
@@ -80,20 +86,22 @@ initialize()
   LOG(DEBUG) << "parameters.size: " << parameters_.size() << ", intermediates.size: " << intermediates_.size();
 }
 
+void initializeFromNInstances(int nInstances);
+
 template<int nStates, typename FunctionSpaceType>
 template<typename FunctionSpaceType2>
 bool CellmlAdapterBase<nStates,FunctionSpaceType>::
 setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nStates>> initialValues)
 {
   LOG(TRACE) << "CellmlAdapterBase<nStates,FunctionSpaceType>::setInitialValues, sourceFilename_=" << this->sourceFilename_;
-  if(PythonUtility::hasKey(this->specificSettings_, "statesInitialValues"))
+  if (this->specificSettings_.hasKey("statesInitialValues"))
   {
     LOG(DEBUG) << "set initial values from config";
 
     // statesInitialValues gives the initial state values for one instance of the problem. it is used for all instances.
-    statesInitialValues_ = PythonUtility::getOptionArray<double,nStates>(this->specificSettings_, "statesInitialValues", 0);
+    statesInitialValues_ = this->specificSettings_.template getOptionArray<double,nStates>("statesInitialValues", 0);
   }
-  else if(this->sourceFilename_ != "")
+  else if (this->sourceFilename_ != "")
   {
     LOG(DEBUG) << "set initial values from source file";
     // parsing the source file was already done, the initial values are stored in the statesInitialValues_ vector
@@ -104,12 +112,12 @@ setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2
     statesInitialValues_.fill(0.0);
   }
 
-  if(PythonUtility::hasKey(specificSettings_, "parametersInitialValues"))
+  if (this->specificSettings_.hasKey("parametersInitialValues"))
   {
     LOG(DEBUG) << "load parametersInitialValues from config";
 
     std::vector<double> parametersInitial;
-    PythonUtility::getOptionVector(specificSettings_, "parametersInitialValues", parametersInitial);
+    specificSettings_.getOptionVector("parametersInitialValues", parametersInitial);
 
     VLOG(1) << "parametersInitialValues: " << parametersInitial << ", parameters_.size(): " << parameters_.size();
 
@@ -121,9 +129,9 @@ setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2
     else
     {
       LOG(DEBUG) << "copy parameters which were given only for one instance to all instances";
-      for(int instanceNo=0; instanceNo<nInstances_; instanceNo++)
+      for (int instanceNo=0; instanceNo<nInstances_; instanceNo++)
       {
-        for(int j=0; j<nParameters_; j++)
+        for (int j=0; j<nParameters_; j++)
         {
           parameters_[j*nInstances_ + instanceNo] = parametersInitial[j];
         }
@@ -183,3 +191,16 @@ knowsMeshType()
   return false;
 }
 
+template<int nStates, typename FunctionSpaceType>
+int CellmlAdapterBase<nStates,FunctionSpaceType>::
+outputStateIndex()
+{
+  return outputStateIndex_;
+}
+
+template<int nStates, typename FunctionSpaceType>
+double CellmlAdapterBase<nStates,FunctionSpaceType>::
+prefactor()
+{
+  return prefactor_;
+}

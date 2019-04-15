@@ -16,14 +16,14 @@ template<int D,typename BasisFunctionType>
 constexpr int FunctionSpaceBaseDim<D,BasisFunctionType>::
 nDofsPerElement()
 {
-  return pow(BasisFunctionType::nDofsPerBasis(),D);
+  return MathUtility::pow<dof_no_t,int>(BasisFunctionType::nDofsPerBasis(),D);
 }
 
 template<int D,typename BasisFunctionType>
 constexpr int FunctionSpaceBaseDim<D,BasisFunctionType>::
 nNodesPerElement()
 {
-  return pow(BasisFunctionType::nDofsPerBasis()/BasisFunctionType::nDofsPerNode(),D);
+  return MathUtility::pow<dof_no_t,int>(BasisFunctionType::nDofsPerBasis()/BasisFunctionType::nDofsPerNode(),D);
 }
 
 template<int D,typename BasisFunctionType>
@@ -37,7 +37,7 @@ template<int D,typename BasisFunctionType>
 constexpr int FunctionSpaceBaseDim<D,BasisFunctionType>::
 averageNNodesPerElement()
 {
-  return pow(BasisFunctionType::nDofsPerBasis()/BasisFunctionType::nDofsPerNode()-1,D);
+  return MathUtility::pow<dof_no_t,int>(BasisFunctionType::nDofsPerBasis()/BasisFunctionType::nDofsPerNode()-1,D);
 }
 
 template<int D,typename BasisFunctionType>
@@ -87,4 +87,4 @@ averageNNodesPerElement()
   return 0;
 }
 
-};  // namespace
+} // namespace

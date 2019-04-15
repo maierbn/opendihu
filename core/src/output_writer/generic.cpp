@@ -6,22 +6,30 @@
 namespace OutputWriter
 {
 
-Generic::Generic(DihuContext context, PyObject *specificSettings) :
+Generic::Generic(DihuContext context, PythonConfig specificSettings) :
   context_(context), specificSettings_(specificSettings)
 {
   // get the rank subset of all processes that collectively call the write methods
   rankSubset_ = this->context_.partitionManager()->rankSubsetForCollectiveOperations();
   VLOG(1) << "OutputWriter::Generic constructor, rankSubset: " << *rankSubset_;
+
+  outputInterval_ = specificSettings_.getOptionInt("outputInterval", 1, PythonUtility::Positive);
+  formatString_ = specificSettings_.getOptionString("format", "Callback");
+
+  // determine filename base
+  if (formatString_ != "Callback")
+  {
+    filenameBase_ = specificSettings_.getOptionString("filename", "out");
+  }
 }
 
 Generic::~Generic()
 {
 }
 
-std::ofstream Generic::openFile(std::string filename, bool append)
+void Generic::openFile(std::ofstream& file, std::string filename, bool append)
 {
   // open file
-  std::ofstream file;
   if (append)
   {
     file.open(filename.c_str(), std::ios::out | std::ios::binary | std::ios::app);
@@ -43,7 +51,7 @@ std::ofstream Generic::openFile(std::string filename, bool append)
       int ret = system((std::string("mkdir -p ")+path).c_str());
       if (ret != 0)
         LOG(WARNING) << "Creation of directory \"" <<path<< "\" failed.";
-      std::this_thread::sleep_for(std::chrono::milliseconds(500));
+      std::this_thread::sleep_for (std::chrono::milliseconds(500));
 
       file.clear();
       file.open(filename.c_str(), std::ios::out | std::ios::binary);
@@ -54,8 +62,6 @@ std::ofstream Generic::openFile(std::string filename, bool append)
   {
     LOG(WARNING) << "Could not open file \"" <<filename << "\" for writing!";
   }
-
-  return file;
 }
 
 void Generic::appendRankNo(std::stringstream &str, int nRanks, int ownRankNo)
@@ -65,4 +71,4 @@ void Generic::appendRankNo(std::stringstream &str, int nRanks, int ownRankNo)
   str << "." << std::setw(nCharacters) << std::setfill('0') << ownRankNo;
 }
 
-};
+}  // namespace

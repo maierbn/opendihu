@@ -4,7 +4,7 @@
 //#include "time_stepping_scheme/time_stepping_scheme_ode.h"
 #include "time_stepping_scheme/time_stepping_implicit.h"
 //#include "interfaces/runnable.h"
-//#include "data_management/time_stepping.h"
+//#include "data_management/time_stepping/time_stepping.h"
 #include "control/dihu_context.h"
 
 namespace TimeSteppingScheme
@@ -23,11 +23,11 @@ public:
 
   //! advance simulation by the given time span [startTime_, endTime_] with given numberTimeSteps, data in solution is used, afterwards new data is in solution
   void advanceTimeSpan();
-   
-protected:
   
   //! precomputes the integration matrix A=I-dtM^(-1)K for the implicit euler scheme
   void setSystemMatrix(double timeStepWidth);
+   
+protected:
   
 };
 

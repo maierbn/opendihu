@@ -12,7 +12,7 @@
 
 namespace SpatialDiscretization
 {
-  
+
 TEST(LaplaceTest, MatrixIsCorrect1DSmall)
 {
   std::string pythonConfig = R"(
@@ -806,5 +806,6 @@ config = {
   StiffnessMatrixTester::checkDirichletBCInSolution(equationDiscretized, dirichletBC);
 }
 
-};
+
+}  // namespace
 

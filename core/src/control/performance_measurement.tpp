@@ -27,4 +27,4 @@ setParameter(std::string key, T parameter)
   parameters_[key] = str.str();
 }
 
-};  // namespace
+} // namespace

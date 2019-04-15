@@ -18,7 +18,7 @@ class Structured : public MeshOfDimension<D>
 {
 public:
   //! constructor from python settings
-  Structured(PyObject *specificSettings);
+  Structured(PythonConfig specificSettings);
 
   //! get number of elements in a given coordinate direction for the local domain
   element_no_t nElementsPerCoordinateDirectionLocal(int dimension) const;
@@ -44,6 +44,6 @@ protected:
   std::array<int, D> nRanks_;    ///< when the number of elements is specified locally the grid of ranks of the partitioning
 };
 
-};    // namespace
+}  // namespace
 
 #include "mesh/structured.tpp"

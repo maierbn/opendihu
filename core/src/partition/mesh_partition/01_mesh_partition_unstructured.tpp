@@ -69,6 +69,17 @@ nDofsLocalWithoutGhosts() const
   return nDofs_;
 }
 
+
+//! number of nodes in the local partition
+template<int D, typename BasisFunctionType>
+dof_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+nNodesLocalWithGhosts(int coordinateDirection) const
+{
+  if (coordinateDirection == 0)
+    return nNodes_;
+  return 1;
+}
+
 //! number of nodes in the local partition
 template<int D, typename BasisFunctionType>
 node_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
@@ -131,6 +142,16 @@ void MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDi
 extractLocalDofsWithoutGhosts(std::vector<T> &vector) const
 {
 
+}
+
+template<int D, typename BasisFunctionType>
+std::array<int,D> MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+getCoordinatesLocal(std::array<global_no_t,D> coordinatesGlobal, bool &isOnLocalDomain) const
+{
+  // because we have no parallel execution, global coordinates are the same as local coordinates and isOnLocalDomain is always true
+  isOnLocalDomain = true;
+  std::array<int,D> coordinatesLocal(coordinatesGlobal.begin(), coordinatesGlobal.end());
+  return coordinatesLocal;
 }
 
 template<int D, typename BasisFunctionType>

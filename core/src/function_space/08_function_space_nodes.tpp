@@ -30,8 +30,8 @@ nDofsLocal() const
 
 template<typename MeshType,int D,int order>
 FunctionSpaceNodes<MeshType, BasisFunction::CompletePolynomialOfDimensionAndOrder<D,order>>::
-FunctionSpaceNodes(PyObject *specificSettings, bool noGeometryField) :
+FunctionSpaceNodes(PythonConfig specificSettings, bool noGeometryField) :
   FunctionSpaceFunction<MeshType, BasisFunction::CompletePolynomialOfDimensionAndOrder<MeshType::dim(),order>>::FunctionSpaceFunction(specificSettings)
 {
 }
-};  // namespace
+} // namespace

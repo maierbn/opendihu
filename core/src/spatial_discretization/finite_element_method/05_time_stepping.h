@@ -4,6 +4,7 @@
 
 #include "mesh/mesh.h"
 #include "interfaces/discretizable_in_time.h"
+#include "interfaces/multipliable.h"
 
 namespace SpatialDiscretization
 {
@@ -14,9 +15,11 @@ template<typename FunctionSpaceType, typename QuadratureType, typename Term>
 class FiniteElementMethodTimeStepping :
   public AssembleRightHandSide<FunctionSpaceType, QuadratureType, Term>,
   public DiscretizableInTime,
-  public Splitable
+  public Splittable
 {
 public:
+  typedef std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> TransferableSolutionDataType;  // type of return value of getSolutionForTransfer
+
   //! constructor, if function space is not given, create new one according to settings
   //! if the function space is given as parameter, is has to be already initialize()d
   FiniteElementMethodTimeStepping(DihuContext context, std::shared_ptr<FunctionSpaceType> functionSpace = nullptr);
@@ -47,11 +50,16 @@ public:
   //! return true because the object has a specified mesh type
   bool knowsMeshType();
 
+
   //! enable or disable boundary condition handling on initialization, set to false to not care for boundary conditions
   void setBoundaryConditionHandlingEnabled(bool boundaryConditionHandlingEnabled);
 
   //! return the mesh that is stored in the data class
   std::shared_ptr<FunctionSpaceType> functionSpace();
+
+  //! get the data that will be transferred in the operator splitting to the other term of the splitting
+  //! the transfer is done by the solution_vector_mapping class
+  TransferableSolutionDataType getSolutionForTransfer();
 
   typedef FunctionSpaceType FunctionSpace;   ///< the FunctionSpace type needed for time stepping scheme
 
@@ -75,7 +83,7 @@ protected:
   
 };
 
-};  // namespace
+} // namespace
 
 #include "spatial_discretization/finite_element_method/05_time_stepping.tpp"
 #include "spatial_discretization/finite_element_method/05_time_stepping_explicit.tpp"

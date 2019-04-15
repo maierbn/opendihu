@@ -19,6 +19,6 @@ public:
                            int timeStepNo, double currentTime, bool onlyNodalValues);
 };
 
-};  // namespace
+} // namespace
 
 #include "output_writer/python_callback/python_callback_writer.tpp"

@@ -48,6 +48,7 @@ public:
 
   using FieldVariableSetGetUnstructured<FunctionSpaceType,1>::getElementValues;
   using FieldVariableSetGetUnstructured<FunctionSpaceType,1>::getValue;
+  using FieldVariableSetGetUnstructured<FunctionSpaceType,1>::getValues;
   using FieldVariableSetGetUnstructured<FunctionSpaceType,1>::getValuesWithGhosts;
   using FieldVariableSetGetUnstructured<FunctionSpaceType,1>::getValuesWithoutGhosts;
   using FieldVariableSetGetUnstructured<FunctionSpaceType,1>::setValue;
@@ -60,6 +61,9 @@ public:
 
   //! get a single value from local dof no. for all components
   double getValue(node_no_t dofLocalNo) const;
+
+  //! get values from their local dof no.s, as vector
+  void getValues(const std::vector<dof_no_t> &dofLocalNo, std::vector<double> &values) const;
 
   //! get all stored local values
   void getValuesWithGhosts(std::vector<double> &values, bool onlyNodalValues=false) const;
@@ -88,6 +92,6 @@ public:
 
 };
 
-};  // namespace
+} // namespace
 
 #include "field_variable/unstructured/04_field_variable_set_get_component_dependent_unstructured_deformable.tpp"

@@ -54,6 +54,8 @@ fiber_distribution_file = "../../input/MU_fibre_distribution_3780.txt"
 firing_times_file = "../../input/MU_firing_times_real.txt"
 #firing_times_file = "../../input/MU_firing_times_immediately.txt"
 
+n_maximum_fibers_y = np.inf   # maximum number of fibers in y direction to use from the file
+
 #print("prefactor: ",Conductivity/(Am*Cm))
 #print("numpy path: ",np.__path__)
 
@@ -104,7 +106,7 @@ parser.add_argument('--disable_firing_output',    help='Disables the initial lis
 parser.add_argument('--v',                        help='Enable full verbosity in c++ code')
 parser.add_argument('-v',                         help='Enable verbosity level in c++ code', action="store_true")
 parser.add_argument('-vmodule',                   help='Enable verbosity level for given file in c++ code')
-parser.add_argument('--rank_reordering',          help='Enable rank reordering in the c++ code', action="store_true")
+parser.add_argument('--n_maximum_fibers_y',       type=int, help='Set number of fibers to maximum this value. This is to allow to only used some layers of fibers. If this value is higher than the actual number of fibers in the file, use all the available fibers in the file.', default=n_maximum_fibers_y)
  
 # parse arguments and assign values to global variables
 args = parser.parse_args(args=sys.argv[:-2])
@@ -314,7 +316,7 @@ for i in range(int(header_length/4.) - 1):
   
 n_fibers_total = parameters[0]
 n_fibers_x = (int)(np.round(np.sqrt(n_fibers_total)))
-n_fibers_y = n_fibers_x
+n_fibers_y = min(n_fibers_x, n_maximum_fibers_y)
 n_points_whole_fiber = parameters[1]
 
 # for debugging:

@@ -158,7 +158,6 @@ void Linear::parseSolverTypes()
   else if (solverType == "gmres")
   {
     kspType_ = KSPGMRES;
-    pcType_ = PCSOR;
   }
   else if (solverType != "")
   {
@@ -172,6 +171,8 @@ void Linear::parseSolverTypes()
   optionKey.str("");
   optionKey << this->name_ << "_preconditionerType";
   Control::PerformanceMeasurement::setParameter(optionKey.str(), preconditionerType);
+
+  LOG(DEBUG) << "linear solver type: " << solverType << " (" << kspType_ << "), preconditionerType: " << preconditionerType << " (" << pcType_ << ")";
 }
 
 std::shared_ptr<KSP> Linear::ksp()

@@ -155,7 +155,7 @@ void ExfileElementRepresentation::outputHeaderExelem(std::ostream &file)
 void ExfileElementRepresentation::output(std::ostream &stream) const
 {
   stream << "ExfileElementRepresentation: " << node_.size() << " nodes: ";
-  for (unsigned int i=0; i<node_.size(); i++)
+  for (unsigned int i = 0; i < node_.size(); i++)
   {
     stream << i << ":(";
     for (auto valueIndex : node_[i].valueIndices)

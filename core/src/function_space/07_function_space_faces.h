@@ -27,8 +27,8 @@ public:
   //! inherit constructor
   using FunctionSpaceDofsNodes<MeshType,BasisFunctionType>::FunctionSpaceDofsNodes;
 
-  //! get all dof indices of a face, note: dimension in FunctionSpaceBaseDim is current-1 (=0), in this case the dofIndices array has exactly 1 entry
-  static void getFaceDofs(Mesh::face_t face, std::array<dof_no_t,FunctionSpaceBaseDim<0,BasisFunctionType>::nDofsPerElement()> &dofIndices);
+  //! get all dof indices of a face, note: dimension in FunctionSpaceBaseDim is current-1 (=0), in this case the dofIndices array has exactly so many entries as there are dofs for a node
+  static void getFaceDofs(Mesh::face_t face, std::array<dof_no_t,FunctionSpaceBaseDim<1,BasisFunctionType>::nDofsPerNode()> &dofIndices);
 };
 
 /** Partial specialization for 2D meshes. In this case a face is a line
@@ -43,7 +43,7 @@ public:
   using FunctionSpaceDofsNodes<MeshType,BasisFunctionType>::FunctionSpaceDofsNodes;
 
   //! get all dof indices of a face, note: dimension in FunctionSpaceBaseDim is current-1 (=1)
-  static void getFaceDofs(Mesh::face_t face, std::array<dof_no_t,FunctionSpaceBaseDim<1,BasisFunctionType>::nDofsPerElement()> &dofIndices);
+  static void getFaceDofs(Mesh::face_t face, std::array<dof_no_t,FunctionSpaceBaseDim<1,BasisFunctionType>::nNodesPerElement()*FunctionSpaceBaseDim<MeshType::dim(),BasisFunctionType>::nDofsPerNode()> &dofIndices);
 };
 
 /** Partial specialization for 3D meshes. In this case a face is a real 2D face.
@@ -58,7 +58,7 @@ public:
   using FunctionSpaceDofsNodes<MeshType,BasisFunctionType>::FunctionSpaceDofsNodes;
 
   //! get all dof indices of a face, note: dimension in FunctionSpaceBaseDim is current-1 (=2)
-  static void getFaceDofs(Mesh::face_t face, std::array<dof_no_t,FunctionSpaceBaseDim<2,BasisFunctionType>::nDofsPerElement()> &dofIndices);
+  static void getFaceDofs(Mesh::face_t face, std::array<dof_no_t,FunctionSpaceBaseDim<2,BasisFunctionType>::nNodesPerElement()*FunctionSpaceBaseDim<MeshType::dim(),BasisFunctionType>::nDofsPerNode()> &dofIndices);
 };
 
 }  // namespace

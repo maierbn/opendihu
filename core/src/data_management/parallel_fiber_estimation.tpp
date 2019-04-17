@@ -46,7 +46,7 @@ void ParallelFiberEstimation<FunctionSpaceType>::
 createPetscObjects()
 {
   LOG(DEBUG) << "ParallelFiberEstimation<FunctionSpaceType>::createPetscObjects()" << std::endl;
-  //assert(this->functionSpace_);
+  assert(this->functionSpace_);
   
   // create field variables on local partition
   this->gradient_ = this->functionSpace_->template createFieldVariable<3>("gradient");

@@ -16,7 +16,7 @@ namespace FunctionSpace
 template<int D,typename BasisFunctionType>
 FunctionSpaceDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::
 FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, PythonConfig specificSettings) :
-  FunctionSpaceDofsNodesStructured<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::FunctionSpaceDofsNodesStructured(partitionManager, specificSettings), physicalExtent_({0.0})
+  FunctionSpaceDofsNodesStructured<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::FunctionSpaceDofsNodesStructured(partitionManager, specificSettings), physicalExtent_({-1.0})
 {
   this->meshWidth_ = 0;
   // meshWidth will be initialized in initialize
@@ -53,7 +53,7 @@ void FunctionSpaceDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunc
 computeMeshWidth()
 {
   // if physicalExtent_ is not yet set
-  if (physicalExtent_[0] == 0.0)
+  if (physicalExtent_[0] < 0.0)
   {
     // only get physicalExtent if it is not a 1-node mesh with 0 elements
     if (D > 1 || this->nElementsPerCoordinateDirectionLocal_[0] != 0 || this->nElementsPerCoordinateDirectionGlobal_[0] != 0)
@@ -67,11 +67,10 @@ computeMeshWidth()
     }
     else
     {
-      physicalExtent_[0] = 1.0;
+      physicalExtent_[0] = 0.0;  // set to 0 as a sign that this function space has no real spatial mesh meaning
     }
     VLOG(1) << "get physicalExtent: " << physicalExtent_;
   }
-
   
   std::array<element_no_t, D> nElements;
   bool inputMeshIsGlobal = this->specificSettings_.getOptionBool("inputMeshIsGlobal", true);
@@ -146,6 +145,7 @@ initialize()
   this->geometryField_ = std::make_shared<GeometryFieldType>(thisMesh, "geometry", componentNames, true);
   
   // no need to set values of the geometry field, because there is no data explicitly stored
+  // the derivative values are appropriately returned by the field variable
 
   // set initalized_ to true which indicates that initialize has been called
   this->initialized_ = true;

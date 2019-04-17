@@ -127,7 +127,9 @@ setValues(int componentNo, PetscInt ni, const PetscInt ix[], const PetscScalar y
   if (VLOG_IS_ON(3))
   {
     std::stringstream str;
-    str << "\"" << this->name_ << "\" setValues(componentNo=" << componentNo << ", indices=";
+    str << "\"" << this->name_ << "\", representation \""
+      << Partition::valuesRepresentationString[this->currentRepresentation_]
+      << "\", setValues(componentNo=" << componentNo << ", indices=";
     for (int i = 0; i < ni; i++)
     {
       str << ix[i] << " ";
@@ -166,6 +168,11 @@ setValues(int componentNo, PetscInt ni, const PetscInt ix[], const PetscScalar y
   {
     PetscErrorCode ierr;
     ierr = VecSetValues(values_[componentNo], ni, ix, y, iora); CHKERRV(ierr);
+
+    // get value
+    double value;
+    ierr = VecGetValues(values_[componentNo], ni, ix, &value); CHKERRV(ierr);
+    LOG(DEBUG) << "retrieved value: " << value;
   }
 }
 
@@ -442,13 +449,13 @@ output(std::ostream &stream)
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
   {
     Vec vector = values_[componentNo];
-    if (valuesContiguous_)
+    if (this->currentRepresentation_ == Partition::values_representation_t::representationContiguous)
       vector = valuesContiguous_;
 
     // retrieve local values
     int nDofsLocal = this->meshPartition_->nDofsLocalWithoutGhosts();
     std::vector<PetscInt> indices(nDofsLocal);
-    if (valuesContiguous_)
+    if (this->currentRepresentation_ == Partition::values_representation_t::representationContiguous)
     {
       for (int i = 0; i < nDofsLocal; i++)
       {
@@ -466,44 +473,19 @@ output(std::ostream &stream)
     PetscErrorCode ierr;
     ierr = VecGetValues(vector, nDofsLocal, indices.data(), localValues.data()); CHKERRV(ierr);
     
-    // gather the local sizes of the vectors to rank 0
-    std::vector<int> localSizes(nRanks);
-    localSizes[ownRankNo] = nDofsLocal;
-    // MPI_Gather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm)
-    // Note that the recvcount argument at the root indicates the number of items it receives from each process, not the total number of items it receives.
     if (ownRankNo == 0)
     {
-      MPIUtility::handleReturnValue(MPI_Gather(MPI_IN_PLACE, 1, MPI_INT, localSizes.data(), 1, MPI_INT, 0, this->meshPartition_->mpiCommunicator()), "MPI_Gather (3)");
-    }
-    else
-    {
-      MPIUtility::handleReturnValue(MPI_Gather(localSizes.data(), 1, MPI_INT, localSizes.data(), 1, MPI_INT, 0, this->meshPartition_->mpiCommunicator()), "MPI_Gather (3)");
-    }
-    
-    // determine the maximum size/number of vector entries on any rank
-    int maxLocalSize;
-    MPIUtility::handleReturnValue(MPI_Allreduce(localSizes.data() + ownRankNo, &maxLocalSize, 1, MPI_INT, MPI_MAX, this->meshPartition_->mpiCommunicator()), "MPI_Allreduce");
-    
-    // gather all values to rank 0
-    std::vector<double> recvBuffer(maxLocalSize*nRanks);
-    std::vector<double> sendBuffer(maxLocalSize,0.0);
-    std::copy(localSizes.begin(), localSizes.end(), sendBuffer.begin());
-
-    VLOG(1) << "MPI_Gather (4)";
-    MPIUtility::handleReturnValue(MPI_Gather(sendBuffer.data(), maxLocalSize, MPI_DOUBLE, recvBuffer.data(), maxLocalSize, MPI_DOUBLE, 0, this->meshPartition_->mpiCommunicator()), "MPI_Gather (4)");
-    
-    if (ownRankNo == 0)
-    {
-      stream << "vector \"" << this->name_ << "\"" << std::endl;
-      stream << "component " << componentNo << ": ";
+      stream << "vector \"" << this->name_ << "\", representation \""
+        << Partition::valuesRepresentationString[this->currentRepresentation_] << "\"" << std::endl;
+      stream << "component " << componentNo << ": [";
       for (int rankNo = 0; rankNo < nRanks; rankNo++)
       {
-        for (int i = 0; i < localSizes[rankNo]; i++)
+        for (int i = 0; i < nDofsLocal; i++)
         {
-          stream << recvBuffer[rankNo*maxLocalSize + i] << "  ";
+          stream << localValues[i] << ", ";
         }
       }
-      stream << std::endl; 
+      stream << "]" << std::endl;
     }
 
     PetscViewer viewer;

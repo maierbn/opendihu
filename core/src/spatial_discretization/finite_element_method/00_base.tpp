@@ -27,6 +27,7 @@ FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Term>::
 FiniteElementMethodBase(DihuContext context, std::shared_ptr<FunctionSpaceType> functionSpace) :
   context_(context["FiniteElementMethod"]), data_(context["FiniteElementMethod"]), specificSettings_(context_.getPythonConfig()), initialized_(false)
 {
+  LOG(DEBUG) << "FiniteElementMethodBase constructor, context: " << this->context_.getPythonConfig();
   outputWriterManager_.initialize(context_, specificSettings_);
 
   // Create mesh or retrieve existing mesh from meshManager. This already creates meshPartition in functionSpace.initialize(), see function_space/03_function_space_partition_structured.tpp
@@ -162,6 +163,7 @@ solve()
   // solve the system
   linearSolver->solve(data_.rightHandSide()->valuesGlobal(), data_.solution()->valuesGlobal(), "Solution obtained");
 
+  VLOG(1) << "solution: " << *data_.solution();
 }
 
 template<typename FunctionSpaceType,typename QuadratureType>

@@ -33,14 +33,14 @@ public:
   //! inherit constructor
   using FunctionSpacePartition<MeshType,BasisFunctionType>::FunctionSpacePartition;
 
-  //! return the local dof number of element-local dof dofIndex of element elementNo
-  dof_no_t getDofNo(element_no_t elementNo, int dofIndex) const;
+  //! return the local dof number of element-local dof dofIndex of element elementNoLocal
+  dof_no_t getDofNo(element_no_t elementNoLocal, int dofIndex) const;
 
-  //! return the local node number of element-local node nodeIndex of element with local no elementNo
-  node_no_t getNodeNo(element_no_t elementNo, int nodeIndex) const;
+  //! return the local node number of element-local node nodeIndex of element with local no elementNoLocal
+  node_no_t getNodeNo(element_no_t elementNoLocal, int nodeIndex) const;
 
-  //! return the global/natural node number of element-local node nodeIndex of element with global no elementNoGlobal
-  global_no_t getNodeNoGlobalNatural(global_no_t elementNoGlobalNatural, int nodeIndex) const;
+  //! return the global/natural node number of element-local node nodeIndex of element with global no elementNoLocalGlobal
+  global_no_t getNodeNoGlobalNatural(global_no_t elementNoLocalGlobalNatural, int nodeIndex) const;
 
   //! get all dofs of a specific node, as vector
   void getNodeDofs(node_no_t nodeGlobalNo, std::vector<dof_no_t> &dofGlobalNos) const;
@@ -68,14 +68,14 @@ public:
   //! inherit constructor
   using FunctionSpacePartition<MeshType,BasisFunctionType>::FunctionSpacePartition;
 
-  //! return the local dof number of element-local dof dofIndex of element elementNo
-  dof_no_t getDofNo(element_no_t elementNo, int dofIndex) const;
+  //! return the local dof number of element-local dof dofIndex of element elementNoLocal
+  dof_no_t getDofNo(element_no_t elementNoLocal, int dofIndex) const;
 
-  //! return the local node number of element-local node nodeIndex of element elementNo
-  node_no_t getNodeNo(element_no_t elementNo, int nodeIndex) const;
+  //! return the local node number of element-local node nodeIndex of element elementNoLocal
+  node_no_t getNodeNo(element_no_t elementNoLocal, int nodeIndex) const;
 
-  //! return the global/natural node number of element-local node nodeIndex of element with global no elementNoGlobal
-  global_no_t getNodeNoGlobalNatural(global_no_t elementNoGlobalNatural, int nodeIndex) const;
+  //! return the global/natural node number of element-local node nodeIndex of element with global no elementNoLocalGlobal
+  global_no_t getNodeNoGlobalNatural(global_no_t elementNoLocalGlobalNatural, int nodeIndex) const;
 
   //! get all dofs of a specific node, as vector
   void getNodeDofs(node_no_t nodeGlobalNo, std::vector<dof_no_t> &dofGlobalNos) const;
@@ -103,14 +103,14 @@ public:
   //! inherit constructor
   using FunctionSpacePartition<MeshType,BasisFunctionType>::FunctionSpacePartition;
 
-  //! return the local dof number of element-local dof dofIndex of element elementNo
-  dof_no_t getDofNo(element_no_t elementNo, int dofIndex) const;
+  //! return the local dof number of element-local dof dofIndex of element elementNoLocal
+  dof_no_t getDofNo(element_no_t elementNoLocal, int dofIndex) const;
 
-  //! return the local node number of element-local node nodeIndex of element elementNo
-  node_no_t getNodeNo(element_no_t elementNo, int nodeIndex) const;
+  //! return the local node number of element-local node nodeIndex of element elementNoLocal
+  node_no_t getNodeNo(element_no_t elementNoLocal, int nodeIndex) const;
 
-  //! return the global/natural node number of element-local node nodeIndex of element with global no elementNoGlobal
-  global_no_t getNodeNoGlobalNatural(global_no_t elementNoGlobalNatural, int nodeIndex) const;
+  //! return the global/natural node number of element-local node nodeIndex of element with global no elementNoLocalGlobal
+  global_no_t getNodeNoGlobalNatural(global_no_t elementNoLocalGlobalNatural, int nodeIndex) const;
 
   //! get all dofs of a specific node, as vector
   void getNodeDofs(node_no_t nodeGlobalNo, std::vector<dof_no_t> &dofGlobalNos) const;

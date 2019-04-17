@@ -21,6 +21,7 @@ struct PolyDataPropertiesForMesh
   global_no_t nPointsGlobal;   ///< the number of points needed for representing the mesh, global value of all rank
   global_no_t nCellsGlobal;    ///< the number of VTK "cells", i.e. "Lines" or "Polys", which is the opendihu number of "elements", global value of all ranks
   std::vector<node_no_t> nNodesLocalWithGhosts;   ///< local number of nodes including ghosts, for all dimensions
+  std::vector<int> unstructuredMeshConnectivityValues;  ///< the values that will be written as "connectivity" array in the vtu file, when outputting UnstructuredDeformable meshes, these values are set directly
 
   std::vector<std::pair<std::string,int>> pointDataArrays;   ///< <name,nComponents> of PointData DataArray elements
 };

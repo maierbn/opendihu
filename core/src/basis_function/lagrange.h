@@ -14,6 +14,8 @@ class LagrangeOfOrder : public BasisFunction
 {
 public:
 
+  typedef LagrangeOfOrder<order> BasisFunctionUsingOnlyNodalValues;   //< the same basis function, but only using nodal values, for Lagrange this is the same.  This construct is used for Neumann BC, where the integration over the surface/line is done using Lagrange ansatz functions.
+
   //! number of degrees of freedom of this basis
   static constexpr int nDofsPerBasis();
 

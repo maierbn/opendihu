@@ -1892,7 +1892,7 @@ where the constant $\text{rhs}$, which is the discretized $δW_\text{ext}$, is g
     \text{rhs} = \ds\int_{\Omega} (B_a - \rho_0\,\ddot{u}_a) δu^L_a\,\phi_L\,\d V - \ds\int_{∂\Omega}  \bar{T}_a δu^L_a\,\phi_L\,\d s.
   \end{array}
 \end{equation*}
-This defines a nonlinear function, $\bfR(\hat{\bfu}) \in \R^{3N}$, with one value for each $δu^L_a, a=1,2,3, L=1,\dots,N$ (I.e. entry $(a,L)$ of the vector $\bfR$ contains formula \eqref{eq:iind} with $\delta_{\bar{a}}^{\bar{L}}=1$ for $\bar{a}=a, \bar{L}=L$ and $\delta_{\bar{a}}^{\bar{L}}=0$ otherwise). The aim is to find $\hat{\bfu}$ such that $\bfR(\hat{\bfu}) = 0$. 
+This defines a nonlinear function, $\bfR(\hat{\bfu}) \in \R^{3N}$, with one value for each $δu^L_a, a=1,2,3, L=1,\dots,N$ (I.e. entry $(a,L)$ of the vector $\bfR$ contains formula \eqref{eq:iind} with $δu_{\bar{a}}^{\bar{L}}=1$ for $\bar{a}=a, \bar{L}=L$ and $δu_{\bar{a}}^{\bar{L}}=0$ otherwise). The aim is to find $\hat{\bfu}$ such that $\bfR(\hat{\bfu}) = 0$. 
 
 Within the Newton-Raphson scheme the equation is linearized around iterative values $\hat{\bfu}^{(k)}$.
 \begin{equation*} 

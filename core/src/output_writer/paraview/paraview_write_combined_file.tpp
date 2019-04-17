@@ -29,7 +29,7 @@ void Paraview::writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, con
   if (binaryOutput_)
   {
     VLOG(1) << "Paraview::writeCombinedValuesVector, " << values.size() << " values: " << values;
-    LOG(DEBUG) << "rankSubset: " << *this->rankSubset_;
+    VLOG(1) << "rankSubset: " << *this->rankSubset_;
 
     int localValuesSize = values.size() * sizeof(float);  // number of bytes
     int nLocalValues = values.size() + (ownRankNo == 0? 1 : 0);
@@ -723,6 +723,9 @@ void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType 
   for (std::map<std::string, PolyDataPropertiesForMesh>::iterator meshPropertiesIter = meshPropertiesUnstructuredGridFile_.begin(); meshPropertiesIter != meshPropertiesUnstructuredGridFile_.end(); meshPropertiesIter++)
   {
     PolyDataPropertiesForMesh &polyDataPropertiesForMesh = meshPropertiesIter->second;
+
+    LOG(DEBUG) << "polyDataPropertiesForMesh A: " << polyDataPropertiesForMesh;
+
     if (polyDataPropertiesForMesh.dimensionality == 3)
     {
       meshNames.insert(meshPropertiesIter->first);
@@ -804,40 +807,69 @@ void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType 
       // get local data values
       // setup connectivity array, which gives the node numbers for every element/cell
       std::vector<int> connectivityValues(8*polyDataPropertiesForMesh.nCellsLocal);
-      element_no_t elementIndex = 0;
-      for (int indexZ = 0; indexZ < nNodesLocalWithGhosts[2]-1; indexZ++)
+
+      VLOG(1) << "n connectivity values from unstructured: " << polyDataPropertiesForMesh.unstructuredMeshConnectivityValues.size();
+      VLOG(1) << "nCellsLocal: " << polyDataPropertiesForMesh.nCellsLocal;
+
+      if (!polyDataPropertiesForMesh.unstructuredMeshConnectivityValues.empty())
       {
-        for (int indexY = 0; indexY < nNodesLocalWithGhosts[1]-1; indexY++)
+        // if connectivity values are already explicitly given, this is the case if we have an unstructured mesh to output
+        assert(polyDataPropertiesForMesh.unstructuredMeshConnectivityValues.size() == connectivityValues.size());
+
+        VLOG(1) << "connectivityValues is initialized to " << connectivityValues.size() << ", values: " << connectivityValues;
+        VLOG(1) << "now copy " << polyDataPropertiesForMesh.unstructuredMeshConnectivityValues.size() << ", values: " << polyDataPropertiesForMesh.unstructuredMeshConnectivityValues;
+        std::copy(polyDataPropertiesForMesh.unstructuredMeshConnectivityValues.begin(), polyDataPropertiesForMesh.unstructuredMeshConnectivityValues.end(), connectivityValues.begin());
+      }
+      else
+      {
+        // for structured meshes create connectivity values
+
+        element_no_t elementIndex = 0;
+        for (int indexZ = 0; indexZ < nNodesLocalWithGhosts[2]-1; indexZ++)
         {
-          for (int indexX = 0; indexX < nNodesLocalWithGhosts[0]-1; indexX++, elementIndex++)
+          for (int indexY = 0; indexY < nNodesLocalWithGhosts[1]-1; indexY++)
           {
-            connectivityValues[elementIndex*8 + 0] = nPointsPreviousRanks3D_
-              + indexZ*nNodesLocalWithGhosts[0]*nNodesLocalWithGhosts[1]
-              + indexY*nNodesLocalWithGhosts[0] + indexX;
-            connectivityValues[elementIndex*8 + 1] = nPointsPreviousRanks3D_
-              + indexZ*nNodesLocalWithGhosts[0]*nNodesLocalWithGhosts[1]
-              + indexY*nNodesLocalWithGhosts[0] + indexX + 1;
-            connectivityValues[elementIndex*8 + 2] = nPointsPreviousRanks3D_
-              + indexZ*nNodesLocalWithGhosts[0]*nNodesLocalWithGhosts[1]
-              + (indexY+1)*nNodesLocalWithGhosts[0] + indexX + 1;
-            connectivityValues[elementIndex*8 + 3] = nPointsPreviousRanks3D_
-              + indexZ*nNodesLocalWithGhosts[0]*nNodesLocalWithGhosts[1]
-              + (indexY+1)*nNodesLocalWithGhosts[0] + indexX;
-            connectivityValues[elementIndex*8 + 4] = nPointsPreviousRanks3D_
-              + (indexZ+1)*nNodesLocalWithGhosts[0]*nNodesLocalWithGhosts[1]
-              + indexY*nNodesLocalWithGhosts[0] + indexX;
-            connectivityValues[elementIndex*8 + 5] = nPointsPreviousRanks3D_
-              + (indexZ+1)*nNodesLocalWithGhosts[0]*nNodesLocalWithGhosts[1]
-              + indexY*nNodesLocalWithGhosts[0] + indexX + 1;
-            connectivityValues[elementIndex*8 + 6] = nPointsPreviousRanks3D_
-              + (indexZ+1)*nNodesLocalWithGhosts[0]*nNodesLocalWithGhosts[1]
-              + (indexY+1)*nNodesLocalWithGhosts[0] + indexX + 1;
-            connectivityValues[elementIndex*8 + 7] = nPointsPreviousRanks3D_
-              + (indexZ+1)*nNodesLocalWithGhosts[0]*nNodesLocalWithGhosts[1]
-              + (indexY+1)*nNodesLocalWithGhosts[0] + indexX;
+            for (int indexX = 0; indexX < nNodesLocalWithGhosts[0]-1; indexX++, elementIndex++)
+            {
+              if (elementIndex*8 + 7 >= connectivityValues.size())
+              {
+                LOG(FATAL) << elementIndex*8 + 7 << ">= " << connectivityValues.size() << ", connectivityValues are not large enough: " << connectivityValues.size() << ", but "
+                  << nNodesLocalWithGhosts[0]-1 << "x" << nNodesLocalWithGhosts[1]-1 << "x" << nNodesLocalWithGhosts[2]-1 << " = "
+                  << (nNodesLocalWithGhosts[0]-1)*(nNodesLocalWithGhosts[1]-1)*(nNodesLocalWithGhosts[2]-1) << " elements";
+              }
+
+              connectivityValues[elementIndex*8 + 0] = nPointsPreviousRanks3D_
+                + indexZ*nNodesLocalWithGhosts[0]*nNodesLocalWithGhosts[1]
+                + indexY*nNodesLocalWithGhosts[0] + indexX;
+              connectivityValues[elementIndex*8 + 1] = nPointsPreviousRanks3D_
+                + indexZ*nNodesLocalWithGhosts[0]*nNodesLocalWithGhosts[1]
+                + indexY*nNodesLocalWithGhosts[0] + indexX + 1;
+              connectivityValues[elementIndex*8 + 2] = nPointsPreviousRanks3D_
+                + indexZ*nNodesLocalWithGhosts[0]*nNodesLocalWithGhosts[1]
+                + (indexY+1)*nNodesLocalWithGhosts[0] + indexX + 1;
+              connectivityValues[elementIndex*8 + 3] = nPointsPreviousRanks3D_
+                + indexZ*nNodesLocalWithGhosts[0]*nNodesLocalWithGhosts[1]
+                + (indexY+1)*nNodesLocalWithGhosts[0] + indexX;
+              connectivityValues[elementIndex*8 + 4] = nPointsPreviousRanks3D_
+                + (indexZ+1)*nNodesLocalWithGhosts[0]*nNodesLocalWithGhosts[1]
+                + indexY*nNodesLocalWithGhosts[0] + indexX;
+              connectivityValues[elementIndex*8 + 5] = nPointsPreviousRanks3D_
+                + (indexZ+1)*nNodesLocalWithGhosts[0]*nNodesLocalWithGhosts[1]
+                + indexY*nNodesLocalWithGhosts[0] + indexX + 1;
+              connectivityValues[elementIndex*8 + 6] = nPointsPreviousRanks3D_
+                + (indexZ+1)*nNodesLocalWithGhosts[0]*nNodesLocalWithGhosts[1]
+                + (indexY+1)*nNodesLocalWithGhosts[0] + indexX + 1;
+              connectivityValues[elementIndex*8 + 7] = nPointsPreviousRanks3D_
+                + (indexZ+1)*nNodesLocalWithGhosts[0]*nNodesLocalWithGhosts[1]
+                + (indexY+1)*nNodesLocalWithGhosts[0] + indexX;
+            }
           }
         }
       }
+
+      VLOG(1) << "nPointsPreviousRanks3D_: " << nPointsPreviousRanks3D_;
+      VLOG(1) << "nNodesLocalWithGhosts: " << nNodesLocalWithGhosts[0]-1 << "x" << nNodesLocalWithGhosts[1]-1 << "x" << nNodesLocalWithGhosts[2]-1;
+      VLOG(1) << "connectivity: " << connectivityValues;
 
       // setup offset array
       std::vector<int> offsetValues(polyDataPropertiesForMesh.nCellsLocal);
@@ -876,7 +908,7 @@ void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType 
       std::vector<double> geometryFieldValues;
       ParaviewLoopOverTuple::loopGetGeometryFieldNodalValues<OutputFieldVariablesType>(fieldVariables, currentMeshName, geometryFieldValues);
 
-      LOG(DEBUG) << "currentMeshName: " << currentMeshName << ", rank " << this->rankSubset_->ownRankNo() << ", n geometryFieldValues: " << geometryFieldValues.size();
+      VLOG(1) << "currentMeshName: " << currentMeshName << ", rank " << this->rankSubset_->ownRankNo() << ", n geometryFieldValues: " << geometryFieldValues.size();
       if (geometryFieldValues.size() == 0)
       {
         LOG(FATAL) << "There is no geometry field. You have to provide a geomteryField in the field variables returned by getOutputFieldVariables!";

@@ -1072,6 +1072,14 @@ output(std::ostream &stream) const
     stream << "null" << std::endl;
   else
     stream << *exfileRepresentation_ << std::endl;
+  if (values_ == nullptr)
+  {
+    stream << "(no values vector)";
+  }
+  else
+  {
+    stream << "values: " << *values_;
+  }
   /*
     << "  elementToDofMapping: " << std::endl
     << *elementToDofMapping_ << std::endl

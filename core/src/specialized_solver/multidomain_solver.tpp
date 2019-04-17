@@ -114,6 +114,7 @@ advanceTimeSpan()
   // stop duration measurement
   if (this->durationLogKey_ != "")
     Control::PerformanceMeasurement::stop(this->durationLogKey_);
+
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
@@ -218,8 +219,8 @@ initialize()
 
   // create the nested vectors
   LOG(DEBUG) << "create nested vector";
-  ierr = VecCreateNest(MPI_COMM_WORLD, nCompartments_+1, NULL, subvectorsRightHandSide_.data(), &rightHandSide_); CHKERRV(ierr);
-  ierr = VecCreateNest(MPI_COMM_WORLD, nCompartments_+1, NULL, subvectorsSolution_.data(), &solution_); CHKERRV(ierr);
+  ierr = VecCreateNest(this->rankSubset_->mpiCommunicator(), nCompartments_+1, NULL, subvectorsRightHandSide_.data(), &rightHandSide_); CHKERRV(ierr);
+  ierr = VecCreateNest(this->rankSubset_->mpiCommunicator(), nCompartments_+1, NULL, subvectorsSolution_.data(), &solution_); CHKERRV(ierr);
 
   LOG(DEBUG) << "initialization done";
   this->initialized_ = true;
@@ -422,7 +423,7 @@ setSystemMatrix(double timeStepWidth)
   VLOG(2) << "set at index " << (nCompartments_+1)*(nCompartments_+1)-1;
 
   // create nested matrix
-  ierr = MatCreateNest(this->dataMultidomain_.functionSpace()->meshPartition()->mpiCommunicator(),
+  ierr = MatCreateNest(this->rankSubset_->mpiCommunicator(),
                        nCompartments_+1, NULL, nCompartments_+1, NULL, submatrices.data(), &this->systemMatrix_); CHKERRV(ierr);
 }
 
@@ -430,12 +431,10 @@ template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodD
 void MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
 solveLinearSystem()
 {
-  PetscErrorCode ierr;
-
-
   VLOG(1) << "in solveLinearSystem";
 
   // configure that the initial value for the iterative solver is the value in solution, not zero
+  PetscErrorCode ierr;
   ierr = KSPSetInitialGuessNonzero(*this->linearSolver_->ksp(), PETSC_TRUE); CHKERRV(ierr);
 
   // solve the system, KSPSolve(ksp,b,x)

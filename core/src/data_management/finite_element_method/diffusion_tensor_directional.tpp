@@ -83,7 +83,8 @@ diffusionTensor(element_no_t elementNoLocal, const std::array<double,FunctionSpa
     spatiallyVaryingPrefactor = functionSpace->interpolateValueInElement(spatiallyVaryingPrefactorElementalValues, xi);
 
     diffusionTensor *= spatiallyVaryingPrefactor;
-    LOG(DEBUG) << "elementNoLocal " << elementNoLocal << ", factor: " << spatiallyVaryingPrefactor << ", scaled diffusionTensor: " << diffusionTensor;
+    if (VLOG_IS_ON(1))
+      VLOG(1) << "elementNoLocal " << elementNoLocal << ", factor: " << spatiallyVaryingPrefactor << ", scaled diffusionTensor: " << diffusionTensor;
   }
 
   // check if diffusion tensor contains nan values

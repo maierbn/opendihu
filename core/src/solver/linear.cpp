@@ -183,8 +183,12 @@ void Linear::solve(Vec rightHandSide, Vec solution, std::string message)
 {
   PetscErrorCode ierr;
 
+  Control::PerformanceMeasurement::start(this->durationLogKey_);
+
   // solve the system
   ierr = KSPSolve(*ksp_, rightHandSide, solution); CHKERRV(ierr);
+
+  Control::PerformanceMeasurement::stop(this->durationLogKey_);
 
   // determine meta data
   int numberOfIterations = 0;

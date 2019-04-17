@@ -4,7 +4,7 @@
 import numpy as np
 import scipy.stats
 import pickle
-import sys
+import sys,os 
 
 # global parameters
 PMax = 7.3              # maximum stress [N/cm^2]
@@ -19,7 +19,7 @@ stimulation_frequency = 10.0      # stimulations per ms
 dt_1D = 1e-3                      # timestep width of diffusion
 dt_0D = 3e-3                      # timestep width of ODEs
 dt_3D = 3e-3                      # overall timestep width of splitting
-output_timestep = 1e-2             # timestep for output files
+output_timestep = 1e-1             # timestep for output files
 end_time = 500.0                   # end simulation time
 #end_time = dt_0D
 
@@ -32,6 +32,9 @@ Am = 0.1
 mesh_file = "../input/scaled_mesh_normal"
 #mesh_file = "../input/scaled_mesh_big"
 fiber_file = "../input/laplace3d_structured_linear"
+
+#fiber_file = "../../input/7x7fibers.bin"
+
 cellml_file = "../input/hodgkin_huxley_1952.c"
 fibre_distribution_file = "../input/MU_fibre_distribution_3780.txt"
 #firing_times_file = "../input/MU_firing_times_real.txt"
@@ -44,91 +47,135 @@ motor_units = [
   {"fiber_no": 50, "standard_deviation": 3.0, "maximum": 0.6},
 ]
 
-
-if "hodgkin" in cellml_file:
-  Cm = 1.0
-
 rank_no = (int)(sys.argv[-2])
 n_ranks = (int)(sys.argv[-1])
 
-# load mesh
-with open(mesh_file, "rb") as f:
-  mesh_data = pickle.load(f, encoding='latin1')
-#
-#  "node_positions": node_positions, 
-#  "linear_elements": linear_elements, 
-#  "quadratic_elements": quadratic_elements, 
-#  "seed_points": seed_points,
-#  "bottom_nodes": bottom_node_indices,
-#  "top_nodes": top_node_indices,
-#  "n_linear_elements_per_coordinate_direction": n_linear_elements_per_coordinate_direction,
-#  "n_quadratic_elements_per_coordinate_direction": n_quadratic_elements_per_coordinate_direction,
-#
 
-# load fibers
-with open(fiber_file, "rb") as f:
-  fiber_data = pickle.load(f, encoding='latin1')
-# list of fibers, fiber = list of points, point = list with 3 coordinate entries
+if ".bin" in fiber_file:
+  # data input from bin files that contain fibers
 
-min_x = min([x for [x,y,z] in mesh_data["node_positions"]])
-max_x = max([x for [x,y,z] in mesh_data["node_positions"]])
-min_y = min([y for [x,y,z] in mesh_data["node_positions"]])
-max_y = max([y for [x,y,z] in mesh_data["node_positions"]])
-min_z = min([z for [x,y,z] in mesh_data["node_positions"]])
-max_z = max([z for [x,y,z] in mesh_data["node_positions"]])
+  try:
+    fiber_file_handle = open(fiber_file, "rb")
+  except:
+    print("Error: Could not open fiber file \"{}\"".format(fiber_file))
+    quit()
 
-if rank_no == 0:
-  print("mesh bounding box x: [{},{}], y: [{},{}], z:[{},{}]".format(min_x, max_x, min_y, max_y, min_z, max_z))
+  # parse fibers from a binary fiber file that was created by parallel_fiber_estimation
+  # parse file header to extract number of fibers
+  bytes_raw = fiber_file_handle.read(32)
+  header_str = struct.unpack('32s', bytes_raw)[0]
+  header_length_raw = fiber_file_handle.read(4)
+  header_length = struct.unpack('i', header_length_raw)[0]
 
-for fiber_no in [10, 30, 50]:
-  data = fiber_data[fiber_no]
-  min_x = min([x for [x,y,z] in data])
-  max_x = max([x for [x,y,z] in data])
-  min_y = min([y for [x,y,z] in data])
-  max_y = max([y for [x,y,z] in data])
-  min_z = min([z for [x,y,z] in data])
-  max_z = max([z for [x,y,z] in data])
+  parameters = []
+  for i in range(int(header_length/4.) - 1):
+    double_raw = fiber_file_handle.read(4)
+    value = struct.unpack('i', double_raw)[0]
+    parameters.append(value)
+    
+  n_fibers_total = parameters[0]
+  n_fibers_x = (int)(np.round(np.sqrt(n_fibers_total)))
+  n_fibers_y = n_fibers_x
+  n_points_whole_fiber = parameters[1]
+
+  n_linear_elements_per_coordinate_direction = [n_fibers_x-1, n_fibers_y-1, n_points_whole_fiber-1]
 
   if rank_no == 0:
-    print("fiber {} bounding box x: [{},{}], y: [{},{}], z:[{},{}]".format(fiber_no, min_x, max_x, min_y, max_y, min_z, max_z))
+    print("n fibers:              {} ({} x {})".format(n_fibers_total, n_fibers_x, n_fibers_y))
+    print("n points per fiber:    {}".format(n_points_whole_fiber))
+    
+  # parse whole fiber file
+  fiber_data = []
+  mesh_node_positions = []
+  for fiber_no in range(n_fibers_total):
+    fiber = []
+    for point_no in range(n_points_whole_fiber):
+      point = []
+      for i in range(3):
+        double_raw = fiber_file_handle.read(8)
+        value = struct.unpack('d', double_raw)[0]
+        point.append(value)
+      fiber.append(point)
+      mesh_node_positions.append(point)
+    fiber_data.append(fiber)
+            
+  bottom_node_indices = list(range(n_fibers_x*n_fibers_y))
+  n_points = n_fibers_x*n_fibers_y*n_points_whole_fiber
+  top_node_indices = list(range(n_points-n_fibers_x*n_fibers_y,n_points))
+
+else:
+  # data input from generating 3D meshes without fiber tracing  
+  # load fibers
+  with open(fiber_file, "rb") as f:
+    fiber_data = pickle.load(f, encoding='latin1')
+  # list of fibers, fiber = list of points, point = list with 3 coordinate entries
+
+  # load mesh
+  with open(mesh_file, "rb") as f:
+    mesh_data = pickle.load(f, encoding='latin1')
+
+  n_linear_elements_per_coordinate_direction = mesh_data["n_linear_elements_per_coordinate_direction"]
+  mesh_node_positions = mesh_data["node_positions"]
+
+  bottom_node_indices = mesh_data["bottom_nodes"]
+  top_node_indices = mesh_data["top_nodes"]
+
+  #
+  #  "node_positions": node_positions, 
+  #  "linear_elements": linear_elements, 
+  #  "quadratic_elements": quadratic_elements, 
+  #  "seed_points": seed_points,
+  #  "bottom_nodes": bottom_node_indices,
+  #  "top_nodes": top_node_indices,
+  #  "n_linear_elements_per_coordinate_direction": n_linear_elements_per_coordinate_direction,
+  #  "n_quadratic_elements_per_coordinate_direction": n_quadratic_elements_per_coordinate_direction,
+  #
+
+  # output bounding box for debugging
+  if rank_no == 0:
+    min_x = min([x for [x,y,z] in mesh_data["node_positions"]])
+    max_x = max([x for [x,y,z] in mesh_data["node_positions"]])
+    min_y = min([y for [x,y,z] in mesh_data["node_positions"]])
+    max_y = max([y for [x,y,z] in mesh_data["node_positions"]])
+    min_z = min([z for [x,y,z] in mesh_data["node_positions"]])
+    max_z = max([z for [x,y,z] in mesh_data["node_positions"]])
+
+    print("mesh bounding box x: [{},{}], y: [{},{}], z:[{},{}]".format(min_x, max_x, min_y, max_y, min_z, max_z))
+
+    for fiber_no in [10, 30, 50]:
+      data = fiber_data[fiber_no]
+      min_x = min([x for [x,y,z] in data])
+      max_x = max([x for [x,y,z] in data])
+      min_y = min([y for [x,y,z] in data])
+      max_y = max([y for [x,y,z] in data])
+      min_z = min([z for [x,y,z] in data])
+      max_z = max([z for [x,y,z] in data])
+
+      print("fiber {} bounding box x: [{},{}], y: [{},{}], z:[{},{}]".format(fiber_no, min_x, max_x, min_y, max_y, min_z, max_z))
+
+# determine relative factor fields fr(x) for compartments
+relative_factors_file = "{}.compartment_relative_factors".format(mesh_file)
+if os.path.exists(relative_factors_file):
+  with open(relative_factors_file, "rb") as f:
+    if rank_no == 0:
+      print("load relative factors from file \"{}\"".format(relative_factors_file))
+    relative_factors = pickle.load(f, encoding='latin1')
+
+else:
+  sys.path.append(os.path.abspath(".."))
+  import initialize_compartment_relative_factors
+  relative_factors = initialize_compartment_relative_factors.compute_compartment_relative_factors(mesh_node_positions, fiber_data, motor_units)
+  if rank_no == 0:
+    print("save relative factors to file \"{}\"".format(relative_factors_file))
+    with open(relative_factors_file, "wb") as f:
+      pickle.dump(relative_factors, f)
+  
+if "hodgkin" in cellml_file:
+  Cm = 1.0
 
 n_compartments = len(motor_units)
 
 # create relative factors for compartments
-
-if rank_no == 0:
-  print("determine relative factors for {} motor units:\n{}".format(n_compartments, motor_units))
-
-# create data structure with 0
-relative_factors = np.zeros((n_compartments, len(mesh_data["node_positions"])))   # each row is one compartment
-
-# loop over nodes of mesh
-for node_no,node_position in enumerate(mesh_data["node_positions"]):
-  node_position = np.array(node_position)
-  
-  # loop over motor units
-  for motor_unit_no,motor_unit in enumerate(motor_units):
-    
-    # find point on fiber that is closest to current node
-    fiber_no = motor_unit["fiber_no"]
-    if fiber_no >= len(fiber_data):
-      print("Error with motor unit {}, only {} fibers available".format(motor_unit, len(fiber_datar)))
-    else:
-      max_distance = None
-      for fiber_point in fiber_data[fiber_no]:
-        d = np.array(fiber_point) - node_position
-        distance = np.inner(d,d)
-        if max_distance is None or distance < max_distance:
-          max_distance = distance
-          #print("node_position {}, fiber_point {}, d={}, |d|={}".format(node_position, fiber_point, d, np.sqrt(distance)))
-      
-      distance = np.sqrt(max_distance)
-      
-      
-      gaussian = scipy.stats.norm(loc = 0., scale = motor_unit["standard_deviation"])
-      value = gaussian.pdf(distance)*motor_unit["maximum"]
-      relative_factors[motor_unit_no][node_no] += value
-      #print("motor unit {}, fiber {}, distance {}, value {}".format(motor_unit_no, fiber_no, distance, value))
 
 if rank_no == 0:
   for i,factors_list in enumerate(relative_factors.tolist()):
@@ -168,7 +215,6 @@ def set_parameters(n_nodes_global, time_step_no, current_time, parameters, dof_n
   
   # determine nodes to stimulate (center node, left and right neighbour)
   
-  n_linear_elements_per_coordinate_direction = mesh_data["n_linear_elements_per_coordinate_direction"]
   n_nodes_x = n_linear_elements_per_coordinate_direction[0]+1
   n_nodes_y = n_linear_elements_per_coordinate_direction[1]+1
   n_nodes_z = n_linear_elements_per_coordinate_direction[2]+1
@@ -210,7 +256,6 @@ def set_specific_states(n_nodes_global, time_step_no, current_time, states, comp
 
   if is_compartment_gets_stimulated:  
     
-    n_linear_elements_per_coordinate_direction = mesh_data["n_linear_elements_per_coordinate_direction"]
     n_nodes_x = n_linear_elements_per_coordinate_direction[0]+1
     n_nodes_y = n_linear_elements_per_coordinate_direction[1]+1
     n_nodes_z = n_linear_elements_per_coordinate_direction[2]+1
@@ -235,16 +280,16 @@ def set_specific_states(n_nodes_global, time_step_no, current_time, states, comp
     
 # boundary conditions
 potential_flow_bc = {}
-for bottom_node_index in mesh_data["bottom_nodes"]:
+for bottom_node_index in bottom_node_indices:
   potential_flow_bc[bottom_node_index] = 0.0
-for top_node_index in mesh_data["top_nodes"]:
+for top_node_index in top_node_indices:
   potential_flow_bc[top_node_index] = 1.0
   
 config = {
   "Meshes": {
     "mesh": {
-      "nElements": mesh_data["n_linear_elements_per_coordinate_direction"],
-      "nodePositions": mesh_data["node_positions"],
+      "nElements": n_linear_elements_per_coordinate_direction,
+      "nodePositions": mesh_node_positions,
       "inputMeshIsGlobal": True,
       "setHermiteDerivatives": False
     }
@@ -252,13 +297,13 @@ config = {
   "Solvers": {
     "potentialFlowSolver": {
       "relativeTolerance": 1e-10,
-      "maxIterations": 10000,
+      "maxIterations": 1e4,
       "solverType": "gmres",
       "preconditionerType": "none"
     },
     "activationSolver": {
       "relativeTolerance": 1e-5,
-      "maxIterations": 10000,
+      "maxIterations": 1e5,
       "solverType": "gmres",
       "preconditionerType": "none"
     }
@@ -267,7 +312,7 @@ config = {
     "timeStepWidth": dt_3D,  # 1e-1
     "logTimeStepWidthAsKey": "dt_3D",
     "durationLogKey": "duration_total",
-    "timeStepOutputInterval" : 100,
+    "timeStepOutputInterval" : 10,
     "endTime": end_time,
     "Term1": {      # CellML
       "MultipleInstances": {
@@ -336,16 +381,17 @@ config = {
             "prefactor": 1.0,
             "inputMeshIsGlobal": True,
             "dirichletBoundaryConditions": {},
-            "diffusionTensor": [                 # fiber direction is (1,0,0)
-              1, 0, 0,
-              0, 1, 0,
-              0, 0, 1
+            "neumannBoundaryConditions": [],
+            "diffusionTensor": [      # sigma_i           # fiber direction is (1,0,0)
+              8.93, 0, 0,
+              0, 0.893, 0,
+              0, 0, 0.893
             ], 
-            "extracellularDiffusionTensor": [
-              2, 0, 0,
-              0, 1, 0,
-              0, 0, 1
-            ]
+            "extracellularDiffusionTensor": [      # sigma_e
+              6.7, 0, 0,
+              0, 6.7, 0,
+              0, 0, 6.7,
+            ],
           },
         },
         

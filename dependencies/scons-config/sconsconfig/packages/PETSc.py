@@ -143,8 +143,7 @@ class PETSc(Package):
         self.check_required(res[0], ctx)
       
         # if installation of petsc fails, retry without mumps
-        if not res[0]:
-         if socket.gethostname()!= 'cmcs09':
+        if not res[0] and socket.gethostname()!= 'cmcs09':
           ctx.Log('Retry without MUMPS\n')
           ctx.Message('Retry to install PETSc without MUMPS ...')
           if "PETSC_REDOWNLOAD" in Package.one_shot_options:

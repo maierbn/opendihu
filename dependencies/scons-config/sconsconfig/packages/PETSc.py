@@ -140,7 +140,7 @@ class PETSc(Package):
         self.check_options(env)
 
         res = super(PETSc, self).check(ctx, loc_callback=find_conf)
-        self.check_required(res[0], ctx)
+        #self.check_required(res[0], ctx)
       
         # if installation of petsc fails, retry without mumps
         if not res[0] and socket.gethostname()!= 'cmcs09':

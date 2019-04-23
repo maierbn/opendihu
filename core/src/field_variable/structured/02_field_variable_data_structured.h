@@ -27,9 +27,6 @@ public:
   //! inherited constructor
   using FieldVariableComponents<FunctionSpaceType,nComponents_>::FieldVariableComponents;
 
-  //! empty contructor
-  //FieldVariableDataStructured();
-
   //! contructor as data copy with a different name (component names are the same)
   FieldVariableDataStructured(FieldVariable<FunctionSpaceType,nComponents_> &rhs, std::string name);
 

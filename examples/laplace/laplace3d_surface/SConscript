@@ -7,5 +7,9 @@
 
 Import('env')     # import Environment object from calling SConstruct
 
-#env.Program(target = "fibers_emg", source = "src/fibers_emg.cpp")
-env.Program(target = "fibers_emg_2d_output", source = "src/fibers_emg_2d_output.cpp")
+# if the option no_tests was given, quit the script
+if not env['no_examples']:
+    
+  # create the main executable
+  env.Program(target = 'laplace_surface', source = "src/laplace_surface.cpp")
+  

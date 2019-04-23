@@ -181,5 +181,6 @@ class PETSc(Package):
           res = super(PETSc, self).check(ctx, loc_callback=find_conf)
           self.check_required(res[0], ctx)
         
+        self.check_required(res[0], ctx)
         ctx.Result(res[0])
         return res[0]

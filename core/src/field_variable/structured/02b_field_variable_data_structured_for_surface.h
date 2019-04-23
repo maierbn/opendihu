@@ -29,6 +29,8 @@ class FieldVariableDataStructuredForSurface<FunctionSpace::FunctionSpace<Mesh::S
   public FieldVariableDataStructured<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<2>,BasisFunctionType>,nComponents>
 {
 public:
+  using FieldVariableDataStructured<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<2>,BasisFunctionType>,nComponents>::FieldVariableDataStructured;
+
   //! constructor from a 3D field variables.
   FieldVariableDataStructuredForSurface(FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>,BasisFunctionType>,nComponents> &rhs, Mesh::face_t face);
 };

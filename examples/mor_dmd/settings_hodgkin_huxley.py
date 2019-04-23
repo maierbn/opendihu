@@ -322,12 +322,7 @@ config = {
           "solverName": "implicitSolver",
         },
         "OutputWriter" : [
-          {"format": "PythonFile", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/strang", "binary": False, "onlyNodalValues": False},
-<<<<<<< HEAD
-#          {"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/strang", "binary": True, "fixedFormat": False, "combineFiles": True},
-=======
          # {"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/strang", "binary": True, "fixedFormat": False, "combineFiles": True},
->>>>>>> 248b1f67d221b20e610090a76d8fc659705917b1
           #{"format": "ExFile", "filename": "out/fibre", "outputInterval": 1e5, "sphereSize": "0.02*0.02*0.02"},
         ],
       },

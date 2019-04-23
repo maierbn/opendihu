@@ -61,6 +61,11 @@ return EXIT_SUCCESS;
     if "docker" in output:
       run_in_docker = True
     
+    # detect if we are on kryton, the POWER9 machine of SGS
+    install_on_krypton = False
+    if os.environ.get("HOSTNAME") == "krypton":
+      install_on_krypton = True
+      
     # Setup the build handler.
     if os.environ.get("PE_ENV") is not None:
     #if os.environ.get("LIBSCI_BASE_DIR") is not None:
@@ -117,7 +122,11 @@ return EXIT_SUCCESS;
           'cd ${SOURCE_DIR} && make DYNAMIC_ARCH=1 USE_OPENMP=1 && make install PREFIX=${PREFIX} USE_OPENMP=1',
         ])
         self.number_output_lines = 30662
-        
+      elif install_on_krypton:
+        self.set_build_handler([
+          'mkdir -p ${PREFIX}',
+          'cd ${SOURCE_DIR} && make TARGET=POWER9 USE_OPENMP=1 CC='+ctx.env["CC"]+' CXX='+ctx.env["CXX"]+' FTN=gfortran && make install PREFIX=${PREFIX} USE_OPENMP=1',
+        ])
       else:                
         self.set_build_handler([
           'mkdir -p ${PREFIX}',

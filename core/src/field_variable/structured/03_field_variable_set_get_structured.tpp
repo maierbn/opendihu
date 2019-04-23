@@ -211,6 +211,34 @@ getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nCompo
   }
 }
 
+//! get values from their local dof no.s for all components
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
+getValues(std::vector<dof_no_t> dofLocalNo, std::vector<std::array<double,nComponents>> &values) const
+{
+  assert(this->values_);
+  const int nValues = dofLocalNo.size();
+  std::vector<double> result(nValues*nComponents);   // temporary result buffer
+
+  int initialSize = values.size();
+  values.resize(initialSize + nValues);
+
+  // prepare lookup indices for PETSc vector values_
+  for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
+  {
+    this->values_->getValues(componentIndex, nValues, dofLocalNo.data(), result.data() + componentIndex*nValues);
+  }
+
+  // copy result to output values
+  for (int dofIndex = 0; dofIndex < nValues; dofIndex++)
+  {
+    for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
+    {
+      values[initialSize+dofIndex][componentIndex] = result[componentIndex*nValues + dofIndex];
+    }
+  }
+}
+
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 getValues(const std::vector<dof_no_t> &dofLocalNo, std::vector<double> &values) const

@@ -509,7 +509,7 @@ struct PythonUtility::convertFromPython<int>
 
       if (double(int(valueDouble)) != valueDouble)      // if value is not e.g. 2.0
       {
-        LOG(WARNING) << "convertFromPython: object is no int: " << object;
+        LOG(WARNING) << "convertFromPython: object is float and not int: " << object;
       }
 
       return int(valueDouble);
@@ -646,7 +646,7 @@ struct PythonUtility::convertFromPython<global_no_t>
 
       if (double(global_no_t(valueDouble)) != valueDouble)      // if value is not e.g. 2.0
       {
-        LOG(WARNING) << "convertFromPython: object is no int: " << object;
+        LOG(WARNING) << "convertFromPython: object is float and not int or global_no_t: " << object;
       }
 
       return global_no_t(valueDouble);

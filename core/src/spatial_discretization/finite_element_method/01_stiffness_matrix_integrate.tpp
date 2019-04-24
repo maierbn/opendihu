@@ -11,9 +11,6 @@
 
 namespace SpatialDiscretization
 {
-
-bool outputAssemble3DStiffnessMatrix_ = true;
-
 // 1D,2D,3D stiffness matrix of Deformable mesh
 template<typename FunctionSpaceType,typename QuadratureType,typename Term,typename Dummy1, typename Dummy2, typename Dummy3>
 void FiniteElementMethodMatrix<FunctionSpaceType,QuadratureType,Term,Dummy1,Dummy2,Dummy3>::
@@ -45,7 +42,7 @@ setStiffnessMatrix()
   bool outputAssemble3DStiffnessMatrixHere = false;
   if (outputAssemble3DStiffnessMatrix_)
   {
-    LOG(INFO) << "Compute stiffness matrix for 3D problem with " << functionSpace->nDofsGlobal() << " global dofs.";
+    LOG(INFO) << "Compute stiffness matrix for " << D << "D problem with " << functionSpace->nDofsGlobal() << " global dofs.";
     outputAssemble3DStiffnessMatrix_ = false;
     outputAssemble3DStiffnessMatrixHere = true;
   }
@@ -79,11 +76,6 @@ setStiffnessMatrix()
 
   LOG(DEBUG) << "1D integration with " << QuadratureType::numberEvaluations() << " evaluations";
   LOG(DEBUG) << D << "D integration with " << QuadratureDD::numberEvaluations() << " evaluations";
-#ifdef DEBUG
-  LOG(DEBUG) << "SAMPLING POINTS: ";
-  for  (auto value : samplingPoints)
-    LOG(DEBUG) << "   " << value;
-#endif
 
   // allow switching between stiffnessMatrix->setValue(... INSERT_VALUES) and ADD_VALUES
   stiffnessMatrix->assembly(MAT_FLUSH_ASSEMBLY);

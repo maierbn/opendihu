@@ -56,15 +56,12 @@ void DihuContext::initializeLogging(int argc, char *argv[])
   el::Configurations conf;
   conf.setToDefault();
 
-  int rankNo;
-  MPIUtility::handleReturnValue (MPI_Comm_rank(MPI_COMM_WORLD, &rankNo));
-  
   // set prefix for output that includes current rank no
   std::string prefix;
   if (nRanksCommWorld_ > 1)
   {
     std::stringstream s;
-    s << rankNo << "/" << nRanksCommWorld_ << " ";
+    s << ownRankNoCommWorld_ << "/" << nRanksCommWorld_ << " ";
     prefix = s.str();
   }
   
@@ -86,7 +83,7 @@ void DihuContext::initializeLogging(int argc, char *argv[])
   if (nRanksCommWorld_ > 1)
   {
     std::stringstream s;
-    s << logFilesPath << rankNo << "_opendihu.log";
+    s << logFilesPath << ownRankNoCommWorld_ << "_opendihu.log";
     conf.setGlobally(el::ConfigurationType::Filename, s.str());
 
     // truncate logfile
@@ -109,7 +106,8 @@ void DihuContext::initializeLogging(int argc, char *argv[])
 
   // set format of outputs
   conf.set(el::Level::Debug, el::ConfigurationType::Format, prefix+"DEBUG: %msg");
-  conf.set(el::Level::Trace, el::ConfigurationType::Format, prefix+"TRACE: %msg");
+  conf.set(el::Level::Trace, el::ConfigurationType::Format, prefix+"TRACE: %msg (" ANSI_COLOR_LIGHT_GRAY "%func" ANSI_COLOR_RESET " at "
+    ANSI_COLOR_LIGHT_GRAY "%loc" ANSI_COLOR_RESET ")");
   conf.set(el::Level::Verbose, el::ConfigurationType::Format, ANSI_COLOR_LIGHT_WHITE "" + prefix+"VERB%vlevel: %msg" ANSI_COLOR_RESET);
   conf.set(el::Level::Warning, el::ConfigurationType::Format,
   //         prefix+"WARN : %loc %func: \n" ANSI_COLOR_YELLOW "Warning: " ANSI_COLOR_RESET "%msg");
@@ -123,7 +121,7 @@ void DihuContext::initializeLogging(int argc, char *argv[])
            +"\n\nFatal error: %msg\n"+separator+ANSI_COLOR_RESET+"\n");
 
   // disable output for ranks != 0
-  if (rankNo > 0)
+  if (ownRankNoCommWorld_ > 0)
   {
     conf.set(el::Level::Info, el::ConfigurationType::Enabled, "false");
     conf.set(el::Level::Warning, el::ConfigurationType::Enabled, "false");

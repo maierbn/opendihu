@@ -74,7 +74,7 @@ MeshPartition(std::array<node_no_t,MeshType::dim()> nElementsLocal, std::array<g
         localSizesOnRanks[i].data(), 1, MPI_INT, rankSubset->mpiCommunicator()));
     }
     LOG(DEBUG) << "determined localSizesOnRanks: " << localSizesOnRanks;
-    LOG(DEBUG) << "nRanks: " << nRanks_;
+    LOG(DEBUG) << "MeshType::dim(): " << MeshType::dim() << ", nRanks: " << nRanks_;
     
     // create localSizesOnPartitions_ from localSizesOnRanks, they are not used, but to check if the program crashes here
     for (int dimensionIndex = 0; dimensionIndex < MeshType::dim(); dimensionIndex++)
@@ -83,9 +83,13 @@ MeshPartition(std::array<node_no_t,MeshType::dim()> nElementsLocal, std::array<g
       assert (nRanks_[dimensionIndex] != 0);
       localSizesOnPartitions_[dimensionIndex].resize(nRanks_[dimensionIndex]);
 
-      // loop over the first rank of the respecive partion
+      // loop over the first rank of the respective portion
       int rankStride = 1;
-      if (dimensionIndex == 1)
+      if (dimensionIndex == 0)
+      {
+        rankStride = 1;
+      }
+      else if (dimensionIndex == 1)
       {
         rankStride = nRanks_[0];
       }
@@ -761,24 +765,20 @@ convertRankNoToPartitionIndex(int coordinateDirection, int rankNo)
   assert(0 <= coordinateDirection);
   assert(coordinateDirection < MeshType::dim());
 
+  //direction 0 is fastest, then 1, then 2
   if (coordinateDirection == 0)
   {
     return rankNo % nRanks_[0];
   }
   else if (coordinateDirection == 1)
   {
-    // example: nRanks: 1,2   localSizesOnPartitions_: ((20),(10,10))
     return (rankNo % (nRanks_[0]*nRanks_[1])) / nRanks_[0];
   }
   else if (coordinateDirection == 2)
   {
     return rankNo / (nRanks_[0]*nRanks_[1]);
   }
-  else
-  {
-    assert(false);
-    return -1;
-  }
+
   return 0;   // will not be reached
 }
   
@@ -1107,6 +1107,7 @@ nNodesGlobalPetscInPreviousPartitions(std::array<int,MeshType::dim()> partitionI
     return beginNodeGlobalNatural(2,partitionIndex[2])*nNodesGlobal(1)*nNodesGlobal(0)
       + nNodesLocalWithoutGhosts(2,partitionIndex[2])*beginNodeGlobalNatural(1,partitionIndex[1])*nNodesGlobal(0)  // (1)
       + nNodesLocalWithoutGhosts(2,partitionIndex[2])*nNodesLocalWithoutGhosts(1,partitionIndex[1])*beginNodeGlobalNatural(0,partitionIndex[0]);   //(2)
+
   }
   else
   {
@@ -1899,7 +1900,7 @@ neighbourRank(Mesh::face_t face)
   face0Minus = 0, face0Plus,
   face1Minus, face1Plus,
   face2Minus, face2Plus
-   * */
+  * */
   if (face == Mesh::face_t::face0Minus)
   {
     // if this subdomain is at the left end of the global domain
@@ -1954,7 +1955,8 @@ neighbourRank(Mesh::face_t face)
     }
     else
     {
-      int neighbourRankNo = (ownRankPartitioningIndex_[1]+1)*nRanks_[0] + ownRankPartitioningIndex_[0];  // 2D case
+      int neighbourRankNo = (ownRankPartitioningIndex_[1] + 1)*nRanks_[0]
+        + ownRankPartitioningIndex_[0];  // 2D case
       if (MeshType::dim() == 3)
       {
         neighbourRankNo += ownRankPartitioningIndex_[2]*nRanks_[0]*nRanks_[1];
@@ -1973,7 +1975,9 @@ neighbourRank(Mesh::face_t face)
     }
     else
     {
-      return (ownRankPartitioningIndex_[2]-1)*nRanks_[0]*nRanks_[1] + ownRankPartitioningIndex_[1]*nRanks_[0] + ownRankPartitioningIndex_[0];
+      return (ownRankPartitioningIndex_[2] - 1)*nRanks_[0]*nRanks_[1]
+        + ownRankPartitioningIndex_[1]*nRanks_[0]
+        + ownRankPartitioningIndex_[0];
     }
   }
   else if (face == Mesh::face_t::face2Plus)
@@ -1987,7 +1991,9 @@ neighbourRank(Mesh::face_t face)
     }
     else
     {
-      return (ownRankPartitioningIndex_[2]+1)*nRanks_[0]*nRanks_[1] + ownRankPartitioningIndex_[1]*nRanks_[0] + ownRankPartitioningIndex_[0];
+      return (ownRankPartitioningIndex_[2] + 1)*nRanks_[0]*nRanks_[1]
+        + ownRankPartitioningIndex_[1]*nRanks_[0]
+        + ownRankPartitioningIndex_[0];
     }
   }
   return -1;  // does not happen (but intel compiler does not recognize it)

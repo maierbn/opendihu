@@ -7,70 +7,11 @@
 #include "data_management/data.h"
 #include "data_management/time_stepping/time_stepping.h"
 #include "cellml/03_cellml_adapter.h"
+#include "spatial_discretization/boundary_conditions/dirichlet_boundary_conditions.h"
+#include "time_stepping_scheme_ode_base.h"
 
 namespace TimeSteppingScheme
 {
-  /**
-   * Specialization for Reduced order models
-   */
-  template<typename FunctionSpaceType, int nComponents>
-  class TimeSteppingSchemeOdeBase :
-  public TimeSteppingScheme
-  {
-  public:
-    typedef FunctionSpaceType FunctionSpace;
-    typedef Data::TimeStepping<FunctionSpaceType, nComponents> Data;   // type of Data object
-    typedef typename Data::TransferableSolutionDataType TransferableSolutionDataType;
-    
-    //! constructor
-    TimeSteppingSchemeOdeBase(DihuContext context, std::string name);
-    
-    //! destructor
-    virtual ~TimeSteppingSchemeOdeBase() {}
-    
-    //! run simulation
-    virtual void run();
-    
-    /*
-     *  //! return the Petsc solution vector
-     *  std::shared_ptr<typename Data::FieldVariableType> solution();
-     */
-    
-    //! get the data that will be transferred in the operator splitting to the other term of the splitting
-    //! the transfer is done by the solution_vector_mapping class
-    TransferableSolutionDataType getSolutionForTransfer();
-    
-    //! return the data object
-    Data &data();
-    
-    //! output the given data for debugging
-    virtual std::string getString(TransferableSolutionDataType &data);
-    
-    //! initialize discretizableInTime
-    virtual void initialize();
-    
-    //! set the subset of ranks that will compute the work
-    void setRankSubset(Partition::RankSubset rankSubset);
-    
-    //! reset state such that new initialization becomes necessary
-    virtual void reset();
-    
-    //! return whether the underlying discretizableInTime object has a specified mesh type and is not independent of the mesh type
-    //bool knowsMeshType();
-    
-  protected:
-    
-    //! read initial values from settings and set field accordingly
-    void setInitialValues();
-    
-    std::shared_ptr<Data> data_;     ///< data object that holds all PETSc vectors and matrices
-    
-    bool initialized_;     ///< if initialize() was already called
-    
-    double prefactor_;     ///< a factor with which the result is multiplied when the data is used in a splitting scheme    
-    
-  };
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /** This is the base class for all ode solvers.
  */
 template<typename DiscretizableInTimeType>
@@ -104,7 +45,7 @@ public:
   
   //! object that stores Dirichlet boundary condition values
   std::shared_ptr<
-  SpatialDiscretization::DirichletBoundaryConditions<FunctionSpace,DiscretizableInTimeType::nComponents()>
+    SpatialDiscretization::DirichletBoundaryConditions<FunctionSpace,DiscretizableInTimeType::nComponents()>
   > dirichletBoundaryConditions();
 
 protected:
@@ -129,6 +70,7 @@ public:
   //! use constructor of parent class
   using TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::TimeSteppingSchemeOdeBaseDiscretizable;
   
+  //using TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::initialize;
 };
 
 

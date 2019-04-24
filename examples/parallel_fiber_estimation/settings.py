@@ -25,12 +25,12 @@ config = {
   },
   "ParallelFiberEstimation" : {
     "stlFilename": "../../../testing/system_testing/tests/fibers/meshes/biceps_full.stl",
-    "resultFilename": "fibers.bin",
+    "resultFilename": "../../electrophysiology/input/7x7fibers.bin",
     "bottomZClip":  72.0,   # 82 (72), bottom z value of the muscle volume  
     "topZClip": 220.0,      # 250 (220), top z value of the muscle volume
     "nElementsXPerSubdomain": 4,  # number of elements in x and y-direction per subdomain
     "nElementsZPerSubdomain": 50,  # number of elements in z-direction per subdomain
-    "nFineGridFibers": 37,     # number of additional fine fibers that are interpolated between the main "key" fibers, the key fibers are traced
+    "nFineGridFibers": 3,     # number of additional fine fibers that are interpolated between the main "key" fibers, the key fibers are traced
     "useGradientField": False,    # set to False
     "maxLevel": 1,          # maximum level (1=8 processes, 2=64 processes)
     "lineStepWidth":  0.1,  # line width for tracing of fibers

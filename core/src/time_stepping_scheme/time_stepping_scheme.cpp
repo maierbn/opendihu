@@ -14,9 +14,16 @@ TimeSteppingScheme::TimeSteppingScheme(DihuContext context) :
 
 void TimeSteppingScheme::setTimeStepWidth(double timeStepWidth)
 {
-  double epsilon = 1e-15;
-  numberTimeSteps_ = int(std::round((endTime_ - startTime_) / timeStepWidth - epsilon));
-  timeStepWidth_ = timeStepWidth;
+  double epsilon = 1e-1;
+  // Increase time step width by maximum of epsilon=10%.
+  // Increasing time step width is potentially dangerous, because it can make the timestepping scheme unstable.
+  // Ideally changing the timestep width should not be possible at all, if it is given correctly in the config.
+  // Examples:
+  //  t_end = 1.09, dt = 1.0 -> increase dt to 1.09, one timestep
+  //  t_end = 1.11, dt = 1.0 -> decrease dt to 0.555, two timesteps
+
+  numberTimeSteps_ = std::max(1,int(std::ceil((endTime_ - startTime_) / timeStepWidth - epsilon)));
+  setNumberTimeSteps(numberTimeSteps_);
 }
 
 void TimeSteppingScheme::setNumberTimeSteps(int numberTimeSteps)
@@ -30,6 +37,12 @@ void TimeSteppingScheme::setTimeSpan(double startTime, double endTime)
 {
   startTime_ = startTime;
   endTime_ = endTime;
+
+  if (timeStepWidth_ > endTime_-startTime_)
+  {
+    LOG(DEBUG) << "time span [" << startTime << "," << endTime << "], reduce timeStepWidth from " << timeStepWidth_ << " to " << endTime_-startTime_;
+    timeStepWidth_ = endTime_-startTime_;
+  }
 
   if (isTimeStepWidthSignificant_)
   {

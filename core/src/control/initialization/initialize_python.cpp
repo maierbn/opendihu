@@ -68,16 +68,13 @@ void DihuContext::initializePython(int argc, char *argv[], bool explicitConfigFi
   }
 
   // add rank no and nRanks
-  // get own rank no and number of ranks
-  int rankNo;
-  MPIUtility::handleReturnValue (MPI_Comm_rank(MPI_COMM_WORLD, &rankNo));
-
-  Control::PerformanceMeasurement::setParameter("rankNo", rankNo);
+  // set own rank no and number of ranks in parameters
+  Control::PerformanceMeasurement::setParameter("rankNo", ownRankNoCommWorld_);
   Control::PerformanceMeasurement::setParameter("nRanks", nRanksCommWorld_);
 
   // convert to wchar_t
   std::stringstream rankNoStr, nRanksStr;
-  rankNoStr << rankNo;
+  rankNoStr << ownRankNoCommWorld_;
   nRanksStr << nRanksCommWorld_;
   argumentToConfigWChar[nArgumentsToConfig-2] = Py_DecodeLocale(rankNoStr.str().c_str(), NULL);
   argumentToConfigWChar[nArgumentsToConfig-1] = Py_DecodeLocale(nRanksStr.str().c_str(), NULL);

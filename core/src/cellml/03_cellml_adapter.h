@@ -31,12 +31,17 @@ public:
   //! this class needs to define a function space in which its solution variables live. This does not matter at all for a CellML problem, therefore Generic is sufficient. But when using in an operator splitting with FEM as second operator part, it has to be compatible to that and thus needs to be set correctly.
   typedef FunctionSpaceType FunctionSpace;   ///< FunctionSpace type
 
+  //! constructor from context object
+  CellmlAdapter(DihuContext context);
+  
+  //! constructor from other CellmlAdapter with new functionSpace (and therefore different number of instances),
+  //! preserves everything else
+  //! initialize does not need to be called afterwards
+  CellmlAdapter(const CellmlAdapter &rhs, std::shared_ptr<FunctionSpace> functionSpace);
+
   //! return nStates_
   static constexpr int nStates();
 
-  //! constructor
-  CellmlAdapter(DihuContext context);
-  
   //! initialize callback functions and rhs
   void initialize();
   
@@ -48,9 +53,6 @@ public:
 
   //! evaluate rhs
   void evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepNo, double currentTime);
-  
-  //! evaluate rhs
-  //void evaluateTimesteppingRightHandSideImplicit(Vec& input, Vec& output, int timeStepNo, double currentTime);
   
   //! return false because the object is independent of mesh type
   bool knowsMeshType();

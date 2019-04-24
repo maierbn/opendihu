@@ -35,6 +35,8 @@ public:
   template<typename T>
   static void setParameter(std::string key, T parameter);
 
+  //! get the value of a parameter that was previously set, empty string if parameter is not present
+  static std::string getParameter(std::string key);
 private:
 
   //! parse some system information
@@ -56,8 +58,6 @@ private:
   static std::map<std::string, Measurement> measurements_;   ///< the currently stored measurements
   static std::map<std::string, int> sums_;   ///< the currently stored sums
   static std::map<std::string,std::string> parameters_;   ///< arbitrary parameters that will be stored in the log
-
-
 };
 
 template<>

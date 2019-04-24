@@ -1892,7 +1892,7 @@ where the constant $\text{rhs}$, which is the discretized $δW_\text{ext}$, is g
     \text{rhs} = \ds\int_{\Omega} (B_a - \rho_0\,\ddot{u}_a) δu^L_a\,\phi_L\,\d V - \ds\int_{∂\Omega}  \bar{T}_a δu^L_a\,\phi_L\,\d s.
   \end{array}
 \end{equation*}
-This defines a nonlinear function, $\bfR(\hat{\bfu}) \in \R^{3N}$, with one value for each $δu^L_a, a=1,2,3, L=1,\dots,N$ (I.e. entry $(a,L)$ of the vector $\bfR$ contains formula \eqref{eq:iind} with $\delta_{\bar{a}}^{\bar{L}}=1$ for $\bar{a}=a, \bar{L}=L$ and $\delta_{\bar{a}}^{\bar{L}}=0$ otherwise). The aim is to find $\hat{\bfu}$ such that $\bfR(\hat{\bfu}) = 0$. 
+This defines a nonlinear function, $\bfR(\hat{\bfu}) \in \R^{3N}$, with one value for each $δu^L_a, a=1,2,3, L=1,\dots,N$ (I.e. entry $(a,L)$ of the vector $\bfR$ contains formula \eqref{eq:iind} with $δu_{\bar{a}}^{\bar{L}}=1$ for $\bar{a}=a, \bar{L}=L$ and $δu_{\bar{a}}^{\bar{L}}=0$ otherwise). The aim is to find $\hat{\bfu}$ such that $\bfR(\hat{\bfu}) = 0$. 
 
 Within the Newton-Raphson scheme the equation is linearized around iterative values $\hat{\bfu}^{(k)}$.
 \begin{equation*} 
@@ -2138,7 +2138,7 @@ leading to the matrix formulation of the Newton iteration:
 \begin{equation*}
   \begin{array}{lll}
     \matt{\bfk_{δ\bfu,Δ\bfu} & \bfk_{δp,Δ\bfu}^\top \\[2mm]
-    \bfk_{δp,Δ\bfu} & \bfzero} \, \matt{Δ\hat{\bfu} \\[2mm] Δ\hat{p}} =  \matt{{\bf R}_{δ\bfu} \\[2mm] {\bf R}_{δp}}.
+    \bfk_{δp,Δ\bfu} & \bfzero} \, \matt{Δ\hat{\bfu} \\[2mm] Δ\hat{p}} =  \matt{\bfR_{δ\bfu} \\[2mm] \bfR_{δp}}.
   \end{array}
 \end{equation*}
 Given the number of spatial dimensions $a,b=1,\dots,d$, the blocks of the Jacobian or tangent stiffness matrix are given by:
@@ -2154,15 +2154,15 @@ Given the number of spatial dimensions $a,b=1,\dots,d$, the blocks of the Jacobi
 The blocks of the residual on the righ-hand side (quasi-static case and neglecting gravity) are given by:
 \begin{equation*}
   \begin{array}{lll}
-    {\bf R}_{δ\bfu, (L,a)} =  {\bf R}_{δ\bfu, (L,a)}^{\text{ext}} + {\bf R}^{\text{int}}_{δ\bfu, (L,a)}  \mbox{ with}\\[4mm]
-\quad    {\bf R}_{δ\bfu, (L,a)}^{\text{ext}} = \ds\int_{∂\Omega}  \bar{T}_a \phi_{(a)}^L\,\d S \\[4mm]
-\quad    {\bf R}_{δ\bfu, (L,a)}^{\text{int}} = - \ds\int_{\Omega}\dfrac12  S_{AB}\, \left(F_{aB}\phi_{(a),A}^L + F_{aA}\phi_{(a),B}^L\,\right) \,\d V \\[4mm]
+    \bfR_{δ\bfu, (L,a)} =  \bfR_{δ\bfu, (L,a)}^{\text{ext}} + \bfR^{\text{int}}_{δ\bfu, (L,a)}  \mbox{ with}\\[4mm]
+\quad    \bfR_{δ\bfu, (L,a)}^{\text{ext}} = \ds\int_{∂\Omega}  \bar{T}_a \phi_{(a)}^L\,\d S \\[4mm]
+\quad    \bfR_{δ\bfu, (L,a)}^{\text{int}} = - \ds\int_{\Omega}\dfrac12  S_{AB}\, \left(F_{aB}\phi_{(a),A}^L + F_{aA}\phi_{(a),B}^L\,\right) \,\d V \\[4mm]
     d \mbox{ blocks of } u_{\text{dofs}} \mbox{ subvectors}\\[4mm]
-    {\bf R}_{δp,L} = \ds\int_\Omega \big(1-J)\,\psi^L\,\d V \\[4mm]
+    \bfR_{δp,L} = \ds\int_\Omega \big(1-J)\,\psi^L\,\d V \\[4mm]
     1 \mbox{ block of } p_{\text{dofs}} \mbox{ subvectors}
   \end{array}
 \end{equation*}
-The tensors inside $\bfk$ and {\bf R} are computed at the initial or previous values $\bfu_0, \,p_0$.
+The tensors inside $\bfk$ and $\bfR$ are computed at the initial or previous values $\bfu_0, \,p_0$.
 
 %
 Similar to the penalty formulation in \cref{quantities_penalty} the required quantities are summarized:

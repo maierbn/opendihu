@@ -19,8 +19,8 @@ public:
   //! virtual destructor to allow dynamic_pointer_cast
   virtual ~Generic();
 
-  //! open file given by filename, create directory if necessary
-  static std::ofstream openFile(std::string filename, bool append=false);
+  //! open file given by filename and provided a ofstrem variable, create directory if necessary
+  static void openFile(std::ofstream& file, std::string filename, bool append=false);
 
   //! append rank no in the format ".001" to str
   static void appendRankNo(std::stringstream &str, int nRanks, int ownRankNo);

@@ -13,13 +13,13 @@ namespace FunctionSpace
 // structured mesh
 template<typename MeshType, typename BasisFunctionType>
 bool FunctionSpaceStructuredFindPositionBase<MeshType,BasisFunctionType>::
-findPosition(Vec3 point, element_no_t &elementNo, int &ghostMeshNo, std::array<double,MeshType::dim()> &xi, bool startSearchInCurrentElement, double xiTolerance)
+findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::array<double,MeshType::dim()> &xi, bool startSearchInCurrentElement, double xiTolerance)
 {
   const element_no_t nElements = this->nElementsLocal();
 
   // set starting no to 0 if it was not given and is thus arbitrarily initialized
-  if (elementNo < 0 || elementNo >= nElements)
-    elementNo = 0;
+  if (elementNoLocal < 0 || elementNoLocal >= nElements)
+    elementNoLocal = 0;
 
   if (startSearchInCurrentElement)
   {
@@ -31,7 +31,7 @@ findPosition(Vec3 point, element_no_t &elementNo, int &ghostMeshNo, std::array<d
     if (ghostMeshNo != -1)
       functionSpace = ghostMesh_[ghostMeshNo].get();
 
-    if (functionSpace->pointIsInElement(point, elementNo, xi, xiTolerance))
+    if (functionSpace->pointIsInElement(point, elementNoLocal, xi, xiTolerance))
     {
 
       // debugging output
@@ -40,7 +40,7 @@ findPosition(Vec3 point, element_no_t &elementNo, int &ghostMeshNo, std::array<d
         // check for element size
         const int nDofsPerElement = FunctionSpace<MeshType,BasisFunctionType>::nDofsPerElement();
         std::array<Vec3,nDofsPerElement> elementalNodePositions;
-        this->geometryField().getElementValues(elementNo, elementalNodePositions);
+        this->geometryField().getElementValues(elementNoLocal, elementalNodePositions);
 
         // get bounding box of element
         double xMin = elementalNodePositions[0][0];
@@ -64,7 +64,7 @@ findPosition(Vec3 point, element_no_t &elementNo, int &ghostMeshNo, std::array<d
         //double yLength = yMax - yMin;
         //douuble zLength = zMax - zMin;
 
-        VLOG(1) << "point " << point << " is in element " << elementNo << ", which has "
+        VLOG(1) << "point " << point << " is in element " << elementNoLocal << ", which has "
           << "bounding box x: [" << xMin << "," << xMax << "], y: [" << yMin << "," << yMax << "], z: [" << zMin << "," << zMax << "]";
       }
 
@@ -76,7 +76,7 @@ findPosition(Vec3 point, element_no_t &elementNo, int &ghostMeshNo, std::array<d
     VLOG(2) << "point is not in current element, now check neighbouring elements";
 
     // set the neighbouring element nos, also considering ghost meshes
-    if (this->checkNeighbouringElements(point, elementNo, ghostMeshNo, xi))
+    if (this->checkNeighbouringElements(point, elementNoLocal, ghostMeshNo, xi))
     {
       return true;
     }
@@ -88,20 +88,20 @@ findPosition(Vec3 point, element_no_t &elementNo, int &ghostMeshNo, std::array<d
 
   // search among all elements
 
-  // look in every element, starting at elementNo-2
-  element_no_t elementNoStart = (elementNo - 2 + nElements) % nElements;
-  element_no_t elementNoEnd = (elementNo - 3 + nElements) % nElements;
+  // look in every element, starting at elementNoLocal-2
+  element_no_t elementNoLocalStart = (elementNoLocal - 2 + nElements) % nElements;
+  element_no_t elementNoLocalEnd = (elementNoLocal - 3 + nElements) % nElements;
 
-  VLOG(3) << "elementNoStart: " << elementNoStart << ", elementNoEnd: " << elementNoEnd << ", nElements: " << nElements
+  VLOG(3) << "elementNoLocalStart: " << elementNoLocalStart << ", elementNoLocalEnd: " << elementNoLocalEnd << ", nElements: " << nElements
     << "(" << this->meshPartition_->nElementsLocal(0) << "x" << this->meshPartition_->nElementsLocal(1) << "x" << this->meshPartition_->nElementsLocal(2) << ")";
 
-  for (element_no_t currentElementNo = elementNoStart; currentElementNo != elementNoEnd; currentElementNo++)
+  for (element_no_t currentElementNo = elementNoLocalStart; currentElementNo != elementNoLocalEnd; currentElementNo++)
   {
     // restart with element 0
     if (currentElementNo == nElements)
     {
       currentElementNo = 0;
-      if (elementNoEnd == currentElementNo)
+      if (elementNoLocalEnd == currentElementNo)
         break;
     }
 
@@ -112,12 +112,12 @@ findPosition(Vec3 point, element_no_t &elementNo, int &ghostMeshNo, std::array<d
       if (startSearchInCurrentElement)
       {
 #ifndef NDEBUG
-        LOG(WARNING) << "Could not find element that contains point " << point << " in neighbourhood of element " << elementNo
+        LOG(WARNING) << "Could not find element that contains point " << point << " in neighbourhood of element " << elementNoLocal
           << ", tested all elements (no ghost elements) and found element " << currentElementNo;
 #endif
       }
 
-      elementNo = currentElementNo;
+      elementNoLocal = currentElementNo;
       ghostMeshNo = -1;   // not a ghost mesh
 
       return true;
@@ -135,9 +135,9 @@ findPosition(Vec3 point, element_no_t &elementNo, int &ghostMeshNo, std::array<d
     if (ghostMesh_[face] != nullptr)
     {
       VLOG(3) << "   ghost mesh " << Mesh::getString((Mesh::face_t)face) << " is set";
-      if (ghostMesh_[face]->findPosition(point, elementNo, ghostMeshNo, xi, false))
+      if (ghostMesh_[face]->findPosition(point, elementNoLocal, ghostMeshNo, xi, false))
       {
-        VLOG(3) << "   point found in ghost mesh " << Mesh::getString((Mesh::face_t)face) << ", element " << elementNo << ", xi " << xi;
+        VLOG(3) << "   point found in ghost mesh " << Mesh::getString((Mesh::face_t)face) << ", element " << elementNoLocal << ", xi " << xi;
         ghostMeshNo = face;
         return true;
       }

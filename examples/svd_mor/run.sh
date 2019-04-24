@@ -4,7 +4,7 @@ echo "running example $(pwd)"
 
 workdir=$(pwd)
 variant="debug"
-variant="release"
+#variant="release"
 
 mkdir -p build_${variant}
 cd build_${variant}

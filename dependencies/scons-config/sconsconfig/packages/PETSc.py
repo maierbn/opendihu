@@ -76,7 +76,7 @@ class PETSc(Package):
             './configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=no \
             --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
             --with-mpi-dir=${MPI_DIR}\
-            --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch \
+            --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch --download-hypre \
             COPTFLAGS=-O3\
             CXXOPTFLAGS=-O3\
             FOPTFLAGS=-O3',

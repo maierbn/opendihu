@@ -142,6 +142,24 @@ solve()
   ierr = KSPSetInitialGuessNonzero(*ksp, PETSC_TRUE); CHKERRV(ierr);
 #endif
 
+// get geometry field values of old mesh
+  std::vector<Vec3> geometryFieldValues;
+  std::vector<double> geometryFieldValuesConsecutive(geometryFieldValues.size()*3);
+
+  this->data_.functionSpace()->geometryField().getValuesWithoutGhosts(geometryFieldValues);
+  for (int i = 0; i < geometryFieldValues.size(); i++)
+  {
+    geometryFieldValuesConsecutive[3*i + 0] = geometryFieldValues[i][0];
+    geometryFieldValuesConsecutive[3*i + 1] = geometryFieldValues[i][1];
+    geometryFieldValuesConsecutive[3*i + 2] = geometryFieldValues[i][2];
+  }
+  // extract preconditioner context
+  PC pc;
+  ierr = KSPGetPC(*ksp, &pc); CHKERRV(ierr);
+
+  //ierr = PCSetCoordinates(pc, PetscInt dim, Pe tscInt nloc, geometryFieldValuesConsecutive.data());  CHKERRV(ierr);
+
+  LOG(DEBUG) << "finiteElementMethod has geometryFieldValues: " << geometryFieldValues;
   // solve the system
   ierr = KSPSolve(*ksp, data_.rightHandSide()->valuesGlobal(), data_.solution()->valuesGlobal()); CHKERRV(ierr);
 

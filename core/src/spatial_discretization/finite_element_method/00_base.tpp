@@ -157,7 +157,7 @@ solve()
   ierr = KSPSetInitialGuessNonzero(*ksp, PETSC_TRUE); CHKERRV(ierr);
 #endif
 
-<<<<<<< HEAD
+
 // get geometry field values of old mesh
   std::vector<Vec3> geometryFieldValues;
   std::vector<double> geometryFieldValuesConsecutive(geometryFieldValues.size()*3);
@@ -176,41 +176,11 @@ solve()
   //ierr = PCSetCoordinates(pc, PetscInt dim, Pe tscInt nloc, geometryFieldValuesConsecutive.data());  CHKERRV(ierr);
 
   LOG(DEBUG) << "finiteElementMethod has geometryFieldValues: " << geometryFieldValues;
-  // solve the system
-  ierr = KSPSolve(*ksp, data_.rightHandSide()->valuesGlobal(), data_.solution()->valuesGlobal()); CHKERRV(ierr);
 
-  int numberOfIterations = 0;
-  PetscReal residualNorm = 0.0;
-  ierr = KSPGetIterationNumber(*ksp, &numberOfIterations); CHKERRV(ierr);
-  ierr = KSPGetResidualNorm(*ksp, &residualNorm); CHKERRV(ierr);
-
-  KSPConvergedReason convergedReason;
-  ierr = KSPGetConvergedReason(*ksp, &convergedReason); CHKERRV(ierr);
-
-  LOG(INFO) << "Solution obtained in " << numberOfIterations << " iterations, residual norm " << residualNorm
-    << ": " << PetscUtility::getStringLinearConvergedReason(convergedReason);
-
-  // check if solution is correct
-#if 0
-  {
-    // get rhs and solution from PETSc
-    int vectorSize = 0;
-    VecGetSize(data_.solution()->values(), &vectorSize);
-
-    std::vector<int> indices(vectorSize);
-    std::iota(indices.begin(), indices.end(), 0);
-    std::vector<double> solution(vectorSize);
-    std::vector<double> rhs(vectorSize);
-
-    VecGetValues(data_.solution()->values(), vectorSize, indices.data(), solution.data());
-    VecGetValues(data_.rightHandSide()->values(), vectorSize, indices.data(), rhs.data());
-=======
   LOG(DEBUG) << "solve...";
->>>>>>> f7ef58cd263a0189bdc3a432e15f1cf1bad4a3ae
 
   // solve the system
   linearSolver->solve(data_.rightHandSide()->valuesGlobal(), data_.solution()->valuesGlobal(), "Solution obtained");
-
 }
 
 template<typename FunctionSpaceType,typename QuadratureType,typename Term>

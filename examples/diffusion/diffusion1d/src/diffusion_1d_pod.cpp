@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
     {
       LOG(INFO) << "Reduced order CrankNicolson";
       
-      ModelOrderReduction::ImplicitEulerReduced<
+      ModelOrderReduction::CrankNicolsonReduced<
         TimeSteppingScheme::CrankNicolson<
           SpatialDiscretization::FiniteElementMethod<
             Mesh::StructuredRegularFixedOfDimension<1>,

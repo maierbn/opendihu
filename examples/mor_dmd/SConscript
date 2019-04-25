@@ -7,7 +7,7 @@
 
 Import('env')     # import Environment object from calling SConstruct
 
-# if the option no_tests was given, quit the script
+# if the option no_examples was given, quit the script
 if not env['no_examples']:
     
   examples = [
@@ -15,7 +15,7 @@ if not env['no_examples']:
 #    "shorten_explicit",
 #    "hodgkin_huxley_explicit",
 #    "hodgkin_huxley_strang",
-#    "hodgkin_huxley_godunov",
+    "hodgkin_huxley_godunov",
 #    "svdexample",
     "dmdexample",
   ]

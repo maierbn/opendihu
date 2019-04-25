@@ -12,13 +12,19 @@ import csv
 import collections
 import copy
 import os
+from argparse import ArgumentParser
 import time
 #sys.path.append('../../scripts/')
 import py_reader
 import json
 
 files = ""
-path = "./out/"
+parser=ArgumentParser()
+parser.add_argument('path')
+args=parser.parse_args()
+
+path = args.path
+
 # get all input data in current directory
 ls = os.listdir(path)
 
@@ -53,7 +59,7 @@ if len(data) == 0:
 ####################
 # 1D
 
-with open(path + 'data.csv', "wt") as csvfile:
+with open(path + 'snapshots.csv', "wt") as csvfile:
     csvwriter = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
     for dataset in data:
       ydata = py_reader.get_values(dataset, "solution", "0")

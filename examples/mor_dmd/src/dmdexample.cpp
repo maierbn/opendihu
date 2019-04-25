@@ -14,7 +14,7 @@
 int main(int argc, char *argv[])
 {
 	// input data
-	std::string inputData = "./out/Snapshots_total_pointwise.csv";
+	std::string inputData = "./out/snapshots.csv";
 
 	std::vector<double> parsedCsv = SvdUtility::readCSV(inputData);
 	int j = SvdUtility::getCSVColumnCount(inputData);

@@ -17,28 +17,10 @@ int main(int argc, char *argv[])
     DihuContext settings_timestepping=settings["ModelOrderReduction"];
     PythonConfig topLevelSettings_timeStepping = settings_timestepping.getPythonConfig();
     
-    if(topLevelSettings_timeStepping.hasKey("ExplicitEulerReduced"))
-    {
-      LOG(INFO) << "Reduced order ExplicitEuler";
-      
-      ModelOrderReduction::ExplicitEulerReduced<
-        TimeSteppingScheme::ExplicitEuler<
-          SpatialDiscretization::FiniteElementMethod<
-            Mesh::StructuredRegularFixedOfDimension<1>,
-            BasisFunction::LagrangeOfOrder<>,
-            Quadrature::None,
-            Equation::Dynamic::IsotropicDiffusion
-          >
-        >
-      > problem(settings);
-    
-      problem.run();
-    
-      return EXIT_SUCCESS;
-    } 
-    else if(topLevelSettings_timeStepping.hasKey("ImplicitEulerReduced"))
+    if(topLevelSettings_timeStepping.hasKey("ImplicitEulerReduced"))
     {
       LOG(INFO) << "Reduced order ImplicitEuler";
+      
       ModelOrderReduction::ImplicitEulerReduced<
         TimeSteppingScheme::ImplicitEuler<
           SpatialDiscretization::FiniteElementMethod<
@@ -58,12 +40,14 @@ int main(int argc, char *argv[])
     {
       LOG(INFO) << "Reduced order CrankNicolson";
       
-      TimeSteppingScheme::CrankNicolson<
-        SpatialDiscretization::FiniteElementMethod<
-          Mesh::StructuredRegularFixedOfDimension<1>,
-          BasisFunction::LagrangeOfOrder<>,
-          Quadrature::None,
-          Equation::Dynamic::IsotropicDiffusion
+      ModelOrderReduction::ImplicitEulerReduced<
+        TimeSteppingScheme::CrankNicolson<
+          SpatialDiscretization::FiniteElementMethod<
+            Mesh::StructuredRegularFixedOfDimension<1>,
+            BasisFunction::LagrangeOfOrder<>,
+            Quadrature::None,
+            Equation::Dynamic::IsotropicDiffusion
+          >
         >
       > problem(settings);
       

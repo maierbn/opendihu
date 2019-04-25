@@ -6,7 +6,7 @@
 
 int main(int argc, char *argv[])
 {
-  std::vector<double> parsedCSV = SvdUtility::readCSV("./out/data.csv");
+  std::vector<double> parsedCSV = SvdUtility::readCSV("./out/snapshots.csv");
   for(std::vector<double>::iterator it = parsedCSV.begin(); it!=parsedCSV.end(); ++it)
   {    
     std::cout << ' ' << *it;
@@ -14,10 +14,11 @@ int main(int argc, char *argv[])
   
   std::cout << std::endl;
 
-  int rowCount = SvdUtility::getCSVRowCount("./out/data.csv");
-  int columnCount = SvdUtility::getCSVColumnCount("./out/data.csv");
+  int rowCount = SvdUtility::getCSVRowCount("./out/snapshots.csv");
+  int columnCount = SvdUtility::getCSVColumnCount("./out/snapshots.csv");
   std::cout << "rowCount: " << rowCount << " columnCount: " << columnCount << std::endl;
   std::cout << "getSVD: " << std::endl;
+  // result is the transpose of the left singular vector
   std::vector<double> result = SvdUtility::getSVD(parsedCSV, columnCount, rowCount);
   
   for(std::vector<double>::iterator it = result.begin(); it!=result.end(); ++it)

@@ -1,14 +1,14 @@
 # Diffusion 1D
 n = 20   # number of elements
-k = 10   
+k = 20   
 
 config = {
   "ModelOrderReduction": {
     "nRowsSnapshots" : n,
-    "nReducedBases" : k, 
-    "ExplicitEuler" : {
+    "nReducedBases" : k,   
+    "ImplicitEuler" : {
       "numberTimeSteps": 1000,
-      "endTime": 1.0,
+      "endTime": 1,
       "initialValues": [2,2,4,5,2,2],      
       "FiniteElementMethod" : {
         "nElements": n,
@@ -18,22 +18,22 @@ config = {
       },
       "OutputWriter" : [
          #{"format": "Paraview", "outputInterval": 1, "filename": "out", "binaryOutput": "false", "fixedFormat": False},
-        {"format": "PythonFile", "filename": "out/diffusion1d", "outputInterval": 100, "binary":False}
+        {"format": "PythonFile", "filename": "out/diffusion1d", "outputInterval": 100, "binary":True}
       ]
     },   
-    "ExplicitEulerReduced" : {
+    "ImplicitEulerReduced" : {
       "numberTimeSteps": 1000,
-      "endTime": 1.0,
+      "endTime": 1,
       "initialValues": [2,2,4,5,2,2],      
       "FiniteElementMethod" : {
-        "nElements": k,
+        "nElements": n,
         "physicalExtent": 4.0,
         "relativeTolerance": 1e-15,
         "diffusionTensor": [5.0],
       },
       "OutputWriter" : [
          #{"format": "Paraview", "outputInterval": 1, "filename": "out", "binaryOutput": "false", "fixedFormat": False},
-        {"format": "PythonFile", "filename": "out/diffusion1dReduced", "outputInterval": 100, "binary":False}
+        {"format": "PythonFile", "filename": "out/diffusion1d_pod", "outputInterval": 100, "binary":True}
       ]
     },
   },

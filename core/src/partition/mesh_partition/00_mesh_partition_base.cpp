@@ -29,12 +29,17 @@ int MeshPartitionBase::ownRankNo()
   return this->rankSubset_->ownRankNo();
 }
 
+std::shared_ptr<RankSubset> MeshPartitionBase::rankSubset() const
+{
+  return rankSubset_;
+}
+
 MPI_Comm MeshPartitionBase::mpiCommunicator() const
 {
   return rankSubset_->mpiCommunicator();
 }
 
-//! fill the dofLocalNo vectors
+//! fill the dofNosLocal_ vectors
 void MeshPartitionBase::createLocalDofOrderings(dof_no_t nDofsLocal)
 {
   // fill dofNosLocal_ 

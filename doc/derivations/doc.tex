@@ -2027,7 +2027,7 @@ The operation \texttt{apply\_BC\_to\_$\bff$} sets values $\bff_{i} = \bfb_{i}$ f
 \end{equation*}
 By doing so the system of linear equation $\mathbb{C}_i\,Δ\bfx_i = \bfb - \bff$ contains the equations $Δx_i = b_i - f_i = 0$ for $i\in \mathcal{I}$. Therefore the variables $\bfx_i$ don't change their value in the loop and keep the initially assigned Dirichlet BC value.
 
-\subsubsection{Mixed formulation}\label{sec:mixed}
+\subsubsection{Mixed formulation (Hellinger-Reisner formulation)}\label{sec:mixed}
 %
 Now a Lagrange multiplier $p$ is added to the functional which enforces the incompressibility constraint, $J=1$. The functional analogous to \eqref{eq:functionals} is expressed as
 \begin{equation*}
@@ -2065,9 +2065,9 @@ In summary, the nonlinear equations are
 where
 \begin{equation*}
   \begin{array}{lll}
-    δW_\text{int}({\bfu},{p})  = \ds\int_{\Omega}\dfrac12  S_{AB}(\bfu,p)\,δu^L_a \left(F_{aB}(\bfu)\,\p{\phi_L}{X_A} + F_{aA}(\bfu)\,\p{\phi_L}{X_B}\right) \,\d V.\\[4mm]
-    δW_\text{ext}  = \ds\int_{\Omega} (B_a - \rho_0\,\ddot{u}_a) δu^L_a\,\phi_L\,\d V - \ds\int_{∂\Omega}  \bar{T}_a δu^L_a\,\phi_L\,\d S\\[4mm]
-    D_{δp}\Pi_L(\bfu) = \ds\int_\Omega \big(J(\bfu) - 1)\,δp^L\,\psi^L\,\d V 
+    δW_\text{int}({\bfu},{p})  = \ds\int_{\Omega}\dfrac12  S_{AB}(\bfu,p)\, \left(F_{aB}(\bfu)\,\p{δu_a}{X_A} + F_{aA}(\bfu)\,\p{δu_a}{X_B}\right) \,\d V\\[4mm]
+    δW_\text{ext}  = \ds\int_{\Omega} (B_a - \rho_0\,\ddot{u}_a) δu_a\,\d V - \ds\int_{∂\Omega}  \bar{T}_a δu_a\,\d S\\[4mm]
+    D_{δp}\Pi_L(\bfu) = \ds\int_\Omega \big(J(\bfu) - 1)\,δp\,\d V 
   \end{array}
 \end{equation*}
 
@@ -2117,7 +2117,8 @@ The linearized system is given by
 We discretize the increments $Δu_a, Δp$ and the virtual displacements and pressure, $δu_a, δp$, by
 \begin{equation*}
   \begin{array}{lll}
-    Δu_a = Δ\hat{u}_{a}^L \phi_{(a)}^L,\qquad  \p{Δu_b}{X_D} = Δ\hat{u}_{b}^M \phi_{(b),D}^M, \qquad Δp = Δ\hat{p}^L \psi^L
+    Δu_a = Δ\hat{u}_{a}^L \phi_{(a)}^L,\qquad  \p{Δu_b}{X_D} = Δ\hat{u}_{b}^M \phi_{(b),D}^M, \qquad Δp = Δ\hat{p}^L \psi^L \\[2ex]
+    δu_a = δ\hat{u}_{a}^L \phi_{(a)}^L,\qquad  δp = δ\hat{p}^L \psi^L
   \end{array}
 \end{equation*}
 where $a$ represents the dimension, without summation when in brackets. We therefore get 
@@ -2133,21 +2134,36 @@ where $a$ represents the dimension, without summation when in brackets. We there
   \end{array}
 \end{equation*}
 
-leading to the matrix formulation
+leading to the matrix formulation of the Newton iteration:
 \begin{equation*}
   \begin{array}{lll}
     \matt{\bfk_{δ\bfu,Δ\bfu} & \bfk_{δp,Δ\bfu}^\top \\[2mm]
-    \bfk_{δp,Δ\bfu} & \bfzero} \, \matt{Δ\hat{\bfu} \\[2mm] Δ\hat{p}} =  \matt{δW_{\text{ext}} \\[2mm] \bfzero},
+    \bfk_{δp,Δ\bfu} & \bfzero} \, \matt{Δ\hat{\bfu} \\[2mm] Δ\hat{p}} =  \matt{\bfR_{δ\bfu} \\[2mm] \bfR_{δp}}.
   \end{array}
 \end{equation*}
-where the blocks of the Jacobian or tangent stiffness matrix are given by
+Given the number of spatial dimensions $a,b=1,\dots,d$, the blocks of the Jacobian or tangent stiffness matrix are given by:
 \begin{equation*}
   \begin{array}{lll}
-    \bfk_{δ\bfu,Δ\bfu,(L,a),(M,b)} = \ds\int_\Omega \p{\phi_{(a)}^L}{X_B}\tilde{k}_{abBD}\p{\phi_{(b)}^M}{X_D}\,\d V \qquad \text{with}\qquad 
+    \bfk_{δ\bfu,Δ\bfu,(L,a),(M,b)} = \ds\int_\Omega \phi_{(a),B}^L\tilde{k}_{abBD}\phi_{(b),D}^M\,\d V \qquad \text{with}\qquad 
     \tilde{k}_{abBD} = δ_{ab}\,S_{BD} + F_{aA}\,F_{bC}\,C_{ABCD}\\[4mm]
+    d\times d \mbox{ blocks of } u_{\text{dofs}} \times u_{\text{dofs}} \mbox{ submatrices}\\[4mm]
     \bfk_{δp,Δ\bfu,L,(M,a)} = \ds\int_\Omega J\,\psi^L\,\phi_{(a),a}^M \,\d V\\[4mm]
+    1\times d \mbox{ blocks of } p_{\text{dofs}} \times u_{\text{dofs}} \mbox{ submatrices}\\[4mm]
+    \end{array}
+\end{equation*}
+The blocks of the residual on the righ-hand side (quasi-static case and neglecting gravity) are given by:
+\begin{equation*}
+  \begin{array}{lll}
+    \bfR_{δ\bfu, (L,a)} =  \bfR_{δ\bfu, (L,a)}^{\text{ext}} + \bfR^{\text{int}}_{δ\bfu, (L,a)}  \mbox{ with}\\[4mm]
+\quad    \bfR_{δ\bfu, (L,a)}^{\text{ext}} = \ds\int_{∂\Omega}  \bar{T}_a \phi_{(a)}^L\,\d S \\[4mm]
+\quad    \bfR_{δ\bfu, (L,a)}^{\text{int}} = - \ds\int_{\Omega}\dfrac12  S_{AB}\, \left(F_{aB}\phi_{(a),A}^L + F_{aA}\phi_{(a),B}^L\,\right) \,\d V \\[4mm]
+    d \mbox{ blocks of } u_{\text{dofs}} \mbox{ subvectors}\\[4mm]
+    \bfR_{δp,L} = \ds\int_\Omega \big(1-J)\,\psi^L\,\d V \\[4mm]
+    1 \mbox{ block of } p_{\text{dofs}} \mbox{ subvectors}
   \end{array}
 \end{equation*}
+The tensors inside $\bfk$ and $\bfR$ are computed at the initial or previous values $\bfu_0, \,p_0$.
+
 %
 Similar to the penalty formulation in \cref{quantities_penalty} the required quantities are summarized:
 \label{quantities_mixed}

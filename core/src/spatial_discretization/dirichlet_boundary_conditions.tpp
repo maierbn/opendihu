@@ -261,6 +261,8 @@ parseBoundaryConditionsForElements()
       }
     }
   }
+
+  LOG(DEBUG) << "boundaryConditionNonGhostDofLocalNos: " << boundaryConditionNonGhostDofLocalNos_ << ", boundaryConditionValues: " << boundaryConditionValues_;
 }
 
 template<typename FunctionSpaceType>
@@ -375,12 +377,21 @@ initializeGhostElements()
 
   // exchange number of ghost elements to send/receive, open a window for other processes to write into how many ghost elements they will send
   // open window for MPI RMA
-  int *remoteAccessibleMemory = nullptr;
+  /*void *remoteAccessibleMemory = nullptr;
   MPI_Win mpiMemoryWindow;
   MPIUtility::handleReturnValue(MPI_Win_allocate(nRanks*sizeof(int), sizeof(int), MPI_INFO_NULL, communicator, &remoteAccessibleMemory, &mpiMemoryWindow), "MPI_Win_allocate");
 
   // set to 0
   memset(remoteAccessibleMemory, 0, sizeof(int)*nRanks);
+*/
+
+
+  LOG(DEBUG) << "rankSubset " << *this->functionSpace_->meshPartition()->rankSubset() << ", create new window";
+  std::vector<int> remoteAccessibleMemory(nRanks, 0);
+  int nBytes = nRanks*sizeof(int);
+  int displacementUnit = sizeof(int);
+  MPI_Win mpiMemoryWindow;
+  MPIUtility::handleReturnValue(MPI_Win_create((void *)remoteAccessibleMemory.data(), nBytes, displacementUnit, MPI_INFO_NULL, communicator, &mpiMemoryWindow), "MPI_Win_create");
 
   std::vector<int> localMemory(nRanks);
 
@@ -420,35 +431,43 @@ initializeGhostElements()
   VLOG(1) << "after fence, nElementsFromRanks: " << nElementsFromRanks;
 
   // send lengths of arrays in ghost elements
-  int *sendBuffer[foreignGhostElements_.size()];
-  MPI_Request sendRequests[foreignGhostElements_.size()];
+  //int *sendBuffer[foreignGhostElements_.size()];
+  std::vector<std::vector<int>> sendBuffer(foreignGhostElements_.size());
+  std::vector<MPI_Request> sendRequests;
   int i = 0;
   for (typename std::map<int,std::vector<GhostElement>>::const_iterator iter = foreignGhostElements_.cbegin(); iter != foreignGhostElements_.cend(); iter++, i++)
   {
     int foreignRankNo = iter->first;
     int nGhostElements = iter->second.size();
 
-    sendBuffer[i] = new int [nGhostElements*2];  // for every ghostElements the sizes of nonBoundaryConditionDofsOfRankGlobalPetsc and boundaryConditionDofsGlobalPetsc
-
-    int j = 0;
-    for (typename std::vector<GhostElement>::const_iterator ghostElementIter = iter->second.begin(); ghostElementIter != iter->second.end(); ghostElementIter++, j++)
+    if (nGhostElements != 0)
     {
-      sendBuffer[i][2*j + 0] = ghostElementIter->nonBoundaryConditionDofsOfRankGlobalPetsc.size();
-      sendBuffer[i][2*j + 1] = ghostElementIter->boundaryConditionDofsGlobalPetsc.size();
-    }
+      //sendBuffer[i] = new int [nGhostElements*2];  // for every ghostElements the sizes of nonBoundaryConditionDofsOfRankGlobalPetsc and boundaryConditionDofsGlobalPetsc
+      sendBuffer[i].resize(nGhostElements*2);  // for every ghostElements the sizes of nonBoundaryConditionDofsOfRankGlobalPetsc and boundaryConditionDofsGlobalPetsc
 
-    VLOG(1) << "send to foreignRank " << foreignRankNo << " sizes ";
-    for (int k = 0; k < nGhostElements*2; k++)
-    {
-      VLOG(1) << "  " << sendBuffer[i][k];
-    }
+      int j = 0;
+      for (typename std::vector<GhostElement>::const_iterator ghostElementIter = iter->second.begin(); ghostElementIter != iter->second.end(); ghostElementIter++, j++)
+      {
+        sendBuffer[i][2*j + 0] = ghostElementIter->nonBoundaryConditionDofsOfRankGlobalPetsc.size();
+        sendBuffer[i][2*j + 1] = ghostElementIter->boundaryConditionDofsGlobalPetsc.size();
+      }
 
-    MPIUtility::handleReturnValue(MPI_Isend(sendBuffer[i], nGhostElements*2, MPI_INT, foreignRankNo, 0, communicator, &sendRequests[i]), "MPI_Isend");
+      VLOG(1) << "send to foreignRank " << foreignRankNo << " sizes ";
+      for (int k = 0; k < nGhostElements*2; k++)
+      {
+        VLOG(1) << "  " << sendBuffer[i][k];
+      }
+
+      assert(sendBuffer[i].size() == nGhostElements*2);
+      MPI_Request sendRequest;
+      MPIUtility::handleReturnValue(MPI_Isend(sendBuffer[i].data(), nGhostElements*2, MPI_INT, foreignRankNo, 0, communicator, &sendRequest), "MPI_Isend");
+      sendRequests.push_back(sendRequest);
+    }
   }
 
   // receive lengths of arrays
-  int *receiveBuffer[nElementsFromRanks.size()];
-  MPI_Request receiveRequests[nElementsFromRanks.size()];
+  std::vector<std::vector<int>> receiveBuffer(nElementsFromRanks.size());
+  std::vector<MPI_Request> receiveRequests;
 
   // receive data
   i = 0;
@@ -457,14 +476,24 @@ initializeGhostElements()
     int foreignRankNo = nElementsFromRanksIter->first;
     int nGhostElementsFromRank = nElementsFromRanksIter->second;
 
-    receiveBuffer[i] = new int [nGhostElementsFromRank*2];
-    MPIUtility::handleReturnValue(MPI_Irecv(receiveBuffer[i], nGhostElementsFromRank*2, MPI_INT, foreignRankNo, 0, communicator, &receiveRequests[i]), "MPI_Irecv");
-
+    if (nGhostElementsFromRank != 0)
+    {
+      receiveBuffer[i].resize(nGhostElementsFromRank*2);
+      MPI_Request receiveRequest;
+      MPIUtility::handleReturnValue(MPI_Irecv(receiveBuffer[i].data(), nGhostElementsFromRank*2, MPI_INT, foreignRankNo, 0, communicator, &receiveRequest), "MPI_Irecv");
+      receiveRequests.push_back(receiveRequest);
+    }
   }
 
   // wait for communication to finish
-  MPIUtility::handleReturnValue(MPI_Waitall(foreignGhostElements_.size(), sendRequests, MPI_STATUSES_IGNORE), "MPI_Waitall");
-  MPIUtility::handleReturnValue(MPI_Waitall(nElementsFromRanks.size(), receiveRequests, MPI_STATUSES_IGNORE), "MPI_Waitall");
+  if (!sendRequests.empty())
+    MPIUtility::handleReturnValue(MPI_Waitall(sendRequests.size(), sendRequests.data(), MPI_STATUSES_IGNORE), "MPI_Waitall");
+
+  if (!receiveRequests.empty())
+    MPIUtility::handleReturnValue(MPI_Waitall(receiveRequests.size(), receiveRequests.data(), MPI_STATUSES_IGNORE), "MPI_Waitall");
+
+  sendRequests.clear();
+  receiveRequests.clear();
 
   if (VLOG_IS_ON(1))
   {
@@ -474,18 +503,21 @@ initializeGhostElements()
       int foreignRank = nElementsFromRanksIter->first;
       int nGhostElementsFromRank = nElementsFromRanksIter->second;
 
-      for (int j = 0; j < nGhostElementsFromRank; j++)
+      if (nGhostElementsFromRank != 0)
       {
-        VLOG(1) << "  foreignRank " << foreignRank << ", ghost element " << j << ", number nonBC dofs: " << receiveBuffer[i][2*j+0];
-        VLOG(1) << "               number BC dofs: " << receiveBuffer[i][2*j+1];
+        for (int j = 0; j < nGhostElementsFromRank; j++)
+        {
+          VLOG(1) << "  foreignRank " << foreignRank << ", ghost element " << j << ", number nonBC dofs: " << receiveBuffer[i][2*j+0];
+          VLOG(1) << "               number BC dofs: " << receiveBuffer[i][2*j+1];
+        }
       }
     }
   }
 
   // send actual ghost elements
-  MPI_Request sendRequestsValues[foreignGhostElements_.size()];
-  long *sendBufferGhostElements[foreignGhostElements_.size()];
-  double *sendBufferValues[foreignGhostElements_.size()];
+  std::vector<MPI_Request> sendRequestsValues;
+  std::vector<std::vector<long>> sendBufferGhostElements(foreignGhostElements_.size());
+  std::vector<std::vector<double>> sendBufferValues(foreignGhostElements_.size());
   i = 0;
   for (typename std::map<int,std::vector<GhostElement>>::const_iterator iter = foreignGhostElements_.cbegin(); iter != foreignGhostElements_.cend(); iter++, i++)
   {
@@ -501,39 +533,48 @@ initializeGhostElements()
       sendBufferValuesSize += ghostElementIter->boundaryConditionDofsGlobalPetsc.size();
     }
 
-    sendBufferGhostElements[i] = new long [sendBufferSize];
-    sendBufferValues[i] = new double [sendBufferValuesSize];
-
-    VLOG(1) << " send to " << foreignRankNo << ", len buffer for ghost elements: " << sendBufferSize << ", sendBufferValuesSize: " << sendBufferValuesSize;
-
-    // fill send buffer
-    int j1 = 0, j2 = 0;
-    for (typename std::vector<GhostElement>::const_iterator ghostElementIter = iter->second.cbegin(); ghostElementIter != iter->second.cend(); ghostElementIter++)
+    if (sendBufferSize != 0)
     {
-      for (int k = 0; k < ghostElementIter->nonBoundaryConditionDofsOfRankGlobalPetsc.size(); k++)
+      sendBufferGhostElements[i].resize(sendBufferSize);
+      sendBufferValues[i].resize(sendBufferValuesSize);
+
+      VLOG(1) << " send to " << foreignRankNo << ", len buffer for ghost elements: " << sendBufferSize << ", sendBufferValuesSize: " << sendBufferValuesSize;
+
+      // fill send buffer
+      int j1 = 0, j2 = 0;
+      for (typename std::vector<GhostElement>::const_iterator ghostElementIter = iter->second.cbegin(); ghostElementIter != iter->second.cend(); ghostElementIter++)
       {
-        sendBufferGhostElements[i][j1++] = (long)ghostElementIter->nonBoundaryConditionDofsOfRankGlobalPetsc[k];
-        VLOG(1) << "store ghost value (non-BC) to send buffer at j=" << j1-1 << ", value: " << ghostElementIter->nonBoundaryConditionDofsOfRankGlobalPetsc[k];
+        for (int k = 0; k < ghostElementIter->nonBoundaryConditionDofsOfRankGlobalPetsc.size(); k++)
+        {
+          sendBufferGhostElements[i][j1++] = (long)ghostElementIter->nonBoundaryConditionDofsOfRankGlobalPetsc[k];
+          VLOG(1) << "store ghost value (non-BC) to send buffer at j=" << j1-1 << ", value: " << ghostElementIter->nonBoundaryConditionDofsOfRankGlobalPetsc[k];
+        }
+
+        for (int k = 0; k < ghostElementIter->boundaryConditionDofsGlobalPetsc.size(); k++)
+        {
+          sendBufferGhostElements[i][j1++] = (long)ghostElementIter->boundaryConditionDofsGlobalPetsc[k];
+          VLOG(1) << "store ghost value (BC) to send buffer at j=" << j1-1 << ", value: " << ghostElementIter->boundaryConditionDofsGlobalPetsc[k];
+          VLOG(1) << "store value to send buffer at j=" << j2 << ", value: " << ghostElementIter->boundaryConditionValues[k];
+          sendBufferValues[i][j2++] = (double)ghostElementIter->boundaryConditionValues[k];
+        }
       }
 
-      for (int k = 0; k < ghostElementIter->boundaryConditionDofsGlobalPetsc.size(); k++)
-      {
-        sendBufferGhostElements[i][j1++] = (long)ghostElementIter->boundaryConditionDofsGlobalPetsc[k];
-        VLOG(1) << "store ghost value (BC) to send buffer at j=" << j1-1 << ", value: " << ghostElementIter->boundaryConditionDofsGlobalPetsc[k];
-        VLOG(1) << "store value to send buffer at j=" << j2 << ", value: " << ghostElementIter->boundaryConditionValues[k];
-        sendBufferValues[i][j2++] = (double)ghostElementIter->boundaryConditionValues[k];
-      }
+      // start send
+      MPI_Request sendRequest, sendRequestValues;
+      assert(sendBufferGhostElements[i].size() == sendBufferSize);
+      MPIUtility::handleReturnValue(MPI_Isend(sendBufferGhostElements[i].data(), sendBufferSize, MPI_LONG, foreignRankNo, 0, communicator, &sendRequest), "MPI_Isend");
+      sendRequests.push_back(sendRequest);
+
+      assert(sendBufferValues[i].size() == sendBufferValuesSize);
+      MPIUtility::handleReturnValue(MPI_Isend(sendBufferValues[i].data(), sendBufferValuesSize, MPI_DOUBLE, foreignRankNo, 0, communicator, &sendRequestValues), "MPI_Isend");
+      sendRequestsValues.push_back(sendRequestValues);
     }
-
-    // start send
-    MPIUtility::handleReturnValue(MPI_Isend(sendBufferGhostElements[i], sendBufferSize, MPI_LONG, foreignRankNo, 0, communicator, &sendRequests[i]), "MPI_Isend");
-    MPIUtility::handleReturnValue(MPI_Isend(sendBufferValues[i], sendBufferValuesSize, MPI_DOUBLE, foreignRankNo, 0, communicator, &sendRequestsValues[i]), "MPI_Isend");
   }
 
   // receive ghost elements
-  long *receiveBufferGhostElements[nElementsFromRanks.size()];
-  double *receiveBufferValues[nElementsFromRanks.size()];
-  MPI_Request receiveRequestsValues[nElementsFromRanks.size()];
+  std::vector<std::vector<long>> receiveBufferGhostElements(nElementsFromRanks.size());
+  std::vector<std::vector<double>> receiveBufferValues(nElementsFromRanks.size());
+  std::vector<MPI_Request> receiveRequestsValues;
 
   // receive data
   i = 0;
@@ -542,6 +583,7 @@ initializeGhostElements()
     int foreignRankNo = nElementsFromRanksIter->first;
     int nGhostElementsFromRank = nElementsFromRanksIter->second;
 
+    // determine sizes of receive buffers
     int receiveBufferSize = 0;
     int receiveBufferValuesSize = 0;
     for (int ghostElementIndex = 0; ghostElementIndex < nGhostElementsFromRank; ghostElementIndex++)
@@ -553,28 +595,42 @@ initializeGhostElements()
 
     LOG(DEBUG) << "receive from " << foreignRankNo << ", size: " << receiveBufferValuesSize;
 
-    receiveBufferGhostElements[i] = new long [receiveBufferSize];
-    receiveBufferValues[i] = new double [receiveBufferValuesSize];
+    if (receiveBufferSize != 0)
+    {
+      receiveBufferGhostElements[i].resize(receiveBufferSize);
+      MPI_Request receiveRequest;
+      MPIUtility::handleReturnValue(MPI_Irecv(receiveBufferGhostElements[i].data(), receiveBufferSize, MPI_LONG, foreignRankNo, 0, communicator, &receiveRequest), "MPI_Irecv");
+      receiveRequests.push_back(receiveRequest);
 
-    MPIUtility::handleReturnValue(MPI_Irecv(receiveBufferGhostElements[i], receiveBufferSize, MPI_LONG, foreignRankNo, 0, communicator, &receiveRequests[i]), "MPI_Irecv");
-    MPIUtility::handleReturnValue(MPI_Irecv(receiveBufferValues[i], receiveBufferValuesSize, MPI_DOUBLE, foreignRankNo, 0, communicator, &receiveRequestsValues[i]), "MPI_Irecv");
+      receiveBufferValues[i].resize(receiveBufferValuesSize);
+      MPI_Request receiveRequestValues;
+      MPIUtility::handleReturnValue(MPI_Irecv(receiveBufferValues[i].data(), receiveBufferValuesSize, MPI_DOUBLE, foreignRankNo, 0, communicator, &receiveRequestValues), "MPI_Irecv");
+      receiveRequestsValues.push_back(receiveRequestValues);
+    }
   }
 
   // wait for communication to finish
-  MPIUtility::handleReturnValue(MPI_Waitall(foreignGhostElements_.size(), sendRequests, MPI_STATUSES_IGNORE), "MPI_Waitall");
-  MPIUtility::handleReturnValue(MPI_Waitall(foreignGhostElements_.size(), sendRequestsValues, MPI_STATUSES_IGNORE), "MPI_Waitall");
-  MPIUtility::handleReturnValue(MPI_Waitall(nElementsFromRanks.size(), receiveRequests, MPI_STATUSES_IGNORE), "MPI_Waitall");
-  MPIUtility::handleReturnValue(MPI_Waitall(nElementsFromRanks.size(), receiveRequestsValues, MPI_STATUSES_IGNORE), "MPI_Waitall");
+  if (!sendRequests.empty())
+    MPIUtility::handleReturnValue(MPI_Waitall(sendRequests.size(), sendRequests.data(), MPI_STATUSES_IGNORE), "MPI_Waitall");
+
+  if (!sendRequestsValues.empty())
+    MPIUtility::handleReturnValue(MPI_Waitall(sendRequestsValues.size(), sendRequestsValues.data(), MPI_STATUSES_IGNORE), "MPI_Waitall");
+
+  if (!receiveRequests.empty())
+    MPIUtility::handleReturnValue(MPI_Waitall(receiveRequests.size(), receiveRequests.data(), MPI_STATUSES_IGNORE), "MPI_Waitall");
+
+  if (!receiveRequestsValues.empty())
+    MPIUtility::handleReturnValue(MPI_Waitall(receiveRequestsValues.size(), receiveRequestsValues.data(), MPI_STATUSES_IGNORE), "MPI_Waitall");
 
 
   // store received values in ownGhostElements_
   i = 0;
-  int j2 = 0;
   for (std::vector<std::pair<int,int>>::iterator nElementsFromRanksIter = nElementsFromRanks.begin(); nElementsFromRanksIter != nElementsFromRanks.end(); nElementsFromRanksIter++, i++)
   {
     int nGhostElementsFromRank = nElementsFromRanksIter->second;
 
     int j = 0;
+    int j2 = 0;
     for (int ghostElementIndex = 0; ghostElementIndex < nGhostElementsFromRank; ghostElementIndex++)
     {
       int sizeNonBoundaryConditionDofsOfRankGlobalPetsc = receiveBuffer[i][2*ghostElementIndex+0];
@@ -582,34 +638,23 @@ initializeGhostElements()
 
       assert(sizeof(global_no_t) == sizeof(long)); // global_no_t = std::size_t == long should be 8 bytes on 64-bit linux
       GhostElement ghostElement;
-      ghostElement.nonBoundaryConditionDofsOfRankGlobalPetsc.assign(&receiveBufferGhostElements[i][j], &receiveBufferGhostElements[i][j+sizeNonBoundaryConditionDofsOfRankGlobalPetsc]);
+      //ghostElement.nonBoundaryConditionDofsOfRankGlobalPetsc.assign(receiveBufferGhostElements[i].begin()+j, receiveBufferGhostElements[i].begin()+j+sizeNonBoundaryConditionDofsOfRankGlobalPetsc);
+      assert(receiveBufferGhostElements[i].size() >= j+sizeNonBoundaryConditionDofsOfRankGlobalPetsc);
+      ghostElement.nonBoundaryConditionDofsOfRankGlobalPetsc.assign(receiveBufferGhostElements[i].begin()+j, receiveBufferGhostElements[i].begin()+j+sizeNonBoundaryConditionDofsOfRankGlobalPetsc);
       j += sizeNonBoundaryConditionDofsOfRankGlobalPetsc;
 
-      ghostElement.boundaryConditionDofsGlobalPetsc.assign(&receiveBufferGhostElements[i][j], &receiveBufferGhostElements[i][j+sizeBoundaryConditionDofsGlobalPetsc]);
+      assert(receiveBufferGhostElements[i].size() >= j+sizeBoundaryConditionDofsGlobalPetsc);
+      ghostElement.boundaryConditionDofsGlobalPetsc.assign(receiveBufferGhostElements[i].begin()+j, receiveBufferGhostElements[i].begin()+j+sizeBoundaryConditionDofsGlobalPetsc);
       j += sizeBoundaryConditionDofsGlobalPetsc;
 
-      ghostElement.boundaryConditionValues.assign(&receiveBufferValues[i][j2], &receiveBufferValues[i][j2+sizeBoundaryConditionDofsGlobalPetsc]);
+      //LOG(DEBUG) << "receiveBufferValues[i=" << i << "] size: " << receiveBufferValues[i].size() << "(" << receiveBufferValues << ")" << ", j2=" << j2
+      //  << ", ghostElementIndex: " << ghostElementIndex << ", sizeBoundaryConditionDofsGlobalPetsc: " << sizeBoundaryConditionDofsGlobalPetsc << " (" << j2+sizeBoundaryConditionDofsGlobalPetsc << ")";
+      assert(receiveBufferValues[i].size() >= j2+sizeBoundaryConditionDofsGlobalPetsc);
+      ghostElement.boundaryConditionValues.assign(receiveBufferValues[i].begin()+j2, receiveBufferValues[i].begin()+j2+sizeBoundaryConditionDofsGlobalPetsc);
       j2 += sizeBoundaryConditionDofsGlobalPetsc;
 
       ownGhostElements_.push_back(ghostElement);
     }
-  }
-
-  // deallocate memory
-  i = 0;
-  for (typename std::map<int,std::vector<GhostElement>>::const_iterator iter = foreignGhostElements_.cbegin(); iter != foreignGhostElements_.cend(); iter++, i++)
-  {
-    delete [] sendBuffer[i];
-    delete [] sendBufferGhostElements[i];
-    delete [] sendBufferValues[i];
-  }
-
-  i = 0;
-  for (std::vector<std::pair<int,int>>::iterator nElementsFromRanksIter = nElementsFromRanks.begin(); nElementsFromRanksIter != nElementsFromRanks.end(); nElementsFromRanksIter++, i++)
-  {
-    delete [] receiveBuffer[i];
-    delete [] receiveBufferGhostElements[i];
-    delete [] receiveBufferValues[i];
   }
 
   VLOG(1) << "received ownGhostElements_: ";
@@ -620,10 +665,11 @@ initializeGhostElements()
   }
 
   /*
-  struct GhostElement
+   *  struct GhostElement
   {
-    std::vector<global_no_> nonBoundaryConditionDofsOfRankGlobalPetsc;    // the non-BC dofs of this element, as global petsc no. that are owned by the rank with no neighbouringRankNo
-    std::vector<global_no_t> boundaryConditionDofsGlobalPetsc;      // the Dirichlet BC dofs of this element
+    std::vector<global_no_t> nonBoundaryConditionDofsOfRankGlobalPetsc;    ///< the non-BC dofs of this element, as global petsc no. that are owned by the rank with no neighbouringRankNo
+    std::vector<global_no_t> boundaryConditionDofsGlobalPetsc;      ///< the Dirichlet BC dofs of this element
+    std::vector<double> boundaryConditionValues;   ///< the prescribed value, corresponding to boundaryConditionDofsGlobalPetsc
   };
   std::map<int,std::vector<GhostElement>> foreignGhostElements_;   ///< ghost elements that are normal elements on this rank, key is the rankNo of the rank to send them to
   std::vector<GhostElement> ownGhostElements_;   ///< the ghost elements for this rank
@@ -638,6 +684,24 @@ applyInVector(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nCo
 
   VLOG(1) << "applied boundary conditions, local dofs: " << boundaryConditionNonGhostDofLocalNos_ << ", values: " << boundaryConditionValues_;
 }
+
+
+//! get a reference to the vector of bc local dofs
+template<typename FunctionSpaceType,int nComponents>
+const std::vector<dof_no_t> &DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::
+boundaryConditionNonGhostDofLocalNos() const
+{
+  return boundaryConditionNonGhostDofLocalNos_;
+}
+
+//! get a reference to the vector of bc local dofs
+template<typename FunctionSpaceType,int nComponents>
+const std::vector<typename DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::ValueType> &DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::
+boundaryConditionValues() const
+{
+  return boundaryConditionValues_;
+}
+
 
 // set the boundary conditions to system matrix, i.e. zero rows and columns of Dirichlet BC dofs and set diagonal to 1
 template<typename FunctionSpaceType>
@@ -842,6 +906,14 @@ applyInRightHandSide(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceT
   // set boundary condition dofs to prescribed values, only non-ghost dofs
   rightHandSide->setValues(this->boundaryConditionNonGhostDofLocalNos_,
                           this->boundaryConditionValues_, INSERT_VALUES);
+}
+
+
+template<typename FunctionSpaceType, int nComponents>
+std::ostream &operator<<(std::ostream &stream, const typename DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::ElementWithNodes rhs)
+{
+  stream << "{el." << rhs.elementNoLocal << ", (dof,v):" << rhs.elementalDofIndex << "}";
+  return stream;
 }
 
 }  // namespace

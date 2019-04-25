@@ -39,6 +39,9 @@ public:
   
   //! initialize the mesh after creation
   virtual void initialize() = 0;
+
+  //! get if initialize was called previously and, thus, initialized_ is set to true
+  bool initialized();
   
   //! set the name of the mesh
   void setMeshName(std::string meshName);
@@ -48,6 +51,7 @@ public:
 protected:
   std::string meshName_;  ///< the name of this mesh, which can be given in the python config and is the key by which the mesh is stored in Mesh::Manager
   PythonConfig specificSettings_;  ///< the python object of the settings for this mesh
+  bool initialized_;   ///< if the mesh is already initialized
 };
 
 /**

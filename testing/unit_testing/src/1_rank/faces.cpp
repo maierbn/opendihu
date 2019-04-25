@@ -512,5 +512,5 @@ config = {
     }
   }
 }
-};
 
+}  // namespace

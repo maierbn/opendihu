@@ -138,4 +138,4 @@ setValuesWithoutGhosts(const std::vector<double> &values, InsertMode petscInsert
   this->values_->setValues(0, values, petscInsertMode);
 }
 
-};  // namespace
+} // namespace

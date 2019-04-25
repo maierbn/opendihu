@@ -28,6 +28,6 @@ public:
   void setValues(FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents> &rhs);
 };
 
-};  // namespace
+} // namespace
 
 #include "field_variable/structured/06_field_variable_set_get_structured_deformable.tpp"

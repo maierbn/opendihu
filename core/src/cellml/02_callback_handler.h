@@ -29,6 +29,9 @@ class CallbackHandler :
 public:
 
   //! constructor
+  CallbackHandler(DihuContext context, bool initializeOutputWriter);
+
+  //! constructor
   CallbackHandler(DihuContext context);
 
   //! destructor
@@ -66,6 +69,9 @@ protected:
  
   //! construct the python call back functions from config
   virtual void initializeCallbackFunctions();
+
+  //! call Py_CLEAR on all python objects
+  void clearPyObjects();
 
   void (*setParameters_) (void *context, int nInstances, int timeStepNo, double currentTime, std::vector<double> &parameters);  ///< callback function that will be called before new states are computed. It can set new parameters ("known" variables) for the computation.
   void (*setSpecificParameters_) (void *context, int nInstances, int timeStepNo, double currentTime, std::vector<double> &localParameters);  ///< callback function that will be called before new states are computed. It can set values for global parameters ("known" variables) for the computation.

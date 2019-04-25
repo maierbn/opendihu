@@ -108,5 +108,5 @@ outputNodeValues(TupleType currentFieldVariableTuple, std::string meshName,
   return false;  // do not break iteration
 }
 
-};  //namespace ExfileLoopOverTuple
-};  //namespace OutputWriter
+}  // namespace ExfileLoopOverTuple
+}  // namespace OutputWriter

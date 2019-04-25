@@ -28,6 +28,6 @@ evaluateIntegrand(const std::array<Vec3,D> &jacobian, const std::array<double,D>
   }
 
   return evaluations;
-};
+}
 
-};  // namespace
+} // namespace

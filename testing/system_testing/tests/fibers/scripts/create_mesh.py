@@ -122,8 +122,9 @@ for loop_no,(border_points,length) in enumerate(zip(border_point_loops,lengths))
   
   # create 2D mesh with border_points
   show_plot = False
+  improve_mesh = False
   grid_points_world_space,duration_1d = stl_create_mesh.create_planar_mesh(border_points, loop_no, n_points, \
-    n_grid_points_x, n_grid_points_y, triangulation_type, parametric_space_shape, max_area_factor, show_plot, debugging_stl_output,\
+    n_grid_points_x, n_grid_points_y, triangulation_type, parametric_space_shape, max_area_factor, improve_mesh, show_plot, debugging_stl_output,\
     [out_triangulation_world_space, markers_border_points_world_space, out_triangulation_parametric_space, grid_triangles_world_space, grid_triangles_parametric_space,\
       markers_grid_points_parametric_space, markers_grid_points_world_space])
 

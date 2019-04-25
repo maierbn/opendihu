@@ -7,7 +7,7 @@
 using namespace std;
 
 
-std::vector<double> SvdUtility::getSVD(vector<double> aData, int m, int n)
+std::vector<double> SvdUtility::getSVD(vector<double> &aData, int m, int n)
 {
   /*
    * lda = ldu = length(column)
@@ -20,8 +20,8 @@ std::vector<double> SvdUtility::getSVD(vector<double> aData, int m, int n)
  
    
   
-  double a[aData.size()];
-  copy(aData.begin(), aData.end(), a);
+  //double a[aData.size()];
+  //copy(aData.begin(), aData.end(), a);
   // Spalten    Zeilen
   // int m = 6, n = 5;
   
@@ -37,16 +37,17 @@ std::vector<double> SvdUtility::getSVD(vector<double> aData, int m, int n)
   int matrix_order = LAPACK_COL_MAJOR;
   //int matrix_order = LAPACK_ROW_MAJOR;
   int minmn = std::min(m,n) - 1;
-  double s[n], u[ldu*m], vt[ldvt*n], superb[minmn];
+  std::vector<double> s(n), u(ldu*m), vt(ldvt*n), superb(minmn);
 	
-  LAPACKE_dgesvd(matrix_order, 'a', 'a', m, n, a, lda, s, u, ldu, vt, ldvt, superb);
+  LAPACKE_dgesvd(matrix_order, 'a', 'a', m, n, aData.data(), lda, s.data(), u.data(), ldu, vt.data(), ldvt, superb.data());
   
   for(int i = 0; i < ldvt*n; i++)
   {
     cout << vt[i] << endl;
   }
   
-  return std::vector<double>(vt, vt + sizeof vt / sizeof vt[0]);;
+  //return std::vector<double>(vt, vt + sizeof vt / sizeof vt[0]);  // <-- ??
+  return vt;
 }
 
 std::vector<double> SvdUtility::readCSV(string filename)
@@ -90,7 +91,7 @@ std::vector<double> SvdUtility::readCSV(string filename, int rows)
   return parsedCsv;
 }
 
-void SvdUtility::writeCSV(string filename, std::vector<double> values, int m, int n)
+void SvdUtility::writeCSV(string filename, std::vector<double> &values, int m, int n)
 {
    ofstream data;
    data.open(filename);

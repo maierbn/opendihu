@@ -24,4 +24,34 @@ void normalize(VecD<D> &vector)
   vector *= 1./norm<D>(vector);
 }
 
-}; // namespace
+template<typename T>
+void readPoint(T &file, Vec3 &point)
+{
+  union
+  {
+    char c[8];
+    double d;
+  };
+  for (int i = 0; i < 3; i++)
+  {
+    file.read(c, 8);
+    point[i] = d;
+  }
+}
+
+template<typename T>
+void writePoint(T &file, Vec3 &point)
+{
+  union
+  {
+    char c[8];
+    double d;
+  };
+  for (int i = 0; i < 3; i++)
+  {
+    d = point[i];
+    file.write(c, 8);
+  }
+}
+
+}  // namespace

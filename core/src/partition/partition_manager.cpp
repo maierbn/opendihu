@@ -33,7 +33,17 @@ void Manager::setRankSubsetForNextCreatedPartitioning(std::shared_ptr<RankSubset
 //! store the ranks which should be used for collective MPI operations
 void Manager::setRankSubsetForCollectiveOperations(std::shared_ptr<RankSubset> rankSubset)
 {
-  rankSubsetForCollectiveOperations_ = rankSubset;
+  // if the rank subset for collective operations was not yet set, set it now
+  if (!rankSubsetForCollectiveOperations_)
+  {
+    rankSubsetForCollectiveOperations_ = rankSubset;
+  }
+  else if (rankSubsetForCollectiveOperations_->size() < rankSubset->size())
+  {
+    // if the rank subset for collective operations was set earlier, only overwrite if with a rank subset that includes more ranks
+    // this happens when more MultipleInstances are nested
+    rankSubsetForCollectiveOperations_ = rankSubset;
+  }
 }
 
 //! ranks which should be used for collective MPI operations
@@ -50,4 +60,4 @@ std::shared_ptr<RankSubset> Manager::rankSubsetForCollectiveOperations()
   return rankSubsetForCollectiveOperations_;
 }
 
-};    // namespace
+}  // namespace

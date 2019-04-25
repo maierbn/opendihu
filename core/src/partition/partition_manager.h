@@ -63,6 +63,6 @@ private:
   std::shared_ptr<RankSubset> rankSubsetForCollectiveOperations_;    ///< the ranks which should be used for collective MPI operations
 };
 
-};    // namespace
+}  // namespace
 
 #include "partition_manager.tpp"

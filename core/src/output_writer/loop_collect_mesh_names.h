@@ -52,8 +52,8 @@ template<typename CurrentFieldVariableType>
 typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
 collectMeshNames(CurrentFieldVariableType currentFieldVariable, std::set<std::string> &meshNames);
 
-};  //namespace ExfileLoopOverTuple
+}  // namespace ExfileLoopOverTuple
 
-};  //namespace OutputWriter
+}  // namespace OutputWriter
 
 #include "output_writer/loop_collect_mesh_names.tpp"

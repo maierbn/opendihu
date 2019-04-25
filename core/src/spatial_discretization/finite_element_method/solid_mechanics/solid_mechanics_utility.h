@@ -102,7 +102,7 @@ void checkSymmetry(const Tensor2<D> &rightCauchyGreen, std::string name);
 template<int D>
 void checkInverseIsCorrect(const Tensor2<D> &rightCauchyGreen, Tensor2<D> &inverseRightCauchyGreen, std::string name);
 
-};  // namespace
+} // namespace
 
 #include "spatial_discretization/finite_element_method/solid_mechanics/solid_mechanics_utility.tpp"
 #include "spatial_discretization/finite_element_method/solid_mechanics/solid_mechanics_utility_checks.tpp"

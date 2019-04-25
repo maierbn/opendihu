@@ -81,4 +81,30 @@ std::string extractBasename(std::string str)
   return str;
 }
 
-}; // namespace
+std::string timeToString(const tm* const time)
+{   
+  // to format: %Y/%m/%d %H:%M:%S
+  std::string date;
+    
+  date += std::to_string( time->tm_year + 1900 ) + "/"
+       +  std::to_string( time->tm_mon + 1 ) + "/"
+       +  std::to_string( time->tm_mday ) + " ";
+  if( time->tm_hour < 10 )
+  {
+      date += "0";
+  }
+  date += std::to_string( time->tm_hour ) + ":";
+   if( time->tm_min < 10 )
+  {
+      date += "0";
+  }
+  date += std::to_string( time->tm_min ) + ":";
+  if( time->tm_sec < 10 )
+  {
+      date += "0";
+  }
+  date += std::to_string( time->tm_sec );
+  return date;
+}
+
+}  // namespace

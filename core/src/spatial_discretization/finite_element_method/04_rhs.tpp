@@ -52,4 +52,4 @@ setRightHandSide()
   this->manipulateWeakRhs();
 }
 
-};
+}  // namespace

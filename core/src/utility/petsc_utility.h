@@ -46,5 +46,5 @@ std::string getStringNonlinearConvergedReason(SNESConvergedReason convergedReaso
 //! check if the matrix and vector number of entries are correct such that stiffnessMatrix can be multiplied to rhs
 void checkDimensionsMatrixVector(Mat &matrix, Vec &input);
 
-}; // namespace
+}  // namespace
 

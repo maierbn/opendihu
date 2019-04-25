@@ -407,4 +407,4 @@ std::string getStringNonlinearConvergedReason(SNESConvergedReason convergedReaso
   return s.str();
 }
 
-}; // namespace
+}  // namespace

@@ -77,4 +77,4 @@ std::ostream &operator<<(std::ostream &stream, const NodeToDofMapping::NodeDofIn
   return stream;
 }
 
-};
+}  // namespace

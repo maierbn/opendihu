@@ -10,9 +10,8 @@ int main(int argc, char *argv[])
   // initialize everything, handle arguments and parse settings from input file
   DihuContext settings(argc, argv);
   
-  PythonConfig topLevelSettings = settings.getPythonConfig();
- // PythonConfig specificSettings_ = PythonConfig(topLevelSettings, "ExplicitEuler");
-
+  PythonConfig topLevelSettings = settings.getPythonConfig(); 
+  
   if(topLevelSettings.hasKey("ExplicitEuler"))
   {
     LOG(INFO) << "ExplicitEuler";

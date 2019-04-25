@@ -44,7 +44,7 @@ config = {
 
   problem.initialize();
 
-  LOG(DEBUG) << " ===================== run dof no tests ===================== ";
+  VLOG(1) << " ===================== run dof no tests ===================== ";
 
   typedef typename ProblemType::FunctionSpace FunctionSpace;
   const int D = FunctionSpace::dim();
@@ -57,15 +57,15 @@ config = {
   {
     global_no_t elementNoGlobalNatural = meshPartition->getElementNoGlobalNatural(elementNoLocal);
 
-    LOG(DEBUG) << "";
-    LOG(DEBUG) << "elementNoLocal = " << elementNoLocal << ", elementNoGlobalNatural = " << elementNoGlobalNatural;
+    VLOG(1) << "";
+    VLOG(1) << "elementNoLocal = " << elementNoLocal << ", elementNoGlobalNatural = " << elementNoGlobalNatural;
 
     // loop over local nodes, with ghosts
     for (int nodeIndex = 0; nodeIndex < functionSpace->nNodesPerElement(); nodeIndex++)
     {
       node_no_t nodeNoLocal = functionSpace->getNodeNo(elementNoLocal, nodeIndex);
 
-      LOG(DEBUG) << "elementNoLocal = " << elementNoLocal << ", nodeIndex = " << nodeIndex << ", nodeNoLocal = " << nodeNoLocal;
+      VLOG(1) << "elementNoLocal = " << elementNoLocal << ", nodeIndex = " << nodeIndex << ", nodeNoLocal = " << nodeNoLocal;
 
       std::array<global_no_t,D> coordinatesGlobal = meshPartition->getCoordinatesGlobal(nodeNoLocal);
       std::array<int,D> coordinatesLocal;
@@ -76,20 +76,20 @@ config = {
 
       node_no_t nodeNoLocalFromCoordinates = functionSpace->getNodeNo(coordinatesLocal);
 
-      LOG(DEBUG) << "coordinatesGlobal: " << coordinatesGlobal;
+      VLOG(1) << "coordinatesGlobal: " << coordinatesGlobal;
 
       global_no_t nodeNoGlobalNaturalFromCoordinates = meshPartition->getNodeNoGlobalNatural(coordinatesGlobal);
       global_no_t nodeNoGlobalNatural = functionSpace->getNodeNoGlobalNatural(elementNoGlobalNatural, nodeIndex);
 
-      LOG(DEBUG) << "nodeNoGlobalNaturalFromCoordinates: " << nodeNoGlobalNaturalFromCoordinates << ", nodeNoGlobalNatural: " << nodeNoGlobalNatural;
-      LOG(DEBUG) << "nodeNoLocalFromCoordinates: " << nodeNoLocalFromCoordinates << ", nodeNoLocal: " << nodeNoLocal;
+      VLOG(1) << "nodeNoGlobalNaturalFromCoordinates: " << nodeNoGlobalNaturalFromCoordinates << ", nodeNoGlobalNatural: " << nodeNoGlobalNatural;
+      VLOG(1) << "nodeNoLocalFromCoordinates: " << nodeNoLocalFromCoordinates << ", nodeNoLocal: " << nodeNoLocal;
 
       ASSERT_EQ(nodeNoGlobalNaturalFromCoordinates, nodeNoGlobalNatural);
       ASSERT_EQ(nodeNoLocalFromCoordinates, nodeNoLocal);
     }
   }
 
-  LOG(DEBUG) << " ===================== run neighbour ===================== ";
+  VLOG(1) << " ===================== run neighbour ===================== ";
   // validate getNeighbourNodeNoLocal
   std::vector<std::pair<std::pair<Mesh::face_t,Mesh::face_t>,std::array<int,D>>> complementFaces = {
     {{Mesh::face_t::face0Plus,  Mesh::face_t::face0Minus}, {1}},
@@ -106,7 +106,7 @@ config = {
     for (node_no_t nodeNoLocal = 0; nodeNoLocal < functionSpace->nNodesLocalWithoutGhosts(); nodeNoLocal++)
     {
       node_no_t neighbourNodeNo = functionSpace->getNeighbourNodeNoLocal(nodeNoLocal, face0);
-      LOG(DEBUG) << "nodeNoLocal = " << nodeNoLocal << ", face " << face0 << ", neighbour: " << neighbourNodeNo;
+      VLOG(1) << "nodeNoLocal = " << nodeNoLocal << ", face " << face0 << ", neighbour: " << neighbourNodeNo;
 
       if (neighbourNodeNo != -1)
       {
@@ -121,7 +121,7 @@ config = {
           realDifference[j] = coordinatesGlobalNeighbour[j] - coordinatesGlobalOrigin[j];
         }
 
-        LOG(DEBUG) << "coordinates origin: " << coordinatesGlobalOrigin << ", neighbour: " << coordinatesGlobalNeighbour
+        VLOG(1) << "coordinates origin: " << coordinatesGlobalOrigin << ", neighbour: " << coordinatesGlobalNeighbour
           << ", difference: " << realDifference << ", expected: " << expectedDifference;
 
         for(int j = 0; j < D; j++)
@@ -135,7 +135,7 @@ config = {
       {
         node_no_t originNode = functionSpace->getNeighbourNodeNoLocal(neighbourNodeNo, face1);
 
-        LOG(DEBUG) << "  originNode: " << originNode << " face " << face1;
+        VLOG(1) << "  originNode: " << originNode << " face " << face1;
         ASSERT_EQ(nodeNoLocal, originNode);
       }
     }
@@ -176,7 +176,7 @@ config = {
 
   problem.initialize();
 
-  LOG(DEBUG) << " ===================== run dof no tests ===================== ";
+  VLOG(1) << " ===================== run dof no tests ===================== ";
 
   typedef typename ProblemType::FunctionSpace FunctionSpace;
   const int D = FunctionSpace::dim();
@@ -189,15 +189,15 @@ config = {
   {
     global_no_t elementNoGlobalNatural = meshPartition->getElementNoGlobalNatural(elementNoLocal);
 
-    LOG(DEBUG) << "";
-    LOG(DEBUG) << "elementNoLocal = " << elementNoLocal << ", elementNoGlobalNatural = " << elementNoGlobalNatural;
+    VLOG(1) << "";
+    VLOG(1) << "elementNoLocal = " << elementNoLocal << ", elementNoGlobalNatural = " << elementNoGlobalNatural;
 
     // loop over local nodes, with ghosts
     for (int nodeIndex = 0; nodeIndex < functionSpace->nNodesPerElement(); nodeIndex++)
     {
       node_no_t nodeNoLocal = functionSpace->getNodeNo(elementNoLocal, nodeIndex);
 
-      LOG(DEBUG) << "elementNoLocal = " << elementNoLocal << ", nodeIndex = " << nodeIndex << ", nodeNoLocal = " << nodeNoLocal;
+      VLOG(1) << "elementNoLocal = " << elementNoLocal << ", nodeIndex = " << nodeIndex << ", nodeNoLocal = " << nodeNoLocal;
 
       std::array<global_no_t,D> coordinatesGlobal = meshPartition->getCoordinatesGlobal(nodeNoLocal);
       std::array<int,D> coordinatesLocal;
@@ -208,20 +208,20 @@ config = {
 
       node_no_t nodeNoLocalFromCoordinates = functionSpace->getNodeNo(coordinatesLocal);
 
-      LOG(DEBUG) << "coordinatesGlobal: " << coordinatesGlobal;
+      VLOG(1) << "coordinatesGlobal: " << coordinatesGlobal;
 
       global_no_t nodeNoGlobalNaturalFromCoordinates = meshPartition->getNodeNoGlobalNatural(coordinatesGlobal);
       global_no_t nodeNoGlobalNatural = functionSpace->getNodeNoGlobalNatural(elementNoGlobalNatural, nodeIndex);
 
-      LOG(DEBUG) << "nodeNoGlobalNaturalFromCoordinates: " << nodeNoGlobalNaturalFromCoordinates << ", nodeNoGlobalNatural: " << nodeNoGlobalNatural;
-      LOG(DEBUG) << "nodeNoLocalFromCoordinates: " << nodeNoLocalFromCoordinates << ", nodeNoLocal: " << nodeNoLocal;
+      VLOG(1) << "nodeNoGlobalNaturalFromCoordinates: " << nodeNoGlobalNaturalFromCoordinates << ", nodeNoGlobalNatural: " << nodeNoGlobalNatural;
+      VLOG(1) << "nodeNoLocalFromCoordinates: " << nodeNoLocalFromCoordinates << ", nodeNoLocal: " << nodeNoLocal;
 
       ASSERT_EQ(nodeNoGlobalNaturalFromCoordinates, nodeNoGlobalNatural);
       ASSERT_EQ(nodeNoLocalFromCoordinates, nodeNoLocal);
     }
   }
 
-  LOG(DEBUG) << " ===================== run neighbour ===================== ";
+  VLOG(1) << " ===================== run neighbour ===================== ";
   // validate getNeighbourNodeNoLocal
   std::vector<std::pair<std::pair<Mesh::face_t,Mesh::face_t>,std::array<int,D>>> complementFaces = {
     {{Mesh::face_t::face0Plus,  Mesh::face_t::face0Minus}, {1}},
@@ -238,7 +238,7 @@ config = {
     for (node_no_t nodeNoLocal = 0; nodeNoLocal < functionSpace->nNodesLocalWithoutGhosts(); nodeNoLocal++)
     {
       node_no_t neighbourNodeNo = functionSpace->getNeighbourNodeNoLocal(nodeNoLocal, face0);
-      LOG(DEBUG) << "nodeNoLocal = " << nodeNoLocal << ", face " << face0 << ", neighbour: " << neighbourNodeNo;
+      VLOG(1) << "nodeNoLocal = " << nodeNoLocal << ", face " << face0 << ", neighbour: " << neighbourNodeNo;
 
       if (neighbourNodeNo != -1)
       {
@@ -253,7 +253,7 @@ config = {
           realDifference[j] = coordinatesGlobalNeighbour[j] - coordinatesGlobalOrigin[j];
         }
 
-        LOG(DEBUG) << "coordinates origin: " << coordinatesGlobalOrigin << ", neighbour: " << coordinatesGlobalNeighbour
+        VLOG(1) << "coordinates origin: " << coordinatesGlobalOrigin << ", neighbour: " << coordinatesGlobalNeighbour
           << ", difference: " << realDifference << ", expected: " << expectedDifference;
 
         for(int j = 0; j < D; j++)
@@ -267,7 +267,7 @@ config = {
       {
         node_no_t originNode = functionSpace->getNeighbourNodeNoLocal(neighbourNodeNo, face1);
 
-        LOG(DEBUG) << "  originNode: " << originNode << " face " << face1;
+        VLOG(1) << "  originNode: " << originNode << " face " << face1;
         ASSERT_EQ(nodeNoLocal, originNode);
       }
     }
@@ -308,7 +308,7 @@ config = {
 
   problem.initialize();
 
-  LOG(DEBUG) << " ===================== run dof no tests ===================== ";
+  VLOG(1) << " ===================== run dof no tests ===================== ";
 
   typedef typename ProblemType::FunctionSpace FunctionSpace;
   const int D = FunctionSpace::dim();
@@ -321,15 +321,15 @@ config = {
   {
     global_no_t elementNoGlobalNatural = meshPartition->getElementNoGlobalNatural(elementNoLocal);
 
-    LOG(DEBUG) << "";
-    LOG(DEBUG) << "elementNoLocal = " << elementNoLocal << ", elementNoGlobalNatural = " << elementNoGlobalNatural;
+    VLOG(1) << "";
+    VLOG(1) << "elementNoLocal = " << elementNoLocal << ", elementNoGlobalNatural = " << elementNoGlobalNatural;
 
     // loop over local nodes, with ghosts
     for (int nodeIndex = 0; nodeIndex < functionSpace->nNodesPerElement(); nodeIndex++)
     {
       node_no_t nodeNoLocal = functionSpace->getNodeNo(elementNoLocal, nodeIndex);
 
-      LOG(DEBUG) << "elementNoLocal = " << elementNoLocal << ", nodeIndex = " << nodeIndex << ", nodeNoLocal = " << nodeNoLocal;
+      VLOG(1) << "elementNoLocal = " << elementNoLocal << ", nodeIndex = " << nodeIndex << ", nodeNoLocal = " << nodeNoLocal;
 
       std::array<global_no_t,D> coordinatesGlobal = meshPartition->getCoordinatesGlobal(nodeNoLocal);
       std::array<int,D> coordinatesLocal;
@@ -340,20 +340,20 @@ config = {
 
       node_no_t nodeNoLocalFromCoordinates = functionSpace->getNodeNo(coordinatesLocal);
 
-      LOG(DEBUG) << "coordinatesGlobal: " << coordinatesGlobal;
+      VLOG(1) << "coordinatesGlobal: " << coordinatesGlobal;
 
       global_no_t nodeNoGlobalNaturalFromCoordinates = meshPartition->getNodeNoGlobalNatural(coordinatesGlobal);
       global_no_t nodeNoGlobalNatural = functionSpace->getNodeNoGlobalNatural(elementNoGlobalNatural, nodeIndex);
 
-      LOG(DEBUG) << "nodeNoGlobalNaturalFromCoordinates: " << nodeNoGlobalNaturalFromCoordinates << ", nodeNoGlobalNatural: " << nodeNoGlobalNatural;
-      LOG(DEBUG) << "nodeNoLocalFromCoordinates: " << nodeNoLocalFromCoordinates << ", nodeNoLocal: " << nodeNoLocal;
+      VLOG(1) << "nodeNoGlobalNaturalFromCoordinates: " << nodeNoGlobalNaturalFromCoordinates << ", nodeNoGlobalNatural: " << nodeNoGlobalNatural;
+      VLOG(1) << "nodeNoLocalFromCoordinates: " << nodeNoLocalFromCoordinates << ", nodeNoLocal: " << nodeNoLocal;
 
       ASSERT_EQ(nodeNoGlobalNaturalFromCoordinates, nodeNoGlobalNatural);
       ASSERT_EQ(nodeNoLocalFromCoordinates, nodeNoLocal);
     }
   }
 
-  LOG(DEBUG) << " ===================== run neighbour ===================== ";
+  VLOG(1) << " ===================== run neighbour ===================== ";
   // validate getNeighbourNodeNoLocal
   std::vector<std::pair<std::pair<Mesh::face_t,Mesh::face_t>,std::array<int,D>>> complementFaces = {
     {{Mesh::face_t::face0Plus,  Mesh::face_t::face0Minus}, {1}},
@@ -370,7 +370,7 @@ config = {
     for (node_no_t nodeNoLocal = 0; nodeNoLocal < functionSpace->nNodesLocalWithoutGhosts(); nodeNoLocal++)
     {
       node_no_t neighbourNodeNo = functionSpace->getNeighbourNodeNoLocal(nodeNoLocal, face0);
-      LOG(DEBUG) << "nodeNoLocal = " << nodeNoLocal << ", face " << face0 << ", neighbour: " << neighbourNodeNo;
+      VLOG(1) << "nodeNoLocal = " << nodeNoLocal << ", face " << face0 << ", neighbour: " << neighbourNodeNo;
 
       if (neighbourNodeNo != -1)
       {
@@ -385,7 +385,7 @@ config = {
           realDifference[j] = coordinatesGlobalNeighbour[j] - coordinatesGlobalOrigin[j];
         }
 
-        LOG(DEBUG) << "coordinates origin: " << coordinatesGlobalOrigin << ", neighbour: " << coordinatesGlobalNeighbour
+        VLOG(1) << "coordinates origin: " << coordinatesGlobalOrigin << ", neighbour: " << coordinatesGlobalNeighbour
           << ", difference: " << realDifference << ", expected: " << expectedDifference;
 
         for(int j = 0; j < D; j++)
@@ -399,7 +399,7 @@ config = {
       {
         node_no_t originNode = functionSpace->getNeighbourNodeNoLocal(neighbourNodeNo, face1);
 
-        LOG(DEBUG) << "  originNode: " << originNode << " face " << face1;
+        VLOG(1) << "  originNode: " << originNode << " face " << face1;
         ASSERT_EQ(nodeNoLocal, originNode);
       }
     }
@@ -445,7 +445,7 @@ config = {
 
   problem.initialize();
 
-  LOG(DEBUG) << " ===================== run dof no tests ===================== ";
+  VLOG(1) << " ===================== run dof no tests ===================== ";
 
   typedef typename ProblemType::FunctionSpace FunctionSpace;
   const int D = FunctionSpace::dim();
@@ -458,15 +458,15 @@ config = {
   {
     global_no_t elementNoGlobalNatural = meshPartition->getElementNoGlobalNatural(elementNoLocal);
 
-    LOG(DEBUG) << "";
-    LOG(DEBUG) << "elementNoLocal = " << elementNoLocal << ", elementNoGlobalNatural = " << elementNoGlobalNatural;
+    VLOG(1) << "";
+    VLOG(1) << "elementNoLocal = " << elementNoLocal << ", elementNoGlobalNatural = " << elementNoGlobalNatural;
 
     // loop over local nodes, with ghosts
     for (int nodeIndex = 0; nodeIndex < functionSpace->nNodesPerElement(); nodeIndex++)
     {
       node_no_t nodeNoLocal = functionSpace->getNodeNo(elementNoLocal, nodeIndex);
 
-      LOG(DEBUG) << "elementNoLocal = " << elementNoLocal << ", nodeIndex = " << nodeIndex << ", nodeNoLocal = " << nodeNoLocal;
+      VLOG(1) << "elementNoLocal = " << elementNoLocal << ", nodeIndex = " << nodeIndex << ", nodeNoLocal = " << nodeNoLocal;
 
       std::array<global_no_t,D> coordinatesGlobal = meshPartition->getCoordinatesGlobal(nodeNoLocal);
       std::array<int,D> coordinatesLocal;
@@ -477,20 +477,20 @@ config = {
 
       node_no_t nodeNoLocalFromCoordinates = functionSpace->getNodeNo(coordinatesLocal);
 
-      LOG(DEBUG) << "coordinatesGlobal: " << coordinatesGlobal;
+      VLOG(1) << "coordinatesGlobal: " << coordinatesGlobal;
 
       global_no_t nodeNoGlobalNaturalFromCoordinates = meshPartition->getNodeNoGlobalNatural(coordinatesGlobal);
       global_no_t nodeNoGlobalNatural = functionSpace->getNodeNoGlobalNatural(elementNoGlobalNatural, nodeIndex);
 
-      LOG(DEBUG) << "nodeNoGlobalNaturalFromCoordinates: " << nodeNoGlobalNaturalFromCoordinates << ", nodeNoGlobalNatural: " << nodeNoGlobalNatural;
-      LOG(DEBUG) << "nodeNoLocalFromCoordinates: " << nodeNoLocalFromCoordinates << ", nodeNoLocal: " << nodeNoLocal;
+      VLOG(1) << "nodeNoGlobalNaturalFromCoordinates: " << nodeNoGlobalNaturalFromCoordinates << ", nodeNoGlobalNatural: " << nodeNoGlobalNatural;
+      VLOG(1) << "nodeNoLocalFromCoordinates: " << nodeNoLocalFromCoordinates << ", nodeNoLocal: " << nodeNoLocal;
 
       ASSERT_EQ(nodeNoGlobalNaturalFromCoordinates, nodeNoGlobalNatural);
       ASSERT_EQ(nodeNoLocalFromCoordinates, nodeNoLocal);
     }
   }
 
-  LOG(DEBUG) << " ===================== run neighbour ===================== ";
+  VLOG(1) << " ===================== run neighbour ===================== ";
   // validate getNeighbourNodeNoLocal
   std::vector<std::pair<std::pair<Mesh::face_t,Mesh::face_t>,std::array<int,D>>> complementFaces = {
     {{Mesh::face_t::face0Plus,  Mesh::face_t::face0Minus}, {1,0}},
@@ -509,7 +509,7 @@ config = {
     for (node_no_t nodeNoLocal = 0; nodeNoLocal < functionSpace->nNodesLocalWithoutGhosts(); nodeNoLocal++)
     {
       node_no_t neighbourNodeNo = functionSpace->getNeighbourNodeNoLocal(nodeNoLocal, face0);
-      LOG(DEBUG) << "nodeNoLocal = " << nodeNoLocal << ", face " << face0 << ", neighbour: " << neighbourNodeNo;
+      VLOG(1) << "nodeNoLocal = " << nodeNoLocal << ", face " << face0 << ", neighbour: " << neighbourNodeNo;
 
       if (neighbourNodeNo != -1)
       {
@@ -524,7 +524,7 @@ config = {
           realDifference[j] = coordinatesGlobalNeighbour[j] - coordinatesGlobalOrigin[j];
         }
 
-        LOG(DEBUG) << "coordinates origin: " << coordinatesGlobalOrigin << ", neighbour: " << coordinatesGlobalNeighbour
+        VLOG(1) << "coordinates origin: " << coordinatesGlobalOrigin << ", neighbour: " << coordinatesGlobalNeighbour
           << ", difference: " << realDifference << ", expected: " << expectedDifference;
 
         for(int j = 0; j < D; j++)
@@ -538,7 +538,7 @@ config = {
       {
         node_no_t originNode = functionSpace->getNeighbourNodeNoLocal(neighbourNodeNo, face1);
 
-        LOG(DEBUG) << "  originNode: " << originNode << " face " << face1;
+        VLOG(1) << "  originNode: " << originNode << " face " << face1;
         ASSERT_EQ(nodeNoLocal, originNode);
       }
     }
@@ -583,7 +583,7 @@ config = {
 
   problem.initialize();
 
-  LOG(DEBUG) << " ===================== run dof no tests ===================== ";
+  VLOG(1) << " ===================== run dof no tests ===================== ";
 
   typedef typename ProblemType::FunctionSpace FunctionSpace;
   const int D = FunctionSpace::dim();
@@ -596,15 +596,15 @@ config = {
   {
     global_no_t elementNoGlobalNatural = meshPartition->getElementNoGlobalNatural(elementNoLocal);
 
-    LOG(DEBUG) << "";
-    LOG(DEBUG) << "elementNoLocal = " << elementNoLocal << ", elementNoGlobalNatural = " << elementNoGlobalNatural;
+    VLOG(1) << "";
+    VLOG(1) << "elementNoLocal = " << elementNoLocal << ", elementNoGlobalNatural = " << elementNoGlobalNatural;
 
     // loop over local nodes, with ghosts
     for (int nodeIndex = 0; nodeIndex < functionSpace->nNodesPerElement(); nodeIndex++)
     {
       node_no_t nodeNoLocal = functionSpace->getNodeNo(elementNoLocal, nodeIndex);
 
-      LOG(DEBUG) << "elementNoLocal = " << elementNoLocal << ", nodeIndex = " << nodeIndex << ", nodeNoLocal = " << nodeNoLocal;
+      VLOG(1) << "elementNoLocal = " << elementNoLocal << ", nodeIndex = " << nodeIndex << ", nodeNoLocal = " << nodeNoLocal;
 
       std::array<global_no_t,D> coordinatesGlobal = meshPartition->getCoordinatesGlobal(nodeNoLocal);
       std::array<int,D> coordinatesLocal;
@@ -615,20 +615,20 @@ config = {
 
       node_no_t nodeNoLocalFromCoordinates = functionSpace->getNodeNo(coordinatesLocal);
 
-      LOG(DEBUG) << "coordinatesGlobal: " << coordinatesGlobal;
+      VLOG(1) << "coordinatesGlobal: " << coordinatesGlobal;
 
       global_no_t nodeNoGlobalNaturalFromCoordinates = meshPartition->getNodeNoGlobalNatural(coordinatesGlobal);
       global_no_t nodeNoGlobalNatural = functionSpace->getNodeNoGlobalNatural(elementNoGlobalNatural, nodeIndex);
 
-      LOG(DEBUG) << "nodeNoGlobalNaturalFromCoordinates: " << nodeNoGlobalNaturalFromCoordinates << ", nodeNoGlobalNatural: " << nodeNoGlobalNatural;
-      LOG(DEBUG) << "nodeNoLocalFromCoordinates: " << nodeNoLocalFromCoordinates << ", nodeNoLocal: " << nodeNoLocal;
+      VLOG(1) << "nodeNoGlobalNaturalFromCoordinates: " << nodeNoGlobalNaturalFromCoordinates << ", nodeNoGlobalNatural: " << nodeNoGlobalNatural;
+      VLOG(1) << "nodeNoLocalFromCoordinates: " << nodeNoLocalFromCoordinates << ", nodeNoLocal: " << nodeNoLocal;
 
       ASSERT_EQ(nodeNoGlobalNaturalFromCoordinates, nodeNoGlobalNatural);
       ASSERT_EQ(nodeNoLocalFromCoordinates, nodeNoLocal);
     }
   }
 
-  LOG(DEBUG) << " ===================== run neighbour ===================== ";
+  VLOG(1) << " ===================== run neighbour ===================== ";
   // validate getNeighbourNodeNoLocal
   std::vector<std::pair<std::pair<Mesh::face_t,Mesh::face_t>,std::array<int,D>>> complementFaces = {
     {{Mesh::face_t::face0Plus,  Mesh::face_t::face0Minus}, {1,0}},
@@ -647,7 +647,7 @@ config = {
     for (node_no_t nodeNoLocal = 0; nodeNoLocal < functionSpace->nNodesLocalWithoutGhosts(); nodeNoLocal++)
     {
       node_no_t neighbourNodeNo = functionSpace->getNeighbourNodeNoLocal(nodeNoLocal, face0);
-      LOG(DEBUG) << "nodeNoLocal = " << nodeNoLocal << ", face " << face0 << ", neighbour: " << neighbourNodeNo;
+      VLOG(1) << "nodeNoLocal = " << nodeNoLocal << ", face " << face0 << ", neighbour: " << neighbourNodeNo;
 
       if (neighbourNodeNo != -1)
       {
@@ -662,7 +662,7 @@ config = {
           realDifference[j] = coordinatesGlobalNeighbour[j] - coordinatesGlobalOrigin[j];
         }
 
-        LOG(DEBUG) << "coordinates origin: " << coordinatesGlobalOrigin << ", neighbour: " << coordinatesGlobalNeighbour
+        VLOG(1) << "coordinates origin: " << coordinatesGlobalOrigin << ", neighbour: " << coordinatesGlobalNeighbour
           << ", difference: " << realDifference << ", expected: " << expectedDifference;
 
         for(int j = 0; j < D; j++)
@@ -676,7 +676,7 @@ config = {
       {
         node_no_t originNode = functionSpace->getNeighbourNodeNoLocal(neighbourNodeNo, face1);
 
-        LOG(DEBUG) << "  originNode: " << originNode << " face " << face1;
+        VLOG(1) << "  originNode: " << originNode << " face " << face1;
         ASSERT_EQ(nodeNoLocal, originNode);
       }
     }
@@ -721,7 +721,7 @@ config = {
 
   problem.initialize();
 
-  LOG(DEBUG) << " ===================== run dof no tests ===================== ";
+  VLOG(1) << " ===================== run dof no tests ===================== ";
 
   typedef typename ProblemType::FunctionSpace FunctionSpace;
   const int D = FunctionSpace::dim();
@@ -734,15 +734,15 @@ config = {
   {
     global_no_t elementNoGlobalNatural = meshPartition->getElementNoGlobalNatural(elementNoLocal);
 
-    LOG(DEBUG) << "";
-    LOG(DEBUG) << "elementNoLocal = " << elementNoLocal << ", elementNoGlobalNatural = " << elementNoGlobalNatural;
+    VLOG(1) << "";
+    VLOG(1) << "elementNoLocal = " << elementNoLocal << ", elementNoGlobalNatural = " << elementNoGlobalNatural;
 
     // loop over local nodes, with ghosts
     for (int nodeIndex = 0; nodeIndex < functionSpace->nNodesPerElement(); nodeIndex++)
     {
       node_no_t nodeNoLocal = functionSpace->getNodeNo(elementNoLocal, nodeIndex);
 
-      LOG(DEBUG) << "elementNoLocal = " << elementNoLocal << ", nodeIndex = " << nodeIndex << ", nodeNoLocal = " << nodeNoLocal;
+      VLOG(1) << "elementNoLocal = " << elementNoLocal << ", nodeIndex = " << nodeIndex << ", nodeNoLocal = " << nodeNoLocal;
 
       std::array<global_no_t,D> coordinatesGlobal = meshPartition->getCoordinatesGlobal(nodeNoLocal);
       std::array<int,D> coordinatesLocal;
@@ -753,20 +753,20 @@ config = {
 
       node_no_t nodeNoLocalFromCoordinates = functionSpace->getNodeNo(coordinatesLocal);
 
-      LOG(DEBUG) << "coordinatesGlobal: " << coordinatesGlobal;
+      VLOG(1) << "coordinatesGlobal: " << coordinatesGlobal;
 
       global_no_t nodeNoGlobalNaturalFromCoordinates = meshPartition->getNodeNoGlobalNatural(coordinatesGlobal);
       global_no_t nodeNoGlobalNatural = functionSpace->getNodeNoGlobalNatural(elementNoGlobalNatural, nodeIndex);
 
-      LOG(DEBUG) << "nodeNoGlobalNaturalFromCoordinates: " << nodeNoGlobalNaturalFromCoordinates << ", nodeNoGlobalNatural: " << nodeNoGlobalNatural;
-      LOG(DEBUG) << "nodeNoLocalFromCoordinates: " << nodeNoLocalFromCoordinates << ", nodeNoLocal: " << nodeNoLocal;
+      VLOG(1) << "nodeNoGlobalNaturalFromCoordinates: " << nodeNoGlobalNaturalFromCoordinates << ", nodeNoGlobalNatural: " << nodeNoGlobalNatural;
+      VLOG(1) << "nodeNoLocalFromCoordinates: " << nodeNoLocalFromCoordinates << ", nodeNoLocal: " << nodeNoLocal;
 
       ASSERT_EQ(nodeNoGlobalNaturalFromCoordinates, nodeNoGlobalNatural);
       ASSERT_EQ(nodeNoLocalFromCoordinates, nodeNoLocal);
     }
   }
 
-  LOG(DEBUG) << " ===================== run neighbour ===================== ";
+  VLOG(1) << " ===================== run neighbour ===================== ";
   // validate getNeighbourNodeNoLocal
   std::vector<std::pair<Mesh::face_t,Mesh::face_t>> complementFaces = {
     {Mesh::face_t::face0Plus,  Mesh::face_t::face0Minus},
@@ -784,14 +784,14 @@ config = {
     for (node_no_t nodeNoLocal = 0; nodeNoLocal < functionSpace->nNodesLocalWithoutGhosts(); nodeNoLocal++)
     {
       node_no_t neighbourNodeNo = functionSpace->getNeighbourNodeNoLocal(nodeNoLocal, face0);
-      LOG(DEBUG) << "nodeNoLocal = " << nodeNoLocal << ", face " << face0 << ", neighbour: " << neighbourNodeNo;
+      VLOG(1) << "nodeNoLocal = " << nodeNoLocal << ", face " << face0 << ", neighbour: " << neighbourNodeNo;
 
       // if the neighbour exists and is a non-ghost dof
       if (neighbourNodeNo != -1 && neighbourNodeNo < functionSpace->nNodesLocalWithoutGhosts())
       {
         node_no_t originNode = functionSpace->getNeighbourNodeNoLocal(neighbourNodeNo, face1);
 
-        LOG(DEBUG) << "  originNode: " << originNode << " face " << face1;
+        VLOG(1) << "  originNode: " << originNode << " face " << face1;
         ASSERT_EQ(nodeNoLocal, originNode);
       }
     }
@@ -838,7 +838,7 @@ config = {
 
   problem.initialize();
 
-  LOG(DEBUG) << " ===================== run dof no tests ===================== ";
+  VLOG(1) << " ===================== run dof no tests ===================== ";
 
   typedef typename ProblemType::FunctionSpace FunctionSpace;
   const int D = FunctionSpace::dim();
@@ -851,15 +851,15 @@ config = {
   {
     global_no_t elementNoGlobalNatural = meshPartition->getElementNoGlobalNatural(elementNoLocal);
 
-    LOG(DEBUG) << "";
-    LOG(DEBUG) << "elementNoLocal = " << elementNoLocal << ", elementNoGlobalNatural = " << elementNoGlobalNatural;
+    VLOG(1) << "";
+    VLOG(1) << "elementNoLocal = " << elementNoLocal << ", elementNoGlobalNatural = " << elementNoGlobalNatural;
 
     // loop over local nodes, with ghosts
     for (int nodeIndex = 0; nodeIndex < functionSpace->nNodesPerElement(); nodeIndex++)
     {
       node_no_t nodeNoLocal = functionSpace->getNodeNo(elementNoLocal, nodeIndex);
 
-      LOG(DEBUG) << "elementNoLocal = " << elementNoLocal << ", nodeIndex = " << nodeIndex << ", nodeNoLocal = " << nodeNoLocal;
+      VLOG(1) << "elementNoLocal = " << elementNoLocal << ", nodeIndex = " << nodeIndex << ", nodeNoLocal = " << nodeNoLocal;
 
       std::array<global_no_t,D> coordinatesGlobal = meshPartition->getCoordinatesGlobal(nodeNoLocal);
       std::array<int,D> coordinatesLocal;
@@ -870,20 +870,20 @@ config = {
 
       node_no_t nodeNoLocalFromCoordinates = functionSpace->getNodeNo(coordinatesLocal);
 
-      LOG(DEBUG) << "coordinatesGlobal: " << coordinatesGlobal;
+      VLOG(1) << "coordinatesGlobal: " << coordinatesGlobal;
 
       global_no_t nodeNoGlobalNaturalFromCoordinates = meshPartition->getNodeNoGlobalNatural(coordinatesGlobal);
       global_no_t nodeNoGlobalNatural = functionSpace->getNodeNoGlobalNatural(elementNoGlobalNatural, nodeIndex);
 
-      LOG(DEBUG) << "nodeNoGlobalNaturalFromCoordinates: " << nodeNoGlobalNaturalFromCoordinates << ", nodeNoGlobalNatural: " << nodeNoGlobalNatural;
-      LOG(DEBUG) << "nodeNoLocalFromCoordinates: " << nodeNoLocalFromCoordinates << ", nodeNoLocal: " << nodeNoLocal;
+      VLOG(1) << "nodeNoGlobalNaturalFromCoordinates: " << nodeNoGlobalNaturalFromCoordinates << ", nodeNoGlobalNatural: " << nodeNoGlobalNatural;
+      VLOG(1) << "nodeNoLocalFromCoordinates: " << nodeNoLocalFromCoordinates << ", nodeNoLocal: " << nodeNoLocal;
 
       ASSERT_EQ(nodeNoGlobalNaturalFromCoordinates, nodeNoGlobalNatural);
       ASSERT_EQ(nodeNoLocalFromCoordinates, nodeNoLocal);
     }
   }
 
-  LOG(DEBUG) << " ===================== run neighbour ===================== ";
+  VLOG(1) << " ===================== run neighbour ===================== ";
   // validate getNeighbourNodeNoLocal
   std::vector<std::pair<std::pair<Mesh::face_t,Mesh::face_t>,std::array<int,D>>> complementFaces = {
     {{Mesh::face_t::face0Plus,  Mesh::face_t::face0Minus}, {1,0,0}},
@@ -904,7 +904,7 @@ config = {
     for (node_no_t nodeNoLocal = 0; nodeNoLocal < functionSpace->nNodesLocalWithoutGhosts(); nodeNoLocal++)
     {
       node_no_t neighbourNodeNo = functionSpace->getNeighbourNodeNoLocal(nodeNoLocal, face0);
-      LOG(DEBUG) << "nodeNoLocal = " << nodeNoLocal << ", face " << face0 << ", neighbour: " << neighbourNodeNo;
+      VLOG(1) << "nodeNoLocal = " << nodeNoLocal << ", face " << face0 << ", neighbour: " << neighbourNodeNo;
 
       if (neighbourNodeNo != -1)
       {
@@ -919,7 +919,7 @@ config = {
           realDifference[j] = coordinatesGlobalNeighbour[j] - coordinatesGlobalOrigin[j];
         }
 
-        LOG(DEBUG) << "coordinates origin: " << coordinatesGlobalOrigin << ", neighbour: " << coordinatesGlobalNeighbour
+        VLOG(1) << "coordinates origin: " << coordinatesGlobalOrigin << ", neighbour: " << coordinatesGlobalNeighbour
           << ", difference: " << realDifference << ", expected: " << expectedDifference;
 
         for(int j = 0; j < D; j++)
@@ -933,7 +933,7 @@ config = {
       {
         node_no_t originNode = functionSpace->getNeighbourNodeNoLocal(neighbourNodeNo, face1);
 
-        LOG(DEBUG) << "  originNode: " << originNode << " face " << face1;
+        VLOG(1) << "  originNode: " << originNode << " face " << face1;
         ASSERT_EQ(nodeNoLocal, originNode);
       }
     }
@@ -979,7 +979,7 @@ config = {
 
   problem.initialize();
 
-  LOG(DEBUG) << " ===================== run dof no tests ===================== ";
+  VLOG(1) << " ===================== run dof no tests ===================== ";
 
   typedef typename ProblemType::FunctionSpace FunctionSpace;
   const int D = FunctionSpace::dim();
@@ -992,15 +992,15 @@ config = {
   {
     global_no_t elementNoGlobalNatural = meshPartition->getElementNoGlobalNatural(elementNoLocal);
 
-    LOG(DEBUG) << "";
-    LOG(DEBUG) << "elementNoLocal = " << elementNoLocal << ", elementNoGlobalNatural = " << elementNoGlobalNatural;
+    VLOG(1) << "";
+    VLOG(1) << "elementNoLocal = " << elementNoLocal << ", elementNoGlobalNatural = " << elementNoGlobalNatural;
 
     // loop over local nodes, with ghosts
     for (int nodeIndex = 0; nodeIndex < functionSpace->nNodesPerElement(); nodeIndex++)
     {
       node_no_t nodeNoLocal = functionSpace->getNodeNo(elementNoLocal, nodeIndex);
 
-      LOG(DEBUG) << "elementNoLocal = " << elementNoLocal << ", nodeIndex = " << nodeIndex << ", nodeNoLocal = " << nodeNoLocal;
+      VLOG(1) << "elementNoLocal = " << elementNoLocal << ", nodeIndex = " << nodeIndex << ", nodeNoLocal = " << nodeNoLocal;
 
       std::array<global_no_t,D> coordinatesGlobal = meshPartition->getCoordinatesGlobal(nodeNoLocal);
       std::array<int,D> coordinatesLocal;
@@ -1011,20 +1011,20 @@ config = {
 
       node_no_t nodeNoLocalFromCoordinates = functionSpace->getNodeNo(coordinatesLocal);
 
-      LOG(DEBUG) << "coordinatesGlobal: " << coordinatesGlobal;
+      VLOG(1) << "coordinatesGlobal: " << coordinatesGlobal;
 
       global_no_t nodeNoGlobalNaturalFromCoordinates = meshPartition->getNodeNoGlobalNatural(coordinatesGlobal);
       global_no_t nodeNoGlobalNatural = functionSpace->getNodeNoGlobalNatural(elementNoGlobalNatural, nodeIndex);
 
-      LOG(DEBUG) << "nodeNoGlobalNaturalFromCoordinates: " << nodeNoGlobalNaturalFromCoordinates << ", nodeNoGlobalNatural: " << nodeNoGlobalNatural;
-      LOG(DEBUG) << "nodeNoLocalFromCoordinates: " << nodeNoLocalFromCoordinates << ", nodeNoLocal: " << nodeNoLocal;
+      VLOG(1) << "nodeNoGlobalNaturalFromCoordinates: " << nodeNoGlobalNaturalFromCoordinates << ", nodeNoGlobalNatural: " << nodeNoGlobalNatural;
+      VLOG(1) << "nodeNoLocalFromCoordinates: " << nodeNoLocalFromCoordinates << ", nodeNoLocal: " << nodeNoLocal;
 
       ASSERT_EQ(nodeNoGlobalNaturalFromCoordinates, nodeNoGlobalNatural);
       ASSERT_EQ(nodeNoLocalFromCoordinates, nodeNoLocal);
     }
   }
 
-  LOG(DEBUG) << " ===================== run neighbour ===================== ";
+  VLOG(1) << " ===================== run neighbour ===================== ";
   // validate getNeighbourNodeNoLocal
   std::vector<std::pair<std::pair<Mesh::face_t,Mesh::face_t>,std::array<int,D>>> complementFaces = {
     {{Mesh::face_t::face0Plus,  Mesh::face_t::face0Minus}, {1,0,0}},
@@ -1045,7 +1045,7 @@ config = {
     for (node_no_t nodeNoLocal = 0; nodeNoLocal < functionSpace->nNodesLocalWithoutGhosts(); nodeNoLocal++)
     {
       node_no_t neighbourNodeNo = functionSpace->getNeighbourNodeNoLocal(nodeNoLocal, face0);
-      LOG(DEBUG) << "nodeNoLocal = " << nodeNoLocal << ", face " << face0 << ", neighbour: " << neighbourNodeNo;
+      VLOG(1) << "nodeNoLocal = " << nodeNoLocal << ", face " << face0 << ", neighbour: " << neighbourNodeNo;
 
       if (neighbourNodeNo != -1)
       {
@@ -1060,7 +1060,7 @@ config = {
           realDifference[j] = coordinatesGlobalNeighbour[j] - coordinatesGlobalOrigin[j];
         }
 
-        LOG(DEBUG) << "coordinates origin: " << coordinatesGlobalOrigin << ", neighbour: " << coordinatesGlobalNeighbour
+        VLOG(1) << "coordinates origin: " << coordinatesGlobalOrigin << ", neighbour: " << coordinatesGlobalNeighbour
           << ", difference: " << realDifference << ", expected: " << expectedDifference;
 
         for(int j = 0; j < D; j++)
@@ -1074,7 +1074,7 @@ config = {
       {
         node_no_t originNode = functionSpace->getNeighbourNodeNoLocal(neighbourNodeNo, face1);
 
-        LOG(DEBUG) << "  originNode: " << originNode << " face " << face1;
+        VLOG(1) << "  originNode: " << originNode << " face " << face1;
         ASSERT_EQ(nodeNoLocal, originNode);
       }
     }
@@ -1124,7 +1124,7 @@ config = {
 
   problem.initialize();
 
-  LOG(DEBUG) << " ===================== run dof no tests ===================== ";
+  VLOG(1) << " ===================== run dof no tests ===================== ";
 
   typedef typename ProblemType::FunctionSpace FunctionSpace;
   const int D = FunctionSpace::dim();
@@ -1137,15 +1137,15 @@ config = {
   {
     global_no_t elementNoGlobalNatural = meshPartition->getElementNoGlobalNatural(elementNoLocal);
 
-    LOG(DEBUG) << "";
-    LOG(DEBUG) << "elementNoLocal = " << elementNoLocal << ", elementNoGlobalNatural = " << elementNoGlobalNatural;
+    VLOG(1) << "";
+    VLOG(1) << "elementNoLocal = " << elementNoLocal << ", elementNoGlobalNatural = " << elementNoGlobalNatural;
 
     // loop over local nodes, with ghosts
     for (int nodeIndex = 0; nodeIndex < functionSpace->nNodesPerElement(); nodeIndex++)
     {
       node_no_t nodeNoLocal = functionSpace->getNodeNo(elementNoLocal, nodeIndex);
 
-      LOG(DEBUG) << "elementNoLocal = " << elementNoLocal << ", nodeIndex = " << nodeIndex << ", nodeNoLocal = " << nodeNoLocal;
+      VLOG(1) << "elementNoLocal = " << elementNoLocal << ", nodeIndex = " << nodeIndex << ", nodeNoLocal = " << nodeNoLocal;
 
       std::array<global_no_t,D> coordinatesGlobal = meshPartition->getCoordinatesGlobal(nodeNoLocal);
       std::array<int,D> coordinatesLocal;
@@ -1156,20 +1156,20 @@ config = {
 
       node_no_t nodeNoLocalFromCoordinates = functionSpace->getNodeNo(coordinatesLocal);
 
-      LOG(DEBUG) << "coordinatesGlobal: " << coordinatesGlobal << ", coordinatesLocal: " << coordinatesLocal;
+      VLOG(1) << "coordinatesGlobal: " << coordinatesGlobal << ", coordinatesLocal: " << coordinatesLocal;
 
       global_no_t nodeNoGlobalNaturalFromCoordinates = meshPartition->getNodeNoGlobalNatural(coordinatesGlobal);
       global_no_t nodeNoGlobalNatural = functionSpace->getNodeNoGlobalNatural(elementNoGlobalNatural, nodeIndex);
 
-      LOG(DEBUG) << "nodeNoGlobalNaturalFromCoordinates: " << nodeNoGlobalNaturalFromCoordinates << ", nodeNoGlobalNatural: " << nodeNoGlobalNatural;
-      LOG(DEBUG) << "nodeNoLocalFromCoordinates: " << nodeNoLocalFromCoordinates << ", nodeNoLocal: " << nodeNoLocal;
+      VLOG(1) << "nodeNoGlobalNaturalFromCoordinates: " << nodeNoGlobalNaturalFromCoordinates << ", nodeNoGlobalNatural: " << nodeNoGlobalNatural;
+      VLOG(1) << "nodeNoLocalFromCoordinates: " << nodeNoLocalFromCoordinates << ", nodeNoLocal: " << nodeNoLocal;
 
       ASSERT_EQ(nodeNoGlobalNaturalFromCoordinates, nodeNoGlobalNatural);
       ASSERT_EQ(nodeNoLocalFromCoordinates, nodeNoLocal);
     }
   }
 
-  LOG(DEBUG) << " ===================== run neighbour ===================== ";
+  VLOG(1) << " ===================== run neighbour ===================== ";
   // validate getNeighbourNodeNoLocal
   std::vector<std::pair<std::pair<Mesh::face_t,Mesh::face_t>,std::array<int,D>>> complementFaces = {
     {{Mesh::face_t::face0Plus,  Mesh::face_t::face0Minus}, {1,0,0}},
@@ -1190,7 +1190,7 @@ config = {
     for (node_no_t nodeNoLocal = 0; nodeNoLocal < functionSpace->nNodesLocalWithoutGhosts(); nodeNoLocal++)
     {
       node_no_t neighbourNodeNo = functionSpace->getNeighbourNodeNoLocal(nodeNoLocal, face0);
-      LOG(DEBUG) << "nodeNoLocal = " << nodeNoLocal << ", face " << face0 << ", neighbour: " << neighbourNodeNo;
+      VLOG(1) << "nodeNoLocal = " << nodeNoLocal << ", face " << face0 << ", neighbour: " << neighbourNodeNo;
 
       if (neighbourNodeNo != -1)
       {
@@ -1205,7 +1205,7 @@ config = {
           realDifference[j] = coordinatesGlobalNeighbour[j] - coordinatesGlobalOrigin[j];
         }
 
-        LOG(DEBUG) << "coordinates origin: " << coordinatesGlobalOrigin << ", neighbour: " << coordinatesGlobalNeighbour
+        VLOG(1) << "coordinates origin: " << coordinatesGlobalOrigin << ", neighbour: " << coordinatesGlobalNeighbour
           << ", difference: " << realDifference << ", expected: " << expectedDifference;
 
         for(int j = 0; j < D; j++)
@@ -1219,7 +1219,7 @@ config = {
       {
         node_no_t originNode = functionSpace->getNeighbourNodeNoLocal(neighbourNodeNo, face1);
 
-        LOG(DEBUG) << "  originNode: " << originNode << " face " << face1;
+        VLOG(1) << "  originNode: " << originNode << " face " << face1;
         ASSERT_EQ(nodeNoLocal, originNode);
       }
     }

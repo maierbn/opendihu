@@ -2,6 +2,10 @@
 
 #include "data_management/finite_element_method/finite_elements.h"
 #include "partition/rank_subset.h"
+#include "spatial_discretization/spatial_discretization.h"
+#include "interfaces/runnable.h"
+#include "interfaces/multipliable.h"
+#include "output_writer/manager.h"
 
 //#define QUADRATURE_TEST    ///< if evaluation of quadrature accuracy takes place
 //#define EXACT_QUADRATURE Quadrature::Gauss<20>
@@ -13,16 +17,21 @@ namespace SpatialDiscretization
  * Base class containing basic finite element functionality such as initializing and solving.
  * Further classes derive from this base class and add special functionality such as setting stiffness matrix, rhs and timestepping
  */
-template<typename FunctionSpaceType,typename QuadratureType,typename Term>
-class FiniteElementMethodBase : public SpatialDiscretization, public Runnable
+template<typename FunctionSpaceType,typename QuadratureType,typename Term_>
+class FiniteElementMethodBase :
+  public SpatialDiscretization,
+  public Runnable,
+  public Multipliable
 {
 public:
   //! constructor, if function space is not given, create new one according to settings
   //! if the function space is given as parameter, is has to be already initialize()d
   FiniteElementMethodBase(DihuContext context, std::shared_ptr<FunctionSpaceType> functionSpace = nullptr);
 
+  typedef Term_ Term;
   typedef ::Data::FiniteElements<FunctionSpaceType,Term> Data;
   typedef FunctionSpaceType FunctionSpace;
+  typedef QuadratureType Quadrature;
   typedef typename Data::TransferableSolutionDataType TransferableSolutionDataType;
 
   // perform computation
@@ -109,6 +118,6 @@ public:
 };
 
 
-};  // namespace
+} // namespace
 
 #include "spatial_discretization/finite_element_method/00_base.tpp"

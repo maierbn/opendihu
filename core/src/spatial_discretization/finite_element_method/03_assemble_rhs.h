@@ -105,7 +105,7 @@ protected:
   void multiplyRightHandSideWithMassMatrix(){}
 };
 
-};  // namespace
+} // namespace
 
 #include "spatial_discretization/finite_element_method/03_assemble_rhs_integrate.tpp"
 #include "spatial_discretization/finite_element_method/03_assemble_rhs_stencils.tpp"

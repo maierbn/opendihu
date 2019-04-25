@@ -76,5 +76,5 @@ checkIfNewExelemHeaderNecessary(TupleType currentFieldVariableTuple, std::string
   return false;  // do not break iteration
 }
 
-};  //namespace ExfileLoopOverTuple
-};  //namespace OutputWriter
+}  // namespace ExfileLoopOverTuple
+}  // namespace OutputWriter

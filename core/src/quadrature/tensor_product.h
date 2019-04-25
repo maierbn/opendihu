@@ -64,5 +64,5 @@ public:
   static std::array<std::array<double,3>, TensorProductBase<3,Quadrature>::numberEvaluations()> samplingPoints();
 };
 
-};  // namespace
+} // namespace
 #include "quadrature/tensor_product.tpp"

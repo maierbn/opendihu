@@ -88,6 +88,6 @@ public:
   void setValuesWithoutGhosts(const std::vector<double> &values, InsertMode petscInsertMode=INSERT_VALUES);
 };
 
-};   // namespace
+}  // namespace
 
 #include "field_variable/structured/04_field_variable_set_get_component_dependent_structured.tpp"

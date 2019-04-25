@@ -34,6 +34,18 @@ public:
   //! for a specific component, get all values
   void getValuesWithoutGhosts(int componentNo, std::vector<double> &values, bool onlyNodalValues=false) const;
 
+  //! get all values
+  //! @param onlyNodalValues: if this is true, for Hermite only the non-derivative values are retrieved
+  void getValuesWithGhosts(std::vector<std::array<double,nComponents>> &values, bool onlyNodalValues=false) const;
+
+  //! get all values
+  //! @param onlyNodalValues: if this is true, for Hermite only the non-derivative values are retrieved
+  void getValuesWithoutGhosts(std::vector<std::array<double,nComponents>> &values, bool onlyNodalValues=false) const;
+
+  //! get all values
+  //! @param onlyNodalValues: if this is true, for Hermite only the non-derivative values are retrieved
+  void getValuesWithoutGhosts(std::array<std::vector<double>,nComponents> &values, bool onlyNodalValues=false) const;
+
   //! for a specific component, get values from their local dof no.s
   template<int N>
   void getValues(int componentNo, std::array<dof_no_t,N> dofLocalNo, std::array<double,N> &values) const;
@@ -58,6 +70,6 @@ public:
   void setValues(FieldVariable<FunctionSpaceType,nComponents> &rhs);
 };
 
-};  // namespace
+} // namespace
 
 #include "field_variable/structured/06_field_variable_set_get_structured_regular_fixed.tpp"

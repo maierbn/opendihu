@@ -65,6 +65,8 @@ FieldVariableDataStructured(FieldVariable<FunctionSpaceType,nComponents2> &rhs, 
   assert(this->functionSpace_);
   assert(this->functionSpace_->meshPartition());
   
+  VLOG(1) << "construct field variable \"" << name << "\" from other field variable \"" << rhs.name() << "\".";
+
   // create new distributed petsc vec as copy of rhs values vector
   if (rhs.partitionedPetscVec())
   {
@@ -325,4 +327,4 @@ output(std::ostream &stream) const
   }
 }
 
-};
+}  // namespace

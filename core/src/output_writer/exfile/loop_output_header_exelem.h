@@ -57,8 +57,8 @@ typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value &
 outputHeaderExelem(CurrentFieldVariableType currentFieldVariable, int &fieldVariableIndex, std::string meshName, 
                    std::ostream &stream, element_no_t currentFieldVariableGlobalNo);
 
-};  //namespace ExfileLoopOverTuple
+}  // namespace ExfileLoopOverTuple
 
-};  //namespace OutputWriter
+}  // namespace OutputWriter
 
 #include "output_writer/exfile/loop_output_header_exelem.tpp"

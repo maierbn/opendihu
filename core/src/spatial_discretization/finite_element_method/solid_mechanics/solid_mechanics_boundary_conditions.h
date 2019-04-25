@@ -65,6 +65,6 @@ protected:
 
 };
 
-};  // namespace
+} // namespace
 
 #include "spatial_discretization/finite_element_method/solid_mechanics/solid_mechanics_boundary_conditions.tpp"

@@ -117,4 +117,4 @@ computeIntegral(const std::array<ValueType, TensorProductBase<3,Quadrature>::num
   return Quadrature::computeIntegral(evaluationsZ);
 }
 
-}
+}  // namespace

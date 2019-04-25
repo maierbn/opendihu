@@ -79,5 +79,5 @@ collectFieldVariablesNames(TupleType currentFieldVariableTuple, const OutputFiel
   return false;  // do not break iteration 
 }
 
-};  //namespace ParaviewLoopOverTuple
-};  //namespace OutputWriter
+}  // namespace ParaviewLoopOverTuple
+}  // namespace OutputWriter

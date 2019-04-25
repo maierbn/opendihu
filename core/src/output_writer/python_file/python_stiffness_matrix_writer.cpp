@@ -164,4 +164,4 @@ void NumpyFileWriter::writeToNumpyFile(std::vector<double> &data, std::string fi
 
 }
 
-};   // namespace
+}  // namespace

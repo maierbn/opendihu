@@ -117,6 +117,22 @@ bool PythonConfig::hasKey(std::string key) const
   return PythonUtility::hasKey(this->pythonConfig_, key);
 }
 
+//! return all keys of the current dict as vector of strings
+void PythonConfig::getKeys(std::vector<std::string> &keys)
+{
+  if (!PyDict_Check(pythonConfig_))
+    return;
+
+  PyObject *pyList = PyDict_Items(pythonConfig_);
+  std::vector<std::pair<std::string,PyObject *>> list = PythonUtility::convertFromPython<std::vector<std::pair<std::string,PyObject *>>>::get(pyList);
+
+  keys.clear();
+  for (std::vector<std::pair<std::string,PyObject *>>::iterator iter = list.begin(); iter != list.end(); iter++)
+  {
+    keys.push_back(iter->first);
+  }
+}
+
 //! given a python dictionary in settings, extract the value of given key and check if it is again a dict. Returns NULL, if the key does not exist. Then also a warning is printed.
 PyObject *PythonConfig::getOptionPyObject(std::string key, PyObject *defaultValue) const
 {

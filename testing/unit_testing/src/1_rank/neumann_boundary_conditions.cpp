@@ -311,7 +311,7 @@ config = {
     "neumannBoundaryConditions": neumann_bc,
     "relativeTolerance": 1e-15,
     "solverType": "gmres",
-    "preconditionerType": "none",
+    "preconditionerType": "sor",
     "maxIterations": 10000,
     "OutputWriter" : []
   },
@@ -400,7 +400,7 @@ config = {
     "neumannBoundaryConditions": neumann_bc,
     "relativeTolerance": 1e-15,
     "solverType": "gmres",
-    "preconditionerType": "none",
+    "preconditionerType": "sor",
     "maxIterations": 10000,
     "OutputWriter" : []
   },
@@ -490,7 +490,7 @@ config = {
     "neumannBoundaryConditions": neumann_bc,        # Neumann BC are always interpolated using Lagrange ansatz functions with one dof per node (not Hermite), even if the solution uses Hermite ansatz functions
     "relativeTolerance": 1e-15,
     "solverType": "gmres",
-    "preconditionerType": "none",
+    "preconditionerType": "sor",
     "maxIterations": 10000,
     "OutputWriter" : [
       {"format": "Paraview", "outputInterval": 1, "filename": "out/p", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":False},
@@ -625,7 +625,7 @@ config = {
     "neumannBoundaryConditions": bc,
     "relativeTolerance": 1e-15,
     "solverType": "gmres",
-    "preconditionerType": "none",
+    "preconditionerType": "sor",
     "maxIterations": 10000,
     "OutputWriter" : [
       {"format": "Paraview", "outputInterval": 1, "filename": "out/laplace_structured", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
@@ -695,7 +695,7 @@ config = {
     "neumannBoundaryConditions": bc,
     "relativeTolerance": 1e-15,
     "solverType": "gmres",
-    "preconditionerType": "none",
+    "preconditionerType": "sor",
     "maxIterations": 10000,
     "OutputWriter" : [
       {"format": "Paraview", "outputInterval": 1, "filename": "out/laplace_linear_unstructured", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
@@ -876,7 +876,7 @@ config = {
     "neumannBoundaryConditions": bc,
     "relativeTolerance": 1e-15,
     "solverType": "gmres",
-    "preconditionerType": "none",
+    "preconditionerType": "sor",
     "maxIterations": 10000,
     "OutputWriter" : [
       {"format": "Paraview", "outputInterval": 1, "filename": "out/laplace_quadratic_unstructured", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
@@ -965,7 +965,7 @@ config = {
     "neumannBoundaryConditions": bc,
     "relativeTolerance": 1e-15,
     "solverType": "gmres",
-    "preconditionerType": "none",
+    "preconditionerType": "sor",
     "maxIterations": 10000,
     "OutputWriter" : [
       {"format": "Paraview", "outputInterval": 1, "filename": "out/laplace_hermite_unstructured", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},

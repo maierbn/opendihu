@@ -44,10 +44,11 @@ Linear::Linear(PythonConfig specificSettings, MPI_Comm mpiCommunicator, std::str
 
   // for multigrid set number of levels and cycle type
   if (pcType_ == std::string(PCGAMG))
-    int nLevels = this->specificSettings_.getOptionInt("nLevels", 2, PythonUtility::Positive);
+  {
+    int nLevels = this->specificSettings_.getOptionInt("nLevels", 25, PythonUtility::Positive);
     ierr = PCMGSetLevels(pc, nLevels, NULL); CHKERRV(ierr);
 	
-	std::string mgType = this->specificSettings_.getOptionString("gamgType", "classical");
+	std::string mgType = this->specificSettings_.getOptionString("gamgType", "agg");
 	PCGAMGType gamgType;
 	gamgType = PCGAMGCLASSICAL;
 	if(mgType == "classical")

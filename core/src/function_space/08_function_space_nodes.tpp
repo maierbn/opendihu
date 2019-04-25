@@ -34,4 +34,4 @@ FunctionSpaceNodes(PythonConfig specificSettings, bool noGeometryField) :
   FunctionSpaceFunction<MeshType, BasisFunction::CompletePolynomialOfDimensionAndOrder<MeshType::dim(),order>>::FunctionSpaceFunction(specificSettings)
 {
 }
-};  // namespace
+} // namespace

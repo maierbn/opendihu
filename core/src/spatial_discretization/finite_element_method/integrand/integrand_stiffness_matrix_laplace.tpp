@@ -33,7 +33,7 @@ evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,Term> &data, cons
   }
 
   return evaluations;
-};
+}
 
 //integrand for stiffness matrix of laplace operator, 2D
 template<typename EvaluationsType,typename FunctionSpaceType,typename Term>
@@ -96,7 +96,7 @@ evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,Term> &data, cons
   }
 
   return evaluations;
-};
+}
 
 //integrand for stiffness matrix of laplace operator, 3D
 template<typename EvaluationsType,typename FunctionSpaceType,typename Term>
@@ -139,6 +139,6 @@ evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,Term> &data, cons
   }
 
   return evaluations;
-};
+}
 
-};  // namespace
+} // namespace

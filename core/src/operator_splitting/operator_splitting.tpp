@@ -7,6 +7,7 @@
 #include "utility/python_utility.h"
 #include "data_management/time_stepping/time_stepping.h"
 #include "control/performance_measurement.h"
+#include "mesh/mesh_manager.h"
 
 namespace OperatorSplitting
 {
@@ -21,6 +22,7 @@ OperatorSplitting(DihuContext context, std::string schemeName) :
 
   PythonConfig topLevelSettings = context_.getPythonConfig();
   specificSettings_ = PythonConfig(topLevelSettings, schemeName);
+  schemeName_ = schemeName;
 }
 
 template<typename TimeStepping1, typename TimeStepping2>
@@ -41,7 +43,6 @@ initialize()
   LOG(TRACE) << "  OperatorSplitting::initialize";
 
   TimeSteppingScheme::initialize();
-
   timeStepOutputInterval_ = specificSettings_.getOptionInt("timeStepOutputInterval", 100, PythonUtility::Positive);
 
   LOG(TRACE) << "  OperatorSplitting::initialize done, timeSpan=[" << this->startTime_<< "," << this->endTime_<< "]"
@@ -64,17 +65,15 @@ initialize()
     timeStepping2_.initialize();
   }
 
+  LOG(DEBUG) << "initialize mappings between meshes \"" << timeStepping1_.data().functionSpace()->meshName() << "\" and \""
+    << timeStepping2_.data().functionSpace()->meshName() << "\".";
+  context_.meshManager()->initializeMappingsBetweenMeshes<typename TimeStepping1::FunctionSpace,typename TimeStepping2::FunctionSpace>(
+    timeStepping1_.data().functionSpace(), timeStepping2_.data().functionSpace());
+
   // log endTime parameters
   Control::PerformanceMeasurement::setParameter("endTime", endTime_);
 
   initialized_ = true;
-}
-
-template<typename TimeStepping1, typename TimeStepping2>
-Vec &OperatorSplitting<TimeStepping1, TimeStepping2>::
-solution()
-{
-  return timeStepping1_.solution();
 }
 
 template<typename TimeStepping1, typename TimeStepping2>
@@ -111,6 +110,13 @@ run()
 }
 
 template<typename TimeStepping1, typename TimeStepping2>
+typename OperatorSplitting<TimeStepping1, TimeStepping2>::TransferableSolutionDataType OperatorSplitting<TimeStepping1, TimeStepping2>::
+getSolutionForTransfer()
+{
+  return timeStepping1_.getSolutionForTransfer();
+}
+
+template<typename TimeStepping1, typename TimeStepping2>
 bool OperatorSplitting<TimeStepping1, TimeStepping2>::
 knowsMeshType()
 {
@@ -124,5 +130,31 @@ data()
   return timeStepping1_.data();
 }
 
+//! get a reference to the first timestepping object
+template<typename TimeStepping1, typename TimeStepping2>
+TimeStepping1 &OperatorSplitting<TimeStepping1, TimeStepping2>::
+timeStepping1()
+{
+  return timeStepping1_;
+}
 
-};    // namespace
+//! get a reference to the second timestepping object
+template<typename TimeStepping1, typename TimeStepping2>
+TimeStepping2 &OperatorSplitting<TimeStepping1, TimeStepping2>::
+timeStepping2()
+{
+  return timeStepping2_;
+}
+
+//! output the given data for debugging
+template<typename TimeStepping1, typename TimeStepping2>
+std::string OperatorSplitting<TimeStepping1, TimeStepping2>::
+getString(typename OperatorSplitting<TimeStepping1, TimeStepping2>::TransferableSolutionDataType &data)
+{
+  std::stringstream s;
+  s << "<" << schemeName_ << ",Term1:" << timeStepping1_.getString(data) << ">";
+  return s.str();
+}
+
+
+}  // namespace

@@ -147,7 +147,7 @@ parseExelemFile(std::string exelemFilename)
           // if the field variable with this name does not exist already, create new field variable object
           if (this->fieldVariable_.find(fieldName) == this->fieldVariable_.end())
           {
-            std::pair<std::string, std::shared_ptr<FieldVariableBaseType>> newEntry
+            std::pair<std::string, std::shared_ptr<FieldVariableBaseFunctionSpaceType>> newEntry
             (
               fieldName,
               FieldVariable::Factory<FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::makeShared(nComponents)
@@ -336,7 +336,7 @@ remapFieldVariables(PythonConfig settings)
 
       if (this->fieldVariable_.find(key) != this->fieldVariable_.end())
       {
-        std::shared_ptr<FieldVariableBaseType> fieldVariable = this->fieldVariable_[key];
+        std::shared_ptr<FieldVariableBaseFunctionSpaceType> fieldVariable = this->fieldVariable_[key];
         this->fieldVariable_.erase(key);
         this->fieldVariable_[value] = fieldVariable;
       }
@@ -371,7 +371,7 @@ remapFieldVariables(PythonConfig settings)
       {
         LOG(WARNING) << "Remap geometry field variable from \"" << fieldVariableEntry.first << "\" to \"geometry\".";
 
-        std::shared_ptr<FieldVariableBaseType> fieldVariable = fieldVariableEntry.second;
+        std::shared_ptr<FieldVariableBaseFunctionSpaceType> fieldVariable = fieldVariableEntry.second;
         this->fieldVariable_.erase(fieldVariableEntry.first);
         this->geometryField_ = std::static_pointer_cast<FieldVariable::FieldVariable<FunctionSpaceType,3>>(fieldVariable);
 
@@ -424,4 +424,4 @@ initializeValuesVector()
   if (geometryField_) 
     this->geometryField_->initializeValuesVector();
 }
-};  // namespace
+} // namespace

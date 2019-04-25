@@ -80,4 +80,4 @@ gradPhi(int dofIndex, std::array<double,MeshType::dim()> xi)
   return gradient;
 }
 
-};  // namespace
+} // namespace

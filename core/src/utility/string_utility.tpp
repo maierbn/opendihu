@@ -24,7 +24,7 @@ void outputValuesBlock(std::ostream &stream, IterType valuesBegin,
     }
   }
   stream << std::endl;
-};
+}
 
 
 template<typename IterType>
@@ -44,7 +44,7 @@ void outputValuesBlockAdd1(std::ostream &stream, IterType valuesBegin,
     }
   }
   stream << std::endl;
-};
+}
 
 
-}; // namespace
+}  // namespace

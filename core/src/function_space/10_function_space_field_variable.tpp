@@ -12,11 +12,11 @@ namespace FunctionSpace
 
 //! create a non-geometry field field variable with no values being set, with given component names
 template<typename MeshType, typename BasisFunctionType>
-std::shared_ptr<FieldVariable::FieldVariableBase<FunctionSpace<MeshType,BasisFunctionType>>> FunctionSpaceFieldVariable<MeshType,BasisFunctionType>::
+std::shared_ptr<FieldVariable::FieldVariableBaseFunctionSpace<FunctionSpace<MeshType,BasisFunctionType>>> FunctionSpaceFieldVariable<MeshType,BasisFunctionType>::
 createFieldVariable(std::string name, std::vector<std::string> componentNames)
 {
   // create the field variable with template parameter nComponents by a factory class that perform the dynamic->static conversion
-  std::shared_ptr<FieldVariable::FieldVariableBase<FunctionSpace<MeshType,BasisFunctionType>>> fieldVariable
+  std::shared_ptr<FieldVariable::FieldVariableBaseFunctionSpace<FunctionSpace<MeshType,BasisFunctionType>>> fieldVariable
     = FieldVariable::Factory<FunctionSpace<MeshType,BasisFunctionType>>::createFromFieldVariable(this->geometryField(), name, componentNames);
 
   // set entries to 0
@@ -27,7 +27,7 @@ createFieldVariable(std::string name, std::vector<std::string> componentNames)
 
 //! create a non-geometry field field variable with no values being set, with given number of components, the component names will be the numbers
 template<typename MeshType, typename BasisFunctionType>
-std::shared_ptr<FieldVariable::FieldVariableBase<FunctionSpace<MeshType,BasisFunctionType>>> FunctionSpaceFieldVariable<MeshType,BasisFunctionType>::
+std::shared_ptr<FieldVariable::FieldVariableBaseFunctionSpace<FunctionSpace<MeshType,BasisFunctionType>>> FunctionSpaceFieldVariable<MeshType,BasisFunctionType>::
 createFieldVariable(std::string name, int nComponents)
 {
   // create standard component names, the strings "0","1","2",...
@@ -36,7 +36,7 @@ createFieldVariable(std::string name, int nComponents)
   {
     componentNames[i] = std::to_string(i);
   }
-  std::shared_ptr<FieldVariable::FieldVariableBase<FunctionSpace<MeshType,BasisFunctionType>>> fieldVariable
+  std::shared_ptr<FieldVariable::FieldVariableBaseFunctionSpace<FunctionSpace<MeshType,BasisFunctionType>>> fieldVariable
     = this->createFieldVariable(name, componentNames);
 
   // set entries to 0
@@ -150,7 +150,7 @@ interpolateGradientInElement(std::array<double,FunctionSpaceFunction<MeshType,Ba
     // get gradient at dof
     std::array<double,D> gradPhiParameterSpace = this->gradPhi(dofIndex, xi);
 
-    VLOG(2) << "  dofIndex2=" << dofIndex << ", xi=" << xi << ", gradPhiParameterSpace: " << gradPhiParameterSpace;
+    //VLOG(2) << "  dofIndex2=" << dofIndex << ", xi=" << xi << ", gradPhiParameterSpace: " << gradPhiParameterSpace;
 
 
     std::array<double,D> gradPhiWorldSpaceDofIndex2{0.0};
@@ -158,7 +158,7 @@ interpolateGradientInElement(std::array<double,FunctionSpaceFunction<MeshType,Ba
     // transform grad from parameter space to world space
     for (int direction = 0; direction < D; direction++)
     {
-      VLOG(2) << "   component " << direction;
+      //VLOG(2) << "   component " << direction;
       for (int k = 0; k < D; k++)
       {
         // jacobianParameterSpace[columnIdx][rowIdx] = dX_rowIdx/dxi_columnIdx
@@ -168,20 +168,20 @@ interpolateGradientInElement(std::array<double,FunctionSpaceFunction<MeshType,Ba
         const double dxik_dXdirection = inverseJacobianParameterSpace[direction][k];  // dxi_k/dX_direction
 
 
-        VLOG(2) << "     += " << dphiDofIndex2_dxik << " * " << dxik_dXdirection;
+        //VLOG(2) << "     += " << dphiDofIndex2_dxik << " * " << dxik_dXdirection;
 
         gradPhiWorldSpaceDofIndex2[direction] += dphiDofIndex2_dxik * dxik_dXdirection;
       }
     }
 
-    VLOG(2) << "  gradPhiWorldSpaceDofIndex2: " << gradPhiWorldSpaceDofIndex2 
-      << " multiply with solution value at dof " << dofIndex << ", " << elementalDofValues[dofIndex];
+    //VLOG(2) << "  gradPhiWorldSpaceDofIndex2: " << gradPhiWorldSpaceDofIndex2
+    //  << " multiply with solution value at dof " << dofIndex << ", " << elementalDofValues[dofIndex];
 
-    VLOG(2) << " sum contributions from the other ansatz functions at this dof: " << gradPhiWorldSpace;
+    //VLOG(2) << " sum contributions from the other ansatz functions at this dof: " << gradPhiWorldSpace;
 
     gradPhiWorldSpace += gradPhiWorldSpaceDofIndex2 * elementalDofValues[dofIndex];
 
-    VLOG(2) << "                                                             -> " << gradPhiWorldSpace;
+    //VLOG(2) << "                                                             -> " << gradPhiWorldSpace;
   }  // dofIndex
 
   return gradPhiWorldSpace;
@@ -255,4 +255,4 @@ getInverseJacobian(element_no_t elementNo, std::array<double,MeshType::dim()> xi
   return getInverseJacobian(geometryValues, elementNo, xi);
 }
 
-};  // namespace
+} // namespace

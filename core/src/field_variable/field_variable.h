@@ -47,6 +47,6 @@ std::ostream &operator<<(std::ostream &stream, const FieldVariable<FunctionSpace
   return stream;
 }
 
-};  // namespace
+} // namespace
 
 #include "field_variable/field_variable.tpp"

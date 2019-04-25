@@ -72,7 +72,7 @@ config = {
 )";
 
   DihuContext settings(argc, argv, pythonConfig);
-  int ownRankNo = DihuContext::ownRankNo();
+  int ownRankNo = settings.ownRankNo();
 
   ProblemType problemGlobalSettings(settings);
   problemGlobalSettings.run();

@@ -146,4 +146,4 @@ computeIntegral(const typename std::array<ValueType, numberEvaluations()>::const
   return result;
 }
   
-};
+}  // namespace

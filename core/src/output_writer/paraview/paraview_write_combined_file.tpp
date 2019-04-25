@@ -27,7 +27,8 @@ void Paraview::writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, con
 
   if (binaryOutput_)
   {
-    VLOG(1) << "Paraview::writeCombinedValuesVector, values: " << values;
+    VLOG(1) << "Paraview::writeCombinedValuesVector, " << values.size() << " values: " << values;
+    LOG(DEBUG) << "rankSubset: " << *this->rankSubset_;
 
     int localValuesSize = values.size() * sizeof(float);  // number of bytes
     int nLocalValues = values.size() + (ownRankNo == 0? 1 : 0);
@@ -50,7 +51,7 @@ void Paraview::writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, con
       MPIUtility::handleReturnValue(MPI_Exscan(&nLocalValues, &nPreviousValues, 1, MPI_INT, MPI_SUM, this->rankSubset_->mpiCommunicator()), "MPI_Exscan");
       nPreviousValues_[identifier] = nPreviousValues;
 
-      VLOG(1) << "reduce data length of total vector, localValuesSize: " << localValuesSize << ", global size: " << globalValuesSize;
+      VLOG(1) << "reduce data length of total vector, localValuesSize: " << localValuesSize << ", global size: " << globalValuesSize << ", nPreviousValues: " << nPreviousValues;
     }
 
     std::list<int32_t> valuesVector;
@@ -108,11 +109,13 @@ void Paraview::writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, con
       MPIUtility::handleReturnValue(MPI_Wait(&sendRequest, &status), "MPI_Wait", &status);
     }
 
+    VLOG(1) << "firstValueNextRank: " << firstValueNextRank << ", nPreviousValues_[" << identifier << "]: " << nPreviousValues_[identifier] << ", %3=" << (nPreviousValues_[identifier]%3);
+
     // the end of the own values are contained in the own written data plus some part of the first value of the next rank
     if (nPreviousValues_[identifier] % 3 == 0)
     {
       valuesVector.push_back(firstValueNextRank);
-      writeBuffer = Paraview::encodeBase64Int(valuesVector.begin(), valuesVector.end(), false);  //without leading dataset size
+      writeBuffer = Paraview::encodeBase64Int32(valuesVector.begin(), valuesVector.end(), false);  //without leading dataset size
 
       // remove last bytes that encode the additional last value
       int offset = 0;
@@ -134,7 +137,7 @@ void Paraview::writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, con
       // add dummy value (4 bytes)
       valuesVector.push_front(0);
       valuesVector.push_back(firstValueNextRank);
-      std::string stringData = Paraview::encodeBase64Int(valuesVector.begin(), valuesVector.end(), false);  //without leading dataset size
+      std::string stringData = Paraview::encodeBase64Int32(valuesVector.begin(), valuesVector.end(), false);  //without leading dataset size
 
       VLOG(1) << "offset = 4 bits [" << stringData << "]";
       //info << "offset = 4 bits [" << stringData << "]";
@@ -167,7 +170,7 @@ void Paraview::writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, con
       valuesVector.push_front(0);
       valuesVector.push_front(0);
       valuesVector.push_back(firstValueNextRank);
-      std::string stringData = Paraview::encodeBase64Int(valuesVector.begin(), valuesVector.end(), false);  //without leading dataset size
+      std::string stringData = Paraview::encodeBase64Int32(valuesVector.begin(), valuesVector.end(), false);  //without leading dataset size
 
       VLOG(1) << "offset = 2 bits [" << stringData << "]";
       //info << "offset = 2 bits [" << stringData << "]";
@@ -195,11 +198,11 @@ void Paraview::writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, con
       writeBuffer = stringData;
     }
 
-    if (VLOG_IS_ON(1))
+    if (VLOG_IS_ON(3))
     {
-      VLOG(1) << " rank " << ownRankNo << ", values: ";
+      VLOG(3) << " rank " << ownRankNo << ", values: ";
       for (std::list<int32_t>::iterator iter=valuesVector.begin(); iter != valuesVector.end(); iter++)
-        VLOG(1) << *iter << " ";
+        VLOG(3) << *iter << " ";
     }
 
     // info << " (rank " << ownRankNo << ", values:";
@@ -224,7 +227,7 @@ void Paraview::writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, con
         // this should not happen
         writeBuffer += std::string("===");
 
-        LOG(ERROR) << "Base64 encoding in parallel has a bug, padding needs 3 '=' signs, but only 1 or 2 should be ever needed";
+        LOG(FATAL) << "Base64 encoding in parallel has a bug, padding needs 3 '=' signs, but only 1 or 2 should be ever needed";
       }
       else if (nBytesGlobal % 4 == 2)
       {
@@ -241,7 +244,7 @@ void Paraview::writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, con
     writeBuffer = Paraview::convertToAscii(values, fixedFormat_);
   }
 
-  VLOG(1) << "writeBuffer [" << writeBuffer << "]";
+  VLOG(2) << "writeBuffer [" << writeBuffer << "]";
 
   // writeBuffer = info.str() + writeBuffer;
 
@@ -256,7 +259,7 @@ void Paraview::writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, con
 }
 
 template<typename OutputFieldVariablesType>
-void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables, std::set<std::string> &combinedMeshesOut)
+void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables, std::set<std::string> &meshNames)
 {
   // output a *.vtp file which contains 1D meshes, if there are any
 
@@ -268,16 +271,18 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
   assert(this->rankSubset_);
 
   VLOG(1) << "meshProperties: " << meshProperties;
-
   /*
-   PolyDataPropertiesForMesh:
-  int dimensionality;    ///< D=1: object is a VTK "Line" and can be written to a combined vtp file
-  global_no_t nPoints;   ///< the number of points needed for representing the mesh, note that some points may be
-                         ///< duplicated because they are ghosts on one process and non-ghost on the other. This is intended.
-  global_no_t nCells;    ///< the number of VTK "cells", i.e. "Lines", which is the opendihu number of "1D elements"
+  struct PolyDataPropertiesForMesh
+  {
+    int dimensionality;    ///< D=1: object is a VTK "Line", D=2, D=3: object is a VTK "Poly"
+    global_no_t nPointsLocal;   ///< the number of points needed for representing the mesh, local value of rank
+    global_no_t nCellsLocal;    ///< the number of VTK "cells", i.e. "Lines" or "Polys", which is the opendihu number of "elements", local value of rank
+    global_no_t nPointsGlobal;   ///< the number of points needed for representing the mesh, global value of all rank
+    global_no_t nCellsGlobal;    ///< the number of VTK "cells", i.e. "Lines" or "Polys", which is the opendihu number of "elements", global value of all ranks
 
-  std::vector<std::pair<std::string,int>> pointDataArrays;   ///< <name,nComponents> of PointData DataArray elements
-  */
+    std::vector<std::pair<std::string,int>> pointDataArrays;   ///< <name,nComponents> of PointData DataArray elements
+  };
+*/
 
   /* one VTKPiece is the XML element that will be output as <Piece></Piece>. It is created from one or multiple opendihu meshes
    */
@@ -296,6 +301,7 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
       properties.nCellsLocal = 0;
       properties.nPointsGlobal = 0;
       properties.nCellsGlobal = 0;
+      properties.dimensionality = 0;
     }
 
     //! assign the correct values to firstScalarName and firstVectorName, only if properties has been set
@@ -348,7 +354,7 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
 
       if (combineMesh)
       {
-        LOG(DEBUG) << "Combine mesh " << meshName << " with " << vtkPiece.meshNamesCombinedMeshes
+        VLOG(1) << "Combine mesh " << meshName << " with " << vtkPiece.meshNamesCombinedMeshes
           << ", add " << iter->second.nPointsLocal << " points, " << iter->second.nCellsLocal << " elements to "
           << vtkPiece.properties.nPointsLocal << " points, " << vtkPiece.properties.nCellsLocal << " elements";
 
@@ -376,12 +382,19 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
     }
   }
 
-  VLOG(1) << "vtkPiece: meshNamesCombinedMeshes: " << vtkPiece.meshNamesCombinedMeshes << ", properties: " << vtkPiece.properties
+  LOG(DEBUG) << "vtkPiece: meshNamesCombinedMeshes: " << vtkPiece.meshNamesCombinedMeshes << ", properties: " << vtkPiece.properties
     << ", firstScalarName: " << vtkPiece.firstScalarName << ", firstVectorName: " << vtkPiece.firstVectorName;
 
-  combinedMeshesOut = vtkPiece.meshNamesCombinedMeshes;
+  meshNames = vtkPiece.meshNamesCombinedMeshes;
 
-  // determine filename
+  // if there are no 1D meshes, return
+  if (meshNames.empty())
+    return;
+
+  // add field variable "partitioning" with 1 component
+  vtkPiece.properties.pointDataArrays.push_back(std::pair<std::string,int>("partitioning", 1));
+
+  // determine filename, broadcast from rank 0
   std::stringstream filename;
   filename << this->filenameBaseWithNo_ << ".vtp";
   int filenameLength = filename.str().length();
@@ -389,11 +402,11 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
   // broadcast length of filename
   MPIUtility::handleReturnValue(MPI_Bcast(&filenameLength, 1, MPI_INT, 0, this->rankSubset_->mpiCommunicator()));
 
-  char receiveBuffer[filenameLength+1];
-  strcpy(receiveBuffer, filename.str().c_str());
-  MPIUtility::handleReturnValue(MPI_Bcast(receiveBuffer, filenameLength, MPI_CHAR, 0, this->rankSubset_->mpiCommunicator()));
+  std::vector<char> receiveBuffer(filenameLength+1, char(0));
+  strcpy(receiveBuffer.data(), filename.str().c_str());
+  MPIUtility::handleReturnValue(MPI_Bcast(receiveBuffer.data(), filenameLength, MPI_CHAR, 0, this->rankSubset_->mpiCommunicator()));
 
-  std::string filenameStr = receiveBuffer;
+  std::string filenameStr(receiveBuffer.begin(), receiveBuffer.end());
 
   // remove file if it exists, synchronization afterwards by MPI calls, that is why the remove call is already here
   assert(this->rankSubset_);
@@ -401,7 +414,8 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
   if (ownRankNo == 0)
   {
     // open file to ensure that directory exists and file is writable
-    std::ofstream file = Generic::openFile(filenameStr);
+    std::ofstream file;
+    Generic::openFile(file, filenameStr);
 
     // close and delete file
     file.close();
@@ -435,9 +449,26 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
     offsetValues[i] = 2*nCellsPreviousRanks + 2*i + 1;
   }
 
-  // collect all data for the field variables
-  std::vector<std::vector<double>> fieldVariableValues;
+  // collect all data for the field variables, organized by field variable names
+  std::map<std::string, std::vector<double>> fieldVariableValues;
   ParaviewLoopOverTuple::loopGetNodalValues<OutputFieldVariablesType>(fieldVariables, vtkPiece.meshNamesCombinedMeshes, fieldVariableValues);
+
+  assert (!fieldVariableValues.empty());
+  fieldVariableValues["partitioning"].resize(vtkPiece.properties.nPointsLocal, (double)this->rankSubset_->ownRankNo());
+
+  // if next assertion will fail, output why for debugging
+  if (fieldVariableValues.size() != vtkPiece.properties.pointDataArrays.size())
+  {
+    LOG(DEBUG) << "n field variable values: " << fieldVariableValues.size() << ", n point data arrays: "
+      << vtkPiece.properties.pointDataArrays.size();
+    LOG(DEBUG) << "vtkPiece.meshNamesCombinedMeshes: " << vtkPiece.meshNamesCombinedMeshes;
+    std::stringstream pointDataArraysNames;
+    for (int i = 0; i < vtkPiece.properties.pointDataArrays.size(); i++)
+    {
+      pointDataArraysNames << vtkPiece.properties.pointDataArrays[i].first << " ";
+    }
+    LOG(DEBUG) << "pointDataArraysNames: " <<  pointDataArraysNames.str();
+  }
 
   assert(fieldVariableValues.size() == vtkPiece.properties.pointDataArrays.size());
 
@@ -459,6 +490,8 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
   std::vector<std::stringstream> outputFileParts(nOutputFileParts);
   int outputFilePartNo = 0;
   outputFileParts[outputFilePartNo] << "<?xml version=\"1.0\"?>" << std::endl
+    << "<!-- " << DihuContext::versionText() << " " << DihuContext::metaText()
+    << ", currentTime: " << this->currentTime_ << ", timeStepNo: " << this->timeStepNo_ << " -->" << std::endl
     << "<VTKFile type=\"PolyData\" version=\"1.0\" byte_order=\"LittleEndian\">" << std::endl    // intel cpus are LittleEndian
     << std::string(1, '\t') << "<PolyData>" << std::endl;
 
@@ -568,8 +601,10 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
   for (std::vector<std::pair<std::string,int>>::iterator pointDataArrayIter = vtkPiece.properties.pointDataArrays.begin();
        pointDataArrayIter != vtkPiece.properties.pointDataArrays.end(); pointDataArrayIter++, fieldVariableNo++)
   {
+    assert(fieldVariableValues.find(pointDataArrayIter->first) != fieldVariableValues.end());
+
     // write values
-    writeCombinedValuesVector(fileHandle, ownRankNo, fieldVariableValues[fieldVariableNo], fieldVariableNo);
+    writeCombinedValuesVector(fileHandle, ownRankNo, fieldVariableValues[pointDataArrayIter->first], fieldVariableNo);
 
     // write next xml constructs
     writeAsciiDataShared(fileHandle, ownRankNo, outputFileParts[outputFilePartNo].str());
@@ -616,4 +651,370 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
   MPIUtility::handleReturnValue(MPI_File_close(&fileHandle), "MPI_File_close");
 }
 
-};  // namespace
+template<typename OutputFieldVariablesType>
+void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType &fieldVariables, std::set<std::string> &meshNames)
+{
+  // output a *.vtu file which contains 3D meshes, if there are any
+
+  // collect the size data that is needed to compute offsets for parallel file output
+  std::map<std::string, PolyDataPropertiesForMesh> meshProperties;
+  ParaviewLoopOverTuple::loopCollectMeshProperties<OutputFieldVariablesType>(fieldVariables, meshProperties);
+
+  VLOG(1) << "writeCombinedUnstructuredGridFile on rankSubset_: " << *this->rankSubset_;
+  assert(this->rankSubset_);
+
+  VLOG(1) << "meshProperties: " << meshProperties;
+  /*
+  struct PolyDataPropertiesForMesh
+  {
+    int dimensionality;    ///< D=1: object is a VTK "Line", D=2, D=3: object should be represented by an unstructured grid
+    global_no_t nPointsLocal;   ///< the number of points needed for representing the mesh, local value of rank
+    global_no_t nCellsLocal;    ///< the number of VTK "cells", i.e. "Lines" or "Polys", which is the opendihu number of "elements", local value of rank
+    global_no_t nPointsGlobal;   ///< the number of points needed for representing the mesh, global value of all rank
+    global_no_t nCellsGlobal;    ///< the number of VTK "cells", i.e. "Lines" or "Polys", which is the opendihu number of "elements", global value of all ranks
+    std::vector<node_no_t> nNodesLocalWithGhosts;   ///< local number of nodes including ghosts, for all dimensions
+
+    std::vector<std::pair<std::string,int>> pointDataArrays;   ///< <name,nComponents> of PointData DataArray elements
+  };
+*/
+
+  // loop over 3D meshes
+  for (std::map<std::string, PolyDataPropertiesForMesh>::iterator meshPropertiesIter = meshProperties.begin(); meshPropertiesIter != meshProperties.end(); meshPropertiesIter++)
+  {
+    PolyDataPropertiesForMesh &polyDataPropertiesForMesh = meshPropertiesIter->second;
+    if (polyDataPropertiesForMesh.dimensionality == 3)
+    {
+      meshNames.insert(meshPropertiesIter->first);
+
+      //! find out name of first scalar and vector field variables
+      std::string firstScalarName;
+      std::string firstVectorName;
+
+      for (std::vector<std::pair<std::string,int>>::iterator iter = polyDataPropertiesForMesh.pointDataArrays.begin(); iter != polyDataPropertiesForMesh.pointDataArrays.end(); iter++)
+      {
+        if (iter->second == 1 && firstScalarName.empty())
+        {
+          firstScalarName = iter->first;
+        }
+        if (iter->second != 1 && firstVectorName.empty())
+        {
+          firstVectorName = iter->first;
+        }
+
+        if (!firstScalarName.empty() && firstVectorName.empty())
+          break;
+      }
+
+      // output 3D mesh
+      // add field variable "partitioning" with 1 component
+      polyDataPropertiesForMesh.pointDataArrays.push_back(std::pair<std::string,int>("partitioning", 1));
+
+      // determine filename, broadcast from rank 0
+      std::stringstream filename;
+      filename << this->filenameBaseWithNo_ << ".vtu";
+      int filenameLength = filename.str().length();
+
+      // broadcast length of filename
+      MPIUtility::handleReturnValue(MPI_Bcast(&filenameLength, 1, MPI_INT, 0, this->rankSubset_->mpiCommunicator()));
+
+      std::vector<char> receiveBuffer(filenameLength+1, char(0));
+      strcpy(receiveBuffer.data(), filename.str().c_str());
+      MPIUtility::handleReturnValue(MPI_Bcast(receiveBuffer.data(), filenameLength, MPI_CHAR, 0, this->rankSubset_->mpiCommunicator()));
+
+      std::string filenameStr(receiveBuffer.begin(), receiveBuffer.end());
+
+      // remove file if it exists, synchronization afterwards by MPI calls, that is why the remove call is already here
+      assert(this->rankSubset_);
+      int ownRankNo = this->rankSubset_->ownRankNo();
+      if (ownRankNo == 0)
+      {
+        // open file to ensure that directory exists and file is writable
+        std::ofstream file;
+        Generic::openFile(file, filenameStr);
+
+        // close and delete file
+        file.close();
+        std::remove(filenameStr.c_str());
+      }
+
+      // exchange information about offset in terms of nCells and nPoints
+      int nCellsPreviousRanks = 0;
+      int nPointsPreviousRanks = 0;
+      int nPointsGlobal = 0;
+      int nLinesGlobal = 0;
+
+      MPIUtility::handleReturnValue(MPI_Exscan(&polyDataPropertiesForMesh.nCellsLocal, &nCellsPreviousRanks, 1, MPI_INT, MPI_SUM, this->rankSubset_->mpiCommunicator()), "MPI_Exscan");
+      MPIUtility::handleReturnValue(MPI_Exscan(&polyDataPropertiesForMesh.nPointsLocal, &nPointsPreviousRanks, 1, MPI_INT, MPI_SUM, this->rankSubset_->mpiCommunicator()), "MPI_Exscan");
+      MPIUtility::handleReturnValue(MPI_Reduce(&polyDataPropertiesForMesh.nPointsLocal, &nPointsGlobal, 1, MPI_INT, MPI_SUM, 0, this->rankSubset_->mpiCommunicator()), "MPI_Reduce");
+      MPIUtility::handleReturnValue(MPI_Reduce(&polyDataPropertiesForMesh.nCellsLocal, &nLinesGlobal, 1, MPI_INT, MPI_SUM, 0, this->rankSubset_->mpiCommunicator()), "MPI_Reduce");
+
+      std::vector<node_no_t> &nNodesLocalWithGhosts = polyDataPropertiesForMesh.nNodesLocalWithGhosts;
+      assert(nNodesLocalWithGhosts.size() == 3);
+
+      // get local data values
+      // setup connectivity array, which gives the node numbers for every element/cell
+      std::vector<int> connectivityValues(8*polyDataPropertiesForMesh.nCellsLocal);
+      element_no_t elementIndex = 0;
+      for (int indexZ = 0; indexZ < nNodesLocalWithGhosts[2]-1; indexZ++)
+      {
+        for (int indexY = 0; indexY < nNodesLocalWithGhosts[1]-1; indexY++)
+        {
+          for (int indexX = 0; indexX < nNodesLocalWithGhosts[0]-1; indexX++, elementIndex++)
+          {
+            connectivityValues[elementIndex*8 + 0] = nPointsPreviousRanks
+              + indexZ*nNodesLocalWithGhosts[0]*nNodesLocalWithGhosts[1]
+              + indexY*nNodesLocalWithGhosts[0] + indexX;
+            connectivityValues[elementIndex*8 + 1] = nPointsPreviousRanks
+              + indexZ*nNodesLocalWithGhosts[0]*nNodesLocalWithGhosts[1]
+              + indexY*nNodesLocalWithGhosts[0] + indexX + 1;
+            connectivityValues[elementIndex*8 + 2] = nPointsPreviousRanks
+              + indexZ*nNodesLocalWithGhosts[0]*nNodesLocalWithGhosts[1]
+              + (indexY+1)*nNodesLocalWithGhosts[0] + indexX + 1;
+            connectivityValues[elementIndex*8 + 3] = nPointsPreviousRanks
+              + indexZ*nNodesLocalWithGhosts[0]*nNodesLocalWithGhosts[1]
+              + (indexY+1)*nNodesLocalWithGhosts[0] + indexX;
+            connectivityValues[elementIndex*8 + 4] = nPointsPreviousRanks
+              + (indexZ+1)*nNodesLocalWithGhosts[0]*nNodesLocalWithGhosts[1]
+              + indexY*nNodesLocalWithGhosts[0] + indexX;
+            connectivityValues[elementIndex*8 + 5] = nPointsPreviousRanks
+              + (indexZ+1)*nNodesLocalWithGhosts[0]*nNodesLocalWithGhosts[1]
+              + indexY*nNodesLocalWithGhosts[0] + indexX + 1;
+            connectivityValues[elementIndex*8 + 6] = nPointsPreviousRanks
+              + (indexZ+1)*nNodesLocalWithGhosts[0]*nNodesLocalWithGhosts[1]
+              + (indexY+1)*nNodesLocalWithGhosts[0] + indexX + 1;
+            connectivityValues[elementIndex*8 + 7] = nPointsPreviousRanks
+              + (indexZ+1)*nNodesLocalWithGhosts[0]*nNodesLocalWithGhosts[1]
+              + (indexY+1)*nNodesLocalWithGhosts[0] + indexX;
+          }
+        }
+      }
+
+      // setup offset array
+      std::vector<int> offsetValues(polyDataPropertiesForMesh.nCellsLocal);
+      for (int i = 0; i < polyDataPropertiesForMesh.nCellsLocal; i++)
+      {
+        offsetValues[i] = 8*nCellsPreviousRanks + 8*i + 8;    // specifies the end, i.e. one after the last, of the last of nodes for each element
+      }
+
+      // collect all data for the field variables, organized by field variable names
+      std::map<std::string, std::vector<double>> fieldVariableValues;
+      std::set<std::string> currentMeshName;
+      currentMeshName.insert(meshPropertiesIter->first);
+      ParaviewLoopOverTuple::loopGetNodalValues<OutputFieldVariablesType>(fieldVariables, currentMeshName, fieldVariableValues);
+
+      // set data for partitioning field variable
+      assert (!fieldVariableValues.empty());
+      fieldVariableValues["partitioning"].resize(polyDataPropertiesForMesh.nPointsLocal, (double)this->rankSubset_->ownRankNo());
+
+      // if next assertion fails, output why for debugging
+      if (fieldVariableValues.size() != polyDataPropertiesForMesh.pointDataArrays.size())
+      {
+        LOG(DEBUG) << "n field variable values: " << fieldVariableValues.size() << ", n point data arrays: "
+          << polyDataPropertiesForMesh.pointDataArrays.size();
+        LOG(DEBUG) << "mesh name: " << currentMeshName;
+        std::stringstream pointDataArraysNames;
+        for (int i = 0; i < polyDataPropertiesForMesh.pointDataArrays.size(); i++)
+        {
+          pointDataArraysNames << polyDataPropertiesForMesh.pointDataArrays[i].first << " ";
+        }
+        LOG(DEBUG) << "pointDataArraysNames: " <<  pointDataArraysNames.str();
+      }
+
+      assert(fieldVariableValues.size() == polyDataPropertiesForMesh.pointDataArrays.size());
+
+      // collect all data for the geometry field variable
+      std::vector<double> geometryFieldValues;
+      ParaviewLoopOverTuple::loopGetGeometryFieldNodalValues<OutputFieldVariablesType>(fieldVariables, currentMeshName, geometryFieldValues);
+
+      LOG(DEBUG) << "currentMeshName: " << currentMeshName << ", rank " << this->rankSubset_->ownRankNo() << ", n geometryFieldValues: " << geometryFieldValues.size();
+      if (geometryFieldValues.size() == 0)
+      {
+        LOG(FATAL) << "There is no geometry field. You have to provide a geomteryField in the field variables returned by getOutputFieldVariables!";
+      }
+
+      int nOutputFileParts = 5 + polyDataPropertiesForMesh.pointDataArrays.size();
+
+      // create the basic structure of the output file
+      std::vector<std::stringstream> outputFileParts(nOutputFileParts);
+      int outputFilePartNo = 0;
+      outputFileParts[outputFilePartNo] << "<?xml version=\"1.0\"?>" << std::endl
+        << "<!-- " << DihuContext::versionText() << " " << DihuContext::metaText()
+        << ", currentTime: " << this->currentTime_ << ", timeStepNo: " << this->timeStepNo_ << " -->" << std::endl
+        << "<VTKFile type=\"UnstructuredGrid\" version=\"1.0\" byte_order=\"LittleEndian\">" << std::endl    // intel cpus are LittleEndian
+        << std::string(1, '\t') << "<UnstructuredGrid>" << std::endl;
+
+      outputFileParts[outputFilePartNo] << std::string(2, '\t') << "<Piece NumberOfPoints=\"" << nPointsGlobal
+        << "\" NumberOfCells=\"" << polyDataPropertiesForMesh.nCellsGlobal << "\">" << std::endl
+        << std::string(3, '\t') << "<PointData";
+
+      if (firstScalarName != "")
+      {
+        outputFileParts[outputFilePartNo] << " Scalars=\"" << firstScalarName << "\"";
+      }
+      if (firstVectorName != "")
+      {
+        outputFileParts[outputFilePartNo] << " Vectors=\"" << firstVectorName << "\"";
+      }
+      outputFileParts[outputFilePartNo] << ">" << std::endl;
+
+      // loop over field variables (PointData)
+      for (std::vector<std::pair<std::string,int>>::iterator pointDataArrayIter = polyDataPropertiesForMesh.pointDataArrays.begin(); pointDataArrayIter != polyDataPropertiesForMesh.pointDataArrays.end(); pointDataArrayIter++)
+      {
+        // write normal data element
+        outputFileParts[outputFilePartNo] << std::string(4, '\t') << "<DataArray "
+            << "Name=\"" << pointDataArrayIter->first << "\" "
+            << "type=\"Float32\" "
+            << "NumberOfComponents=\"" << pointDataArrayIter->second << "\" format=\"" << (binaryOutput_? "binary" : "ascii")
+            << "\" >" << std::endl << std::string(5, '\t');
+
+        // at this point the data of the field variable is missing
+        outputFilePartNo++;
+
+        outputFileParts[outputFilePartNo] << std::endl << std::string(4, '\t') << "</DataArray>" << std::endl;
+      }
+
+      outputFileParts[outputFilePartNo] << std::string(3, '\t') << "</PointData>" << std::endl
+        << std::string(3, '\t') << "<CellData>" << std::endl
+        << std::string(3, '\t') << "</CellData>" << std::endl
+        << std::string(3, '\t') << "<Points>" << std::endl
+        << std::string(4, '\t') << "<DataArray type=\"Float32\" NumberOfComponents=\"3\" format=\"" << (binaryOutput_? "binary" : "ascii")
+        << "\" >" << std::endl << std::string(5, '\t');
+
+      // at this point the data of points (geometry field) is missing
+      outputFilePartNo++;
+
+      outputFileParts[outputFilePartNo] << std::endl << std::string(4, '\t') << "</DataArray>" << std::endl
+        << std::string(3, '\t') << "</Points>" << std::endl
+        << std::string(3, '\t') << "<Cells>" << std::endl
+        << std::string(4, '\t') << "<DataArray Name=\"connectivity\" type=\"Int32\" "
+        << (binaryOutput_? "format=\"binary\"" : "format=\"ascii\"") << ">" << std::endl << std::string(5, '\t');
+
+      // at this point the the structural information of the lines (connectivity) is missing
+      outputFilePartNo++;
+
+      outputFileParts[outputFilePartNo]
+        << std::endl << std::string(4, '\t') << "</DataArray>" << std::endl
+        << std::string(4, '\t') << "<DataArray Name=\"offsets\" type=\"Int32\" "
+        << (binaryOutput_? "format=\"binary\"" : "format=\"ascii\"") << ">" << std::endl << std::string(5, '\t');
+
+      // at this point the offset array will be written to the file
+      outputFilePartNo++;
+
+      outputFileParts[outputFilePartNo]
+        << std::endl << std::string(4, '\t') << "</DataArray>" << std::endl
+        << std::string(4, '\t') << "<DataArray Name=\"types\" type=\"UInt8\" "
+        << (binaryOutput_? "format=\"binary\"" : "format=\"ascii\"") << ">" << std::endl << std::string(5, '\t');
+
+      // at this point the types array will be written to the file
+      outputFilePartNo++;
+
+      outputFileParts[outputFilePartNo]
+        << std::endl << std::string(4, '\t') << "</DataArray>" << std::endl
+        << std::string(3, '\t') << "</Cells>" << std::endl
+        << std::string(2, '\t') << "</Piece>" << std::endl
+        << std::string(1, '\t') << "</UnstructuredGrid>" << std::endl
+        << "</VTKFile>" << std::endl;
+
+      assert(outputFilePartNo+1 == nOutputFileParts);
+
+      // loop over output file parts and collect the missing data for the own rank
+
+      VLOG(1) << "outputFileParts:";
+
+      for (std::vector<std::stringstream>::iterator iter = outputFileParts.begin(); iter != outputFileParts.end(); iter++)
+      {
+        VLOG(1) << "  " << iter->str();
+      }
+
+      LOG(DEBUG) << "open MPI file \"" << filenameStr << "\".";
+
+      // open file
+      MPI_File fileHandle;
+      MPIUtility::handleReturnValue(MPI_File_open(this->rankSubset_->mpiCommunicator(), filenameStr.c_str(),
+                                                  //MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_UNIQUE_OPEN,
+                                                  MPI_MODE_WRONLY | MPI_MODE_CREATE,
+                                                  MPI_INFO_NULL, &fileHandle), "MPI_File_open");
+
+      // write beginning of file on rank 0
+      outputFilePartNo = 0;
+
+      writeAsciiDataShared(fileHandle, ownRankNo, outputFileParts[outputFilePartNo].str());
+      outputFilePartNo++;
+
+      VLOG(1) << "get current shared file position";
+
+      // get current file position
+      MPI_Offset currentFilePosition = 0;
+      MPIUtility::handleReturnValue(MPI_File_get_position_shared(fileHandle, &currentFilePosition), "MPI_File_get_position_shared");
+      LOG(DEBUG) << "current shared file position: " << currentFilePosition;
+
+      // write field variables
+      // loop over field variables
+      int fieldVariableNo = 0;
+      for (std::vector<std::pair<std::string,int>>::iterator pointDataArrayIter = polyDataPropertiesForMesh.pointDataArrays.begin();
+          pointDataArrayIter != polyDataPropertiesForMesh.pointDataArrays.end(); pointDataArrayIter++, fieldVariableNo++)
+      {
+        assert(fieldVariableValues.find(pointDataArrayIter->first) != fieldVariableValues.end());
+
+        VLOG(1) << "write vector for field variable \"" << pointDataArrayIter->first << "\".";
+
+        // write values
+        writeCombinedValuesVector(fileHandle, ownRankNo, fieldVariableValues[pointDataArrayIter->first], fieldVariableNo);
+
+        // write next xml constructs
+        writeAsciiDataShared(fileHandle, ownRankNo, outputFileParts[outputFilePartNo].str());
+        outputFilePartNo++;
+      }
+
+      VLOG(1) << "write vector for geometry data";
+
+      // write geometry field data
+      writeCombinedValuesVector(fileHandle, ownRankNo, geometryFieldValues, fieldVariableNo++);
+
+      // write next xml constructs
+      writeAsciiDataShared(fileHandle, ownRankNo, outputFileParts[outputFilePartNo].str());
+      outputFilePartNo++;
+
+      // write connectivity values
+      writeCombinedValuesVector(fileHandle, ownRankNo, connectivityValues, fieldVariableNo++);
+
+      // write next xml constructs
+      writeAsciiDataShared(fileHandle, ownRankNo, outputFileParts[outputFilePartNo].str());
+      outputFilePartNo++;
+
+      // write offset values
+      writeCombinedValuesVector(fileHandle, ownRankNo, offsetValues, fieldVariableNo++);
+
+      // write next xml constructs
+      writeAsciiDataShared(fileHandle, ownRankNo, outputFileParts[outputFilePartNo].str());
+      outputFilePartNo++;
+
+      // write types values
+      writeCombinedTypesVector(fileHandle, ownRankNo, polyDataPropertiesForMesh.nCellsGlobal, fieldVariableNo++);
+
+      // write next xml constructs
+      writeAsciiDataShared(fileHandle, ownRankNo, outputFileParts[outputFilePartNo].str());
+
+      /*
+        int array_of_sizes[1];
+        array_of_sizes[0]=numProcs;
+        int array_of_subsizes[1];
+        array_of_subsizes[0]=1;
+        int array_of_starts[1];
+        array_of_starts[0]=myId;
+
+
+        MPI_Datatype accessPattern;
+        MPI_Type_create_subarray(1,array_of_sizes, array_of_subsizes, array_of_starts, MPI_ORDER_C, MPI_BYTE, &accessPattern);
+        MPI_Type_commit(&accessPattern);
+
+        MPI_File_set_view(fh, 0, MPI_BYTE, accessPattern, "native", MPI_INFO_NULL);
+        MPI_File_write(fh, v, size, MPI_BYTE, MPI_STATUS_IGNORE);
+      */
+
+      MPIUtility::handleReturnValue(MPI_File_close(&fileHandle), "MPI_File_close");
+    }
+  }
+}
+
+} // namespace

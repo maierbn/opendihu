@@ -22,14 +22,9 @@ struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
     // start critical section for python API calls
     // PythonUtility::GlobalInterpreterLock lock;
 
-    LOG(DEBUG) << "PythonUtility::convertFromPython array int";
-
     std::array<ValueType,nComponents> result;
     if (PyList_Check(object))
     {
-      LOG(DEBUG) << "PyList: " << PythonUtility::getString(object);
-      LOG(DEBUG) << "size: " << PyTuple_Size(object);
-
       int i = 0;
       int iEnd = std::min((int)PyList_Size(object), nComponents);
 
@@ -47,9 +42,6 @@ struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
     }
     else if (PyTuple_Check(object))
     {
-      LOG(DEBUG) << "PyTuple: " << PythonUtility::getString(object);
-      LOG(DEBUG) << "size: " << PyTuple_Size(object);
-
       int i = 0;
       int iEnd = std::min((int)PyTuple_Size(object), nComponents);
 
@@ -113,8 +105,6 @@ struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
   //! convert a python object to its corresponding c type, with type checking, if conversion is not possible use trivial default value (0 or 0.0 or "")
   static std::array<ValueType,nComponents> get(PyObject *object)
   {
-    LOG(DEBUG) << "PythonUtility::convertFromPython array int (non default)";
-
     std::array<ValueType,nComponents> defaultValue;
     defaultValue.fill(ValueType());
     return convertFromPython<std::array<ValueType,nComponents>>::get(object, defaultValue);
@@ -128,8 +118,6 @@ struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
   //! convert a python object to its corresponding c type, with type checking, if conversion is not possible, use defaultValue
   static std::array<ValueType,nComponents> get(PyObject *object, std::array<ValueType,nComponents> defaultValue)
   {
-    LOG(DEBUG) << "PythonUtility::convertFromPython array global_no_t";
-
     // start critical section for python API calls
     // PythonUtility::GlobalInterpreterLock lock;
 
@@ -216,8 +204,6 @@ struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
   //! convert a python object to its corresponding c type, with type checking, if conversion is not possible use trivial default value (0 or 0.0 or "")
   static std::array<ValueType,nComponents> get(PyObject *object)
   {
-    LOG(DEBUG) << "PythonUtility::convertFromPython array global_no_t (no defaults)";
-
     std::array<ValueType,nComponents> defaultValue;
     defaultValue.fill(ValueType());
     return convertFromPython<std::array<ValueType,nComponents>>::get(object, defaultValue);
@@ -231,15 +217,12 @@ struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
   //! convert a python object to its corresponding c type, with type checking, if conversion is not possible, use defaultValue
   static std::array<ValueType,nComponents> get(PyObject *object, std::array<ValueType,nComponents> defaultValue)
   {
-    LOG(DEBUG) << "PythonUtility::convertFromPython array unsigned long: " << PythonUtility::getString(object);
     // start critical section for python API calls
     // PythonUtility::GlobalInterpreterLock lock;
 
     std::array<ValueType,nComponents> result;
     if (PyList_Check(object))
     {
-      LOG(DEBUG) << "PythonUtility::convertFromPython pylist";
-
       unsigned long i = 0;
       unsigned long iEnd = std::min((unsigned long)PyList_Size(object), nComponents);
 
@@ -257,8 +240,6 @@ struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
     }
     else if (PyTuple_Check(object))
     {
-      LOG(DEBUG) << "PythonUtility::convertFromPython pytuple";
-
       int i = 0;
       int iEnd = std::min((unsigned long)PyTuple_Size(object), nComponents);
 
@@ -322,8 +303,6 @@ struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
   //! convert a python object to its corresponding c type, with type checking, if conversion is not possible use trivial default value (0 or 0.0 or "")
   static std::array<ValueType,nComponents> get(PyObject *object)
   {
-    LOG(DEBUG) << "PythonUtility::convertFromPython array unsigned long (no defaults)";
-
     std::array<ValueType,nComponents> defaultValue;
     defaultValue.fill(ValueType());
     return convertFromPython<std::array<ValueType,nComponents>>::get(object, defaultValue);
@@ -345,6 +324,7 @@ struct PythonUtility::convertFromPython<std::vector<ValueType>>
     {
       int nEntries = (int)PyList_Size(object);
       result.resize(nEntries);
+      LOG(DEBUG) << "nEntries: " << nEntries;
 
       for (int i = 0; i < nEntries; i++)
       {
@@ -529,7 +509,7 @@ struct PythonUtility::convertFromPython<int>
 
       if (double(int(valueDouble)) != valueDouble)      // if value is not e.g. 2.0
       {
-        LOG(WARNING) << "convertFromPython: object is no int: " << object;
+        LOG(WARNING) << "convertFromPython: object is float and not int: " << object;
       }
 
       return int(valueDouble);
@@ -666,7 +646,7 @@ struct PythonUtility::convertFromPython<global_no_t>
 
       if (double(global_no_t(valueDouble)) != valueDouble)      // if value is not e.g. 2.0
       {
-        LOG(WARNING) << "convertFromPython: object is no int: " << object;
+        LOG(WARNING) << "convertFromPython: object is float and not int or global_no_t: " << object;
       }
 
       return global_no_t(valueDouble);
@@ -735,6 +715,54 @@ struct PythonUtility::convertFromPython<std::size_t>
   static std::size_t get(PyObject *object)
   {
     return convertFromPython<std::size_t>::get(object, 0);
+  }
+};
+
+//partial specialization for long long which is also MPI_Offset
+template<>
+struct PythonUtility::convertFromPython<long long>
+{
+  //! convert a python object to its corresponding c type, with type checking, if conversion is not possible, use defaultValue
+  static long long get(PyObject *object, long long defaultValue)
+  {
+    if (object == NULL)
+      return defaultValue;
+
+    // start critical section for python API calls
+    // PythonUtility::GlobalInterpreterLock lock;
+
+    if (PyLong_Check(object))
+    {
+      long long valueLong = PyLong_AsLongLong(object);
+      return valueLong;
+    }
+    else if (PyFloat_Check(object))
+    {
+      double valueDouble = PyFloat_AsDouble(object);
+
+      if (double((long long)(valueDouble)) != valueDouble)      // if value is not e.g. 2.0
+      {
+        LOG(WARNING) << "convertFromPython: object is no long long: " << object;
+      }
+
+      return (long long)(valueDouble);
+    }
+    else if (PyUnicode_Check(object))
+    {
+      std::string valueString = pyUnicodeToString(object);
+      return atoi(valueString.c_str());
+    }
+    else
+    {
+      LOG(WARNING) << "convertFromPython: object is no long long: " << object;
+    }
+    return defaultValue;
+  }
+
+  //! convert a python object to its corresponding c type, with type checking, if conversion is not possible use trivial default value (0 or 0.0 or "")
+  static long long get(PyObject *object)
+  {
+    return convertFromPython<long long>::get(object, 0);
   }
 };
 

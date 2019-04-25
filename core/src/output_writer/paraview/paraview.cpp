@@ -60,10 +60,10 @@ std::string Paraview::convertToAscii(const std::vector<double> &vector, bool fix
     {
       result << vector[i] << " ";
     }
-    if (i % 3 == 2)
+    /*if (i % 3 == 2)   // this breaks validity for paraview but creates better analysable results (1 point per row)
     {
       result << std::endl << std::string(5,'\t');
-    }
+    }*/
   }
   return result.str();
 }
@@ -84,4 +84,5 @@ std::string Paraview::convertToAscii(const std::vector<int> &vector, bool fixedF
   }
   return result.str();
 }
-};
+
+}  // namespace

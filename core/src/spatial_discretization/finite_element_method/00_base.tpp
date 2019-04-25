@@ -78,9 +78,21 @@ initialize()
     return;
 
   data_.initialize();
+
+  // assemble stiffness matrix
+  Control::PerformanceMeasurement::start("durationSetStiffnessMatrix");
   setStiffnessMatrix();
+  Control::PerformanceMeasurement::stop("durationSetStiffnessMatrix");
+
+  // set the rhs
+  Control::PerformanceMeasurement::start("durationSetRightHandSide");
   setRightHandSide();
+  Control::PerformanceMeasurement::stop("durationSetRightHandSide");
+
+  // apply boundary conditions
+  Control::PerformanceMeasurement::start("durationAssembleBoundaryConditions");
   this->applyBoundaryConditions();
+  Control::PerformanceMeasurement::stop("durationAssembleBoundaryConditions");
 
   initialized_ = true;
 }
@@ -135,6 +147,9 @@ solve()
   PetscErrorCode ierr;
   ierr = KSPSetOperators(*ksp, stiffnessMatrix->valuesGlobal(), stiffnessMatrix->valuesGlobal()); CHKERRV(ierr);
 
+  VLOG(1) << "rhs: " << *data_.rightHandSide();
+  VLOG(1) << "stiffnessMatrix: " << *stiffnessMatrix;
+
   // non-zero initial values
 #if 0  
   PetscScalar scalar = 0.5;
@@ -142,6 +157,7 @@ solve()
   ierr = KSPSetInitialGuessNonzero(*ksp, PETSC_TRUE); CHKERRV(ierr);
 #endif
 
+<<<<<<< HEAD
 // get geometry field values of old mesh
   std::vector<Vec3> geometryFieldValues;
   std::vector<double> geometryFieldValuesConsecutive(geometryFieldValues.size()*3);
@@ -188,44 +204,13 @@ solve()
 
     VecGetValues(data_.solution()->values(), vectorSize, indices.data(), solution.data());
     VecGetValues(data_.rightHandSide()->values(), vectorSize, indices.data(), rhs.data());
+=======
+  LOG(DEBUG) << "solve...";
+>>>>>>> f7ef58cd263a0189bdc3a432e15f1cf1bad4a3ae
 
-    // get stiffness matrix
-    int nRows, nColumns;
-    MatGetSize(data_.stiffnessMatrix(), &nRows, &nColumns);
-    std::vector<int> rowIndices(nRows);
-    std::iota(rowIndices.begin(), rowIndices.end(), 0);
-    std::vector<int> columnIndices(nColumns);
-    std::iota(columnIndices.begin(), columnIndices.end(), 0);
-    std::vector<double> matrixValues(nRows*nColumns);
+  // solve the system
+  linearSolver->solve(data_.rightHandSide()->valuesGlobal(), data_.solution()->valuesGlobal(), "Solution obtained");
 
-    std::vector<long int> nEntries = {nRows, nColumns};
-
-    MatGetValues(data_.stiffnessMatrix().values(), nRows, rowIndices.data(), nColumns, columnIndices.data(), matrixValues.data());
-
-    std::vector<double> f(vectorSize);
-
-    // compute f = matrix * solution
-
-    for (int i=0; i<vectorSize; i++)
-    {
-      f[i] = 0.0;
-      for (int j=0; j<vectorSize; j++)
-      {
-        f[i] += matrixValues[i*nColumns + j] * solution[j];
-      }
-    }
-
-    // compute residual norm
-    double res = 0.0;
-    for (int i=0; i<vectorSize; i++)
-    {
-      res += (f[i] - rhs[i]) * (f[i] - rhs[i]);
-      LOG(DEBUG) << i << ". solution=" << solution[i]<< ", f=" <<f[i]<< ", rhs=" <<rhs[i]<< ", squared error: " <<(f[i] - rhs[i]) * (f[i] - rhs[i]);
-    }
-
-    LOG(DEBUG) << "res=" << res;
-  }
-#endif  
 }
 
 template<typename FunctionSpaceType,typename QuadratureType,typename Term>
@@ -382,4 +367,4 @@ initialize(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> di
   FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Equation::Dynamic::DirectionalDiffusion>::initialize();
 }
 
-};
+} // namespace

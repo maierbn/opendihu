@@ -149,4 +149,4 @@ std::ostream &operator<<(std::ostream &stream, const ExfileRepresentation &rhs)
   return stream;
 }
 
-};
+}  // namespace

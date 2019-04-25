@@ -23,7 +23,10 @@ class CellmlAdapterBase
 {
 public:
 
-  //! constructor
+  //! constructor from context
+  CellmlAdapterBase(DihuContext context, bool noNewOutputWriter);
+
+  //! constructor from context
   CellmlAdapterBase(DihuContext context);
 
   //! destructor
@@ -32,8 +35,11 @@ public:
   //! return the compile-time constant number of state variables of one instance that will be integrated
   static constexpr int nComponents();
 
-  //! load model
+  //! load model, use settings given in context
   void initialize();
+
+  //! create generic function space with given number of instances
+  void initializeFromNInstances(int nInstances);
   
   //! set initial values as given in python config
   template<typename FunctionSpaceType2>
@@ -62,7 +68,7 @@ protected:
   //! scan the given cellml source file for initial values that are given by dummy assignments (OpenCMISS) or directly (OpenCOR). This also sets nParameters_, nConstants_ and nIntermediates_
   virtual bool scanSourceFile(std::string sourceFilename, std::array<double,nStates> &statesInitialValues) = 0;
 
-  const DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
+  DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
   PythonConfig specificSettings_;    ///< python object containing the value of the python config dict with corresponding key
   OutputWriter::Manager outputWriterManager_; ///< manager object holding all output writer
 

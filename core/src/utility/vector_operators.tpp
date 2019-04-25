@@ -111,6 +111,20 @@ std::array<double,nComponents> operator*(std::array<double,nComponents> vector, 
   return result;
 }
 
+//! vector*scalar multiplication
+template<typename T>
+std::vector<T> operator*(std::vector<T> vector, double lambda)
+{
+  std::vector<T> result(vector.size());
+
+  //#pragma omp simd
+  for (int i = 0; i < vector.size(); i++)
+  {
+    result[i] = lambda * vector[i];
+  }
+  return result;
+}
+
 //! component-wise vector multiplication
 template<std::size_t nComponents>
 std::array<double,nComponents> operator*(const std::array<double,nComponents> vector1, const std::array<double,nComponents> vector2)
@@ -276,6 +290,36 @@ std::ostream &operator<<(std::ostream &stream, const std::set<T> &set)
   stream << "}";
   return stream;
 }
+
+//! output operators for tuples or arbitrary type
+template <size_t index, typename... T>
+typename std::enable_if<(index >= sizeof...(T))>::type
+  getString(std::ostream &stream, const std::tuple<T...> &tuple)
+{}
+
+template <size_t index, typename... T>
+typename std::enable_if<(index < sizeof...(T))>::type
+  getString(std::ostream &stream, const std::tuple<T...> &tuple)
+{
+  if (index != 0)
+  {
+    stream << ",";
+  }
+  stream << std::get<index>(tuple);
+
+  getString<index+1>(stream, tuple);
+}
+
+template <typename... T>
+std::ostream &operator<<(std::ostream& stream, const std::tuple<T...> &tuple)
+{
+  stream << "[";
+  getString<0>(stream, tuple);
+  stream << "]";
+
+  return stream;
+}
+
 /*
 std::ostream &operator<<(std::ostream &stream, const std::stringstream &stringstream)
 {

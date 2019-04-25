@@ -73,4 +73,4 @@ applyBoundaryConditions()
   }
 }
 
-};  // namespace
+} // namespace

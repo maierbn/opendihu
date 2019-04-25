@@ -110,4 +110,4 @@ outputExnode(std::ostream &stream, OutputFieldVariablesType fieldVariables, std:
 }
 
 
-};  //namespace
+}  // namespace

@@ -311,4 +311,4 @@ setHermiteDerivatives()
   }
 }
 
-};  // namespace
+} // namespace

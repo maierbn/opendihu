@@ -58,4 +58,4 @@ setRepresentationContiguous()
     this->values_->setRepresentationContiguous();
 }
 
-};  // namespace
+} // namespace

@@ -56,6 +56,6 @@ protected:
 
 };
 
-};  // namespace
+} // namespace
 
 #include "spatial_discretization/finite_element_method/02_boundary_conditions.tpp"

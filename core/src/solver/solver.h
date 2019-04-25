@@ -20,6 +20,9 @@ public:
 
   //! determine if the own python config object is the same as config
   bool configEquals(PythonConfig config);
+
+  //! get the name of the solver
+  std::string name();
 protected:
 
   PythonConfig specificSettings_;   ///< the python config dict

@@ -191,5 +191,5 @@ config = {
   assertFileMatchesContent("init_from_config.exelem", exelemReferenceOutput);
 }
 
-};
+}  // namespace
 

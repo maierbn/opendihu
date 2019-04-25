@@ -86,6 +86,6 @@ public:
                          int nFieldVariablesOfMesh, PythonConfig specificSettings);
 };
 
-};  // namespace
+} // namespace
 
 #include "output_writer/paraview/paraview_writer.tpp"

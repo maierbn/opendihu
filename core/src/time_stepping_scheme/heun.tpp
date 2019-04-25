@@ -12,7 +12,16 @@ template<typename DiscretizableInTime>
 Heun<DiscretizableInTime>::Heun(DihuContext context) :
   TimeSteppingExplicit<DiscretizableInTime>(context, "Heun")
 {
-  this->data_ = std::make_shared<Data::TimeSteppingHeun<typename DiscretizableInTime::FunctionSpace, DiscretizableInTime::nComponents()>>(context);  // create data object for heun
+}
+
+template<typename DiscretizableInTime>
+void Heun<DiscretizableInTime>::initialize()
+{
+  LOG(TRACE) << "Heun::initialize";
+
+  this->data_ = std::make_shared<Data::TimeSteppingHeun<typename DiscretizableInTime::FunctionSpace, DiscretizableInTime::nComponents()>>(this->context_);  // create data object for heun
+
+  TimeSteppingSchemeOde<DiscretizableInTime>::initialize();
 }
 
 template<typename DiscretizableInTime>
@@ -46,7 +55,7 @@ void Heun<DiscretizableInTime>::advanceTimeSpan()
       LOG(INFO) << "Heun, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
     }
 
-    VLOG(1) << "starting from solution: " << this->data_->solution();
+    VLOG(1) << "starting from solution: " << *this->data_->solution();
 
     // advance solution value to compute u* first
     // compute  delta_u = f(u_{t})
@@ -57,7 +66,7 @@ void Heun<DiscretizableInTime>::advanceTimeSpan()
     // integrate u* += dt * delta_u : values = solution.values + timeStepWidth * increment.values
     VecAXPY(solution, this->timeStepWidth_, increment);
 
-    VLOG(1) << "increment: " << this->data_->increment() << ", dt: " << this->timeStepWidth_;
+    VLOG(1) << "increment: " << *this->data_->increment() << ", dt: " << this->timeStepWidth_;
 
     // now, advance solution value to compute u_{t+1}
     // compute  delta_u* = f(u*)
@@ -95,14 +104,6 @@ void Heun<DiscretizableInTime>::advanceTimeSpan()
       Control::PerformanceMeasurement::start(this->durationLogKey_);
     //this->data_->print();
   }
-
-  //this->data_->solution()->restoreValuesContiguousToGlobalSub();
-  //this->data_->increment()->restoreValuesContiguousToGlobalSub();
-  //dataHeun->intermediateIncrement()->restoreValuesContiguousToGlobalSub();
-
-  //this->data_->solution()->restoreValuesContiguous();
-  //this->data_->increment()->restoreValuesContiguous();
-  //dataHeun->intermediateIncrement()->restoreValuesContiguous();
 
   // stop duration measurement
   if (this->durationLogKey_ != "")

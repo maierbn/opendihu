@@ -563,4 +563,4 @@ nLocalUnknowns()
   return nLocalUnknownsDisplacements + nLocalUnknownsPressure;
 }
 
-};    // namespace
+}  // namespace

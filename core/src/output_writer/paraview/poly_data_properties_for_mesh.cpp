@@ -25,4 +25,4 @@ std::ostream &operator<<(std::ostream &stream, PolyDataPropertiesForMesh rhs)
   return stream;
 }
 
-};
+}  // namespace

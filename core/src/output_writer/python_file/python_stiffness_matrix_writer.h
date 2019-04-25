@@ -51,6 +51,6 @@ private:
 
 };
 
-};   // namespace
+}  // namespace
 
 #include "output_writer/python_file/python_stiffness_matrix_writer.tpp"

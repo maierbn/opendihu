@@ -87,4 +87,4 @@ averageNNodesPerElement()
   return 0;
 }
 
-};  // namespace
+} // namespace

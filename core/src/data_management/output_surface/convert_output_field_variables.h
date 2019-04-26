@@ -34,6 +34,22 @@ struct ConvertFieldVariable<std::shared_ptr<FieldVariable::FieldVariable<Functio
   }
 };
 
+template<typename FieldVariableType>
+struct ConvertFieldVariable<std::vector<FieldVariableType>>
+{
+  typedef std::vector<typename ConvertFieldVariable<FieldVariableType>::type> type;
+
+  static void convert(const std::vector<FieldVariableType> &fieldVariable3D, type &fieldVariable2D, Mesh::face_t face, bool &ownRankInvolvedInOutput)
+  {
+    fieldVariable2D.resize(fieldVariable3D.size());
+
+    for (int i = 0; i < fieldVariable3D.size(); i++)
+    {
+      ConvertFieldVariable<FieldVariableType>::convert(fieldVariable3D[i], fieldVariable2D[i], face, ownRankInvolvedInOutput);
+    }
+  }
+};
+
 template<typename OutputFieldVariables3D, size_t currentIndex, typename ConvertedTail>
 struct ConvertTuple
 {

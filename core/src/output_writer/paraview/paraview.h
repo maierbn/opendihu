@@ -16,7 +16,7 @@ class Paraview : public Generic
 public:
 
   //! constructor
-  Paraview(DihuContext context, PythonConfig specificSettings);
+  Paraview(DihuContext context, PythonConfig specificSettings, std::shared_ptr<Partition::RankSubset> rankSubset = nullptr);
 
   //! write out solution to given filename, if timeStepNo is not -1, this value will be part of the filename
   template<typename DataType>
@@ -39,10 +39,12 @@ public:
   void writePolyDataFile(const OutputFieldVariablesType &fieldVariables, std::set<std::string> &combinedMeshesOut);
 
 
-  //! write a single *.vtu file that contains all data of all 3D field variables. This is uses MPI IO. It can be enabled with the "combineFiles" option.
-  //! on return, combinedMeshesOut contains the 3D mesh names that were written to the vtu file.
+  //! write a single *.vtu file that contains all data of all 3D or 2D field variables (depending on output3DMeshes).
+  //! This is uses MPI IO. It can be enabled with the "combineFiles" option.
+  //! on return, combinedMeshesOut contains the 3D or 2D mesh names that were written to the vtu file.
   template<typename OutputFieldVariablesType>
-  void writeCombinedUnstructuredGridFile(const OutputFieldVariablesType &fieldVariables, std::set<std::string> &combinedMeshesOut);
+  void writeCombinedUnstructuredGridFile(const OutputFieldVariablesType &fieldVariables, std::set<std::string> &combinedMeshesOut,
+                                         bool output3DMeshes);
 
   //! encode a Petsc vector in Base64,
   //! @param withEncodedSizePrefix if the length of the vector should be added as encoded prefix
@@ -95,8 +97,8 @@ protected:
   template<typename T>
   void writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, const std::vector<T> &values, int identifier, bool writeFloatsAsInt=false);
 
-  //! write a vector containing nValues 12 values for the types for an unstructured grid
-  void writeCombinedTypesVector(MPI_File fileHandle, int ownRankNo, int nValues, int identifier);
+  //! write a vector containing nValues "12" (if output3DMeshes) or "9" (if !output3DMeshes) values for the types for an unstructured grid
+  void writeCombinedTypesVector(MPI_File fileHandle, int ownRankNo, int nValues, bool output3DMeshes, int identifier);
 
   bool binaryOutput_;  ///< if the data output should be binary encoded using base64
   bool fixedFormat_;   ///< if non-binary output is selected, if the ascii values should be written with a fixed precision, like 1.000000e5
@@ -106,7 +108,8 @@ protected:
   std::vector<int> globalValuesSize_;   ///< cached values used in writeCombinedValuesVector
   std::vector<int> nPreviousValues_;    ///< cached values used in writeCombinedValuesVector
 
-  std::map<std::string, PolyDataPropertiesForMesh> meshPropertiesUnstructuredGridFile_;    ///< mesh information for a combined unstructured grid file (*.vtu), e.g. for 3D data
+  std::map<std::string, PolyDataPropertiesForMesh> meshPropertiesUnstructuredGridFile2D_;    ///< mesh information for a combined unstructured grid file (*.vtu), for 2D data
+  std::map<std::string, PolyDataPropertiesForMesh> meshPropertiesUnstructuredGridFile3D_;    ///< mesh information for a combined unstructured grid file (*.vtu), for 3D data
   std::map<std::string, PolyDataPropertiesForMesh> meshPropertiesPolyDataFile_;    ///< mesh information for a poly data file (*.vtp), for 1D data
   VTKPiece vtkPiece_;   ///< the VTKPiece data structure used for PolyDataFile
 

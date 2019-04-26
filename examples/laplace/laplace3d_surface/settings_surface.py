@@ -50,7 +50,7 @@ config = {
   "OutputSurface": {
     "face": "1-",
     "OutputWriter" : [
-      {"format": "Paraview", "outputInterval": 1, "filename": "out/surface", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":False},      
+      {"format": "Paraview", "outputInterval": 1, "filename": "out/surface", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},      
       {"format": "PythonFile", "filename": "out/surface", "outputInterval": 1, "binary":False, "onlyNodalValues":True}
     ],
     "FiniteElementMethod" : {

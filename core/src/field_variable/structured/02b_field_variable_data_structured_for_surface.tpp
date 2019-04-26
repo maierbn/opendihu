@@ -20,7 +20,7 @@ FieldVariableDataStructuredForSurface(FieldVariable<FunctionSpace::FunctionSpace
   this->name_ = rhs.name();
   this->isGeometryField_ = rhs.isGeometryField();
 
-  LOG(DEBUG) << "create 2D surface field variable from 3D field variable \"" << rhs.name() << "\"";
+  LOG(DEBUG) << "create 2D surface field variable from 3D field variable \"" << rhs.name() << "\", is geometry: " << this->isGeometryField_;
 
   typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>,BasisFunctionType> FunctionSpace3D;
   typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<2>,BasisFunctionType> FunctionSpace2D;
@@ -133,12 +133,12 @@ setValues(FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableO
     values.clear();
     rhs.getValues(componentNo, surfaceDofs_, values);
 
-    LOG(DEBUG) << "component " << componentNo << ", values: " << values;
+    //VLOG(1) << "component " << componentNo << ", values: " << values;
     this->values_->setValues(componentNo, this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts(), this->functionSpace_->meshPartition()->dofNosLocal().data(), values.data(), INSERT_VALUES);
   }
 
-  //this->values_->startGhostManipulation();
-  this->values_->finishGhostManipulation();
+  this->values_->setRepresentationGlobal();
+  this->values_->startGhostManipulation();
 }
 
 template<typename BasisFunctionType, int nComponents>

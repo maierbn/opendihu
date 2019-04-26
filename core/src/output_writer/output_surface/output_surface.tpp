@@ -31,10 +31,6 @@ initialize()
   if (initialized_)
     return;
 
-  // initialize output writers
-  PythonConfig specificSettings = context_.getPythonConfig();
-  LOG(DEBUG) << "OutputSurface: initialize output writers";
-  outputWriterManager_.initialize(context_, specificSettings);
 
   // initialize solvers
   solver_.initialize();
@@ -42,6 +38,17 @@ initialize()
   data_.setData(solver_.data());
   data_.initialize();
   ownRankInvolvedInOutput_ = data_.ownRankInvolvedInOutput();
+
+  // initialize output writers
+  PythonConfig specificSettings = context_.getPythonConfig();
+  LOG(DEBUG) << "OutputSurface: initialize output writers";
+
+  // initialize output writer to use smaller rank subset that only contains the ranks that have parts of the surface
+  // if the last argument is not given, by default the common rank subset would be used
+  if (ownRankInvolvedInOutput_)
+  {
+    outputWriterManager_.initialize(context_, specificSettings, data_.functionSpace()->meshPartition()->rankSubset());
+  }
   initialized_ = true;
 }
 
@@ -72,6 +79,13 @@ void OutputSurface<Solver>::
 reset()
 {
   solver_.reset();
+}
+
+template<typename Solver>
+void OutputSurface<Solver>::
+setTimeSpan(double startTime, double endTime)
+{
+  solver_.setTimeSpan(startTime, endTime);
 }
 
 template<typename Solver>

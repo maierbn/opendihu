@@ -13,7 +13,7 @@ namespace Mesh
 template<typename FunctionSpaceType>
 std::shared_ptr<FunctionSpaceType> Manager::functionSpace(PythonConfig settings)
 {
-  LOG(DEBUG) << "querying Mesh::Manager::functionSpace, type " << typeid(FunctionSpaceType).name();
+  LOG(DEBUG) << "querying Mesh::Manager::functionSpace, type " << StringUtility::demangle(typeid(FunctionSpaceType).name());
   
   // if mesh was already created earlier
   if (settings.hasKey("meshName"))
@@ -21,15 +21,16 @@ std::shared_ptr<FunctionSpaceType> Manager::functionSpace(PythonConfig settings)
     std::string meshName = settings.getOptionString("meshName", "");
     if (hasFunctionSpaceOfType<FunctionSpaceType>(meshName))
     {
-      LOG(DEBUG) << "Mesh with meshName \"" << meshName << "\" requested, found and type matches, type is " << typeid(functionSpaces_[meshName]).name()
-      << ", cast to " << typeid(FunctionSpaceType).name();
+      LOG(DEBUG) << "Mesh with meshName \"" << meshName << "\" requested, found and type matches, type is "
+        << StringUtility::demangle(typeid(functionSpaces_[meshName]).name())
+      << ", cast to " << StringUtility::demangle(typeid(FunctionSpaceType).name());
       return std::static_pointer_cast<FunctionSpaceType>(functionSpaces_[meshName]);
     }
     else if (meshConfiguration_.find(meshName) != meshConfiguration_.end())
     {
       // mesh was preconfigured, create new mesh from stored meshConfiguration
       LOG(DEBUG) << "Mesh configuration for \"" << meshName << "\" found and requested, will be created now. "
-      << "Type is " << typeid(FunctionSpaceType).name() << ".";
+      << "Type is " << StringUtility::demangle(typeid(FunctionSpaceType).name()) << ".";
       
       // get mesh configuration that was parsed earlier
       PythonConfig meshConfiguration = meshConfiguration_.at(meshName);
@@ -72,7 +73,7 @@ std::shared_ptr<FunctionSpaceType> Manager::functionSpace(PythonConfig settings)
   // create new mesh, store as anonymous object
   std::stringstream anonymousName;
   anonymousName << "anonymous" << numberAnonymousMeshes_++;
-  LOG(DEBUG) << "Create new mesh with type " << typeid(FunctionSpaceType).name() << " and name \"" <<anonymousName.str() << "\" (1).";
+  LOG(DEBUG) << "Create new mesh with type " << StringUtility::demangle(typeid(FunctionSpaceType).name()) << " and name \"" <<anonymousName.str() << "\" (1).";
   
   // create mesh and initialize
   std::shared_ptr<FunctionSpaceType> functionSpace = createFunctionSpace<FunctionSpaceType>(anonymousName.str(), settings);
@@ -94,7 +95,7 @@ std::shared_ptr<FunctionSpaceType> Manager::functionSpace(PythonConfig settings)
 template<typename FunctionSpaceType>
 std::shared_ptr<FunctionSpaceType> Manager::functionSpace(std::string meshName)
 {
-  LOG(DEBUG) << "querying Mesh::Manager::functionSpace, type " << typeid(FunctionSpaceType).name();
+  LOG(DEBUG) << "querying Mesh::Manager::functionSpace, type " << StringUtility::demangle(typeid(FunctionSpaceType).name());
 
   // if mesh was already created earlier
   if (functionSpaces_.find(meshName) != functionSpaces_.end())
@@ -119,7 +120,8 @@ std::shared_ptr<FunctionSpaceType> Manager::createFunctionSpace(std::string name
   }
 
   // create new mesh
-  LOG(DEBUG) << "Create new mesh with type " << typeid(FunctionSpaceType).name() << " and name \"" <<name << "\" (2).";
+  LOG(DEBUG) << "Create new mesh with type " << StringUtility::demangle(typeid(FunctionSpaceType).name())
+    << " and name \"" <<name << "\" (2).";
 
   // create mesh and initialize
   std::shared_ptr<FunctionSpaceType> functionSpace;
@@ -157,7 +159,8 @@ std::shared_ptr<FunctionSpaceType> Manager::createFunctionSpaceWithGivenMeshPart
   }
 
   // create new mesh
-  LOG(DEBUG) << "Create new mesh with type " << typeid(FunctionSpaceType).name() << " and name \"" <<name << "\" (3).";
+  LOG(DEBUG) << "Create new mesh with type " << StringUtility::demangle(typeid(FunctionSpaceType).name())
+    << " and name \"" <<name << "\" (3).";
 
   // create mesh and initialize
   std::shared_ptr<FunctionSpaceType> functionSpace = std::make_shared<FunctionSpaceType>(this->partitionManager_, std::forward<Args>(args)...);
@@ -188,7 +191,8 @@ bool Manager::hasFunctionSpaceOfType(std::string meshName)
     }
     else
     {
-      LOG(WARNING) << "Mesh \"" << meshName << "\" is stored but under a type that is different from " << typeid(FunctionSpaceType).name() << ". A new mesh will be created instead.";
+      LOG(WARNING) << "Mesh \"" << meshName << "\" is stored but under a type that is different from "
+        << StringUtility::demangle(typeid(FunctionSpaceType).name()) << ". A new mesh will be created instead.";
       // This warning could be if in an operator splitting setup for Cellml adapter the functionType is set differently from the one in the FEM.
     }
   }

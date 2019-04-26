@@ -37,6 +37,9 @@ public:
   //! reset state
   void reset();
 
+  //! set a new time interval
+  void setTimeSpan(double startTime, double endTime);
+
   //! return the data object of the timestepping scheme
   Data3D &data();
 

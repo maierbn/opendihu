@@ -9,7 +9,8 @@
 namespace OutputWriter
 {
 
-PythonCallback::PythonCallback(DihuContext context, PythonConfig settings) : Generic(context, settings)
+PythonCallback::PythonCallback(DihuContext context, PythonConfig settings, std::shared_ptr<Partition::RankSubset> rankSubset) :
+  Generic(context, settings, rankSubset)
 {
   callback_ = settings.getOptionPyObject("callback");
   onlyNodalValues_ = settings.getOptionBool("onlyNodalValues", true);

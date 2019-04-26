@@ -18,8 +18,8 @@
 namespace OutputWriter
 {
 
-Paraview::Paraview(DihuContext context, PythonConfig settings) :
-  Generic(context, settings)
+Paraview::Paraview(DihuContext context, PythonConfig settings, std::shared_ptr<Partition::RankSubset> rankSubset) :
+  Generic(context, settings, rankSubset)
 {
   binaryOutput_ = settings.getOptionBool("binary", true);
   fixedFormat_ = settings.getOptionBool("fixedFormat", true);

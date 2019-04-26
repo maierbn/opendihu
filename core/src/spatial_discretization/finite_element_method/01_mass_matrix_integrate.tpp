@@ -23,7 +23,8 @@ setMassMatrix()
   }
 
   const int D = FunctionSpaceType::dim();
-  LOG(TRACE) << "setMassMatrix " << D << "D using integration, FunctionSpaceType: " << typeid(FunctionSpaceType).name() << ", QuadratureType: " << typeid(QuadratureType).name();
+  LOG(TRACE) << "setMassMatrix " << D << "D using integration, FunctionSpaceType: " << StringUtility::demangle(typeid(FunctionSpaceType).name())
+    << ", QuadratureType: " << StringUtility::demangle(typeid(QuadratureType).name());
 
   // massMatrix * f_strong = rhs_weak
   // row of massMatrix: contributions to a single entry in rhs_weak

@@ -316,7 +316,8 @@ for i in range(int(header_length/4.) - 1):
   
 n_fibers_total = parameters[0]
 n_fibers_x = (int)(np.round(np.sqrt(n_fibers_total)))
-n_fibers_y = min(n_fibers_x, n_maximum_fibers_y)
+n_fibers_y = n_fibers_x
+n_fibers_x = min(n_fibers_x, n_maximum_fibers_y)
 n_points_whole_fiber = parameters[1]
 
 # for debugging:

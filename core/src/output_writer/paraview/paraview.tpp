@@ -179,7 +179,7 @@ void Paraview::writeParaviewPartitionFieldVariable(FieldVariableType &geometryFi
   {
     file << std::string(3, '\t') << "<PDataArray "
         << "Name=\"partitioning\" "
-        << "type=\"Float32\" "
+        << "type=\"Int32\" "
         << "NumberOfComponents=\"1\" ";
 
     if (binaryOutput)
@@ -196,18 +196,18 @@ void Paraview::writeParaviewPartitionFieldVariable(FieldVariableType &geometryFi
     // write normal data element
     file << std::string(4, '\t') << "<DataArray "
         << "Name=\"partitioning\" "
-        << "type=\"Float32\" "
+        << "type=\"Int32\" "
         << "NumberOfComponents=\"1\" ";
 
     std::string stringData;
 
     const node_no_t nNodesLocal = geometryField.functionSpace()->meshPartition()->nNodesLocalWithGhosts();
 
-    std::vector<double> values(nNodesLocal, (double)DihuContext::ownRankNoCommWorld());
+    std::vector<int32_t> values(nNodesLocal, (int32_t)DihuContext::ownRankNoCommWorld());
 
     if (binaryOutput)
     {
-      stringData = Paraview::encodeBase64Float(values.begin(), values.end());
+      stringData = Paraview::encodeBase64Int32(values.begin(), values.end());
       file << "format=\"binary\" >" << std::endl;
     }
     else

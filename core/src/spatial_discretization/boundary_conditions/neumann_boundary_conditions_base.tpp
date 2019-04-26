@@ -39,7 +39,8 @@ initialize(PythonConfig specificSettings, std::shared_ptr<FunctionSpaceType> fun
   // if boundary conditions are present in config
   if (!specificSettings.hasKey(boundaryConditionsConfigKey))
   {
-    LOG(WARNING) << specificSettings << "[\"" << boundaryConditionsConfigKey << "\"] not set: No Neumann boundary conditions specified";
+    LOG(WARNING) << specificSettings << "[\"" << boundaryConditionsConfigKey << "\"] not set: No Neumann boundary conditions specified" << std::endl
+      << "(Set \"neumannBoundaryConditions\": [] to avoid this warning.)";
     return;
   }
 

@@ -6,7 +6,7 @@ namespace OutputWriter
 template<typename Solver>
 OutputSurface<Solver>::
 OutputSurface(DihuContext context) :
-  context_(context["OutputSurface"]), solver_(context_), data_(context_)
+  context_(context["OutputSurface"]), solver_(context_), data_(context_), ownRankInvolvedInOutput_(true)
 {
 
 }
@@ -18,15 +18,22 @@ advanceTimeSpan()
   solver_.advanceTimeSpan();
 
   LOG(DEBUG) << "OutputSurface: writeOutput";
-  outputWriterManager_.writeOutput(data_);
+  if (ownRankInvolvedInOutput_)
+  {
+    outputWriterManager_.writeOutput(data_);
+  }
 }
 
 template<typename Solver>
 void OutputSurface<Solver>::
 initialize()
 {
+  if (initialized_)
+    return;
+
   // initialize output writers
   PythonConfig specificSettings = context_.getPythonConfig();
+  LOG(DEBUG) << "OutputSurface: initialize output writers";
   outputWriterManager_.initialize(context_, specificSettings);
 
   // initialize solvers
@@ -34,6 +41,8 @@ initialize()
 
   data_.setData(solver_.data());
   data_.initialize();
+  ownRankInvolvedInOutput_ = data_.ownRankInvolvedInOutput();
+  initialized_ = true;
 }
 
 template<typename Solver>
@@ -47,14 +56,22 @@ template<typename Solver>
 void OutputSurface<Solver>::
 run()
 {
-  return solver_.run();
+  initialize();
+
+  solver_.run();
+
+  LOG(DEBUG) << "OutputSurface: writeOutput";
+  if (ownRankInvolvedInOutput_)
+  {
+    outputWriterManager_.writeOutput(data_);
+  }
 }
 
 template<typename Solver>
 void OutputSurface<Solver>::
 reset()
 {
-  return solver_.reset();
+  solver_.reset();
 }
 
 template<typename Solver>

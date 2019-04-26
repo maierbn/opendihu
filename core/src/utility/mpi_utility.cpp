@@ -60,7 +60,7 @@ void gdbParallelDebuggingBarrier()
     int pid = getpid();
     LOG(INFO) << "Rank " << rankNo << ", PID " << pid << " is waiting for gdbResume=" << gdbResume 
       << " to become 1 " << std::endl << std::endl
-      << "sudo gdb -p " << pid << std::endl << std::endl
+      << "gdb -p " << pid << std::endl << std::endl
       << "select-frame 2" << std::endl
       << "set var gdbResume = 1" << std::endl
       << "info locals " << std::endl 

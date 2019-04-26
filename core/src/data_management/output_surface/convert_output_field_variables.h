@@ -8,9 +8,9 @@ struct ConvertFieldVariable
 {
   typedef FieldVariableType type;
 
-  void convert(const FieldVariableType fieldVariable3D, type &fieldVariable2D, Mesh::face_t face)
+  static void convert(const FieldVariableType fieldVariable3D, type &fieldVariable2D, Mesh::face_t face, bool &ownRankInvolvedInOutput)
   {
-    LOG(DEBUG) << "convert field variable: no transformation " << typeid(FieldVariableType).name();
+    LOG(DEBUG) << "convert field variable \"" << fieldVariable3D->name() << "\": no transformation " << typeid(FieldVariableType).name();
     fieldVariable2D = fieldVariable3D;
   }
 };
@@ -20,10 +20,17 @@ struct ConvertFieldVariable<std::shared_ptr<FieldVariable::FieldVariable<Functio
 {
   typedef std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<2>,BasisFunctionType>,nComponents>> type;
 
-  void convert(const std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>,BasisFunctionType>,nComponents>> fieldVariable3D, type &fieldVariable2D, Mesh::face_t face)
+  static void convert(const std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>,BasisFunctionType>,nComponents>> fieldVariable3D, type &fieldVariable2D, Mesh::face_t face, bool &ownRankInvolvedInOutput)
   {
-    LOG(DEBUG) << "convert field variable: transform shared_ptr<field variable 3D> to shared_ptr<field variable 2D>";
-    fieldVariable2D = std::make_shared<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<2>,BasisFunctionType>,nComponents>>>(fieldVariable3D, face);
+    LOG(DEBUG) << "convert field variable \"" << fieldVariable3D->name() << "\": transform shared_ptr<field variable 3D> to shared_ptr<field variable 2D>";
+    if (!fieldVariable2D)
+    {
+      fieldVariable2D = std::make_shared<FieldVariable::FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<2>,BasisFunctionType>,nComponents>>(*fieldVariable3D, face, ownRankInvolvedInOutput);
+    }
+    else
+    {
+      fieldVariable2D->setValues(*fieldVariable3D);
+    }
   }
 };
 
@@ -34,21 +41,26 @@ struct ConvertTuple
     OutputFieldVariables3D,        // input tuple of field variables
     currentIndex-1,           // index, starting from which the field variables are already transformed
     decltype(std::tuple_cat(           // tuple of transformed field variables, at the end of the tuple
-      std::declval<typename ConvertFieldVariable<std::tuple_element<currentIndex-1,OutputFieldVariables3D>>::type>(),
+      std::declval<std::tuple<
+          typename ConvertFieldVariable<typename std::tuple_element<currentIndex-1,OutputFieldVariables3D>::type>::type
+          >>(),
       std::declval<ConvertedTail>()
     ))
   > ConvertTupleClass;
   typedef typename ConvertTupleClass::type type;
 
-  static void convert(const OutputFieldVariables3D fieldVariables3D, type &fieldVariables2D, Mesh::face_t face)
+  // convert a tuple of field variables from 3D function spaces to 2D function spaces
+  static void convert(const OutputFieldVariables3D fieldVariables3D, type &fieldVariables2D, Mesh::face_t face, bool &ownRankInvolvedInOutput)
   {
     LOG(DEBUG) << "convert: currentIndex = " << currentIndex << ", call previous ConvertTuple";
 
     LOG(DEBUG) << "call convert on field variable";
-    ConvertFieldVariable<std::tuple_element<currentIndex,OutputFieldVariables3D>>::convert(std::get<currentIndex>(fieldVariables3D), std::get<currentIndex>(fieldVariables2D), face);
+    ConvertFieldVariable<typename std::tuple_element<currentIndex,OutputFieldVariables3D>::type>::convert(
+      std::get<currentIndex>(fieldVariables3D), std::get<currentIndex>(fieldVariables2D), face, ownRankInvolvedInOutput
+    );
 
     LOG(DEBUG) << "call convert on previous variables";
-    ConvertTupleClass::convert(fieldVariables3D, fieldVariables2D);
+    ConvertTupleClass::convert(fieldVariables3D, fieldVariables2D, face, ownRankInvolvedInOutput);
 
   }
 };
@@ -59,11 +71,13 @@ struct ConvertTuple<OutputFieldVariables3D, 0, ConvertedTail>
 {
   typedef ConvertedTail type;
 
-  static void convert(const OutputFieldVariables3D fieldVariables3D, type &fieldVariables2D, Mesh::face_t face)
+  static void convert(const OutputFieldVariables3D fieldVariables3D, type &fieldVariables2D, Mesh::face_t face, bool &ownRankInvolvedInOutput)
   {
     LOG(DEBUG) << "convert: recursion end";
     LOG(DEBUG) << "call convert on field variable";
-    ConvertFieldVariable<std::tuple_element<0,OutputFieldVariables3D>>::convert(std::get<0>(fieldVariables3D), std::get<0>(fieldVariables2D), face);
+    ConvertFieldVariable<typename std::tuple_element<0,OutputFieldVariables3D>::type>::convert(
+      std::get<0>(fieldVariables3D), std::get<0>(fieldVariables2D), face, ownRankInvolvedInOutput
+    );
   }
 };
 
@@ -73,24 +87,33 @@ struct ConvertOutputFieldVariables
 {
   typedef ConvertTuple<
     OutputFieldVariables3D,
-    std::tuple_size<std::tuple<OutputFieldVariables3D>>::value-1,      // last index of tuple
+    std::tuple_size<OutputFieldVariables3D>::value-1,      // last index of tuple
     std::tuple<    // tuple containing only transformed last element
       typename ConvertFieldVariable   // transformed last element
       <
-        std::tuple_element    // last element
+        typename std::tuple_element    // last element
         <
-          std::tuple_size<std::tuple<OutputFieldVariables3D>>::value-1,
+          std::tuple_size<OutputFieldVariables3D>::value-1,
           OutputFieldVariables3D
-        >
+        >::type
       >::type
     >
   > ConvertTupleClass;
   typedef typename ConvertTupleClass::type type;   // equals tuple of converted field variables
 
-  static void convert(const OutputFieldVariables3D fieldVariables3D, type &fieldVariables2D, Mesh::face_t face)
+  typedef typename std::tuple_element<0,type>::type::element_type::FunctionSpace FunctionSpaceFirstFieldVariable;  // the function space type of the first field variable
+
+  // convert a tuple of field variables from 3D function spaces to 2D function spaces by taking the surface at the given face
+  static void convert(const OutputFieldVariables3D fieldVariables3D, type &fieldVariables2D, Mesh::face_t face, bool &ownRankInvolvedInOutput)
   {
-    LOG(DEBUG) << "convert: start at interface";
-    ConvertTupleClass::convert(fieldVariables3D, fieldVariables2D, face);
+    LOG(DEBUG) << "convert: start 3D: " << typeid(OutputFieldVariables3D).name() << ", n field variables: " << std::tuple_size<std::tuple<OutputFieldVariables3D>>::value;
+    ConvertTupleClass::convert(fieldVariables3D, fieldVariables2D, face, ownRankInvolvedInOutput);
+  }
+
+  // extract the function space of the first field variable
+  static std::shared_ptr<FunctionSpaceFirstFieldVariable> getFunctionSpaceFirstFieldVariable(type &fieldVariables2D)
+  {
+    return std::get<0>(fieldVariables2D)->functionSpace();
   }
 };
 

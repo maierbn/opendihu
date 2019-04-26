@@ -676,6 +676,16 @@ nNodesLocalWithoutGhosts(int coordinateDirection, int partitionIndex) const
   }
 }
 
+template<typename MeshType,typename BasisFunctionType>
+int MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+beginElementGlobal(int coordinateDirection) const
+{
+  assert(0 <= coordinateDirection);
+  assert(coordinateDirection < MeshType::dim());
+
+  return beginElementGlobal_[coordinateDirection];
+}
+
 //! number of nodes in total
 template<typename MeshType,typename BasisFunctionType>
 global_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::

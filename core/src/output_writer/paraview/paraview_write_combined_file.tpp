@@ -20,7 +20,7 @@ namespace OutputWriter
 {
 
 template<typename T>
-void Paraview::writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, const std::vector<T> &values, int identifier)
+void Paraview::writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, const std::vector<T> &values, int identifier, bool writeFloatsAsInt)
 {
   // fill the write buffer with the local values
   std::string writeBuffer;
@@ -60,19 +60,33 @@ void Paraview::writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, con
     // convert float values to int32 and insert into valuesVector
     if (std::is_same<T,double>::value || std::is_same<T,float>::value)
     {
-      for (int i = 0; i < values.size(); i++)
+      if (writeFloatsAsInt)
       {
-        union
+        // values are float type but should be converted to integer values
+        for (int i = 0; i < values.size(); i++)
         {
-          float f;
-          int32_t j;
-        };
-        f = values[i];
-        valuesVector.push_back(j);
+          int32_t integerValue = (int32_t)(round(values[i]));
+          valuesVector.push_back(integerValue);
+        }
+      }
+      else
+      {
+        // values are float type, put 4 byte data per float in list of int32_t datatype
+        for (int i = 0; i < values.size(); i++)
+        {
+          union
+          {
+            float f;
+            int32_t j;
+          };
+          f = values[i];
+          valuesVector.push_back(j);
+        }
       }
     }
     else
     {
+      // values are already int32_t
       // copy all int values
       std::copy(values.begin(), values.end(), std::back_inserter(valuesVector));
     }
@@ -543,7 +557,7 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
     // write normal data element
     outputFileParts[outputFilePartNo] << std::string(4, '\t') << "<DataArray "
         << "Name=\"" << pointDataArrayIter->first << "\" "
-        << "type=\"Float32\" "
+        << "type=\"" << (pointDataArrayIter->first == "partitioning"? "Int32" : "Float32") << "\" "
         << "NumberOfComponents=\"" << pointDataArrayIter->second << "\" format=\"" << (binaryOutput_? "binary" : "ascii")
         << "\" >" << std::endl << std::string(5, '\t');
 
@@ -634,7 +648,8 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
     assert(fieldVariableValues.find(pointDataArrayIter->first) != fieldVariableValues.end());
 
     // write values
-    writeCombinedValuesVector(fileHandle, ownRankNo, fieldVariableValues[pointDataArrayIter->first], fieldVariableNo);
+    bool writeFloatsAsInt = pointDataArrayIter->first == "partitioning";    // for partitioning, convert float values to integer values for output
+    writeCombinedValuesVector(fileHandle, ownRankNo, fieldVariableValues[pointDataArrayIter->first], fieldVariableNo, writeFloatsAsInt);
 
     // write next xml constructs
     writeAsciiDataShared(fileHandle, ownRankNo, outputFileParts[outputFilePartNo].str());
@@ -945,7 +960,7 @@ void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType 
         // write normal data element
         outputFileParts[outputFilePartNo] << std::string(4, '\t') << "<DataArray "
             << "Name=\"" << pointDataArrayIter->first << "\" "
-            << "type=\"Float32\" "
+            << "type=\"" << (pointDataArrayIter->first == "partitioning"? "Int32" : "Float32") << "\" "
             << "NumberOfComponents=\"" << pointDataArrayIter->second << "\" format=\"" << (binaryOutput_? "binary" : "ascii")
             << "\" >" << std::endl << std::string(5, '\t');
 
@@ -1043,7 +1058,8 @@ void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType 
         VLOG(1) << "write vector for field variable \"" << pointDataArrayIter->first << "\".";
 
         // write values
-        writeCombinedValuesVector(fileHandle, ownRankNo, fieldVariableValues[pointDataArrayIter->first], fieldVariableNo);
+        bool writeFloatsAsInt = pointDataArrayIter->first == "partitioning";    // for partitioning, convert float values to integer values for output
+        writeCombinedValuesVector(fileHandle, ownRankNo, fieldVariableValues[pointDataArrayIter->first], fieldVariableNo, writeFloatsAsInt);
 
         // write next xml constructs
         writeAsciiDataShared(fileHandle, ownRankNo, outputFileParts[outputFilePartNo].str());

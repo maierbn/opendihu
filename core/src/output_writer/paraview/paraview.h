@@ -93,7 +93,7 @@ protected:
 
   //! write the values vector combined to the file, correctly encoded, identifier is an id to access cached values
   template<typename T>
-  void writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, const std::vector<T> &values, int identifier);
+  void writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, const std::vector<T> &values, int identifier, bool writeFloatsAsInt=false);
 
   //! write a vector containing nValues 12 values for the types for an unstructured grid
   void writeCombinedTypesVector(MPI_File fileHandle, int ownRankNo, int nValues, int identifier);

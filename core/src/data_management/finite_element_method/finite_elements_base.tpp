@@ -224,6 +224,7 @@ initializeInverseLumpedMassMatrix()
 
   getPetscMemoryParameters(diagonalNonZeros, offdiagonalNonZeros);
 
+  assert(this->functionSpace_);
   std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> partition = this->functionSpace_->meshPartition();
   const int nComponents = 1;
   this->inverseLumpedMassMatrix_ = std::make_shared<PartitionedPetscMat<FunctionSpaceType>>(partition, nComponents, diagonalNonZeros, offdiagonalNonZeros, "inverseLumpedMassMatrix");
@@ -233,6 +234,7 @@ template<typename FunctionSpaceType>
 typename FiniteElementsBase<FunctionSpaceType>::OutputFieldVariables FiniteElementsBase<FunctionSpaceType>::
 getOutputFieldVariables()
 {
+  assert(this->functionSpace_);
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> geometryField
     = std::make_shared<FieldVariable::FieldVariable<FunctionSpaceType,3>>(this->functionSpace_->geometryField());
   /*

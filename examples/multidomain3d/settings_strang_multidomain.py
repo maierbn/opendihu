@@ -285,6 +285,53 @@ for bottom_node_index in bottom_node_indices:
 for top_node_index in top_node_indices:
   potential_flow_bc[top_node_index] = 1.0
   
+multidomain_solver = {
+  "nCompartments": n_compartments,
+  "am": Am,
+  "cm": Cm,
+  "timeStepWidth": dt_0D,
+  "endTime": end_time,
+  "timeStepOutputInterval": 50,
+  "solverName": "activationSolver",
+  "inputIsGlobal": True,
+  "compartmentRelativeFactors": relative_factors.tolist(),
+  "PotentialFlow": {
+    "FiniteElementMethod" : {  
+      "meshName": "mesh",
+      "solverName": "potentialFlowSolver",
+      "prefactor": 1.0,
+      "dirichletBoundaryConditions": potential_flow_bc,
+      "inputMeshIsGlobal": True,
+    },
+  },
+  "Activation": {
+    "FiniteElementMethod" : {  
+      "meshName": "mesh",
+      "solverName": "activationSolver",
+      "prefactor": 1.0,
+      "inputMeshIsGlobal": True,
+      "dirichletBoundaryConditions": {},
+      "neumannBoundaryConditions": [],
+      "diffusionTensor": [      # sigma_i           # fiber direction is (1,0,0)
+        8.93, 0, 0,
+        0, 0.893, 0,
+        0, 0, 0.893
+      ], 
+      "extracellularDiffusionTensor": [      # sigma_e
+        6.7, 0, 0,
+        0, 6.7, 0,
+        0, 0, 6.7,
+      ],
+    },
+  },
+  
+  "OutputWriter" : [
+    {"format": "Paraview", "outputInterval": (int)(1./dt_1D*output_timestep), "filename": "out/output", "binary": True, "fixedFormat": False, "combineFiles": False},
+    #{"format": "ExFile", "filename": "out/fibre_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "sphereSize": "0.02*0.02*0.02"},
+    #{"format": "PythonFile", "filename": "out/fibre_"+str(i), "outputInterval": int(1./dt_1D*output_timestep), "binary":True, "onlyNodalValues":True},
+  ]
+}
+  
 config = {
   "Meshes": {
     "mesh": {
@@ -355,51 +402,13 @@ config = {
       },
     },
     "Term2": {     # Diffusion
-      "MultidomainSolver" : {
-        "nCompartments": n_compartments,
-        "am": Am,
-        "cm": Cm,
-        "timeStepWidth": dt_0D,
-        "endTime": end_time,
-        "timeStepOutputInterval": 50,
-        "solverName": "activationSolver",
-        "inputIsGlobal": True,
-        "compartmentRelativeFactors": relative_factors.tolist(),
-        "PotentialFlow": {
-          "FiniteElementMethod" : {  
-            "meshName": "mesh",
-            "solverName": "potentialFlowSolver",
-            "prefactor": 1.0,
-            "dirichletBoundaryConditions": potential_flow_bc,
-            "inputMeshIsGlobal": True,
-          },
-        },
-        "Activation": {
-          "FiniteElementMethod" : {  
-            "meshName": "mesh",
-            "solverName": "activationSolver",
-            "prefactor": 1.0,
-            "inputMeshIsGlobal": True,
-            "dirichletBoundaryConditions": {},
-            "neumannBoundaryConditions": [],
-            "diffusionTensor": [      # sigma_i           # fiber direction is (1,0,0)
-              8.93, 0, 0,
-              0, 0.893, 0,
-              0, 0, 0.893
-            ], 
-            "extracellularDiffusionTensor": [      # sigma_e
-              6.7, 0, 0,
-              0, 6.7, 0,
-              0, 0, 6.7,
-            ],
-          },
-        },
-        
-        "OutputWriter" : [
-          {"format": "Paraview", "outputInterval": (int)(1./dt_1D*output_timestep), "filename": "out/output", "binary": True, "fixedFormat": False, "combineFiles": False},
-          #{"format": "ExFile", "filename": "out/fibre_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "sphereSize": "0.02*0.02*0.02"},
-          #{"format": "PythonFile", "filename": "out/fibre_"+str(i), "outputInterval": int(1./dt_1D*output_timestep), "binary":True, "onlyNodalValues":True},
-        ]
+      "MultidomainSolver" : multidomain_solver,
+      "OutputSurface": {        # version for fibers_emg_2d_output
+        "OutputWriter": [
+          {"format": "Paraview", "outputInterval": (int)(1./dt_1D*output_timestep), "filename": "out/surface", "binary": True, "fixedFormat": False, "combineFiles": True},
+        ],
+        "face": "1-",
+        "MultidomainSolver" : multidomain_solver,
       }
     }
   }

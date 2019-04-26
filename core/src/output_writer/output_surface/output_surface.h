@@ -37,6 +37,9 @@ public:
   //! reset state
   void reset();
 
+  //! set a new time interval
+  void setTimeSpan(double startTime, double endTime);
+
   //! return the data object of the timestepping scheme
   Data3D &data();
 
@@ -49,7 +52,9 @@ protected:
   DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
   Solver solver_;     ///< the contained solver object
 
+  bool initialized_ = false;   ///< if this object is initialized
   Data::OutputSurface<Data3D> data_;   ///< data object
+  bool ownRankInvolvedInOutput_;   ///< if the own rank should call the output writer, because surface meshes are output, it can be that the surface is only contained on a subset of ranks
 
   Manager outputWriterManager_; ///< manager object holding all output writers
 

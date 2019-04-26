@@ -3,6 +3,9 @@
 #include <iostream>
 #include <algorithm>
 #include <iomanip>
+#ifdef __GNUC__
+#include <cxxabi.h>
+#endif
 
 namespace StringUtility
 {
@@ -105,6 +108,17 @@ std::string timeToString(const tm* const time)
   }
   date += std::to_string( time->tm_sec );
   return date;
+}
+
+std::string demangle(const char *typeidName)
+{
+#ifdef __GNUC__
+  // source: https://gcc.gnu.org/onlinedocs/libstdc++/manual/ext_demangling.html
+  int status;
+  return std::string(abi::__cxa_demangle(typeidName, 0, 0, &status));
+#else
+  return std::string(typeidName);
+#endif
 }
 
 }  // namespace

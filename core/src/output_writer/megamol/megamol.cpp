@@ -26,16 +26,16 @@ BoundingBox::BoundingBox():
 }
 
 #ifdef HAVE_ADIOS
-MegaMol::MegaMol(DihuContext context, PythonConfig settings) :
-  Generic(context, settings),currentOpenWriterIndex_(0)
+MegaMol::MegaMol(DihuContext context, PythonConfig settings, std::shared_ptr<Partition::RankSubset> rankSubset) :
+  Generic(context, settings, rankSubset), currentOpenWriterIndex_(0)
 {
   combineNInstances_ = specificSettings_.getOptionInt("combineNInstances", 1);
   useFrontBackBuffer_ = specificSettings_.getOptionBool("useFrontBackBuffer", true);
 }
 #else
 
-MegaMol::MegaMol(DihuContext context, PythonConfig settings) :
-Generic(context, settings)
+MegaMol::MegaMol(DihuContext context, PythonConfig settings, std::shared_ptr<Partition::RankSubset> rankSubset) :
+Generic(context, settings, rankSubset)
 {
 }
 #endif

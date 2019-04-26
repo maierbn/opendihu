@@ -12,7 +12,7 @@
 namespace OutputWriter
 {
 
-void Manager::initialize(DihuContext context, PythonConfig settings)
+void Manager::initialize(DihuContext context, PythonConfig settings, std::shared_ptr<Partition::RankSubset> rankSubset)
 {
   outputWriter_.clear();
 
@@ -36,7 +36,7 @@ void Manager::initialize(DihuContext context, PythonConfig settings)
         VLOG(1) << "parse outputWriter, settings: " << settings.pyObject() << ", writerSettings: " << writerSettings;
       }
       PythonConfig writerConfig(settings, "OutputWriter", writerSettings);
-      createOutputWriterFromSettings(context, writerConfig);
+      createOutputWriterFromSettings(context, writerConfig, rankSubset);
     }
   }
   else
@@ -49,7 +49,7 @@ void Manager::initialize(DihuContext context, PythonConfig settings)
   }
 }
 
-void Manager::createOutputWriterFromSettings(DihuContext context, PythonConfig settings)
+void Manager::createOutputWriterFromSettings(DihuContext context, PythonConfig settings, std::shared_ptr<Partition::RankSubset> rankSubset)
 {
   LOG(DEBUG) << "createOutputWriterFromSettings " << settings;
   if (settings.hasKey("format"))
@@ -60,24 +60,24 @@ void Manager::createOutputWriterFromSettings(DihuContext context, PythonConfig s
     LOG(DEBUG) << "add OutputWriter with format \"" << typeString << "\"";
     if (typeString == "Paraview")
     {
-      outputWriter_.push_back(std::make_shared<Paraview>(context, settings));
+      outputWriter_.push_back(std::make_shared<Paraview>(context, settings, rankSubset));
     }
     else if (typeString == "PythonCallback")
     {
-      outputWriter_.push_back(std::make_shared<PythonCallback>(context, settings));
+      outputWriter_.push_back(std::make_shared<PythonCallback>(context, settings, rankSubset));
     }
     else if (typeString == "PythonFile")
     {
-      outputWriter_.push_back(std::make_shared<PythonFile>(context, settings));
+      outputWriter_.push_back(std::make_shared<PythonFile>(context, settings, rankSubset));
     }
     else if (typeString == "Exfile" || typeString == "ExFile")
     {
-      outputWriter_.push_back(std::make_shared<Exfile>(context, settings));
+      outputWriter_.push_back(std::make_shared<Exfile>(context, settings, rankSubset));
     }
     else if (typeString == "MegaMol")
     {
 #ifdef HAVE_ADIOS
-      outputWriter_.push_back(std::make_shared<MegaMol>(context, settings));
+      outputWriter_.push_back(std::make_shared<MegaMol>(context, settings, rankSubset));
 #else
       LOG(ERROR) << "Not compiled with ADIOS, but a \"MegaMol\" output writer was specified. Ignoring this output writer.";
 #endif

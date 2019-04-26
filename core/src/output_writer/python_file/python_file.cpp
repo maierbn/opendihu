@@ -9,7 +9,8 @@
 namespace OutputWriter
 {
 
-PythonFile::PythonFile(DihuContext context, PythonConfig settings) : Generic(context, settings)
+PythonFile::PythonFile(DihuContext context, PythonConfig settings, std::shared_ptr<Partition::RankSubset> rankSubset) :
+  Generic(context, settings, rankSubset)
 {
   onlyNodalValues_ = settings.getOptionBool("onlyNodalValues", true);
 }

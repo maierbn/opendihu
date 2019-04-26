@@ -20,6 +20,8 @@ public:
   //! inherited constructor
   using FieldVariableDataStructuredForSurface<FunctionSpaceType,nComponents>::FieldVariableDataStructuredForSurface;
 
+  using FieldVariableDataStructuredForSurface<FunctionSpaceType,nComponents>::setValues;
+
   //! for a specific component, get all values
   //! @param onlyNodalValues: if this is true, for Hermite only the non-derivative values are retrieved
   void getValuesWithGhosts(int componentNo, std::vector<double> &values, bool onlyNodalValues=false) const;

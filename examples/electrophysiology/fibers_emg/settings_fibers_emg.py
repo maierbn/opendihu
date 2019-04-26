@@ -901,6 +901,7 @@ config = {
         "OutputWriter": [
           {"format": "Paraview", "outputInterval": int(1./dt_bidomain*output_timestep), "filename": "out/" + scenario_name + "/2d_emg", "binary": True, "fixedFormat": False, "combineFiles": True},
         ],
+        "face": "1-",
         "StaticBidomainSolver": {
           "timeStepWidth": dt_bidomain,
           "timeStepOutputInterval": 50,

@@ -29,7 +29,7 @@ class MegaMol : public Generic
 public:
 
   //! constructor
-  MegaMol(DihuContext context, PythonConfig specificSettings);
+  MegaMol(DihuContext context, PythonConfig specificSettings, std::shared_ptr<Partition::RankSubset> rankSubset = nullptr);
 
   //! write out solution to given filename, if timeStepNo is not -1, this value will be part of the filename
   template<typename DataType>

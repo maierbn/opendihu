@@ -28,6 +28,7 @@ void Paraview::write(DataType& data, int timeStepNo, double currentTime)
   Control::PerformanceMeasurement::start("durationParaviewOutput");
 
   std::set<std::string> combined1DMeshes;
+  std::set<std::string> combined2DMeshes;
   std::set<std::string> combined3DMeshes;
 
   if (combineFiles_)
@@ -41,9 +42,15 @@ void Paraview::write(DataType& data, int timeStepNo, double currentTime)
     Control::PerformanceMeasurement::start("durationParaview3D");
 
     // create an UnstructuredMesh file that combines all 3D meshes into one file
-    writeCombinedUnstructuredGridFile<typename DataType::OutputFieldVariables>(data.getOutputFieldVariables(), combined3DMeshes);
+    writeCombinedUnstructuredGridFile<typename DataType::OutputFieldVariables>(data.getOutputFieldVariables(), combined3DMeshes, true);
 
     Control::PerformanceMeasurement::stop("durationParaview3D");
+    Control::PerformanceMeasurement::start("durationParaview2D");
+
+    // create an UnstructuredMesh file that combines all 2D meshes into one file
+    writeCombinedUnstructuredGridFile<typename DataType::OutputFieldVariables>(data.getOutputFieldVariables(), combined2DMeshes, false);
+
+    Control::PerformanceMeasurement::stop("durationParaview2D");
   }
 
   // output normal files, parallel or if combineFiles_, only the 2D and 3D meshes, combined
@@ -57,9 +64,14 @@ void Paraview::write(DataType& data, int timeStepNo, double currentTime)
   std::set_difference(meshNames.begin(), meshNames.end(), combined1DMeshes.begin(), combined1DMeshes.end(),
                       std::inserter(meshesWithout1D, meshesWithout1D.end()));
 
-  // remove 3D meshes that were already output by writePolyDataFile
-  std::set<std::string> meshesToOutput;
+  // remove 3D meshes that were already output by writeCombinedUnstructuredGridFile
+  std::set<std::string> meshesWithout1D3D;
   std::set_difference(meshesWithout1D.begin(), meshesWithout1D.end(), combined3DMeshes.begin(), combined3DMeshes.end(),
+                      std::inserter(meshesWithout1D3D, meshesWithout1D3D.end()));
+
+  // remove 2D meshes that were already output by writeCombinedUnstructuredGridFile
+  std::set<std::string> meshesToOutput;
+  std::set_difference(meshesWithout1D3D.begin(), meshesWithout1D3D.end(), combined2DMeshes.begin(), combined2DMeshes.end(),
                       std::inserter(meshesToOutput, meshesToOutput.end()));
 
   // loop over meshes and create a paraview file for each
@@ -179,7 +191,7 @@ void Paraview::writeParaviewPartitionFieldVariable(FieldVariableType &geometryFi
   {
     file << std::string(3, '\t') << "<PDataArray "
         << "Name=\"partitioning\" "
-        << "type=\"Float32\" "
+        << "type=\"Int32\" "
         << "NumberOfComponents=\"1\" ";
 
     if (binaryOutput)
@@ -196,18 +208,18 @@ void Paraview::writeParaviewPartitionFieldVariable(FieldVariableType &geometryFi
     // write normal data element
     file << std::string(4, '\t') << "<DataArray "
         << "Name=\"partitioning\" "
-        << "type=\"Float32\" "
+        << "type=\"Int32\" "
         << "NumberOfComponents=\"1\" ";
 
     std::string stringData;
 
     const node_no_t nNodesLocal = geometryField.functionSpace()->meshPartition()->nNodesLocalWithGhosts();
 
-    std::vector<double> values(nNodesLocal, (double)DihuContext::ownRankNoCommWorld());
+    std::vector<int32_t> values(nNodesLocal, (int32_t)DihuContext::ownRankNoCommWorld());
 
     if (binaryOutput)
     {
-      stringData = Paraview::encodeBase64Float(values.begin(), values.end());
+      stringData = Paraview::encodeBase64Int32(values.begin(), values.end());
       file << "format=\"binary\" >" << std::endl;
     }
     else

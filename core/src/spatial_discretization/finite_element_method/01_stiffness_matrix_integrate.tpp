@@ -17,7 +17,8 @@ void FiniteElementMethodMatrix<FunctionSpaceType,QuadratureType,Term,Dummy1,Dumm
 setStiffnessMatrix()
 {
   const int D = FunctionSpaceType::dim();
-  LOG(TRACE) << "setStiffnessMatrix " << D << "D using integration, FunctionSpaceType: " << typeid(FunctionSpaceType).name() << ", QuadratureType: " << typeid(QuadratureType).name();
+  LOG(TRACE) << "setStiffnessMatrix " << D << "D using integration, FunctionSpaceType: " << StringUtility::demangle(typeid(FunctionSpaceType).name())
+    << ", QuadratureType: " << typeid(QuadratureType).name();
 
   // get prefactor value
   const double prefactor = this->specificSettings_.getOptionDouble("prefactor", 1.0);

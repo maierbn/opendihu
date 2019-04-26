@@ -6,7 +6,7 @@ namespace OutputWriter
 template<typename Solver>
 OutputSurface<Solver>::
 OutputSurface(DihuContext context) :
-  context_(context["OutputSurface"]), solver_(context_), data_(context_), ownRankInvolvedInOutput_(true)
+  context_(context["OutputSurface"]), solver_(context_), data_(context_), ownRankInvolvedInOutput_(true), timeStepNo_(0), currentTime_(0.0)
 {
 
 }
@@ -20,7 +20,7 @@ advanceTimeSpan()
   LOG(DEBUG) << "OutputSurface: writeOutput";
   if (ownRankInvolvedInOutput_)
   {
-    outputWriterManager_.writeOutput(data_);
+    outputWriterManager_.writeOutput(data_, timeStepNo_++);
   }
 }
 
@@ -85,6 +85,7 @@ template<typename Solver>
 void OutputSurface<Solver>::
 setTimeSpan(double startTime, double endTime)
 {
+  currentTime_ = startTime;
   solver_.setTimeSpan(startTime, endTime);
 }
 

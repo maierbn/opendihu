@@ -55,6 +55,8 @@ protected:
   bool initialized_ = false;   ///< if this object is initialized
   Data::OutputSurface<Data3D> data_;   ///< data object
   bool ownRankInvolvedInOutput_;   ///< if the own rank should call the output writer, because surface meshes are output, it can be that the surface is only contained on a subset of ranks
+  int timeStepNo_;     ///< time step no for output writer
+  double currentTime_;   ///< current simulation time for output writer
 
   Manager outputWriterManager_; ///< manager object holding all output writers
 

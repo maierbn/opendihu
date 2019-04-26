@@ -28,21 +28,13 @@ FieldVariableDataStructuredForSurface(FieldVariable<FunctionSpace::FunctionSpace
   std::shared_ptr<Partition::MeshPartition<FunctionSpace3D>> meshPartition3D = rhs.functionSpace()->meshPartition();
 
   // construct rankSubset
-
-  // collect rank nos
-  int rankNoEnd = meshPartition3D->nRanks(0) * meshPartition3D->nRanks(1);
-  int rankNoBegin = 0;
-  std::vector<int> rankNos(rankNoEnd);
-
-  if (face == Mesh::face_t::face2Plus)
-  {
-    rankNoBegin = meshPartition3D->nRanks(0) * meshPartition3D->nRanks(1) * (meshPartition3D->nRanks(2) - 1);
-  }
-  std::iota(rankNos.begin(), rankNos.end(), rankNoBegin);
+  std::vector<int> rankNos;
+  std::array<int,3> nRanksPerCoordinateDirection({meshPartition3D->nRanks(0), meshPartition3D->nRanks(1), meshPartition3D->nRanks(2)});
+  getSurfaceNumbers(nRanksPerCoordinateDirection, 1, face, rankNos);
 
   std::shared_ptr<Partition::RankSubset> rankSubset = std::make_shared<Partition::RankSubset>(rankNos.begin(), rankNos.end(), rhs.functionSpace()->meshPartition()->rankSubset());
 
-  LOG(DEBUG) << "created rank subset from ranks " << rankNos << ", own is contained: " << rankSubset->ownRankIsContained();
+  VLOG(1) << "created rank subset from ranks " << rankNos << ", own is contained: " << rankSubset->ownRankIsContained();
 
   ownRankInvolvedInOutput = true;
   if (!rankSubset->ownRankIsContained())
@@ -52,21 +44,35 @@ FieldVariableDataStructuredForSurface(FieldVariable<FunctionSpace::FunctionSpace
     return;
   }
 
-  LOG(DEBUG) << "rankSubset: " << *rankSubset;
+  VLOG(1) << "rankSubset: " << *rankSubset;
 
   // construct meshPartition
-  std::array<node_no_t,2> nElementsLocal{meshPartition3D->nElementsLocal(0), meshPartition3D->nElementsLocal(1)};
-  std::array<global_no_t,2> nElementsGlobal{(global_no_t)meshPartition3D->nElementsGlobal(0), (global_no_t)meshPartition3D->nElementsGlobal(1)};
-  std::array<int,2> beginElementGlobal{meshPartition3D->beginElementGlobal(0), meshPartition3D->beginElementGlobal(1)};
-  std::array<int,2> nRanks{meshPartition3D->nRanks(0), meshPartition3D->nRanks(1)};
+  int dimensionIndex0 = 0;
+  int dimensionIndex1 = 1;
+
+  if (face == Mesh::face_t::face0Minus || face == Mesh::face_t::face0Plus)
+  {
+    dimensionIndex0 = 1;
+    dimensionIndex1 = 2;
+  }
+  else if (face == Mesh::face_t::face1Minus || face == Mesh::face_t::face1Plus)
+  {
+    dimensionIndex0 = 0;
+    dimensionIndex1 = 2;
+  }
+
+  std::array<node_no_t,2> nElementsLocal{meshPartition3D->nElementsLocal(dimensionIndex0), meshPartition3D->nElementsLocal(dimensionIndex1)};
+  std::array<global_no_t,2> nElementsGlobal{(global_no_t)meshPartition3D->nElementsGlobal(dimensionIndex0), (global_no_t)meshPartition3D->nElementsGlobal(dimensionIndex1)};
+  std::array<int,2> beginElementGlobal{meshPartition3D->beginElementGlobal(dimensionIndex0), meshPartition3D->beginElementGlobal(dimensionIndex1)};
+  std::array<int,2> nRanks{meshPartition3D->nRanks(dimensionIndex0), meshPartition3D->nRanks(dimensionIndex1)};
 
   std::shared_ptr<Partition::MeshPartition<FunctionSpace2D>> meshPartition = std::make_shared<Partition::MeshPartition<FunctionSpace2D>>(
     nElementsLocal, nElementsGlobal, beginElementGlobal, nRanks, rankSubset
   );
 
-  LOG(DEBUG) << "meshPartition 3D: " << *meshPartition3D;
-  LOG(DEBUG) << "meshPartition 2D: " << *meshPartition;
-  LOG(DEBUG) << "nElementsGlobal: " << nElementsGlobal;
+  VLOG(1) << "meshPartition 3D: " << *meshPartition3D;
+  VLOG(1) << "meshPartition 2D: " << *meshPartition;
+  VLOG(1) << "nElementsGlobal: " << nElementsGlobal;
 
   // create surface function space
   std::stringstream functionSpaceName;
@@ -77,18 +83,12 @@ FieldVariableDataStructuredForSurface(FieldVariable<FunctionSpace::FunctionSpace
   // create node positions (without ghost nodes)
   std::vector<Vec3> localNodePositions2D;
 
+  std::array<int,3> nNodesPerCoordinateDirection({meshPartition3D->nNodesLocalWithoutGhosts(0), meshPartition3D->nNodesLocalWithoutGhosts(1), meshPartition3D->nNodesLocalWithoutGhosts(2)});
+  getSurfaceNumbers(nNodesPerCoordinateDirection, rhs.functionSpace()->nDofsPerNode(), face, surfaceDofs_);
 
-  surfaceDofs_.resize(nDofsLocalWithoutGhosts);
+  VLOG(1) << "nDofsLocalWithoutGhosts: " << nDofsLocalWithoutGhosts << ", surfaceDofs: " << surfaceDofs_;
 
-  dof_no_t surfaceDofsBegin = 0;
-  if (face == Mesh::face_t::face2Plus)
-  {
-    surfaceDofsBegin = meshPartition3D->nDofsLocalWithoutGhosts() - nDofsLocalWithoutGhosts;
-  }
-
-  std::iota(surfaceDofs_.begin(), surfaceDofs_.end(), surfaceDofsBegin);
-
-  LOG(DEBUG) << "nDofsLocalWithoutGhosts: " << nDofsLocalWithoutGhosts << ", surfaceDofs: " << surfaceDofs_;
+  assert(nDofsLocalWithoutGhosts == surfaceDofs_.size());
 
   rhs.functionSpace()->geometryField().getValues(surfaceDofs_, localNodePositions2D);
   std::array<element_no_t,2> nElementsPerCoordinateDirectionLocal();
@@ -122,7 +122,7 @@ template<typename BasisFunctionType, int nComponents>
 void FieldVariableDataStructuredForSurface<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<2>,BasisFunctionType>,nComponents>::
 setValues(FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>,BasisFunctionType>,nComponents> &rhs)
 {
-  LOG(DEBUG) << "copy values from rhs field variable";
+  VLOG(1) << "copy values from rhs field variable";
 
   // copy values from rhs
   static std::vector<double> values;
@@ -139,6 +139,107 @@ setValues(FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableO
 
   //this->values_->startGhostManipulation();
   this->values_->finishGhostManipulation();
+}
+
+template<typename BasisFunctionType, int nComponents>
+void FieldVariableDataStructuredForSurface<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<2>,BasisFunctionType>,nComponents>::
+getSurfaceNumbers(const std::array<int,3> size, int nDofsPerNode, Mesh::face_t face, std::vector<int> &surfaceNumbers)
+{
+
+  int nNumbersTotal;
+
+  switch(face)
+  {
+  case Mesh::face_t::face0Minus:   // left
+  case Mesh::face_t::face0Plus:    // right
+    nNumbersTotal = size[1]*size[2];
+    break;
+  case Mesh::face_t::face1Minus:   // front
+  case Mesh::face_t::face1Plus:    // back
+    nNumbersTotal = size[0]*size[2];
+    break;
+  case Mesh::face_t::face2Minus:   // bottom
+  case Mesh::face_t::face2Plus:    // top
+    nNumbersTotal = size[0]*size[1];
+    break;
+  default:
+    break;
+  }
+  surfaceNumbers.resize(nNumbersTotal*nDofsPerNode);
+
+  VLOG(1) << "size: " << size << ", nNumbersTotal: " << nNumbersTotal << ", nDofsPerNode: " << nDofsPerNode;
+
+  // collect rank nos
+  if (face == Mesh::face_t::face1Minus)   // front
+  {
+    int i = 0;
+    int rankNo = 0;
+    const int rankNoStride = size[0] * (size[1] - 1);
+    for (int zIndex = 0; zIndex < size[2]; zIndex++, rankNo += rankNoStride)
+    {
+      for (int xIndex = 0; xIndex < size[0]; xIndex++, rankNo++)
+      {
+        for (int nodalDofIndex = 0; nodalDofIndex < nDofsPerNode; nodalDofIndex++, i++)
+        {
+          surfaceNumbers[i] = rankNo * nDofsPerNode + nodalDofIndex;
+        }
+      }
+    }
+  }
+  else if (face == Mesh::face_t::face1Plus)   // back
+  {
+    int i = 0;
+    const int rankNoStride = size[0] * (size[1] - 1);
+    int rankNo = rankNoStride;
+    for (int zIndex = 0; zIndex < size[2]; zIndex++, rankNo += rankNoStride)
+    {
+      for (int xIndex = 0; xIndex < size[0]; xIndex++, rankNo++)
+      {
+        for (int nodalDofIndex = 0; nodalDofIndex < nDofsPerNode; nodalDofIndex++, i++)
+        {
+          surfaceNumbers[i] = rankNo * nDofsPerNode + nodalDofIndex;
+        }
+      }
+    }
+  }
+  else
+  {
+    int rankNoEnd = size[0]*size[1]*size[2];
+    int rankNoBegin = 0;
+    int rankNoStride = 1;
+
+    switch(face)
+    {
+    case Mesh::face_t::face0Minus:   // left
+      rankNoStride = size[0];
+      break;
+    case Mesh::face_t::face0Plus:   // right
+      rankNoBegin = size[0]-1;
+      rankNoStride = size[0];
+      break;
+    case Mesh::face_t::face2Minus:   // bottom
+      rankNoEnd = size[0] * size[1];
+      break;
+    case Mesh::face_t::face2Plus:   // top
+      rankNoBegin = size[0] * size[1] * (size[2]-1);
+      break;
+    default:
+      break;
+    }
+
+    VLOG(1) << "nNumbersTotal: " << nNumbersTotal << ", nDofsPerNode: " << nDofsPerNode
+      << "rankNoBegin: " << rankNoBegin << ", rankNoEnd: " << rankNoEnd << ", rankNoStride: " << rankNoStride;
+
+    int i = 0;
+    for (int rankNo = rankNoBegin; rankNo < rankNoEnd; rankNo += rankNoStride)
+    {
+      for (int nodalDofIndex = 0; nodalDofIndex < nDofsPerNode; nodalDofIndex++, i++)
+      {
+        assert(i < nNumbersTotal*nDofsPerNode);
+        surfaceNumbers[i] = rankNo * nDofsPerNode + nodalDofIndex;
+      }
+    }
+  }
 }
 
 }  // namespace

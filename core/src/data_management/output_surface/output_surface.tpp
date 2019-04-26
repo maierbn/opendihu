@@ -13,13 +13,6 @@ OutputSurface(DihuContext context) :
   std::string faceStr = this->context_.getPythonConfig().getOptionString("face","2-");
   face_ = Mesh::parseFace(faceStr);
 
-  // only 2- and 2+ are allowed
-  if (face_ != Mesh::face_t::face2Minus && face_ != Mesh::face_t::face2Plus)
-  {
-    LOG(ERROR) << this->context_.getPythonConfig() << ": only \"2-\" and \"2+\" are supported! Now using \"2-\".";
-    face_ = Mesh::face_t::face2Minus;
-  }
-
   LOG(DEBUG) << "OutputSurface: parsed face \"" << Mesh::getString(face_) << "\".";
 }
 

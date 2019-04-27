@@ -588,6 +588,14 @@ fixInvalidFibersInFile()
 {
   // open the file again and interpolate all missing fibers
 
+  // copy existing file
+  std::string newFilename = resultFilename_ + std::string(".unfixed");
+  std::stringstream moveCommand;
+  moveCommand << "cp " << resultFilename_ << " " << newFilename;
+  int ret = std::system(moveCommand.str().c_str());
+  ret++;
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
   int nPointsPerFiber = 0;
   int nFibers = 0;
   int headerLength = 0;
@@ -598,6 +606,11 @@ fixInvalidFibersInFile()
   }
   else
   {
+    // determine size of file
+    struct stat statBuffer;
+    stat(resultFilename_.c_str(), &statBuffer);
+    int fileSize = statBuffer.st_size;
+
     // skip first part of header
     file.seekg(32);
     union int32
@@ -625,168 +638,333 @@ fixInvalidFibersInFile()
     int nFibersX = int(std::round(std::sqrt(nFibers)));
     int nFibersInvalid = 0;
     int nFibersFixed = 0;
+    const long long fiberDataSize = nPointsPerFiber*3*sizeof(double);
 
     LOG(DEBUG) << "headerLength: " << headerLength << ", nFibers: " << nFibers << ", nPointsPerFiber: " << nPointsPerFiber << ", nFibersX: " << nFibersX;
 
-    // determine which fibers are valid
-    std::vector<std::vector<bool>> fiberIsValid(nFibersX, std::vector<bool>(nFibersX, true));
-
-    for (int fiberIndexY = 0; fiberIndexY != nFibersX; fiberIndexY++)
+    if (int((fileSize-(32+headerLength)) / fiberDataSize) != nFibers)
     {
-      for (int fiberIndexX = 0; fiberIndexX != nFibersX; fiberIndexX++)
-      {
-        int fiberIndex = fiberIndexY*nFibersX + fiberIndexX;
-        file.seekg(32+headerLength + fiberIndex*nPointsPerFiber*3*sizeof(double));
-
-        // read first value of fiber
-        Vec3 firstPoint;
-        MathUtility::readPoint(file, firstPoint);
-
-        // if fiber is invalid
-        if (firstPoint[0] == 0.0 && firstPoint[1] == 0.0 && firstPoint[2] == 0.0)
-        {
-          fiberIsValid[fiberIndexY][fiberIndexX] = false;
-          nFibersInvalid++;
-        }
-      }
+      LOG(ERROR) << "File \"" << resultFilename_ << "\" states to have " << nFibers << " fibers in header, but actually has "
+        << int((fileSize-(32+headerLength)) / fiberDataSize) << " fibers!";
     }
 
-    VLOG(2) << "fiberIsValid: " << fiberIsValid;
-
-    // loop over invalid fibers and fix them from neighbouring fibers
-    for (int fiberIndexY = 0; fiberIndexY != nFibersX; fiberIndexY++)
+    for (int iterationNo = 0; iterationNo < 3 && (nFibersInvalid - nFibersFixed > 0 || iterationNo == 0); iterationNo++)
     {
-      for (int fiberIndexX = 0; fiberIndexX != nFibersX; fiberIndexX++)
+
+      // determine which fibers are valid
+      std::vector<std::vector<bool>> fiberIsValid(nFibersX, std::vector<bool>(nFibersX, true));
+
+      for (int fiberIndexY = 0; fiberIndexY != nFibersX; fiberIndexY++)
       {
-        if (!fiberIsValid[fiberIndexY][fiberIndexX])
+        for (int fiberIndexX = 0; fiberIndexX != nFibersX; fiberIndexX++)
         {
-          // find neighbouring valid fibers
-          std::vector<std::pair<int,int>> neighbouringFibers;
+          int fiberIndex = fiberIndexY*nFibersX + fiberIndexX;
+          file.seekg(32+headerLength + fiberIndex*fiberDataSize);
 
-          // check X direction
-          // find previous neighbour
-          int leftNeighbourIndex = -1;
-          for (int neighbouringFiberIndexX = fiberIndexX-1; neighbouringFiberIndexX >= 0; neighbouringFiberIndexX--)
+          // read all points of fiber
+          for (int zPointIndex = 0; zPointIndex < nPointsPerFiber; zPointIndex++)
           {
-            if (fiberIsValid[fiberIndexY][neighbouringFiberIndexX])
+            Vec3 point;
+            MathUtility::readPoint(file, point);
+
+            // if fiber is invalid
+            if (point[0] == 0.0 && point[1] == 0.0 && point[2] == 0.0)
             {
-              leftNeighbourIndex = neighbouringFiberIndexX;
+              fiberIsValid[fiberIndexY][fiberIndexX] = false;
+              nFibersInvalid++;
+              LOG(DEBUG) << "fiber (" << fiberIndexX << "," << fiberIndexY << ") / (" << nFibersX << "," << nFibersX << ") is invalid (" << zPointIndex << ". point)";
               break;
             }
-          }
-
-          // find next neighoubr
-          int rightNeighbourIndex = -1;
-          for (int neighbouringFiberIndexX = fiberIndexX+1; neighbouringFiberIndexX < nFibersX; neighbouringFiberIndexX++)
-          {
-            if (fiberIsValid[fiberIndexY][neighbouringFiberIndexX])
-            {
-              rightNeighbourIndex = neighbouringFiberIndexX;
-              break;
-            }
-          }
-
-          // check Y direction
-          // find previous neighbour
-          int frontNeighbourIndex = -1;
-          for (int neighbouringFiberIndexY = fiberIndexY-1; neighbouringFiberIndexY >= 0; neighbouringFiberIndexY--)
-          {
-            if (fiberIsValid[neighbouringFiberIndexY][fiberIndexX])
-            {
-              frontNeighbourIndex = neighbouringFiberIndexY;
-              break;
-            }
-          }
-
-          // find next neighoubr
-          int backNeighbourIndex = -1;
-          for (int neighbouringFiberIndexY = fiberIndexY+1; neighbouringFiberIndexY < nFibersX; neighbouringFiberIndexY++)
-          {
-            if (fiberIsValid[neighbouringFiberIndexY][fiberIndexX])
-            {
-              backNeighbourIndex = neighbouringFiberIndexY;
-              break;
-            }
-          }
-
-          VLOG(2) << "fiber " << fiberIndexX << "," << fiberIndexY << ": neighbours x("
-            << leftNeighbourIndex << "," << rightNeighbourIndex << ") y(" << frontNeighbourIndex << "," << backNeighbourIndex << ")";
-
-          if (leftNeighbourIndex != -1 && rightNeighbourIndex != -1)
-          {
-            // interpolate fiber from the neighbours in x direction
-
-            double alpha0 = double(rightNeighbourIndex - fiberIndexX) / (rightNeighbourIndex - leftNeighbourIndex);
-            double alpha1 = double(fiberIndexX - leftNeighbourIndex) / (rightNeighbourIndex - leftNeighbourIndex);
-
-            VLOG(2) << "take left-right, alphas: " << alpha0 << ", " << alpha1;
-
-            // loop over all points of the fiber
-            for (int zIndex = 0; zIndex != nPointsPerFiber; zIndex++)
-            {
-              // get the left and right valid fibers
-              Vec3 point0, point1;
-              int previousFiberIndex = fiberIndexY*nFibersX + leftNeighbourIndex;
-              file.seekg(32+headerLength + previousFiberIndex*nPointsPerFiber*3*sizeof(double) + zIndex*3*sizeof(double));
-
-              MathUtility::readPoint(file, point0);
-
-              int nextFiberIndex = fiberIndexY*nFibersX + rightNeighbourIndex;
-              file.seekg(32+headerLength + nextFiberIndex*nPointsPerFiber*3*sizeof(double) + zIndex*3*sizeof(double));
-
-              MathUtility::readPoint(file, point1);
-
-              // compute the interpolated value
-              Vec3 interpolatedPoint = alpha0*point0 + alpha1*point1;
-
-              // write the interpolated value back
-              int interpolatedFiberIndex = fiberIndexY*nFibersX + fiberIndexX;
-              file.seekp(32+headerLength + interpolatedFiberIndex*nPointsPerFiber*3*sizeof(double) + zIndex*3*sizeof(double));
-
-              MathUtility::writePoint(file, interpolatedPoint);
-            }
-            nFibersFixed++;
-          }
-          else if (frontNeighbourIndex != -1 && backNeighbourIndex != -1)
-          {
-            // interpolate fiber from the neighbours in x direction
-
-            double alpha0 = double(backNeighbourIndex - fiberIndexX) / (backNeighbourIndex - frontNeighbourIndex);
-            double alpha1 = double(fiberIndexX - frontNeighbourIndex) / (backNeighbourIndex - frontNeighbourIndex);
-
-            VLOG(2) << "take front-back, alphas: " << alpha0 << ", " << alpha1;
-
-            // loop over all points of the fiber
-            for (int zIndex = 0; zIndex != nPointsPerFiber; zIndex++)
-            {
-              // get the left and right valid fibers
-              Vec3 point0, point1;
-              int previousFiberIndex = frontNeighbourIndex*nFibersX + fiberIndexX;
-              file.seekg(32+headerLength + previousFiberIndex*nPointsPerFiber*3*sizeof(double) + zIndex*3*sizeof(double));
-
-              MathUtility::readPoint(file, point0);
-
-              int nextFiberIndex = backNeighbourIndex*nFibersX + fiberIndexX;
-              file.seekg(32+headerLength + nextFiberIndex*nPointsPerFiber*3*sizeof(double) + zIndex*3*sizeof(double));
-
-              MathUtility::readPoint(file, point1);
-
-              // compute the interpolated value
-              Vec3 interpolatedPoint = alpha0*point0 + alpha1*point1;
-
-              // write the interpolated value back
-              int interpolatedFiberIndex = fiberIndexY*nFibersX + fiberIndexX;
-              file.seekp(32+headerLength + interpolatedFiberIndex*nPointsPerFiber*3*sizeof(double) + zIndex*3*sizeof(double));
-
-              MathUtility::writePoint(file, interpolatedPoint);
-            }
-            nFibersFixed++;
           }
         }
       }
-    }
 
-    LOG(DEBUG) << "nFibersInvalid: " << nFibersInvalid << ", nFibersFixed: " << nFibersFixed << ", difference: " << nFibersInvalid - nFibersFixed;
+      VLOG(2) << "fiberIsValid: " << fiberIsValid;
+
+      // loop over invalid fibers and fix them from neighbouring fibers
+      for (int fiberIndexY = 0; fiberIndexY != nFibersX; fiberIndexY++)
+      {
+        for (int fiberIndexX = 0; fiberIndexX != nFibersX; fiberIndexX++)
+        {
+          if (!fiberIsValid[fiberIndexY][fiberIndexX])
+          {
+            // find neighbouring valid fibers
+            std::vector<std::pair<int,int>> neighbouringFibers;
+
+            // check X direction
+            // find previous neighbour
+            int leftNeighbourIndex = -1;
+            for (int neighbouringFiberIndexX = fiberIndexX-1; neighbouringFiberIndexX >= 0; neighbouringFiberIndexX--)
+            {
+              if (fiberIsValid[fiberIndexY][neighbouringFiberIndexX])
+              {
+                leftNeighbourIndex = neighbouringFiberIndexX;
+                break;
+              }
+            }
+
+            // find next neighoubr
+            int rightNeighbourIndex = -1;
+            for (int neighbouringFiberIndexX = fiberIndexX+1; neighbouringFiberIndexX < nFibersX; neighbouringFiberIndexX++)
+            {
+              if (fiberIsValid[fiberIndexY][neighbouringFiberIndexX])
+              {
+                rightNeighbourIndex = neighbouringFiberIndexX;
+                break;
+              }
+            }
+
+            // check Y direction
+            // find previous neighbour
+            int frontNeighbourIndex = -1;
+            for (int neighbouringFiberIndexY = fiberIndexY-1; neighbouringFiberIndexY >= 0; neighbouringFiberIndexY--)
+            {
+              if (fiberIsValid[neighbouringFiberIndexY][fiberIndexX])
+              {
+                frontNeighbourIndex = neighbouringFiberIndexY;
+                break;
+              }
+            }
+
+            // find next neighoubr
+            int backNeighbourIndex = -1;
+            for (int neighbouringFiberIndexY = fiberIndexY+1; neighbouringFiberIndexY < nFibersX; neighbouringFiberIndexY++)
+            {
+              if (fiberIsValid[neighbouringFiberIndexY][fiberIndexX])
+              {
+                backNeighbourIndex = neighbouringFiberIndexY;
+                break;
+              }
+            }
+
+            VLOG(2) << "fiber " << fiberIndexX << "," << fiberIndexY << ": neighbours x("
+              << leftNeighbourIndex << "," << rightNeighbourIndex << ") y(" << frontNeighbourIndex << "," << backNeighbourIndex << ")";
+
+            if (leftNeighbourIndex != -1 && rightNeighbourIndex != -1)
+            {
+              // interpolate fiber from the neighbours in x direction
+
+              double alpha0 = double(rightNeighbourIndex - fiberIndexX) / (rightNeighbourIndex - leftNeighbourIndex);
+              double alpha1 = double(fiberIndexX - leftNeighbourIndex) / (rightNeighbourIndex - leftNeighbourIndex);
+
+              VLOG(2) << "take left-right, alphas: " << alpha0 << ", " << alpha1;
+
+              // loop over all points of the fiber
+              for (int zIndex = 0; zIndex != nPointsPerFiber; zIndex++)
+              {
+                // get the left and right valid fibers
+                Vec3 point0, point1;
+                int previousFiberIndex = fiberIndexY*nFibersX + leftNeighbourIndex;
+                assert(previousFiberIndex < nFibers);
+                file.seekg(32+headerLength + previousFiberIndex*fiberDataSize + zIndex*3*sizeof(double));
+
+                MathUtility::readPoint(file, point0);
+
+                int nextFiberIndex = fiberIndexY*nFibersX + rightNeighbourIndex;
+                assert(nextFiberIndex < nFibers);
+
+                file.seekg(32+headerLength + nextFiberIndex*fiberDataSize + zIndex*3*sizeof(double));
+
+                MathUtility::readPoint(file, point1);
+
+                // compute the interpolated value
+                Vec3 interpolatedPoint = alpha0*point0 + alpha1*point1;
+
+                // write the interpolated value back
+                int interpolatedFiberIndex = fiberIndexY*nFibersX + fiberIndexX;
+                assert(interpolatedFiberIndex < nFibers);
+
+                file.seekp(32+headerLength + interpolatedFiberIndex*fiberDataSize + zIndex*3*sizeof(double));
+
+                MathUtility::writePoint(file, interpolatedPoint);
+              }
+              nFibersFixed++;
+            }
+            else if (frontNeighbourIndex != -1 && backNeighbourIndex != -1)
+            {
+              // interpolate fiber from the neighbours in x direction
+
+              double alpha0 = double(backNeighbourIndex - fiberIndexX) / (backNeighbourIndex - frontNeighbourIndex);
+              double alpha1 = double(fiberIndexX - frontNeighbourIndex) / (backNeighbourIndex - frontNeighbourIndex);
+
+              VLOG(2) << "take front-back, alphas: " << alpha0 << ", " << alpha1;
+
+              // loop over all points of the fiber
+              for (int zIndex = 0; zIndex != nPointsPerFiber; zIndex++)
+              {
+                // get the left and right valid fibers
+                Vec3 point0, point1;
+                int previousFiberIndex = frontNeighbourIndex*nFibersX + fiberIndexX;
+                assert(previousFiberIndex < nFibers);
+
+                file.seekg(32+headerLength + previousFiberIndex*fiberDataSize + zIndex*3*sizeof(double));
+
+                MathUtility::readPoint(file, point0);
+
+                int nextFiberIndex = backNeighbourIndex*nFibersX + fiberIndexX;
+                assert(nextFiberIndex < nFibers);
+
+                file.seekg(32+headerLength + nextFiberIndex*fiberDataSize + zIndex*3*sizeof(double));
+
+                MathUtility::readPoint(file, point1);
+
+                // compute the interpolated value
+                Vec3 interpolatedPoint = alpha0*point0 + alpha1*point1;
+
+                // write the interpolated value back
+                int interpolatedFiberIndex = fiberIndexY*nFibersX + fiberIndexX;
+                assert(interpolatedFiberIndex < nFibers);
+
+                file.seekp(32+headerLength + interpolatedFiberIndex*fiberDataSize + zIndex*3*sizeof(double));
+
+                MathUtility::writePoint(file, interpolatedPoint);
+              }
+              nFibersFixed++;
+            }
+            else
+            {
+              // check if first point of invalid fiber is set
+              int fiberIndex = fiberIndexY*nFibersX + fiberIndexX;
+              file.seekg(32+headerLength + fiberIndex*fiberDataSize);
+
+              // read first point of fiber
+              Vec3 firstPoint;
+              MathUtility::readPoint(file, firstPoint);
+
+              // if fiber is valid
+              if (firstPoint[0] != 0.0 || firstPoint[1] != 0.0 || firstPoint[2] != 0.0)
+              {
+                int validIndex0 = -1;
+                int validIndex1 = -1;
+                if (rightNeighbourIndex != -1)
+                {
+                  validIndex0 = fiberIndexY*nFibersX + rightNeighbourIndex;
+                }
+                else if (leftNeighbourIndex != -1)
+                {
+                  validIndex0 = fiberIndexY*nFibersX + leftNeighbourIndex;
+                }
+
+                if (backNeighbourIndex != -1)
+                {
+                  validIndex1 = backNeighbourIndex*nFibersX + fiberIndexX;
+                }
+                else if(frontNeighbourIndex != -1)
+                {
+                  validIndex1 = frontNeighbourIndex*nFibersX + fiberIndexX;
+                }
+
+                if (validIndex0 != -1 && validIndex1 != -1)
+                {
+
+                  // read first points of fibers
+
+                  // read first point of fiber
+                  std::array<Vec3,2> neighbouringFiberFirstPoint;
+
+                  file.seekg(32+headerLength + validIndex0*fiberDataSize);
+                  MathUtility::readPoint(file, neighbouringFiberFirstPoint[0]);
+
+                  file.seekg(32+headerLength + validIndex1*fiberDataSize);
+                  MathUtility::readPoint(file, neighbouringFiberFirstPoint[1]);
+
+                  // assert that fiber points are on same z position
+                  assert(neighbouringFiberFirstPoint[0][2] - neighbouringFiberFirstPoint[1][2] < 1e-12);
+                  if (firstPoint[2] - neighbouringFiberFirstPoint[1][2] > 1e-12)
+                  {
+                    LOG(WARNING) << "Could not fixe fiber (" << fiberIndexX << "," << fiberIndexY << ") / (" << nFibersX << "," << nFibersX << "),"
+                     << " first point: " << firstPoint << ", neighbouring points: " << neighbouringFiberFirstPoint[0] << "," << neighbouringFiberFirstPoint[1];
+
+                    int zIndex = nPointsPerFiber - 1;
+                    file.seekg(32+headerLength + validIndex0*fiberDataSize + zIndex*3*sizeof(double));
+                    MathUtility::readPoint(file, neighbouringFiberFirstPoint[0]);
+
+                    file.seekg(32+headerLength + validIndex1*fiberDataSize + zIndex*3*sizeof(double));
+                    MathUtility::readPoint(file, neighbouringFiberFirstPoint[1]);
+                  }
+
+                  if (firstPoint[2] - neighbouringFiberFirstPoint[1][2] > 1e-12)
+                  {
+                    LOG(WARNING) << "Could not fixe fiber (" << fiberIndexX << "," << fiberIndexY << ") / (" << nFibersX << "," << nFibersX << "),"
+                     << " first point: " << firstPoint << ", neighbouring points: " << neighbouringFiberFirstPoint[0] << "," << neighbouringFiberFirstPoint[1];
+
+                    int zIndex = int(nPointsPerFiber/2);
+                    file.seekg(32+headerLength + validIndex0*fiberDataSize + zIndex*3*sizeof(double));
+                    MathUtility::readPoint(file, neighbouringFiberFirstPoint[0]);
+
+                    file.seekg(32+headerLength + validIndex1*fiberDataSize + zIndex*3*sizeof(double));
+                    MathUtility::readPoint(file, neighbouringFiberFirstPoint[1]);
+                  }
+
+                  if (firstPoint[2] - neighbouringFiberFirstPoint[1][2] > 1e-12)
+                  {
+                    LOG(WARNING) << "Could not fixe fiber (" << fiberIndexX << "," << fiberIndexY << ") / (" << nFibersX << "," << nFibersX << "),"
+                     << " first point: " << firstPoint << ", neighbouring points: " << neighbouringFiberFirstPoint[0] << "," << neighbouringFiberFirstPoint[1];
+
+                    int zIndex = int(nPointsPerFiber/2)+1;
+                    file.seekg(32+headerLength + validIndex0*fiberDataSize + zIndex*3*sizeof(double));
+                    MathUtility::readPoint(file, neighbouringFiberFirstPoint[0]);
+
+                    file.seekg(32+headerLength + validIndex1*fiberDataSize + zIndex*3*sizeof(double));
+                    MathUtility::readPoint(file, neighbouringFiberFirstPoint[1]);
+                  }
+
+                  if (firstPoint[2] - neighbouringFiberFirstPoint[1][2] > 1e-12)
+                  {
+                    LOG(ERROR) << "Could not fixed fiber (" << fiberIndexX << "," << fiberIndexY << ") / (" << nFibersX << "," << nFibersX << "),"
+                      << " first point: " << firstPoint << ", neighbouring points: " << neighbouringFiberFirstPoint[0] << "," << neighbouringFiberFirstPoint[1];
+                  }
+                  else
+                  {
+                    //assert(firstPoint[2] - neighbouringFiberFirstPoint[1][2] < 1e-12);
+
+                    // the two neighbouring valid fibers are the indices validIndex0 and validIndex1
+                    // consider the triangle between the first valid point is of the to be interpolated fiber and the two neighbouring fibers
+                    double angle = std::atan2(firstPoint[1]-neighbouringFiberFirstPoint[0][1], firstPoint[0]-neighbouringFiberFirstPoint[0][0]);
+                    double relativeLength = MathUtility::distance<3>(firstPoint, neighbouringFiberFirstPoint[0])
+                      / MathUtility::distance<3>(neighbouringFiberFirstPoint[1], neighbouringFiberFirstPoint[0]);
+
+                    // interpolate points
+                    // loop over all points of the fiber
+                    for (int zIndex = 0; zIndex != nPointsPerFiber; zIndex++)
+                    {
+                      // get the two valid fibers
+                      Vec3 point0, point1;
+                      assert(validIndex0 < nFibers);
+                      file.seekg(32+headerLength + validIndex0*fiberDataSize + zIndex*3*sizeof(double));
+
+                      MathUtility::readPoint(file, point0);
+
+                      assert(validIndex1 < nFibers);
+                      file.seekg(32+headerLength + validIndex1*fiberDataSize + zIndex*3*sizeof(double));
+
+                      MathUtility::readPoint(file, point1);
+
+                      double distance = MathUtility::distance<3>(point0, point1);
+
+                      // compute the interpolated point
+                      Vec3 interpolatedPoint = point0 + Vec3({cos(angle)*relativeLength*distance, sin(angle)*relativeLength*distance, 0.0});
+
+                      // write the interpolated value back
+                      int interpolatedFiberIndex = fiberIndexY*nFibersX + fiberIndexX;
+                      assert(interpolatedFiberIndex < nFibers);
+
+                      file.seekp(32+headerLength + interpolatedFiberIndex*fiberDataSize + zIndex*3*sizeof(double));
+
+                      MathUtility::writePoint(file, interpolatedPoint);
+                    }
+                    nFibersFixed++;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      LOG(DEBUG) << "nFibersInvalid: " << nFibersInvalid << ", nFibersFixed: " << nFibersFixed << ", difference: " << nFibersInvalid - nFibersFixed;
+      LOG(INFO) << "Iteration " << iterationNo << ", fixed " << nFibersFixed << " of " << nFibersInvalid << " invalid fibers, total: " << nFibers;
+    }
   }
 
   file.close();
@@ -839,6 +1017,7 @@ resampleFibersInFile(int nPointsPerFiber)
 
   int nFibersX = (nBorderPointsXNew_-1) * nFineGridFibers_ + nBorderPointsXNew_;
   int nFibers = MathUtility::sqr(nFibersX);
+  const long long fiberDataSize = nPointsPerFiber*3*sizeof(double);
 
   // loop over fibers in old file
   for (int fiberIndex = 0; fiberIndex != nFibers; fiberIndex++)
@@ -864,7 +1043,7 @@ resampleFibersInFile(int nPointsPerFiber)
       // load previous point, only if it was not already loaded
       if (oldZIndexPrevious != oldZIndexPrevious0)
       {
-        fileOld.seekg(32+headerLength + fiberIndex*nPointsPerFiber*3*sizeof(double) + oldZIndexPrevious*3*sizeof(double));
+        fileOld.seekg(32+headerLength + fiberIndex*fiberDataSize + oldZIndexPrevious*3*sizeof(double));
         MathUtility::readPoint(fileOld, previousPoint);
         oldZIndexPrevious0 = oldZIndexPrevious;
       }
@@ -875,7 +1054,7 @@ resampleFibersInFile(int nPointsPerFiber)
         // only if it was not already loaded
         if (oldZIndexNext != oldZIndexNext0)
         {
-          fileOld.seekg(32+headerLength + fiberIndex*nPointsPerFiber*3*sizeof(double) + oldZIndexNext*3*sizeof(double));
+          fileOld.seekg(32+headerLength + fiberIndex*fiberDataSize + oldZIndexNext*3*sizeof(double));
           MathUtility::readPoint(fileOld, nextPoint);
           oldZIndexNext0 = oldZIndexNext;
         }
@@ -1040,14 +1219,57 @@ void ParallelFiberEstimation<BasisFunctionType>::
 interpolateFineFibersFromFile()
 {
   // open existing file to read
+
+  bool waitIfFileGetsBig = specificSettings_.getOptionBool("waitIfFileGetsBig", true);
+
+
+  struct stat statBuffer;
+  int rc = stat(resultFilename_.c_str(), &statBuffer);
+  if (rc != 0)
+  {
+    LOG(FATAL) << "Could not open file \"" << resultFilename_ << "\".";
+  }
+  int fileOldSize = statBuffer.st_size;
+
   std::ifstream fileOld(resultFilename_.c_str(), std::ios::in | std::ios::binary);
   assert (fileOld.is_open());
 
   std::stringstream newFilename;
-  newFilename << resultFilename_ << ".fine";
-  LOG(DEBUG) << "write to file " << newFilename.str();
-  std::ofstream fileNew(newFilename.str().c_str(), std::ios::out | std::ios::binary);
-  assert (fileNew.is_open());
+
+  // check if old file name is like "path/7x7fibers"
+  bool filenameHasXFormat = false;
+
+  std::string fileBase = resultFilename_;
+  std::string path = "";
+
+  if (fileBase.find("/") != std::string::npos)
+  {
+    path = fileBase.substr(0, fileBase.rfind("/")+1);
+    fileBase = fileBase.substr(fileBase.rfind("/")+1);
+  }
+
+  bool xFound = false;
+  int suffixPos = 0;
+  for(int i = 0; i < fileBase.size(); i++)
+  {
+    if (!isdigit(fileBase[i]))
+    {
+      if (xFound)
+      {
+        suffixPos = i;
+        filenameHasXFormat = true;
+        break;
+      }
+      if (fileBase[i] == 'x')
+      {
+        xFound = true;
+      }
+      else
+      {
+        break;
+      }
+    }
+  }
 
   // parse header
   // skip first part of header
@@ -1082,11 +1304,30 @@ interpolateFineFibersFromFile()
   // copy header
   std::vector<char> headerBuffer(32+headerLength);
   fileOld.read(headerBuffer.data(), 32+headerLength);
-  fileNew.write(headerBuffer.data(), 32+headerLength);
 
   int nFibersNewX = (nFibersOldX-1) * nFineGridFibers_ + nFibersOldX;
   int nFibersNew = MathUtility::sqr(nFibersNewX);
 
+  if (filenameHasXFormat)
+  {
+    newFilename << path << nFibersNewX << "x" << nFibersNewX  << fileBase.substr(suffixPos);
+  }
+  else
+  {
+    newFilename << resultFilename_ << ".fine";
+  }
+
+  LOG(DEBUG) << "write to file " << newFilename.str();
+  std::ofstream fileNew(newFilename.str().c_str(), std::ios::out | std::ios::binary);
+  if (!fileNew.is_open())
+  {
+    LOG(FATAL) << "Could not write to file \"" << newFilename.str() << "\".";
+  }
+
+  // write header to new file
+  fileNew.write(headerBuffer.data(), 32+headerLength);
+
+  LOG(INFO) << "\"" << resultFilename_ << "\" -> \"" << newFilename.str() << "\"";
   LOG(INFO) << "interpolate from " <<  nFibersOldX << " x " << nFibersOldX << " = " << nFibersOld
     << " to " << nFibersNewX << " x " << nFibersNewX << " = " << nFibersNew << ", (nFineGridFibers: " << nFineGridFibers_ << ")";
 
@@ -1095,12 +1336,17 @@ interpolateFineFibersFromFile()
   long long nGibiBytes = nBytes / (long long)(1024) / (long long)(1024) / (long long)(1024);
   LOG(INFO) << "estimated size: " << nGibiBytes << " GiB";
 
-  if (nGibiBytes >= 1)
+  if (nGibiBytes >= 1 && waitIfFileGetsBig)
   {
     LOG(INFO) << "Press any key to continue . . .";
     std::cin.get();
   }
 
+  if (int((fileOldSize-(32+headerLength)) / fiberDataSize) != nFibersOld)
+  {
+    LOG(ERROR) << "File \"" << resultFilename_ << "\" states to have " << nFibersOld << " fibers in header, but actually has "
+      << int((fileOldSize-(32+headerLength)) / fiberDataSize) << " fibers!";
+  }
 
   union
   {
@@ -1109,25 +1355,29 @@ interpolateFineFibersFromFile()
   };
 
   // write new number of fibers
+  // nFibersTotal
   fileNew.seekp(32+4);
   parameter = nFibersNew;
   fileNew.write(c, 4);
 
+  // nBorderPointsXNew
   fileNew.seekp(32+3*4);
   parameter = nFibersOldX;
   fileNew.write(c, 4);
 
+  // nFineGridFibers
   fileNew.seekp(32+5*4);
   parameter = nFineGridFibers_;
   fileNew.write(c, 4);
 
+  // date
   fileNew.seekp(32+9*4);
   parameter = time(NULL);
   fileNew.write(c, 4);
 
   fileNew.seekp(32+headerLength);
 
-  // loop over fibers in new file
+  // define 4 buffers that can each hold data for one fiber
   std::array<std::vector<char>,4> buffer;
 
   // initialize buffers
@@ -1136,18 +1386,29 @@ interpolateFineFibersFromFile()
     buffer[i].resize(fiberDataSize);
   }
 
+  // loop over fibers in new file
   for (int fiberIndexY = 0; fiberIndexY != nFibersNewX; fiberIndexY++)
   {
     for (int fiberIndexX = 0; fiberIndexX != nFibersNewX; fiberIndexX++)
     {
+      // index of bottom left fiber in old file
       int oldFiberIndexX = (int)(fiberIndexX / (nFineGridFibers_+1));
       int oldFiberIndexY = (int)(fiberIndexY / (nFineGridFibers_+1));
+
+      VLOG(1) << "fiber " << fiberIndexX << "," << fiberIndexY << ", oldFiberIndex: " << oldFiberIndexX << "," << oldFiberIndexY;
 
       // if fiber is key fiber
       if (fiberIndexX % (nFineGridFibers_+1) == 0 && fiberIndexY % (nFineGridFibers_+1) == 0)
       {
         // copy fiber data from old file
         int oldFiberIndex = oldFiberIndexY * nFibersOldX + oldFiberIndexX;
+
+        // assert that file is long enough
+        if (32+headerLength + (oldFiberIndex+1)*fiberDataSize > fileOldSize)
+        {
+          LOG(ERROR) << "Read past end of file, oldFiberIndex: " << oldFiberIndex;
+        }
+        assert(32+headerLength + (oldFiberIndex+1)*fiberDataSize <= fileOldSize);
 
         fileOld.seekg(32+headerLength + oldFiberIndex*fiberDataSize);
         fileOld.read(buffer[0].data(), fiberDataSize);
@@ -1156,7 +1417,13 @@ interpolateFineFibersFromFile()
       else
       {
         // if fiber is no key fiber, read 4 neighbouring fibers and interpolate
-        // determine indices
+        // *     *
+        //  \   /
+        //    o
+        //  /   \
+        // x     *     // x = oldFiberIndex
+        //
+        // determine indices of 4 neighbouring fibers
         int oldFiberIndex[4] = {
           oldFiberIndexY * nFibersOldX + oldFiberIndexX,
           oldFiberIndexY * nFibersOldX + (oldFiberIndexX+1),
@@ -1164,8 +1431,18 @@ interpolateFineFibersFromFile()
           (oldFiberIndexY+1) * nFibersOldX + (oldFiberIndexX+1)
         };
 
+        // check if fiber is contained in file
+        std::array<bool,4> edgeFiberIsValid({true,true,true,true});
         for (int i = 0; i < 4; i++)
         {
+          // check if end of data for fiber is beyond end of file
+          std::size_t oldFiberEndPosInFile = 32+headerLength + (oldFiberIndex[i]+1)*fiberDataSize;
+          if (oldFiberEndPosInFile > fileOldSize)
+          {
+            edgeFiberIsValid[i] = false;
+            continue;
+          }
+
           fileOld.seekg(32+headerLength + oldFiberIndex[i]*fiberDataSize);
           fileOld.read(buffer[i].data(), fiberDataSize);
         }
@@ -1173,6 +1450,17 @@ interpolateFineFibersFromFile()
         // compute interpolation factors
         double alpha0 = double(fiberIndexX - oldFiberIndexX*(nFineGridFibers_+1)) / (nFineGridFibers_+1);
         double alpha1 = double(fiberIndexY - oldFiberIndexY*(nFineGridFibers_+1)) / (nFineGridFibers_+1);
+
+        // 2 3
+        // 0 1
+        if (!edgeFiberIsValid[2] && !edgeFiberIsValid[3])
+        {
+          alpha1 = 0.0;
+        }
+        if (!edgeFiberIsValid[1] && !edgeFiberIsValid[3])
+        {
+          alpha0 = 0.0;
+        }
 
         VLOG(1) << "(" << fiberIndexX << "," << fiberIndexY << ") alpha: " << alpha0 << "," << alpha1;
 

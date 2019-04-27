@@ -80,7 +80,7 @@ sendBorderPoints(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &bor
 
       // header
       file << borderPointsSubdomain[subdomainIndex][0].size() << ";";
-      LOG(DEBUG) << "a";
+      VLOG(1) << "a";
       if (borderPointsSubdomain[subdomainIndex][0].size() == 0)
       {
         file << "0;";
@@ -89,14 +89,14 @@ sendBorderPoints(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &bor
       {
         file << borderPointsSubdomain[subdomainIndex][0][0].size() << ";";
       }
-      LOG(DEBUG) << "b";
+      VLOG(1) << "b";
       for (int i = 0; i < 4; i++)
       {
         file << (subdomainIsAtBorderNew[i]? "1" : "0") << ";";
-        LOG(DEBUG) << "c" << i;
+        VLOG(1) << "c" << i;
       }
       file << std::endl;
-      LOG(DEBUG) << "d";
+      VLOG(1) << "d";
       
       // data
       for (int faceNo = (int)Mesh::face_t::face0Minus; faceNo <= (int)Mesh::face_t::face1Plus; faceNo++)
@@ -107,14 +107,14 @@ sendBorderPoints(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &bor
           {
             for (int i = 0; i < 3; i++)
             {
-              LOG(DEBUG) << "e " << faceNo << " " << zLevelIndex << " " << pointIndex << " " << i;
+              VLOG(1) << "e " << faceNo << " " << zLevelIndex << " " << pointIndex << " " << i;
               file << borderPointsSubdomain[subdomainRankNo][faceNo][zLevelIndex][pointIndex][i] << ";";
             }
           }
           file << std::endl;
         }
       }
-      LOG(DEBUG) << "f";
+      VLOG(1) << "f";
 
       file.close();
       LOG(DEBUG) << " saved data for subdomain " << subdomainRankNo << " to file \"" << filename.str() << "\".";

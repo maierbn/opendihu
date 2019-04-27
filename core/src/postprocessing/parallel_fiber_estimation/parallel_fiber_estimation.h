@@ -9,6 +9,7 @@
 #include "interfaces/runnable.h"
 #include "data_management/parallel_fiber_estimation.h"
 #include "quadrature/gauss.h"
+#include "spatial_discretization/boundary_conditions/neumann_boundary_conditions.h"
 
 namespace Postprocessing
 {
@@ -72,6 +73,9 @@ protected:
 
   //! create Dirichlet BC object
   void createDirichletBoundaryConditions(const std::array<int,3> &nElementsPerCoordinateDirectionLocal, std::shared_ptr<SpatialDiscretization::DirichletBoundaryConditions<FunctionSpaceType,1>> &dirichletBoundaryConditions);
+
+  //! create Neumann BC object
+  void createNeumannBoundaryConditions(const std::array<int,3> &nElementsPerCoordinateDirectionLocal, std::shared_ptr<SpatialDiscretization::NeumannBoundaryConditions<FunctionSpaceType,Quadrature::Gauss<3>, 1>> &neumannBoundaryConditions);
 
   //! communicate ghost values for gradient and solution value to neighbouring processes, the ghost elements are obtained from the mesh partition
   void exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder);
@@ -156,6 +160,8 @@ protected:
   std::string resultFilename_;  ///< the filename of the output result file
   double bottomZClip_;   ///< bottom z-value of the volume to consider
   double topZClip_;   ///< top z-value of the volume to consider
+  double finalBottomZClip_;   ///< bottom z-value of the final fibers
+  double finalTopZClip_;   ///< top z-value of the final fibers
   int nBorderPointsX_;    ///< number of subdivisions of the line
   int nBorderPointsZ_;    ///< number of subdivisions in z direction
   int maxLevel_;   ///< the maximum level up to which the domain will be subdivided, number of final domains is 8^maxLevel_ (octree structure)
@@ -165,6 +171,7 @@ protected:
   int nNodesPerFiber_;    ///< the number of nodes of the final fiber, this is assured at the end, then the fibers get resampled to the required number of nodes per fiber
   bool improveMesh_;      ///< if the improveMesh_ flag should be set to the algorithm that creates the 3D mesh. This make the mesh smoother but it takes more time
   int level_;             ///< current level of the recursion, 0=1 process, 1=8 processes, 2=64 processes
+  bool useNeumannBoundaryConditions_;   ///< if neumann instead of dirichlet boundary conditions should be used
 
   PyObject *moduleStlCreateMesh_;   ///< python module, file "stl_create_mesh.py"
   PyObject *moduleStlCreateRings_;   ///< python module, file "stl_create_rings.py"

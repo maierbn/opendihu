@@ -284,7 +284,7 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
 
 #ifdef WRITE_CHECKPOINT_GHOST_MESH
       std::stringstream filenameOut;
-      filenameOut << "checkpoint_ghost_mesh_" << neighbourRankNo << "_" << Mesh::getString((Mesh::face_t)face) << ".txt";
+      filenameOut << "out/checkpoint_ghost_mesh_" << neighbourRankNo << "_" << Mesh::getString((Mesh::face_t)face) << ".txt";
       std::ofstream fileOut;
       fileOut.open(filenameOut.str().c_str(), std::ios::out | std::ios::trunc);
 
@@ -329,7 +329,7 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
 #ifdef USE_CHECKPOINT_GHOST_MESH
 
       std::stringstream filenameIn;
-      filenameIn << "checkpoint_ghost_mesh_" << neighbourRankNo << "_" << Mesh::getString((Mesh::face_t)face) << ".txt";
+      filenameIn << "out/checkpoint_ghost_mesh_" << neighbourRankNo << "_" << Mesh::getString((Mesh::face_t)face) << ".txt";
       std::ifstream fileIn;
       fileIn.open(filenameIn.str().c_str(), std::ios::in);
 

@@ -28,6 +28,9 @@ public:
   //! set the dirichlet boundary condition object, this can be done to set BC from within the C++ code, not from python config
   void setDirichletBoundaryConditions(std::shared_ptr<DirichletBoundaryConditions<FunctionSpaceType,1>> dirichletBoundaryConditions);
 
+  //! set the neumann boundary condition object, this can be done to set BC from within the C++ code, not from python config
+  void setNeumannBoundaryConditions(std::shared_ptr<NeumannBoundaryConditions<FunctionSpaceType,QuadratureType,1>> neumannBoundaryConditions);
+
 protected:
 
   //! apply dirichlet boundary conditions, this calls applyBoundaryConditionsWeakForm

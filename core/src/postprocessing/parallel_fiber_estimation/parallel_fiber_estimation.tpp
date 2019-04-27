@@ -11,8 +11,8 @@
 // write or load various checkpoints, this is for debugging to only run part of the algorithm on prescribed data
 //#define USE_CHECKPOINT_BORDER_POINTS
 //#define USE_CHECKPOINT_MESH
-//#define WRITE_CHECKPOINT_MESH
-//#define WRITE_CHECKPOINT_BORDER_POINTS
+#define WRITE_CHECKPOINT_MESH
+#define WRITE_CHECKPOINT_BORDER_POINTS
 //#define WRITE_CHECKPOINT_GHOST_MESH
 //#define USE_CHECKPOINT_GHOST_MESH
 
@@ -25,14 +25,17 @@
 // include files that implement various methods of this class, these make use the previous defines
 #include "postprocessing/parallel_fiber_estimation/create_dirichlet_boundary_conditions.tpp"
 #include "postprocessing/parallel_fiber_estimation/create_mesh.tpp"
+#include "postprocessing/parallel_fiber_estimation/create_neumann_boundary_conditions.tpp"
 #include "postprocessing/parallel_fiber_estimation/create_seed_points.tpp"
 #include "postprocessing/parallel_fiber_estimation/exchange_ghost_values.tpp"
 #include "postprocessing/parallel_fiber_estimation/exchange_seed_points.tpp"
 #include "postprocessing/parallel_fiber_estimation/fill_border_points.tpp"
 #include "postprocessing/parallel_fiber_estimation/fix_incomplete_streamlines.tpp"
+#include "postprocessing/parallel_fiber_estimation/interpolate_fine_fibers_from_file.tpp"
 #include "postprocessing/parallel_fiber_estimation/output_border_points.tpp"
 #include "postprocessing/parallel_fiber_estimation/rearrange_streamline_points.tpp"
 #include "postprocessing/parallel_fiber_estimation/refine_border_points.tpp"
+#include "postprocessing/parallel_fiber_estimation/resample_fibers_in_file.tpp"
 #include "postprocessing/parallel_fiber_estimation/sample_at_equidistant_z_points.tpp"
 #include "postprocessing/parallel_fiber_estimation/send_receive_border_points.tpp"
 #include "postprocessing/parallel_fiber_estimation/trace_result_fibers.tpp"
@@ -60,7 +63,11 @@ ParallelFiberEstimation(DihuContext context) :
   maxLevel_ = specificSettings_.getOptionInt("maxLevel", 2);
   nFineGridFibers_ = specificSettings_.getOptionInt("nFineGridFibers", 2);
   improveMesh_ = specificSettings_.getOptionBool("improveMesh", true);
+  useNeumannBoundaryConditions_ = specificSettings_.getOptionBool("useNeumannBoundaryConditions", false);
   nNodesPerFiber_ = specificSettings_.getOptionInt("nNodesPerFiber", 1000);
+  finalBottomZClip_ = specificSettings_.getOptionDouble("finalBottomZClip", bottomZClip_);
+  finalTopZClip_ = specificSettings_.getOptionDouble("finalTopZClip", topZClip_);
+
 
   this->lineStepWidth_ = specificSettings_.getOptionDouble("lineStepWidth", 1e-2, PythonUtility::Positive);
   this->maxNIterations_ = specificSettings_.getOptionInt("maxIterations", 100000, PythonUtility::Positive);
@@ -83,8 +90,6 @@ initialize()
   LOG(TRACE) << "ParallelFiberEstimation::initialize";
 
   currentRankSubset_ = std::make_shared<Partition::RankSubset>(0);  // rankSubset with only the master rank (rank no 0)
-
-
 
   // load python modules
   moduleStlCreateRings_ = PyImport_ImportModule("stl_create_rings");
@@ -283,7 +288,7 @@ generateParallelMesh()
 
   int subdomainIndex = currentRankSubset_->ownRankNo();
   std::stringstream filename;
-  filename << "checkpoint_borderPoints_subdomain_" << subdomainIndex << ".csv";
+  filename << "out/checkpoint_borderPoints_subdomain_" << subdomainIndex << ".csv";
   std::ifstream file(filename.str().c_str(), std::ios::in);
   if (!file.is_open())
   {
@@ -497,9 +502,19 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
 #endif
 #endif
 
-    // create dirichlet boundary condition object
+    // create boundary condition objects, either dirichlet or neumann
     std::shared_ptr<SpatialDiscretization::DirichletBoundaryConditions<FunctionSpaceType,1>> dirichletBoundaryConditions;
-    createDirichletBoundaryConditions(nElementsPerCoordinateDirectionLocal, dirichletBoundaryConditions);
+    std::shared_ptr<SpatialDiscretization::NeumannBoundaryConditions<FunctionSpaceType,Quadrature::Gauss<3>,1>> neumannBoundaryConditions;
+    if (useNeumannBoundaryConditions_)
+    {
+      // create neumann boundary condition object
+      createNeumannBoundaryConditions(nElementsPerCoordinateDirectionLocal, neumannBoundaryConditions);
+    }
+    else
+    {
+      // create dirichlet boundary condition object
+      createDirichletBoundaryConditions(nElementsPerCoordinateDirectionLocal, dirichletBoundaryConditions);
+    }
 
     // initialize data object to allocate gradient field
     data_.setFunctionSpace(this->functionSpace_);
@@ -507,13 +522,23 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     data_.initialize();
 
     // set dirichlet values in data for debugging output of vector of dirichlet BC values
-    const std::vector<dof_no_t> &dirichletDofs = dirichletBoundaryConditions->boundaryConditionNonGhostDofLocalNos();
-    const std::vector<VecD<1>> &dirichletValues = dirichletBoundaryConditions->boundaryConditionValues();
-    data_.dirichletValues()->setValues(-1);
-    data_.dirichletValues()->setValues(dirichletDofs, dirichletValues);
+    if (!useNeumannBoundaryConditions_)
+    {
+      const std::vector<dof_no_t> &dirichletDofs = dirichletBoundaryConditions->boundaryConditionNonGhostDofLocalNos();
+      const std::vector<VecD<1>> &dirichletValues = dirichletBoundaryConditions->boundaryConditionValues();
+      data_.dirichletValues()->setValues(-1);
+      data_.dirichletValues()->setValues(dirichletDofs, dirichletValues);
+    }
 
     // set boundary conditions to the problem
-    problem_->setDirichletBoundaryConditions(dirichletBoundaryConditions);
+    if (useNeumannBoundaryConditions_)
+    {
+      problem_->setNeumannBoundaryConditions(neumannBoundaryConditions);
+    }
+    else
+    {
+      problem_->setDirichletBoundaryConditions(dirichletBoundaryConditions);
+    }
     problem_->reset();
     problem_->initialize();
 

@@ -1,3 +1,5 @@
+# refine the given, serially created file with 7x7 fibers
+
 # input fiber
 input=/store/software/opendihu/examples/electrophysiology/input/7x7fibers.bin
 

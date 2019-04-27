@@ -27,6 +27,13 @@ setDirichletBoundaryConditions(std::shared_ptr<DirichletBoundaryConditions<Funct
 
 template<typename FunctionSpaceType,typename QuadratureType,typename Term,typename Dummy>
 void BoundaryConditions<FunctionSpaceType,QuadratureType,Term,Dummy>::
+setNeumannBoundaryConditions(std::shared_ptr<NeumannBoundaryConditions<FunctionSpaceType,QuadratureType,1>> neumannBoundaryConditions)
+{
+  this->neumannBoundaryConditions_ = neumannBoundaryConditions;
+}
+
+template<typename FunctionSpaceType,typename QuadratureType,typename Term,typename Dummy>
+void BoundaryConditions<FunctionSpaceType,QuadratureType,Term,Dummy>::
 applyBoundaryConditions()
 {
   if (!boundaryConditionHandlingEnabled_)
@@ -52,6 +59,7 @@ applyBoundaryConditions()
   // handle Neumann boundary conditions
   if (neumannBoundaryConditions_ == nullptr)
   {
+    LOG(DEBUG) << "no Neumann boundary conditions are present, create object";
     neumannBoundaryConditions_ = std::make_shared<NeumannBoundaryConditions<FunctionSpaceType,QuadratureType,1>>(this->context_);
     neumannBoundaryConditions_->initialize(this->specificSettings_, this->data_.functionSpace(), "neumannBoundaryConditions");
 
@@ -67,6 +75,7 @@ applyBoundaryConditions()
   // handle Dirichlet boundary conditions
   if (dirichletBoundaryConditions_ == nullptr)
   {
+    LOG(DEBUG) << "no Dirichlet boundary conditions are present, create object";
     dirichletBoundaryConditions_ = std::make_shared<DirichletBoundaryConditions<FunctionSpaceType,1>>(this->context_);
     dirichletBoundaryConditions_->initialize(this->specificSettings_, this->data_.functionSpace(), "dirichletBoundaryConditions");
   }

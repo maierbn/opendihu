@@ -27,7 +27,7 @@ def output_points(filename, rankNo, points, size):
     out_mesh.vectors[i] = f
   #out_mesh.update_normals()
 
-  outfile = "{}.{}.{}.stl".format(filename[0:2], rankNo, filename[2:])
+  outfile = "out/{}.{}.{}.stl".format(filename[0:2], rankNo, filename[2:])
   #out_mesh.save(outfile, mode=stl.Mode.ASCII)
   out_mesh.save(outfile)
   print("saved {} triangles to \"{}\"".format(len(triangles),outfile))
@@ -59,7 +59,7 @@ def output_streamline(filename, rankNo, points, size):
     out_mesh.vectors[i] = f
   #out_mesh.update_normals()
 
-  outfile = "{}.{}.{}.stl".format(filename[0:2], rankNo, filename[2:])
+  outfile = "out/{}.{}.{}.stl".format(filename[0:2], rankNo, filename[2:])
   #out_mesh.save(outfile, mode=stl.Mode.ASCII)
   out_mesh.save(outfile)
   print("saved {} triangles to \"{}\"".format(len(triangles),outfile))
@@ -94,7 +94,7 @@ def output_streamlines(filename, rankNo, streamlines, size):
     out_mesh.vectors[i] = f
   #out_mesh.update_normals()
 
-  outfile = "{}.{}.{}.stl".format(filename[0:2], rankNo, filename[2:])
+  outfile = "out/{}.{}.{}.stl".format(filename[0:2], rankNo, filename[2:])
   #out_mesh.save(outfile, mode=stl.Mode.ASCII)
   out_mesh.save(outfile)
   print("saved {} triangles to \"{}\"".format(len(triangles),outfile))
@@ -137,7 +137,7 @@ def output_border_points(filename, rankNo, points, size):
       
   #out_mesh.update_normals()
 
-  outfile = "{}.{}.{}.stl".format(filename[0:2], rankNo, filename[2:])
+  outfile = "out/{}.{}.{}.stl".format(filename[0:2], rankNo, filename[2:])
   out_mesh.save(outfile)
   print("saved {} triangles to \"{}\"".format(len(triangles),outfile))
 
@@ -149,7 +149,7 @@ def output_triangles(filename, triangles):
     out_mesh.vectors[i] = f
   #out_mesh.update_normals()
 
-  outfile = "{}.stl".format(filename)
+  outfile = "out/{}.stl".format(filename)
   #out_mesh.save(outfile, mode=stl.Mode.ASCII)
   out_mesh.save(outfile)
   print("saved {} triangles to \"{}\"".format(len(triangles),outfile))
@@ -197,7 +197,7 @@ def output_ghost_elements(filename, rankNo, point_values, n_elements, size):
     out_mesh.vectors[i] = f
   #out_mesh.update_normals()
 
-  outfile = "{}.{}.{}.stl".format(filename[0:2], rankNo, filename[2:])
+  outfile = "out/{}.{}.{}.stl".format(filename[0:2], rankNo, filename[2:])
   #out_mesh.save(outfile, mode=stl.Mode.ASCII)
   out_mesh.save(outfile)
   print("saved {} triangles to \"{}\"".format(len(triangles),outfile))

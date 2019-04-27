@@ -10,6 +10,12 @@
 namespace SpatialDiscretization
 {
 
+/**
+ *  Neumann boundary conditions, that are specified for faces of elements. There are scalar boundary conditions representing normal flux.
+ *  For solid mechanics, Neumann boundary conditions represent surface traction and can have a direction.
+ *  Applying Neumann boundary conditions is simply substracting a rhs vector from the normal rhs.
+ */
+
 /** initializeRhs for mesh dimension 2 or 3
  */
 template<typename FunctionSpaceType, typename QuadratureType, int nComponents>
@@ -36,11 +42,11 @@ public NeumannBoundaryConditionsInitializeRhs<FunctionSpaceType,QuadratureType,n
 public:
   using NeumannBoundaryConditionsInitializeRhs<FunctionSpaceType,QuadratureType,nComponents>::NeumannBoundaryConditionsInitializeRhs;
 
-protected:
-
   typedef typename NeumannBoundaryConditionsBase<FunctionSpaceType,QuadratureType,nComponents>::ElementWithFaces ElementWithFaces;
 
-  //! parse an object of type ElementWithFaces frorm python config,
+protected:
+
+  //! parse an object of type ElementWithFaces from python config,
   //! example values:  {"element": 1, "face": "0+", "dofVectors:", {0: [tmax,0,0], 1: [tmax,0,0], 2: [tmax,0,0], 3: [tmax,0,0]}}
   //! if elementNoLocal is != -1, it will be used as value for the local element no, otherwise the value is parsed from config
   virtual ElementWithFaces parseElementWithFaces(PythonConfig specificSettings, std::shared_ptr<FunctionSpaceType> functionSpace, element_no_t elementNoLocal) override;
@@ -58,9 +64,9 @@ public NeumannBoundaryConditionsInitializeRhs<FunctionSpaceType,QuadratureType,1
 public:
   using NeumannBoundaryConditionsInitializeRhs<FunctionSpaceType,QuadratureType,1>::NeumannBoundaryConditionsInitializeRhs;
 
-protected:
-
   typedef typename NeumannBoundaryConditionsBase<FunctionSpaceType,QuadratureType,1>::ElementWithFaces ElementWithFaces;
+
+protected:
 
   //! parse an object of type ElementWithFaces frorm python config,
   //! example values:  {"element": 1, "face": "0+", "dofVectors:", {0: [tmax,0,0], 1: [tmax,0,0], 2: [tmax,0,0], 3: [tmax,0,0]}}
@@ -80,9 +86,9 @@ public NeumannBoundaryConditionsBase<FunctionSpaceType,QuadratureType,nComponent
 public:
   using NeumannBoundaryConditionsBase<FunctionSpaceType,QuadratureType,nComponents>::NeumannBoundaryConditionsBase;
 
-protected:
-
   typedef typename NeumannBoundaryConditionsBase<FunctionSpaceType,QuadratureType,nComponents>::ElementWithFaces ElementWithFaces;
+
+protected:
 
   // initialize the rhs in data, this is called by initialize()
   virtual void initializeRhs();

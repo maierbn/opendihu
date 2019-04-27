@@ -1,4 +1,5 @@
 # parallel fiber estimation, Laplace 3D
+# refine given fiber file and interpolate fibers in between
 #
 # command arguments: <nFineGridFibers> <input_filename>
 

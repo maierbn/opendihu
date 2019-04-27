@@ -31,3 +31,4 @@ config.py
 **/*.csv
 **/input/*
 **/scaled_mesh*
+prepare_arm.sh

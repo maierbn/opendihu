@@ -39,15 +39,6 @@ FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, std
   this->noGeometryField_ = noGeometryField;
 }
 
-
-template<int D,typename BasisFunctionType>
-FunctionSpaceDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
-FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, const std::vector<double> &localNodePositionsFromFile, const std::vector<Vec3> &localNodePositions,
-                       const std::array<element_no_t,D> nElementsPerCoordinateDirectionLocal, const std::array<int,D> nRanksPerCoordinateDirection) :
-  FunctionSpaceDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>(partitionManager, localNodePositions, nElementsPerCoordinateDirectionLocal, nRanksPerCoordinateDirection)
-{
-}
-
 template<int D,typename BasisFunctionType>
 FunctionSpaceDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
 FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, const std::vector<Vec3> &localNodePositions,

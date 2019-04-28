@@ -68,7 +68,7 @@ getOptionVector(std::string keyString, std::vector<T> &values) const
   PythonUtility::getOptionVector(this->pythonConfig_, keyString, pathString, values);
 }
 
-//! extract a vector with unknown number of nEntries, must be a list
+//! extract a vector with known number of nEntries
 template<typename T>
 void PythonConfig::
 getOptionVector(std::string keyString, int nEntries, std::vector<T> &values) const
@@ -86,7 +86,7 @@ getOptionVector(std::string keyString, int nEntries, std::vector<T> &values) con
   values = PythonUtility::convertFromPython<std::vector<T>>::get(pyLocalValues);
   if (values.size() < nEntries)
   {
-    LOG(WARNING) << pathString << ": given vector has only " << values.size() << " entries, fill with 0's to size "
+    LOG(WARNING) << pathString << "[\"" << keyString << "\"]: given vector has only " << values.size() << " entries, fill with 0's to size "
       << nEntries;
     values.resize(nEntries, T{0.0});
   }

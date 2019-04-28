@@ -69,7 +69,10 @@ public:
   Vec &valuesLocal(int componentNo = 0);
 
   //! get the internal PETSc vector values, the global vector for the specified component
-  Vec &valuesGlobal(int componentNo = 0);
+  Vec &valuesGlobal(int componentNo);
+
+  //! if the vector has multiple components, return a nested Vec of the global vector, else return the global vector
+  Vec &valuesGlobal();
 
   //! fill a contiguous vector with all components after each other, "struct of array"-type data layout.
   //! after manipulation of the vector has finished one has to call restoreValuesContiguous
@@ -98,6 +101,7 @@ protected:
   
   std::array<Vec,nComponents> values_;  ///< the (serial) Petsc vectors that contains all the data, one for each component
   Vec valuesContiguous_ = PETSC_NULL;   ///< global vector that has all values of the components concatenated, i.e. in a "struct of arrays" memory layout
+  Vec vectorNestedGlobal_;       ///< a VecNest object containing the global values, only in used if nComponents > 1
 };
 
 /** This is the partial specialization for structured meshes.
@@ -180,8 +184,11 @@ public:
   Vec &valuesLocal(int componentNo = 0);
   
   //! get the global Vector of a specified component
-  Vec &valuesGlobal(int componentNo = 0);
+  Vec &valuesGlobal(int componentNo);
   
+  //! if the vector has multiple components, return a nested Vec of the global vector, else return the global vector
+  Vec &valuesGlobal();
+
   //! fill a contiguous vector with all components after each other, "struct of array"-type data layout.
   //! after manipulation of the vector has finished one has to call restoreValuesContiguous
   Vec &getValuesContiguous();
@@ -223,6 +230,7 @@ protected:
   std::vector<double> savedValues_;   ///< temporary storage of values that would be overwritten by ghost value operations of the extracted field variable
   Vec savedVectorLocal_;        ///< when this PartitionedPetscVec has nComponents=1 and extractComponentShared is called, there is no valuesContiguous_ vector in use (because it is only one component anyway, replacement is globalVector_[0]). Then the extracted field variable gets copies of the own vectorLocal_ and vectorGlobal_ set, the original pointer vectorLocal_ and vectorGlobal_ are saved in this variable and reset when restoreValuesContiguous is called.
   Vec savedVectorGlobal_;        ///< when this PartitionedPetscVec has nComponents=1 and extractComponentShared is called, there is no valuesContiguous_ vector in use (because it is only one component anyway, replacement is globalVector_[0]). Then the extracted field variable gets copies of the own vectorLocal_ and vectorGlobal_ set, the original pointer vectorLocal_ and vectorGlobal_ are saved in this variable and reset when restoreValuesContiguous is called.
+  Vec vectorNestedGlobal_;       ///< a VecNest object containing the global values, only in used if nComponents > 1
 };
 
 

@@ -15,22 +15,23 @@ namespace SpatialDiscretization
 {
 
 /** base class of the integrand that produces the stiffness matrix
+ * D = dimension (e.g. 2D, 3D), EvaluationsType = a composite data structure of multiple values, nComponents=1 for classical FE, D for solid mechanics
  */
-template<int D,typename EvaluationsType,typename FunctionSpaceType,typename Term,typename=Term>
+template<int D,typename EvaluationsType,typename FunctionSpaceType,int nComponents,typename Term,typename=Term>
 class IntegrandStiffnessMatrix
 {
 public:
-  static EvaluationsType evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,Term> &data,
+  static EvaluationsType evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,nComponents,Term> &data,
                                            const std::array<Vec3,D> &jacobian, element_no_t elementNoLocal, std::array<double,D> xi);
 };
 
 /** partial specialization for laplace operator, dimension 1
  */
 template<typename EvaluationsType,typename FunctionSpaceType,typename Term>
-class IntegrandStiffnessMatrix<1,EvaluationsType,FunctionSpaceType,Term,Equation::hasLaplaceOperator<Term>>
+class IntegrandStiffnessMatrix<1,EvaluationsType,FunctionSpaceType,1,Term,Equation::hasLaplaceOperator<Term>>
 {
 public:
-  static EvaluationsType evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,Term> &data,
+  static EvaluationsType evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,1,Term> &data,
                                            const std::array<Vec3,1> &jacobian, element_no_t elementNoLocal, const std::array<double,1> xi);
 };
 
@@ -38,10 +39,10 @@ public:
 /** partial specialization for laplace operator, dimension 2
  */
 template<typename EvaluationsType,typename FunctionSpaceType,typename Term>
-class IntegrandStiffnessMatrix<2,EvaluationsType,FunctionSpaceType,Term,Equation::hasLaplaceOperator<Term>>
+class IntegrandStiffnessMatrix<2,EvaluationsType,FunctionSpaceType,1,Term,Equation::hasLaplaceOperator<Term>>
 {
 public:
-  static EvaluationsType evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,Term> &data,
+  static EvaluationsType evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,1,Term> &data,
                                            const std::array<Vec3,2> &jacobian, element_no_t elementNoLocal, const std::array<double,2> xi);
 };
 
@@ -49,10 +50,10 @@ public:
 /** partial specialization for laplace operator, dimension 3
  */
 template<typename EvaluationsType,typename FunctionSpaceType,typename Term>
-class IntegrandStiffnessMatrix<3,EvaluationsType,FunctionSpaceType,Term,Equation::hasLaplaceOperator<Term>>
+class IntegrandStiffnessMatrix<3,EvaluationsType,FunctionSpaceType,1,Term,Equation::hasLaplaceOperator<Term>>
 {
 public:
-  static EvaluationsType evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,Term> &data,
+  static EvaluationsType evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,1,Term> &data,
                                            const std::array<Vec3,3> &jacobian, element_no_t elementNoLocal, const std::array<double,3> xi);
 };
 

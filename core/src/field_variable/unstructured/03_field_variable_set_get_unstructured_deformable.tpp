@@ -347,6 +347,16 @@ setValue(dof_no_t dofLocalNo, const std::array<double,nComponents> &value, Inser
   // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. finishGhostManipulation must be called
 }
 
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
+setValue(int componentNo, dof_no_t dofLocalNo, double value, InsertMode petscInsertMode)
+{
+  assert(this->values_);
+
+  this->values_->setValues(componentNo, 1, &dofLocalNo, &value, petscInsertMode);
+}
+
+
 //! set values for the specified component for all local dofs, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::

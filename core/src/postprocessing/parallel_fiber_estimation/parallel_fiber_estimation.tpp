@@ -10,7 +10,7 @@
 
 // write or load various checkpoints, this is for debugging to only run part of the algorithm on prescribed data
 //#define USE_CHECKPOINT_BORDER_POINTS
-//#define USE_CHECKPOINT_MESH
+#define USE_CHECKPOINT_MESH
 //#define WRITE_CHECKPOINT_MESH
 //#define WRITE_CHECKPOINT_BORDER_POINTS
 //#define WRITE_CHECKPOINT_GHOST_MESH
@@ -38,9 +38,9 @@
 #include "postprocessing/parallel_fiber_estimation/11_resample_fibers_in_file.tpp"
 #include "postprocessing/parallel_fiber_estimation/11_trace_result_fibers.tpp"
 #include "postprocessing/parallel_fiber_estimation/12_send_receive_border_points.tpp"
+#include "postprocessing/parallel_fiber_estimation/adjust_filename.tpp"
 #include "postprocessing/parallel_fiber_estimation/exchange_seed_points.tpp"
 #include "postprocessing/parallel_fiber_estimation/output_border_points.tpp"
-
 
 namespace Postprocessing
 {
@@ -48,7 +48,7 @@ namespace Postprocessing
 template<typename BasisFunctionType>
 ParallelFiberEstimation<BasisFunctionType>::
 ParallelFiberEstimation(DihuContext context) :
-  context_(context["ParallelFiberEstimation"]), problem_(nullptr), data_(context_), specificSettings_(context_.getPythonConfig())
+  context_(context["ParallelFiberEstimation"]), problem_(nullptr), data_(context_), specificSettings_(context_.getPythonConfig()), level_(0)
 {
   LOG(TRACE) << "ParallelFiberEstimation::ParallelFiberEstimation()";
 
@@ -225,7 +225,7 @@ generateParallelMesh()
 #ifndef NDEBUG
 #ifdef STL_OUTPUT
     // output the loops
-    PyObject_CallFunction(functionOutputRings_, "s i O f", "00_loops", currentRankSubset_->ownRankNo(),
+    PyObject_CallFunction(functionOutputRings_, "s i i O f", "00_loops", currentRankSubset_->ownRankNo(), level_,
                           PythonUtility::convertToPython<std::vector<std::vector<Vec3>>>::get(loops), 0.1);
     PythonUtility::checkForError();
 #endif
@@ -362,7 +362,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
 //#ifdef STL_OUTPUT_VERBOSE
   if (currentRankSubset_->ownRankIsContained())
   {
-    PyObject_CallFunction(functionOutputBorderPoints_, "s i O f", "01_border_points_old", currentRankSubset_->ownRankNo(),
+    PyObject_CallFunction(functionOutputBorderPoints_, "s i i O f", "01_border_points_old", currentRankSubset_->ownRankNo(), level_,
                           PythonUtility::convertToPython<std::array<std::vector<std::vector<Vec3>>,4>>::get(borderPointsOld), 0.2);
     PythonUtility::checkForError();
   }
@@ -499,7 +499,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     std::vector<Vec3> geometryValues;
     problem_->data().functionSpace()->geometryField().getValuesWithGhosts(geometryValues);
 
-    PyObject_CallFunction(functionOutputPoints_, "s i O f", "03_geometry_values", currentRankSubset_->ownRankNo(),
+    PyObject_CallFunction(functionOutputPoints_, "s i i O f", "03_geometry_values", currentRankSubset_->ownRankNo(), level_,
                           PythonUtility::convertToPython<std::vector<Vec3>>::get(geometryValues), 0.1);
     PythonUtility::checkForError();
 #endif
@@ -651,13 +651,18 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     // if this is the end of the recursion, trace final fibers
     if (traceFinalFibers)
     {
-      traceResultFibers(streamlineDirection, seedPointsZIndex, nodePositions, borderPointsSubdomain);
+      traceResultFibers(streamlineDirection, seedPointsZIndex, nodePositions, borderPointsSubdomain, true);
 
       MPI_Barrier(this->currentRankSubset_->mpiCommunicator());
       LOG(DEBUG) << "algorithm is finished";
 
       // algorithm is finished
       return;
+    }
+    else
+    {
+      // trace resulting fibers, for debugging output
+      traceResultFibers(streamlineDirection, seedPointsZIndex, nodePositions, borderPointsSubdomain, false);
     }
   }  // if own rank is part of this stage of the algorithm
 

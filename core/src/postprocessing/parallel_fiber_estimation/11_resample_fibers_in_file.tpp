@@ -5,15 +5,15 @@ namespace Postprocessing
 
 template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
-resampleFibersInFile(int nPointsPerFiber)
+resampleFibersInFile(int nPointsPerFiber, std::string filename)
 {
   // create a new file with all the fibers from the old file but resampled such that they have nNodesPerFiber_ nodes
   LOG(INFO) << "resample fibers in file";
 
   // rename existing file
-  std::string newFilename = resultFilename_ + std::string("_");
+  std::string newFilename = filename + std::string("_");
   std::stringstream moveCommand;
-  moveCommand << "mv " << resultFilename_ << " " << newFilename;
+  moveCommand << "mv " << filename << " " << newFilename;
   int ret = std::system(moveCommand.str().c_str());
   ret++;
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -22,8 +22,8 @@ resampleFibersInFile(int nPointsPerFiber)
   std::ifstream fileOld(newFilename.c_str(), std::ios::in | std::ios::binary);
   assert (fileOld.is_open());
 
-  LOG(DEBUG) << "write to file " << resultFilename_;
-  std::ofstream fileNew(resultFilename_.c_str(), std::ios::out | std::ios::binary);
+  LOG(DEBUG) << "write to file " << filename;
+  std::ofstream fileNew(filename.c_str(), std::ios::out | std::ios::binary);
   assert (fileNew.is_open());
 
   const int headerLength = sizeof(int32_t)*10;
@@ -114,7 +114,7 @@ resampleFibersInFile(int nPointsPerFiber)
 
   fileOld.close();
   fileNew.close();
-  LOG(INFO) << "File \"" << resultFilename_ << "\" written.";
+  LOG(INFO) << "File \"" << filename << "\" written.";
 }
 
 } // namespace

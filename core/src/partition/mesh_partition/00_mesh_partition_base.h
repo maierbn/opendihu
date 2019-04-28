@@ -37,7 +37,7 @@ public:
   
   //! remove all dofs from the vector that are not handled in the local partition
   virtual void extractLocalDofsWithoutGhosts(std::vector<double> &values) const = 0;
-  
+
   //! get the MPI communicator that is needed for the work portion
   MPI_Comm mpiCommunicator() const;
   

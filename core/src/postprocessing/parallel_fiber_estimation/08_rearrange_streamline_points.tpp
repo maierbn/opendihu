@@ -636,11 +636,11 @@ rearrangeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, std
   {
     s.str("");
     s << "06_border_points_subdomain_" << subdomainIndex;
-    PyObject_CallFunction(functionOutputBorderPoints_, "s i O f", s.str().c_str(), currentRankSubset_->ownRankNo(),
+    PyObject_CallFunction(functionOutputBorderPoints_, "s i i O f", s.str().c_str(), currentRankSubset_->ownRankNo(), level_,
                           PythonUtility::convertToPython<std::array<std::vector<std::vector<Vec3>>,4>>::get(borderPointsSubdomain[subdomainIndex]), 1.0);
     PythonUtility::checkForError();
   }
-  PyObject_CallFunction(functionOutputStreamlines_, "s i O f", "06_corner_streamlines", currentRankSubset_->ownRankNo(),
+  PyObject_CallFunction(functionOutputStreamlines_, "s i i O f", "06_corner_streamlines", currentRankSubset_->ownRankNo(), level_,
                         PythonUtility::convertToPython<std::vector<std::vector<Vec3>>>::get(cornerStreamlines), 1.0);
   PythonUtility::checkForError();
 #endif

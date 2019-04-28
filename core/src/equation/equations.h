@@ -3,3 +3,4 @@
 #include "equation/mooney_rivlin_compressible.h"
 #include "equation/mooney_rivlin_incompressible.h"
 #include "equation/poisson.h"
+#include "equation/linear_elasticity.h"

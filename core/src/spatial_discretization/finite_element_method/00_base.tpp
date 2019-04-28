@@ -22,8 +22,8 @@
 namespace SpatialDiscretization
 {
 
-template<typename FunctionSpaceType,typename QuadratureType,typename Term>
-FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Term>::
+template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term>
+FiniteElementMethodBase<FunctionSpaceType,QuadratureType,nComponents,Term>::
 FiniteElementMethodBase(DihuContext context, std::shared_ptr<FunctionSpaceType> functionSpace) :
   context_(context["FiniteElementMethod"]), data_(context["FiniteElementMethod"]), specificSettings_(context_.getPythonConfig()), initialized_(false)
 {
@@ -49,29 +49,29 @@ FiniteElementMethodBase(DihuContext context, std::shared_ptr<FunctionSpaceType> 
   data_.setFunctionSpace(functionSpace);
 }
 
-template<typename FunctionSpaceType,typename QuadratureType,typename Term>
-std::shared_ptr<FunctionSpaceType> FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Term>::
+template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term>
+std::shared_ptr<FunctionSpaceType> FiniteElementMethodBase<FunctionSpaceType,QuadratureType,nComponents,Term>::
 functionSpace()
 {
   return data_.functionSpace();
 }
 
-template<typename FunctionSpaceType,typename QuadratureType,typename Term>
-Data::FiniteElements<FunctionSpaceType,Term> &FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Term>::
+template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term>
+Data::FiniteElements<FunctionSpaceType,nComponents,Term> &FiniteElementMethodBase<FunctionSpaceType,QuadratureType,nComponents,Term>::
 data()
 {
   return data_;
 }
 
-template<typename FunctionSpaceType,typename QuadratureType,typename Term>
-void FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Term>::
+template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term>
+void FiniteElementMethodBase<FunctionSpaceType,QuadratureType,nComponents,Term>::
 setRankSubset(Partition::RankSubset rankSubset)
 {
   data_.setRankSubset(rankSubset);
 }
  
-template<typename FunctionSpaceType,typename QuadratureType,typename Term>
-void FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Term>::
+template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term>
+void FiniteElementMethodBase<FunctionSpaceType,QuadratureType,nComponents,Term>::
 initialize()
 {
   // do not initialize if it was called already
@@ -98,16 +98,16 @@ initialize()
   initialized_ = true;
 }
 
-template<typename FunctionSpaceType,typename QuadratureType,typename Term>
-void FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Term>::
+template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term>
+void FiniteElementMethodBase<FunctionSpaceType,QuadratureType,nComponents,Term>::
 reset()
 {
   data_.reset();
   initialized_ = false;
 }
 
-template<typename FunctionSpaceType,typename QuadratureType,typename Term>
-void FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Term>::
+template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term>
+void FiniteElementMethodBase<FunctionSpaceType,QuadratureType,nComponents,Term>::
 run()
 {
   initialize();
@@ -117,8 +117,8 @@ run()
   outputWriterManager_.writeOutput(data_);
 }
 
-template<typename FunctionSpaceType,typename QuadratureType,typename Term>
-void FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Term>::
+template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term>
+void FiniteElementMethodBase<FunctionSpaceType,QuadratureType,nComponents,Term>::
 solve()
 {
   // solve linear system k*d=f for d
@@ -166,8 +166,8 @@ solve()
   VLOG(1) << "solution: " << *data_.solution();
 }
 
-template<typename FunctionSpaceType,typename QuadratureType>
-void FiniteElementMethodInitializeData<FunctionSpaceType,QuadratureType,Equation::Dynamic::DirectionalDiffusion>::
+template<typename FunctionSpaceType,typename QuadratureType,int nComponents>
+void FiniteElementMethodInitializeData<FunctionSpaceType,QuadratureType,nComponents,Equation::Dynamic::DirectionalDiffusion>::
 initialize(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> direction,
            std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> spatiallyVaryingPrefactor,
            bool useAdditionalDiffusionTensor)
@@ -178,7 +178,7 @@ initialize(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> di
   this->data_.initialize(direction, spatiallyVaryingPrefactor, useAdditionalDiffusionTensor);
 
   // call normal initialize, this does not initialize the data object again
-  FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Equation::Dynamic::DirectionalDiffusion>::initialize();
+  FiniteElementMethodBase<FunctionSpaceType,QuadratureType,nComponents,Equation::Dynamic::DirectionalDiffusion>::initialize();
 }
 
 } // namespace

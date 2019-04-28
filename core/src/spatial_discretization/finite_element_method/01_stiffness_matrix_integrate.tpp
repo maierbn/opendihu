@@ -8,12 +8,13 @@
 #include "quadrature/tensor_product.h"
 #include "function_space/function_space.h"
 #include "spatial_discretization/finite_element_method/integrand/integrand_stiffness_matrix_laplace.h"
+#include "spatial_discretization/finite_element_method/integrand/integrand_stiffness_matrix_linear_elasticity.h"
 
 namespace SpatialDiscretization
 {
 // 1D,2D,3D stiffness matrix of Deformable mesh
-template<typename FunctionSpaceType,typename QuadratureType,typename Term,typename Dummy1, typename Dummy2, typename Dummy3>
-void FiniteElementMethodMatrix<FunctionSpaceType,QuadratureType,Term,Dummy1,Dummy2,Dummy3>::
+template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term,typename Dummy1, typename Dummy2, typename Dummy3>
+void FiniteElementMethodMatrix<FunctionSpaceType,QuadratureType,nComponents,Term,Dummy1,Dummy2,Dummy3>::
 setStiffnessMatrix()
 {
   const int D = FunctionSpaceType::dim();
@@ -26,8 +27,8 @@ setStiffnessMatrix()
   // define shortcuts for integrator and basis
   typedef Quadrature::TensorProduct<D,QuadratureType> QuadratureDD;
   const int nDofsPerElement = FunctionSpaceType::nDofsPerElement();
-  //typedef std::array<std::array<double, nDofsPerElement>, nDofsPerElement> EvaluationsType;
-  typedef MathUtility::Matrix<nDofsPerElement,nDofsPerElement> EvaluationsType;
+  const int nUnknownsPerElement = nDofsPerElement*nComponents;
+  typedef MathUtility::Matrix<nUnknownsPerElement,nUnknownsPerElement> EvaluationsType;
   typedef std::array<
             EvaluationsType,
             QuadratureDD::numberEvaluations()
@@ -58,15 +59,18 @@ setStiffnessMatrix()
   {
     std::array<dof_no_t,nDofsPerElement> dofNosLocal = functionSpace->getElementDofNosLocal(elementNo);
 
-    for (int i=0; i<nDofsPerElement; i++)
+    for (int i = 0; i < nDofsPerElement; i++)
     {
-      for (int j=0; j<nDofsPerElement; j++)
+      for (int j = 0; j < nDofsPerElement; j++)
       {
         VLOG(3) << " initialize stiffnessMatrix entry for element " << elementNo << " elementalDofs (" << i << "," << j << "), "
           << "localDofs " << dofNosLocal[i] << "," << dofNosLocal[j] << ") (entry no. " << cntr++ << ")";
 
-        //LOG(DEBUG) << " initialize stiffnessMatrix entry ( " << dofNosLocal[i] << "," << dofNosLocal[j] << ") (no. " << cntr++ << ")";
-        stiffnessMatrix->setValue(dofNosLocal[i], dofNosLocal[j], 0, INSERT_VALUES);
+        for (int componentNo = 0; componentNo < nComponents; componentNo++)
+        {
+          //LOG(DEBUG) << " initialize stiffnessMatrix entry ( " << dofNosLocal[i] << "," << dofNosLocal[j] << ") (no. " << cntr++ << ")";
+          stiffnessMatrix->setValue(componentNo, dofNosLocal[i], dofNosLocal[j], 0, INSERT_VALUES);
+        }
       }
     }
   }
@@ -120,7 +124,8 @@ setStiffnessMatrix()
 
       // get evaluations of integrand at xi for all (i,j)-dof pairs, integrand is defined in another class
       evaluationsArray[samplingPointIndex]
-        = IntegrandStiffnessMatrix<D,EvaluationsType,FunctionSpaceType,Term>::evaluateIntegrand(this->data_, jacobian, elementNo, xi);
+        = IntegrandStiffnessMatrix<D,EvaluationsType,FunctionSpaceType,nComponents,Term>::
+          evaluateIntegrand(this->data_, jacobian, elementNo, xi);
 
     }  // function evaluations
 
@@ -128,17 +133,21 @@ setStiffnessMatrix()
     EvaluationsType integratedValues = QuadratureDD::computeIntegral(evaluationsArray);
 
     // perform integration and add to entry of stiffness matrix
-    for (int i=0; i<nDofsPerElement; i++)
+    for (int i = 0; i < nDofsPerElement; i++)
     {
-      for (int j=0; j<nDofsPerElement; j++)
+      for (int j = 0; j < nDofsPerElement; j++)
       {
-        // integrate value and set entry in stiffness matrix
-        double integratedValue = integratedValues(i,j);
-        double value = -prefactor * integratedValue;
+        for (int componentNo = 0; componentNo < nComponents; componentNo++)
+        {
+          // integrate value and set entry in stiffness matrix
+          double integratedValue = integratedValues(i*nComponents + componentNo, j*nComponents + componentNo);
+          double value = -prefactor * integratedValue;
 
-        VLOG(2) << "  dof pair (" << i<< "," <<j<< ") dofs (" << dofNosLocal[i]<< "," << dofNosLocal[j]<< "), prefactor: " << prefactor << ", integrated value: " <<integratedValue;
+          VLOG(2) << "  dof pair (" << i<< "," <<j<< ") dofs (" << dofNosLocal[i]<< "," << dofNosLocal[j]<< "), component " << componentNo
+            << ", prefactor: " << prefactor << ", integrated value: " <<integratedValue;
 
-        stiffnessMatrix->setValue(dofNosLocal[i], dofNosLocal[j], value, ADD_VALUES);
+          stiffnessMatrix->setValue(componentNo, dofNosLocal[i], dofNosLocal[j], value, ADD_VALUES);
+        }
       }  // j
     }  // i
   }  // elementNo

@@ -54,7 +54,7 @@ public:
 
   //! wrapper of MatSetValues for a single value, sets a local value in the matrix
   template<int nComponents>
-  void setValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], const std::vector<std::array<double,nComponents>> v, InsertMode addv);
+  void setValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], const std::vector<std::array<double,nComponents>> &v, InsertMode addv);
 
   //! wrapper of MatZeroRowsColumns, zeros all entries (except possibly the main diagonal) of a set of local rows and columns
   void zeroRowsColumns(PetscInt numRows,const PetscInt rows[], PetscScalar diag);
@@ -73,7 +73,7 @@ public:
 
   //! get entries from the matrix that are locally stored
   template<int nComponents>
-  void getValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], std::vector<std::array<double,nComponents>> v) const;
+  void getValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], std::vector<std::array<double,nComponents>> &v) const;
 
   //! get entries from the matrix that are locally stored, uses the global/Petsc indexing. This is not the global natural numbering!
   void getValuesGlobalPetscIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], PetscScalar v[]) const;
@@ -83,7 +83,7 @@ public:
 
   //! get entries from the matrix that are locally stored, uses the global/Petsc indexing. This is not the global natural numbering!
   template<int nComponents>
-  void getValuesGlobalPetscIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], std::vector<std::array<double,nComponents>> v) const;
+  void getValuesGlobalPetscIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], std::vector<std::array<double,nComponents>> &v) const;
 
   //! get a reference to the local PETSc matrix
   Mat &valuesLocal(int componentNo = 0);
@@ -96,6 +96,12 @@ public:
 
   //! output matrix to stream, the operator<< is also overloaded to use this method
   void output(std::ostream &stream) const;
+
+  //! get the mesh partition of rows
+  std::shared_ptr<Partition::MeshPartition<RowsFunctionSpaceType>> meshPartitionRows();
+
+  //! get the mesh partion of columns
+  std::shared_ptr<Partition::MeshPartition<ColumnsFunctionSpaceType>> meshPartitionColumns();
 
 protected:
 

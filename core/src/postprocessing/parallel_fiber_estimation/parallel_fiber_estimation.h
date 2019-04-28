@@ -35,7 +35,7 @@ public:
   void interpolateFineFibersFromFile();
 
   //! open the result file and interpolate all missing fibers, write fixed fibers to same file
-  void fixInvalidFibersInFile();
+  void fixInvalidFibersInFile(std::string filename);
 
   //! function space to use, i.e. 3D structured deformable grid
   typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunctionType> FunctionSpaceType;
@@ -84,7 +84,7 @@ protected:
   void createSeedPoints(const std::array<bool,4> &subdomainIsAtBorder, int seedPointsZIndex, const std::vector<Vec3> &nodePositions, std::vector<Vec3> &seedPoints);
 
   //! trace the fibers that are evenly distributed in the subdomain, this is the final step of the algorithm. It uses borderPointsSubdomain as starting dataset
-  void traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::vector<Vec3> &nodePositions, std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain);
+  void traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::vector<Vec3> &nodePositions, const std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain, bool finalFile);
 
   //! trace the streamlines starting from the seed points, this uses functionality from the parent class
   void traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool streamlineDirectionUpwards, std::vector<Vec3> &seedPoints, std::vector<std::vector<Vec3>> &streamlinePoints);
@@ -144,7 +144,10 @@ protected:
   void fixInvalidKeyFibers(int nFibersX, std::vector<std::vector<bool>> &fiberIsValid, std::vector<std::vector<Vec3>> &fibers, int &nFibersFixed);
 
   //! resamples the final fibers in the output file to match the required number of nodes per fiber
-  void resampleFibersInFile(int nPointsPerFiber);
+  void resampleFibersInFile(int nPointsPerFiber, std::string filename);
+
+  //! if the filename is something like path/fibers0x0.bin, replace 0 by nFibersX, return true if replacement was performed
+  bool adjustFilename(std::string &filename, int nFibersX);
 
   const DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
   std::shared_ptr<FiniteElementMethodType> problem_;   ///< the DiscretizableInTime object that is managed by this class

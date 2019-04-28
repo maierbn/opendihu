@@ -37,7 +37,7 @@ refineBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPointsOld
 #ifndef NDEBUG
 #ifdef STL_OUTPUT
 #ifdef STL_OUTPUT_VERBOSE
-  PyObject_CallFunction(functionOutputBorderPoints_, "s i O f", "01_border_points_old", currentRankSubset_->ownRankNo(),
+  PyObject_CallFunction(functionOutputBorderPoints_, "s i i O f", "01_border_points_old", currentRankSubset_->ownRankNo(), level_,
                         PythonUtility::convertToPython<std::array<std::vector<std::vector<Vec3>>,4>>::get(borderPointsOld), 0.2);
   PythonUtility::checkForError();
 
@@ -45,12 +45,12 @@ refineBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPointsOld
   {
     std::stringstream s;
     s << "02_border_points_face_" << Mesh::getString((Mesh::face_t)face);
-    PyObject_CallFunction(functionOutputPoints_, "s i O f", s.str().c_str(), currentRankSubset_->ownRankNo(),
+    PyObject_CallFunction(functionOutputPoints_, "s i i O f", s.str().c_str(), currentRankSubset_->ownRankNo(), level_,
                           PythonUtility::convertToPython<std::vector<Vec3>>::get(borderPoints[face][0]), 0.2);
     PythonUtility::checkForError();
   }
 
-  PyObject_CallFunction(functionOutputBorderPoints_, "s i O f", "02_border_points", currentRankSubset_->ownRankNo(),
+  PyObject_CallFunction(functionOutputBorderPoints_, "s i i O f", "02_border_points", currentRankSubset_->ownRankNo(), level_,
                         PythonUtility::convertToPython<std::array<std::vector<std::vector<Vec3>>,4>>::get(borderPoints), 0.3);
   PythonUtility::checkForError();
 #endif

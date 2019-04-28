@@ -40,7 +40,7 @@ checkTraceFinalFibers()
 template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
 traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::vector<Vec3> &nodePositions,
-                  std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain)
+                  const std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain, bool finalFile)
 {
   LOG(DEBUG) << "traceResultFibers, nBorderPointsXNew_: " << nBorderPointsXNew_ << ", nFineGridFibers: " << nFineGridFibers_;
 
@@ -160,7 +160,7 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
   }
 
 #ifndef NDEBUG
-  PyObject_CallFunction(functionOutputStreamlines_, "s i O f", "12_final_border", currentRankSubset_->ownRankNo(),
+  PyObject_CallFunction(functionOutputStreamlines_, "s i i O f", "12_final_border", currentRankSubset_->ownRankNo(), level_,
                         PythonUtility::convertToPython<std::vector<std::vector<Vec3>>>::get(fibers), 0.1);
   PythonUtility::checkForError();
 #endif
@@ -319,14 +319,14 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
 
 #ifndef NDEBUG
 #ifdef STL_OUTPUT
-  PyObject_CallFunction(functionOutputPoints_, "s i O f", "13_final_seed_points", currentRankSubset_->ownRankNo(),
+  PyObject_CallFunction(functionOutputPoints_, "s i i O f", "13_final_seed_points", currentRankSubset_->ownRankNo(), level_,
                         PythonUtility::convertToPython<std::vector<Vec3>>::get(seedPoints), 0.2);
   PythonUtility::checkForError();
 #endif
 #endif
 
 #ifndef NDEBUG
-  PyObject_CallFunction(functionOutputStreamlines_, "s i O f", "13_final_interior", currentRankSubset_->ownRankNo(),
+  PyObject_CallFunction(functionOutputStreamlines_, "s i i O f", "13_final_interior", currentRankSubset_->ownRankNo(), level_,
                         PythonUtility::convertToPython<std::vector<std::vector<Vec3>>>::get(fibers), 0.1);
   PythonUtility::checkForError();
 #endif
@@ -426,7 +426,7 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
     }
   }
 #if 0
-  PyObject_CallFunction(functionOutputStreamlines_, "s i O f", "14_final", currentRankSubset_->ownRankNo(),
+  PyObject_CallFunction(functionOutputStreamlines_, "s i i O f", "14_final", currentRankSubset_->ownRankNo(), level_,
                         PythonUtility::convertToPython<std::vector<std::vector<Vec3>>>::get(fibers), 0.1);
   PythonUtility::checkForError();
 #endif
@@ -446,10 +446,24 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
   // were not traced but estimated from the border mesh which may be of bad quality
   int ownRankNo = currentRankSubset_->ownRankNo();
 
-  LOG(DEBUG) << "open file \"" << resultFilename_ << "\".";
+  std::stringstream filenameStr;
+  std::string filename;
+  if (finalFile)
+  {
+    filenameStr << resultFilename_;
+  }
+  else
+  {
+    filenameStr << "out/level_" << level_ << "/result_0x0_level_" << level_ << ".bin";
+  }
+  filename = filenameStr.str();
+  // add the number of fibers in the filename
+  adjustFilename(filename, nFibersX);
+
+  LOG(DEBUG) << "open file \"" << filename << "\".";
   // open file
   MPI_File fileHandle;
-  MPIUtility::handleReturnValue(MPI_File_open(currentRankSubset_->mpiCommunicator(), resultFilename_.c_str(),
+  MPIUtility::handleReturnValue(MPI_File_open(currentRankSubset_->mpiCommunicator(), filename.c_str(),
                                               //MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_UNIQUE_OPEN,
                                               MPI_MODE_WRONLY | MPI_MODE_CREATE,
                                               MPI_INFO_NULL, &fileHandle), "MPI_File_open");
@@ -569,15 +583,15 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
 
   MPIUtility::handleReturnValue(MPI_File_close(&fileHandle), "MPI_File_close");
 
-  LOG(DEBUG) << "Fibers written to file \"" << resultFilename_ << "\".";
+  LOG(DEBUG) << "Fibers written to file \"" << filename << "\".";
 
   if (currentRankSubset_->ownRankNo() == 0)
   {
-    fixInvalidFibersInFile();
+    fixInvalidFibersInFile(filename);
 
     if (nPointsWholeFiber != nNodesPerFiber_ || finalBottomZClip_ != bottomZClip_ || finalTopZClip_ != topZClip_)
     {
-      resampleFibersInFile(nPointsWholeFiber);
+      resampleFibersInFile(nPointsWholeFiber, filename);
     }
   }
 }
@@ -715,14 +729,14 @@ fixInvalidKeyFibers(int nFibersX, std::vector<std::vector<bool>> &fiberIsValid, 
 
 template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
-fixInvalidFibersInFile()
+fixInvalidFibersInFile(std::string filename)
 {
   // open the file again and interpolate all missing fibers
 
   // copy existing file
-  std::string newFilename = resultFilename_ + std::string(".unfixed");
+  std::string newFilename = filename + std::string(".unfixed");
   std::stringstream moveCommand;
-  moveCommand << "cp " << resultFilename_ << " " << newFilename;
+  moveCommand << "cp " << filename << " " << newFilename;
   int ret = std::system(moveCommand.str().c_str());
   ret++;
   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
@@ -730,16 +744,16 @@ fixInvalidFibersInFile()
   int nPointsPerFiber = 0;
   int nFibers = 0;
   int headerLength = 0;
-  std::fstream file(resultFilename_.c_str(), std::ios::out | std::ios::in | std::ios::binary);
+  std::fstream file(filename.c_str(), std::ios::out | std::ios::in | std::ios::binary);
   if (!file.is_open())
   {
-    LOG(FATAL) << "Could not open file \"" << resultFilename_ << "\".";
+    LOG(FATAL) << "Could not open file \"" << filename << "\".";
   }
   else
   {
     // determine size of file
     struct stat statBuffer;
-    stat(resultFilename_.c_str(), &statBuffer);
+    stat(filename.c_str(), &statBuffer);
     int fileSize = statBuffer.st_size;
 
     // skip first part of header
@@ -775,7 +789,7 @@ fixInvalidFibersInFile()
 
     if (int((fileSize-(32+headerLength)) / fiberDataSize) != nFibers)
     {
-      LOG(ERROR) << "File \"" << resultFilename_ << "\" states to have " << nFibers << " fibers in header, but actually has "
+      LOG(ERROR) << "File \"" << filename << "\" states to have " << nFibers << " fibers in header, but actually has "
         << int((fileSize-(32+headerLength)) / fiberDataSize) << " fibers!";
     }
 

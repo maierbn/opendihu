@@ -148,7 +148,7 @@ sampleStreamlineAtEquidistantZPoints(std::vector<Vec3> &streamlinePoints, const 
 //#ifdef STL_OUTPUT_VERBOSE
   std::stringstream name;
   name << "05_sampled_streamline_" << streamlineNoDebugging << "_";
-  PyObject_CallFunction(functionOutputStreamline_, "s i O f", name.str().c_str(), currentRankSubset_->ownRankNo(),
+  PyObject_CallFunction(functionOutputStreamline_, "s i i O f", name.str().c_str(), currentRankSubset_->ownRankNo(), level_,
                         PythonUtility::convertToPython<std::vector<Vec3>>::get(streamlineZPoints), 0.1);
   PythonUtility::checkForError();
 //#endif

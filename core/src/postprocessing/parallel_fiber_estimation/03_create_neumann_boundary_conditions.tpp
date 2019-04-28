@@ -108,8 +108,8 @@ createNeumannBoundaryConditions(const std::array<int,3> &nElementsPerCoordinateD
                                               MPI_SUM, this->currentRankSubset_->mpiCommunicator()));
 
   // compute flux values that will be set as Neumann BC values
-  double fluxTop = -1./surfaceTopGlobal;
-  double fluxBottom = 1./surfaceBottomGlobal;
+  double fluxTop = 1./surfaceTopGlobal;
+  double fluxBottom = -1./surfaceBottomGlobal;
 
   LOG(DEBUG) << "surfaceTop local: " << surfaceTopLocal << ", global: " << surfaceTopGlobal << ", fluxTop: " << fluxTop;
   LOG(DEBUG) << "surfaceBottom local: " << surfaceBottomLocal << ", global: " << surfaceBottomGlobal << ", fluxBottom: " << fluxBottom;

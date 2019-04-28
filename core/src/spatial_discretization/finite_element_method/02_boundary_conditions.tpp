@@ -11,30 +11,30 @@
 namespace SpatialDiscretization
 {
 
-template<typename FunctionSpaceType,typename QuadratureType,typename Term,typename Dummy>
-void BoundaryConditions<FunctionSpaceType,QuadratureType,Term,Dummy>::
+template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term,typename Dummy>
+void BoundaryConditions<FunctionSpaceType,QuadratureType,nComponents,Term,Dummy>::
 setBoundaryConditionHandlingEnabled(bool boundaryConditionHandlingEnabled)
 {
   boundaryConditionHandlingEnabled_ = boundaryConditionHandlingEnabled;
 }
 
-template<typename FunctionSpaceType,typename QuadratureType,typename Term,typename Dummy>
-void BoundaryConditions<FunctionSpaceType,QuadratureType,Term,Dummy>::
-setDirichletBoundaryConditions(std::shared_ptr<DirichletBoundaryConditions<FunctionSpaceType,1>> dirichletBoundaryConditions)
+template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term,typename Dummy>
+void BoundaryConditions<FunctionSpaceType,QuadratureType,nComponents,Term,Dummy>::
+setDirichletBoundaryConditions(std::shared_ptr<DirichletBoundaryConditions<FunctionSpaceType,nComponents>> dirichletBoundaryConditions)
 {
   this->dirichletBoundaryConditions_ = dirichletBoundaryConditions;
 }
 
-template<typename FunctionSpaceType,typename QuadratureType,typename Term,typename Dummy>
-void BoundaryConditions<FunctionSpaceType,QuadratureType,Term,Dummy>::
-setNeumannBoundaryConditions(std::shared_ptr<NeumannBoundaryConditions<FunctionSpaceType,QuadratureType,1>> neumannBoundaryConditions)
+template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term,typename Dummy>
+void BoundaryConditions<FunctionSpaceType,QuadratureType,nComponents,Term,Dummy>::
+setNeumannBoundaryConditions(std::shared_ptr<NeumannBoundaryConditions<FunctionSpaceType,QuadratureType,nComponents>> neumannBoundaryConditions)
 {
   LOG(DEBUG) << "set Neumann boundary conditions";
   this->neumannBoundaryConditions_ = neumannBoundaryConditions;
 }
 
-template<typename FunctionSpaceType,typename QuadratureType,typename Term,typename Dummy>
-void BoundaryConditions<FunctionSpaceType,QuadratureType,Term,Dummy>::
+template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term,typename Dummy>
+void BoundaryConditions<FunctionSpaceType,QuadratureType,nComponents,Term,Dummy>::
 applyBoundaryConditions()
 {
   if (!boundaryConditionHandlingEnabled_)
@@ -61,7 +61,7 @@ applyBoundaryConditions()
   if (neumannBoundaryConditions_ == nullptr)
   {
     LOG(DEBUG) << "no Neumann boundary conditions are present, create object";
-    neumannBoundaryConditions_ = std::make_shared<NeumannBoundaryConditions<FunctionSpaceType,QuadratureType,1>>(this->context_);
+    neumannBoundaryConditions_ = std::make_shared<NeumannBoundaryConditions<FunctionSpaceType,QuadratureType,nComponents>>(this->context_);
     neumannBoundaryConditions_->initialize(this->specificSettings_, this->data_.functionSpace(), "neumannBoundaryConditions");
   }
   VLOG(1) << "neumann BC rhs: " << *neumannBoundaryConditions_->rhs();
@@ -75,12 +75,12 @@ applyBoundaryConditions()
   if (dirichletBoundaryConditions_ == nullptr)
   {
     LOG(DEBUG) << "no Dirichlet boundary conditions are present, create object";
-    dirichletBoundaryConditions_ = std::make_shared<DirichletBoundaryConditions<FunctionSpaceType,1>>(this->context_);
+    dirichletBoundaryConditions_ = std::make_shared<DirichletBoundaryConditions<FunctionSpaceType,nComponents>>(this->context_);
     dirichletBoundaryConditions_->initialize(this->specificSettings_, this->data_.functionSpace(), "dirichletBoundaryConditions");
   }
 
   // get abbreviations
-  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> rightHandSide = this->data_.rightHandSide();
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> rightHandSide = this->data_.rightHandSide();
   std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> stiffnessMatrix = this->data_.stiffnessMatrix();
 
   // apply the boundary conditions in stiffness matrix (set bc rows and columns of matrix to 0 and diagonal to 1), also add terms with matrix entries to rhs

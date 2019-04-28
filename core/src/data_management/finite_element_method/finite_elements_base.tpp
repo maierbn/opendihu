@@ -19,27 +19,27 @@
 namespace Data
 {
 
-template<typename FunctionSpaceType>
-FiniteElementsBase<FunctionSpaceType>::
+template<typename FunctionSpaceType, int nComponents>
+FiniteElementsBase<FunctionSpaceType,nComponents>::
 FiniteElementsBase(DihuContext context) : Data<FunctionSpaceType>(context)
 {
 }
 
-template<typename FunctionSpaceType>
-FiniteElementsBase<FunctionSpaceType>::
+template<typename FunctionSpaceType, int nComponents>
+FiniteElementsBase<FunctionSpaceType,nComponents>::
 ~FiniteElementsBase()
 {
 }
 
-template<typename FunctionSpaceType>
-void FiniteElementsBase<FunctionSpaceType>::
+template<typename FunctionSpaceType, int nComponents>
+void FiniteElementsBase<FunctionSpaceType,nComponents>::
 initialize()
 {
   LOG(DEBUG) << "Data::FiniteElementsBase::initialize";
   Data<FunctionSpaceType>::initialize();
 }
-template<typename FunctionSpaceType>
-void FiniteElementsBase<FunctionSpaceType>::
+template<typename FunctionSpaceType, int nComponents>
+void FiniteElementsBase<FunctionSpaceType,nComponents>::
 reset()
 {
   LOG(DEBUG) << "Data::FiniteElementsBase::reset";
@@ -50,8 +50,8 @@ reset()
   this->stiffnessMatrix_ = nullptr;
 }
 
-template<typename FunctionSpaceType>
-void FiniteElementsBase<FunctionSpaceType>::
+template<typename FunctionSpaceType, int nComponents>
+void FiniteElementsBase<FunctionSpaceType,nComponents>::
 getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros)
 {
   const int D = this->functionSpace_->dimension();
@@ -78,8 +78,8 @@ getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros)
   };
 }
 
-template<typename FunctionSpaceType>
-void FiniteElementsBase<FunctionSpaceType>::
+template<typename FunctionSpaceType, int nComponents>
+void FiniteElementsBase<FunctionSpaceType,nComponents>::
 createPetscObjects()
 {
   LOG(TRACE) << "FiniteElements::createPetscObjects";
@@ -90,8 +90,8 @@ createPetscObjects()
   std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> meshPartition = this->functionSpace_->meshPartition();
   
   // create field variables on local partition
-  this->rhs_ = this->functionSpace_->template createFieldVariable<1>("rhs");
-  this->solution_ = this->functionSpace_->template createFieldVariable<1>("solution");
+  this->rhs_ = this->functionSpace_->template createFieldVariable<nComponents>("rhs");
+  this->solution_ = this->functionSpace_->template createFieldVariable<nComponents>("solution");
 
   // create PETSc matrix object
 
@@ -104,61 +104,61 @@ createPetscObjects()
   LOG(DEBUG) << "d=" << this->functionSpace_->dimension()
     << ", number of diagonal non-zeros: " << diagonalNonZeros << ", number of off-diagonal non-zeros: " <<offdiagonalNonZeros;
 
-  int nComponents = 1;
   this->stiffnessMatrix_ = std::make_shared<PartitionedPetscMat<FunctionSpaceType>>(meshPartition, nComponents, diagonalNonZeros, offdiagonalNonZeros, "stiffnessMatrix");
 
 }
 
-template<typename FunctionSpaceType>
-std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> FiniteElementsBase<FunctionSpaceType>::
+template<typename FunctionSpaceType, int nComponents>
+std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> FiniteElementsBase<FunctionSpaceType,nComponents>::
 stiffnessMatrix()
 {
   return this->stiffnessMatrix_;
 }
 
-template<typename FunctionSpaceType>
-std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> FiniteElementsBase<FunctionSpaceType>::
+template<typename FunctionSpaceType, int nComponents>
+std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> FiniteElementsBase<FunctionSpaceType,nComponents>::
 massMatrix()
 {
   return this->massMatrix_;
 }
 
-template<typename FunctionSpaceType>
-std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> FiniteElementsBase<FunctionSpaceType>::
+template<typename FunctionSpaceType, int nComponents>
+std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> FiniteElementsBase<FunctionSpaceType,nComponents>::
 inverseLumpedMassMatrix()
 {
   return this->inverseLumpedMassMatrix_;
 }
 
-template<typename FunctionSpaceType>
-std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> FiniteElementsBase<FunctionSpaceType>::
+template<typename FunctionSpaceType, int nComponents>
+std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> FiniteElementsBase<FunctionSpaceType,nComponents>::
 rightHandSide()
 {
   return this->rhs_;
 }
 
-template<typename FunctionSpaceType>
-std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> FiniteElementsBase<FunctionSpaceType>::
+template<typename FunctionSpaceType, int nComponents>
+std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> FiniteElementsBase<FunctionSpaceType,nComponents>::
 solution()
 {
   return this->solution_;
 }
 
-template<typename FunctionSpaceType>
-typename FiniteElementsBase<FunctionSpaceType>::TransferableSolutionDataType FiniteElementsBase<FunctionSpaceType>::
+template<typename FunctionSpaceType, int nComponents>
+typename FiniteElementsBase<FunctionSpaceType,nComponents>::TransferableSolutionDataType FiniteElementsBase<FunctionSpaceType,nComponents>::
 getSolutionForTransfer()
 {
   return this->solution_;
 }
 
-template<typename FunctionSpaceType>
-void FiniteElementsBase<FunctionSpaceType>::
+template<typename FunctionSpaceType, int nComponents>
+void FiniteElementsBase<FunctionSpaceType,nComponents>::
 print()
 {
   if (!VLOG_IS_ON(4))
     return;
 
   VLOG(4) << "======================";
+  VLOG(4) << "nComponents: " << nComponents;
   VLOG(4) << *this->stiffnessMatrix_;
   VLOG(4) << *this->rhs_;
   VLOG(4) << *this->solution_;
@@ -186,8 +186,8 @@ print()
   VLOG(4) << "======================";
 }
 
-template<typename FunctionSpaceType>
-void FiniteElementsBase<FunctionSpaceType>::
+template<typename FunctionSpaceType, int nComponents>
+void FiniteElementsBase<FunctionSpaceType,nComponents>::
 initializeMassMatrix()
 {
   // if the massMatrix is already initialized do not initialize again
@@ -203,12 +203,11 @@ initializeMassMatrix()
   getPetscMemoryParameters(diagonalNonZeros, offdiagonalNonZeros);
 
   std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> partition = this->functionSpace_->meshPartition();
-  const int nComponents = 1;
   this->massMatrix_ = std::make_shared<PartitionedPetscMat<FunctionSpaceType>>(partition, nComponents, diagonalNonZeros, offdiagonalNonZeros, "massMatrix");
 }
 
-template<typename FunctionSpaceType>
-void FiniteElementsBase<FunctionSpaceType>::
+template<typename FunctionSpaceType, int nComponents>
+void FiniteElementsBase<FunctionSpaceType,nComponents>::
 initializeInverseLumpedMassMatrix()
 {
   // if the inverseLumpedMassMatrix_ is already initialized do not initialize again
@@ -225,12 +224,11 @@ initializeInverseLumpedMassMatrix()
 
   assert(this->functionSpace_);
   std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> partition = this->functionSpace_->meshPartition();
-  const int nComponents = 1;
   this->inverseLumpedMassMatrix_ = std::make_shared<PartitionedPetscMat<FunctionSpaceType>>(partition, nComponents, diagonalNonZeros, offdiagonalNonZeros, "inverseLumpedMassMatrix");
 }
 
-template<typename FunctionSpaceType>
-typename FiniteElementsBase<FunctionSpaceType>::OutputFieldVariables FiniteElementsBase<FunctionSpaceType>::
+template<typename FunctionSpaceType, int nComponents>
+typename FiniteElementsBase<FunctionSpaceType,nComponents>::OutputFieldVariables FiniteElementsBase<FunctionSpaceType,nComponents>::
 getOutputFieldVariables()
 {
   assert(this->functionSpace_);

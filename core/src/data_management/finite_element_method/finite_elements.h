@@ -17,25 +17,25 @@ namespace Data
 /*
  * Data class for general finite elements method
  */
-template<typename FunctionSpaceType,typename Term,typename = Term,typename = typename FunctionSpaceType::BasisFunction>
+template<typename FunctionSpaceType,int nComponents,typename Term,typename = Term,typename = typename FunctionSpaceType::BasisFunction>
 class FiniteElements :
-  public FiniteElementsBase<FunctionSpaceType>
+  public FiniteElementsBase<FunctionSpaceType,nComponents>
 {
 public:
 
   //! constructor
-  using FiniteElementsBase<FunctionSpaceType>::FiniteElementsBase;
+  using FiniteElementsBase<FunctionSpaceType,nComponents>::FiniteElementsBase;
 
   // !intialize base class and diffusion tensor
-  using FiniteElementsBase<FunctionSpaceType>::initialize;
+  using FiniteElementsBase<FunctionSpaceType,nComponents>::initialize;
 };
 
 /*
  * partial specialization for term with constant diffusion tensor
  */
-template<typename FunctionSpaceType>
-class FiniteElements<FunctionSpaceType,Equation::Dynamic::AnisotropicDiffusion> :
-  public FiniteElementsBase<FunctionSpaceType>,
+template<typename FunctionSpaceType,int nComponents>
+class FiniteElements<FunctionSpaceType,nComponents,Equation::Dynamic::AnisotropicDiffusion> :
+  public FiniteElementsBase<FunctionSpaceType,nComponents>,
   public DiffusionTensorConstant<FunctionSpaceType>
 {
 public:
@@ -49,9 +49,9 @@ public:
 
 /** for directional diffusion use the diffusion tensor that depends upon a direction field
  */
-template<typename FunctionSpaceType>
-class FiniteElements<FunctionSpaceType,Equation::Dynamic::DirectionalDiffusion> :
-  public FiniteElementsBase<FunctionSpaceType>,
+template<typename FunctionSpaceType,int nComponents>
+class FiniteElements<FunctionSpaceType,nComponents,Equation::Dynamic::DirectionalDiffusion> :
+  public FiniteElementsBase<FunctionSpaceType,nComponents>,
   public DiffusionTensorDirectional<FunctionSpaceType>
 {
 public:

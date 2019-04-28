@@ -156,6 +156,14 @@ valuesGlobal(int componentNo)
 
 template<typename FunctionSpaceType, int nComponents>
 Vec &FieldVariableDataStructured<FunctionSpaceType,nComponents>::
+valuesGlobal()
+{
+  assert(this->values_);
+  return this->values_->valuesGlobal();
+}
+
+template<typename FunctionSpaceType, int nComponents>
+Vec &FieldVariableDataStructured<FunctionSpaceType,nComponents>::
 getValuesContiguous()
 {
   assert(this->values_);

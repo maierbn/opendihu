@@ -1,4 +1,4 @@
-#include "spatial_discretization/finite_element_method/integrand/integrand_stiffness_matrix_laplace.h"
+#include "spatial_discretization/finite_element_method/integrand/integrand_stiffness_matrix_linear_elasticity.h"
 
 #include <array>
 
@@ -7,16 +7,17 @@
 namespace SpatialDiscretization
 {
 
-//integrand for stiffness matrix of laplace operator, 1D
-template<typename EvaluationsType,typename FunctionSpaceType,typename Term>
-EvaluationsType IntegrandStiffnessMatrix<1,EvaluationsType,FunctionSpaceType,1,Term,Equation::hasLaplaceOperator<Term>>::
-evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,1,Term> &data, const std::array<Vec3,1> &jacobian,
+//integrand for stiffness matrix of finite elasticity, 1D
+template<typename EvaluationsType,typename FunctionSpaceType>
+EvaluationsType IntegrandStiffnessMatrix<1,EvaluationsType,FunctionSpaceType,1,Equation::Static::LinearElasticity>::
+evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,1,Equation::Static::LinearElasticity> &data, const std::array<Vec3,1> &jacobian,
                   element_no_t elementNoLocal, const std::array<double,1> xi)
 {
   EvaluationsType evaluations;
-
+/*
   double s = MathUtility::norm<3>(jacobian[0]);
   double integralFactor = 1. / s;
+  double diffusionTensor = data.diffusionTensor(elementNoLocal, xi)[0];
 
   // initialize gradient vectors of ansatz function phi_i, for node i of current element
   std::array<std::array<double,1>,FunctionSpaceType::nDofsPerElement()> gradPhi = data.functionSpace()->getGradPhi(xi);
@@ -26,29 +27,31 @@ evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,1,Term> &data, co
   {
     for (int j=0; j<FunctionSpaceType::nDofsPerElement(); j++)
     {
-      double integrand = gradPhi[i][0] * gradPhi[j][0] * integralFactor;
+      double integrand = diffusionTensor * gradPhi[i][0] * gradPhi[j][0] * integralFactor;
       evaluations(i,j) = integrand;
       VLOG(2) << "   dofs(" <<i<< "," <<j<< ") integrand=" <<gradPhi[i][0]<< "*" <<gradPhi[j][0]<< "*" <<integralFactor<< "=" <<integrand;
     }
   }
-
+*/
   return evaluations;
 }
 
-//integrand for stiffness matrix of laplace operator, 2D
-template<typename EvaluationsType,typename FunctionSpaceType,typename Term>
-EvaluationsType IntegrandStiffnessMatrix<2,EvaluationsType,FunctionSpaceType,1,Term,Equation::hasLaplaceOperator<Term>>::
-evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,1,Term> &data, const std::array<Vec3,2> &jacobian,
+//integrand for stiffness matrix of finite elasticity, 2D
+template<typename EvaluationsType,typename FunctionSpaceType>
+EvaluationsType IntegrandStiffnessMatrix<2,EvaluationsType,FunctionSpaceType,2,Equation::Static::LinearElasticity>::
+evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,2,Equation::Static::LinearElasticity> &data, const std::array<Vec3,2> &jacobian,
                   element_no_t elementNoLocal, const std::array<double,2> xi)
 {
-  VLOG(3) << "evaluateIntegrand laplace operator 2D";
+  VLOG(1) << "evaluateIntegrand generalized Laplace";
 
   EvaluationsType evaluations;
-
+/*
   const Vec3 &zeta1 = jacobian[0];  // first column of jacobian
   const Vec3 &zetah = jacobian[1];  // second column of jacobian
 
   double integrationFactor = MathUtility::computeIntegrationFactor<2>(jacobian);
+  MathUtility::Matrix<2,2> diffusionTensor = data.diffusionTensor(elementNoLocal, xi);
+  VLOG(1) << "diffusionTensor: " << diffusionTensor;
 
   double l1 = MathUtility::length<3>(zeta1);
   double lh = MathUtility::length<3>(zetah);
@@ -88,23 +91,28 @@ evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,1,Term> &data, co
   // loop over pairs of basis functions and evaluation integrand at xi
   for (int i=0; i<FunctionSpaceType::nDofsPerElement(); i++)
   {
+    // compute diffusionTensor * gradPhi[i]
+    Vec2 diffusionTensorGradPhiI = diffusionTensor * gradPhi[i];
+    //LOG(DEBUG) << "diffusionTensor: " << diffusionTensor << ", phi " << gradPhi[i] << " -> " << diffusionTensorGradPhiI;
     for (int j=0; j<FunctionSpaceType::nDofsPerElement(); j++)
     {
-      double integrand = MathUtility::applyTransformation(transformationMatrix, gradPhi[i], gradPhi[j]) * integrationFactor;
+      double integrand = MathUtility::applyTransformation(transformationMatrix, diffusionTensorGradPhiI, gradPhi[j]) * integrationFactor;
       evaluations(i,j) = integrand;
     }
   }
-
+*/
   return evaluations;
 }
 
-//integrand for stiffness matrix of laplace operator, 3D
-template<typename EvaluationsType,typename FunctionSpaceType,typename Term>
-EvaluationsType IntegrandStiffnessMatrix<3,EvaluationsType,FunctionSpaceType,1,Term,Equation::hasLaplaceOperator<Term>>::
-evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,1,Term> &data, const std::array<Vec3,3> &jacobian,
+//integrand for stiffness matrix of finite elasticity, 3D
+template<typename EvaluationsType,typename FunctionSpaceType>
+EvaluationsType IntegrandStiffnessMatrix<3,EvaluationsType,FunctionSpaceType,3,Equation::Static::LinearElasticity>::
+evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,3,Equation::Static::LinearElasticity> &data, const std::array<Vec3,3> &jacobian,
                   element_no_t elementNoLocal, const std::array<double,3> xi)
 {
   EvaluationsType evaluations;
+/*
+  MathUtility::Matrix<3,3> diffusionTensor = data.diffusionTensor(elementNoLocal, xi);
 
   // compute the 3x3 transformation matrix T = J^{-1}J^{-T} and the absolute of the determinant of the jacobian
   double determinant;
@@ -124,20 +132,47 @@ evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,1,Term> &data, co
   VLOG(3) << s.str();
 #endif
 
-  const std::array<Vec3,FunctionSpaceType::nDofsPerElement()> gradPhi = data.functionSpace()->getGradPhi(xi);
+  std::array<Vec3,FunctionSpaceType::nDofsPerElement()> gradPhi = data.functionSpace()->getGradPhi(xi);
 
   // loop over pairs of basis functions and evaluation integrand at xi
   for (int i=0; i<FunctionSpaceType::nDofsPerElement(); i++)
   {
+    // compute diffusionTensor * gradPhi[i]
+    Vec3 diffusionTensorGradPhiI = diffusionTensor * gradPhi[i];
     for (int j=0; j<FunctionSpaceType::nDofsPerElement(); j++)
     {
 
       //! computes gradPhi[i]^T * T * gradPhi[j] where T is the symmetric transformation matrix
-      double integrand = MathUtility::applyTransformation(transformationMatrix, gradPhi[i], gradPhi[j]) * fabs(determinant);
+      double integrand = MathUtility::applyTransformation(transformationMatrix, diffusionTensorGradPhiI, gradPhi[j]) * fabs(determinant);
+
+      if (!std::isfinite(integrand))
+      {
+        LOG(ERROR) << "Value entry (" << i << "," << j << ") in stiffness matrix is nan or inf (" << integrand << "). ";
+        std::stringstream s, s2;
+        for (int i=0; i<3; i++)
+        {
+          for (int j=0; j<3; j++)
+          {
+            s << transformationMatrix[i*3+j] << " ";
+            s2 << diffusionTensor[i*3+j] << " ";
+          }
+          s << std::endl;
+          s2 << std::endl;
+        }
+        LOG(INFO) << "elementNoLocal: " << elementNoLocal << ", xi: " << xi
+          << ", gradPhi[" << i << "] = " << gradPhi[i] << ", gradPhi[" << j << "] = " << gradPhi[j]
+          << ", diffusionTensor:";
+        LOG(INFO) << s2.str();
+        LOG(INFO) << "diffusionTensorGradPhiI: " << diffusionTensorGradPhiI;
+        LOG(INFO) << "Transformation matrix: ";
+        LOG(INFO) << s.str();
+        LOG(INFO) << "determinant: " << determinant;
+        LOG(INFO) << "jacobian (column-major): " << jacobian;
+      }
       evaluations(i,j) = integrand;
     }
   }
-
+*/
   return evaluations;
 }
 

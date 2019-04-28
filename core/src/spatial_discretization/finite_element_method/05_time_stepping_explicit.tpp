@@ -18,8 +18,8 @@
 namespace SpatialDiscretization
 {
 
-template<typename FunctionSpaceType, typename QuadratureType, typename Term>
-void FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
+template<typename FunctionSpaceType, typename QuadratureType, int nComponents, typename Term>
+void FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, nComponents, Term>::
 computeInverseMassMatrixTimesRightHandSide(Vec &result)
 {
   // massMatrix * f_strong = rhs_weak
@@ -46,8 +46,8 @@ computeInverseMassMatrixTimesRightHandSide(Vec &result)
   }
 }
 
-template<typename FunctionSpaceType, typename QuadratureType, typename Term>
-void FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
+template<typename FunctionSpaceType, typename QuadratureType, int nComponents, typename Term>
+void FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, nComponents, Term>::
 evaluateTimesteppingRightHandSideExplicit(Vec &input, Vec &output, int timeStepNo, double currentTime)
 {
   // this method computes output = M^{-1}*K*input

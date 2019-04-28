@@ -28,28 +28,21 @@ template<typename FunctionSpaceType, int nComponents>
 class DirichletBoundaryConditions :
   public DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>
 {
+public:
+
   //! use constructor of base class
   using DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::DirichletBoundaryConditionsBase;
-};
 
-/* Specialization for variables with 1 component as used in normal finite element computations.
- */
-template<typename FunctionSpaceType>
-class DirichletBoundaryConditions<FunctionSpaceType,1> :
-  public DirichletBoundaryConditionsBase<FunctionSpaceType,1>
-{
-public:
-  //! use constructor of base class
-  using DirichletBoundaryConditionsBase<FunctionSpaceType,1>::DirichletBoundaryConditionsBase;
+  typedef std::array<double,nComponents> ValueType;
 
   //! set the boundary conditions to system matrix, i.e. zero rows and columns of Dirichlet BC dofs and set diagonal to 1. Store the cleared matrix values in boundaryConditionsRightHandSideSummand such that they can be used for adjusting the rhs vector afterwards
   void applyInSystemMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> systemMatrix,
-                           std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> boundaryConditionsRightHandSideSummand);
+                           std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> boundaryConditionsRightHandSideSummand);
 
   //! set the boundary conditions to the right hand side using the information in boundaryConditionsRightHandSideSummand that was obtained by applyInSystemMatrix
   //! if the argument boundaryConditionsRightHandSideSummand is also set as rightHandSide, only write prescribed values into rightHandSide, do not add anything
-  void applyInRightHandSide(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> rightHandSide,
-                            std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> boundaryConditionsRightHandSideSummand);
+  void applyInRightHandSide(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> rightHandSide,
+                            std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> boundaryConditionsRightHandSideSummand);
 
 protected:
 
@@ -60,7 +53,7 @@ protected:
   {
     std::vector<global_no_t> nonBoundaryConditionDofsOfRankGlobalPetsc;    ///< the non-BC dofs of this element, as global petsc no. that are owned by the rank with no neighbouringRankNo
     std::vector<global_no_t> boundaryConditionDofsGlobalPetsc;      ///< the Dirichlet BC dofs of this element
-    std::vector<double> boundaryConditionValues;   ///< the prescribed value, corresponding to boundaryConditionDofsGlobalPetsc
+    std::vector<ValueType> boundaryConditionValues;   ///< the prescribed value, corresponding to boundaryConditionDofsGlobalPetsc
   };
   std::map<int,std::vector<GhostElement>> foreignGhostElements_;   ///< ghost elements that are normal elements on this rank, key is the rankNo of the rank to send them to
   std::vector<GhostElement> ownGhostElements_;   ///< the ghost elements for this rank

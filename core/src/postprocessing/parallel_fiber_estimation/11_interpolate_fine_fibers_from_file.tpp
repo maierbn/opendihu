@@ -8,9 +8,7 @@ void ParallelFiberEstimation<BasisFunctionType>::
 interpolateFineFibersFromFile()
 {
   // open existing file to read
-
   bool waitIfFileGetsBig = specificSettings_.getOptionBool("waitIfFileGetsBig", true);
-
 
   struct stat statBuffer;
   int rc = stat(resultFilename_.c_str(), &statBuffer);
@@ -22,43 +20,6 @@ interpolateFineFibersFromFile()
 
   std::ifstream fileOld(resultFilename_.c_str(), std::ios::in | std::ios::binary);
   assert (fileOld.is_open());
-
-  std::stringstream newFilename;
-
-  // check if old file name is like "path/7x7fibers"
-  bool filenameHasXFormat = false;
-
-  std::string fileBase = resultFilename_;
-  std::string path = "";
-
-  if (fileBase.find("/") != std::string::npos)
-  {
-    path = fileBase.substr(0, fileBase.rfind("/")+1);
-    fileBase = fileBase.substr(fileBase.rfind("/")+1);
-  }
-
-  bool xFound = false;
-  int suffixPos = 0;
-  for(int i = 0; i < fileBase.size(); i++)
-  {
-    if (!isdigit(fileBase[i]))
-    {
-      if (xFound)
-      {
-        suffixPos = i;
-        filenameHasXFormat = true;
-        break;
-      }
-      if (fileBase[i] == 'x')
-      {
-        xFound = true;
-      }
-      else
-      {
-        break;
-      }
-    }
-  }
 
   // parse header
   // skip first part of header
@@ -97,9 +58,10 @@ interpolateFineFibersFromFile()
   int nFibersNewX = (nFibersOldX-1) * nFineGridFibers_ + nFibersOldX;
   int nFibersNew = MathUtility::sqr(nFibersNewX);
 
-  if (filenameHasXFormat)
+  std::stringstream newFilename;
+  if (adjustFilename(resultFilename_, nFibersNewX))
   {
-    newFilename << path << nFibersNewX << "x" << nFibersNewX  << fileBase.substr(suffixPos);
+    newFilename << resultFilename_;
   }
   else
   {

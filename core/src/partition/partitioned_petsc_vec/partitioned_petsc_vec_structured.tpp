@@ -61,6 +61,12 @@ createVector()
 
   // createVector acts like startGhostManipulation as it also gets the local vector (VecGhostGetLocalForm) to work on.
   this->currentRepresentation_ = Partition::values_representation_t::representationLocal;
+
+  // create VecNest object, if number of components > 1
+  if (nComponents > 1)
+  {
+    ierr = VecCreateNest(this->meshPartition_->mpiCommunicator(), nComponents, NULL, vectorGlobal_.data(), &vectorNestedGlobal_); CHKERRV(ierr);
+  }
 }
 
 // set the internal representation to be global, i.e. using the global vectors
@@ -534,6 +540,16 @@ valuesGlobal(int componentNo)
   VLOG(2) << "\"" << this->name_ << "\" valuesGlobal(component=" << componentNo << ")";
 
   return vectorGlobal_[componentNo];
+}
+
+template<typename MeshType,typename BasisFunctionType,int nComponents>
+Vec &PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
+valuesGlobal()
+{
+  if (nComponents == 1)
+    return valuesGlobal(0);
+
+  return vectorNestedGlobal_;
 }
 
 //! fill a contiguous vector with all components after each other, "struct of array"-type data layout.

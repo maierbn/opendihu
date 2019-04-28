@@ -150,7 +150,7 @@ sendBorderPoints(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &bor
 #if 1
     std::stringstream debugFilename;
     debugFilename << "01_border_points_to_send_subdomain_" << subdomainIndex;
-    PyObject_CallFunction(functionOutputBorderPoints_, "s i O f", debugFilename.str().c_str(), currentRankSubset_->ownRankNo(),
+    PyObject_CallFunction(functionOutputBorderPoints_, "s i i O f", debugFilename.str().c_str(), currentRankSubset_->ownRankNo(), level_,
                           PythonUtility::convertToPython<std::array<std::vector<std::vector<Vec3>>,4>>::get(borderPointsSubdomain[subdomainIndex]), 0.1);
     PythonUtility::checkForError();
 #endif
@@ -231,7 +231,7 @@ receiveBorderPoints(int nRanksPerCoordinateDirectionPreviously, std::array<std::
 #if 1
     std::stringstream debugFilename;
     debugFilename << "02_border_points_received";
-    PyObject_CallFunction(functionOutputBorderPoints_, "s i O f", debugFilename.str().c_str(), currentRankSubset_->ownRankNo(),
+    PyObject_CallFunction(functionOutputBorderPoints_, "s i i O f", debugFilename.str().c_str(), currentRankSubset_->ownRankNo(), level_,
                           PythonUtility::convertToPython<std::array<std::vector<std::vector<Vec3>>,4>>::get(borderPointsNew), 0.1);
     PythonUtility::checkForError();
 #endif

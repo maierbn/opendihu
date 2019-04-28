@@ -93,7 +93,10 @@ public:
   Vec &valuesLocal(int componentNo = 0);
 
   //! get the internal PETSc values vector
-  Vec &valuesGlobal(int componentNo = 0);
+  Vec &valuesGlobal(int componentNo);
+
+  //! get the internal PETSc values vector
+  Vec &valuesGlobal();
 
   //! fill a contiguous vector with all components after each other, "struct of array"-type data layout.
   //! after manipulation of the vector has finished one has to call restoreValuesContiguous

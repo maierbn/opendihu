@@ -8,7 +8,7 @@ from stl import mesh
 
 import stl_create_rings
 
-def output_points(filename, rankNo, points, size):
+def output_points(filename, rankNo, level, points, size):
   
   triangles = []
   
@@ -27,12 +27,14 @@ def output_points(filename, rankNo, points, size):
     out_mesh.vectors[i] = f
   #out_mesh.update_normals()
 
-  outfile = "out/{}.{}.{}.stl".format(filename[0:2], rankNo, filename[2:])
+  if not os.path.exists("out/level_{}".format(level)):
+    os.makedirs("out/level_{}".format(level),0o755)
+  outfile = "out/level_{}/{}.{}.{}.stl".format(level, filename[0:2], rankNo, filename[2:])
   #out_mesh.save(outfile, mode=stl.Mode.ASCII)
   out_mesh.save(outfile)
   print("saved {} triangles to \"{}\"".format(len(triangles),outfile))
 
-def output_streamline(filename, rankNo, points, size):
+def output_streamline(filename, rankNo, level, points, size):
   
   triangles = []
   
@@ -59,12 +61,14 @@ def output_streamline(filename, rankNo, points, size):
     out_mesh.vectors[i] = f
   #out_mesh.update_normals()
 
-  outfile = "out/{}.{}.{}.stl".format(filename[0:2], rankNo, filename[2:])
+  if not os.path.exists("out/level_{}".format(level)):
+    os.makedirs("out/level_{}".format(level),0o755)
+  outfile = "out/level_{}/{}.{}.{}.stl".format(level, filename[0:2], rankNo, filename[2:])
   #out_mesh.save(outfile, mode=stl.Mode.ASCII)
   out_mesh.save(outfile)
   print("saved {} triangles to \"{}\"".format(len(triangles),outfile))
 
-def output_streamlines(filename, rankNo, streamlines, size):
+def output_streamlines(filename, rankNo, level, streamlines, size):
   
   triangles = []
   
@@ -94,12 +98,14 @@ def output_streamlines(filename, rankNo, streamlines, size):
     out_mesh.vectors[i] = f
   #out_mesh.update_normals()
 
-  outfile = "out/{}.{}.{}.stl".format(filename[0:2], rankNo, filename[2:])
+  if not os.path.exists("out/level_{}".format(level)):
+    os.makedirs("out/level_{}".format(level),0o755)
+  outfile = "out/level_{}/{}.{}.{}.stl".format(level, filename[0:2], rankNo, filename[2:])
   #out_mesh.save(outfile, mode=stl.Mode.ASCII)
   out_mesh.save(outfile)
   print("saved {} triangles to \"{}\"".format(len(triangles),outfile))
 
-def output_rings(filename, rankNo, rings, size):
+def output_rings(filename, rankNo, level, rings, size):
   
   triangles = []
   
@@ -135,15 +141,21 @@ def output_rings(filename, rankNo, rings, size):
     out_mesh.vectors[i] = f
   #out_mesh.update_normals()
 
-  outfile = "out/{}.{}.{}.stl".format(filename[0:2], rankNo, filename[2:])
+  print("output_rings({}, {}, {}, ...)".format(filename, rankNo, level))
+
+  if not os.path.exists("out/level_{}".format(level)):
+    print("path does not exist")
+    os.makedirs("out/level_{}".format(level),0o755)
+    print("path created")
+  outfile = "out/level_{}/{}.{}.{}.stl".format(level, filename[0:2], rankNo, filename[2:])
   #out_mesh.save(outfile, mode=stl.Mode.ASCII)
   out_mesh.save(outfile)
   print("saved {} triangles to \"{}\"".format(len(triangles),outfile))
 
-def output_border_points(filename, rankNo, points, size):
+def output_border_points(filename, rankNo, level, points, size):
   
   triangles = []
-  print("output_border_points(filename={}, rankNo={}, points: {}, size={})".format(filename, rankNo, len(points), size))
+  print("output_border_points(filename={}, rankNo={}, points: {}, size={})".format(filename, rankNo, level, len(points), size))
   
   # data structure:
   # std::array<std::vector<std::vector<Vec3>>,4>
@@ -185,7 +197,9 @@ def output_border_points(filename, rankNo, points, size):
       
   #out_mesh.update_normals()
 
-  outfile = "out/{}.{}.{}.stl".format(filename[0:2], rankNo, filename[2:])
+  if not os.path.exists("out/level_{}".format(level)):
+    os.makedirs("out/level_{}".format(level),0o755)
+  outfile = "out/level_{}/{}.{}.{}.stl".format(level, filename[0:2], rankNo, filename[2:])
   out_mesh.save(outfile)
   print("saved {} triangles to \"{}\"".format(len(triangles),outfile))
 
@@ -202,7 +216,7 @@ def output_triangles(filename, triangles):
   out_mesh.save(outfile)
   print("saved {} triangles to \"{}\"".format(len(triangles),outfile))
 
-def output_ghost_elements(filename, rankNo, point_values, n_elements, size):
+def output_ghost_elements(filename, rankNo, level, point_values, n_elements, size):
   
   triangles = []
   
@@ -245,7 +259,9 @@ def output_ghost_elements(filename, rankNo, point_values, n_elements, size):
     out_mesh.vectors[i] = f
   #out_mesh.update_normals()
 
-  outfile = "out/{}.{}.{}.stl".format(filename[0:2], rankNo, filename[2:])
+  if not os.path.exists("out/level_{}".format(level)):
+    os.makedirs("out/level_{}".format(level),0o755)
+  outfile = "out/level_{}/{}.{}.{}.stl".format(level, filename[0:2], rankNo, filename[2:])
   #out_mesh.save(outfile, mode=stl.Mode.ASCII)
   out_mesh.save(outfile)
   print("saved {} triangles to \"{}\"".format(len(triangles),outfile))

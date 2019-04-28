@@ -82,7 +82,7 @@ createMesh(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std::vect
 
   if (subdomainNNodesX != nBorderPointsXNew_ || subdomainNNodesY != nBorderPointsXNew_ || subdomainNNodesZ != nBorderPointsZ_)
   {
-    PyObject_CallFunction(functionOutputBorderPoints_, "s i O f", "xx_failed_border_points", currentRankSubset_->ownRankNo(),
+    PyObject_CallFunction(functionOutputBorderPoints_, "s i i O f", "xx_failed_border_points", currentRankSubset_->ownRankNo(), level_,
                           PythonUtility::convertToPython<std::array<std::vector<std::vector<Vec3>>,4>>::get(borderPoints), 0.3);
     PythonUtility::checkForError();
   }
@@ -131,7 +131,7 @@ createMesh(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std::vect
 
 #ifndef NDEBUG
 #ifdef STL_OUTPUT
-  PyObject_CallFunction(functionOutputPoints_, "s i O f", "03_mesh_points", currentRankSubset_->ownRankNo(),
+  PyObject_CallFunction(functionOutputPoints_, "s i i O f", "03_mesh_points", currentRankSubset_->ownRankNo(), level_,
                         PythonUtility::convertToPython<std::vector<Vec3>>::get(nodePositions), 0.05);
   PythonUtility::checkForError();
 #endif

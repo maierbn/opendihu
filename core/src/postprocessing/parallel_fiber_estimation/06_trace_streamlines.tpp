@@ -49,7 +49,7 @@ traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool stre
 #ifdef STL_OUTPUT_VERBOSE
       std::stringstream name;
       name << "04_streamline_" << i << "_";
-      PyObject_CallFunction(functionOutputPoints_, "s i O f", name.str().c_str(), currentRankSubset_->ownRankNo(),
+      PyObject_CallFunction(functionOutputPoints_, "s i i O f", name.str().c_str(), currentRankSubset_->ownRankNo(), level_,
                             PythonUtility::convertToPython<std::vector<Vec3>>::get(streamlinePoints[i]), 0.5);
       PythonUtility::checkForError();
 #endif
@@ -72,7 +72,7 @@ traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool stre
 
 #ifndef NDEBUG
 #ifdef STL_OUTPUT
-    PyObject_CallFunction(functionOutputPoints_, "s i O f", "03_seed_points", currentRankSubset_->ownRankNo(),
+    PyObject_CallFunction(functionOutputPoints_, "s i i O f", "03_seed_points", currentRankSubset_->ownRankNo(), level_,
                           PythonUtility::convertToPython<std::vector<Vec3>>::get(seedPoints), 0.2);
     PythonUtility::checkForError();
 #endif
@@ -108,7 +108,7 @@ traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool stre
 #ifdef STL_OUTPUT_VERBOSE
       std::stringstream name;
       name << "04_raw_streamline_" << i << "_";
-      PyObject_CallFunction(functionOutputStreamline_, "s i O f", name.str().c_str(), currentRankSubset_->ownRankNo(),
+      PyObject_CallFunction(functionOutputStreamline_, "s i i O f", name.str().c_str(), currentRankSubset_->ownRankNo(), level_,
                             PythonUtility::convertToPython<std::vector<Vec3>>::get(streamlinePoints[i]), 0.1);
       PythonUtility::checkForError();
 #endif

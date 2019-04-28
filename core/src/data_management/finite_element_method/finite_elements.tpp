@@ -20,42 +20,42 @@ namespace Data
 {
 
 //! constructor
-template<typename FunctionSpaceType>
-FiniteElements<FunctionSpaceType,Equation::Dynamic::AnisotropicDiffusion>::
+template<typename FunctionSpaceType,int nComponents>
+FiniteElements<FunctionSpaceType,nComponents,Equation::Dynamic::AnisotropicDiffusion>::
 FiniteElements(DihuContext context) :
-  FiniteElementsBase<FunctionSpaceType>(context),
+  FiniteElementsBase<FunctionSpaceType,nComponents>(context),
   DiffusionTensorConstant<FunctionSpaceType>(context.getPythonConfig())
 {
 }
 
 //! constructor
-template<typename FunctionSpaceType>
-FiniteElements<FunctionSpaceType,Equation::Dynamic::DirectionalDiffusion>::
+template<typename FunctionSpaceType,int nComponents>
+FiniteElements<FunctionSpaceType,nComponents,Equation::Dynamic::DirectionalDiffusion>::
 FiniteElements(DihuContext context) :
-  FiniteElementsBase<FunctionSpaceType>(context),
+  FiniteElementsBase<FunctionSpaceType,nComponents>(context),
   DiffusionTensorDirectional<FunctionSpaceType>(context.getPythonConfig())
 {
 }
 
-template<typename FunctionSpaceType>
-void FiniteElements<FunctionSpaceType,Equation::Dynamic::AnisotropicDiffusion>::
+template<typename FunctionSpaceType,int nComponents>
+void FiniteElements<FunctionSpaceType,nComponents,Equation::Dynamic::AnisotropicDiffusion>::
 initialize()
 {
   LOG(DEBUG) << "Data::FiniteElements::initialize";
 
-  FiniteElementsBase<FunctionSpaceType>::initialize();
+  FiniteElementsBase<FunctionSpaceType,nComponents>::initialize();
 
   // set up diffusion tensor if there is any
   DiffusionTensorConstant<FunctionSpaceType>::initialize();
 }
 
-template<typename FunctionSpaceType>
-void FiniteElements<FunctionSpaceType,Equation::Dynamic::DirectionalDiffusion>::
+template<typename FunctionSpaceType,int nComponents>
+void FiniteElements<FunctionSpaceType,nComponents,Equation::Dynamic::DirectionalDiffusion>::
 initialize(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> direction,
            std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> spatiallyVaryingPrefactor,
            bool useAdditionalDiffusionTensor)
 {
-  FiniteElementsBase<FunctionSpaceType>::initialize();
+  FiniteElementsBase<FunctionSpaceType,nComponents>::initialize();
 
   // set up diffusion tensor, initialize with given direction field
   DiffusionTensorDirectional<FunctionSpaceType>::initialize(direction, spatiallyVaryingPrefactor, useAdditionalDiffusionTensor);

@@ -11,7 +11,8 @@ PartitionedPetscMat(std::shared_ptr<Partition::MeshPartition<RowsFunctionSpaceTy
   matrixComponents_.reserve(MathUtility::sqr(nComponents_));
   for (int i = 0; i < MathUtility::sqr(nComponents_); i++)
   {
-    matrixComponents_.push_back(PartitionedPetscMatOneComponent<RowsFunctionSpaceType,ColumnsFunctionSpaceType>(meshPartition, diagonalNonZeros, offdiagonalNonZeros, name));
+    //matrixComponents_.push_back(PartitionedPetscMatOneComponent<RowsFunctionSpaceType,ColumnsFunctionSpaceType>(meshPartition, diagonalNonZeros, offdiagonalNonZeros, name));
+    matrixComponents_.emplace_back(meshPartition, diagonalNonZeros, offdiagonalNonZeros, name);
   }
   createMatNest();
 }
@@ -26,7 +27,7 @@ PartitionedPetscMat(std::shared_ptr<Partition::MeshPartition<RowsFunctionSpaceTy
   matrixComponents_.reserve(MathUtility::sqr(nComponents_));
   for (int i = 0; i < MathUtility::sqr(nComponents_); i++)
   {
-    matrixComponents_.push_back(PartitionedPetscMatOneComponent<RowsFunctionSpaceType,ColumnsFunctionSpaceType>(meshPartition, name));
+    matrixComponents_.emplace_back(meshPartition, name);
   }
   createMatNest();
 }
@@ -42,7 +43,7 @@ PartitionedPetscMat<RowsFunctionSpaceType,ColumnsFunctionSpaceType>::
   matrixComponents_.reserve(MathUtility::sqr(nComponents_));
   for (int i = 0; i < MathUtility::sqr(nComponents_); i++)
   {
-    matrixComponents_.push_back(PartitionedPetscMatOneComponent<RowsFunctionSpaceType,ColumnsFunctionSpaceType>(meshPartitionRows, meshPartitionColumns, diagonalNonZeros, offdiagonalNonZeros, name));
+    matrixComponents_.emplace_back(meshPartitionRows, meshPartitionColumns, diagonalNonZeros, offdiagonalNonZeros, name);
   }
   createMatNest();
 }
@@ -59,7 +60,7 @@ PartitionedPetscMat(std::shared_ptr<Partition::MeshPartition<RowsFunctionSpaceTy
   matrixComponents_.reserve(MathUtility::sqr(nComponents_));
   for (int i = 0; i < MathUtility::sqr(nComponents_); i++)
   {
-    matrixComponents_.push_back(PartitionedPetscMatOneComponent<RowsFunctionSpaceType,ColumnsFunctionSpaceType>(meshPartitionRows, meshPartitionColumns, name));
+    matrixComponents_.emplace_back(meshPartitionRows, meshPartitionColumns, name);
   }
   createMatNest();
 }
@@ -75,7 +76,7 @@ PartitionedPetscMat(std::shared_ptr<Partition::MeshPartition<RowsFunctionSpaceTy
   matrixComponents_.reserve(MathUtility::sqr(nComponents_));
   for (int i = 0; i < MathUtility::sqr(nComponents_); i++)
   {
-    matrixComponents_.push_back(PartitionedPetscMatOneComponent<RowsFunctionSpaceType,ColumnsFunctionSpaceType>(meshPartition, globalMatrix, name));
+    matrixComponents_.emplace_back(meshPartition, globalMatrix, name);
   }
   createMatNest();
 }
@@ -132,7 +133,7 @@ setValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], 
 template<typename RowsFunctionSpaceType, typename ColumnsFunctionSpaceType>
 template<int nComponentsSquared>
 void PartitionedPetscMat<RowsFunctionSpaceType,ColumnsFunctionSpaceType>::
-setValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], const std::vector<std::array<double,nComponentsSquared>> v, InsertMode addv)
+setValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], const std::vector<std::array<double,nComponentsSquared>> &v, InsertMode addv)
 {
   assert(matrixComponents_.size() >= nComponentsSquared);
   std::vector<double> componentValues(m*n);
@@ -201,7 +202,7 @@ getValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], 
 template<typename RowsFunctionSpaceType, typename ColumnsFunctionSpaceType>
 template<int nComponentsSquared>
 void PartitionedPetscMat<RowsFunctionSpaceType,ColumnsFunctionSpaceType>::
-getValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], std::vector<std::array<double,nComponentsSquared>> v) const
+getValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], std::vector<std::array<double,nComponentsSquared>> &v) const
 {
   assert(matrixComponents_.size() >= nComponentsSquared);
   std::vector<double> componentValues(m*n);
@@ -237,7 +238,7 @@ getValuesGlobalPetscIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, cons
 template<typename RowsFunctionSpaceType, typename ColumnsFunctionSpaceType>
 template<int nComponentsSquared>
 void PartitionedPetscMat<RowsFunctionSpaceType,ColumnsFunctionSpaceType>::
-getValuesGlobalPetscIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], std::vector<std::array<double,nComponentsSquared>> v) const
+getValuesGlobalPetscIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], std::vector<std::array<double,nComponentsSquared>> &v) const
 {
   assert(matrixComponents_.size() >= nComponentsSquared);
   std::vector<double> componentValues(m*n);
@@ -258,7 +259,7 @@ Mat &PartitionedPetscMat<RowsFunctionSpaceType,ColumnsFunctionSpaceType>::
 valuesLocal(int componentNo)
 {
   assert(0 <= componentNo && componentNo < matrixComponents_.size());
-  return matrixComponents_[componentNo].valuesLocal(componentNo);
+  return matrixComponents_[componentNo].valuesLocal();
 }
 
 template<typename RowsFunctionSpaceType, typename ColumnsFunctionSpaceType>
@@ -266,13 +267,17 @@ Mat &PartitionedPetscMat<RowsFunctionSpaceType,ColumnsFunctionSpaceType>::
 valuesGlobal(int componentNo)
 {
   assert(0 <= componentNo && componentNo < matrixComponents_.size());
-  return matrixComponents_[componentNo].valuesGlobal(componentNo);
+  return matrixComponents_[componentNo].valuesGlobal();
 }
 
 template<typename RowsFunctionSpaceType, typename ColumnsFunctionSpaceType>
 Mat &PartitionedPetscMat<RowsFunctionSpaceType,ColumnsFunctionSpaceType>::
 valuesGlobal()
 {
+  if (nComponents_ == 1)
+  {
+    return matrixComponents_[0].valuesGlobal();
+  }
   return matNest_;
 }
 
@@ -290,6 +295,22 @@ createMatNest()
     submatrices[i] = matrixComponents_[i].valuesGlobal();
   }
   ierr = MatCreateNest(mpiCommunicator, nComponents_, NULL, nComponents_, NULL, submatrices.data(), &this->matNest_); CHKERRV(ierr);
+}
+
+//! get the mesh partition of rows
+template<typename RowsFunctionSpaceType, typename ColumnsFunctionSpaceType>
+std::shared_ptr<Partition::MeshPartition<RowsFunctionSpaceType>> PartitionedPetscMat<RowsFunctionSpaceType,ColumnsFunctionSpaceType>::
+meshPartitionRows()
+{
+  return matrixComponents_[0].meshPartitionRows();
+}
+
+//! get the mesh partion of columns
+template<typename RowsFunctionSpaceType, typename ColumnsFunctionSpaceType>
+std::shared_ptr<Partition::MeshPartition<ColumnsFunctionSpaceType>> PartitionedPetscMat<RowsFunctionSpaceType,ColumnsFunctionSpaceType>::
+meshPartitionColumns()
+{
+  return matrixComponents_[0].meshPartitionColumns();
 }
 
 //! output matrix to stream, the operator<< is also overloaded to use this method

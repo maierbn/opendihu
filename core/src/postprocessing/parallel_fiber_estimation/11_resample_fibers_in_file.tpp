@@ -114,6 +114,7 @@ resampleFibersInFile(int nPointsPerFiber)
 
   fileOld.close();
   fileNew.close();
+  LOG(INFO) << "File \"" << resultFilename_ << "\" written.";
 }
 
 } // namespace

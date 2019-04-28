@@ -9,9 +9,9 @@ import sys
 
 local = True
 
-nx = 2
-ny = 2
-nz = 5
+nx = 5
+ny = 5
+nz = 6
 
 
 # Neumann boundary conditions

@@ -29,6 +29,7 @@ template<typename FunctionSpaceType,typename QuadratureType,typename Term,typena
 void BoundaryConditions<FunctionSpaceType,QuadratureType,Term,Dummy>::
 setNeumannBoundaryConditions(std::shared_ptr<NeumannBoundaryConditions<FunctionSpaceType,QuadratureType,1>> neumannBoundaryConditions)
 {
+  LOG(DEBUG) << "set Neumann boundary conditions";
   this->neumannBoundaryConditions_ = neumannBoundaryConditions;
 }
 
@@ -62,10 +63,8 @@ applyBoundaryConditions()
     LOG(DEBUG) << "no Neumann boundary conditions are present, create object";
     neumannBoundaryConditions_ = std::make_shared<NeumannBoundaryConditions<FunctionSpaceType,QuadratureType,1>>(this->context_);
     neumannBoundaryConditions_->initialize(this->specificSettings_, this->data_.functionSpace(), "neumannBoundaryConditions");
-
-    VLOG(1) << "neumann BC rhs: " << *neumannBoundaryConditions_->rhs();
-
   }
+  VLOG(1) << "neumann BC rhs: " << *neumannBoundaryConditions_->rhs();
 
   // add rhs, rightHandSide += -1 * rhs
   PetscErrorCode ierr;

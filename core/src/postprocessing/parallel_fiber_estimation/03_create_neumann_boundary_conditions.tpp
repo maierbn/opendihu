@@ -32,15 +32,24 @@ createNeumannBoundaryConditions(const std::array<int,3> &nElementsPerCoordinateD
 
         if (std::is_same<BasisFunctionType,BasisFunction::LagrangeOfOrder<1>>::value)
         {
+          // 2 3
+          // 0 1
           Vec3 a = -geometryValues[0] + geometryValues[3];
           Vec3 b = -geometryValues[1] + geometryValues[2];
 
           // compute surface
           surfaceBottomLocal += 0.5*MathUtility::norm<3>(MathUtility::cross(a,b));
         }
-        else
+        else if (std::is_same<BasisFunctionType,BasisFunction::LagrangeOfOrder<2>>::value)
         {
-          LOG(FATAL) << "not implemented for anything other than linear Lagrange elements";
+          // 6 7 8
+          // 3 4 5
+          // 0 1 2
+          Vec3 a = -geometryValues[0] + geometryValues[8];
+          Vec3 b = -geometryValues[2] + geometryValues[6];
+
+          // compute surface
+          surfaceBottomLocal += 0.5*MathUtility::norm<3>(MathUtility::cross(a,b));
         }
       }
     }
@@ -65,11 +74,25 @@ createNeumannBoundaryConditions(const std::array<int,3> &nElementsPerCoordinateD
 
         if (std::is_same<BasisFunctionType,BasisFunction::LagrangeOfOrder<1>>::value)
         {
+          // 2 3  6 7
+          // 0 1  4 5
           Vec3 a = -geometryValues[4] + geometryValues[7];
           Vec3 b = -geometryValues[5] + geometryValues[6];
 
           // compute surface
           surfaceTopLocal += 0.5*MathUtility::norm<3>(MathUtility::cross(a,b));
+        }
+        else if (std::is_same<BasisFunctionType,BasisFunction::LagrangeOfOrder<2>>::value)
+        {
+          // 6 7 8  15 16 17    24 25 26
+          // 3 4 5  12 13 14    21 22 23
+          // 0 1 2   9 10 11    18 19 20
+          Vec3 a = -geometryValues[18] + geometryValues[26];
+          Vec3 b = -geometryValues[20] + geometryValues[24];
+
+          // compute surface
+          surfaceTopLocal += 0.5*MathUtility::norm<3>(MathUtility::cross(a,b));
+          LOG(DEBUG) << "surfaceTopLocal += 0.5*|" << a << " x " << b << "| = " << 0.5*MathUtility::norm<3>(MathUtility::cross(a,b)) << " g: " << geometryValues;
         }
       }
     }
@@ -85,8 +108,11 @@ createNeumannBoundaryConditions(const std::array<int,3> &nElementsPerCoordinateD
                                               MPI_SUM, this->currentRankSubset_->mpiCommunicator()));
 
   // compute flux values that will be set as Neumann BC values
-  double fluxTop = 1./surfaceTopGlobal;
+  double fluxTop = -1./surfaceTopGlobal;
   double fluxBottom = 1./surfaceBottomGlobal;
+
+  LOG(DEBUG) << "surfaceTop local: " << surfaceTopLocal << ", global: " << surfaceTopGlobal << ", fluxTop: " << fluxTop;
+  LOG(DEBUG) << "surfaceBottom local: " << surfaceBottomLocal << ", global: " << surfaceBottomGlobal << ", fluxBottom: " << fluxBottom;
 
   // create neumann boundary conditions for elements
   /*

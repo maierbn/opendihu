@@ -168,6 +168,18 @@ initialize(std::shared_ptr<FunctionSpaceType> functionSpace, const std::vector<t
   data_.initialize();
 
   boundaryConditionElements_ = boundaryConditionElements;
+
+  // output parsed settings
+  LOG(DEBUG) << boundaryConditionElements_.size() << " boundaryConditionElements parsed";
+  LOG(DEBUG) << boundaryConditionElements_.size() << " boundaryConditionElements_: ";
+
+  for(ElementWithFaces elementWithFaces : boundaryConditionElements_)
+  {
+    LOG(DEBUG) << "  elementNoLocal " << elementWithFaces.elementNoLocal << ", face " << Mesh::getString(elementWithFaces.face)
+      << ", dofVectors on surface: " << elementWithFaces.dofVectors << ", surfaceDofs on volume: " << elementWithFaces.surfaceDofs;
+  }
+
+  initializeRhs();
 }
 
 template<typename FunctionSpaceType,typename QuadratureType,int nComponents>

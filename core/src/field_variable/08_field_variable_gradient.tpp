@@ -39,6 +39,8 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
     {
       dof_no_t dofNo = elementDofs[dofIndex];
 
+      assert(dofNo < nDofsWithGhosts);
+
       // increase counter of number of summands for that dof
       nSummands[dofNo]++;
     }
@@ -75,18 +77,69 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
           xi[i] = double(dofIndex / 4);
       }
 
-      VLOG(2) << "element " << elementNoLocal << " dofIndex " << dofIndex << ", xi " << xi << " g:" << geometryValues;
+      //VLOG(2) << "element " << elementNoLocal << " dofIndex " << dofIndex << ", xi " << xi << " g:" << geometryValues;
 
       // compute the 3xD jacobian of the parameter space to world space mapping
       Tensor2<D> jacobianParameterSpace = MathUtility::transformToDxD<D,D>(FunctionSpaceType::computeJacobian(geometryValues, xi));
       double jacobianDeterminant;
       Tensor2<D> inverseJacobianParameterSpace = MathUtility::computeInverse<D>(jacobianParameterSpace, jacobianDeterminant);
 
+
+      // get gradient at dof
+      std::array<double,D> gradPhiParameterSpace = this->functionSpace_->gradPhi(dofIndex, xi);
+
+      //VLOG(2) << "  dofIndex2=" << dofIndex << ", xi=" << xi << ", gradPhiParameterSpace: " << gradPhiParameterSpace;
+      std::array<double,D> gradPhiWorldSpaceDofIndex2{0.0};
+
+      // transform grad from parameter space to world space
+      for (int direction = 0; direction < D; direction++)
+      {
+        //VLOG(2) << "   component " << direction;
+        for (int k = 0; k < D; k++)
+        {
+          // jacobianParameterSpace[columnIdx][rowIdx] = dX_rowIdx/dxi_columnIdx
+          // inverseJacobianParameterSpace[columnIdx][rowIdx] = dxi_rowIdx/dX_columnIdx because of inverse function theorem
+
+          const double dphiDofIndex2_dxik = gradPhiParameterSpace[k];   // dphi_dofIndex/dxi_k
+          const double dxik_dXdirection = inverseJacobianParameterSpace[direction][k];  // dxi_k/dX_direction
+
+
+          //VLOG(2) << "     += " << dphiDofIndex2_dxik << " * " << dxik_dXdirection;
+
+          gradPhiWorldSpaceDofIndex2[direction] += dphiDofIndex2_dxik * dxik_dXdirection;
+        }
+      }
+
+      //VLOG(2) << "  gradPhiWorldSpaceDofIndex2: " << gradPhiWorldSpaceDofIndex2
+      //  << " multiply with solution value at dof " << dofIndex << ", " << solutionValues[dofIndex];
+
+      //VLOG(2) << " sum contributions from the other ansatz functions at this dof: " << gradPhiWorldSpace;
+
+      std::array<double,D> gradPhiWorldSpace2 = gradPhiWorldSpaceDofIndex2 * solutionValues[dofIndex];
+
+
       std::array<double,D> gradPhiWorldSpace = this->functionSpace_->interpolateGradientInElement(solutionValues, inverseJacobianParameterSpace, xi);
 
       dof_no_t dofNo = elementDofs[dofIndex];
 
-      VLOG(2) << "   local dof " << dofNo << ", add value " << gradPhiWorldSpace;
+      if (fabs(gradPhiWorldSpace[0])+fabs(gradPhiWorldSpace[1]) > fabs(gradPhiWorldSpace[2]) || dofIndex == 123)
+      {
+        VLOG(2) << "element " << elementNoLocal << " dofIndex " << dofIndex << ", xi " << xi << " geometry:" << geometryValues
+          << ", solution: " << solutionValues;
+        VLOG(2) << "   jacobianParameterSpace: " << jacobianParameterSpace << ", inverseJacobianParameterSpace: " << inverseJacobianParameterSpace << ", jacobianDeterminant: " << jacobianDeterminant;
+        VLOG(2) << "   local dof " << dofNo << ", add value " << MathUtility::normalized<3>(gradPhiWorldSpace) << "/" << nSummands[dofNo] << " -- " << gradPhiWorldSpace2;
+        VLOG(2) << "extreml: " << (fabs(gradPhiWorldSpace[0])+fabs(gradPhiWorldSpace[1])) / fabs(gradPhiWorldSpace[2]);
+
+        for (int i = 0; i < 10; i++)
+        {
+          double f = 0.1;
+          xi += Vec3({(rand()%101/50.-1.)*f,(rand()%101/50.-1.)*f,(rand()%101/50.-1.)*f});
+          Vec3 a = this->functionSpace_->interpolateGradientInElement(solutionValues, inverseJacobianParameterSpace, xi);
+          VLOG(2) << "  xi: " << xi << ", grad: " << MathUtility::normalized<3>(a);
+        }
+        VLOG(2) << " ";
+        VLOG(2) << " ";
+      }
 
       gradPhiWorldSpace /= nSummands[dofNo];
 

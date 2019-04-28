@@ -99,18 +99,65 @@ def output_streamlines(filename, rankNo, streamlines, size):
   out_mesh.save(outfile)
   print("saved {} triangles to \"{}\"".format(len(triangles),outfile))
 
+def output_rings(filename, rankNo, rings, size):
+  
+  triangles = []
+  
+  factor = 1.0
+  
+  for points in rings:
+    previous_point = None
+    first_point = None
+    
+    for p in points:
+      point = np.array([p[0], p[1], p[2]])
+      if np.linalg.norm(point) < 1e-3:
+        continue
+      if previous_point is None:
+        first_point = point
+      else:
+        triangles.append([previous_point, point, 0.5*(previous_point+point)])
+      previous_point = point
+      
+      stl_create_rings.create_point_marker(point, triangles, size*factor)
+      #factor *= 1.1
+      #if factor > 3:
+      #  factor = 3.0
+
+    # close loop (not for border points on faces)
+    if previous_point is not None:
+      triangles.append([previous_point, first_point, 0.5*(previous_point+first_point)])
+
+  #---------------------------------------
+  # Create the mesh
+  out_mesh = mesh.Mesh(np.zeros(len(triangles), dtype=mesh.Mesh.dtype))
+  for i, f in enumerate(triangles):
+    out_mesh.vectors[i] = f
+  #out_mesh.update_normals()
+
+  outfile = "out/{}.{}.{}.stl".format(filename[0:2], rankNo, filename[2:])
+  #out_mesh.save(outfile, mode=stl.Mode.ASCII)
+  out_mesh.save(outfile)
+  print("saved {} triangles to \"{}\"".format(len(triangles),outfile))
+
 def output_border_points(filename, rankNo, points, size):
   
   triangles = []
   print("output_border_points(filename={}, rankNo={}, points: {}, size={})".format(filename, rankNo, len(points), size))
   
+  # data structure:
+  # std::array<std::vector<std::vector<Vec3>>,4>
+  # list [<face0>, <face1>, <face2>, <face3>]
+  # <face> = [<level0>, <level1>, ...]
+  # <level> = [<point0>, <point1>, ...]
+  
   factor = 1.0
-  for p1 in points:
-    for p2 in p1:
+  for face_points in points:
+    for zlevel_points in face_points:
       previous_point = None
       first_point = None
-      for p3 in p2:
-        point = np.array([p3[0], p3[1], p3[2]])
+      for p in zlevel_points:
+        point = np.array([p[0], p[1], p[2]])
         if np.linalg.norm(point) < 1e-3:
           continue
         if previous_point is None:
@@ -123,9 +170,10 @@ def output_border_points(filename, rankNo, points, size):
         #factor *= 1.1
         #if factor > 3:
         #  factor = 3.0        
-      # close loop
-      if previous_point is not None:
-        triangles.append([previous_point, first_point, 0.5*(previous_point+first_point)])
+      
+      # close loop (not for border points on faces)
+      #if previous_point is not None:
+      #  triangles.append([previous_point, first_point, 0.5*(previous_point+first_point)])
 
   #---------------------------------------
   # Create the mesh

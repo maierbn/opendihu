@@ -11,8 +11,8 @@
 // write or load various checkpoints, this is for debugging to only run part of the algorithm on prescribed data
 //#define USE_CHECKPOINT_BORDER_POINTS
 //#define USE_CHECKPOINT_MESH
-#define WRITE_CHECKPOINT_MESH
-#define WRITE_CHECKPOINT_BORDER_POINTS
+//#define WRITE_CHECKPOINT_MESH
+//#define WRITE_CHECKPOINT_BORDER_POINTS
 //#define WRITE_CHECKPOINT_GHOST_MESH
 //#define USE_CHECKPOINT_GHOST_MESH
 
@@ -23,23 +23,23 @@
 //#define FILE_COMMUNICATION        // when sending border points between ranks, do not use MPI but file I/O instead
 
 // include files that implement various methods of this class, these make use the previous defines
-#include "postprocessing/parallel_fiber_estimation/create_dirichlet_boundary_conditions.tpp"
-#include "postprocessing/parallel_fiber_estimation/create_mesh.tpp"
-#include "postprocessing/parallel_fiber_estimation/create_neumann_boundary_conditions.tpp"
-#include "postprocessing/parallel_fiber_estimation/create_seed_points.tpp"
-#include "postprocessing/parallel_fiber_estimation/exchange_ghost_values.tpp"
+#include "postprocessing/parallel_fiber_estimation/01_refine_border_points.tpp"
+#include "postprocessing/parallel_fiber_estimation/02_create_mesh.tpp"
+#include "postprocessing/parallel_fiber_estimation/03_create_dirichlet_boundary_conditions.tpp"
+#include "postprocessing/parallel_fiber_estimation/03_create_neumann_boundary_conditions.tpp"
+#include "postprocessing/parallel_fiber_estimation/04_exchange_ghost_values.tpp"
+#include "postprocessing/parallel_fiber_estimation/05_create_seed_points.tpp"
+#include "postprocessing/parallel_fiber_estimation/06_trace_streamlines.tpp"
+#include "postprocessing/parallel_fiber_estimation/07_sample_at_equidistant_z_points.tpp"
+#include "postprocessing/parallel_fiber_estimation/08_rearrange_streamline_points.tpp"
+#include "postprocessing/parallel_fiber_estimation/09_fill_border_points.tpp"
+#include "postprocessing/parallel_fiber_estimation/10_fix_incomplete_streamlines.tpp"
+#include "postprocessing/parallel_fiber_estimation/11_interpolate_fine_fibers_from_file.tpp"
+#include "postprocessing/parallel_fiber_estimation/11_resample_fibers_in_file.tpp"
+#include "postprocessing/parallel_fiber_estimation/11_trace_result_fibers.tpp"
+#include "postprocessing/parallel_fiber_estimation/12_send_receive_border_points.tpp"
 #include "postprocessing/parallel_fiber_estimation/exchange_seed_points.tpp"
-#include "postprocessing/parallel_fiber_estimation/fill_border_points.tpp"
-#include "postprocessing/parallel_fiber_estimation/fix_incomplete_streamlines.tpp"
-#include "postprocessing/parallel_fiber_estimation/interpolate_fine_fibers_from_file.tpp"
 #include "postprocessing/parallel_fiber_estimation/output_border_points.tpp"
-#include "postprocessing/parallel_fiber_estimation/rearrange_streamline_points.tpp"
-#include "postprocessing/parallel_fiber_estimation/refine_border_points.tpp"
-#include "postprocessing/parallel_fiber_estimation/resample_fibers_in_file.tpp"
-#include "postprocessing/parallel_fiber_estimation/sample_at_equidistant_z_points.tpp"
-#include "postprocessing/parallel_fiber_estimation/send_receive_border_points.tpp"
-#include "postprocessing/parallel_fiber_estimation/trace_result_fibers.tpp"
-#include "postprocessing/parallel_fiber_estimation/trace_streamlines.tpp"
 
 
 namespace Postprocessing
@@ -138,6 +138,9 @@ initialize()
   functionOutputStreamlines_ = PyObject_GetAttrString(moduleStlDebugOutput_, "output_streamlines");
   assert(functionOutputStreamlines_);
 
+  functionOutputRings_ = PyObject_GetAttrString(moduleStlDebugOutput_, "output_rings");
+  assert(functionOutputRings_);
+
   functionOutputGhostElements_ = PyObject_GetAttrString(moduleStlDebugOutput_, "output_ghost_elements");
   assert(functionOutputGhostElements_);
 
@@ -222,7 +225,7 @@ generateParallelMesh()
 #ifndef NDEBUG
 #ifdef STL_OUTPUT
     // output the loops
-    PyObject_CallFunction(functionOutputStreamlines_, "s i O f", "00_loops", currentRankSubset_->ownRankNo(),
+    PyObject_CallFunction(functionOutputRings_, "s i O f", "00_loops", currentRankSubset_->ownRankNo(),
                           PythonUtility::convertToPython<std::vector<std::vector<Vec3>>>::get(loops), 0.1);
     PythonUtility::checkForError();
 #endif
@@ -288,7 +291,7 @@ generateParallelMesh()
 
   int subdomainIndex = currentRankSubset_->ownRankNo();
   std::stringstream filename;
-  filename << "out/checkpoint_borderPoints_subdomain_" << subdomainIndex << ".csv";
+  filename << "checkpoints/checkpoint_borderPoints_subdomain_" << subdomainIndex << ".csv";
   std::ifstream file(filename.str().c_str(), std::ios::in);
   if (!file.is_open())
   {

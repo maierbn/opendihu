@@ -11,10 +11,17 @@ createMesh(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std::vect
   int subdomainNNodesY;
   int subdomainNNodesZ;
 
+  LOG(DEBUG) << "createMesh";
+
 #ifdef USE_CHECKPOINT_MESH  // load from file
   std::stringstream filename;
-  filename << "out/checkpoint_mesh_" << currentRankSubset_->ownRankNo() << ".csv";
+  filename << "checkpoints/checkpoint_mesh_" << currentRankSubset_->ownRankNo() << ".csv";
   std::ifstream file(filename.str().c_str());
+
+  if (!file.is_open())
+  {
+    LOG(FATAL) << "Could not open file \"" << filename.str() << "\".";
+  }
 
   file >> subdomainNNodesX >> subdomainNNodesY >> subdomainNNodesZ;
   nElementsPerCoordinateDirectionLocal[0] = subdomainNNodesX-1;
@@ -101,7 +108,7 @@ createMesh(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std::vect
 
 #ifdef WRITE_CHECKPOINT_MESH
   std::stringstream filename;
-  filename << "out/checkpoint_mesh_" << currentRankSubset_->ownRankNo() << ".csv";
+  filename << "checkpoints/checkpoint_mesh_" << currentRankSubset_->ownRankNo() << ".csv";
   std::ofstream file(filename.str().c_str(), std::ios::out | std::ios::trunc);
   assert(file.is_open());
 

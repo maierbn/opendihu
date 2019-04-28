@@ -188,6 +188,7 @@ protected:
   PyObject *functionCreate3dMeshFromBorderPointsFaces_;       ///< create_3d_mesh_from_border_points_faces
   PyObject *functionOutputStreamline_;   ///< function to output connected points as streamline
   PyObject *functionOutputStreamlines_;   ///< function to output border points as connected streamlines
+  PyObject *functionOutputRings_;   ///< function to output border point rings as connected and closed lines
 
   std::shared_ptr<Partition::RankSubset> currentRankSubset_;  ///< the rank subset of the ranks that are used at the current stage of the algorithm
   std::array<int,3> nRanksPerCoordinateDirection_;   ///< the numbers of ranks in each coordinate direction at the current stage of the algorithm

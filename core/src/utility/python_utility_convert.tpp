@@ -23,6 +23,7 @@ struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
     // PythonUtility::GlobalInterpreterLock lock;
 
     std::array<ValueType,nComponents> result;
+    assert(object != nullptr);
     if (PyList_Check(object))
     {
       int i = 0;
@@ -122,6 +123,7 @@ struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
     // PythonUtility::GlobalInterpreterLock lock;
 
     std::array<ValueType,nComponents> result;
+    assert(object != nullptr);
     if (PyList_Check(object))
     {
       global_no_t i = 0;
@@ -221,6 +223,7 @@ struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
     // PythonUtility::GlobalInterpreterLock lock;
 
     std::array<ValueType,nComponents> result;
+    assert(object != nullptr);
     if (PyList_Check(object))
     {
       unsigned long i = 0;
@@ -320,6 +323,7 @@ struct PythonUtility::convertFromPython<std::vector<ValueType>>
     // PythonUtility::GlobalInterpreterLock lock;
 
     std::vector<ValueType> result;
+    assert(object != nullptr);
     if (PyList_Check(object))
     {
       int nEntries = (int)PyList_Size(object);
@@ -360,6 +364,7 @@ struct PythonUtility::convertFromPython<std::vector<ValueType>>
     // PythonUtility::GlobalInterpreterLock lock;
 
     std::vector<ValueType> result;
+    assert(object != nullptr);
     if (PyList_Check(object))
     {
       int nEntries = (int)PyList_Size(object);
@@ -395,6 +400,7 @@ struct PythonUtility::convertFromPython<std::pair<ValueType1,ValueType2>>
     // PythonUtility::GlobalInterpreterLock lock;
 
     std::pair<ValueType1,ValueType2> result;
+    assert(object != nullptr);
     if (PyTuple_Check(object))
     {
       int nEntries = (int)PyTuple_Size(object);
@@ -460,6 +466,7 @@ struct PythonUtility::convertFromPython<std::tuple<ValueTypes...>>
     // PythonUtility::GlobalInterpreterLock lock;
 
     std::tuple<ValueTypes...> result;
+    assert(object != nullptr);
     if (PyTuple_Check(object))
     {
       int nEntries = (int)PyTuple_Size(object);
@@ -498,6 +505,7 @@ struct PythonUtility::convertFromPython<int>
     // start critical section for python API calls
     // PythonUtility::GlobalInterpreterLock lock;
 
+    assert(object != nullptr);
     if (PyLong_Check(object))
     {
       long valueLong = PyLong_AsLong(object);

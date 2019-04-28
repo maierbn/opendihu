@@ -19,6 +19,12 @@ adjustFilename(std::string &filename, int nFibersX)
     fileBase = fileBase.substr(fileBase.rfind("/")+1);
   }
 
+  // create directory and wait until system has created it
+  int ret = system((std::string("mkdir -p ")+path).c_str());
+  if (ret != 0)
+    LOG(WARNING) << "Creation of directory \"" <<path<< "\" failed.";
+  std::this_thread::sleep_for(std::chrono::milliseconds(50));
+
   // check if filename contains x
   bool xFound = false;
   bool filenameHasXFormat = false;

@@ -105,7 +105,7 @@ initializeRhs()
            dofVectorsIter++)
       {
         int dofIndex = dofVectorsIter->first;
-        VecD<nComponents> fluxValue = dofVectorsIter->second;
+        VecD<nComponents> fluxValue = dofVectorsIter->second;   // this is the prescribed value, either a scalar of the flux or the traction vector
 
         boundaryConditionValueAtXi += fluxValue * FunctionSpaceSurface::phi(dofIndex, xiSurface);
       }

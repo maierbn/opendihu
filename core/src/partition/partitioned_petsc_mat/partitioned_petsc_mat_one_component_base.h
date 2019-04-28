@@ -8,7 +8,7 @@
 /** Base class for a partitioned PetscMat
  */
 template<typename RowsFunctionSpaceType, typename ColumnsFunctionSpaceType>
-class PartitionedPetscMatBase
+class PartitionedPetscMatOneComponentBase
 {
 public:
   
@@ -16,7 +16,7 @@ public:
   typedef ColumnsFunctionSpaceType ColumnsFunctionSpace;
   
   //! constructor
-  PartitionedPetscMatBase(std::shared_ptr<Partition::MeshPartition<RowsFunctionSpaceType>> meshPartitionRows,
+  PartitionedPetscMatOneComponentBase(std::shared_ptr<Partition::MeshPartition<RowsFunctionSpaceType>> meshPartitionRows,
                           std::shared_ptr<Partition::MeshPartition<ColumnsFunctionSpaceType>> meshPartitionColumns, std::string name);
  
   //! wrapper of MatSetValues for a single value, sets a local value in the matrix
@@ -63,4 +63,4 @@ protected:
 };
 
 
-#include "partition/partitioned_petsc_mat/partitioned_petsc_mat_base.tpp"
+#include "partition/partitioned_petsc_mat/partitioned_petsc_mat_one_component_base.tpp"

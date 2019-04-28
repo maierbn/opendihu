@@ -76,7 +76,13 @@ getOptionVector(std::string keyString, int nEntries, std::vector<T> &values) con
   std::string pathString = this->getStringPath();
 
   PyObject *pyLocalValues = nullptr;
-  getOptionPyObject(keyString, pyLocalValues);
+  pyLocalValues = getOptionPyObject(keyString, pyLocalValues);
+  if (!pyLocalValues)
+  {
+    LOG(WARNING) << pathString << "[\"" << keyString << "\"]: no vector was given, set to zeros";
+    values.resize(nEntries, T{0.0});
+    return;
+  }
   values = PythonUtility::convertFromPython<std::vector<T>>::get(pyLocalValues);
   if (values.size() < nEntries)
   {

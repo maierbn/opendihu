@@ -2030,10 +2030,11 @@ with bulk modulus $K$ and shear modulus $μ$.
 Discretization
 \begin{equation*}
   \begin{array}{lll}
-    \bfu_{a}(\bfx) = u_a^M\,\phi^M(\bfx)\\[4mm]
-    \p{\bfu_{a}(\bfx)}{x_b} = u_a^M\,\p{\phi^M(\bfx)}{x_b}
+    \bfu_{a}(\bfx) = u_a^M\,\phi^M(\bfx),\\[4mm]
+    \p{\bfu_{a}(\bfx)}{x_b} = u_a^M\,\p{\phi^M(\bfx)}{x_b}.
   \end{array}
 \end{equation*}
+As before, $a,b=1,\dots,D$ indicate components, $L,M$ indicate nodes / dofs.
 Strain $\bfeps$ is computed linearly from displacements: 
 \begin{equation*}
   \begin{array}{lll}
@@ -2049,7 +2050,26 @@ This results in
     δu_{(d)}^L\,u_{(b)}^N\,\p{\phi^L(\bfx)}{x_{(c)}}\p{\phi^N(\bfx)}{x_{(a)}}
     + δu_{(d)}^L\,u_{(a)}^O\,\p{\phi^L(\bfx)}{x_{(c)}}\p{\phi^O(\bfx)}{x_{(b)}}\\[4mm]
     & + δu_{(c)}^M\,u_{(b)}^N\,\p{\phi^M(\bfx)}{x_{(d)}}\p{\phi^N(\bfx)}{x_{(a)}}
-    + δu_{(c)}^M\,u_{(a)}^O\,\p{\phi^M(\bfx)}{x_{(d)}}\p{\phi^O(\bfx)}{x_{(b)}}\Big)
+    + δu_{(c)}^M\,u_{(a)}^O\,\p{\phi^M(\bfx)}{x_{(d)}}\p{\phi^O(\bfx)}{x_{(b)}}\Big).
+  \end{array}
+\end{equation*}
+For matrix entry $\bfM_{LaMb}$, we have
+\begin{equation*}
+  \begin{array}{lll}
+  % L -> L
+  % N -> M
+  % d -> a
+  % b -> b
+  % a -> c
+  % c -> d
+    \bfM_{LaMb} = \dfrac14\mathbb{C}_{cbda}\p{\phi^L(\bfx)}{x_{(d)}}\p{\phi^M(\bfx)}{x_{(c)}}
+    % L -> L
+    % O -> M
+    % d -> a
+    % a -> b
+    % b -> c
+    % c -> d
+    + \dfrac14\mathbb{C}_{bcda}\p{\phi^L(\bfx)}{x_{(d)}}\p{\phi^M(\bfx)}{x_{(c)}}
   \end{array}
 \end{equation*}
 %\begin{equation*}

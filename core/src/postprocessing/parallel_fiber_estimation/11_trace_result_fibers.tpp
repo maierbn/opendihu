@@ -4,8 +4,8 @@ namespace Postprocessing
 {
 
 template<typename BasisFunctionType>
-bool ParallelFiberEstimation<BasisFunctionType>::
-checkTraceFinalFibers()
+void ParallelFiberEstimation<BasisFunctionType>::
+determineLevel()
 {
   // determine current level = log2(nRanksPerCoordinateDirection_)
   level_ = 0;
@@ -14,6 +14,13 @@ checkTraceFinalFibers()
   {
     level_++;
   }
+}
+
+template<typename BasisFunctionType>
+bool ParallelFiberEstimation<BasisFunctionType>::
+checkTraceFinalFibers()
+{
+  determineLevel();
 
   int nRanksAvailable = this->context_.nRanksCommWorld();
 
@@ -1030,7 +1037,7 @@ fixInvalidFibersInFile(std::string filename)
 
                   if (firstPoint[2] - neighbouringFiberFirstPoint[1][2] > 1e-12)
                   {
-                    LOG(WARNING) << "Could not fixe fiber (" << fiberIndexX << "," << fiberIndexY << ") / (" << nFibersX << "," << nFibersX << "),"
+                    LOG(WARNING) << "Could not fix fiber (" << fiberIndexX << "," << fiberIndexY << ") / (" << nFibersX << "," << nFibersX << "),"
                      << " first point: " << firstPoint << ", neighbouring points: " << neighbouringFiberFirstPoint[0] << "," << neighbouringFiberFirstPoint[1];
 
                     int zIndex = int(nPointsPerFiber/2);
@@ -1043,7 +1050,7 @@ fixInvalidFibersInFile(std::string filename)
 
                   if (firstPoint[2] - neighbouringFiberFirstPoint[1][2] > 1e-12)
                   {
-                    LOG(WARNING) << "Could not fixe fiber (" << fiberIndexX << "," << fiberIndexY << ") / (" << nFibersX << "," << nFibersX << "),"
+                    LOG(WARNING) << "Could not fix fiber (" << fiberIndexX << "," << fiberIndexY << ") / (" << nFibersX << "," << nFibersX << "),"
                      << " first point: " << firstPoint << ", neighbouring points: " << neighbouringFiberFirstPoint[0] << "," << neighbouringFiberFirstPoint[1];
 
                     int zIndex = int(nPointsPerFiber/2)+1;
@@ -1056,7 +1063,7 @@ fixInvalidFibersInFile(std::string filename)
 
                   if (firstPoint[2] - neighbouringFiberFirstPoint[1][2] > 1e-12)
                   {
-                    LOG(ERROR) << "Could not fixed fiber (" << fiberIndexX << "," << fiberIndexY << ") / (" << nFibersX << "," << nFibersX << "),"
+                    LOG(ERROR) << "Could not fix fiber (" << fiberIndexX << "," << fiberIndexY << ") / (" << nFibersX << "," << nFibersX << "),"
                       << " first point: " << firstPoint << ", neighbouring points: " << neighbouringFiberFirstPoint[0] << "," << neighbouringFiberFirstPoint[1];
                   }
                   else

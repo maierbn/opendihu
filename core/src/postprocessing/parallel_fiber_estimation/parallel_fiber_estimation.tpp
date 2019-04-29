@@ -282,7 +282,7 @@ generateParallelMesh()
   std::iota(ranks.begin(), ranks.end(), 0);
   currentRankSubset_ = std::make_shared<Partition::RankSubset>(ranks.begin(), ranks.end());
   nRanksPerCoordinateDirection_.fill(2);
-
+  determineLevel();
 
   std::array<bool,4> subdomainIsAtBorder;
 

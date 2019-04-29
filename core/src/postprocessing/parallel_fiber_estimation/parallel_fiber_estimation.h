@@ -149,6 +149,9 @@ protected:
   //! if the filename is something like path/fibers0x0.bin, replace 0 by nFibersX, return true if replacement was performed
   bool adjustFilename(std::string &filename, int nFibersX);
 
+  // compute the current level_ = log2(nRanksPerCoordinateDirection_)
+  void determineLevel();
+
   const DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
   std::shared_ptr<FiniteElementMethodType> problem_;   ///< the DiscretizableInTime object that is managed by this class
 

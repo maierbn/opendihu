@@ -19,6 +19,8 @@ adjustFilename(std::string &filename, int nFibersX)
     fileBase = fileBase.substr(fileBase.rfind("/")+1);
   }
 
+  LOG(DEBUG) << "adjust filename [" << filename << "], nFibersX: " << nFibersX << ", path: [" << path << "], fileBase: [" << fileBase << "]";
+
   // create directory and wait until system has created it
   int ret = system((std::string("mkdir -p ")+path).c_str());
   if (ret != 0)
@@ -50,11 +52,14 @@ adjustFilename(std::string &filename, int nFibersX)
     }
   }
 
+  LOG(DEBUG) << " filenameHasXFormat: " << filenameHasXFormat;
+
   if (filenameHasXFormat)
   {
     std::stringstream newFilename;
     newFilename << path << nFibersX << "x" << nFibersX  << fileBase.substr(suffixPos);
     filename = newFilename.str();
+    LOG(DEBUG) << "newFilename: [" << filename << "]";
     return true;
   }
   else

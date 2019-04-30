@@ -69,6 +69,7 @@ public:
   //! output string representation to stream for debugging
   void output(std::ostream &stream) const;
 
+
   //! not implemented interface methods
 
   //! parse current component's exfile representation from file contents

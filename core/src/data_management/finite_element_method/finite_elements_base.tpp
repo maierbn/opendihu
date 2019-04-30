@@ -93,6 +93,8 @@ createPetscObjects()
   this->rhs_ = this->functionSpace_->template createFieldVariable<nComponents>("rhs");
   this->solution_ = this->functionSpace_->template createFieldVariable<nComponents>("solution");
 
+  this->rhs_->zeroEntries();
+
   // create PETSc matrix object
 
   // PETSc MatCreateAIJ parameters

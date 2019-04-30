@@ -2027,7 +2027,15 @@ where $\bfsigma = \mathbb{C} : \bfeps$ with
   \end{array}
 \end{equation*}
 with bulk modulus $K$ and shear modulus $μ$.
-Discretization
+
+The following symmetry properties hold:
+\begin{equation*}
+  \begin{array}{lll}
+    \bbC_{abcd} = \bbC_{bacd} = \bbC_{abdc} = \bbC_{badc} \quad \text{minor symmetries}\\[4mm]
+    \bbC_{abcd} = \bbC_{cdab} \quad \text{major symmetries}
+  \end{array}
+\end{equation*}
+Discretization yields:
 \begin{equation*}
   \begin{array}{lll}
     \bfu_{a}(\bfx) = u_a^M\,\phi^M(\bfx),\\[4mm]
@@ -2056,20 +2064,36 @@ This results in
 For matrix entry $\bfM_{LaMb}$, we have
 \begin{equation*}
   \begin{array}{lll}
-  % L -> L
-  % N -> M
-  % d -> a
-  % b -> b
-  % a -> c
-  % c -> d
-    \bfM_{LaMb} = \dfrac14\mathbb{C}_{cbda}\p{\phi^L(\bfx)}{x_{(d)}}\p{\phi^M(\bfx)}{x_{(c)}}
+    % L -> L
+    % N -> M
+    % d -> a
+    % b -> b
+    % a -> c
+    % c -> d
+    \bfM_{LaMb} &= \dfrac14\mathbb{C}_{cbda}\p{\phi^L(\bfx)}{x_{d}}\p{\phi^M(\bfx)}{x_{c}}
     % L -> L
     % O -> M
     % d -> a
     % a -> b
     % b -> c
     % c -> d
-    + \dfrac14\mathbb{C}_{bcda}\p{\phi^L(\bfx)}{x_{(d)}}\p{\phi^M(\bfx)}{x_{(c)}}
+    + \dfrac14\mathbb{C}_{bcda}\p{\phi^L(\bfx)}{x_{d}}\p{\phi^M(\bfx)}{x_{c}}\\[4mm]
+    % M -> L
+    % N -> M
+    % c -> a
+    % b -> b
+    % a -> c
+    % d -> d
+    &+ \dfrac14\mathbb{C}_{cbad}\p{\phi^L(\bfx)}{x_{d}}\p{\phi^M(\bfx)}{x_{c}}
+    % M -> L
+    % O -> M
+    % c -> a
+    % a -> b
+    % b -> c
+    % d -> d
+    + \dfrac14\mathbb{C}_{bcad}\p{\phi^L(\bfx)}{x_{d}}\p{\phi^M(\bfx)}{x_{c}}\\[4mm]
+    &= \dfrac14\big(\mathbb{C}_{cbda} + \mathbb{C}_{bcda} + \mathbb{C}_{cbad} + \mathbb{C}_{bcad}\big) \p{\phi^L(\bfx)}{x_{d}}\p{\phi^M(\bfx)}{x_{c}}\\[4mm]
+    &= \mathbb{C}_{adbc}\p{\phi^L(\bfx)}{x_{d}}\p{\phi^M(\bfx)}{x_{c}}\\[4mm]
   \end{array}
 \end{equation*}
 %\begin{equation*}

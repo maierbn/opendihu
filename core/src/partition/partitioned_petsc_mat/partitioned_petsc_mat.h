@@ -56,8 +56,15 @@ public:
   template<int nComponents>
   void setValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], const std::vector<std::array<double,nComponents>> &v, InsertMode addv);
 
+  //! set entries in the given submatrix, uses the global/Petsc indexing. This is not the global natural numbering!
+  void setValuesGlobalPetscIndexing(int componentNo, PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], const PetscScalar v[], InsertMode addv);
+
   //! wrapper of MatZeroRowsColumns, zeros all entries (except possibly the main diagonal) of a set of local rows and columns
   void zeroRowsColumns(PetscInt numRows,const PetscInt rows[], PetscScalar diag);
+
+  //! wrapper of MatZeroRowsColumns, zeros all entries (except possibly the main diagonal) of a set of local rows and columns
+  //! this is for a given row / column component
+  void zeroRowsColumns(int rowColumncomponentNo, PetscInt numRows,const PetscInt rows[], PetscScalar diag);
 
   //! wrapper of MatZeroEntries, sets all entries to 0
   void zeroEntries();

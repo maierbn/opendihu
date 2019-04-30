@@ -17,10 +17,40 @@ initializeRhs()
   LOG(TRACE) << "NeumannBoundaryConditions::initializeRhs, D=" << FunctionSpaceType::dim() << ", nComponents=" << nComponents;
   // initialize RHS for mesh dimension 2 or 3, this is the same for nComponents == 1 and nComponents > 1
 
+/*
+  LOG(DEBUG) << "test";
+
+  const int nComponentsTest = 1;
+
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponentsTest>> test = this->data_.functionSpace()->template createFieldVariable<nComponentsTest>("test");
+  test->zeroEntries();
+  test->zeroGhostBuffer();
+  test->setRepresentationGlobal();
+  test->startGhostManipulation();
+  LOG(DEBUG) << "inititalized, test: " << *test;
+
+
+  int ownRankNo = this->data_.functionSpace()->meshPartition()->rankSubset()->ownRankNo();
+  if (ownRankNo == 0)
+  {
+    std::array<double,nComponentsTest> value({10.0});
+    test->setValue(0, value, INSERT_VALUES);
+  }
+  else
+  {
+    std::array<double,nComponentsTest> value({11.0});
+    test->setValue(0, value, INSERT_VALUES);
+  }
+
+  LOG(DEBUG) << "before finishGhostManipulation, test: " << *test;
+  test->finishGhostManipulation();
+
+  LOG(DEBUG) << "after finishGhostManipulation, test: " << *test;*/
+
   this->data_.rhs()->setRepresentationGlobal();
   this->data_.rhs()->zeroEntries();
   this->data_.rhs()->startGhostManipulation();
-  this->data_.rhs()->zeroGhostBuffer();
+  //this->data_.rhs()->zeroGhostBuffer();
 
   typedef typename NeumannBoundaryConditionsBase<FunctionSpaceType,QuadratureType,nComponents>::ElementWithFaces ElementWithFaces;
   typedef FunctionSpace::FunctionSpace<typename FunctionSpaceType::SurfaceMesh,
@@ -121,7 +151,7 @@ initializeRhs()
 
         VecD<nComponents> dofIntegrand = boundaryConditionValueAtXi * functionSpace->phi(surfaceDofIndex, xi) * integrationFactor;
 
-        LOG(DEBUG) << "  surfaceDofIndex " << surfaceDofIndex << ", xi=" << xi << ", BC value: " << boundaryConditionValueAtXi
+        VLOG(2) << "  surfaceDofIndex " << surfaceDofIndex << ", xi=" << xi << ", BC value: " << boundaryConditionValueAtXi
           << " phi = " << functionSpace->phi(surfaceDofIndex, xi) << ", integrationFactor: " << integrationFactor << ", dofIntegrand: " << dofIntegrand;
 
         // store integrand in evaluations array
@@ -165,13 +195,16 @@ initializeRhs()
         // get integrated value
         double integratedValue = integratedValues[i];
 
-        LOG(DEBUG) << "  dof " << dofIndex << ", component " << dofComponent << " integrated value: " << integratedValue;
+        VLOG(2) << "  dof " << dofIndex << ", component " << dofComponent << " integrated value: " << integratedValue;
       }  // dofComponent
 #endif
     }  // dofIndex
   } // elementGlobalNo
 
+
   this->data_.rhs()->finishGhostManipulation();
+
+  VLOG(1) << "after initializeRhs, rhs: " << *this->data_.rhs();
 }
 
 // 1D initializeRhs

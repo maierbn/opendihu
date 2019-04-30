@@ -6,38 +6,18 @@
 namespace SpatialDiscretization
 {
 
-/** partial specialization for finite elasticity, dimension 1
+/** partial specialization for finite elasticity
  */
-template<typename EvaluationsType,typename FunctionSpaceType>
-class IntegrandStiffnessMatrix<1,EvaluationsType,FunctionSpaceType,1,Equation::Static::LinearElasticity>
+template<int D, typename EvaluationsType,typename FunctionSpaceType>
+class IntegrandStiffnessMatrix<D,EvaluationsType,FunctionSpaceType,D,Equation::Static::LinearElasticity>
 {
 public:
-  static EvaluationsType evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,1,Equation::Static::LinearElasticity> &data,
-                                           const std::array<Vec3,1> &jacobian, element_no_t elementNoLocal,
-                                           const std::array<double,1> xi);
-};
-
-/** partial specialization for finite elasticity, dimension 2
- */
-template<typename EvaluationsType,typename FunctionSpaceType>
-class IntegrandStiffnessMatrix<2,EvaluationsType,FunctionSpaceType,2,Equation::Static::LinearElasticity>
-{
-public:
-  static EvaluationsType evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,2,Equation::Static::LinearElasticity> &data,
-                                           const std::array<Vec3,2> &jacobian, element_no_t elementNoLocal,
-                                           const std::array<double,2> xi);
-};
-
-
-/** partial specialization for finite elasticity, dimension 3
- */
-template<typename EvaluationsType,typename FunctionSpaceType>
-class IntegrandStiffnessMatrix<3,EvaluationsType,FunctionSpaceType,3,Equation::Static::LinearElasticity>
-{
-public:
-  static EvaluationsType evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,3,Equation::Static::LinearElasticity> &data,
-                                           const std::array<Vec3,3> &jacobian, element_no_t elementNoLocal,
-                                           const std::array<double,3> xi);
+  static EvaluationsType evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,D,Equation::Static::LinearElasticity> &data,
+                                           const std::array<Vec3,D> &jacobian, element_no_t elementNoLocal,
+                                           const std::array<double,D> xi);
+protected:
+  //! evaluate the stiffness tensor C_abcd
+  static double stiffness(const Data::FiniteElements<FunctionSpaceType,D,Equation::Static::LinearElasticity> &data, int a, int b, int c, int d);
 };
 
 } // namespace

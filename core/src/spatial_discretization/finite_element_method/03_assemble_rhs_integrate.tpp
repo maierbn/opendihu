@@ -94,15 +94,19 @@ multiplyRightHandSideWithMassMatrix()
     {
       for (int j = 0; j < nDofsPerElement; j++)
       {
-        for (int componentNo = 0; componentNo < nComponents; componentNo++)
+        // loop over components (1,...,D for solid mechanics)
+        for (int rowComponentNo = 0; rowComponentNo < nComponents; rowComponentNo++)
         {
-          // integrate value and set entry in stiffness matrix
-          double integratedValue = integratedValues(i*nComponents + componentNo, j*nComponents + componentNo);
+          for (int columnComponentNo = 0; columnComponentNo < nComponents; columnComponentNo++)
+          {
+            // integrate value and set entry in stiffness matrix
+            double integratedValue = integratedValues(i*nComponents + rowComponentNo, j*nComponents + columnComponentNo);
 
-          double value = integratedValue * rhsValues[dofNosLocal[j]][componentNo];
-          VLOG(2) << "  dof pair (" << i<< "," <<j<< "), integrated value: " <<integratedValue << ", rhsValue[" << dofNosLocal[j]<< "]: " << rhsValues[dofNosLocal[j]] << " = " << value;
+            double value = integratedValue * rhsValues[dofNosLocal[j]][columnComponentNo];
+            VLOG(2) << "  dof pair (" << i<< "," <<j<< "), integrated value: " <<integratedValue << ", rhsValue[" << dofNosLocal[j]<< "]: " << rhsValues[dofNosLocal[j]] << " = " << value;
 
-          rightHandSide->setValue(componentNo, dofNosLocal[i], value, ADD_VALUES);
+            rightHandSide->setValue(rowComponentNo, dofNosLocal[i], value, ADD_VALUES);
+          }
         }
       }  // j
     }  // i

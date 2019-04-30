@@ -180,6 +180,8 @@ public:
   //! @param onlyNodalValues: if for Hermite only get every second dof such that derivatives are not returned
   const std::vector<PetscInt> &dofNosLocal(bool onlyNodalValues=false) const;
 
+  // use getDofNoGlobalPetsc(dofNosLocal(), ...) to get dofNosGlobalPetsc
+
   //! get a vector of global natural dof nos of the locally stored non-ghost dofs, needed for setParameters callback function in cellml adapter
   void getDofNosGlobalNatural(std::vector<global_no_t> &dofNosGlobalNatural) const;
 

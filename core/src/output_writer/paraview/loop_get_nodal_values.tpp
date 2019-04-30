@@ -34,7 +34,8 @@ typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value &
 getNodalValues(CurrentFieldVariableType currentFieldVariable, const OutputFieldVariablesType &fieldVariables, std::set<std::string> meshNames,
                std::map<std::string,std::vector<double>> &values)
 {
-  LOG(DEBUG) << "field variable " << StringUtility::demangle(typeid(currentFieldVariable).name()) << " name \"" << currentFieldVariable->name() << "\", is geometry: " << currentFieldVariable->isGeometryField() << ", s" << values.size();
+  VLOG(1) << "field variable " << StringUtility::demangle(typeid(currentFieldVariable).name()) << " name \"" << currentFieldVariable->name()
+    << "\", is geometry: " << currentFieldVariable->isGeometryField() << ", values size: " << values.size();
 
   // if mesh name is one of the specified meshNames (and it is not a geometry field)
   if (meshNames.find(currentFieldVariable->functionSpace()->meshName()) != meshNames.end()

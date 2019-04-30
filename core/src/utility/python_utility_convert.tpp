@@ -80,6 +80,10 @@ struct PythonUtility::convertFromPython<double>
 
       return valueDouble;
     }
+    else if (object == Py_None)
+    {
+      return std::nan("");
+    }
     else if (PyLong_Check(object))
     {
       long valueLong = PyLong_AsLong(object);

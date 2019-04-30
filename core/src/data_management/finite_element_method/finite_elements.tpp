@@ -61,5 +61,25 @@ initialize(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> di
   DiffusionTensorDirectional<FunctionSpaceType>::initialize(direction, spatiallyVaryingPrefactor, useAdditionalDiffusionTensor);
 }
 
+//! initialize, store the reference geometry as copy of the current geometry
+template<typename FunctionSpaceType,int nComponents>
+void FiniteElements<FunctionSpaceType,nComponents,Equation::Static::LinearElasticity>::
+initialize()
+{
+  LinearStiffness<FunctionSpaceType,nComponents>::initialize();
+
+  referenceGeometry_ = std::make_shared<FieldVariable::FieldVariable<FunctionSpaceType,3>>(this->functionSpace_->geometryField());
+}
+
+//! update the geometry of the mesh and function space with the displacements
+template<typename FunctionSpaceType,int nComponents>
+void FiniteElements<FunctionSpaceType,nComponents,Equation::Static::LinearElasticity>::
+updateGeometry()
+{
+  PetscErrorCode ierr;
+
+  // w = alpha * x + y, VecWAXPY(w, alpha, x, y)
+  ierr = VecWAXPY(this->functionSpace_->geometryField()->valuesGlobal(), 1, this->referenceGeometry_->valuesGlobal(), this->solution_->valuesGlobal());
+}
 
 } // namespace Data

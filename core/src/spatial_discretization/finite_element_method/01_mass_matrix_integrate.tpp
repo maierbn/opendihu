@@ -56,9 +56,15 @@ setMassMatrix()
     {
       for (int j = 0; j < nDofsPerElement; j++)
       {
-        for (int componentNo = 0; componentNo < nComponents; componentNo++)
+        // loop over components (1,...,D for solid mechanics)
+        for (int rowComponentNo = 0; rowComponentNo < nComponents; rowComponentNo++)
         {
-          massMatrix->setValue(componentNo, dofNosLocal[i], dofNosLocal[j], 0, INSERT_VALUES);
+          for (int columnComponentNo = 0; columnComponentNo < nComponents; columnComponentNo++)
+          {
+            int componentNo = rowComponentNo*nComponents + columnComponentNo;
+
+            massMatrix->setValue(componentNo, dofNosLocal[i], dofNosLocal[j], 0, INSERT_VALUES);
+          }
         }
       }
     }
@@ -105,12 +111,16 @@ setMassMatrix()
     {
       for (int j = 0; j < nDofsPerElement; j++)
       {
-        for (int componentNo = 0; componentNo < nComponents; componentNo++)
+        for (int rowComponentNo = 0; rowComponentNo < nComponents; rowComponentNo++)
         {
-          // integrate value and set entry in discretization matrix
-          double integratedValue = integratedValues(i*nComponents + componentNo, j*nComponents + componentNo);
+          for (int columnComponentNo = 0; columnComponentNo < nComponents; columnComponentNo++)
+          {
+            // integrate value and set entry in discretization matrix
+            double integratedValue = integratedValues(i*nComponents + rowComponentNo, j*nComponents + columnComponentNo);
+            int componentNo = rowComponentNo*nComponents + columnComponentNo;
 
-          massMatrix->setValue(componentNo, dofNosLocal[i], dofNosLocal[j], integratedValue, ADD_VALUES);
+            massMatrix->setValue(componentNo, dofNosLocal[i], dofNosLocal[j], integratedValue, ADD_VALUES);
+          }
         }
       }  // j
     }  // i

@@ -64,7 +64,8 @@ applyBoundaryConditions()
     neumannBoundaryConditions_ = std::make_shared<NeumannBoundaryConditions<FunctionSpaceType,QuadratureType,nComponents>>(this->context_);
     neumannBoundaryConditions_->initialize(this->specificSettings_, this->data_.functionSpace(), "neumannBoundaryConditions");
   }
-  VLOG(1) << "neumann BC rhs: " << *neumannBoundaryConditions_->rhs();
+  LOG(DEBUG) << "neumann BC rhs: " << *neumannBoundaryConditions_->rhs();
+  LOG(DEBUG) << "rhs: " << *this->data_.rightHandSide();
 
   // add rhs, rightHandSide += -1 * rhs
   PetscErrorCode ierr;

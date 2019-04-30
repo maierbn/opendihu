@@ -25,7 +25,7 @@ config = {
   },
   "ParallelFiberEstimation" : {
     "stlFilename": "../../../testing/system_testing/tests/fibers/meshes/biceps_full.stl",   # this is the input filename
-    "resultFilename": "../../electrophysiology/input/7x7fibers.bin",              # this is the output filename, the numbers <a>x<b> are adjusted automatically
+    "resultFilename": "result_0x0fibers.bin",              # this is the output filename, the numbers <a>x<b> are adjusted automatically
     "bottomZClip":  72.0,                 # 82 (72), bottom z value of the muscle volume to simulate the potential flow in
     "topZClip": 220.0,                    # 250 (220), top z value of the muscle volume
     "finalBottomZClip":  72.0,            # 82 (72), bottom z value of the final fibers, fibers will be cropped and resampled to nNodesPerFiber between finalBottomZClip and finalTopZClip

@@ -95,10 +95,14 @@ Linear::Linear(PythonConfig specificSettings, MPI_Comm mpiCommunicator, std::str
   std::stringstream nIterationsLogKey;
   nIterationsLogKey << "nIterations_" << name_;
   nIterationsLogKey_ = nIterationsLogKey.str();
-
+  
   std::stringstream residualNormLogKey;
   residualNormLogKey << "residualNorm_" << name_;
   residualNormLogKey_ = residualNormLogKey.str();
+  
+  std::stringstream nIterationsTotalLogKey;
+  nIterationsTotalLogKey << "nIterationsTotal_" << name_;
+  nIterationsTotalLogKey_ = nIterationsTotalLogKey.str();
 }
 
 void Linear::parseSolverTypes()
@@ -139,6 +143,14 @@ void Linear::parseSolverTypes()
   {
 	  pcType_ = PCHYPRE;
   }
+  else if (preconditionerType == "none")
+  {
+    pcType_ = PCNONE;
+  }
+  else if (preconditionerType != "none" && preconditionerType != "")
+  {
+    pcType_ = preconditionerType.c_str();
+  }
 
   // all ksp types: https://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/KSP/KSPType.html#KSPType
   kspType_ = KSPGMRES;
@@ -153,6 +165,10 @@ void Linear::parseSolverTypes()
   else if (solverType == "cg")
   {
     kspType_ = KSPCG;
+  }
+  else if (solverType == "bcgs")
+  {
+    kspType_ = KSPBCGS;
   }
   else if (solverType == "preonly")
   {
@@ -187,7 +203,16 @@ void Linear::parseSolverTypes()
   {
 	  kspType_ = KSPFGMRES;
   }
-  
+  else if (solverType == "gmres")
+  {
+    kspType_ = KSPGMRES;
+  }
+  else if (solverType != "")
+  {
+    kspType_ = solverType.c_str();
+  }
+
+>>>>>>> develop
   std::stringstream optionKey;
   optionKey << this->name_ << "_solverType";
   Control::PerformanceMeasurement::setParameter(optionKey.str(), solverType);
@@ -195,6 +220,8 @@ void Linear::parseSolverTypes()
   optionKey.str("");
   optionKey << this->name_ << "_preconditionerType";
   Control::PerformanceMeasurement::setParameter(optionKey.str(), preconditionerType);
+
+  LOG(DEBUG) << "linear solver type: " << solverType << " (" << kspType_ << "), preconditionerType: " << preconditionerType << " (" << pcType_ << ")";
 }
 
 std::shared_ptr<KSP> Linear::ksp()
@@ -206,8 +233,12 @@ void Linear::solve(Vec rightHandSide, Vec solution, std::string message)
 {
   PetscErrorCode ierr;
 
+  Control::PerformanceMeasurement::start(this->durationLogKey_);
+
   // solve the system
   ierr = KSPSolve(*ksp_, rightHandSide, solution); CHKERRV(ierr);
+
+  Control::PerformanceMeasurement::stop(this->durationLogKey_);
 
   // determine meta data
   int numberOfIterations = 0;
@@ -240,8 +271,6 @@ void Linear::solve(Vec rightHandSide, Vec solution, std::string message)
     // compute residual
     ierr = KSPBuildResidual(*ksp_, *temporaryVectorLeft_, *temporaryVectorRight_, &(*residual_)); CHKERRV(ierr);
 
-    LOG(INFO) << "r: " << PetscUtility::getStringVector(*residual_);
-
     // compute norm of residual
     ierr = VecNorm(*residual_, NORM_2, &residualNorm); CHKERRV(ierr);
   }
@@ -255,6 +284,7 @@ void Linear::solve(Vec rightHandSide, Vec solution, std::string message)
   // store parameter values to be logged
   Control::PerformanceMeasurement::setParameter(nIterationsLogKey_, numberOfIterations);
   Control::PerformanceMeasurement::setParameter(residualNormLogKey_, residualNorm);
+  Control::PerformanceMeasurement::countNumber(nIterationsTotalLogKey_, numberOfIterations);
 }
 
 }   //namespace

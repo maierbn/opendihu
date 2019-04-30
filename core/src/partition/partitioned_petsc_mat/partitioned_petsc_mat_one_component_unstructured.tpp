@@ -169,6 +169,33 @@ zeroRowsColumns(PetscInt numRows, const PetscInt rows[], PetscScalar diag)
 
 template<int D, typename BasisFunctionType>
 void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+zeroRows(PetscInt numRows, const PetscInt rows[])
+{
+  if (VLOG_IS_ON(2))
+  {
+    std::stringstream stream;
+    stream << "\"" << this->name_ << "\" zeroRows rows [";
+    for (int i = 0; i < numRows; i++)
+      stream << rows[i] << " ";
+    stream << "]";
+    VLOG(2) << stream.str();
+  }
+
+  PetscErrorCode ierr;
+
+  if (numRows != 0)
+  {
+    // this call is collective, but apparently fails if numRows == 0
+    ierr = MatZeroRowsLocal(this->matrix_, numRows, rows, 0.0, NULL, NULL); CHKERRV(ierr);
+  }
+  else
+  {
+    std::vector<PetscInt> rows = {0};
+    ierr = MatZeroRowsLocal(this->matrix_, 0, rows.data(), 0.0, NULL, NULL); CHKERRV(ierr);
+  }
+}
+template<int D, typename BasisFunctionType>
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
 zeroEntries()
 {
   PetscErrorCode ierr;
@@ -208,6 +235,17 @@ getValuesGlobalPetscIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, cons
 
   // access the global matrix
   ierr = MatGetValues(this->matrix_, m, idxm, n, idxn, v); CHKERRV(ierr);
+}
+
+template<int D, typename BasisFunctionType>
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+setValuesGlobalPetscIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], const PetscScalar v[], InsertMode addv)
+{
+  // this wraps the standard PETSc MatSetValues, for the global indexing, only retrieves locally stored indices
+  PetscErrorCode ierr;
+
+  // access the global matrix
+  ierr = MatSetValues(this->matrix_, m, idxm, n, idxn, v, addv); CHKERRV(ierr);
 }
 
 template<int D, typename BasisFunctionType>

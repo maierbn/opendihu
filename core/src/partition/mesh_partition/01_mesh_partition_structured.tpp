@@ -6,7 +6,7 @@
 
 namespace Partition
 {
-  
+
 template<typename MeshType,typename BasisFunctionType>
 MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 MeshPartition(std::array<global_no_t,MeshType::dim()> nElementsGlobal, std::shared_ptr<RankSubset> rankSubset) :

@@ -175,6 +175,8 @@ config = {
     "physicalExtent": 4.0,
     "dirichletBoundaryConditions": bc,
     "relativeTolerance": 1e-15,
+    "solverType": "gmres",
+    "preconditionerType": "sor",
     "OutputWriter" : [
       {"format": "Paraview", "filename": "out", "outputInterval": 1, "binary": False},
       {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False, "onlyNodalValues": False}
@@ -235,6 +237,8 @@ config = {
     "physicalExtent": [6.0, 4.0],
     "dirichletBoundaryConditions": bc,
     "relativeTolerance": 1e-15,
+    "solverType": "gmres",
+    "preconditionerType": "sor",
     "OutputWriter" : [
       {"format": "Paraview", "filename": "out2d_p2", "outputInterval": 1, "binary": False},
       {"format": "PythonFile", "filename": "out2d_p2", "outputInterval": 1, "binary": False}
@@ -299,6 +303,8 @@ config = {
         "physicalExtent": [6.0, 4.0],
         "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
+        "solverType": "gmres",
+        "preconditionerType": "sor",
         "OutputWriter" : [
           {"format": "Paraview", "filename": "out2d_p1", "outputInterval": 1, "binary": False},
           {"format": "PythonFile", "filename": "out2d_p1", "outputInterval": 1, "binary": False}
@@ -365,6 +371,8 @@ config = {
         "physicalExtent": [6.0, 4.0],
         "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
+        "solverType": "gmres",
+        "preconditionerType": "sor",
         "OutputWriter" : [
           {"format": "Paraview", "filename": "out2d_p1", "outputInterval": 1, "binary": False},
           {"format": "PythonFile", "filename": "out2d_p1", "outputInterval": 1, "binary": False}
@@ -426,6 +434,8 @@ config = {
         "physicalExtent": [2*nx, 2*ny],
         "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
+        "solverType": "gmres",
+        "preconditionerType": "sor",
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
         ]
@@ -482,6 +492,8 @@ config = {
         "physicalExtent": [2*nx, 2*ny],
         "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
+        "solverType": "gmres",
+        "preconditionerType": "sor",
         "OutputWriter" : [
           {"format": "Paraview", "filename": "out", "outputInterval": 1, "binary": False},
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
@@ -547,6 +559,8 @@ config = {
         "physicalExtent": [2*nx, 2*ny],
         "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
+        "solverType": "gmres",
+        "preconditionerType": "sor",
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
         ]
@@ -602,6 +616,8 @@ config = {
         "physicalExtent": [2*nx, 2*ny],
         "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
+        "solverType": "gmres",
+        "preconditionerType": "sor",
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
         ]
@@ -712,6 +728,8 @@ config = {
         "physicalExtent": [2*nx, 2*ny],
         "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
+        "solverType": "gmres",
+        "preconditionerType": "sor",
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
         ]
@@ -817,6 +835,8 @@ config = {
         "physicalExtent": [2*nx, 2*ny],
         "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
+        "solverType": "gmres",
+        "preconditionerType": "sor",
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
         ]
@@ -884,6 +904,8 @@ config = {
         "physicalExtent": [6.0, 4.0],
         "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
+        "solverType": "gmres",
+        "preconditionerType": "sor",
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
         ]
@@ -942,6 +964,8 @@ config = {
         "physicalExtent": [6.0, 4.0],
         "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
+        "solverType": "gmres",
+        "preconditionerType": "sor",
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
         ]
@@ -1010,6 +1034,8 @@ config = {
         "physicalExtent": [6.0, 4.0],
         "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
+        "solverType": "gmres",
+        "preconditionerType": "sor",
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
         ]
@@ -1065,6 +1091,8 @@ config = {
         "physicalExtent": [6.0, 4.0],
         "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
+        "solverType": "gmres",
+        "preconditionerType": "sor",
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
         ]
@@ -1177,6 +1205,8 @@ config = {
         "physicalExtent": [physical_extend_x, physical_extend_y],
         "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
+        "solverType": "gmres",
+        "preconditionerType": "sor",
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
         ]
@@ -1285,6 +1315,8 @@ config = {
         "physicalExtent": [physical_extend_x, physical_extend_y],
         "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
+        "solverType": "gmres",
+        "preconditionerType": "sor",
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
         ]
@@ -1343,6 +1375,8 @@ config = {
         "physicalExtent": [2*nx, 2*ny, 2*nz],
         "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
+        "solverType": "gmres",
+        "preconditionerType": "sor",
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
         ]
@@ -1397,6 +1431,8 @@ config = {
         "physicalExtent": [2*nx, 2*ny, 2*nz],
         "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
+        "solverType": "gmres",
+        "preconditionerType": "sor",
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
         ]
@@ -1514,6 +1550,8 @@ config = {
         "physicalExtent": [physical_extend_x, physical_extend_y, physical_extend_z],
         "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
+        "solverType": "gmres",
+        "preconditionerType": "sor",
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
         ]
@@ -1621,6 +1659,8 @@ config = {
         "physicalExtent": [2*nx, 2*ny, 2*nz],
         "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
+        "solverType": "gmres",
+        "preconditionerType": "sor",
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
         ]
@@ -1680,6 +1720,8 @@ config = {
         "dirichletBoundaryConditions": bc,
         "maxIterations": 1e5,
         "relativeTolerance": 1e-15,
+        "solverType": "gmres",
+        "preconditionerType": "sor",
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
         ]
@@ -1736,6 +1778,8 @@ config = {
         "dirichletBoundaryConditions": bc,
         "maxIterations": 1e5,
         "relativeTolerance": 1e-15,
+        "solverType": "gmres",
+        "preconditionerType": "sor",
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
         ]
@@ -1794,6 +1838,8 @@ config = {
         "physicalExtent": [2*nx, 2*ny, 2*nz],
         "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
+        "solverType": "gmres",
+        "preconditionerType": "sor",
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
         ]
@@ -1848,6 +1894,8 @@ config = {
         "physicalExtent": [2*nx, 2*ny, 2*nz],
         "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
+        "solverType": "gmres",
+        "preconditionerType": "sor",
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
         ]
@@ -1961,6 +2009,8 @@ config = {
         "physicalExtent": [physical_extend_x, physical_extend_y, physical_extend_z],
         "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
+        "solverType": "gmres",
+        "preconditionerType": "sor",
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
         ]
@@ -2067,6 +2117,8 @@ config = {
         "physicalExtent": [2*nx, 2*ny, 2*nz],
         "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
+        "solverType": "gmres",
+        "preconditionerType": "sor",
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
         ]
@@ -2231,6 +2283,8 @@ config = {
         "dirichletBoundaryConditions": bc,
         "maxIterations": 1e5,
         "relativeTolerance": 1e-15,
+        "solverType": "gmres",
+        "preconditionerType": "sor",
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
         ]
@@ -2391,6 +2445,8 @@ config = {
         "dirichletBoundaryConditions": bc,
         "maxIterations": 1e5,
         "relativeTolerance": 1e-15,
+        "solverType": "gmres",
+        "preconditionerType": "sor",
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
         ]

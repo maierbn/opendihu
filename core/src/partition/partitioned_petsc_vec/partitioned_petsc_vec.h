@@ -94,6 +94,8 @@ public:
   //! output the vector to stream, for debugging
   void output(std::ostream &stream);
 
+  void debug(){}
+
 protected:
   
   //! create the values vectors
@@ -211,7 +213,7 @@ public:
   
   //! output the vector to stream, for debugging
   void output(std::ostream &stream);
-  
+
 protected:
  
   //! create a distributed Petsc vector, according to partition

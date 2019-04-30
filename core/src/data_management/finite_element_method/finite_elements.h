@@ -10,6 +10,8 @@
 #include "data_management/finite_element_method/diffusion_tensor_directional.h"
 #include "data_management/finite_element_method/diffusion_tensor_constant.h"
 #include "equation/diffusion.h"
+#include "equation/linear_elasticity.h"
+#include "data_management/finite_element_method/linear_stiffness.h"
 
 namespace Data
 {
@@ -26,7 +28,7 @@ public:
   //! constructor
   using FiniteElementsBase<FunctionSpaceType,nComponents>::FiniteElementsBase;
 
-  // !intialize base class and diffusion tensor
+  //! initialize base class and diffusion tensor
   using FiniteElementsBase<FunctionSpaceType,nComponents>::initialize;
 };
 
@@ -67,24 +69,27 @@ public:
                           bool useAdditionalDiffusionTensor = false);
 };
 
-
-
-/*
-#include "equation/type_traits.h"
-
-template<typename FunctionSpaceType,typename Term>
-class FiniteElements<
-  FunctionSpaceType,
-  Term,
-  Equation::isSolidMechanics<Term>,
-  BasisFunction::isNotMixed<typename FunctionSpaceType::BasisFunction>
-> :
-  public Data<FunctionSpaceType>
+/** for linear elasticity use the class that holds linear elastcity parameters, K and μ
+ */
+template<typename FunctionSpaceType,int nComponents>
+class FiniteElements<FunctionSpaceType,nComponents,Equation::Static::LinearElasticity> :
+  public LinearStiffness<FunctionSpaceType,nComponents>
 {
 public:
-  void tangentStiffnessMatrix();
+  //! constructor
+  using LinearStiffness<FunctionSpaceType,nComponents>::LinearStiffness;
+
+  //! initialize, store the reference geometry as copy of the current geometry
+  void initialize();
+
+  //! update the geometry of the mesh and function space with the displacements
+  void updateGeometry();
+
+protected:
+
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> referenceGeometry_;  //< reference geometry
 };
-*/
+
 }  // namespace
 
 #include "data_management/finite_element_method/finite_elements.tpp"

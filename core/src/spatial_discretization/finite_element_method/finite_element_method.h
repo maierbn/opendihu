@@ -28,7 +28,7 @@ public:
 };
 
 /** partial specialisation for Laplace: has only stiffnessMatrix
- * use inheritage hierarchy until file 03_boundary_conditions.h
+ * use inheritage hierarchy until file 02_boundary_conditions.h
  */
 template<typename MeshType, typename BasisFunctionType, typename QuadratureType, typename Term>
 class FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, Term, Equation::hasNoRhs<Term>, BasisFunction::isNotMixed<BasisFunctionType>> :
@@ -61,17 +61,19 @@ protected:
   void setRightHandSide(){}
 };
 
-/** common class for finite elasticity, not specialized MeshType, BasisFunctionType, for poisson equation/everything that is static, scalar and has a rhs
+/** common class for linear elasticity, not specialized MeshType, BasisFunctionType
  * use inheritage hierarchy until file 04_rhs.h
  */
 template<typename MeshType, typename BasisFunctionType, typename QuadratureType>
-class FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, Equation::Static::LinearElasticity, Equation::hasRhsNoTimestepping<Equation::Static::LinearElasticity>, BasisFunction::isNotMixed<BasisFunctionType>> :
-  public FiniteElementMethodRhs<FunctionSpace::FunctionSpace<MeshType, BasisFunctionType>, QuadratureType, MeshType::dim(), Equation::Static::LinearElasticity>
+class FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, Equation::Static::LinearElasticity, Equation::Static::LinearElasticity, BasisFunction::isNotMixed<BasisFunctionType>> :
+  public BoundaryConditions<FunctionSpace::FunctionSpace<MeshType, BasisFunctionType>, QuadratureType, MeshType::dim(), Equation::Static::LinearElasticity>
 {
 public:
   //! use constructor of base class
-  using FiniteElementMethodRhs<FunctionSpace::FunctionSpace<MeshType, BasisFunctionType>, QuadratureType, MeshType::dim(), Equation::Static::LinearElasticity>::FiniteElementMethodRhs;
+  using BoundaryConditions<FunctionSpace::FunctionSpace<MeshType, BasisFunctionType>, QuadratureType, MeshType::dim(), Equation::Static::LinearElasticity>::BoundaryConditions;
 
+protected:
+  void setRightHandSide(){}
 };
 
 /** common class for scalar equations, not specialized MeshType, BasisFunctionType, for poisson equation/everything that is static, scalar and has a rhs

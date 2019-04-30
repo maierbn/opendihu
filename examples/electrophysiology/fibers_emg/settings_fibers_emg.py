@@ -941,6 +941,22 @@ config = {
           },
           "OutputWriter" : output_writer_emg,
         }
+      },
+      "QuasiStaticLinearElasticitySolver": {
+        "FiniteElementMethod" : {
+          "meshName": "3Dmesh",
+          "solverName": "activationSolver",
+          "prefactor": 1.0,
+          "inputMeshIsGlobal": True,
+          "dirichletBoundaryConditions": {},
+          "neumannBoundaryConditions": [],
+          "bulkModulus": 1.5,
+          "shearModulus": 2.0,
+          "OutputWriter" : [
+            {"format": "Paraview", "outputInterval": 1, "filename": "out/deformation", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
+            {"format": "PythonFile", "filename": "out/deformation", "outputInterval": 1, "binary":False, "onlyNodalValues":True},
+          ]
+        },
       }
     }
   }

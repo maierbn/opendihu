@@ -211,8 +211,7 @@ void Linear::parseSolverTypes()
   {
     kspType_ = solverType.c_str();
   }
-
->>>>>>> develop
+  
   std::stringstream optionKey;
   optionKey << this->name_ << "_solverType";
   Control::PerformanceMeasurement::setParameter(optionKey.str(), solverType);

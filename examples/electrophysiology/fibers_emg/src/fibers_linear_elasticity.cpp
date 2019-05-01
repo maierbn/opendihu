@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
         Control::MultipleInstances<
           TimeSteppingScheme::Heun<                   // fiber reaction term
             CellmlAdapter<
-              4,   // 57 for Hodgkin-Huxley
+              57,1,  // Shorten
               FunctionSpace::FunctionSpace<
                 Mesh::StructuredDeformableOfDimension<1>,
                 BasisFunction::LagrangeOfOrder<1>
@@ -41,18 +41,12 @@ int main(int argc, char *argv[])
         >
       >
     >,
-    TimeSteppingScheme::StaticBidomainSolver<              // bidomain
-      SpatialDiscretization::FiniteElementMethod<       //FEM for initial potential flow, fibre directions
+    TimeSteppingScheme::QuasiStaticLinearElasticitySolver<              // bidomain
+      SpatialDiscretization::FiniteElementMethod<       // linear elasticity
         Mesh::StructuredDeformableOfDimension<3>,
         BasisFunction::LagrangeOfOrder<1>,
         Quadrature::Gauss<3>,
-        Equation::Static::Laplace
-      >,
-      SpatialDiscretization::FiniteElementMethod<       // anisotropic diffusion
-        Mesh::StructuredDeformableOfDimension<3>,
-        BasisFunction::LagrangeOfOrder<1>,
-        Quadrature::Gauss<5>,
-        Equation::Dynamic::DirectionalDiffusion
+        Equation::Static::LinearElasticity
       >
     >
   > problem(settings);

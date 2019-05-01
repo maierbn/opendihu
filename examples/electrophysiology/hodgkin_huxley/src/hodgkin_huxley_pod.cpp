@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
   OperatorSplitting::Godunov<
     ModelOrderReduction::ExplicitEulerReduced<
       TimeSteppingScheme::ExplicitEuler<
-        CellmlAdapter<4>
+        CellmlAdapter<4,9>
       >
     >,
     ModelOrderReduction::ImplicitEulerReduced< //! Diffusion term not to be used with the explicit timestepping. The reduced mass and stiffness matrices are not implemented.

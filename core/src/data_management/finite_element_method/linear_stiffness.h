@@ -15,6 +15,8 @@ public:
   //! constructor
   using FiniteElementsBase<FunctionSpaceType,nComponents>::FiniteElementsBase;
 
+  using FiniteElementsBase<FunctionSpaceType,nComponents>::OutputFieldVariables;
+
   //! initialize stifness parameters, then call the initialize method of the base class
   virtual void initialize();
 
@@ -22,13 +24,16 @@ public:
   double linearStiffness(int a, int b, int c, int d) const;
 
   //! set values for active stress
-  void setActiveStress(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,9>> activeStress);
+  void setActiveStress(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents*nComponents>> activeStress);
+
+  //! get the active stress DxD tensor (row major)
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents*nComponents>> activeStress();
 
 protected:
   double bulkModulus_;   ///< material parameter bulk modulus, symbol K
   double shearModulus_;  ///< material parameter shear modulus, symbol μ
 
-  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,9>> activeStress_;  ///< active stress field variable, this is a 3x3 tensor
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents*nComponents>> activeStress_;  ///< active stress field variable, this is a DxD tensor, stored row-major
 };
 
 }  // namespace

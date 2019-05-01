@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
         Control::MultipleInstances<
           TimeSteppingScheme::Heun<                   // fiber reaction term
             CellmlAdapter<
-              4,   // 57 for Hodgkin-Huxley
+              4, 9,
               FunctionSpace::FunctionSpace<
                 Mesh::StructuredDeformableOfDimension<1>,
                 BasisFunction::LagrangeOfOrder<1>

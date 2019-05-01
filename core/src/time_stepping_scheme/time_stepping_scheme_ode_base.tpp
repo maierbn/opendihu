@@ -60,13 +60,6 @@ setInitialValues()
 }
 
 template<typename FunctionSpaceType, int nComponents>
-typename TimeSteppingSchemeOdeBase<FunctionSpaceType, nComponents>::TransferableSolutionDataType TimeSteppingSchemeOdeBase<FunctionSpaceType, nComponents>::
-getSolutionForTransfer()
-{
-  return data_->getSolutionForTransfer();
-}
-
-template<typename FunctionSpaceType, int nComponents>
 void TimeSteppingSchemeOdeBase<FunctionSpaceType, nComponents>::
 setRankSubset(Partition::RankSubset rankSubset)
 {
@@ -103,14 +96,6 @@ run()
 
   // do simulations
   this->advanceTimeSpan();
-}
-
-//! output the given data for debugging
-template<typename FunctionSpaceType, int nComponents>
-std::string TimeSteppingSchemeOdeBase<FunctionSpaceType, nComponents>::
-getString(typename TimeSteppingSchemeOdeBase<FunctionSpaceType, nComponents>::TransferableSolutionDataType &data)
-{
-  return data_->getString(data);
 }
 
 } // namespace

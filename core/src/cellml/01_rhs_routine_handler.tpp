@@ -16,11 +16,11 @@
 #include <ctime>
 
 // forward declaration
-template <int nStates,typename FunctionSpaceType>
+template <int nStates,int nIntermediates_,typename FunctionSpaceType>
 class CellmlAdapter;
 
-template<int nStates, typename FunctionSpaceType>
-void RhsRoutineHandler<nStates,FunctionSpaceType>::
+template<int nStates, int nIntermediates_, typename FunctionSpaceType>
+void RhsRoutineHandler<nStates,nIntermediates_,FunctionSpaceType>::
 initializeRhsRoutine()
 {
   /* we have the following:
@@ -223,8 +223,8 @@ initializeRhsRoutine()
   loadRhsLibrary(libraryFilename);
 }
 
-template<int nStates, typename FunctionSpaceType>
-bool RhsRoutineHandler<nStates,FunctionSpaceType>::
+template<int nStates, int nIntermediates_, typename FunctionSpaceType>
+bool RhsRoutineHandler<nStates,nIntermediates_,FunctionSpaceType>::
 loadRhsLibrary(std::string libraryFilename)
 {
 
@@ -296,7 +296,7 @@ loadRhsLibrary(std::string libraryFilename)
       {
         LOG(DEBUG) << "call opendihu rhsRoutine, by calling several opencmiss rhs";
 
-        CellmlAdapter<nStates,FunctionSpaceType> *cellmlAdapter = (CellmlAdapter<nStates,FunctionSpaceType> *)context;
+        CellmlAdapter<nStates,nIntermediates_,FunctionSpaceType> *cellmlAdapter = (CellmlAdapter<nStates,nIntermediates_,FunctionSpaceType> *)context;
         int nInstances, nIntermediates, nParameters;
         cellmlAdapter->getNumbers(nInstances, nIntermediates, nParameters);
 
@@ -357,8 +357,8 @@ loadRhsLibrary(std::string libraryFilename)
   return false;
 }
 
-template<int nStates, typename FunctionSpaceType>
-bool RhsRoutineHandler<nStates,FunctionSpaceType>::
+template<int nStates, int nIntermediates_, typename FunctionSpaceType>
+bool RhsRoutineHandler<nStates,nIntermediates_,FunctionSpaceType>::
 createSimdSourceFile(std::string &simdSourceFilename)
 {
   // This method can handle two different types of input c files: from OpenCMISS and from OpenCOR
@@ -459,7 +459,7 @@ createSimdSourceFile(std::string &simdSourceFilename)
         simdSource << std::endl << "/* This function was created by opendihu at " << StringUtility::timeToString(&tm)  //std::put_time(&tm, "%d/%m/%Y %H:%M:%S")
           << ".\n * It is designed for " << this->nInstances_ << " instances of the CellML problem. */" << std::endl
           << "void computeCellMLRightHandSide("
-          << "void *context, double t, double *states, double *rates, double *algebraics, double *parameters)" << std::endl << "{" << std::endl;
+          << "void *context, double t, double *states, double *rates, double *intermediates, double *parameters)" << std::endl << "{" << std::endl;
         discardOpenBrace = true;
 
         simdSource << "  double VOI = t;   /* current simulation time */" << std::endl;
@@ -472,8 +472,8 @@ createSimdSourceFile(std::string &simdSourceFilename)
             simdSource << "  " << constantAssignmentsLine << std::endl;
           }
           simdSource << std::endl
-            << "  double ALGEBRAIC[" << this->nIntermediates_*this->nInstances_ << "];  "
-            << "  /* " << this->nIntermediates_ << " per instance * " << this->nInstances_ << " instances */ " << std::endl;
+            << "  double ALGEBRAIC[" << this->nIntermediatesInSource_*this->nInstances_ << "];  "
+            << "  /* " << this->nIntermediatesInSource_ << " per instance * " << this->nInstances_ << " instances */ " << std::endl;
         }
       }
       // line contains OpenCMISS assignment
@@ -531,8 +531,10 @@ createSimdSourceFile(std::string &simdSourceFilename)
               entry.code = "states";
             else if (entry.code == "OC_RATE" || entry.code == "RATES")
               entry.code = "rates";
-            else if (entry.code == "ALGEBRAIC" || entry.code == "OC_WANTED")
-              entry.code = "algebraics";
+            else if (entry.code == "OC_WANTED")
+              entry.code = "intermediates";
+            else if (entry.code == "ALGEBRAIC")
+              entry.code = "ALGEBRAIC";
             else if (entry.code == "OC_KNOWN")
               entry.code = "parameters";
 
@@ -552,7 +554,7 @@ createSimdSourceFile(std::string &simdSourceFilename)
             }
 
             // check if this is an assignment to a algebraic value that is actually an explicit parameter (set by parametersUsedAsIntermediate)
-            if (entry.code == "algebraics" && i == 0)
+            if (entry.code == "ALGEBRAIC" && i == 0)
             {
               isExplicitParameter = false;
               for (int parameterUsedAsIntermediate : this->parametersUsedAsIntermediate_)
@@ -569,7 +571,7 @@ createSimdSourceFile(std::string &simdSourceFilename)
             }
 
             // replace algebraic by parameter if it is an explicit parameter set by parametersUsedAsIntermediate
-            if (entry.code == "algebraics")
+            if (entry.code == "ALGEBRAIC")
             {
               // loop over all parametersUsedAsIntermediate_
               for (int j = 0; j < this->parametersUsedAsIntermediate_.size(); j++)
@@ -615,13 +617,18 @@ createSimdSourceFile(std::string &simdSourceFilename)
           entries.push_back(entry);
         }
 
+        VLOG(2) << "now generate new code out of it ";
         if (isExplicitParameter)
         {
+          VLOG(2) << "explicit parameter";
+
           simdSource << "  /* explicit parameter */" << std::endl
             << "  /* " << line << "*/" << std::endl;
         }
         else
         {
+          VLOG(2) << "add for with pragmas";
+
           simdSource << std::endl
             << "#ifndef TEST_WITHOUT_PRAGMAS" << std::endl
             << "  #pragma omp for simd" << std::endl
@@ -643,24 +650,37 @@ createSimdSourceFile(std::string &simdSourceFilename)
                 {
                   // constants only exist once for all instances
                   simdSource << entry.code << "[" << entry.arrayIndex<< "]";
+
+                  VLOG(2) << "    (write \"" << entry.code << "[" << entry.arrayIndex<< "]" << "\")";
+                }
+                else if (entry.code == "algebraics")
+                {
+                  LOG(FATAL) << "dniuea";
                 }
                 else
                 {
                   // all other variables (states, rates, intermediates, parameters) exist for every instance
                   simdSource << entry.code << "[" << entry.arrayIndex * this->nInstances_ << "+i]";
+
+                  VLOG(2) << "    (write \"" << entry.code << "[" << entry.arrayIndex * this->nInstances_ << "+i]" << "\")";
                 }
                 break;
               case entry_t::other:
+
+                VLOG(2) << "    (write \"" << entry.code << "\")";
+
                 simdSource << entry.code;
                 break;
             }
           }
+          VLOG(2) << "write end of for loop (closing })";
           simdSource << std::endl << "  }" << std::endl;
         }
       }
       // every other line
       else
       {
+        VLOG(2) << "line is not special, copy: [" << line << "]";
         simdSource << line << std::endl;
       }
     }
@@ -700,10 +720,11 @@ createSimdSourceFile(std::string &simdSourceFilename)
 }
 
 // given a normal cellml source file for rhs routine, create a third file for gpu acceleration. @return: if successful
-template<int nStates, typename FunctionSpaceType>
-bool RhsRoutineHandler<nStates,FunctionSpaceType>::
+template<int nStates, int nIntermediates_, typename FunctionSpaceType>
+bool RhsRoutineHandler<nStates,nIntermediates_,FunctionSpaceType>::
 createGPUSourceFile(std::string &gpuSourceFilename)
 {
+  LOG(FATAL) << "createGPUSourceFile";
   // This method can handle two different types of input c files: from OpenCMISS and from OpenCOR
   // Method creates gpuSourceFile for a freely choosable but fix  number of instances and sets name of string gpuSourceFilename
 
@@ -816,8 +837,8 @@ createGPUSourceFile(std::string &gpuSourceFilename)
             gpuSource << "  " << constantAssignmentsLine << std::endl;
           }
           gpuSource << std::endl
-            << "  double ALGEBRAIC[" << this->nIntermediates_*this->nInstances_ << "];  "
-            << "  /* " << this->nIntermediates_ << " per instance * " << this->nInstances_ << " instances */ " << std::endl;
+            << "  double ALGEBRAIC[" << this->nIntermediatesInSource_*this->nInstances_ << "];  "
+            << "  /* " << this->nIntermediatesInSource_ << " per instance * " << this->nInstances_ << " instances */ " << std::endl;
         }
       }
       // line contains OpenCMISS assignment
@@ -1038,15 +1059,17 @@ createGPUSourceFile(std::string &gpuSourceFilename)
   return true;
 }
 
-template<int nStates, typename FunctionSpaceType>
-bool RhsRoutineHandler<nStates,FunctionSpaceType>::
+template<int nStates, int nIntermediates_, typename FunctionSpaceType>
+bool RhsRoutineHandler<nStates,nIntermediates_,FunctionSpaceType>::
 scanSourceFile(std::string sourceFilename, std::array<double,nStates> &statesInitialValues)
 {
   LOG(TRACE) << "scanSourceFile";
 
-  // parse source file, set initial values for states (only one instance) and nParameters_, nConstants_ and nIntermediates_
+  // parse source file, set initial values for states (only one instance) and nParameters_, nConstants_ and nIntermediatesInSource_
 
   this->inputFileTypeOpenCMISS_ = true;   //< if the input file that is being parsed is from OpenCMISS and not from OpenCOR
+
+  int nAlgebraicInSource = 0;
 
   // read in source from file
   std::ifstream sourceFile(sourceFilename.c_str());
@@ -1124,16 +1147,22 @@ scanSourceFile(std::string sourceFilename, std::array<double,nStates> &statesIni
         double value = atof(line.substr(line.find("= ")+2).c_str());
         statesInitialValues[index] = value;
       }
-      else if (line.find("ALGEBRAIC[") == 0)  // assignment to an algebraic variable in both OpenCMISS and OpenCOR generated files
+      else if (line.find("ALGEBRAIC[") == 0)  // assignment to an algebraic variable in both OpenCMISS and OpenCOR generated files, in OpenCMISS generated files, this does not count towards the algebraic variables that are hold by opendihu
       {
         int algebraicIndex = atoi(line.substr(10,line.find("]",10)-10).c_str());
-        this->nIntermediates_ = std::max(this->nIntermediates_, algebraicIndex+1);
+        nAlgebraicInSource = std::max(nAlgebraicInSource, algebraicIndex+1);
       }
       else if (line.find("OC_KNOWN[") != std::string::npos)  // usage of a parameter variable in OpenCMISS generated file
       {
         std::string substr(line.substr(line.find("OC_KNOWN[")+9,line.find("]",line.find("OC_KNOWN[")+9)-line.find("OC_KNOWN[")-9));
         int index = atoi(substr.c_str());
         this->nParameters_ = std::max(this->nParameters_, index+1);
+      }
+      else if (line.find("OC_WANTED[") != std::string::npos)  // usage of a algebraic/wanted variable in OpenCMISS generated file
+      {
+        std::string substr(line.substr(line.find("OC_WANTED[")+10,line.find("]",line.find("OC_WANTED[")+10)-line.find("OC_WANTED[")-10));
+        int index = atoi(substr.c_str());
+        this->nIntermediatesInSource_ = std::max(this->nIntermediatesInSource_, index+1);
       }
       else if (line.find("CONSTANTS[") != std::string::npos)  // usage of a constant
       {
@@ -1154,5 +1183,14 @@ scanSourceFile(std::string sourceFilename, std::array<double,nStates> &statesIni
       }
     }
   }
+
+  // for OpenCMISS generated files, the number of intermediates is correctly parsed as number of OC_WANTED variables, which is different from the number of ALGEBRAIC variables.
+  // for OpenCOR generated files, the number of intermediates is the number of ALGEBRAIC variables.
+  if (!this->inputFileTypeOpenCMISS_)
+  {
+    this->nIntermediatesInSource_ = nAlgebraicInSource;
+  }
+
+
   return true;
 }

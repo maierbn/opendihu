@@ -399,6 +399,11 @@ setValues(int componentNo, const std::vector<dof_no_t> &dofNosLocal, const std::
 {
   assert(componentNo >= 0 && componentNo < nComponents);
   assert(this->values_);
+  if (values.size() < dofNosLocal.size())
+  {
+    LOG(FATAL) << "FieldVariable::setValues: trying to set " << dofNosLocal.size() << " values but only " << values.size() << " given.";
+  }
+  assert(values.size() >= dofNosLocal.size());
 
   // set the values for the given component
   this->values_->setValues(componentNo, dofNosLocal.size(), dofNosLocal.data(), values.data(), petscInsertMode);

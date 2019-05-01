@@ -6,6 +6,8 @@
 #include "data_management/finite_element_method/finite_elements.h"
 #include "control/dihu_context.h"
 #include "partition/rank_subset.h"
+#include "equation/linear_elasticity.h"
+#include "data_management/specialized_solver/quasi_static_linear_elasticity.h"
 
 namespace TimeSteppingScheme
 {
@@ -18,10 +20,17 @@ class QuasiStaticLinearElasticitySolver :
 {
 public:
   typedef typename FiniteElementMethod::FunctionSpace FunctionSpace;
-  typedef typename Data::FiniteElements<typename FiniteElementMethodDiffusion::FunctionSpace,3,Equation::Static::LinearElasticity> DataLinearElasticityType;
-  typedef Data::QuasiStaticLinearElasticitySolver<DataLinearElasticityType> Data;
-  typedef typename FiniteElementsData::FieldVariableType FieldVariableType;
+  typedef typename Data::FiniteElements<FunctionSpace,3,Equation::Static::LinearElasticity> DataLinearElasticityType;
+  typedef Data::QuasiStaticLinearElasticity<DataLinearElasticityType> Data;
+  typedef FieldVariable::FieldVariable<FunctionSpace,1> FieldVariableType;
   typedef std::shared_ptr<FieldVariableType> TransferableSolutionDataType;
+
+  typedef SpatialDiscretization::FiniteElementMethod<       //FEM for initial potential flow, fiber directions
+        Mesh::StructuredDeformableOfDimension<3>,
+        BasisFunction::LagrangeOfOrder<1>,
+        Quadrature::Gauss<3>,
+        Equation::Static::Laplace
+  > FiniteElementMethodPotentialFlow;
 
   //! constructor
   QuasiStaticLinearElasticitySolver(DihuContext context);
@@ -56,11 +65,15 @@ public:
 
 protected:
 
+  // from the activation scalar field (symbol gamma), compute the active stress tensor field in fiber direction
+  void computeActiveStress();
+
   DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
 
   OutputWriter::Manager outputWriterManager_; ///< manager object holding all output writer
   Data data_;                 ///< data object
 
+  FiniteElementMethodPotentialFlow finiteElementMethodPotentialFlow_;   ///< the finite element object that is used for the Laplace problem of the potential flow, needed for the fiber directions
   FiniteElementMethod finiteElementMethodLinearElasticity_;   ///< the finite element object that solves the linear elasticity equation
 
   std::string durationLogKey_;   ///< key with with the duration of the computation is written to the performance measurement log
@@ -68,8 +81,10 @@ protected:
   bool initialized_;   ///< if this object was already initialized
   PythonConfig specificSettings_;    ///< python object containing the value of the python config dict with corresponding key
   double endTime_;     ///< end time of current time step
+  double maximumActiveStress_;    ///< parameter value of the maximum active stress, this is the scaling factor of the activation value to get the active stress tensor
+  double strainScalingCurveWidth_;   ///< width of a parabola that scales the stress dependend on the relative sarcomere length
 };
 
 }  // namespace
 
-#include "specialized_solver/quasi_static_linear_elasticity.tpp"
+#include "specialized_solver/quasi_static_linear_elasticity_solver.tpp"

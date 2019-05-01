@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
   
   OperatorSplitting::Strang<
     TimeSteppingScheme::Heun<
-      CellmlAdapter<4>
+      CellmlAdapter<4,9>
     >,
     TimeSteppingScheme::CrankNicolson<
       SpatialDiscretization::FiniteElementMethod<

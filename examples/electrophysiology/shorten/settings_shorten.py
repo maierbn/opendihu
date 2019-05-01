@@ -5,13 +5,13 @@
 
 import sys
 
-end_time = 200.0   # [ms] end time of simulation
+end_time = 100.0   # [ms] end time of simulation
 n_elements = 100
 
 # global parameters
 PMax = 7.3              # maximum stress [N/cm^2]
 Conductivity = 3.828    # sigma, conductivity [mS/cm
-Conductivity *= 10
+Conductivity *= 2
 Am = 500.0              # surface area to volume ratio [cm^-1]
 Cm = 0.58               # membrane capacitance [uF/cm^2]
 innervation_zone_width = 0.  # cm
@@ -28,6 +28,7 @@ dt_1D = 0.004                      # timestep width of diffusion
 dt_0D = 0.002                     # timestep width of ODEs
 dt_3D = dt_1D                      # overall timestep width of splitting
 
+output_timestep = 4e-1             # timestep for output files
 output_timestep = 1e-1             # timestep for output files
 
 # input files
@@ -40,8 +41,8 @@ fibre_file = "../../input/laplace3d_structured_linear"
 #fibre_file = "../../input1000/laplace3d_structured_quadratic"
 
 fibre_distribution_file = "../../input/MU_fibre_distribution_3780.txt"
-#firing_times_file = "../../input/MU_firing_times_real.txt"
-firing_times_file = "../../input/MU_firing_times_immediately.txt"
+firing_times_file = "../../input/MU_firing_times_real.txt"
+#firing_times_file = "../../input/MU_firing_times_immediately.txt"
 
 # import needed packages
 import sys
@@ -173,7 +174,7 @@ def set_specific_states(n_nodes_global, time_step_no, current_time, states, fibr
     nodes_to_stimulate_global = [innervation_node_global]
 
     for node_no_global in nodes_to_stimulate_global:
-      states[(node_no_global,0,0)] = 20.0   # key: ((x,y,z),nodal_dof_index,state_no)
+      states[(node_no_global,0,0)] = 30.0   # key: ((x,y,z),nodal_dof_index,state_no)
 
 # callback function from output writer
 def callback(data, shape, nEntries, dim, timeStepNo, currentTime, null):
@@ -244,7 +245,7 @@ config = {
       },
     },
     "Term2": {     # Diffusion
-      "ImplicitEuler" : {
+      "ExplicitEuler" : {
         "initialValues": [],
         "timeStepWidth": dt_1D,
         "timeStepOutputInterval": 1e4,
@@ -309,7 +310,7 @@ config = {
         },
         
         "OutputWriter" : [
-          #{"format": "PythonFile", "outputInterval": 1e4, "filename": "out/states", "binary": True},
+          {"format": "PythonFile", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/states", "binary": True},
         ],
       },
     },
@@ -330,8 +331,8 @@ config = {
           "solverName": "implicitSolver",
         },
         "OutputWriter" : [
-          #{"format": "PythonFile", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/strang", "binary": True, "onlyNodalValues": False},
-          {"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/strang", "binary": True, "fixedFormat": False, "combineFiles": True},
+          {"format": "PythonFile", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/strang", "binary": True, "onlyNodalValues": False},
+          #{"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/strang", "binary": True, "fixedFormat": False, "combineFiles": True},
           #{"format": "ExFile", "filename": "out/fibre", "outputInterval": 1e5, "sphereSize": "0.02*0.02*0.02"},
         ],
       },

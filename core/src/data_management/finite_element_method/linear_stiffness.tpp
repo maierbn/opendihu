@@ -38,10 +38,17 @@ linearStiffness(int a, int b, int c, int d) const
 //! set values for active stress
 template<typename FunctionSpaceType,int nComponents>
 void LinearStiffness<FunctionSpaceType,nComponents>::
-setActiveStress(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,9>> activeStress)
+setActiveStress(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents*nComponents>> activeStress)
 {
   activeStress_ = activeStress;
 }
 
+  //! get the active stress DxD tensor (row major)
+template<typename FunctionSpaceType,int nComponents>
+std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents*nComponents>> LinearStiffness<FunctionSpaceType,nComponents>::
+activeStress()
+{
+  return activeStress_;
+}
 
 }  // namespace

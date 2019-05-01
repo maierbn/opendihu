@@ -297,6 +297,7 @@ generateBoundaryConditionsByComponent()
   if (nComponents == 1)
   {
     boundaryConditionsByComponent_[0].dofNosLocal = boundaryConditionNonGhostDofLocalNos_;
+    boundaryConditionsByComponent_[0].values.resize(boundaryConditionValues_.size());
     for (int i = 0; i < boundaryConditionValues_.size(); i++)
     {
       boundaryConditionsByComponent_[0].values[i] = boundaryConditionValues_[i][0];

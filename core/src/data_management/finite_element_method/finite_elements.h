@@ -79,11 +79,17 @@ public:
   //! constructor
   using LinearStiffness<FunctionSpaceType,nComponents>::LinearStiffness;
 
+  typedef FunctionSpaceType FunctionSpace;
+  using LinearStiffness<FunctionSpaceType,nComponents>::OutputFieldVariables;
+
   //! initialize, store the reference geometry as copy of the current geometry
   void initialize();
 
   //! update the geometry of the mesh and function space with the displacements
   void updateGeometry();
+
+  //! compute the strain from the current displacement (which is the solution field variable)
+  void computeStrain(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents*nComponents>> strain);
 
 protected:
 

@@ -37,7 +37,7 @@ FieldVariableDataStructured(FieldVariable<FunctionSpaceType,nComponents> &rhs, s
   // create new distributed petsc vec as copy of rhs values vector
   if (rhs.partitionedPetscVec())
   {
-    // if rhs is not a geometry field an therefore has a partitionedPetscVec, use that
+    // if rhs is not a geometry field and therefore has a partitionedPetscVec, use that
     this->values_ = std::make_shared<PartitionedPetscVec<FunctionSpaceType,nComponents>>(*rhs.partitionedPetscVec(), name);
   }
   else

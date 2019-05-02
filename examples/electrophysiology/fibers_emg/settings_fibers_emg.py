@@ -623,7 +623,7 @@ for i in range(n_points_3D_mesh_global_x*n_points_3D_mesh_global_y):
 nx = n_points_3D_mesh_global_x-1
 ny = n_points_3D_mesh_global_y-1
 nz = n_points_3D_mesh_global_z-1
-linear_elasticity_neumann_bc = [{"element": k*nx*ny + j*nx + nx-1, "constantVector": [0.0,0.0,-1.0], "face": "1-"} for k in range(nz) for j in range(ny)]
+linear_elasticity_neumann_bc = [{"element": k*nx*ny + j*nx + nx-1, "constantVector": [0.0,0.0,-1.0], "face": "2-"} for k in range(nz) for j in range(ny)]
 
     
 if debug_output:

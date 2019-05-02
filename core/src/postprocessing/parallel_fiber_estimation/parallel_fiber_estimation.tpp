@@ -10,9 +10,9 @@
 
 // write or load various checkpoints, this is for debugging to only run part of the algorithm on prescribed data
 //#define USE_CHECKPOINT_BORDER_POINTS
-//#define USE_CHECKPOINT_MESH
-#define WRITE_CHECKPOINT_MESH
-#define WRITE_CHECKPOINT_BORDER_POINTS
+#define USE_CHECKPOINT_MESH
+//#define WRITE_CHECKPOINT_MESH
+//#define WRITE_CHECKPOINT_BORDER_POINTS
 //#define WRITE_CHECKPOINT_GHOST_MESH
 //#define USE_CHECKPOINT_GHOST_MESH
 
@@ -680,7 +680,9 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
   std::iota(ranks.begin(), ranks.end(), 0);
   currentRankSubset_ = std::make_shared<Partition::RankSubset>(ranks.begin(), ranks.end(), context_.rankSubset());
 
-  LOG(DEBUG) << "refineSubdomainsOnThisRank: " << refineSubdomainsOnThisRank << ", rankSubset: " << *currentRankSubset_;
+  // sendBorderPoints and receiveBorderPoints need the same level
+  determineLevel();
+  LOG(DEBUG) << "new currentRankSubset_ created, refineSubdomainsOnThisRank: " << refineSubdomainsOnThisRank << ", rankSubset: " << *currentRankSubset_ << ", new level: " << level_;
 
   // send border points to ranks that will handle the new subdomains
   std::vector<MPI_Request> sendRequests;
@@ -689,8 +691,6 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
   {
     sendBorderPoints(borderPointsSubdomain, sendBuffers, sendRequests);
   }
-
-  determineLevel();
 
   // receive border points
   std::array<std::vector<std::vector<Vec3>>,4> borderPointsNew;

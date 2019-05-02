@@ -45,10 +45,6 @@ adjustFilename(std::string &filename, int nFibersX)
       {
         xFound = true;
       }
-      else
-      {
-        break;
-      }
     }
   }
 

@@ -397,6 +397,10 @@ setGeometryFieldValues()
   this->geometryField_->setValuesWithoutGhosts(geometryValues);
   this->geometryField_->finishGhostManipulation();
 
+  this->geometryField_->startGhostManipulation();
+  this->geometryField_->zeroGhostBuffer();
+  this->geometryField_->finishGhostManipulation();
+
   // initialize Hermite derivative dofs such that geometry fields becomes "even"
   bool setHermiteDerivatives = false;
   if (std::is_same<BasisFunctionType,BasisFunction::Hermite>::value)

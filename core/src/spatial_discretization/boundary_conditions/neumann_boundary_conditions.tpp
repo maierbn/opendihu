@@ -52,6 +52,8 @@ initializeRhs()
   this->data_.rhs()->startGhostManipulation();
   //this->data_.rhs()->zeroGhostBuffer();
 
+  LOG(DEBUG) << "after startGhostManipulation, rhs: " << *this->data_.rhs();
+
   typedef typename NeumannBoundaryConditionsBase<FunctionSpaceType,QuadratureType,nComponents>::ElementWithFaces ElementWithFaces;
   typedef FunctionSpace::FunctionSpace<typename FunctionSpaceType::SurfaceMesh,
                                        typename FunctionSpaceType::BasisFunction::BasisFunctionUsingOnlyNodalValues>
@@ -202,9 +204,11 @@ initializeRhs()
   } // elementGlobalNo
 
 
+  LOG(DEBUG) << "before finishGhostManipulation, rhs: " << *this->data_.rhs();
   this->data_.rhs()->finishGhostManipulation();
 
   VLOG(1) << "after initializeRhs, rhs: " << *this->data_.rhs();
+  LOG(DEBUG) << "after initializeRhs, rhs: " << *this->data_.rhs();
 }
 
 // 1D initializeRhs

@@ -9,16 +9,16 @@ import sys
 
 local = True
 
-nx = 3
-ny = 3
-nz = 3
+nx = 4
+ny = 4
+nz = 4
 
 
 # Neumann boundary conditions
 bc = []
 
 # global boundary conditions
-if not local:   
+if not local:
   for j in range(int(ny)):
     for i in range(int(nx)):
       x = i/nx
@@ -51,7 +51,7 @@ if local:
     #if rank_no == 0:
     #  n_elements = [2,2,3]
 
-  nRanksPerCoordinateDirection = [2,2,1]
+  nRanksPerCoordinateDirection = [2,2,2]
 
   # boundary conditions
   bc = []
@@ -61,11 +61,11 @@ if local:
       y = j/ny
       element_no = int(j*nx + i)
       
-      #if rank_no == 0:
-      bc.append({"element": element_no, "constantValue": -1.0, "face": "2-"})
+      if rank_no < 4:
+        bc.append({"element": element_no, "constantValue": -1.0, "face": "2-"})
         
-      #if rank_no == n_ranks-1:
-      bc.append({"element": -(nx*ny)+element_no, "constantValue": 1.0, "face": "2+"})
+      if rank_no >= n_ranks-4:
+        bc.append({"element": -(nx*ny)+element_no, "constantValue": 1.0, "face": "2+"})
 
 config = {
   "FiniteElementMethod" : {

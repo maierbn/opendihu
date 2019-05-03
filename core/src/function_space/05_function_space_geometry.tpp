@@ -27,6 +27,8 @@ getElementGeometry(element_no_t elementNoLocal, std::array<Vec3, FunctionSpaceBa
     LOG(ERROR) << "FunctionSpace::getElementGeometry elementNoLocal: " << elementNoLocal << ", nElementsLocal: " << this->nElementsLocal();
   assert (elementNoLocal < this->nElementsLocal());
 
+  //TODO: put this somewhere else
+  this->geometryField_->startGhostManipulation();
   this->geometryField_->getElementValues(elementNoLocal, values);
 }
 

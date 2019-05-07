@@ -666,20 +666,9 @@ applyInRightHandSide(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceT
     ierr = VecAXPY(rightHandSide->valuesGlobal(), 1, boundaryConditionsRightHandSideSummand->valuesGlobal()); CHKERRV(ierr);
   }
 
-<<<<<<< HEAD
-  //LOG(DEBUG) << "rightHandSide after update summand: " << *rightHandSide;
-
   // set boundary condition dofs to prescribed values, only non-ghost dofs
   rightHandSide->setValues(this->boundaryConditionNonGhostDofLocalNos_,
                           this->boundaryConditionValues_, INSERT_VALUES);
-
-
-  //LOG(DEBUG) << "rightHandSide after set values: " << *rightHandSide;
-=======
-  // set boundary condition dofs to prescribed values, only non-ghost dofs
-  rightHandSide->setValues(this->boundaryConditionNonGhostDofLocalNos_,
-                          this->boundaryConditionValues_, INSERT_VALUES);
->>>>>>> n0
 }
 
 

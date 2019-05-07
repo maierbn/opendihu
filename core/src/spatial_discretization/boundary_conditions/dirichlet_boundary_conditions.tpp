@@ -507,8 +507,6 @@ applyInSystemMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> syst
 
   VLOG(1) << ownGhostElements_.size() << " ghost elements";
 
-  double debugValue = 0;
-
   // loop over ghost elements
   for (typename std::vector<GhostElement>::iterator ghostElementIter = ownGhostElements_.begin(); ghostElementIter != ownGhostElements_.end(); ghostElementIter++)
   {
@@ -630,8 +628,8 @@ applyInSystemMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> syst
     VLOG(1) << " after set values at " << rowDofNosLocal << ": " << *boundaryConditionsRightHandSideSummand;
   }
 
-  LOG(DEBUG) << "sum: " << debugValue;
-  LOG(DEBUG) << "rhs summand afterwards: " << *boundaryConditionsRightHandSideSummand;
+  //LOG(DEBUG) << "sum: " << debugValue;
+  //LOG(DEBUG) << "rhs summand afterwards: " << *boundaryConditionsRightHandSideSummand;
   VLOG(1) << "rhs summand afterwards: " << *boundaryConditionsRightHandSideSummand;
 
 
@@ -660,8 +658,8 @@ applyInRightHandSide(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceT
 {
   //LOG(TRACE) << "DirichletBoundaryConditionsBase::applyInRightHandSide";
 
-  LOG(DEBUG) << "applyInRightHandSide: rightHandSide=" << *rightHandSide;
-  LOG(DEBUG) << "boundaryConditionsRightHandSideSummand=" << *boundaryConditionsRightHandSideSummand;
+  //LOG(DEBUG) << "applyInRightHandSide: rightHandSide=" << *rightHandSide;
+  //LOG(DEBUG) << "boundaryConditionsRightHandSideSummand=" << *boundaryConditionsRightHandSideSummand;
 
   if (rightHandSide != boundaryConditionsRightHandSideSummand)
   {
@@ -670,14 +668,14 @@ applyInRightHandSide(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceT
     ierr = VecAXPY(rightHandSide->valuesGlobal(), 1, boundaryConditionsRightHandSideSummand->valuesGlobal()); CHKERRV(ierr);
   }
 
-  LOG(DEBUG) << "rightHandSide after update summand: " << *rightHandSide;
+  //LOG(DEBUG) << "rightHandSide after update summand: " << *rightHandSide;
 
   // set boundary condition dofs to prescribed values, only non-ghost dofs
   rightHandSide->setValues(this->boundaryConditionNonGhostDofLocalNos_,
                           this->boundaryConditionValues_, INSERT_VALUES);
 
 
-  LOG(DEBUG) << "rightHandSide after set values: " << *rightHandSide;
+  //LOG(DEBUG) << "rightHandSide after set values: " << *rightHandSide;
 }
 
 

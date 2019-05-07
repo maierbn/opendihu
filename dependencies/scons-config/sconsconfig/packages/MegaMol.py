@@ -37,14 +37,16 @@ class MegaMol(Package):
 
     # download and so on
     self.set_build_handler([
-      'mkdir -p ${PREFIX} && mkdir -p ${DEPENDENCIES_DIR}/megamol/ospray',
+      'mkdir -p ${PREFIX} && mkdir -p ${DEPENDENCIES_DIR}/megamol/ospray',  # create folders
+      'git clone https://github.com/embree/embree.git embree && cd embree && git checkout v3.5.2 && mkdir build && cd build && cmake -DCMAKE_C_COMPILER='+ctx.env["cc"]+' -DCMAKE_CXX_COMPILER='+ctx.env["CC"]+' -DEMBREE_ISPC_SUPPORT=OFF -DEMBREE_TUTORIALS=OFF -DCMAKE_INSTALL_PREFIX=${PREFIX} .. && make && make install', # build embree
+      'git clone https://github.com/ospray/ospray.git ospray && cd ospray && git checkout v1.8.5 && mkdir build && cd build && cmake -DCMAKE_C_COMPILER='+ctx.env["cc"]+' -DCMAKE_CXX_COMPILER='+ctx.env["CC"]+' -DEMBREE_DIR=${PREFIX} -DCMAKE_INSTALL_PREFIX=${PREFIX} .. && make && make install', # build ospray
       "sed -i 's|int megamol_main(int argc, char\* argv\[\]) {|int main(int argc, char\* argv\[\]) {|g' ${SOURCE_DIR}/console/src/Console.cpp",  # reverse eventual change to Console.cpp
       'cd ${SOURCE_DIR} && mkdir -p build && cd build && \
       '+ctx.env["cmake"]+' -DCMAKE_INSTALL_PREFIX=${PREFIX} -DUSE_MPI=ON -DMPI_GUESS_LIBRARY_NAME= -DADIOS2_DIR=${DEPENDENCIES_DIR}/adios/install/lib/cmake/adios2 \
       -DBUILD_CINEEMATICCAMERA_PLUGIN=OFF -DBUILD_GEOMETRY_CALLS_PLUGIN=ON -DBUILD_GUI_PLUGIN=OFF -DBUILD_IMAGEVIEWER2_PLUGIN=OFF -DBUILD_IMAGE_CALLS_PLUGIN=OFF -DBUILD_INFOVIS_PLUGIN=OFF -DBUILD_MDAO2_PLUGIN=OFF \
       -DBUILD_MMSTD_MOLDYN_PLUGIN=OFF -DBUILD_MMSTD_TRISOUP_PLUGIN=OFF -DBUILD_MMSTD_VOLUME_PLUGIN=OFF -DBUILD_PROTEIN_PLUGIN=OFF -DBUILD_PWDEMOS_PLUGIN=OFF -DBUILD_MWDEMOS_PLUGIN=OFF -DBUILD_PROTEIN_CALLS_PLUGIN=OFF -DUSE_LIBUNWIND=OFF \
       -DUSE_EXTERNAL_ADIOS=ON \
-      -DBUILD_OSPRAY_PLUGIN=ON -DBUILD_PBS_PLUGIN=ON -DOSPRAY_DIR=${DEPENDENCIES_DIR}/megamol/ospray \
+      -DBUILD_OSPRAY_PLUGIN=ON -DBUILD_PBS_PLUGIN=ON -Dospray_DIR=${PREFIX} \
       CXXFLAGS="-Wno-int-in-bool-context -Wno-endif-labels -Wno-reorder -Wno-pedantic" .. \
       && make && make install',
       "cp ${SOURCE_DIR}/console/src/Console.cpp ${SOURCE_DIR}/console/src/Console.cpp.backup && \

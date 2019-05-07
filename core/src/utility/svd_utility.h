@@ -21,6 +21,10 @@ class SvdUtility
 
   static void getSVD(double _Complex input[], int rows, int cols, double _Complex leftSingVec[], double sigma[], double _Complex rightSingVecT[]);
 
+  static void reconstructSnapshots(int rows, int cols, double leftSingVec[], double sigma[], double rightSingVecT[], double output[]);
+  
+  static void printMatrix(std::string name, double input[], int rows, int cols);
+  
   static vector<double> readCSV(string filename);
 
   static vector<double> readCSV(string filename, int rows);

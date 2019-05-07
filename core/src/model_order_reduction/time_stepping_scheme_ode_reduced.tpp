@@ -68,7 +68,7 @@ namespace ModelOrderReduction
     }
     
     this->data_ = std::make_shared <::Data::TimeStepping<::FunctionSpace::Generic,1>>(context); // create data object
-
+    
   }
 
   template<typename TimeSteppingType>
@@ -78,6 +78,8 @@ namespace ModelOrderReduction
     
     Vec &solution = this->fullTimestepping_.data().solution()->getValuesContiguous();
     Vec &redSolution= this->data().solution()->valuesGlobal();
+    LOG(DEBUG) << "data solution: " << *this->data().solution();
+    
     Mat &basisTransp = this->dataMOR_->basisTransp()->valuesGlobal();
     
     PetscInt mat_sz_1, mat_sz_2;
@@ -114,8 +116,8 @@ namespace ModelOrderReduction
     this->dataMOR_->setFunctionSpace(this->functionSpaceRed);
     this->dataMOR_->setFunctionSpaceRows(this->functionSpaceRowsSnapshots);
     
-    assert(functionSpaceRowsSnapshots->meshPartition());   // assert that the function space was retrieved correctly
-    this->data_->setFunctionSpace(functionSpaceRowsSnapshots);
+    assert(functionSpaceRed->meshPartition());   // assert that the function space was retrieved correctly
+    this->data_->setFunctionSpace(functionSpaceRed);
     this->data().setOutputComponentNo(0);
     this->data_->initialize();
     

@@ -5,7 +5,7 @@
 
 import sys
 
-end_time = 20   # [ms] end time of simulation
+end_time = 5   # [ms] end time of simulation
 n_elements = 100
 
 # global parameters
@@ -232,7 +232,8 @@ config = {
         },
         
         "OutputWriter" : [
-          {"format": "PythonFile", "outputInterval": int(1./dt_0D*output_timestep), "filename": "out/states", "binary": True, "onlyNodalValues": True},
+          #{"format": "PythonFile", "outputInterval": int(1./dt_0D*output_timestep), "filename": "out/states", "binary": False, "onlyNodalValues": True},
+          {"format": "PythonFile", "outputInterval": 50, "filename": "out/states", "binary": False, "onlyNodalValues": True},
         ],
       },
     },
@@ -252,7 +253,7 @@ config = {
           "solverName": "implicitSolver",
         },
         "OutputWriter" : [
-          {"format": "PythonFile", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/godunov", "binary": False, "onlyNodalValues": False},
+          #{"format": "PythonFile", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/godunov", "binary": False, "onlyNodalValues": False},
           #{"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/godunov", "binary": True, "fixedFormat": False, "combineFiles": True},
           #{"format": "ExFile", "filename": "out/fibre", "outputInterval": 1e5, "sphereSize": "0.02*0.02*0.02"},
         ],

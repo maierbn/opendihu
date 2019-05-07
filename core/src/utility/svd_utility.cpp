@@ -55,8 +55,8 @@ std::vector<double> SvdUtility::getSVD(vector<double> aData, int m, int n)
   {
     cout << vt[i] << endl;
   }
- 
- return std::vector<double>(vt, vt + sizeof vt / sizeof vt[0]);;
+ // ? we need the left singular vectors not the right ones
+ return std::vector<double>(vt, vt + sizeof vt / sizeof vt[0]);
 }
 
 // takes real matrix input (rows x cols) as double[] in column major order
@@ -68,10 +68,11 @@ void SvdUtility::getSVD(double input[], int rows, int cols, double leftSingVec[]
   double* singVal = new double[min];
   double* superb = new double[min];
 
-  LAPACKE_dgesvd(LAPACK_COL_MAJOR, 's', 's', rows, cols, input, rows, singVal, leftSingVec, rows, rightSingVecT, min, superb);
-
-  // cout << "info: " << info << endl << endl;
-
+  printMatrix("snapshots", input, rows, cols);
+  
+  // if error or wrong numbers by 'a' use 's' instead
+  LAPACKE_dgesvd(LAPACK_COL_MAJOR, 'a', 'a', rows, cols, input, rows, singVal, leftSingVec, rows, rightSingVecT, min, superb);
+  
   // build diagonal matrix sigma from vector singularValues
   for (int row = 0; row < min; ++row)
   {
@@ -86,7 +87,11 @@ void SvdUtility::getSVD(double input[], int rows, int cols, double leftSingVec[]
         sigma[row + col * min] = 0;
       }
     }
-}
+  }
+  
+  printMatrix("leftSingVec", leftSingVec, rows, min);
+  printMatrix("sigma", sigma, min, min);
+  printMatrix("rightSingVecT", rightSingVecT, min, cols);
 }
 
 // takes complex matrix input (rows x cols) as double _Complex[] in column major order
@@ -119,6 +124,55 @@ void SvdUtility::getSVD(double _Complex input[], int rows, int cols, double _Com
     }
 }
 }
+
+void SvdUtility::reconstructSnapshots(int rows, int cols, double leftSingVec[], double sigma[], double rightSingVecT[], double output[])
+{
+  
+  int rank = std::min(rows, cols);  
+  double* C = new double[rank*cols];
+  
+  // Sigma multiplied by transpose of the right singular vector
+  cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans, rank, cols, rank, 1.0, sigma, rank, rightSingVecT, rank, 0.0, C, rank);
+  cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans, rows, cols, rank, 1.0, leftSingVec, rows, C, rank, 0.0, output, rows);
+  
+  cout << "Reconstructed matrix:" << endl;
+  for (int row = 0; row < rows; ++row)
+  {
+    for (int col = 0; col < cols; ++col)
+      cout << output[col*rows+row] << ' ';
+    cout << endl;
+  }
+  
+  printMatrix("v_reconst", output, rows, cols);
+}
+
+// takes real matrix input (rows x cols) as double[]
+// prints name and input entry-wise
+void SvdUtility::printMatrix(std::string name, double input[], int rows, int cols)
+{
+  
+  cout << "    " << name << " =" << endl << "    \\begin{bmatrix*}[r]" << endl << "        " << input[0];
+  
+  for (int row = 0; row < rows; ++row)
+  {
+    for (int col = 1; col < cols; ++col)
+    {
+      cout << " & " << input[col * rows + row];
+    }
+    
+    if (row < rows - 1)
+    {
+      cout << " \\\\" << endl << "        " << input[row + 1];
+    }
+    else
+    {
+      cout << endl << "    \\end{bmatrix*}" << endl;
+    }
+  }
+  
+  cout << endl;
+}
+
 
 // reads CSV cell by cell as vector
 std::vector<double> SvdUtility::readCSV(string filename)

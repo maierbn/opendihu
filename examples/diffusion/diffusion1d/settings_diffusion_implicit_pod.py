@@ -5,7 +5,8 @@ k = 5
 config = {
   "ModelOrderReduction": {
     "nRowsSnapshots" : n,
-    "nReducedBases" : k,   
+    "nReducedBases" : k,
+    "snapshots" :"./out_snapshots/snapshots.csv",
     "ImplicitEuler" : {
        "numberTimeSteps": 5,
        "endTime": 0.1,

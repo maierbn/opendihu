@@ -397,10 +397,23 @@ setGeometryFieldValues()
   this->geometryField_->setValuesWithoutGhosts(geometryValues);
   this->geometryField_->finishGhostManipulation();
 
+  // output ghost values for debugging
+  // get ghost values
+  std::stringstream stream;
+  std::vector<Vec3> geometryFieldValuesWithGhosts;
+  this->geometryField().getValuesWithGhosts(geometryFieldValuesWithGhosts);
+  for (int i = this->meshPartition_->nDofsLocalWithoutGhosts(); i < geometryFieldValuesWithGhosts.size(); i++)
+  {
+    stream << " " << geometryFieldValuesWithGhosts[i];
+  }
+  LOG(DEBUG) << "in setsetGeometryFieldValues, geometry field ghost values: " << stream.str();
+
+
+/*
   this->geometryField_->startGhostManipulation();
   this->geometryField_->zeroGhostBuffer();
   this->geometryField_->finishGhostManipulation();
-
+*/
   // initialize Hermite derivative dofs such that geometry fields becomes "even"
   bool setHermiteDerivatives = false;
   if (std::is_same<BasisFunctionType,BasisFunction::Hermite>::value)

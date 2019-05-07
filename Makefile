@@ -91,3 +91,6 @@ fibers_emg:
 
 laplace2d:
 	cd examples/laplace/laplace2d && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+
+laplace_surface:
+	cd examples/laplace/laplace3d_surface && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG

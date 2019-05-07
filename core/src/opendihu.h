@@ -44,6 +44,8 @@
 
 #include "cellml/03_cellml_adapter.h"
 
+#include "output_writer/output_surface/output_surface.h"
+
 #include "quadrature/gauss.h"
 #include "quadrature/clenshaw_curtis.h"
 #include "quadrature/newton_cotes.h"

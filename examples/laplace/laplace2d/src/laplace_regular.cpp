@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
   
   SpatialDiscretization::FiniteElementMethod<
     Mesh::StructuredRegularFixedOfDimension<2>,
-    BasisFunction::Hermite,
+    BasisFunction::LagrangeOfOrder<2>,
     Quadrature::Gauss<3>,
     Equation::Static::Laplace
   > equationDiscretized(settings);

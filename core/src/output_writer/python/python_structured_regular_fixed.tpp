@@ -75,7 +75,7 @@ buildPyDataObject(OutputFieldVariablesType fieldVariables,
   int nRanks = mesh->meshPartition()->nRanks();
   int ownRankNo = mesh->meshPartition()->ownRankNo();
 
-  LOG(DEBUG) << "PythonRegularFixed";
+  LOG(DEBUG) << "PythonRegularFixed, meshName \"" << meshName << "\"";
 
   // start critical section for python API calls
   // PythonUtility::GlobalInterpreterLock lock;

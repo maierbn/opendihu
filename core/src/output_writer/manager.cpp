@@ -13,17 +13,15 @@
 namespace OutputWriter
 {
 
-void Manager::initialize(DihuContext context, PythonConfig settings)
+void Manager::initialize(DihuContext context, PythonConfig settings, std::shared_ptr<Partition::RankSubset> rankSubset)
 {
-  
-  LOG(TRACE) << "Entering Manager::initialize";
   outputWriter_.clear();
 
-  //if(PyDict_Check(settings.pyObject()))
-  //{
-    PythonUtility::printDict(settings.pyObject());
+  if(PyDict_Check(settings.pyObject()))
+  {
+    //PythonUtility::printDict(settings.pyObject());
     
-    if (settings.hasKey("OutputWriter"))                    // <<--- if "settings.pyObject()" is not a Python dict, this will crash!
+    if (settings.hasKey("OutputWriter"))
     {
       LOG(DEBUG) << "OutputWriter::Manager::initialize(), settings has key OutputWriter";
 
@@ -40,27 +38,24 @@ void Manager::initialize(DihuContext context, PythonConfig settings)
           VLOG(1) << "parse outputWriter, settings: " << settings.pyObject() << ", writerSettings: " << writerSettings;
         }
         PythonConfig writerConfig(settings, "OutputWriter", writerSettings);
-        createOutputWriterFromSettings(context, writerConfig);
+        createOutputWriterFromSettings(context, writerConfig, rankSubset);
       }
     }
     else
     {
       std::vector<std::string> configKeys;
-      LOG(TRACE) << "   getKeys(configKeys)";
       settings.getKeys(configKeys);
-      LOG(TRACE) << "   ?";
       LOG(DEBUG) << "Config does not contain \"OutputWriter\". Keys: " << configKeys;
-      //PythonUtility::printDict(settings.pyObject());
     }
-    LOG(TRACE) << "Leaving Manager::initialize";
-  //}
-  //else
-  //{
-  //  LOG(ERROR) << "Can't initialize manager. PythonConfig \"" << settings << "\" is not a Python Dict.";
-  //}
+    //LOG(TRACE) << "Leaving Manager::initialize";
+  }
+  else
+  {
+    LOG(ERROR) << "Can't initialize manager. PythonConfig \"" << settings << "\" is not a Python Dict.";
+  }
 }
 
-void Manager::createOutputWriterFromSettings(DihuContext context, PythonConfig settings)
+void Manager::createOutputWriterFromSettings(DihuContext context, PythonConfig settings, std::shared_ptr<Partition::RankSubset> rankSubset)
 {
   LOG(DEBUG) << "createOutputWriterFromSettings " << settings;
   if (settings.hasKey("format"))
@@ -71,24 +66,24 @@ void Manager::createOutputWriterFromSettings(DihuContext context, PythonConfig s
     LOG(DEBUG) << "add OutputWriter with format \"" << typeString << "\"";
     if (typeString == "Paraview")
     {
-      outputWriter_.push_back(std::make_shared<Paraview>(context, settings));
+      outputWriter_.push_back(std::make_shared<Paraview>(context, settings, rankSubset));
     }
     else if (typeString == "PythonCallback")
     {
-      outputWriter_.push_back(std::make_shared<PythonCallback>(context, settings));
+      outputWriter_.push_back(std::make_shared<PythonCallback>(context, settings, rankSubset));
     }
     else if (typeString == "PythonFile")
     {
-      outputWriter_.push_back(std::make_shared<PythonFile>(context, settings));
+      outputWriter_.push_back(std::make_shared<PythonFile>(context, settings, rankSubset));
     }
     else if (typeString == "Exfile" || typeString == "ExFile")
     {
-      outputWriter_.push_back(std::make_shared<Exfile>(context, settings));
+      outputWriter_.push_back(std::make_shared<Exfile>(context, settings, rankSubset));
     }
     else if (typeString == "MegaMol")
     {
 #ifdef HAVE_ADIOS
-      outputWriter_.push_back(std::make_shared<MegaMol>(context, settings));
+      outputWriter_.push_back(std::make_shared<MegaMol>(context, settings, rankSubset));
 #else
       LOG(ERROR) << "Not compiled with ADIOS, but a \"MegaMol\" output writer was specified. Ignoring this output writer.";
 #endif

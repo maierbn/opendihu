@@ -100,6 +100,9 @@ public:
   //! number of elments in total
   element_no_t nElementsGlobal(int coordinateDirection) const;
   
+  //! global no of first local element
+  int beginElementGlobal(int coordinateDirection) const;
+
   //! number of nodes in total
   global_no_t nNodesGlobal() const;
   

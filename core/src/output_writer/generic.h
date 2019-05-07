@@ -13,8 +13,8 @@ namespace OutputWriter
 class Generic
 {
 public:
-  //! ctor
-  Generic(DihuContext context, PythonConfig specificSettings);
+  //! constructor, if rankSubset is not given, use the rankSubsetForCollectiveOperations, which is the collection of all available ranks
+  Generic(DihuContext context, PythonConfig specificSettings, std::shared_ptr<Partition::RankSubset> rankSubset = nullptr);
 
   //! virtual destructor to allow dynamic_pointer_cast
   virtual ~Generic();
@@ -40,7 +40,6 @@ protected:
   int writeCallCount_ = 0;      ///< counter of calls to write
   int outputFileNo_ = 0;        ///< counter of calls to write when actually a file was written
   int outputInterval_ = 0;      ///< the interval in which calls to write actually write data
-
 
   std::shared_ptr<Partition::RankSubset> rankSubset_; ///< the ranks that collectively call Paraview::write
 

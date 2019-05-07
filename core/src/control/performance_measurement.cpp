@@ -20,6 +20,7 @@ namespace Control
 
 std::map<std::string, PerformanceMeasurement::Measurement> PerformanceMeasurement::measurements_;
 std::map<std::string,std::string> PerformanceMeasurement::parameters_;
+std::map<std::string, int> PerformanceMeasurement::sums_;
 
 PerformanceMeasurement::Measurement::Measurement() :
   start(0.0), totalDuration(0.0), nTimeSpans(0), totalError(0.0), nErrors(0)
@@ -96,13 +97,19 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
   {
     header << measurement.first << ";n;";
   }
-
+  
   // write parameter names
   for (std::pair<std::string,std::string> parameter : parameters_)
   {
     if (parameter.first == "nRanks" || parameter.first == "rankNo")
       continue;
     header << parameter.first << ";";
+  }
+  
+  // write sum names
+  for (std::pair<std::string,int> sum : sums_)
+  {
+    header << sum.first << ";";
   }
 
   header << std::endl;
@@ -128,19 +135,25 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
     data << measurement.second.totalDuration << ";"
     << measurement.second.nTimeSpans << ";";
   }
-
+  
   // write parameters
   for (std::pair<std::string,std::string> parameter : parameters_)
   {
     if (parameter.first == "nRanks" || parameter.first == "rankNo")
       continue;
-
+    
     // remove newlines
     StringUtility::replace(parameter.second, "\n", "");
     StringUtility::replace(parameter.second, "\r", "");
     data << parameter.second << ";";
   }
-
+  
+  // write sums
+  for (std::pair<std::string,int> sum : sums_)
+  {
+    data << sum.second << ";";
+  }
+  
   data << std::endl;
 
   // check if header has to be added to file
@@ -239,6 +252,20 @@ void PerformanceMeasurement::measureError<double>(std::string name, double diffe
 
   iter->second.totalError += fabs(differenceVector);
   iter->second.nErrors++;
+}
+
+void PerformanceMeasurement::countNumber(std::string name, int number)
+{
+  std::map<std::string, int>::iterator iter = sums_.find(name);
+  
+  // if there is no entry of name yet, create new
+  if (iter == sums_.end())
+  {
+    auto insertedIter = sums_.insert(std::pair<std::string, int>(name, 0));
+    iter = insertedIter.first;
+  }
+  
+  iter->second += number;
 }
 
 void PerformanceMeasurement::parseStatusInformation()

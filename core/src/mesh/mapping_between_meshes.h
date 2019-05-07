@@ -2,7 +2,15 @@
 
 #include <Python.h>  // has to be the first included header
 
-#include "field_variable/field_variable.h"
+#include <memory>
+#include "control/types.h"
+
+//#include "field_variable/field_variable.h"
+namespace FieldVariable
+{
+  template<typename FunctionSpace,int nComponents>
+  class FieldVariable;
+}
 
 namespace Mesh
 {

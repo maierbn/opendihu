@@ -8,6 +8,7 @@
 #include "function_space/11_function_space_xi.h"
 #include "mesh/mesh.h"
 #include "basis_function/lagrange.h"
+#include "function_space/function_space_generic.h"
 
 namespace FunctionSpace
 {
@@ -72,10 +73,6 @@ public:
   //! (unused method) return the geometry field entry (node position for Lagrange elements) of a specific dof
   Vec3 getGeometry(node_no_t dofNo) const {return Vec3();}
 };
-
-// define generic function space without logical real world mesh presententation, that can be used for generic field variables.
-// For example for MOR the reduced vectors do not live on any mesh, but they need a function space to be defined and such that output writers work.
-typedef FunctionSpace<Mesh::StructuredRegularFixedOfDimension<1>,BasisFunction::LagrangeOfOrder<1>> Generic;
 
 }  // namespace
 

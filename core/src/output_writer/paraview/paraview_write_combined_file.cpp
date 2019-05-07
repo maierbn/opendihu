@@ -31,20 +31,35 @@ void Paraview::writeAsciiDataShared(MPI_File fileHandle, int ownRankNo, std::str
   }
 }
 
-void Paraview::writeCombinedTypesVector(MPI_File fileHandle, int ownRankNo, int nValues, int identifier)
+void Paraview::writeCombinedTypesVector(MPI_File fileHandle, int ownRankNo, int nValues, bool output3DMeshes, int identifier)
 {
   std::string writeBuffer;
 
   if (binaryOutput_)
   {
-    std::vector<int> values(nValues, 12);
-    writeBuffer = Paraview::encodeBase64UInt8(values.begin(), values.end());
+    if (output3DMeshes)
+    {
+      std::vector<int> values(nValues, 12);
+      writeBuffer = Paraview::encodeBase64UInt8(values.begin(), values.end());
+    }
+    else
+    {
+      std::vector<int> values(nValues, 9);
+      writeBuffer = Paraview::encodeBase64UInt8(values.begin(), values.end());
+    }
   }
   else
   {
     for (int i = 0; i < nValues; i++)
     {
-      writeBuffer += std::string("12 ");
+      if (output3DMeshes)
+      {
+        writeBuffer += std::string("12 ");
+      }
+      else
+      {
+        writeBuffer += std::string("9 ");
+      }
     }
   }
 

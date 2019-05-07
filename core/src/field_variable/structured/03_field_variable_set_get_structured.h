@@ -3,7 +3,7 @@
 #include <Python.h>  // has to be the first included header
 #include <petscvec.h>
 
-#include "field_variable/structured/02_field_variable_data_structured.h"
+#include "field_variable/structured/02b_field_variable_data_structured_for_surface.h"
 #include "partition/partitioned_petsc_vec/partitioned_petsc_vec.h"
 
 namespace FieldVariable
@@ -14,11 +14,13 @@ namespace FieldVariable
  */
 template<typename FunctionSpaceType, int nComponents>
 class FieldVariableSetGetStructured :
-  public FieldVariableDataStructured<FunctionSpaceType,nComponents>
+  public FieldVariableDataStructuredForSurface<FunctionSpaceType,nComponents>
 {
 public:
   //! inherited constructor
-  using FieldVariableDataStructured<FunctionSpaceType,nComponents>::FieldVariableDataStructured;
+  using FieldVariableDataStructuredForSurface<FunctionSpaceType,nComponents>::FieldVariableDataStructuredForSurface;
+
+  using FieldVariableDataStructuredForSurface<FunctionSpaceType,nComponents>::setValues;
 
   //! for a specific component, get all values
   //! @param onlyNodalValues: if this is true, for Hermite only the non-derivative values are retrieved
@@ -53,6 +55,9 @@ public:
   //! get values from their local dof no.s for all components
   template<int N>
   void getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nComponents>,N> &values) const;
+
+  //! get values from their local dof no.s for all components
+  void getValues(std::vector<dof_no_t> dofLocalNo, std::vector<std::array<double,nComponents>> &values) const;
 
   //! for a specific component, get the values corresponding to all element-local dofs
   void getElementValues(int componentNo, element_no_t elementNoLocal, std::array<double,FunctionSpaceType::nDofsPerElement()> &values) const;

@@ -18,8 +18,8 @@ public:
   template<typename DataType>
   void writeOutput(DataType &problemData, int timeStepNo = -1, double currentTime = 0.0) const;
 
-  //! parse settings and create output writers from specification in "OutputWriter" list
-  void initialize(DihuContext context, PythonConfig settings);
+  //! parse settings and create output writers from specification in "OutputWriter" list, if rankSubset is not given, use the rankSubsetForCollectiveOperations, which is the collection of all available ranks
+  void initialize(DihuContext context, PythonConfig settings, std::shared_ptr<Partition::RankSubset> rankSubset = nullptr);
 
   //! if this manager contains any output writers
   bool hasOutputWriters();
@@ -27,7 +27,7 @@ public:
 protected:
 
   //! helper function that creates an outputWriter
-  void createOutputWriterFromSettings(DihuContext context, PythonConfig settings);
+  void createOutputWriterFromSettings(DihuContext context, PythonConfig settings, std::shared_ptr<Partition::RankSubset> rankSubset);
 
   std::list<std::shared_ptr<Generic>> outputWriter_;    ///< list of active output writers
 };

@@ -477,6 +477,65 @@ getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nCompo
   }
 }
 
+//! get values from their local dof no.s for all components
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetRegularFixed<FunctionSpaceType,nComponents>::
+getValues(std::vector<dof_no_t> dofLocalNo, std::vector<std::array<double,nComponents>> &values) const
+{
+  // if this is not a geometry field get the stored values
+  if (!this->isGeometryField_)
+  {
+    FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::getValues(dofLocalNo, values);
+    return;
+  }
+
+  const int nValues = dofLocalNo.size();
+  int initialSize = values.size();
+  values.resize(initialSize + nValues);
+
+  // for geometry field compute the entries
+  const int nDofsPerNode = FunctionSpaceType::nDofsPerNode();
+  const int D = FunctionSpaceType::dim();
+  assert(nComponents == 3);
+
+  // loop over entries in values to be filled
+  for (int i = 0; i < nValues; i++)
+  {
+    int nodeNoLocal = int(dofLocalNo[i] / nDofsPerNode);
+    int nodeLocalDofIndex = int(dofLocalNo[i] % nDofsPerNode);
+    std::array<global_no_t,D> coordinates = this->functionSpace_->meshPartition()->getCoordinatesGlobal(nodeNoLocal);
+
+    if (nodeLocalDofIndex > 0)   // if this is a derivative of Hermite, set to 0
+    {
+      values[initialSize + i][0] = getGeometryFieldHermiteDerivative(nodeLocalDofIndex, 0);
+
+      if (D >= 2)
+        values[initialSize + i][1] = getGeometryFieldHermiteDerivative(nodeLocalDofIndex, 1);
+
+      if (D == 3)
+        values[initialSize + i][2] = getGeometryFieldHermiteDerivative(nodeLocalDofIndex, 2);
+    }
+    else
+    {
+      // x direction
+      values[initialSize + i][0] = coordinates[0] * this->functionSpace_->meshWidth();
+
+      // y direction
+      if (D >= 2)
+        values[initialSize + i][1] = coordinates[1] * this->functionSpace_->meshWidth();
+
+      // z direction
+      if (D == 3)
+        values[initialSize + i][2] = coordinates[2] * this->functionSpace_->meshWidth();
+    }
+
+    if (D < 3)
+      values[initialSize + i][2] = 0;
+    if (D < 2)
+      values[initialSize + i][1] = 0;
+  }
+}
+
 //! for a specific component, get the values corresponding to all element-local dofs
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetRegularFixed<FunctionSpaceType,nComponents>::

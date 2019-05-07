@@ -864,12 +864,11 @@ config = {
       }
     },
     "Term2": {        # Bidomain
-      "StaticBidomainSolver": {
+      "StaticBidomainSolver": {       # version for fibers_emg
         "timeStepWidth": dt_bidomain,
         "timeStepOutputInterval": 50,
         "durationLogKey": "duration_bidomain",
         "solverName": "activationSolver",
-#        "inputIsGlobal": True,
         "initialGuessNonzero": emg_initial_guess_nonzero,
         "PotentialFlow": {
           "FiniteElementMethod" : {  
@@ -900,6 +899,48 @@ config = {
           },
         },
         "OutputWriter" : output_writer_emg,
+      },
+      "OutputSurface": {        # version for fibers_emg_2d_output
+        "OutputWriter": [
+          {"format": "Paraview", "outputInterval": int(1./dt_bidomain*output_timestep), "filename": "out/" + scenario_name + "/2d_emg", "binary": True, "fixedFormat": False, "combineFiles": True},
+        ],
+        "face": "1-",
+        "StaticBidomainSolver": {
+          "timeStepWidth": dt_bidomain,
+          "timeStepOutputInterval": 50,
+          "durationLogKey": "duration_bidomain",
+          "solverName": "activationSolver",
+          "initialGuessNonzero": emg_initial_guess_nonzero,
+          "PotentialFlow": {
+            "FiniteElementMethod" : {  
+              "meshName": "3Dmesh",
+              "solverName": "potentialFlowSolver",
+              "prefactor": 1.0,
+              "dirichletBoundaryConditions": potential_flow_dirichlet_bc,
+              "inputMeshIsGlobal": True,
+            },
+          },
+          "Activation": {
+            "FiniteElementMethod" : {  
+              "meshName": "3Dmesh",
+              "solverName": "activationSolver",
+              "prefactor": 1.0,
+              "inputMeshIsGlobal": True,
+              "dirichletBoundaryConditions": {},
+              "diffusionTensor": [      # sigma_i           # fiber direction is (1,0,0)
+                8.93, 0, 0,
+                0, 0.893, 0,
+                0, 0, 0.893
+              ], 
+              "extracellularDiffusionTensor": [      # sigma_e
+                6.7, 0, 0,
+                0, 6.7, 0,
+                0, 0, 6.7,
+              ],
+            },
+          },
+          "OutputWriter" : output_writer_emg,
+        }
       }
     }
   }

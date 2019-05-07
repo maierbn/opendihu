@@ -151,8 +151,8 @@ if os.environ.get("PE_ENV") is not None:  # if on hazelhen
   #LAPACK_DIR = os.environ.get("CRAY_LIBSCI_PREFIX_DIR")
   #PETSC_DOWNLOAD = False
   #PETSC_DIR = os.environ.get("PETSC_DIR")
-else:
-  print("...no more changes.")
+#else:
+#  print("...no more changes.")
 #Steps for getting started on HazelHen
 #   module swap PrgEnv-cray/6.0.4 PrgEnv-gnu  # to switch to GNU programming environment, however also Intel and Cray environments work
 #   module load cray-libsci

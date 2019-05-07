@@ -7,11 +7,14 @@
 namespace OutputWriter
 {
 
-Generic::Generic(DihuContext context, PythonConfig specificSettings) :
-  context_(context), specificSettings_(specificSettings)
+Generic::Generic(DihuContext context, PythonConfig specificSettings, std::shared_ptr<Partition::RankSubset> rankSubset) :
+  context_(context), rankSubset_(rankSubset), specificSettings_(specificSettings)
 {
   // get the rank subset of all processes that collectively call the write methods
-  rankSubset_ = this->context_.partitionManager()->rankSubsetForCollectiveOperations();
+  if (!rankSubset_)
+  {
+    rankSubset_ = this->context_.partitionManager()->rankSubsetForCollectiveOperations();
+  }
   VLOG(1) << "OutputWriter::Generic constructor, rankSubset: " << *rankSubset_;
 
   outputInterval_ = specificSettings_.getOptionInt("outputInterval", 1, PythonUtility::Positive);

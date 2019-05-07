@@ -51,7 +51,7 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
       LOG(INFO) << "Explicit Euler, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
     }
 
-    VLOG(1) << "starting from solution: " << this->data_->solution();
+    VLOG(1) << "starting from solution: " << *this->data_->solution();
 
     //LOG(WARNING) << "Ready for attachement in explicit_euler.tpp:53";
     //while (timeSpan==0.001)
@@ -62,7 +62,7 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
     this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
       solution, increment, timeStepNo, currentTime);
 
-    VLOG(1) << "increment: " << this->data_->increment() << ", dt: " << this->timeStepWidth_;
+    VLOG(1) << "increment: " << *this->data_->increment() << ", dt: " << this->timeStepWidth_;
 
     // integrate, y += dt * delta_u
     // unfortunately, this can only be used with petsc master branch, GNU compiler and "--with-cuda" (approximately)
@@ -79,7 +79,7 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
     timeStepNo++;
     currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
 
-    VLOG(1) << "solution after integration: " << this->data_->solution();
+    VLOG(1) << "solution after integration: " << *this->data_->solution();
 
     // apply the prescribed boundary condition values
     this->applyBoundaryConditions();

@@ -10,7 +10,6 @@ PythonConfig::PythonConfig(PyObject *specificSettings)
 {
   pythonConfig_ = specificSettings;
   VLOG(1) << "PythonConfig::constructor " << PythonUtility::getString(pythonConfig_);
-  LOG(DEBUG) << "PythonConfig::constructor " << PythonUtility::getString(pythonConfig_);
   Py_XINCREF(pythonConfig_);
 }
 
@@ -19,7 +18,6 @@ PythonConfig::PythonConfig(const PythonConfig &rhs, std::string key)
 {
   pythonConfig_ = rhs.getOptionPyObject(key);
   VLOG(1) << "PythonConfig::constructor(rhs,key=\"" << key << "\") " << PythonUtility::getString(pythonConfig_);
-  LOG(DEBUG) << "PythonConfig::constructor(rhs,key=\"" << key << "\") " << PythonUtility::getString(pythonConfig_);
   Py_XINCREF(pythonConfig_);
 
   int pathSize = std::distance(rhs.pathBegin(), rhs.pathEnd());
@@ -33,7 +31,6 @@ PythonConfig::PythonConfig(const PythonConfig &rhs, std::string key, PyObject *c
 {
   pythonConfig_ = config;
   VLOG(1) << "PythonConfig::constructor(rhs,key=\"" << key << "\",config) " << PythonUtility::getString(pythonConfig_);
-  LOG(DEBUG) << "PythonConfig::constructor(rhs,key=\"" << key << "\",config) " << PythonUtility::getString(pythonConfig_);
   Py_XINCREF(pythonConfig_);
 
   int pathSize = std::distance(rhs.pathBegin(), rhs.pathEnd());
@@ -48,7 +45,6 @@ PythonConfig::PythonConfig(const PythonConfig &rhs, std::string key, std::string
 {
   pythonConfig_ = config;
   VLOG(1) << "PythonConfig::constructor(rhs,key=\"" << key << "\",config) " << PythonUtility::getString(pythonConfig_);
-  LOG(DEBUG) << "PythonConfig::constructor(rhs,key=\"" << key << "\",config) " << PythonUtility::getString(pythonConfig_);
   Py_XINCREF(pythonConfig_);
 
   int pathSize = std::distance(rhs.pathBegin(), rhs.pathEnd());
@@ -143,7 +139,6 @@ PyObject *PythonConfig::getOptionPyObject(std::string key, PyObject *defaultValu
 {
   std::string pathString = getStringPath();
   return PythonUtility::getOptionPyObject(this->pythonConfig_, key, pathString, defaultValue);
-  LOG(TRACE) << "getOptionPyObject";
 }
 
 //! return the option value given by key in the python dictionary settings. If not found, return the defaultValue

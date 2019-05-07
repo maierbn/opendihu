@@ -20,30 +20,30 @@ int PythonUtility::listIndex = 0;
 
 bool PythonUtility::hasKey(const PyObject* settings, std::string keyString)
 {
-  LOG(TRACE) << "        performing hasKey("<< keyString <<"). (python_utility.cpp)";
+  //LOG(TRACE) << "        performing hasKey("<< keyString <<"). (python_utility.cpp)";
   if (settings)
   { 
-    LOG(TRACE) << "           settings is \"" << getString((PyObject*) settings) << "\".";
+    //LOG(TRACE) << "           settings is \"" << getString((PyObject*) settings) << "\".";
     // start critical section for python API calls
     // PythonUtility::GlobalInterpreterLock lock;
   
     // check if input dictionary contains the key
     PyObject *key = PyUnicode_FromString(keyString.c_str());
-    LOG(TRACE) << "           checked for key: " << getString(key);
+    //LOG(TRACE) << "           checked for key: " << getString(key);
       
     //int val = PyDict_Contains((PyObject *)settings, key); // Aufruf führt zu unerwartetem Fehler wenn "settings" kein PyDict ist!!
     //SEGMENTATION FAULT: LOG(INFO) << "PyDict_Contains(.,.) returned " << val;
     //returns 0: PyDict_Check((PyObject *)settings);
     
     if (PyDict_Contains((PyObject *)settings, key))
-    { LOG(TRACE) << "           ... found. Py_CLEAR(key)...";
+    { //LOG(TRACE) << "           ... found. Py_CLEAR(key)...";
       Py_CLEAR(key);
       return true;
     }
-    LOG(TRACE) << "           Not found. Py_CLEAR(key)";
+    //LOG(TRACE) << "           Not found. Py_CLEAR(key)";
     Py_CLEAR(key);
   }
-  LOG(TRACE) << "           no settings there, returning false.";
+  //LOG(TRACE) << "           no settings there, returning false.";
   return false;
 }
 
@@ -86,7 +86,6 @@ PyObject *PythonUtility::getOptionPyObject(const PyObject *settings, std::string
     }
   }
   return defaultValue;
-      LOG(TRACE) << "PythonUtility::getOptionPyObject returning default value";
 }
 
 double PythonUtility::getOptionDouble(const PyObject* settings, std::string keyString, std::string pathString, double defaultValue, ValidityCriterion validityCriterion)
@@ -558,8 +557,8 @@ void PythonUtility::printDict(PyObject *dict)
     LOG(DEBUG) << "printDict: Object is not a dict!";
     return;
   }
-  LOG(TRACE) << "   trying to invoke \"getString()\"";
-  LOG(DEBUG) << getString(dict);
+  //LOG(TRACE) << "   trying to invoke \"getString()\"";
+  //LOG(DEBUG) << getString(dict);
 }
 
 bool PythonUtility::getOptionDictEnd(const PyObject *settings, std::string keyString, std::string pathString)

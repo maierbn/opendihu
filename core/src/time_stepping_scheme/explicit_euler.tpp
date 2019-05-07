@@ -53,9 +53,9 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
 
     VLOG(1) << "starting from solution: " << this->data_->solution();
 
-    LOG(WARNING) << "Ready for attachement in explicit_euler.tpp:53";
-    while (timeSpan==0.001)
-    {sleep(5);}
+    //LOG(WARNING) << "Ready for attachement in explicit_euler.tpp:53";
+    //while (timeSpan==0.001)
+    //{sleep(5);}
     
     // advance computed value
     // compute next delta_u = f(u)

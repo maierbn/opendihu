@@ -60,7 +60,7 @@ void Manager::storePreconfiguredSolvers()
             solverConfiguration_.insert(std::pair<std::string,PythonConfig>(key, PythonConfig(specificSettings_, "Solvers", key, value)));
           }
         }
-        LOG(WARNING)/*DEBUG!*/<< "Extracted dict for solver \"" << key << "\".";
+        LOG(DEBUG)<< "Extracted dict for solver \"" << key << "\".";
       }
     }
     else

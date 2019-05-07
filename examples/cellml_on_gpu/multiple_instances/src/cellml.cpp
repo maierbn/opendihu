@@ -8,7 +8,7 @@ int main(int argc, char *argv[])
 {
   // 0D sub-cellular model
     // initialize everything, handle arguments and parse settings from input file
-  DihuContext settings(argc, argv);
+  DihuContext settings(argc, argv, false, true);
   
   char userInput;
   std::cout << "Do you wish to attach with (e.g.) gdb? (y/n)";

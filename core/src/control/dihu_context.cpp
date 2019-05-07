@@ -1,6 +1,6 @@
 #include "control/dihu_context.h"
 
-#include <Python.h>  // this has to be the first included header
+#include </usr/local/home/kraemer/python/install/include/python3.6m/Python.h>  // this has to be the first included header
 #include <control/python_home.h>  // defines PYTHON_HOME_DIRECTORY
 #include <omp.h>
 
@@ -99,7 +99,7 @@ DihuContext::DihuContext(const DihuContext &rhs) : pythonConfig_(rhs.pythonConfi
 {
   nObjects_++;
   VLOG(1) << "DihuContext(a), nObjects = " << nObjects_;
-  LOG(TRACE) << "Invoked DihuContext copy constructor, nObjects = " << nObjects_;
+  //LOG(TRACE) << "Invoked DihuContext copy constructor, nObjects = " << nObjects_;
 
   doNotFinalizeMpi_ = rhs.doNotFinalizeMpi_;
 }
@@ -108,7 +108,7 @@ DihuContext::DihuContext(const DihuContext &rhs) : pythonConfig_(rhs.pythonConfi
 DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, PythonConfig pythonConfig, std::shared_ptr<Partition::RankSubset> rankSubset) :
   pythonConfig_(pythonConfig), rankSubset_(rankSubset), doNotFinalizeMpi_(doNotFinalizeMpi)
 {
-  LOG(TRACE) << "NOTE: invoked DihuContext 5-arguments constructor!";
+  //LOG(TRACE) << "NOTE: invoked DihuContext 5-arguments constructor!";
   nObjects_++;
   VLOG(1) << "DihuContext(b), nObjects = " << nObjects_;
 
@@ -119,13 +119,14 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, PythonCo
   }
 }
 
-DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool settingsFromFile) :
-  pythonConfig_(NULL), doNotFinalizeMpi_(doNotFinalizeMpi)
+DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, const bool settingsFromFile) :
+  pythonConfig_(NULL), doNotFinalizeMpi_(doNotFinalizeMpi), pythonFile_(settingsFromFile)
 {
-  LOG(TRACE) << "invoked DihuContext 2-bools-4-arguments constructor";
+  //LOG(WARNING) << "settingsFromFile: " << (settingsFromFile? "true" : "false");
+  //LOG(TRACE) << "invoked DihuContext 2-bools-4-arguments constructor";
   nObjects_++;
   VLOG(1) << "DihuContext(c), nObjects = " << nObjects_;
-  LOG(WARNING) << "DihuContext(c), nObjects = " << nObjects_;
+  //LOG(WARNING) << "DihuContext(c), nObjects = " << nObjects_;
   if (!initialized_)
   {
 
@@ -190,17 +191,17 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
 
     // check if the first command line argument is *.py, only then it is treated as config file
     bool explicitConfigFileGiven = false;
-    LOG(WARNING) << "argc > 1: " << (argc > 1);
-    LOG(WARNING) << "settingsFromFile: " << settingsFromFile;
-    if (argc > 1 && settingsFromFile)
+    //LOG(WARNING) << "argc > 1: " << ((argc > 1)? "true" : "false");
+    //LOG(WARNING) << "settingsFromFile: " << (settingsFromFile? "true" : "false");
+    if (argc > 1 && pythonFile_)//settingsFromFile
     {
       std::string firstArgument = argv[1];
-      LOG(WARNING) << "first argument of command line is: " << firstArgument;
+      //LOG(WARNING) << "first argument of command line is: " << firstArgument;
       if (firstArgument.rfind(".py") == firstArgument.size() - 3)
       {
         explicitConfigFileGiven = true;
         Control::settingsFileName = argv[1];
-        LOG(DEBUG) << "Using settings from command line argument \"" << argv[1] << "\".";
+        //LOG(DEBUG) << "Using settings from command line argument \"" << argv[1] << "\".";
       }
       else
       {
@@ -210,13 +211,13 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
 
     initializePython(argc, argv, explicitConfigFileGiven);
     // load python script
-    if (settingsFromFile)
+    if (pythonFile_)//settingsFromFile
     {
       loadPythonScriptFromFile(Control::settingsFileName);
     }
 
     // start megamol console
-    LOG(WARNING)/*DEBUG!*/ << "initializeMegaMol";
+    LOG(DEBUG) << "initializeMegaMol";
     initializeMegaMol(argc, argv);
 
     initialized_ = true;
@@ -248,13 +249,13 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
     LOG(DEBUG) << "create solverManagerForThread_[1]";
     solverManagerForThread_[1] = std::make_shared<Solver::Manager>(pythonConfig_);
   }
-  LOG(TRACE) << "Leaving DihuContext constructor.";
+  //LOG(TRACE) << "Leaving DihuContext constructor.";
 }
 
 DihuContext::DihuContext(int argc, char *argv[], std::string pythonSettings, bool doNotFinalizeMpi) :
   DihuContext(argc, argv, doNotFinalizeMpi, false)
 {
-  LOG(TRACE) << "NOTE: invoked DihuContext 1-bool-4-arguments constructor!";
+  //LOG(TRACE) << "NOTE: invoked DihuContext 1-bool-4-arguments constructor!";
   nObjects_++;
   VLOG(1) << "DihuContext(d), nObjects = " << nObjects_;
   // This constructor is called when creating the context object from unit tests.
@@ -460,7 +461,10 @@ DihuContext::~DihuContext()
   //VLOG(4) << "PY_CLEAR(PYTHONCONFIG_)";  // note: calling VLOG in a destructor is critical and can segfault
   //Py_CLEAR(pythonConfig_);
 
-
+//#ifdef __PGI
+//  // counterpart to initialize_python.cpp
+//  dlclose(libpythonHandle);
+//#endif
 
   // do not finalize Python because otherwise tests keep crashing
   //Py_Finalize();

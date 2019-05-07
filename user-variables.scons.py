@@ -42,10 +42,11 @@ if socket.gethostname() != 'cmcs09':
   #PYTHON_REBUILD=True
 else:
 # Python 3.6.5
-  PYTHON_DIR="/afs/.mathematik.uni-stuttgart.de/home/cmcs/share/environment-modules/Packages/python/python-3.6.5" #"/usr/local/home/kraemer/python/install"
+  #PYTHON_DOWNLOAD=True
+  PYTHON_DIR="/usr/local/home/kraemer/python/install"#"/afs/.mathematik.uni-stuttgart.de/home/cmcs/share/environment-modules/Packages/python/python-3.6.5" #"/usr/local/home/kraemer/python/install"
 
 # Python packages - they are now all combined with the option PYTHONPACKAGES_DOWNLOAD
-PYTHONPACKAGES_DOWNLOAD=True
+PYTHONPACKAGES_DOWNLOAD=False
 
 # Base64, encoding library for binary vtk (paraview) output files
 BASE64_DOWNLOAD=True

@@ -1,9 +1,9 @@
 # CellML debug
     
-import numpy as np
-import matplotlib 
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
+#import numpy as np
+#import matplotlib 
+#matplotlib.use('Agg')
+#import matplotlib.pyplot as plt
 
 def setParameters(n_instances, time_step_no, current_time, parameters, *additional_parameters):
   
@@ -22,7 +22,7 @@ tsw=0.001*pow(2,1-It_value)
 et=0.001#1.0
 opiv=1*pow(2,It_value-2)
 hrciv=opiv
-ElemNo=200
+ElemNo=10
 
 
 config = {

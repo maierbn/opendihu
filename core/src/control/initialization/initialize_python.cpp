@@ -3,6 +3,7 @@
 #include <Python.h>  // this has to be the first included header
 #include <control/python_home.h>  // defines PYTHON_HOME_DIRECTORY
 #include "control/performance_measurement.h"
+//#include <dlfcn.h>
 
 void DihuContext::initializePython(int argc, char *argv[], bool explicitConfigFileGiven)
 {
@@ -21,6 +22,12 @@ void DihuContext::initializePython(int argc, char *argv[], bool explicitConfigFi
   const wchar_t *pythonSearchPathWChar = Py_DecodeLocale(pythonSearchPath.c_str(), NULL);
   Py_SetPythonHome((wchar_t *)pythonSearchPathWChar);
 
+//#ifdef __PGI
+//  //workaround (see https://stackoverflow.com/questions/11842920/undefined-symbol-pyexc-importerror-when-embedding-python-in-c)
+//  void*const libpythonHandle = dlopen("/afs/.mathematik.uni-stuttgart.de/home/cmcs/share/environment-modules/Packages/python/python-3.6.5/lib/libpython3.so", RTLD_LAZY | RTLD_GLOBAL);
+//  // dlclose counterpart in dihu_context.cpp NOT implemented.   
+//#endif
+  
   // initialize python
   Py_Initialize();
 
@@ -166,14 +173,23 @@ void DihuContext::loadPythonScript(std::string text)
   try
   { LOG(TRACE) << "check import";
     // check if numpy module could be loaded
+    //LOG(INFO) << "PyRun_SimpleString(\"import numpy\"): " << PyRun_SimpleString("import numpy");
     PyObject *numpyModule = PyImport_ImportModule("numpy");
     if (numpyModule == NULL)
     {
       LOG(ERROR) << "Failed to import numpy.";
+      if (PyErr_Occurred())
+      {
+        LOG(INFO) << "PyErr occurred.";
+        PyErr_Print();
+      }
+      else{
+        LOG(INFO) << "PyErr_Occurred() = NULL";}
     }
     LOG(TRACE) << "execute config script";
     // execute config script
     ret = PyRun_SimpleString(pythonScriptText_.c_str());
+    //LOG(INFO) << "PyRun_SimpleString(arg) with arg: " << pythonScriptText_.c_str();
 
     PythonUtility::checkForError();
   }

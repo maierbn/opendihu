@@ -30,7 +30,7 @@ class DihuContext
 {
 public:
   //! constructor, initialize context, parse command line parameters and input file
-  DihuContext(int argc, char *argv[], bool doNotFinalizeMpi=false, bool settingsFromFile=true);
+  DihuContext(int argc, char *argv[], bool doNotFinalizeMpi=false, const bool settingsFromFile=true);
 
   //! constructor for test cases
   DihuContext(int argc, char *argv[], std::string pythonSettings, bool doNotFinalizeMpi=true);
@@ -133,6 +133,7 @@ private:
   static std::vector<char *> megamolArgv_;   ///< the arguments use for the megamol instance
   static std::vector<std::string> megamolArguments_;  ///< the string data of the megamol arguments
   bool doNotFinalizeMpi_;  ///< when the last object gets destroyed, either MPI_Finalize() is called (should be used) or MPI_Barrier (only needed in testcases where MPI context needs to be used for the next test cases)
+  bool pythonFile_;
 
 #ifdef HAVE_ADIOS
   static std::shared_ptr<adios2::ADIOS> adios_;  ///< adios context option

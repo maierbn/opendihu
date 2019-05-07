@@ -1682,6 +1682,9 @@ getNodeNoGlobalNatural(std::array<global_no_t,MeshType::dim()> coordinatesGlobal
   {
     assert(false);
   }
+#ifdef __PGI
+  return 0;
+#endif
 }
 
 template<typename MeshType,typename BasisFunctionType>

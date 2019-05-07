@@ -32,11 +32,15 @@ class pythonPackages(Package):
         self.check_text = check_text
         self.static = False
         
+        import socket
+        
         if os.environ.get("PE_ENV") is not None:
           # Setup the build handler.
           self.set_build_handler([
               '$${DEPENDENCIES_DIR}/python/install/bin/pip3 install ${DEPENDENCIES_DIR}/pythonpackages/*.whl --prefix=${DEPENDENCIES_DIR}/python/install'
           ])
+        elif socket.gethostname() == 'cmcs09':
+           print("scons package pythonPackages.py: Nothing to be done.")
         else :
           # Setup the build handler.
           self.set_build_handler([

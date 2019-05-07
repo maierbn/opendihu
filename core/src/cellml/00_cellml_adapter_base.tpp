@@ -156,9 +156,6 @@ setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2
 
   VLOG(1) << "initialValues: " << *initialValues;
   return true;
-
-  LOG(DEBUG) << "do not set initial values";
-  return false;
 }
 
 template<int nStates, typename FunctionSpaceType>

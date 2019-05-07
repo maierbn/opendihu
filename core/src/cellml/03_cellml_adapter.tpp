@@ -197,7 +197,7 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
     VLOG(1) << "call rhsRoutine_ with " << this->intermediates_.size() << " intermediates, " << this->parameters_.size() << " parameters";
     VLOG(2) << "intermediates: " << this->intermediates_ << ", parameters: " << this->parameters_;
 
-    LOG(WARNING) << "void *context: " << (void *)this << ", double t: " << currentTime << ", double *states: " <<  states << ", double *rates: " << rates << ", double *intermediates: " << this->intermediates_.data() << ", double *parameters: " << this->parameters_.data();
+    //LOG(WARNING) << "void *context: " << (void *)this << ", double t: " << currentTime << ", double *states: " <<  states << ", double *rates: " << rates << ", double *intermediates: " << this->intermediates_.data() << ", double *parameters: " << this->parameters_.data();
     
     Control::PerformanceMeasurement::start("rhsEvaluationTime");  // commented out because it takes too long in this very inner loop --> by Aaron: commented IN because for a shorten cellML problem it seems reasonable.
     // call actual rhs routine from cellml code

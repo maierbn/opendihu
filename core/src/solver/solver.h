@@ -27,6 +27,7 @@ protected:
 
   PythonConfig specificSettings_;   ///< the python config dict
   std::string name_;           ///< the name of the solver
+  std::string durationLogKey_; ///< key for logging of the duration of solve
 };
 
 }  // namespace

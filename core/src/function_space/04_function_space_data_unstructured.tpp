@@ -9,6 +9,7 @@
 #include "easylogging++.h"
 #include "utility/string_utility.h"
 #include "utility/math_utility.h"
+#include "control/dihu_context.h"
 
 #include "field_variable/unstructured/exfile_representation.h"
 #include "field_variable/unstructured/element_to_dof_mapping.h"
@@ -39,6 +40,12 @@ template<int D,typename BasisFunctionType>
 void FunctionSpaceDataUnstructured<D,BasisFunctionType>::
 initialize()
 { 
+  if (DihuContext::nRanksCommWorld() > 1)
+  {
+    LOG(FATAL) << "Unstructured grids are not implemented for parallel execution! " << std::endl
+      << "Use structured or regular grids instead or run with a single process.";
+  }
+
   if (this->specificSettings_.hasKey("exelem"))
   {
     std::string filenameExelem = this->specificSettings_.getOptionString("exelem", "input.exelem");

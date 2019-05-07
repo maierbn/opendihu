@@ -3,7 +3,7 @@
 #include <Python.h>  // has to be the first included header
 #include <petscvec.h>
 
-#include "field_variable/structured/02_field_variable_data_structured.h"
+#include "field_variable/structured/02b_field_variable_data_structured_for_surface.h"
 #include "partition/partitioned_petsc_vec/partitioned_petsc_vec.h"
 
 namespace FieldVariable
@@ -14,11 +14,11 @@ namespace FieldVariable
  */
 template<typename FunctionSpaceType, int nComponents>
 class FieldVariableSetGetStructured :
-  public FieldVariableDataStructured<FunctionSpaceType,nComponents>
+  public FieldVariableDataStructuredForSurface<FunctionSpaceType,nComponents>
 {
 public:
   //! inherited constructor
-  using FieldVariableDataStructured<FunctionSpaceType,nComponents>::FieldVariableDataStructured;
+  using FieldVariableDataStructuredForSurface<FunctionSpaceType,nComponents>::FieldVariableDataStructuredForSurface;
 
   //! for a specific component, get all values
   //! @param onlyNodalValues: if this is true, for Hermite only the non-derivative values are retrieved
@@ -54,11 +54,14 @@ public:
   template<int N>
   void getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nComponents>,N> &values) const;
 
+  //! get values from their local dof no.s for all components
+  void getValues(std::vector<dof_no_t> dofLocalNo, std::vector<std::array<double,nComponents>> &values) const;
+
   //! for a specific component, get the values corresponding to all element-local dofs
-  void getElementValues(int componentNo, element_no_t elementNo, std::array<double,FunctionSpaceType::nDofsPerElement()> &values) const;
+  void getElementValues(int componentNo, element_no_t elementNoLocal, std::array<double,FunctionSpaceType::nDofsPerElement()> &values) const;
 
   //! get the values corresponding to all element-local dofs for all components
-  void getElementValues(element_no_t elementNo, std::array<std::array<double,nComponents>,FunctionSpaceType::nDofsPerElement()> &values) const;
+  void getElementValues(element_no_t elementNoLocal, std::array<std::array<double,nComponents>,FunctionSpaceType::nDofsPerElement()> &values) const;
 
   //! for a specific component, get a single value from local dof no.
   double getValue(int componentNo, node_no_t dofLocalNo) const;

@@ -102,7 +102,8 @@ class PETSc(Package):
                 #'PATH=${PATH}:${DEPENDENCIES_DIR}/bison/install/bin \
                 './configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=no \
                 --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
-                --with-mpi-dir=${MPI_DIR}  --download-hypre \
+                --with-mpi-dir=${MPI_DIR}\
+                --download-mumps --download-hypre --download-scalapack --download-parmetis --download-metis --download-ptscotch\
                 COPTFLAGS=-O3\
                 CXXOPTFLAGS=-O3\
                 FOPTFLAGS=-O3 | tee out.txt',
@@ -138,11 +139,10 @@ class PETSc(Package):
         self.check_options(env)
 
         res = super(PETSc, self).check(ctx, loc_callback=find_conf)
-        self.check_required(res[0], ctx)
+        #self.check_required(res[0], ctx)
       
         # if installation of petsc fails, retry without mumps
-        if not res[0]:
-         if socket.gethostname()!= 'cmcs09':
+        if not res[0] and socket.gethostname()!= 'cmcs09':
           ctx.Log('Retry without MUMPS\n')
           ctx.Message('Retry to install PETSc without MUMPS ...')
           if "PETSC_REDOWNLOAD" in Package.one_shot_options:
@@ -180,5 +180,6 @@ class PETSc(Package):
           res = super(PETSc, self).check(ctx, loc_callback=find_conf)
           self.check_required(res[0], ctx)
         
+        self.check_required(res[0], ctx)
         ctx.Result(res[0])
         return res[0]

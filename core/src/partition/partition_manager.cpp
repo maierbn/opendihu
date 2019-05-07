@@ -11,18 +11,6 @@ namespace Partition
 
 Manager::Manager(PythonConfig specificSettings) : specificSettings_(specificSettings), nextRankSubset_(nullptr)
 {
-  MPIUtility::handleReturnValue (MPI_Comm_size(MPI_COMM_WORLD, &nRanksCommWorld_));
-  MPIUtility::handleReturnValue (MPI_Comm_rank(MPI_COMM_WORLD, &rankNoCommWorld_));
-}
-  
-int Manager::nRanksCommWorld()
-{
-  return nRanksCommWorld_;
-}
-
-int Manager::rankNoCommWorld()
-{
-  return rankNoCommWorld_;
 }
 
 void Manager::setRankSubsetForNextCreatedPartitioning(std::shared_ptr<RankSubset> nextRankSubset)

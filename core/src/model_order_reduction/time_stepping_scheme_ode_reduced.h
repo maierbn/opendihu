@@ -6,7 +6,7 @@
 #include "time_stepping_scheme/time_stepping_scheme_ode.h"
 #include "time_stepping_scheme/time_stepping_scheme_ode.h"
 #include "data_management/time_stepping/time_stepping_reduced.h"
-#include "model_order_reduction/mor.h"
+#include "model_order_reduction/model_order_reduction.h"
 
 namespace ModelOrderReduction
 {

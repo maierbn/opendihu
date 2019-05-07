@@ -76,11 +76,11 @@ public:
 
 private:
 
-  //! initializes the vectors and stiffness matrix with size
-  void createPetscObjects();
-
   //! get maximum number of expected non-zeros in stiffness matrix
   void getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros);
+
+  //! initializes the vectors and stiffness matrix with size
+  void createPetscObjects();
 
   std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> stiffnessMatrix_;      ///< the standard stiffness matrix of the finite element formulation
   std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> massMatrix_;           ///< the standard mass matrix, which is a matrix that, applied to a rhs vector f, gives the rhs vector in weak formulation

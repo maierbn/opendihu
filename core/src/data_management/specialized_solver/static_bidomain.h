@@ -13,7 +13,7 @@
 namespace Data
 {
 
-/**  The datastructures used for multidomain solver.
+/**  The datastructures used for static bidomain solver.
   */
 template<typename FunctionSpaceType>
 class StaticBidomain : public Data<FunctionSpaceType>

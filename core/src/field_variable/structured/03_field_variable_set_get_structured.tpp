@@ -211,6 +211,34 @@ getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nCompo
   }
 }
 
+//! get values from their local dof no.s for all components
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
+getValues(std::vector<dof_no_t> dofLocalNo, std::vector<std::array<double,nComponents>> &values) const
+{
+  assert(this->values_);
+  const int nValues = dofLocalNo.size();
+  std::vector<double> result(nValues*nComponents);   // temporary result buffer
+
+  int initialSize = values.size();
+  values.resize(initialSize + nValues);
+
+  // prepare lookup indices for PETSc vector values_
+  for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
+  {
+    this->values_->getValues(componentIndex, nValues, dofLocalNo.data(), result.data() + componentIndex*nValues);
+  }
+
+  // copy result to output values
+  for (int dofIndex = 0; dofIndex < nValues; dofIndex++)
+  {
+    for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
+    {
+      values[initialSize+dofIndex][componentIndex] = result[componentIndex*nValues + dofIndex];
+    }
+  }
+}
+
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 getValues(const std::vector<dof_no_t> &dofLocalNo, std::vector<double> &values) const
@@ -229,10 +257,10 @@ getValues(const std::vector<dof_no_t> &dofLocalNo, std::vector<double> &values) 
 //! for a specific component, get the values corresponding to all element-local dofs
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
-getElementValues(int componentNo, element_no_t elementNo,
+getElementValues(int componentNo, element_no_t elementNoLocal,
                  std::array<double,FunctionSpaceType::nDofsPerElement()> &values) const
 {
-  assert(elementNo >= 0 && elementNo < this->functionSpace_->nElementsLocal());
+  assert(elementNoLocal >= 0 && elementNoLocal < this->functionSpace_->nElementsLocal());
   assert(componentNo >= 0 && componentNo < nComponents);
   assert(this->values_);
   
@@ -242,8 +270,8 @@ getElementValues(int componentNo, element_no_t elementNo,
   std::array<PetscInt,nDofsPerElement> indices;
   for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
   {
-    indices[dofIndex] = this->functionSpace_->getDofNo(elementNo, dofIndex);
-    //LOG(DEBUG) << "getElementValues el. " << elementNo << ", dof " << indices[dofIndex];
+    indices[dofIndex] = this->functionSpace_->getDofNo(elementNoLocal, dofIndex);
+    //LOG(DEBUG) << "getElementValues el. " << elementNoLocal << ", dof " << indices[dofIndex];
   }
   
   // get the values
@@ -253,24 +281,24 @@ getElementValues(int componentNo, element_no_t elementNo,
 //! get the values corresponding to all element-local dofs for all components
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
-getElementValues(element_no_t elementNo, 
+getElementValues(element_no_t elementNoLocal,
                  std::array<std::array<double,nComponents>,FunctionSpaceType::nDofsPerElement()> &values) const
 {
-  assert(elementNo >= 0 && elementNo < this->functionSpace_->nElementsLocal());
+  assert(elementNoLocal >= 0 && elementNoLocal < this->functionSpace_->nElementsLocal());
   assert(this->values_);
   
   const int nDofsPerElement = FunctionSpaceType::nDofsPerElement();
   std::array<PetscInt,nDofsPerElement> indices;
   std::array<double,nDofsPerElement*nComponents> result;
 
-  VLOG(2) << "getElementValues element " << elementNo << ", nComponents=" << nComponents << ", nDofsPerElement=" << nDofsPerElement;
+  VLOG(2) << "getElementValues element " << elementNoLocal << ", nComponents=" << nComponents << ", nDofsPerElement=" << nDofsPerElement;
 
   // prepare lookup indices for PETSc vector values_
   for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
   {
     for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
     {
-      indices[dofIndex] = this->functionSpace_->getDofNo(elementNo, dofIndex);
+      indices[dofIndex] = this->functionSpace_->getDofNo(elementNoLocal, dofIndex);
     }
     
     // get the values for the current component
@@ -285,7 +313,7 @@ getElementValues(element_no_t elementNo,
     for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
     {
       values[dofIndex][componentIndex] = result[componentIndex*nDofsPerElement + dofIndex];
-      //VLOG(2) << "getElementValues element " << elementNo << ", dofIndex " << dofIndex << " componentIndex " << componentIndex << " value: " << values[dofIndex][componentIndex];
+      //VLOG(2) << "getElementValues element " << elementNoLocal << ", dofIndex " << dofIndex << " componentIndex " << componentIndex << " value: " << values[dofIndex][componentIndex];
     }
   }
 }

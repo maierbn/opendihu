@@ -150,4 +150,11 @@ Vec2 getXiOnFace(face_t face, std::array<double,1> xiSurface)
   return xi;
 }
 
+//! dummy function
+VecD<1> getXiOnFace(face_t face, std::array<double,0> xiSurface)
+{
+  return VecD<1>({});
+}
+
+
 }  // namespace

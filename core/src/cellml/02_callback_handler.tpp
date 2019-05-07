@@ -268,6 +268,8 @@ callPythonSetSpecificStatesFunction(int nInstances, int timeStepNo, double curre
 
     if (isOnLocalDomain)   // if the given parameter values is for a dof inside the current domain
     {
+      LOG(DEBUG) << "after python setSpecificStates callback: set dof " << dofNoLocal << ", state " << stateNo << " to value " << value;
+
       // set first parameter value to given value
       localStates[stateNo*nDofsLocalWithoutGhosts + dofNoLocal] = value;
     }

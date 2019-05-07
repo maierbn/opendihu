@@ -7,7 +7,7 @@
 #include "easylogging++.h"
 #include "field_variable/field_variable.h"
 #include "utility/petsc_utility.h"
-#include "function_space/00_function_space_base_dim.h"
+//#include "function_space/00_function_space_base_dim.h"
 #include "mesh/face_t.h"
 
 namespace FunctionSpace
@@ -32,10 +32,20 @@ FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, std
 {
   LOG(DEBUG) << "constructor FunctionSpaceDofsNodes StructuredDeformable, noGeometryField_=" << this->noGeometryField_;
 
+  // local node positions are without ghost nodes
   localNodePositions_ = localNodePositions;
   LOG(DEBUG) << "store " << localNodePositions_.size() << " node positions";
 
   this->noGeometryField_ = noGeometryField;
+}
+
+
+template<int D,typename BasisFunctionType>
+FunctionSpaceDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
+FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, const std::vector<double> &localNodePositionsFromFile, const std::vector<Vec3> &localNodePositions,
+                       const std::array<element_no_t,D> nElementsPerCoordinateDirectionLocal, const std::array<int,D> nRanksPerCoordinateDirection) :
+  FunctionSpaceDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>(partitionManager, localNodePositions, nElementsPerCoordinateDirectionLocal, nRanksPerCoordinateDirection)
+{
 }
 
 template<int D,typename BasisFunctionType>
@@ -57,6 +67,7 @@ FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, con
   LOG(DEBUG) << "set local number of elements per coordinate direction: " << this->nElementsPerCoordinateDirectionLocal_ << ", nRanks: " << this->nRanks_;
   LOG(DEBUG) << "set forcePartitioningCreationFromLocalNumberOfElements_ to true";
 
+  // local node positions are without ghost nodes
   localNodePositions_.reserve(localNodePositions.size() * D);
 
   for (const Vec3 &vector : localNodePositions)
@@ -254,8 +265,8 @@ parseNodePositionsFromSettings(PythonConfig specificSettings)
     }
   }
   else   // there was no "nodePositions" given in config, use physicalExtent instead
-  {    
-    // if node positions are not given in settings but physicalExtent, fill from that
+  {
+    // if node positions are not given in settings but physicalExtent, generate node positions such that physicalExtent is reached
     std::array<double, D> physicalExtent, meshWidth;
     physicalExtent = specificSettings.getOptionArray<double, D>("physicalExtent", 1.0, PythonUtility::Positive);
 
@@ -387,7 +398,11 @@ setGeometryFieldValues()
   this->geometryField_->finishGhostManipulation();
 
   // initialize Hermite derivative dofs such that geometry fields becomes "even"
-  bool setHermiteDerivatives = this->specificSettings_.getOptionBool("setHermiteDerivatives", false);
+  bool setHermiteDerivatives = false;
+  if (std::is_same<BasisFunctionType,BasisFunction::Hermite>::value)
+  {
+    setHermiteDerivatives = this->specificSettings_.getOptionBool("setHermiteDerivatives", true);
+  }
   if (setHermiteDerivatives)
   {
     this->setHermiteDerivatives();

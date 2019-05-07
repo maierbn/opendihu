@@ -5,6 +5,7 @@
 #include "utility/python_utility.h"
 #include "utility/petsc_utility.h"
 #include "data_management/specialized_solver/multidomain.h"
+#include "control/performance_measurement.h"
 
 namespace TimeSteppingScheme
 {
@@ -111,8 +112,11 @@ initialize()
 
   // initialize the finite element class, from which only the stiffness matrix is needed
   // diffusion object without prefactor, for normal diffusion (1st multidomain eq.)
+
+  // initialize(direction, spatiallyVaryingPrefactor, useAdditionalDiffusionTensor)
   finiteElementMethodDiffusionTransmembrane_.initialize(data_.fiberDirection(), nullptr);
-  // direction, spatiallyVaryingPrefactor, useAdditionalDiffusionTensor=false
+
+  // direction, spatiallyVaryingPrefactor, useAdditionalDiffusionTensor=true
   finiteElementMethodDiffusionExtracellular_.initialize(data_.fiberDirection(), nullptr, true);
 
   // initialize the matrix to be used for computing the rhs
@@ -165,12 +169,91 @@ solveLinearSystem()
   Vec rightHandSide = data_.transmembraneFlow()->valuesGlobal();
   Vec solution = data_.extraCellularPotential()->valuesGlobal();
 
+  // check if there are nans
+  data_.transmembraneFlow()->checkNansInfs();
+
+  // dump vectors to be able to later check values
+  //debugDumpData();
+
   // solve the system, KSPSolve(ksp,b,x)
 #ifndef NDEBUG
   this->linearSolver_->solve(rightHandSide, solution);
 #else
   this->linearSolver_->solve(rightHandSide, solution, "Linear system of bidomain problem solved");
 #endif
+}
+
+//! return whether the underlying discretizableInTime object has a specified mesh type and is not independent of the mesh type
+template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
+void StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
+debugDumpData()
+{
+  static int counter = 0;
+
+  // compute matrix norm
+  double norm1, normFrobenius, normInfinity;
+  MatNorm(finiteElementMethodDiffusionExtracellular_.data().stiffnessMatrix()->valuesGlobal(), NORM_1, &norm1);
+  MatNorm(finiteElementMethodDiffusionExtracellular_.data().stiffnessMatrix()->valuesGlobal(), NORM_FROBENIUS, &normFrobenius);
+  MatNorm(finiteElementMethodDiffusionExtracellular_.data().stiffnessMatrix()->valuesGlobal(), NORM_INFINITY, &normInfinity);
+
+  double directionNorm;
+  VecNorm(data_.fiberDirection()->valuesGlobal(), NORM_2, &directionNorm);
+
+
+  std::stringstream filename;
+  filename << "norm_" << counter << ".txt";
+  std::ofstream file0;
+  file0.open(filename.str().c_str(), std::ios::out | std::ios::app);
+
+  file0 << Control::PerformanceMeasurement::getParameter("scenarioName") << ";" << DihuContext::ownRankNoCommWorld() << "/" << DihuContext::nRanksCommWorld() << ";"
+    << norm1 << ";" << normFrobenius << ";" << normInfinity << ";directionNorm;" << directionNorm<< std::endl;
+  file0.close();
+
+
+  filename.str("");
+  filename << "rhs_" << Control::PerformanceMeasurement::getParameter("scenarioName") << "_" << counter << "." << DihuContext::ownRankNoCommWorld() << ".bin";
+  std::ofstream file;
+  file.open(filename.str().c_str(), std::ios::out | std::ios::trunc | std::ios::binary);
+
+  if (file.is_open())
+  {
+    std::vector<double> values;
+    data_.transmembraneFlow()->getValuesWithoutGhosts(values);
+
+    // loop over rhs vector
+    for (int i = 0; i < values.size(); i++)
+    {
+      file.write((char *)(&values[i]), 8);
+    }
+    file.close();
+  }
+  else
+  {
+    LOG(INFO) << "Could not open file";
+  }
+
+
+  filename.str("");
+  filename << "initial_value_" << Control::PerformanceMeasurement::getParameter("scenarioName") << "_" << counter << "." << DihuContext::ownRankNoCommWorld() << ".bin";
+  file.open(filename.str().c_str(), std::ios::out | std::ios::trunc | std::ios::binary);
+
+  if (file.is_open())
+  {
+    std::vector<double> values;
+    data_.extraCellularPotential()->getValuesWithoutGhosts(values);
+
+    // loop over rhs vector
+    for (int i = 0; i < values.size(); i++)
+    {
+      file.write((char *)(&values[i]), 8);
+    }
+    file.close();
+  }
+  else
+  {
+    LOG(INFO) << "Could not open file";
+  }
+  counter++;
 }
 
 //! return whether the underlying discretizableInTime object has a specified mesh type and is not independent of the mesh type

@@ -20,6 +20,7 @@ namespace Control
 
 std::map<std::string, PerformanceMeasurement::Measurement> PerformanceMeasurement::measurements_;
 std::map<std::string,std::string> PerformanceMeasurement::parameters_;
+std::map<std::string, int> PerformanceMeasurement::sums_;
 
 PerformanceMeasurement::Measurement::Measurement() :
   start(0.0), totalDuration(0.0), nTimeSpans(0), totalError(0.0), nErrors(0)
@@ -61,17 +62,23 @@ void PerformanceMeasurement::stop(std::string name, int numberAccumulated)
   }
 }
 
+std::string PerformanceMeasurement::getParameter(std::string key)
+{
+  if (parameters_.find(key) == parameters_.end())
+    return "";
+
+  return parameters_[key];
+}
+
 void PerformanceMeasurement::writeLogFile(std::string logFileName)
 {
   //LOG(DEBUG) << "PerformanceMeasurement::writeLogFile \"" << logFileName;
 
   parseStatusInformation();
 
-  //char *PGI_used = getenv("PGI");
-  //const bool combined = (PGI_used==NULL ? true : false);
   const bool combined = true;   /// if the output is using MPI Output
 
-  int ownRankNo = DihuContext::partitionManager()->rankNoCommWorld();
+  int ownRankNo = DihuContext::ownRankNoCommWorld();
 
   // determine file name
   std::stringstream filename;
@@ -90,13 +97,19 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
   {
     header << measurement.first << ";n;";
   }
-
+  
   // write parameter names
   for (std::pair<std::string,std::string> parameter : parameters_)
   {
     if (parameter.first == "nRanks" || parameter.first == "rankNo")
       continue;
     header << parameter.first << ";";
+  }
+  
+  // write sum names
+  for (std::pair<std::string,int> sum : sums_)
+  {
+    header << sum.first << ";";
   }
 
   header << std::endl;
@@ -107,7 +120,6 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
   // time stamp
   auto t = std::time(nullptr);
   auto tm = *std::localtime(&t);
-  //data << std::put_time(&tm, "%Y/%m/%d %H:%M:%S") << ";";
   data << StringUtility::timeToString(&tm) << ";";
 
   // host name
@@ -123,19 +135,25 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
     data << measurement.second.totalDuration << ";"
     << measurement.second.nTimeSpans << ";";
   }
-
+  
   // write parameters
   for (std::pair<std::string,std::string> parameter : parameters_)
   {
     if (parameter.first == "nRanks" || parameter.first == "rankNo")
       continue;
-
+    
     // remove newlines
     StringUtility::replace(parameter.second, "\n", "");
     StringUtility::replace(parameter.second, "\r", "");
     data << parameter.second << ";";
   }
-
+  
+  // write sums
+  for (std::pair<std::string,int> sum : sums_)
+  {
+    data << sum.second << ";";
+  }
+  
   data << std::endl;
 
   // check if header has to be added to file
@@ -165,7 +183,7 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
   // write header and data to file
   if (combined)   // MPI output
   {
-    // open log file to create directory
+    // open log file to create directory if needed
     std::ofstream file;
     if (ownRankNo == 0)
     {
@@ -181,10 +199,10 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
     MPI_File fileHandle;
     MPIUtility::handleReturnValue(MPI_File_open(MPI_COMM_WORLD, logFileName.c_str(),
                                                 //MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_UNIQUE_OPEN,
-                                                //MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_APPEND,
-                                                MPI_MODE_WRONLY | MPI_MODE_CREATE,
+                                                MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_APPEND,
                                                 MPI_INFO_NULL, &fileHandle), "MPI_File_open");
 
+    // write header
     // collective blocking write, only rank 0 writes, but afterwards all have the same shared file pointer position
     if (ownRankNo == 0)
     {
@@ -198,8 +216,10 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
       MPIUtility::handleReturnValue(MPI_File_write_ordered(fileHandle, b, 0, MPI_BYTE, &status), "MPI_File_write_ordered", &status);
     }
 
+    // write log line for own rank
     MPIUtility::handleReturnValue(MPI_File_write_ordered(fileHandle, data.str().c_str(), data.str().length(), MPI_BYTE, MPI_STATUS_IGNORE), "MPI_File_write_ordered");
 
+    // close file
     MPIUtility::handleReturnValue(MPI_File_close(&fileHandle), "MPI_File_close");
   }
   else  // standard POSIX output
@@ -233,6 +253,20 @@ void PerformanceMeasurement::measureError<double>(std::string name, double diffe
 
   iter->second.totalError += fabs(differenceVector);
   iter->second.nErrors++;
+}
+
+void PerformanceMeasurement::countNumber(std::string name, int number)
+{
+  std::map<std::string, int>::iterator iter = sums_.find(name);
+  
+  // if there is no entry of name yet, create new
+  if (iter == sums_.end())
+  {
+    auto insertedIter = sums_.insert(std::pair<std::string, int>(name, 0));
+    iter = insertedIter.first;
+  }
+  
+  iter->second += number;
 }
 
 void PerformanceMeasurement::parseStatusInformation()

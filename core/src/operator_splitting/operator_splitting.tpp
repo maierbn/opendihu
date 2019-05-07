@@ -73,6 +73,12 @@ initialize()
   // log endTime parameters
   Control::PerformanceMeasurement::setParameter("endTime", endTime_);
 
+  // compose logging keys
+  logKeyTimeStepping1AdvanceTimeSpan_ = this->durationLogKey_ + std::string("_advanceTimeSpan1");  ///< key for logging of the duration of the advanceTimeSpan() call of timeStepping1
+  logKeyTimeStepping2AdvanceTimeSpan_ = this->durationLogKey_ + std::string("_advanceTimeSpan2");  ///< key for logging of the duration of the advanceTimeSpan() call of timeStepping2
+  logKeyTransfer12_ = this->durationLogKey_ + std::string("_transfer12");  ///< key for logging of the duration of data transfer from timestepping 1 to 2
+  logKeyTransfer21_ = this->durationLogKey_ + std::string("_transfer21");  ///< key for logging of the duration of data transfer from timestepping 2 to 1
+
   initialized_ = true;
 }
 

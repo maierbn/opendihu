@@ -1417,11 +1417,11 @@ interpolateFineFibersFromFile()
       else
       {
         // if fiber is no key fiber, read 4 neighbouring fibers and interpolate
-        // *     *
+        /*// *     *
         //  \   /
         //    o
         //  /   \
-        // x     *     // x = oldFiberIndex
+        // x     *     // x = oldFiberIndex*/
         //
         // determine indices of 4 neighbouring fibers
         int oldFiberIndex[4] = {

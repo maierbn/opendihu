@@ -35,11 +35,14 @@ class MegaMol(Package):
     ctx.Message('Checking for MegaMol ...       ')
     self.check_options(env)
 
+    # get number of available processors
+    p = multiprocessing.cpu_count()
+
     # download and so on
     self.set_build_handler([
       'mkdir -p ${PREFIX} && mkdir -p ${DEPENDENCIES_DIR}/megamol/ospray',  # create folders
-      'cd ${DEPENDENCIES_DIR}/megamol && git clone https://github.com/embree/embree.git embree; cd embree && git checkout v3.5.2 && mkdir -p build && cd build && cmake -DCMAKE_C_COMPILER='+ctx.env["CC"]+' -DCMAKE_CXX_COMPILER='+ctx.env["CXX"]+' -DEMBREE_ISPC_SUPPORT=OFF -DEMBREE_TUTORIALS=OFF -DCMAKE_INSTALL_PREFIX=${PREFIX} .. && make && make install', # build embree
-      'cd ${DEPENDENCIES_DIR}/megamol && git clone https://github.com/ospray/ospray.git ospray; cd ospray && git checkout v1.8.5 && mkdir -p build && cd build && cmake -DCMAKE_C_COMPILER='+ctx.env["CC"]+' -DCMAKE_CXX_COMPILER='+ctx.env["CXX"]+' -DEMBREE_DIR=${PREFIX} -DCMAKE_INSTALL_PREFIX=${PREFIX} .. && make && make install', # build ospray
+      'cd ${DEPENDENCIES_DIR}/megamol && git clone https://github.com/embree/embree.git embree; cd embree && git checkout v3.5.2 && mkdir -p build && cd build && cmake -DCMAKE_C_COMPILER='+ctx.env["CC"]+' -DCMAKE_CXX_COMPILER='+ctx.env["CXX"]+' -DEMBREE_ISPC_SUPPORT=OFF -DEMBREE_TUTORIALS=OFF -DCMAKE_INSTALL_PREFIX=${PREFIX} .. && make -j '+str(p)+' && make install', # build embree
+      'cd ${DEPENDENCIES_DIR}/megamol && git clone https://github.com/ospray/ospray.git ospray; cd ospray && git checkout v1.8.5 && mkdir -p build && cd build && cmake -DCMAKE_C_COMPILER='+ctx.env["CC"]+' -DCMAKE_CXX_COMPILER='+ctx.env["CXX"]+' -DEMBREE_DIR=${PREFIX} -DCMAKE_INSTALL_PREFIX=${PREFIX} .. && make -j '+str(p)+' && make install', # build ospray
       "sed -i 's|int megamol_main(int argc, char\* argv\[\]) {|int main(int argc, char\* argv\[\]) {|g' ${SOURCE_DIR}/console/src/Console.cpp",  # reverse eventual change to Console.cpp
       'cd ${SOURCE_DIR} && mkdir -p build && cd build && \
       '+ctx.env["cmake"]+' -DCMAKE_INSTALL_PREFIX=${PREFIX} -DUSE_MPI=ON -DMPI_GUESS_LIBRARY_NAME= -DADIOS2_DIR=${DEPENDENCIES_DIR}/adios/install/lib/cmake/adios2 \
@@ -48,7 +51,7 @@ class MegaMol(Package):
       -DUSE_EXTERNAL_ADIOS=ON \
       -DBUILD_OSPRAY_PLUGIN=ON -DBUILD_PBS_PLUGIN=ON -Dospray_DIR=${PREFIX} \
       CXXFLAGS="-Wno-int-in-bool-context -Wno-endif-labels -Wno-reorder -Wno-pedantic" .. \
-      && make && make install',
+      && make -j '+str(p)+' && make install',
       "cp ${SOURCE_DIR}/console/src/Console.cpp ${SOURCE_DIR}/console/src/Console.cpp.backup && \
       sed -i 's|int main(int argc, char\* argv\[\]) {|int megamol_main(int argc, char\* argv\[\]) {|g' ${SOURCE_DIR}/console/src/Console.cpp",  # replace main() by megamol_main in Console.cpp
       'mkdir -p ${PREFIX}/include && printf "#pragma once\nint megamol_main(int argc, char* argv[]);" > ${PREFIX}/include/Console.h',

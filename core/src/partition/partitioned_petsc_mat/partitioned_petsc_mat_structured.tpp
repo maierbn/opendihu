@@ -84,7 +84,7 @@ template<typename MeshType, typename BasisFunctionType, typename ColumnsFunction
 PartitionedPetscMat<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
 ~PartitionedPetscMat()
 {
-  LOG(DEBUG) << "destroy PartitionedPetscMat";
+  LOG(DEBUG) << "destroy PartitionedPetscMat \"" << this->name_ << "\"";
   PetscErrorCode ierr;
   ierr = MatDestroy(&this->globalMatrix_); CHKERRV(ierr);
   ierr = MatDestroy(&this->localMatrix_); CHKERRV(ierr);

@@ -124,8 +124,12 @@ void HeunAdaptiv<DiscretizableInTime>::advanceTimeSpan()
         VLOG(1) << "starting from solution: " << this->data_->solution();
 
         //---- Calculate next solution like always and store in temporary vector
+
         this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
         temp_solution_normal, temp_increment_1, timeStepNo, currentTime);
+
+        // save internal variable of CellML adapter
+        double lastCallSpecificStatesTime = this->discretizableInTime_.lastCallSpecificStatesTime();
 
         VecAXPY(temp_solution_normal, this->timeStepWidth_, temp_increment_1);
 
@@ -140,6 +144,9 @@ void HeunAdaptiv<DiscretizableInTime>::advanceTimeSpan()
         VecAXPY(temp_increment_2, 1.0, temp_increment_1);
 
         VecAXPY(temp_solution_tilde_intermediate, 0.5*this->timeStepWidth_, temp_increment_1);
+
+        // restore internal variable of CellML adapter, to allow stimulus happen again, because next time, the simulation time is smaller than at last call the rhs
+        this->discretizableInTime_.setLastCallSpecificStatesTime(lastCallSpecificStatesTime);
 
         this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
         temp_solution_tilde_intermediate, temp_increment_1_2, timeStepNo+1, (currentTime + 0.5*this->timeStepWidth_));

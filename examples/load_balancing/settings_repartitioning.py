@@ -109,8 +109,8 @@ if rank_no == 0:
 
 # configure on which ranks fibers 0 and 1 will run
 ranks = [
-  [0,1],       # rank nos that will compute fiber 0
-  [2,3]        # rank nos that will compute fiber 1
+  [0,1,2,3],       # rank nos that will compute fiber 0
+  #[2,3]        # rank nos that will compute fiber 1
 ]
 
 config = {
@@ -143,7 +143,7 @@ config = {
   },
   # control class that configures multiple instances of the fiber model
   "MultipleInstances": {
-    "nInstances": 2,      # number of fibers
+    "nInstances": 1,      # number of fibers
     "instances": [        # settings for each fiber, `i` is the index of the fiber (0 or 1)
     {
       "ranks": ranks[i],
@@ -184,7 +184,9 @@ config = {
                 #"setParametersFunctionAdditionalParameter": i,
                 
                 "setSpecificStatesFunction": set_specific_states,    # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
-                "setSpecificStatesCallInterval": 2*int(1./stimulation_frequency/dt_0D),     # set_specific_states should be called stimulation_frequency times per ms, the factor 2 is needed because every Heun step includes two calls to rhs
+                #"setSpecificStatesCallInterval": 2*int(1./stimulation_frequency/dt_0D),     # set_specific_states should be called stimulation_frequency times per ms, the factor 2 is needed because every Heun step includes two calls to rhs
+                "setSpecificStatesCallInterval": 0,
+                "setSpecificStatesCallFrequency": stimulation_frequency,     # set_specific_states should be called stimulation_frequency times per ms, the factor 2 is needed because every Heun step includes two calls to rhs
                 "additionalArgument": i,
                 
                 "outputStateIndex": 0,                             # state 0 = Vm, rate 28 = gamma
@@ -225,9 +227,10 @@ config = {
             },
           },
         }
+        
       }
     }
-    for i in range(2)
+    for i in range(1)
     ]
   }
 }

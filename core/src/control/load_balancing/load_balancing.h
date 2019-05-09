@@ -38,6 +38,14 @@ protected:
 
   //! check if the degrees of freedom should be redistributed among the ranks
   virtual void rebalance();
+
+private:
+
+  // Counter variable to keep track of rebalancing
+  double rebalanceCounter_;
+
+  // Frequency of the rebalancing
+  int rebalanceFrequency_;
 };
 
 }  // namespace

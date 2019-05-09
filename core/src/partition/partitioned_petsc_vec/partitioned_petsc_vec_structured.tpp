@@ -146,9 +146,9 @@ createVector()
       //ierr = VecGhostRestoreLocalForm(debugGlobal_, &debugLocal_); CHKERRV(ierr);
 
       // (
-      std::vector<double> localValuesDebug(nGhostDofsDebug+nValuesLocalDebug);
-      ierr = VecGetValuesLocal(debugGlobal_, nGhostDofsDebug+nValuesLocalDebug, dofNosLocalDebug.data(), localValuesDebug.data()); CHKERRV(ierr);
-      LOG(DEBUG) << "localValuesDebug before GhostUpdate: " << localValuesDebug;
+      //std::vector<double> localValuesDebug(nGhostDofsDebug+nValuesLocalDebug);
+      //ierr = VecGetValues(debugGlobal_, nGhostDofsDebug+nValuesLocalDebug, dofNosLocalDebug.data(), localValuesDebug.data()); CHKERRV(ierr);
+      //LOG(DEBUG) << "localValuesDebug before GhostUpdate: " << localValuesDebug;
       // )
 
       ierr = VecGhostUpdateBegin(debugGlobal_, ADD_VALUES, SCATTER_REVERSE); CHKERRV(ierr);

@@ -104,6 +104,8 @@ initialize()
   assert(thisMesh != nullptr);
   
   // create empty field variable for geometry field
+  LOG(DEBUG) << "step 1: construct geometryField";
+
   std::vector<std::string> componentNames{"x", "y", "z"};
   this->geometryField_ = std::make_shared<GeometryFieldType>(thisMesh, "geometry", componentNames, true);
   
@@ -393,9 +395,23 @@ setGeometryFieldValues()
       geometryValuesIndex++;
     }
   }
-  // set values for node positions as geometry field 
+  // set values for node positions as geometry field
   this->geometryField_->setValuesWithoutGhosts(geometryValues);
-  this->geometryField_->finishGhostManipulation();
+
+  // initialize Hermite derivative dofs such that geometry fields becomes "even"
+  bool setHermiteDerivatives = false;
+  if (std::is_same<BasisFunctionType,BasisFunction::Hermite>::value)
+  {
+    setHermiteDerivatives = this->specificSettings_.getOptionBool("setHermiteDerivatives", true);
+  }
+  if (setHermiteDerivatives)
+  {
+    this->setHermiteDerivatives();
+  }
+
+  //this->geometryField_->finishGhostManipulation();      // reduce ghost values, not necessary
+  this->geometryField_->setRepresentationGlobal();
+  this->geometryField_->startGhostManipulation();       // distribute ghost values
 
   // output ghost values for debugging
   // get ghost values
@@ -408,22 +424,11 @@ setGeometryFieldValues()
   }
   LOG(DEBUG) << "in setsetGeometryFieldValues, geometry field ghost values: " << stream.str();
 
-
 /*
-  this->geometryField_->startGhostManipulation();
-  this->geometryField_->zeroGhostBuffer();
-  this->geometryField_->finishGhostManipulation();
+  LOG(TRACE) << "Abort";
+  MPI_Barrier(this->meshPartition_->mpiCommunicator());
+  MPI_Abort(this->meshPartition_->mpiCommunicator(), 0);
 */
-  // initialize Hermite derivative dofs such that geometry fields becomes "even"
-  bool setHermiteDerivatives = false;
-  if (std::is_same<BasisFunctionType,BasisFunction::Hermite>::value)
-  {
-    setHermiteDerivatives = this->specificSettings_.getOptionBool("setHermiteDerivatives", true);
-  }
-  if (setHermiteDerivatives)
-  {
-    this->setHermiteDerivatives();
-  }
 
   VLOG(1) << "setGeometryField, geometryValues: " << geometryValues;
 }

@@ -87,6 +87,8 @@ createVector()
     ierr = VecCreateGhost(this->meshPartition_->mpiCommunicator(), this->meshPartition_->nDofsLocalWithoutGhosts(),
                           this->meshPartition_->nDofsGlobal(), nGhostDofs, this->meshPartition_->ghostDofNosGlobalPetsc().data(), &vectorGlobal_[componentNo]); CHKERRV(ierr);
     
+#if 0
+    // debugging tests, learn how ghost value communcation works
     if (componentNo == 0)
     {
       Vec debugLocal_;
@@ -96,63 +98,69 @@ createVector()
       std::vector<int> ghostDofNosGlobalDebug({ownRankNo+1});
       std::vector<int> ghostDofNosLocalDebug({1});
       std::vector<int> dofNosLocalDebug({0,1});
+      std::vector<int> dofNosGlobalDebug({ownRankNo,ownRankNo+1});
 
       int nGhostDofsDebug = 1;
       int nValuesLocalDebug = 1;
+      int nValuesGlobalDebug = 9;
 
       if (ownRankNo == 7)
       {
         nGhostDofsDebug = 0;
         nValuesLocalDebug = 2;
       }
-      ierr = VecCreateGhost(this->meshPartition_->mpiCommunicator(), nValuesLocalDebug,
-                            9, nGhostDofsDebug, ghostDofNosGlobalDebug.data(), &debugGlobal_); CHKERRV(ierr);
 
-      ierr = VecSetFromOptions(debugGlobal_); CHKERRV(ierr);
+      // step 1: construct geometry field
+      // createVector()
+      ierr = VecCreateGhost(this->meshPartition_->mpiCommunicator(), nValuesLocalDebug,
+                            nValuesGlobalDebug, nGhostDofsDebug, ghostDofNosGlobalDebug.data(), &debugGlobal_); CHKERRV(ierr);
+
+      //ierr = PetscObjectSetName((PetscObject) debugGlobal_, "debug"); CHKERRV(ierr);
+
+      //ierr = VecGhostUpdateBegin(debugGlobal_, INSERT_VALUES, SCATTER_FORWARD); CHKERRV(ierr);
+      //ierr = VecGhostUpdateEnd(debugGlobal_, INSERT_VALUES, SCATTER_FORWARD); CHKERRV(ierr);
+
+      //ierr = VecSetFromOptions(debugGlobal_); CHKERRV(ierr);
       ierr = VecGhostGetLocalForm(debugGlobal_, &debugLocal_); CHKERRV(ierr);
       // now representation is local
+      // --
 
-      // set values
+      // step 2: this->geometryField_->setValuesWithoutGhosts(geometryValues)
+      // field_variable: this->values_->setValues()
+      // setValues()
       std::vector<int> dofNoDebug({0,1});
       std::vector<double> valuesDebug({(double)10+ownRankNo, (double)10+ownRankNo+1});
       valuesDebug.resize(nValuesLocalDebug);
       ierr = VecSetValues(debugLocal_, nValuesLocalDebug, dofNoDebug.data(), valuesDebug.data(), INSERT_VALUES); CHKERRV(ierr);
+      // now representation is local
       // --
 
-      std::vector<double> values(nGhostDofsDebug, 0.1);
-      ierr = VecSetValues(debugLocal_, nGhostDofsDebug, ghostDofNosLocalDebug.data(), values.data(), INSERT_VALUES); CHKERRV(ierr);
-
       // set representation global
-      ierr = VecGhostRestoreLocalForm(debugGlobal_, &debugLocal_); CHKERRV(ierr);
+      //ierr = VecGhostRestoreLocalForm(debugGlobal_, &debugLocal_); CHKERRV(ierr);
+      // --
+
+      // step 3: this->geometryField_->finishGhostManipulation()
+      // finishGhostManipulation()
+      // representation must be local
+      //ierr = VecGhostRestoreLocalForm(debugGlobal_, &debugLocal_); CHKERRV(ierr);
+      //ierr = VecGhostUpdateBegin(debugGlobal_, ADD_VALUES, SCATTER_REVERSE); CHKERRV(ierr);
+      //ierr = VecGhostUpdateEnd(debugGlobal_, ADD_VALUES, SCATTER_REVERSE); CHKERRV(ierr);
+      // now representation is global
       // --
 
       // now representation is global
 
       // startGhostManipulation
-      ierr = VecGhostUpdateBegin(debugGlobal_, INSERT_VALUES, SCATTER_FORWARD); CHKERRV(ierr);
-
-      ierr = VecGhostUpdateEnd(debugGlobal_, INSERT_VALUES, SCATTER_FORWARD); CHKERRV(ierr);
+      //ierr = VecGhostUpdateBegin(debugGlobal_, INSERT_VALUES, SCATTER_FORWARD); CHKERRV(ierr);
+      //ierr = VecGhostUpdateEnd(debugGlobal_, INSERT_VALUES, SCATTER_FORWARD); CHKERRV(ierr);
       //ierr = VecGhostGetLocalForm(debugGlobal_, &debugLocal_); CHKERRV(ierr);
       // --
 
       // now representation is local
       // zeroGhostBuffer
-      std::vector<double> zeroValues(nGhostDofsDebug, 0.0);
+      //std::vector<double> zeroValues(nGhostDofsDebug, 0.0);
       //ierr = VecSetValues(debugLocal_, nGhostDofsDebug, ghostDofNosLocalDebug.data(), zeroValues.data(), INSERT_VALUES); CHKERRV(ierr);
-      ierr = VecSetValues(debugGlobal_, nGhostDofsDebug, ghostDofNosGlobalDebug.data(), zeroValues.data(), INSERT_VALUES); CHKERRV(ierr);
-      // --
-
-      // finishGhostManipulation
-      //ierr = VecGhostRestoreLocalForm(debugGlobal_, &debugLocal_); CHKERRV(ierr);
-
-      // (
-      //std::vector<double> localValuesDebug(nGhostDofsDebug+nValuesLocalDebug);
-      //ierr = VecGetValues(debugGlobal_, nGhostDofsDebug+nValuesLocalDebug, dofNosLocalDebug.data(), localValuesDebug.data()); CHKERRV(ierr);
-      //LOG(DEBUG) << "localValuesDebug before GhostUpdate: " << localValuesDebug;
-      // )
-
-      ierr = VecGhostUpdateBegin(debugGlobal_, ADD_VALUES, SCATTER_REVERSE); CHKERRV(ierr);
-      ierr = VecGhostUpdateEnd(debugGlobal_, ADD_VALUES, SCATTER_REVERSE); CHKERRV(ierr);
+      //ierr = VecSetValues(debugGlobal_, nGhostDofsDebug, ghostDofNosGlobalDebug.data(), zeroValues.data(), INSERT_VALUES); CHKERRV(ierr);
       // --
 
       // now representation is global
@@ -164,28 +172,36 @@ createVector()
       // --
 
       // set representation local
-      ierr = VecGhostGetLocalForm(debugGlobal_, &debugLocal_); CHKERRV(ierr);
+      //ierr = VecGhostGetLocalForm(debugGlobal_, &debugLocal_); CHKERRV(ierr);
       // --
 
-      // get values
+      ierr = VecGhostUpdateBegin(debugGlobal_, INSERT_VALUES, SCATTER_FORWARD); CHKERRV(ierr);
+      ierr = VecGhostUpdateEnd(debugGlobal_, INSERT_VALUES, SCATTER_FORWARD); CHKERRV(ierr);
+
+
+      // get values from global vector
+      std::vector<double> globalValues(nValuesLocalDebug+nGhostDofsDebug);
+      ierr = VecGetValues(debugGlobal_, nValuesLocalDebug+nGhostDofsDebug, dofNosGlobalDebug.data(), globalValues.data()); CHKERRV(ierr);
+      LOG(INFO) << "local + ghost values (from global vector): " << globalValues;
+
+      // get values from local vector
       ierr = VecGetValues(debugLocal_, nValuesLocalDebug, dofNoDebug.data(), valuesDebug.data()); CHKERRV(ierr);
-      LOG(DEBUG) << "local values: " << valuesDebug;
-      // --
-
+      LOG(DEBUG) << "local values (from local vector): " << valuesDebug;
 
       // get ghost values (from local vector)
       std::vector<double> localGhostValues(nGhostDofsDebug);
       ierr = VecGetValues(debugLocal_, nGhostDofsDebug, ghostDofNosLocalDebug.data(), localGhostValues.data()); CHKERRV(ierr);
 
-      LOG(DEBUG) << "ghost values (from the local vector): " << localGhostValues;
+      LOG(DEBUG) << "ghost values (from local vector): " << localGhostValues;
 
       // get ghost values (from global vector)
       ierr = VecGetValues(debugGlobal_, nGhostDofsDebug, ghostDofNosGlobalDebug.data(), localGhostValues.data()); CHKERRV(ierr);
 
-      LOG(DEBUG) << "ghost values (from the global vector): " << localGhostValues;
+      LOG(DEBUG) << "ghost values (from global vector): " << localGhostValues;
 
       //ierr = VecGetValues();
     }
+#endif
 
     // initialize PETSc vector object
     //ierr = VecCreate(this->meshPartition_->mpiCommunicator(), &vectorLocal_[componentNo]); CHKERRV(ierr);

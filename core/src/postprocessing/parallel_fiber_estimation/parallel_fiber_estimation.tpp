@@ -488,20 +488,6 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     LOG(DEBUG) << "n dofs local without ghosts: " << this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts();
     LOG(DEBUG) << "nElementsPerCoordinateDirectionLocal: " << nElementsPerCoordinateDirectionLocal;
 
-    //LOG(DEBUG) << "nodePositions: " << nodePositions;
-    std::vector<Vec3> geometryFieldValues;
-    this->functionSpace_->geometryField().getValuesWithoutGhosts(geometryFieldValues);
-    LOG(DEBUG) << "geometryFieldValues: " << geometryFieldValues;
-
-    // get ghost values
-    std::stringstream stream;
-    std::vector<Vec3> geometryFieldValuesWithGhosts;
-    this->functionSpace_->geometryField().getValuesWithGhosts(geometryFieldValuesWithGhosts);
-    for (int i = this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts(); i < geometryFieldValuesWithGhosts.size(); i++)
-    {
-      stream << " " << geometryFieldValuesWithGhosts[i];
-    }
-    LOG(DEBUG) << "geometry field ghost values: " << stream.str();
     /*
     std::array<global_no_t,FunctionSpace::dim()> &nElementsGlobal,
       const std::array<element_no_t,FunctionSpace::dim()> nElementsLocal,
@@ -523,7 +509,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     PythonUtility::checkForError();
 #endif
 #endif
-exit(0);
+
     // create boundary condition objects, either dirichlet or neumann
     std::shared_ptr<SpatialDiscretization::DirichletBoundaryConditions<FunctionSpaceType,1>> dirichletBoundaryConditions;
     std::shared_ptr<SpatialDiscretization::NeumannBoundaryConditions<FunctionSpaceType,Quadrature::Gauss<3>,1>> neumannBoundaryConditions;

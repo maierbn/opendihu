@@ -17,13 +17,26 @@ sampleAtEquidistantZPoints(std::vector<std::vector<Vec3>> &streamlinePoints, con
   int nStreamlines = streamlinePoints.size();
   streamlineZPoints.resize(nStreamlines);
 
+  std::vector<std::vector<Vec3>> rawSampledStreamlinesForDebugging;
+
   // loop over all traced streamlines in this subdomain
   for (int i = 0; i < nStreamlines; i++)
   {
     LOG(DEBUG) << " streamline " << i << " has " << streamlinePoints[i].size() << " points.";
 
-    sampleStreamlineAtEquidistantZPoints(streamlinePoints[i], seedPoints[i], bottomZClip, topZClip, streamlineZPoints[i], i);
+    sampleStreamlineAtEquidistantZPoints(streamlinePoints[i], seedPoints[i], bottomZClip, topZClip, streamlineZPoints[i], i, rawSampledStreamlinesForDebugging);
   }
+
+#ifndef NDEBUG
+#ifdef STL_OUTPUT
+  std::stringstream name;
+  name << "05_sampled_streamlines_";
+  PyObject_CallFunction(functionOutputStreamline_, "s i i O f", name.str().c_str(), currentRankSubset_->ownRankNo(), level_,
+                        PythonUtility::convertToPython<std::vector<std::vector<Vec3>>>::get(rawSampledStreamlinesForDebugging), 0.1);
+  PythonUtility::checkForError();
+#endif
+#endif
+
 }
 
 template<typename BasisFunctionType>
@@ -43,7 +56,7 @@ computeBottomTopZClip(double &bottomZClip, double &topZClip)
 template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
 sampleStreamlineAtEquidistantZPoints(std::vector<Vec3> &streamlinePoints, const Vec3 &seedPoint, double bottomZClip, double topZClip,
-                                     std::vector<Vec3> &streamlineZPoints, int streamlineNoDebugging)
+                                     std::vector<Vec3> &streamlineZPoints, int streamlineNoForDebugging, std::vector<std::vector<Vec3>> &rawSampledStreamlinesForDebugging)
 {
   // the streamline is expected to have at least one point, the seed point
   assert(!streamlinePoints.empty());
@@ -144,21 +157,24 @@ sampleStreamlineAtEquidistantZPoints(std::vector<Vec3> &streamlinePoints, const 
     << ", nBorderPointsXNew_: " << nBorderPointsXNew_ << ", nBorderPointsZNew_: " << nBorderPointsZNew_;
 
 #ifndef NDEBUG
+
+  rawSampledStreamlinesForDebugging.push_back(streamlineZPoints);
+
 #ifdef STL_OUTPUT
-//#ifdef STL_OUTPUT_VERBOSE
+#ifdef STL_OUTPUT_VERBOSE
   std::stringstream name;
-  name << "05_sampled_streamline_" << streamlineNoDebugging << "_";
+  name << "05_sampled_streamline_" << streamlineNoForDebugging << "_";
   PyObject_CallFunction(functionOutputStreamline_, "s i i O f", name.str().c_str(), currentRankSubset_->ownRankNo(), level_,
                         PythonUtility::convertToPython<std::vector<Vec3>>::get(streamlineZPoints), 0.1);
   PythonUtility::checkForError();
-//#endif
+#endif
 #endif
 #endif
 
   // if streamline is not complete
   if (streamlineZPoints.size() != nBorderPointsZNew_)
   {
-    LOG(DEBUG) << "Streamline " << streamlineNoDebugging << " is not complete, i.e. does not run from \"bottomZClip\" to \"topZClip\" .";
+    LOG(DEBUG) << "Streamline " << streamlineNoForDebugging << " is not complete, i.e. does not run from \"bottomZClip\" to \"topZClip\" .";
 
     // assign seed point instead of incomplete streamline
     streamlineZPoints.resize(1);

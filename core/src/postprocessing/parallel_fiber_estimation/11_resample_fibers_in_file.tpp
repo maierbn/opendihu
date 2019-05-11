@@ -8,20 +8,57 @@ void ParallelFiberEstimation<BasisFunctionType>::
 resampleFibersInFile(int nPointsPerFiber, std::string filename)
 {
   // create a new file with all the fibers from the old file but resampled such that they have nNodesPerFiber_ nodes
-  LOG(INFO) << "resample fibers in file";
+  LOG(INFO) << "resample fibers in file, this is completely serial, nBorderPointsXNew_: " << nBorderPointsXNew_;
 
-  // rename existing file
-  std::string newFilename = filename + std::string("_");
-  std::stringstream moveCommand;
-  moveCommand << "mv " << filename << " " << newFilename;
-  int ret = std::system(moveCommand.str().c_str());
-  ret++;
-  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  // determine nFibersX of the input file
+  std::ifstream file(filename.c_str(), std::ios::in | std::ios::binary);
+
+  // skip first part of header
+  file.seekg(32+4);
+  union int32
+  {
+    char c[4];
+    int32_t i;
+  }
+  bufferNFibers, bufferNPointsPerFiber;
+
+  // get number of fibers
+  file.read(bufferNFibers.c, 4);
+  int nFibers = bufferNFibers.i;
+
+  // get number of points per fiber
+  file.read(bufferNPointsPerFiber.c, 4);
+  if (nPointsPerFiber != bufferNPointsPerFiber.i)
+  {
+    LOG(FATAL) << "Invalid number of points per fiber: file \"" << filename << "\" contains " << bufferNPointsPerFiber.i
+      << ", but " << nPointsPerFiber << " are required.";
+  }
+  file.close();
+
+  int nFibersX = int(std::round(std::sqrt(nFibers)));
+  std::string filenameExistingFile = filename;
+
+  // adjust result filename to contain the correct number of fibers
+  adjustFilename(filename, nFibersX);
+
+  // if filename does not change, i.e. filename does not depend on number of fibers
+  if (filename == filenameExistingFile)
+  {
+    filenameExistingFile = filename + std::string(".lowres");
+
+    // rename existing file
+    std::stringstream moveCommand;
+    moveCommand << "mv " << filename << " " << filenameExistingFile;
+    int ret = std::system(moveCommand.str().c_str());
+    ret++;
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
 
   // open existing file to read
-  std::ifstream fileOld(newFilename.c_str(), std::ios::in | std::ios::binary);
+  std::ifstream fileOld(filenameExistingFile.c_str(), std::ios::in | std::ios::binary);
   assert (fileOld.is_open());
 
+  // open new file to write
   LOG(DEBUG) << "write to file " << filename;
   std::ofstream fileNew(filename.c_str(), std::ios::out | std::ios::binary);
   assert (fileNew.is_open());
@@ -48,8 +85,6 @@ resampleFibersInFile(int nPointsPerFiber, std::string filename)
 
   double oldZIncrement = double(topZClip_ - bottomZClip_) / (nPointsPerFiber - 1);
 
-  int nFibersX = (nBorderPointsXNew_-1) * nFineGridFibers_ + nBorderPointsXNew_;
-  int nFibers = MathUtility::sqr(nFibersX);
   const long long fiberDataSize = nPointsPerFiber*3*sizeof(double);
 
   // loop over fibers in old file
@@ -114,7 +149,8 @@ resampleFibersInFile(int nPointsPerFiber, std::string filename)
 
   fileOld.close();
   fileNew.close();
-  LOG(INFO) << "File \"" << filename << "\" written.";
+
+  LOG(INFO) << nFibersX << "x" << nFibersX << " fibers written to file \"" << filename << "\".";
 }
 
 } // namespace

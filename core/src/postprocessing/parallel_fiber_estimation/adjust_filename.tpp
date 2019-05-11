@@ -22,10 +22,13 @@ adjustFilename(std::string &filename, int nFibersX)
   LOG(DEBUG) << "adjust filename [" << filename << "], nFibersX: " << nFibersX << ", path: [" << path << "], fileBase: [" << fileBase << "]";
 
   // create directory and wait until system has created it
-  int ret = system((std::string("mkdir -p ")+path).c_str());
-  if (ret != 0)
-    LOG(WARNING) << "Creation of directory \"" <<path<< "\" failed.";
-  std::this_thread::sleep_for(std::chrono::milliseconds(50));
+  if (path != "")
+  {
+    int ret = system((std::string("mkdir -p ")+path).c_str());
+    if (ret != 0)
+      LOG(WARNING) << "Creation of directory \"" <<path<< "\" failed.";
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+  }
 
   // check if filename contains x
   bool xFound = false;

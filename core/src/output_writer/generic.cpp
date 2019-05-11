@@ -51,10 +51,13 @@ void Generic::openFile(std::ofstream& file, std::string filename, bool append)
       std::string path = filename.substr(0, filename.rfind("/"));
 
       // create directory and wait until system has created it
-      int ret = system((std::string("mkdir -p ")+path).c_str());
-      if (ret != 0)
-        LOG(WARNING) << "Creation of directory \"" <<path<< "\" failed.";
-      std::this_thread::sleep_for(std::chrono::milliseconds(500));
+      if (path != "")
+      {
+        int ret = system((std::string("mkdir -p ")+path).c_str());
+        if (ret != 0)
+          LOG(WARNING) << "Creation of directory \"" <<path<< "\" failed.";
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+      }
 
       file.clear();
       file.open(filename.c_str(), std::ios::out | std::ios::binary);

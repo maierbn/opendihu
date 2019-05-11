@@ -103,7 +103,7 @@ protected:
 
   //! sample one streamline at equidistant z points, if the streamline does not run from bottom to top, only add seedPoint, i is a number for debugging output
   void sampleStreamlineAtEquidistantZPoints(std::vector<Vec3> &streamlinePoints, const Vec3 &seedPoint, double bottomZClip, double topZClip,
-                                     std::vector<Vec3> &streamlineZPoints, int i = 0);
+                                     std::vector<Vec3> &streamlineZPoints, int streamlineNoForDebugging, std::vector<std::vector<Vec3>> &rawSampledStreamlinesForDebugging);
 
   //! compute the starting end end value of z for the current subdomain, uses meshPartition_
   void computeBottomTopZClip(double &bottomZClip, double &topZClip);

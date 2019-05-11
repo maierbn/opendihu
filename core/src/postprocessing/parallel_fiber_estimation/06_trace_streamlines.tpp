@@ -100,22 +100,33 @@ traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool stre
 
       // if everything was cleared, add seed point
       if (streamlinePoints[i].empty())
+      {
         streamlinePoints[i].push_back(startingPoint);
 
 
 #ifndef NDEBUG
 #ifdef STL_OUTPUT
-#ifdef STL_OUTPUT_VERBOSE
+//#ifdef STL_OUTPUT_VERBOSE
+        std::stringstream name;
+        name << "04_raw_invalid_streamline_" << i << "_";
+        PyObject_CallFunction(functionOutputStreamline_, "s i i O f", name.str().c_str(), currentRankSubset_->ownRankNo(), level_,
+                              PythonUtility::convertToPython<std::vector<Vec3>>::get(streamlinePoints[i]), 0.1);
+        PythonUtility::checkForError();
+//#endif
+#endif
+#endif
+      }
+    }
+
+#ifndef NDEBUG
+#ifdef STL_OUTPUT
       std::stringstream name;
-      name << "04_raw_streamline_" << i << "_";
-      PyObject_CallFunction(functionOutputStreamline_, "s i i O f", name.str().c_str(), currentRankSubset_->ownRankNo(), level_,
-                            PythonUtility::convertToPython<std::vector<Vec3>>::get(streamlinePoints[i]), 0.1);
+      name << "04_raw_streamlines_";
+      PyObject_CallFunction(functionOutputStreamlines_, "s i i O f", name.str().c_str(), currentRankSubset_->ownRankNo(), level_,
+                            PythonUtility::convertToPython<std::vector<std::vector<Vec3>>>::get(streamlinePoints), 0.1);
       PythonUtility::checkForError();
 #endif
 #endif
-#endif
-
-    }
 
     // reorder streamline points such that they go from bottom to top
     if (streamlineDirection < 0)

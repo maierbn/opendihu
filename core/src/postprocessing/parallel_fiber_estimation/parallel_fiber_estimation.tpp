@@ -34,6 +34,7 @@
 #include "postprocessing/parallel_fiber_estimation/08_rearrange_streamline_points.tpp"
 #include "postprocessing/parallel_fiber_estimation/09_fill_border_points.tpp"
 #include "postprocessing/parallel_fiber_estimation/10_fix_incomplete_streamlines.tpp"
+#include "postprocessing/parallel_fiber_estimation/11_fix_invalid.tpp"
 #include "postprocessing/parallel_fiber_estimation/11_interpolate_fine_fibers_from_file.tpp"
 #include "postprocessing/parallel_fiber_estimation/11_resample_fibers_in_file.tpp"
 #include "postprocessing/parallel_fiber_estimation/11_trace_result_fibers.tpp"

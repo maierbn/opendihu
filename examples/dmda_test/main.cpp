@@ -158,6 +158,7 @@ int main(int argc, char *argv[])
 {
   
   // test case
+  // run with 2 processes
   
   // global
   // |3 |4 5|
@@ -173,7 +174,14 @@ int main(int argc, char *argv[])
   // |1 3*| |2 3|
   // |0 2*| |0 1|
   //  p0     p1   *=ghost
-  
+  //
+  // values
+  // |1.1  3.1|  |2.2  3.2|
+  // |0.1  2.1|  |0.2  1.2|
+  //
+  // |1.1  |5.3  3.2|
+  // |0.1  |2.3  1.2|
+
   
   // keywords: VecCreateGhost, VecGhostUpdateBegin, VecGetLocalVector
   
@@ -294,6 +302,50 @@ int main(int argc, char *argv[])
   LOG(INFO) << "local values: " << values2;
   VecView(globalVector, PETSC_VIEWER_STDOUT_WORLD);
 
+  MPI_Barrier(MPI_COMM_WORLD);
+  LOG(INFO) << "communicate ghost values";
+
+  // now communicate ghost values from rank 1 to rank 0
+  VecGhostUpdateBegin(globalVector, INSERT_VALUES, SCATTER_FORWARD);
+  VecGhostUpdateEnd(globalVector, INSERT_VALUES, SCATTER_FORWARD);
+
+  VecGetValues(globalVector, nEntriesGlobal, indices.data(), values.data());
+  LOG(INFO) << "global values: " << values;
+
+  VecGetValues(localVector, nEntriesLocal, indices2.data(), values2.data());
+  LOG(INFO) << "local values: " << values2;
+
+  if (ownRankNo == 0)
+  {
+    // global values
+    assert(fabs(values[0] - 0.1) < 1e-12);
+    assert(fabs(values[1] - 1.1) < 1e-12);
+    assert(fabs(values[2] - 2.3) < 1e-12);
+    assert(fabs(values[3] - 5.3) < 1e-12);
+
+    // local values
+    assert(fabs(values2[0] - 0.1) < 1e-12);
+    assert(fabs(values2[1] - 1.1) < 1e-12);
+    assert(fabs(values2[2] - 2.3) < 1e-12);
+    assert(fabs(values2[3] - 5.3) < 1e-12);
+  }
+  else
+  {
+    // global values
+    assert(fabs(values[2] - 2.3) < 1e-12);
+    assert(fabs(values[3] - 1.2) < 1e-12);
+    assert(fabs(values[4] - 5.3) < 1e-12);
+    assert(fabs(values[5] - 3.2) < 1e-12);
+
+    // local values
+    assert(fabs(values2[0] - 2.3) < 1e-12);
+    assert(fabs(values2[1] - 1.2) < 1e-12);
+    assert(fabs(values2[2] - 5.3) < 1e-12);
+    assert(fabs(values2[3] - 3.2) < 1e-12);
+  }
+
+
+  MPI_Barrier(MPI_COMM_WORLD);
   // --------- matrix ------------
   LOG(INFO) << " --------- matrix ---------";
   Mat globalMatrix;

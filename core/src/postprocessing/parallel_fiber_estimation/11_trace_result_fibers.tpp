@@ -1122,5 +1122,4 @@ fixInvalidFibersInFile(std::string filename)
   file.close();
 }
 
-
 } // namespace

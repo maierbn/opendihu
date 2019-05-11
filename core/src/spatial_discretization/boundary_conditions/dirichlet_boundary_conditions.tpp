@@ -783,10 +783,9 @@ void DirichletBoundaryConditions<FunctionSpaceType,nComponents>::
 applyInRightHandSide(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> rightHandSide,
                      std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> boundaryConditionsRightHandSideSummand)
 {
-  //LOG(TRACE) << "DirichletBoundaryConditionsBase::applyInRightHandSide";
-
-  VLOG(1) << "applyInRightHandSide: rightHandSide=" << *rightHandSide;
-  VLOG(1) << "boundaryConditionsRightHandSideSummand=" << *boundaryConditionsRightHandSideSummand;
+  LOG(TRACE) << "DirichletBoundaryConditionsBase::applyInRightHandSide";
+  //LOG(DEBUG) << "applyInRightHandSide: rightHandSide=" << *rightHandSide;
+  //LOG(DEBUG) << "boundaryConditionsRightHandSideSummand=" << *boundaryConditionsRightHandSideSummand;
 
   if (rightHandSide != boundaryConditionsRightHandSideSummand)
   {
@@ -800,7 +799,11 @@ applyInRightHandSide(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceT
 
   this->applyInVector(rightHandSide);
 
-  VLOG(1) << "rightHandSide after set values: " << *rightHandSide;
+  if (VLOG_IS_ON(1))
+  {
+    VLOG(1) << "rightHandSide after set values: " << *rightHandSide;
+  }
+ 
 }
 
 

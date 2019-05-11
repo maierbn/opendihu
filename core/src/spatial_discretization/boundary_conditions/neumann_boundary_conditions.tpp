@@ -110,15 +110,16 @@ initializeRhs()
       << geometryVolume << ", face " << Mesh::getString(elementIter->face) << ", geometrySurface: " << geometrySurface;
 
     // show node positions
+      /*
     if (VLOG_IS_ON(1))
     {
       std::array<dof_no_t,FunctionSpaceType::nNodesPerElement()> elementNodeNos = functionSpace->getElementNodeNos(elementNoLocal);
       for (int elementalNodeIndex = 0; elementalNodeIndex < FunctionSpaceType::nNodesPerElement(); elementalNodeIndex++)
       {
         dof_no_t nodeNoLocal = elementNodeNos[elementalNodeIndex];
-        LOG(DEBUG) << ", global coordinates of element: " << functionSpace->meshPartition()->getCoordinatesGlobal(nodeNoLocal);
+        //LOG(DEBUG) << ", global coordinates of element: " << functionSpace->meshPartition()->getCoordinatesGlobal(nodeNoLocal);
       }
-    }
+    }*/
 
     // loop over integration points (e.g. gauss points)
     for (unsigned int samplingPointIndex = 0; samplingPointIndex < samplingPointsSurface.size(); samplingPointIndex++)

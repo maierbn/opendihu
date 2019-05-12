@@ -74,7 +74,8 @@ initialize()
   if (nIntermediatesInSource_ > nIntermediates_)
   {
     LOG(FATAL) << "CellML source file needs " << nIntermediatesInSource_ << " intermediates, but CellMLAdapter only supports " << nIntermediates_
-      << ". You have to set the correct number in the c++ file and recompile.";
+      << ". You have to set the correct number in the c++ file and recompile." << std::endl
+      << "(Use \"CellMLAdapter<" << nStates << "," << nIntermediatesInSource_ << ">\".)";
   }
   else if (nIntermediatesInSource_ != nIntermediates_)
   {

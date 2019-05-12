@@ -137,38 +137,44 @@ getFaceDofs(Mesh::face_t face, std::array<dof_no_t,FunctionSpaceBaseDim<2,BasisF
 
   const int nNodesPerElement2D = FunctionSpaceBaseDim<2,BasisFunctionType>::nNodesPerElement();
   const int nDofsPerNode = FunctionSpaceBaseDim<MeshType::dim(),BasisFunctionType>::nDofsPerNode();
-  const int nDofsPer1DLine = FunctionSpaceBaseDim<1,BasisFunctionType>::nNodesPerElement() * nDofsPerNode;
-  const int nDofsPer2DPlane = FunctionSpaceBaseDim<2,BasisFunctionType>::nNodesPerElement() * nDofsPerNode;
+  const int nNodesPer1DLine = FunctionSpaceBaseDim<1,BasisFunctionType>::nNodesPerElement();
+  const int nDofsPer1DLine = nNodesPer1DLine * nDofsPerNode;
+  const int nDofsPer2DPlane = nNodesPerElement2D * nDofsPerNode;
+
+  LOG(DEBUG) << "getFaceDofs, MeshType: " << StringUtility::demangle(typeid(MeshType).name()) << ", BasisFunctionType: " << StringUtility::demangle(typeid(BasisFunctionType).name())
+    << ", nDofsPer2DPlane: " << nDofsPer2DPlane;
 
   switch(face)
   {
-  case Mesh::face0Minus:
+  case Mesh::face0Minus:    // left
 
     currentDofIndex = 0;
     for (int i = 0; i < nNodesPerElement2D; i++)
     {
       for (int nodalDofIndex = 0; nodalDofIndex < nDofsPerNode; nodalDofIndex++)
       {
+        assert(i*nDofsPerNode + nodalDofIndex < nDofsPer2DPlane);
         dofIndices[i*nDofsPerNode + nodalDofIndex] = currentDofIndex + nodalDofIndex;
       }
       currentDofIndex += nDofsPer1DLine;
     }
     break;
 
-  case Mesh::face0Plus:
+  case Mesh::face0Plus:   // right
 
     currentDofIndex = nDofsPer1DLine - nDofsPerNode;
     for (int i = 0; i < nNodesPerElement2D; i++)
     {
       for (int nodalDofIndex = 0; nodalDofIndex < nDofsPerNode; nodalDofIndex++)
       {
+        assert(i*nDofsPerNode + nodalDofIndex < nDofsPer2DPlane);
         dofIndices[i*nDofsPerNode + nodalDofIndex] = currentDofIndex + nodalDofIndex;
       }
       currentDofIndex += nDofsPer1DLine;
     }
     break;
 
-  case Mesh::face1Minus:
+  case Mesh::face1Minus:      // front
 
     currentDofIndex = 0;
     rowStartIndex = 0;
@@ -176,10 +182,11 @@ getFaceDofs(Mesh::face_t face, std::array<dof_no_t,FunctionSpaceBaseDim<2,BasisF
     for (int i = 0; i < nNodesPerElement2D; i++)
     {
       currentDofIndex = rowStartIndex;
-      for (int j = 0; j < nDofsPer1DLine; j++)
+      for (int j = 0; j < nNodesPer1DLine; j++)
       {
         for (int nodalDofIndex = 0; nodalDofIndex < nDofsPerNode; nodalDofIndex++, index++)
         {
+          assert(index < nDofsPer2DPlane);
           dofIndices[index] = currentDofIndex + nodalDofIndex;
         }
         currentDofIndex += nDofsPerNode;
@@ -189,7 +196,7 @@ getFaceDofs(Mesh::face_t face, std::array<dof_no_t,FunctionSpaceBaseDim<2,BasisF
     }
     break;
 
-  case Mesh::face1Plus:
+  case Mesh::face1Plus:     // back
 
     currentDofIndex = 0;
     rowStartIndex = nDofsPer2DPlane - nDofsPer1DLine;
@@ -197,10 +204,11 @@ getFaceDofs(Mesh::face_t face, std::array<dof_no_t,FunctionSpaceBaseDim<2,BasisF
     for (int i = 0; i < nNodesPerElement2D; i++)
     {
       currentDofIndex = rowStartIndex;
-      for (int j = 0; j < nDofsPer1DLine; j++)
+      for (int j = 0; j < nNodesPer1DLine; j++)
       {
         for (int nodalDofIndex = 0; nodalDofIndex < nDofsPerNode; nodalDofIndex++, index++)
         {
+          assert(index < nDofsPer2DPlane);
           dofIndices[index] = currentDofIndex + nodalDofIndex;
         }
         currentDofIndex += nDofsPerNode;
@@ -210,26 +218,28 @@ getFaceDofs(Mesh::face_t face, std::array<dof_no_t,FunctionSpaceBaseDim<2,BasisF
     }
     break;
 
-  case Mesh::face2Minus:
+  case Mesh::face2Minus:    // bottom
 
     currentDofIndex = 0;
     for (int i = 0; i < nNodesPerElement2D; i++)
     {
       for (int nodalDofIndex = 0; nodalDofIndex < nDofsPerNode; nodalDofIndex++)
       {
+        assert(i*nDofsPerNode + nodalDofIndex < nDofsPer2DPlane);
         dofIndices[i*nDofsPerNode + nodalDofIndex] = currentDofIndex + nodalDofIndex;
       }
       currentDofIndex += nDofsPerNode;
     }
     break;
 
-  case Mesh::face2Plus:
+  case Mesh::face2Plus:     // top
 
     currentDofIndex = FunctionSpaceBaseDim<3,BasisFunctionType>::nDofsPerElement() - nDofsPer2DPlane;
     for (int i = 0; i < nNodesPerElement2D; i++)
     {
       for (int nodalDofIndex = 0; nodalDofIndex < nDofsPerNode; nodalDofIndex++)
       {
+        assert(i*nDofsPerNode + nodalDofIndex < nDofsPer2DPlane);
         dofIndices[i*nDofsPerNode + nodalDofIndex] = currentDofIndex + nodalDofIndex;
       }
       currentDofIndex += nDofsPerNode;

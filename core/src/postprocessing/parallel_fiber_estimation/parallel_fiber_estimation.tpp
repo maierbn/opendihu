@@ -560,6 +560,9 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     data_.gradient()->setRepresentationGlobal();
 
     // output the results
+    std::stringstream filename;
+    filename << "level_" << level_ << "/" << this->outputWriterManager_.filename();
+    this->outputWriterManager_.setFilename(filename.str());
     this->outputWriterManager_.writeOutput(data_);  // output gradient
 
     //if (level > 1)

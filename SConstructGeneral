@@ -193,7 +193,7 @@ if env["BUILD_TYPE"] == "debug":
 elif env["BUILD_TYPE"] == "releasewithdebuginfo":
   # release with debug info build
   variant_dir = os.path.join(path_where_to_call_sconscript,'build_release_with_debug_info')         # folder of build
-  env.MergeFlags('-DDEBUG -O2 -ggdb3 -g3 -pg')   # gcc flags, will be sorted automatically into linker and compiler flags
+  env.MergeFlags('-DNDEBUG -O2 -ggdb3 -g3 -pg')   # gcc flags, will be sorted automatically into linker and compiler flags
   env.Append(LIBPATH = [os.path.join(opendihu_home, 'core/build_release_with_debug_info')])   # add release with debug info version of opendihu library
   env.Prepend(LIBS = ['opendihurd'])
 

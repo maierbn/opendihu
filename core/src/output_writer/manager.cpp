@@ -95,4 +95,22 @@ bool Manager::hasOutputWriters()
   return !outputWriter_.empty();
 }
 
+//! get the filename of the first output writer
+std::string Manager::filename()
+{
+  if (outputWriter_.empty())
+    return std::string("");
+
+  return outputWriter_.front()->filenameBase();
+}
+
+//! set the filename for the first output writer
+void Manager::setFilename(std::string filename)
+{
+  if (!outputWriter_.empty())
+  {
+    outputWriter_.front()->setFilenameBase(filename);
+  }
+}
+
 }  // namespace

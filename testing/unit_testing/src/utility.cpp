@@ -114,7 +114,7 @@ void assertFileMatchesContent(std::string filename, std::string referenceContent
   // read in file contents
   file.read(&fileContents[0], fileSize);
 
-  // remove parts of the contents that are dependend from version or time
+  // remove parts of the contents that are dependend on version or time
   removeVaryingContent(fileContents);
   removeVaryingContent(referenceContents);
   removeVaryingContent(referenceContents2);
@@ -140,6 +140,19 @@ void assertFileMatchesContent(std::string filename, std::string referenceContent
     }
     else
     {
+      // Do not fail if one of the files has more whitespace at a certain position, this can happen if there are different numbers like " -1e-18" and "  1e-18" with different number of whitespaces.
+      if (*iterFileContents == ' ' && *iterReferenceContents != ' ')
+      {
+        iterFileContents++;
+        continue;
+      }
+      if (*iterFileContents != ' ' && *iterReferenceContents == ' ')
+      {
+        iterFileContents++;
+        continue;
+      }
+
+      // if character is diferrent
       if(*iterFileContents != *iterReferenceContents)
       {
         msg << "mismatch at character, file: [" << *iterFileContents << "] != reference: [" << *iterReferenceContents << "], pos: " << std::distance(fileContents.begin(),iterFileContents) << " ";
@@ -171,6 +184,19 @@ void assertFileMatchesContent(std::string filename, std::string referenceContent
       }
       else
       {
+        // Do not fail if one of the files has more whitespace at a certain position, this can happen if there are different numbers like " -1e-18" and "  1e-18" with different number of whitespaces.
+        if (*iterFileContents == ' ' && *iterReferenceContents != ' ')
+        {
+          iterFileContents++;
+          continue;
+        }
+        if (*iterFileContents != ' ' && *iterReferenceContents == ' ')
+        {
+          iterFileContents++;
+          continue;
+        }
+
+        // if character is diferrent
         if (*iterFileContents, *iterReferenceContents)
         {
           msg << "mismatch at character file: [" << *iterFileContents << "] != reference: [" << *iterReferenceContents << "], pos: " << std::distance(fileContents.begin(),iterFileContents);

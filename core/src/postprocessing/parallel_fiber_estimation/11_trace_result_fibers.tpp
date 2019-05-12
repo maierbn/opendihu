@@ -469,6 +469,7 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
   {
     filenameStr << "out/level_" << level_ << "/result_0x0_level_" << level_ << ".bin";
   }
+
   filename = filenameStr.str();
   // add the number of fibers in the filename
   adjustFilename(filename, nFibersRow0);

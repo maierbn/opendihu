@@ -446,9 +446,9 @@ config = {
       0, 0, 0,  1./6,  1./6,  1./6,  1./3,  1./3,  1./3,  0, 0,  1./6,  1./6,  1./3,  1./3,  0, 0,  1./6,  1./6,  1./3,  1./3,  0.5,  0.5,  0.5,  2./3,  2./3,  2./3,  0.5,  0.5,  2./3,  2./3,  0.5,  0.5,  2./3,  2./3,  5./6,  5./6,  5./6,  1,  1,  1,  5./6,  5./6,  1,  1,  5./6,  5./6,  1,  1
   };
 
-  StiffnessMatrixTester::compareSolution(equationDiscretized1, referenceSolutionQuadratic);
-  StiffnessMatrixTester::compareSolution(equationDiscretized2, referenceSolutionQuadratic);
-  StiffnessMatrixTester::compareSolution(equationDiscretized3, referenceSolutionUnstructured);
+  StiffnessMatrixTester::compareSolution(equationDiscretized1, referenceSolutionQuadratic, 1e-13);
+  StiffnessMatrixTester::compareSolution(equationDiscretized2, referenceSolutionQuadratic, 1e-13);
+  StiffnessMatrixTester::compareSolution(equationDiscretized3, referenceSolutionUnstructured, 1e-13);
 }
 
 TEST(NeumannBoundaryConditionTest, NeumannBoundaryConditionIsCorrect2DHermite)
@@ -538,7 +538,7 @@ config = {
       0, 0.406837, 0.281594, -2.24366, 0.030306, 0.081652, 0.0835685, -0.450449, 0.378492, 0.0185906, 0.0594175, -0.450268, 0.379885, 0.00320504, 0.0153181, -0.0873346, 0.030306, -0.081652, 0.0835685, 0.450449, 0.379885, -0.00320504, 0.0153181, 0.0873346, 8.52526e-15, -0.406837, 0.281594, 2.24366, 0.378492, -0.0185906, 0.0594175, 0.450268, 0.716161, -0.0185906, 0.0594175, -0.450268, 0.714768, -0.00320504, 0.0153181, -0.0873346, 0.714768, 0.00320504, 0.0153181, 0.0873346, 0.716161, 0.0185906, 0.0594175, 0.450268, 1.09465, -0.406837, 0.281594, -2.24366, 1.06435, -0.081652, 0.0835685, -0.450449, 1.06435, 0.081652, 0.0835685, 0.450449, 1.09465, 0.406837, 0.281594, 2.24366
   };
 
-  StiffnessMatrixTester::compareSolution(equationDiscretized1, referenceSolutionHermite, 1e-13);
+  StiffnessMatrixTester::compareSolution(equationDiscretized1, referenceSolutionHermite, 1e-12);
   StiffnessMatrixTester::compareSolution(equationDiscretized2, referenceSolutionHermite, 1e-12);
   StiffnessMatrixTester::compareSolution(equationDiscretized3, referenceSolutionUnstructured, 1e-5);
 }

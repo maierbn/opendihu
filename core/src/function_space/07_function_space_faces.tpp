@@ -178,9 +178,9 @@ getFaceDofs(Mesh::face_t face, std::array<dof_no_t,FunctionSpaceBaseDim<2,BasisF
       currentDofIndex = rowStartIndex;
       for (int j = 0; j < nDofsPer1DLine; j++)
       {
-        for (int nodalDofIndex = 0; nodalDofIndex < nDofsPerNode; nodalDofIndex++)
+        for (int nodalDofIndex = 0; nodalDofIndex < nDofsPerNode; nodalDofIndex++, index++)
         {
-          dofIndices[index++] = currentDofIndex + nodalDofIndex;
+          dofIndices[index] = currentDofIndex + nodalDofIndex;
         }
         currentDofIndex += nDofsPerNode;
       }
@@ -199,9 +199,9 @@ getFaceDofs(Mesh::face_t face, std::array<dof_no_t,FunctionSpaceBaseDim<2,BasisF
       currentDofIndex = rowStartIndex;
       for (int j = 0; j < nDofsPer1DLine; j++)
       {
-        for (int nodalDofIndex = 0; nodalDofIndex < nDofsPerNode; nodalDofIndex++)
+        for (int nodalDofIndex = 0; nodalDofIndex < nDofsPerNode; nodalDofIndex++, index++)
         {
-          dofIndices[index++] = currentDofIndex + nodalDofIndex;
+          dofIndices[index] = currentDofIndex + nodalDofIndex;
         }
         currentDofIndex += nDofsPerNode;
       }

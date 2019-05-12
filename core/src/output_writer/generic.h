@@ -25,6 +25,12 @@ public:
   //! append rank no in the format ".001" to str
   static void appendRankNo(std::stringstream &str, int nRanks, int ownRankNo);
 
+  //! set the filename, this overrides the value from config
+  void setFilenameBase(std::string filenameBase);
+
+  //! get the base filename, i.e. without suffix
+  std::string filenameBase();
+
 protected:
 
   //! check if output should be written in this timestep and prepare filename, i.e. set filename_ from config

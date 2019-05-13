@@ -143,14 +143,14 @@ void assertFileMatchesContent(std::string filename, std::string referenceContent
     else
     {
       // Do not fail if one of the files has more whitespace at a certain position, this can happen if there are different numbers like " -1e-18" and "  1e-18" with different number of whitespaces.
-      if (*iterFileContents == ' ' && *iterReferenceContents != ' ')
+      if ((*iterFileContents == ' ' && *iterReferenceContents != ' ') || (*iterFileContents == '\n' && *iterReferenceContents != '\n'))
       {
         iterFileContents++;
         continue;
       }
-      if (*iterFileContents != ' ' && *iterReferenceContents == ' ')
+      if ((*iterFileContents != ' ' && *iterReferenceContents == ' ') || (*iterFileContents != '\n' && *iterReferenceContents == '\n'))
       {
-        iterFileContents++;
+        iterReferenceContents++;
         continue;
       }
 
@@ -188,14 +188,14 @@ void assertFileMatchesContent(std::string filename, std::string referenceContent
       else
       {
         // Do not fail if one of the files has more whitespace at a certain position, this can happen if there are different numbers like " -1e-18" and "  1e-18" with different number of whitespaces.
-        if (*iterFileContents == ' ' && *iterReferenceContents != ' ')
+        if ((*iterFileContents == ' ' && *iterReferenceContents != ' ') || (*iterFileContents == '\n' && *iterReferenceContents != '\n'))
         {
           iterFileContents++;
           continue;
         }
-        if (*iterFileContents != ' ' && *iterReferenceContents == ' ')
+        if ((*iterFileContents != ' ' && *iterReferenceContents == ' ') || (*iterFileContents != '\n' && *iterReferenceContents == '\n'))
         {
-          iterFileContents++;
+          iterReferenceContents++;
           continue;
         }
 

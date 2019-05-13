@@ -72,11 +72,8 @@ exchangeSeedPointsBeforeTracing(int nRanksZ, int rankZNo, bool streamlineDirecti
     LOG(DEBUG) << "send " << sendBuffer.size() << " initial seed points values to rank " << neighbourRankNo << " (tag: " << tag << ")";
     MPIUtility::handleReturnValue(MPI_Send(sendBuffer.data(), sendBuffer.size(), MPI_DOUBLE, neighbourRankNo,
                                             tag, currentRankSubset_->mpiCommunicator()), "MPI_Send");
-
   }
-
 }
-
 
 template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
@@ -177,7 +174,7 @@ exchangeSeedPointsAfterTracingKeyFibers(int nRanksZ, int rankZNo, bool streamlin
 
         for (int k = 0; k < 3; k++)
         {
-          sendBuffer[streamlineIndex*3+k] = streamlinePoints[streamlineIndex][streamlinePointNo][k];
+          sendBuffer[streamlineIndex*3+k] = streamlinePoints[streamlineIndex][streamlinePointNo-1][k];
         }
       }
     }

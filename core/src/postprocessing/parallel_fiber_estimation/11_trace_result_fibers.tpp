@@ -189,7 +189,6 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
   int rankZNo = meshPartition_->ownRankPartitioningIndex(2);
   int nRanksZ = meshPartition_->nRanks(2);
   bool streamlineDirectionUpwards = streamlineDirection>0;
-  LOG(DEBUG) << "streamlineDirectionUpwards: " << streamlineDirectionUpwards;
 
   // The overall picture is that global streamlines begin at the center (at rankZNo/2).
   // Rank int(nRanksZ/2) send the initial seed points to the rank below (int(nRanksZ/2)-1)
@@ -197,7 +196,6 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
 
   // determine if previously set seedPoints are used or if they are received from neighbouring rank, receive seed points or send them to lower neighbour, if own rank is int(nRanksZ/2)
   exchangeSeedPointsBeforeTracing(nRanksZ, rankZNo, streamlineDirectionUpwards, seedPoints);
-  LOG(DEBUG) << "streamlineDirectionUpwards: " << streamlineDirectionUpwards;
 
   // determine z range of current subdomain
   double bottomZClip = 0;
@@ -311,7 +309,7 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
   fixInvalidKeyFibers(nFibersX, keyFiberIsValid, fibers, nFibersFixed);
 
   // send end points of streamlines to next rank that continues the streamline
-  exchangeSeedPointsAfterTracingKeyFibers(nRanksZ, rankZNo, nFibersX, streamlineDirectionUpwards, seedPoints, fibers);
+  exchangeSeedPointsAfterTracingKeyFibers(nRanksZ, rankZNo, streamlineDirectionUpwards, nFibersX, seedPoints, fibers);
 
   // reduced number of valid/invalid fibers on ranks
   int nValidGlobal = 0;

@@ -179,7 +179,7 @@ getFaceDofs(Mesh::face_t face, std::array<dof_no_t,FunctionSpaceBaseDim<2,BasisF
     currentDofIndex = 0;
     rowStartIndex = 0;
     index = 0;
-    for (int i = 0; i < nNodesPerElement2D; i++)
+    for (int i = 0; i < nNodesPer1DLine; i++)
     {
       currentDofIndex = rowStartIndex;
       for (int j = 0; j < nNodesPer1DLine; j++)
@@ -201,7 +201,7 @@ getFaceDofs(Mesh::face_t face, std::array<dof_no_t,FunctionSpaceBaseDim<2,BasisF
     currentDofIndex = 0;
     rowStartIndex = nDofsPer2DPlane - nDofsPer1DLine;
     index = 0;
-    for (int i = 0; i < nNodesPerElement2D; i++)
+    for (int i = 0; i < nNodesPer1DLine; i++)
     {
       currentDofIndex = rowStartIndex;
       for (int j = 0; j < nNodesPer1DLine; j++)

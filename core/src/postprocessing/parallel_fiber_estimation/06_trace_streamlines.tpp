@@ -68,7 +68,7 @@ traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool stre
     // determine if previously set seedPoints are used or if they are received from neighbouring rank, receive seed points or send them to lower neighbour, if own rank is int(nRanksZ/2)
     exchangeSeedPointsBeforeTracing(nRanksZ, rankZNo, streamlineDirectionUpwards, seedPoints);
 
-    LOG(DEBUG) << " on " << nRanksZ << " ranks in Z direction, trace " << nStreamlines << " streamlines";
+    LOG(DEBUG) << " on " << nRanksZ << " ranks in Z direction, trace " << nStreamlines << " streamlines, streamlineDirectionUpwards: " << streamlineDirectionUpwards;
 
 #ifndef NDEBUG
 #ifdef STL_OUTPUT

@@ -72,9 +72,7 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
     fibers[fiberIndex].resize(nBorderPointsZNew_,Vec3{0,0,0});
   }
 
-  std::vector<Vec3> seedPoints(nBorderPointsXNew_*nBorderPointsXNew_, Vec3({0.0,0.0,0.0}));
-
-  // fill already existing fibers at borders (and the seed points)
+  // fill already existing fibers at borders
 
   //   ^ --(1+)-> ^   ^ --(1+)-> ^
   //   0-   [2]   0+  0-   [3]   0+
@@ -101,7 +99,6 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
         fibers[fibersPointIndex][zLevelIndex] = borderPointsSubdomain[subdomainIndex][face][zLevelIndex][pointIndex];
         fibers[fibersPointIndex][zLevelIndex+(nBorderPointsZ_-1)] = borderPointsSubdomain[subdomainIndex+4][face][zLevelIndex][pointIndex];
       }
-      seedPoints[fibersPointIndex] = fibers[fibersPointIndex][seedPointsZIndex];
     }
   }
 
@@ -120,7 +117,6 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
         fibers[fibersPointIndex][zLevelIndex] = borderPointsSubdomain[subdomainIndex][face][zLevelIndex][pointIndex];
         fibers[fibersPointIndex][zLevelIndex+(nBorderPointsZ_-1)] = borderPointsSubdomain[subdomainIndex+4][face][zLevelIndex][pointIndex];
       }
-      seedPoints[fibersPointIndex] = fibers[fibersPointIndex][seedPointsZIndex];
     }
   }
 
@@ -144,7 +140,6 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
         VLOG(1) << "set value at left border, pointIndexStride: " << pointIndexStride << ", fibers[" << fibersPointIndex << "][z"
           << zLevelIndex+(nBorderPointsZ_-1) << "] =" << fibers[fibersPointIndex][zLevelIndex+(nBorderPointsZ_-1)];
       }
-      seedPoints[fibersPointIndex] = fibers[fibersPointIndex][seedPointsZIndex];
     }
   }
 
@@ -168,7 +163,6 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
         VLOG(1) << "set value at right border, pointIndexStride: " << pointIndexStride << ", fibers[" << fibersPointIndex << "][z"
           << zLevelIndex+(nBorderPointsZ_-1) << "] =" << fibers[fibersPointIndex][zLevelIndex+(nBorderPointsZ_-1)];
       }
-      seedPoints[fibersPointIndex] = fibers[fibersPointIndex][seedPointsZIndex];
     }
   }
 
@@ -179,6 +173,8 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
 #endif
 
   // determine own seed points
+  std::vector<Vec3> seedPoints(nBorderPointsXNew_*nBorderPointsXNew_, Vec3({0.0,0.0,0.0}));
+
   // set seed points for interior fibers and trace fibers
   for (int j = 1; j < nBorderPointsXNew_-1; j++)
   {
@@ -189,6 +185,42 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
       seedPoints[j*nBorderPointsXNew_+i] = seedPoint;
     }
   }
+
+  LOG(DEBUG) << " set seed points at border";
+
+  // set seed points for border
+  // bottom (1-)
+  fibersPointIndex = 0;
+  pointIndexStride = nFineGridFibers_+1;
+  for (int i = 0; i < nBorderPointsXNew_; i++, fibersPointIndex += pointIndexStride)
+  {
+    seedPoints[0*nBorderPointsXNew_+i] = fibers[fibersPointIndex][seedPointsZIndex];
+  }
+
+  // top (1+)
+  fibersPointIndex = nFibersX * (nFibersX-1);
+  pointIndexStride = nFineGridFibers_+1;
+  for (int i = 0; i < nBorderPointsXNew_; i++, fibersPointIndex += pointIndexStride)
+  {
+    seedPoints[0*nBorderPointsXNew_+i] = fibers[fibersPointIndex][seedPointsZIndex];
+  }
+
+  // left (0-)
+  fibersPointIndex = 0;
+  pointIndexStride = nFibersX * (nFineGridFibers_+1);
+  for (int i = 0; i < nBorderPointsXNew_; i++, fibersPointIndex += pointIndexStride)
+  {
+    seedPoints[0*nBorderPointsXNew_+i] = fibers[fibersPointIndex][seedPointsZIndex];
+  }
+
+  // right (0+)
+  fibersPointIndex = nFibersX-1;
+  pointIndexStride = nFibersX * (nFineGridFibers_+1);
+  for (int i = 0; i < nBorderPointsXNew_; i++, fibersPointIndex += pointIndexStride)
+  {
+    seedPoints[0*nBorderPointsXNew_+i] = fibers[fibersPointIndex][seedPointsZIndex];
+  }
+
   LOG(DEBUG) << "determine " << nBorderPointsXNew_ << "x" << nBorderPointsXNew_ << " seed points: " << seedPoints.size();
 
   // communicate seed Points

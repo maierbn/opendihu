@@ -32,7 +32,7 @@ exchangeSeedPointsBeforeTracing(int nRanksZ, int rankZNo, bool streamlineDirecti
       tag = currentRankSubset_->ownRankNo()*100 + neighbourRankNo*10000 + level_*10 + 6;
     }
 
-    LOG(DEBUG) << "receive " << seedPoints.size()*3 << " seed points from rank " << neighbourRankNo << " (tag: " << tag << ")";
+    LOG(DEBUG) << "receive " << seedPoints.size()*3 << " seed point values (" << seedPoints.size() << " seed points) from rank " << neighbourRankNo << " (tag: " << tag << ")";
     std::vector<double> receiveBuffer(seedPoints.size()*3);
     MPIUtility::handleReturnValue(MPI_Recv(receiveBuffer.data(), receiveBuffer.size(), MPI_DOUBLE, neighbourRankNo,
                                            tag, currentRankSubset_->mpiCommunicator(), MPI_STATUS_IGNORE), "MPI_Recv");
@@ -108,7 +108,6 @@ exchangeSeedPointsAfterTracing(int nRanksZ, int rankZNo, bool streamlineDirectio
     std::vector<double> sendBuffer(seedPoints.size()*3);
     for (int streamlineIndex = 0; streamlineIndex < seedPoints.size(); streamlineIndex++)
     {
-
       int streamlinePointNo = 0;
 
       // if the streamline is going upwards, the next seed point is the upper most, i.e. the last, otherwise it is the first
@@ -176,18 +175,20 @@ exchangeSeedPointsAfterTracingKeyFibers(int nRanksZ, int rankZNo, bool streamlin
           streamlinePointNo = streamlinePoints[streamlineIndex].size();
         }
 
-        for (int i = 0; i < 3; i++)
+        for (int k = 0; k < 3; k++)
         {
-          sendBuffer[streamlineIndex*3+i] = streamlinePoints[streamlineIndex][streamlinePointNo][i];
+          sendBuffer[streamlineIndex*3+k] = streamlinePoints[streamlineIndex][streamlinePointNo][k];
         }
       }
-
-      int tag = currentRankSubset_->ownRankNo()*10000 + neighbourRankNo*100 + level_*10 + 7;
-      LOG(DEBUG) << "send " << sendBuffer.size() << " seed point values to " << neighbourRankNo << ", tag: " << tag;
-      // send end points of streamlines
-      MPIUtility::handleReturnValue(MPI_Send(sendBuffer.data(), sendBuffer.size(), MPI_DOUBLE, neighbourRankNo,
-                                            tag, currentRankSubset_->mpiCommunicator()), "MPI_Send");
     }
+
+    int tag = currentRankSubset_->ownRankNo()*10000 + neighbourRankNo*100 + level_*10 + 7;
+    LOG(DEBUG) << "send " << sendBuffer.size() << " seed point values (" << sendBuffer.size()/3 << " seed points) to " << neighbourRankNo << ", tag: " << tag;
+    LOG(DEBUG) << "sendBuffer: " << sendBuffer;
+
+    // send end points of streamlines
+    MPIUtility::handleReturnValue(MPI_Send(sendBuffer.data(), sendBuffer.size(), MPI_DOUBLE, neighbourRankNo,
+                                          tag, currentRankSubset_->mpiCommunicator()), "MPI_Send");
   }
 }
 

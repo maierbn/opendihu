@@ -128,7 +128,9 @@ void assertFileMatchesContent(std::string filename, std::string referenceContent
   for (std::string::iterator iterFileContents = fileContents.begin(); iterFileContents != fileContents.end() && iterReferenceContents != referenceContents.end();)
   {
     //VLOG(1) << "[" << *iterFileContents << "] ?= [" << *iterReferenceContents << "]";
-    if (isdigit(*iterFileContents) || *iterFileContents == '.' || *iterFileContents == '-')   // characters with which a number can start (e.g. ".5", "-1")
+    if (isdigit(*iterFileContents) || *iterFileContents == '.' || *iterFileContents == '-'
+      || isdigit(*iterReferenceContents) || *iterReferenceContents == '.' || *iterReferenceContents == '-'
+    )   // characters with which a number can start (e.g. ".5", "-1")
     {
       double numberFileContents = parseNumber(iterFileContents, fileContents.end());
       double numberReferenceContents = parseNumber(iterReferenceContents, referenceContents.end());
@@ -172,7 +174,8 @@ void assertFileMatchesContent(std::string filename, std::string referenceContent
     iterReferenceContents = referenceContents2.begin(); 
     for (std::string::iterator iterFileContents = fileContents.begin(); iterFileContents != fileContents.end() && iterReferenceContents != referenceContents2.end();)
     {
-      if (isdigit(*iterFileContents) || *iterFileContents == '.' || *iterFileContents == '-')
+      if (isdigit(*iterFileContents) || *iterFileContents == '.' || *iterFileContents == '-'
+        || isdigit(*iterReferenceContents) || *iterReferenceContents == '.' || *iterReferenceContents == '-')
       {
         double numberFileContents = parseNumber(iterFileContents, fileContents.end());
         double numberReferenceContents = parseNumber(iterReferenceContents, referenceContents2.end());

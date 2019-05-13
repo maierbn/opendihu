@@ -72,7 +72,9 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
     fibers[fiberIndex].resize(nBorderPointsZNew_,Vec3{0,0,0});
   }
 
-  // fill already existing fibers at borders
+  std::vector<Vec3> seedPoints(nBorderPointsXNew_*nBorderPointsXNew_, Vec3({0.0,0.0,0.0}));
+
+  // fill already existing fibers at borders (and the seed points)
 
   //   ^ --(1+)-> ^   ^ --(1+)-> ^
   //   0-   [2]   0+  0-   [3]   0+
@@ -99,6 +101,7 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
         fibers[fibersPointIndex][zLevelIndex] = borderPointsSubdomain[subdomainIndex][face][zLevelIndex][pointIndex];
         fibers[fibersPointIndex][zLevelIndex+(nBorderPointsZ_-1)] = borderPointsSubdomain[subdomainIndex+4][face][zLevelIndex][pointIndex];
       }
+      seedPoints[fibersPointIndex] = fibers[fibersPointIndex][seedPointsZIndex];
     }
   }
 
@@ -117,6 +120,7 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
         fibers[fibersPointIndex][zLevelIndex] = borderPointsSubdomain[subdomainIndex][face][zLevelIndex][pointIndex];
         fibers[fibersPointIndex][zLevelIndex+(nBorderPointsZ_-1)] = borderPointsSubdomain[subdomainIndex+4][face][zLevelIndex][pointIndex];
       }
+      seedPoints[fibersPointIndex] = fibers[fibersPointIndex][seedPointsZIndex];
     }
   }
 
@@ -140,6 +144,7 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
         VLOG(1) << "set value at left border, pointIndexStride: " << pointIndexStride << ", fibers[" << fibersPointIndex << "][z"
           << zLevelIndex+(nBorderPointsZ_-1) << "] =" << fibers[fibersPointIndex][zLevelIndex+(nBorderPointsZ_-1)];
       }
+      seedPoints[fibersPointIndex] = fibers[fibersPointIndex][seedPointsZIndex];
     }
   }
 
@@ -163,6 +168,7 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
         VLOG(1) << "set value at right border, pointIndexStride: " << pointIndexStride << ", fibers[" << fibersPointIndex << "][z"
           << zLevelIndex+(nBorderPointsZ_-1) << "] =" << fibers[fibersPointIndex][zLevelIndex+(nBorderPointsZ_-1)];
       }
+      seedPoints[fibersPointIndex] = fibers[fibersPointIndex][seedPointsZIndex];
     }
   }
 
@@ -174,7 +180,6 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
 
   // determine own seed points
   // set seed points for interior fibers and trace fibers
-  std::vector<Vec3> seedPoints(nBorderPointsXNew_*nBorderPointsXNew_, Vec3({0.0,0.0,0.0}));
   for (int j = 1; j < nBorderPointsXNew_-1; j++)
   {
     for (int i = 1; i < nBorderPointsXNew_-1; i++)
@@ -184,6 +189,7 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
       seedPoints[j*nBorderPointsXNew_+i] = seedPoint;
     }
   }
+  LOG(DEBUG) << "determine " << nBorderPointsXNew_ << "x" << nBorderPointsXNew_ << " seed points: " << seedPoints.size();
 
   // communicate seed Points
   int rankZNo = meshPartition_->ownRankPartitioningIndex(2);
@@ -196,6 +202,8 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
 
   // determine if previously set seedPoints are used or if they are received from neighbouring rank, receive seed points or send them to lower neighbour, if own rank is int(nRanksZ/2)
   exchangeSeedPointsBeforeTracing(nRanksZ, rankZNo, streamlineDirectionUpwards, seedPoints);
+
+  LOG(DEBUG) << "number of seed points after exchange with neighbours: " << seedPoints.size();
 
   // determine z range of current subdomain
   double bottomZClip = 0;
@@ -250,6 +258,8 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
       // sample the streamline at equidistant z levels and store points in fibers vector
       int fibersPointIndex = j * (nFineGridFibers_+1) * nFibersX + i * (nFineGridFibers_+1);
       sampleStreamlineAtEquidistantZPoints(streamlinePoints, seedPoint, bottomZClip, topZClip, fibers[fibersPointIndex], fibersPointIndex*1000, rawSampledStreamlinesForDebugging);  // last parameter is value for debugging output
+
+      LOG(DEBUG) << "sampled streamline (" << i << "," << j << ") at equidistant z points";
     }
   }
 

@@ -133,6 +133,14 @@ exchangeSeedPointsAfterTracingKeyFibers(int nRanksZ, int rankZNo, bool streamlin
 {
   LOG(DEBUG) << "exchangeSeedPointsAfterTracingKeyFibers, nRanksZ: " << nRanksZ << ", rankZNo: " << rankZNo << ", streamlineDirectionUpwards: " << streamlineDirectionUpwards
     << ", ownRankPartitioningIndex_: " << this->meshPartition_->ownRankPartitioningIndex(0) << "," << this->meshPartition_->ownRankPartitioningIndex(1) << "," << this->meshPartition_->ownRankPartitioningIndex(2);
+  LOG(DEBUG) << "n seed points: " << seedPoints.size() << ", n streamlines: " << streamlinePoints.size();
+
+  std::stringstream stream;
+  for (int i = 0; i < streamlinePoints.size(); i++)
+  {
+    stream << " " << streamlinePoints[i].size();
+  }
+  LOG(DEBUG) << " streamline sizes: " << stream.str();
 
   if (nRanksZ == 1)
     return;

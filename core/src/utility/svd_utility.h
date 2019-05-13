@@ -30,7 +30,9 @@ class SvdUtility
   static vector<double> readCSV(string filename, int rows);
 
   static void writeCSV(string filename, vector<double> values, int m, int n);
-
+  
+  static void writeCSV(string filename, double values[], int m, int n);
+  
   static int getCSVRowCount(string filename);
 
   static int getCSVColumnCount(string filename);

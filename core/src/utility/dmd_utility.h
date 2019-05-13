@@ -61,7 +61,9 @@ public:
 
 	static void getDmdModes(double _Complex dmdModes[], double _Complex a[], double _Complex eigenvectors[], int rows, int cols, double leftSingVec[], double leftSingVecReduced[], double amplitudes[]);
 
-	static int getSpecComp(double _Complex dmdModes[], double growthRates[], double frequencies[], double amplitudes[], int order, double epsilon0);
+  static void writeCSVGrowthRatesFrequenciesAmplitudes(std::string filename, double growthRates[], double frequencies[], double amplitudes[], int n_modes);
+  
+  static int getSpecComp(double _Complex dmdModes[], double growthRates[], double frequencies[], double amplitudes[], int order, double epsilon0);
 
 	static void concatenateVector(double _Complex inputA[], double inputB[], double _Complex output[], int rows, int cols);
 
@@ -72,6 +74,6 @@ public:
 	static void reconstructSnapshots(double _Complex dmdModes[], double growthRates[], double frequencies[], double leftSingVec[], double snapshotsReconst[], int rows, int cols, int specComp, int spatComp, double deltat);
 
 	static void contReconst(double t, double t0, double _Complex dmdModes[], double growthRates[], double frequencies[], int rows, int cols, double output[]);
-
+  
 	//static int getCSVRowCount(std::string filename);
 };

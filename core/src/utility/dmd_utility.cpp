@@ -579,6 +579,23 @@ void DmdUtility::getDmdModes(double _Complex dmdModes[], double _Complex a[], do
 	}
 }
 
+void DmdUtility::writeCSVGrowthRatesFrequenciesAmplitudes(std::string filename, double growthRates[], double frequencies[], double amplitudes[], int n_modes)
+{
+  ofstream data;
+  data.open(filename, ios_base::app);
+  data << "\n";
+  
+  for (int i = 0; i < n_modes; i++)
+  { 
+    data << std::to_string(frequencies[i]) << ",";
+    data << std::to_string(growthRates[i]) << ",";     
+    data << std::to_string(amplitudes[i]) << ","; 
+    data << "\n";
+  }
+  
+  data.close(); 
+}
+
 int DmdUtility::getSpecComp(double _Complex dmdModes[], double growthRates[], double frequencies[], double amplitudes[], int order, double epsilon0)
 {
 	// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -588,35 +605,34 @@ int DmdUtility::getSpecComp(double _Complex dmdModes[], double growthRates[], do
 	// transpose u
 	double _Complex* dmdModesT = new double _Complex[order * order];
 	DmdUtility::transposeMatrix(dmdModes, dmdModesT, order, order);
-	// SvdUtility::printMatrix("uTransposed", uComplexTransposed, order, order);
+	// DmdUtility::printMatrix("uTransposed", uComplexTransposed, order, order);
 
 	//double _Complex* deltasComplex = new double _Complex[order];
 	//SvdUtility::doubleToComplex(deltas, deltasComplex, order, 1);
-	// SvdUtility::printMatrix("deltas", deltasComplex, order, 1);
+	// DmdUtility::printMatrix("deltas", deltasComplex, order, 1);
 	//double _Complex* omegasComplex = new double _Complex[order];
 	//SvdUtility::doubleToComplex(omegas, omegasComplex, order, 1);
-	// SvdUtility::printMatrix("omegas", omegasComplex, order, 1);
+	// DmdUtility::printMatrix("omegas", omegasComplex, order, 1);
 
 	// UU=[u;deltas';omegas';amplitude']'
 	double _Complex* uu = new double _Complex[order * (order + 3)];
 	DmdUtility::concatenateVector(dmdModesT, growthRates, uu, order, order);
 	DmdUtility::concatenateVector(uu, frequencies, uu, order, order + 1);
 	DmdUtility::concatenateVector(uu, amplitudes, uu, order, order + 2);
-	// SvdUtility::printMatrix("UU", uu, order, order + 3);
+	// DmdUtility::printMatrix("UU", uu, order, order + 3);
 
 	// UU1=sortrows(UU,-(M+3))
 	double _Complex* uu1 = new double _Complex[order * (order + 3)];
 	DmdUtility::sortMatrix(uu, uu1, order, order + 3);
-	// SvdUtility::printMatrix("UU1", uu1, order, order + 3);
+	// DmdUtility::printMatrix("UU1", uu1, order, order + 3);
 
 	// UU=UU1'
 	double _Complex* uu1Transposed = new double _Complex[(order + 3) * order];
 	DmdUtility::transposeMatrix(uu1, uu1Transposed, order, order + 3);
-	// SvdUtility::printMatrix("UU", uu1Transposed, order + 3, order);
+  DmdUtility::printMatrix("UU", uu1Transposed, order + 3, order);
 
 	// u=UU(1:M,:)
 	DmdUtility::resizeMatrix(uu1Transposed, dmdModes, order + 3, order, 0, order - 1);
-	// SvdUtility::printMatrix("u", uComplex, order, order);
 
 	// deltas=UU(M+1,:)
 	// omegas=UU(M+2,:)
@@ -626,10 +642,23 @@ int DmdUtility::getSpecComp(double _Complex dmdModes[], double growthRates[], do
 		growthRates[col] = creal(uu1Transposed[order + col * (order + 3)]);
 		frequencies[col] = creal(uu1Transposed[order + 1 + col * (order + 3)]);
 		amplitudes[col] = creal(uu1Transposed[order + 2 + col * (order + 3)]);
+    
+    cout << frequencies[col] << endl;
 	}
-	// SvdUtility::printMatrix("deltas", deltasComplex, order, 1);
-	// SvdUtility::printMatrix("omegas", omegasComplex, order, 1);
-	// SvdUtility::printMatrix("amplitude", amplitude, order, 1);
+	
+	DmdUtility::writeCSVGrowthRatesFrequenciesAmplitudes("dmdResult.csv", growthRates, frequencies, amplitudes, order);	
+	
+	DmdUtility::printMatrix("frequencies", frequencies, order, 1);
+	DmdUtility::printMatrix("amplitudes", amplitudes, order, 1);
+  DmdUtility::printMatrix("growthRates", growthRates, order, 1);
+  
+  //SvdUtility::writeCSV("dmdResult.csv", frequencies, 1, order); //written columnwise
+  //SvdUtility::writeCSV("dmdResult.csv", amplitudes,  1, order);
+  //SvdUtility::writeCSV("dmdResult.csv", growthRates, 1, order);
+	
+	// DmdUtility::printMatrix("deltas", deltasComplex, order, 1);
+	// DmdUtility::printMatrix("omegas", omegasComplex, order, 1);
+	// DmdUtility::printMatrix("amplitude", amplitude, order, 1);
 
 	// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	// Spectral complexity: number of DMD modes

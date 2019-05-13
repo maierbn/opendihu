@@ -14,7 +14,7 @@
 int main(int argc, char *argv[])
 {
 	// input data
-	std::string inputData = "./out/snapshots.csv";
+	std::string inputData = "./out_snapshots/snapshots.csv";
 
 	std::vector<double> parsedCsv = SvdUtility::readCSV(inputData);
 	int j = SvdUtility::getCSVColumnCount(inputData);
@@ -24,8 +24,8 @@ int main(int argc, char *argv[])
 	std::copy(parsedCsv.begin(), parsedCsv.end(), v);
 
 	double deltat = 0.1;
-	double epsilon1 = exp(-2);
-	double epsilon0 = exp(-1);
+	double epsilon1 = exp(-15);
+	double epsilon0 = exp(-15);
 
 	//DmdUtility::printMatrix("V", v, j, k);
 

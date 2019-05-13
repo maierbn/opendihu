@@ -5,8 +5,8 @@
 
 import sys
 
-end_time = 1.0   # [ms] end time of simulation
-n_elements = 10
+end_time = 5.0   # [ms] end time of simulation
+n_elements = 20
 
 # global parameters
 PMax = 7.3              # maximum stress [N/cm^2]

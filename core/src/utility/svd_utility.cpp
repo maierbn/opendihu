@@ -71,7 +71,7 @@ void SvdUtility::getSVD(double input[], int rows, int cols, double leftSingVec[]
   printMatrix("snapshots", input, rows, cols);
   
   // if error or wrong numbers by 'a' use 's' instead
-  LAPACKE_dgesvd(LAPACK_COL_MAJOR, 'a', 'a', rows, cols, input, rows, singVal, leftSingVec, rows, rightSingVecT, min, superb);
+  LAPACKE_dgesvd(LAPACK_COL_MAJOR, 's', 's', rows, cols, input, rows, singVal, leftSingVec, rows, rightSingVecT, min, superb);
   
   // build diagonal matrix sigma from vector singularValues
   for (int row = 0; row < min; ++row)
@@ -232,6 +232,22 @@ void SvdUtility::writeCSV(string filename, std::vector<double> values, int m, in
     data << "\n";
   }
 data.close();
+}
+
+// writes vector cell by cell as CSV
+void SvdUtility::writeCSV(string filename, double values[], int m, int n)
+{
+  ofstream data;
+  data.open(filename, ios_base::app);
+  for (int i = 0; i < m; i++)
+  {
+    for (int j = 0; j < n; j++)
+    {
+      data << std::to_string(values[i*m + j]) << ",";
+    }
+    data << "\n";
+  }
+  data.close();
 }
 
 // returns number of rows of CSV

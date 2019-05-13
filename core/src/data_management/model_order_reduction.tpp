@@ -75,6 +75,9 @@ createPetscObjects()
 {
   LOG(TRACE) << "ModelOrderReduction::createPetscObjects()";
   
+  assert(this->functionSpace_);
+  assert(this->functionSpaceRows_);
+
   // get the partitioning from the function space
   std::shared_ptr<Partition::MeshPartition<FunctionSpaceRows>> 
   meshPartitionRows = this->functionSpaceRows_->meshPartition();

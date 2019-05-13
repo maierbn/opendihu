@@ -254,8 +254,8 @@ parseNodePositionsFromSettings(PythonConfig specificSettings)
     }
   }
   else   // there was no "nodePositions" given in config, use physicalExtent instead
-  {    
-    // if node positions are not given in settings but physicalExtent, fill from that
+  {
+    // if node positions are not given in settings but physicalExtent, generate node positions such that physicalExtent is reached
     std::array<double, D> physicalExtent, meshWidth;
     physicalExtent = specificSettings.getOptionArray<double, D>("physicalExtent", 1.0, PythonUtility::Positive);
 
@@ -387,7 +387,11 @@ setGeometryFieldValues()
   this->geometryField_->finishGhostManipulation();
 
   // initialize Hermite derivative dofs such that geometry fields becomes "even"
-  bool setHermiteDerivatives = this->specificSettings_.getOptionBool("setHermiteDerivatives", false);
+  bool setHermiteDerivatives = false;
+  if (std::is_same<BasisFunctionType,BasisFunction::Hermite>::value)
+  {
+    setHermiteDerivatives = this->specificSettings_.getOptionBool("setHermiteDerivatives", true);
+  }
   if (setHermiteDerivatives)
   {
     this->setHermiteDerivatives();

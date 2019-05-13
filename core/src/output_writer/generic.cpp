@@ -27,10 +27,9 @@ Generic::~Generic()
 {
 }
 
-std::ofstream Generic::openFile(std::string filename, bool append)
+void Generic::openFile(std::ofstream& file, std::string filename, bool append)
 {
   // open file
-  std::ofstream file;
   if (append)
   {
     file.open(filename.c_str(), std::ios::out | std::ios::binary | std::ios::app);
@@ -63,8 +62,6 @@ std::ofstream Generic::openFile(std::string filename, bool append)
   {
     LOG(WARNING) << "Could not open file \"" <<filename << "\" for writing!";
   }
-
-  return file;
 }
 
 void Generic::appendRankNo(std::stringstream &str, int nRanks, int ownRankNo)

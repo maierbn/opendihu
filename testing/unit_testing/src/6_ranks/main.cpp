@@ -23,7 +23,7 @@ int main(int argc_, char **argv_) {
   // if all tests succeeded an all ranks, create file "SUCCESS"
   if (result == 0)
   {
-    LOG(INFO) << "All tests passed on all ranks.";
+    LOG(INFO) << "\x1b[32mAll tests passed on all ranks.\x1b[0m";
     std::ofstream outfile("SUCCESS");
     outfile.close();
   }

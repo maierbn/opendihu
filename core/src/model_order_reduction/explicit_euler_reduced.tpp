@@ -23,8 +23,8 @@ namespace ModelOrderReduction
     double timeSpan = this->endTime_ - this->startTime_;
     
     LOG(DEBUG) << "ReducedOrderExplicitEuler::advanceTimeSpan(), timeSpan=" << timeSpan<< ", timeStepWidth=" << this->timeStepWidth_
-      << " n steps: " << this->numberTimeSteps_;
-    
+      << " n steps: " << this->numberTimeSteps_;       
+
     // debugging output of matrices
     //this->fullTimestepping_.data().print();
     
@@ -34,7 +34,7 @@ namespace ModelOrderReduction
     Vec &redIncrement = this->data().increment()->valuesGlobal();
         
     Mat &basis = this->dataMOR_->basis()->valuesGlobal();
-    Mat &basisTransp = this->dataMOR_->basisTransp()->valuesGlobal();
+    Mat &basisTransp = this->dataMOR_->basisTransp()->valuesGlobal();    
     
     // loop over time steps
     double currentTime = this->startTime_;
@@ -48,14 +48,14 @@ namespace ModelOrderReduction
       }
                  
       // full state recovery
-      //required in case of operator splitting because only the reduced solutions is transfered.
+      //required in case of operator splitting because only the reduced solutions is transferred.
       this->MatMultFull(basis, redSolution, solution);
             
-      VLOG(1) << "starting from full-order solution: " << *this->fullTimestepping_.data().solution();
+      VLOG(1) << "starting from full-order solution: " << *this->fullTimestepping_.data().solution();     
       
       // advance computed value
       // compute next delta_u = f(u)
-      this->evaluateTimesteppingRightHandSideExplicit(solution, increment, timeStepNo, currentTime);
+      this->evaluateTimesteppingRightHandSideExplicit(solution, increment, timeStepNo, currentTime);      
       
       VLOG(2) << "computed full-order increment: " << *this->fullTimestepping_.data().increment() << ", dt=" << this->timeStepWidth_;             
       
@@ -66,7 +66,7 @@ namespace ModelOrderReduction
       
       VLOG(2) << "reduced solution before adding the reduced increment" << *this->data().solution();
       
-      // reduction step
+      // reduction of increment
       // modified version of MatMult for MOR
       this->MatMultReduced(basisTransp, increment, redIncrement);
       
@@ -75,15 +75,18 @@ namespace ModelOrderReduction
       // integrate, z += dt * delta_z
       VecAXPY(redSolution, this->timeStepWidth_, redIncrement);
       
-      VLOG(1) << "reduced solution after integration" << *this->data().solution();      
-                 
+      VLOG(2) << "reduced solution after integration" << *this->data().solution();           
+      
       // advance simulation time
       timeStepNo++;
       currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
       
       // write the current output values of the full-order timestepping
       // full state recovery
+
       this->MatMultFull(basis, redSolution , solution);
+      VLOG(1) << "solution after integration" << *this->fullTimestepping_.data().solution(); 
+      
       this->fullTimestepping_.outputWriterManager().writeOutput(this->fullTimestepping_.data(), timeStepNo, currentTime);
       
       // write the current output values of the (reduced) timestepping
@@ -93,7 +96,6 @@ namespace ModelOrderReduction
     
     this->fullTimestepping_.data().solution()->restoreValuesContiguous();
     this->fullTimestepping_.data().increment()->restoreValuesContiguous();
-    
   }
   
   template<typename TimeSteppingExplicitType>

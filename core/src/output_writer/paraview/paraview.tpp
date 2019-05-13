@@ -11,6 +11,7 @@
 #include "output_writer/paraview/loop_output.h"
 #include "output_writer/paraview/loop_collect_mesh_properties.h"
 #include "output_writer/paraview/poly_data_properties_for_mesh.h"
+#include "control/performance_measurement.h"
 
 namespace OutputWriter
 {
@@ -24,16 +25,25 @@ void Paraview::write(DataType& data, int timeStepNo, double currentTime)
     return;
   }
 
+  Control::PerformanceMeasurement::start("durationParaviewOutput");
+
   std::set<std::string> combined1DMeshes;
   std::set<std::string> combined3DMeshes;
 
   if (combineFiles_)
   {
+    Control::PerformanceMeasurement::start("durationParaview1D");
+
     // create a PolyData file that combines all 1D meshes into one file
     writePolyDataFile<typename DataType::OutputFieldVariables>(data.getOutputFieldVariables(), combined1DMeshes);
 
+    Control::PerformanceMeasurement::stop("durationParaview1D");
+    Control::PerformanceMeasurement::start("durationParaview3D");
+
     // create an UnstructuredMesh file that combines all 3D meshes into one file
     writeCombinedUnstructuredGridFile<typename DataType::OutputFieldVariables>(data.getOutputFieldVariables(), combined3DMeshes);
+
+    Control::PerformanceMeasurement::stop("durationParaview3D");
   }
 
   // output normal files, parallel or if combineFiles_, only the 2D and 3D meshes, combined
@@ -65,6 +75,8 @@ void Paraview::write(DataType& data, int timeStepNo, double currentTime)
     // loop over all field variables and output those that are associated with the mesh given by meshName
     ParaviewLoopOverTuple::loopOutput(data.getOutputFieldVariables(), data.getOutputFieldVariables(), meshName, filenameStart.str(), specificSettings_);
   }
+
+  Control::PerformanceMeasurement::stop("durationParaviewOutput");
 }
 
 template<typename FieldVariableType>
@@ -189,13 +201,9 @@ void Paraview::writeParaviewPartitionFieldVariable(FieldVariableType &geometryFi
 
     std::string stringData;
 
-    // get own rank no
-    int ownRankNoCommWorld = 0;
-    MPIUtility::handleReturnValue(MPI_Comm_rank(MPI_COMM_WORLD, &ownRankNoCommWorld));
-
     const node_no_t nNodesLocal = geometryField.functionSpace()->meshPartition()->nNodesLocalWithGhosts();
 
-    std::vector<double> values(nNodesLocal, (double)ownRankNoCommWorld);
+    std::vector<double> values(nNodesLocal, (double)DihuContext::ownRankNoCommWorld());
 
     if (binaryOutput)
     {

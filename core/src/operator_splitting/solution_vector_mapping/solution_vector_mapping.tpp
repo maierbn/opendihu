@@ -82,7 +82,7 @@ void SolutionVectorMapping<
 
   VLOG(1) << "solution vector mapping, transfer from component "
     << componentNo1 << " (" << fieldVariable1->nDofsLocalWithoutGhosts() << " dofs), prefactor " << prefactor1
-    << " to " << componentNo2 << " (" << fieldVariable2->nDofsLocalWithoutGhosts() << " dofs), prefactor " << prefactor2 << " (not considered here)";
+    << " to " << componentNo2 << " (" << fieldVariable2->nDofsLocalWithoutGhosts() << " dofs), prefactor " << prefactor2 << " (2nd prefactor not considered here)";
 
   assert(fieldVariable1->nDofsLocalWithoutGhosts() == fieldVariable2->nDofsLocalWithoutGhosts());
   assert(fieldVariable1->nDofsGlobal() == fieldVariable2->nDofsGlobal());
@@ -98,11 +98,15 @@ void SolutionVectorMapping<
   else
   {
     VLOG(1) << "SolutionVectorMapping extractComponentShared";
+    VLOG(2) << "original field variable: " << *fieldVariable1;
 
     // fieldVariable2 has only 1 component
     // The following retrieves the raw memory pointer from the Petsc vector in fieldVariable1 and reuses it for fieldVariable2
     // that means that fieldVariable cannot be used anymore, only after restoreExtractedComponent was called on fieldVariable1. This is done in the other solution_vector_mapping transfer call.
     fieldVariable1->extractComponentShared(componentNo1, fieldVariable2);
+
+
+    VLOG(2) << "resulting field variable: " << *fieldVariable2;
   }
 
   // scale result with prefactor1

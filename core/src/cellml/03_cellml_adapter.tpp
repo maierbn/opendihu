@@ -35,7 +35,8 @@ CellmlAdapter(const CellmlAdapter &rhs, std::shared_ptr<FunctionSpace> functionS
   this->functionSpace_ = functionSpace;
   this->outputWriterManager_ = rhs.outputWriterManager_;
 
-return;
+  return;
+
   // copy member variables from rhs
   this->specificSettings_ = rhs.specificSettings_;
   this->setParameters_ = rhs.setParameters_;

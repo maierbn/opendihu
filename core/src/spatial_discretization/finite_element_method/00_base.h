@@ -2,6 +2,10 @@
 
 #include "data_management/finite_element_method/finite_elements.h"
 #include "partition/rank_subset.h"
+#include "spatial_discretization/spatial_discretization.h"
+#include "interfaces/runnable.h"
+#include "interfaces/multipliable.h"
+#include "output_writer/manager.h"
 
 //#define QUADRATURE_TEST    ///< if evaluation of quadrature accuracy takes place
 //#define EXACT_QUADRATURE Quadrature::Gauss<20>

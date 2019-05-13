@@ -53,9 +53,6 @@ streamline_tracer:
 diffusion:
 	cd testing/system_testing/tests/diffusion &&  python ../../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
 
-laplace:
-	cd testing/system_testing/tests/laplace &&  python ../../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
-
 quadrature:
 	cd examples/quadrature/own && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
 
@@ -91,3 +88,6 @@ multiple_fibers_cubes_partitioning:
 	
 fibers_emg:
 	cd examples/electrophysiology/fibers_emg && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+
+laplace2d:
+	cd examples/laplace/laplace2d && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG

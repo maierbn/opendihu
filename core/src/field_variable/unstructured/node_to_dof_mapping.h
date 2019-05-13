@@ -27,12 +27,12 @@ public:
     std::vector<dof_no_t> dofs;               ///< the dofs of the node
     std::vector<double> scaleFactors;    ///< the scale factors for Hermite basis functions, not used yet, but set maybe for later use
 
-    struct ElementLocalNode
+    struct elementNoLocalde
     {
       element_no_t elementGlobalNo;    ///< element global no
       unsigned int nodeIdx;       ///< node index local to the element
     };
-    std::vector<std::vector<ElementLocalNode>> elementsOfVersion;  ///< for each version the global element no. and node index of the element that is adjacent to this node and use the specified version. The number of versions is thus the size of the outer vector
+    std::vector<std::vector<elementNoLocalde>> elementsOfVersion;  ///< for each version the global element no. and node index of the element that is adjacent to this node and use the specified version. The number of versions is thus the size of the outer vector
   };
 
   //! get the dof information of a node
@@ -64,6 +64,6 @@ private:
 };
 
 std::ostream &operator<<(std::ostream &stream, const NodeToDofMapping &rhs);
-std::ostream &operator<<(std::ostream &stream, const NodeToDofMapping::NodeDofInformation::ElementLocalNode &rhs);
+std::ostream &operator<<(std::ostream &stream, const NodeToDofMapping::NodeDofInformation::elementNoLocalde &rhs);
 
 } // namespace

@@ -606,10 +606,17 @@ void rotateMatrix<3>(Matrix<3,3> &matrix, Vec3 directionVector)
     -b3/determinant, b2*b3*(sqr(b1) + b1 - sqr(b2) - sqr(b3))/((sqr(b2) + sqr(b3))*determinant), (-sqr(b1)*sqr(b2) + b1*sqr(b3) + pow(b2,4) + sqr(b2)*sqr(b3))/((sqr(b2) + sqr(b3))*determinant)
   });
 
-  VLOG(1) << "direction: " << directionVector << ", determinant: " << determinant;
+  /*VLOG(1) << "direction: " << directionVector << ", determinant: " << determinant;
   VLOG(1) << "rotationMatrix: " << rotationMatrix << ", rotationMatrixInverse: " << rotationMatrixInverse;
 
+  VLOG(1) << "matrix before rotation: " << matrix;
+  VLOG(1) << "   rotInv * matrix: " << rotationMatrixInverse * matrix;
+  VLOG(1) << "   rotInv * matrix * rot: " << rotationMatrixInverse * matrix * rotationMatrix;
+  */
+
   matrix = rotationMatrixInverse * matrix * rotationMatrix;
+
+  //VLOG(1) << "matrix after rotation: " << matrix;
 }
 
 }  // namespace

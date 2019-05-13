@@ -395,9 +395,8 @@ output(std::ostream &stream) const
 {
 #ifndef NDEBUG  
   // this method gets all values and outputs them to stream, only on rank 0
-  PetscMPIInt ownRankNo, nRanks;
-  MPIUtility::handleReturnValue(MPI_Comm_rank(this->meshPartitionRows_->mpiCommunicator(), &ownRankNo), "MPI_Comm_rank");
-  MPIUtility::handleReturnValue(MPI_Comm_size(this->meshPartitionRows_->mpiCommunicator(), &nRanks), "MPI_Comm_size");
+  PetscMPIInt ownRankNo = this->meshPartitionRows_->ownRankNo();
+  PetscMPIInt nRanks = this->meshPartitionRows_->nRanks();
   
   // get global size of matrix 
   int nRowsGlobal, nColumnsGlobal, nRowsLocal, nColumnsLocal;

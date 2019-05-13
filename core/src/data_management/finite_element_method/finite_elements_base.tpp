@@ -88,6 +88,8 @@ createPetscObjects()
   // get the partitioning from the function space
   std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> meshPartition = this->functionSpace_->meshPartition();
   
+  assert(this->functionSpace_);
+
   // create field variables on local partition
   this->rhs_ = this->functionSpace_->template createFieldVariable<1>("rhs");
   this->solution_ = this->functionSpace_->template createFieldVariable<1>("solution");

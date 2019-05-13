@@ -265,7 +265,10 @@ getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[])
     str << ") [representation=" << Partition::valuesRepresentationString[this->currentRepresentation_] << "]: ";
     for (int i = 0; i < ni; i++)
     {
-      str << y[i] << " ";
+      if (fabs(y[i]) > 1e-10)
+        str << y[i] << ", ";
+      else
+        str << "0, ";
     }
     str << "]";
     VLOG(3) << str.str();
@@ -676,6 +679,7 @@ restoreValuesContiguous()
     return;
   }
 
+  // assert that the valuesContiguous_ is being used
   assert(valuesContiguous_ != PETSC_NULL);
   if (this->currentRepresentation_ != Partition::values_representation_t::representationContiguous)
   {
@@ -683,11 +687,12 @@ restoreValuesContiguous()
       << Partition::valuesRepresentationString[this->currentRepresentation_] << ", probably without previous getValuesContiguous()";
   }
 
+  // copy values from component vectors to contiguous vector
   PetscErrorCode ierr;
   const double *valuesDataContiguous;
   ierr = VecGetArrayRead(valuesContiguous_, &valuesDataContiguous); CHKERRV(ierr);
 
-  // copy values from component vectors to contiguous vector
+  // loop over components
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
   {
     double *valuesDataComponent;
@@ -943,9 +948,8 @@ output(std::ostream &stream)
 {
 #ifndef NDEBUG
   // this method gets all local non-ghost values and outputs them to stream, only on rank 0
-  PetscMPIInt ownRankNo, nRanks;
-  MPIUtility::handleReturnValue(MPI_Comm_rank(this->meshPartition_->mpiCommunicator(), &ownRankNo), "MPI_Comm_rank");
-  MPIUtility::handleReturnValue(MPI_Comm_size(this->meshPartition_->mpiCommunicator(), &nRanks), "MPI_Comm_size");
+  PetscMPIInt ownRankNo = this->meshPartition_->ownRankNo();
+  PetscMPIInt nRanks = this->meshPartition_->nRanks();
 
   int componentNo = 0;
   Vec vector = vectorLocal_[componentNo];
@@ -1052,7 +1056,7 @@ output(std::ostream &stream)
       for (int rankNo = 0; rankNo < nRanks; rankNo++)
       {
         if (rankNo != 0)
-          stream << ",";
+          stream << ";";
         for (dof_no_t dofNoLocal = 0; dofNoLocal < localSizes[rankNo]; dofNoLocal++)
         {
           if (dofNoLocal == 400)
@@ -1062,7 +1066,7 @@ output(std::ostream &stream)
           }
 
           double value = recvBuffer[rankNo*maxLocalSize + dofNoLocal];
-          stream << "  " << value;
+          stream << " " << value;
         }
       }
       stream << "]," << std::endl;

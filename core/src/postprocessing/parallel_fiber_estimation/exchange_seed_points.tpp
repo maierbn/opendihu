@@ -131,6 +131,10 @@ template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
 exchangeSeedPointsAfterTracingKeyFibers(int nRanksZ, int rankZNo, bool streamlineDirectionUpwards, int nFibersX, std::vector<Vec3> &seedPoints, std::vector<std::vector<Vec3>> &streamlinePoints)
 {
+  // nRanksZ, rankZNo, streamlineDirectionUpwards, nFibersX, seedPoints, fibers
+  // seedPoints size is nBorderPointsXNew_ * nBorderPointsXNew_
+  // streamlinePoints size is nFibersX * nFibersX
+
   LOG(DEBUG) << "exchangeSeedPointsAfterTracingKeyFibers, nRanksZ: " << nRanksZ << ", rankZNo: " << rankZNo << ", streamlineDirectionUpwards: " << streamlineDirectionUpwards
     << ", ownRankPartitioningIndex_: " << this->meshPartition_->ownRankPartitioningIndex(0) << "," << this->meshPartition_->ownRankPartitioningIndex(1) << "," << this->meshPartition_->ownRankPartitioningIndex(2);
   LOG(DEBUG) << "n seed points: " << seedPoints.size() << ", n streamlines: " << streamlinePoints.size();
@@ -177,12 +181,12 @@ exchangeSeedPointsAfterTracingKeyFibers(int nRanksZ, int rankZNo, bool streamlin
         // if the streamline is going upwards, the next seed point is the upper most, i.e. the last, otherwise it is the first
         if (streamlineDirectionUpwards)
         {
-          streamlinePointNo = streamlinePoints[streamlineIndex].size();
+          streamlinePointNo = streamlinePoints[streamlineIndex].size() - 1;
         }
 
         for (int k = 0; k < 3; k++)
         {
-          sendBuffer[streamlineIndex*3+k] = streamlinePoints[streamlineIndex][streamlinePointNo-1][k];
+          sendBuffer[streamlineIndex*3+k] = streamlinePoints[streamlineIndex][streamlinePointNo][k];
         }
       }
     }

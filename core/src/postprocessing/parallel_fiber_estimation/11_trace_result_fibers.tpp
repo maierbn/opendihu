@@ -202,7 +202,7 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
   pointIndexStride = nFineGridFibers_+1;
   for (int i = 0; i < nBorderPointsXNew_; i++, fibersPointIndex += pointIndexStride)
   {
-    seedPoints[0*nBorderPointsXNew_+i] = fibers[fibersPointIndex][seedPointsZIndex];
+    seedPoints[(nBorderPointsXNew_-1)*nBorderPointsXNew_+i] = fibers[fibersPointIndex][seedPointsZIndex];
   }
 
   // left (0-)
@@ -210,7 +210,7 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
   pointIndexStride = nFibersX * (nFineGridFibers_+1);
   for (int i = 0; i < nBorderPointsXNew_; i++, fibersPointIndex += pointIndexStride)
   {
-    seedPoints[0*nBorderPointsXNew_+i] = fibers[fibersPointIndex][seedPointsZIndex];
+    seedPoints[i*nBorderPointsXNew_+0] = fibers[fibersPointIndex][seedPointsZIndex];
   }
 
   // right (0+)
@@ -218,7 +218,7 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
   pointIndexStride = nFibersX * (nFineGridFibers_+1);
   for (int i = 0; i < nBorderPointsXNew_; i++, fibersPointIndex += pointIndexStride)
   {
-    seedPoints[0*nBorderPointsXNew_+i] = fibers[fibersPointIndex][seedPointsZIndex];
+    seedPoints[i*nBorderPointsXNew_+(nBorderPointsXNew_-1)] = fibers[fibersPointIndex][seedPointsZIndex];
   }
 
   LOG(DEBUG) << "determine " << nBorderPointsXNew_ << "x" << nBorderPointsXNew_ << " seed points: " << seedPoints.size();
@@ -244,8 +244,7 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
 
   std::vector<std::vector<Vec3>> rawSampledStreamlinesForDebugging;
 
-  // set seed points for interior fibers and trace fibers
-
+  // get seed points for interior fibers and trace fibers, the border fibers are already traced
   for (int j = 1; j < nBorderPointsXNew_-1; j++)
   {
     for (int i = 1; i < nBorderPointsXNew_-1; i++)

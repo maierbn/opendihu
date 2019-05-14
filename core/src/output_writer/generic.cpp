@@ -71,4 +71,15 @@ void Generic::appendRankNo(std::stringstream &str, int nRanks, int ownRankNo)
   str << "." << std::setw(nCharacters) << std::setfill('0') << ownRankNo;
 }
 
+int Generic::outputFileNo()
+{
+  return outputFileNo_;
+}
+
+void Generic::setOutputFileNo(int outputFileNo)
+{
+  LOG(INFO) << "setOutputFileNo to " << outputFileNo;
+  outputFileNo_ = outputFileNo;
+}
+
 }  // namespace

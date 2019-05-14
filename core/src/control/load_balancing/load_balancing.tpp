@@ -55,8 +55,7 @@ rebalance()
   //##########################################################################################################
 
   // Check if rebalancing is required. Depends on simulation progress
-  //if (rebalanceCounter_ >= timeSteppingHeun.currentHeunTime())
-  if (false)
+  if (rebalanceCounter_ >= timeSteppingHeun.currentHeunTime())
   {
     // No rebalancing needed, return
     return;
@@ -281,10 +280,10 @@ rebalance()
 
     // Add left and right border of peak to vector. A distance of 5 nodes to teh left and to the rigth are chosen
     for(std::vector<int>::iterator it = peak_positions_fibre.begin(); it != peak_positions_fibre.end(); ++it) {
-        if (static_cast<int>(*it) - 5 >= 0){
+        if (static_cast<int>(*it) - 10 >= 0){
             split_positions_fibre.push_back(static_cast<int>(*it) - 5);
         }
-        if (static_cast<int>(*it) + 5 <= nNodesGlobal){
+        if (static_cast<int>(*it) + 10 <= nNodesGlobal){
             split_positions_fibre.push_back(static_cast<int>(*it) + 5);
         }
     }
@@ -760,277 +759,7 @@ rebalance()
   LOG(DEBUG) << " New geometry field values vector " << geometryFieldValuesNew_TEST;
   LOG(DEBUG) << " New cellml value vector " << cellmlValuesNew_TEST;
 
-
-  // TEST CALL -------------------------------------
-  //nElementsLocal = nElementsLocalNew_TEST;
-  //------------------------------------------------
-
-  //##########################################################################################################
-  //####################################  COLLECT DIFFUSION VALUES  ##########################################
-  //##########################################################################################################
-
-//  //Collect diffusion values per fiber. First process of fiber collects
-//  std::vector<double> diffusion_values_fibre;
-//
-//  // Adjust size of vector to get an even number. Must be adjusted to number of processes (currently hard-coded for 2)(TODO)
-//  if (nNodesGlobal % 2 == 0){
-//    diffusion_values_fibre.resize(nNodesGlobal);
-//  } else {
-//    diffusion_values_fibre.resize(nNodesGlobal+1);
-//  }
-//
-//  // Log info
-//  LOG(DEBUG) << "New size of diffusion values vector " << diffusion_values_fibre.size();
-//
-//  // Check variable to induce adding a new number
-//  int insert_check_diffusion = false;
-//
-//  // Add dummy for the exact amount of data send
-//  if (nNodesGlobal > nNodesLocalWithoutGhosts*2){
-//    diffusionValues.push_back(-1000);
-//    insert_check_diffusion = true;
-//  }
-//
-//  //Gather values
-//  MPI_Gather(diffusionValues.data(), diffusionValues.size(), MPI_DOUBLE, diffusion_values_fibre.data(), diffusionValues.size(), MPI_DOUBLE, 0, rankSubsetFiber->mpiCommunicator());
-//
-//  // Log info. Only gathering processes log info
-//  if (rankSubsetFiber->ownRankNo() == 0){
-//    LOG(DEBUG) << "Received all diffusion values of fiber (with potential dummies): " << diffusion_values_fibre;
-//  }
-//
-//  // Crop old vector
-//  if (insert_check_diffusion == true){
-//    diffusionValues.pop_back();
-//  }
-//
-//  // Remove entries from new vector
-//  diffusion_values_fibre.erase(std::remove(diffusion_values_fibre.begin(), diffusion_values_fibre.end(), -1000), diffusion_values_fibre.end());
-//
-//  // Log info. Only gathering processes log info
-//  if (rankSubsetFiber->ownRankNo() == 0){
-//    LOG(DEBUG) << "Diffusion values with removed dummies: " << diffusion_values_fibre;
-//  }
-//
-//  //##########################################################################################################
-//  //#######################################  END OF SECTION ##################################################
-//  //##########################################################################################################
-//
-//  //##########################################################################################################
-//  //####################################  COLLECT NODE VALUES  ###############################################
-//  //##########################################################################################################
-//
-//  //Collect node coordinates of fiber. First process of fiber collects
-//  std::vector<Vec3> node_coordinates_fibre;
-//
-//  // Check variable to induce adding a new number
-//  int insert_check_node = false;
-//
-//  // Add dummy for the exact amount of data send
-//  if (nNodesGlobal > nNodesLocalWithoutGhosts*2){
-//    Vec3 node_add;
-//    node_add[0] = -1000;
-//    node_add[1] = -1000;
-//    node_add[2] = -1000;
-//    geometryFieldValues.push_back(node_add);
-//    insert_check_node = true;
-//  }
-//
-//  // Add elements to vector
-//  for(int i = 0; i < geometryFieldValues.size(); i++){
-//    node_coordinates_fibre.push_back(geometryFieldValues[i]);
-//  }
-//
-//  // Temporary vector to add
-//  Vec3 temp_vec;
-//
-//  //Gather values
-//  for(int i = 0; i < geometryFieldValues.size(); i++){
-//    MPI_Gather(geometryFieldValues[i].data(), geometryFieldValues[i].size(), MPI_DOUBLE, temp_vec.data(),
-//    geometryFieldValues[i].size(), MPI_DOUBLE, 0, rankSubsetFiber->mpiCommunicator());
-//
-//    // Add to node vector
-//    node_coordinates_fibre.push_back(temp_vec);
-//  }
-//
-//  // Log info. Only gathering processes log info
-//  if (rankSubsetFiber->ownRankNo() == 0){
-//    LOG(DEBUG) << "Received all node values of fiber (with potential dummies): " << node_coordinates_fibre;
-//  }
-//
-//  // Crop old vector
-//  if (insert_check_node == true){
-//    node_coordinates_fibre.pop_back();
-//  }
-//
-//  // Remove entries from new vector
-//  Vec3 node_remove;
-//  node_remove[0] = -1000;
-//  node_remove[1] = -1000;
-//  node_remove[2] = -1000;
-//  node_coordinates_fibre.erase(std::remove(node_coordinates_fibre.begin(), node_coordinates_fibre.end(), node_remove), node_coordinates_fibre.end());
-//
-//  // Log info. Only gathering processes log info
-//  if (rankSubsetFiber->ownRankNo() == 0){
-//    LOG(DEBUG) << "Node values with removed dummies: " << node_coordinates_fibre;
-//  }
-//
-//  //##########################################################################################################
-//  //#######################################  END OF SECTION ##################################################
-//  //##########################################################################################################
-//
-//  //##########################################################################################################
-//  //####################################  COLLECT CELLML VALUES  #############################################
-//  //##########################################################################################################
-//
-//  //Collect cellml values per fiber. First process of fiber collects. Collect each component individually
-//  std::vector<double> cellml_values_fibre_component_1;
-//  std::vector<double> cellml_values_fibre_component_2;
-//  std::vector<double> cellml_values_fibre_component_3;
-//  std::vector<double> cellml_values_fibre_component_4;
-//
-//  // Adjust size of vector to get an even number. Must be adjusted to number of processes (currently hard-coded for 2)(TODO)
-//  if (nNodesGlobal % 2 == 0){
-//    cellml_values_fibre_component_1.resize(nNodesGlobal);
-//    cellml_values_fibre_component_2.resize(nNodesGlobal);
-//    cellml_values_fibre_component_3.resize(nNodesGlobal);
-//    cellml_values_fibre_component_4.resize(nNodesGlobal);
-//  } else {
-//    cellml_values_fibre_component_1.resize(nNodesGlobal+1);
-//    cellml_values_fibre_component_2.resize(nNodesGlobal+1);
-//    cellml_values_fibre_component_3.resize(nNodesGlobal+1);
-//    cellml_values_fibre_component_4.resize(nNodesGlobal+1);
-//  }
-//
-//  // Log info
-//  LOG(DEBUG) << "New size of cellml values vectors " << cellml_values_fibre_component_1.size();
-//
-//  // Check variable to induce adding a new number
-//  int insert_check_cellml = false;
-//
-//  // Add dummy for the exact amount of data send
-//  if (nNodesGlobal > nNodesLocalWithoutGhosts*2){
-//    cellmlValues[0].push_back(-1000);
-//    cellmlValues[1].push_back(-1000);
-//    cellmlValues[2].push_back(-1000);
-//    cellmlValues[3].push_back(-1000);
-//    insert_check_cellml = true;
-//  }
-//
-//  //Gather values. Each component is gathered individually
-//  MPI_Gather(cellmlValues[0].data(), cellmlValues[0].size(), MPI_DOUBLE, cellml_values_fibre_component_1.data(),
-//  cellmlValues[0].size(), MPI_DOUBLE, 0, rankSubsetFiber->mpiCommunicator());
-//  MPI_Gather(cellmlValues[1].data(), cellmlValues[1].size(), MPI_DOUBLE, cellml_values_fibre_component_2.data(),
-//  cellmlValues[1].size(), MPI_DOUBLE, 0, rankSubsetFiber->mpiCommunicator());
-//  MPI_Gather(cellmlValues[2].data(), cellmlValues[2].size(), MPI_DOUBLE, cellml_values_fibre_component_3.data(),
-//  cellmlValues[2].size(), MPI_DOUBLE, 0, rankSubsetFiber->mpiCommunicator());
-//  MPI_Gather(cellmlValues[3].data(), cellmlValues[3].size(), MPI_DOUBLE, cellml_values_fibre_component_4.data(),
-//  cellmlValues[3].size(), MPI_DOUBLE, 0, rankSubsetFiber->mpiCommunicator());
-//
-//  // Log info. Only gathering processes log info
-//  if (rankSubsetFiber->ownRankNo() == 0){
-//    LOG(DEBUG) << "Received all cellml values [0] of fiber (with potential dummies): " << cellml_values_fibre_component_1;
-//    LOG(DEBUG) << "Received all cellml values [1] of fiber (with potential dummies): " << cellml_values_fibre_component_2;
-//    LOG(DEBUG) << "Received all cellml values [2] of fiber (with potential dummies): " << cellml_values_fibre_component_3;
-//    LOG(DEBUG) << "Received all cellml values [3] of fiber (with potential dummies): " << cellml_values_fibre_component_4;
-//  }
-//
-//  // Crop old vector
-//  if (insert_check_cellml == true){
-//    cellmlValues[0].pop_back();
-//    cellmlValues[1].pop_back();
-//    cellmlValues[2].pop_back();
-//    cellmlValues[3].pop_back();
-//  }
-//
-//  // Remove entries from new vector
-//  cellml_values_fibre_component_1.erase(std::remove(cellml_values_fibre_component_1.begin(),
-//  cellml_values_fibre_component_1.end(), -1000), cellml_values_fibre_component_1.end());
-//  cellml_values_fibre_component_2.erase(std::remove(cellml_values_fibre_component_2.begin(),
-//  cellml_values_fibre_component_2.end(), -1000), cellml_values_fibre_component_2.end());
-//  cellml_values_fibre_component_3.erase(std::remove(cellml_values_fibre_component_3.begin(),
-//  cellml_values_fibre_component_3.end(), -1000), cellml_values_fibre_component_3.end());
-//  cellml_values_fibre_component_4.erase(std::remove(cellml_values_fibre_component_4.begin(),
-//  cellml_values_fibre_component_4.end(), -1000), cellml_values_fibre_component_4.end());
-//
-//  // Log info. Only gathering processes log info
-//  if (rankSubsetFiber->ownRankNo() == 0){
-//    LOG(DEBUG) << "Cellml values [0] with removed dummies: " << cellml_values_fibre_component_1;
-//    LOG(DEBUG) << "Cellml values [1] with removed dummies: " << cellml_values_fibre_component_2;
-//    LOG(DEBUG) << "Cellml values [2] with removed dummies: " << cellml_values_fibre_component_3;
-//    LOG(DEBUG) << "Cellml values [3] with removed dummies: " << cellml_values_fibre_component_4;
-//  }
-//
-//  //##########################################################################################################
-//  //##########################################  CURRENT END  #################################################
-//  //##########################################################################################################
-//
-//  //##########################################################################################################
-//  //##################################  COMMUNICATE NEW VALUES  ##############################################
-//  //##########################################################################################################
-//
-//  // Create container for testing purpose
-//  int nElementsLocalNew_TEST;
-//  //std::vector<Vec3> nodePositionsWithoutGhosts;
-//  std::vector<double> diffusionValuesNew_TEST;
-//  //std::array<std::vector<double>,nCellMLComponents> cellmlValuesNew_TEST;
-//  int split_position;
-//
-//  if (rankSubsetFiber->ownRankNo() == 0){
-//    split_position= split_positions_fibre_final[0];
-//  }
-//
-//  // Broadcast split position
-//  MPI_Bcast(&split_position, 1, MPI_INT, 0, rankSubsetFiber->mpiCommunicator());
-//
-//  // Communicate new positions to other processes
-//  for(int rank = 1; rank < rankSubsetFiber->size(); rank++){
-//
-//    if (rankSubsetFiber->ownRankNo() == 0){
-//
-//        // Set element number for sending
-//        nElementsLocalNew_TEST = nNodesGlobal - split_positions_fibre_final[rank - 1] - 1;
-//        // Send new element number
-//        MPI_Send(&nElementsLocalNew_TEST, 1, MPI_INT, rank, 0, rankSubsetFiber->mpiCommunicator());
-//        // Set own element number
-//        nElementsLocalNew_TEST = split_positions_fibre_final[rank - 1];
-//
-//        // Set diffusion values for sending
-//        for(int counter = split_positions_fibre_final[rank - 1]; counter < nNodesGlobal; counter++){
-//            diffusionValuesNew_TEST.push_back(diffusion_values_fibre[counter]);
-//        }
-//        LOG(DEBUG) << "sending vector of size " << diffusionValuesNew_TEST.size();
-//        LOG(DEBUG) << "Split position " << split_position;
-//
-//        // Send new diffusion values
-//        MPI_Send(diffusionValuesNew_TEST.data(), diffusionValuesNew_TEST.size(), MPI_DOUBLE, rank, 0, rankSubsetFiber->mpiCommunicator());
-//        LOG(DEBUG) << "SENDING OK";
-//        // Set own diffusion values
-//        diffusionValuesNew_TEST.clear();
-//        for(int counter = 0; counter < split_positions_fibre_final[0]; counter++){
-//            diffusionValuesNew_TEST.push_back(diffusion_values_fibre[counter]);
-//        }
-//    } else if (rankSubsetFiber->ownRankNo() == rank){
-//        // Receive new element number
-//        MPI_Recv(&nElementsLocalNew_TEST, 1, MPI_INT, 0, 0, rankSubsetFiber->mpiCommunicator(), MPI_STATUS_IGNORE);
-//        // Receive new diffusion values
-//        diffusionValuesNew_TEST.resize(split_position + 1);
-//        MPI_Recv(diffusionValuesNew_TEST.data(), diffusionValuesNew_TEST.size(), MPI_DOUBLE, 0, 0, rankSubsetFiber->mpiCommunicator(), MPI_STATUS_IGNORE);
-//    }
-//  }
-//
-//  // Log info
-//  LOG(DEBUG) << "Received new element number: " << nElementsLocalNew_TEST;
-//  LOG(DEBUG) << "Received new diffusion values";
-//
-//  // Setting new values. Testing purpose
-//  nElementsLocal = nElementsLocalNew_TEST;
-//  diffusionValues = diffusionValuesNew_TEST;
-//  LOG(DEBUG) << diffusionValues.size() << "old values compared to " << diffusionValuesNew_TEST.size();
-//
-//  //##########################################################################################################
-//  //######################################  END OF SECTION  ##################################################
-//  //##########################################################################################################
+  LOG(DEBUG) << "YYY" << endNodeOfProcessNew - startNodeOfProcessNew + 1 << ";" << nElementsLocalNew_TEST;
 
   // Number of elements on own rank after rebalancing
   //int nElementsLocalNew = nElementsLocal;
@@ -1050,12 +779,6 @@ rebalance()
 
   // Number of nodes on own rank after rebalancing
   int nNodesLocalWithoutGhostsNew = meshPartition->nNodesLocalWithoutGhosts();
-
-  // TEST -------------------------------------------------------
-  //geometryFieldValues = geometryFieldValuesNew_TEST;
-  //cellmlValues = cellmlValuesNew_TEST;
-  //diffusionValues = diffusionValuesNew_TEST;
-  // ----------------------------------------------------------------
 
   // Vector of node positions
   std::vector<Vec3> nodePositionsWithoutGhosts;
@@ -1119,12 +842,8 @@ rebalance()
   // Recreate data structures for diffusion part
   timeSteppingDiffusion.reset();
 
-  LOG(DEBUG) << "BIS HIERHIN LÄUFTS";
-
   // DIESER BEFEHL MACHT PROBLEME
   timeSteppingDiffusion.initialize();   // retrieves function space from finiteElementMethod
-
-  LOG(DEBUG) << "HIER NICHT MEHR";
 
   // Set all local data
   timeSteppingDiffusion.data().solution()->setValuesWithoutGhosts(diffusionValuesNew);

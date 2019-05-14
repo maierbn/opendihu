@@ -90,6 +90,7 @@ protected:
   int handleResultCallInterval_;      ///< handleResult will be called every callInterval_ time steps
   double setSpecificStatesCallFrequency_;   ///< frequency, after which the setSpecificStates callback function will be called, either this condition or the condition with setSpecificStatesCallInterval_ is used
   double lastCallSpecificStatesTime_;      ///< last time the setSpecificStates_ method was called
+  double setSpecificStatesRepeatAfterFirstCall_; ///< duration of continuation of calling the setSpecificStates callback after it was triggered
  
   PyObject *pythonSetParametersFunction_;   ///< Python function handle that is called to set parameters to the CellML problem from the python config
   PyObject *pythonSetSpecificParametersFunction_;   ///< Python function handle that is called to set parameters to the CellML problem from the python config

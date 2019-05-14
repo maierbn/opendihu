@@ -122,6 +122,7 @@ initialize()
   this->internalTimeStepNo_ = 0;
 
   this->setSpecificStatesCallFrequency_ = this->specificSettings_.getOptionDouble("setSpecificStatesCallFrequency", 0.0);
+  this->setSpecificStatesRepeatAfterFirstCall_ = this->specificSettings_.getOptionDouble("setSpecificStatesRepeatAfterFirstCall", 0.0);
 
   // initialize the lastCallSpecificStatesTime_ to something negative, such that the condition is fullfilled already in the fisrrt iteration
   this->lastCallSpecificStatesTime_ = -2*this->setSpecificStatesCallFrequency_;
@@ -206,7 +207,10 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
     }
     else
     {
-      this->lastCallSpecificStatesTime_ += 1./this->setSpecificStatesCallFrequency_;
+      if (currentTime - (this->lastCallSpecificStatesTime_ + 1./this->setSpecificStatesCallFrequency_) > this->setSpecificStatesRepeatAfterFirstCall_)
+      {
+         this->lastCallSpecificStatesTime_ += 1./this->setSpecificStatesCallFrequency_;
+      }
       LOG(DEBUG) << "next call to setSpecificStates,this->setSpecificStatesCallFrequency_: " << this->setSpecificStatesCallFrequency_ << ", set lastCallSpecificStatesTime_ to " << this->lastCallSpecificStatesTime_;
     }
 

@@ -1,7 +1,7 @@
 # 2 fibers, biceps, example for load_balancing
 #
 
-end_time = 10.0     # end time for the simulation
+end_time = 20.0     # end time for the simulation
 
 import numpy as np
 import pickle
@@ -59,6 +59,8 @@ def fiber_gets_stimulated(fiber_no, frequency, current_time):
   
 # callback function that can set states, i.e. prescribed values for stimulation
 def set_specific_states(n_nodes_global, time_step_no, current_time, states, fiber_no):
+  
+  print("call set_specific_states at time {}".format(current_time))
   
   # determine if fiber gets stimulated at the current time
   is_fiber_gets_stimulated = fiber_gets_stimulated(fiber_no, stimulation_frequency, current_time)
@@ -152,7 +154,7 @@ config = {
         "timeStepWidth": dt_3D,  # 1e-1
         "logTimeStepWidthAsKey": "dt_3D",
         "durationLogKey": "duration_total",
-        "timeStepOutputInterval" : 1,
+        "timeStepOutputInterval" : 1e2,
         "endTime": end_time,
       
         # config for strang splitting
@@ -160,14 +162,15 @@ config = {
           "timeStepWidth": dt_3D,  # 1e-1
           "logTimeStepWidthAsKey": "dt_3D",
           "durationLogKey": "duration_total",
-          "timeStepOutputInterval" : 1000,
+          "timeStepOutputInterval" : 1,
           "endTime": end_time,
           "Term1": {      # CellML
             "HeunAdaptiv" : {
               "timeStepWidth": dt_0D,  # 5e-5
-              "tolerance": 1e-2,
-              "delta": 1e-6,
-              "maxTimeStepWidth": dt_3D,
+              "tolerance": 1e-7,
+              "lowestMultiplier": 1000,
+              "minTimeStepWidth": 1e-5,
+              "timeStepAdaptOption": "regular",
               "logTimeStepWidthAsKey": "dt_0D",
               "durationLogKey": "duration_0D",
               "initialValues": [],
@@ -187,6 +190,7 @@ config = {
                 #"setSpecificStatesCallInterval": 2*int(1./stimulation_frequency/dt_0D),     # set_specific_states should be called stimulation_frequency times per ms, the factor 2 is needed because every Heun step includes two calls to rhs
                 "setSpecificStatesCallInterval": 0,
                 "setSpecificStatesCallFrequency": stimulation_frequency,     # set_specific_states should be called stimulation_frequency times per ms, the factor 2 is needed because every Heun step includes two calls to rhs
+                "setSpecificStatesRepeatAfterFirstCall": 0.001,      # simulation time span for which the setSpecificStates callback will be called after a call was triggered
                 "additionalArgument": i,
                 
                 "outputStateIndex": 0,                             # state 0 = Vm, rate 28 = gamma
@@ -220,6 +224,7 @@ config = {
               },
               "OutputWriter" : [
                 {"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/fiber_"+str(i), "binary": True, "fixedFormat": False, "combineFiles": False},
+                #{"format": "Paraview", "outputInterval": 1, "filename": "out/fiber_"+str(i), "binary": True, "fixedFormat": False, "combineFiles": False},
                 #{"format": "Paraview", "outputInterval": 1./dt_1D*output_timestep, "filename": "out/fiber_"+str(i)+"_txt", "binary": False, "fixedFormat": False},
                 #{"format": "ExFile", "filename": "out/fiber_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "sphereSize": "0.02*0.02*0.02"},
                 #{"format": "PythonFile", "filename": "out/fiber_"+str(i), "outputInterval": int(1./dt_1D*output_timestep), "binary":True, "onlyNodalValues":True},

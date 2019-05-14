@@ -25,6 +25,12 @@ public:
   //! append rank no in the format ".001" to str
   static void appendRankNo(std::stringstream &str, int nRanks, int ownRankNo);
 
+  //! return the counter for the output file number
+  int outputFileNo();
+
+  //! set the current output file no counter
+  void setOutputFileNo(int outputFileNo);
+
 protected:
 
   //! check if output should be written in this timestep and prepare filename, i.e. set filename_ from config

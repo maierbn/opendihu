@@ -290,7 +290,7 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
       int fibersPointIndex = j * (nFineGridFibers_+1) * nFibersX + i * (nFineGridFibers_+1);
       sampleStreamlineAtEquidistantZPoints(streamlinePoints, seedPoint, bottomZClip, topZClip, fibers[fibersPointIndex], fibersPointIndex*1000, rawSampledStreamlinesForDebugging);  // last parameter is value for debugging output
 
-      LOG(DEBUG) << "sampled streamline (" << i << "," << j << ") at equidistant z points";
+      LOG(DEBUG) << " (" << i << "," << j << ") seedPoint " << seedPoint << ", sampled streamline (" << i << "," << j << ") at equidistant z points";
     }
   }
 

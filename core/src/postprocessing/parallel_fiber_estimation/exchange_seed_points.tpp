@@ -44,6 +44,7 @@ exchangeSeedPointsBeforeTracing(int nRanksZ, int rankZNo, bool streamlineDirecti
       {
         seedPoints[seedPointIndex][i] = receiveBuffer[seedPointIndex*3 + i];
       }
+      LOG(DEBUG) << "received seed point " << seedPointIndex << ":" << seedPoints[seedPointIndex];
     }
     //LOG(DEBUG) << "received " << seedPoints.size() << " seed points from rank " << neighbourRankNo << ": " << seedPoints;
 

@@ -168,7 +168,7 @@ exchangeSeedPointsAfterTracingKeyFibers(int nRanksZ, int rankZNo, bool streamlin
     }
 
     // fill send buffer
-    std::vector<double> sendBuffer(seedPoints.size()*3);
+    std::vector<double> sendBuffer(seedPoints.size()*3, -1.0);
       
     for (int j = 0; j < nBorderPointsXNew_; j++)
     {
@@ -182,11 +182,13 @@ exchangeSeedPointsAfterTracingKeyFibers(int nRanksZ, int rankZNo, bool streamlin
         if (streamlineDirectionUpwards)
         {
           streamlinePointNo = streamlinePoints[streamlineIndex].size() - 1;
+          LOG(DEBUG) << "  take point " << streamlinePoints[streamlineIndex][streamlinePointNo] << " (" << i << "," << j << ") for send buffer";
         }
 
         for (int k = 0; k < 3; k++)
         {
-          sendBuffer[streamlineIndex*3+k] = streamlinePoints[streamlineIndex][streamlinePointNo][k];
+          int seedPointIndex = j*nBorderPointsXNew_ + i;
+          sendBuffer[seedPointIndex*3+k] = streamlinePoints[streamlineIndex][streamlinePointNo][k];
         }
       }
     }

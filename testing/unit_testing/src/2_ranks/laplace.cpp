@@ -1724,7 +1724,7 @@ config = {
         "nElements": [nx, ny, nz],
         "physicalExtent": [2*nx, 2*ny, 2*nz],
         "dirichletBoundaryConditions": bc,
-        "maxIterations": 1e5,
+        "maxIterations": 1e6,
         "relativeTolerance": 1e-15,
         "solverType": "gmres",
         "preconditionerType": "sor",

@@ -32,6 +32,8 @@ exchangeSeedPointsBeforeTracing(int nRanksZ, int rankZNo, bool streamlineDirecti
       tag = currentRankSubset_->ownRankNo()*100 + neighbourRankNo*10000 + level_*10 + 6;
     }
 
+    seedPoints.resize(nBorderPointsXNew_*nBorderPointsXNew_, -1.0);
+
     LOG(DEBUG) << "receive " << seedPoints.size()*3 << " seed point values (" << seedPoints.size() << " seed points) from rank " << neighbourRankNo << " (tag: " << tag << ")";
     std::vector<double> receiveBuffer(seedPoints.size()*3);
     MPIUtility::handleReturnValue(MPI_Recv(receiveBuffer.data(), receiveBuffer.size(), MPI_DOUBLE, neighbourRankNo,
@@ -47,7 +49,6 @@ exchangeSeedPointsBeforeTracing(int nRanksZ, int rankZNo, bool streamlineDirecti
       LOG(DEBUG) << "received seed point " << seedPointIndex << ":" << seedPoints[seedPointIndex];
     }
     //LOG(DEBUG) << "received " << seedPoints.size() << " seed points from rank " << neighbourRankNo << ": " << seedPoints;
-
   }
 
   // on rank int(nRanksZ/2), send seed points to rank below

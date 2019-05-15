@@ -32,7 +32,7 @@ exchangeSeedPointsBeforeTracing(int nRanksZ, int rankZNo, bool streamlineDirecti
       tag = currentRankSubset_->ownRankNo()*100 + neighbourRankNo*10000 + level_*10 + 6;
     }
 
-    seedPoints.resize(nBorderPointsXNew_*nBorderPointsXNew_, -1.0);
+    seedPoints.resize(nBorderPointsXNew_*nBorderPointsXNew_, Vec3({-1.0,-1.0,-1.0});
 
     LOG(DEBUG) << "receive " << seedPoints.size()*3 << " seed point values (" << seedPoints.size() << " seed points) from rank " << neighbourRankNo << " (tag: " << tag << ")";
     std::vector<double> receiveBuffer(seedPoints.size()*3);

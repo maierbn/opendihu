@@ -8,7 +8,8 @@ void ParallelFiberEstimation<BasisFunctionType>::
 exchangeSeedPointsBeforeTracing(int nRanksZ, int rankZNo, bool streamlineDirectionUpwards, std::vector<Vec3> &seedPoints)
 {
   // determine if previously set seedPoints are used or if they are received from neighbouring rank
-  LOG(DEBUG) << "exchangeSeedPointsBeforeTracing, rankZNo: " << rankZNo << ", streamlineDirectionUpwards: " << streamlineDirectionUpwards << ", int(nRanksZ/2): " << int(nRanksZ/2);
+  LOG(DEBUG) << "exchangeSeedPointsBeforeTracing, rankZNo: " << rankZNo
+    << ", streamlineDirectionUpwards: " << streamlineDirectionUpwards << ", int(nRanksZ/2): " << int(nRanksZ/2) << ", n seed points: " << seedPoints.size();
 
   if (nRanksZ == 1)
     return;

@@ -456,6 +456,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     int nNodePositionsWithoutGhosts = nNodePositionsWithoutGhostsX * nNodePositionsWithoutGhostsY * nNodePositionsWithoutGhostsZ;
     std::vector<Vec3> nodePositionsWithoutGhosts(nNodePositionsWithoutGhosts);
 
+    // extract the node positions without ghosts from all node positions
     LOG(DEBUG) << "nNodePositionsWithoutGhosts: " << nNodePositionsWithoutGhosts << ", nNodePositionsWithGhosts: " << nodePositions.size();
     LOG(DEBUG) << nNodePositionsWithoutGhostsX << "x" << nNodePositionsWithoutGhostsY << "x" << nNodePositionsWithoutGhostsZ;
     LOG(DEBUG) << nBorderPointsXNew_ << "x" << nBorderPointsXNew_ << "x" << nBorderPointsZ_ << "=" << nBorderPointsZ_*nBorderPointsXNew_*nBorderPointsXNew_;
@@ -480,6 +481,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
       }
     }
 
+    // create the new function space
     context_.partitionManager()->setRankSubsetForNextCreatedPartitioning(currentRankSubset_);
     this->functionSpace_ = context_.meshManager()->template createFunctionSpaceWithGivenMeshPartition<FunctionSpaceType>(
       meshName.str(), meshPartition_, nodePositionsWithoutGhosts, nElementsPerCoordinateDirectionLocal, nRanksPerCoordinateDirection_);
@@ -619,7 +621,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     // determine the seed points of the streamlines
     createSeedPoints(subdomainIsAtBorder, seedPointsZIndex, nodePositions, seedPoints);
 
-    // trace streamlines from seed points
+    // trace streamlines from seed points, this also exchanges the seed points
     std::vector<std::vector<Vec3>> streamlinePoints;
     traceStreamlines(nRanksZ, rankZNo, streamlineDirection, streamlineDirectionUpwards, seedPoints, streamlinePoints);
 

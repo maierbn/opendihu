@@ -507,8 +507,6 @@ applyInSystemMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> syst
 
   VLOG(1) << ownGhostElements_.size() << " ghost elements";
 
-  double debugValue = 0;
-
   // loop over ghost elements
   for (typename std::vector<GhostElement>::iterator ghostElementIter = ownGhostElements_.begin(); ghostElementIter != ownGhostElements_.end(); ghostElementIter++)
   {
@@ -630,7 +628,6 @@ applyInSystemMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> syst
     VLOG(1) << " after set values at " << rowDofNosLocal << ": " << *boundaryConditionsRightHandSideSummand;
   }
 
-  LOG(DEBUG) << "sum: " << debugValue;
   LOG(DEBUG) << "rhs summand afterwards: " << *boundaryConditionsRightHandSideSummand;
   VLOG(1) << "rhs summand afterwards: " << *boundaryConditionsRightHandSideSummand;
 

@@ -13,6 +13,7 @@ template<typename FunctionSpaceType,int nComponents>
 BoundaryConditionsBase<FunctionSpaceType,nComponents>::
 BoundaryConditionsBase(DihuContext context) : specificSettings_(NULL)
 {
+  LOG(DEBUG) << " create new boundary conditions object.";
 }
 
 template<typename FunctionSpaceType,int nComponents>
@@ -20,9 +21,18 @@ void BoundaryConditionsBase<FunctionSpaceType,nComponents>::
 initialize(PythonConfig specificSettings, std::shared_ptr<FunctionSpaceType> functionSpace, std::string boundaryConditionsConfigKey)
 {
   functionSpace_ = functionSpace;
+
+  LOG(DEBUG) << "BoundaryConditionsBase::initialize, use functionSpace_: " << functionSpace_->meshName();
+
   specificSettings_ = specificSettings;
   printDebuggingInfo();
 
+  // clear previous boundary condition values
+  boundaryConditionElements_.clear();
+  boundaryConditionNonGhostDofLocalNos_.clear();
+  boundaryConditionValues_.clear();
+
+  // parse new boundary condition dofs and values
   parseBoundaryConditionsForElements(boundaryConditionsConfigKey);
   this->initializeGhostElements();
 }
@@ -33,6 +43,8 @@ initialize(std::shared_ptr<FunctionSpaceType> functionSpace, std::vector<Boundar
                 std::vector<dof_no_t> &boundaryConditionNonGhostDofLocalNos, std::vector<ValueType> &boundaryConditionValues)
 {
   functionSpace_ = functionSpace;
+
+  LOG(DEBUG) << "BoundaryConditionsBase::initialize, use functionSpace_: " << functionSpace_->meshName();
 
   boundaryConditionElements_ = boundaryConditionElements;
   boundaryConditionNonGhostDofLocalNos_ = boundaryConditionNonGhostDofLocalNos;
@@ -123,13 +135,16 @@ template<typename FunctionSpaceType,int nComponents>
 void BoundaryConditionsBase<FunctionSpaceType,nComponents>::
 parseBoundaryConditionsForElements(std::string boundaryConditionsConfigKey)
 {
-  LOG(TRACE) << "parseBoundaryConditionsForElements";
+  LOG(TRACE) << "parseBoundaryConditionsForElements, functionSpace: " <<  functionSpace_->meshName()
+    << ", nElementsLocal: " << functionSpace_->meshPartition()->nElementsLocal(0) << "=" << functionSpace_->nElementsLocal();
 
   // add weak form of BC to rhs
   const int nDofsPerNode = FunctionSpaceType::nDofsPerNode();
 
   // determine if the BC indices in the config are given for global or local dof nos
   bool inputMeshIsGlobal = this->specificSettings_.getOptionBool("inputMeshIsGlobal", true);
+
+  LOG(DEBUG) << "boundaryConditionNonGhostDofLocalNos: " << boundaryConditionNonGhostDofLocalNos_ << ", boundaryConditionValues: " << boundaryConditionValues_;
 
   // Boundary conditions are specified for dof numbers, not nodes, such that for Hermite it is possible to prescribe derivatives.
   // However the ordering of the dofs is not known in the config for unstructured meshes. Therefore the ordering is special.

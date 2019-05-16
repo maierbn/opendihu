@@ -27,6 +27,14 @@ setDirichletBoundaryConditions(std::shared_ptr<DirichletBoundaryConditions<Funct
 
 template<typename FunctionSpaceType,typename QuadratureType,typename Term,typename Dummy>
 void BoundaryConditions<FunctionSpaceType,QuadratureType,Term,Dummy>::
+reset()
+{
+  LOG(DEBUG) << "delete dirichlet boundary conditions object";
+  this->dirichletBoundaryConditions_ = nullptr;
+}
+
+template<typename FunctionSpaceType,typename QuadratureType,typename Term,typename Dummy>
+void BoundaryConditions<FunctionSpaceType,QuadratureType,Term,Dummy>::
 applyBoundaryConditions()
 {
   if (!boundaryConditionHandlingEnabled_)
@@ -67,8 +75,13 @@ applyBoundaryConditions()
   // handle Dirichlet boundary conditions
   if (dirichletBoundaryConditions_ == nullptr)
   {
+    LOG(DEBUG) << "create dirichlet BC object";
     dirichletBoundaryConditions_ = std::make_shared<DirichletBoundaryConditions<FunctionSpaceType,1>>(this->context_);
     dirichletBoundaryConditions_->initialize(this->specificSettings_, this->data_.functionSpace(), "dirichletBoundaryConditions");
+  }
+  else
+  {
+    LOG(DEBUG) << "dirichlet BC object already exists";
   }
 
   // get abbreviations

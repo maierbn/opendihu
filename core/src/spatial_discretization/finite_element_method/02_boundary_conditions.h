@@ -28,6 +28,9 @@ public:
   //! set the dirichlet boundary condition object, this can be done to set BC from within the C++ code, not from python config
   void setDirichletBoundaryConditions(std::shared_ptr<DirichletBoundaryConditions<FunctionSpaceType,1>> dirichletBoundaryConditions);
 
+  //! reset to pre-initialized state
+  virtual void reset();
+
 protected:
 
   //! apply dirichlet boundary conditions, this calls applyBoundaryConditionsWeakForm

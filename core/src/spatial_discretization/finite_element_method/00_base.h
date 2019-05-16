@@ -41,7 +41,7 @@ public:
   virtual void initialize();
 
   //! reset to pre-initialized state, this deallocates all data and sets initialized_ to false such that a new call to initialize() is necessary
-  void reset();
+  virtual void reset();
 
   //! set the subset of ranks that will compute the work
   void setRankSubset(Partition::RankSubset rankSubset);

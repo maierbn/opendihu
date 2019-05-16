@@ -50,24 +50,16 @@ rebalance()
   LOG(DEBUG) << "rankSubsetGlobal: " << *rankSubsetGlobal;
   LOG(DEBUG) << "rankSubsetFiber: " << *rankSubsetFiber;
 
-  //##########################################################################################################
-  //###############################  CHECK FOR NEEDED REBALANCING  ###########################################
-  //##########################################################################################################
-
   // Check if rebalancing is required. Depends on simulation progress
-  if (rebalanceCounter_ >= timeSteppingHeun.currentHeunTime())
+  if (this->rebalanceCounter_ >= timeSteppingHeun.currentHeunTime())
   {
     // No rebalancing needed, return
     return;
   } else {
     // Defined frequency passed, rebalance. Raise counter for further rebalancing
-    rebalanceCounter_ = rebalanceCounter_ + rebalanceFrequency_;
+    this->rebalanceCounter_ = this->rebalanceCounter_ + rebalanceFrequency_;
     LOG(DEBUG) << "Starting rebalancing process";
   }
-
-  //##########################################################################################################
-  //#######################################  END OF SECTION ##################################################
-  //##########################################################################################################
 
   // Number of elements and elements in current progress and whole fibre
   int nNodesLocalWithoutGhosts = finiteElementMethod.functionSpace()->meshPartition()->nNodesLocalWithoutGhosts();
@@ -126,6 +118,16 @@ rebalance()
   //#################################  DETERMINE PEAK POSITIONS  #############################################
   //##########################################################################################################
 
+  for (int i = 0; i < diffusionValues.size(); i++){
+    LOG(DEBUG) << "Eintrag vor dem Rebalancing " << i << " in Diffusionsvektor ist " << diffusionValues[i];
+  }
+  for (int i = 0; i < geometryFieldValues.size(); i++){
+    LOG(DEBUG) << "Eintrag vor dem Rebalancing " << i << " in Nodesvektor ist " << geometryFieldValues[i];
+  }
+  for (int i = 0; i < cellmlValues[0].size(); i++){
+    LOG(DEBUG) << "Eintrag vor dem Rebalancing" << i << " in cellmelvecktor[0] ist " << cellmlValues[0][i];
+  }
+
   // Counter to determine amount of peaks in current process
   int peaks_per_process = 0;
 
@@ -139,7 +141,7 @@ rebalance()
   for(std::vector<double>::iterator it = cellmlValues[0].begin(); it != cellmlValues[0].end(); ++it) {
     if (static_cast<double>(*it) >= 31.0){
         // Check if this peak has already been detected
-        if (abs(distance(cellmlValues[0].begin(), it) - peak_previous) > 5) {
+        if (abs(distance(cellmlValues[0].begin(), it) - peak_previous) > 10) {
             peaks_per_process++;
             peak_positions_process.push_back (distance(cellmlValues[0].begin(), it));
             LOG(DEBUG) << "Peak found at position " << distance(cellmlValues[0].begin(), it);
@@ -236,9 +238,13 @@ rebalance()
   //Sort vector with peak positions of fibre
   std::sort(peak_positions_fibre.begin(), peak_positions_fibre.end());
 
+  // Remove -1 entries
+  peak_positions_fibre.erase(std::remove(peak_positions_fibre.begin(), peak_positions_fibre.end(), -1), peak_positions_fibre.end());
+
   // Log info. Only gathering processes log info
   if (rankSubsetFiber->ownRankNo() == 0){
     LOG(DEBUG) << "Position of peaks on this fiber are " << peak_positions_fibre;
+    LOG(INFO) << "Position of peaks on this fiber are " << peak_positions_fibre;
   }
 
   //Adjust vector length to maximum number of peaks globally. Missing entries are filled with -1
@@ -275,16 +281,26 @@ rebalance()
 
     // Add regularly distributed split points to the vector
     for(int rank = 1;  rank < rankSubsetFiber->size(); rank++) {
-        split_positions_fibre.push_back(floor(nNodesGlobal/rankSubsetFiber->size())*rank);
+        split_positions_fibre.push_back(floor((nNodesGlobal - 1)/rankSubsetFiber->size()) * rank);
     }
+    LOG(INFO) << "Regular distributed split points are " << split_positions_fibre;
 
     // Add left and right border of peak to vector. A distance of 5 nodes to teh left and to the rigth are chosen
     for(std::vector<int>::iterator it = peak_positions_fibre.begin(); it != peak_positions_fibre.end(); ++it) {
-        if (static_cast<int>(*it) - 10 >= 0){
-            split_positions_fibre.push_back(static_cast<int>(*it) - 5);
-        }
-        if (static_cast<int>(*it) + 10 <= nNodesGlobal){
-            split_positions_fibre.push_back(static_cast<int>(*it) + 5);
+        if (static_cast<int>(*it) < (nNodesGlobal/2)){
+            if (static_cast<int>(*it) - 50 > 0){
+                split_positions_fibre.push_back(static_cast<int>(*it) - 50);
+            }
+            if (static_cast<int>(*it) + 10 < nNodesGlobal){
+                split_positions_fibre.push_back(static_cast<int>(*it) + 10);
+            }
+        } else {
+            if (static_cast<int>(*it) - 10 > 0){
+                split_positions_fibre.push_back(static_cast<int>(*it) - 10);
+            }
+            if (static_cast<int>(*it) + 50 < nNodesGlobal){
+                split_positions_fibre.push_back(static_cast<int>(*it) + 50);
+            }
         }
     }
 
@@ -305,7 +321,7 @@ rebalance()
     LOG(DEBUG) << "Starting optimization process";
   }
 
-  // Final splitting vector
+  // Final splitting positions
   std::vector<int> split_positions_fibre_final;
 
   // Resize it for later broadacasting. Size must equal amount of processes - 1
@@ -336,6 +352,8 @@ rebalance()
       // Clear old vector
       split_positions_fibre_modified.clear();
 
+      max_interval_permutation = 0;
+
       // Transform 1's of vector in node numbers
       for(int y = 0; y < split_positions_fibre_to_test.size(); y++){
         if (split_positions_fibre_to_test[y] == 1){
@@ -346,43 +364,44 @@ rebalance()
       // Sort vector
       std::sort(split_positions_fibre_modified.begin(), split_positions_fibre_modified.end());
 
+      // Iterate over all possible split points in current permutation
       for(int i = 0; i < split_positions_fibre_modified.size(); i++){
+
         // When first point is picked
         if (i == 0){
+            // Iterate over all peak positions
             for (int j = 0; j < peak_positions_fibre.size(); j++){
+              // If there is a peak on this interval
               if ((0 < peak_positions_fibre[j]) && (peak_positions_fibre[j] < split_positions_fibre_modified[i])){
-                  max_interval_permutation = split_positions_fibre_modified[i];
+                  if (split_positions_fibre_modified[i] > max_interval_permutation){
+                    max_interval_permutation = split_positions_fibre_modified[i];
+                  }
               }
             }
-            // Check if only one point is tested
-            if (i == split_positions_fibre_modified.size() - 1){
-                for (int k = 0; k < peak_positions_fibre.size(); k++){
-                    if ((split_positions_fibre_modified[i] < peak_positions_fibre[k]) && (peak_positions_fibre[k] < nNodesGlobal)){
-                        max_interval_permutation = std::max(max_interval_permutation, nNodesGlobal - split_positions_fibre_modified[i]);
-                    }
-                }
-            }
         }
-        // When last point is picked
-        else if (i == split_positions_fibre_modified.size() - 1){
-          for (int j = 0; j < peak_positions_fibre.size(); j++){
-            if ((split_positions_fibre_modified[i] < peak_positions_fibre[j]) && (peak_positions_fibre[j] < nNodesGlobal)){
-                max_interval_permutation = std::max(max_interval_permutation, nNodesGlobal - split_positions_fibre_modified[i]);
+        // When last point is picked. Check in both directions needed
+        else if (i == (split_positions_fibre_modified.size() - 1)){
+          for (int l = 0; l < peak_positions_fibre.size(); l++){
+            if ((split_positions_fibre_modified[i] < peak_positions_fibre[l]) && (peak_positions_fibre[l] < nNodesGlobal - 1)){
+                max_interval_permutation = std::max(max_interval_permutation, nNodesGlobal - 1 - split_positions_fibre_modified[i]);
+            }
+            if ((split_positions_fibre_modified[i-1] < peak_positions_fibre[l]) && (peak_positions_fibre[l] < split_positions_fibre_modified[i])){
+                max_interval_permutation = std::max(max_interval_permutation, split_positions_fibre_modified[i] - split_positions_fibre_modified[i-1]);
             }
           }
         }
         // When point in between is picked
         else {
-          for (int j = 0; j < peak_positions_fibre.size(); j++){
-            if ((split_positions_fibre_modified[i] < peak_positions_fibre[j]) && (peak_positions_fibre[j] < split_positions_fibre_modified[i + 1])){
-                max_interval_permutation = std::max(max_interval_permutation, split_positions_fibre_modified[i +1] - split_positions_fibre_modified[i]);
+          for (int k = 0; k < peak_positions_fibre.size(); k++){
+            if ((split_positions_fibre_modified[i-1] < peak_positions_fibre[k]) && (peak_positions_fibre[k] < split_positions_fibre_modified[i])){
+                max_interval_permutation = std::max(max_interval_permutation, split_positions_fibre_modified[i] - split_positions_fibre_modified[i-1]);
             }
           }
         }
       }
 
       // When better solution has been found
-      if (max_interval_permutation < min_interval_fibre){
+      if (max_interval_permutation <= min_interval_fibre){
 
         // Update best solution
         min_interval_fibre = max_interval_permutation;
@@ -402,10 +421,17 @@ rebalance()
 
     // Log info
     LOG(DEBUG) << "Best split point set calculated to " << split_positions_fibre_final;
+    //LOG(INFO) << "Split points are " << split_positions_fibre_final;
+
+    //split_positions_fibre_final[0] = 50;
+    //split_positions_fibre_final[1] = 594;
+    //split_positions_fibre_final[2] = 893;
   }
 
+  LOG(INFO) << "Split points are " << split_positions_fibre_final;
+
   // Broadcast result to all processes of the fiber
-  MPI_Bcast(&split_positions_fibre_final[0], split_positions_fibre_final.size(), MPI_INT, 0, rankSubsetFiber->mpiCommunicator());
+  MPI_Bcast(split_positions_fibre_final.data(), rankSubsetFiber->size() - 1, MPI_INT, 0, rankSubsetFiber->mpiCommunicator());
 
   // Log successful broadcast
   if (rankSubsetFiber->ownRankNo() != 0){
@@ -445,7 +471,7 @@ rebalance()
   // If last rank is taken
   else if (rankSubsetFiber->ownRankNo() == (rankSubsetFiber->size() - 1)){
       startNodeOfProcessNew = split_positions_fibre_final[split_positions_fibre_final.size() - 1];
-      endNodeOfProcessNew = nNodesGlobal - 1;
+      endNodeOfProcessNew = endNodeOfProcessOld;
   }
   // If any other rank is taken
   else {
@@ -454,7 +480,7 @@ rebalance()
   }
 
   // Determine new element number
-  if (rankSubsetFiber->ownRankNo() == rankSubsetFiber->size() - 1){
+  if (rankSubsetFiber->ownRankNo() == (rankSubsetFiber->size() - 1)){
       nElementsLocalNew_TEST = endNodeOfProcessNew - startNodeOfProcessNew;
   } else {
       nElementsLocalNew_TEST = endNodeOfProcessNew - startNodeOfProcessNew + 1;
@@ -464,302 +490,304 @@ rebalance()
   LOG(DEBUG) << "Changed element number from " << nElementsLocal << " to " << nElementsLocalNew_TEST;
 
   // Log info
-  LOG(DEBUG) << "Old nodes from " << startNodeOfProcessOld << " to " << endNodeOfProcessOld << " changed to " << startNodeOfProcessNew << " to " << endNodeOfProcessNew;
-
-  //--------------------------------------  VALUES OF NODES  -------------------------------------------------
+  LOG(DEBUG) << "Old nodes index range from " << startNodeOfProcessOld << " : " << endNodeOfProcessOld << " changed to " << startNodeOfProcessNew << " : " << endNodeOfProcessNew;
 
   // Vector of diffusion values to be send and received
-  std::vector<double> diffusionValueToSend;
-  std::vector<double> diffusionValueToReceive;
   std::vector<double> diffusionValuesNew_TEST = diffusionValues;
 
   // Vector of nodes to be send
-  std::vector<Vec3> nodeValueToSend;
-  std::vector<Vec3> nodeValueToReceive;
   std::vector<Vec3> geometryFieldValuesNew_TEST = geometryFieldValues;
-  Vec3 temporalNodeValues;
 
   // Vector of cellml values to be send
-  std::array<std::vector<double>,nCellMLComponents> cellmlValueToSend;
-  std::array<std::vector<double>,nCellMLComponents> cellmlValueToReceive;
   std::array<std::vector<double>,nCellMLComponents> cellmlValuesNew_TEST = cellmlValues;
 
-  // Counter for each process to determine send/received elements at the left/right end
-  int sendReceiveCountLeft = 0;
-  int sendReceiveCountRight = 0;
+  //---------------------------------------------------------------------------------------------------------------
 
   // Sending, when starting node of process moved to the right
   if (startNodeOfProcessNew > startNodeOfProcessOld){
+
+    // Counter for elements to send
+    int sendCounterLeft = startNodeOfProcessNew - startNodeOfProcessOld;
+
+    // Create data structures
+    std::vector<double> diffusionValueToSendLeft;
+    std::vector<Vec3> nodeValueToSendLeft;
+    std::array<std::vector<double>,nCellMLComponents> cellmlValueToSendLeft;
 
     // Counter for the while loop
     int loopCounter = 0;
 
     // Fill sending vector
-    while (loopCounter < (startNodeOfProcessNew - startNodeOfProcessOld)){
+    while (loopCounter < sendCounterLeft){
 
         // Diffusion values
-        diffusionValueToSend.push_back(diffusionValues[loopCounter]);
+        diffusionValueToSendLeft.push_back(diffusionValues[loopCounter]);
 
         // Geometry field values
-        nodeValueToSend.push_back(geometryFieldValues[loopCounter]);
+        nodeValueToSendLeft.push_back(geometryFieldValues[loopCounter]);
 
         // cellml values
         for (int i = 0; i < nCellMLComponents; i++){
-            cellmlValueToSend[i].push_back(cellmlValues[i][loopCounter]);
+            cellmlValueToSendLeft[i].push_back(cellmlValues[i][loopCounter]);
         }
-
-        // Update counter for to left side of the process
-        sendReceiveCountLeft++;
 
         // Update counter
         loopCounter++;
     }
 
-    // Log info
-    LOG(DEBUG) << "Diffusion values to be send " << diffusionValueToSend;
-    LOG(DEBUG) << "Nodes to be send " << nodeValueToSend;
-    LOG(DEBUG) << "Cellml values to be send " << cellmlValueToSend;
+    // Remove diffusion values to be send
+    diffusionValuesNew_TEST.erase(diffusionValuesNew_TEST.begin(), diffusionValuesNew_TEST.begin() + sendCounterLeft);
 
-    // Log info
-    LOG(DEBUG) << "Creating new vectors ";
+    // Remove geometry field values
+    geometryFieldValuesNew_TEST.erase(geometryFieldValuesNew_TEST.begin(), geometryFieldValuesNew_TEST.begin() + sendCounterLeft);
 
-    // Create new vectors without elements to be send
-    for (int i = 0; i < sendReceiveCountLeft; i++){
-
-        // Remove diffusion values to be send
-        diffusionValuesNew_TEST.erase(diffusionValuesNew_TEST.begin());
-
-        // Remove geometry field values
-        geometryFieldValuesNew_TEST.erase(geometryFieldValuesNew_TEST.begin());
-
-        // Remove cellml values
-        for (int i = 0; i < nCellMLComponents; i++){
-            cellmlValuesNew_TEST[i].erase(cellmlValuesNew_TEST[i].begin());
-        }
+    // Remove cellml values
+    for (int i = 0; i < nCellMLComponents; i++){
+        cellmlValuesNew_TEST[i].erase(cellmlValuesNew_TEST[i].begin(), cellmlValuesNew_TEST[i].begin() + sendCounterLeft);
     }
 
     // Log info
-    LOG(DEBUG) << "New vectors for next splitting created";
+    LOG(DEBUG) << "I CREATED THE FOLLOWING VECTORS BECAUSE I ERASED VALUES";
     LOG(DEBUG) << "New diffusion vector " << diffusionValuesNew_TEST;
     LOG(DEBUG) << "New node vector" << geometryFieldValuesNew_TEST;
     LOG(DEBUG) << "New cellml vector" << cellmlValuesNew_TEST;
 
-    // Send size of vector for diffusion values to previous process
-    MPI_Send(&sendReceiveCountLeft, 1, MPI_INT, rankSubsetFiber->ownRankNo() - 1, 0, rankSubsetFiber->mpiCommunicator());
-
-    // Log info
-    LOG(DEBUG) << "Length of vectors send to process " << rankSubsetFiber->ownRankNo() - 1;
-
     // Send diffusion values to previous process
-    MPI_Send(diffusionValueToSend.data(), sendReceiveCountLeft, MPI_DOUBLE, rankSubsetFiber->ownRankNo() - 1, 0, rankSubsetFiber->mpiCommunicator());
+    MPI_Send(diffusionValueToSendLeft.data(), sendCounterLeft, MPI_DOUBLE, rankSubsetFiber->ownRankNo() - 1, 0, rankSubsetFiber->mpiCommunicator());
 
     // Send nodes to previous process
-    for(int i = 0; i < sendReceiveCountLeft; i++){
-        MPI_Send(nodeValueToSend[i].data(), 3, MPI_DOUBLE, rankSubsetFiber->ownRankNo() - 1, 0, rankSubsetFiber->mpiCommunicator());
+    for(int i = 0; i < sendCounterLeft; i++){
+        MPI_Send(nodeValueToSendLeft[i].data(), 3, MPI_DOUBLE, rankSubsetFiber->ownRankNo() - 1, 0, rankSubsetFiber->mpiCommunicator());
     }
 
     // Send cellml values to previous process
     for(int i = 0; i < nCellMLComponents; i++){
-        MPI_Send(cellmlValueToSend[i].data(), sendReceiveCountLeft, MPI_DOUBLE, rankSubsetFiber->ownRankNo() - 1, 0, rankSubsetFiber->mpiCommunicator());
+        MPI_Send(cellmlValueToSendLeft[i].data(), sendCounterLeft, MPI_DOUBLE, rankSubsetFiber->ownRankNo() - 1, 0, rankSubsetFiber->mpiCommunicator());
     }
+
+    // Log info
+    LOG(DEBUG) << "I HAVE SEND THE FOLLOWING VECTORS TO " << rankSubsetFiber->ownRankNo() - 1;
+    LOG(DEBUG) << "Diffusion values to be send " << diffusionValueToSendLeft;
+    LOG(DEBUG) << "Nodes to be send " << nodeValueToSendLeft;
+    LOG(DEBUG) << "Cellml values to be send " << cellmlValueToSendLeft;
   }
 
   // Receive, when end node of process moved to the right
   if (endNodeOfProcessNew > endNodeOfProcessOld){
 
-    // Receive size of vector for diffusion values from successive process
-    MPI_Recv(&sendReceiveCountRight, 1, MPI_INT, rankSubsetFiber->ownRankNo() + 1, 0, rankSubsetFiber->mpiCommunicator(), MPI_STATUS_IGNORE);
-    LOG(DEBUG) << "Length vectors received from process " << rankSubsetFiber->ownRankNo() + 1;
+    // Counter for received data
+    int receiveCounterRight = endNodeOfProcessNew - endNodeOfProcessOld;
+
+    // Create data structures
+    std::vector<double> diffusionValueToReceiveRight;
+    std::vector<Vec3> nodeValueToReceiveRight;
+    std::array<std::vector<double>,nCellMLComponents> cellmlValueToReceiveRight;
+    Vec3 temporalNodeValuesRight;
 
     // Resize vector
-    diffusionValueToReceive.resize(sendReceiveCountRight);
+    diffusionValueToReceiveRight.resize(receiveCounterRight);
     for(int i = 0; i < nCellMLComponents; i++){
-        cellmlValueToReceive[i].resize(sendReceiveCountRight);
+        cellmlValueToReceiveRight[i].resize(receiveCounterRight);
     }
 
     // Receive diffusion values from successive process
-    MPI_Recv(diffusionValueToReceive.data(), sendReceiveCountRight, MPI_DOUBLE, rankSubsetFiber->ownRankNo() + 1, 0, rankSubsetFiber->mpiCommunicator(), MPI_STATUS_IGNORE);
+    MPI_Recv(diffusionValueToReceiveRight.data(), receiveCounterRight, MPI_DOUBLE, rankSubsetFiber->ownRankNo() + 1, 0, rankSubsetFiber->mpiCommunicator(), MPI_STATUS_IGNORE);
 
-    // Log info
-    LOG(DEBUG) << "Received diffusion vector " << diffusionValueToReceive;
-
-    for(int i = 0; i < sendReceiveCountRight; i++){
-        MPI_Recv(temporalNodeValues.data(), 3, MPI_DOUBLE, rankSubsetFiber->ownRankNo() + 1, 0, rankSubsetFiber->mpiCommunicator(), MPI_STATUS_IGNORE);
-        nodeValueToReceive.push_back(temporalNodeValues);
+    for(int i = 0; i < receiveCounterRight; i++){
+        MPI_Recv(temporalNodeValuesRight.data(), 3, MPI_DOUBLE, rankSubsetFiber->ownRankNo() + 1, 0, rankSubsetFiber->mpiCommunicator(), MPI_STATUS_IGNORE);
+        nodeValueToReceiveRight.push_back(temporalNodeValuesRight);
     }
-
-    // Log info
-    LOG(DEBUG) << "Received node vector " << nodeValueToReceive;
 
     for(int i = 0; i < nCellMLComponents; i++){
-        MPI_Recv(&cellmlValueToReceive[i][0], sendReceiveCountRight, MPI_DOUBLE, rankSubsetFiber->ownRankNo() + 1, 0, rankSubsetFiber->mpiCommunicator(), MPI_STATUS_IGNORE);
+        MPI_Recv(cellmlValueToReceiveRight[i].data(), receiveCounterRight, MPI_DOUBLE, rankSubsetFiber->ownRankNo() + 1, 0, rankSubsetFiber->mpiCommunicator(), MPI_STATUS_IGNORE);
     }
 
     // Log info
-    LOG(DEBUG) << "Received cellml vector " << cellmlValueToReceive;
+    LOG(DEBUG) << "I RECEIVED TO FOLLOWING VECTORS FROM " << rankSubsetFiber->ownRankNo() + 1;
+    LOG(DEBUG) << "Received diffusion vector " << diffusionValueToReceiveRight;
+    LOG(DEBUG) << "Received node vector " << nodeValueToReceiveRight;
+    LOG(DEBUG) << "Received cellml vector " << cellmlValueToReceiveRight;
 
     // Build new vectors based on received data
-    for (int x = 0; x < sendReceiveCountRight; x++){
+    for (int x = 0; x < receiveCounterRight; x++){
 
         // Diffusion vector
-        diffusionValuesNew_TEST.push_back(diffusionValueToReceive[x]);
+        diffusionValuesNew_TEST.push_back(diffusionValueToReceiveRight[x]);
 
         // Node vector
-        geometryFieldValuesNew_TEST.push_back(nodeValueToReceive[x]);
+        geometryFieldValuesNew_TEST.push_back(nodeValueToReceiveRight[x]);
 
         // Cellml vector
         for (int i = 0; i < nCellMLComponents; i++){
-            cellmlValuesNew_TEST[i].push_back(cellmlValueToReceive[i][x]);
+            cellmlValuesNew_TEST[i].push_back(cellmlValueToReceiveRight[i][x]);
         }
     }
+
+    // Log info
+    LOG(DEBUG) << "I CREATED THE FOLLOWING NEW VECTOR BECAUSE I RECEIVED DATA";
+    LOG(DEBUG) << "New diffusion vector " << diffusionValuesNew_TEST;
+    LOG(DEBUG) << "New geometry field vector " << geometryFieldValuesNew_TEST;
+    LOG(DEBUG) << "New Cellml values vector " << cellmlValuesNew_TEST;
   }
 
-
-  //---------------------------------------------------------------------------------------------------------------------
-
+  //------------------------------------------------------------------------------------------------------------------
+  // Barrier to acertain successful first communication
+  //MPI_Barrier(rankSubsetGlobal->mpiCommunicator());
+  //LOG(DEBUG) << "Barrier reached";
 
   // Sending, when ending node of process moved to the left
   if (endNodeOfProcessNew < endNodeOfProcessOld){
+
+    // Counter for elements to send
+    int sendCounterRight = endNodeOfProcessOld - endNodeOfProcessNew;
+
+    // Create data structures
+    std::vector<double> diffusionValueToSendRight;
+    std::vector<Vec3> nodeValueToSendRight;
+    std::array<std::vector<double>,nCellMLComponents> cellmlValueToSendRight;
 
     // Counter for the while loop
     int loopCounter = 0;
 
     // Fill sending vector
-    while (loopCounter < (endNodeOfProcessOld - endNodeOfProcessNew)){
+    while (loopCounter < sendCounterRight){
 
         // Diffusion values
-        diffusionValueToSend.push_back(diffusionValues[endNodeOfProcessOld - loopCounter]);
+        diffusionValueToSendRight.push_back(diffusionValues[diffusionValues.size() - 1 - loopCounter]);
 
-        // Geometry fild values
-        nodeValueToSend.push_back(geometryFieldValues[loopCounter]);
+        // Geometry field values
+        nodeValueToSendRight.push_back(geometryFieldValues[geometryFieldValues.size() - 1 - loopCounter]);
 
         // cellml values
         for (int i = 0; i < nCellMLComponents; i++){
-            cellmlValueToSend[i].push_back(cellmlValues[i][loopCounter]);
+            cellmlValueToSendRight[i].push_back(cellmlValues[i][cellmlValues[i].size() - 1 -loopCounter]);
         }
 
-        // Update counter for the right side of the process
-        sendReceiveCountRight++;
-
-        // Update variabel
+        // Update variable
         loopCounter++;
     }
 
-    // Log info
-    LOG(DEBUG) << "Diffusion values to be send " << diffusionValueToSend;
-    LOG(DEBUG) << "Nodes to be send " << nodeValueToSend;
-    LOG(DEBUG) << "Cellml values to be send " << cellmlValueToSend;
-
     // Remove entries from old vector
-    for (int x = 0; x < sendReceiveCountRight; x++){
+    for (int x = 0; x < sendCounterRight; x++){
+
         // Remove diffusion values
-        diffusionValuesNew_TEST.erase(diffusionValuesNew_TEST.end() - 1);
+        //diffusionValuesNew_TEST.erase(diffusionValuesNew_TEST.end() - 1);
+        diffusionValuesNew_TEST.pop_back();
 
         // Remove geometry field values
-        geometryFieldValuesNew_TEST.erase(geometryFieldValuesNew_TEST.end() - 1);
+        //geometryFieldValuesNew_TEST.erase(geometryFieldValuesNew_TEST.end() - 1);
+        geometryFieldValuesNew_TEST.pop_back();
 
         // Remove cellml values
         for (int i = 0; i < nCellMLComponents; i++){
-            cellmlValuesNew_TEST[i].erase(cellmlValuesNew_TEST[i].end() - 1);
+            //cellmlValuesNew_TEST[i].erase(cellmlValuesNew_TEST[i].end() - 1);
+            cellmlValuesNew_TEST[i].pop_back();
         }
     }
 
     // Log info
-    LOG(DEBUG) << "New vectors created";
+    LOG(DEBUG) << "I CREATED THE FOLLOWING VECTORS BECAUSE I ERASED VALUES";
     LOG(DEBUG) << "New diffusion vector " << diffusionValuesNew_TEST;
     LOG(DEBUG) << "New node vector" << geometryFieldValuesNew_TEST;
     LOG(DEBUG) << "New cellml vector" << cellmlValuesNew_TEST;
 
-    // Send size of vector for diffusion values to previous process
-    MPI_Send(&sendReceiveCountRight, 1, MPI_INT, rankSubsetFiber->ownRankNo() + 1, 0, rankSubsetFiber->mpiCommunicator());
-    LOG(DEBUG) << "Length of vectors send to process " << rankSubsetFiber->ownRankNo() + 1;
-
-     // Send diffusion values to previous process
-    MPI_Send(diffusionValueToSend.data(), sendReceiveCountRight, MPI_DOUBLE, rankSubsetFiber->ownRankNo() + 1, 0, rankSubsetFiber->mpiCommunicator());
-    LOG(DEBUG) << "Vector of diffusion values send to process " << rankSubsetFiber->ownRankNo() + 1;
+    // Send diffusion values to previous process
+    MPI_Send(diffusionValueToSendRight.data(), sendCounterRight, MPI_DOUBLE, rankSubsetFiber->ownRankNo() + 1, 0, rankSubsetFiber->mpiCommunicator());
 
     // Send nodes to previous process
-    for(int i = 0; i < sendReceiveCountRight; i++){
-        MPI_Send(nodeValueToSend[i].data(), 3, MPI_DOUBLE, rankSubsetFiber->ownRankNo() + 1, 0, rankSubsetFiber->mpiCommunicator());
+    for(int i = 0; i < sendCounterRight; i++){
+        MPI_Send(nodeValueToSendRight[i].data(), 3, MPI_DOUBLE, rankSubsetFiber->ownRankNo() + 1, 0, rankSubsetFiber->mpiCommunicator());
     }
-
-    // Log info
-    LOG(DEBUG) << "Vector of nodes send to process " << rankSubsetFiber->ownRankNo() + 1;
 
     // Send cellml values to previous process
     for(int i = 0; i < nCellMLComponents; i++){
-        MPI_Send(cellmlValueToSend[i].data(), sendReceiveCountRight, MPI_DOUBLE, rankSubsetFiber->ownRankNo() + 1, 0, rankSubsetFiber->mpiCommunicator());
+        MPI_Send(cellmlValueToSendRight[i].data(), sendCounterRight, MPI_DOUBLE, rankSubsetFiber->ownRankNo() + 1, 0, rankSubsetFiber->mpiCommunicator());
     }
 
     // Log info
-    LOG(DEBUG) << "Vector of cellml values send to process " << rankSubsetFiber->ownRankNo() + 1;
+    LOG(DEBUG) << "I HAVE SEND THE FOLLOWING VECTORS TO " << rankSubsetFiber->ownRankNo() + 1;
+    LOG(DEBUG) << "Diffusion values to be send " << diffusionValueToSendRight;
+    LOG(DEBUG) << "Nodes to be send " << nodeValueToSendRight;
+    LOG(DEBUG) << "Cellml values to be send " << cellmlValueToSendRight;
+
   }
 
-  // Receive, when start node of process moved to the right
+  // Receive, when start node of process moved to the left
   if (startNodeOfProcessNew < startNodeOfProcessOld){
 
-    // Receive size of vector for diffusion values from successive process
-    MPI_Recv(&sendReceiveCountLeft, 1, MPI_INT, rankSubsetFiber->ownRankNo() - 1, 0, rankSubsetFiber->mpiCommunicator(), MPI_STATUS_IGNORE);
-    LOG(DEBUG) << "Length of vectors received from process " << rankSubsetFiber->ownRankNo() - 1;
+    // Counter for received data
+    int receiveCounterLeft = startNodeOfProcessOld - startNodeOfProcessNew;
+
+    // Create data structures
+    std::vector<double> diffusionValueToReceiveLeft;
+    std::vector<Vec3> nodeValueToReceiveLeft;
+    std::array<std::vector<double>,nCellMLComponents> cellmlValueToReceiveLeft;
+    Vec3 temporalNodeValuesLeft;
 
     // Resize vectors
-    diffusionValueToReceive.resize(sendReceiveCountLeft);
+    diffusionValueToReceiveLeft.resize(receiveCounterLeft);
     for(int i = 0; i < nCellMLComponents; i++){
-        cellmlValueToReceive[i].resize(sendReceiveCountLeft);
+        cellmlValueToReceiveLeft[i].resize(receiveCounterLeft);
     }
 
     // Receive diffusion values from successive process
-    MPI_Recv(&diffusionValueToReceive[0], sendReceiveCountLeft, MPI_DOUBLE, rankSubsetFiber->ownRankNo() - 1, 0, rankSubsetFiber->mpiCommunicator(), MPI_STATUS_IGNORE);
-
-    // Log info
-    LOG(DEBUG) << "Received send diffusion vector " << diffusionValueToReceive;
+    MPI_Recv(diffusionValueToReceiveLeft.data(), receiveCounterLeft, MPI_DOUBLE, rankSubsetFiber->ownRankNo() - 1, 0, rankSubsetFiber->mpiCommunicator(), MPI_STATUS_IGNORE);
 
     // Receive nodes from successive process
-    for(int i = 0; i < sendReceiveCountLeft; i++){
-        MPI_Recv(temporalNodeValues.data(), 3, MPI_DOUBLE, rankSubsetFiber->ownRankNo() - 1, 0, rankSubsetFiber->mpiCommunicator(), MPI_STATUS_IGNORE);
-        nodeValueToReceive.push_back(temporalNodeValues);
+    for(int i = 0; i < receiveCounterLeft; i++){
+        MPI_Recv(temporalNodeValuesLeft.data(), 3, MPI_DOUBLE, rankSubsetFiber->ownRankNo() - 1, 0, rankSubsetFiber->mpiCommunicator(), MPI_STATUS_IGNORE);
+        nodeValueToReceiveLeft.push_back(temporalNodeValuesLeft);
     }
-
-    // Log info
-    LOG(DEBUG) << "Received send node vector " << nodeValueToReceive;
 
     // Receive cellml values from successive process
     for(int i = 0; i < nCellMLComponents; i++){
-        MPI_Recv(&cellmlValueToReceive[i][0], sendReceiveCountLeft, MPI_DOUBLE, rankSubsetFiber->ownRankNo() - 1, 0, rankSubsetFiber->mpiCommunicator(), MPI_STATUS_IGNORE);
+        MPI_Recv(cellmlValueToReceiveLeft[i].data(), receiveCounterLeft, MPI_DOUBLE, rankSubsetFiber->ownRankNo() - 1, 0, rankSubsetFiber->mpiCommunicator(), MPI_STATUS_IGNORE);
     }
 
     // Log info
-    LOG(DEBUG) << "Received cellml vector " << cellmlValueToReceive;
+    LOG(DEBUG) << "I RECEIVED TO FOLLOWING VECTORS FROM " << rankSubsetFiber->ownRankNo() - 1;
+    LOG(DEBUG) << "Received diffusion vector " << diffusionValueToReceiveLeft;
+    LOG(DEBUG) << "Received node vector " << nodeValueToReceiveLeft;
+    LOG(DEBUG) << "Received cellml vector " << cellmlValueToReceiveLeft;
 
     // Build new vectors based on received data
-    for (int x = 0; x < sendReceiveCountLeft; x++){
-
-        // Define iterators to insert at first psoition
-        auto iteratorDiffusion = diffusionValuesNew_TEST.begin();
-        auto iteratorNodes = geometryFieldValuesNew_TEST.begin();
+    for (int x = 0; x < receiveCounterLeft; x++){
 
         // Diffusion vector
-        iteratorDiffusion = diffusionValuesNew_TEST.insert(iteratorDiffusion, diffusionValueToReceive[diffusionValueToReceive.size() -1 - x]);
+        diffusionValuesNew_TEST.insert(diffusionValuesNew_TEST.begin(), diffusionValueToReceiveLeft[x]);
 
         // Node vector
-        iteratorNodes = geometryFieldValuesNew_TEST.insert(iteratorNodes, nodeValueToReceive[nodeValueToReceive.size() -1 - x]);
+        geometryFieldValuesNew_TEST.insert(geometryFieldValuesNew_TEST.begin(), nodeValueToReceiveLeft[x]);
 
         // Cellml vector
         for (int i = 0; i < nCellMLComponents; i++){
-            auto iteratorCellml = cellmlValuesNew_TEST[i].begin();
-            iteratorCellml = cellmlValuesNew_TEST[i].insert(iteratorCellml, cellmlValueToReceive[i][cellmlValueToReceive[i].size() -1 - x]);
+            cellmlValuesNew_TEST[i].insert(cellmlValuesNew_TEST[i].begin(), cellmlValueToReceiveLeft[i][x]);
         }
     }
+
+    // Log info
+    LOG(DEBUG) << "I CREATED THE FOLLOWING NEW VECTOR BECAUSE I RECEIVED DATA";
+    LOG(DEBUG) << "New diffusion vector " << diffusionValuesNew_TEST;
+    LOG(DEBUG) << "New geometry field vector " << geometryFieldValuesNew_TEST;
+    LOG(DEBUG) << "New Cellml values vector " << cellmlValuesNew_TEST;
+
   }
 
-  // Log new infos
-  LOG(DEBUG) << " New number of nodes" << endNodeOfProcessNew - startNodeOfProcessNew + 1;
-  LOG(DEBUG) << " New element number " << nElementsLocalNew_TEST;
-  LOG(DEBUG) << " New diffusion values vector " << diffusionValuesNew_TEST;
-  LOG(DEBUG) << " New geometry field values vector " << geometryFieldValuesNew_TEST;
-  LOG(DEBUG) << " New cellml value vector " << cellmlValuesNew_TEST;
-
-  LOG(DEBUG) << "YYY" << endNodeOfProcessNew - startNodeOfProcessNew + 1 << ";" << nElementsLocalNew_TEST;
+  //Log info
+  LOG(DEBUG) << "OVERALL RESULT";
+  //LOG(DEBUG) << "New diffusion vector " << diffusionValuesNew_TEST;
+  for (int i = 0; i < diffusionValuesNew_TEST.size(); i++){
+    LOG(DEBUG) << "Eintrag " << i << " in Diffusionsvektor ist " << diffusionValuesNew_TEST[i];
+  }
+  for (int i = 0; i < geometryFieldValuesNew_TEST.size(); i++){
+    LOG(DEBUG) << "Eintrag " << i << " in Nodesvektor ist " << geometryFieldValuesNew_TEST[i];
+  }
+  for (int i = 0; i < cellmlValuesNew_TEST[0].size(); i++){
+    LOG(DEBUG) << "Eintrag " << i << " in cellmelvecktor[0] ist " << cellmlValuesNew_TEST[0][i];
+  }
+  //LOG(DEBUG) << "New geometry field vector " << geometryFieldValuesNew_TEST;
+  //LOG(DEBUG) << "New Cellml values vector " << cellmlValuesNew_TEST;
+  LOG(INFO) << "REBALANCING FINISHED";
 
   // Number of elements on own rank after rebalancing
   //int nElementsLocalNew = nElementsLocal;
@@ -807,12 +835,14 @@ rebalance()
 
   // Create function space with updated mesh partition
   std::stringstream meshName;
-  meshName << finiteElementMethod.functionSpace()->meshName() << "_";
+  meshName << finiteElementMethod.functionSpace()->meshName() << "_" << this->rebalanceCounter_;
 
   this->context_.partitionManager()->setRankSubsetForNextCreatedPartitioning(rankSubsetFiber);
 
   std::shared_ptr<FiberFunctionSpaceType> functionSpaceNew = this->context_.meshManager()->template createFunctionSpaceWithGivenMeshPartition<FiberFunctionSpaceType>(
     meshName.str(), meshPartition, nodePositionsWithoutGhosts, nElementsPerDimensionLocal, nRanks);
+
+  LOG(DEBUG) << "create FiniteElementMethod object";
 
   finiteElementMethod = std::move(SpatialDiscretization::FiniteElementMethod<
     typename FiberFunctionSpaceType::Mesh,
@@ -820,7 +850,6 @@ rebalance()
     typename FiniteElementMethodType::Quadrature,
     typename FiniteElementMethodType::Term
   >(timeSteppingDiffusion.data().context(), functionSpaceNew));
-
 
   // save internal value of cellMLAdapter which needs to be preserved
   double lastCallSpecificStatesTime = cellMLAdapter.lastCallSpecificStatesTime();
@@ -848,6 +877,7 @@ rebalance()
   // Set all local data
   timeSteppingDiffusion.data().solution()->setValuesWithoutGhosts(diffusionValuesNew);
 
+  LOG(INFO) << "Reached End of Rebalancing";
 }
 
 } // namespace

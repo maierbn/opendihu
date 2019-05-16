@@ -154,9 +154,6 @@ initializeRhsRoutine()
       nInstancesRanks[ownRankNoCommunicator] = this->nInstances_;
 
       LOG(DEBUG) << "ownRankNoCommunicator: " << ownRankNoCommunicator << ", Communicator has " << nRanksCommunicator << " ranks, nInstancesRanks: " << nInstancesRanks;
-      MPI_Barrier(this->functionSpace_->meshPartition()->mpiCommunicator());
-
-
 
       MPIUtility::handleReturnValue(MPI_Allgather(MPI_IN_PLACE, 0, MPI_DATATYPE_NULL, nInstancesRanks.data(),
                                                   1, MPI_INT, this->functionSpace_->meshPartition()->mpiCommunicator()), "MPI_Allgather");

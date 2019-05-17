@@ -619,4 +619,33 @@ void rotateMatrix<3>(Matrix<3,3> &matrix, Vec3 directionVector)
   //VLOG(1) << "matrix after rotation: " << matrix;
 }
 
+double estimateMaximumEigenvalue(const Tensor2<3> &matrix)
+{
+  Vec3 v({1.0,0.0,0.0});
+
+  double normVPrevious = 0;
+  double normV = 1;
+
+  for (int i = 0; i < 10 || fabs(normVPrevious - normV) < 1e-12; i++)
+  {
+    normVPrevious = normV;
+
+    v = matrix*v;
+
+    // normalize vector
+    normV = norm<3>(v);
+    v /= normV;
+  }
+
+  return normV;
+}
+
+double estimateConditionNumber(const Tensor2<3> &matrix, const Tensor2<3> &inverseMatrix)
+{
+  double maximumEigenvalue = estimateMaximumEigenvalue(matrix);
+  double minimumEigenvalue = 1./estimateMaximumEigenvalue(inverseMatrix);
+
+  return maximumEigenvalue / minimumEigenvalue;
+}
+
 }  // namespace

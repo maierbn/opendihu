@@ -95,6 +95,9 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
       double jacobianDeterminant;
       Tensor2<D> inverseJacobianParameterSpace = MathUtility::computeInverse<D>(jacobianParameterSpace, jacobianDeterminant);
 
+      // estimate condition value of jacobian
+      //double conditionNumber = MathUtility::estimateConditionNumber(jacobianParameterSpace, inverseJacobianParameterSpace);
+      //VLOG(1) << "conditionNumber: " << conditionNumber;
 
       // get gradient at dof
       std::array<double,D> gradPhiWorldSpace = this->functionSpace_->interpolateGradientInElement(solutionValues, inverseJacobianParameterSpace, xi);
@@ -190,6 +193,9 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
   //gradientField->setRepresentationLocal();
 
   //LOG(DEBUG) << "gradientField: " << *gradientField;
+
+  // fix bad values in the gradient field
+
 }
 
 } // namespace

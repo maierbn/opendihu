@@ -461,7 +461,7 @@ refineMesh(std::array<int,D> refinementFactors)
   }
 
   int nNodesLocalWithoutGhostsNew = nNodesNew[0] * nNodesNew[1] * nNodesNew[2];
-  localNodePositions_.resize(nNodesLocalWithoutGhostsNew);
+  localNodePositions_.resize(nNodesLocalWithoutGhostsNew*3);
 
   LOG(DEBUG) << "nElementsLocal: " << nElementsLocalOld << " -> " << nElementsLocalNew;
   LOG(DEBUG) << "nNodesNew: " << nNodesNew;
@@ -474,6 +474,8 @@ refineMesh(std::array<int,D> refinementFactors)
   const std::vector<dof_no_t> &dofNosLocalNaturalOrdering = this->meshPartition_->dofNosLocalNaturalOrdering();
 
   this->meshPartition_->refine(refinementFactors);
+
+  LOG(DEBUG) << "set new node positions";
 
   // loop over new node positions
   for (int zIndexNew = 0; zIndexNew < nNodesNew[2]; zIndexNew++)

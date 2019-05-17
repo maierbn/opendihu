@@ -484,6 +484,7 @@ refineMesh(std::array<int,D> refinementFactors)
     {
       for (int xIndexNew = 0; xIndexNew < nNodesNew[0]; xIndexNew++)
       {
+
         std::array<double,3> alpha({1.0,1.0,1.0});
 
         alpha[0] = double(xIndexNew % refinementFactors[0]) / refinementFactors[0];
@@ -495,49 +496,60 @@ refineMesh(std::array<int,D> refinementFactors)
         int yIndexOld = yIndexNew / refinementFactors[1];
         int zIndexOld = zIndexNew / refinementFactors[2];
 
+        LOG(DEBUG) << xIndex << "," << yIndex << "," << zIndex << " / " << nNodesNew << ", alpha: " << alpha << ", old index: " << xIndexOld << "," << yIndexOld << "," << zIndexOld;
+
         std::array<std::array<std::array<Vec3,2>,2>,2> neighbouringPoints;
 
         // z- y- x-
         int indexOld = zIndexOld*nNodesWithGhostsOld[1]*nNodesWithGhostsOld[0] + yIndexOld*nNodesWithGhostsOld[0] + xIndexOld;
         int dofNoOld = dofNosLocalNaturalOrdering[indexOld];
+        assert(dofNoOld < oldGeometryValues.size());
         neighbouringPoints[0][0][0] = oldGeometryValues[dofNoOld];
 
         // z- y- x+
         indexOld = zIndexOld*nNodesWithGhostsOld[1]*nNodesWithGhostsOld[0] + yIndexOld*nNodesWithGhostsOld[0] + (xIndexOld + 1);
         dofNoOld = dofNosLocalNaturalOrdering[indexOld];
+        assert(dofNoOld < oldGeometryValues.size());
         neighbouringPoints[0][0][1] = oldGeometryValues[dofNoOld];
 
         // z- y+ x-
         indexOld = zIndexOld*nNodesWithGhostsOld[1]*nNodesWithGhostsOld[0] + (yIndexOld+1)*nNodesWithGhostsOld[0] + xIndexOld;
         dofNoOld = dofNosLocalNaturalOrdering[indexOld];
+        assert(dofNoOld < oldGeometryValues.size());
         neighbouringPoints[0][1][0] = oldGeometryValues[dofNoOld];
 
         // z- y+ x+
         indexOld = zIndexOld*nNodesWithGhostsOld[1]*nNodesWithGhostsOld[0] + (yIndexOld+1)*nNodesWithGhostsOld[0] + (xIndexOld + 1);
         dofNoOld = dofNosLocalNaturalOrdering[indexOld];
+        assert(dofNoOld < oldGeometryValues.size());
         neighbouringPoints[0][1][1] = oldGeometryValues[dofNoOld];
 
         // z+ y- x-
         indexOld = (zIndexOld+1)*nNodesWithGhostsOld[1]*nNodesWithGhostsOld[0] + yIndexOld*nNodesWithGhostsOld[0] + xIndexOld;
         dofNoOld = dofNosLocalNaturalOrdering[indexOld];
+        assert(dofNoOld < oldGeometryValues.size());
         neighbouringPoints[1][0][0] = oldGeometryValues[dofNoOld];
 
         // z+ y- x+
         indexOld = (zIndexOld+1)*nNodesWithGhostsOld[1]*nNodesWithGhostsOld[0] + yIndexOld*nNodesWithGhostsOld[0] + (xIndexOld + 1);
         dofNoOld = dofNosLocalNaturalOrdering[indexOld];
+        assert(dofNoOld < oldGeometryValues.size());
         neighbouringPoints[1][0][1] = oldGeometryValues[dofNoOld];
 
         // z+ y+ x-
         indexOld = (zIndexOld+1)*nNodesWithGhostsOld[1]*nNodesWithGhostsOld[0] + (yIndexOld+1)*nNodesWithGhostsOld[0] + xIndexOld;
         dofNoOld = dofNosLocalNaturalOrdering[indexOld];
+        assert(dofNoOld < oldGeometryValues.size());
         neighbouringPoints[1][1][0] = oldGeometryValues[dofNoOld];
 
         // z+ y+ x+
         indexOld = (zIndexOld+1)*nNodesWithGhostsOld[1]*nNodesWithGhostsOld[0] + (yIndexOld+1)*nNodesWithGhostsOld[0] + (xIndexOld + 1);
         dofNoOld = dofNosLocalNaturalOrdering[indexOld];
+        assert(dofNoOld < oldGeometryValues.size());
         neighbouringPoints[1][1][1] = oldGeometryValues[dofNoOld];
 
         int indexNew = zIndexNew*nNodesNew[1]*nNodesNew[0] + yIndexNew*nNodesNew[0] + xIndexNew;
+        assert(3*indexNew+2 < localNodePositions_.size());
         Vec3 resultingPoint =
           + (1.0 - alpha[2]) * (1.0 - alpha[1]) * (1.0 - alpha[0]) * neighbouringPoints[0][0][0]
           + (1.0 - alpha[2]) * (1.0 - alpha[1]) * alpha[0]         * neighbouringPoints[0][0][1]
@@ -551,13 +563,19 @@ refineMesh(std::array<int,D> refinementFactors)
         localNodePositions_[3*indexNew + 0] = resultingPoint[0];
         localNodePositions_[3*indexNew + 1] = resultingPoint[1];
         localNodePositions_[3*indexNew + 2] = resultingPoint[2];
+
+        LOG(DEBUG) << "    neighbouringPoints: " << neighbouringPoints << ", resultingPoint: " << resultingPoint;
       }
     }
   }
 
+  LOG(DEBUG) << "create new geometry field";
+
   // create new geometry field
   std::vector<std::string> componentNames{"x", "y", "z"};
   this->geometryField_ = std::make_shared<GeometryFieldType>(thisFunctionSpace, "geometry", componentNames, true);
+
+  LOG(DEBUG) << "setGeometryFieldValues";
 
   // assign new values of geometry field
   this->setGeometryFieldValues();

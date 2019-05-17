@@ -71,7 +71,7 @@ exchangeBorderSeedPointsBeforeTracing(int nRanksZ, int rankZNo, bool streamlineD
   if (nRanksZ == 1)
     return;
 
-  if (rankZNo != int(nRanksZ/2))
+  if (rankZNo != int(nRanksZ/2) && rankZNo != int(nRanksZ/2)-1)
   {
     int neighbourRankNo;
     if (streamlineDirectionUpwards)

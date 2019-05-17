@@ -139,7 +139,7 @@ createSeedPoints(const std::array<bool,4> &subdomainIsAtBorder, int seedPointsZI
   LOG(DEBUG) << "seed point positions: ";
   for (int i = 0; i < seedPointPositionDebug.size(); i++)
   {
-    LOG(DEBUG) << "  " << i << ": " << seedPointPositionDebug[i];
+    LOG(DEBUG) << "  " << i << " at " << seedPointPositionDebug[i] << ": " << seedPoints[i];
   }
 #endif
 }

@@ -269,7 +269,7 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
 
   LOG(DEBUG) << "waitall (" << sendRequests.size() << " send requests, " << receiveRequests.size() << " receiveRefquests) complete";
 #endif
-  LOG(DEBUG) << "ghost exchange communication done";
+  LOG(DEBUG) << "ghost exchange communication done, currentRankSubset_: " << *currentRankSubset_;
 
 
   MPI_Barrier(currentRankSubset_->mpiCommunicator());
@@ -284,7 +284,7 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
 
 #ifdef WRITE_CHECKPOINT_GHOST_MESH
       std::stringstream filenameOut;
-      filenameOut << "checkpoints/checkpoint_ghost_mesh_" << neighbourRankNo << "_" << Mesh::getString((Mesh::face_t)face) << ".txt";
+      filenameOut << "checkpoints/checkpoint_ghost_mesh_l" << level_ << "_" << neighbourRankNo << "_" << Mesh::getString((Mesh::face_t)face) << ".txt";
       std::ofstream fileOut;
       fileOut.open(filenameOut.str().c_str(), std::ios::out | std::ios::trunc);
 
@@ -329,7 +329,7 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
 #ifdef USE_CHECKPOINT_GHOST_MESH
 
       std::stringstream filenameIn;
-      filenameIn << "checkpoints/checkpoint_ghost_mesh_" << neighbourRankNo << "_" << Mesh::getString((Mesh::face_t)face) << ".txt";
+      filenameIn << "checkpoints/checkpoint_ghost_mesh_l" << level_ << "_" << neighbourRankNo << "_" << Mesh::getString((Mesh::face_t)face) << ".txt";
       std::ifstream fileIn;
       fileIn.open(filenameIn.str().c_str(), std::ios::in);
 

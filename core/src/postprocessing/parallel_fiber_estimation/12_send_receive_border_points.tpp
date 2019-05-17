@@ -67,7 +67,7 @@ sendBorderPoints(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &bor
     // save subdomains to be send to a file
 #ifdef WRITE_CHECKPOINT_BORDER_POINTS
     std::stringstream filename;
-    filename << "checkpoints/checkpoint_borderPoints_subdomain_" << subdomainRankNo << ".csv";
+    filename << "checkpoints/checkpoint_borderPoints_l" << level_ << "_subdomain_" << subdomainRankNo << ".csv";
     LOG(DEBUG) << " filename \"" << filename.str() << "\".";
     std::ofstream file(filename.str().c_str(), std::ios::out | std::ios::trunc);
     if(!file.is_open())

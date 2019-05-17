@@ -185,6 +185,8 @@ protected:
   int level_;             ///< current level of the recursion, 0=1 process, 1=8 processes, 2=64 processes
   bool useNeumannBoundaryConditions_;   ///< if neumann instead of dirichlet boundary conditions should be used
 
+  std::array<int,3> refinementFactors_;   ///< factors by which the mesh should be refined prior to solving the Laplace problem and tracing the streamlines
+
   PyObject *moduleStlCreateMesh_;   ///< python module, file "stl_create_mesh.py"
   PyObject *moduleStlCreateRings_;   ///< python module, file "stl_create_rings.py"
   PyObject *moduleStlDebugOutput_;   ///< python module, file "stl_debug_output.py"

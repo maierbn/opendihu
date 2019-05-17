@@ -308,6 +308,8 @@ refine(std::array<int,MeshType::dim()> refinementFactor)
   //! fill the dofLocalNo vectors, onlyNodalDofLocalNos_, ghostDofNosGlobalPetsc_ and localToGlobalPetscMappingDofs_
   createLocalDofOrderings();
 
+  dofNosLocalNaturalOrdering_.clear();
+
   LOG(DEBUG) << "mesh partition after refinement: " << *this;
 }
 

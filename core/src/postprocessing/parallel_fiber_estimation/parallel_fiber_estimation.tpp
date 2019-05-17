@@ -68,7 +68,7 @@ ParallelFiberEstimation(DihuContext context) :
   nNodesPerFiber_ = specificSettings_.getOptionInt("nNodesPerFiber", 1000);
   finalBottomZClip_ = specificSettings_.getOptionDouble("finalBottomZClip", bottomZClip_);
   finalTopZClip_ = specificSettings_.getOptionDouble("finalTopZClip", topZClip_);
-
+  refinementFactors_ = specificSettings_.getOptionArray<int,3>("refinementFactors", std::array<int,3>({1,1,1}));
 
   this->lineStepWidth_ = specificSettings_.getOptionDouble("lineStepWidth", 1e-2, PythonUtility::Positive);
   this->maxNIterations_ = specificSettings_.getOptionInt("maxIterations", 100000, PythonUtility::Positive);
@@ -178,18 +178,22 @@ generateParallelMesh()
   std::array<std::vector<std::vector<Vec3>>,4> borderPoints;  // borderPoints[face_t][z-level][pointIndex]
   std::array<bool,4> subdomainIsAtBorder;
 
+  bool useCheckpointsBorderPoints = false;
+
 #ifdef USE_CHECKPOINT_BORDER_POINTS     // normal execution
 
-  std::vector<int> ranks(64);
+  // start at higher level
+  level_ = 0;
+  std::vector<int> ranks((level_+1)*(level_+1)*(level_+1));
   std::iota(ranks.begin(), ranks.end(), 0);
   currentRankSubset_ = std::make_shared<Partition::RankSubset>(ranks.begin(), ranks.end());
-  nRanksPerCoordinateDirection_.fill(2);
+  nRanksPerCoordinateDirection_.fill(level_+1);
   determineLevel();
 
   // parse file
   int subdomainIndex = currentRankSubset_->ownRankNo();
   std::stringstream filename;
-  filename << "checkpoints/checkpoint_borderPoints_subdomain_" << subdomainIndex << ".csv";
+  filename << "checkpoints/checkpoint_borderPoints_l" << level_ << "_subdomain_" << subdomainIndex << ".csv";
   std::ifstream file(filename.str().c_str(), std::ios::in);
   if (!file.is_open())
   {
@@ -197,6 +201,7 @@ generateParallelMesh()
   }
   else
   {
+    useCheckpointsBorderPoints = true;
     assert(file.is_open());
 
     char c;
@@ -246,10 +251,10 @@ generateParallelMesh()
 
     MPI_Barrier(MPI_COMM_WORLD);
   }
+#endif
 
   // if checkpoint file could not be opened, continue with normal execution
-  if (!file.is_open())
-#endif
+  if (!useCheckpointsBorderPoints)
   {
     // only rank 0 creates the first border points
     if (DihuContext::ownRankNoCommWorld() == 0)
@@ -493,8 +498,10 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     LOG(DEBUG) << "n dofs local without ghosts: " << this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts();
     LOG(DEBUG) << "nElementsPerCoordinateDirectionLocal: " << nElementsPerCoordinateDirectionLocal;
 
-    //std::array<int,3> refinementFactors({2,2,2});
-    //this->functionSpace_->refineMesh(refinementFactors);
+    if (refinementFactors_[0] > 1 || refinementFactors_[1] > 1 || refinementFactors_[2] > 1)
+    {
+      this->functionSpace_->refineMesh(refinementFactors_);
+    }
 
     LOG(DEBUG) << "after refinement: ";
     LOG(DEBUG) << "n dofs local without ghosts: " << this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts();
@@ -667,7 +674,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     // write border points to file
     outputStreamlines(borderPointsSubdomain, "11_fixed");
 
-    // if this is the end of the recursion, trace final fibers
+    // if this is the end of the recursion, trace final fibers, reuse the fibers at the borders that were already traced
     if (traceFinalFibers)
     {
       traceResultFibers(streamlineDirection, seedPointsZIndex, nodePositions, borderPointsSubdomain, true);

@@ -423,7 +423,7 @@ setGeometryFieldValues()
   {
     stream << " " << geometryFieldValuesWithGhosts[i];
   }
-  LOG(DEBUG) << "in setsetGeometryFieldValues, geometry field ghost values: " << stream.str();
+  LOG(DEBUG) << "in setGeometryFieldValues, geometry field ghost values: " << stream.str();
 #endif
 
 /*
@@ -481,6 +481,11 @@ refineMesh(std::array<int,D> refinementFactors)
     this->nElementsPerCoordinateDirectionGlobal_[i] = this->meshPartition_->nElementsGlobal(i);
   }
 
+  LOG(DEBUG) << "nNodesLocalWithoutGhosts: " << this->nNodesLocalWithoutGhosts();
+  LOG(DEBUG) << "nNodesLocalWithoutGhosts: " << this->meshPartition_->nNodesLocalWithoutGhosts(0) << ","
+    << this->meshPartition_->nNodesLocalWithoutGhosts(1) << "," << this->meshPartition_->nNodesLocalWithoutGhosts(2) << ": "
+    << this->meshPartition_->nNodesLocalWithoutGhosts();
+
   std::array<std::array<std::array<Vec3,2>,2>,2> neighbouringPoints({});
   LOG(DEBUG) << "set new node positions";
 
@@ -495,15 +500,15 @@ refineMesh(std::array<int,D> refinementFactors)
         std::array<double,3> alpha({1.0,1.0,1.0});
 
         alpha[0] = double(xIndexNew % refinementFactors[0]) / refinementFactors[0];
-        alpha[1] = double(xIndexNew % refinementFactors[1]) / refinementFactors[1];
-        alpha[2] = double(xIndexNew % refinementFactors[2]) / refinementFactors[2];
+        alpha[1] = double(yIndexNew % refinementFactors[1]) / refinementFactors[1];
+        alpha[2] = double(zIndexNew % refinementFactors[2]) / refinementFactors[2];
 
         // get neighbouring node positions
         int xIndexOld = xIndexNew / refinementFactors[0];
         int yIndexOld = yIndexNew / refinementFactors[1];
         int zIndexOld = zIndexNew / refinementFactors[2];
 
-        LOG(DEBUG) << xIndexNew << "," << yIndexNew << "," << zIndexNew << " / " << nNodesNew << ", alpha: " << alpha << ", old index: " << xIndexOld << "," << yIndexOld << "," << zIndexOld;
+        VLOG(1) << xIndexNew << "," << yIndexNew << "," << zIndexNew << " / " << nNodesNew << ", alpha: " << alpha << ", old index: " << xIndexOld << "," << yIndexOld << "," << zIndexOld;
 
         // z- y- x-
         int indexOld = zIndexOld*nNodesWithGhostsOld[1]*nNodesWithGhostsOld[0] + yIndexOld*nNodesWithGhostsOld[0] + xIndexOld;
@@ -582,7 +587,7 @@ refineMesh(std::array<int,D> refinementFactors)
         localNodePositions_[3*indexNew + 1] = resultingPoint[1];
         localNodePositions_[3*indexNew + 2] = resultingPoint[2];
 
-        LOG(DEBUG) << "    neighbouringPoints: " << neighbouringPoints << ", resultingPoint: " << resultingPoint;
+        VLOG(1) << "    neighbouringPoints: " << neighbouringPoints << ", resultingPoint: " << resultingPoint;
       }
     }
   }

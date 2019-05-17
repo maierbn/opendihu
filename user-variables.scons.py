@@ -50,10 +50,10 @@ EASYLOGGINGPP_DOWNLOAD=True#False
 EASYLOGGINGPP_REBUILD=False
 
 # ADIOS2, adaptable I/O library, needed for interfacing MegaMol
-ADIOS_DOWNLOAD=True
+ADIOS_DOWNLOAD=False
 
 # MegaMol, visualization framework of VISUS, optional, needs ADIOS2
-MEGAMOL_DOWNLOAD=True    # install MegaMol from official git repo, but needed is the private repo, ask for access to use MegaMol with opendihu
+MEGAMOL_DOWNLOAD=False    # install MegaMol from official git repo, but needed is the private repo, ask for access to use MegaMol with opendihu
 
 # MPI
 # MPI is normally detected by runnig the mpicc command. If this is not available, you can provide the MPI_DIR as usual.

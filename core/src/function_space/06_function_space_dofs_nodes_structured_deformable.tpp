@@ -475,6 +475,11 @@ refineMesh(std::array<int,D> refinementFactors)
   const std::vector<dof_no_t> &dofNosLocalNaturalOrdering = this->meshPartition_->dofNosLocalNaturalOrdering();
 
   this->meshPartition_->refine(refinementFactors);
+  for (int i = 0; i < D; i++)
+  {
+    this->nElementsPerCoordinateDirectionLocal_[i] = this->meshPartition_->nElementsLocal(i);
+    this->nElementsPerCoordinateDirectionGlobal_[i] = this->meshPartition_->nElementsGlobal(i);
+  }
 
   std::array<std::array<std::array<Vec3,2>,2>,2> neighbouringPoints({});
   LOG(DEBUG) << "set new node positions";

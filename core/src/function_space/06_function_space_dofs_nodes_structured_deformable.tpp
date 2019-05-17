@@ -496,7 +496,7 @@ refineMesh(std::array<int,D> refinementFactors)
         int yIndexOld = yIndexNew / refinementFactors[1];
         int zIndexOld = zIndexNew / refinementFactors[2];
 
-        LOG(DEBUG) << xIndex << "," << yIndex << "," << zIndex << " / " << nNodesNew << ", alpha: " << alpha << ", old index: " << xIndexOld << "," << yIndexOld << "," << zIndexOld;
+        LOG(DEBUG) << xIndexNew << "," << yIndexNew << "," << zIndexNew << " / " << nNodesNew << ", alpha: " << alpha << ", old index: " << xIndexOld << "," << yIndexOld << "," << zIndexOld;
 
         std::array<std::array<std::array<Vec3,2>,2>,2> neighbouringPoints;
 

@@ -464,7 +464,8 @@ refineMesh(std::array<int,D> refinementFactors)
   localNodePositions_.resize(nNodesLocalWithoutGhostsNew*3);
 
   LOG(DEBUG) << "nElementsLocal: " << nElementsLocalOld << " -> " << nElementsLocalNew;
-  LOG(DEBUG) << "nNodesNew: " << nNodesNew;
+  LOG(DEBUG) << "oldGeometryValues.size: " << oldGeometryValues.size();
+  LOG(DEBUG) << "nNodesNew: " << nNodesNew << ", nNodesWithGhostsOld: " << nNodesWithGhostsOld;
 
   // get local natural dof nos (ordering including ghost dofs)
   std::shared_ptr<FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>> thisFunctionSpace
@@ -475,6 +476,7 @@ refineMesh(std::array<int,D> refinementFactors)
 
   this->meshPartition_->refine(refinementFactors);
 
+  std::array<std::array<std::array<Vec3,2>,2>,2> neighbouringPoints({});
   LOG(DEBUG) << "set new node positions";
 
   // loop over new node positions
@@ -498,67 +500,78 @@ refineMesh(std::array<int,D> refinementFactors)
 
         LOG(DEBUG) << xIndexNew << "," << yIndexNew << "," << zIndexNew << " / " << nNodesNew << ", alpha: " << alpha << ", old index: " << xIndexOld << "," << yIndexOld << "," << zIndexOld;
 
-        std::array<std::array<std::array<Vec3,2>,2>,2> neighbouringPoints;
-
         // z- y- x-
         int indexOld = zIndexOld*nNodesWithGhostsOld[1]*nNodesWithGhostsOld[0] + yIndexOld*nNodesWithGhostsOld[0] + xIndexOld;
         int dofNoOld = dofNosLocalNaturalOrdering[indexOld];
         assert(dofNoOld < oldGeometryValues.size());
         neighbouringPoints[0][0][0] = oldGeometryValues[dofNoOld];
+        Vec3 resultingPoint = (1.0 - alpha[2]) * (1.0 - alpha[1]) * (1.0 - alpha[0]) * neighbouringPoints[0][0][0];
 
         // z- y- x+
         indexOld = zIndexOld*nNodesWithGhostsOld[1]*nNodesWithGhostsOld[0] + yIndexOld*nNodesWithGhostsOld[0] + (xIndexOld + 1);
         dofNoOld = dofNosLocalNaturalOrdering[indexOld];
-        assert(dofNoOld < oldGeometryValues.size());
-        neighbouringPoints[0][0][1] = oldGeometryValues[dofNoOld];
+        if (dofNoOld < oldGeometryValues.size())
+        {
+          neighbouringPoints[0][0][1] = oldGeometryValues[dofNoOld];
+          resultingPoint += (1.0 - alpha[2]) * (1.0 - alpha[1]) * alpha[0]         * neighbouringPoints[0][0][1];
+        }
 
         // z- y+ x-
         indexOld = zIndexOld*nNodesWithGhostsOld[1]*nNodesWithGhostsOld[0] + (yIndexOld+1)*nNodesWithGhostsOld[0] + xIndexOld;
         dofNoOld = dofNosLocalNaturalOrdering[indexOld];
-        assert(dofNoOld < oldGeometryValues.size());
-        neighbouringPoints[0][1][0] = oldGeometryValues[dofNoOld];
+        if (dofNoOld < oldGeometryValues.size())
+        {
+          neighbouringPoints[0][1][0] = oldGeometryValues[dofNoOld];
+          resultingPoint += (1.0 - alpha[2]) * alpha[1]         * (1.0 - alpha[0]) * neighbouringPoints[0][1][0];
+        }
 
         // z- y+ x+
         indexOld = zIndexOld*nNodesWithGhostsOld[1]*nNodesWithGhostsOld[0] + (yIndexOld+1)*nNodesWithGhostsOld[0] + (xIndexOld + 1);
         dofNoOld = dofNosLocalNaturalOrdering[indexOld];
-        assert(dofNoOld < oldGeometryValues.size());
-        neighbouringPoints[0][1][1] = oldGeometryValues[dofNoOld];
+        if (dofNoOld < oldGeometryValues.size())
+        {
+          neighbouringPoints[0][1][1] = oldGeometryValues[dofNoOld];
+          resultingPoint += (1.0 - alpha[2]) * alpha[1]         * alpha[0]         * neighbouringPoints[0][1][1];
+        }
 
         // z+ y- x-
         indexOld = (zIndexOld+1)*nNodesWithGhostsOld[1]*nNodesWithGhostsOld[0] + yIndexOld*nNodesWithGhostsOld[0] + xIndexOld;
         dofNoOld = dofNosLocalNaturalOrdering[indexOld];
-        assert(dofNoOld < oldGeometryValues.size());
-        neighbouringPoints[1][0][0] = oldGeometryValues[dofNoOld];
+        if (dofNoOld < oldGeometryValues.size())
+        {
+          neighbouringPoints[1][0][0] = oldGeometryValues[dofNoOld];
+          resultingPoint += alpha[2]         * (1.0 - alpha[1]) * (1.0 - alpha[0]) * neighbouringPoints[1][0][0];
+        }
 
         // z+ y- x+
         indexOld = (zIndexOld+1)*nNodesWithGhostsOld[1]*nNodesWithGhostsOld[0] + yIndexOld*nNodesWithGhostsOld[0] + (xIndexOld + 1);
         dofNoOld = dofNosLocalNaturalOrdering[indexOld];
-        assert(dofNoOld < oldGeometryValues.size());
-        neighbouringPoints[1][0][1] = oldGeometryValues[dofNoOld];
+        if (dofNoOld < oldGeometryValues.size())
+        {
+          neighbouringPoints[1][0][1] = oldGeometryValues[dofNoOld];
+          resultingPoint += alpha[2]         * (1.0 - alpha[1]) * alpha[0]         * neighbouringPoints[1][0][1];
+        }
 
         // z+ y+ x-
         indexOld = (zIndexOld+1)*nNodesWithGhostsOld[1]*nNodesWithGhostsOld[0] + (yIndexOld+1)*nNodesWithGhostsOld[0] + xIndexOld;
         dofNoOld = dofNosLocalNaturalOrdering[indexOld];
-        assert(dofNoOld < oldGeometryValues.size());
-        neighbouringPoints[1][1][0] = oldGeometryValues[dofNoOld];
+        if (dofNoOld < oldGeometryValues.size())
+        {
+          neighbouringPoints[1][1][0] = oldGeometryValues[dofNoOld];
+          resultingPoint += alpha[2]         * alpha[1]         * (1.0 - alpha[0]) * neighbouringPoints[1][1][0];
+        }
 
         // z+ y+ x+
         indexOld = (zIndexOld+1)*nNodesWithGhostsOld[1]*nNodesWithGhostsOld[0] + (yIndexOld+1)*nNodesWithGhostsOld[0] + (xIndexOld + 1);
         dofNoOld = dofNosLocalNaturalOrdering[indexOld];
-        assert(dofNoOld < oldGeometryValues.size());
-        neighbouringPoints[1][1][1] = oldGeometryValues[dofNoOld];
+        if (dofNoOld < oldGeometryValues.size())
+        {
+          neighbouringPoints[1][1][1] = oldGeometryValues[dofNoOld];
+          resultingPoint += alpha[2]         * alpha[1]         * alpha[0]         * neighbouringPoints[1][1][1];
+        }
 
         int indexNew = zIndexNew*nNodesNew[1]*nNodesNew[0] + yIndexNew*nNodesNew[0] + xIndexNew;
         assert(3*indexNew+2 < localNodePositions_.size());
-        Vec3 resultingPoint =
-          + (1.0 - alpha[2]) * (1.0 - alpha[1]) * (1.0 - alpha[0]) * neighbouringPoints[0][0][0]
-          + (1.0 - alpha[2]) * (1.0 - alpha[1]) * alpha[0]         * neighbouringPoints[0][0][1]
-          + (1.0 - alpha[2]) * alpha[1]         * (1.0 - alpha[0]) * neighbouringPoints[0][1][0]
-          + (1.0 - alpha[2]) * alpha[1]         * alpha[0]         * neighbouringPoints[0][1][1]
-          + alpha[2]         * (1.0 - alpha[1]) * (1.0 - alpha[0]) * neighbouringPoints[1][0][0]
-          + alpha[2]         * (1.0 - alpha[1]) * alpha[0]         * neighbouringPoints[1][0][1]
-          + alpha[2]         * alpha[1]         * (1.0 - alpha[0]) * neighbouringPoints[1][1][0]
-          + alpha[2]         * alpha[1]         * alpha[0]         * neighbouringPoints[1][1][1];
 
         localNodePositions_[3*indexNew + 0] = resultingPoint[0];
         localNodePositions_[3*indexNew + 1] = resultingPoint[1];

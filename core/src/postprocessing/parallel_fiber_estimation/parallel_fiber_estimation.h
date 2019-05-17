@@ -72,10 +72,10 @@ protected:
   bool checkTraceFinalFibers();
 
   //! create Dirichlet BC object
-  void createDirichletBoundaryConditions(const std::array<int,3> &nElementsPerCoordinateDirectionLocal, std::shared_ptr<SpatialDiscretization::DirichletBoundaryConditions<FunctionSpaceType,1>> &dirichletBoundaryConditions);
+  void createDirichletBoundaryConditions(std::shared_ptr<SpatialDiscretization::DirichletBoundaryConditions<FunctionSpaceType,1>> &dirichletBoundaryConditions);
 
   //! create Neumann BC object
-  void createNeumannBoundaryConditions(const std::array<int,3> &nElementsPerCoordinateDirectionLocal, std::shared_ptr<SpatialDiscretization::NeumannBoundaryConditions<FunctionSpaceType,Quadrature::Gauss<3>, 1>> &neumannBoundaryConditions);
+  void createNeumannBoundaryConditions(std::shared_ptr<SpatialDiscretization::NeumannBoundaryConditions<FunctionSpaceType,Quadrature::Gauss<3>, 1>> &neumannBoundaryConditions);
 
   //! communicate ghost values for gradient and solution value to neighbouring processes, the ghost elements are obtained from the mesh partition
   void exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder);

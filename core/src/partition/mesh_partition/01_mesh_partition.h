@@ -208,6 +208,9 @@ public:
   //! get the partitioning index in the coordinate direction, i.e. the no. of this rank in this direction, the total number of ranks in each direction can be retrieved by nRanks
   int ownRankPartitioningIndex(int coordinateDirection);
 
+  //! refine the partitioning by multiplying the number of elements by refinementFactor
+  void refine(std::array<int,MeshType::dim()> refinementFactor);
+
 protected:
   
   //! initialize the values of hasFullNumberOfNodes_ variable
@@ -225,7 +228,7 @@ protected:
   //! create the DM object for the node partitioning, such that is follows the element partitioning
   void createDmElements();
   
-  //! fill the dofLocalNo vectors
+  //! fill the dofLocalNo vectors, onlyNodalDofLocalNos_, ghostDofNosGlobalPetsc_ and localToGlobalPetscMappingDofs_
   void createLocalDofOrderings();
 
   //! determine the values of ownRankPartitioningIndex_
@@ -373,4 +376,7 @@ std::ostream &operator<<(std::ostream &stream, std::shared_ptr<ISLocalToGlobalMa
 
 #include "partition/mesh_partition/01_mesh_partition_output.tpp"
 #include "partition/mesh_partition/01_mesh_partition_structured.tpp"
+#include "partition/mesh_partition/01_mesh_partition_structured_initialize.tpp"
+#include "partition/mesh_partition/01_mesh_partition_structured_get.tpp"
+#include "partition/mesh_partition/01_mesh_partition_structured_coordinates.tpp"
 #include "partition/mesh_partition/01_mesh_partition_unstructured.tpp"

@@ -487,10 +487,17 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     this->functionSpace_ = context_.meshManager()->template createFunctionSpaceWithGivenMeshPartition<FunctionSpaceType>(
       meshName.str(), meshPartition_, nodePositionsWithoutGhosts, nElementsPerCoordinateDirectionLocal, nRanksPerCoordinateDirection_);
 
+    LOG(DEBUG) << "after refinement: ";
     LOG(DEBUG) << "n nodePositions with ghosts: " << nodePositions.size();
     LOG(DEBUG) << "n nodePositions without ghosts: " << nodePositionsWithoutGhosts.size();
     LOG(DEBUG) << "n dofs local without ghosts: " << this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts();
     LOG(DEBUG) << "nElementsPerCoordinateDirectionLocal: " << nElementsPerCoordinateDirectionLocal;
+
+    std::array<int,3> refinementFactors({2,2,2});
+    this->functionSpace_->refineMesh(refinementFactors);
+
+    LOG(DEBUG) << "after refinement: ";
+    LOG(DEBUG) << "n dofs local without ghosts: " << this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts();
 
     /*
     std::array<global_no_t,FunctionSpace::dim()> &nElementsGlobal,
@@ -519,13 +526,13 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     std::shared_ptr<SpatialDiscretization::NeumannBoundaryConditions<FunctionSpaceType,Quadrature::Gauss<3>,1>> neumannBoundaryConditions;
     if (useNeumannBoundaryConditions_)
     {
-      // create neumann boundary condition object
-      createNeumannBoundaryConditions(nElementsPerCoordinateDirectionLocal, neumannBoundaryConditions);
+      // create neumann boundary condition object, using this->functionSpace_
+      createNeumannBoundaryConditions(neumannBoundaryConditions);
     }
     else
     {
-      // create dirichlet boundary condition object
-      createDirichletBoundaryConditions(nElementsPerCoordinateDirectionLocal, dirichletBoundaryConditions);
+      // create dirichlet boundary condition object, using this->functionSpace_
+      createDirichletBoundaryConditions(dirichletBoundaryConditions);
     }
 
     // initialize data object to allocate gradient field

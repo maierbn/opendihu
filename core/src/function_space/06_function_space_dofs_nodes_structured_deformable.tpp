@@ -98,16 +98,16 @@ initialize()
  
   // pass a shared "this" pointer to the geometryField 
   // retrieve "this" pointer and convert to downwards pointer of most derived class "FunctionSpace"
-  std::shared_ptr<FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>> thisMesh
+  std::shared_ptr<FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>> thisFunctionSpace
     = std::static_pointer_cast<FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>(this->shared_from_this());
 
-  assert(thisMesh != nullptr);
+  assert(thisFunctionSpace != nullptr);
   
   // create empty field variable for geometry field
   LOG(DEBUG) << "step 1: construct geometryField";
 
   std::vector<std::string> componentNames{"x", "y", "z"};
-  this->geometryField_ = std::make_shared<GeometryFieldType>(thisMesh, "geometry", componentNames, true);
+  this->geometryField_ = std::make_shared<GeometryFieldType>(thisFunctionSpace, "geometry", componentNames, true);
   
   // assign values of geometry field
   this->setGeometryFieldValues();
@@ -414,6 +414,7 @@ setGeometryFieldValues()
   this->geometryField_->startGhostManipulation();       // distribute ghost values
 
   // output ghost values for debugging
+#ifndef NDEBUG
   // get ghost values
   std::stringstream stream;
   std::vector<Vec3> geometryFieldValuesWithGhosts;
@@ -423,6 +424,7 @@ setGeometryFieldValues()
     stream << " " << geometryFieldValuesWithGhosts[i];
   }
   LOG(DEBUG) << "in setsetGeometryFieldValues, geometry field ghost values: " << stream.str();
+#endif
 
 /*
   LOG(TRACE) << "Abort";
@@ -432,5 +434,132 @@ setGeometryFieldValues()
 
   VLOG(1) << "setGeometryField, geometryValues: " << geometryValues;
 }
+
+template<int D,typename BasisFunctionType>
+void FunctionSpaceDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
+refineMesh(std::array<int,D> refinementFactors)
+{
+  LOG(DEBUG) << "refineMesh with refinementFactors: " << refinementFactors;
+
+  std::vector<Vec3> oldGeometryValues;
+  this->geometryField_->getValuesWithGhosts(oldGeometryValues);
+
+  int averageNNodesPerElement1D = FunctionSpaceBaseDim<1,BasisFunctionType>::averageNNodesPerElement();
+
+  // determine number of old nodes
+  std::array<int,3> nElementsLocalOld({1,1,1});
+  std::array<int,3> nElementsLocalNew({1,1,1});
+  std::array<int,3> nNodesWithGhostsOld({1,1,1});
+  std::array<int,3> nNodesNew({1,1,1});
+
+  for (int i = 0; i < D; i++)
+  {
+    nElementsLocalOld[i] = this->meshPartition_->nElementsLocal(i);
+    nElementsLocalNew[i] = nElementsLocalOld[i] * refinementFactors[i];
+    nNodesNew[i] = nElementsLocalNew[i] * averageNNodesPerElement1D + (this->meshPartition_->hasFullNumberOfNodes(i)? 1 : 0);
+    nNodesWithGhostsOld[i] = this->meshPartition_->nNodesLocalWithGhosts(i);
+  }
+
+  int nNodesLocalWithoutGhostsNew = nNodesNew[0] * nNodesNew[1] * nNodesNew[2];
+  localNodePositions_.resize(nNodesLocalWithoutGhostsNew);
+
+  LOG(DEBUG) << "nElementsLocal: " << nElementsLocalOld << " -> " << nElementsLocalNew;
+  LOG(DEBUG) << "nNodesNew: " << nNodesNew;
+
+  // get local natural dof nos (ordering including ghost dofs)
+  std::shared_ptr<FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>> thisFunctionSpace
+    = std::static_pointer_cast<FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>(this->shared_from_this());
+
+  this->meshPartition_->initializeDofNosLocalNaturalOrdering(thisFunctionSpace);
+  const std::vector<dof_no_t> &dofNosLocalNaturalOrdering = this->meshPartition_->dofNosLocalNaturalOrdering();
+
+  this->meshPartition_->refine(refinementFactors);
+
+  // loop over new node positions
+  for (int zIndexNew = 0; zIndexNew < nNodesNew[2]; zIndexNew++)
+  {
+    for (int yIndexNew = 0; yIndexNew < nNodesNew[1]; yIndexNew++)
+    {
+      for (int xIndexNew = 0; xIndexNew < nNodesNew[0]; xIndexNew++)
+      {
+        std::array<double,3> alpha({1.0,1.0,1.0});
+
+        alpha[0] = double(xIndexNew % refinementFactors[0]) / refinementFactors[0];
+        alpha[1] = double(xIndexNew % refinementFactors[1]) / refinementFactors[1];
+        alpha[2] = double(xIndexNew % refinementFactors[2]) / refinementFactors[2];
+
+        // get neighbouring node positions
+        int xIndexOld = xIndexNew / refinementFactors[0];
+        int yIndexOld = yIndexNew / refinementFactors[1];
+        int zIndexOld = zIndexNew / refinementFactors[2];
+
+        std::array<std::array<std::array<Vec3,2>,2>,2> neighbouringPoints;
+
+        // z- y- x-
+        int indexOld = zIndexOld*nNodesWithGhostsOld[1]*nNodesWithGhostsOld[0] + yIndexOld*nNodesWithGhostsOld[0] + xIndexOld;
+        int dofNoOld = dofNosLocalNaturalOrdering[indexOld];
+        neighbouringPoints[0][0][0] = oldGeometryValues[dofNoOld];
+
+        // z- y- x+
+        indexOld = zIndexOld*nNodesWithGhostsOld[1]*nNodesWithGhostsOld[0] + yIndexOld*nNodesWithGhostsOld[0] + (xIndexOld + 1);
+        dofNoOld = dofNosLocalNaturalOrdering[indexOld];
+        neighbouringPoints[0][0][1] = oldGeometryValues[dofNoOld];
+
+        // z- y+ x-
+        indexOld = zIndexOld*nNodesWithGhostsOld[1]*nNodesWithGhostsOld[0] + (yIndexOld+1)*nNodesWithGhostsOld[0] + xIndexOld;
+        dofNoOld = dofNosLocalNaturalOrdering[indexOld];
+        neighbouringPoints[0][1][0] = oldGeometryValues[dofNoOld];
+
+        // z- y+ x+
+        indexOld = zIndexOld*nNodesWithGhostsOld[1]*nNodesWithGhostsOld[0] + (yIndexOld+1)*nNodesWithGhostsOld[0] + (xIndexOld + 1);
+        dofNoOld = dofNosLocalNaturalOrdering[indexOld];
+        neighbouringPoints[0][1][1] = oldGeometryValues[dofNoOld];
+
+        // z+ y- x-
+        indexOld = (zIndexOld+1)*nNodesWithGhostsOld[1]*nNodesWithGhostsOld[0] + yIndexOld*nNodesWithGhostsOld[0] + xIndexOld;
+        dofNoOld = dofNosLocalNaturalOrdering[indexOld];
+        neighbouringPoints[1][0][0] = oldGeometryValues[dofNoOld];
+
+        // z+ y- x+
+        indexOld = (zIndexOld+1)*nNodesWithGhostsOld[1]*nNodesWithGhostsOld[0] + yIndexOld*nNodesWithGhostsOld[0] + (xIndexOld + 1);
+        dofNoOld = dofNosLocalNaturalOrdering[indexOld];
+        neighbouringPoints[1][0][1] = oldGeometryValues[dofNoOld];
+
+        // z+ y+ x-
+        indexOld = (zIndexOld+1)*nNodesWithGhostsOld[1]*nNodesWithGhostsOld[0] + (yIndexOld+1)*nNodesWithGhostsOld[0] + xIndexOld;
+        dofNoOld = dofNosLocalNaturalOrdering[indexOld];
+        neighbouringPoints[1][1][0] = oldGeometryValues[dofNoOld];
+
+        // z+ y+ x+
+        indexOld = (zIndexOld+1)*nNodesWithGhostsOld[1]*nNodesWithGhostsOld[0] + (yIndexOld+1)*nNodesWithGhostsOld[0] + (xIndexOld + 1);
+        dofNoOld = dofNosLocalNaturalOrdering[indexOld];
+        neighbouringPoints[1][1][1] = oldGeometryValues[dofNoOld];
+
+        int indexNew = zIndexNew*nNodesNew[1]*nNodesNew[0] + yIndexNew*nNodesNew[0] + xIndexNew;
+        Vec3 resultingPoint =
+          + (1.0 - alpha[2]) * (1.0 - alpha[1]) * (1.0 - alpha[0]) * neighbouringPoints[0][0][0]
+          + (1.0 - alpha[2]) * (1.0 - alpha[1]) * alpha[0]         * neighbouringPoints[0][0][1]
+          + (1.0 - alpha[2]) * alpha[1]         * (1.0 - alpha[0]) * neighbouringPoints[0][1][0]
+          + (1.0 - alpha[2]) * alpha[1]         * alpha[0]         * neighbouringPoints[0][1][1]
+          + alpha[2]         * (1.0 - alpha[1]) * (1.0 - alpha[0]) * neighbouringPoints[1][0][0]
+          + alpha[2]         * (1.0 - alpha[1]) * alpha[0]         * neighbouringPoints[1][0][1]
+          + alpha[2]         * alpha[1]         * (1.0 - alpha[0]) * neighbouringPoints[1][1][0]
+          + alpha[2]         * alpha[1]         * alpha[0]         * neighbouringPoints[1][1][1];
+
+        localNodePositions_[3*indexNew + 0] = resultingPoint[0];
+        localNodePositions_[3*indexNew + 1] = resultingPoint[1];
+        localNodePositions_[3*indexNew + 2] = resultingPoint[2];
+      }
+    }
+  }
+
+  // create new geometry field
+  std::vector<std::string> componentNames{"x", "y", "z"};
+  this->geometryField_ = std::make_shared<GeometryFieldType>(thisFunctionSpace, "geometry", componentNames, true);
+
+  // assign new values of geometry field
+  this->setGeometryFieldValues();
+}
+
 
 } // namespace

@@ -5,7 +5,7 @@ namespace Postprocessing
 
 template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
-createDirichletBoundaryConditions(const std::array<int,3> &nElementsPerCoordinateDirectionLocal, std::shared_ptr<SpatialDiscretization::DirichletBoundaryConditions<FunctionSpaceType,1>> &dirichletBoundaryConditions)
+createDirichletBoundaryConditions(std::shared_ptr<SpatialDiscretization::DirichletBoundaryConditions<FunctionSpaceType,1>> &dirichletBoundaryConditions)
 {
   // create dirichlet BC object
   dirichletBoundaryConditions = std::make_shared<SpatialDiscretization::DirichletBoundaryConditions<FunctionSpaceType,1>>(this->context_);
@@ -16,6 +16,12 @@ createDirichletBoundaryConditions(const std::array<int,3> &nElementsPerCoordinat
   std::vector<ElementWithNodes> boundaryConditionElements;
   std::vector<dof_no_t> boundaryConditionNonGhostDofLocalNos;
   std::vector<std::array<double,1>> boundaryConditionValues;
+
+  std::array<int,3> nElementsPerCoordinateDirectionLocal;
+  for (int i = 0; i < 3; i++)
+  {
+    nElementsPerCoordinateDirectionLocal[i] = this->meshPartition_->nElementsLocal(i);
+  }
 
   // fill dirichlet boundary condition object
   // set bottom nodes to 0

@@ -86,6 +86,9 @@ public:
 
   //! initialize geometry
   virtual void initialize();
+
+  //! refine the mesh by given factor, create new node positions
+  void refineMesh(std::array<int,D> refinementFactors);
   
 protected:
 

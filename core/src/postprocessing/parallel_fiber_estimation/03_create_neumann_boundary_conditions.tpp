@@ -5,9 +5,15 @@ namespace Postprocessing
 
 template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
-createNeumannBoundaryConditions(const std::array<int,3> &nElementsPerCoordinateDirectionLocal, std::shared_ptr<SpatialDiscretization::NeumannBoundaryConditions<FunctionSpaceType,Quadrature::Gauss<3>, 1>> &neumannBoundaryConditions)
+createNeumannBoundaryConditions(std::shared_ptr<SpatialDiscretization::NeumannBoundaryConditions<FunctionSpaceType,Quadrature::Gauss<3>, 1>> &neumannBoundaryConditions)
 {
   typedef SpatialDiscretization::NeumannBoundaryConditions<FunctionSpaceType,Quadrature::Gauss<3>,1> NeumannBoundaryConditionsType;
+
+  std::array<int,3> nElementsPerCoordinateDirectionLocal;
+  for (int i = 0; i < 3; i++)
+  {
+    nElementsPerCoordinateDirectionLocal[i] = this->meshPartition_->nElementsLocal(i);
+  }
 
   // create neumann BC object
   neumannBoundaryConditions = std::make_shared<NeumannBoundaryConditionsType>(this->context_);

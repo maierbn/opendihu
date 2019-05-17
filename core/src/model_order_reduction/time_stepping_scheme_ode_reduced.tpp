@@ -124,6 +124,7 @@ namespace ModelOrderReduction
     MORBase<typename TimeSteppingType::FunctionSpace>::initialize();  
     
     setInitialValues(); //necessary for the explicit scheme
+    this->outputWriterManager_.writeOutput(*this->data_, 0, 0);
 
     VLOG(1) << "initialized full-order solution: " << *this->fullTimestepping_.data().solution();
 

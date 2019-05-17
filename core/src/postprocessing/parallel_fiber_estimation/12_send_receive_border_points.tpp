@@ -108,7 +108,7 @@ sendBorderPoints(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &bor
             for (int i = 0; i < 3; i++)
             {
               VLOG(1) << "e " << faceNo << " " << zLevelIndex << " " << pointIndex << " " << i;
-              file << borderPointsSubdomain[subdomainRankNo][faceNo][zLevelIndex][pointIndex][i] << ";";
+              file << borderPointsSubdomain[subdomainIndex][faceNo][zLevelIndex][pointIndex][i] << ";";
             }
           }
           file << std::endl;
@@ -117,7 +117,7 @@ sendBorderPoints(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &bor
       VLOG(1) << "f";
 
       file.close();
-      LOG(DEBUG) << " saved data for subdomain " << subdomainRankNo << " to file \"" << filename.str() << "\".";
+      LOG(DEBUG) << " saved data for subdomain " << subdomainIndex << ", for rank " << subdomainRankNo << ", to file \"" << filename.str() << "\".";
     }
 #endif
 

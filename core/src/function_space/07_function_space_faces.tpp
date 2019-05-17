@@ -252,4 +252,157 @@ getFaceDofs(Mesh::face_t face, std::array<dof_no_t,FunctionSpaceBaseDim<2,BasisF
   }
 }
 
+//! get the neighbouring elemental node index in given direction inside one element or -1 if there is no such node in the element in that direction
+template<typename MeshType,typename BasisFunctionType>
+int FunctionSpaceFaces<MeshType,BasisFunctionType,Mesh::isDim<1,MeshType>> ::
+getNeighbourNodeIndex(int nodeIndex, Mesh::face_t face)
+{
+  if (face > Mesh::face0Plus)
+    return -1;
+
+  const int nNodesPerElement = FunctionSpaceBaseDim<1,BasisFunctionType>::nNodesPerElement();
+
+  switch(face)
+  {
+  case Mesh::face0Minus:    // left
+    return nodeIndex-1;
+
+  case Mesh::face0Plus:     // right
+    if (nodeIndex == nNodesPerElement-1)
+      return -1;
+    return nodeIndex+1;
+
+  default:
+    assert(false);
+    break;
+  }
+}
+
+//! get the neighbouring elemental node index in given direction inside one element or -1 if there is no such node in the element in that direction
+template<typename MeshType,typename BasisFunctionType>
+int FunctionSpaceFaces<MeshType,BasisFunctionType,Mesh::isDim<2,MeshType>> ::
+getNeighbourNodeIndex(int nodeIndex, Mesh::face_t face)
+{
+  if (face > Mesh::face1Plus)
+    return -1;
+
+  //   1+
+  //   _
+  //0-|_|0+
+  //   1-
+  //
+  const int nNodesPerElement1D = FunctionSpaceBaseDim<1,BasisFunctionType>::nNodesPerElement();
+
+  int nodeIndexX = nodeIndex % nNodesPerElement1D;
+  int nodeIndexY = nodeIndex / nNodesPerElement1D;
+
+  switch(face)
+  {
+  case Mesh::face0Minus:    // left
+
+    if (nodeIndexX == 0)
+      return -1;
+
+    return nodeIndexY * nNodesPerElement1D + (nodeIndexX - 1);
+
+  case Mesh::face0Plus:     // right
+
+    if (nodeIndexX == nNodesPerElement1D-1)
+      return -1;
+
+    return nodeIndexY * nNodesPerElement1D + (nodeIndexX + 1);
+
+  case Mesh::face1Minus:    // front
+
+    if (nodeIndexY == 0)
+      return -1;
+
+    return (nodeIndexY-1) * nNodesPerElement1D + nodeIndexX;
+
+  case Mesh::face1Plus:     // back
+
+    if (nodeIndexY == nNodesPerElement1D-1)
+      return -1;
+
+    return (nodeIndexY+1) * nNodesPerElement1D + nodeIndexX;
+
+  default:
+    assert(false);
+    break;
+  }
+}
+
+//! get the neighbouring elemental node index in given direction inside one element or -1 if there is no such node in the element in that direction
+template<typename MeshType,typename BasisFunctionType>
+int FunctionSpaceFaces<MeshType,BasisFunctionType,Mesh::isDim<3,MeshType>> ::
+getNeighbourNodeIndex(int nodeIndex, Mesh::face_t face)
+{
+  // bottom layer
+  //   1+
+  //   _
+  //0-|_|0+  (2-)
+  //   1-
+  // ------------
+  // top layer
+  //   1+
+  //   _
+  //0-|_|0+  (2+)
+  //   1-
+  //
+  const int nNodesPerElement2D = FunctionSpaceBaseDim<2,BasisFunctionType>::nNodesPerElement();
+  const int nNodesPerElement1D = FunctionSpaceBaseDim<1,BasisFunctionType>::nNodesPerElement();
+  int nodeIndexX = nodeIndex % nNodesPerElement1D;
+  int nodeIndexY = (nodeIndex % nNodesPerElement2D) / nNodesPerElement1D;
+  int nodeIndexZ = nodeIndex / nNodesPerElement2D;
+
+  switch(face)
+  {
+  case Mesh::face0Minus:    // left
+
+    if (nodeIndexX == 0)
+      return -1;
+
+    return nodeIndexZ * nNodesPerElement2D + nodeIndexY * nNodesPerElement1D + (nodeIndexX - 1);
+
+  case Mesh::face0Plus:     // right
+
+    if (nodeIndexX == nNodesPerElement1D-1)
+      return -1;
+
+    return nodeIndexZ * nNodesPerElement2D + nodeIndexY * nNodesPerElement1D + (nodeIndexX + 1);
+
+  case Mesh::face1Minus:    // front
+
+    if (nodeIndexY == 0)
+      return -1;
+
+    return nodeIndexZ * nNodesPerElement2D + (nodeIndexY - 1) * nNodesPerElement1D + nodeIndexX;
+
+  case Mesh::face1Plus:     // back
+
+    if (nodeIndexY == nNodesPerElement1D-1)
+      return -1;
+
+    return nodeIndexZ * nNodesPerElement2D + (nodeIndexY + 1) * nNodesPerElement1D + nodeIndexX;
+
+  case Mesh::face2Minus:    // bottom
+
+    if (nodeIndexZ == 0)
+      return -1;
+
+    return (nodeIndexZ - 1) * nNodesPerElement2D + nodeIndexY * nNodesPerElement1D + nodeIndexX;
+
+  case Mesh::face2Plus:     // top
+
+    if (nodeIndexZ == nNodesPerElement1D-1)
+      return -1;
+
+    return (nodeIndexZ + 1) * nNodesPerElement2D + nodeIndexY * nNodesPerElement1D + nodeIndexX;
+
+  default:
+    assert(false);
+    break;
+  }
+}
+
 } // namespace

@@ -346,6 +346,9 @@ config = {
 
 TEST(LaplaceTest, Structured2DLinearParallelWithMultipleInstances)
 {
+  LOG(INFO) << "wait 1 s";
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));  // pause execution, such that output files can be closed
+
   std::string pythonConfig = R"(
 # Laplace 2D, 3 x 2 (=6) elements, 4 x 3 (=12) nodes
 
@@ -408,6 +411,9 @@ config = {
 // 2D structured deformable
 TEST(LaplaceTest, SerialEqualsParallelRegular2DLinear)
 {
+  LOG(INFO) << "wait 1 s";
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));  // pause execution, such that output files can be closed
+
   // run serial problem
   std::string pythonConfig = R"(
 # Laplace 2D, 3 x 2 (=6) elements, 4 x 3 (=12) nodes
@@ -1131,6 +1137,9 @@ config = {
 
 TEST(LaplaceTest, SerialEqualsParallelDeformable2DHermite)
 {
+  LOG(INFO) << "wait 1 s";
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));  // pause execution, such that output files can be closed
+
   // run serial problem
   std::string pythonConfig = R"(
 import numpy as np
@@ -1351,6 +1360,9 @@ config = {
 // 3D structured deformable
 TEST(LaplaceTest, SerialEqualsParallelDeformable3DLinear)
 {
+  LOG(INFO) << "wait 1 s";
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));  // pause execution, such that output files can be closed
+
   // run serial problem
   std::string pythonConfig = R"(
 # Laplace 3D
@@ -1476,6 +1488,9 @@ config = {
 
 TEST(LaplaceTest, SerialEqualsParallelDeformable3DQuadratic)
 {
+  LOG(INFO) << "wait 1 s";
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));  // pause execution, such that output files can be closed
+
   // run serial problem
   std::string pythonConfig = R"(
 # Laplace 3D
@@ -1695,6 +1710,9 @@ config = {
 // Test does not converge and gives slightly different results
 TEST(LaplaceTest, SerialEqualsParallelDeformable3DHermite)
 {
+  LOG(INFO) << "wait 1 s";
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));  // pause execution, such that output files can be closed
+
   // run serial problem
   std::string pythonConfig = R"(
 # Laplace 3D
@@ -1814,6 +1832,9 @@ config = {
 // 3D structured regular fixed
 TEST(LaplaceTest, SerialEqualsParallelRegular3DLinear)
 {
+  LOG(INFO) << "wait 1 s";
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));  // pause execution, such that output files can be closed
+
   // run serial problem
   std::string pythonConfig = R"(
 # Laplace 3D
@@ -1935,6 +1956,9 @@ config = {
 
 TEST(LaplaceTest, SerialEqualsParallelRegular3DQuadratic)
 {
+  LOG(INFO) << "wait 1 s";
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));  // pause execution, such that output files can be closed
+
   // run serial problem
   std::string pythonConfig = R"(
 # Laplace 3D
@@ -2154,6 +2178,9 @@ config = {
 // Test does sometimes not converge and gives slightly different solutions
 TEST(LaplaceTest, SerialEqualsParallelRegular3DHermite)
 {
+  LOG(INFO) << "wait 1 s";
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));  // pause execution, such that output files can be closed
+
   // run serial problem
   std::string pythonConfig = R"(
 # Laplace 3D

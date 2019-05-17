@@ -74,6 +74,7 @@ traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool stre
     exchangeBorderSeedPointsBeforeTracing(nRanksZ, rankZNo, streamlineDirectionUpwards, seedPoints);
 
     LOG(DEBUG) << " on " << nRanksZ << " ranks in Z direction, trace " << nStreamlines << " streamlines, streamlineDirectionUpwards: " << streamlineDirectionUpwards;
+    LOG(DEBUG) << " There are " << seedPoints.size() << " seed points: " << seedPoints;
 
 #ifndef NDEBUG
 #ifdef STL_OUTPUT

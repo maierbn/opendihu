@@ -71,6 +71,9 @@ fixIncompleteStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,4>
     }
   }
   LOG(DEBUG) << "n invalid: " << nInvalid;
+
+  if (nInvalid > 0)
+    LOG(ERROR) << "There are " << nInvalid << " streamlines! Level " << level_;
 #endif
 }
 

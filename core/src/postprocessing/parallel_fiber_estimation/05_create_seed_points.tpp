@@ -18,6 +18,8 @@ createSeedPoints(const std::array<bool,4> &subdomainIsAtBorder, int seedPointsZI
 
   LOG(DEBUG) << "createSeedPoints, seedPointsZIndex: " << seedPointsZIndex << ", subdomainIsAtBorder: " << std::boolalpha << subdomainIsAtBorder;
 
+  std::vector<std::array<int,2>> seedPointPositionDebug;
+
   int subdomainNNodesX = nBorderPointsXNew_;
   int subdomainNNodesY = nBorderPointsXNew_;
 
@@ -41,12 +43,15 @@ createSeedPoints(const std::array<bool,4> &subdomainIsAtBorder, int seedPointsZI
   if (subdomainIsAtBorder[(int)Mesh::face_t::face0Plus])
     iEndHorizontal -= 1;
 
+  LOG(DEBUG) << "seedPoints: starting with faces";
+
   // face0Minus
   if (!subdomainIsAtBorder[(int)Mesh::face_t::face0Minus])
   {
     for (int i = iBeginVertical; i < iEndVertical; i++)
     {
       seedPoints.push_back(nodePositions[seedPointsZIndex*subdomainNNodesX*subdomainNNodesY + i*subdomainNNodesX + 0]);
+      seedPointPositionDebug.push_back(std::array<int,2>({0,i}));
     }
   }
 
@@ -56,6 +61,7 @@ createSeedPoints(const std::array<bool,4> &subdomainIsAtBorder, int seedPointsZI
     for (int i = iBeginVertical; i < iEndVertical; i++)
     {
       seedPoints.push_back(nodePositions[seedPointsZIndex*subdomainNNodesX*subdomainNNodesY + i*subdomainNNodesX + (subdomainNNodesX-1)]);
+      seedPointPositionDebug.push_back(std::array<int,2>({subdomainNNodesX-1,i}));
     }
   }
 
@@ -65,6 +71,7 @@ createSeedPoints(const std::array<bool,4> &subdomainIsAtBorder, int seedPointsZI
     for (int i = iBeginHorizontal; i < iEndHorizontal; i++)
     {
       seedPoints.push_back(nodePositions[seedPointsZIndex*subdomainNNodesX*subdomainNNodesY + i]);
+      seedPointPositionDebug.push_back(std::array<int,2>({i,0}));
     }
   }
 
@@ -74,6 +81,7 @@ createSeedPoints(const std::array<bool,4> &subdomainIsAtBorder, int seedPointsZI
     for (int i = iBeginHorizontal; i < iEndHorizontal; i++)
     {
       seedPoints.push_back(nodePositions[seedPointsZIndex*subdomainNNodesX*subdomainNNodesY + (subdomainNNodesY-1)*subdomainNNodesX + i]);
+      seedPointPositionDebug.push_back(std::array<int,2>({i,subdomainNNodesY-1}));
     }
   }
 
@@ -84,6 +92,7 @@ createSeedPoints(const std::array<bool,4> &subdomainIsAtBorder, int seedPointsZI
   for (int i = iBeginHorizontal; i < iEndHorizontal; i++)
   {
     seedPoints.push_back(nodePositions[seedPointsZIndex*subdomainNNodesX*subdomainNNodesY + int(subdomainNNodesY/2)*subdomainNNodesX + i]);
+    seedPointPositionDebug.push_back(std::array<int,2>({i,int(subdomainNNodesY/2)}));
   }
 
   LOG(DEBUG) << "seedPoints: starting with vertical center line, streamlineIndex = " << seedPoints.size();
@@ -92,6 +101,7 @@ createSeedPoints(const std::array<bool,4> &subdomainIsAtBorder, int seedPointsZI
   for (int i = iBeginVertical; i < iEndVertical; i++)
   {
     seedPoints.push_back(nodePositions[seedPointsZIndex*subdomainNNodesX*subdomainNNodesY + i*subdomainNNodesX + int(subdomainNNodesX/2)]);
+    seedPointPositionDebug.push_back(std::array<int,2>({int(subdomainNNodesX/2),i}));
   }
 
   LOG(DEBUG) << "seedPoints: end, streamlineIndex = " << seedPoints.size();
@@ -120,9 +130,18 @@ createSeedPoints(const std::array<bool,4> &subdomainIsAtBorder, int seedPointsZI
     LOG(DEBUG) << "(i,j) = " << i << "," << j << ", index: " << seedPointsZIndex*subdomainNNodesX*subdomainNNodesY + j*subdomainNNodesX + i
       << ", size of nodePositions: " << nodePositions.size();
     seedPoints.push_back(nodePositions[seedPointsZIndex*subdomainNNodesX*subdomainNNodesY + j*subdomainNNodesX + i]);
+    seedPointPositionDebug.push_back(std::array<int,2>({i,j}));
   }
+
   LOG(DEBUG) << "seedPoints: after cornerStreamlines, streamlineIndex = " << seedPoints.size();
 
+#ifndef NDEBUG
+  LOG(DEBUG) << "seed point positions: ";
+  for (int i = 0; i < seedPointPositionDebug.size(); i++)
+  {
+    LOG(DEBUG) << "  " << i << ": " << seedPointPositionDebug[i];
+  }
+#endif
 }
 
 } // namespace

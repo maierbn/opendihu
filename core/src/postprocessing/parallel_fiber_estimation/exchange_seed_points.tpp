@@ -62,6 +62,109 @@ exchangeBorderSeedPoints(int nRanksZ, int rankZNo, bool streamlineDirectionUpwar
 
 template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
+exchangeBorderSeedPointsBeforeTracing(int nRanksZ, int rankZNo, bool streamlineDirectionUpwards, std::vector<Vec3> &seedPoints)
+{
+  // determine if previously set seedPoints are used or if they are received from neighbouring rank
+  LOG(DEBUG) << "exchangeBorderSeedPointsBeforeTracing, rankZNo: " << rankZNo
+    << ", streamlineDirectionUpwards: " << streamlineDirectionUpwards << ", int(nRanksZ/2): " << int(nRanksZ/2) << ", n seed points: " << seedPoints.size();
+
+  if (nRanksZ == 1)
+    return;
+
+  if (rankZNo != int(nRanksZ/2))
+  {
+    int neighbourRankNo;
+    if (streamlineDirectionUpwards)
+    {
+      neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_t::face2Minus);
+    }
+    else
+    {
+      neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_t::face2Plus);
+    }
+
+    // receive seed points
+    int tag = currentRankSubset_->ownRankNo()*100 + neighbourRankNo*10000 + level_*10 + 7;
+    if (rankZNo == int(nRanksZ/2)-1)
+    {
+      tag = currentRankSubset_->ownRankNo()*100 + neighbourRankNo*10000 + level_*10 + 6;
+    }
+
+    LOG(DEBUG) << "receive " << seedPoints.size()*3 << " seed point values (" << seedPoints.size() << " seed points) from rank " << neighbourRankNo << " (tag: " << tag << ")";
+    std::vector<double> receiveBuffer(seedPoints.size()*3);
+    MPIUtility::handleReturnValue(MPI_Recv(receiveBuffer.data(), receiveBuffer.size(), MPI_DOUBLE, neighbourRankNo,
+                                           tag, currentRankSubset_->mpiCommunicator(), MPI_STATUS_IGNORE), "MPI_Recv");
+
+    // fill seed points from receive buffer
+    for (int seedPointIndex = 0; seedPointIndex < seedPoints.size(); seedPointIndex++)
+    {
+      for (int i = 0; i < 3; i++)
+      {
+        seedPoints[seedPointIndex][i] = receiveBuffer[seedPointIndex*3 + i];
+      }
+      LOG(DEBUG) << "received seed point " << seedPointIndex << ":" << seedPoints[seedPointIndex];
+    }
+    //LOG(DEBUG) << "received " << seedPoints.size() << " seed points from rank " << neighbourRankNo << ": " << seedPoints;
+  }
+}
+
+template<typename BasisFunctionType>
+void ParallelFiberEstimation<BasisFunctionType>::
+exchangeBorderSeedPointsAfterTracing(int nRanksZ, int rankZNo, bool streamlineDirectionUpwards, std::vector<std::vector<Vec3>> &streamlinePoints)
+{
+  LOG(DEBUG) << "exchangeBorderSeedPointsAfterTracing, nRanksZ: " << nRanksZ << ", rankZNo: " << rankZNo << ", streamlineDirectionUpwards: " << streamlineDirectionUpwards
+    << ", ownRankPartitioningIndex_: " << this->meshPartition_->ownRankPartitioningIndex(0) << "," << this->meshPartition_->ownRankPartitioningIndex(1) << "," << this->meshPartition_->ownRankPartitioningIndex(2);
+
+  if (nRanksZ == 1)
+    return;
+
+  // this assumes the streamline always goes from bottom to top
+
+  // send end points of streamlines to next rank that continues the streamline
+  if (nRanksZ > 1 && rankZNo != nRanksZ-1 && rankZNo != 0)
+  {
+
+    int neighbourRankNo;
+    if (streamlineDirectionUpwards)
+    {
+      neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_t::face2Plus);
+    }
+    else
+    {
+      neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_t::face2Minus);
+    }
+
+    // fill send buffer
+    const int nSeedPoints = streamlinePoints.size();
+    std::vector<double> sendBuffer(nSeedPoints*3);
+    for (int streamlineIndex = 0; streamlineIndex < nSeedPoints; streamlineIndex++)
+    {
+      int streamlinePointNo = 0;
+
+      // if the streamline is going upwards, the next seed point is the upper most, i.e. the last, otherwise it is the first
+      if (streamlineDirectionUpwards)
+      {
+        streamlinePointNo = streamlinePoints[streamlineIndex].size();
+      }
+
+      for (int i = 0; i < 3; i++)
+      {
+        sendBuffer[streamlineIndex*3+i] = streamlinePoints[streamlineIndex][streamlinePointNo][i];
+      }
+    }
+
+    int tag = currentRankSubset_->ownRankNo()*10000 + neighbourRankNo*100 + level_*10 + 7;
+    LOG(DEBUG) << "send " << sendBuffer.size() << " seed point values (" << nSeedPoints << " seed points) to " << neighbourRankNo << ", tag: " << tag
+      << ", sendBuffer: " << sendBuffer;
+
+    // send end points of streamlines
+    MPIUtility::handleReturnValue(MPI_Send(sendBuffer.data(), sendBuffer.size(), MPI_DOUBLE, neighbourRankNo,
+                                          tag, currentRankSubset_->mpiCommunicator()), "MPI_Send");
+  }
+}
+
+template<typename BasisFunctionType>
+void ParallelFiberEstimation<BasisFunctionType>::
 exchangeSeedPointsBeforeTracingKeyFibers(int nRanksZ, int rankZNo, bool streamlineDirectionUpwards, std::vector<Vec3> &seedPoints)
 {
   // determine if previously set seedPoints are used or if they are received from neighbouring rank

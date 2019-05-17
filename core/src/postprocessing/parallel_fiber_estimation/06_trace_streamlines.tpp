@@ -70,6 +70,9 @@ traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool stre
     // determine if previously set seedPoints are used or if they are received from neighbouring rank, receive seed points or send them to lower neighbour, if own rank is int(nRanksZ/2)
     exchangeBorderSeedPoints(nRanksZ, rankZNo, streamlineDirectionUpwards, seedPoints);
 
+    // receive seed points from neighbouring rank
+    exchangeBorderSeedPointsBeforeTracing(nRanksZ, rankZNo, streamlineDirectionUpwards, seedPoints);
+
     LOG(DEBUG) << " on " << nRanksZ << " ranks in Z direction, trace " << nStreamlines << " streamlines, streamlineDirectionUpwards: " << streamlineDirectionUpwards;
 
 #ifndef NDEBUG
@@ -141,6 +144,12 @@ traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool stre
         //LOG(DEBUG) << streamlineIndex << " after: " << streamlinePoints[streamlineIndex];
       }
     }
+
+    LOG(DEBUG) << "call exchangeSeedPointsAfterTracing with " << seedPoints.size() << " seed points from traceStreamlines";
+
+    // send end points of streamlines to next rank that continues the streamline
+    exchangeBorderSeedPointsAfterTracing(nRanksZ, rankZNo, streamlineDirectionUpwards, streamlinePoints);
+
   }
 
   //MPI_Barrier(currentRankSubset_->mpiCommunicator());

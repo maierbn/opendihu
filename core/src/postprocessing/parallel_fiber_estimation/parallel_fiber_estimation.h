@@ -98,6 +98,12 @@ protected:
   //! send end points of streamlines to next rank that continues the streamline, only iterate over key fibers
   void exchangeSeedPointsAfterTracingKeyFibers(int nRanksZ, int rankZNo, bool streamlineDirectionUpwards, int nFibersX, std::vector<Vec3> &seedPoints, std::vector<std::vector<Vec3>> &fibers);
   
+  //! receive border seed points
+  void exchangeBorderSeedPointsBeforeTracing(int nRanksZ, int rankZNo, bool streamlineDirectionUpwards, std::vector<Vec3> &seedPoints);
+
+  //! send border seed points as the end of the streamlines
+  void exchangeBorderSeedPointsAfterTracing(int nRanksZ, int rankZNo, bool streamlineDirectionUpwards, std::vector<std::vector<Vec3>> &streamlinePoints);
+
   //! sample the streamlines at equidistant z points, if the streamline does not run from bottom to top, only add seedPoint
   void sampleAtEquidistantZPoints(std::vector<std::vector<Vec3>> &streamlinePoints, const std::vector<Vec3> &seedPoints, std::vector<std::vector<Vec3>> &streamlineZPoints);
 

@@ -626,7 +626,8 @@ double estimateMaximumEigenvalue(const Tensor2<3> &matrix)
   double normVPrevious = 0;
   double normV = 1;
 
-  for (int i = 0; i < 10 || fabs(normVPrevious - normV) < 1e-12; i++)
+  // power iteration
+  for (int i = 0; i < 15 && fabs(normVPrevious - normV) >= 1e-5; i++)
   {
     normVPrevious = normV;
 
@@ -635,6 +636,8 @@ double estimateMaximumEigenvalue(const Tensor2<3> &matrix)
     // normalize vector
     normV = norm<3>(v);
     v /= normV;
+
+    VLOG(1) << " eigenvalue estimation, it " << i << ", v: " << v << ", value: " << normV << ", error: " << fabs(normVPrevious - normV);
   }
 
   return normV;

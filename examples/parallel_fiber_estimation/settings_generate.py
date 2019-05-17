@@ -19,8 +19,10 @@ bc = {}
 config = {
   "Solvers": {
     "linearSolver": {
-      "relativeTolerance": 1e-12,
-      "maxIterations": 500000,
+      "relativeTolerance": 1e-4,
+      "maxIterations": 1e3,
+      "solverType": "gmres",
+      "preconditionerType": "sor"
     }
   },
   "ParallelFiberEstimation" : {
@@ -35,7 +37,7 @@ config = {
     "nElementsZPerSubdomain": 50,         # number of elements in z-direction per subdomain
     "nFineGridFibers": 0,                 # number of additional fine fibers that are interpolated between the main "key" fibers, the key fibers are traced
     "useGradientField": False,            # set to False
-    "maxLevel": 0,                        # maximum level (0=1 process, 1=8 processes, 2=64 processes)
+    "maxLevel": 1,                        # maximum level (0=1 process, 1=8 processes, 2=64 processes)
     "lineStepWidth":  0.1,                # line width for tracing of fibers
     "nNodesPerFiber": (220.-72.) / 0.1,   # number of nodes in each final fiber
     "improveMesh": True,                  # smooth the 2D meshes, required for bigger meshes or larger amount of ranks

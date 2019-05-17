@@ -333,6 +333,23 @@ getValue(int componentNo, node_no_t dofLocalNo) const
   return result;
 }
 
+//! get a single value from local dof no. for all components
+template<typename FunctionSpaceType, int nComponents>
+std::array<double,nComponents> FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
+getValue(node_no_t dofLocalNo) const
+{
+  assert(this->values_);
+
+  PetscInt index = dofLocalNo;
+
+  std::array<double,nComponents> result;
+  for (int componentNo = 0; componentNo < nComponents; componentNo++)
+  {
+    this->values_->getValues(componentNo, 1, &index, &result[componentNo]);
+  }
+  return result;
+}
+
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 extractComponentCopy(int componentNo, std::shared_ptr<FieldVariable<FunctionSpaceType,1>> extractedFieldVariable)

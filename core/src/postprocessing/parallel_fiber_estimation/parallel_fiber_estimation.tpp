@@ -9,12 +9,12 @@
 #include "spatial_discretization/boundary_conditions/dirichlet_boundary_conditions.h"
 
 // write or load various checkpoints, this is for debugging to only run part of the algorithm on prescribed data
-//#define USE_CHECKPOINT_BORDER_POINTS
-//#define USE_CHECKPOINT_MESH
+#define USE_CHECKPOINT_BORDER_POINTS
+#define USE_CHECKPOINT_MESH
 //#define WRITE_CHECKPOINT_MESH
 //#define WRITE_CHECKPOINT_BORDER_POINTS
 //#define WRITE_CHECKPOINT_GHOST_MESH
-//#define USE_CHECKPOINT_GHOST_MESH
+#define USE_CHECKPOINT_GHOST_MESH
 
 // output STl files for debugging
 #define STL_OUTPUT                // output some stl files
@@ -493,8 +493,8 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     LOG(DEBUG) << "n dofs local without ghosts: " << this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts();
     LOG(DEBUG) << "nElementsPerCoordinateDirectionLocal: " << nElementsPerCoordinateDirectionLocal;
 
-    std::array<int,3> refinementFactors({2,2,2});
-    this->functionSpace_->refineMesh(refinementFactors);
+    //std::array<int,3> refinementFactors({2,2,2});
+    //this->functionSpace_->refineMesh(refinementFactors);
 
     LOG(DEBUG) << "after refinement: ";
     LOG(DEBUG) << "n dofs local without ghosts: " << this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts();
@@ -565,7 +565,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     problem_->run();
 
     // compute a gradient field from the solution
-    problem_->data().solution()->computeGradientField(data_.gradient());
+    problem_->data().solution()->computeGradientField(data_.gradient(), data_.jacobianConditionNumber());
 
     data_.gradient()->setRepresentationGlobal();
 

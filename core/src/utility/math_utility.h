@@ -111,7 +111,7 @@ void readPoint(T &file, Vec3 &point);
 template<typename T>
 void writePoint(T &file, Vec3 &point);
 
-//! estimate the maximum eigenvalue of the matrix
+//! estimate the maximum eigenvalue of the matrix by using the power iteration / von Mises iteration algorithm, the algorithm is stopped after 15 iterations
 double estimateMaximumEigenvalue(const Tensor2<3> &matrix);
 
 //! estimate the condition number |sigma_max/sigma_min| of the matrix

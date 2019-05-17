@@ -27,7 +27,7 @@ public:
   //! inherited constructor
   using FieldVariableComponents<FunctionSpaceType,nComponents_>::FieldVariableComponents;
 
-  //! contructor as data copy with a different name (component names are the same)
+  //! contructor as data copy with a different name (component names are the same), note, it is not possible to make rhs const, because VecCopy needs globalValues() and this may change rhs
   FieldVariableDataStructured(FieldVariable<FunctionSpaceType,nComponents_> &rhs, std::string name);
 
   //! contructor as data copy with a different name and different components

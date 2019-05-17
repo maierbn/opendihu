@@ -24,7 +24,7 @@ FieldVariableDataStructured(FieldVariable<FunctionSpaceType,nComponents> &rhs, s
   FieldVariableComponents<FunctionSpaceType,nComponents>::FieldVariableComponents()
 {
   // initialize everything from other field variable
-  this->componentNames_.resize(rhs.componentNames().size());
+  //this->componentNames_.resize(rhs.componentNames().size());
   std::copy(rhs.componentNames().begin(), rhs.componentNames().end(), this->componentNames_.begin());
   
   this->name_ = name;

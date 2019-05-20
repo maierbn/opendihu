@@ -6,7 +6,7 @@
 import sys
 
 end_time = 5.0   # [ms] end time of simulation
-n_elements = 20
+n_elements = 10
 
 # global parameters
 PMax = 7.3              # maximum stress [N/cm^2]
@@ -232,13 +232,14 @@ config = {
         },
         
         "OutputWriter" : [
-          #{"format": "PythonFile", "outputInterval": 1e4, "filename": "out/states", "binary": True, "onlyNodalValues": True},
+          {"format": "PythonFile", "outputInterval": 1, "filename": "out/states", "binary": False, "onlyNodalValues": True},
+          #{"format": "PythonFile", "outputInterval": int(1./dt_0D*output_timestep), "filename": "out/states", "binary": True, "onlyNodalValues": True},
         ],
       },
     },
     "Term2": {     # Diffusion
       "ImplicitEuler" : {
-        "initialValues": [],
+        "initialValues": [-75,-75,-75,-75,-75,-75,-75,-75,-75,-75,-75],
         "timeStepWidth": dt_1D,
         "timeStepOutputInterval": 1,
         "logTimeStepWidthAsKey": "dt_1D",
@@ -252,8 +253,8 @@ config = {
           "solverName": "implicitSolver",
         },
         "OutputWriter" : [
-          {"format": "PythonFile", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/godunov", "binary": False, "onlyNodalValues": False},
-#          {"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/godunov", "binary": True, "fixedFormat": False, "combineFiles": True},
+          {"format": "PythonFile", "outputInterval": 1, "filename": "out/godunov", "binary": False, "onlyNodalValues": False},
+          #{"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/godunov", "binary": True, "fixedFormat": False, "combineFiles": True},
           #{"format": "ExFile", "filename": "out/fibre", "outputInterval": 1e5, "sphereSize": "0.02*0.02*0.02"},
         ],
       },

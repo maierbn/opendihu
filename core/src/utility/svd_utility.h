@@ -15,7 +15,8 @@ class SvdUtility
 {
 
  public:
-  static vector<double> getSVD(vector<double> aData, int m, int n);
+  
+  static void getSVD(double input[], int rows, int cols, double leftSingVec[]);
 
   static void getSVD(double input[], int rows, int cols, double leftSingVec[], double sigma[], double rightSingVecT[]);
 
@@ -31,7 +32,7 @@ class SvdUtility
 
   static void writeCSV(string filename, vector<double> values, int m, int n);
   
-  static void writeCSV(string filename, double values[], int m, int n);
+  static void writeCSV(string filename, double values[], int m, int n, bool columnWise = false);
   
   static int getCSVRowCount(string filename);
 

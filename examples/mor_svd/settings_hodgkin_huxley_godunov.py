@@ -238,7 +238,7 @@ config = {
     },
     "Term2": {     # Diffusion
       "ImplicitEuler" : {
-        "initialValues": [],
+        "initialValues": [-75,-75,-75,-75,-75,-75,-75,-75,-75,-75,-75],
         "timeStepWidth": dt_1D,
         "timeStepOutputInterval": 1,
         "logTimeStepWidthAsKey": "dt_1D",

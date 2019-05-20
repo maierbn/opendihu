@@ -13,7 +13,7 @@ cd build_${variant}
 rm -rf out
 
 ./hodgkin_huxley_godunov ../settings_hodgkin_huxley_godunov.py
-python ../scripts/check_results.py ../build_${variant}/out/
+python ../scripts/snapshots.py --path ./out/
 ./svdexample 
 
 cd $workdir

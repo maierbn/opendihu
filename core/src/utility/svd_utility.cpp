@@ -10,53 +10,18 @@
 
 using namespace std;
 
-// applies SVD and returns V transposed
-// m columns and n rows
-std::vector<double> SvdUtility::getSVD(vector<double> aData, int m, int n)
+// takes real matrix input (rows x cols) as double[] in column major order
+// performs singular-value decomposition on input utilizing LAPACKE_dgesvd
+// stores the left-singular vectors (column-wise leftSingularVectors)
+void SvdUtility::getSVD(double input[], int rows, int cols, double leftSingVec[])
 {
-  /*
-  * lda = ldu = length(column)
-  * ldvt= length(row)
-  * s = singular values
-  * superb = array to store intermediate results
-  * a = matrix which we want to decomposite as 1D-array
-  *
-  * */
- 
- 
- 
-  double* a = new double[aData.size()];
-  copy(aData.begin(), aData.end(), a);
-  // Spalten    Zeilen
-  // int m = 6, n = 5;
+  int min = std::min(cols, rows);
+  double* singVal = new double[min];
+  double* superb = new double[min];  
+  double* rightSingVecT = new double[min*cols];
   
-  /* double a[m*n] = {
-      8.79,  6.11, -9.15,  9.57, -3.49,  9.84,
-      9.93,  6.91, -7.93,  1.64,  4.02,  0.15,
-      9.83,  5.04,  4.86,  8.83,  9.80, -8.99,
-      5.45, -0.27,  4.85,  0.74, 10.00, -6.02,
-      3.16,  7.98,  3.01,  5.80,  4.27, -5.31
-      };
-  **/
-  int lda = m, ldu = m, ldvt = n;
-  int matrix_order = LAPACK_COL_MAJOR;
-  //int matrix_order = LAPACK_ROW_MAJOR;
-  int minmn = std::min(m, n) - 1;
-  double* s = new double[n];
-  double* u = new double[ldu*m];
-  double* vt = new double[ldvt*n];
-  double* superb = new double[minmn];
+  LAPACKE_dgesvd(LAPACK_COL_MAJOR, 's', 's', rows, cols, input, rows, singVal, leftSingVec, rows, rightSingVecT, min, superb);
   
-  int info = LAPACKE_dgesvd(matrix_order, 'a', 'a', m, n, a, lda, s, u, ldu, vt, ldvt, superb);
-  
-  cout << "info: " << info << endl;
-  
-  for (int i = 0; i < ldvt*n; i++)
-  {
-    cout << vt[i] << endl;
-  }
- // ? we need the left singular vectors not the right ones
- return std::vector<double>(vt, vt + sizeof vt / sizeof vt[0]);
 }
 
 // takes real matrix input (rows x cols) as double[] in column major order
@@ -122,7 +87,7 @@ void SvdUtility::getSVD(double _Complex input[], int rows, int cols, double _Com
       }
 
     }
-}
+  }
 }
 
 void SvdUtility::reconstructSnapshots(int rows, int cols, double leftSingVec[], double sigma[], double rightSingVecT[], double output[])
@@ -157,7 +122,7 @@ void SvdUtility::printMatrix(std::string name, double input[], int rows, int col
   {
     for (int col = 1; col < cols; ++col)
     {
-      cout << " & " << input[col * rows + row];
+      cout << " & " << input[col * rows + col]; //???? col * rows + row
     }
     
     if (row < rows - 1)
@@ -227,26 +192,40 @@ void SvdUtility::writeCSV(string filename, std::vector<double> values, int m, in
   {
     for (int j = 0; j < n; j++)
     {
-      data << std::to_string(values[i*m + j]) << ",";
+      data << std::to_string(values[i*n + j]) << ",";
+      cout << std::to_string(values[i*n + j]) << ",";
     }
     data << "\n";
+    cout << endl;
   }
 data.close();
 }
 
 // writes vector cell by cell as CSV
-void SvdUtility::writeCSV(string filename, double values[], int m, int n)
+void SvdUtility::writeCSV(string filename, double values[], int m, int n, bool columnWise)
 {
   ofstream data;
   data.open(filename, ios_base::app);
-  for (int i = 0; i < m; i++)
-  {
+  
+  if(!columnWise)
+    for (int i = 0; i < m; i++)
+    {
+      for (int j = 0; j < n; j++)
+      {
+        data << std::to_string(values[i*n + j]) << ",";
+      }
+      data << "\n";
+    }
+  else
     for (int j = 0; j < n; j++)
     {
-      data << std::to_string(values[i*m + j]) << ",";
+      for (int i = 0; i < m; i++)
+      {
+        data << std::to_string(values[j*m + i]) << ",";
+      }
+      data << "\n";
     }
-    data << "\n";
-  }
+    
   data.close();
 }
 

@@ -270,6 +270,12 @@ def create_rings(input_filename, bottom_clip, top_clip, n_loops, write_output_me
   n_is_inside_2 = 0
 
   n_triangles = len(stl_mesh.points)
+  
+  # disturb values a tiny bit to avoid singularities
+  eps1 = 1.234e-9
+  eps2 = 5.432e-9
+  bottom_clip += eps1
+  top_clip -= eps2
 
   z_samples = np.linspace(bottom_clip, top_clip, n_loops)
 

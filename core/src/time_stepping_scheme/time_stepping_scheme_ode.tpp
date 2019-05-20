@@ -136,6 +136,9 @@ initialize()
     LOG(DEBUG) << "initial values were set by DiscretizableInTime";
   }
   VLOG(1) << "initial solution vector: " << *this->data_->solution();
+
+  // output initial values
+  this->outputWriterManager_.writeOutput(*this->data_, 0, 0);
   
   this->data_->print();
   

@@ -30,7 +30,7 @@ before_install:
   - docker pull maierbn/opendihu:latest
 
 script:
-  - docker run maierbn/opendihu:latest bash -c "cd opendihu && git pull && git checkout parallel_fiber_estimation && make release" 
+  - docker run maierbn/opendihu:latest bash -c "cd opendihu && git checkout parallel_fiber_estimation && git pull origin parallel_fiber_estimation && make release" 
 
 #after_failure:
 #  - tree -L 4 dependencies

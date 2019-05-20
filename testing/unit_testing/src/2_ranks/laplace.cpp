@@ -346,7 +346,7 @@ config = {
 
 TEST(LaplaceTest, Structured2DLinearParallelWithMultipleInstances)
 {
-  LOG(INFO) << "wait 1 s";
+  std::cout << "wait 1 s" << std::endl;
   std::this_thread::sleep_for(std::chrono::milliseconds(1000));  // pause execution, such that output files can be closed
 
   std::string pythonConfig = R"(
@@ -402,8 +402,9 @@ config = {
       Equation::Static::Laplace
     >
   > problem(settings);
+  LOG(INFO) << "problem created";
 
-  problem.run();
+  //problem.run();
 
   nFails += ::testing::Test::HasFailure();
 }

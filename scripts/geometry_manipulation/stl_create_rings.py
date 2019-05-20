@@ -197,7 +197,7 @@ def order_loop(loop, first_point):
       
     next_point_found = False
       
-    # iterate over points in current loop
+    # iterate over points in old loop
     for edge in loop:
       if np.allclose(current_end_point, edge[0]) and not np.allclose(previous_end_point, edge[1]):
         new_loop.append(edge[1])
@@ -226,8 +226,30 @@ def order_loop(loop, first_point):
     if not next_point_found:
       if debug: 
         print("no point found that continues loop")
-      print("Error: Loop for z={} could not be closed. Maybe there are triangles missing?".format(loop[0][2]))
-      break
+      
+      # look for closest point and use that as next one
+      minimum_distance = None
+      
+      closest_point = None
+      # iterate over points in old loop
+      for edge in loop:
+        # consider both points of current edge
+        for point in [edge[0], edge[1]]:
+          # do not allow last edge to be selected again
+          if not np.allclose(current_end_point, point) and not np.allclose(previous_end_point, point) :
+            distance = np.linalg.norm(point - current_end_point)
+            if minimum_distance is None or distance < minimum_distance:
+              minimum_distance = distance
+              closest_point = point
+          
+      new_loop.append(closest_point)
+      previous_end_point = current_end_point
+      current_end_point = closest_point
+      if debug: 
+        print("use closest point {} with a distance of {} to the current point".format(closest_point, minimum_distance))
+        
+      #print("Error: Loop for z={} could not be closed. Maybe there are triangles missing?".format(loop[0][0][2]))
+      #break
   return new_loop
       
 def create_rings(input_filename, bottom_clip, top_clip, n_loops, write_output_mesh):

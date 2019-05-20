@@ -378,5 +378,6 @@ std::ostream &operator<<(std::ostream &stream, std::shared_ptr<ISLocalToGlobalMa
 #include "partition/mesh_partition/01_mesh_partition_structured.tpp"
 #include "partition/mesh_partition/01_mesh_partition_structured_initialize.tpp"
 #include "partition/mesh_partition/01_mesh_partition_structured_get.tpp"
+#include "partition/mesh_partition/01_mesh_partition_structured_is_non_ghost.tpp"
 #include "partition/mesh_partition/01_mesh_partition_structured_coordinates.tpp"
 #include "partition/mesh_partition/01_mesh_partition_unstructured.tpp"

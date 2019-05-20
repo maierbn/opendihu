@@ -141,7 +141,7 @@ getFaceDofs(Mesh::face_t face, std::array<dof_no_t,FunctionSpaceBaseDim<2,BasisF
   const int nDofsPer1DLine = nNodesPer1DLine * nDofsPerNode;
   const int nDofsPer2DPlane = nNodesPerElement2D * nDofsPerNode;
 
-  LOG(DEBUG) << "getFaceDofs, MeshType: " << StringUtility::demangle(typeid(MeshType).name()) << ", BasisFunctionType: " << StringUtility::demangle(typeid(BasisFunctionType).name())
+  VLOG(1) << "getFaceDofs, MeshType: " << StringUtility::demangle(typeid(MeshType).name()) << ", BasisFunctionType: " << StringUtility::demangle(typeid(BasisFunctionType).name())
     << ", nDofsPer2DPlane: " << nDofsPer2DPlane;
 
   switch(face)

@@ -26,22 +26,24 @@ config = {
     }
   },
   "ParallelFiberEstimation" : {
+    #"stlFilename": "../../../testing/system_testing/tests/fibers/meshes/biceps_full.stl",   # this is the input filename
+    #"stlFilename": "../../electrophysiology/input/biceps_full.stl",   # this is the input filename
     "stlFilename": "../../electrophysiology/input/biceps_splines.stl",   # this is the input filename
     "resultFilename": "result_0x0fibers.bin",              # this is the output filename, the numbers <a>x<b> are adjusted automatically
     "bottomZClip":  72.0,                 # 82 (72), bottom z value of the muscle volume to simulate the potential flow in
-    "topZClip": 220.0,                    # 250 (220), top z value of the muscle volume
+    "topZClip": 200.0,                    # 250 (220), top z value of the muscle volume
     "finalBottomZClip":  72.0,            # 82 (72), bottom z value of the final fibers, fibers will be cropped and resampled to nNodesPerFiber between finalBottomZClip and finalTopZClip
-    "finalTopZClip": 220.0,               # 250 (220), top z value of the final fibers, fibers will be cropped and resampled to nNodesPerFiber between finalBottomZClip and finalTopZClip
+    "finalTopZClip": 250.0,               # 250 (220), top z value of the final fibers, fibers will be cropped and resampled to nNodesPerFiber between finalBottomZClip and finalTopZClip
     "useNeumannBoundaryConditions": True, # which type of boundary conditions at top and bottom should be used, Neumann or Dirichlet type  
-    "nElementsXPerSubdomain": 4,          # number of elements in x and y-direction per subdomain
+    "nElementsXPerSubdomain": 4,          # 4 number of elements in x and y-direction per subdomain
     "nElementsZPerSubdomain": 50,         # number of elements in z-direction per subdomain
     "nFineGridFibers": 0,                 # number of additional fine fibers that are interpolated between the main "key" fibers, the key fibers are traced
     "useGradientField": False,            # set to False
-    "maxLevel": 0,                        # maximum level (0=1 process, 1=8 processes, 2=64 processes)
-    "lineStepWidth":  0.1,                # line width for tracing of fibers
-    "nNodesPerFiber": (220.-72.) / 0.1,   # number of nodes in each final fiber
+    "maxLevel": 2,                        # maximum level (0=1 process, 1=8 processes, 2=64 processes)
+    "lineStepWidth":  0.01,                # line width for tracing of fibers
+    "nNodesPerFiber": (200.-72.) / 0.1,   # number of nodes in each final fiber
     "improveMesh": True,                  # smooth the 2D meshes, required for bigger meshes or larger amount of ranks
-    "refinementFactors": [2,2,2],         # factors in x,y,z direction by which the mesh should be refined prior to solving the laplace problem and tracing the streamlines
+    "refinementFactors": [3,3,5],         # [2,2,2] factors in x,y,z direction by which the mesh should be refined prior to solving the laplace problem and tracing the streamlines
     "FiniteElementMethod" : {
       "meshName": "potentialFlow",
       "solverName": "linearSolver",

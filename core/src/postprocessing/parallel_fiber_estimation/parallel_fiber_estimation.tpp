@@ -9,12 +9,12 @@
 #include "spatial_discretization/boundary_conditions/dirichlet_boundary_conditions.h"
 
 // write or load various checkpoints, this is for debugging to only run part of the algorithm on prescribed data
-#define USE_CHECKPOINT_BORDER_POINTS
-#define USE_CHECKPOINT_MESH
+//#define USE_CHECKPOINT_BORDER_POINTS
+//#define USE_CHECKPOINT_MESH
 //#define WRITE_CHECKPOINT_MESH
 //#define WRITE_CHECKPOINT_BORDER_POINTS
 //#define WRITE_CHECKPOINT_GHOST_MESH
-#define USE_CHECKPOINT_GHOST_MESH
+//#define USE_CHECKPOINT_GHOST_MESH
 
 // output STl files for debugging
 #define STL_OUTPUT                // output some stl files

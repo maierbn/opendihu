@@ -272,8 +272,8 @@ def create_rings(input_filename, bottom_clip, top_clip, n_loops, write_output_me
   n_triangles = len(stl_mesh.points)
   
   # disturb values a tiny bit to avoid singularities
-  eps1 = 1.234e-9
-  eps2 = 5.432e-9
+  eps1 = 1.234e-2
+  eps2 = 5.432e-2
   bottom_clip += eps1
   top_clip -= eps2
 

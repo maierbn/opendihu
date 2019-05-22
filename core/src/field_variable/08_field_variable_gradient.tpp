@@ -217,9 +217,39 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
         {
           LOG(DEBUG) << "dof " << dofNo << " has condition number " << conditionNumberValues[dofIndex] << ", use approximated gradient value";
 
-          Vec3 approximatedGradientValue = approximatedGradientField->getValue(dofNo);
+          // use approximated gradient
+          //Vec3 approximatedGradientValue = approximatedGradientField->getValue(dofNo);
 
-          gradientField->setValue(dofNo, approximatedGradientValue, INSERT_VALUES);
+          //gradientField->setValue(dofNo, approximatedGradientValue, INSERT_VALUES);
+
+          // use interpolation of neighbouring gradient values
+          int nodeIndex = dofIndex / this->functionSpace_->nDofsPerNode();
+          int nodeNoLocal = this->functionSpace_->getNodeNo(elementNoLocal, nodeIndex);
+
+          Vec3 gradientSum;
+          int nSummands = 0;
+
+          for (int face = (int)Mesh::face_t::face0Minus; face <= (int)Mesh::face_t::face2Plus; face++)
+          {
+            int neighbourNodeNo = this->functionSpace_->getNeighbourNodeNoLocal(nodeNoLocal, (Mesh::face_t)face);
+            if (neighbourNodeNo != -1)
+            {
+              int neighbourDofNo = neighbourNodeNo*this->functionSpace_->nDofsPerNode();
+              int jacobianConditionNumber = jacobianConditionNumberField->getValue(neighbourDofNo);
+
+              if (jacobianConditionNumber <= CONDITION_TOLERANCE)
+              {
+                gradientSum += gradientField->getValue(neighbourDofNo);
+                nSummands++;
+                LOG(DEBUG) << "  neighbour " << Mesh::getString((Mesh::face_t)face) << " has condition number "
+                  << jacobianConditionNumber << ", value " << gradientField->getValue(neighbourDofNo);
+              }
+            }
+          }
+
+          gradientSum /= nSummands;
+          gradientField->setValue(dofNo, gradientSum, INSERT_VALUES);
+          LOG(DEBUG) << nSummands << " summands, result: " << gradientSum;
         }
       }
     }

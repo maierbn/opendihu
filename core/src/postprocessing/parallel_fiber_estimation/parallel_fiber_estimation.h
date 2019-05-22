@@ -196,7 +196,7 @@ protected:
   //PyObject *functionCreateRings_;               ///< create_rings
   //PyObject *functionRingsToBorderPoints_;       ///< rings_to_border_points
   PyObject *functionCreateBorderPoints_;  ///< function that creates the initial border points of the mesh as loops
-  PyObject *functionBorderPointLoopsToList_;    ///< border_point_loops_to_list
+  //PyObject *functionBorderPointLoopsToList_;    ///< border_point_loops_to_list
   PyObject *functionOutputPoints_;              ///< output_points
   PyObject *functionOutputBorderPoints_;        ///< output_border_points
   PyObject *functionOutputGhostElements_;        ///< output_ghots_elements

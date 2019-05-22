@@ -118,14 +118,17 @@ initialize()
   functionGetStlMesh_ = PyObject_GetAttrString(moduleStlCreateRings_, "get_stl_mesh");
   assert(functionGetStlMesh_);
 
-  functionCreateRings_ = PyObject_GetAttrString(moduleStlCreateRings_, "create_rings");
-  assert(functionCreateRings_);
+  //functionCreateRings_ = PyObject_GetAttrString(moduleStlCreateRings_, "create_rings");
+  //assert(functionCreateRings_);
 
-  functionRingsToBorderPoints_ = PyObject_GetAttrString(moduleStlCreateMesh_, "rings_to_border_points");
-  assert(functionRingsToBorderPoints_);
+  //functionRingsToBorderPoints_ = PyObject_GetAttrString(moduleStlCreateMesh_, "rings_to_border_points");
+  //assert(functionRingsToBorderPoints_);
 
-  functionBorderPointLoopsToList_ = PyObject_GetAttrString(moduleStlCreateMesh_, "border_point_loops_to_list");
-  assert(functionRingsToBorderPoints_);
+  //functionBorderPointLoopsToList_ = PyObject_GetAttrString(moduleStlCreateMesh_, "border_point_loops_to_list");
+  //assert(functionBorderPointLoopsToList_);
+
+  functionCreateBorderPoints_ = PyObject_GetAttrString(moduleStlCreateRings_, "create_border_points");
+  assert(functionCreateBorderPoints_);
 
   functionOutputPoints_ = PyObject_GetAttrString(moduleStlDebugOutput_, "output_points");
   assert(functionOutputPoints_);
@@ -260,6 +263,14 @@ generateParallelMesh()
     if (DihuContext::ownRankNoCommWorld() == 0)
     {
       // run python script to generate loops for the whole volume
+
+      PyObject *borderPointsPy = PyObject_CallFunction(functionCreateBorderPoints_, "s f f i i",
+        stlFilename_.c_str(), bottomZClip_, topZClip_, nBorderPointsZ_, 4*(nBorderPointsX_-1));
+      PythonUtility::checkForError();
+      assert(borderPointsPy);
+
+      /*
+      // old implementation
       // run stl_create_rings.create_rings
       // "Create n_loops rings/loops (slices) on a closed surface, in equidistant z-values between bottom_clip and top_clip"
 
@@ -290,13 +301,15 @@ generateParallelMesh()
         assert(false);
       }
 
+
       // run stl_create_mesh.border_point_loops_to_list
       // "transform the points from numpy array to list, such that they can be extracted from the opendihu C++ code"
       PyObject* borderPointLoops = PyObject_CallFunction(functionBorderPointLoopsToList_, "O", borderPointsPy);
       PythonUtility::checkForError();
+      */
 
-      std::vector<std::vector<Vec3>> loops = PythonUtility::convertFromPython<std::vector<std::vector<Vec3>>>::get(borderPointLoops);
-      std::vector<double> lengths = PythonUtility::convertFromPython<std::vector<double>>::get(lengthsPy);
+      std::vector<std::vector<Vec3>> loops = PythonUtility::convertFromPython<std::vector<std::vector<Vec3>>>::get(borderPointsPy);
+      //std::vector<double> lengths = PythonUtility::convertFromPython<std::vector<double>>::get(lengthsPy);
       //LOG(DEBUG) << "loops: " << loops << " (size: " << loops.size() << ")" << ", lengths: " << lengths;
 
   #ifndef NDEBUG

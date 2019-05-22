@@ -27,9 +27,13 @@ def output_points(filename, rankNo, level, points, size):
     out_mesh.vectors[i] = f
   #out_mesh.update_normals()
 
-  if not os.path.exists("out/level_{}".format(level)):
-    os.makedirs("out/level_{}".format(level),0o755)
-  outfile = "out/level_{}/{}.{}.{}.stl".format(level, filename[0:2], rankNo, filename[2:])
+  if level != -1:
+    if not os.path.exists("out/level_{}".format(level)):
+      os.makedirs("out/level_{}".format(level),0o755)
+    outfile = "out/level_{}/{}.{}.{}.stl".format(level, filename[0:2], rankNo, filename[2:])
+  else:
+    outfile = "{}.stl".format(filename)
+    
   #out_mesh.save(outfile, mode=stl.Mode.ASCII)
   out_mesh.save(outfile)
   print("saved {} triangles to \"{}\"".format(len(triangles),outfile))

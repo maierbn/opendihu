@@ -193,8 +193,9 @@ protected:
   PyObject *functionCreateRingSection_;  ///< python function create_ring_section
   PyObject *functionCreateRingSectionMesh_;  ///< python function create_ring_section_mesh
   PyObject *functionGetStlMesh_;  ///< python function get_stl_mesh
-  PyObject *functionCreateRings_;               ///< create_rings
-  PyObject *functionRingsToBorderPoints_;       ///< rings_to_border_points
+  //PyObject *functionCreateRings_;               ///< create_rings
+  //PyObject *functionRingsToBorderPoints_;       ///< rings_to_border_points
+  PyObject *functionCreateBorderPoints_;  ///< function that creates the initial border points of the mesh as loops
   PyObject *functionBorderPointLoopsToList_;    ///< border_point_loops_to_list
   PyObject *functionOutputPoints_;              ///< output_points
   PyObject *functionOutputBorderPoints_;        ///< output_border_points

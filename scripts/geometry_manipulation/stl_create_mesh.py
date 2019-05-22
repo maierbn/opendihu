@@ -43,6 +43,8 @@ import scipy.optimize
 import timeit
 
 import stl_debug_output
+import stl_create_rings
+import spline_surface
 
 def triangle_contains_point(triangle, point):
   """ check if a point lies inside a triangle, 2D """

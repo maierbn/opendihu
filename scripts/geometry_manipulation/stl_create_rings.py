@@ -12,7 +12,8 @@ import copy
 import scipy.spatial
 import os
 import pickle
-import stl_create_mesh   # for standardize_loop
+import stl_create_mesh   # for standardize_loop and rings_to_border_points
+import spline_surface
 
 import stl
 from stl import mesh
@@ -260,6 +261,7 @@ def create_rings(input_filename, bottom_clip, top_clip, n_loops, write_output_me
   :param top_clip: the top z-value where to clip the muscle
   :param n_loops: number of loops/rings to extract between bottom_clip and top_clip
   :param write_output_mesh: if the result should be written to an output stl file for debugging
+  :return: a list of lists of points (one list for each level)
   """
 
   stl_mesh = mesh.Mesh.from_file(input_filename)
@@ -395,6 +397,37 @@ def create_rings(input_filename, bottom_clip, top_clip, n_loops, write_output_me
   
   return loops
 
+def create_border_points(input_filename, bottom_clip, top_clip, n_loops, n_points):
+  """ 
+  This is a top-level function that performs all the steps to create the initial border points of the whole mesh. 
+  It is called by the C++ implementation.
+  :param input_filename: filenamem of either an STL mesh or a geomdl B-spline Surface stored as pickle
+  :param bottom_clip:
+  :param top_clip:
+  """
+  
+  # if the file contains a spline curve, try to load it and call the function from spline_surface
+  if "surface.pickle" in input_filename:
+    try:
+      # check if file exists
+      if os.path.exists(input_filename):
+        print("File \"{}\" exists.".format(input_filename))
+      else:
+        print("File \"{}\" does not exist".format(input_filename))
+        
+      f = open(input_filename,"rb")
+      surface = pickle.load(f)
+      return spline_surface.create_border_points(surface, bottom_clip, top_clip, n_loops, n_points)
+    except:
+      print("Error! Could not create border points from file \"{}\".".format(input_filename))
+      quit()
+  
+  # algorithm for STL mesh
+  loops = create_rings(input_filename, bottom_clip, top_clip, n_loops, False)
+  border_points, lengths = stl_create_mesh.rings_to_border_points(loops, n_points)
+  border_points = stl_create_mesh.border_point_loops_to_list(border_points)
+  
+  return border_points
 
 def create_point_marker(point, markers, size=None):
   if size is None:
@@ -416,7 +449,6 @@ def create_point_marker(point, markers, size=None):
     [point+diag1,point+diag3,point+diag7],[point+diag1,point+diag7,point+diag5]  # right
   ]
 
-
 def get_stl_mesh(input_filename):
   """
   Get an stl mesh object from the stl file given in input_filename, for use with function create_ring_section_mesh
@@ -427,13 +459,24 @@ def create_ring_section(input_filename, start_point, end_point, z_value, n_point
   """
   Create a curve on the intersection of a horizontal plane given by z_value and the surface from the stl file.
   From nearest point to start_point to nearest point to end_point, the direction is such that the length of the curve is minimal (there are 2 possible orientations cw/ccw)
-  The direction is such that the distance of the curve
   :param input_filename: file name of an stl file that contains the closed surface mesh of the muscle, aligned with the z-axis
   :param start_point: the line starts at the point on the surface with given z_value, that is the nearest to start_point
   :param end_point: the line ends at the point on the surface with given z_value, that is the nearest to end_point
   :param z_value: the z level of the line on the surface
   :param n_points: number of points on the border
+  :return: list of points
   """
+  
+  # if the file contains a spline curve, try to load it and call the function from spline_surface
+  if "surface.pickle" in input_filename:
+    try:
+      f = open(input_filename,"rb")
+      surface = pickle.load(f)
+      return spline_surface.create_ring_section(surface, start_point, end_point, z_value, n_points)
+    except:
+      print("Error! Could not open file \"{}\" for reading spline surface.".format(input_filename))
+  
+  # else interpret the file as stl mesh and use the stl mesh algorithm
   stl_mesh = get_stl_mesh(input_filename)
   return create_ring_section_mesh(stl_mesh, start_point, end_point, z_value, n_points)
       
@@ -446,6 +489,7 @@ def create_ring_section_mesh(stl_mesh, start_point, end_point, z_value, n_points
   :param end_point: the line ends at the point on the surface with given z_value, that is the nearest to end_point
   :param z_value: the z level of the line on the surface
   :param n_points: number of points on the border
+  :return: list of points
   """
   
   print("create_ring_section, start_point={}, end_point={}, z_value={}, n_points={}".format(start_point, end_point, z_value, n_points))

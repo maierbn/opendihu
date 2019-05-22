@@ -11,11 +11,6 @@ import os
 import pickle
 import stl_debug_output
 
-import matplotlib
-from matplotlib import cm
-from mpl_toolkits.mplot3d import Axes3D
-import matplotlib.pyplot as plt
-
 import stl
 from stl import mesh
 
@@ -29,8 +24,6 @@ from geomdl import linalg
 from geomdl import operations
 from geomdl import fitting
 from geomdl import exchange
-from geomdl.visualization import VisPlotly
-from geomdl.visualization import VisMPL
 
 def get_u_by_z_value(curve, value):
   """

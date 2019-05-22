@@ -52,9 +52,6 @@ public:
   //! get the data object
   Data &data();
   
-  //! solve finite element linear system with multigrid method
-  virtual void solveMG();
-  
   //! get the residualNorm
   void getResidual(Vec *residual);
   

@@ -14,11 +14,6 @@ import pickle
 import stl_create_rings # for create_rings
 import stl_create_mesh   # for rings_to_border_points
 
-import matplotlib
-from matplotlib import cm
-from mpl_toolkits.mplot3d import Axes3D
-import matplotlib.pyplot as plt
-
 import stl
 from stl import mesh
 
@@ -32,8 +27,6 @@ from geomdl import linalg
 from geomdl import operations
 from geomdl import fitting
 from geomdl import exchange
-from geomdl.visualization import VisPlotly
-from geomdl.visualization import VisMPL
 
 # source: https://stackoverflow.com/questions/13685386/matplotlib-equal-unit-length-with-equal-aspect-ratio-z-axis-is-not-equal-to
 def set_axes_radius(ax, origin, radius):

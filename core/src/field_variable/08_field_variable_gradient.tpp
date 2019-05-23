@@ -208,39 +208,39 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
       if (conditionNumber > CONDITION_TOLERANCE)
       {
         LOG(DEBUG) << "dof " << dofNoLocal << " has condition number " << conditionNumber << ", use approximated gradient value";
-      }
 
-      Vec3 gradientSum;
-      int nSummands = 0;
+        Vec3 gradientSum;
+        int nSummands = 0;
 
-      for (int face = (int)Mesh::face_t::face0Minus; face <= (int)Mesh::face_t::face2Plus; face++)
-      {
-        int neighbourNodeNo = this->functionSpace_->getNeighbourNodeNoLocal(nodeNoLocal, (Mesh::face_t)face);
-        if (neighbourNodeNo != -1)
+        for (int face = (int)Mesh::face_t::face0Minus; face <= (int)Mesh::face_t::face2Plus; face++)
         {
-          int neighbourDofNo = neighbourNodeNo*this->functionSpace_->nDofsPerNode();
-          double neighbourJacobianConditionNumber = jacobianConditionNumberField->getValue(neighbourDofNo);
+          int neighbourNodeNo = this->functionSpace_->getNeighbourNodeNoLocal(nodeNoLocal, (Mesh::face_t)face);
+          if (neighbourNodeNo != -1)
+          {
+            int neighbourDofNo = neighbourNodeNo*this->functionSpace_->nDofsPerNode();
+            double neighbourJacobianConditionNumber = jacobianConditionNumberField->getValue(neighbourDofNo);
 
-          if (fabs(neighbourJacobianConditionNumber) <= CONDITION_TOLERANCE)
-          {
-            gradientSum += gradientField->getValue(neighbourDofNo);
-            nSummands++;
-            LOG(DEBUG) << "  neighbour " << Mesh::getString((Mesh::face_t)face) << ", node " << neighbourNodeNo
-              << ", dof " << neighbourDofNo << "  has condition number "
-              << neighbourJacobianConditionNumber << ", value " << gradientField->getValue(neighbourDofNo);
-          }
-          else
-          {
-            LOG(DEBUG) << "  neighbour " << Mesh::getString((Mesh::face_t)face) << ", node " << neighbourNodeNo
-              << ", dof " << neighbourDofNo << "  has condition number "
-              << neighbourJacobianConditionNumber << ", do not use gradient";
+            if (fabs(neighbourJacobianConditionNumber) <= CONDITION_TOLERANCE)
+            {
+              gradientSum += gradientField->getValue(neighbourDofNo);
+              nSummands++;
+              LOG(DEBUG) << "  neighbour " << Mesh::getString((Mesh::face_t)face) << ", node " << neighbourNodeNo
+                << ", dof " << neighbourDofNo << "  has condition number "
+                << neighbourJacobianConditionNumber << ", value " << gradientField->getValue(neighbourDofNo);
+            }
+            else
+            {
+              LOG(DEBUG) << "  neighbour " << Mesh::getString((Mesh::face_t)face) << ", node " << neighbourNodeNo
+                << ", dof " << neighbourDofNo << "  has condition number "
+                << neighbourJacobianConditionNumber << ", do not use gradient";
+            }
           }
         }
-      }
 
-      gradientSum /= nSummands;
-      gradientField->setValue(dofNoLocal, gradientSum, INSERT_VALUES);
-      LOG(DEBUG) << "node " << nodeNoLocal << " has " << nSummands << " summands, result: " << gradientSum;
+        gradientSum /= nSummands;
+        gradientField->setValue(dofNoLocal, gradientSum, INSERT_VALUES);
+        LOG(DEBUG) << "node " << nodeNoLocal << " has " << nSummands << " summands, result: " << gradientSum;
+      }
     }
   }
 }

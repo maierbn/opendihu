@@ -146,6 +146,19 @@ traceStreamline(Vec3 startingPoint, double direction, std::vector<Vec3> &points)
 
     points.push_back(currentPoint);
   }
+
+  if (points.empty())
+  {
+    LOG(DEBUG) << "traced streamline is completely empty";
+  }
+  else if (points.size() == 1)
+  {
+    LOG(DEBUG) << "traced streamline has 1 point: " << points[0];
+  }
+  else
+  {
+    LOG(DEBUG) << "traced streamline has " << points.size() << " points, start: " << points[0] << ", end: " << points[points.size()-1];
+  }
 }
 
 }  // namespace

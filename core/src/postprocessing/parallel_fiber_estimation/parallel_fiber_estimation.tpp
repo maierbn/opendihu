@@ -646,8 +646,12 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
       seedPointsZIndex = nBorderPointsZ_/2;
     }
 
+    LOG(DEBUG) << "createSeedPoints";
+
     // determine the seed points of the streamlines
     createSeedPoints(subdomainIsAtBorder, seedPointsZIndex, nodePositions, seedPoints);
+
+    LOG(DEBUG) << "traceStreamlines";
 
     // trace streamlines from seed points, this also exchanges the seed points
     std::vector<std::vector<Vec3>> streamlinePoints;
@@ -660,6 +664,8 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
 
     // save streamline points to the portions of the faces
     //std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> borderPointsSubdomain;  // [subdomain index][face_t][z-level][point index]
+
+    LOG(DEBUG) << "rearrangeStreamlinePoints";
 
     // assign sampled points to the data structure borderPointsSubdomain, which contains the points for each subdomain and face, as list of points for each z level
     std::array<std::array<std::vector<bool>,4>,8> borderPointsSubdomainAreValid;

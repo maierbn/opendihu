@@ -8,7 +8,7 @@
 #include "arg.h"
 #include "opendihu.h"
 #include "../utility.h"
-
+/*
 TEST(LaplaceTest, Structured1DLinear)
 {
   std::string pythonConfig = R"(
@@ -343,7 +343,7 @@ config = {
 
   nFails += ::testing::Test::HasFailure();
 }
-/*
+
 // This test succeeds everywhere except in travis CI, I don't know how to debug it.
 TEST(LaplaceTest, Structured2DLinearParallelWithMultipleInstances)
 {
@@ -540,7 +540,7 @@ config = {
 
   nFails += ::testing::Test::HasFailure();
 }
-
+/*
 TEST(LaplaceTest, SerialEqualsParallelRegular2DQuadratic)
 {
   LOG(INFO) << "wait 1 s";

@@ -10,5 +10,5 @@ jobs:
       - checkout
 
       - run:
-          command: apt-get update; apt-get upgrade; make release
+          command: apt-get update -y; apt-get upgrade -y; make release
 

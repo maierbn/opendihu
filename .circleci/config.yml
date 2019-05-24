@@ -1,0 +1,14 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: maierbn/opendihu:latest
+
+    working_directory: /opendihu/opendihu
+
+    steps:
+      - checkout
+
+      - run:
+          command: make release
+

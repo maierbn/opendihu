@@ -361,6 +361,7 @@ run()
 
   LOG(DEBUG) << "multipleInstances::run() complete, now call writeOutput, hasOutputWriters: " << this->outputWriterManager_.hasOutputWriters();
 
+  return;
   if (nInstancesLocal_ > 0)
   {
     this->outputWriterManager_.writeOutput(this->data_, instancesLocal_[0].numberTimeSteps(), instancesLocal_[0].endTime());

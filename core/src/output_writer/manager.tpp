@@ -18,32 +18,40 @@ void Manager::writeOutput(DataType &problemData, int timeStepNo, double currentT
 
   for (auto &outputWriter : this->outputWriter_)
   {
+    LOG(DEBUG) << "call write of outputWriter on file \"" << outputWriter->filenameBase() << "\"";
+
     if (std::dynamic_pointer_cast<Exfile>(outputWriter) != nullptr)
     {
+      LOG(DEBUG) << "type Exfile";
       std::shared_ptr<Exfile> writer = std::static_pointer_cast<Exfile>(outputWriter);
       writer->write<DataType>(problemData, timeStepNo, currentTime);
     }
     else if (std::dynamic_pointer_cast<Paraview>(outputWriter) != nullptr)
     {
+      LOG(DEBUG) << "type Paraview";
       std::shared_ptr<Paraview> writer = std::static_pointer_cast<Paraview>(outputWriter);
       writer->write<DataType>(problemData, timeStepNo, currentTime);
     }
     else if (std::dynamic_pointer_cast<PythonCallback>(outputWriter) != nullptr)
     {
+      LOG(DEBUG) << "type PythonCallback";
       std::shared_ptr<PythonCallback> writer = std::static_pointer_cast<PythonCallback>(outputWriter);
       writer->write<DataType>(problemData, timeStepNo, currentTime);
     }
     else if (std::dynamic_pointer_cast<PythonFile>(outputWriter) != nullptr)
     {
+      LOG(DEBUG) << "type PythonFile";
       std::shared_ptr<PythonFile> writer = std::static_pointer_cast<PythonFile>(outputWriter);
       writer->write<DataType>(problemData, timeStepNo, currentTime);
     }
     else if (std::dynamic_pointer_cast<MegaMol>(outputWriter) != nullptr)
     {
+      LOG(DEBUG) << "type MegaMol";
       std::shared_ptr<MegaMol> writer = std::static_pointer_cast<MegaMol>(outputWriter);
       writer->write<DataType>(problemData, timeStepNo, currentTime);
     }
   }
+  LOG(DEBUG) << "Manager::writeOutput finished";
 
   // stop duration measurement
   Control::PerformanceMeasurement::stop("durationWriteOutput");

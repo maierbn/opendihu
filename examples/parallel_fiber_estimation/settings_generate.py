@@ -28,8 +28,8 @@ config = {
   "ParallelFiberEstimation" : {
     #"stlFilename": "../../../testing/system_testing/tests/fibers/meshes/biceps_full.stl",   # this is the input filename
     #"stlFilename": "../../electrophysiology/input/biceps_full.stl",   # this is the input filename
-    "stlFilename": "../../electrophysiology/input/biceps_splines.stl",   # this is the input filename
-    #"stlFilename": "../../electrophysiology/input/biceps.surface.pickle",   # this is the input filename
+    #"stlFilename": "../../electrophysiology/input/biceps_splines.stl",   # this is the input filename
+    "stlFilename": "../../electrophysiology/input/biceps.surface.pickle",   # this is the input filename
     "resultFilename": "result_0x0fibers.bin",              # this is the output filename, the numbers <a>x<b> are adjusted automatically
     "bottomZClip":  72.0,                 # 82 (72), bottom z value of the muscle volume to simulate the potential flow in
     "topZClip": 200.0,                    # 250 (220), top z value of the muscle volume

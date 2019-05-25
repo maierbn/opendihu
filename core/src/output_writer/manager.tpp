@@ -14,8 +14,9 @@ template<typename DataType>
 void Manager::writeOutput(DataType &problemData, int timeStepNo, double currentTime) const
 {
   // start duration measurement
-  Control::PerformanceMeasurement::start("durationWriteOutput");
+  //Control::PerformanceMeasurement::start("durationWriteOutput");
 
+  LOG(DEBUG) << "Manager::writeOutput";
   for (auto &outputWriter : this->outputWriter_)
   {
     LOG(DEBUG) << "call write of outputWriter on file \"" << outputWriter->filenameBase() << "\"";
@@ -54,7 +55,7 @@ void Manager::writeOutput(DataType &problemData, int timeStepNo, double currentT
   LOG(DEBUG) << "Manager::writeOutput finished";
 
   // stop duration measurement
-  Control::PerformanceMeasurement::stop("durationWriteOutput");
+  //Control::PerformanceMeasurement::stop("durationWriteOutput");
 }
 
 }  // namespace

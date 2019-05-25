@@ -115,6 +115,22 @@ exchangeBorderSeedPointsAfterTracing(int nRanksZ, int rankZNo, bool streamlineDi
   LOG(DEBUG) << "exchangeBorderSeedPointsAfterTracing, nRanksZ: " << nRanksZ << ", rankZNo: " << rankZNo << ", streamlineDirectionUpwards: " << streamlineDirectionUpwards
     << ", ownRankPartitioningIndex_: " << this->meshPartition_->ownRankPartitioningIndex(0) << "," << this->meshPartition_->ownRankPartitioningIndex(1) << "," << this->meshPartition_->ownRankPartitioningIndex(2);
 
+  std::stringstream stream;
+  for (int i = 0; i < streamlinePoints.size(); i++)
+  {
+    if (i != 0)
+      stream << ",";
+    if (streamlinePoints[i].size() >= 2)
+    {
+      stream << " [" << streamlinePoints[i][0] << "," << streamlinePoints[i][streamlinePoints[i].size()-1] << "]";
+    }
+    else
+    {
+      stream << " [size: " << streamlinePoints[i].size() << "]";
+    }
+  }
+  LOG(DEBUG) << "streamlinePoints: " << stream.str();
+
   if (nRanksZ == 1)
     return;
 
@@ -144,7 +160,7 @@ exchangeBorderSeedPointsAfterTracing(int nRanksZ, int rankZNo, bool streamlineDi
       // if the streamline is going upwards, the next seed point is the upper most, i.e. the last, otherwise it is the first
       if (streamlineDirectionUpwards)
       {
-        streamlinePointNo = streamlinePoints[streamlineIndex].size();
+        streamlinePointNo = streamlinePoints[streamlineIndex].size()-1;
       }
 
       for (int i = 0; i < 3; i++)

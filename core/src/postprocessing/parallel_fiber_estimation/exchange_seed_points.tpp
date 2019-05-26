@@ -185,13 +185,21 @@ exchangeBorderSeedPointsAfterTracing(int nRanksZ, int rankZNo, bool streamlineDi
                                      const std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain,
                                      const std::array<std::vector<Vec3>,4> &cornerStreamlines)
 {
-  if (nRanksZ == 1)
-    return;
-
   // borderPointsSubdomain[subdomainIndex][face][z-level][fiberNo]
   std::vector<Vec3> seedPoints;
   extractSeedPointsFromBorderPoints(borderPointsSubdomain, cornerStreamlines, subdomainIsAtBorder,
                                     streamlineDirectionUpwards, seedPoints);
+
+#ifndef NDEBUG
+#ifdef STL_OUTPUT
+  PyObject_CallFunction(functionOutputPoints_, "s i i O f", "07_seed_points_to_send", currentRankSubset_->ownRankNo(), level_,
+                        PythonUtility::convertToPython<std::vector<Vec3>>::get(seedPoints), 0.2);
+  PythonUtility::checkForError();
+#endif
+#endif
+
+  if (nRanksZ == 1)
+    return;
 
   // send end points of streamlines to next rank that continues the streamline
   if (nRanksZ > 1 && rankZNo != nRanksZ-1 && rankZNo != 0)
@@ -226,13 +234,6 @@ exchangeBorderSeedPointsAfterTracing(int nRanksZ, int rankZNo, bool streamlineDi
     MPIUtility::handleReturnValue(MPI_Send(sendBuffer.data(), sendBuffer.size(), MPI_DOUBLE, neighbourRankNo,
                                           tag, currentRankSubset_->mpiCommunicator()), "MPI_Send");
 
-#ifndef NDEBUG
-#ifdef STL_OUTPUT
-  PyObject_CallFunction(functionOutputPoints_, "s i i O f", "07_seed_points_sent", currentRankSubset_->ownRankNo(), level_,
-                        PythonUtility::convertToPython<std::vector<Vec3>>::get(seedPoints), 0.2);
-  PythonUtility::checkForError();
-#endif
-#endif
   }
 }
 

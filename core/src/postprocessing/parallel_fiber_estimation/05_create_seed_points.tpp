@@ -234,7 +234,7 @@ extractSeedPointsFromBorderPoints(const std::array<std::array<std::vector<std::v
   {
     int subdomainIndex = (i < nBorderPointsX_-1? 1 : 2) + (streamlineDirectionUpwards? 4 : 0);
     int streamlineIndex = i % (nBorderPointsX_-1);
-    seedPoints.push_back(borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face0Plus][seedPointsZIndex][streamlineIndex]);
+    seedPoints.push_back(borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face0Minus][seedPointsZIndex][streamlineIndex]);
   }
 
   // corner streamlines

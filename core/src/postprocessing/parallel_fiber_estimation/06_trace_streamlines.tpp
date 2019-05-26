@@ -146,12 +146,6 @@ traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool stre
       }
     }
 
-    LOG(DEBUG) << "call exchangeSeedPointsAfterTracing with " << seedPoints.size()
-      << " seed points, " << streamlinePoints.size() << " streamlines from traceStreamlines";
-
-    // send end points of streamlines to next rank that continues the streamline
-    exchangeBorderSeedPointsAfterTracing(nRanksZ, rankZNo, streamlineDirectionUpwards, streamlinePoints);
-
   }
 
   //MPI_Barrier(currentRankSubset_->mpiCommunicator());

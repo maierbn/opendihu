@@ -70,7 +70,7 @@ resampleFibersInFile(int nPointsPerFiber, std::string filename)
   fileOld.read(headerBuffer.data(), 32+headerLength);
   fileNew.write(headerBuffer.data(), 32+headerLength);
 
-  // write new number of fibers
+  // write new number of points per fiber
   union
   {
     int32_t parameter;
@@ -136,7 +136,8 @@ resampleFibersInFile(int nPointsPerFiber, std::string filename)
       double alpha = (currentZ - (bottomZClip_ + oldZIndexPrevious*oldZIncrement)) / oldZIncrement;
       Vec3 newPoint = (1.-alpha) * previousPoint + alpha * nextPoint;
 
-      if (fiberIndex < 10 || fiberIndex > nFibers-10)
+      //if (fiberIndex < 10 || fiberIndex > nFibers-10)
+      if (false)
       {
         LOG(DEBUG) << "f" << fiberIndex << " z" << zIndex << "(" << currentZ << ") indices " << oldZIndexPrevious << "," << oldZIndexNext
           << ", points " << previousPoint << nextPoint << ", alpha: " << alpha << ", newPoint: " << newPoint;

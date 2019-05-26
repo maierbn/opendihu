@@ -6,7 +6,7 @@ namespace Postprocessing
 template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
 fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain,
-                 std::vector<std::vector<Vec3>> &cornerStreamlines, std::array<std::array<std::vector<bool>,4>,8> &borderPointsSubdomainAreValid,
+                 std::array<std::vector<Vec3>,4> &cornerStreamlines, std::array<std::array<std::vector<bool>,4>,8> &borderPointsSubdomainAreValid,
                  std::array<bool,4> &subdomainIsAtBorder)
 {
   LOG(DEBUG) << "fillBorderPoints";

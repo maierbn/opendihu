@@ -56,7 +56,7 @@ protected:
 
   //! take the streamlines at equidistant z points in streamlineZPoints and copy them to the array borderPointsSubdomain
   void rearrangeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain,
-                                 std::vector<std::vector<Vec3>> &cornerStreamlines, std::array<std::array<std::vector<bool>,4>,8> &borderPointsSubdomainAreValid, std::array<bool,4> &subdomainIsAtBorder);
+                                 std::array<std::vector<Vec3>,4> &cornerStreamlines, std::array<std::array<std::vector<bool>,4>,8> &borderPointsSubdomainAreValid, std::array<bool,4> &subdomainIsAtBorder);
 
   //! interpolate points for invalid streamlines
   void fixIncompleteStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain, std::array<std::array<std::vector<bool>,4>,8> &borderPointsSubdomainAreValid,
@@ -102,7 +102,15 @@ protected:
   void exchangeBorderSeedPointsBeforeTracing(int nRanksZ, int rankZNo, bool streamlineDirectionUpwards, std::vector<Vec3> &seedPoints);
 
   //! send border seed points as the end of the streamlines
-  void exchangeBorderSeedPointsAfterTracing(int nRanksZ, int rankZNo, bool streamlineDirectionUpwards, std::vector<std::vector<Vec3>> &streamlinePoints);
+  //void exchangeBorderSeedPointsAfterTracing(int nRanksZ, int rankZNo, bool streamlineDirectionUpwards, std::vector<std::vector<Vec3>> &streamlinePoints);
+
+  //! send border seed points from borderPointsSubdomain
+  void exchangeBorderSeedPointsAfterTracing(int nRanksZ, int rankZNo, bool streamlineDirectionUpwards, const std::array<bool,4> &subdomainIsAtBorder, const std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain,
+                                            const std::array<std::vector<Vec3>,4> &cornerStreamlines);
+
+  //! extract seed points for the next rank from borderPoints, at the end of the streamlines
+  void extractSeedPointsFromBorderPoints(const std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain, std::array<std::vector<Vec3>,4> cornerStreamlines, const std::array<bool,4> &subdomainIsAtBorder,
+                                  bool streamlineDirectionUpwards, std::vector<Vec3> &seedPoints);
 
   //! sample the streamlines at equidistant z points, if the streamline does not run from bottom to top, only add seedPoint
   void sampleAtEquidistantZPoints(std::vector<std::vector<Vec3>> &streamlinePoints, const std::vector<Vec3> &seedPoints, std::vector<std::vector<Vec3>> &streamlineZPoints);
@@ -116,7 +124,7 @@ protected:
 
   //! fill in missing points at the borders, where no streamlines were traced
   void fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain,
-                        std::vector<std::vector<Vec3>> &cornerStreamlines, std::array<std::array<std::vector<bool>,4>,8> &borderPointsSubdomainAreValid, std::array<bool,4> &subdomainIsAtBorder);
+                        std::array<std::vector<Vec3>,4> &cornerStreamlines, std::array<std::array<std::vector<bool>,4>,8> &borderPointsSubdomainAreValid, std::array<bool,4> &subdomainIsAtBorder);
 
   //! send border points to those ranks that will handle them in the next subdomain
   void sendBorderPoints(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain,

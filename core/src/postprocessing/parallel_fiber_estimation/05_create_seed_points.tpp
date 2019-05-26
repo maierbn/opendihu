@@ -17,6 +17,7 @@ createSeedPoints(const std::array<bool,4> &subdomainIsAtBorder, int seedPointsZI
   // +-->   1-
 
   LOG(DEBUG) << "createSeedPoints, seedPointsZIndex: " << seedPointsZIndex << ", subdomainIsAtBorder: " << std::boolalpha << subdomainIsAtBorder;
+  LOG(DEBUG) << "nBorderPointsXNew: " << nBorderPointsXNew_;
 
   std::vector<std::array<int,2>> seedPointPositionDebug;
 
@@ -142,6 +143,109 @@ createSeedPoints(const std::array<bool,4> &subdomainIsAtBorder, int seedPointsZI
     LOG(DEBUG) << "  " << i << " at " << seedPointPositionDebug[i] << ": " << seedPoints[i];
   }
 #endif
+}
+
+template<typename BasisFunctionType>
+void ParallelFiberEstimation<BasisFunctionType>::
+extractSeedPointsFromBorderPoints(const std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain, std::array<std::vector<Vec3>,4> cornerStreamlines, const std::array<bool,4> &subdomainIsAtBorder,
+                                  bool streamlineDirectionUpwards, std::vector<Vec3> &seedPoints)
+{
+  int seedPointsZIndex = 0;
+  if (streamlineDirectionUpwards)
+  {
+    seedPointsZIndex = nBorderPointsZ_-1;
+  }
+  // boundary indices for face0Minus and face0Plus (vertical direction)
+  int iBeginVertical = 0;
+  int iEndVertical = nBorderPointsXNew_;
+
+  if (subdomainIsAtBorder[(int)Mesh::face_t::face1Minus])
+    iBeginVertical += 1;
+
+  if (subdomainIsAtBorder[(int)Mesh::face_t::face1Plus])
+    iEndVertical -= 1;
+
+  // boundary indices for face1Minus and face1Plus (horizontal direction)
+  int iBeginHorizontal = 0;
+  int iEndHorizontal = nBorderPointsXNew_;
+
+  if (subdomainIsAtBorder[(int)Mesh::face_t::face0Minus])
+    iBeginHorizontal += 1;
+
+  if (subdomainIsAtBorder[(int)Mesh::face_t::face0Plus])
+    iEndHorizontal -= 1;
+
+  LOG(DEBUG) << "seedPoints: starting with faces";
+
+  // face0Minus
+  if (!subdomainIsAtBorder[(int)Mesh::face_t::face0Minus])
+  {
+    for (int i = iBeginVertical; i < iEndVertical; i++)
+    {
+      int subdomainIndex = (i < nBorderPointsX_-1? 0 : 2) + (streamlineDirectionUpwards? 4 : 0);
+      int streamlineIndex = i % (nBorderPointsX_-1);
+      seedPoints.push_back(borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face0Minus][seedPointsZIndex][streamlineIndex]);
+    }
+  }
+
+  // face0Plus
+  if (!subdomainIsAtBorder[(int)Mesh::face_t::face0Plus])
+  {
+    for (int i = iBeginVertical; i < iEndVertical; i++)
+    {
+      int subdomainIndex = (i < nBorderPointsX_-1? 1 : 3) + (streamlineDirectionUpwards? 4 : 0);
+      int streamlineIndex = i % (nBorderPointsX_-1);
+      seedPoints.push_back(borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face0Plus][seedPointsZIndex][streamlineIndex]);
+    }
+  }
+
+  // face1Minus (with corner points)
+  if (!subdomainIsAtBorder[(int)Mesh::face_t::face1Minus])
+  {
+    for (int i = iBeginHorizontal; i < iEndHorizontal; i++)
+    {
+      int subdomainIndex = (i < nBorderPointsX_-1? 0 : 1) + (streamlineDirectionUpwards? 4 : 0);
+      int streamlineIndex = i % (nBorderPointsX_-1);
+      seedPoints.push_back(borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face1Minus][seedPointsZIndex][streamlineIndex]);
+    }
+  }
+
+  // face1Plus (with corner points)
+  if (!subdomainIsAtBorder[(int)Mesh::face_t::face1Plus])
+  {
+    for (int i = iBeginHorizontal; i < iEndHorizontal; i++)
+    {
+      int subdomainIndex = (i < nBorderPointsX_-1? 2 : 3) + (streamlineDirectionUpwards? 4 : 0);
+      int streamlineIndex = i % (nBorderPointsX_-1);
+      seedPoints.push_back(borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face1Plus][seedPointsZIndex][streamlineIndex]);
+    }
+  }
+
+  // horizontal center line (with corner points)
+  for (int i = iBeginHorizontal; i < iEndHorizontal; i++)
+  {
+    int subdomainIndex = (i < nBorderPointsX_-1? 0 : 1) + (streamlineDirectionUpwards? 4 : 0);
+    int streamlineIndex = i % (nBorderPointsX_-1);
+    seedPoints.push_back(borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face1Plus][seedPointsZIndex][streamlineIndex]);
+  }
+
+  // vertical center line (with corner points and center point)
+  for (int i = iBeginVertical; i < iEndVertical; i++)
+  {
+    int subdomainIndex = (i < nBorderPointsX_-1? 1 : 2) + (streamlineDirectionUpwards? 4 : 0);
+    int streamlineIndex = i % (nBorderPointsX_-1);
+    seedPoints.push_back(borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face0Plus][seedPointsZIndex][streamlineIndex]);
+  }
+
+  // corner streamlines
+  if (streamlineDirectionUpwards)
+  {
+    seedPointsZIndex = nBorderPointsZNew_-1;
+  }
+  for (int i = 0; i < 4; i++)
+  {
+    seedPoints.push_back(cornerStreamlines[i][seedPointsZIndex]);
+  }
 }
 
 } // namespace

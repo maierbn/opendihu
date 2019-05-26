@@ -107,7 +107,7 @@ exchangeBorderSeedPointsBeforeTracing(int nRanksZ, int rankZNo, bool streamlineD
     //LOG(DEBUG) << "received " << seedPoints.size() << " seed points from rank " << neighbourRankNo << ": " << seedPoints;
   }
 }
-
+/*
 template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
 exchangeBorderSeedPointsAfterTracing(int nRanksZ, int rankZNo, bool streamlineDirectionUpwards, std::vector<std::vector<Vec3>> &streamlinePoints)
@@ -153,19 +153,19 @@ exchangeBorderSeedPointsAfterTracing(int nRanksZ, int rankZNo, bool streamlineDi
     // fill send buffer
     const int nSeedPoints = streamlinePoints.size();
     std::vector<double> sendBuffer(nSeedPoints*3);
-    for (int streamlineIndex = 0; streamlineIndex < nSeedPoints; streamlineIndex++)
+    for (int seedPointIndex = 0; seedPointIndex < nSeedPoints; seedPointIndex++)
     {
       int streamlinePointNo = 0;
 
       // if the streamline is going upwards, the next seed point is the upper most, i.e. the last, otherwise it is the first
       if (streamlineDirectionUpwards)
       {
-        streamlinePointNo = streamlinePoints[streamlineIndex].size()-1;
+        streamlinePointNo = streamlinePoints[seedPointIndex].size()-1;
       }
 
       for (int i = 0; i < 3; i++)
       {
-        sendBuffer[streamlineIndex*3+i] = streamlinePoints[streamlineIndex][streamlinePointNo][i];
+        sendBuffer[seedPointIndex*3+i] = streamlinePoints[seedPointIndex][streamlinePointNo][i];
       }
     }
 
@@ -176,6 +176,63 @@ exchangeBorderSeedPointsAfterTracing(int nRanksZ, int rankZNo, bool streamlineDi
     // send end points of streamlines
     MPIUtility::handleReturnValue(MPI_Send(sendBuffer.data(), sendBuffer.size(), MPI_DOUBLE, neighbourRankNo,
                                           tag, currentRankSubset_->mpiCommunicator()), "MPI_Send");
+  }
+}*/
+
+template<typename BasisFunctionType>
+void ParallelFiberEstimation<BasisFunctionType>::
+exchangeBorderSeedPointsAfterTracing(int nRanksZ, int rankZNo, bool streamlineDirectionUpwards, const std::array<bool,4> &subdomainIsAtBorder,
+                                     const std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain,
+                                     const std::array<std::vector<Vec3>,4> &cornerStreamlines)
+{
+  if (nRanksZ == 1)
+    return;
+
+  // borderPointsSubdomain[subdomainIndex][face][z-level][fiberNo]
+  std::vector<Vec3> seedPoints;
+  extractSeedPointsFromBorderPoints(borderPointsSubdomain, cornerStreamlines, subdomainIsAtBorder,
+                                    streamlineDirectionUpwards, seedPoints);
+
+  // send end points of streamlines to next rank that continues the streamline
+  if (nRanksZ > 1 && rankZNo != nRanksZ-1 && rankZNo != 0)
+  {
+
+    int neighbourRankNo;
+    if (streamlineDirectionUpwards)
+    {
+      neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_t::face2Plus);
+    }
+    else
+    {
+      neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_t::face2Minus);
+    }
+
+    // fill send buffer
+    const int nSeedPoints = seedPoints.size();
+    std::vector<double> sendBuffer(nSeedPoints*3);
+    for (int seedPointIndex = 0; seedPointIndex < nSeedPoints; seedPointIndex++)
+    {
+      for (int i = 0; i < 3; i++)
+      {
+        sendBuffer[seedPointIndex*3+i] = seedPoints[seedPointIndex][i];
+      }
+    }
+
+    int tag = currentRankSubset_->ownRankNo()*10000 + neighbourRankNo*100 + level_*10 + 7;
+    LOG(DEBUG) << "send " << sendBuffer.size() << " seed point values (" << nSeedPoints << " seed points) to " << neighbourRankNo << ", tag: " << tag
+      << ", sendBuffer: " << sendBuffer;
+
+    // send end points of streamlines
+    MPIUtility::handleReturnValue(MPI_Send(sendBuffer.data(), sendBuffer.size(), MPI_DOUBLE, neighbourRankNo,
+                                          tag, currentRankSubset_->mpiCommunicator()), "MPI_Send");
+
+#ifndef NDEBUG
+#ifdef STL_OUTPUT
+  PyObject_CallFunction(functionOutputPoints_, "s i i O f", "07_seed_points_sent", currentRankSubset_->ownRankNo(), level_,
+                        PythonUtility::convertToPython<std::vector<Vec3>>::get(seedPoints), 0.2);
+  PythonUtility::checkForError();
+#endif
+#endif
   }
 }
 
@@ -298,21 +355,21 @@ exchangeSeedPointsAfterTracingKeyFibers(int nRanksZ, int rankZNo, bool streamlin
     {
       for (int i = 0; i < nBorderPointsXNew_; i++)
       {
-        int streamlineIndex = j * (nFineGridFibers_+1) * nFibersX + i * (nFineGridFibers_+1);
+        int seedPointIndex = j * (nFineGridFibers_+1) * nFibersX + i * (nFineGridFibers_+1);
 
         int streamlinePointNo = 0;
 
         // if the streamline is going upwards, the next seed point is the upper most, i.e. the last, otherwise it is the first
         if (streamlineDirectionUpwards)
         {
-          streamlinePointNo = streamlinePoints[streamlineIndex].size() - 1;
-          LOG(DEBUG) << "  take point " << streamlinePoints[streamlineIndex][streamlinePointNo] << " (" << i << "," << j << ") for send buffer";
+          streamlinePointNo = streamlinePoints[seedPointIndex].size() - 1;
+          LOG(DEBUG) << "  take point " << streamlinePoints[seedPointIndex][streamlinePointNo] << " (" << i << "," << j << ") for send buffer";
         }
 
         for (int k = 0; k < 3; k++)
         {
           int seedPointIndex = j*nBorderPointsXNew_ + i;
-          sendBuffer[seedPointIndex*3+k] = streamlinePoints[streamlineIndex][streamlinePointNo][k];
+          sendBuffer[seedPointIndex*3+k] = streamlinePoints[seedPointIndex][streamlinePointNo][k];
         }
       }
     }

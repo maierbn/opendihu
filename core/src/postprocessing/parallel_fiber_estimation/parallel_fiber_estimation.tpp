@@ -659,6 +659,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
 
     // sample streamlines at equidistant z points
     nBorderPointsZNew_ = nBorderPointsZ_*2 - 1;
+
     std::vector<std::vector<Vec3>> streamlineZPoints;
     sampleAtEquidistantZPoints(streamlinePoints, seedPoints, streamlineZPoints);
 
@@ -669,7 +670,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
 
     // assign sampled points to the data structure borderPointsSubdomain, which contains the points for each subdomain and face, as list of points for each z level
     std::array<std::array<std::vector<bool>,4>,8> borderPointsSubdomainAreValid;
-    std::vector<std::vector<Vec3>> cornerStreamlines;
+    std::array<std::vector<Vec3>,4> cornerStreamlines;
     rearrangeStreamlinePoints(streamlineZPoints, borderPointsSubdomain, cornerStreamlines, borderPointsSubdomainAreValid, subdomainIsAtBorder);
 
     LOG(DEBUG) << "nBorderPointsZ_: " << nBorderPointsZ_ << ", nBorderPointsZNew_: " << nBorderPointsZNew_;
@@ -692,6 +693,12 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
 
     // write border points to file
     outputStreamlines(borderPointsSubdomain, "11_fixed");
+
+    LOG(DEBUG) << "call exchangeSeedPointsAfterTracing with " << seedPoints.size()
+      << " seed points, " << streamlinePoints.size() << " streamlines from traceStreamlines";
+
+    // send end points of streamlines to next rank that continues the streamline
+    exchangeBorderSeedPointsAfterTracing(nRanksZ, rankZNo, streamlineDirectionUpwards, subdomainIsAtBorder, borderPointsSubdomain, cornerStreamlines);
 
     // if this is the end of the recursion, trace final fibers, reuse the fibers at the borders that were already traced
     if (traceFinalFibers)

@@ -38,7 +38,7 @@ refineBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPointsOld
 #ifdef STL_OUTPUT
 #ifdef STL_OUTPUT_VERBOSE
   PyObject_CallFunction(functionOutputBorderPoints_, "s i i O f", "01_border_points_old", currentRankSubset_->ownRankNo(), level_,
-                        PythonUtility::convertToPython<std::array<std::vector<std::vector<Vec3>>,4>>::get(borderPointsOld), 0.2);
+                        PythonUtility::convertToPython<std::array<std::vector<std::vector<Vec3>>,4>>::get(borderPointsOld), 0.02);
   PythonUtility::checkForError();
 
   for (int face = Mesh::face_t::face0Minus; face <= Mesh::face_t::face1Plus; face++)
@@ -51,7 +51,7 @@ refineBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPointsOld
   }
 
   PyObject_CallFunction(functionOutputBorderPoints_, "s i i O f", "02_border_points", currentRankSubset_->ownRankNo(), level_,
-                        PythonUtility::convertToPython<std::array<std::vector<std::vector<Vec3>>,4>>::get(borderPoints), 0.3);
+                        PythonUtility::convertToPython<std::array<std::vector<std::vector<Vec3>>,4>>::get(borderPoints), 0.03);
   PythonUtility::checkForError();
 #endif
 #endif

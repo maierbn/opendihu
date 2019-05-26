@@ -38,8 +38,6 @@ fixIncompleteStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,4>
   }
 #endif
 
-
-
   // if there are streamlines at the edge between two processes' subdomains that are valid on one process and invalid on the other, send them from the valid process to the invalid
   communicateEdgeStreamlines(borderPointsSubdomain, borderPointsSubdomainAreValid);
 
@@ -539,7 +537,7 @@ fixStreamlinesInterior(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8
           if (lastStreamlinesWereInvalid)
           {
             LOG(DEBUG) << "subdomain " << subdomainIndex << ", face " << Mesh::getString((Mesh::face_t)face)
-              << ", invalid streamlines " << lastValid+1 << " - " << pointIndex-1 << ", lastValid: " << lastValid << ", nextValid: " << pointIndex;
+              << ", invalid streamlines from " << lastValid+1 << " to " << pointIndex-1 << ", lastValid: " << lastValid << ", nextValid: " << pointIndex;
 
             // loop over streamlines between lastValid and pointIndex, these are all invalid, interpolate them
             for (int invalidStreamlineIndex = lastValid+1; invalidStreamlineIndex < pointIndex; invalidStreamlineIndex++)
@@ -563,9 +561,10 @@ fixStreamlinesInterior(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8
               if (lastValid != -1)
               {
                 nStreamlinesFixed++;
-                LOG(DEBUG) << borderPointsSubdomain[subdomainIndex][face].size();
-                LOG(DEBUG) << borderPointsSubdomain[seedPointSubdomainIndex][face].size();
-                LOG(DEBUG) << borderPointsSubdomain[seedPointSubdomainIndex][face][seedPointZLevelIndex].size();
+                LOG(DEBUG) << "number z levels subdomain: " << borderPointsSubdomain[subdomainIndex][face].size();
+                LOG(DEBUG) << "number z levels subdomain with seed point: " << borderPointsSubdomain[seedPointSubdomainIndex][face].size();
+                LOG(DEBUG) << "number streamlines on subdomain with seed point at seed point (i.e. number of seed points): "
+                  << borderPointsSubdomain[seedPointSubdomainIndex][face][seedPointZLevelIndex].size();
 
                 Vec3 seedPointInvalid = borderPointsSubdomain[subdomainIndex][face][0][invalidStreamlineIndex];
                 Vec3 seedPointLastValid = borderPointsSubdomain[seedPointSubdomainIndex][face][seedPointZLevelIndex][lastValid];
@@ -581,7 +580,7 @@ fixStreamlinesInterior(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8
                   LOG(DEBUG) << "zIndex: " << i << ": " << borderPointsSubdomain[seedPointSubdomainIndex][face][i][lastValid];
                 }
 
-                LOG(DEBUG) << "pointIndex: " << pointIndex << ", current streamline: ";
+                LOG(DEBUG) << "(next valid) pointIndex: " << pointIndex << ", current streamline: ";
                 for (int i = 0; i < nBorderPointsZ_; i++)
                 {
                   LOG(DEBUG) << "zIndex: " << i << ": " << borderPointsSubdomain[seedPointSubdomainIndex][face][i][pointIndex];
@@ -590,6 +589,10 @@ fixStreamlinesInterior(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8
                 double alpha = MathUtility::norm<3>(seedPointInvalid - seedPointLastValid) / MathUtility::norm<3>(seedPointCurrent - seedPointLastValid);
 
                 LOG(DEBUG) << "alpha: " << alpha;
+
+                if (alpha < 0 || alpha > 1)
+                  LOG(WARNING) << "Interpolating invalid streamline in subdomain " << subdomainIndex
+                    << ", face " << Mesh::getString((Mesh::face_t)face) << " with alpha = " << alpha << ", alpha should be in [0,1].";
 
                 //loop over points of streamline from bottom to top
                 for (int zLevelIndex = 0; zLevelIndex < nBorderPointsZ_; zLevelIndex++)

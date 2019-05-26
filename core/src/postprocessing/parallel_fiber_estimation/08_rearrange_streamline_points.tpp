@@ -6,7 +6,7 @@ namespace Postprocessing
 template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
 rearrangeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain,
-                          std::vector<std::vector<Vec3>> &cornerStreamlines,
+                          std::array<std::vector<Vec3>,4> &cornerStreamlines,
                           std::array<std::array<std::vector<bool>,4>,8> &borderPointsSubdomainAreValid,
                           std::array<bool,4> &subdomainIsAtBorder)
 {
@@ -620,7 +620,6 @@ rearrangeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, std
     }
   }
 
-  cornerStreamlines.resize(4);
   for (int cornerStreamlineIndex = 0; cornerStreamlineIndex != 4; cornerStreamlineIndex++, streamlineIndex++)
   {
     cornerStreamlines[cornerStreamlineIndex].resize(streamlineZPoints[streamlineIndex].size());
@@ -637,11 +636,11 @@ rearrangeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, std
     s.str("");
     s << "06_border_points_subdomain_" << subdomainIndex;
     PyObject_CallFunction(functionOutputBorderPoints_, "s i i O f", s.str().c_str(), currentRankSubset_->ownRankNo(), level_,
-                          PythonUtility::convertToPython<std::array<std::vector<std::vector<Vec3>>,4>>::get(borderPointsSubdomain[subdomainIndex]), 1.0);
+                          PythonUtility::convertToPython<std::array<std::vector<std::vector<Vec3>>,4>>::get(borderPointsSubdomain[subdomainIndex]), 0.1);
     PythonUtility::checkForError();
   }
   PyObject_CallFunction(functionOutputStreamlines_, "s i i O f", "06_corner_streamlines", currentRankSubset_->ownRankNo(), level_,
-                        PythonUtility::convertToPython<std::vector<std::vector<Vec3>>>::get(cornerStreamlines), 1.0);
+                        PythonUtility::convertToPython<std::array<std::vector<Vec3>,4>>::get(cornerStreamlines), 0.1);
   PythonUtility::checkForError();
 #endif
 }

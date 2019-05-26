@@ -193,7 +193,9 @@ fixInvalidFibersInFile(std::string filename)
     int nFibersFixed = 0;
     const long long fiberDataSize = nPointsPerFiber*3*sizeof(double);
 
-    LOG(DEBUG) << "headerLength: " << headerLength << ", nFibers: " << nFibers << ", nPointsPerFiber: " << nPointsPerFiber << ", nFibersX: " << nFibersX;
+    LOG(DEBUG) << "headerLength: " << headerLength << ", nFibers: " << nFibers
+      << ", nPointsPerFiber: " << nPointsPerFiber << ", nFibersX: " << nFibersX << ", fiberDataSize: " << fiberDataSize
+      << ", fileSize: " << fileSize;
 
     if (int((fileSize-(32+headerLength)) / fiberDataSize) != nFibers)
     {

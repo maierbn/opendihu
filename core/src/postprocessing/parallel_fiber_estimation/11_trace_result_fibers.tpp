@@ -172,6 +172,8 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
   PythonUtility::checkForError();
 #endif
 
+  // nodePositions are the node positions of the (not refined) 3D mesh, dimension nBorderPointsX_*nBorderPointsX_*nBorderPointsZ_, corresponding seedPointsZIndex
+
   // determine own seed points
   std::vector<Vec3> seedPoints(nBorderPointsXNew_*nBorderPointsXNew_, Vec3({0.0,0.0,0.0}));
 
@@ -185,6 +187,10 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
       seedPoints[j*nBorderPointsXNew_+i] = seedPoint;
     }
   }
+
+  // seedPointsZIndex is either 0 or nBorderPointsZ_-1, change to nBorderPointsXNew_-1 in the second case
+  if (seedPointsZIndex != 0)
+    seedPointsZIndex = nBorderPointsZNew_-1;
 
   LOG(DEBUG) << " set seed points at border";
 

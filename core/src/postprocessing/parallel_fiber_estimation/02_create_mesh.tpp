@@ -83,7 +83,7 @@ createMesh(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std::vect
   if (subdomainNNodesX != nBorderPointsXNew_ || subdomainNNodesY != nBorderPointsXNew_ || subdomainNNodesZ != nBorderPointsZ_)
   {
     PyObject_CallFunction(functionOutputBorderPoints_, "s i i O f", "xx_failed_border_points", currentRankSubset_->ownRankNo(), level_,
-                          PythonUtility::convertToPython<std::array<std::vector<std::vector<Vec3>>,4>>::get(borderPoints), 0.3);
+                          PythonUtility::convertToPython<std::array<std::vector<std::vector<Vec3>>,4>>::get(borderPoints), 0.03);
     PythonUtility::checkForError();
   }
   assert(subdomainNNodesX == nBorderPointsXNew_);

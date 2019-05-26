@@ -232,7 +232,7 @@ extractSeedPointsFromBorderPoints(const std::array<std::array<std::vector<std::v
   // vertical center line (with corner points and center point)
   for (int i = iBeginVertical; i < iEndVertical; i++)
   {
-    int subdomainIndex = (i < nBorderPointsX_-1? 1 : 2) + (streamlineDirectionUpwards? 4 : 0);
+    int subdomainIndex = (i < nBorderPointsX_-1? 1 : 3) + (streamlineDirectionUpwards? 4 : 0);
     int streamlineIndex = i % (nBorderPointsX_-1);
     seedPoints.push_back(borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face0Minus][seedPointsZIndex][streamlineIndex]);
   }

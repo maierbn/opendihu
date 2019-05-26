@@ -329,6 +329,9 @@ def create_ring_section(spline_surface, start_point, end_point, z_value, n_point
       point[2] = z_value
       points.append(point)
   
+  # if start and end points were reversed, reverse back
+  if length_backwards < length_forwards:
+    points = list(reversed(points))
   return points
   
 # load stl mesh and evaluate 

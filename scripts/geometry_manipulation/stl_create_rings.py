@@ -13,6 +13,7 @@ import scipy.spatial
 import os
 import pickle
 import stl_create_mesh   # for standardize_loop and rings_to_border_points
+import stl_debug_output
 import spline_surface
 
 import stl
@@ -472,10 +473,26 @@ def create_ring_section(input_filename, start_point, end_point, z_value, n_point
     try:
       f = open(input_filename,"rb")
       surface = pickle.load(f)
-      return spline_surface.create_ring_section(surface, start_point, end_point, z_value, n_points)
     except:
       print("Error! Could not open file \"{}\" for reading spline surface.".format(input_filename))
-  
+
+    debugging_points = []
+    result = spline_surface.create_ring_section(surface, start_point, end_point, z_value, n_points, debugging_points)
+    
+    level = 0
+    rank_no = z_value
+    filename = "00_{}_pass".format(start_point)
+    if len(debugging_points) != 0:
+      stl_debug_output.output_points(filename, rank_no, level, debugging_points, 0.02)
+
+    filename = "00_{}_start_end".format(start_point)
+    stl_debug_output.output_points(filename, rank_no, level, [start_point, end_point], 0.1)
+
+    filename = "00_{}_points".format(start_point)
+    stl_debug_output.output_points(filename, rank_no, level, result, 0.05)
+
+    return result
+    
   # else interpret the file as stl mesh and use the stl mesh algorithm
   stl_mesh = get_stl_mesh(input_filename)
   return create_ring_section_mesh(stl_mesh, start_point, end_point, z_value, n_points)

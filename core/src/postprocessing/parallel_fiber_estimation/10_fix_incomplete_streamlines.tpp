@@ -82,7 +82,7 @@ communicateEdgeStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,
 {
   // if there are streamlines at the edge between two processes' subdomains that are valid on one process and invalid on the other, send them from the valid process to the invalid
   LOG(DEBUG) << "communicateEdgeStreamlines";
-  MPI_Barrier(currentRankSubset_->mpiCommunicator());
+  //MPI_Barrier(currentRankSubset_->mpiCommunicator());
 
   //
   //   ^ --(1+)-> ^   ^ --(1+)-> ^

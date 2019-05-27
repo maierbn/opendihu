@@ -272,7 +272,7 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
   LOG(DEBUG) << "ghost exchange communication done, currentRankSubset_: " << *currentRankSubset_;
 
 
-  MPI_Barrier(currentRankSubset_->mpiCommunicator());
+  //MPI_Barrier(currentRankSubset_->mpiCommunicator());
   //LOG(FATAL) << "end after get ghost elements";
 
   // handle received values

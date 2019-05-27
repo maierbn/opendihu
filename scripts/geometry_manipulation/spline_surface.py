@@ -81,12 +81,24 @@ def get_u_by_xy_value(curve, xyvalue):
   def function(u):
     #print("f({})".format(u))
     u = u[0]
+    
+    if u < 0:
+      u = 0
+    elif u > 1:
+      u = 1
+      
     x = curve.evaluate_single(u)
     return np.linalg.norm(np.array(x[:2]) - np.array(xyvalue))
   
   def jacobian(u):
     #print("jacobian({})".format(u))
     u = u[0]
+    
+    if u < 0:
+      u = 0
+    elif u > 1:
+      u = 1
+      
     x,x_prime = curve.derivatives(u, 1)
     f = np.linalg.norm(np.array(x[:2]) - np.array(xyvalue))
     f_prime = 1/f * ((x[0] - xyvalue[0])*x_prime[0] + (x[1] - xyvalue[1])*x_prime[1])

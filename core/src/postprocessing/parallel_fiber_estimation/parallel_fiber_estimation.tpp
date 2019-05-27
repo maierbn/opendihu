@@ -678,15 +678,11 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     // write border points to file
     outputStreamlines(borderPointsSubdomain, "09_traced");
 
-#if 1
     // fill the streamline points that are at the boundary
     fillBorderPoints(borderPoints, borderPointsSubdomain, cornerStreamlines, borderPointsSubdomainAreValid, subdomainIsAtBorder);
 
-    MPI_Barrier(this->currentRankSubset_->mpiCommunicator());
     // write border points to file
     outputStreamlines(borderPointsSubdomain, "10_filled");
-#endif
-    MPI_Barrier(this->currentRankSubset_->mpiCommunicator());
 
     // fill in missing points
     fixIncompleteStreamlines(borderPointsSubdomain, borderPointsSubdomainAreValid, streamlineDirectionUpwards, subdomainIsAtBorder, borderPoints);

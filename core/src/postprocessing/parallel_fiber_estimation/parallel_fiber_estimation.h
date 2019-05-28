@@ -163,6 +163,9 @@ protected:
   //! if the filename is something like path/fibers0x0.bin, replace 0 by nFibersX, return true if replacement was performed
   bool adjustFilename(std::string &filename, int nFibersX);
 
+  //! create output file with fibers in it
+  void writeToFile(std::string filename, std::vector<std::vector<Vec3>> &fibers, int nFibersX, bool withBoundaryLayer);
+
   // compute the current level_ = log2(nRanksPerCoordinateDirection_)
   void determineLevel();
 
@@ -176,7 +179,7 @@ protected:
   PythonConfig specificSettings_;   ///< the specific python config for this module
   std::vector<Vec3> seedPositions_;  ///< the seed points from where the streamlines start
 
-  std::string inputMeshFilename;   ///< the filename of the input mesh file
+  std::string inputMeshFilename_;   ///< the filename of the input mesh file
   std::string resultFilename_;  ///< the filename of the output result file
   double bottomZClip_;   ///< bottom z-value of the volume to consider
   double topZClip_;   ///< top z-value of the volume to consider

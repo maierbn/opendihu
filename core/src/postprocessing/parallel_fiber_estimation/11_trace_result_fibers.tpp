@@ -498,14 +498,7 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
     LOG(INFO) << "total number of fibers, valid: " << nFibersGlobal-nFibersNotInterpolatedGlobal << ", invalid: " << nFibersNotInterpolatedGlobal;
   }
 
-  // write fiber data to file, the (x+,x-,y+,y-) border fibers of the global borders are not written to the file because they
-  // were not traced but estimated from the border mesh which may be of bad quality
-  int ownRankNo = currentRankSubset_->ownRankNo();
-
-  int nPointsWholeFiber = meshPartition_->nRanks(2) * (nBorderPointsZNew_-1) + 1;
-  int nFibersRow0 = meshPartition_->nRanks(0) * (nFibersX-1) - 1;
-  int nFibersTotal = MathUtility::sqr(nFibersRow0);
-
+  // write fiber data to file
   std::stringstream filenameStr;
   std::string filename;
   if (finalFile)
@@ -517,9 +510,56 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
     filenameStr << "out/level_" << level_ << "/result_0x0_level_" << level_ << ".bin";
   }
 
+  int nFibersRow0 = meshPartition_->nRanks(0) * (nFibersX-1);
+
+  // write full mesh including boundary layer
   filename = filenameStr.str();
+
   // add the number of fibers in the filename
   adjustFilename(filename, nFibersRow0);
+
+  writeToFile(filename, fibers, nFibersX, true);
+
+
+  // write mesh without boundary layer
+  // the (x+,x-,y+,y-) border fibers of the global borders are not written to the file because they
+  // were not traced but estimated from the border mesh which may be of bad quality
+
+  filename = filenameStr.str();
+  filenameStr.str("");
+  if (filename.find(".bin") != std::string::npos)
+  {
+    filenameStr << filename.substr(0, filename.find(".bin")) << ".no_boundary" << filename.substr(filename.find(".bin"));
+  }
+  else
+  {
+    filenameStr << ".no_boundary";
+  }
+  filename = filenameStr.str();
+  nFibersRow0 = meshPartition_->nRanks(0) * (nFibersX-1) - 1;
+
+  // add the number of fibers in the filename
+  adjustFilename(filename, nFibersRow0);
+
+  writeToFile(filename, fibers, nFibersX, false);
+
+}
+
+
+template<typename BasisFunctionType>
+void ParallelFiberEstimation<BasisFunctionType>::
+writeToFile(std::string filename, std::vector<std::vector<Vec3>> &fibers, int nFibersX, bool withBoundaryLayer)
+{
+
+  int nFibersRow0 = meshPartition_->nRanks(0) * (nFibersX-1) - 1;
+  if (withBoundaryLayer)
+    nFibersRow0 = meshPartition_->nRanks(0) * (nFibersX-1);
+
+  int nFibersTotal = MathUtility::sqr(nFibersRow0);
+  int ownRankNo = currentRankSubset_->ownRankNo();
+  int nRanksZ = meshPartition_->nRanks(2);
+
+  int nPointsWholeFiber = meshPartition_->nRanks(2) * (nBorderPointsZNew_-1) + 1;
 
   LOG(DEBUG) << "open file \"" << filename << "\".";
   // open file
@@ -560,10 +600,10 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
     parameters[5] = nFineGridFibers_;
     parameters[6] = currentRankSubset_->size();
     parameters[7] = nRanksZ;
-    parameters[8] = nFibers;
+    parameters[8] = nFibersTotal;
     parameters[9] = time(NULL);
 
-    LOG(DEBUG) << "nFibersTotal: " << nFibersTotal << ", nPointsWholeFiber: " << nPointsWholeFiber << ", nFibersPerRank: " << nFibers;
+    LOG(DEBUG) << "nFibersTotal: " << nFibersTotal << ", nPointsWholeFiber: " << nPointsWholeFiber;
 
     writeBuffer += std::string(c, nParameters*sizeof(int32_t));
 
@@ -579,17 +619,23 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
   headerOffset = 32+nParameters*sizeof(int32_t);
 
   // write fibers
-  LOG(DEBUG) << "write fibers, nFibersX: " << nFibersX << ", nRanks: (" << meshPartition_->nRanks(0) << "," << meshPartition_->nRanks(1) << "," << meshPartition_->nRanks(2) << ")";
-  for (int j = 0; j < nFibersX-1; j++)
+  LOG(DEBUG) << "write fibers to \"" << filename << "\", nFibersX: " << nFibersX << ", nRanks: (" << meshPartition_->nRanks(0) << "," << meshPartition_->nRanks(1)
+    << "," << meshPartition_->nRanks(2) << "), withBoundaryLayer: " << withBoundaryLayer;
+
+  int nFibersXToWrite = nFibersX-1;
+  if (withBoundaryLayer)
+    nFibersXToWrite = nFibersX;
+
+  for (int j = 0; j < nFibersXToWrite; j++)
   {
     // do not consider first fiber which of a border fiber
-    if (j == 0 && meshPartition_->ownRankPartitioningIndex(1) == 0)
+    if (!withBoundaryLayer && j == 0 && meshPartition_->ownRankPartitioningIndex(1) == 0)
       continue;
 
-    for (int i = 0; i < nFibersX-1; i++)
+    for (int i = 0; i < nFibersXToWrite; i++)
     {
       // only consider last fiber in right column
-      if (i == 0 && meshPartition_->ownRankPartitioningIndex(0) == 0)
+      if (!withBoundaryLayer && i == 0 && meshPartition_->ownRankPartitioningIndex(0) == 0)
         continue;
 
       // convert streamline data to bytes
@@ -630,8 +676,17 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
       char *writeBuffer = reinterpret_cast<char *>(values.data());
 
       // compute offset in file
-      int fiberIndex0 = meshPartition_->ownRankPartitioningIndex(0) * (nFibersX-1) + i - 1;
-      int fiberIndex1 = meshPartition_->ownRankPartitioningIndex(1) * (nFibersX-1) + j - 1;
+      int nFibersPreviousRanks0 = meshPartition_->ownRankPartitioningIndex(0) * (nFibersX-1);
+      int nFibersPreviousRanks1 = meshPartition_->ownRankPartitioningIndex(1) * (nFibersX-1);
+
+      if (withBoundaryLayer)
+      {
+        nFibersPreviousRanks0++;
+        nFibersPreviousRanks1++;
+      }
+
+      int fiberIndex0 = nFibersPreviousRanks0 + i - 1;
+      int fiberIndex1 = nFibersPreviousRanks1 + j - 1;
 
       int fiberIndex = fiberIndex1 * nFibersRow0 + fiberIndex0;
       int pointOffset = fiberIndex * nPointsWholeFiber + meshPartition_->ownRankPartitioningIndex(2) * (nBorderPointsZNew_-1);

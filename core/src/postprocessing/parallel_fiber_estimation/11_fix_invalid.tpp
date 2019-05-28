@@ -8,7 +8,7 @@ template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
 fixInvalidKeyFibers(int nFibersX, std::vector<std::vector<bool>> &fiberIsValid, std::vector<std::vector<Vec3>> &fibers, int &nFibersFixed)
 {
-  LOG(DEBUG) << "fixInvalidFibers";
+  LOG(DEBUG) << "fixInvalidKeyFibers";
 
   // fibers[fiberIndex][zLevelIndex]
   nFibersFixed = 0;
@@ -20,6 +20,8 @@ fixInvalidKeyFibers(int nFibersX, std::vector<std::vector<bool>> &fiberIsValid, 
     {
       if (!fiberIsValid[fiberIndexY][fiberIndexX])
       {
+        LOG(DEBUG) << "fiber (" << fiberIndexX << "," << fiberIndexY << ") is invalid, try to fix";
+
         // find neighbouring valid fibers
         std::vector<std::pair<int,int>> neighbouringFibers;
 
@@ -69,7 +71,7 @@ fixInvalidKeyFibers(int nFibersX, std::vector<std::vector<bool>> &fiberIsValid, 
           }
         }
 
-        VLOG(2) << "fiber " << fiberIndexX << "," << fiberIndexY << ": neighbours x("
+        LOG(DEBUG) << "fiber " << fiberIndexX << "," << fiberIndexY << ": neighbours x("
           << leftNeighbourIndex << "," << rightNeighbourIndex << ") y(" << frontNeighbourIndex << "," << backNeighbourIndex << ")";
 
         if (leftNeighbourIndex != -1 && rightNeighbourIndex != -1)
@@ -79,7 +81,11 @@ fixInvalidKeyFibers(int nFibersX, std::vector<std::vector<bool>> &fiberIsValid, 
           double alpha0 = double(rightNeighbourIndex - fiberIndexX) / (rightNeighbourIndex - leftNeighbourIndex);
           double alpha1 = double(fiberIndexX - leftNeighbourIndex) / (rightNeighbourIndex - leftNeighbourIndex);
 
-          VLOG(2) << "take left-right, alphas: " << alpha0 << ", " << alpha1;
+          LOG(DEBUG) << "interpolate fiber from left and right neighbours, alphas: " << alpha0 << ", " << alpha1;
+
+          // resize invalid fiber vector
+          int interpolatedFiberIndex = (fiberIndexY*nFibersX + fiberIndexX) * (nFineGridFibers_+1);
+          fibers[interpolatedFiberIndex].resize(nBorderPointsZNew_);
 
           // loop over all points of the fiber
           for (int zIndex = 0; zIndex != nBorderPointsZNew_; zIndex++)
@@ -107,7 +113,11 @@ fixInvalidKeyFibers(int nFibersX, std::vector<std::vector<bool>> &fiberIsValid, 
           double alpha0 = double(backNeighbourIndex - fiberIndexX) / (backNeighbourIndex - frontNeighbourIndex);
           double alpha1 = double(fiberIndexX - frontNeighbourIndex) / (backNeighbourIndex - frontNeighbourIndex);
 
-          VLOG(2) << "take front-back, alphas: " << alpha0 << ", " << alpha1;
+          LOG(DEBUG) << "interpolate fiber from front and back neighbours, alphas: " << alpha0 << ", " << alpha1;
+
+          // resize invalid fiber vector
+          int interpolatedFiberIndex = (fiberIndexY*nFibersX + fiberIndexX) * (nFineGridFibers_+1);
+          fibers[interpolatedFiberIndex].resize(nBorderPointsZNew_);
 
           // loop over all points of the fiber
           for (int zIndex = 0; zIndex != nBorderPointsZNew_; zIndex++)
@@ -123,7 +133,6 @@ fixInvalidKeyFibers(int nFibersX, std::vector<std::vector<bool>> &fiberIsValid, 
             Vec3 interpolatedPoint = alpha0*point0 + alpha1*point1;
 
             // write the interpolated value back
-            int interpolatedFiberIndex = (fiberIndexY*nFibersX + fiberIndexX) * (nFineGridFibers_+1);
             fibers[interpolatedFiberIndex][zIndex] = interpolatedPoint;
           }
           nFibersFixed++;

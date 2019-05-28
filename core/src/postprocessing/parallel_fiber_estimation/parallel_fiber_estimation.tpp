@@ -55,7 +55,7 @@ ParallelFiberEstimation(DihuContext context) :
 
   outputWriterManager_.initialize(context_, specificSettings_);
 
-  stlFilename_ = specificSettings_.getOptionString("stlFilename", "");
+  inputMeshFilename_ = specificSettings_.getOptionString("inputMeshFilename", "");
   resultFilename_ = specificSettings_.getOptionString("resultFilename", "fibers.bin");
   bottomZClip_ = specificSettings_.getOptionDouble("bottomZClip", 0);
   topZClip_ = specificSettings_.getOptionDouble("topZClip", 100);
@@ -265,7 +265,7 @@ generateParallelMesh()
       // run python script to generate loops for the whole volume
 
       PyObject *borderPointsPy = PyObject_CallFunction(functionCreateBorderPoints_, "s f f i i",
-        stlFilename_.c_str(), bottomZClip_, topZClip_, nBorderPointsZ_, 4*(nBorderPointsX_-1));
+        inputMeshFilename_.c_str(), bottomZClip_, topZClip_, nBorderPointsZ_, 4*(nBorderPointsX_-1));
       PythonUtility::checkForError();
       assert(borderPointsPy);
 
@@ -274,7 +274,7 @@ generateParallelMesh()
       // run stl_create_rings.create_rings
       // "Create n_loops rings/loops (slices) on a closed surface, in equidistant z-values between bottom_clip and top_clip"
 
-      PyObject* loopsPy = PyObject_CallFunction(functionCreateRings_, "s f f i O", stlFilename_.c_str(), bottomZClip_, topZClip_, nBorderPointsZ_, Py_False);
+      PyObject* loopsPy = PyObject_CallFunction(functionCreateRings_, "s f f i O", inputMeshFilename_.c_str(), bottomZClip_, topZClip_, nBorderPointsZ_, Py_False);
       PythonUtility::checkForError();
       assert(loopsPy);
 

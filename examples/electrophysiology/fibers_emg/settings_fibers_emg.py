@@ -6,9 +6,6 @@
 end_time = 100.0
 
 import numpy as np
-import matplotlib 
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
 import pickle
 import sys
 import struct
@@ -192,7 +189,7 @@ if "shorten" in cellml_file:
   parameters_used_as_intermediate = [32]
   parameters_used_as_constant = [65]
   parameters_initial_values = [0.0, 1.0]
-  nodal_stimulation_current = 400.
+  nodal_stimulation_current = 1200.
   
 elif "hodgkin_huxley" in cellml_file:
   parameters_used_as_intermediate = []
@@ -793,7 +790,7 @@ config = {
             "timeStepWidth": dt_3D,  # 1e-1
             "logTimeStepWidthAsKey": "dt_3D",
             "durationLogKey": "duration_monodomain",
-            "timeStepOutputInterval" : 1000,
+            "timeStepOutputInterval" : 100,
             "endTime": dt_3D,
 
             "Term1": {      # CellML
@@ -823,7 +820,10 @@ config = {
                       #"setSpecificParametersFunction": set_specific_parameters,    # callback function that sets parameters like stimulation current
                       #"setSpecificParametersCallInterval": int(1./stimulation_frequency/dt_0D),     # set_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
                       "setSpecificStatesFunction": set_specific_states,    # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
-                      "setSpecificStatesCallInterval": 2*int(1./stimulation_frequency/dt_0D),     # set_specific_states should be called stimulation_frequency times per ms, the factor 2 is needed because every Heun step includes two calls to rhs
+                      #"setSpecificStatesCallInterval": 2*int(1./stimulation_frequency/dt_0D),     # set_specific_states should be called stimulation_frequency times per ms, the factor 2 is needed because every Heun step includes two calls to rhs
+                      "setSpecificStatesCallInterval": 0,                  # 0 means disabled
+                      "setSpecificStatesCallFrequency": stimulation_frequency, # set_specific_states should be called stimulation_frequency times per ms, the factor 2 is needed because every Heun step includes two calls to rhs
+                      "setSpecificStatesRepeatAfterFirstCall": 0.01,  # simulation time span for which the setSpecificStates callback will be called after a call was triggered
                       "additionalArgument": fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y),
                       
                       "outputStateIndex": 0,     # Shorten / Hodgkin Huxley: state 0 = Vm, Shorten: rate 28 = gamma, intermediate 0 = gamma
@@ -980,8 +980,8 @@ config = {
           "shearModulus": 2.0,
         },
         "OutputWriter" : [
-          {"format": "Paraview", "outputInterval": 1, "filename": "out/deformation", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
-          {"format": "PythonFile", "filename": "out/deformation", "outputInterval": 1, "binary":False, "onlyNodalValues":True},
+          {"format": "Paraview", "outputInterval": 1, "filename": "out/deformation", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
+          #{"format": "PythonFile", "filename": "out/deformation", "outputInterval": 1, "binary":False, "onlyNodalValues":True},
         ]
       }
     }

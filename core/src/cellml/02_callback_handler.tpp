@@ -308,17 +308,18 @@ callPythonHandleResultFunction(int nInstances, int timeStepNo, double currentTim
   Py_CLEAR(arglist);
 }
 
-template<int nStates, typename FunctionSpaceType>
-double CallbackHandler<nStates,FunctionSpaceType>::
+template<int nStates, int nIntermediates_, typename FunctionSpaceType>
+double CallbackHandler<nStates,nIntermediates_,FunctionSpaceType>::
 lastCallSpecificStatesTime()
 {
   return this->lastCallSpecificStatesTime_;
 }
 
-template<int nStates, typename FunctionSpaceType>
-void CallbackHandler<nStates,FunctionSpaceType>::
+template<int nStates, int nIntermediates_, typename FunctionSpaceType>
+void CallbackHandler<nStates,nIntermediates_,FunctionSpaceType>::
 setLastCallSpecificStatesTime(double lastCallSpecificStatesTime)
 {
   this->lastCallSpecificStatesTime_ = lastCallSpecificStatesTime;
   LOG(DEBUG) << "now set lastCallSpecificStatesTime_ to " << lastCallSpecificStatesTime_;
 }
+

@@ -80,7 +80,7 @@ void FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, nCompone
 reset()
 {
   LOG(DEBUG) << " FiniteElementMethodTimeStepping::reset";
-  FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Term>::reset();
+  FiniteElementMethodBase<FunctionSpaceType,QuadratureType,nComponents_,Term>::reset();
   linearSolver_ = nullptr;
   ksp_ = nullptr;
 }

@@ -109,7 +109,10 @@ with open(input_filename, "rb") as infile:
         elif y < n_points_y-1:
           edge_lengths.append(np.linalg.norm(points[z,y,x,:] - points[z,y+1,x,:]))
 
-    variance_sum += np.var(edge_lengths)
+    mean = np.mean(edge_lengths)
+    variance = np.var(edge_lengths)
+    #print("z: {}, mean: {}, var: {}, var/mean^2: {}".format(z, mean, variance, variance / (mean*mean)))
+    variance_sum += variance / (mean*mean)
 
   variance = variance_sum / n_points_whole_fiber
   

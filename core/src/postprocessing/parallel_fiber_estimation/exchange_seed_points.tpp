@@ -248,7 +248,9 @@ exchangeSeedPointsBeforeTracingKeyFibers(int nRanksZ, int rankZNo, bool streamli
   if (nRanksZ == 1)
     return;
 
-  if (rankZNo == int(nRanksZ/2)-1)
+  // on rank int(nRanksZ/2), receive seed points from rank above
+  // on any other rank excpt int(nRanksZ/2)-1, receive seed points from neighbouring rank that preceeded the streamlines
+  if (rankZNo != int(nRanksZ/2))
   {
     int neighbourRankNo;
     if (streamlineDirectionUpwards)

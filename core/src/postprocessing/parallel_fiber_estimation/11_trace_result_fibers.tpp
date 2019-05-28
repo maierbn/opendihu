@@ -534,7 +534,17 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
   const int nParameters = 10;   // if I change this, also change the constant header length further down in resampleFibersInFile
   if (ownRankNo == 0)
   {
-    std::string writeBuffer("opendihu binary fibers file     ");
+    std::string writeBuffer("opendihu binary fibers file     ");  // 32 characters
+
+    // if a scenario name was given, use that as file header
+    std::string scenarioName = Control::PerformanceMeasurement::getParameter("scenarioName");
+    if (scenarioName != "")
+    {
+      writeBuffer = scenarioName.substr(0, 32);
+
+      while (writeBuffer.size() < 32)
+        writeBuffer += " ";
+    }
 
     union
     {

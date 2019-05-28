@@ -24,7 +24,8 @@ with open(input_filename, "rb") as infile:
   
   # parse header
   bytes_raw = infile.read(32)
-  header_str = struct.unpack('32s', bytes_raw)[0]
+  scenario_name = struct.unpack('32s', bytes_raw)[0].decode('utf-8')
+  print(scenario_name)
   
   header_length_raw = infile.read(4)
   header_length = struct.unpack('i', header_length_raw)[0]
@@ -116,5 +117,5 @@ with open(input_filename, "rb") as infile:
   
   # write to log file
   with open("variances.csv","a") as f:
-    f.write("{};{};{}\n".format(input_filename,n_fibers_valid,variance))
+    f.write("{};{};{};{}\n".format(scenario_name,input_filename,n_fibers_valid,variance))
   print("appended to variances.csv")

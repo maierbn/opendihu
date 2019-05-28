@@ -10,10 +10,6 @@ fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std
                  std::array<bool,4> &subdomainIsAtBorder)
 {
   LOG(DEBUG) << "fillBorderPoints";
-  //MPI_Barrier(this->currentRankSubset_->mpiCommunicator());
-  //PyObject *stlMeshPy = PyObject_CallFunction(functionGetStlMesh_, "s", stlFilename_.c_str());
-  //PythonUtility::checkForError();
-  //assert(stlMeshPy);
 
   int nRanksZ = meshPartition_->nRanks(2);
   int rankZNo = meshPartition_->ownRankPartitioningIndex(2);
@@ -175,7 +171,7 @@ fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std
         PyObject *startPointPy = PythonUtility::convertToPython<Vec3>::get(startPoint);
         PyObject *endPointPy = PythonUtility::convertToPython<Vec3>::get(endPoint);
         //PyObject *loopSectionPy = PyObject_CallFunction(functionCreateRingSectionMesh_, "O O O f i", stlMeshPy, startPointPy, endPointPy, currentZ, nBorderPointsXNew_);
-        PyObject *loopSectionPy = PyObject_CallFunction(functionCreateRingSection_, "s O O f i", stlFilename_.c_str(), startPointPy, endPointPy, currentZ, nBorderPointsXNew_);
+        PyObject *loopSectionPy = PyObject_CallFunction(functionCreateRingSection_, "s O O f i", inputMeshFilename.c_str(), startPointPy, endPointPy, currentZ, nBorderPointsXNew_);
         PythonUtility::checkForError();
         //  create_ring_section(input_filename, start_point, end_point, z_value, n_points)
         assert(loopSectionPy);
@@ -375,6 +371,7 @@ fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std
 #endif
 
   // output points for debugging
+#if 0
 #ifndef NDEBUG
   std::ofstream file("points.csv", std::ios::out | std::ios::trunc);
   assert (file.is_open());
@@ -395,6 +392,7 @@ fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std
     }
   }
   file.close();
+#endif
 #endif
 }
 

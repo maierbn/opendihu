@@ -59,6 +59,21 @@ MEGAMOL_DOWNLOAD=False    # install MegaMol from official git repo, but needed i
 # MPI is normally detected by runnig the mpicc command. If this is not available, you can provide the MPI_DIR as usual.
 MPI_DIR="/usr/lib/openmpi"    # standard path for openmpi on ubuntu 16.04
 
+# on krypton build MPI
+try:
+  import socket
+  if socket.gethostname() == "krypton":
+    print "Settings for krypton"
+    #del MPI_DIR
+    #MPI_DOWNLOAD=True
+    #MPI_IGNORE_MPICC=True
+    MPI_DIR="/scratch/maierbn/opendihu/dependencies/mpi/install"   # for first install, use three previous lines instead of this one
+    PYTHONPACKAGES_DOWNLOAD=False
+    #mpiCC= /scratch/maierbn/opendihu/dependencies/mpi/install/bin
+    cmake="/scratch/maierbn/cmake/cmake-3.14.3/bin/cmake"
+except:
+  pass
+
 # automatically set MPI_DIR for other systems, like ubuntu 18.04 and Debian
 try:
   import lsb_release
@@ -102,7 +117,6 @@ try:
     MPI_DISABLE_CHECKS=True
     PETSC_DISABLE_CHECKS=True
     GOOGLETEST_DISABLE_CHECKS=True
-
 
 except:
   pass

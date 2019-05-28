@@ -12,8 +12,8 @@ namespace SpatialDiscretization
 {
 
 // 1D,2D,3D mass matrix of Deformable mesh
-template<typename FunctionSpaceType,typename QuadratureType,typename Term,typename Dummy0,typename Dummy1,typename Dummy2>
-void FiniteElementMethodMatrix<FunctionSpaceType,QuadratureType,Term,Dummy0,Dummy1,Dummy2>::
+template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term,typename Dummy0,typename Dummy1,typename Dummy2>
+void FiniteElementMethodMatrix<FunctionSpaceType,QuadratureType,nComponents,Term,Dummy0,Dummy1,Dummy2>::
 setMassMatrix()
 {
   // check if matrix discretization matrix exists
@@ -23,7 +23,8 @@ setMassMatrix()
   }
 
   const int D = FunctionSpaceType::dim();
-  LOG(TRACE) << "setMassMatrix " << D << "D using integration, FunctionSpaceType: " << typeid(FunctionSpaceType).name() << ", QuadratureType: " << typeid(QuadratureType).name();
+  LOG(TRACE) << "setMassMatrix " << D << "D using integration, FunctionSpaceType: " << StringUtility::demangle(typeid(FunctionSpaceType).name())
+    << ", QuadratureType: " << StringUtility::demangle(typeid(QuadratureType).name());
 
   // massMatrix * f_strong = rhs_weak
   // row of massMatrix: contributions to a single entry in rhs_weak
@@ -31,7 +32,8 @@ setMassMatrix()
   // define shortcuts for integrator and basis
   typedef Quadrature::TensorProduct<D,QuadratureType> QuadratureDD;
   const int nDofsPerElement = FunctionSpaceType::nDofsPerElement();
-  typedef MathUtility::Matrix<nDofsPerElement,nDofsPerElement> EvaluationsType;
+  const int nUnknowsPerElement = nDofsPerElement*nComponents;
+  typedef MathUtility::Matrix<nUnknowsPerElement,nUnknowsPerElement> EvaluationsType;
   typedef std::array<
             EvaluationsType,
             QuadratureDD::numberEvaluations()
@@ -50,11 +52,20 @@ setMassMatrix()
   {
     std::array<dof_no_t,nDofsPerElement> dofNosLocal = functionSpace->getElementDofNosLocal(elementNo);
 
-    for (int i=0; i<nDofsPerElement; i++)
+    for (int i = 0; i < nDofsPerElement; i++)
     {
-      for (int j=0; j<nDofsPerElement; j++)
+      for (int j = 0; j < nDofsPerElement; j++)
       {
-        massMatrix->setValue(dofNosLocal[i], dofNosLocal[j], 0, INSERT_VALUES);
+        // loop over components (1,...,D for solid mechanics)
+        for (int rowComponentNo = 0; rowComponentNo < nComponents; rowComponentNo++)
+        {
+          for (int columnComponentNo = 0; columnComponentNo < nComponents; columnComponentNo++)
+          {
+            int componentNo = rowComponentNo*nComponents + columnComponentNo;
+
+            massMatrix->setValue(componentNo, dofNosLocal[i], dofNosLocal[j], 0, INSERT_VALUES);
+          }
+        }
       }
     }
   }
@@ -88,7 +99,7 @@ setMassMatrix()
       auto jacobian = FunctionSpaceType::computeJacobian(geometry, xi);
 
       // get evaluations of integrand which is defined in another class
-      evaluationsArray[samplingPointIndex] = IntegrandMassMatrix<D,EvaluationsType,FunctionSpaceType,Term>::evaluateIntegrand(jacobian,xi);
+      evaluationsArray[samplingPointIndex] = IntegrandMassMatrix<D,EvaluationsType,FunctionSpaceType,nComponents,Term>::evaluateIntegrand(jacobian,xi);
 
     }  // function evaluations
 
@@ -96,14 +107,21 @@ setMassMatrix()
     EvaluationsType integratedValues = QuadratureDD::computeIntegral(evaluationsArray);
 
     // perform integration and add to entry in rhs vector
-    for (int i=0; i<nDofsPerElement; i++)
+    for (int i = 0; i < nDofsPerElement; i++)
     {
-      for (int j=0; j<nDofsPerElement; j++)
+      for (int j = 0; j < nDofsPerElement; j++)
       {
-        // integrate value and set entry in discretization matrix
-        double integratedValue = integratedValues(i,j);
+        for (int rowComponentNo = 0; rowComponentNo < nComponents; rowComponentNo++)
+        {
+          for (int columnComponentNo = 0; columnComponentNo < nComponents; columnComponentNo++)
+          {
+            // integrate value and set entry in discretization matrix
+            double integratedValue = integratedValues(i*nComponents + rowComponentNo, j*nComponents + columnComponentNo);
+            int componentNo = rowComponentNo*nComponents + columnComponentNo;
 
-        massMatrix->setValue(dofNosLocal[i], dofNosLocal[j], integratedValue, ADD_VALUES);
+            massMatrix->setValue(componentNo, dofNosLocal[i], dofNosLocal[j], integratedValue, ADD_VALUES);
+          }
+        }
       }  // j
     }  // i
   }  // elementNo

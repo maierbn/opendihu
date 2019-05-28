@@ -89,6 +89,8 @@ template<typename FieldVariableTargetType>
 void MappingBetweenMeshesManager::
 prepareMapping(std::shared_ptr<FieldVariableTargetType> fieldVariableTarget)
 {
+  Control::PerformanceMeasurement::start("durationMapPrepare");
+
   std::string fieldVariableTargetName = fieldVariableTarget->name();
   // std::map<std::string, std::shared_ptr<FieldVariable::FieldVariableBase>> targetFactorSum_;
 
@@ -113,6 +115,8 @@ prepareMapping(std::shared_ptr<FieldVariableTargetType> fieldVariableTarget)
   targetFactorSum->zeroGhostBuffer();
   fieldVariableTarget->zeroEntries();
   fieldVariableTarget->zeroGhostBuffer();
+
+  Control::PerformanceMeasurement::stop("durationMapPrepare");
 }
 
 //! map data from the source to the target field variable. This has to be called between prepareMapping and finalizeMapping, can be called multiple times with different source meshes.
@@ -169,6 +173,8 @@ template<typename FieldVariableTargetType>
 void MappingBetweenMeshesManager::
 finalizeMapping(std::shared_ptr<FieldVariableTargetType> fieldVariableTarget, int componentNoTarget)
 {
+  Control::PerformanceMeasurement::start("durationMapFinalize");
+
   // assert that targetFactorSum_ field variable exists, this should have been created by prepareMapping()
   assert(targetFactorSum_.find(fieldVariableTarget->name()) != targetFactorSum_.end());
 
@@ -225,6 +231,8 @@ finalizeMapping(std::shared_ptr<FieldVariableTargetType> fieldVariableTarget, in
 
   // set the computed values
   fieldVariableTarget->setValuesWithoutGhosts(componentNoTarget, targetValues);
+
+  Control::PerformanceMeasurement::stop("durationMapFinalize");
 }
 
 

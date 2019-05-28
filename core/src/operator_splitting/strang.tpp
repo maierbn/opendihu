@@ -51,9 +51,14 @@ advanceTimeSpan()
     {
       LOG(INFO) << "Strang, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
     }
-    LOG(DEBUG) << "  Strang: time step " << timeStepNo << ", t: " << currentTime;
 
+    LOG(DEBUG) << "  Strang: time step " << timeStepNo << ", t: " << currentTime;
     LOG(DEBUG) << "  Strang: timeStepping1 (first half) setTimeSpan [" << currentTime << ", " << midTime << "]";
+
+    // --------------- time stepping 1, time span = [0,midTime] -------------------------
+    if (this->durationLogKey_ != "")
+      Control::PerformanceMeasurement::start(this->logKeyTimeStepping1AdvanceTimeSpan_);
+
     // set timespan for timestepping1
     this->timeStepping1_.setTimeSpan(currentTime, midTime);
 
@@ -62,30 +67,64 @@ advanceTimeSpan()
     // advance simulation by time span
     this->timeStepping1_.advanceTimeSpan();
 
+    if (this->durationLogKey_ != "")
+    {
+      Control::PerformanceMeasurement::stop(this->logKeyTimeStepping1AdvanceTimeSpan_);
+      Control::PerformanceMeasurement::start(this->logKeyTransfer12_);
+    }
+
+    // --------------- data transfer 1->2 -------------------------
     LOG(DEBUG) << "  Strang: transfer timeStepping1 -> timeStepping2";
 
     // scale solution in timeStepping1 and transfer to timestepping2_
     SolutionVectorMapping<typename TimeStepping1::TransferableSolutionDataType, typename TimeStepping2::TransferableSolutionDataType>::
       transfer(this->timeStepping1_.getSolutionForTransfer(), this->timeStepping2_.getSolutionForTransfer());
 
+    if (this->durationLogKey_ != "")
+    {
+      Control::PerformanceMeasurement::stop(this->logKeyTransfer12_);
+      Control::PerformanceMeasurement::start(this->logKeyTimeStepping2AdvanceTimeSpan_);
+    }
+
+    // --------------- time stepping 2, time span = [0,dt] -------------------------
     LOG(DEBUG) << "  Strang: timeStepping2 (complete) advanceTimeSpan [" << currentTime << ", " << currentTime+this->timeStepWidth_<< "]";
+
     // set timespan for timestepping2
     this->timeStepping2_.setTimeSpan(currentTime, currentTime+this->timeStepWidth_);
 
     // advance simulation by time span
     this->timeStepping2_.advanceTimeSpan();
 
+    if (this->durationLogKey_ != "")
+    {
+      Control::PerformanceMeasurement::stop(this->logKeyTimeStepping2AdvanceTimeSpan_);
+      Control::PerformanceMeasurement::start(this->logKeyTransfer21_);
+    }
+
+    // --------------- data transfer 2->1 -------------------------
     LOG(DEBUG) << "  Strang: transfer timeStepping2 -> timeStepping1";
     // scale solution in timeStepping2 and transfer to timestepping1_
     SolutionVectorMapping<typename TimeStepping2::TransferableSolutionDataType, typename TimeStepping1::TransferableSolutionDataType>::
       transfer(this->timeStepping2_.getSolutionForTransfer(), this->timeStepping1_.getSolutionForTransfer());
 
+    if (this->durationLogKey_ != "")
+    {
+      Control::PerformanceMeasurement::stop(this->logKeyTransfer21_);
+      Control::PerformanceMeasurement::start(this->logKeyTimeStepping1AdvanceTimeSpan_);
+    }
+
+    // --------------- time stepping 1, time span = [midTime,dt] -------------------------
     LOG(DEBUG) << "  Strang: timeStepping1 (second half) advanceTimeSpan [" << midTime << ", " << currentTime+this->timeStepWidth_<< "]";
     // set timespan for timestepping1
     this->timeStepping1_.setTimeSpan(midTime,currentTime+this->timeStepWidth_);
 
     // advance simulation by time span
     this->timeStepping1_.advanceTimeSpan();
+
+    if (this->durationLogKey_ != "")
+    {
+      Control::PerformanceMeasurement::stop(this->logKeyTimeStepping1AdvanceTimeSpan_);
+    }
 
     /* option 1. (implemented)
      * no need to transfer data again, since next operator splitting step will start with timeStepping1 (which has the actual data).

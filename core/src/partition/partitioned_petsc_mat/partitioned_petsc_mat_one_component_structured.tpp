@@ -78,7 +78,7 @@ template<typename MeshType, typename BasisFunctionType, typename ColumnsFunction
 PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
 ~PartitionedPetscMatOneComponent()
 {
-  LOG(DEBUG) << "destroy PartitionedPetscMatOneComponent";
+  VLOG(1) << "destroy PartitionedPetscMatOneComponent";
   PetscErrorCode ierr;
   ierr = MatDestroy(&this->globalMatrix_); CHKERRV(ierr);
   ierr = MatDestroy(&this->localMatrix_); CHKERRV(ierr);
@@ -219,25 +219,82 @@ zeroRowsColumns(PetscInt numRows, const PetscInt rows[], PetscScalar diag)
   }
   
   PetscErrorCode ierr;
+
+  // map the values of the localMatrix back into the global matrix
+//  ierr = MatRestoreLocalSubMatrix(this->globalMatrix_, this->meshPartitionRows_->dofNosLocalIS(), this->meshPartitionColumns_->dofNosLocalIS(), &this->localMatrix_); CHKERRV(ierr);
+
+  // assemble the global matrix
+  //ierr = MatAssemblyBegin(this->globalMatrix_, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
+  //ierr = MatAssemblyEnd(this->globalMatrix_, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
+
   if (numRows != 0)
   {
     // execute zeroRowsColumns on the global matrix, because it is not defined on the local matrix
     // this call is collective, but apparently fails if numRows == 0
     ierr = MatZeroRowsColumnsLocal(this->globalMatrix_, numRows, rows, diag, NULL, NULL); CHKERRV(ierr);
+    //ierr = MatZeroRowsColumns(this->globalMatrix_, numRows, rows, diag, NULL, NULL); CHKERRV(ierr);
   }
   else
   {
     std::vector<PetscInt> rows = {0};
-    ierr = MatZeroRowsColumnsLocal(this->globalMatrix_, 0, rows.data(), diag, NULL, NULL); CHKERRV(ierr);
+    //ierr = MatZeroRowsColumnsLocal(this->localMatrix_, 0, rows.data(), diag, NULL, NULL); CHKERRV(ierr);
+    ierr = MatZeroRowsColumns(this->globalMatrix_, 0, rows.data(), diag, NULL, NULL); CHKERRV(ierr);
   }
-  
+  /*
   // assemble the global matrix
   ierr = MatAssemblyBegin(this->globalMatrix_, MAT_FLUSH_ASSEMBLY); CHKERRV(ierr);
   ierr = MatAssemblyEnd(this->globalMatrix_, MAT_FLUSH_ASSEMBLY); CHKERRV(ierr);
   
   // get the local submatrix from the global matrix
   ierr = MatGetLocalSubMatrix(this->globalMatrix_, this->meshPartitionRows_->dofNosLocalIS(), this->meshPartitionColumns_->dofNosLocalIS(), &this->localMatrix_); CHKERRV(ierr);
+*/
+}
 
+template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
+zeroRows(PetscInt numRows, const PetscInt rows[])
+{
+  if (VLOG_IS_ON(2))
+  {
+    std::stringstream stream;
+    stream << "\"" << this->name_ << "\" zeroRows rows [";
+    for (int i = 0; i < numRows; i++)
+      stream << rows[i] << " ";
+    stream << "]";
+    VLOG(2) << stream.str();
+  }
+
+  PetscErrorCode ierr;
+
+  // assemble the global matrix
+  //ierr = MatAssemblyBegin(this->globalMatrix_, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
+  //ierr = MatAssemblyEnd(this->globalMatrix_, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
+
+  //std::vector<int> rowIndicesGlobal(numRows);
+  //ierr = ISLocalToGlobalMappingApply(this->meshPartitionRows_->localToGlobalMappingDofs(), numRows, rows, rowIndicesGlobal.data()); CHKERRV(ierr);
+
+  //MatSetOption(this->globalMatrix_, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE);
+
+  if (numRows != 0)
+  {
+    // execute zeroRows on the global matrix, because it is not defined on the local matrix
+    // this call is collective, but apparently fails if numRows == 0
+    ierr = MatZeroRowsLocal(this->globalMatrix_, numRows, rows, 0.0, NULL, NULL); CHKERRV(ierr);
+    //ierr = MatZeroRows(this->globalMatrix_, numRows, rowIndicesGlobal.data(), 0.0, NULL, NULL); CHKERRV(ierr);
+  }
+  else
+  {
+    std::vector<PetscInt> rows = {0};
+    ierr = MatZeroRowsLocal(this->globalMatrix_, 0, rows.data(), 0.0, NULL, NULL); CHKERRV(ierr);
+  }
+/*
+  // assemble the global matrix
+  ierr = MatAssemblyBegin(this->globalMatrix_, MAT_FLUSH_ASSEMBLY); CHKERRV(ierr);
+  ierr = MatAssemblyEnd(this->globalMatrix_, MAT_FLUSH_ASSEMBLY); CHKERRV(ierr);
+
+  // get the local submatrix from the global matrix
+  ierr = MatGetLocalSubMatrix(this->globalMatrix_, this->meshPartitionRows_->dofNosLocalIS(), this->meshPartitionColumns_->dofNosLocalIS(), &this->localMatrix_); CHKERRV(ierr);
+  */
 }
 
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
@@ -279,19 +336,19 @@ assembly(MatAssemblyType type)
 
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
 void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
-getValuesGlobalPetscIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], PetscScalar v[])
+getValuesGlobalPetscIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], PetscScalar v[]) const
 {
   // this wraps the standard PETSc MatGetValues, for the global indexing, only retrieves locally stored indices
   PetscErrorCode ierr;
-  
+
   // map the values of the localMatrix back into the global matrix
   //ierr = MatRestoreLocalSubMatrix(this->globalMatrix_, this->meshPartitionRows_->dofNosLocalIS(),
   //                                this->meshPartitionColumns_->dofNosLocalIS(), &this->localMatrix_); CHKERRV(ierr);
-  
+
   // assemble the global matrix
   //ierr = MatAssemblyBegin(this->globalMatrix_, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
   //ierr = MatAssemblyEnd(this->globalMatrix_, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
-  
+
   if (VLOG_IS_ON(1))
   {
     for (int i = 0; i < m; i++)
@@ -311,6 +368,51 @@ getValuesGlobalPetscIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, cons
   {
     std::stringstream stream;
     stream << "\"" << this->name_ << "\" getValuesGlobalPetscIndexing, rows [";
+    for (int i = 0; i < m; i++)
+      stream << idxm[i] << " ";
+    stream << "], cols [";
+    for (int i = 0; i < n; i++)
+      stream << idxn[i] << " ";
+    stream << "], values [";
+    for (int i = 0; i < n*m; i++)
+      stream << v[i] << " ";
+    stream << "]";
+    VLOG(2) << stream.str();
+  }
+}
+
+template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
+setValuesGlobalPetscIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], const PetscScalar v[], InsertMode addv)
+{
+  // this wraps the standard PETSc MatSetValues, for the global indexing
+  PetscErrorCode ierr;
+
+  if (VLOG_IS_ON(1))
+  {
+    for (int i = 0; i < m; i++)
+    {
+      assert(idxm[i] < this->meshPartitionRows_->nDofsGlobal());
+    }
+    for (int i = 0; i < n; i++)
+    {
+      assert(idxn[i] < this->meshPartitionColumns_->nDofsGlobal());
+    }
+  }
+
+  // map the values of the localMatrix back into the global matrix
+  ierr = MatRestoreLocalSubMatrix(this->globalMatrix_, this->meshPartitionRows_->dofNosLocalIS(), this->meshPartitionColumns_->dofNosLocalIS(), &this->localMatrix_); CHKERRV(ierr);
+
+  // access the global matrix
+  ierr = MatSetValues(this->globalMatrix_, m, idxm, n, idxn, v, addv); CHKERRV(ierr);
+
+  // get the local submatrix from the global matrix
+  ierr = MatGetLocalSubMatrix(this->globalMatrix_, this->meshPartitionRows_->dofNosLocalIS(), this->meshPartitionColumns_->dofNosLocalIS(), &this->localMatrix_); CHKERRV(ierr);
+
+  if (VLOG_IS_ON(2))
+  {
+    std::stringstream stream;
+    stream << "\"" << this->name_ << "\" setValuesGlobalPetscIndexing, rows [";
     for (int i = 0; i < m; i++)
       stream << idxm[i] << " ";
     stream << "], cols [";

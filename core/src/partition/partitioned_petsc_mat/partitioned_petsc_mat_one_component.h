@@ -52,9 +52,15 @@ public:
   //! wrapper of MatSetValues for a single value, sets a local value in the matrix
   void setValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], const PetscScalar v[], InsertMode addv);
   
+  //! set entries in the matrix that are locally stored, uses the global/Petsc indexing. This is not the global natural numbering!
+  void setValuesGlobalPetscIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], const PetscScalar v[], InsertMode addv);
+
   //! wrapper of MatZeroRowsColumns, zeros all entries (except possibly the main diagonal) of a set of local rows and columns
   void zeroRowsColumns(PetscInt numRows, const PetscInt rows[], PetscScalar diag);
-  
+
+  //! wrapper of MatZeroRows, zeros all entries local rows
+  void zeroRows(PetscInt numRows, const PetscInt rows[]);
+
   //! wrapper of MatZeroEntries, sets all entries to 0
   void zeroEntries();
   
@@ -65,7 +71,7 @@ public:
   void getValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], PetscScalar v[]) const;
 
   //! get entries from the matrix that are locally stored, uses the global/Petsc indexing. This is not the global natural numbering!
-  void getValuesGlobalPetscIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], PetscScalar v[]);
+  void getValuesGlobalPetscIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], PetscScalar v[]) const;
 
   //! get a reference to the local PETSc matrix
   Mat &valuesLocal();
@@ -126,10 +132,16 @@ public:
   
   //! wrapper of MatSetValues for a single value, sets a local value in the matrix
   void setValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], const PetscScalar v[], InsertMode addv);
-  
+
+  //! set entries in the matrix that are locally stored, uses the global/Petsc indexing. This is not the global natural numbering!
+  void setValuesGlobalPetscIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], const PetscScalar v[], InsertMode addv);
+
   //! wrapper of MatZeroRowsColumns, zeros all entries (except possibly the main diagonal) of a set of local rows and columns
   void zeroRowsColumns(PetscInt numRows,const PetscInt rows[], PetscScalar diag);
   
+  //! wrapper of MatZeroRows, zeros all entries local rows
+  void zeroRows(PetscInt numRows, const PetscInt rows[]);
+
   //! wrapper of MatZeroEntries, sets all entries to 0
   void zeroEntries();
   
@@ -140,7 +152,7 @@ public:
   void getValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], PetscScalar v[]) const;
 
   //! get entries from the matrix that are locally stored, uses the global/Petsc indexing. This is not the global natural numbering!
-  void getValuesGlobalPetscIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], PetscScalar v[]);
+  void getValuesGlobalPetscIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], PetscScalar v[]) const;
   
   //! get a reference to the PETSc matrix, because there is no parallelism with UnstructuredDeformableOfDimension meshes, this is the same as valuesGlobal
   Mat &valuesLocal();

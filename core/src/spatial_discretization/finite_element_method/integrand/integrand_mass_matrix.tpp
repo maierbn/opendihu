@@ -7,8 +7,8 @@
 namespace SpatialDiscretization
 {
 
-template<int D,typename EvaluationsType,typename FunctionSpaceType,typename Term,typename Dummy>
-EvaluationsType IntegrandMassMatrix<D,EvaluationsType,FunctionSpaceType,Term,Dummy>::
+template<int D,typename EvaluationsType,typename FunctionSpaceType,int nComponents,typename Term,typename Dummy>
+EvaluationsType IntegrandMassMatrix<D,EvaluationsType,FunctionSpaceType,nComponents,Term,Dummy>::
 evaluateIntegrand(const std::array<Vec3,D> &jacobian, const std::array<double,D> xi)
 {
   EvaluationsType evaluations;
@@ -17,13 +17,17 @@ evaluateIntegrand(const std::array<Vec3,D> &jacobian, const std::array<double,D>
   double integrationFactor = MathUtility::computeIntegrationFactor<D>(jacobian);
 
   // loop over pairs of basis functions and evaluation integrand at xi
-  for (int i=0; i<FunctionSpaceType::nDofsPerElement(); i++)
+  for (int i = 0; i < FunctionSpaceType::nDofsPerElement(); i++)
   {
-    for (int j=0; j<FunctionSpaceType::nDofsPerElement(); j++)
+    for (int j = 0; j < FunctionSpaceType::nDofsPerElement(); j++)
     {
-      //VLOG(2) << "    integrationFactor " << integrationFactor << ", jacobian: " << jacobian;
-      double integrand = FunctionSpaceType::phi(i,xi) * FunctionSpaceType::phi(j,xi) * integrationFactor;
-      evaluations(i,j) = integrand;
+      // loop over components, for not solid mechanics, nComponents is 1
+      for (int componentNo = 0; componentNo < nComponents; componentNo++)
+      {
+        //VLOG(2) << "    integrationFactor " << integrationFactor << ", jacobian: " << jacobian;
+        double integrand = FunctionSpaceType::phi(i,xi) * FunctionSpaceType::phi(j,xi) * integrationFactor;
+        evaluations(i*nComponents + componentNo, j*nComponents + componentNo) = integrand;
+      }
     }
   }
 

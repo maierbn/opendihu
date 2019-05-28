@@ -123,6 +123,20 @@ traceStreamline(Vec3 startingPoint, double direction, std::vector<Vec3> &points)
       VLOG(2) << "use direct gradient";
     }
 
+    if (fabs(gradient[0] + gradient[1] + gradient[2]) < 1e-15)
+    {
+      LOG(ERROR) << "Gradient at element " << elementNo << ", xi " << xi << " is zero!";
+      if (!useGradientField_)
+      {
+        Tensor2<D> inverseJacobian = functionSpace->getInverseJacobian(geometryValues, elementNo, xi);
+        LOG(DEBUG) << "geometryValues: " << geometryValues << ", inverseJacobian: " << inverseJacobian << ", elementalSolutionValues: " << elementalSolutionValues;
+      }
+      else
+      {
+        LOG(DEBUG) << "elementalGradientValues: " << elementalGradientValues;
+      }
+    }
+
     // integrate streamline
     VLOG(2) << "  integrate from " << currentPoint << ", gradient: " << gradient << ", gradient normalized: " << MathUtility::normalized<3>(gradient)
       << ", lineStepWidth: " << lineStepWidth_;
@@ -131,6 +145,19 @@ traceStreamline(Vec3 startingPoint, double direction, std::vector<Vec3> &points)
     VLOG(2) << "              to " << currentPoint;
 
     points.push_back(currentPoint);
+  }
+
+  if (points.empty())
+  {
+    LOG(DEBUG) << "traced streamline is completely empty";
+  }
+  else if (points.size() == 1)
+  {
+    LOG(DEBUG) << "traced streamline has 1 point: " << points[0];
+  }
+  else
+  {
+    LOG(DEBUG) << "traced streamline has " << points.size() << " points, start: " << points[0] << ", end: " << points[points.size()-1];
   }
 }
 

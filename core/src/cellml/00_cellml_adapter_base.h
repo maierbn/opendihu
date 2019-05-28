@@ -18,10 +18,12 @@
  *   State: state variable
  *   Rate: the time derivative of the state variable, i.e. the increment value in an explicit Euler stepping
  */
-template <int nStates, typename FunctionSpaceType>
+template <int nStates, int nIntermediates_, typename FunctionSpaceType>
 class CellmlAdapterBase
 {
 public:
+
+  typedef FieldVariable::FieldVariable<FunctionSpaceType,nIntermediates_> FieldVariableTypeIntermediates;
 
   //! constructor from context
   CellmlAdapterBase(DihuContext context, bool noNewOutputWriter);
@@ -63,9 +65,15 @@ public:
   //! get the prefactor value, i.e. the factor with which the solution will be scaled before the transfer in an operator splitting scheme
   double prefactor();
 
+  //! get the const number of intermediates
+  constexpr int nIntermediates() const;
+
+  //! return vector of the intermediate values
+  std::shared_ptr<FieldVariableTypeIntermediates> intermediates();
+
 protected:
 
-  //! scan the given cellml source file for initial values that are given by dummy assignments (OpenCMISS) or directly (OpenCOR). This also sets nParameters_, nConstants_ and nIntermediates_
+  //! scan the given cellml source file for initial values that are given by dummy assignments (OpenCMISS) or directly (OpenCOR). This also sets nParameters_, nConstants_ and nIntermediatesFromSource_
   virtual bool scanSourceFile(std::string sourceFilename, std::array<double,nStates> &statesInitialValues) = 0;
 
   DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
@@ -76,7 +84,7 @@ protected:
 
   int nInstances_;         ///< number of instances of the CellML problem. Usually it is the number of mesh nodes when a mesh is used. When running in parallel this is the local number of instances without ghosts.
   int nParameters_ = 0;    ///< number of parameters (=CellML name "known") in one instance of the CellML problem
-  int nIntermediates_ = 0; ///< number of intermediate values (=CellML name "wanted") in one instance of the CellML problem
+  int nIntermediatesInSource_ = 0; ///< number of intermediate values (=CellML name "wanted") in one instance of the CellML problem, as detected from the source file
   int nConstants_ = 0;     ///< number of entries in the "CONSTANTS" array
    
   int outputStateIndex_ = 0;   ///< the index of the state that should be used further in an operator splitting scheme, for electrophysiology application this is the states of Vm
@@ -86,9 +94,11 @@ protected:
   //std::vector<double> states_;    ///< vector of states, that are computed by rhsRoutine, this is not needed as member variable, because the states are directly stored in the Petsc Vecs of the solving time stepping scheme
   //std::vector<double> rates_;     ///< vector of rates, that are computed by rhsRoutine, this is not needed as member variable, because the states are directly stored in the Petsc Vecs of the solving time stepping scheme
   std::vector<double> parameters_; ///< vector of values that will be provided to CellML by the code, given by python config, CellML name: known
-  std::vector<double> intermediates_;    ///< vector of intermediate values in DAE system. These can be computed directly from the actual states at any time. Gets computed by rhsRoutine from states, together with rates. OpenCMISS name is intermediate, CellML name: wanted
+  //std::vector<double> intermediates_;    ///< vector of intermediate values in DAE system. These can be computed directly from the actual states at any time. Gets computed by rhsRoutine from states, together with rates. OpenCMISS name is intermediate, CellML name: wanted
   std::array<double,nStates> statesInitialValues_;  ///< initial values of the states for one instances, as parsed from source file
   
+  std::shared_ptr<FieldVariableTypeIntermediates> intermediates_;   ///< field variable that hold the intermediate values
+
   std::vector<int> parametersUsedAsIntermediate_;  ///< explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array
   std::vector<int> parametersUsedAsConstant_;  ///< explicitely defined parameters that will be copied to constants, this vector contains the indices of the constants 
   

@@ -78,10 +78,17 @@ public:
   FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, const std::vector<Vec3> &nodePositions,
                          const std::array<element_no_t,D> nElementsPerCoordinateDirection, const std::array<int,D> nRanksPerCoordinateDirection);
 
+  //! constructor from node positions (dummy, needed for creation from node positions from file)
+  FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, const std::vector<double> &nodePositionsFromBinaryFile, const std::vector<Vec3> &nodePositions,
+                         const std::array<element_no_t,D> nElementsPerCoordinateDirection, const std::array<int,D> nRanksPerCoordinateDirection);
+
   typedef FieldVariable::FieldVariable<FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>,3> GeometryFieldType;  ///< the class typename of the geometry field variable
 
   //! initialize geometry
   virtual void initialize();
+
+  //! refine the mesh by given factor, create new node positions
+  void refineMesh(std::array<int,D> refinementFactors);
   
 protected:
 

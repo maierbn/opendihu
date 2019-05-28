@@ -11,7 +11,7 @@ Import('env')     # import Environment object from calling SConstruct
 if not env['no_examples']:
     
   # create the main executable
-  #env.Program(target = 'laplace_unstructured', source = "src/laplace_unstructured.cpp")
-  #env.Program(target = 'laplace_structured', source = "src/laplace_structured.cpp")
-  #env.Program(target = 'laplace_regular', source = "src/laplace_regular.cpp")
+  env.Program(target = 'laplace_unstructured', source = "src/laplace_unstructured.cpp")
+  env.Program(target = 'laplace_structured', source = "src/laplace_structured.cpp")
+  env.Program(target = 'laplace_regular', source = "src/laplace_regular.cpp")
   env.Program(target = 'laplace_hermite', source = "src/laplace_hermite.cpp")

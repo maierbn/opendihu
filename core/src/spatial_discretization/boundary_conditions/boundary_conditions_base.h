@@ -22,6 +22,12 @@ public:
     std::vector<std::pair<int,ValueType>> elementalDofIndex;   ///< the element-local dof index and the value of the boundary condition on this dof
   };
 
+  struct BoundaryConditionsForComponent
+  {
+    std::vector<dof_no_t> dofNosLocal;
+    std::vector<double> values;
+  };
+
   //! constructor
   BoundaryConditionsBase(DihuContext context);
 
@@ -54,16 +60,25 @@ protected:
   //! print the data to VLOG(1)
   void printDebuggingInfo();
 
+  //! create the boundaryConditionsByComponent_ data structure from boundaryConditionNonGhostDofLocalNos_ and boundaryConditionValues_
+  void generateBoundaryConditionsByComponent();
+
   PythonConfig specificSettings_;            ///< the python config that contains the boundary conditions
   std::shared_ptr<FunctionSpaceType> functionSpace_;     ///< function space for which boundary conditions are specified
 
   std::vector<ElementWithNodes> boundaryConditionElements_;   ///< nodes grouped by elements on which boundary conditions are specified
   std::vector<dof_no_t> boundaryConditionNonGhostDofLocalNos_;        ///< vector of all local (non-ghost) boundary condition dofs
   std::vector<ValueType> boundaryConditionValues_;               ///< vector of the local prescribed values, related to boundaryConditionNonGhostDofLocalNos_
+
+  std::array<BoundaryConditionsForComponent, nComponents> boundaryConditionsByComponent_;   ///< the boundary condition data organized by component
+
 };
 
 template<typename FunctionSpaceType, int nComponents>
-std::ostream &operator<<(std::ostream &stream, const typename BoundaryConditionsBase<FunctionSpaceType,nComponents>::ElementWithNodes rhs);
+std::ostream &operator<<(std::ostream &stream, const typename BoundaryConditionsBase<FunctionSpaceType,nComponents>::BoundaryConditionsForComponent &rhs);
+
+template<typename FunctionSpaceType, int nComponents>
+std::ostream &operator<<(std::ostream &stream, const typename BoundaryConditionsBase<FunctionSpaceType,nComponents>::ElementWithNodes &rhs);
 
 } // namespace
 

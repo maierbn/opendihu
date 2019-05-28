@@ -18,7 +18,8 @@ void SolutionVectorMapping<
   {
     LOG(ERROR) << "Trying to transfer data from " << transferableSolutionData1.size() << " variables to " << transferableSolutionData2.size() << ", number has to be equal. "
       << "Now only using the first " << nTransferableVariables << " variable" << (nTransferableVariables != 1? "s" : "") << ". Types: " << std::endl
-      << typeid(TransferableSolutionDataType1).name() << std::endl << typeid(TransferableSolutionDataType2).name();
+      << StringUtility::demangle(typeid(TransferableSolutionDataType1).name()) << std::endl
+      << StringUtility::demangle(typeid(TransferableSolutionDataType2).name());
   }
 
   for (int i = 0; i < nTransferableVariables; i++)

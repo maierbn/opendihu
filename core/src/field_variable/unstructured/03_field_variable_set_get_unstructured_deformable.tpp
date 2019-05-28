@@ -161,6 +161,19 @@ getValue(int componentNo, node_no_t dofLocalNo) const
   return this->component_[componentNo].getValue(dofLocalNo);
 }
 
+//! get a single value from local dof no. for all components
+template<typename FunctionSpaceType, int nComponents>
+std::array<double,nComponents> FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
+getValue(node_no_t dofLocalNo) const
+{
+  std::array<double,nComponents> result;
+  for (int componentNo = 0; componentNo < nComponents; componentNo++)
+  {
+    result[componentNo] = this->component_[componentNo].getValue(dofLocalNo);
+  }
+  return result;
+}
+
 //! for a specific component, get the values corresponding to all element-local dofs
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
@@ -346,6 +359,16 @@ setValue(dof_no_t dofLocalNo, const std::array<double,nComponents> &value, Inser
 
   // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. finishGhostManipulation must be called
 }
+
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
+setValue(int componentNo, dof_no_t dofLocalNo, double value, InsertMode petscInsertMode)
+{
+  assert(this->values_);
+
+  this->values_->setValues(componentNo, 1, &dofLocalNo, &value, petscInsertMode);
+}
+
 
 //! set values for the specified component for all local dofs, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
 template<typename FunctionSpaceType, int nComponents>

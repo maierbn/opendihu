@@ -1,3 +1,6 @@
-[submodule "dependencies/megamol/src/megamol-tobiasrau"]
-	path = dependencies/megamol/src/megamol-tobiasrau
-	url = git@github.com:tobiasrau/megamol-dev.git
+#[submodule "dependencies/megamol/src/megamol-tobiasrau"]
+#	path = dependencies/megamol/src/megamol-tobiasrau
+#	url = git@github.com:tobiasrau/megamol-dev.git
+#[submodule "dependencies/megamol/src/megamol-dev"]
+#	path = dependencies/megamol/src/megamol-dev
+#	url = https://github.com/UniStuttgart-VISUS/megamol-dev.git

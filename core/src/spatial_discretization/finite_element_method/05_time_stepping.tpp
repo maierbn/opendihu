@@ -20,29 +20,29 @@
 namespace SpatialDiscretization
 {
 
-template<typename FunctionSpaceType, typename QuadratureType, typename Term>
-FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
+template<typename FunctionSpaceType, typename QuadratureType, int nComponents_, typename Term>
+FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, nComponents_, Term>::
 FiniteElementMethodTimeStepping(DihuContext context, std::shared_ptr<FunctionSpaceType> functionSpace)
-  : AssembleRightHandSide<FunctionSpaceType, QuadratureType, Term>(context, functionSpace),
+  : AssembleRightHandSide<FunctionSpaceType, QuadratureType, nComponents_, Term>(context, functionSpace),
   DiscretizableInTime(), Splittable(), linearSolver_(nullptr), ksp_(nullptr)
 {
 }
 
-template<typename FunctionSpaceType, typename QuadratureType, typename Term>
-void FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
+template<typename FunctionSpaceType, typename QuadratureType, int nComponents_, typename Term>
+void FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, nComponents_, Term>::
 setBoundaryConditionHandlingEnabled(bool boundaryConditionHandlingEnabled)
 {
-  BoundaryConditions<FunctionSpaceType,QuadratureType,Term,Term>::setBoundaryConditionHandlingEnabled(boundaryConditionHandlingEnabled);
+  BoundaryConditions<FunctionSpaceType,QuadratureType,nComponents_,Term,Term>::setBoundaryConditionHandlingEnabled(boundaryConditionHandlingEnabled);
 }
 
-template<typename FunctionSpaceType, typename QuadratureType, typename Term>
-void FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
+template<typename FunctionSpaceType, typename QuadratureType, int nComponents_, typename Term>
+void FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, nComponents_, Term>::
 initialize()
 {
   LOG(DEBUG) << "FiniteElementMethodTimeStepping::initialize";
   
   // call initialize of the parent class
-  FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Term>::initialize();
+  FiniteElementMethodBase<FunctionSpaceType,QuadratureType,nComponents_,Term>::initialize();
 
   // initialize the linear solver
   this->initializeLinearSolver();
@@ -55,8 +55,8 @@ initialize()
   }
 }
 
-template<typename FunctionSpaceType, typename QuadratureType, typename Term>
-void FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
+template<typename FunctionSpaceType, typename QuadratureType, int nComponents_, typename Term>
+void FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, nComponents_, Term>::
 initializeForImplicitTimeStepping()
 {
   LOG(DEBUG) << "FiniteElementMethodTimeStepping::initializeForImplicitTimeStepping()";
@@ -75,8 +75,8 @@ initializeForImplicitTimeStepping()
   this->setInverseLumpedMassMatrix();
 }
 
-template<typename FunctionSpaceType, typename QuadratureType, typename Term>
-void FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
+template<typename FunctionSpaceType, typename QuadratureType, int nComponents_, typename Term>
+void FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, nComponents_, Term>::
 reset()
 {
   linearSolver_ = nullptr;
@@ -84,8 +84,8 @@ reset()
 }
 
 //! hook to set initial values for a time stepping from this FiniteElement context, return true if it has set the values or don't do anything and return false
-template<typename FunctionSpaceType, typename QuadratureType, typename Term>
-bool FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
+template<typename FunctionSpaceType, typename QuadratureType, int nComponents_, typename Term>
+bool FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, nComponents_, Term>::
 setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> initialValues)
 {
   // Do not set initial values from within the "FiniteElements" section of the config. (therefore return false)
@@ -93,15 +93,15 @@ setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,
   return false;
 }
 
-template<typename FunctionSpaceType, typename QuadratureType, typename Term>
-void FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
+template<typename FunctionSpaceType, typename QuadratureType, int nComponents_, typename Term>
+void FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, nComponents_, Term>::
 setRankSubset(Partition::RankSubset rankSubset)
 {
-  FiniteElementMethodBase<FunctionSpaceType, QuadratureType, Term>::setRankSubset(rankSubset);
+  FiniteElementMethodBase<FunctionSpaceType, QuadratureType, nComponents_, Term>::setRankSubset(rankSubset);
 }
 
-template<typename FunctionSpaceType, typename QuadratureType, typename Term>
-void FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
+template<typename FunctionSpaceType, typename QuadratureType, int nComponents_, typename Term>
+void FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, nComponents_, Term>::
 initializeLinearSolver()
 { 
   if (linearSolver_ == nullptr)
@@ -125,23 +125,23 @@ initializeLinearSolver()
   }
 }
 
-template<typename FunctionSpaceType, typename QuadratureType, typename Term>
-constexpr int FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
+template<typename FunctionSpaceType, typename QuadratureType, int nComponents_, typename Term>
+constexpr int FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, nComponents_, Term>::
 nComponents()
 {
-  return 1;   // this may be different for structural mechanics
+  return nComponents_;
 }
 
-template<typename FunctionSpaceType, typename QuadratureType, typename Term>
-bool FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
+template<typename FunctionSpaceType, typename QuadratureType, int nComponents_, typename Term>
+bool FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, nComponents_, Term>::
 knowsMeshType()
 {
   return true;
 }
 
-template<typename FunctionSpaceType, typename QuadratureType, typename Term>
-typename FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::TransferableSolutionDataType
-FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
+template<typename FunctionSpaceType, typename QuadratureType, int nComponents_, typename Term>
+typename FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, nComponents_, Term>::TransferableSolutionDataType
+FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, nComponents_, Term>::
 getSolutionForTransfer()
 {
   // check for nans or infs
@@ -149,11 +149,11 @@ getSolutionForTransfer()
   return this->data_->getSolutionForTransfer();
 }
 
-template<typename FunctionSpaceType, typename QuadratureType, typename Term>
-std::shared_ptr<FunctionSpaceType> FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
+template<typename FunctionSpaceType, typename QuadratureType, int nComponents_, typename Term>
+std::shared_ptr<FunctionSpaceType> FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, nComponents_, Term>::
 functionSpace()
 {
-  return FiniteElementMethodBase<FunctionSpaceType, QuadratureType, Term>::functionSpace();
+  return FiniteElementMethodBase<FunctionSpaceType, QuadratureType, nComponents_, Term>::functionSpace();
 }
 
 } // namespace SpatialDiscretization

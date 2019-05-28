@@ -21,9 +21,9 @@
  *   State: state variable
  *   Rate: the time derivative of the state variable, i.e. the increment value in an explicit Euler stepping
  */
-template <int nStates_, typename FunctionSpaceType=FunctionSpace::Generic>
+template <int nStates_, int nIntermediates_=9, typename FunctionSpaceType=FunctionSpace::Generic>
 class CellmlAdapter :
-  public CallbackHandler<nStates_,FunctionSpaceType>,
+  public CallbackHandler<nStates_,nIntermediates_,FunctionSpaceType>,
   public Splittable
 {
 public:

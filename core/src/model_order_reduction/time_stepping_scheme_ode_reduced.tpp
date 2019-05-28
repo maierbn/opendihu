@@ -17,9 +17,11 @@ namespace ModelOrderReduction
   TimeSteppingSchemeOdeReduced<TimeSteppingType>::
   TimeSteppingSchemeOdeReduced(DihuContext context, std::string name):
   MORBase<typename TimeSteppingType::FunctionSpace>(context["ModelOrderReduction"]),
-  ::TimeSteppingScheme::TimeSteppingSchemeOdeBase<::FunctionSpace::Generic,1>(context["ModelOrderReduction"],name),
+  ::TimeSteppingScheme::TimeSteppingSchemeOdeTransferableSolutionData<::FunctionSpace::Generic,1>(context["ModelOrderReduction"],name),
     fullTimestepping_(context["ModelOrderReduction"]), initialized_(false)
   {  
+    LOG(DEBUG) << "Constructor TimeSteppingSchemeOdeReduced, given context: " << context.getPythonConfig();
+
     this->specificSettingsMOR_ = context["ModelOrderReduction"].getPythonConfig();
     
     LOG(DEBUG) << this->specificSettingsMOR_;
@@ -105,8 +107,9 @@ namespace ModelOrderReduction
     LOG(TRACE) << "TimeSteppingSchemeOdeReduced::initialize()";
     
     this->fullTimestepping_.initialize();
+    LOG(DEBUG) << "fullTimestepping_ was initialized, has function space: " << this->fullTimestepping_.data().functionSpace()->meshName();
 
-    ::TimeSteppingScheme::TimeSteppingSchemeOdeBase<::FunctionSpace::Generic,1>::initialize(); 
+    ::TimeSteppingScheme::TimeSteppingSchemeOdeTransferableSolutionData<::FunctionSpace::Generic,1>::initialize();
 
     this->dataMOR_->setFunctionSpace(this->functionSpaceRed);
     this->dataMOR_->setFunctionSpaceRows(this->functionSpaceRowsSnapshots);
@@ -121,6 +124,8 @@ namespace ModelOrderReduction
     setInitialValues(); //necessary for the explicit scheme
 
     VLOG(1) << "initialized full-order solution: " << *this->fullTimestepping_.data().solution();
+
+    LOG(DEBUG) << "fullTimestepping_ has function space: " << this->fullTimestepping_.data().functionSpace()->meshName();
 
     initialized_ = true;
   }

@@ -57,6 +57,9 @@ public:
   template<int N>
   void getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nComponents>,N> &values) const;
 
+  //! get values from their local dof no.s for all components
+  void getValues(std::vector<dof_no_t> dofLocalNo, std::vector<std::array<double,nComponents>> &values) const;
+
   //! for a specific component, get the values corresponding to all element-local dofs
   void getElementValues(int componentNo, element_no_t elementNoLocal, std::array<double,FunctionSpaceType::nDofsPerElement()> &values) const;
 

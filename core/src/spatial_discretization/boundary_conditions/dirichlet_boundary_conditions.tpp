@@ -8,8 +8,8 @@
 namespace SpatialDiscretization
 {
 
-template<typename FunctionSpaceType>
-void DirichletBoundaryConditions<FunctionSpaceType,1>::
+template<typename FunctionSpaceType,int nComponents>
+void DirichletBoundaryConditions<FunctionSpaceType,nComponents>::
 initializeGhostElements()
 {
   LOG(TRACE) << "initializeGhostElements";
@@ -19,7 +19,7 @@ initializeGhostElements()
 
   // determine own ghost elements that can be send to other ranks
   // loop over elements that have nodes with prescribed boundary conditions, only for those the integral term is non-zero
-  for (typename std::vector<typename DirichletBoundaryConditionsBase<FunctionSpaceType,1>::ElementWithNodes>::const_iterator iter = this->boundaryConditionElements_.cbegin();
+  for (typename std::vector<typename DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::ElementWithNodes>::const_iterator iter = this->boundaryConditionElements_.cbegin();
        iter != this->boundaryConditionElements_.cend(); iter++)
   {
     element_no_t elementNoLocal = iter->elementNoLocal;
@@ -27,13 +27,13 @@ initializeGhostElements()
     // get the dof nos of the current element
     std::array<dof_no_t,nDofsPerElement> dofNosLocal = this->functionSpace_->getElementDofNosLocal(elementNoLocal);
 
-    std::vector<std::pair<int,std::array<double,1>>>::const_iterator boundaryConditionDofIter = iter->elementalDofIndex.begin();
+    typename std::vector<std::pair<int,std::array<double,nComponents>>>::const_iterator boundaryConditionDofIter = iter->elementalDofIndex.begin();
 
     VLOG(1) << "element " << elementNoLocal << ", elemental dofs: " << iter->elementalDofIndex;
 
     std::map<int,std::vector<global_no_t>> nonBoundaryConditionDofsOfRankGlobalPetsc;
     std::vector<global_no_t> boundaryConditionDofsGlobalPetsc;
-    std::vector<double> boundaryConditionValues;
+    std::vector<ValueType> boundaryConditionValues;
 
     // loop over all dofs of the element
     for (int elementalDofIndex = 0; elementalDofIndex < nDofsPerElement; elementalDofIndex++)
@@ -56,9 +56,9 @@ initializeGhostElements()
         global_no_t nodeNoGlobalPetsc = this->functionSpace_->meshPartition()->getNodeNoGlobalPetsc(nodeNoLocal);
         global_no_t dofNoGlobalPetsc = nodeNoGlobalPetsc*nDofsPerNode + nodalDofIndex;
         boundaryConditionDofsGlobalPetsc.push_back(dofNoGlobalPetsc);
-        boundaryConditionValues.push_back(boundaryConditionDofIter->second[0]);
+        boundaryConditionValues.push_back(boundaryConditionDofIter->second);
 
-        VLOG(1) << "   dof has prescribed value " << boundaryConditionDofIter->second[0] << ", dofNoGlobalPetsc: " << dofNoGlobalPetsc;
+        VLOG(1) << "   dof has prescribed value " << boundaryConditionDofIter->second << ", dofNoGlobalPetsc: " << dofNoGlobalPetsc;
 
         boundaryConditionDofIter++;
       }
@@ -209,7 +209,7 @@ initializeGhostElements()
   }
 
   // receive lengths of arrays
-  std::vector<std::vector<int>> receiveBuffer(nElementsFromRanks.size());
+  std::vector<std::vector<int>> receiveBuffer(nElementsFromRanks.size());   // for every ghostElements the sizes of nonBoundaryConditionDofsOfRankGlobalPetsc and boundaryConditionDofsGlobalPetsc
   std::vector<MPI_Request> receiveRequests;
 
   // receive data
@@ -273,7 +273,7 @@ initializeGhostElements()
     {
       sendBufferSize += ghostElementIter->nonBoundaryConditionDofsOfRankGlobalPetsc.size();
       sendBufferSize += ghostElementIter->boundaryConditionDofsGlobalPetsc.size();
-      sendBufferValuesSize += ghostElementIter->boundaryConditionDofsGlobalPetsc.size();
+      sendBufferValuesSize += ghostElementIter->boundaryConditionDofsGlobalPetsc.size()*nComponents;
     }
 
     if (sendBufferSize != 0)
@@ -297,8 +297,12 @@ initializeGhostElements()
         {
           sendBufferGhostElements[i][j1++] = (long)ghostElementIter->boundaryConditionDofsGlobalPetsc[k];
           VLOG(1) << "store ghost value (BC) to send buffer at j=" << j1-1 << ", value: " << ghostElementIter->boundaryConditionDofsGlobalPetsc[k];
-          VLOG(1) << "store value to send buffer at j=" << j2 << ", value: " << ghostElementIter->boundaryConditionValues[k];
-          sendBufferValues[i][j2++] = (double)ghostElementIter->boundaryConditionValues[k];
+          VLOG(1) << "store value to send buffer starting at j=" << j2 << " (" << nComponents << " components), "
+            << "values: " << ghostElementIter->boundaryConditionValues[k];
+          for (int componentNo = 0; componentNo < nComponents; componentNo++)
+          {
+            sendBufferValues[i][j2++] = (double)ghostElementIter->boundaryConditionValues[k][componentNo];
+          }
         }
       }
 
@@ -331,9 +335,9 @@ initializeGhostElements()
     int receiveBufferValuesSize = 0;
     for (int ghostElementIndex = 0; ghostElementIndex < nGhostElementsFromRank; ghostElementIndex++)
     {
-      receiveBufferSize += receiveBuffer[i][2*ghostElementIndex+0];
-      receiveBufferSize += receiveBuffer[i][2*ghostElementIndex+1];
-      receiveBufferValuesSize += receiveBuffer[i][2*ghostElementIndex+1];
+      receiveBufferSize += receiveBuffer[i][2*ghostElementIndex+0];     // number of nonBC dofs in the ghostElement on that rank
+      receiveBufferSize += receiveBuffer[i][2*ghostElementIndex+1];     // number of BC dofs in the ghostElement on that rank
+      receiveBufferValuesSize += receiveBuffer[i][2*ghostElementIndex+1]*nComponents;
     }
 
     LOG(DEBUG) << "receive from " << foreignRankNo << ", size: " << receiveBufferValuesSize;
@@ -377,7 +381,7 @@ initializeGhostElements()
     for (int ghostElementIndex = 0; ghostElementIndex < nGhostElementsFromRank; ghostElementIndex++)
     {
       int sizeNonBoundaryConditionDofsOfRankGlobalPetsc = receiveBuffer[i][2*ghostElementIndex+0];
-      int sizeBoundaryConditionDofsGlobalPetsc = receiveBuffer[i][2*ghostElementIndex+1];
+      int sizeBoundaryConditionDofsGlobalPetsc = receiveBuffer[i][2*ghostElementIndex+1];    // number of values of type ValueType (vectors of nComponents)
 
       assert(sizeof(global_no_t) == sizeof(long)); // global_no_t = std::size_t == long should be 8 bytes on 64-bit linux
       GhostElement ghostElement;
@@ -393,8 +397,16 @@ initializeGhostElements()
       //LOG(DEBUG) << "receiveBufferValues[i=" << i << "] size: " << receiveBufferValues[i].size() << "(" << receiveBufferValues << ")" << ", j2=" << j2
       //  << ", ghostElementIndex: " << ghostElementIndex << ", sizeBoundaryConditionDofsGlobalPetsc: " << sizeBoundaryConditionDofsGlobalPetsc << " (" << j2+sizeBoundaryConditionDofsGlobalPetsc << ")";
       assert(receiveBufferValues[i].size() >= j2+sizeBoundaryConditionDofsGlobalPetsc);
-      ghostElement.boundaryConditionValues.assign(receiveBufferValues[i].begin()+j2, receiveBufferValues[i].begin()+j2+sizeBoundaryConditionDofsGlobalPetsc);
-      j2 += sizeBoundaryConditionDofsGlobalPetsc;
+
+      ghostElement.boundaryConditionValues.resize(sizeBoundaryConditionDofsGlobalPetsc);
+      for (int valueIndex = 0; valueIndex < sizeBoundaryConditionDofsGlobalPetsc; valueIndex++)
+      {
+        for (int componentNo = 0; componentNo < nComponents; componentNo++)
+        {
+          ghostElement.boundaryConditionValues[valueIndex][componentNo] = receiveBufferValues[i][j2 + valueIndex*nComponents + componentNo];
+        }
+      }
+      j2 += sizeBoundaryConditionDofsGlobalPetsc*nComponents;
 
       ownGhostElements_.push_back(ghostElement);
     }
@@ -419,42 +431,33 @@ initializeGhostElements()
   */
 }
 
-template<typename FunctionSpaceType,int nComponents>
-void DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::
-applyInVector(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> fieldVariable)
-{
-  fieldVariable->setValues(this->boundaryConditionNonGhostDofLocalNos_, this->boundaryConditionValues_);
-
-  VLOG(1) << "applied boundary conditions, local dofs: " << this->boundaryConditionNonGhostDofLocalNos_
-    << ", values: " << this->boundaryConditionValues_;
-}
-
 // set the boundary conditions to system matrix, i.e. zero rows and columns of Dirichlet BC dofs and set diagonal to 1
-template<typename FunctionSpaceType>
-void DirichletBoundaryConditions<FunctionSpaceType,1>::
+template<typename FunctionSpaceType,int nComponents>
+void DirichletBoundaryConditions<FunctionSpaceType,nComponents>::
 applyInSystemMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> systemMatrix,
-                    std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> boundaryConditionsRightHandSideSummand)
+                    std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> boundaryConditionsRightHandSideSummand)
 {
   LOG(TRACE) << "DirichletBoundaryConditionsBase::applyInSystemMatrix";
+  VLOG(1) << "boundaryConditionsRightHandSideSummand: " << *boundaryConditionsRightHandSideSummand;
 
   // boundary conditions for local non-ghost dofs are stored in the following member variables:
   // std::vector<dof_no_t> boundaryConditionNonGhostDofLocalNos_;        ///< vector of all local (non-ghost) boundary condition dofs
   // std::vector<ValueType> boundaryConditionValues_;               ///< vector of the local prescribed values, related to boundaryConditionDofLocalNos_
+
+  // with typedef std::array<double,nComponents> ValueType;   ///< the type of value of one boundary condition
 
   // determine actions to be executed later, this is such that there are no duplicates
   // One action is the following:
   //   1. get matrix entry M_{row,col}
   //   2. update rhs rhs_{row} -= M_{row,col}*BC_col
   // The row and column indices are stored in global PETSc ordering.
-  std::map<global_no_t, std::pair<double, std::set<global_no_t>>> action; // map[columnNoGlobalPetsc] = <bc value, <rowNosGlobalPetsc>>
+  std::map<global_no_t, std::pair<ValueType, std::set<global_no_t>>> action; // map[columnNoGlobalPetsc] = <bc value, <rowNosGlobalPetsc>>
 
   // save matrix entries to use them later to adjust the rhs entries
   const int nDofsPerElement = FunctionSpaceType::nDofsPerElement();
 
-  typedef std::array<double,1> ValueType;  // the type for values of boundary conditions
-
   // loop over elements that have nodes with prescribed boundary conditions, only for those the integral term is non-zero
-  for (typename std::vector<typename DirichletBoundaryConditionsBase<FunctionSpaceType,1>::ElementWithNodes>::const_iterator iter = this->boundaryConditionElements_.cbegin();
+  for (typename std::vector<typename DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::ElementWithNodes>::const_iterator iter = this->boundaryConditionElements_.cbegin();
        iter != this->boundaryConditionElements_.cend(); iter++)
   {
     // get dofs of element (with and without ghosts), at least some of the dofs of this element are prescribed Dirchlet boundary condition values
@@ -471,10 +474,10 @@ applyInSystemMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> syst
     VLOG(1) << "element " << elementNoLocal << ", dofNosLocal: " << dofNosLocal << ", rowDofNosLocalWithoutGhosts: " << rowDofNosLocalWithoutGhosts;
 
     // loop over dofs of element that have prescribed Dirichlet boundary condition values
-    for (std::vector<std::pair<int,ValueType>>::const_iterator columnDofsIter = iter->elementalDofIndex.begin(); columnDofsIter != iter->elementalDofIndex.end(); columnDofsIter++)
+    for (typename std::vector<std::pair<int,ValueType>>::const_iterator columnDofsIter = iter->elementalDofIndex.begin(); columnDofsIter != iter->elementalDofIndex.end(); columnDofsIter++)
     {
       int elementalDofIndexColumn = columnDofsIter->first;
-      double boundaryConditionValue = columnDofsIter->second[0];
+      ValueType boundaryConditionValue = columnDofsIter->second;
 
       dof_no_t boundaryConditionColumnDofNoLocal = dofNosLocal[elementalDofIndexColumn];
 
@@ -483,7 +486,9 @@ applyInSystemMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> syst
       action[boundaryConditionColumnDofNoGlobal].first = boundaryConditionValue;
       action[boundaryConditionColumnDofNoGlobal].second.insert(rowDofNosGlobalPetsc.begin(), rowDofNosGlobalPetsc.end());
 
-      // do only store action, do not perform yet
+      // do only store action, do not perform yet, all collected actions are duplicate-cleared (automatically, because of map) and executed at the end of this method
+
+      // commented out code would perform action
       /*
       VLOG(1) << "  dof " << boundaryConditionColumnDofNoLocal << ", BC value: " << boundaryConditionValue;
       PetscInt columnNo = boundaryConditionColumnDofNoLocal;
@@ -507,8 +512,6 @@ applyInSystemMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> syst
 
   VLOG(1) << ownGhostElements_.size() << " ghost elements";
 
-  double debugValue = 0;
-
   // loop over ghost elements
   for (typename std::vector<GhostElement>::iterator ghostElementIter = ownGhostElements_.begin(); ghostElementIter != ownGhostElements_.end(); ghostElementIter++)
   {
@@ -529,7 +532,7 @@ applyInSystemMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> syst
     for (std::vector<global_no_t>::iterator columnDofIter = ghostElementIter->boundaryConditionDofsGlobalPetsc.begin(); columnDofIter != ghostElementIter->boundaryConditionDofsGlobalPetsc.end(); columnDofIter++, i++)
     {
       PetscInt columnDofNoGlobalPetsc = *columnDofIter;
-      double boundaryConditionValue = ghostElementIter->boundaryConditionValues[i];
+      ValueType boundaryConditionValue = ghostElementIter->boundaryConditionValues[i];
 
       VLOG(1) << "  dof " << columnDofNoGlobalPetsc << " (global PETSc), BC value: " << boundaryConditionValue;
 
@@ -540,7 +543,9 @@ applyInSystemMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> syst
       action[boundaryConditionColumnDofNoGlobal].first = boundaryConditionValue;
       action[boundaryConditionColumnDofNoGlobal].second.insert(rowDofsGlobal.begin(), rowDofsGlobal.end());
 
-      // do only store action, do not perform yet
+      // do only store action, do not perform yet, all collected actions are duplicate-cleared and executed at the end of this method
+
+      // commented out code would perform action
 /*
       std::vector<double> values(rowDofsGlobal.size());
       systemMatrix->getValuesGlobalPetscIndexing(rowDofsGlobal.size(), rowDofsGlobal.data(), 1, &columnDofNoGlobalPetsc, values.data());
@@ -581,11 +586,17 @@ applyInSystemMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> syst
   }
 #endif
 
+  std::vector<double> valuesBuffer;
+  std::vector<dof_no_t> dofNosBuffer;
+
+  LOG(DEBUG) << "dirichlet boundary conditions in system matrix: execute actions, adjust rhs summand";
+
   // execute actions
-  for (std::map<global_no_t, std::pair<double, std::set<global_no_t>>>::iterator actionIter = action.begin(); actionIter != action.end(); actionIter++)
+  for (typename std::map<global_no_t, std::pair<ValueType, std::set<global_no_t>>>::iterator actionIter = action.begin();
+       actionIter != action.end(); actionIter++)
   {
     PetscInt columnDofNoGlobalPetsc = actionIter->first;
-    double boundaryConditionValue = actionIter->second.first;
+    ValueType boundaryConditionValue = actionIter->second.first;
 
     std::vector<PetscInt> rowDofNoGlobalPetsc(actionIter->second.second.begin(), actionIter->second.second.end());
 
@@ -597,8 +608,8 @@ applyInSystemMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> syst
     });
 
     // get the values of the column from the matrix
-    std::vector<double> values(rowDofNoGlobalPetsc.size());
-    systemMatrix->getValuesGlobalPetscIndexing(rowDofNoGlobalPetsc.size(), rowDofNoGlobalPetsc.data(), 1, &columnDofNoGlobalPetsc, values.data());
+    std::vector<ValueType> values(rowDofNoGlobalPetsc.size());
+    systemMatrix->template getValuesGlobalPetscIndexing<nComponents>(rowDofNoGlobalPetsc.size(), rowDofNoGlobalPetsc.data(), 1, &columnDofNoGlobalPetsc, values);
 
     VLOG(1) << "system matrix, col " << columnDofNoGlobalPetsc << ", rows " << rowDofNoGlobalPetsc << ", values: " << values;
 
@@ -617,21 +628,54 @@ applyInSystemMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> syst
 #endif
 
     // scale values with -boundaryConditionValue
-    for (double &v : values)
+    for (ValueType &v : values)
     {
-      v *= -boundaryConditionValue;
+      for (int i = 0; i < nComponents; i++)
+      {
+        v[i] *= -boundaryConditionValue[i];
+      }
     }
 
     VLOG(1) << " multiplied with BC value " << boundaryConditionValue << ": " << values;
 
     // subtract values*boundaryConditionValue from boundaryConditionsRightHandSideSummand
-    boundaryConditionsRightHandSideSummand->setValues(rowDofNosLocal, values, ADD_VALUES);
+    if (nComponents == 1)
+    {
+      // for equations with one component, simply add values
+      boundaryConditionsRightHandSideSummand->setValues(rowDofNosLocal, values, ADD_VALUES);
+    }
+    else
+    {
+      // for equations with multiple components, some components in some dofs may be set to None (NaN) which indicates that they should not be touched
+      for (int componentNo = 0; componentNo < nComponents; componentNo++)
+      {
+        // check if column dof has a valid Dirichlet BC, else do nothing for this component
+        if (!std::isfinite(boundaryConditionValue[componentNo]))
+          continue;
+
+        valuesBuffer.clear();
+        dofNosBuffer.clear();
+        valuesBuffer.reserve(values.size());
+        dofNosBuffer.reserve(values.size());
+
+        // copy dofs and values for valid values to buffers
+        for (int i = 0; i < values.size(); i++)
+        {
+          if (std::isfinite(values[i][componentNo]))
+          {
+            dofNosBuffer.push_back(rowDofNosLocal[i]);
+            valuesBuffer.push_back(values[i][componentNo]);
+          }
+        }
+
+        // perform action for component
+        boundaryConditionsRightHandSideSummand->setValues(componentNo, dofNosBuffer, valuesBuffer, ADD_VALUES);
+      }
+    }
 
     VLOG(1) << " after set values at " << rowDofNosLocal << ": " << *boundaryConditionsRightHandSideSummand;
   }
 
-  LOG(DEBUG) << "sum: " << debugValue;
-  LOG(DEBUG) << "rhs summand afterwards: " << *boundaryConditionsRightHandSideSummand;
   VLOG(1) << "rhs summand afterwards: " << *boundaryConditionsRightHandSideSummand;
 
 
@@ -647,37 +691,119 @@ applyInSystemMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> syst
 
 
   // zero entries in stiffness matrix that correspond to dirichlet dofs
-  // set values of row and column of the dofs to zero and diagonal entry to 1
-  systemMatrix->zeroRowsColumns(this->boundaryConditionNonGhostDofLocalNos_.size(), this->boundaryConditionNonGhostDofLocalNos_.data(), 1.0);
+
+  //systemMatrix->assembly(MAT_FLUSH_ASSEMBLY);
+
+  LOG(DEBUG) << "dirichlet boundary conditions in system matrix: zero entries in system matrix";
+
+  if (nComponents > 1)
+  {
+    LOG(DEBUG) << "zero columns";
+
+    // loop over columns or boundary condition dofs
+    for (typename std::map<global_no_t, std::pair<ValueType, std::set<global_no_t>>>::iterator actionIter = action.begin();
+        actionIter != action.end(); actionIter++)
+    {
+      // get the column, this is potentially a non-local dof
+      PetscInt columnDofNoGlobalPetsc = actionIter->first;
+      ValueType boundaryConditionValue = actionIter->second.first;
+
+      // get the row dofs, these are all in the local range, but the numbers are global-petsc
+      std::vector<PetscInt> rowDofNoGlobalPetsc(actionIter->second.second.begin(), actionIter->second.second.end());
+
+      // for equations with multiple components, some components in some dofs may be set to None (NaN) which indicates that they should not be touched
+      for (int componentNo = 0; componentNo < nComponents; componentNo++)
+      {
+        // check if column dof has a valid Dirichlet BC, else do nothing for this component
+        if (!std::isfinite(boundaryConditionValue[componentNo]))
+          continue;
+
+        // set entries in nested system matrices to zero
+        // Actually, the rows and columns corresponding to each BC dof have to be zeroed out. Here, we set the columns to zero,
+        // later, systemMatrix->zeroRowsColumns zeros out the rows only.
+        // We have to use the global indexing, because the column maybe a non-local dof, but all global columns of the local rows are stored on the own rank always.
+
+        // zero out column in all component matrices with row component "componentIndex" and column component "componentNo"
+        std::vector<double> zeros(rowDofNoGlobalPetsc.size(), 0.0);
+
+        // loop over rows of sub matrices
+        for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
+        {
+          // do not do anything in the diagonal submatrix
+          if (componentIndex == componentNo)
+          {
+            continue;
+          }
+
+          int zeroComponentNo = componentIndex*nComponents + componentNo;
+          VLOG(1) << "zeroComponentNo: " << zeroComponentNo << ", columnDofNoGlobalPetsc: " << columnDofNoGlobalPetsc;
+          systemMatrix->setValuesGlobalPetscIndexing(zeroComponentNo, rowDofNoGlobalPetsc.size(), rowDofNoGlobalPetsc.data(), 1, &columnDofNoGlobalPetsc, zeros.data(), INSERT_VALUES);
+        }
+      }
+    }
+  }
+
   systemMatrix->assembly(MAT_FINAL_ASSEMBLY);
+
+
+  // set values of row and column of the dofs to zero and diagonal entry to 1
+  //LOG(DEBUG) << "apply dirichlet BC: zeroRowsColumns at dofs " << this->boundaryConditionNonGhostDofLocalNos_;
+  for (int componentNo = 0; componentNo < nComponents; componentNo++)
+  {
+    VLOG(1) << "zero rowsColumns componentNo " << componentNo;
+    systemMatrix->zeroRowsColumns(componentNo, this->boundaryConditionsByComponent_[componentNo].dofNosLocal.size(), this->boundaryConditionsByComponent_[componentNo].dofNosLocal.data(), 1.0);
+  }
+
+  systemMatrix->assembly(MAT_FINAL_ASSEMBLY);
+  VLOG(1) << "stiffness matrix after apply Dirichlet BC: " << *systemMatrix;
+}
+
+template<typename FunctionSpaceType,int nComponents>
+void DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::
+applyInVector(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> fieldVariable)
+{
+  //fieldVariable->setValues(this->boundaryConditionNonGhostDofLocalNos_, this->boundaryConditionValues_);
+
+  // set boundary condition dofs to prescribed values, only non-ghost dofs
+  for (int componentNo = 0; componentNo < nComponents; componentNo++)
+  {
+    // std::array<std::pair<std::vector<dof_no_t>, std::vector<double>>, nComponents> boundaryConditionsByComponent_;   ///< the boundary condition data organized by component
+    fieldVariable->setValues(componentNo, this->boundaryConditionsByComponent_[componentNo].dofNosLocal,
+                             this->boundaryConditionsByComponent_[componentNo].values, INSERT_VALUES);
+
+    VLOG(1) << "applied boundary conditions, component " << componentNo
+      << ", local dofs: " << this->boundaryConditionsByComponent_[componentNo].dofNosLocal
+      << ", values: " << this->boundaryConditionsByComponent_[componentNo].values;
+  }
 }
 
 // set the boundary conditions to the right hand side
-template<typename FunctionSpaceType>
-void DirichletBoundaryConditions<FunctionSpaceType,1>::
-applyInRightHandSide(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> rightHandSide,
-                     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> boundaryConditionsRightHandSideSummand)
+template<typename FunctionSpaceType,int nComponents>
+void DirichletBoundaryConditions<FunctionSpaceType,nComponents>::
+applyInRightHandSide(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> rightHandSide,
+                     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> boundaryConditionsRightHandSideSummand)
 {
-  //LOG(TRACE) << "DirichletBoundaryConditionsBase::applyInRightHandSide";
-
-  LOG(DEBUG) << "applyInRightHandSide: rightHandSide=" << *rightHandSide;
-  LOG(DEBUG) << "boundaryConditionsRightHandSideSummand=" << *boundaryConditionsRightHandSideSummand;
+  LOG(TRACE) << "DirichletBoundaryConditionsBase::applyInRightHandSide";
+  //LOG(DEBUG) << "applyInRightHandSide: rightHandSide=" << *rightHandSide;
+  //LOG(DEBUG) << "boundaryConditionsRightHandSideSummand=" << *boundaryConditionsRightHandSideSummand;
 
   if (rightHandSide != boundaryConditionsRightHandSideSummand)
   {
     // set rhs += summand, where summand is the helper variable boundaryConditionsRightHandSideSummand
     PetscErrorCode ierr;
-    ierr = VecAXPY(rightHandSide->valuesGlobal(), 1, boundaryConditionsRightHandSideSummand->valuesGlobal()); CHKERRV(ierr);
+    for (int componentNo = 0; componentNo < nComponents; componentNo++)
+    {
+      ierr = VecAXPY(rightHandSide->valuesGlobal(componentNo), 1, boundaryConditionsRightHandSideSummand->valuesGlobal(componentNo)); CHKERRV(ierr);
+    }
   }
 
-  LOG(DEBUG) << "rightHandSide after update summand: " << *rightHandSide;
+  this->applyInVector(rightHandSide);
 
-  // set boundary condition dofs to prescribed values, only non-ghost dofs
-  rightHandSide->setValues(this->boundaryConditionNonGhostDofLocalNos_,
-                          this->boundaryConditionValues_, INSERT_VALUES);
-
-
-  LOG(DEBUG) << "rightHandSide after set values: " << *rightHandSide;
+  if (VLOG_IS_ON(1))
+  {
+    VLOG(1) << "rightHandSide after set values: " << *rightHandSide;
+  }
+ 
 }
 
 

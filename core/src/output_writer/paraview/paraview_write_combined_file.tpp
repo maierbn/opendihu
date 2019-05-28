@@ -20,7 +20,7 @@ namespace OutputWriter
 {
 
 template<typename T>
-void Paraview::writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, const std::vector<T> &values, int identifier)
+void Paraview::writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, const std::vector<T> &values, int identifier, bool writeFloatsAsInt)
 {
   // fill the write buffer with the local values
   std::string writeBuffer;
@@ -60,19 +60,33 @@ void Paraview::writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, con
     // convert float values to int32 and insert into valuesVector
     if (std::is_same<T,double>::value || std::is_same<T,float>::value)
     {
-      for (int i = 0; i < values.size(); i++)
+      if (writeFloatsAsInt)
       {
-        union
+        // values are float type but should be converted to integer values
+        for (int i = 0; i < values.size(); i++)
         {
-          float f;
-          int32_t j;
-        };
-        f = values[i];
-        valuesVector.push_back(j);
+          int32_t integerValue = (int32_t)(round(values[i]));
+          valuesVector.push_back(integerValue);
+        }
+      }
+      else
+      {
+        // values are float type, put 4 byte data per float in list of int32_t datatype
+        for (int i = 0; i < values.size(); i++)
+        {
+          union
+          {
+            float f;
+            int32_t j;
+          };
+          f = values[i];
+          valuesVector.push_back(j);
+        }
       }
     }
     else
     {
+      // values are already int32_t
       // copy all int values
       std::copy(values.begin(), values.end(), std::back_inserter(valuesVector));
     }
@@ -543,7 +557,7 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
     // write normal data element
     outputFileParts[outputFilePartNo] << std::string(4, '\t') << "<DataArray "
         << "Name=\"" << pointDataArrayIter->first << "\" "
-        << "type=\"Float32\" "
+        << "type=\"" << (pointDataArrayIter->first == "partitioning"? "Int32" : "Float32") << "\" "
         << "NumberOfComponents=\"" << pointDataArrayIter->second << "\" format=\"" << (binaryOutput_? "binary" : "ascii")
         << "\" >" << std::endl << std::string(5, '\t');
 
@@ -634,7 +648,8 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
     assert(fieldVariableValues.find(pointDataArrayIter->first) != fieldVariableValues.end());
 
     // write values
-    writeCombinedValuesVector(fileHandle, ownRankNo, fieldVariableValues[pointDataArrayIter->first], fieldVariableNo);
+    bool writeFloatsAsInt = pointDataArrayIter->first == "partitioning";    // for partitioning, convert float values to integer values for output
+    writeCombinedValuesVector(fileHandle, ownRankNo, fieldVariableValues[pointDataArrayIter->first], fieldVariableNo, writeFloatsAsInt);
 
     // write next xml constructs
     writeAsciiDataShared(fileHandle, ownRankNo, outputFileParts[outputFilePartNo].str());
@@ -684,9 +699,12 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
 }
 
 template<typename OutputFieldVariablesType>
-void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType &fieldVariables, std::set<std::string> &meshNames)
+void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType &fieldVariables, std::set<std::string> &meshNames,
+                                                 bool output3DMeshes)
 {
-  // output a *.vtu file which contains 3D meshes, if there are any
+  // output a *.vtu file which contains 3D (if output3DMeshes==true) or 2D meshes (if output3DMeshes==false), if there are any
+
+  std::map<std::string, PolyDataPropertiesForMesh> &meshPropertiesUnstructuredGridFile_ = (output3DMeshes? meshPropertiesUnstructuredGridFile3D_ : meshPropertiesUnstructuredGridFile2D_);
 
   bool meshPropertiesInitialized = !meshPropertiesUnstructuredGridFile_.empty();
 
@@ -700,6 +718,7 @@ void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType 
 
     Control::PerformanceMeasurement::stop("durationParaview3DInit");
   }
+  else LOG(DEBUG) << "meshPropertiesUnstructuredGridFile_ already initialized";
 
   VLOG(1) << "writeCombinedUnstructuredGridFile on rankSubset_: " << *this->rankSubset_;
   assert(this->rankSubset_);
@@ -719,16 +738,23 @@ void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType 
   };
 */
 
-  // loop over 3D meshes
+  int targetDimensionality = 2;
+  if (output3DMeshes)
+    targetDimensionality = 3;
+
+  VLOG(1) << "targetDimensionality: " << targetDimensionality;
+
+  // loop over 3D or 2D meshes
   for (std::map<std::string, PolyDataPropertiesForMesh>::iterator meshPropertiesIter = meshPropertiesUnstructuredGridFile_.begin(); meshPropertiesIter != meshPropertiesUnstructuredGridFile_.end(); meshPropertiesIter++)
   {
     PolyDataPropertiesForMesh &polyDataPropertiesForMesh = meshPropertiesIter->second;
 
-    LOG(DEBUG) << "polyDataPropertiesForMesh A: " << polyDataPropertiesForMesh;
+    VLOG(1) << "polyDataPropertiesForMesh A: " << polyDataPropertiesForMesh;
 
-    if (polyDataPropertiesForMesh.dimensionality == 3)
+    if (polyDataPropertiesForMesh.dimensionality == targetDimensionality)
     {
       meshNames.insert(meshPropertiesIter->first);
+      VLOG(1) << "meshName " << meshPropertiesIter->first;
 
       //! find out name of first scalar and vector field variables
       std::string firstScalarName;
@@ -749,16 +775,9 @@ void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType 
           break;
       }
 
-      // output 3D mesh
-      if (!meshPropertiesInitialized)
-      {
-        // add field variable "partitioning" with 1 component
-        polyDataPropertiesForMesh.pointDataArrays.push_back(std::pair<std::string,int>("partitioning", 1));
-      }
-
       // determine filename, broadcast from rank 0
       std::stringstream filename;
-      filename << this->filenameBaseWithNo_ << ".vtu";
+      filename << this->filenameBaseWithNo_ << "_" << targetDimensionality << "D.vtu";
       int filenameLength = filename.str().length();
 
       // broadcast length of filename
@@ -787,6 +806,8 @@ void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType 
       // exchange information about offset in terms of nCells and nPoints
       if (!meshPropertiesInitialized)
       {
+        VLOG(1) << "set nCellsPreviousRanks3D_, nPointsPreviousRanks3D_, nPointsGlobal3D_";
+
         nCellsPreviousRanks3D_ = 0;
         nPointsPreviousRanks3D_ = 0;
         nPointsGlobal3D_ = 0;
@@ -799,14 +820,26 @@ void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType 
 
         Control::PerformanceMeasurement::stop("durationParaview3DReduction");
         Control::PerformanceMeasurement::stop("durationParaview3DInit");
+
+        VLOG(1) << "nCellsLocal local: " << polyDataPropertiesForMesh.nCellsLocal << ", prefix sum: " << nCellsPreviousRanks3D_;
+        VLOG(1) << "nPointsLocal local: " << polyDataPropertiesForMesh.nPointsLocal << ", prefix sum: " << nPointsPreviousRanks3D_ << ", global: " << nPointsGlobal3D_;
+      }
+      else
+      {
+        VLOG(1) << "nCellsPreviousRanks3D_, nPointsPreviousRanks3D_, nPointsGlobal3D_ already set to "
+          << nCellsPreviousRanks3D_ << ", " << nPointsPreviousRanks3D_ << ", " << nPointsGlobal3D_;
       }
 
       std::vector<node_no_t> &nNodesLocalWithGhosts = polyDataPropertiesForMesh.nNodesLocalWithGhosts;
-      assert(nNodesLocalWithGhosts.size() == 3);
+      assert(nNodesLocalWithGhosts.size() == targetDimensionality);
+
+      int nNodesPerCell = 4;
+      if (output3DMeshes)
+        nNodesPerCell = 8;
 
       // get local data values
       // setup connectivity array, which gives the node numbers for every element/cell
-      std::vector<int> connectivityValues(8*polyDataPropertiesForMesh.nCellsLocal);
+      std::vector<int> connectivityValues(nNodesPerCell*polyDataPropertiesForMesh.nCellsLocal);
 
       VLOG(1) << "n connectivity values from unstructured: " << polyDataPropertiesForMesh.unstructuredMeshConnectivityValues.size();
       VLOG(1) << "nCellsLocal: " << polyDataPropertiesForMesh.nCellsLocal;
@@ -823,70 +856,97 @@ void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType 
       else
       {
         // for structured meshes create connectivity values
-
-        element_no_t elementIndex = 0;
-        for (int indexZ = 0; indexZ < nNodesLocalWithGhosts[2]-1; indexZ++)
+        if (output3DMeshes)
         {
+          // fill connectivityValues for 3D meshes
+          element_no_t elementIndex = 0;
+          for (int indexZ = 0; indexZ < nNodesLocalWithGhosts[2]-1; indexZ++)
+          {
+            for (int indexY = 0; indexY < nNodesLocalWithGhosts[1]-1; indexY++)
+            {
+              for (int indexX = 0; indexX < nNodesLocalWithGhosts[0]-1; indexX++, elementIndex++)
+              {
+                if (elementIndex*8 + 7 >= connectivityValues.size())
+                {
+                  LOG(FATAL) << elementIndex*8 + 7 << ">= " << connectivityValues.size() << ", connectivityValues are not large enough: " << connectivityValues.size() << ", but "
+                    << nNodesLocalWithGhosts[0]-1 << "x" << nNodesLocalWithGhosts[1]-1 << "x" << nNodesLocalWithGhosts[2]-1 << " = "
+                    << (nNodesLocalWithGhosts[0]-1)*(nNodesLocalWithGhosts[1]-1)*(nNodesLocalWithGhosts[2]-1) << " elements";
+                }
+
+                connectivityValues[elementIndex*8 + 0] = nPointsPreviousRanks3D_
+                  + indexZ*nNodesLocalWithGhosts[0]*nNodesLocalWithGhosts[1]
+                  + indexY*nNodesLocalWithGhosts[0] + indexX;
+                connectivityValues[elementIndex*8 + 1] = nPointsPreviousRanks3D_
+                  + indexZ*nNodesLocalWithGhosts[0]*nNodesLocalWithGhosts[1]
+                  + indexY*nNodesLocalWithGhosts[0] + indexX + 1;
+                connectivityValues[elementIndex*8 + 2] = nPointsPreviousRanks3D_
+                  + indexZ*nNodesLocalWithGhosts[0]*nNodesLocalWithGhosts[1]
+                  + (indexY+1)*nNodesLocalWithGhosts[0] + indexX + 1;
+                connectivityValues[elementIndex*8 + 3] = nPointsPreviousRanks3D_
+                  + indexZ*nNodesLocalWithGhosts[0]*nNodesLocalWithGhosts[1]
+                  + (indexY+1)*nNodesLocalWithGhosts[0] + indexX;
+                connectivityValues[elementIndex*8 + 4] = nPointsPreviousRanks3D_
+                  + (indexZ+1)*nNodesLocalWithGhosts[0]*nNodesLocalWithGhosts[1]
+                  + indexY*nNodesLocalWithGhosts[0] + indexX;
+                connectivityValues[elementIndex*8 + 5] = nPointsPreviousRanks3D_
+                  + (indexZ+1)*nNodesLocalWithGhosts[0]*nNodesLocalWithGhosts[1]
+                  + indexY*nNodesLocalWithGhosts[0] + indexX + 1;
+                connectivityValues[elementIndex*8 + 6] = nPointsPreviousRanks3D_
+                  + (indexZ+1)*nNodesLocalWithGhosts[0]*nNodesLocalWithGhosts[1]
+                  + (indexY+1)*nNodesLocalWithGhosts[0] + indexX + 1;
+                connectivityValues[elementIndex*8 + 7] = nPointsPreviousRanks3D_
+                  + (indexZ+1)*nNodesLocalWithGhosts[0]*nNodesLocalWithGhosts[1]
+                  + (indexY+1)*nNodesLocalWithGhosts[0] + indexX;
+              }
+            }
+          }
+        }
+        else
+        {
+          // fill connectivityValues for 2D meshes
+          element_no_t elementIndex = 0;
           for (int indexY = 0; indexY < nNodesLocalWithGhosts[1]-1; indexY++)
           {
             for (int indexX = 0; indexX < nNodesLocalWithGhosts[0]-1; indexX++, elementIndex++)
             {
-              if (elementIndex*8 + 7 >= connectivityValues.size())
+              if (elementIndex*4 + 3 >= connectivityValues.size())
               {
-                LOG(FATAL) << elementIndex*8 + 7 << ">= " << connectivityValues.size() << ", connectivityValues are not large enough: " << connectivityValues.size() << ", but "
-                  << nNodesLocalWithGhosts[0]-1 << "x" << nNodesLocalWithGhosts[1]-1 << "x" << nNodesLocalWithGhosts[2]-1 << " = "
-                  << (nNodesLocalWithGhosts[0]-1)*(nNodesLocalWithGhosts[1]-1)*(nNodesLocalWithGhosts[2]-1) << " elements";
+                LOG(FATAL) << elementIndex*4 + 3 << ">= " << connectivityValues.size() << ", connectivityValues are not large enough: " << connectivityValues.size() << ", but "
+                  << nNodesLocalWithGhosts[0]-1 << "x" << nNodesLocalWithGhosts[1]-1 << " = "
+                  << (nNodesLocalWithGhosts[0]-1)*(nNodesLocalWithGhosts[1]-1) << " elements";
               }
 
-              connectivityValues[elementIndex*8 + 0] = nPointsPreviousRanks3D_
-                + indexZ*nNodesLocalWithGhosts[0]*nNodesLocalWithGhosts[1]
+              connectivityValues[elementIndex*4 + 0] = nPointsPreviousRanks3D_
                 + indexY*nNodesLocalWithGhosts[0] + indexX;
-              connectivityValues[elementIndex*8 + 1] = nPointsPreviousRanks3D_
-                + indexZ*nNodesLocalWithGhosts[0]*nNodesLocalWithGhosts[1]
+              connectivityValues[elementIndex*4 + 1] = nPointsPreviousRanks3D_
                 + indexY*nNodesLocalWithGhosts[0] + indexX + 1;
-              connectivityValues[elementIndex*8 + 2] = nPointsPreviousRanks3D_
-                + indexZ*nNodesLocalWithGhosts[0]*nNodesLocalWithGhosts[1]
+              connectivityValues[elementIndex*4 + 2] = nPointsPreviousRanks3D_
                 + (indexY+1)*nNodesLocalWithGhosts[0] + indexX + 1;
-              connectivityValues[elementIndex*8 + 3] = nPointsPreviousRanks3D_
-                + indexZ*nNodesLocalWithGhosts[0]*nNodesLocalWithGhosts[1]
-                + (indexY+1)*nNodesLocalWithGhosts[0] + indexX;
-              connectivityValues[elementIndex*8 + 4] = nPointsPreviousRanks3D_
-                + (indexZ+1)*nNodesLocalWithGhosts[0]*nNodesLocalWithGhosts[1]
-                + indexY*nNodesLocalWithGhosts[0] + indexX;
-              connectivityValues[elementIndex*8 + 5] = nPointsPreviousRanks3D_
-                + (indexZ+1)*nNodesLocalWithGhosts[0]*nNodesLocalWithGhosts[1]
-                + indexY*nNodesLocalWithGhosts[0] + indexX + 1;
-              connectivityValues[elementIndex*8 + 6] = nPointsPreviousRanks3D_
-                + (indexZ+1)*nNodesLocalWithGhosts[0]*nNodesLocalWithGhosts[1]
-                + (indexY+1)*nNodesLocalWithGhosts[0] + indexX + 1;
-              connectivityValues[elementIndex*8 + 7] = nPointsPreviousRanks3D_
-                + (indexZ+1)*nNodesLocalWithGhosts[0]*nNodesLocalWithGhosts[1]
+              connectivityValues[elementIndex*4 + 3] = nPointsPreviousRanks3D_
                 + (indexY+1)*nNodesLocalWithGhosts[0] + indexX;
             }
           }
         }
       }
 
-      VLOG(1) << "nPointsPreviousRanks3D_: " << nPointsPreviousRanks3D_;
-      VLOG(1) << "nNodesLocalWithGhosts: " << nNodesLocalWithGhosts[0]-1 << "x" << nNodesLocalWithGhosts[1]-1 << "x" << nNodesLocalWithGhosts[2]-1;
+      VLOG(1) << "nPointsPreviousRanks3D_: " << nPointsPreviousRanks3D_ << ", nCellsPreviousRanks3D_: " << nCellsPreviousRanks3D_;
+      //VLOG(1) << "nNodesLocalWithGhosts: " << nNodesLocalWithGhosts[0]-1 << "x" << nNodesLocalWithGhosts[1]-1 << "x" << nNodesLocalWithGhosts[2]-1;
       VLOG(1) << "connectivity: " << connectivityValues;
 
       // setup offset array
       std::vector<int> offsetValues(polyDataPropertiesForMesh.nCellsLocal);
       for (int i = 0; i < polyDataPropertiesForMesh.nCellsLocal; i++)
       {
-        offsetValues[i] = 8*nCellsPreviousRanks3D_ + 8*i + 8;    // specifies the end, i.e. one after the last, of the last of nodes for each element
+        offsetValues[i] = nNodesPerCell*nCellsPreviousRanks3D_ + nNodesPerCell*i + nNodesPerCell;    // specifies the end, i.e. one after the last, of the last of nodes for each element
       }
+
+      VLOG(1) << "offsetValues: " << offsetValues;
 
       // collect all data for the field variables, organized by field variable names
       std::map<std::string, std::vector<double>> fieldVariableValues;
       std::set<std::string> currentMeshName;
       currentMeshName.insert(meshPropertiesIter->first);
       ParaviewLoopOverTuple::loopGetNodalValues<OutputFieldVariablesType>(fieldVariables, currentMeshName, fieldVariableValues);
-
-      // set data for partitioning field variable
-      assert (!fieldVariableValues.empty());
-      fieldVariableValues["partitioning"].resize(polyDataPropertiesForMesh.nPointsLocal, (double)this->rankSubset_->ownRankNo());
 
       // if next assertion fails, output why for debugging
       if (fieldVariableValues.size() != polyDataPropertiesForMesh.pointDataArrays.size())
@@ -900,9 +960,53 @@ void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType 
           pointDataArraysNames << polyDataPropertiesForMesh.pointDataArrays[i].first << " ";
         }
         LOG(DEBUG) << "pointDataArraysNames: " <<  pointDataArraysNames.str();
+        LOG(DEBUG) << "OutputFieldVariablesType: " << StringUtility::demangle(typeid(OutputFieldVariablesType).name());
       }
 
       assert(fieldVariableValues.size() == polyDataPropertiesForMesh.pointDataArrays.size());
+
+      // output 3D or 2D mesh
+      if (!meshPropertiesInitialized)
+      {
+        // add field variable "partitioning" with 1 component
+        polyDataPropertiesForMesh.pointDataArrays.push_back(std::pair<std::string,int>("partitioning", 1));
+      }
+
+      // set data for partitioning field variable
+      assert (!fieldVariableValues.empty());
+      fieldVariableValues["partitioning"].resize(polyDataPropertiesForMesh.nPointsLocal, (double)this->rankSubset_->ownRankNo());
+
+      // for 2D field variables, add 0 every 2nd entry to generate 3D values, because paraview cannot handle 2D vectors properly
+      if (targetDimensionality == 2)
+      {
+        std::vector<double> buffer;
+
+        // loop over all field variables
+        for (std::vector<std::pair<std::string,int>>::iterator pointDataArrayIter = polyDataPropertiesForMesh.pointDataArrays.begin(); pointDataArrayIter != polyDataPropertiesForMesh.pointDataArrays.end(); pointDataArrayIter++)
+        {
+          // if it is a 2D vector field
+          if (pointDataArrayIter->second == 2)
+          {
+
+            std::vector<double> &values = fieldVariableValues[pointDataArrayIter->first];
+
+            // copy all values to a buffer
+            buffer.assign(values.begin(), values.end());
+            int nValues = buffer.size();
+
+            // resize the values vector to 2/3 the size
+            values.resize(nValues/2*3);
+
+            // loop over the new values vector and set the entries
+            for (int i = 0; i < nValues/2; i++)
+            {
+              values[3*i + 0] = buffer[2*i + 0];
+              values[3*i + 1] = buffer[2*i + 1];
+              values[3*i + 2] = 0.0;
+            }
+          }
+        }
+      }
 
       // collect all data for the geometry field variable
       std::vector<double> geometryFieldValues;
@@ -942,11 +1046,16 @@ void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType 
       // loop over field variables (PointData)
       for (std::vector<std::pair<std::string,int>>::iterator pointDataArrayIter = polyDataPropertiesForMesh.pointDataArrays.begin(); pointDataArrayIter != polyDataPropertiesForMesh.pointDataArrays.end(); pointDataArrayIter++)
       {
+        // paraview cannot handle 2D vector fields without warnings, so set 3D vector fields
+        int nComponentsParaview = pointDataArrayIter->second;
+        if (nComponentsParaview == 2)
+          nComponentsParaview = 3;
+
         // write normal data element
         outputFileParts[outputFilePartNo] << std::string(4, '\t') << "<DataArray "
             << "Name=\"" << pointDataArrayIter->first << "\" "
-            << "type=\"Float32\" "
-            << "NumberOfComponents=\"" << pointDataArrayIter->second << "\" format=\"" << (binaryOutput_? "binary" : "ascii")
+            << "type=\"" << (pointDataArrayIter->first == "partitioning"? "Int32" : "Float32") << "\" "
+            << "NumberOfComponents=\"" << nComponentsParaview << "\" format=\"" << (binaryOutput_? "binary" : "ascii")
             << "\" >" << std::endl << std::string(5, '\t');
 
         // at this point the data of the field variable is missing
@@ -1008,7 +1117,7 @@ void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType 
         VLOG(1) << "  " << iter->str();
       }
 
-      LOG(DEBUG) << "open MPI file \"" << filenameStr << "\".";
+      LOG(DEBUG) << "open MPI file \"" << filenameStr << "\" for rankSubset " << *this->rankSubset_;
 
       // open file
       MPI_File fileHandle;
@@ -1043,7 +1152,8 @@ void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType 
         VLOG(1) << "write vector for field variable \"" << pointDataArrayIter->first << "\".";
 
         // write values
-        writeCombinedValuesVector(fileHandle, ownRankNo, fieldVariableValues[pointDataArrayIter->first], fieldVariableNo);
+        bool writeFloatsAsInt = pointDataArrayIter->first == "partitioning";    // for partitioning, convert float values to integer values for output
+        writeCombinedValuesVector(fileHandle, ownRankNo, fieldVariableValues[pointDataArrayIter->first], fieldVariableNo, writeFloatsAsInt);
 
         // write next xml constructs
         writeAsciiDataShared(fileHandle, ownRankNo, outputFileParts[outputFilePartNo].str());
@@ -1074,7 +1184,7 @@ void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType 
       outputFilePartNo++;
 
       // write types values
-      writeCombinedTypesVector(fileHandle, ownRankNo, polyDataPropertiesForMesh.nCellsGlobal, fieldVariableNo++);
+      writeCombinedTypesVector(fileHandle, ownRankNo, polyDataPropertiesForMesh.nCellsGlobal, output3DMeshes, fieldVariableNo++);
 
       // write next xml constructs
       writeAsciiDataShared(fileHandle, ownRankNo, outputFileParts[outputFilePartNo].str());
@@ -1098,6 +1208,11 @@ void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType 
 
       Control::PerformanceMeasurement::stop("durationParaview3DWrite");
       MPIUtility::handleReturnValue(MPI_File_close(&fileHandle), "MPI_File_close");
+    }
+    else
+    {
+      VLOG(1) << "skip mesh " << meshPropertiesIter->first << " because " << polyDataPropertiesForMesh.dimensionality << " != " << targetDimensionality;
+
     }
   }
 }

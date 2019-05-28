@@ -4,8 +4,9 @@
 #include <map>
 
 #include "control/dihu_context.h"
-#include "function_space/function_space.h"
+//#include "function_space/function_space.h"
 #include "mesh/mapping_between_meshes_manager.h"
+#include "function_space/function_space_generic.h"
 
 namespace Partition{
 class Manager;

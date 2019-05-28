@@ -10,8 +10,8 @@ namespace TimeSteppingScheme
 
 template<typename DiscretizableInTimeType>
 TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::TimeSteppingSchemeOdeBaseDiscretizable(DihuContext context, std::string name) :
-  TimeSteppingSchemeOdeBase<typename DiscretizableInTimeType::FunctionSpace,DiscretizableInTimeType::nComponents()>::
-  TimeSteppingSchemeOdeBase(context, name), discretizableInTime_(this->context_), initialized_(false)
+  TimeSteppingSchemeOdeTransferableSolutionData<typename DiscretizableInTimeType::FunctionSpace,DiscretizableInTimeType::nComponents(), DiscretizableInTimeType>::
+  TimeSteppingSchemeOdeTransferableSolutionData(context, name), discretizableInTime_(this->context_), initialized_(false)
 {
   //initialize output writers
   this->outputWriterManager_.initialize(this->context_, this->specificSettings_);
@@ -66,7 +66,7 @@ void TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::
 setRankSubset(Partition::RankSubset rankSubset)
 {
   TimeSteppingSchemeOdeBase<typename DiscretizableInTimeType::Functionspace,DiscretizableInTimeType::nComponents()>::
-  setRankSubset(rankSubset);
+    setRankSubset(rankSubset);
   discretizableInTime_.setRankSubset(rankSubset);
 } 
 
@@ -75,7 +75,7 @@ void TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::
 reset()
 {
   TimeSteppingSchemeOdeBase<typename DiscretizableInTimeType::FunctionSpace,DiscretizableInTimeType::nComponents()>::
-  reset();
+    reset();
   discretizableInTime_.reset();
   this->data_.reset();
   
@@ -136,6 +136,9 @@ initialize()
     LOG(DEBUG) << "initial values were set by DiscretizableInTime";
   }
   VLOG(1) << "initial solution vector: " << *this->data_->solution();
+
+  // output initial values
+  this->outputWriterManager_.writeOutput(*this->data_, 0, 0);
   
   this->data_->print();
   
@@ -150,11 +153,20 @@ dirichletBoundaryConditions()
   return dirichletBoundaryConditions_;
 }
 
-template<int nStates, typename FunctionSpaceType>
-void TimeSteppingSchemeOde<CellmlAdapter<nStates, FunctionSpaceType>>::
+template<typename DiscretizableInTimeType>
+bool TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::
+knowsMeshType()
+{
+  return this->discretizableInTime_.knowsMeshType();
+}
+
+// ----------------------
+// specialization for CellML adapter
+template<int nStates,int nIntermediates,typename FunctionSpaceType>
+void TimeSteppingSchemeOde<CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>>::
 initialize()
 {
-  TimeSteppingSchemeOdeBaseDiscretizable<CellmlAdapter<nStates, FunctionSpaceType>>::initialize();
+  TimeSteppingSchemeOdeBaseDiscretizable<CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>>::initialize();
   double prefactor = this->discretizableInTime_.prefactor();
   int outputComponentNo = this->discretizableInTime_.outputStateIndex();
 
@@ -162,13 +174,34 @@ initialize()
 
   this->data_->setPrefactor(prefactor);
   this->data_->setOutputComponentNo(outputComponentNo);
+
+  // -1 means do not use intermediates, but states
+  this->outputIntermediateIndex_ = this->specificSettings_.getOptionInt("outputIntermediateIndex", -1);
 }
 
-template<typename DiscretizableInTimeType>
-bool TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::
-knowsMeshType()
+template<int nStates,int nIntermediates,typename FunctionSpaceType>
+typename TimeSteppingSchemeOde<CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>>::TransferableSolutionData
+TimeSteppingSchemeOde<CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>>::
+getSolutionForTransfer()
 {
-  return this->discretizableInTime_.knowsMeshType();
+  std::tuple<std::shared_ptr<typename CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::FieldVariableTypeIntermediates>,int> intermediatesData(
+    this->discretizableInTime_.intermediates(), this->outputIntermediateIndex_);
+
+  return std::make_pair<
+    typename Data::TimeStepping<FunctionSpaceType,nStates>::TransferableSolutionDataType,
+    std::tuple<std::shared_ptr<typename CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::FieldVariableTypeIntermediates>,int>
+  >(
+    this->data_->getSolutionForTransfer(),
+    std::move(intermediatesData)
+  );
+}
+
+//! output the given data for debugging
+template<int nStates,int nIntermediates,typename FunctionSpaceType>
+std::string TimeSteppingSchemeOde<CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>>::
+getString(typename TimeSteppingSchemeOde<CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>>::TransferableSolutionData &data)
+{
+  return std::string("");
 }
 
 } // namespace

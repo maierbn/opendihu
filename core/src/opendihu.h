@@ -29,6 +29,7 @@
 #include "time_stepping_scheme/heun.h"
 #include "specialized_solver/multidomain_solver.h"
 #include "specialized_solver/static_bidomain_solver.h"
+#include "specialized_solver/quasi_static_linear_elasticity_solver.h"
 #include "time_stepping_scheme/heun_adaptiv.h"
 
 #include "spatial_discretization/finite_element_method/05_time_stepping.h"
@@ -43,6 +44,8 @@
 #include "postprocessing/parallel_fiber_estimation/parallel_fiber_estimation.h"
 
 #include "cellml/03_cellml_adapter.h"
+
+#include "output_writer/output_surface/output_surface.h"
 
 #include "quadrature/gauss.h"
 #include "quadrature/clenshaw_curtis.h"

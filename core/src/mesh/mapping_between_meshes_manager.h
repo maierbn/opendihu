@@ -2,6 +2,7 @@
 
 #include <Python.h>  // has to be the first included header
 #include <map>
+#include <vector>
 
 #include "mesh/mapping_between_meshes.h"
 #include "field_variable/00_field_variable_base.h"

@@ -145,7 +145,7 @@ config = {
   DihuContext settings(argc, argv, pythonConfig);
 
   TimeSteppingScheme::ExplicitEuler<
-    CellmlAdapter<57>
+    CellmlAdapter<57, 71>  // 57 states, 71 intermediates
   > problem(settings);
 
   problem.run();

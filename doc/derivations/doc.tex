@@ -2017,7 +2017,7 @@ with right hand side
 and stiffness matrix
 \begin{equation*}
   \begin{array}{lll}
-    \bfK = \ds\int_{Ω} \bfsigma : δ\bfeps \, \d \bfx
+    \bfK(δ\bfu)\,\bfu = \ds\int_{Ω} \bfsigma : δ\bfeps \, \d \bfx
   \end{array}
 \end{equation*}
 where $\bfsigma = \mathbb{C} : \bfeps$ with
@@ -2027,13 +2027,22 @@ where $\bfsigma = \mathbb{C} : \bfeps$ with
   \end{array}
 \end{equation*}
 with bulk modulus $K$ and shear modulus $μ$.
-Discretization
+
+The following symmetry properties hold:
 \begin{equation*}
   \begin{array}{lll}
-    \bfu_{a}(\bfx) = u_a^M\,\phi^M(\bfx)\\[4mm]
-    \p{\bfu_{a}(\bfx)}{x_b} = u_a^M\,\p{\phi^M(\bfx)}{x_b}
+    \bbC_{abcd} = \bbC_{bacd} = \bbC_{abdc} = \bbC_{badc} \quad \text{minor symmetries}\\[4mm]
+    \bbC_{abcd} = \bbC_{cdab} \quad \text{major symmetries}
   \end{array}
 \end{equation*}
+Discretization yields:
+\begin{equation*}
+  \begin{array}{lll}
+    \bfu_{a}(\bfx) = u_a^M\,\phi^M(\bfx),\\[4mm]
+    \p{\bfu_{a}(\bfx)}{x_b} = u_a^M\,\p{\phi^M(\bfx)}{x_b}.
+  \end{array}
+\end{equation*}
+As before, $a,b=1,\dots,D$ indicate components, $L,M$ indicate nodes / dofs.
 Strain $\bfeps$ is computed linearly from displacements: 
 \begin{equation*}
   \begin{array}{lll}
@@ -2049,7 +2058,42 @@ This results in
     δu_{(d)}^L\,u_{(b)}^N\,\p{\phi^L(\bfx)}{x_{(c)}}\p{\phi^N(\bfx)}{x_{(a)}}
     + δu_{(d)}^L\,u_{(a)}^O\,\p{\phi^L(\bfx)}{x_{(c)}}\p{\phi^O(\bfx)}{x_{(b)}}\\[4mm]
     & + δu_{(c)}^M\,u_{(b)}^N\,\p{\phi^M(\bfx)}{x_{(d)}}\p{\phi^N(\bfx)}{x_{(a)}}
-    + δu_{(c)}^M\,u_{(a)}^O\,\p{\phi^M(\bfx)}{x_{(d)}}\p{\phi^O(\bfx)}{x_{(b)}}\Big)
+    + δu_{(c)}^M\,u_{(a)}^O\,\p{\phi^M(\bfx)}{x_{(d)}}\p{\phi^O(\bfx)}{x_{(b)}}\Big).
+  \end{array}
+\end{equation*}
+For matrix entry $\bfM_{LaMb}$, we have
+\begin{equation*}
+  \begin{array}{lll}
+    % L -> L
+    % N -> M
+    % d -> a
+    % b -> b
+    % a -> c
+    % c -> d
+    \bfM_{LaMb} &= \dfrac14\mathbb{C}_{cbda}\p{\phi^L(\bfx)}{x_{d}}\p{\phi^M(\bfx)}{x_{c}}
+    % L -> L
+    % O -> M
+    % d -> a
+    % a -> b
+    % b -> c
+    % c -> d
+    + \dfrac14\mathbb{C}_{bcda}\p{\phi^L(\bfx)}{x_{d}}\p{\phi^M(\bfx)}{x_{c}}\\[4mm]
+    % M -> L
+    % N -> M
+    % c -> a
+    % b -> b
+    % a -> c
+    % d -> d
+    &+ \dfrac14\mathbb{C}_{cbad}\p{\phi^L(\bfx)}{x_{d}}\p{\phi^M(\bfx)}{x_{c}}
+    % M -> L
+    % O -> M
+    % c -> a
+    % a -> b
+    % b -> c
+    % d -> d
+    + \dfrac14\mathbb{C}_{bcad}\p{\phi^L(\bfx)}{x_{d}}\p{\phi^M(\bfx)}{x_{c}}\\[4mm]
+    &= \dfrac14\big(\mathbb{C}_{cbda} + \mathbb{C}_{bcda} + \mathbb{C}_{cbad} + \mathbb{C}_{bcad}\big) \p{\phi^L(\bfx)}{x_{d}}\p{\phi^M(\bfx)}{x_{c}}\\[4mm]
+    &= \mathbb{C}_{adbc}\p{\phi^L(\bfx)}{x_{d}}\p{\phi^M(\bfx)}{x_{c}}\\[4mm]
   \end{array}
 \end{equation*}
 %\begin{equation*}
@@ -2057,6 +2101,45 @@ This results in
 %    \bfK_{LM} = \ds\int_{Ω} \mathbb{C}_{abcd} \,\dfrac12\left(\p{\phi^{(M)}_{d}}{x_{c}} + \p{\phi^{(M)}_{c}}{x_{d}}\right) \dfrac12\left(\p{\phi^{(L)}_{b}}{x_{a}} + \p{\phi^{(L)}_{a}}{x_{b}}\right)  \d \bfx
 %  \end{array}
 %\end{equation*}
+
+\subsubsection{Using active stress}
+For the muscle module we have $\bfsigma = \bfsigma_\text{passive} + \bfsigma_\text{active}$. 
+\begin{equation*}
+  \begin{array}{lll}
+    \bfI(\bfu,δ\bfu) = \ds\int_{Ω} (\bfsigma_\text{passive} + \bfsigma_\text{active}) : δ\bfeps \, \d \bfx = \ds\int_{Ω} (\mathbb{C}:\bfeps + \bfsigma_\text{active}) : δ\bfeps \, \d \bfx = \bfK(δ\bfu)\,\bfu + \bff_\text{active}
+  \end{array}
+\end{equation*}
+We have the additional term
+\begin{equation*}
+  \begin{array}{lll}
+    \bff_\text{active} = \ds\int_{Ω} \bfsigma^\text{active}_{ab} : δ\bfeps_{ab} \, \d \bfx = \ds\int_{Ω}  \bfsigma^\text{active}_{ab} \dfrac12\left(δu_{b}^L\,\p{\phi^L(\bfx)}{x_{a}} + δu_{a}^M\,\p{\phi^M(\bfx)}{x_{b}}\right) \, \d \bfx.
+  \end{array}
+\end{equation*}
+The entry of $\bff$ is
+\begin{equation*}
+  \begin{array}{lll}
+    % L -> L
+    % b -> a
+    % a -> b
+    \bff^\text{active}_{La} = \ds\int_{Ω}\left(  \dfrac12 \bfsigma^\text{active}_{ba} \,\p{\phi^L(\bfx)}{x_{b}}  
+    % M -> L
+    % a -> a
+    % b -> b
+    + \dfrac12 \bfsigma^\text{active}_{ab}\,\p{\phi^L(\bfx)}{x_{b}}  \right)  \, \d \bfx.
+  \end{array}
+\end{equation*}
+Because of symmetry of $\bfsigma$, we have
+\begin{equation*}
+  \begin{array}{lll}
+    \bff^\text{active}_{La} = \ds\int_{Ω}\bfsigma^\text{active}_{ab}\,\p{\phi^L(\bfx)}{x_{b}} \,\d\bfx.
+  \end{array}
+\end{equation*}
+When $\bff^\text{active}$ is on the right hand side, we have a minus:
+\begin{equation*}
+  \begin{array}{lll}
+    \bfK\,\bfu = -\bff^\text{active} + \bff.
+  \end{array}
+\end{equation*}
 
 \subsubsection{Handling of Dirichlet boundary conditions}
 %

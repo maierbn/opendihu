@@ -16,12 +16,14 @@ namespace TimeSteppingScheme
  */
 template<typename DiscretizableInTimeType>
 class TimeSteppingSchemeOdeBaseDiscretizable:
-public TimeSteppingSchemeOdeBase<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>
+  public TimeSteppingSchemeOdeTransferableSolutionData<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents(), DiscretizableInTimeType>
 {
 public:
   typedef DiscretizableInTimeType DiscretizableInTime_Type;
   typedef typename DiscretizableInTimeType::FunctionSpace FunctionSpace;
   
+  using TimeSteppingSchemeOdeTransferableSolutionData<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents(), DiscretizableInTimeType>::TransferableSolutionDataType;
+
   //! constructor
   TimeSteppingSchemeOdeBaseDiscretizable(DihuContext context, std::string name);
 
@@ -73,22 +75,35 @@ public:
   //using TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::initialize;
 };
 
-
 /**
  * Specialization for CellmlAdapter
  */
-template<int nStates, typename FunctionSpaceType>
-class TimeSteppingSchemeOde<CellmlAdapter<nStates, FunctionSpaceType>>:
-  public TimeSteppingSchemeOdeBaseDiscretizable<CellmlAdapter<nStates, FunctionSpaceType>>
+template<int nStates,int nIntermediates,typename FunctionSpaceType>
+class TimeSteppingSchemeOde<CellmlAdapter<nStates, nIntermediates, FunctionSpaceType>> :
+  public TimeSteppingSchemeOdeBaseDiscretizable<CellmlAdapter<nStates, nIntermediates, FunctionSpaceType>>
 {
 public:
   //! use constructor of parent class
-  using TimeSteppingSchemeOdeBaseDiscretizable<CellmlAdapter<nStates, FunctionSpaceType>>::TimeSteppingSchemeOdeBaseDiscretizable;
+  using TimeSteppingSchemeOdeBaseDiscretizable<CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>>::TimeSteppingSchemeOdeBaseDiscretizable;
   
+  //! use data type for solution transfer
+  using TimeSteppingSchemeOdeBaseDiscretizable<CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>>::TransferableSolutionDataType;
+
+  typedef typename TimeSteppingSchemeOdeBaseDiscretizable<CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>>::TransferableSolutionDataType TransferableSolutionData;
+
   //! initialize CellMLAdapter and get outputStateIndex and prefactor from CellMLAdapter to set them in data_
   virtual void initialize();
+
+  //! get the data that will be transferred in the operator splitting to the other term of the splitting
+  //! the transfer is done by the solution_vector_mapping class
+  virtual TransferableSolutionData getSolutionForTransfer();
+
+  //! output the given data for debugging
+  virtual std::string getString(TransferableSolutionData &data);
+
+protected:
+  int outputIntermediateIndex_ = -1;   ///< component index of the intermediates field variable to use for solution transfer
 };
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 }  // namespace

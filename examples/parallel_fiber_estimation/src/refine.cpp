@@ -5,8 +5,8 @@
 
 int main(int argc, char *argv[])
 {
-  // 3D Laplace equation
-  
+  // Given a binary file with fibers interpolate between given fibers and create new file with more fibers.
+
   // initialize everything, handle arguments and parse settings from input file
   DihuContext settings(argc, argv);
   

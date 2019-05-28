@@ -281,7 +281,7 @@ std::string DihuContext::versionText()
 {
   std::stringstream versionTextStr;
 
-  versionTextStr << "opendihu 0.1, build " << __DATE__ << " " << __TIME__;
+  versionTextStr << "opendihu 1.0, build " << __DATE__ << " " << __TIME__;
 #ifdef __cplusplus
   versionTextStr << ", C++ " << __cplusplus;
 #endif

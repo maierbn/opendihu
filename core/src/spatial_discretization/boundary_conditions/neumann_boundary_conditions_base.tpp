@@ -39,7 +39,8 @@ initialize(PythonConfig specificSettings, std::shared_ptr<FunctionSpaceType> fun
   // if boundary conditions are present in config
   if (!specificSettings.hasKey(boundaryConditionsConfigKey))
   {
-    LOG(WARNING) << specificSettings << "[\"" << boundaryConditionsConfigKey << "\"] not set: No Neumann boundary conditions specified";
+    LOG(WARNING) << specificSettings << "[\"" << boundaryConditionsConfigKey << "\"] not set: No Neumann boundary conditions specified" << std::endl
+      << "(Set \"neumannBoundaryConditions\": [] to avoid this warning.)";
     return;
   }
 
@@ -144,7 +145,31 @@ initialize(PythonConfig specificSettings, std::shared_ptr<FunctionSpaceType> fun
     }
   }
 
-  // parse settings
+  // output parsed settings
+  LOG(DEBUG) << boundaryConditionElements_.size() << " boundaryConditionElements parsed";
+  LOG(DEBUG) << boundaryConditionElements_.size() << " boundaryConditionElements_: ";
+
+  for(ElementWithFaces elementWithFaces : boundaryConditionElements_)
+  {
+    LOG(DEBUG) << "  elementNoLocal " << elementWithFaces.elementNoLocal << ", face " << Mesh::getString(elementWithFaces.face)
+      << ", dofVectors on surface: " << elementWithFaces.dofVectors << ", surfaceDofs on volume: " << elementWithFaces.surfaceDofs;
+  }
+
+  initializeRhs();
+}
+
+// initialize directly
+template<typename FunctionSpaceType,typename QuadratureType,int nComponents>
+void NeumannBoundaryConditionsBase<FunctionSpaceType,QuadratureType,nComponents>::
+initialize(std::shared_ptr<FunctionSpaceType> functionSpace, const std::vector<typename NeumannBoundaryConditionsBase<FunctionSpaceType,QuadratureType,nComponents>::ElementWithFaces> &boundaryConditionElements)
+{
+  this->functionSpace_ = functionSpace;
+  data_.setFunctionSpace(functionSpace_);
+  data_.initialize();
+
+  boundaryConditionElements_ = boundaryConditionElements;
+
+  // output parsed settings
   LOG(DEBUG) << boundaryConditionElements_.size() << " boundaryConditionElements parsed";
   LOG(DEBUG) << boundaryConditionElements_.size() << " boundaryConditionElements_: ";
 

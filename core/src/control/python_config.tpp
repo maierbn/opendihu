@@ -67,3 +67,27 @@ getOptionVector(std::string keyString, std::vector<T> &values) const
   std::string pathString = this->getStringPath();
   PythonUtility::getOptionVector(this->pythonConfig_, keyString, pathString, values);
 }
+
+//! extract a vector with known number of nEntries
+template<typename T>
+void PythonConfig::
+getOptionVector(std::string keyString, int nEntries, std::vector<T> &values) const
+{
+  std::string pathString = this->getStringPath();
+
+  PyObject *pyLocalValues = nullptr;
+  pyLocalValues = getOptionPyObject(keyString, pyLocalValues);
+  if (!pyLocalValues)
+  {
+    LOG(WARNING) << pathString << "[\"" << keyString << "\"]: no vector was given, set to zeros";
+    values.resize(nEntries, T{0.0});
+    return;
+  }
+  values = PythonUtility::convertFromPython<std::vector<T>>::get(pyLocalValues);
+  if (values.size() < nEntries)
+  {
+    LOG(WARNING) << pathString << "[\"" << keyString << "\"]: given vector has only " << values.size() << " entries, fill with 0's to size "
+      << nEntries;
+    values.resize(nEntries, T{0.0});
+  }
+}

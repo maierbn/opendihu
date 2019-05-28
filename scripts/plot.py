@@ -146,6 +146,8 @@ if dimension == 1:
       gs = gridspec.GridSpec(2,1,height_ratios=[3,4])
       ax1 = plt.subplot(gs[0])  # main component
       ax3 = plt.subplot(gs[1])  # all other components
+      ax1.margins(x=0.2)
+      ax3.margins(x=0.2)
     else:
       ax1 = plt.gca()
     
@@ -229,9 +231,9 @@ if dimension == 1:
       ax3.set_ylabel('Other components')
       if len(solution_components) > 5:
         ncol = len(solution_components)/10
-        ax3.legend(prop={'size': 6, }, ncol=ncol)
+        ax3.legend(prop={'size': 6, }, ncol=ncol, loc='upper right')
       else:
-        ax3.legend()
+        ax3.legend(loc='lower right')
     return top_text,
 
   def animate(i):
@@ -359,7 +361,7 @@ if dimension == 1:
       
     return top_text,
     
-  interval = 5000.0 / len(data)
+  interval = 20000.0 / len(data)
         
   if len(data) == 1 or plot_over_time:
     init()

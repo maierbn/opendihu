@@ -14,7 +14,7 @@ namespace ModelOrderReduction
   template<typename TimeSteppingType>
   class TimeSteppingSchemeOdeReduced :
     public MORBase<typename TimeSteppingType::FunctionSpace>,
-    public ::TimeSteppingScheme::TimeSteppingSchemeOdeBase<::FunctionSpace::Generic,1>
+    public ::TimeSteppingScheme::TimeSteppingSchemeOdeTransferableSolutionData<::FunctionSpace::Generic,1>
   {
   public:
     typedef FieldVariable::FieldVariable<::FunctionSpace::Generic,1> FieldVariableType;  

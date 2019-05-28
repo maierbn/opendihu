@@ -3,7 +3,7 @@
 #include <Python.h>  // has to be the first included header
 #include <petscvec.h>
 
-#include "field_variable/structured/02_field_variable_data_structured.h"
+#include "field_variable/structured/02b_field_variable_data_structured_for_surface.h"
 #include "partition/partitioned_petsc_vec/partitioned_petsc_vec.h"
 
 namespace FieldVariable
@@ -14,11 +14,13 @@ namespace FieldVariable
  */
 template<typename FunctionSpaceType, int nComponents>
 class FieldVariableSetGetStructured :
-  public FieldVariableDataStructured<FunctionSpaceType,nComponents>
+  public FieldVariableDataStructuredForSurface<FunctionSpaceType,nComponents>
 {
 public:
   //! inherited constructor
-  using FieldVariableDataStructured<FunctionSpaceType,nComponents>::FieldVariableDataStructured;
+  using FieldVariableDataStructuredForSurface<FunctionSpaceType,nComponents>::FieldVariableDataStructuredForSurface;
+
+  using FieldVariableDataStructuredForSurface<FunctionSpaceType,nComponents>::setValues;
 
   //! for a specific component, get all values
   //! @param onlyNodalValues: if this is true, for Hermite only the non-derivative values are retrieved
@@ -54,6 +56,9 @@ public:
   template<int N>
   void getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nComponents>,N> &values) const;
 
+  //! get values from their local dof no.s for all components
+  void getValues(std::vector<dof_no_t> dofLocalNo, std::vector<std::array<double,nComponents>> &values) const;
+
   //! for a specific component, get the values corresponding to all element-local dofs
   void getElementValues(int componentNo, element_no_t elementNoLocal, std::array<double,FunctionSpaceType::nDofsPerElement()> &values) const;
 
@@ -62,6 +67,9 @@ public:
 
   //! for a specific component, get a single value from local dof no.
   double getValue(int componentNo, node_no_t dofLocalNo) const;
+
+  //! get a single value from local dof no. for all components
+  std::array<double,nComponents> getValue(node_no_t dofLocalNo) const;
 
   //! extract the specified component from the field variable (by copying it) and store it in the given field variable (which already has the data allocated)
   void extractComponentCopy(int componentNo, std::shared_ptr<FieldVariable<FunctionSpaceType,1>> extractedFieldVariable);
@@ -79,10 +87,10 @@ public:
   //! set the values for the given component from the other field variable
   void setValues(int componentNo, std::shared_ptr<FieldVariable<FunctionSpaceType,1>> fieldVariable);
 
-  //! set values for a given components for given dofs
+  //! set values for a given component for given dofs
   void setValues(int componentNo, const std::vector<dof_no_t> &dofNosLocal, const std::vector<double> &values, InsertMode petscInsertMode=INSERT_VALUES);
 
-  //! set values for a given components for given dofs
+  //! set values for a given component for given dofs
   template<int N>
   void setValues(int componentNo, const std::array<dof_no_t,N> &dofNosLocal, const std::array<double,N> &values, InsertMode petscInsertMode=INSERT_VALUES);
 
@@ -92,8 +100,11 @@ public:
   //! set values for all components for dofs, only nValues values will be set despite potentially more dofNosLocal, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
   void setValues(int nValues, const std::vector<dof_no_t> &dofNosLocal, const std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode=INSERT_VALUES);
 
-  //! set a single dof (all components) , after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
+  //! set a single dof (all components), after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
   void setValue(dof_no_t dofLocalNo, const std::array<double,nComponents> &value, InsertMode petscInsertMode=INSERT_VALUES);
+
+  //! set a single dof for a given component, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
+  void setValue(int componentNo, dof_no_t dofLocalNo, double value, InsertMode petscInsertMode);
 
   //! set values for the specified component for all local dofs, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
   void setValuesWithGhosts(int componentNo, const std::vector<double> &values, InsertMode petscInsertMode=INSERT_VALUES);

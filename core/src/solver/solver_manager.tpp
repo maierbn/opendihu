@@ -7,6 +7,7 @@
 #include <iostream>
 #include "easylogging++.h"
 #include "utility/python_utility.h"
+#include "utility/string_utility.h"
 
 namespace Solver
 {
@@ -30,7 +31,8 @@ std::shared_ptr<SolverType> Manager::solver(PythonConfig settings, MPI_Comm mpiC
     
     if (hasSolver(solverName, mpiCommunicator))
     {
-      LOG(DEBUG) << "Solver with solverName \"" << solverName << "\" requested and found, type is " << typeid(solvers_[mpiCommunicator][solverName]).name();
+      LOG(DEBUG) << "Solver with solverName \"" << solverName << "\" requested and found, type is "
+        << StringUtility::demangle(typeid(solvers_[mpiCommunicator][solverName]).name());
 
       return std::static_pointer_cast<SolverType>(solvers_[mpiCommunicator][solverName]);
     }
@@ -38,7 +40,7 @@ std::shared_ptr<SolverType> Manager::solver(PythonConfig settings, MPI_Comm mpiC
     {
       // solver was preconfigured, do nothing specific here, created standard solver
       LOG(DEBUG) << "Solver configuration for \"" << solverName << "\" requested and found, create solver. "
-        << "Type is " << typeid(SolverType).name() << ".";
+        << "Type is " << StringUtility::demangle(typeid(SolverType).name()) << ".";
 
       std::shared_ptr<SolverType> solver = std::make_shared<SolverType>(solverConfiguration_.at(solverName), mpiCommunicator, solverName);
 
@@ -78,7 +80,8 @@ std::shared_ptr<SolverType> Manager::solver(PythonConfig settings, MPI_Comm mpiC
   // create new solver, store as anonymous object
   std::stringstream anonymousName;
   anonymousName << "anonymous" << numberAnonymousSolvers_++;
-  LOG(DEBUG) << "Create new solver with type " << typeid(SolverType).name() << " and name \"" <<anonymousName.str() << "\".";
+  LOG(DEBUG) << "Create new solver with type " << StringUtility::demangle(typeid(SolverType).name())
+    << " and name \"" <<anonymousName.str() << "\".";
   std::shared_ptr<SolverType> solver = std::make_shared<SolverType>(settings, mpiCommunicator, anonymousName.str());
 
   solvers_[mpiCommunicator][anonymousName.str()] = solver;

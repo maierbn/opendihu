@@ -403,6 +403,7 @@ getNeighbourNodeIndex(int nodeIndex, Mesh::face_t face)
     assert(false);
     break;
   }
+  return -1;
 }
 
 } // namespace

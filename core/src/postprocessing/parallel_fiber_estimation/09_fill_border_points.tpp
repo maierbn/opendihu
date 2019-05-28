@@ -10,10 +10,6 @@ fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std
                  std::array<bool,4> &subdomainIsAtBorder)
 {
   LOG(DEBUG) << "fillBorderPoints";
-  //MPI_Barrier(this->currentRankSubset_->mpiCommunicator());
-  //PyObject *stlMeshPy = PyObject_CallFunction(functionGetStlMesh_, "s", stlFilename_.c_str());
-  //PythonUtility::checkForError();
-  //assert(stlMeshPy);
 
   int nRanksZ = meshPartition_->nRanks(2);
   int rankZNo = meshPartition_->ownRankPartitioningIndex(2);
@@ -375,6 +371,7 @@ fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std
 #endif
 
   // output points for debugging
+#if 0
 #ifndef NDEBUG
   std::ofstream file("points.csv", std::ios::out | std::ios::trunc);
   assert (file.is_open());
@@ -395,6 +392,7 @@ fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std
     }
   }
   file.close();
+#endif
 #endif
 }
 

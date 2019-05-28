@@ -84,23 +84,11 @@ traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool stre
 #endif
 #endif
 
-    //MPI_Barrier(currentRankSubset_->mpiCommunicator());
-    //LOG(FATAL) << "end before tracing of streamlines";
-
     // trace streamlines from seed points
     for (int i = 0; i < nStreamlines; i++)
     {
       Vec3 &startingPoint = seedPoints[i];
       streamlinePoints[i].push_back(startingPoint);
-
-
-      /* debugging condition, TODO: remove */
-      /*int ownRankNo = currentRankSubset_->ownRankNo();
-      if (!((ownRankNo == 1)))
-      {
-        continue;
-      }*/
-      /* end */
 
       this->traceStreamline(startingPoint, streamlineDirection, streamlinePoints[i]);
 
@@ -140,16 +128,10 @@ traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool stre
       VLOG(1) << "reverse streamlines direction";
       for (int streamlineIndex = 0; streamlineIndex < nStreamlines; streamlineIndex++)
       {
-        //VLOG(1) << streamlineIndex << " has " << streamlinePoints[streamlineIndex].size() << " points, before: " << streamlinePoints[streamlineIndex];
         std::reverse(streamlinePoints[streamlineIndex].begin(), streamlinePoints[streamlineIndex].end());
-        //LOG(DEBUG) << streamlineIndex << " after: " << streamlinePoints[streamlineIndex];
       }
     }
-
   }
-
-  //MPI_Barrier(currentRankSubset_->mpiCommunicator());
-  //LOG(FATAL) << "end after all streamlines were traced";
 }
 
 } // namespace

@@ -200,7 +200,8 @@ fixInvalidFibersInFile(std::string filename)
     if (int((fileSize-(32+headerLength)) / fiberDataSize) != nFibers)
     {
       LOG(ERROR) << "File \"" << filename << "\" states to have " << nFibers << " fibers in header, but actually has "
-        << int((fileSize-(32+headerLength)) / fiberDataSize) << " fibers!";
+        << int((fileSize-(32+headerLength)) / fiberDataSize) << " fibers!" << std::endl
+        << "This can happen, if the file \"" << filename << "\" existed from a previous run, then this is not a problem.";
     }
 
     for (int iterationNo = 0; iterationNo < 3 && (nFibersInvalid - nFibersFixed > 0 || iterationNo == 0); iterationNo++)

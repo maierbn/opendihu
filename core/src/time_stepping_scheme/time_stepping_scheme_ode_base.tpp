@@ -72,6 +72,8 @@ reset()
 {
   TimeSteppingScheme::reset();
   initialized_ = false;
+
+  this->outputWriterManager_.initialize(context_, this->specificSettings_);
 }
 
 template<typename FunctionSpaceType, int nComponents>

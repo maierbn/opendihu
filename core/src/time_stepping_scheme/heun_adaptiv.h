@@ -4,15 +4,13 @@
 #include "interfaces/runnable.h"
 #include "data_management/time_stepping/time_stepping_heun.h"
 #include "control/dihu_context.h"
+#include <iostream>
+#include <fstream>
 
 namespace TimeSteppingScheme
 {
 
-/** The Heun integration scheme, u_{t+1} = u_{t} + 0.5*dt*(f(u_{t})+f(u*)) where u* = u_{t} + dt*f(u_{t}).
- *
- *  However, we compute it in the way: u_{t+1} = u* + 0.5*dt*(f(u*)-f(u_{t}))
- *  (more round off this way, but less storage required)
- *
+/** The adaptive method to perform calculation with Heun method
  */
 template<typename DiscretizableInTime>
 class HeunAdaptiv:
@@ -23,27 +21,72 @@ public:
   //! constructor
   HeunAdaptiv(DihuContext context);
 
-  //! initialize the data object
-  virtual void initialize();
-
   //! advance simulation by the given time span [startTime_, endTime_] with given numberTimeSteps, data in solution is used, afterwards new data is in solution
   void advanceTimeSpan();
 
   //! run the simulation
   void run();
 
-private:
+  //! initialize the data object
+  virtual void initialize();
 
-  // Allowed tolerance
+  //! Returns the current time passed in the simulation. Used to trigger rebalancing
+  double currentHeunTime();
+
+private:
+  // allowed tolerance
   double tolerance_;
 
-  // delta to prevent very small timeStepWidth_
+  // offset to prevent small steps towards the end of the timeSpan
   double delta_;
 
-  ///< this is the time step width at the and of the time stepping, saved because the actual time step width may be set smaller to exactly reach timeSpan
+  // safes timeStepWidth when it has to be cut because of the end of the timeSpan
   double savedTimeStepWidth_;
-};
 
+  // minimal timeStepWidth to use
+  double minTimeStepWidth_;
+
+  // check to show usage of minimal timeStepWidth
+  bool minimum_check_;
+
+  // check to show usage of delta
+  bool ten_percent_check_;
+
+  // value to adapt timeStepWidth with
+  double alpha_;
+
+  // estimator to estimate the error
+  double estimator_;
+
+  // lowest multiplier for modified method
+  int lowestMultiplier_;
+
+  // multiplicator for modified method
+  int multiplicator_;
+
+  // vector norm between two solutions
+  PetscReal vecnorm;
+
+  // temporary vectors for calculation
+  Vec temp_solution_normal;
+  Vec temp_solution_tilde;
+  Vec temp_solution_tilde_intermediate;
+  Vec temp_increment_1;
+  Vec temp_increment_2;
+
+  // counter for the successful steps
+  int stepCounterSuccess_;
+
+  // counter for the failed steps
+  int stepCounterFail_;
+
+  // read in performed adaption method
+  std::string timeStepAdaptOption_;
+
+  // current time of the simulation
+  double currentTimeHeun_;
+
+};
 }  // namespace
 
 #include "time_stepping_scheme/heun_adaptiv.tpp"

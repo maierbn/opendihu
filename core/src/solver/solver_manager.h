@@ -28,6 +28,12 @@ public:
   //! check if a solver with the given name and mpiCommunicator is stored
   bool hasSolver(std::string solverName, MPI_Comm mpiCommunicator);
 
+  //! delete the solver identified by solverName
+  void deleteSolver(std::string solverName, MPI_Comm mpiCommunicator);
+
+  //! delete the solver identified by solverName, for all communcatiors
+  void deleteSolver(std::string solverName);
+
 private:
   //! store settings for all solvers that are specified in specificSettings_
   void storePreconfiguredSolvers();

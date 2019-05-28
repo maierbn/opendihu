@@ -135,6 +135,17 @@ initializeRhsRoutine()
       }
     }
 
+    // gather what number of instances all ranks have
+    int nRanksCommunicator = this->functionSpace_->meshPartition()->nRanks();
+    int ownRankNoCommunicator = this->functionSpace_->meshPartition()->ownRankNo();
+    std::vector<int> nInstancesRanks(nRanksCommunicator);
+    nInstancesRanks[ownRankNoCommunicator] = this->nInstances_;
+
+    LOG(DEBUG) << "ownRankNoCommunicator: " << ownRankNoCommunicator << ", Communicator has " << nRanksCommunicator << " ranks, nInstancesRanks: " << nInstancesRanks;
+
+    MPIUtility::handleReturnValue(MPI_Allgather(MPI_IN_PLACE, 0, MPI_DATATYPE_NULL, nInstancesRanks.data(),
+                                                1, MPI_INT, this->functionSpace_->meshPartition()->mpiCommunicator()), "MPI_Allgather");
+
     // check if the library already exists by a previous compilation
     struct stat buffer;
     if (stat(libraryFilename.c_str(), &buffer) == 0)
@@ -147,19 +158,6 @@ initializeRhsRoutine()
       // get the global rank no, needed for the output filenames
       int rankNoWorldCommunicator = DihuContext::ownRankNoCommWorld();
 
-      // gather what number of instances all ranks have
-      int nRanksCommunicator = this->functionSpace_->meshPartition()->nRanks();
-      int ownRankNoCommunicator = this->functionSpace_->meshPartition()->ownRankNo();
-      std::vector<int> nInstancesRanks(nRanksCommunicator);
-      nInstancesRanks[ownRankNoCommunicator] = this->nInstances_;
-
-      LOG(DEBUG) << "ownRankNoCommunicator: " << ownRankNoCommunicator << ", Communicator has " << nRanksCommunicator << " ranks, nInstancesRanks: " << nInstancesRanks;
-      MPI_Barrier(this->functionSpace_->meshPartition()->mpiCommunicator());
-
-
-
-      MPIUtility::handleReturnValue(MPI_Allgather(MPI_IN_PLACE, 0, MPI_DATATYPE_NULL, nInstancesRanks.data(),
-                                                  1, MPI_INT, this->functionSpace_->meshPartition()->mpiCommunicator()), "MPI_Allgather");
 
       // determine if this rank should do compilation, such that each nInstances is compiled only once, by the rank with lowest number
       int i = 0;

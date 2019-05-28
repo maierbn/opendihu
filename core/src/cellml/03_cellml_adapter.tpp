@@ -119,7 +119,15 @@ initialize()
 
   this->outputStateIndex_ = this->specificSettings_.getOptionInt("outputStateIndex", 0, PythonUtility::NonNegative);
   this->prefactor_ = this->specificSettings_.getOptionDouble("prefactor", 1.0);
+
   this->internalTimeStepNo_ = 0;
+
+  this->setSpecificStatesCallFrequency_ = this->specificSettings_.getOptionDouble("setSpecificStatesCallFrequency", 0.0);
+  this->setSpecificStatesRepeatAfterFirstCall_ = this->specificSettings_.getOptionDouble("setSpecificStatesRepeatAfterFirstCall", 0.0);
+
+  // initialize the lastCallSpecificStatesTime_ to something negative, such that the condition is fullfilled already in the fisrrt iteration
+  this->lastCallSpecificStatesTime_ = -2*this->setSpecificStatesCallFrequency_;
+
 }
 
 template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
@@ -195,9 +203,32 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
     this->setSpecificParameters_((void *)this, this->nInstances_, this->internalTimeStepNo_, currentTime, this->parameters_);
   }
 
+  LOG(DEBUG) << "currentTime: " << currentTime << ", lastCallSpecificStatesTime_: " << this->lastCallSpecificStatesTime_
+    << ", setSpecificStatesCallFrequency_: " << this->setSpecificStatesCallFrequency_ << ", "
+    << this->lastCallSpecificStatesTime_ + 1./this->setSpecificStatesCallFrequency_;
+
   // get new values for parameters, call callback function of python config
-  if (this->setSpecificStates_ && this->internalTimeStepNo_ % this->setSpecificStatesCallInterval_ == 0)
+  if (this->setSpecificStates_
+      && (
+          (this->setSpecificStatesCallInterval_ != 0 && this->internalTimeStepNo_ % this->setSpecificStatesCallInterval_ == 0)
+          || (this->setSpecificStatesCallFrequency_ != 0.0 && currentTime >= this->lastCallSpecificStatesTime_ + 1./this->setSpecificStatesCallFrequency_)
+         )
+     )
   {
+    if (this->lastCallSpecificStatesTime_ < 0)
+    {
+      LOG(DEBUG) << "initial call to setSpecificStates, set lastCallSpecificStatesTime_ to 0, was " << this->lastCallSpecificStatesTime_;
+      this->lastCallSpecificStatesTime_ = 0;
+    }
+    else
+    {
+      if (currentTime - (this->lastCallSpecificStatesTime_ + 1./this->setSpecificStatesCallFrequency_) > this->setSpecificStatesRepeatAfterFirstCall_)
+      {
+         this->lastCallSpecificStatesTime_ += 1./this->setSpecificStatesCallFrequency_;
+      }
+      LOG(DEBUG) << "next call to setSpecificStates,this->setSpecificStatesCallFrequency_: " << this->setSpecificStatesCallFrequency_ << ", set lastCallSpecificStatesTime_ to " << this->lastCallSpecificStatesTime_;
+    }
+
     // start critical section for python API calls
     // PythonUtility::GlobalInterpreterLock lock;
 

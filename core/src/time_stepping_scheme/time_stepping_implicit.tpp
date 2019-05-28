@@ -51,6 +51,22 @@ initialize()
 }
 
 template<typename DiscretizableInTimeType>
+void TimeSteppingImplicit<DiscretizableInTimeType>::
+reset()
+{
+  TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::reset();
+
+  LOG(DEBUG) << "set linearSolver_ to nullptr";
+  if (linearSolver_)
+  {
+    LOG(DEBUG) << "delete linear solver";
+    this->context_.solverManager()->deleteSolver(linearSolver_->name());
+  }
+
+  linearSolver_ = nullptr;
+}
+
+template<typename DiscretizableInTimeType>
 Data::TimeSteppingImplicit<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>
 &TimeSteppingImplicit<DiscretizableInTimeType>::
 dataImplicit()
@@ -81,6 +97,7 @@ template<typename DiscretizableInTimeType>
 void TimeSteppingImplicit<DiscretizableInTimeType>::
 initializeLinearSolver()
 { 
+  LOG(DEBUG) << "initializeLinearSolver, linearSolver_ == nullptr: " << (linearSolver_ == nullptr);
   if (linearSolver_ == nullptr)
   {
     LOG(DEBUG) << "Implicit time stepping: initialize linearSolver";

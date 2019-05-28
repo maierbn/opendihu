@@ -48,6 +48,7 @@ reset()
 
   // deallocate Petsc matrices
   this->stiffnessMatrix_ = nullptr;
+  LOG(DEBUG) << "stiffnessMatrix_ set to nullptr";
 }
 
 template<typename FunctionSpaceType, int nComponents>
@@ -106,6 +107,8 @@ createPetscObjects()
   LOG(DEBUG) << "d=" << this->functionSpace_->dimension()
     << ", number of diagonal non-zeros: " << diagonalNonZeros << ", number of off-diagonal non-zeros: " <<offdiagonalNonZeros;
 
+  int nComponents = 1;
+  LOG(DEBUG) << "create new stiffnessMatrix";
   this->stiffnessMatrix_ = std::make_shared<PartitionedPetscMat<FunctionSpaceType>>(meshPartition, nComponents, diagonalNonZeros, offdiagonalNonZeros, "stiffnessMatrix");
 
 }

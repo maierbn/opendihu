@@ -137,7 +137,7 @@ void BoundaryConditionsBase<FunctionSpaceType,nComponents>::
 parseBoundaryConditionsForElements(std::string boundaryConditionsConfigKey)
 {
   LOG(TRACE) << "parseBoundaryConditionsForElements, functionSpace: " <<  functionSpace_->meshName()
-    << ", nElementsLocal: " << functionSpace_->meshPartition()->nElementsLocal(0) << "=" << functionSpace_->nElementsLocal();
+    << ", nElementsLocal: " << functionSpace_->nElementsLocal();
 
   // add weak form of BC to rhs
   const int nDofsPerNode = FunctionSpaceType::nDofsPerNode();

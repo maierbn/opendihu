@@ -344,9 +344,6 @@ config = {
   nFails += ::testing::Test::HasFailure();
 }
 
-// The following tests succeed everywhere except in travis CI, I(BM) don't know why and how to debug it.
-#ifndef ON_TRAVIS_CI
-
 TEST(LaplaceTest, Structured2DLinearParallelWithMultipleInstances)
 {
   std::cout << "wait 1 s" << std::endl;
@@ -2509,5 +2506,4 @@ config = {
 
   nFails += ::testing::Test::HasFailure();
 }
-#endif
 // */

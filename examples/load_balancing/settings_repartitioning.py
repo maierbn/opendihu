@@ -1,7 +1,7 @@
 # 2 fibers, biceps, example for load_balancing
 #
 
-end_time = 10.0     # end time for the simulation
+end_time = 20.0     # end time for the simulation
 
 import numpy as np
 import pickle
@@ -28,10 +28,24 @@ fiber_file = "../input/laplace3d_structured_linear"
 fiber_distribution_file = "../input/MU_fibre_distribution_3780.txt"
 firing_times_file = "../input/MU_firing_times_load_balancing.txt"
 cellml_file = "../input/hodgkin_huxley_1952.c"
+#cellml_file = "../input/shorten.cpp"        # <-- die Zeile einkommentieren, um Shorten zu verwenden
 
 # get own rank no and number of ranks
 rank_no = (int)(sys.argv[-2])
 n_ranks = (int)(sys.argv[-1])
+
+# set values for cellml model
+if "shorten" in cellml_file:
+  parameters_used_as_intermediate = [32]
+  parameters_used_as_constant = [65]
+  parameters_initial_values = [0.0, 1.0]
+  nodal_stimulation_current = 1200.
+  
+elif "hodgkin_huxley" in cellml_file:
+  parameters_used_as_intermediate = []
+  parameters_used_as_constant = [2]
+  parameters_initial_values = [0.0]
+  nodal_stimulation_current = 40.
 
 def get_motor_unit_no(fiber_no):
   """
@@ -59,6 +73,8 @@ def fiber_gets_stimulated(fiber_no, frequency, current_time):
   
 # callback function that can set states, i.e. prescribed values for stimulation
 def set_specific_states(n_nodes_global, time_step_no, current_time, states, fiber_no):
+  
+  #print("call set_specific_states at time {}".format(current_time))
   
   # determine if fiber gets stimulated at the current time
   is_fiber_gets_stimulated = fiber_gets_stimulated(fiber_no, stimulation_frequency, current_time)
@@ -109,8 +125,8 @@ if rank_no == 0:
 
 # configure on which ranks fibers 0 and 1 will run
 ranks = [
-  [0,1],       # rank nos that will compute fiber 0
-  [2,3]        # rank nos that will compute fiber 1
+  [0,1,2,3],       # rank nos that will compute fiber 0
+  #[2,3]        # rank nos that will compute fiber 1
 ]
 
 config = {
@@ -143,7 +159,7 @@ config = {
   },
   # control class that configures multiple instances of the fiber model
   "MultipleInstances": {
-    "nInstances": 2,      # number of fibers
+    "nInstances": 1,      # number of fibers
     "instances": [        # settings for each fiber, `i` is the index of the fiber (0 or 1)
     {
       "ranks": ranks[i],
@@ -152,7 +168,7 @@ config = {
         "timeStepWidth": dt_3D,  # 1e-1
         "logTimeStepWidthAsKey": "dt_3D",
         "durationLogKey": "duration_total",
-        "timeStepOutputInterval" : 1,
+        "timeStepOutputInterval" : 1e2,
         "endTime": end_time,
       
         # config for strang splitting
@@ -160,14 +176,15 @@ config = {
           "timeStepWidth": dt_3D,  # 1e-1
           "logTimeStepWidthAsKey": "dt_3D",
           "durationLogKey": "duration_total",
-          "timeStepOutputInterval" : 1000,
+          "timeStepOutputInterval" : 1,
           "endTime": end_time,
           "Term1": {      # CellML
             "HeunAdaptiv" : {
               "timeStepWidth": dt_0D,  # 5e-5
-              "tolerance": 1e-2,
-              "delta": 1e-6,
-              "maxTimeStepWidth": dt_3D,
+              "tolerance": 1e7,
+              "lowestMultiplier": 1000,
+              "minTimeStepWidth": 1e-5,
+              "timeStepAdaptOption": "regular",
               "logTimeStepWidthAsKey": "dt_0D",
               "durationLogKey": "duration_0D",
               "initialValues": [],
@@ -184,13 +201,16 @@ config = {
                 #"setParametersFunctionAdditionalParameter": i,
                 
                 "setSpecificStatesFunction": set_specific_states,    # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
-                "setSpecificStatesCallInterval": 2*int(1./stimulation_frequency/dt_0D),     # set_specific_states should be called stimulation_frequency times per ms, the factor 2 is needed because every Heun step includes two calls to rhs
+                #"setSpecificStatesCallInterval": 2*int(1./stimulation_frequency/dt_0D),     # set_specific_states should be called stimulation_frequency times per ms, the factor 2 is needed because every Heun step includes two calls to rhs
+                "setSpecificStatesCallInterval": 0,
+                "setSpecificStatesCallFrequency": stimulation_frequency,     # set_specific_states should be called stimulation_frequency times per ms, the factor 2 is needed because every Heun step includes two calls to rhs
+                "setSpecificStatesRepeatAfterFirstCall": 0.01,      # simulation time span for which the setSpecificStates callback will be called after a call was triggered
                 "additionalArgument": i,
                 
                 "outputStateIndex": 0,                             # state 0 = Vm, rate 28 = gamma
-                "parametersUsedAsIntermediate": [],                # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
-                "parametersUsedAsConstant": [2],                   # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
-                "parametersInitialValues": [0.0],                  # initial values for the parameters
+                "parametersUsedAsIntermediate": parameters_used_as_intermediate,  #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
+                "parametersUsedAsConstant": parameters_used_as_constant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
+                "parametersInitialValues": parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
                 "meshName": "MeshFiber"+str(i),                    # name of the fiber mesh, i.e. either MeshFiber0 or MeshFiber1
                 "prefactor": 1.0,
               },
@@ -218,6 +238,7 @@ config = {
               },
               "OutputWriter" : [
                 {"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/fiber_"+str(i), "binary": True, "fixedFormat": False, "combineFiles": False},
+                #{"format": "Paraview", "outputInterval": 1, "filename": "out/fiber_"+str(i), "binary": True, "fixedFormat": False, "combineFiles": False},
                 #{"format": "Paraview", "outputInterval": 1./dt_1D*output_timestep, "filename": "out/fiber_"+str(i)+"_txt", "binary": False, "fixedFormat": False},
                 #{"format": "ExFile", "filename": "out/fiber_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "sphereSize": "0.02*0.02*0.02"},
                 #{"format": "PythonFile", "filename": "out/fiber_"+str(i), "outputInterval": int(1./dt_1D*output_timestep), "binary":True, "onlyNodalValues":True},
@@ -225,9 +246,10 @@ config = {
             },
           },
         }
+        
       }
     }
-    for i in range(2)
+    for i in range(1)
     ]
   }
 }

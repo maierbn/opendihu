@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
       OperatorSplitting::Strang<
         TimeSteppingScheme::HeunAdaptiv<
           CellmlAdapter<
-            4,   // 57 for Hodgkin-Huxley
+            4,     // number of states, Hodgkin-Huxley: 4, Shorten: 57
             FunctionSpace::FunctionSpace<
               Mesh::StructuredDeformableOfDimension<1>,
               BasisFunction::LagrangeOfOrder<1>

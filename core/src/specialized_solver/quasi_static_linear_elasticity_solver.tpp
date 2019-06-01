@@ -63,7 +63,7 @@ advanceTimeSpan()
 
   LOG(DEBUG) << "update geometry";
 
-  finiteElementMethodLinearElasticity_.data().updateGeometry();
+  //finiteElementMethodLinearElasticity_.data().updateGeometry();
 
   // stop duration measurement
   if (this->durationLogKey_ != "")

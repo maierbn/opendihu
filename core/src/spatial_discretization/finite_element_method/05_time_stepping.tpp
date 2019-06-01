@@ -79,6 +79,8 @@ template<typename FunctionSpaceType, typename QuadratureType, int nComponents_, 
 void FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, nComponents_, Term>::
 reset()
 {
+  LOG(DEBUG) << " FiniteElementMethodTimeStepping::reset";
+  FiniteElementMethodBase<FunctionSpaceType,QuadratureType,nComponents_,Term>::reset();
   linearSolver_ = nullptr;
   ksp_ = nullptr;
 }

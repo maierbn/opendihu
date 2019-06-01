@@ -90,7 +90,7 @@ initializeCallbackFunctions()
   if (this->specificSettings_.hasKey("setSpecificStatesFunction"))
   {
     pythonSetSpecificStatesFunction_ = this->specificSettings_.getOptionFunction("setSpecificStatesFunction");
-    setSpecificStatesCallInterval_ = this->specificSettings_.getOptionInt("setSpecificStatesCallInterval", 1, PythonUtility::Positive);
+    setSpecificStatesCallInterval_ = this->specificSettings_.getOptionInt("setSpecificStatesCallInterval", 1, PythonUtility::NonNegative);
     setSpecificStates_ = [](void *context, int nInstances, int timeStepNo, double currentTime, double *localStates)
     {
       CallbackHandler *cellmlAdapter = (CallbackHandler *)context;
@@ -307,3 +307,19 @@ callPythonHandleResultFunction(int nInstances, int timeStepNo, double currentTim
   Py_CLEAR(returnValue);
   Py_CLEAR(arglist);
 }
+
+template<int nStates, int nIntermediates_, typename FunctionSpaceType>
+double CallbackHandler<nStates,nIntermediates_,FunctionSpaceType>::
+lastCallSpecificStatesTime()
+{
+  return this->lastCallSpecificStatesTime_;
+}
+
+template<int nStates, int nIntermediates_, typename FunctionSpaceType>
+void CallbackHandler<nStates,nIntermediates_,FunctionSpaceType>::
+setLastCallSpecificStatesTime(double lastCallSpecificStatesTime)
+{
+  this->lastCallSpecificStatesTime_ = lastCallSpecificStatesTime;
+  LOG(DEBUG) << "now set lastCallSpecificStatesTime_ to " << lastCallSpecificStatesTime_;
+}
+

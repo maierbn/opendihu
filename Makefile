@@ -9,7 +9,6 @@ python := python2.7
 #endif
 
 debug:
-	env
 	$(python) dependencies/scons/scons.py BUILD_TYPE=DEBUG
 
 release:

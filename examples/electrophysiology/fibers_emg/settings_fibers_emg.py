@@ -64,7 +64,7 @@ n_subdomains_z = 1
 # here any number is possible
 sampling_stride_x = 2
 sampling_stride_y = 2
-sampling_stride_z = 3
+sampling_stride_z = 50
 
 # parse arguments
 scenario_name = ""
@@ -919,7 +919,7 @@ config = {
       },
       "OutputSurface": {        # version for fibers_emg_2d_output
         "OutputWriter": [
-          {"format": "Paraview", "outputInterval": int(1./dt_bidomain*output_timestep), "filename": "out/" + scenario_name + "/2d_emg", "binary": True, "fixedFormat": False, "combineFiles": True},
+          {"format": "Paraview", "outputInterval": int(1./dt_bidomain*output_timestep), "filename": "out/" + scenario_name + "/surface_emg", "binary": True, "fixedFormat": False, "combineFiles": True},
         ],
         "face": "1-",
         "StaticBidomainSolver": {
@@ -980,7 +980,7 @@ config = {
           "shearModulus": 2.0,
         },
         "OutputWriter" : [
-          {"format": "Paraview", "outputInterval": 1, "filename": "out/deformation", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
+          {"format": "Paraview", "outputInterval": int(1./dt_bidomain*output_timestep), "filename": "out/deformation", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
           #{"format": "PythonFile", "filename": "out/deformation", "outputInterval": 1, "binary":False, "onlyNodalValues":True},
         ]
       }

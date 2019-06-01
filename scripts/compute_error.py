@@ -18,12 +18,20 @@ def compute_error_filenames(reference_filenames, filenames_to_test, field_variab
     print("No files to test given")
     return None
     
-  data_reference = py_reader.load_data(reference_filenames)[0]
-  data_test = py_reader.load_data(filenames_to_test)[0]
+  data_sets_reference = py_reader.load_data(reference_filenames)
+  data_sets_to_test = py_reader.load_data(filenames_to_test)
+    
+  if len(data_sets_reference) != len(data_sets_to_test):
+    print("Number of timesteps does not match! Reference data set: {}, Test data set: {}".format(data_sets_reference, data_sets_to_test))
+    
+  data_reference = data_sets_reference[-1]
+  data_test = data_sets_to_test[-1]
   
   # parse field variables and extract values
   values_reference = None
   values_test = None
+  
+  data_reference
   
   # parse reference field variable
   for field_variable in data_reference["data"]:
@@ -40,12 +48,20 @@ def compute_error_filenames(reference_filenames, filenames_to_test, field_variab
   
   # compute error
   absolute_error = np.linalg.norm(values_reference - values_test)
+  print("values_reference: ",values_reference)
+  print("values_test: ",values_test)
+  print("difference: ",values_reference - values_test)
+  
   try:
     relative_error = np.linalg.norm((values_reference - values_test) / values_reference)
   except:
     relative_error = np.linalg.norm((values_reference - values_test) / values_test)
   
+  print("Absoluter Fehler: ", absolute_error)
+
   relative_error /= len(values_reference)
+
+  print("Relativer Fehler: ",relative_error)
   
   return relative_error
   
@@ -77,6 +93,11 @@ def compute_error(reference_filenames_base, files_to_test_base, field_variable_n
   """  
   reference_filenames = get_matching_py_filenames(reference_filenames_base)
   test_filenames = get_matching_py_filenames(files_to_test_base)
-  #print("reference_filenames_base: {}, reference_filenames: {}".format(reference_filenames_base,reference_filenames))
+  print("reference_filenames_base: {}, reference_filenames: {}".format(reference_filenames_base,reference_filenames))
+  print("files_to_test_base: {}, test_filenames: {}".format(files_to_test_base,test_filenames))
   
   return compute_error_filenames(reference_filenames, test_filenames, field_variable_name)
+
+if __name__ == '__main__':
+  compute_error(sys.argv[1], sys.argv[2], "solution")
+

@@ -87,4 +87,15 @@ std::string Generic::filenameBase()
   return filenameBase_;
 }
 
+int Generic::outputFileNo()
+{
+  return outputFileNo_;
+}
+
+void Generic::setOutputFileNo(int outputFileNo)
+{
+  LOG(INFO) << "setOutputFileNo to " << outputFileNo;
+  outputFileNo_ = outputFileNo;
+}
+
 }  // namespace

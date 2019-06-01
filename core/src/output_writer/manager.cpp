@@ -14,6 +14,15 @@ namespace OutputWriter
 
 void Manager::initialize(DihuContext context, PythonConfig settings, std::shared_ptr<Partition::RankSubset> rankSubset)
 {
+  std::vector<int> outputFileNo;
+  if (!outputWriter_.empty())
+  {
+    for (std::list<std::shared_ptr<Generic>>::iterator iter = outputWriter_.begin(); iter != outputWriter_.end(); iter++)
+    {
+      outputFileNo.push_back((*iter)->outputFileNo());
+    }
+  }
+
   outputWriter_.clear();
 
   //VLOG(3) << "initializeOutputWriter, settings=" << settings;
@@ -47,6 +56,21 @@ void Manager::initialize(DihuContext context, PythonConfig settings, std::shared
     LOG(DEBUG) << "Config does not contain \"OutputWriter\". Keys: " << configKeys;
     //PythonUtility::printDict(settings.pyObject());
   }
+
+
+  // if there were outputFileNo stored from earlier output writers, restore these numbers
+  if (!outputWriter_.empty() && !outputFileNo.empty())
+  {
+    int i = 0;
+    for (std::list<std::shared_ptr<Generic>>::iterator iter = outputWriter_.begin(); iter != outputWriter_.end(); iter++)
+    {
+      (*iter)->setOutputFileNo(outputFileNo[i]);
+
+      if (i < outputFileNo.size())
+        i++;
+    }
+  }
+
 }
 
 void Manager::createOutputWriterFromSettings(DihuContext context, PythonConfig settings, std::shared_ptr<Partition::RankSubset> rankSubset)

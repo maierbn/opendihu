@@ -777,7 +777,7 @@ void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType 
 
       // determine filename, broadcast from rank 0
       std::stringstream filename;
-      filename << this->filenameBaseWithNo_ << "_" << targetDimensionality << "D.vtu";
+      filename << targetDimensionality << "D_" << this->filenameBaseWithNo_ << ".vtu";
       int filenameLength = filename.str().length();
 
       // broadcast length of filename

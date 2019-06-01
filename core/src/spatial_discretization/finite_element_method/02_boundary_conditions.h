@@ -31,6 +31,9 @@ public:
   //! set the neumann boundary condition object, this can be done to set BC from within the C++ code, not from python config
   void setNeumannBoundaryConditions(std::shared_ptr<NeumannBoundaryConditions<FunctionSpaceType,QuadratureType,nComponents>> neumannBoundaryConditions);
 
+  //! reset to pre-initialized state
+  virtual void reset();
+
 protected:
 
   //! apply dirichlet boundary conditions, this calls applyBoundaryConditionsWeakForm

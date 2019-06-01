@@ -30,6 +30,12 @@ public:
 
   //! get the base filename, i.e. without suffix
   std::string filenameBase();
+  
+  //! return the counter for the output file number
+  int outputFileNo();
+
+  //! set the current output file no counter
+  void setOutputFileNo(int outputFileNo);
 
 protected:
 

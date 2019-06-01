@@ -235,7 +235,7 @@ if os.environ.get("PE_ENV") == "CRAY" and env["USE_HPL"]:
   print("USE_HPL=True: Compiling with -hpl option\n")
   env.MergeFlags('-hpl={}/opendihu.pl'.format(opendihu_home))
 
-if os.environ.get("USER") == "travis":
+if os.environ.get("HOME") == "/root":
   env.MergeFlags('-DON_TRAVIS_CI')
 
 # add basic linker flags for linux

@@ -18,7 +18,7 @@ innervation_zone_width = 0.  # cm
   
 cellml_file = "../../input/shorten_ocallaghan_davidson_soboleva_2007.c"
 cellml_file = "../../input/shorten.cpp"
-#cellml_file = "../../input/hodgkin_huxley_1952.c"
+cellml_file = "../../input/hodgkin_huxley_1952.c"
 
 fiber_distribution_file = "../../input/MU_fibre_distribution_3780.txt"
 firing_times_file = "../../input/MU_firing_times_real.txt"
@@ -41,6 +41,7 @@ try:
   n_fibers = (int)(sys.argv[1])
   n_nodes_per_fiber = (int)(sys.argv[2])
   scenario_name = sys.argv[3]
+  
 except:
   print("arguments: <n_processes_per_fiber> <n_fibers> <n_nodes_per_fiber> <scenario_name>")
   sys.exit(0)
@@ -58,6 +59,8 @@ elif scenario_name == "solver_scaling":
 
 rank_no = (int)(sys.argv[-2])
 n_ranks = (int)(sys.argv[-1])
+solver_type = sys.argv[4]
+preconditioner_type = sys.argv[5]
 
 # adjust n_processes_per_fiber if there are too many ranks
 surplus = n_processes_per_fiber*n_fibers - n_ranks
@@ -316,7 +319,7 @@ config = {
       "maxIterations": 1e4,
       "relativeTolerance": 1e-10,
       "solverType": solver_type,
-      "preconditionerType": "none",
+      "preconditionerType": preconditioner_type,
     }
   },
   "MultipleInstances": {

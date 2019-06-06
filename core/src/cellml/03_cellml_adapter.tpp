@@ -203,9 +203,15 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
     this->setSpecificParameters_((void *)this, this->nInstances_, this->internalTimeStepNo_, currentTime, this->parameters_);
   }
 
-  LOG(DEBUG) << "currentTime: " << currentTime << ", lastCallSpecificStatesTime_: " << this->lastCallSpecificStatesTime_
+  VLOG(1) << "currentTime: " << currentTime << ", lastCallSpecificStatesTime_: " << this->lastCallSpecificStatesTime_
     << ", setSpecificStatesCallFrequency_: " << this->setSpecificStatesCallFrequency_ << ", "
     << this->lastCallSpecificStatesTime_ + 1./this->setSpecificStatesCallFrequency_;
+  VLOG(1) << "this->setSpecificStates_? " << (this->setSpecificStates_? "true" : "false")
+    << ", this->setSpecificStatesCallInterval_: " << this->setSpecificStatesCallInterval_ << " != 0? " << (this->setSpecificStatesCallInterval_ != 0? "true" : "false")
+    << ", (this->internalTimeStepNo_ % this->setSpecificStatesCallInterval_) = " << this->internalTimeStepNo_  << " % " << this->setSpecificStatesCallInterval_
+    << ", this->setSpecificStatesCallFrequency_= " << this->setSpecificStatesCallFrequency_ << " != 0.0? " << (this->setSpecificStatesCallFrequency_ != 0.0? "true" : "false")
+    << ", currentTime=" << currentTime << " >= " << this->lastCallSpecificStatesTime_ << " + " << 1./this->setSpecificStatesCallFrequency_ << " = " << this->lastCallSpecificStatesTime_ + 1./this->setSpecificStatesCallFrequency_ << "? "
+    << (currentTime >= this->lastCallSpecificStatesTime_ + 1./this->setSpecificStatesCallFrequency_? "true" : "false");
 
   // get new values for parameters, call callback function of python config
   if (this->setSpecificStates_
@@ -217,7 +223,7 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
   {
     if (this->lastCallSpecificStatesTime_ < 0)
     {
-      LOG(DEBUG) << "initial call to setSpecificStates, set lastCallSpecificStatesTime_ to 0, was " << this->lastCallSpecificStatesTime_;
+      VLOG(1) << "initial call to setSpecificStates, set lastCallSpecificStatesTime_ to 0, was " << this->lastCallSpecificStatesTime_;
       this->lastCallSpecificStatesTime_ = 0;
     }
     else
@@ -226,14 +232,14 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
       {
          this->lastCallSpecificStatesTime_ += 1./this->setSpecificStatesCallFrequency_;
       }
-      LOG(DEBUG) << "next call to setSpecificStates,this->setSpecificStatesCallFrequency_: " << this->setSpecificStatesCallFrequency_ << ", set lastCallSpecificStatesTime_ to " << this->lastCallSpecificStatesTime_;
+      VLOG(1) << "next call to setSpecificStates,this->setSpecificStatesCallFrequency_: " << this->setSpecificStatesCallFrequency_ << ", set lastCallSpecificStatesTime_ to " << this->lastCallSpecificStatesTime_;
     }
 
     // start critical section for python API calls
     // PythonUtility::GlobalInterpreterLock lock;
 
-    LOG(DEBUG) << "call setSpecificStates, this->internalTimeStepNo_ = " << this->internalTimeStepNo_ << ", this->setSpecificStatesCallInterval_: " << this->setSpecificStatesCallInterval_;
-    LOG(DEBUG) << "currentTime: " << currentTime << ", call setSpecificStates, this->internalTimeStepNo_ = " << this->internalTimeStepNo_ << ", this->setSpecificStatesCallInterval_: " << this->setSpecificStatesCallInterval_;
+    VLOG(1) << "call setSpecificStates, this->internalTimeStepNo_ = " << this->internalTimeStepNo_ << ", this->setSpecificStatesCallInterval_: " << this->setSpecificStatesCallInterval_;
+    VLOG(1) << "currentTime: " << currentTime << ", call setSpecificStates, this->internalTimeStepNo_ = " << this->internalTimeStepNo_ << ", this->setSpecificStatesCallInterval_: " << this->setSpecificStatesCallInterval_;
     this->setSpecificStates_((void *)this, this->nInstances_, this->internalTimeStepNo_, currentTime, states);
   }
 

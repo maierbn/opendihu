@@ -275,6 +275,8 @@ def set_specific_parameters(n_nodes_global, time_step_no, current_time, paramete
 
 # callback function that can set states, i.e. prescribed values for stimulation
 def set_specific_states(n_nodes_global, time_step_no, current_time, states, fiber_no):
+
+  print("call set_specific_states at time {}".format(current_time)) 
   
   # determine if fiber gets stimulated at the current time
   is_fiber_gets_stimulated = fiber_gets_stimulated(fiber_no, stimulation_frequency, current_time)
@@ -748,7 +750,7 @@ if rank_no == 0 and n_ranks < 10 and False:
             list(range(subdomain_coordinate_y*n_subdomains_x + subdomain_coordinate_x, n_ranks, n_subdomains_x*n_subdomains_y))))
 
 config = {
-  "scenarioName": scenario_name+"_tol1e-7",
+  "scenarioName": scenario_name,
   "Meshes": meshes,
   "MappingsBetweenMeshes": {"MeshFiber_{}".format(i) : "3Dmesh" for i in range(n_fibers_total)},
   "Solvers": {
@@ -769,7 +771,13 @@ config = {
       "maxIterations": 10000,
       "solverType": emg_solver_type,
       "preconditionerType": emg_preconditioner_type,
-    }
+    },
+    "linearElasticitySolver": {
+      "relativeTolerance": 1e-5,
+      "maxIterations": 10,
+      "solverType": emg_solver_type,
+      "preconditionerType": emg_preconditioner_type,
+    }, 
   },
   "Coupling": {
     "timeStepWidth": dt_bidomain,  # 1e-1
@@ -971,7 +979,7 @@ config = {
         },
         "FiniteElementMethod" : {   # linear elasticity finite element method
           "meshName": "3Dmesh",
-          "solverName": "activationSolver",
+          "solverName": "linearElasticitySolver",
           "prefactor": 1.0,
           "inputMeshIsGlobal": True,
           "dirichletBoundaryConditions": linear_elasticity_dirichlet_bc,

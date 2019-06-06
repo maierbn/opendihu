@@ -14,6 +14,7 @@ import datetime
 import pickle
 
 input_filename = "fibers.bin"
+include_boundary = True
 
 if len(sys.argv) >= 2:
   input_filename = sys.argv[1]
@@ -100,13 +101,25 @@ with open(input_filename, "rb") as infile:
   # compute variance
   # loop over z levels
   variance_sum = 0
+  if include_boundary:
+    x_start = 0
+    x_end = n_points_x
+    y_start = 0
+    y_end = n_points_y
+  else:
+    x_start = 1
+    x_end = n_points_x-1
+    
+    y_start = 1
+    y_end = n_points_y-1
+  
   for z in range(n_points_whole_fiber):
     edge_lengths = []
-    for y in range(n_points_y):
-      for x in range(n_points_x):
-        if x < n_points_x-1:
+    for y in range(y_start,y_end):
+      for x in range(x_start,x_end):
+        if x < x_end-1:
           edge_lengths.append(np.linalg.norm(points[z,y,x,:] - points[z,y,x+1,:]))
-        elif y < n_points_y-1:
+        elif y < y_end-1:
           edge_lengths.append(np.linalg.norm(points[z,y,x,:] - points[z,y+1,x,:]))
 
     mean = np.mean(edge_lengths)

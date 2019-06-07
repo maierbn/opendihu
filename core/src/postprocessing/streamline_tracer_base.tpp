@@ -135,6 +135,7 @@ traceStreamline(Vec3 startingPoint, double direction, std::vector<Vec3> &points)
       {
         LOG(DEBUG) << "elementalGradientValues: " << elementalGradientValues;
       }
+      MPI_Abort(functionSpace_->meshPartition()->mpiCommunicator(), -1);
     }
 
     // integrate streamline

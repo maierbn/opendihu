@@ -8,9 +8,9 @@
 namespace TimeSteppingScheme
 {
 
-/** The Heun integration scheme, u_{t+1} = u_{t} + 0.5*dt*(f(u_{t})+f(u*)) where u* = u_{t} + dt*f(u_{t}).
+/** The Heun integration scheme, u_{t+1} = u_{t} + 0.5*dt*(f(u_{t})+f(u*))
  *
- *  However, we compute it in the way: u_{t+1} = u* + 0.5*dt*(f(u*)-f(u_{t}))
+ *  However, we compute it in the way: u_{t+1} = u* + 0.5*dt*(f(u*)-f(u_{t})) where u* = u_{t} + dt*f(u_{t}).
  *  (more round off this way, but less storage required)
  *
  */

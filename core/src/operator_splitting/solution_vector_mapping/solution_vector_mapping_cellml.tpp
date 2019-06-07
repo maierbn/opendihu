@@ -17,7 +17,8 @@ void SolutionVectorMapping<
               std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1a>>, int, double>,   // <fieldVariableTypeStates,componentNoStates,prefactor>
               std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1b>>, int>    // <fieldIariableIntermediates,componentNoIntermediates
             > &transferableSolutionData1,
-            const std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2>>, int, double> &transferableSolutionData2)
+            const std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2>>, int, double> &transferableSolutionData2,
+            const std::string transferSlotName)
 {
   // rename input data
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1a>> fieldVariable1States = std::get<0>(transferableSolutionData1.first);
@@ -34,11 +35,39 @@ void SolutionVectorMapping<
   double prefactor1 = std::get<2>(transferableSolutionData1.first);
   double prefactor2 = std::get<2>(transferableSolutionData2);
 
-  // depending on the value of componentNo1Intermediates, transfer states or intermediates
-  if (componentNo1Intermediates == -1)
+  bool useSlotIntermediates = (transferSlotName == "intermediates");
+
+  // depending on the transferSlotName parameter, transfer states or intermediates
+  if (useSlotIntermediates)
+  {
+    // componentNo1Intermediates is != -1, use the intermediates field variable
+    VLOG(1) << "solution vector mapping (solution_vector_mapping_cellml.tpp), transfer intermediates from component "
+      << componentNo1Intermediates << " (" << fieldVariable1Intermediates->nDofsLocalWithoutGhosts() << " dofs), prefactor " << prefactor1
+      << " to " << componentNo2 << " (" << fieldVariable2->nDofsLocalWithoutGhosts() << " dofs), prefactor " << prefactor2 << " (not considered here)";
+
+    assert(fieldVariable1Intermediates->nDofsLocalWithoutGhosts() == fieldVariable2->nDofsLocalWithoutGhosts());
+    assert(fieldVariable1Intermediates->nDofsGlobal() == fieldVariable2->nDofsGlobal());
+
+    // if representation of fieldVariable1Intermediates is invalid, this means that it has been extracted to another field variable
+    if (fieldVariable2->partitionedPetscVec()->currentRepresentation() == Partition::values_representation_t::representationInvalid)
+    {
+      VLOG(1) << "SolutionVectorMapping restoreExtractedComponent";
+      // tranfer from finite elements back to cellml
+      fieldVariable2->restoreExtractedComponent(fieldVariable1Intermediates->partitionedPetscVec());
+    }
+    else
+    {
+      // here we copy the given component of fieldVariable1Intermediates to the component of field variable2, because field variable 2 has > 1 components
+      // if field fariable 2 has only 1 component, it could be extracted from fieldVariable1Intermediates without copy, this is done in the other specialization
+      VLOG(1) << "SolutionVectorMapping VecCopy";
+      PetscErrorCode ierr;
+      ierr = VecCopy(fieldVariable1Intermediates->valuesGlobal(componentNo1Intermediates), fieldVariable2->valuesGlobal(componentNo2)); CHKERRV(ierr);
+    }
+  }
+  else
   {
     // transfer the states field variable
-    VLOG(1) << "solution vector mapping, transfer states from component "
+    VLOG(1) << "solution vector mapping (solution_vector_mapping_cellml.tpp), transfer states from component "
       << componentNo1States << " (" << fieldVariable1States->nDofsLocalWithoutGhosts() << " dofs), prefactor " << prefactor1
       << " to " << componentNo2 << " (" << fieldVariable2->nDofsLocalWithoutGhosts() << " dofs), prefactor " << prefactor2 << " (not considered here)";
 
@@ -68,32 +97,6 @@ void SolutionVectorMapping<
       ierr = VecScale(fieldVariable2->valuesGlobal(componentNo2), prefactor1); CHKERRV(ierr);
     }
   }
-  else
-  {
-    // componentNo1Intermediates is != -1, use the intermediates field variable
-    VLOG(1) << "solution vector mapping, transfer intermediates from component "
-      << componentNo1Intermediates << " (" << fieldVariable1Intermediates->nDofsLocalWithoutGhosts() << " dofs), prefactor " << prefactor1
-      << " to " << componentNo2 << " (" << fieldVariable2->nDofsLocalWithoutGhosts() << " dofs), prefactor " << prefactor2 << " (not considered here)";
-
-    assert(fieldVariable1Intermediates->nDofsLocalWithoutGhosts() == fieldVariable2->nDofsLocalWithoutGhosts());
-    assert(fieldVariable1Intermediates->nDofsGlobal() == fieldVariable2->nDofsGlobal());
-
-    // if representation of fieldVariable1Intermediates is invalid, this means that it has been extracted to another field variable
-    if (fieldVariable2->partitionedPetscVec()->currentRepresentation() == Partition::values_representation_t::representationInvalid)
-    {
-      VLOG(1) << "SolutionVectorMapping restoreExtractedComponent";
-      // tranfer from finite elements back to cellml
-      fieldVariable2->restoreExtractedComponent(fieldVariable1Intermediates->partitionedPetscVec());
-    }
-    else
-    {
-      // here we copy the given component of fieldVariable1Intermediates to the component of field variable2, because field variable 2 has > 1 components
-      // if field fariable 2 has only 1 component, it could be extracted from fieldVariable1Intermediates without copy, this is done in the other specialization
-      VLOG(1) << "SolutionVectorMapping VecCopy";
-      PetscErrorCode ierr;
-      ierr = VecCopy(fieldVariable1Intermediates->valuesGlobal(componentNo1Intermediates), fieldVariable2->valuesGlobal(componentNo2)); CHKERRV(ierr);
-    }
-  }
 }
 
 // reverse transfer
@@ -108,7 +111,8 @@ void SolutionVectorMapping<
             const std::pair<
               std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2a>>, int, double>,   // <fieldVariableTypeStates,componentNoStates,prefactor>
               std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2b>>, int>    // <fieldIariableIntermediates,componentNoIntermediates
-            > &transferableSolutionData2)
+            > &transferableSolutionData2,
+            const std::string transferSlotName)
 {
   // rename input data
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1>> fieldVariable1 = std::get<0>(transferableSolutionData1);
@@ -125,11 +129,39 @@ void SolutionVectorMapping<
   double prefactor1 = std::get<2>(transferableSolutionData1);
   double prefactor2 = std::get<2>(transferableSolutionData2.first);
 
-  // depending on the value of componentNo1Intermediates, transfer states or intermediates
-  if (componentNo2Intermediates == -1)
+  bool useSlotIntermediates = (transferSlotName == "intermediates");
+
+  // depending on the transferSlotName parameter, transfer states or intermediates
+  if (useSlotIntermediates)
+  {
+    // componentNo1 is != -1, use the intermediates field variable
+    VLOG(1) << "solution vector mapping (solution_vector_mapping_cellml.tpp), transfer intermediates from component "
+      << componentNo1 << " (" << fieldVariable1->nDofsLocalWithoutGhosts() << " dofs), prefactor " << prefactor1
+      << " to " << componentNo2Intermediates << " (" << fieldVariable2Intermediates->nDofsLocalWithoutGhosts() << " dofs), prefactor " << prefactor2 << " (not considered here)";
+
+    assert(fieldVariable1->nDofsLocalWithoutGhosts() == fieldVariable2Intermediates->nDofsLocalWithoutGhosts());
+    assert(fieldVariable1->nDofsGlobal() == fieldVariable2Intermediates->nDofsGlobal());
+
+    // if representation of fieldVariable1 is invalid, this means that it has been extracted to another field variable
+    if (fieldVariable2Intermediates->partitionedPetscVec()->currentRepresentation() == Partition::values_representation_t::representationInvalid)
+    {
+      VLOG(1) << "SolutionVectorMapping restoreExtractedComponent";
+      // tranfer from finite elements back to cellml
+      fieldVariable2Intermediates->restoreExtractedComponent(fieldVariable1->partitionedPetscVec());
+    }
+    else
+    {
+      // here we copy the given component of fieldVariable1 to the component of field variable2, because field variable 2 has > 1 components
+      // if field fariable 2 has only 1 component, it could be extracted from fieldVariable1 without copy, this is done in the other specialization
+      VLOG(1) << "SolutionVectorMapping VecCopy";
+      PetscErrorCode ierr;
+      ierr = VecCopy(fieldVariable1->valuesGlobal(componentNo1), fieldVariable2Intermediates->valuesGlobal(componentNo2Intermediates)); CHKERRV(ierr);
+    }
+  }
+  else
   {
     // transfer the states field variable
-    VLOG(1) << "solution vector mapping, transfer states from component "
+    VLOG(1) << "solution vector mapping (solution_vector_mapping_cellml.tpp), transfer states from component "
       << componentNo1 << " (" << fieldVariable1->nDofsLocalWithoutGhosts() << " dofs), prefactor " << prefactor1
       << " to " << componentNo2States << " (" << fieldVariable2States->nDofsLocalWithoutGhosts() << " dofs), prefactor " << prefactor2 << " (not considered here)";
 
@@ -159,32 +191,6 @@ void SolutionVectorMapping<
       ierr = VecScale(fieldVariable2States->valuesGlobal(componentNo2States), prefactor1); CHKERRV(ierr);
     }
   }
-  else
-  {
-    // componentNo1 is != -1, use the intermediates field variable
-    VLOG(1) << "solution vector mapping, transfer intermediates from component "
-      << componentNo1 << " (" << fieldVariable1->nDofsLocalWithoutGhosts() << " dofs), prefactor " << prefactor1
-      << " to " << componentNo2Intermediates << " (" << fieldVariable2Intermediates->nDofsLocalWithoutGhosts() << " dofs), prefactor " << prefactor2 << " (not considered here)";
-
-    assert(fieldVariable1->nDofsLocalWithoutGhosts() == fieldVariable2Intermediates->nDofsLocalWithoutGhosts());
-    assert(fieldVariable1->nDofsGlobal() == fieldVariable2Intermediates->nDofsGlobal());
-
-    // if representation of fieldVariable1 is invalid, this means that it has been extracted to another field variable
-    if (fieldVariable2Intermediates->partitionedPetscVec()->currentRepresentation() == Partition::values_representation_t::representationInvalid)
-    {
-      VLOG(1) << "SolutionVectorMapping restoreExtractedComponent";
-      // tranfer from finite elements back to cellml
-      fieldVariable2Intermediates->restoreExtractedComponent(fieldVariable1->partitionedPetscVec());
-    }
-    else
-    {
-      // here we copy the given component of fieldVariable1 to the component of field variable2, because field variable 2 has > 1 components
-      // if field fariable 2 has only 1 component, it could be extracted from fieldVariable1 without copy, this is done in the other specialization
-      VLOG(1) << "SolutionVectorMapping VecCopy";
-      PetscErrorCode ierr;
-      ierr = VecCopy(fieldVariable1->valuesGlobal(componentNo1), fieldVariable2Intermediates->valuesGlobal(componentNo2Intermediates)); CHKERRV(ierr);
-    }
-  }
 }
 
 /** Transfer between two field variables, the first is vector-valued, use given component number, store in second, which is scalar
@@ -200,7 +206,8 @@ void SolutionVectorMapping<
               std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1a>>, int, double>,   // <fieldVariableTypeStates,componentNoStates,prefactor>
               std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1b>>, int>    // <fieldIariableIntermediates,componentNoIntermediates
             > &transferableSolutionData1,
-            const std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,1>>, int, double> &transferableSolutionData2)
+            const std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,1>>, int, double> &transferableSolutionData2,
+            const std::string transferSlotName)
 {
   // rename input data
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1a>> fieldVariable1States = std::get<0>(transferableSolutionData1.first);
@@ -217,8 +224,42 @@ void SolutionVectorMapping<
   double prefactor1 = std::get<2>(transferableSolutionData1.first);
   double prefactor2 = std::get<2>(transferableSolutionData2);
 
-  // depending on the value of componentNo1Intermediates, transfer states or intermediates
-  if (componentNo1Intermediates == -1)
+  bool useSlotIntermediates = (transferSlotName == "intermediates");
+
+  // depending on the transferSlotName parameter, transfer states or intermediates
+  if (useSlotIntermediates)
+  {
+    // transfer the intermediates field variable
+    VLOG(1) << "solution vector mapping, transfer from intermediates component "
+      << componentNo1Intermediates << " (" << fieldVariable1Intermediates->nDofsLocalWithoutGhosts() << " dofs), prefactor " << prefactor1
+      << " to " << componentNo2 << " (" << fieldVariable2->nDofsLocalWithoutGhosts() << " dofs), prefactor " << prefactor2 << " (2nd prefactor not considered here)";
+
+    assert(fieldVariable1Intermediates->nDofsLocalWithoutGhosts() == fieldVariable2->nDofsLocalWithoutGhosts());
+    assert(fieldVariable1Intermediates->nDofsGlobal() == fieldVariable2->nDofsGlobal());
+
+    // if representation of fieldVariable1Intermediates is invalid, this means that it has been extracted to another field variable
+    if (fieldVariable2->partitionedPetscVec()->currentRepresentation() == Partition::values_representation_t::representationInvalid)
+    {
+      VLOG(1) << "SolutionVectorMapping restoreExtractedComponent";
+
+      // transfer from finite elements back to cellml
+      fieldVariable2->restoreExtractedComponent(fieldVariable1Intermediates->partitionedPetscVec());
+    }
+    else
+    {
+      VLOG(1) << "SolutionVectorMapping extractComponentShared";
+      VLOG(2) << "original field variable: " << *fieldVariable1Intermediates;
+
+      // fieldVariable2 has only 1 component
+      // The following retrieves the raw memory pointer from the Petsc vector in fieldVariable1Intermediates and reuses it for fieldVariable2
+      // that means that fieldVariable cannot be used anymore, only after restoreExtractedComponent was called on fieldVariable1Intermediates. This is done in the other solution_vector_mapping transfer call.
+      fieldVariable1Intermediates->extractComponentShared(componentNo1Intermediates, fieldVariable2);
+
+
+      VLOG(2) << "resulting field variable: " << *fieldVariable2;
+    }
+  }
+  else
   {
     // transfer the states field variable
     VLOG(1) << "solution vector mapping, transfer from states component "
@@ -255,38 +296,6 @@ void SolutionVectorMapping<
     {
       PetscErrorCode ierr;
       ierr = VecScale(fieldVariable2->valuesGlobal(componentNo2), prefactor1); CHKERRV(ierr);
-    }
-  }
-  else
-  {
-    // transfer the intermediates field variable
-    VLOG(1) << "solution vector mapping, transfer from intermediates component "
-      << componentNo1Intermediates << " (" << fieldVariable1Intermediates->nDofsLocalWithoutGhosts() << " dofs), prefactor " << prefactor1
-      << " to " << componentNo2 << " (" << fieldVariable2->nDofsLocalWithoutGhosts() << " dofs), prefactor " << prefactor2 << " (2nd prefactor not considered here)";
-
-    assert(fieldVariable1Intermediates->nDofsLocalWithoutGhosts() == fieldVariable2->nDofsLocalWithoutGhosts());
-    assert(fieldVariable1Intermediates->nDofsGlobal() == fieldVariable2->nDofsGlobal());
-
-    // if representation of fieldVariable1Intermediates is invalid, this means that it has been extracted to another field variable
-    if (fieldVariable2->partitionedPetscVec()->currentRepresentation() == Partition::values_representation_t::representationInvalid)
-    {
-      VLOG(1) << "SolutionVectorMapping restoreExtractedComponent";
-
-      // transfer from finite elements back to cellml
-      fieldVariable2->restoreExtractedComponent(fieldVariable1Intermediates->partitionedPetscVec());
-    }
-    else
-    {
-      VLOG(1) << "SolutionVectorMapping extractComponentShared";
-      VLOG(2) << "original field variable: " << *fieldVariable1Intermediates;
-
-      // fieldVariable2 has only 1 component
-      // The following retrieves the raw memory pointer from the Petsc vector in fieldVariable1Intermediates and reuses it for fieldVariable2
-      // that means that fieldVariable cannot be used anymore, only after restoreExtractedComponent was called on fieldVariable1Intermediates. This is done in the other solution_vector_mapping transfer call.
-      fieldVariable1Intermediates->extractComponentShared(componentNo1Intermediates, fieldVariable2);
-
-
-      VLOG(2) << "resulting field variable: " << *fieldVariable2;
     }
   }
 }

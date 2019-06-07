@@ -12,7 +12,7 @@
 namespace TimeSteppingScheme
 {
 
-/** A specialized solver for linear elasticity, as quasi-static timestepping scheme
+/** A specialized solver for 3D linear elasticity, as quasi-static timestepping scheme
   */
 template<typename FiniteElementMethod>
 class QuasiStaticLinearElasticitySolver :
@@ -20,7 +20,7 @@ class QuasiStaticLinearElasticitySolver :
 {
 public:
   typedef typename FiniteElementMethod::FunctionSpace FunctionSpace;
-  typedef typename Data::FiniteElements<FunctionSpace,3,Equation::Static::LinearElasticity> DataLinearElasticityType;
+  typedef typename Data::FiniteElements<FunctionSpace,3,Equation::Static::LinearElasticityActiveStress> DataLinearElasticityType;
   typedef Data::QuasiStaticLinearElasticity<DataLinearElasticityType> Data;
   typedef FieldVariable::FieldVariable<FunctionSpace,1> FieldVariableType;
   typedef std::shared_ptr<FieldVariableType> TransferableSolutionDataType;

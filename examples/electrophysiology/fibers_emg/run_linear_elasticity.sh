@@ -7,7 +7,7 @@
 --paraview_output \
 --dt_0D=2e-3 \
 --dt_1D=4e-3 \
---dt_3D=4e-3 \
---dt_bidomain=1e-2 \
+--dt_splitting=4e-3 \
+--dt_3D=1e-2 \
 --output_timestep=1e-1 
 

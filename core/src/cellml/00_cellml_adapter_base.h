@@ -62,6 +62,9 @@ public:
   //! get the outputStateIndex value, which is the index of the state that should be used further in an operator splitting scheme, for electrophysiology application this is the states of Vm
   int outputStateIndex();
 
+  //! get the outputIntermediateIndex, which is the index of the intermediate that should be used for further computation in the operator splitting
+  int outputIntermediateIndex();
+
   //! get the prefactor value, i.e. the factor with which the solution will be scaled before the transfer in an operator splitting scheme
   double prefactor();
 
@@ -88,6 +91,7 @@ protected:
   int nConstants_ = 0;     ///< number of entries in the "CONSTANTS" array
    
   int outputStateIndex_ = 0;   ///< the index of the state that should be used further in an operator splitting scheme, for electrophysiology application this is the states of Vm
+  int outputIntermediateIndex_ = 0;  ///< the index of the intermediates that should be transferred to further solvers, analogous to outputStateIndex
   double prefactor_ = 0;       ///< the factor with which the solution will be scaled before the transfer in an operator splitting scheme
   int internalTimeStepNo_ = 0; ///< the counter how often the right hand side was called
 

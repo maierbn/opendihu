@@ -217,6 +217,13 @@ outputStateIndex()
 }
 
 template<int nStates, int nIntermediates_, typename FunctionSpaceType>
+int CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
+outputIntermediateIndex()
+{
+  return outputIntermediateIndex_;
+}
+
+template<int nStates, int nIntermediates_, typename FunctionSpaceType>
 double CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
 prefactor()
 {

@@ -33,9 +33,11 @@ class SolutionVectorMapping<
 >
 {
 public:
-  //! transfer the data from transferableSolutionData1 to transferableSolutionData2, as efficient as possible
+  //! transfer the data from transferableSolutionData1 to transferableSolutionData2, as efficient as possible, where there are multiple slots that could be transferred (e.g. at cellmlAdapter), use the one specified by transferSlotName
   static void transfer(const std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1>>,int,double> &transferableSolutionData1,
-                       const std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2>>,int,double> &transferableSolutionData2);
+                       const std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2>>,int,double> &transferableSolutionData2,
+                       const std::string transferSlotName
+                      );
 };
 
 /** Transfer between two field variables with given component number,
@@ -48,9 +50,10 @@ class SolutionVectorMapping<
 >
 {
 public:
-  //! transfer the data from transferableSolutionData1 to transferableSolutionData2, as efficient as possible
+  //! transfer the data from transferableSolutionData1 to transferableSolutionData2, as efficient as possible, where there are multiple slots that could be transferred (e.g. at cellmlAdapter), use the one specified by transferSlotName
   static void transfer(const std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1>>,int,double> &transferableSolutionData1,
-                       const std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,1>>,int,double> &transferableSolutionData2);
+                       const std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,1>>,int,double> &transferableSolutionData2,
+                       const std::string transferSlotName);
 };
 
 #include "operator_splitting/solution_vector_mapping/solution_vector_mapping.tpp"

@@ -9,7 +9,8 @@ void SolutionVectorMapping<
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,1>>,   // <fieldVariableType,componentNo>
   std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2>>, int, double>
 >::transfer(const std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,1>> &transferableSolutionData1,
-            const std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2>>, int, double> &transferableSolutionData2)
+            const std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2>>, int, double> &transferableSolutionData2,
+            const std::string transferSlotName)
 {
 
   // call the transfer function of the parent class
@@ -36,7 +37,8 @@ void SolutionVectorMapping<
   std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1>>, int, double>,
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,1>>   // <fieldVariableType,componentNo>
 >::transfer(const std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1>>, int, double> &transferableSolutionData1,
-            const std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,1>> &transferableSolutionData2)
+            const std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,1>> &transferableSolutionData2,
+            const std::string transferSlotName)
 {
   // call the transfer function of the parent class
   SolutionVectorMapping<

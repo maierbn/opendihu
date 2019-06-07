@@ -38,7 +38,6 @@ public:
   //! use constructor of base class
   using BoundaryConditions<FunctionSpace::FunctionSpace<MeshType, BasisFunctionType>, QuadratureType, 1, Term>::BoundaryConditions;
 
-protected:
   //! initialize rhs vector to 0
   void setRightHandSide();
 };
@@ -57,12 +56,11 @@ public:
     FunctionSpace::FunctionSpace<MeshType, LowOrderBasisFunctionType>,
     FunctionSpace::FunctionSpace<MeshType, HighOrderBasisFunctionType>>, MixedQuadratureType, 1, Term>::FiniteElementMethodRhs;
 
-protected:
   void setRightHandSide(){}
 };
 
-/** common class for linear elasticity, not specialized MeshType, BasisFunctionType
- * use inheritage hierarchy until file 04_rhs.h
+/** common class for linear elasticity without active stress, not specialized MeshType, BasisFunctionType
+ * use inheritage hierarchy until file 02_boundary_conditions.h
  */
 template<typename MeshType, typename BasisFunctionType, typename QuadratureType>
 class FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, Equation::Static::LinearElasticity, Equation::Static::LinearElasticity, BasisFunction::isNotMixed<BasisFunctionType>> :
@@ -72,8 +70,19 @@ public:
   //! use constructor of base class
   using BoundaryConditions<FunctionSpace::FunctionSpace<MeshType, BasisFunctionType>, QuadratureType, MeshType::dim(), Equation::Static::LinearElasticity>::BoundaryConditions;
 
-protected:
   void setRightHandSide(){}
+};
+
+/** common class for linear elasticity with active stress, not specialized MeshType, BasisFunctionType
+ * use inheritage hierarchy until file 04_rhs.h
+ */
+template<typename MeshType, typename BasisFunctionType, typename QuadratureType>
+class FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, Equation::Static::LinearElasticityActiveStress, Equation::Static::LinearElasticityActiveStress, BasisFunction::isNotMixed<BasisFunctionType>> :
+  public FiniteElementMethodRhs<FunctionSpace::FunctionSpace<MeshType, BasisFunctionType>, QuadratureType, MeshType::dim(), Equation::Static::LinearElasticityActiveStress>
+{
+public:
+  //! use constructor of base class
+  using FiniteElementMethodRhs<FunctionSpace::FunctionSpace<MeshType, BasisFunctionType>, QuadratureType, MeshType::dim(), Equation::Static::LinearElasticityActiveStress>::FiniteElementMethodRhs;
 };
 
 /** common class for scalar equations, not specialized MeshType, BasisFunctionType, for poisson equation/everything that is static, scalar and has a rhs

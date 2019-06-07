@@ -43,6 +43,7 @@ createPetscObjects()
   this->activeStress_ = this->functionSpace_->template createFieldVariable<9>("activeStress");
   this->strain_ = this->functionSpace_->template createFieldVariable<9>("strain");
   this->flowPotential_ = this->functionSpace_->template createFieldVariable<1>("flowPotential");
+  this->rightHandSideActive_ = this->functionSpace_->template createFieldVariable<3>("rightHandSideActive");
   this->fiberDirection_ = this->functionSpace_->template createFieldVariable<3>("fiberDirection");
 }
 
@@ -71,7 +72,7 @@ strain()
 }
 
 template<typename DataLinearElasticityType>
-std::shared_ptr<typename QuasiStaticLinearElasticity<DataLinearElasticityType>::GradientFieldVariableType>
+std::shared_ptr<typename QuasiStaticLinearElasticity<DataLinearElasticityType>::VectorFieldVariableType>
 QuasiStaticLinearElasticity<DataLinearElasticityType>::
 fiberDirection()
 {
@@ -84,6 +85,14 @@ QuasiStaticLinearElasticity<DataLinearElasticityType>::
 flowPotential()
 {
   return this->flowPotential_;
+}
+
+template<typename DataLinearElasticityType>
+std::shared_ptr<typename QuasiStaticLinearElasticity<DataLinearElasticityType>::VectorFieldVariableType>
+QuasiStaticLinearElasticity<DataLinearElasticityType>::
+rightHandSideActive()
+{
+  return this->rightHandSideActive_;
 }
 
 template<typename DataLinearElasticityType>
@@ -112,7 +121,8 @@ getOutputFieldVariables()
     std::tuple<std::shared_ptr<FieldVariableType>>(this->activation_),
     std::tuple<std::shared_ptr<StressFieldVariableType>>(this->activeStress_),
     std::tuple<std::shared_ptr<StressFieldVariableType>>(this->strain_),
-    std::tuple<std::shared_ptr<GradientFieldVariableType>>(this->fiberDirection_),
+    std::tuple<std::shared_ptr<VectorFieldVariableType>>(this->rightHandSideActive_),
+    std::tuple<std::shared_ptr<VectorFieldVariableType>>(this->fiberDirection_),
     std::tuple<std::shared_ptr<FieldVariableType>>(this->flowPotential_)
   );
 }

@@ -7,10 +7,10 @@
 namespace SpatialDiscretization
 {
 
-//integrand for stiffness matrix of finite elasticity, 1D
-template<int D, typename EvaluationsType,typename FunctionSpaceType>
-EvaluationsType IntegrandStiffnessMatrix<D,EvaluationsType,FunctionSpaceType,D,Equation::Static::LinearElasticity>::
-evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,D,Equation::Static::LinearElasticity> &data, const std::array<Vec3,D> &jacobian,
+//integrand for stiffness matrix of finite elasticity
+template<int D, typename EvaluationsType,typename FunctionSpaceType,typename Term>
+EvaluationsType IntegrandStiffnessMatrix<D,EvaluationsType,FunctionSpaceType,D,Term,Equation::isLinearElasticity<Term>>::
+evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,D,Term> &data, const std::array<Vec3,D> &jacobian,
                   element_no_t elementNoLocal, const std::array<double,D> xi)
 {
   EvaluationsType evaluations{};

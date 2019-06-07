@@ -23,10 +23,13 @@ transfer(const std::vector<std::vector<
              std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunctionType>,nComponents1b>>, int>    // <fieldIariableIntermediates,componentNoIntermediates
            >
          >> &transferableSolutionData1,
-         std::shared_ptr<FieldVariableType2> transferableSolutionData2)
+         std::shared_ptr<FieldVariableType2> transferableSolutionData2,
+         const std::string transferSlotName)
 {
   typedef FieldVariable::FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunctionType>, nComponents1a> FieldVariableType1a;
   typedef FieldVariable::FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunctionType>, nComponents1b> FieldVariableType1b;
+
+  VLOG(1) << "Solution vector mapping (solution_vector_mapping_fibers_emg.tpp)";
 
   // prepare the target mesh for the mapping, set all factors to zero
   DihuContext::meshManager()->template prepareMapping<FieldVariableType2>(transferableSolutionData2);
@@ -83,7 +86,8 @@ transfer(std::shared_ptr<FieldVariableType1> transferableSolutionData1,
              std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunctionType>,nComponents2a>>, int, double>,   // <fieldVariableTypeStates,componentNoStates,prefactor>
              std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunctionType>,nComponents2b>>, int>    // <fieldIariableIntermediates,componentNoIntermediates
            >
-          >> &transferableSolutionData2)
+          >> &transferableSolutionData2,
+         const std::string transferSlotName)
 {
   // do nothing to map from 3D Vm field back to fibers
 }

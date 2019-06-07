@@ -9,6 +9,7 @@
 #include "cellml/03_cellml_adapter.h"
 #include "spatial_discretization/boundary_conditions/dirichlet_boundary_conditions.h"
 #include "time_stepping_scheme_ode_base.h"
+#include "time_stepping_scheme/time_stepping_scheme_ode_transferable_solution_data.h"
 
 namespace TimeSteppingScheme
 {
@@ -105,7 +106,7 @@ protected:
   int outputIntermediateIndex_ = -1;   ///< component index of the intermediates field variable to use for solution transfer
 };
 
-
 }  // namespace
 
 #include "time_stepping_scheme/time_stepping_scheme_ode.tpp"
+#include "time_stepping_scheme/time_stepping_scheme_ode_cellml.tpp"

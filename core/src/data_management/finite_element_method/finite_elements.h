@@ -11,6 +11,7 @@
 #include "data_management/finite_element_method/diffusion_tensor_constant.h"
 #include "equation/diffusion.h"
 #include "equation/linear_elasticity.h"
+#include "equation/type_traits.h"
 #include "data_management/finite_element_method/linear_stiffness.h"
 
 namespace Data
@@ -71,8 +72,8 @@ public:
 
 /** for linear elasticity use the class that holds linear elastcity parameters, K and μ
  */
-template<typename FunctionSpaceType,int nComponents>
-class FiniteElements<FunctionSpaceType,nComponents,Equation::Static::LinearElasticity> :
+template<typename FunctionSpaceType,int nComponents,typename Term>
+class FiniteElements<FunctionSpaceType,nComponents,Term,Equation::isLinearElasticity<Term>> :
   public LinearStiffness<FunctionSpaceType,nComponents>
 {
 public:

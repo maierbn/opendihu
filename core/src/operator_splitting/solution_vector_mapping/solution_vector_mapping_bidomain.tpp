@@ -20,9 +20,12 @@ void SolutionVectorMapping<
                std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunctionType>, nComponents1>>,
                int, double>
              >> &transferableSolutionData1,
-             std::shared_ptr<FieldVariableType2> transferableSolutionData2)
+             std::shared_ptr<FieldVariableType2> transferableSolutionData2,
+             const std::string transferSlotName)
 {
   typedef FieldVariable::FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunctionType>, nComponents1> FieldVariableType1;
+
+  VLOG(1) << " (solution_vector_mapping_bidomain.tpp)";
 
   // prepare the target mesh for the mapping, set all factors to zero
   DihuContext::meshManager()->template prepareMapping<FieldVariableType2>(transferableSolutionData2);
@@ -62,7 +65,8 @@ void SolutionVectorMapping<
             std::tuple<
               std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunctionType>, nComponents2>>,
               int, double>
-            >> transferableSolutionData2)
+            >> transferableSolutionData2,
+            const std::string transferSlotName)
 {
   // do nothing to map from 3D Vm field back to fibers
 }

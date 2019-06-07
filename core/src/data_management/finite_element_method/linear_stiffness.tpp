@@ -14,8 +14,6 @@ initialize()
   // load K and μ from settings
   bulkModulus_ = this->context_.getPythonConfig().getOptionDouble("bulkModulus", 1.0, PythonUtility::ValidityCriterion::Positive);
   shearModulus_ = this->context_.getPythonConfig().getOptionDouble("shearModulus", 1.0, PythonUtility::ValidityCriterion::Positive);
-
-  activeStress_ = nullptr;
 }
 
 //! get the value of the 2nd order stiffness tensor, C_abcd
@@ -40,15 +38,32 @@ template<typename FunctionSpaceType,int nComponents>
 void LinearStiffness<FunctionSpaceType,nComponents>::
 setActiveStress(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents*nComponents>> activeStress)
 {
+  assert(activeStress != nullptr);
   activeStress_ = activeStress;
 }
 
-  //! get the active stress DxD tensor (row major)
+//! set the pointer to rightHandSideActive, the actual variable is stored in the quasi_static_linear_elasticity class
+template<typename FunctionSpaceType,int nComponents>
+void LinearStiffness<FunctionSpaceType,nComponents>::
+setRightHandSideActive(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> rightHandSideActive)
+{
+  rightHandSideActive_ = rightHandSideActive;
+}
+
+//! get the active stress DxD tensor (row major)
 template<typename FunctionSpaceType,int nComponents>
 std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents*nComponents>> LinearStiffness<FunctionSpaceType,nComponents>::
 activeStress()
 {
   return activeStress_;
+}
+
+//! get the active stress DxD tensor (row major)
+template<typename FunctionSpaceType,int nComponents>
+std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> LinearStiffness<FunctionSpaceType,nComponents>::
+rightHandSideActive()
+{
+  return rightHandSideActive_;
 }
 
 }  // namespace

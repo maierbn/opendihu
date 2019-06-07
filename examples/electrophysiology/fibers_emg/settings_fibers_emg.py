@@ -29,9 +29,9 @@ emg_initial_guess_nonzero = False
 # timing parameters
 stimulation_frequency = 10000*1e-3   # sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
 dt_1D = 1e-3                      # timestep width of diffusion
-dt_0D = 1.5e-3                      # timestep width of ODEs
-dt_3D = 3e-3                      # overall timestep width of splitting
-dt_bidomain = 1e0                # time step width for bidomain equation
+dt_0D = 1.5e-3                    # timestep width of ODEs
+dt_splitting = 3e-3               # overall timestep width of strang splitting
+dt_3D = 1e0                 # time step width of coupling, when 3D should be performed
 output_timestep = 1e0             # timestep for output files
 
 # input files
@@ -95,8 +95,8 @@ parser.add_argument('--end_time', '--tend', '-t', type=float, help='The end simu
 parser.add_argument('--output_timestep',          type=float, help='The timestep for writing outputs.', default=output_timestep)
 parser.add_argument('--dt_0D',                    type=float, help='The timestep for the 0D model.', default=dt_0D)
 parser.add_argument('--dt_1D',                    type=float, help='The timestep for the 1D model.', default=dt_1D)
-parser.add_argument('--dt_3D',                    type=float, help='The timestep for the splitting.', default=dt_3D)
-parser.add_argument('--dt_bidomain',              type=float, help='The timestep for the bidomain model.', default=dt_bidomain)
+parser.add_argument('--dt_splitting',             type=float, help='The timestep for the splitting.', default=dt_splitting)
+parser.add_argument('--dt_3D',                    type=float, help='The timestep for the 3D model, either bidomain or mechanics.', default=dt_3D)
 parser.add_argument('--disable_firing_output',    help='Disables the initial list of fiber firings.', default=False, action='store_true')
 parser.add_argument('--v',                        help='Enable full verbosity in c++ code')
 parser.add_argument('-v',                         help='Enable verbosity level in c++ code', action="store_true")
@@ -114,14 +114,15 @@ if n_subdomains is not None:
   
 if linear_elasticity:
   cellml_file = "../../input/shorten.cpp"
+  emg_solver_type = "cg"
   
 if rank_no == 0:
   print("scenario_name: {},  n_subdomains: {} {} {},  n_ranks: {},  end_time: {}".format(scenario_name, n_subdomains_x, n_subdomains_y, n_subdomains_z, n_ranks, end_time))
-  print("dt_0D:           {}, diffusion_solver_type:      {}".format(dt_0D, diffusion_solver_type))
-  print("dt_1D:           {}, potential_flow_solver_type: {}".format(dt_1D, potential_flow_solver_type))
-  print("dt_3D:           {}, emg_solver_type:            {}, emg_initial_guess_nonzero: {}".format(dt_3D, emg_solver_type, emg_initial_guess_nonzero))
-  print("dt_bidomain:     {},                                    paraview_output: {}".format(dt_bidomain, paraview_output))
-  print("output_timestep: {}  stimulation_frequency: {} 1/ms = {} Hz".format(output_timestep, stimulation_frequency, stimulation_frequency*1e3))
+  print("dt_0D:           {:0.0e}, diffusion_solver_type:      {}".format(dt_0D, diffusion_solver_type))
+  print("dt_1D:           {:0.0e}, potential_flow_solver_type: {}".format(dt_1D, potential_flow_solver_type))
+  print("dt_splitting:    {:0.0e}, emg_solver_type:            {}, emg_initial_guess_nonzero: {}".format(dt_splitting, emg_solver_type, emg_initial_guess_nonzero))
+  print("dt_3D:           {:0.0e}, paraview_output: {}".format(dt_3D, paraview_output))
+  print("output_timestep: {:0.0e}  stimulation_frequency: {} 1/ms = {} Hz".format(output_timestep, stimulation_frequency, stimulation_frequency*1e3))
   print("fiber_file:              {}".format(fiber_file))
   print("cellml_file:             {}".format(cellml_file))
   print("fiber_distribution_file: {}".format(fiber_distribution_file))
@@ -181,8 +182,8 @@ if fiber_file == "cuboid.bin":
 output_writer_fibers = []
 output_writer_emg = []
 if paraview_output:
-  output_writer_emg.append({"format": "Paraview", "outputInterval": int(1./dt_bidomain*output_timestep), "filename": "out/" + scenario_name + "/emg", "binary": True, "fixedFormat": False, "combineFiles": True})
-  output_writer_fibers.append({"format": "Paraview", "outputInterval": int(1./dt_3D*output_timestep), "filename": "out/" + scenario_name + "/fibers", "binary": True, "fixedFormat": False, "combineFiles": True})
+  output_writer_emg.append({"format": "Paraview", "outputInterval": int(1./dt_3D*output_timestep), "filename": "out/" + scenario_name + "/emg", "binary": True, "fixedFormat": False, "combineFiles": True})
+  output_writer_fibers.append({"format": "Paraview", "outputInterval": int(1./dt_splitting*output_timestep), "filename": "out/" + scenario_name + "/fibers", "binary": True, "fixedFormat": False, "combineFiles": True})
 
 # set values for cellml model
 if "shorten" in cellml_file:
@@ -276,7 +277,7 @@ def set_specific_parameters(n_nodes_global, time_step_no, current_time, paramete
 # callback function that can set states, i.e. prescribed values for stimulation
 def set_specific_states(n_nodes_global, time_step_no, current_time, states, fiber_no):
 
-  print("call set_specific_states at time {}".format(current_time)) 
+  #print("call set_specific_states at time {}".format(current_time)) 
   
   # determine if fiber gets stimulated at the current time
   is_fiber_gets_stimulated = fiber_gets_stimulated(fiber_no, stimulation_frequency, current_time)
@@ -320,11 +321,6 @@ n_fibers_x = (int)(np.round(np.sqrt(n_fibers_total)))
 n_fibers_y = n_fibers_x
 n_points_whole_fiber = parameters[1]
 
-# for debugging:
-#n_fibers_total = 4
-#n_fibers_x = 2
-#n_fibers_y = 2
-  
 if rank_no == 0:
   print("n fibers:              {} ({} x {})".format(n_fibers_total, n_fibers_x, n_fibers_y))
   print("n points per fiber:    {}".format(n_points_whole_fiber))
@@ -616,14 +612,14 @@ for i in range(n_points_3D_mesh_global_x*n_points_3D_mesh_global_y):
 # set Dirichlet BC at top nodes for linear elasticity problem, fix muscle at top
 linear_elasticity_dirichlet_bc = {}
 for i in range(n_points_3D_mesh_global_x*n_points_3D_mesh_global_y):
-  linear_elasticity_dirichlet_bc[(n_points_3D_mesh_global_z-1)*n_points_3D_mesh_global_x*n_points_3D_mesh_global_y + i] = 1.0
+  linear_elasticity_dirichlet_bc[(n_points_3D_mesh_global_z-1)*n_points_3D_mesh_global_x*n_points_3D_mesh_global_y + i] = 0.0
     
 # Neumann BC at bottom nodes, traction downwards
 nx = n_points_3D_mesh_global_x-1
 ny = n_points_3D_mesh_global_y-1
 nz = n_points_3D_mesh_global_z-1
-linear_elasticity_neumann_bc = [{"element": k*nx*ny + j*nx + nx-1, "constantVector": [0.0,0.0,-1.0], "face": "2-"} for k in range(nz) for j in range(ny)]
-
+#linear_elasticity_neumann_bc = [{"element": 0*nx*ny + j*nx + i, "constantVector": [0.0,0.0,-1.0], "face": "2-"} for j in range(ny) for i in range(nx)]
+linear_elasticity_neumann_bc = []
     
 if debug_output:
   print("{}: point sampling for elements, unsampled points: {} x {} x {}, sampling stride: {}, {}, {}".format(rank_no, n_fibers_x, n_fibers_y, n_points_whole_fiber, sampling_stride_x, sampling_stride_y, sampling_stride_z))
@@ -762,29 +758,30 @@ config = {
     },
     "potentialFlowSolver": {
       "relativeTolerance": 1e-10,
-      "maxIterations": 10000,
+      "maxIterations": 1e4,
       "solverType": potential_flow_solver_type,
       "preconditionerType": potential_flow_preconditioner_type,
     },
     "activationSolver": {
       "relativeTolerance": 1e-100,
-      "maxIterations": 10000,
+      "maxIterations": 1e4,
       "solverType": emg_solver_type,
       "preconditionerType": emg_preconditioner_type,
     },
     "linearElasticitySolver": {
       "relativeTolerance": 1e-5,
-      "maxIterations": 10,
+      "maxIterations": 1e4,
       "solverType": emg_solver_type,
       "preconditionerType": emg_preconditioner_type,
     }, 
   },
   "Coupling": {
-    "timeStepWidth": dt_bidomain,  # 1e-1
-    "logTimeStepWidthAsKey": "dt_bidomain",
+    "timeStepWidth": dt_3D,  # 1e-1
+    "logTimeStepWidthAsKey": "dt_3D",
     "durationLogKey": "duration_total",
     "timeStepOutputInterval" : 10,
     "endTime": end_time,
+    "transferSlotName": "intermediates" if linear_elasticity else "states",
     "Term1": {      # monodomain fibers
       "MultipleInstances": {
         "logKey": "duration_subdomains_xy",
@@ -795,11 +792,12 @@ config = {
           "ranks": list(range(subdomain_coordinate_y*n_subdomains_x + subdomain_coordinate_x, n_ranks, n_subdomains_x*n_subdomains_y)),
           "StrangSplitting": {
             #"numberTimeSteps": 1,
-            "timeStepWidth": dt_3D,  # 1e-1
-            "logTimeStepWidthAsKey": "dt_3D",
+            "timeStepWidth": dt_splitting,  # 1e-1
+            "logTimeStepWidthAsKey": "dt_splitting",
             "durationLogKey": "duration_monodomain",
             "timeStepOutputInterval" : 100,
-            "endTime": dt_3D,
+            "endTime": dt_splitting,
+            "transferSlotName": "states",   # which output slot of the cellml adapter ("states" or "intermediates") to use for transfer to diffusion, in this case we need "states", states[0] which is Vm
 
             "Term1": {      # CellML
               "MultipleInstances": {
@@ -816,7 +814,6 @@ config = {
                     "timeStepOutputInterval": 1e4,
                     "inputMeshIsGlobal": True,
                     "dirichletBoundaryConditions": {},
-                    "outputIntermediateIndex": 0 if linear_elasticity else -1,   # -1 = do not use intermediates, value >= 0 = use that component of the intermediates instead of states
                       
                     "CellML" : {
                       "sourceFilename": cellml_file,             # input C++ source file, can be either generated by OpenCMISS or OpenCOR from cellml model
@@ -834,6 +831,7 @@ config = {
                       "setSpecificStatesRepeatAfterFirstCall": 0.01,  # simulation time span for which the setSpecificStates callback will be called after a call was triggered
                       "additionalArgument": fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y),
                       
+                      "outputIntermediateIndex": 0,  # which intermediate value to use in further computation
                       "outputStateIndex": 0,     # Shorten / Hodgkin Huxley: state 0 = Vm, Shorten: rate 28 = gamma, intermediate 0 = gamma
                       "parametersUsedAsIntermediate": parameters_used_as_intermediate,  #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
                       "parametersUsedAsConstant": parameters_used_as_constant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
@@ -890,7 +888,7 @@ config = {
     },
     "Term2": {        # Bidomain
       "StaticBidomainSolver": {       # version for fibers_emg
-        "timeStepWidth": dt_bidomain,
+        "timeStepWidth": dt_3D,
         "timeStepOutputInterval": 50,
         "durationLogKey": "duration_bidomain",
         "solverName": "activationSolver",
@@ -927,11 +925,11 @@ config = {
       },
       "OutputSurface": {        # version for fibers_emg_2d_output
         "OutputWriter": [
-          {"format": "Paraview", "outputInterval": int(1./dt_bidomain*output_timestep), "filename": "out/" + scenario_name + "/surface_emg", "binary": True, "fixedFormat": False, "combineFiles": True},
+          {"format": "Paraview", "outputInterval": int(1./dt_3D*output_timestep), "filename": "out/" + scenario_name + "/surface_emg", "binary": True, "fixedFormat": False, "combineFiles": True},
         ],
         "face": "1-",
         "StaticBidomainSolver": {
-          "timeStepWidth": dt_bidomain,
+          "timeStepWidth": dt_3D,
           "timeStepOutputInterval": 50,
           "durationLogKey": "duration_bidomain",
           "solverName": "activationSolver",
@@ -974,6 +972,7 @@ config = {
             "solverName": "potentialFlowSolver",
             "prefactor": 1.0,
             "dirichletBoundaryConditions": potential_flow_dirichlet_bc,
+            "neumannBoundaryConditions": [],
             "inputMeshIsGlobal": True,
           },
         },
@@ -984,11 +983,13 @@ config = {
           "inputMeshIsGlobal": True,
           "dirichletBoundaryConditions": linear_elasticity_dirichlet_bc,
           "neumannBoundaryConditions": linear_elasticity_neumann_bc,
-          "bulkModulus": 1.5,
-          "shearModulus": 2.0,
+          "bulkModulus": 40e3,  # https://www.researchgate.net/publication/230248067_Bulk_Modulus
+          "shearModulus": 39e3, # https://onlinelibrary.wiley.com/doi/full/10.1002/mus.24104
         },
+        "maximumActiveStress": 1.0,
+        "strainScalingCurveWidth": 1.0,
         "OutputWriter" : [
-          {"format": "Paraview", "outputInterval": int(1./dt_bidomain*output_timestep), "filename": "out/deformation", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
+          {"format": "Paraview", "outputInterval": int(1./dt_3D*output_timestep), "filename": "out/deformation", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
           #{"format": "PythonFile", "filename": "out/deformation", "outputInterval": 1, "binary":False, "onlyNodalValues":True},
         ]
       }

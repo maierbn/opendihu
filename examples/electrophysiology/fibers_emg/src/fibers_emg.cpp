@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
           >
         >,
         Control::MultipleInstances<
-          TimeSteppingScheme::ImplicitEuler<          // fiber diffusion
+          TimeSteppingScheme::ImplicitEuler<          // fiber diffusion, note that implicit euler gives lower error in this case than crank nicolson
             SpatialDiscretization::FiniteElementMethod<
               Mesh::StructuredDeformableOfDimension<1>,
               BasisFunction::LagrangeOfOrder<1>,

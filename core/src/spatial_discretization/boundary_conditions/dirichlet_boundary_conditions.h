@@ -36,8 +36,10 @@ public:
   typedef std::array<double,nComponents> ValueType;
 
   //! set the boundary conditions to system matrix, i.e. zero rows and columns of Dirichlet BC dofs and set diagonal to 1. Store the cleared matrix values in boundaryConditionsRightHandSideSummand such that they can be used for adjusting the rhs vector afterwards
+  //! @param systemMatrixAlreadySet: if this is true, then the systemMatrix is not changed. This is useful in a timestepping scheme where the dirichlet BC dofs do not change over time.
   void applyInSystemMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> systemMatrix,
-                           std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> boundaryConditionsRightHandSideSummand);
+                           std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> boundaryConditionsRightHandSideSummand,
+                           bool systemMatrixAlreadySet=false);
 
   //! set the boundary conditions to the right hand side using the information in boundaryConditionsRightHandSideSummand that was obtained by applyInSystemMatrix
   //! if the argument boundaryConditionsRightHandSideSummand is also set as rightHandSide, only write prescribed values into rightHandSide, do not add anything

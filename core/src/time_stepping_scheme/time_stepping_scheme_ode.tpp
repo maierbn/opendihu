@@ -160,48 +160,4 @@ knowsMeshType()
   return this->discretizableInTime_.knowsMeshType();
 }
 
-// ----------------------
-// specialization for CellML adapter
-template<int nStates,int nIntermediates,typename FunctionSpaceType>
-void TimeSteppingSchemeOde<CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>>::
-initialize()
-{
-  TimeSteppingSchemeOdeBaseDiscretizable<CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>>::initialize();
-  double prefactor = this->discretizableInTime_.prefactor();
-  int outputComponentNo = this->discretizableInTime_.outputStateIndex();
-
-  LOG(DEBUG) << "set CellML prefactor=" << prefactor << ", outputComponentNo=" << outputComponentNo;
-
-  this->data_->setPrefactor(prefactor);
-  this->data_->setOutputComponentNo(outputComponentNo);
-
-  // -1 means do not use intermediates, but states
-  this->outputIntermediateIndex_ = this->specificSettings_.getOptionInt("outputIntermediateIndex", -1);
-}
-
-template<int nStates,int nIntermediates,typename FunctionSpaceType>
-typename TimeSteppingSchemeOde<CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>>::TransferableSolutionData
-TimeSteppingSchemeOde<CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>>::
-getSolutionForTransfer()
-{
-  std::tuple<std::shared_ptr<typename CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::FieldVariableTypeIntermediates>,int> intermediatesData(
-    this->discretizableInTime_.intermediates(), this->outputIntermediateIndex_);
-
-  return std::make_pair<
-    typename Data::TimeStepping<FunctionSpaceType,nStates>::TransferableSolutionDataType,
-    std::tuple<std::shared_ptr<typename CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::FieldVariableTypeIntermediates>,int>
-  >(
-    this->data_->getSolutionForTransfer(),
-    std::move(intermediatesData)
-  );
-}
-
-//! output the given data for debugging
-template<int nStates,int nIntermediates,typename FunctionSpaceType>
-std::string TimeSteppingSchemeOde<CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>>::
-getString(typename TimeSteppingSchemeOde<CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>>::TransferableSolutionData &data)
-{
-  return std::string("");
-}
-
 } // namespace

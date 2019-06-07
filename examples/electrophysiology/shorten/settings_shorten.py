@@ -108,7 +108,7 @@ def fiber_gets_stimulated(fiber_no, frequency, current_time):
 # callback function that can set states, i.e. prescribed values for stimulation
 def set_specific_states(n_nodes_global, time_step_no, current_time, states, fiber_no):
 
-  print("call set_specific_states at time {}".format(current_time))
+  #print("call set_specific_states at time {}".format(current_time))
 
   # determine if fiber gets stimulated at the current time
   is_fiber_gets_stimulated = fiber_gets_stimulated(fiber_no, stimulation_frequency, current_time)

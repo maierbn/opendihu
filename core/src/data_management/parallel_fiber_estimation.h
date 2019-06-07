@@ -58,6 +58,7 @@ public:
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>>,  // geometry
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>,  // solution
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>,   // rhs
+    std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>,   // rhs neumann bc
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>>,  // gradient field
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>,  // dirichlet values
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>  // dirichlet values

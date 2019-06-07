@@ -118,6 +118,8 @@ initialize()
   Control::PerformanceMeasurement::stop("durationInitCellml");
 
   this->outputStateIndex_ = this->specificSettings_.getOptionInt("outputStateIndex", 0, PythonUtility::NonNegative);
+  this->outputIntermediateIndex_ = this->specificSettings_.getOptionInt("outputIntermediateIndex", 0, PythonUtility::NonNegative);
+
   this->prefactor_ = this->specificSettings_.getOptionDouble("prefactor", 1.0);
 
   this->internalTimeStepNo_ = 0;
@@ -273,6 +275,8 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
   ierr = VecRestoreArray(input, &states); CHKERRV(ierr);
   ierr = VecRestoreArray(output, &rates); CHKERRV(ierr);
   ierr = VecRestoreArray(this->intermediates_->getValuesContiguous(), &intermediatesData); CHKERRV(ierr);
+
+  VLOG(1) << "intermediates: " << *this->intermediates_;
 
   this->internalTimeStepNo_++;
 }

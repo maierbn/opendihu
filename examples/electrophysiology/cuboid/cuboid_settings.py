@@ -320,6 +320,8 @@ config = {
       "relativeTolerance": 1e-10,
       "solverType": solver_type,
       "preconditionerType": preconditioner_type,
+      "cycleType": sys.argv[6],
+      "nLevels": sys.argv[7],
     }
   },
   "MultipleInstances": {

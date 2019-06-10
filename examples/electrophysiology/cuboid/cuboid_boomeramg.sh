@@ -42,5 +42,5 @@ mpiexec -n 1 ./cuboid ../cuboid_settings.py 1 1 10000 boomeramg_10 richardson pc
 mpiexec -n 1 ./cuboid ../cuboid_settings.py 1 1 10000 cg_boomeramg_2 cg pchypre -pc_type hypre -pc_hypre_type boomeramg -pc_hypre_boomeramg_max_levels 2
 mpiexec -n 1 ./cuboid ../cuboid_settings.py 1 1 10000 cg_boomeramg_4 cg pchypre -pc_type hypre -pc_hypre_type boomeramg -pc_hypre_boomeramg_max_levels 4
 mpiexec -n 1 ./cuboid ../cuboid_settings.py 1 1 10000 cg_boomeramg_6 cg pchypre -pc_type hypre -pc_hypre_type boomeramg -pc_hypre_boomeramg_max_levels 6
-mpiexec -n 1 ./cuboid ../cuboid_settings.py 1 1 10000 cg_boomeramg_8 cg pchypre -pc_type hypre -pc_hypre_type boomeramg -pc_hypre_boom eramg_max_levels 8
+mpiexec -n 1 ./cuboid ../cuboid_settings.py 1 1 10000 cg_boomeramg_8 cg pchypre -pc_type hypre -pc_hypre_type boomeramg -pc_hypre_boomeramg_max_levels 8
 mpiexec -n 1 ./cuboid ../cuboid_settings.py 1 1 10000 cg_boomeramg_10 cg pchypre -pc_type hypre -pc_hypre_type boomeramg -pc_hypre_boomeramg_max_levels 10

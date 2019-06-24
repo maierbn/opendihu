@@ -78,7 +78,7 @@ advanceTimeSpan()
 
     // scale solution in timeStepping1 and transfer to timestepping2_
     SolutionVectorMapping<typename TimeStepping1::TransferableSolutionDataType, typename TimeStepping2::TransferableSolutionDataType>::
-      transfer(this->timeStepping1_.getSolutionForTransfer(), this->timeStepping2_.getSolutionForTransfer());
+      transfer(this->timeStepping1_.getSolutionForTransfer(), this->timeStepping2_.getSolutionForTransfer(), this->transferSlotName_);
 
     if (this->durationLogKey_ != "")
     {
@@ -105,7 +105,7 @@ advanceTimeSpan()
     LOG(DEBUG) << "  Strang: transfer timeStepping2 -> timeStepping1";
     // scale solution in timeStepping2 and transfer to timestepping1_
     SolutionVectorMapping<typename TimeStepping2::TransferableSolutionDataType, typename TimeStepping1::TransferableSolutionDataType>::
-      transfer(this->timeStepping2_.getSolutionForTransfer(), this->timeStepping1_.getSolutionForTransfer());
+      transfer(this->timeStepping2_.getSolutionForTransfer(), this->timeStepping1_.getSolutionForTransfer(), this->transferSlotName_);
 
     if (this->durationLogKey_ != "")
     {

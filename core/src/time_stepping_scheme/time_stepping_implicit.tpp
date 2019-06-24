@@ -35,6 +35,7 @@ initialize()
   // compute the system matrix
   this->setSystemMatrix(this->timeStepWidth_);
 
+  LOG(DEBUG) << "time_stepping_implicit applyInSystemMatrix, from TimeSteppingImplicit::initialize";
   // set the boundary conditions to system matrix, i.e. zero rows and columns of Dirichlet BC dofs and set diagonal to 1
   this->dirichletBoundaryConditions_->applyInSystemMatrix(this->dataImplicit_->systemMatrix(), this->dataImplicit_->boundaryConditionsRightHandSideSummand());
 

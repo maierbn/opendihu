@@ -1244,11 +1244,18 @@ output(std::ostream &stream)
       {
         if (rankNo != 0)
           stream << ";";
+
+        int dofNoLocalEnd = localSizes[rankNo];
+        if (!VLOG_IS_ON(1))
+        {
+          dofNoLocalEnd = std::min(400, localSizes[rankNo]);
+        }
+
         for (dof_no_t dofNoLocal = 0; dofNoLocal < localSizes[rankNo]; dofNoLocal++)
         {
-          if (dofNoLocal == 400)
+          if (dofNoLocal == dofNoLocalEnd)
           {
-            stream << "... (" << localSizes[rankNo] << " entries, only showing the first 400)";
+            stream << "... (" << localSizes[rankNo] << " entries, only showing the first " << dofNoLocalEnd << ")";
             break;
           }
 

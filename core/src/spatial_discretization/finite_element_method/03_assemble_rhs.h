@@ -91,7 +91,7 @@ protected:
 /**
  * Partial specialization for solid mechanics, mixed formulation
  */
-template<typename LowOrderFunctionSpaceType,typename HighOrderFunctionSpaceType,typename QuadratureType,int nComponents,typename Term>
+/*template<typename LowOrderFunctionSpaceType,typename HighOrderFunctionSpaceType,typename QuadratureType,int nComponents,typename Term>
 class AssembleRightHandSide<FunctionSpace::Mixed<LowOrderFunctionSpaceType,HighOrderFunctionSpaceType>, QuadratureType, nComponents, Term,
     Equation::isSolidMechanics<Term>> :
   public BoundaryConditions<FunctionSpace::Mixed<LowOrderFunctionSpaceType,HighOrderFunctionSpaceType>, QuadratureType, nComponents, Term>
@@ -103,7 +103,7 @@ public:
 protected:
   //! Transform values in rhs vector into FEM discretized values by multiplying them with the integrate basis functions
   void multiplyRightHandSideWithMassMatrix(){}
-};
+};*/
 
 } // namespace
 

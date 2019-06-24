@@ -45,6 +45,12 @@ public:
   //! return reference to solution of the system, the PETSc Vec can be obtained via fieldVariable.valuesGlobal()
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> solution();
 
+  //! return reference to rhsNeumannBoundaryConditions, the PETSc Vec can be obtained via fieldVariable.valuesGlobal()
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> negativeRightHandSideNeumannBoundaryConditions();
+
+  //! set the field variable rightHandSideNeumannBoundaryConditions
+  void setNegativeRightHandSideNeumannBoundaryConditions(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> rightHandSideNeumannBoundaryConditions);
+
   //! print all stored data to stdout
   void print();
   
@@ -71,7 +77,8 @@ public:
   typedef std::tuple<
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>>,  // geometry
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>>,  // solution
-    std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>>   // rhs
+    std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>>,   // rhs
+    std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>>   // neumann BC rhs
   > OutputFieldVariables;
 
   //! get pointers to all field variables that can be written by output writers
@@ -90,6 +97,7 @@ private:
   std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> inverseLumpedMassMatrix_;         ///< the inverse lumped mass matrix that has only entries on the diagonal, they are the reciprocal of the row sums of the mass matrix
 
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> rhs_;                 ///< the rhs vector in weak formulation
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> negativeRhsNeumannBoundaryConditions_;                 ///< the rhs vector in weak formulation, only contribution from neumann boundary conditions
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> solution_;            ///< the vector of the quantity of interest, e.g. displacement
 
 };

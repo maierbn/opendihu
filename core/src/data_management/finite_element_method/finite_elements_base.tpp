@@ -91,10 +91,9 @@ createPetscObjects()
   std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> meshPartition = this->functionSpace_->meshPartition();
   
   // create field variables on local partition
-  this->rhs_ = this->functionSpace_->template createFieldVariable<nComponents>("rhs");
+  this->rhs_ = this->functionSpace_->template createFieldVariable<nComponents>("rightHandSide");
   this->solution_ = this->functionSpace_->template createFieldVariable<nComponents>("solution");
-
-  this->rhs_->zeroEntries();
+  this->negativeRhsNeumannBoundaryConditions_ = this->functionSpace_->template createFieldVariable<nComponents>("zero");
 
   // create PETSc matrix object
 
@@ -109,7 +108,6 @@ createPetscObjects()
 
   LOG(DEBUG) << "create new stiffnessMatrix";
   this->stiffnessMatrix_ = std::make_shared<PartitionedPetscMat<FunctionSpaceType>>(meshPartition, nComponents, diagonalNonZeros, offdiagonalNonZeros, "stiffnessMatrix");
-
 }
 
 template<typename FunctionSpaceType, int nComponents>
@@ -142,9 +140,23 @@ rightHandSide()
 
 template<typename FunctionSpaceType, int nComponents>
 std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> FiniteElementsBase<FunctionSpaceType,nComponents>::
+negativeRightHandSideNeumannBoundaryConditions()
+{
+  return this->negativeRhsNeumannBoundaryConditions_;
+}
+
+template<typename FunctionSpaceType, int nComponents>
+std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> FiniteElementsBase<FunctionSpaceType,nComponents>::
 solution()
 {
   return this->solution_;
+}
+
+template<typename FunctionSpaceType, int nComponents>
+void FiniteElementsBase<FunctionSpaceType,nComponents>::
+setNegativeRightHandSideNeumannBoundaryConditions(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> negativeRightHandSideNeumannBoundaryConditions)
+{
+  this->negativeRhsNeumannBoundaryConditions_ = negativeRightHandSideNeumannBoundaryConditions;
 }
 
 template<typename FunctionSpaceType, int nComponents>
@@ -238,17 +250,12 @@ getOutputFieldVariables()
   assert(this->functionSpace_);
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> geometryField
     = std::make_shared<FieldVariable::FieldVariable<FunctionSpaceType,3>>(this->functionSpace_->geometryField());
-  /*
-  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> generalField;
 
-  generalField = std::static_pointer_cast<FieldVariable::FieldVariable<FunctionSpaceType,3>>(this->functionSpace_->fieldVariable("general"));
-  if (!generalField)
-   generalField = geometryField;
-  */
   return OutputFieldVariables(
     geometryField,
     solution_,
-    rhs_
+    rhs_,
+    negativeRhsNeumannBoundaryConditions_
   );
 }
 

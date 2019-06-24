@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
         Mesh::StructuredDeformableOfDimension<3>,
         BasisFunction::LagrangeOfOrder<1>,
         Quadrature::Gauss<3>,
-        Equation::Static::LinearElasticity
+        Equation::Static::LinearElasticityActiveStress
       >
     >
   > problem(settings);

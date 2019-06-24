@@ -118,6 +118,8 @@ initialize()
   Control::PerformanceMeasurement::stop("durationInitCellml");
 
   this->outputStateIndex_ = this->specificSettings_.getOptionInt("outputStateIndex", 0, PythonUtility::NonNegative);
+  this->outputIntermediateIndex_ = this->specificSettings_.getOptionInt("outputIntermediateIndex", 0, PythonUtility::NonNegative);
+
   this->prefactor_ = this->specificSettings_.getOptionDouble("prefactor", 1.0);
 
   this->internalTimeStepNo_ = 0;
@@ -206,6 +208,12 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
   VLOG(1) << "currentTime: " << currentTime << ", lastCallSpecificStatesTime_: " << this->lastCallSpecificStatesTime_
     << ", setSpecificStatesCallFrequency_: " << this->setSpecificStatesCallFrequency_ << ", "
     << this->lastCallSpecificStatesTime_ + 1./this->setSpecificStatesCallFrequency_;
+  VLOG(1) << "this->setSpecificStates_? " << (this->setSpecificStates_? "true" : "false")
+    << ", this->setSpecificStatesCallInterval_: " << this->setSpecificStatesCallInterval_ << " != 0? " << (this->setSpecificStatesCallInterval_ != 0? "true" : "false")
+    << ", (this->internalTimeStepNo_ % this->setSpecificStatesCallInterval_) = " << this->internalTimeStepNo_  << " % " << this->setSpecificStatesCallInterval_
+    << ", this->setSpecificStatesCallFrequency_= " << this->setSpecificStatesCallFrequency_ << " != 0.0? " << (this->setSpecificStatesCallFrequency_ != 0.0? "true" : "false")
+    << ", currentTime=" << currentTime << " >= " << this->lastCallSpecificStatesTime_ << " + " << 1./this->setSpecificStatesCallFrequency_ << " = " << this->lastCallSpecificStatesTime_ + 1./this->setSpecificStatesCallFrequency_ << "? "
+    << (currentTime >= this->lastCallSpecificStatesTime_ + 1./this->setSpecificStatesCallFrequency_? "true" : "false");
 
   // get new values for parameters, call callback function of python config
   if (this->setSpecificStates_
@@ -267,6 +275,8 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
   ierr = VecRestoreArray(input, &states); CHKERRV(ierr);
   ierr = VecRestoreArray(output, &rates); CHKERRV(ierr);
   ierr = VecRestoreArray(this->intermediates_->getValuesContiguous(), &intermediatesData); CHKERRV(ierr);
+
+  VLOG(1) << "intermediates: " << *this->intermediates_;
 
   this->internalTimeStepNo_++;
 }

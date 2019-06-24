@@ -777,7 +777,7 @@ void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType 
 
       // determine filename, broadcast from rank 0
       std::stringstream filename;
-      filename << targetDimensionality << "D_" << this->filenameBaseWithNo_ << ".vtu";
+      filename << this->filenameBaseWithNo_ << ".vtu";
       int filenameLength = filename.str().length();
 
       // broadcast length of filename
@@ -948,22 +948,25 @@ void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType 
       currentMeshName.insert(meshPropertiesIter->first);
       ParaviewLoopOverTuple::loopGetNodalValues<OutputFieldVariablesType>(fieldVariables, currentMeshName, fieldVariableValues);
 
-      // if next assertion fails, output why for debugging
-      if (fieldVariableValues.size() != polyDataPropertiesForMesh.pointDataArrays.size())
+      if (!meshPropertiesInitialized)
       {
-        LOG(DEBUG) << "n field variable values: " << fieldVariableValues.size() << ", n point data arrays: "
-          << polyDataPropertiesForMesh.pointDataArrays.size();
-        LOG(DEBUG) << "mesh name: " << currentMeshName;
-        std::stringstream pointDataArraysNames;
-        for (int i = 0; i < polyDataPropertiesForMesh.pointDataArrays.size(); i++)
+        // if next assertion fails, output why for debugging
+        if (fieldVariableValues.size() != polyDataPropertiesForMesh.pointDataArrays.size())
         {
-          pointDataArraysNames << polyDataPropertiesForMesh.pointDataArrays[i].first << " ";
+          LOG(DEBUG) << "n field variable values: " << fieldVariableValues.size() << ", n point data arrays: "
+            << polyDataPropertiesForMesh.pointDataArrays.size();
+          LOG(DEBUG) << "mesh name: " << currentMeshName;
+          std::stringstream pointDataArraysNames;
+          for (int i = 0; i < polyDataPropertiesForMesh.pointDataArrays.size(); i++)
+          {
+            pointDataArraysNames << polyDataPropertiesForMesh.pointDataArrays[i].first << " ";
+          }
+          LOG(DEBUG) << "pointDataArraysNames: " <<  pointDataArraysNames.str();
+          LOG(DEBUG) << "OutputFieldVariablesType: " << StringUtility::demangle(typeid(OutputFieldVariablesType).name());
         }
-        LOG(DEBUG) << "pointDataArraysNames: " <<  pointDataArraysNames.str();
-        LOG(DEBUG) << "OutputFieldVariablesType: " << StringUtility::demangle(typeid(OutputFieldVariablesType).name());
-      }
 
-      assert(fieldVariableValues.size() == polyDataPropertiesForMesh.pointDataArrays.size());
+        assert(fieldVariableValues.size() == polyDataPropertiesForMesh.pointDataArrays.size());
+      }
 
       // output 3D or 2D mesh
       if (!meshPropertiesInitialized)

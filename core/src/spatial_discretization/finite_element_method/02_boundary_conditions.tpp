@@ -39,6 +39,7 @@ reset()
 {
   LOG(DEBUG) << "delete dirichlet boundary conditions object";
   this->dirichletBoundaryConditions_ = nullptr;
+  this->systemMatrixAlreadySet_ = false;
 }
 
 template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term,typename Dummy>
@@ -71,6 +72,7 @@ applyBoundaryConditions()
     LOG(DEBUG) << "no Neumann boundary conditions are present, create object";
     neumannBoundaryConditions_ = std::make_shared<NeumannBoundaryConditions<FunctionSpaceType,QuadratureType,nComponents>>(this->context_);
     neumannBoundaryConditions_->initialize(this->specificSettings_, this->data_.functionSpace(), "neumannBoundaryConditions");
+    this->data_.setNegativeRightHandSideNeumannBoundaryConditions(neumannBoundaryConditions_->rhs());
   }
   LOG(DEBUG) << "neumann BC rhs: " << *neumannBoundaryConditions_->rhs();
   LOG(DEBUG) << "rhs: " << *this->data_.rightHandSide();
@@ -97,7 +99,9 @@ applyBoundaryConditions()
   std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> stiffnessMatrix = this->data_.stiffnessMatrix();
 
   // apply the boundary conditions in stiffness matrix (set bc rows and columns of matrix to 0 and diagonal to 1), also add terms with matrix entries to rhs
-  dirichletBoundaryConditions_->applyInSystemMatrix(stiffnessMatrix, rightHandSide);
+  LOG(DEBUG) << "call applyInSystemMatrix from applyBoundaryConditions, this->systemMatrixAlreadySet: " << this->systemMatrixAlreadySet_;
+  dirichletBoundaryConditions_->applyInSystemMatrix(stiffnessMatrix, rightHandSide, this->systemMatrixAlreadySet_);
+  this->systemMatrixAlreadySet_ = true;
 
   // set prescribed values in rhs
   dirichletBoundaryConditions_->applyInRightHandSide(rightHandSide, rightHandSide);

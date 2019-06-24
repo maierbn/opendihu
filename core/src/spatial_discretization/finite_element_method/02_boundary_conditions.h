@@ -34,10 +34,10 @@ public:
   //! reset to pre-initialized state
   virtual void reset();
 
-protected:
-
   //! apply dirichlet boundary conditions, this calls applyBoundaryConditionsWeakForm
   virtual void applyBoundaryConditions();
+
+protected:
 
   //! parse config and fill local member variables
   void parseBoundaryConditions();
@@ -45,12 +45,13 @@ protected:
   bool boundaryConditionHandlingEnabled_ = true;   ///< if the boundary conditions should be handled in this class, if false, nothing is done here. This is the case if the FiniteElementMethod is used within a timestepping scheme. Then the time stepping scheme constructs its system matrix out of this class' stiffness matrix and applied Dirichlet boundary condition handle there.
   std::shared_ptr<DirichletBoundaryConditions<FunctionSpaceType,nComponents>> dirichletBoundaryConditions_ = nullptr;  ///< object that parses Dirichlet boundary conditions and applies them to system matrix and rhs
   std::shared_ptr<NeumannBoundaryConditions<FunctionSpaceType,QuadratureType,nComponents>> neumannBoundaryConditions_ = nullptr;  ///< object that parses Neumann boundary conditions and applies them to the rhs
+  bool systemMatrixAlreadySet_ = false;  ///< if the system matrix has been changed to account for dirichlet DCs, which means that rows/columns of BC dofs were set to zero and diagonal to 1
 };
 
 /**
  * Partial specialization for solid mechanics, mixed formulation
  */
-template<typename LowOrderFunctionSpaceType,typename HighOrderFunctionSpaceType,typename QuadratureType,int nComponents,typename Term>
+/*template<typename LowOrderFunctionSpaceType,typename HighOrderFunctionSpaceType,typename QuadratureType,int nComponents,typename Term>
 class BoundaryConditions<FunctionSpace::Mixed<LowOrderFunctionSpaceType,HighOrderFunctionSpaceType>, QuadratureType, nComponents, Term, Equation::isSolidMechanics<Term>> :
   public FiniteElementMethodMatrix<FunctionSpace::Mixed<LowOrderFunctionSpaceType,HighOrderFunctionSpaceType>,QuadratureType,nComponents,Term>
 {
@@ -62,7 +63,7 @@ protected:
   //! apply dirichlet boundary conditions
   void applyBoundaryConditions(){}
 
-};
+};*/
 
 } // namespace
 

@@ -62,8 +62,8 @@ initialize(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> di
 }
 
 //! initialize, store the reference geometry as copy of the current geometry
-template<typename FunctionSpaceType,int nComponents>
-void FiniteElements<FunctionSpaceType,nComponents,Equation::Static::LinearElasticity>::
+template<typename FunctionSpaceType,int nComponents,typename Term>
+void FiniteElements<FunctionSpaceType,nComponents,Term,Equation::isLinearElasticity<Term>>::
 initialize()
 {
   LinearStiffness<FunctionSpaceType,nComponents>::initialize();
@@ -73,8 +73,8 @@ initialize()
 }
 
 //! update the geometry of the mesh and function space with the displacements
-template<typename FunctionSpaceType,int nComponents>
-void FiniteElements<FunctionSpaceType,nComponents,Equation::Static::LinearElasticity>::
+template<typename FunctionSpaceType,int nComponents,typename Term>
+void FiniteElements<FunctionSpaceType,nComponents,Term,Equation::isLinearElasticity<Term>>::
 updateGeometry()
 {
   PetscErrorCode ierr;
@@ -84,8 +84,8 @@ updateGeometry()
 }
 
 //! compute the linear strain field epsilon
-template<typename FunctionSpaceType,int nComponents>
-void FiniteElements<FunctionSpaceType,nComponents,Equation::Static::LinearElasticity>::
+template<typename FunctionSpaceType,int nComponents,typename Term>
+void FiniteElements<FunctionSpaceType,nComponents,Term,Equation::isLinearElasticity<Term>>::
 computeStrain(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents*nComponents>> strain)
 {
   // compute strain as epsilon_ab = 1/2(u_Lb dphi_L(x)/dx_a + u_Ma dphi_M(x)/dx_b)

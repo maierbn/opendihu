@@ -46,14 +46,13 @@ advanceTimeSpan()
   LOG(TRACE) << "advanceTimeSpan, endTime: " << endTime_;
 
   // compute active stress from activation
-  computeActiveStress();   //this->data_.activation(); to this->data_.activeStress();
-
-  // set active stress in linear elasticity class
-  finiteElementMethodLinearElasticity_.data().setActiveStress(data_.activeStress());
+  computeActiveStress();   //this->data_.activation(); to this->data_.activeStress() = finiteElementMethodLinearElasticity_.data().activeStress()
 
   LOG(DEBUG) << "solve linear elasticity";
 
   // solve linear elasticity
+  finiteElementMethodLinearElasticity_.setRightHandSide();
+  finiteElementMethodLinearElasticity_.applyBoundaryConditions();
   finiteElementMethodLinearElasticity_.run();
 
   LOG(DEBUG) << "compute strain";
@@ -82,6 +81,7 @@ computeActiveStress()
   const int D = 3;
 
   LOG(TRACE) << "";
+  LOG(DEBUG) << "activation: " << *this->data_.activation();
 
   // loop over elements
   for (element_no_t elementNoLocal = 0; elementNoLocal < this->data_.functionSpace()->nElementsLocal(); elementNoLocal++)
@@ -91,6 +91,8 @@ computeActiveStress()
 
     std::array<Vec3,nDofsPerElement> fiberDirectionValues;
     this->data_.fiberDirection()->getElementValues(elementNoLocal, fiberDirectionValues);
+
+    VLOG(1) << "element " << elementNoLocal << ", activationValues: " << activationValues;
 
     // loop over dofs of element
     for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
@@ -102,9 +104,10 @@ computeActiveStress()
       // get the strain in fiber direction
       int componentNo = D*D - 1;   // get the epsilon_zz entry which is the last
       double strainZ = data_.strain()->getValue(componentNo, dofNo);
+      double relativeSarcomereLength = strainZ;
 
-      // scale the stress dependent of the strain which corresponds to the relative sarcomere length
-      double scalingFactor = 1 - MathUtility::sqr(strainZ / strainScalingCurveWidth_);   // scaling function 1 - (z/w)^2, w is the width of the parabola
+      // scale the stress dependent on the strain which corresponds to the relative sarcomere length
+      double scalingFactor = 1 - MathUtility::sqr(relativeSarcomereLength / strainScalingCurveWidth_);   // scaling function 1 - (z/w)^2, w is the width of the parabola
       scalingFactor = 1.0;  // currently disabled for debugging
       directionalStress *= scalingFactor;
 
@@ -117,7 +120,8 @@ computeActiveStress()
       // rotate stress tensor in fiber direction
       MathUtility::rotateMatrix(stressTensor, fiberDirectionValues[dofIndex]);
 
-      LOG(DEBUG) << " dof " << dofNo << ", strainZ: " << strainZ << ", directionalStress: " << directionalStress
+      LOG(DEBUG) << " dof " << dofNo << ", strainZ: " << strainZ << ", relativeSarcomereLength: " << relativeSarcomereLength
+        << ", activationValues: " << activationValues << ", directionalStress: " << directionalStress
         << ", fiber direction: " << fiberDirectionValues[dofIndex] << ", rotated stress: " << stressTensor;
 
       std::array<double,D*D> stressTensorValues = std::array<double,D*D>(stressTensor);
@@ -154,12 +158,17 @@ initialize()
   LOG(DEBUG) << "initialize QuasiStaticLinearElasticitySolver";
   assert(this->specificSettings_.pyObject());
 
-  // initialize the finite element method, this also creates the function space
-  finiteElementMethodLinearElasticity_.initialize();
-
   // initialize the data object
   data_.setFunctionSpace(finiteElementMethodLinearElasticity_.functionSpace());
   data_.initialize();
+
+  // set pointer to active stress in linear elasticity class
+  finiteElementMethodLinearElasticity_.data().setActiveStress(data_.activeStress());
+  finiteElementMethodLinearElasticity_.data().setRightHandSideActive(data_.rightHandSideActive());
+
+  // initialize the finite element method
+  finiteElementMethodLinearElasticity_.initialize();
+
   data_.setData(std::make_shared<DataLinearElasticityType>(finiteElementMethodLinearElasticity_.data()));
 
   // initialize the potential flow finite element method

@@ -111,7 +111,7 @@ with open(input_filename, "rb") as infile:
     pickle.dump(streamlines, f)
   print("done")
   
-  if n_streamlines_invalid == 0:
+  if n_streamlines_invalid == 0 and n_fibers_x > 1:
     print("output svg files: {}, {}, {}".format(svg_top_filename, svg_center_filename, svg_bottom_filename))
     
     paths = ["", "", ""]  # path strings for bottom, center, top

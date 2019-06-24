@@ -6,10 +6,10 @@ namespace SpatialDiscretization
 {
 
 template<typename FunctionSpaceType, typename QuadratureType, int nComponents>
-void FiniteElementMethodRhs<FunctionSpaceType, QuadratureType, nComponents, Equation::Static::LinearElasticity>::
+void FiniteElementMethodRhs<FunctionSpaceType, QuadratureType, nComponents, Equation::Static::LinearElasticityActiveStress>::
 setRightHandSide()
 {
-  LOG(TRACE) << "setRightHandSide";
+  LOG(TRACE) << "setRightHandSide LinearElasticityActiveStress";
 
   // compute rhs as f_La = -int sigma_ab * dphi_L(x)/dx_b dx
 
@@ -26,16 +26,26 @@ setRightHandSide()
             QuadratureDD::numberEvaluations()
           > EvaluationsArrayType;    // evaluations[nGP^D][nDofs][nDofs]
 
-  // initialize variables
+  // get shortcuts to variables
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> rightHandSide = this->data_.rightHandSide();
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents*nComponents>> activeStress = this->data_.activeStress();
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> rightHandSideActive = this->data_.rightHandSideActive();
 
+  assert(activeStress != nullptr);
 
   std::shared_ptr<FunctionSpaceType> functionSpace = this->data_.functionSpace();
 
   // merge local changes on the partitioned vector
+  rightHandSide->zeroEntries();
   rightHandSide->setRepresentationGlobal();
   rightHandSide->startGhostManipulation();
+
+  if (rightHandSideActive)
+  {
+    rightHandSideActive->zeroEntries();
+    rightHandSideActive->setRepresentationGlobal();
+    rightHandSideActive->startGhostManipulation();
+  }
 
   // setup arrays used for integration
   std::array<std::array<double,D>, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
@@ -72,17 +82,16 @@ setRightHandSide()
       // loop over dofs of element (index L in formula)
       for (int dofIndexL = 0; dofIndexL < nDofsPerElement; dofIndexL++)
       {
-        dof_no_t dofNoLocal = dofNosLocal[dofIndexL];
-
         // compute grad phi with respect to world space
         VecD<D> gradPhiWorldSpace = inverseJacobian * gradPhiParameterSpace[dofIndexL];
 
+        // compute entry f_active_La = int_Omega σ_ab ∂phi_L/∂x_b
         for (int a = 0; a < D; a++)
         {
           double entryLa = 0;
           for (int b = 0; b < D; b++)
           {
-            double sigma_ab = activeStressValues[a*D + b];
+            double sigma_ab = activeStressValues[dofIndexL][a*D + b];
             entryLa += gradPhiWorldSpace[b] * sigma_ab;
           }
           evaluationsArray[samplingPointIndex][dofIndexL*nComponents + a] = entryLa * integrationFactor;
@@ -101,13 +110,19 @@ setRightHandSide()
       {
         double value = -integratedValues[dofIndexL*nComponents + componentNo];
 
+        LOG(DEBUG) << "rhs, dof " << dofNosLocal[dofIndexL] << ", component " << componentNo << ", add value " << value;
         rightHandSide->setValue(componentNo, dofNosLocal[dofIndexL], value, ADD_VALUES);
+        if(rightHandSideActive)
+          rightHandSideActive->setValue(componentNo, dofNosLocal[dofIndexL], value, ADD_VALUES);
       }
     } // index L
   }  // elementNoLocal
 
   // merge local changes on the vector, parallel assembly
   rightHandSide->finishGhostManipulation();
+  if (rightHandSideActive)
+    rightHandSideActive->finishGhostManipulation();
+  LOG(DEBUG) << "set rhs: " << *rightHandSide;
 
 }
 

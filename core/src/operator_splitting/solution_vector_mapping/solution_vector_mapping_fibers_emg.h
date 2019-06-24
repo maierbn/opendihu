@@ -22,14 +22,15 @@ class SolutionVectorMapping<
 >
 {
 public:
-  //! transfer the data from transferableSolutionData1 to transferableSolutionData2, as efficient as possible
+  //! transfer the data from transferableSolutionData1 to transferableSolutionData2, as efficient as possible, where there are multiple slots that could be transferred (e.g. at cellmlAdapter), use the one specified by transferSlotName
   static void transfer(const std::vector<std::vector<
                          std::pair<
                            std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunctionType>,nComponents1a>>, int, double>,   // <fieldVariableTypeStates,componentNoStates,prefactor>
                            std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunctionType>,nComponents1b>>, int>    // <fieldIariableIntermediates,componentNoIntermediates
                          >
                        >> &transferableSolutionData1,
-                       std::shared_ptr<FieldVariableType2> transferableSolutionData2);
+                       std::shared_ptr<FieldVariableType2> transferableSolutionData2,
+                       const std::string transferSlotName);
 };
 
 template<typename BasisFunctionType, typename FieldVariableType1, int nComponents2a, int nComponents2b>
@@ -44,14 +45,15 @@ class SolutionVectorMapping<
 >
 {
 public:
-  //! transfer the data from transferableSolutionData1 to transferableSolutionData2, as efficient as possible
+  //! transfer the data from transferableSolutionData1 to transferableSolutionData2, as efficient as possible, where there are multiple slots that could be transferred (e.g. at cellmlAdapter), use the one specified by transferSlotName
   static void transfer(std::shared_ptr<FieldVariableType1> transferableSolutionData1,
                        const std::vector<std::vector<
                          std::pair<
                            std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunctionType>,nComponents2a>>, int, double>,   // <fieldVariableTypeStates,componentNoStates,prefactor>
                            std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunctionType>,nComponents2b>>, int>    // <fieldIariableIntermediates,componentNoIntermediates
                          >
-                       >> &transferableSolutionData2);
+                       >> &transferableSolutionData2,
+                       const std::string transferSlotName);
 };
 
 #include "operator_splitting/solution_vector_mapping/solution_vector_mapping_fibers_emg.tpp"

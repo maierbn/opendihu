@@ -69,6 +69,8 @@ protected:
   std::string logKeyTransfer12_;  ///< key for logging of the duration of data transfer from timestepping 1 to 2
   std::string logKeyTransfer21_;  ///< key for logging of the duration of data transfer from timestepping 2 to 1
 
+  std::string transferSlotName_;  ///< some solver objects have multiple output slots, e.g. cellMLAdapter has intermediates and states as possible output values to use for further computation. transferSlotName select which one to use in the transfer of this operator splitting
+
   bool initialized_;               ///< if initialize() was already called
 };
 

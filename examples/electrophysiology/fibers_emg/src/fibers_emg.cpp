@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
         Control::MultipleInstances<
           TimeSteppingScheme::Heun<                   // fiber reaction term
             CellmlAdapter<
-              4, 9,
+              4, 9,  // nStates,nIntermediates: 57,1 = Shorten, 4,9 = Hodgkin Huxley
               FunctionSpace::FunctionSpace<
                 Mesh::StructuredDeformableOfDimension<1>,
                 BasisFunction::LagrangeOfOrder<1>

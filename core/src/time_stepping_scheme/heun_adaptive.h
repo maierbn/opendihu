@@ -13,22 +13,19 @@ namespace TimeSteppingScheme
 /** The adaptive method to perform calculation with Heun method
  */
 template<typename DiscretizableInTime>
-class HeunAdaptiv:
+class HeunAdaptive:
   public TimeSteppingExplicit<DiscretizableInTime>, public Runnable
 {
 public:
 
   //! constructor
-  HeunAdaptiv(DihuContext context);
+  HeunAdaptive(DihuContext context);
 
   //! advance simulation by the given time span [startTime_, endTime_] with given numberTimeSteps, data in solution is used, afterwards new data is in solution
   void advanceTimeSpan();
 
   //! run the simulation
   void run();
-
-  //! initialize the data object
-  virtual void initialize();
 
   //! Returns the current time passed in the simulation. Used to trigger rebalancing
   double currentHeunTime();
@@ -89,4 +86,4 @@ private:
 };
 }  // namespace
 
-#include "time_stepping_scheme/heun_adaptiv.tpp"
+#include "time_stepping_scheme/heun_adaptive.tpp"

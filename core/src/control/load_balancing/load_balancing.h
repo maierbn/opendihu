@@ -2,7 +2,7 @@
 
 #include "control/load_balancing/load_balancing_base.h"
 #include "operator_splitting/strang.h"
-#include "time_stepping_scheme/heun_adaptiv.h"
+#include "time_stepping_scheme/heun_adaptive.h"
 
 namespace Control
 {
@@ -24,10 +24,10 @@ public:
 template<typename CellMLAdapter, typename DiffusionTimeStepping>
 class LoadBalancing<
   OperatorSplitting::Strang<
-    TimeSteppingScheme::HeunAdaptiv<CellMLAdapter>,
+    TimeSteppingScheme::HeunAdaptive<CellMLAdapter>,
     DiffusionTimeStepping
   >> :
-public LoadBalancingBase<OperatorSplitting::Strang<TimeSteppingScheme::HeunAdaptiv<CellMLAdapter>,DiffusionTimeStepping>>
+public LoadBalancingBase<OperatorSplitting::Strang<TimeSteppingScheme::HeunAdaptive<CellMLAdapter>,DiffusionTimeStepping>>
 {
 public:
 
@@ -41,10 +41,10 @@ protected:
 
 private:
 
-  // Counter variable to keep track of rebalancing
+  // counter variable to keep track of rebalancing
   double rebalanceCounter_;
 
-  // Frequency of the rebalancing
+  // frequency of the rebalancing
   int rebalanceFrequency_;
 };
 

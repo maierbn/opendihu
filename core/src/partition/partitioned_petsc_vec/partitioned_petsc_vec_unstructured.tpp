@@ -178,7 +178,7 @@ setValues(int componentNo, PetscInt ni, const PetscInt ix[], const PetscScalar y
     // get value
     double value;
     ierr = VecGetValues(values_[componentNo], ni, ix, &value); CHKERRV(ierr);
-    LOG(DEBUG) << "retrieved value: " << value;
+    //LOG(DEBUG) << "retrieved value: " << value;
   }
 }
 

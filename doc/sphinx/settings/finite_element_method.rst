@@ -6,7 +6,7 @@ Description
 
 This class template is used to discretize the Laplace operator using the Finite Element Method. 
 It assembles stiffness and mass matrices and can call a solver for the Laplace or Poisson problem.
-Thus, it can be used directly to solve a Laplace or Poisson problem. Or it can be used in a timestepping scheme to solve a diffusion equation.
+Thus, it can be used directly to solve a Laplace or Poisson problem. It can also be used in a timestepping scheme to solve a diffusion equation.
 
 C++ instantiation
 -----------------
@@ -19,6 +19,17 @@ C++ instantiation
     /*Quadrature*/,
     /*Equation*/
   >
+
+Example:
+
+.. code-block:: c
+  
+  SpatialDiscretization::FiniteElementMethod<
+    Mesh::StructuredRegularFixedOfDimension<3>,
+    BasisFunction::LagrangeOfOrder<1>,
+    Quadrature::Gauss<3>,
+    Equation::Static::Laplace
+  >
   
 Mesh
 ^^^^^
@@ -26,7 +37,7 @@ The mesh to use for the discretization. This is one of
 
 * ``Mesh::StructuredRegularFixedOfDimension<D>``
 * ``Mesh::StructuredDeformableOfDimension<D>``
-* ``Mesh::UnstructuredDimension<D>``
+* ``Mesh::UnstructuredDeformableOfDimension<D>``
 
 where ``D`` is either ``1``, ``2`` or ``3``. See :doc:`/settings/mesh` for details.
 

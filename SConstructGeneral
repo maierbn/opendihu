@@ -183,14 +183,13 @@ if env["BUILD_TYPE"] == "debug":
   variant_dir = os.path.join(path_where_to_call_sconscript,"build_debug")           # output folder for build
   if socket.gethostname() != 'cmcs09':
     env.MergeFlags('-ftemplate-backtrace-limit=0 -fstack-check')
-    if not env["USE_MEGAMOL"]:
-      env.MergeFlags('-Werror')
     env.MergeFlags('-Wall -Wpedantic -Wno-sign-compare -Wno-error=sign-compare')
     env.MergeFlags('-DDEBUG -ggdb3 -g3 -Og -pg  -DELPP_FEATURE_CRASH_LOG')   # gcc flags, will be sorted automatically into linker and compiler flags
   else: # using pgi compiler here:
     env.MergeFlags('-O0 -g -ta=host,tesla:cc60,time -Minfo=accel -noswitcherror -std=c++14 -DELPP_FEATURE_CRASH_LOG -laccg -laccapi -laccn -laccg2 -lcudadevice')
-    if not env["USE_MEGAMOL"]:
-      env.MergeFlags('-Werror')
+    env.MergeFlags('-DDEBUG')
+  if not env["USE_MEGAMOL"]:
+    env.MergeFlags('-Werror')
   env.Append(LIBPATH = [os.path.join(opendihu_home, 'core/build_debug')])   # add debug version of opendihu library
   env.Prepend(LIBS = ['opendihud'])
 
@@ -211,14 +210,14 @@ else:
   variant_dir = os.path.join(path_where_to_call_sconscript,'build_release')         # output folder for build
   env.Append(LIBPATH = [os.path.join(opendihu_home, 'core/build_release')])   # add release version of opendihu library
   env.Prepend(LIBS = ['opendihu'])
-  if socket.gethostname() != 'cmcs09':
-    env.MergeFlags('-DELPP_DISABLE_DEBUG_LOGS -DELPP_DISABLE_VERBOSE_LOGS -DELPP_DISABLE_TRACE_LOGS -DNDEBUG')
+  if socket.gethostname() == 'cmcs09':
+    env.MergeFlags('-DNDEBUG')
   else:
-    env.MergeFlags('-DDEBUG')  
+    env.MergeFlags('-DELPP_DISABLE_DEBUG_LOGS -DELPP_DISABLE_VERBOSE_LOGS -DELPP_DISABLE_TRACE_LOGS -DNDEBUG')
   if os.environ.get("PE_ENV") == "CRAY":
     env.MergeFlags('-O3')   # fastest with cray (same performance as -02)
   elif socket.gethostname() == 'cmcs09':
-    env.MergeFlags('-g -O0 -noswitcherror -std=c++14 -acc -ta=host,tesla:managed,cc35,cc60,time,cuda10.0 -laccg -laccapi -laccn -laccg2 -lcudadevice')
+    env.MergeFlags('-g -O3 -fastsse -Mvect=simd -noswitcherror -std=c++14 -acc -ta=host,tesla:managed,cc35,cc60,time,cuda10.0 -laccg -laccapi -laccn -laccg2 -lcudadevice')
     #env.MergeFlags('-fastsse -g -noswitcherror -std=c++14 -Mvect=simd -acc -ta=host,tesla:cc60,time -Minfo=accel -laccg -laccapi -laccn -laccg2 -lcudadevice')
     #env.MergeFlags('-g -noswitcherror -std=c++14') # managed,
   else:

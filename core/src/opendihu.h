@@ -27,10 +27,12 @@
 #include "time_stepping_scheme/explicit_euler.h"
 #include "time_stepping_scheme/implicit_euler.h"
 #include "time_stepping_scheme/heun.h"
+#include "time_stepping_scheme/heun_adaptive.h"
+
 #include "specialized_solver/multidomain_solver.h"
 #include "specialized_solver/static_bidomain_solver.h"
 #include "specialized_solver/quasi_static_linear_elasticity_solver.h"
-#include "time_stepping_scheme/heun_adaptive.h"
+#include "specialized_solver/reaction_diffusion_accelerator.h"
 
 #include "spatial_discretization/finite_element_method/05_time_stepping.h"
 

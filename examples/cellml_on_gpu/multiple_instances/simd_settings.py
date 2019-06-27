@@ -16,13 +16,13 @@ xdata = []
 gamma_data = []
 vm_data = []
 
-It_value=7
+It_value=2
 tsw=0.001*pow(2,1-It_value)
 et=0.001#1.0
 opiv=1*pow(2,It_value-2)
 hrciv=opiv
-ElemNo=200
-
+ElemNo=3946000-1
+# ohne GPU geht auch das grob 2-fache (8.000.000)
 
 config = {
   "disablePrinting": False,
@@ -43,7 +43,8 @@ config = {
 
     "CellML" : {
       "sourceFilename": "cellml_rhs.c",
-      "compilerFlags": "-fPIC -shared -acc -fastsse",
+      #"openmpClause": "ivdep nodepchk safeptr",
+      "compilerFlags": "-fPIC -shared -Minfo -Msafeptr",# -acc -fastsse", -Mvect=nosimd
       "simdSourceFilename" : "simdcode.cpp",
       "setParametersFunction": setParameters,
       "setParametersCallInterval": 1,

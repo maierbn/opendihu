@@ -1,9 +1,9 @@
 # CellML debug
     
-#import numpy as np
-#import matplotlib 
-#matplotlib.use('Agg')
-#import matplotlib.pyplot as plt
+import numpy as np
+import matplotlib 
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 
 def setParameters(n_instances, time_step_no, current_time, parameters, *additional_parameters):
   
@@ -17,13 +17,15 @@ xdata = []
 gamma_data = []
 vm_data = []
 
-It_value=7
+It_value=4
 tsw=0.001*pow(2,1-It_value)
 et=0.001#1.0
 opiv=1*pow(2,It_value-2)
 hrciv=opiv
-ElemNo=10
-
+ElemNo=tobereplaced-1
+# 7700 als kleinste Einhiet. --> 7700 *2^i --> i=9:  3942400
+# ElemNo maximal ca  3.946.250 auf device 0
+# ElemNo maximal ca  7.892.500 auf device 1 (doppelt so viel)
 
 config = {
   "disablePrinting": False,
@@ -48,14 +50,9 @@ config = {
       "deviceNumber": "0",
       "openaccClause": "kernels",
       "sourceFilename": "cellml_rhs.c",
-      #"compilerFlags": "-fPIC -shared -acc -fastsse",
       # use "gpuSourceFilename" if you want gpu offloading
-      "compilerFlags": "-fPIC -ta=host,tesla:cc35,cc60,time,cuda10.0 -shared -acc -I/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/include",# -Minfo=accel",
-      #"openaccClause": "kernels",managed,
-      #"gpuSourceFilename": "gpucodedata.c",
+      "compilerFlags": "-fPIC -ta=host,tesla:managed:cc35,cc60,time,cuda10.0 -shared -acc -I/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/include",# -Minfo=accel",
       "gpuSourceFilename": "gpucodekernels.c",
-      # use "simdSourceFilename" if you want to use simd (might be default..?!)
-      #"simdSourceFilename" : "simdcode.cpp",
       # use "libraryFilename" if you want to use existing library, needs ("useGivenLibrary": True,) as well
       #"libraryFilename": "lib/cellml_rhs_101.so", 
       #"useGivenLibrary":True,

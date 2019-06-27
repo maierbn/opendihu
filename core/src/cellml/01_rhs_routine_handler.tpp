@@ -64,10 +64,8 @@ initializeRhsRoutine()
       {
         LOG(ERROR) << "You need to compile and run opendihu with an openACC compatible compiler like from PGI.";
       }
-      // todo: would like to check whether source File "gpuSourceFilename" already is a matching one.
-      //
 
-      // file does not exist yet or is not a matching one. create one.
+      // create source file with gpu-ization enabled
       if (!createGPUSourceFile(gpuSourceFilename))
       {
          LOG(ERROR) << "Could not create a gpu version for CellML RHS.";
@@ -76,35 +74,23 @@ initializeRhsRoutine()
  //"-fPIC -fopenmp -finstrument-functions -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared "
       std::string compilerFlags = this->specificSettings_.getOptionString("compilerFlags", "-fPIC -ta=host,tesla,time -shared -acc -Minfo"); // Note: it seems, we need shared to compile library, but not to build executable
 
-#ifdef NDEBUG
       std::stringstream s;
-//      if ( this->specificSettings_.hasKey("deviceNumber") || this->specificSettings_.hasKey("gpuSourceFilename") )
-//      {
-//        if ( atoi(this->specificSettings_.getOptionString("deviceNumber","-2").c_str()) == -1 )
-//        {
+#ifdef NDEBUG
       std::string mpi_c_compiler = MPI_C_COMPILER_COMMAND;
       if (mpi_c_compiler.find("c++") != std::string::npos )
+      {
         LOG(ERROR) << "You cannot use \"" << mpi_c_compiler.c_str() << "\" as a compile command for CellML modules. Use \"mpicc\" instead!";
-      s << MPI_C_COMPILER_COMMAND << " -g " << compilerFlags << " "; // TODO: " -fast " statt -g
-      LOG(WARNING) << "Compiling CellML right hand side with \'-g\'.";
-//        }
-//      }
-//      else
-//        s << C_COMPILER_COMMAND << " -fast " << compilerFlags << " ";
-      compileCommandOptions = s.str();
+      }
+#ifndef __PGI
+      LOG(ERROR) << "You need the PGI compiler to make use of GPU-ization.";
 #else
-      std::stringstream s;
-//      if (this->specificSettings_.hasKey("deviceNumber"))
-//      { // deviceNumber speciefied. if ==-1, then we need mpicc
-//        if (atoi(this->specificSettings_.getOptionString("deviceNumber","-2").c_str()) == -1)
-//        {
-      s << MPI_C_COMPILER_COMMAND << " -O0 -g " << compilerFlags << " ";
-//        }
-//      }
-//      else
-//        s << C_COMPILER_COMMAND << " -O0 -g " << compilerFlags << " ";
-      compileCommandOptions = s.str();
+      s << MPI_C_COMPILER_COMMAND << " -O3 " << compilerFlags << " ";
 #endif
+      //LOG(WARNING) << "Compiling CellML right hand side with \'-g\'.";
+#else
+      s << MPI_C_COMPILER_COMMAND << " -O0 -g " << compilerFlags << " ";
+#endif
+      compileCommandOptions = s.str();
     }
     else // use simd version if there was no simd- or gpu- sourceFilename key specified at all in python config.
     {
@@ -125,18 +111,30 @@ initializeRhsRoutine()
       // load compiler flags     
       std::string compilerFlags = this->specificSettings_.getOptionString("compilerFlags", "-fPIC -finstrument-functions -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared ");
 
+      std::stringstream s;
 #ifdef NDEBUG
+// RELEASE MODE
+#ifndef __PGI
+  // RELEASE & NORMAL GCC MODE
       // other possible options
       // -fopt-info-vec-missed=vectorizer_missed.log
       // -fopt-info-vec-all=vectorizer_all.log
-      std::stringstream s;
       s << C_COMPILER_COMMAND << " -O3 " << compilerFlags << " ";
-      compileCommandOptions = s.str();
 #else
-      std::stringstream s;
-      s << C_COMPILER_COMMAND << " -O0 -ggdb " << compilerFlags << " ";
-      compileCommandOptions = s.str();
+  // RELEASE & PGI MODE
+      s << C_COMPILER_COMMAND << " -O3 -fastsse " << compilerFlags << " ";
 #endif
+#else
+// DEBUG MODE
+#ifndef __PGI
+  // DEBUG & NORMAL GCC MODE
+      s << C_COMPILER_COMMAND << " -O0 -ggdb " << compilerFlags << " ";
+#else
+  // DEBUG & PGI MODE
+      s << C_COMPILER_COMMAND << " -O0 -g " << compilerFlags << " ";
+#endif
+#endif
+      compileCommandOptions = s.str();
     }
     // compile source file to a library
     std::stringstream s;
@@ -389,6 +387,7 @@ bool RhsRoutineHandler<nStates,FunctionSpaceType>::
 createSimdSourceFile(std::string &simdSourceFilename)
 {
   // This method can handle two different types of input c files: from OpenCMISS and from OpenCOR
+  // Method creates simdSourceFile for a freely choosable but fix number of instances and sets name of string simdSourceFilename
 
   // input source filename is this->sourceFilename_
   bool inputFileTypeOpenCMISS = true;   //< if the input file that is being parsed is from OpenCMISS and not from OpenCOR
@@ -397,8 +396,25 @@ createSimdSourceFile(std::string &simdSourceFilename)
   std::ifstream sourceFile(this->sourceFilename_.c_str());
   if (!sourceFile.is_open())
   {
-    LOG(ERROR) << "Could not open source file \"" << this->sourceFilename_<< "\" for reading!";
-    return false;
+    if (this->sourceFilename_ == "" && this->specificSettings_.hasKey("simdSourceFilename"))
+    { // no sourceFile given but a simdSourceFile. --> assuming this file to be valid. take and return
+      simdSourceFilename = this->specificSettings_.getOptionString("simdSourceFilename", "");
+      if (simdSourceFilename == "")
+      {
+        LOG(ERROR) << "You did not specify a \"sourceFile\" but a \"simdSourceFile\", which has no name!";
+        return false;
+      }
+      else
+      {
+        LOG(WARNING) << "You did not specify a \"sourceFile\" but a \"simdSourceFile\". Assuming this to be valid.";
+        return true;
+      }
+    }
+    else
+    {
+      LOG(ERROR) << "Could not open source file \"" << this->sourceFilename_<< "\" for reading!";
+      return false;
+    }
   }
   else
   {
@@ -406,11 +422,14 @@ createSimdSourceFile(std::string &simdSourceFilename)
     std::stringstream source;
     source << sourceFile.rdbuf();
     sourceFile.close();
-
     bool discardOpenBrace = false;   // if the next line consisting of only "{" should be discarded
     std::stringstream simdSource;
+    int nInterimRes = 0;
+    //  necess..     // openmpClause might only be useful when using PGI (defines environment variable '__PGI')
+    //    ..ary?     std::string openmpClause = this->specificSettings_.getOptionString("openmpClause", ""); // the user might provide additional compiler directives through the python key "openmpClause"
 
-    simdSource << "#include <math.h>" << std::endl;
+    simdSource << "#include <math.h>" << std::endl;    // to ensure this is included. if already there, the later ones will not be written.
+    simdSource << "#include <stdlib.h>" << std::endl;  // to use malloc()
 
     // step through lines and create simd source file
     while(!source.eof())
@@ -436,10 +455,12 @@ createSimdSourceFile(std::string &simdSourceFilename)
       {
         size_t pos = line.find("ALGEBRAIC[");
         size_t posStart = line.find("[", pos)+1;
-        size_t posEnd = line.find("]", posStart);
-        int algebraicSize = atoi(line.substr(posStart).c_str());
-
-        simdSource << line.substr(0, posStart) << algebraicSize * this->nInstances_ << line.substr(posEnd) << std::endl;
+        nInterimRes = atoi(line.substr(posStart).c_str());
+        int constantsSize = atoi(line.substr(line.find("[")+1).c_str());
+  
+        simdSource << "double * CONSTANTS, * interimRes;" << std::endl;
+        simdSource << "CONSTANTS = (double *) malloc(sizeof(double)*" << constantsSize << ");" << std::endl;
+        simdSource << "interimRes = (double *) malloc(sizeof(double)*" << nInterimRes * this->nInstances_ << ");" << std::endl; //!
       }
       else if (line.find("initConsts") != std::string::npos)
       {
@@ -475,21 +496,21 @@ createSimdSourceFile(std::string &simdSourceFilename)
           return true;
         }
         else if (line.find("void computeGPUCellMLRightHandSide") != std::string::npos)
-	{
-	  LOG(WARNING) << "The given source file \"" << this->sourceFilename_<< "\" is ment for GPU-ization, not for SIMD-usage. "
-	    << "Use the option \"gpuSourceFilename\" instead.";
-	  return false;
-	}
+  {
+    LOG(WARNING) << "The given source file \"" << this->sourceFilename_<< "\" is ment for GPU-ization, not for SIMD-usage. "
+      << "Use the option \"gpuSourceFilename\" instead.";
+    return false;
+  }
 
         auto t = std::time(nullptr);
         auto tm = *std::localtime(&t);
         simdSource << std::endl << "/* This function was created by opendihu at " << StringUtility::timeToString(&tm)  //std::put_time(&tm, "%d/%m/%Y %H:%M:%S")
           << ".\n * It is designed for " << this->nInstances_ << " instances of the CellML problem. */" << std::endl
           << "void computeCellMLRightHandSide("
-          << "void *context, double t, double *states, double *rates, double *algebraics, double *parameters)" << std::endl << "{" << std::endl;
+          << "void *context, double t, double *states, double *rates, double *intermediates, double *parameters)" << std::endl << "{" << std::endl;
         discardOpenBrace = true;
 
-        simdSource << "  double VOI = t;   /* current simulation time */" << std::endl;
+        simdSource << "//  double VOI = t;   /* current simulation time */" << std::endl;
         if (!inputFileTypeOpenCMISS)
         {
           simdSource << std::endl << "  /* define constants */" << std::endl
@@ -499,7 +520,7 @@ createSimdSourceFile(std::string &simdSourceFilename)
             simdSource << "  " << constantAssignmentsLine << std::endl;
           }
           simdSource << std::endl
-            << "  double ALGEBRAIC[" << this->nIntermediates_*this->nInstances_ << "];  "
+            << "  double interimRes[" << this->nIntermediates_*this->nInstances_ << "];  "
             << "  /* " << this->nIntermediates_ << " per instance * " << this->nInstances_ << " instances */ " << std::endl;
         }
       }
@@ -537,8 +558,8 @@ createSimdSourceFile(std::string &simdSourceFilename)
           size_t posVariable = std::min({
             line.find("OC_STATE", currentPos),    // states
             line.find("OC_RATE", currentPos),     // rates
-            line.find("ALGEBRAIC", currentPos),   // algebraics
-            line.find("OC_WANTED", currentPos),   // algebraics
+            line.find("ALGEBRAIC", currentPos),   // interimRes
+            line.find("OC_WANTED", currentPos),   // intermediates
             line.find("OC_KNOWN", currentPos),    // parameters
             line.find("STATES", currentPos),      // states
             line.find("RATES", currentPos),       // rates
@@ -558,10 +579,12 @@ createSimdSourceFile(std::string &simdSourceFilename)
               entry.code = "states";
             else if (entry.code == "OC_RATE" || entry.code == "RATES")
               entry.code = "rates";
-            else if (entry.code == "ALGEBRAIC" || entry.code == "OC_WANTED")
-              entry.code = "algebraics";
+            else if (entry.code == "OC_WANTED") 
+              entry.code = "intermediates";
             else if (entry.code == "OC_KNOWN")
               entry.code = "parameters";
+            else if (entry.code == "ALGEBRAIC")
+              entry.code = "interimRes";
 
             // extract array index
             entry.arrayIndex = atoi(line.substr(posBracket+1).c_str());
@@ -579,13 +602,14 @@ createSimdSourceFile(std::string &simdSourceFilename)
             }
 
             // check if this is an assignment to a algebraic value that is actually an explicit parameter (set by parametersUsedAsIntermediate)
-            if (entry.code == "algebraics" && i == 0)
+            if (entry.code == "algebraics" && i == 0) // TODO das muss angepasst werden
             {
               isExplicitParameter = false;
               for (int parameterUsedAsIntermediate : this->parametersUsedAsIntermediate_)
               {
                 if (entry.arrayIndex == parameterUsedAsIntermediate)
                 {
+                  LOG(WARNING) << "In CellmlAdapter, createGPUSourceFile: \"parametersUsedAsIntermediate\" might not be treated properly!";
                   isExplicitParameter = true;
                   break;
                 }
@@ -596,13 +620,14 @@ createSimdSourceFile(std::string &simdSourceFilename)
             }
 
             // replace algebraic by parameter if it is an explicit parameter set by parametersUsedAsIntermediate
-            if (entry.code == "algebraics")
+            if (entry.code == "algebraics") // TODO das muss angepasst werden
             {
               // loop over all parametersUsedAsIntermediate_
               for (int j = 0; j < this->parametersUsedAsIntermediate_.size(); j++)
               {
                 if (entry.arrayIndex == this->parametersUsedAsIntermediate_[j])
                 {
+                  LOG(WARNING) << "In CellmlAdapter, createGPUSourceFile: \"parametersUsedAsIntermediate\" might not be treated properly!";
                   entry.code = "parameters";
                   entry.arrayIndex = j;
                   break;
@@ -618,6 +643,7 @@ createSimdSourceFile(std::string &simdSourceFilename)
               {
                 if (entry.arrayIndex == this->parametersUsedAsConstant_[j])
                 {
+                  LOG(WARNING) << "In CellmlAdapter, createGPUSourceFile: \"parametersUsedAsIntermediate\" might not be treated properly!";
                   entry.code = "parameters";
                   entry.arrayIndex = this->parametersUsedAsIntermediate_.size() + j;
                   break;
@@ -651,7 +677,7 @@ createSimdSourceFile(std::string &simdSourceFilename)
         {
           simdSource << std::endl
             << "#ifndef TEST_WITHOUT_PRAGMAS" << std::endl
-            << "  #pragma omp for simd" << std::endl
+            << "  #pragma omp for simd " << std::endl // << openmpClause
             << "#endif" << std::endl
             << "  for (int i = 0; i < " << this->nInstances_ << "; i++)" << std::endl
             << "  {" << std::endl
@@ -684,6 +710,14 @@ createSimdSourceFile(std::string &simdSourceFilename)
           }
           simdSource << std::endl << "  }" << std::endl;
         }
+      }
+      else if (line.find("extern") != std::string::npos)
+      {
+        // gpuSource << "/* " << line << " */" << std::endl;
+      }
+      else if (line.find("math.h") != std::string::npos)
+      {
+        //
       }
       // every other line
       else
@@ -773,11 +807,13 @@ createGPUSourceFile(std::string &gpuSourceFilename)
     bool openaccRegionOpen = false;
     std::string parallelString = "parallel ";
     int nInterimRes = 0;
+    std::string openaccDivision;
     
     gpuSource << "#include <math.h>" << std::endl;    // to ensure this is included. if already there, the later ones will not be written.
     gpuSource << "#include <openacc.h>" << std::endl; // to be able to change gpu device to something else than '0'.
-    gpuSource << "#include <mpi.h>" << std::endl;     // to get own rank number for offload device spreading in case of MPI
+    gpuSource << "#include <mpi.h>" << std::endl;     // to get own rank number for offload device spreading in case of MPI+X
     gpuSource << "#include <unistd.h>" << std::endl;     // temporär
+    gpuSource << "#include <stdlib.h>" << std::endl;  // to use malloc()
    
     // step through lines and create simd source file
     while(!source.eof())
@@ -803,11 +839,12 @@ createGPUSourceFile(std::string &gpuSourceFilename)
       {
         size_t pos = line.find("ALGEBRAIC[");
         size_t posStart = line.find("[", pos)+1;
-        size_t posEnd = line.find("]", posStart);
-        int algebraicSize = atoi(line.substr(posStart).c_str());
-        nInterimRes = algebraicSize;
-
-        gpuSource << line.substr(0, posStart-10) << "interimRes[" << algebraicSize * this->nInstances_ << line.substr(posEnd) << std::endl;
+        nInterimRes = atoi(line.substr(posStart).c_str());
+        int constantsSize = atoi(line.substr(line.find("[")+1).c_str());
+  
+        gpuSource << "double * CONSTANTS, * interimRes;" << std::endl;
+        gpuSource << "CONSTANTS = (double *) malloc(sizeof(double)*" << constantsSize << ");" << std::endl;
+        gpuSource << "interimRes = (double *) malloc(sizeof(double)*" << nInterimRes * this->nInstances_ << ");" << std::endl; //!
       }
       else if (line.find("initConsts") != std::string::npos)
       {
@@ -819,7 +856,7 @@ createGPUSourceFile(std::string &gpuSourceFilename)
         constantAssignments_.push_back(line);
         gpuSource << line << std::endl;
       }
-      else if (line.find("void computeVariables") != std::string::npos) // SINN?
+      else if (line.find("void computeVariables") != std::string::npos)
       {
         gpuSource << std::endl;
         break;
@@ -852,42 +889,61 @@ createGPUSourceFile(std::string &gpuSourceFilename)
 
         auto t = std::time(nullptr);
         auto tm = *std::localtime(&t);
-        gpuSource << std::endl << "/* This function was created by opendihu at " <<  StringUtility::timeToString(&tm)   //std::put_time(&tm, "%d/%m/%Y %H:%M:%S")
+        gpuSource << std::endl << "/* This function was created by opendihu at " <<  StringUtility::timeToString(&tm)  //std::put_time(&tm, "%d/%m/%Y %H:%M:%S")
           << ".\n * It is designed for " << this->nInstances_ << " instances of the CellML problem. */" << std::endl
           << "void computeGPUCellMLRightHandSide("
-          << "void *context, double t, double *states, double *rates, double *intermediates, double *parameters)" << std::endl << "{" << std::endl; // << "#pragma omp target" << std::endl << "{" << std::endl;
+          << "void *context, double t, double *states, double *rates, double *intermediates, double *parameters)" << std::endl << "{" << std::endl;
         discardOpenBrace = true;
-        
+
         // the user shall be able to choose the offloading device. Or if in MPI mode, choose different devices.
-       /* gpuSource << "" << std::endl;
-        gpuSource << "    int iii = 0;" << std::endl;
-        gpuSource << "    //char hostname[256];" << std::endl;
-        gpuSource << "    //gethostname(hostname, sizeof(hostname));" << std::endl;
-        gpuSource << "    printf(\"Ready for attach \\n\");" << std::endl;
-        gpuSource << "    fflush(stdout);" << std::endl;
-        gpuSource << "    while (0 == iii)" << std::endl;
-        gpuSource << "    {" << std::endl;
-        gpuSource << "       sleep(5);" << std::endl;
-        gpuSource << "    }" << std::endl;
-        gpuSource << "" << std::endl;*/
         if (this->specificSettings_.hasKey("deviceNumber"))
         { 
+          // möglich soll sein:
+          // | fixe Auswahl: x in {'0', '1', ...}
+          //   dann überprüfen, ob überhaupt zulässig:
+          //   * kompile-Zeit  x > 0           ?
+          //   * runtime       x <= numDevices ?
+          // | MPI+X: x = '-1'
+          //   verteilen der Prozesse auf vorhandene GPUs
           int deviceNumberByUser = atoi(this->specificSettings_.getOptionString("deviceNumber","0").c_str());
-          gpuSource << "  int numDevices = acc_get_num_devices( acc_device_nvidia );" << std::endl;
-          gpuSource << "  if ( " << deviceNumberByUser << " <= numDevices && " << deviceNumberByUser <<" >= 0 )" << std::endl;
-          gpuSource << "  {" << std::endl;
-          gpuSource << "    acc_set_device_num( " << deviceNumberByUser << ", acc_device_nvidia );" << std::endl;
-          gpuSource << "  }" << std::endl;
-          gpuSource << "  else if ( " << deviceNumberByUser << " == -1 ) // MPI: spread available GPUs among the MPI ranks:" << std::endl;
-          gpuSource << "  {" << std::endl;
-          gpuSource << "     int myrank;" << std::endl;
-          gpuSource << "     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);" << std::endl;
-          gpuSource << "     int devID = myrank % numDevices;" << std::endl;
-          gpuSource << "     acc_set_device_num(devID, acc_device_nvidia);" << std::endl;
-          gpuSource << "  }" << std::endl;
-          
+          if (deviceNumberByUser >= 0)
+          {
+            gpuSource << "  int numDevices = acc_get_num_devices( acc_device_nvidia );" << std::endl;
+            gpuSource << "  if( numDevices )" << std::endl;
+            gpuSource << "  {" << std::endl;
+            gpuSource << "    if ( " << deviceNumberByUser << " < numDevices )" << std::endl;
+            gpuSource << "    {" << std::endl;
+            gpuSource << "      acc_set_device_num( " << deviceNumberByUser << ", acc_device_nvidia );" << std::endl;
+            gpuSource << "    }" << std::endl;
+            //                else case is an error. let openACC handle this one..
+            //gpuSource << "    else" << std::endl;
+            //gpuSource << "    {" << std::endl;
+            //gpuSource << "    }" << std::endl;
+            gpuSource << "  }" << std::endl;
+            gpuSource << "  else" << std::endl;
+            gpuSource << "  {     /* no NVIDIA GPUs available */" << std::endl;
+            gpuSource << "    acc_set_device_type( acc_device_host);" << std::endl;
+            gpuSource << "  }" << std::endl;
+          }
+          else if (deviceNumberByUser == -1 )
+          { 
+            gpuSource << "  int rank=0;" << std::endl;
+            gpuSource << "  MPI_Comm_rank( MPI_COMM_WORLD, &rank );" << std::endl;
+            gpuSource << "  int numDevices = acc_get_num_devices( acc_device_nvidia );" << std::endl;
+            gpuSource << "  if( numDevices )" << std::endl;
+            gpuSource << "  {" << std::endl;
+            gpuSource << "    int gpuNumber = rank % numDevices;" << std::endl;
+            gpuSource << "    acc_set_device_num( gpuNumber, acc_device_nvidia );" << std::endl;
+            gpuSource << "  }" << std::endl;
+            gpuSource << "  else" << std::endl;
+            gpuSource << "  {     /* no NVIDIA GPUs available */" << std::endl;
+            gpuSource << "    acc_set_device_type( acc_device_host);" << std::endl;
+            gpuSource << "  }" << std::endl;
+          }
+          else
+          { LOG(ERROR) << "The value deviceNumber specified in python settings has to fit your hardware, or be '-1' to try MPI+X. You specified: " << this->specificSettings_.getOptionString("deviceNumber","0").c_str();}
         }
-                
+
         gpuSource << "//  double VOI = t;   /* current simulation time */" << std::endl; // out commented, since never used
         if (!inputFileTypeOpenCMISS)
         {
@@ -958,10 +1014,10 @@ createGPUSourceFile(std::string &gpuSourceFilename)
             else if (entry.code == "OC_RATE" || entry.code == "RATES")
               entry.code = "rates";
             else if (entry.code == "OC_WANTED") 
-              entry.code = "intermediates";    // rename OC_WANTED to intermediates not algebraics!!
+              entry.code = "intermediates";
             else if (entry.code == "OC_KNOWN")
               entry.code = "parameters";
-            else if (entry.code == "ALGEBRAIC") //  ALGEBRAIC are NOT input but necessary interim results!!
+            else if (entry.code == "ALGEBRAIC")
               entry.code = "interimRes";
 
             // extract array index
@@ -980,7 +1036,7 @@ createGPUSourceFile(std::string &gpuSourceFilename)
             }
 
             // check if this is an assignment to a algebraic value that is actually an explicit parameter (set by parametersUsedAsIntermediate)
-            if (entry.code == "intermediates" && i == 0) // TODO das muss angepasst werden
+            if (entry.code == "algebraics" && i == 0) // TODO das muss angepasst werden
             {
               isExplicitParameter = false;
               for (int parameterUsedAsIntermediate : this->parametersUsedAsIntermediate_)
@@ -1052,11 +1108,12 @@ createGPUSourceFile(std::string &gpuSourceFilename)
             << "  /* " << line << "*/" << std::endl;
         }
         else
-        {
+        { 
           if (firstForLoop)
           { if (this->specificSettings_.hasKey("openaccClause"))
             {
               std::string openaccClause = this->specificSettings_.getOptionString("openaccClause", "");
+              openaccDivision = this->specificSettings_.getOptionString("openaccDivision", "");
               std:: string dataMovement("");
               if (openaccClause.find("kernels") != std::string::npos)
               {
@@ -1064,7 +1121,7 @@ createGPUSourceFile(std::string &gpuSourceFilename)
                 parallelString = ""; 
               }
               else if (openaccClause.find("data") != std::string::npos)
-              { // TODO this->nInstances_
+              {
                 dataMovement = " copyin(parameters[0:" + std::to_string(this->nInstances_*this->nParameters_)
                              + "],states[0:" + std::to_string(this->nInstances_*nStates)
                              + "],CONSTANTS[0:" + std::to_string(this->nConstants_)
@@ -1078,7 +1135,7 @@ createGPUSourceFile(std::string &gpuSourceFilename)
             }
             firstForLoop = false;
           }
-          gpuSource << std::endl << "#pragma acc "<< parallelString << "loop independent" << std::endl << "  for (int i = 0; i < " << this->nInstances_ << "; i++)" << std::endl
+          gpuSource << std::endl << "#pragma acc "<< parallelString << "loop independent "<< openaccDivision << std::endl << "  for (int i = 0; i < " << this->nInstances_ << "; i++)" << std::endl
           << "  {" << std::endl << "    ";
 
           VLOG(2) << "parsed " << entries.size() << " entries";
@@ -1144,6 +1201,13 @@ createGPUSourceFile(std::string &gpuSourceFilename)
     {
       gpuSourceFilename = this->specificSettings_.getOptionString("gpuSourceFilename", "");
     }
+
+    // add .rankNoWorldCommunicator to gpu source filename
+    s.str("");
+    // get the global rank no, needed for the output filenames
+    int rankNoWorldCommunicator = DihuContext::ownRankNoCommWorld();
+    s << gpuSourceFilename << "." << rankNoWorldCommunicator << ".c";  // .c suffix is needed such that cray compiler knowns that it is c code
+    gpuSourceFilename = s.str();
 
     std::ofstream gpuSourceFile;
     OutputWriter::Generic::openFile(gpuSourceFile, gpuSourceFilename.c_str());
@@ -1220,9 +1284,11 @@ scanSourceFile(std::string sourceFilename, std::array<double,nStates> &statesIni
         else if (variableName == "OC_KNOWN")
         {
           // store initial value for parameter
-          if (this->parameters_.size() < index+1)
+          if (this->parameters_.size() < index+1 )
           {
-            this->parameters_.resize(index+1);
+            this->parameters_.resize( index+1 );
+            // and reset nParameters_ 
+            this->nParameters_ = std::max( this->nParameters_, (int) index+1 );
           }
           this->parameters_[index] = value;
         }
@@ -1250,9 +1316,26 @@ scanSourceFile(std::string sourceFilename, std::array<double,nStates> &statesIni
         statesInitialValues[index] = value;
       }
       else if (line.find("ALGEBRAIC[") == 0)  // assignment to an algebraic variable in both OpenCMISS and OpenCOR generated files
+      { 
+        /* The following outcommented two lines are presumably not necessary.
+         * Instead, nIntermediates_ should be determined from the highest index
+         * of a 'OC_WANTED' vector. ==> See 'else if (line.find("OC_WANTED[") == 0 )' below.
+         */ 
+        //int algebraicIndex = atoi(line.substr(10,line.find("]",10)-10).c_str());
+        //this->nIntermediates_ = std::max(this->nIntermediates_, algebraicIndex+1);
+      }
+      else if (line.find( "OC_WANTED[" ) == 0 )  // assignment of an intermediate(todo) variable in OpenCMISS generated file
       {
-        int algebraicIndex = atoi(line.substr(10,line.find("]",10)-10).c_str());
-        this->nIntermediates_ = std::max(this->nIntermediates_, algebraicIndex+1);
+        int index = atoi(line.substr( 10, line.find( "]",10 ) -10 ).c_str());
+        this->nIntermediates_ = std::max( this->nIntermediates_, index+1 );
+        
+        // it is possible, that 'OC_KNOWN[' only appears in assignments of OC_WANTED. Therefore, check additionally:
+        if (line.find("OC_KNOWN[") != std::string::npos)
+        {
+          std::string substr(line.substr(line.find("OC_KNOWN[")+9,line.find("]",line.find("OC_KNOWN[")+9)-line.find("OC_KNOWN[")-9));
+          index = atoi(substr.c_str());
+          this->nParameters_ = std::max(this->nParameters_, index+1);
+        }
       }
       else if (line.find("OC_KNOWN[") != std::string::npos)  // usage of a parameter variable in OpenCMISS generated file
       {

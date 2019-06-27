@@ -10,7 +10,7 @@ int main(int argc, char *argv[])
     // initialize everything, handle arguments and parse settings from input file
   DihuContext settings(argc, argv, false, true);
   
-  char userInput;
+  /*char userInput;
   std::cout << "Do you wish to attach with (e.g.) gdb? (y/n)";
   std::cin >> userInput;
   if(userInput=='y' || userInput=='Y' || userInput=='j' || userInput=='J')
@@ -19,6 +19,7 @@ int main(int argc, char *argv[])
     sleep(60);
     LOG(WARNING) << "Attachement time is over.";
   }
+  */
   
   TimeSteppingScheme::ExplicitEuler<
     CellmlAdapter<57>

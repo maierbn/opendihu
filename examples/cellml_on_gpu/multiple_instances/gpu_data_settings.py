@@ -16,12 +16,14 @@ xdata = []
 gamma_data = []
 vm_data = []
 
-It_value=7
+It_value=2
 tsw=0.001*pow(2,1-It_value)
 et=0.001#1.0
 opiv=1*pow(2,It_value-2)
 hrciv=opiv
-ElemNo=6400
+ElemNo=3946000/10-1
+# ElemNo maximal ca  3.946.250 auf device 0
+# ElemNo maximal ca  7.892.500 auf device 1 (doppelt so viel)
 
 
 config = {
@@ -44,11 +46,12 @@ config = {
     #],
 
     "CellML" : {
-      "deviceNumber": "1",
+      "deviceNumber": "0",
       "sourceFilename": "cellml_rhs.c",
       # use "gpuSourceFilename" if you want gpu offloading
       "compilerFlags": "-fPIC -ta=host,tesla:managed,cc35,cc60,time,cuda10.0 -shared -acc -I/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/include",# -Minfo=accel",
       "openaccClause": "data",
+      "openaccDivision": "", #"num_gangs(32*32*4), vector_length(128)", # für cellml probleme eigentlich unnötig. das sind eventuell mögliche verbesserungen um den 0,1%-Bereich (gegen mögliche Verschlechterung im 1-5%-Bereich). Compiler macht das gut.
       "gpuSourceFilename": "gpucodedata.c",
       #"gpuSourceFilename": "gpucodekernels.c",
       # use "simdSourceFilename" if you want to use simd (might be default..?!)

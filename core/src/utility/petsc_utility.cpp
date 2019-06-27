@@ -331,8 +331,10 @@ std::string getStringLinearConvergedReason(KSPConvergedReason convergedReason)
   case KSP_DIVERGED_INDEFINITE_MAT:
     return ANSI_COLOR_RED "KSP_DIVERGED_INDEFINITE_MAT" ANSI_COLOR_RESET;
 
+#ifndef __PGI
   case KSP_DIVERGED_PCSETUP_FAILED:
     return ANSI_COLOR_RED "KSP_DIVERGED_PCSETUP_FAILED" ANSI_COLOR_RESET;
+#endif
 
   default:
     break;

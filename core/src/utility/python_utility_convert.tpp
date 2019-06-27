@@ -718,7 +718,9 @@ struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
 
       return result;
     }
+#ifndef __PGI
     return defaultValue;
+#endif
   }
 
   //! convert a python object to its corresponding c type, with type checking, if conversion is not possible use trivial default value (0 or 0.0 or "")
@@ -866,7 +868,10 @@ struct PythonUtility::convertFromPython<std::vector<ValueType>>
 
       return result;
     }
+    
+#ifndef __PGI
     return std::vector<ValueType>();
+#endif
   }
 };
 

@@ -15,9 +15,15 @@
 # 3. Specify <PACKAGE>_INC_DIR and <PACKAGE>_LIB_DIR to point to the header and library directories. They are usually named "include" and "lib".
 # 4. Set <PACKAGE>_DOWNLOAD=True or additionally <PACKAGE>_REDOWNLOAD=True to let the build system download and install everything on their own.
 
-# set compiler to use, in SconstructGeneral, there will be set CXX=$CC and CC=$cc (if not on cmcs09)
-cc="gcc"   # c compiler
-CC="g++"   # c++ compiler
+# set compiler to use
+import socket
+# for hosts other than cmcs09 in SconstructGeneral, there will be set CXX=$CC and CC=$cc
+if socket.gethostname() != 'cmcs09':
+  cc="gcc"   # c compiler
+  CC="g++"   # c++ compiler
+else:
+  cc="pgcc"
+  CC="pgc++"
 cmake="cmake"
 
 # LAPACK, includes also BLAS, OpenBLAS is used
@@ -25,14 +31,22 @@ LAPACK_DOWNLOAD=True
 
 # PETSc, this downloads and installs MUMPS (direct solver package) and its dependencies PT-Scotch, SCAlapack, ParMETIS, METIS
 PETSC_DOWNLOAD=True
-PETSC_REBUILD=False#True#False
-#PETSC_DIR="/usr/local/home/kraemer/opendihu/dependencies/petsc/install"
+PETSC_REDOWNLOAD=False#True
+PETSC_REBUILD=False#True
+PETSC_DIR="/usr/local/home/kraemer/opendihu/dependencies/petsc/install"
 
+if socket.gethostname() != 'cmcs09':
 # Python 3.6
-PYTHON_DOWNLOAD=True    # This downloads and uses Python, use it to be independent of an eventual system python
+  PYTHON_DOWNLOAD=True    # This downloads and uses Python, use it to be independent of an eventual system python
+  #PYTHON_REDOWNLOAD=False
+  #PYTHON_REBUILD=True
+else:
+# Python 3.6.5
+  #PYTHON_DOWNLOAD=True
+  PYTHON_DIR="/usr/local/home/kraemer/python/install"#"/afs/.mathematik.uni-stuttgart.de/home/cmcs/share/environment-modules/Packages/python/python-3.6.5" #"/usr/local/home/kraemer/python/install"
 
 # Python packages - they are now all combined with the option PYTHONPACKAGES_DOWNLOAD
-PYTHONPACKAGES_DOWNLOAD=True
+PYTHONPACKAGES_DOWNLOAD=False
 
 # Base64, encoding library for binary vtk (paraview) output files
 BASE64_DOWNLOAD=True
@@ -50,7 +64,7 @@ EASYLOGGINGPP_DOWNLOAD=True#False
 EASYLOGGINGPP_REBUILD=False
 
 # ADIOS2, adaptable I/O library, needed for interfacing MegaMol
-ADIOS_DOWNLOAD=False
+ADIOS_DOWNLOAD=True
 
 # MegaMol, visualization framework of VISUS, optional, needs ADIOS2
 MEGAMOL_DOWNLOAD=False    # install MegaMol from official git repo, but needed is the private repo, ask for access to use MegaMol with opendihu
@@ -58,21 +72,6 @@ MEGAMOL_DOWNLOAD=False    # install MegaMol from official git repo, but needed i
 # MPI
 # MPI is normally detected by runnig the mpicc command. If this is not available, you can provide the MPI_DIR as usual.
 MPI_DIR="/usr/lib/openmpi"    # standard path for openmpi on ubuntu 16.04
-
-# on krypton build MPI
-try:
-  import socket
-  if socket.gethostname() == "krypton":
-    print "Settings for krypton"
-    #del MPI_DIR
-    #MPI_DOWNLOAD=True
-    #MPI_IGNORE_MPICC=True
-    MPI_DIR="/scratch/maierbn/opendihu/dependencies/mpi/install"   # for first install, use three previous lines instead of this one
-    PYTHONPACKAGES_DOWNLOAD=False
-    #mpiCC= /scratch/maierbn/opendihu/dependencies/mpi/install/bin
-    cmake="/scratch/maierbn/cmake/cmake-3.14.3/bin/cmake"
-except:
-  pass
 
 # automatically set MPI_DIR for other systems, like ubuntu 18.04 and Debian
 try:
@@ -105,18 +104,17 @@ try:
   # on cmcs09 (CPU-GPU):
   if socket.gethostname() == 'cmcs09':
     print "Setting PGI settings for GPU-offloading, since host cmcs09 was detected."
-    del MPI_DIR
-    #MPI_DIR="/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2"
+    #del MPI_DIR
+    MPI_DIR="/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2"
     #MPI_DOWNLOAD=False
-    cc="/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/18.10/bin/pgcc"
-    CC="/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/18.10/bin/pgc++"
-    mpiCC="/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/bin/mpic++"
-    mpicc="/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/bin/mpicc"
-    #cc="/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/bin/mpicc"
-    #CC=mpiCC
+    #cc="/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/18.10/bin/pgcc"
+    #CC="/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/18.10/bin/pgc++"
+    #mpiCC="/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/bin/mpic++"
+    #mpicc="/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/bin/mpicc"
     MPI_DISABLE_CHECKS=True
     PETSC_DISABLE_CHECKS=True
     GOOGLETEST_DISABLE_CHECKS=True
+
 
 except:
   pass
@@ -134,7 +132,7 @@ if os.environ.get("PE_ENV") is not None:  # if on hazelhen
   cc="cc"   # C compiler wrapper
   CC="CC"   # C++ compiler wrapper
   mpiCC="CC"  # mpi C++ compiler wrapper
-  cmake="~/cmake"
+  cmake="/lustre/cray/ws8/ws/icbbnmai-opendihu/cmake/cmake-3.13.2-Linux-x86_64/bin/cmake"
 
   # use cray-pat for profiling
   USE_CRAY_PAT=False

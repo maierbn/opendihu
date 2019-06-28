@@ -1,4 +1,4 @@
-# Configuration for scons build system
+#i Configuration for scons build system
 #
 # For each package the following variables are available:
 # <PACKAGE>_DIR         Location of the package, must contain subfolders "include" and "lib" or "lib64" with header and library files.
@@ -33,7 +33,7 @@ LAPACK_DOWNLOAD=True
 PETSC_DOWNLOAD=True
 PETSC_REDOWNLOAD=False#True
 PETSC_REBUILD=False#True
-PETSC_DIR="/usr/local/home/kraemer/opendihu/dependencies/petsc/install"
+#PETSC_DIR="/usr/local/home/kraemer/opendihu/dependencies/petsc/install"
 
 if socket.gethostname() != 'cmcs09':
 # Python 3.6
@@ -115,6 +115,17 @@ try:
     PETSC_DISABLE_CHECKS=True
     GOOGLETEST_DISABLE_CHECKS=True
 
+  elif "argon" in socket.gethostname():
+    cc="pgcc"
+    CC="pgc++"
+    mpiCC="mpic++"
+
+    LAPACK_DOWNLOAD=False
+    #LAPACK_PATH=os.onviron.get("PGI")+"/linux86-64/2018"
+
+    MPI_DISABLE_CHECKS=True
+    PETSC_DISABLE_CHECKS=True
+    GOOGLETEST_DISABLE_CHECK=True
 
 except:
   pass

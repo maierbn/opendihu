@@ -841,11 +841,17 @@ class Package(object):
         
     # compile / run test program
     if self.run:
-      res = ctx.TryRun(text, self.ext)
+      if os.environ.get("PE_ENV") is not None or "pg" in ctx.env["CC"]:
+         ctx.Log("Do not run test, only link\n")
+         ctx.Log("Reason: either on compute cluster ($PE_ENV is set) or PGI compiler (env[\"CC\"] contains \"pg\")")
+
+         # on cluster or with PGI compiler, do not run program, only link
+         res = (ctx.TryLink(text, self.ext), '')    
+      else:
+        
+          # compile and run test program normally
+          res = ctx.TryRun(text, self.ext)
       
-      if not res[0] and os.environ.get("PE_ENV") is not None:
-        ctx.Log("Run failed on hazelhen, try again, this time only link")
-        res = (ctx.TryLink(text, self.ext), '')
     else:
       res = (ctx.TryLink(text, self.ext), '')
         
@@ -1033,7 +1039,7 @@ class Package(object):
 
         system_inc_dirs = []
         for inc_dir in inc_sub_dirs:
-          if socket.gethostname() == 'cmcs09':
+          if "pgcc" in ctx.env["CC"]:
             system_inc_dirs.append(('-I', inc_dir))
           else:
             system_inc_dirs.append(('-isystem', inc_dir))     # -isystem is the same is -I for gcc, except it suppresses warning (useful for dependencies)            

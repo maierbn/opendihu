@@ -101,10 +101,11 @@ class PETSc(Package):
           if socket.gethostname() != 'cmcs09':
             self.set_build_handler([
                 #'PATH=${PATH}:${DEPENDENCIES_DIR}/bison/install/bin \
-                './configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=no \
+                '$./configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=no \
                 --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
                 --with-mpi-dir=${MPI_DIR}\
                 --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch\
+                CC=$CC CXX=$CXX F77=$F77 F90=$F90 \
                 COPTFLAGS=-O3\
                 CXXOPTFLAGS=-O3\
                 FOPTFLAGS=-O3 | tee out.txt',

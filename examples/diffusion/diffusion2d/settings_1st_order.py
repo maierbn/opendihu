@@ -25,7 +25,7 @@ config = {
     },
     
     "OutputWriter" : [
-      #{"format": "Paraview", "interval": 1, "filename": "out", "binaryOutput": "false", "fixedFormat": False, "frequency": 100},
+      {"format": "Paraview", "interval": 1, "filename": "out/filename", "binary": "false", "fixedFormat": False, "frequency": 10},
       {"format": "PythonFile", "outputInterval": 10, "filename": "out/out_diffusion2d", "binary": True}
     ]
   },

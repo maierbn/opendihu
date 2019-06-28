@@ -18,7 +18,7 @@ with ``D`` equals to 1, 2 or 3.
 :numref:`meshes` shows the different mesh types for linear and quadratic basis functions. As can be seen, the meshes all have quadrilateral elements, corresponding to lines in 1D, quadrilaterals in 2D and hexaeders in 3D.
 
 .. _meshes:
-.. figure:: meshes.svg
+.. figure:: images/meshes.svg
   :width: 50%
 
   Different Mesh types, here 2D meshes, for linear or Hermite basis functions (left column) and for quadratic Lagrange basis functions (right column)
@@ -144,7 +144,7 @@ After the x,y-plane is done, the next plane starts with :math:`(z,y,x)=(1,0,0)`.
 For imagination see :numref:`coordinate_directions`.
 
 .. _coordinate_directions:
-.. figure:: coordinate_directions.svg
+.. figure:: images/coordinate_directions.svg
   :width: 80%
 
   Coordinate directions x,y,z and iterator/index names i,j,k for 2D and 3D meshes.
@@ -155,22 +155,13 @@ inputMeshIsGlobal
 
 Whether the values of ``nElements`` and the ``nodePositions`` describe the global domain (``True``) or the local subdomain (``False``) in parallel execution.
 
-See also the notes on :ref:`inputMeshIsGlobal` later.
-
-UnstructuredDeformable
-^^^^^^^^^^^^^^^^^^^^^^^ 
-
-For specifying an **Unstructured Deformable** mesh there are two options:
-
-1. Using node positions and elements
-
-2. Using *Exfiles*
+See also the following notes on :ref:`inputMeshIsGlobal`.
 
 .. _inputMeshIsGlobal:
 
 inputMeshIsGlobal
 ^^^^^^^^^^^^^^^^^^^
-It specifies whether the given values and degrees of freedom are interpreted as local values or global values in the context of a parallel execution on multiple processes. It has no effect for serial execution.
+It specifies whether the given values and degrees of freedom are interpreted as local values or global values in the context of a parallel execution on multiple processes. It has no effect for serial execution and unstructured meshes.
 It applies to all values given as mesh properties, such as node positions, element and node numbers, the physicalExtent, the number of elements, etc.
 
 * If set to ``True``, all specified values and degrees of freedom are interpreted with global indexing. In this case, the same values should be given on all processes. Consequently, the program can be run on different numbers of processes with the same settings.
@@ -185,7 +176,7 @@ The last two command line arguments that are available in the python settings sc
 The advantage of the local specification is that each process only has to know its own portion of the whole problem. Internally there is no transfer of the local information to other processes. 
 Thus, large problems can be computed with a high number of processes, where the global problem data would be too big to be stored by a single process.
 
-The following example uses such a local specification. It sets the right hand side value of the last degree of freedom on the last MPI rank to 1.0 and all other values to 0.0.
+The following example shows how to use the own MPI rank number.
 
 .. code-block:: python
 
@@ -193,12 +184,81 @@ The following example uses such a local specification. It sets the right hand si
   rank_no = (int)(sys.argv[-2])
   n_ranks = (int)(sys.argv[-1])
   
+  if rank_no == 0:
+    ...
+  elif rank_no == 1:
+    ...
+  
   config = {
-    "FiniteElementMethod" : {
-      "inputMeshIsGlobal": False,
-      "rightHandSide": {-1: 1.0} if rank_no == n_ranks-1 else {},
-      
-      # further options of FiniteElementMethod
-      # ...
+    "Meshes": {
+      "mesh": {
+        "inputMeshIsGlobal": False,
+        # ...
+      }
     }
   }
+  
+UnstructuredDeformable
+^^^^^^^^^^^^^^^^^^^^^^^ 
+
+For specifying an **Unstructured Deformable** mesh there are two options:
+
+1. Using node positions and elements. For each element the corresponding nodes have to be specified.
+  
+2. Using *EX files*, an ASCII-based file format for unstructured meshes, that is used by `OpenCMISS <http://opencmiss.org>`_.
+
+These two options are described in the following.
+
+1. Using **node positions and elements**
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+  "elements": [[[0,0], [1,0], [2,1], [3,0]], [next element]]   # each node is [node no, version-at-that-node no] or just node-no then it assumes version no 0
+  "nodePositions": [[0,0,0], [1,0], [2,0,0], [0,1], [1,1], [2,1], [0,2], [1,2], [2,2], ...],
+
+elements
+~~~~~~~~~
+
+An element is a Finite Element that consists of its nodes. The number of nodes per element is dependent on the dimensionality of the mesh and the basis function. 
+
+When two elements are next to each other, they usually share the nodes on their common edge. This ensures that there is only one degree of freedom at the common nodes and therefore the field variable is continuous.
+However, for unstructured meshes there is also the possibility to have different degrees of freedom at a common node of two adjacent elements. This means, that discontinuities can be modeled. 
+
+For this concept, the degree of freedom is assigned to a *version* of the node within the element. A node is seen in different *versions* by the different adjacent elements.
+
+What needs to be specified in the python settings under the ``elements`` key is a list of element specifications. Each element specification is a list of node references. Each node reference is either a node number (non-negative integer value) or a two-element list of the node number and the version number.
+
+In an element specification there have to be as many node references as there are nodes in the element. The order of the nodes in the element follows the numbering scheme of advancing in :math:`x`-direction fastest, then in :math:`y`-direction, then in :math:`z`-direction. For example, linear 2D elements have 4 nodes, so the element specification has 4 items in the list. Quadratic 3D elements have :math:`3^3=27` nodes.
+
+The node number in the node reference is the global node number in the typical numbering.
+
+The version number is counted from zero for each node. If this number is omitted, then 0 is assumed.
+
+nodePositions
+~~~~~~~~~~~~~~~
+
+This is a list of positions of the nodes, each node position is a list with maximum three entries for the components in :math:`x,y` and :math:`z` direction. Not specified entries are set to zero.
+
+2. Using EX files
+~~~~~~~~~~~~~~~~~~~
+
+The 2. option is to provide **EX files**. This is an ASCII-based file format and only suitable for small problem sizes. It is used by `OpenCMISS <http://opencmiss.org>`_ and can be visualized using `CMGUI <http://physiomeproject.org/software/opencmiss/cmgui/download>`_. A geometry description consists of an *\*.exelem* file that contains element adjacency information and an *\*.exnode* file with the actual node positions. Opendihu extracts the *geometric field* of these files and uses them as geometry (opendihu terminology is *geometry field*).
+
+More details on this file format can be found `here in the opencmiss documentation <http://opencmiss.org/documentation/data_format/ex_file_format.html>`_.
+
+.. code-block:: python
+
+    "exelem": "left_biceps_brachii.exelem",
+    "exnode": "left_biceps_brachii.exnode",
+    
+exelem
+~~~~~~~~
+ 
+The file name of the *exelem* file.
+
+exnode
+~~~~~~~
+
+The file name of the *exnode* file.
+    

@@ -280,7 +280,7 @@ This optionally specifies a list of output writers that can be used to output ge
 
 prefactor
 ^^^^^^^^^^
-Default: 1
+*Default: 1*
 
 The prefactor is a scalar multiplier of the Laplace operator term, i.e. :math:`c` in :math:`c\cdot  Δu` or :math:`c\cdot∇ \cdot (A ∇u)`. 
 
@@ -297,7 +297,7 @@ The given values correspond to global degrees of freedom, if ``"inputMeshIsGloba
 
 inputMeshIsGlobal
 ^^^^^^^^^^^^^^^^^^
-*Default: ``True``*
+*Default:* ``True``
 
 Together with ``rightHandSide`` it specifies whether the given values are interpreted as local values or global values in the context of a parallel execution on multiple processes. It has no effect for serial execution.
 

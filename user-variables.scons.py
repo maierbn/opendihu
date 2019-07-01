@@ -123,8 +123,10 @@ try:
     LAPACK_DOWNLOAD=False
     #LAPACK_PATH=os.onviron.get("PGI")+"/linux86-64/2018"
 
-    MPI_DISABLE_CHECKS=True
-    PETSC_DISABLE_CHECKS=True
+    #MPI_DISABLE_CHECKS=True
+    MPI_DIR="/usr/local.nfs/sw/pgi/pgi-18.10-u1604/linux86-64/2018/mpi/openmpi/"
+    DISABLE_RUN=True   # do not run executables for checks, because they need mpirun as prefix
+    #PETSC_DISABLE_CHECKS=True
     GOOGLETEST_DISABLE_CHECK=True
 
 except:

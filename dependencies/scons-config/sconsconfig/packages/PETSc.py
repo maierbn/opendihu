@@ -99,13 +99,13 @@ class PETSc(Package):
           # standard release build with MUMPS
           # This needs bison installed
           if socket.gethostname() != 'cmcs09':
+#                CC=$CC CXX=$CXX F77=$F77 F90=$F90 \
+#                --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
             self.set_build_handler([
                 #'PATH=${PATH}:${DEPENDENCIES_DIR}/bison/install/bin \
                 '$./configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=no \
-                --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
-                --with-mpi-dir=${MPI_DIR}\
                 --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch\
-                CC=$CC CXX=$CXX F77=$F77 F90=$F90 \
+                --with-mpi-dir=${MPI_DIR}\
                 COPTFLAGS=-O3\
                 CXXOPTFLAGS=-O3\
                 FOPTFLAGS=-O3 | tee out.txt',
@@ -166,9 +166,9 @@ class PETSc(Package):
             ])
           else:
             # release build without MUMPS
+#              --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
             self.set_build_handler([
               '$./configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=no \
-              --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
               --with-mpi-dir=${MPI_DIR}\
               COPTFLAGS=-O3\
               CXXOPTFLAGS=-O3\

@@ -2,7 +2,6 @@
 
 #include "utility/python_utility.h"
 #include "control/performance_measurement.h"
-#include "partition/partitioned_petsc_vec/dump_vector.h"
 #include "partition/partitioned_petsc_mat/partitioned_petsc_mat.h"
 
 namespace Solver

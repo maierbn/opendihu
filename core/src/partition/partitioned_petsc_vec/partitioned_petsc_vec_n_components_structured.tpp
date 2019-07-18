@@ -1320,3 +1320,15 @@ output(std::ostream &stream)
   }
 #endif
 }
+
+template<typename MeshType,typename BasisFunctionType,int nComponents>
+void PartitionedPetscVecNComponentsStructured<MeshType,BasisFunctionType,nComponents>::
+dumpVector(std::string filename, std::string format)
+{
+  // loop over components
+  for (int componentNo = 0; componentNo < nComponents; componentNo++)
+  {
+    // dump the data using a PetscViewer
+    /**a*///PartitionedPetscVecBase<>::dumpVector(filename, format, vectorGlobal_[componentNo], this->meshPartition_->mpiCommunicator(), componentNo, nComponents);
+  }
+}

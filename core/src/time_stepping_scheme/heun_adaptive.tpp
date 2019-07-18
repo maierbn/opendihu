@@ -272,10 +272,10 @@ void HeunAdaptive<DiscretizableInTime>::advanceTimeSpan()
           // check, if there is still time in timeSpan
           if ((timeSpan - time) != 0.0)
           {
-            // remaining time in timeSpan is to low for current timeStep (regarding delta)
+            // remaining time in timeSpan is too low for current timeStep (regarding delta)
             if (((timeSpan - time) - this->timeStepWidth_) <= delta_)
             {
-              // timeStepWidth to big, has to be reduced
+              // timeStepWidth too big, has to be reduced
               if ((timeSpan - time) < this->timeStepWidth_)
               {
                 // save current timeStepWidth
@@ -321,11 +321,13 @@ void HeunAdaptive<DiscretizableInTime>::advanceTimeSpan()
           stepCounterFail_ = stepCounterFail_ + 1;
 
           // check if new timeStepWidth is below minimum
-          if (this->timeStepWidth_ < minTimeStepWidth_){
-              // set check variable
-              minimum_check_ = true;
-              // adjust timeStepWidth
-              this->timeStepWidth_ = minTimeStepWidth_;
+          if (this->timeStepWidth_ < minTimeStepWidth_)
+          {
+            // set check variable
+            minimum_check_ = true;
+
+            // adjust timeStepWidth
+            this->timeStepWidth_ = minTimeStepWidth_;
           }
           // log info
           LOG(DEBUG) << "Solution rejected. Retry with smaller timeStepWidth " << this->timeStepWidth_;
@@ -427,8 +429,9 @@ void HeunAdaptive<DiscretizableInTime>::advanceTimeSpan()
     if (estimator_ <= tolerance_)
     {
       // lower multiplicator, so timeSpan is divided in lesser parts. No adjustment when multiplicator is already 1
-      if (multiplicator_ > 1){
-          multiplicator_--;
+      if (multiplicator_ > 1)
+      {
+        multiplicator_--;
       }
 
       // calculate new timeStepWidth
@@ -437,8 +440,9 @@ void HeunAdaptive<DiscretizableInTime>::advanceTimeSpan()
     else
     {
       // raise multiplicator, so timeSpan is divided in more parts
-      if (multiplicator_ < lowestMultiplier_){
-          multiplicator_++;
+      if (multiplicator_ < lowestMultiplier_)
+      {
+        multiplicator_++;
       }
 
       // calculate new timeStepWidth

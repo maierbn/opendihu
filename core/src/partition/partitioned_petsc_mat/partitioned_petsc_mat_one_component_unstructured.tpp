@@ -275,6 +275,14 @@ valuesGlobal()
 
 template<int D, typename BasisFunctionType>
 void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+dumpMatrix(std::string filename, std::string format)
+{
+  // std::string filename, std::string format, Mat &matrix, MPI_Comm mpiCommunicator
+  PetscUtility::dumpMatrix(filename, format, this->matrix_, this->meshPartitionRows_->mpiCommunicator());
+}
+
+template<int D, typename BasisFunctionType>
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
 output(std::ostream &stream) const
 {
   // this method gets all values and outputs them to stream

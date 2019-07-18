@@ -94,7 +94,8 @@ public:
   //! output the vector to stream, for debugging
   void output(std::ostream &stream);
 
-  void debug(){}
+  //! write the vector to a file using PetscViewer, format is "default", "ascii" or "matlab"
+  void dumpVector(std::string filename, std::string format);
 
 protected:
   
@@ -211,6 +212,9 @@ public:
   //! output the vector to stream, for debugging
   void output(std::ostream &stream);
 
+  //! write the vector to a file using PetscViewer, format is "default", "ascii" or "matlab"
+  void dumpVector(std::string filename, std::string format);
+
 protected:
  
   //! create a distributed Petsc vector, according to partition
@@ -230,12 +234,10 @@ protected:
   Vec savedVectorLocal_;        ///< when this PartitionedPetscVec has nComponents=1 and extractComponentShared is called, there is no valuesContiguous_ vector in use (because it is only one component anyway, replacement is globalVector_[0]). Then the extracted field variable gets copies of the own vectorLocal_ and vectorGlobal_ set, the original pointer vectorLocal_ and vectorGlobal_ are saved in this variable and reset when restoreValuesContiguous is called.
   Vec savedVectorGlobal_;        ///< when this PartitionedPetscVec has nComponents=1 and extractComponentShared is called, there is no valuesContiguous_ vector in use (because it is only one component anyway, replacement is globalVector_[0]). Then the extracted field variable gets copies of the own vectorLocal_ and vectorGlobal_ set, the original pointer vectorLocal_ and vectorGlobal_ are saved in this variable and reset when restoreValuesContiguous is called.
   Vec vectorNestedGlobal_;       ///< a VecNest object containing the global values, only in used if nComponents > 1
-
-
-  Vec debug_;
 };
 
-
+/** This is a partial specialization for structured meshes with multiple components.
+ */
 template<typename MeshType, typename BasisFunctionType, int nComponents>
 class PartitionedPetscVec<
   FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,
@@ -255,6 +257,8 @@ public:
   void restoreValuesContiguous() override;
 };
 
+/** This is the partial specialization for 1-component vectors
+ */
 template<typename MeshType, typename BasisFunctionType>
 class PartitionedPetscVec<
   FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,

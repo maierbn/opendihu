@@ -19,7 +19,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = u'opendihu'
+project = 'opendihu'
 copyright = u'2019, Benjamin Maier'
 author = u'Benjamin Maier'
 

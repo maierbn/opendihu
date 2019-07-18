@@ -14,7 +14,7 @@ RESET='\033[0m'
 SUCCESS="1"
 
 # prepare log files
-rm $WORKDIR/compile_examples_failed.txt
+rm -f $WORKDIR/compile_examples_failed.txt
 touch $WORKDIR/compile_examples_failed.txt
 echo "Testing compilation of examples at $(date)" > $WORKDIR/compile_examples_log.txt
 

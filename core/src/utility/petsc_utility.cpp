@@ -9,6 +9,7 @@
 #include "petscksp.h"
 #include "utility/mpi_utility.h"
 #include "control/dihu_context.h"   // for DihuContext::nRanksCommWorld
+#include "output_writer/generic.h"
 
 // color codes: https://github.com/shiena/ansicolor/blob/master/README.md
 #define ANSI_COLOR_RED     "\x1b[31m"
@@ -275,7 +276,6 @@ void checkDimensionsMatrixVector(Mat &matrix, Vec &input)
 #endif
 }
 
-
 std::string getStringLinearConvergedReason(KSPConvergedReason convergedReason)
 {
 
@@ -409,5 +409,100 @@ std::string getStringNonlinearConvergedReason(SNESConvergedReason convergedReaso
   s << "unknown reason (" << int(convergedReason) << ")";
   return s.str();
 }
+
+void dumpVector(std::string filename, std::string format, Vec &vector, MPI_Comm mpiCommunicator, int componentNo, int nComponents)
+{
+  PetscViewer viewer;
+  static int counter = 0;
+
+  // set viewer format and suffix depending on format string
+  std::string suffix = ".txt";
+  PetscViewerFormat petscViewFormat = PETSC_VIEWER_DEFAULT;
+
+  if (format == "matlab")
+  {
+    suffix = ".m";
+    petscViewFormat = PETSC_VIEWER_ASCII_MATLAB;
+  }
+  else if (format == "ascii")
+  {
+    suffix = ".txt";
+    petscViewFormat = PETSC_VIEWER_ASCII_INDEX;
+  }
+  else if (format != "default")
+  {
+    LOG(WARNING) << "In dumpVector: Format \"" << format << "\" is not allowed, possible values: default, ascii, matlab";
+  }
+
+  // compose output filename
+  std::stringstream vectorOutputFilename;
+  vectorOutputFilename << filename << "_" << std::setw(5) << std::setfill('0') << counter++ << suffix;
+
+  std::stringstream filenameStream;
+  filenameStream << vectorOutputFilename.str();
+
+  // if there are multiple components, add component no to filename
+  if (nComponents > 1)
+  {
+    filenameStream << componentNo;
+  }
+
+  // open file given by filename, create directory if necessary
+  std::ofstream file;
+  OutputWriter::Generic::openFile(file, filenameStream.str());
+  file.close();
+
+  // dump the data using a PetscViewer
+  PetscErrorCode ierr;
+  ierr = PetscViewerASCIIOpen(mpiCommunicator, filenameStream.str().c_str(), &viewer); CHKERRV(ierr);
+  ierr = PetscViewerPushFormat(viewer, petscViewFormat); CHKERRV(ierr);
+  ierr = VecView(vector, viewer); CHKERRV(ierr);
+
+  LOG(DEBUG) << "Vector written to \"" << filenameStream.str() << "\".";
+}
+
+//! dump the matrix to a file using PetscViewer, format is "default", "ascii" or "matlab"
+void dumpMatrix(std::string filename, std::string format, Mat &matrix, MPI_Comm mpiCommunicator)
+{
+  PetscViewer viewer;
+  static int counter = 0;
+
+  // set viewer format and suffix depending on format string
+  std::string suffix = ".txt";
+  PetscViewerFormat petscViewFormat = PETSC_VIEWER_DEFAULT;
+
+  if (format == "matlab")
+  {
+    suffix = ".m";
+    petscViewFormat = PETSC_VIEWER_ASCII_MATLAB;
+  }
+  else if (format == "ascii")
+  {
+    suffix = ".txt";
+    petscViewFormat = PETSC_VIEWER_ASCII_DENSE;
+  }
+  else if (format != "default")
+  {
+    LOG(WARNING) << "In dumpMatrix: Format \"" << format << "\" is not allowed, possible values: default, matlab";
+  }
+
+  // compose output filename
+  std::stringstream matrixOutputFilename;
+  matrixOutputFilename << filename << "_" << std::setw(5) << std::setfill('0') << counter++ << suffix;
+
+  // open file given by filename, create directory if necessary
+  std::ofstream file;
+  OutputWriter::Generic::openFile(file, filename);
+  file.close();
+
+  // dump the data using a PetscViewer
+  PetscErrorCode ierr;
+  ierr = PetscViewerASCIIOpen(mpiCommunicator, matrixOutputFilename.str().c_str(), &viewer); CHKERRV(ierr);
+  ierr = PetscViewerPushFormat(viewer, petscViewFormat); CHKERRV(ierr);
+  ierr = MatView(matrix, viewer); CHKERRV(ierr);
+
+  LOG(DEBUG) << "Matrix written to \"" << matrixOutputFilename.str() << "\".";
+}
+
 
 }  // namespace

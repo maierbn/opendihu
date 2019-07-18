@@ -110,6 +110,9 @@ public:
   //! get the mesh partion of columns
   std::shared_ptr<Partition::MeshPartition<ColumnsFunctionSpaceType>> meshPartitionColumns();
 
+  //! write the matrix to a file using PetscViewer, format is "default", "ascii" or "matlab"
+  void dumpMatrix(std::string filename, std::string format);
+
 protected:
 
   //! create the nested matrix

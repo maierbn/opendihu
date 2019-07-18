@@ -193,7 +193,7 @@ to rebuild petsc, even if it was already detected. The same options that can be 
 * The settings files use python syntax and are actually python scripts. This means you can execute any python code there, for example load your own custom geometry or input data files and set the options appropriately. The general documentation of the options is only given through the examples, so if you need to know how to specify certain options, look for an example files, that does it, or ask me.
 
 # Documentation
-Documentation can be found at [opendihu.ReadTheDocs.io](https://opendihu.readthedocs.io/en/latest/>).
+Documentation can be found at [opendihu.ReadTheDocs.io](https://opendihu.readthedocs.io/en/latest/).
 Theory documentation can be found in the `doc/derivations/doc.pdf` document. 
 Some developer hints for the core code can be found in `doc/documentation.rst`. 
 Generally the C++ code contains a lot of comments and often it is useful to look directly into the code, to find out how something works. 

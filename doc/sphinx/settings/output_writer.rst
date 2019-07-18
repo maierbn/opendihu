@@ -3,6 +3,8 @@ OutputWriter
 
 OutputWriters are used to write the computed simulation data to files. The data is organised in field variables, which are scalar or vector fields over the computational domain.
 
+Note: To output matrices and right hand side vectors, e.g. in MATLAB compatible format, the direct options of the :doc:`solver` class should be used.
+
 Several different output writers can be specified in the ``"OutputWriter"`` list.
 The output writers are then called one after another and produce output in different formats, depending on their properties.
 

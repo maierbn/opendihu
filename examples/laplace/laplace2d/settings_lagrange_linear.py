@@ -24,6 +24,8 @@ config = {
     "relativeTolerance": 1e-15,
     "solverType": "gmres",
     "preconditionerType": "none",
+    "dumpFilename": "out/",
+    "dumpFormat": "matlab",  # default, ascii, or matlab
     "maxIterations": 10000,
     "OutputWriter" : [
       {"format": "Paraview", "outputInterval": 1, "filename": "out/laplace", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":False},

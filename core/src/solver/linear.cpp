@@ -2,6 +2,8 @@
 
 #include "utility/python_utility.h"
 #include "control/performance_measurement.h"
+#include "partition/partitioned_petsc_vec/dump_vector.h"
+#include "partition/partitioned_petsc_mat/partitioned_petsc_mat.h"
 
 namespace Solver
 {
@@ -17,14 +19,20 @@ Linear::Linear(PythonConfig specificSettings, MPI_Comm mpiCommunicator, std::str
     VLOG(1) << "Create linear solver on " << size << (size == 1? " rank." : " ranks.");
   }
 
+  mpiCommunicator_ = mpiCommunicator;
+
   // parse options
   relativeTolerance_ = this->specificSettings_.getOptionDouble("relativeTolerance", 1e-5, PythonUtility::Positive);
   maxIterations_ = this->specificSettings_.getOptionDouble("maxIterations", 10000, PythonUtility::Positive);
-  
+
+  //parse information to use for dumping matrices and vectors
+  dumpFormat_ = this->specificSettings_.getOptionString("dumpFormat", "default");
+  dumpFilename_ = this->specificSettings_.getOptionString("dumpFilename", "");
+
   // set up KSP object
   //KSP *ksp;
   ksp_ = std::make_shared<KSP>();
-  PetscErrorCode ierr = KSPCreate (mpiCommunicator, ksp_.get()); CHKERRV(ierr);
+  PetscErrorCode ierr = KSPCreate(mpiCommunicator_, ksp_.get()); CHKERRV(ierr);
 
   // parse the solver and preconditioner types from settings
   parseSolverTypes();
@@ -184,6 +192,17 @@ void Linear::solve(Vec rightHandSide, Vec solution, std::string message)
 {
   PetscErrorCode ierr;
 
+  // dump files
+  if (!dumpFilename_.empty())
+  {
+    PetscUtility::dumpVector(dumpFilename_+std::string("rhs"), dumpFormat_, rightHandSide, mpiCommunicator_);
+
+    Mat matrix;
+    Mat preconditionerMatrix;
+    KSPGetOperators(*ksp_, &matrix, &preconditionerMatrix);
+    PetscUtility::dumpMatrix(dumpFilename_+std::string("matrix"), dumpFormat_, matrix, mpiCommunicator_);
+  }
+
   Control::PerformanceMeasurement::start(this->durationLogKey_);
 
   // solve the system
@@ -203,6 +222,7 @@ void Linear::solve(Vec rightHandSide, Vec solution, std::string message)
   ierr = KSPGetConvergedReason(*ksp_, &convergedReason); CHKERRV(ierr);
   ierr = VecGetSize(rightHandSide, &nDofsGlobal); CHKERRV(ierr);
 
+  // compute residual norm
   if (kspType_ == KSPPREONLY && (pcType_ == PCLU || pcType_ == PCILU))
   {
     if (!residual_)

@@ -755,6 +755,8 @@ config = {
       "relativeTolerance": 1e-10,
       "solverType": diffusion_solver_type,
       "preconditionerType": diffusion_preconditioner_type,
+      "dumpFilename": "out/dump_",
+      "dumpFormat": "matlab",
     },
     "potentialFlowSolver": {
       "relativeTolerance": 1e-10,
@@ -771,8 +773,8 @@ config = {
     "linearElasticitySolver": {
       "relativeTolerance": 1e-5,
       "maxIterations": 1e4,
-      "solverType": emg_solver_type,
-      "preconditionerType": emg_preconditioner_type,
+#      "solverType": emg_solver_type,
+#      "preconditionerType": emg_preconditioner_type,
     }, 
   },
   "Coupling": {

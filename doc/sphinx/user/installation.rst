@@ -28,7 +28,9 @@ In order to use the code for development or for more efficient runs, it is neces
 
   git clone https://github.com/maierbn/opendihu
 
-(If you usually skip instructions, clone and run `make` in the top level directory and see what happens. If there are error messages, look into the log file `config.log`.)
+There are several branches. The `develop` branch contains a recent version and is more-or-less stable. The `stable` branch is always stable but does not contain the latest developments. There are also multiple feature branches.
+
+There is one `release <https://github.com/maierbn/opendihu/releases>`_ so far: version 1.0 from 15.04.2019. 
 
 Prerequisites
 ^^^^^^^^^^^^^^

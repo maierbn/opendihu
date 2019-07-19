@@ -6,16 +6,16 @@ Getting started
 * To build an example, `cd` into a subdirectory under `examples`, e.g. `examples/laplace/laplace2d`. In this directory run `scons`. 
   For this to work, you either need to install `scons` on your system (e.g. `sudo apt install scons` on ubuntu). Or use the given `scons` in the `dependencies` directory (see above): 
 
-.. code-block:: bash
+  .. code-block:: bash
 
-  python2.7 ../../dependencies/scons/scons.py 
+    python2.7 ../../dependencies/scons/scons.py 
 
 * To build the release target, use `scons` or `scons BUILD_TYPE=release` or `scons BUILD_TYPE=r`, to build the debug target, use `scons BUILD_TYPE=debug` or `scons BUILD_TYPE=d`.
 * There will be executables created in the `build_debug` or `build_release` subdirectories. Change into one of these directories and run the program with a settings file as only argument: 
 
-.. code-block:: bash
+  .. code-block:: bash
 
-  ./laplace_regular settings_lagrange_quadratic.py
+    ./laplace_regular settings_lagrange_quadratic.py
 
 * Output files in this example (and likewise in the other examples) will be created under the `out` subdirectory. If you look into `out`, you'll find two files: `laplace.py` and `laplace.vtr`.
  
@@ -35,34 +35,34 @@ Getting started
   * If you have set the aliases of Sec. 2, you can recompile with `sdd`. Otherwise go up one directory and run `scons BUILD_TYPE=d`. 
   * Now, from the `build_debug` directory, run the new executable with 
 
-.. code-block:: bash
+  .. code-block:: bash
 
-    ./laplace_regular ../settings_lagrange_linear.py
-    
+      ./laplace_regular ../settings_lagrange_linear.py
+      
   * Plot the result with `plot out/*`.
 
 * Test the parallel execution and run the same program with the same settings file on two processes:
 
-.. code-block:: bash
+  .. code-block:: bash
 
-  mpirun -n 2 ./laplace_regular ../settings_lagrange_linear.py
+    mpirun -n 2 ./laplace_regular ../settings_lagrange_linear.py
 
-If you now look into the out directory (`ls -l out`), you'll see that two new files, `laplace.0.py` and `laplace.1.py`, were created by the two processes. The file `laplace.py` is still the old one from the single process.
+  If you now look into the out directory (`ls -l out`), you'll see that two new files, `laplace.0.py` and `laplace.1.py`, were created by the two processes. The file `laplace.py` is still the old one from the single process.
 
-Now plot the new files, either `plot out/laplace.0.py out/laplace.1.py` or shorter `plot out/laplace.*.py`. The result looks the same.
+  Now plot the new files, either `plot out/laplace.0.py out/laplace.1.py` or shorter `plot out/laplace.*.py`. The result looks the same.
 
-Check that the results from the serial and parallel are actually the same using the following helper script:
+  Check that the results from the serial and parallel are actually the same using the following helper script:
 
-.. code-block:: bash
+  .. code-block:: bash
 
-    validate_parallel.py out/*
-    
+      validate_parallel.py out/*
+      
 * The created python output files are human-readable (because `"binary":False` is set in the settings file). You can open them in an editor and see what they contain. There is also the `catpy`  script for formatted printing on the console:
 
-.. code-block:: bash
+  .. code-block:: bash
 
-  catpy out/laplace.0.py
-  
+    catpy out/laplace.0.py
+    
 * With the current settings, also the Paraview files are human-readable. You can also open e.g. `out/laplace.vtr` in an editor. Also try loading the `.pvtr` file in Paraview. 
   For big files it is better to produce binary files.
   
@@ -73,9 +73,15 @@ Check that the results from the serial and parallel are actually the same using 
 
       {"format": "Exfile", "filename": "out/laplace"},
     
-  to the `"OutputWriter"` list in file `settings_lagrange_linear.py` (line 31).   
+  to the `"OutputWriter"` list in file `settings_lagrange_linear.py` (line 31). (More details at :doc:`/settings/output_writer`.)
   After running the program again, you get the output files `laplace.exelem`, `laplace.exnode` and `laplace.com` in the out directory. The `.com` file is a convienient perl script that sets up the visualization in cmgui (OpenCMISS Iron won't generate this for you.). Change into the `out` directory and simply run `cmgui laplace.com`. In the Scene Editor click on `/` and then the `surface` item. Under `data`, select `solution` as the field variable that will be shown in color. Now you can tilt the view in the Graphics window to see the solution.
     
 * Now you know the basics, how to run a simulation program. Next, you can try to change parameters in the settings file, like number of elements (variables `m` and `n`), the `physicalExtent` or try to understand, how the Dirichlet boundary conditions were specified. 
   Note, that because this example uses a `Mesh::StructuredRegularFixedOfDimension<2>` mesh (in the `cpp` source file), we can only have elements with quadratic shape, i.e. `physicalExtent` and `nElements` have to match. You can look into the `laplace_structured.cpp` example file, which uses a structured mesh, that can have different mesh width in `x` and `y` direction or even arbitrary node positions.
-* The settings files use python syntax and are actually python scripts. This means you can execute any python code there, for example load your own custom geometry or input data files and set the options appropriately. The general documentation of the options is only given through the examples, so if you need to know how to specify certain options, look for an example files, that does it, or ask me.
+* The settings files use python syntax and are actually python scripts. 
+  This means you can execute any python code there, for example load your own custom geometry or input data files and set the options appropriately. 
+  The general documentation of the options is given on the :doc:`/settings` pages, 
+  but some classes are not yet documented and their settings can only be known from the examples (or the C++ core code).
+  So if you need to know how to specify certain options, look for an example files, that does it, or ask a developer.
+* To execute some of the more advanced electrophysiology examples, you'll need special input files like a muscle geometry. These are too large to have in git. Ask `Benjamin <mailto:benjamin.maier@ipvs.uni-stuttgart.de>`_ to get them.
+* If you now continue to use opendihu, you can consult the :doc:`/settings` pages for reference. If anything is unclear do not hesitate to ask. If you have improvements concerning the formulations on this website or can contribute to writing the documentation, come in contact!

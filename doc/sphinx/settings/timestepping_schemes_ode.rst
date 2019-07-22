@@ -1,6 +1,18 @@
 TimeSteppingSchemesOde
 ======================
-Several timestepping schemes to solve ordinary differential equations are implemented. They all have the following properties in common.
+Several timestepping schemes to solve ordinary differential equations are implemented. The C++ classes are listed in the following
+
+C++ code:
+
+.. code-block:: c
+  
+  TimeSteppingScheme::ExplicitEuler</* inner object, DiscretizableInTime*/>
+  TimeSteppingScheme::ImplicitEuler</* inner object, DiscretizableInTime*/>
+  TimeSteppingScheme::Heun</* inner object, DiscretizableInTime*/>
+  TimeSteppingScheme::HeunAdaptive</* inner object, DiscretizableInTime*/>
+  TimeSteppingScheme::CrankNicolson</* inner object, DiscretizableInTime*/>
+
+They all have the following properties in common.
 
 The following example is a configuration of the ExplicitEuler scheme:
  

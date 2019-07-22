@@ -17,6 +17,7 @@ If you are new, start with the :ref:`introduction <introduction>` or continue cl
    :caption: Contents:
    
    introduction
+   examples
    settings
    developer_information
    

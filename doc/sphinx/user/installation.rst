@@ -82,6 +82,8 @@ There is also `make debug` and `make release` that just call `scons` with the re
 
 Instead of using the `Makefile` you can call `scons` yourself.
 
+.. _installation_aliases:
+
 Building with scons
 ^^^^^^^^^^^^^^^^^^^^^^^^
 

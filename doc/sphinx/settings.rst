@@ -25,9 +25,9 @@ The following pages contain all settings that are possible to specify for the di
    settings/quasi_static_linear_elasticity_solver
    settings/static_bidomain_solver
    
-Indices and tables
-==================
+.. Indices and tables
+  ==================
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+  * :ref:`genindex`
+  * :ref:`modindex`
+  * :ref:`search`

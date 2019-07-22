@@ -27,6 +27,8 @@ out.py
 **/results/*
 **/*.tgz
 **/out.txt
+**/anim.mp4
+**/fig.pdf
 config.py
 **/*.csv
 **/input/*

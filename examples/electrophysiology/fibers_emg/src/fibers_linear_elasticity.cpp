@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
         >
       >
     >,
-    TimeSteppingScheme::QuasiStaticLinearElasticitySolver<              // bidomain
+    TimeSteppingScheme::QuasiStaticLinearElasticitySolver<              // linear elasticity
       SpatialDiscretization::FiniteElementMethod<       // linear elasticity
         Mesh::StructuredDeformableOfDimension<3>,
         BasisFunction::LagrangeOfOrder<1>,

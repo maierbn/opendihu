@@ -29,7 +29,7 @@ transfer(const std::vector<std::vector<
   typedef FieldVariable::FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunctionType>, nComponents1a> FieldVariableType1a;
   typedef FieldVariable::FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunctionType>, nComponents1b> FieldVariableType1b;
 
-  VLOG(1) << "Solution vector mapping (solution_vector_mapping_fibers_emg.tpp)";
+  LOG(DEBUG) << "Solution vector mapping (solution_vector_mapping_fibers_emg.tpp)";
 
   // prepare the target mesh for the mapping, set all factors to zero
   DihuContext::meshManager()->template prepareMapping<FieldVariableType2>(transferableSolutionData2);

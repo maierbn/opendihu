@@ -653,11 +653,14 @@ class Package(object):
       os.remove('scons_build_success')
 
     # Remove the installation directory.
-    if os.path.exists(install_dir):
-      if os.path.islink(install_dir):
-        os.unlink(install_dir)
-      else:
-        shutil.rmtree(install_dir)
+    try:
+      if os.path.exists(install_dir):
+        if os.path.islink(install_dir):
+          os.unlink(install_dir)
+        else:
+          shutil.rmtree(install_dir)
+    except:
+      ctx.Log("Failed to remove installation directory {}".format(install_dir))
 
     # Hunt down the correct build handler.
     handler = self.get_build_handler()

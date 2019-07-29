@@ -51,6 +51,7 @@ sconsconfig/packages/bison.py
 sconsconfig/packages/boost.py
 sconsconfig/packages/bzip2.py
 sconsconfig/packages/cfitsio.py
+sconsconfig/packages/chaste.py
 sconsconfig/packages/clock.py
 sconsconfig/packages/flex.py
 sconsconfig/packages/glut.py

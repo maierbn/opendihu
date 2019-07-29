@@ -6,7 +6,7 @@ class HDF5(Package):
 
     def __init__(self, **kwargs):
         defaults = {
-            'download_url': 'http://www.hdfgroup.org/ftp/HDF5/releases/hdf5-1.8.9/src/hdf5-1.8.9.tar.gz',
+            'download_url': 'https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.10/hdf5-1.10.5/src/hdf5-1.10.5.tar.gz',
         }
         defaults.update(kwargs)
         super(HDF5, self).__init__(**defaults)
@@ -69,14 +69,14 @@ int main(int argc, char* argv[]) {
 
         # Setup the build handler. I'm going to assume this will work for all architectures.
         self.set_build_handler([
-            './configure --prefix=${PREFIX} --enable-shared --enable-parallel CC=${MPI_DIR}/bin/mpicc',
+            './configure --prefix=${PREFIX} --enable-shared --enable-parallel',
             'make',
             'make install'
         ])
 
     def check(self, ctx):
         env = ctx.env
-        ctx.Message('Checking for HDF5 ... ')
+        ctx.Message('Checking for HDF5 ...          ')
         self.check_options(env)
 
         res = super(HDF5, self).check(ctx)

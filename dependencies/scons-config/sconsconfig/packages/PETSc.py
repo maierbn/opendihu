@@ -104,7 +104,7 @@ class PETSc(Package):
                 './configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=no \
                 --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
                 --with-mpi-dir=${MPI_DIR}\
-                --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch --download-hdf5 \
+                --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch \
                 COPTFLAGS=-O3\
                 CXXOPTFLAGS=-O3\
                 FOPTFLAGS=-O3 | tee out.txt',
@@ -145,7 +145,7 @@ class PETSc(Package):
         # if installation of petsc fails, retry without mumps and extra packages like parmetis, hdf5 or hypre
         if not res[0] and socket.gethostname()!= 'cmcs09':
           ctx.Log('Retry without MUMPS\n')
-          ctx.Message('Retry to install a fail-back PETSc without MUMPS, Hypre, HDF5 and PARMetis ...')
+          ctx.Message('Retry to install a fail-back PETSc without MUMPS, Hypre and Parmetis ...')
           if "PETSC_REDOWNLOAD" in Package.one_shot_options:
             Package.one_shot_options.remove('PETSC_REDOWNLOAD')
           if "PETSC_REBUILD" in Package.one_shot_options:

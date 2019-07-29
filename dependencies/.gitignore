@@ -27,3 +27,5 @@ mpi_debug
 pythonpackages
 megamol
 adios
+vtk
+chaste

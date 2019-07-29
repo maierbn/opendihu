@@ -48,3 +48,4 @@ from SvgPath import SvgPath
 from pythonPackages import pythonPackages
 from MegaMol import MegaMol
 from ADIOS import ADIOS
+from VTK import VTK

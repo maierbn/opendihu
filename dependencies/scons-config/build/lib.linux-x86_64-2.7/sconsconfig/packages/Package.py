@@ -1033,7 +1033,7 @@ class Package(object):
 
         system_inc_dirs = []
         for inc_dir in inc_sub_dirs:
-          if socket.gethostname() == 'cmcs09':
+          if socket.gethostname() == 'cmcs09' or "pgcc" in ctx.env["cc"]:
             system_inc_dirs.append(('-I', inc_dir))
           else:
             system_inc_dirs.append(('-isystem', inc_dir))     # -isystem is the same is -I for gcc, except it suppresses warning (useful for dependencies)            

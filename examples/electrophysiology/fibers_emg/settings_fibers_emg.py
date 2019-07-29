@@ -51,17 +51,16 @@ parser.add_argument('-vmodule',                              help='Enable verbos
 parser.add_argument('--rank_reordering',                     help='Enable rank reordering in the c++ code', action="store_true")
 parser.add_argument('--linear_elasticity',                   help='Enable linear elasticity', action="store_true")
  
-# parse command line arguments and assign values to global variables
-args = parser.parse_args(args=sys.argv[:-2])
-globals().update(args.__dict__)
+# parse command line arguments and assign values to variables module
+args = parser.parse_args(args=sys.argv[:-2], namespace=variables)
 
 # initialize some dependend variables
-if n_subdomains is not None:
-  variables.n_subdomains_x = n_subdomains[0]
-  variables.n_subdomains_y = n_subdomains[1]
-  variables.n_subdomains_z = n_subdomains[2]
+if variables.n_subdomains is not None:
+  variables.n_subdomains_x = variables.n_subdomains[0]
+  variables.n_subdomains_y = variables.n_subdomains[1]
+  variables.n_subdomains_z = variables.n_subdomains[2]
   
-if linear_elasticity:
+if variables.linear_elasticity:
   variables.cellml_file = "../../input/shorten.cpp"
   variables.emg_solver_type = "cg"
 
@@ -134,7 +133,7 @@ config = {
     "durationLogKey":         "duration_total",
     "timeStepOutputInterval": 10,
     "endTime":                variables.end_time,
-    "transferSlotName":       "intermediates" if linear_elasticity else "states",
+    "transferSlotName":       "intermediates" if variables.linear_elasticity else "states",
     "Term1": {        # monodomain, fibers
       "MultipleInstances": {
         "logKey":                     "duration_subdomains_xy",

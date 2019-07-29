@@ -227,7 +227,7 @@ def set_specific_states(n_nodes_global, time_step_no, current_time, states, fibe
 variables.fiber_distribution = np.genfromtxt(variables.fiber_distribution_file, delimiter=" ")
 variables.firing_times = np.genfromtxt(variables.firing_times_file)
 
-# for debugging output show when the first 20 variables.fibers will fire
+# for debugging output show when the first 20 fibers will fire
 if rank_no == 0 and not variables.disable_firing_output:
   print("Debugging output about fiber firing: Taking input from file \"{}\"".format(variables.firing_times_file))
   import timeit

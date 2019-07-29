@@ -46,7 +46,7 @@ fiber_file = "../../input/13x13fibers.bin"
 
 load_data_from_file = False         # If the fiber geometry data should be loaded completely in the python script. If True, this reads the binary file and assigns the node positions in the config. If False, the C++ code will read the binary file and only extract the local node positions. This is more performant for highly parallel runs.
 debug_output = False                # verbose output in this python script, for debugging the domain decomposition
-disable_firing_output = False       # Disables the initial list of fiber firings on the console to save some console space
+disable_firing_output = True        # Disables the initial list of fiber firings on the console to save some console space
 paraview_output = False             # If the paraview output writer should be enabled
 
 # motor unit stimulation times

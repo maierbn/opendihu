@@ -44,7 +44,7 @@ int main(int argc, char* argv[]) {
   */
 
   {
-  double dist0 = vtkLine::DistanceToLine(p0, lineP0, lineP1);
+  /*double dist0 = vtkLine::DistanceToLine(p0, lineP0, lineP1);
   std::cout << "Dist0: " << dist0 << std::endl;
 
   double dist1 = vtkLine::DistanceToLine(p1, lineP0, lineP1);
@@ -59,7 +59,7 @@ int main(int argc, char* argv[]) {
 
   double dist1 = vtkLine::DistanceToLine(p1, lineP0, lineP1, t, closest);
   std::cout << "Dist1: " << dist1 << " closest point: " << closest[0] << " " << closest[1] << " " << closest[2] << std::endl;
-  } 
+  } */
 }
 '''
 

@@ -23,8 +23,8 @@ emg_initial_guess_nonzero = False   # If the initial guess for the emg linear sy
 
 # timing parameters
 # -----------------
-end_time = 100.0
-stimulation_frequency = 10000*1e-3  # sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
+end_time = 1000.0
+stimulation_frequency = 100*1e-3    # sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
 dt_1D = 1e-3                        # timestep width of diffusion
 dt_0D = 1.5e-3                      # timestep width of ODEs
 dt_splitting = 3e-3                 # overall timestep width of strang splitting

@@ -43,8 +43,8 @@ int main(int argc, char* argv[]) {
   line->GetPoints()->SetPoint(0, lineP1);
   */
 
-  {
-  /*double dist0 = vtkLine::DistanceToLine(p0, lineP0, lineP1);
+  /*{
+  double dist0 = vtkLine::DistanceToLine(p0, lineP0, lineP1);
   std::cout << "Dist0: " << dist0 << std::endl;
 
   double dist1 = vtkLine::DistanceToLine(p1, lineP0, lineP1);

@@ -77,6 +77,7 @@ MPI_DIR="/usr/lib/openmpi"    # standard path for openmpi on ubuntu 16.04
 VTK_DOWNLOAD=True
 HDF5_DOWNLOAD=True
 XERCESC_DOWNLOAD=True
+XSD_DOWNLOAD=True
 
 # automatically set MPI_DIR for other systems, like ubuntu 18.04 and Debian
 try:

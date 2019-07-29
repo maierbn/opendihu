@@ -45,6 +45,7 @@ sconsconfig/packages/Sphinx.py
 sconsconfig/packages/SvgPath.py
 sconsconfig/packages/UTBot.py
 sconsconfig/packages/VTK.py
+sconsconfig/packages/XercesC.py
 sconsconfig/packages/__init__.py
 sconsconfig/packages/alsa.py
 sconsconfig/packages/bison.py

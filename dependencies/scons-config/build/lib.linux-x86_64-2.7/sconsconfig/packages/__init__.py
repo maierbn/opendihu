@@ -49,3 +49,4 @@ from pythonPackages import pythonPackages
 from MegaMol import MegaMol
 from ADIOS import ADIOS
 from VTK import VTK
+from XercesC import XercesC

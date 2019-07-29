@@ -33,6 +33,7 @@
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/SciPy.py
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/pugixml.py
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/libusb.pyc
+/usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/XercesC.pyc
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/HDF5.py
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/clock.pyc
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/METIS.pyc
@@ -125,6 +126,7 @@
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/chaste.pyc
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/AntTweakBar.pyc
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/Python.pyc
+/usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/XercesC.py
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/Package.py
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/MegaMolConsole.pyc
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/libusb.py

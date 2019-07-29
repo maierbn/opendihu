@@ -77,7 +77,7 @@ int main(int argc, char* argv[]) {
     self.number_output_lines = 4768
     
     env = ctx.env
-    ctx.Message('Checking for VTK ...        ')
+    ctx.Message('Checking for VTK ...           ')
     self.check_options(env)
 
     res = super(VTK, self).check(ctx)

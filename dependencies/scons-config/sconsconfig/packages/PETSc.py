@@ -95,7 +95,7 @@ class PETSc(Package):
             --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch | tee out.txt',
             '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt',
             '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt)',
-            'ln -s ${PREFIX}/lib/libparmetis.so ${PREFIX}/lib/parmetis.so'    # create parmetis.so link for chaste
+            'ln -fs ${PREFIX}/lib/libparmetis.so ${PREFIX}/lib/parmetis.so'    # create parmetis.so link for chaste
           ])
         else:
           # standard release build with MUMPS
@@ -113,7 +113,7 @@ class PETSc(Package):
                 FOPTFLAGS=-O3 | tee out.txt',
                '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt',
                '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt)',
-               'ln -s ${PREFIX}/lib/libparmetis.so ${PREFIX}/lib/parmetis.so'    # create parmetis.so link for chaste
+               'ln -fs ${PREFIX}/lib/libparmetis.so ${PREFIX}/lib/parmetis.so'    # create parmetis.so link for chaste
             ])
           else:                                                                               # # # # # P G I # # # # #
             #print("WARNING: MPI_DIR is set manually in scons-config/sconsconfig/packages/PETSc.Py." ) # because --with-mpi-dir=${MPI_DIR} does not work

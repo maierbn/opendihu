@@ -36,6 +36,10 @@ class Python(Package):
             return EXIT_SUCCESS;
           }
 '''
+
+    def check(self, ctx):
+        env = ctx.env
+        ctx.Message('Checking for Python ...        ')
         
         if socket.gethostname() != 'cmcs09':
           # Setup the build handler.
@@ -144,10 +148,8 @@ class Python(Package):
             '$export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${PREFIX}/lib',
             'cd ${PREFIX}/include && echo "#define PYTHON_HOME_DIRECTORY \\"${PREFIX}\\"\n" > python_home.h',
           ])
-
-    def check(self, ctx):
-        env = ctx.env
-        ctx.Message('Checking for Python ...        ')
+        
+        
         self.check_options(env)
 
         res = super(Python, self).check(ctx)

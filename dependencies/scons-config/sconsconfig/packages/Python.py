@@ -57,7 +57,7 @@ class Python(Package):
             #print("gcc has --enable-plugin, compile python with optimizations")
             self.set_build_handler([
               'mkdir -p ${PREFIX}',
-              'cd ${SOURCE_DIR} && chmod +x ./configure && ./configure --enable-shared --enable-optimizations --prefix=${PREFIX} \
+              'cd ${SOURCE_DIR} && chmod +x ./configure && CC="'+env['CC']+'" CXX="'+env['CXX']+'" ./configure --enable-shared --enable-optimizations --prefix=${PREFIX} \
                 LDFLAGS="-Wl,--rpath=${PREFIX}/lib -L${DEPENDENCIES_DIR}/bzip2/install/lib" \
                 CFLAGS="-I${DEPENDENCIES_DIR}/bzip2/install/include" \
                 && make && make install',

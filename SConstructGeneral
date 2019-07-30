@@ -56,6 +56,7 @@ sconsconfig.select(
     packages.HDF5(required=False),       # The parallel output library HDF5, compiled with --enable-parallel as needed for chaste, the version that Petsc can download does not have this feature
     packages.XercesC(required=False),       # XML-parser, needed for chaste
     packages.xsd(required=False),       # XML Schema to C++ data binding compiler, needed for chaste
+    packages.boost(required=False),       # boost C++ library, needed for chaste
     packages.Chaste(required=False),       # The Chaste framework, only the nonlinear mechanics solver is used
     packages.EasyLoggingPP(required=True),      # This is the logging library, it has to be the last package to be included because it contains a source (.c) file that needs to be compiled and linked to opendihu and somehow otherwise scons-config does not work.
 )
@@ -190,6 +191,8 @@ if env["BUILD_TYPE"] == "debug":
     env.MergeFlags('-ftemplate-backtrace-limit=0 -fstack-check')
     env.MergeFlags('-Wall -Wpedantic -Wno-sign-compare -Wno-error=sign-compare')
     env.MergeFlags('-DDEBUG -ggdb3 -g3 -Og -pg  -DELPP_FEATURE_CRASH_LOG')   # gcc flags, will be sorted automatically into linker and compiler flags
+    env.MergeFlags('-I/store/software/opendihu/dependencies/chaste/install/include/chaste/continuum_mechanics/problem')
+    env.MergeFlags('-I/store/software/opendihu/dependencies/chaste/install/include/chaste/continuum_mechanics/common')
   else: # using pgi compiler here:
     env.MergeFlags('-O0 -g -ta=host,tesla:cc60,time -Minfo=accel -noswitcherror -std=c++14 -DELPP_FEATURE_CRASH_LOG -laccg -laccapi -laccn -laccg2 -lcudadevice')
     env.MergeFlags('-DDEBUG')

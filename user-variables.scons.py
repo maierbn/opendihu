@@ -78,6 +78,7 @@ VTK_DOWNLOAD=True
 HDF5_DOWNLOAD=True
 XERCESC_DOWNLOAD=True
 XSD_DOWNLOAD=True
+BOOST_DOWNLOAD=True
 CHASTE_DOWNLOAD=True
 
 # automatically set MPI_DIR for other systems, like ubuntu 18.04 and Debian

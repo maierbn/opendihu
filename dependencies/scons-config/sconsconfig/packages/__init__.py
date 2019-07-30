@@ -51,4 +51,5 @@ from ADIOS import ADIOS
 from VTK import VTK
 from XercesC import XercesC
 from xsd import xsd
+from boost import boost
 from chaste import Chaste

@@ -56,6 +56,7 @@ sconsconfig.select(
     packages.HDF5(required=False),       # The parallel output library HDF5, compiled with --enable-parallel as needed for chaste, the version that Petsc can download does not have this feature
     packages.XercesC(required=False),       # XML-parser, needed for chaste
     packages.xsd(required=False),       # XML Schema to C++ data binding compiler, needed for chaste
+    packages.Chaste(required=False),       # The Chaste framework, only the nonlinear mechanics solver is used
     packages.EasyLoggingPP(required=True),      # This is the logging library, it has to be the last package to be included because it contains a source (.c) file that needs to be compiled and linked to opendihu and somehow otherwise scons-config does not work.
 )
 

@@ -87,6 +87,7 @@ class PETSc(Package):
           # debug build with MUMPS
           print("PETSc debugging build is on!")
           self.set_build_handler([
+            'mkdir -p ${PREFIX}',
             #'PATH=${PATH}:${DEPENDENCIES_DIR}/bison/install/bin \
             './configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=yes \
             --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
@@ -100,6 +101,7 @@ class PETSc(Package):
           # This needs bison installed
           if socket.gethostname() != 'cmcs09':
             self.set_build_handler([
+                'mkdir -p ${PREFIX}',
                 #'PATH=${PATH}:${DEPENDENCIES_DIR}/bison/install/bin \
                 './configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=no \
                 --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
@@ -115,6 +117,7 @@ class PETSc(Package):
             #print("WARNING: MPI_DIR is set manually in scons-config/sconsconfig/packages/PETSc.Py." ) # because --with-mpi-dir=${MPI_DIR} does not work
             print("INFO: setting FLAG '--with-mpiexec' manually in PETSc.Py. ")
             self.set_build_handler([ 
+                'mkdir -p ${PREFIX}',
  # don't use CC=$CC nor CXX=$CXX such that compiler can choose mpicc and mpicxx instead
  # --with-mpi=0 -I/usr/local/home/kraemer/opendihu/dependencies/petsc/install/include/petsc/mpiuni\
  # --with-mpi-include=/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/include \ can't use both include and dir.
@@ -157,15 +160,17 @@ class PETSc(Package):
           if self.have_option(env, "PETSC_DEBUG"):
             # debug build, without MUMPS
             self.set_build_handler([
-                '$./configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=yes \
+              'mkdir -p ${PREFIX}',
+              '$./configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=yes \
                 --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
                 --with-mpi-dir=${MPI_DIR} | tee out.txt',
-            '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt',
-            '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt)',
+              '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt',
+              '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt)',
             ])
           else:
             # release build without MUMPS
             self.set_build_handler([
+              'mkdir -p ${PREFIX}',
               '$./configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=no \
               --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
               --with-mpi-dir=${MPI_DIR}\

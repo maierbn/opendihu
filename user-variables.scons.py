@@ -98,7 +98,7 @@ try:
   
   # on neon use custom cmake
   import socket
-  if socket.gethostname() == "neon" or socket.gethostname() == "helium":
+  if socket.gethostname() == "neon" or socket.gethostname() == "helium" or "argon" in socket.gethostname():
     cmake="~/software/cmake/cmake-3.13.3-Linux-x86_64/bin/cmake"
   
   # on cmcs09 (CPU-GPU):
@@ -119,6 +119,7 @@ try:
     cc="pgcc"
     CC="pgc++"
     mpiCC="mpic++"
+    print("using pgi on argon")
 
     LAPACK_DOWNLOAD=False
     #LAPACK_PATH=os.onviron.get("PGI")+"/linux86-64/2018"

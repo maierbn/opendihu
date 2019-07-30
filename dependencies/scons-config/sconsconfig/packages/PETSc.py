@@ -53,6 +53,7 @@ class PETSc(Package):
         super(PETSc, self).__init__(**defaults)
         self.sub_dirs = [('include','lib')]
         self.libs = [['petsc'], ['petscksp', 'petscvec', 'petsc']]
+        self.headers = ['petsc.h']
 
         self.check_text = petsc_text
         self.static = False
@@ -110,6 +111,8 @@ class PETSc(Package):
                 CXXOPTFLAGS=-O3\
                 FOPTFLAGS=-O3 | tee out.txt',
                '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt',
+               '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt',
+               '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt)',
                '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt)',
             ])
           else:                                                                               # # # # # P G I # # # # #
@@ -132,6 +135,8 @@ class PETSc(Package):
                 COPTFLAGS=-fast \
                 CXXOPTFLAGS=-fast | tee out.txt',
                '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt',
+               '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt',
+               '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt)',
                '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt)',
                #'cp /usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/include/mpi.h /usr/local/home/kraemer/opendihu/dependencies/petsc/install/include/',
                #'ln -sfn /usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/include /usr/local/home/kraemer/opendihu/dependencies/petsc/install/include/mpiinclude',
@@ -173,8 +178,8 @@ class PETSc(Package):
               COPTFLAGS=-O3\
               CXXOPTFLAGS=-O3\
               FOPTFLAGS=-O3 | tee out.txt',
-            '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt',
-            '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt)',
+            '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt || make',
+            '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt) || make install',
             ])
           
           self.number_output_lines = 3990

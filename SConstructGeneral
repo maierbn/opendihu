@@ -181,7 +181,7 @@ if os.environ.get("PE_ENV") == None:
 if env["BUILD_TYPE"] == "debug":
   # debug build
   variant_dir = os.path.join(path_where_to_call_sconscript,"build_debug")           # output folder for build
-  if socket.gethostname() != 'cmcs09':
+  if env['CC'] != "pgcc":  # not pgi compiler
     env.MergeFlags('-ftemplate-backtrace-limit=0 -fstack-check')
     env.MergeFlags('-Wall -Wpedantic -Wno-sign-compare -Wno-error=sign-compare')
     env.MergeFlags('-DDEBUG -ggdb3 -g3 -Og -pg  -DELPP_FEATURE_CRASH_LOG')   # gcc flags, will be sorted automatically into linker and compiler flags
@@ -216,7 +216,7 @@ else:
     env.MergeFlags('-DELPP_DISABLE_DEBUG_LOGS -DELPP_DISABLE_VERBOSE_LOGS -DELPP_DISABLE_TRACE_LOGS -DNDEBUG')
   if os.environ.get("PE_ENV") == "CRAY":
     env.MergeFlags('-O3')   # fastest with cray (same performance as -02)
-  elif socket.gethostname() == 'cmcs09':
+  elif env["CC"] == "pgcc":
     env.MergeFlags('-g -O3 -fastsse -Mvect=simd -noswitcherror -std=c++14 -acc -ta=host,tesla:managed,cc35,cc60,time,cuda10.0 -laccg -laccapi -laccn -laccg2 -lcudadevice')
     #env.MergeFlags('-fastsse -g -noswitcherror -std=c++14 -Mvect=simd -acc -ta=host,tesla:cc60,time -Minfo=accel -laccg -laccapi -laccn -laccg2 -lcudadevice')
     #env.MergeFlags('-g -noswitcherror -std=c++14') # managed,

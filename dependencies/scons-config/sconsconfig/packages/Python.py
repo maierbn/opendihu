@@ -67,6 +67,9 @@ class Python(Package):
                 && make && make install',
               '$export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${PREFIX}/lib',
               'cd ${PREFIX}/include && echo "#define PYTHON_HOME_DIRECTORY \\"${PREFIX}\\"\n" > python_home.h',
+              "sed -i 's/#define clock_t long/\/\/#define clock_t long/g' ${PREFIX}/include/python3.6m/pyconfig.h",   # this is needed for pgi on argon
+              "sed -i 's/#define gid_t int/\/\/#define gid_t int/g' ${PREFIX}/include/python3.6m/pyconfig.h",
+              "sed -i 's/#define uid_t int/\/\/#define uid_t int/g' ${PREFIX}/include/python3.6m/pyconfig.h",
             ])
             self.number_output_lines = 9823
           else:       
@@ -79,6 +82,9 @@ class Python(Package):
                 && make && make install',
               '$export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${PREFIX}/lib',
               'cd ${PREFIX}/include && echo "#define PYTHON_HOME_DIRECTORY \\"${PREFIX}\\"\n" > python_home.h',
+              "sed -i 's/#define clock_t long/\/\/#define clock_t long/g' ${PREFIX}/include/python3.6m/pyconfig.h",  # this is needed for pgi on argon
+              "sed -i 's/#define gid_t int/\/\/#define gid_t int/g' ${PREFIX}/include/python3.6m/pyconfig.h",
+              "sed -i 's/#define uid_t int/\/\/#define uid_t int/g' ${PREFIX}/include/python3.6m/pyconfig.h",
             ])
         
             self.number_output_lines = 7082

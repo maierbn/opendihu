@@ -717,10 +717,10 @@ class Package(object):
         if substitute_environment_variables:
           cmd = ctx.env.subst(cmd)
           
-        sys.stdout.write("    $"+cmd+"  ")
+        sys.stdout.write("    $ "+cmd+"  ")
         sys.stdout.flush()
     
-        ctx.Log("  $"+cmd+"\n")
+        ctx.Log("  $ "+cmd+"\n")
 
         output = ""
         try:

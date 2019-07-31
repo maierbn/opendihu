@@ -19,7 +19,7 @@ class VTK(Package):
     #    ('include/mysql', 'lib64'),
     #]
     self.headers = ['vtkLine.h']
-    self.libs = [
+    self.libs = [[
       'vtkChartsCore-8.2.so',
       'vtkCommonColor-8.2.so',
       'vtkCommonComputationalGeometry-8.2.so',
@@ -141,7 +141,7 @@ class VTK(Package):
       'vtkViewsCore-8.2.so',
       'vtkViewsInfovis-8.2.so',
       'vtkzlib-8.2.so'
-    ]
+    ]]
     #self.extra_libs = ['lapack', 'blas']
     #self.set_rpath = False    # do not use dynamic linkage
     self.check_text = r'''

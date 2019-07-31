@@ -52,7 +52,9 @@ class PETSc(Package):
         defaults.update(kwargs)
         super(PETSc, self).__init__(**defaults)
         self.sub_dirs = [('include','lib')]
-        self.libs = [['petsc'], ['petscksp', 'petscvec', 'petsc']]
+        self.libs = [['petsc', 'cmumps', 'dmumps', 'HYPRE', 'mumps_common', 'pord', 'ptesmumps', 'ptscotch', 'ptscotcherr', 'ptscotcherrexit', 'ptscotchparmetis', 'scalapack', 'scotch', 'scotcherr',
+          'scotcherrexit', 'smumps', 'sundials_cvode', 'sundials_nvecparallel', 'sundials_nvecserial', 'zmumps']]
+          
 
         self.check_text = petsc_text
         self.static = False
@@ -89,7 +91,7 @@ class PETSc(Package):
           self.set_build_handler([
             'mkdir -p ${PREFIX}',
             #'PATH=${PATH}:${DEPENDENCIES_DIR}/bison/install/bin \
-            './configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=yes \
+            './configure --prefix=${PREFIX} --with-debugging=yes \
             --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
             --with-mpi-dir=${MPI_DIR}\
             --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch | tee out.txt',
@@ -106,7 +108,7 @@ class PETSc(Package):
             self.set_build_handler([
                 'mkdir -p ${PREFIX}',
                 #'PATH=${PATH}:${DEPENDENCIES_DIR}/bison/install/bin \
-                '$./configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=no \
+                '$./configure --prefix=${PREFIX} --with-debugging=no \
                 --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
                 --with-mpi-dir=${MPI_DIR}\
                 --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch --download-sundials --download-hypre \
@@ -186,6 +188,7 @@ class PETSc(Package):
             '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt',
             '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt)',
             ])
+          self.libs = ['petsc']
           
           self.number_output_lines = 3990
           

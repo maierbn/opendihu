@@ -838,7 +838,9 @@ getNodeNo(std::array<int,MeshType::dim()> coordinateLocal) const
     return this->meshPartition()->nNodesLocalWithoutGhosts(0)*this->meshPartition()->nNodesLocalWithoutGhosts(1)*localZ
       + this->meshPartition()->nNodesLocalWithoutGhosts(0)*localY + localX;
   }
+#ifndef 	__PGI
   return 0;  // should not happen, but cray compiler does not recognize it
+#endif
 }
 
 } // namespace

@@ -53,7 +53,7 @@ class PETSc(Package):
     super(PETSc, self).__init__(**defaults)
     self.sub_dirs = [('include','lib')]
     self.libs = [['petsc', 'cmumps', 'dmumps', 'HYPRE', 'mumps_common', 'pord', 'ptesmumps', 'scalapack', 'scotch', 'scotcherr',
-      'scotcherrexit', 'smumps', 'sundials_cvode', 'sundials_nvecparallel', 'sundials_nvecserial', 'zmumps']]
+      'scotcherrexit', 'smumps', 'sundials_cvode', 'sundials_nvecparallel', 'sundials_nvecserial', 'zmumps', 'parmetis']]
     self.headers = ['petsc.h']
 
     self.check_text = petsc_text
@@ -115,7 +115,7 @@ class PETSc(Package):
             COPTFLAGS=-O3\
             CXXOPTFLAGS=-O3\
             FOPTFLAGS=-O3 | tee out.txt',
-           '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt',
+           '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt',     # do it twice, the first time fails with PGI
            '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt',
            '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt)',
            '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt)',

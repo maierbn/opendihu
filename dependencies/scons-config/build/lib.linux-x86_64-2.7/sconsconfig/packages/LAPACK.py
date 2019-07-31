@@ -134,7 +134,7 @@ return EXIT_SUCCESS;
         ])
         self.number_output_lines = 19129
     
-      self.libs = ["openblas"]
+      self.libs = [["openblas"],["blas"]]
       self.headers = ["lapacke.h"]
 
     env = ctx.env

@@ -101,10 +101,12 @@ class PETSc(Package):
           # standard release build with MUMPS
           # This needs bison installed
           if socket.gethostname() != 'cmcs09':
+            # on normal host
+            
             self.set_build_handler([
                 'mkdir -p ${PREFIX}',
                 #'PATH=${PATH}:${DEPENDENCIES_DIR}/bison/install/bin \
-                './configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=no \
+                '$./configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=no \
                 --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
                 --with-mpi-dir=${MPI_DIR}\
                 --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch --download-sundials --download-hypre \
@@ -115,7 +117,9 @@ class PETSc(Package):
                '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt)',
                'ln -fs ${PREFIX}/lib/libparmetis.so ${PREFIX}/lib/parmetis.so'    # create parmetis.so link for chaste
             ])
-          else:                                                                               # # # # # P G I # # # # #
+          else:                              
+            # on cmcs09 using PGI
+                                                             # # # # # P G I # # # # #
             #print("WARNING: MPI_DIR is set manually in scons-config/sconsconfig/packages/PETSc.Py." ) # because --with-mpi-dir=${MPI_DIR} does not work
             print("INFO: setting FLAG '--with-mpiexec' manually in PETSc.Py. ")
             self.set_build_handler([ 
@@ -171,10 +175,10 @@ class PETSc(Package):
             ])
           else:
             # release build without MUMPS
+#              --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
             self.set_build_handler([
               'mkdir -p ${PREFIX}',
               '$./configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=no \
-              --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
               --with-mpi-dir=${MPI_DIR}\
               COPTFLAGS=-O3\
               CXXOPTFLAGS=-O3\

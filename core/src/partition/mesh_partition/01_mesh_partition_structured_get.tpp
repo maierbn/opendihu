@@ -610,6 +610,7 @@ getNodeNoGlobalNatural(std::array<global_no_t,MeshType::dim()> coordinatesGlobal
   {
     assert(false);
   }
+  return 0; // never reached, but pgi compiler does not recognize it
 }
 
 template<typename MeshType,typename BasisFunctionType>

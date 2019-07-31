@@ -49,7 +49,8 @@ class Chaste(Package):
       'AbstractContinuumMechanicsAssembler.hpp',  # Chaste/continuum_mechanics/src/solver
       'NonlinearElasticityTools.hpp',  # Chaste/continuum_mechanics/src/common
     ]
-    self.libs = [['chaste_global','chaste_io','chaste_linalg','chaste_mesh','chaste_ode','chaste_pde','chaste_continuum_mechanics']]
+    self.libs = [['chaste_ode', 'chaste_continuum_mechanics', 'chaste_pde', 'chaste_io', 'chaste_mesh', 'chaste_linalg', 'chaste_global']]
+
     #self.extra_libs = ['lapack', 'blas']
     #self.set_rpath = False    # do not use dynamic linkage
     self.check_text = r'''

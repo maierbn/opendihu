@@ -14,7 +14,7 @@ class boost(Package):
             ('include', 'lib'),
         ]
         self.headers = ['boost/optional.hpp']
-        self.libs = [['boost_filesystem', 'boost_program_options', 'boost_serialization', 'boost_system', 'boost_wserialization']]
+        self.libs = [['boost_wserialization', 'boost_system', 'boost_program_options', 'boost_filesystem', 'boost_serialization']]
         self.check_text = r'''
 #include <iostream>
 #include <boost/optional.hpp>
@@ -42,7 +42,7 @@ int main(int argc, char* argv[]) {
         
         self.set_build_handler([
             './bootstrap.sh',
-            './b2 link=static variant=release runtime-link=static install --prefix=${PREFIX}  --with-system --with-filesystem --with-serialization --with-program_options'
+            './b2 link=static variant=release runtime-link=static cxxflags=-std=c++14 install --prefix=${PREFIX}  --with-system --with-filesystem --with-serialization --with-program_options'
         ])
         
         ctx.Message('Checking for boost ...         ')

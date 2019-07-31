@@ -14,7 +14,7 @@ class boost(Package):
             ('include', 'lib'),
         ]
         self.headers = ['boost/optional.hpp']
-        self.libs = [['boost_filesystem', 'boost_program_options', 'boost_serialization', 'boost_system', 'boost_wserialization']]
+        self.libs = [['boost_wserialization', 'boost_system', 'boost_program_options', 'boost_filesystem', 'boost_serialization']]
         self.check_text = r'''
 #include <iostream>
 #include <boost/optional.hpp>

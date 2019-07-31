@@ -52,8 +52,8 @@ class PETSc(Package):
     defaults.update(kwargs)
     super(PETSc, self).__init__(**defaults)
     self.sub_dirs = [('include','lib')]
-    self.libs = [['petsc', 'cmumps', 'dmumps', 'HYPRE', 'mumps_common', 'pord', 'ptesmumps', 'scalapack', 'scotch', 'scotcherr',
-      'scotcherrexit', 'smumps', 'sundials_cvode', 'sundials_nvecparallel', 'sundials_nvecserial', 'zmumps', 'parmetis']]
+    self.libs = [['cmumps', 'HYPRE', 'sundials_cvode', 'petsc', 'scalapack', 'parmetis', 'dmumps', 'smumps', 'zmumps', 'mumps_common', 'cmumps', 'scalapack', 'petsc', 'pord', 'parmetis', 'petsc', 'dmumps', 'sundials_nvecparallel', 'sundials_nvecserial', 'petsc', 'sundials_cvode', 'smumps']]
+      # ['petsc', 'cmumps', 'dmumps', 'HYPRE', 'mumps_common', 'pord', 'scalapack', 'smumps', 'sundials_cvode', 'sundials_nvecparallel', 'sundials_nvecserial', 'zmumps', 'parmetis']]
     self.headers = ['petsc.h']
 
     self.check_text = petsc_text

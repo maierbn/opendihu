@@ -105,10 +105,11 @@ class PETSc(Package):
           if socket.gethostname() != 'cmcs09':
             # on normal host
             
+            # static libraries do not work!
             self.set_build_handler([
                 'mkdir -p ${PREFIX}',
                 #'PATH=${PATH}:${DEPENDENCIES_DIR}/bison/install/bin \
-                './configure --prefix=${PREFIX} --with-debugging=no \
+                './configure --prefix=${PREFIX} --with-debugging=no --with-shared-libraries=1  \
                 --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
                 --with-mpi-dir=${MPI_DIR}\
                 --download-mumps --download-scalapack --download-parmetis --download-metis --download-sundials --download-hypre \

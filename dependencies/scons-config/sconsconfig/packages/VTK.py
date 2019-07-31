@@ -192,7 +192,7 @@ int main(int argc, char* argv[]) {
 
     # Setup the build handler.
     self.set_build_handler([
-      "mkdir -p build; cd build; cmake -DCMAKE_INSTALL_PREFIX=${PREFIX} ..",
+      "mkdir -p build; cd build; cmake -DCMAKE_INSTALL_PREFIX=${PREFIX} -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Release ..",
       "cd build; make -j{}".format(p),
       "cd build; make install",
     ])

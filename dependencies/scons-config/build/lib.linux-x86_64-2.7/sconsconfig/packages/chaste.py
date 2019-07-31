@@ -91,7 +91,7 @@ int main(int argc, char* argv[]) {
         -DBLAS_LIBRARIES=${DEPENDENCIES_DIR}/lapack/install/lib/libopenblas.so \
         -DBUILD_SHARED_LIBS=OFF \
         -DChaste_ENABLE_TESTING=OFF \
-        -DBoost_USE_STATIC_LIBS=ON \
+        -DBoost_USE_STATIC_LIBS=OFF \
         -DBoost_USE_STATIC_RUNTIME=FALSE \
         -DPETSC_ARCH=arch-linux2-c-opt \
         ..",

@@ -43,7 +43,7 @@ int main(int argc, char* argv[]) {
         self.set_build_handler([
             './bootstrap.sh',
             #'./b2 link=static variant=release runtime-link=static cxxflags=-std=c++14 install --prefix=${PREFIX}  --with-system --with-filesystem --with-serialization --with-program_options'
-            './b2 link=shared variant=release runtime-link=shared cxxflags=-std=c++14 install --prefix=${PREFIX}  --with-system --with-filesystem --with-serialization --with-program_options'
+            './b2 link=shared variant=release runtime-link=shared cxxstd=14 install --prefix=${PREFIX}  --with-system --with-filesystem --with-serialization --with-program_options'
         ])
         
         ctx.Message('Checking for boost ...         ')

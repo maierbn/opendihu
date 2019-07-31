@@ -108,7 +108,7 @@ class PETSc(Package):
             self.set_build_handler([
                 'mkdir -p ${PREFIX}',
                 #'PATH=${PATH}:${DEPENDENCIES_DIR}/bison/install/bin \
-                '$./configure --prefix=${PREFIX} --with-debugging=no \
+                './configure --prefix=${PREFIX} --with-debugging=no \
                 --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
                 --with-mpi-dir=${MPI_DIR}\
                 --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch --download-sundials --download-hypre \
@@ -169,7 +169,7 @@ class PETSc(Package):
             # debug build, without MUMPS
             self.set_build_handler([
               'mkdir -p ${PREFIX}',
-              '$./configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=yes \
+              './configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=yes \
                 --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
                 --with-mpi-dir=${MPI_DIR} | tee out.txt',
               '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt',
@@ -180,7 +180,7 @@ class PETSc(Package):
 #              --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
             self.set_build_handler([
               'mkdir -p ${PREFIX}',
-              '$./configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=no \
+              './configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=no \
               --with-mpi-dir=${MPI_DIR}\
               COPTFLAGS=-O3\
               CXXOPTFLAGS=-O3\

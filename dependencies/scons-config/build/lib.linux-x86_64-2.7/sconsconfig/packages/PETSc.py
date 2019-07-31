@@ -52,7 +52,7 @@ class PETSc(Package):
         defaults.update(kwargs)
         super(PETSc, self).__init__(**defaults)
         self.sub_dirs = [('include','lib')]
-        self.libs = [['petsc', 'cmumps', 'dmumps', 'HYPRE', 'mumps_common', 'pord', 'ptesmumps', 'scalapack', 'scotch', 'scotcherr',
+        self.libs = [['petsc', 'cmumps', 'dmumps', 'HYPRE', 'mumps_common', 'pord', 'ptesmumps', 'ptscotch', 'ptscotcherr', 'ptscotcherrexit', 'ptscotchparmetis', 'scalapack', 'scotch', 'scotcherr',
           'scotcherrexit', 'smumps', 'sundials_cvode', 'sundials_nvecparallel', 'sundials_nvecserial', 'zmumps']]
           
 
@@ -94,7 +94,7 @@ class PETSc(Package):
             './configure --prefix=${PREFIX} --with-debugging=yes \
             --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
             --with-mpi-dir=${MPI_DIR}\
-            --download-mumps --download-scalapack --download-parmetis --download-metis | tee out.txt',
+            --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch | tee out.txt',
             '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt',
             '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt)',
             'ln -fs ${PREFIX}/lib/libparmetis.so ${PREFIX}/lib/parmetis.so'    # create parmetis.so link for chaste
@@ -111,7 +111,7 @@ class PETSc(Package):
                 './configure --prefix=${PREFIX} --with-debugging=no \
                 --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
                 --with-mpi-dir=${MPI_DIR}\
-                --download-mumps --download-scalapack --download-parmetis --download-metis --download-sundials --download-hypre \
+                --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch --download-sundials --download-hypre \
                 COPTFLAGS=-O3\
                 CXXOPTFLAGS=-O3\
                 FOPTFLAGS=-O3 | tee out.txt',

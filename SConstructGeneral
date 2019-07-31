@@ -186,8 +186,9 @@ if env["BUILD_TYPE"] == "debug":
     env.MergeFlags('-Wall -Wpedantic -Wno-sign-compare -Wno-error=sign-compare')
     env.MergeFlags('-DDEBUG -ggdb3 -g3 -Og -pg  -DELPP_FEATURE_CRASH_LOG')   # gcc flags, will be sorted automatically into linker and compiler flags
   else: # using pgi compiler here:
-    env.MergeFlags('-O0 -g -ta=host,tesla:cc60,time -Minfo=accel -noswitcherror -std=c++14 -DELPP_FEATURE_CRASH_LOG -laccg -laccapi -laccn -laccg2 -lcudadevice')
-    env.MergeFlags('-DDEBUG')
+#    env.MergeFlags('-O0 -g -ta=host,tesla:cc60,time -Minfo=accel -noswitcherror -std=c++14 -DELPP_FEATURE_CRASH_LOG -laccg -laccapi -laccn -laccg2 -lcudadevice')
+    env.MergeFlags('-O0 -g -std=c++14 -DELPP_FEATURE_CRASH_LOG')
+    env.MergeFlags('-DDEBUG -D__SSE__')
   if not env["USE_MEGAMOL"]:
     env.MergeFlags('-Werror')
   env.Append(LIBPATH = [os.path.join(opendihu_home, 'core/build_debug')])   # add debug version of opendihu library
@@ -217,9 +218,9 @@ else:
   if os.environ.get("PE_ENV") == "CRAY":
     env.MergeFlags('-O3')   # fastest with cray (same performance as -02)
   elif env["CC"] == "pgcc":
-    env.MergeFlags('-g -O3 -fastsse -Mvect=simd -noswitcherror -std=c++14 -acc -ta=host,tesla:managed,cc35,cc60,time,cuda10.0 -laccg -laccapi -laccn -laccg2 -lcudadevice')
+    #env.MergeFlags('-g -O3 -fastsse -Mvect=simd -noswitcherror -std=c++14 -acc -ta=host,tesla:managed,cc35,cc60,time,cuda10.0 -laccg -laccapi -laccn -laccg2 -lcudadevice')
     #env.MergeFlags('-fastsse -g -noswitcherror -std=c++14 -Mvect=simd -acc -ta=host,tesla:cc60,time -Minfo=accel -laccg -laccapi -laccn -laccg2 -lcudadevice')
-    #env.MergeFlags('-g -noswitcherror -std=c++14') # managed,
+    env.MergeFlags('-g -noswitcherror -std=c++14') # managed,
   else:
     env.MergeFlags('-Ofast')   # fastest with GNU and Intel
   

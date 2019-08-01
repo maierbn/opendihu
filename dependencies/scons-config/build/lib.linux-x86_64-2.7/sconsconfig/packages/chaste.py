@@ -95,7 +95,7 @@ int main(int argc, char* argv[]) {
         -DBoost_USE_STATIC_LIBS=OFF \
         -DPETSC_ARCH=arch-linux2-c-opt \
         ..",
-      "!cd build; make -j{}".format(p),   # '!' means this command is allowed to fail and fails because Amara could not be installed
+      "!cd build; make core -j{}".format(p),   # '!' means this command is allowed to fail and fails because Amara could not be installed
       #"cd build; make install",  # this does not really work
       "mkdir -p ${PREFIX}/lib/chaste && mkdir -p ${PREFIX}/include",
       "$cp -ft ${PREFIX}/lib/chaste $(find ${SOURCE_DIR}/build/ -name *.a)",   # install manually

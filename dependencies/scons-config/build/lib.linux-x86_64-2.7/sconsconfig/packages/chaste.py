@@ -91,11 +91,11 @@ int main(int argc, char* argv[]) {
         -DBLAS_LIBRARIES=${DEPENDENCIES_DIR}/lapack/install/lib/libopenblas.so \
         -DBUILD_SHARED_LIBS=OFF \
         -DChaste_ENABLE_TESTING=OFF \
-        -DBoost_USE_STATIC_LIBS=OFF \
         -DBoost_USE_STATIC_RUNTIME=FALSE \
+        -DBoost_USE_STATIC_LIBS=OFF \
         -DPETSC_ARCH=arch-linux2-c-opt \
         ..",
-      "!cd build; make core -j{}".format(p),   # '!' means this command is allowed to fail and fails because Amara could not be installed
+      "!cd build; make -j{}".format(p),   # '!' means this command is allowed to fail and fails because Amara could not be installed
       #"cd build; make install",  # this does not really work
       "mkdir -p ${PREFIX}/lib/chaste && mkdir -p ${PREFIX}/include",
       "$cp -ft ${PREFIX}/lib/chaste $(find ${SOURCE_DIR}/build/ -name *.a)",   # install manually

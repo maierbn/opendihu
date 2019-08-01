@@ -57,6 +57,14 @@ int DihuContext::nObjects_ = 0;   ///< number of objects of DihuContext, if the 
 int DihuContext::nRanksCommWorld_ = 0;   ///< number of MPI ranks in MPI_COMM_WORLD
 int DihuContext::ownRankNoCommWorld_ = 0;  ///< own MPI rank no in MPI_COMM_WORLD
 
+// fix undefined references in boost when compiling with c++14
+namespace boost {
+namespace system {
+  void generic_category(){}
+  void system_category(){}
+}
+}
+
 void handleSignal(int signalNo)
 {
   std::string signalName = strsignal(signalNo);

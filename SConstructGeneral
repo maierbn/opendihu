@@ -242,6 +242,7 @@ else:
 if os.environ.get("PE_ENV") != "CRAY" and "pg" not in env["cc"]:
   env.MergeFlags('-Wunused-variable')   # always warn about unused variables
   env.MergeFlags('-std=c++14 -fopenmp -march=native')
+  env.MergeFlags('-Wl,--disable-new-dtags')
 
 if os.environ.get("PE_ENV") == "CRAY" and env["USE_HPL"]:
   print("USE_HPL=True: Compiling with -hpl option\n")

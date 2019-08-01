@@ -63,7 +63,8 @@ VTK_DOWNLOAD = have_chaste
 HDF5_DOWNLOAD = have_chaste
 XERCESC_DOWNLOAD = have_chaste
 XSD_DOWNLOAD = have_chaste
-BOOST_DOWNLOAD = have_chaste
+#BOOST_DOWNLOAD = have_chaste
+BOOST_DOWNLOAD = False
 CHASTE_DOWNLOAD = have_chaste
 
 # automatically set MPI_DIR for other systems, like ubuntu 18.04 and Debian

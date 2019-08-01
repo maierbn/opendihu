@@ -1,22 +1,30 @@
 # Multiple 1D variables.fibers (monodomain) with 3D EMG (static bidomain), biceps geometry
 # to see all available arguments, execute: ./fibers_emg ../settings_fibers_emg.py -help
-#
+##
 # if variables.fiber_file=cuboid.bin, it uses a small cuboid test example
 #
 # You have to set n_subdomains such that it matches the number of processes, e.g. 2x2x1 = 4 processes.
 # Decomposition is in x,y,z direction, the fibers are aligned with the z axis.
 # E.g. --n_subdomains 2 2 1 which is 2x2x1 means no subdivision per fiber, 
 # --n_subdomains 8 8 4 means every fiber will be subdivided to 4 processes and all fibers will be computed by 8x8 processes.
-
+#
 # Example with 4 processes and end time 5:
 #   mpirun -n 4 ./fibers_emg ../settings_fibers_emg.py --n_subdomains 2 2 1 --variables.end_time=5.0
+#
+# Three files contribute to the settings:
+# A lot of variables are set by the helper.py script, the variables and their values are defined in variables.py and this file
+# creates the composite config that is needed by opendihu.
+# You should only make changes in the variables.py file to set different parameters or in this file to add functionality.
+# This is the most complex example, you can ask me (BM) how it works exactly.
+
 
 import sys
 import timeit
 import argparse
 
 sys.path.insert(0, '..')
-import variables    # file variables.py
+import variables              # file variables.py, defined default values for all parameters, you can set the parameters there
+from create_partitioned_meshes_for_settings import *   # file create_partitioned_meshes_for_settings with helper functions about own subdomain
 
 # define command line arguments
 parser = argparse.ArgumentParser(description='fibers_emg')
@@ -87,6 +95,9 @@ if rank_no == 0:
     
 # initialize all helper variables
 from helper import *
+
+variables.n_subdomains_xy = variables.n_subdomains_x * variables.n_subdomains_y
+variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
 
 # define the config dict
 config = {

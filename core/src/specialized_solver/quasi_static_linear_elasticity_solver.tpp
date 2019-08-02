@@ -1,4 +1,4 @@
-#include "specialized_solver/static_bidomain_solver.h"
+#include "specialized_solver/quasi_static_linear_elasticity_solver.h"
 
 #include <Python.h>  // has to be the first included header
 

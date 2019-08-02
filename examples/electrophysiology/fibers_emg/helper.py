@@ -54,6 +54,10 @@ if variables.fiber_file == "cuboid.bin":
             point = [x*(float)(size_x)/(variables.n_fibers_x-1), y*(float)(size_y)/(variables.n_fibers_y-1), z*(float)(size_z)/(variables.n_points_whole_fiber-1)]
             outfile.write(struct.pack('3d', point[0], point[1], point[2]))   # data point
 
+# output diffusion solver type
+if rank_no == 0:
+  print("diffusion solver type: {}".format(variables.diffusion_solver_type))
+
 # create the partitioning using the script in create_partitioned_meshes_for_settings.py
 result = create_partitioned_meshes_for_settings(
     variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, 
@@ -69,7 +73,7 @@ variables.output_writer_fibers = []
 variables.output_writer_emg = []
 if variables.paraview_output:
   variables.output_writer_emg.append({"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + variables.scenario_name + "/emg", "binary": True, "fixedFormat": False, "combineFiles": True})
-  variables.output_writer_fibers.append({"format": "Paraview", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep), "filename": "out/" + variables.scenario_name + "/variables.fibers", "binary": True, "fixedFormat": False, "combineFiles": True})
+  variables.output_writer_fibers.append({"format": "Paraview", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep), "filename": "out/" + variables.scenario_name + "/fibers", "binary": True, "fixedFormat": False, "combineFiles": True})
 
 # set values for cellml model
 if "shorten" in variables.cellml_file:

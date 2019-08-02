@@ -247,6 +247,7 @@ template<typename FunctionSpaceType, int nComponents>
 typename FiniteElementsBase<FunctionSpaceType,nComponents>::OutputFieldVariables FiniteElementsBase<FunctionSpaceType,nComponents>::
 getOutputFieldVariables()
 {
+  // these field variables will be written to output files
   assert(this->functionSpace_);
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> geometryField
     = std::make_shared<FieldVariable::FieldVariable<FunctionSpaceType,3>>(this->functionSpace_->geometryField());

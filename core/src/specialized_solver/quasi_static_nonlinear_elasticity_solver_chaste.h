@@ -1,39 +1,27 @@
 #pragma once
 
 #include <Python.h>  // has to be the first included header
-#include "time_stepping_scheme/time_stepping_scheme_ode.h"
-#include "interfaces/runnable.h"
-#include "data_management/finite_element_method/finite_elements.h"
-#include "control/dihu_context.h"
-#include "partition/rank_subset.h"
-#include "equation/linear_elasticity.h"
-#include "data_management/specialized_solver/quasi_static_linear_elasticity.h"
+
+#include "data_management/specialized_solver/quasi_static_nonlinear_elasticity_chaste.h"
 
 namespace TimeSteppingScheme
 {
 
-/** A specialized solver for 3D linear elasticity, as quasi-static timestepping scheme (a new static solution every timestep)
+/** This solver is an adapter to the chaste software framework and uses the hyperelasticity implementation of chaste.
+ *  It solves the nonlinear finite elasticity problem with Mooney-Rivlin material, for either 2D or 3D.
   */
-template<typename FiniteElementMethod>
-class QuasiStaticLinearElasticitySolver :
+template<int D>
+class QuasiStaticNonlinearElasticitySolverChaste :
   public Runnable
 {
 public:
-  typedef typename FiniteElementMethod::FunctionSpace FunctionSpace;
-  typedef typename Data::FiniteElements<FunctionSpace,3,Equation::Static::LinearElasticityActiveStress> DataLinearElasticityType;
-  typedef Data::QuasiStaticLinearElasticity<DataLinearElasticityType> Data;
-  typedef FieldVariable::FieldVariable<FunctionSpace,1> FieldVariableType;
+  typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>, BasisFunction::LagrangeOfOrder<2>> FunctionSpaceType;
+  typedef Data::QuasiStaticNonlinearElasticityChaste<FunctionSpaceType> Data;
+  typedef FieldVariable::FieldVariable<FunctionSpaceType,1> FieldVariableType;
   typedef std::shared_ptr<FieldVariableType> TransferableSolutionDataType;
 
-  typedef SpatialDiscretization::FiniteElementMethod<       //FEM for initial potential flow, fiber directions
-        Mesh::StructuredDeformableOfDimension<3>,
-        BasisFunction::LagrangeOfOrder<1>,
-        Quadrature::Gauss<3>,
-        Equation::Static::Laplace
-  > FiniteElementMethodPotentialFlow;
-
   //! constructor
-  QuasiStaticLinearElasticitySolver(DihuContext context);
+  QuasiStaticNonlinearElasticitySolverChaste(DihuContext context);
 
   //! advance simulation by the given time span, data in solution is used, afterwards new data is in solution
   void advanceTimeSpan();
@@ -65,16 +53,10 @@ public:
 
 protected:
 
-  // from the activation scalar field (symbol gamma), compute the active stress tensor field in fiber direction
-  void computeActiveStress();
-
   DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
 
   OutputWriter::Manager outputWriterManager_; ///< manager object holding all output writer
   Data data_;                 ///< data object
-
-  FiniteElementMethodPotentialFlow finiteElementMethodPotentialFlow_;   ///< the finite element object that is used for the Laplace problem of the potential flow, needed for the fiber directions
-  FiniteElementMethod finiteElementMethodLinearElasticity_;   ///< the finite element object that solves the linear elasticity equation
 
   std::string durationLogKey_;   ///< key with with the duration of the computation is written to the performance measurement log
 
@@ -87,4 +69,4 @@ protected:
 
 }  // namespace
 
-#include "specialized_solver/quasi_static_linear_elasticity_solver.tpp"
+#include "specialized_solver/quasi_static_nonlinear_elasticity_solver_chaste.tpp"

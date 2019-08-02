@@ -34,6 +34,7 @@ opendihu_home = Dir('.').srcnode().abspath  # opendihu home directory is where t
 
 #
 # Select the packages we want to use in the configuration.
+# The order is relevant, depending packages should be after the packages they depend on.
 #
 sconsconfig.select(
     packages.MPI(required=True),     # This searches for the MPI implementation
@@ -178,6 +179,13 @@ Progress(progress_function, interval=env["node_count_interval"])
 if os.environ.get("PE_ENV") == None:
   notify = env.Command(target='notify-send'+str(random.random()), source = None, action = 'notify-send "compilation complete" || true')
   AlwaysBuild('notify-send')
+    
+# ensure that PYTHONPATH points to scripts directory which contains python scripts
+current_python_path = os.environ.get("PYTHONPATH")
+if current_python_path is None:
+  os.environ["PYTHONPATH"] = os.path.join(opendihu_home, "scripts")+":"+os.path.join(opendihu_home, "scripts/geometry_manipulation")
+elif "scripts" not in current_python_path:
+  os.environ["PYTHONPATH"] = current_python_path+":"+os.path.join(opendihu_home, "scripts")+":"+os.path.join(opendihu_home, "scripts/geometry_manipulation")
     
 # -----------------------------------------------
 # Depending on the variable BUILD_TYPE either build with debug, releasewithdebuginfo or release settings and link corresponding version of core

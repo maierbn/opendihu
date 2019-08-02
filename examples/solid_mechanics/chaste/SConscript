@@ -11,4 +11,5 @@ Import('env')     # import Environment object from calling SConstruct
 if not env['no_examples']:
     
   # create the main executable
-  env.Program(target = 'solving_elasticity_problems_tutorial.cpp', source = "src/solving_elasticity_problems_tutorial.cpp")
+  #env.Program(target = 'solving_elasticity_problems_tutorial', source = "src/solving_elasticity_problems_tutorial.cpp")
+  env.Program(target = '3d_muscle', source = "src/3d_muscle.cpp")

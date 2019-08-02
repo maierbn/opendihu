@@ -110,6 +110,7 @@ template<typename FunctionSpaceType>
 typename StaticBidomain<FunctionSpaceType>::OutputFieldVariables StaticBidomain<FunctionSpaceType>::
 getOutputFieldVariables()
 {
+  // these field variables will be written to output files
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> geometryField
     = std::make_shared<FieldVariable::FieldVariable<FunctionSpaceType,3>>(this->functionSpace_->geometryField());
 

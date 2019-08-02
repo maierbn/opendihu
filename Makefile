@@ -100,3 +100,6 @@ linear_elasticity:
 
 fibers_linear_elasticity:
 	cd examples/electrophysiology/fibers_emg && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+
+3d_muscle:
+	cd examples/solid_mechanics/chaste && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG

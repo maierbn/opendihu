@@ -131,6 +131,7 @@ template<typename FunctionSpaceType,int nComponents>
 typename TimeStepping<FunctionSpaceType,nComponents>::TransferableSolutionDataType TimeStepping<FunctionSpaceType,nComponents>::
 getSolutionForTransfer()
 {
+  // these field variables will be written by the output writers
   //LOG(DEBUG) << "TimeStepping::getSolutionForTransfer \"" << debuggingName_ << "\", solution " << *this->solution_;
   return std::tuple<std::shared_ptr<FieldVariableType>,int,double>(this->solution_,this->outputComponentNo_,this->prefactor_);
 }
@@ -139,6 +140,7 @@ template<typename FunctionSpaceType,int nComponents>
 typename TimeStepping<FunctionSpaceType,nComponents>::OutputFieldVariables TimeStepping<FunctionSpaceType,nComponents>::
 getOutputFieldVariables()
 {
+  // these field variables will be written to output files
   return OutputFieldVariables(
     std::make_shared<FieldVariable::FieldVariable<FunctionSpaceType,3>>(this->functionSpace_->geometryField()),
     solution_

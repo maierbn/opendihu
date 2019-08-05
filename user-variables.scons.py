@@ -58,7 +58,7 @@ MEGAMOL_DOWNLOAD = False    # install MegaMol from official git repo, but needed
 MPI_DIR = "/usr/lib/openmpi"    # standard path for openmpi on ubuntu 16.04
 
 # chaste and dependencies
-have_chaste = True
+have_chaste = False
 VTK_DOWNLOAD = have_chaste
 HDF5_DOWNLOAD = have_chaste
 XERCESC_DOWNLOAD = have_chaste

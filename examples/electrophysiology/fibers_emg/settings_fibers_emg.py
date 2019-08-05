@@ -140,7 +140,7 @@ config = {
   },
   "Coupling": {
     "timeStepWidth":          variables.dt_3D,  # 1e-1
-    "logTimeStepWidthAsKey":  "variables.dt_3D",
+    "logTimeStepWidthAsKey":  "dt_3D",
     "durationLogKey":         "duration_total",
     "timeStepOutputInterval": 10,
     "endTime":                variables.end_time,
@@ -156,7 +156,7 @@ config = {
           "StrangSplitting": {
             #"numberTimeSteps": 1,
             "timeStepWidth":          variables.dt_splitting,  # 1e-1
-            "logTimeStepWidthAsKey":  "variables.dt_splitting",
+            "logTimeStepWidthAsKey":  "dt_splitting",
             "durationLogKey":         "duration_monodomain",
             "timeStepOutputInterval": 100,
             "endTime":                variables.dt_splitting,
@@ -171,7 +171,7 @@ config = {
                   "ranks":                          list(range(variables.n_subdomains_z)),    # these rank nos are local nos to the outer instance of MultipleInstances, i.e. from 0 to number of ranks in z direction
                   "Heun" : {
                     "timeStepWidth":                variables.dt_0D,  # 5e-5
-                    "logTimeStepWidthAsKey":        "variables.dt_0D",
+                    "logTimeStepWidthAsKey":        "dt_0D",
                     "durationLogKey":               "duration_0D",
                     "initialValues":                [],
                     "timeStepOutputInterval":       1e4,
@@ -217,7 +217,7 @@ config = {
                     "initialValues":               [],
                     #"numberTimeSteps":            1,
                     "timeStepWidth":               variables.dt_1D,  # 1e-5
-                    "logTimeStepWidthAsKey":       "variables.dt_1D",
+                    "logTimeStepWidthAsKey":       "dt_1D",
                     "durationLogKey":              "duration_1D",
                     "timeStepOutputInterval":      1e4,
                     "dirichletBoundaryConditions": {0: -75.0036, -1: -75.0036},

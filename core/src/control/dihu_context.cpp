@@ -36,6 +36,10 @@
 #ifdef HAVE_MEGAMOL
 #include "Console.h"
 #endif
+#ifdef HAVE_CHASTE
+#include "CommandLineArguments.hpp"
+#include "ExecutableSupport.hpp"
+#endif
 
 //INITIALIZE_EASYLOGGINGPP
 
@@ -209,6 +213,11 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
     // start megamol console
     LOG(DEBUG) << "initializeMegaMol";
     initializeMegaMol(argc, argv);
+
+    // initialize chaste, if available
+#ifdef HAVE_CHASTE
+    ExecutableSupport::StartupWithoutShowingCopyright(&argc, &argv);
+#endif
 
     initialized_ = true;
   }

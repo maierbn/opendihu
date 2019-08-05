@@ -23,9 +23,9 @@ n_subdomains_z = 1
 
 # stride for sampling the 3D elements from the fiber data
 # here any number is possible
-sampling_stride_x = 2
-sampling_stride_y = 2
-sampling_stride_z = 50
+sampling_stride_x = 7
+sampling_stride_y = 7
+sampling_stride_z = 1000
 
 # create the partitioning using the script in create_partitioned_meshes_for_settings.py
 result = create_partitioned_meshes_for_settings(

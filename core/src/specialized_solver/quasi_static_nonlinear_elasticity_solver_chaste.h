@@ -59,6 +59,7 @@ protected:
   Data data_;                 ///< data object
 
   std::string durationLogKey_;   ///< key with with the duration of the computation is written to the performance measurement log
+  std::shared_ptr<FunctionSpaceType> functionSpace_;  ///< the function space with quadratic Lagrange basis functions, as created in the opendihu code. This will be passed on to chaste.
 
   bool initialized_;   ///< if this object was already initialized
   PythonConfig specificSettings_;    ///< python object containing the value of the python config dict with corresponding key

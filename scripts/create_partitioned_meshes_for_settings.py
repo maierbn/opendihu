@@ -332,8 +332,8 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
   if own_subdomain_coordinate_z == variables.n_subdomains_z-1:
     variables.n_elements_3D_mesh[2] -= 1
 
-  print("len: {}".format(len(node_positions_3d_mesh)))
-  print("n_elements_3D_mesh: {}".format(variables.n_elements_3D_mesh))
+  #print("len: {}".format(len(node_positions_3d_mesh)))
+  #print("n_elements_3D_mesh: {}".format(variables.n_elements_3D_mesh))
   
   # set the entry for the config
   meshes = {}
@@ -464,7 +464,7 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
             node_positions_3d_mesh_quadratic.append(list((np.array(point0) + np.array(point2) + np.array(point4) + np.array(point6))/4.0))
             
           if point0 is not None and point1 is not None and point2 is not None and point3 is not None and point4 is not None and point5 is not None and point6 is not None and point7 is not None:
-            node_positions_3d_mesh_quadratic.append(list((np.array(point0) + np.array(point1) + np.array(point2) + np.array(point3) + np.array(point4) + np.array(point5) + np.array(point6) + np.array(point7))/4.0))
+            node_positions_3d_mesh_quadratic.append(list((np.array(point0) + np.array(point1) + np.array(point2) + np.array(point3) + np.array(point4) + np.array(point5) + np.array(point6) + np.array(point7))/8.0))
     
     # store quadratic 3D mesh in the config
     meshes["3Dmesh_quadratic"] = {

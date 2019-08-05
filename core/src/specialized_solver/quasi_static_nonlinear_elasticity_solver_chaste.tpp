@@ -101,6 +101,8 @@ advanceTimeSpan()
     std::vector<unsigned> topNodes = NonlinearElasticityTools<3>::GetNodesByComponentValue(mesh, /*component*/ 2, /*value*/ (double)nElementsGlobalZ);
     std::vector<unsigned> bottomNodes = NonlinearElasticityTools<3>::GetNodesByComponentValue(mesh, /*component*/ 2, /*value*/ 0.0);
 
+    LOG(DEBUG) << "topNodes: " << topNodes;
+
 
     if (functionSpace_->meshPartition()->nNodesGlobal() != mesh.GetNumNodes())
     {
@@ -172,16 +174,131 @@ advanceTimeSpan()
     file << "]";
     file.close();
 
-    for (unsigned int nodeIndex = 0; nodeIndex < functionSpace_->meshPartition()->nNodesGlobal(); nodeIndex++)
+    // set new posititons
+#if 1
+    // numbering for chaste as shown in plot_chaste_numbering.py
+    unsigned int chasteNodeIndex = 0;
+
+    // loop over element corner nodes
+    for (unsigned int nodeIndexZ = 0; nodeIndexZ < functionSpace_->meshPartition()->nNodesGlobal(2); nodeIndexZ += 2)
     {
-      c_vector<double,3> &location = mesh.GetNode(nodeIndex)->rGetModifiableLocation();
-      Vec3 position = functionSpace_->getGeometry(nodeIndex);
-      location[0] = -position[0];
-      location[1] = position[1];
-      location[2] = position[2];
-      file <<
-      LOG(DEBUG) << "nodeIndex " << nodeIndex << " pos " << location;
+      for (unsigned int nodeIndexY = 0; nodeIndexY < functionSpace_->meshPartition()->nNodesGlobal(1); nodeIndexY += 2)
+      {
+        for (unsigned int nodeIndexX = 0; nodeIndexX < functionSpace_->meshPartition()->nNodesGlobal(0); nodeIndexX += 2)
+        {
+          int opendihuNodeIndex = nodeIndexZ * functionSpace_->meshPartition()->nNodesGlobal(0) * functionSpace_->meshPartition()->nNodesGlobal(1)
+            + nodeIndexY * functionSpace_->meshPartition()->nNodesGlobal(1) + nodeIndexX;
+
+          c_vector<double,3> &location = mesh.GetNode(chasteNodeIndex)->rGetModifiableLocation();
+          Vec3 position = functionSpace_->getGeometry(opendihuNodeIndex);
+          location[0] = position[0];
+          location[1] = position[1];
+          location[2] = position[2];
+          LOG(DEBUG) << "corner, nodeIndex " << opendihuNodeIndex << ", " << chasteNodeIndex << " pos " << location;
+
+          chasteNodeIndex++;
+        }
+      }
     }
+
+    // loop over rest of nodes
+    for (unsigned int nodeIndexZ = 0; nodeIndexZ < functionSpace_->meshPartition()->nNodesGlobal(2); nodeIndexZ++)
+    {
+      for (unsigned int nodeIndexY = 0; nodeIndexY < functionSpace_->meshPartition()->nNodesGlobal(1); nodeIndexY++)
+      {
+        for (unsigned int nodeIndexX = 0; nodeIndexX < functionSpace_->meshPartition()->nNodesGlobal(0); nodeIndexX++)
+        {
+          // do not consider element corner nodes
+          if (nodeIndexZ % 2 == 0 && nodeIndexY % 2 == 0 && nodeIndexX % 2 == 0)
+            continue;
+
+          int opendihuNodeIndex = nodeIndexZ * functionSpace_->meshPartition()->nNodesGlobal(0) * functionSpace_->meshPartition()->nNodesGlobal(1)
+            + nodeIndexY * functionSpace_->meshPartition()->nNodesGlobal(1) + nodeIndexX;
+
+          c_vector<double,3> &location = mesh.GetNode(chasteNodeIndex)->rGetModifiableLocation();
+          Vec3 position = functionSpace_->getGeometry(opendihuNodeIndex);
+          location[0] = position[0];
+          location[1] = position[1];
+          location[2] = position[2];
+          LOG(DEBUG) << "nodeIndex " << opendihuNodeIndex << "," << chasteNodeIndex << " pos " << location;
+
+          chasteNodeIndex++;
+        }
+      }
+    }
+
+
+#endif
+
+    std::ofstream file2("chaste_points.txt");
+
+    file2 << "chaste_element_points = [";
+
+    // loop over opendihu elements
+    for (unsigned int elementIndexZ = 0; elementIndexZ < functionSpace_->meshPartition()->nElementsGlobal(2); elementIndexZ++)
+    {
+      for (unsigned int elementIndexY = 0; elementIndexY < functionSpace_->meshPartition()->nElementsGlobal(1); elementIndexY++)
+      {
+        for (unsigned int elementIndexX = 0; elementIndexX < functionSpace_->meshPartition()->nElementsGlobal(0); elementIndexX++)
+        {
+          int nodeIndex0 = elementIndexZ * functionSpace_->meshPartition()->nNodesGlobal(0) * functionSpace_->meshPartition()->nNodesGlobal(1)
+            + elementIndexY * functionSpace_->meshPartition()->nNodesGlobal(1) + elementIndexX;
+          int nodeIndex4 = nodeIndex0 + functionSpace_->meshPartition()->nNodesGlobal(1)*functionSpace_->meshPartition()->nNodesGlobal(0);
+
+          const c_vector<double,3> &position0 = mesh.GetNode(nodeIndex0)->rGetLocation();
+          const c_vector<double,3> &position1 = mesh.GetNode(nodeIndex0+1)->rGetLocation();
+          const c_vector<double,3> &position2 = mesh.GetNode(nodeIndex0+functionSpace_->meshPartition()->nNodesGlobal(0))->rGetLocation();
+          const c_vector<double,3> &position3 = mesh.GetNode(nodeIndex0+functionSpace_->meshPartition()->nNodesGlobal(0)+1)->rGetLocation();
+          const c_vector<double,3> &position4 = mesh.GetNode(nodeIndex4)->rGetLocation();
+          const c_vector<double,3> &position5 = mesh.GetNode(nodeIndex4+1)->rGetLocation();
+          const c_vector<double,3> &position6 = mesh.GetNode(nodeIndex4+functionSpace_->meshPartition()->nNodesGlobal(0))->rGetLocation();
+          const c_vector<double,3> &position7 = mesh.GetNode(nodeIndex4+functionSpace_->meshPartition()->nNodesGlobal(0)+1)->rGetLocation();
+
+          file2 << "["
+            << "[" << position0[0] << "," << position0[1] << "," << position0[2] << "],"
+            << "[" << position1[0] << "," << position1[1] << "," << position1[2] << "],"
+            << "[" << position2[0] << "," << position2[1] << "," << position2[2] << "],"
+            << "[" << position3[0] << "," << position3[1] << "," << position3[2] << "],"
+            << "[" << position4[0] << "," << position4[1] << "," << position4[2] << "],"
+            << "[" << position5[0] << "," << position5[1] << "," << position5[2] << "],"
+            << "[" << position6[0] << "," << position6[1] << "," << position6[2] << "],"
+            << "[" << position7[0] << "," << position7[1] << "," << position7[2] << "]]," << std::endl;
+        }
+      }
+    }
+
+    file2 << "]" << std::endl << std::endl;
+
+    file2 << "chaste_nodes = [";
+    // loop over chaste nodes
+    for (unsigned int nodeIndex = 0; nodeIndex < mesh.GetNumNodes(); nodeIndex++)
+    {
+      Node<3> *node = mesh.GetNode(nodeIndex);
+      const c_vector<double,3> &position = node->rGetLocation();
+
+       file2 << "[" << position[0] << "," << position[1] << "," << position[2] << "],";
+    }
+    file2 << "]" << std::endl << std::endl;
+
+    file2 << "chaste_tets = [";
+    for (unsigned int elementIndex = 0; elementIndex < mesh.GetNumElements(); elementIndex++)
+    {
+      file2 << "[";
+      Element<3,3> *element = mesh.GetElement(elementIndex);
+      LOG(DEBUG) << "element " << elementIndex << " has " << element->GetNumNodes() << " nodes.";
+
+      for (unsigned int elementalNodeIndex = 0; elementalNodeIndex < element->GetNumNodes(); elementalNodeIndex++)
+      {
+        Node<3> *node = element->GetNode(elementalNodeIndex);
+        const c_vector<double,3> &position = node->rGetLocation();
+
+        file2 << "[" << position[0] << "," << position[1] << "," << position[2] << "],";
+      }
+      file2 << "]," << std::endl;
+    }
+
+    file2 << "]";
+    file2.close();
 
     LOG(DEBUG) << "node positions set";
 
@@ -270,11 +387,11 @@ advanceTimeSpan()
       */
     IncompressibleNonlinearElasticitySolver<3> solver(mesh, problemDefinition, "output_directory");
 
-    if (false)
-    {
+    LOG(DEBUG) << "solve...";
+
     /* .. and to compute the solution, just call `Solve()` */
     solver.Solve();
-    }
+    LOG(DEBUG) << "solving done";
 
     /* '''Visualisation'''. Go to the folder `SimpleIncompressibleElasticityTutorial` in your test-output directory.
       * There should be 2 files, initial.nodes and solution.nodes. These are the original nodal positions and the deformed

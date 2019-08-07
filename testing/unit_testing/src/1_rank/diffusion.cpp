@@ -163,12 +163,13 @@ TEST(DiffusionTest, ImplicitEuler1DPOD)
   std::string pythonConfigReduction = R"(
     # Diffusion 1D POD
 n = 5   # number of elements
-k = 5
+k = 4   # number of the reduced modes is equal to k+1 because there are 5 snapshots avalable from the full order model
 
 config = {
   "ModelOrderReduction": {
     "nRowsSnapshots" : n,
     "nReducedBases" : k,
+    "snapshots" :"./out_snapshots/snapshots.csv",
     "ImplicitEuler" : {
        "numberTimeSteps": 5,
        "endTime": 0.1,
@@ -189,7 +190,7 @@ config = {
       "endTime": 0.1,
       "initialValues": [2,2,4,5,2,2],
       "FiniteElementMethod" : {
-        "nElements": n,
+        "nElements": k,
         "physicalExtent": 4.0,
         "relativeTolerance": 1e-15,
         "diffusionTensor": [5.0],

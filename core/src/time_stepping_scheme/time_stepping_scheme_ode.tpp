@@ -140,6 +140,9 @@ initialize()
   // output initial values
   this->outputWriterManager_.writeOutput(*this->data_, 0, 0);
   
+  //output initial values
+  this->outputWriterManager_.writeOutput(*this->data_, 0, 0);
+  
   this->data_->print();
   
   initialized_ = true;

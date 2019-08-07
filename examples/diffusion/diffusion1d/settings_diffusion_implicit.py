@@ -1,6 +1,5 @@
 # Diffusion 1D POD
-n = 5   # number of elements
-k = 5   
+n = 5   # number of elements  
 
 config = {
   "ImplicitEuler" : {

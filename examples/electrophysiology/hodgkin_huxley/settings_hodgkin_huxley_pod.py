@@ -5,10 +5,11 @@
 
 import sys
 
-end_time = 20   # [ms] end time of simulation
+end_time = 5   # [ms] end time of simulation
 n_elements = 100 # elements of pysical mesh
 n_total = 403 # rows of the snapshot matrix
-n_reduced = 403 # number of reduced bases, columns of the left singular vector
+n_reduced = 99 # number of reduced bases, columns of the left singular vector, is equal to n_reduced+1
+snapshots_file = "./out/snapshots.csv"
 
 # global parameters
 PMax = 7.3              # maximum stress [N/cm^2]
@@ -185,8 +186,8 @@ config = {
       "inputMeshIsGlobal": True,
     },
     "MeshFibreReduced": {
-      "nElements": n_total,
-      "physicalExtent": n_elements/10.,
+      "nElements": n_reduced,
+      "physicalExtent": n_reduced/10.,
       "logKey": "Fiber",
       "inputMeshIsGlobal": True,
     },
@@ -210,6 +211,7 @@ config = {
       "ModelOrderReduction": {
         "nRowsSnapshots" : n_total,
         "nReducedBases" : n_reduced,
+        "snapshots" : snapshots_file,
         "nRowsComponents" : 1,
         "ExplicitEuler" : {
           "timeStepWidth": dt_0D,  # 5e-5
@@ -244,7 +246,7 @@ config = {
           },
           
           "OutputWriter" : [
-            {"format": "PythonFile", "outputInterval": int(1./dt_0D*output_timestep), "filename": "out/states", "binary": True, "onlyNodalValues": True},
+            #{"format": "PythonFile", "outputInterval": int(1./dt_0D*output_timestep), "filename": "out/states", "binary": False, "onlyNodalValues": True},
           ],
         },# ExplicitEuler
         "ExplicitEulerReduced" : {
@@ -280,7 +282,7 @@ config = {
           },
           
           "OutputWriter" : [
-            {"format": "PythonFile", "outputInterval": int(1./dt_0D*output_timestep), "filename": "out/statesReduced", "binary": True, "onlyNodalValues": True},
+            {"format": "PythonFile", "outputInterval": int(1./dt_0D*output_timestep), "filename": "out/statesReduced", "binary": False, "onlyNodalValues": True},
           ],
         },#ExplicitEulerReduced
       },# ModelOrderReduction
@@ -289,6 +291,7 @@ config = {
      "ModelOrderReduction": {
       "nRowsSnapshots" : n_total,
       "nReducedBases" : n_reduced,
+      "snapshots" : snapshots_file,
       "nRowsComponents" : 1,
       "ImplicitEuler" : {
         "initialValues": [],
@@ -305,7 +308,7 @@ config = {
           "solverName": "implicitSolver",
         },
         "OutputWriter" : [
-          {"format": "PythonFile", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/godunov", "binary": True, "onlyNodalValues": False},
+          #{"format": "PythonFile", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/godunov", "binary": False, "onlyNodalValues": False},
           #{"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/godunov", "binary": False, "fixedFormat": False, "combineFiles": True},
           #{"format": "ExFile", "filename": "out/fibre", "outputInterval": 1e5, "sphereSize": "0.02*0.02*0.02"},
         ],
@@ -325,7 +328,7 @@ config = {
           "solverName": "implicitSolver",
         },
         "OutputWriter" : [
-         {"format": "PythonFile", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/godunovReduced", "binary": True, "onlyNodalValues": False},
+         {"format": "PythonFile", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/godunovReduced", "binary": False, "onlyNodalValues": False},
           #{"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/godunov", "binary": False, "fixedFormat": False, "combineFiles": True},
           #{"format": "ExFile", "filename": "out/fibre", "outputInterval": 1e5, "sphereSize": "0.02*0.02*0.02"},
         ],

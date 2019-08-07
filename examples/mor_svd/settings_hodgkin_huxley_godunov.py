@@ -5,8 +5,8 @@
 
 import sys
 
-end_time = 100   # [ms] end time of simulation
-n_elements = 100
+end_time = 1.0   # [ms] end time of simulation
+n_elements = 10
 
 # global parameters
 PMax = 7.3              # maximum stress [N/cm^2]
@@ -14,33 +14,28 @@ Conductivity = 3.828    # sigma, conductivity [mS/cm]
 Am = 500.0              # surface area to volume ratio [cm^-1]
 Cm = 0.58               # membrane capacitance [uF/cm^2]
 innervation_zone_width = 0.  # cm
-cellml_file = "../../input/hodgkin_huxley_1952.c"
+cellml_file = "../input/hodgkin_huxley_1952.c"
 solver_type = "gmres"
 
 # timing parameters
 stimulation_frequency = 10.0      # stimulations per ms
-dt_1D = 1e-3                      # timestep width of diffusion
-dt_0D = 1e-3                      # timestep width of ODEs
-dt_3D = 1e-3                      # overall timestep width of splitting
-
-dt_1D = 0.004                      # timestep width of diffusion
-dt_0D = 0.002                     # timestep width of ODEs
-dt_3D = dt_1D                      # overall timestep width of splitting
-
-output_timestep = 1e-1            # timestep for output files
+dt_1D = 0.01                      # timestep width of diffusion
+dt_0D = 0.01                      # timestep width of ODEs
+dt_3D = 0.01                      # overall timestep width of splitting
+output_timestep = 0.01             # timestep for output files
 
 # input files
-#cellml_file = "../../input/shorten_ocallaghan_davidson_soboleva_2007.c"
-#cellml_file = "../../input/shorten.cpp"
-cellml_file = "../../input/hodgkin_huxley_1952.c"
+#cellml_file = "../input/shorten_ocallaghan_davidson_soboleva_2007.c"
+#cellml_file = "../input/shorten.cpp"
+cellml_file = "../input/hodgkin_huxley_1952.c"
 
-#fibre_file = "../../input/laplace3d_structured_quadratic"
-fibre_file = "../../input/laplace3d_structured_linear"
-#fibre_file = "../../input1000/laplace3d_structured_quadratic"
+#fibre_file = "../input/laplace3d_structured_quadratic"
+fibre_file = "../input/laplace3d_structured_linear"
+#fibre_file = "../input1000/laplace3d_structured_quadratic"
 
-fibre_distribution_file = "../../input/MU_fibre_distribution_3780.txt"
-firing_times_file = "../../input/MU_firing_times_real.txt"
-#firing_times_file = "../../input/MU_firing_times_immediately.txt"
+fibre_distribution_file = "../input/MU_fibre_distribution_3780.txt"
+#firing_times_file = "../input/MU_firing_times_real.txt"
+firing_times_file = "../input/MU_firing_times_immediately.txt"
 
 # import needed packages
 import sys
@@ -181,7 +176,7 @@ def callback(data, shape, nEntries, dim, timeStepNo, currentTime, null):
 config = {
   "scenarioName": scenario_name,
   "Meshes": {
-    "MeshFiber": {
+    "MeshFibre": {
       "nElements": n_elements,
       "physicalExtent": n_elements/10.,
       "logKey": "Fiber",
@@ -202,7 +197,7 @@ config = {
     "endTime": end_time,
     "logTimeStepWidthAsKey": "dt_3D",
     "durationLogKey": "duration_total",
-    "timeStepOutputInterval": 1000,
+    "timeStepOutputInterval": 1,
     "Term1": {      # CellML
       "ExplicitEuler" : {
         "timeStepWidth": dt_0D,  # 5e-5
@@ -232,34 +227,33 @@ config = {
           "parametersUsedAsIntermediate": parameters_used_as_intermediate,  #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
           "parametersUsedAsConstant": parameters_used_as_constant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
           "parametersInitialValues": parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
-          "meshName": "MeshFiber",
+          "meshName": "MeshFibre",
           "prefactor": 1.0,
         },
         
         "OutputWriter" : [
-          #{"format": "PythonFile", "outputInterval": int(1./dt_0D*output_timestep), "filename": "out/states", "binary": False, "onlyNodalValues": True},
-          {"format": "PythonFile", "outputInterval": 50, "filename": "out/states", "binary": False, "onlyNodalValues": True},
+          #{"format": "PythonFile", "outputInterval": 1e4, "filename": "out/states", "binary": True, "onlyNodalValues": True},
         ],
       },
     },
     "Term2": {     # Diffusion
       "ImplicitEuler" : {
-        "initialValues": [],
+        "initialValues": [-75,-75,-75,-75,-75,-75,-75,-75,-75,-75,-75],
         "timeStepWidth": dt_1D,
-        "timeStepOutputInterval": 1e4,
+        "timeStepOutputInterval": 1,
         "logTimeStepWidthAsKey": "dt_1D",
         "durationLogKey": "duration_1D",
         "inputMeshIsGlobal": True,
         "dirichletBoundaryConditions": {},
         "solverName": "implicitSolver",
         "FiniteElementMethod" : {
-          "meshName": "MeshFiber",
+          "meshName": "MeshFibre",
           "prefactor": Conductivity/(Am*Cm),
           "solverName": "implicitSolver",
         },
         "OutputWriter" : [
-          #{"format": "PythonFile", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/godunov", "binary": False, "onlyNodalValues": False},
-          #{"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/godunov", "binary": True, "fixedFormat": False, "combineFiles": True},
+          {"format": "PythonFile", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/godunov", "binary": False, "onlyNodalValues": False},
+#          {"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/godunov", "binary": True, "fixedFormat": False, "combineFiles": True},
           #{"format": "ExFile", "filename": "out/fibre", "outputInterval": 1e5, "sphereSize": "0.02*0.02*0.02"},
         ],
       },
@@ -302,17 +296,17 @@ config = {
           "parametersUsedAsIntermediate": parameters_used_as_intermediate,  #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
           "parametersUsedAsConstant": parameters_used_as_constant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
           "parametersInitialValues": parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
-          "meshName": "MeshFiber",
+          "meshName": "MeshFibre",
           "prefactor": 1.0,
         },
         
         "OutputWriter" : [
-          {"format": "PythonFile", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/states", "binary": True},
+          #{"format": "PythonFile", "outputInterval": 1e4, "filename": "out/states", "binary": True},
         ],
       },
     },
     "Term2": {     # Diffusion
-      "CrankNicolson" : {
+      "ImplicitEuler" : {
         "initialValues": [],
         #"numberTimeSteps": 1,
         "timeStepWidth": dt_1D,
@@ -323,13 +317,12 @@ config = {
         "dirichletBoundaryConditions": {},
         "solverName": "implicitSolver",
         "FiniteElementMethod" : {
-          "meshName": "MeshFiber",
+          "meshName": "MeshFibre",
           "prefactor": Conductivity/(Am*Cm),
           "solverName": "implicitSolver",
         },
         "OutputWriter" : [
-          {"format": "PythonFile", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/strang", "binary": True, "onlyNodalValues": False},
-          #{"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/strang", "binary": True, "fixedFormat": False, "combineFiles": True},
+         # {"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/strang", "binary": True, "fixedFormat": False, "combineFiles": True},
           #{"format": "ExFile", "filename": "out/fibre", "outputInterval": 1e5, "sphereSize": "0.02*0.02*0.02"},
         ],
       },

@@ -1,11 +1,11 @@
 # Diffusion 1D
-n = 5   # number of elements
+n = 20   # number of elements
 
 config = {
-  "ExplicitEuler" : {
+  "CrankNicolson" : {
     "initialValues": [2,2,4,5,2,2],
-    "numberTimeSteps": 5,
-    "endTime": 0.1,
+    "numberTimeSteps": 1000,
+    "endTime": 1,
     "FiniteElementMethod" : {
       "nElements": n,
       "physicalExtent": 4.0,
@@ -14,7 +14,7 @@ config = {
     },
     "OutputWriter" : [
       #{"format": "Paraview", "outputInterval": 1, "filename": "out", "binaryOutput": "false", "fixedFormat": False},
-      {"format": "PythonFile", "filename": "out/diffusion1d", "outputInterval": 1, "binary":False}
+      {"format": "PythonFile", "filename": "out/diffusion1d", "outputInterval": 10, "binary":False}
     ]
   },
 }

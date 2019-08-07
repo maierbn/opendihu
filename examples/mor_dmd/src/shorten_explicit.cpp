@@ -15,25 +15,17 @@ int main(int argc, char *argv[])
   DihuContext settings(argc, argv);
   
   LOG(DEBUG)<<std::string(80, '=');
-
-  // SvdUtility::getSVD(SvdUtility::loadCSV(out.csv));
   
   OperatorSplitting::Godunov<
     TimeSteppingScheme::ExplicitEuler<
-      ModelOrderReduction::POD<
-        CellmlAdapter<57>,
-        ModelOrderReduction::LinearPart
-      >
+      CellmlAdapter<57>
     >,
-    TimeSteppingScheme::ImplicitEuler<
-      ModelOrderReduction::POD<
-        SpatialDiscretization::FiniteElementMethod<
-          Mesh::StructuredRegularFixedOfDimension<1>,
-          BasisFunction::LagrangeOfOrder<1>,
-          Quadrature::Gauss<2>,
-          Equation::Dynamic::IsotropicDiffusion
-        >,
-        ModelOrderReduction::LinearPart
+    TimeSteppingScheme::ExplicitEuler<
+      SpatialDiscretization::FiniteElementMethod<
+        Mesh::StructuredRegularFixedOfDimension<1>,
+        BasisFunction::LagrangeOfOrder<1>,
+        Quadrature::Gauss<2>,
+        Equation::Dynamic::IsotropicDiffusion
       >
     >
   >

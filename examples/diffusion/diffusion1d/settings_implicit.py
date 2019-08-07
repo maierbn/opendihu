@@ -2,7 +2,7 @@
 n = 5   # number of elements
 
 config = {
-  "ExplicitEuler" : {
+  "ImplicitEuler" : {
     "initialValues": [2,2,4,5,2,2],
     "numberTimeSteps": 5,
     "endTime": 0.1,

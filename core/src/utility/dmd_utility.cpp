@@ -646,7 +646,7 @@ int DmdUtility::getSpecComp(double _Complex dmdModes[], double growthRates[], do
     cout << frequencies[col] << endl;
 	}
 	
-	DmdUtility::writeCSVGrowthRatesFrequenciesAmplitudes("dmdResult.csv", growthRates, frequencies, amplitudes, order);	
+	DmdUtility::writeCSVGrowthRatesFrequenciesAmplitudes("./out/dmdResult.csv", growthRates, frequencies, amplitudes, order);	
 	
 	DmdUtility::printMatrix("frequencies", frequencies, order, 1);
 	DmdUtility::printMatrix("amplitudes", amplitudes, order, 1);

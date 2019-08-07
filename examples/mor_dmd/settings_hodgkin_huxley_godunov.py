@@ -5,7 +5,7 @@
 
 import sys
 
-end_time = 5.0   # [ms] end time of simulation
+end_time = 20.0   # [ms] end time of simulation
 n_elements = 10
 
 # global parameters
@@ -18,7 +18,7 @@ cellml_file = "../input/hodgkin_huxley_1952.c"
 solver_type = "gmres"
 
 # timing parameters
-stimulation_frequency = 10.0      # stimulations per ms
+stimulation_frequency = 0.1      # stimulations per ms
 dt_1D = 0.01                      # timestep width of diffusion
 dt_0D = 0.01                      # timestep width of ODEs
 dt_3D = 0.01                      # overall timestep width of splitting

@@ -20,12 +20,12 @@ int main(int argc, char *argv[])
 	int j = SvdUtility::getCSVColumnCount(inputData);
 	int k = SvdUtility::getCSVRowCount(inputData);
 	std::cout << "J = " << j << endl << "K = " << k << endl;
-	double* v = new double[j * k];
-	std::copy(parsedCsv.begin(), parsedCsv.end(), v);
+  double* snapshots = new double[j * k];
+  std::copy(parsedCsv.begin(), parsedCsv.end(), snapshots);
 
-	double deltat = 0.1;
-	double epsilon1 = exp(-15);
-	double epsilon0 = exp(-15);
+	double deltat = 0.01; //has no influence because it is once multiplied with and once divided to
+	double epsilon1 = 0.0;
+	double epsilon0 = 0.0;
 
 	//DmdUtility::printMatrix("V", v, j, k);
 
@@ -45,13 +45,25 @@ int main(int argc, char *argv[])
 	//double* sigmas = new double[n];
 	double* sigma = new double[n * n];
 
-	int kSpat = DmdUtility::getSpatComp(v, j, k, u, sigma, tT, epsilon1);
+  // make a copy because the values of v are changed by the lapack SVD
+  double* v=new double[j * k]; 
+  std::copy(snapshots,snapshots + j * k, v); 
+  
+  int kSpat = DmdUtility::getSpatComp(v, j, k, u, sigma, tT, epsilon1);
 
 	// %%%%%%%%%%%%%%%%%%%%%%
 	// Spatial complexity: kk
 	// %%%%%%%%%%%%%%%%%%%%%%
 
 	std::cout << "Spatial complexity: kSpat = " << kSpat << endl << endl;
+  
+  // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  // Reconstruct snapshots to test
+  // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  
+  double* svdReconst=new double[j*k];
+  SvdUtility::reconstructSnapshots(j, k, u, sigma, tT, svdReconst);
+  SvdUtility::writeCSV("./out_snapshots/snapshots_svdReconst.csv", svdReconst, j, k, true);
 
 	// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	// Create reduced snapshots matrix hatT
@@ -155,9 +167,12 @@ int main(int argc, char *argv[])
 	DmdUtility::reconstructSnapshots(uReduced, deltasReduced, omegasReduced, uOneTokSpat, vreconstReal, j, k, kSpec, kSpat, deltat);
 
 	DmdUtility::printMatrix("Vreconst", vreconstReal, j, k);
+  
+  bool columnWise=true;
+  SvdUtility::writeCSV("./out_snapshots/snapshots_reconst.csv", vreconstReal, j, k, columnWise);
 
-	// NormV=norm(V(:),2)
-	double normV = DmdUtility::getNorm(v, j, k);
+	// NormSnapshots=norm(snapshots(:),2)
+	double normSnapshots = DmdUtility::getNorm(snapshots, j, k);
 
 	double* diff = new double[j * k];
 	DmdUtility::setZero(diff, j, k);
@@ -165,14 +180,14 @@ int main(int argc, char *argv[])
 	{
 		for (int col = 0; col < k; ++col)
 		{
-			diff[row + col * j] = v[row + col * j] - vreconstReal[row + col * j];
+			diff[row + col * j] = snapshots[row + col * j] - vreconstReal[row + col * j];
 		}
 	}
 
-	double rms = DmdUtility::getNorm(diff, j, k) / normV;
+	double rms = DmdUtility::getNorm(diff, j, k) / normSnapshots;
 	std::cout << "RelativeerrorRMS = " << rms << endl;
 
-	double max = DmdUtility::getInfNorm(diff, j, k) / DmdUtility::getInfNorm(v, j, k);
+	double max = DmdUtility::getInfNorm(diff, j, k) / DmdUtility::getInfNorm(snapshots, j, k);
 	std::cout << "RelativeerrorMax = " << max << endl;
 
 	/*

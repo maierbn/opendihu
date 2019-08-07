@@ -20,7 +20,16 @@ void SvdUtility::getSVD(double input[], int rows, int cols, double leftSingVec[]
   double* superb = new double[min];  
   double* rightSingVecT = new double[min*cols];
   
-  LAPACKE_dgesvd(LAPACK_COL_MAJOR, 's', 's', rows, cols, input, rows, singVal, leftSingVec, rows, rightSingVecT, min, superb);
+  double* inputCopy = new double[rows * cols];
+  for (int col = 0; col < cols; ++col)
+  {
+    for (int row = 0; row < rows; ++row)
+    {
+      inputCopy[col * rows + row] = input[col * rows + row];
+    }
+  }
+    
+  LAPACKE_dgesvd(LAPACK_COL_MAJOR, 's', 's', rows, cols, inputCopy, rows, singVal, leftSingVec, rows, rightSingVecT, min, superb);
   
 }
 
@@ -35,8 +44,17 @@ void SvdUtility::getSVD(double input[], int rows, int cols, double leftSingVec[]
 
   printMatrix("snapshots", input, rows, cols);
   
+  double* inputCopy = new double[rows * cols];
+  for (int col = 0; col < cols; ++col)
+  {
+    for (int row = 0; row < rows; ++row)
+    {
+      inputCopy[col * rows + row] = input[col * rows + row];
+    }
+  }
+  
   // if error or wrong numbers by 'a' use 's' instead
-  LAPACKE_dgesvd(LAPACK_COL_MAJOR, 's', 's', rows, cols, input, rows, singVal, leftSingVec, rows, rightSingVecT, min, superb);
+  LAPACKE_dgesvd(LAPACK_COL_MAJOR, 's', 's', rows, cols, inputCopy, rows, singVal, leftSingVec, rows, rightSingVecT, min, superb);
   
   // build diagonal matrix sigma from vector singularValues
   for (int row = 0; row < min; ++row)
@@ -65,10 +83,19 @@ void SvdUtility::getSVD(double input[], int rows, int cols, double leftSingVec[]
 void SvdUtility::getSVD(double _Complex input[], int rows, int cols, double _Complex leftSingVec[], double sigma[], double _Complex rightSingVecT[])
 {
   int min = std::min(cols, rows);
-  double* singVal = new double[min];
-  double* superb = new double[min];
+  double  * singVal = new double [min];
+  double  * superb = new double [min];
+  
+  double _Complex * inputCopy = new double _Complex [rows * cols];
+  for (int col = 0; col < cols; ++col)
+  {
+    for (int row = 0; row < rows; ++row)
+    {
+      inputCopy[col * rows + row] = input[col * rows + row];
+    }
+  }
 
-  LAPACKE_zgesvd(LAPACK_COL_MAJOR, 's', 's', rows, cols, input, rows, singVal, leftSingVec, rows, rightSingVecT, min, superb);
+  LAPACKE_zgesvd(LAPACK_COL_MAJOR, 's', 's', rows, cols, inputCopy, rows, singVal, leftSingVec, rows, rightSingVecT, min, superb);
 
   // cout << "info: " << info << endl << endl;
 

@@ -101,6 +101,7 @@ int main(int argc, char* argv[]) {
       "$cp -ft ${PREFIX}/lib/chaste $(find ${SOURCE_DIR}/build/ -name *.a)",   # install manually
       "$cp -ft ${PREFIX}/include $(find ${SOURCE_DIR} -name *.hpp)",
       "$cp -ft ${PREFIX}/include $(find ${SOURCE_DIR}/mesh/src -name *.h)",
+      "sed -i 's/#define LOG(level/\/\/#define LOG(level/g' ${PREFIX}/include/LogFile.hpp ",   # comment out definition of LOG macro, which is already provided by Easylogging++
     ])
     self.number_output_lines = 1539
     self.number_output_lines = 696

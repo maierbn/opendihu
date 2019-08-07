@@ -216,7 +216,12 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
 
     // initialize chaste, if available
 #ifdef HAVE_CHASTE
-    ExecutableSupport::StartupWithoutShowingCopyright(&argc, &argv);
+    int *argcChaste = new int;
+    char ***argvChaste = new (char**);
+    *argcChaste = argc;
+    *argvChaste = argv;
+    ExecutableSupport::StartupWithoutShowingCopyright(argcChaste, argvChaste);
+    LOG(DEBUG) << "initialize chaste";
 #endif
 
     initialized_ = true;

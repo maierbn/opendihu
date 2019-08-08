@@ -56,7 +56,8 @@ public:
 
   //! field variables that will be output by outputWriters
   typedef std::tuple<
-      std::shared_ptr<DisplacementsFieldVariableType>,              // displacements_
+      std::shared_ptr<DisplacementsFieldVariableType>,  // geometry field
+      std::shared_ptr<DisplacementsFieldVariableType>,  // displacements_
       std::shared_ptr<StressFieldVariableType>         // pK2Stress_
     >
    OutputFieldVariables;

@@ -24,6 +24,8 @@ createPetscObjects()
 {
   LOG(DEBUG) << "QuasiStaticHyperelasticity::createPetscObject";
 
+  assert(this->displacementsFunctionSpace_);
+  assert(this->pressureFunctionSpace_);
   assert(this->functionSpace_);
 
 
@@ -93,6 +95,9 @@ void QuasiStaticHyperelasticity<PressureFunctionSpace,DisplacementsFunctionSpace
 setDisplacementsFunctionSpace(std::shared_ptr<DisplacementsFunctionSpace> displacementsFunctionSpace)
 {
   displacementsFunctionSpace_ = displacementsFunctionSpace;
+
+  // also set the functionSpace_ variable which is from the parent class Data
+  this->functionSpace_ = displacementsFunctionSpace;
 }
 
 
@@ -108,6 +113,7 @@ getOutputFieldVariables()
 {
   // these field variables will be written to output files
   return std::tuple_cat(
+    std::tuple<std::shared_ptr<DisplacementsFieldVariableType>>(std::make_shared<typename DisplacementsFunctionSpace::GeometryFieldType>(this->displacementsFunctionSpace_->geometryField())), // geometry
     std::tuple<std::shared_ptr<DisplacementsFieldVariableType>>(this->displacements_),              // displacements_
     std::tuple<std::shared_ptr<StressFieldVariableType>>(this->pK2Stress_)         // pK2Stress_
   );

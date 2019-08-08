@@ -48,6 +48,10 @@ void Manager::initialize(DihuContext context, PythonConfig settings, std::shared
       createOutputWriterFromSettings(context, writerConfig, rankSubset);
     }
   }
+  else if (settings.hasKey("OutputWriters"))
+  {
+    LOG(ERROR) << "You wrote \"OutputWriters\" but it should be \"OutputWriter\".";
+  }
   else
   {
     std::vector<std::string> configKeys;

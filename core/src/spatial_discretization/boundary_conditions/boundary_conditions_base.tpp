@@ -356,6 +356,14 @@ boundaryConditionValues() const
   return boundaryConditionValues_;
 }
 
+//! get the boundary conditions data organized by component
+template<typename FunctionSpaceType,int nComponents>
+const std::array<typename BoundaryConditionsBase<FunctionSpaceType,nComponents>::BoundaryConditionsForComponent, nComponents> &BoundaryConditionsBase<FunctionSpaceType,nComponents>::
+boundaryConditionsByComponent() const
+{
+  return boundaryConditionsByComponent_;
+}
+
 template<typename FunctionSpaceType, int nComponents>
 std::ostream &operator<<(std::ostream &stream, const typename BoundaryConditionsBase<FunctionSpaceType,nComponents>::BoundaryConditionsForComponent rhs)
 {

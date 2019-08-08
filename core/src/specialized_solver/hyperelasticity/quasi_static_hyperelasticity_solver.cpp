@@ -25,6 +25,15 @@ QuasiStaticHyperelasticitySolver(DihuContext context) :
   c0_ = specificSettings_.getOptionDouble("c0", 1.0, PythonUtility::ValidityCriterion::Positive);
   c1_ = specificSettings_.getOptionDouble("c1", 1.0, PythonUtility::ValidityCriterion::Positive);
 
+  useAnalyticJacobian_ = this->specificSettings_.getOptionBool("useAnalyticJacobian", true);
+  useNumericJacobian_ = this->specificSettings_.getOptionBool("useNumericJacobian", true);
+
+  if (!useAnalyticJacobian_ && !useNumericJacobian_)
+  {
+    LOG(WARNING) << "Cannot set both \"useAnalyticJacobian\" and \"useNumericJacobian\" to False, now using numeric jacobian.";
+    useNumericJacobian_ = true;
+  }
+
   LOG(DEBUG) << "QuasiStaticHyperelasticitySolver: parsed parameters c0: " << c0_ << ", c1: " << c1_;
   LOG(DEBUG) << "now parse output writers";
 
@@ -41,6 +50,8 @@ advanceTimeSpan()
     Control::PerformanceMeasurement::start(this->durationLogKey_);
 
   LOG(TRACE) << "advanceTimeSpan, endTime: " << endTime_;
+
+  nonlinearSolve();
 
   // stop duration measurement
   if (this->durationLogKey_ != "")
@@ -118,6 +129,7 @@ initialize()
 
   // initialize the data object
   // store mesh in data
+  LOG(DEBUG) << "call setDisplacementsFunctionSpace of data";
   data_.setDisplacementsFunctionSpace(displacementsFunctionSpace_);
   data_.setPressureFunctionSpace(pressureFunctionSpace_);
 
@@ -138,7 +150,7 @@ initialize()
 
   // determine number of non zero entries in matrix
   int diagonalNonZeros, offdiagonalNonZeros;
-  Data::FiniteElementsBase<DisplacementsFunctionSpace,1> getPetscMemoryParameters(diagonalNonZeros, offdiagonalNonZeros);
+  ::Data::FiniteElementsBase<DisplacementsFunctionSpace,1>::getPetscMemoryParameters(diagonalNonZeros, offdiagonalNonZeros);
 
   if (useNestedMat_)
   {
@@ -179,7 +191,7 @@ initialize()
     submatrices_[3*4 + 3] = pMatrix_.back().valuesGlobal();
 
     // create 4x4 nested matrix
-    ierr = MatCreateNest(mpiCommunicator, 4, NULL, 4, NULL, submatrices.data(), &this->solverMatrixTangentStiffness_); CHKERRV(ierr);
+    ierr = MatCreateNest(mpiCommunicator, 4, NULL, 4, NULL, submatrices_.data(), &this->solverMatrixTangentStiffness_); CHKERRV(ierr);
 
     // create nested vector for solution
     for (int i = 0; i < 3; i++)
@@ -200,8 +212,8 @@ initialize()
   {
     // prepare for non-nested data structures
 
-    int nRows = displacementsFunctionSpace_->nDofsGlobal() * 3 + pressureFunctionSpace_->nDofsGlobal()
-    std::shared_ptr<FunctionSpace::Generic> genericFunctionSpace = createGenericFunctionSpace(nRows, "genericMesh")
+    int nRows = displacementsFunctionSpace_->nDofsGlobal() * 3 + pressureFunctionSpace_->nDofsGlobal();
+    std::shared_ptr<FunctionSpace::Generic> genericFunctionSpace = context_.meshManager()->createGenericFunctionSpace(nRows, "genericMesh");
 
     combinedJacobianMatrix_ = std::make_shared<PartitionedPetscMat<FunctionSpace::Generic>>(
       genericFunctionSpace->meshPartition(), 1, 4*diagonalNonZeros, 4*offdiagonalNonZeros, "combinedJacobian");
@@ -212,6 +224,26 @@ initialize()
     solverMatrixTangentStiffness_ = combinedJacobianMatrix_->valuesGlobal();
     solverVariableSolution_ = combinedVecSolution_->valuesGlobal();
     solverVariableResidual_ = combinedVecResidual_->valuesGlobal();
+
+    // assemble vectors
+    VecAssemblyBegin(solverVariableResidual_);
+    VecAssemblyEnd(solverVariableResidual_);
+    VecAssemblyBegin(solverVariableSolution_);
+    VecAssemblyEnd(solverVariableSolution_);
+
+    LOG(DEBUG) << "pointer value solverVariableResidual_: " << solverVariableResidual_;
+    LOG(DEBUG) << "pointer value solverVariableSolution_: " << solverVariableSolution_;
+    LOG(DEBUG) << "pointer value solverMatrixTangentStiffness_: " << solverMatrixTangentStiffness_;
+
+    // assemble matrix
+    evaluateAnalyticJacobian(solverVariableSolution_, solverMatrixTangentStiffness_);
+  }
+
+  // initialize Dirichlet boundary conditions
+  if (dirichletBoundaryConditions_ == nullptr)
+  {
+    dirichletBoundaryConditions_ = std::make_shared<SpatialDiscretization::DirichletBoundaryConditions<DisplacementsFunctionSpace,3>>(this->context_);
+    dirichletBoundaryConditions_->initialize(this->specificSettings_, this->data_.functionSpace(), "dirichletBoundaryConditions");
   }
 
   LOG(DEBUG) << "initialization done";

@@ -7,6 +7,7 @@
 #include "basis_function/basis_function.h"
 #include "data_management/specialized_solver/quasi_static_hyperelasticity.h"
 #include "output_writer/manager.h"
+#include "spatial_discretization/boundary_conditions/dirichlet_boundary_conditions.h"
 
 namespace TimeSteppingScheme
 {
@@ -49,14 +50,6 @@ public:
   //! return the data object
   Data &data();
 
-protected:
-
-  //! use Petsc to solve the nonlinear equation
-  void nonlinearSolve();
-
-  //! set the solution variable to zero and the initial values
-  void initializeSolutionVariable();
-
   //! zero rows and columns in jac for which dirichlet values are set, set diagonal to 1
   void applyDirichletBoundaryConditionsInJacobian(Vec x, Mat jac);
 
@@ -65,6 +58,20 @@ protected:
 
   //! this evaluates the actual nonlinear function f(x) that should be solved f(x) = 0
   void evaluateNonlinearFunction(Vec x, Vec f);
+
+  //! this evaluates the analytic jacobian for the Newton scheme, or the material stiffness
+  void evaluateAnalyticJacobian(Vec x, Mat jac);
+
+protected:
+
+  //! use Petsc to solve the nonlinear equation using the SNES solver
+  void nonlinearSolve();
+
+  //! set the solution variable to zero and the initial values
+  void initializeSolutionVariable();
+
+  //! check if the solution satisfies Dirichlet BC and the residual is zero, only for debugging output
+  void checkSolution(Vec x);
 
   //! get a string representation of the values for debugging output
   std::string getString(Vec x);
@@ -98,10 +105,15 @@ protected:
   bool initialized_;   ///< if this object was already initialized
   PythonConfig specificSettings_;    ///< python object containing the value of the python config dict with corresponding key
   double endTime_;     ///< end time of current time step
+
+  std::shared_ptr<SpatialDiscretization::DirichletBoundaryConditions<DisplacementsFunctionSpace,3>> dirichletBoundaryConditions_ = nullptr;  ///< object that parses Dirichlet boundary conditions and applies them to rhs
+
   double c0_;    ///< first Mooney-Rivlin parameter
   double c1_;   ///< second Mooney-Rivlin parameter
 
   bool useNestedMat_ = false;   ///< if the MatNest and VecNest data structures of Petsc should be used, this avoids data copy but is harder to debug
+  bool useAnalyticJacobian_;   ///< if the analytically computed Jacobian of the Newton scheme should be used. Theoretically if it is correct, this is the fastest option.
+  bool useNumericJacobian_;   ///< if a numerically computed Jacobian should be used, approximated by finite differences
 };
 
 }  // namespace

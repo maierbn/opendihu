@@ -52,6 +52,9 @@ public:
   template<typename FunctionSpaceType, typename ...Args>
   std::shared_ptr<FunctionSpaceType> createFunctionSpace(std::string name, Args && ...args);
 
+  //! create a generic function space without mesh representation with dimension nEntries
+  std::shared_ptr<FunctionSpace::Generic> createGenericFunctionSpace(int nEntries, std::string name);
+
   //! create a mesh not from python config but directly by calling an appropriate construtor.
   //! With this e.g. meshes from node positions can be created.
   //! Use the given meshPartition, i.e. not the number of elements from settings.

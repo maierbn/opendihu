@@ -45,6 +45,9 @@ public:
   //! get a reference to the vector of bc local dofs
   const std::vector<ValueType> &boundaryConditionValues() const;
 
+  //! get the boundary conditions data organized by component
+  const std::array<BoundaryConditionsForComponent, nComponents> &boundaryConditionsByComponent() const;
+
 protected:
 
   //! fill auxiliary ghost element data structures, this is only needed for Dirichlet boundary conditions on scalar fields

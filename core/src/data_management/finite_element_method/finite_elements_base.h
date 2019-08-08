@@ -69,6 +69,9 @@ public:
   //! get the inversed lumped mass matrix
   std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> inverseLumpedMassMatrix();
   
+//! get maximum number of expected non-zeros in stiffness matrix
+  static void getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros);
+
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
   //! the transfer is done by the solution_vector_mapping class
   TransferableSolutionDataType getSolutionForTransfer();
@@ -85,9 +88,6 @@ public:
   OutputFieldVariables getOutputFieldVariables();
 
 private:
-
-  //! get maximum number of expected non-zeros in stiffness matrix
-  void getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros);
 
   //! initializes the vectors and stiffness matrix with size
   void createPetscObjects();

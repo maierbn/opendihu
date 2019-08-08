@@ -51,6 +51,24 @@ public:
 
 protected:
 
+  //! use Petsc to solve the nonlinear equation
+  void nonlinearSolve();
+
+  //! set the solution variable to zero and the initial values
+  void initializeSolutionVariable();
+
+  //! zero rows and columns in jac for which dirichlet values are set, set diagonal to 1
+  void applyDirichletBoundaryConditionsInJacobian(Vec x, Mat jac);
+
+  //! set f to x-x0 for values with dirichlet boundary condition
+  void applyDirichletBoundaryConditionsInNonlinearFunction(Vec x, Vec f);
+
+  //! this evaluates the actual nonlinear function f(x) that should be solved f(x) = 0
+  void evaluateNonlinearFunction(Vec x, Vec f);
+
+  //! get a string representation of the values for debugging output
+  std::string getString(Vec x);
+
   DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
 
   OutputWriter::Manager outputWriterManager_; ///< manager object holding all output writer
@@ -60,11 +78,30 @@ protected:
   std::shared_ptr<DisplacementsFunctionSpace> displacementsFunctionSpace_;  ///< the function space with quadratic Lagrange basis functions, used for discretization of displacements
   std::shared_ptr<PressureFunctionSpace> pressureFunctionSpace_;  ///< the function space with linear Lagrange basis functions, used for discretization of pressure
 
+  Mat solverMatrixTangentStiffness_;   //< the jacobian matrix for the Newton solver, which in case of nonlinear elasticity is the tangent stiffness matrix
+  Vec solverVariableResidual_;         //< nested PETSc Vec to store the residual
+  Vec solverVariableSolution_;         //< nested PETSc Vec to store the solution
+
+  std::array<Mat,16> submatrices_;  // all submatrices of the 4x4 block jacobian matrix, solverMatrixTangentStiffness_
+  std::array<Vec,4> subvectorsSolution_;  // all subvectors of the 4 entries vector, solverVariableSolution_
+  std::array<Vec,4> subvectorsResidual_;  // all subvectors of the 4 entries vector, solverVariableResidual_
+  std::vector<PartitionedPetscMat<DisplacementsFunctionSpace,DisplacementsFunctionSpace>> uMatrix_;    //< upper left 3x3 blocks of matrices in the jacobian for Newton scheme
+  std::vector<PartitionedPetscMat<DisplacementsFunctionSpace,PressureFunctionSpace>> upMatrix_;        //< lower left 1x3 blocks of matrices in the jacobian for Newton scheme
+  std::vector<PartitionedPetscMat<PressureFunctionSpace,DisplacementsFunctionSpace>> puMatrix_;        //< upper right 3x1 blocks of matrices in the jacobian for Newton scheme
+  std::vector<PartitionedPetscMat<PressureFunctionSpace,PressureFunctionSpace>> pMatrix_;                           //< lower left matrix in the jacobian for Newton scheme
+
+  std::shared_ptr<PartitionedPetscMat<FunctionSpace::Generic>> combinedJacobianMatrix_;    // single jacobian matrix, when useNestedMat_ is false
+  std::shared_ptr<PartitionedPetscVec<FunctionSpace::Generic,1>> combinedVecResidual_;
+  std::shared_ptr<PartitionedPetscVec<FunctionSpace::Generic,1>> combinedVecSolution_;
+
+  // settings variables
   bool initialized_;   ///< if this object was already initialized
   PythonConfig specificSettings_;    ///< python object containing the value of the python config dict with corresponding key
   double endTime_;     ///< end time of current time step
   double c0_;    ///< first Mooney-Rivlin parameter
   double c1_;   ///< second Mooney-Rivlin parameter
+
+  bool useNestedMat_ = false;   ///< if the MatNest and VecNest data structures of Petsc should be used, this avoids data copy but is harder to debug
 };
 
 }  // namespace

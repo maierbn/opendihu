@@ -123,6 +123,96 @@ initialize()
 
   data_.initialize();
 
+  // setup Petsc variables
+
+  // create nested matrix for the jacobian matrix for the Newton solver, which in case of nonlinear elasticity is the tangent stiffness matrix
+  PetscErrorCode ierr;
+  MPI_Comm mpiCommunicator = displacementsFunctionSpace_->meshPartition()->mpiCommunicator();
+
+  /*
+   *  U U U P
+   *  U U U P
+   *  U U U P
+   *  P P P P
+   */
+
+  // determine number of non zero entries in matrix
+  int diagonalNonZeros, offdiagonalNonZeros;
+  Data::FiniteElementsBase<DisplacementsFunctionSpace,1> getPetscMemoryParameters(diagonalNonZeros, offdiagonalNonZeros);
+
+  if (useNestedMat_)
+  {
+    // top u matrices
+    for (int i = 0; i < 3; i++)
+    {
+      for (int j = 0; j < 3; j++)
+      {
+        std::stringstream name;
+        name << "jacobian" << i << j;
+        uMatrix_.emplace_back(displacementsFunctionSpace_->meshPartition(), 1, diagonalNonZeros, offdiagonalNonZeros, name.str());
+        submatrices_[i*4 + j] = uMatrix_.back().valuesGlobal();
+      }
+    }
+
+    // right p matrices
+    for (int i = 0; i < 3; i++)
+    {
+      std::stringstream name;
+      name << "jacobian" << i << 3;
+      upMatrix_.emplace_back(displacementsFunctionSpace_->meshPartition(), pressureFunctionSpace_->meshPartition(),
+                            1, diagonalNonZeros, offdiagonalNonZeros, name.str());
+      submatrices_[i*4 + 3] = upMatrix_.back().valuesGlobal();
+    }
+
+    // bottom p matrices
+    for (int j = 0; j < 3; j++)
+    {
+      std::stringstream name;
+      name << "jacobian" << 3 << j;
+      puMatrix_.emplace_back(pressureFunctionSpace_->meshPartition(), displacementsFunctionSpace_->meshPartition(),
+                            1, diagonalNonZeros, offdiagonalNonZeros, name.str());
+      submatrices_[3*4 + j] = puMatrix_.back().valuesGlobal();
+    }
+
+    // bottom right matrix
+    pMatrix_.emplace_back(pressureFunctionSpace_->meshPartition(), 1, diagonalNonZeros, offdiagonalNonZeros, "jacobian33");
+    submatrices_[3*4 + 3] = pMatrix_.back().valuesGlobal();
+
+    // create 4x4 nested matrix
+    ierr = MatCreateNest(mpiCommunicator, 4, NULL, 4, NULL, submatrices.data(), &this->solverMatrixTangentStiffness_); CHKERRV(ierr);
+
+    // create nested vector for solution
+    for (int i = 0; i < 3; i++)
+    {
+      subvectorsSolution_[i] = this->data_.displacements()->valuesGlobal(i);
+
+      VecDuplicate(subvectorsSolution_[i], &subvectorsResidual_[i]);
+    }
+    subvectorsSolution_[3] = this->data_.pressure()->valuesGlobal();
+    VecDuplicate(subvectorsSolution_[3], &subvectorsResidual_[3]);
+
+    ierr = VecCreateNest(mpiCommunicator, 4, NULL, subvectorsSolution_.data(), &this->solverVariableSolution_); CHKERRV(ierr);
+
+    // create nested vector for residual
+    ierr = VecCreateNest(mpiCommunicator, 4, NULL, subvectorsResidual_.data(), &this->solverVariableResidual_); CHKERRV(ierr);
+  }
+  else
+  {
+    // prepare for non-nested data structures
+
+    int nRows = displacementsFunctionSpace_->nDofsGlobal() * 3 + pressureFunctionSpace_->nDofsGlobal()
+    std::shared_ptr<FunctionSpace::Generic> genericFunctionSpace = createGenericFunctionSpace(nRows, "genericMesh")
+
+    combinedJacobianMatrix_ = std::make_shared<PartitionedPetscMat<FunctionSpace::Generic>>(
+      genericFunctionSpace->meshPartition(), 1, 4*diagonalNonZeros, 4*offdiagonalNonZeros, "combinedJacobian");
+
+    combinedVecSolution_ =  std::make_shared<PartitionedPetscVec<FunctionSpace::Generic,1>>(genericFunctionSpace->meshPartition(), "combinedSolution");
+    combinedVecResidual_ =  std::make_shared<PartitionedPetscVec<FunctionSpace::Generic,1>>(genericFunctionSpace->meshPartition(), "combinedResidual");
+
+    solverMatrixTangentStiffness_ = combinedJacobianMatrix_->valuesGlobal();
+    solverVariableSolution_ = combinedVecSolution_->valuesGlobal();
+    solverVariableResidual_ = combinedVecResidual_->valuesGlobal();
+  }
 
   LOG(DEBUG) << "initialization done";
   this->initialized_ = true;

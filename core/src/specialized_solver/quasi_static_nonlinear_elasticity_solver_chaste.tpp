@@ -101,6 +101,8 @@ advanceTimeSpan()
     std::vector<unsigned> topNodes = NonlinearElasticityTools<3>::GetNodesByComponentValue(mesh, /*component*/ 2, /*value*/ (double)nElementsGlobalZ);
     std::vector<unsigned> bottomNodes = NonlinearElasticityTools<3>::GetNodesByComponentValue(mesh, /*component*/ 2, /*value*/ 0.0);
 
+    LOG(DEBUG) << "topNodes: " << topNodes;
+
 
     if (functionSpace_->meshPartition()->nNodesGlobal() != mesh.GetNumNodes())
     {
@@ -133,55 +135,62 @@ advanceTimeSpan()
     c_vector<double,3> &location5 = mesh.GetNode(nodeIndex)->rGetModifiableLocation();
     location5[1] += 0.13;
 
-    std::ofstream file("node_points.txt");
+    // set new posititons
+#if 1
+    // numbering for chaste as shown in plot_chaste_numbering.py
+    unsigned int chasteNodeIndex = 0;
 
-    file << "element_points = [";
-
-    // loop over opendihu elements
-    for (unsigned int elementIndexZ = 0; elementIndexZ < functionSpace_->meshPartition()->nElementsGlobal(2); elementIndexZ++)
+    // loop over element corner nodes
+    for (unsigned int nodeIndexZ = 0; nodeIndexZ < functionSpace_->meshPartition()->nNodesGlobal(2); nodeIndexZ += 2)
     {
-      for (unsigned int elementIndexY = 0; elementIndexY < functionSpace_->meshPartition()->nElementsGlobal(1); elementIndexY++)
+      for (unsigned int nodeIndexY = 0; nodeIndexY < functionSpace_->meshPartition()->nNodesGlobal(1); nodeIndexY += 2)
       {
-        for (unsigned int elementIndexX = 0; elementIndexX < functionSpace_->meshPartition()->nElementsGlobal(0); elementIndexX++)
+        for (unsigned int nodeIndexX = 0; nodeIndexX < functionSpace_->meshPartition()->nNodesGlobal(0); nodeIndexX += 2)
         {
-          int nodeIndex0 = elementIndexZ * functionSpace_->meshPartition()->nNodesGlobal(0) * functionSpace_->meshPartition()->nNodesGlobal(1)
-            + elementIndexY * functionSpace_->meshPartition()->nNodesGlobal(1) + elementIndexX;
-          int nodeIndex4 = nodeIndex0 + functionSpace_->meshPartition()->nNodesGlobal(1)*functionSpace_->meshPartition()->nNodesGlobal(0);
+          int opendihuNodeIndex = nodeIndexZ * functionSpace_->meshPartition()->nNodesGlobal(0) * functionSpace_->meshPartition()->nNodesGlobal(1)
+            + nodeIndexY * functionSpace_->meshPartition()->nNodesGlobal(1) + nodeIndexX;
 
-          Vec3 position0 = functionSpace_->getGeometry(nodeIndex0);
-          Vec3 position1 = functionSpace_->getGeometry(nodeIndex0+1);
-          Vec3 position2 = functionSpace_->getGeometry(nodeIndex0+functionSpace_->meshPartition()->nNodesGlobal(0));
-          Vec3 position3 = functionSpace_->getGeometry(nodeIndex0+functionSpace_->meshPartition()->nNodesGlobal(0)+1);
-          Vec3 position4 = functionSpace_->getGeometry(nodeIndex4);
-          Vec3 position5 = functionSpace_->getGeometry(nodeIndex4+1);
-          Vec3 position6 = functionSpace_->getGeometry(nodeIndex4+functionSpace_->meshPartition()->nNodesGlobal(0));
-          Vec3 position7 = functionSpace_->getGeometry(nodeIndex4+functionSpace_->meshPartition()->nNodesGlobal(0)+1);
+          c_vector<double,3> &location = mesh.GetNode(chasteNodeIndex)->rGetModifiableLocation();
+          Vec3 position = functionSpace_->getGeometry(opendihuNodeIndex);
+          location[0] = position[0];
+          location[1] = position[1];
+          location[2] = position[2];
+          LOG(DEBUG) << "corner, nodeIndex " << opendihuNodeIndex << ", " << chasteNodeIndex << " pos " << location;
 
-          file << "["
-            << "[" << position0[0] << "," << position0[1] << "," << position0[2] << "],"
-            << "[" << position1[0] << "," << position1[1] << "," << position1[2] << "],"
-            << "[" << position2[0] << "," << position2[1] << "," << position2[2] << "],"
-            << "[" << position3[0] << "," << position3[1] << "," << position3[2] << "],"
-            << "[" << position4[0] << "," << position4[1] << "," << position4[2] << "],"
-            << "[" << position5[0] << "," << position5[1] << "," << position5[2] << "],"
-            << "[" << position6[0] << "," << position6[1] << "," << position6[2] << "],"
-            << "[" << position7[0] << "," << position7[1] << "," << position7[2] << "]]," << std::endl;
+          chasteNodeIndex++;
         }
       }
     }
-    file << "]";
-    file.close();
 
-    for (unsigned int nodeIndex = 0; nodeIndex < functionSpace_->meshPartition()->nNodesGlobal(); nodeIndex++)
+    // loop over rest of nodes
+    for (unsigned int nodeIndexZ = 0; nodeIndexZ < functionSpace_->meshPartition()->nNodesGlobal(2); nodeIndexZ++)
     {
-      c_vector<double,3> &location = mesh.GetNode(nodeIndex)->rGetModifiableLocation();
-      Vec3 position = functionSpace_->getGeometry(nodeIndex);
-      location[0] = -position[0];
-      location[1] = position[1];
-      location[2] = position[2];
-      file <<
-      LOG(DEBUG) << "nodeIndex " << nodeIndex << " pos " << location;
+      for (unsigned int nodeIndexY = 0; nodeIndexY < functionSpace_->meshPartition()->nNodesGlobal(1); nodeIndexY++)
+      {
+        for (unsigned int nodeIndexX = 0; nodeIndexX < functionSpace_->meshPartition()->nNodesGlobal(0); nodeIndexX++)
+        {
+          // do not consider element corner nodes
+          if (nodeIndexZ % 2 == 0 && nodeIndexY % 2 == 0 && nodeIndexX % 2 == 0)
+            continue;
+
+          int opendihuNodeIndex = nodeIndexZ * functionSpace_->meshPartition()->nNodesGlobal(0) * functionSpace_->meshPartition()->nNodesGlobal(1)
+            + nodeIndexY * functionSpace_->meshPartition()->nNodesGlobal(1) + nodeIndexX;
+
+          c_vector<double,3> &location = mesh.GetNode(chasteNodeIndex)->rGetModifiableLocation();
+          Vec3 position = functionSpace_->getGeometry(opendihuNodeIndex);
+          location[0] = position[0];
+          location[1] = position[1];
+          location[2] = position[2];
+          LOG(DEBUG) << "nodeIndex " << opendihuNodeIndex << "," << chasteNodeIndex << " pos " << location;
+
+          chasteNodeIndex++;
+        }
+      }
     }
+
+
+#endif
+
 
     LOG(DEBUG) << "node positions set";
 
@@ -201,32 +210,44 @@ advanceTimeSpan()
       * In this problem we apply a gravity-like downward force.
       */
     c_vector<double,3> bodyForce;
-    bodyForce(0) =  0.0;
-    bodyForce(1) = -2.0;
-    bodyForce(2) =  0.0;
+    bodyForce(0) = 0.0;
+    bodyForce(1) = 0.0;
+    bodyForce(2) = -0.1;
 
-    /*
-    std::vector<BoundaryElement<1,2>*> boundary_elems;
-    std::vector<c_vector<double,2> > tractions;
+    std::vector<BoundaryElement<2,3>*> tractionElements;
+    std::vector<c_vector<double,3> > tractionValues;
+
     // Create a constant traction
-    c_vector<double,2> traction;
+    c_vector<double,3> traction;
     traction(0) = 0;
-    traction(1) = 1.0; // this choice of sign corresponds to an inward force (if applied to the bottom surface)
-    // Loop over boundary elements
-    for (TetrahedralMesh<2,2>::BoundaryElementIterator iter = mesh.GetBoundaryElementIteratorBegin();
+    traction(1) = 0;
+    traction(2) = -0.1; // negative = outwards
+
+    ChasteCuboid<3> boundingBox = mesh.CalculateBoundingBox();
+    LOG(DEBUG) << "get bounding box: " << boundingBox.rGetLowerCorner().rGetLocation() << ", " << boundingBox.rGetUpperCorner().rGetLocation();
+
+    int observationNodeNo = 0;
+
+    // loop over boundary elements
+    for (TetrahedralMesh<3,3>::BoundaryElementIterator iter = mesh.GetBoundaryElementIteratorBegin();
         iter != mesh.GetBoundaryElementIteratorEnd();
         ++iter)
     {
-        // If the centre of the element has Y value of 0.0, it is on the surface we need
-        if (fabs((*iter)->CalculateCentroid()[1] - 0.0) < 1e-6)
-        {
-            // Put the boundary element and the constant traction into the stores.
-            BoundaryElement<1,2>* p_element = *iter;
-            boundary_elems.push_back(p_element);
-            tractions.push_back(traction);
-        }
+      LOG(DEBUG) << "boundary element centroid z: " << (*iter)->CalculateCentroid()[2];
+
+      // if element lies at bottom of domain
+      if (fabs((*iter)->CalculateCentroid()[2] - boundingBox.rGetLowerCorner().rGetLocation()[2]) < 1e-6)
+      {
+          // Put the boundary element and the constant traction into the stores.
+          BoundaryElement<2,3>* p_element = *iter;
+          tractionElements.push_back(p_element);
+          tractionValues.push_back(traction);
+
+          observationNodeNo = p_element->GetNodeGlobalIndex(0);
+      }
     }
-    */
+
+
 
     /* Two types of boundary condition are required: displacement and traction. As with the other PDE solvers,
       * the displacement (Dirichlet) boundary conditions are specified at nodes, whereas traction (Neumann) boundary
@@ -262,58 +283,88 @@ advanceTimeSpan()
     /* Set the body force and the density. (Note that the second line isn't technically
       * needed, as internally the density is initialised to 1)
       */
-    problemDefinition.SetBodyForce(bodyForce);
+    //problemDefinition.SetBodyForce(bodyForce);
     problemDefinition.SetDensity(1.0);
+    problemDefinition.SetTractionBoundaryConditions(tractionElements, tractionValues);
+    //problemDefinition.SetSolveUsingSnes(true);  // use PETSc SNES instead of own solver
+
+    LOG(DEBUG) << tractionElements.size() << "traction elements: ";
+
 
     /* Now we create the (incompressible) solver, passing in the mesh, problem definition
       * and output directory, relative to $CHASTE_TEST_OUTPUT
       */
     IncompressibleNonlinearElasticitySolver<3> solver(mesh, problemDefinition, "output_directory");
 
-    if (false)
+    // enable active stress contributions
+    solver.SetIncludeActiveTension(true);
+    solver.SetTakeFullFirstNewtonStep(true);
+
+    for (int loadStepIndex = 0; loadStepIndex < 10; loadStepIndex++)
     {
-    /* .. and to compute the solution, just call `Solve()` */
-    solver.Solve();
+
+      solver.SetCurrentTime(loadStepIndex);
+
+      // update traction
+      c_vector<double,3> traction;
+      traction(0) = 0;
+      traction(1) = 0;
+      traction(2) = -0.1*loadStepIndex; // negative = outwards
+
+      // update the constant traction values
+      tractionValues.clear();
+      //std::fill_n(tractionValues.begin(), tractionElements.size(), traction);0
+      for(int i = 0; i < tractionElements.size(); i++)
+        tractionValues.push_back(traction);
+
+      LOG(DEBUG) << "n traction values: " << tractionValues.size() << ", n traction elements: " << tractionElements.size();
+
+      problemDefinition.SetTractionBoundaryConditions(tractionElements, tractionValues);
+
+      LOG(DEBUG) << "solve...";
+
+      /* .. and to compute the solution, just call `Solve()` */
+      solver.Solve();
+      LOG(DEBUG) << "solving done";
+
+      /* '''Visualisation'''. Go to the folder `SimpleIncompressibleElasticityTutorial` in your test-output directory.
+        * There should be 2 files, initial.nodes and solution.nodes. These are the original nodal positions and the deformed
+        * positions. Each file has two columns, the x and y locations of each node. To visualise the solution in say
+        * Matlab or Octave, you could do: `x=load('solution.nodes'); plot(x(:,1),x(:,2),'k*')`. For Cmgui output, see below.
+        *
+        * To get the actual solution from the solver, use these two methods. Note that the first
+        * gets the deformed position (ie the new location, not the displacement). They are both of size
+        * num_total_nodes.
+        */
+      std::vector<c_vector<double,3> >& r_deformed_positions = solver.rGetDeformedPosition();
+      std::vector<double>& r_pressures = solver.rGetPressures();
+
+      /* Let us obtain the values of the new position, and the pressure, at the bottom right corner node. */
+      //assert( fabs(mesh.GetNode(node_index)->rGetLocation()[0] - 0.8) < 1e-6); // check that X=0.8, ie that we have the correct node,
+      //assert( fabs(mesh.GetNode(node_index)->rGetLocation()[1] - 0.0) < 1e-6); // check that Y=0.0, ie that we have the correct node,
+      std::cout << "New position: " << r_deformed_positions[observationNodeNo](0) << " " << r_deformed_positions[observationNodeNo](1) << " " << r_deformed_positions[observationNodeNo](2) << "\n";
+      std::cout << "Pressure: " << r_pressures[observationNodeNo] << "\n";
+
+      /* HOW_TO_TAG Continuum mechanics
+        * Visualise nonlinear elasticity problems solutions, including visualisng strains
+        */
+
+      /* One visualiser is Cmgui. This method can be used to convert all the output files to Cmgui format.
+        * They are placed in `[OUTPUT_DIRECTORY]/cmgui`. A script is created to easily load the data: in a
+        * terminal cd to this directory and call `cmgui LoadSolutions.com`. (In this directory, the initial position is given by
+        * solution_0.exnode, the deformed by solution_1.exnode).
+        */
+      //solver.CreateCmguiOutput();
+
+      /* The recommended visualiser is Paraview, for which Chaste must be installed with VTK. With paraview, strains (and in the future
+        * stresses) can be visualised on the undeformed/deformed geometry). We can create VTK output using
+        * the `VtkNonlinearElasticitySolutionWriter` class. The undeformed geometry, solution displacement, and pressure (if incompressible
+        * problem) are written to file, and below we also choose to write the deformation tensor C for each element.
+        */
+      VtkNonlinearElasticitySolutionWriter<3> vtk_writer(solver);
+      vtk_writer.SetWriteElementWiseStrains(DEFORMATION_TENSOR_C); // other options are DEFORMATION_GRADIENT_F and LAGRANGE_STRAIN_E
+      vtk_writer.Write();
     }
-
-    /* '''Visualisation'''. Go to the folder `SimpleIncompressibleElasticityTutorial` in your test-output directory.
-      * There should be 2 files, initial.nodes and solution.nodes. These are the original nodal positions and the deformed
-      * positions. Each file has two columns, the x and y locations of each node. To visualise the solution in say
-      * Matlab or Octave, you could do: `x=load('solution.nodes'); plot(x(:,1),x(:,2),'k*')`. For Cmgui output, see below.
-      *
-      * To get the actual solution from the solver, use these two methods. Note that the first
-      * gets the deformed position (ie the new location, not the displacement). They are both of size
-      * num_total_nodes.
-      */
-    std::vector<c_vector<double,3> >& r_deformed_positions = solver.rGetDeformedPosition();
-    std::vector<double>& r_pressures = solver.rGetPressures();
-
-    /* Let us obtain the values of the new position, and the pressure, at the bottom right corner node. */
-    unsigned node_index = 8;
-    //assert( fabs(mesh.GetNode(node_index)->rGetLocation()[0] - 0.8) < 1e-6); // check that X=0.8, ie that we have the correct node,
-    //assert( fabs(mesh.GetNode(node_index)->rGetLocation()[1] - 0.0) < 1e-6); // check that Y=0.0, ie that we have the correct node,
-    std::cout << "New position: " << r_deformed_positions[node_index](0) << " " << r_deformed_positions[node_index](1) << "\n";
-    std::cout << "Pressure: " << r_pressures[node_index] << "\n";
-
-    /* HOW_TO_TAG Continuum mechanics
-      * Visualise nonlinear elasticity problems solutions, including visualisng strains
-      */
-
-    /* One visualiser is Cmgui. This method can be used to convert all the output files to Cmgui format.
-      * They are placed in `[OUTPUT_DIRECTORY]/cmgui`. A script is created to easily load the data: in a
-      * terminal cd to this directory and call `cmgui LoadSolutions.com`. (In this directory, the initial position is given by
-      * solution_0.exnode, the deformed by solution_1.exnode).
-      */
-    //solver.CreateCmguiOutput();
-
-    /* The recommended visualiser is Paraview, for which Chaste must be installed with VTK. With paraview, strains (and in the future
-      * stresses) can be visualised on the undeformed/deformed geometry). We can create VTK output using
-      * the `VtkNonlinearElasticitySolutionWriter` class. The undeformed geometry, solution displacement, and pressure (if incompressible
-      * problem) are written to file, and below we also choose to write the deformation tensor C for each element.
-      */
-    VtkNonlinearElasticitySolutionWriter<3> vtk_writer(solver);
-    vtk_writer.SetWriteElementWiseStrains(DEFORMATION_TENSOR_C); // other options are DEFORMATION_GRADIENT_F and LAGRANGE_STRAIN_E
-    vtk_writer.Write();
   }
   catch(Exception e)
   {

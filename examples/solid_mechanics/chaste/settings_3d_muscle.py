@@ -27,6 +27,10 @@ sampling_stride_x = 7
 sampling_stride_y = 7
 sampling_stride_z = 1000
 
+#sampling_stride_x = 1
+#sampling_stride_y = 1
+#sampling_stride_z = 100
+
 # create the partitioning using the script in create_partitioned_meshes_for_settings.py
 result = create_partitioned_meshes_for_settings(
     n_subdomains_x, n_subdomains_y, n_subdomains_z, 
@@ -36,6 +40,25 @@ result = create_partitioned_meshes_for_settings(
 #parse result
 [variables.meshes, variables.own_subdomain_coordinate_x, variables.own_subdomain_coordinate_y, variables.own_subdomain_coordinate_z, variables.n_fibers_x, variables.n_fibers_y, variables.n_points_whole_fiber] = result
 
+node_positions = variables.meshes["3Dmesh_quadratic"]["nodePositions"]
+#node_positions = variables.meshes["3Dmesh"]["nodePositions"]
+
+"""
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+
+
+x_list = [x for [x,y,z] in node_positions]
+y_list = [y for [x,y,z] in node_positions]
+z_list = [z for [x,y,z] in node_positions]
+  
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+ax.scatter(x_list,y_list,z_list,c='b',s=30)
+
+plt.show()
+"""
+
 config = {
   "scenarioName": "3d_muscle_chaste",
   "Meshes": variables.meshes,
@@ -43,5 +66,8 @@ config = {
     "maximumActiveStress": 1.0,       # dummy value
     "strainScalingCurveWidth": 1.0,    # dummy value
     "meshName": "3Dmesh_quadratic",
+    "OutputWriters": [
+      {"format": "PythonFile", "outputInterval": 1, "filename": "out/mesh", "binary": True}
+    ]
   }
 }

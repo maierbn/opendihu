@@ -25,13 +25,41 @@ A function space object appears usually as a shared pointer, since multiple obje
   // retrieve the mesh partition via
   // functionSpace->meshPartition()
 
-To create a new function space, use the `meshManager` object. This is a singleton class, the mesh manager is available from the context:
+To create a new function space, use the `meshManager` object. This is a singleton class, the mesh manager is available from the `DihuContext` context object. It stores all existent function spaces and takes care that the same function space won't be created twice.
+
+Create a function space from settings (see :doc:`/settings/mesh` for details). If this function space was already created, it returns a pointer to the already created function space. If it was not yet created, it constructs a new object.
+This works for all mesh types.
 
 .. code-block:: c++
 
   // assuming `context_` is the object of type DihuContext and `specificSettings_` is the python settings object of type `PythonConfig`
   // (can be retrived by `specificSettings_ = context_.getPythonConfig();`)
-  context_.meshManager()->functionSpace<DisplacementsFunctionSpace>(specificSettings_);
+  std::shared_ptr<FunctionSpaceType> functionSpace 
+    = context_.meshManager()->functionSpace<FunctionSpaceType>(specificSettings_);
+  
+Create a function space with a `Mesh::RegularFixedOfDimension<D>` mesh directly, `nElements` is the local number of elements, in the subdomain,
+`physicalExtent` is the physical "size" of the subdomain. You can give the function space a name in the first argument, instead of "name". Later the function space can be retrieved from the mesh manager with the `functionSpace<>` method, as above.
+
+.. code-block:: c++
+
+  std::array<element_no_t, D> nElements;
+  std::array<double, D> physicalExtent;
+  
+  std::shared_ptr<FunctionSpaceType> functionSpace 
+    = context_.meshManager()->createFunctionSpace<FunctionSpaceType>("name", nElements, physicalExtent);
+
+Create a function space with a `Mesh::StructuredDeformableOfDimension<D>` mesh directly. `nodePositions` is a vector of all local node positions without ghosts, in the local ordering. `nElementsPerCoordinateDirection` is the local number of elements in the subdomain and `nRanksPerCoordinateDirection` is the global number of ranks in each coordinate direction.
+
+.. code-block:: c++
+
+  const int D = 3;   // or 2 or 1
+  std::vector<Vec3> nodePositions;
+  const std::array<element_no_t,D> nElementsPerCoordinateDirection;
+  const std::array<int,D> nRanksPerCoordinateDirection;
+
+  std::shared_ptr<FunctionSpaceType> functionSpace 
+    = context_.meshManager()->createFunctionSpace<FunctionSpaceType>("name", nodePositions, nElementsPerCoordinateDirection, nRanksPerCoordinateDirection);
+                         
 
 MeshPartition
 -------------
@@ -688,6 +716,33 @@ The function space object has the following methods:
   
   :param element_no_t elementNo: 
   :param std\:\:vector<dof_no_t> &dofNosLocal: 
+  
+
+.. cpp:function:: Vec3 getGeometry(node_no_t dofGlobalNo) const
+  
+  Return the geometry field entry (node position for Lagrange elements) of a specific dof.
+  
+  :param node_no_t dofGlobalNo: 
+  
+.. cpp:function:: void getElementGeometry(element_no_t elementNoLocal, std::array<Vec3, FunctionSpaceBaseDim<MeshType::dim(),BasisFunctionType>::nDofsPerElement()> &values)
+  
+  Get all geometry entries for an element.
+  
+  :param element_no_t elementNoLocal: 
+  :param std\:\:array<Vec3,FunctionSpaceBaseDim<MeshType\:\:dim(),BasisFunctionType>\:\:nDofsPerElement(: 
+  
+.. cpp:function:: void extractSurfaceGeometry(const std::array<Vec3, FunctionSpaceBaseDim<MeshType::dim(),BasisFunctionType>::nDofsPerElement()> &geometryVolume, Mesh::face_t face,std::array<Vec3, FunctionSpaceBaseDim<MeshType::dim()-1,BasisFunctionType>::nNodesPerElement()> &geometrySurface)
+  
+  From the function space geometry, extract geometry data for a surface with has one lower dimensionality, only the nodal dofs are extracted, also for Hermite.
+  
+  :param const std\:\:array<Vec3,FunctionSpaceBaseDim<MeshType\:\:dim(),BasisFunctionType>\:\:nDofsPerElement()> &geometryVolume: 
+  :param Mesh\:\:face_t face: 
+  :param std\:\:array<Vec3,FunctionSpaceBaseDim<MeshType\:\:dim()-1,BasisFunctionType>\:\:nNodesPerElement(: 
+  
+.. cpp:function:: GeometryFieldType &geometryField()
+  
+  Return the internal geometry field variable.
+  
   
 
 

@@ -74,7 +74,7 @@ public:
   //! constructor from python settings with additionally given node positions
   FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, std::vector<double> &nodePositions, PythonConfig specificSettings, bool noGeometryField=false);
 
-  //! constructor from node positions
+  //! constructor from node positions, nElementsPerCoordinateDirection are the local elements
   FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, const std::vector<Vec3> &nodePositions,
                          const std::array<element_no_t,D> nElementsPerCoordinateDirection, const std::array<int,D> nRanksPerCoordinateDirection);
 

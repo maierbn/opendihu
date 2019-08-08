@@ -24,6 +24,11 @@ Field variables can be generated from the function space on which they are defin
   // and name "flowPotential"
   fieldVariable_ = functionSpace_->template createFieldVariable<1>("flowPotential");
 
+  // vector-valued field variable with 3 components x,y,z
+  std::vector<std::string> componentNames({"x","y","z"});
+  fieldVariable2_ = functionSpace_->template createFieldVariable<3>("Δu", componentNames);
+  
+
 General methods
 ------------------
 

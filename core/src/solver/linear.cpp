@@ -49,11 +49,49 @@ Linear::Linear(PythonConfig specificSettings, MPI_Comm mpiCommunicator, std::str
   // set type of preconditioner
   ierr = PCSetType(pc, pcType_); CHKERRV(ierr);
 
-  // for multigrid set number of levels to 5
+  // for multigrid set number of levels and cycle type
   if (pcType_ == std::string(PCGAMG))
   {
-    int nLevels = 5;
+    int nLevels = this->specificSettings_.getOptionInt("nLevels", 25, PythonUtility::Positive);
     ierr = PCMGSetLevels(pc, nLevels, NULL); CHKERRV(ierr);
+    
+    std::string mgType = this->specificSettings_.getOptionString("gamgType", "agg");
+    
+    PCGAMGType gamgType = PCGAMGCLASSICAL;
+    
+    if (mgType == "agg")
+    {
+      gamgType = PCGAMGAGG;
+    }
+    else if (mgType == "geo")
+    {
+      gamgType = PCGAMGGEO;
+    }
+    
+    ierr = PCGAMGSetType(pc,gamgType); CHKERRV(ierr);
+    
+    mgType = this->specificSettings_.getOptionString("cycleType", "cycleV");
+    
+    PCMGCycleType cycleType = PC_MG_CYCLE_V;
+    
+    if (mgType == "cycleW")
+    {
+      cycleType = PC_MG_CYCLE_W;
+    }
+    
+    ierr = PCMGSetCycleType(pc, cycleType); CHKERRV(ierr);    
+  }
+  
+  // set Hypre Options from Python config
+  if (pcType_ == std::string (PCHYPRE))
+  {
+    std::string hypreOptions = this->specificSettings_.getOptionString("hypreOptions", "-pc_hypre_type boomeramg");
+    PetscOptionsInsertString(NULL,hypreOptions.c_str());
+  }
+  
+  if (pcType_ ==  std::string(PCMG))
+  {
+    //TODO
   }
 
   // set options from command line, this overrides the python config
@@ -105,6 +143,14 @@ void Linear::parseSolverTypes()
   else if (preconditionerType == "gamg")
   {
     pcType_ = PCGAMG;
+  }
+  else if (preconditionerType == "pcmg")
+  {
+    pcType_ = PCMG;
+  }
+  else if (preconditionerType == "pchypre")
+  {
+    pcType_ = PCHYPRE;
   }
   else if (preconditionerType == "none")
   {

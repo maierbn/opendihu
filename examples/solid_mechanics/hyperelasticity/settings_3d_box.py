@@ -2,9 +2,9 @@ import numpy as np
 import sys, os
 
 # number of elements
-nx = 4
-ny = 3
-nz = 5
+nx = 2
+ny = 2
+nz = 1
 
 # boundary conditions (for quadratic elements)
 dirichlet_bc = {}

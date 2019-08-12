@@ -206,6 +206,15 @@ applyDirichletBoundaryConditionsInJacobian(Vec x, Mat jac)
     const std::array<BoundaryConditionsForComponent, 3> &boundaryConditionsByComponent = dirichletBoundaryConditions_->boundaryConditionsByComponent();
     PetscErrorCode ierr;
 
+    // allow new allocation of diagonal entries
+    for (int i = 0; i < 4; i++)
+    {
+      for (int j = 0; j < 4; j++)
+      {
+        MatSetOption(submatrices_[i*4 + j],MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE);
+      }
+    }
+
     for (int componentNo = 0; componentNo < 3; componentNo++)
     {
       const int nValues = boundaryConditionsByComponent[componentNo].dofNosLocal.size();
@@ -227,6 +236,7 @@ applyDirichletBoundaryConditionsInJacobian(Vec x, Mat jac)
       MatAssemblyEnd(submatrices_[componentNo*4 + componentNo], MAT_FINAL_ASSEMBLY);
 
       // zero rows
+
       // loop over column blocks
       for (int j = 0; j < 4; j++)
       {
@@ -437,6 +447,7 @@ evaluateAnalyticJacobian(Vec x, Mat jac)
       int j = 0;
       for (int i = 0; i < nValues; i++)
       {
+        // skip dofs with Dirichlet BC
         if (componentNo < 3)
         {
           if (j < boundaryConditionsByComponent[componentNo].dofNosLocal.size())

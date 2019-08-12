@@ -111,7 +111,7 @@ protected:
   double c0_;    ///< first Mooney-Rivlin parameter
   double c1_;   ///< second Mooney-Rivlin parameter
 
-  bool useNestedMat_ = false;   ///< if the MatNest and VecNest data structures of Petsc should be used, this avoids data copy but is harder to debug
+  bool useNestedMat_ = true;   ///< if the MatNest and VecNest data structures of Petsc should be used, this avoids data copy but is harder to debug
   bool useAnalyticJacobian_;   ///< if the analytically computed Jacobian of the Newton scheme should be used. Theoretically if it is correct, this is the fastest option.
   bool useNumericJacobian_;   ///< if a numerically computed Jacobian should be used, approximated by finite differences
 };

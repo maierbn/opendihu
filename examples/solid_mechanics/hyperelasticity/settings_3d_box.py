@@ -2,9 +2,9 @@ import numpy as np
 import sys, os
 
 # number of elements
-nx = 1
-ny = 1
-nz = 1
+nx = 4
+ny = 3
+nz = 5
 
 # boundary conditions (for quadratic elements)
 dirichlet_bc = {}
@@ -54,8 +54,8 @@ config = {
     "c0": 1.0,       # dummy value
     "c1": 1.0,    # dummy value
     "residualNormLogFilename": "log_residual_norm.txt",
-    "useAnalyticJacobian": False,
-    "useNumericJacobian": True,
+    "useAnalyticJacobian": True,
+    "useNumericJacobian": False,   # only works with non-nested matrices
     
     # mesh
     "nElements": [nx, ny, nz],
@@ -67,6 +67,9 @@ config = {
     "solverType": "gmres",
     "preconditionerType": "none",
     "maxIterations": 1e4,
+    
+    "dumpFilename": "out/m",
+    "dumpFormat": "ascii",   # default, ascii, matlab
     
     "dirichletBoundaryConditions": dirichlet_bc,
     "neumannBoundaryConditions": neumann_bc,

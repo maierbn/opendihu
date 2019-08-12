@@ -11,34 +11,52 @@
 #include "control/dihu_context.h"   // for DihuContext::nRanksCommWorld
 #include "output_writer/generic.h"
 
-// color codes: https://github.com/shiena/ansicolor/blob/master/README.md
-#define ANSI_COLOR_RED     "\x1b[31m"
-#define ANSI_COLOR_GREEN   "\x1b[32m"
-#define ANSI_COLOR_YELLOW  "\x1b[33m"
-#define ANSI_COLOR_BLUE    "\x1b[34m"
-#define ANSI_COLOR_MAGENTA "\x1b[35m"
-#define ANSI_COLOR_CYAN    "\x1b[36m"
-#define ANSI_COLOR_LIGHT_GRAY    "\x1b[90m"
-#define ANSI_COLOR_LIGHT_WHITE    "\x1b[97m"
-#define ANSI_COLOR_RESET   "\x1b[0m"
-
 namespace PetscUtility
 {
 
 void getMatrixEntries(const Mat &matrix, std::vector<double> &matrixValues)
 {
-  int nRows, nColumns;
-  MatGetLocalSize(matrix, &nRows, &nColumns);
+  MatType matrixType = MATSEQMAIJ;
+  MatGetType(matrix, &matrixType);
 
-  std::vector<int> rowIndices(nRows);
-  std::iota(rowIndices.begin(), rowIndices.end(), 0);
-  std::vector<int> columnIndices(nColumns);
-  std::iota(columnIndices.begin(), columnIndices.end(), 0);
-  matrixValues.resize(nRows*nColumns);
-  LOG(DEBUG) << "matrixValues contains " << nRows*nColumns << " local entries for the " << nRows << "x" << nColumns << " local matrix";
+  // if matrix is nested, only consider first submatrix
+  if (std::string(matrixType) == std::string(MATNEST))
+  {
+    int nNestedRows = 1;
+    int nNestedColumns = 1;
+    Mat **nestedMats;
+    MatNestGetSubMats(matrix,&nNestedRows,&nNestedColumns,&nestedMats);
 
-  // get values in row-major format with global indexing, note, there is no "MatGetValuesLocal"
-  MatGetValues(matrix, nRows, rowIndices.data(), nColumns, columnIndices.data(), matrixValues.data());
+    int nRows, nColumns;
+    MatGetLocalSize(nestedMats[0][0], &nRows, &nColumns);
+
+    std::vector<int> rowIndices(nRows);
+    std::iota(rowIndices.begin(), rowIndices.end(), 0);
+    std::vector<int> columnIndices(nColumns);
+    std::iota(columnIndices.begin(), columnIndices.end(), 0);
+    matrixValues.resize(nRows*nColumns, 0.0);
+
+    // get values in row-major format with global indexing, note, there is no "MatGetValuesLocal"
+    MatGetValues(nestedMats[0][0], nRows, rowIndices.data(), nColumns, columnIndices.data(), matrixValues.data());
+  }
+  else
+  {
+    // normal matrix
+    int nRows, nColumns;
+    MatGetLocalSize(matrix, &nRows, &nColumns);
+
+    int rowBegin, rowEnd;
+    MatGetOwnershipRange(matrix, &rowBegin, &rowEnd);
+    std::vector<int> rowIndices(nRows);
+    std::iota(rowIndices.begin(), rowIndices.end(), rowBegin);
+    std::vector<int> columnIndices(nColumns);
+    std::iota(columnIndices.begin(), columnIndices.end(), 0);
+    matrixValues.resize(nRows*nColumns, 0.0);
+    //LOG(DEBUG) << "matrixValues contains " << nRows*nColumns << " local entries for the " << nRows << "x" << nColumns << " local matrix";
+
+    // get values in row-major format with global indexing, note, there is no "MatGetValuesLocal"
+    MatGetValues(matrix, nRows, rowIndices.data(), nColumns, columnIndices.data(), matrixValues.data());
+  }
 }
 
 void getVectorEntries(const Vec &vector, std::vector<double> &vectorValues)
@@ -133,28 +151,52 @@ std::string getStringMatrix(const Mat& matrix)
 #ifdef NDEBUG
   return std::string("");
 #else
-  int nRows, nColumns;
-  MatGetLocalSize(matrix, &nRows, &nColumns);
-  int nRowsGlobal, nColumnsGlobal;
-  MatGetSize(matrix, &nRowsGlobal, &nColumnsGlobal);
 
-  PetscMPIInt nRanks = DihuContext::nRanksCommWorld();
-  //MPIUtility::handleReturnValue(MPI_Comm_size(MPI_COMM_WORLD, &nRanks), "MPI_Comm_size");
+  int nNestedRows = 1;
+  int nNestedColumns = 1;
+  Mat **nestedMats;
 
-  if (nRanks > 1)
+  std::stringstream s;
+
+  MatType matrixType = MATSEQMAIJ;
+  MatGetType(matrix, &matrixType);
+
+  if (std::string(matrixType) == std::string(MATNEST))
   {
-    std::stringstream s;
-    s << nRows << "x" << nColumns;
-    if (nRows != nRowsGlobal || nColumns != nColumnsGlobal)
-      s << " (global: " << nRowsGlobal << "x" << nColumnsGlobal << ")";
-    s << std::endl;
-    return s.str();
+    MatNestGetSubMats(matrix,&nNestedRows,&nNestedColumns,&nestedMats);
   }
 
-  std::vector<double> matrixValues;
-  getMatrixEntries(matrix, matrixValues);
+  for (int i = 0; i < nNestedRows; i++)
+  {
+    for (int j = 0; j < nNestedColumns; j++)
+    {
+      const char *name;
+      PetscObjectGetName((PetscObject)matrix, &name);
+      s << "\"" << name << "\" (" << i << "," << j << ")/(" << nNestedRows << "," << nNestedColumns << "): ";
 
-  return getStringMatrix(matrixValues, nRows, nColumns, nRowsGlobal, nColumnsGlobal);
+      Mat submatrix;
+      if (std::string(matrixType) != std::string(MATNEST))
+      {
+        submatrix = matrix;
+      }
+      else
+      {
+        submatrix = nestedMats[i][j];
+      }
+
+      int nRows, nColumns;
+      MatGetLocalSize(submatrix, &nRows, &nColumns);
+      int nRowsGlobal, nColumnsGlobal;
+      MatGetSize(submatrix, &nRowsGlobal, &nColumnsGlobal);
+
+      std::vector<double> matrixValues;
+      getMatrixEntries(submatrix, matrixValues);
+
+      s << getStringMatrix(matrixValues, nRows, nColumns, nRowsGlobal, nColumnsGlobal);
+      s << std::endl;
+    }
+  }
+  return s.str();
 #endif
 }
 
@@ -166,6 +208,13 @@ std::string getStringMatrix(std::vector<double> &matrixValues, int nRows, int nC
   const double zeroTolerance = 1e-15;
 
   std::stringstream s;
+
+  PetscMPIInt nRanks = DihuContext::nRanksCommWorld();
+  PetscMPIInt ownRank = DihuContext::ownRankNoCommWorld();
+  //MPIUtility::handleReturnValue(MPI_Comm_size(MPI_COMM_WORLD, &nRanks), "MPI_Comm_size");
+
+  if (nRanks > 1)
+    s << ownRank << "/" << nRanks << ": ";
   s << nRows << "x" << nColumns;
   if (nRows != nRowsGlobal || nColumns != nColumnsGlobal)
     s << " (global: " << nRowsGlobal << "x" << nColumnsGlobal << ")";
@@ -182,10 +231,10 @@ std::string getStringMatrix(std::vector<double> &matrixValues, int nRows, int nC
     s << std::setw(4) << std::setfill(' ') <<i<< "| ";
     for (int j=0; j<nColumns; j++)
     {
-      if (fabs(matrixValues[i*nRows + j]) <= zeroTolerance)
+      if (fabs(matrixValues[i*nColumns + j]) <= zeroTolerance)
         s << std::string(6, ' ');
       else
-        s << std::showpos << std::setw(5) << std::setfill(' ') << std::setprecision(3) << matrixValues[i*nRows + j]<< " ";
+        s << std::showpos << std::setw(5) << std::setfill(' ') << std::setprecision(3) << matrixValues[i*nRows + j]<< " " << std::noshowpos;
     }
     s << std::string(6, ' ');
     s << std::endl;
@@ -214,7 +263,7 @@ std::string getStringVector(const Vec& vector)
   std::stringstream s;
   for (int i=0; i<nEntries; i++)
   {
-    s << (fabs(vectorValues[i]) < zeroTolerance? 0.0 : vectorValues[i]) << " ";
+    s << std::setprecision(9) << (fabs(vectorValues[i]) < zeroTolerance? 0.0 : vectorValues[i]) << " ";
   }
 
   return s.str();
@@ -226,37 +275,72 @@ std::string getStringSparsityPattern(const Mat& matrix)
 #ifdef NDEBUG
   return std::string("");
 #else
-  int nRows, nColumns;
-  MatGetLocalSize(matrix, &nRows, &nColumns);
-
-  std::vector<double> matrixValues;
-  getMatrixEntries(matrix, matrixValues);
+  int nNestedRows = 1;
+  int nNestedColumns = 1;
+  Mat **nestedMats;
 
   std::stringstream s;
-  s << " ";
-  for (int j=0; j<nColumns; j++)
+
+  MatType matrixType = MATSEQMAIJ;
+  MatGetType(matrix, &matrixType);
+
+  if (std::string(matrixType) == std::string(MATNEST))
   {
-    if (j%10 == 0)
-      s << "|";
-    else if (j%2 == 0)
-      s << ".";
-    else
-      s << " ";
+    MatNestGetSubMats(matrix,&nNestedRows,&nNestedColumns,&nestedMats);
   }
-  s << std::endl;
-  for (int i=0; i<nRows; i++)
+
+  for (int i = 0; i < nNestedRows; i++)
   {
-    s << " ";
-    for (int j=0; j<nColumns; j++)
+    for (int j = 0; j < nNestedColumns; j++)
     {
-      if (matrixValues[i*nRows + j] == 0.0)
-        s << " ";
+      const char *name;
+      PetscObjectGetName((PetscObject)matrix, &name);
+      s << "\"" << name << "\" (" << i << "," << j << ")/(" << nNestedRows << "," << nNestedColumns << "): ";
+
+      Mat submatrix;
+      if (std::string(matrixType) != std::string(MATNEST))
+      {
+        submatrix = matrix;
+      }
       else
-        s << "*";
+      {
+        submatrix = nestedMats[i][j];
+      }
+
+      int nRows, nColumns;
+      MatGetLocalSize(submatrix, &nRows, &nColumns);
+      int nRowsGlobal, nColumnsGlobal;
+      MatGetSize(submatrix, &nRowsGlobal, &nColumnsGlobal);
+
+      std::vector<double> matrixValues;
+      getMatrixEntries(submatrix, matrixValues);
+
+      s << std::endl << " ";
+      for (int j=0; j<nColumns; j++)
+      {
+        if (j%10 == 0)
+          s << "|";
+        else if (j%2 == 0)
+          s << ".";
+        else
+          s << " ";
+      }
+      s << std::endl;
+      for (int i=0; i<nRows; i++)
+      {
+        s << " ";
+        for (int j=0; j<nColumns; j++)
+        {
+          if (fabs(matrixValues[i*nColumns + j]) < 1e-14)
+            s << " ";
+          else
+            s << "*";
+        }
+        s << std::endl;
+      }
+      s << std::endl;
     }
-    s << std::endl;
   }
-  s << std::endl;
   return s.str();
 #endif
 }
@@ -495,11 +579,151 @@ void dumpMatrix(std::string filename, std::string format, Mat &matrix, MPI_Comm 
   OutputWriter::Generic::openFile(file, filename);
   file.close();
 
+  // if the matrix is nested, created single matrix
+  MatType matrixType = MATSEQMAIJ;
+  MatGetType(matrix, &matrixType);
+
+  // if matrix is nested, only consider first submatrix
+  if (std::string(matrixType) == std::string(MATNEST))
+  {
+    int nNestedRows = 1;
+    int nNestedColumns = 1;
+    Mat **nestedMats;
+    MatNestGetSubMats(matrix,&nNestedRows,&nNestedColumns,&nestedMats);
+
+    int nRowsGlobal = 0;
+    int nColumnsGlobal = 0;
+
+    // collect global size
+    // number of columns
+    int nRows, nColumns;
+    int j = 0;
+    for (int i = 0; i < nNestedColumns; i++)
+    {
+      MatGetSize(nestedMats[j][i], &nRows, &nColumns);
+
+      nColumnsGlobal += nColumns;
+    }
+
+    // number of rows
+    int i = 0;
+    for (int j = 0; j < nNestedRows; j++)
+    {
+      MatGetSize(nestedMats[j][i], &nRows, &nColumns);
+
+      nRowsGlobal += nRows;
+    }
+
+    int ownRankNo = 0;
+    int nRanks = 0;
+    MPI_Comm_rank(mpiCommunicator, &ownRankNo);
+    MPI_Comm_size(mpiCommunicator, &nRanks);
+
+    VLOG(1) << "ownRankNo: " << ownRankNo << ", nRanks: " << nRanks;
+
+    Mat globalMatrix;
+
+    if (ownRankNo == 0)
+    {
+      MatCreateSeqDense(MPI_COMM_SELF, nRowsGlobal, nColumnsGlobal, NULL, &globalMatrix);
+    }
+
+    PetscErrorCode ierr;
+
+    int globalRowOffset = 0;
+    int globalColumnOffset = 0;
+
+    // gather all data from processes and set values in globalMatrix
+    for (int j = 0; j < nNestedRows; j++)
+    {
+      globalColumnOffset = 0;
+      for (int i = 0; i < nNestedColumns; i++)
+      {
+        MatGetSize(nestedMats[j][i], &nRows, &nColumns);
+
+        const PetscInt *ranges;
+        MatGetOwnershipRanges(nestedMats[j][i], &ranges);
+
+        std::vector<double> values;
+
+        for (int rankNo = 0; rankNo < nRanks; rankNo++)
+        {
+          int nRows = ranges[rankNo+1] - ranges[rankNo];
+          values.resize(nColumns * nRows, 0.0);
+
+          //LOG(DEBUG) << "(" << j << "," << i << ") rank " << rankNo << " has " << nRows << " rows";
+
+          if (ownRankNo == rankNo)
+          {
+            // get own data
+            std::vector<int> rowIndices(nRows);
+            std::iota(rowIndices.begin(), rowIndices.end(), ranges[rankNo]);
+
+            std::vector<int> columnIndices(nColumns);
+            std::iota(columnIndices.begin(), columnIndices.end(), 0);
+
+            ierr = MatGetValues(nestedMats[j][i], nRows, rowIndices.data(), nColumns, columnIndices.data(), values.data()); CHKERRV(ierr);
+
+            // send data to root
+            if (rankNo != 0)
+            {
+              MPI_Send(values.data(), nColumns * nRows, MPI_DOUBLE, 0, 0, mpiCommunicator);
+            }
+
+            VLOG(1) << nColumns << "x" << nRows << " values [" << j << "," << i << "] from rank " << rankNo << ", starting at (" << ranges[rankNo] << ", 0): " << values;
+            //LOG(DEBUG) << "send " << nColumns*nRows << " values to 0";
+          }
+
+          if (ownRankNo == 0)
+          {
+            // receive data
+            if (rankNo != 0)
+            {
+              MPI_Recv(values.data(), nColumns * nRows, MPI_DOUBLE, rankNo, 0, mpiCommunicator, MPI_STATUS_IGNORE);
+            }
+            //LOG(DEBUG) << "receive " << nColumns*nRows << " values from " << rankNo;
+
+            // set data
+            std::vector<int> rowIndices(nRows);
+            std::iota(rowIndices.begin(), rowIndices.end(), globalRowOffset + ranges[rankNo]);
+
+            std::vector<int> columnIndices(nColumns);
+            std::iota(columnIndices.begin(), columnIndices.end(), globalColumnOffset);
+
+            VLOG(1) << "insert at (" << globalRowOffset + ranges[rankNo] << "," << globalColumnOffset << ") " << nRows << "x" << nColumns << " values [" << j << "," << i << "] from rank " << rankNo << ": " << values;
+            ierr = MatSetValues(globalMatrix, nRows, rowIndices.data(), nColumns, columnIndices.data(), values.data(), INSERT_VALUES); CHKERRV(ierr);
+          }
+        }
+        globalColumnOffset += nColumns;
+      }
+      MatGetSize(nestedMats[j][0], &nRows, &nColumns);
+
+      globalRowOffset += nRows;
+    }
+
+    matrix = globalMatrix;
+
+    if (ownRankNo == 0)
+    {
+      mpiCommunicator = MPI_COMM_SELF;
+
+      MatAssemblyBegin(matrix, MAT_FINAL_ASSEMBLY);
+      MatAssemblyEnd(matrix, MAT_FINAL_ASSEMBLY);
+    }
+    else
+    {
+      mpiCommunicator = MPI_COMM_NULL;
+    }
+  }
+
   // dump the data using a PetscViewer
-  PetscErrorCode ierr;
-  ierr = PetscViewerASCIIOpen(mpiCommunicator, matrixOutputFilename.str().c_str(), &viewer); CHKERRV(ierr);
-  ierr = PetscViewerPushFormat(viewer, petscViewFormat); CHKERRV(ierr);
-  ierr = MatView(matrix, viewer); CHKERRV(ierr);
+  if (mpiCommunicator != MPI_COMM_NULL)
+  {
+    PetscErrorCode ierr;
+    ierr = PetscViewerASCIIOpen(mpiCommunicator, matrixOutputFilename.str().c_str(), &viewer); CHKERRV(ierr);
+    ierr = PetscViewerPushFormat(viewer, petscViewFormat); CHKERRV(ierr);
+    ierr = MatView(matrix, viewer); CHKERRV(ierr);
+  }
 
   LOG(DEBUG) << "Matrix written to \"" << matrixOutputFilename.str() << "\".";
 }

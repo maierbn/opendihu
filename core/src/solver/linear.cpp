@@ -33,18 +33,37 @@ Linear::Linear(PythonConfig specificSettings, MPI_Comm mpiCommunicator, std::str
   ksp_ = std::make_shared<KSP>();
   PetscErrorCode ierr = KSPCreate(mpiCommunicator_, ksp_.get()); CHKERRV(ierr);
 
+  setupKsp(*this->ksp_);
+
+  // prepare log keys to log number of iterations and residual norm
+  std::stringstream nIterationsLogKey;
+  nIterationsLogKey << "nIterations_" << name_;
+  nIterationsLogKey_ = nIterationsLogKey.str();
+  
+  std::stringstream residualNormLogKey;
+  residualNormLogKey << "residualNorm_" << name_;
+  residualNormLogKey_ = residualNormLogKey.str();
+  
+  std::stringstream nIterationsTotalLogKey;
+  nIterationsTotalLogKey << "nIterationsTotal_" << name_;
+  nIterationsTotalLogKey_ = nIterationsTotalLogKey.str();
+}
+
+void Linear::setupKsp(KSP ksp)
+{
   // parse the solver and preconditioner types from settings
   parseSolverTypes();
 
   // set solver type
-  ierr = KSPSetType(*ksp_, kspType_); CHKERRV(ierr);
+  PetscErrorCode ierr;
+  ierr = KSPSetType(ksp, kspType_); CHKERRV(ierr);
 
   // set options from command line, this overrides the python config
-  ierr = KSPSetFromOptions(*ksp_); CHKERRV(ierr);
+  ierr = KSPSetFromOptions(ksp); CHKERRV(ierr);
 
   // extract preconditioner context
   PC pc;
-  ierr = KSPGetPC(*ksp_, &pc); CHKERRV(ierr);
+  ierr = KSPGetPC(ksp, &pc); CHKERRV(ierr);
 
   // set type of preconditioner
   ierr = PCSetType(pc, pcType_); CHKERRV(ierr);
@@ -60,20 +79,8 @@ Linear::Linear(PythonConfig specificSettings, MPI_Comm mpiCommunicator, std::str
   ierr = PCSetFromOptions(pc); CHKERRV(ierr);
 
   //                                    relative tol,      absolute tol,  diverg tol.,   max_iterations
-  ierr = KSPSetTolerances (*ksp_, relativeTolerance_, PETSC_DEFAULT, PETSC_DEFAULT, maxIterations_); CHKERRV(ierr);
+  ierr = KSPSetTolerances (ksp, relativeTolerance_, PETSC_DEFAULT, PETSC_DEFAULT, maxIterations_); CHKERRV(ierr);
 
-  // prepare log keys to log number of iterations and residual norm
-  std::stringstream nIterationsLogKey;
-  nIterationsLogKey << "nIterations_" << name_;
-  nIterationsLogKey_ = nIterationsLogKey.str();
-  
-  std::stringstream residualNormLogKey;
-  residualNormLogKey << "residualNorm_" << name_;
-  residualNormLogKey_ = residualNormLogKey.str();
-  
-  std::stringstream nIterationsTotalLogKey;
-  nIterationsTotalLogKey << "nIterationsTotal_" << name_;
-  nIterationsTotalLogKey_ = nIterationsTotalLogKey.str();
 }
 
 void Linear::parseSolverTypes()
@@ -187,11 +194,9 @@ std::shared_ptr<KSP> Linear::ksp()
   return ksp_;
 }
 
-void Linear::solve(Vec rightHandSide, Vec solution, std::string message)
+void Linear::dumpMatrixRightHandSide(Vec rightHandSide)
 {
-  PetscErrorCode ierr;
-
-  // dump files
+  // dump files containing rhs and system matrix
   if (!dumpFilename_.empty())
   {
     PetscUtility::dumpVector(dumpFilename_+std::string("rhs"), dumpFormat_, rightHandSide, mpiCommunicator_);
@@ -201,6 +206,14 @@ void Linear::solve(Vec rightHandSide, Vec solution, std::string message)
     KSPGetOperators(*ksp_, &matrix, &preconditionerMatrix);
     PetscUtility::dumpMatrix(dumpFilename_+std::string("matrix"), dumpFormat_, matrix, mpiCommunicator_);
   }
+}
+
+void Linear::solve(Vec rightHandSide, Vec solution, std::string message)
+{
+  PetscErrorCode ierr;
+
+  // dump files
+  dumpMatrixRightHandSide(rightHandSide);
 
   Control::PerformanceMeasurement::start(this->durationLogKey_);
 

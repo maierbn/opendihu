@@ -24,7 +24,13 @@ public:
   //! perform the solve
   void solve(Vec rightHandSide, Vec solution, std::string message="");
 
+  // dump files containing rhs and system matrix
+  void dumpMatrixRightHandSide(Vec rightHandSide);
+
 protected:
+
+  //! set options for KSP object
+  void setupKsp(KSP ksp);
 
   //! parse the solver and preconditioner type from settings
   void parseSolverTypes();

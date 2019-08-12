@@ -73,7 +73,7 @@ protected:
   std::vector<dof_no_t> boundaryConditionNonGhostDofLocalNos_;        ///< vector of all local (non-ghost) boundary condition dofs
   std::vector<ValueType> boundaryConditionValues_;               ///< vector of the local prescribed values, related to boundaryConditionNonGhostDofLocalNos_
 
-  std::array<BoundaryConditionsForComponent, nComponents> boundaryConditionsByComponent_;   ///< the boundary condition data organized by component
+  std::array<BoundaryConditionsForComponent, nComponents> boundaryConditionsByComponent_;   ///< the local boundary condition data organized by component
 
 };
 

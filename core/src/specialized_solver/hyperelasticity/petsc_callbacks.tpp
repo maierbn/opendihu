@@ -4,6 +4,7 @@
 #include <easylogging++.h>
 
 #include "utility/petsc_utility.h"
+#include "specialized_solver/hyperelasticity/compute_numeric_jacobian.h"
 
 /**
  * Nonlinear function F that gets solved by PETSc, solve for x such that F(x) = 0
@@ -72,7 +73,6 @@ PetscErrorCode jacobianFunctionAnalytic(SNES snes, Vec x, Mat jac, Mat b, void *
   return 0;
 }
 
-
 template<typename T>
 PetscErrorCode jacobianFunctionFiniteDifferences(SNES snes, Vec x, Mat jac, Mat b, void *context)
 {
@@ -84,7 +84,7 @@ PetscErrorCode jacobianFunctionFiniteDifferences(SNES snes, Vec x, Mat jac, Mat 
   VLOG(1) << "pointer value b:   " << b;
 
   // compute jacobian by finite differences
-  SNESComputeJacobianDefault(snes, x, jac, b, context);
+  SNESComputeJacobianDefaultNested(snes, x, jac, b, context);
 
   // zero rows and columns for which Dirichlet BC is set, set diagonal to 1
   object->applyDirichletBoundaryConditionsInJacobian(x, jac);
@@ -107,7 +107,7 @@ PetscErrorCode jacobianFunctionCombined(SNES snes, Vec x, Mat jac, Mat b, void *
   VLOG(1) << "pointer value b:   " << b;
 
   // compute the finite differences jacobian in the main jacobian slot jac
-  SNESComputeJacobianDefault(snes, x, jac, jac, context);
+  SNESComputeJacobianDefaultNested(snes, x, jac, jac, context);
 
   // zero rows and columns for which Dirichlet BC is set
   object->applyDirichletBoundaryConditionsInJacobian(x, jac);

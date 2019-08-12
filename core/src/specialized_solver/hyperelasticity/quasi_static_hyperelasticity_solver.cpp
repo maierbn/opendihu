@@ -12,8 +12,11 @@ namespace TimeSteppingScheme
 
 QuasiStaticHyperelasticitySolver::
 QuasiStaticHyperelasticitySolver(DihuContext context) :
-  context_(context["QuasiStaticHyperelasticitySolver"]), data_(context_), initialized_(false)
+  context_(context["QuasiStaticHyperelasticitySolver"]), data_(context_), initialized_(false), endTime_(0)
 {
+  if (!useNestedMat_ && context_.nRanksCommWorld() > 1)
+    LOG(FATAL) << "Not using useNestedMat_ is only for serial execution";
+
   // get python config
   this->specificSettings_ = this->context_.getPythonConfig();
 
@@ -230,14 +233,13 @@ initialize()
     VecAssemblyEnd(solverVariableResidual_);
     VecAssemblyBegin(solverVariableSolution_);
     VecAssemblyEnd(solverVariableSolution_);
-
-    LOG(DEBUG) << "pointer value solverVariableResidual_: " << solverVariableResidual_;
-    LOG(DEBUG) << "pointer value solverVariableSolution_: " << solverVariableSolution_;
-    LOG(DEBUG) << "pointer value solverMatrixTangentStiffness_: " << solverMatrixTangentStiffness_;
-
-    // assemble matrix
-    evaluateAnalyticJacobian(solverVariableSolution_, solverMatrixTangentStiffness_);
   }
+
+  LOG(DEBUG) << "-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.";
+  LOG(DEBUG) << "pointer value solverVariableResidual_:       " << solverVariableResidual_;
+  LOG(DEBUG) << "pointer value solverVariableSolution_:       " << solverVariableSolution_;
+  LOG(DEBUG) << "pointer value solverMatrixTangentStiffness_: " << solverMatrixTangentStiffness_;
+  LOG(DEBUG) << "-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.";
 
   // initialize Dirichlet boundary conditions
   if (dirichletBoundaryConditions_ == nullptr)
@@ -245,6 +247,9 @@ initialize()
     dirichletBoundaryConditions_ = std::make_shared<SpatialDiscretization::DirichletBoundaryConditions<DisplacementsFunctionSpace,3>>(this->context_);
     dirichletBoundaryConditions_->initialize(this->specificSettings_, this->data_.functionSpace(), "dirichletBoundaryConditions");
   }
+
+  // assemble matrix
+  evaluateAnalyticJacobian(solverVariableSolution_, solverMatrixTangentStiffness_);
 
   LOG(DEBUG) << "initialization done";
   this->initialized_ = true;

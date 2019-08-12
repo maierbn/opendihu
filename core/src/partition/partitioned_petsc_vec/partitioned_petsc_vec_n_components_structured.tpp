@@ -1070,7 +1070,7 @@ output(std::ostream &stream)
 
   stream << "vector \"" << this->name_ << "\", (" << nEntries << " global, " << nEntriesLocal
     << " local entries (per component), representation " << Partition::valuesRepresentationString[this->currentRepresentation_]
-    << ")" << std::endl;
+    << ")";
 
   // loop over components
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
@@ -1172,7 +1172,7 @@ output(std::ostream &stream)
     
     if (ownRankNo == 0)
     {
-      stream << "\"" << this->name_ << "\" component " << componentNo << ": local values on ranks: [";
+      stream << std::endl << "\"" << this->name_ << "\" component " << componentNo << ": local values on ranks: [";
       std::vector<double> globalValues(this->meshPartition_->nDofsGlobal());
       for (int rankNo = 0; rankNo < nRanks; rankNo++)
       {

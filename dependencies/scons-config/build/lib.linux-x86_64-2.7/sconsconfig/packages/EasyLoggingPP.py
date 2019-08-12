@@ -46,7 +46,7 @@ class EasyLoggingPP(Package):
         
     def check(self, ctx):
         env = ctx.env
-        ctx.Message('Checking for EasyLoggingPP ... ')
+        ctx.Message('Checking for EasyLogging++ ... ')
         
         flag = ""
         if env["CXX"] == "g++":

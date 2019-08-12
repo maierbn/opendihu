@@ -172,7 +172,7 @@ parseBoundaryConditionsForElements(std::string boundaryConditionsConfigKey)
   std::vector<std::pair<int,ValueType>> boundaryConditions;  // (index, value)
   parseBoundaryConditions(this->specificSettings_, functionSpace_, boundaryConditionsConfigKey, boundaryConditions);
 
-  LOG(DEBUG) << "read in Dirichlet boundary conditions from config: " << boundaryConditions;
+  LOG(DEBUG) << "read in Dirichlet boundary conditions from config (\"nan\" means there is no BC for this dof): " << boundaryConditions;
 
   // sort all parsed boundary conditions for their index no
   auto compareFunction = [](const std::pair<int,ValueType> &item1, const std::pair<int,ValueType> &item2)

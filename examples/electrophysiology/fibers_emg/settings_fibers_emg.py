@@ -352,6 +352,7 @@ config = {
           "neumannBoundaryConditions":   variables.linear_elasticity_neumann_bc,
           "bulkModulus":          40e3,  # https://www.researchgate.net/publication/230248067_Bulk_Modulus
           "shearModulus":         39e3, # https://onlinelibrary.wiley.com/doi/full/10.1002/mus.24104
+          "scalingFactor":        5e4, 
         },
         "maximumActiveStress":      1.0,
         "strainScalingCurveWidth":  1.0,

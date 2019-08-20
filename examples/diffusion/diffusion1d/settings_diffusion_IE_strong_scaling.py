@@ -7,7 +7,7 @@ physical_extent = 15.0 # cm
 dx = physical_extent/n # dx=0.01
 
 dt = 0.001 # ms
-end_time = 1 # 1000 iterations to encounter the cost of communication for long-term runs
+end_time = 10 # 10000 iterations to encounter the cost of communication for long-term runs
 
 Diffusion = 0.01 # almost comparable to shorten fast-twitch 
 solver_type = "gmres"
@@ -62,7 +62,7 @@ config = {
      },
      "OutputWriter" : [
        #{"format": "Paraview", "outputInterval": 1, "filename": "out", "binaryOutput": "false", "fixedFormat": False},
-       {"format": "PythonFile", "filename": "out/" + scenario_name, "outputInterval": 1000, "binary":False}
+       {"format": "PythonFile", "filename": "out/" + scenario_name, "outputInterval": 10000, "binary":False}
      ]
   }
 }

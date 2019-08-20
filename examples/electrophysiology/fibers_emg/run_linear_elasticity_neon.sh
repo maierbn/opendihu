@@ -1,5 +1,5 @@
 
-mpirun -n 144 \
+nice -n 10 mpirun -n 144 \
 ./fibers_linear_elasticity ../settings_fibers_emg.py \
 --n_subdomains 6 6 4 \
 --linear_elasticity \

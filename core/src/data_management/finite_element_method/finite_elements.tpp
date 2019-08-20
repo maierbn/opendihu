@@ -79,8 +79,16 @@ updateGeometry(double scalingFactor)
 {
   PetscErrorCode ierr;
 
+  //this->solution()->startGhostManipulation();
+
   // w = alpha * x + y, VecWAXPY(w, alpha, x, y)
   ierr = VecWAXPY(this->functionSpace_->geometryField().valuesGlobal(), scalingFactor, this->solution()->valuesGlobal(), this->referenceGeometry_->valuesGlobal()); CHKERRV(ierr);
+  
+  if (VLOG_IS_ON(1))
+  {
+    VLOG(1) << "scalingFactor: " << scalingFactor << ", solution: " << *this->solution() << ", referenceGeometry: " << *this->referenceGeometry_ 
+      << ", geometryField: " << this->functionSpace_->geometryField();
+  }
 }
 
 //! compute the linear strain field epsilon

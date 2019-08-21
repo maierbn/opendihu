@@ -14,9 +14,6 @@ QuasiStaticHyperelasticitySolver::
 QuasiStaticHyperelasticitySolver(DihuContext context) :
   context_(context["QuasiStaticHyperelasticitySolver"]), data_(context_), initialized_(false), endTime_(0)
 {
-  if (!useNestedMat_ && context_.nRanksCommWorld() > 1)
-    LOG(FATAL) << "Not using useNestedMat_ is only for serial execution";
-
   // get python config
   this->specificSettings_ = this->context_.getPythonConfig();
 
@@ -25,9 +22,8 @@ QuasiStaticHyperelasticitySolver(DihuContext context) :
   {
     this->durationLogKey_ = specificSettings_.getOptionString("durationLogKey", "");
   }
-  c0_ = specificSettings_.getOptionDouble("c0", 1.0, PythonUtility::ValidityCriterion::Positive);
-  c1_ = specificSettings_.getOptionDouble("c1", 1.0, PythonUtility::ValidityCriterion::Positive);
 
+  // parse options concerning jacobian
   useAnalyticJacobian_ = this->specificSettings_.getOptionBool("useAnalyticJacobian", true);
   useNumericJacobian_ = this->specificSettings_.getOptionBool("useNumericJacobian", true);
 
@@ -37,7 +33,17 @@ QuasiStaticHyperelasticitySolver(DihuContext context) :
     useNumericJacobian_ = true;
   }
 
-  LOG(DEBUG) << "QuasiStaticHyperelasticitySolver: parsed parameters c0: " << c0_ << ", c1: " << c1_;
+  // parse material parameters
+  c1_ = specificSettings_.getOptionDouble("c1", 1.0, PythonUtility::ValidityCriterion::Positive);
+  c2_ = specificSettings_.getOptionDouble("c2", 1.0, PythonUtility::ValidityCriterion::Positive);
+
+  // initialize material parameters
+  std::vector<double> parametersVector({c1_, c2_});
+
+  // set all PARAM(i) values to the values given by materialParameters
+  SEMT::set_parameters<2>::to(parametersVector);
+
+  LOG(DEBUG) << "QuasiStaticHyperelasticitySolver: parsed parameters c1: " << c1_ << ", c2: " << c2_;
   LOG(DEBUG) << "now parse output writers";
 
   // initialize output writers
@@ -54,6 +60,9 @@ advanceTimeSpan()
 
   LOG(TRACE) << "advanceTimeSpan, endTime: " << endTime_;
 
+  // write reference output values
+  this->outputWriterManager_.writeOutput(this->data_, 0, 0.0);
+
   nonlinearSolve();
 
   // stop duration measurement
@@ -61,7 +70,7 @@ advanceTimeSpan()
     Control::PerformanceMeasurement::stop(this->durationLogKey_);
 
   // write current output values
-  this->outputWriterManager_.writeOutput(this->data_, 0, endTime_);
+  this->outputWriterManager_.writeOutput(this->data_, 1, endTime_);
 }
 
 void QuasiStaticHyperelasticitySolver::
@@ -138,6 +147,21 @@ initialize()
 
   data_.initialize();
 
+  // initialize Dirichlet boundary conditions
+  if (dirichletBoundaryConditions_ == nullptr)
+  {
+    dirichletBoundaryConditions_ = std::make_shared<SpatialDiscretization::DirichletBoundaryConditions<DisplacementsFunctionSpace,3>>(this->context_);
+    dirichletBoundaryConditions_->initialize(this->specificSettings_, this->data_.functionSpace(), "dirichletBoundaryConditions");
+  }
+
+  // initialize Neumann boundary conditions
+  if (neumannBoundaryConditions_ == nullptr)
+  {
+    typedef Quadrature::Gauss<3> QuadratureType;
+    neumannBoundaryConditions_ = std::make_shared<SpatialDiscretization::NeumannBoundaryConditions<DisplacementsFunctionSpace,QuadratureType,3>>(this->context_);
+    neumannBoundaryConditions_->initialize(this->specificSettings_, this->data_.functionSpace(), "neumannBoundaryConditions");
+  }
+
   // setup Petsc variables
 
   // create nested matrix for the jacobian matrix for the Newton solver, which in case of nonlinear elasticity is the tangent stiffness matrix
@@ -213,40 +237,125 @@ initialize()
   }
   else
   {
-    // prepare for non-nested data structures
+    // prepare for non-nested data structures without ghost dofs
 
-    int nRows = displacementsFunctionSpace_->nDofsGlobal() * 3 + pressureFunctionSpace_->nDofsGlobal();
-    std::shared_ptr<FunctionSpace::Generic> genericFunctionSpace = context_.meshManager()->createGenericFunctionSpace(nRows, "genericMesh");
+    int nRowsLocal = displacementsFunctionSpace_->nDofsLocalWithoutGhosts() * 3 + pressureFunctionSpace_->nDofsLocalWithoutGhosts();
+    for (int componentNo = 0; componentNo < 3; componentNo++)
+    {
+      nRowsLocal -= dirichletBoundaryConditions_->boundaryConditionsByComponent()[componentNo].dofNosLocal.size();
+    }
+
+    LOG(DEBUG) << "n dofs displacements: 3*" << displacementsFunctionSpace_->nDofsLocalWithoutGhosts() << " = " << 3*displacementsFunctionSpace_->nDofsLocalWithoutGhosts();
+    LOG(DEBUG) << "n dofs pressure: " << pressureFunctionSpace_->nDofsLocalWithoutGhosts() << ", total: " << displacementsFunctionSpace_->nDofsLocalWithoutGhosts() * 3 + pressureFunctionSpace_->nDofsLocalWithoutGhosts();
+    LOG(DEBUG) << "n BC dofs: ux:" << dirichletBoundaryConditions_->boundaryConditionsByComponent()[0].dofNosLocal.size()
+      << ", uy: " << dirichletBoundaryConditions_->boundaryConditionsByComponent()[1].dofNosLocal.size()
+      << ", uz: " << dirichletBoundaryConditions_->boundaryConditionsByComponent()[2].dofNosLocal.size();
+    LOG(DEBUG) << "number of non-BC dofs total: " << nRowsLocal;
+
+    std::shared_ptr<FunctionSpace::Generic> genericFunctionSpace = context_.meshManager()->createGenericFunctionSpace(nRowsLocal, displacementsFunctionSpace_->meshPartition()->nRanks(), "genericMesh");
 
     combinedJacobianMatrix_ = std::make_shared<PartitionedPetscMat<FunctionSpace::Generic>>(
       genericFunctionSpace->meshPartition(), 1, 4*diagonalNonZeros, 4*offdiagonalNonZeros, "combinedJacobian");
 
     combinedVecSolution_ =  std::make_shared<PartitionedPetscVec<FunctionSpace::Generic,1>>(genericFunctionSpace->meshPartition(), "combinedSolution");
     combinedVecResidual_ =  std::make_shared<PartitionedPetscVec<FunctionSpace::Generic,1>>(genericFunctionSpace->meshPartition(), "combinedResidual");
+    combinedVecExternalVirtualWork_ =  std::make_shared<PartitionedPetscVec<FunctionSpace::Generic,1>>(genericFunctionSpace->meshPartition(), "combinedVecExternalVirtualWork");
 
     solverMatrixTangentStiffness_ = combinedJacobianMatrix_->valuesGlobal();
     solverVariableSolution_ = combinedVecSolution_->valuesGlobal();
     solverVariableResidual_ = combinedVecResidual_->valuesGlobal();
+    externalVirtualWork_ = combinedVecExternalVirtualWork_->valuesGlobal();
 
     // assemble vectors
     VecAssemblyBegin(solverVariableResidual_);
     VecAssemblyEnd(solverVariableResidual_);
     VecAssemblyBegin(solverVariableSolution_);
     VecAssemblyEnd(solverVariableSolution_);
+
+    // setup mapping from (component, dof) to index in combined vectors, and reverse mapping
+    int combinedVectorIndex = 0;
+    mappingIndexDofNo_.resize(nRowsLocal);
+
+    // displacement components
+    for (int componentNo = 0; componentNo < 3; componentNo++)
+    {
+      int nDofsLocal = displacementsFunctionSpace_->nDofsLocalWithoutGhosts();
+      int nDirichletBoundaryConditionDofs = dirichletBoundaryConditions_->boundaryConditionsByComponent()[componentNo].dofNosLocal.size();
+      nEntriesComponent_[componentNo] = nDofsLocal - nDirichletBoundaryConditionDofs;
+
+      LOG(DEBUG) << "component " << componentNo << ", nDirichletBoundaryConditionDofs: " << nDirichletBoundaryConditionDofs << ", nEntries: " << nEntriesComponent_[componentNo];
+      LOG(DEBUG) << "dirichletBC: " << dirichletBoundaryConditions_->boundaryConditionsByComponent()[componentNo].dofNosLocal;
+
+      mappingComponentDofToIndex_[componentNo].resize(nDofsLocal);    // mapping vector will contain an entry (the index) for every local dof or -1 if it is a Dirichlet BC
+
+      int boundaryConditionIndex = 0;
+      for (dof_no_t dofNoLocal = 0; dofNoLocal < nDofsLocal; dofNoLocal++)
+      {
+        // if this is a dirichlet bc dof
+        if (boundaryConditionIndex < nDirichletBoundaryConditionDofs)
+        {
+          if (dofNoLocal == dirichletBoundaryConditions_->boundaryConditionsByComponent()[componentNo].dofNosLocal[boundaryConditionIndex])
+          {
+            boundaryConditionIndex++;
+            mappingComponentDofToIndex_[componentNo][dofNoLocal] = -1;
+            continue;
+          }
+        }
+
+        // this is a normal dof
+        mappingComponentDofToIndex_[componentNo][dofNoLocal] = combinedVectorIndex;
+        mappingIndexDofNo_[combinedVectorIndex] = dofNoLocal;
+        combinedVectorIndex++;
+      }
+      LOG(DEBUG) << "mappingComponentDofToIndex_: " << mappingComponentDofToIndex_;
+    }
+
+    // pressure component, there are no Dirichlet BCs for pressure
+    int nPressureDofsLocal = pressureFunctionSpace_->nDofsLocalWithoutGhosts();
+    mappingComponentDofToIndex_[3].resize(nPressureDofsLocal);
+    std::iota(mappingComponentDofToIndex_[3].begin(), mappingComponentDofToIndex_[3].end(), combinedVectorIndex);
+
+    nEntriesComponent_[3] = nPressureDofsLocal;
+    std::iota(mappingIndexDofNo_.begin()+nRowsLocal-nPressureDofsLocal, mappingIndexDofNo_.end(), 0);
+
+    assert(mappingIndexDofNo_[nRowsLocal-1] == nPressureDofsLocal-1);
+    LOG(DEBUG) << "component p: nEntries: " << nEntriesComponent_[3]
+      << ", mappingComponentDofToIndex_: " << mappingComponentDofToIndex_[3];
+
+    LOG(DEBUG) << "mappingIndexDofNo_: " << mappingIndexDofNo_;
+
+    // get externalVirtualWork_
+    std::vector<double> values;
+    int offsetComponent = 0;
+    for (int componentNo = 0; componentNo < 3; componentNo++)
+    {
+      neumannBoundaryConditions_->rhs()->getValues(componentNo, nEntriesComponent_[componentNo], mappingIndexDofNo_.data()+offsetComponent, values);
+
+      offsetComponent += nEntriesComponent_[componentNo];
+    }
+
+    // add 0's for pressure component
+    values.resize(nRowsLocal, 0.0);
+    std::vector<int> indices(nRowsLocal);
+    std::iota(indices.begin(), indices.end(), 0);
+    combinedVecExternalVirtualWork_->setValues(0, nRowsLocal, indices.data(), values.data(), INSERT_VALUES);
+
+    LOG(DEBUG) << "combinedVecExternalVirtualWork: " << PetscUtility::getStringVector(combinedVecExternalVirtualWork_->valuesGlobal());
   }
 
   LOG(DEBUG) << "-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.";
   LOG(DEBUG) << "pointer value solverVariableResidual_:       " << solverVariableResidual_;
   LOG(DEBUG) << "pointer value solverVariableSolution_:       " << solverVariableSolution_;
   LOG(DEBUG) << "pointer value solverMatrixTangentStiffness_: " << solverMatrixTangentStiffness_;
-  LOG(DEBUG) << "-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.";
 
-  // initialize Dirichlet boundary conditions
-  if (dirichletBoundaryConditions_ == nullptr)
+  if (useNestedMat_)
   {
-    dirichletBoundaryConditions_ = std::make_shared<SpatialDiscretization::DirichletBoundaryConditions<DisplacementsFunctionSpace,3>>(this->context_);
-    dirichletBoundaryConditions_->initialize(this->specificSettings_, this->data_.functionSpace(), "dirichletBoundaryConditions");
+    for (int i = 0; i < 3; i++)
+    {
+      LOG(DEBUG) << "subvectorsResidual_[" << i << "]: " << subvectorsResidual_[i];
+    }
   }
+  LOG(DEBUG) << "-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.";
 
   // assemble matrix
   evaluateAnalyticJacobian(solverVariableSolution_, solverMatrixTangentStiffness_);

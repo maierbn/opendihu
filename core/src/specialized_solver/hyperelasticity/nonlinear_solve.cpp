@@ -122,13 +122,19 @@ nonlinearSolve()
     logFile->close();
   }
 
+  // copy the solution values back to this->data_.displacements() and this->data.pressure()
+  setSolutionVector();
+
+  // compute the PK2 stress at every node
+  computePK2StressField();
+
+  // set the geometry field
+  this->data_.updateGeometry();
+
   nonlinearSolver->dumpMatrixRightHandSide(solverVariableResidual_);
 
   LOG(DEBUG) << "solution: " << getString(solverVariableSolution_);
   checkSolution(solverVariableSolution_);
-
-  // set the displacement variables according to the values in the solve variable
-  //setFromSolverVariableSolution(solverVariableSolution);
 }
 
 void QuasiStaticHyperelasticitySolver::
@@ -147,38 +153,54 @@ initializeSolutionVariable()
   else
   {
     VecZeroEntries(solverVariableSolution_);
-
-    // set x to x0 for values with dirichlet boundary condition
-    PetscErrorCode ierr;
-
-    typedef SpatialDiscretization::BoundaryConditionsBase<DisplacementsFunctionSpace,3>::BoundaryConditionsForComponent BoundaryConditionsForComponent;
-    const std::array<BoundaryConditionsForComponent, 3> &boundaryConditionsByComponent = dirichletBoundaryConditions_->boundaryConditionsByComponent();
-
-    for (int componentNo = 0; componentNo < 3; componentNo++)
-    {
-      const int nValues = boundaryConditionsByComponent[componentNo].dofNosLocal.size();
-
-      std::vector<int> dofNos(nValues);
-      std::vector<double> values(nValues);
-
-      for (int i = 0; i < nValues; i++)
-      {
-        dofNos[i] = componentNo * displacementsFunctionSpace_->nDofsGlobal() + boundaryConditionsByComponent[componentNo].dofNosLocal[i];
-      }
-
-      for (int i = 0; i < nValues; i++)
-      {
-        values[i] = boundaryConditionsByComponent[componentNo].values[i];
-      }
-
-      ierr = VecSetValues(solverVariableSolution_, nValues, dofNos.data(), values.data(), INSERT_VALUES); CHKERRV(ierr);
-    }
   }
 
   VecAssemblyBegin(solverVariableSolution_);
   VecAssemblyEnd(solverVariableSolution_);
 
   LOG(DEBUG) << "after initialization: " << this->getString(solverVariableSolution_);
+}
+
+void QuasiStaticHyperelasticitySolver::
+applyDirichletBoundaryConditionsInVector(Vec x)
+{
+  // set x to x0 for values with dirichlet boundary condition
+
+  if (this->useNestedMat_)
+  {
+    typedef SpatialDiscretization::BoundaryConditionsBase<DisplacementsFunctionSpace,3>::BoundaryConditionsForComponent BoundaryConditionsForComponent;
+    const std::array<BoundaryConditionsForComponent, 3> &boundaryConditionsByComponent = dirichletBoundaryConditions_->boundaryConditionsByComponent();
+
+    // get the subvectors of the nested Vec, the 4 subvectors correspond to [ux,uy,uz,p]
+    Vec *xSubvectors;
+
+    int nSubvecs;
+    VecNestGetSubVecs(x, &nSubvecs, &xSubvectors);
+
+    // loop over the first 3 components (x,y,z) and set the value of the function to f(x) = x-x0
+    for (int componentNo = 0; componentNo < 3; componentNo++)
+    {
+      const int nValues = boundaryConditionsByComponent[componentNo].dofNosLocal.size();
+      std::vector<double> xValues(nValues);
+
+      int ownershipBegin = 0;
+      int ownershipEnd = 0;
+      VecGetOwnershipRange(xSubvectors[componentNo], &ownershipBegin, &ownershipEnd);
+
+      std::vector<int> dofsNosGlobal(nValues);
+      for (int i = 0; i < nValues; i++)
+      {
+        dofsNosGlobal[i] = ownershipBegin + boundaryConditionsByComponent[componentNo].dofNosLocal[i];
+      }
+
+      // set the values x
+      PetscErrorCode ierr;
+      ierr = VecSetValues(xSubvectors[componentNo], nValues, dofsNosGlobal.data(), boundaryConditionsByComponent[componentNo].values.data(), INSERT_VALUES); CHKERRV(ierr);
+
+      VecAssemblyBegin(xSubvectors[componentNo]);
+      VecAssemblyEnd(xSubvectors[componentNo]);
+    }
+  }
 }
 
 void QuasiStaticHyperelasticitySolver::
@@ -196,7 +218,7 @@ applyDirichletBoundaryConditionsInJacobian(Vec x, Mat jac)
 
     // the analytic jacobian should consider Dirichlet BC within construction
 
-    return;
+    //return;
 
     VLOG(2) << "before setting dirichlet BC jacobian:" << PetscUtility::getStringMatrix(jac);
 
@@ -277,28 +299,7 @@ applyDirichletBoundaryConditionsInJacobian(Vec x, Mat jac)
   }
   else
   {
-    // zero rows and columns in jac for which dirichlet values are set, set diagonal to 1
-    PetscErrorCode ierr;
-
-    typedef SpatialDiscretization::BoundaryConditionsBase<DisplacementsFunctionSpace,3>::BoundaryConditionsForComponent BoundaryConditionsForComponent;
-
-    const std::array<BoundaryConditionsForComponent, 3> &boundaryConditionsByComponent = dirichletBoundaryConditions_->boundaryConditionsByComponent();
-
-    for (int componentNo = 0; componentNo < 3; componentNo++)
-    {
-      const int nValues = boundaryConditionsByComponent[componentNo].dofNosLocal.size();
-
-      std::vector<int> dofNos(nValues);
-
-      for (int i = 0; i < nValues; i++)
-      {
-        dofNos[i] = componentNo * displacementsFunctionSpace_->nDofsGlobal() + boundaryConditionsByComponent[componentNo].dofNosLocal[i];
-      }
-
-      ierr = MatZeroRowsColumns(jac, nValues, dofNos.data(), 1.0, NULL, NULL); CHKERRV(ierr);
-    }
-
-    VLOG(2) << "jac with BC: " << PetscUtility::getStringMatrix(jac);
+    // not needed
   }
 }
 
@@ -357,30 +358,7 @@ applyDirichletBoundaryConditionsInNonlinearFunction(Vec x, Vec f)
   }
   else
   {
-    for (int componentNo = 0; componentNo < 3; componentNo++)
-    {
-      const int nValues = boundaryConditionsByComponent[componentNo].dofNosLocal.size();
-
-      std::vector<int> dofNos(nValues);
-      std::vector<double> values(nValues), xValues(nValues);
-
-      for (int i = 0; i < nValues; i++)
-      {
-        dofNos[i] = componentNo * displacementsFunctionSpace_->nDofsGlobal() + boundaryConditionsByComponent[componentNo].dofNosLocal[i];
-      }
-
-      ierr = VecGetValues(x, nValues, dofNos.data(), xValues.data()); CHKERRV(ierr);
-
-      for (int i = 0; i < nValues; i++)
-      {
-        values[i] = xValues[i] - boundaryConditionsByComponent[componentNo].values[i];
-        VLOG(3) << "  " << std::string(1,('x' + (char)componentNo)) << i << " set " << xValues[i] << "-" << boundaryConditionsByComponent[componentNo].values[i] << " = " << values[i];
-      }
-
-      ierr = VecSetValues(f, nValues, dofNos.data(), values.data(), INSERT_VALUES); CHKERRV(ierr);
-    }
-    VecAssemblyBegin(f);
-    VecAssemblyEnd(f);
+    // not needed
   }
 
   VLOG(1) << "f with BC: " << this->getString(f);
@@ -391,100 +369,73 @@ evaluateNonlinearFunction(Vec x, Vec f)
 {
   VLOG(1) << "evaluateNonlinearFunction at " << getString(x);
 
-  if (this->useNestedMat_)
+  bool backupVecs = f != solverVariableResidual_ || x != solverVariableSolution_;
+
+  VLOG(1) << "backupVecs: " << backupVecs;
+
+  // backup the values of solverVariableSolution_ and solverVariableResidual_ to be able to work with them now
+  if (backupVecs)
   {
-    bool backupVecs = f != solverVariableResidual_ || x != solverVariableSolution_;
-
-    // backup the values of solverVariableSolution_ and solverVariableResidual_ to be able to work with them now
-    if (backupVecs)
-    {
-      // this happens in computation of the numeric jacobian
-      VecSwap(x, solverVariableSolution_);
-      VecSwap(f, solverVariableResidual_);
-    }
-
-    // evaluate nonlinear function F(X), where X=solverVariableSolution_ and F=solverVariableResidual_
-    VecCopy(solverVariableSolution_, solverVariableResidual_);
-    VecPointwiseMult(solverVariableResidual_,solverVariableResidual_,solverVariableResidual_);   // VecPointwiseMult(w,x,y), w = x*y
-    VecScale(solverVariableResidual_, 2.0);
-    VecShift(solverVariableResidual_, -0.5);
-
-    // restore the values of solverVariableSolution_ and solverVariableResidual_ to their original values
-    if (backupVecs)
-    {
-      VecSwap(x, solverVariableSolution_);
-      VecSwap(f, solverVariableResidual_);
-    }
+    // this happens in computation of the numeric jacobian
+    VecSwap(x, solverVariableSolution_);
+    VecSwap(f, solverVariableResidual_);
   }
-  else
+
+  materialComputeResidual();
+
+  VLOG(1) << "solverVariableResidual_: " << getString(solverVariableResidual_);
+
+  // restore the values of solverVariableSolution_ and solverVariableResidual_ to their original values
+  if (backupVecs)
   {
-    // VecAXPY(y, alpha, x), y = alpha x + y.
-    VecCopy(x, f);
-    VecPointwiseMult(f,f,f);   // VecPointwiseMult(w,x,y), w = x*y
-    VecScale(f, 2.0);
-    VecShift(f, -0.5);
-    // test 1: f(x) = 2*x - 1   =>   f'(x) = 2,  f(0.5) = 0
-    // test 2: f(x) = 2*x^2 - 0.5   =>   f'(x) = 4*x,  f(0.5) = 0
+    VecSwap(x, solverVariableSolution_);
+    VecSwap(f, solverVariableResidual_);
   }
+  VLOG(1) << "f: " << getString(f);
 }
 
 void QuasiStaticHyperelasticitySolver::
 evaluateAnalyticJacobian(Vec x, Mat jac)
 {
-  VLOG(1) << "evaluateAnalyticJacobian";
-  if (this->useNestedMat_)
+  materialComputeJacobian();
+
+  MatAssemblyBegin(jac, MAT_FINAL_ASSEMBLY);
+  MatAssemblyEnd(jac, MAT_FINAL_ASSEMBLY);
+}
+
+void QuasiStaticHyperelasticitySolver::
+setInputVector(Vec x)
+{
+  // if not useNestedMat_, copy entries of combined vector x to this->data_.displacements() and this->data_.pressure()
+
+  if (!this->useNestedMat_)
   {
-    typedef SpatialDiscretization::BoundaryConditionsBase<DisplacementsFunctionSpace,3>::BoundaryConditionsForComponent BoundaryConditionsForComponent;
-    const std::array<BoundaryConditionsForComponent, 3> &boundaryConditionsByComponent = dirichletBoundaryConditions_->boundaryConditionsByComponent();
+    std::vector<double> values;
+    PetscUtility::getVectorEntries(x, values);
 
-    for (int componentNo = 0; componentNo < 4; componentNo++)
+    VLOG(1) << "setInputVector, x=" << PetscUtility::getStringVector(x);
+
+    int indexOffset = 0;
+    for (int componentNo = 0; componentNo < 3; componentNo++)
     {
-      int nValues = displacementsFunctionSpace_->nDofsGlobal();
-      if (componentNo == 3)
-        nValues = pressureFunctionSpace_->nDofsGlobal();
+      this->data_.displacements()->setValues(componentNo, nEntriesComponent_[componentNo], mappingIndexDofNo_.data()+indexOffset, values.data()+indexOffset);
 
-      // set diagonal entries
-      int j = 0;
-      for (int i = 0; i < nValues; i++)
-      {
-        // skip dofs with Dirichlet BC
-        if (componentNo < 3)
-        {
-          if (j < boundaryConditionsByComponent[componentNo].dofNosLocal.size())
-          {
-            if (i == boundaryConditionsByComponent[componentNo].dofNosLocal[j])
-            {
-              j++;
-              continue;
-            }
-          }
-        }
-
-        double value = 2.0;
-        VLOG(1) << "matrix " << componentNo << "," << componentNo << " (" << componentNo*4 + componentNo << ") set entry " << i << "," << i << " to " << value;
-
-        PetscErrorCode ierr;
-        ierr = MatSetValue(submatrices_[componentNo*4 + componentNo], i, i, value, INSERT_VALUES); CHKERRV(ierr);
-        //MatSetValuesLocal(submatrices_[componentNo*4 + componentNo], 1, &i, 1, &i, &value, INSERT_VALUES);
-      }
+      indexOffset += nEntriesComponent_[componentNo];
     }
-    MatAssemblyBegin(jac, MAT_FINAL_ASSEMBLY);
-    MatAssemblyEnd(jac, MAT_FINAL_ASSEMBLY);
 
-    VLOG(2) << "analytic jacobian with BC: " << PetscUtility::getStringMatrix(jac);
+    this->data_.pressure()->setValues(0, nEntriesComponent_[3], mappingIndexDofNo_.data()+indexOffset, values.data()+indexOffset);
+    VLOG(1) << *this->data_.displacements();
+    VLOG(1) << *this->data_.pressure();
   }
-  else
+}
+
+void QuasiStaticHyperelasticitySolver::
+setSolutionVector()
+{
+  if (!this->useNestedMat_)
   {
-    int nValues = 3*displacementsFunctionSpace_->nDofsGlobal() + pressureFunctionSpace_->nDofsGlobal();
-
-    // set diagonal entries
-    for (int i = 0; i < nValues; i++)
-    {
-      MatSetValue(jac, i, i, 3.0, INSERT_VALUES);
-    }
-
-    MatAssemblyBegin(jac, MAT_FINAL_ASSEMBLY);
-    MatAssemblyEnd(jac, MAT_FINAL_ASSEMBLY);
+    // set this->data_.displacements() and this->data_.pressure() from the solution Vec
+    setInputVector(combinedVecSolution_->valuesGlobal());
   }
 }
 
@@ -495,6 +446,7 @@ checkSolution(Vec x)
   {
     // check if Dirichlet BC are met
 
+    PetscErrorCode ierr;
     typedef SpatialDiscretization::BoundaryConditionsBase<DisplacementsFunctionSpace,3>::BoundaryConditionsForComponent BoundaryConditionsForComponent;
     const std::array<BoundaryConditionsForComponent, 3> &boundaryConditionsByComponent = dirichletBoundaryConditions_->boundaryConditionsByComponent();
 
@@ -508,7 +460,7 @@ checkSolution(Vec x)
 
       int ownershipBegin = 0;
       int ownershipEnd = 0;
-      VecGetOwnershipRange(subvectorsSolution_[componentNo], &ownershipBegin, &ownershipEnd);
+      ierr = VecGetOwnershipRange(subvectorsSolution_[componentNo], &ownershipBegin, &ownershipEnd); CHKERRV(ierr);
 
       std::vector<int> dofsNosGlobal(nValues);
       for (int i = 0; i < nValues; i++)
@@ -516,7 +468,6 @@ checkSolution(Vec x)
         dofsNosGlobal[i] = ownershipBegin + boundaryConditionsByComponent[componentNo].dofNosLocal[i];
       }
 
-      PetscErrorCode ierr;
       ierr = VecGetValues(subvectorsSolution_[componentNo], nValues, dofsNosGlobal.data(), xValues.data()); CHKERRV(ierr);
 
       for (int i = 0; i < nValues; i++)
@@ -535,11 +486,11 @@ checkSolution(Vec x)
 
     if (l2NormDirichletBC < 1e-5)
     {
-      LOG(DEBUG) << ANSI_COLOR_GREEN "Dirichlet BC are met." ANSI_COLOR_RESET;
+      LOG(DEBUG) << ANSI_COLOR_GREEN "Dirichlet BC are satisfied." ANSI_COLOR_RESET;
     }
     else
     {
-      LOG(DEBUG) << ANSI_COLOR_RED "Dirichlet BC are NOT met." ANSI_COLOR_RESET;
+      LOG(DEBUG) << ANSI_COLOR_RED "Dirichlet BC are NOT satisfied." ANSI_COLOR_RESET;
     }
 
     // check if function is zero
@@ -588,65 +539,19 @@ checkSolution(Vec x)
   }
   else
   {
-    // check if Dirichlet BC are met
-
-    typedef SpatialDiscretization::BoundaryConditionsBase<DisplacementsFunctionSpace,3>::BoundaryConditionsForComponent BoundaryConditionsForComponent;
-    const std::array<BoundaryConditionsForComponent, 3> &boundaryConditionsByComponent = dirichletBoundaryConditions_->boundaryConditionsByComponent();
-
-    double l2NormDirichletBC = 0.0;
-    int nEntries = 0;
-    for (int componentNo = 0; componentNo < 3; componentNo++)
-    {
-      const int nValues = boundaryConditionsByComponent[componentNo].dofNosLocal.size();
-
-      std::vector<int> dofNos(nValues);
-      std::vector<double> values(nValues), xValues(nValues);
-
-      for (int i = 0; i < nValues; i++)
-      {
-        dofNos[i] = componentNo * displacementsFunctionSpace_->nDofsGlobal() + boundaryConditionsByComponent[componentNo].dofNosLocal[i];
-      }
-
-      PetscErrorCode ierr;
-      ierr = VecGetValues(x, nValues, dofNos.data(), xValues.data()); CHKERRV(ierr);
-
-      for (int i = 0; i < nValues; i++)
-      {
-        double contribution = MathUtility::sqr(xValues[i] - boundaryConditionsByComponent[componentNo].values[i]);
-        l2NormDirichletBC += contribution;
-        nEntries++;
-
-        if (fabs(contribution) > 1e-5)
-          LOG(DEBUG) << "Component " << componentNo << " dof " << i << ", value is " << xValues[i] << ", should be " << boundaryConditionsByComponent[componentNo].values[i];
-      }
-    }
-
-    l2NormDirichletBC /= nEntries;
-    LOG(DEBUG) << "L2-norm Dirchlet-BC residual: " << l2NormDirichletBC;
-
-    if (l2NormDirichletBC < 1e-5)
-    {
-      LOG(DEBUG) << ANSI_COLOR_GREEN "Dirichlet BC are met." ANSI_COLOR_RESET;
-    }
-    else
-    {
-      LOG(DEBUG) << ANSI_COLOR_RED "Dirichlet BC are NOT met." ANSI_COLOR_RESET;
-    }
-
     // check if function is zero
     evaluateNonlinearFunction(x, solverVariableResidual_);
 
-    // set rows in f to x - x0 for which dirichlet BC in x is given
-    applyDirichletBoundaryConditionsInNonlinearFunction(x, solverVariableResidual_);
+    int nValues = 3*nEntriesComponent_[0] + nEntriesComponent_[3];
 
-    int nValues = 3*displacementsFunctionSpace_->nDofsGlobal() + pressureFunctionSpace_->nDofsGlobal();
+    std::vector<double> values;
+    PetscUtility::getVectorEntries(solverVariableResidual_, values);
+
     for (int i = 0; i < nValues; i++)
     {
-      double value;
-      PetscErrorCode ierr;
-      ierr = VecGetValues(solverVariableResidual_, 1, &i, &value); CHKERRV(ierr);
+      double value = values[i];
       if (fabs(value) > 1e-5)
-        LOG(DEBUG) << "Dof " << i << ", residual is " << value << " should be zero.";
+        LOG(DEBUG) << "Entry " << i << ", residual is " << value << ", should be zero.";
     }
 
     PetscReal l2NormResidual;
@@ -664,42 +569,88 @@ checkSolution(Vec x)
   }
 }
 
-
 std::string QuasiStaticHyperelasticitySolver::
 getString(Vec x)
 {
   if (this->useNestedMat_)
   {
     std::stringstream result;
-    result << "[xyz: " << *this->data_.displacements() << " p: " << *this->data_.pressure() << "]";
+
+    Vec *subvectors;
+    int nSubVecs = 0;
+    VecNestGetSubVecs(solverVariableResidual_, &nSubVecs, &subvectors);
+
+    result << std::endl << "[";
+    for (int componentNo = 0; componentNo < 3; componentNo++)    // a
+    {
+      if (componentNo > 0)
+        result << ", " << std::endl << " ";
+      result << "u" << std::string(1, char('x'+componentNo)) << ": " << PetscUtility::getStringVector(subvectors[componentNo]);
+    }
+    result << std::endl << " p:  " << PetscUtility::getStringVector(subvectors[3]) << "]";
 
     return result.str();
   }
   else
   {
-    std::stringstream result;
+    typedef SpatialDiscretization::BoundaryConditionsBase<DisplacementsFunctionSpace,3>::BoundaryConditionsForComponent BoundaryConditionsForComponent;
+    const std::array<BoundaryConditionsForComponent, 3> &boundaryConditionsByComponent = dirichletBoundaryConditions_->boundaryConditionsByComponent();
 
-    std::array<std::vector<double>,4> values;
+    std::stringstream result;
+    result << std::endl << "[";
+
+    std::vector<double> values;
+    PetscUtility::getVectorEntries(x, values);
+
+    VLOG(1) << "mappingComponentDofToIndex: " << mappingComponentDofToIndex_;
+
     for (int componentNo = 0; componentNo < 4; componentNo++)
     {
-      int nValues = displacementsFunctionSpace_->nDofsGlobal();
+      int nValues = displacementsFunctionSpace_->nDofsLocalWithoutGhosts();
+
       if (componentNo == 3)
-        nValues = pressureFunctionSpace_->nDofsGlobal();
-
-      values[componentNo].resize(nValues);
-
-      std::vector<int> dofNos(nValues);
-
-      for (int i = 0; i < nValues; i++)
       {
-        dofNos[i] = componentNo * displacementsFunctionSpace_->nDofsGlobal() + i;
+        nValues = pressureFunctionSpace_->nDofsLocalWithoutGhosts();
       }
 
-      PetscErrorCode ierr;
-      ierr = VecGetValues(x, nValues, dofNos.data(), values[componentNo].data()); CHKERRABORT(displacementsFunctionSpace_->meshPartition()->mpiCommunicator(), ierr);
+      if (componentNo < 3)
+      {
+        result << std::string(1, char('x'+componentNo)) << ": ";
+      }
+      else
+      {
+        result << "p: ";
+      }
+
+      VLOG(1) << "componentNo " << componentNo << ", nValues: " << nValues << ", n non-BC: " << nEntriesComponent_[componentNo];
+
+      int dirichletBoundaryConditionIndex = 0;
+      for (int dofNoLocal = 0; dofNoLocal < nValues; dofNoLocal++)
+      {
+        int combinedIndex = mappingComponentDofToIndex_[componentNo][dofNoLocal];
+
+        if (dofNoLocal != 0)
+          result << ", ";
+
+        if (combinedIndex == -1)
+        {
+          VLOG(2) << "  i:" << dofNoLocal << ", dirichlet bc no " << dirichletBoundaryConditionIndex << ": " << boundaryConditionsByComponent[componentNo].values[dirichletBoundaryConditionIndex];
+          // Dirichlet BC
+          result << boundaryConditionsByComponent[componentNo].values[dirichletBoundaryConditionIndex] << "*";
+          dirichletBoundaryConditionIndex++;
+        }
+        else
+        {
+          VLOG(2) << "  i:" << dofNoLocal << ", normal index " << combinedIndex << ": " << values[combinedIndex];
+
+          result << values[combinedIndex];
+        }
+      }
+      if (componentNo < 3)
+        result << std::endl << " ";
     }
 
-    result << "[x:" << values[0] << " y:" << values[1] << " z:" << values[2] << " p:" << values[3] << "]";
+    result << "] * = Dirichlet BC";
     return result.str();
   }
   return std::string("no");

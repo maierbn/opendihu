@@ -100,16 +100,19 @@ initializeGhostElements()
     }
   }
 
-  VLOG(1) << "determined foreignGhostElements_: ";
-
-  for (typename std::map<int,std::vector<GhostElement>>::iterator iter = foreignGhostElements_.begin(); iter != foreignGhostElements_.end(); iter++)
+  if (VLOG_IS_ON(1))
   {
-    VLOG(1) << "  rank " << iter->first << " has " << iter->second.size() << " ghost elements";
-    for (int i = 0; i < iter->second.size(); i++)
+    VLOG(1) << "determined foreignGhostElements_: ";
+
+    for (typename std::map<int,std::vector<GhostElement>>::iterator iter = foreignGhostElements_.begin(); iter != foreignGhostElements_.end(); iter++)
     {
-      VLOG(1) << ", non-BC: " << iter->second[i].nonBoundaryConditionDofsOfRankGlobalPetsc
-        << ", BC: " << iter->second[i].boundaryConditionDofsGlobalPetsc
-        << ", values: " << iter->second[i].boundaryConditionValues;
+      VLOG(1) << "  rank " << iter->first << " has " << iter->second.size() << " ghost elements";
+      for (int i = 0; i < iter->second.size(); i++)
+      {
+        VLOG(1) << ", non-BC: " << iter->second[i].nonBoundaryConditionDofsOfRankGlobalPetsc
+          << ", BC: " << iter->second[i].boundaryConditionDofsGlobalPetsc
+          << ", values: " << iter->second[i].boundaryConditionValues;
+      }
     }
   }
 
@@ -153,7 +156,6 @@ initializeGhostElements()
     MPIUtility::handleReturnValue(MPI_Put(&localMemory[foreignRankNo], 1, MPI_INT, foreignRankNo, ownRankNo, 1, MPI_INT, mpiMemoryWindow), "MPI_Put");
 
     MPIUtility::handleReturnValue(MPI_Win_unlock(foreignRankNo, mpiMemoryWindow), "MPI_Win_unlock");
-
   }
 
   MPIUtility::handleReturnValue(MPI_Win_fence(MPI_MODE_NOSUCCEED, mpiMemoryWindow), "MPI_Win_fence");
@@ -174,7 +176,6 @@ initializeGhostElements()
   VLOG(1) << "after fence, nElementsFromRanks: " << nElementsFromRanks;
 
   // send lengths of arrays in ghost elements
-  //int *sendBuffer[foreignGhostElements_.size()];
   std::vector<std::vector<int>> sendBuffer(foreignGhostElements_.size());
   std::vector<MPI_Request> sendRequests;
   int i = 0;
@@ -185,7 +186,6 @@ initializeGhostElements()
 
     if (nGhostElements != 0)
     {
-      //sendBuffer[i] = new int [nGhostElements*2];  // for every ghostElements the sizes of nonBoundaryConditionDofsOfRankGlobalPetsc and boundaryConditionDofsGlobalPetsc
       sendBuffer[i].resize(nGhostElements*2);  // for every ghostElements the sizes of nonBoundaryConditionDofsOfRankGlobalPetsc and boundaryConditionDofsGlobalPetsc
 
       int j = 0;

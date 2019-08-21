@@ -2653,7 +2653,7 @@ We derive an expression for $S_{AB}$. From \cref{eq:internal_potential_direction
 \begin{equation*}
   \begin{array}{lll}
     S_{AB} &= J(\bfu)\,p\,C^{-1}_{AB}(\bfu) + 2 \p{\Psi_\text{iso}(\bar{\bfC}(\bfu))}{C_{AB}}\\[4mm]
-    &= J(\bfu)\,p\,C^{-1}_{AB}(\bfu) + 2 \p{\Psi_\text{iso}(\bar{I}_1, \bar{I}_2}{C_{AB}}\\[4mm]
+    &= J(\bfu)\,p\,C^{-1}_{AB}(\bfu) + 2 \p{\Psi_\text{iso}(\bar{I}_1, \bar{I}_2}{C_{AB}})\\[4mm]
   \end{array}
 \end{equation*}
 with (\cite{holzapfel2000nonlinear} p.234)
@@ -2680,7 +2680,7 @@ So in summary we get
 \end{equation*}
 $S_{AB}$, which is the 2nd Piola-Kirchhoff stress tensor, is symmetric, since $\bfC$ and $\bfC^{-1}$ are symmetric.
 
-The jacobian determinant, $J$, is compute from discretized quantities as follows.
+The jacobian determinant, $J$, can be computed from discretized quantities as follows.
 \begin{equation*}
   \begin{array}{lll}
     F_{aA} = δ_{aA} + \p{u_a}{X_A} = δ_{aA} + \hat{u}_{a}^M \phi_{(a),A}^M\\[4mm]
@@ -2695,7 +2695,7 @@ The external virtual work for the dynamic case is given by
 \begin{equation*}
   \begin{array}{lll}
     D_{δ\bfu}\Pi_\text{ext} = -δW_\text{ext} &= -\ds\int_{\Omega} (B_a - \rho_0\,\ddot{u}_a) δu_a\,\d V - \ds\int_{∂\Omega}  \bar{T}_a δu_a\,\d S\\[4mm]
-     &= -\ds\int_{\Omega} (B_a - \rho_0\,\ddot{u}_a) δ\hat{u}^M_a\,\phi_{(a)}^M \,\d V - \ds\int_{∂\Omega}  \bar{T}_a δ\hat{u}^M_a\,\phi_{(a)}^M\,\d S
+     &= -\ds\int_{\Omega} \big(B_a^L\,\phi_{(a)}^L - \rho_0\,\hat{\ddot{u}}_a^L\,\phi_{(a)}^L\big) δ\hat{u}^M_a\,\phi_{(a)}^M \,\d V - \ds\int_{∂\Omega}  \bar{T}_a^L \phi_{(a)}^L δ\hat{u}^M_a\,\phi_{(a)}^M\,\d S
   \end{array}
 \end{equation*}
 
@@ -2719,7 +2719,7 @@ where
 \begin{equation}\label{eq:first_ders}
   \begin{array}{lll}
     δW_\text{int}({\bfu},{p})  = \ds\int_{\Omega}\dfrac12  S_{AB}(\bfu,p)\, \left(F_{aB}\, \phi_{(a),A}^M + F_{aA}\, \phi_{(a),B}^M\right)δ\hat{u}_{a}^M \,\d V\\[4mm]
-    δW_\text{ext}  = \ds\int_{\Omega} (B_a - \rho_0\,\ddot{u}_a) \phi_{(a)}^M\,δ\hat{u}^M_a \,\d V +\ds\int_{∂\Omega}  \bar{T}_a\, \phi_{(a)}^M\,δ\hat{u}^M_a\,\d S \\[4mm]
+    δW_\text{ext}  = \ds\int_{\Omega} (B_a - \rho_0\,\ddot{u}_a) \phi_{(a)}^M\,δ\hat{u}^M_a \,\d V +\ds\int_{∂\Omega}  \bar{T}^L_a\,\phi_{(a)}^L\, \phi_{(a)}^M\,δ\hat{u}^M_a\,\d S \\[4mm]
     D_{δp}\Pi_L(\bfu) = \ds\int_\Omega \big(J(\bfu) - 1)\,δp\,\d V 
   \end{array}
 \end{equation}
@@ -2833,11 +2833,11 @@ Given the number of spatial dimensions $a,b=1,\dots,D=3$, the blocks of the Jaco
 The blocks of the residual on the righ-hand side (quasi-static case and neglecting gravity) follow from \cref{eq:first_dir_der} and are given by
 \begin{equation*}
   \begin{array}{lll}
-    \bfR_{δ\bfu, (L,a)} = -D_{δ\bfu, (L,a)}\Pi_L(\bfu,p) = -δW_{\text{int}, (L,a)} + δW_{\text{ext}, (L,a)} = \bfR_{δ\bfu, (L,a)}^{\text{int}} + \bfR^{\text{ext}}_{δ\bfu, (L,a)}  \mbox{ with}\\[4mm]
-\quad    \bfR_{δ\bfu, (L,a)}^{\text{int}} = - \ds\int_{\Omega}\dfrac12  S_{AB}\, \left(F_{aB}\phi_{(a),A}^L + F_{aA}\phi_{(a),B}^L\,\right) \,\d V \\[4mm]
-\quad    \bfR_{δ\bfu, (L,a)}^{\text{ext}} = \ds\int_{\Omega} (B_a - \rho_0\,\hat{\ddot{u}}_a) \phi_{(a)}^L \,\d V + \ds\int_{∂\Omega}  \bar{T}_a \phi_{(a)}^L\,\d S \\[4mm]
+    -\bfR_{δ\bfu, (L,a)} = D_{δ\bfu, (L,a)}\Pi_L(\bfu,p) = δW_{\text{int}, (L,a)} - δW_{\text{ext}, (L,a)} = -\big(\bfR_{δ\bfu, (L,a)}^{\text{int}} + \bfR^{\text{ext}}_{δ\bfu, (L,a)}\big)  \mbox{ with}\\[4mm]
+\quad    -\bfR_{δ\bfu, (L,a)}^{\text{int}} = \ds\int_{\Omega}\dfrac12  S_{AB}\, \left(F_{aB}\phi_{(a),A}^L + F_{aA}\phi_{(a),B}^L\,\right) \,\d V \\[4mm]
+\quad    -\bfR_{δ\bfu, (L,a)}^{\text{ext}} = \ds\int_{\Omega} \big(B_a^M\,\phi_{(a)}^M - \rho_0\,\hat{\ddot{u}}_a^M\,\phi_{(a)}^M\big) \phi_{(a)}^L \,\d V + \ds\int_{∂\Omega}  \bar{T}_a^M \,\phi_{(a)}^M\, \phi_{(a)}^L\,\d S \\[4mm]
     d \mbox{ blocks of subvectors with length } u_{\text{dofs}}\\[4mm]
-    \bfR_{δp,L} = -D_{δp, L}\Pi_L(\bfu,p) = \ds\int_\Omega \big(1-J)\,\psi^L\,\d V \\[4mm]
+    -\bfR_{δp,L} = D_{δp, L}\Pi_L(\bfu,p) = \ds\int_\Omega (J-1)\,\psi^L\,\d V \\[4mm]
     1 \mbox{ subvector of length } p_{\text{dofs}}
   \end{array}
 \end{equation*}

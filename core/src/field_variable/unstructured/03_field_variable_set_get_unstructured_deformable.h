@@ -61,6 +61,9 @@ public:
   //! get values for all components, from their local dof no.s, as contiguous vector in order [comp0, comp0, comp0, ..., comp1, comp1, ...]
   void getValues(const std::vector<dof_no_t> &dofLocalNo, std::vector<double> &values) const;
 
+  //! for a specific component, get values from their local dof no.s
+  void getValues(int componentNo, int nValues, const dof_no_t *dofLocalNo, std::vector<double> &values) const;
+
   //! get values from their local dof no.s for all components, this eventually does not get all values if there are multiple versions
   template<int N>
   void getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nComponents>,N> &values) const;
@@ -95,6 +98,9 @@ public:
   //! set values for a given components for given dofs
   template<int N>
   void setValues(int componentNo, const std::array<dof_no_t,N> &dofNosLocal, const std::array<double,N> &values, InsertMode petscInsertMode=INSERT_VALUES);
+
+  //! set values for a given component for given dofs, using raw pointers
+  void setValues(int componentNo, int nValues, const dof_no_t *dofNosLocal, const double *values, InsertMode petscInsertMode=INSERT_VALUES);
 
   //! copy the values from another field variable of the same type
   void setValues(FieldVariable<FunctionSpaceType,nComponents> &rhs);

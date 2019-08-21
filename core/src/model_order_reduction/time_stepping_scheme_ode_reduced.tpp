@@ -37,12 +37,8 @@ namespace ModelOrderReduction
       LOG(DEBUG) << "nRowsSnapshots: " << this->nRowsSnapshots_;
     }
     
-    std::array<element_no_t, 1> nElementsRed({this -> nReducedBases_});
-    std::array<element_no_t, 1> nElementsRows({this -> nRowsSnapshots_});
-    std::array<double, 1> physicalExtent({0.0}); 
-    
     typedef ::FunctionSpace::Generic GenericFunctionSpace;
-    
+
     if(this->context_.meshManager()->hasFunctionSpace("functionSpaceReduced"))
     {
       // take the existing function space
@@ -51,8 +47,8 @@ namespace ModelOrderReduction
     else
     {
       // create the functionspace for the reduced order
-      LOG(DEBUG) << "nElementsRed: " << nElementsRed;
-      this->functionSpaceRed = this->context_.meshManager()->template createFunctionSpace<GenericFunctionSpace>("functionSpaceReduced", nElementsRed, physicalExtent);
+      LOG(DEBUG) << "nReducedBases: " << this->nReducedBases_;
+      this->functionSpaceRed = this->context_.meshManager()->createGenericFunctionSpace(this->nReducedBases_, 1, "functionSpaceReduced");
       LOG(DEBUG) << "functionSpaceRed";
     }
     
@@ -63,7 +59,7 @@ namespace ModelOrderReduction
     }
     else
     {
-      this->functionSpaceRowsSnapshots = this->context_.meshManager()->template createFunctionSpace<GenericFunctionSpace>("functionSpaceRowsSnapshots", nElementsRows, physicalExtent);        
+      this->functionSpaceRowsSnapshots = this->context_.meshManager()->createGenericFunctionSpace(this->nRowsSnapshots_, 1, "functionSpaceRowsSnapshots");
       LOG(DEBUG) << "functionSpaceRowsSnapshots";
     }
     

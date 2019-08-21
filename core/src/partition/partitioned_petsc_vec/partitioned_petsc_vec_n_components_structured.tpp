@@ -23,7 +23,7 @@ PartitionedPetscVecNComponentsStructured(PartitionedPetscVec<FunctionSpace::Func
   
   createVector();
 
-  LOG(DEBUG) << "\"" << this->name_ << "\" contruct vector from rhs \"" << rhs.name() << "\", representation: "
+  LOG(DEBUG) << "\"" << this->name_ << "\" contruct empty vector from rhs \"" << rhs.name() << "\", representation: "
     << Partition::valuesRepresentationString[rhs.currentRepresentation()];
 }
   
@@ -252,6 +252,11 @@ setRepresentationGlobal()
 
     setRepresentationGlobal();
   }
+  else
+  {
+    LOG(FATAL) << "Cannot set vector representation from \"" << Partition::valuesRepresentationString[this->currentRepresentation_]
+      << "\" to \"global\".";
+  }
 }
 
 template<typename MeshType,typename BasisFunctionType,int nComponents>
@@ -283,6 +288,11 @@ setRepresentationLocal()
   {
     LOG(FATAL) << "\"" << this->name_ << "\" setRepresentationLocal, previous representation: "
     << Partition::valuesRepresentationString[this->currentRepresentation_] << ". This is not directly possible, call restoreExtractedComponent instead.";
+  }
+  else
+  {
+    LOG(FATAL) << "Cannot set vector representation from \"" << Partition::valuesRepresentationString[this->currentRepresentation_]
+      << "\" to \"local\".";
   }
 }
 
@@ -1319,16 +1329,4 @@ output(std::ostream &stream)
     }  // componentNo
   }
 #endif
-}
-
-template<typename MeshType,typename BasisFunctionType,int nComponents>
-void PartitionedPetscVecNComponentsStructured<MeshType,BasisFunctionType,nComponents>::
-dumpVector(std::string filename, std::string format)
-{
-  // loop over components
-  for (int componentNo = 0; componentNo < nComponents; componentNo++)
-  {
-    // dump the data using a PetscViewer
-    /**a*///PartitionedPetscVecBase<>::dumpVector(filename, format, vectorGlobal_[componentNo], this->meshPartition_->mpiCommunicator(), componentNo, nComponents);
-  }
 }

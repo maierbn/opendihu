@@ -94,9 +94,6 @@ public:
   //! output the vector to stream, for debugging
   void output(std::ostream &stream);
 
-  //! write the vector to a file using PetscViewer, format is "default", "ascii" or "matlab"
-  void dumpVector(std::string filename, std::string format);
-
 protected:
   
   //! create the values vectors
@@ -211,9 +208,6 @@ public:
   
   //! output the vector to stream, for debugging
   void output(std::ostream &stream);
-
-  //! write the vector to a file using PetscViewer, format is "default", "ascii" or "matlab"
-  void dumpVector(std::string filename, std::string format);
 
 protected:
  

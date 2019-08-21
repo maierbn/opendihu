@@ -39,7 +39,7 @@ config = {
   std::shared_ptr<Mesh::Manager> meshManager = settings.meshManager();
 
   // create the field variable with name "test"
-  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace::Generic,1>> fieldVariable = meshManager->createGenericFieldVariable(5, "test");
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace::Generic,1>> fieldVariable = meshManager->createGenericFieldVariable(5, 1, "test");
 
   // set all values to 0
   fieldVariable->zeroEntries();
@@ -103,8 +103,9 @@ config = {
   std::array<int,2> nElements1({2,2});
   std::array<int,2> nElements2({3,3});
   std::array<double,2> physicalExtent({0});
-  std::shared_ptr<FunctionSpace1> functionSpace1 = meshManager->createFunctionSpace<FunctionSpace1>("functionSpace1", nElements1, physicalExtent);
-  std::shared_ptr<FunctionSpace2> functionSpace2 = meshManager->createFunctionSpace<FunctionSpace2>("functionSpace2", nElements2, physicalExtent);
+  std::array<int,2> nRanks({1,1});
+  std::shared_ptr<FunctionSpace1> functionSpace1 = meshManager->createFunctionSpace<FunctionSpace1>("functionSpace1", nElements1, physicalExtent, nRanks);
+  std::shared_ptr<FunctionSpace2> functionSpace2 = meshManager->createFunctionSpace<FunctionSpace2>("functionSpace2", nElements2, physicalExtent, nRanks);
 
   // create dense matrix, 9x49
   std::shared_ptr<PartitionedPetscMat<FunctionSpace1,FunctionSpace2>> matrix

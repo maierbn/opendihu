@@ -295,6 +295,47 @@ In the dictionary case, negative indices are counted from the end. This means, e
 
 The given values correspond to global degrees of freedom, if ``"inputMeshIsGlobal": True`` is given (or omitted, because ``True`` is the default) or to local degrees of freedom of the process, if ``"inputMeshIsGlobal": False``.
 
+dirichletBoundaryConditions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The Dirichlet type boundary conditions. These are dofs that will have a prescribed value. It is a Dict of ``{<dof no>: <value>}`` entries. 
+Negative dof nos are interpreted as counted from the end, i.e. -1 is the last dof, -2 is the second-last etc.
+
+Dirichlet boundary conditions are specified for dof numbers, not nodes, such that for Hermite it is possible to prescribe derivatives. For Lagrange ansatz functions, dof numbers are equivalent to node numbers.
+
+For unstructured meshes, the ordering of the dofs cannot be known at the time when the settings are parsed, because they depend on the mesh which could be read from ``*.ex`` files after the settings get parsed.
+Therefore the ordering is special.
+For every node there are as many values as dofs, in contiguous order.
+
+Consider the following example for 2D Hermite, unstructured grid, 2x2 elements:
+
+.. code-block:: python
+
+  node numbering:
+   6_7_8
+  3|_4_|5
+  0|_1_|2
+
+  dof numbering:
+   6_7_8
+  2|_3_|5
+  0|_1_|4
+
+To specify du/dn = 0 at the left boundary in this example you would set:
+
+.. code-block:: python
+  
+  bc[0*2+1] = 0, bc[3*2+1] = 0, bc[6*2+1] = 0
+
+To specifiy u=0 on the bottom, you would set:
+
+.. code-block:: python
+  
+  bc[0] = 0, bc[2] = 0, bc[4] = 0
+
+When `inputMeshIsGlobal` is set to ``False``, the specified dofs are interpreted as local to the subdomain. Then you have to specify values also for ghost dofs. 
+This means that you have to specify prescribed nodal values on every process whose subdomain is adjacent to that node.
+
 inputMeshIsGlobal
 ^^^^^^^^^^^^^^^^^^
 *Default:* ``True``

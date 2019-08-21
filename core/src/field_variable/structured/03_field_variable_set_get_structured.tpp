@@ -211,6 +211,18 @@ getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nCompo
   }
 }
 
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
+getValues(int componentNo, int nValues, const dof_no_t *dofLocalNo, std::vector<double> &values) const
+{
+  assert(componentNo >= 0 && componentNo < nComponents);
+  assert(this->values_);
+
+  int valuesPreviousSize = values.size();
+  values.resize(valuesPreviousSize + nValues);
+  this->values_->getValues(componentNo, nValues, (PetscInt *)dofLocalNo, values.data() + valuesPreviousSize);
+}
+
 //! get values from their local dof no.s for all components
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
@@ -284,6 +296,13 @@ void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 getElementValues(element_no_t elementNoLocal,
                  std::array<std::array<double,nComponents>,FunctionSpaceType::nDofsPerElement()> &values) const
 {
+  assert(this->functionSpace_);
+#ifndef NDEBUG
+  if (elementNoLocal >= this->functionSpace_->nElementsLocal())
+  {
+    LOG(ERROR) << "getElementValues, elementNoLocal = " << elementNoLocal << " >= nElementsLocal = " << this->functionSpace_->nElementsLocal();
+  }
+#endif
   assert(elementNoLocal >= 0 && elementNoLocal < this->functionSpace_->nElementsLocal());
   assert(this->values_);
   
@@ -436,6 +455,18 @@ setValues(int componentNo, const std::array<dof_no_t,N> &dofNosLocal, const std:
 
   // set the values for the given component
   this->values_->setValues(componentNo, N, dofNosLocal.data(), values.data(), petscInsertMode);
+}
+
+//! set values for a given component for given dofs, using raw pointers
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
+setValues(int componentNo, int nValues, const dof_no_t *dofNosLocal, const double *values, InsertMode petscInsertMode)
+{
+  assert(componentNo >= 0 && componentNo < nComponents);
+  assert(this->values_);
+
+  // set the values for the given component
+  this->values_->setValues(componentNo, nValues, dofNosLocal, values, petscInsertMode);
 }
 
 //! set values for all components for dofs, only nValues values will be set despite potentially more dofNosLocal, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes

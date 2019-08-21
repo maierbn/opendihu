@@ -25,11 +25,21 @@ PetscErrorCode nonlinearFunction(SNES snes, Vec x, Vec f, void *context)
   VLOG(1) << "pointer value x: " << x;
   VLOG(1) << "pointer value f: " << f;
 
+  Vec x_original;
+  VecDuplicate(x, &x_original);
+  VecCopy(x, x_original);
+
+  // if nested matrices are used, do nothing, otherwise copy the values from x to the combined vectors
+  object->setInputVector(x);
+
+  // set prescribed values in x to x0, to also make the columns vanish in the numeric jacobian
+  //object->applyDirichletBoundaryConditionsInVector(x);
+
   // compute the lhs which is the virtual work and the incompressibility constraint
   object->evaluateNonlinearFunction(x, f);
 
   // set rows in f to x - x0 for which dirichlet BC in x is given
-  object->applyDirichletBoundaryConditionsInNonlinearFunction(x, f);
+  //object->applyDirichletBoundaryConditionsInNonlinearFunction(x_original, f);
 
   // compute and output function norm
   if (VLOG_IS_ON(1))
@@ -62,6 +72,9 @@ PetscErrorCode jacobianFunctionAnalytic(SNES snes, Vec x, Mat jac, Mat b, void *
   VLOG(1) << "pointer value jac: " << jac;
   VLOG(1) << "pointer value b:   " << b;
 
+  // if nested matrices are used, do nothing, otherwise copy the values from x to the combined vectors
+  object->setInputVector(x);
+
   object->evaluateAnalyticJacobian(x, jac);
 
   // zero rows and columns for which Dirichlet BC is set, set diagonal to 1
@@ -83,13 +96,16 @@ PetscErrorCode jacobianFunctionFiniteDifferences(SNES snes, Vec x, Mat jac, Mat 
   VLOG(1) << "pointer value jac: " << jac;
   VLOG(1) << "pointer value b:   " << b;
 
+  // if nested matrices are used, do nothing, otherwise copy the values from x to the combined vectors
+  object->setInputVector(x);
+
   // compute jacobian by finite differences
   SNESComputeJacobianDefaultNested(snes, x, jac, b, context);
 
   // zero rows and columns for which Dirichlet BC is set, set diagonal to 1
   object->applyDirichletBoundaryConditionsInJacobian(x, jac);
 
-  VLOG(2) << "-- computed tangent stiffness matrix by finite differences: " << PetscUtility::getStringMatrix(jac);
+  LOG(DEBUG) << "-- computed tangent stiffness matrix by finite differences: " << PetscUtility::getStringMatrix(jac);
   VLOG(2) << "-- non-zeros pattern: " << std::endl << PetscUtility::getStringSparsityPattern(jac);
 
   return 0;
@@ -108,6 +124,9 @@ PetscErrorCode jacobianFunctionCombined(SNES snes, Vec x, Mat jac, Mat b, void *
 
   // compute the finite differences jacobian in the main jacobian slot jac
   SNESComputeJacobianDefaultNested(snes, x, jac, jac, context);
+
+  // if nested matrices are used, do nothing, otherwise copy the values from x to the combined vectors
+  object->setInputVector(x);
 
   // zero rows and columns for which Dirichlet BC is set
   object->applyDirichletBoundaryConditionsInJacobian(x, jac);

@@ -22,7 +22,7 @@ inline typename std::enable_if<i < std::tuple_size<OutputFieldVariablesType>::va
 loopCollectMeshProperties(const OutputFieldVariablesType &fieldVariables, std::map<std::string,PolyDataPropertiesForMesh> &meshProperties
 )
 {
-  LOG(DEBUG) << "loopCollectMeshProperties i=" << i << " type " << StringUtility::demangle(typeid(typename std::tuple_element<i,OutputFieldVariablesType>::type).name());
+  //LOG(DEBUG) << "loopCollectMeshProperties i=" << i << " type " << StringUtility::demangle(typeid(typename std::tuple_element<i,OutputFieldVariablesType>::type).name());
 
   // call what to do in the loop body
   if (collectMeshProperties<typename std::tuple_element<i,OutputFieldVariablesType>::type, OutputFieldVariablesType>(
@@ -42,7 +42,7 @@ collectMeshProperties(CurrentFieldVariableType currentFieldVariable, const Outpu
   assert(currentFieldVariable != nullptr);
   assert(currentFieldVariable->functionSpace());
   std::string meshName = currentFieldVariable->functionSpace()->meshName();
-  LOG(DEBUG) << "field variable \"" << currentFieldVariable->name() << "\", mesh \"" << meshName << "\".";
+  //LOG(DEBUG) << "field variable \"" << currentFieldVariable->name() << "\", mesh \"" << meshName << "\".";
 
   /*
   int dimensionality;    ///< D=1: object is a VTK "Line", D=2, D=3: object should be represented by an unstructured grid

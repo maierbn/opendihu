@@ -5,6 +5,7 @@
 #include "utility/vector_operators.h"
 #include "control/types.h"
 #include "quadrature/gauss.h"
+#include "quadrature/tensor_product.h"
 
 namespace SpatialDiscretization
 {

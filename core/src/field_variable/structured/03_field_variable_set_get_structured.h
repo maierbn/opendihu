@@ -49,6 +49,9 @@ public:
   //! for a specific component, get values from their local dof no.s, as vector
   void getValues(int componentNo, const std::vector<dof_no_t> &dofLocalNo, std::vector<double> &values) const;
 
+  //! for a specific component, get values from their local dof no.s
+  void getValues(int componentNo, int nValues, const dof_no_t *dofLocalNo, std::vector<double> &values) const;
+
   //! get values for all components, from their local dof no.s, as contiguous vector in order [comp0, comp0, comp0, ..., comp1, comp1, ...]
   void getValues(const std::vector<dof_no_t> &dofLocalNo, std::vector<double> &values) const;
 
@@ -93,6 +96,9 @@ public:
   //! set values for a given component for given dofs
   template<int N>
   void setValues(int componentNo, const std::array<dof_no_t,N> &dofNosLocal, const std::array<double,N> &values, InsertMode petscInsertMode=INSERT_VALUES);
+
+  //! set values for a given component for given dofs, using raw pointers
+  void setValues(int componentNo, int nValues, const dof_no_t *dofNosLocal, const double *values, InsertMode petscInsertMode=INSERT_VALUES);
 
   //! set values for all components for dofs, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
   void setValues(const std::vector<dof_no_t> &dofNosLocal, const std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode=INSERT_VALUES);

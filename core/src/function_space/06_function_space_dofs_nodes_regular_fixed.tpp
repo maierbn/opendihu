@@ -31,21 +31,35 @@ FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, std
 
 template<int D,typename BasisFunctionType>
 FunctionSpaceDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::
-FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, std::vector<double> &null, std::array<element_no_t, D> nElements, std::array<double, D> physicalExtent) :
-  FunctionSpaceDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::FunctionSpaceDofsNodes(partitionManager, nElements, physicalExtent)
+FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, std::vector<double> &null, std::array<element_no_t, D> nElements, std::array<double, D> physicalExtent, const std::array<int,D> nRanksPerCoordinateDirection, bool inputMeshIsGlobal) :
+  FunctionSpaceDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::FunctionSpaceDofsNodes(partitionManager, nElements, physicalExtent, nRanksPerCoordinateDirection, inputMeshIsGlobal)
 {
 }
 
 template<int D,typename BasisFunctionType>
 FunctionSpaceDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::
-FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, std::array<element_no_t, D> nElements, std::array<double, D> physicalExtent) :
+FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, std::array<element_no_t, D> nElements, std::array<double, D> physicalExtent, const std::array<int,D> nRanksPerCoordinateDirection, bool inputMeshIsGlobal) :
   FunctionSpaceDofsNodesStructured<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::FunctionSpaceDofsNodesStructured(partitionManager, nullptr),
   physicalExtent_(physicalExtent)
 {
   // compute mesh width from physical extent and number of elements in the coordinate directions
   // note for quadratic elements the mesh width is the distance between the nodes, not length of elements
   this->meshWidth_ = 0;
-  std::copy(nElements.begin(), nElements.end(), this->nElementsPerCoordinateDirectionGlobal_.begin());
+  this->nRanks_ = nRanksPerCoordinateDirection;
+
+  if (inputMeshIsGlobal)
+  {
+    std::copy(nElements.begin(), nElements.end(), this->nElementsPerCoordinateDirectionGlobal_.begin());
+  }
+  else
+  {
+    std::copy(nElements.begin(), nElements.end(), this->nElementsPerCoordinateDirectionLocal_.begin());
+
+    this->forcePartitioningCreationFromLocalNumberOfElements_ = true;     // this is defined in 03_function_space_partition.h
+
+    // forcePartitioningCreationFromLocalNumberOfElements_ is set to true, this means that the partitioning is created considering
+    // this->nElementsPerCoordinateDirectionLocal_ and not depending on values of inputMeshIsGlobal
+  }
 }
 
 template<int D,typename BasisFunctionType>

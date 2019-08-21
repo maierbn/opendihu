@@ -24,8 +24,8 @@ public:
 
   struct BoundaryConditionsForComponent
   {
-    std::vector<dof_no_t> dofNosLocal;
-    std::vector<double> values;
+    std::vector<dof_no_t> dofNosLocal;    // the local dof no (without ghost dofs), both vectors are sorted according to this
+    std::vector<double> values;           // the values corresponding to the dofs
   };
 
   //! constructor
@@ -69,11 +69,11 @@ protected:
   PythonConfig specificSettings_;            ///< the python config that contains the boundary conditions
   std::shared_ptr<FunctionSpaceType> functionSpace_;     ///< function space for which boundary conditions are specified
 
-  std::vector<ElementWithNodes> boundaryConditionElements_;   ///< nodes grouped by elements on which boundary conditions are specified
-  std::vector<dof_no_t> boundaryConditionNonGhostDofLocalNos_;        ///< vector of all local (non-ghost) boundary condition dofs
-  std::vector<ValueType> boundaryConditionValues_;               ///< vector of the local prescribed values, related to boundaryConditionNonGhostDofLocalNos_
+  std::vector<ElementWithNodes> boundaryConditionElements_;   ///< nodes grouped by elements on which boundary conditions are specified, this includes ghost nodes
+  std::vector<dof_no_t> boundaryConditionNonGhostDofLocalNos_;        ///< vector of all local (non-ghost) boundary condition dofs, sorted
+  std::vector<ValueType> boundaryConditionValues_;               ///< vector of the local (non-ghost) prescribed values, related to boundaryConditionNonGhostDofLocalNos_
 
-  std::array<BoundaryConditionsForComponent, nComponents> boundaryConditionsByComponent_;   ///< the local boundary condition data organized by component
+  std::array<BoundaryConditionsForComponent, nComponents> boundaryConditionsByComponent_;   ///< the local boundary condition data organized by component, entries are sorted by dofNoLocal, without ghost dofs
 
 };
 

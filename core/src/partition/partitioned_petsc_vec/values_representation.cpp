@@ -8,7 +8,9 @@ const char *valuesRepresentationString[16] =
   "local",
   "global",
   "contiguous",
-  "invalid"
+  "invalid",
+  "combined-local",
+  "combined-global"
 };
 
 } // namespace

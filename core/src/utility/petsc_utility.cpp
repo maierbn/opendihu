@@ -61,27 +61,38 @@ void getMatrixEntries(const Mat &matrix, std::vector<double> &matrixValues)
 
 void getVectorEntries(const Vec &vector, std::vector<double> &vectorValues)
 {
-  int nEntries;
-  VecGetLocalSize(vector, &nEntries);
+  int ownershipBegin = 0;
+  int ownershipEnd = 0;
 
-  std::vector<int> indices(nEntries);
-  std::iota(indices.begin(), indices.end(), 0);
-  vectorValues.resize(nEntries);
+  PetscErrorCode ierr;
+  ierr = VecGetOwnershipRange(vector, &ownershipBegin, &ownershipEnd); CHKERRV(ierr);
+  int nValues = ownershipEnd - ownershipBegin;
 
-  VecGetValues(vector, nEntries, indices.data(), vectorValues.data());
+  std::vector<int> dofNosGlobal(nValues);
+  std::iota(dofNosGlobal.begin(), dofNosGlobal.end(), ownershipBegin);
+  vectorValues.resize(nValues);
+
+  // get the values
+  ierr = VecGetValues(vector, nValues, dofNosGlobal.data(), vectorValues.data()); CHKERRV(ierr);
 }
 
 void setVector(const std::vector<double> &vectorValues, Vec& vector)
 {
-  std::vector<int> indices(vectorValues.size());
-  std::iota(indices.begin(), indices.end(), 0);
-  VecSetValues(vector, vectorValues.size(), indices.data(), vectorValues.data(), INSERT_VALUES);
+  int ownershipBegin = 0;
+  int ownershipEnd = 0;
+
+  PetscErrorCode ierr;
+  ierr = VecGetOwnershipRange(vector, &ownershipBegin, &ownershipEnd); CHKERRV(ierr);
+  int nValues = ownershipEnd - ownershipBegin;
+  assert (nValues >= vectorValues.size());
+
+  std::vector<int> dofNosGlobal(nValues);
+  std::iota(dofNosGlobal.begin(), dofNosGlobal.end(), ownershipBegin);
+
+  VecSetValues(vector, vectorValues.size(), dofNosGlobal.data(), vectorValues.data(), INSERT_VALUES);
 
   VecAssemblyBegin(vector);
   VecAssemblyEnd(vector);
-
-  int size;
-  VecGetSize(vector, &size);
 }
 
 void createVector(Vec& vector, int nEntries, std::string name)
@@ -256,11 +267,10 @@ std::string getStringVector(const Vec& vector)
   int nEntries;
   VecGetLocalSize(vector, &nEntries);
 
-  LOG(DEBUG) << " getStringVector: " << nEntries;
-
   const double zeroTolerance = 1e-15;
 
   std::stringstream s;
+  s << "(" << nEntries << " entries) ";
   for (int i=0; i<nEntries; i++)
   {
     s << std::setprecision(9) << (fabs(vectorValues[i]) < zeroTolerance? 0.0 : vectorValues[i]) << " ";
@@ -536,11 +546,126 @@ void dumpVector(std::string filename, std::string format, Vec &vector, MPI_Comm 
   OutputWriter::Generic::openFile(file, filenameStream.str());
   file.close();
 
+  // if the vector is nested, created single vector
+  VecType vectorType = VECSEQ;
+  VecGetType(vector, &vectorType);
+
+  if (vectorType != NULL)
+  {
+    if (std::string(vectorType) == std::string(VECNEST))
+    {
+      int nNestedVecs = 1;
+      Vec *nestedVecs;
+      VecNestGetSubVecs(vector,&nNestedVecs,&nestedVecs);
+
+      int nEntriesGlobal = 0;
+
+      // collect global size
+      int nEntries;
+      for (int i = 0; i < nNestedVecs; i++)
+      {
+        VecGetSize(nestedVecs[i], &nEntries);
+
+        nEntriesGlobal += nEntries;
+      }
+
+      int ownRankNo = 0;
+      int nRanks = 0;
+      MPI_Comm_rank(mpiCommunicator, &ownRankNo);
+      MPI_Comm_size(mpiCommunicator, &nRanks);
+
+      VLOG(1) << "ownRankNo: " << ownRankNo << ", nRanks: " << nRanks;
+
+      Vec globalVector;
+
+      if (ownRankNo == 0)
+      {
+        VecCreateSeq(MPI_COMM_SELF, nEntriesGlobal, &globalVector);
+        const char *name = "v";
+        //PetscObjectGetName((PetscObject)vector, &name);
+        PetscObjectSetName((PetscObject)globalVector, name);
+      }
+
+      PetscErrorCode ierr;
+
+      // gather all data from processes and set values in globalMatrix
+      for (int j = 0; j < nNestedVecs; j++)
+      {
+        VecGetSize(nestedVecs[j], &nEntries);
+
+        const PetscInt *ranges;
+        VecGetOwnershipRanges(nestedVecs[j], &ranges);
+
+        std::vector<double> values;
+
+        for (int rankNo = 0; rankNo < nRanks; rankNo++)
+        {
+          int nRows = ranges[rankNo+1] - ranges[rankNo];
+          values.resize(nRows, 0.0);
+
+          //LOG(DEBUG) << "(" << j << "," << i << ") rank " << rankNo << " has " << nRows << " rows";
+
+          if (ownRankNo == rankNo)
+          {
+            // get own data
+            std::vector<int> rowIndices(nRows);
+            std::iota(rowIndices.begin(), rowIndices.end(), ranges[rankNo]);
+
+            ierr = VecGetValues(nestedVecs[j], nRows, rowIndices.data(), values.data()); CHKERRV(ierr);
+
+            // send data to root
+            if (rankNo != 0)
+            {
+              MPI_Send(values.data(), nRows, MPI_DOUBLE, 0, 0, mpiCommunicator);
+            }
+
+            VLOG(1) << nRows << " values [" << j << "] from rank " << rankNo << ", starting at " << ranges[rankNo] << ": " << values;
+            //LOG(DEBUG) << "send " << nColumns*nRows << " values to 0";
+          }
+
+          if (ownRankNo == 0)
+          {
+            // receive data
+            if (rankNo != 0)
+            {
+              MPI_Recv(values.data(), nRows, MPI_DOUBLE, rankNo, 0, mpiCommunicator, MPI_STATUS_IGNORE);
+            }
+            //LOG(DEBUG) << "receive " << nColumns*nRows << " values from " << rankNo;
+
+            // set data
+            std::vector<int> rowIndices(nRows);
+            std::iota(rowIndices.begin(), rowIndices.end(), ranges[rankNo]);
+
+            VLOG(1) << "insert at (" << ranges[rankNo] << ") " << nRows << " values [" << j << "] from rank " << rankNo << ": " << values;
+            ierr = VecSetValues(globalVector, nRows, rowIndices.data(), values.data(), INSERT_VALUES); CHKERRV(ierr);
+          }
+        }
+      }
+
+      vector = globalVector;
+
+      if (ownRankNo == 0)
+      {
+        mpiCommunicator = MPI_COMM_SELF;
+
+        VecAssemblyBegin(vector);
+        VecAssemblyEnd(vector);
+      }
+      else
+      {
+        mpiCommunicator = MPI_COMM_NULL;
+      }
+    }
+  }
+
   // dump the data using a PetscViewer
-  PetscErrorCode ierr;
-  ierr = PetscViewerASCIIOpen(mpiCommunicator, filenameStream.str().c_str(), &viewer); CHKERRV(ierr);
-  ierr = PetscViewerPushFormat(viewer, petscViewFormat); CHKERRV(ierr);
-  ierr = VecView(vector, viewer); CHKERRV(ierr);
+  if (mpiCommunicator != MPI_COMM_NULL)
+  {
+    PetscErrorCode ierr;
+    ierr = PetscViewerASCIIOpen(mpiCommunicator, filenameStream.str().c_str(), &viewer); CHKERRV(ierr);
+    ierr = PetscViewerPushFormat(viewer, petscViewFormat); CHKERRV(ierr);
+    ierr = VecView(vector, viewer); CHKERRV(ierr);
+  }
 
   LOG(DEBUG) << "Vector written to \"" << filenameStream.str() << "\".";
 }
@@ -583,136 +708,140 @@ void dumpMatrix(std::string filename, std::string format, Mat &matrix, MPI_Comm 
   MatType matrixType = MATSEQMAIJ;
   MatGetType(matrix, &matrixType);
 
-  // if matrix is nested, only consider first submatrix
-  if (std::string(matrixType) == std::string(MATNEST))
+  if (matrixType != NULL)
   {
-    int nNestedRows = 1;
-    int nNestedColumns = 1;
-    Mat **nestedMats;
-    MatNestGetSubMats(matrix,&nNestedRows,&nNestedColumns,&nestedMats);
-
-    int nRowsGlobal = 0;
-    int nColumnsGlobal = 0;
-
-    // collect global size
-    // number of columns
-    int nRows, nColumns;
-    int j = 0;
-    for (int i = 0; i < nNestedColumns; i++)
+    if (std::string(matrixType) == std::string(MATNEST))
     {
-      MatGetSize(nestedMats[j][i], &nRows, &nColumns);
+      int nNestedRows = 1;
+      int nNestedColumns = 1;
+      Mat **nestedMats;
+      MatNestGetSubMats(matrix,&nNestedRows,&nNestedColumns,&nestedMats);
 
-      nColumnsGlobal += nColumns;
-    }
+      int nRowsGlobal = 0;
+      int nColumnsGlobal = 0;
 
-    // number of rows
-    int i = 0;
-    for (int j = 0; j < nNestedRows; j++)
-    {
-      MatGetSize(nestedMats[j][i], &nRows, &nColumns);
-
-      nRowsGlobal += nRows;
-    }
-
-    int ownRankNo = 0;
-    int nRanks = 0;
-    MPI_Comm_rank(mpiCommunicator, &ownRankNo);
-    MPI_Comm_size(mpiCommunicator, &nRanks);
-
-    VLOG(1) << "ownRankNo: " << ownRankNo << ", nRanks: " << nRanks;
-
-    Mat globalMatrix;
-
-    if (ownRankNo == 0)
-    {
-      MatCreateSeqDense(MPI_COMM_SELF, nRowsGlobal, nColumnsGlobal, NULL, &globalMatrix);
-    }
-
-    PetscErrorCode ierr;
-
-    int globalRowOffset = 0;
-    int globalColumnOffset = 0;
-
-    // gather all data from processes and set values in globalMatrix
-    for (int j = 0; j < nNestedRows; j++)
-    {
-      globalColumnOffset = 0;
+      // collect global size
+      // number of columns
+      int nRows, nColumns;
+      int j = 0;
       for (int i = 0; i < nNestedColumns; i++)
       {
         MatGetSize(nestedMats[j][i], &nRows, &nColumns);
 
-        const PetscInt *ranges;
-        MatGetOwnershipRanges(nestedMats[j][i], &ranges);
-
-        std::vector<double> values;
-
-        for (int rankNo = 0; rankNo < nRanks; rankNo++)
-        {
-          int nRows = ranges[rankNo+1] - ranges[rankNo];
-          values.resize(nColumns * nRows, 0.0);
-
-          //LOG(DEBUG) << "(" << j << "," << i << ") rank " << rankNo << " has " << nRows << " rows";
-
-          if (ownRankNo == rankNo)
-          {
-            // get own data
-            std::vector<int> rowIndices(nRows);
-            std::iota(rowIndices.begin(), rowIndices.end(), ranges[rankNo]);
-
-            std::vector<int> columnIndices(nColumns);
-            std::iota(columnIndices.begin(), columnIndices.end(), 0);
-
-            ierr = MatGetValues(nestedMats[j][i], nRows, rowIndices.data(), nColumns, columnIndices.data(), values.data()); CHKERRV(ierr);
-
-            // send data to root
-            if (rankNo != 0)
-            {
-              MPI_Send(values.data(), nColumns * nRows, MPI_DOUBLE, 0, 0, mpiCommunicator);
-            }
-
-            VLOG(1) << nColumns << "x" << nRows << " values [" << j << "," << i << "] from rank " << rankNo << ", starting at (" << ranges[rankNo] << ", 0): " << values;
-            //LOG(DEBUG) << "send " << nColumns*nRows << " values to 0";
-          }
-
-          if (ownRankNo == 0)
-          {
-            // receive data
-            if (rankNo != 0)
-            {
-              MPI_Recv(values.data(), nColumns * nRows, MPI_DOUBLE, rankNo, 0, mpiCommunicator, MPI_STATUS_IGNORE);
-            }
-            //LOG(DEBUG) << "receive " << nColumns*nRows << " values from " << rankNo;
-
-            // set data
-            std::vector<int> rowIndices(nRows);
-            std::iota(rowIndices.begin(), rowIndices.end(), globalRowOffset + ranges[rankNo]);
-
-            std::vector<int> columnIndices(nColumns);
-            std::iota(columnIndices.begin(), columnIndices.end(), globalColumnOffset);
-
-            VLOG(1) << "insert at (" << globalRowOffset + ranges[rankNo] << "," << globalColumnOffset << ") " << nRows << "x" << nColumns << " values [" << j << "," << i << "] from rank " << rankNo << ": " << values;
-            ierr = MatSetValues(globalMatrix, nRows, rowIndices.data(), nColumns, columnIndices.data(), values.data(), INSERT_VALUES); CHKERRV(ierr);
-          }
-        }
-        globalColumnOffset += nColumns;
+        nColumnsGlobal += nColumns;
       }
-      MatGetSize(nestedMats[j][0], &nRows, &nColumns);
 
-      globalRowOffset += nRows;
-    }
+      // number of rows
+      int i = 0;
+      for (int j = 0; j < nNestedRows; j++)
+      {
+        MatGetSize(nestedMats[j][i], &nRows, &nColumns);
 
-    matrix = globalMatrix;
+        nRowsGlobal += nRows;
+      }
 
-    if (ownRankNo == 0)
-    {
-      mpiCommunicator = MPI_COMM_SELF;
+      int ownRankNo = 0;
+      int nRanks = 0;
+      MPI_Comm_rank(mpiCommunicator, &ownRankNo);
+      MPI_Comm_size(mpiCommunicator, &nRanks);
 
-      MatAssemblyBegin(matrix, MAT_FINAL_ASSEMBLY);
-      MatAssemblyEnd(matrix, MAT_FINAL_ASSEMBLY);
-    }
-    else
-    {
-      mpiCommunicator = MPI_COMM_NULL;
+      VLOG(1) << "ownRankNo: " << ownRankNo << ", nRanks: " << nRanks;
+
+      Mat globalMatrix;
+
+      if (ownRankNo == 0)
+      {
+        MatCreateSeqDense(MPI_COMM_SELF, nRowsGlobal, nColumnsGlobal, NULL, &globalMatrix);
+        const char *name = "matrix";
+        PetscObjectSetName((PetscObject)globalMatrix, name);
+      }
+
+      PetscErrorCode ierr;
+
+      int globalRowOffset = 0;
+      int globalColumnOffset = 0;
+
+      // gather all data from processes and set values in globalMatrix
+      for (int j = 0; j < nNestedRows; j++)
+      {
+        globalColumnOffset = 0;
+        for (int i = 0; i < nNestedColumns; i++)
+        {
+          MatGetSize(nestedMats[j][i], &nRows, &nColumns);
+
+          const PetscInt *ranges;
+          MatGetOwnershipRanges(nestedMats[j][i], &ranges);
+
+          std::vector<double> values;
+
+          for (int rankNo = 0; rankNo < nRanks; rankNo++)
+          {
+            int nRows = ranges[rankNo+1] - ranges[rankNo];
+            values.resize(nColumns * nRows, 0.0);
+
+            //LOG(DEBUG) << "(" << j << "," << i << ") rank " << rankNo << " has " << nRows << " rows";
+
+            if (ownRankNo == rankNo)
+            {
+              // get own data
+              std::vector<int> rowIndices(nRows);
+              std::iota(rowIndices.begin(), rowIndices.end(), ranges[rankNo]);
+
+              std::vector<int> columnIndices(nColumns);
+              std::iota(columnIndices.begin(), columnIndices.end(), 0);
+
+              ierr = MatGetValues(nestedMats[j][i], nRows, rowIndices.data(), nColumns, columnIndices.data(), values.data()); CHKERRV(ierr);
+
+              // send data to root
+              if (rankNo != 0)
+              {
+                MPI_Send(values.data(), nColumns * nRows, MPI_DOUBLE, 0, 0, mpiCommunicator);
+              }
+
+              VLOG(1) << nColumns << "x" << nRows << " values [" << j << "," << i << "] from rank " << rankNo << ", starting at (" << ranges[rankNo] << ", 0): " << values;
+              //LOG(DEBUG) << "send " << nColumns*nRows << " values to 0";
+            }
+
+            if (ownRankNo == 0)
+            {
+              // receive data
+              if (rankNo != 0)
+              {
+                MPI_Recv(values.data(), nColumns * nRows, MPI_DOUBLE, rankNo, 0, mpiCommunicator, MPI_STATUS_IGNORE);
+              }
+              //LOG(DEBUG) << "receive " << nColumns*nRows << " values from " << rankNo;
+
+              // set data
+              std::vector<int> rowIndices(nRows);
+              std::iota(rowIndices.begin(), rowIndices.end(), globalRowOffset + ranges[rankNo]);
+
+              std::vector<int> columnIndices(nColumns);
+              std::iota(columnIndices.begin(), columnIndices.end(), globalColumnOffset);
+
+              VLOG(1) << "insert at (" << globalRowOffset + ranges[rankNo] << "," << globalColumnOffset << ") " << nRows << "x" << nColumns << " values [" << j << "," << i << "] from rank " << rankNo << ": " << values;
+              ierr = MatSetValues(globalMatrix, nRows, rowIndices.data(), nColumns, columnIndices.data(), values.data(), INSERT_VALUES); CHKERRV(ierr);
+            }
+          }
+          globalColumnOffset += nColumns;
+        }
+        MatGetSize(nestedMats[j][0], &nRows, &nColumns);
+
+        globalRowOffset += nRows;
+      }
+
+      matrix = globalMatrix;
+
+      if (ownRankNo == 0)
+      {
+        mpiCommunicator = MPI_COMM_SELF;
+
+        MatAssemblyBegin(matrix, MAT_FINAL_ASSEMBLY);
+        MatAssemblyEnd(matrix, MAT_FINAL_ASSEMBLY);
+      }
+      else
+      {
+        mpiCommunicator = MPI_COMM_NULL;
+      }
     }
   }
 
@@ -722,6 +851,10 @@ void dumpMatrix(std::string filename, std::string format, Mat &matrix, MPI_Comm 
     PetscErrorCode ierr;
     ierr = PetscViewerASCIIOpen(mpiCommunicator, matrixOutputFilename.str().c_str(), &viewer); CHKERRV(ierr);
     ierr = PetscViewerPushFormat(viewer, petscViewFormat); CHKERRV(ierr);
+
+    MatAssemblyBegin(matrix, MAT_FINAL_ASSEMBLY);
+    MatAssemblyEnd(matrix, MAT_FINAL_ASSEMBLY);
+
     ierr = MatView(matrix, viewer); CHKERRV(ierr);
   }
 

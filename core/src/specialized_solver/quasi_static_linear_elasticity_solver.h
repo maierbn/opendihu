@@ -83,6 +83,7 @@ protected:
   double endTime_;     ///< end time of current time step
   double maximumActiveStress_;    ///< parameter value of the maximum active stress, this is the scaling factor of the activation value to get the active stress tensor
   double strainScalingCurveWidth_;   ///< width of a parabola that scales the stress dependend on the relative sarcomere length
+  double scalingFactor_;      ///< factor with which to scale the displacement
 };
 
 }  // namespace

@@ -94,6 +94,9 @@ try:
   import socket
   if socket.gethostname() == "neon" or socket.gethostname() == "helium" or "argon" in socket.gethostname():
     cmake="~/software/cmake/cmake-3.13.3-Linux-x86_64/bin/cmake"
+
+  if "sgscl" in socket.gethostname():
+    MPI_DIR="/scratch-nfs/maierbn/openmpi/install-3.1"
   
   # on cmcs09 (CPU-GPU):
   if socket.gethostname() == 'cmcs09':

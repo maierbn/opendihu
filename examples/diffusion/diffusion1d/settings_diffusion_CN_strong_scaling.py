@@ -7,11 +7,12 @@ physical_extent = 15.0 # cm
 dx = physical_extent/n # dx=0.01
 
 dt = 0.001 # ms
-end_time = 1 # 1000 iterations to encounter the cost of communication for long-term runs
+end_time = 10 # 10000 iterations to encounter the cost of communication for long-term runs
 
 Diffusion = 0.01 # almost comparable to shorten fast-twitch 
 solver_type = "gmres"
 preconditioner_type = "none"
+scenario_name = "DiffusionImplicitCN"
 
 #parse arguments  
 print("{}".format(str(sys.argv)))
@@ -22,6 +23,7 @@ print("n: {}".format(n))
 
 if len(sys.argv) >= 3:
   scenario_name = sys.argv[1]
+  print("scenario: [{}]".format(scenario_name))
 
 if len(sys.argv) >= 4:
   solver_type = sys.argv[2]
@@ -53,7 +55,7 @@ config = {
      "endTime": end_time,
      "initialValues": [20,20,40,50,20,20],
      "solverName": "implicitSolver",
-     "durationLogKey": "duration_diffusion_1D_ImplicitEuler",    
+     "durationLogKey": "duration_diffusion_1D_implicitSolver", 
      "meshName": "mesh",  
      "FiniteElementMethod" : {
         "diffusionTensor": Diffusion,

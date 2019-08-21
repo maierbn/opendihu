@@ -86,8 +86,8 @@ public:
   //! initialize, store the reference geometry as copy of the current geometry
   void initialize();
 
-  //! update the geometry of the mesh and function space with the displacements
-  void updateGeometry();
+  //! update the geometry of the mesh and function space with the displacements, scaled by scalingFactor
+  void updateGeometry(double scalingFactor=1.0);
 
   //! compute the strain from the current displacement (which is the solution field variable)
   void computeStrain(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents*nComponents>> strain);

@@ -27,6 +27,7 @@ QuasiStaticLinearElasticitySolver(DihuContext context) :
   }
   maximumActiveStress_ = specificSettings_.getOptionDouble("maximumActiveStress", 1.0, PythonUtility::ValidityCriterion::Positive);
   strainScalingCurveWidth_ = specificSettings_.getOptionDouble("strainScalingCurveWidth", 1.0, PythonUtility::ValidityCriterion::Positive);
+  scalingFactor_ = specificSettings_.getOptionDouble("scalingFactor", 1.0);
 
   LOG(DEBUG) << "QuasiStaticLinearElasticitySolver: parsed parameters maximumActiveStress: " << maximumActiveStress_ << ", strainScalingCurveWidth: " << strainScalingCurveWidth_;
   LOG(DEBUG) << "now parse output writers";
@@ -62,7 +63,7 @@ advanceTimeSpan()
 
   LOG(DEBUG) << "update geometry";
 
-  //finiteElementMethodLinearElasticity_.data().updateGeometry();
+  finiteElementMethodLinearElasticity_.data().updateGeometry(this->scalingFactor_);
 
   // stop duration measurement
   if (this->durationLogKey_ != "")

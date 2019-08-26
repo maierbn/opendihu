@@ -61,7 +61,7 @@ def run(x,y,z,n_fibers_per_dimension):
     --emg_solver_type {EMG_SOLVER_TYPE} \
     --emg_initial_guess_nonzero \
     --firing_times_file {FIRING_TIMES_FILE} \
-    --end_time 1.0 \
+    --end_time 10000.0 \
     --disable_firing_output \
 ".format(OPENDIHU_HOME=opendihu_home, X=x, Y=y, Z=z, NP=x*y*z, N=pes_per_node, EXAMPLE_HOME=example_home, SETTINGS_FILE=settings_file, SCENARIO_NAME=scenario_name, FIBER_FILE=fiber_file, n_available_nodes=n_available_nodes, FIRING_TIMES_FILE=firing_times_file, EMG_SOLVER_TYPE=emg_solver_type, DURATION=sleep_duration)
 

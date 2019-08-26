@@ -10,8 +10,8 @@ namespace TimeSteppingScheme
 
 template<typename DiscretizableInTimeType>
 TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::TimeSteppingSchemeOdeBaseDiscretizable(DihuContext context, std::string name) :
-  TimeSteppingSchemeOdeBase<typename DiscretizableInTimeType::FunctionSpace,DiscretizableInTimeType::nComponents()>::
-  TimeSteppingSchemeOdeBase(context, name), discretizableInTime_(this->context_), initialized_(false)
+  TimeSteppingSchemeOdeTransferableSolutionData<typename DiscretizableInTimeType::FunctionSpace,DiscretizableInTimeType::nComponents(), DiscretizableInTimeType>::
+  TimeSteppingSchemeOdeTransferableSolutionData(context, name), discretizableInTime_(this->context_), initialized_(false)
 {
   //initialize output writers
   this->outputWriterManager_.initialize(this->context_, this->specificSettings_);
@@ -66,7 +66,7 @@ void TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::
 setRankSubset(Partition::RankSubset rankSubset)
 {
   TimeSteppingSchemeOdeBase<typename DiscretizableInTimeType::Functionspace,DiscretizableInTimeType::nComponents()>::
-  setRankSubset(rankSubset);
+    setRankSubset(rankSubset);
   discretizableInTime_.setRankSubset(rankSubset);
 } 
 
@@ -75,7 +75,7 @@ void TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::
 reset()
 {
   TimeSteppingSchemeOdeBase<typename DiscretizableInTimeType::FunctionSpace,DiscretizableInTimeType::nComponents()>::
-  reset();
+    reset();
   discretizableInTime_.reset();
   this->data_.reset();
   
@@ -137,6 +137,9 @@ initialize()
   }
   VLOG(1) << "initial solution vector: " << *this->data_->solution();
   
+  //output initial values
+  this->outputWriterManager_.writeOutput(*this->data_, 0, 0);
+  
   this->data_->print();
   
   initialized_ = true;
@@ -148,20 +151,6 @@ TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::
 dirichletBoundaryConditions()
 {
   return dirichletBoundaryConditions_;
-}
-
-template<int nStates, typename FunctionSpaceType>
-void TimeSteppingSchemeOde<CellmlAdapter<nStates, FunctionSpaceType>>::
-initialize()
-{
-  TimeSteppingSchemeOdeBaseDiscretizable<CellmlAdapter<nStates, FunctionSpaceType>>::initialize();
-  double prefactor = this->discretizableInTime_.prefactor();
-  int outputComponentNo = this->discretizableInTime_.outputStateIndex();
-
-  LOG(DEBUG) << "set CellML prefactor=" << prefactor << ", outputComponentNo=" << outputComponentNo;
-
-  this->data_->setPrefactor(prefactor);
-  this->data_->setOutputComponentNo(outputComponentNo);
 }
 
 template<typename DiscretizableInTimeType>

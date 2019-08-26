@@ -9,16 +9,16 @@ import sys
 
 local = True
 
-nx = 2
-ny = 2
-nz = 5
+nx = 4
+ny = 4
+nz = 4
 
 
 # Neumann boundary conditions
 bc = []
 
 # global boundary conditions
-if not local:   
+if not local:
   for j in range(int(ny)):
     for i in range(int(nx)):
       x = i/nx
@@ -42,12 +42,16 @@ n_ranks = (int)(sys.argv[-1])
 
 n_elements = [nx,ny,nz]
 
+nRanksPerCoordinateDirection = [1,1,n_ranks]
+
 # local boundary conditions
 if local:
-  if n_ranks > 1:
-    n_elements = [2,2,2]
-    if rank_no == 0:
-      n_elements = [2,2,3]
+  #if n_ranks > 1:
+    #n_elements = [2,2,2]
+    #if rank_no == 0:
+    #  n_elements = [2,2,3]
+
+  nRanksPerCoordinateDirection = [2,2,2]
 
   # boundary conditions
   bc = []
@@ -57,16 +61,16 @@ if local:
       y = j/ny
       element_no = int(j*nx + i)
       
-      if rank_no == 0:
+      if rank_no < 4:
         bc.append({"element": element_no, "constantValue": -1.0, "face": "2-"})
         
-      if rank_no == n_ranks-1:
+      if rank_no >= n_ranks-4:
         bc.append({"element": -(nx*ny)+element_no, "constantValue": 1.0, "face": "2+"})
 
 config = {
   "FiniteElementMethod" : {
     "nElements": n_elements,
-    "nRanks": [1,1,n_ranks],
+    "nRanks": nRanksPerCoordinateDirection,
     "inputMeshIsGlobal": not local,
     "physicalExtent": n_elements,
     "outputInterval": 1.0,

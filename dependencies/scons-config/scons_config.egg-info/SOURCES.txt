@@ -44,12 +44,15 @@ sconsconfig/packages/SkyMaker.py
 sconsconfig/packages/Sphinx.py
 sconsconfig/packages/SvgPath.py
 sconsconfig/packages/UTBot.py
+sconsconfig/packages/VTK.py
+sconsconfig/packages/XercesC.py
 sconsconfig/packages/__init__.py
 sconsconfig/packages/alsa.py
 sconsconfig/packages/bison.py
 sconsconfig/packages/boost.py
 sconsconfig/packages/bzip2.py
 sconsconfig/packages/cfitsio.py
+sconsconfig/packages/chaste.py
 sconsconfig/packages/clock.py
 sconsconfig/packages/flex.py
 sconsconfig/packages/glut.py
@@ -65,6 +68,7 @@ sconsconfig/packages/pythonPackages.py
 sconsconfig/packages/rapidxml.py
 sconsconfig/packages/re2.py
 sconsconfig/packages/sqlite3.py
+sconsconfig/packages/xsd.py
 sconsconfig/tools/__init__.py
 sconsconfig/tools/cuda.py
 sconsconfig/tools/klee.py

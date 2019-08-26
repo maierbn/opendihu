@@ -11,8 +11,10 @@ void SolutionVectorMapping<
   std::vector<TransferableSolutionDataType1>,
   std::vector<TransferableSolutionDataType2>
 >::transfer(const std::vector<TransferableSolutionDataType1> &transferableSolutionData1,
-            const std::vector<TransferableSolutionDataType2> &transferableSolutionData2)
+            const std::vector<TransferableSolutionDataType2> &transferableSolutionData2,
+            const std::string transferSlotName)
 {
+  VLOG(1) << "Solution vector mapping (solution_vector_mapping_vector.tpp)";
   int nTransferableVariables = std::min(transferableSolutionData1.size(), transferableSolutionData2.size());
   if (transferableSolutionData1.size() != transferableSolutionData2.size())
   {
@@ -22,11 +24,13 @@ void SolutionVectorMapping<
       << StringUtility::demangle(typeid(TransferableSolutionDataType2).name());
   }
 
+  // loop over the two vectors A and B and transfer A[i] -> B[i] for every component
   for (int i = 0; i < nTransferableVariables; i++)
   {
     SolutionVectorMapping<TransferableSolutionDataType1,TransferableSolutionDataType2>::transfer(
       transferableSolutionData1[i],
-      transferableSolutionData2[i]
+      transferableSolutionData2[i],
+      transferSlotName
     );
   }
 }

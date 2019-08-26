@@ -174,6 +174,9 @@ createPartitioningStructuredLocal(std::array<global_no_t,FunctionSpace::dim()> &
     VLOG(1) << "set nElementsGlobal[" << i << "] = " << nElementsGlobal[i];
   }
   
+  LOG(DEBUG) << "create new meshPartition, nElementsLocal: " << nElementsLocal << ", nElementsGlobal: " << nElementsGlobal
+    << ", beginGlobal: " << beginGlobal << ", nRanks: " << nRanks << ", rankSubset : " << *rankSubset;
+
   // create a mesh partition with prescribed local partitions
   return std::make_shared<MeshPartition<FunctionSpace>>(nElementsLocal, nElementsGlobal, beginGlobal, nRanks, rankSubset);
 }

@@ -353,11 +353,13 @@ class Package(object):
     name = self.name
     upp = name.upper()
     vars.Add(BoolVariable('DISABLE_CHECKS', help='Allow failure of checks for all packages.', default=False))
+    vars.Add(BoolVariable('DISABLE_RUN', help='Do not attempt to run executables for checks, only compile, for all packages.', default=False))
     vars.Add(upp + '_DIR', help='Location of %s.'%name)
     vars.Add(upp + '_INC_DIR', help='Location of %s header files.'%name)
     vars.Add(upp + '_LIB_DIR', help='Location of %s libraries.'%name)
     vars.Add(upp + '_LIBS', help='%s libraries.'%name)
     vars.Add(upp + '_DISABLE_CHECKS', help='Allow failure of check for %s.'%name)
+    vars.Add(upp + '_DISABLE_RUN', help='Do not attempt to run executables for checks for %s.'%name)
     if self.download_url:
       vars.Add(BoolVariable(upp + '_DOWNLOAD', help='Download and use a local copy of %s.'%name, default=False))
       vars.Add(BoolVariable(upp + '_REDOWNLOAD', help='Force update of previously downloaded copy of %s.'%name, default=False))
@@ -653,11 +655,14 @@ class Package(object):
       os.remove('scons_build_success')
 
     # Remove the installation directory.
-    if os.path.exists(install_dir):
-      if os.path.islink(install_dir):
-        os.unlink(install_dir)
-      else:
-        shutil.rmtree(install_dir)
+    try:
+      if os.path.exists(install_dir):
+        if os.path.islink(install_dir):
+          os.unlink(install_dir)
+        else:
+          shutil.rmtree(install_dir)
+    except:
+      ctx.Log("Failed to remove installation directory {}".format(install_dir))
 
     # Hunt down the correct build handler.
     handler = self.get_build_handler()
@@ -711,13 +716,19 @@ class Package(object):
           path_environment_variable = os.environ.get("PATH")
         cmd = cmd.replace('${PATH}', path_environment_variable)
         
+        
+        ctx.Log("MPI_DIR in env: {}\n".format("MPI_DIR" in ctx.env))
+        ctx.Log("env[MPI_DIR]={}, replace in cmd\n".format(ctx.env["MPI_DIR"]))
+        if "MPI_DIR" in ctx.env:
+          cmd = cmd.replace('${MPI_DIR}', ctx.env["MPI_DIR"])
+        
         if substitute_environment_variables:
           cmd = ctx.env.subst(cmd)
           
-        sys.stdout.write("    $"+cmd+"  ")
+        sys.stdout.write("    $ "+cmd+"  ")
         sys.stdout.flush()
     
-        ctx.Log("  $"+cmd+"\n")
+        ctx.Log("  $ "+cmd+"\n")
 
         output = ""
         try:
@@ -836,16 +847,33 @@ class Package(object):
       ccflags = ctx.env["CCFLAGS"]
       for i in ccflags:
         ctx.Log("  CCFLAGS: "+str(i)+"\n")
-    ctx.Log("=============")
+    ctx.Log("=============\n")
     #ctx.Log("  CCFLAGS:  "+str(ctx.env["CCFLAGS"])+"\n")    # cannot do str(..CCFLAGS..) when it is a tuple
-        
+       
+    if ctx.env.get('DISABLE_RUN', []):
+      ctx.Log('Do not run executable, only link because DISABLE_RUN is set.\n')
+      self.run = False
+
+    name = self.name
+    upp = name.upper()
+    if ctx.env.get(upp + '_DISABLE_RUN', []):
+      ctx.Log('Do not run executable, only link because '+upp + '_DISABLE_RUN is set.\n')
+      self.run = False
+  
+ 
     # compile / run test program
     if self.run:
-      res = ctx.TryRun(text, self.ext)
+      if os.environ.get("PE_ENV") is not None or "pg" in ctx.env["CC"]:
+         ctx.Log("Do not run test, only link\n")
+         ctx.Log("Reason: either on compute cluster ($PE_ENV is set) or PGI compiler (env[\"CC\"] contains \"pg\")\n")
+
+         # on cluster or with PGI compiler, do not run program, only link
+         res = (ctx.TryLink(text, self.ext), '')    
+      else:
+        
+          # compile and run test program normally
+          res = ctx.TryRun(text, self.ext)
       
-      if not res[0] and os.environ.get("PE_ENV") is not None:
-        ctx.Log("Run failed on hazelhen, try again, this time only link")
-        res = (ctx.TryLink(text, self.ext), '')
     else:
       res = (ctx.TryLink(text, self.ext), '')
         
@@ -866,6 +894,7 @@ class Package(object):
  
       disable_checks = False
       if ctx.env.get('DISABLE_CHECKS', []):
+        ctx.Log('Disable checks because DISABLE_CHECKS is set.\n')
         disable_checks = True
       name = self.name
       upp = name.upper()
@@ -1033,7 +1062,7 @@ class Package(object):
 
         system_inc_dirs = []
         for inc_dir in inc_sub_dirs:
-          if socket.gethostname() == 'cmcs09':
+          if "pgcc" in ctx.env["cc"] or "pgcc" in ctx.env["CC"]:
             system_inc_dirs.append(('-I', inc_dir))
           else:
             system_inc_dirs.append(('-isystem', inc_dir))     # -isystem is the same is -I for gcc, except it suppresses warning (useful for dependencies)            

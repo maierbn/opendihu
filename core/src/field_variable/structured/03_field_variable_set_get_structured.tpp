@@ -333,6 +333,23 @@ getValue(int componentNo, node_no_t dofLocalNo) const
   return result;
 }
 
+//! get a single value from local dof no. for all components
+template<typename FunctionSpaceType, int nComponents>
+std::array<double,nComponents> FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
+getValue(node_no_t dofLocalNo) const
+{
+  assert(this->values_);
+
+  PetscInt index = dofLocalNo;
+
+  std::array<double,nComponents> result;
+  for (int componentNo = 0; componentNo < nComponents; componentNo++)
+  {
+    this->values_->getValues(componentNo, 1, &index, &result[componentNo]);
+  }
+  return result;
+}
+
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 extractComponentCopy(int componentNo, std::shared_ptr<FieldVariable<FunctionSpaceType,1>> extractedFieldVariable)
@@ -399,6 +416,11 @@ setValues(int componentNo, const std::vector<dof_no_t> &dofNosLocal, const std::
 {
   assert(componentNo >= 0 && componentNo < nComponents);
   assert(this->values_);
+  if (values.size() < dofNosLocal.size())
+  {
+    LOG(FATAL) << "FieldVariable::setValues: trying to set " << dofNosLocal.size() << " values but only " << values.size() << " given.";
+  }
+  assert(values.size() >= dofNosLocal.size());
 
   // set the values for the given component
   this->values_->setValues(componentNo, dofNosLocal.size(), dofNosLocal.data(), values.data(), petscInsertMode);
@@ -464,6 +486,17 @@ setValue(dof_no_t dofLocalNo, const std::array<double,nComponents> &value, Inser
     this->values_->setValues(componentIndex, 1, &dofLocalNo, value.data()+componentIndex, petscInsertMode);
   }
 
+  // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. finishGhostManipulation must be called
+}
+
+//! set a single dof (all components) , after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
+setValue(int componentNo, dof_no_t dofLocalNo, double value, InsertMode petscInsertMode)
+{
+  assert(this->values_);
+
+  this->values_->setValues(componentNo, 1, &dofLocalNo, &value, petscInsertMode);
   // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. finishGhostManipulation must be called
 }
 

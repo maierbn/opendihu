@@ -505,20 +505,7 @@ std::string PythonUtility::getString(PyObject *object, int indent, int first_ind
 
       line << std::endl << std::string(indent+2, ' ');
 
-      if (PyUnicode_Check(key))
-      {
-        std::string keyString = pyUnicodeToString(key);
-        line << keyString<< ": ";
-      }
-      else if (PyLong_Check(key))
-      {
-        std::string keyString = std::to_string(PyLong_AsLong(key));
-        line << keyString<< ": ";
-      }
-      else
-      {
-        line << "(key is of unknown type): ";
-      }
+      line << getString(key) << ": ";
 
       line << getString(value, indent+2, 0);
     }

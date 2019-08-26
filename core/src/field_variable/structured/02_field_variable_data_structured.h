@@ -27,7 +27,7 @@ public:
   //! inherited constructor
   using FieldVariableComponents<FunctionSpaceType,nComponents_>::FieldVariableComponents;
 
-  //! contructor as data copy with a different name (component names are the same)
+  //! contructor as data copy with a different name (component names are the same), note, it is not possible to make rhs const, because VecCopy needs globalValues() and this may change rhs
   FieldVariableDataStructured(FieldVariable<FunctionSpaceType,nComponents_> &rhs, std::string name);
 
   //! contructor as data copy with a different name and different components
@@ -53,7 +53,10 @@ public:
   Vec &valuesLocal(int componentNo = 0);
 
   //! get the internal PETSc vector values, the global vector for the specified component
-  Vec &valuesGlobal(int componentNo = 0);
+  Vec &valuesGlobal(int componentNo);
+
+  //! if the vector has multiple components, return a nested Vec of the global vector, else return the global vector
+  Vec &valuesGlobal();
 
   //! fill a contiguous vector with all components after each other, "struct of array"-type data layout.
   //! after manipulation of the vector has finished one has to call restoreValuesContiguous
@@ -65,6 +68,7 @@ public:
 
   //! output string representation to stream for debugging
   void output(std::ostream &stream) const;
+
 
   //! not implemented interface methods
 

@@ -27,3 +27,9 @@ mpi_debug
 pythonpackages
 megamol
 adios
+vtk
+hdf5
+xercesc
+xsd
+boost
+chaste

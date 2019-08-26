@@ -35,6 +35,7 @@ initialize()
   // compute the system matrix
   this->setSystemMatrix(this->timeStepWidth_);
 
+  LOG(DEBUG) << "time_stepping_implicit applyInSystemMatrix, from TimeSteppingImplicit::initialize";
   // set the boundary conditions to system matrix, i.e. zero rows and columns of Dirichlet BC dofs and set diagonal to 1
   this->dirichletBoundaryConditions_->applyInSystemMatrix(this->dataImplicit_->systemMatrix(), this->dataImplicit_->boundaryConditionsRightHandSideSummand());
 
@@ -48,6 +49,22 @@ initialize()
   ierr = KSPSetOperators(*ksp_, systemMatrix, systemMatrix); CHKERRV(ierr);
   
   this->initialized_ = true;
+}
+
+template<typename DiscretizableInTimeType>
+void TimeSteppingImplicit<DiscretizableInTimeType>::
+reset()
+{
+  TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::reset();
+
+  LOG(DEBUG) << "set linearSolver_ to nullptr";
+  if (linearSolver_)
+  {
+    LOG(DEBUG) << "delete linear solver";
+    this->context_.solverManager()->deleteSolver(linearSolver_->name());
+  }
+
+  linearSolver_ = nullptr;
 }
 
 template<typename DiscretizableInTimeType>
@@ -81,6 +98,7 @@ template<typename DiscretizableInTimeType>
 void TimeSteppingImplicit<DiscretizableInTimeType>::
 initializeLinearSolver()
 { 
+  LOG(DEBUG) << "initializeLinearSolver, linearSolver_ == nullptr: " << (linearSolver_ == nullptr);
   if (linearSolver_ == nullptr)
   {
     LOG(DEBUG) << "Implicit time stepping: initialize linearSolver";

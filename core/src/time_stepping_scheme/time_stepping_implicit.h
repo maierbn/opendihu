@@ -29,6 +29,9 @@ public:
   //! set the system matrix
   virtual void initialize();
   
+  //! reset the object's state, i.e. delete the linear solver
+  virtual void reset();
+
   //! data for implicit timestepping
   DataImplicit &dataImplicit();
   

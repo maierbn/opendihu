@@ -101,6 +101,10 @@ public:
   //! extract a vector with exactly the specified number of nEntries, can be a dict or list, not specified entries are set to 0
   void getOptionVector(std::string keyString, int nEntries, std::vector<double> &values) const;
 
+  //! extract a vector with exactly the specified number of nEntries, must be a list, not specified entries are set to {0}
+  template<typename T>
+  void getOptionVector(std::string keyString, int nEntries, std::vector<T> &values) const;
+
   //! extract a vector with unknown number of nEntries, must be a list
   template<typename T>
   void getOptionVector(std::string keyString, std::vector<T> &values) const;

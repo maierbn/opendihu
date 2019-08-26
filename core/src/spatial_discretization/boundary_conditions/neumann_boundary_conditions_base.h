@@ -19,12 +19,17 @@ class NeumannBoundaryConditionsBase :
 {
 public:
 
+  struct ElementWithFaces;
+
   //! constructor
   NeumannBoundaryConditionsBase(DihuContext context);
 
   //! parse config and extract boundary conditions specified under the given key, store in boundaryConditionElements_
   void initialize(PythonConfig specificSettings, std::shared_ptr<FunctionSpaceType> functionSpace,
                   std::string boundaryConditionsConfigKey) override;
+
+  //! initialize directly
+  void initialize(std::shared_ptr<FunctionSpaceType> functionSpace, const std::vector<ElementWithFaces> &boundaryConditionElements);
 
   //! return the rhs with contributions from Neumann boundary conditions
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> rhs();

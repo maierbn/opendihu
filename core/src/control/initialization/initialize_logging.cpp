@@ -80,6 +80,19 @@ void DihuContext::initializeLogging(int argc, char *argv[])
 
   // set location of log files
   std::string logFilesPath = "/tmp/logs/";   // must end with '/'
+
+  if (argc >= 3)
+  {
+    std::string argument(argv[2]);
+    if (argument[0] == '/')
+    {
+      if (argument[argument.size()-1] != '/')
+        argument += "/";
+
+      logFilesPath += argument.substr(1);
+    }
+  }
+
   if (nRanksCommWorld_ > 1)
   {
     std::stringstream s;
@@ -137,4 +150,5 @@ void DihuContext::initializeLogging(int argc, char *argv[])
   // reconfigure all loggers
   el::Loggers::reconfigureAllLoggers(conf);
   el::Loggers::removeFlag(el::LoggingFlag::AllowVerboseIfModuleNotSpecified);
+  LOG(DEBUG) << "Log to \"" << logFilesPath << "\".";
 }

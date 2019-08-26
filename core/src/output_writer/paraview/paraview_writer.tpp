@@ -7,6 +7,7 @@
 
 #include "output_writer/paraview/loop_collect_field_variables_names.h"
 #include "output_writer/paraview/loop_output_point_data.h"
+#include "field_variable/field_variable.h"
 
 namespace OutputWriter
 {

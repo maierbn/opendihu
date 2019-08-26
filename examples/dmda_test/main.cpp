@@ -45,7 +45,7 @@ void testDmda()
   localSizesOnRanks_[0].assign(lxData, lxData + nRanks_[0]);
   localSizesOnRanks_[1].assign(lyData, lyData + nRanks_[1]);
   
-  LOG(INFO)  
+  LOG(DEBUG)
     << "globalSize_: " << globalSize_
     << "beginElementGlobal_: " << beginElementGlobal_ << ", "
     << "nElementsLocal_: " << nElementsLocal_ << ", "
@@ -158,6 +158,7 @@ int main(int argc, char *argv[])
 {
   
   // test case
+  // run with 2 processes
   
   // global
   // |3 |4 5|
@@ -173,7 +174,14 @@ int main(int argc, char *argv[])
   // |1 3*| |2 3|
   // |0 2*| |0 1|
   //  p0     p1   *=ghost
-  
+  //
+  // values
+  // |1.1  3.1|  |2.2  3.2|
+  // |0.1  2.1|  |0.2  1.2|
+  //
+  // |1.1  |5.3  3.2|
+  // |0.1  |2.3  1.2|
+
   
   // keywords: VecCreateGhost, VecGhostUpdateBegin, VecGetLocalVector
   
@@ -185,7 +193,7 @@ int main(int argc, char *argv[])
   MPI_Comm_rank(MPI_COMM_WORLD, &ownRankNo);
   MPI_Comm_size(PETSC_COMM_WORLD,&size);
   
-  LOG(INFO) << " ownRankNo: " << ownRankNo << ", size: " << size;
+  LOG(DEBUG) << " ownRankNo: " << ownRankNo << ", size: " << size;
 
   int nNodesLocal = 0;      // non-ghosts
   int nNodesGlobal = 0;
@@ -266,23 +274,23 @@ int main(int argc, char *argv[])
     VecRestoreLocalVectorRead(globalVector, localVector);*/
   }
   
-  LOG(INFO) << "localToGlobalMapping: " << localToGlobalMapping;
+  LOG(DEBUG) << "localToGlobalMapping: " << localToGlobalMapping;
 
   int nEntriesGlobal;
   VecGetSize(globalVector, &nEntriesGlobal);  
 
-  LOG(INFO) << "global vector has " << nEntriesGlobal << " entries";
+  LOG(DEBUG) << "global vector has " << nEntriesGlobal << " entries";
   
   std::vector<int> indices(nEntriesGlobal);
   std::iota(indices.begin(), indices.end(), 0);
   std::vector<double> values(nEntriesGlobal);
     
   VecGetValues(globalVector, nEntriesGlobal, indices.data(), values.data());
-  LOG(INFO) << "global values: " << values;
+  LOG(DEBUG) << "global values: " << values;
   
   int nEntriesLocal;
   VecGetSize(localVector, &nEntriesLocal);
-  LOG(INFO) << "local vector has " << nEntriesLocal << " entries (" 
+  LOG(DEBUG) << "local vector has " << nEntriesLocal << " entries ("
     << nNodesLocal << " local, " << (nGhosts) << " ghosts)";
   
   std::vector<int> indices2(nEntriesLocal);
@@ -291,11 +299,55 @@ int main(int argc, char *argv[])
     
   VecGetValues(localVector, nEntriesLocal, indices2.data(), values2.data());
   
-  LOG(INFO) << "local values: " << values2;
+  LOG(DEBUG) << "local values: " << values2;
   VecView(globalVector, PETSC_VIEWER_STDOUT_WORLD);
 
+  MPI_Barrier(MPI_COMM_WORLD);
+  LOG(INFO) << "communicate ghost values";
+
+  // now communicate ghost values from rank 1 to rank 0
+  VecGhostUpdateBegin(globalVector, INSERT_VALUES, SCATTER_FORWARD);
+  VecGhostUpdateEnd(globalVector, INSERT_VALUES, SCATTER_FORWARD);
+
+  VecGetValues(globalVector, nEntriesGlobal, indices.data(), values.data());
+  LOG(INFO) << "global values: " << values;
+
+  VecGetValues(localVector, nEntriesLocal, indices2.data(), values2.data());
+  LOG(INFO) << "local values: " << values2;
+
+  if (ownRankNo == 0)
+  {
+    // global values
+    assert(fabs(values[0] - 0.1) < 1e-12);
+    assert(fabs(values[1] - 1.1) < 1e-12);
+    assert(fabs(values[2] - 2.3) < 1e-12);
+    assert(fabs(values[3] - 5.3) < 1e-12);
+
+    // local values
+    assert(fabs(values2[0] - 0.1) < 1e-12);
+    assert(fabs(values2[1] - 1.1) < 1e-12);
+    assert(fabs(values2[2] - 2.3) < 1e-12);
+    assert(fabs(values2[3] - 5.3) < 1e-12);
+  }
+  else
+  {
+    // global values
+    assert(fabs(values[2] - 2.3) < 1e-12);
+    assert(fabs(values[3] - 1.2) < 1e-12);
+    assert(fabs(values[4] - 5.3) < 1e-12);
+    assert(fabs(values[5] - 3.2) < 1e-12);
+
+    // local values
+    assert(fabs(values2[0] - 2.3) < 1e-12);
+    assert(fabs(values2[1] - 1.2) < 1e-12);
+    assert(fabs(values2[2] - 5.3) < 1e-12);
+    assert(fabs(values2[3] - 3.2) < 1e-12);
+  }
+
+
+  MPI_Barrier(MPI_COMM_WORLD);
   // --------- matrix ------------
-  LOG(INFO) << " --------- matrix ---------";
+  LOG(DEBUG) << " --------- matrix ---------";
   Mat globalMatrix;
   Mat localMatrix;
   int nComponents = 1;
@@ -311,19 +363,19 @@ int main(int argc, char *argv[])
   int nRows, nColumns, nRowsLocal, nColumnsLocal;
   ierr = MatGetSize(globalMatrix, &nRows, &nColumns); CHKERRQ(ierr);
   ierr = MatGetLocalSize(globalMatrix, &nRowsLocal, &nColumnsLocal); CHKERRQ(ierr);
-  LOG(INFO) << "matrix global: " << nRows << "x" << nColumns << ", local: " << nRowsLocal << "x" << nColumnsLocal;
+  LOG(DEBUG) << "matrix global: " << nRows << "x" << nColumns << ", local: " << nRowsLocal << "x" << nColumnsLocal;
 
   std::vector<int> localDofNos(nNodesLocal+nGhosts);
   std::iota(localDofNos.begin(), localDofNos.end(), 0);
   
-  LOG(INFO) << "matrix created";
+  LOG(DEBUG) << "matrix created";
   
   IS indexSet;
   ierr = ISCreateGeneral(PETSC_COMM_WORLD, localDofNos.size(), localDofNos.data(), PETSC_COPY_VALUES, &indexSet); CHKERRQ(ierr);
   ierr = MatGetLocalSubMatrix(globalMatrix, indexSet, indexSet, &localMatrix); CHKERRQ(ierr);
   // see Figure 10 on p.72 of PETSc manual
   
-  LOG(INFO) << "got local submatrix for indexSet " << localDofNos;
+  LOG(DEBUG) << "got local submatrix for indexSet " << localDofNos;
   
   // set values
   std::vector<int> rowIndices;
@@ -341,7 +393,7 @@ int main(int argc, char *argv[])
   {
     values[i] = 1.1*(ownRankNo+1);
   }
-  LOG(INFO) << "INSERT_VALUES: rowIndices: " << rowIndices << ", columnIndices: " << columnIndices << ", values " << values;
+  LOG(DEBUG) << "INSERT_VALUES: rowIndices: " << rowIndices << ", columnIndices: " << columnIndices << ", values " << values;
   
   ierr = MatSetValuesLocal(localMatrix, rowIndices.size(), rowIndices.data(), columnIndices.size(), columnIndices.data(), values.data(), INSERT_VALUES); CHKERRQ(ierr);
   //ierr = MatSetValuesLocal(globalMatrix, rowIndices.size(), rowIndices.data(), columnIndices.size(), columnIndices.data(), values.data(), ADD_VALUES); CHKERRQ(ierr);
@@ -354,7 +406,7 @@ int main(int argc, char *argv[])
   
   ierr = MatGetLocalSubMatrix(globalMatrix, indexSet, indexSet, &localMatrix); CHKERRQ(ierr);
   
-  LOG(INFO) << "ADD_VALUES: rowIndices: " << rowIndices << ", columnIndices: " << columnIndices << ", values " << values;
+  LOG(DEBUG) << "ADD_VALUES: rowIndices: " << rowIndices << ", columnIndices: " << columnIndices << ", values " << values;
   
   rowIndices.resize(nNodesLocal+nGhosts);
   std::iota(rowIndices.begin(), rowIndices.end(), 0);
@@ -400,8 +452,8 @@ int main(int argc, char *argv[])
   
   MPI_Barrier(MPI_COMM_WORLD);
   // get all values 
-  //LOG(INFO) << " display globalMatrix";
-  //LOG(INFO) << " globalMatrix: " << PetscUtility::getStringMatrix(globalMatrix);
+  //LOG(DEBUG) << " display globalMatrix";
+  //LOG(DEBUG) << " globalMatrix: " << PetscUtility::getStringMatrix(globalMatrix);
   
   // show entries
   ierr = MatView(globalMatrix, PETSC_VIEWER_STDOUT_WORLD); CHKERRQ(ierr);

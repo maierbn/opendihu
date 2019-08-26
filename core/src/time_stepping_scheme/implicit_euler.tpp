@@ -28,7 +28,7 @@ void ImplicitEuler<DiscretizableInTimeType>::advanceTimeSpan()
   double timeSpan = this->endTime_ - this->startTime_;
   
   LOG(DEBUG) << "ImplicitEuler::advanceTimeSpan, timeSpan=" << timeSpan<< ", timeStepWidth=" << this->timeStepWidth_
-    << " n steps: " << this->numberTimeSteps_;
+    << " n steps: " << this->numberTimeSteps_ << ", time span: [" << this->startTime_ << "," << this->endTime_ << "]";
 
   Vec solution = this->data_->solution()->valuesGlobal();
 

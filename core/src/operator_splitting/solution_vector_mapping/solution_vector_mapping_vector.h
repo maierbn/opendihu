@@ -29,9 +29,10 @@ class SolutionVectorMapping<
 >
 {
 public:
-  //! transfer the data from transferableSolutionData1 to transferableSolutionData2, as efficient as possible
+  //! transfer the data from transferableSolutionData1 to transferableSolutionData2, as efficient as possible, where there are multiple slots that could be transferred (e.g. at cellmlAdapter), use the one specified by transferSlotName
   static void transfer(const std::vector<TransferableSolutionDataType1> &transferableSolutionData1,
-                       const std::vector<TransferableSolutionDataType2> &transferableSolutionData2);
+                       const std::vector<TransferableSolutionDataType2> &transferableSolutionData2,
+                       const std::string transferSlotName);
 };
 
 #include "operator_splitting/solution_vector_mapping/solution_vector_mapping_vector.tpp"

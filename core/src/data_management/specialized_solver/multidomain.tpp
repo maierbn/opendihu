@@ -148,6 +148,7 @@ template<typename FunctionSpaceType>
 typename Multidomain<FunctionSpaceType>::OutputFieldVariables Multidomain<FunctionSpaceType>::
 getOutputFieldVariables()
 {
+  // these field variables will be written to output files
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> geometryField
     = std::make_shared<FieldVariable::FieldVariable<FunctionSpaceType,3>>(this->functionSpace_->geometryField());
 

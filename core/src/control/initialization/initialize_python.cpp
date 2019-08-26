@@ -38,12 +38,19 @@ void DihuContext::initializePython(int argc, char *argv[], bool explicitConfigFi
   VLOG(1) << "standard python path: " << standardPythonPath;
 
   // set python path
-  std::stringstream pythonPath;
+  //std::stringstream pythonPath;
   //pythonPath << ".:" << PYTHON_HOME_DIRECTORY << "/lib/python3.6:" << PYTHON_HOME_DIRECTORY << "/lib/python3.6/site-packages:"
   //pythonPath << OPENDIHU_HOME << "/scripts:" << OPENDIHU_HOME << "/scripts/geometry_manipulation";
   //VLOG(1) << "python path: " << pythonPath.str();
   //const wchar_t *pythonPathWChar = Py_DecodeLocale(pythonPath.str().c_str(), NULL);
   //Py_SetPath((wchar_t *)pythonPathWChar);
+
+  // adjust PYTHONPATH
+  std::stringstream codeForPythonPath;
+  codeForPythonPath << "import sys" << std::endl
+    << "sys.path.append('" << OPENDIHU_HOME << "/scripts" << "')" << std::endl
+    << "sys.path.append('" << OPENDIHU_HOME << "/scripts/geometry_manipulation" << "')" << std::endl;
+   PyRun_SimpleString(codeForPythonPath.str().c_str());
 
 
   // pass on command line arguments to python config script

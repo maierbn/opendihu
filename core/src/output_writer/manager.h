@@ -24,6 +24,12 @@ public:
   //! if this manager contains any output writers
   bool hasOutputWriters();
 
+  //! get the filename of the first output writer
+  std::string filename();
+
+  //! set the filename for the first output writer
+  void setFilename(std::string filename);
+
 protected:
 
   //! helper function that creates an outputWriter

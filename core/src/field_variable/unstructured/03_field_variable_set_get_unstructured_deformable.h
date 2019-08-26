@@ -74,6 +74,9 @@ public:
   //! for a specific component, get a single value from local dof no.
   double getValue(int componentNo, node_no_t dofLocalNo) const;
 
+  //! get a single value from local dof no. for all components
+  std::array<double,nComponents> getValue(node_no_t dofLocalNo) const;
+
   //! copy the values of a given component to a new single-component field variable
   void extractComponentCopy(int componentNo, std::shared_ptr<FieldVariable<FunctionSpaceType,1>> extractedFieldVariable);
 
@@ -104,6 +107,9 @@ public:
 
   //! set a single dof (all components) , after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
   void setValue(dof_no_t dofLocalNo, const std::array<double,nComponents> &value, InsertMode petscInsertMode=INSERT_VALUES);
+
+  //! set a single dof for a given component, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
+  void setValue(int componentNo, dof_no_t dofLocalNo, double value, InsertMode petscInsertMode);
 
   //! set values for the specified component for all local dofs, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
   void setValuesWithGhosts(int componentNo, const std::vector<double> &values, InsertMode petscInsertMode=INSERT_VALUES);

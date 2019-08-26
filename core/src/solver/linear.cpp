@@ -2,6 +2,7 @@
 
 #include "utility/python_utility.h"
 #include "control/performance_measurement.h"
+#include "partition/partitioned_petsc_mat/partitioned_petsc_mat.h"
 
 namespace Solver
 {
@@ -17,14 +18,20 @@ Linear::Linear(PythonConfig specificSettings, MPI_Comm mpiCommunicator, std::str
     VLOG(1) << "Create linear solver on " << size << (size == 1? " rank." : " ranks.");
   }
 
+  mpiCommunicator_ = mpiCommunicator;
+
   // parse options
   relativeTolerance_ = this->specificSettings_.getOptionDouble("relativeTolerance", 1e-5, PythonUtility::Positive);
   maxIterations_ = this->specificSettings_.getOptionDouble("maxIterations", 10000, PythonUtility::Positive);
-  
+
+  //parse information to use for dumping matrices and vectors
+  dumpFormat_ = this->specificSettings_.getOptionString("dumpFormat", "default");
+  dumpFilename_ = this->specificSettings_.getOptionString("dumpFilename", "");
+
   // set up KSP object
   //KSP *ksp;
   ksp_ = std::make_shared<KSP>();
-  PetscErrorCode ierr = KSPCreate (mpiCommunicator, ksp_.get()); CHKERRV(ierr);
+  PetscErrorCode ierr = KSPCreate(mpiCommunicator_, ksp_.get()); CHKERRV(ierr);
 
   // parse the solver and preconditioner types from settings
   parseSolverTypes();
@@ -42,11 +49,49 @@ Linear::Linear(PythonConfig specificSettings, MPI_Comm mpiCommunicator, std::str
   // set type of preconditioner
   ierr = PCSetType(pc, pcType_); CHKERRV(ierr);
 
-  // for multigrid set number of levels to 5
+  // for multigrid set number of levels and cycle type
   if (pcType_ == std::string(PCGAMG))
   {
-    int nLevels = 5;
+    int nLevels = this->specificSettings_.getOptionInt("nLevels", 25, PythonUtility::Positive);
     ierr = PCMGSetLevels(pc, nLevels, NULL); CHKERRV(ierr);
+    
+    std::string mgType = this->specificSettings_.getOptionString("gamgType", "agg");
+    
+    PCGAMGType gamgType = PCGAMGCLASSICAL;
+    
+    if (mgType == "agg")
+    {
+      gamgType = PCGAMGAGG;
+    }
+    else if (mgType == "geo")
+    {
+      gamgType = PCGAMGGEO;
+    }
+    
+    ierr = PCGAMGSetType(pc,gamgType); CHKERRV(ierr);
+    
+    mgType = this->specificSettings_.getOptionString("cycleType", "cycleV");
+    
+    PCMGCycleType cycleType = PC_MG_CYCLE_V;
+    
+    if (mgType == "cycleW")
+    {
+      cycleType = PC_MG_CYCLE_W;
+    }
+    
+    ierr = PCMGSetCycleType(pc, cycleType); CHKERRV(ierr);    
+  }
+  
+  // set Hypre Options from Python config
+  if (pcType_ == std::string (PCHYPRE))
+  {
+    std::string hypreOptions = this->specificSettings_.getOptionString("hypreOptions", "-pc_hypre_type boomeramg");
+    PetscOptionsInsertString(NULL,hypreOptions.c_str());
+  }
+  
+  if (pcType_ ==  std::string(PCMG))
+  {
+    //TODO
   }
 
   // set options from command line, this overrides the python config
@@ -76,38 +121,7 @@ void Linear::parseSolverTypes()
 
   // parse preconditioner type
   std::string preconditionerType = this->specificSettings_.getOptionString("preconditionerType", "none");
-
-  // all pc types: https://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/PC/PCType.html
-  pcType_ = PCNONE;
-  if (preconditionerType == "jacobi")
-  {
-    pcType_ = PCJACOBI;
-  }
-  else if (preconditionerType == "sor")
-  {
-    pcType_ = PCSOR;
-  }
-  else if (preconditionerType == "lu")
-  {
-    pcType_ = PCLU;
-  }
-  else if (preconditionerType == "ilu")
-  {
-    pcType_ = PCILU;
-  }
-  else if (preconditionerType == "gamg")
-  {
-    pcType_ = PCGAMG;
-  }
-  else if (preconditionerType == "none")
-  {
-    pcType_ = PCNONE;
-  }
-  else if (preconditionerType != "none" && preconditionerType != "")
-  {
-    pcType_ = preconditionerType.c_str();
-  }
-
+  
   // all ksp types: https://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/KSP/KSPType.html#KSPType
   kspType_ = KSPGMRES;
   if (solverType == "richardson")
@@ -164,6 +178,46 @@ void Linear::parseSolverTypes()
     kspType_ = solverType.c_str();
   }
 
+  // all pc types: https://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/PC/PCType.html
+  pcType_ = PCNONE;
+  if (preconditionerType == "jacobi")
+  {
+    pcType_ = PCJACOBI;
+  }
+  else if (preconditionerType == "sor")
+  {
+    pcType_ = PCSOR;
+  }
+  else if (preconditionerType == "lu")
+  {
+    pcType_ = PCLU;
+  }
+  else if (preconditionerType == "ilu")
+  {
+    pcType_ = PCILU;
+  }
+  else if (preconditionerType == "gamg")
+  {
+    pcType_ = PCGAMG;
+  }
+  else if (preconditionerType == "pcmg")
+  {
+    pcType_ = PCMG;
+  }
+  // the hypre boomeramg as the only solver does not provide the correct solution 
+  else if (preconditionerType == "pchypre" && kspType_ != KSPPREONLY) 
+  {
+    pcType_ = PCHYPRE;
+  }
+  else if (preconditionerType == "none")
+  {
+    pcType_ = PCNONE;
+  }
+  else if (preconditionerType != "none" && preconditionerType != "")
+  {
+    pcType_ = preconditionerType.c_str();
+  }
+
   std::stringstream optionKey;
   optionKey << this->name_ << "_solverType";
   Control::PerformanceMeasurement::setParameter(optionKey.str(), solverType);
@@ -184,6 +238,17 @@ void Linear::solve(Vec rightHandSide, Vec solution, std::string message)
 {
   PetscErrorCode ierr;
 
+  // dump files
+  if (!dumpFilename_.empty())
+  {
+    PetscUtility::dumpVector(dumpFilename_+std::string("rhs"), dumpFormat_, rightHandSide, mpiCommunicator_);
+
+    Mat matrix;
+    Mat preconditionerMatrix;
+    KSPGetOperators(*ksp_, &matrix, &preconditionerMatrix);
+    PetscUtility::dumpMatrix(dumpFilename_+std::string("matrix"), dumpFormat_, matrix, mpiCommunicator_);
+  }
+
   Control::PerformanceMeasurement::start(this->durationLogKey_);
 
   // solve the system
@@ -203,6 +268,7 @@ void Linear::solve(Vec rightHandSide, Vec solution, std::string message)
   ierr = KSPGetConvergedReason(*ksp_, &convergedReason); CHKERRV(ierr);
   ierr = VecGetSize(rightHandSide, &nDofsGlobal); CHKERRV(ierr);
 
+  // compute residual norm
   if (kspType_ == KSPPREONLY && (pcType_ == PCLU || pcType_ == PCILU))
   {
     if (!residual_)

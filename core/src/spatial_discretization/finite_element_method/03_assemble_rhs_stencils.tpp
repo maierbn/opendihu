@@ -17,8 +17,8 @@ namespace SpatialDiscretization
 {
 
 // 1D rhs
-template<typename QuadratureType, typename Term>
-void AssembleRightHandSide<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Equation::hasLaplaceOperator<Term>>::
+template<typename QuadratureType,typename Term>
+void AssembleRightHandSide<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, 1, Term, Equation::hasLaplaceOperator<Term>>::
 multiplyRightHandSideWithMassMatrix()
 {
   LOG(TRACE) << "multiplyRightHandSideWithMassMatrix (1D)";
@@ -108,8 +108,8 @@ multiplyRightHandSideWithMassMatrix()
 }
 
 // 2D rhs
-template<typename QuadratureType, typename Term>
-void AssembleRightHandSide<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<2>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Equation::hasLaplaceOperator<Term>>::
+template<typename QuadratureType,typename Term>
+void AssembleRightHandSide<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<2>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, 1, Term, Equation::hasLaplaceOperator<Term>>::
 multiplyRightHandSideWithMassMatrix()
 {
   LOG(TRACE) << "multiplyRightHandSideWithMassMatrix (2D)";
@@ -334,8 +334,8 @@ multiplyRightHandSideWithMassMatrix()
 }
 
 // 3D rhs
-template<typename QuadratureType, typename Term>
-void AssembleRightHandSide<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<3>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Equation::hasLaplaceOperator<Term>>::
+template<typename QuadratureType,typename Term>
+void AssembleRightHandSide<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<3>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, 1, Term, Equation::hasLaplaceOperator<Term>>::
 multiplyRightHandSideWithMassMatrix()
 {
   LOG(TRACE) << "multiplyRightHandSideWithMassMatrix (3D)";

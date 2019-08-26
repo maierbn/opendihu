@@ -20,15 +20,20 @@ RankSubset::RankSubset(Iter ranksBegin, Iter ranksEnd, std::shared_ptr<RankSubse
   int ownRankParentCommunicator = 0;
   if (parentRankSubset)
   {
+    LOG(DEBUG) << "create RankSubset with " << std::distance(ranksBegin,ranksEnd) << " ranks, use parent communicator";
     parentCommunicator = parentRankSubset->mpiCommunicator();
     ownRankParentCommunicator = parentRankSubset->ownRankNo();
+    VLOG(1) << "determined own rank: " << ownRankParentCommunicator;
   }
   else
   {
+    VLOG(1) << "create RankSubset with " << std::distance(ranksBegin,ranksEnd) << " ranks, from MPI_COMM_WORLD";
     // get the own rank in the parent communicator which is MPI_COMM_WORLD
     MPIUtility::handleReturnValue(MPI_Comm_rank(MPI_COMM_WORLD, &ownRankParentCommunicator), "MPI_Comm_rank");
+    VLOG(1) << "determined own rank: " << ownRankParentCommunicator;
   }
 
+  // get the own rank in the communicator
   int color = MPI_UNDEFINED;
   
   std::copy(ranksBegin, ranksEnd, std::inserter(rankNo_, rankNo_.begin()));
@@ -84,6 +89,8 @@ RankSubset::RankSubset(Iter ranksBegin, Iter ranksEnd, std::shared_ptr<RankSubse
   // assign the name of the new communicator
   if (ownRankIsContained())
   {
+    LOG(DEBUG) << "ownRankIsContained";
+
     // get name of old communicator
     std::vector<char> oldCommunicatorNameStr(MPI_MAX_OBJECT_NAME);
     int oldCommunicatorNameLength = 0;

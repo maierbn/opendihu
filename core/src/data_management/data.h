@@ -14,6 +14,12 @@
 namespace Data
 {
 
+/** This is the base class for all data classes. These classes store the payload data of the solvers,
+ *  usually field variables which contain itself vectors (type PartitionedPetscVec),
+ *  furthermore matrices (type PartitionedPetscMat).
+ *  OutputWriters get an instance of these data classes and can only output what is stored in the object.
+ *  Therefore all important data of the field variables should be organized here.
+ */
 template<typename FunctionSpaceType>
 class Data
 {

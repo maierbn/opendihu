@@ -13,6 +13,7 @@ template<typename FunctionSpaceType,int nComponents>
 BoundaryConditionsBase<FunctionSpaceType,nComponents>::
 BoundaryConditionsBase(DihuContext context) : specificSettings_(NULL)
 {
+  LOG(DEBUG) << " create new boundary conditions object.";
 }
 
 template<typename FunctionSpaceType,int nComponents>
@@ -20,9 +21,18 @@ void BoundaryConditionsBase<FunctionSpaceType,nComponents>::
 initialize(PythonConfig specificSettings, std::shared_ptr<FunctionSpaceType> functionSpace, std::string boundaryConditionsConfigKey)
 {
   functionSpace_ = functionSpace;
+
+  LOG(DEBUG) << "BoundaryConditionsBase::initialize, use functionSpace_: " << functionSpace_->meshName();
+
   specificSettings_ = specificSettings;
   printDebuggingInfo();
 
+  // clear previous boundary condition values
+  boundaryConditionElements_.clear();
+  boundaryConditionNonGhostDofLocalNos_.clear();
+  boundaryConditionValues_.clear();
+
+  // parse new boundary condition dofs and values
   parseBoundaryConditionsForElements(boundaryConditionsConfigKey);
   this->initializeGhostElements();
 }
@@ -34,9 +44,12 @@ initialize(std::shared_ptr<FunctionSpaceType> functionSpace, std::vector<Boundar
 {
   functionSpace_ = functionSpace;
 
+  LOG(DEBUG) << "BoundaryConditionsBase::initialize, use functionSpace_: " << functionSpace_->meshName();
+
   boundaryConditionElements_ = boundaryConditionElements;
   boundaryConditionNonGhostDofLocalNos_ = boundaryConditionNonGhostDofLocalNos;
   boundaryConditionValues_ = boundaryConditionValues;
+  generateBoundaryConditionsByComponent();
   printDebuggingInfo();
 
   this->initializeGhostElements();
@@ -123,13 +136,16 @@ template<typename FunctionSpaceType,int nComponents>
 void BoundaryConditionsBase<FunctionSpaceType,nComponents>::
 parseBoundaryConditionsForElements(std::string boundaryConditionsConfigKey)
 {
-  LOG(TRACE) << "parseBoundaryConditionsForElements";
+  LOG(TRACE) << "parseBoundaryConditionsForElements, functionSpace: " <<  functionSpace_->meshName()
+    << ", nElementsLocal: " << functionSpace_->nElementsLocal();
 
   // add weak form of BC to rhs
   const int nDofsPerNode = FunctionSpaceType::nDofsPerNode();
 
   // determine if the BC indices in the config are given for global or local dof nos
   bool inputMeshIsGlobal = this->specificSettings_.getOptionBool("inputMeshIsGlobal", true);
+
+  LOG(DEBUG) << "boundaryConditionNonGhostDofLocalNos: " << boundaryConditionNonGhostDofLocalNos_ << ", boundaryConditionValues: " << boundaryConditionValues_;
 
   // Boundary conditions are specified for dof numbers, not nodes, such that for Hermite it is possible to prescribe derivatives.
   // However the ordering of the dofs is not known in the config for unstructured meshes. Therefore the ordering is special.
@@ -156,6 +172,8 @@ parseBoundaryConditionsForElements(std::string boundaryConditionsConfigKey)
   std::vector<std::pair<int,ValueType>> boundaryConditions;  // (index, value)
   parseBoundaryConditions(this->specificSettings_, functionSpace_, boundaryConditionsConfigKey, boundaryConditions);
 
+  LOG(DEBUG) << "read in Dirichlet boundary conditions from config: " << boundaryConditions;
+
   // sort all parsed boundary conditions for their index no
   auto compareFunction = [](const std::pair<int,ValueType> &item1, const std::pair<int,ValueType> &item2)
   {
@@ -163,7 +181,7 @@ parseBoundaryConditionsForElements(std::string boundaryConditionsConfigKey)
   };
   std::sort(boundaryConditions.begin(), boundaryConditions.end(), compareFunction);
 
-  LOG(DEBUG) << "read in boundary conditions from config: " << boundaryConditions;
+  LOG(DEBUG) << "sorted Dirichlet boundary conditions from config: " << boundaryConditions;
 
   // determine elements with nodes that have prescribed boundary conditions, store them in the vector boundaryConditionElements_,
   // which is organized by local elements
@@ -261,7 +279,65 @@ parseBoundaryConditionsForElements(std::string boundaryConditionsConfigKey)
     }
   }
 
-  LOG(DEBUG) << "boundaryConditionNonGhostDofLocalNos: " << boundaryConditionNonGhostDofLocalNos_ << ", boundaryConditionValues: " << boundaryConditionValues_;
+  generateBoundaryConditionsByComponent();
+
+  LOG(DEBUG) << "boundaryConditionNonGhostDofLocalNos: " << boundaryConditionNonGhostDofLocalNos_
+    << ", boundaryConditionValues: " << boundaryConditionValues_ << ", boundaryConditionsByComponent_: ";
+  for (int componentNo = 0; componentNo < nComponents; componentNo++)
+  {
+    LOG(DEBUG) << "  component " << componentNo << ", dofs " << boundaryConditionsByComponent_[componentNo].dofNosLocal
+      << ", values " << boundaryConditionsByComponent_[componentNo].values;
+  }
+}
+
+template<typename FunctionSpaceType,int nComponents>
+void BoundaryConditionsBase<FunctionSpaceType,nComponents>::
+generateBoundaryConditionsByComponent()
+{
+  // fill the data structure
+  //  struct BoundaryConditionsForComponent
+  //  {
+  //    std::vector<dof_no_t> dofsLocal;
+  //    std::vector<double> values;
+  //  };
+  //  std::array<BoundaryConditionsForComponent, nComponents> boundaryConditionsByComponent_;   ///< the boundary condition data organized by component
+
+  // from the two data structures
+  //   std::vector<dof_no_t> boundaryConditionNonGhostDofLocalNos_;        ///< vector of all local (non-ghost) boundary condition dofs
+  //   std::vector<ValueType> boundaryConditionValues_;               ///< vector of the local prescribed values, related to boundaryConditionNonGhostDofLocalNos_
+
+  // The boundaryConditionValues_ vector can contain NaN values, where in the config None was set.
+  // This indicates that these dofs should not be set as Dirichlet boundary conditions.
+
+  if (nComponents == 1)
+  {
+    boundaryConditionsByComponent_[0].dofNosLocal = boundaryConditionNonGhostDofLocalNos_;
+    boundaryConditionsByComponent_[0].values.resize(boundaryConditionValues_.size());
+    for (int i = 0; i < boundaryConditionValues_.size(); i++)
+    {
+      boundaryConditionsByComponent_[0].values[i] = boundaryConditionValues_[i][0];
+    }
+  }
+  else
+  {
+    for (int componentNo = 0; componentNo < nComponents; componentNo++)
+    {
+      // preallocate as if all values were valid boundary conditions
+      boundaryConditionsByComponent_[componentNo].dofNosLocal.reserve(boundaryConditionValues_.size());
+      boundaryConditionsByComponent_[componentNo].values.reserve(boundaryConditionValues_.size());
+
+      // iterate over all values
+      for (int i = 0; i < boundaryConditionValues_.size(); i++)
+      {
+        // if value is not nan and therefore valid
+        if (std::isfinite(boundaryConditionValues_[i][componentNo]))
+        {
+          boundaryConditionsByComponent_[componentNo].dofNosLocal.push_back(boundaryConditionNonGhostDofLocalNos_[i]);
+          boundaryConditionsByComponent_[componentNo].values.push_back(boundaryConditionValues_[i][componentNo]);
+        }
+      }
+    }
+  }
 }
 
 //! get a reference to the vector of bc local dofs
@@ -278,6 +354,13 @@ const std::vector<typename BoundaryConditionsBase<FunctionSpaceType,nComponents>
 boundaryConditionValues() const
 {
   return boundaryConditionValues_;
+}
+
+template<typename FunctionSpaceType, int nComponents>
+std::ostream &operator<<(std::ostream &stream, const typename BoundaryConditionsBase<FunctionSpaceType,nComponents>::BoundaryConditionsForComponent rhs)
+{
+  stream << "{dofNos: " << rhs.dofNosLocal << ", values: " << rhs.values << "}";
+  return stream;
 }
 
 template<typename FunctionSpaceType, int nComponents>

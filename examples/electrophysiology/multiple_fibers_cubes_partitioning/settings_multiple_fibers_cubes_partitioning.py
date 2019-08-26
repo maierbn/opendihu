@@ -524,11 +524,7 @@ config = {
                   #{"format": "PythonFile", "filename": "out/fiber_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "binary":True, "onlyNodalValues":True},
                 ]
               },
-<<<<<<< HEAD
             } for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y)) \
-=======
-            } for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y))
->>>>>>> b2c7482dbbfdb5470167a40b02fa7a20d2dd607e
                 for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x))],
             "OutputWriter" : [
               {"format": "Paraview", "outputInterval": int(1./dt_3D*output_timestep), "filename": "out/all_fibers", "binary": True, "fixedFormat": False, "combineFiles": True},
@@ -537,11 +533,7 @@ config = {
           },
         },
       }
-<<<<<<< HEAD
-    } for subdomain_coordinate_y in range(n_subdomains_y) for subdomain_coordinate_x in range(n_subdomains_x)]
-=======
     } for subdomain_coordinate_y in range(n_subdomains_y)
         for subdomain_coordinate_x in range(n_subdomains_x)]
->>>>>>> b2c7482dbbfdb5470167a40b02fa7a20d2dd607e
   }
 }

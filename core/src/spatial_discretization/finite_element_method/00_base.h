@@ -17,7 +17,7 @@ namespace SpatialDiscretization
  * Base class containing basic finite element functionality such as initializing and solving.
  * Further classes derive from this base class and add special functionality such as setting stiffness matrix, rhs and timestepping
  */
-template<typename FunctionSpaceType,typename QuadratureType,typename Term_>
+template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term_>
 class FiniteElementMethodBase :
   public SpatialDiscretization,
   public Runnable,
@@ -29,7 +29,7 @@ public:
   FiniteElementMethodBase(DihuContext context, std::shared_ptr<FunctionSpaceType> functionSpace = nullptr);
 
   typedef Term_ Term;
-  typedef ::Data::FiniteElements<FunctionSpaceType,Term> Data;
+  typedef ::Data::FiniteElements<FunctionSpaceType,nComponents,Term> Data;
   typedef FunctionSpaceType FunctionSpace;
   typedef QuadratureType Quadrature;
   typedef typename Data::TransferableSolutionDataType TransferableSolutionDataType;
@@ -41,7 +41,7 @@ public:
   virtual void initialize();
 
   //! reset to pre-initialized state, this deallocates all data and sets initialized_ to false such that a new call to initialize() is necessary
-  void reset();
+  virtual void reset();
 
   //! set the subset of ranks that will compute the work
   void setRankSubset(Partition::RankSubset rankSubset);
@@ -82,24 +82,24 @@ protected:
 
 /** class that provides extra initialize methods, depending on Term
  */
-template<typename FunctionSpaceType,typename QuadratureType,typename Term>
+template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term>
 class FiniteElementMethodInitializeData :
-  public FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Term>
+  public FiniteElementMethodBase<FunctionSpaceType,QuadratureType,nComponents,Term>
 {
 public:
   //! use constructor of base class
-  using FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Term>::FiniteElementMethodBase;
+  using FiniteElementMethodBase<FunctionSpaceType,QuadratureType,nComponents,Term>::FiniteElementMethodBase;
 };
 
 /** special initialize for DiffusionTensorDirectional, for Term Equation::Dynamic::DirectionalDiffusion
  */
-template<typename FunctionSpaceType,typename QuadratureType>
-class FiniteElementMethodInitializeData<FunctionSpaceType,QuadratureType,Equation::Dynamic::DirectionalDiffusion> :
-  public FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Equation::Dynamic::DirectionalDiffusion>
+template<typename FunctionSpaceType,typename QuadratureType,int nComponents>
+class FiniteElementMethodInitializeData<FunctionSpaceType,QuadratureType,nComponents,Equation::Dynamic::DirectionalDiffusion> :
+  public FiniteElementMethodBase<FunctionSpaceType,QuadratureType,nComponents,Equation::Dynamic::DirectionalDiffusion>
 {
 public:
   //! use constructor of base class
-  using FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Equation::Dynamic::DirectionalDiffusion>::FiniteElementMethodBase;
+  using FiniteElementMethodBase<FunctionSpaceType,QuadratureType,nComponents,Equation::Dynamic::DirectionalDiffusion>::FiniteElementMethodBase;
 
   //! initialize with direction field for DiffusionTensorDirectional, this replaces the initialize() method
   virtual void initialize(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> direction,

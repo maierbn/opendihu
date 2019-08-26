@@ -21,14 +21,14 @@
  *   State: state variable
  *   Rate: the time derivative of the state variable, i.e. the increment value in an explicit Euler stepping
  */
-template <int nStates, typename FunctionSpaceType>
+template <int nStates, int nIntermediates_, typename FunctionSpaceType>
 class RhsRoutineHandler:
-  public CellmlAdapterBase<nStates,FunctionSpaceType>
+  public CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>
 {
 public:
 
   //! constructor
-  using CellmlAdapterBase<nStates,FunctionSpaceType>::CellmlAdapterBase;
+  using CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::CellmlAdapterBase;
 
 protected:
   //! given a normal cellml source file for rhs routine create a second file for multiple instances. @return: if successful

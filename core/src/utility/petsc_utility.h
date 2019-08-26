@@ -46,5 +46,11 @@ std::string getStringNonlinearConvergedReason(SNESConvergedReason convergedReaso
 //! check if the matrix and vector number of entries are correct such that stiffnessMatrix can be multiplied to rhs
 void checkDimensionsMatrixVector(Mat &matrix, Vec &input);
 
+//! write the vector to a file using PetscViewer, format is "default", "ascii" or "matlab"
+void dumpVector(std::string filename, std::string format, Vec &vector, MPI_Comm mpiCommunicator, int componentNo=0, int nComponents=1);
+
+//! dump the matrix to a file using PetscViewer, format is "default", "ascii" or "matlab"
+void dumpMatrix(std::string filename, std::string format, Mat &matrix, MPI_Comm mpiCommunicator);
+
 }  // namespace
 

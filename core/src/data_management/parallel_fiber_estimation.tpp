@@ -51,6 +51,7 @@ createPetscObjects()
   // create field variables on local partition
   this->gradient_ = this->functionSpace_->template createFieldVariable<3>("gradient");
   this->dirichletValues_ = this->functionSpace_->template createFieldVariable<1>("dirichletValues");
+  this->jacobianConditionNumber_ = this->functionSpace_->template createFieldVariable<1>("jacobianConditionNumber");
 }
 
 template<typename FunctionSpaceType>
@@ -65,6 +66,13 @@ std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> ParallelFiber
  dirichletValues()
 {
   return this->dirichletValues_;
+}
+
+template<typename FunctionSpaceType>
+std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> ParallelFiberEstimation<FunctionSpaceType>::
+ jacobianConditionNumber()
+{
+  return this->jacobianConditionNumber_;
 }
 
 template<typename FunctionSpaceType>
@@ -87,7 +95,8 @@ getOutputFieldVariables()
   return std::tuple_cat(
     problem_->data().getOutputFieldVariables(),
     std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>>>(this->gradient_),
-    std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>>(this->dirichletValues_)
+    std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>>(this->dirichletValues_),
+    std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>>(this->jacobianConditionNumber_)
   );
 }
 

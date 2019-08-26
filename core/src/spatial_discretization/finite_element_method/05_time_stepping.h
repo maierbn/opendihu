@@ -11,9 +11,9 @@ namespace SpatialDiscretization
 
 /** class used for timestepping as for diffusion equation
  */
-template<typename FunctionSpaceType, typename QuadratureType, typename Term>
+template<typename FunctionSpaceType, typename QuadratureType, int nComponents_, typename Term>
 class FiniteElementMethodTimeStepping :
-  public AssembleRightHandSide<FunctionSpaceType, QuadratureType, Term>,
+  public AssembleRightHandSide<FunctionSpaceType, QuadratureType, nComponents_, Term>,
   public DiscretizableInTime,
   public Splittable
 {
@@ -24,7 +24,7 @@ public:
   //! if the function space is given as parameter, is has to be already initialize()d
   FiniteElementMethodTimeStepping(DihuContext context, std::shared_ptr<FunctionSpaceType> functionSpace = nullptr);
 
-  using AssembleRightHandSide<FunctionSpaceType, QuadratureType, Term>::initialize;
+  using AssembleRightHandSide<FunctionSpaceType, QuadratureType, nComponents_, Term>::initialize;
 
   //! return the compile-time constant number of variable components of the solution field variable
   static constexpr int nComponents();

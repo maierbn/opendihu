@@ -11,11 +11,10 @@ Import('env')     # import Environment object from calling SConstruct
 if not env['no_examples']:
     
   # define the source files
-  src_files = Split(
-  """
-    src/nonlinear_test.cpp
-    src/quadrature.cpp
-  """)
+  src_files = [
+  #    "src/nonlinear_test.cpp",  # uses mixed function space, currently not functional
+  #  "src/quadrature.cpp"
+  ]
 
   # create the main executable
-  env.Program(target = 'quadrature', source = src_files)
+  #env.Program(target = 'quadrature', source = src_files)

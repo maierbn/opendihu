@@ -24,7 +24,7 @@ FieldVariableDataStructured(FieldVariable<FunctionSpaceType,nComponents> &rhs, s
   FieldVariableComponents<FunctionSpaceType,nComponents>::FieldVariableComponents()
 {
   // initialize everything from other field variable
-  this->componentNames_.resize(rhs.componentNames().size());
+  //this->componentNames_.resize(rhs.componentNames().size());
   std::copy(rhs.componentNames().begin(), rhs.componentNames().end(), this->componentNames_.begin());
   
   this->name_ = name;
@@ -37,7 +37,7 @@ FieldVariableDataStructured(FieldVariable<FunctionSpaceType,nComponents> &rhs, s
   // create new distributed petsc vec as copy of rhs values vector
   if (rhs.partitionedPetscVec())
   {
-    // if rhs is not a geometry field an therefore has a partitionedPetscVec, use that
+    // if rhs is not a geometry field and therefore has a partitionedPetscVec, use that
     this->values_ = std::make_shared<PartitionedPetscVec<FunctionSpaceType,nComponents>>(*rhs.partitionedPetscVec(), name);
   }
   else
@@ -152,6 +152,14 @@ valuesGlobal(int componentNo)
 {
   assert(this->values_);
   return this->values_->valuesGlobal(componentNo);
+}
+
+template<typename FunctionSpaceType, int nComponents>
+Vec &FieldVariableDataStructured<FunctionSpaceType,nComponents>::
+valuesGlobal()
+{
+  assert(this->values_);
+  return this->values_->valuesGlobal();
 }
 
 template<typename FunctionSpaceType, int nComponents>

@@ -43,6 +43,8 @@ import scipy.optimize
 import timeit
 
 import stl_debug_output
+import stl_create_rings
+import spline_surface
 
 def triangle_contains_point(triangle, point):
   """ check if a point lies inside a triangle, 2D """
@@ -2921,7 +2923,7 @@ def create_3d_mesh_simple(n_points_x, loops):
 
 
 
-def create_3d_mesh_from_border_points_faces(border_points_faces, improve_mesh):
+def create_3d_mesh_from_border_points_faces(border_points_faces, improve_mesh, level_no):
   """
   Create the 3D mesh from border points which are organised as faces.
   :param border_points_faces: [border_points_0minus, border_points_0plus, border_points_1minus, border_points_1plus]
@@ -2993,7 +2995,7 @@ def create_3d_mesh_from_border_points_faces(border_points_faces, improve_mesh):
     n_grid_points_y = n_points_x+1
 
     print("")
-    print("Loop {}/{} with {} border points".format(loop_no, n_loops, n_points))
+    print("Level {}, loop {}/{} with {} border points".format(level_no, loop_no, n_loops, n_points))
     #print("border points: ", border_points)
     
     # create 2D mesh with border_points

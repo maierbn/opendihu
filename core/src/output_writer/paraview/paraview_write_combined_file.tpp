@@ -777,7 +777,7 @@ void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType 
 
       // determine filename, broadcast from rank 0
       std::stringstream filename;
-      filename << this->filenameBaseWithNo_ << "_" << targetDimensionality << "D.vtu";
+      filename << this->filenameBaseWithNo_ << ".vtu";
       int filenameLength = filename.str().length();
 
       // broadcast length of filename
@@ -948,22 +948,25 @@ void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType 
       currentMeshName.insert(meshPropertiesIter->first);
       ParaviewLoopOverTuple::loopGetNodalValues<OutputFieldVariablesType>(fieldVariables, currentMeshName, fieldVariableValues);
 
-      // if next assertion fails, output why for debugging
-      if (fieldVariableValues.size() != polyDataPropertiesForMesh.pointDataArrays.size())
+      if (!meshPropertiesInitialized)
       {
-        LOG(DEBUG) << "n field variable values: " << fieldVariableValues.size() << ", n point data arrays: "
-          << polyDataPropertiesForMesh.pointDataArrays.size();
-        LOG(DEBUG) << "mesh name: " << currentMeshName;
-        std::stringstream pointDataArraysNames;
-        for (int i = 0; i < polyDataPropertiesForMesh.pointDataArrays.size(); i++)
+        // if next assertion fails, output why for debugging
+        if (fieldVariableValues.size() != polyDataPropertiesForMesh.pointDataArrays.size())
         {
-          pointDataArraysNames << polyDataPropertiesForMesh.pointDataArrays[i].first << " ";
+          LOG(DEBUG) << "n field variable values: " << fieldVariableValues.size() << ", n point data arrays: "
+            << polyDataPropertiesForMesh.pointDataArrays.size();
+          LOG(DEBUG) << "mesh name: " << currentMeshName;
+          std::stringstream pointDataArraysNames;
+          for (int i = 0; i < polyDataPropertiesForMesh.pointDataArrays.size(); i++)
+          {
+            pointDataArraysNames << polyDataPropertiesForMesh.pointDataArrays[i].first << " ";
+          }
+          LOG(DEBUG) << "pointDataArraysNames: " <<  pointDataArraysNames.str();
+          LOG(DEBUG) << "OutputFieldVariablesType: " << StringUtility::demangle(typeid(OutputFieldVariablesType).name());
         }
-        LOG(DEBUG) << "pointDataArraysNames: " <<  pointDataArraysNames.str();
-        LOG(DEBUG) << "OutputFieldVariablesType: " << StringUtility::demangle(typeid(OutputFieldVariablesType).name());
-      }
 
-      assert(fieldVariableValues.size() == polyDataPropertiesForMesh.pointDataArrays.size());
+        assert(fieldVariableValues.size() == polyDataPropertiesForMesh.pointDataArrays.size());
+      }
 
       // output 3D or 2D mesh
       if (!meshPropertiesInitialized)
@@ -975,6 +978,38 @@ void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType 
       // set data for partitioning field variable
       assert (!fieldVariableValues.empty());
       fieldVariableValues["partitioning"].resize(polyDataPropertiesForMesh.nPointsLocal, (double)this->rankSubset_->ownRankNo());
+
+      // for 2D field variables, add 0 every 2nd entry to generate 3D values, because paraview cannot handle 2D vectors properly
+      if (targetDimensionality == 2)
+      {
+        std::vector<double> buffer;
+
+        // loop over all field variables
+        for (std::vector<std::pair<std::string,int>>::iterator pointDataArrayIter = polyDataPropertiesForMesh.pointDataArrays.begin(); pointDataArrayIter != polyDataPropertiesForMesh.pointDataArrays.end(); pointDataArrayIter++)
+        {
+          // if it is a 2D vector field
+          if (pointDataArrayIter->second == 2)
+          {
+
+            std::vector<double> &values = fieldVariableValues[pointDataArrayIter->first];
+
+            // copy all values to a buffer
+            buffer.assign(values.begin(), values.end());
+            int nValues = buffer.size();
+
+            // resize the values vector to 2/3 the size
+            values.resize(nValues/2*3);
+
+            // loop over the new values vector and set the entries
+            for (int i = 0; i < nValues/2; i++)
+            {
+              values[3*i + 0] = buffer[2*i + 0];
+              values[3*i + 1] = buffer[2*i + 1];
+              values[3*i + 2] = 0.0;
+            }
+          }
+        }
+      }
 
       // collect all data for the geometry field variable
       std::vector<double> geometryFieldValues;
@@ -1014,11 +1049,16 @@ void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType 
       // loop over field variables (PointData)
       for (std::vector<std::pair<std::string,int>>::iterator pointDataArrayIter = polyDataPropertiesForMesh.pointDataArrays.begin(); pointDataArrayIter != polyDataPropertiesForMesh.pointDataArrays.end(); pointDataArrayIter++)
       {
+        // paraview cannot handle 2D vector fields without warnings, so set 3D vector fields
+        int nComponentsParaview = pointDataArrayIter->second;
+        if (nComponentsParaview == 2)
+          nComponentsParaview = 3;
+
         // write normal data element
         outputFileParts[outputFilePartNo] << std::string(4, '\t') << "<DataArray "
             << "Name=\"" << pointDataArrayIter->first << "\" "
             << "type=\"" << (pointDataArrayIter->first == "partitioning"? "Int32" : "Float32") << "\" "
-            << "NumberOfComponents=\"" << pointDataArrayIter->second << "\" format=\"" << (binaryOutput_? "binary" : "ascii")
+            << "NumberOfComponents=\"" << nComponentsParaview << "\" format=\"" << (binaryOutput_? "binary" : "ascii")
             << "\" >" << std::endl << std::string(5, '\t');
 
         // at this point the data of the field variable is missing

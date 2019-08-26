@@ -45,6 +45,12 @@ createVector()
     // set sparsity type and other options
     ierr = VecSetFromOptions(values_[componentNo]); CHKERRV(ierr);
   }
+
+  // create VecNest object, if number of components > 1
+  if (nComponents > 1)
+  {
+    ierr = VecCreateNest(this->meshPartition_->mpiCommunicator(), nComponents, NULL, values_.data(), &vectorNestedGlobal_); CHKERRV(ierr);
+  }
 }
 
 //! this has to be called before the vector is manipulated (i.e. VecSetValues or vecZeroEntries is called)
@@ -172,7 +178,7 @@ setValues(int componentNo, PetscInt ni, const PetscInt ix[], const PetscScalar y
     // get value
     double value;
     ierr = VecGetValues(values_[componentNo], ni, ix, &value); CHKERRV(ierr);
-    LOG(DEBUG) << "retrieved value: " << value;
+    //LOG(DEBUG) << "retrieved value: " << value;
   }
 }
 
@@ -341,6 +347,16 @@ valuesGlobal(int componentNo)
   assert(values_.size() == nComponents);
   
   return values_[componentNo];
+}
+
+template<typename FunctionSpaceType, int nComponents, typename DummyForTraits>
+Vec &PartitionedPetscVec<FunctionSpaceType, nComponents, DummyForTraits>::
+valuesGlobal()
+{
+  if (nComponents == 1)
+    return valuesGlobal(0);
+
+  return vectorNestedGlobal_;
 }
 
 //! fill a contiguous vector with all components after each other, "struct of array"-type data layout.

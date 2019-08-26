@@ -9,7 +9,8 @@ void SolutionVectorMapping<
   std::vector<std::tuple<std::shared_ptr<FieldVariableType1>, int, double>>,   // <fieldVariableType,componentNo,prefactor>
   std::pair<std::vector<Vec>,std::vector<std::shared_ptr<FieldVariableType2>>>  // Petsc Vecs which are the sub-vectors of a nested vector
 >::transfer(const std::vector<std::tuple<std::shared_ptr<FieldVariableType1>, int, double>> &transferableSolutionData1,
-            std::pair<std::vector<Vec>,std::vector<std::shared_ptr<FieldVariableType2>>> transferableSolutionData2)
+            std::pair<std::vector<Vec>,std::vector<std::shared_ptr<FieldVariableType2>>> transferableSolutionData2,
+            const std::string transferSlotName)
 {
   // transfer from cellml to multidomain
   // this is analogous to the following code line in the old code:
@@ -21,6 +22,7 @@ void SolutionVectorMapping<
 
   // assert that dimensions match
   int nCompartments = transmembranePotential.size();
+  VLOG(1) << "Solution vector mapping (solution_vector_mapping_multidomain.tpp)";
   LOG(DEBUG) << "transfer from cellml to multidomain, nCompartments=" << nCompartments << ", subcellularStates.size(): " << subcellularStates.size();
   assert(nCompartments == subcellularStates.size());
 
@@ -48,7 +50,8 @@ void SolutionVectorMapping<
   std::pair<std::vector<Vec>,std::vector<std::shared_ptr<FieldVariableType1>>>,  // Petsc Vecs which are the sub-vectors of a nested vector
   std::vector<std::tuple<std::shared_ptr<FieldVariableType2>, int, double>>   // <fieldVariable,componentNo,prefactor>
 >::transfer(const std::pair<std::vector<Vec>,std::vector<std::shared_ptr<FieldVariableType1>>> &transferableSolutionData1,  // <Petsc Vecs which are the sub-vectors of a nested vector, transmembranePotential>
-            const std::vector<std::tuple<std::shared_ptr<FieldVariableType2>, int, double>> &transferableSolutionData2)
+            const std::vector<std::tuple<std::shared_ptr<FieldVariableType2>, int, double>> &transferableSolutionData2,
+            const std::string transferSlotName)
 {
   // transfer from multidomain to cellml
   // this is analogous to the following code line in the old code:
@@ -61,6 +64,7 @@ void SolutionVectorMapping<
 
   // assert that dimensions match
   int nCompartments = subVectors.size() - 1;  // not for phi_e
+  VLOG(1) << "Solution vector mapping (solution_vector_mapping_multidomain.tpp)";
   LOG(DEBUG) << "transfer from multidomain to cellml, size of subvectors=" << nCompartments << ", subcellularStates.size(): " << subcellularStates.size();
   assert(nCompartments == subcellularStates.size());
 

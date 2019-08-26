@@ -1,4 +1,4 @@
-# Configuration for scons build system
+#i Configuration for scons build system
 #
 # For each package the following variables are available:
 # <PACKAGE>_DIR         Location of the package, must contain subfolders "include" and "lib" or "lib64" with header and library files.
@@ -15,49 +15,57 @@
 # 3. Specify <PACKAGE>_INC_DIR and <PACKAGE>_LIB_DIR to point to the header and library directories. They are usually named "include" and "lib".
 # 4. Set <PACKAGE>_DOWNLOAD=True or additionally <PACKAGE>_REDOWNLOAD=True to let the build system download and install everything on their own.
 
-# set compiler to use, in SconstructGeneral, there will be set CXX=$CC and CC=$cc (if not on cmcs09)
-cc="gcc"   # c compiler
-CC="g++"   # c++ compiler
+# set compiler to use
+cc = "gcc"   # c compiler
+CC = "g++"   # c++ compiler
+
 cmake="cmake"
 
 # LAPACK, includes also BLAS, OpenBLAS is used
-LAPACK_DOWNLOAD=True
+LAPACK_DOWNLOAD = True
 
 # PETSc, this downloads and installs MUMPS (direct solver package) and its dependencies PT-Scotch, SCAlapack, ParMETIS, METIS
-PETSC_DOWNLOAD=True
-PETSC_REBUILD=False#True#False
-#PETSC_DIR="/usr/local/home/kraemer/opendihu/dependencies/petsc/install"
+PETSC_DOWNLOAD = True
+PETSC_REDOWNLOAD = False
+PETSC_REBUILD = False
 
 # Python 3.6
-PYTHON_DOWNLOAD=True    # This downloads and uses Python, use it to be independent of an eventual system python
+PYTHON_DOWNLOAD = True    # This downloads and uses Python, use it to be independent of an eventual system python
 
 # Python packages - they are now all combined with the option PYTHONPACKAGES_DOWNLOAD
-PYTHONPACKAGES_DOWNLOAD=True
+PYTHONPACKAGES_DOWNLOAD = False
 
 # Base64, encoding library for binary vtk (paraview) output files
-BASE64_DOWNLOAD=True
+BASE64_DOWNLOAD = True
 
 # Google Test, testing framework, not needed on Hazelhen
-GOOGLETEST_DOWNLOAD=True
+GOOGLETEST_DOWNLOAD = True
 
 # SEMT, library for symbolic differentiation
-SEMT_DOWNLOAD=True
-SEMT_REDOWLOAD=False#True
-SEMT_REBUILD=False#True
+SEMT_DOWNLOAD = True
 
 # EasyLoggingPP, provides logging facilities
-EASYLOGGINGPP_DOWNLOAD=True#False
-EASYLOGGINGPP_REBUILD=False
+EASYLOGGINGPP_DOWNLOAD = True
 
 # ADIOS2, adaptable I/O library, needed for interfacing MegaMol
-ADIOS_DOWNLOAD=True
+ADIOS_DOWNLOAD = True
 
 # MegaMol, visualization framework of VISUS, optional, needs ADIOS2
-MEGAMOL_DOWNLOAD=False    # install MegaMol from official git repo, but needed is the private repo, ask for access to use MegaMol with opendihu
+MEGAMOL_DOWNLOAD = False    # install MegaMol from official git repo, but needed is the private repo, ask for access to use MegaMol with opendihu
 
 # MPI
 # MPI is normally detected by runnig the mpicc command. If this is not available, you can provide the MPI_DIR as usual.
-MPI_DIR="/usr/lib/openmpi"    # standard path for openmpi on ubuntu 16.04
+MPI_DIR = "/usr/lib/openmpi"    # standard path for openmpi on ubuntu 16.04
+
+# chaste and dependencies
+have_chaste = False
+VTK_DOWNLOAD = have_chaste
+HDF5_DOWNLOAD = have_chaste
+XERCESC_DOWNLOAD = have_chaste
+XSD_DOWNLOAD = have_chaste
+#BOOST_DOWNLOAD = have_chaste
+BOOST_DOWNLOAD = False
+CHASTE_DOWNLOAD = have_chaste
 
 # automatically set MPI_DIR for other systems, like ubuntu 18.04 and Debian
 try:
@@ -84,25 +92,45 @@ try:
   
   # on neon use custom cmake
   import socket
-  if socket.gethostname() == "neon" or socket.gethostname() == "helium":
+  if socket.gethostname() == "neon" or socket.gethostname() == "helium" or "argon" in socket.gethostname():
     cmake="~/software/cmake/cmake-3.13.3-Linux-x86_64/bin/cmake"
+
+  if "sgscl" in socket.gethostname():
+    MPI_DIR="/scratch-nfs/maierbn/openmpi/install-3.1"
   
   # on cmcs09 (CPU-GPU):
   if socket.gethostname() == 'cmcs09':
     print "Setting PGI settings for GPU-offloading, since host cmcs09 was detected."
-    del MPI_DIR
-    #MPI_DIR="/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2"
+    
+    cc="pgcc"   # c compiler
+    CC="pgc++"   # c++ compiler
+    
+    #PYTHON_DOWNLOAD=True
+    PYTHON_DIR="/usr/local/home/kraemer/python/install"#"/afs/.mathematik.uni-stuttgart.de/home/cmcs/share/environment-modules/Packages/python/python-3.6.5" #"/usr/local/home/kraemer/python/install"
+
+    
+    #del MPI_DIR
+    MPI_DIR="/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2"
     #MPI_DOWNLOAD=False
-    cc="/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/18.10/bin/pgcc"
-    CC="/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/18.10/bin/pgc++"
-    mpiCC="/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/bin/mpic++"
-    mpicc="/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/bin/mpicc"
-    #cc="/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/bin/mpicc"
-    #CC=mpiCC
+    #cc="/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/18.10/bin/pgcc"
+    #CC="/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/18.10/bin/pgc++"
+    #mpiCC="/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/bin/mpic++"
+    #mpicc="/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/bin/mpicc"
     MPI_DISABLE_CHECKS=True
     PETSC_DISABLE_CHECKS=True
     GOOGLETEST_DISABLE_CHECKS=True
 
+  elif "argon" in socket.gethostname():
+    cc = "pgcc"
+    CC = "pgc++"
+    mpiCC = "mpic++"
+
+    LAPACK_DOWNLOAD = False
+    
+    MPI_DIR = "/usr/local.nfs/sw/pgi/pgi-18.10-u1604/linux86-64/2018/mpi/openmpi/"
+    DISABLE_RUN = True   # do not run executables for checks, because they need mpirun as prefix
+    #PETSC_DISABLE_CHECKS = True
+    GOOGLETEST_DISABLE_CHECK = True
 
 except:
   pass
@@ -110,29 +138,29 @@ except:
 # download and build debugging MPI version
 if False:
   del MPI_DIR
-  MPI_DOWNLOAD=True
-  MPI_IGNORE_MPICC=True    # this downloads and builds openmpi
-  MPI_DEBUG=True            # this enables debugging flags such that valgrind memcheck can track MPI errors
+  MPI_DOWNLOAD = True
+  MPI_IGNORE_MPICC = True    # this downloads and builds openmpi
+  MPI_DEBUG = True            # this enables debugging flags such that valgrind memcheck can track MPI errors
 
 # specialized settings for supercomputer (HazelHen)
 import os
 if os.environ.get("PE_ENV") is not None:  # if on hazelhen
-  cc="cc"   # C compiler wrapper
-  CC="CC"   # C++ compiler wrapper
-  mpiCC="CC"  # mpi C++ compiler wrapper
-  cmake="/lustre/cray/ws8/ws/icbbnmai-opendihu/cmake/cmake-3.13.2-Linux-x86_64/bin/cmake"
+  cc = "cc"   # C compiler wrapper
+  CC = "CC"   # C++ compiler wrapper
+  mpiCC = "CC"  # mpi C++ compiler wrapper
+  cmake = "~/cmake_3.6.3/bin/cmake"
 
   # use cray-pat for profiling
-  USE_CRAY_PAT=False
+  USE_CRAY_PAT = False
 
   # use -hpl option with cray compiler to create an optimization program library
-  USE_HPL=False
+  USE_HPL = False
 
   # do not use googletest
-  GOOGLETEST_DOWNLOAD=False  
+  GOOGLETEST_DOWNLOAD = False  
 
   # do not use buggy python packages
-  PYTHONPACKAGES_DOWNLOAD=False
+  PYTHONPACKAGES_DOWNLOAD = False
 
   #MPI_DIR = os.environ.get("CRAY_MPICH_DIR")
   #LAPACK_DOWNLOAD = False

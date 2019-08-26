@@ -10,10 +10,10 @@
 #include "utility/string_utility.h"
 #include "mesh/mesh_manager.h"
 
-template<int nStates, typename FunctionSpaceType>
-CallbackHandler<nStates,FunctionSpaceType>::
+template<int nStates, int nIntermediates_, typename FunctionSpaceType>
+CallbackHandler<nStates,nIntermediates_,FunctionSpaceType>::
 CallbackHandler(DihuContext context, bool noNewOutputWriter) :
-  RhsRoutineHandler<nStates,FunctionSpaceType>(context, noNewOutputWriter),
+  RhsRoutineHandler<nStates,nIntermediates_,FunctionSpaceType>(context, noNewOutputWriter),
   DiscretizableInTime(),
   setParameters_(NULL), setSpecificParameters_(NULL), setSpecificStates_(NULL), handleResult_(NULL),
   pythonSetParametersFunction_(NULL), pythonSetSpecificParametersFunction_(NULL), pythonSetSpecificStatesFunction_(NULL), pythonHandleResultFunction_(NULL),
@@ -21,10 +21,10 @@ CallbackHandler(DihuContext context, bool noNewOutputWriter) :
 {
 }
 
-template<int nStates, typename FunctionSpaceType>
-CallbackHandler<nStates,FunctionSpaceType>::
+template<int nStates, int nIntermediates_, typename FunctionSpaceType>
+CallbackHandler<nStates,nIntermediates_,FunctionSpaceType>::
 CallbackHandler(DihuContext context) :
-  RhsRoutineHandler<nStates,FunctionSpaceType>(context),
+  RhsRoutineHandler<nStates,nIntermediates_,FunctionSpaceType>(context),
   DiscretizableInTime(),
   setParameters_(NULL), setSpecificParameters_(NULL), setSpecificStates_(NULL), handleResult_(NULL),
   pythonSetParametersFunction_(NULL), pythonSetSpecificParametersFunction_(NULL), pythonSetSpecificStatesFunction_(NULL), pythonHandleResultFunction_(NULL),
@@ -32,15 +32,15 @@ CallbackHandler(DihuContext context) :
 {
 }
 
-template<int nStates, typename FunctionSpaceType>
-CallbackHandler<nStates,FunctionSpaceType>::
+template<int nStates, int nIntermediates_, typename FunctionSpaceType>
+CallbackHandler<nStates,nIntermediates_,FunctionSpaceType>::
 ~CallbackHandler()
 {
   clearPyObjects();
 }
 
-template<int nStates, typename FunctionSpaceType>
-void CallbackHandler<nStates,FunctionSpaceType>::
+template<int nStates, int nIntermediates_, typename FunctionSpaceType>
+void CallbackHandler<nStates,nIntermediates_,FunctionSpaceType>::
 clearPyObjects()
 {
   // Py_CLEAR has no effect if the variable is NULL
@@ -54,8 +54,8 @@ clearPyObjects()
   Py_CLEAR(pyGlobalNaturalDofsList_);
 }
 
-template<int nStates, typename FunctionSpaceType>
-void CallbackHandler<nStates,FunctionSpaceType>::
+template<int nStates, int nIntermediates_, typename FunctionSpaceType>
+void CallbackHandler<nStates,nIntermediates_,FunctionSpaceType>::
 initializeCallbackFunctions()
 {
   if (this->specificSettings_.hasKey("setParametersFunction"))
@@ -90,7 +90,7 @@ initializeCallbackFunctions()
   if (this->specificSettings_.hasKey("setSpecificStatesFunction"))
   {
     pythonSetSpecificStatesFunction_ = this->specificSettings_.getOptionFunction("setSpecificStatesFunction");
-    setSpecificStatesCallInterval_ = this->specificSettings_.getOptionInt("setSpecificStatesCallInterval", 1, PythonUtility::Positive);
+    setSpecificStatesCallInterval_ = this->specificSettings_.getOptionInt("setSpecificStatesCallInterval", 1, PythonUtility::NonNegative);
     setSpecificStates_ = [](void *context, int nInstances, int timeStepNo, double currentTime, double *localStates)
     {
       CallbackHandler *cellmlAdapter = (CallbackHandler *)context;
@@ -121,8 +121,8 @@ initializeCallbackFunctions()
   }
 }
 
-template<int nStates, typename FunctionSpaceType>
-void CallbackHandler<nStates,FunctionSpaceType>::
+template<int nStates, int nIntermediates_, typename FunctionSpaceType>
+void CallbackHandler<nStates,nIntermediates_,FunctionSpaceType>::
 callPythonSetParametersFunction(int nInstances, int timeStepNo, double currentTime, std::vector<double> &parameters)
 {
   if (pythonSetParametersFunction_ == NULL)
@@ -160,8 +160,8 @@ callPythonSetParametersFunction(int nInstances, int timeStepNo, double currentTi
 }
 
 
-template<int nStates, typename FunctionSpaceType>
-void CallbackHandler<nStates,FunctionSpaceType>::
+template<int nStates, int nIntermediates_, typename FunctionSpaceType>
+void CallbackHandler<nStates,nIntermediates_,FunctionSpaceType>::
 callPythonSetSpecificParametersFunction(int nInstances, int timeStepNo, double currentTime, std::vector<double> &localParameters)
 {
   if (pythonSetSpecificParametersFunction_ == NULL)
@@ -220,8 +220,8 @@ callPythonSetSpecificParametersFunction(int nInstances, int timeStepNo, double c
   Py_CLEAR(arglist);
 }
 
-template<int nStates, typename FunctionSpaceType>
-void CallbackHandler<nStates,FunctionSpaceType>::
+template<int nStates, int nIntermediates_, typename FunctionSpaceType>
+void CallbackHandler<nStates,nIntermediates_,FunctionSpaceType>::
 callPythonSetSpecificStatesFunction(int nInstances, int timeStepNo, double currentTime, double *localStates)
 {
   if (pythonSetSpecificStatesFunction_ == NULL)
@@ -281,8 +281,8 @@ callPythonSetSpecificStatesFunction(int nInstances, int timeStepNo, double curre
   Py_CLEAR(arglist);
 }
 
-template<int nStates, typename FunctionSpaceType>
-void CallbackHandler<nStates,FunctionSpaceType>::
+template<int nStates, int nIntermediates_, typename FunctionSpaceType>
+void CallbackHandler<nStates,nIntermediates_,FunctionSpaceType>::
 callPythonHandleResultFunction(int nInstances, int timeStepNo, double currentTime,
                                double *localStates, double *intermediates)
 {
@@ -290,9 +290,10 @@ callPythonHandleResultFunction(int nInstances, int timeStepNo, double currentTim
     return;
 
   // compose callback function
-  LOG(DEBUG) << "callPythonHandleResultFunction: nInstances: " << this->nInstances_<< ", nStates: " << nStates << ", nIntermediates: " << this->nIntermediates_;
+  LOG(DEBUG) << "callPythonHandleResultFunction: nInstances: " << this->nInstances_<< ", nStates: " << nStates
+    << ", nIntermediates: " << this->nIntermediates();
   PyObject *statesList = PythonUtility::convertToPythonList(nStates*this->nInstances_, localStates);
-  PyObject *intermediatesList = PythonUtility::convertToPythonList(this->nIntermediates_*this->nInstances_, intermediates);
+  PyObject *intermediatesList = PythonUtility::convertToPythonList(nIntermediates_*this->nInstances_, intermediates);
   PyObject *arglist = Py_BuildValue("(i,i,d,O,O,O)", nInstances, timeStepNo, currentTime, statesList, intermediatesList, pyHandleResultFunctionAdditionalParameter_);
   PyObject *returnValue = PyObject_CallObject(pythonHandleResultFunction_, arglist);
 
@@ -306,3 +307,19 @@ callPythonHandleResultFunction(int nInstances, int timeStepNo, double currentTim
   Py_CLEAR(returnValue);
   Py_CLEAR(arglist);
 }
+
+template<int nStates, int nIntermediates_, typename FunctionSpaceType>
+double CallbackHandler<nStates,nIntermediates_,FunctionSpaceType>::
+lastCallSpecificStatesTime()
+{
+  return this->lastCallSpecificStatesTime_;
+}
+
+template<int nStates, int nIntermediates_, typename FunctionSpaceType>
+void CallbackHandler<nStates,nIntermediates_,FunctionSpaceType>::
+setLastCallSpecificStatesTime(double lastCallSpecificStatesTime)
+{
+  this->lastCallSpecificStatesTime_ = lastCallSpecificStatesTime;
+  LOG(DEBUG) << "now set lastCallSpecificStatesTime_ to " << lastCallSpecificStatesTime_;
+}
+

@@ -94,3 +94,12 @@ laplace2d:
 
 laplace_surface:
 	cd examples/laplace/laplace3d_surface && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+
+linear_elasticity:
+	cd examples/solid_mechanics/linear_elasticity && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+
+fibers_linear_elasticity:
+	cd examples/electrophysiology/fibers_emg && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+
+3d_muscle:
+	cd examples/solid_mechanics/chaste && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG

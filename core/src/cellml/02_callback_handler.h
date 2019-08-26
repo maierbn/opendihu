@@ -21,9 +21,9 @@
  *   State: state variable
  *   Rate: the time derivative of the state variable, i.e. the increment value in an explicit Euler stepping
  */
-template <int nStates, typename FunctionSpaceType>
+template <int nStates, int nIntermediates_, typename FunctionSpaceType>
 class CallbackHandler :
-  public RhsRoutineHandler<nStates,FunctionSpaceType>,
+  public RhsRoutineHandler<nStates,nIntermediates_,FunctionSpaceType>,
   public DiscretizableInTime
 {
 public:
@@ -65,6 +65,12 @@ public:
   //! directly call the python callback if it exists
   void callPythonHandleResultFunction(int nInstances, int timeStepNo, double currentTime, double *states, double *intermediates);
 
+  //! get the values of this->lastCallSpecificStatesTime
+  double lastCallSpecificStatesTime();
+
+  //! set the value of this->lastCallSpecificStatesTime
+  void setLastCallSpecificStatesTime(double lastCallSpecificStatesTime);
+
 protected:
  
   //! construct the python call back functions from config
@@ -82,6 +88,9 @@ protected:
   int setSpecificParametersCallInterval_;      ///< setSpecificParameters_ will be called every callInterval_ time steps
   int setSpecificStatesCallInterval_;      ///< setSpecificStates_ will be called every callInterval_ time steps
   int handleResultCallInterval_;      ///< handleResult will be called every callInterval_ time steps
+  double setSpecificStatesCallFrequency_;   ///< frequency, after which the setSpecificStates callback function will be called, either this condition or the condition with setSpecificStatesCallInterval_ is used
+  double lastCallSpecificStatesTime_;      ///< last time the setSpecificStates_ method was called
+  double setSpecificStatesRepeatAfterFirstCall_; ///< duration of continuation of calling the setSpecificStates callback after it was triggered
  
   PyObject *pythonSetParametersFunction_;   ///< Python function handle that is called to set parameters to the CellML problem from the python config
   PyObject *pythonSetSpecificParametersFunction_;   ///< Python function handle that is called to set parameters to the CellML problem from the python config

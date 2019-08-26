@@ -39,15 +39,6 @@ FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, std
   this->noGeometryField_ = noGeometryField;
 }
 
-
-template<int D,typename BasisFunctionType>
-FunctionSpaceDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
-FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, const std::vector<double> &localNodePositionsFromFile, const std::vector<Vec3> &localNodePositions,
-                       const std::array<element_no_t,D> nElementsPerCoordinateDirectionLocal, const std::array<int,D> nRanksPerCoordinateDirection) :
-  FunctionSpaceDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>(partitionManager, localNodePositions, nElementsPerCoordinateDirectionLocal, nRanksPerCoordinateDirection)
-{
-}
-
 template<int D,typename BasisFunctionType>
 FunctionSpaceDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
 FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, const std::vector<Vec3> &localNodePositions,
@@ -55,7 +46,7 @@ FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, con
   FunctionSpaceDofsNodesStructured<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>(partitionManager, NULL)
 {
   LOG(DEBUG) << "constructor FunctionSpaceDofsNodes StructuredDeformable, from " << localNodePositions.size() << " localNodePositions";
- 
+
   this->noGeometryField_ = false;
   this->nElementsPerCoordinateDirectionLocal_ = nElementsPerCoordinateDirectionLocal;
   this->nRanks_ = nRanksPerCoordinateDirection;
@@ -75,6 +66,15 @@ FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, con
     for (int i = 0; i < 3; i++)
       localNodePositions_.push_back(vector[i]);
   }
+}
+
+template<int D,typename BasisFunctionType>
+FunctionSpaceDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
+FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, const std::vector<double> &nodePositionsFromBinaryFile, const std::vector<Vec3> &localNodePositions,
+                       const std::array<element_no_t,D> nElementsPerCoordinateDirectionLocal, const std::array<int,D> nRanksPerCoordinateDirection) :
+  FunctionSpaceDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::FunctionSpaceDofsNodes(
+    partitionManager, localNodePositions, nElementsPerCoordinateDirectionLocal, nRanksPerCoordinateDirection)
+{
 }
 
 template<int D,typename BasisFunctionType>
@@ -98,14 +98,16 @@ initialize()
  
   // pass a shared "this" pointer to the geometryField 
   // retrieve "this" pointer and convert to downwards pointer of most derived class "FunctionSpace"
-  std::shared_ptr<FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>> thisMesh
+  std::shared_ptr<FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>> thisFunctionSpace
     = std::static_pointer_cast<FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>(this->shared_from_this());
 
-  assert(thisMesh != nullptr);
+  assert(thisFunctionSpace != nullptr);
   
   // create empty field variable for geometry field
+  LOG(DEBUG) << "step 1: construct geometryField";
+
   std::vector<std::string> componentNames{"x", "y", "z"};
-  this->geometryField_ = std::make_shared<GeometryFieldType>(thisMesh, "geometry", componentNames, true);
+  this->geometryField_ = std::make_shared<GeometryFieldType>(thisFunctionSpace, "geometry", componentNames, true);
   
   // assign values of geometry field
   this->setGeometryFieldValues();
@@ -393,9 +395,8 @@ setGeometryFieldValues()
       geometryValuesIndex++;
     }
   }
-  // set values for node positions as geometry field 
+  // set values for node positions as geometry field
   this->geometryField_->setValuesWithoutGhosts(geometryValues);
-  this->geometryField_->finishGhostManipulation();
 
   // initialize Hermite derivative dofs such that geometry fields becomes "even"
   bool setHermiteDerivatives = false;
@@ -408,7 +409,200 @@ setGeometryFieldValues()
     this->setHermiteDerivatives();
   }
 
+  //this->geometryField_->finishGhostManipulation();      // reduce ghost values, not necessary
+  this->geometryField_->setRepresentationGlobal();
+  this->geometryField_->startGhostManipulation();       // distribute ghost values
+
+  // output ghost values for debugging
+#ifndef NDEBUG
+  // get ghost values
+  std::stringstream stream;
+  std::vector<Vec3> geometryFieldValuesWithGhosts;
+  this->geometryField().getValuesWithGhosts(geometryFieldValuesWithGhosts);
+  for (int i = this->meshPartition_->nDofsLocalWithoutGhosts(); i < geometryFieldValuesWithGhosts.size(); i++)
+  {
+    stream << " " << geometryFieldValuesWithGhosts[i];
+  }
+  LOG(DEBUG) << "in setGeometryFieldValues, geometry field ghost values: " << stream.str();
+#endif
+
+/*
+  LOG(TRACE) << "Abort";
+  MPI_Barrier(this->meshPartition_->mpiCommunicator());
+  MPI_Abort(this->meshPartition_->mpiCommunicator(), 0);
+*/
+
   VLOG(1) << "setGeometryField, geometryValues: " << geometryValues;
 }
+
+template<int D,typename BasisFunctionType>
+void FunctionSpaceDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
+refineMesh(std::array<int,D> refinementFactors)
+{
+  LOG(DEBUG) << "refineMesh with refinementFactors: " << refinementFactors;
+
+  std::vector<Vec3> oldGeometryValues;
+  this->geometryField_->getValuesWithGhosts(oldGeometryValues);
+
+  int averageNNodesPerElement1D = FunctionSpaceBaseDim<1,BasisFunctionType>::averageNNodesPerElement();
+
+  // determine number of old nodes
+  std::array<int,3> nElementsLocalOld({1,1,1});
+  std::array<int,3> nElementsLocalNew({1,1,1});
+  std::array<int,3> nNodesWithGhostsOld({1,1,1});
+  std::array<int,3> nNodesNew({1,1,1});
+
+  for (int i = 0; i < D; i++)
+  {
+    nElementsLocalOld[i] = this->meshPartition_->nElementsLocal(i);
+    nElementsLocalNew[i] = nElementsLocalOld[i] * refinementFactors[i];
+    nNodesNew[i] = nElementsLocalNew[i] * averageNNodesPerElement1D + (this->meshPartition_->hasFullNumberOfNodes(i)? 1 : 0);
+    nNodesWithGhostsOld[i] = this->meshPartition_->nNodesLocalWithGhosts(i);
+  }
+
+  int nNodesLocalWithoutGhostsNew = nNodesNew[0] * nNodesNew[1] * nNodesNew[2];
+  localNodePositions_.resize(nNodesLocalWithoutGhostsNew*3);
+
+  LOG(DEBUG) << "nElementsLocal: " << nElementsLocalOld << " -> " << nElementsLocalNew;
+  LOG(DEBUG) << "oldGeometryValues.size: " << oldGeometryValues.size();
+  LOG(DEBUG) << "nNodesNew: " << nNodesNew << ", nNodesWithGhostsOld: " << nNodesWithGhostsOld;
+
+  // get local natural dof nos (ordering including ghost dofs)
+  std::shared_ptr<FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>> thisFunctionSpace
+    = std::static_pointer_cast<FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>(this->shared_from_this());
+
+  this->meshPartition_->initializeDofNosLocalNaturalOrdering(thisFunctionSpace);
+  const std::vector<dof_no_t> &dofNosLocalNaturalOrdering = this->meshPartition_->dofNosLocalNaturalOrdering();
+
+  this->meshPartition_->refine(refinementFactors);
+  for (int i = 0; i < D; i++)
+  {
+    this->nElementsPerCoordinateDirectionLocal_[i] = this->meshPartition_->nElementsLocal(i);
+    this->nElementsPerCoordinateDirectionGlobal_[i] = this->meshPartition_->nElementsGlobal(i);
+  }
+
+  LOG(DEBUG) << "nNodesLocalWithoutGhosts: " << this->nNodesLocalWithoutGhosts();
+  LOG(DEBUG) << "nNodesLocalWithoutGhosts: " << this->meshPartition_->nNodesLocalWithoutGhosts(0) << ","
+    << this->meshPartition_->nNodesLocalWithoutGhosts(1) << "," << this->meshPartition_->nNodesLocalWithoutGhosts(2) << ": "
+    << this->meshPartition_->nNodesLocalWithoutGhosts();
+
+  std::array<std::array<std::array<Vec3,2>,2>,2> neighbouringPoints({});
+  LOG(DEBUG) << "set new node positions";
+
+  // loop over new node positions
+  for (int zIndexNew = 0; zIndexNew < nNodesNew[2]; zIndexNew++)
+  {
+    for (int yIndexNew = 0; yIndexNew < nNodesNew[1]; yIndexNew++)
+    {
+      for (int xIndexNew = 0; xIndexNew < nNodesNew[0]; xIndexNew++)
+      {
+
+        std::array<double,3> alpha({1.0,1.0,1.0});
+
+        alpha[0] = double(xIndexNew % refinementFactors[0]) / refinementFactors[0];
+        alpha[1] = double(yIndexNew % refinementFactors[1]) / refinementFactors[1];
+        alpha[2] = double(zIndexNew % refinementFactors[2]) / refinementFactors[2];
+
+        // get neighbouring node positions
+        int xIndexOld = xIndexNew / refinementFactors[0];
+        int yIndexOld = yIndexNew / refinementFactors[1];
+        int zIndexOld = zIndexNew / refinementFactors[2];
+
+        VLOG(1) << xIndexNew << "," << yIndexNew << "," << zIndexNew << " / " << nNodesNew << ", alpha: " << alpha << ", old index: " << xIndexOld << "," << yIndexOld << "," << zIndexOld;
+
+        // z- y- x-
+        int indexOld = zIndexOld*nNodesWithGhostsOld[1]*nNodesWithGhostsOld[0] + yIndexOld*nNodesWithGhostsOld[0] + xIndexOld;
+        int dofNoOld = dofNosLocalNaturalOrdering[indexOld];
+        assert(dofNoOld < oldGeometryValues.size());
+        neighbouringPoints[0][0][0] = oldGeometryValues[dofNoOld];
+        Vec3 resultingPoint = (1.0 - alpha[2]) * (1.0 - alpha[1]) * (1.0 - alpha[0]) * neighbouringPoints[0][0][0];
+
+        // z- y- x+
+        indexOld = zIndexOld*nNodesWithGhostsOld[1]*nNodesWithGhostsOld[0] + yIndexOld*nNodesWithGhostsOld[0] + (xIndexOld + 1);
+        dofNoOld = dofNosLocalNaturalOrdering[indexOld];
+        if (dofNoOld < oldGeometryValues.size())
+        {
+          neighbouringPoints[0][0][1] = oldGeometryValues[dofNoOld];
+          resultingPoint += (1.0 - alpha[2]) * (1.0 - alpha[1]) * alpha[0]         * neighbouringPoints[0][0][1];
+        }
+
+        // z- y+ x-
+        indexOld = zIndexOld*nNodesWithGhostsOld[1]*nNodesWithGhostsOld[0] + (yIndexOld+1)*nNodesWithGhostsOld[0] + xIndexOld;
+        dofNoOld = dofNosLocalNaturalOrdering[indexOld];
+        if (dofNoOld < oldGeometryValues.size())
+        {
+          neighbouringPoints[0][1][0] = oldGeometryValues[dofNoOld];
+          resultingPoint += (1.0 - alpha[2]) * alpha[1]         * (1.0 - alpha[0]) * neighbouringPoints[0][1][0];
+        }
+
+        // z- y+ x+
+        indexOld = zIndexOld*nNodesWithGhostsOld[1]*nNodesWithGhostsOld[0] + (yIndexOld+1)*nNodesWithGhostsOld[0] + (xIndexOld + 1);
+        dofNoOld = dofNosLocalNaturalOrdering[indexOld];
+        if (dofNoOld < oldGeometryValues.size())
+        {
+          neighbouringPoints[0][1][1] = oldGeometryValues[dofNoOld];
+          resultingPoint += (1.0 - alpha[2]) * alpha[1]         * alpha[0]         * neighbouringPoints[0][1][1];
+        }
+
+        // z+ y- x-
+        indexOld = (zIndexOld+1)*nNodesWithGhostsOld[1]*nNodesWithGhostsOld[0] + yIndexOld*nNodesWithGhostsOld[0] + xIndexOld;
+        dofNoOld = dofNosLocalNaturalOrdering[indexOld];
+        if (dofNoOld < oldGeometryValues.size())
+        {
+          neighbouringPoints[1][0][0] = oldGeometryValues[dofNoOld];
+          resultingPoint += alpha[2]         * (1.0 - alpha[1]) * (1.0 - alpha[0]) * neighbouringPoints[1][0][0];
+        }
+
+        // z+ y- x+
+        indexOld = (zIndexOld+1)*nNodesWithGhostsOld[1]*nNodesWithGhostsOld[0] + yIndexOld*nNodesWithGhostsOld[0] + (xIndexOld + 1);
+        dofNoOld = dofNosLocalNaturalOrdering[indexOld];
+        if (dofNoOld < oldGeometryValues.size())
+        {
+          neighbouringPoints[1][0][1] = oldGeometryValues[dofNoOld];
+          resultingPoint += alpha[2]         * (1.0 - alpha[1]) * alpha[0]         * neighbouringPoints[1][0][1];
+        }
+
+        // z+ y+ x-
+        indexOld = (zIndexOld+1)*nNodesWithGhostsOld[1]*nNodesWithGhostsOld[0] + (yIndexOld+1)*nNodesWithGhostsOld[0] + xIndexOld;
+        dofNoOld = dofNosLocalNaturalOrdering[indexOld];
+        if (dofNoOld < oldGeometryValues.size())
+        {
+          neighbouringPoints[1][1][0] = oldGeometryValues[dofNoOld];
+          resultingPoint += alpha[2]         * alpha[1]         * (1.0 - alpha[0]) * neighbouringPoints[1][1][0];
+        }
+
+        // z+ y+ x+
+        indexOld = (zIndexOld+1)*nNodesWithGhostsOld[1]*nNodesWithGhostsOld[0] + (yIndexOld+1)*nNodesWithGhostsOld[0] + (xIndexOld + 1);
+        dofNoOld = dofNosLocalNaturalOrdering[indexOld];
+        if (dofNoOld < oldGeometryValues.size())
+        {
+          neighbouringPoints[1][1][1] = oldGeometryValues[dofNoOld];
+          resultingPoint += alpha[2]         * alpha[1]         * alpha[0]         * neighbouringPoints[1][1][1];
+        }
+
+        int indexNew = zIndexNew*nNodesNew[1]*nNodesNew[0] + yIndexNew*nNodesNew[0] + xIndexNew;
+        assert(3*indexNew+2 < localNodePositions_.size());
+
+        localNodePositions_[3*indexNew + 0] = resultingPoint[0];
+        localNodePositions_[3*indexNew + 1] = resultingPoint[1];
+        localNodePositions_[3*indexNew + 2] = resultingPoint[2];
+
+        VLOG(1) << "    neighbouringPoints: " << neighbouringPoints << ", resultingPoint: " << resultingPoint;
+      }
+    }
+  }
+
+  LOG(DEBUG) << "create new geometry field";
+
+  // create new geometry field
+  std::vector<std::string> componentNames{"x", "y", "z"};
+  this->geometryField_ = std::make_shared<GeometryFieldType>(thisFunctionSpace, "geometry", componentNames, true);
+
+  LOG(DEBUG) << "setGeometryFieldValues";
+
+  // assign new values of geometry field
+  this->setGeometryFieldValues();
+}
+
 
 } // namespace

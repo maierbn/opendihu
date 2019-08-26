@@ -11,7 +11,8 @@ void SolutionVectorMapping<
   std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1>>, int, double>,   // <fieldVariableType,componentNo,prefactor>
   std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2>>, int, double>
 >::transfer(const std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1>>, int, double> &transferableSolutionData1,
-            const std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2>>, int, double> &transferableSolutionData2)
+            const std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2>>, int, double> &transferableSolutionData2,
+            const std::string transferSlotName)
 {
   // rename input data
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1>> fieldVariable1 = std::get<0>(transferableSolutionData1);
@@ -26,7 +27,7 @@ void SolutionVectorMapping<
   double prefactor1 = std::get<2>(transferableSolutionData1);
   double prefactor2 = std::get<2>(transferableSolutionData2);
 
-  VLOG(1) << "solution vector mapping, transfer from component "
+  VLOG(1) << "solution vector mapping (solution_vector_mapping.tpp), transfer from component "
     << componentNo1 << " (" << fieldVariable1->nDofsLocalWithoutGhosts() << " dofs), prefactor " << prefactor1
     << " to " << componentNo2 << " (" << fieldVariable2->nDofsLocalWithoutGhosts() << " dofs), prefactor " << prefactor2 << " (not considered here)";
 
@@ -65,7 +66,8 @@ void SolutionVectorMapping<
   std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1>>, int, double>,   // <fieldVariableType,componentNo,prefactor>
   std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,1>>, int, double>
 >::transfer(const std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1>>, int, double> &transferableSolutionData1,
-            const std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,1>>, int, double> &transferableSolutionData2)
+            const std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,1>>, int, double> &transferableSolutionData2,
+            const std::string transferSlotName)
 {
   // rename input data
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1>> fieldVariable1 = std::get<0>(transferableSolutionData1);
@@ -80,7 +82,7 @@ void SolutionVectorMapping<
   double prefactor1 = std::get<2>(transferableSolutionData1);
   double prefactor2 = std::get<2>(transferableSolutionData2);
 
-  VLOG(1) << "solution vector mapping, transfer from component "
+  VLOG(1) << "solution vector mapping (solution_vector_mapping.tpp), transfer from component "
     << componentNo1 << " (" << fieldVariable1->nDofsLocalWithoutGhosts() << " dofs), prefactor " << prefactor1
     << " to " << componentNo2 << " (" << fieldVariable2->nDofsLocalWithoutGhosts() << " dofs), prefactor " << prefactor2 << " (2nd prefactor not considered here)";
 

@@ -98,13 +98,19 @@ void Paraview::writeParaviewFieldVariable(FieldVariableType &fieldVariable,
   // here we have the type of the mesh with meshName (which is typedef to FunctionSpace)
   //typedef typename FieldVariableType::FunctionSpace FunctionSpace;
 
+  // paraview does not correctly handle 2-component output data, so set number to 3
+  int nComponentsParaview = fieldVariable.nComponents();
+  if (nComponentsParaview == 2)
+    nComponentsParaview = 3;
+
   // if only the "parallel dataset element" stub which is needed in the master files, should be written
   if (onlyParallelDatasetElement)
   {
+
     file << std::string(3, '\t') << "<PDataArray "
         << "Name=\"" << fieldVariable.name() << "\" "
         << "type=\"Float32\" "
-        << "NumberOfComponents=\"" << fieldVariable.nComponents() << "\" ";
+        << "NumberOfComponents=\"" << nComponentsParaview << "\" ";
 
     if (binaryOutput)
     {
@@ -121,7 +127,7 @@ void Paraview::writeParaviewFieldVariable(FieldVariableType &fieldVariable,
     file << std::string(4, '\t') << "<DataArray "
         << "Name=\"" << fieldVariable.name() << "\" "
         << "type=\"Float32\" "
-        << "NumberOfComponents=\"" << fieldVariable.nComponents() << "\" ";
+        << "NumberOfComponents=\"" << nComponentsParaview << "\" ";
 
     const int nComponents = FieldVariableType::nComponents();
     std::string stringData;
@@ -156,14 +162,21 @@ void Paraview::writeParaviewFieldVariable(FieldVariableType &fieldVariable,
         index += nDofsPerNode;
       }
     }
-    values.reserve(componentValues[0].size()*nComponents);
+    values.reserve(componentValues[0].size()*nComponentsParaview);
 
     // copy values in consecutive order (x y z x y z) to output
     for (int i = 0; i < componentValues[0].size(); i++)
     {
-      for (int componentNo = 0; componentNo < nComponents; componentNo++)
+      for (int componentNo = 0; componentNo < nComponentsParaview; componentNo++)
       {
-        values.push_back(componentValues[componentNo][i]);
+        if (nComponents == 2 && nComponentsParaview == 3 && componentNo == 2)
+        {
+          values.push_back(0.0);
+        }
+        else
+        {
+          values.push_back(componentValues[componentNo][i]);
+        }
       }
     }
 

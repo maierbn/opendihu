@@ -69,7 +69,10 @@ public:
   Vec &valuesLocal(int componentNo = 0);
 
   //! get the internal PETSc vector values, the global vector for the specified component
-  Vec &valuesGlobal(int componentNo = 0);
+  Vec &valuesGlobal(int componentNo);
+
+  //! if the vector has multiple components, return a nested Vec of the global vector, else return the global vector
+  Vec &valuesGlobal();
 
   //! fill a contiguous vector with all components after each other, "struct of array"-type data layout.
   //! after manipulation of the vector has finished one has to call restoreValuesContiguous
@@ -91,6 +94,9 @@ public:
   //! output the vector to stream, for debugging
   void output(std::ostream &stream);
 
+  //! write the vector to a file using PetscViewer, format is "default", "ascii" or "matlab"
+  void dumpVector(std::string filename, std::string format);
+
 protected:
   
   //! create the values vectors
@@ -98,6 +104,7 @@ protected:
   
   std::array<Vec,nComponents> values_;  ///< the (serial) Petsc vectors that contains all the data, one for each component
   Vec valuesContiguous_ = PETSC_NULL;   ///< global vector that has all values of the components concatenated, i.e. in a "struct of arrays" memory layout
+  Vec vectorNestedGlobal_;       ///< a VecNest object containing the global values, only in used if nComponents > 1
 };
 
 /** This is the partial specialization for structured meshes.
@@ -105,20 +112,17 @@ protected:
  *  This object is created such that it matches the partition given by the meshPartition.
  */
 template<typename MeshType, typename BasisFunctionType, int nComponents>
-class PartitionedPetscVec<
-  FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,
-  nComponents,
-  Mesh::isStructured<MeshType>> : 
+class PartitionedPetscVecNComponentsStructured : 
   public PartitionedPetscVecBase<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>>
 {
 public:
  
   //! constructor, construct a petsc Vec with meshPartition that can hold the values for a field variable with nComponents components
-  PartitionedPetscVec(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,MeshType>> meshPartition, std::string name);
+  PartitionedPetscVecNComponentsStructured(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,MeshType>> meshPartition, std::string name);
  
   //! constructor, copy from existing vector
   template<int nComponents2>
-  PartitionedPetscVec(PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents2> &rhs, std::string name);
+  PartitionedPetscVecNComponentsStructured(PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents2> &rhs, std::string name);
  
   //! Communicates the ghost values from the global vectors to the local vector and sets the representation to local.
   //! The representation has to be global, afterwards it is set to local.
@@ -180,15 +184,18 @@ public:
   Vec &valuesLocal(int componentNo = 0);
   
   //! get the global Vector of a specified component
-  Vec &valuesGlobal(int componentNo = 0);
+  Vec &valuesGlobal(int componentNo);
   
+  //! if the vector has multiple components, return a nested Vec of the global vector, else return the global vector
+  Vec &valuesGlobal();
+
   //! fill a contiguous vector with all components after each other, "struct of array"-type data layout.
   //! after manipulation of the vector has finished one has to call restoreValuesContiguous
-  Vec &getValuesContiguous();
+  virtual Vec &getValuesContiguous() = 0;
 
   //! copy the values back from a contiguous representation where all components are in one vector to the standard internal format of PartitionedPetscVec where there is one local vector with ghosts for each component.
   //! this has to be called
-  void restoreValuesContiguous();
+  virtual void restoreValuesContiguous() = 0;
 
   //! set the internal representation to be global, i.e. using the global vectors, if it was local, ghost buffer entries are discarded (use finishGhostManipulation to consider ghost dofs)
   void setRepresentationGlobal();
@@ -204,7 +211,10 @@ public:
   
   //! output the vector to stream, for debugging
   void output(std::ostream &stream);
-  
+
+  //! write the vector to a file using PetscViewer, format is "default", "ascii" or "matlab"
+  void dumpVector(std::string filename, std::string format);
+
 protected:
  
   //! create a distributed Petsc vector, according to partition
@@ -223,11 +233,54 @@ protected:
   std::vector<double> savedValues_;   ///< temporary storage of values that would be overwritten by ghost value operations of the extracted field variable
   Vec savedVectorLocal_;        ///< when this PartitionedPetscVec has nComponents=1 and extractComponentShared is called, there is no valuesContiguous_ vector in use (because it is only one component anyway, replacement is globalVector_[0]). Then the extracted field variable gets copies of the own vectorLocal_ and vectorGlobal_ set, the original pointer vectorLocal_ and vectorGlobal_ are saved in this variable and reset when restoreValuesContiguous is called.
   Vec savedVectorGlobal_;        ///< when this PartitionedPetscVec has nComponents=1 and extractComponentShared is called, there is no valuesContiguous_ vector in use (because it is only one component anyway, replacement is globalVector_[0]). Then the extracted field variable gets copies of the own vectorLocal_ and vectorGlobal_ set, the original pointer vectorLocal_ and vectorGlobal_ are saved in this variable and reset when restoreValuesContiguous is called.
+  Vec vectorNestedGlobal_;       ///< a VecNest object containing the global values, only in used if nComponents > 1
 };
 
+/** This is a partial specialization for structured meshes with multiple components.
+ */
+template<typename MeshType, typename BasisFunctionType, int nComponents>
+class PartitionedPetscVec<
+  FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,
+  nComponents,
+  Mesh::isStructured<MeshType>> : 
+  public PartitionedPetscVecNComponentsStructured<MeshType,BasisFunctionType,nComponents>
+{
+public:
+  using PartitionedPetscVecNComponentsStructured<MeshType,BasisFunctionType,nComponents>::PartitionedPetscVecNComponentsStructured;
+  
+  //! fill a contiguous vector with all components after each other, "struct of array"-type data layout.
+  //! after manipulation of the vector has finished one has to call restoreValuesContiguous
+  Vec &getValuesContiguous() override;
+  
+  //! copy the values back from a contiguous representation where all components are in one vector to the standard internal format of PartitionedPetscVec where there is one local vector with ghosts for each component.
+  //! this has to be called
+  void restoreValuesContiguous() override;
+};
+
+/** This is the partial specialization for 1-component vectors
+ */
+template<typename MeshType, typename BasisFunctionType>
+class PartitionedPetscVec<
+  FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,
+  1,
+  Mesh::isStructured<MeshType>> : 
+  public PartitionedPetscVecNComponentsStructured<MeshType,BasisFunctionType,1>
+{
+public:
+  using PartitionedPetscVecNComponentsStructured<MeshType,BasisFunctionType,1>::PartitionedPetscVecNComponentsStructured;
+  
+  //! fill a contiguous vector with all components after each other, "struct of array"-type data layout.
+  //! after manipulation of the vector has finished one has to call restoreValuesContiguous
+  Vec &getValuesContiguous() override;
+  
+  //! copy the values back from a contiguous representation where all components are in one vector to the standard internal format of PartitionedPetscVec where there is one local vector with ghosts for each component.
+  //! this has to be called
+  void restoreValuesContiguous() override;
+};
 
 template<typename FunctionSpaceType, int nComponents>
 std::ostream &operator<<(std::ostream &stream, PartitionedPetscVec<FunctionSpaceType,nComponents> &vector);
 
 #include "partition/partitioned_petsc_vec/partitioned_petsc_vec_unstructured.tpp"
+#include "partition/partitioned_petsc_vec/partitioned_petsc_vec_n_components_structured.tpp"
 #include "partition/partitioned_petsc_vec/partitioned_petsc_vec_structured.tpp"

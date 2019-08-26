@@ -1,5 +1,7 @@
 #include "partition/partitioned_petsc_vec/partitioned_petsc_vec_base.h"
 
+#include "output_writer/generic.h"
+
 template<typename FunctionSpaceType>
 int PartitionedPetscVecBase<FunctionSpaceType>::vectorNo_ = 0;
 

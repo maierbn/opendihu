@@ -17,10 +17,42 @@ initializeRhs()
   LOG(TRACE) << "NeumannBoundaryConditions::initializeRhs, D=" << FunctionSpaceType::dim() << ", nComponents=" << nComponents;
   // initialize RHS for mesh dimension 2 or 3, this is the same for nComponents == 1 and nComponents > 1
 
+/*
+  LOG(DEBUG) << "test";
+
+  const int nComponentsTest = 1;
+
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponentsTest>> test = this->data_.functionSpace()->template createFieldVariable<nComponentsTest>("test");
+  test->zeroEntries();
+  test->zeroGhostBuffer();
+  test->setRepresentationGlobal();
+  test->startGhostManipulation();
+  LOG(DEBUG) << "inititalized, test: " << *test;
+
+
+  int ownRankNo = this->data_.functionSpace()->meshPartition()->rankSubset()->ownRankNo();
+  if (ownRankNo == 0)
+  {
+    std::array<double,nComponentsTest> value({10.0});
+    test->setValue(0, value, INSERT_VALUES);
+  }
+  else
+  {
+    std::array<double,nComponentsTest> value({11.0});
+    test->setValue(0, value, INSERT_VALUES);
+  }
+
+  LOG(DEBUG) << "before finishGhostManipulation, test: " << *test;
+  test->finishGhostManipulation();
+
+  LOG(DEBUG) << "after finishGhostManipulation, test: " << *test;*/
+
   this->data_.rhs()->setRepresentationGlobal();
   this->data_.rhs()->zeroEntries();
   this->data_.rhs()->startGhostManipulation();
-  this->data_.rhs()->zeroGhostBuffer();
+  //this->data_.rhs()->zeroGhostBuffer();
+
+  LOG(DEBUG) << "after startGhostManipulation, rhs: " << *this->data_.rhs();
 
   typedef typename NeumannBoundaryConditionsBase<FunctionSpaceType,QuadratureType,nComponents>::ElementWithFaces ElementWithFaces;
   typedef FunctionSpace::FunctionSpace<typename FunctionSpaceType::SurfaceMesh,
@@ -77,6 +109,18 @@ initializeRhs()
     VLOG(1) << "element no " << elementNoLocal << ", dofVectors: " << elementIter->dofVectors << ", geometryVolume: "
       << geometryVolume << ", face " << Mesh::getString(elementIter->face) << ", geometrySurface: " << geometrySurface;
 
+    // show node positions
+      /*
+    if (VLOG_IS_ON(1))
+    {
+      std::array<dof_no_t,FunctionSpaceType::nNodesPerElement()> elementNodeNos = functionSpace->getElementNodeNos(elementNoLocal);
+      for (int elementalNodeIndex = 0; elementalNodeIndex < FunctionSpaceType::nNodesPerElement(); elementalNodeIndex++)
+      {
+        dof_no_t nodeNoLocal = elementNodeNos[elementalNodeIndex];
+        //LOG(DEBUG) << ", global coordinates of element: " << functionSpace->meshPartition()->getCoordinatesGlobal(nodeNoLocal);
+      }
+    }*/
+
     // loop over integration points (e.g. gauss points)
     for (unsigned int samplingPointIndex = 0; samplingPointIndex < samplingPointsSurface.size(); samplingPointIndex++)
     {
@@ -105,7 +149,7 @@ initializeRhs()
            dofVectorsIter++)
       {
         int dofIndex = dofVectorsIter->first;
-        VecD<nComponents> fluxValue = dofVectorsIter->second;
+        VecD<nComponents> fluxValue = dofVectorsIter->second;   // this is the prescribed value, either a scalar of the flux or the traction vector
 
         boundaryConditionValueAtXi += fluxValue * FunctionSpaceSurface::phi(dofIndex, xiSurface);
       }
@@ -121,7 +165,7 @@ initializeRhs()
 
         VecD<nComponents> dofIntegrand = boundaryConditionValueAtXi * functionSpace->phi(surfaceDofIndex, xi) * integrationFactor;
 
-        LOG(DEBUG) << "  surfaceDofIndex " << surfaceDofIndex << ", xi=" << xi << ", BC value: " << boundaryConditionValueAtXi
+        VLOG(2) << "  surfaceDofIndex " << surfaceDofIndex << ", xi=" << xi << ", BC value: " << boundaryConditionValueAtXi
           << " phi = " << functionSpace->phi(surfaceDofIndex, xi) << ", integrationFactor: " << integrationFactor << ", dofIntegrand: " << dofIntegrand;
 
         // store integrand in evaluations array
@@ -165,13 +209,18 @@ initializeRhs()
         // get integrated value
         double integratedValue = integratedValues[i];
 
-        LOG(DEBUG) << "  dof " << dofIndex << ", component " << dofComponent << " integrated value: " << integratedValue;
+        VLOG(2) << "  dof " << dofIndex << ", component " << dofComponent << " integrated value: " << integratedValue;
       }  // dofComponent
 #endif
     }  // dofIndex
   } // elementGlobalNo
 
+
+  LOG(DEBUG) << "before finishGhostManipulation, rhs: " << *this->data_.rhs();
   this->data_.rhs()->finishGhostManipulation();
+
+  VLOG(1) << "after initializeRhs, rhs: " << *this->data_.rhs();
+  LOG(DEBUG) << "after initializeRhs, rhs: " << *this->data_.rhs();
 }
 
 // 1D initializeRhs

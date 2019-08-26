@@ -112,6 +112,7 @@ setHermiteDerivatives()
   if (std::is_same<BasisFunctionType,BasisFunction::Hermite>::value)
   {
     // ensure that ghost buffers is filled with the correct values
+    this->geometryField_->setRepresentationGlobal();
     this->geometryField_->startGhostManipulation();
 
     // loop over nodes

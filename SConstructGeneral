@@ -20,6 +20,7 @@ import os
 import sys
 import random
 import socket
+import platform
 
 sys.path.append("dependencies/scons-config/dist/scons_config-0.1-py2.7.egg")     # load scons_config
 
@@ -249,7 +250,12 @@ else:
 # flags to always include, except with cray compiler
 if os.environ.get("PE_ENV") != "CRAY" and "pg" not in env["cc"]:
   env.MergeFlags('-Wunused-variable')   # always warn about unused variables
-  env.MergeFlags('-std=c++14 -fopenmp -march=native')
+  env.MergeFlags('-std=c++14 -fopenmp')
+  if "ppc" in platform.processor():
+    env.MergeFlags('-mcpu=native -mtune=native')
+  else:
+    env.MergeFlags('-march=native')
+
   env.MergeFlags('-Wl,--disable-new-dtags')
 
 if os.environ.get("PE_ENV") == "CRAY" and env["USE_HPL"]:

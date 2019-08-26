@@ -31,6 +31,8 @@ if len(sys.argv) >= 4:
 if len(sys.argv) >= 5:
   preconditioner_type = sys.argv[3]
 
+
+print("scenario: [{}]".format(scenario_name))
 print("solver: [{}], preconditioner: [{}]".format(solver_type,preconditioner_type))
 
 config = {
@@ -53,16 +55,16 @@ config = {
      "endTime": end_time,
      "initialValues": [20,20,40,50,20,20],
      "solverName": "implicitSolver",
-     "durationLogKey": "duration_diffusion_1D_implicitSolver",    
+     "durationLogKey": "duration_diffusion_1D_implicitSolver", 
      "meshName": "mesh",  
      "FiniteElementMethod" : {
         "diffusionTensor": Diffusion,
         "meshName": "mesh",
-        "solverName": "implicitSolver",
+          "solverName": "implicitSolver",
      },
      "OutputWriter" : [
        #{"format": "Paraview", "outputInterval": 1, "filename": "out", "binaryOutput": "false", "fixedFormat": False},
-       {"format": "PythonFile", "filename": "out/" + scenario_name, "outputInterval": 10000, "binary":False}
+       {"format": "PythonFile", "filename": "out/" + scenario_name, "outputInterval": 1000, "binary":False}
      ]
   }
 }

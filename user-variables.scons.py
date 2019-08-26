@@ -94,6 +94,9 @@ try:
   import socket
   if socket.gethostname() == "neon" or socket.gethostname() == "helium" or "argon" in socket.gethostname():
     cmake="~/software/cmake/cmake-3.13.3-Linux-x86_64/bin/cmake"
+
+  if "sgscl" in socket.gethostname():
+    MPI_DIR="/scratch-nfs/maierbn/openmpi/install-3.1"
   
   # on cmcs09 (CPU-GPU):
   if socket.gethostname() == 'cmcs09':
@@ -145,7 +148,7 @@ if os.environ.get("PE_ENV") is not None:  # if on hazelhen
   cc = "cc"   # C compiler wrapper
   CC = "CC"   # C++ compiler wrapper
   mpiCC = "CC"  # mpi C++ compiler wrapper
-  cmake = "/lustre/cray/ws8/ws/icbbnmai-opendihu/cmake/cmake-3.13.2-Linux-x86_64/bin/cmake"
+  cmake = "~/cmake_3.6.3/bin/cmake"
 
   # use cray-pat for profiling
   USE_CRAY_PAT = False

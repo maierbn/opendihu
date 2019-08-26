@@ -350,12 +350,12 @@ config = {
           "inputMeshIsGlobal":    True,
           "dirichletBoundaryConditions": variables.linear_elasticity_dirichlet_bc,
           "neumannBoundaryConditions":   variables.linear_elasticity_neumann_bc,
-          "bulkModulus":          4.0, #40e3 # https://www.researchgate.net/publication/230248067_Bulk_Modulus
-          "shearModulus":         3.9, #39e3 # https://onlinelibrary.wiley.com/doi/full/10.1002/mus.24104
+          "bulkModulus":          40e3, #40e3 # https://www.researchgate.net/publication/230248067_Bulk_Modulus
+          "shearModulus":         39e3, #39e3 # https://onlinelibrary.wiley.com/doi/full/10.1002/mus.24104
         },
         "maximumActiveStress":      1.0,
         "strainScalingCurveWidth":  1.0,
-        "scalingFactor":        1e0, 
+        "scalingFactor":        1e4,   #1e4
         "OutputWriter" : [
           {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/deformation", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
           #{"format": "PythonFile", "filename": "out/deformation", "outputInterval": 1, "binary":False, "onlyNodalValues":True},

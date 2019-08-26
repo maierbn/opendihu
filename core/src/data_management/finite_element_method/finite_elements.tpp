@@ -81,8 +81,12 @@ updateGeometry(double scalingFactor)
 
   //this->solution()->startGhostManipulation();
 
+  this->functionSpace_->geometryField().finishGhostManipulation();
+  
   // w = alpha * x + y, VecWAXPY(w, alpha, x, y)
   ierr = VecWAXPY(this->functionSpace_->geometryField().valuesGlobal(), scalingFactor, this->solution()->valuesGlobal(), this->referenceGeometry_->valuesGlobal()); CHKERRV(ierr);
+  
+  this->functionSpace_->geometryField().startGhostManipulation();
   
   if (VLOG_IS_ON(1))
   {

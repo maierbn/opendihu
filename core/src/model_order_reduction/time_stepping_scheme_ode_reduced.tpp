@@ -48,7 +48,7 @@ namespace ModelOrderReduction
     {
       // create the functionspace for the reduced order
       LOG(DEBUG) << "nReducedBases: " << this->nReducedBases_;
-      this->functionSpaceRed = this->context_.meshManager()->createGenericFunctionSpace(this->nReducedBases_, 1, "functionSpaceReduced");
+      this->functionSpaceRed = this->context_.meshManager()->createGenericFunctionSpace(this->nReducedBases_, "functionSpaceReduced");
       LOG(DEBUG) << "functionSpaceRed";
     }
     
@@ -59,7 +59,7 @@ namespace ModelOrderReduction
     }
     else
     {
-      this->functionSpaceRowsSnapshots = this->context_.meshManager()->createGenericFunctionSpace(this->nRowsSnapshots_, 1, "functionSpaceRowsSnapshots");
+      this->functionSpaceRowsSnapshots = this->context_.meshManager()->createGenericFunctionSpace(this->nRowsSnapshots_, "functionSpaceRowsSnapshots");
       LOG(DEBUG) << "functionSpaceRowsSnapshots";
     }
     

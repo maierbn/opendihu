@@ -316,7 +316,8 @@ parseBoundaryConditionsForElements(std::string boundaryConditionsConfigKey)
   
   generateBoundaryConditionsByComponent();
 
-  LOG(DEBUG) << "boundaryConditionNonGhostDofLocalNos: " << boundaryConditionNonGhostDofLocalNos_
+  LOG(DEBUG) << "boundaryConditionsNonGhost_: " << boundaryConditionsNonGhost_
+    << ", boundaryConditionNonGhostDofLocalNos: " << boundaryConditionNonGhostDofLocalNos_
     << ", boundaryConditionValues: " << boundaryConditionValues_ << ", boundaryConditionsByComponent_: ";
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
   {

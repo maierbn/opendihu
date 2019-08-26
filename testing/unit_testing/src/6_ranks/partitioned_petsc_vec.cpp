@@ -8,7 +8,7 @@
 #include "arg.h"
 #include "opendihu.h"
 #include "../utility.h"
-#include "partition/partitioned_petsc_vec/partitioned_petsc_vec_with_dirichlet_bc.h"
+#include "partition/partitioned_petsc_vec/01_partitioned_petsc_vec_with_dirichlet_bc.h"
 #include "spatial_discretization/boundary_conditions/dirichlet_boundary_conditions.h"
 
 TEST(PartitionedPetscVecTest, Test)

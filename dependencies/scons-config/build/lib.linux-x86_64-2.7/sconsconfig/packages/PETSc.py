@@ -105,13 +105,14 @@ class PETSc(Package):
       if socket.gethostname() != 'cmcs09':
         # on normal host
         
+        # for metis to work, we need --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch        
         self.set_build_handler([
             'mkdir -p ${PREFIX}',
             #'PATH=${PATH}:${DEPENDENCIES_DIR}/bison/install/bin \
             './configure --prefix=${PREFIX} --with-debugging=no --with-shared-libraries=1 \
             --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
             --with-mpi-dir=${MPI_DIR}\
-            --download-mumps --download-scalapack --download-parmetis --download-metis --download-sundials --download-hypre \
+            --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch --download-sundials --download-hypre \
             COPTFLAGS=-O3\
             CXXOPTFLAGS=-O3\
             FOPTFLAGS=-O3 | tee out.txt',

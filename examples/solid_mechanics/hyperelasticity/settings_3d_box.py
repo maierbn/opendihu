@@ -45,7 +45,7 @@ if False:
 dirichlet_bc[0] = [xpos,ypos,zpos]
 dirichlet_bc[1] = [np.nan,ypos,zpos]
 
-neumann_bc = [{"element": k*nx*ny + j*nx + nx-1, "constantVector": [0,0,1], "face": "2+"} for k in range(nz) for j in range(ny)]
+neumann_bc = [{"element": k*nx*ny + j*nx + nx-1, "constantVector": [0,0,1e-2], "face": "2+"} for k in range(nz) for j in range(ny)]
 
 #dirichlet_bc = {}
 #neumann_bc = []
@@ -65,9 +65,9 @@ config = {
     "physicalExtent": [nx, ny, nz],
     
     # solver
-    "relativeTolerance": 1e-15,
-    "solverType": "gmres",          # cg groppcg pipecg pipecgrr cgne nash stcg gltr richardson chebyshev gmres tcqmr fcg pipefcg bcgs ibcgs fbcgs fbcgsr bcgsl cgs tfqmr cr pipecr lsqr preonly qcg bicg fgmres pipefgmres minres symmlq lgmres lcd gcr pipegcr pgmres dgmres tsirm cgls
-    "preconditionerType": "none",
+    "relativeTolerance": 1e-10,
+    "solverType": "preonly",          # cg groppcg pipecg pipecgrr cgne nash stcg gltr richardson chebyshev gmres tcqmr fcg pipefcg bcgs ibcgs fbcgs fbcgsr bcgsl cgs tfqmr cr pipecr lsqr preonly qcg bicg fgmres pipefgmres minres symmlq lgmres lcd gcr pipegcr pgmres dgmres tsirm cgls
+    "preconditionerType": "lu",
     "maxIterations": 1e4,
     
     "dumpFilename": "out/m",

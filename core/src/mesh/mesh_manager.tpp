@@ -200,4 +200,30 @@ bool Manager::hasFunctionSpaceOfType(std::string meshName)
   return false;
 }
 
+template<typename FunctionSpaceType>
+std::shared_ptr<FunctionSpace::Generic> Manager::
+createGenericFunctionSpace(int nEntries, std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> meshPartition, std::string name)
+{
+  std::array<element_no_t, 1> nElements;
+
+  if (meshPartition->ownRankNo() == meshPartition->nRanks()-1)
+  {
+    // on the right border, have one element less than nodes, because nodes are left and right of the 1D element
+    nElements[0] = nEntries-1;
+  }
+  else
+  {
+    // everywhere else there are as many nodes as elements
+    nElements[0] = nEntries;
+  }
+
+  LOG(DEBUG) << "createGenericFunctionSpace, nEntries: " << nEntries << ", hasFullNumberOfNodes: "
+    << "["  << meshPartition->hasFullNumberOfNodes(0) << ", "  << meshPartition->hasFullNumberOfNodes(1) << ", "  << meshPartition->hasFullNumberOfNodes(2) << "], nElements: " << nElements;
+
+  std::array<double, 1> physicalExtent({0.0});
+  std::array<int, 1> nRanksPerCoordinateDirection({meshPartition->nRanks()});
+  std::shared_ptr<Mesh> mesh = createFunctionSpace<FunctionSpace::Generic>(name, nElements, physicalExtent, nRanksPerCoordinateDirection, false);   // last parameter is that nElements is local number
+
+  return std::static_pointer_cast<FunctionSpace::Generic>(mesh);
+}
 }   // namespace

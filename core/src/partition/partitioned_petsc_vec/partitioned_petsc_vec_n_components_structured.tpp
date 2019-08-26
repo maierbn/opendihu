@@ -252,6 +252,10 @@ setRepresentationGlobal()
 
     setRepresentationGlobal();
   }
+  else if (this->currentRepresentation_ == Partition::values_representation_t::representationGlobal)
+  {
+    // already global, do nothing
+  }
   else
   {
     LOG(FATAL) << "Cannot set vector representation from \"" << Partition::valuesRepresentationString[this->currentRepresentation_]
@@ -288,6 +292,10 @@ setRepresentationLocal()
   {
     LOG(FATAL) << "\"" << this->name_ << "\" setRepresentationLocal, previous representation: "
     << Partition::valuesRepresentationString[this->currentRepresentation_] << ". This is not directly possible, call restoreExtractedComponent instead.";
+  }
+  else if (this->currentRepresentation_ == Partition::values_representation_t::representationLocal)
+  {
+    // already local, do nothing
   }
   else
   {

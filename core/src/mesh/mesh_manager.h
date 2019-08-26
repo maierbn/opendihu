@@ -52,8 +52,12 @@ public:
   template<typename FunctionSpaceType, typename ...Args>
   std::shared_ptr<FunctionSpaceType> createFunctionSpace(std::string name, Args && ...args);
 
+  //! create a generic function space without mesh representation with dimension nEntries, in serial
+  std::shared_ptr<FunctionSpace::Generic> createGenericFunctionSpace(int nEntries, std::string name);
+
   //! create a generic function space without mesh representation with dimension nEntries
-  std::shared_ptr<FunctionSpace::Generic> createGenericFunctionSpace(int nEntries, int nRanks, std::string name);
+  template<typename FunctionSpaceType>
+  std::shared_ptr<FunctionSpace::Generic> createGenericFunctionSpace(int nEntries, std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> meshPartition, std::string name);
 
   //! create a mesh not from python config but directly by calling an appropriate construtor.
   //! With this e.g. meshes from node positions can be created.
@@ -66,7 +70,7 @@ public:
   //! The vector contains nEntries entries, the partitioning is done by the partition manager.
   //! \param nRanks on how many ranks the field variable will be distributed, the nEntries is the local size
   //! \param name is the name of the Petsc Vec, used for debugging output.
-  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace::Generic,1>> createGenericFieldVariable(int nEntries, int nRanks, std::string name);
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace::Generic,1>> createGenericFieldVariable(int nEntries, std::string name);
 
   friend class NodePositionsTester;    ///< a class used for testing
 

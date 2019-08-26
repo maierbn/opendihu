@@ -179,6 +179,7 @@ initialize()
   int diagonalNonZeros, offdiagonalNonZeros;
   ::Data::FiniteElementsBase<DisplacementsFunctionSpace,1>::getPetscMemoryParameters(diagonalNonZeros, offdiagonalNonZeros);
 
+  // use Petsc nested matrix data structures, these avoid to copy values from the geometry fields, but only gmres and cg solvers are implemented
   if (useNestedMat_)
   {
     // top u matrices
@@ -218,7 +219,7 @@ initialize()
     submatrices_[3*4 + 3] = pMatrix_.back().valuesGlobal();
 
     // create 4x4 nested matrix
-    ierr = MatCreateNest(mpiCommunicator, 4, NULL, 4, NULL, submatrices_.data(), &this->solverMatrixTangentStiffness_); CHKERRV(ierr);
+    ierr = MatCreateNest(mpiCommunicator, 4, NULL, 4, NULL, submatrices_.data(), &this->solverMatrixJacobian_); CHKERRV(ierr);
 
     // create nested vector for solution
     for (int i = 0; i < 3; i++)
@@ -237,116 +238,66 @@ initialize()
   }
   else
   {
-    // prepare for non-nested data structures without ghost dofs
+    // prepare for non-nested data structures without ghost dofs, these are normal Petsc Mat's and Vec's for which all solvers are available
 
-    int nRowsLocal = displacementsFunctionSpace_->nDofsLocalWithoutGhosts() * 3 + pressureFunctionSpace_->nDofsLocalWithoutGhosts();
-    for (int componentNo = 0; componentNo < 3; componentNo++)
-    {
-      nRowsLocal -= dirichletBoundaryConditions_->boundaryConditionsByComponent()[componentNo].dofNosLocal.size();
-    }
+    combinedVecSolution_ = std::make_shared<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>>(
+      displacementsFunctionSpace_->meshPartition(), pressureFunctionSpace_->meshPartition(), dirichletBoundaryConditions_, "combinedSolution");
+
+    combinedVecResidual_ = std::make_shared<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>>(
+      displacementsFunctionSpace_->meshPartition(), pressureFunctionSpace_->meshPartition(), dirichletBoundaryConditions_, "combinedResidual");
+
+    combinedVecExternalVirtualWork_ = std::make_shared<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>>(
+      displacementsFunctionSpace_->meshPartition(), pressureFunctionSpace_->meshPartition(), dirichletBoundaryConditions_, "combinedVecExternalVirtualWork");
+
+    int nMatrixRowsLocal = combinedVecSolution_->nEntriesLocal();
 
     LOG(DEBUG) << "n dofs displacements: 3*" << displacementsFunctionSpace_->nDofsLocalWithoutGhosts() << " = " << 3*displacementsFunctionSpace_->nDofsLocalWithoutGhosts();
     LOG(DEBUG) << "n dofs pressure: " << pressureFunctionSpace_->nDofsLocalWithoutGhosts() << ", total: " << displacementsFunctionSpace_->nDofsLocalWithoutGhosts() * 3 + pressureFunctionSpace_->nDofsLocalWithoutGhosts();
     LOG(DEBUG) << "n BC dofs: ux:" << dirichletBoundaryConditions_->boundaryConditionsByComponent()[0].dofNosLocal.size()
       << ", uy: " << dirichletBoundaryConditions_->boundaryConditionsByComponent()[1].dofNosLocal.size()
       << ", uz: " << dirichletBoundaryConditions_->boundaryConditionsByComponent()[2].dofNosLocal.size();
-    LOG(DEBUG) << "number of non-BC dofs total: " << nRowsLocal;
+    LOG(DEBUG) << "number of non-BC dofs total: " << nMatrixRowsLocal;
 
-    std::shared_ptr<FunctionSpace::Generic> genericFunctionSpace = context_.meshManager()->createGenericFunctionSpace(nRowsLocal, displacementsFunctionSpace_->meshPartition()->nRanks(), "genericMesh");
+    std::shared_ptr<FunctionSpace::Generic> genericFunctionSpace = context_.meshManager()->createGenericFunctionSpace(nMatrixRowsLocal, displacementsFunctionSpace_->meshPartition(), "genericMesh");
 
-    combinedJacobianMatrix_ = std::make_shared<PartitionedPetscMat<FunctionSpace::Generic>>(
+    combinedMatrixJacobian_ = std::make_shared<PartitionedPetscMat<FunctionSpace::Generic>>(
       genericFunctionSpace->meshPartition(), 1, 4*diagonalNonZeros, 4*offdiagonalNonZeros, "combinedJacobian");
 
-    combinedVecSolution_ =  std::make_shared<PartitionedPetscVec<FunctionSpace::Generic,1>>(genericFunctionSpace->meshPartition(), "combinedSolution");
-    combinedVecResidual_ =  std::make_shared<PartitionedPetscVec<FunctionSpace::Generic,1>>(genericFunctionSpace->meshPartition(), "combinedResidual");
-    combinedVecExternalVirtualWork_ =  std::make_shared<PartitionedPetscVec<FunctionSpace::Generic,1>>(genericFunctionSpace->meshPartition(), "combinedVecExternalVirtualWork");
-
-    solverMatrixTangentStiffness_ = combinedJacobianMatrix_->valuesGlobal();
+    solverMatrixJacobian_ = combinedMatrixJacobian_->valuesGlobal();
     solverVariableSolution_ = combinedVecSolution_->valuesGlobal();
     solverVariableResidual_ = combinedVecResidual_->valuesGlobal();
     externalVirtualWork_ = combinedVecExternalVirtualWork_->valuesGlobal();
 
-    // assemble vectors
-    VecAssemblyBegin(solverVariableResidual_);
-    VecAssemblyEnd(solverVariableResidual_);
-    VecAssemblyBegin(solverVariableSolution_);
-    VecAssemblyEnd(solverVariableSolution_);
+    LOG(DEBUG) << "for debugging: " << combinedVecSolution_->getString();
 
-    // setup mapping from (component, dof) to index in combined vectors, and reverse mapping
-    int combinedVectorIndex = 0;
-    mappingIndexDofNo_.resize(nRowsLocal);
+    combinedVecExternalVirtualWork_->zeroEntries();
+    combinedMatrixJacobian_->assembly(MAT_FINAL_ASSEMBLY);
 
-    // displacement components
-    for (int componentNo = 0; componentNo < 3; componentNo++)
-    {
-      int nDofsLocal = displacementsFunctionSpace_->nDofsLocalWithoutGhosts();
-      int nDirichletBoundaryConditionDofs = dirichletBoundaryConditions_->boundaryConditionsByComponent()[componentNo].dofNosLocal.size();
-      nEntriesComponent_[componentNo] = nDofsLocal - nDirichletBoundaryConditionDofs;
-
-      LOG(DEBUG) << "component " << componentNo << ", nDirichletBoundaryConditionDofs: " << nDirichletBoundaryConditionDofs << ", nEntries: " << nEntriesComponent_[componentNo];
-      LOG(DEBUG) << "dirichletBC: " << dirichletBoundaryConditions_->boundaryConditionsByComponent()[componentNo].dofNosLocal;
-
-      mappingComponentDofToIndex_[componentNo].resize(nDofsLocal);    // mapping vector will contain an entry (the index) for every local dof or -1 if it is a Dirichlet BC
-
-      int boundaryConditionIndex = 0;
-      for (dof_no_t dofNoLocal = 0; dofNoLocal < nDofsLocal; dofNoLocal++)
-      {
-        // if this is a dirichlet bc dof
-        if (boundaryConditionIndex < nDirichletBoundaryConditionDofs)
-        {
-          if (dofNoLocal == dirichletBoundaryConditions_->boundaryConditionsByComponent()[componentNo].dofNosLocal[boundaryConditionIndex])
-          {
-            boundaryConditionIndex++;
-            mappingComponentDofToIndex_[componentNo][dofNoLocal] = -1;
-            continue;
-          }
-        }
-
-        // this is a normal dof
-        mappingComponentDofToIndex_[componentNo][dofNoLocal] = combinedVectorIndex;
-        mappingIndexDofNo_[combinedVectorIndex] = dofNoLocal;
-        combinedVectorIndex++;
-      }
-      LOG(DEBUG) << "mappingComponentDofToIndex_: " << mappingComponentDofToIndex_;
-    }
-
-    // pressure component, there are no Dirichlet BCs for pressure
-    int nPressureDofsLocal = pressureFunctionSpace_->nDofsLocalWithoutGhosts();
-    mappingComponentDofToIndex_[3].resize(nPressureDofsLocal);
-    std::iota(mappingComponentDofToIndex_[3].begin(), mappingComponentDofToIndex_[3].end(), combinedVectorIndex);
-
-    nEntriesComponent_[3] = nPressureDofsLocal;
-    std::iota(mappingIndexDofNo_.begin()+nRowsLocal-nPressureDofsLocal, mappingIndexDofNo_.end(), 0);
-
-    assert(mappingIndexDofNo_[nRowsLocal-1] == nPressureDofsLocal-1);
-    LOG(DEBUG) << "component p: nEntries: " << nEntriesComponent_[3]
-      << ", mappingComponentDofToIndex_: " << mappingComponentDofToIndex_[3];
-
-    LOG(DEBUG) << "mappingIndexDofNo_: " << mappingIndexDofNo_;
+    combinedVecExternalVirtualWork_->startGhostManipulation();
 
     // get externalVirtualWork_
     std::vector<double> values;
-    int offsetComponent = 0;
     for (int componentNo = 0; componentNo < 3; componentNo++)
     {
-      neumannBoundaryConditions_->rhs()->getValues(componentNo, nEntriesComponent_[componentNo], mappingIndexDofNo_.data()+offsetComponent, values);
+      values.clear();
+      neumannBoundaryConditions_->rhs()->getValuesWithoutGhosts(componentNo, values);
+      LOG(DEBUG) << "component " << componentNo << ", neumannBoundaryConditions_ rhs values: " << values;
 
-      offsetComponent += nEntriesComponent_[componentNo];
+
+      combinedVecExternalVirtualWork_->setValues(componentNo, displacementsFunctionSpace_->meshPartition()->nDofsLocalWithoutGhosts(),
+                                                 displacementsFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data(), INSERT_VALUES);
     }
 
-    // add 0's for pressure component
-    values.resize(nRowsLocal, 0.0);
-    std::vector<int> indices(nRowsLocal);
-    std::iota(indices.begin(), indices.end(), 0);
-    combinedVecExternalVirtualWork_->setValues(0, nRowsLocal, indices.data(), values.data(), INSERT_VALUES);
+    combinedVecExternalVirtualWork_->finishGhostManipulation();
 
-    LOG(DEBUG) << "combinedVecExternalVirtualWork: " << PetscUtility::getStringVector(combinedVecExternalVirtualWork_->valuesGlobal());
+    LOG(DEBUG) << "combinedVecExternalVirtualWork: " << combinedVecExternalVirtualWork_->getString();
+    combinedVecExternalVirtualWork_->startGhostManipulation();
   }
 
   LOG(DEBUG) << "-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.";
-  LOG(DEBUG) << "pointer value solverVariableResidual_:       " << solverVariableResidual_;
-  LOG(DEBUG) << "pointer value solverVariableSolution_:       " << solverVariableSolution_;
-  LOG(DEBUG) << "pointer value solverMatrixTangentStiffness_: " << solverMatrixTangentStiffness_;
+  LOG(DEBUG) << "pointer value solverVariableResidual_: " << solverVariableResidual_;
+  LOG(DEBUG) << "pointer value solverVariableSolution_: " << solverVariableSolution_;
+  LOG(DEBUG) << "pointer value solverMatrixJacobian_:   " << solverMatrixJacobian_;
 
   if (useNestedMat_)
   {
@@ -358,12 +309,25 @@ initialize()
   LOG(DEBUG) << "-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.";
 
   // assemble matrix
-  evaluateAnalyticJacobian(solverVariableSolution_, solverMatrixTangentStiffness_);
+  evaluateAnalyticJacobian(solverVariableSolution_, solverMatrixJacobian_);
 
   LOG(DEBUG) << "initialization done";
   this->initialized_ = true;
 }
 
+//! get the PartitionedPetsVec for the residual and result of the nonlinear function
+std::shared_ptr<PartitionedPetscVecForHyperelasticity<typename QuasiStaticHyperelasticitySolver::DisplacementsFunctionSpace,typename QuasiStaticHyperelasticitySolver::PressureFunctionSpace>> QuasiStaticHyperelasticitySolver::
+combinedVecResidual()
+{
+  return this->combinedVecResidual_;
+}
+
+//! get the PartitionedPetsVec for the solution
+std::shared_ptr<PartitionedPetscVecForHyperelasticity<typename QuasiStaticHyperelasticitySolver::DisplacementsFunctionSpace,typename QuasiStaticHyperelasticitySolver::PressureFunctionSpace>> QuasiStaticHyperelasticitySolver::
+combinedVecSolution()
+{
+  return this->combinedVecSolution_;
+}
 
 void QuasiStaticHyperelasticitySolver::reset()
 {

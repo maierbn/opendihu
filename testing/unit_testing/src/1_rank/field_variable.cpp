@@ -39,7 +39,7 @@ config = {
   std::shared_ptr<Mesh::Manager> meshManager = settings.meshManager();
 
   // create the field variable with name "test"
-  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace::Generic,1>> fieldVariable = meshManager->createGenericFieldVariable(5, 1, "test");
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace::Generic,1>> fieldVariable = meshManager->createGenericFieldVariable(5, "test");
 
   // set all values to 0
   fieldVariable->zeroEntries();

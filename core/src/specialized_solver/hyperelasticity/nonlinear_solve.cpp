@@ -23,6 +23,7 @@ nonlinearSolve()
 
   assert(snes != nullptr);
 
+  // set solution vector to zero
   this->initializeSolutionVariable();
 
   //VLOG(1) << "initial values: " << PetscUtility::getStringVectorVector(solverVariableSolution);
@@ -61,20 +62,20 @@ nonlinearSolve()
     if (useNumericJacobian_)   // use combination of analytic jacobian also with finite differences
     {
       Mat solverMatrixTangentStiffnessFiniteDifferences;
-      ierr = MatDuplicate(solverMatrixTangentStiffness_, MAT_DO_NOT_COPY_VALUES, &solverMatrixTangentStiffnessFiniteDifferences); CHKERRV(ierr);
-      ierr = SNESSetJacobian(*snes, solverMatrixTangentStiffnessFiniteDifferences, solverMatrixTangentStiffness_, callbackJacobianCombined, this); CHKERRV(ierr);
-      LOG(DEBUG) << "Use combination of numeric and analytic jacobian: " << solverMatrixTangentStiffness_;
+      ierr = MatDuplicate(solverMatrixJacobian_, MAT_DO_NOT_COPY_VALUES, &solverMatrixTangentStiffnessFiniteDifferences); CHKERRV(ierr);
+      ierr = SNESSetJacobian(*snes, solverMatrixTangentStiffnessFiniteDifferences, solverMatrixJacobian_, callbackJacobianCombined, this); CHKERRV(ierr);
+      LOG(DEBUG) << "Use combination of numeric and analytic jacobian: " << solverMatrixJacobian_;
     }
     else    // use pure analytic jacobian, without fd
     {
-      ierr = SNESSetJacobian(*snes, solverMatrixTangentStiffness_, solverMatrixTangentStiffness_, callbackJacobianAnalytic, this); CHKERRV(ierr);
-      LOG(DEBUG) << "Use only analytic jacobian: " << solverMatrixTangentStiffness_;
+      ierr = SNESSetJacobian(*snes, solverMatrixJacobian_, solverMatrixJacobian_, callbackJacobianAnalytic, this); CHKERRV(ierr);
+      LOG(DEBUG) << "Use only analytic jacobian: " << solverMatrixJacobian_;
     }
   }
   else
   {
     // set function to compute jacobian from finite differences
-    ierr = SNESSetJacobian(*snes, solverMatrixTangentStiffness_, solverMatrixTangentStiffness_, callbackJacobianFiniteDifferences, this); CHKERRV(ierr);
+    ierr = SNESSetJacobian(*snes, solverMatrixJacobian_, solverMatrixJacobian_, callbackJacobianFiniteDifferences, this); CHKERRV(ierr);
     LOG(DEBUG) << "Use Finite-Differences approximation for jacobian";
   }
 
@@ -96,25 +97,29 @@ nonlinearSolve()
   // set monitor function
   ierr = SNESMonitorSet(*snes, callbackMonitorFunction, logFile.get(), NULL); CHKERRV(ierr);
 
-  LOG(DEBUG) << "------------------  start solve  ------------------";
+  for (int i = 0; i < 2; i++)
+  {
+    LOG(DEBUG) << "------------------  start solve " << i << " ------------------";
 
-  // solve the system nonlinearFunction(displacements) = 0
-  // not sure if displacements has to be a different vector from the one used in the provided functions
-  ierr = SNESSolve(*snes, NULL, solverVariableSolution_); CHKERRV(ierr);
+    // solve the system nonlinearFunction(displacements) = 0
+    // not sure if displacements has to be a different vector from the one used in the provided functions
+    ierr = SNESSolve(*snes, NULL, solverVariableSolution_); CHKERRV(ierr);
 
-  int numberOfIterations = 0;
-  PetscReal residualNorm = 0.0;
-  ierr = SNESGetIterationNumber(*snes, &numberOfIterations); CHKERRV(ierr);
-  ierr = SNESGetFunctionNorm(*snes, &residualNorm); CHKERRV(ierr);
+    // get information about the solution process
+    int numberOfIterations = 0;
+    PetscReal residualNorm = 0.0;
+    ierr = SNESGetIterationNumber(*snes, &numberOfIterations); CHKERRV(ierr);
+    ierr = SNESGetFunctionNorm(*snes, &residualNorm); CHKERRV(ierr);
 
-  SNESConvergedReason convergedReason;
-  KSPConvergedReason kspConvergedReason;
-  ierr = SNESGetConvergedReason(*snes, &convergedReason); CHKERRV(ierr);
-  ierr = KSPGetConvergedReason(*ksp, &kspConvergedReason); CHKERRV(ierr);
+    SNESConvergedReason convergedReason;
+    KSPConvergedReason kspConvergedReason;
+    ierr = SNESGetConvergedReason(*snes, &convergedReason); CHKERRV(ierr);
+    ierr = KSPGetConvergedReason(*ksp, &kspConvergedReason); CHKERRV(ierr);
 
-  LOG(INFO) << "Solution done in " << numberOfIterations << " iterations, residual norm " << residualNorm
-    << ": " << PetscUtility::getStringNonlinearConvergedReason(convergedReason) << ", "
-    << PetscUtility::getStringLinearConvergedReason(kspConvergedReason);
+    LOG(INFO) << "Solution done in " << numberOfIterations << " iterations, residual norm " << residualNorm
+      << ": " << PetscUtility::getStringNonlinearConvergedReason(convergedReason) << ", "
+      << PetscUtility::getStringLinearConvergedReason(kspConvergedReason);
+  }
 
   // close log file
   if (logFile != nullptr)
@@ -133,7 +138,8 @@ nonlinearSolve()
 
   nonlinearSolver->dumpMatrixRightHandSide(solverVariableResidual_);
 
-  LOG(DEBUG) << "solution: " << getString(solverVariableSolution_);
+  LOG(DEBUG) << "solution: " << combinedVecResidual_->getString();
+
   checkSolution(solverVariableSolution_);
 }
 
@@ -149,16 +155,18 @@ initializeSolutionVariable()
 
     // set prescribed Dirchlet BC displacements values
     this->dirichletBoundaryConditions_->applyInVector(this->data_.displacements());
+
+    VecAssemblyBegin(solverVariableSolution_);
+    VecAssemblyEnd(solverVariableSolution_);
   }
   else
   {
-    VecZeroEntries(solverVariableSolution_);
+    combinedVecSolution_->zeroEntries();
+    combinedVecSolution_->startGhostManipulation();
+    combinedVecSolution_->finishGhostManipulation();
   }
 
-  VecAssemblyBegin(solverVariableSolution_);
-  VecAssemblyEnd(solverVariableSolution_);
-
-  LOG(DEBUG) << "after initialization: " << this->getString(solverVariableSolution_);
+  LOG(DEBUG) << "after initialization: " << combinedVecSolution_->getString();
 }
 
 void QuasiStaticHyperelasticitySolver::
@@ -367,11 +375,11 @@ applyDirichletBoundaryConditionsInNonlinearFunction(Vec x, Vec f)
 void QuasiStaticHyperelasticitySolver::
 evaluateNonlinearFunction(Vec x, Vec f)
 {
-  VLOG(1) << "evaluateNonlinearFunction at " << getString(x);
+  //VLOG(1) << "evaluateNonlinearFunction at " << getString(x);
 
   bool backupVecs = f != solverVariableResidual_ || x != solverVariableSolution_;
 
-  VLOG(1) << "backupVecs: " << backupVecs;
+  //VLOG(1) << "backupVecs: " << backupVecs;
 
   // backup the values of solverVariableSolution_ and solverVariableResidual_ to be able to work with them now
   if (backupVecs)
@@ -383,7 +391,7 @@ evaluateNonlinearFunction(Vec x, Vec f)
 
   materialComputeResidual();
 
-  VLOG(1) << "solverVariableResidual_: " << getString(solverVariableResidual_);
+  //VLOG(1) << "solverVariableResidual_: " << combinedVecResidual_->getString();
 
   // restore the values of solverVariableSolution_ and solverVariableResidual_ to their original values
   if (backupVecs)
@@ -391,7 +399,7 @@ evaluateNonlinearFunction(Vec x, Vec f)
     VecSwap(x, solverVariableSolution_);
     VecSwap(f, solverVariableResidual_);
   }
-  VLOG(1) << "f: " << getString(f);
+  //VLOG(1) << "f: " << getString(f);
 }
 
 void QuasiStaticHyperelasticitySolver::
@@ -411,19 +419,82 @@ setInputVector(Vec x)
   if (!this->useNestedMat_)
   {
     std::vector<double> values;
-    PetscUtility::getVectorEntries(x, values);
 
-    VLOG(1) << "setInputVector, x=" << PetscUtility::getStringVector(x);
-
-    int indexOffset = 0;
-    for (int componentNo = 0; componentNo < 3; componentNo++)
+    if (VLOG_IS_ON(1))
     {
-      this->data_.displacements()->setValues(componentNo, nEntriesComponent_[componentNo], mappingIndexDofNo_.data()+indexOffset, values.data()+indexOffset);
-
-      indexOffset += nEntriesComponent_[componentNo];
+      PetscUtility::getVectorEntries(x, values);
+      VLOG(1) << "setInputVector, x=" << PetscUtility::getStringVector(x);
     }
 
-    this->data_.pressure()->setValues(0, nEntriesComponent_[3], mappingIndexDofNo_.data()+indexOffset, values.data()+indexOffset);
+    std::stringstream result;
+    if (x == combinedVecResidual_->vectorCombinedWithoutDirichletDofsGlobal_)
+    {
+      result << "(combinedVecResidual_ global " << Partition::valuesRepresentationString[combinedVecResidual_->currentRepresentation()] << ")";
+    }
+    else if (x == combinedVecResidual_->vectorCombinedWithoutDirichletDofsLocal_)
+    {
+      result << "(combinedVecResidual_ local " << Partition::valuesRepresentationString[combinedVecResidual_->currentRepresentation()] << ")";
+    }
+    else if (x == combinedVecSolution_->vectorCombinedWithoutDirichletDofsGlobal_)
+    {
+      result << "(combinedVecSolution_ global " << Partition::valuesRepresentationString[combinedVecSolution_->currentRepresentation()] << ")";
+    }
+    else if (x == combinedVecSolution_->vectorCombinedWithoutDirichletDofsLocal_)
+    {
+      result << "(combinedVecSolution_ local " << Partition::valuesRepresentationString[combinedVecSolution_->currentRepresentation()] << ")";
+    }
+    else if (x == combinedVecExternalVirtualWork_->vectorCombinedWithoutDirichletDofsGlobal_)
+    {
+      result << "(combinedVecExternalVirtualWork_ global " << Partition::valuesRepresentationString[combinedVecExternalVirtualWork_->currentRepresentation()] << ")";
+    }
+    else if (x == combinedVecExternalVirtualWork_->vectorCombinedWithoutDirichletDofsLocal_)
+    {
+      result << "(combinedVecExternalVirtualWork_ local " << Partition::valuesRepresentationString[combinedVecExternalVirtualWork_->currentRepresentation()] << ")";
+    }
+    else
+    {
+      result << "(unknown Vec)";
+    }
+
+
+    bool backupVecs = false;
+    if (x != solverVariableSolution_)
+    {
+      backupVecs = true;
+      result << " (backup)";
+    }
+    //LOG(DEBUG) << "setInputVector " << result.str();
+
+    // move the values of x to variable solverVariableSolution_
+    if (backupVecs)
+    {
+      // this happens in computation of the numeric jacobian
+      VecSwap(x, solverVariableSolution_);
+    }
+
+    // set displacement entries
+    for (int componentNo = 0; componentNo < 3; componentNo++)
+    {
+      int nEntries = displacementsFunctionSpace_->nDofsLocalWithoutGhosts();
+      values.resize(nEntries);
+      combinedVecSolution_->getValues(componentNo, nEntries, displacementsFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
+
+      this->data_.displacements()->setValues(componentNo, nEntries, displacementsFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
+    }
+
+    // set pressure entries
+    int nEntries = pressureFunctionSpace_->nDofsLocalWithoutGhosts();
+    values.resize(nEntries);
+
+    combinedVecSolution_->getValues(3, nEntries, pressureFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
+    this->data_.pressure()->setValues(0, nEntries, pressureFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
+
+    // undo the backup operation
+    if (backupVecs)
+    {
+      VecSwap(x, solverVariableSolution_);
+    }
+
     VLOG(1) << *this->data_.displacements();
     VLOG(1) << *this->data_.pressure();
   }
@@ -542,17 +613,32 @@ checkSolution(Vec x)
     // check if function is zero
     evaluateNonlinearFunction(x, solverVariableResidual_);
 
-    int nValues = 3*nEntriesComponent_[0] + nEntriesComponent_[3];
-
-    std::vector<double> values;
-    PetscUtility::getVectorEntries(solverVariableResidual_, values);
-
-    for (int i = 0; i < nValues; i++)
+    for (int componentNo = 0; componentNo < 4; componentNo++)
     {
-      double value = values[i];
-      if (fabs(value) > 1e-5)
-        LOG(DEBUG) << "Entry " << i << ", residual is " << value << ", should be zero.";
+      int nEntries = displacementsFunctionSpace_->nDofsLocalWithoutGhosts();
+      std::vector<double> values;
+
+      if (componentNo < 3)
+      {
+        values.resize(nEntries);
+        combinedVecResidual_->getValues(componentNo, nEntries, displacementsFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
+      }
+      else if (componentNo == 3)
+      {
+        nEntries = pressureFunctionSpace_->nDofsLocalWithoutGhosts();
+        values.resize(nEntries);
+        combinedVecResidual_->getValues(componentNo, nEntries, pressureFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
+      }
+
+      for (int i = 0; i < nEntries; i++)
+      {
+        double value = values[i];
+        if (fabs(value) > 1e-5)
+          LOG(DEBUG) << "Component " << componentNo << " entry " << i << ", residual is " << value << ", should be zero.";
+      }
     }
+
+    solverVariableResidual_ = combinedVecResidual_->valuesGlobal();
 
     PetscReal l2NormResidual;
     VecNorm(solverVariableResidual_, NORM_2, &l2NormResidual);
@@ -593,65 +679,7 @@ getString(Vec x)
   }
   else
   {
-    typedef SpatialDiscretization::BoundaryConditionsBase<DisplacementsFunctionSpace,3>::BoundaryConditionsForComponent BoundaryConditionsForComponent;
-    const std::array<BoundaryConditionsForComponent, 3> &boundaryConditionsByComponent = dirichletBoundaryConditions_->boundaryConditionsByComponent();
-
-    std::stringstream result;
-    result << std::endl << "[";
-
-    std::vector<double> values;
-    PetscUtility::getVectorEntries(x, values);
-
-    VLOG(1) << "mappingComponentDofToIndex: " << mappingComponentDofToIndex_;
-
-    for (int componentNo = 0; componentNo < 4; componentNo++)
-    {
-      int nValues = displacementsFunctionSpace_->nDofsLocalWithoutGhosts();
-
-      if (componentNo == 3)
-      {
-        nValues = pressureFunctionSpace_->nDofsLocalWithoutGhosts();
-      }
-
-      if (componentNo < 3)
-      {
-        result << std::string(1, char('x'+componentNo)) << ": ";
-      }
-      else
-      {
-        result << "p: ";
-      }
-
-      VLOG(1) << "componentNo " << componentNo << ", nValues: " << nValues << ", n non-BC: " << nEntriesComponent_[componentNo];
-
-      int dirichletBoundaryConditionIndex = 0;
-      for (int dofNoLocal = 0; dofNoLocal < nValues; dofNoLocal++)
-      {
-        int combinedIndex = mappingComponentDofToIndex_[componentNo][dofNoLocal];
-
-        if (dofNoLocal != 0)
-          result << ", ";
-
-        if (combinedIndex == -1)
-        {
-          VLOG(2) << "  i:" << dofNoLocal << ", dirichlet bc no " << dirichletBoundaryConditionIndex << ": " << boundaryConditionsByComponent[componentNo].values[dirichletBoundaryConditionIndex];
-          // Dirichlet BC
-          result << boundaryConditionsByComponent[componentNo].values[dirichletBoundaryConditionIndex] << "*";
-          dirichletBoundaryConditionIndex++;
-        }
-        else
-        {
-          VLOG(2) << "  i:" << dofNoLocal << ", normal index " << combinedIndex << ": " << values[combinedIndex];
-
-          result << values[combinedIndex];
-        }
-      }
-      if (componentNo < 3)
-        result << std::endl << " ";
-    }
-
-    result << "] * = Dirichlet BC";
-    return result.str();
+    LOG(FATAL) << "this should not be called";
   }
   return std::string("no");
 }

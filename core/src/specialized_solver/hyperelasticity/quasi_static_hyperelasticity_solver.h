@@ -9,6 +9,7 @@
 #include "output_writer/manager.h"
 #include "spatial_discretization/boundary_conditions/dirichlet_boundary_conditions.h"
 #include "spatial_discretization/boundary_conditions/neumann_boundary_conditions.h"
+#include "partition/partitioned_petsc_vec/02_partitioned_petsc_vec_for_hyperelasticity.h"
 
 namespace TimeSteppingScheme
 {
@@ -75,6 +76,12 @@ public:
   //! get a string representation of the values for debugging output
   std::string getString(Vec x);
 
+  //! get the PartitionedPetsVec for the residual and result of the nonlinear function
+  std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>> combinedVecResidual();      //< the
+
+  //! get the PartitionedPetsVec for the solution
+  std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>> combinedVecSolution();      //< the Vec for the solution
+
 protected:
 
   //! use Petsc to solve the nonlinear equation using the SNES solver
@@ -129,12 +136,12 @@ protected:
   std::shared_ptr<DisplacementsFunctionSpace> displacementsFunctionSpace_;  ///< the function space with quadratic Lagrange basis functions, used for discretization of displacements
   std::shared_ptr<PressureFunctionSpace> pressureFunctionSpace_;  ///< the function space with linear Lagrange basis functions, used for discretization of pressure
 
-  Mat solverMatrixTangentStiffness_;   //< the jacobian matrix for the Newton solver, which in case of nonlinear elasticity is the tangent stiffness matrix
+  Mat solverMatrixJacobian_;           //< the jacobian matrix for the Newton solver, which in case of nonlinear elasticity is the tangent stiffness matrix
   Vec solverVariableResidual_;         //< nested PETSc Vec to store the residual
   Vec solverVariableSolution_;         //< nested PETSc Vec to store the solution
 
   // data structures for nested matrices and vectors
-  std::array<Mat,16> submatrices_;  // all submatrices of the 4x4 block jacobian matrix, solverMatrixTangentStiffness_
+  std::array<Mat,16> submatrices_;  // all submatrices of the 4x4 block jacobian matrix, solverMatrixJacobian_
   std::array<Vec,4> subvectorsSolution_;  // all subvectors of the 4 entries vector, solverVariableSolution_
   std::array<Vec,4> subvectorsResidual_;  // all subvectors of the 4 entries vector, solverVariableResidual_
   std::vector<PartitionedPetscMat<DisplacementsFunctionSpace,DisplacementsFunctionSpace>> uMatrix_;    //< upper left 3x3 blocks of matrices in the jacobian for Newton scheme
@@ -143,15 +150,11 @@ protected:
   std::vector<PartitionedPetscMat<PressureFunctionSpace,PressureFunctionSpace>> pMatrix_;                           //< lower left matrix in the jacobian for Newton scheme
 
   // data structures for combined matrices and vectors
-  std::shared_ptr<PartitionedPetscMat<FunctionSpace::Generic>> combinedJacobianMatrix_;    //< single jacobian matrix, when useNestedMat_ is false
-  std::shared_ptr<PartitionedPetscVec<FunctionSpace::Generic,1>> combinedVecResidual_;      //< the Vec for the residual and result of the nonlinear function
-  std::shared_ptr<PartitionedPetscVec<FunctionSpace::Generic,1>> combinedVecSolution_;      //< the Vec for the solution
-  std::shared_ptr<PartitionedPetscVec<FunctionSpace::Generic,1>> combinedVecExternalVirtualWork_;      //< the Vec for the external virtual work
+  std::shared_ptr<PartitionedPetscMat<FunctionSpace::Generic>> combinedMatrixJacobian_;    //< single jacobian matrix, when useNestedMat_ is false
+  std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>> combinedVecResidual_;      //< the Vec for the residual and result of the nonlinear function
+  std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>> combinedVecSolution_;      //< the Vec for the solution
+  std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>> combinedVecExternalVirtualWork_;      //< the Vec for the external virtual work
   Vec externalVirtualWork_;     // the external virtual work resulting from the traction, this is a dead load, i.e. it does not change during deformation
-
-  std::array<std::vector<dof_no_t>,4> mappingComponentDofToIndex_;     //< mapping from component and local dof no to index of the combined vector, the Dirichlet BCs are left out, the respective entries are set to -1, mappingComponentDofToIndex_[componentNo][dofNoLocal] = combinedIndex
-  std::array<int,4> nEntriesComponent_;     //< number of local dofs without Dirichlet BC on each component, this is also needed to interpret mappingIndexDofNo_
-  std::vector<dof_no_t> mappingIndexDofNo_;  //< mapping from index of the componed vectors to the local dof no within the correct component, use nEntriesComponent_ to determine which component, mappingIndexDofNo_[combinedIndex] = dofNoLocal
 
   // settings variables
   bool initialized_;   ///< if this object was already initialized

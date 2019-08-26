@@ -25,9 +25,9 @@ PetscErrorCode nonlinearFunction(SNES snes, Vec x, Vec f, void *context)
   VLOG(1) << "pointer value x: " << x;
   VLOG(1) << "pointer value f: " << f;
 
-  Vec x_original;
-  VecDuplicate(x, &x_original);
-  VecCopy(x, x_original);
+  //Vec x_original;
+  //VecDuplicate(x, &x_original);
+  //VecCopy(x, x_original);
 
   // if nested matrices are used, do nothing, otherwise copy the values from x to the combined vectors
   object->setInputVector(x);
@@ -96,6 +96,9 @@ PetscErrorCode jacobianFunctionFiniteDifferences(SNES snes, Vec x, Mat jac, Mat 
   VLOG(1) << "pointer value jac: " << jac;
   VLOG(1) << "pointer value b:   " << b;
 
+  LOG(DEBUG) << "in jacobianFunctionFiniteDifferences, "
+    << "solution: " << object->combinedVecSolution()->getString() << ", residual: " << object->combinedVecResidual()->getString();
+
   // if nested matrices are used, do nothing, otherwise copy the values from x to the combined vectors
   object->setInputVector(x);
 
@@ -105,7 +108,7 @@ PetscErrorCode jacobianFunctionFiniteDifferences(SNES snes, Vec x, Mat jac, Mat 
   // zero rows and columns for which Dirichlet BC is set, set diagonal to 1
   object->applyDirichletBoundaryConditionsInJacobian(x, jac);
 
-  LOG(DEBUG) << "-- computed tangent stiffness matrix by finite differences: " << PetscUtility::getStringMatrix(jac);
+  VLOG(2) << "-- computed tangent stiffness matrix by finite differences: " << PetscUtility::getStringMatrix(jac);
   VLOG(2) << "-- non-zeros pattern: " << std::endl << PetscUtility::getStringSparsityPattern(jac);
 
   return 0;

@@ -254,21 +254,21 @@ void Manager::loadGeometryFromFile()
 }
 
 std::shared_ptr<FunctionSpace::Generic> Manager::
-createGenericFunctionSpace(int nEntries, int nRanks, std::string name)
+createGenericFunctionSpace(int nEntries, std::string name)
 {
   // constructor is declared in function_space/06_function_space_dofs_nodes.h
   // FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, std::array<element_no_t, D> nElements, std::array<double, D> physicalExtent, int inputMeshIsGlobal);
 
   std::array<element_no_t, 1> nElements({nEntries - 1});
   std::array<double, 1> physicalExtent({0.0});
-  std::array<int, 1> nRanksPerCoordinateDirection({nRanks});
+  std::array<int, 1> nRanksPerCoordinateDirection({1});
   std::shared_ptr<Mesh> mesh = createFunctionSpace<FunctionSpace::Generic>(name, nElements, physicalExtent, nRanksPerCoordinateDirection, false);   // last parameter is that nElements is local number
 
   return std::static_pointer_cast<FunctionSpace::Generic>(mesh);
 }
 
 std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace::Generic,1>> Manager::
-createGenericFieldVariable(int nEntries, int nRanks, std::string name)
+createGenericFieldVariable(int nEntries, std::string name)
 {
   assert(nEntries > 1);
 
@@ -276,7 +276,7 @@ createGenericFieldVariable(int nEntries, int nRanks, std::string name)
   std::stringstream meshName;
   meshName << "meshForFieldVariable" << name;
   LOG(DEBUG) << "create generic field variable with " << nEntries << " entries.";
-  std::shared_ptr<FunctionSpace::Generic> functionSpace = createGenericFunctionSpace(nEntries, nRanks, meshName.str());
+  std::shared_ptr<FunctionSpace::Generic> functionSpace = createGenericFunctionSpace(nEntries, meshName.str());
 
   // createFieldVariable is declared in function_space/10_function_space_field_variable.h
   //template <int nComponents>

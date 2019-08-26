@@ -29,6 +29,11 @@ materialComputeResidual()
   if (outputValues)
     LOG(DEBUG) << "input: " << getString(solverVariableSolution_);
 
+  assert(combinedVecResidual_->currentRepresentation() == Partition::values_representation_t::representationCombinedGlobal);
+  assert(combinedVecSolution_->currentRepresentation() == Partition::values_representation_t::representationCombinedGlobal);
+
+  static int evaluationNo = 0;  // counter how often this function was called
+
   // get pointer to function space
   std::shared_ptr<DisplacementsFunctionSpace> displacementsFunctionSpace = this->data_.displacementsFunctionSpace();
   std::shared_ptr<PressureFunctionSpace> pressureFunctionSpace = this->data_.pressureFunctionSpace();
@@ -55,7 +60,22 @@ materialComputeResidual()
   PetscErrorCode ierr;
 
   // set values to zero
-  ierr = VecZeroEntries(solverVariableResidual_); CHKERRV(ierr);
+  if (useNestedMat_)
+  {
+    ierr = VecZeroEntries(solverVariableResidual_); CHKERRV(ierr);
+  }
+  else
+  {
+    combinedVecResidual_->zeroEntries();
+    combinedVecResidual_->startGhostManipulation();
+  }
+
+  // dump input vector
+  // dumpVector(std::string filename, std::string format, Vec &vector, MPI_Comm mpiCommunicator, int componentNo=0, int nComponents=1);
+  std::stringstream filename;
+  filename << "out/x" << std::setw(3) << std::setfill('0') << evaluationNo;
+  //PetscUtility::dumpVector(filename.str(), "matlab", solverVariableSolution_, displacementsFunctionSpace->meshPartition()->mpiCommunicator());
+  combinedVecSolution_->dumpGlobalNatural(filename.str());
 
   // loop over elements
   for (int elementNoLocal = 0; elementNoLocal < nElementsLocal; elementNoLocal++)
@@ -235,7 +255,7 @@ materialComputeResidual()
         // get local dof no, aDof is the dof within the element, dofNoLocal is the dof within the local subdomain
         dof_no_t dofNoLocal = dofNosLocal[aDof];
 
-        LOG(DEBUG) << "  result vector (L,a)=(" <<aDof<< "," <<aComponent<< "), " <<i<< ", dof " << dofNosLocal[aDof] << " all elemental dofs: "  << dofNosLocal
+        VLOG(1) << "  result vector (L,a)=(" <<aDof<< "," <<aComponent<< "), " <<i<< ", dof " << dofNosLocal[aDof] << " all elemental dofs: "  << dofNosLocal
           << ", integrated value: " <<integratedValue;
 
         if (useNestedMat_)
@@ -244,21 +264,9 @@ materialComputeResidual()
         }
         else
         {
-          dof_no_t resultVectorIndex = mappingComponentDofToIndex_[aComponent][dofNoLocal];
-          VLOG(1) << "dofNoLocal " << dofNoLocal << ", component " << aComponent << " -> index " << resultVectorIndex << " (from mappingComponentDofToIndex: " << mappingComponentDofToIndex_[aComponent] << ")";
-
-          // only set value if it is not a Dirichlet BC dof
-          if (resultVectorIndex != -1)
-          {
-            LOG(DEBUG) << "u: set value " << integratedValue << " at index " << resultVectorIndex << ", dofNoLocal: " << dofNoLocal << ", mappingComponentDofToIndex: " << mappingComponentDofToIndex_[aComponent];
-            ierr = VecSetValue(solverVariableResidual_, resultVectorIndex, integratedValue, ADD_VALUES); CHKERRV(ierr);
-          }
-          else
-          {
-            VLOG(1) << "value is Dirichlet BC, do not set anything";
-          }
+          combinedVecResidual_->setValue(aComponent, dofNoLocal, integratedValue, ADD_VALUES);
+          VLOG(1) << "u: set value " << integratedValue << " at dofNoLocal: " << dofNoLocal << ", component: " << aComponent;
         }
-
       }  // aComponent
     }  // aDof
 
@@ -280,20 +288,8 @@ materialComputeResidual()
       }
       else
       {
-        dof_no_t resultVectorIndex = mappingComponentDofToIndex_[3][dofNoLocal];
-
-        VLOG(1) << "dofNoLocal " << dofNoLocal << ", component " << 3 << " -> index " << resultVectorIndex << " (from mappingComponentDofToIndex: " << mappingComponentDofToIndex_[3] << ")";
-
-        // only set value if it is not a Dirichlet BC dof
-        if (resultVectorIndex != -1)
-        {
-          LOG(DEBUG) << "p: set value " << integratedValue << " at index " << resultVectorIndex;
-          ierr = VecSetValue(solverVariableResidual_, resultVectorIndex, integratedValue, ADD_VALUES); CHKERRV(ierr);
-        }
-        else
-        {
-          VLOG(1) << "value is Dirichlet BC, do not set anything";
-        }
+        combinedVecResidual_->setValue(3, dofNoLocal, integratedValue, ADD_VALUES);
+        VLOG(1) << "p: set value " << integratedValue << " at dofNoLocal: " << dofNoLocal;
       }
     }
   }  // elementNoLocal
@@ -312,9 +308,7 @@ materialComputeResidual()
   }
   else
   {
-    LOG(DEBUG) << "solverVariableResidual_: " <<solverVariableResidual_;
-    ierr = VecAssemblyBegin(solverVariableResidual_); CHKERRV(ierr);
-    ierr = VecAssemblyEnd(solverVariableResidual_); CHKERRV(ierr);
+    combinedVecResidual_->finishGhostManipulation();
   }
 
   // if useNestedMat_: here, subvectorsResidual_[0-2] contains δW_int, subvectorsResidual_[3] contains int_Ω (J-1)*Ψ dV
@@ -371,8 +365,23 @@ materialComputeResidual()
   if(outputValues)
     LOG(DEBUG) << "total:   " << getString(solverVariableResidual_);
 
-  ierr = VecAssemblyBegin(solverVariableResidual_); CHKERRV(ierr);
-  ierr = VecAssemblyEnd(solverVariableResidual_); CHKERRV(ierr);
+  if (useNestedMat_)
+  {
+    ierr = VecAssemblyBegin(solverVariableResidual_); CHKERRV(ierr);
+    ierr = VecAssemblyEnd(solverVariableResidual_); CHKERRV(ierr);
+  }
+
+  // dump output vector
+  // dumpVector(std::string filename, std::string format, Vec &vector, MPI_Comm mpiCommunicator, int componentNo=0, int nComponents=1);
+  filename.str("");
+  filename << "out/F" << std::setw(3) << std::setfill('0') << evaluationNo;
+  //PetscUtility::dumpVector(filename.str(), "matlab", solverVariableResidual_, displacementsFunctionSpace->meshPartition()->mpiCommunicator());
+  combinedVecResidual_->dumpGlobalNatural(filename.str());
+
+  assert(combinedVecResidual_->currentRepresentation() == Partition::values_representation_t::representationCombinedGlobal);
+  assert(combinedVecSolution_->currentRepresentation() == Partition::values_representation_t::representationCombinedGlobal);
+
+  evaluationNo++;
 }
 
 void QuasiStaticHyperelasticitySolver::

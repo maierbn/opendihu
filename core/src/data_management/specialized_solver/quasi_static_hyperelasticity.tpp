@@ -144,7 +144,6 @@ setDisplacementsFunctionSpace(std::shared_ptr<DisplacementsFunctionSpace> displa
   // set the geometry field of the reference configuration as copy of the geometry field of the function space
   geometryReference_ = std::make_shared<DisplacementsFieldVariableType>(displacementsFunctionSpace_->geometryField(), "geometryReference");
   geometryReference_->setValues(displacementsFunctionSpace_->geometryField());
-
 }
 
 //! get the displacements function space

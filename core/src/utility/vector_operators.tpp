@@ -232,7 +232,7 @@ std::ostream &operator<<(std::ostream &stream, const std::vector<T> &values)
     for (; i < std::min(100ul,values.size()); i++)
       stream << "," << values[i];
     if (i == 100 && i < values.size())
-      stream << "... " << values.size() << " entries total, only showing the first 100";
+      stream << "... " << values.size() << " entries total, only showing the first 100 (set -vmodule=vector_operators*=1)";
   }
 
   stream << "]";

@@ -118,7 +118,6 @@ initialize()
   // parse boundary conditions, needs functionSpace set
   // initialize dirichlet boundary conditions object which parses dirichlet boundary condition dofs and values from config
   this->dirichletBoundaryConditions_->initialize(this->specificSettings_, this->data_->functionSpace(), "dirichletBoundaryConditions");
-  //TODO: add Neumann BC
 
   // set initial values from settings
 

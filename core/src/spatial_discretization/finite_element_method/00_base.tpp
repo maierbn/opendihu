@@ -163,6 +163,12 @@ solve()
   // solve the system
   linearSolver->solve(data_.rightHandSide()->valuesGlobal(), data_.solution()->valuesGlobal(), "Solution obtained");
 
+  data_.solution()->setRepresentationGlobal();
+  data_.solution()->startGhostManipulation();
+  data_.solution()->zeroGhostBuffer();
+  data_.solution()->finishGhostManipulation();
+  
+  
   VLOG(1) << "solution: " << *data_.solution();
 }
 

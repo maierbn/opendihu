@@ -35,7 +35,7 @@ public:
 
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
   //! the transfer is done by the solution_vector_mapping class
-  TransferableSolutionDataType getSolutionForTransfer();
+  OutputConnectorDataType getOutputConnectorData();
 
 protected:
 

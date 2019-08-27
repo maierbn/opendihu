@@ -81,7 +81,7 @@ public:
   using LinearStiffness<FunctionSpaceType,nComponents>::LinearStiffness;
 
   typedef FunctionSpaceType FunctionSpace;
-  using LinearStiffness<FunctionSpaceType,nComponents>::OutputFieldVariables;
+  using LinearStiffness<FunctionSpaceType,nComponents>::FieldVariablesForOutputWriter;
 
   //! initialize, store the reference geometry as copy of the current geometry
   void initialize();

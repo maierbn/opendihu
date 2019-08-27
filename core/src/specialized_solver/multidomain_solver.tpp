@@ -463,11 +463,11 @@ data()
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
 //! the transfer is done by the solution_vector_mapping class
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
-typename MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::TransferableSolutionDataType
+typename MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::OutputConnectorDataType
 MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
-getSolutionForTransfer()
+getOutputConnectorData()
 {
-  LOG(DEBUG) << "getSolutionForTransfer, size of Vm vector: " << this->dataMultidomain_.transmembranePotential().size();
+  LOG(DEBUG) << "getOutputConnectorData, size of Vm vector: " << this->dataMultidomain_.transmembranePotential().size();
 
   return std::pair<std::vector<Vec>,std::vector<std::shared_ptr<FieldVariableType>>>(
     this->subvectorsSolution_, this->dataMultidomain_.transmembranePotential());

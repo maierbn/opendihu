@@ -13,7 +13,7 @@
 template<int nStates, int nIntermediates_, typename FunctionSpaceType>
 CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
 CellmlAdapterBase(DihuContext context) :
-  context_(context), specificSettings_(PythonConfig(context_.getPythonConfig(), "CellML"))
+  context_(context), specificSettings_(PythonConfig(context_.getPythonConfig(), "CellML")), data_(context_)
 {
   outputWriterManager_.initialize(this->context_, specificSettings_);
   LOG(TRACE) << "CellmlAdapterBase constructor";
@@ -41,6 +41,14 @@ nComponents()
 
 template<int nStates, int nIntermediates_, typename FunctionSpaceType>
 void CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
+setSolutionVariable(std::shared_ptr<FieldVariableStates> states)
+{
+  this->data_.setStatesVariable(states);
+}
+
+
+template<int nStates, int nIntermediates_, typename FunctionSpaceType>
+void CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
 initialize()
 {
   LOG(TRACE) << "CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::initialize";
@@ -58,10 +66,6 @@ initialize()
     functionSpace_ = context_.meshManager()->functionSpace<FunctionSpaceType>(specificSettings_);  // create initialized mesh
   }
   LOG(DEBUG) << "Cellml mesh has " << functionSpace_->nNodesLocalWithoutGhosts() << " local nodes";
-
-  // create intermediates field variable
-  intermediates_ = this->functionSpace_->template createFieldVariable<nIntermediates_>("intermediates");  // intermediates do not have names in the source files
-  intermediates_->setRepresentationContiguous();
 
   //store number of instances
   nInstances_ = functionSpace_->nNodesLocalWithoutGhosts();
@@ -102,9 +106,11 @@ initialize()
   parameters_.resize(nParameters_*nInstances_);
   LOG(DEBUG) << "parameters.size: " << parameters_.size();
   //<< ", intermediates.size: " << intermediates_.size();
-}
 
-void initializeFromNInstances(int nInstances);
+  // initialize data, i.e. states and intermediates field variables
+  data_.setFunctionSpace(functionSpace_);
+  data_.initialize();
+}
 
 template<int nStates, int nIntermediates_, typename FunctionSpaceType>
 template<typename FunctionSpaceType2>
@@ -234,7 +240,7 @@ template<int nStates, int nIntermediates_, typename FunctionSpaceType>
 std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nIntermediates_>> CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
 intermediates()
 {
-  return intermediates_;
+  return this->data_.intermediates();
 }
 
 template<int nStates, int nIntermediates_, typename FunctionSpaceType>
@@ -244,4 +250,20 @@ nIntermediates() const
   return nIntermediates_;
 }
 
+template<int nStates, int nIntermediates_, typename FunctionSpaceType>
+CellMLOutputConnectorDataType<nStates,nIntermediates_,FunctionSpaceType> CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
+getOutputConnectorData()
+{
+  // create an object that contains the solution data
+  CellMLOutputConnectorDataType<nStates,nIntermediates_,FunctionSpaceType> outputConnectorData;
 
+  outputConnectorData.stateVariable.values = this->data_.states();
+  outputConnectorData.stateVariable.componentNo = outputStateIndex_;
+  outputConnectorData.stateVariable.scalingFactor = prefactor_;
+
+  outputConnectorData.intermediateVariable.values = this->data_.intermediates();
+  outputConnectorData.intermediateVariable.componentNo = outputIntermediateIndex_;
+  outputConnectorData.intermediateVariable.scalingFactor = prefactor_;
+
+  return outputConnectorData;
+}

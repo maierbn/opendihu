@@ -62,10 +62,10 @@ public:
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>>,  // gradient field
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>,  // dirichlet values
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>  // dirichlet values
-  > OutputFieldVariables;
+  > FieldVariablesForOutputWriter;
 
   //! get pointers to all field variables that can be written by output writers
-  OutputFieldVariables getOutputFieldVariables();
+  FieldVariablesForOutputWriter getFieldVariablesForOutputWriter();
 
 protected:
 

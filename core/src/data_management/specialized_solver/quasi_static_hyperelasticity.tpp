@@ -103,8 +103,8 @@ print()
 }
 
 template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace>
-typename QuasiStaticHyperelasticity<PressureFunctionSpace,DisplacementsFunctionSpace>::OutputFieldVariables QuasiStaticHyperelasticity<PressureFunctionSpace,DisplacementsFunctionSpace>::
-getOutputFieldVariables()
+typename QuasiStaticHyperelasticity<PressureFunctionSpace,DisplacementsFunctionSpace>::FieldVariablesForOutputWriter QuasiStaticHyperelasticity<PressureFunctionSpace,DisplacementsFunctionSpace>::
+getFieldVariablesForOutputWriter()
 {
   // these field variables will be written to output files
   return std::tuple_cat(

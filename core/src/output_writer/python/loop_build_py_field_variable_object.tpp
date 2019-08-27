@@ -11,18 +11,18 @@ namespace PythonLoopOverTuple
  /** Static recursive loop from 0 to number of entries in the tuple
  * Loop body
  */
-template<typename OutputFieldVariablesType, int i>
-inline typename std::enable_if<i < std::tuple_size<OutputFieldVariablesType>::value, void>::type
-loopBuildPyFieldVariableObject(const OutputFieldVariablesType &fieldVariables, int &fieldVariableIndex, std::string meshName, 
+template<typename FieldVariablesForOutputWriterType, int i>
+inline typename std::enable_if<i < std::tuple_size<FieldVariablesForOutputWriterType>::value, void>::type
+loopBuildPyFieldVariableObject(const FieldVariablesForOutputWriterType &fieldVariables, int &fieldVariableIndex, std::string meshName, 
                                PyObject *pyData, bool onlyNodalValues, std::shared_ptr<Mesh::Mesh> &mesh)
 {
   // call what to do in the loop body
-  if (buildPyFieldVariableObject<typename std::tuple_element<i,OutputFieldVariablesType>::type>(
+  if (buildPyFieldVariableObject<typename std::tuple_element<i,FieldVariablesForOutputWriterType>::type>(
        std::get<i>(fieldVariables), fieldVariableIndex, meshName, pyData, onlyNodalValues, mesh))
     return;
   
   // advance iteration to next tuple element
-  loopBuildPyFieldVariableObject<OutputFieldVariablesType, i+1>(fieldVariables, fieldVariableIndex, meshName, pyData, onlyNodalValues, mesh);
+  loopBuildPyFieldVariableObject<FieldVariablesForOutputWriterType, i+1>(fieldVariables, fieldVariableIndex, meshName, pyData, onlyNodalValues, mesh);
 }
  
 // current element is of pointer type (not vector)

@@ -97,10 +97,10 @@ data()
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
 //! the transfer is done by the solution_vector_mapping class
 template<class TimeStepping>
-typename LoadBalancingBase<TimeStepping>::TransferableSolutionDataType LoadBalancingBase<TimeStepping>::
-getSolutionForTransfer()
+typename LoadBalancingBase<TimeStepping>::OutputConnectorDataType LoadBalancingBase<TimeStepping>::
+getOutputConnectorData()
 {
-  return timeSteppingScheme_.getSolutionForTransfer();
+  return timeSteppingScheme_.getOutputConnectorData();
 }
 
 } // namespace

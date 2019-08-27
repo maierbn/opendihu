@@ -43,10 +43,10 @@ public:
   virtual dof_no_t nUnknownsLocalWithoutGhosts();
 
   //! field variables that will be output by outputWriters
-  typedef std::tuple<std::vector<typename BaseDataType::OutputFieldVariables>> OutputFieldVariables;
+  typedef std::tuple<std::vector<typename BaseDataType::FieldVariablesForOutputWriter>> FieldVariablesForOutputWriter;
 
   //! get pointers to all field variables that can be written by output writers
-  OutputFieldVariables getOutputFieldVariables();
+  FieldVariablesForOutputWriter getFieldVariablesForOutputWriter();
 
 protected:
 

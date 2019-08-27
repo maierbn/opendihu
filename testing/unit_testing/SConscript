@@ -38,7 +38,7 @@ if not env['no_tests']:
                 'src/1_rank/unstructured_deformable.cpp',
                 'src/utility.cpp']
 
-    #src_files = ['src/1_rank/unstructured_deformable.cpp', 'src/1_rank/main.cpp', 'src/utility.cpp']
+    #src_files = ['src/1_rank/operator_splitting.cpp', 'src/1_rank/main.cpp', 'src/utility.cpp']
     #print ""
     #print "WARNING: only compiling tests ",src_files
 

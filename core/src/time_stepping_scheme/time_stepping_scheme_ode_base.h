@@ -21,8 +21,7 @@ public TimeSteppingScheme
 {
 public:
   typedef FunctionSpaceType FunctionSpace;
-  typedef Data::TimeStepping<FunctionSpaceType, nComponents> Data;   // type of Data object
-  //typedef typename Data::TransferableSolutionDataType TransferableSolutionDataType;
+  typedef typename Data::TimeStepping<FunctionSpaceType, nComponents> Data;   // type of Data object
 
   //! constructor
   TimeSteppingSchemeOdeBase(DihuContext context, std::string name);
@@ -33,15 +32,11 @@ public:
   //! run simulation
   virtual void run();
 
-  //! get the data that will be transferred in the operator splitting to the other term of the splitting
-  //! the transfer is done by the solution_vector_mapping class
-  //virtual TransferableSolutionDataType getSolutionForTransfer();
-
   //! return the data object
   Data &data();
 
   //! output the given data for debugging
-  //virtual std::string getString(TransferableSolutionDataType &data);
+  //virtual std::string getString(OutputConnectorDataType &data);
 
   //! initialize discretizableInTime
   virtual void initialize();

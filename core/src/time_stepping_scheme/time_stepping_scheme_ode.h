@@ -9,7 +9,7 @@
 #include "cellml/03_cellml_adapter.h"
 #include "spatial_discretization/boundary_conditions/dirichlet_boundary_conditions.h"
 #include "time_stepping_scheme_ode_base.h"
-#include "time_stepping_scheme/time_stepping_scheme_ode_transferable_solution_data.h"
+//#include "time_stepping_scheme/time_stepping_scheme_ode_transferable_solution_data.h"
 
 namespace TimeSteppingScheme
 {
@@ -17,13 +17,15 @@ namespace TimeSteppingScheme
  */
 template<typename DiscretizableInTimeType>
 class TimeSteppingSchemeOdeBaseDiscretizable:
-  public TimeSteppingSchemeOdeTransferableSolutionData<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents(), DiscretizableInTimeType>
+//  public TimeSteppingSchemeOdeOutputConnectorDataType<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents(), DiscretizableInTimeType>
+  public TimeSteppingSchemeOdeBase<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>
 {
 public:
   typedef DiscretizableInTimeType DiscretizableInTime_Type;
   typedef typename DiscretizableInTimeType::FunctionSpace FunctionSpace;
-  
-  using TimeSteppingSchemeOdeTransferableSolutionData<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents(), DiscretizableInTimeType>::TransferableSolutionDataType;
+  typedef typename DiscretizableInTimeType::OutputConnectorDataType OutputConnectorDataType;
+
+  //using TimeSteppingSchemeOdeOutputConnectorDataType<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents(), DiscretizableInTimeType>::OutputConnectorDataType;
 
   //! constructor
   TimeSteppingSchemeOdeBaseDiscretizable(DihuContext context, std::string name);
@@ -37,6 +39,11 @@ public:
   //! discretizable in time object
   DiscretizableInTimeType &discretizableInTime();
   
+  //! Get the data that will be transferred in the operator splitting to the other term of the splitting.
+  //! The transfer is done by the solution_vector_mapping class.
+  //! The data is passed on from the DiscretizableInTime object.
+  virtual OutputConnectorDataType getOutputConnectorData();
+
   //! set the subset of ranks that will compute the work
   void setRankSubset(Partition::RankSubset rankSubset);
   
@@ -79,7 +86,7 @@ public:
 /**
  * Specialization for CellmlAdapter
  */
-template<int nStates,int nIntermediates,typename FunctionSpaceType>
+/*template<int nStates,int nIntermediates,typename FunctionSpaceType>
 class TimeSteppingSchemeOde<CellmlAdapter<nStates, nIntermediates, FunctionSpaceType>> :
   public TimeSteppingSchemeOdeBaseDiscretizable<CellmlAdapter<nStates, nIntermediates, FunctionSpaceType>>
 {
@@ -88,23 +95,21 @@ public:
   using TimeSteppingSchemeOdeBaseDiscretizable<CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>>::TimeSteppingSchemeOdeBaseDiscretizable;
   
   //! use data type for solution transfer
-  using TimeSteppingSchemeOdeBaseDiscretizable<CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>>::TransferableSolutionDataType;
-
-  typedef typename TimeSteppingSchemeOdeBaseDiscretizable<CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>>::TransferableSolutionDataType TransferableSolutionData;
+  typedef typename TimeSteppingSchemeOdeBaseDiscretizable<CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>>::OutputConnectorDataType OutputConnectorDataType;
 
   //! initialize CellMLAdapter and get outputStateIndex and prefactor from CellMLAdapter to set them in data_
   virtual void initialize();
 
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
   //! the transfer is done by the solution_vector_mapping class
-  virtual TransferableSolutionData getSolutionForTransfer();
+  virtual OutputConnectorDataType getOutputConnectorData();
 
   //! output the given data for debugging
-  virtual std::string getString(TransferableSolutionData &data);
+  virtual std::string getString(OutputConnectorDataType &data);
 
 protected:
   int outputIntermediateIndex_ = -1;   ///< component index of the intermediates field variable to use for solution transfer
-};
+};*/
 
 }  // namespace
 

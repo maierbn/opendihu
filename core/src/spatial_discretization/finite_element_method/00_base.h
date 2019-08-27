@@ -32,7 +32,7 @@ public:
   typedef ::Data::FiniteElements<FunctionSpaceType,nComponents,Term> Data;
   typedef FunctionSpaceType FunctionSpace;
   typedef QuadratureType Quadrature;
-  typedef typename Data::TransferableSolutionDataType TransferableSolutionDataType;
+  typedef typename Data::OutputConnectorDataType OutputConnectorDataType;
 
   // perform computation
   void run();

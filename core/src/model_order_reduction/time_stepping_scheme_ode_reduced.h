@@ -14,13 +14,14 @@ namespace ModelOrderReduction
   template<typename TimeSteppingType>
   class TimeSteppingSchemeOdeReduced :
     public MORBase<typename TimeSteppingType::FunctionSpace>,
-    public ::TimeSteppingScheme::TimeSteppingSchemeOdeTransferableSolutionData<::FunctionSpace::Generic,1>
+    public ::TimeSteppingScheme::TimeSteppingSchemeOdeBase<::FunctionSpace::Generic,1>
   {
   public:
     typedef FieldVariable::FieldVariable<::FunctionSpace::Generic,1> FieldVariableType;  
     typedef ::FunctionSpace::Generic GenericFunctionSpace;
     typedef TimeSteppingType FullTimeSteppingType;
-    
+    typedef std::shared_ptr<FieldVariableType> OutputConnectorDataType;
+
     //! constructor
     TimeSteppingSchemeOdeReduced(DihuContext context,std::string name);
 
@@ -44,6 +45,10 @@ namespace ModelOrderReduction
     
     //! full-order timestepping object
     TimeSteppingType fullTimestepping();
+
+    //! get the data that will be transferred in the operator splitting to the other term of the splitting
+    //! the transfer is done by the solution_vector_mapping class
+    OutputConnectorDataType getOutputConnectorData();
 
   protected:
     //! read initial values from settings and set field accordingly

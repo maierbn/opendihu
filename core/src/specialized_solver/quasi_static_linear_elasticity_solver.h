@@ -23,7 +23,7 @@ public:
   typedef typename Data::FiniteElements<FunctionSpace,3,Equation::Static::LinearElasticityActiveStress> DataLinearElasticityType;
   typedef Data::QuasiStaticLinearElasticity<DataLinearElasticityType> Data;
   typedef FieldVariable::FieldVariable<FunctionSpace,1> FieldVariableType;
-  typedef std::shared_ptr<FieldVariableType> TransferableSolutionDataType;
+  typedef std::shared_ptr<FieldVariableType> OutputConnectorDataType;
 
   typedef SpatialDiscretization::FiniteElementMethod<       //FEM for initial potential flow, fiber directions
         Mesh::StructuredDeformableOfDimension<3>,
@@ -58,10 +58,10 @@ public:
 
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
   //! the transfer is done by the solution_vector_mapping class
-  TransferableSolutionDataType getSolutionForTransfer();
+  OutputConnectorDataType getOutputConnectorData();
 
   //! output the given data for debugging
-  std::string getString(TransferableSolutionDataType &data);
+  std::string getString(OutputConnectorDataType &data);
 
 protected:
 

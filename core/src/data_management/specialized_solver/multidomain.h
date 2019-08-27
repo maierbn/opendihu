@@ -67,10 +67,10 @@ public:
     std::shared_ptr<FieldVariableType>,              // extra-cellular potential
     std::vector<std::shared_ptr<FieldVariableType>>,              // transmembranePotentials
     std::vector<std::shared_ptr<FieldVariableType>>              // compartmentRelativeFactors
-  > OutputFieldVariables;
+  > FieldVariablesForOutputWriter;
 
   //! get pointers to all field variables that can be written by output writers
-  OutputFieldVariables getOutputFieldVariables();
+  FieldVariablesForOutputWriter getFieldVariablesForOutputWriter();
 
 private:
 

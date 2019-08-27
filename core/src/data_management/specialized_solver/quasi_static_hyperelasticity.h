@@ -59,10 +59,10 @@ public:
       std::shared_ptr<DisplacementsFieldVariableType>,              // displacements_
       std::shared_ptr<StressFieldVariableType>         // pK2Stress_
     >
-   OutputFieldVariables;
+   FieldVariablesForOutputWriter;
 
   //! get pointers to all field variables that can be written by output writers
-  OutputFieldVariables getOutputFieldVariables();
+  FieldVariablesForOutputWriter getFieldVariablesForOutputWriter();
 
 private:
 

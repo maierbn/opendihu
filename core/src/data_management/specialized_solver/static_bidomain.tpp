@@ -107,8 +107,8 @@ print() // use override in stead of extending the parents' print output.This way
 }
 
 template<typename FunctionSpaceType>
-typename StaticBidomain<FunctionSpaceType>::OutputFieldVariables StaticBidomain<FunctionSpaceType>::
-getOutputFieldVariables()
+typename StaticBidomain<FunctionSpaceType>::FieldVariablesForOutputWriter StaticBidomain<FunctionSpaceType>::
+getFieldVariablesForOutputWriter()
 {
   // these field variables will be written to output files
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> geometryField

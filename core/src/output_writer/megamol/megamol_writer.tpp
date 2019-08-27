@@ -10,9 +10,9 @@ namespace OutputWriter
 {
 
 #ifdef HAVE_ADIOS
-template<typename FunctionSpaceType, typename OutputFieldVariablesType>
-void MegaMolWriter<FunctionSpaceType, OutputFieldVariablesType>::
-outputData(OutputFieldVariablesType fieldVariables, std::string meshName, std::shared_ptr<FunctionSpaceType> functionSpace,
+template<typename FunctionSpaceType, typename FieldVariablesForOutputWriterType>
+void MegaMolWriter<FunctionSpaceType, FieldVariablesForOutputWriterType>::
+outputData(FieldVariablesForOutputWriterType fieldVariables, std::string meshName, std::shared_ptr<FunctionSpaceType> functionSpace,
            PythonConfig specificSettings, MegaMolWriterContext &megaMolWriterContext)
 {
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> geometryField;

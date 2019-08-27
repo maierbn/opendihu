@@ -113,12 +113,12 @@ print()
 }
 
 template<typename DataLinearElasticityType>
-typename QuasiStaticLinearElasticity<DataLinearElasticityType>::OutputFieldVariables QuasiStaticLinearElasticity<DataLinearElasticityType>::
-getOutputFieldVariables()
+typename QuasiStaticLinearElasticity<DataLinearElasticityType>::FieldVariablesForOutputWriter QuasiStaticLinearElasticity<DataLinearElasticityType>::
+getFieldVariablesForOutputWriter()
 {
   // these field variables will be written to output files
   return std::tuple_cat(
-    dataLinearElasticity_->getOutputFieldVariables(),
+    dataLinearElasticity_->getFieldVariablesForOutputWriter(),
     std::tuple<std::shared_ptr<FieldVariableType>>(this->activation_),
     std::tuple<std::shared_ptr<StressFieldVariableType>>(this->activeStress_),
     std::tuple<std::shared_ptr<StressFieldVariableType>>(this->strain_),

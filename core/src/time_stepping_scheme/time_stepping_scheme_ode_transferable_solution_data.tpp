@@ -9,17 +9,17 @@ namespace TimeSteppingScheme
 {
 
 template<typename FunctionSpaceType, int nComponents, typename DiscretizableInTimeType>
-typename TimeSteppingSchemeOdeTransferableSolutionData<FunctionSpaceType, nComponents, DiscretizableInTimeType>::TransferableSolutionDataType
-TimeSteppingSchemeOdeTransferableSolutionData<FunctionSpaceType, nComponents, DiscretizableInTimeType>::
-getSolutionForTransfer()
+typename TimeSteppingSchemeOdeOutputConnectorDataType<FunctionSpaceType, nComponents, DiscretizableInTimeType>::OutputConnectorDataType
+TimeSteppingSchemeOdeOutputConnectorDataType<FunctionSpaceType, nComponents, DiscretizableInTimeType>::
+getOutputConnectorData()
 {
-  return this->data_->getSolutionForTransfer();
+  return this->data_->getOutputConnectorData();
 }
 
 //! output the given data for debugging
 template<typename FunctionSpaceType, int nComponents, typename DiscretizableInTimeType>
-std::string TimeSteppingSchemeOdeTransferableSolutionData<FunctionSpaceType, nComponents, DiscretizableInTimeType>::
-getString(typename TimeSteppingSchemeOdeTransferableSolutionData<FunctionSpaceType, nComponents, DiscretizableInTimeType>::TransferableSolutionDataType &data)
+std::string TimeSteppingSchemeOdeOutputConnectorDataType<FunctionSpaceType, nComponents, DiscretizableInTimeType>::
+getString(typename TimeSteppingSchemeOdeOutputConnectorDataType<FunctionSpaceType, nComponents, DiscretizableInTimeType>::OutputConnectorDataType &data)
 {
   return this->data_->getString(data);
 }

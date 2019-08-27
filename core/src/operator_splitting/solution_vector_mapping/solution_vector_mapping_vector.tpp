@@ -6,12 +6,12 @@
 
 /** Transfer between two vectors of any type
  */
-template<typename TransferableSolutionDataType1, typename TransferableSolutionDataType2>
+template<typename OutputConnectorDataType1, typename OutputConnectorDataType2>
 void SolutionVectorMapping<
-  std::vector<TransferableSolutionDataType1>,
-  std::vector<TransferableSolutionDataType2>
->::transfer(const std::vector<TransferableSolutionDataType1> &transferableSolutionData1,
-            const std::vector<TransferableSolutionDataType2> &transferableSolutionData2,
+  std::vector<OutputConnectorDataType1>,
+  std::vector<OutputConnectorDataType2>
+>::transfer(const std::vector<OutputConnectorDataType1> &transferableSolutionData1,
+            const std::vector<OutputConnectorDataType2> &transferableSolutionData2,
             const std::string transferSlotName)
 {
   VLOG(1) << "Solution vector mapping (solution_vector_mapping_vector.tpp)";
@@ -20,14 +20,14 @@ void SolutionVectorMapping<
   {
     LOG(ERROR) << "Trying to transfer data from " << transferableSolutionData1.size() << " variables to " << transferableSolutionData2.size() << ", number has to be equal. "
       << "Now only using the first " << nTransferableVariables << " variable" << (nTransferableVariables != 1? "s" : "") << ". Types: " << std::endl
-      << StringUtility::demangle(typeid(TransferableSolutionDataType1).name()) << std::endl
-      << StringUtility::demangle(typeid(TransferableSolutionDataType2).name());
+      << StringUtility::demangle(typeid(OutputConnectorDataType1).name()) << std::endl
+      << StringUtility::demangle(typeid(OutputConnectorDataType2).name());
   }
 
   // loop over the two vectors A and B and transfer A[i] -> B[i] for every component
   for (int i = 0; i < nTransferableVariables; i++)
   {
-    SolutionVectorMapping<TransferableSolutionDataType1,TransferableSolutionDataType2>::transfer(
+    SolutionVectorMapping<OutputConnectorDataType1,OutputConnectorDataType2>::transfer(
       transferableSolutionData1[i],
       transferableSolutionData2[i],
       transferSlotName

@@ -117,13 +117,13 @@ print()
 }
 
 template<typename FunctionSpaceType>
-typename Mechanics<FunctionSpaceType>::OutputFieldVariables Mechanics<FunctionSpaceType>::
-getOutputFieldVariables()
+typename Mechanics<FunctionSpaceType>::FieldVariablesForOutputWriter Mechanics<FunctionSpaceType>::
+getFieldVariablesForOutputWriter()
 {
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> geometryField
     = std::make_shared<FieldVariable::FieldVariable<FunctionSpaceType,3>>(this->functionSpace_->geometryField());
 
-  return OutputFieldVariables(
+  return FieldVariablesForOutputWriter(
     geometryField,
     displacements_,
     rhs_

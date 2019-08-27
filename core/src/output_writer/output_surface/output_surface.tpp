@@ -97,10 +97,10 @@ data()
 }
 
 template<typename Solver>
-typename OutputSurface<Solver>::TransferableSolutionDataType OutputSurface<Solver>::
-getSolutionForTransfer()
+typename OutputSurface<Solver>::OutputConnectorDataType OutputSurface<Solver>::
+getOutputConnectorData()
 {
-  return solver_.getSolutionForTransfer();
+  return solver_.getOutputConnectorData();
 }
 
 }  // namespace OutputWriter

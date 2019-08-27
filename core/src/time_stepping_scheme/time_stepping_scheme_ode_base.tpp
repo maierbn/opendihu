@@ -21,7 +21,7 @@ TimeSteppingScheme(context[name]), initialized_(false)
 }
 
 template<typename FunctionSpaceType, int nComponents>
-Data::TimeStepping<FunctionSpaceType, nComponents> &TimeSteppingSchemeOdeBase<FunctionSpaceType, nComponents>::
+typename Data::TimeStepping<FunctionSpaceType, nComponents> &TimeSteppingSchemeOdeBase<FunctionSpaceType, nComponents>::
 data()
 {
   return *data_;
@@ -99,5 +99,8 @@ run()
   // do simulations
   this->advanceTimeSpan();
 }
+
+
+
 
 } // namespace

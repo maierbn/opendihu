@@ -88,12 +88,12 @@ print()
 }
 
 template<typename FunctionSpaceType>
-typename ParallelFiberEstimation<FunctionSpaceType>::OutputFieldVariables ParallelFiberEstimation<FunctionSpaceType>::
-getOutputFieldVariables()
+typename ParallelFiberEstimation<FunctionSpaceType>::FieldVariablesForOutputWriter ParallelFiberEstimation<FunctionSpaceType>::
+getFieldVariablesForOutputWriter()
 {
   assert(problem_);
   return std::tuple_cat(
-    problem_->data().getOutputFieldVariables(),
+    problem_->data().getFieldVariablesForOutputWriter(),
     std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>>>(this->gradient_),
     std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>>(this->dirichletValues_),
     std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>>(this->jacobianConditionNumber_)

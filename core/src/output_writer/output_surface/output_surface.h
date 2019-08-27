@@ -17,7 +17,7 @@ class OutputSurface :
 public:
   typedef typename Solver::FunctionSpace FunctionSpace;
   typedef typename Solver::Data Data3D;
-  typedef typename Solver::TransferableSolutionDataType TransferableSolutionDataType;
+  typedef typename Solver::OutputConnectorDataType OutputConnectorDataType;
 
   //! constructor
   OutputSurface(DihuContext context);
@@ -45,7 +45,7 @@ public:
 
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
   //! the transfer is done by the solution_vector_mapping class
-  TransferableSolutionDataType getSolutionForTransfer();
+  OutputConnectorDataType getOutputConnectorData();
 
 protected:
 

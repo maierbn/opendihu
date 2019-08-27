@@ -36,7 +36,7 @@ public:
   DataImplicit &dataImplicit();
   
   //! output the given data for debugging
-  virtual std::string getString(typename TimeSteppingSchemeOde<DiscretizableInTimeType>::TransferableSolutionDataType &data);
+  //virtual std::string getString(typename TimeSteppingSchemeOde<DiscretizableInTimeType>::OutputConnectorDataType &data);
 
 protected:
   

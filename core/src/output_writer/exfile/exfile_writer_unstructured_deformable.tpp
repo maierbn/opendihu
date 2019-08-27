@@ -8,9 +8,9 @@ namespace OutputWriter
 {
 
 //! write exelem file to given stream
-template<int D, typename BasisFunctionType, typename OutputFieldVariablesType>
-void ExfileWriter<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,OutputFieldVariablesType>::
-outputExelem(std::ostream &stream, OutputFieldVariablesType fieldVariables, std::string meshName, 
+template<int D, typename BasisFunctionType, typename FieldVariablesForOutputWriterType>
+void ExfileWriter<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,FieldVariablesForOutputWriterType>::
+outputExelem(std::ostream &stream, FieldVariablesForOutputWriterType fieldVariables, std::string meshName, 
              std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> mesh, 
              int nFieldVariablesOfMesh)
 {
@@ -29,7 +29,7 @@ outputExelem(std::ostream &stream, OutputFieldVariablesType fieldVariables, std:
     if (currentElementGlobalNo > 0)
     {
       outputHeader = false;
-      ExfileLoopOverTuple::loopCheckIfNewExelemHeaderNecessary<OutputFieldVariablesType>(fieldVariables, meshName, currentElementGlobalNo, outputHeader);
+      ExfileLoopOverTuple::loopCheckIfNewExelemHeaderNecessary<FieldVariablesForOutputWriterType>(fieldVariables, meshName, currentElementGlobalNo, outputHeader);
     }
 
     // output header
@@ -53,7 +53,7 @@ outputExelem(std::ostream &stream, OutputFieldVariablesType fieldVariables, std:
 
       // loop over field variables and output headers
       int fieldVariableIndex = 0;
-      ExfileLoopOverTuple::loopOutputHeaderExelem<OutputFieldVariablesType>(fieldVariables, fieldVariableIndex, meshName, stream, currentElementGlobalNo);
+      ExfileLoopOverTuple::loopOutputHeaderExelem<FieldVariablesForOutputWriterType>(fieldVariables, fieldVariableIndex, meshName, stream, currentElementGlobalNo);
     }
     
     mesh->elementToNodeMapping()->outputElementExelem(stream, currentElementGlobalNo);
@@ -62,9 +62,9 @@ outputExelem(std::ostream &stream, OutputFieldVariablesType fieldVariables, std:
 }
 
 //! write exnode file to given stream
-template<int D, typename BasisFunctionType, typename OutputFieldVariablesType>
-void ExfileWriter<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,OutputFieldVariablesType>::
-outputExnode(std::ostream &stream, OutputFieldVariablesType fieldVariables, std::string meshName, 
+template<int D, typename BasisFunctionType, typename FieldVariablesForOutputWriterType>
+void ExfileWriter<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,FieldVariablesForOutputWriterType>::
+outputExnode(std::ostream &stream, FieldVariablesForOutputWriterType fieldVariables, std::string meshName, 
              std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> mesh,
              int nFieldVariablesOfMesh
             )
@@ -81,7 +81,7 @@ outputExnode(std::ostream &stream, OutputFieldVariablesType fieldVariables, std:
     if (currentNodeGlobalNo > 0)
     {
       outputHeader = false;
-      ExfileLoopOverTuple::loopCheckIfNewExnodeHeaderNecessary<OutputFieldVariablesType>(fieldVariables, meshName, currentNodeGlobalNo, outputHeader);
+      ExfileLoopOverTuple::loopCheckIfNewExnodeHeaderNecessary<FieldVariablesForOutputWriterType>(fieldVariables, meshName, currentNodeGlobalNo, outputHeader);
     }
 
     // output header
@@ -92,7 +92,7 @@ outputExnode(std::ostream &stream, OutputFieldVariablesType fieldVariables, std:
 
       // output the exnode file header for the current node
       int fieldVariableIndex = 0;
-      ExfileLoopOverTuple::loopOutputHeaderExnode<OutputFieldVariablesType>(fieldVariables, fieldVariableIndex, meshName, stream, currentNodeGlobalNo, valueIndex);
+      ExfileLoopOverTuple::loopOutputHeaderExnode<FieldVariablesForOutputWriterType>(fieldVariables, fieldVariableIndex, meshName, stream, currentNodeGlobalNo, valueIndex);
     }
 
     stream << " Node: " << currentNodeGlobalNo+1 << std::endl;
@@ -100,7 +100,7 @@ outputExnode(std::ostream &stream, OutputFieldVariablesType fieldVariables, std:
     // collect values of all field variables at the current node
     // get dofs
     std::vector<double> valuesAtNode;
-    ExfileLoopOverTuple::loopGetValuesAtNode<OutputFieldVariablesType>(fieldVariables, meshName, currentNodeGlobalNo, valuesAtNode);
+    ExfileLoopOverTuple::loopGetValuesAtNode<FieldVariablesForOutputWriterType>(fieldVariables, meshName, currentNodeGlobalNo, valuesAtNode);
 
     StringUtility::outputValuesBlock(stream, valuesAtNode.begin(), valuesAtNode.end(), 8);
   }

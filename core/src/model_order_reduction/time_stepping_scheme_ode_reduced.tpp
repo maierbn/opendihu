@@ -17,7 +17,7 @@ namespace ModelOrderReduction
   TimeSteppingSchemeOdeReduced<TimeSteppingType>::
   TimeSteppingSchemeOdeReduced(DihuContext context, std::string name):
   MORBase<typename TimeSteppingType::FunctionSpace>(context["ModelOrderReduction"]),
-  ::TimeSteppingScheme::TimeSteppingSchemeOdeTransferableSolutionData<::FunctionSpace::Generic,1>(context["ModelOrderReduction"],name),
+  ::TimeSteppingScheme::TimeSteppingSchemeOdeBase<::FunctionSpace::Generic,1>(context["ModelOrderReduction"],name),
     fullTimestepping_(context["ModelOrderReduction"]), initialized_(false)
   {  
     LOG(DEBUG) << "Constructor TimeSteppingSchemeOdeReduced, given context: " << context.getPythonConfig();
@@ -111,14 +111,14 @@ namespace ModelOrderReduction
     this->fullTimestepping_.initialize();
     LOG(DEBUG) << "fullTimestepping_ was initialized, has function space: " << this->fullTimestepping_.data().functionSpace()->meshName();
 
-    ::TimeSteppingScheme::TimeSteppingSchemeOdeTransferableSolutionData<::FunctionSpace::Generic,1>::initialize();
+    ::TimeSteppingScheme::TimeSteppingSchemeOdeBase<::FunctionSpace::Generic,1>::initialize();
 
     this->dataMOR_->setFunctionSpace(this->functionSpaceRed);
     this->dataMOR_->setFunctionSpaceRows(this->functionSpaceRowsSnapshots);
     
     assert(functionSpaceRed->meshPartition());   // assert that the function space was retrieved correctly
     this->data_->setFunctionSpace(functionSpaceRed);
-    this->data().setOutputComponentNo(0);
+    //this->data().setOutputComponentNo(0);
     this->data_->initialize();
     
     MORBase<typename TimeSteppingType::FunctionSpace>::initialize();  
@@ -157,5 +157,11 @@ namespace ModelOrderReduction
   {
     return fullTimestepping_;
   }
-  
+
+  template<typename TimeSteppingType>
+  typename TimeSteppingSchemeOdeReduced<TimeSteppingType>::OutputConnectorDataType TimeSteppingSchemeOdeReduced<TimeSteppingType>::
+  getOutputConnectorData()
+  {
+    return this->data_->solution();
+  }
 } //namespace

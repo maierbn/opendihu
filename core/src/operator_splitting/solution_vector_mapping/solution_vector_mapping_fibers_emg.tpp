@@ -10,17 +10,17 @@
 template<typename BasisFunctionType, int nComponents1a, int nComponents1b, typename FieldVariableType2>
 void SolutionVectorMapping<
   std::vector<std::vector<
-    std::pair<
-      std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunctionType>,nComponents1a>>, int, double>,   // <fieldVariableTypeStates,componentNoStates,prefactor>
-      std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunctionType>,nComponents1b>>, int>    // <fieldIariableIntermediates,componentNoIntermediates
+    CellMLOutputConnectorDataType<
+      nComponents1a,nComponents1b,
+      FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>,BasisFunctionType>
     >
   >>,
   std::shared_ptr<FieldVariableType2>
 >::
 transfer(const std::vector<std::vector<
-           std::pair<
-             std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunctionType>,nComponents1a>>, int, double>,   // <fieldVariableTypeStates,componentNoStates,prefactor>
-             std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunctionType>,nComponents1b>>, int>    // <fieldIariableIntermediates,componentNoIntermediates
+           CellMLOutputConnectorDataType<
+             nComponents1a,nComponents1b,
+             FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>,BasisFunctionType>
            >
          >> &transferableSolutionData1,
          std::shared_ptr<FieldVariableType2> transferableSolutionData2,
@@ -41,11 +41,11 @@ transfer(const std::vector<std::vector<
   {
     for (int j = 0; j < transferableSolutionData1[i].size(); j++)
     {
-      std::shared_ptr<FieldVariableType1a> fieldVariable1States = std::get<0>(transferableSolutionData1[i][j].first);   // this is the transmembranePotential
-      std::shared_ptr<FieldVariableType1b> fieldVariable1Intermediates = std::get<0>(transferableSolutionData1[i][j].second);   // this is the stress
+      std::shared_ptr<FieldVariableType1a> fieldVariable1States        = transferableSolutionData1[i][j].stateVariable.values;   // this is the transmembranePotential
+      std::shared_ptr<FieldVariableType1b> fieldVariable1Intermediates = transferableSolutionData1[i][j].intermediateVariable.values;   // this is the stress
 
-      const int sourceComponentNoStates = std::get<1>(transferableSolutionData1[i][j].first);
-      const int sourceComponentNoIntermediates = std::get<1>(transferableSolutionData1[i][j].second);
+      const int sourceComponentNoStates        = transferableSolutionData1[i][j].stateVariable.componentNo;
+      const int sourceComponentNoIntermediates = transferableSolutionData1[i][j].intermediateVariable.componentNo;
 
       //LOG(DEBUG) << "transmembranePotential:" << *fieldVariable1;
       //LOG(FATAL) << "end";
@@ -74,17 +74,17 @@ template<typename BasisFunctionType, typename FieldVariableType1, int nComponent
 void SolutionVectorMapping<
   std::shared_ptr<FieldVariableType1>,  // <3D field variable>
   std::vector<std::vector<
-    std::pair<
-      std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunctionType>,nComponents2a>>, int, double>,   // <fieldVariableTypeStates,componentNoStates,prefactor>
-      std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunctionType>,nComponents2b>>, int>    // <fieldIariableIntermediates,componentNoIntermediates
+    CellMLOutputConnectorDataType<
+      nComponents2a,nComponents2b,
+      FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>,BasisFunctionType>
     >
   >>
 >::
 transfer(std::shared_ptr<FieldVariableType1> transferableSolutionData1,
          const std::vector<std::vector<
-           std::pair<
-             std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunctionType>,nComponents2a>>, int, double>,   // <fieldVariableTypeStates,componentNoStates,prefactor>
-             std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunctionType>,nComponents2b>>, int>    // <fieldIariableIntermediates,componentNoIntermediates
+           CellMLOutputConnectorDataType<
+             nComponents2a,nComponents2b,
+             FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>,BasisFunctionType>
            >
           >> &transferableSolutionData2,
          const std::string transferSlotName)

@@ -17,26 +17,26 @@ namespace ParaviewLoopOverTuple
  /** Static recursive loop from 0 to number of entries in the tuple
  * Loop body
  */
-template<typename OutputFieldVariablesType, int i>
-inline typename std::enable_if<i < std::tuple_size<OutputFieldVariablesType>::value, void>::type
-loopCollectMeshProperties(const OutputFieldVariablesType &fieldVariables, std::map<std::string,PolyDataPropertiesForMesh> &meshProperties
+template<typename FieldVariablesForOutputWriterType, int i>
+inline typename std::enable_if<i < std::tuple_size<FieldVariablesForOutputWriterType>::value, void>::type
+loopCollectMeshProperties(const FieldVariablesForOutputWriterType &fieldVariables, std::map<std::string,PolyDataPropertiesForMesh> &meshProperties
 )
 {
-  LOG(DEBUG) << "loopCollectMeshProperties i=" << i << " type " << StringUtility::demangle(typeid(typename std::tuple_element<i,OutputFieldVariablesType>::type).name());
+  LOG(DEBUG) << "loopCollectMeshProperties i=" << i << " type " << StringUtility::demangle(typeid(typename std::tuple_element<i,FieldVariablesForOutputWriterType>::type).name());
 
   // call what to do in the loop body
-  if (collectMeshProperties<typename std::tuple_element<i,OutputFieldVariablesType>::type, OutputFieldVariablesType>(
+  if (collectMeshProperties<typename std::tuple_element<i,FieldVariablesForOutputWriterType>::type, FieldVariablesForOutputWriterType>(
         std::get<i>(fieldVariables), fieldVariables, meshProperties))
     return;
   
   // advance iteration to next tuple element
-  loopCollectMeshProperties<OutputFieldVariablesType, i+1>(fieldVariables, meshProperties);
+  loopCollectMeshProperties<FieldVariablesForOutputWriterType, i+1>(fieldVariables, meshProperties);
 }
  
 // current element is of pointer type (not vector)
-template<typename CurrentFieldVariableType, typename OutputFieldVariablesType>
+template<typename CurrentFieldVariableType, typename FieldVariablesForOutputWriterType>
 typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
-collectMeshProperties(CurrentFieldVariableType currentFieldVariable, const OutputFieldVariablesType &fieldVariables,
+collectMeshProperties(CurrentFieldVariableType currentFieldVariable, const FieldVariablesForOutputWriterType &fieldVariables,
                            std::map<std::string,PolyDataPropertiesForMesh> &meshProperties)
 {
   assert(currentFieldVariable != nullptr);
@@ -89,24 +89,24 @@ collectMeshProperties(CurrentFieldVariableType currentFieldVariable, const Outpu
 }
 
 // element i is of vector type
-template<typename VectorType, typename OutputFieldVariablesType>
+template<typename VectorType, typename FieldVariablesForOutputWriterType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
-collectMeshProperties(VectorType currentFieldVariableVector, const OutputFieldVariablesType &fieldVariables,
+collectMeshProperties(VectorType currentFieldVariableVector, const FieldVariablesForOutputWriterType &fieldVariables,
                            std::map<std::string,PolyDataPropertiesForMesh> &meshProperties)
 {
   for (auto& currentFieldVariable : currentFieldVariableVector)
   {
     // call function on all vector entries
-    if (collectMeshProperties<typename VectorType::value_type,OutputFieldVariablesType>(currentFieldVariable, fieldVariables, meshProperties))
+    if (collectMeshProperties<typename VectorType::value_type,FieldVariablesForOutputWriterType>(currentFieldVariable, fieldVariables, meshProperties))
       return true; // break iteration
   }
   return false;  // do not break iteration 
 }
 
 // element i is of tuple type
-template<typename TupleType, typename OutputFieldVariablesType>
+template<typename TupleType, typename FieldVariablesForOutputWriterType>
 typename std::enable_if<TypeUtility::isTuple<TupleType>::value, bool>::type
-collectMeshProperties(TupleType currentFieldVariableTuple, const OutputFieldVariablesType &fieldVariables,
+collectMeshProperties(TupleType currentFieldVariableTuple, const FieldVariablesForOutputWriterType &fieldVariables,
                            std::map<std::string,PolyDataPropertiesForMesh> &meshProperties)
 {
   // call for tuple element

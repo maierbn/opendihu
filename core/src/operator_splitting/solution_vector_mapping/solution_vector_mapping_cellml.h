@@ -7,25 +7,28 @@
 #include "data_management/data.h"
 #include "control/types.h"
 #include "mesh/mesh.h"
+#include "data_management/time_stepping/time_stepping.h"
+#include "cellml/00_cellml_adapter_base.h"
 
 /** Transfer between a pair of states and intermediates field variables from CellML, with given component numbers each, to a normal field variable with component no, both field variables have a component no. != 1
+ *
+ * template <int nStates, int nIntermediates, typename FunctionSpaceType>
+ * struct CellMLOutputConnectorDataType
+ * {
+ *   Data::ScaledFieldVariableComponent<FunctionSpaceType,nStates> stateVariable;          //< one component of the states
+ *   Data::ScaledFieldVariableComponent<FunctionSpaceType,nIntermediates> intermediateVariable;   //< one component of the intermediates
+ * };
  */
 template<typename FunctionSpaceType1, int nComponents1a, int nComponents1b, typename FunctionSpaceType2, int nComponents2>
 class SolutionVectorMapping<
-  std::pair<
-    std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1a>>, int, double>,   // <fieldVariableTypeStates,componentNoStates,prefactor>
-    std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1b>>, int>    // <fieldIariableIntermediates,componentNoIntermediates
-  >,
-  std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2>>, int, double>
+  CellMLOutputConnectorDataType<nComponents1a,nComponents1b,FunctionSpaceType1>,      //< intermediates and states from cellmlAdapter
+  Data::ScaledFieldVariableComponent<FunctionSpaceType2,nComponents2>
 >
 {
 public:
   //! transfer the data from transferableSolutionData1 to transferableSolutionData2, as efficient as possible, where there are multiple slots that could be transferred (e.g. at cellmlAdapter), use the one specified by transferSlotName
-  static void transfer(const std::pair<
-                         std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1a>>, int, double>,   // <fieldVariableTypeStates,componentNoStates,prefactor>
-                         std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1b>>, int>    // <fieldIariableIntermediates,componentNoIntermediates
-                       > &transferableSolutionData1,
-                       const std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2>>,int,double> &transferableSolutionData2,
+  static void transfer(const CellMLOutputConnectorDataType<nComponents1a,nComponents1b,FunctionSpaceType1> &transferableSolutionData1,
+                       const Data::ScaledFieldVariableComponent<FunctionSpaceType2,nComponents2> &transferableSolutionData2,
                        const std::string transferSlotName);
 };
 
@@ -33,20 +36,14 @@ public:
  */
 template<typename FunctionSpaceType1, int nComponents1, typename FunctionSpaceType2, int nComponents2a, int nComponents2b>
 class SolutionVectorMapping<
-  std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1>>, int, double>,
-  std::pair<
-    std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2a>>, int, double>,   // <fieldVariableTypeStates,componentNoStates,prefactor>
-    std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2b>>, int>    // <fieldIariableIntermediates,componentNoIntermediates
-  >
+  Data::ScaledFieldVariableComponent<FunctionSpaceType1,nComponents1>,
+  CellMLOutputConnectorDataType<nComponents2a,nComponents2b,FunctionSpaceType2>
 >
 {
 public:
   //! transfer the data from transferableSolutionData1 to transferableSolutionData2, as efficient as possible, where there are multiple slots that could be transferred (e.g. at cellmlAdapter), use the one specified by transferSlotName
-  static void transfer(const std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1>>,int,double> &transferableSolutionData1,
-                      const std::pair<
-                        std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2a>>, int, double>,   // <fieldVariableTypeStates,componentNoStates,prefactor>
-                        std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2b>>, int>    // <fieldIariableIntermediates,componentNoIntermediates
-                      > &transferableSolutionData2,
+  static void transfer(const Data::ScaledFieldVariableComponent<FunctionSpaceType1,nComponents1> &transferableSolutionData1,
+                       const CellMLOutputConnectorDataType<nComponents2a,nComponents2b,FunctionSpaceType2> &transferableSolutionData2,
                        const std::string transferSlotName);
 };
 
@@ -55,20 +52,14 @@ public:
  */
 template<typename FunctionSpaceType1, int nComponents1a, int nComponents1b, typename FunctionSpaceType2>
 class SolutionVectorMapping<
-  std::pair<
-    std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1a>>, int, double>,   // <fieldVariableTypeStates,componentNoStates,prefactor>
-    std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1b>>, int>    // <fieldIariableIntermediates,componentNoIntermediates
-  >,
-  std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,1>>, int, double>
+  CellMLOutputConnectorDataType<nComponents1a,nComponents1b,FunctionSpaceType1>,
+  Data::ScaledFieldVariableComponent<FunctionSpaceType2,1>
 >
 {
 public:
   //! transfer the data from transferableSolutionData1 to transferableSolutionData2, as efficient as possible, where there are multiple slots that could be transferred (e.g. at cellmlAdapter), use the one specified by transferSlotName
-  static void transfer(const std::pair<
-                         std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1a>>, int, double>,   // <fieldVariableTypeStates,componentNoStates,prefactor>
-                         std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1b>>, int>    // <fieldIariableIntermediates,componentNoIntermediates
-                       > &transferableSolutionData1,
-                       const std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,1>>,int,double> &transferableSolutionData2,
+  static void transfer(const CellMLOutputConnectorDataType<nComponents1a,nComponents1b,FunctionSpaceType1> &transferableSolutionData1,
+                       const Data::ScaledFieldVariableComponent<FunctionSpaceType2,1> &transferableSolutionData2,
                        const std::string transferSlotName);
 };
 

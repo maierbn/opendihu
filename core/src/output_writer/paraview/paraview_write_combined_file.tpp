@@ -273,8 +273,8 @@ void Paraview::writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, con
   MPIUtility::handleReturnValue(MPI_File_write_ordered(fileHandle, writeBuffer.c_str(), writeBuffer.length(), MPI_BYTE, MPI_STATUS_IGNORE), "MPI_File_write_ordered");
 }
 
-template<typename OutputFieldVariablesType>
-void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables, std::set<std::string> &meshNames)
+template<typename FieldVariablesForOutputWriterType>
+void Paraview::writePolyDataFile(const FieldVariablesForOutputWriterType &fieldVariables, std::set<std::string> &meshNames)
 {
   // output a *.vtp file which contains 1D meshes, if there are any
 
@@ -285,7 +285,7 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
     Control::PerformanceMeasurement::start("durationParaview1DInit");
 
     // collect the size data that is needed to compute offsets for parallel file output
-    ParaviewLoopOverTuple::loopCollectMeshProperties<OutputFieldVariablesType>(fieldVariables, meshPropertiesPolyDataFile_);
+    ParaviewLoopOverTuple::loopCollectMeshProperties<FieldVariablesForOutputWriterType>(fieldVariables, meshPropertiesPolyDataFile_);
 
     Control::PerformanceMeasurement::stop("durationParaview1DInit");
   }
@@ -493,7 +493,7 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
 
   // collect all data for the field variables, organized by field variable names
   std::map<std::string, std::vector<double>> fieldVariableValues;
-  ParaviewLoopOverTuple::loopGetNodalValues<OutputFieldVariablesType>(fieldVariables, vtkPiece_.meshNamesCombinedMeshes, fieldVariableValues);
+  ParaviewLoopOverTuple::loopGetNodalValues<FieldVariablesForOutputWriterType>(fieldVariables, vtkPiece_.meshNamesCombinedMeshes, fieldVariableValues);
 
   assert (!fieldVariableValues.empty());
   fieldVariableValues["partitioning"].resize(vtkPiece_.properties.nPointsLocal, (double)this->rankSubset_->ownRankNo());
@@ -516,7 +516,7 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
 
   // collect all data for the geometry field variable
   std::vector<double> geometryFieldValues;
-  ParaviewLoopOverTuple::loopGetGeometryFieldNodalValues<OutputFieldVariablesType>(fieldVariables, vtkPiece_.meshNamesCombinedMeshes, geometryFieldValues);
+  ParaviewLoopOverTuple::loopGetGeometryFieldNodalValues<FieldVariablesForOutputWriterType>(fieldVariables, vtkPiece_.meshNamesCombinedMeshes, geometryFieldValues);
 
   // only continue if there is data to reduce
   if (vtkPiece_.meshNamesCombinedMeshes.empty())
@@ -698,8 +698,8 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
   MPIUtility::handleReturnValue(MPI_File_close(&fileHandle), "MPI_File_close");
 }
 
-template<typename OutputFieldVariablesType>
-void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType &fieldVariables, std::set<std::string> &meshNames,
+template<typename FieldVariablesForOutputWriterType>
+void Paraview::writeCombinedUnstructuredGridFile(const FieldVariablesForOutputWriterType &fieldVariables, std::set<std::string> &meshNames,
                                                  bool output3DMeshes)
 {
   // output a *.vtu file which contains 3D (if output3DMeshes==true) or 2D meshes (if output3DMeshes==false), if there are any
@@ -714,7 +714,7 @@ void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType 
     Control::PerformanceMeasurement::start("durationParaview3DInit");
 
     // collect the size data that is needed to compute offsets for parallel file output
-    ParaviewLoopOverTuple::loopCollectMeshProperties<OutputFieldVariablesType>(fieldVariables, meshPropertiesUnstructuredGridFile_);
+    ParaviewLoopOverTuple::loopCollectMeshProperties<FieldVariablesForOutputWriterType>(fieldVariables, meshPropertiesUnstructuredGridFile_);
 
     Control::PerformanceMeasurement::stop("durationParaview3DInit");
   }
@@ -946,7 +946,7 @@ void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType 
       std::map<std::string, std::vector<double>> fieldVariableValues;
       std::set<std::string> currentMeshName;
       currentMeshName.insert(meshPropertiesIter->first);
-      ParaviewLoopOverTuple::loopGetNodalValues<OutputFieldVariablesType>(fieldVariables, currentMeshName, fieldVariableValues);
+      ParaviewLoopOverTuple::loopGetNodalValues<FieldVariablesForOutputWriterType>(fieldVariables, currentMeshName, fieldVariableValues);
 
       if (!meshPropertiesInitialized)
       {
@@ -962,7 +962,7 @@ void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType 
             pointDataArraysNames << polyDataPropertiesForMesh.pointDataArrays[i].first << " ";
           }
           LOG(DEBUG) << "pointDataArraysNames: " <<  pointDataArraysNames.str();
-          LOG(DEBUG) << "OutputFieldVariablesType: " << StringUtility::demangle(typeid(OutputFieldVariablesType).name());
+          LOG(DEBUG) << "FieldVariablesForOutputWriterType: " << StringUtility::demangle(typeid(FieldVariablesForOutputWriterType).name());
         }
 
         assert(fieldVariableValues.size() == polyDataPropertiesForMesh.pointDataArrays.size());
@@ -1013,12 +1013,12 @@ void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType 
 
       // collect all data for the geometry field variable
       std::vector<double> geometryFieldValues;
-      ParaviewLoopOverTuple::loopGetGeometryFieldNodalValues<OutputFieldVariablesType>(fieldVariables, currentMeshName, geometryFieldValues);
+      ParaviewLoopOverTuple::loopGetGeometryFieldNodalValues<FieldVariablesForOutputWriterType>(fieldVariables, currentMeshName, geometryFieldValues);
 
       VLOG(1) << "currentMeshName: " << currentMeshName << ", rank " << this->rankSubset_->ownRankNo() << ", n geometryFieldValues: " << geometryFieldValues.size();
       if (geometryFieldValues.size() == 0)
       {
-        LOG(FATAL) << "There is no geometry field. You have to provide a geomteryField in the field variables returned by getOutputFieldVariables!";
+        LOG(FATAL) << "There is no geometry field. You have to provide a geomteryField in the field variables returned by getFieldVariablesForOutputWriter!";
       }
 
       int nOutputFileParts = 5 + polyDataPropertiesForMesh.pointDataArrays.size();

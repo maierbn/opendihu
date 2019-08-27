@@ -20,7 +20,7 @@ namespace Data
 
 template<typename FunctionSpaceType,int nComponents>
 TimeStepping<FunctionSpaceType,nComponents>::
-TimeStepping(DihuContext context) : Data<FunctionSpaceType>(context), outputComponentNo_(0), prefactor_(1.0)
+TimeStepping(DihuContext context) : Data<FunctionSpaceType>(context)
 {
   this->debuggingName_ = "timestepping";
 }
@@ -112,7 +112,7 @@ setComponentNames(std::vector<std::string> componentNames)
 {
   componentNames_ = componentNames;
 }
-
+/*
 template<typename FunctionSpaceType,int nComponents>
 void TimeStepping<FunctionSpaceType,nComponents>::
 setOutputComponentNo(int outputComponentNo)
@@ -125,23 +125,28 @@ void TimeStepping<FunctionSpaceType,nComponents>::
 setPrefactor(double prefactor)
 {
   prefactor_ = prefactor;
-}
-
+}*/
+/*
 template<typename FunctionSpaceType,int nComponents>
-typename TimeStepping<FunctionSpaceType,nComponents>::TransferableSolutionDataType TimeStepping<FunctionSpaceType,nComponents>::
-getSolutionForTransfer()
+typename TimeStepping<FunctionSpaceType,nComponents>::OutputConnectorDataType TimeStepping<FunctionSpaceType,nComponents>::
+getOutputConnectorData()
 {
   // these field variables will be written by the output writers
-  //LOG(DEBUG) << "TimeStepping::getSolutionForTransfer \"" << debuggingName_ << "\", solution " << *this->solution_;
-  return std::tuple<std::shared_ptr<FieldVariableType>,int,double>(this->solution_,this->outputComponentNo_,this->prefactor_);
-}
+  //LOG(DEBUG) << "TimeStepping::getOutputConnectorData \"" << debuggingName_ << "\", solution " << *this->solution_;
+  OutputConnectorDataType outputConnectorData;
+  outputConnectorData.values = this->solution_;
+  outputConnectorData.componentNo = this->outputComponentNo_;
+  outputConnectorData.scalingFactor = this->prefactor_;
+
+  return outputConnectorData;
+}*/
 
 template<typename FunctionSpaceType,int nComponents>
-typename TimeStepping<FunctionSpaceType,nComponents>::OutputFieldVariables TimeStepping<FunctionSpaceType,nComponents>::
-getOutputFieldVariables()
+typename TimeStepping<FunctionSpaceType,nComponents>::FieldVariablesForOutputWriter TimeStepping<FunctionSpaceType,nComponents>::
+getFieldVariablesForOutputWriter()
 {
   // these field variables will be written to output files
-  return OutputFieldVariables(
+  return FieldVariablesForOutputWriter(
     std::make_shared<FieldVariable::FieldVariable<FunctionSpaceType,3>>(this->functionSpace_->geometryField()),
     solution_
   );
@@ -150,10 +155,10 @@ getOutputFieldVariables()
 //! output the given data for debugging
 template<typename FunctionSpaceType,int nComponents>
 std::string TimeStepping<FunctionSpaceType,nComponents>::
-getString(typename TimeStepping<FunctionSpaceType,nComponents>::TransferableSolutionDataType &data)
+getString(typename TimeStepping<FunctionSpaceType,nComponents>::OutputConnectorDataType &data)
 {
   std::stringstream s;
-  s << "<" << debuggingName_ << ":" << *std::get<0>(data) << ">";
+  s << "<" << debuggingName_ << ":" << *(data.values) << ">";
 
   return s.str();
 }

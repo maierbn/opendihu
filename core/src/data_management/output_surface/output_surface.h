@@ -12,7 +12,7 @@ namespace Data
   */
 template<typename Data3D>
 class OutputSurface :
-  public Data<typename ConvertOutputFieldVariables<typename Data3D::OutputFieldVariables>::FunctionSpaceFirstFieldVariable> // function space of data object is the function space of the first converted 2D field variable
+  public Data<typename ConvertFieldVariablesForOutputWriter<typename Data3D::FieldVariablesForOutputWriter>::FunctionSpaceFirstFieldVariable> // function space of data object is the function space of the first converted 2D field variable
 {
 public:
   //! constructor
@@ -31,10 +31,10 @@ public:
   bool ownRankInvolvedInOutput();
 
   //! field variables that will be output by outputWriters
-  typedef typename ConvertOutputFieldVariables<typename Data3D::OutputFieldVariables>::type OutputFieldVariables;
+  typedef typename ConvertFieldVariablesForOutputWriter<typename Data3D::FieldVariablesForOutputWriter>::type FieldVariablesForOutputWriter;
 
   //! get pointers to all field variables that can be written by output writers
-  OutputFieldVariables getOutputFieldVariables();
+  FieldVariablesForOutputWriter getFieldVariablesForOutputWriter();
 
 private:
 
@@ -42,7 +42,7 @@ private:
   std::shared_ptr<Data3D> data3d_;   ///< other data object that contains the 3D field variables
   bool ownRankInvolvedInOutput_;     ///< if the own rank hold part of the 2D surface field variable data and thus should call the output writer for output
 
-  OutputFieldVariables outputFieldVariables2D_;   ///< the surface field variables
+  FieldVariablesForOutputWriter outputFieldVariables2D_;   ///< the surface field variables
 
   //! initializes the vectors with size
   void createPetscObjects() override;

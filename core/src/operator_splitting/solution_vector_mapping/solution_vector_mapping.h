@@ -7,6 +7,7 @@
 #include "data_management/data.h"
 #include "control/types.h"
 #include "mesh/mesh.h"
+#include "data_management/time_stepping/time_stepping.h"
 
 /**
  * The Data classes contain each a vector that stores the solution. Often, the values need to be accessed to
@@ -19,23 +20,31 @@
  *
  * The data is also scaled with a prefactor, that can be given. This is needed for the results of the cellml class.
  */
-template<typename TransferableSolutionDataType1, typename TransferableSolutionDataType2>
+template<typename OutputConnectorDataType1, typename OutputConnectorDataType2>
 class SolutionVectorMapping
 {
 };
 
 /** Transfer between two field variables with given component number, both field variables have a component no. != 1
+ *
+ *  template<typename FunctionSpaceType, int nComponents>
+ *  struct ScaledFieldVariableComponent
+ *  {
+ *    std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> values;    //< a field variable containing the payload data that is to be exchangend to another solver
+ *    int componentNo;                              //< the component of values that is relevant, only this component out of the potentially multi-component field variable in values will be transferred.
+ *    double scalingFactor;    //< a scaling factor, the values will be multiplied by the factor before the transfer. Disabled if set to 1.0.
+ *  };
  */
 template<typename FunctionSpaceType1, int nComponents1, typename FunctionSpaceType2, int nComponents2>
 class SolutionVectorMapping<
-  std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1>>, int, double>,   // <fieldVariableType,componentNo,prefactor>
-  std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2>>, int, double>
+  Data::ScaledFieldVariableComponent<FunctionSpaceType1,nComponents1>,   // <fieldVariableType,componentNo,prefactor>
+  Data::ScaledFieldVariableComponent<FunctionSpaceType2,nComponents2>
 >
 {
 public:
   //! transfer the data from transferableSolutionData1 to transferableSolutionData2, as efficient as possible, where there are multiple slots that could be transferred (e.g. at cellmlAdapter), use the one specified by transferSlotName
-  static void transfer(const std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1>>,int,double> &transferableSolutionData1,
-                       const std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2>>,int,double> &transferableSolutionData2,
+  static void transfer(const Data::ScaledFieldVariableComponent<FunctionSpaceType1,nComponents1> &transferableSolutionData1,
+                       const Data::ScaledFieldVariableComponent<FunctionSpaceType2,nComponents2> &transferableSolutionData2,
                        const std::string transferSlotName
                       );
 };
@@ -45,14 +54,14 @@ public:
  */
 template<typename FunctionSpaceType1, int nComponents1, typename FunctionSpaceType2>
 class SolutionVectorMapping<
-  std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1>>, int, double>,   // <fieldVariableType,componentNo,prefactor>
-  std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,1>>, int, double>
+  Data::ScaledFieldVariableComponent<FunctionSpaceType1,nComponents1>,   // <fieldVariableType,componentNo,prefactor>
+  Data::ScaledFieldVariableComponent<FunctionSpaceType2,1>
 >
 {
 public:
   //! transfer the data from transferableSolutionData1 to transferableSolutionData2, as efficient as possible, where there are multiple slots that could be transferred (e.g. at cellmlAdapter), use the one specified by transferSlotName
-  static void transfer(const std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1>>,int,double> &transferableSolutionData1,
-                       const std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,1>>,int,double> &transferableSolutionData2,
+  static void transfer(const Data::ScaledFieldVariableComponent<FunctionSpaceType1,nComponents1> &transferableSolutionData1,
+                       const Data::ScaledFieldVariableComponent<FunctionSpaceType2,1> &transferableSolutionData2,
                        const std::string transferSlotName);
 };
 

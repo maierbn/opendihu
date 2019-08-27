@@ -145,8 +145,8 @@ print() // use override in stead of extending the parents' print output.This way
 }
 
 template<typename FunctionSpaceType>
-typename Multidomain<FunctionSpaceType>::OutputFieldVariables Multidomain<FunctionSpaceType>::
-getOutputFieldVariables()
+typename Multidomain<FunctionSpaceType>::FieldVariablesForOutputWriter Multidomain<FunctionSpaceType>::
+getFieldVariablesForOutputWriter()
 {
   // these field variables will be written to output files
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> geometryField

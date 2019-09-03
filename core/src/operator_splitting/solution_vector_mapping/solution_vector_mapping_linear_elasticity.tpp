@@ -1,4 +1,4 @@
-#include "operator_splitting/solution_vector_mapping/solution_vector_mapping_fibers_emg.h"
+#include "operator_splitting/solution_vector_mapping/solution_vector_mapping_linear_elasticity.h"
 
 #include <vector>
 #include <tuple>
@@ -7,7 +7,7 @@
 #include "mesh/mapping_between_meshes.h"
 #include "mesh/mesh_manager.h"
 
-template<typename BasisFunctionType, int nComponents1a, int nComponents1b, typename FunctionSpaceType2, int nComponents2>
+template<typename BasisFunctionType, int nComponents1a, int nComponents1b, typename FieldVariableType2>
 void SolutionVectorMapping<
   std::vector<std::vector<
     CellMLOutputConnectorDataType<
@@ -15,7 +15,7 @@ void SolutionVectorMapping<
       FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>,BasisFunctionType>
     >
   >>,
-  Data::ScaledFieldVariableComponent<FunctionSpaceType2,nComponents2>
+  TimeSteppingScheme::ElasticitySolverOutputConnectorDataType<FieldVariableType2>
 >::
 transfer(const std::vector<std::vector<
            CellMLOutputConnectorDataType<
@@ -23,7 +23,7 @@ transfer(const std::vector<std::vector<
              FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>,BasisFunctionType>
            >
          >> &transferableSolutionData1,
-         Data::ScaledFieldVariableComponent<FunctionSpaceType2,nComponents2> transferableSolutionData2,
+         TimeSteppingScheme::ElasticitySolverOutputConnectorDataType<FieldVariableType2> transferableSolutionData2,
          const std::string transferSlotName)
 {
   typedef FieldVariable::FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunctionType>, nComponents1a> FieldVariableType1a;
@@ -32,12 +32,13 @@ transfer(const std::vector<std::vector<
   LOG(DEBUG) << "Solution vector mapping (solution_vector_mapping_fibers_emg.tpp)";
 
   // prepare the target mesh for the mapping, set all factors to zero
-  typedef FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2> FieldVariableType2;
-  DihuContext::meshManager()->template prepareMapping<FieldVariableType2>(transferableSolutionData2.values);
+  DihuContext::meshManager()->template prepareMapping<FieldVariableType2>(transferableSolutionData2.activation);
 
-  const int targetComponentNo = transferableSolutionData2.componentNo;
+  const int targetComponentNo = 0; // 3D activation field variable has only 1 component
 
   bool useSlotIntermediates = (transferSlotName == "intermediates");
+
+
 
   // loop over vector of fibers
   for (int i = 0; i < transferableSolutionData1.size(); i++)
@@ -65,25 +66,25 @@ transfer(const std::vector<std::vector<
       {
         // transfer intermediates
         DihuContext::meshManager()->mapLowToHighDimension<FieldVariableType1b, FieldVariableType2>(
-          fieldVariable1Intermediates, sourceComponentNoIntermediates, transferableSolutionData2.values, targetComponentNo);
+          fieldVariable1Intermediates, sourceComponentNoIntermediates, transferableSolutionData2.activation, targetComponentNo);
       }
       else
       {
         // transfer state
         DihuContext::meshManager()->mapLowToHighDimension<FieldVariableType1a, FieldVariableType2>(
-          fieldVariable1States, sourceComponentNoStates, transferableSolutionData2.values, targetComponentNo);
+          fieldVariable1States, sourceComponentNoStates, transferableSolutionData2.activation, targetComponentNo);
       }
     }
   }
 
   // finalize the mapping to the target mesh, compute final values by dividing by the factors
-  DihuContext::meshManager()->template finalizeMapping<FieldVariableType2>(transferableSolutionData2.values, targetComponentNo);
+  DihuContext::meshManager()->template finalizeMapping<FieldVariableType2>(transferableSolutionData2.activation, targetComponentNo);
 }
 
 
-template<typename FunctionSpaceType1, int nComponents1, typename BasisFunctionType, int nComponents2a, int nComponents2b>
+template<typename FieldVariableType1, typename BasisFunctionType, int nComponents2a, int nComponents2b>
 void SolutionVectorMapping<
-  Data::ScaledFieldVariableComponent<FunctionSpaceType1,nComponents1>,  // <3D field variable>
+  TimeSteppingScheme::ElasticitySolverOutputConnectorDataType<FieldVariableType1>,  // <3D field variable>
   std::vector<std::vector<
     CellMLOutputConnectorDataType<
       nComponents2a,nComponents2b,
@@ -91,7 +92,7 @@ void SolutionVectorMapping<
     >
   >>
 >::
-transfer(Data::ScaledFieldVariableComponent<FunctionSpaceType1,nComponents1>,
+transfer(TimeSteppingScheme::ElasticitySolverOutputConnectorDataType<FieldVariableType1> transferableSolutionData1,
          const std::vector<std::vector<
            CellMLOutputConnectorDataType<
              nComponents2a,nComponents2b,
@@ -100,5 +101,26 @@ transfer(Data::ScaledFieldVariableComponent<FunctionSpaceType1,nComponents1>,
           >> &transferableSolutionData2,
          const std::string transferSlotName)
 {
-  // do nothing to map from 3D Vm field back to fibers
+  // map geometry of 3D field back to all fiber geometries
+
+  // define source and target field variable types
+  typedef FieldVariable::FieldVariable<typename FieldVariableType1::FunctionSpace,3> SourceFieldVariable;
+
+  typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>,BasisFunctionType> TargetFunctionSpace;
+  typedef FieldVariable::FieldVariable<TargetFunctionSpace,3> TargetFieldVariable;
+
+  // get source field variable, this is the same for all fibers
+  std::shared_ptr<SourceFieldVariable> geometryFieldSource = std::make_shared<SourceFieldVariable>(transferableSolutionData1.activation->functionSpace()->geometryField());
+
+  // loop over vector of fibers
+  for (int i = 0; i < transferableSolutionData2.size(); i++)
+  {
+    for (int j = 0; j < transferableSolutionData2[i].size(); j++)
+    {
+      std::shared_ptr<TargetFieldVariable> geometryFieldTarget = std::make_shared<TargetFieldVariable>(transferableSolutionData2[i][j].stateVariable.values->functionSpace()->geometryField());
+
+      // transfer values from 3D mesh to 1D mesh, using the inverse mapping that was already generated
+      DihuContext::meshManager()->mapHighToLowDimension<SourceFieldVariable, TargetFieldVariable>(geometryFieldSource, geometryFieldTarget);
+    }
+  }
 }

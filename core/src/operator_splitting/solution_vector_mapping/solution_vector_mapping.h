@@ -74,3 +74,4 @@ public:
 #include "operator_splitting/solution_vector_mapping/solution_vector_mapping_bidomain.h"
 #include "operator_splitting/solution_vector_mapping/solution_vector_mapping_cellml.h"
 #include "operator_splitting/solution_vector_mapping/solution_vector_mapping_fibers_emg.h"
+#include "operator_splitting/solution_vector_mapping/solution_vector_mapping_linear_elasticity.h"

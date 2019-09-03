@@ -264,7 +264,7 @@ checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghost
 {
   VLOG(1) << "checkNeighbouringElements(elementNo = " << elementNo << ", ghostMeshNo = " << ghostMeshNo << ", initial xi = " << xi;
 
-  const double xiTolerance = 1e-4;
+  const double xiTolerance = 1e-3;  //1e-4
   static std::array<int,3> xOffset;
   static std::array<int,3> yOffset;
   static std::array<int,3> zOffset;

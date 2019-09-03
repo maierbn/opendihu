@@ -133,8 +133,8 @@ config = {
     "linearElasticitySolver": {   # solver for linear elasticity
       "relativeTolerance":  1e-1,
       "maxIterations":      1e4,
-#      "solverType":        variables.emg_solver_type,
-#      "preconditionerType": variables.emg_preconditioner_type,
+      "solverType":         "gmres",
+      "preconditionerType": "none",
       "dumpFilename":       "",
       "dumpFormat":         "matlab",
     }, 

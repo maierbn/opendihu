@@ -25,12 +25,12 @@ findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::ar
   {
     VLOG(2) << "findPosition: startSearchInCurrentElement";
 
-    // check if point is already in current element
     FunctionSpaceStructuredFindPositionBase<MeshType,BasisFunctionType> *functionSpace = this;
 
     if (ghostMeshNo != -1)
       functionSpace = ghostMesh_[ghostMeshNo].get();
 
+    // check if point is already in current element
     if (functionSpace->pointIsInElement(point, elementNoLocal, xi, xiTolerance))
     {
 
@@ -113,7 +113,9 @@ findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::ar
       {
 #ifndef NDEBUG
         LOG(WARNING) << "Could not find element that contains point " << point << " in neighbourhood of element " << elementNoLocal
-          << ", tested all elements (no ghost elements) and found element " << currentElementNo;
+          << (ghostMeshNo != -1? std::string(" in ghost mesh ")+Mesh::getString((Mesh::face_t)ghostMeshNo) : "")
+          << ", tested all elements (no ghost elements) and found element " << currentElementNo << ". "
+          << "This can happen if the elements lies on the border of the higher dimensional element, e.g. if a fiber lies on the outer border of the 3D muscle mesh.";
 #endif
       }
 

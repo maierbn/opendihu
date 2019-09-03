@@ -88,6 +88,15 @@ void Heun<DiscretizableInTime>::advanceTimeSpan()
 
     VLOG(1) << *this->data_->solution();
 
+#ifndef NDEBUG
+    if (this->data_->solution()->containsNanOrInf())
+    {
+      LOG(ERROR) << "At time " << currentTime << ", in Heun method: Solution contains Nan or Inf. This probably means that the timestep width, "
+        << this->timeStepWidth_ << " is too high. Note, this expensive check is only performed when compiled for debug target.";
+      LOG(ERROR) << *this->data_->solution();
+    }
+#endif
+
     // advance simulation time
     timeStepNo++;
     currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;

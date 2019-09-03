@@ -412,7 +412,7 @@ getOutputConnectorData()
 
     if (VLOG_IS_ON(1))
     {
-      VLOG(1) << "instance " << i << "/" << nInstancesLocal_ << " is " << instancesLocal_[i].getString(output[i]);
+      VLOG(1) << "instance " << i << "/" << nInstancesLocal_ << " is " << output[i];
     }
   }
   return output;

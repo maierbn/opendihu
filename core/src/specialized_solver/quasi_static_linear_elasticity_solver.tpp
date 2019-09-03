@@ -58,11 +58,13 @@ advanceTimeSpan()
 
   LOG(DEBUG) << "compute strain";
 
-  // add displacements to geometry
   finiteElementMethodLinearElasticity_.data().computeStrain(data_.strain());
+
+  data_.debug();
 
   LOG(DEBUG) << "update geometry";
 
+  // add displacements to geometry
   finiteElementMethodLinearElasticity_.data().updateGeometry(this->scalingFactor_);
 
   // stop duration measurement
@@ -216,7 +218,10 @@ typename QuasiStaticLinearElasticitySolver<FiniteElementMethod>::OutputConnector
 QuasiStaticLinearElasticitySolver<FiniteElementMethod>::
 getOutputConnectorData()
 {
-  return this->data_.activation();
+  ElasticitySolverOutputConnectorDataType<FieldVariableType> outputConnectorData;
+  outputConnectorData.activation = this->data_.activation();
+
+  return outputConnectorData;
 }
 
 //! output the given data for debugging

@@ -139,6 +139,20 @@ std::array<double,nComponents> operator*(const std::array<double,nComponents> ve
   return result;
 }
 
+//! vector multiplication, outer product
+template<std::size_t nComponents1, std::size_t nComponents2>
+std::array<std::array<double,nComponents1>,nComponents2> operator*(const std::array<double,nComponents2> vector1, const std::array<double,nComponents1> vector2)
+{
+  std::array<std::array<double,nComponents1>,nComponents2> result;
+
+  //#pragma omp simd
+  for (int i = 0; i < nComponents2; i++)
+  {
+    result[i] = vector1[i] * vector2;
+  }
+  return result;
+}
+
 //! matrix-vector multiplication
 template<std::size_t M, std::size_t N>
 std::array<double,M> operator*(const std::array<std::array<double,M>,N> &matrix, const std::array<double,N> vector)
@@ -168,6 +182,20 @@ std::array<T,nComponents> operator/(const std::array<T,nComponents> vector1, con
   for (int i = 0; i < nComponents; i++)
   {
     result[i] = vector1[i] / vector2[i];
+  }
+  return result;
+}
+
+//! scalar division
+template<typename T, std::size_t nComponents>
+std::array<T,nComponents> operator/(const std::array<T,nComponents> vector1, const double value)
+{
+  std::array<T,nComponents> result;
+
+  //#pragma omp simd
+  for (int i = 0; i < nComponents; i++)
+  {
+    result[i] = vector1[i] / value;
   }
   return result;
 }

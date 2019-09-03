@@ -113,6 +113,35 @@ print()
 }
 
 template<typename DataLinearElasticityType>
+void QuasiStaticLinearElasticity<DataLinearElasticityType>::
+debug()
+{
+  std::shared_ptr<VectorFieldVariableType> solution = this->dataLinearElasticity_->solution();
+
+  int nValues = solution->nDofsLocalWithoutGhosts();
+  std::vector<Vec3> values;
+  solution->getValuesWithoutGhosts(values);
+
+  std::vector<Vec3> geometryValues;
+  solution->functionSpace()->geometryField().getValuesWithoutGhosts(geometryValues);
+
+  static int aa=0;
+
+  for (int i = 0; i < nValues; i++)
+  {
+    std::stringstream s;
+    s << values[i][0] << "," << values[i][1] << "," << values[i][2];
+    values[i][2] = 1e-3;
+    values[i][1] = 1e-3;
+    values[i][0] = 1e-3;
+    LOG(INFO) << "i: " << i << ", geometry: " << geometryValues[i] << ", solution: " << s.str() << " -> " << values[i];
+  }
+  aa++;
+  LOG(INFO) << "--";
+  solution->setValuesWithoutGhosts(values);
+}
+
+template<typename DataLinearElasticityType>
 typename QuasiStaticLinearElasticity<DataLinearElasticityType>::FieldVariablesForOutputWriter QuasiStaticLinearElasticity<DataLinearElasticityType>::
 getFieldVariablesForOutputWriter()
 {

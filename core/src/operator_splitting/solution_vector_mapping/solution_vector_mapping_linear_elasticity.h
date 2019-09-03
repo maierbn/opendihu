@@ -7,6 +7,8 @@
 #include "data_management/data.h"
 #include "control/types.h"
 #include "mesh/mesh.h"
+#include "cellml/00_cellml_adapter_base.h"
+#include "specialized_solver/quasi_static_linear_elasticity_solver.h"
 
 /** Transfer between the output from cubes partitioned fibers (MultipleInstances<Strang<...) and StaticBidomainSolver
  *
@@ -17,7 +19,7 @@
  *   Data::ScaledFieldVariableComponent<FunctionSpaceType,nIntermediates> intermediateVariable;   //< one component of the intermediates
  * };
  */
-template<typename BasisFunctionType, int nComponents1a, int nComponents1b, typename FunctionSpaceType2, int nComponents2>
+template<typename BasisFunctionType, int nComponents1a, int nComponents1b, typename FieldVariableType2>
 class SolutionVectorMapping<
   std::vector<std::vector<
     CellMLOutputConnectorDataType<
@@ -25,7 +27,7 @@ class SolutionVectorMapping<
       FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>,BasisFunctionType>
     >
   >>,
-  Data::ScaledFieldVariableComponent<FunctionSpaceType2,nComponents2>  // <3D field variable>
+  TimeSteppingScheme::ElasticitySolverOutputConnectorDataType<FieldVariableType2>
 >
 {
 public:
@@ -36,13 +38,13 @@ public:
                            FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>,BasisFunctionType>
                          >
                        >> &transferableSolutionData1,
-                       Data::ScaledFieldVariableComponent<FunctionSpaceType2,nComponents2> transferableSolutionData2,
+                       TimeSteppingScheme::ElasticitySolverOutputConnectorDataType<FieldVariableType2> transferableSolutionData2,
                        const std::string transferSlotName);
 };
 
-template<typename FunctionSpaceType1, int nComponents1, typename BasisFunctionType, int nComponents2a, int nComponents2b>
+template<typename FieldVariableType1, typename BasisFunctionType, int nComponents2a, int nComponents2b>
 class SolutionVectorMapping<
-  Data::ScaledFieldVariableComponent<FunctionSpaceType1,nComponents1>,  // <3D field variable>
+  TimeSteppingScheme::ElasticitySolverOutputConnectorDataType<FieldVariableType1>,  // 3D data
   std::vector<std::vector<
     CellMLOutputConnectorDataType<
       nComponents2a,nComponents2b,
@@ -53,7 +55,7 @@ class SolutionVectorMapping<
 {
 public:
   //! transfer the data from transferableSolutionData1 to transferableSolutionData2, as efficient as possible, where there are multiple slots that could be transferred (e.g. at cellmlAdapter), use the one specified by transferSlotName
-  static void transfer(Data::ScaledFieldVariableComponent<FunctionSpaceType1,nComponents1>,
+  static void transfer(TimeSteppingScheme::ElasticitySolverOutputConnectorDataType<FieldVariableType1> transferableSolutionData1,
                        const std::vector<std::vector<
                          CellMLOutputConnectorDataType<
                            nComponents2a,nComponents2b,
@@ -63,4 +65,4 @@ public:
                        const std::string transferSlotName);
 };
 
-#include "operator_splitting/solution_vector_mapping/solution_vector_mapping_fibers_emg.tpp"
+#include "operator_splitting/solution_vector_mapping/solution_vector_mapping_linear_elasticity.tpp"

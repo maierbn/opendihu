@@ -47,6 +47,9 @@ public:
   //! return the field variable of the active stress part of rhs, f_active
   std::shared_ptr<VectorFieldVariableType> rightHandSideActive();
 
+
+  void debug();
+
   //! initialize
   void initialize();
 

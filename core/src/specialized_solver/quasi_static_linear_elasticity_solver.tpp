@@ -27,6 +27,7 @@ QuasiStaticLinearElasticitySolver(DihuContext context) :
   }
   maximumActiveStress_ = specificSettings_.getOptionDouble("maximumActiveStress", 1.0, PythonUtility::ValidityCriterion::Positive);
   strainScalingCurveWidth_ = specificSettings_.getOptionDouble("strainScalingCurveWidth", 1.0, PythonUtility::ValidityCriterion::Positive);
+  scalingFactor_ = specificSettings_.getOptionDouble("scalingFactor", 1.0);
 
   LOG(DEBUG) << "QuasiStaticLinearElasticitySolver: parsed parameters maximumActiveStress: " << maximumActiveStress_ << ", strainScalingCurveWidth: " << strainScalingCurveWidth_;
   LOG(DEBUG) << "now parse output writers";
@@ -57,12 +58,14 @@ advanceTimeSpan()
 
   LOG(DEBUG) << "compute strain";
 
-  // add displacements to geometry
   finiteElementMethodLinearElasticity_.data().computeStrain(data_.strain());
+
+  data_.debug();
 
   LOG(DEBUG) << "update geometry";
 
-  //finiteElementMethodLinearElasticity_.data().updateGeometry();
+  // add displacements to geometry
+  finiteElementMethodLinearElasticity_.data().updateGeometry(this->scalingFactor_);
 
   // stop duration measurement
   if (this->durationLogKey_ != "")
@@ -211,17 +214,20 @@ data()
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
 //! the transfer is done by the solution_vector_mapping class
 template<typename FiniteElementMethod>
-typename QuasiStaticLinearElasticitySolver<FiniteElementMethod>::TransferableSolutionDataType
+typename QuasiStaticLinearElasticitySolver<FiniteElementMethod>::OutputConnectorDataType
 QuasiStaticLinearElasticitySolver<FiniteElementMethod>::
-getSolutionForTransfer()
+getOutputConnectorData()
 {
-  return this->data_.activation();
+  ElasticitySolverOutputConnectorDataType<FieldVariableType> outputConnectorData;
+  outputConnectorData.activation = this->data_.activation();
+
+  return outputConnectorData;
 }
 
 //! output the given data for debugging
 template<typename FiniteElementMethod>
 std::string QuasiStaticLinearElasticitySolver<FiniteElementMethod>::
-getString(typename QuasiStaticLinearElasticitySolver<FiniteElementMethod>::TransferableSolutionDataType &data)
+getString(typename QuasiStaticLinearElasticitySolver<FiniteElementMethod>::OutputConnectorDataType &data)
 {
   std::stringstream s;
   s << "<QuasiStaticLinearElasticitySolver:" << *data << ">";

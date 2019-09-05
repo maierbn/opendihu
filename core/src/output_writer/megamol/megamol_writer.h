@@ -11,14 +11,14 @@
 namespace OutputWriter
 {
 
-template<typename FunctionSpaceType, typename OutputFieldVariablesType>
+template<typename FunctionSpaceType, typename FieldVariablesForOutputWriterType>
 class MegaMolWriter
 {
 public:
 
 #ifdef HAVE_ADIOS
   //! output the given field variable data for one mesh
-  static void outputData(OutputFieldVariablesType fieldVariables, std::string meshName, std::shared_ptr<FunctionSpaceType> functionSpace,
+  static void outputData(FieldVariablesForOutputWriterType fieldVariables, std::string meshName, std::shared_ptr<FunctionSpaceType> functionSpace,
                          PythonConfig specificSettings, MegaMolWriterContext &megaMolWriterContext);
 #endif
 };

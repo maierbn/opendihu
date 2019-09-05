@@ -14,12 +14,12 @@ template<typename TimeStepping1, typename TimeStepping2>
 class OperatorSplitting :
   public ::TimeSteppingScheme::TimeSteppingScheme,    // contains also Multipliable
   public Runnable
-  //public Printer<typename TimeStepping2::TransferableSolutionDataType>
+  //public Printer<typename TimeStepping2::OutputConnectorDataType>
 {
 public:
   typedef typename TimeStepping1::FunctionSpace FunctionSpace;
   typedef typename TimeStepping1::Data Data;
-  typedef typename TimeStepping1::TransferableSolutionDataType TransferableSolutionDataType;  // needed when this class is itself part of an operator splitting
+  typedef typename TimeStepping1::OutputConnectorDataType OutputConnectorDataType;  // needed when this class is itself part of an operator splitting
  
   //! constructor
   OperatorSplitting(DihuContext context, std::string schemeName);
@@ -31,7 +31,7 @@ public:
   void run();
 
   //! get the data to be reused in further computations
-  TransferableSolutionDataType getSolutionForTransfer();
+  OutputConnectorDataType getOutputConnectorData();
 
   //! return whether the object has a specified mesh type or if it is independent of any mesh type
   bool knowsMeshType();
@@ -55,7 +55,7 @@ public:
   TimeStepping2 &timeStepping2();
 
   //! output the given data for debugging
-  std::string getString(TransferableSolutionDataType &data);
+  std::string getString(OutputConnectorDataType &data);
 
 protected:
 
@@ -75,10 +75,10 @@ protected:
 };
 
 /*
-template<typename TransferableSolutionDataType>
+template<typename OutputConnectorDataType>
 class Printer
 {
-  void print(TransferableSolutionDataType &data);
+  void print(OutputConnectorDataType &data);
 };
 
 */

@@ -25,14 +25,14 @@ materialComputeResidual()
   // δW_int = int_Ω 1/2 S_AB (F_aB phi_L,A + F_aA phi_L,B) dV
 
   //LOG(TRACE) << "materialComputeResidual";
-  const bool outputValues = false;
+  const bool outputValues = true;
+  const bool outputFiles = false;
   if (outputValues)
     LOG(DEBUG) << "input: " << getString(solverVariableSolution_);
 
+  // assert that data representation is global
   assert(combinedVecResidual_->currentRepresentation() == Partition::values_representation_t::representationCombinedGlobal);
   assert(combinedVecSolution_->currentRepresentation() == Partition::values_representation_t::representationCombinedGlobal);
-
-  static int evaluationNo = 0;  // counter how often this function was called
 
   // get pointer to function space
   std::shared_ptr<DisplacementsFunctionSpace> displacementsFunctionSpace = this->data_.displacementsFunctionSpace();
@@ -70,12 +70,17 @@ materialComputeResidual()
     combinedVecResidual_->startGhostManipulation();
   }
 
-  // dump input vector
-  // dumpVector(std::string filename, std::string format, Vec &vector, MPI_Comm mpiCommunicator, int componentNo=0, int nComponents=1);
-  std::stringstream filename;
-  filename << "out/x" << std::setw(3) << std::setfill('0') << evaluationNo;
-  //PetscUtility::dumpVector(filename.str(), "matlab", solverVariableSolution_, displacementsFunctionSpace->meshPartition()->mpiCommunicator());
-  combinedVecSolution_->dumpGlobalNatural(filename.str());
+  static int evaluationNo = 0;  // counter how often this function was called
+
+  if (outputFiles)
+  {
+    // dump input vector
+    // dumpVector(std::string filename, std::string format, Vec &vector, MPI_Comm mpiCommunicator, int componentNo=0, int nComponents=1);
+    std::stringstream filename;
+    filename << "out/x" << std::setw(3) << std::setfill('0') << evaluationNo;
+    //PetscUtility::dumpVector(filename.str(), "matlab", solverVariableSolution_, displacementsFunctionSpace->meshPartition()->mpiCommunicator());
+    combinedVecSolution_->dumpGlobalNatural(filename.str());
+  }
 
   // loop over elements
   for (int elementNoLocal = 0; elementNoLocal < nElementsLocal; elementNoLocal++)
@@ -87,6 +92,8 @@ materialComputeResidual()
     // get displacements field values for element
     std::array<Vec3,nDisplacementsDofsPerElement> displacementsValues;
     this->data_.displacements()->getElementValues(elementNoLocal, displacementsValues);
+
+    //LOG(DEBUG) << "elementNoLocal " << elementNoLocal << ", displacementsValues: " << displacementsValues;
 
     std::array<double,nPressureDofsPerElement> pressureValuesCurrentElement;
     this->data_.pressure()->getElementValues(elementNoLocal, pressureValuesCurrentElement);
@@ -372,11 +379,14 @@ materialComputeResidual()
   }
 
   // dump output vector
-  // dumpVector(std::string filename, std::string format, Vec &vector, MPI_Comm mpiCommunicator, int componentNo=0, int nComponents=1);
-  filename.str("");
-  filename << "out/F" << std::setw(3) << std::setfill('0') << evaluationNo;
-  //PetscUtility::dumpVector(filename.str(), "matlab", solverVariableResidual_, displacementsFunctionSpace->meshPartition()->mpiCommunicator());
-  combinedVecResidual_->dumpGlobalNatural(filename.str());
+  if (outputFiles)
+  {
+    // dumpVector(std::string filename, std::string format, Vec &vector, MPI_Comm mpiCommunicator, int componentNo=0, int nComponents=1);
+    std::stringstream filename;
+    filename << "out/F" << std::setw(3) << std::setfill('0') << evaluationNo;
+    //PetscUtility::dumpVector(filename.str(), "matlab", solverVariableResidual_, displacementsFunctionSpace->meshPartition()->mpiCommunicator());
+    combinedVecResidual_->dumpGlobalNatural(filename.str());
+  }
 
   assert(combinedVecResidual_->currentRepresentation() == Partition::values_representation_t::representationCombinedGlobal);
   assert(combinedVecSolution_->currentRepresentation() == Partition::values_representation_t::representationCombinedGlobal);
@@ -388,6 +398,7 @@ void QuasiStaticHyperelasticitySolver::
 materialComputeJacobian()
 {
   // compute jacobian in submatrices_
+
 
 }
 
@@ -707,6 +718,9 @@ computePK2StressField()
 {
   LOG(TRACE) << "computePK2StressField";
 
+  //this->data_.pK2Stress()->startGhostManipulation();
+  this->data_.pK2Stress()->zeroGhostBuffer();
+
   // get pointer to function space
   std::shared_ptr<DisplacementsFunctionSpace> displacementsFunctionSpace = this->data_.displacementsFunctionSpace();
   std::shared_ptr<PressureFunctionSpace> pressureFunctionSpace = this->data_.pressureFunctionSpace();
@@ -719,7 +733,6 @@ computePK2StressField()
   // loop over elements
   for (int elementNoLocal = 0; elementNoLocal < nElementsLocal; elementNoLocal++)
   {
-    LOG(DEBUG) << "el " << elementNoLocal;
     // get geometry field of reference configuration
     std::array<Vec3,nDisplacementsDofsPerElement> geometryReferenceValues;
     this->data_.geometryReference()->getElementValues(elementNoLocal, geometryReferenceValues);
@@ -733,6 +746,8 @@ computePK2StressField()
 
     // get indices of element-local dofs
     std::array<dof_no_t,27> dofNosLocal = this->displacementsFunctionSpace_->getElementDofNosLocal(elementNoLocal);
+
+    LOG(DEBUG) << "el " << elementNoLocal << ", geometryRef: " << geometryReferenceValues << ", displacements: " << displacementsValues << ", p: " << pressureValuesCurrentElement;
 
     // loop over nodes of this element
     for (int elementalNodeNo = 0; elementalNodeNo < 27; elementalNodeNo++)
@@ -817,6 +832,7 @@ computePK2StressField()
     }
   }
   this->data_.pK2Stress()->finishGhostManipulation();
+  this->data_.pK2Stress()->startGhostManipulation();
 }
 
 } // namespace

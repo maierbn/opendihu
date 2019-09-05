@@ -14,25 +14,25 @@ namespace ParaviewLoopOverTuple
  /** Static recursive loop from 0 to number of entries in the tuple
  * Loop body
  */
-template<typename OutputFieldVariablesType, int i>
-inline typename std::enable_if<i < std::tuple_size<OutputFieldVariablesType>::value, void>::type
-loopGetGeometryFieldNodalValues(const OutputFieldVariablesType &fieldVariables, std::set<std::string> meshNames,
+template<typename FieldVariablesForOutputWriterType, int i>
+inline typename std::enable_if<i < std::tuple_size<FieldVariablesForOutputWriterType>::value, void>::type
+loopGetGeometryFieldNodalValues(const FieldVariablesForOutputWriterType &fieldVariables, std::set<std::string> meshNames,
                    std::vector<double> &values
 )
 {
   // call what to do in the loop body
-  if (getGeometryFieldNodalValues<typename std::tuple_element<i,OutputFieldVariablesType>::type, OutputFieldVariablesType>(
+  if (getGeometryFieldNodalValues<typename std::tuple_element<i,FieldVariablesForOutputWriterType>::type, FieldVariablesForOutputWriterType>(
         std::get<i>(fieldVariables), fieldVariables, meshNames, values))
     return;
 
   // advance iteration to next tuple element
-  loopGetGeometryFieldNodalValues<OutputFieldVariablesType, i+1>(fieldVariables, meshNames, values);
+  loopGetGeometryFieldNodalValues<FieldVariablesForOutputWriterType, i+1>(fieldVariables, meshNames, values);
 }
 
 // current element is of pointer type (not vector)
-template<typename CurrentFieldVariableType, typename OutputFieldVariablesType>
+template<typename CurrentFieldVariableType, typename FieldVariablesForOutputWriterType>
 typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
-getGeometryFieldNodalValues(CurrentFieldVariableType currentFieldVariable, const OutputFieldVariablesType &fieldVariables, std::set<std::string> meshNames,
+getGeometryFieldNodalValues(CurrentFieldVariableType currentFieldVariable, const FieldVariablesForOutputWriterType &fieldVariables, std::set<std::string> meshNames,
                std::vector<double> &values)
 {
   VLOG(1) << "getGeometryFieldNodalValues meshNames: " << meshNames
@@ -90,24 +90,24 @@ getGeometryFieldNodalValues(CurrentFieldVariableType currentFieldVariable, const
 }
 
 // element i is of vector type
-template<typename VectorType, typename OutputFieldVariablesType>
+template<typename VectorType, typename FieldVariablesForOutputWriterType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
-getGeometryFieldNodalValues(VectorType currentFieldVariableVector, const OutputFieldVariablesType &fieldVariables, std::set<std::string> meshNames,
+getGeometryFieldNodalValues(VectorType currentFieldVariableVector, const FieldVariablesForOutputWriterType &fieldVariables, std::set<std::string> meshNames,
                std::vector<double> &values)
 {
   for (auto& currentFieldVariable : currentFieldVariableVector)
   {
     // call function on all vector entries
-    if (getGeometryFieldNodalValues<typename VectorType::value_type,OutputFieldVariablesType>(currentFieldVariable, fieldVariables, meshNames, values))
+    if (getGeometryFieldNodalValues<typename VectorType::value_type,FieldVariablesForOutputWriterType>(currentFieldVariable, fieldVariables, meshNames, values))
       return true; // break iteration
   }
   return false;  // do not break iteration
 }
 
 // element i is of tuple type
-template<typename TupleType, typename OutputFieldVariablesType>
+template<typename TupleType, typename FieldVariablesForOutputWriterType>
 typename std::enable_if<TypeUtility::isTuple<TupleType>::value, bool>::type
-getGeometryFieldNodalValues(TupleType currentFieldVariableTuple, const OutputFieldVariablesType &fieldVariables, std::set<std::string> meshNames,
+getGeometryFieldNodalValues(TupleType currentFieldVariableTuple, const FieldVariablesForOutputWriterType &fieldVariables, std::set<std::string> meshNames,
                std::vector<double> &values)
 {
   // call for tuple element

@@ -119,10 +119,10 @@ run()
 }
 
 template<typename TimeStepping1, typename TimeStepping2>
-typename OperatorSplitting<TimeStepping1, TimeStepping2>::TransferableSolutionDataType OperatorSplitting<TimeStepping1, TimeStepping2>::
-getSolutionForTransfer()
+typename OperatorSplitting<TimeStepping1, TimeStepping2>::OutputConnectorDataType OperatorSplitting<TimeStepping1, TimeStepping2>::
+getOutputConnectorData()
 {
-  return timeStepping1_.getSolutionForTransfer();
+  return timeStepping1_.getOutputConnectorData();
 }
 
 template<typename TimeStepping1, typename TimeStepping2>
@@ -158,10 +158,10 @@ timeStepping2()
 //! output the given data for debugging
 template<typename TimeStepping1, typename TimeStepping2>
 std::string OperatorSplitting<TimeStepping1, TimeStepping2>::
-getString(typename OperatorSplitting<TimeStepping1, TimeStepping2>::TransferableSolutionDataType &data)
+getString(typename OperatorSplitting<TimeStepping1, TimeStepping2>::OutputConnectorDataType &data)
 {
   std::stringstream s;
-  s << "<" << schemeName_ << ",Term1:" << timeStepping1_.getString(data) << ">";
+  s << "<" << schemeName_ << ",Term1:" << data << ">";
   return s.str();
 }
 

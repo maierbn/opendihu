@@ -152,6 +152,14 @@ solution()
   return this->solution_;
 }
 
+//! set the solution variable if it is initialized externally, such as in a timestepping scheme
+template<typename FunctionSpaceType, int nComponents>
+void FiniteElementsBase<FunctionSpaceType,nComponents>::
+setSolutionVariable(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> solution)
+{
+  this->solution_ = solution;
+}
+
 template<typename FunctionSpaceType, int nComponents>
 void FiniteElementsBase<FunctionSpaceType,nComponents>::
 setNegativeRightHandSideNeumannBoundaryConditions(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> negativeRightHandSideNeumannBoundaryConditions)
@@ -160,8 +168,8 @@ setNegativeRightHandSideNeumannBoundaryConditions(std::shared_ptr<FieldVariable:
 }
 
 template<typename FunctionSpaceType, int nComponents>
-typename FiniteElementsBase<FunctionSpaceType,nComponents>::TransferableSolutionDataType FiniteElementsBase<FunctionSpaceType,nComponents>::
-getSolutionForTransfer()
+typename FiniteElementsBase<FunctionSpaceType,nComponents>::OutputConnectorDataType FiniteElementsBase<FunctionSpaceType,nComponents>::
+getOutputConnectorData()
 {
   return this->solution_;
 }
@@ -244,15 +252,15 @@ initializeInverseLumpedMassMatrix()
 }
 
 template<typename FunctionSpaceType, int nComponents>
-typename FiniteElementsBase<FunctionSpaceType,nComponents>::OutputFieldVariables FiniteElementsBase<FunctionSpaceType,nComponents>::
-getOutputFieldVariables()
+typename FiniteElementsBase<FunctionSpaceType,nComponents>::FieldVariablesForOutputWriter FiniteElementsBase<FunctionSpaceType,nComponents>::
+getFieldVariablesForOutputWriter()
 {
   // these field variables will be written to output files
   assert(this->functionSpace_);
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> geometryField
     = std::make_shared<FieldVariable::FieldVariable<FunctionSpaceType,3>>(this->functionSpace_->geometryField());
 
-  return OutputFieldVariables(
+  return FieldVariablesForOutputWriter(
     geometryField,
     solution_,
     rhs_,

@@ -55,6 +55,14 @@ displacements()
   return this->displacements_;
 }
 
+  //! field variable displacements u but on the linear mesh
+  template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace>
+std::shared_ptr<typename QuasiStaticHyperelasticity<PressureFunctionSpace,DisplacementsFunctionSpace>::DisplacementsLinearFieldVariableType> QuasiStaticHyperelasticity<PressureFunctionSpace,DisplacementsFunctionSpace>::
+displacementsLinearMesh()
+{
+  return this->displacementsLinearMesh_;
+}
+
 //! field variable of p
 template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace>
 std::shared_ptr<typename QuasiStaticHyperelasticity<PressureFunctionSpace,DisplacementsFunctionSpace>::PressureFieldVariableType> QuasiStaticHyperelasticity<PressureFunctionSpace,DisplacementsFunctionSpace>::
@@ -73,14 +81,18 @@ pK2Stress()
 
 template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace>
 void QuasiStaticHyperelasticity<PressureFunctionSpace,DisplacementsFunctionSpace>::
-updateGeometry()
+updateGeometry(double scalingFactor)
 {
   PetscErrorCode ierr;
+
+  this->displacementsFunctionSpace_->geometryField().finishGhostManipulation();
 
   // update quadratic function space geometry
   // w = alpha * x + y, VecWAXPY(w, alpha, x, y)
   ierr = VecWAXPY(this->displacementsFunctionSpace_->geometryField().valuesGlobal(),
-                  1, this->displacements_->valuesGlobal(), this->geometryReference_->valuesGlobal()); CHKERRV(ierr);
+                  scalingFactor, this->displacements_->valuesGlobal(), this->geometryReference_->valuesGlobal()); CHKERRV(ierr);
+
+  this->displacementsFunctionSpace_->geometryField().startGhostManipulation();
 
   // for displacements extract linear mesh from quadratic mesh
   std::vector<Vec3> displacementValues;
@@ -112,9 +124,13 @@ updateGeometry()
   displacementsLinearMesh_->setValuesWithGhosts(linearMeshDisplacementValues, INSERT_VALUES);
 
   // update linear function space geometry
+  this->pressureFunctionSpace_->geometryField().finishGhostManipulation();
+
   // w = alpha * x + y, VecWAXPY(w, alpha, x, y)
   ierr = VecWAXPY(this->pressureFunctionSpace_->geometryField().valuesGlobal(),
                   1, this->displacementsLinearMesh_->valuesGlobal(), this->geometryReferenceLinearMesh_->valuesGlobal()); CHKERRV(ierr);
+
+  this->pressureFunctionSpace_->geometryField().startGhostManipulation();
 }
 
 //! set the function space object that discretizes the pressure field variable
@@ -169,14 +185,47 @@ print()
 }
 
 template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace>
-typename QuasiStaticHyperelasticity<PressureFunctionSpace,DisplacementsFunctionSpace>::OutputFieldVariables QuasiStaticHyperelasticity<PressureFunctionSpace,DisplacementsFunctionSpace>::
-getOutputFieldVariables()
+typename QuasiStaticHyperelasticity<PressureFunctionSpace,DisplacementsFunctionSpace>::FieldVariablesForOutputWriter QuasiStaticHyperelasticity<PressureFunctionSpace,DisplacementsFunctionSpace>::
+getFieldVariablesForOutputWriter()
 {
   // these field variables will be written to output files
+
   return std::tuple_cat(
     std::tuple<std::shared_ptr<DisplacementsFieldVariableType>>(std::make_shared<typename DisplacementsFunctionSpace::GeometryFieldType>(this->displacementsFunctionSpace_->geometryField())), // geometry
     std::tuple<std::shared_ptr<DisplacementsFieldVariableType>>(this->displacements_),              // displacements_
     std::tuple<std::shared_ptr<StressFieldVariableType>>(this->pK2Stress_)         // pK2Stress_
+  );
+
+  /*
+  // code to output the pressure field variables
+  return std::tuple_cat(
+    std::tuple<std::shared_ptr<DisplacementsLinearFieldVariableType>>(std::make_shared<typename PressureFunctionSpace::GeometryFieldType>(this->pressureFunctionSpace_->geometryField())), // geometry
+    std::tuple<std::shared_ptr<PressureFieldVariableType>>(this->pressure_)
+  );
+  */
+}
+
+// --------------------------------
+// QuasiStaticHyperelasticityPressureOutput
+
+template<typename PressureFunctionSpace>
+void QuasiStaticHyperelasticityPressureOutput<PressureFunctionSpace>::
+initialize(std::shared_ptr<typename QuasiStaticHyperelasticityPressureOutput<PressureFunctionSpace>::PressureFieldVariableType> pressure,
+           std::shared_ptr<typename QuasiStaticHyperelasticityPressureOutput<PressureFunctionSpace>::DisplacementsLinearFieldVariableType> displacementsLinearMesh)
+{
+  pressure_ = pressure;
+  displacementsLinearMesh_ = displacementsLinearMesh;
+}
+
+template<typename PressureFunctionSpace>
+typename QuasiStaticHyperelasticityPressureOutput<PressureFunctionSpace>::FieldVariablesForOutputWriter QuasiStaticHyperelasticityPressureOutput<PressureFunctionSpace>::
+getFieldVariablesForOutputWriter()
+{
+  // these field variables will be written to output files
+  return std::tuple_cat(
+    std::tuple<std::shared_ptr<DisplacementsLinearFieldVariableType>>(std::make_shared<typename PressureFunctionSpace::GeometryFieldType>(this->functionSpace_->geometryField())), // geometry
+    std::tuple<std::shared_ptr<DisplacementsLinearFieldVariableType>>(this->displacementsLinearMesh_),
+    std::tuple<std::shared_ptr<PressureFieldVariableType>>(this->pressure_)
   );
 }
 

@@ -6,45 +6,45 @@ namespace TimeSteppingScheme
 {
 
 template<typename FunctionSpaceType, int nComponents, typename DiscretizableInTimeType=FunctionSpaceType>
-class TimeSteppingSchemeOdeTransferableSolutionData :
+class TimeSteppingSchemeOdeOutputConnectorDataType :
   public TimeSteppingSchemeOdeBase<FunctionSpaceType, nComponents>
 {
 public:
   using TimeSteppingSchemeOdeBase<FunctionSpaceType, nComponents>::TimeSteppingSchemeOdeBase;
 
-  typedef Data::TimeStepping<FunctionSpaceType, nComponents> Data;   // type of Data object
-  typedef typename Data::TransferableSolutionDataType TransferableSolutionDataType;
+  typedef typename Data::TimeStepping<FunctionSpaceType, nComponents> Data;   // type of Data object
+  typedef typename Data::OutputConnectorDataType OutputConnectorDataType;
 
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
   //! the transfer is done by the solution_vector_mapping class
-  virtual TransferableSolutionDataType getSolutionForTransfer();
+  virtual OutputConnectorDataType getOutputConnectorData();
 
   //! output the given data for debugging
-  virtual std::string getString(TransferableSolutionDataType &data);
+  virtual std::string getString(OutputConnectorDataType &data);
 
 };
 
 /** Partial specialization for CellML adapter, which transfers different data (states and intermediates)
  */
 template<typename FunctionSpaceType,int nComponents,int nStates,int nIntermediates>
-class TimeSteppingSchemeOdeTransferableSolutionData<FunctionSpaceType, nComponents, CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>> :
+class TimeSteppingSchemeOdeOutputConnectorDataType<FunctionSpaceType, nComponents, CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>> :
 public TimeSteppingSchemeOdeBase<FunctionSpaceType,nComponents>
 {
 public:
   using TimeSteppingSchemeOdeBase<FunctionSpaceType,nComponents>::TimeSteppingSchemeOdeBase;
 
-  typedef Data::TimeStepping<FunctionSpaceType,nComponents> DataType;   // type of Data object
+  typedef typename Data::TimeStepping<FunctionSpaceType,nComponents> DataType;   // type of Data object
   typedef std::pair<
-    typename DataType::TransferableSolutionDataType,    // std::tuple<std::shared_ptr<FieldVariableType>,int,double> TransferableSolutionDataType;  // <field variable, output component no., prefactor>
-    std::tuple<std::shared_ptr<typename CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::FieldVariableTypeIntermediates>,int>  // intermediates, output component no., -1 if unused
-  > TransferableSolutionDataType;
+    typename DataType::OutputConnectorDataType,    // std::tuple<std::shared_ptr<FieldVariableType>,int,double> OutputConnectorDataType;  // <field variable, output component no., prefactor>
+    std::tuple<std::shared_ptr<typename CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::FieldVariableIntermediates>,int>  // intermediates, output component no., -1 if unused
+  > OutputConnectorDataType;
 
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
   //! the transfer is done by the solution_vector_mapping class
-  virtual TransferableSolutionDataType getSolutionForTransfer() = 0;
+  virtual OutputConnectorDataType getOutputConnectorData() = 0;
 
   //! output the given data for debugging
-  virtual std::string getString(TransferableSolutionDataType &data) = 0;
+  virtual std::string getString(OutputConnectorDataType &data) = 0;
 };
 
 }  // namespace

@@ -12,9 +12,9 @@
 namespace OutputWriter
 {
 // regular fixed
-template<int D, typename BasisFunctionType, typename OutputFieldVariablesType>
-void ParaviewWriter<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>, BasisFunctionType>, OutputFieldVariablesType>::
-outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::string meshName, 
+template<int D, typename BasisFunctionType, typename FieldVariablesForOutputWriterType>
+void ParaviewWriter<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>, BasisFunctionType>, FieldVariablesForOutputWriterType>::
+outputFile(std::string filename, FieldVariablesForOutputWriterType fieldVariables, std::string meshName, 
            std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>, BasisFunctionType>> mesh,
            int nFieldVariablesOfMesh, PythonConfig specificSettings)
 {
@@ -291,9 +291,9 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
 }
   
 // structured deformable
-template<int D, typename BasisFunctionType, typename OutputFieldVariablesType>
-void ParaviewWriter<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>, BasisFunctionType>, OutputFieldVariablesType>::
-outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::string meshName, 
+template<int D, typename BasisFunctionType, typename FieldVariablesForOutputWriterType>
+void ParaviewWriter<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>, BasisFunctionType>, FieldVariablesForOutputWriterType>::
+outputFile(std::string filename, FieldVariablesForOutputWriterType fieldVariables, std::string meshName, 
            std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>, BasisFunctionType>> mesh,
            int nFieldVariablesOfMesh, PythonConfig specificSettings)
 {
@@ -498,9 +498,9 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   
   
 // unstructured deformable
-template<int D, typename BasisFunctionType, typename OutputFieldVariablesType>
-void ParaviewWriter<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, OutputFieldVariablesType>::
-outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::string meshName, 
+template<int D, typename BasisFunctionType, typename FieldVariablesForOutputWriterType>
+void ParaviewWriter<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FieldVariablesForOutputWriterType>::
+outputFile(std::string filename, FieldVariablesForOutputWriterType fieldVariables, std::string meshName, 
            std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>> mesh,
            int nFieldVariablesOfMesh, PythonConfig specificSettings)
 {

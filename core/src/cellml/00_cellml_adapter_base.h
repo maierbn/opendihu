@@ -7,6 +7,28 @@
 #include "control/dihu_context.h"
 #include "output_writer/manager.h"
 #include "function_space/function_space.h"
+#include "data_management/cellml_adapter.h"
+
+/** The data type of the output connector of the CellML adapter.
+ *  This is the data that will be transferred to connected solvers.
+ *  The stateVariable can, e.g., be configured to contain Vm (by setting "outputStateIndex" in python settings).
+ *  The intermediateVariable can, e.g., be configured to contain alpha (by setting "outputIntermediateIndex" in python settings).
+ */
+template <int nStates, int nIntermediates, typename FunctionSpaceType>
+struct CellMLOutputConnectorDataType
+{
+  Data::ScaledFieldVariableComponent<FunctionSpaceType,nStates> stateVariable;          //< one component of the states
+  Data::ScaledFieldVariableComponent<FunctionSpaceType,nIntermediates> intermediateVariable;   //< one component of the intermediates
+};
+
+// operator used for output
+template <int nStates, int nIntermediates, typename FunctionSpaceType>
+std::ostream &operator<<(std::ostream &stream, const CellMLOutputConnectorDataType<nStates,nIntermediates,FunctionSpaceType> &rhs)
+{
+  stream << "<states: " << rhs.stateVariable << ", intermediates: " << rhs.intermediateVariable << ")>";
+  return stream;
+}
+
 
 /** This is the base class of the CellmlAdapter, that handles common functionality.
  * nStates: number of states in one instance of the CellML problem
@@ -23,7 +45,10 @@ class CellmlAdapterBase
 {
 public:
 
-  typedef FieldVariable::FieldVariable<FunctionSpaceType,nIntermediates_> FieldVariableTypeIntermediates;
+  typedef FieldVariable::FieldVariable<FunctionSpaceType,nIntermediates_> FieldVariableIntermediates;
+  typedef FieldVariable::FieldVariable<FunctionSpaceType,nStates> FieldVariableStates;
+  typedef Data::CellmlAdapter<nStates, nIntermediates_, FunctionSpaceType> Data;
+  typedef CellMLOutputConnectorDataType<nStates,nIntermediates_,FunctionSpaceType> OutputConnectorDataType;
 
   //! constructor from context
   CellmlAdapterBase(DihuContext context, bool noNewOutputWriter);
@@ -46,6 +71,9 @@ public:
   //! set initial values as given in python config
   template<typename FunctionSpaceType2>
   bool setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nStates>> initialValues);
+
+  //! set the solution field variable in the data object, that actual data is stored in the timestepping scheme object
+  void setSolutionVariable(std::shared_ptr<FieldVariableStates> states);
 
   //! return false because the object is independent of mesh type
   bool knowsMeshType();
@@ -72,7 +100,12 @@ public:
   constexpr int nIntermediates() const;
 
   //! return vector of the intermediate values
-  std::shared_ptr<FieldVariableTypeIntermediates> intermediates();
+  std::shared_ptr<FieldVariableIntermediates> intermediates();
+
+  //! get the data that will be transferred in the operator splitting to the other term of the splitting
+  //! the transfer is done by the solution_vector_mapping class
+  CellMLOutputConnectorDataType<nStates,nIntermediates_,FunctionSpaceType> getOutputConnectorData();
+
 
 protected:
 
@@ -84,6 +117,7 @@ protected:
   OutputWriter::Manager outputWriterManager_; ///< manager object holding all output writer
 
   std::shared_ptr<FunctionSpaceType> functionSpace_;    ///< a mesh, there are as many instances of the same CellML problem as there are nodes in the mesh
+  Data data_;     ///< the data object that stores all variables, i.e. intermediates and states
 
   int nInstances_;         ///< number of instances of the CellML problem. Usually it is the number of mesh nodes when a mesh is used. When running in parallel this is the local number of instances without ghosts.
   int nParameters_ = 0;    ///< number of parameters (=CellML name "known") in one instance of the CellML problem
@@ -101,7 +135,7 @@ protected:
   //std::vector<double> intermediates_;    ///< vector of intermediate values in DAE system. These can be computed directly from the actual states at any time. Gets computed by rhsRoutine from states, together with rates. OpenCMISS name is intermediate, CellML name: wanted
   std::array<double,nStates> statesInitialValues_;  ///< initial values of the states for one instances, as parsed from source file
   
-  std::shared_ptr<FieldVariableTypeIntermediates> intermediates_;   ///< field variable that hold the intermediate values
+  //std::shared_ptr<FieldVariableIntermediates> intermediates_;   ///< field variable that hold the intermediate values
 
   std::vector<int> parametersUsedAsIntermediate_;  ///< explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array
   std::vector<int> parametersUsedAsConstant_;  ///< explicitely defined parameters that will be copied to constants, this vector contains the indices of the constants 

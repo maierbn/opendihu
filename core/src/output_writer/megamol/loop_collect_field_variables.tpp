@@ -11,18 +11,18 @@ namespace MegaMolLoopOverTuple
 /** Static recursive loop from 0 to number of entries in the tuple
  * Loop body
  */
-template<typename OutputFieldVariablesType, typename FunctionSpaceType, int i>
-inline typename std::enable_if<i < std::tuple_size<OutputFieldVariablesType>::value, void>::type
-loopCollectFieldVariables(const OutputFieldVariablesType &fieldVariables, std::string meshName,
+template<typename FieldVariablesForOutputWriterType, typename FunctionSpaceType, int i>
+inline typename std::enable_if<i < std::tuple_size<FieldVariablesForOutputWriterType>::value, void>::type
+loopCollectFieldVariables(const FieldVariablesForOutputWriterType &fieldVariables, std::string meshName,
                           std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> &geometryField,
                           std::vector<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>> &scalarFieldVariables)
 {
   // call what to do in the loop body
-  if (collectFieldVariables<typename std::tuple_element<i,OutputFieldVariablesType>::type,FunctionSpaceType>(std::get<i>(fieldVariables), meshName, geometryField, scalarFieldVariables))
+  if (collectFieldVariables<typename std::tuple_element<i,FieldVariablesForOutputWriterType>::type,FunctionSpaceType>(std::get<i>(fieldVariables), meshName, geometryField, scalarFieldVariables))
     return;
   
   // advance iteration to next tuple element
-  loopCollectFieldVariables<OutputFieldVariablesType, FunctionSpaceType, i+1>(fieldVariables, meshName, geometryField, scalarFieldVariables);
+  loopCollectFieldVariables<FieldVariablesForOutputWriterType, FunctionSpaceType, i+1>(fieldVariables, meshName, geometryField, scalarFieldVariables);
 }
  
 // current element is of pointer type (not vector)

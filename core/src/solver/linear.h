@@ -53,6 +53,9 @@ protected:
   std::string nIterationsLogKey_;  ///< the keyword for the log with which the number of iterations will be stored
   std::string residualNormLogKey_;  ///< the keyword for the log with which the residual norm gets stored
   std::string nIterationsTotalLogKey_;  ///< the keyword for the log with which the total number of iterations gets stored
+
+  std::string solverType_;      ///< the type of the solver as given in the settings
+  std::string preconditionerType_;     ///< the type of the preconditioner, as given in the settings
 };
 
 }  // namespace

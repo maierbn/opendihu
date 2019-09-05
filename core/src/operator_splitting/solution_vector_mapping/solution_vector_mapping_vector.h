@@ -22,16 +22,16 @@
 
 /** Transfer between two vectors of any type, this calls the implementations without vectors.
  */
-template<typename TransferableSolutionDataType1, typename TransferableSolutionDataType2>
+template<typename OutputConnectorDataType1, typename OutputConnectorDataType2>
 class SolutionVectorMapping<
-  std::vector<TransferableSolutionDataType1>,
-  std::vector<TransferableSolutionDataType2>
+  std::vector<OutputConnectorDataType1>,
+  std::vector<OutputConnectorDataType2>
 >
 {
 public:
   //! transfer the data from transferableSolutionData1 to transferableSolutionData2, as efficient as possible, where there are multiple slots that could be transferred (e.g. at cellmlAdapter), use the one specified by transferSlotName
-  static void transfer(const std::vector<TransferableSolutionDataType1> &transferableSolutionData1,
-                       const std::vector<TransferableSolutionDataType2> &transferableSolutionData2,
+  static void transfer(const std::vector<OutputConnectorDataType1> &transferableSolutionData1,
+                       const std::vector<OutputConnectorDataType2> &transferableSolutionData2,
                        const std::string transferSlotName);
 };
 

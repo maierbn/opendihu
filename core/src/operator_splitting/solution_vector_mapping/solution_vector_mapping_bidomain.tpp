@@ -44,7 +44,7 @@ void SolutionVectorMapping<
       //LOG(FATAL) << "end";
 
       // map data between field variables
-      DihuContext::meshManager()->map<FieldVariableType1, FieldVariableType2>(transmembranePotential, sourceComponentNo, transferableSolutionData2, targetComponentNo);
+      DihuContext::meshManager()->mapLowToHighDimension<FieldVariableType1, FieldVariableType2>(transmembranePotential, sourceComponentNo, transferableSolutionData2, targetComponentNo);
     }
   }
 

@@ -42,6 +42,7 @@ parser.add_argument('--emg_solver_type',                     help='The solver fo
 parser.add_argument('--emg_preconditioner_type',             help='The preconditioner for the static bidomain.', default=variables.emg_preconditioner_type, choices=["jacobi","sor","lu","ilu","gamg","none"])
 parser.add_argument('--emg_initial_guess_nonzero',           help='If the initial guess for the emg linear system should be set to the previous solution.', default=variables.emg_initial_guess_nonzero, action='store_true')
 parser.add_argument('--paraview_output',                     help='Enable the paraview output writer.',          default=variables.paraview_output, action='store_true')
+parser.add_argument('--adios_output',                        help='Enable the MegaMol/ADIOS output writer.',          default=variables.adios_output, action='store_true')
 parser.add_argument('--fiber_file',                          help='The filename of the file that contains the fiber data.', default=variables.fiber_file)
 parser.add_argument('--cellml_file',                         help='The filename of the file that contains the cellml model.', default=variables.cellml_file)
 parser.add_argument('--fiber_distribution_file',             help='The filename of the file that contains the MU firing times.', default=variables.fiber_distribution_file)
@@ -132,8 +133,8 @@ config = {
     "linearElasticitySolver": {   # solver for linear elasticity
       "relativeTolerance":  1e-1,
       "maxIterations":      1e4,
-#      "solverType":        variables.emg_solver_type,
-#      "preconditionerType": variables.emg_preconditioner_type,
+      "solverType":         "gmres",
+      "preconditionerType": "none",
       "dumpFilename":       "",
       "dumpFormat":         "matlab",
     }, 
@@ -350,11 +351,12 @@ config = {
           "inputMeshIsGlobal":    True,
           "dirichletBoundaryConditions": variables.linear_elasticity_dirichlet_bc,
           "neumannBoundaryConditions":   variables.linear_elasticity_neumann_bc,
-          "bulkModulus":          40e3,  # https://www.researchgate.net/publication/230248067_Bulk_Modulus
-          "shearModulus":         39e3, # https://onlinelibrary.wiley.com/doi/full/10.1002/mus.24104
+          "bulkModulus":          40e3, #40e3 # https://www.researchgate.net/publication/230248067_Bulk_Modulus
+          "shearModulus":         39e3, #39e3 # https://onlinelibrary.wiley.com/doi/full/10.1002/mus.24104
         },
         "maximumActiveStress":      1.0,
         "strainScalingCurveWidth":  1.0,
+        "scalingFactor":        1e4,   #1e4
         "OutputWriter" : [
           {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/deformation", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
           #{"format": "PythonFile", "filename": "out/deformation", "outputInterval": 1, "binary":False, "onlyNodalValues":True},

@@ -50,15 +50,15 @@ struct ConvertFieldVariable<std::vector<FieldVariableType>>
   }
 };
 
-template<typename OutputFieldVariables3D, size_t currentIndex, typename ConvertedTail>
+template<typename FieldVariablesForOutputWriter3D, size_t currentIndex, typename ConvertedTail>
 struct ConvertTuple
 {
   typedef ConvertTuple<
-    OutputFieldVariables3D,        // input tuple of field variables
+    FieldVariablesForOutputWriter3D,        // input tuple of field variables
     currentIndex-1,           // index, starting from which the field variables are already transformed
     decltype(std::tuple_cat(           // tuple of transformed field variables, at the end of the tuple
       std::declval<std::tuple<
-          typename ConvertFieldVariable<typename std::tuple_element<currentIndex-1,OutputFieldVariables3D>::type>::type
+          typename ConvertFieldVariable<typename std::tuple_element<currentIndex-1,FieldVariablesForOutputWriter3D>::type>::type
           >>(),
       std::declval<ConvertedTail>()
     ))
@@ -66,12 +66,12 @@ struct ConvertTuple
   typedef typename ConvertTupleClass::type type;
 
   // convert a tuple of field variables from 3D function spaces to 2D function spaces
-  static void convert(const OutputFieldVariables3D fieldVariables3D, type &fieldVariables2D, Mesh::face_t face, bool &ownRankInvolvedInOutput)
+  static void convert(const FieldVariablesForOutputWriter3D fieldVariables3D, type &fieldVariables2D, Mesh::face_t face, bool &ownRankInvolvedInOutput)
   {
     //LOG(DEBUG) << "convert: currentIndex = " << currentIndex << ", call previous ConvertTuple";
 
     //LOG(DEBUG) << "call convert on field variable";
-    ConvertFieldVariable<typename std::tuple_element<currentIndex,OutputFieldVariables3D>::type>::convert(
+    ConvertFieldVariable<typename std::tuple_element<currentIndex,FieldVariablesForOutputWriter3D>::type>::convert(
       std::get<currentIndex>(fieldVariables3D), std::get<currentIndex>(fieldVariables2D), face, ownRankInvolvedInOutput
     );
 
@@ -82,35 +82,35 @@ struct ConvertTuple
 };
 
 // recursion end
-template<typename OutputFieldVariables3D,typename ConvertedTail>
-struct ConvertTuple<OutputFieldVariables3D, 0, ConvertedTail>
+template<typename FieldVariablesForOutputWriter3D,typename ConvertedTail>
+struct ConvertTuple<FieldVariablesForOutputWriter3D, 0, ConvertedTail>
 {
   typedef ConvertedTail type;
 
-  static void convert(const OutputFieldVariables3D fieldVariables3D, type &fieldVariables2D, Mesh::face_t face, bool &ownRankInvolvedInOutput)
+  static void convert(const FieldVariablesForOutputWriter3D fieldVariables3D, type &fieldVariables2D, Mesh::face_t face, bool &ownRankInvolvedInOutput)
   {
     //LOG(DEBUG) << "convert: recursion end";
     //LOG(DEBUG) << "call convert on field variable";
-    ConvertFieldVariable<typename std::tuple_element<0,OutputFieldVariables3D>::type>::convert(
+    ConvertFieldVariable<typename std::tuple_element<0,FieldVariablesForOutputWriter3D>::type>::convert(
       std::get<0>(fieldVariables3D), std::get<0>(fieldVariables2D), face, ownRankInvolvedInOutput
     );
   }
 };
 
 // interface to be used
-template<typename OutputFieldVariables3D>
-struct ConvertOutputFieldVariables
+template<typename FieldVariablesForOutputWriter3D>
+struct ConvertFieldVariablesForOutputWriter
 {
   typedef ConvertTuple<
-    OutputFieldVariables3D,
-    std::tuple_size<OutputFieldVariables3D>::value-1,      // last index of tuple
+    FieldVariablesForOutputWriter3D,
+    std::tuple_size<FieldVariablesForOutputWriter3D>::value-1,      // last index of tuple
     std::tuple<    // tuple containing only transformed last element
       typename ConvertFieldVariable   // transformed last element
       <
         typename std::tuple_element    // last element
         <
-          std::tuple_size<OutputFieldVariables3D>::value-1,
-          OutputFieldVariables3D
+          std::tuple_size<FieldVariablesForOutputWriter3D>::value-1,
+          FieldVariablesForOutputWriter3D
         >::type
       >::type
     >
@@ -120,9 +120,9 @@ struct ConvertOutputFieldVariables
   typedef typename std::tuple_element<0,type>::type::element_type::FunctionSpace FunctionSpaceFirstFieldVariable;  // the function space type of the first field variable
 
   // convert a tuple of field variables from 3D function spaces to 2D function spaces by taking the surface at the given face
-  static void convert(const OutputFieldVariables3D fieldVariables3D, type &fieldVariables2D, Mesh::face_t face, bool &ownRankInvolvedInOutput)
+  static void convert(const FieldVariablesForOutputWriter3D fieldVariables3D, type &fieldVariables2D, Mesh::face_t face, bool &ownRankInvolvedInOutput)
   {
-    //LOG(DEBUG) << "convert: start 3D: " << typeid(OutputFieldVariables3D).name() << ", n field variables: " << std::tuple_size<std::tuple<OutputFieldVariables3D>>::value;
+    //LOG(DEBUG) << "convert: start 3D: " << typeid(FieldVariablesForOutputWriter3D).name() << ", n field variables: " << std::tuple_size<std::tuple<FieldVariablesForOutputWriter3D>>::value;
     ConvertTupleClass::convert(fieldVariables3D, fieldVariables2D, face, ownRankInvolvedInOutput);
   }
 

@@ -2,9 +2,9 @@ import numpy as np
 import sys, os
 
 # number of elements
-nx = 1
-ny = 1
-nz = 2
+nx = 2
+ny = 2
+nz = 4
 
 # boundary conditions (for quadratic elements)
 dirichlet_bc = {}
@@ -45,7 +45,7 @@ if False:
 dirichlet_bc[0] = [xpos,ypos,zpos]
 dirichlet_bc[1] = [np.nan,ypos,zpos]
 
-neumann_bc = [{"element": k*nx*ny + j*nx + nx-1, "constantVector": [0,0,1e-2], "face": "2+"} for k in range(nz) for j in range(ny)]
+neumann_bc = [{"element": (nz-1)*nx*ny + j*nx + i, "constantVector": [0,1e-2,5e-2], "face": "2+"} for j in range(ny) for i in range(nx)]
 
 #dirichlet_bc = {}
 #neumann_bc = []
@@ -67,7 +67,7 @@ config = {
     # solver
     "relativeTolerance": 1e-10,
     "solverType": "preonly",          # cg groppcg pipecg pipecgrr cgne nash stcg gltr richardson chebyshev gmres tcqmr fcg pipefcg bcgs ibcgs fbcgs fbcgsr bcgsl cgs tfqmr cr pipecr lsqr preonly qcg bicg fgmres pipefgmres minres symmlq lgmres lcd gcr pipegcr pgmres dgmres tsirm cgls
-    "preconditionerType": "lu",
+    "preconditionerType": "cholesky",
     "maxIterations": 1e4,
     
     "dumpFilename": "out/m",
@@ -77,8 +77,14 @@ config = {
     "neumannBoundaryConditions": neumann_bc,
     
     "OutputWriter" : [
-      {"format": "Paraview", "outputInterval": 1, "filename": "out/out", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
-      {"format": "PythonFile", "filename": "out/out", "outputInterval": 1, "binary":False, "onlyNodalValues":True},
-    ]
+      {"format": "Paraview", "outputInterval": 1, "filename": "out/u", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
+      {"format": "PythonFile", "filename": "out/u", "outputInterval": 1, "binary":False, "onlyNodalValues":True},
+    ],
+    "pressure": {
+      "OutputWriter" : [
+        {"format": "Paraview", "outputInterval": 1, "filename": "out/p", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
+        {"format": "PythonFile", "filename": "out/p", "outputInterval": 1, "binary":False, "onlyNodalValues":True},
+      ]
+    }
   },
 }

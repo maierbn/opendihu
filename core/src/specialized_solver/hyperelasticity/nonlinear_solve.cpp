@@ -6,6 +6,7 @@
 #include "solver/nonlinear.h"
 #include "control/dihu_context.h"
 #include "solver/solver_manager.h"
+#include "partition/partitioned_petsc_vec/02_partitioned_petsc_vec_for_hyperelasticity.h"
 
 namespace TimeSteppingScheme
 {
@@ -85,17 +86,18 @@ nonlinearSolve()
   {
     std::string logFileName = this->specificSettings_.getOptionString("residualNormLogFilename", "residual_norm.txt");
 
-    logFile = std::make_shared<std::ofstream>(logFileName, std::ios::out | std::ios::binary | std::ios::trunc);
+    residualNormLogFile_ = std::ofstream(logFileName, std::ios::out | std::ios::binary | std::ios::trunc);
 
-    if (!logFile->is_open())
+    if (!residualNormLogFile_.is_open())
     {
       LOG(WARNING) << "Could not open log file for residual norm, \"" << logFileName << "\".";
-      logFile = nullptr;
     }
   }
 
   // set monitor function
-  ierr = SNESMonitorSet(*snes, callbackMonitorFunction, logFile.get(), NULL); CHKERRV(ierr);
+  ierr = SNESMonitorSet(*snes, callbackMonitorFunction, this, NULL); CHKERRV(ierr);
+
+  //debug();
 
   for (int i = 0; i < 2; i++)
   {
@@ -134,13 +136,121 @@ nonlinearSolve()
   computePK2StressField();
 
   // set the geometry field
-  this->data_.updateGeometry();
+  this->data_.updateGeometry(displacementsScalingFactor_);
 
   nonlinearSolver->dumpMatrixRightHandSide(solverVariableResidual_);
 
   LOG(DEBUG) << "solution: " << combinedVecResidual_->getString();
 
   checkSolution(solverVariableSolution_);
+}
+
+void QuasiStaticHyperelasticitySolver::
+monitorSolvingIteration(SNES snes, PetscInt its, PetscReal norm)
+{
+  //T* object = static_cast<T*>(mctx);
+  LOG(DEBUG) << "  Nonlinear solver: iteration " << its << ", residual norm " << norm;
+
+  static int evaluationNo = 0;  // counter how often this function was called
+
+  // dump input vector
+  // dumpVector(std::string filename, std::string format, Vec &vector, MPI_Comm mpiCommunicator, int componentNo=0, int nComponents=1);
+  std::stringstream filename;
+  filename << "out/x" << std::setw(3) << std::setfill('0') << evaluationNo;
+  //PetscUtility::dumpVector(filename.str(), "matlab", solverVariableSolution_, displacementsFunctionSpace->meshPartition()->mpiCommunicator());
+  combinedVecSolution_->dumpGlobalNatural(filename.str());
+
+  filename.str("");
+  filename << "out/F" << std::setw(3) << std::setfill('0') << evaluationNo;
+  //PetscUtility::dumpVector(filename.str(), "matlab", solverVariableSolution_, displacementsFunctionSpace->meshPartition()->mpiCommunicator());
+  combinedVecResidual_->dumpGlobalNatural(filename.str());
+
+  evaluationNo++;
+
+  // if log file was given, write residual norm to log file
+  if (residualNormLogFile_.is_open())
+  {
+    residualNormLogFile_ << its << ";" << norm << std::endl;
+  }
+}
+
+void QuasiStaticHyperelasticitySolver::
+debug()
+{
+  //materialComputeResidual();   // solverVariableSolution_ -> solverVariableResidual_ respective combinedVecSolution_ -> combinedVecResidual_
+
+  int i = 46;  // 46  17
+  int j = 47;  // 47  18
+  double epsilon = 1e-10;
+
+  // compute F(x) - F(x+eps_i)
+  Vec *x;
+  Vec *f, *diff;
+  VecDuplicateVecs(solverVariableSolution_, 5, &x);
+  VecDuplicateVecs(solverVariableSolution_, 5, &f);
+  VecDuplicateVecs(solverVariableSolution_, 2, &diff);
+
+  int begin,end;
+  VecGetOwnershipRange(solverVariableSolution_,&begin,&end);
+
+  // set x0 = x
+  VecCopy(solverVariableSolution_, x[0]);
+
+  // set x1 = x+eps_i
+  VecCopy(solverVariableSolution_, x[1]);
+
+  // set x2 = x+eps_j
+  VecCopy(solverVariableSolution_, x[2]);
+
+  if (i >= begin && i < end)
+  {
+    LOG(DEBUG) << "set epsilon at i=" << i;
+    VecSetValue(x[1], i, epsilon, ADD_VALUES);
+  }
+  VecAssemblyBegin(x[1]);
+  VecAssemblyEnd(x[1]);
+
+  // compute diff0 = F(x1) - f(x0)
+  evaluateNonlinearFunction(x[0], f[0]);
+  evaluateNonlinearFunction(x[1], f[1]);
+
+  VecWAXPY(diff[0],-1.0,f[1],f[0]);  // WAXPY(w,a,x,y), w = a*x + y
+  VecScale(diff[0], 1./epsilon);
+
+  LOG(DEBUG) << "(F(x+eps_i) - F(x)) / eps = diff0 = " << PetscUtility::getStringVector(diff[0]);
+
+
+  if (j >= begin && j < end)
+  {
+    LOG(DEBUG) << "set epsilon at j=" << j;
+    VecSetValue(x[2], j, epsilon, ADD_VALUES);
+  }
+  VecAssemblyBegin(x[2]);
+  VecAssemblyEnd(x[2]);
+
+  // compute diff1 = F(x2) - f(x0)
+  evaluateNonlinearFunction(x[2], f[2]);
+
+  VecWAXPY(diff[1],-1.0,f[2],f[0]);  // WAXPY(w,a,x,y), w = a*x + y
+  VecScale(diff[1], 1./epsilon);
+
+  LOG(DEBUG) << "(F(x+eps_j) - F(x)) / eps = diff1 = " << PetscUtility::getStringVector(diff[1]);
+
+  if (j >= begin && j < end)
+  {
+    double value;
+    VecGetValues(diff[0],1,&j,&value);
+    LOG(DEBUG) << "j = " << j << ", dF_j(x)/dx_i = " << value;
+  }
+  if (i >= begin && i < end)
+  {
+    double value;
+    VecGetValues(diff[1],1,&i,&value);
+    LOG(DEBUG) << "i = " << i << ", dF_i(x)/dx_j = " << value;
+  }
+
+  MPI_Barrier(combinedVecSolution_->meshPartition()->mpiCommunicator());
+  LOG(FATAL) << "end";
 }
 
 void QuasiStaticHyperelasticitySolver::
@@ -166,7 +276,7 @@ initializeSolutionVariable()
     combinedVecSolution_->finishGhostManipulation();
   }
 
-  LOG(DEBUG) << "after initialization: " << combinedVecSolution_->getString();
+  //LOG(DEBUG) << "after initialization: " << combinedVecSolution_->getString();
 }
 
 void QuasiStaticHyperelasticitySolver::
@@ -389,6 +499,10 @@ evaluateNonlinearFunction(Vec x, Vec f)
     VecSwap(f, solverVariableResidual_);
   }
 
+  // set the solverVariableSolution_ values in displacements and pressure, this is needed for materialComputeResidual
+  setInputVector(solverVariableSolution_);
+
+  // compute the actual output of the nonlinear function
   materialComputeResidual();
 
   //VLOG(1) << "solverVariableResidual_: " << combinedVecResidual_->getString();
@@ -473,6 +587,8 @@ setInputVector(Vec x)
     }
 
     // set displacement entries
+    this->data_.displacements()->zeroGhostBuffer();
+    this->data_.pressure()->zeroGhostBuffer();
     for (int componentNo = 0; componentNo < 3; componentNo++)
     {
       int nEntries = displacementsFunctionSpace_->nDofsLocalWithoutGhosts();
@@ -481,6 +597,8 @@ setInputVector(Vec x)
 
       this->data_.displacements()->setValues(componentNo, nEntries, displacementsFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
     }
+    this->data_.displacements()->finishGhostManipulation();
+    this->data_.displacements()->startGhostManipulation();
 
     // set pressure entries
     int nEntries = pressureFunctionSpace_->nDofsLocalWithoutGhosts();
@@ -488,6 +606,8 @@ setInputVector(Vec x)
 
     combinedVecSolution_->getValues(3, nEntries, pressureFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
     this->data_.pressure()->setValues(0, nEntries, pressureFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
+    this->data_.pressure()->finishGhostManipulation();
+    this->data_.pressure()->startGhostManipulation();
 
     // undo the backup operation
     if (backupVecs)
@@ -495,8 +615,8 @@ setInputVector(Vec x)
       VecSwap(x, solverVariableSolution_);
     }
 
-    VLOG(1) << *this->data_.displacements();
-    VLOG(1) << *this->data_.pressure();
+    //VLOG(1) << *this->data_.displacements();
+    //VLOG(1) << *this->data_.pressure();
   }
 }
 
@@ -508,6 +628,19 @@ setSolutionVector()
     // set this->data_.displacements() and this->data_.pressure() from the solution Vec
     setInputVector(combinedVecSolution_->valuesGlobal());
   }
+}
+
+void QuasiStaticHyperelasticitySolver::
+dumpJacobianMatrix(Mat jac)
+{
+  static int evaluationNo = 0;  // counter how often this function was called
+
+  std::stringstream filename;
+  filename << "out/jac_" << std::setw(3) << std::setfill('0') << evaluationNo;
+
+  evaluationNo++;
+
+  combinedVecSolution_->dumpMatrixGlobalNatural(jac, filename.str());
 }
 
 void QuasiStaticHyperelasticitySolver::
@@ -679,9 +812,24 @@ getString(Vec x)
   }
   else
   {
-    LOG(FATAL) << "this should not be called";
+    if (x == solverVariableSolution_)
+    {
+      return combinedVecSolution_->getString();
+    }
+    else if (x == solverVariableResidual_)
+    {
+      return combinedVecResidual_->getString();
+    }
+    else if (x == externalVirtualWork_)
+    {
+      return combinedVecExternalVirtualWork_->getString();
+    }
+    else
+    {
+      LOG(FATAL) << "this should not be called";
+    }
   }
-  return std::string("no");
+  return std::string("no getString representation");
 }
 
 } // namespace TimeSteppingScheme

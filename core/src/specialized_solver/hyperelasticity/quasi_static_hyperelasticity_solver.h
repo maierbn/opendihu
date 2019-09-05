@@ -23,6 +23,7 @@ public:
   typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunction::LagrangeOfOrder<2>> DisplacementsFunctionSpace;
   typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunction::LagrangeOfOrder<1>> PressureFunctionSpace;
   typedef Data::QuasiStaticHyperelasticity<PressureFunctionSpace,DisplacementsFunctionSpace> Data;
+  typedef ::Data::QuasiStaticHyperelasticityPressureOutput<PressureFunctionSpace> PressureDataCopy;
 
   typedef FieldVariable::FieldVariable<DisplacementsFunctionSpace,3> DisplacementsFieldVariableType;
   typedef FieldVariable::FieldVariable<PressureFunctionSpace,1> PressureFieldVariableType;
@@ -82,6 +83,14 @@ public:
   //! get the PartitionedPetsVec for the solution
   std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>> combinedVecSolution();      //< the Vec for the solution
 
+  //! output the jacobian matrix for debugging
+  void dumpJacobianMatrix(Mat jac);
+
+  void debug();
+
+  //! callback after each nonlinear iteration
+  void monitorSolvingIteration(SNES snes, PetscInt its, PetscReal norm);
+
 protected:
 
   //! use Petsc to solve the nonlinear equation using the SNES solver
@@ -129,8 +138,10 @@ protected:
 
   DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
 
-  OutputWriter::Manager outputWriterManager_; ///< manager object holding all output writer
+  OutputWriter::Manager outputWriterManager_; ///< manager object holding all output writer for displacements based variables
+  OutputWriter::Manager outputWriterManagerPressure_; ///< manager object holding all output writer for pressure based variables
   Data data_;                 ///< data object
+  PressureDataCopy pressureDataCopy_;   ///< a helper object that is used to write the pressure function space based variables with the output writers
 
   std::string durationLogKey_;   ///< key with with the duration of the computation is written to the performance measurement log
   std::shared_ptr<DisplacementsFunctionSpace> displacementsFunctionSpace_;  ///< the function space with quadratic Lagrange basis functions, used for discretization of displacements
@@ -160,12 +171,14 @@ protected:
   bool initialized_;   ///< if this object was already initialized
   PythonConfig specificSettings_;    ///< python object containing the value of the python config dict with corresponding key
   double endTime_;     ///< end time of current time step
+  std::ofstream residualNormLogFile_;   ///< ofstream of a log file that will contain the residual norm for each iteration
 
   std::shared_ptr<SpatialDiscretization::DirichletBoundaryConditions<DisplacementsFunctionSpace,3>> dirichletBoundaryConditions_ = nullptr;  ///< object that parses Dirichlet boundary conditions and applies them to rhs
   std::shared_ptr<SpatialDiscretization::NeumannBoundaryConditions<DisplacementsFunctionSpace,Quadrature::Gauss<3>,3>> neumannBoundaryConditions_ = nullptr;  ///< object that parses Neumann boundary conditions and applies them to the rhs
 
   double c1_;    ///< first Mooney-Rivlin parameter
   double c2_;   ///< second Mooney-Rivlin parameter
+  double displacementsScalingFactor_;   ///< factor with which to scale the displacements
 
   bool useNestedMat_ = false;   ///< if the MatNest and VecNest data structures of Petsc should be used, this avoids data copy but is harder to debug
   bool useAnalyticJacobian_;   ///< if the analytically computed Jacobian of the Newton scheme should be used. Theoretically if it is correct, this is the fastest option.

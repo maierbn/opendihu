@@ -520,6 +520,28 @@ setValue(dof_no_t dofLocalNo, const std::array<double,nComponents> &value, Inser
   // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. finishGhostManipulation must be called
 }
 
+template<typename FunctionSpaceType, int nComponents>
+template<int N>
+void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
+setValues(const std::array<dof_no_t,N> &dofNosLocal, const std::array<std::array<double,nComponents>,N> &values, InsertMode petscInsertMode)
+{
+  assert(this->values_);
+
+  std::array<double,N> valuesBuffer;
+
+  for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
+  {
+    // loop over dofs and prepare values of current component
+    for (int dofIndex = 0; dofIndex < N; dofIndex++)
+    {
+      valuesBuffer[dofIndex] = values[dofIndex][componentIndex];
+    }
+
+    // set the values for the current component
+    this->values_->setValues(componentIndex, N, dofNosLocal.data(), valuesBuffer.data(), petscInsertMode);
+  }
+}
+
 //! set a single dof (all components) , after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::

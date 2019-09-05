@@ -9,9 +9,9 @@
 namespace OutputWriter
 {
 
-template<int D, typename BasisFunctionType, typename OutputFieldVariablesType>
-PyObject *Python<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,OutputFieldVariablesType>::
-buildPyDataObject(OutputFieldVariablesType fieldVariables, 
+template<int D, typename BasisFunctionType, typename FieldVariablesForOutputWriterType>
+PyObject *Python<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,FieldVariablesForOutputWriterType>::
+buildPyDataObject(FieldVariablesForOutputWriterType fieldVariables, 
                   std::string meshName, int timeStepNo, double currentTime, bool onlyNodalValues)
 {
   // build python dict containing all information
@@ -34,11 +34,11 @@ buildPyDataObject(OutputFieldVariablesType fieldVariables,
   // }
 
 
-  LOG(DEBUG) << "build pyData, " << std::tuple_size<OutputFieldVariablesType>::value;
+  LOG(DEBUG) << "build pyData, " << std::tuple_size<FieldVariablesForOutputWriterType>::value;
 
   // build python object for data
   std::shared_ptr<Mesh::Mesh> meshBase;
-  PyObject *pyData = PythonBase<OutputFieldVariablesType>::buildPyFieldVariablesObject(fieldVariables, meshName, onlyNodalValues, meshBase);
+  PyObject *pyData = PythonBase<FieldVariablesForOutputWriterType>::buildPyFieldVariablesObject(fieldVariables, meshName, onlyNodalValues, meshBase);
 
   // cast mesh to its real type
   typedef FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType> FunctionSpaceType;
@@ -53,7 +53,7 @@ buildPyDataObject(OutputFieldVariablesType fieldVariables,
   // start critical section for python API calls
   // PythonUtility::GlobalInterpreterLock lock;
   
-  PyObject *pyElementalDofs = Python<FunctionSpaceType,OutputFieldVariablesType>::
+  PyObject *pyElementalDofs = Python<FunctionSpaceType,FieldVariablesForOutputWriterType>::
     buildPyElementalDofsObject(meshBase, onlyNodalValues);
   
   // build python dict that will contain all information and data
@@ -73,8 +73,8 @@ buildPyDataObject(OutputFieldVariablesType fieldVariables,
   return data;
 }
 
-template<int D, typename BasisFunctionType, typename OutputFieldVariablesType>
-PyObject *Python<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,OutputFieldVariablesType>::
+template<int D, typename BasisFunctionType, typename FieldVariablesForOutputWriterType>
+PyObject *Python<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,FieldVariablesForOutputWriterType>::
 buildPyElementalDofsObject(std::shared_ptr<Mesh::Mesh> meshBase, bool onlyNodalValues)
 {
   typedef FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType> FunctionSpace;

@@ -61,10 +61,10 @@ public:
     std::shared_ptr<FieldVariableType>,              // extra-cellular potential
     std::shared_ptr<FieldVariableType>,              // transmembranePotential
     std::shared_ptr<FieldVariableType>              // transmembraneFlow
-  > OutputFieldVariables;
+  > FieldVariablesForOutputWriter;
 
   //! get pointers to all field variables that can be written by output writers
-  OutputFieldVariables getOutputFieldVariables();
+  FieldVariablesForOutputWriter getFieldVariablesForOutputWriter();
 
 private:
 

@@ -118,7 +118,7 @@ protected:
 
   std::vector<int> nonBcGhostDofNosGlobal_;  ///< non-bc ghost dofs in non-bc global indexing
 
-  std::array<std::vector<dof_no_t>,nComponents> dofNoLocalToDofNoNonBcGlobal_;   ///< mapping from component no and local dof no to the numbering used for the combined vector
+  std::array<std::vector<dof_no_t>,nComponents> dofNoLocalToDofNoNonBcGlobal_;   ///< mapping from component no and local dof no to the numbering used for the combined vector, for local dofs with ghosts
   std::array<std::vector<dof_no_t>,nComponents> dofNoLocalToDofNoNonBcLocal_;    ///< mapping from component no and local dof no to the local number of the non-bc dof numbering
   std::array<std::vector<double>,nComponents> boundaryConditionValues_;   ///< prescribed boundary condition values for local dof nos (normal local dof numbering)
   std::array<std::vector<bool>,nComponents> isPrescribed_;                ///< for every local dof no, if the dof has a prescribed Dirichlet BC value

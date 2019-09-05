@@ -71,10 +71,10 @@ data()
 }
 
 template<typename FunctionSpaceType>
-MechanicsSolver<FunctionSpaceType>::TransferableSolutionDataType MechanicsSolver<FunctionSpaceType>::
-getSolutionForTransfer()
+MechanicsSolver<FunctionSpaceType>::OutputConnectorDataType MechanicsSolver<FunctionSpaceType>::
+getOutputConnectorData()
 {
-  return data_.getSolutionForTransfer();
+  return data_.getOutputConnectorData();
 }
 
 }  // namespace

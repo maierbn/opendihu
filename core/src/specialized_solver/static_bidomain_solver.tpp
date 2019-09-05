@@ -274,9 +274,9 @@ data()
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
 //! the transfer is done by the solution_vector_mapping class
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
-typename StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::TransferableSolutionDataType
+typename StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::OutputConnectorDataType
 StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
-getSolutionForTransfer()
+getOutputConnectorData()
 {
   return this->data_.transmembranePotential();
 }
@@ -284,7 +284,7 @@ getSolutionForTransfer()
 //! output the given data for debugging
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
 std::string StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
-getString(typename StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::TransferableSolutionDataType &data)
+getString(typename StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::OutputConnectorDataType &data)
 {
   std::stringstream s;
   s << "<StaticBidomain:" << *data << ">";

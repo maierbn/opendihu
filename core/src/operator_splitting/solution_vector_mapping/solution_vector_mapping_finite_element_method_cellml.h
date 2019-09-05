@@ -8,42 +8,64 @@
 #include "control/types.h"
 #include "mesh/mesh.h"
 #include "operator_splitting/solution_vector_mapping/solution_vector_mapping.h"
+#include "data_management/finite_element_method/finite_elements.h"
 
 /** Transfer between one scalar field variable (e.g. from finite element method) and one field variables with given component number and prefactor (e.g. from cellml)
  */
-template<typename FunctionSpaceType1, typename FunctionSpaceType2, int nComponents2>
+template<typename FunctionSpaceType1, typename OutputConnectorDataType2>
 class SolutionVectorMapping<
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,1>>,   // <fieldVariableType,componentNo>
-  std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2>>,int,double>
+  OutputConnectorDataType2
 > :
   public SolutionVectorMapping<
-    std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,1>>,int,double>,
-    std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2>>,int,double>
+    Data::ScaledFieldVariableComponent<FunctionSpaceType1,1>,
+    OutputConnectorDataType2
   >
 {
 public:
   //! transfer the data from transferableSolutionData1 to transferableSolutionData2, as efficient as possible, where there are multiple slots that could be transferred (e.g. at cellmlAdapter), use the one specified by transferSlotName
   static void transfer(const std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,1>> &transferableSolutionData1,
-                       const std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2>>,int,double> &transferableSolutionData2,
+                       const OutputConnectorDataType2 &transferableSolutionData2,
                        const std::string transferSlotName);
 };
 
 /** Transfer between one scalar field variable (e.g. from finite element method) and one field variables with given component number and prefactor (e.g. from cellml)
  *  The other way
  */
-template<typename FunctionSpaceType1, int nComponents1, typename FunctionSpaceType2>
+template<typename OutputConnectorDataType1, typename FunctionSpaceType2>
 class SolutionVectorMapping<
-  std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1>>,int,double>,
+  OutputConnectorDataType1,
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,1>>    // <fieldVariableType,componentNo>
 > :
   public SolutionVectorMapping<
-    std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1>>,int,double>,
-    std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,1>>,int,double>
+    OutputConnectorDataType1,
+    Data::ScaledFieldVariableComponent<FunctionSpaceType2,1>
   >
 {
 public:
   //! transfer the data from transferableSolutionData1 to transferableSolutionData2, as efficient as possible, where there are multiple slots that could be transferred (e.g. at cellmlAdapter), use the one specified by transferSlotName
-  static void transfer(const std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1>>,int,double> &transferableSolutionData1,
+  static void transfer(const OutputConnectorDataType1 &transferableSolutionData1,
+                       const std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,1>> &transferableSolutionData2,
+                       const std::string transferSlotName);
+
+};
+
+/** Transfer between one scalar field variable (e.g. from finite element method) and one field variables with given component number and prefactor (e.g. from cellml)
+ *  The other way
+ */
+template<typename FunctionSpaceType1, typename FunctionSpaceType2>
+class SolutionVectorMapping<
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,1>>,
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,1>>
+> :
+  public SolutionVectorMapping<
+    Data::ScaledFieldVariableComponent<FunctionSpaceType1,1>,
+    Data::ScaledFieldVariableComponent<FunctionSpaceType2,1>
+  >
+{
+public:
+  //! transfer the data from transferableSolutionData1 to transferableSolutionData2, as efficient as possible, where there are multiple slots that could be transferred (e.g. at cellmlAdapter), use the one specified by transferSlotName
+  static void transfer(const std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,1>> &transferableSolutionData1,
                        const std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,1>> &transferableSolutionData2,
                        const std::string transferSlotName);
 

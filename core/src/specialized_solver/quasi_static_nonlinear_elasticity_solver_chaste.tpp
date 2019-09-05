@@ -448,9 +448,9 @@ data()
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
 //! the transfer is done by the solution_vector_mapping class
 template<int D>
-typename QuasiStaticNonlinearElasticitySolverChaste<D>::TransferableSolutionDataType
+typename QuasiStaticNonlinearElasticitySolverChaste<D>::OutputConnectorDataType
 QuasiStaticNonlinearElasticitySolverChaste<D>::
-getSolutionForTransfer()
+getOutputConnectorData()
 {
   return this->data_.activation();
 }
@@ -458,7 +458,7 @@ getSolutionForTransfer()
 //! output the given data for debugging
 template<int D>
 std::string QuasiStaticNonlinearElasticitySolverChaste<D>::
-getString(typename QuasiStaticNonlinearElasticitySolverChaste<D>::TransferableSolutionDataType &data)
+getString(typename QuasiStaticNonlinearElasticitySolverChaste<D>::OutputConnectorDataType &data)
 {
   std::stringstream s;
   s << "<QuasiStaticNonlinearElasticitySolverChaste:" << *data << ">";

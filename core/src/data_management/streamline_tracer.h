@@ -52,14 +52,14 @@ public:
   typedef FieldVariable::FieldVariable<FunctionSpaceFiber,3> FieldVariableFiberGeometry;
   
   //! field variables that will be output by outputWriters
-  typename BaseDataType::OutputFieldVariables dummy;
+  typename BaseDataType::FieldVariablesForOutputWriter dummy;
   typedef decltype(std::tuple_cat(dummy, std::tuple<
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>>,  // gradient field
     std::vector<std::shared_ptr<FieldVariableFiberGeometry>>   // geometry fields of meshes
-  >())) OutputFieldVariables;
+  >())) FieldVariablesForOutputWriter;
 
   //! get pointers to all field variables that can be written by output writers
-  OutputFieldVariables getOutputFieldVariables();
+  FieldVariablesForOutputWriter getFieldVariablesForOutputWriter();
 
 protected:
 

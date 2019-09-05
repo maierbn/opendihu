@@ -95,6 +95,16 @@ setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,
   return false;
 }
 
+
+//! set the solution field variable in the data object, that actual data is stored in the timestepping scheme object
+template<typename FunctionSpaceType, typename QuadratureType, int nComponents_, typename Term>
+void FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, nComponents_, Term>::
+setSolutionVariable(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> solution)
+{
+  this->data_.setSolutionVariable(solution);
+}
+
+
 template<typename FunctionSpaceType, typename QuadratureType, int nComponents_, typename Term>
 void FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, nComponents_, Term>::
 setRankSubset(Partition::RankSubset rankSubset)
@@ -142,13 +152,13 @@ knowsMeshType()
 }
 
 template<typename FunctionSpaceType, typename QuadratureType, int nComponents_, typename Term>
-typename FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, nComponents_, Term>::TransferableSolutionDataType
+typename FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, nComponents_, Term>::OutputConnectorDataType
 FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, nComponents_, Term>::
-getSolutionForTransfer()
+getOutputConnectorData()
 {
   // check for nans or infs
-  //this->data_->solution()->checkNanInf();
-  return this->data_->getSolutionForTransfer();
+  //this->data_.solution()->checkNanInf();
+  return this->data_.getOutputConnectorData();
 }
 
 template<typename FunctionSpaceType, typename QuadratureType, int nComponents_, typename Term>

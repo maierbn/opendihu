@@ -10,8 +10,11 @@ namespace TimeSteppingScheme
 
 template<typename DiscretizableInTimeType>
 TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::TimeSteppingSchemeOdeBaseDiscretizable(DihuContext context, std::string name) :
-  TimeSteppingSchemeOdeTransferableSolutionData<typename DiscretizableInTimeType::FunctionSpace,DiscretizableInTimeType::nComponents(), DiscretizableInTimeType>::
-  TimeSteppingSchemeOdeTransferableSolutionData(context, name), discretizableInTime_(this->context_), initialized_(false)
+//  TimeSteppingSchemeOdeOutputConnectorDataType<typename DiscretizableInTimeType::FunctionSpace,DiscretizableInTimeType::nComponents(), DiscretizableInTimeType>::
+//  TimeSteppingSchemeOdeOutputConnectorDataType(context, name),
+  TimeSteppingSchemeOdeBase<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>::
+  TimeSteppingSchemeOdeBase(context, name),
+  discretizableInTime_(this->context_), initialized_(false)
 {
   //initialize output writers
   this->outputWriterManager_.initialize(this->context_, this->specificSettings_);
@@ -115,10 +118,12 @@ initialize()
   // create the vectors in the data object
   this->data_->initialize();
 
+  // pass the solution field variable on to the discretizableInTime object
+  discretizableInTime_.setSolutionVariable(this->data_->solution());
+
   // parse boundary conditions, needs functionSpace set
   // initialize dirichlet boundary conditions object which parses dirichlet boundary condition dofs and values from config
   this->dirichletBoundaryConditions_->initialize(this->specificSettings_, this->data_->functionSpace(), "dirichletBoundaryConditions");
-  //TODO: add Neumann BC
 
   // set initial values from settings
 
@@ -136,8 +141,8 @@ initialize()
     LOG(DEBUG) << "initial values were set by DiscretizableInTime";
   }
   VLOG(1) << "initial solution vector: " << *this->data_->solution();
-
-  // output initial values
+  
+  //output initial values
   this->outputWriterManager_.writeOutput(*this->data_, 0, 0);
   
   this->data_->print();
@@ -160,4 +165,10 @@ knowsMeshType()
   return this->discretizableInTime_.knowsMeshType();
 }
 
+template<typename DiscretizableInTimeType>
+typename TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::OutputConnectorDataType TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::
+getOutputConnectorData()
+{
+  return this->discretizableInTime_.getOutputConnectorData();
+}
 } // namespace

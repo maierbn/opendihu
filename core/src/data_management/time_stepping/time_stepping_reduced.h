@@ -15,7 +15,7 @@ public TimeStepping<::FunctionSpace::Generic,1>
 {
 public:
   typedef FieldVariable::FieldVariable<::FunctionSpace::Generic,1> FieldVariableType;
-  typedef std::tuple<std::shared_ptr<FieldVariableType>,double> TransferableSolutionDataType;  // <field variable, output component no., prefactor>
+  typedef std::tuple<std::shared_ptr<FieldVariableType>,double> OutputConnectorDataType;  // <field variable, output component no., prefactor>
   
   //! constructor
   TimeSteppingReduced(DihuContext context);
@@ -48,7 +48,7 @@ public:
   
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
   //! the transfer is done by the solution_vector_mapping class
-  TransferableSolutionDataType getSolutionForTransferInOperatorSplitting();
+  OutputConnectorDataType getOutputConnectorDataInOperatorSplitting();
   
   virtual void initialize() override;
    

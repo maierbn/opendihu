@@ -8,32 +8,26 @@
  */
 template<typename FunctionSpaceType1, int nComponents1a, int nComponents1b, typename FunctionSpaceType2, int nComponents2>
 void SolutionVectorMapping<
-  std::pair<
-    std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1a>>, int, double>,   // <fieldVariableTypeStates,componentNoStates,prefactor>
-    std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1b>>, int>    // <fieldIariableIntermediates,componentNoIntermediates
-  >,
-  std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2>>, int, double>
->::transfer(const std::pair<
-              std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1a>>, int, double>,   // <fieldVariableTypeStates,componentNoStates,prefactor>
-              std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1b>>, int>    // <fieldIariableIntermediates,componentNoIntermediates
-            > &transferableSolutionData1,
-            const std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2>>, int, double> &transferableSolutionData2,
+  CellMLOutputConnectorDataType<nComponents1a,nComponents1b,FunctionSpaceType1>,
+  Data::ScaledFieldVariableComponent<FunctionSpaceType2,nComponents2>
+>::transfer(const CellMLOutputConnectorDataType<nComponents1a,nComponents1b,FunctionSpaceType1> &transferableSolutionData1,
+            const Data::ScaledFieldVariableComponent<FunctionSpaceType2,nComponents2> &transferableSolutionData2,
             const std::string transferSlotName)
 {
   // rename input data
-  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1a>> fieldVariable1States = std::get<0>(transferableSolutionData1.first);
-  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1b>> fieldVariable1Intermediates = std::get<0>(transferableSolutionData1.second);
-  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2>> fieldVariable2 = std::get<0>(transferableSolutionData2);
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1a>> fieldVariable1States        = transferableSolutionData1.stateVariable.values;
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1b>> fieldVariable1Intermediates = transferableSolutionData1.intermediateVariable.values;
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2>> fieldVariable2               = transferableSolutionData2.values;
 
   // disable checking for nans and infs because it takes a lot of time
   //fieldVariable1->checkNansInfs();
 
-  int componentNo1States = std::get<1>(transferableSolutionData1.first);
-  int componentNo1Intermediates = std::get<1>(transferableSolutionData1.second);
-  int componentNo2 = std::get<1>(transferableSolutionData2);
+  int componentNo1States        = transferableSolutionData1.stateVariable.componentNo;
+  int componentNo1Intermediates = transferableSolutionData1.intermediateVariable.componentNo;
+  int componentNo2              = transferableSolutionData2.componentNo;
 
-  double prefactor1 = std::get<2>(transferableSolutionData1.first);
-  double prefactor2 = std::get<2>(transferableSolutionData2);
+  double prefactor1 = transferableSolutionData1.stateVariable.scalingFactor;
+  double prefactor2 = transferableSolutionData2.scalingFactor;
 
   bool useSlotIntermediates = (transferSlotName == "intermediates");
 
@@ -102,32 +96,26 @@ void SolutionVectorMapping<
 // reverse transfer
 template<typename FunctionSpaceType1, int nComponents1, typename FunctionSpaceType2, int nComponents2a, int nComponents2b>
 void SolutionVectorMapping<
-  std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1>>, int, double>,
-  std::pair<
-    std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2a>>, int, double>,   // <fieldVariableTypeStates,componentNoStates,prefactor>
-    std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2b>>, int>    // <fieldIariableIntermediates,componentNoIntermediates
-  >
->::transfer(const std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1>>,int,double> &transferableSolutionData1,
-            const std::pair<
-              std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2a>>, int, double>,   // <fieldVariableTypeStates,componentNoStates,prefactor>
-              std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2b>>, int>    // <fieldIariableIntermediates,componentNoIntermediates
-            > &transferableSolutionData2,
+  Data::ScaledFieldVariableComponent<FunctionSpaceType1,nComponents1>,
+  CellMLOutputConnectorDataType<nComponents2a,nComponents2b,FunctionSpaceType2>
+>::transfer(const Data::ScaledFieldVariableComponent<FunctionSpaceType1,nComponents1> &transferableSolutionData1,
+            const CellMLOutputConnectorDataType<nComponents2a,nComponents2b,FunctionSpaceType2> &transferableSolutionData2,
             const std::string transferSlotName)
 {
   // rename input data
-  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1>> fieldVariable1 = std::get<0>(transferableSolutionData1);
-  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2a>> fieldVariable2States = std::get<0>(transferableSolutionData2.first);
-  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2b>> fieldVariable2Intermediates = std::get<0>(transferableSolutionData2.second);
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1>> fieldVariable1               = transferableSolutionData1.values;
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2a>> fieldVariable2States        = transferableSolutionData2.stateVariable.values;
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2b>> fieldVariable2Intermediates = transferableSolutionData2.intermediateVariable.values;
 
   // disable checking for nans and infs because it takes a lot of time
   //fieldVariable1->checkNansInfs();
 
-  int componentNo1 = std::get<1>(transferableSolutionData1);
-  int componentNo2States = std::get<1>(transferableSolutionData2.first);
-  int componentNo2Intermediates = std::get<1>(transferableSolutionData2.second);
+  int componentNo1              = transferableSolutionData1.componentNo;
+  int componentNo2States        = transferableSolutionData2.stateVariable.componentNo;
+  int componentNo2Intermediates = transferableSolutionData2.intermediateVariable.componentNo;
 
-  double prefactor1 = std::get<2>(transferableSolutionData1);
-  double prefactor2 = std::get<2>(transferableSolutionData2.first);
+  double prefactor1 = transferableSolutionData1.scalingFactor;
+  double prefactor2 = transferableSolutionData2.stateVariable.scalingFactor;
 
   bool useSlotIntermediates = (transferSlotName == "intermediates");
 
@@ -197,32 +185,26 @@ void SolutionVectorMapping<
  */
 template<typename FunctionSpaceType1, int nComponents1a, int nComponents1b, typename FunctionSpaceType2>
 void SolutionVectorMapping<
-  std::pair<
-    std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1a>>, int, double>,   // <fieldVariableTypeStates,componentNoStates,prefactor>
-    std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1b>>, int>    // <fieldIariableIntermediates,componentNoIntermediates
-  >,
-  std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,1>>, int, double>
->::transfer(const std::pair<
-              std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1a>>, int, double>,   // <fieldVariableTypeStates,componentNoStates,prefactor>
-              std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1b>>, int>    // <fieldIariableIntermediates,componentNoIntermediates
-            > &transferableSolutionData1,
-            const std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,1>>, int, double> &transferableSolutionData2,
+  CellMLOutputConnectorDataType<nComponents1a,nComponents1b,FunctionSpaceType1>,
+  Data::ScaledFieldVariableComponent<FunctionSpaceType2,1>
+>::transfer(const CellMLOutputConnectorDataType<nComponents1a,nComponents1b,FunctionSpaceType1> &transferableSolutionData1,
+            const Data::ScaledFieldVariableComponent<FunctionSpaceType2,1> &transferableSolutionData2,
             const std::string transferSlotName)
 {
   // rename input data
-  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1a>> fieldVariable1States = std::get<0>(transferableSolutionData1.first);
-  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1b>> fieldVariable1Intermediates = std::get<0>(transferableSolutionData1.second);
-  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,1>> fieldVariable2 = std::get<0>(transferableSolutionData2);
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1a>> fieldVariable1States        = transferableSolutionData1.stateVariable.values;
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1b>> fieldVariable1Intermediates = transferableSolutionData1.intermediateVariable.values;
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,1>> fieldVariable2                          = transferableSolutionData2.values;
 
   // disable checking for nans and infs because it takes a lot of time
   //fieldVariable1->checkNansInfs();
 
-  int componentNo1States = std::get<1>(transferableSolutionData1.first);
-  int componentNo1Intermediates = std::get<1>(transferableSolutionData1.second);
+  int componentNo1States        = transferableSolutionData1.stateVariable.componentNo;
+  int componentNo1Intermediates = transferableSolutionData1.intermediateVariable.componentNo;
   int componentNo2 = 0;
 
-  double prefactor1 = std::get<2>(transferableSolutionData1.first);
-  double prefactor2 = std::get<2>(transferableSolutionData2);
+  double prefactor1 = transferableSolutionData1.stateVariable.scalingFactor;
+  double prefactor2 = transferableSolutionData2.scalingFactor;
 
   bool useSlotIntermediates = (transferSlotName == "intermediates");
 

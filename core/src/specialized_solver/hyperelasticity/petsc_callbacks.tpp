@@ -30,7 +30,7 @@ PetscErrorCode nonlinearFunction(SNES snes, Vec x, Vec f, void *context)
   //VecCopy(x, x_original);
 
   // if nested matrices are used, do nothing, otherwise copy the values from x to the combined vectors
-  object->setInputVector(x);
+  //object->setInputVector(x);
 
   // set prescribed values in x to x0, to also make the columns vanish in the numeric jacobian
   //object->applyDirichletBoundaryConditionsInVector(x);
@@ -80,6 +80,9 @@ PetscErrorCode jacobianFunctionAnalytic(SNES snes, Vec x, Mat jac, Mat b, void *
   // zero rows and columns for which Dirichlet BC is set, set diagonal to 1
   object->applyDirichletBoundaryConditionsInJacobian(x, jac);
 
+  // output the jacobian matrix for debugging
+  object->dumpJacobianMatrix(jac);
+
   VLOG(2) << "-- computed tangent stiffness matrix analytically: " << PetscUtility::getStringMatrix(jac);
   VLOG(2) << "-- non-zeros pattern: " << std::endl << PetscUtility::getStringSparsityPattern(jac);
 
@@ -107,6 +110,9 @@ PetscErrorCode jacobianFunctionFiniteDifferences(SNES snes, Vec x, Mat jac, Mat 
 
   // zero rows and columns for which Dirichlet BC is set, set diagonal to 1
   object->applyDirichletBoundaryConditionsInJacobian(x, jac);
+
+  // output the jacobian matrix for debugging
+  object->dumpJacobianMatrix(jac);
 
   VLOG(2) << "-- computed tangent stiffness matrix by finite differences: " << PetscUtility::getStringMatrix(jac);
   VLOG(2) << "-- non-zeros pattern: " << std::endl << PetscUtility::getStringSparsityPattern(jac);
@@ -140,6 +146,9 @@ PetscErrorCode jacobianFunctionCombined(SNES snes, Vec x, Mat jac, Mat b, void *
   // zero rows and columns for which Dirichlet BC is set
   object->applyDirichletBoundaryConditionsInJacobian(x, b);
 
+  // output the jacobian matrix for debugging
+  object->dumpJacobianMatrix(jac);
+
   //LOG(INFO) << "terminate in jacobianFunctionCombined";
   //exit(0);
   return 0;
@@ -157,15 +166,8 @@ PetscErrorCode jacobianFunctionCombined(SNES snes, Vec x, Mat jac, Mat b, void *
 template<typename T>
 PetscErrorCode monitorFunction(SNES snes, PetscInt its, PetscReal norm, void *mctx)
 {
-  //T* object = static_cast<T*>(mctx);
-  LOG(DEBUG) << "  Nonlinear solver: iteration " << its << ", residual norm " << norm;
-
-  // if log file was given, write residual norm to log file
-  if (mctx != NULL)
-  {
-    std::ofstream *logFile = (std::ofstream *)(mctx);
-    *logFile << its << ";" << norm << std::endl;
-  }
+  T* object = static_cast<T*>(mctx);
+  object->monitorSolvingIteration(snes, its, norm);
 
   return 0;
 }

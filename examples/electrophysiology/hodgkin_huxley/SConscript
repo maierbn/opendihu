@@ -11,12 +11,11 @@ Import('env')     # import Environment object from calling SConstruct
 if not env['no_examples']:
         
   examples = [
-   # "hodgkin_huxley_godunov",
+    "hodgkin_huxley_godunov",
     "hodgkin_huxley_strang",
    # "hodgkin_huxley_explicit",
-   # "hodgkin_huxley_pod",
-   # "hodgkin_huxley_pod_explicit"
-  ]
+    "hodgkin_huxley_pod",
+     ]
 
   for example in examples:
     env.Program(target = example, source = "src/{}.cpp".format(example))

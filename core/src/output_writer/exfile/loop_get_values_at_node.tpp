@@ -11,17 +11,17 @@ namespace ExfileLoopOverTuple
  /** Static recursive loop from 0 to number of entries in the tuple
  * Loop body
  */
-template<typename OutputFieldVariablesType, int i>
-inline typename std::enable_if<i < std::tuple_size<OutputFieldVariablesType>::value, void>::type
-loopGetValuesAtNode(const OutputFieldVariablesType &fieldVariables, std::string meshName, 
+template<typename FieldVariablesForOutputWriterType, int i>
+inline typename std::enable_if<i < std::tuple_size<FieldVariablesForOutputWriterType>::value, void>::type
+loopGetValuesAtNode(const FieldVariablesForOutputWriterType &fieldVariables, std::string meshName, 
                      element_no_t currentNodeGlobalNo, std::vector<double> &valuesAtNode)
 {
   // call what to do in the loop body
-  if (getValuesAtNode<typename std::tuple_element<i,OutputFieldVariablesType>::type>(std::get<i>(fieldVariables), meshName, currentNodeGlobalNo, valuesAtNode))
+  if (getValuesAtNode<typename std::tuple_element<i,FieldVariablesForOutputWriterType>::type>(std::get<i>(fieldVariables), meshName, currentNodeGlobalNo, valuesAtNode))
     return;
   
   // advance iteration to next tuple element
-  loopGetValuesAtNode<OutputFieldVariablesType, i+1>(fieldVariables, meshName, currentNodeGlobalNo, valuesAtNode);
+  loopGetValuesAtNode<FieldVariablesForOutputWriterType, i+1>(fieldVariables, meshName, currentNodeGlobalNo, valuesAtNode);
 }
  
 // current element is of pointer type (not vector)

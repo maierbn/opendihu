@@ -62,14 +62,14 @@ advanceTimeSpan()
 
     // --------------- data transfer 1->2 -------------------------
     LOG(DEBUG) << "  CouplingOrGodunov: transfer timeStepping1 -> timeStepping2";
-    typename TimeStepping1::TransferableSolutionDataType solutionTimeStepping1 = this->timeStepping1_.getSolutionForTransfer();
+    typename TimeStepping1::OutputConnectorDataType solutionTimeStepping1 = this->timeStepping1_.getOutputConnectorData();
 
     if (VLOG_IS_ON(1))
-      VLOG(1) << "  timeStepping1_.getSolutionForTransfer(): " << this->timeStepping1_.getString(solutionTimeStepping1);
+      VLOG(1) << "  timeStepping1_.getOutputConnectorData(): " << solutionTimeStepping1;
 
     // scale solution in timeStepping1 and transfer to timestepping2_
-    SolutionVectorMapping<typename TimeStepping1::TransferableSolutionDataType, typename TimeStepping2::TransferableSolutionDataType>::
-      transfer(solutionTimeStepping1, this->timeStepping2_.getSolutionForTransfer(), this->transferSlotName_);
+    SolutionVectorMapping<typename TimeStepping1::OutputConnectorDataType, typename TimeStepping2::OutputConnectorDataType>::
+      transfer(solutionTimeStepping1, this->timeStepping2_.getOutputConnectorData(), this->transferSlotName_);
 
     if (this->durationLogKey_ != "")
     {
@@ -96,8 +96,8 @@ advanceTimeSpan()
     LOG(DEBUG) << "  CouplingOrGodunov: transfer timeStepping2 -> timeStepping1";
 
     // scale solution in timeStepping2 and transfer to timestepping1_
-    SolutionVectorMapping<typename TimeStepping2::TransferableSolutionDataType, typename TimeStepping1::TransferableSolutionDataType>::
-      transfer(this->timeStepping2_.getSolutionForTransfer(), this->timeStepping1_.getSolutionForTransfer(), this->transferSlotName_);
+    SolutionVectorMapping<typename TimeStepping2::OutputConnectorDataType, typename TimeStepping1::OutputConnectorDataType>::
+      transfer(this->timeStepping2_.getOutputConnectorData(), this->timeStepping1_.getOutputConnectorData(), this->transferSlotName_);
 
     if (this->durationLogKey_ != "")
     {

@@ -1,0 +1,24 @@
+#!/bin/bash
+#PBS -N fibers_emg_gnu
+#PBS -l nodes=50:ppn=24
+#PBS -l walltime=04:00:00
+#PBS -j oe
+
+# load modules  
+. ~/load_modules.sh
+#module switch PrgEnv-gnu/6.0.4 PrgEnv-cray
+#module load perftools-base
+#module load perftools-preload
+
+# Change to the directory that the job was submitted from
+cd $PBS_O_WORKDIR
+cd build_release
+
+export OMP_NUM_THREADS=1
+export PRGENV=gnu
+export OPENDIHU_HOME=/lustre/cray/ws9/2/ws/icbbnmai-opendihu1/opendihu-${PRGENV}
+export PYTHONPATH=$OPENDIHU_HOME/scripts
+
+# this script needs OPENDIHU_HOME set  
+# <number of available nodes>
+../run_hazelhen.py $PBS_NUM_NODES

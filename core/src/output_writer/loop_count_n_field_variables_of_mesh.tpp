@@ -11,17 +11,17 @@ namespace LoopOverTuple
 /** Static recursive loop from 0 to number of entries in the tuple
  * Loop body
  */
-template<typename OutputFieldVariablesType, int i>
-inline typename std::enable_if<i < std::tuple_size<OutputFieldVariablesType>::value, void>::type
-loopCountNFieldVariablesOfMesh(const OutputFieldVariablesType &fieldVariables, std::string meshName,
+template<typename FieldVariablesForOutputWriterType, int i>
+inline typename std::enable_if<i < std::tuple_size<FieldVariablesForOutputWriterType>::value, void>::type
+loopCountNFieldVariablesOfMesh(const FieldVariablesForOutputWriterType &fieldVariables, std::string meshName,
                                int &nFieldVariablesOfMesh)
 {
   // call what to do in the loop body
-  if (countNFieldVariablesOfMesh<typename std::tuple_element<i,OutputFieldVariablesType>::type>(std::get<i>(fieldVariables), meshName, nFieldVariablesOfMesh))
+  if (countNFieldVariablesOfMesh<typename std::tuple_element<i,FieldVariablesForOutputWriterType>::type>(std::get<i>(fieldVariables), meshName, nFieldVariablesOfMesh))
     return;
   
   // advance iteration to next tuple element
-  loopCountNFieldVariablesOfMesh<OutputFieldVariablesType, i+1>(fieldVariables, meshName, nFieldVariablesOfMesh);
+  loopCountNFieldVariablesOfMesh<FieldVariablesForOutputWriterType, i+1>(fieldVariables, meshName, nFieldVariablesOfMesh);
 }
  
 // current element is of pointer type (not vector)

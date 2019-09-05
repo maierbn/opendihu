@@ -20,6 +20,7 @@ import os
 import sys
 import random
 import socket
+import platform
 
 sys.path.append("dependencies/scons-config/dist/scons_config-0.1-py2.7.egg")     # load scons_config
 
@@ -213,7 +214,7 @@ if env["BUILD_TYPE"] == "debug":
 elif env["BUILD_TYPE"] == "releasewithdebuginfo":
   # release with debug info build
   variant_dir = os.path.join(path_where_to_call_sconscript,'build_release_with_debug_info')         # folder of build
-  env.MergeFlags('-DDEBUG -O2 -ggdb3 -g3 -pg')   # gcc flags, will be sorted automatically into linker and compiler flags
+  env.MergeFlags('-DDEBUG -DRELWITHDEBINFO -O2 -ggdb3 -g3 -pg')   # gcc flags, will be sorted automatically into linker and compiler flags
   env.Append(LIBPATH = [os.path.join(opendihu_home, 'core/build_release_with_debug_info')])   # add release with debug info version of opendihu library
   env.Prepend(LIBS = ['opendihurd'])
 
@@ -249,7 +250,12 @@ else:
 # flags to always include, except with cray compiler
 if os.environ.get("PE_ENV") != "CRAY" and "pg" not in env["cc"]:
   env.MergeFlags('-Wunused-variable')   # always warn about unused variables
-  env.MergeFlags('-std=c++14 -fopenmp -march=native')
+  env.MergeFlags('-std=c++14 -fopenmp')
+  if "ppc" in platform.processor():
+    env.MergeFlags('-mcpu=native -mtune=native')
+  else:
+    env.MergeFlags('-march=native')
+
   env.MergeFlags('-Wl,--disable-new-dtags')
 
 if os.environ.get("PE_ENV") == "CRAY" and env["USE_HPL"]:

@@ -289,6 +289,28 @@ setValues(int componentNo, std::shared_ptr<FieldVariable<FunctionSpaceType,1>> f
 }
 
 template<typename FunctionSpaceType, int nComponents>
+template<int N>
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
+setValues(const std::array<dof_no_t,N> &dofNosLocal, const std::array<std::array<double,nComponents>,N> &values, InsertMode petscInsertMode)
+{
+  assert(this->values_);
+
+  std::array<double,N> valuesBuffer;
+
+  for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
+  {
+    // loop over dofs and prepare values of current component
+    for (int dofIndex = 0; dofIndex < N; dofIndex++)
+    {
+      valuesBuffer[dofIndex] = values[dofIndex][componentIndex];
+    }
+
+    // set the values for the current component
+    this->values_->setValues(componentIndex, N, dofNosLocal.data(), valuesBuffer.data(), petscInsertMode);
+  }
+}
+
+template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
 extractComponentCopy(int componentNo, std::shared_ptr<FieldVariable<FunctionSpaceType,1>> extractedFieldVariable)
 {

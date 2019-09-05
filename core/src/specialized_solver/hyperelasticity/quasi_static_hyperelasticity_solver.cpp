@@ -12,7 +12,7 @@ namespace TimeSteppingScheme
 
 QuasiStaticHyperelasticitySolver::
 QuasiStaticHyperelasticitySolver(DihuContext context) :
-  context_(context["QuasiStaticHyperelasticitySolver"]), data_(context_), initialized_(false), endTime_(0)
+  context_(context["QuasiStaticHyperelasticitySolver"]), data_(context_), pressureDataCopy_(context_), initialized_(false), endTime_(0)
 {
   // get python config
   this->specificSettings_ = this->context_.getPythonConfig();
@@ -34,8 +34,9 @@ QuasiStaticHyperelasticitySolver(DihuContext context) :
   }
 
   // parse material parameters
-  c1_ = specificSettings_.getOptionDouble("c1", 1.0, PythonUtility::ValidityCriterion::Positive);
-  c2_ = specificSettings_.getOptionDouble("c2", 1.0, PythonUtility::ValidityCriterion::Positive);
+  c1_ = specificSettings_.getOptionDouble("c1", 1.0, PythonUtility::ValidityCriterion::NonNegative);
+  c2_ = specificSettings_.getOptionDouble("c2", 1.0, PythonUtility::ValidityCriterion::NonNegative);
+  displacementsScalingFactor_ = specificSettings_.getOptionDouble("scalingFactor", 1.0);
 
   // initialize material parameters
   std::vector<double> parametersVector({c1_, c2_});
@@ -48,6 +49,7 @@ QuasiStaticHyperelasticitySolver(DihuContext context) :
 
   // initialize output writers
   this->outputWriterManager_.initialize(this->context_, this->specificSettings_);
+  this->outputWriterManagerPressure_.initialize(this->context_, this->context_["pressure"].getPythonConfig());
 }
 
 
@@ -62,6 +64,7 @@ advanceTimeSpan()
 
   // write reference output values
   this->outputWriterManager_.writeOutput(this->data_, 0, 0.0);
+  this->outputWriterManagerPressure_.writeOutput(this->pressureDataCopy_, 0, 0.0);
 
   nonlinearSolve();
 
@@ -71,6 +74,7 @@ advanceTimeSpan()
 
   // write current output values
   this->outputWriterManager_.writeOutput(this->data_, 1, endTime_);
+  this->outputWriterManagerPressure_.writeOutput(this->pressureDataCopy_, 1, endTime_);
 }
 
 void QuasiStaticHyperelasticitySolver::
@@ -146,6 +150,8 @@ initialize()
   data_.setPressureFunctionSpace(pressureFunctionSpace_);
 
   data_.initialize();
+  pressureDataCopy_.initialize(data_.pressure(), data_.displacementsLinearMesh());
+  pressureDataCopy_.setFunctionSpace(pressureFunctionSpace_);
 
   // initialize Dirichlet boundary conditions
   if (dirichletBoundaryConditions_ == nullptr)

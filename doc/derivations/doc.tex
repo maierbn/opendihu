@@ -2757,7 +2757,7 @@ To compute the second directional derivatives we recall the first derivatives \c
 \end{equation}
 
 
-Linearization yields
+Linearization yields (p.396)
 \begin{equation}\label{eq:goveq}
   \begin{array}{lll}
     D^2_{δ\bfu,Δ\bfu}\Pi_L(\bfu,p) &= \ds\int_{\Omega_0} \big(∇ δ\bfu : ∇ Δ\bfu \,\bfS + \bfF^\top ∇ δ\bfu : (\C_\text{vol} + \C_\text{iso}) : \bfF^\top ∇ Δ\bfu \big)\,\d V\\[4mm]
@@ -2769,7 +2769,7 @@ Linearization yields
     D^2_{δp,Δp}\Pi_L(\bfu,p) &= 0
   \end{array}
 \end{equation}
-with $\C = ∂\bfS(\bfE)/∂\bfE = \C_\text{vol}+ \C_\text{iso}$ from Holzapfel \cite{holzapfel2000nonlinear} ($\C_\text{vol}$ p.254, $\C_\text{iso}$ p.255)
+with $\C = ∂\bfS(\bfE)/∂\bfE = 2∂\bfS(\bfC)/∂\bfC = \C_\text{vol}+ \C_\text{iso}$ from Holzapfel \cite{holzapfel2000nonlinear} ($\C_\text{vol}$ p.254, $\C_\text{iso}$ p.255)
 $$
   \begin{array}{lll}
     \C_\text{vol} = \p{J(\bfu)p\bfC^{-1}(\bfu)}{\bfC}\,,\\[4mm]
@@ -2824,7 +2824,7 @@ Given the number of spatial dimensions $a,b=1,\dots,D=3$, the blocks of the Jaco
 \begin{equation*}
   \begin{array}{lll}
     \bfk_{δ\bfu,Δ\bfu,(L,a),(M,b)} = \ds\int_\Omega \phi_{(a),B}^L\tilde{k}_{abBD}\phi_{(b),D}^M\,\d V \qquad \text{with}\qquad 
-    \tilde{k}_{abBD} = δ_{ab}\,S_{BD} + F_{aA}\,F_{bC}\,C_{ABCD}\\[4mm]
+    \tilde{k}_{abBD} = δ_{ab}\,S_{BD} + F_{aA}\,F_{bC}\,\mathbb{C}_{ABCD}\\[4mm]
     d\times d \mbox{ blocks of submatrices, each with size } (u_{\text{dofs}} \times u_{\text{dofs}})\\[4mm]
     \bfk_{δp,Δ\bfu,L,(M,a)} = \ds\int_\Omega J\,\psi^L\,(F^{-1})_{Ba}\,\phi_{(a),B}^M \,\d V\\[4mm]
     1\times d \mbox{ blocks of submatrices, each with size } (p_{\text{dofs}} \times u_{\text{dofs}})\\[4mm]
@@ -2867,12 +2867,13 @@ The following is a summary of the steps to compute the 2nd Piola-Kirchhoff stres
     \bfS = \bfS_\text{iso} + \bfS_\text{vol} \quad \text{symmetric}\quad &\text{(p.233)}\\
     \hline\\
     \big(\bfC^{-1} \odot \bfC^{-1}\big)_{abcd} = \dfrac12\big(C^{-1}_{ac}\,C^{-1}_{bd} + C^{-1}_{ad}\,C^{-1}_{bc}\big) \quad &\text{(p.254)}\\[4mm]
-    \mathbb{C}_\text{vol} = J\,p\,\bfC^{-1} \otimes \bfC^{-1} - 2\,J\,p\,\bfC^{-1} \odot \bfC^{-1} \quad &\text{(p.254)}\\[4mm]
+    \mathbb{C}_\text{vol} = J\,p\,\bfC^{-1} \otimes \bfC^{-1} - 2\,J\,p\,\bfC^{-1} \odot \bfC^{-1} \quad &\text{(p.254, p.406)}\\[4mm]
     \bar{\delta}_1 = 4\left(\dfrac{∂^2\Psi_\text{iso}}{∂\bar{I}_1\,∂\bar{I}_1} + 2\,\bar{I}_1\dfrac{∂^2\Psi_\text{iso}}{∂\bar{I}_1\,∂\bar{I}_2} +\dfrac{∂\Psi_\text{iso}}{∂\bar{I}_2} + \bar{I}_1^2\,\dfrac{∂^2\Psi_\text{iso}}{∂\bar{I}_2\,∂\bar{I}_2}\right) \quad &\text{(p.262)}\\[4mm]
     \bar{\delta}_2 = -4\left(\dfrac{∂^2\Psi_\text{iso}}{∂\bar{I}_1\,∂\bar{I}_2} + \bar{I}_1\,\dfrac{∂^2\Psi_\text{iso}}{∂\bar{I}_2\,∂\bar{I}_2}\right) \quad &\text{(p.262)}\\[4mm]
     \bar{\delta}_3 = 4\dfrac{∂^2\Psi_\text{iso}}{∂\bar{I}_2\,∂\bar{I}_2} \quad &\text{(p.262)}\\[4mm]
     \bar{\delta}_4 = -4\dfrac{∂\Psi_\text{iso}}{∂\bar{I}_2} \quad &\text{(p.262)}\\[4mm]
-    \bar{\mathbb{C}} = J^{-4/3}\left(\bar{\delta}_1\,\bfI \otimes \bfI + \bar{\delta}_2\,\big(\bfI \otimes \bar{\bfC} + \bar{\bfC} \otimes \bfI\big) + \bar{\delta}_3\bar{\bfC} \otimes \bar{\bfC} + \bar{\delta}_4\,\mathbb{I} \right) \quad &\text{(p.262)}\\[4mm]
+    \mathbb{S} = (\mathbb{I} + \bar{\mathbb{I}}) / 2, \quad \mathbb{I}_{abcd} = δ_{ac}\,δ_{bd}, \quad \bar{\mathbb{I}}_{abcd} = δ_{ad}\,δ_{bc} &\text{(p.262, p.23)}\\[4mm]
+    \bar{\mathbb{C}} = J^{-4/3}\left(\bar{\delta}_1\,\bfI \otimes \bfI + \bar{\delta}_2\,\big(\bfI \otimes \bar{\bfC} + \bar{\bfC} \otimes \bfI\big) + \bar{\delta}_3\bar{\bfC} \otimes \bar{\bfC} + \bar{\delta}_4\,\mathbb{S} \right) \quad &\text{(p.262)}\\[4mm]
     \tilde{\mathbb{P}} = \bfC^{-1} \odot \bfC^{-1} - \dfrac13 \bfC^{-1} \otimes \bfC^{-1} \quad &\text{(p.255)}\\[4mm]
     \mathbb{C}_\text{iso} = \mathbb{P} : \bar{\mathbb{C}} : \mathbb{P}^\top + \dfrac23 J^{-2/3} \bar{\bfS} : \bfC\,\tilde{\mathbb{P}} - \dfrac23\big(\bfC^{-1}\otimes \bfS_\text{iso} + \bfS_\text{iso}\otimes \bfC^{-1}\big) \quad &\text{(p.255)}\\[4mm]
     \mathbb{C} = \mathbb{C}_\text{vol} + \mathbb{C}_\text{iso} \quad \text{minor symmetries}\quad &\text{(p.254)}\\[4mm]

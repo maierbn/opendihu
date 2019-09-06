@@ -235,7 +235,6 @@ std::ostream &operator<<(std::ostream &stream, const std::array<std::size_t,N> v
   return stream;
 }
 
-
 template<typename T>
 std::ostream &operator<<(std::ostream &stream, const std::vector<T> &values)
 {

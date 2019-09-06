@@ -1,9 +1,11 @@
 #pragma once
 
+#include <Python.h>  // has to be the first included header
 #include <memory>
 
 #include "control/types.h"
 #include "partition/rank_subset.h"
+#include "partition/mesh_partition/01_mesh_partition.h"
 
 /** Base class for a partitioned PetscMat
  */

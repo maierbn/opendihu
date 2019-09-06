@@ -27,6 +27,21 @@ nonBCDofNoLocal(int componentNo, dof_no_t localDofNo)
   return dofNoLocalToDofNoNonBcLocal_[componentNo][localDofNo];
 }
 
+template<typename FunctionSpaceType, int nComponents, int nComponentsDirichletBc>
+bool PartitionedPetscVecWithDirichletBc<FunctionSpaceType, nComponents, nComponentsDirichletBc>::
+isPrescribed(int componentNo, dof_no_t localDofNo)
+{
+  return isPrescribed_[componentNo][localDofNo];
+}
+
+//! get a reference to the internal dofNoLocalToDofNoNonBcGlobal_ data structure
+template<typename FunctionSpaceType, int nComponents, int nComponentsDirichletBc>
+const std::array<std::vector<dof_no_t>,nComponents> &PartitionedPetscVecWithDirichletBc<FunctionSpaceType, nComponents, nComponentsDirichletBc>::
+dofNoLocalToDofNoNonBcGlobal()
+{
+  return dofNoLocalToDofNoNonBcGlobal_;
+}
+
 template<typename FunctionSpaceType, int nComponentsT, int nComponentsDirichletBc>
 void PartitionedPetscVecWithDirichletBc<FunctionSpaceType, nComponentsT, nComponentsDirichletBc>::
 initialize(int nComponents, int offsetInGlobalNumberingPerRank)
@@ -447,6 +462,8 @@ valuesGlobal()
   }
 
   VLOG(2) << "\"" << this->name_ << "\" valuesGlobal()";
+
+  LOG(DEBUG) << "valuesGlobal, return vectorCombinedWithoutDirichletDofsGlobal_";
 
   return vectorCombinedWithoutDirichletDofsGlobal_;
 }
@@ -873,11 +890,11 @@ zeroEntries()
   VLOG(3) << "\"" << this->name_ << "\" zeroEntries, representation: " << Partition::valuesRepresentationString[this->currentRepresentation_];
 
   PetscErrorCode ierr;
-  if (this->currentRepresentation_ == Partition::values_representation_t::representationCombinedLocal)
+  //if (this->currentRepresentation_ == Partition::values_representation_t::representationCombinedLocal)
   {
     ierr = VecZeroEntries(vectorCombinedWithoutDirichletDofsLocal_); CHKERRV(ierr);
   }
-  else if (this->currentRepresentation_ == Partition::values_representation_t::representationCombinedGlobal)
+  //else if (this->currentRepresentation_ == Partition::values_representation_t::representationCombinedGlobal)
   {
     ierr = VecZeroEntries(vectorCombinedWithoutDirichletDofsGlobal_); CHKERRV(ierr);
   }

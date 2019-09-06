@@ -5,6 +5,7 @@
 #include <memory>
 
 #include "spatial_discretization/boundary_conditions/boundary_conditions_base.h"
+#include "partition/partitioned_petsc_mat/partitioned_petsc_mat.h"
 
 namespace SpatialDiscretization
 {

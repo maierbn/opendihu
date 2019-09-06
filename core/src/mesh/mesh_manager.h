@@ -56,6 +56,7 @@ public:
   std::shared_ptr<FunctionSpace::Generic> createGenericFunctionSpace(int nEntries, std::string name);
 
   //! create a generic function space without mesh representation with dimension nEntries
+  //! @param meshPartition This is only used to get the number of ranks.
   template<typename FunctionSpaceType>
   std::shared_ptr<FunctionSpace::Generic> createGenericFunctionSpace(int nEntries, std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> meshPartition, std::string name);
 

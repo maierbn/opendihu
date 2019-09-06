@@ -326,25 +326,29 @@ std::string getStringSparsityPattern(const Mat& matrix)
       getMatrixEntries(submatrix, matrixValues);
 
       s << std::endl << " ";
-      for (int j=0; j<nColumns; j++)
+      for (int columnNo=0; columnNo<nColumns; columnNo++)
       {
-        if (j%10 == 0)
+        if (columnNo%10 == 0)
           s << "|";
-        else if (j%2 == 0)
+        else if (columnNo%2 == 0)
           s << ".";
         else
           s << " ";
       }
       s << std::endl;
-      for (int i=0; i<nRows; i++)
+      for (int rowNo=0; rowNo<nRows; rowNo++)
       {
         s << " ";
-        for (int j=0; j<nColumns; j++)
+        for (int columnNo=0; columnNo<nColumns; columnNo++)
         {
-          if (fabs(matrixValues[i*nColumns + j]) < 1e-14)
-            s << " ";
+          if (fabs(matrixValues[rowNo*nColumns + columnNo]) < 1e-7)
+            s << ".";
+          else if (fabs(matrixValues[rowNo*nColumns + columnNo] - 1.0) < 1e-7)
+            s << "1";
+          else if (fabs(matrixValues[rowNo*nColumns + columnNo] - matrixValues[rowNo*nColumns + columnNo]) < 2e-4)
+            s << "s";
           else
-            s << "*";
+            s << "x";
         }
         s << std::endl;
       }

@@ -336,6 +336,8 @@ To specifiy u=0 on the bottom, you would set:
 When `inputMeshIsGlobal` is set to ``False``, the specified dofs are interpreted as local to the subdomain. Then you have to specify values also for ghost dofs. 
 This means that you have to specify prescribed nodal values on every process whose subdomain is adjacent to that node.
 
+When the value to set is a vector, e.g. for solid mechanics problems where displacements can be prescribed, specify a list of the components for each prescribed dof, e.g. ``[1.0, 2.0, 3.0]`` to set a Dirichlet boundary condition of :math:`\bar{u} = (1,2,3)^\top`. When not all components should be prescribed, replace the entry by ``None``, e.g. ``[None, 2.0, None]`` to only prescribe the y component.
+
 inputMeshIsGlobal
 ^^^^^^^^^^^^^^^^^^
 *Default:* ``True``

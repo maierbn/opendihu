@@ -1,1 +1,1 @@
-scons BUILD_TYPE=release && (echo release build succeeded) || (echo release build failed && exit -1)
+scons BUILD_TYPE=release -j 4 && (echo release build succeeded) || (echo release build failed && exit -1)

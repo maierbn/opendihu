@@ -77,6 +77,15 @@ public:
   //! get the Petsc Vec that contains all components but no values for dirichlet BC dofs
   Vec &valuesGlobal();
 
+  //! get the index in the internal vector in local numbering, from componentNo and local dof no
+  dof_no_t nonBCDofNoLocal(int componentNo, dof_no_t localDofNo);
+
+  //! determine if the dof entry is prescribed
+  bool isPrescribed(int componentNo, dof_no_t localDofNo);
+
+  //! get a reference to the internal dofNoLocalToDofNoNonBcGlobal_ data structure
+  const std::array<std::vector<dof_no_t>,nComponents> &dofNoLocalToDofNoNonBcGlobal();
+
 protected:
 
   //! prepare internal variables such that the vector can be created by createVector afterwards
@@ -93,12 +102,8 @@ protected:
   //! set the internal representation to be combined local, i.e. using the local vector (vectorCombinedWithoutDirichletDofsLocal_), ghost buffer is not filled (use startGhostManipulation to consider ghost dofs)
   void setRepresentationLocal();
 
-  //! get the index in the internal vector in local numbering, from componentNo and local dof no
-  dof_no_t nonBCDofNoLocal(int componentNo, dof_no_t localDofNo);
-  
-
   std::shared_ptr<SpatialDiscretization::DirichletBoundaryConditions<FunctionSpaceType,nComponentsDirichletBc>> dirichletBoundaryConditions_; //< the dirichlet boundary conditions object that contains dofs and values of Dirichlet BCs
-public:
+
   /** The local vector contains the nodal/dof values for the local portion of the current rank. This includes ghost nodes.
    *  The global vector manages the whole data and also only stores the local portion of it on the current rank.
    *  It shares the memory with the local vector. The local vector uses local indices whereas the global vector is accessed using globalPetsc indexing.
@@ -108,7 +113,7 @@ public:
    */
   Vec vectorCombinedWithoutDirichletDofsGlobal_;  ///< the values of all components in "struct of array" ordering, Dirichlet BC dofs are left out. This is accessed using global ordering.
   Vec vectorCombinedWithoutDirichletDofsLocal_;  ///< the values of all components in "struct of array" ordering, Dirichlet BC dofs are left out. This is accessed using local ordering.
-protected:
+
   std::array<int,nComponents> nNonBcDofsWithoutGhosts_;  ///< the local without ghosts number of entries in the vector, without the Dirichlet BC dofs
   int nNonBcDofsGhosts_;         ///< number of ghost values
   int nEntriesLocal_;    ///< the local number of entries in the vector, without Ghost dofs

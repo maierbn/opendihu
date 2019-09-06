@@ -11,6 +11,7 @@ Getting started
     python2.7 ../../dependencies/scons/scons.py 
 
 * To build the release target, use `scons` or `scons BUILD_TYPE=release` or `scons BUILD_TYPE=r`, to build the debug target, use `scons BUILD_TYPE=debug` or `scons BUILD_TYPE=d`.
+* To use multiple processes at once, add the `-j` option, e.g. `scons BUILD_TYPE=r -j 4` to build the release target with 4 processes.
 * There will be executables created in the `build_debug` or `build_release` subdirectories. Change into one of these directories and run the program with a settings file as only argument: 
 
   .. code-block:: bash
@@ -32,7 +33,7 @@ Getting started
   
   * Now change to linear Lagrange basis functions, by changing `LagrangeOfOrder<2>` to `LagrangeOfOrder<1>`.
   * Change into the `build_debug` directory (`cd ../build_debug`). 
-  * If you have set the aliases of Sec. 2, you can recompile with `sdd`. Otherwise go up one directory and run `scons BUILD_TYPE=d`. 
+  * If you have set the aliases of Sec. 2, you can recompile with `sdd`. Otherwise go up one directory and run `scons BUILD_TYPE=d -j 4`. 
   * Now, from the `build_debug` directory, run the new executable with 
 
   .. code-block:: bash

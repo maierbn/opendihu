@@ -284,9 +284,9 @@ Getters
   
   :param int componentNo:
   :param int nValues: The number of values to get.
-  :param const dof_no_t *dofLocalNo: 
-  :param std::vector<double> &values: The resulting values will be appended to this vector.
-    
+  :param const dof_no_t \*dofLocalNo:
+  :param std\:\:vector<double> &values: The resulting values will be appended to this vector.
+  
 .. cpp:function:: std::array<double,nComponents> getValue(node_no_t dofLocalNo) const
   
   Get a single value from local dof no. for all components.
@@ -381,8 +381,8 @@ Setters
   
   :param int componentNo:
   :param int nValues: The number of values to set
-  :param const dof_no_t *dofNosLocal
-  :param const double *values
+  :param const dof_no_t \*dofNosLocal:
+  :param const double \*values:
   :param InsertMode petscInsertMode=INSERT_VALUES: 
   
 .. cpp:function:: void setValues(const std::vector<dof_no_t> &dofNosLocal, const std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode=INSERT_VALUES)

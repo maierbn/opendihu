@@ -82,7 +82,8 @@ struct PythonUtility::convertFromPython<double>
     }
     else if (object == Py_None)
     {
-      return std::nan("");
+      //return std::nan("");
+      return std::numeric_limits<double>::max();
     }
     else if (PyLong_Check(object))
     {

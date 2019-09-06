@@ -62,9 +62,9 @@ nonlinearSolve()
   {
     if (useNumericJacobian_)   // use combination of analytic jacobian also with finite differences
     {
-      Mat solverMatrixTangentStiffnessFiniteDifferences;
-      ierr = MatDuplicate(solverMatrixJacobian_, MAT_DO_NOT_COPY_VALUES, &solverMatrixTangentStiffnessFiniteDifferences); CHKERRV(ierr);
-      ierr = SNESSetJacobian(*snes, solverMatrixTangentStiffnessFiniteDifferences, solverMatrixJacobian_, callbackJacobianCombined, this); CHKERRV(ierr);
+      // use the analytic jacobian for the preconditioner and the numeric jacobian as normal jacobian
+      ierr = SNESSetJacobian(*snes, solverMatrixAdditionalNumericJacobian_, solverMatrixJacobian_, callbackJacobianCombined, this); CHKERRV(ierr);
+      //ierr = SNESSetJacobian(*snes, solverMatrixAdditionalNumericJacobian_, solverMatrixAdditionalNumericJacobian_, callbackJacobianCombined, this); CHKERRV(ierr);
       LOG(DEBUG) << "Use combination of numeric and analytic jacobian: " << solverMatrixJacobian_;
     }
     else    // use pure analytic jacobian, without fd
@@ -99,6 +99,7 @@ nonlinearSolve()
 
   //debug();
 
+  // try two times to solve nonlinear problem
   for (int i = 0; i < 2; i++)
   {
     LOG(DEBUG) << "------------------  start solve " << i << " ------------------";
@@ -121,6 +122,10 @@ nonlinearSolve()
     LOG(INFO) << "Solution done in " << numberOfIterations << " iterations, residual norm " << residualNorm
       << ": " << PetscUtility::getStringNonlinearConvergedReason(convergedReason) << ", "
       << PetscUtility::getStringLinearConvergedReason(kspConvergedReason);
+
+    // if the nonlinear scheme converged, finish loop
+    if (convergedReason >= 0)
+      break;
   }
 
   // close log file
@@ -149,21 +154,24 @@ void QuasiStaticHyperelasticitySolver::
 monitorSolvingIteration(SNES snes, PetscInt its, PetscReal norm)
 {
   //T* object = static_cast<T*>(mctx);
-  LOG(DEBUG) << "  Nonlinear solver: iteration " << its << ", residual norm " << norm;
+  LOG(INFO) << "  Nonlinear solver: iteration " << its << ", residual norm " << norm;
 
   static int evaluationNo = 0;  // counter how often this function was called
 
-  // dump input vector
-  // dumpVector(std::string filename, std::string format, Vec &vector, MPI_Comm mpiCommunicator, int componentNo=0, int nComponents=1);
-  std::stringstream filename;
-  filename << "out/x" << std::setw(3) << std::setfill('0') << evaluationNo;
-  //PetscUtility::dumpVector(filename.str(), "matlab", solverVariableSolution_, displacementsFunctionSpace->meshPartition()->mpiCommunicator());
-  combinedVecSolution_->dumpGlobalNatural(filename.str());
+  if (dumpDenseMatlabVariables_)
+  {
+    // dump input vector
+    // dumpVector(std::string filename, std::string format, Vec &vector, MPI_Comm mpiCommunicator, int componentNo=0, int nComponents=1);
+    std::stringstream filename;
+    filename << "out/x" << std::setw(3) << std::setfill('0') << evaluationNo;
+    //PetscUtility::dumpVector(filename.str(), "matlab", solverVariableSolution_, displacementsFunctionSpace->meshPartition()->mpiCommunicator());
+    combinedVecSolution_->dumpGlobalNatural(filename.str());
 
-  filename.str("");
-  filename << "out/F" << std::setw(3) << std::setfill('0') << evaluationNo;
-  //PetscUtility::dumpVector(filename.str(), "matlab", solverVariableSolution_, displacementsFunctionSpace->meshPartition()->mpiCommunicator());
-  combinedVecResidual_->dumpGlobalNatural(filename.str());
+    filename.str("");
+    filename << "out/r" << std::setw(3) << std::setfill('0') << evaluationNo;
+    //PetscUtility::dumpVector(filename.str(), "matlab", solverVariableSolution_, displacementsFunctionSpace->meshPartition()->mpiCommunicator());
+    combinedVecResidual_->dumpGlobalNatural(filename.str());
+  }
 
   evaluationNo++;
 
@@ -177,6 +185,58 @@ monitorSolvingIteration(SNES snes, PetscInt its, PetscReal norm)
 void QuasiStaticHyperelasticitySolver::
 debug()
 {
+
+  int nRows, nColumns;
+  MatGetLocalSize(solverMatrixAdditionalNumericJacobian_, &nRows, &nColumns);
+
+  std::vector<double> entriesNumericJacobian;
+  PetscUtility::getMatrixEntries(solverMatrixAdditionalNumericJacobian_, entriesNumericJacobian);
+
+  std::vector<double> entriesAnalyticJacobian;
+  PetscUtility::getMatrixEntries(solverMatrixJacobian_, entriesAnalyticJacobian);
+
+  LOG(DEBUG) << "nRows: " << nRows << ", nColumns: " << nColumns << ", nEntries: " << entriesNumericJacobian.size() << "=" << entriesAnalyticJacobian.size() << " should be " << nRows*nColumns;
+
+  bool uSame = true;
+  double maxError = 0;
+  for (int rowNo = 0; rowNo < nRows; rowNo++)
+  {
+    for (int columnNo = 0; columnNo < nColumns; columnNo++)
+    {
+      double error = entriesNumericJacobian[rowNo*nColumns + columnNo] - entriesAnalyticJacobian[rowNo*nColumns + columnNo];
+      if (fabs(error) > maxError)
+        maxError = error;
+      if (fabs(error) > 1e-5)
+      {
+        uSame = false;
+        LOG(DEBUG) << "  (" << rowNo << "," << columnNo << ") numeric: " << entriesNumericJacobian[rowNo*nColumns + columnNo]
+          << ", analytic: " << entriesAnalyticJacobian[rowNo*nColumns + columnNo];
+        //break;
+      }
+    }
+  }
+/*
+  bool pSame = true;
+  for (int rowNo = 81-12; rowNo < 89-12; rowNo++)
+  {
+    for (int columnNo = 0; columnNo < 89-12; columnNo++)
+    {
+      if (fabs(entriesNumericJacobian[rowNo*nColumns + columnNo] - entriesAnalyticJacobian[rowNo*nColumns + columnNo]) > 1e-5)
+      {
+        pSame = false;
+        LOG(DEBUG) << " p (" << rowNo << "," << columnNo << ") numeric: " << entriesNumericJacobian[rowNo*nColumns + columnNo]
+          << ", analytic: " << entriesAnalyticJacobian[rowNo*nColumns + columnNo];
+        //break;
+      }
+    }
+  }*/
+
+  MPI_Barrier(this->combinedVecSolution_->meshPartition()->mpiCommunicator());
+  LOG(DEBUG) << "same: " << uSame << ", max error: " << maxError;// << ", pSame: " << pSame;
+
+  return;
+
+
   //materialComputeResidual();   // solverVariableSolution_ -> solverVariableResidual_ respective combinedVecSolution_ -> combinedVecResidual_
 
   int i = 46;  // 46  17
@@ -271,12 +331,14 @@ initializeSolutionVariable()
   }
   else
   {
+    LOG(DEBUG) << "zeroEntries, representation: " << combinedVecSolution_->currentRepresentation();
     combinedVecSolution_->zeroEntries();
-    combinedVecSolution_->startGhostManipulation();
-    combinedVecSolution_->finishGhostManipulation();
+    //combinedVecSolution_->startGhostManipulation();
+    //combinedVecSolution_->finishGhostManipulation();
   }
 
-  //LOG(DEBUG) << "after initialization: " << combinedVecSolution_->getString();
+  LOG(DEBUG) << "values: " << PetscUtility::getStringVector(solverVariableSolution_);
+  LOG(DEBUG) << "after initialization: " << combinedVecSolution_->getString();
 }
 
 void QuasiStaticHyperelasticitySolver::
@@ -519,10 +581,12 @@ evaluateNonlinearFunction(Vec x, Vec f)
 void QuasiStaticHyperelasticitySolver::
 evaluateAnalyticJacobian(Vec x, Mat jac)
 {
+  setInputVector(x);
+
   materialComputeJacobian();
 
-  MatAssemblyBegin(jac, MAT_FINAL_ASSEMBLY);
-  MatAssemblyEnd(jac, MAT_FINAL_ASSEMBLY);
+  //MatAssemblyBegin(jac, MAT_FINAL_ASSEMBLY);
+  //MatAssemblyEnd(jac, MAT_FINAL_ASSEMBLY);
 }
 
 void QuasiStaticHyperelasticitySolver::
@@ -540,44 +604,11 @@ setInputVector(Vec x)
       VLOG(1) << "setInputVector, x=" << PetscUtility::getStringVector(x);
     }
 
-    std::stringstream result;
-    if (x == combinedVecResidual_->vectorCombinedWithoutDirichletDofsGlobal_)
-    {
-      result << "(combinedVecResidual_ global " << Partition::valuesRepresentationString[combinedVecResidual_->currentRepresentation()] << ")";
-    }
-    else if (x == combinedVecResidual_->vectorCombinedWithoutDirichletDofsLocal_)
-    {
-      result << "(combinedVecResidual_ local " << Partition::valuesRepresentationString[combinedVecResidual_->currentRepresentation()] << ")";
-    }
-    else if (x == combinedVecSolution_->vectorCombinedWithoutDirichletDofsGlobal_)
-    {
-      result << "(combinedVecSolution_ global " << Partition::valuesRepresentationString[combinedVecSolution_->currentRepresentation()] << ")";
-    }
-    else if (x == combinedVecSolution_->vectorCombinedWithoutDirichletDofsLocal_)
-    {
-      result << "(combinedVecSolution_ local " << Partition::valuesRepresentationString[combinedVecSolution_->currentRepresentation()] << ")";
-    }
-    else if (x == combinedVecExternalVirtualWork_->vectorCombinedWithoutDirichletDofsGlobal_)
-    {
-      result << "(combinedVecExternalVirtualWork_ global " << Partition::valuesRepresentationString[combinedVecExternalVirtualWork_->currentRepresentation()] << ")";
-    }
-    else if (x == combinedVecExternalVirtualWork_->vectorCombinedWithoutDirichletDofsLocal_)
-    {
-      result << "(combinedVecExternalVirtualWork_ local " << Partition::valuesRepresentationString[combinedVecExternalVirtualWork_->currentRepresentation()] << ")";
-    }
-    else
-    {
-      result << "(unknown Vec)";
-    }
-
-
     bool backupVecs = false;
     if (x != solverVariableSolution_)
     {
       backupVecs = true;
-      result << " (backup)";
     }
-    //LOG(DEBUG) << "setInputVector " << result.str();
 
     // move the values of x to variable solverVariableSolution_
     if (backupVecs)
@@ -633,6 +664,9 @@ setSolutionVector()
 void QuasiStaticHyperelasticitySolver::
 dumpJacobianMatrix(Mat jac)
 {
+  if (!dumpDenseMatlabVariables_)
+    return;
+
   static int evaluationNo = 0;  // counter how often this function was called
 
   std::stringstream filename;
@@ -640,7 +674,21 @@ dumpJacobianMatrix(Mat jac)
 
   evaluationNo++;
 
-  combinedVecSolution_->dumpMatrixGlobalNatural(jac, filename.str());
+  // if there are both numeric and analytic jacobian in use, this is the numeric jacobian
+  if (jac == solverMatrixAdditionalNumericJacobian_)
+  {
+    filename << "n";
+    combinedMatrixAdditionalNumericJacobian_->dumpMatrixGlobalNatural(filename.str());
+  }
+  else if (jac == solverMatrixJacobian_)
+  {
+    // this is the normal jacobian, either numeric or analytic, if only one of both is is use
+    combinedMatrixJacobian_->dumpMatrixGlobalNatural(filename.str());
+  }
+  else
+  {
+    LOG(ERROR) << "Could not output jacobian matrix " << jac << " (solverMatrixJacobian_: " << solverMatrixJacobian_ << ", solverMatrixAdditionalNumericJacobian_: " << solverMatrixAdditionalNumericJacobian_ << ")";
+  }
 }
 
 void QuasiStaticHyperelasticitySolver::

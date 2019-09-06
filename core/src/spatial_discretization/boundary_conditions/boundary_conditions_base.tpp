@@ -171,7 +171,7 @@ parseBoundaryConditionsForElements(std::string boundaryConditionsConfigKey)
   std::vector<std::pair<int,ValueType>> boundaryConditions;  // (index, value)
   parseBoundaryConditions(this->specificSettings_, functionSpace_, boundaryConditionsConfigKey, boundaryConditions);
 
-  LOG(DEBUG) << "read in Dirichlet boundary conditions from config (\"nan\" means there is no BC for this dof): " << boundaryConditions;
+  LOG(DEBUG) << "read in Dirichlet boundary conditions from config (\"" << std::numeric_limits<double>::max() << "\" means there is no BC for this dof): " << boundaryConditions;
 
   // sort all parsed boundary conditions for their index no
   auto compareFunction = [](const std::pair<int,ValueType> &item1, const std::pair<int,ValueType> &item2)
@@ -354,8 +354,9 @@ generateBoundaryConditionsByComponent()
     // iterate over all values
     for (int i = 0; i < boundaryConditionValues_.size(); i++)
     {
-      // if value is not nan and therefore valid
-      if (std::isfinite(boundaryConditionValues_[i][componentNo]))
+      // if value is not std::numeric_limits<double>::max() and therefore valid
+      //if (std::isfinite(boundaryConditionValues_[i][componentNo]) && )
+      if (boundaryConditionValues_[i][componentNo] != std::numeric_limits<double>::max())
       {
         dofNosValues.push_back(std::pair<int,double>(boundaryConditionNonGhostDofLocalNos_[i], boundaryConditionValues_[i][componentNo]));
       }

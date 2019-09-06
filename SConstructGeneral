@@ -207,14 +207,15 @@ if env["BUILD_TYPE"] == "debug":
     env.MergeFlags('-O0 -g -std=c++14 -DELPP_FEATURE_CRASH_LOG')
     env.MergeFlags('-DDEBUG -D__SSE__')
   if not env["USE_MEGAMOL"]:
-    env.MergeFlags('-Werror')
+    #env.MergeFlags('-Werror')
+    pass
   env.Append(LIBPATH = [os.path.join(opendihu_home, 'core/build_debug')])   # add debug version of opendihu library
   env.Prepend(LIBS = ['opendihud'])
 
 elif env["BUILD_TYPE"] == "releasewithdebuginfo":
   # release with debug info build
   variant_dir = os.path.join(path_where_to_call_sconscript,'build_release_with_debug_info')         # folder of build
-  env.MergeFlags('-DDEBUG -DRELWITHDEBINFO -O2 -ggdb3 -g3 -pg')   # gcc flags, will be sorted automatically into linker and compiler flags
+  env.MergeFlags('-DRELWITHDEBINFO -O3 -ggdb3 -g3 -pg')   # gcc flags, will be sorted automatically into linker and compiler flags
   env.Append(LIBPATH = [os.path.join(opendihu_home, 'core/build_release_with_debug_info')])   # add release with debug info version of opendihu library
   env.Prepend(LIBS = ['opendihurd'])
 

@@ -6,10 +6,11 @@
 #include "function_space/function_space.h"
 #include "basis_function/basis_function.h"
 #include "data_management/specialized_solver/quasi_static_hyperelasticity.h"
+#include "partition/partitioned_petsc_vec/02_partitioned_petsc_vec_for_hyperelasticity.h"
+#include "partition/partitioned_petsc_mat/partitioned_petsc_mat_for_hyperelasticity.h"
 #include "output_writer/manager.h"
 #include "spatial_discretization/boundary_conditions/dirichlet_boundary_conditions.h"
 #include "spatial_discretization/boundary_conditions/neumann_boundary_conditions.h"
-#include "partition/partitioned_petsc_vec/02_partitioned_petsc_vec_for_hyperelasticity.h"
 
 namespace TimeSteppingScheme
 {
@@ -127,14 +128,23 @@ protected:
   //! compute the 2nd Piola-Kirchhoff pressure, S
   Tensor2<3>
   computePK2Stress(const double pressure,                           //< [in] pressure value p
-                 const Tensor2<3> &rightCauchyGreen,                //< [in] C
-                 const Tensor2<3> &inverseRightCauchyGreen,         //< [in] C^{-1}
-                 const std::array<double,2> reducedInvariants,      //< [in] the reduced invariants Ibar_1, Ibar_2
-                 const double deformationGradientDeterminant        //< [in] J = det(F)
-                );
+                   const Tensor2<3> &rightCauchyGreen,                //< [in] C
+                   const Tensor2<3> &inverseRightCauchyGreen,         //< [in] C^{-1}
+                   const std::array<double,2> reducedInvariants,      //< [in] the reduced invariants Ibar_1, Ibar_2
+                   const double deformationGradientDeterminant,       //< [in] J = det(F)
+                   Tensor2<3> &fictitiousPK2Stress,                   //< [out] Sbar, the fictitious 2nd Piola-Kirchhoff stress tensor
+                   Tensor2<3> &pk2StressIsochoric                     //< [out] S_iso, the isochoric part of the 2nd Piola-Kirchhoff stress tensor
+                  );
 
   //! compute the PK2 stress at every node and set value in data, for output
   void computePK2StressField();
+
+  //! compute the material elasticity tensor
+  void computeElasticityTensor(const Tensor2<3> &rightCauchyGreen,
+                               const Tensor2<3> &inverseRightCauchyGreen, double deformationGradientDeterminant, double pressure,
+                               std::array<double,2> reducedInvariants, const Tensor2<3> &fictitiousPK2Stress, const Tensor2<3> &pk2StressIsochoric,
+                               Tensor4<3> &elasticityTensor);
+
 
   DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
 
@@ -148,6 +158,7 @@ protected:
   std::shared_ptr<PressureFunctionSpace> pressureFunctionSpace_;  ///< the function space with linear Lagrange basis functions, used for discretization of pressure
 
   Mat solverMatrixJacobian_;           //< the jacobian matrix for the Newton solver, which in case of nonlinear elasticity is the tangent stiffness matrix
+  Mat solverMatrixAdditionalNumericJacobian_;           //< only used when both analytic and numeric jacobians are computed, then this holds the numeric jacobian
   Vec solverVariableResidual_;         //< nested PETSc Vec to store the residual
   Vec solverVariableSolution_;         //< nested PETSc Vec to store the solution
 
@@ -161,10 +172,14 @@ protected:
   std::vector<PartitionedPetscMat<PressureFunctionSpace,PressureFunctionSpace>> pMatrix_;                           //< lower left matrix in the jacobian for Newton scheme
 
   // data structures for combined matrices and vectors
-  std::shared_ptr<PartitionedPetscMat<FunctionSpace::Generic>> combinedMatrixJacobian_;    //< single jacobian matrix, when useNestedMat_ is false
   std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>> combinedVecResidual_;      //< the Vec for the residual and result of the nonlinear function
   std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>> combinedVecSolution_;      //< the Vec for the solution
   std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>> combinedVecExternalVirtualWork_;      //< the Vec for the external virtual work
+
+  //std::shared_ptr<PartitionedPetscMat<FunctionSpace::Generic>> combinedMatrixJacobian_;    //< single jacobian matrix, when useNestedMat_ is false
+  std::shared_ptr<PartitionedPetscMatForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>> combinedMatrixJacobian_;    //< single jacobian matrix, when useNestedMat_ is false
+  std::shared_ptr<PartitionedPetscMatForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>> combinedMatrixAdditionalNumericJacobian_;   //< only used when both analytic and numeric jacobians are computed, then this holds the numeric jacobian
+
   Vec externalVirtualWork_;     // the external virtual work resulting from the traction, this is a dead load, i.e. it does not change during deformation
 
   // settings variables
@@ -179,6 +194,7 @@ protected:
   double c1_;    ///< first Mooney-Rivlin parameter
   double c2_;   ///< second Mooney-Rivlin parameter
   double displacementsScalingFactor_;   ///< factor with which to scale the displacements
+  bool dumpDenseMatlabVariables_;      ///< the current vector x, the residual, r and the jacobian, jac should be written
 
   bool useNestedMat_ = false;   ///< if the MatNest and VecNest data structures of Petsc should be used, this avoids data copy but is harder to debug
   bool useAnalyticJacobian_;   ///< if the analytically computed Jacobian of the Newton scheme should be used. Theoretically if it is correct, this is the fastest option.

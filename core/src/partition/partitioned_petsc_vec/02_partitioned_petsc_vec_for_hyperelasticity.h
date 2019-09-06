@@ -29,8 +29,8 @@ public:
   //! write the vector values to a file in natural ordering, such that the output for different numbers of ranks can be compared
   void dumpGlobalNatural(std::string filename);
 
-  //! in the same way as dumpGlobalNatural, output the matrix to the file, it has the same form regardless of number of ranks and therefore can be used to compare output with different ranks
-  void dumpMatrixGlobalNatural(Mat matrix, std::string filename);
+  //! the meshPartition of the pressure function space, the other meshPartition, the one of the displacements function space can be obtained by meshPartition()
+  std::shared_ptr<Partition::MeshPartition<PressureFunctionSpaceType>> meshPartitionPressure();
 
   //! get a string representation of the whole vector in global natural ordering
   //! @param horizontal if the string is for console output (less newlines) or for file output

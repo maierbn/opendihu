@@ -37,6 +37,7 @@ QuasiStaticHyperelasticitySolver(DihuContext context) :
   c1_ = specificSettings_.getOptionDouble("c1", 1.0, PythonUtility::ValidityCriterion::NonNegative);
   c2_ = specificSettings_.getOptionDouble("c2", 1.0, PythonUtility::ValidityCriterion::NonNegative);
   displacementsScalingFactor_ = specificSettings_.getOptionDouble("scalingFactor", 1.0);
+  dumpDenseMatlabVariables_ = specificSettings_.getOptionBool("dumpDenseMatlabVariables", false);
 
   // initialize material parameters
   std::vector<double> parametersVector({c1_, c2_});
@@ -266,9 +267,21 @@ initialize()
 
     std::shared_ptr<FunctionSpace::Generic> genericFunctionSpace = context_.meshManager()->createGenericFunctionSpace(nMatrixRowsLocal, displacementsFunctionSpace_->meshPartition(), "genericMesh");
 
-    combinedMatrixJacobian_ = std::make_shared<PartitionedPetscMat<FunctionSpace::Generic>>(
-      genericFunctionSpace->meshPartition(), 1, 4*diagonalNonZeros, 4*offdiagonalNonZeros, "combinedJacobian");
+    /*combinedMatrixJacobian_ = std::make_shared<PartitionedPetscMat<FunctionSpace::Generic>>(
+      genericFunctionSpace->meshPartition(), 1, 4*diagonalNonZeros, 4*offdiagonalNonZeros, "combinedJacobian");*/
 
+    combinedMatrixJacobian_ = std::make_shared<PartitionedPetscMatForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>>(
+      combinedVecSolution_, 4*diagonalNonZeros, 4*offdiagonalNonZeros, "combinedJacobian");
+
+    if (useNumericJacobian_ && useAnalyticJacobian_)
+    {
+      combinedMatrixAdditionalNumericJacobian_ = std::make_shared<PartitionedPetscMatForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>>(
+        combinedVecSolution_, 4*diagonalNonZeros, 4*offdiagonalNonZeros, "combinedJacobianNumeric");
+
+      solverMatrixAdditionalNumericJacobian_ = combinedMatrixAdditionalNumericJacobian_->valuesGlobal();
+    }
+
+    LOG(DEBUG) << "get the internal vectors";
     solverMatrixJacobian_ = combinedMatrixJacobian_->valuesGlobal();
     solverVariableSolution_ = combinedVecSolution_->valuesGlobal();
     solverVariableResidual_ = combinedVecResidual_->valuesGlobal();
@@ -277,7 +290,6 @@ initialize()
     LOG(DEBUG) << "for debugging: " << combinedVecSolution_->getString();
 
     combinedVecExternalVirtualWork_->zeroEntries();
-    combinedMatrixJacobian_->assembly(MAT_FINAL_ASSEMBLY);
 
     combinedVecExternalVirtualWork_->startGhostManipulation();
 
@@ -304,6 +316,7 @@ initialize()
   LOG(DEBUG) << "pointer value solverVariableResidual_: " << solverVariableResidual_;
   LOG(DEBUG) << "pointer value solverVariableSolution_: " << solverVariableSolution_;
   LOG(DEBUG) << "pointer value solverMatrixJacobian_:   " << solverMatrixJacobian_;
+  LOG(DEBUG) << "pointer value solverMatrixAdditionalNumericJacobian_:  " << solverMatrixAdditionalNumericJacobian_;
 
   if (useNestedMat_)
   {
@@ -314,8 +327,33 @@ initialize()
   }
   LOG(DEBUG) << "-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.";
 
-  // assemble matrix
-  evaluateAnalyticJacobian(solverVariableSolution_, solverMatrixJacobian_);
+  // if a numeric jacobian is in use, assemble the matrix
+  // depending on if also the analytic jacobian will be computed, the storage for the numeric jacobian is either combinedMatrixJacobian_ or combinedMatrixAdditionalNumericJacobian_
+  if (useNumericJacobian_)
+  {
+    if (useAnalyticJacobian_)
+    {
+      // assemble matrix, new nonzeros are allocated later
+      combinedMatrixAdditionalNumericJacobian_->assembly(MAT_FINAL_ASSEMBLY);
+    }
+    else
+    {
+      // assemble matrix, new nonzeros are allocated later
+      combinedMatrixJacobian_->assembly(MAT_FINAL_ASSEMBLY);
+    }
+  }
+
+  if (useAnalyticJacobian_)
+  {
+    MatSetOption(solverMatrixJacobian_, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE);
+
+    // assemble matrix and nonzeros structure
+    evaluateAnalyticJacobian(solverVariableSolution_, solverMatrixJacobian_);
+
+    // output the jacobian matrix for debugging
+    LOG(DEBUG) << "initial analytic jacobian matrix: ";
+    dumpJacobianMatrix(solverMatrixJacobian_);
+  }
 
   LOG(DEBUG) << "initialization done";
   this->initialized_ = true;

@@ -495,13 +495,14 @@ materialComputeJacobian()
       }  // aDof
     }  // lDof
 
+    /*
     // loop over diagonal matrix entries in p-part (bottom left submatrix)
-    const double epsilon = 1e-7;
+    const double epsilon = 0.0;
     for (int lDof = 0; lDof < nPressureDofsPerElement; lDof++)           // L
     {
       dof_no_t dofLNoLocal = dofNosLocalPressure[lDof];     // dof with respect to pressure function space
       combinedMatrixJacobian_->setValue(3, dofLNoLocal, 3, dofLNoLocal, epsilon, INSERT_VALUES);
-    }
+    }*/
   }  // elementNoLocal
 
   // allow switching between stiffnessMatrix->setValue(... INSERT_VALUES) and ADD_VALUES

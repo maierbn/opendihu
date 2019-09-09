@@ -281,14 +281,6 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
   this->internalTimeStepNo_++;
 }
 
-//! return false because the object is independent of mesh type
-template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
-bool CellmlAdapter<nStates_,nIntermediates_,FunctionSpaceType>::
-knowsMeshType()
-{
-  return CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::knowsMeshType();
-}
-
 template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
 void CellmlAdapter<nStates_,nIntermediates_,FunctionSpaceType>::
 getComponentNames(std::vector<std::string> &stateNames)

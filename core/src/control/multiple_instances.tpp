@@ -371,16 +371,6 @@ run()
   LOG(DEBUG) << "end of multiple_instances run";
 }
 
-template<typename TimeSteppingScheme>
-bool MultipleInstances<TimeSteppingScheme>::
-knowsMeshType()
-{
-  // This is a dummy method that is currently not used, it is only important if we want to map between multiple data sets.
-  assert(nInstances_ > 0);
-  assert(!instancesLocal_.empty());
-  return instancesLocal_[0].knowsMeshType();
-}
-
 //! return the data object
 template<typename TimeSteppingScheme>
 ::Data::MultipleInstances<typename TimeSteppingScheme::FunctionSpace, TimeSteppingScheme> &MultipleInstances<TimeSteppingScheme>::

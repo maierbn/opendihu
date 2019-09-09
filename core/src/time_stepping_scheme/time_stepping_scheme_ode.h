@@ -50,9 +50,6 @@ public:
   //! reset state such that new initialization becomes necessary
   virtual void reset();
 
-  //! return whether the underlying discretizableInTime object has a specified mesh type and is not independent of the mesh type
-  bool knowsMeshType();
-  
   //! object that stores Dirichlet boundary condition values
   std::shared_ptr<
     SpatialDiscretization::DirichletBoundaryConditions<FunctionSpace,DiscretizableInTimeType::nComponents()>

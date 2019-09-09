@@ -139,13 +139,6 @@ namespace ModelOrderReduction
     // do simulations
     this->advanceTimeSpan();    
   }
-    
-  template<typename TimeSteppingType>
-  bool TimeSteppingSchemeOdeReduced<TimeSteppingType>::
-  knowsMeshType()
-  {
-    return false;
-  }
 
   template<typename TimeSteppingType>
   TimeSteppingType TimeSteppingSchemeOdeReduced<TimeSteppingType>::

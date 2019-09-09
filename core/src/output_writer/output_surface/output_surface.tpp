@@ -53,13 +53,6 @@ initialize()
 }
 
 template<typename Solver>
-bool OutputSurface<Solver>::
-knowsMeshType()
-{
-  return solver_.knowsMeshType();
-}
-
-template<typename Solver>
 void OutputSurface<Solver>::
 run()
 {

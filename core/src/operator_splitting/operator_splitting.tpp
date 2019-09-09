@@ -50,22 +50,11 @@ initialize()
   LOG(TRACE) << "  OperatorSplitting::initialize done, timeSpan=[" << this->startTime_<< "," << this->endTime_<< "]"
     << ", n steps: " << this->numberTimeSteps_;
 
-  // initialize time stepping objects, if only one knows its MeshType, initialize that first
-  //(e.g. CellML-adapter does not know, because it is independent of the type of a mesh)
-  if (timeStepping2_.knowsMeshType() && !timeStepping1_.knowsMeshType())
-  {
-    LOG(DEBUG) << "  OperatorSplitting::initialize timeStepping2";
-    timeStepping2_.initialize();
-    LOG(DEBUG) << "  OperatorSplitting::initialize timeStepping1";
-    timeStepping1_.initialize();
-  }
-  else
-  {
-    LOG(DEBUG) << "  OperatorSplitting::initialize timeStepping1";
-    timeStepping1_.initialize();
-    LOG(DEBUG) << "  OperatorSplitting::initialize timeStepping2";
-    timeStepping2_.initialize();
-  }
+  // initialize time stepping objects
+  LOG(DEBUG) << "  OperatorSplitting::initialize timeStepping1";
+  timeStepping1_.initialize();
+  LOG(DEBUG) << "  OperatorSplitting::initialize timeStepping2";
+  timeStepping2_.initialize();
 
   LOG(DEBUG) << "initialize mappings between meshes \"" << timeStepping1_.data().functionSpace()->meshName() << "\" and \""
     << timeStepping2_.data().functionSpace()->meshName() << "\".";
@@ -123,13 +112,6 @@ typename OperatorSplitting<TimeStepping1, TimeStepping2>::OutputConnectorDataTyp
 getOutputConnectorData()
 {
   return timeStepping1_.getOutputConnectorData();
-}
-
-template<typename TimeStepping1, typename TimeStepping2>
-bool OperatorSplitting<TimeStepping1, TimeStepping2>::
-knowsMeshType()
-{
-  return timeStepping1_.knowsMeshType() && timeStepping2_.knowsMeshType();
 }
 
 template<typename TimeStepping1, typename TimeStepping2>

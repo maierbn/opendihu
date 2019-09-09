@@ -430,14 +430,6 @@ void QuasiStaticNonlinearElasticitySolverChaste<D>::reset()
   this->initialized_ = false;
 }
 
-//! return whether the underlying discretizableInTime object has a specified mesh type and is not independent of the mesh type
-template<int D>
-bool QuasiStaticNonlinearElasticitySolverChaste<D>::
-knowsMeshType()
-{
-  return true;
-}
-
 template<int D>
 typename QuasiStaticNonlinearElasticitySolverChaste<D>::Data &QuasiStaticNonlinearElasticitySolverChaste<D>::
 data()

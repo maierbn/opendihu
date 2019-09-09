@@ -40,9 +40,6 @@ namespace ModelOrderReduction
     //! reset state such that new initialization becomes necessary
     //virtual void reset();
 
-    //! return whether the scheme has a specified mesh type and is not independent of the mesh type
-    bool knowsMeshType();
-    
     //! full-order timestepping object
     TimeSteppingType fullTimestepping();
 

@@ -33,9 +33,6 @@ public:
   //! get the data to be reused in further computations
   OutputConnectorDataType getOutputConnectorData();
 
-  //! return whether the object has a specified mesh type or if it is independent of any mesh type
-  bool knowsMeshType();
-
   //! set the subset of ranks that will compute the work
   void setRankSubset(Partition::RankSubset rankSubset);
   

@@ -145,13 +145,6 @@ nComponents()
 }
 
 template<typename FunctionSpaceType, typename QuadratureType, int nComponents_, typename Term>
-bool FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, nComponents_, Term>::
-knowsMeshType()
-{
-  return true;
-}
-
-template<typename FunctionSpaceType, typename QuadratureType, int nComponents_, typename Term>
 typename FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, nComponents_, Term>::OutputConnectorDataType
 FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, nComponents_, Term>::
 getOutputConnectorData()

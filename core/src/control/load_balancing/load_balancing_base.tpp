@@ -81,13 +81,6 @@ reset()
 }
 
 template<class TimeStepping>
-bool LoadBalancingBase<TimeStepping>::
-knowsMeshType()
-{
-  return timeSteppingScheme_.knowsMeshType();
-}
-
-template<class TimeStepping>
 typename LoadBalancingBase<TimeStepping>::Data &LoadBalancingBase<TimeStepping>::
 data()
 {

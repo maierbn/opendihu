@@ -28,9 +28,6 @@ public:
   //! initialize time span from specificSettings_
   void initialize();
 
-  //! return whether the scheme has a specified mesh type and is not independent of the mesh type
-  bool knowsMeshType();
-
   //! run solution process
   void run();
 

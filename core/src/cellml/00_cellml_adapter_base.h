@@ -75,9 +75,6 @@ public:
   //! set the solution field variable in the data object, that actual data is stored in the timestepping scheme object
   void setSolutionVariable(std::shared_ptr<FieldVariableStates> states);
 
-  //! return false because the object is independent of mesh type
-  bool knowsMeshType();
-
   //! return the mesh
   std::shared_ptr<FunctionSpaceType> functionSpace();
 

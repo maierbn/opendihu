@@ -445,14 +445,6 @@ solveLinearSystem()
 #endif
 }
 
-//! return whether the underlying discretizableInTime object has a specified mesh type and is not independent of the mesh type
-template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
-bool MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
-knowsMeshType()
-{
-  return true;
-}
-
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
 typename MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::Data &MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
 data()

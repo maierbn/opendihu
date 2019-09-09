@@ -47,12 +47,5 @@ public:
   //! By default it is set to true, which is needed for static problems, like Laplace.
   virtual void setBoundaryConditionHandlingEnabled(bool boundaryConditionHandlingEnabled) = 0;
 
-  //! return whether the object has a specified mesh type and is not independent of the mesh type
-  virtual bool knowsMeshType() = 0;
-
-  //! return the mesh
-  //virtual std::shared_ptr<FunctionSpaceType> functionSpace() = 0;
-  //old: virtual std::shared_ptr<Mesh::Mesh> mesh() = 0;
-
 protected:
 };

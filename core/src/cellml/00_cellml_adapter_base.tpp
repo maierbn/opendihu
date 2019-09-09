@@ -209,13 +209,6 @@ getStateNames(std::vector<std::string> &stateNames)
 }
 
 template<int nStates, int nIntermediates_, typename FunctionSpaceType>
-bool CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
-knowsMeshType()
-{
-  return false;
-}
-
-template<int nStates, int nIntermediates_, typename FunctionSpaceType>
 int CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
 outputStateIndex()
 {

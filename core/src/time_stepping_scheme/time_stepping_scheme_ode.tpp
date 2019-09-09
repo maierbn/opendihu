@@ -159,13 +159,6 @@ dirichletBoundaryConditions()
 }
 
 template<typename DiscretizableInTimeType>
-bool TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::
-knowsMeshType()
-{
-  return this->discretizableInTime_.knowsMeshType();
-}
-
-template<typename DiscretizableInTimeType>
 typename TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::OutputConnectorDataType TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::
 getOutputConnectorData()
 {

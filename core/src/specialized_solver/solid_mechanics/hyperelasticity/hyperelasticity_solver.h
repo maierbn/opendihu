@@ -52,9 +52,6 @@ public:
   //! reset state
   void reset();
 
-  //! return whether the underlying discretizableInTime object has a specified mesh type and is not independent of the mesh type
-  bool knowsMeshType();
-
   //! return the data object
   Data &data();
 

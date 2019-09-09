@@ -57,13 +57,6 @@ void MechanicsSolver<FunctionSpaceType>::reset()
 }
 
 template<typename FunctionSpaceType>
-bool MechanicsSolver<FunctionSpaceType>::
-knowsMeshType()
-{
-  return true;
-}
-
-template<typename FunctionSpaceType>
 MechanicsSolver<FunctionSpaceType>::Data &MechanicsSolver<FunctionSpaceType>::
 data()
 {

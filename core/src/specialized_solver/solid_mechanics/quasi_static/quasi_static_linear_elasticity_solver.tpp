@@ -196,14 +196,6 @@ void QuasiStaticLinearElasticitySolver<FiniteElementMethod>::reset()
   this->initialized_ = false;
 }
 
-//! return whether the underlying discretizableInTime object has a specified mesh type and is not independent of the mesh type
-template<typename FiniteElementMethod>
-bool QuasiStaticLinearElasticitySolver<FiniteElementMethod>::
-knowsMeshType()
-{
-  return true;
-}
-
 template<typename FiniteElementMethod>
 typename QuasiStaticLinearElasticitySolver<FiniteElementMethod>::Data &QuasiStaticLinearElasticitySolver<FiniteElementMethod>::
 data()

@@ -256,14 +256,6 @@ debugDumpData()
   counter++;
 }
 
-//! return whether the underlying discretizableInTime object has a specified mesh type and is not independent of the mesh type
-template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
-bool StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
-knowsMeshType()
-{
-  return true;
-}
-
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
 typename StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::Data &StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
 data()

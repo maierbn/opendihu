@@ -47,10 +47,6 @@ public:
   //! set the subset of ranks that will compute the work
   void setRankSubset(Partition::RankSubset rankSubset);
 
-  //! return true because the object has a specified mesh type
-  bool knowsMeshType();
-
-
   //! enable or disable boundary condition handling on initialization, set to false to not care for boundary conditions
   void setBoundaryConditionHandlingEnabled(bool boundaryConditionHandlingEnabled);
 

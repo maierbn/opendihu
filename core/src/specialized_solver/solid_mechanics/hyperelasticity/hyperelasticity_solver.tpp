@@ -323,14 +323,6 @@ void HyperelasticitySolver<Term>::reset()
   this->initialized_ = false;
 }
 
-//! return whether the underlying discretizableInTime object has a specified mesh type and is not independent of the mesh type
-template<typename Term>
-bool HyperelasticitySolver<Term>::
-knowsMeshType()
-{
-  return true;
-}
-
 template<typename Term>
 typename HyperelasticitySolver<Term>::Data &HyperelasticitySolver<Term>::
 data()

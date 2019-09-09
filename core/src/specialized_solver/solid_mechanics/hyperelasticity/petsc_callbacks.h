@@ -53,4 +53,4 @@ PetscErrorCode jacobianFunctionCombined(SNES snes, Vec x, Mat jac, Mat b, void *
 template<typename T>
 PetscErrorCode monitorFunction(SNES snes, PetscInt its, PetscReal norm, void *mctx);
 
-#include "specialized_solver/hyperelasticity/petsc_callbacks.tpp"
+#include "specialized_solver/solid_mechanics/hyperelasticity/petsc_callbacks.tpp"

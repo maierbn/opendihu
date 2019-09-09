@@ -376,8 +376,6 @@ void checkDimensionsMatrixVector(Mat &matrix, Vec &input)
 
 std::string getStringLinearConvergedReason(KSPConvergedReason convergedReason)
 {
-
-
   // source: http://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/KSP/KSPGetConvergedReason.html
   switch(convergedReason)
   {

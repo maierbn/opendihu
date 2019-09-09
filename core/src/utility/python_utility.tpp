@@ -17,7 +17,7 @@ std::pair<Key, Value> PythonUtility::getOptionDictBegin(const PyObject *settings
 {
   std::pair<Key, Value> firstEntry;
 
-  if (settings)
+  if (settings && PyDict_Check(settings))
   {
     // start critical section for python API calls
     // PythonUtility::GlobalInterpreterLock lock;
@@ -90,7 +90,7 @@ void PythonUtility::getOptionDictNext(const PyObject *settings, std::string keyS
 template<typename Value>
 Value PythonUtility::getOptionListBegin(const PyObject *settings, std::string keyString, std::string pathString)
 {
-  if (settings)
+  if (settings && PyDict_Check(settings))
   {
     // start critical section for python API calls
     // PythonUtility::GlobalInterpreterLock lock;
@@ -161,6 +161,11 @@ std::array<ValueType, D> PythonUtility::getOptionArray(PyObject* settings, std::
                                                       std::array<ValueType, D> defaultValue, ValidityCriterion validityCriterion)
 {
   std::array<ValueType, D> result = defaultValue;
+
+  if (!settings || !PyDict_Check(settings))
+  {
+    return result;
+  }
 
   if (settings)
   {

@@ -106,4 +106,4 @@ protected:
 
 }  // namespace
 
-#include "specialized_solver/quasi_static_linear_elasticity_solver.tpp"
+#include "specialized_solver/solid_mechanics/quasi_static/quasi_static_linear_elasticity_solver.tpp"

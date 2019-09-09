@@ -1,4 +1,4 @@
-#include "specialized_solver/quasi_static_nonlinear_elasticity_solver_chaste.h"
+#include "specialized_solver/solid_mechanics/quasi_static/quasi_static_nonlinear_elasticity_solver_chaste.h"
 
 #include <Python.h>  // has to be the first included header
 

@@ -246,12 +246,12 @@ void Linear::dumpMatrixRightHandSide(Vec rightHandSide)
   // dump files containing rhs and system matrix
   if (!dumpFilename_.empty())
   {
-    PetscUtility::dumpVector(dumpFilename_+std::string("rhs"), dumpFormat_, rightHandSide, mpiCommunicator_);
+    PetscUtility::dumpVector(dumpFilename_+std::string("_rhs"), dumpFormat_, rightHandSide, mpiCommunicator_);
 
     Mat matrix;
     Mat preconditionerMatrix;
     KSPGetOperators(*ksp_, &matrix, &preconditionerMatrix);
-    PetscUtility::dumpMatrix(dumpFilename_+std::string("matrix"), dumpFormat_, matrix, mpiCommunicator_);
+    PetscUtility::dumpMatrix(dumpFilename_+std::string("_matrix"), dumpFormat_, matrix, mpiCommunicator_);
   }
 }
 

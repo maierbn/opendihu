@@ -12,12 +12,15 @@
 #include "spatial_discretization/boundary_conditions/dirichlet_boundary_conditions.h"
 #include "spatial_discretization/boundary_conditions/neumann_boundary_conditions.h"
 
-namespace TimeSteppingScheme
+namespace SpatialDiscretization
 {
 
 /** This solver is for the nonlinear finite elasticity problem with Mooney-Rivlin material in 3D.
+ *
+ * Further improvements for solving: https://github.com/jedbrown/spectral-petsc/blob/master/stokes.C
+ * https://lists.mcs.anl.gov/pipermail/petsc-dev/2008-April/000711.html
   */
-class QuasiStaticHyperelasticitySolver :
+class HyperelasticitySolver :
   public Runnable
 {
 public:
@@ -31,7 +34,7 @@ public:
   typedef FieldVariable::FieldVariable<DisplacementsFunctionSpace,6> StressFieldVariableType;
 
   //! constructor
-  QuasiStaticHyperelasticitySolver(DihuContext context);
+  HyperelasticitySolver(DihuContext context);
 
   //! advance simulation by the given time span, data in solution is used, afterwards new data is in solution
   void advanceTimeSpan();
@@ -159,8 +162,9 @@ protected:
 
   Mat solverMatrixJacobian_;           //< the jacobian matrix for the Newton solver, which in case of nonlinear elasticity is the tangent stiffness matrix
   Mat solverMatrixAdditionalNumericJacobian_;           //< only used when both analytic and numeric jacobians are computed, then this holds the numeric jacobian
-  Vec solverVariableResidual_;         //< nested PETSc Vec to store the residual
-  Vec solverVariableSolution_;         //< nested PETSc Vec to store the solution
+  Vec solverVariableResidual_;         //< PETSc Vec to store the residual
+  Vec solverVariableSolution_;         //< PETSc Vec to store the solution
+  Vec zeros_;                          // a solver that contains all zeros, needed to zero the diagonal of the jacobian matrix
 
   // data structures for nested matrices and vectors
   std::array<Mat,16> submatrices_;  // all submatrices of the 4x4 block jacobian matrix, solverMatrixJacobian_
@@ -188,8 +192,8 @@ protected:
   double endTime_;     ///< end time of current time step
   std::ofstream residualNormLogFile_;   ///< ofstream of a log file that will contain the residual norm for each iteration
 
-  std::shared_ptr<SpatialDiscretization::DirichletBoundaryConditions<DisplacementsFunctionSpace,3>> dirichletBoundaryConditions_ = nullptr;  ///< object that parses Dirichlet boundary conditions and applies them to rhs
-  std::shared_ptr<SpatialDiscretization::NeumannBoundaryConditions<DisplacementsFunctionSpace,Quadrature::Gauss<3>,3>> neumannBoundaryConditions_ = nullptr;  ///< object that parses Neumann boundary conditions and applies them to the rhs
+  std::shared_ptr<DirichletBoundaryConditions<DisplacementsFunctionSpace,3>> dirichletBoundaryConditions_ = nullptr;  ///< object that parses Dirichlet boundary conditions and applies them to rhs
+  std::shared_ptr<NeumannBoundaryConditions<DisplacementsFunctionSpace,Quadrature::Gauss<3>,3>> neumannBoundaryConditions_ = nullptr;  ///< object that parses Neumann boundary conditions and applies them to the rhs
 
   double c1_;    ///< first Mooney-Rivlin parameter
   double c2_;   ///< second Mooney-Rivlin parameter

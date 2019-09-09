@@ -8,7 +8,7 @@
 #include "control/types.h"
 #include "mesh/mesh.h"
 #include "cellml/00_cellml_adapter_base.h"
-#include "specialized_solver/quasi_static_linear_elasticity_solver.h"
+#include "specialized_solver/solid_mechanics/quasi_static/quasi_static_linear_elasticity_solver.h"
 
 /** Transfer between the output from cubes partitioned fibers (MultipleInstances<Strang<...) and StaticBidomainSolver
  *

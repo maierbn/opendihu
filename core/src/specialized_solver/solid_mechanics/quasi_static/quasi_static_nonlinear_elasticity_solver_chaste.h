@@ -70,4 +70,4 @@ protected:
 
 }  // namespace
 
-#include "specialized_solver/quasi_static_nonlinear_elasticity_solver_chaste.tpp"
+#include "specialized_solver/solid_mechanics/quasi_static/quasi_static_nonlinear_elasticity_solver_chaste.tpp"

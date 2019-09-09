@@ -33,10 +33,12 @@ if False:
   for k in range(0,2*nz+1):
     dirichlet_bc[k*(2*nx+1)*(2*ny+1)] = [xpos,ypos,None]
 
+if True:
   # horizontal edge
   for i in range(0,2*nx+1):
     dirichlet_bc[i] = [None,ypos,zpos]
 
+if False:
   # horizontal edge
   for j in range(0,2*ny+1):
     dirichlet_bc[j*(2*nx+1)] = [xpos,None,zpos]
@@ -52,14 +54,14 @@ neumann_bc = [{"element": (nz-1)*nx*ny + j*nx + i, "constantVector": [0,1e-1,5e-
 
 config = {
   "scenarioName": "3d_box",
-  "QuasiStaticHyperelasticitySolver": {
+  "HyperelasticitySolver": {
     "c1": 1.0,       # dummy value
     "c2": 0.0,    # dummy value
     "residualNormLogFilename": "log_residual_norm.txt",
     "useAnalyticJacobian": True,
     "useNumericJacobian": False,   # only works with non-nested matrices, if both numeric and analytic are enable, it uses the analytic for the preconditioner and the numeric as normal jacobian
       
-    "dumpDenseMatlabVariables": False,   # extrac output of matlab vectors, x,r, jacobian matrix
+    "dumpDenseMatlabVariables": True,   # extrac output of matlab vectors, x,r, jacobian matrix
     
     # mesh
     "nElements": [nx, ny, nz],
@@ -69,7 +71,7 @@ config = {
     # solver
     "relativeTolerance": 1e-10,
     "solverType": "preonly",          # cg groppcg pipecg pipecgrr cgne nash stcg gltr richardson chebyshev gmres tcqmr fcg pipefcg bcgs ibcgs fbcgs fbcgsr bcgsl cgs tfqmr cr pipecr lsqr preonly qcg bicg fgmres pipefgmres minres symmlq lgmres lcd gcr pipegcr pgmres dgmres tsirm cgls
-    "preconditionerType": "cholesky",
+    "preconditionerType": "lu",
     "maxIterations": 1e4,
     "dumpFilename": "out/m",
     "dumpFormat": "matlab",   # default, ascii, matlab

@@ -35,14 +35,14 @@ double parseNumber(std::string::iterator &iterFileContents, std::string::iterato
   {
     std::stod(numberFileContents, nullptr);
   }
-  catch (std::exception &e)
+  catch (std::exception &e)   // fails for letter 'e'
   {
     std::string s;
     for(std::string::iterator iterFileContents2 = iterFileContentsBegin; iterFileContents2 != iterFileContentsEnd; iterFileContents2++)
     {
       s += *iterFileContents2;
     }
-    LOG(DEBUG) << "parsing of number [" << numberFileContents << "] from [" << s.substr(0,20) << "] failed: " << e.what();
+    //LOG(DEBUG) << "parsing of number [" << numberFileContents << "] from [" << s.substr(0,20) << "] failed: " << e.what();
   }
   return number;
 }
@@ -157,7 +157,7 @@ void assertFileMatchesContent(std::string filename, std::string referenceContent
       // if character is diferrent
       if(*iterFileContents != *iterReferenceContents)
       {
-        msg << "mismatch at character, file: [" << *iterFileContents << "] != reference: [" << *iterReferenceContents << "], pos: " << std::distance(fileContents.begin(),iterFileContents) << " ";
+        //msg << "mismatch at character, file: [" << *iterFileContents << "] != reference: [" << *iterReferenceContents << "], pos: " << std::distance(fileContents.begin(),iterFileContents) << " ";
         referenceContentMatches = false;
         //VLOG(1) << "mismatch!";
       }
@@ -202,7 +202,7 @@ void assertFileMatchesContent(std::string filename, std::string referenceContent
         // if character is diferrent
         if (*iterFileContents, *iterReferenceContents)
         {
-          msg << "mismatch at character file: [" << *iterFileContents << "] != reference: [" << *iterReferenceContents << "], pos: " << std::distance(fileContents.begin(),iterFileContents);
+          //msg << "mismatch at character file: [" << *iterFileContents << "] != reference: [" << *iterReferenceContents << "], pos: " << std::distance(fileContents.begin(),iterFileContents);
           referenceContent2Matches = false;
         }
         iterFileContents++;
@@ -221,7 +221,7 @@ void assertFileMatchesContent(std::string filename, std::string referenceContent
       LOG(INFO) << "file content of file \"" << filename << "\" is different (referenceContents2). fileContents: " << std::endl << fileContents << std::endl << ", referenceContents2: " << std::endl << referenceContents2;
     
     LOG(INFO) << msg.str();
-    ASSERT_TRUE(false) << "neither referenceContent nor referenceContent2 matches! " << msg.str();
+    ASSERT_TRUE(false) << "filename \"" << filename << "\": neither referenceContent nor referenceContent2 matches! " << msg.str();
   }
   
 }

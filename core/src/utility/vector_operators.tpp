@@ -218,9 +218,23 @@ bool operator<(const std::array<T,N> &vector, double value)
 template<typename T, std::size_t N>
 std::ostream &operator<<(std::ostream &stream, const std::array<T,N> &vector)
 {
-  stream << "(" << vector[0];
+  stream << "(";
+
+  // first entry
+  if (vector[0] == std::numeric_limits<T>::max())
+    stream << "None";
+  else
+    stream << vector[0];
+
+  // subsequent entries
   for (std::size_t i = 1; i < N; i++)
-    stream << "," << vector[i];
+  {
+    stream << ",";
+    if (vector[i] == std::numeric_limits<T>::max())
+      stream << "None";
+    else
+      stream << vector[i];
+  }
   stream << ")";
   return stream;
 }
@@ -234,6 +248,7 @@ std::ostream &operator<<(std::ostream &stream, const std::array<std::size_t,N> v
   stream << ")";
   return stream;
 }
+
 
 template<typename T>
 std::ostream &operator<<(std::ostream &stream, const std::vector<T> &values)
@@ -250,16 +265,20 @@ std::ostream &operator<<(std::ostream &stream, const std::vector<T> &values)
   {
     // with VLOG output all entries
     for (unsigned long i = 1; i < values.size(); i++)
+    {
       stream << "," << values[i];
+    }
   }
   else
   {
     // without VLOG only output the first 100 entries
     unsigned long i = 1;
     for (; i < std::min(100ul,values.size()); i++)
+    {
       stream << "," << values[i];
+    }
     if (i == 100 && i < values.size())
-      stream << "... " << values.size() << " entries total, only showing the first 100 (set -vmodule=vector_operators*=1)";
+      stream << "... " << values.size() << " entries total, only showing the first 100 (call with -vmodule=vector_operators*=1 to show all)";
   }
 
   stream << "]";

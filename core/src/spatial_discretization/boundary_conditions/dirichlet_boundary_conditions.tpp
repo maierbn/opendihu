@@ -652,7 +652,8 @@ applyInSystemMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> syst
       for (int componentNo = 0; componentNo < nComponents; componentNo++)
       {
         // check if column dof has a valid Dirichlet BC, else do nothing for this component
-        if (!std::isfinite(boundaryConditionValue[componentNo]))
+        //if (!std::isfinite(boundaryConditionValue[componentNo]))
+        if (boundaryConditionValue[componentNo] == std::numeric_limits<double>::max())
           continue;
 
         valuesBuffer.clear();
@@ -663,7 +664,8 @@ applyInSystemMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> syst
         // copy dofs and values for valid values to buffers
         for (int i = 0; i < values.size(); i++)
         {
-          if (std::isfinite(values[i][componentNo]))
+          //if (std::isfinite(values[i][componentNo]))
+          if (values[i][componentNo] != std::numeric_limits<double>::max())
           {
             dofNosBuffer.push_back(rowDofNosLocal[i]);
             valuesBuffer.push_back(values[i][componentNo]);
@@ -723,7 +725,8 @@ applyInSystemMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> syst
         for (int componentNo = 0; componentNo < nComponents; componentNo++)
         {
           // check if column dof has a valid Dirichlet BC, else do nothing for this component
-          if (!std::isfinite(boundaryConditionValue[componentNo]))
+          //if (!std::isfinite(boundaryConditionValue[componentNo]) ||
+          if (boundaryConditionValue[componentNo] == std::numeric_limits<double>::max())
             continue;
 
           // set entries in nested system matrices to zero

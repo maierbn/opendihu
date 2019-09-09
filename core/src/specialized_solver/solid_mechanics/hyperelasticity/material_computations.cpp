@@ -1,13 +1,13 @@
-#include "specialized_solver/hyperelasticity/quasi_static_hyperelasticity_solver.h"
+#include "specialized_solver/solid_mechanics/hyperelasticity/hyperelasticity_solver.h"
 
 #include <Python.h>  // has to be the first included header
 
 #include "equation/mooney_rivlin_incompressible.h"
 
-namespace TimeSteppingScheme
+namespace SpatialDiscretization
 {
 
-void QuasiStaticHyperelasticitySolver::
+void HyperelasticitySolver::
 materialComputeResidual()
 {
   // compute Wint - Wext in solverVariableResidual_
@@ -399,7 +399,7 @@ materialComputeResidual()
   evaluationNo++;
 }
 
-void QuasiStaticHyperelasticitySolver::
+void HyperelasticitySolver::
 materialComputeJacobian()
 {
   // analytic jacobian combinedMatrixJacobian_
@@ -495,15 +495,20 @@ materialComputeJacobian()
       }  // aDof
     }  // lDof
 
-    /*
-    // loop over diagonal matrix entries in p-part (bottom left submatrix)
-    const double epsilon = 0.0;
+
+    // loop over diagonal matrix entries in p-part (bottom left submatrix), set diagonal entries to 0
+    // This allocates nonzero entries and sets them to zero. It is needed for the solver.
+    const double epsilon = 1e-12;
     for (int lDof = 0; lDof < nPressureDofsPerElement; lDof++)           // L
     {
       dof_no_t dofLNoLocal = dofNosLocalPressure[lDof];     // dof with respect to pressure function space
       combinedMatrixJacobian_->setValue(3, dofLNoLocal, 3, dofLNoLocal, epsilon, INSERT_VALUES);
-    }*/
+    }
   }  // elementNoLocal
+
+  // set diagonal to zero
+  //PetscErrorCode ierr;
+  //ierr = MatDiagonalSet(combinedMatrixJacobian_->valuesGlobal(), zeros_, INSERT_VALUES); CHKERRV(ierr);
 
   // allow switching between stiffnessMatrix->setValue(... INSERT_VALUES) and ADD_VALUES
   combinedMatrixJacobian_->assembly(MAT_FLUSH_ASSEMBLY);
@@ -815,7 +820,7 @@ materialComputeJacobian()
   combinedMatrixJacobian_->assembly(MAT_FINAL_ASSEMBLY);
 }
 
-Tensor2<3> QuasiStaticHyperelasticitySolver::
+Tensor2<3> HyperelasticitySolver::
 computeDeformationGradient(const std::array<Vec3,DisplacementsFunctionSpace::nDofsPerElement()> &displacements,
                            const Tensor2<3> &inverseJacobianMaterial,
                            const std::array<double, 3> xi
@@ -875,7 +880,7 @@ computeDeformationGradient(const std::array<Vec3,DisplacementsFunctionSpace::nDo
   return deformationGradient;
 }
 
-Tensor2<3> QuasiStaticHyperelasticitySolver::
+Tensor2<3> HyperelasticitySolver::
 computeRightCauchyGreenTensor(const Tensor2<3> &deformationGradient)
 {
   // compute C = F^T*F where F is the deformationGradient and C is the right Cauchy-Green Tensor
@@ -901,7 +906,7 @@ computeRightCauchyGreenTensor(const Tensor2<3> &deformationGradient)
   return rightCauchyGreenTensor;
 }
 
-std::array<double,3> QuasiStaticHyperelasticitySolver::
+std::array<double,3> HyperelasticitySolver::
 computeInvariants(const Tensor2<3> &rightCauchyGreen, const double rightCauchyGreenDeterminant)
 {
   std::array<double,3> invariants;
@@ -932,7 +937,7 @@ computeInvariants(const Tensor2<3> &rightCauchyGreen, const double rightCauchyGr
   return invariants;
 }
 
-std::array<double,2> QuasiStaticHyperelasticitySolver::
+std::array<double,2> HyperelasticitySolver::
 computeReducedInvariants(const std::array<double,3> invariants, const double deformationGradientDeterminant)
 {
   std::array<double,2> reducedInvariants;
@@ -958,7 +963,7 @@ computeReducedInvariants(const std::array<double,3> invariants, const double def
   return reducedInvariants;
 }
 
-Tensor2<3> QuasiStaticHyperelasticitySolver::
+Tensor2<3> HyperelasticitySolver::
 computePK2Stress(const double pressure,                             //< [in] pressure value p
                  const Tensor2<3> &rightCauchyGreen,                //< [in] C
                  const Tensor2<3> &inverseRightCauchyGreen,         //< [in] C^{-1}
@@ -1126,7 +1131,7 @@ computePK2Stress(const double pressure,                             //< [in] pre
   return pK2Stress;
 }
 
-void QuasiStaticHyperelasticitySolver::
+void HyperelasticitySolver::
 computePK2StressField()
 {
   //LOG(TRACE) << "computePK2StressField";
@@ -1255,7 +1260,7 @@ computePK2StressField()
 }
 
 //! compute the material elasticity tensor
-void QuasiStaticHyperelasticitySolver::
+void HyperelasticitySolver::
 computeElasticityTensor(const Tensor2<3> &rightCauchyGreen,         //< [in] C
                         const Tensor2<3> &inverseRightCauchyGreen,  //< [in] C^{-1}
                         double deformationGradientDeterminant,      //< [in] J = det(F)

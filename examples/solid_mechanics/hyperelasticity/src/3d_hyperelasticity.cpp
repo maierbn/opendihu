@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
   DihuContext settings(argc, argv);
   
   // define problem
-  TimeSteppingScheme::QuasiStaticHyperelasticitySolver problem(settings);
+  SpatialDiscretization::HyperelasticitySolver problem(settings);
   
   // run problem
   problem.run();

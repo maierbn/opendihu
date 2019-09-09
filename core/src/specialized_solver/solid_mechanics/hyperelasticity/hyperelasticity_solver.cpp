@@ -1,4 +1,4 @@
-#include "specialized_solver/hyperelasticity/quasi_static_hyperelasticity_solver.h"
+#include "specialized_solver/solid_mechanics/hyperelasticity/hyperelasticity_solver.h"
 
 #include <Python.h>  // has to be the first included header
 
@@ -7,12 +7,12 @@
 #include "data_management/specialized_solver/multidomain.h"
 #include "control/performance_measurement.h"
 
-namespace TimeSteppingScheme
+namespace SpatialDiscretization
 {
 
-QuasiStaticHyperelasticitySolver::
-QuasiStaticHyperelasticitySolver(DihuContext context) :
-  context_(context["QuasiStaticHyperelasticitySolver"]), data_(context_), pressureDataCopy_(context_), initialized_(false), endTime_(0)
+HyperelasticitySolver::
+HyperelasticitySolver(DihuContext context) :
+  context_(context["HyperelasticitySolver"]), data_(context_), pressureDataCopy_(context_), initialized_(false), endTime_(0)
 {
   // get python config
   this->specificSettings_ = this->context_.getPythonConfig();
@@ -45,7 +45,7 @@ QuasiStaticHyperelasticitySolver(DihuContext context) :
   // set all PARAM(i) values to the values given by materialParameters
   SEMT::set_parameters<2>::to(parametersVector);
 
-  LOG(DEBUG) << "QuasiStaticHyperelasticitySolver: parsed parameters c1: " << c1_ << ", c2: " << c2_;
+  LOG(DEBUG) << "HyperelasticitySolver: parsed parameters c1: " << c1_ << ", c2: " << c2_;
   LOG(DEBUG) << "now parse output writers";
 
   // initialize output writers
@@ -54,7 +54,7 @@ QuasiStaticHyperelasticitySolver(DihuContext context) :
 }
 
 
-void QuasiStaticHyperelasticitySolver::
+void HyperelasticitySolver::
 advanceTimeSpan()
 {
   // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
@@ -78,7 +78,7 @@ advanceTimeSpan()
   this->outputWriterManagerPressure_.writeOutput(this->pressureDataCopy_, 1, endTime_);
 }
 
-void QuasiStaticHyperelasticitySolver::
+void HyperelasticitySolver::
 run()
 {
   // initialize everything
@@ -88,20 +88,20 @@ run()
 }
 
 
-void QuasiStaticHyperelasticitySolver::
+void HyperelasticitySolver::
 setTimeSpan(double startTime, double endTime)
 {
   endTime_ = endTime;
 }
 
 
-void QuasiStaticHyperelasticitySolver::
+void HyperelasticitySolver::
 initialize()
 {
   if (this->initialized_)
     return;
 
-  LOG(DEBUG) << "initialize QuasiStaticHyperelasticitySolver";
+  LOG(DEBUG) << "initialize HyperelasticitySolver";
   assert(this->specificSettings_.pyObject());
 
   // create function space / mesh, the geometry is from the settings
@@ -287,6 +287,11 @@ initialize()
     solverVariableResidual_ = combinedVecResidual_->valuesGlobal();
     externalVirtualWork_ = combinedVecExternalVirtualWork_->valuesGlobal();
 
+    // create vector with all zeros in it
+    PetscErrorCode ierr;
+    ierr = VecDuplicate(solverVariableResidual_, &zeros_); CHKERRV(ierr);
+    ierr = VecZeroEntries(zeros_); CHKERRV(ierr);
+
     LOG(DEBUG) << "for debugging: " << combinedVecSolution_->getString();
 
     combinedVecExternalVirtualWork_->zeroEntries();
@@ -360,34 +365,34 @@ initialize()
 }
 
 //! get the PartitionedPetsVec for the residual and result of the nonlinear function
-std::shared_ptr<PartitionedPetscVecForHyperelasticity<typename QuasiStaticHyperelasticitySolver::DisplacementsFunctionSpace,typename QuasiStaticHyperelasticitySolver::PressureFunctionSpace>> QuasiStaticHyperelasticitySolver::
+std::shared_ptr<PartitionedPetscVecForHyperelasticity<typename HyperelasticitySolver::DisplacementsFunctionSpace,typename HyperelasticitySolver::PressureFunctionSpace>> HyperelasticitySolver::
 combinedVecResidual()
 {
   return this->combinedVecResidual_;
 }
 
 //! get the PartitionedPetsVec for the solution
-std::shared_ptr<PartitionedPetscVecForHyperelasticity<typename QuasiStaticHyperelasticitySolver::DisplacementsFunctionSpace,typename QuasiStaticHyperelasticitySolver::PressureFunctionSpace>> QuasiStaticHyperelasticitySolver::
+std::shared_ptr<PartitionedPetscVecForHyperelasticity<typename HyperelasticitySolver::DisplacementsFunctionSpace,typename HyperelasticitySolver::PressureFunctionSpace>> HyperelasticitySolver::
 combinedVecSolution()
 {
   return this->combinedVecSolution_;
 }
 
-void QuasiStaticHyperelasticitySolver::reset()
+void HyperelasticitySolver::reset()
 {
   this->initialized_ = false;
 }
 
 //! return whether the underlying discretizableInTime object has a specified mesh type and is not independent of the mesh type
 
-bool QuasiStaticHyperelasticitySolver::
+bool HyperelasticitySolver::
 knowsMeshType()
 {
   return true;
 }
 
-typename QuasiStaticHyperelasticitySolver::Data &
-QuasiStaticHyperelasticitySolver::
+typename HyperelasticitySolver::Data &
+HyperelasticitySolver::
 data()
 {
   return data_;

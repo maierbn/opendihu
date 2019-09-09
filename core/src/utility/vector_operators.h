@@ -82,6 +82,9 @@ std::ostream &operator<<(std::ostream &stream, const std::array<std::size_t,N> v
 template<typename T>
 std::ostream &operator<<(std::ostream &stream, const std::vector<T> &vector);
 
+template<>
+std::ostream &operator<<(std::ostream &stream, const std::vector<double> &vector);
+
 //! output contents of stringstream
 //std::ostream &operator<<(std::ostream &stream, const std::stringstream &stringstream);
 

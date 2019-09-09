@@ -1,10 +1,10 @@
-#include "specialized_solver/hyperelasticity/petsc_callbacks.h"
+#include "specialized_solver/solid_mechanics/hyperelasticity/petsc_callbacks.h"
 
 #include <Python.h>  // has to be the first included header
 #include <easylogging++.h>
 
 #include "utility/petsc_utility.h"
-#include "specialized_solver/hyperelasticity/compute_numeric_jacobian.h"
+#include "specialized_solver/solid_mechanics/hyperelasticity/compute_numeric_jacobian.h"
 
 /**
  * Nonlinear function F that gets solved by PETSc, solve for x such that F(x) = 0

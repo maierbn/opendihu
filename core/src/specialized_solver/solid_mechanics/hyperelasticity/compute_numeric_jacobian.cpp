@@ -1,4 +1,4 @@
-#include "specialized_solver/hyperelasticity/compute_numeric_jacobian.h"
+#include "specialized_solver/solid_mechanics/hyperelasticity/compute_numeric_jacobian.h"
 
 #include <petsc/private/snesimpl.h>
 #include <petscdm.h>

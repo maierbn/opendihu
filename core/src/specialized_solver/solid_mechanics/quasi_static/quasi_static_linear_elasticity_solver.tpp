@@ -1,4 +1,4 @@
-#include "specialized_solver/quasi_static_linear_elasticity_solver.h"
+#include "specialized_solver/solid_mechanics/quasi_static/quasi_static_linear_elasticity_solver.h"
 
 #include <Python.h>  // has to be the first included header
 

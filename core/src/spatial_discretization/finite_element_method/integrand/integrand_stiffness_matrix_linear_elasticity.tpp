@@ -53,8 +53,6 @@ evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,D,Term> &data, co
               //  LOG(DEBUG) << "abcd=" << a << b << c << d << ": stiffness=" << data.linearStiffness(a, d, b, c) << ", integrand=" << integrand
               //    << " at " << indexL << "," << indexM << " (" << indexL*D + a << "," << indexM*D + b << ")";
 
-
-
               if (!std::isfinite(integrand))
               {
                 LOG(ERROR) << "Entry is not finite, abcd=" << a << b << c << d << ": stiffness=" << data.linearStiffness(a, d, b, c)

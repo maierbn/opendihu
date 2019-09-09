@@ -1,17 +1,17 @@
-#include "specialized_solver/hyperelasticity/quasi_static_hyperelasticity_solver.h"
+#include "specialized_solver/solid_mechanics/hyperelasticity/hyperelasticity_solver.h"
 
 #include <Python.h>  // has to be the first included header
 
-#include "specialized_solver/hyperelasticity/petsc_callbacks.h"
+#include "specialized_solver/solid_mechanics/hyperelasticity/petsc_callbacks.h"
 #include "solver/nonlinear.h"
 #include "control/dihu_context.h"
 #include "solver/solver_manager.h"
 #include "partition/partitioned_petsc_vec/02_partitioned_petsc_vec_for_hyperelasticity.h"
 
-namespace TimeSteppingScheme
+namespace SpatialDiscretization
 {
 
-void QuasiStaticHyperelasticitySolver::
+void HyperelasticitySolver::
 nonlinearSolve()
 {
   LOG(TRACE) << "nonlinear solve";
@@ -45,7 +45,7 @@ nonlinearSolve()
   */
 
   // set callback functions that are defined in petsc_callbacks.h
-  typedef QuasiStaticHyperelasticitySolver ThisClass;
+  typedef HyperelasticitySolver ThisClass;
 
   PetscErrorCode (*callbackNonlinearFunction)(SNES, Vec, Vec, void *)              = *nonlinearFunction<ThisClass>;
   PetscErrorCode (*callbackJacobianAnalytic)(SNES, Vec, Mat, Mat, void *)          = *jacobianFunctionAnalytic<ThisClass>;
@@ -150,7 +150,7 @@ nonlinearSolve()
   checkSolution(solverVariableSolution_);
 }
 
-void QuasiStaticHyperelasticitySolver::
+void HyperelasticitySolver::
 monitorSolvingIteration(SNES snes, PetscInt its, PetscReal norm)
 {
   //T* object = static_cast<T*>(mctx);
@@ -182,7 +182,7 @@ monitorSolvingIteration(SNES snes, PetscInt its, PetscReal norm)
   }
 }
 
-void QuasiStaticHyperelasticitySolver::
+void HyperelasticitySolver::
 debug()
 {
 
@@ -313,7 +313,7 @@ debug()
   LOG(FATAL) << "end";
 }
 
-void QuasiStaticHyperelasticitySolver::
+void HyperelasticitySolver::
 initializeSolutionVariable()
 {
   // set variable to all zero and dirichlet boundary condition values
@@ -341,7 +341,7 @@ initializeSolutionVariable()
   LOG(DEBUG) << "after initialization: " << combinedVecSolution_->getString();
 }
 
-void QuasiStaticHyperelasticitySolver::
+void HyperelasticitySolver::
 applyDirichletBoundaryConditionsInVector(Vec x)
 {
   // set x to x0 for values with dirichlet boundary condition
@@ -383,7 +383,7 @@ applyDirichletBoundaryConditionsInVector(Vec x)
   }
 }
 
-void QuasiStaticHyperelasticitySolver::
+void HyperelasticitySolver::
 applyDirichletBoundaryConditionsInJacobian(Vec x, Mat jac)
 {
   if (this->useNestedMat_)
@@ -483,7 +483,7 @@ applyDirichletBoundaryConditionsInJacobian(Vec x, Mat jac)
   }
 }
 
-void QuasiStaticHyperelasticitySolver::
+void HyperelasticitySolver::
 applyDirichletBoundaryConditionsInNonlinearFunction(Vec x, Vec f)
 {
   // set f to x-x0 for values with dirichlet boundary condition
@@ -544,7 +544,7 @@ applyDirichletBoundaryConditionsInNonlinearFunction(Vec x, Vec f)
   VLOG(1) << "f with BC: " << this->getString(f);
 }
 
-void QuasiStaticHyperelasticitySolver::
+void HyperelasticitySolver::
 evaluateNonlinearFunction(Vec x, Vec f)
 {
   //VLOG(1) << "evaluateNonlinearFunction at " << getString(x);
@@ -578,7 +578,7 @@ evaluateNonlinearFunction(Vec x, Vec f)
   //VLOG(1) << "f: " << getString(f);
 }
 
-void QuasiStaticHyperelasticitySolver::
+void HyperelasticitySolver::
 evaluateAnalyticJacobian(Vec x, Mat jac)
 {
   setInputVector(x);
@@ -589,7 +589,7 @@ evaluateAnalyticJacobian(Vec x, Mat jac)
   //MatAssemblyEnd(jac, MAT_FINAL_ASSEMBLY);
 }
 
-void QuasiStaticHyperelasticitySolver::
+void HyperelasticitySolver::
 setInputVector(Vec x)
 {
   // if not useNestedMat_, copy entries of combined vector x to this->data_.displacements() and this->data_.pressure()
@@ -651,7 +651,7 @@ setInputVector(Vec x)
   }
 }
 
-void QuasiStaticHyperelasticitySolver::
+void HyperelasticitySolver::
 setSolutionVector()
 {
   if (!this->useNestedMat_)
@@ -661,7 +661,7 @@ setSolutionVector()
   }
 }
 
-void QuasiStaticHyperelasticitySolver::
+void HyperelasticitySolver::
 dumpJacobianMatrix(Mat jac)
 {
   if (!dumpDenseMatlabVariables_)
@@ -691,7 +691,7 @@ dumpJacobianMatrix(Mat jac)
   }
 }
 
-void QuasiStaticHyperelasticitySolver::
+void HyperelasticitySolver::
 checkSolution(Vec x)
 {
   if (this->useNestedMat_)
@@ -836,7 +836,7 @@ checkSolution(Vec x)
   }
 }
 
-std::string QuasiStaticHyperelasticitySolver::
+std::string HyperelasticitySolver::
 getString(Vec x)
 {
   if (this->useNestedMat_)

@@ -10,7 +10,7 @@
 #include "stiffness_matrix_tester.h"
 #include "equation/diffusion.h"
 #include "../utility.h"
-/*
+
 TEST(DiffusionTest, ExplicitEuler1D)
 {
   std::string pythonConfig = R"(
@@ -156,7 +156,7 @@ config = {
   std::string referenceOutput = "{\"meshType\": \"StructuredRegularFixed\", \"dimension\": 1, \"nElementsGlobal\": [5], \"nElementsLocal\": [5], \"beginNodeGlobalNatural\": [0], \"hasFullNumberOfNodes\": [true], \"basisFunction\": \"Lagrange\", \"basisOrder\": 1, \"onlyNodalValues\": true, \"nRanks\": 1, \"ownRankNo\": 0, \"data\": [{\"name\": \"geometry\", \"components\": [{\"name\": \"x\", \"values\": [0.0, 0.8, 1.6, 2.4000000000000004, 3.2, 4.0]}, {\"name\": \"y\", \"values\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}, {\"name\": \"z\", \"values\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}]}, {\"name\": \"solution\", \"components\": [{\"name\": \"0\", \"values\": [2.0429559072490386, 2.2518627527228317, 3.8477024200726957, 4.495048744910582, 2.3533552300645306, 2.0611026396733574]}]}], \"timeStepNo\": 5, \"currentTime\": 0.1}";
   assertFileMatchesContent("out_diffusion1d_implicit_0000004.py", referenceOutput);
 
-}*/
+}
 
 TEST(DiffusionTest, ImplicitEuler1DPOD)
 {
@@ -274,7 +274,7 @@ config = {
   // compare to full output of POD problem
   assertFileMatchesContent("diffusion1d_pod_full_0000004.py", referenceOutput);
 }
-/*
+
 TEST(DiffusionTest, CrankNicolson1D)
 {
   std::string pythonConfig = R"(
@@ -562,4 +562,3 @@ config = {
     >
   > problem(settings);
 }
-*/

@@ -1,6 +1,7 @@
 #pragma once
 
-#include <petsc/petsc.h>
+#include <Python.h>  // has to be the first included header
+#include <petsc.h>
 
 /**
  * Callback functions for PETSc and the SNES solver

@@ -29,7 +29,7 @@ config = {
     "relativeTolerance": 1e-15,
     "meshName": "testMesh",
   },
-  "dirichletBoundaryConditions": {0:[1.0,np.nan], 1:[np.nan,2.0], 5:[1.0,np.nan]},
+  "dirichletBoundaryConditions": {0:[1.0,None], 1:[None,2.0], 5:[1.0,None]},
 }
 )";
 
@@ -178,7 +178,7 @@ config = {
     "relativeTolerance": 1e-15,
     "meshName": "testMesh",
   },
-  "dirichletBoundaryConditions": {0:[1.0,np.nan]} if (rank_no == 0) else {0:[np.nan,2.0], 3:[1.0,np.nan]},
+  "dirichletBoundaryConditions": {0:[1.0,None]} if (rank_no == 0) else {0:[None,2.0], 3:[1.0,None]},
   "inputMeshIsGlobal": False
 }
 )";
@@ -331,7 +331,7 @@ config = {
     "relativeTolerance": 1e-15,
     "meshName": "testMesh",
   },
-  "dirichletBoundaryConditions": {0:[1.0,np.nan,np.nan], 1:[np.nan,2.0,np.nan], 5:[1.0,np.nan,np.nan], 20:[np.nan,3.0,np.nan], 40:[np.nan,np.nan,2.0], 27:[np.nan,1.0,2.0], 33:[2.0,np.nan,np.nan]},
+  "dirichletBoundaryConditions": {0:[1.0,None,None], 1:[None,2.0,None], 5:[1.0,None,None], 20:[None,3.0,None], 40:[None,None,2.0], 27:[None,1.0,2.0], 33:[2.0,None,None]},
 }
 )";
 
@@ -486,7 +486,7 @@ config = {
     "relativeTolerance": 1e-15,
     "meshName": "testMesh",
   },
-  "dirichletBoundaryConditions": {0:[1.0,np.nan,np.nan], 1:[np.nan,2.0,np.nan], 5:[1.0,np.nan,np.nan], 20:[np.nan,3.0,np.nan], 40:[np.nan,np.nan,2.0], 27:[np.nan,1.0,2.0], 33:[2.0,np.nan,np.nan]},
+  "dirichletBoundaryConditions": {0:[1.0,None,None], 1:[None,2.0,None], 5:[1.0,None,None], 20:[None,3.0,None], 40:[None,None,2.0], 27:[None,1.0,2.0], 33:[2.0,None,None]},
 }
 )";
 

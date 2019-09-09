@@ -15,7 +15,6 @@ TEST(PartitionedPetscVecTest, Test)
 {
   // explicit functionSpace with node positions
   std::string pythonConfig = R"(
-import numpy as np
 # Laplace 1D
 config = {
   "Meshes" : {
@@ -28,7 +27,7 @@ config = {
     "relativeTolerance": 1e-15,
     "meshName": "testMesh",
   },
-  "dirichletBoundaryConditions": {6:[1.0,np.nan], 2:[np.nan,2.0], 28:[1.0,np.nan], -4:[2.0,1.0], -12:[3,4], 7: [np.nan,5]},
+  "dirichletBoundaryConditions": {6:[1.0,None], 2:[None,2.0], 28:[1.0,None], -4:[2.0,1.0], -12:[3,4], 7: [None,5]},
 }
 )";
 

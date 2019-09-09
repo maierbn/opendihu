@@ -4,7 +4,7 @@
 #include <map>
 #include <vector>
 
-#include "mesh/mapping_between_meshes.h"
+#include "mesh/mapping_between_meshes/mapping_between_meshes.h"
 #include "field_variable/00_field_variable_base.h"
 
 namespace Mesh
@@ -153,4 +153,4 @@ protected:
 
 }  // namespace
 
-#include "mesh/mapping_between_meshes_manager.tpp"
+#include "mesh/mapping_between_meshes/mapping_between_meshes_manager.tpp"

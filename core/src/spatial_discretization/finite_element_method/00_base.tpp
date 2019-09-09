@@ -13,7 +13,7 @@
 
 #include "mesh/structured_regular_fixed.h"
 #include "basis_function/lagrange.h"
-#include "mesh/mesh_manager.h"
+#include "mesh/mesh_manager/mesh_manager.h"
 #include "solver/solver_manager.h"
 #include "solver/linear.h"
 #include "partition/partitioned_petsc_vec/partitioned_petsc_vec.h"

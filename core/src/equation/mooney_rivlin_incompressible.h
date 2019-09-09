@@ -14,6 +14,8 @@ namespace SolidMechanics
  */
 struct MooneyRivlinIncompressible3D
 {
+  static constexpr bool usesFiberDirection = false;   //< if the equation depends on a fiber direction, i.e. has 4th and 5th invariant
+
   // define helper variables for strain energy density function
   // reduced invariants
   static constexpr auto Ibar1 = VAR(0);    //< 1st reduced invariant

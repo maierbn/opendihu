@@ -5,7 +5,7 @@
 
 #include "control/dihu_context.h"
 //#include "function_space/function_space.h"
-#include "mesh/mapping_between_meshes_manager.h"
+#include "mesh/mapping_between_meshes/mapping_between_meshes_manager.h"
 #include "function_space/function_space_generic.h"
 
 namespace Partition{
@@ -101,4 +101,4 @@ private:
 
 }  // namespace
 
-#include "mesh/mesh_manager.tpp"
+#include "mesh/mesh_manager/mesh_manager.tpp"

@@ -4,7 +4,7 @@
 #include "utility/python_utility.h"
 #include "utility/petsc_utility.h"
 #include<petscmat.h>
-#include "mesh/mesh_manager.h"
+#include "mesh/mesh_manager/mesh_manager.h"
 #include "function_space/function_space.h"
 #include "time_stepping_scheme/time_stepping_scheme.h"
 #include "time_stepping_scheme/time_stepping_scheme_ode.h"

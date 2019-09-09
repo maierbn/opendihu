@@ -7,7 +7,7 @@
 #include "utility/python_utility.h"
 #include "data_management/time_stepping/time_stepping.h"
 #include "control/performance_measurement.h"
-#include "mesh/mesh_manager.h"
+#include "mesh/mesh_manager/mesh_manager.h"
 
 namespace OperatorSplitting
 {

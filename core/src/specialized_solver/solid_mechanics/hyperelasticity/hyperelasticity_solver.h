@@ -87,6 +87,12 @@ public:
 
 protected:
 
+  //! initialize all Petsc Vec's and Mat's that will be used in the computation
+  void initializePetscVariables();
+
+  //! initialize the field variable which stores directions of fibers
+  void initializeFiberDirections();
+
   //! use Petsc to solve the nonlinear equation using the SNES solver
   void nonlinearSolve();
 

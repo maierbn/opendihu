@@ -110,9 +110,6 @@ initialize()
   displacementsFunctionSpace_ = context_.meshManager()->functionSpace<DisplacementsFunctionSpace>(specificSettings_);
 
   // create 3D function space with linear basis functions
-  //FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, const std::vector<Vec3> &nodePositions,
-  //                       const std::array<element_no_t,D> nElementsPerCoordinateDirection, const std::array<int,D> nRanksPerCoordinateDirection);
-
   std::vector<Vec3> nodePositionsLinearMesh;
 
   // loop over nodes of quadratic function space and extract nodes for linear function space
@@ -171,10 +168,35 @@ initialize()
     neumannBoundaryConditions_->initialize(this->specificSettings_, this->data_.functionSpace(), "neumannBoundaryConditions");
   }
 
-  // setup Petsc variables
+  // initialize fiber direction field
+  if (Term::usesFiberDirection)
+  {
+    initializeFiberDirections();
+  }
 
+  // setup Petsc variables
+  initializePetscVariables();
+
+  LOG(DEBUG) << "initialization done";
+  this->initialized_ = true;
+}
+
+template<typename Term>
+void HyperelasticitySolver<Term>::
+initializeFiberDirections()
+{
+  std::vector<std::string> fiberMeshNames;
+  this->specificSettings_.getOptionVector<std::string>("fiberMeshNames", fiberMeshNames);
+
+
+}
+
+template<typename Term>
+void HyperelasticitySolver<Term>::
+initializePetscVariables()
+{
   /*
-   * matrix layout for one process:
+   * jacobian matrix layout (for one process):
    *  (U U U P)
    *  (U U U P)
    *  (U U U P)
@@ -296,10 +318,8 @@ initialize()
     LOG(DEBUG) << "initial analytic jacobian matrix: ";
     dumpJacobianMatrix(solverMatrixJacobian_);
   }
-
-  LOG(DEBUG) << "initialization done";
-  this->initialized_ = true;
 }
+
 
 //! get the PartitionedPetsVec for the residual and result of the nonlinear function
 template<typename Term>

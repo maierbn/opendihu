@@ -4,8 +4,8 @@
 #include <tuple>
 #include "easylogging++.h"
 
-#include "mesh/mapping_between_meshes.h"
-#include "mesh/mesh_manager.h"
+#include "mesh/mapping_between_meshes/mapping_between_meshes.h"
+#include "mesh/mesh_manager/mesh_manager.h"
 
 template<typename BasisFunctionType, int nComponents1, typename FieldVariableType2>
 void SolutionVectorMapping<

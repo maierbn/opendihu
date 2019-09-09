@@ -23,7 +23,7 @@
 #include "output_writer/python_callback/python_callback.h"
 #include "output_writer/python_file/python_file.h"
 #include "output_writer/exfile/exfile.h"
-#include "mesh/mesh_manager.h"
+#include "mesh/mesh_manager/mesh_manager.h"
 #include "solver/solver_manager.h"
 #include "partition/partition_manager.h"
 

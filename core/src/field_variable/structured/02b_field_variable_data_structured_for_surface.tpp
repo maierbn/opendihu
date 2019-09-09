@@ -4,7 +4,7 @@
 #include <petsc.h>
 
 #include "partition/rank_subset.h"
-#include "mesh/mesh_manager.h"
+#include "mesh/mesh_manager/mesh_manager.h"
 
 namespace FieldVariable
 {

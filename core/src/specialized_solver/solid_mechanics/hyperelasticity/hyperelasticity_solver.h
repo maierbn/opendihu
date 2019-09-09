@@ -57,15 +57,6 @@ public:
   //! return the data object
   Data &data();
 
-  //! zero rows and columns in jac for which dirichlet values are set, set diagonal to 1
-  void applyDirichletBoundaryConditionsInJacobian(Vec x, Mat jac);
-
-  //! set f to x-x0 for values with dirichlet boundary condition
-  void applyDirichletBoundaryConditionsInNonlinearFunction(Vec x, Vec f);
-
-  //! apply the Dirichlet BCs in the input vector x, i.e. set all Dirichlet values in x
-  void applyDirichletBoundaryConditionsInVector(Vec x);
-
   //! this evaluates the actual nonlinear function f(x) that should be solved f(x) = 0
   void evaluateNonlinearFunction(Vec x, Vec f);
 
@@ -166,18 +157,8 @@ protected:
   Vec solverVariableSolution_;         //< PETSc Vec to store the solution
   Vec zeros_;                          // a solver that contains all zeros, needed to zero the diagonal of the jacobian matrix
 
-  // data structures for nested matrices and vectors
-  std::array<Mat,16> submatrices_;  // all submatrices of the 4x4 block jacobian matrix, solverMatrixJacobian_
-  std::array<Vec,4> subvectorsSolution_;  // all subvectors of the 4 entries vector, solverVariableSolution_
-  std::array<Vec,4> subvectorsResidual_;  // all subvectors of the 4 entries vector, solverVariableResidual_
-  std::vector<PartitionedPetscMat<DisplacementsFunctionSpace,DisplacementsFunctionSpace>> uMatrix_;    //< upper left 3x3 blocks of matrices in the jacobian for Newton scheme
-  std::vector<PartitionedPetscMat<DisplacementsFunctionSpace,PressureFunctionSpace>> upMatrix_;        //< lower left 1x3 blocks of matrices in the jacobian for Newton scheme
-  std::vector<PartitionedPetscMat<PressureFunctionSpace,DisplacementsFunctionSpace>> puMatrix_;        //< upper right 3x1 blocks of matrices in the jacobian for Newton scheme
-  std::vector<PartitionedPetscMat<PressureFunctionSpace,PressureFunctionSpace>> pMatrix_;                           //< lower left matrix in the jacobian for Newton scheme
-
-  // data structures for combined matrices and vectors
   std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>> combinedVecResidual_;      //< the Vec for the residual and result of the nonlinear function
-  std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>> combinedVecSolution_;      //< the Vec for the solution
+  std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>> combinedVecSolution_;      //< the Vec for the solution, combined means that ux,uy,uz and p components are combined in one vector
   std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>> combinedVecExternalVirtualWork_;      //< the Vec for the external virtual work
 
   //std::shared_ptr<PartitionedPetscMat<FunctionSpace::Generic>> combinedMatrixJacobian_;    //< single jacobian matrix, when useNestedMat_ is false
@@ -200,7 +181,6 @@ protected:
   double displacementsScalingFactor_;   ///< factor with which to scale the displacements
   bool dumpDenseMatlabVariables_;      ///< the current vector x, the residual, r and the jacobian, jac should be written
 
-  bool useNestedMat_ = false;   ///< if the MatNest and VecNest data structures of Petsc should be used, this avoids data copy but is harder to debug
   bool useAnalyticJacobian_;   ///< if the analytically computed Jacobian of the Newton scheme should be used. Theoretically if it is correct, this is the fastest option.
   bool useNumericJacobian_;   ///< if a numerically computed Jacobian should be used, approximated by finite differences
 };

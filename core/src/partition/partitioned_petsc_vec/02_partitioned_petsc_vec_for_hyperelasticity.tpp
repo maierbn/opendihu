@@ -130,6 +130,12 @@ template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpace
 std::string PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>::
 getString(bool horizontal, std::string vectorName)
 {
+  // do not assemble a horizontal string for console in release mode, because this is only needed for debugging output
+#ifdef NDEBUG
+  if (horizontal)
+    return std::string("");
+#endif
+
   std::stringstream result;
   int ownRankNo = this->meshPartition_->ownRankNo();
 

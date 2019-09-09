@@ -11,12 +11,6 @@ void HyperelasticitySolver::
 materialComputeResidual()
 {
   // compute Wint - Wext in solverVariableResidual_
-  // if useNestedMat_:
-  //  output is solverVariableResidual_, which is a nested vector of subvectorsResidual_[0-4]
-  //  input is solverVariableSolution_, which is a nested vector of subvectorsSolution_[0-4]
-  //  subvectorsSolution_ is the same vector as this->data_.displacements() (3 components) and this->data_.pressure() (1 component)
-  //
-  // if not useNestedMat_:
   //  output is solverVariableResidual_, a normal Vec, no Dirichlet BC dofs
   //  input is solverVariableSolution_, a normal Vec, the same values have already been assigned to this->data_.displacements() and this->data_.pressure()
 
@@ -60,15 +54,8 @@ materialComputeResidual()
   PetscErrorCode ierr;
 
   // set values to zero
-  if (useNestedMat_)
-  {
-    ierr = VecZeroEntries(solverVariableResidual_); CHKERRV(ierr);
-  }
-  else
-  {
-    combinedVecResidual_->zeroEntries();
-    combinedVecResidual_->startGhostManipulation();
-  }
+  combinedVecResidual_->zeroEntries();
+  combinedVecResidual_->startGhostManipulation();
 
   static int evaluationNo = 0;  // counter how often this function was called
 
@@ -270,15 +257,8 @@ materialComputeResidual()
         VLOG(1) << "  result vector (L,a)=(" <<aDof<< "," <<aComponent<< "), " <<i<< ", dof " << dofNosLocal[aDof] << " all elemental dofs: "  << dofNosLocal
           << ", integrated value: " <<integratedValue;
 
-        if (useNestedMat_)
-        {
-          ierr = VecSetValue(subvectorsResidual_[aComponent], dofNoLocal, integratedValue, ADD_VALUES); CHKERRV(ierr);
-        }
-        else
-        {
-          combinedVecResidual_->setValue(aComponent, dofNoLocal, integratedValue, ADD_VALUES);
-          VLOG(1) << "u: set value " << integratedValue << " at dofNoLocal: " << dofNoLocal << ", component: " << aComponent;
-        }
+        combinedVecResidual_->setValue(aComponent, dofNoLocal, integratedValue, ADD_VALUES);
+        VLOG(1) << "u: set value " << integratedValue << " at dofNoLocal: " << dofNoLocal << ", component: " << aComponent;
       }  // aComponent
     }  // aDof
 
@@ -294,37 +274,15 @@ materialComputeResidual()
       dof_no_t dofNoLocal = pressureDofNosLocal[aDof];
 
       // set value of result vector
-      if (useNestedMat_)
-      {
-        ierr = VecSetValue(subvectorsResidual_[3], dofNoLocal, integratedValue, ADD_VALUES); CHKERRV(ierr);
-      }
-      else
-      {
-        combinedVecResidual_->setValue(3, dofNoLocal, integratedValue, ADD_VALUES);
-        VLOG(1) << "p: set value " << integratedValue << " at dofNoLocal: " << dofNoLocal;
-      }
+      combinedVecResidual_->setValue(3, dofNoLocal, integratedValue, ADD_VALUES);
+      VLOG(1) << "p: set value " << integratedValue << " at dofNoLocal: " << dofNoLocal;
     }
   }  // elementNoLocal
 
   // assemble result vector
-  if (useNestedMat_)
-  {
-    for (int componentNo = 0; componentNo < 4; componentNo++)    // a
-    {
-      ierr = VecAssemblyBegin(subvectorsResidual_[componentNo]); CHKERRV(ierr);
-    }
-    for (int componentNo = 0; componentNo < 4; componentNo++)    // a
-    {
-      ierr = VecAssemblyEnd(subvectorsResidual_[componentNo]); CHKERRV(ierr);
-    }
-  }
-  else
-  {
-    combinedVecResidual_->finishGhostManipulation();
-  }
+  combinedVecResidual_->finishGhostManipulation();
 
-  // if useNestedMat_: here, subvectorsResidual_[0-2] contains δW_int, subvectorsResidual_[3] contains int_Ω (J-1)*Ψ dV
-  // else solverVariableResidual_ contains δW_int
+  // solverVariableResidual_ contains δW_int
 
   // output values for debugging
   if (outputValues)
@@ -332,58 +290,18 @@ materialComputeResidual()
     //LOG(DEBUG) << "input u: " << *this->data_.displacements();
     //LOG(DEBUG) << "input p: " << *this->data_.pressure();
 
-    if (useNestedMat_)
-    {
-      for (int componentNo = 0; componentNo < 3; componentNo++)    // a
-      {
-        LOG(DEBUG) << "δW_int_" << std::string(1, char('x'+componentNo)) << ": " << PetscUtility::getStringVector(subvectorsResidual_[componentNo]);
-      }
-      for (int componentNo = 0; componentNo < 3; componentNo++)    // a
-      {
-        LOG(DEBUG) << "δW_ext_" << std::string(1, char('x'+componentNo)) << ": " << PetscUtility::getStringVector(neumannBoundaryConditions_->rhs()->valuesGlobal(componentNo));
-      }
-    }
-    else
-    {
-      LOG(DEBUG) << "δW_int: " << getString(solverVariableResidual_);
-      LOG(DEBUG) << "δW_ext: " << getString(externalVirtualWork_);
-    }
+    LOG(DEBUG) << "δW_int: " << getString(solverVariableResidual_);
+    LOG(DEBUG) << "δW_ext: " << getString(externalVirtualWork_);
   }
 
-  // substract external virtual work from subvectorsResidual_[0-2], only traction term,
-  // δW_ext = int_∂Ω T_a phi_L dS
-  if (useNestedMat_)
-  {
-    for (int componentNo = 0; componentNo < 3; componentNo++)    // a
-    {
-      ierr = VecAXPY(subvectorsResidual_[componentNo], -1, neumannBoundaryConditions_->rhs()->valuesGlobal(componentNo)); CHKERRV(ierr);
-    }
-
-    // assemble result vector
-    for (int componentNo = 0; componentNo < 4; componentNo++)    // a
-    {
-      ierr = VecAssemblyBegin(subvectorsResidual_[componentNo]); CHKERRV(ierr);
-    }
-    for (int componentNo = 0; componentNo < 4; componentNo++)    // a
-    {
-      ierr = VecAssemblyEnd(subvectorsResidual_[componentNo]); CHKERRV(ierr);
-    }
-  }
-  else
-  {
-    ierr = VecAXPY(solverVariableResidual_, -1, externalVirtualWork_); CHKERRV(ierr);
-  }
+  // compute F = δW_int - δW_ext,
+  // δW_ext = int_∂Ω T_a phi_L dS was precomputed in initialize
+  ierr = VecAXPY(solverVariableResidual_, -1, externalVirtualWork_); CHKERRV(ierr);
 
   if(outputValues)
     LOG(DEBUG) << "total:   " << getString(solverVariableResidual_);
 
-  if (useNestedMat_)
-  {
-    ierr = VecAssemblyBegin(solverVariableResidual_); CHKERRV(ierr);
-    ierr = VecAssemblyEnd(solverVariableResidual_); CHKERRV(ierr);
-  }
-
-  // dump output vector
+  // dump output vector to file
   if (outputFiles)
   {
     // dumpVector(std::string filename, std::string format, Vec &vector, MPI_Comm mpiCommunicator, int componentNo=0, int nComponents=1);
@@ -403,10 +321,6 @@ void HyperelasticitySolver::
 materialComputeJacobian()
 {
   // analytic jacobian combinedMatrixJacobian_
-  // if useNestedMat_:
-  //   not implemented
-  //
-  // if not useNestedMat_:
   //  output is combinedMatrixJacobian_, a PartitionedPetscMat or solverMatrixJacobian_, the normal Mat, contains no Dirichlet BC dofs
   //  input is solverVariableSolution_, a normal Vec, the same values have already been assigned to this->data_.displacements() and this->data_.pressure()
 
@@ -439,11 +353,6 @@ materialComputeJacobian()
 
   // setup arrays used for integration
   std::array<Vec3, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
-
-  if (useNestedMat_)
-  {
-    LOG(FATAL) << "not implemented";
-  }
 
   // set values to zero to be able to add values later
 

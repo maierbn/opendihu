@@ -4,7 +4,6 @@
 #include <easylogging++.h>
 
 #include "utility/petsc_utility.h"
-#include "specialized_solver/solid_mechanics/hyperelasticity/compute_numeric_jacobian.h"
 
 /**
  * Nonlinear function F that gets solved by PETSc, solve for x such that F(x) = 0
@@ -25,14 +24,8 @@ PetscErrorCode nonlinearFunction(SNES snes, Vec x, Vec f, void *context)
   VLOG(1) << "pointer value x: " << x;
   VLOG(1) << "pointer value f: " << f;
 
-  // set prescribed values in x to x0, to also make the columns vanish in the numeric jacobian
-  //object->applyDirichletBoundaryConditionsInVector(x);
-
   // compute the lhs which is the virtual work and the incompressibility constraint
   object->evaluateNonlinearFunction(x, f);
-
-  // set rows in f to x - x0 for which dirichlet BC in x is given
-  //object->applyDirichletBoundaryConditionsInNonlinearFunction(x_original, f);
 
   // compute and output function norm
   if (VLOG_IS_ON(1))
@@ -68,9 +61,6 @@ PetscErrorCode jacobianFunctionAnalytic(SNES snes, Vec x, Mat jac, Mat b, void *
   // compute jacobian by analytic formula
   object->evaluateAnalyticJacobian(x, jac);
 
-  // zero rows and columns for which Dirichlet BC is set, set diagonal to 1
-  object->applyDirichletBoundaryConditionsInJacobian(x, jac);
-
   // output the jacobian matrix for debugging
   object->dumpJacobianMatrix(jac);
 
@@ -94,10 +84,7 @@ PetscErrorCode jacobianFunctionFiniteDifferences(SNES snes, Vec x, Mat jac, Mat 
     << "solution: " << object->combinedVecSolution()->getString() << ", residual: " << object->combinedVecResidual()->getString();
 
   // compute jacobian by finite differences, in b (but this is the same pointer as jac)
-  SNESComputeJacobianDefaultNested(snes, x, jac, b, context);
-
-  // zero rows and columns for which Dirichlet BC is set, set diagonal to 1
-  object->applyDirichletBoundaryConditionsInJacobian(x, jac);
+  SNESComputeJacobianDefault(snes, x, jac, b, context);
 
   // output the jacobian matrix for debugging
   object->dumpJacobianMatrix(jac);
@@ -120,10 +107,7 @@ PetscErrorCode jacobianFunctionCombined(SNES snes, Vec x, Mat jac, Mat b, void *
   VLOG(1) << "pointer value b:   " << b << " (should be the analytic slot)";
 
   // compute the finite differences jacobian in the main jacobian slot jac
-  SNESComputeJacobianDefaultNested(snes, x, jac, jac, context);
-
-  // zero rows and columns for which Dirichlet BC is set
-  object->applyDirichletBoundaryConditionsInJacobian(x, jac);
+  SNESComputeJacobianDefault(snes, x, jac, jac, context);
 
   // output the jacobian matrix for debugging
   object->dumpJacobianMatrix(jac);
@@ -131,13 +115,8 @@ PetscErrorCode jacobianFunctionCombined(SNES snes, Vec x, Mat jac, Mat b, void *
   // compute the tangent stiffness matrix, stored in the preconditioner slot b
   object->evaluateAnalyticJacobian(x, b);
 
-  // zero rows and columns for which Dirichlet BC is set
-  object->applyDirichletBoundaryConditionsInJacobian(x, b);
-
   // output the jacobian matrix for debugging
   object->dumpJacobianMatrix(b);
-
-  object->debug();
 
   //LOG_AFTER_N(2,FATAL) << "terminate in jacobianFunctionCombined";
   return 0;

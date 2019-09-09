@@ -11,7 +11,8 @@ namespace FieldVariable
 
 template<typename BasisFunctionType, int nComponents>
 FieldVariableDataStructuredForSurface<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<2>,BasisFunctionType>,nComponents>::
-FieldVariableDataStructuredForSurface(FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>,BasisFunctionType>,nComponents> &rhs, Mesh::face_t face, bool &ownRankInvolvedInOutput)
+FieldVariableDataStructuredForSurface(FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>,BasisFunctionType>,nComponents> &rhs, Mesh::face_t face, bool &ownRankInvolvedInOutput) :
+  FieldVariableDataStructured<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<2>,BasisFunctionType>,nComponents>::FieldVariableDataStructured()
 {
   // initialize everything from other field variable, which is 3D but this field variable is 2D
   assert(rhs.getNComponents() == nComponents);

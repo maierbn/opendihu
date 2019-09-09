@@ -60,7 +60,7 @@ initialize()
     PythonUtility::printDict(specificSettings_.pyObject());
   }
   
-  // create a mesh if there is not yet one assigned, function space FunctionSpace::Generic, downcasted to Mesh::Mesh
+  // create a mesh if there is not yet one assigned, function space FunctionSpace::Generic
   if (!functionSpace_)
   {
     functionSpace_ = context_.meshManager()->functionSpace<FunctionSpaceType>(specificSettings_);  // create initialized mesh

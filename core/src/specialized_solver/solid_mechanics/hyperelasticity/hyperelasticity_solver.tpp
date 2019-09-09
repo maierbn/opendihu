@@ -10,7 +10,8 @@
 namespace SpatialDiscretization
 {
 
-HyperelasticitySolver::
+template<typename Term>
+HyperelasticitySolver<Term>::
 HyperelasticitySolver(DihuContext context) :
   context_(context["HyperelasticitySolver"]), data_(context_), pressureDataCopy_(context_), initialized_(false), endTime_(0)
 {
@@ -53,8 +54,8 @@ HyperelasticitySolver(DihuContext context) :
   this->outputWriterManagerPressure_.initialize(this->context_, this->context_["pressure"].getPythonConfig());
 }
 
-
-void HyperelasticitySolver::
+template<typename Term>
+void HyperelasticitySolver<Term>::
 advanceTimeSpan()
 {
   // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
@@ -78,7 +79,8 @@ advanceTimeSpan()
   this->outputWriterManagerPressure_.writeOutput(this->pressureDataCopy_, 1, endTime_);
 }
 
-void HyperelasticitySolver::
+template<typename Term>
+void HyperelasticitySolver<Term>::
 run()
 {
   // initialize everything
@@ -87,15 +89,15 @@ run()
   this->advanceTimeSpan();
 }
 
-
-void HyperelasticitySolver::
+template<typename Term>
+void HyperelasticitySolver<Term>::
 setTimeSpan(double startTime, double endTime)
 {
   endTime_ = endTime;
 }
 
-
-void HyperelasticitySolver::
+template<typename Term>
+void HyperelasticitySolver<Term>::
 initialize()
 {
   if (this->initialized_)
@@ -157,7 +159,7 @@ initialize()
   // initialize Dirichlet boundary conditions
   if (dirichletBoundaryConditions_ == nullptr)
   {
-    dirichletBoundaryConditions_ = std::make_shared<SpatialDiscretization::DirichletBoundaryConditions<DisplacementsFunctionSpace,3>>(this->context_);
+    dirichletBoundaryConditions_ = std::make_shared<DirichletBoundaryConditions<DisplacementsFunctionSpace,3>>(this->context_);
     dirichletBoundaryConditions_->initialize(this->specificSettings_, this->data_.functionSpace(), "dirichletBoundaryConditions");
   }
 
@@ -165,7 +167,7 @@ initialize()
   if (neumannBoundaryConditions_ == nullptr)
   {
     typedef Quadrature::Gauss<3> QuadratureType;
-    neumannBoundaryConditions_ = std::make_shared<SpatialDiscretization::NeumannBoundaryConditions<DisplacementsFunctionSpace,QuadratureType,3>>(this->context_);
+    neumannBoundaryConditions_ = std::make_shared<NeumannBoundaryConditions<DisplacementsFunctionSpace,QuadratureType,3>>(this->context_);
     neumannBoundaryConditions_->initialize(this->specificSettings_, this->data_.functionSpace(), "neumannBoundaryConditions");
   }
 
@@ -300,37 +302,40 @@ initialize()
 }
 
 //! get the PartitionedPetsVec for the residual and result of the nonlinear function
-std::shared_ptr<PartitionedPetscVecForHyperelasticity<typename HyperelasticitySolver::DisplacementsFunctionSpace,typename HyperelasticitySolver::PressureFunctionSpace>> HyperelasticitySolver::
+template<typename Term>
+std::shared_ptr<PartitionedPetscVecForHyperelasticity<typename HyperelasticitySolver<Term>::DisplacementsFunctionSpace,typename HyperelasticitySolver<Term>::PressureFunctionSpace>> HyperelasticitySolver<Term>::
 combinedVecResidual()
 {
   return this->combinedVecResidual_;
 }
 
 //! get the PartitionedPetsVec for the solution
-std::shared_ptr<PartitionedPetscVecForHyperelasticity<typename HyperelasticitySolver::DisplacementsFunctionSpace,typename HyperelasticitySolver::PressureFunctionSpace>> HyperelasticitySolver::
+template<typename Term>
+std::shared_ptr<PartitionedPetscVecForHyperelasticity<typename HyperelasticitySolver<Term>::DisplacementsFunctionSpace,typename HyperelasticitySolver<Term>::PressureFunctionSpace>> HyperelasticitySolver<Term>::
 combinedVecSolution()
 {
   return this->combinedVecSolution_;
 }
 
-void HyperelasticitySolver::reset()
+template<typename Term>
+void HyperelasticitySolver<Term>::reset()
 {
   this->initialized_ = false;
 }
 
 //! return whether the underlying discretizableInTime object has a specified mesh type and is not independent of the mesh type
-
-bool HyperelasticitySolver::
+template<typename Term>
+bool HyperelasticitySolver<Term>::
 knowsMeshType()
 {
   return true;
 }
 
-typename HyperelasticitySolver::Data &
-HyperelasticitySolver::
+template<typename Term>
+typename HyperelasticitySolver<Term>::Data &HyperelasticitySolver<Term>::
 data()
 {
   return data_;
 }
 
-} // namespace TimeSteppingScheme
+} // namespace SpatialDiscretization

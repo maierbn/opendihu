@@ -20,6 +20,7 @@ namespace SpatialDiscretization
  * Further improvements for solving: https://github.com/jedbrown/spectral-petsc/blob/master/stokes.C
  * https://lists.mcs.anl.gov/pipermail/petsc-dev/2008-April/000711.html
   */
+template<typename Term = Equation::SolidMechanics::MooneyRivlinIncompressible3D>
 class HyperelasticitySolver :
   public Runnable
 {
@@ -81,6 +82,7 @@ public:
   //! output the jacobian matrix for debugging
   void dumpJacobianMatrix(Mat jac);
 
+  //! not used
   void debug();
 
   //! callback after each nonlinear iteration
@@ -186,3 +188,7 @@ protected:
 };
 
 }  // namespace
+
+#include "specialized_solver/solid_mechanics/hyperelasticity/hyperelasticity_solver.tpp"
+#include "specialized_solver/solid_mechanics/hyperelasticity/material_computations.tpp"
+#include "specialized_solver/solid_mechanics/hyperelasticity/nonlinear_solve.tpp"

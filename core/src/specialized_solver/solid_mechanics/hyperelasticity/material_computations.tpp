@@ -7,7 +7,8 @@
 namespace SpatialDiscretization
 {
 
-void HyperelasticitySolver::
+template<typename Term>
+void HyperelasticitySolver<Term>::
 materialComputeResidual()
 {
   // compute Wint - Wext in solverVariableResidual_
@@ -317,7 +318,8 @@ materialComputeResidual()
   evaluationNo++;
 }
 
-void HyperelasticitySolver::
+template<typename Term>
+void HyperelasticitySolver<Term>::
 materialComputeJacobian()
 {
   // analytic jacobian combinedMatrixJacobian_
@@ -729,7 +731,8 @@ materialComputeJacobian()
   combinedMatrixJacobian_->assembly(MAT_FINAL_ASSEMBLY);
 }
 
-Tensor2<3> HyperelasticitySolver::
+template<typename Term>
+Tensor2<3> HyperelasticitySolver<Term>::
 computeDeformationGradient(const std::array<Vec3,DisplacementsFunctionSpace::nDofsPerElement()> &displacements,
                            const Tensor2<3> &inverseJacobianMaterial,
                            const std::array<double, 3> xi
@@ -789,7 +792,8 @@ computeDeformationGradient(const std::array<Vec3,DisplacementsFunctionSpace::nDo
   return deformationGradient;
 }
 
-Tensor2<3> HyperelasticitySolver::
+template<typename Term>
+Tensor2<3> HyperelasticitySolver<Term>::
 computeRightCauchyGreenTensor(const Tensor2<3> &deformationGradient)
 {
   // compute C = F^T*F where F is the deformationGradient and C is the right Cauchy-Green Tensor
@@ -815,7 +819,8 @@ computeRightCauchyGreenTensor(const Tensor2<3> &deformationGradient)
   return rightCauchyGreenTensor;
 }
 
-std::array<double,3> HyperelasticitySolver::
+template<typename Term>
+std::array<double,3> HyperelasticitySolver<Term>::
 computeInvariants(const Tensor2<3> &rightCauchyGreen, const double rightCauchyGreenDeterminant)
 {
   std::array<double,3> invariants;
@@ -846,7 +851,8 @@ computeInvariants(const Tensor2<3> &rightCauchyGreen, const double rightCauchyGr
   return invariants;
 }
 
-std::array<double,2> HyperelasticitySolver::
+template<typename Term>
+std::array<double,2> HyperelasticitySolver<Term>::
 computeReducedInvariants(const std::array<double,3> invariants, const double deformationGradientDeterminant)
 {
   std::array<double,2> reducedInvariants;
@@ -872,7 +878,8 @@ computeReducedInvariants(const std::array<double,3> invariants, const double def
   return reducedInvariants;
 }
 
-Tensor2<3> HyperelasticitySolver::
+template<typename Term>
+Tensor2<3> HyperelasticitySolver<Term>::
 computePK2Stress(const double pressure,                             //< [in] pressure value p
                  const Tensor2<3> &rightCauchyGreen,                //< [in] C
                  const Tensor2<3> &inverseRightCauchyGreen,         //< [in] C^{-1}
@@ -884,8 +891,6 @@ computePK2Stress(const double pressure,                             //< [in] pre
 {
   // compute the PK2 stress tensor as S=2*dPsi/dC
   // for explanation see pdf document
-  typedef Equation::Static::MooneyRivlinIncompressible3D Term;
-
   auto dPsi_dIbar1Expression = SEMT::deriv_t(Term::strainEnergyDensityFunctionIsochoric, Term::Ibar1);
   auto dPsi_dIbar2Expression = SEMT::deriv_t(Term::strainEnergyDensityFunctionIsochoric, Term::Ibar2);
 
@@ -1040,7 +1045,8 @@ computePK2Stress(const double pressure,                             //< [in] pre
   return pK2Stress;
 }
 
-void HyperelasticitySolver::
+template<typename Term>
+void HyperelasticitySolver<Term>::
 computePK2StressField()
 {
   //LOG(TRACE) << "computePK2StressField";
@@ -1168,8 +1174,9 @@ computePK2StressField()
   this->data_.pK2Stress()->startGhostManipulation();
 }
 
+template<typename Term>
 //! compute the material elasticity tensor
-void HyperelasticitySolver::
+void HyperelasticitySolver<Term>::
 computeElasticityTensor(const Tensor2<3> &rightCauchyGreen,         //< [in] C
                         const Tensor2<3> &inverseRightCauchyGreen,  //< [in] C^{-1}
                         double deformationGradientDeterminant,      //< [in] J = det(F)
@@ -1184,7 +1191,6 @@ computeElasticityTensor(const Tensor2<3> &rightCauchyGreen,         //< [in] C
   // compute the elasticity tensor as CC=2*dS(C)/dC
   // for explanation see pdf document
   const int D = 3;
-  typedef Equation::Static::MooneyRivlinIncompressible3D Term;
 
   // compute preliminary variables that are independent of the indices a,b,c,d
   auto dPsi_dIbar1Expression = SEMT::deriv_t(Term::strainEnergyDensityFunctionIsochoric, Term::Ibar1);
@@ -1390,6 +1396,5 @@ computeElasticityTensor(const Tensor2<3> &rightCauchyGreen,         //< [in] C
     LOG(DEBUG) << "elasticity tensor checked for minor symmetries";
   }
 }
-
 
 } // namespace

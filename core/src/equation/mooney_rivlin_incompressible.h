@@ -7,20 +7,13 @@
 
 namespace Equation
 {
-namespace Static
+namespace SolidMechanics
 {
 
 /** Hyperelastic solid mechanics formulation with arbitrary strain energy density function
  */
-struct MooneyRivlinIncompressible3D : public Static
+struct MooneyRivlinIncompressible3D
 {
-  static constexpr bool usesTimeStepping = false;              ///< Equation of the form L = u_t
-  static constexpr bool hasLaplaceOperator = false;            ///< Equations that include Δu
-  static constexpr bool hasGeneralizedLaplaceOperator = false; ///< Equations that include ∇•(A∇u)
-  static constexpr bool hasRhs = true;                        ///< Equations that can have a non-zero rhs (Lu = f)
-  static constexpr bool isSolidMechanics = true;               ///< Equations of solid mechanics
-  static constexpr bool isIncompressible = true;              ///< Incompressible material
-
   // define helper variables for strain energy density function
   // reduced invariants
   static constexpr auto Ibar1 = VAR(0);    //< 1st reduced invariant

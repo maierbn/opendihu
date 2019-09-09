@@ -11,7 +11,8 @@
 namespace SpatialDiscretization
 {
 
-void HyperelasticitySolver::
+template<typename Term>
+void HyperelasticitySolver<Term>::
 nonlinearSolve()
 {
   LOG(TRACE) << "nonlinear solve";
@@ -152,7 +153,8 @@ nonlinearSolve()
 #endif
 }
 
-void HyperelasticitySolver::
+template<typename Term>
+void HyperelasticitySolver<Term>::
 monitorSolvingIteration(SNES snes, PetscInt its, PetscReal norm)
 {
   //T* object = static_cast<T*>(mctx);
@@ -184,7 +186,8 @@ monitorSolvingIteration(SNES snes, PetscInt its, PetscReal norm)
   }
 }
 
-void HyperelasticitySolver::
+template<typename Term>
+void HyperelasticitySolver<Term>::
 debug()
 {
 
@@ -315,7 +318,8 @@ debug()
   LOG(FATAL) << "end";
 }
 
-void HyperelasticitySolver::
+template<typename Term>
+void HyperelasticitySolver<Term>::
 initializeSolutionVariable()
 {
   // set variable to all zero and dirichlet boundary condition value
@@ -326,7 +330,8 @@ initializeSolutionVariable()
   LOG(DEBUG) << "after initialization: " << combinedVecSolution_->getString();
 }
 
-void HyperelasticitySolver::
+template<typename Term>
+void HyperelasticitySolver<Term>::
 evaluateNonlinearFunction(Vec x, Vec f)
 {
   //VLOG(1) << "evaluateNonlinearFunction at " << getString(x);
@@ -360,7 +365,8 @@ evaluateNonlinearFunction(Vec x, Vec f)
   //VLOG(1) << "f: " << getString(f);
 }
 
-void HyperelasticitySolver::
+template<typename Term>
+void HyperelasticitySolver<Term>::
 evaluateAnalyticJacobian(Vec x, Mat jac)
 {
   setInputVector(x);
@@ -371,7 +377,8 @@ evaluateAnalyticJacobian(Vec x, Mat jac)
   //MatAssemblyEnd(jac, MAT_FINAL_ASSEMBLY);
 }
 
-void HyperelasticitySolver::
+template<typename Term>
+void HyperelasticitySolver<Term>::
 setInputVector(Vec x)
 {
   // copy entries of combined vector x to this->data_.displacements() and this->data_.pressure()
@@ -429,13 +436,15 @@ setInputVector(Vec x)
   //VLOG(1) << *this->data_.pressure();
 }
 
-void HyperelasticitySolver::
+template<typename Term>
+void HyperelasticitySolver<Term>::
 setSolutionVector()
 {
   setInputVector(combinedVecSolution_->valuesGlobal());
 }
 
-void HyperelasticitySolver::
+template<typename Term>
+void HyperelasticitySolver<Term>::
 dumpJacobianMatrix(Mat jac)
 {
   if (!dumpDenseMatlabVariables_)
@@ -465,7 +474,8 @@ dumpJacobianMatrix(Mat jac)
   }
 }
 
-void HyperelasticitySolver::
+template<typename Term>
+void HyperelasticitySolver<Term>::
 checkSolution(Vec x)
 {
   // check if function is zero
@@ -512,7 +522,8 @@ checkSolution(Vec x)
   }
 }
 
-std::string HyperelasticitySolver::
+template<typename Term>
+std::string HyperelasticitySolver<Term>::
 getString(Vec x)
 {
   if (x == solverVariableSolution_)

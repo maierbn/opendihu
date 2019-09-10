@@ -129,6 +129,12 @@ public:
   template<typename FieldVariableTargetType>
   void finalizeMapping(std::shared_ptr<FieldVariableTargetType> fieldVariableTarget);
 
+  //! Add and initialize a mapping between meshes, this can be called in the code in initialize, when it is clear, that this mapping will be needed
+  //! If it is not clear, whether it will be needed, call initializeMappingsBetweenMeshes instead.
+  template<typename FunctionSpaceSourceType, typename FunctionSpaceTargetType>
+  std::shared_ptr<MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>>
+    createMappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSource, std::shared_ptr<FunctionSpaceTargetType> functionSpaceTarget);
+
 protected:
 
   //! create MappingBetweenMeshes objects from the config and store them under mappingsBetweenMeshes_
@@ -139,11 +145,6 @@ protected:
 
   //! get the mapping from source mesh to target mesh
   std::shared_ptr<MappingBetweenMeshesBase> mappingBetweenMeshes(std::string sourceMeshName, std::string targetMeshName);
-
-  //! add and initialize a mapping between meshes
-  template<typename FunctionSpaceSourceType, typename FunctionSpaceTargetType>
-  std::shared_ptr<MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>>
-    createMappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSource, std::shared_ptr<FunctionSpaceTargetType> functionSpaceTarget);
 
   PythonConfig specificSettings_;    ///< python object containing the value of the python config dict with corresponding key, for meshManager
 

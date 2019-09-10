@@ -69,8 +69,8 @@ neumann_bc = [{"element": (nz-1)*nx*ny + j*nx + i, "constantVector": [0,1e-1,5e-
 config = {
   "scenarioName": "3d_box",
   "HyperelasticitySolver": {
-    "c1": 1.0,       # dummy value
-    "c2": 0.0,    # dummy value
+
+    "materialParameters": [1, 0],
     "residualNormLogFilename": "log_residual_norm.txt",
     "useAnalyticJacobian": True,
     "useNumericJacobian": False,   # only works with non-nested matrices, if both numeric and analytic are enable, it uses the analytic for the preconditioner and the numeric as normal jacobian

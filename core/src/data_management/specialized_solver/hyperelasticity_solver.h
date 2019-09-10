@@ -3,6 +3,7 @@
 #include <Python.h>  // has to be the first included header
 #include <petscmat.h>
 #include <memory>
+#include <type_traits>
 
 #include "data_management/data.h"
 #include "field_variable/field_variable.h"
@@ -14,8 +15,8 @@ namespace Data
  *   Template arguments are the two function spaces of the mixed formulation.
  *   Typically, PressureFunctionSpace is linear and DisplacementsFunctionSpace is quadratic.
   */
-template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace>
-class QuasiStaticHyperelasticity :
+template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term>
+class QuasiStaticHyperelasticityBase :
   public Data<DisplacementsFunctionSpace>
 {
 public:
@@ -26,7 +27,7 @@ public:
   typedef FieldVariable::FieldVariable<DisplacementsFunctionSpace,6> StressFieldVariableType;
 
   //! constructor
-  QuasiStaticHyperelasticity(DihuContext context);
+  QuasiStaticHyperelasticityBase(DihuContext context);
 
   //! field variable of u
   std::shared_ptr<DisplacementsFieldVariableType> displacements();
@@ -42,6 +43,10 @@ public:
 
   //! field variable of S
   std::shared_ptr<StressFieldVariableType> pK2Stress();
+
+  //! field variable of fiber direction
+  std::shared_ptr<DisplacementsFieldVariableType> fiberDirection();
+
 
   //! initialize
   void initialize();
@@ -65,18 +70,8 @@ public:
   //! \param scalingFactor factor with which to scale the displacements
   void updateGeometry(double scalingFactor = 1.0);
 
-  //! field variables that will be output by outputWriters
-  typedef std::tuple<
-      std::shared_ptr<DisplacementsFieldVariableType>,  // current geometry field
-      std::shared_ptr<DisplacementsFieldVariableType>,  // displacements_
-      std::shared_ptr<StressFieldVariableType>         // pK2Stress_
-    >
-  FieldVariablesForOutputWriter;
 
-  //! get pointers to all field variables that can be written by output writers
-  FieldVariablesForOutputWriter getFieldVariablesForOutputWriter();
-
-private:
+protected:
 
   //! initializes the vectors with size
   void createPetscObjects() override;
@@ -91,6 +86,58 @@ private:
   std::shared_ptr<PressureFieldVariableType> pressure_;     //<  p, the pressure variable
   std::shared_ptr<StressFieldVariableType> pK2Stress_;     //<  the symmetric PK2 stress tensor in Voigt notation
   std::shared_ptr<DisplacementsLinearFieldVariableType> displacementsLinearMesh_;     //<  the displacements u, but on the linear mesh not the quadratic. This is an internal helper field
+  std::shared_ptr<DisplacementsFieldVariableType> fiberDirection_;    //< interpolated direction of fibers
+};
+
+/** Helper class that outputs the field variables for the output writer.
+ *  Depending on the Term if it uses fiberDirection information, also output a fiber direction field.
+ *  The normal isotropic Mooney-Rivlin thus has no fiber direction output.
+ */
+template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term, typename DummyForTraits=Term>
+class QuasiStaticHyperelasticity :
+  public QuasiStaticHyperelasticityBase<PressureFunctionSpace, DisplacementsFunctionSpace, Term>
+{
+public:
+  using QuasiStaticHyperelasticityBase<PressureFunctionSpace, DisplacementsFunctionSpace, Term>::QuasiStaticHyperelasticityBase;
+
+  typedef FieldVariable::FieldVariable<DisplacementsFunctionSpace,3> DisplacementsFieldVariableType;
+  typedef FieldVariable::FieldVariable<DisplacementsFunctionSpace,6> StressFieldVariableType;
+
+  //! field variables that will be output by outputWriters
+  //type to use if there is no fiber direction field variable
+  typedef std::tuple<
+    std::shared_ptr<DisplacementsFieldVariableType>,  // current geometry field
+    std::shared_ptr<DisplacementsFieldVariableType>,  // displacements_
+    std::shared_ptr<StressFieldVariableType>         // pK2Stress_
+  >
+  FieldVariablesForOutputWriter;
+
+  //! get pointers to all field variables that can be written by output writers
+  FieldVariablesForOutputWriter getFieldVariablesForOutputWriter();
+};
+
+template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term>
+class QuasiStaticHyperelasticity<PressureFunctionSpace, DisplacementsFunctionSpace, Term, std::enable_if_t<Term::usesFiberDirection,Term>> :
+  public QuasiStaticHyperelasticityBase<PressureFunctionSpace, DisplacementsFunctionSpace, Term>
+{
+public:
+  using QuasiStaticHyperelasticityBase<PressureFunctionSpace, DisplacementsFunctionSpace, Term>::QuasiStaticHyperelasticityBase;
+
+  typedef FieldVariable::FieldVariable<DisplacementsFunctionSpace,3> DisplacementsFieldVariableType;
+  typedef FieldVariable::FieldVariable<DisplacementsFunctionSpace,6> StressFieldVariableType;
+
+  //! field variables that will be output by outputWriters
+  // type to use if we have a fiber direction field variable
+  typedef std::tuple<
+    std::shared_ptr<DisplacementsFieldVariableType>,  // current geometry field
+    std::shared_ptr<DisplacementsFieldVariableType>,  // displacements_
+    std::shared_ptr<StressFieldVariableType>,         // pK2Stress_
+    std::shared_ptr<DisplacementsFieldVariableType>   // fiber direction
+  >
+  FieldVariablesForOutputWriter;
+
+  //! get pointers to all field variables that can be written by output writers
+  FieldVariablesForOutputWriter getFieldVariablesForOutputWriter();
 };
 
 /** This is a helper class that stores copies of the pressure variables.
@@ -136,4 +183,4 @@ private:
 
 } // namespace Data
 
-#include "data_management/specialized_solver/quasi_static_hyperelasticity.tpp"
+#include "data_management/specialized_solver/hyperelasticity_solver.tpp"

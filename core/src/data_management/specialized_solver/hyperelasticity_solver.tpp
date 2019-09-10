@@ -1,28 +1,30 @@
-#include "data_management/specialized_solver/quasi_static_hyperelasticity.h"
+#include "data_management/specialized_solver/hyperelasticity_solver.h"
+
+#include "utility/static_if.h"
 
 namespace Data
 {
 
-template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace>
-  QuasiStaticHyperelasticity<PressureFunctionSpace,DisplacementsFunctionSpace>::
-QuasiStaticHyperelasticity(DihuContext context) :
+template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term>
+  QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::
+QuasiStaticHyperelasticityBase(DihuContext context) :
   Data<DisplacementsFunctionSpace>::Data(context)
 {
 }
 
-template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace>
-void QuasiStaticHyperelasticity<PressureFunctionSpace,DisplacementsFunctionSpace>::
+template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term>
+void QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::
 initialize()
 {
   // call initialize of base class, this calls createPetscObjects
   Data<DisplacementsFunctionSpace>::initialize();
 }
 
-template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace>
-void QuasiStaticHyperelasticity<PressureFunctionSpace,DisplacementsFunctionSpace>::
+template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term>
+void QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::
 createPetscObjects()
 {
-  LOG(DEBUG) << "QuasiStaticHyperelasticity::createPetscObject";
+  LOG(DEBUG) << "QuasiStaticHyperelasticityBase::createPetscObject";
 
   assert(this->displacementsFunctionSpace_);
   assert(this->pressureFunctionSpace_);
@@ -31,6 +33,7 @@ createPetscObjects()
 
   std::vector<std::string> displacementsComponentNames({"x","y","z"});
   displacements_           = this->displacementsFunctionSpace_->template createFieldVariable<3>("u", displacementsComponentNames);     //< u, the displacements
+  fiberDirection_          = this->displacementsFunctionSpace_->template createFieldVariable<3>("fiberDirection", displacementsComponentNames);
   displacementsLinearMesh_ = this->pressureFunctionSpace_->template createFieldVariable<3>("uLin", displacementsComponentNames);     //< u, the displacements
   pressure_                = this->pressureFunctionSpace_->template createFieldVariable<1>("p");     //<  p, the pressure variable
 
@@ -40,47 +43,55 @@ createPetscObjects()
 
 
 //! field variable of geometryReference_
-template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace>
-std::shared_ptr<typename QuasiStaticHyperelasticity<PressureFunctionSpace,DisplacementsFunctionSpace>::DisplacementsFieldVariableType> QuasiStaticHyperelasticity<PressureFunctionSpace,DisplacementsFunctionSpace>::
+template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term>
+std::shared_ptr<typename QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::DisplacementsFieldVariableType> QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::
 geometryReference()
 {
   return this->geometryReference_;
 }
 
 //! field variable of u
-template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace>
-std::shared_ptr<typename QuasiStaticHyperelasticity<PressureFunctionSpace,DisplacementsFunctionSpace>::DisplacementsFieldVariableType> QuasiStaticHyperelasticity<PressureFunctionSpace,DisplacementsFunctionSpace>::
+template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term>
+std::shared_ptr<typename QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::DisplacementsFieldVariableType> QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::
 displacements()
 {
   return this->displacements_;
 }
 
-  //! field variable displacements u but on the linear mesh
-  template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace>
-std::shared_ptr<typename QuasiStaticHyperelasticity<PressureFunctionSpace,DisplacementsFunctionSpace>::DisplacementsLinearFieldVariableType> QuasiStaticHyperelasticity<PressureFunctionSpace,DisplacementsFunctionSpace>::
+//! field variable of fiber direction
+template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term>
+std::shared_ptr<typename QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::DisplacementsFieldVariableType> QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::
+fiberDirection()
+{
+  return this->fiberDirection_;
+}
+
+//! field variable displacements u but on the linear mesh
+template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term>
+std::shared_ptr<typename QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::DisplacementsLinearFieldVariableType> QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::
 displacementsLinearMesh()
 {
   return this->displacementsLinearMesh_;
 }
 
 //! field variable of p
-template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace>
-std::shared_ptr<typename QuasiStaticHyperelasticity<PressureFunctionSpace,DisplacementsFunctionSpace>::PressureFieldVariableType> QuasiStaticHyperelasticity<PressureFunctionSpace,DisplacementsFunctionSpace>::
+template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term>
+std::shared_ptr<typename QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::PressureFieldVariableType> QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::
 pressure()
 {
   return this->pressure_;
 }
 
 //! field variable of S
-template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace>
-std::shared_ptr<typename QuasiStaticHyperelasticity<PressureFunctionSpace,DisplacementsFunctionSpace>::StressFieldVariableType> QuasiStaticHyperelasticity<PressureFunctionSpace,DisplacementsFunctionSpace>::
+template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term>
+std::shared_ptr<typename QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::StressFieldVariableType> QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::
 pK2Stress()
 {
   return this->pK2Stress_;
 }
 
-template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace>
-void QuasiStaticHyperelasticity<PressureFunctionSpace,DisplacementsFunctionSpace>::
+template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term>
+void QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::
 updateGeometry(double scalingFactor)
 {
   PetscErrorCode ierr;
@@ -134,8 +145,8 @@ updateGeometry(double scalingFactor)
 }
 
 //! set the function space object that discretizes the pressure field variable
-template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace>
-void QuasiStaticHyperelasticity<PressureFunctionSpace,DisplacementsFunctionSpace>::
+template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term>
+void QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::
 setPressureFunctionSpace(std::shared_ptr<PressureFunctionSpace> pressureFunctionSpace)
 {
   pressureFunctionSpace_ = pressureFunctionSpace;
@@ -146,8 +157,8 @@ setPressureFunctionSpace(std::shared_ptr<PressureFunctionSpace> pressureFunction
 }
 
 //! set the function space object that discretizes the displacements field variable
-template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace>
-void QuasiStaticHyperelasticity<PressureFunctionSpace,DisplacementsFunctionSpace>::
+template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term>
+void QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::
 setDisplacementsFunctionSpace(std::shared_ptr<DisplacementsFunctionSpace> displacementsFunctionSpace)
 {
   displacementsFunctionSpace_ = displacementsFunctionSpace;
@@ -163,37 +174,53 @@ setDisplacementsFunctionSpace(std::shared_ptr<DisplacementsFunctionSpace> displa
 }
 
 //! get the displacements function space
-template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace>
-std::shared_ptr<DisplacementsFunctionSpace> QuasiStaticHyperelasticity<PressureFunctionSpace,DisplacementsFunctionSpace>::
+template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term>
+std::shared_ptr<DisplacementsFunctionSpace> QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::
 displacementsFunctionSpace()
 {
   return displacementsFunctionSpace_;
 }
 
 //! get the pressure function space
-template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace>
-std::shared_ptr<PressureFunctionSpace> QuasiStaticHyperelasticity<PressureFunctionSpace,DisplacementsFunctionSpace>::
+template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term>
+std::shared_ptr<PressureFunctionSpace> QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::
 pressureFunctionSpace()
 {
   return pressureFunctionSpace_;
 }
 
-template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace>
-void QuasiStaticHyperelasticity<PressureFunctionSpace,DisplacementsFunctionSpace>::
+template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term>
+void QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::
 print()
 {
 }
 
-template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace>
-typename QuasiStaticHyperelasticity<PressureFunctionSpace,DisplacementsFunctionSpace>::FieldVariablesForOutputWriter QuasiStaticHyperelasticity<PressureFunctionSpace,DisplacementsFunctionSpace>::
+
+template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term>
+typename QuasiStaticHyperelasticity<PressureFunctionSpace, DisplacementsFunctionSpace, Term, std::enable_if_t<Term::usesFiberDirection,Term>>::FieldVariablesForOutputWriter
+QuasiStaticHyperelasticity<PressureFunctionSpace, DisplacementsFunctionSpace, Term, std::enable_if_t<Term::usesFiberDirection,Term>>::
 getFieldVariablesForOutputWriter()
 {
-  // these field variables will be written to output files
+  LOG(DEBUG) << "getFieldVariablesForOutputWriter, with fiberDirection";
+  return std::make_tuple(
+    std::shared_ptr<DisplacementsFieldVariableType>(std::make_shared<typename DisplacementsFunctionSpace::GeometryFieldType>(this->displacementsFunctionSpace_->geometryField())), // geometry
+    std::shared_ptr<DisplacementsFieldVariableType>(this->displacements_),              // displacements_
+    std::shared_ptr<StressFieldVariableType>(this->pK2Stress_),         // pK2Stress_
+    std::shared_ptr<DisplacementsFieldVariableType>(this->fiberDirection_)
+  );
+}
 
-  return std::tuple_cat(
-    std::tuple<std::shared_ptr<DisplacementsFieldVariableType>>(std::make_shared<typename DisplacementsFunctionSpace::GeometryFieldType>(this->displacementsFunctionSpace_->geometryField())), // geometry
-    std::tuple<std::shared_ptr<DisplacementsFieldVariableType>>(this->displacements_),              // displacements_
-    std::tuple<std::shared_ptr<StressFieldVariableType>>(this->pK2Stress_)         // pK2Stress_
+template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term, typename DummyForTraits>
+typename QuasiStaticHyperelasticity<PressureFunctionSpace,DisplacementsFunctionSpace,Term,DummyForTraits>::FieldVariablesForOutputWriter QuasiStaticHyperelasticity<PressureFunctionSpace,DisplacementsFunctionSpace,Term,DummyForTraits>::
+getFieldVariablesForOutputWriter()
+{
+  LOG(DEBUG) << "getFieldVariablesForOutputWriter, without fiberDirection";
+
+  // these field variables will be written to output files
+  return std::make_tuple(
+    std::shared_ptr<DisplacementsFieldVariableType>(std::make_shared<typename DisplacementsFunctionSpace::GeometryFieldType>(this->displacementsFunctionSpace_->geometryField())), // geometry
+    std::shared_ptr<DisplacementsFieldVariableType>(this->displacements_),              // displacements_
+    std::shared_ptr<StressFieldVariableType>(this->pK2Stress_)         // pK2Stress_
   );
 
   /*

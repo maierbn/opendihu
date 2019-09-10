@@ -86,6 +86,9 @@ materialComputeResidual()
     std::array<double,nPressureDofsPerElement> pressureValuesCurrentElement;
     this->data_.pressure()->getElementValues(elementNoLocal, pressureValuesCurrentElement);
 
+    std::array<Vec3,nDisplacementsDofsPerElement> elementalDirectionValues;
+    this->data_.fiberDirection()->getElementValues(elementNoLocal, elementalDirectionValues);
+
     // loop over integration points (e.g. gauss points) for displacements field
     for (unsigned int samplingPointIndex = 0; samplingPointIndex < samplingPoints.size(); samplingPointIndex++)
     {
@@ -109,9 +112,12 @@ materialComputeResidual()
       double rightCauchyGreenDeterminant;   // J^2
       Tensor2<D> inverseRightCauchyGreen = MathUtility::computeSymmetricInverse<D>(rightCauchyGreen, rightCauchyGreenDeterminant);  // C^-1
 
+      // fiber direction
+      Vec3 fiberDirection = displacementsFunctionSpace->template interpolateValueInElement<3>(elementalDirectionValues, xi);
+
       // invariants
-      std::array<double,3> invariants = this->computeInvariants(rightCauchyGreen, rightCauchyGreenDeterminant);  // I_1, I_2, I_3
-      std::array<double,2> reducedInvariants = this->computeReducedInvariants(invariants, deformationGradientDeterminant); // Ibar_1, Ibar_2
+      std::array<double,5> invariants = this->computeInvariants(rightCauchyGreen, rightCauchyGreenDeterminant, fiberDirection);  // I_1, I_2, I_3, I_4, I_5
+      std::array<double,5> reducedInvariants = this->computeReducedInvariants(invariants, deformationGradientDeterminant); // Ibar_1, Ibar_2, Ibar_4, Ibar_5
 
       // pressure is the separately interpolated pressure for mixed formulation
       double pressure = pressureFunctionSpace->interpolateValueInElement(pressureValuesCurrentElement, xi);
@@ -120,9 +126,13 @@ materialComputeResidual()
       //! compute 2nd Piola-Kirchhoff stress tensor S = 2*dPsi/dC and the fictitious PK2 Stress Sbar
       Tensor2<D> fictitiousPK2Stress;   // Sbar
       Tensor2<D> pk2StressIsochoric;    // S_iso
-      Tensor2<D> pK2Stress = this->computePK2Stress(pressure, rightCauchyGreen, inverseRightCauchyGreen, reducedInvariants, deformationGradientDeterminant,
+      Tensor2<D> pK2Stress = this->computePK2Stress(pressure, rightCauchyGreen, inverseRightCauchyGreen, reducedInvariants, deformationGradientDeterminant, fiberDirection,
                                                       fictitiousPK2Stress, pk2StressIsochoric
                                                    );
+
+      this->materialTesting(pressure, rightCauchyGreen, inverseRightCauchyGreen, reducedInvariants, deformationGradientDeterminant, fiberDirection,
+        fictitiousPK2Stress, pk2StressIsochoric
+      );
 
       std::array<Vec3,nDisplacementsDofsPerElement> gradPhi = displacementsFunctionSpace->getGradPhi(xi);
       // (column-major storage) gradPhi[L][a] = dphi_L / dxi_a
@@ -409,7 +419,14 @@ materialComputeJacobian()
 
     // loop over diagonal matrix entries in p-part (bottom left submatrix), set diagonal entries to 0
     // This allocates nonzero entries and sets them to zero. It is needed for the solver.
-    const double epsilon = 1e-12;
+
+    // The direct solvers are not able to solve the saddle point problem in serial execution, add an artifical regularization term.
+    double epsilon = 1e-12;
+
+    // or parallel execution everything is fine and we do not need regularization
+    if (this->data_.functionSpace()->meshPartition()->nRanks() > 1)
+      epsilon = 0;
+
     for (int lDof = 0; lDof < nPressureDofsPerElement; lDof++)           // L
     {
       dof_no_t dofLNoLocal = dofNosLocalPressure[lDof];     // dof with respect to pressure function space
@@ -440,6 +457,9 @@ materialComputeJacobian()
     std::array<double,nPressureDofsPerElement> pressureValuesCurrentElement;
     this->data_.pressure()->getElementValues(elementNoLocal, pressureValuesCurrentElement);
 
+    std::array<Vec3,nDisplacementsDofsPerElement> elementalDirectionValues;
+    this->data_.fiberDirection()->getElementValues(elementNoLocal, elementalDirectionValues);
+
     // loop over integration points (e.g. gauss points) for displacements field
     for (unsigned int samplingPointIndex = 0; samplingPointIndex < samplingPoints.size(); samplingPointIndex++)
     {
@@ -463,9 +483,12 @@ materialComputeJacobian()
       double rightCauchyGreenDeterminant;   // J^2
       Tensor2<D> inverseRightCauchyGreen = MathUtility::computeSymmetricInverse<D>(rightCauchyGreen, rightCauchyGreenDeterminant);  // C^-1
 
+      // fiber direction
+      Vec3 fiberDirection = displacementsFunctionSpace->template interpolateValueInElement<3>(elementalDirectionValues, xi);
+
       // invariants
-      std::array<double,3> invariants = this->computeInvariants(rightCauchyGreen, rightCauchyGreenDeterminant);  // I_1, I_2, I_3
-      std::array<double,2> reducedInvariants = this->computeReducedInvariants(invariants, deformationGradientDeterminant); // Ibar_1, Ibar_2
+      std::array<double,5> invariants = this->computeInvariants(rightCauchyGreen, rightCauchyGreenDeterminant, fiberDirection);  // I_1, I_2, I_3
+      std::array<double,5> reducedInvariants = this->computeReducedInvariants(invariants, deformationGradientDeterminant); // Ibar_1, Ibar_2
 
       // pressure is the separately interpolated pressure for mixed formulation
       double pressure = pressureFunctionSpace->interpolateValueInElement(pressureValuesCurrentElement, xi);
@@ -474,7 +497,7 @@ materialComputeJacobian()
       //! compute 2nd Piola-Kirchhoff stress tensor S = 2*dPsi/dC and the fictitious PK2 Stress Sbar
       Tensor2<D> fictitiousPK2Stress;   // Sbar
       Tensor2<D> pk2StressIsochoric;    // S_iso
-      Tensor2<D> pK2Stress = this->computePK2Stress(pressure, rightCauchyGreen, inverseRightCauchyGreen, reducedInvariants, deformationGradientDeterminant,
+      Tensor2<D> pK2Stress = this->computePK2Stress(pressure, rightCauchyGreen, inverseRightCauchyGreen, reducedInvariants, deformationGradientDeterminant, fiberDirection,
                                                       fictitiousPK2Stress, pk2StressIsochoric
                                                    );
 
@@ -484,8 +507,12 @@ materialComputeJacobian()
 
 
       Tensor4<D> elasticityTensor;
-      computeElasticityTensor(rightCauchyGreen, inverseRightCauchyGreen, deformationGradientDeterminant, pressure, reducedInvariants, fictitiousPK2Stress, pk2StressIsochoric,
-                              elasticityTensor);
+      Tensor4<D> fictitiousElasticityTensor;
+      computeElasticityTensor(rightCauchyGreen, inverseRightCauchyGreen, deformationGradientDeterminant, pressure, reducedInvariants, fictitiousPK2Stress, pk2StressIsochoric, fiberDirection,
+                              fictitiousElasticityTensor, elasticityTensor);
+
+      // test if implementation of S is correct
+      this->materialTesting(pressure, rightCauchyGreen, inverseRightCauchyGreen, reducedInvariants, deformationGradientDeterminant, fiberDirection, fictitiousPK2Stress, pk2StressIsochoric);
 
       VLOG(2) << "";
       VLOG(2) << "element " << elementNoLocal << " xi: " << xi;
@@ -820,10 +847,10 @@ computeRightCauchyGreenTensor(const Tensor2<3> &deformationGradient)
 }
 
 template<typename Term>
-std::array<double,3> HyperelasticitySolver<Term>::
-computeInvariants(const Tensor2<3> &rightCauchyGreen, const double rightCauchyGreenDeterminant)
+std::array<double,5> HyperelasticitySolver<Term>::
+computeInvariants(const Tensor2<3> &rightCauchyGreen, const double rightCauchyGreenDeterminant, const Vec3 fiberDirection)
 {
-  std::array<double,3> invariants;
+  std::array<double,5> invariants;
 
   // I1 = tr(C)
   invariants[0] = 0.0;
@@ -848,14 +875,55 @@ computeInvariants(const Tensor2<3> &rightCauchyGreen, const double rightCauchyGr
   // I3 = det(C)
   invariants[2] = rightCauchyGreenDeterminant;
 
+  // for a transversely isotropic material that also has 4th and 5th invariant
+  if (Term::usesFiberDirection)
+  {
+    // I4 = a0 • C a0;
+    double a0Ca0 = 0;
+    for (int i = 0; i < 3; i++)
+    {
+      double ca0_i = 0;
+      for (int j = 0; j < 3; j++)
+      {
+        ca0_i += rightCauchyGreen[j][i] * fiberDirection[j];
+      }
+      a0Ca0 += fiberDirection[i] * ca0_i;
+    }
+
+    invariants[3] = a0Ca0;
+
+    // I5 = a0 • C^2 a0;
+
+    double a0C2a0 = 0;
+    for (int i = 0; i < 3; i++)
+    {
+      double c2a0_i = 0;
+      for (int j = 0; j < 3; j++)
+      {
+        // compute C^2
+        double c2_ij = 0;
+        for (int k = 0; k < 3; k++)
+        {
+          // C^2_ij = C_ik * C_kj
+          c2_ij += rightCauchyGreen[k][i] * rightCauchyGreen[j][k];
+        }
+        c2a0_i += c2_ij * fiberDirection[j];
+      }
+      a0C2a0 += fiberDirection[i] * c2a0_i;
+    }
+
+    invariants[4] = a0C2a0;
+    LOG(DEBUG) << "computed I4: " << invariants[3] << ", I5: " << invariants[4] << ", a0: " << fiberDirection;
+  }
+
   return invariants;
 }
 
 template<typename Term>
-std::array<double,2> HyperelasticitySolver<Term>::
-computeReducedInvariants(const std::array<double,3> invariants, const double deformationGradientDeterminant)
+std::array<double,5> HyperelasticitySolver<Term>::
+computeReducedInvariants(const std::array<double,5> invariants, const double deformationGradientDeterminant)
 {
-  std::array<double,2> reducedInvariants;
+  std::array<double,5> reducedInvariants;
 
   // 3D: Fbar = J^{-1/3}*F such that det(Fbar) = 1
   // 2D: Fbar = J^{-1/2}*F such that det(Fbar) = 1
@@ -875,6 +943,14 @@ computeReducedInvariants(const std::array<double,3> invariants, const double def
   reducedInvariants[0] = pow(deformationGradientDeterminant, factor23) * invariants[0];
   reducedInvariants[1] = pow(deformationGradientDeterminant, factor43) * invariants[1];
 
+  // for a transversely isotropic material that also has 4th and 5th invariant
+  if (Term::usesFiberDirection)
+  {
+    reducedInvariants[2] = 1;  // not used, because I3 = det C = 1 constant
+    reducedInvariants[3] = pow(deformationGradientDeterminant, factor23) * invariants[3];
+    reducedInvariants[4] = pow(deformationGradientDeterminant, factor43) * invariants[4];
+  }
+
   return reducedInvariants;
 }
 
@@ -883,8 +959,9 @@ Tensor2<3> HyperelasticitySolver<Term>::
 computePK2Stress(const double pressure,                             //< [in] pressure value p
                  const Tensor2<3> &rightCauchyGreen,                //< [in] C
                  const Tensor2<3> &inverseRightCauchyGreen,         //< [in] C^{-1}
-                 const std::array<double,2> reducedInvariants,      //< [in] the reduced invariants Ibar_1, Ibar_2
+                 const std::array<double,5> reducedInvariants,      //< [in] the reduced invariants Ibar_1, Ibar_2
                  const double deformationGradientDeterminant,       //< [in] J = det(F)
+                 Vec3 fiberDirection,                               //< [in] a0, direction of fibers
                  Tensor2<3> &fictitiousPK2Stress,                   //< [out] Sbar, the fictitious 2nd Piola-Kirchhoff stress tensor
                  Tensor2<3> &pk2StressIsochoric                     //< [out] S_iso, the isochoric part of the 2nd Piola-Kirchhoff stress tensor
                 )
@@ -923,10 +1000,34 @@ computePK2Stress(const double pressure,                             //< [in] pre
       fictitiousPK2Stress[j][i] = factor1 * delta_ij + factor2 * cBar;
 
       //if (i == j)
-      //  LOG(DEBUG) << "  C_" << i << j << " = " << rightCauchyGreen[j][i] << ", factorJ23 = " << factorJ23 << ", SBar_" << i << j << ": " << fictitiousPK2Stress[j][i]
-      //    << " = " << factor1 << " * " << delta_ij << " + " << factor2 << "*" << cBar ;
+      //LOG(DEBUG) << "  C_" << i << j << " = " << rightCauchyGreen[j][i] << ", J=" << J << ", factorJ23 = " << factorJ23 << ", SBar_" << i << j << ": " << fictitiousPK2Stress[j][i]
+      //     << " = " << factor1 << " * " << delta_ij << " + " << factor2 << "*" << cBar;
     }
   }
+
+  //LOG(DEBUG) << "in computePK2Stress, factor1: " << factor1 << ", factor2: " << factor2 << ", C: " << rightCauchyGreen << ", Sbar: " << fictitiousPK2Stress << ", reducedInvariants: " << reducedInvariants;
+
+  // add term for 4th invariant
+  if (Term::usesFiberDirection)
+  {
+    auto dPsi_dIbar4Expression = SEMT::deriv_t(Term::strainEnergyDensityFunctionIsochoric, Term::Ibar4);
+    const double dPsi_dIbar4 = dPsi_dIbar4Expression.apply(reducedInvariantsVector);
+    double factor4 = 2*dPsi_dIbar4;
+
+    for (int i=0; i<3; i++)     // alternative indices: A
+    {
+      // column index
+      for (int j=0; j<3; j++)     // alternative indices: B
+      {
+        fictitiousPK2Stress[j][i] += factor4 * fiberDirection[i] * fiberDirection[j];
+      }
+    }
+
+    //LOG(DEBUG) << "fiberDirection: " << fiberDirection << ", factor4: " << factor4
+    //  << ", dPsi_dIbar4Expression: " << dPsi_dIbar4Expression << ", invariants: " << reducedInvariantsVector;
+  }
+
+  // add term for 5th invariant (not implemented)
 
   // Holzapfel p.234
   // S = S_vol + S_iso
@@ -979,12 +1080,15 @@ computePK2Stress(const double pressure,                             //< [in] pre
       // total stress is sum of volumetric and isochoric part, sVol = J*p*C^{-1}_AB, sIso = j^{-2/3}*(Ii-1/3*Cc)*Sbar
       pK2Stress[j][i] = sVol + sIso;
 
+      // debugging
+      //pK2Stress[j][i] = sIso;
+
       //VLOG(2) << "set pk2Stress_" << i << j << " = " << pK2Stress[j][i];
 
       //if (i == j)
       //  LOG(DEBUG) << "  ccs: " << ccs << " C:Sbar: " << cSbar << ", factorJ23: " << factorJ23 << ", Svol_" << i << j << " = " << sVol << ", Siso_" << i << j << " = " << sIso << ", S = " << pK2Stress[j][i];
-    }
-  }
+    }  // j
+  }  // i
 
   //for debugging, check symmetry of PK2 stress and if it is correct
   if (VLOG_IS_ON(2))
@@ -1039,7 +1143,7 @@ computePK2Stress(const double pressure,                             //< [in] pre
       }
     }
     if (!mismatch)
-      VLOG(2) << "Sbar is correct!";
+      LOG_N_TIMES(2,DEBUG) << "Sbar is correct!";
   }
 
   return pK2Stress;
@@ -1076,6 +1180,9 @@ computePK2StressField()
 
     std::array<double,nPressureDofsPerElement> pressureValuesCurrentElement;
     this->data_.pressure()->getElementValues(elementNoLocal, pressureValuesCurrentElement);
+
+    std::array<Vec3,nDisplacementsDofsPerElement> elementalDirectionValues;
+    this->data_.fiberDirection()->getElementValues(elementNoLocal, elementalDirectionValues);
 
     // get indices of element-local dofs
     std::array<dof_no_t,27> dofNosLocal = this->displacementsFunctionSpace_->getElementDofNosLocal(elementNoLocal);
@@ -1147,9 +1254,12 @@ computePK2StressField()
       double rightCauchyGreenDeterminant;   // J^2
       Tensor2<D> inverseRightCauchyGreen = MathUtility::computeSymmetricInverse<D>(rightCauchyGreen, rightCauchyGreenDeterminant);  // C^-1
 
+      // fiber direction
+      Vec3 fiberDirection = displacementsFunctionSpace->template interpolateValueInElement<3>(elementalDirectionValues, xi);
+
       // invariants
-      std::array<double,3> invariants = this->computeInvariants(rightCauchyGreen, rightCauchyGreenDeterminant);  // I_1, I_2, I_3
-      std::array<double,2> reducedInvariants = this->computeReducedInvariants(invariants, deformationGradientDeterminant); // Ibar_1, Ibar_2
+      std::array<double,5> invariants = this->computeInvariants(rightCauchyGreen, rightCauchyGreenDeterminant, fiberDirection);  // I_1, I_2, I_3, I_4, I_5
+      std::array<double,5> reducedInvariants = this->computeReducedInvariants(invariants, deformationGradientDeterminant); // Ibar_1, Ibar_2, Ibar_4, Ibar_5
 
       // pressure is the separately interpolated pressure for mixed formulation
       double pressure = pressureFunctionSpace->interpolateValueInElement(pressureValuesCurrentElement, xi);
@@ -1158,7 +1268,7 @@ computePK2StressField()
       //! compute 2nd Piola-Kirchhoff stress tensor S = 2*dPsi/dC and the fictitious PK2 Stress Sbar
       Tensor2<D> fictitiousPK2Stress;   // Sbar
       Tensor2<D> pk2StressIsochoric;    // S_iso
-      Tensor2<D> pK2Stress = this->computePK2Stress(pressure, rightCauchyGreen, inverseRightCauchyGreen, reducedInvariants, deformationGradientDeterminant,
+      Tensor2<D> pK2Stress = this->computePK2Stress(pressure, rightCauchyGreen, inverseRightCauchyGreen, reducedInvariants, deformationGradientDeterminant, fiberDirection,
                                                       fictitiousPK2Stress, pk2StressIsochoric
                                                    );
 
@@ -1181,9 +1291,11 @@ computeElasticityTensor(const Tensor2<3> &rightCauchyGreen,         //< [in] C
                         const Tensor2<3> &inverseRightCauchyGreen,  //< [in] C^{-1}
                         double deformationGradientDeterminant,      //< [in] J = det(F)
                         double pressure,                            //< [in] pressure value p
-                        std::array<double,2> reducedInvariants,     //< [in] the reduced invariants Ibar_1, Ibar_2
+                        std::array<double,5> reducedInvariants,     //< [in] the reduced invariants Ibar_1, Ibar_2
                         const Tensor2<3> &fictitiousPK2Stress,      //< [in] Sbar, the fictitious 2nd Piola-Kirchhoff stress tensor
                         const Tensor2<3> &pk2StressIsochoric,       //< [in] S_iso, the isochoric part of the 2nd Piola-Kirchhoff stress tensor
+                        Vec3 fiberDirection,                        //< [in] a0, direction of fibers
+                        Tensor4<3> &fictitiousElasticityTensor,     //< [out] fictitious Elasticity tensor CCbar_{ABCD}
                         Tensor4<3> &elasticityTensor                //< [out] elasticity tensor CC_{ABCD}
                        )
 {
@@ -1218,20 +1330,31 @@ computeElasticityTensor(const Tensor2<3> &rightCauchyGreen,         //< [in] C
   const double factor3 = 4*d2Psi_dIbar2Ibar2;
   const double factor4 = -4*dPsi_dIbar2;
 
+  LOG(DEBUG) << "Ψ: " << Term::strainEnergyDensityFunctionIsochoric;
+  LOG(DEBUG) << "∂Ψ/∂Ibar1: " << dPsi_dIbar1Expression;
+  LOG(DEBUG) << "∂Ψ/∂Ibar2: " << dPsi_dIbar2Expression << " = " << dPsi_dIbar2;
+  LOG(DEBUG) << "∂2Ψ/(∂Ibar1 ∂Ibar1): " << d2Psi_dIbar1Ibar1Expression << " = " << d2Psi_dIbar1Ibar1;
+  LOG(DEBUG) << "∂2Ψ/(∂Ibar1 ∂Ibar1): " << d2Psi_dIbar1Ibar2Expression << " = " << d2Psi_dIbar1Ibar2;
+  LOG(DEBUG) << "∂2Ψ/(∂Ibar1 ∂Ibar1): " << d2Psi_dIbar2Ibar2Expression << " = " << d2Psi_dIbar2Ibar2;
+  LOG(DEBUG) << "factor1: " << factor1;
+  LOG(DEBUG) << "factor2: " << factor2;
+  LOG(DEBUG) << "factor3: " << factor3;
+  LOG(DEBUG) << "factor4: " << factor4;
+
   const double J = deformationGradientDeterminant;
 
   const double factorJ23 = pow(J,-2./3);   // J^{-2/3}
   const double factorJ43 = pow(J,-4./3);   // J^{-4/3}
 
   // distinct entries
-  const int indices[21][4] = {
+/*  const int indices[21][4] = {
     {0,0,0,0},{0,1,0,0},{0,2,0,0},{1,1,0,0},{1,2,0,0},{2,2,0,0},{0,1,0,1},{0,2,0,1},{1,1,0,1},{1,2,0,1},
     {2,2,0,1},{0,2,0,2},{1,1,0,2},{1,2,0,2},{2,2,0,2},{1,1,1,1},{1,2,1,1},{2,2,1,1},{1,2,1,2},{2,2,1,2},
     {2,2,2,2}
   };
-
+*/
   // all entries
-#if 0
+#if 1
   int indices[81][4];
 
   int entryNo = 0;
@@ -1255,7 +1378,7 @@ computeElasticityTensor(const Tensor2<3> &rightCauchyGreen,         //< [in] C
 #endif
 
   // loop over distinct entries in elasticity tensor
-  for (int entryNo = 0; entryNo < 21; entryNo++)
+  for (int entryNo = 0; entryNo < 81; entryNo++)  // 21
   {
     // get indices of current entry
     const int a = indices[entryNo][0];
@@ -1294,22 +1417,57 @@ computeElasticityTensor(const Tensor2<3> &rightCauchyGreen,         //< [in] C
         for (int e = 0; e < D; e++)
         {
           int delta_eh = (e == h? 1 : 0);
+          int delta_eg = (e == g? 1 : 0);
 
           for (int f = 0; f < D; f++)
           {
             int delta_fg = (f == g? 1 : 0);
+            int delta_fh = (f == h? 1 : 0);
             int delta_ef = (e == f? 1 : 0);
             const double c_ef = rightCauchyGreen[f][e];
 
-            int iI_efgh = delta_ef * delta_gh;
+            int iI_efgh = delta_eg * delta_fh;
             int iIbar_efgh = delta_eh * delta_fg;
+            int sS_efgh = 0.5 * (iI_efgh + iIbar_efgh);
+            sS_efgh = iI_efgh;
+            //sS_efgh = iIbar_efgh;   // both should work because of symmetry
 
             const double summand1 = factor1 * delta_ef * delta_gh;
             const double summand2 = factor2 * (delta_ef * factorJ23*c_gh + factorJ23*c_ef * delta_gh);
             const double summand3 = factor3 * factorJ23*c_ef * factorJ23*c_gh;
-            const double summand4 = factor4 * 0.5 * (iI_efgh + iIbar_efgh);
+            const double summand4 = factor4 * sS_efgh;
 
-            const double cBar_efgh = factorJ43 * (summand1 + summand2 + summand3 + summand4);
+            double sum = summand1 + summand2 + summand3 + summand4;
+
+            // terms for 4th invariant
+            if (Term::usesFiberDirection)
+            {
+              auto dPsi_dIbar4Expression = SEMT::deriv_t(Term::strainEnergyDensityFunctionIsochoric, Term::Ibar4);
+
+              auto d2Psi_dIbar1Ibar4Expression = SEMT::deriv_t(dPsi_dIbar1Expression, Term::Ibar4);
+              auto d2Psi_dIbar2Ibar4Expression = SEMT::deriv_t(dPsi_dIbar2Expression, Term::Ibar4);
+              auto d2Psi_dIbar4Ibar4Expression = SEMT::deriv_t(dPsi_dIbar4Expression, Term::Ibar4);
+
+              const double d2Psi_dIbar1Ibar4 = d2Psi_dIbar1Ibar4Expression.apply(reducedInvariantsVector);
+              const double d2Psi_dIbar2Ibar4 = d2Psi_dIbar2Ibar4Expression.apply(reducedInvariantsVector);
+              const double d2Psi_dIbar4Ibar4 = d2Psi_dIbar4Ibar4Expression.apply(reducedInvariantsVector);
+
+              const double factor5 = 4*(d2Psi_dIbar1Ibar4 + Ibar1 * d2Psi_dIbar2Ibar4);
+              const double factor6 = -4*d2Psi_dIbar2Ibar4;
+              const double factor7 = 4*d2Psi_dIbar4Ibar4;
+
+              const double summand5 = factor5 * (delta_ef       * fiberDirection[g] * fiberDirection[h] + fiberDirection[e] * fiberDirection[f] * delta_gh);
+              const double summand6 = factor6 * (factorJ23*c_ef * fiberDirection[g] * fiberDirection[h] + fiberDirection[e] * fiberDirection[f] * factorJ23*c_gh);
+              const double summand7 = factor7 * fiberDirection[e] * fiberDirection[f] * fiberDirection[g] * fiberDirection[h];
+
+              sum += summand5 + summand6 + summand7;
+
+              // terms for 5th invariant are not implemented, this means that the strain energy function can only depend on Ibar4
+            }
+
+            const double cBar_efgh = factorJ43 * sum;
+
+            fictitiousElasticityTensor[h][g][f][e] = cBar_efgh;
 
             const double iI_abef = delta_ab * delta_ef;
 
@@ -1353,6 +1511,9 @@ computeElasticityTensor(const Tensor2<3> &rightCauchyGreen,         //< [in] C
     // compute C
     const double c_abcd = cVol + cIso;
 
+    // debugging
+    //const double c_abcd = cIso;
+
     // store entry
     elasticityTensor[d][c][b][a] = c_abcd;
     elasticityTensor[c][d][b][a] = c_abcd;
@@ -1364,8 +1525,10 @@ computeElasticityTensor(const Tensor2<3> &rightCauchyGreen,         //< [in] C
     elasticityTensor[a][b][c][d] = c_abcd;
   }
 
+  LOG_N_TIMES(2,DEBUG) << "elasticityTensor: " << elasticityTensor;
+
   // verify major and minor symmetries of elasticity tensor
-  if (VLOG_IS_ON(2))
+  if (VLOG_IS_ON(2)||true)
   {
     const double errorTolerance = 1e-14;
     std::string name("C");
@@ -1393,6 +1556,7 @@ computeElasticityTensor(const Tensor2<3> &rightCauchyGreen,         //< [in] C
         }
       }
     }
+    //LOG_N_TIMES(2,DEBUG) << "elasticity tensor checked for minor symmetries";
     LOG(DEBUG) << "elasticity tensor checked for minor symmetries";
   }
 }

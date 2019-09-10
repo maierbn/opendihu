@@ -332,6 +332,8 @@ finalizeMapping(std::shared_ptr<FieldVariableTargetType> fieldVariableTarget, in
     }
   }
 
+  VLOG(1) << "targetValues: " << targetValues;
+
   // set the computed values
   fieldVariableTarget->setValuesWithoutGhosts(componentNoTarget, targetValues);
 

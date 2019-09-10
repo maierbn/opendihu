@@ -3,14 +3,38 @@
 #include <vector>
 #include <algorithm>
 #include <array>
+#include <cmath>
 
 #include "easylogging++.h"
 #include "semt/Semt.h"
 
 #include "opendihu.h"
 
+using namespace std;
+
 int main(int argc, char *argv[])
 {
+  // test SEMT 
+  
+  // Define an instance of variable with index 0 named x.
+  DVAR(x, 0);
+
+  //auto f = pow(x, INT(1)/INT(2));
+  //auto f = ln(pow(x, INT(2)));
+  auto f = pow(sqrt(x), INT(2));
+  cout << "f = " << f << endl;
+  
+  auto df1 = deriv_t(f, x);
+  cout << "f' = " << df1 << endl;
+
+  auto g = x - (x + x);
+  cout << "g = " << g << endl;
+  
+  auto dg1 = deriv_t(g, x);
+  cout << "g' = " << dg1 << endl;
+
+  
+  /*
   std::string pythonConfig = R"(
 config = {
   "nElements": [2,2],
@@ -66,7 +90,7 @@ config = {
   LOG(DEBUG) << "after finishGhostManipulation, test: " << *test;
 
 
-  test->debug();
+  test->debug();*/
   
   return EXIT_SUCCESS;
 }

@@ -1,10 +1,12 @@
+# Mooney-Rivlin transversely isotropic with parameters from Heidlauf 2013
+
 import numpy as np
 import sys, os
 
 # number of elements
-nx = 2
-ny = 2
-nz = 5
+nx = 2    # 2
+ny = 1    # 2
+nz = 5    # 5
 
 # boundary conditions (for quadratic elements)
 dirichlet_bc = {}
@@ -12,6 +14,9 @@ dirichlet_bc = {}
 xpos = 0.0
 ypos = 0.0
 zpos = 0.0
+
+own_rank_no = (int)(sys.argv[-2])
+n_ranks = (int)(sys.argv[-1])
 
 # bottom plane
 for j in range(0,2*ny+1):
@@ -56,16 +61,28 @@ neumann_bc = [{"element": (nz-1)*nx*ny + j*nx + i, "constantVector": [0,1e-1,5e-
 fiber_meshes = {}
 fiber_mesh_names = []
 
-for j in range(ny):
+n_elements = 0
+if own_rank_no==0:
+  n_elements =  2*int(np.ceil(nz/2.))+1    # 7
+elif own_rank_no == 1:
+  n_elements =  2*(nz-int(np.ceil(nz/2.)))  # 4
+
+for j in range(ny*2+2):
   for i in range(nx):
     fiber_no = j*nx + i
     
     x = 0.5 + i
-    y = 0.2 + j
+    y = -2.0 + 0.2 + j
     angle = 20./180.*np.pi
     
     node_positions = []
-    for z in range(2*nz):
+    for z in range(2*nz+1):
+      if own_rank_no==0 and z > 2*int(np.ceil(nz/2.)):
+        continue
+      
+      if own_rank_no==1 and z < 2*int(np.ceil(nz/2.)):
+        continue
+      
       h = 0.5*z
       x_pos = x
       y_pos = y + np.sin(angle)*h
@@ -77,18 +94,23 @@ for j in range(ny):
     
     fiber_meshes[mesh_name] = {
       "nodePositions": node_positions,
-      "nElements": [2*nz],
+      "nElements": [n_elements],
+      "inputMeshIsGlobal": False,
+      "nRanks": [2],
     }
     
 config = {
   "scenarioName": "3d_box",
   "Meshes": fiber_meshes,
   "HyperelasticitySolver": {
-    "c1": 1.0,       # dummy value
-    "c2": 0.0,    # dummy value
+  
+    #"materialParameters": [6.352e-10, 3.627e-10, 2.756e-5, 43.373],  # c1, c2, b1, d1
+    "materialParameters": [2.0, 3, 4, 5],  # c1, c2, b1, d1
+    "displacementsScalingFactor": 1,
+    
     "residualNormLogFilename": "log_residual_norm.txt",
     "useAnalyticJacobian": True,
-    "useNumericJacobian": False,   # only works with non-nested matrices, if both numeric and analytic are enable, it uses the analytic for the preconditioner and the numeric as normal jacobian
+    "useNumericJacobian": True,   # only works with non-nested matrices, if both numeric and analytic are enable, it uses the analytic for the preconditioner and the numeric as normal jacobian
       
     "dumpDenseMatlabVariables": True,   # extrac output of matlab vectors, x,r, jacobian matrix
     
@@ -122,3 +144,5 @@ config = {
     }
   },
 }
+
+print(config)

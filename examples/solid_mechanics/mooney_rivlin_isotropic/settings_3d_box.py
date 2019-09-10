@@ -1,10 +1,11 @@
+# isotropic Mooney Rivlin
 import numpy as np
 import sys, os
 
 # number of elements
-nx = 2
-ny = 2
-nz = 5
+nx = 1    # 2
+ny = 1    # 2
+nz = 3    # 5
 
 # boundary conditions (for quadratic elements)
 dirichlet_bc = {}
@@ -55,11 +56,12 @@ neumann_bc = [{"element": (nz-1)*nx*ny + j*nx + i, "constantVector": [0,1e-1,5e-
 config = {
   "scenarioName": "3d_box",
   "HyperelasticitySolver": {
-    "c1": 1.0,       # dummy value
-    "c2": 0.0,    # dummy value
+    #"materialParameters": [1.5,2.0],
+    "materialParameters": [0.0,1.0],
+    "displacementsScalingFactor": 1.0,   # scaling factor for displacements
     "residualNormLogFilename": "log_residual_norm.txt",
     "useAnalyticJacobian": True,
-    "useNumericJacobian": False,   # only works with non-nested matrices, if both numeric and analytic are enable, it uses the analytic for the preconditioner and the numeric as normal jacobian
+    "useNumericJacobian": True,   # only works with non-nested matrices, if both numeric and analytic are enable, it uses the analytic for the preconditioner and the numeric as normal jacobian
       
     "dumpDenseMatlabVariables": True,   # extrac output of matlab vectors, x,r, jacobian matrix
     

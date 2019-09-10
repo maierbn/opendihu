@@ -8,8 +8,9 @@ namespace Mesh
 {
 
 template<typename FunctionSpaceSourceType, typename FunctionSpaceTargetType>
-MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>::MappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSource,
-                                                                                             std::shared_ptr<FunctionSpaceTargetType> functionSpaceTarget) :
+MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>::
+MappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSource,
+                     std::shared_ptr<FunctionSpaceTargetType> functionSpaceTarget) :
   functionSpaceSource_(functionSpaceSource),
   functionSpaceTarget_(functionSpaceTarget)
 {
@@ -26,7 +27,11 @@ MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>::MappingB
 
   targetMappingInfo_.resize(nDofsLocalSource);
 
-  VLOG(1) << "create mapping " << functionSpaceSource->meshName() << " -> " << functionSpaceTarget->meshName();
+  if (VLOG_IS_ON(1))
+  {
+    VLOG(1) << "create mapping " << functionSpaceSource->meshName() << " -> " << functionSpaceTarget->meshName();
+    VLOG(1) << "geometry: " << functionSpaceSource->geometryField();
+  }
 
   //VLOG(1) << "target meshPartition: " << *functionSpaceTarget->meshPartition();
   //VLOG(1) << "geometryField: " << functionSpaceTarget->geometryField();
@@ -35,6 +40,7 @@ MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>::MappingB
 
   bool mappingSucceeded = true;
   bool startSearchInCurrentElement = false;
+  int nSourceDofsOutsideTargetMesh = 0;
 
   // visualization for 1D-1D: s=source, t=target
   // t--s--------t-----s-----t
@@ -52,12 +58,17 @@ MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>::MappingB
 
     double xiTolerance = xiToleranceBase;
     int nTries = 0;
-    for(nTries = 0; nTries < 10; nTries++)
+    int nTriesMax = 3;
+    int startElementNo = elementNo;
+    for(nTries = 0; nTries < nTriesMax; nTries++)
     {
       // find element no in the target mesh where the position is
+      elementNo = startElementNo;
       if (functionSpaceTarget->findPosition(position, elementNo, ghostMeshNo, xi, startSearchInCurrentElement, xiTolerance))
       {
         xiToleranceBase = xiTolerance;
+
+        targetMappingInfo.mapThisDof = true;
         break;
       }
       else
@@ -67,14 +78,21 @@ MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>::MappingB
       }
     }
 
-    if (nTries == 10)
+    if (nTries == nTriesMax)
     {
+      /*
       LOG(DEBUG) << "Could not create mapping between meshes \"" << functionSpaceSource->meshName() << "\" and \""
         << functionSpaceTarget->meshName() << "\", dof local " << sourceDofNoLocal
         << " of mesh \"" << functionSpaceSource->meshName() << "\" at position " << position << " is outside of mesh \""
         << functionSpaceTarget->meshName() << "\" with tolerance " << xiTolerance << ".";
-      mappingSucceeded = false;
-      break;
+      mappingSucceeded = false;*/
+      LOG(DEBUG) << "In mapping between meshes \"" << functionSpaceSource->meshName() << "\" and \""
+        << functionSpaceTarget->meshName() << "\", source dof local " << sourceDofNoLocal
+        << " of mesh \"" << functionSpaceSource->meshName() << "\" at position " << position << " is outside of target mesh \""
+        << functionSpaceTarget->meshName() << "\" with tolerance " << xiTolerance << ".";
+
+      nSourceDofsOutsideTargetMesh++;
+      targetMappingInfo.mapThisDof = false;
     }
 
     // store element no
@@ -85,7 +103,21 @@ MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>::MappingB
     // note: geometry value = sum over dofs of geometryValue_dof * phi_dof(xi)
     for (int targetDofIndex = 0; targetDofIndex < nDofsPerTargetElement; targetDofIndex++)
     {
-      targetMappingInfo.scalingFactors[targetDofIndex] = functionSpaceTarget->phi(targetDofIndex, xi);
+      VLOG(3) << "   phi_" << targetDofIndex << "(" << xi << ")=" << functionSpaceTarget->phi(targetDofIndex, xi);
+      double phiContribution = functionSpaceTarget->phi(targetDofIndex, xi);
+
+      if (fabs(phiContribution) < 1e-7)
+      {
+        if (phiContribution >= 0)
+        {
+          phiContribution = 1e-7;
+        }
+        else
+        {
+          phiContribution = -1e-7;
+        }
+      }
+      targetMappingInfo.scalingFactors[targetDofIndex] = phiContribution;
     }
 
     targetMappingInfo_[sourceDofNoLocal] = targetMappingInfo;
@@ -117,7 +149,7 @@ MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>::MappingB
   else
   {
     LOG(DEBUG) << "Successfully initialized mapping between meshes \"" << functionSpaceSource->meshName() << "\" and \""
-      << functionSpaceTarget->meshName() << "\".";
+      << functionSpaceTarget->meshName() << "\", " << nSourceDofsOutsideTargetMesh << "/" << nDofsLocalSource << " source dofs are outside the target mesh.";
   }
 }
 
@@ -151,6 +183,10 @@ void MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>::map
   // loop over all local dofs of the source functionSpace
   for (dof_no_t sourceDofNoLocal = 0; sourceDofNoLocal != nDofsLocalSource; sourceDofNoLocal++)
   {
+    // if source dof is outside of target mesh
+    if (!targetMappingInfo_[sourceDofNoLocal].mapThisDof)
+      continue;
+
     // get value
     double sourceValue = sourceValues[sourceDofNoLocal];
 
@@ -204,6 +240,10 @@ void MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>::map
   // loop over all local dofs of the source functionSpace
   for (dof_no_t sourceDofNoLocal = 0; sourceDofNoLocal != nDofsLocalSource; sourceDofNoLocal++)
   {
+    // if target dof is outside of source mesh
+    if (!targetMappingInfo_[sourceDofNoLocal].mapThisDof)
+      continue;
+
     // get value
     VecD<nComponents> sourceValue = sourceValues[sourceDofNoLocal];
 
@@ -262,6 +302,10 @@ void MappingBetweenMeshes<FunctionSpaceTargetType, FunctionSpaceSourceType>::map
   // loop over all local dofs of the target functionSpace, which was the source function space when the mapping was initialized
   for (dof_no_t targetDofNoLocal = 0; targetDofNoLocal != nDofsLocalTarget; targetDofNoLocal++)
   {
+    // if source dof is outside of target mesh
+    if (!targetMappingInfo_[targetDofNoLocal].mapThisDof)
+      continue;
+
     element_no_t sourceElementNoLocal = targetMappingInfo_[targetDofNoLocal].elementNoLocal;
 
     // get source values of the element where targetDofNoLocal is in

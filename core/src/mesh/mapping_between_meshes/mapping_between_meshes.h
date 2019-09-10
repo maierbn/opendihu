@@ -58,6 +58,7 @@ private:
   {
     element_no_t elementNoLocal;   //< local element no of the target element (high dim)
     std::array<double,FunctionSpaceTargetType::nDofsPerElement()> scalingFactors;          //< factors for the dofs of the element with which to scale the value
+    bool mapThisDof;    //< if this source dof should be mapped to the target dofs in elementNoLocal, if this is false, the dof is outside of the target mesh
   };
 
   std::vector<targetDof_t> targetMappingInfo_;  ///< [localDofNo source functionSpace (low dim)] information where in the target (high dim) to store the value from local dof No of the source (low dim)

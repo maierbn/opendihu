@@ -112,7 +112,7 @@ PetscErrorCode jacobianFunctionCombined(SNES snes, Vec x, Mat jac, Mat b, void *
   // output the jacobian matrix for debugging
   object->dumpJacobianMatrix(jac);
 
-  // compute the tangent stiffness matrix, stored in the preconditioner slot b
+  // compute the analytical jacobian matrix, stored in the preconditioner slot b
   object->evaluateAnalyticJacobian(x, b);
 
   // output the jacobian matrix for debugging

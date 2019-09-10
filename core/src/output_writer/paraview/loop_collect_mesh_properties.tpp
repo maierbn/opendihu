@@ -22,8 +22,7 @@ inline typename std::enable_if<i < std::tuple_size<FieldVariablesForOutputWriter
 loopCollectMeshProperties(const FieldVariablesForOutputWriterType &fieldVariables, std::map<std::string,PolyDataPropertiesForMesh> &meshProperties
 )
 {
-
-  LOG(DEBUG) << "loopCollectMeshProperties i=" << i << " type " << StringUtility::demangle(typeid(typename std::tuple_element<i,FieldVariablesForOutputWriterType>::type).name());
+  //LOG(DEBUG) << "loopCollectMeshProperties i=" << i << " type " << StringUtility::demangle(typeid(typename std::tuple_element<i,FieldVariablesForOutputWriterType>::type).name());
 
   // call what to do in the loop body
   if (collectMeshProperties<typename std::tuple_element<i,FieldVariablesForOutputWriterType>::type, FieldVariablesForOutputWriterType>(

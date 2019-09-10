@@ -35,19 +35,24 @@ HyperelasticitySolver(DihuContext context) :
   }
 
   // parse material parameters
-  c1_ = specificSettings_.getOptionDouble("c1", 1.0, PythonUtility::ValidityCriterion::NonNegative);
-  c2_ = specificSettings_.getOptionDouble("c2", 1.0, PythonUtility::ValidityCriterion::NonNegative);
-  displacementsScalingFactor_ = specificSettings_.getOptionDouble("scalingFactor", 1.0);
-  dumpDenseMatlabVariables_ = specificSettings_.getOptionBool("dumpDenseMatlabVariables", false);
+  specificSettings_.getOptionVector("materialParameters", materialParameters_);
+
+  LOG(DEBUG) << "HyperelasticitySolver: parsed parameters " << materialParameters_;
+
+  if (materialParameters_.size() < Term::nMaterialParameters)
+  {
+    LOG(FATAL) << "Not enough material parameters specified. Specified parameters: " << materialParameters_.size()
+      << " (" << materialParameters_ << "), needed parameters by " << StringUtility::demangle(typeid(Term).name()) << ": "
+      << Term::nMaterialParameters;
+  }
 
   // initialize material parameters
-  std::vector<double> parametersVector({c1_, c2_});
-
   // set all PARAM(i) values to the values given by materialParameters
-  SEMT::set_parameters<2>::to(parametersVector);
+  SEMT::set_parameters<Term::nMaterialParameters>::to(materialParameters_);
 
-  LOG(DEBUG) << "HyperelasticitySolver: parsed parameters c1: " << c1_ << ", c2: " << c2_;
-  LOG(DEBUG) << "now parse output writers";
+
+  displacementsScalingFactor_ = specificSettings_.getOptionDouble("displacementsScalingFactor", 1.0);
+  dumpDenseMatlabVariables_ = specificSettings_.getOptionBool("dumpDenseMatlabVariables", false);
 
   // initialize output writers
   this->outputWriterManager_.initialize(this->context_, this->specificSettings_);
@@ -186,9 +191,89 @@ void HyperelasticitySolver<Term>::
 initializeFiberDirections()
 {
   std::vector<std::string> fiberMeshNames;
-  this->specificSettings_.getOptionVector<std::string>("fiberMeshNames", fiberMeshNames);
+  this->specificSettings_.template getOptionVector<std::string>("fiberMeshNames", fiberMeshNames);
+
+  // loop over fiber mesh names
+  for (int fiberNo = 0; fiberNo < fiberMeshNames.size(); fiberNo++)
+  {
+    // get fiber function space
+    std::string fiberMeshName = fiberMeshNames[fiberNo];
+    LOG(DEBUG) << "fiber " << fiberNo << "/" << fiberMeshNames.size() << ", mesh \"" << fiberMeshName << "\".";
+
+    std::shared_ptr<FiberFunctionSpace> fiberFunctionSpace = context_.meshManager()->functionSpace<FiberFunctionSpace>(fiberMeshName);
+
+    LOG(DEBUG) << "create mapping";
+
+    // initialize mapping 1D fiber -> 3D
+    context_.meshManager()->createMappingBetweenMeshes<FiberFunctionSpace,DisplacementsFunctionSpace>(
+      fiberFunctionSpace, this->displacementsFunctionSpace_);
+  }
+
+  // prepare the target mesh for the mapping, set all factors to zero
+  DihuContext::meshManager()->template prepareMapping<DisplacementsFieldVariableType>(this->data_.fiberDirection());
 
 
+  // loop over fiber mesh names
+  for (int fiberNo = 0; fiberNo < fiberMeshNames.size(); fiberNo++)
+  {
+    std::string fiberMeshName = fiberMeshNames[fiberNo];
+    LOG(DEBUG) << "mesh \"" << fiberMeshName << "\".";
+
+    std::shared_ptr<FiberFunctionSpace> fiberFunctionSpace = context_.meshManager()->functionSpace<FiberFunctionSpace>(fiberMeshName);
+
+    // define direction field variable on the fiber that will store the direction of the fiber
+    std::vector<std::string> components({"x","y","z"});
+    std::shared_ptr<FieldVariable::FieldVariable<FiberFunctionSpace,3>> direction
+      = fiberFunctionSpace->createFieldVariable<3>("direction", components);
+
+    // set values of direction field variable
+    int nDofsLocalWithoutGhosts = fiberFunctionSpace->nDofsLocalWithoutGhosts();
+    std::vector<Vec3> geometryFieldValues;
+    fiberFunctionSpace->geometryField().getValuesWithoutGhosts(geometryFieldValues);
+
+    std::vector<Vec3> directionValues(nDofsLocalWithoutGhosts);
+
+    // loop over local nodes
+    for (dof_no_t dofNoLocal = 0; dofNoLocal < nDofsLocalWithoutGhosts; dofNoLocal++)
+    {
+      dof_no_t index0 = std::max(0, dofNoLocal-1);
+      dof_no_t index1 = std::min(nDofsLocalWithoutGhosts-1, dofNoLocal+1);
+
+      Vec3 direction = -geometryFieldValues[index0] + geometryFieldValues[index1];
+      directionValues[dofNoLocal] = direction;
+    }
+
+    direction->setValuesWithoutGhosts(directionValues);
+
+    // transfer direction values
+    DihuContext::meshManager()->mapLowToHighDimension<FieldVariable::FieldVariable<FiberFunctionSpace,3>, DisplacementsFieldVariableType>(
+      direction, this->data_.fiberDirection());
+  }
+
+  // finalize the mapping to the target mesh, compute final values by dividing by the factors
+  DihuContext::meshManager()->template finalizeMapping<DisplacementsFieldVariableType>(this->data_.fiberDirection());
+
+  LOG(DEBUG) << "normalize fiber direction";
+
+  // normalize entries
+  std::vector<Vec3> valuesLocalWithoutGhosts;
+  this->data_.fiberDirection()->getValuesWithoutGhosts(valuesLocalWithoutGhosts);
+
+  for (dof_no_t dofNoLocal = 0; dofNoLocal < this->data_.fiberDirection()->nDofsLocalWithoutGhosts(); dofNoLocal++)
+  {
+    if (MathUtility::normSquared<3>(valuesLocalWithoutGhosts[dofNoLocal]) < 1e-10)
+    {
+      valuesLocalWithoutGhosts[dofNoLocal] = Vec3({0, 0, 1});
+      LOG(DEBUG) << "dof " << dofNoLocal << ", fiberDirection was (0,0,0), set to (0,0,1)";
+    }
+    else
+    {
+      MathUtility::normalize<3>(valuesLocalWithoutGhosts[dofNoLocal]);
+      LOG(DEBUG) << "dof " << dofNoLocal << ", fiberDirection normalized: " << valuesLocalWithoutGhosts[dofNoLocal];
+    }
+  }
+
+  this->data_.fiberDirection()->setValuesWithoutGhosts(valuesLocalWithoutGhosts);
 }
 
 template<typename Term>
@@ -237,6 +322,8 @@ initializePetscVariables()
 
   combinedMatrixJacobian_ = std::make_shared<PartitionedPetscMatForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>>(
     combinedVecSolution_, 4*diagonalNonZeros, 4*offdiagonalNonZeros, "combinedJacobian");
+
+  solverMatrixAdditionalNumericJacobian_ = PETSC_NULL;
 
   // if both numeric and analytic jacobian are used, create additional matrix that will hold the numeric jacobian
   if (useNumericJacobian_ && useAnalyticJacobian_)

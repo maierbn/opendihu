@@ -16,6 +16,8 @@ bool FunctionSpaceStructuredFindPositionBase<MeshType,BasisFunctionType>::
 findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::array<double,MeshType::dim()> &xi, bool startSearchInCurrentElement, double xiTolerance)
 {
   const element_no_t nElements = this->nElementsLocal();
+  VLOG(2) << "findPosition, elementNoLocal: " << elementNoLocal << ", ghostMeshNo: " << ghostMeshNo
+    << ", startSearchInCurrentElement: " << startSearchInCurrentElement << ", xiTolerance: " << xiTolerance << ", xi: " << xi;
 
   // set starting no to 0 if it was not given and is thus arbitrarily initialized
   if (elementNoLocal < 0 || elementNoLocal >= nElements)
@@ -28,7 +30,18 @@ findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::ar
     FunctionSpaceStructuredFindPositionBase<MeshType,BasisFunctionType> *functionSpace = this;
 
     if (ghostMeshNo != -1)
+    {
       functionSpace = ghostMesh_[ghostMeshNo].get();
+
+      // if no such ghost mesh is stored, fall back to own mesh
+      if (functionSpace == nullptr)
+      {
+        ghostMeshNo = -1;
+        functionSpace = this;
+      }
+    }
+
+    assert(functionSpace);
 
     // check if point is already in current element
     if (functionSpace->pointIsInElement(point, elementNoLocal, xi, xiTolerance))

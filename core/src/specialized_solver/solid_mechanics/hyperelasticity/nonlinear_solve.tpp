@@ -467,6 +467,50 @@ dumpJacobianMatrix(Mat jac)
   {
     // this is the normal jacobian, either numeric or analytic, if only one of both is is use
     combinedMatrixJacobian_->dumpMatrixGlobalNatural(filename.str());
+
+    if (solverMatrixAdditionalNumericJacobian_ != PETSC_NULL)
+    {
+      double numericJacobianNorm = 0;
+      MatNorm(solverMatrixAdditionalNumericJacobian_, NORM_1, &numericJacobianNorm);
+      if (numericJacobianNorm > 1)
+      {
+        // compute difference between analytic and numeric jacobian
+        Mat difference;
+        PetscErrorCode ierr;
+        ierr = MatDuplicate(solverMatrixAdditionalNumericJacobian_, MAT_COPY_VALUES, &difference); CHKERRV(ierr);
+        ierr = MatCopy(solverMatrixAdditionalNumericJacobian_, difference, SAME_NONZERO_PATTERN); CHKERRV(ierr);
+        MatAXPY(difference, -1, solverMatrixJacobian_, DIFFERENT_NONZERO_PATTERN);
+
+        Mat analyticJacobianSubmatrixU = combinedMatrixJacobian_->getSubmatrixUU();
+        Mat numericJacobianSubmatrixU = combinedMatrixAdditionalNumericJacobian_->getSubmatrixUU();
+
+        Mat differenceSubmatrixU;
+        ierr = MatDuplicate(analyticJacobianSubmatrixU, MAT_COPY_VALUES, &differenceSubmatrixU); CHKERRV(ierr);
+        ierr = MatCopy(analyticJacobianSubmatrixU, differenceSubmatrixU, SAME_NONZERO_PATTERN); CHKERRV(ierr);
+        MatAXPY(differenceSubmatrixU, -1, numericJacobianSubmatrixU, DIFFERENT_NONZERO_PATTERN);
+
+
+
+        double norm1 = 0;
+        double normF = 0;
+        double normInf = 0;
+        MatNorm(difference, NORM_1, &norm1);
+        MatNorm(difference, NORM_FROBENIUS, &normF);
+        MatNorm(difference, NORM_INFINITY, &normInf);
+        LOG(DEBUG) << "difference between analytic and numeric jacobian matrices: 1-norm: " << norm1 << ", frobenius norm: " << normF << ", infinity norm: " << normInf;
+
+
+        MatNorm(differenceSubmatrixU, NORM_1, &norm1);
+        MatNorm(differenceSubmatrixU, NORM_FROBENIUS, &normF);
+        MatNorm(differenceSubmatrixU, NORM_INFINITY, &normInf);
+        LOG(DEBUG) << "only uu submatrix: 1-norm: " << norm1 << ", frobenius norm: " << normF << ", infinity norm: " << normInf;
+
+
+        if (norm1 > 1)
+          LOG(ERROR) << "norm mismatch";
+      }
+
+    }
   }
   else
   {

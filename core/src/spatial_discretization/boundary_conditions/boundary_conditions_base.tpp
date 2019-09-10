@@ -171,7 +171,9 @@ parseBoundaryConditionsForElements(std::string boundaryConditionsConfigKey)
   std::vector<std::pair<int,ValueType>> boundaryConditions;  // (index, value)
   parseBoundaryConditions(this->specificSettings_, functionSpace_, boundaryConditionsConfigKey, boundaryConditions);
 
-  LOG(DEBUG) << "read in Dirichlet boundary conditions from config (\"" << std::numeric_limits<double>::max() << "\" means there is no BC for this dof): " << boundaryConditions;
+  LOG(DEBUG) << "read in Dirichlet boundary conditions from config (None means there is no BC for this dof, "
+    << "the internal representation for this is max double (\"" << std::numeric_limits<double>::max() << "\")). ";
+  LOG(DEBUG) << boundaryConditions;
 
   // sort all parsed boundary conditions for their index no
   auto compareFunction = [](const std::pair<int,ValueType> &item1, const std::pair<int,ValueType> &item2)

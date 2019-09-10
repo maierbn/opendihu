@@ -19,48 +19,12 @@ std::shared_ptr<FunctionSpaceType> Manager::functionSpace(PythonConfig settings)
   if (settings.hasKey("meshName"))
   {
     std::string meshName = settings.getOptionString("meshName", "");
-    if (hasFunctionSpaceOfType<FunctionSpaceType>(meshName))
-    {
-      LOG(DEBUG) << "Mesh with meshName \"" << meshName << "\" requested, found and type matches, type is "
-        << StringUtility::demangle(typeid(functionSpaces_[meshName]).name())
-      << ", cast to " << StringUtility::demangle(typeid(FunctionSpaceType).name());
-      return std::static_pointer_cast<FunctionSpaceType>(functionSpaces_[meshName]);
-    }
-    else if (meshConfiguration_.find(meshName) != meshConfiguration_.end())
-    {
-      // mesh was preconfigured, create new mesh from stored meshConfiguration
-      LOG(DEBUG) << "Mesh configuration for \"" << meshName << "\" found and requested, will be created now. "
-      << "Type is " << StringUtility::demangle(typeid(FunctionSpaceType).name()) << ".";
-      
-      // get mesh configuration that was parsed earlier
-      PythonConfig meshConfiguration = meshConfiguration_.at(meshName);
-      
-      if (hasFunctionSpace(meshName))
-      {
-        std::stringstream newMeshName;
-        newMeshName << meshName << "_2";
-        meshName = newMeshName.str();
-        LOG(INFO) << "Create a mesh with name \"" << meshName << "\".";
-      }
-      
-      // create new mesh and initialize
-      std::shared_ptr<FunctionSpaceType> functionSpace = createFunctionSpace<FunctionSpaceType>(meshName, meshConfiguration);
-      
-      std::string logKey;
-      if (meshConfiguration.hasKey("logKey"))
-      {
-        logKey = meshConfiguration.getOptionString("logKey", "");
-      }
 
-      Control::PerformanceMeasurement::setParameter(std::string("~nDofs") + logKey, functionSpace->nDofsGlobal());
-      Control::PerformanceMeasurement::setParameter(std::string("~nNodes") + logKey, functionSpace->nNodesGlobal());
-      Control::PerformanceMeasurement::setParameter(std::string("~nElements") + logKey, functionSpace->nElementsGlobal());
+    std::shared_ptr<FunctionSpaceType> functionSpace = this->functionSpace<FunctionSpaceType>(meshName);
 
+    if (functionSpace)
+    {
       return functionSpace;
-    }
-    else
-    {
-      LOG(ERROR) << "Config contains reference to mesh with meshName \"" << meshName << "\" but no such mesh was defined.";
     }
   }
   else
@@ -97,16 +61,52 @@ std::shared_ptr<FunctionSpaceType> Manager::functionSpace(std::string meshName)
 {
   LOG(DEBUG) << "querying Mesh::Manager::functionSpace, type " << StringUtility::demangle(typeid(FunctionSpaceType).name());
 
-  // if mesh was already created earlier
-  if (functionSpaces_.find(meshName) != functionSpaces_.end())
+  if (hasFunctionSpaceOfType<FunctionSpaceType>(meshName))
   {
+    LOG(DEBUG) << "Mesh with meshName \"" << meshName << "\" requested, found and type matches, type is "
+      << StringUtility::demangle(typeid(functionSpaces_[meshName]).name())
+    << ", cast to " << StringUtility::demangle(typeid(FunctionSpaceType).name());
     return std::static_pointer_cast<FunctionSpaceType>(functionSpaces_[meshName]);
+  }
+  else if (meshConfiguration_.find(meshName) != meshConfiguration_.end())
+  {
+    // mesh was preconfigured, create new mesh from stored meshConfiguration
+    LOG(DEBUG) << "Mesh configuration for \"" << meshName << "\" found and requested, will be created now. "
+    << "Type is " << StringUtility::demangle(typeid(FunctionSpaceType).name()) << ".";
+
+    // get mesh configuration that was parsed earlier
+    PythonConfig meshConfiguration = meshConfiguration_.at(meshName);
+
+    if (hasFunctionSpace(meshName))
+    {
+      std::stringstream newMeshName;
+      newMeshName << meshName << "_2";
+      meshName = newMeshName.str();
+      LOG(INFO) << "Create a mesh with name \"" << meshName << "\".";
+    }
+
+    // create new mesh and initialize
+    std::shared_ptr<FunctionSpaceType> functionSpace = createFunctionSpace<FunctionSpaceType>(meshName, meshConfiguration);
+
+    std::string logKey;
+    if (meshConfiguration.hasKey("logKey"))
+    {
+      logKey = meshConfiguration.getOptionString("logKey", "");
+    }
+
+    Control::PerformanceMeasurement::setParameter(std::string("~nDofs") + logKey, functionSpace->nDofsGlobal());
+    Control::PerformanceMeasurement::setParameter(std::string("~nNodes") + logKey, functionSpace->nNodesGlobal());
+    Control::PerformanceMeasurement::setParameter(std::string("~nElements") + logKey, functionSpace->nElementsGlobal());
+
+    return functionSpace;
   }
   else
   {
-    LOG(ERROR) << "FunctionSpace with meshName \"" << meshName << "\" does not exist.";
+    LOG(ERROR) << "Mesh with name \"" << meshName << "\" was not defined. "
+      << "Add the following to the python settings:\n\"Meshes\": {\n\t\"" << meshName << "\": { \n\t\t<your mesh options here>\n\t}\n}";
   }
-  return std::static_pointer_cast<FunctionSpaceType>(functionSpaces_.begin()->second);
+
+  return nullptr;
 }
 
 //! create a mesh not from python config but directly by calling an appropriate construtor. 

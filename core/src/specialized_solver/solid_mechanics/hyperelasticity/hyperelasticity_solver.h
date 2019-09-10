@@ -5,7 +5,7 @@
 #include "interfaces/runnable.h"
 #include "function_space/function_space.h"
 #include "basis_function/basis_function.h"
-#include "data_management/specialized_solver/quasi_static_hyperelasticity.h"
+#include "data_management/specialized_solver/hyperelasticity_solver.h"
 #include "partition/partitioned_petsc_vec/02_partitioned_petsc_vec_for_hyperelasticity.h"
 #include "partition/partitioned_petsc_mat/partitioned_petsc_mat_for_hyperelasticity.h"
 #include "output_writer/manager.h"
@@ -27,7 +27,9 @@ class HyperelasticitySolver :
 public:
   typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunction::LagrangeOfOrder<2>> DisplacementsFunctionSpace;
   typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunction::LagrangeOfOrder<1>> PressureFunctionSpace;
-  typedef Data::QuasiStaticHyperelasticity<PressureFunctionSpace,DisplacementsFunctionSpace> Data;
+  typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1>> FiberFunctionSpace;
+
+  typedef Data::QuasiStaticHyperelasticity<PressureFunctionSpace,DisplacementsFunctionSpace,Term,Term> Data;
   typedef ::Data::QuasiStaticHyperelasticityPressureOutput<PressureFunctionSpace> PressureDataCopy;
 
   typedef FieldVariable::FieldVariable<DisplacementsFunctionSpace,3> DisplacementsFieldVariableType;
@@ -81,6 +83,15 @@ public:
 
   //! not used
   void debug();
+  void materialTesting(const double pressure,                         //< [in] pressure value p
+                   const Tensor2<3> &rightCauchyGreen,                //< [in] C
+                   const Tensor2<3> &inverseRightCauchyGreen,         //< [in] C^{-1}
+                   const std::array<double,5> reducedInvariants,      //< [in] the reduced invariants Ibar_1, Ibar_2
+                   const double deformationGradientDeterminant,       //< [in] J = det(F)
+                   Vec3 fiberDirection,                               //< [in] a0, direction of fibers
+                   Tensor2<3> &fictitiousPK2Stress,                   //< [in] Sbar, the fictitious 2nd Piola-Kirchhoff stress tensor
+                   Tensor2<3> &pk2StressIsochoric                     //< [in] S_iso, the isochoric part of the 2nd Piola-Kirchhoff stress tensor
+                  );
 
   //! callback after each nonlinear iteration
   void monitorSolvingIteration(SNES snes, PetscInt its, PetscReal norm);
@@ -118,19 +129,20 @@ protected:
   //! compute the right Cauchy Green tensor, C = F^T*F. This is simply a matrix matrix multiplication
   Tensor2<3> computeRightCauchyGreenTensor(const Tensor2<3> &deformationGradient);
 
-  //! compute the invariants, [I1,I2,I3] where I1 = tr(C), I2 = 1/2 * (tr(C)^2 - tr(C^2)), I3 = det(C)
-  std::array<double,3> computeInvariants(const Tensor2<3> &rightCauchyGreen, const double rightCauchyGreenDeterminant);
+  //! compute the invariants, [I1,I2,I3,I4,I5] where I1 = tr(C), I2 = 1/2 * (tr(C)^2 - tr(C^2)), I3 = det(C), I4 = a0•C0 a0, I5 = a0•C0^2 a0
+  std::array<double,5> computeInvariants(const Tensor2<3> &rightCauchyGreen, const double rightCauchyGreenDeterminant, const Vec3 fiberDirection);
 
   //! compute the reduced invariants, [Ibar1, Ibar2]
-  std::array<double,2> computeReducedInvariants(const std::array<double,3> invariants, const double deformationGradientDeterminant);
+  std::array<double,5> computeReducedInvariants(const std::array<double,5> invariants, const double deformationGradientDeterminant);
 
   //! compute the 2nd Piola-Kirchhoff pressure, S
   Tensor2<3>
   computePK2Stress(const double pressure,                           //< [in] pressure value p
                    const Tensor2<3> &rightCauchyGreen,                //< [in] C
                    const Tensor2<3> &inverseRightCauchyGreen,         //< [in] C^{-1}
-                   const std::array<double,2> reducedInvariants,      //< [in] the reduced invariants Ibar_1, Ibar_2
+                   const std::array<double,5> reducedInvariants,      //< [in] the reduced invariants Ibar_1, Ibar_2
                    const double deformationGradientDeterminant,       //< [in] J = det(F)
+                   Vec3 fiberDirection,                               //< [in] a0, direction of fibers
                    Tensor2<3> &fictitiousPK2Stress,                   //< [out] Sbar, the fictitious 2nd Piola-Kirchhoff stress tensor
                    Tensor2<3> &pk2StressIsochoric                     //< [out] S_iso, the isochoric part of the 2nd Piola-Kirchhoff stress tensor
                   );
@@ -141,8 +153,8 @@ protected:
   //! compute the material elasticity tensor
   void computeElasticityTensor(const Tensor2<3> &rightCauchyGreen,
                                const Tensor2<3> &inverseRightCauchyGreen, double deformationGradientDeterminant, double pressure,
-                               std::array<double,2> reducedInvariants, const Tensor2<3> &fictitiousPK2Stress, const Tensor2<3> &pk2StressIsochoric,
-                               Tensor4<3> &elasticityTensor);
+                               std::array<double,5> reducedInvariants, const Tensor2<3> &fictitiousPK2Stress, const Tensor2<3> &pk2StressIsochoric,
+                               Vec3 fiberDirection, Tensor4<3> &fictitiousElasticityTensor, Tensor4<3> &elasticityTensor);
 
 
   DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
@@ -181,8 +193,7 @@ protected:
   std::shared_ptr<DirichletBoundaryConditions<DisplacementsFunctionSpace,3>> dirichletBoundaryConditions_ = nullptr;  ///< object that parses Dirichlet boundary conditions and applies them to rhs
   std::shared_ptr<NeumannBoundaryConditions<DisplacementsFunctionSpace,Quadrature::Gauss<3>,3>> neumannBoundaryConditions_ = nullptr;  ///< object that parses Neumann boundary conditions and applies them to the rhs
 
-  double c1_;    ///< first Mooney-Rivlin parameter
-  double c2_;   ///< second Mooney-Rivlin parameter
+  std::vector<double> materialParameters_;    ///< material parameters, e.g. c1,c2 for Mooney-Rivlin
   double displacementsScalingFactor_;   ///< factor with which to scale the displacements
   bool dumpDenseMatlabVariables_;      ///< the current vector x, the residual, r and the jacobian, jac should be written
 
@@ -195,3 +206,4 @@ protected:
 #include "specialized_solver/solid_mechanics/hyperelasticity/hyperelasticity_solver.tpp"
 #include "specialized_solver/solid_mechanics/hyperelasticity/material_computations.tpp"
 #include "specialized_solver/solid_mechanics/hyperelasticity/nonlinear_solve.tpp"
+#include "specialized_solver/solid_mechanics/hyperelasticity/material_testing.tpp"

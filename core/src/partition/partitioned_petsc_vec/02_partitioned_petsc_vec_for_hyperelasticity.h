@@ -36,6 +36,15 @@ public:
   //! @param horizontal if the string is for console output (less newlines) or for file output
   std::string getString(bool horizontal = true, std::string vectorName = "");
 
+  //! get the number of displacement dofs ux,uy,uz without Dirichlet Bc constraint dofs
+  dof_no_t nDisplacementDofsWithoutBcLocal();
+
+  //! get a Petsc index set (IS) of all global non-bc indices comprising ux,uy,uz
+  IS displacementDofsGlobal();
+
+  //! get a Petsc index set (IS) of all global non-bc indices p
+  IS pressureDofsGlobal();
+
 protected:
 
   //! do the additional initalization after the initialization of the parent class, that accounts also for the pressure component

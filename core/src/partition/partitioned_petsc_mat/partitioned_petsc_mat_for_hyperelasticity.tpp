@@ -408,7 +408,7 @@ dumpMatrixGlobalNatural(std::string filename)
     {
       matrixName << filename;
     }
-    matrixName << "r" << nRanks;
+    //matrixName << "r" << nRanks;
 
     filename += std::string(".m");
     OutputWriter::Generic::openFile(file, filename);
@@ -437,4 +437,57 @@ dumpMatrixGlobalNatural(std::string filename)
 
     LOG(INFO) << "Matrix written to \"" << filename << "\".";
   }
+}
+
+//! get a submatrix of the upper left part (only displacements)
+template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType>
+Mat PartitionedPetscMatForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>::
+getSubmatrixUU()
+{
+  MPI_Comm mpiCommunicator = partitionedPetscVecForHyperelasticity_->meshPartition()->mpiCommunicator();
+
+  // create index sets of rows of displacement dofs
+  IS displacementDofs = partitionedPetscVecForHyperelasticity_->displacementDofsGlobal();
+
+  Mat submatrixUU;
+  PetscErrorCode ierr;
+  ierr = MatGetSubMatrix(this->globalMatrix_, displacementDofs, displacementDofs, MAT_INITIAL_MATRIX, &submatrixUU); CHKERRABORT(mpiCommunicator,ierr);
+
+  return submatrixUU;
+}
+
+//! get a submatrix of the lower left part (pressure)
+template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType>
+Mat PartitionedPetscMatForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>::
+getSubmatrixPU()
+{
+  MPI_Comm mpiCommunicator = partitionedPetscVecForHyperelasticity_->meshPartition()->mpiCommunicator();
+
+  // create index sets of rows of pressure dofs
+  IS pressureDofs = partitionedPetscVecForHyperelasticity_->pressureDofsGlobal();
+  IS displacementDofs = partitionedPetscVecForHyperelasticity_->displacementDofsGlobal();
+
+  Mat submatrixPU;
+  PetscErrorCode ierr;
+  ierr = MatGetSubMatrix(this->globalMatrix_, pressureDofs, displacementDofs, MAT_INITIAL_MATRIX, &submatrixPU); CHKERRABORT(mpiCommunicator,ierr);
+
+  return submatrixPU;
+}
+
+//! get a submatrix of the lower left part (pressure)
+template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType>
+Mat PartitionedPetscMatForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>::
+getSubmatrixUP()
+{
+  MPI_Comm mpiCommunicator = partitionedPetscVecForHyperelasticity_->meshPartition()->mpiCommunicator();
+
+  // create index sets of rows of pressure dofs
+  IS pressureDofs = partitionedPetscVecForHyperelasticity_->pressureDofsGlobal();
+  IS displacementDofs = partitionedPetscVecForHyperelasticity_->displacementDofsGlobal();
+
+  Mat submatrixUP;
+  PetscErrorCode ierr;
+  ierr = MatGetSubMatrix(this->globalMatrix_, displacementDofs, pressureDofs, MAT_INITIAL_MATRIX, &submatrixUP); CHKERRABORT(mpiCommunicator,ierr);
+
+  return submatrixUP;
 }

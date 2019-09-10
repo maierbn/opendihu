@@ -1428,8 +1428,10 @@ The principal scalar invariants of the right Cauchy Green Tensor $\bfC = \bfF^\t
 \begin{equation*}
   \begin{array}{lll}
     I_1(\bfC) = \tr(\bfC) = \bfC : \bfI = C_{ii} = λ_1 + λ_2 + λ_3\\[4mm]
-    I_2(\bfC) = \dfrac12\Big(\big(\tr(\bfC)^2 - \tr(\bfC^2)\big)\Big) = \dfrac12(C_{ii}\,C_{jj} - C_{ji}\,C_{ij}) = λ_1\,λ_2 + λ_1\,λ_2 + λ_2\,λ_3\\[4mm]
-    I_3(\bfC) = \det(\bfC) = ε_{ijk}\,C_{1i}\,C_{2j}\,C_{3k} = λ_1\,λ_2\,λ_3
+    I_2(\bfC) = \dfrac12\big(\tr(\bfC)^2 - \tr(\bfC^2)\big) = \dfrac12(C_{ii}\,C_{jj} - C_{ji}\,C_{ij}) = λ_1\,λ_2 + λ_1\,λ_2 + λ_2\,λ_3\\[4mm]
+    I_3(\bfC) = \det(\bfC) = ε_{ijk}\,C_{1i}\,C_{2j}\,C_{3k} = λ_1\,λ_2\,λ_3\\[4mm]
+    I_4(\bfC) = \bfa_0 \cdot \bfC \, \bfa_0\\[4mm]
+    I_5(\bfC) = \bfa_0 \cdot \bfC^2 \, \bfa_0
   \end{array}
 \end{equation*}
 The principal stretches $\lambda_a, a=1,2,3$ are the eigenvalues of the right Cauchy-Green tensor $\bfC$. $ε_{ijk}$ is the Levi-Civita symbol
@@ -1442,15 +1444,33 @@ The principal stretches $\lambda_a, a=1,2,3$ are the eigenvalues of the right Ca
     \end{cases}
   \end{array}
 \end{equation*}
-
+Reduced invariants (p.233), with kinematic assumption $\bar I_3=1$:
+\begin{equation*}
+  \begin{array}{lll}
+    \bar I_1(\bar\bfC) = \tr(\bar\bfC) = \bar\bfC : \bfI = J^{-2/3} I_1\\[4mm]
+    \bar I_2(\bar\bfC) = \dfrac12\big(\tr(\bar\bfC)^2 - \tr(\bar\bfC^2)\big) = J^{-4/3} I_2\\[4mm]
+    \bar I_3(\bar\bfC) = \det(\bar\bfC) = 1
+  \end{array}
+\end{equation*}
 
 \subsubsection{Strain energy density function}
 Strain energy density function $\Psi(\bfC) = \Psi(I_1, I_2, I_3)$ for isotropic hyperelastic materials. To compute $\bfS = 2\,\p{\Psi(\bfC)}{\bfC}$ derivatives w.r.t. to the invariants are required. (p. 216 Holzapfel Nonlinear Solid Mechanics  \cite{holzapfel2000nonlinear})
 \begin{equation*}
   \begin{array}{lll}
     \p{I_1}{\bfC} = \p{\tr\bfC}{\bfC} = \p{\bfI:\bfC}{\bfC} = \bfI, \quad &\p{I_1}{C_{AB}} = \delta_{AB}\\[4mm]
-    \p{I_2}{\bfC} = \tr C\,\bfI - \bfC, \quad &\p{I_2}{C_{AB}} = I_1\,\delta_{AB} - C_{AB}\\[4mm]
-    \p{I_3}{\bfC} = I_3\,\bfC^{-1}, \quad &\p{I_3}{C_{AB}} = I_3\,C^{-1}_{AB}
+    \p{I_2}{\bfC} = \tr \bfC\,\bfI - \bfC, \quad &\p{I_2}{C_{AB}} = I_1\,\delta_{AB} - C_{AB}\\[4mm]
+    \p{I_3}{\bfC} = I_3\,\bfC^{-1}, \quad &\p{I_3}{C_{AB}} = I_3\,C^{-1}_{AB}\\[4mm]
+    \p{I_4}{\bfC} = \bfa_0 \otimes \bfa_0\\[4mm]
+    \p{I_5}{\bfC} = \bfa_0 \otimes \bfC\,\bfa_0 + \bfa_0\,\bfC \otimes \bfa_0
+  \end{array}
+\end{equation*}
+Note for the reduced invariants (p.234):
+\begin{equation*}
+  \begin{array}{lll}
+    \p{\bar{I}_1}{\bar\bfC} = \p{\tr\bar\bfC}{\bar\bfC} = \p{\bfI:\bar\bfC}{\bar\bfC} = \bfI\\[4mm]
+    \p{\bar I_2}{\bar\bfC} = \tr \bar\bfC\,\bfI - \bar\bfC\\[4mm]
+    \p{\bar I_4}{\bar\bfC} = \bfa_0 \otimes \bfa_0\\[4mm]
+    \p{\bar I_5}{\bar\bfC} = \bfa_0 \otimes \bar\bfC\,\bfa_0 + \bfa_0\,\bar\bfC \otimes \bfa_0  \quad \text{(p.277)}
   \end{array}
 \end{equation*}
 In total we get
@@ -1652,7 +1672,7 @@ Accordingly, reduced invariants are (p.233)
 \begin{equation*}
   \begin{array}{lll}
     \bar{I_1} = \tr(\bar{\bfC}) = J^{-2/3}\,I_1,\\[4mm]
-    \bar{I_2} = \dfrac12\big((\tr(\bar{\bfC})^2 - \tr(\bar{\bfC}^2)\big) = J^{-4/3}\,I_2,\\[4mm]
+    \bar{I_2} = \dfrac12\big(\tr(\bar{\bfC})^2 - \tr(\bar{\bfC}^2)\big) = J^{-4/3}\,I_2,\\[4mm]
     \bar{I_3} = \det(\bar{\bfC}) = 1.
   \end{array}
 \end{equation*}
@@ -2859,21 +2879,42 @@ The following is a summary of the steps to compute the 2nd Piola-Kirchhoff stres
     \bar{\bfC} = J^{-2/3}\bfC \quad &\text{(p.228)}\\[4mm]
     \bar{\gamma}_1 = 2\left(\p{\Psi_\text{iso}(\bar{I}_1, \bar{I}_2)}{\bar{I}_1} + \bar{I}_1\,\p{\Psi_\text{iso}(\bar{I}_1, \bar{I}_2)}{\bar{I}_2}\right)\quad &\text{(p.234)}\\[4mm]
     \bar{\gamma}_2 = -2\p{\Psi_\text{iso}(\bar{I}_1, \bar{I}_2)}{\bar{I}_2}\quad &\text{(p.234)}\\[4mm]
-    \bar{\bfS} = 2\p{\Psi_\text{iso}(\bar{I_1},\bar{I_2})}{\bar{\bfC}} = \bar{\gamma_1}\,\bfI + \bar{\gamma_2}\,\bar{\bfC}\quad &\text{(p.234)}\\[4mm]
+    \bar{\gamma}_4 = 2\p{\Psi_\text{iso}}{\bar{I}_4}\quad &\text{(p.273)}\\[4mm]
+    \bar{\gamma}_5 = 2\p{\Psi_\text{iso}}{\bar{I}_5}\quad &\text{(p.273)}\\[4mm]
+    \bar{\bfS} = 2\p{\Psi_\text{iso}(\bar{I_1},\bar{I_2})}{\bar{\bfC}} = \bar{\gamma_1}\,\bfI + \bar{\gamma_2}\,\bar{\bfC} \quad \text{(isotropic)} \quad &\text{(p.234)}\\[4mm]
+    \bar{\bfS} = 2\p{\Psi_\text{iso}(\bar{I_1},\bar{I_2})}{\bar{\bfC}} = \bar{\gamma_1}\,\bfI + \bar{\gamma_2}\,\bar{\bfC} \\[4mm]
+    \hspace*{4cm}+ \bar{\gamma_4}\, \bfa_0 \otimes \bfa_0 + \bar{\gamma_5}\,(\bfa_0 \otimes \bar{\bfC}\,\bfa_0 + \bfa_0\bar{\bfC}\otimes \bfa_0) \quad \text{(trans-isotropic)} \quad &\text{(p.271)}\\[4mm]
     (\mathbb{I})_{abcd} = \delta_{ac}\,\delta_{bd}&\text{(p.23)}\\[4mm]
     \mathbb{P} = \mathbb{I} - \dfrac13 \bfC^{-1} \otimes \bfC \quad &\text{(p.229)}\\[4mm]
     \bfS_\text{iso} = J^{-2/3}\mathbb{P}:\bar{\bfS} \quad &\text{(p.234)}\\[4mm]
     \bfS_\text{vol} = J\,p\,\bfC^{-1} \quad &\text{(p.230, p.245)}\\[4mm]
     \bfS = \bfS_\text{iso} + \bfS_\text{vol} \quad \text{symmetric}\quad &\text{(p.233)}\\
-    \hline\\
+  \end{array}
+\end{equation*}
+\begin{equation*}
+  \begin{array}{lll}
     \big(\bfC^{-1} \odot \bfC^{-1}\big)_{abcd} = \dfrac12\big(C^{-1}_{ac}\,C^{-1}_{bd} + C^{-1}_{ad}\,C^{-1}_{bc}\big) \quad &\text{(p.254)}\\[4mm]
     \mathbb{C}_\text{vol} = J\,p\,\bfC^{-1} \otimes \bfC^{-1} - 2\,J\,p\,\bfC^{-1} \odot \bfC^{-1} \quad &\text{(p.254, p.406)}\\[4mm]
     \bar{\delta}_1 = 4\left(\dfrac{∂^2\Psi_\text{iso}}{∂\bar{I}_1\,∂\bar{I}_1} + 2\,\bar{I}_1\dfrac{∂^2\Psi_\text{iso}}{∂\bar{I}_1\,∂\bar{I}_2} +\dfrac{∂\Psi_\text{iso}}{∂\bar{I}_2} + \bar{I}_1^2\,\dfrac{∂^2\Psi_\text{iso}}{∂\bar{I}_2\,∂\bar{I}_2}\right) \quad &\text{(p.262)}\\[4mm]
     \bar{\delta}_2 = -4\left(\dfrac{∂^2\Psi_\text{iso}}{∂\bar{I}_1\,∂\bar{I}_2} + \bar{I}_1\,\dfrac{∂^2\Psi_\text{iso}}{∂\bar{I}_2\,∂\bar{I}_2}\right) \quad &\text{(p.262)}\\[4mm]
     \bar{\delta}_3 = 4\dfrac{∂^2\Psi_\text{iso}}{∂\bar{I}_2\,∂\bar{I}_2} \quad &\text{(p.262)}\\[4mm]
     \bar{\delta}_4 = -4\dfrac{∂\Psi_\text{iso}}{∂\bar{I}_2} \quad &\text{(p.262)}\\[4mm]
+    \bar{\delta}_5 = 4\left(\dfrac{∂^2\Psi_\text{iso}}{∂\bar{I}_1\,∂\bar{I}_4} +\bar I_1 \dfrac{∂^2\Psi_\text{iso}}{∂\bar{I}_2\,∂\bar{I}_4}\right) \quad &\text{(p.272)}\\[4mm]
+    \bar{\delta}_6 = -4\dfrac{∂^2\Psi_\text{iso}}{∂\bar{I}_2\,∂\bar{I}_4} \quad &\text{(p.272)}\\[4mm]
+    \bar{\delta}_7 = 4\dfrac{∂^2\Psi_\text{iso}}{∂\bar{I}_4\,∂\bar{I}_4} \quad &\text{(p.272)}\\[4mm]
     \mathbb{S} = (\mathbb{I} + \bar{\mathbb{I}}) / 2, \quad \mathbb{I}_{abcd} = δ_{ac}\,δ_{bd}, \quad \bar{\mathbb{I}}_{abcd} = δ_{ad}\,δ_{bc} &\text{(p.262, p.23)}\\[4mm]
-    \bar{\mathbb{C}} = J^{-4/3}\left(\bar{\delta}_1\,\bfI \otimes \bfI + \bar{\delta}_2\,\big(\bfI \otimes \bar{\bfC} + \bar{\bfC} \otimes \bfI\big) + \bar{\delta}_3\bar{\bfC} \otimes \bar{\bfC} + \bar{\delta}_4\,\mathbb{S} \right) \quad &\text{(p.262)}\\[4mm]
+    \bar{\mathbb{C}} = J^{-4/3}\,2\,\p{\bar \bfS}{\bar{\bfC}} = J^{-4/3}\left(\bar{\delta}_1\,\bfI \otimes \bfI + \bar{\delta}_2\,\big(\bfI \otimes \bar{\bfC} + \bar{\bfC} \otimes \bfI\big) + \bar{\delta}_3\bar{\bfC} \otimes \bar{\bfC} + \bar{\delta}_4\,\mathbb{S} \right) \quad \text{isotropic} &\text{(p.262)}\\[4mm]
+    
+    \p{\bar I_5}{\bar\bfC} = \bfa_0 \otimes \bar\bfC\,\bfa_0 + \bfa_0\,\bar\bfC \otimes \bfa_0  \quad &\text{(p.277)}\\[4mm]
+    \dfrac{∂^2\bar{I}_5}{∂\bar{\bfC}∂\bar{\bfC}} = \bfa_0 \otimes \bar\bfC\,\bfa_0 + \bfa_0\,\bar\bfC \otimes \bfa_0\\[4mm]
+    \bar{\mathbb{C}} = J^{-4/3}\Big(\bar{\delta}_1\,\bfI \otimes \bfI + \bar{\delta}_2\,\big(\bfI \otimes \bar{\bfC} + \bar{\bfC} \otimes \bfI\big) + \bar{\delta}_3\bar{\bfC} \otimes \bar{\bfC} + \bar{\delta}_4\,\mathbb{S}  \\[4mm]
+    \hspace*{2cm} +\bar{δ}_5\,(\bfI \otimes \bfa_0 \otimes \bfa_0 + \bfa_0 \otimes \bfa_0 \otimes \bfI) \\[4mm]
+    \hspace*{2cm} +\bar{δ}_6\,(\bar{\bfC} \otimes \bfa_0 \otimes \bfa_0 + \bfa_0 \otimes \bfa_0 \otimes \bar{\bfC})\\[4mm]
+    \hspace*{2cm} +\bar{δ}_7\,(\bfa_0 \otimes \bfa_0 \otimes \bfa_0 \otimes \bfa_0) 
+    + \bar{δ}_8\,\left(\bfI \otimes \p{\bar{I}_5}{\bar{\bfC}} + \p{\bar{I}_5}{\bar{\bfC}} \otimes \bfI \right)\\[4mm]
+    \hspace*{2cm}+ \bar{δ}_9\,\left(\bar{\bfC} \otimes \p{\bar{I}_5}{\bar{\bfC}} + \p{\bar{I}_5}{\bar{\bfC}} \otimes \bar{\bfC} \right) + \bar{δ}_{10}\left(\p{\bar{I}_5}{\bar{\bfC}} \otimes \p{\bar{I}_5}{\bar{\bfC}}\right) \\[4mm]
+    \hspace*{2cm}+ \bar{δ}_{11} \left(\bfa_0 \otimes \bfa_0 \otimes \p{\bar{I}_5}{\bar{\bfC}} + \p{\bar{I}_5}{\bar{\bfC}} \otimes \bfa_0 \otimes \bfa_0 \right) + \bar{δ}_{12} \dfrac{∂^2\bar{I}_5}{∂\bar{\bfC}∂\bar{\bfC}}\Big)
+    \quad \text{trans-isotropic} &\text{(p.272)}\\[4mm]
     \tilde{\mathbb{P}} = \bfC^{-1} \odot \bfC^{-1} - \dfrac13 \bfC^{-1} \otimes \bfC^{-1} \quad &\text{(p.255)}\\[4mm]
     \mathbb{C}_\text{iso} = \mathbb{P} : \bar{\mathbb{C}} : \mathbb{P}^\top + \dfrac23 J^{-2/3} \bar{\bfS} : \bfC\,\tilde{\mathbb{P}} - \dfrac23\big(\bfC^{-1}\otimes \bfS_\text{iso} + \bfS_\text{iso}\otimes \bfC^{-1}\big) \quad &\text{(p.255)}\\[4mm]
     \mathbb{C} = \mathbb{C}_\text{vol} + \mathbb{C}_\text{iso} \quad \text{minor symmetries}\quad &\text{(p.254)}\\[4mm]

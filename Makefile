@@ -103,3 +103,9 @@ fibers_linear_elasticity:
 
 3d_muscle:
 	cd examples/solid_mechanics/chaste && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+
+mooney_rivlin_transiso:
+	cd examples/solid_mechanics/mooney_rivlin_transiso  && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+
+mooney_rivlin:
+	cd examples/solid_mechanics/mooney_rivlin_isotropic  && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG

@@ -478,6 +478,49 @@ getString(bool horizontal, std::string vectorName)
 }
 
 template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType>
+IS PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>::
+displacementDofsGlobal()
+{
+  MPI_Comm mpiCommunicator = this->meshPartition_->mpiCommunicator();
+
+  // create index sets of rows of displacement dofs
+  int nDisplacementDofsLocal = nDisplacementDofsWithoutBcLocal();
+  std::vector<int> indices(nDisplacementDofsLocal);
+  std::iota(indices.begin(), indices.end(), this->nonBcDofNoGlobalBegin_);
+
+  IS indexSet;
+  PetscErrorCode ierr;
+  ierr = ISCreateGeneral(mpiCommunicator, nDisplacementDofsLocal, indices.data(), PETSC_COPY_VALUES, &indexSet); CHKERRABORT(mpiCommunicator,ierr);
+
+  return indexSet;
+}
+
+template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType>
+IS PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>::
+pressureDofsGlobal()
+{
+  MPI_Comm mpiCommunicator = this->meshPartition_->mpiCommunicator();
+
+  // create index sets of rows of displacement dofs
+  int nPressureDofsLocal = this->nNonBcDofsWithoutGhosts_[3];
+  std::vector<int> indices(nPressureDofsLocal);
+  std::iota(indices.begin(), indices.end(), this->nonBcDofNoGlobalBegin_ + nDisplacementDofsWithoutBcLocal());
+
+  IS indexSet;
+  PetscErrorCode ierr;
+  ierr = ISCreateGeneral(mpiCommunicator, nPressureDofsLocal, indices.data(), PETSC_COPY_VALUES, &indexSet); CHKERRABORT(mpiCommunicator,ierr);
+
+  return indexSet;
+}
+
+template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType>
+dof_no_t PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>::
+nDisplacementDofsWithoutBcLocal()
+{
+  return this->nNonBcDofsWithoutGhosts_[0] + this->nNonBcDofsWithoutGhosts_[1] + this->nNonBcDofsWithoutGhosts_[2];
+}
+
+template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType>
 std::ostream &operator<<(std::ostream &stream, PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType> &vector)
 {
   vector.output(stream);

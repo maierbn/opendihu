@@ -34,6 +34,15 @@ public:
   //! output the matrix to the file in globalNatural ordering, it has the same form regardless of number of ranks and therefore can be used to compare output with different ranks
   void dumpMatrixGlobalNatural(std::string filename);
 
+  //! get a submatrix of the upper left part (only displacements)
+  Mat getSubmatrixUU();
+
+  //! get a submatrix of the upper right part
+  Mat getSubmatrixUP();
+
+  //! get a submatrix of the lower left part
+  Mat getSubmatrixPU();
+
 protected:
 
   std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>> partitionedPetscVecForHyperelasticity_;

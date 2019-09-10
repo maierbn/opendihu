@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
   DihuContext settings(argc, argv);
   
   // define problem
-  SpatialDiscretization::HyperelasticitySolver<> problem(settings);
+  SpatialDiscretization::HyperelasticitySolver<Equation::SolidMechanics::TransverselyIsotropicMooneyRivlinIncompressible3D> problem(settings);
   
   // run problem
   problem.run();

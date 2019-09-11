@@ -52,7 +52,7 @@ if False:
 dirichlet_bc[0] = [xpos,ypos,zpos]
 dirichlet_bc[1] = [None,ypos,zpos]
 
-neumann_bc = [{"element": (nz-1)*nx*ny + j*nx + i, "constantVector": [0,1e-1,5e-1], "face": "2+"} for j in range(ny) for i in range(nx)]
+neumann_bc = [{"element": (nz-1)*nx*ny + j*nx + i, "constantVector": [1e-1,0,0], "face": "2+"} for j in range(ny) for i in range(nx)]
 
 #dirichlet_bc = {}
 #neumann_bc = []
@@ -103,16 +103,18 @@ config = {
   "scenarioName": "3d_box",
   "Meshes": fiber_meshes,
   "HyperelasticitySolver": {
-  
+    "durationLogKey": "nonlinear",
+    
     #"materialParameters": [6.352e-10, 3.627e-10, 2.756e-5, 43.373],  # c1, c2, b1, d1
     "materialParameters": [2.0, 3, 4, 5],  # c1, c2, b1, d1
     "displacementsScalingFactor": 1,
     
     "residualNormLogFilename": "log_residual_norm.txt",
     "useAnalyticJacobian": True,
-    "useNumericJacobian": True,   # only works with non-nested matrices, if both numeric and analytic are enable, it uses the analytic for the preconditioner and the numeric as normal jacobian
+    "useNumericJacobian": False,   # only works with non-nested matrices, if both numeric and analytic are enable, it uses the analytic for the preconditioner and the numeric as normal jacobian
       
-    "dumpDenseMatlabVariables": True,   # extrac output of matlab vectors, x,r, jacobian matrix
+    "dumpDenseMatlabVariables": False,   # extra output of matlab vectors, x,r, jacobian matrix
+    # if useAnalyticJacobian,useNumericJacobian and dumpDenseMatlabVariables all all three true, the analytic and numeric jacobian matrices will get compared to see if there are programming errors for the analytic jacobian
     
     "fiberMeshNames": fiber_mesh_names,   # fiber meshes that will be used to determine the fiber direction
     

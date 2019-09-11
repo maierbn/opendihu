@@ -32,7 +32,7 @@ struct MooneyRivlinIncompressible3D
   //! the isochoric part of the decoupled strain energy density function, Psi_iso, in terms of the reduced invariants
   static const auto constexpr strainEnergyDensityFunctionIsochoric
     = c1*(Ibar1 - INT(3)) + c2*(Ibar2 - INT(3));
-    //= c1*(pow(Ibar1,INT(3)) - INT(3)) + c2*(pow(Ibar2,INT(2))*Ibar1 - INT(3));
+    //= c1*(pow(Ibar1,INT(3)) - INT(3)) + c2*(pow(Ibar2,INT(2))*Ibar1 - INT(3));  // complicated artifical equation for debugging
 };
 
 struct TransverselyIsotropicMooneyRivlinIncompressible3D

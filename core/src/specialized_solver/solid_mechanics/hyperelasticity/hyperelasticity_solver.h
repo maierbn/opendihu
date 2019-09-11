@@ -83,6 +83,8 @@ public:
 
   //! not used
   void debug();
+
+  //! not relevant, as it does nothing. Contains a lot of commented out debugging code that is helpful to debug the analytic jacobian matrix
   void materialTesting(const double pressure,                         //< [in] pressure value p
                    const Tensor2<3> &rightCauchyGreen,                //< [in] C
                    const Tensor2<3> &inverseRightCauchyGreen,         //< [in] C^{-1}
@@ -154,8 +156,10 @@ protected:
   void computeElasticityTensor(const Tensor2<3> &rightCauchyGreen,
                                const Tensor2<3> &inverseRightCauchyGreen, double deformationGradientDeterminant, double pressure,
                                std::array<double,5> reducedInvariants, const Tensor2<3> &fictitiousPK2Stress, const Tensor2<3> &pk2StressIsochoric,
-                               Vec3 fiberDirection, Tensor4<3> &fictitiousElasticityTensor, Tensor4<3> &elasticityTensor);
+                               Vec3 fiberDirection, Tensor4<3> &fictitiousElasticityTensor, Tensor4<3> &elasticityTensorIso, Tensor4<3> &elasticityTensor);
 
+  //! compute P : Sbar
+  Tensor2<3> computePSbar(const Tensor2<3> &fictitiousPK2Stress, const Tensor2<3> &rightCauchyGreen);
 
   DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
 

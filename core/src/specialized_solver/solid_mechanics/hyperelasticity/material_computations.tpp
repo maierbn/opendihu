@@ -4,6 +4,9 @@
 
 #include "equation/mooney_rivlin_incompressible.h"
 
+#define SYMMETRIC             // yes
+//#define SYMMETRICP_PK2        // does not matter
+
 namespace SpatialDiscretization
 {
 
@@ -508,8 +511,9 @@ materialComputeJacobian()
 
       Tensor4<D> elasticityTensor;
       Tensor4<D> fictitiousElasticityTensor;
+      Tensor4<3> elasticityTensorIso;
       computeElasticityTensor(rightCauchyGreen, inverseRightCauchyGreen, deformationGradientDeterminant, pressure, reducedInvariants, fictitiousPK2Stress, pk2StressIsochoric, fiberDirection,
-                              fictitiousElasticityTensor, elasticityTensor);
+                              fictitiousElasticityTensor, elasticityTensorIso, elasticityTensor);
 
       // test if implementation of S is correct
       this->materialTesting(pressure, rightCauchyGreen, inverseRightCauchyGreen, reducedInvariants, deformationGradientDeterminant, fiberDirection, fictitiousPK2Stress, pk2StressIsochoric);
@@ -913,7 +917,7 @@ computeInvariants(const Tensor2<3> &rightCauchyGreen, const double rightCauchyGr
     }
 
     invariants[4] = a0C2a0;
-    LOG(DEBUG) << "computed I4: " << invariants[3] << ", I5: " << invariants[4] << ", a0: " << fiberDirection;
+    //LOG(DEBUG) << "computed I4: " << invariants[3] << ", I5: " << invariants[4] << ", a0: " << fiberDirection;
   }
 
   return invariants;
@@ -1054,17 +1058,26 @@ computePK2Stress(const double pressure,                             //< [in] pre
       for (int k=0; k<3; k++)        // alternative indices: C
       {
         const int delta_ik = (i == k? 1 : 0);
-        const int delta_jk = (j == k? 1 : 0);
 
         // column index
         for (int l=0; l<3; l++)            // alternative indices: D
         {
-          const int delta_il = (i == l? 1 : 0);
           const int delta_jl = (j == l? 1 : 0);
-          const int Ii = 0.5 * (delta_ik * delta_jl + delta_il * delta_jk);       // II = (δ_AC*δ_BD + δ_AD*δ_BC) / 2
 
+#ifdef SYMMETRICP_PK2
+          // symmetric version
+          const int delta_il = (i == l? 1 : 0);
+          const int delta_jk = (j == k? 1 : 0);
+
+          const double Ii = 0.5 * (delta_ik * delta_jl + delta_il * delta_jk);       // II = (δ_AC*δ_BD + δ_AD*δ_BC) / 2
+#else
+          // not symmetric version
+          const int Ii = delta_ik * delta_jl;       // II = (δ_AC*δ_BD + δ_AD*δ_BC) / 2
+#endif
           const double Cc = inverseRightCauchyGreen[j][i] * rightCauchyGreen[l][k];     // CC = C^{-1}_AB * C_CD
           const double Pp = (Ii - 1./3 * Cc);
+
+          //LOG(DEBUG) << "    PP_" << i << j << k << l << " = " << Pp << " = " << Ii << "-1/3*" << Cc << " (" << inverseRightCauchyGreen[j][i] << "," << rightCauchyGreen[l][k] << "), Ii: " << Ii;
 
           pSbar += Pp * fictitiousPK2Stress[l][k];
 
@@ -1073,9 +1086,11 @@ computePK2Stress(const double pressure,                             //< [in] pre
         }
       }
 
+
       // isochoric stress
       const double sIso = factorJ23 * pSbar;
       pk2StressIsochoric[j][i] = sIso;
+      //LOG(DEBUG) << "    PSbar_" << i << j << ": " << pSbar << ", J^-2/3: " << factorJ23 << ", Siso_" << i << j << ": " << sIso;
 
       // total stress is sum of volumetric and isochoric part, sVol = J*p*C^{-1}_AB, sIso = j^{-2/3}*(Ii-1/3*Cc)*Sbar
       pK2Stress[j][i] = sVol + sIso;
@@ -1090,7 +1105,7 @@ computePK2Stress(const double pressure,                             //< [in] pre
     }  // j
   }  // i
 
-  //for debugging, check symmetry of PK2 stress and if it is correct
+  //for debugging, check symmetry of PK2 stress and if it is correct according to Mooney-Rivlin formula
   if (VLOG_IS_ON(2))
   {
     const double errorTolerance = 1e-14;
@@ -1137,7 +1152,7 @@ computePK2Stress(const double pressure,                             //< [in] pre
 
         if (fabs(sBar - fictitiousPK2Stress[b][a]) > errorTolerance)
         {
-          LOG(ERROR) << "mismatch in Sbar_" << a << b << ": derived: " << fictitiousPK2Stress << ", explicit formula: " << sBar;
+          LOG(ERROR) << "mismatch in Sbar_" << a << b << ": derived: " << fictitiousPK2Stress << ", Mooney Rivlin explicit formula: " << sBar;
           mismatch = true;
         }
       }
@@ -1296,6 +1311,7 @@ computeElasticityTensor(const Tensor2<3> &rightCauchyGreen,         //< [in] C
                         const Tensor2<3> &pk2StressIsochoric,       //< [in] S_iso, the isochoric part of the 2nd Piola-Kirchhoff stress tensor
                         Vec3 fiberDirection,                        //< [in] a0, direction of fibers
                         Tensor4<3> &fictitiousElasticityTensor,     //< [out] fictitious Elasticity tensor CCbar_{ABCD}
+                        Tensor4<3> &elasticityTensorIso,            //< [out] CCiso_{ABCD}
                         Tensor4<3> &elasticityTensor                //< [out] elasticity tensor CC_{ABCD}
                        )
 {
@@ -1330,16 +1346,19 @@ computeElasticityTensor(const Tensor2<3> &rightCauchyGreen,         //< [in] C
   const double factor3 = 4*d2Psi_dIbar2Ibar2;
   const double factor4 = -4*dPsi_dIbar2;
 
-  LOG(DEBUG) << "Ψ: " << Term::strainEnergyDensityFunctionIsochoric;
-  LOG(DEBUG) << "∂Ψ/∂Ibar1: " << dPsi_dIbar1Expression;
-  LOG(DEBUG) << "∂Ψ/∂Ibar2: " << dPsi_dIbar2Expression << " = " << dPsi_dIbar2;
-  LOG(DEBUG) << "∂2Ψ/(∂Ibar1 ∂Ibar1): " << d2Psi_dIbar1Ibar1Expression << " = " << d2Psi_dIbar1Ibar1;
-  LOG(DEBUG) << "∂2Ψ/(∂Ibar1 ∂Ibar1): " << d2Psi_dIbar1Ibar2Expression << " = " << d2Psi_dIbar1Ibar2;
-  LOG(DEBUG) << "∂2Ψ/(∂Ibar1 ∂Ibar1): " << d2Psi_dIbar2Ibar2Expression << " = " << d2Psi_dIbar2Ibar2;
-  LOG(DEBUG) << "factor1: " << factor1;
-  LOG(DEBUG) << "factor2: " << factor2;
-  LOG(DEBUG) << "factor3: " << factor3;
-  LOG(DEBUG) << "factor4: " << factor4;
+  if (false)
+  {
+    LOG(DEBUG) << "elasticity tensor, Ψ: " << Term::strainEnergyDensityFunctionIsochoric;
+    LOG(DEBUG) << "∂Ψ/∂Ibar1: " << dPsi_dIbar1Expression;
+    LOG(DEBUG) << "∂Ψ/∂Ibar2: " << dPsi_dIbar2Expression << " = " << dPsi_dIbar2;
+    LOG(DEBUG) << "∂2Ψ/(∂Ibar1 ∂Ibar1): " << d2Psi_dIbar1Ibar1Expression << " = " << d2Psi_dIbar1Ibar1;
+    LOG(DEBUG) << "∂2Ψ/(∂Ibar1 ∂Ibar1): " << d2Psi_dIbar1Ibar2Expression << " = " << d2Psi_dIbar1Ibar2;
+    LOG(DEBUG) << "∂2Ψ/(∂Ibar1 ∂Ibar1): " << d2Psi_dIbar2Ibar2Expression << " = " << d2Psi_dIbar2Ibar2;
+    LOG(DEBUG) << "factor1: " << factor1;
+    LOG(DEBUG) << "factor2: " << factor2;
+    LOG(DEBUG) << "factor3: " << factor3;
+    LOG(DEBUG) << "factor4: " << factor4;
+  }
 
   const double J = deformationGradientDeterminant;
 
@@ -1347,14 +1366,14 @@ computeElasticityTensor(const Tensor2<3> &rightCauchyGreen,         //< [in] C
   const double factorJ43 = pow(J,-4./3);   // J^{-4/3}
 
   // distinct entries
-/*  const int indices[21][4] = {
+  const int indices[21][4] = {
     {0,0,0,0},{0,1,0,0},{0,2,0,0},{1,1,0,0},{1,2,0,0},{2,2,0,0},{0,1,0,1},{0,2,0,1},{1,1,0,1},{1,2,0,1},
     {2,2,0,1},{0,2,0,2},{1,1,0,2},{1,2,0,2},{2,2,0,2},{1,1,1,1},{1,2,1,1},{2,2,1,1},{1,2,1,2},{2,2,1,2},
     {2,2,2,2}
   };
-*/
+
   // all entries
-#if 1
+#if 0
   int indices[81][4];
 
   int entryNo = 0;
@@ -1378,7 +1397,7 @@ computeElasticityTensor(const Tensor2<3> &rightCauchyGreen,         //< [in] C
 #endif
 
   // loop over distinct entries in elasticity tensor
-  for (int entryNo = 0; entryNo < 81; entryNo++)  // 21
+  for (int entryNo = 0; entryNo < 21; entryNo++)  // 21
   {
     // get indices of current entry
     const int a = indices[entryNo][0];
@@ -1386,15 +1405,19 @@ computeElasticityTensor(const Tensor2<3> &rightCauchyGreen,         //< [in] C
     const int c = indices[entryNo][2];
     const int d = indices[entryNo][3];
 
-    // define constants that depend on a,b,c,d
-    const double delta_ab = (a == b? 1 : 0);
-    const double delta_cd = (c == d? 1 : 0);
-
     const double cInv_ab = inverseRightCauchyGreen[b][a];
     const double cInv_cd = inverseRightCauchyGreen[d][c];
 
     // compute C_vol
+    // symmetric version
+#ifdef SYMMETRIC
     const double cInvDotCInv = 0.5 * (inverseRightCauchyGreen[c][a] * inverseRightCauchyGreen[d][b] + inverseRightCauchyGreen[d][a] * inverseRightCauchyGreen[c][b]);
+#else
+     // version for not symmetric C
+    const double cInvDotCInv = inverseRightCauchyGreen[c][a] * inverseRightCauchyGreen[d][b];
+#endif
+
+
     const double cInvDyadCInv = inverseRightCauchyGreen[b][a] * inverseRightCauchyGreen[d][c];
     const double jp = deformationGradientDeterminant * pressure;
 
@@ -1428,9 +1451,15 @@ computeElasticityTensor(const Tensor2<3> &rightCauchyGreen,         //< [in] C
 
             int iI_efgh = delta_eg * delta_fh;
             int iIbar_efgh = delta_eh * delta_fg;
-            int sS_efgh = 0.5 * (iI_efgh + iIbar_efgh);
-            sS_efgh = iI_efgh;
+
+#ifdef SYMMETRIC
+            // symmetric version
+            double sS_efgh = 0.5 * (iI_efgh + iIbar_efgh);
+#else
+            // non-symmetric version
+            double sS_efgh = iI_efgh;
             //sS_efgh = iIbar_efgh;   // both should work because of symmetry
+#endif
 
             const double summand1 = factor1 * delta_ef * delta_gh;
             const double summand2 = factor2 * (delta_ef * factorJ23*c_gh + factorJ23*c_ef * delta_gh);
@@ -1465,20 +1494,27 @@ computeElasticityTensor(const Tensor2<3> &rightCauchyGreen,         //< [in] C
               // terms for 5th invariant are not implemented, this means that the strain energy function can only depend on Ibar4
             }
 
-            const double cBar_efgh = factorJ43 * sum;
+            const double ccBar_efgh = factorJ43 * sum;
 
-            fictitiousElasticityTensor[h][g][f][e] = cBar_efgh;
+            //LOG(DEBUG) << "     CCBar_" << e << f << g << h << ": " << factorJ43 << "*(" << summand1 << "+" << summand2 << "+" << summand3 << "+" << summand4 << "), summand4 = " << factor4 << "*" << sS_efgh;
 
-            const double iI_abef = delta_ab * delta_ef;
+            fictitiousElasticityTensor[h][g][f][e] = ccBar_efgh;
 
+            int delta_ae = (a == e? 1 : 0);
+            int delta_bf = (b == f? 1 : 0);
+
+            const double iI_abef = delta_ae * delta_bf;
             const double p_abef = iI_abef - 1./D*cInv_ab*c_ef;
 
-            pCbar_abgh += p_abef * cBar_efgh;
+            pCbar_abgh += p_abef * ccBar_efgh;
 
           }  // f
         }  // e
 
-        const double iI_cdgh = delta_cd * delta_gh;
+        int delta_cg = (c == g? 1 : 0);
+        int delta_dh = (d == h? 1 : 0);
+        const double iI_cdgh = delta_cg * delta_dh;
+
         const double p_cdgh = iI_cdgh - 1./D*cInv_cd*c_gh;     // (P^T)_ghcd = P_cdgh
 
         const double pT_ghcd = p_cdgh;
@@ -1508,13 +1544,27 @@ computeElasticityTensor(const Tensor2<3> &rightCauchyGreen,         //< [in] C
     // compute C_iso
     const double cIso = pCbarPT_abcd + sBarCP_abcd + cInvSiso;
 
+    //LOG(DEBUG) << a<<b<<c<<d<<": compute CCIso: " << cIso << ": " << pCbarPT_abcd << "," << sBarCP_abcd << "," << cInvSiso;
+
+#if 0
+    // store entry in CCIso, this is only returned from this method for debugging purposes, only for use in materialTesting
+    // therefore it can be omitted here
+    elasticityTensorIso[d][c][b][a] = cIso;
+    elasticityTensorIso[c][d][b][a] = cIso;
+    elasticityTensorIso[d][c][a][b] = cIso;
+    elasticityTensorIso[c][d][a][b] = cIso;
+    elasticityTensorIso[b][a][d][c] = cIso;
+    elasticityTensorIso[a][b][d][c] = cIso;
+    elasticityTensorIso[b][a][c][d] = cIso;
+    elasticityTensorIso[a][b][c][d] = cIso;
+#endif
     // compute C
     const double c_abcd = cVol + cIso;
 
     // debugging
     //const double c_abcd = cIso;
 
-    // store entry
+    // store entry, store all symmetric entries at once, because tensor has major and minor symmetries (CC_abcd = CC_cdab and CC_abcd = CC_bacd)
     elasticityTensor[d][c][b][a] = c_abcd;
     elasticityTensor[c][d][b][a] = c_abcd;
     elasticityTensor[d][c][a][b] = c_abcd;
@@ -1525,12 +1575,12 @@ computeElasticityTensor(const Tensor2<3> &rightCauchyGreen,         //< [in] C
     elasticityTensor[a][b][c][d] = c_abcd;
   }
 
-  LOG_N_TIMES(2,DEBUG) << "elasticityTensor: " << elasticityTensor;
-
   // verify major and minor symmetries of elasticity tensor
-  if (VLOG_IS_ON(2)||true)
+  if (VLOG_IS_ON(1))
   {
-    const double errorTolerance = 1e-14;
+  //LOG_N_TIMES(2,DEBUG) << "elasticityTensor: " << elasticityTensor;
+
+    const double errorTolerance = 1e-12;
     std::string name("C");
     for (int a = 0; a < 3; a++)
     {
@@ -1556,9 +1606,54 @@ computeElasticityTensor(const Tensor2<3> &rightCauchyGreen,         //< [in] C
         }
       }
     }
-    //LOG_N_TIMES(2,DEBUG) << "elasticity tensor checked for minor symmetries";
-    LOG(DEBUG) << "elasticity tensor checked for minor symmetries";
+    LOG_N_TIMES(2,DEBUG) << "elasticity tensor checked for minor symmetries";
+    //LOG(DEBUG) << "elasticity tensor checked for minor symmetries";
   }
+}
+
+template<typename Term>
+Tensor2<3> HyperelasticitySolver<Term>::
+computePSbar(const Tensor2<3> &fictitiousPK2Stress, const Tensor2<3> &rightCauchyGreen)
+{
+  // only needed for debugging in materialTesting
+  double determinant;
+  Tensor2<3> inverseRightCauchyGreen = MathUtility::computeInverse<3>(rightCauchyGreen, determinant);
+
+  //ab cd
+  //  P : Sbar
+  Tensor2<3> PSbar;
+  for (int a = 0; a < 3; a++)
+  {
+    for (int b = 0; b < 3; b++)
+    {
+      double cInv_ab = inverseRightCauchyGreen[b][a];
+
+      double psbar_ab = 0;
+      for (int c = 0; c < 3; c++)
+      {
+        int delta_ac = (a == c? 1 : 0);
+        for (int d = 0; d < 3; d++)
+        {
+          int delta_bd = (b == d? 1 : 0);
+          const double ii_abcd = delta_ac * delta_bd;
+
+          double c_cd = rightCauchyGreen[d][c];
+
+          double p_abcd = ii_abcd - 1./3*cInv_ab * c_cd;
+
+          //LOG(DEBUG) << "  .PP_" << a << b << c << d << ": " << p_abcd << "=" << ii_abcd << "-1/3*" << cInv_ab * c_cd << " (" << cInv_ab << "," << c_cd << "), Ii: " << ii_abcd;
+
+          const double sBar_cd = fictitiousPK2Stress[d][c];
+          psbar_ab += p_abcd * sBar_cd;
+        }
+      }
+
+
+      //LOG(DEBUG) << " PSBar_" << a << b << ": " << psbar_ab;
+      PSbar[b][a] = psbar_ab;
+    }
+  }
+  return PSbar;
 }
 
 } // namespace

@@ -100,6 +100,9 @@ nonlinearSolve()
 
   //debug();
 
+  if (this->durationLogKey_ != "")
+    Control::PerformanceMeasurement::start(this->durationLogKey_+std::string("_durationSolve"));
+
   // try two times to solve nonlinear problem
   for (int i = 0; i < 2; i++)
   {
@@ -128,6 +131,9 @@ nonlinearSolve()
     if (convergedReason >= 0)
       break;
   }
+
+  if (this->durationLogKey_ != "")
+    Control::PerformanceMeasurement::stop(this->durationLogKey_+std::string("_durationSolve"));
 
   // close log file
   if (logFile != nullptr)

@@ -3,9 +3,9 @@ import numpy as np
 import sys, os
 
 # number of elements
-nx = 1    # 2
-ny = 1    # 2
-nz = 3    # 5
+nx = 2    # 2
+ny = 2    # 2
+nz = 5    # 5
 
 # boundary conditions (for quadratic elements)
 dirichlet_bc = {}
@@ -56,14 +56,17 @@ neumann_bc = [{"element": (nz-1)*nx*ny + j*nx + i, "constantVector": [0,1e-1,5e-
 config = {
   "scenarioName": "3d_box",
   "HyperelasticitySolver": {
+    "durationLogKey": "nonlinear",
+    
     #"materialParameters": [1.5,2.0],
     "materialParameters": [0.0,1.0],
     "displacementsScalingFactor": 1.0,   # scaling factor for displacements
     "residualNormLogFilename": "log_residual_norm.txt",
-    "useAnalyticJacobian": True,
+    "useAnalyticJacobian": False,
     "useNumericJacobian": True,   # only works with non-nested matrices, if both numeric and analytic are enable, it uses the analytic for the preconditioner and the numeric as normal jacobian
       
-    "dumpDenseMatlabVariables": True,   # extrac output of matlab vectors, x,r, jacobian matrix
+    "dumpDenseMatlabVariables": False,   # extra output of matlab vectors, x,r, jacobian matrix
+    # if useAnalyticJacobian,useNumericJacobian and dumpDenseMatlabVariables all all three true, the analytic and numeric jacobian matrices will get compared to see if there are programming errors for the analytic jacobian
     
     # mesh
     "nElements": [nx, ny, nz],

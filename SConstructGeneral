@@ -179,8 +179,13 @@ Progress(progress_function, interval=env["node_count_interval"])
 
 # add notification when compilation is complete
 if os.environ.get("PE_ENV") == None:
-  notify = env.Command(target='notify-send'+str(random.random()), source = None, action = 'notify-send "compilation complete" || true')
-  AlwaysBuild('notify-send')
+  if "notifyset" not in env:
+    env["notifyset"] = True
+    target='notify-send'+str(random.random())
+    notify = env.Command(target=target, source = None, action = 'notify-send "compilation complete" || true')
+    #AlwaysBuild('notify-send')
+    Depends(notify, 'core/build_debug/libopendihud.a')
+    Depends(notify, 'core/build_release/libopendihu.a')
     
 # ensure that PYTHONPATH points to scripts directory which contains python scripts
 current_python_path = os.environ.get("PYTHONPATH")

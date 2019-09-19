@@ -107,7 +107,8 @@ initialize()
 
       if (computingRank == rankSubset->ownRankNo())
       {
-        LOG(DEBUG) << "compute (i,j)=(" << i << "," << j << "), rank " << computingRank;
+        LOG(DEBUG) << "compute (i,j)=(" << i << "," << j << "), computingRank " << computingRank 
+          << ", fiberNo: " << fiberNo << ", rankSubset->size(): " << rankSubset->size() << ", own: " << rankSubset->ownRankNo();
         nFibersToCompute_++;
       }
     }
@@ -136,7 +137,9 @@ initialize()
 
       if (computingRank == rankSubset->ownRankNo())
       {
-        LOG(DEBUG) << "compute (i,j)=(" << i << "," << j << "), rank " << computingRank << ", fiberDataNo=" << fiberDataNo;
+        LOG(DEBUG) << "compute (i,j)=(" << i << "," << j << "), computingRank " << computingRank 
+          << ", fiberNo: " << fiberNo << ", fiberDataNo: " << fiberDataNo 
+          << ", rankSubset->size(): " << rankSubset->size() << ", own: " << rankSubset->ownRankNo();
         nInstancesToCompute_ += fiberFunctionSpace->nDofsGlobal();
 
         assert(fiberDataNo < fiberData_.size());

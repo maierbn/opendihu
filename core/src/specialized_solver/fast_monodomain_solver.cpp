@@ -460,6 +460,7 @@ computeMonodomain()
 void FastMonodomainSolver<Control::MultipleInstances<OperatorSplitting::Strang<Control::MultipleInstances<TimeSteppingScheme::Heun<CellmlAdapter<4, 9, FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1> > > > >, Control::MultipleInstances<TimeSteppingScheme::ImplicitEuler<SpatialDiscretization::FiniteElementMethod<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1>, Quadrature::Gauss<2>, Equation::Dynamic::IsotropicDiffusion> > > > > >::
 compute0D(double startTime, double timeStepWidth, int nTimeSteps)
 {
+  Control::PerformanceMeasurement::start("duration_0D");
   LOG(DEBUG) << "compute0D(" << startTime << "), " << nTimeSteps << " time steps";
 
   using Vc::double_v;
@@ -610,11 +611,14 @@ compute0D(double startTime, double timeStepWidth, int nTimeSteps)
   }
 
   VLOG(1) << "nFiberPointBuffers: " << fiberPointBuffers_.size();
+  Control::PerformanceMeasurement::stop("duration_0D");
 }
 
 void FastMonodomainSolver<Control::MultipleInstances<OperatorSplitting::Strang<Control::MultipleInstances<TimeSteppingScheme::Heun<CellmlAdapter<4, 9, FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1> > > > >, Control::MultipleInstances<TimeSteppingScheme::ImplicitEuler<SpatialDiscretization::FiniteElementMethod<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1>, Quadrature::Gauss<2>, Equation::Dynamic::IsotropicDiffusion> > > > > >::
 compute1D(double startTime, double timeStepWidth, int nTimeSteps, double prefactor)
 {
+  Control::PerformanceMeasurement::start("duration_1D");
+
   // perform implicit euler step
   // (K - 1/dt*M) u^{n+1} = -1/dt*M u^{n})
 
@@ -808,6 +812,7 @@ compute1D(double startTime, double timeStepWidth, int nTimeSteps, double prefact
     VLOG(1) << " -> " << s.str();
 #endif
   }
+  Control::PerformanceMeasurement::stop("duration_1D");
 }
 
 void FastMonodomainSolver<Control::MultipleInstances<OperatorSplitting::Strang<Control::MultipleInstances<TimeSteppingScheme::Heun<CellmlAdapter<4, 9, FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1> > > > >, Control::MultipleInstances<TimeSteppingScheme::ImplicitEuler<SpatialDiscretization::FiniteElementMethod<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1>, Quadrature::Gauss<2>, Equation::Dynamic::IsotropicDiffusion> > > > > >::

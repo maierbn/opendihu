@@ -15,10 +15,10 @@ namespace MathUtility
 {
 
 //! returns v*v (square)
-inline double sqr(double v){return v*v;};
+inline double sqr(double v){return v*v;}
 
 //! returns v*v (square)
-inline int sqr(int v){return v*v;};
+inline int sqr(int v){return v*v;}
 
 //! return the euclidean norm of the difference vector, i.e. the distance between the nodes
 template<int D>

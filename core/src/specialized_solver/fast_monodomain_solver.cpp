@@ -120,6 +120,7 @@ initialize()
   // determine total number of Hodgkin-Huxley instances to compute on this rank
   nInstancesToCompute_ = 0;
   int fiberDataNo = 0;
+  fiberNo = 0;
   for (int i = 0; i < instances.size(); i++)
   {
     std::vector<TimeSteppingScheme::Heun<CellmlAdapterType>> &innerInstances

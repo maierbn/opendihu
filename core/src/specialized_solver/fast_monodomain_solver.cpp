@@ -141,14 +141,14 @@ initialize()
         assert(fiberFunctionSpace);
         assert(motorUnitNo_.size() > 0);
         
-        fiberData_[fiberDataNo].valuesLength = fiberFunctionSpace->nDofsGlobal();
-        fiberData_[fiberDataNo].fiberNoGlobal = fiberNoGlobal;
-        fiberData_[fiberDataNo].motorUnitNo = motorUnitNo_[fiberNoGlobal % motorUnitNo_.size()];
+        fiberData_.at(fiberDataNo).valuesLength = fiberFunctionSpace->nDofsGlobal();
+        fiberData_.at(fiberDataNo).fiberNoGlobal = fiberNoGlobal;
+        fiberData_.at(fiberDataNo).motorUnitNo = motorUnitNo_[fiberNoGlobal % motorUnitNo_.size()];
 
-        fiberData_[fiberDataNo].valuesOffset = 0;
+        fiberData_.at(fiberDataNo).valuesOffset = 0;
         if (fiberDataNo > 0)
         {
-          fiberData_[fiberDataNo].valuesOffset = fiberData_[fiberDataNo-1].valuesOffset + fiberData_[fiberDataNo].valuesLength;
+          fiberData_.at(fiberDataNo).valuesOffset = fiberData_.at(fiberDataNo-1).valuesOffset + fiberData_.at(fiberDataNo-1).valuesLength;
         }
 
         // increase index for fiberData_ struct

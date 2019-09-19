@@ -271,7 +271,7 @@ int MPI_Gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
       std::vector<double> vmValuesLocal;
       innerInstances[j].data().solution()->getValuesWithoutGhosts(0, vmValuesLocal);
 
-      LOG(DEBUG) << "Gatherv of values to rank " << computingRank << ", values " << vmValuesLocal << ", sizes: " << nDofsOnRanks << ", offsets: " << offsetsOnRanks;
+      LOG(DEBUG) << "Gatherv of values to rank " << computingRank << ", sizes: " << nDofsOnRanks << ", offsets: " << offsetsOnRanks << ", local values " << vmValuesLocal;
 
       MPI_Gatherv(vmValuesLocal.data(), fiberFunctionSpace->nDofsLocalWithoutGhosts(), MPI_DOUBLE,
                   fiberData_[fiberDataNo].vmValues.data(), nDofsOnRanks.data(), offsetsOnRanks.data(),
@@ -353,13 +353,13 @@ updateFiberData()
 int MPI_Scatterv(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype,
                  void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm)
 */
-      LOG(DEBUG) << "Scatterv to rank " << computingRank << ", values " << fiberData_[fiberDataNo].vmValues << ", sizes: " << nDofsOnRanks << ", offsets: " << offsetsOnRanks;
-
       // communicate Vm values
       std::vector<double> vmValuesLocal(fiberFunctionSpace->nDofsLocalWithoutGhosts());
       MPI_Scatterv(fiberData_[fiberDataNo].vmValues.data(), nDofsOnRanks.data(), offsetsOnRanks.data(), MPI_DOUBLE,
                    vmValuesLocal.data(), fiberFunctionSpace->nDofsLocalWithoutGhosts(), MPI_DOUBLE,
                    computingRank, mpiCommunicator);
+
+      LOG(DEBUG) << "Scatterv from rank " << computingRank << ", sizes: " << nDofsOnRanks << ", offsets: " << offsetsOnRanks; << ", received local values " << vmValuesLocal
 
       LOG(DEBUG) << "fiber " << fiberDataNo << ", set values " << vmValuesLocal;
       innerInstances[j].data().solution()->setValuesWithoutGhosts(0, vmValuesLocal);

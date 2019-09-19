@@ -28,8 +28,8 @@ outputData(OutputFieldVariablesType fieldVariables, std::string meshName, std::s
   // get first other scalar field variable
   if (scalarFieldVariables.size() > 0)
   {
-    LOG(DEBUG) << "mesh \"" << meshName << "\", retrieve field variable \"" << scalarFieldVariables[0]->name() << "\"";
     scalarFieldVariables[0]->getValuesWithoutGhosts(megaMolWriterContext.scalarFieldVariableValues);
+    //LOG(INFO) << "mesh \"" << meshName << "\", retrieve field variable \"" << scalarFieldVariables[0]->name() << "\", n values: " << megaMolWriterContext.scalarFieldVariableValues.size();
   }
 
   LOG(DEBUG) << "MegaMolWriter::outputData, mesh \"" << meshName << "\".";

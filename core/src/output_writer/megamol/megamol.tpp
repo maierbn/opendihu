@@ -157,16 +157,17 @@ void MegaMol::write(DataType& data, int timeStepNo, double currentTime)
         std::string variableName = "xyz";
 
         // communicate offset into the global values array
-        int localSize = geometryFieldScalarValues.size();
-        int offset = 0;
-        int globalSize = 0;
+        long long localSize = geometryFieldScalarValues.size();
+        long long offset = 0;
+        long long globalSize = 0;
 
         std::shared_ptr<Partition::RankSubset> rankSubset = DihuContext::partitionManager()->rankSubsetForCollectiveOperations();
 
-        MPI_Exscan(&localSize, &offset, 1, MPI_INT, MPI_SUM, rankSubset->mpiCommunicator());
-        MPI_Allreduce(&localSize, &globalSize, 1, MPI_INT, MPI_SUM, rankSubset->mpiCommunicator());
+        MPI_Exscan(&localSize, &offset, 1, MPI_LONG_LONG, MPI_SUM, rankSubset->mpiCommunicator());
+        MPI_Allreduce(&localSize, &globalSize, 1, MPI_LONG_LONG, MPI_SUM, rankSubset->mpiCommunicator());
 
-        LOG(DEBUG) << "define variable \"" << variableName << "\", localSize: " << localSize << ", offset: " << offset << ", globalSize: " << globalSize;
+        LOG(DEBUG) << rankSubset->ownRankNo() << "/" << rankSubset->size() << ": define variable \"" << variableName 
+          << "\", localSize: " << localSize << ", offset: " << offset << ", globalSize: " << globalSize;
 
         // name, global size, offset, local size
         adiosFieldVariableGeometry_ = std::make_shared<adios2::Variable<double>>(adiosIo->DefineVariable<double>(
@@ -245,7 +246,7 @@ void MegaMol::write(DataType& data, int timeStepNo, double currentTime)
 
     if (writer->nOpenWriters > combineNInstances_)
     {
-      LOG(FATAL) << "More open MegaMol writers than allowed.";
+      LOG(FATAL) << "More open MegaMol writers (" << writer->nOpenWriters << ") than allowed (" << combineNInstances_ << ")";
     }
 
     if (writer->nOpenWriters == combineNInstances_)

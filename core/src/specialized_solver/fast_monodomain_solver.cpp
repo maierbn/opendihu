@@ -359,7 +359,7 @@ int MPI_Scatterv(const void *sendbuf, const int *sendcounts, const int *displs, 
                    vmValuesLocal.data(), fiberFunctionSpace->nDofsLocalWithoutGhosts(), MPI_DOUBLE,
                    computingRank, mpiCommunicator);
 
-      LOG(DEBUG) << "Scatterv from rank " << computingRank << ", sizes: " << nDofsOnRanks << ", offsets: " << offsetsOnRanks; << ", received local values " << vmValuesLocal
+      LOG(DEBUG) << "Scatterv from rank " << computingRank << ", sizes: " << nDofsOnRanks << ", offsets: " << offsetsOnRanks << ", received local values " << vmValuesLocal;
 
       LOG(DEBUG) << "fiber " << fiberDataNo << ", set values " << vmValuesLocal;
       innerInstances[j].data().solution()->setValuesWithoutGhosts(0, vmValuesLocal);

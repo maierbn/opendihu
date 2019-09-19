@@ -126,7 +126,7 @@ initialize()
     for (int j = 0; j < innerInstances.size(); j++, fiberNo++)
     {
       CellmlAdapterType &cellmlAdapter = innerInstances[j].discretizableInTime();
-      int fiberNo = PythonUtility::convertFromPython<int>::get(cellmlAdapter.pySetFunctionAdditionalParameter_);
+      int fiberNoGlobal = PythonUtility::convertFromPython<int>::get(cellmlAdapter.pySetFunctionAdditionalParameter_);
 
       std::shared_ptr<FiberFunctionSpace> fiberFunctionSpace = innerInstances[j].data().functionSpace();
 
@@ -136,8 +136,11 @@ initialize()
       if (computingRank == rankSubset->ownRankNo())
       {
         nInstancesToCompute_ += fiberFunctionSpace->nDofsGlobal();
+
+        assert(fiberDataNo < fiberData_.size());
+
         fiberData_[fiberDataNo].valuesLength = fiberFunctionSpace->nDofsGlobal();
-        fiberData_[fiberDataNo].fiberNo = fiberNo;
+        fiberData_[fiberDataNo].fiberNoGlobal = fiberNoGlobal;
         fiberData_[fiberDataNo].motorUnitNo = motorUnitNo_[fiberNo % motorUnitNo_.size()];
 
         fiberData_[fiberDataNo].valuesOffset = 0;
@@ -504,7 +507,7 @@ compute0D(double startTime, double timeStepWidth, int nTimeSteps)
 
       if (stimulate)
       {
-        LOG(DEBUG) << "stimulate fiber " << fiberData_[fiberDataNo].fiberNo << ", MU " << motorUnitNo << " at t=" << currentTime;
+        LOG(DEBUG) << "stimulate fiber " << fiberData_[fiberDataNo].fiberNoGlobal << ", MU " << motorUnitNo << " at t=" << currentTime;
         LOG(DEBUG) << "  pointBuffersNo: " << pointBuffersNo << ", indexInFiber: " << indexInFiber << ", fiberCenterIndex: " << fiberCenterIndex;
         LOG(DEBUG) << "  motorUnitNo: " << motorUnitNo << " (" << motorUnitNo % firingEvents_[index % firingEvents_.size()].size() << ")";
         LOG(DEBUG) << "  time index: " << index << " (" << index % firingEvents_.size() << ")";

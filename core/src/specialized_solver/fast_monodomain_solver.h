@@ -155,7 +155,7 @@ private:
     std::vector<double> vmValues;         ///< values of Vm
     int valuesLength;                     ///< number of vmValues
     global_no_t valuesOffset;             ///< number of vmValues in previous entries in fiberData_
-    int fiberNo;                          ///< fiberNo as given in settings (value of additionalArgument)
+    int fiberNoGlobal;                    ///< fiberNo as given in settings (value of additionalArgument)
     int motorUnitNo;                      ///< motor unit no.
   };
 

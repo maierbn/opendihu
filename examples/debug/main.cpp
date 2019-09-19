@@ -1,3 +1,5 @@
+
+#include <Vc/Vc>
 #include <iostream>
 #include <cstdlib>
 #include <vector>
@@ -12,10 +14,51 @@
 
 using namespace std;
 
+struct FiberPointData
+{
+  Vc::double_v values[8];
+};
+Vc_DECLARE_ALLOCATOR(FiberPointData)
+
+int f(int a)
+{
+  double v = 0;
+  for(long long int j = 0; j < 1e8; j++)
+  {
+    if (j % 17 == 5 || j % 13 == 2 || j%7 == 6)
+      v += 2*a;
+    if (j%2 == 0)
+      v *= 2.;
+    if (j%3 == 2)
+      v /= 3.21;
+  }
+  return v;
+}
+
 int main(int argc, char *argv[])
 {
-  // test SEMT 
+  LOG(DEBUG) << "debug" << f(1);
+  LOG(INFO) << "info" << f(2);
+  VLOG(1) << "vlog1 " << f(3);
+  LOG(ERROR) << "logerror" << f(4);
   
+  cout << "double vector size: " << Vc::double_v::size() << ", float vector size: " << Vc::float_v::size() << endl;
+
+  // test Vc
+  int nFiberPoints = 100;
+  int nVcVectors = (nFiberPoints + Vc::double_v::Size - 1) / Vc::double_v::Size;
+
+  std::vector<FiberPointData> values(nVcVectors);
+  
+  for (int i = 0; i < nVcVectors; i++)
+  {
+    values[i].values[0] = 8.0;
+  }
+
+  //Vc::Memory<FiberPointData> data(nFiberPoints);
+  
+  // test SEMT 
+  /*
   // Define an instance of variable with index 0 named x.
   DVAR(x, 0);
 
@@ -33,7 +76,7 @@ int main(int argc, char *argv[])
   auto dg1 = deriv_t(g, x);
   cout << "g' = " << dg1 << endl;
 
-  
+  */
   /*
   std::string pythonConfig = R"(
 config = {

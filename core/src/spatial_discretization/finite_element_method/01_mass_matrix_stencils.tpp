@@ -23,8 +23,6 @@
 #include "mesh/mesh.h"
 #include "control/types.h"
 
-
-
 namespace SpatialDiscretization
 {
 

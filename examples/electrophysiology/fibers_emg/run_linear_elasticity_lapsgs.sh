@@ -7,6 +7,7 @@
 --dt_1D=2e-3 \
 --dt_splitting=2e-3 \
 --dt_3D=1e-2 \
---output_timestep=1e-1 -vmodule=heun.tpp=1 
+--output_timestep=1e-1 
+#-vmodule=heun.tpp=1 
 #-vmodule=09_function_space_structured_check_nei*=1 
 

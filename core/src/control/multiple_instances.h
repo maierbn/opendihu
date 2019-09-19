@@ -22,6 +22,7 @@ public:
   typedef std::vector<typename TimeSteppingScheme::OutputConnectorDataType> OutputConnectorDataType;
   typedef typename TimeSteppingScheme::FunctionSpace FunctionSpace;
   typedef typename ::Data::MultipleInstances<typename TimeSteppingScheme::FunctionSpace, TimeSteppingScheme> Data;
+  typedef TimeSteppingScheme TimeSteppingSchemeType;
 
   //! constructor
   MultipleInstances(DihuContext context);
@@ -50,6 +51,9 @@ public:
 
   //! output the given data for debugging
   std::string getString(OutputConnectorDataType &data);
+
+  //! the FastMonodomainSolver accesses the internals of MultipleInstances
+  template<typename T> friend class FastMonodomainSolver;
 
 protected:
 

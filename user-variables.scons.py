@@ -53,6 +53,9 @@ ADIOS_DOWNLOAD = True
 # MegaMol, visualization framework of VISUS, optional, needs ADIOS2
 MEGAMOL_DOWNLOAD = False    # install MegaMol from official git repo, but needed is the private repo, ask for access to use MegaMol with opendihu
 
+# Vc, vectorization types
+VC_DOWNLOAD=True
+
 # MPI
 # MPI is normally detected by runnig the mpicc command. If this is not available, you can provide the MPI_DIR as usual.
 MPI_DIR = "/usr/lib/openmpi"    # standard path for openmpi on ubuntu 16.04

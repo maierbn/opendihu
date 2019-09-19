@@ -38,6 +38,9 @@ doc:
 release_without_tests:
 	$(python) dependencies/scons/scons.py BUILD_TYPE=RELEASE no_tests=True
 
+debug_without_tests:
+	$(python) dependencies/scons/scons.py BUILD_TYPE=DEBUG no_tests=True -j $(shell nproc --all)
+
 system_testing:
 	cd testing/system_testing && ./run.sh
 
@@ -109,3 +112,6 @@ mooney_rivlin_transiso:
 
 mooney_rivlin:
 	cd examples/solid_mechanics/mooney_rivlin_isotropic  && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+
+ddebug:
+	cd examples/debug  && python ../../dependencies/scons/scons.py BUILD_TYPE=DEBUG

@@ -812,8 +812,20 @@ class Package(object):
     
     # add sources directly to test program
     for source in self.sources:
-      object_filename = os.path.join(self.base_dir, os.path.join("src", os.path.splitext(source)[0]+".o"))
-      ctx.env.AppendUnique(LINKFLAGS = object_filename)
+      
+      if ctx.env["BUILD_TYPE"] == "debug":
+        ctx.Log("debug mode detected, using debug version of {}".format(source))
+        object_filename = os.path.join(self.base_dir, os.path.join("src", os.path.splitext(source)[0]+".o"))
+      else:
+        ctx.Log("not debug mode detected, using release version of {}".format(source))
+        object_filename = os.path.join(self.base_dir, os.path.join("src", os.path.splitext(source)[0]+".release.o"))
+      
+      if os.path.isfile(object_filename):
+        ctx.env.AppendUnique(LINKFLAGS = object_filename)
+      else:
+        sys.stdout.write("Error: Could not find file \"{}\".".format(object_filename))
+        ctx.Log("Error: Could not find file \"{}\".".format(object_filename))
+        
       #with open(filename) as file:
       #  text += "\n"+file.read()
     

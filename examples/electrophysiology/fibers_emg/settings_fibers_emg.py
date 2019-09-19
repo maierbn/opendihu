@@ -57,6 +57,7 @@ parser.add_argument('--disable_firing_output',               help='Disables the 
 parser.add_argument('--v',                                   help='Enable full verbosity in c++ code')
 parser.add_argument('-v',                                    help='Enable verbosity level in c++ code', action="store_true")
 parser.add_argument('-vmodule',                              help='Enable verbosity level for given file in c++ code')
+parser.add_argument('-pause',                                help='Stop at parallel debugging barrier', action="store_true")
 parser.add_argument('--rank_reordering',                     help='Enable rank reordering in the c++ code', action="store_true")
 parser.add_argument('--linear_elasticity',                   help='Enable linear elasticity', action="store_true")
  
@@ -90,6 +91,8 @@ if rank_no == 0:
   print("fiber_distribution_file: {}".format(variables.fiber_distribution_file))
   print("firing_times_file:       {}".format(variables.firing_times_file))
   print("********************************************************************************")
+  
+  print("prefactor: sigma_eff/(Am*Cm) = {} = {} / ({}*{})".format(variables.Conductivity/(variables.Am*variables.Cm), variables.Conductivity, variables.Am, variables.Cm))
   
   # start timer to measure duration of parsing of this script  
   t_start_script = timeit.default_timer()
@@ -191,7 +194,7 @@ config = {
                       "setSpecificStatesFunction":              set_specific_states,                            # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
                       #"setSpecificStatesCallInterval":         2*int(1./variables.stimulation_frequency/variables.dt_0D),     # set_specific_states should be called variables.stimulation_frequency times per ms, the factor 2 is needed because every Heun step includes two calls to rhs
                       "setSpecificStatesCallInterval":          0,                                              # 0 means disabled
-                      "setSpecificStatesCallFrequency":         variables.stimulation_frequency,                # set_specific_states should be called variables.stimulation_frequency times per ms, the factor 2 is needed because every Heun step includes two calls to rhs
+                      "setSpecificStatesCallFrequency":         variables.stimulation_frequency,                # set_specific_states should be called variables.stimulation_frequency times per ms
                       "setSpecificStatesRepeatAfterFirstCall":  0.01,                                           # simulation time span for which the setSpecificStates callback will be called after a call was triggered
                       "additionalArgument":                     fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y),
                       
@@ -248,7 +251,9 @@ config = {
         } if (subdomain_coordinate_x,subdomain_coordinate_y) == (variables.own_subdomain_coordinate_x,variables.own_subdomain_coordinate_y) else None
         for subdomain_coordinate_y in range(variables.n_subdomains_y)
             for subdomain_coordinate_x in range(variables.n_subdomains_x)]
-      }
+      },
+      "fiberDistributionFile":    variables.fiber_distribution_file,   # for FastMonodomainSolver, e.g. MU_fibre_distribution_3780.txt
+      "firingTimesFile":          variables.firing_times_file,         # for FastMonodomainSolver, e.g. MU_firing_times_real.txt
     },
     "Term2": {        # Bidomain, EMG
       "StaticBidomainSolver": {       # version for fibers_emg
@@ -356,11 +361,14 @@ config = {
         },
         "maximumActiveStress":      1.0,
         "strainScalingCurveWidth":  1.0,
-        "scalingFactor":        1e4,   #1e4
+        "scalingFactor":            1e4,   #1e4
         "OutputWriter" : [
           {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/deformation", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
           #{"format": "PythonFile", "filename": "out/deformation", "outputInterval": 1, "binary":False, "onlyNodalValues":True},
         ]
+      },
+      "QuasiStaticNonlinearElasticitySolverFebio": {
+        "durationLogKey": "febio",
       }
     }
   }

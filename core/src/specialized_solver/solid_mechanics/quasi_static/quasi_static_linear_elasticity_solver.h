@@ -9,26 +9,10 @@
 #include "equation/linear_elasticity.h"
 #include "data_management/specialized_solver/quasi_static_linear_elasticity.h"
 #include "spatial_discretization/finite_element_method/finite_element_method.h"
+#include "specialized_solver/solid_mechanics/quasi_static/output_connector_data_type.h"
 
 namespace TimeSteppingScheme
 {
-
-/** Data type of output connector for QuasiStaticLinearElasticitySolver
- *  This is a separate class such that the mapping to the other solver object can be specialized.
- */
-template<typename FieldVariableType>
-struct ElasticitySolverOutputConnectorDataType
-{
-  std::shared_ptr<FieldVariableType> activation;   // field variable on 3D function space
-};
-
-//! output method for the ElasticitySolverOutputConnectorDataType type
-template<typename FieldVariableType>
-std::ostream &operator<<(std::ostream &stream, const ElasticitySolverOutputConnectorDataType<FieldVariableType> &rhs)
-{
-  stream << "<activation: " << *rhs.activation << ", strain: " << *rhs.strain << ">";
-  return stream;
-}
 
 /** A specialized solver for 3D linear elasticity, as quasi-static timestepping scheme (a new static solution every timestep)
   */

@@ -4,7 +4,7 @@
 
 namespace MathUtility
 {
-
+/*
 double sqr(double v)
 {
   return v*v;
@@ -13,7 +13,7 @@ double sqr(double v)
 int sqr(int v)
 {
   return v*v;
-}
+}*/
 
 template<>
 double length<2>(const Vec2 node)

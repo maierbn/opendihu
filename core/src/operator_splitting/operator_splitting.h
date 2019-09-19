@@ -20,7 +20,8 @@ public:
   typedef typename TimeStepping1::FunctionSpace FunctionSpace;
   typedef typename TimeStepping1::Data Data;
   typedef typename TimeStepping1::OutputConnectorDataType OutputConnectorDataType;  // needed when this class is itself part of an operator splitting
- 
+  typedef TimeStepping1 TimeStepping1Type;
+
   //! constructor
   OperatorSplitting(DihuContext context, std::string schemeName);
 

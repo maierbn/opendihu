@@ -60,6 +60,7 @@ sconsconfig.select(
     #packages.xsd(required=False),       # XML Schema to C++ data binding compiler, needed for chaste
     #packages.boost(required=False),       # boost C++ library, needed for chaste
     #packages.Chaste(required=False),       # The Chaste framework, only the nonlinear mechanics solver is used
+    packages.Vc(required=True),          # The Vc types for explicit vectorization
     packages.EasyLoggingPP(required=True),      # This is the logging library, it has to be the last package to be included because it contains a source (.c) file that needs to be compiled and linked to opendihu and somehow otherwise scons-config does not work.
 )
 
@@ -199,7 +200,7 @@ if env["BUILD_TYPE"] == "debug":
   if env['CC'] != "pgcc":  # not pgi compiler
     env.MergeFlags('-ftemplate-backtrace-limit=0 -fstack-check')
     env.MergeFlags('-Wall -Wpedantic -Wno-sign-compare -Wno-error=sign-compare')
-    env.MergeFlags('-DDEBUG -ggdb3 -g3 -Og -pg  -DELPP_FEATURE_CRASH_LOG')   # gcc flags, will be sorted automatically into linker and compiler flags
+    env.MergeFlags('-DDEBUG -ggdb3 -g3 -Og  -DELPP_FEATURE_CRASH_LOG')   # gcc flags, will be sorted automatically into linker and compiler flags
     env.MergeFlags('-I/store/software/opendihu/dependencies/chaste/install/include/chaste/continuum_mechanics/problem')
     env.MergeFlags('-I/store/software/opendihu/dependencies/chaste/install/include/chaste/continuum_mechanics/common')
   else: # using pgi compiler here:
@@ -232,7 +233,7 @@ else:
   if socket.gethostname() == 'cmcs09':
     env.MergeFlags('-DNDEBUG')
   else:
-    env.MergeFlags('-DELPP_DISABLE_DEBUG_LOGS -DELPP_DISABLE_VERBOSE_LOGS -DELPP_DISABLE_TRACE_LOGS -DNDEBUG')
+    env.MergeFlags('-DELPP_DISABLE_DEBUG_LOGS -DELPP_DISABLE_VERBOSE_LOGS -DELPP_DISABLE_TRACE_LOGS -DELPP_DISABLE_LOGGING_FLAGS_FROM_ARG -DNDEBUG')
   if os.environ.get("PE_ENV") == "CRAY":
     env.MergeFlags('-O3')   # fastest with cray (same performance as -02)
   elif env["CC"] == "pgcc":
@@ -241,6 +242,7 @@ else:
     env.MergeFlags('-noswitcherror -std=c++14') # managed,
   else:
     env.MergeFlags('-Ofast -pg -g')   # fastest with GNU and Intel
+    env.Append(LINKFLAGS = "-pg")   # add gprof flags for linker
   
   if env["USE_CRAY_PAT"]:
     print("USE_CRAY_PAT=True: Compiling with -DHAVE_PAT (uses PAT_region_begin())\n")

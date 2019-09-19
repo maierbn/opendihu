@@ -53,6 +53,9 @@ ADIOS_DOWNLOAD = True
 # MegaMol, visualization framework of VISUS, optional, needs ADIOS2
 MEGAMOL_DOWNLOAD = False    # install MegaMol from official git repo, but needed is the private repo, ask for access to use MegaMol with opendihu
 
+# Vc, vectorization types
+VC_DOWNLOAD=True
+
 # MPI
 # MPI is normally detected by runnig the mpicc command. If this is not available, you can provide the MPI_DIR as usual.
 MPI_DIR = "/usr/lib/openmpi"    # standard path for openmpi on ubuntu 16.04
@@ -93,7 +96,8 @@ try:
   # on neon use custom cmake
   import socket
   if socket.gethostname() == "neon" or socket.gethostname() == "helium" or "argon" in socket.gethostname():
-    cmake="~/software/cmake/cmake-3.13.3-Linux-x86_64/bin/cmake"
+    if os.path.isfile("~/software/cmake/cmake-3.13.3-Linux-x86_64/bin/cmake"):
+      cmake="~/software/cmake/cmake-3.13.3-Linux-x86_64/bin/cmake"
 
   if "sgscl" in socket.gethostname():
     MPI_DIR="/scratch-nfs/maierbn/openmpi/install-3.1"
@@ -148,7 +152,7 @@ if os.environ.get("PE_ENV") is not None:  # if on hazelhen
   cc = "cc"   # C compiler wrapper
   CC = "CC"   # C++ compiler wrapper
   mpiCC = "CC"  # mpi C++ compiler wrapper
-  cmake = "~/cmake_3.6.3/bin/cmake"
+  cmake = "/lustre/cray/ws8/ws/icbbnmai-opendihu1/cmake/cmake-3.13.2-Linux-x86_64/bin/cmake"
 
   # use cray-pat for profiling
   USE_CRAY_PAT = False

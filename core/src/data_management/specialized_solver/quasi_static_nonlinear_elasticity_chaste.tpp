@@ -79,8 +79,8 @@ print()
 }
 
 template<typename FunctionSpace>
-typename QuasiStaticNonlinearElasticityChaste<FunctionSpace>::OutputFieldVariables QuasiStaticNonlinearElasticityChaste<FunctionSpace>::
-getOutputFieldVariables()
+typename QuasiStaticNonlinearElasticityChaste<FunctionSpace>::FieldVariablesForOutputWriter QuasiStaticNonlinearElasticityChaste<FunctionSpace>::
+getFieldVariablesForOutputWriter()
 {
   // these field variables will be written to output files
   return std::tuple_cat(

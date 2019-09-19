@@ -12,4 +12,4 @@ if not env['no_examples']:
     
   # create the main executable
   env.Program(target = 'test', source = "main.cpp")
-  env.Program(target = 'test2', source = "main2.cpp")
+#  env.Program(target = 'test2', source = "main2.cpp")

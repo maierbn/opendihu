@@ -14,7 +14,7 @@ For example, you can build any example in its top-level directory by calling
 
 .. code-block:: bash
 
-  scons BUILD_TYPE=d
+  scons BUILD_TYPE=d -j 4
 
 The resulting executable in this case will be created under the `build_debug` subdirectory. It can be executed with the file name of a python script as its argument. This python script contains all the settings.
 For example, if the created executable is `build_debug/simulation` and the python settings file is `settings.py`, one would typically execute the simulation in the following way:

@@ -278,6 +278,15 @@ Getters
   :param int componentNo: 
   :param node_no_t dofLocalNo: 
   
+.. cpp:function:: getValues(int componentNo, int nValues, const dof_no_t *dofLocalNo, std::vector<double> &values) const
+  
+  Get values from their local dof no.s for a specific component.
+  
+  :param int componentNo:
+  :param int nValues: The number of values to get.
+  :param const dof_no_t \*dofLocalNo:
+  :param std\:\:vector<double> &values: The resulting values will be appended to this vector.
+  
 .. cpp:function:: std::array<double,nComponents> getValue(node_no_t dofLocalNo) const
   
   Get a single value from local dof no. for all components.
@@ -316,13 +325,6 @@ Getters
   Only for scalar field variables:  get a single value from local dof no. for all components.
   
   :param node_no_t dofLocalNo: 
-  
-.. cpp:function:: void getValues(const std::vector<dof_no_t> &dofLocalNo, std::vector<double> &values) const
-  
-  Only for scalar field variables:  get values from their local dof no.s, as vector.
-  
-  :param const std\:\:vector<dof_no_t> &dofLocalNo: 
-  :param std\:\:vector<double> &values: 
   
 .. cpp:function:: void getValuesWithGhosts(std::vector<double> &values, bool onlyNodalValues=false) const
   
@@ -373,12 +375,30 @@ Setters
   :param const std\:\:array<double,N> &values: 
   :param InsertMode petscInsertMode=INSERT_VALUES: 
   
+.. cpp:function:: void setValues(int componentNo, int nValues, const dof_no_t *dofNosLocal, const double *values, InsertMode petscInsertMode=INSERT_VALUES)
+  
+  Set values for a given component for given dofs, using raw pointers. This directly mirors the VecSetValues function of Petsc.
+  
+  :param int componentNo:
+  :param int nValues: The number of values to set
+  :param const dof_no_t \*dofNosLocal:
+  :param const double \*values:
+  :param InsertMode petscInsertMode=INSERT_VALUES: 
+  
 .. cpp:function:: void setValues(const std::vector<dof_no_t> &dofNosLocal, const std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode=INSERT_VALUES)
   
   Set values for all components for dofs, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes.
   
   :param const std\:\:vector<dof_no_t> &dofNosLocal: 
   :param const std\:\:vector<std\:\:array<double,nComponents>> &values: 
+  :param InsertMode petscInsertMode=INSERT_VALUES: 
+  
+.. cpp:function:: template<int N>void setValues(const std::array<dof_no_t,N> &dofNosLocal, const std::array<std::array<double,nComponents>,N> &values, InsertMode petscInsertMode=INSERT_VALUES)
+  
+  Set values for all components for N dofs, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes.
+  
+  :param const std\:\:array<dof_no_t,N> &dofNosLocal: 
+  :param const std\:\:array<std\:\:array<double,nComponents>,N> &values: 
   :param InsertMode petscInsertMode=INSERT_VALUES: 
   
 .. cpp:function:: void setValues(int nValues, const std::vector<dof_no_t> &dofNosLocal, const std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode=INSERT_VALUES)

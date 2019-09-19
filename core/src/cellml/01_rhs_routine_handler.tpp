@@ -9,7 +9,7 @@
 #include "utility/python_utility.h"
 #include "utility/petsc_utility.h"
 #include "utility/string_utility.h"
-#include "mesh/mesh_manager.h"
+#include "mesh/mesh_manager/mesh_manager.h"
 
 #include <unistd.h>  //dlopen
 #include <dlfcn.h>

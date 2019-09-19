@@ -15,7 +15,7 @@ public:
   //! constructor
   using FiniteElementsBase<FunctionSpaceType,nComponents>::FiniteElementsBase;
 
-  using FiniteElementsBase<FunctionSpaceType,nComponents>::OutputFieldVariables;
+  using FiniteElementsBase<FunctionSpaceType,nComponents>::FieldVariablesForOutputWriter;
 
   //! initialize stifness parameters, then call the initialize method of the base class
   virtual void initialize();

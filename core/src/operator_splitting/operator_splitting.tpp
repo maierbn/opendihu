@@ -7,7 +7,7 @@
 #include "utility/python_utility.h"
 #include "data_management/time_stepping/time_stepping.h"
 #include "control/performance_measurement.h"
-#include "mesh/mesh_manager.h"
+#include "mesh/mesh_manager/mesh_manager.h"
 
 namespace OperatorSplitting
 {
@@ -50,22 +50,11 @@ initialize()
   LOG(TRACE) << "  OperatorSplitting::initialize done, timeSpan=[" << this->startTime_<< "," << this->endTime_<< "]"
     << ", n steps: " << this->numberTimeSteps_;
 
-  // initialize time stepping objects, if only one knows its MeshType, initialize that first
-  //(e.g. CellML-adapter does not know, because it is independent of the type of a mesh)
-  if (timeStepping2_.knowsMeshType() && !timeStepping1_.knowsMeshType())
-  {
-    LOG(DEBUG) << "  OperatorSplitting::initialize timeStepping2";
-    timeStepping2_.initialize();
-    LOG(DEBUG) << "  OperatorSplitting::initialize timeStepping1";
-    timeStepping1_.initialize();
-  }
-  else
-  {
-    LOG(DEBUG) << "  OperatorSplitting::initialize timeStepping1";
-    timeStepping1_.initialize();
-    LOG(DEBUG) << "  OperatorSplitting::initialize timeStepping2";
-    timeStepping2_.initialize();
-  }
+  // initialize time stepping objects
+  LOG(DEBUG) << "  OperatorSplitting::initialize timeStepping1";
+  timeStepping1_.initialize();
+  LOG(DEBUG) << "  OperatorSplitting::initialize timeStepping2";
+  timeStepping2_.initialize();
 
   LOG(DEBUG) << "initialize mappings between meshes \"" << timeStepping1_.data().functionSpace()->meshName() << "\" and \""
     << timeStepping2_.data().functionSpace()->meshName() << "\".";
@@ -119,17 +108,10 @@ run()
 }
 
 template<typename TimeStepping1, typename TimeStepping2>
-typename OperatorSplitting<TimeStepping1, TimeStepping2>::TransferableSolutionDataType OperatorSplitting<TimeStepping1, TimeStepping2>::
-getSolutionForTransfer()
+typename OperatorSplitting<TimeStepping1, TimeStepping2>::OutputConnectorDataType OperatorSplitting<TimeStepping1, TimeStepping2>::
+getOutputConnectorData()
 {
-  return timeStepping1_.getSolutionForTransfer();
-}
-
-template<typename TimeStepping1, typename TimeStepping2>
-bool OperatorSplitting<TimeStepping1, TimeStepping2>::
-knowsMeshType()
-{
-  return timeStepping1_.knowsMeshType() && timeStepping2_.knowsMeshType();
+  return timeStepping1_.getOutputConnectorData();
 }
 
 template<typename TimeStepping1, typename TimeStepping2>
@@ -158,10 +140,10 @@ timeStepping2()
 //! output the given data for debugging
 template<typename TimeStepping1, typename TimeStepping2>
 std::string OperatorSplitting<TimeStepping1, TimeStepping2>::
-getString(typename OperatorSplitting<TimeStepping1, TimeStepping2>::TransferableSolutionDataType &data)
+getString(typename OperatorSplitting<TimeStepping1, TimeStepping2>::OutputConnectorDataType &data)
 {
   std::stringstream s;
-  s << "<" << schemeName_ << ",Term1:" << timeStepping1_.getString(data) << ">";
+  s << "<" << schemeName_ << ",Term1:" << data << ">";
   return s.str();
 }
 

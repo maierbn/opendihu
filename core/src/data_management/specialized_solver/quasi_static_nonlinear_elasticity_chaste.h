@@ -49,10 +49,10 @@ public:
       std::shared_ptr<StressFieldVariableType>,         // active stress
       std::shared_ptr<VectorFieldVariableType>         // displacement
     >
-   OutputFieldVariables;
+   FieldVariablesForOutputWriter;
 
   //! get pointers to all field variables that can be written by output writers
-  OutputFieldVariables getOutputFieldVariables();
+  FieldVariablesForOutputWriter getFieldVariablesForOutputWriter();
 
 private:
 

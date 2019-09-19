@@ -12,7 +12,7 @@ public:
   //! constructor
   Splittable();
 
-  /// classes implementing Splittable need to typedef TransferableSolutionData type which is the type of the field variable with the solution that will be exchanged with the other component in a splitting scheme
+  /// classes implementing Splittable need to typedef OutputConnectorDataType type which is the type of the field variable with the solution that will be exchanged with the other component in a splitting scheme
 
   //! return the solution vector mapping object, that contains information on if there are more internal values stored in the data_ object than may be needed for further computationo
   //std::shared_ptr<SolutionVectorMapping> solutionVectorMapping();

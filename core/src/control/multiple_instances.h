@@ -19,9 +19,10 @@ class MultipleInstances: public Runnable
 {
 public:
 
-  typedef std::vector<typename TimeSteppingScheme::TransferableSolutionDataType> TransferableSolutionDataType;
+  typedef std::vector<typename TimeSteppingScheme::OutputConnectorDataType> OutputConnectorDataType;
   typedef typename TimeSteppingScheme::FunctionSpace FunctionSpace;
   typedef typename ::Data::MultipleInstances<typename TimeSteppingScheme::FunctionSpace, TimeSteppingScheme> Data;
+  typedef TimeSteppingScheme TimeSteppingSchemeType;
 
   //! constructor
   MultipleInstances(DihuContext context);
@@ -35,15 +36,12 @@ public:
   //! initialize time span from specificSettings_
   void initialize();
 
-  //! return whether the scheme has a specified mesh type and is not independent of the mesh type
-  bool knowsMeshType();
-
   //! return the data object
   Data &data();
 
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
   //! the transfer is done by the solution_vector_mapping class
-  TransferableSolutionDataType getSolutionForTransfer();
+  OutputConnectorDataType getOutputConnectorData();
 
   //! run solution process
   void run();
@@ -52,7 +50,10 @@ public:
   void reset();
 
   //! output the given data for debugging
-  std::string getString(TransferableSolutionDataType &data);
+  std::string getString(OutputConnectorDataType &data);
+
+  //! the FastMonodomainSolver accesses the internals of MultipleInstances
+  template<typename T> friend class FastMonodomainSolver;
 
 protected:
 

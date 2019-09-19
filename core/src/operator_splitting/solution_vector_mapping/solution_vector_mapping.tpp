@@ -8,24 +8,24 @@
  */
 template<typename FunctionSpaceType1, int nComponents1, typename FunctionSpaceType2, int nComponents2>
 void SolutionVectorMapping<
-  std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1>>, int, double>,   // <fieldVariableType,componentNo,prefactor>
-  std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2>>, int, double>
->::transfer(const std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1>>, int, double> &transferableSolutionData1,
-            const std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2>>, int, double> &transferableSolutionData2,
+  Data::ScaledFieldVariableComponent<FunctionSpaceType1,nComponents1>,   // <fieldVariableType,componentNo,prefactor>
+  Data::ScaledFieldVariableComponent<FunctionSpaceType2,nComponents2>
+>::transfer(const Data::ScaledFieldVariableComponent<FunctionSpaceType1,nComponents1> &transferableSolutionData1,
+            const Data::ScaledFieldVariableComponent<FunctionSpaceType2,nComponents2> &transferableSolutionData2,
             const std::string transferSlotName)
 {
   // rename input data
-  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1>> fieldVariable1 = std::get<0>(transferableSolutionData1);
-  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2>> fieldVariable2 = std::get<0>(transferableSolutionData2);
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1>> fieldVariable1 = transferableSolutionData1.values;
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2>> fieldVariable2 = transferableSolutionData2.values;
 
   // disable checking for nans and infs because it takes a lot of time
   //fieldVariable1->checkNansInfs();
 
-  int componentNo1 = std::get<1>(transferableSolutionData1);
-  int componentNo2 = std::get<1>(transferableSolutionData2);
+  int componentNo1 = transferableSolutionData1.componentNo;
+  int componentNo2 = transferableSolutionData2.componentNo;
 
-  double prefactor1 = std::get<2>(transferableSolutionData1);
-  double prefactor2 = std::get<2>(transferableSolutionData2);
+  double prefactor1 = transferableSolutionData1.scalingFactor;
+  double prefactor2 = transferableSolutionData2.scalingFactor;
 
   VLOG(1) << "solution vector mapping (solution_vector_mapping.tpp), transfer from component "
     << componentNo1 << " (" << fieldVariable1->nDofsLocalWithoutGhosts() << " dofs), prefactor " << prefactor1
@@ -63,24 +63,24 @@ void SolutionVectorMapping<
 
 template<typename FunctionSpaceType1, int nComponents1, typename FunctionSpaceType2>
 void SolutionVectorMapping<
-  std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1>>, int, double>,   // <fieldVariableType,componentNo,prefactor>
-  std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,1>>, int, double>
->::transfer(const std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1>>, int, double> &transferableSolutionData1,
-            const std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,1>>, int, double> &transferableSolutionData2,
+  Data::ScaledFieldVariableComponent<FunctionSpaceType1,nComponents1>,   // <fieldVariableType,componentNo,prefactor>
+  Data::ScaledFieldVariableComponent<FunctionSpaceType2,1>
+>::transfer(const Data::ScaledFieldVariableComponent<FunctionSpaceType1,nComponents1> &transferableSolutionData1,
+            const Data::ScaledFieldVariableComponent<FunctionSpaceType2,1> &transferableSolutionData2,
             const std::string transferSlotName)
 {
   // rename input data
-  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1>> fieldVariable1 = std::get<0>(transferableSolutionData1);
-  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,1>> fieldVariable2 = std::get<0>(transferableSolutionData2);
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1>> fieldVariable1 = transferableSolutionData1.values;
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,1>> fieldVariable2 = transferableSolutionData2.values;
 
   // disable checking for nans and infs because it takes a lot of time
   //fieldVariable1->checkNansInfs();
 
-  int componentNo1 = std::get<1>(transferableSolutionData1);
+  int componentNo1 = transferableSolutionData1.componentNo;
   int componentNo2 = 0;
 
-  double prefactor1 = std::get<2>(transferableSolutionData1);
-  double prefactor2 = std::get<2>(transferableSolutionData2);
+  double prefactor1 = transferableSolutionData1.scalingFactor;
+  double prefactor2 = transferableSolutionData2.scalingFactor;
 
   VLOG(1) << "solution vector mapping (solution_vector_mapping.tpp), transfer from component "
     << componentNo1 << " (" << fieldVariable1->nDofsLocalWithoutGhosts() << " dofs), prefactor " << prefactor1

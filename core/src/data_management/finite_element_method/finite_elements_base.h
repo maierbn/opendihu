@@ -25,7 +25,8 @@ class FiniteElementsBase :
 {
 public:
 
-  typedef std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> TransferableSolutionDataType;
+  //! type of data that will be transferred to nested solvers
+  typedef std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> OutputConnectorDataType;
 
   //! constructor
   FiniteElementsBase(DihuContext context);
@@ -60,6 +61,9 @@ public:
   //! create the inverse of the lumped mass matrix
   void initializeInverseLumpedMassMatrix();
 
+  //! set the solution variable if it is initialized externally, such as in a timestepping scheme
+  void setSolutionVariable(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> solution);
+
   //! return reference to a stiffness matrix
   std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> stiffnessMatrix();
 
@@ -69,9 +73,12 @@ public:
   //! get the inversed lumped mass matrix
   std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> inverseLumpedMassMatrix();
   
+//! get maximum number of expected non-zeros in stiffness matrix
+  static void getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros);
+
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
   //! the transfer is done by the solution_vector_mapping class
-  TransferableSolutionDataType getSolutionForTransfer();
+  OutputConnectorDataType getOutputConnectorData();
 
   //! field variables that will be output by outputWriters
   typedef std::tuple<
@@ -79,15 +86,12 @@ public:
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>>,  // solution
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>>,   // rhs
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>>   // neumann BC rhs
-  > OutputFieldVariables;
+  > FieldVariablesForOutputWriter;
 
   //! get pointers to all field variables that can be written by output writers
-  OutputFieldVariables getOutputFieldVariables();
+  FieldVariablesForOutputWriter getFieldVariablesForOutputWriter();
 
 private:
-
-  //! get maximum number of expected non-zeros in stiffness matrix
-  void getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros);
 
   //! initializes the vectors and stiffness matrix with size
   void createPetscObjects();

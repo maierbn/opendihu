@@ -80,13 +80,13 @@ void MegaMol::write(DataType& data, int timeStepNo, double currentTime)
 
     // collect all available meshes
     std::set<std::string> meshNames;
-    LoopOverTuple::loopCollectMeshNames<typename DataType::OutputFieldVariables>(data.getOutputFieldVariables(), meshNames);
+    LoopOverTuple::loopCollectMeshNames<typename DataType::FieldVariablesForOutputWriter>(data.getFieldVariablesForOutputWriter(), meshNames);
 
     // loop over meshes and retrieve data
     for (std::string meshName : meshNames)
     {
       // loop over all field variables and output those that are associated with the mesh given by meshName
-      MegaMolLoopOverTuple::loopOutput(data.getOutputFieldVariables(), data.getOutputFieldVariables(), meshName, specificSettings_,
+      MegaMolLoopOverTuple::loopOutput(data.getFieldVariablesForOutputWriter(), data.getFieldVariablesForOutputWriter(), meshName, specificSettings_,
                                        writer->megaMolWriterContext);
     }
 

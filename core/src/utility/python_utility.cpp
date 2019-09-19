@@ -20,7 +20,7 @@ int PythonUtility::listIndex = 0;
 
 bool PythonUtility::hasKey(const PyObject* settings, std::string keyString)
 {
-  if (settings)
+  if (settings && settings != Py_None)
   {
     // start critical section for python API calls
     // PythonUtility::GlobalInterpreterLock lock;
@@ -55,26 +55,32 @@ bool PythonUtility::isTypeList(const PyObject *object)
 
 PyObject *PythonUtility::getOptionPyObject(const PyObject *settings, std::string keyString, std::string pathString, PyObject *defaultValue)
 {
-  if (settings)
+  PyObject *result = defaultValue;
+
+  if (!settings || !PyDict_Check(settings))
   {
-    // start critical section for python API calls
-    // PythonUtility::GlobalInterpreterLock lock;
-    
-    // check if input dictionary contains the key
-    PyObject *key = PyUnicode_FromString(keyString.c_str());
-    if (PyDict_Contains((PyObject *)settings, key))
-    {
-      PyObject *value = PyDict_GetItem((PyObject *)settings, key);
-      Py_CLEAR(key);
-      return value;
-    }
-    else
-    {
-      LOG(WARNING) << "Dict does not contain " << pathString << "[\"" << keyString << "\"]!" << std::endl;
-      Py_CLEAR(key);
-      return defaultValue;
-    }
+    LOG(DEBUG) << "PyObject *settings is NULL.";
+    return result;
   }
+
+  // start critical section for python API calls
+  // PythonUtility::GlobalInterpreterLock lock;
+
+  // check if input dictionary contains the key
+  PyObject *key = PyUnicode_FromString(keyString.c_str());
+  if (PyDict_Contains((PyObject *)settings, key))
+  {
+    PyObject *value = PyDict_GetItem((PyObject *)settings, key);
+    Py_CLEAR(key);
+    return value;
+  }
+  else
+  {
+    LOG(ERROR) << "Dict does not contain " << pathString << "[\"" << keyString << "\"]!" << std::endl;
+    Py_CLEAR(key);
+    return defaultValue;
+  }
+
   return defaultValue;
 }
 
@@ -82,7 +88,7 @@ double PythonUtility::getOptionDouble(const PyObject* settings, std::string keyS
 {
   double result = defaultValue;
 
-  if (!settings)
+  if (!settings || !PyDict_Check(settings))
   {
     LOG(DEBUG) << "PyObject *settings is NULL.";
     return result;
@@ -179,7 +185,7 @@ int PythonUtility::getOptionInt(const PyObject *settings, std::string keyString,
 {
   int result = defaultValue;
 
-  if (!settings)
+  if (!settings || !PyDict_Check(settings))
     return result;
 
   // start critical section for python API calls
@@ -273,7 +279,7 @@ bool PythonUtility::getOptionBool(const PyObject *settings, std::string keyStrin
 {
   int result = defaultValue;
 
-  if (!settings)
+  if (!settings || !PyDict_Check(settings))
     return result;
 
   // start critical section for python API calls
@@ -330,7 +336,7 @@ std::string PythonUtility::getOptionString(const PyObject *settings, std::string
 {
   std::string result = defaultValue;
 
-  if (!settings)
+  if (!settings || !PyDict_Check(settings))
     return result;
 
   // start critical section for python API calls
@@ -359,7 +365,7 @@ PyObject *PythonUtility::getOptionFunction(const PyObject *settings, std::string
 {
   PyObject *result = NULL;
 
-  if (!settings)
+  if (!settings || !PyDict_Check(settings))
     return result;
 
   // start critical section for python API calls

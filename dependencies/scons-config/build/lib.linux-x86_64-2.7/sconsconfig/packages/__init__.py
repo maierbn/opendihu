@@ -53,3 +53,4 @@ from XercesC import XercesC
 from xsd import xsd
 from boost import boost
 from chaste import Chaste
+from vc import Vc

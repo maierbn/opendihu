@@ -178,7 +178,7 @@ k = 5   # number of the reduced modes is equal to k+1 because there are 6 snapsh
 
 config = {
   "ModelOrderReduction": {
-    "nRowsSnapshots" : n,
+    "nRowsSnapshots" : n+1,
     "nReducedBases" : k,
       "snapshots" :"./snapshots.csv",
     "ImplicitEuler" : {

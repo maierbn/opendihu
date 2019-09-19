@@ -421,6 +421,13 @@ getPartitioningIndex(std::array<global_no_t,MeshType::dim()> nodeNoGlobalNatural
 
 template<typename MeshType,typename BasisFunctionType>
 global_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+beginNodeGlobalPetsc() const
+{
+  return nNodesGlobalPetscInPreviousPartitions(ownRankPartitioningIndex_);
+}
+
+template<typename MeshType,typename BasisFunctionType>
+global_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 nNodesGlobalPetscInPreviousPartitions(std::array<int,MeshType::dim()> partitionIndex) const
 {
   if (MeshType::dim() == 1)

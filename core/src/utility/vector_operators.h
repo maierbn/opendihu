@@ -50,9 +50,17 @@ std::vector<T> operator*(std::vector<T> vector, double lambda);
 template<std::size_t nComponents>
 std::array<double,nComponents> operator*(std::array<double,nComponents> vector1, std::array<double,nComponents> vector2); // component-wise multiplication
 
+//! vector multiplication, outer product
+template<std::size_t nComponents1, std::size_t nComponents2>
+std::array<std::array<double,nComponents1>,nComponents2> operator*(const std::array<double,nComponents2> vector1, const std::array<double,nComponents1> vector2);
+
 //! component-wise division
 template<typename T, std::size_t nComponents>
 std::array<T,nComponents> operator/(std::array<T,nComponents> vector1, std::array<T,nComponents> vector2);
+
+//! scalar division
+template<typename T, std::size_t nComponents>
+std::array<T,nComponents> operator/(std::array<T,nComponents> vector1, double value);
 
 //! matrix-vector multiplication, note that there is a matrix class with also matrix-vector multiplication. It stores matrices in row-major order, here column-major order is assumed
 template<std::size_t M, std::size_t N>
@@ -73,6 +81,9 @@ std::ostream &operator<<(std::ostream &stream, const std::array<std::size_t,N> v
 //! output arbitrary vector
 template<typename T>
 std::ostream &operator<<(std::ostream &stream, const std::vector<T> &vector);
+
+template<>
+std::ostream &operator<<(std::ostream &stream, const std::vector<double> &vector);
 
 //! output contents of stringstream
 //std::ostream &operator<<(std::ostream &stream, const std::stringstream &stringstream);

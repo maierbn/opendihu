@@ -23,7 +23,7 @@ PartitionedPetscVecNComponentsStructured(PartitionedPetscVec<FunctionSpace::Func
   
   createVector();
 
-  LOG(DEBUG) << "\"" << this->name_ << "\" contruct vector from rhs \"" << rhs.name() << "\", representation: "
+  LOG(DEBUG) << "\"" << this->name_ << "\" contruct empty vector from rhs \"" << rhs.name() << "\", representation: "
     << Partition::valuesRepresentationString[rhs.currentRepresentation()];
 }
   
@@ -252,6 +252,15 @@ setRepresentationGlobal()
 
     setRepresentationGlobal();
   }
+  else if (this->currentRepresentation_ == Partition::values_representation_t::representationGlobal)
+  {
+    // already global, do nothing
+  }
+  else
+  {
+    LOG(FATAL) << "Cannot set vector representation from \"" << Partition::valuesRepresentationString[this->currentRepresentation_]
+      << "\" to \"global\".";
+  }
 }
 
 template<typename MeshType,typename BasisFunctionType,int nComponents>
@@ -283,6 +292,15 @@ setRepresentationLocal()
   {
     LOG(FATAL) << "\"" << this->name_ << "\" setRepresentationLocal, previous representation: "
     << Partition::valuesRepresentationString[this->currentRepresentation_] << ". This is not directly possible, call restoreExtractedComponent instead.";
+  }
+  else if (this->currentRepresentation_ == Partition::values_representation_t::representationLocal)
+  {
+    // already local, do nothing
+  }
+  else
+  {
+    LOG(FATAL) << "Cannot set vector representation from \"" << Partition::valuesRepresentationString[this->currentRepresentation_]
+      << "\" to \"local\".";
   }
 }
 
@@ -1070,7 +1088,7 @@ output(std::ostream &stream)
 
   stream << "vector \"" << this->name_ << "\", (" << nEntries << " global, " << nEntriesLocal
     << " local entries (per component), representation " << Partition::valuesRepresentationString[this->currentRepresentation_]
-    << ")" << std::endl;
+    << ")";
 
   // loop over components
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
@@ -1172,7 +1190,7 @@ output(std::ostream &stream)
     
     if (ownRankNo == 0)
     {
-      stream << "\"" << this->name_ << "\" component " << componentNo << ": local values on ranks: [";
+      stream << std::endl << "\"" << this->name_ << "\" component " << componentNo << ": local values on ranks: [";
       std::vector<double> globalValues(this->meshPartition_->nDofsGlobal());
       for (int rankNo = 0; rankNo < nRanks; rankNo++)
       {
@@ -1319,16 +1337,4 @@ output(std::ostream &stream)
     }  // componentNo
   }
 #endif
-}
-
-template<typename MeshType,typename BasisFunctionType,int nComponents>
-void PartitionedPetscVecNComponentsStructured<MeshType,BasisFunctionType,nComponents>::
-dumpVector(std::string filename, std::string format)
-{
-  // loop over components
-  for (int componentNo = 0; componentNo < nComponents; componentNo++)
-  {
-    // dump the data using a PetscViewer
-    /**a*///PartitionedPetscVecBase<>::dumpVector(filename, format, vectorGlobal_[componentNo], this->meshPartition_->mpiCommunicator(), componentNo, nComponents);
-  }
 }

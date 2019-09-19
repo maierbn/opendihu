@@ -96,18 +96,18 @@ print()
 }
 
 template<typename FunctionSpaceType,typename BaseDataType>
-typename MultipleInstances<FunctionSpaceType,BaseDataType>::OutputFieldVariables MultipleInstances<FunctionSpaceType,BaseDataType>::
-getOutputFieldVariables()
+typename MultipleInstances<FunctionSpaceType,BaseDataType>::FieldVariablesForOutputWriter MultipleInstances<FunctionSpaceType,BaseDataType>::
+getFieldVariablesForOutputWriter()
 {
-  std::vector<typename BaseDataType::OutputFieldVariables> instancesOutputFieldVariables;
-  instancesOutputFieldVariables.reserve(instancesData_.size());
+  std::vector<typename BaseDataType::FieldVariablesForOutputWriter> instancesFieldVariablesForOutputWriter;
+  instancesFieldVariablesForOutputWriter.reserve(instancesData_.size());
   
   for (typename std::vector<std::shared_ptr<BaseDataType>>::const_iterator iter = instancesData_.begin(); iter != instancesData_.end(); iter++)
   {
-    instancesOutputFieldVariables.push_back((*iter)->getOutputFieldVariables());
+    instancesFieldVariablesForOutputWriter.push_back((*iter)->getFieldVariablesForOutputWriter());
   }
   
-  return std::make_tuple(instancesOutputFieldVariables);
+  return std::make_tuple(instancesFieldVariablesForOutputWriter);
 }
 
 

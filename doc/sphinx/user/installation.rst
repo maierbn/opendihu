@@ -89,7 +89,8 @@ Building with scons
 
 In order to build examples you need to use `scons`. The opendihu library can either be build using `scons` or using the `Makefile`, which again simply calls scons.
 
-So you can either install scons on your system or use the `scons` program, that is packaged with opendihu. This is located under `dependencies/scons/scons.py`. It needs to be run with python 2.7 (not python3). 
+So you can either install scons on your system or use the `scons` program, that is packaged with opendihu. This is located under `dependencies/scons/scons.py`. 
+It needs to be run with python 2.7 (not python3). 
 
 It is advisable to define a bash alias for this scons command.
 If you like, you can copy the following aliases to your `~/.bashrc` or `~/.bash_aliases` file:
@@ -98,16 +99,16 @@ If you like, you can copy the following aliases to your `~/.bashrc` or `~/.bash_
 
   alias scons='<your path>/opendihu/dependencies/scons/scons.py'
   alias s='scons'
-  alias sd='scons BUILD_TYPE=d'
-  alias sdd='cd .. && scons BUILD_TYPE=d; cd -'
-  alias sddn='cd .. && scons BUILD_TYPE=d no_tests=yes no_examples=yes; cd -'
-  alias sdn='scons BUILD_TYPE=d no_tests=yes no_examples=yes'
-  alias srn='scons BUILD_TYPE=r no_tests=yes no_examples=yes'
-  alias sr='scons BUILD_TYPE=r'
-  alias srr='cd .. && scons BUILD_TYPE=r; cd -'
-  alias sdr='scons BUILD_TYPE=rd'
-  alias srd='scons BUILD_TYPE=rd'
-  alias srdd='cd .. && scons BUILD_TYPE=rd; cd -'
+  alias sd='scons BUILD_TYPE=d -j4'
+  alias sdd='cd .. && scons BUILD_TYPE=d -j4; cd -'
+  alias sddn='cd .. && scons BUILD_TYPE=d no_tests=yes no_examples=yes -j4; cd -'
+  alias sdn='scons BUILD_TYPE=d no_tests=yes no_examples=yes -j4'
+  alias srn='scons BUILD_TYPE=r no_tests=yes no_examples=yes -j4'
+  alias sr='scons BUILD_TYPE=r -j4'
+  alias srr='cd .. && scons BUILD_TYPE=r -j4; cd -'
+  alias sdr='scons BUILD_TYPE=rd -j4'
+  alias srd='scons BUILD_TYPE=rd -j4'
+  alias srdd='cd .. && scons BUILD_TYPE=rd -j4; cd -'
 
 Then simply execute ``sd`` to build in debug or ``s`` to build in release mode. Other options are ``sdd`` to build an example in debug mode from within the `build_debug` directory or analogously ``srr`` for release mode.
 

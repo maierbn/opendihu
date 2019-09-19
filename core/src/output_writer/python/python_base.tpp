@@ -11,9 +11,9 @@
 namespace OutputWriter
 {
 
-template<typename OutputFieldVariablesType>
-PyObject *PythonBase<OutputFieldVariablesType>::
-buildPyFieldVariablesObject(OutputFieldVariablesType fieldVariables, std::string meshName, bool onlyNodalValues, std::shared_ptr<Mesh::Mesh> &mesh)
+template<typename FieldVariablesForOutputWriterType>
+PyObject *PythonBase<FieldVariablesForOutputWriterType>::
+buildPyFieldVariablesObject(FieldVariablesForOutputWriterType fieldVariables, std::string meshName, bool onlyNodalValues, std::shared_ptr<Mesh::Mesh> &mesh)
 {
   // build python dict containing field variables
   // [
@@ -24,13 +24,13 @@ buildPyFieldVariablesObject(OutputFieldVariablesType fieldVariables, std::string
   //   },
   // ]
 
-  const int nFieldVariables = std::tuple_size<OutputFieldVariablesType>::value;
+  const int nFieldVariables = std::tuple_size<FieldVariablesForOutputWriterType>::value;
   VLOG(2) << "buildPyFieldVariablesObject for " << nFieldVariables << " field variables";
 
   PyObject *pyData = PyList_New((Py_ssize_t)nFieldVariables);
 
   int fieldVariableIndex = 0;
-  PythonLoopOverTuple::loopBuildPyFieldVariableObject<OutputFieldVariablesType>(fieldVariables, fieldVariableIndex, meshName, pyData, onlyNodalValues, mesh);
+  PythonLoopOverTuple::loopBuildPyFieldVariableObject<FieldVariablesForOutputWriterType>(fieldVariables, fieldVariableIndex, meshName, pyData, onlyNodalValues, mesh);
 
   return pyData;
 }

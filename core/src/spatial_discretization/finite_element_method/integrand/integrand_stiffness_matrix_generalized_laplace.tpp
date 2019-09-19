@@ -145,6 +145,7 @@ evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,1,Term> &data, co
       //! computes gradPhi[i]^T * T * gradPhi[j] where T is the symmetric transformation matrix
       double integrand = MathUtility::applyTransformation(transformationMatrix, diffusionTensorGradPhiI, gradPhi[j]) * fabs(determinant);
 
+#ifndef NDEBUG
       if (!std::isfinite(integrand))
       {
         LOG(ERROR) << "Value entry (" << i << "," << j << ") in stiffness matrix is nan or inf (" << integrand << "). ";
@@ -169,6 +170,7 @@ evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,1,Term> &data, co
         LOG(INFO) << "determinant: " << determinant;
         LOG(INFO) << "jacobian (column-major): " << jacobian;
       }
+#endif
       evaluations(i,j) = integrand;
     }
   }

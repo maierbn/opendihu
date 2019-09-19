@@ -36,19 +36,19 @@ void Paraview::write(DataType& data, int timeStepNo, double currentTime)
     Control::PerformanceMeasurement::start("durationParaview1D");
 
     // create a PolyData file that combines all 1D meshes into one file
-    writePolyDataFile<typename DataType::OutputFieldVariables>(data.getOutputFieldVariables(), combined1DMeshes);
+    writePolyDataFile<typename DataType::FieldVariablesForOutputWriter>(data.getFieldVariablesForOutputWriter(), combined1DMeshes);
 
     Control::PerformanceMeasurement::stop("durationParaview1D");
     Control::PerformanceMeasurement::start("durationParaview3D");
 
     // create an UnstructuredMesh file that combines all 3D meshes into one file
-    writeCombinedUnstructuredGridFile<typename DataType::OutputFieldVariables>(data.getOutputFieldVariables(), combined3DMeshes, true);
+    writeCombinedUnstructuredGridFile<typename DataType::FieldVariablesForOutputWriter>(data.getFieldVariablesForOutputWriter(), combined3DMeshes, true);
 
     Control::PerformanceMeasurement::stop("durationParaview3D");
     Control::PerformanceMeasurement::start("durationParaview2D");
 
     // create an UnstructuredMesh file that combines all 2D meshes into one file
-    writeCombinedUnstructuredGridFile<typename DataType::OutputFieldVariables>(data.getOutputFieldVariables(), combined2DMeshes, false);
+    writeCombinedUnstructuredGridFile<typename DataType::FieldVariablesForOutputWriter>(data.getFieldVariablesForOutputWriter(), combined2DMeshes, false);
 
     Control::PerformanceMeasurement::stop("durationParaview2D");
   }
@@ -57,7 +57,7 @@ void Paraview::write(DataType& data, int timeStepNo, double currentTime)
 
   // collect all available meshes
   std::set<std::string> meshNames;
-  LoopOverTuple::loopCollectMeshNames<typename DataType::OutputFieldVariables>(data.getOutputFieldVariables(), meshNames);
+  LoopOverTuple::loopCollectMeshNames<typename DataType::FieldVariablesForOutputWriter>(data.getFieldVariablesForOutputWriter(), meshNames);
 
   // remove 1D meshes that were already output by writePolyDataFile
   std::set<std::string> meshesWithout1D;
@@ -85,7 +85,7 @@ void Paraview::write(DataType& data, int timeStepNo, double currentTime)
       filenameStart << this->filename_ << "_" << meshName;
 
     // loop over all field variables and output those that are associated with the mesh given by meshName
-    ParaviewLoopOverTuple::loopOutput(data.getOutputFieldVariables(), data.getOutputFieldVariables(), meshName, filenameStart.str(), specificSettings_);
+    ParaviewLoopOverTuple::loopOutput(data.getFieldVariablesForOutputWriter(), data.getFieldVariablesForOutputWriter(), meshName, filenameStart.str(), specificSettings_);
   }
 
   Control::PerformanceMeasurement::stop("durationParaviewOutput");
@@ -139,6 +139,7 @@ void Paraview::writeParaviewFieldVariable(FieldVariableType &fieldVariable,
     fieldVariable.functionSpace()->meshPartition()->initializeDofNosLocalNaturalOrdering(fieldVariable.functionSpace());
 
     // ensure that ghost values are in place
+    fieldVariable.zeroGhostBuffer();
     fieldVariable.setRepresentationGlobal();
     fieldVariable.startGhostManipulation();
 

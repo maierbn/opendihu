@@ -19,7 +19,7 @@ class StaticBidomainSolver :
 public:
   typedef typename FiniteElementMethodDiffusion::FunctionSpace FunctionSpace;
   typedef typename Data::StaticBidomain<typename FiniteElementMethodDiffusion::FunctionSpace>::FieldVariableType FieldVariableType;
-  typedef std::shared_ptr<FieldVariableType> TransferableSolutionDataType;
+  typedef std::shared_ptr<FieldVariableType> OutputConnectorDataType;
   typedef typename Data::StaticBidomain<typename FiniteElementMethodDiffusion::FunctionSpace> Data;
 
   //! constructor
@@ -40,18 +40,15 @@ public:
   //! reset state
   void reset();
 
-  //! return whether the underlying discretizableInTime object has a specified mesh type and is not independent of the mesh type
-  bool knowsMeshType();
-
   //! return the data object
   Data &data();
 
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
   //! the transfer is done by the solution_vector_mapping class
-  TransferableSolutionDataType getSolutionForTransfer();
+  OutputConnectorDataType getOutputConnectorData();
 
   //! output the given data for debugging
-  std::string getString(TransferableSolutionDataType &data);
+  std::string getString(OutputConnectorDataType &data);
 
 protected:
 

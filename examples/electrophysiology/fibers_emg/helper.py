@@ -80,9 +80,9 @@ if variables.adios_output:
 
 # set values for cellml model
 if "shorten" in variables.cellml_file:
-  variables.parameters_used_as_intermediate = [32]
-  variables.parameters_used_as_constant = [65]
-  variables.parameters_initial_values = [0.0, 1.0]
+  variables.parameters_used_as_intermediate = [32]    # 
+  variables.parameters_used_as_constant = [65]        # fiber stretch λ, this indicates how much the fiber has stretched, 1 means no extension. CONSTANTS[65] in the shorten model
+  variables.parameters_initial_values = [0.0, 1.0]    # stimulation current I_stim, fiber stretch λ, OpenCMISS generated files: OC_KNOWN will be set by this
   variables.nodal_stimulation_current = 1200.
   
 elif "hodgkin_huxley" in variables.cellml_file:

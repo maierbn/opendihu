@@ -109,6 +109,9 @@ public:
   //! global no of first local node in the partition specified by partitionIndex or the current partition if partitionIndex == -1
   global_no_t beginNodeGlobalNatural(int coordinateDirection, int partitionIndex = -1) const;
     
+  //! get the number of nodes in the global Petsc ordering that are in partitions prior to the own rank
+  global_no_t beginNodeGlobalPetsc() const;
+
   //! number of nodes in total
   global_no_t nNodesGlobal(int coordinateDirection) const;
   
@@ -237,7 +240,7 @@ protected:
   //! get the index in terms of partitions of the partition that contains the given node no
   std::array<int,MeshType::dim()> getPartitioningIndex(std::array<global_no_t,MeshType::dim()> nodeNoGlobalNatural) const;
 
-  //! get the number of nodes in the global Petsc ordering that in partitions prior to the one given by partitionIndex
+  //! get the number of nodes in the global Petsc ordering that are in partitions prior to the one given by partitionIndex
   global_no_t nNodesGlobalPetscInPreviousPartitions(std::array<int,MeshType::dim()> partitionIndex) const;
 
   //! get the node no in global petsc ordering from global coordinates

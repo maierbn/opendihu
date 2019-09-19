@@ -9,7 +9,7 @@
 #include "utility/petsc_utility.h"
 #include "utility/string_utility.h"
 #include "mesh/structured_regular_fixed.h"
-#include "mesh/mesh_manager.h"
+#include "mesh/mesh_manager/mesh_manager.h"
 #include "function_space/function_space.h"
 
 //#include <libcellml>    // libcellml not used here
@@ -155,12 +155,12 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
   PetscErrorCode ierr;
   ierr = VecGetArray(input, &states); CHKERRV(ierr);   // get r/w pointer to contiguous array of the data, VecRestoreArray() needs to be called afterwards
   ierr = VecGetArray(output, &rates); CHKERRV(ierr);
-  ierr = VecGetArray(this->intermediates_->getValuesContiguous(), &intermediatesData); CHKERRV(ierr);
+  ierr = VecGetArray(this->data_.intermediates()->getValuesContiguous(), &intermediatesData); CHKERRV(ierr);
 
   int nStatesInput, nRates, nIntermediates = 101;
   ierr = VecGetSize(input, &nStatesInput); CHKERRV(ierr);
   ierr = VecGetSize(output, &nRates); CHKERRV(ierr);
-  ierr = VecGetLocalSize(this->intermediates_->getValuesContiguous(), &nIntermediates); CHKERRV(ierr);
+  ierr = VecGetLocalSize(this->data_.intermediates()->getValuesContiguous(), &nIntermediates); CHKERRV(ierr);
 
   //double intermediatesData[101];
 
@@ -274,19 +274,11 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
   // give control of data back to Petsc
   ierr = VecRestoreArray(input, &states); CHKERRV(ierr);
   ierr = VecRestoreArray(output, &rates); CHKERRV(ierr);
-  ierr = VecRestoreArray(this->intermediates_->getValuesContiguous(), &intermediatesData); CHKERRV(ierr);
+  ierr = VecRestoreArray(this->data_.intermediates()->getValuesContiguous(), &intermediatesData); CHKERRV(ierr);
 
-  VLOG(1) << "intermediates: " << *this->intermediates_;
+  VLOG(1) << "intermediates: " << *this->data_.intermediates();
 
   this->internalTimeStepNo_++;
-}
-
-//! return false because the object is independent of mesh type
-template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
-bool CellmlAdapter<nStates_,nIntermediates_,FunctionSpaceType>::
-knowsMeshType()
-{
-  return CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::knowsMeshType();
 }
 
 template<int nStates_, int nIntermediates_, typename FunctionSpaceType>

@@ -5,11 +5,13 @@
 #include <memory>
 
 #include "spatial_discretization/boundary_conditions/boundary_conditions_base.h"
+#include "partition/partitioned_petsc_mat/partitioned_petsc_mat.h"
 
 namespace SpatialDiscretization
 {
 
 /** A class that handles Dirichlet type boundary conditions.
+ *  In the python settings, the Dirichlet BC's need to be specified also for ghost dofs, when inputMeshIsGlobal=False.
   */
 template<typename FunctionSpaceType, int nComponents>
 class DirichletBoundaryConditionsBase :
@@ -57,6 +59,7 @@ protected:
     std::vector<global_no_t> boundaryConditionDofsGlobalPetsc;      ///< the Dirichlet BC dofs of this element
     std::vector<ValueType> boundaryConditionValues;   ///< the prescribed value, corresponding to boundaryConditionDofsGlobalPetsc
   };
+  
   std::map<int,std::vector<GhostElement>> foreignGhostElements_;   ///< ghost elements that are normal elements on this rank, key is the rankNo of the rank to send them to
   std::vector<GhostElement> ownGhostElements_;   ///< the ghost elements for this rank
 };

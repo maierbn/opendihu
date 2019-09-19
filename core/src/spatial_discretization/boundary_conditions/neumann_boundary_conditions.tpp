@@ -5,6 +5,7 @@
 #include "utility/vector_operators.h"
 #include "control/types.h"
 #include "quadrature/gauss.h"
+#include "quadrature/tensor_product.h"
 
 namespace SpatialDiscretization
 {
@@ -216,11 +217,11 @@ initializeRhs()
   } // elementGlobalNo
 
 
-  LOG(DEBUG) << "before finishGhostManipulation, rhs: " << *this->data_.rhs();
+  VLOG(1) << "before finishGhostManipulation, rhs: " << *this->data_.rhs();
   this->data_.rhs()->finishGhostManipulation();
 
   VLOG(1) << "after initializeRhs, rhs: " << *this->data_.rhs();
-  LOG(DEBUG) << "after initializeRhs, rhs: " << *this->data_.rhs();
+  //LOG(DEBUG) << "after initializeRhs, rhs: " << *this->data_.rhs();
 }
 
 // 1D initializeRhs
@@ -269,7 +270,7 @@ initializeRhs()
     // get indices of element-local dofs
     std::array<dof_no_t,nDofsPerElement> dofNosLocal = functionSpace->getElementDofNosLocal(elementNoLocal);
 
-    LOG(DEBUG) << "set value " << elementIter->dofVectors[0].second << " at dof " << dofNosLocal[elementIter->dofVectors[0].first];
+    VLOG(1) << "set value " << elementIter->dofVectors[0].second << " at dof " << dofNosLocal[elementIter->dofVectors[0].first];
 
     // add entries in result vector
     this->data_.rhs()->setValue(dofNosLocal[elementIter->dofVectors[0].first], elementIter->dofVectors[0].second, ADD_VALUES);

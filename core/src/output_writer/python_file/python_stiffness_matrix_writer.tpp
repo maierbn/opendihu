@@ -113,7 +113,7 @@ template<typename DataType>
 void PythonStiffnessMatrixWriter<DataType>::
 writeNumpySolution(DataType &data, std::string filename)
 {
- // TODO: change to data.OutputFieldVariables instead of data.solution
+ // TODO: change to data.FieldVariablesForOutputWriter instead of data.solution
 
  /*
   // determine file names

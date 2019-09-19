@@ -371,16 +371,6 @@ run()
   LOG(DEBUG) << "end of multiple_instances run";
 }
 
-template<typename TimeSteppingScheme>
-bool MultipleInstances<TimeSteppingScheme>::
-knowsMeshType()
-{
-  // This is a dummy method that is currently not used, it is only important if we want to map between multiple data sets.
-  assert(nInstances_ > 0);
-  assert(!instancesLocal_.empty());
-  return instancesLocal_[0].knowsMeshType();
-}
-
 //! return the data object
 template<typename TimeSteppingScheme>
 ::Data::MultipleInstances<typename TimeSteppingScheme::FunctionSpace, TimeSteppingScheme> &MultipleInstances<TimeSteppingScheme>::
@@ -400,19 +390,19 @@ reset()
 }
 
 template<typename TimeSteppingScheme>
-typename MultipleInstances<TimeSteppingScheme>::TransferableSolutionDataType MultipleInstances<TimeSteppingScheme>::
-getSolutionForTransfer()
+typename MultipleInstances<TimeSteppingScheme>::OutputConnectorDataType MultipleInstances<TimeSteppingScheme>::
+getOutputConnectorData()
 {
-  std::vector<typename TimeSteppingScheme::TransferableSolutionDataType> output(nInstancesLocal_);
+  std::vector<typename TimeSteppingScheme::OutputConnectorDataType> output(nInstancesLocal_);
 
   for (int i = 0; i < nInstancesLocal_; i++)
   {
-    VLOG(1) << "MultipleInstances::getSolutionForTransfer";
-    output[i] = instancesLocal_[i].getSolutionForTransfer();
+    VLOG(1) << "MultipleInstances::getOutputConnectorData";
+    output[i] = instancesLocal_[i].getOutputConnectorData();
 
     if (VLOG_IS_ON(1))
     {
-      VLOG(1) << "instance " << i << "/" << nInstancesLocal_ << " is " << instancesLocal_[i].getString(output[i]);
+      VLOG(1) << "instance " << i << "/" << nInstancesLocal_ << " is " << output[i];
     }
   }
   return output;
@@ -420,7 +410,7 @@ getSolutionForTransfer()
 
 template<typename TimeSteppingScheme>
 std::string MultipleInstances<TimeSteppingScheme>::
-getString(typename MultipleInstances<TimeSteppingScheme>::TransferableSolutionDataType &data)
+getString(typename MultipleInstances<TimeSteppingScheme>::OutputConnectorDataType &data)
 {
   std::stringstream s;
   s << "<MultipleInstances(" << nInstancesLocal_ << "):";

@@ -47,6 +47,9 @@ public:
   //! return the field variable of the active stress part of rhs, f_active
   std::shared_ptr<VectorFieldVariableType> rightHandSideActive();
 
+
+  void debug();
+
   //! initialize
   void initialize();
 
@@ -58,7 +61,7 @@ public:
 
   //! field variables that will be output by outputWriters
   typedef decltype(std::tuple_cat(
-    std::declval<typename DataLinearElasticityType::OutputFieldVariables>(),
+    std::declval<typename DataLinearElasticityType::FieldVariablesForOutputWriter>(),
     std::declval<std::tuple<
       std::shared_ptr<FieldVariableType>,              // activation
       std::shared_ptr<StressFieldVariableType>,         // active stress
@@ -67,10 +70,10 @@ public:
       std::shared_ptr<VectorFieldVariableType>,      // fiberDirection
       std::shared_ptr<FieldVariableType>               // solution of laplace potential flow
     >>()))
-   OutputFieldVariables;
+   FieldVariablesForOutputWriter;
 
   //! get pointers to all field variables that can be written by output writers
-  OutputFieldVariables getOutputFieldVariables();
+  FieldVariablesForOutputWriter getFieldVariablesForOutputWriter();
 
 private:
 

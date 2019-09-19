@@ -16,7 +16,7 @@ PartitionedPetscMatOneComponent(std::shared_ptr<Partition::MeshPartition<Functio
   createMatrix(matrixType, diagonalNonZeros, offdiagonalNonZeros);
 }
 
-//! constructor, create square sparse matrix
+//! constructor, create square dense matrix
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
 PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
 PartitionedPetscMatOneComponent(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>>> meshPartition, std::string name) :

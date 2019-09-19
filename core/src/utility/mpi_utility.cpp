@@ -57,6 +57,7 @@ void gdbParallelDebuggingBarrier()
   
   if (nRanks > 0) 
   {
+#ifdef NDEBUG
     int pid = getpid();
     LOG(INFO) << "Rank " << rankNo << ", PID " << pid << " is waiting for gdbResume=" << gdbResume 
       << " to become 1 " << std::endl << std::endl
@@ -65,12 +66,60 @@ void gdbParallelDebuggingBarrier()
       << "set var gdbResume = 1" << std::endl
       << "info locals " << std::endl 
       << "continue";
+#else
+    int pid = getpid();
+    LOG(DEBUG) << "Rank " << rankNo << ", PID " << pid << " is waiting for gdbResume=" << gdbResume
+      << " to become 1 " << std::endl << std::endl
+      << "gdb -p " << pid << std::endl << std::endl
+      << "select-frame 2" << std::endl
+      << "set var gdbResume = 1" << std::endl
+      << "info locals " << std::endl
+      << "continue" << std::endl << std::endl;
+
+#endif
     while (gdbResume == 0)
     {
       std::this_thread::sleep_for (std::chrono::milliseconds(5));
     }
     LOG(INFO) << "Rank " << rankNo << ", PID " << pid << " resumes because gdbResume=" << gdbResume;
   }
+}
+
+std::string loadFile(std::string filename, MPI_Comm mpiCommunicator)
+{
+  int nRanks, rankNo;
+  handleReturnValue (MPI_Comm_size(mpiCommunicator, &nRanks));
+  handleReturnValue (MPI_Comm_rank(mpiCommunicator, &rankNo));
+
+  unsigned long long fileLength = 0;
+
+  // on master rank, check if file exists and how many bytes it contains
+  if (rankNo == 0)
+  {
+    std::ifstream in(filename, std::ifstream::ate | std::ifstream::binary);
+    if (!in.is_open())
+    {
+      LOG(FATAL) << "Could not open file \""  << filename << "\".";
+    }
+    fileLength = in.tellg();
+    in.close();
+  }
+
+  handleReturnValue(MPI_Bcast(&fileLength, 1, MPI_UNSIGNED_LONG_LONG, 0, mpiCommunicator), "MPI_Bcast");
+
+  // collectively open the file for reading
+  MPI_File fileHandle;
+  handleReturnValue(MPI_File_open(mpiCommunicator, filename.c_str(),
+                                  MPI_MODE_RDONLY,
+                                  MPI_INFO_NULL, &fileHandle), "MPI_File_open");
+
+  std::vector<char> fileContents(fileLength);
+  int offset = 0;
+  handleReturnValue(MPI_File_read_at_all(fileHandle, offset, fileContents.data(), fileLength, MPI_BYTE, MPI_STATUS_IGNORE), "MPI_Read_at_all");
+
+  handleReturnValue(MPI_File_close(&fileHandle), "MPI_File_close");
+
+  return std::string(fileContents.begin(), fileContents.end());
 }
 
 }  // namespace MPIUtility

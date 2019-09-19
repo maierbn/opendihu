@@ -23,7 +23,7 @@
 #include "output_writer/python_callback/python_callback.h"
 #include "output_writer/python_file/python_file.h"
 #include "output_writer/exfile/exfile.h"
-#include "mesh/mesh_manager.h"
+#include "mesh/mesh_manager/mesh_manager.h"
 #include "solver/solver_manager.h"
 #include "partition/partition_manager.h"
 
@@ -79,6 +79,7 @@ void handleSignal(int signalNo)
   if (signalNo == SIGSEGV)
   {
 #ifndef NDEBUG
+#ifndef RELWITHDEBINFO
 #ifdef __GNUC__
     // source: https://stackoverflow.com/questions/77005/how-to-automatically-generate-a-stacktrace-when-my-program-crashes
     void *array[100];
@@ -88,6 +89,7 @@ void handleSignal(int signalNo)
 
     // print stack trace
     backtrace_symbols_fd(array, size, STDERR_FILENO);
+#endif
 #endif
 #endif
   }

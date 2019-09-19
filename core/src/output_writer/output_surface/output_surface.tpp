@@ -53,13 +53,6 @@ initialize()
 }
 
 template<typename Solver>
-bool OutputSurface<Solver>::
-knowsMeshType()
-{
-  return solver_.knowsMeshType();
-}
-
-template<typename Solver>
 void OutputSurface<Solver>::
 run()
 {
@@ -97,10 +90,10 @@ data()
 }
 
 template<typename Solver>
-typename OutputSurface<Solver>::TransferableSolutionDataType OutputSurface<Solver>::
-getSolutionForTransfer()
+typename OutputSurface<Solver>::OutputConnectorDataType OutputSurface<Solver>::
+getOutputConnectorData()
 {
-  return solver_.getSolutionForTransfer();
+  return solver_.getOutputConnectorData();
 }
 
 }  // namespace OutputWriter

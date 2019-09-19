@@ -9,10 +9,10 @@ python := python2.7
 #endif
 
 debug:
-	$(python) dependencies/scons/scons.py BUILD_TYPE=DEBUG
+	$(python) dependencies/scons/scons.py BUILD_TYPE=DEBUG -j $(shell nproc --all)
 
 release:
-	$(python) dependencies/scons/scons.py BUILD_TYPE=RELEASE
+	$(python) dependencies/scons/scons.py BUILD_TYPE=RELEASE -j $(shell nproc --all)
 
 clean:
 	rm -rf .sconf_temp
@@ -37,6 +37,9 @@ doc:
 # the following targets are just for convenience and could also be deleted
 release_without_tests:
 	$(python) dependencies/scons/scons.py BUILD_TYPE=RELEASE no_tests=True
+
+debug_without_tests:
+	$(python) dependencies/scons/scons.py BUILD_TYPE=DEBUG no_tests=True -j $(shell nproc --all)
 
 system_testing:
 	cd testing/system_testing && ./run.sh
@@ -103,3 +106,12 @@ fibers_linear_elasticity:
 
 3d_muscle:
 	cd examples/solid_mechanics/chaste && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+
+mooney_rivlin_transiso:
+	cd examples/solid_mechanics/mooney_rivlin_transiso  && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+
+mooney_rivlin:
+	cd examples/solid_mechanics/mooney_rivlin_isotropic  && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+
+ddebug:
+	cd examples/debug  && python ../../dependencies/scons/scons.py BUILD_TYPE=DEBUG

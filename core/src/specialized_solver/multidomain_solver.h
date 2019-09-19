@@ -19,7 +19,7 @@ class MultidomainSolver :
 public:
   typedef typename FiniteElementMethodDiffusion::FunctionSpace FunctionSpace;
   typedef typename Data::Multidomain<typename FiniteElementMethodDiffusion::FunctionSpace>::FieldVariableType FieldVariableType;
-  typedef std::pair<std::vector<Vec>,std::vector<std::shared_ptr<FieldVariableType>>> TransferableSolutionDataType;
+  typedef std::pair<std::vector<Vec>,std::vector<std::shared_ptr<FieldVariableType>>> OutputConnectorDataType;
   typedef typename Data::Multidomain<typename FiniteElementMethodDiffusion::FunctionSpace> Data;
 
   //! constructor
@@ -34,15 +34,12 @@ public:
   //! run the simulation
   void run();
 
-  //! return whether the underlying discretizableInTime object has a specified mesh type and is not independent of the mesh type
-  bool knowsMeshType();
-
   //! return the data object
   Data &data();
 
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
   //! the transfer is done by the solution_vector_mapping class
-  TransferableSolutionDataType getSolutionForTransfer();
+  OutputConnectorDataType getOutputConnectorData();
 
 protected:
 

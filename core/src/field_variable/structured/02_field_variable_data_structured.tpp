@@ -9,13 +9,13 @@
 
 namespace FieldVariable
 {
-/*
+
 template<typename FunctionSpaceType, int nComponents>
 FieldVariableDataStructured<FunctionSpaceType,nComponents>::
 FieldVariableDataStructured() :
   FieldVariableComponents<FunctionSpaceType,nComponents>::FieldVariableComponents()
 {
-}*/
+}
 
 //! contructor as data copy with a different name (component names are the same)
 template<typename FunctionSpaceType, int nComponents>
@@ -32,7 +32,6 @@ FieldVariableDataStructured(FieldVariable<FunctionSpaceType,nComponents> &rhs, s
   this->functionSpace_ = rhs.functionSpace();
 
   assert(this->functionSpace_);
-  
 
   // create new distributed petsc vec as copy of rhs values vector
   if (rhs.partitionedPetscVec())

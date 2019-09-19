@@ -83,7 +83,7 @@ initialize()
     LOG(FATAL) << "Could not parse firing times.";
 
   // initialize data structures
-  std::vector<NestedSolversType::TimeSteppingSchemeType> &instances = nestedSolvers_.instancesLocal_;
+  std::vector<NestedSolversType::TimeSteppingSchemeType> &instances = nestedSolvers_.instancesLocal();
 
   // determine number of fibers
   int nFibers = 0;
@@ -92,7 +92,7 @@ initialize()
   for (int i = 0; i < instances.size(); i++)
   {
     std::vector<TimeSteppingScheme::Heun<CellmlAdapterType>> &innerInstances
-      = instances[i].timeStepping1().instancesLocal_;  // TimeSteppingScheme::Heun<CellmlAdapter...
+      = instances[i].timeStepping1().instancesLocal();  // TimeSteppingScheme::Heun<CellmlAdapter...
     nFibers += innerInstances.size();
 
     for (int j = 0; j < innerInstances.size(); j++, fiberNo++)
@@ -121,7 +121,7 @@ initialize()
   for (int i = 0; i < instances.size(); i++)
   {
     std::vector<TimeSteppingScheme::Heun<CellmlAdapterType>> &innerInstances
-      = instances[i].timeStepping1().instancesLocal_;  // TimeSteppingScheme::Heun<CellmlAdapter...
+      = instances[i].timeStepping1().instancesLocal();  // TimeSteppingScheme::Heun<CellmlAdapter...
 
     for (int j = 0; j < innerInstances.size(); j++, fiberNo++)
     {
@@ -196,11 +196,11 @@ advanceTimeSpan()
   //nestedSolvers_.advanceTimeSpan();
 
   // call output writer of diffusion
-  std::vector<NestedSolversType::TimeSteppingSchemeType> &instances = nestedSolvers_.instancesLocal_;
+  std::vector<NestedSolversType::TimeSteppingSchemeType> &instances = nestedSolvers_.instancesLocal();
 
   for (int i = 0; i < instances.size(); i++)
   {
-    instances[i].timeStepping2().outputWriterManager_.writeOutput(instances[i].timeStepping2().data_, 0, currentTime_);
+    instances[i].timeStepping2().writeOutput(0, currentTime_);
   }
 }
 
@@ -208,7 +208,7 @@ void FastMonodomainSolver<Control::MultipleInstances<OperatorSplitting::Strang<C
 fetchFiberData()
 {
   LOG(TRACE) << "fetchFiberData";
-  std::vector<NestedSolversType::TimeSteppingSchemeType> &instances = nestedSolvers_.instancesLocal_;
+  std::vector<NestedSolversType::TimeSteppingSchemeType> &instances = nestedSolvers_.instancesLocal();
 
   // loop over fibers and communicate element lengths and initial values to the ranks that participate in computing
 
@@ -217,7 +217,7 @@ fetchFiberData()
   for (int i = 0; i < instances.size(); i++)
   {
     std::vector<TimeSteppingScheme::Heun<CellmlAdapterType>> &innerInstances
-      = instances[i].timeStepping1().instancesLocal_;  // TimeSteppingScheme::Heun<CellmlAdapter...
+      = instances[i].timeStepping1().instancesLocal();  // TimeSteppingScheme::Heun<CellmlAdapter...
 
     for (int j = 0; j < innerInstances.size(); j++, fiberNo++)
     {
@@ -320,7 +320,7 @@ updateFiberData()
   }
 
   LOG(TRACE) << "updateFiberData";
-  std::vector<NestedSolversType::TimeSteppingSchemeType> &instances = nestedSolvers_.instancesLocal_;
+  std::vector<NestedSolversType::TimeSteppingSchemeType> &instances = nestedSolvers_.instancesLocal();
 
   // loop over fibers and communicate element lengths and initial values to the ranks that participate in computing
 
@@ -329,7 +329,7 @@ updateFiberData()
   for (int i = 0; i < instances.size(); i++)
   {
     std::vector<TimeSteppingScheme::Heun<CellmlAdapterType>> &innerInstances
-      = instances[i].timeStepping1().instancesLocal_;  // TimeSteppingScheme::Heun<CellmlAdapter...
+      = instances[i].timeStepping1().instancesLocal();  // TimeSteppingScheme::Heun<CellmlAdapter...
 
     for (int j = 0; j < innerInstances.size(); j++, fiberNo++)
     {
@@ -363,7 +363,7 @@ int MPI_Scatterv(const void *sendbuf, const int *sendcounts, const int *displs, 
 
       LOG(DEBUG) << "fiber " << fiberDataNo << ", set values " << vmValuesLocal;
       innerInstances[j].data().solution()->setValuesWithoutGhosts(0, vmValuesLocal);
-      instances[i].timeStepping2().instancesLocal_[j].data().solution()->setValuesWithoutGhosts(0, vmValuesLocal);
+      instances[i].timeStepping2().instancesLocal()[j].data().solution()->setValuesWithoutGhosts(0, vmValuesLocal);
 
       // increase index for fiberData_ struct
       if (computingRank == rankSubset->ownRankNo())
@@ -381,10 +381,10 @@ computeMonodomain()
   // array of vectorized struct
 
   // fetch timestep widths and total time span
-  std::vector<NestedSolversType::TimeSteppingSchemeType> &instances = nestedSolvers_.instancesLocal_;
+  std::vector<NestedSolversType::TimeSteppingSchemeType> &instances = nestedSolvers_.instancesLocal();
 
-  TimeSteppingScheme::Heun<CellmlAdapterType> &heun = instances[0].timeStepping1().instancesLocal_[0];
-  ImplicitEuler &implicitEuler = instances[0].timeStepping2().instancesLocal_[0];
+  TimeSteppingScheme::Heun<CellmlAdapterType> &heun = instances[0].timeStepping1().instancesLocal()[0];
+  ImplicitEuler &implicitEuler = instances[0].timeStepping2().instancesLocal()[0];
   double prefactor = implicitEuler.discretizableInTime().data().context().getPythonConfig().getOptionDouble("prefactor", 1.0);
 
   double startTime = instances[0].startTime();

@@ -53,7 +53,10 @@ public:
   std::string getString(OutputConnectorDataType &data);
 
   //! the FastMonodomainSolver accesses the internals of MultipleInstances
-  template<typename T> friend class FastMonodomainSolver;
+  std::vector<TimeSteppingScheme> &instancesLocal();
+ 
+  //! write data to file using the output writer manager, this is only needed for FastMonodomainSolver
+  void writeOutput(int timeStepNo, double currentTime);
 
 protected:
 

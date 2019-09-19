@@ -147,6 +147,7 @@ private:
   NestedSolversType nestedSolvers_;   ///< the nested solvers object that would normally solve the problem
 
   /** data to be exchanged for computation of a single fiber
+   *  The data stored herein is used for local computation.
    */
   struct FiberData
   {

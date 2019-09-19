@@ -11,6 +11,7 @@
 #include <string>
 #include <sys/param.h>
 #include <iomanip>
+//#include <stdlib.h>  //was only for function getenv()
 
 #include "output_writer/generic.h"
 
@@ -19,6 +20,9 @@ namespace Control
 
 std::map<std::string, PerformanceMeasurement::Measurement> PerformanceMeasurement::measurements_;
 std::map<std::string,std::string> PerformanceMeasurement::parameters_;
+std::map<std::string, int> PerformanceMeasurement::sums_;
+std::shared_ptr<std::thread> PerformanceMeasurement::perfThread_;
+int PerformanceMeasurement::perfThreadHandle_;
 
 PerformanceMeasurement::Measurement::Measurement() :
   start(0.0), totalDuration(0.0), nTimeSpans(0), totalError(0.0), nErrors(0)
@@ -44,7 +48,7 @@ void PerformanceMeasurement::stop(std::string name, int numberAccumulated)
 {
   double stopTime = MPI_Wtime();
 
-  if(measurements_.find(name) == measurements_.end())
+  if (measurements_.find(name) == measurements_.end())
   {
     LOG(ERROR) << "PerformanceMeasurement stop with name \"" << name << "\", a corresponding start is not present.";
   }
@@ -60,6 +64,53 @@ void PerformanceMeasurement::stop(std::string name, int numberAccumulated)
   }
 }
 
+void PerformanceMeasurement::startFlops()
+{
+  // get process id
+  int pid = getpid();
+
+  perfThread_ = std::make_shared<std::thread>([pid](){
+
+    std::stringstream filename;
+    filename << "perf." << DihuContext::ownRankNoCommWorld() << ".txt";
+
+    std::stringstream command;
+    command << "perf stat -e r5301c7 -p " << pid << " -o " << filename.str();
+
+    LOG(INFO) << "starting perf with command " << command.str();
+
+    int returnValue = system(command.str().c_str());
+    LOG(DEBUG) << returnValue;
+  });
+  perfThreadHandle_ = perfThread_->native_handle();
+
+  perfThread_->detach();
+}
+
+void PerformanceMeasurement::endFlops()
+{
+  pthread_cancel(perfThreadHandle_);
+
+  std::stringstream filename;
+  filename << "perf." << DihuContext::ownRankNoCommWorld() << ".txt";
+
+  // parse file
+  std::ifstream file(filename.str());
+  if (file.is_open())
+  {
+     std::string content((std::istreambuf_iterator<char>(file)), (std::istreambuf_iterator<char>()));
+     LOG(DEBUG) << content;
+  }
+}
+
+std::string PerformanceMeasurement::getParameter(std::string key)
+{
+  if (parameters_.find(key) == parameters_.end())
+    return "";
+
+  return parameters_[key];
+}
+
 void PerformanceMeasurement::writeLogFile(std::string logFileName)
 {
   //LOG(DEBUG) << "PerformanceMeasurement::writeLogFile \"" << logFileName;
@@ -68,31 +119,40 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
 
   const bool combined = true;   /// if the output is using MPI Output
 
-  int ownRankNo = DihuContext::ownRankNo();
+  int ownRankNo = DihuContext::ownRankNoCommWorld();
 
   // determine file name
   std::stringstream filename;
   filename << logFileName;
   if (!combined)
-    filename << "." << std::setw(7) << std::setfill('0') << DihuContext::ownRankNo();
+    filename << "." << std::setw(7) << std::setfill('0') << ownRankNo;
   filename << ".csv";
   logFileName = filename.str();
 
   // compose header
   std::stringstream header;
-  header << "# timestamp;hostname;";
-
-  // write parameter names
-  for (std::pair<std::string,std::string> parameter : parameters_)
-  {
-    header << parameter.first << ";";
-  }
+  header << "# timestamp;hostname;version;nRanks;rankNo;";
 
   // write measurement names
   for (std::pair<std::string, Measurement> measurement : measurements_)
   {
     header << measurement.first << ";n;";
   }
+  
+  // write parameter names
+  for (std::pair<std::string,std::string> parameter : parameters_)
+  {
+    if (parameter.first == "nRanks" || parameter.first == "rankNo")
+      continue;
+    header << parameter.first << ";";
+  }
+  
+  // write sum names
+  for (std::pair<std::string,int> sum : sums_)
+  {
+    header << sum.first << ";";
+  }
+
   header << std::endl;
 
   // compose data
@@ -101,18 +161,14 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
   // time stamp
   auto t = std::time(nullptr);
   auto tm = *std::localtime(&t);
-  data << std::put_time(&tm, "%Y/%m/%d %H:%M:%S") << ";";
+  data << StringUtility::timeToString(&tm) << ";";
 
   // host name
   char hostname[MAXHOSTNAMELEN+1];
   gethostname(hostname, MAXHOSTNAMELEN+1);
   data << std::string(hostname) << ";";
-
-  // write parameters
-  for (std::pair<std::string,std::string> parameter : parameters_)
-  {
-    data << parameter.second << ";";
-  }
+  data << DihuContext::versionText() << ";";
+  data << parameters_["nRanks"] << ";" << parameters_["rankNo"] << ";";
 
   // write measurement values
   for (std::pair<std::string, Measurement> measurement : measurements_)
@@ -120,6 +176,25 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
     data << measurement.second.totalDuration << ";"
     << measurement.second.nTimeSpans << ";";
   }
+  
+  // write parameters
+  for (std::pair<std::string,std::string> parameter : parameters_)
+  {
+    if (parameter.first == "nRanks" || parameter.first == "rankNo")
+      continue;
+    
+    // remove newlines
+    StringUtility::replace(parameter.second, "\n", "");
+    StringUtility::replace(parameter.second, "\r", "");
+    data << parameter.second << ";";
+  }
+  
+  // write sums
+  for (std::pair<std::string,int> sum : sums_)
+  {
+    data << sum.second << ";";
+  }
+  
   data << std::endl;
 
   // check if header has to be added to file
@@ -149,11 +224,11 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
   // write header and data to file
   if (combined)   // MPI output
   {
-    // open log file to create directory
+    // open log file to create directory if needed
     std::ofstream file;
     if (ownRankNo == 0)
     {
-      file = OutputWriter::Generic::openFile(filename.str(), true);
+      OutputWriter::Generic::openFile(file, filename.str(), true);
       file.close();
     }
 
@@ -161,12 +236,14 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
 
 
     // open file
+    MPI_Barrier(MPI_COMM_WORLD);
     MPI_File fileHandle;
     MPIUtility::handleReturnValue(MPI_File_open(MPI_COMM_WORLD, logFileName.c_str(),
                                                 //MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_UNIQUE_OPEN,
                                                 MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_APPEND,
                                                 MPI_INFO_NULL, &fileHandle), "MPI_File_open");
 
+    // write header
     // collective blocking write, only rank 0 writes, but afterwards all have the same shared file pointer position
     if (ownRankNo == 0)
     {
@@ -175,19 +252,22 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
     }
     else
     {
-      char b[0];
+      char b[1];
       MPI_Status status;
       MPIUtility::handleReturnValue(MPI_File_write_ordered(fileHandle, b, 0, MPI_BYTE, &status), "MPI_File_write_ordered", &status);
     }
 
+    // write log line for own rank
     MPIUtility::handleReturnValue(MPI_File_write_ordered(fileHandle, data.str().c_str(), data.str().length(), MPI_BYTE, MPI_STATUS_IGNORE), "MPI_File_write_ordered");
 
+    // close file
     MPIUtility::handleReturnValue(MPI_File_close(&fileHandle), "MPI_File_close");
   }
   else  // standard POSIX output
   {
     // open log file
-    std::ofstream file = OutputWriter::Generic::openFile(filename.str(), true);
+    std::ofstream file;
+    OutputWriter::Generic::openFile(file, filename.str(), true);
 
     if (outputHeader)
     {
@@ -214,6 +294,20 @@ void PerformanceMeasurement::measureError<double>(std::string name, double diffe
 
   iter->second.totalError += fabs(differenceVector);
   iter->second.nErrors++;
+}
+
+void PerformanceMeasurement::countNumber(std::string name, int number)
+{
+  std::map<std::string, int>::iterator iter = sums_.find(name);
+  
+  // if there is no entry of name yet, create new
+  if (iter == sums_.end())
+  {
+    auto insertedIter = sums_.insert(std::pair<std::string, int>(name, 0));
+    iter = insertedIter.first;
+  }
+  
+  iter->second += number;
 }
 
 void PerformanceMeasurement::parseStatusInformation()
@@ -301,4 +395,4 @@ void PerformanceMeasurement::parseStatusInformation()
    LOG(INFO) << "Total user time: " << message.str();
 }
 
-};  // namespace
+} // namespace

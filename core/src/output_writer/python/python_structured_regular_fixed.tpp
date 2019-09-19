@@ -10,9 +10,9 @@
 namespace OutputWriter
 {
 
-template<int D, typename BasisFunctionType, typename OutputFieldVariablesType>
-PyObject *Python<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,OutputFieldVariablesType>::
-buildPyDataObject(OutputFieldVariablesType fieldVariables,
+template<int D, typename BasisFunctionType, typename FieldVariablesForOutputWriterType>
+PyObject *Python<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,FieldVariablesForOutputWriterType>::
+buildPyDataObject(FieldVariablesForOutputWriterType fieldVariables,
                   std::string meshName, int timeStepNo, double currentTime, bool onlyNodalValues)
 {
   // build python dict containing all information
@@ -36,7 +36,7 @@ buildPyDataObject(OutputFieldVariablesType fieldVariables,
 
   // build python object for data
   std::shared_ptr<Mesh::Mesh> meshBase;
-  PyObject *pyData = PythonBase<OutputFieldVariablesType>::buildPyFieldVariablesObject(fieldVariables, meshName, onlyNodalValues, meshBase);
+  PyObject *pyData = PythonBase<FieldVariablesForOutputWriterType>::buildPyFieldVariablesObject(fieldVariables, meshName, onlyNodalValues, meshBase);
 
   // cast mesh to its real type
   typedef FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType> FunctionSpaceType;
@@ -75,13 +75,15 @@ buildPyDataObject(OutputFieldVariablesType fieldVariables,
   int nRanks = mesh->meshPartition()->nRanks();
   int ownRankNo = mesh->meshPartition()->ownRankNo();
 
-  LOG(DEBUG) << "PythonRegularFixed";
+  LOG(DEBUG) << "PythonRegularFixed, meshName \"" << meshName << "\"";
 
   // start critical section for python API calls
   // PythonUtility::GlobalInterpreterLock lock;
   
   // build python dict that will contain all information and data
-  PyObject *data = Py_BuildValue("{s s, s i, s O, s O, s O, s O, s s, s i, s O, s i, s i, s O, s i, s d}",
+  PyObject *data = Py_BuildValue("{s s, s s, s s, s i, s O, s O, s O, s O, s s, s i, s O, s i, s i, s O, s i, s d}",
+                                 "version", DihuContext::versionText().c_str(),
+                                 "meta", DihuContext::metaText().c_str(),
                                  "meshType", "StructuredRegularFixed",
                                  "dimension", D, "nElementsGlobal", pyNElementsGlobal, "nElementsLocal", pyNElementsLocal,
                                  "beginNodeGlobalNatural", pyBeginNodeGlobal, "hasFullNumberOfNodes", pyHasFullNumberOfNodes,
@@ -94,4 +96,4 @@ buildPyDataObject(OutputFieldVariablesType fieldVariables,
   return data;
 }
 
-};
+}  // namespace

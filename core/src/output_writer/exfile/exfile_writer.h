@@ -17,38 +17,38 @@ namespace OutputWriter
 {
 
 /** Base class of ExfileWriter that writes exelem and exnode files of given field variables.
- *  OutputFieldVariablesType is a std::tuple<std::shared_ptr<>, std::shared_ptr<>, ...> of field variables.
+ *  FieldVariablesForOutputWriterType is a std::tuple<std::shared_ptr<>, std::shared_ptr<>, ...> of field variables.
  *  Only field variables which are defined on the specified mesh will be output.
  *  The FunctionSpaceType has to be the type of the field variables given in meshName.
  */
-template<typename FunctionSpaceType, typename OutputFieldVariablesType>
+template<typename FunctionSpaceType, typename FieldVariablesForOutputWriterType>
 class ExfileWriter
 {
 public:
 
   //! write exelem file to given stream, for the mesh with given meshName
-  static void outputExelem(std::ostream &stream, OutputFieldVariablesType fieldVariables, std::string meshName, std::shared_ptr<FunctionSpaceType> mesh, int nFieldVariablesOfMesh);
+  static void outputExelem(std::ostream &stream, FieldVariablesForOutputWriterType fieldVariables, std::string meshName, std::shared_ptr<FunctionSpaceType> mesh, int nFieldVariablesOfMesh);
 
   //! write exnode file to given stream, only output fieldVariables that are on a mesh with the given meshName 
-  static void outputExnode(std::ostream &stream, OutputFieldVariablesType fieldVariables, std::string meshName, std::shared_ptr<FunctionSpaceType> mesh, int nFieldVariablesOfMesh);
+  static void outputExnode(std::ostream &stream, FieldVariablesForOutputWriterType fieldVariables, std::string meshName, std::shared_ptr<FunctionSpaceType> mesh, int nFieldVariablesOfMesh);
 };
 
 // specialization for UnstructuredDeformable
-template<int D, typename BasisFunctionType, typename OutputFieldVariablesType>
-class ExfileWriter<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>, OutputFieldVariablesType>
+template<int D, typename BasisFunctionType, typename FieldVariablesForOutputWriterType>
+class ExfileWriter<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>, FieldVariablesForOutputWriterType>
 {
 public:
   typedef FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType> FunctionSpaceType;
 
   //! write exelem file to given stream, for the mesh with given meshName
-  static void outputExelem(std::ostream &stream, OutputFieldVariablesType fieldVariables, std::string meshName, std::shared_ptr<FunctionSpaceType> mesh, int nFieldVariablesOfMesh);
+  static void outputExelem(std::ostream &stream, FieldVariablesForOutputWriterType fieldVariables, std::string meshName, std::shared_ptr<FunctionSpaceType> mesh, int nFieldVariablesOfMesh);
 
   //! write exnode file to given stream, only output fieldVariables that are on a mesh with the given meshName 
-  static void outputExnode(std::ostream &stream, OutputFieldVariablesType fieldVariables, std::string meshName, std::shared_ptr<FunctionSpaceType> mesh, int nFieldVariablesOfMesh);
+  static void outputExnode(std::ostream &stream, FieldVariablesForOutputWriterType fieldVariables, std::string meshName, std::shared_ptr<FunctionSpaceType> mesh, int nFieldVariablesOfMesh);
 };
 
 
-};  // namespace
+} // namespace
 
 #include "output_writer/exfile/exfile_writer_structured.tpp"
 #include "output_writer/exfile/exfile_writer_unstructured_deformable.tpp"

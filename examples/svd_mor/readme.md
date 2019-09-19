@@ -1,3 +1,0 @@
-This directory contains examples that demonstrate functionality of the core module. Because they are not all build every time (because it wastes  time at ordinary debugging) some may no longer be compatible, but it should be not too hard to fix them. The currently build set of examples is determined by the `SConstruct` file.
-
-Currently build and working: electrophysiology

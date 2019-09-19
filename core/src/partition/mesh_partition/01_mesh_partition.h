@@ -95,17 +95,23 @@ public:
   node_no_t nNodesLocalWithoutGhosts(int coordinateDirection, int partitionIndex = -1) const;
   
   //! number of elments in the local partition
-  node_no_t nElementsLocal(int coordinateDirection) const;
+  element_no_t nElementsLocal(int coordinateDirection) const;
   
   //! number of elments in total
-  node_no_t nElementsGlobal(int coordinateDirection) const;
+  element_no_t nElementsGlobal(int coordinateDirection) const;
   
+  //! global no of first local element
+  int beginElementGlobal(int coordinateDirection) const;
+
   //! number of nodes in total
   global_no_t nNodesGlobal() const;
   
   //! global no of first local node in the partition specified by partitionIndex or the current partition if partitionIndex == -1
   global_no_t beginNodeGlobalNatural(int coordinateDirection, int partitionIndex = -1) const;
     
+  //! get the number of nodes in the global Petsc ordering that are in partitions prior to the own rank
+  global_no_t beginNodeGlobalPetsc() const;
+
   //! number of nodes in total
   global_no_t nNodesGlobal(int coordinateDirection) const;
   
@@ -138,8 +144,17 @@ public:
   //! get the global node coordinates (x,y,z) of the node given by its local node no. This also works for ghost nodes.
   std::array<global_no_t,MeshType::dim()> getCoordinatesGlobal(node_no_t nodeNoLocal) const;
 
-  //! get the local coordinates for a local node no, also for non-ghost nodes. With this method and functionSpace->getNodeNo(coordinatesLocal) it is possible to implement a global-to-local mapping.
+  //! get the local coordinates for a local node no, also for ghost nodes. With this method and functionSpace->getNodeNo(coordinatesLocal) it is possible to implement a global-to-local mapping.
   std::array<int,MeshType::dim()> getCoordinatesLocal(node_no_t nodeNoLocal) const;
+
+  //! from global natural coordinates compute the local coordinates, set isOnLocalDomain to true if the node with global coordinates is in the local domain
+  std::array<int,MeshType::dim()> getCoordinatesLocal(std::array<global_no_t,MeshType::dim()> coordinatesGlobal, bool &isOnLocalDomain) const;
+
+  //! get the local coordinates for a local element no
+  std::array<int,MeshType::dim()> getElementCoordinatesLocal(element_no_t elementNoLocal) const;
+
+  //! get the local element no. from coordinates
+  element_no_t getElementNoLocal(std::array<int,MeshType::dim()> elementCoordinates) const;
 
   //! get the local node no for a global petsc node no, does not work for ghost nodes
   node_no_t getNodeNoLocal(global_no_t nodeNoGlobalPetsc) const;
@@ -168,11 +183,10 @@ public:
   //! @param onlyNodalValues: if for Hermite only get every second dof such that derivatives are not returned
   const std::vector<PetscInt> &dofNosLocal(bool onlyNodalValues=false) const;
 
+  // use getDofNoGlobalPetsc(dofNosLocal(), ...) to get dofNosGlobalPetsc
+
   //! get a vector of global natural dof nos of the locally stored non-ghost dofs, needed for setParameters callback function in cellml adapter
   void getDofNosGlobalNatural(std::vector<global_no_t> &dofNosGlobalNatural) const;
-
-  //! from global natural coordinates compute the local coordinates, set isOnLocalDomain to true if the node with global coordinates is in the local domain
-  std::array<int,MeshType::dim()> getCoordinatesLocal(std::array<global_no_t,MeshType::dim()> coordinatesGlobal, bool &isOnLocalDomain) const;
 
   //! get the global dof nos of the ghost dofs in the local partition
   const std::vector<PetscInt> &ghostDofNosGlobalPetsc() const;
@@ -194,6 +208,12 @@ public:
   //! get the rank no of the neighbour in direction face, -1 if there is no such neighbour
   int neighbourRank(Mesh::face_t face);
 
+  //! get the partitioning index in the coordinate direction, i.e. the no. of this rank in this direction, the total number of ranks in each direction can be retrieved by nRanks
+  int ownRankPartitioningIndex(int coordinateDirection);
+
+  //! refine the partitioning by multiplying the number of elements by refinementFactor
+  void refine(std::array<int,MeshType::dim()> refinementFactor);
+
 protected:
   
   //! initialize the values of hasFullNumberOfNodes_ variable
@@ -205,10 +225,13 @@ protected:
   //! initialize the value of nDofsLocalWithoutGhosts
   void setNDofsLocalWithoutGhosts();
 
+  //! initialize the localSizesOnPartitions_ array from localSizesOnPartitions_
+  void setLocalSizesOnPartitions();
+
   //! create the DM object for the node partitioning, such that is follows the element partitioning
   void createDmElements();
   
-  //! fill the dofLocalNo vectors
+  //! fill the dofLocalNo vectors, onlyNodalDofLocalNos_, ghostDofNosGlobalPetsc_ and localToGlobalPetscMappingDofs_
   void createLocalDofOrderings();
 
   //! determine the values of ownRankPartitioningIndex_
@@ -217,7 +240,7 @@ protected:
   //! get the index in terms of partitions of the partition that contains the given node no
   std::array<int,MeshType::dim()> getPartitioningIndex(std::array<global_no_t,MeshType::dim()> nodeNoGlobalNatural) const;
 
-  //! get the number of nodes in the global Petsc ordering that in partitions prior to the one given by partitionIndex
+  //! get the number of nodes in the global Petsc ordering that are in partitions prior to the one given by partitionIndex
   global_no_t nNodesGlobalPetscInPreviousPartitions(std::array<int,MeshType::dim()> partitionIndex) const;
 
   //! get the node no in global petsc ordering from global coordinates
@@ -231,7 +254,7 @@ protected:
   std::array<int,MeshType::dim()> nRanks_;    ///<  number of ranks in each coordinate direction that decompose the total domain
   std::array<int,MeshType::dim()> ownRankPartitioningIndex_;   ///< the index in terms of partitions of the own partition
 
-  std::array<std::vector<element_no_t>,MeshType::dim()> localSizesOnRanks_;  ///< the sizes of different partitions in each coordinate direction, i.e. localSizesOnRanks_[0] is (width partition #0, width partition #1, ...)
+  std::array<std::vector<element_no_t>,MeshType::dim()> localSizesOnPartitions_;  ///< the sizes of different partitions in each coordinate direction, i.e. localSizesOnPartitions_[0] is (width partition #0, width partition #1, ...)
 
   std::array<bool,MeshType::dim()> hasFullNumberOfNodes_;   ///< if the own local partition has nodes on both sides of the 1D projection at the border. This is only true at the right/top/back-most partition.
   
@@ -273,6 +296,9 @@ public:
   //! number of nodes in the local partition
   node_no_t nNodesLocalWithoutGhosts() const;
   
+  //! return the number of local nodes for coordinateDirection == 0 and 1 otherwise (this is needed for combineFiles with paraview output writer and 3D meshes)
+  node_no_t nNodesLocalWithGhosts(int coordinateDirection) const;
+
   //! number of nodes in the local partition
   node_no_t nNodesLocalWithGhosts() const;
   
@@ -353,4 +379,8 @@ std::ostream &operator<<(std::ostream &stream, std::shared_ptr<ISLocalToGlobalMa
 
 #include "partition/mesh_partition/01_mesh_partition_output.tpp"
 #include "partition/mesh_partition/01_mesh_partition_structured.tpp"
+#include "partition/mesh_partition/01_mesh_partition_structured_initialize.tpp"
+#include "partition/mesh_partition/01_mesh_partition_structured_get.tpp"
+#include "partition/mesh_partition/01_mesh_partition_structured_is_non_ghost.tpp"
+#include "partition/mesh_partition/01_mesh_partition_structured_coordinates.tpp"
 #include "partition/mesh_partition/01_mesh_partition_unstructured.tpp"

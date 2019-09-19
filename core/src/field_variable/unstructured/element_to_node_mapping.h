@@ -42,4 +42,4 @@ private:
   std::vector<Element> elements_;   ///< for global element no the nodes and scale factors
 };
 
-};  // namespace
+} // namespace

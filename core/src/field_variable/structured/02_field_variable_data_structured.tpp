@@ -9,13 +9,13 @@
 
 namespace FieldVariable
 {
-/*
+
 template<typename FunctionSpaceType, int nComponents>
 FieldVariableDataStructured<FunctionSpaceType,nComponents>::
 FieldVariableDataStructured() :
   FieldVariableComponents<FunctionSpaceType,nComponents>::FieldVariableComponents()
 {
-}*/
+}
 
 //! contructor as data copy with a different name (component names are the same)
 template<typename FunctionSpaceType, int nComponents>
@@ -24,7 +24,7 @@ FieldVariableDataStructured(FieldVariable<FunctionSpaceType,nComponents> &rhs, s
   FieldVariableComponents<FunctionSpaceType,nComponents>::FieldVariableComponents()
 {
   // initialize everything from other field variable
-  this->componentNames_.resize(rhs.componentNames().size());
+  //this->componentNames_.resize(rhs.componentNames().size());
   std::copy(rhs.componentNames().begin(), rhs.componentNames().end(), this->componentNames_.begin());
   
   this->name_ = name;
@@ -32,12 +32,11 @@ FieldVariableDataStructured(FieldVariable<FunctionSpaceType,nComponents> &rhs, s
   this->functionSpace_ = rhs.functionSpace();
 
   assert(this->functionSpace_);
-  
 
   // create new distributed petsc vec as copy of rhs values vector
   if (rhs.partitionedPetscVec())
   {
-    // if rhs is not a geometry field an therefore has a partitionedPetscVec, use that
+    // if rhs is not a geometry field and therefore has a partitionedPetscVec, use that
     this->values_ = std::make_shared<PartitionedPetscVec<FunctionSpaceType,nComponents>>(*rhs.partitionedPetscVec(), name);
   }
   else
@@ -65,6 +64,8 @@ FieldVariableDataStructured(FieldVariable<FunctionSpaceType,nComponents2> &rhs, 
   assert(this->functionSpace_);
   assert(this->functionSpace_->meshPartition());
   
+  VLOG(1) << "construct field variable \"" << name << "\" from other field variable \"" << rhs.name() << "\".";
+
   // create new distributed petsc vec as copy of rhs values vector
   if (rhs.partitionedPetscVec())
   {
@@ -150,6 +151,14 @@ valuesGlobal(int componentNo)
 {
   assert(this->values_);
   return this->values_->valuesGlobal(componentNo);
+}
+
+template<typename FunctionSpaceType, int nComponents>
+Vec &FieldVariableDataStructured<FunctionSpaceType,nComponents>::
+valuesGlobal()
+{
+  assert(this->values_);
+  return this->values_->valuesGlobal();
 }
 
 template<typename FunctionSpaceType, int nComponents>
@@ -325,4 +334,4 @@ output(std::ostream &stream) const
   }
 }
 
-};
+}  // namespace

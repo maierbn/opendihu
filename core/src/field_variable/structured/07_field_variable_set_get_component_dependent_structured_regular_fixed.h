@@ -40,6 +40,6 @@ public:
   
 };
 
-};  // namespace
+} // namespace
 
 #include "field_variable/structured/07_field_variable_set_get_component_dependent_structured_regular_fixed.tpp"

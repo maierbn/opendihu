@@ -103,8 +103,9 @@ config = {
   std::array<int,2> nElements1({2,2});
   std::array<int,2> nElements2({3,3});
   std::array<double,2> physicalExtent({0});
-  std::shared_ptr<FunctionSpace1> functionSpace1 = meshManager->createFunctionSpace<FunctionSpace1>("functionSpace1", nElements1, physicalExtent);
-  std::shared_ptr<FunctionSpace2> functionSpace2 = meshManager->createFunctionSpace<FunctionSpace2>("functionSpace2", nElements2, physicalExtent);
+  std::array<int,2> nRanks({1,1});
+  std::shared_ptr<FunctionSpace1> functionSpace1 = meshManager->createFunctionSpace<FunctionSpace1>("functionSpace1", nElements1, physicalExtent, nRanks);
+  std::shared_ptr<FunctionSpace2> functionSpace2 = meshManager->createFunctionSpace<FunctionSpace2>("functionSpace2", nElements2, physicalExtent, nRanks);
 
   // create dense matrix, 9x49
   std::shared_ptr<PartitionedPetscMat<FunctionSpace1,FunctionSpace2>> matrix
@@ -172,7 +173,7 @@ config = {
   typedef BasisFunction::LagrangeOfOrder<2> BasisFunctionType;
   
   typedef FunctionSpace::FunctionSpace<MeshType,BasisFunctionType> FunctionSpaceType;
-  typedef std::shared_ptr<FieldVariable::FieldVariableBase<FunctionSpaceType>> FieldVariableBaseType;
+  typedef std::shared_ptr<FieldVariable::FieldVariableBaseFunctionSpace<FunctionSpaceType>> FieldVariableBaseFunctionSpaceType;
   typedef std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> FieldVariable1Type;
   typedef std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,2>> FieldVariable2Type;
   typedef std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> FieldVariable3Type;
@@ -182,9 +183,9 @@ config = {
   
   // 5x5 nodes, 2 dofs/node, 18 dofs/element, 50 dofs
   
-  FieldVariableBaseType aBase = functionSpace->createFieldVariable("a", {"x","y"});
-  FieldVariableBaseType bBase = functionSpace->createFieldVariable("b", 2);
-  FieldVariableBaseType cBase = functionSpace->createFieldVariable("c");
+  FieldVariableBaseFunctionSpaceType aBase = functionSpace->createFieldVariable("a", {"x","y"});
+  FieldVariableBaseFunctionSpaceType bBase = functionSpace->createFieldVariable("b", 2);
+  FieldVariableBaseFunctionSpaceType cBase = functionSpace->createFieldVariable("c");
   FieldVariable3Type d = functionSpace->template createFieldVariable<3>("d");
   
   
@@ -396,10 +397,10 @@ config = {
   
   /*
   //! create a non-geometry field field variable with no values being set, with given component names
-  std::shared_ptr<FieldVariable::FieldVariableBase<FunctionSpace<MeshType,BasisFunctionType>>> createFieldVariable(std::string name, std::vector<std::string> componentNames);
+  std::shared_ptr<FieldVariable::FieldVariableBaseFunctionSpace<FunctionSpace<MeshType,BasisFunctionType>>> createFieldVariable(std::string name, std::vector<std::string> componentNames);
   
   //! create a non-geometry field field variable with no values being set, with given number of components, the component names will be the numbers
-  std::shared_ptr<FieldVariable::FieldVariableBase<FunctionSpace<MeshType,BasisFunctionType>>> createFieldVariable(std::string name, int nComponents=1);
+  std::shared_ptr<FieldVariable::FieldVariableBaseFunctionSpace<FunctionSpace<MeshType,BasisFunctionType>>> createFieldVariable(std::string name, int nComponents=1);
   
   //! create a non-geometry field field variable with no values being set, with given number of components, the component names will be the numbers
   template <int nComponents>
@@ -495,7 +496,7 @@ config = {
   typedef BasisFunction::LagrangeOfOrder<2> BasisFunctionType;
   
   typedef FunctionSpace::FunctionSpace<MeshType,BasisFunctionType> FunctionSpaceType;
-  typedef std::shared_ptr<FieldVariable::FieldVariableBase<FunctionSpaceType>> FieldVariableBaseType;
+  typedef std::shared_ptr<FieldVariable::FieldVariableBaseFunctionSpace<FunctionSpaceType>> FieldVariableBaseFunctionSpaceType;
   typedef std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> FieldVariable1Type;
   typedef std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,2>> FieldVariable2Type;
   typedef std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> FieldVariable3Type;
@@ -504,9 +505,9 @@ config = {
   
   // 5x5 nodes, 2 dofs/node, 18 dofs/element, 50 dofs
   
-  FieldVariableBaseType aBase = functionSpace->createFieldVariable("a", {"x","y"});
-  FieldVariableBaseType bBase = functionSpace->createFieldVariable("b", 2);
-  FieldVariableBaseType cBase = functionSpace->createFieldVariable("c");
+  FieldVariableBaseFunctionSpaceType aBase = functionSpace->createFieldVariable("a", {"x","y"});
+  FieldVariableBaseFunctionSpaceType bBase = functionSpace->createFieldVariable("b", 2);
+  FieldVariableBaseFunctionSpaceType cBase = functionSpace->createFieldVariable("c");
   FieldVariable3Type d = functionSpace->template createFieldVariable<3>("d");
   
   
@@ -735,7 +736,7 @@ config = {
   typedef BasisFunction::LagrangeOfOrder<2> BasisFunctionType;
   
   typedef FunctionSpace::FunctionSpace<MeshType,BasisFunctionType> FunctionSpaceType;
-  typedef std::shared_ptr<FieldVariable::FieldVariableBase<FunctionSpaceType>> FieldVariableBaseType;
+  typedef std::shared_ptr<FieldVariable::FieldVariableBaseFunctionSpace<FunctionSpaceType>> FieldVariableBaseFunctionSpaceType;
   typedef std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> FieldVariable1Type;
   typedef std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,2>> FieldVariable2Type;
   typedef std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> FieldVariable3Type;
@@ -744,9 +745,9 @@ config = {
   
   // 5x5 nodes, 2 dofs/node, 18 dofs/element, 50 dofs
   
-  FieldVariableBaseType aBase = functionSpace->createFieldVariable("a", {"x","y"});
-  FieldVariableBaseType bBase = functionSpace->createFieldVariable("b", 2);
-  FieldVariableBaseType cBase = functionSpace->createFieldVariable("c");
+  FieldVariableBaseFunctionSpaceType aBase = functionSpace->createFieldVariable("a", {"x","y"});
+  FieldVariableBaseFunctionSpaceType bBase = functionSpace->createFieldVariable("b", 2);
+  FieldVariableBaseFunctionSpaceType cBase = functionSpace->createFieldVariable("c");
   FieldVariable3Type d = functionSpace->template createFieldVariable<3>("d");
   
   
@@ -931,4 +932,4 @@ config = {
   
 }
 
-}; // namespace
+}  // namespace

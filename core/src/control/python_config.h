@@ -45,6 +45,9 @@ public:
   //! checks if this settings contain the given key, no warning is printed
   bool hasKey(std::string key) const;
 
+  //! return all keys of the current dict as vector of strings
+  void getKeys(std::vector<std::string> &keys);
+
   //! given a python dictionary in settings, extract the value of given key and check if it is again a dict. Returns NULL, if the key does not exist. Then also a warning is printed.
   PyObject *getOptionPyObject(std::string key, PyObject *defaultValue = Py_None) const;
 
@@ -97,6 +100,10 @@ public:
 
   //! extract a vector with exactly the specified number of nEntries, can be a dict or list, not specified entries are set to 0
   void getOptionVector(std::string keyString, int nEntries, std::vector<double> &values) const;
+
+  //! extract a vector with exactly the specified number of nEntries, must be a list, not specified entries are set to {0}
+  template<typename T>
+  void getOptionVector(std::string keyString, int nEntries, std::vector<T> &values) const;
 
   //! extract a vector with unknown number of nEntries, must be a list
   template<typename T>

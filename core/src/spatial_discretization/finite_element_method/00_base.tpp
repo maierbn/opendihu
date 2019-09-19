@@ -13,7 +13,7 @@
 
 #include "mesh/structured_regular_fixed.h"
 #include "basis_function/lagrange.h"
-#include "mesh/mesh_manager.h"
+#include "mesh/mesh_manager/mesh_manager.h"
 #include "solver/solver_manager.h"
 #include "solver/linear.h"
 #include "partition/partitioned_petsc_vec/partitioned_petsc_vec.h"
@@ -22,11 +22,12 @@
 namespace SpatialDiscretization
 {
 
-template<typename FunctionSpaceType,typename QuadratureType,typename Term>
-FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Term>::
+template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term>
+FiniteElementMethodBase<FunctionSpaceType,QuadratureType,nComponents,Term>::
 FiniteElementMethodBase(DihuContext context, std::shared_ptr<FunctionSpaceType> functionSpace) :
   context_(context["FiniteElementMethod"]), data_(context["FiniteElementMethod"]), specificSettings_(context_.getPythonConfig()), initialized_(false)
 {
+  LOG(DEBUG) << "FiniteElementMethodBase constructor, context: " << this->context_.getPythonConfig();
   outputWriterManager_.initialize(context_, specificSettings_);
 
   // Create mesh or retrieve existing mesh from meshManager. This already creates meshPartition in functionSpace.initialize(), see function_space/03_function_space_partition_structured.tpp
@@ -48,29 +49,29 @@ FiniteElementMethodBase(DihuContext context, std::shared_ptr<FunctionSpaceType> 
   data_.setFunctionSpace(functionSpace);
 }
 
-template<typename FunctionSpaceType,typename QuadratureType,typename Term>
-std::shared_ptr<FunctionSpaceType> FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Term>::
+template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term>
+std::shared_ptr<FunctionSpaceType> FiniteElementMethodBase<FunctionSpaceType,QuadratureType,nComponents,Term>::
 functionSpace()
 {
   return data_.functionSpace();
 }
 
-template<typename FunctionSpaceType,typename QuadratureType,typename Term>
-Data::FiniteElements<FunctionSpaceType,Term> &FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Term>::
+template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term>
+Data::FiniteElements<FunctionSpaceType,nComponents,Term> &FiniteElementMethodBase<FunctionSpaceType,QuadratureType,nComponents,Term>::
 data()
 {
   return data_;
 }
 
-template<typename FunctionSpaceType,typename QuadratureType,typename Term>
-void FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Term>::
+template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term>
+void FiniteElementMethodBase<FunctionSpaceType,QuadratureType,nComponents,Term>::
 setRankSubset(Partition::RankSubset rankSubset)
 {
   data_.setRankSubset(rankSubset);
 }
  
-template<typename FunctionSpaceType,typename QuadratureType,typename Term>
-void FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Term>::
+template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term>
+void FiniteElementMethodBase<FunctionSpaceType,QuadratureType,nComponents,Term>::
 initialize()
 {
   // do not initialize if it was called already
@@ -78,15 +79,35 @@ initialize()
     return;
 
   data_.initialize();
+
+  // assemble stiffness matrix
+  Control::PerformanceMeasurement::start("durationSetStiffnessMatrix");
   setStiffnessMatrix();
+  Control::PerformanceMeasurement::stop("durationSetStiffnessMatrix");
+
+  // set the rhs
+  Control::PerformanceMeasurement::start("durationSetRightHandSide");
   setRightHandSide();
+  Control::PerformanceMeasurement::stop("durationSetRightHandSide");
+
+  // apply boundary conditions
+  Control::PerformanceMeasurement::start("durationAssembleBoundaryConditions");
   this->applyBoundaryConditions();
+  Control::PerformanceMeasurement::stop("durationAssembleBoundaryConditions");
 
   initialized_ = true;
 }
 
-template<typename FunctionSpaceType,typename QuadratureType,typename Term>
-void FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Term>::
+template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term>
+void FiniteElementMethodBase<FunctionSpaceType,QuadratureType,nComponents,Term>::
+reset()
+{
+  data_.reset();
+  initialized_ = false;
+}
+
+template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term>
+void FiniteElementMethodBase<FunctionSpaceType,QuadratureType,nComponents,Term>::
 run()
 {
   initialize();
@@ -96,8 +117,8 @@ run()
   outputWriterManager_.writeOutput(data_);
 }
 
-template<typename FunctionSpaceType,typename QuadratureType,typename Term>
-void FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Term>::
+template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term>
+void FiniteElementMethodBase<FunctionSpaceType,QuadratureType,nComponents,Term>::
 solve()
 {
   // solve linear system k*d=f for d
@@ -127,6 +148,9 @@ solve()
   PetscErrorCode ierr;
   ierr = KSPSetOperators(*ksp, stiffnessMatrix->valuesGlobal(), stiffnessMatrix->valuesGlobal()); CHKERRV(ierr);
 
+  VLOG(1) << "rhs: " << *data_.rightHandSide();
+  VLOG(1) << "stiffnessMatrix: " << *stiffnessMatrix;
+
   // non-zero initial values
 #if 0  
   PetscScalar scalar = 0.5;
@@ -134,76 +158,22 @@ solve()
   ierr = KSPSetInitialGuessNonzero(*ksp, PETSC_TRUE); CHKERRV(ierr);
 #endif
 
+  LOG(DEBUG) << "solve...";
+
   // solve the system
-  ierr = KSPSolve(*ksp, data_.rightHandSide()->valuesGlobal(), data_.solution()->valuesGlobal()); CHKERRV(ierr);
+  linearSolver->solve(data_.rightHandSide()->valuesGlobal(), data_.solution()->valuesGlobal(), "Solution obtained");
 
-  int numberOfIterations = 0;
-  PetscReal residualNorm = 0.0;
-  ierr = KSPGetIterationNumber(*ksp, &numberOfIterations); CHKERRV(ierr);
-  ierr = KSPGetResidualNorm(*ksp, &residualNorm); CHKERRV(ierr);
-
-  KSPConvergedReason convergedReason;
-  ierr = KSPGetConvergedReason(*ksp, &convergedReason); CHKERRV(ierr);
-
-  LOG(INFO) << "Solution obtained in " << numberOfIterations << " iterations, residual norm " << residualNorm
-    << ": " << PetscUtility::getStringLinearConvergedReason(convergedReason);
-
-  // check if solution is correct
-#if 0
-  {
-    // get rhs and solution from PETSc
-    int vectorSize = 0;
-    VecGetSize(data_.solution()->values(), &vectorSize);
-
-    std::vector<int> indices(vectorSize);
-    std::iota(indices.begin(), indices.end(), 0);
-    std::vector<double> solution(vectorSize);
-    std::vector<double> rhs(vectorSize);
-
-    VecGetValues(data_.solution()->values(), vectorSize, indices.data(), solution.data());
-    VecGetValues(data_.rightHandSide()->values(), vectorSize, indices.data(), rhs.data());
-
-    // get stiffness matrix
-    int nRows, nColumns;
-    MatGetSize(data_.stiffnessMatrix(), &nRows, &nColumns);
-    std::vector<int> rowIndices(nRows);
-    std::iota(rowIndices.begin(), rowIndices.end(), 0);
-    std::vector<int> columnIndices(nColumns);
-    std::iota(columnIndices.begin(), columnIndices.end(), 0);
-    std::vector<double> matrixValues(nRows*nColumns);
-
-    std::vector<long int> nEntries = {nRows, nColumns};
-
-    MatGetValues(data_.stiffnessMatrix().values(), nRows, rowIndices.data(), nColumns, columnIndices.data(), matrixValues.data());
-
-    std::vector<double> f(vectorSize);
-
-    // compute f = matrix * solution
-
-    for(int i=0; i<vectorSize; i++)
-    {
-      f[i] = 0.0;
-      for(int j=0; j<vectorSize; j++)
-      {
-        f[i] += matrixValues[i*nColumns + j] * solution[j];
-      }
-    }
-
-    // compute residual norm
-    double res = 0.0;
-    for(int i=0; i<vectorSize; i++)
-    {
-      res += (f[i] - rhs[i]) * (f[i] - rhs[i]);
-      LOG(DEBUG) << i << ". solution=" << solution[i]<< ", f=" <<f[i]<< ", rhs=" <<rhs[i]<< ", squared error: " <<(f[i] - rhs[i]) * (f[i] - rhs[i]);
-    }
-
-    LOG(DEBUG) << "res=" << res;
-  }
-#endif  
+  data_.solution()->setRepresentationGlobal();
+  data_.solution()->startGhostManipulation();
+  data_.solution()->zeroGhostBuffer();
+  data_.solution()->finishGhostManipulation();
+  
+  
+  VLOG(1) << "solution: " << *data_.solution();
 }
 
-template<typename FunctionSpaceType,typename QuadratureType>
-void FiniteElementMethodInitializeData<FunctionSpaceType,QuadratureType,Equation::Dynamic::DirectionalDiffusion>::
+template<typename FunctionSpaceType,typename QuadratureType,int nComponents>
+void FiniteElementMethodInitializeData<FunctionSpaceType,QuadratureType,nComponents,Equation::Dynamic::DirectionalDiffusion>::
 initialize(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> direction,
            std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> spatiallyVaryingPrefactor,
            bool useAdditionalDiffusionTensor)
@@ -214,7 +184,7 @@ initialize(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> di
   this->data_.initialize(direction, spatiallyVaryingPrefactor, useAdditionalDiffusionTensor);
 
   // call normal initialize, this does not initialize the data object again
-  FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Equation::Dynamic::DirectionalDiffusion>::initialize();
+  FiniteElementMethodBase<FunctionSpaceType,QuadratureType,nComponents,Equation::Dynamic::DirectionalDiffusion>::initialize();
 }
 
-};
+} // namespace

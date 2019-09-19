@@ -21,8 +21,8 @@ void PythonCallback::write(DataType& data, int timeStepNo, double currentTime)
   LOG(TRACE) << "PythonCallback::write timeStepNo=" << timeStepNo << ", currentTime=" << currentTime;
 
   // call implementation specific for FunctionSpace type
-  PythonCallbackWriter<typename DataType::FunctionSpace,typename DataType::OutputFieldVariables>::
-    callCallback(callback_, data.getOutputFieldVariables(), this->timeStepNo_, this->currentTime_, this->onlyNodalValues_);
+  PythonCallbackWriter<typename DataType::FunctionSpace,typename DataType::FieldVariablesForOutputWriter>::
+    callCallback(callback_, data.getFieldVariablesForOutputWriter(), this->timeStepNo_, this->currentTime_, this->onlyNodalValues_);
 }
 
-};
+}  // namespace

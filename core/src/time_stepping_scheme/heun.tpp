@@ -12,7 +12,16 @@ template<typename DiscretizableInTime>
 Heun<DiscretizableInTime>::Heun(DihuContext context) :
   TimeSteppingExplicit<DiscretizableInTime>(context, "Heun")
 {
-  this->data_ = std::make_shared<Data::TimeSteppingHeun<typename DiscretizableInTime::FunctionSpace, DiscretizableInTime::nComponents()>>(context);  // create data object for heun
+}
+
+template<typename DiscretizableInTime>
+void Heun<DiscretizableInTime>::initialize()
+{
+  LOG(TRACE) << "Heun::initialize";
+
+  this->data_ = std::make_shared<Data::TimeSteppingHeun<typename DiscretizableInTime::FunctionSpace, DiscretizableInTime::nComponents()>>(this->context_);  // create data object for heun
+
+  TimeSteppingSchemeOde<DiscretizableInTime>::initialize();
 }
 
 template<typename DiscretizableInTime>
@@ -39,14 +48,14 @@ void Heun<DiscretizableInTime>::advanceTimeSpan()
 
   // loop over time steps
   double currentTime = this->startTime_;
-  for(int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
+  for (int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
   {
     if (timeStepNo % this->timeStepOutputInterval_ == 0 && timeStepNo > 0)
     {
       LOG(INFO) << "Heun, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
     }
 
-    VLOG(1) << "starting from solution: " << this->data_->solution();
+    VLOG(1) << "starting from solution: " << *this->data_->solution();
 
     // advance solution value to compute u* first
     // compute  delta_u = f(u_{t})
@@ -57,7 +66,7 @@ void Heun<DiscretizableInTime>::advanceTimeSpan()
     // integrate u* += dt * delta_u : values = solution.values + timeStepWidth * increment.values
     VecAXPY(solution, this->timeStepWidth_, increment);
 
-    VLOG(1) << "increment: " << this->data_->increment() << ", dt: " << this->timeStepWidth_;
+    VLOG(1) << "increment: " << *this->data_->increment() << ", dt: " << this->timeStepWidth_;
 
     // now, advance solution value to compute u_{t+1}
     // compute  delta_u* = f(u*)
@@ -65,8 +74,9 @@ void Heun<DiscretizableInTime>::advanceTimeSpan()
     this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
       solution, intermediateIncrement, timeStepNo + 1, currentTime + this->timeStepWidth_);
 
-    // integrate u_{t+1} = u_{t} + dt*0.5(delta_u + delta_u_star)
-    // however, use: u_{t+1} = u* + 0.5*dt*(f(u*)-f(u_{t}))     (#)
+    // we need       u_{t+1} = u_{t} + dt*0.5*(delta_u + delta_u*)
+    // however, use: u_{t+1} = u*    + dt*0.5*(delta_u* - delta_u)     (#)
+    // where         u*      = u_{t} + dt*delta_u
     //
     // first calculate (f(u*)-f(u_{t})). to save storage we store into f(u*):
     VecAXPY(intermediateIncrement, -1.0, increment);
@@ -78,6 +88,15 @@ void Heun<DiscretizableInTime>::advanceTimeSpan()
     this->applyBoundaryConditions();
 
     VLOG(1) << *this->data_->solution();
+
+#ifndef NDEBUG
+    if (this->data_->solution()->containsNanOrInf())
+    {
+      LOG(ERROR) << "At time " << currentTime << ", in Heun method: Solution contains Nan or Inf. This probably means that the timestep width, "
+        << this->timeStepWidth_ << " is too high. Note, this expensive check is only performed when compiled for debug target.";
+      LOG(ERROR) << *this->data_->solution();
+    }
+#endif
 
     // advance simulation time
     timeStepNo++;
@@ -95,14 +114,6 @@ void Heun<DiscretizableInTime>::advanceTimeSpan()
       Control::PerformanceMeasurement::start(this->durationLogKey_);
     //this->data_->print();
   }
-
-  //this->data_->solution()->restoreValuesContiguousToGlobalSub();
-  //this->data_->increment()->restoreValuesContiguousToGlobalSub();
-  //dataHeun->intermediateIncrement()->restoreValuesContiguousToGlobalSub();
-
-  //this->data_->solution()->restoreValuesContiguous();
-  //this->data_->increment()->restoreValuesContiguous();
-  //dataHeun->intermediateIncrement()->restoreValuesContiguous();
 
   // stop duration measurement
   if (this->durationLogKey_ != "")

@@ -7,7 +7,10 @@ const char *valuesRepresentationString[16] =
 {
   "local",
   "global",
-  "contiguous"
+  "contiguous",
+  "invalid",
+  "combined-local",
+  "combined-global"
 };
 
-};  // namespace
+} // namespace

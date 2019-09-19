@@ -35,12 +35,12 @@ public:
  */
 template<int D, typename BasisFunctionType, typename Term>
 class PythonStiffnessMatrixWriter<
-  Data::FiniteElements<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,Term>
+  Data::FiniteElements<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,1,Term>
 > :
   public NumpyFileWriter
 {
 public:
-  typedef Data::FiniteElements<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,Term> DataType;
+  typedef Data::FiniteElements<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,1,Term> DataType;
 
   //! write out solution to file filename as numpy array, as 1D data and in correct shape, also write rhs matrix
   static void writeNumpySolution(DataType &data, std::string filename);
@@ -51,6 +51,6 @@ private:
 
 };
 
-};   // namespace
+}  // namespace
 
 #include "output_writer/python_file/python_stiffness_matrix_writer.tpp"

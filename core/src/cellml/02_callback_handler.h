@@ -21,12 +21,15 @@
  *   State: state variable
  *   Rate: the time derivative of the state variable, i.e. the increment value in an explicit Euler stepping
  */
-template <int nStates, typename FunctionSpaceType>
+template <int nStates, int nIntermediates_, typename FunctionSpaceType>
 class CallbackHandler :
-  public RhsRoutineHandler<nStates,FunctionSpaceType>,
+  public RhsRoutineHandler<nStates,nIntermediates_,FunctionSpaceType>,
   public DiscretizableInTime
 {
 public:
+
+  //! constructor
+  CallbackHandler(DihuContext context, bool initializeOutputWriter);
 
   //! constructor
   CallbackHandler(DihuContext context);
@@ -62,10 +65,19 @@ public:
   //! directly call the python callback if it exists
   void callPythonHandleResultFunction(int nInstances, int timeStepNo, double currentTime, double *states, double *intermediates);
 
+  //! get the values of this->lastCallSpecificStatesTime
+  double lastCallSpecificStatesTime();
+
+  //! set the value of this->lastCallSpecificStatesTime
+  void setLastCallSpecificStatesTime(double lastCallSpecificStatesTime);
+
 protected:
  
   //! construct the python call back functions from config
   virtual void initializeCallbackFunctions();
+
+  //! call Py_CLEAR on all python objects
+  void clearPyObjects();
 
   void (*setParameters_) (void *context, int nInstances, int timeStepNo, double currentTime, std::vector<double> &parameters);  ///< callback function that will be called before new states are computed. It can set new parameters ("known" variables) for the computation.
   void (*setSpecificParameters_) (void *context, int nInstances, int timeStepNo, double currentTime, std::vector<double> &localParameters);  ///< callback function that will be called before new states are computed. It can set values for global parameters ("known" variables) for the computation.
@@ -76,6 +88,9 @@ protected:
   int setSpecificParametersCallInterval_;      ///< setSpecificParameters_ will be called every callInterval_ time steps
   int setSpecificStatesCallInterval_;      ///< setSpecificStates_ will be called every callInterval_ time steps
   int handleResultCallInterval_;      ///< handleResult will be called every callInterval_ time steps
+  double setSpecificStatesCallFrequency_;   ///< frequency, after which the setSpecificStates callback function will be called, either this condition or the condition with setSpecificStatesCallInterval_ is used
+  double lastCallSpecificStatesTime_;      ///< last time the setSpecificStates_ method was called
+  double setSpecificStatesRepeatAfterFirstCall_; ///< duration of continuation of calling the setSpecificStates callback after it was triggered
  
   PyObject *pythonSetParametersFunction_;   ///< Python function handle that is called to set parameters to the CellML problem from the python config
   PyObject *pythonSetSpecificParametersFunction_;   ///< Python function handle that is called to set parameters to the CellML problem from the python config

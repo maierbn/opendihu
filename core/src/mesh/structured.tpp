@@ -82,4 +82,4 @@ nElementsPerCoordinateDirectionGlobal() const
   return nElementsPerCoordinateDirectionGlobal_;
 }
 
-};    // namespace
+}  // namespace

@@ -31,10 +31,11 @@ public:
   using FieldVariableSetGet<FunctionSpaceType,1>::FieldVariableSetGet;
 
   //! fill the gradient field with the gradient values in world coordinates of this field variable. This is only possible for scalar fields.
-  void computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSpaceType::dim()>> gradientField);
+  void computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSpaceType::dim()>> gradientField,
+                            std::shared_ptr<FieldVariable<FunctionSpaceType,1>> jacobianConditionNumber = nullptr);
 
 };
 
-};  // namespace
+} // namespace
 
 #include "field_variable/08_field_variable_gradient.tpp"

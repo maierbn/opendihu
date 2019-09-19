@@ -42,7 +42,7 @@ void Manager::storePreconfiguredSolvers()
         {
           LOG(WARNING) << "Could not extract dict for solver \"" << key << "\".";
         }
-        else if(!PyDict_Check(value))
+        else if (!PyDict_Check(value))
         {
           LOG(WARNING) << "Value for solver with name \"" << key << "\" should be a dict.";
         }
@@ -70,4 +70,34 @@ void Manager::storePreconfiguredSolvers()
   }
 }
 
-};   // namespace
+void Manager::deleteSolver(std::string solverName, MPI_Comm mpiCommunicator)
+{
+  if (solvers_.find(mpiCommunicator) == solvers_.end())
+  {
+    return;
+  }
+
+  if (solvers_[mpiCommunicator].find(solverName) == solvers_[mpiCommunicator].end())
+  {
+    return;
+  }
+
+  solvers_[mpiCommunicator][solverName] = nullptr;
+  solvers_[mpiCommunicator].erase(solvers_[mpiCommunicator].find(solverName));
+}
+
+void Manager::deleteSolver(std::string solverName)
+{
+  for (std::map<MPI_Comm, std::map<std::string, std::shared_ptr<Solver>>>::iterator iter = solvers_.begin(); iter != solvers_.end(); iter++)
+  {
+    std::map<std::string, std::shared_ptr<Solver>> &solvers = iter->second;
+    if (solvers.find(solverName) != solvers.end())
+    {
+      LOG(DEBUG) << "Erase solver \"" << solverName << "\".";
+      solvers.erase(solvers.find(solverName));
+      continue;
+    }
+  }
+}
+
+}  // namespace

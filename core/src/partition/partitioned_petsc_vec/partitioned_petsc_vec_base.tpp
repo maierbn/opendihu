@@ -1,10 +1,22 @@
 #include "partition/partitioned_petsc_vec/partitioned_petsc_vec_base.h"
 
+#include "output_writer/generic.h"
+
+template<typename FunctionSpaceType>
+int PartitionedPetscVecBase<FunctionSpaceType>::vectorNo_ = 0;
+
 template<typename FunctionSpaceType>
 PartitionedPetscVecBase<FunctionSpaceType>::
 PartitionedPetscVecBase(std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> meshPartition, std::string name) :
   name_(name), meshPartition_(meshPartition), currentRepresentation_(Partition::values_representation_t::representationGlobal)
 {
+  // add a unique number to each vector in debug mode, to distinguish vectors with the same name
+#ifndef NDEBUG
+  std::stringstream nameStr;
+  nameStr << name << "_" << vectorNo_;
+  vectorNo_++;
+  name_ = nameStr.str();
+#endif
 }
 
 template<typename FunctionSpaceType>

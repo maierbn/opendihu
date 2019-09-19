@@ -9,32 +9,24 @@ namespace TimeSteppingScheme
 {
 
 template<typename DiscretizableInTimeType>
-TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::
-TimeSteppingSchemeOdeBase(DihuContext context, std::string name) :
-  TimeSteppingScheme(context), discretizableInTime_(context[name]), initialized_(false)
+TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::TimeSteppingSchemeOdeBaseDiscretizable(DihuContext context, std::string name) :
+//  TimeSteppingSchemeOdeOutputConnectorDataType<typename DiscretizableInTimeType::FunctionSpace,DiscretizableInTimeType::nComponents(), DiscretizableInTimeType>::
+//  TimeSteppingSchemeOdeOutputConnectorDataType(context, name),
+  TimeSteppingSchemeOdeBase<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>::
+  TimeSteppingSchemeOdeBase(context, name),
+  discretizableInTime_(this->context_), initialized_(false)
 {
-  // get python config
-  PythonConfig topLevelSettings = this->context_.getPythonConfig();
-  this->specificSettings_ = PythonConfig(topLevelSettings, name);
-
-  // initialize output writers
+  //initialize output writers
   this->outputWriterManager_.initialize(this->context_, this->specificSettings_);
 
-  // create dirichlet Boundary conditions object
+  //create dirichlet Boundary conditions object
   this->dirichletBoundaryConditions_ = std::make_shared<
     SpatialDiscretization::DirichletBoundaryConditions<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>
-  >();
+  >(this->context_);
 }
 
 template<typename DiscretizableInTimeType>
-Data::TimeStepping<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()> &TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::
-data()
-{
-  return *data_;
-}
-
-template<typename DiscretizableInTimeType>
-void TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::
+void TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::
 setInitialValues()
 {
   // set initial values as given in settings, or set to zero if not given
@@ -60,52 +52,41 @@ setInitialValues()
   VLOG(1) << "set initial values to " << localValues;
 
   // set the first component of the solution variable by the given values
-  data_->solution()->setValuesWithoutGhosts(0, localValues);
+  this->data_->solution()->setValuesWithoutGhosts(0, localValues);
 
-  VLOG(1) << data_->solution();
-}
-/*
-template<typename DiscretizableInTimeType>
-std::shared_ptr<typename TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::Data::FieldVariableType> TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::
-solution()
-{
-  return data_->solution();
-}*/
-
-template<typename DiscretizableInTimeType>
-typename TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::TransferableSolutionDataType TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::
-getSolutionForTransferInOperatorSplitting()
-{
-  return data_->getSolutionForTransferInOperatorSplitting();
+  VLOG(1) << this->data_->solution();
 }
 
 template<typename DiscretizableInTimeType>
-DiscretizableInTimeType &TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::
+DiscretizableInTimeType &TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::
 discretizableInTime()
 {
   return this->discretizableInTime_;
 }
 
 template<typename DiscretizableInTimeType>
-void TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::
+void TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::
 setRankSubset(Partition::RankSubset rankSubset)
 {
-  data_->setRankSubset(rankSubset);
+  TimeSteppingSchemeOdeBase<typename DiscretizableInTimeType::Functionspace,DiscretizableInTimeType::nComponents()>::
+    setRankSubset(rankSubset);
   discretizableInTime_.setRankSubset(rankSubset);
 } 
- 
+
 template<typename DiscretizableInTimeType>
-void TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::
+void TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::
 reset()
 {
-  TimeSteppingScheme::reset();
+  TimeSteppingSchemeOdeBase<typename DiscretizableInTimeType::FunctionSpace,DiscretizableInTimeType::nComponents()>::
+    reset();
   discretizableInTime_.reset();
+  this->data_.reset();
   
   initialized_ = false;
 }
 
 template<typename DiscretizableInTimeType>
-void TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::
+void TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::
 initialize()
 {
   if (initialized_)
@@ -121,28 +102,33 @@ initialize()
   discretizableInTime_.initialize();
   discretizableInTime_.initializeForImplicitTimeStepping();   // this performs extra initialization for implicit timestepping methods, i.e. it sets the inverse lumped mass matrix
 
+  // retrieve the function space from the discretizable in time object, this is used for the data object
   std::shared_ptr<typename DiscretizableInTimeType::FunctionSpace> functionSpace
     = discretizableInTime_.functionSpace();
 
   assert(functionSpace->meshPartition());   // assert that the function space was retrieved correctly
-  data_->setFunctionSpace(functionSpace);
+  assert(this->data_);
+  this->data_->setFunctionSpace(functionSpace);
   
   // set component names in data
   std::vector<std::string> componentNames;
   discretizableInTime_.getComponentNames(componentNames);
-  data_->setComponentNames(componentNames);
+  this->data_->setComponentNames(componentNames);
   
   // create the vectors in the data object
-  data_->initialize();
+  this->data_->initialize();
+
+  // pass the solution field variable on to the discretizableInTime object
+  discretizableInTime_.setSolutionVariable(this->data_->solution());
 
   // parse boundary conditions, needs functionSpace set
   // initialize dirichlet boundary conditions object which parses dirichlet boundary condition dofs and values from config
-  this->dirichletBoundaryConditions_->initialize(this->specificSettings_, this->data_->functionSpace());
+  this->dirichletBoundaryConditions_->initialize(this->specificSettings_, this->data_->functionSpace(), "dirichletBoundaryConditions");
 
   // set initial values from settings
 
   // load initial values as specified in config under the "CellML" section
-  if (!discretizableInTime_.setInitialValues(data_->solution()))
+  if (!discretizableInTime_.setInitialValues(this->data_->solution()))
   {
     LOG(DEBUG) << "initial values were not set by DiscretizableInTime, set now";
 
@@ -154,43 +140,28 @@ initialize()
   {
     LOG(DEBUG) << "initial values were set by DiscretizableInTime";
   }
+  VLOG(1) << "initial solution vector: " << *this->data_->solution();
   
-  data_->print();
+  //output initial values
+  this->outputWriterManager_.writeOutput(*this->data_, 0, 0);
+  
+  this->data_->print();
   
   initialized_ = true;
 }
 
-template<int nStates, typename FunctionSpaceType>
-void TimeSteppingSchemeOde<CellmlAdapter<nStates, FunctionSpaceType>>::
-initialize()
+template<typename DiscretizableInTimeType>
+std::shared_ptr<SpatialDiscretization::DirichletBoundaryConditions<typename DiscretizableInTimeType::FunctionSpace,DiscretizableInTimeType::nComponents()>>
+TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::
+dirichletBoundaryConditions()
 {
-  TimeSteppingSchemeOdeBase<CellmlAdapter<nStates, FunctionSpaceType>>::initialize();
-  double prefactor = this->discretizableInTime_.prefactor();
-  int outputComponentNo = this->discretizableInTime_.outputStateIndex();
-
-  LOG(DEBUG) << "set CellML prefactor=" << prefactor << ", outputComponentNo=" << outputComponentNo;
-
-  this->data_->setPrefactor(prefactor);
-  this->data_->setOutputComponentNo(outputComponentNo);
+  return dirichletBoundaryConditions_;
 }
 
 template<typename DiscretizableInTimeType>
-void TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::
-run()
+typename TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::OutputConnectorDataType TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::
+getOutputConnectorData()
 {
-  // initialize
-  this->initialize();
-
-  // do simulations
-  this->advanceTimeSpan();
+  return this->discretizableInTime_.getOutputConnectorData();
 }
-
-template<typename DiscretizableInTimeType>
-bool TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::
-knowsMeshType()
-{
-  return this->discretizableInTime_.knowsMeshType();
-}
-
-
 } // namespace

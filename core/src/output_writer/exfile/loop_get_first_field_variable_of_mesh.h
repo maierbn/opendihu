@@ -4,10 +4,10 @@
 
 #include <cstdlib>
 
-/** The functions in this file model a loop over the elements of a tuple, as it occurs as OutputFieldVariablesType in all data_management classes.
+/** The functions in this file model a loop over the elements of a tuple, as it occurs as FieldVariablesForOutputWriterType in all data_management classes.
  *  (Because the types inside the tuple are static and fixed at compile-time, a simple for loop c not work here.)
  *  The two functions starting with loop recursively emulate the loop. One method is the break condition and does nothing, the other method does the work and calls the method without loop in the name.
- *  OutputFieldVariablesType is assumed to be of type std::tuple<...>> where the types can be (mixed) std::shared_ptr<FieldVariable> or std::vector<std::shared_ptr<FieldVariable>>.
+ *  FieldVariablesForOutputWriterType is assumed to be of type std::tuple<...>> where the types can be (mixed) std::shared_ptr<FieldVariable> or std::vector<std::shared_ptr<FieldVariable>>.
  */
 
 namespace OutputWriter
@@ -19,9 +19,9 @@ namespace ExfileLoopOverTuple
  /** Static recursive loop from 0 to number of entries in the tuple
  *  Stopping criterion
  */
-template<typename OutputFieldVariablesType, typename FieldVariableType, int i=0>
-inline typename std::enable_if<i == std::tuple_size<OutputFieldVariablesType>::value, void>::type
-loopGetFirstFieldVariableOfMesh(const OutputFieldVariablesType &fieldVariables, std::string meshName,
+template<typename FieldVariablesForOutputWriterType, typename FieldVariableType, int i=0>
+inline typename std::enable_if<i == std::tuple_size<FieldVariablesForOutputWriterType>::value, void>::type
+loopGetFirstFieldVariableOfMesh(const FieldVariablesForOutputWriterType &fieldVariables, std::string meshName,
                                 std::shared_ptr<FieldVariableType> &firstFieldVariableOfMesh
 )
 {}
@@ -29,9 +29,9 @@ loopGetFirstFieldVariableOfMesh(const OutputFieldVariablesType &fieldVariables, 
  /** Static recursive loop from 0 to number of entries in the tuple
  * Loop body
  */
-template<typename OutputFieldVariablesType, typename FieldVariableType, int i=0>
-inline typename std::enable_if<i < std::tuple_size<OutputFieldVariablesType>::value, void>::type
-loopGetFirstFieldVariableOfMesh(const OutputFieldVariablesType &fieldVariables, std::string meshName,
+template<typename FieldVariablesForOutputWriterType, typename FieldVariableType, int i=0>
+inline typename std::enable_if<i < std::tuple_size<FieldVariablesForOutputWriterType>::value, void>::type
+loopGetFirstFieldVariableOfMesh(const FieldVariablesForOutputWriterType &fieldVariables, std::string meshName,
                                 std::shared_ptr<FieldVariableType> &firstFieldVariableOfMesh);
 
 
@@ -56,8 +56,8 @@ typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value &
 getFirstFieldVariableOfMesh(CurrentFieldVariableType currentFieldVariable, std::string meshName,
                                 std::shared_ptr<FieldVariableType> &firstFieldVariableOfMesh);
 
-};  //namespace ExfileLoopOverTuple
+}  // namespace ExfileLoopOverTuple
 
-};  //namespace OutputWriter
+}  // namespace OutputWriter
 
 #include "output_writer/exfile/loop_get_first_field_variable_of_mesh.tpp"

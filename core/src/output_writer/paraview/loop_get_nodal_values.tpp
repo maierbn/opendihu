@@ -13,27 +13,30 @@ namespace ParaviewLoopOverTuple
  /** Static recursive loop from 0 to number of entries in the tuple
  * Loop body
  */
-template<typename OutputFieldVariablesType, int i>
-inline typename std::enable_if<i < std::tuple_size<OutputFieldVariablesType>::value, void>::type
-loopGetNodalValues(const OutputFieldVariablesType &fieldVariables, std::set<std::string> meshNames,
-                   std::vector<std::vector<double>> &values
+template<typename FieldVariablesForOutputWriterType, int i>
+inline typename std::enable_if<i < std::tuple_size<FieldVariablesForOutputWriterType>::value, void>::type
+loopGetNodalValues(const FieldVariablesForOutputWriterType &fieldVariables, std::set<std::string> meshNames,
+                   std::map<std::string,std::vector<double>> &values
 )
 {
   // call what to do in the loop body
-  if (getNodalValues<typename std::tuple_element<i,OutputFieldVariablesType>::type, OutputFieldVariablesType>(
+  if (getNodalValues<typename std::tuple_element<i,FieldVariablesForOutputWriterType>::type, FieldVariablesForOutputWriterType>(
         std::get<i>(fieldVariables), fieldVariables, meshNames, values))
     return;
   
   // advance iteration to next tuple element
-  loopGetNodalValues<OutputFieldVariablesType, i+1>(fieldVariables, meshNames, values);
+  loopGetNodalValues<FieldVariablesForOutputWriterType, i+1>(fieldVariables, meshNames, values);
 }
  
 // current element is of pointer type (not vector)
-template<typename CurrentFieldVariableType, typename OutputFieldVariablesType>
+template<typename CurrentFieldVariableType, typename FieldVariablesForOutputWriterType>
 typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
-getNodalValues(CurrentFieldVariableType currentFieldVariable, const OutputFieldVariablesType &fieldVariables, std::set<std::string> meshNames,
-               std::vector<std::vector<double>> &values)
+getNodalValues(CurrentFieldVariableType currentFieldVariable, const FieldVariablesForOutputWriterType &fieldVariables, std::set<std::string> meshNames,
+               std::map<std::string,std::vector<double>> &values)
 {
+  VLOG(1) << "field variable " << StringUtility::demangle(typeid(currentFieldVariable).name()) << " name \"" << currentFieldVariable->name()
+    << "\", is geometry: " << currentFieldVariable->isGeometryField() << ", values size: " << values.size();
+
   // if mesh name is one of the specified meshNames (and it is not a geometry field)
   if (meshNames.find(currentFieldVariable->functionSpace()->meshName()) != meshNames.end()
     && !currentFieldVariable->isGeometryField())
@@ -45,6 +48,7 @@ getNodalValues(CurrentFieldVariableType currentFieldVariable, const OutputFieldV
     currentFieldVariable->functionSpace()->meshPartition()->initializeDofNosLocalNaturalOrdering(currentFieldVariable->functionSpace());
 
     // ensure that ghost values are in place
+    currentFieldVariable->zeroGhostBuffer();
     currentFieldVariable->setRepresentationGlobal();
     currentFieldVariable->startGhostManipulation();
 
@@ -68,15 +72,19 @@ getNodalValues(CurrentFieldVariableType currentFieldVariable, const OutputFieldV
         index += nDofsPerNode;
       }
     }
-    values.emplace_back();
-    values.back().reserve(componentValues[0].size()*nComponents);
+
+    std::string fieldVariableName = currentFieldVariable->name();
+
+    // create entry for field variable name if it does not exist and reserve enough space for all values
+    values[fieldVariableName].reserve(values[fieldVariableName].size() + componentValues[0].size()*nComponents);
+    LOG(DEBUG) << "add \"" << fieldVariableName << "\".";
 
     // copy values in consecutive order (x y z x y z) to output
     for (int i = 0; i < componentValues[0].size(); i++)
     {
       for (int componentNo = 0; componentNo < nComponents; componentNo++)
       {
-        values.back().push_back(componentValues[componentNo][i]);
+        values[fieldVariableName].push_back(componentValues[componentNo][i]);
       }
     }
 
@@ -86,25 +94,25 @@ getNodalValues(CurrentFieldVariableType currentFieldVariable, const OutputFieldV
 }
 
 // element i is of vector type
-template<typename VectorType, typename OutputFieldVariablesType>
+template<typename VectorType, typename FieldVariablesForOutputWriterType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
-getNodalValues(VectorType currentFieldVariableVector, const OutputFieldVariablesType &fieldVariables, std::set<std::string> meshNames,
-               std::vector<std::vector<double>> &values)
+getNodalValues(VectorType currentFieldVariableVector, const FieldVariablesForOutputWriterType &fieldVariables, std::set<std::string> meshNames,
+               std::map<std::string,std::vector<double>> &values)
 {
   for (auto& currentFieldVariable : currentFieldVariableVector)
   {
     // call function on all vector entries
-    if (getNodalValues<typename VectorType::value_type,OutputFieldVariablesType>(currentFieldVariable, fieldVariables, meshNames, values))
+    if (getNodalValues<typename VectorType::value_type,FieldVariablesForOutputWriterType>(currentFieldVariable, fieldVariables, meshNames, values))
       return true; // break iteration
   }
   return false;  // do not break iteration 
 }
 
 // element i is of tuple type
-template<typename TupleType, typename OutputFieldVariablesType>
+template<typename TupleType, typename FieldVariablesForOutputWriterType>
 typename std::enable_if<TypeUtility::isTuple<TupleType>::value, bool>::type
-getNodalValues(TupleType currentFieldVariableTuple, const OutputFieldVariablesType &fieldVariables, std::set<std::string> meshNames,
-               std::vector<std::vector<double>> &values)
+getNodalValues(TupleType currentFieldVariableTuple, const FieldVariablesForOutputWriterType &fieldVariables, std::set<std::string> meshNames,
+               std::map<std::string,std::vector<double>> &values)
 {
   // call for tuple element
   loopGetNodalValues<TupleType>(currentFieldVariableTuple, meshNames, values);
@@ -112,5 +120,5 @@ getNodalValues(TupleType currentFieldVariableTuple, const OutputFieldVariablesTy
   return false;  // do not break iteration 
 }
 
-};  //namespace ParaviewLoopOverTuple
-};  //namespace OutputWriter
+}  // namespace ParaviewLoopOverTuple
+}  // namespace OutputWriter

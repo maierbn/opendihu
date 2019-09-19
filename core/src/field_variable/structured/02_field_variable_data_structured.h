@@ -24,13 +24,10 @@ class FieldVariableDataStructured :
   public FieldVariableComponents<FunctionSpaceType,nComponents_>
 {
 public:
-  //! inherited constructor
-  using FieldVariableComponents<FunctionSpaceType,nComponents_>::FieldVariableComponents;
+  //! normal constructor without arguments
+  FieldVariableDataStructured();
 
-  //! empty contructor
-  //FieldVariableDataStructured();
-
-  //! contructor as data copy with a different name (component names are the same)
+  //! contructor as data copy with a different name (component names are the same), note, it is not possible to make rhs const, because VecCopy needs globalValues() and this may change rhs
   FieldVariableDataStructured(FieldVariable<FunctionSpaceType,nComponents_> &rhs, std::string name);
 
   //! contructor as data copy with a different name and different components
@@ -56,7 +53,10 @@ public:
   Vec &valuesLocal(int componentNo = 0);
 
   //! get the internal PETSc vector values, the global vector for the specified component
-  Vec &valuesGlobal(int componentNo = 0);
+  Vec &valuesGlobal(int componentNo);
+
+  //! if the vector has multiple components, return a nested Vec of the global vector, else return the global vector
+  Vec &valuesGlobal();
 
   //! fill a contiguous vector with all components after each other, "struct of array"-type data layout.
   //! after manipulation of the vector has finished one has to call restoreValuesContiguous
@@ -68,6 +68,7 @@ public:
 
   //! output string representation to stream for debugging
   void output(std::ostream &stream) const;
+
 
   //! not implemented interface methods
 
@@ -87,7 +88,7 @@ public:
   virtual void unifyMappings(std::shared_ptr<ElementToNodeMapping> elementToNodeMapping, const int nDofsPerNode){}
 
   //! eliminate duplicate elementToDof and exfileRepresentation objects in components of two field variables (this and one other)
-  virtual void unifyMappings(std::shared_ptr<FieldVariableBase<FunctionSpaceType>> fieldVariable2){}
+  virtual void unifyMappings(std::shared_ptr<FieldVariableBaseFunctionSpace<FunctionSpaceType>> fieldVariable2){}
 
   //! initialize PETSc vector with size of total number of dofs for all components of this field variable
   virtual void initializeValuesVector(){}
@@ -112,6 +113,6 @@ protected:
   std::shared_ptr<PartitionedPetscVec<FunctionSpaceType,nComponents_>> values_ = nullptr;          ///< Petsc vector containing the values, the values for the components are stored as struct of array, e.g. (comp1val1, comp1val2, comp1val3, ..., comp2val1, comp2val2, comp2val3, ...). Dof ordering proceeds fastest over dofs of a node, then over nodes, node numbering is along whole domain, fastes in x, then in y,z direction.
 };
 
-};  // namespace
+} // namespace
 
 #include "field_variable/structured/02_field_variable_data_structured.tpp"

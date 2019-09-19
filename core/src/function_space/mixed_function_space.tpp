@@ -56,4 +56,4 @@ highOrderFunctionSpace()
   return highOrderFunctionSpace_;
 }
 
-};  //namespace
+}  // namespace

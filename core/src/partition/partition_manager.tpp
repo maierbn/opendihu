@@ -55,17 +55,18 @@ createPartitioningStructuredLocal(std::array<global_no_t,FunctionSpace::dim()> &
   {
     // create rank subset of all available MPI ranks
     rankSubset = std::make_shared<RankSubset>();
+    LOG(DEBUG) << "create new rank subset " << *rankSubset;
   }
   else 
   {
     // if nextRankSubset was specified, use it
     rankSubset = nextRankSubset_;
+    LOG(DEBUG) << "use previously set rankSubset " << *rankSubset;
   }
   
-  int rankNoSubsetCommunicator;
-  int nRanksSubsetCommunicator;
-  MPIUtility::handleReturnValue(MPI_Comm_rank(rankSubset->mpiCommunicator(), &rankNoSubsetCommunicator));
-  MPIUtility::handleReturnValue(MPI_Comm_size(rankSubset->mpiCommunicator(), &nRanksSubsetCommunicator));
+  int rankNoSubsetCommunicator = rankSubset->ownRankNo();
+  int nRanksSubsetCommunicator = rankSubset->size();
+
   int nRanksTotal = 1;
   for (int i = 0; i < D; i++)
   {
@@ -82,15 +83,13 @@ createPartitioningStructuredLocal(std::array<global_no_t,FunctionSpace::dim()> &
   
   if (D >= 2) 
   {
-    rankGridCoordinate[1] = int(rankNoSubsetCommunicator / nRanks[0]);
+    rankGridCoordinate[1] = int((rankNoSubsetCommunicator % (nRanks[0]*nRanks[1])) / nRanks[0]);
   }
   if (D >= 3)
   {
     rankGridCoordinate[2] = int(rankNoSubsetCommunicator / (nRanks[0]*nRanks[1]));
   }
 
-  LOG(DEBUG) << "rankGridCoordinate: " << rankGridCoordinate;
-  
   // expand nRanks to 3 entries where not valid entries are set to 1
   std::array<int,3> nRanks3({1});
   for (int i = 0; i < D; i++)
@@ -126,6 +125,7 @@ createPartitioningStructuredLocal(std::array<global_no_t,FunctionSpace::dim()> &
     // create new communicator which contains all ranks that have the same value of color (and not MPI_UNDEFINED)
     MPIUtility::handleReturnValue(MPI_Comm_split(rankSubset->mpiCommunicator(), oneDimensionCommunicatorColor, rankNoSubsetCommunicator,
                    &oneDimensionCommunicator[2]));
+    VLOG(1) << "rankGridCoordinate: " << rankGridCoordinate << ", nRanks:" << nRanks << ", z color: " << oneDimensionCommunicatorColor;
   }
   
   // reduce the global sizes in the coordinate directions
@@ -174,6 +174,9 @@ createPartitioningStructuredLocal(std::array<global_no_t,FunctionSpace::dim()> &
     VLOG(1) << "set nElementsGlobal[" << i << "] = " << nElementsGlobal[i];
   }
   
+  LOG(DEBUG) << "create new meshPartition, nElementsLocal: " << nElementsLocal << ", nElementsGlobal: " << nElementsGlobal
+    << ", beginGlobal: " << beginGlobal << ", nRanks: " << nRanks << ", rankSubset : " << *rankSubset;
+
   // create a mesh partition with prescribed local partitions
   return std::make_shared<MeshPartition<FunctionSpace>>(nElementsLocal, nElementsGlobal, beginGlobal, nRanks, rankSubset);
 }
@@ -219,4 +222,4 @@ createPartitioningStructuredGlobal(const std::array<global_no_t,FunctionSpace::d
   return meshPartition;
 }
 
-};    // namespace
+}  // namespace

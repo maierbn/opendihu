@@ -13,50 +13,50 @@ namespace OutputWriter
 {
 
 /** Helper class that creates a python object out of a tuple of field variables.
- *  OutputFieldVariablesType is a std::tuple<std::shared_ptr<>, std::shared_ptr<>, ...> of field variables that will be output.
+ *  FieldVariablesForOutputWriterType is a std::tuple<std::shared_ptr<>, std::shared_ptr<>, ...> of field variables that will be output.
   */
-template<typename FunctionSpaceType, typename OutputFieldVariablesType>
+template<typename FunctionSpaceType, typename FieldVariablesForOutputWriterType>
 class Python
 {};
 
 /* Specialization for RegularFixed. This also outputs rhs matrix and stiffness matrix for laplace problems.
  *
  */
-template<int D, typename BasisFunctionType, typename OutputFieldVariablesType>
-class Python<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,OutputFieldVariablesType> :
-  public PythonBase<OutputFieldVariablesType>
+template<int D, typename BasisFunctionType, typename FieldVariablesForOutputWriterType>
+class Python<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,FieldVariablesForOutputWriterType> :
+  public PythonBase<FieldVariablesForOutputWriterType>
 {
 public:
   typedef FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType> FunctionSpaceType;
 
   //! call python callback
-  static PyObject *buildPyDataObject(OutputFieldVariablesType fieldVariables,
+  static PyObject *buildPyDataObject(FieldVariablesForOutputWriterType fieldVariables,
                                      std::string meshName, int timeStepNo, double currentTime, bool onlyNodalValues);
 };
 
 // specialization for StructuredDeformable
-template<int D, typename BasisFunctionType, typename OutputFieldVariablesType>
-class Python<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>,OutputFieldVariablesType> :
-  public PythonBase<OutputFieldVariablesType>
+template<int D, typename BasisFunctionType, typename FieldVariablesForOutputWriterType>
+class Python<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>,FieldVariablesForOutputWriterType> :
+  public PythonBase<FieldVariablesForOutputWriterType>
 {
 public:
   typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType> FunctionSpaceType;
 
   //! call python callback
-  static PyObject *buildPyDataObject(OutputFieldVariablesType fieldVariables,
+  static PyObject *buildPyDataObject(FieldVariablesForOutputWriterType fieldVariables,
                                      std::string meshName, int timeStepNo, double currentTime, bool onlyNodalValues);
 };
 
 // specialization for UnstructuredDeformable
-template<int D, typename BasisFunctionType, typename OutputFieldVariablesType>
-class Python<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,OutputFieldVariablesType> :
-  public PythonBase<OutputFieldVariablesType>
+template<int D, typename BasisFunctionType, typename FieldVariablesForOutputWriterType>
+class Python<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,FieldVariablesForOutputWriterType> :
+  public PythonBase<FieldVariablesForOutputWriterType>
 {
 public:
   typedef FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType> FunctionSpaceType;
 
   //! call python callback
-  static PyObject *buildPyDataObject(OutputFieldVariablesType fieldVariables,
+  static PyObject *buildPyDataObject(FieldVariablesForOutputWriterType fieldVariables,
                                      std::string meshName, int timeStepNo, double currentTime, bool onlyNodalValues);
 private:
   
@@ -64,7 +64,7 @@ private:
   static PyObject *buildPyElementalDofsObject(std::shared_ptr<Mesh::Mesh> meshBase, bool onlyNodalValues);
 };
 
-};  // namespace
+} // namespace
 
 #include "output_writer/python/python_structured_regular_fixed.tpp"
 #include "output_writer/python/python_structured_deformable.tpp"

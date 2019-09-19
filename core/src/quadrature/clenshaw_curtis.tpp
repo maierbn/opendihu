@@ -220,5 +220,5 @@ computeIntegral(const typename std::array<ValueType,64>::const_iterator evaluati
   }
   return result;
 }
-  
-};
+
+}  // namespace

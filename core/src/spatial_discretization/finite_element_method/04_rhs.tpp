@@ -15,30 +15,29 @@
 namespace SpatialDiscretization
 {
 
-template<typename FunctionSpaceType, typename QuadratureType, typename Term>
-void FiniteElementMethodRhs<FunctionSpaceType, QuadratureType, Term>::
+template<typename FunctionSpaceType, typename QuadratureType, int nComponents, typename Term>
+void FiniteElementMethodRhs<FunctionSpaceType, QuadratureType, nComponents, Term>::
 setRightHandSide()
 {
   LOG(TRACE) << "setRightHandSide";
 
   dof_no_t nUnknownsLocal = this->data_.nUnknownsLocalWithoutGhosts();     // local unknows without ghosts
-  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> rightHandSide = this->data_.rightHandSide();
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> rightHandSide = this->data_.rightHandSide();
 
-  std::vector<double> localValues;
+  std::vector<VecD<nComponents>> localValues;
   
   // parse values from config
   bool inputMeshIsGlobal = this->specificSettings_.getOptionBool("inputMeshIsGlobal", true);
   if (inputMeshIsGlobal)
   {
     global_no_t nUnknownsGlobal = this->data_.nUnknownsGlobal();
-    this->specificSettings_.getOptionVector("rightHandSide", (int)nUnknownsGlobal, localValues);
 
-    std::shared_ptr<Mesh::Mesh> functionSpace = this->data_.functionSpace();
-    functionSpace->meshPartitionBase()->extractLocalDofsWithoutGhosts(localValues);
+    this->specificSettings_.template getOptionVector<VecD<nComponents>>("rightHandSide", nUnknownsGlobal, localValues);
+    this->data_.functionSpace()->meshPartition()->extractLocalDofsWithoutGhosts(localValues);
   }
   else 
   {
-    this->specificSettings_.getOptionVector("rightHandSide", nUnknownsLocal, localValues);
+    this->specificSettings_.template getOptionVector<VecD<nComponents>>("rightHandSide", nUnknownsLocal, localValues);
   }
 
   // assign read values to rightHandSide variable. They are now stored in "strong form" and need to be transformed to "weak form" by multiplying with mass matrix
@@ -52,4 +51,4 @@ setRightHandSide()
   this->manipulateWeakRhs();
 }
 
-};
+}  // namespace

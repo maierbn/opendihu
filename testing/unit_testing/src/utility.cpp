@@ -35,16 +35,56 @@ double parseNumber(std::string::iterator &iterFileContents, std::string::iterato
   {
     std::stod(numberFileContents, nullptr);
   }
-  catch (std::exception &e)
+  catch (std::exception &e)   // fails for letter 'e'
   {
     std::string s;
     for(std::string::iterator iterFileContents2 = iterFileContentsBegin; iterFileContents2 != iterFileContentsEnd; iterFileContents2++)
     {
       s += *iterFileContents2;
     }
-    LOG(DEBUG) << "parsing of number [" << numberFileContents << "] from [" << s.substr(0,20) << "] failed: " << e.what();
+    //LOG(DEBUG) << "parsing of number [" << numberFileContents << "] from [" << s.substr(0,20) << "] failed: " << e.what();
   }
   return number;
+}
+
+void removeVaryingContent(std::string &contents)
+{
+  // in paraview output files there is always a comment "<!-- ... -->" with varying content like timestamp. It is different each
+  // run, therefore you cannot compare it to reference values. This functions removes this contents.
+  while(contents.find("<!--") != std::string::npos)
+  {
+    std::size_t pos0 = contents.find("<!--");
+    std::size_t pos1 = contents.find("-->", pos0);
+    contents = contents.substr(0, pos0) + contents.substr(pos1+3);
+  }
+
+  // also remove timestamp and meta information in python files
+  // example: {"version": "opendihu 0.1, build Jan 18 2019 20:51:36, C++ 201402, GCC 7.3.0", "meta": "current time: 2019/01/18 20:57:17, hostname: lapsgs05, n ranks: 4", "meshType" ...
+
+  while(contents.find("\"version") != std::string::npos)
+  {
+    std::size_t pos = contents.find("\"version") + 1;
+    std::size_t startPos = pos;
+    for (int i = 0; i < 7; i++)
+    {
+      pos = contents.find("\"", pos)+1;
+    }
+    pos = contents.find(",", pos)+1;
+    pos = contents.find("\"", pos);
+    contents = contents.substr(0, startPos-1) + contents.substr(pos);
+  }
+  while(contents.find("'version") != std::string::npos)
+  {
+    std::size_t pos = contents.find("'version") + 1;
+    std::size_t startPos = pos;
+    for (int i = 0; i < 7; i++)
+    {
+      pos = contents.find("'", pos)+1;
+    }
+    pos = contents.find(",", pos)+1;
+    pos = contents.find("'", pos);
+    contents = contents.substr(0, startPos-1) + contents.substr(pos);
+  }
 }
 
 void assertFileMatchesContent(std::string filename, std::string referenceContents, std::string referenceContents2)
@@ -73,7 +113,12 @@ void assertFileMatchesContent(std::string filename, std::string referenceContent
   
   // read in file contents
   file.read(&fileContents[0], fileSize);
-  
+
+  // remove parts of the contents that are dependend on version or time
+  removeVaryingContent(fileContents);
+  removeVaryingContent(referenceContents);
+  removeVaryingContent(referenceContents2);
+
   bool referenceContentMatches = true;
   bool referenceContent2Matches = true;
   std::stringstream msg;
@@ -83,7 +128,9 @@ void assertFileMatchesContent(std::string filename, std::string referenceContent
   for (std::string::iterator iterFileContents = fileContents.begin(); iterFileContents != fileContents.end() && iterReferenceContents != referenceContents.end();)
   {
     //VLOG(1) << "[" << *iterFileContents << "] ?= [" << *iterReferenceContents << "]";
-    if (isdigit(*iterFileContents) || *iterFileContents == '.' || *iterFileContents == '-')   // characters with which a number can start (e.g. ".5", "-1")
+    if (isdigit(*iterFileContents) || *iterFileContents == '.' || *iterFileContents == '-'
+      || isdigit(*iterReferenceContents) || *iterReferenceContents == '.' || *iterReferenceContents == '-'
+    )   // characters with which a number can start (e.g. ".5", "-1")
     {
       double numberFileContents = parseNumber(iterFileContents, fileContents.end());
       double numberReferenceContents = parseNumber(iterReferenceContents, referenceContents.end());
@@ -95,9 +142,22 @@ void assertFileMatchesContent(std::string filename, std::string referenceContent
     }
     else
     {
+      // Do not fail if one of the files has more whitespace at a certain position, this can happen if there are different numbers like " -1e-18" and "  1e-18" with different number of whitespaces.
+      if ((*iterFileContents == ' ' && *iterReferenceContents != ' ') || (*iterFileContents == '\n' && *iterReferenceContents != '\n'))
+      {
+        iterFileContents++;
+        continue;
+      }
+      if ((*iterFileContents != ' ' && *iterReferenceContents == ' ') || (*iterFileContents != '\n' && *iterReferenceContents == '\n'))
+      {
+        iterReferenceContents++;
+        continue;
+      }
+
+      // if character is diferrent
       if(*iterFileContents != *iterReferenceContents)
       {
-        msg << "mismatch at character file: [" << *iterFileContents << "] != reference: [" << *iterReferenceContents << "], pos: " << std::distance(fileContents.begin(),iterFileContents);
+        //msg << "mismatch at character, file: [" << *iterFileContents << "] != reference: [" << *iterReferenceContents << "], pos: " << std::distance(fileContents.begin(),iterFileContents) << " ";
         referenceContentMatches = false;
         //VLOG(1) << "mismatch!";
       }
@@ -114,7 +174,8 @@ void assertFileMatchesContent(std::string filename, std::string referenceContent
     iterReferenceContents = referenceContents2.begin(); 
     for (std::string::iterator iterFileContents = fileContents.begin(); iterFileContents != fileContents.end() && iterReferenceContents != referenceContents2.end();)
     {
-      if (isdigit(*iterFileContents) || *iterFileContents == '.' || *iterFileContents == '-')
+      if (isdigit(*iterFileContents) || *iterFileContents == '.' || *iterFileContents == '-'
+        || isdigit(*iterReferenceContents) || *iterReferenceContents == '.' || *iterReferenceContents == '-')
       {
         double numberFileContents = parseNumber(iterFileContents, fileContents.end());
         double numberReferenceContents = parseNumber(iterReferenceContents, referenceContents2.end());
@@ -126,9 +187,22 @@ void assertFileMatchesContent(std::string filename, std::string referenceContent
       }
       else
       {
+        // Do not fail if one of the files has more whitespace at a certain position, this can happen if there are different numbers like " -1e-18" and "  1e-18" with different number of whitespaces.
+        if ((*iterFileContents == ' ' && *iterReferenceContents != ' ') || (*iterFileContents == '\n' && *iterReferenceContents != '\n'))
+        {
+          iterFileContents++;
+          continue;
+        }
+        if ((*iterFileContents != ' ' && *iterReferenceContents == ' ') || (*iterFileContents != '\n' && *iterReferenceContents == '\n'))
+        {
+          iterReferenceContents++;
+          continue;
+        }
+
+        // if character is diferrent
         if (*iterFileContents, *iterReferenceContents)
         {
-          msg << "mismatch at character file: [" << *iterFileContents << "] != reference: [" << *iterReferenceContents << "], pos: " << std::distance(fileContents.begin(),iterFileContents);
+          //msg << "mismatch at character file: [" << *iterFileContents << "] != reference: [" << *iterReferenceContents << "], pos: " << std::distance(fileContents.begin(),iterFileContents);
           referenceContent2Matches = false;
         }
         iterFileContents++;
@@ -147,7 +221,7 @@ void assertFileMatchesContent(std::string filename, std::string referenceContent
       LOG(INFO) << "file content of file \"" << filename << "\" is different (referenceContents2). fileContents: " << std::endl << fileContents << std::endl << ", referenceContents2: " << std::endl << referenceContents2;
     
     LOG(INFO) << msg.str();
-    ASSERT_TRUE(false) << "neither referenceContent nor referenceContent2 matches! " << msg.str();
+    ASSERT_TRUE(false) << "filename \"" << filename << "\": neither referenceContent nor referenceContent2 matches! " << msg.str();
   }
   
 }
@@ -177,14 +251,14 @@ void assertParallelEqualsSerialOutputFiles(std::vector<std::string> &outputFiles
 
   // prepare command line arguments
   int nCommandLineArguments = outputFilesToCheck.size() + 1;
-  wchar_t *argvWChar[nCommandLineArguments];
+  std::vector<wchar_t *> argvWChar(nCommandLineArguments);
   argvWChar[0] = Py_DecodeLocale(std::string("validate_parallel.py").c_str(), NULL);
   for (int i = 0; i < outputFilesToCheck.size(); i++)
   {
     argvWChar[i+1] = Py_DecodeLocale(outputFilesToCheck[i].c_str(), NULL);
   }
 
-  PySys_SetArgvEx(nCommandLineArguments, argvWChar, 0);
+  PySys_SetArgvEx(nCommandLineArguments, argvWChar.data(), 0);
 
   // wait a bit until files are ready to be opened by the python script
   std::this_thread::sleep_for(std::chrono::milliseconds(20));

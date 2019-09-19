@@ -16,25 +16,25 @@ namespace ParaviewLoopOverTuple
  /** Static recursive loop from 0 to number of entries in the tuple
  * Loop body
  */
-template<typename OutputFieldVariablesType, int i>
-inline typename std::enable_if<i < std::tuple_size<OutputFieldVariablesType>::value, void>::type
-loopOutputPointData(const OutputFieldVariablesType &fieldVariables, std::string meshName, 
+template<typename FieldVariablesForOutputWriterType, int i>
+inline typename std::enable_if<i < std::tuple_size<FieldVariablesForOutputWriterType>::value, void>::type
+loopOutputPointData(const FieldVariablesForOutputWriterType &fieldVariables, std::string meshName, 
                     std::ofstream &file, bool binaryOutput, bool fixedFormat, bool onlyParallelDatasetElement
 )
 {
   // call what to do in the loop body
-  if (outputPointData<typename std::tuple_element<i,OutputFieldVariablesType>::type, OutputFieldVariablesType>(
+  if (outputPointData<typename std::tuple_element<i,FieldVariablesForOutputWriterType>::type, FieldVariablesForOutputWriterType>(
         std::get<i>(fieldVariables), fieldVariables, meshName, file, binaryOutput, fixedFormat, onlyParallelDatasetElement))
     return;
   
   // advance iteration to next tuple element
-  loopOutputPointData<OutputFieldVariablesType, i+1>(fieldVariables, meshName, file, binaryOutput, fixedFormat, onlyParallelDatasetElement);
+  loopOutputPointData<FieldVariablesForOutputWriterType, i+1>(fieldVariables, meshName, file, binaryOutput, fixedFormat, onlyParallelDatasetElement);
 }
  
 // current element is of pointer type (not vector)
-template<typename CurrentFieldVariableType, typename OutputFieldVariablesType>
+template<typename CurrentFieldVariableType, typename FieldVariablesForOutputWriterType>
 typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
-outputPointData(CurrentFieldVariableType currentFieldVariable, const OutputFieldVariablesType &fieldVariables, std::string meshName, 
+outputPointData(CurrentFieldVariableType currentFieldVariable, const FieldVariablesForOutputWriterType &fieldVariables, std::string meshName, 
                 std::ofstream &file, bool binaryOutput, bool fixedFormat, bool onlyParallelDatasetElement)
 {
   // if mesh name is the specified meshName
@@ -47,24 +47,24 @@ outputPointData(CurrentFieldVariableType currentFieldVariable, const OutputField
 }
 
 // Elementent i is of vector type
-template<typename VectorType, typename OutputFieldVariablesType>
+template<typename VectorType, typename FieldVariablesForOutputWriterType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
-outputPointData(VectorType currentFieldVariableVector, const OutputFieldVariablesType &fieldVariables, std::string meshName, 
+outputPointData(VectorType currentFieldVariableVector, const FieldVariablesForOutputWriterType &fieldVariables, std::string meshName, 
                 std::ofstream &file, bool binaryOutput, bool fixedFormat, bool onlyParallelDatasetElement)
 {
   for (auto& currentFieldVariable : currentFieldVariableVector)
   {
     // call function on all vector entries
-    if (outputPointData<typename VectorType::value_type,OutputFieldVariablesType>(currentFieldVariable, fieldVariables, meshName, file, binaryOutput, fixedFormat, onlyParallelDatasetElement))
+    if (outputPointData<typename VectorType::value_type,FieldVariablesForOutputWriterType>(currentFieldVariable, fieldVariables, meshName, file, binaryOutput, fixedFormat, onlyParallelDatasetElement))
       return true; // break iteration
   }
   return false;  // do not break iteration 
 }
 
 // element i is of tuple type
-template<typename TupleType, typename OutputFieldVariablesType>
+template<typename TupleType, typename FieldVariablesForOutputWriterType>
 typename std::enable_if<TypeUtility::isTuple<TupleType>::value, bool>::type
-outputPointData(TupleType currentFieldVariableTuple, const OutputFieldVariablesType &fieldVariables, std::string meshName, 
+outputPointData(TupleType currentFieldVariableTuple, const FieldVariablesForOutputWriterType &fieldVariables, std::string meshName, 
                 std::ofstream &file, bool binaryOutput, bool fixedFormat, bool onlyParallelDatasetElement)
 {
   // call for tuple element
@@ -73,5 +73,5 @@ outputPointData(TupleType currentFieldVariableTuple, const OutputFieldVariablesT
   return false;  // do not break iteration 
 }
 
-};  //namespace ParaviewLoopOverTuple
-};  //namespace OutputWriter
+}  // namespace ParaviewLoopOverTuple
+}  // namespace OutputWriter

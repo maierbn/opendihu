@@ -7,6 +7,7 @@
 #include "utility/python_utility.h"
 #include "data_management/time_stepping/time_stepping.h"
 #include "control/performance_measurement.h"
+#include "mesh/mesh_manager/mesh_manager.h"
 
 namespace OperatorSplitting
 {
@@ -21,6 +22,7 @@ OperatorSplitting(DihuContext context, std::string schemeName) :
 
   PythonConfig topLevelSettings = context_.getPythonConfig();
   specificSettings_ = PythonConfig(topLevelSettings, schemeName);
+  schemeName_ = schemeName;
 }
 
 template<typename TimeStepping1, typename TimeStepping2>
@@ -41,40 +43,35 @@ initialize()
   LOG(TRACE) << "  OperatorSplitting::initialize";
 
   TimeSteppingScheme::initialize();
-
   timeStepOutputInterval_ = specificSettings_.getOptionInt("timeStepOutputInterval", 100, PythonUtility::Positive);
+
+  transferSlotName_ = specificSettings_.getOptionString("transferSlotName", "");
 
   LOG(TRACE) << "  OperatorSplitting::initialize done, timeSpan=[" << this->startTime_<< "," << this->endTime_<< "]"
     << ", n steps: " << this->numberTimeSteps_;
 
-  // initialize time stepping objects, if only one knows its MeshType, initialize that first
-  //(e.g. CellML-adapter does not know, because it is independent of the type of a mesh)
-  if (timeStepping2_.knowsMeshType() && !timeStepping1_.knowsMeshType())
-  {
-    LOG(DEBUG) << "  OperatorSplitting::initialize timeStepping2";
-    timeStepping2_.initialize();
-    LOG(DEBUG) << "  OperatorSplitting::initialize timeStepping1";
-    timeStepping1_.initialize();
-  }
-  else
-  {
-    LOG(DEBUG) << "  OperatorSplitting::initialize timeStepping1";
-    timeStepping1_.initialize();
-    LOG(DEBUG) << "  OperatorSplitting::initialize timeStepping2";
-    timeStepping2_.initialize();
-  }
+  // initialize time stepping objects
+  LOG(DEBUG) << "  OperatorSplitting::initialize timeStepping1";
+  timeStepping1_.initialize();
+  LOG(DEBUG) << "  OperatorSplitting::initialize timeStepping2";
+  timeStepping2_.initialize();
+
+  LOG(DEBUG) << "initialize mappings between meshes \"" << timeStepping1_.data().functionSpace()->meshName() << "\" and \""
+    << timeStepping2_.data().functionSpace()->meshName() << "\".";
+  context_.meshManager()->initializeMappingsBetweenMeshes<typename TimeStepping1::FunctionSpace,typename TimeStepping2::FunctionSpace>(
+    timeStepping1_.data().functionSpace(), timeStepping2_.data().functionSpace());
 
   // log endTime parameters
   Control::PerformanceMeasurement::setParameter("endTime", endTime_);
 
-  initialized_ = true;
-}
+  // compose logging keys
+  logKeyTimeStepping1AdvanceTimeSpan_ = this->durationLogKey_ + std::string("_advanceTimeSpan1");  ///< key for logging of the duration of the advanceTimeSpan() call of timeStepping1
+  logKeyTimeStepping2AdvanceTimeSpan_ = this->durationLogKey_ + std::string("_advanceTimeSpan2");  ///< key for logging of the duration of the advanceTimeSpan() call of timeStepping2
+  logKeyTransfer12_ = this->durationLogKey_ + std::string("_transfer12");  ///< key for logging of the duration of data transfer from timestepping 1 to 2
+  logKeyTransfer21_ = this->durationLogKey_ + std::string("_transfer21");  ///< key for logging of the duration of data transfer from timestepping 2 to 1
 
-template<typename TimeStepping1, typename TimeStepping2>
-Vec &OperatorSplitting<TimeStepping1, TimeStepping2>::
-solution()
-{
-  return timeStepping1_.solution();
+
+  initialized_ = true;
 }
 
 template<typename TimeStepping1, typename TimeStepping2>
@@ -111,10 +108,10 @@ run()
 }
 
 template<typename TimeStepping1, typename TimeStepping2>
-bool OperatorSplitting<TimeStepping1, TimeStepping2>::
-knowsMeshType()
+typename OperatorSplitting<TimeStepping1, TimeStepping2>::OutputConnectorDataType OperatorSplitting<TimeStepping1, TimeStepping2>::
+getOutputConnectorData()
 {
-  return timeStepping1_.knowsMeshType() && timeStepping2_.knowsMeshType();
+  return timeStepping1_.getOutputConnectorData();
 }
 
 template<typename TimeStepping1, typename TimeStepping2>
@@ -124,5 +121,31 @@ data()
   return timeStepping1_.data();
 }
 
+//! get a reference to the first timestepping object
+template<typename TimeStepping1, typename TimeStepping2>
+TimeStepping1 &OperatorSplitting<TimeStepping1, TimeStepping2>::
+timeStepping1()
+{
+  return timeStepping1_;
+}
 
-};    // namespace
+//! get a reference to the second timestepping object
+template<typename TimeStepping1, typename TimeStepping2>
+TimeStepping2 &OperatorSplitting<TimeStepping1, TimeStepping2>::
+timeStepping2()
+{
+  return timeStepping2_;
+}
+
+//! output the given data for debugging
+template<typename TimeStepping1, typename TimeStepping2>
+std::string OperatorSplitting<TimeStepping1, TimeStepping2>::
+getString(typename OperatorSplitting<TimeStepping1, TimeStepping2>::OutputConnectorDataType &data)
+{
+  std::stringstream s;
+  s << "<" << schemeName_ << ",Term1:" << data << ">";
+  return s.str();
+}
+
+
+}  // namespace

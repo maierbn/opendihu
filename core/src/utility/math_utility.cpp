@@ -4,7 +4,7 @@
 
 namespace MathUtility
 {
-
+/*
 double sqr(double v)
 {
   return v*v;
@@ -13,7 +13,7 @@ double sqr(double v)
 int sqr(int v)
 {
   return v*v;
-}
+}*/
 
 template<>
 double length<2>(const Vec2 node)
@@ -509,6 +509,50 @@ int permutation(int i, int j, int k)
   return 0;
 }
 
+void quadrilateralGetPointCoordinates(const std::array<Vec3,4> geometryValues, const Vec3 point, Vec2 &xi)
+{
+  // derivation using sympy in script invert_mapping.py
+  const double xp1 = point[0];
+  const double xp2 = point[1];
+
+  double x11 = geometryValues[0][0];
+  double x12 = geometryValues[0][1];
+
+  const double x21 = geometryValues[1][0];
+  const double x22 = geometryValues[1][1];
+
+  const double x31 = geometryValues[2][0];
+  const double x32 = geometryValues[2][1];
+
+  const double x41 = geometryValues[3][0];
+  const double x42 = geometryValues[3][1];
+
+  // compute analytic solution for xi
+  // avoid division by 0
+  const double divisor = (x11*x32 - x11*x42 - x12*x31 + x12*x41 - x21*x32 + x21*x42 + x22*x31 - x22*x41);
+  const double eps = 1e-12;
+  if (fabs(divisor) < eps)
+  {
+    x11 += eps;
+    x12 += 0.8*eps;
+  }
+
+  double xi1 = 0.5*(2*x11*x32 - x11*x42 - 2*x12*x31 + x12*x41 - x21*x32 + x22*x31 + xp1*(x12 - x22 - x32 + x42) + xp2*(-x11 + x21 + x31 - x41) + std::sqrt(std::pow(x11, 2)*std::pow(x42, 2) - 2*std::pow(x11, 2)*x42*xp2 + std::pow(x11, 2)*std::pow(xp2, 2) - 2*x11*x12*x41*x42 + 2*x11*x12*x41*xp2 + 2*x11*x12*x42*xp1 - 2*x11*x12*xp1*xp2 - 2*x11*x21*x32*x42 + 2*x11*x21*x32*xp2 + 2*x11*x21*x42*xp2 - 2*x11*x21*std::pow(xp2, 2) - 2*x11*x22*x31*x42 + 2*x11*x22*x31*xp2 + 4*x11*x22*x32*x41 - 4*x11*x22*x32*xp1 - 4*x11*x22*x41*xp2 + 2*x11*x22*x42*xp1 + 2*x11*x22*xp1*xp2 + 2*x11*x31*x42*xp2 - 2*x11*x31*std::pow(xp2, 2) - 4*x11*x32*x41*xp2 + 2*x11*x32*x42*xp1 + 2*x11*x32*xp1*xp2 + 2*x11*x41*x42*xp2 + 2*x11*x41*std::pow(xp2, 2) - 2*x11*std::pow(x42, 2)*xp1 - 2*x11*x42*xp1*xp2 + std::pow(x12, 2)*std::pow(x41, 2) - 2*std::pow(x12, 2)*x41*xp1 + std::pow(x12, 2)*std::pow(xp1, 2) + 4*x12*x21*x31*x42 - 4*x12*x21*x31*xp2 - 2*x12*x21*x32*x41 + 2*x12*x21*x32*xp1 + 2*x12*x21*x41*xp2 - 4*x12*x21*x42*xp1 + 2*x12*x21*xp1*xp2 - 2*x12*x22*x31*x41 + 2*x12*x22*x31*xp1 + 2*x12*x22*x41*xp1 - 2*x12*x22*std::pow(xp1, 2) + 2*x12*x31*x41*xp2 - 4*x12*x31*x42*xp1 + 2*x12*x31*xp1*xp2 + 2*x12*x32*x41*xp1 - 2*x12*x32*std::pow(xp1, 2) - 2*x12*std::pow(x41, 2)*xp2 + 2*x12*x41*x42*xp1 - 2*x12*x41*xp1*xp2 + 2*x12*x42*std::pow(xp1, 2) + std::pow(x21, 2)*std::pow(x32, 2) - 2*std::pow(x21, 2)*x32*xp2 + std::pow(x21, 2)*std::pow(xp2, 2) - 2*x21*x22*x31*x32 + 2*x21*x22*x31*xp2 + 2*x21*x22*x32*xp1 - 2*x21*x22*xp1*xp2 + 2*x21*x31*x32*xp2 - 4*x21*x31*x42*xp2 + 2*x21*x31*std::pow(xp2, 2) - 2*x21*std::pow(x32, 2)*xp1 + 2*x21*x32*x41*xp2 + 2*x21*x32*x42*xp1 - 2*x21*x32*xp1*xp2 - 2*x21*x41*std::pow(xp2, 2) + 2*x21*x42*xp1*xp2 + std::pow(x22, 2)*std::pow(x31, 2) - 2*std::pow(x22, 2)*x31*xp1 + std::pow(x22, 2)*std::pow(xp1, 2) - 2*x22*std::pow(x31, 2)*xp2 + 2*x22*x31*x32*xp1 + 2*x22*x31*x41*xp2 + 2*x22*x31*x42*xp1 - 2*x22*x31*xp1*xp2 - 4*x22*x32*x41*xp1 + 2*x22*x32*std::pow(xp1, 2) + 2*x22*x41*xp1*xp2 - 2*x22*x42*std::pow(xp1, 2) + std::pow(x31, 2)*std::pow(xp2, 2) - 2*x31*x32*xp1*xp2 - 2*x31*x41*std::pow(xp2, 2) + 2*x31*x42*xp1*xp2 + std::pow(x32, 2)*std::pow(xp1, 2) + 2*x32*x41*xp1*xp2 - 2*x32*x42*std::pow(xp1, 2) + std::pow(x41, 2)*std::pow(xp2, 2) - 2*x41*x42*xp1*xp2 + std::pow(x42, 2)*std::pow(xp1, 2)))/(x11*x32 - x11*x42 - x12*x31 + x12*x41 - x21*x32 + x21*x42 + x22*x31 - x22*x41);
+
+
+  // avoid division by 0
+  const double divisor2 = (x11*xi1 - x11 - x21*xi1 - x31*xi1 + x31 + x41*xi1);
+  if (fabs(divisor2) < eps)
+  {
+    x11 -= 0.6*eps;
+    xi1 += 0.8*eps;
+  }
+  const double xi2 = (x11*xi1 - x11 - x21*xi1 + xp1)/(x11*xi1 - x11 - x21*xi1 - x31*xi1 + x31 + x41*xi1);
+
+  xi[0] = xi1;
+  xi[1] = xi2;
+}
+
 template<>
 void rotateMatrix<1>(Matrix<1,1> &matrix, Vec3 directionVector)
 {
@@ -562,10 +606,49 @@ void rotateMatrix<3>(Matrix<3,3> &matrix, Vec3 directionVector)
     -b3/determinant, b2*b3*(sqr(b1) + b1 - sqr(b2) - sqr(b3))/((sqr(b2) + sqr(b3))*determinant), (-sqr(b1)*sqr(b2) + b1*sqr(b3) + pow(b2,4) + sqr(b2)*sqr(b3))/((sqr(b2) + sqr(b3))*determinant)
   });
 
-  VLOG(1) << "direction: " << directionVector << ", determinant: " << determinant;
+  /*VLOG(1) << "direction: " << directionVector << ", determinant: " << determinant;
   VLOG(1) << "rotationMatrix: " << rotationMatrix << ", rotationMatrixInverse: " << rotationMatrixInverse;
 
+  VLOG(1) << "matrix before rotation: " << matrix;
+  VLOG(1) << "   rotInv * matrix: " << rotationMatrixInverse * matrix;
+  VLOG(1) << "   rotInv * matrix * rot: " << rotationMatrixInverse * matrix * rotationMatrix;
+  */
+
   matrix = rotationMatrixInverse * matrix * rotationMatrix;
+
+  //VLOG(1) << "matrix after rotation: " << matrix;
 }
 
-}; // namespace
+double estimateMaximumEigenvalue(const Tensor2<3> &matrix)
+{
+  Vec3 v({1.0,0.0,0.0});
+
+  double normVPrevious = 0;
+  double normV = 1;
+
+  // power iteration
+  for (int i = 0; i < 15 && fabs(normVPrevious - normV) >= 1e-5; i++)
+  {
+    normVPrevious = normV;
+
+    v = matrix*v;
+
+    // normalize vector
+    normV = norm<3>(v);
+    v /= normV;
+
+    VLOG(1) << " eigenvalue estimation, it " << i << ", v: " << v << ", value: " << normV << ", error: " << fabs(normVPrevious - normV);
+  }
+
+  return normV;
+}
+
+double estimateConditionNumber(const Tensor2<3> &matrix, const Tensor2<3> &inverseMatrix)
+{
+  double maximumEigenvalue = estimateMaximumEigenvalue(matrix);
+  double minimumEigenvalue = 1./estimateMaximumEigenvalue(inverseMatrix);
+
+  return maximumEigenvalue / minimumEigenvalue;
+}
+
+}  // namespace

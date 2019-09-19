@@ -88,13 +88,16 @@ print factor(uu.dot(a))
 
 # diffusion tensor
 import numpy as np
-uu_num = uu.subs([(b1,2.), (b2,1.), (b3,-1)])
+uu_num = uu.subs([(b1,0.), (b2,0.), (b3,5.)])
 
-print "b=",b.subs([(b1,2.), (b2,1.), (b3,-1)])
+print "b=",b.subs([(b1,0.), (b2,0.), (b3,5.)])
 
 base_matrix = Matrix([[2,0,0], [0,1,0], [0,0,1]])
+print("rotation matrix: ",uu_num)
+print("rotation_matrix inverse: ",uu_num.inv())
 
 sigma = uu_num.inv()*base_matrix*uu_num
+print "rotInv*matrix:",uu_num.inv()*base_matrix
 print "sigma=",sigma
 eigenvectors = sigma.eigenvects(simplify=True)
 for eigenvector in eigenvectors:

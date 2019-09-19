@@ -12,6 +12,82 @@ namespace FieldVariable
 
 using namespace StringUtility;
 
+//! for a specific component, get all values
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
+getValuesWithGhosts(int componentNo, std::vector<double> &values, bool onlyNodalValues) const
+{
+  assert(componentNo >= 0 && componentNo < nComponents);
+
+  this->component_[componentNo].getValues(values, onlyNodalValues);
+}
+
+//! for a specific component, get all values
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
+getValuesWithoutGhosts(int componentNo, std::vector<double> &values, bool onlyNodalValues) const
+{
+  this->getValuesWithGhosts(componentNo, values, onlyNodalValues);
+}
+
+//! for a specific component, get all values
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
+getValuesWithGhosts(std::vector<std::array<double,nComponents>> &values, bool onlyNodalValues) const
+{
+  std::vector<double> buffer;
+  for (int componentNo = 0; componentNo < nComponents; componentNo++)
+  {
+    // get values into buffer
+    this->component_[componentNo].getValues(buffer, onlyNodalValues);
+
+    values.resize(buffer.size());
+
+    // copy values from buffer to output vector
+    for (int valueIndex = 0; valueIndex < buffer.size(); valueIndex++)
+    {
+      values[valueIndex][componentNo] = buffer[valueIndex];
+    }
+  }
+}
+
+//! for a specific component, get all values
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
+getValuesWithGhosts(std::array<std::vector<double>,nComponents> &values, bool onlyNodalValues) const
+{
+  std::vector<double> buffer;
+  for (int componentNo = 0; componentNo < nComponents; componentNo++)
+  {
+    // get values into buffer
+    this->component_[componentNo].getValues(buffer, onlyNodalValues);
+
+    values.resize(buffer.size());
+
+    // copy values from buffer to output vector
+    for (int valueIndex = 0; valueIndex < buffer.size(); valueIndex++)
+    {
+      values[componentNo][valueIndex] = buffer[valueIndex];
+    }
+  }
+}
+
+//! for a specific component, get all values
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
+getValuesWithoutGhosts(std::vector<std::array<double,nComponents>> &values, bool onlyNodalValues) const
+{
+  this->getValuesWithGhosts(values, onlyNodalValues);
+}
+
+//! for a specific component, get all values
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
+getValuesWithoutGhosts(std::array<std::vector<double>,nComponents> &values, bool onlyNodalValues) const
+{
+  this->getValuesWithGhosts(values, onlyNodalValues);
+}
+
 //! get values from their local dof no.s for all components, this eventually does not get all values if there are multiple versions
 template<typename FunctionSpaceType, int nComponents>
 template<int N>
@@ -38,24 +114,6 @@ getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nCompo
   }
 }
 
-//! for a specific component, get all values
-template<typename FunctionSpaceType, int nComponents>
-void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
-getValuesWithGhosts(int componentNo, std::vector<double> &values, bool onlyNodalValues) const
-{
-  assert(componentNo >= 0 && componentNo < nComponents);
-  
-  this->component_[componentNo].getValues(values, onlyNodalValues);
-}
-
-//! for a specific component, get all values
-template<typename FunctionSpaceType, int nComponents>
-void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
-getValuesWithoutGhosts(int componentNo, std::vector<double> &values, bool onlyNodalValues) const
-{
-  this->getValuesWithGhosts(componentNo, values, onlyNodalValues);
-}
-
 //! for a specific component, get values from their local dof no.s
 template<typename FunctionSpaceType, int nComponents>
 template<int N>
@@ -65,6 +123,18 @@ getValues(int componentNo, std::array<dof_no_t,N> dofLocalNo, std::array<double,
   assert(componentNo >= 0 && componentNo < nComponents);
   
   this->component_[componentNo].template getValues<N>(dofLocalNo, values);
+}
+
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
+getValues(int componentNo, int nValues, const dof_no_t *dofLocalNo, std::vector<double> &values) const
+{
+  assert(componentNo >= 0 && componentNo < nComponents);
+  assert(this->values_);
+
+  int valuesPreviousSize = values.size();
+  values.resize(valuesPreviousSize + nValues);
+  this->values_->getValues(componentNo, nValues, (PetscInt *)dofLocalNo, values.data() + valuesPreviousSize);
 }
 
 //! for a specific component, get values from their local dof no.s
@@ -101,6 +171,19 @@ getValue(int componentNo, node_no_t dofLocalNo) const
 {
   assert(componentNo >= 0 && componentNo < nComponents);
   return this->component_[componentNo].getValue(dofLocalNo);
+}
+
+//! get a single value from local dof no. for all components
+template<typename FunctionSpaceType, int nComponents>
+std::array<double,nComponents> FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
+getValue(node_no_t dofLocalNo) const
+{
+  std::array<double,nComponents> result;
+  for (int componentNo = 0; componentNo < nComponents; componentNo++)
+  {
+    result[componentNo] = this->component_[componentNo].getValue(dofLocalNo);
+  }
+  return result;
 }
 
 //! for a specific component, get the values corresponding to all element-local dofs
@@ -159,6 +242,43 @@ setValues(int componentNo, Vec petscVector)
   this->setValues(componentNo, values);
 }
 
+
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
+setValues(int componentNo, const std::vector<dof_no_t> &dofNosLocal, const std::vector<double> &values, InsertMode petscInsertMode)
+{
+  assert(componentNo >= 0 && componentNo < nComponents);
+  assert(this->values_);
+  assert(dofNosLocal.size() == values.size());
+
+  // set the values for the current component
+  this->values_->setValues(componentNo, dofNosLocal.size(), dofNosLocal.data(), values.data(), petscInsertMode);
+}
+
+template<typename FunctionSpaceType, int nComponents>
+template<int N>
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
+setValues(int componentNo, const std::array<dof_no_t,N> &dofNosLocal, const std::array<double,N> &values, InsertMode petscInsertMode)
+{
+  assert(componentNo >= 0 && componentNo < nComponents);
+  assert(this->values_);
+
+  // set the values for the current component
+  this->values_->setValues(componentNo, N, dofNosLocal.data(), values.data(), petscInsertMode);
+}
+
+//! set values for a given component for given dofs, using raw pointers
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
+setValues(int componentNo, int nValues, const dof_no_t *dofNosLocal, const double *values, InsertMode petscInsertMode)
+{
+  assert(componentNo >= 0 && componentNo < nComponents);
+  assert(this->values_);
+
+  // set the values for the current component
+  this->values_->setValues(componentNo, nValues, dofNosLocal, values, petscInsertMode);
+}
+
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
 setValues(int componentNo, std::shared_ptr<FieldVariable<FunctionSpaceType,1>> fieldVariable)
@@ -166,6 +286,28 @@ setValues(int componentNo, std::shared_ptr<FieldVariable<FunctionSpaceType,1>> f
   std::vector<double> values;
   fieldVariable->getValuesWithoutGhosts(0, values, false);
   this->setValues(componentNo, values);
+}
+
+template<typename FunctionSpaceType, int nComponents>
+template<int N>
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
+setValues(const std::array<dof_no_t,N> &dofNosLocal, const std::array<std::array<double,nComponents>,N> &values, InsertMode petscInsertMode)
+{
+  assert(this->values_);
+
+  std::array<double,N> valuesBuffer;
+
+  for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
+  {
+    // loop over dofs and prepare values of current component
+    for (int dofIndex = 0; dofIndex < N; dofIndex++)
+    {
+      valuesBuffer[dofIndex] = values[dofIndex][componentIndex];
+    }
+
+    // set the values for the current component
+    this->values_->setValues(componentIndex, N, dofNosLocal.data(), valuesBuffer.data(), petscInsertMode);
+  }
 }
 
 template<typename FunctionSpaceType, int nComponents>
@@ -257,11 +399,22 @@ setValue(dof_no_t dofLocalNo, const std::array<double,nComponents> &value, Inser
   // prepare lookup indices for PETSc vector values_
   for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
   {
+    LOG(DEBUG) << "set value of \"" << this->name_ << "\" for component " << componentIndex << " to " << value[componentIndex];
     this->values_->setValues(componentIndex, 1, &dofLocalNo, value.data()+componentIndex, petscInsertMode);
   }
 
   // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. finishGhostManipulation must be called
 }
+
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
+setValue(int componentNo, dof_no_t dofLocalNo, double value, InsertMode petscInsertMode)
+{
+  assert(this->values_);
+
+  this->values_->setValues(componentNo, 1, &dofLocalNo, &value, petscInsertMode);
+}
+
 
 //! set values for the specified component for all local dofs, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
 template<typename FunctionSpaceType, int nComponents>
@@ -321,4 +474,4 @@ zeroEntries()
   this->values_->zeroEntries();
 }
 
-};  // namespace
+} // namespace

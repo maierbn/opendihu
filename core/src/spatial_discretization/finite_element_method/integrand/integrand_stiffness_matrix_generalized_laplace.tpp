@@ -9,8 +9,8 @@ namespace SpatialDiscretization
 
 //integrand for stiffness matrix of laplace operator, 1D
 template<typename EvaluationsType,typename FunctionSpaceType,typename Term>
-EvaluationsType IntegrandStiffnessMatrix<1,EvaluationsType,FunctionSpaceType,Term,Equation::hasGeneralizedLaplaceOperator<Term>>::
-evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,Term> &data, const std::array<Vec3,1> &jacobian,
+EvaluationsType IntegrandStiffnessMatrix<1,EvaluationsType,FunctionSpaceType,1,Term,Equation::hasGeneralizedLaplaceOperator<Term>>::
+evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,1,Term> &data, const std::array<Vec3,1> &jacobian,
                   element_no_t elementNoLocal, const std::array<double,1> xi)
 {
   EvaluationsType evaluations;
@@ -34,12 +34,12 @@ evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,Term> &data, cons
   }
 
   return evaluations;
-};
+}
 
 //integrand for stiffness matrix of laplace operator, 2D
 template<typename EvaluationsType,typename FunctionSpaceType,typename Term>
-EvaluationsType IntegrandStiffnessMatrix<2,EvaluationsType,FunctionSpaceType,Term,Equation::hasGeneralizedLaplaceOperator<Term>>::
-evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,Term> &data, const std::array<Vec3,2> &jacobian,
+EvaluationsType IntegrandStiffnessMatrix<2,EvaluationsType,FunctionSpaceType,1,Term,Equation::hasGeneralizedLaplaceOperator<Term>>::
+evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,1,Term> &data, const std::array<Vec3,2> &jacobian,
                   element_no_t elementNoLocal, const std::array<double,2> xi)
 {
   VLOG(1) << "evaluateIntegrand generalized Laplace";
@@ -74,9 +74,9 @@ evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,Term> &data, cons
 #ifdef DEBUG
   VLOG(3) << "transformationMatrix:";
     std::stringstream s;
-  for(int i=0; i<2; i++)
+  for (int i=0; i<2; i++)
   {
-    for(int j=0; j<2; j++)
+    for (int j=0; j<2; j++)
     {
       s << transformationMatrix[i*2+j] << " ";
     }
@@ -102,12 +102,12 @@ evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,Term> &data, cons
   }
 
   return evaluations;
-};
+}
 
 //integrand for stiffness matrix of laplace operator, 3D
 template<typename EvaluationsType,typename FunctionSpaceType,typename Term>
-EvaluationsType IntegrandStiffnessMatrix<3,EvaluationsType,FunctionSpaceType,Term,Equation::hasGeneralizedLaplaceOperator<Term>>::
-evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,Term> &data, const std::array<Vec3,3> &jacobian,
+EvaluationsType IntegrandStiffnessMatrix<3,EvaluationsType,FunctionSpaceType,1,Term,Equation::hasGeneralizedLaplaceOperator<Term>>::
+evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,1,Term> &data, const std::array<Vec3,3> &jacobian,
                   element_no_t elementNoLocal, const std::array<double,3> xi)
 {
   EvaluationsType evaluations;
@@ -121,9 +121,9 @@ evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,Term> &data, cons
 #ifdef DEBUG
   VLOG(3) << "transformationMatrix:";
   std::stringstream s;
-  for(int i=0; i<3; i++)
+  for (int i=0; i<3; i++)
   {
-    for(int j=0; j<3; j++)
+    for (int j=0; j<3; j++)
     {
       s << transformationMatrix[i*3+j] << " ";
     }
@@ -144,11 +144,38 @@ evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,Term> &data, cons
 
       //! computes gradPhi[i]^T * T * gradPhi[j] where T is the symmetric transformation matrix
       double integrand = MathUtility::applyTransformation(transformationMatrix, diffusionTensorGradPhiI, gradPhi[j]) * fabs(determinant);
+
+#ifndef NDEBUG
+      if (!std::isfinite(integrand))
+      {
+        LOG(ERROR) << "Value entry (" << i << "," << j << ") in stiffness matrix is nan or inf (" << integrand << "). ";
+        std::stringstream s, s2;
+        for (int i=0; i<3; i++)
+        {
+          for (int j=0; j<3; j++)
+          {
+            s << transformationMatrix[i*3+j] << " ";
+            s2 << diffusionTensor[i*3+j] << " ";
+          }
+          s << std::endl;
+          s2 << std::endl;
+        }
+        LOG(INFO) << "elementNoLocal: " << elementNoLocal << ", xi: " << xi
+          << ", gradPhi[" << i << "] = " << gradPhi[i] << ", gradPhi[" << j << "] = " << gradPhi[j]
+          << ", diffusionTensor:";
+        LOG(INFO) << s2.str();
+        LOG(INFO) << "diffusionTensorGradPhiI: " << diffusionTensorGradPhiI;
+        LOG(INFO) << "Transformation matrix: ";
+        LOG(INFO) << s.str();
+        LOG(INFO) << "determinant: " << determinant;
+        LOG(INFO) << "jacobian (column-major): " << jacobian;
+      }
+#endif
       evaluations(i,j) = integrand;
     }
   }
 
   return evaluations;
-};
+}
 
-};  // namespace
+} // namespace

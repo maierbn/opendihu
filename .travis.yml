@@ -15,7 +15,7 @@ services:
       
 sudo: required
 
-before_install:
+#before_install:
 #  - sudo apt-get install tree
 #  - sudo apt-get install gcc-5
 #  - sudo apt-get install gfortran-5
@@ -27,10 +27,10 @@ before_install:
 #  - gcc --version
 #  - g++ --version
 #  - gfortran --version
-  - docker pull maierbn/opendihu:latest
+#  - docker pull maierbn/opendihu:latest
 
 script:
-  - docker run maierbn/opendihu:latest bash -c "cd opendihu && git pull && make release" 
+  - docker run maierbn/opendihu:latest bash -c "cd opendihu && git checkout parallel_fiber_estimation && git pull origin parallel_fiber_estimation && make release" 
 
 #after_failure:
 #  - tree -L 4 dependencies

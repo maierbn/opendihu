@@ -54,7 +54,7 @@ public:
   using FieldVariableSetGetStructured<FunctionSpaceType,1>::setValues;
 
   //! get the values corresponding to all element-local dofs for all components
-  void getElementValues(element_no_t elementNo, std::array<double,FunctionSpaceType::nDofsPerElement()> &values) const;
+  void getElementValues(element_no_t elementNoLocal, std::array<double,FunctionSpaceType::nDofsPerElement()> &values) const;
 
   //! get a single value from local dof no. for all components
   double getValue(node_no_t dofLocalNo) const;
@@ -88,6 +88,6 @@ public:
   void setValuesWithoutGhosts(const std::vector<double> &values, InsertMode petscInsertMode=INSERT_VALUES);
 };
 
-};   // namespace
+}  // namespace
 
 #include "field_variable/structured/04_field_variable_set_get_component_dependent_structured.tpp"

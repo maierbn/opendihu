@@ -34,5 +34,8 @@ Vec3 getXiOnFace(face_t face, std::array<double,2> xiSurface);
 //! return a value of xi in [0,1]^2 that lies on the face in parameter space, the position on the face is given by xiSurface in [0,1]
 Vec2 getXiOnFace(face_t face, std::array<double,1> xiSurface);
 
+//! dummy function
+VecD<1> getXiOnFace(face_t face, std::array<double,0> xiSurface);
+
 }  // namespace
 

@@ -27,9 +27,9 @@ MathUtility::Matrix<nRows,nColumns> operator*(double lambda, MathUtility::Matrix
 template<int nRows, int nColumns>
 MathUtility::Matrix<nRows,nColumns> operator*(MathUtility::Matrix<nRows,nColumns> matrix, double lambda);
 
-//! component-wise matrix multiplication
-template<int nRows, int nColumns>
-MathUtility::Matrix<nRows,nColumns> operator*(MathUtility::Matrix<nRows,nColumns> matrix1, MathUtility::Matrix<nRows,nColumns> matrix2);
+//! matrix-matrix multiplication
+template<int nRows, int nColumns, int nColumns2>
+MathUtility::Matrix<nRows,nColumns2> operator*(MathUtility::Matrix<nRows,nColumns> matrix1, MathUtility::Matrix<nColumns,nColumns2> matrix2);
 
 //! output array content to stream
 template<int nRows, int nColumns>

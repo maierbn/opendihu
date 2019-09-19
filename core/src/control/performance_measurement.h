@@ -20,11 +20,20 @@ public:
 
   //! stop timing measurement for a given keyword, the counter of number of time spans is increased by numberAccumulated
   static void stop(std::string name, int numberAccumulated=1);
+  
+  //! execute perf counter to measure flops of the current PID
+  static void startFlops();
+
+  //! stop perf
+  static void endFlops();
 
   //! compute the mean magnitude of the given error vector or matrix and store it under name
   template<typename T>
   static void measureError(std::string name, T differenceVector);
-
+  
+  //! compute sum of numbers
+  static void countNumber(std::string name, int number);
+  
   //! write collected information to a log file
   static void writeLogFile(std::string logFileName = "logs/log");
 
@@ -32,6 +41,8 @@ public:
   template<typename T>
   static void setParameter(std::string key, T parameter);
 
+  //! get the value of a parameter that was previously set, empty string if parameter is not present
+  static std::string getParameter(std::string key);
 private:
 
   //! parse some system information
@@ -51,13 +62,15 @@ private:
   };
 
   static std::map<std::string, Measurement> measurements_;   ///< the currently stored measurements
+  static std::map<std::string, int> sums_;   ///< the currently stored sums
   static std::map<std::string,std::string> parameters_;   ///< arbitrary parameters that will be stored in the log
 
-
+  static std::shared_ptr<std::thread> perfThread_;  ///< thread used to execute perf which measures FLOPS
+  static int perfThreadHandle_;   ///< handle of the perf thread
 };
 
 template<>
 void PerformanceMeasurement::measureError<double>(std::string name, double differenceVector);
 
-};  // namespace
+} // namespace
 #include "control/performance_measurement.tpp"

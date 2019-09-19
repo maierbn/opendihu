@@ -11,18 +11,18 @@ namespace ExfileLoopOverTuple
  /** Static recursive loop from 0 to number of entries in the tuple
  * Loop body
  */
-template<typename OutputFieldVariablesType, int i>
-inline typename std::enable_if<i < std::tuple_size<OutputFieldVariablesType>::value, void>::type
-loopOutputNodeValues(const OutputFieldVariablesType &fieldVariables, std::string meshName,
+template<typename FieldVariablesForOutputWriterType, int i>
+inline typename std::enable_if<i < std::tuple_size<FieldVariablesForOutputWriterType>::value, void>::type
+loopOutputNodeValues(const FieldVariablesForOutputWriterType &fieldVariables, std::string meshName,
                      std::ostream &stream, node_no_t nodeGlobalNo)
 {
   // call what to do in the loop body
-  if (outputNodeValues<typename std::tuple_element<i,OutputFieldVariablesType>::type>(
+  if (outputNodeValues<typename std::tuple_element<i,FieldVariablesForOutputWriterType>::type>(
     std::get<i>(fieldVariables), meshName, stream, nodeGlobalNo))
     return;
   
   // advance iteration to next tuple element
-  loopOutputNodeValues<OutputFieldVariablesType, i+1>(fieldVariables, meshName, stream, nodeGlobalNo);
+  loopOutputNodeValues<FieldVariablesForOutputWriterType, i+1>(fieldVariables, meshName, stream, nodeGlobalNo);
 }
  
 // current element is of pointer type (not vector)
@@ -108,5 +108,5 @@ outputNodeValues(TupleType currentFieldVariableTuple, std::string meshName,
   return false;  // do not break iteration
 }
 
-};  //namespace ExfileLoopOverTuple
-};  //namespace OutputWriter
+}  // namespace ExfileLoopOverTuple
+}  // namespace OutputWriter

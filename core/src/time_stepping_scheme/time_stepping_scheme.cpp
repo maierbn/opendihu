@@ -14,9 +14,16 @@ TimeSteppingScheme::TimeSteppingScheme(DihuContext context) :
 
 void TimeSteppingScheme::setTimeStepWidth(double timeStepWidth)
 {
-  double epsilon = 1e-15;
-  numberTimeSteps_ = int(std::ceil((endTime_ - startTime_) / timeStepWidth - epsilon));
-  timeStepWidth_ = timeStepWidth;
+  double epsilon = 1e-1;
+  // Increase time step width by maximum of epsilon=10%.
+  // Increasing time step width is potentially dangerous, because it can make the timestepping scheme unstable.
+  // Ideally changing the timestep width should not be possible at all, if it is given correctly in the config.
+  // Examples:
+  //  t_end = 1.09, dt = 1.0 -> increase dt to 1.09, one timestep
+  //  t_end = 1.11, dt = 1.0 -> decrease dt to 0.555, two timesteps
+
+  numberTimeSteps_ = std::max(1,int(std::ceil((endTime_ - startTime_) / timeStepWidth - epsilon)));
+  setNumberTimeSteps(numberTimeSteps_);
 }
 
 void TimeSteppingScheme::setNumberTimeSteps(int numberTimeSteps)
@@ -31,7 +38,13 @@ void TimeSteppingScheme::setTimeSpan(double startTime, double endTime)
   startTime_ = startTime;
   endTime_ = endTime;
 
-  if(isTimeStepWidthSignificant_)
+  if (timeStepWidth_ > endTime_-startTime_)
+  {
+    LOG(DEBUG) << "time span [" << startTime << "," << endTime << "], reduce timeStepWidth from " << timeStepWidth_ << " to " << endTime_-startTime_;
+    timeStepWidth_ = endTime_-startTime_;
+  }
+
+  if (isTimeStepWidthSignificant_)
   {
     setTimeStepWidth(timeStepWidth_);
     LOG(DEBUG) << "set number of time steps to " <<numberTimeSteps_<< " from timeStepWidth " << timeStepWidth_;
@@ -87,7 +100,7 @@ void TimeSteppingScheme::initialize()
     setNumberTimeSteps(numberTimeSteps);
   }
 
-  LOG(INFO) << "Time span: [" << startTime_ << "," << endTime_ << "], Number of time steps: " << numberTimeSteps_
+  LOG(DEBUG) << "Time span: [" << startTime_ << "," << endTime_ << "], Number of time steps: " << numberTimeSteps_
     << ", time step width: " << timeStepWidth_;
 
   // log timeStepWidth as the key that is given by "logTimeStepWidthAsKey"
@@ -97,7 +110,7 @@ void TimeSteppingScheme::initialize()
     Control::PerformanceMeasurement::setParameter(timeStepWidthKey, timeStepWidth_);
   }
 
-  if (specificSettings_.hasKey("logTimeStepWidthAsKey"))
+  if (specificSettings_.hasKey("durationLogKey"))
   {
     this->durationLogKey_ = specificSettings_.getOptionString("durationLogKey", "");
   }
@@ -122,7 +135,7 @@ double TimeSteppingScheme::endTime()
   return endTime_;
 }
 
-double TimeSteppingScheme::numberTimeSteps()
+int TimeSteppingScheme::numberTimeSteps()
 {
   return numberTimeSteps_;
 }
@@ -137,4 +150,11 @@ PythonConfig TimeSteppingScheme::specificSettings()
   return specificSettings_;
 }
 
-};  // namespace
+OutputWriter::Manager TimeSteppingScheme::outputWriterManager()
+{
+  return outputWriterManager_;
+}
+
+
+}  // namespace
+

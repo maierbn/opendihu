@@ -27,6 +27,9 @@ if not env['no_tests']:
                 'src/1_rank/laplace.cpp',
                 'src/1_rank/main.cpp',
                 'src/1_rank/mesh.cpp',
+                'src/1_rank/neumann_boundary_conditions_1d.cpp',
+                'src/1_rank/neumann_boundary_conditions_2d.cpp',
+                'src/1_rank/neumann_boundary_conditions_3d.cpp',
                 'src/1_rank/numerical_integration.cpp',
                 'src/1_rank/operator_splitting.cpp',
                 'src/1_rank/output.cpp',
@@ -35,21 +38,30 @@ if not env['no_tests']:
                 'src/1_rank/unstructured_deformable.cpp',
                 'src/utility.cpp']
 
-    #src_files = ['src/1_rank/laplace.cpp', 'src/1_rank/main.cpp', 'src/utility.cpp']
+    #src_files = ['src/1_rank/diffusion.cpp', 'src/1_rank/main.cpp', 'src/utility.cpp']
     #print ""
     #print "WARNING: only compiling tests ",src_files
 
     program = env.Program('1_rank_tests', source=src_files)
 
     # add command that runs the tests after build
-    test = env.Command(target = 'test1', source = './1_rank_tests', action = 'cd testing/unit_testing/'+variant_directory+' && ./1_rank_tests || sudo ./1_rank_tests -on_error_attach_debugger')
+    test = env.Command(target = 'test1', source = './1_rank_tests', action = 'cd testing/unit_testing/'+variant_directory+' && ./1_rank_tests || sudo -n ./1_rank_tests -on_error_attach_debugger')
     AlwaysBuild(test)
 
 
   # ---- parallel unit tests: 2 ranks ----
   if True:
-    src_files = ['src/2_ranks/laplace.cpp', 'src/2_ranks/diffusion.cpp', 'src/2_ranks/poisson.cpp', 'src/2_ranks/main.cpp', 'src/utility.cpp']
-    #src_files = ['src/2_ranks/laplace.cpp', 'src/2_ranks/main.cpp', 'src/utility.cpp']
+    src_files = ['src/2_ranks/laplace.cpp',
+                 'src/2_ranks/diffusion.cpp',
+                 'src/2_ranks/poisson.cpp',
+                 'src/2_ranks/neumann_boundary_conditions.cpp',
+                 'src/2_ranks/solid_mechanics.cpp',
+                 'src/2_ranks/main.cpp',
+                 'src/utility.cpp',
+                 'src/2_ranks/partitioned_petsc_vec.cpp']
+    #src_files = ['src/2_ranks/solid_mechanics.cpp', 'src/2_ranks/main.cpp', 'src/utility.cpp']
+    #print ""
+    #print "WARNING: only compiling tests ",src_files
 
     program = env.Program('2_ranks_tests', source=src_files)
 
@@ -59,11 +71,16 @@ if not env['no_tests']:
 
   # ---- parallel unit tests: 6 ranks ----
   if True:
-    src_files = ['src/6_ranks/numberings.cpp', 'src/6_ranks/diffusion.cpp', 'src/6_ranks/main.cpp', 'src/utility.cpp']
-    #src_files = ['src/6_ranks/numberings.cpp', 'src/6_ranks/main.cpp', 'src/utility.cpp']
+    src_files = ['src/6_ranks/numberings.cpp', 'src/6_ranks/diffusion.cpp', 'src/6_ranks/partitioned_petsc_vec.cpp', 'src/6_ranks/main.cpp', 'src/utility.cpp']
+    #src_files = ['src/6_ranks/partitioned_petsc_vec.cpp', 'src/6_ranks/main.cpp', 'src/utility.cpp']
 
     program = env.Program('6_ranks_tests', source=src_files)
 
     # add command that runs the tests after build
     test = env.Command(target = 'test6', source = './6_ranks_tests', action = 'cd testing/unit_testing/'+variant_directory+' && rm -f SUCCESS && mpirun -n 6 -quiet --allow-run-as-root ./6_ranks_tests || [ -f "SUCCESS" ]')
+    AlwaysBuild(test)
+
+  # ---- test compilation of examples ----
+  if False:
+    test = env.Command(target = 'test_examples', source = None, action = 'cd scripts && ./check_if_examples_compile.sh')
     AlwaysBuild(test)

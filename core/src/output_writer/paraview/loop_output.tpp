@@ -14,25 +14,25 @@ namespace ParaviewLoopOverTuple
  /** Static recursive loop from 0 to number of entries in the tuple
  * Loop body
  */
-template<typename OutputFieldVariablesType, typename AllOutputFieldVariablesType, int i>
-inline typename std::enable_if<i < std::tuple_size<OutputFieldVariablesType>::value, void>::type
-loopOutput(const OutputFieldVariablesType &fieldVariables, const AllOutputFieldVariablesType &allFieldVariables,
+template<typename FieldVariablesForOutputWriterType, typename AllFieldVariablesForOutputWriterType, int i>
+inline typename std::enable_if<i < std::tuple_size<FieldVariablesForOutputWriterType>::value, void>::type
+loopOutput(const FieldVariablesForOutputWriterType &fieldVariables, const AllFieldVariablesForOutputWriterType &allFieldVariables,
            std::string meshName, std::string filename, PythonConfig specificSettings
 )
 {
   // call what to do in the loop body
-  if (output<typename std::tuple_element<i,OutputFieldVariablesType>::type, AllOutputFieldVariablesType>(
+  if (output<typename std::tuple_element<i,FieldVariablesForOutputWriterType>::type, AllFieldVariablesForOutputWriterType>(
         std::get<i>(fieldVariables), allFieldVariables, meshName, filename, specificSettings))
     return;
   
   // advance iteration to next tuple element
-  loopOutput<OutputFieldVariablesType, AllOutputFieldVariablesType, i+1>(fieldVariables, allFieldVariables, meshName, filename, specificSettings);
+  loopOutput<FieldVariablesForOutputWriterType, AllFieldVariablesForOutputWriterType, i+1>(fieldVariables, allFieldVariables, meshName, filename, specificSettings);
 }
  
 // current element is of pointer type (not vector)
-template<typename CurrentFieldVariableType, typename OutputFieldVariablesType>
+template<typename CurrentFieldVariableType, typename FieldVariablesForOutputWriterType>
 typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
-output(CurrentFieldVariableType currentFieldVariable, const OutputFieldVariablesType &fieldVariables, std::string meshName, 
+output(CurrentFieldVariableType currentFieldVariable, const FieldVariablesForOutputWriterType &fieldVariables, std::string meshName, 
        std::string filename, PythonConfig specificSettings)
 {
   // if mesh name is the specified meshName
@@ -45,7 +45,7 @@ output(CurrentFieldVariableType currentFieldVariable, const OutputFieldVariables
     LoopOverTuple::loopCountNFieldVariablesOfMesh(fieldVariables, meshName, nFieldVariablesInMesh);
     
     // call exfile writer to output all field variables with the meshName
-    ParaviewWriter<FunctionSpace, OutputFieldVariablesType>::outputFile(filename, fieldVariables, meshName, currentFieldVariable->functionSpace(), nFieldVariablesInMesh, specificSettings);
+    ParaviewWriter<FunctionSpace, FieldVariablesForOutputWriterType>::outputFile(filename, fieldVariables, meshName, currentFieldVariable->functionSpace(), nFieldVariablesInMesh, specificSettings);
    
     return true;  // break iteration
   }
@@ -54,31 +54,31 @@ output(CurrentFieldVariableType currentFieldVariable, const OutputFieldVariables
 }
 
 // element i is of vector type
-template<typename VectorType, typename OutputFieldVariablesType>
+template<typename VectorType, typename FieldVariablesForOutputWriterType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
-output(VectorType currentFieldVariableVector, const OutputFieldVariablesType &fieldVariables, std::string meshName, 
+output(VectorType currentFieldVariableVector, const FieldVariablesForOutputWriterType &fieldVariables, std::string meshName, 
        std::string filename, PythonConfig specificSettings)
 {
   for (auto& currentFieldVariable : currentFieldVariableVector)
   {
     // call function on all vector entries
-    if (output<typename VectorType::value_type,OutputFieldVariablesType>(currentFieldVariable, fieldVariables, meshName, filename, specificSettings))
+    if (output<typename VectorType::value_type,FieldVariablesForOutputWriterType>(currentFieldVariable, fieldVariables, meshName, filename, specificSettings))
       return true; // break iteration
   }
   return false;  // do not break iteration 
 }
 
 // element i is of tuple type
-template<typename TupleType, typename AllOutputFieldVariablesType>
+template<typename TupleType, typename AllFieldVariablesForOutputWriterType>
 typename std::enable_if<TypeUtility::isTuple<TupleType>::value, bool>::type
-output(TupleType currentFieldVariableTuple, const AllOutputFieldVariablesType &fieldVariables, std::string meshName, 
+output(TupleType currentFieldVariableTuple, const AllFieldVariablesForOutputWriterType &fieldVariables, std::string meshName, 
        std::string filename, PythonConfig specificSettings)
 {
   // call for tuple element
-  loopOutput<TupleType, AllOutputFieldVariablesType>(currentFieldVariableTuple, fieldVariables, meshName, filename, specificSettings);
+  loopOutput<TupleType, AllFieldVariablesForOutputWriterType>(currentFieldVariableTuple, fieldVariables, meshName, filename, specificSettings);
   
   return false;  // do not break iteration 
 }
 
-};  //namespace ParaviewLoopOverTuple
-};  //namespace OutputWriter
+}  // namespace ParaviewLoopOverTuple
+}  // namespace OutputWriter

@@ -36,6 +36,12 @@ std::string multiply(std::string str);
 //! extract the basename of a file, i.e. remove leading path and trailing .*
 std::string extractBasename(std::string str);
 
-};  // namespace
+//! converts time to string object
+std::string timeToString(const tm* const time);
+
+//! return the human readable version of the result of typeid(<class>).name()
+std::string demangle(const char *typeidName);
+
+} // namespace
 
 #include "utility/string_utility.tpp"

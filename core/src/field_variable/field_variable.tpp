@@ -1,5 +1,7 @@
 #include "field_variable/field_variable.h"
 
+#include <cmath>
+
 namespace FieldVariable
 {
  
@@ -58,4 +60,27 @@ setRepresentationContiguous()
     this->values_->setRepresentationContiguous();
 }
 
-};  // namespace
+template<typename FunctionSpaceType,int nComponents>
+bool FieldVariable<FunctionSpaceType,nComponents>::
+containsNanOrInf()
+{
+  if (this->values_)
+  {
+    // get all local values
+    std::vector<VecD<nComponents>> values;
+    this->getValuesWithoutGhosts(values);
+
+    // loop over values and check if they are neither nan nor inf
+    for (int i = 0; i < values.size(); i++)
+    {
+      for (int componentNo = 0; componentNo < nComponents; componentNo++)
+      {
+        if (!std::isfinite(values[componentNo][i]))
+          return true;
+      }
+    }
+  }
+  return false;
+}
+
+} // namespace

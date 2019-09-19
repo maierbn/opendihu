@@ -6,56 +6,56 @@
 namespace Data
 {
 
-template<typename FullFunctionSpaceType>  
-ModelOrderReduction<FullFunctionSpaceType>::
-ModelOrderReduction(DihuContext context): Data<FullFunctionSpaceType>(context)
+template<typename FunctionSpaceRows>  
+ModelOrderReduction<FunctionSpaceRows>::
+ModelOrderReduction(DihuContext context): Data<FunctionSpaceRows>(context)
 {    
 }
 
-template<typename FullFunctionSpaceType>  
-ModelOrderReduction<FullFunctionSpaceType>::
+template<typename FunctionSpaceRows>  
+ModelOrderReduction<FunctionSpaceRows>::
 ~ModelOrderReduction()
 {    
 }
 
-template<typename FullFunctionSpaceType> 
-void ModelOrderReduction<FullFunctionSpaceType>::
-setFullFunctionSpace(std::shared_ptr<FullFunctionSpaceType> functionSpace)
+template<typename FunctionSpaceRows> 
+void ModelOrderReduction<FunctionSpaceRows>::
+setFunctionSpaceRows(std::shared_ptr<FunctionSpaceRows> functionSpace)
 {
-  this->fullFunctionSpace_=functionSpace;
+  this->functionSpaceRows_=functionSpace;
 }
 
-template<typename FullFunctionSpaceType>  
-std::shared_ptr<PartitionedPetscMat<FullFunctionSpaceType,::FunctionSpace::Generic>> 
-&ModelOrderReduction<FullFunctionSpaceType>::
+template<typename FunctionSpaceRows>  
+std::shared_ptr<PartitionedPetscMat<FunctionSpaceRows,::FunctionSpace::Generic>> 
+&ModelOrderReduction<FunctionSpaceRows>::
 basis()
 {    
   return this->basis_; 
 }
   
-template<typename FullFunctionSpaceType>  
-std::shared_ptr<PartitionedPetscMat<::FunctionSpace::Generic,FullFunctionSpaceType>> 
-&ModelOrderReduction<FullFunctionSpaceType>::
+template<typename FunctionSpaceRows>  
+std::shared_ptr<PartitionedPetscMat<::FunctionSpace::Generic,FunctionSpaceRows>> 
+&ModelOrderReduction<FunctionSpaceRows>::
 basisTransp()
 {    
   return this->basisTransp_; 
 }
   
-//template<typename FullFunctionSpaceType>  
+//template<typename FunctionSpaceRows>  
 //void ModelOrderReduction::setBasis()
 //{
 //}
   
-template<typename FullFunctionSpaceType>  
+template<typename FunctionSpaceRows>  
 std::shared_ptr<PartitionedPetscMat<::FunctionSpace::Generic,::FunctionSpace::Generic>>
-&ModelOrderReduction<FullFunctionSpaceType>::
-redSysMatrix()
+&ModelOrderReduction<FunctionSpaceRows>::
+redSystemMatrix()
 {    
-  return this->redSysMatrix_; 
+  return this->redSystemMatrix_; 
 } 
  
-template<typename FullFunctionSpaceType>  
-void ModelOrderReduction<FullFunctionSpaceType>::
+template<typename FunctionSpaceRows>  
+void ModelOrderReduction<FunctionSpaceRows>::
 initialize()
 {
   if (!this->initialized_)
@@ -69,47 +69,27 @@ initialize()
   }
 }
 
-//! the reduced solution
-template<typename FullFunctionSpaceType>  
-std::shared_ptr<typename ModelOrderReduction<FullFunctionSpaceType>::FieldVariableType> &
-ModelOrderReduction<FullFunctionSpaceType>::
-redSolution()
-{
-  return redSolution_;
-}
-  
-//! The reduced order increment
-template<typename FullFunctionSpaceType>  
-std::shared_ptr<typename ModelOrderReduction<FullFunctionSpaceType>::FieldVariableType> &
-ModelOrderReduction<FullFunctionSpaceType>::
-redIncrement()
-{
-  return redIncrement_;
-}
-
-template<typename FullFunctionSpaceType>
-void ModelOrderReduction<FullFunctionSpaceType>::
+template<typename FunctionSpaceRows>
+void ModelOrderReduction<FunctionSpaceRows>::
 createPetscObjects()
 {
   LOG(TRACE) << "ModelOrderReduction::createPetscObjects()";
   
-  // create field variables on local partition
-  const int nComponents = 1;
-  this->redSolution_ = this->functionSpace_->template createFieldVariable<nComponents>("redSolution");
-  this->redIncrement_ = std::static_pointer_cast<FieldVariableType>(this->functionSpace_->createFieldVariable("redIncrement", 1));
-  
+  assert(this->functionSpace_);
+  assert(this->functionSpaceRows_);
+
   // get the partitioning from the function space
-  std::shared_ptr<Partition::MeshPartition<FullFunctionSpaceType>> 
-  meshPartitionRows = this->fullFunctionSpace_->meshPartition();
+  std::shared_ptr<Partition::MeshPartition<FunctionSpaceRows>> 
+  meshPartitionRows = this->functionSpaceRows_->meshPartition();
   
   std::shared_ptr<Partition::MeshPartition<::FunctionSpace::Generic>>
   meshPartitionColumns = this->functionSpace_->meshPartition();
   
-  this->basis_ = std::make_shared<PartitionedPetscMat<::FunctionSpace::Generic,FullFunctionSpaceType>>(
+  this->basis_ = std::make_shared<PartitionedPetscMat<FunctionSpaceRows,::FunctionSpace::Generic>>(
     meshPartitionRows, meshPartitionColumns, 1, "basis");
-  this->basisTransp_ = std::make_shared<PartitionedPetscMat<::FunctionSpace::Generic,FullFunctionSpaceType>>(
+  this->basisTransp_ = std::make_shared<PartitionedPetscMat<::FunctionSpace::Generic,FunctionSpaceRows>>(
     meshPartitionColumns, meshPartitionRows, 1, "basisTransp");
-  this->redSysMatrix_=std::make_shared<PartitionedPetscMat<::FunctionSpace::Generic,::FunctionSpace::Generic>>(
+  this->redSystemMatrix_=std::make_shared<PartitionedPetscMat<::FunctionSpace::Generic,::FunctionSpace::Generic>>(
     meshPartitionColumns, meshPartitionColumns, 1, "redSysMatrix");
 }
 

@@ -10,8 +10,7 @@ Import('env')     # import Environment object from calling SConstruct
 # if the option no_tests was given, quit the script
 if not env['no_examples']:
       
-  # define the source files
-  src_files = ["src/laplace_structured_linear.cpp"]
-
-  # create the main executable
-  env.Program(target = 'parallel_fiber_estimation', source = src_files)
+  #env.Program(target = 'generate', source = "src/generate_quadratic.cpp")
+  env.Program(target = 'generate', source = "src/generate.cpp")
+  #env.Program(target = 'refine', source = "src/refine.cpp")
+  #env.Program(target = 'fix', source = "src/fix.cpp")

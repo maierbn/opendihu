@@ -11,6 +11,7 @@
 #include "field_variable/field_variable.h"
 #include "partition/partitioned_petsc_vec/partitioned_petsc_vec.h"
 #include "partition/partitioned_petsc_mat/partitioned_petsc_mat.h"
+#include "data_management/scaled_field_variable_component.h"
 
 namespace Data
 {
@@ -26,7 +27,9 @@ class TimeStepping : public Data<FunctionSpaceType>
 public:
 
   typedef FieldVariable::FieldVariable<FunctionSpaceType,nComponents> FieldVariableType;
-  typedef std::tuple<std::shared_ptr<FieldVariableType>,int,double> TransferableSolutionDataType;  // <field variable, output component no., prefactor>
+  //typedef std::tuple<std::shared_ptr<FieldVariableType>,int,double> OutputConnectorDataType;  // <field variable, output component no., prefactor>
+
+  typedef ScaledFieldVariableComponent<FunctionSpaceType,nComponents> OutputConnectorDataType;
 
   //! constructor
   TimeStepping(DihuContext context);
@@ -41,13 +44,13 @@ public:
   std::shared_ptr<FieldVariableType> increment();
   
   //! set the names of the components for the solution field variable
-  void setComponentNames(std::vector<std::string> componentNames); 
+  void setComponentNames(std::vector<std::string> componentNames);
   
   //! set the value of outputComponentNo, i.e. the component no. of the component of the field variable that will be transferred to the other part of the operator when an operator splitting is used
-  void setOutputComponentNo(int outputComponentNo);
+  //void setOutputComponentNo(int outputComponentNo);
 
   //! set the value of outputComponentNo, i.e. the component no. of the component of the field variable that will be transferred to the other part of the operator when an operator splitting is used
-  void setPrefactor(double prefactor);
+  //void setPrefactor(double prefactor);
 
   //! print all stored data to stdout
   virtual void print();
@@ -63,16 +66,19 @@ public:
 
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
   //! the transfer is done by the solution_vector_mapping class
-  TransferableSolutionDataType getSolutionForTransferInOperatorSplitting();
+  //OutputConnectorDataType getOutputConnectorData();
 
   //! field variables that will be output by outputWriters
   typedef std::tuple<
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>>,  // geometry
     std::shared_ptr<FieldVariableType>  // solution
-  > OutputFieldVariables;
+  > FieldVariablesForOutputWriter;
 
   //! get pointers to all field variables that can be written by output writers
-  OutputFieldVariables getOutputFieldVariables();
+  FieldVariablesForOutputWriter getFieldVariablesForOutputWriter();
+
+  //! output the given data for debugging
+  std::string getString(OutputConnectorDataType &data);
 
 protected:
 
@@ -83,8 +89,7 @@ protected:
   std::shared_ptr<FieldVariableType> increment_;        ///< the vector for delta u, (note, this might be reduced in future to only a sub-part of the whole data vector if memory consumption is a problem)
   std::vector<std::string> componentNames_;      ///< names of the components of the solution and increment variables
   
-  int outputComponentNo_;   ///< the component no. of the component of the field variable that will be transferred to the other part of the operator when an operator splitting is used
-  double prefactor_;        ///< a factor with which the solution will be scaled when transferred in an operator splitting
+  std::string debuggingName_;   ///< a name identifier only used for debugging
 
 private:
   //! get maximum number of expected non-zeros in the system matrix

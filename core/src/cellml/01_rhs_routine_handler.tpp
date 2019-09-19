@@ -4,23 +4,23 @@
 
 #include <list>
 #include <sstream>
+#include <sys/stat.h>  // stat() to check if file exists
 
 #include "utility/python_utility.h"
 #include "utility/petsc_utility.h"
 #include "utility/string_utility.h"
-#include "mesh/mesh_manager.h"
+#include "mesh/mesh_manager/mesh_manager.h"
 
 #include <unistd.h>  //dlopen
 #include <dlfcn.h>
 #include <ctime>
 
 // forward declaration
-template <int nStates,typename FunctionSpaceType>
+template <int nStates,int nIntermediates_,typename FunctionSpaceType>
 class CellmlAdapter;
 
-
-template<int nStates, typename FunctionSpaceType>
-void RhsRoutineHandler<nStates,FunctionSpaceType>::
+template<int nStates, int nIntermediates_, typename FunctionSpaceType>
+void RhsRoutineHandler<nStates,nIntermediates_,FunctionSpaceType>::
 initializeRhsRoutine()
 {
   /* we have the following:
@@ -38,7 +38,7 @@ initializeRhsRoutine()
     LOG(WARNING) << "Option \"forceRecompileRhs\" was recently changed to \"useGivenLibrary\" but with different semantics!.";
   }
 
-  if(useGivenLibrary_)
+  if (useGivenLibrary_)
   { //try open library file
     if (!this->specificSettings_.hasKey("libraryFilename"))
     {
@@ -55,7 +55,7 @@ initializeRhsRoutine()
     std::stringstream compileCommand;
     std::string compileCommandOptions;
 
-    if(this->specificSettings_.hasKey("gpuSourceFilename"))
+    if (this->specificSettings_.hasKey("gpuSourceFilename"))
     {
       // todo: would like to check whether source File "gpuSourceFilename" already is a matching one.
       //
@@ -66,12 +66,12 @@ initializeRhsRoutine()
          LOG(ERROR) << "Could not create a gpu version for CellML RHS.";
       }
       sourceFilenameToUse = gpuSourceFilename;
-
-      std::string compilerFlags = this->specificSettings_.getOptionString("compilerFlags", "-fPIC -fopenmp -finstrument-functions -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared ");
+ //"-fPIC -fopenmp -finstrument-functions -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared "
+      std::string compilerFlags = this->specificSettings_.getOptionString("compilerFlags", "-ta=host,tesla,time");
 
 #ifdef NDEBUG
       std::stringstream s;
-      s << C_COMPILER_COMMAND << " -O3 " << compilerFlags << " ";
+      s << C_COMPILER_COMMAND << " -fast " << compilerFlags << " ";
       compileCommandOptions = s.str();
 #else
       std::stringstream s;
@@ -81,7 +81,7 @@ initializeRhsRoutine()
     }
     else // use simd version if there was no simd- or gpu- sourceFilename key specified at all in python config.
     {
-      if(!this->specificSettings_.hasKey("simdSourceFilename"))
+      if (!this->specificSettings_.hasKey("simdSourceFilename"))
       {
         LOG(DEBUG) << "No key named \"gpuSourceFilename\" or \"simdSourceFilename\" specified in python config. Using simd version." ;
       }
@@ -135,72 +135,83 @@ initializeRhsRoutine()
       }
     }
 
-    int rankNoWorldCommunicator = DihuContext::ownRankNo();
-
     // gather what number of instances all ranks have
     int nRanksCommunicator = this->functionSpace_->meshPartition()->nRanks();
     int ownRankNoCommunicator = this->functionSpace_->meshPartition()->ownRankNo();
     std::vector<int> nInstancesRanks(nRanksCommunicator);
-
-    LOG(DEBUG) << "Communicator has " << nRanksCommunicator << " ranks";
-
     nInstancesRanks[ownRankNoCommunicator] = this->nInstances_;
+
+    LOG(DEBUG) << "ownRankNoCommunicator: " << ownRankNoCommunicator << ", Communicator has " << nRanksCommunicator << " ranks, nInstancesRanks: " << nInstancesRanks;
 
     MPIUtility::handleReturnValue(MPI_Allgather(MPI_IN_PLACE, 0, MPI_DATATYPE_NULL, nInstancesRanks.data(),
                                                 1, MPI_INT, this->functionSpace_->meshPartition()->mpiCommunicator()), "MPI_Allgather");
 
-    // determine if this rank should do compilation, such that each nInstances is compiled only once, by the rank with lowest number
-    int i = 0;
-    int rankWhichCompilesLibrary = 0;
-    for (std::vector<int>::iterator iter = nInstancesRanks.begin(); iter != nInstancesRanks.end(); iter++, i++)
+    // check if the library already exists by a previous compilation
+    struct stat buffer;
+    if (stat(libraryFilename.c_str(), &buffer) == 0)
     {
-      if (*iter == this->nInstances_)
-      {
-        rankWhichCompilesLibrary = i;
-        break;
-      }
-    }
-
-    LOG(DEBUG) << "library will be compiled on rank " << rankWhichCompilesLibrary;
-
-    if (rankWhichCompilesLibrary == ownRankNoCommunicator)
-    {
-      LOG(DEBUG) << "compile on this rank";
-
-      if (libraryFilename.find("/") != std::string::npos)
-      {
-        std::string path = libraryFilename.substr(0, libraryFilename.rfind("/"));
-        int ret = system((std::string("mkdir -p ")+path).c_str());
-
-        if (ret != 0)
-        {
-          LOG(ERROR) << "Could not create path \"" << path << "\".";
-        }
-      }
-
-      std::stringstream compileCommand;
-
-      // compile library to filename with "*.rankNoWorldCommunicator", then wait (different wait times for ranks), then rename file to without "*.rankNoWorldCommunicator"
-      compileCommand << compileCommandOptions
-        << " -o " << libraryFilename << "." << rankNoWorldCommunicator << " " << sourceFilenameToUse
-        //<< " && sleep " << int((rankNoWorldCommunicator%100)/10+1)
-        << " && mv " << libraryFilename << "." << rankNoWorldCommunicator << " " << libraryFilename;
-
-      int ret = system(compileCommand.str().c_str());
-      if (ret != 0)
-      {
-        LOG(ERROR) << "Compilation failed. Command: \"" << compileCommand.str() << "\".";
-        libraryFilename = "";
-      }
-      else
-      {
-        LOG(DEBUG) << "Compilation successful. Command: \"" << compileCommand.str() << "\".";
-      }
+      LOG(DEBUG) << "Library \"" << libraryFilename << "\" already exists.";
     }
     else
     {
-      LOG(DEBUG) << "we are the wrong rank, do not compile library "
-        << "wait until library has been compiled";
+      // compile the library at one rank
+      // get the global rank no, needed for the output filenames
+      int rankNoWorldCommunicator = DihuContext::ownRankNoCommWorld();
+
+
+      // determine if this rank should do compilation, such that each nInstances is compiled only once, by the rank with lowest number
+      int i = 0;
+      int rankWhichCompilesLibrary = 0;
+      for (std::vector<int>::iterator iter = nInstancesRanks.begin(); iter != nInstancesRanks.end(); iter++, i++)
+      {
+        if (*iter == this->nInstances_)
+        {
+          rankWhichCompilesLibrary = i;
+          break;
+        }
+      }
+
+      LOG(DEBUG) << "library will be compiled on rank " << rankWhichCompilesLibrary;
+
+      if (rankWhichCompilesLibrary == ownRankNoCommunicator)
+      {
+        LOG(DEBUG) << "compile on this rank";
+
+        if (libraryFilename.find("/") != std::string::npos)
+        {
+          std::string path = libraryFilename.substr(0, libraryFilename.rfind("/"));
+          int ret = system((std::string("mkdir -p ")+path).c_str());
+
+          if (ret != 0)
+          {
+            LOG(ERROR) << "Could not create path \"" << path << "\".";
+          }
+        }
+
+        std::stringstream compileCommand;
+
+        // compile library to filename with "*.rankNoWorldCommunicator", then wait (different wait times for ranks), then rename file to without "*.rankNoWorldCommunicator"
+        compileCommand << compileCommandOptions
+          << " -o " << libraryFilename << "." << rankNoWorldCommunicator << " " << sourceFilenameToUse
+          //<< " && sleep " << int((rankNoWorldCommunicator%100)/10+1)
+          << " && mv " << libraryFilename << "." << rankNoWorldCommunicator << " " << libraryFilename;
+
+        int ret = system(compileCommand.str().c_str());
+        if (ret != 0)
+        {
+          LOG(ERROR) << "Compilation failed. Command: \"" << compileCommand.str() << "\".";
+          libraryFilename = "";
+        }
+        else
+        {
+          LOG(DEBUG) << "Compilation successful. Command: \"" << compileCommand.str() << "\".";
+        }
+      }
+      else
+      {
+        LOG(DEBUG) << "we are the wrong rank, do not compile library "
+          << "wait until library has been compiled";
+      }
     }
 
     // barrier to wait until the one rank that compiles the library has finished
@@ -210,8 +221,8 @@ initializeRhsRoutine()
   loadRhsLibrary(libraryFilename);
 }
 
-template<int nStates, typename FunctionSpaceType>
-bool RhsRoutineHandler<nStates,FunctionSpaceType>::
+template<int nStates, int nIntermediates_, typename FunctionSpaceType>
+bool RhsRoutineHandler<nStates,nIntermediates_,FunctionSpaceType>::
 loadRhsLibrary(std::string libraryFilename)
 {
 
@@ -222,11 +233,27 @@ loadRhsLibrary(std::string libraryFilename)
   if (currentWorkingDirectory[currentWorkingDirectory.length()-1] != '/')
     currentWorkingDirectory += "/";
 
-  void* handle = NULL;
-  for (int i = 0; handle==NULL && i < 50; i++)  // wait maximum 5 seconds for rank 1 to finish
+  void *handle = NULL;
+  for (int i = 0; handle == NULL && i < 50; i++)  // wait maximum 2.5 ms for rank 1 to finish
   {
     handle = dlopen((currentWorkingDirectory+libraryFilename).c_str(), RTLD_LOCAL | RTLD_LAZY);
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    if (i > 30)
+    {
+      std::this_thread::yield();
+    }
+    else if (i > 35)
+    {
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+    else if (i > 40)
+    {
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+    else if (i > 45)
+    {
+      std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    }
+
   }
 
   if (handle)
@@ -267,12 +294,12 @@ loadRhsLibrary(std::string libraryFilename)
       {
         LOG(DEBUG) << "call opendihu rhsRoutine, by calling several opencmiss rhs";
 
-        CellmlAdapter<nStates,FunctionSpaceType> *cellmlAdapter = (CellmlAdapter<nStates,FunctionSpaceType> *)context;
+        CellmlAdapter<nStates,nIntermediates_,FunctionSpaceType> *cellmlAdapter = (CellmlAdapter<nStates,nIntermediates_,FunctionSpaceType> *)context;
         int nInstances, nIntermediates, nParameters;
         cellmlAdapter->getNumbers(nInstances, nIntermediates, nParameters);
 
         // call the standard rhs routine for every instance of the CellML problem
-        for(int instanceNo = 0; instanceNo < nInstances; instanceNo++)
+        for (int instanceNo = 0; instanceNo < nInstances; instanceNo++)
         {
           // create vectors that contain the values for a single instance
           std::vector<double> states(nStates);
@@ -328,8 +355,8 @@ loadRhsLibrary(std::string libraryFilename)
   return false;
 }
 
-template<int nStates, typename FunctionSpaceType>
-bool RhsRoutineHandler<nStates,FunctionSpaceType>::
+template<int nStates, int nIntermediates_, typename FunctionSpaceType>
+bool RhsRoutineHandler<nStates,nIntermediates_,FunctionSpaceType>::
 createSimdSourceFile(std::string &simdSourceFilename)
 {
   // This method can handle two different types of input c files: from OpenCMISS and from OpenCOR
@@ -418,19 +445,19 @@ createSimdSourceFile(std::string &simdSourceFilename)
             << "Use the option \"simdSourceFilename\" instead.";
           return true;
         }
-        else if(line.find("void computeGPUCellMLRightHandSide") != std::string::npos)
-	{
-	  LOG(WARNING) << "The given source file \"" << this->sourceFilename_<< "\" is ment for GPU-ization, not for SIMD-usage. "
-	    << "Use the option \"gpuSourceFilename\" instead.";
-	  return false;
-	}
+        else if (line.find("void computeGPUCellMLRightHandSide") != std::string::npos)
+        {
+          LOG(WARNING) << "The given source file \"" << this->sourceFilename_<< "\" is meant for GPU-ization, not for SIMD usage. "
+            << "Use the option \"gpuSourceFilename\" instead.";
+          return false;
+        }
 
         auto t = std::time(nullptr);
         auto tm = *std::localtime(&t);
-        simdSource << std::endl << "/* This function was created by opendihu at " << std::put_time(&tm, "%d/%m/%Y %H:%M:%S")
+        simdSource << std::endl << "/* This function was created by opendihu at " << StringUtility::timeToString(&tm)  //std::put_time(&tm, "%d/%m/%Y %H:%M:%S")
           << ".\n * It is designed for " << this->nInstances_ << " instances of the CellML problem. */" << std::endl
           << "void computeCellMLRightHandSide("
-          << "void *context, double t, double *states, double *rates, double *algebraics, double *parameters)" << std::endl << "{" << std::endl;
+          << "void *context, double t, double *states, double *rates, double *intermediates, double *parameters)" << std::endl << "{" << std::endl;
         discardOpenBrace = true;
 
         simdSource << "  double VOI = t;   /* current simulation time */" << std::endl;
@@ -443,12 +470,12 @@ createSimdSourceFile(std::string &simdSourceFilename)
             simdSource << "  " << constantAssignmentsLine << std::endl;
           }
           simdSource << std::endl
-            << "  double ALGEBRAIC[" << this->nIntermediates_*this->nInstances_ << "];  "
-            << "  /* " << this->nIntermediates_ << " per instance * " << this->nInstances_ << " instances */ " << std::endl;
+            << "  double ALGEBRAIC[" << this->nIntermediatesInSource_*this->nInstances_ << "];  "
+            << "  /* " << this->nIntermediatesInSource_ << " per instance * " << this->nInstances_ << " instances */ " << std::endl;
         }
       }
       // line contains OpenCMISS assignment
-      else if(line.find("OC_WANTED") == 0 || line.find("OC_RATE") == 0 || line.find("ALGEBRAIC") == 0 || line.find("RATES") == 0)
+      else if (line.find("OC_WANTED") == 0 || line.find("OC_RATE") == 0 || line.find("ALGEBRAIC") == 0 || line.find("RATES") == 0)
       {
         // parse line
         struct entry_t
@@ -464,7 +491,7 @@ createSimdSourceFile(std::string &simdSourceFilename)
         VLOG(2) << "line: [" << line << "]";
 
         size_t currentPos = 0;
-        for(int i = 0; currentPos <= line.length(); i++)
+        for (int i = 0; currentPos <= line.length(); i++)
         {
           VLOG(2);
           VLOG(2) << "currentPos: " << currentPos << " code from there: \"" << line.substr(currentPos, 20) << "\"";
@@ -502,8 +529,10 @@ createSimdSourceFile(std::string &simdSourceFilename)
               entry.code = "states";
             else if (entry.code == "OC_RATE" || entry.code == "RATES")
               entry.code = "rates";
-            else if (entry.code == "ALGEBRAIC" || entry.code == "OC_WANTED")
-              entry.code = "algebraics";
+            else if (entry.code == "OC_WANTED")
+              entry.code = "intermediates";
+            else if (entry.code == "ALGEBRAIC")
+              entry.code = "ALGEBRAIC";
             else if (entry.code == "OC_KNOWN")
               entry.code = "parameters";
 
@@ -523,7 +552,7 @@ createSimdSourceFile(std::string &simdSourceFilename)
             }
 
             // check if this is an assignment to a algebraic value that is actually an explicit parameter (set by parametersUsedAsIntermediate)
-            if (entry.code == "algebraics" && i == 0)
+            if (entry.code == "ALGEBRAIC" && i == 0)
             {
               isExplicitParameter = false;
               for (int parameterUsedAsIntermediate : this->parametersUsedAsIntermediate_)
@@ -540,7 +569,7 @@ createSimdSourceFile(std::string &simdSourceFilename)
             }
 
             // replace algebraic by parameter if it is an explicit parameter set by parametersUsedAsIntermediate
-            if (entry.code == "algebraics")
+            if (entry.code == "ALGEBRAIC")
             {
               // loop over all parametersUsedAsIntermediate_
               for (int j = 0; j < this->parametersUsedAsIntermediate_.size(); j++)
@@ -586,16 +615,25 @@ createSimdSourceFile(std::string &simdSourceFilename)
           entries.push_back(entry);
         }
 
+        VLOG(2) << "now generate new code out of it ";
         if (isExplicitParameter)
         {
+          VLOG(2) << "explicit parameter";
+
           simdSource << "  /* explicit parameter */" << std::endl
             << "  /* " << line << "*/" << std::endl;
         }
         else
         {
-          // add pragma omp here
-          simdSource << std::endl << "  for(int i = 0; i < " << this->nInstances_ << "; i++)" << std::endl
-            << "  {" << std::endl << "    ";
+          VLOG(2) << "add for with pragmas";
+
+          simdSource << std::endl
+            << "#ifndef TEST_WITHOUT_PRAGMAS" << std::endl
+            << "  #pragma omp for simd" << std::endl
+            << "#endif" << std::endl
+            << "  for (int i = 0; i < " << this->nInstances_ << "; i++)" << std::endl
+            << "  {" << std::endl
+            << "    ";
 
           VLOG(2) << "parsed " << entries.size() << " entries";
 
@@ -610,24 +648,37 @@ createSimdSourceFile(std::string &simdSourceFilename)
                 {
                   // constants only exist once for all instances
                   simdSource << entry.code << "[" << entry.arrayIndex<< "]";
+
+                  VLOG(2) << "    (write \"" << entry.code << "[" << entry.arrayIndex<< "]" << "\")";
+                }
+                else if (entry.code == "algebraics")
+                {
+                  LOG(FATAL) << "dniuea";
                 }
                 else
                 {
                   // all other variables (states, rates, intermediates, parameters) exist for every instance
                   simdSource << entry.code << "[" << entry.arrayIndex * this->nInstances_ << "+i]";
+
+                  VLOG(2) << "    (write \"" << entry.code << "[" << entry.arrayIndex * this->nInstances_ << "+i]" << "\")";
                 }
                 break;
               case entry_t::other:
+
+                VLOG(2) << "    (write \"" << entry.code << "\")";
+
                 simdSource << entry.code;
                 break;
             }
           }
+          VLOG(2) << "write end of for loop (closing })";
           simdSource << std::endl << "  }" << std::endl;
         }
       }
       // every other line
       else
       {
+        VLOG(2) << "line is not special, copy: [" << line << "]";
         simdSource << line << std::endl;
       }
     }
@@ -643,11 +694,13 @@ createSimdSourceFile(std::string &simdSourceFilename)
 
     // add .rankNoWorldCommunicator to simd source filename
     s.str("");
-    int rankNoWorldCommunicator = DihuContext::ownRankNo();
+    // get the global rank no, needed for the output filenames
+    int rankNoWorldCommunicator = DihuContext::ownRankNoCommWorld();
     s << simdSourceFilename << "." << rankNoWorldCommunicator << ".c";  // .c suffix is needed such that cray compiler knowns that it is c code
     simdSourceFilename = s.str();
 
-    std::ofstream simdSourceFile = OutputWriter::Generic::openFile(simdSourceFilename.c_str());
+    std::ofstream simdSourceFile;
+    OutputWriter::Generic::openFile(simdSourceFile, simdSourceFilename.c_str());
     if (!simdSourceFile.is_open())
     {
       LOG(ERROR) << "Could not write to file \"" << simdSourceFilename << "\".";
@@ -664,12 +717,12 @@ createSimdSourceFile(std::string &simdSourceFilename)
   return true;
 }
 
-
 // given a normal cellml source file for rhs routine, create a third file for gpu acceleration. @return: if successful
-template<int nStates, typename FunctionSpaceType>
-bool RhsRoutineHandler<nStates,FunctionSpaceType>::
+template<int nStates, int nIntermediates_, typename FunctionSpaceType>
+bool RhsRoutineHandler<nStates,nIntermediates_,FunctionSpaceType>::
 createGPUSourceFile(std::string &gpuSourceFilename)
 {
+  LOG(FATAL) << "createGPUSourceFile";
   // This method can handle two different types of input c files: from OpenCMISS and from OpenCOR
   // Method creates gpuSourceFile for a freely choosable but fix  number of instances and sets name of string gpuSourceFilename
 
@@ -757,7 +810,7 @@ createGPUSourceFile(std::string &gpuSourceFilename)
           gpuSourceFilename="";
           return false;
         }
-        else if(line.find("void computeGPUCellMLRightHandSide") != std::string::npos)
+        else if (line.find("void computeGPUCellMLRightHandSide") != std::string::npos)
         {
           LOG(WARNING) << "The given source file \"" << this->sourceFilename_<< "\" contains already a GPU version of the rhs routine."
             << "Use the option \"gpuSourceFilename\" instead of \"sourceFilename\" or \"simdSourceFilename\".";
@@ -766,7 +819,7 @@ createGPUSourceFile(std::string &gpuSourceFilename)
 
         auto t = std::time(nullptr);
         auto tm = *std::localtime(&t);
-        gpuSource << std::endl << "/* This function was created by opendihu at " << std::put_time(&tm, "%d/%m/%Y %H:%M:%S")
+        gpuSource << std::endl << "/* This function was created by opendihu at " <<  StringUtility::timeToString(&tm)   //std::put_time(&tm, "%d/%m/%Y %H:%M:%S")
           << ".\n * It is designed for " << this->nInstances_ << " instances of the CellML problem. */" << std::endl
           << "void computeGPUCellMLRightHandSide("
           << "void *context, double t, double *states, double *rates, double *algebraics, double *parameters)" << std::endl << "{" << std::endl << "#pragma omp target" << std::endl << "{" << std::endl;
@@ -782,12 +835,12 @@ createGPUSourceFile(std::string &gpuSourceFilename)
             gpuSource << "  " << constantAssignmentsLine << std::endl;
           }
           gpuSource << std::endl
-            << "  double ALGEBRAIC[" << this->nIntermediates_*this->nInstances_ << "];  "
-            << "  /* " << this->nIntermediates_ << " per instance * " << this->nInstances_ << " instances */ " << std::endl;
+            << "  double ALGEBRAIC[" << this->nIntermediatesInSource_*this->nInstances_ << "];  "
+            << "  /* " << this->nIntermediatesInSource_ << " per instance * " << this->nInstances_ << " instances */ " << std::endl;
         }
       }
       // line contains OpenCMISS assignment
-      else if(line.find("OC_WANTED") == 0 || line.find("OC_RATE") == 0 || line.find("ALGEBRAIC") == 0 || line.find("RATES") == 0)
+      else if (line.find("OC_WANTED") == 0 || line.find("OC_RATE") == 0 || line.find("ALGEBRAIC") == 0 || line.find("RATES") == 0)
       {
         // parse line
         struct entry_t
@@ -803,7 +856,7 @@ createGPUSourceFile(std::string &gpuSourceFilename)
         VLOG(2) << "line: [" << line << "]";
 
         size_t currentPos = 0;
-        for(int i = 0; currentPos <= line.length(); i++)
+        for (int i = 0; currentPos <= line.length(); i++)
         {
           VLOG(2);
           VLOG(2) << "currentPos: " << currentPos << " code from there: \"" << line.substr(currentPos, 20) << "\"";
@@ -931,8 +984,8 @@ createGPUSourceFile(std::string &gpuSourceFilename)
             << "  /* " << line << "*/" << std::endl;
         }
         else
-        {
-          gpuSource << std::endl << "#pragma omp teams distribute parallel for" << std::endl << "  for(int i = 0; i < " << this->nInstances_ << "; i++)" << std::endl
+        { // gang worker vector 
+          gpuSource << std::endl << "#pragma acc parallel loop independent" << std::endl << "  for (int i = 0; i < " << this->nInstances_ << "; i++)" << std::endl
             << "  {" << std::endl << "    ";
 
           VLOG(2) << "parsed " << entries.size() << " entries";
@@ -966,7 +1019,7 @@ createGPUSourceFile(std::string &gpuSourceFilename)
       // every other line
       else
       {
-        if(line.find("}")!= 0)
+        if (line.find("}")!= 0)
         {
           gpuSource << line << std::endl;
         }
@@ -986,7 +1039,8 @@ createGPUSourceFile(std::string &gpuSourceFilename)
       gpuSourceFilename = this->specificSettings_.getOptionString("gpuSourceFilename", "");
     }
 
-    std::ofstream gpuSourceFile = OutputWriter::Generic::openFile(gpuSourceFilename.c_str());
+    std::ofstream gpuSourceFile;
+    OutputWriter::Generic::openFile(gpuSourceFile, gpuSourceFilename.c_str());
     if (!gpuSourceFile.is_open())
     {
       LOG(ERROR) << "Could not write to file \"" << gpuSourceFilename << "\".";
@@ -1003,15 +1057,17 @@ createGPUSourceFile(std::string &gpuSourceFilename)
   return true;
 }
 
-template<int nStates, typename FunctionSpaceType>
-bool RhsRoutineHandler<nStates,FunctionSpaceType>::
+template<int nStates, int nIntermediates_, typename FunctionSpaceType>
+bool RhsRoutineHandler<nStates,nIntermediates_,FunctionSpaceType>::
 scanSourceFile(std::string sourceFilename, std::array<double,nStates> &statesInitialValues)
 {
   LOG(TRACE) << "scanSourceFile";
 
-  // parse source file, set initial values for states (only one instance) and nParameters_, nConstants_ and nIntermediates_
+  // parse source file, set initial values for states (only one instance) and nParameters_, nConstants_ and nIntermediatesInSource_
 
   this->inputFileTypeOpenCMISS_ = true;   //< if the input file that is being parsed is from OpenCMISS and not from OpenCOR
+
+  int nAlgebraicInSource = 0;
 
   // read in source from file
   std::ifstream sourceFile(sourceFilename.c_str());
@@ -1089,16 +1145,22 @@ scanSourceFile(std::string sourceFilename, std::array<double,nStates> &statesIni
         double value = atof(line.substr(line.find("= ")+2).c_str());
         statesInitialValues[index] = value;
       }
-      else if (line.find("ALGEBRAIC[") == 0)  // assignment to an algebraic variable in both OpenCMISS and OpenCOR generated files
+      else if (line.find("ALGEBRAIC[") == 0)  // assignment to an algebraic variable in both OpenCMISS and OpenCOR generated files, in OpenCMISS generated files, this does not count towards the algebraic variables that are hold by opendihu
       {
         int algebraicIndex = atoi(line.substr(10,line.find("]",10)-10).c_str());
-        this->nIntermediates_ = std::max(this->nIntermediates_, algebraicIndex+1);
+        nAlgebraicInSource = std::max(nAlgebraicInSource, algebraicIndex+1);
       }
       else if (line.find("OC_KNOWN[") != std::string::npos)  // usage of a parameter variable in OpenCMISS generated file
       {
         std::string substr(line.substr(line.find("OC_KNOWN[")+9,line.find("]",line.find("OC_KNOWN[")+9)-line.find("OC_KNOWN[")-9));
         int index = atoi(substr.c_str());
         this->nParameters_ = std::max(this->nParameters_, index+1);
+      }
+      else if (line.find("OC_WANTED[") != std::string::npos)  // usage of a algebraic/wanted variable in OpenCMISS generated file
+      {
+        std::string substr(line.substr(line.find("OC_WANTED[")+10,line.find("]",line.find("OC_WANTED[")+10)-line.find("OC_WANTED[")-10));
+        int index = atoi(substr.c_str());
+        this->nIntermediatesInSource_ = std::max(this->nIntermediatesInSource_, index+1);
       }
       else if (line.find("CONSTANTS[") != std::string::npos)  // usage of a constant
       {
@@ -1119,5 +1181,14 @@ scanSourceFile(std::string sourceFilename, std::array<double,nStates> &statesIni
       }
     }
   }
+
+  // for OpenCMISS generated files, the number of intermediates is correctly parsed as number of OC_WANTED variables, which is different from the number of ALGEBRAIC variables.
+  // for OpenCOR generated files, the number of intermediates is the number of ALGEBRAIC variables.
+  if (!this->inputFileTypeOpenCMISS_)
+  {
+    this->nIntermediatesInSource_ = nAlgebraicInSource;
+  }
+
+
   return true;
 }

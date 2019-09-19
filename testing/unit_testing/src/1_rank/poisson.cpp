@@ -483,7 +483,7 @@ config = {
   "disableMatrixPrinting": True,
   "FiniteElementMethod" : {
     "nElements": [4, 5],
-    "physicalExtent": [1.0, 2.0, 3.0],
+    "physicalExtent": [1.0, 5.0/4., 3.0],
     "rightHandSide": [1, 4.0, 5, 9.0, 0.0, 0, 5, 7, 3],
     "dirichletBoundaryConditions": {0:0},
     "relativeTolerance": 1e-15,
@@ -498,7 +498,7 @@ config = {
   "disableMatrixPrinting": True,
   "FiniteElementMethod" : {
     "nElements": [4, 5],
-    "physicalExtent": [1.0, 2.0],
+    "physicalExtent": [1.0, 5.0/4.],
     "rightHandSide": {2:5, 7:7.0, 3:9, "8":3, 0:1, 1:4, 6.0:5, "10":0},
     "dirichletBoundaryConditions": {0:0},
     "relativeTolerance": 1e-15,
@@ -541,7 +541,8 @@ config = {
     "nElements": [10],
     "physicalExtent": [4.0],
     "rightHandSide": [1,8,3,4,5,6,7,8,9,10,11,12],
-    "relativeTolerance": 1e-15,
+    "relativeTolerance": 1e-10,
+    "maxIterations": 1e5,
   },
 }
 )";
@@ -587,7 +588,8 @@ config = {
     "nElements": [10],
     "physicalExtent": [4.0],
     "rightHandSide": [1,8,3,4,5,6,7,8,9,10,11,12],  # note: 1 entry to much
-    "relativeTolerance": 1e-15,
+    "relativeTolerance": 1e-10,
+    "maxIterations": 1e5,
   },
 }
 )";
@@ -631,9 +633,10 @@ config = {
   "disableMatrixPrinting": True,
   "FiniteElementMethod" : {
     "nElements": [3, 2],
-    "physicalExtent": 4.0,
+    "physicalExtent": [4.0, 4./3.*2.],
     "rightHandSide": [1,2,3,4,5,6,7,8,9,10,11,12],
-    "relativeTolerance": 1e-15,
+    "relativeTolerance": 1e-10,
+    "maxIterations": 1e5,
   },
 }
 )";
@@ -679,7 +682,8 @@ config = {
     "nElements": [3, 2],
     "physicalExtent": [4.0, 8./3],
     "rightHandSide": [1,2,3,4,5,6,7,8,9,10,11,12],
-    "relativeTolerance": 1e-15,
+    "relativeTolerance": 1e-10,
+    "maxIterations": 1e5,
   },
 }
 )";
@@ -723,9 +727,10 @@ config = {
   "disableMatrixPrinting": True,
   "FiniteElementMethod" : {
     "nElements": [3, 2, 2],
-    "physicalExtent": [4.0, 3.0, 2.0],
+    "physicalExtent": [12./3.0, 8./3.0, 8./3.0],
     "rightHandSide": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24],
-    "relativeTolerance": 1e-15,
+    "relativeTolerance": 1e-10,
+    "maxIterations": 1e5,
   },
 }
 )";
@@ -771,9 +776,10 @@ config = {
   "disableMatrixPrinting": True,
   "FiniteElementMethod" : {
     "nElements": [3, 2, 2],
-    "physicalExtent": [4.0, 8./3.0, 8./3.0],
+    "physicalExtent": [12./3.0, 8./3.0, 8./3.0],
     "rightHandSide": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24],
-    "relativeTolerance": 1e-15,
+    "relativeTolerance": 1e-10,
+    "maxIterations": 1e5,
   },
 }
 )";
@@ -809,5 +815,5 @@ config = {
 
 }
 
-};
+}  // namespace
 

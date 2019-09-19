@@ -36,13 +36,22 @@ ParallelFiberEstimation<FunctionSpaceType>::
 
 template<typename FunctionSpaceType>
 void ParallelFiberEstimation<FunctionSpaceType>::
+setProblem(std::shared_ptr<FiniteElementMethodType> problem)
+{
+  problem_ = problem;
+}
+
+template<typename FunctionSpaceType>
+void ParallelFiberEstimation<FunctionSpaceType>::
 createPetscObjects()
 {
   LOG(DEBUG) << "ParallelFiberEstimation<FunctionSpaceType>::createPetscObjects()" << std::endl;
-  //assert(this->functionSpace_);
+  assert(this->functionSpace_);
   
   // create field variables on local partition
   this->gradient_ = this->functionSpace_->template createFieldVariable<3>("gradient");
+  this->dirichletValues_ = this->functionSpace_->template createFieldVariable<1>("dirichletValues");
+  this->jacobianConditionNumber_ = this->functionSpace_->template createFieldVariable<1>("jacobianConditionNumber");
 }
 
 template<typename FunctionSpaceType>
@@ -50,6 +59,20 @@ std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> ParallelFiber
 gradient()
 {
   return this->gradient_;
+}
+
+template<typename FunctionSpaceType>
+std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> ParallelFiberEstimation<FunctionSpaceType>::
+ dirichletValues()
+{
+  return this->dirichletValues_;
+}
+
+template<typename FunctionSpaceType>
+std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> ParallelFiberEstimation<FunctionSpaceType>::
+ jacobianConditionNumber()
+{
+  return this->jacobianConditionNumber_;
 }
 
 template<typename FunctionSpaceType>
@@ -65,11 +88,15 @@ print()
 }
 
 template<typename FunctionSpaceType>
-typename ParallelFiberEstimation<FunctionSpaceType>::OutputFieldVariables ParallelFiberEstimation<FunctionSpaceType>::
-getOutputFieldVariables()
+typename ParallelFiberEstimation<FunctionSpaceType>::FieldVariablesForOutputWriter ParallelFiberEstimation<FunctionSpaceType>::
+getFieldVariablesForOutputWriter()
 {
+  assert(problem_);
   return std::tuple_cat(
-    std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>>>(this->gradient_)
+    problem_->data().getFieldVariablesForOutputWriter(),
+    std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>>>(this->gradient_),
+    std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>>(this->dirichletValues_),
+    std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>>(this->jacobianConditionNumber_)
   );
 }
 

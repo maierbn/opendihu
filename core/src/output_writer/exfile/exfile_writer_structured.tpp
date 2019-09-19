@@ -6,9 +6,9 @@ namespace OutputWriter
 {
 
 //! write exnode file to given stream
-template<typename FunctionSpaceType, typename OutputFieldVariablesType>
-void ExfileWriter<FunctionSpaceType,OutputFieldVariablesType>::
-outputExelem(std::ostream &stream, OutputFieldVariablesType fieldVariables, std::string meshName, std::shared_ptr<FunctionSpaceType> mesh, int nFieldVariablesOfMesh)
+template<typename FunctionSpaceType, typename FieldVariablesForOutputWriterType>
+void ExfileWriter<FunctionSpaceType,FieldVariablesForOutputWriterType>::
+outputExelem(std::ostream &stream, FieldVariablesForOutputWriterType fieldVariables, std::string meshName, std::shared_ptr<FunctionSpaceType> mesh, int nFieldVariablesOfMesh)
 {
   const int D = FunctionSpaceType::dim();
   stream << " Group name: " << meshName << std::endl
@@ -23,7 +23,7 @@ outputExelem(std::ostream &stream, OutputFieldVariablesType fieldVariables, std:
 
   // loop over field variables and output headers
   int fieldVariableIndex = 0;  // counter over field variables
-  ExfileLoopOverTuple::loopOutputHeaderExelem<OutputFieldVariablesType>(fieldVariables, fieldVariableIndex, meshName, stream, 0);
+  ExfileLoopOverTuple::loopOutputHeaderExelem<FieldVariablesForOutputWriterType>(fieldVariables, fieldVariableIndex, meshName, stream, 0);
   //int fieldVariableNo = 0;     // a number that runs over the field variables
   //for (auto &fieldVariable : fieldVariables)
   //{
@@ -36,7 +36,7 @@ outputExelem(std::ostream &stream, OutputFieldVariablesType fieldVariables, std:
    Nodes:
            1           2           4           5
 */
-  for(element_no_t elementGlobalNo = 0; elementGlobalNo < nElements; elementGlobalNo++)
+  for (element_no_t elementGlobalNo = 0; elementGlobalNo < nElements; elementGlobalNo++)
   {
     stream << " Element:            " << elementGlobalNo+1 << " 0 0" << std::endl
       << "   Nodes:" << std::endl;
@@ -48,9 +48,9 @@ outputExelem(std::ostream &stream, OutputFieldVariablesType fieldVariables, std:
 }
 
 //! write exnode file to given stream
-template<typename FunctionSpaceType, typename OutputFieldVariablesType>
-void ExfileWriter<FunctionSpaceType,OutputFieldVariablesType>::
-outputExnode(std::ostream &stream, OutputFieldVariablesType fieldVariables, std::string meshName, 
+template<typename FunctionSpaceType, typename FieldVariablesForOutputWriterType>
+void ExfileWriter<FunctionSpaceType,FieldVariablesForOutputWriterType>::
+outputExnode(std::ostream &stream, FieldVariablesForOutputWriterType fieldVariables, std::string meshName, 
              std::shared_ptr<FunctionSpaceType> mesh, int nFieldVariablesOfMesh)
 {
   VLOG(2) << "ExfileWriter<Structured>::outputExnode, meshName: " << meshName << ",nFieldVariablesOfMesh:" << nFieldVariablesOfMesh;
@@ -61,7 +61,7 @@ outputExnode(std::ostream &stream, OutputFieldVariablesType fieldVariables, std:
   // loop over field variables and output headers
   int valueIndex = 0;
   int fieldVariableIndex = 0;  // counter over field variables
-  ExfileLoopOverTuple::loopOutputHeaderExnode<OutputFieldVariablesType>(fieldVariables, fieldVariableIndex, meshName, stream, 0, valueIndex);
+  ExfileLoopOverTuple::loopOutputHeaderExnode<FieldVariablesForOutputWriterType>(fieldVariables, fieldVariableIndex, meshName, stream, 0, valueIndex);
 
   //int fieldVariableNo = 0;     // a number that runs over the field variables
   //for (auto &fieldVariable : fieldVariables)
@@ -76,7 +76,7 @@ outputExnode(std::ostream &stream, OutputFieldVariablesType fieldVariables, std:
   {
     stream << " Node: " << nodeGlobalNo+1 << std::endl;
 
-    ExfileLoopOverTuple::loopOutputNodeValues<OutputFieldVariablesType>(fieldVariables, meshName, stream, nodeGlobalNo);
+    ExfileLoopOverTuple::loopOutputNodeValues<FieldVariablesForOutputWriterType>(fieldVariables, meshName, stream, nodeGlobalNo);
     /*
     // loop over field variables
     for (auto &fieldVariableBase : fieldVariables)
@@ -110,4 +110,4 @@ outputExnode(std::ostream &stream, OutputFieldVariablesType fieldVariables, std:
 }
 
 
-};  //namespace
+}  // namespace

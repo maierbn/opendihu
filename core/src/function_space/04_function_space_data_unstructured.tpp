@@ -9,6 +9,7 @@
 #include "easylogging++.h"
 #include "utility/string_utility.h"
 #include "utility/math_utility.h"
+#include "control/dihu_context.h"
 
 #include "field_variable/unstructured/exfile_representation.h"
 #include "field_variable/unstructured/element_to_dof_mapping.h"
@@ -29,9 +30,22 @@ FunctionSpaceDataUnstructured(std::shared_ptr<Partition::Manager> partitionManag
 }
 
 template<int D,typename BasisFunctionType>
+FunctionSpaceDataUnstructured<D,BasisFunctionType>::
+FunctionSpaceDataUnstructured(std::shared_ptr<Partition::Manager> partitionManager, std::vector<double> &null, PythonConfig settings, bool noGeometryField) :
+  FunctionSpaceDataUnstructured<D,BasisFunctionType>::FunctionSpaceDataUnstructured(partitionManager, settings)
+{
+}
+
+template<int D,typename BasisFunctionType>
 void FunctionSpaceDataUnstructured<D,BasisFunctionType>::
 initialize()
 { 
+  if (DihuContext::nRanksCommWorld() > 1)
+  {
+    LOG(FATAL) << "Unstructured grids are not implemented for parallel execution! " << std::endl
+      << "Use structured or regular grids instead or run with a single process.";
+  }
+
   if (this->specificSettings_.hasKey("exelem"))
   {
     std::string filenameExelem = this->specificSettings_.getOptionString("exelem", "input.exelem");
@@ -101,7 +115,7 @@ getNodeDofs(node_no_t nodeGlobalNo, std::vector<dof_no_t> &dofGlobalNos) const
 
   dofGlobalNos.reserve(dofGlobalNos.size() + nodeDofs.size());
 
-  for(dof_no_t dof : nodeDofs)
+  for (dof_no_t dof : nodeDofs)
   {
     dofGlobalNos.push_back(dof);
   }
@@ -137,4 +151,4 @@ nElementsGlobal() const
   return this->geometryField_->nElements();
 }
 
-};  // namespace
+} // namespace

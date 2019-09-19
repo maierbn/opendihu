@@ -34,10 +34,10 @@ std::array<T,nComponents> operator-(const std::array<T,nComponents> &vector1)
 }
 
 //! vector addition
-template<std::size_t nComponents>
-std::array<double,nComponents> operator+(const std::array<double,nComponents> vector1, const std::array<double,nComponents> vector2)
+template<typename T, std::size_t nComponents>
+std::array<T,nComponents> operator+(const std::array<T,nComponents> vector1, const std::array<T,nComponents> vector2)
 {
-  std::array<double,nComponents> result;
+  std::array<T,nComponents> result;
 
   //#pragma omp simd
   for (int i = 0; i < nComponents; i++)
@@ -48,8 +48,8 @@ std::array<double,nComponents> operator+(const std::array<double,nComponents> ve
 }
 
 //! vector increment operation
-template<std::size_t nComponents>
-std::array<double,nComponents> &operator+=(std::array<double,nComponents> &vector1, const std::array<double,nComponents> vector2)
+template<typename T, std::size_t nComponents>
+std::array<T,nComponents> &operator+=(std::array<T,nComponents> &vector1, const std::array<T,nComponents> vector2)
 {
   //#pragma omp simd
   for (int i = 0; i < nComponents; i++)
@@ -111,6 +111,20 @@ std::array<double,nComponents> operator*(std::array<double,nComponents> vector, 
   return result;
 }
 
+//! vector*scalar multiplication
+template<typename T>
+std::vector<T> operator*(std::vector<T> vector, double lambda)
+{
+  std::vector<T> result(vector.size());
+
+  //#pragma omp simd
+  for (int i = 0; i < vector.size(); i++)
+  {
+    result[i] = lambda * vector[i];
+  }
+  return result;
+}
+
 //! component-wise vector multiplication
 template<std::size_t nComponents>
 std::array<double,nComponents> operator*(const std::array<double,nComponents> vector1, const std::array<double,nComponents> vector2)
@@ -121,6 +135,20 @@ std::array<double,nComponents> operator*(const std::array<double,nComponents> ve
   for (int i = 0; i < nComponents; i++)
   {
     result[i] = vector1[i] * vector2[i];
+  }
+  return result;
+}
+
+//! vector multiplication, outer product
+template<std::size_t nComponents1, std::size_t nComponents2>
+std::array<std::array<double,nComponents1>,nComponents2> operator*(const std::array<double,nComponents2> vector1, const std::array<double,nComponents1> vector2)
+{
+  std::array<std::array<double,nComponents1>,nComponents2> result;
+
+  //#pragma omp simd
+  for (int i = 0; i < nComponents2; i++)
+  {
+    result[i] = vector1[i] * vector2;
   }
   return result;
 }
@@ -158,6 +186,20 @@ std::array<T,nComponents> operator/(const std::array<T,nComponents> vector1, con
   return result;
 }
 
+//! scalar division
+template<typename T, std::size_t nComponents>
+std::array<T,nComponents> operator/(const std::array<T,nComponents> vector1, const double value)
+{
+  std::array<T,nComponents> result;
+
+  //#pragma omp simd
+  for (int i = 0; i < nComponents; i++)
+  {
+    result[i] = vector1[i] / value;
+  }
+  return result;
+}
+
 template<typename T, std::size_t N>
 bool operator<(const std::array<T,N> &vector, double value)
 {
@@ -176,9 +218,23 @@ bool operator<(const std::array<T,N> &vector, double value)
 template<typename T, std::size_t N>
 std::ostream &operator<<(std::ostream &stream, const std::array<T,N> &vector)
 {
-  stream << "(" << vector[0];
+  stream << "(";
+
+  // first entry
+  if (vector[0] == std::numeric_limits<T>::max())
+    stream << "None";
+  else
+    stream << vector[0];
+
+  // subsequent entries
   for (std::size_t i = 1; i < N; i++)
-    stream << "," << vector[i];
+  {
+    stream << ",";
+    if (vector[i] == std::numeric_limits<T>::max())
+      stream << "None";
+    else
+      stream << vector[i];
+  }
   stream << ")";
   return stream;
 }
@@ -209,16 +265,21 @@ std::ostream &operator<<(std::ostream &stream, const std::vector<T> &values)
   {
     // with VLOG output all entries
     for (unsigned long i = 1; i < values.size(); i++)
+    {
       stream << "," << values[i];
+    }
   }
   else
   {
     // without VLOG only output the first 100 entries
     unsigned long i = 1;
     for (; i < std::min(100ul,values.size()); i++)
+    {
       stream << "," << values[i];
+    }
     if (i == 100 && i < values.size())
-      stream << "... " << values.size() << " entries total, only showing the first 100";
+      stream << "..." << values[values.size()-3] << "," << values[values.size()-2] << "," << values[values.size()-1]
+        << " (" << values.size() << " entries total, only showing the first 100 (call with -vmodule=vector_operators*=1 to show all))";
   }
 
   stream << "]";
@@ -250,7 +311,7 @@ template<typename T1, typename T2>
 std::ostream &operator<<(std::ostream &stream, const std::map<T1,T2> &map)
 {
   bool first = true;
-  for(typename std::map<T1,T2>::const_iterator iter = map.cbegin(); iter != map.cend(); iter++)
+  for (typename std::map<T1,T2>::const_iterator iter = map.cbegin(); iter != map.cend(); iter++)
   {
     if (!first)
       stream << ", ";
@@ -266,7 +327,7 @@ std::ostream &operator<<(std::ostream &stream, const std::set<T> &set)
 {
   stream << "{";
   bool first = true;
-  for(typename std::set<T>::const_iterator iter = set.cbegin(); iter != set.cend(); iter++)
+  for (typename std::set<T>::const_iterator iter = set.cbegin(); iter != set.cend(); iter++)
   {
     if (!first)
       stream << ", ";
@@ -276,6 +337,36 @@ std::ostream &operator<<(std::ostream &stream, const std::set<T> &set)
   stream << "}";
   return stream;
 }
+
+//! output operators for tuples or arbitrary type
+template <size_t index, typename... T>
+typename std::enable_if<(index >= sizeof...(T))>::type
+  getString(std::ostream &stream, const std::tuple<T...> &tuple)
+{}
+
+template <size_t index, typename... T>
+typename std::enable_if<(index < sizeof...(T))>::type
+  getString(std::ostream &stream, const std::tuple<T...> &tuple)
+{
+  if (index != 0)
+  {
+    stream << ",";
+  }
+  stream << std::get<index>(tuple);
+
+  getString<index+1>(stream, tuple);
+}
+
+template <typename... T>
+std::ostream &operator<<(std::ostream& stream, const std::tuple<T...> &tuple)
+{
+  stream << "[";
+  getString<0>(stream, tuple);
+  stream << "]";
+
+  return stream;
+}
+
 /*
 std::ostream &operator<<(std::ostream &stream, const std::stringstream &stringstream)
 {

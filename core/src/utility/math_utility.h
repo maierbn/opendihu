@@ -15,10 +15,10 @@ namespace MathUtility
 {
 
 //! returns v*v (square)
-double sqr(double v);
+inline double sqr(double v){return v*v;}
 
 //! returns v*v (square)
-int sqr(int v);
+inline int sqr(int v){return v*v;}
 
 //! return the euclidean norm of the difference vector, i.e. the distance between the nodes
 template<int D>
@@ -99,6 +99,23 @@ bool isSubsequenceOf(std::vector<int> a, std::vector<int> b, size_t &subsequence
 //! rotate the matrix such that unit vector (1,0,0) now points to directionVector, directionVector does not need to be normalized
 template<int D>
 void rotateMatrix(Matrix<D,D> &matrix, Vec3 directionVector);
+
+//! compute the inverse Phi mapping, i.e. get the xi0, xi1 coordinates of a point in a quadrilateral
+void quadrilateralGetPointCoordinates(const std::array<Vec3,4> quadrilateral, const Vec3 point, Vec2 &xi);
+
+//! read a Vec3 from an open fstream at the current position of the file get pointer
+template<typename T>
+void readPoint(T &file, Vec3 &point);
+
+//! write a Vec3 to an open fstream at the current position of the file put pointer
+template<typename T>
+void writePoint(T &file, Vec3 &point);
+
+//! estimate the maximum eigenvalue of the matrix by using the power iteration / von Mises iteration algorithm, the algorithm is stopped after 15 iterations
+double estimateMaximumEigenvalue(const Tensor2<3> &matrix);
+
+//! estimate the condition number |sigma_max/sigma_min| of the matrix
+double estimateConditionNumber(const Tensor2<3> &matrix, const Tensor2<3> &inverseMatrix);
 
 /** pow as constexpr function
  *  https://stackoverflow.com/a/27270730/10290071

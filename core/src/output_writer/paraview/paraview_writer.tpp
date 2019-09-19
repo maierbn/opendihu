@@ -7,13 +7,14 @@
 
 #include "output_writer/paraview/loop_collect_field_variables_names.h"
 #include "output_writer/paraview/loop_output_point_data.h"
+#include "field_variable/field_variable.h"
 
 namespace OutputWriter
 {
 // regular fixed
-template<int D, typename BasisFunctionType, typename OutputFieldVariablesType>
-void ParaviewWriter<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>, BasisFunctionType>, OutputFieldVariablesType>::
-outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::string meshName, 
+template<int D, typename BasisFunctionType, typename FieldVariablesForOutputWriterType>
+void ParaviewWriter<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>, BasisFunctionType>, FieldVariablesForOutputWriterType>::
+outputFile(std::string filename, FieldVariablesForOutputWriterType fieldVariables, std::string meshName, 
            std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>, BasisFunctionType>> mesh,
            int nFieldVariablesOfMesh, PythonConfig specificSettings)
 {
@@ -64,7 +65,8 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
     s << filenameBaseWithPath << ".pvtr";
 
     // open file
-    std::ofstream file = Paraview::openFile(s.str());
+    std::ofstream file;
+    Paraview::openFile(file, s.str());
 
     LOG(DEBUG) << "Write PRectilinearGrid, file \"" << s.str() << "\".";
 
@@ -76,6 +78,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
 
     // write file
     file << "<?xml version=\"1.0\"?>" << std::endl
+      << "<!-- " << DihuContext::versionText() << " " << DihuContext::metaText() << "-->" << std::endl
       << "<VTKFile type=\"PRectilinearGrid\" version=\"1.0\" byte_order=\"LittleEndian\">" << std::endl    // intel cpus are LittleEndian
       << std::string(1, '\t') << "<PRectilinearGrid "
       << "WholeExtent=\"" << "0 " << globalExtent[0] << " 0 " << globalExtent[1] << " 0 " << globalExtent[2] << "\" GhostLevel=\"0\"> " << std::endl;
@@ -162,7 +165,8 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
 
 
   // open file
-  std::ofstream file = Paraview::openFile(s.str());
+  std::ofstream file;
+  Paraview::openFile(file, s.str());
 
   LOG(DEBUG) << "Write RectilinearGrid, file \"" << s.str() << "\".";
 
@@ -188,7 +192,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
 
     coordinates[dimensionNo].resize(nNodes);
 
-    for(node_no_t nodeNo = 0; nodeNo < nNodes; nodeNo++)
+    for (node_no_t nodeNo = 0; nodeNo < nNodes; nodeNo++)
     {
       double coordinate = (mesh->meshPartition()->beginNodeGlobalNatural(dimensionNo) + nodeNo) * meshWidth;
       VLOG(1) << "coordinate: " << coordinate << ", nodeNo=" << nodeNo;
@@ -197,7 +201,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   }
 
   // set other coordinates to 0
-  for(; dimensionNo < 3; dimensionNo++)
+  for (; dimensionNo < 3; dimensionNo++)
   {
     coordinates[dimensionNo].resize(1);
     coordinates[dimensionNo][0] = 0.0;
@@ -205,6 +209,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   
   // write file
   file << "<?xml version=\"1.0\"?>" << std::endl
+    << "<!-- " << DihuContext::versionText() << " " << DihuContext::metaText() << "-->" << std::endl
     << "<VTKFile type=\"RectilinearGrid\" version=\"1.0\" byte_order=\"LittleEndian\">" << std::endl    // intel cpus are LittleEndian
     << std::string(1, '\t') << "<RectilinearGrid "
     << "WholeExtent=\"" << "0 " << globalExtent[0] << " 0 " << globalExtent[1] << " 0 " << globalExtent[2] << "\"> " << std::endl     // dataset element
@@ -286,9 +291,9 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
 }
   
 // structured deformable
-template<int D, typename BasisFunctionType, typename OutputFieldVariablesType>
-void ParaviewWriter<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>, BasisFunctionType>, OutputFieldVariablesType>::
-outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::string meshName, 
+template<int D, typename BasisFunctionType, typename FieldVariablesForOutputWriterType>
+void ParaviewWriter<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>, BasisFunctionType>, FieldVariablesForOutputWriterType>::
+outputFile(std::string filename, FieldVariablesForOutputWriterType fieldVariables, std::string meshName, 
            std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>, BasisFunctionType>> mesh,
            int nFieldVariablesOfMesh, PythonConfig specificSettings)
 {
@@ -339,7 +344,8 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
     s << filenameBaseWithPath << ".pvts";
 
     // open file
-    std::ofstream file = Paraview::openFile(s.str());
+    std::ofstream file;
+    Paraview::openFile(file, s.str());
 
     LOG(DEBUG) << "Write PStructuredGrid, file \"" << s.str() << "\".";
 
@@ -351,6 +357,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
 
     // write file
     file << "<?xml version=\"1.0\"?>" << std::endl
+      << "<!-- " << DihuContext::versionText() << " " << DihuContext::metaText() << "-->" << std::endl
       << "<VTKFile type=\"PStructuredGrid\" version=\"1.0\" byte_order=\"LittleEndian\">" << std::endl    // intel cpus are LittleEndian
       << std::string(1, '\t') << "<PStructuredGrid "
       << "WholeExtent=\"" << "0 " << globalExtent[0] << " 0 " << globalExtent[1] << " 0 " << globalExtent[2] << "\" GhostLevel=\"0\"> " << std::endl;
@@ -426,7 +433,8 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   }
 
   // open file
-  std::ofstream file = Paraview::openFile(s.str());
+  std::ofstream file;
+  Paraview::openFile(file, s.str());
 
   LOG(DEBUG) << "Write StructuredGrid, file \"" << s.str() << "\".";
 
@@ -446,6 +454,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   
   // write file
   file << "<?xml version=\"1.0\"?>" << std::endl
+    << "<!-- " << DihuContext::versionText() << " " << DihuContext::metaText() << "-->" << std::endl
     << "<VTKFile type=\"StructuredGrid\" version=\"1.0\" byte_order=\"LittleEndian\">" << std::endl    // intel cpus are LittleEndian
     << std::string(1, '\t') << "<StructuredGrid "
     << "WholeExtent=\"" << "0 " << globalExtent[0] << " 0 " << globalExtent[1] << " 0 " << globalExtent[2] << "\"> " << std::endl     // dataset element
@@ -489,9 +498,9 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   
   
 // unstructured deformable
-template<int D, typename BasisFunctionType, typename OutputFieldVariablesType>
-void ParaviewWriter<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, OutputFieldVariablesType>::
-outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::string meshName, 
+template<int D, typename BasisFunctionType, typename FieldVariablesForOutputWriterType>
+void ParaviewWriter<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FieldVariablesForOutputWriterType>::
+outputFile(std::string filename, FieldVariablesForOutputWriterType fieldVariables, std::string meshName, 
            std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>> mesh,
            int nFieldVariablesOfMesh, PythonConfig specificSettings)
 {
@@ -501,7 +510,8 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   s << filename << ".vtu";
 
   // open file
-  std::ofstream file = Paraview::openFile(s.str());
+  std::ofstream file;
+  Paraview::openFile(file, s.str());
 
   LOG(DEBUG) << "Write UnstructuredGrid, file \"" << s.str() << "\".";
 
@@ -520,6 +530,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
 
   // write file
   file << "<?xml version=\"1.0\"?>" << std::endl
+    << "<!-- " << DihuContext::versionText() << " " << DihuContext::metaText() << "-->" << std::endl
     << "<VTKFile type=\"UnstructuredGrid\" version=\"1.0\" byte_order=\"LittleEndian\">" << std::endl    // intel cpus are LittleEndian
     << std::string(1, '\t') << "<UnstructuredGrid> " << std::endl
     << std::string(2, '\t') << "<Piece "
@@ -580,7 +591,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   if (binaryOutput)
   {
     file << "format=\"binary\">" << std::endl
-       << Paraview::encodeBase64Int(values.begin(), values.end()) << std::endl;
+       << Paraview::encodeBase64Int32(values.begin(), values.end()) << std::endl;
   }
   else 
   {
@@ -602,7 +613,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   if (binaryOutput)
   {
     file << "format=\"binary\">" << std::endl
-      << Paraview::encodeBase64Int(values.begin(), values.end()) << std::endl;
+      << Paraview::encodeBase64Int32(values.begin(), values.end()) << std::endl;
   }
   else
   {
@@ -640,4 +651,4 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
     << "</VTKFile>" << std::endl;
 }
   
-};
+}  // namespace

@@ -11,25 +11,25 @@ def str_format_memory(value):
   result = ""
   if value >= (1024 * 1024 * 1024 * 1024):
     tera = value / (1024. * 1024 * 1024 * 1024)
-    result += "{:.3f} TiB".format(int(tera))
+    result += "{:.3f} TiB".format(tera)
 
   elif (value >= (1024 * 1024 * 1024)):
     giga = value / (1024. * 1024 * 1024)
-    result += "{:.3f} GiB".format(int(giga))
+    result += "{:.3f} GiB".format(giga)
 
   elif (value >= (1024 * 1024)):
     mega = value / (1024. * 1024)
-    result += "{:.3f} MiB".format(int(mega))
+    result += "{:.3f} MiB".format(mega)
 
   elif (value >= (1024)):
     kilo = value / (1024.);
-    result += "{:.3f} kiB".format(int(kilo))
+    result += "{:.3f} kiB".format(kilo)
 
   else:
     result += "{} B".format(int(value))
 
-  if value >= 1024:
-    result += " ("+str_format_number(int(value))+" Bytes)";
+  #if value >= 1024:
+  #  result += " ("+str_format_number(int(value))+" Bytes)";
   
   return result
     

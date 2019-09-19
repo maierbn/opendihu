@@ -8,7 +8,7 @@ namespace SpatialDiscretization
 
 /** class of integrand for rhs
  */
-template<int D,typename EvaluationsType,typename FunctionSpaceType,typename Term,typename=Term>
+template<int D,typename EvaluationsType,typename FunctionSpaceType,int nComponents,typename Term,typename=Term>
 class IntegrandMassMatrix
 {
 public:
@@ -17,6 +17,6 @@ public:
 
 
 
-};  // namespace
+} // namespace
 
 #include "spatial_discretization/finite_element_method/integrand/integrand_mass_matrix.tpp"

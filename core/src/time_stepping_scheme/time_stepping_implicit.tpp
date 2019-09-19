@@ -16,8 +16,6 @@ template<typename DiscretizableInTimeType>
 TimeSteppingImplicit<DiscretizableInTimeType>::TimeSteppingImplicit(DihuContext context, std::string name) :
 TimeSteppingSchemeOde<DiscretizableInTimeType>(context, name)
 {
-  this->data_ = std::make_shared<Data::TimeSteppingImplicit<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>>(context); // create data object for implicit euler
-  this->dataImplicit_ = std::static_pointer_cast<Data::TimeSteppingImplicit<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>>(this->data_);
 }
 
 template<typename DiscretizableInTimeType>
@@ -26,13 +24,18 @@ initialize()
 {
   if (this->initialized_)
     return;
-  
+
+  // initialize data objects that are needed for TimeSteppingSchemeOde<DiscretizableInTimeType>::initialize();
+  this->data_ = std::make_shared<Data::TimeSteppingImplicit<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>>(this->context_); // create data object for implicit euler
+  this->dataImplicit_ = std::static_pointer_cast<Data::TimeSteppingImplicit<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>>(this->data_);
+
   TimeSteppingSchemeOde<DiscretizableInTimeType>::initialize();
   LOG(TRACE) << "TimeSteppingImplicit::initialize";
 
   // compute the system matrix
   this->setSystemMatrix(this->timeStepWidth_);
 
+  LOG(DEBUG) << "time_stepping_implicit applyInSystemMatrix, from TimeSteppingImplicit::initialize";
   // set the boundary conditions to system matrix, i.e. zero rows and columns of Dirichlet BC dofs and set diagonal to 1
   this->dirichletBoundaryConditions_->applyInSystemMatrix(this->dataImplicit_->systemMatrix(), this->dataImplicit_->boundaryConditionsRightHandSideSummand());
 
@@ -50,33 +53,52 @@ initialize()
 
 template<typename DiscretizableInTimeType>
 void TimeSteppingImplicit<DiscretizableInTimeType>::
+reset()
+{
+  TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::reset();
+
+  LOG(DEBUG) << "set linearSolver_ to nullptr";
+  if (linearSolver_)
+  {
+    LOG(DEBUG) << "delete linear solver";
+    this->context_.solverManager()->deleteSolver(linearSolver_->name());
+  }
+
+  linearSolver_ = nullptr;
+}
+
+template<typename DiscretizableInTimeType>
+Data::TimeSteppingImplicit<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>
+&TimeSteppingImplicit<DiscretizableInTimeType>::
+dataImplicit()
+{
+  return *dataImplicit_;
+}
+
+template<typename DiscretizableInTimeType>
+void TimeSteppingImplicit<DiscretizableInTimeType>::
 solveLinearSystem(Vec &input, Vec &output)
 {
   // solve systemMatrix*output = input for output
   Mat &systemMatrix = this->dataImplicit_->systemMatrix()->valuesGlobal();
   
-  PetscErrorCode ierr;
   PetscUtility::checkDimensionsMatrixVector(systemMatrix, input);
   
-  // solve the system, KSPSolve(ksp,b,x)
-  ierr = KSPSolve(*ksp_, input, output); CHKERRV(ierr);
-  
-  int numberOfIterations = 0;
-  PetscReal residualNorm = 0.0;
-  ierr = KSPGetIterationNumber(*ksp_, &numberOfIterations); CHKERRV(ierr);
-  ierr = KSPGetResidualNorm(*ksp_, &residualNorm); CHKERRV(ierr);
-  
-  KSPConvergedReason convergedReason;
-  ierr = KSPGetConvergedReason(*ksp_, &convergedReason); CHKERRV(ierr);
-  
-  VLOG(1) << "Linear system of implicit time stepping solved in " << numberOfIterations << " iterations, residual norm " << residualNorm
-    << ": " << PetscUtility::getStringLinearConvergedReason(convergedReason);
+  if (VLOG_IS_ON(1))
+  {
+    linearSolver_->solve(input, output, "Linear system of implicit time stepping solved");
+  }
+  else
+  {
+    linearSolver_->solve(input, output);
+  }
 }
 
 template<typename DiscretizableInTimeType>
 void TimeSteppingImplicit<DiscretizableInTimeType>::
 initializeLinearSolver()
 { 
+  LOG(DEBUG) << "initializeLinearSolver, linearSolver_ == nullptr: " << (linearSolver_ == nullptr);
   if (linearSolver_ == nullptr)
   {
     LOG(DEBUG) << "Implicit time stepping: initialize linearSolver";
@@ -92,6 +114,14 @@ initializeLinearSolver()
   }
 }
 
+/*
+//! output the given data for debugging
+template<typename DiscretizableInTimeType>
+std::string TimeSteppingImplicit<DiscretizableInTimeType>::
+getString(typename TimeSteppingSchemeOde<DiscretizableInTimeType>::OutputConnectorDataType &data)
+{
+  return dataImplicit_->getString(data);
+}*/
 
 
 } // namespace TimeSteppingScheme

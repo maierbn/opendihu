@@ -38,6 +38,13 @@ using hasNoRhs = std::enable_if_t<!Term::hasRhs,Term>;
 template<typename Term>
 using isSolidMechanics = std::enable_if_t<Term::isSolidMechanics,Term>;
 
+// Equations of linear elasticity
+template<typename Term>
+using isLinearElasticity = std::enable_if_t<
+  std::is_same<Term,Static::LinearElasticity>::value
+  || std::is_same<Term,Static::LinearElasticityActiveStress>::value
+  ,Term>;
+
 // compressible material
 template<typename Term>
 using isCompressible = std::enable_if_t<Term::isSolidMechanics && !Term::isIncompressible,Term>;

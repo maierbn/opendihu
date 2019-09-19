@@ -15,37 +15,57 @@
 namespace Control
 {
 
-template<class TimeSteppingScheme>
+template<typename TimeSteppingScheme>
 MultipleInstances<TimeSteppingScheme>::
 MultipleInstances(DihuContext context) :
-  context_(context["MultipleInstances"]), specificSettings_(context_.getPythonConfig()), data_(context_)
+  context_(context["MultipleInstances"]), specificSettings_(context_.getPythonConfig()),
+  data_(context_), outputInitializeThisInstance_(false)
 {
-// #ifdef HAVE_PAT
-  // PAT_record(PAT_STATE_OFF);
-  // std::string label = "initialization";
-  // PAT_region_begin(1, label.c_str());
-  // LOG(INFO) << "PAT_region_begin(" << label << ")";
-// #endif
+  std::vector<std::string> configKeys;
+  specificSettings_.getKeys(configKeys);
+  LOG(DEBUG) << "initialize outputWriterManager_, keys: " << configKeys;
+
+  // parse log key
+  if (specificSettings_.hasKey("durationLogKey") || specificSettings_.hasKey("logKey"))
+  {
+    if (specificSettings_.hasKey("logKey"))
+    {
+      this->logKey_ = specificSettings_.getOptionString("logKey", "");
+    }
+    else
+    {
+      this->logKey_ = specificSettings_.getOptionString("durationLogKey", "");
+    }
+  }
 
   outputWriterManager_.initialize(context_, specificSettings_);
   
-  //VLOG(1) << "MultipleInstances constructor, settings: " << specificSettings_;
+  //LOG(DEBUG) << "MultipleInstances constructor, settings: ";
+  //PythonUtility::printDict(specificSettings_.pyObject());
   
   // extract the number of instances
   nInstances_ = specificSettings_.getOptionInt("nInstances", 1, PythonUtility::Positive);
-   
+
   // parse all instance configs 
-  std::vector<PythonConfig> instanceConfigs;
+  std::vector<std::shared_ptr<PythonConfig>> instanceConfigs;
   
   // get the config for the first InstancesDataset instance from the list
   PyObject *instanceConfig = specificSettings_.getOptionListBegin<PyObject *>("instances");
 
   int i = 0;
-  for(;
+  for (;
       !specificSettings_.getOptionListEnd("instances") && i < nInstances_;
       specificSettings_.template getOptionListNext<PyObject *>("instances", instanceConfig), i++)
   {
-    instanceConfigs.push_back(PythonConfig(specificSettings_, "instances", instanceConfig));
+    if (instanceConfig == Py_None)
+    {
+      instanceConfigs.push_back(nullptr);
+    }
+    else
+    {
+      instanceConfigs.push_back(std::make_shared<PythonConfig>(specificSettings_, "instances", instanceConfig));
+    }
+
     VLOG(3) << "i = " << i << ", instanceConfig = " << instanceConfig;
   }
     
@@ -57,7 +77,9 @@ MultipleInstances(DihuContext context) :
     
   if (!specificSettings_.getOptionListEnd("instances"))
   {
-    LOG(ERROR) << "Only " << nInstances_ << " instances were created, but more configurations are given.";
+    PyObject *instancesList = specificSettings_.getOptionPyObject("instances");
+    std::vector<PyObject*> vector = PythonUtility::convertFromPython<std::vector<PyObject *>>::get(instancesList);
+    LOG(ERROR) << "Only " << nInstances_ << " instances were created, but more (" << vector.size() << ") configurations are given.";
   }
   
   VLOG(1) << "MultipleInstances constructor, create Partitioning for " << nInstances_ << " instances";
@@ -66,47 +88,60 @@ MultipleInstances(DihuContext context) :
 
   // determine all ranks of all computed instances
   std::set<int> ranksAllComputedInstances;
-  nInstancesComputedGlobally_ = 0;
-  std::vector<std::tuple<std::shared_ptr<Partition::RankSubset>, bool, PythonConfig>> rankSubsets(nInstances_);  // <rankSubset, computeOnThisRank, instanceConfig>
 
-  int ownRankNoWorldCommunicator = this->context_.partitionManager()->rankNoCommWorld();
-  int nRanksCommWorld = this->context_.partitionManager()->nRanksCommWorld();
+  // if all ranks are given, parse them
+  if (specificSettings_.hasKey("ranksAllComputedInstances"))
+  {
+    std::vector<int> ranksAllComputedInstancesVector;
+    specificSettings_.getOptionVector("ranksAllComputedInstances", ranksAllComputedInstancesVector);
+    ranksAllComputedInstances.insert(ranksAllComputedInstancesVector.begin(), ranksAllComputedInstancesVector.end());
+  }
+
+  nInstancesComputedGlobally_ = 0;
+  std::vector<std::tuple<std::shared_ptr<Partition::RankSubset>, bool, std::shared_ptr<PythonConfig>>> instanceData(nInstances_);  // <rankSubset, computeOnThisRank, instanceConfig>
+
+  int ownRankNo = this->context_.ownRankNo();  // this may not be from MPI_COMM_WORLD but the context's communicator
+  int nRanksThisContext = this->context_.rankSubset()->size();
+  std::vector<std::shared_ptr<Partition::RankSubset>> rankSubsets;
 
   // parse the rank lists for all instances
   for (int instanceConfigNo = 0; instanceConfigNo < nInstances_; instanceConfigNo++)
   {
-    PythonConfig instanceConfig = instanceConfigs[instanceConfigNo];
-    std::get<2>(rankSubsets[instanceConfigNo]) = instanceConfig;
+    std::shared_ptr<PythonConfig> instanceConfig = instanceConfigs[instanceConfigNo];
+    std::get<2>(instanceData[instanceConfigNo]) = instanceConfig;
    
+    std::shared_ptr<Partition::RankSubset> rankSubset = nullptr;
+    std::vector<int> ranks;
+    bool computeOnThisRank = false;
+
     // extract ranks for this instance
-    if (!instanceConfig.hasKey("ranks"))
+    if (!instanceConfig)
+    {
+      // do nothing
+    }
+    else if (!instanceConfig->hasKey("ranks"))
     {
       LOG(ERROR) << "Instance " << instanceConfigs << " has no \"ranks\" settings.";
-
-      std::get<0>(rankSubsets[instanceConfigNo]) = nullptr;
-      std::get<1>(rankSubsets[instanceConfigNo]) = false;
-      continue;
     }
     else 
     {
-      // extract rank list
-      std::vector<int> ranks;
-      instanceConfig.getOptionVector("ranks", ranks);
-      
+      // extract rank list from config
+      instanceConfig->getOptionVector("ranks", ranks);
+      std::set<int> rankSet(ranks.begin(), ranks.end());
+      LOG(DEBUG) << "instance no. " << instanceConfigNo << " has ranks: " << ranks << ", " << rankSet;
+
       VLOG(2) << "instance " << instanceConfigNo << " on ranks: " << ranks;
 
       // check if own rank is part of ranks list
-      bool computeOnThisRank = false;
-
       bool computeSomewhere = false;
-      for (int rank : ranks)
+      for (int rank : rankSet)
       {
-        if (rank < nRanksCommWorld)
+        if (rank < nRanksThisContext)
         {
           ranksAllComputedInstances.insert(rank);
           computeSomewhere = true;
         }
-        if (rank == ownRankNoWorldCommunicator)
+        if (rank == ownRankNo)
         {
           computeOnThisRank = true;
         }
@@ -120,11 +155,33 @@ MultipleInstances(DihuContext context) :
       VLOG(2) << "compute on this rank: " << std::boolalpha << computeOnThisRank;
 
       // create rank subset
-      std::shared_ptr<Partition::RankSubset> rankSubset = std::make_shared<Partition::RankSubset>(ranks.begin(), ranks.end());
+      if (computeOnThisRank)
+      {
+        LOG(DEBUG) << "instance " << instanceConfigNo << ", compute on this rank";
+      }
 
-      std::get<0>(rankSubsets[instanceConfigNo]) = rankSubset;
-      std::get<1>(rankSubsets[instanceConfigNo]) = computeOnThisRank;
+      // check if a matching rank subset already exists that can be reused
+      for (int i = 0; i < rankSubsets.size(); i++)
+      {
+        if (rankSubsets[i]->equals(rankSet))
+        {
+          rankSubset = rankSubsets[i];
+          LOG(DEBUG) << "reuse rank subset of instance " << i << ", ranks: " << ranks;
+          break;
+        }
+      }
     }
+
+    if (!rankSubset)
+    {
+      LOG(DEBUG) << "create new rank subset from ranks " << ranks << " in context " << *this->context_.rankSubset();
+      // The rank subsets have to be created collectively by all ranks in the current context, even if they will not be part of the new communicator!
+      rankSubset = std::make_shared<Partition::RankSubset>(ranks.begin(), ranks.end(), this->context_.rankSubset());
+    }
+    rankSubsets.push_back(rankSubset);
+
+    std::get<0>(instanceData[instanceConfigNo]) = rankSubset;
+    std::get<1>(instanceData[instanceConfigNo]) = computeOnThisRank;
   }
 
   // create the rank list with all computed instances
@@ -141,9 +198,9 @@ MultipleInstances(DihuContext context) :
   // create all instances that are computed on the own rank
   for (int instanceConfigNo = 0; instanceConfigNo < nInstances_; instanceConfigNo++)
   {
-    std::shared_ptr<Partition::RankSubset> rankSubset = std::get<0>(rankSubsets[instanceConfigNo]);
-    bool computeOnThisRank = std::get<1>(rankSubsets[instanceConfigNo]);
-    PythonConfig instanceConfig = std::get<2>(rankSubsets[instanceConfigNo]);
+    std::shared_ptr<Partition::RankSubset> rankSubset = std::get<0>(instanceData[instanceConfigNo]);
+    bool computeOnThisRank = std::get<1>(instanceData[instanceConfigNo]);
+    std::shared_ptr<PythonConfig> instanceConfig = std::get<2>(instanceData[instanceConfigNo]);
 
     if (!computeOnThisRank)
     {
@@ -151,27 +208,50 @@ MultipleInstances(DihuContext context) :
     }
 
     // store the rank subset containing only the own rank for the mesh of the current instance
-    this->context_.partitionManager()->setRankSubsetForNextCreatedMesh(rankSubset);
+    this->context_.partitionManager()->setRankSubsetForNextCreatedPartitioning(rankSubset);
 
     VLOG(1) << "create sub context for instance no " << instanceConfigNo << ", rankSubset: " << *rankSubset;
-    instancesLocal_.emplace_back(context_.createSubContext(instanceConfig));
+    instancesLocal_.emplace_back(context_.createSubContext(*instanceConfig, rankSubset));
   }
 
   nInstancesLocal_ = instancesLocal_.size();
+
+  if (this->logKey_ != "")
+  {
+    std::stringstream logKey;
+    logKey << this->logKey_ << "_n";
+    Control::PerformanceMeasurement::setParameter(logKey.str(), nInstancesLocal_);
+  }
+
+  // clear rank subset for next created partitioning
+  this->context_.partitionManager()->setRankSubsetForNextCreatedPartitioning(nullptr);
 }
 
-template<class TimeSteppingScheme>
+template<typename TimeSteppingScheme>
 void MultipleInstances<TimeSteppingScheme>::
 advanceTimeSpan()
 {
+  // start duration measurement
+  if (this->logKey_ != "")
+    Control::PerformanceMeasurement::start(this->logKey_);
+
   // This method advances the simulation by the specified time span. It will be needed when this MultipleInstances object is part of a parent control element, like a coupling to 3D model.
   for (int i = 0; i < nInstancesLocal_; i++)
   {
     instancesLocal_[i].advanceTimeSpan();
   }
+
+  // stop duration measurement
+  if (this->logKey_ != "")
+    Control::PerformanceMeasurement::stop(this->logKey_);
+
+
+  LOG(DEBUG) << "multipleInstances::advanceTimeSpan() complete, now call writeOutput, hasOutputWriters: " << this->outputWriterManager_.hasOutputWriters();
+
+  writeOutput(instancesLocal_[0].numberTimeSteps(), instancesLocal_[0].endTime());
 }
 
-template<class TimeSteppingScheme>
+template<typename TimeSteppingScheme>
 void MultipleInstances<TimeSteppingScheme>::
 setTimeSpan(double startTime, double endTime)
 {
@@ -181,25 +261,67 @@ setTimeSpan(double startTime, double endTime)
   }
 }
 
-template<class TimeSteppingScheme>
+template<typename TimeSteppingScheme>
 void MultipleInstances<TimeSteppingScheme>::
 initialize()
 {
+  if (this->logKey_ != "")
+  {
+    std::stringstream logKey;
+    logKey << this->logKey_ << "_init";
+    Control::PerformanceMeasurement::start(logKey.str());
+  }
+
   LOG(TRACE) << "MultipleInstances::initialize()";
+
+  // initialize output of progress in %, it is only output for once instance and then only for rank 0
+  if (outputInitialize_)
+  {
+    outputInitializeThisInstance_ = true;
+    outputInitialize_ = false;
+    LOG(INFO) << "Initialize " << nInstancesComputedGlobally_ << " global instances (" << nInstancesLocal_ << " local).";
+  }
+
+  double progress = 0;
   for (int i = 0; i < nInstancesLocal_; i++)
   {
+    // output progress
+    double newProgress = (double)i/nInstancesLocal_;
+    if (outputInitializeThisInstance_ && this->context_.ownRankNo() == 0)
+    {
+      if (int(progress*10) != int(newProgress*10))
+      {
+        std::cout << "\b\b\b\b" << int(newProgress*100) << "%" << std::flush;
+      }
+    }
+    progress = newProgress;
+
     LOG(DEBUG) << "instance " << i << " initialize";
     instancesLocal_[i].initialize();
   }
+
+  // end output of progress
+  if (outputInitializeThisInstance_ && this->context_.ownRankNo() == 0)
+  {
+    std::cout << "\b\b\b\bdone." << std::endl;
+  }
+
   
   data_.setInstancesData(instancesLocal_);
+
+  if (this->logKey_ != "")
+  {
+    std::stringstream logKey;
+    logKey << this->logKey_ << "_init";
+    Control::PerformanceMeasurement::stop(logKey.str());
+  }
 
 // #ifdef HAVE_PAT
   // PAT_region_end(1);    // end region "initialization", id 1
 // #endif
 }
 
-template<class TimeSteppingScheme>
+template<typename TimeSteppingScheme>
 void MultipleInstances<TimeSteppingScheme>::
 run()
 {
@@ -234,27 +356,27 @@ run()
   PAT_record(PAT_STATE_OFF);
 #endif
 
-  this->outputWriterManager_.writeOutput(this->data_);
+  LOG(DEBUG) << "multipleInstances::run() complete, now call writeOutput, hasOutputWriters: "
+    << std::boolalpha << this->outputWriterManager_.hasOutputWriters();
+
+  assert(nInstancesLocal_ == instancesLocal_.size());
+
+  if (nInstancesLocal_ > 0)
+  {
+    this->outputWriterManager_.writeOutput(this->data_, instancesLocal_[0].numberTimeSteps(), instancesLocal_[0].endTime());
+  }
+  LOG(DEBUG) << "end of multiple_instances run";
 }
 
-template<class TimeSteppingScheme>
-bool MultipleInstances<TimeSteppingScheme>::
-knowsMeshType()
+//! return the data object
+template<typename TimeSteppingScheme>
+::Data::MultipleInstances<typename TimeSteppingScheme::FunctionSpace, TimeSteppingScheme> &MultipleInstances<TimeSteppingScheme>::
+data()
 {
-  // This is a dummy method that is currently not used, it is only important if we want to map between multiple data sets.
-  assert(nInstances_ > 0);
-  return instancesLocal_[0].knowsMeshType();
+  return data_;
 }
-/*
-template<class TimeSteppingScheme>
-Vec &MultipleInstances<TimeSteppingScheme>::
-solution()
-{
-  assert(nInstances_ > 0);
-  return instancesLocal_[0].solution();
-}*/
 
-template<class TimeSteppingScheme>
+template<typename TimeSteppingScheme>
 void MultipleInstances<TimeSteppingScheme>::
 reset()
 {
@@ -264,17 +386,59 @@ reset()
   }
 }
 
-template<class TimeSteppingScheme>
-typename MultipleInstances<TimeSteppingScheme>::TransferableSolutionDataType MultipleInstances<TimeSteppingScheme>::
-getSolutionForTransferInOperatorSplitting()
+template<typename TimeSteppingScheme>
+typename MultipleInstances<TimeSteppingScheme>::OutputConnectorDataType MultipleInstances<TimeSteppingScheme>::
+getOutputConnectorData()
 {
-  std::vector<typename TimeSteppingScheme::TransferableSolutionDataType> output(nInstancesLocal_);
+  std::vector<typename TimeSteppingScheme::OutputConnectorDataType> output(nInstancesLocal_);
 
   for (int i = 0; i < nInstancesLocal_; i++)
   {
-    output[i] = instancesLocal_[i].getSolutionForTransferInOperatorSplitting();
+    VLOG(1) << "MultipleInstances::getOutputConnectorData";
+    output[i] = instancesLocal_[i].getOutputConnectorData();
+
+    if (VLOG_IS_ON(1))
+    {
+      VLOG(1) << "instance " << i << "/" << nInstancesLocal_ << " is " << output[i];
+    }
   }
   return output;
 }
 
-};
+
+template<typename TimeSteppingScheme>
+std::vector<TimeSteppingScheme> &MultipleInstances<TimeSteppingScheme>::
+instancesLocal()
+{
+  return instancesLocal_;
+}
+
+
+template<typename TimeSteppingScheme>
+void MultipleInstances<TimeSteppingScheme>::
+writeOutput(int timeStepNo, double currentTime)
+{
+  if (nInstancesLocal_ > 0)
+  {
+    this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime);
+  }  
+}
+
+
+template<typename TimeSteppingScheme>
+std::string MultipleInstances<TimeSteppingScheme>::
+getString(typename MultipleInstances<TimeSteppingScheme>::OutputConnectorDataType &data)
+{
+  std::stringstream s;
+  s << "<MultipleInstances(" << nInstancesLocal_ << "):";
+  for (int i = 0; i < std::min((int)data.size(), nInstancesLocal_); i++)
+  {
+    if (i != 0)
+      s << ", ";
+    s << instancesLocal_[i].getString(data[i]);
+  }
+  s << ">";
+  return s.str();
+}
+
+}  // namespace

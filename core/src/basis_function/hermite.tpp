@@ -13,4 +13,4 @@ constexpr int Hermite::nDofsPerBasis()
   return 4;
 }
 
-}; // namespace
+}  // namespace

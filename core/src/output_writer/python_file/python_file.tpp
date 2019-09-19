@@ -24,7 +24,7 @@ void PythonFile::write(DataType& data, int timeStepNo, double currentTime)
 
   // collect all available meshes
   std::set<std::string> meshNames;
-  LoopOverTuple::loopCollectMeshNames<typename DataType::OutputFieldVariables>(data.getOutputFieldVariables(), meshNames);
+  LoopOverTuple::loopCollectMeshNames<typename DataType::FieldVariablesForOutputWriter>(data.getFieldVariablesForOutputWriter(), meshNames);
   
   // loop over meshes and create an output file for each
   for (std::string meshName : meshNames)
@@ -50,8 +50,8 @@ void PythonFile::write(DataType& data, int timeStepNo, double currentTime)
     // PythonUtility::GlobalInterpreterLock lock;
    
     // build python object for data
-    PyObject *pyData = Python<typename DataType::FunctionSpace, typename DataType::OutputFieldVariables>::
-      buildPyDataObject(data.getOutputFieldVariables(), meshName, timeStepNo, currentTime, this->onlyNodalValues_);
+    PyObject *pyData = Python<typename DataType::FunctionSpace, typename DataType::FieldVariablesForOutputWriter>::
+      buildPyDataObject(data.getFieldVariablesForOutputWriter(), meshName, timeStepNo, currentTime, this->onlyNodalValues_);
     //PyObject *pyData = PyDict_New();
     //PyDict_SetItemString(pyData, "a", PyLong_FromLong(5));
     //PyDict_SetItemString(pyData,"b", PyUnicode_FromString("hi"));
@@ -63,8 +63,9 @@ void PythonFile::write(DataType& data, int timeStepNo, double currentTime)
     }
 
     // open file, to see if directory needs to be created
-    std::ofstream ofile = openFile(filename);
-    if(ofile.is_open())
+    std::ofstream ofile;
+    openFile(ofile, filename);
+    if (ofile.is_open())
       ofile.close();
 
     // pickle is the python library to serialize objects
@@ -125,4 +126,4 @@ void PythonFile::write(DataType& data, int timeStepNo, double currentTime)
 
 }
 
-};
+}  // namespace

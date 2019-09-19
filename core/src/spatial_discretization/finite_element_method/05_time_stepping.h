@@ -4,26 +4,27 @@
 
 #include "mesh/mesh.h"
 #include "interfaces/discretizable_in_time.h"
+#include "interfaces/multipliable.h"
 
 namespace SpatialDiscretization
 {
 
 /** class used for timestepping as for diffusion equation
  */
-template<typename FunctionSpaceType, typename QuadratureType, typename Term>
+template<typename FunctionSpaceType, typename QuadratureType, int nComponents_, typename Term>
 class FiniteElementMethodTimeStepping :
-  public AssembleRightHandSide<FunctionSpaceType, QuadratureType, Term>,
+  public AssembleRightHandSide<FunctionSpaceType, QuadratureType, nComponents_, Term>,
   public DiscretizableInTime,
   public Splittable
 {
 public:
-  typedef std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> TransferableSolutionDataType;  // type of return value of getSolutionForTransferInOperatorSplitting
+  typedef std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> OutputConnectorDataType;  // type of return value of getOutputConnectorData
 
   //! constructor, if function space is not given, create new one according to settings
   //! if the function space is given as parameter, is has to be already initialize()d
   FiniteElementMethodTimeStepping(DihuContext context, std::shared_ptr<FunctionSpaceType> functionSpace = nullptr);
 
-  using AssembleRightHandSide<FunctionSpaceType, QuadratureType, Term>::initialize;
+  using AssembleRightHandSide<FunctionSpaceType, QuadratureType, nComponents_, Term>::initialize;
 
   //! return the compile-time constant number of variable components of the solution field variable
   static constexpr int nComponents();
@@ -46,18 +47,18 @@ public:
   //! set the subset of ranks that will compute the work
   void setRankSubset(Partition::RankSubset rankSubset);
 
-  //! return true because the object has a specified mesh type
-  bool knowsMeshType();
-
   //! enable or disable boundary condition handling on initialization, set to false to not care for boundary conditions
   void setBoundaryConditionHandlingEnabled(bool boundaryConditionHandlingEnabled);
+
+  //! set the solution field variable in the data object, that actual data is stored in the timestepping scheme object
+  void setSolutionVariable(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> solution);
 
   //! return the mesh that is stored in the data class
   std::shared_ptr<FunctionSpaceType> functionSpace();
 
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
   //! the transfer is done by the solution_vector_mapping class
-  TransferableSolutionDataType getSolutionForTransferInOperatorSplitting();
+  OutputConnectorDataType getOutputConnectorData();
 
   typedef FunctionSpaceType FunctionSpace;   ///< the FunctionSpace type needed for time stepping scheme
 
@@ -81,7 +82,7 @@ protected:
   
 };
 
-};  // namespace
+} // namespace
 
 #include "spatial_discretization/finite_element_method/05_time_stepping.tpp"
 #include "spatial_discretization/finite_element_method/05_time_stepping_explicit.tpp"

@@ -13,7 +13,7 @@ template<typename DiscretizableInTime>
 ExplicitEuler<DiscretizableInTime>::ExplicitEuler(DihuContext context) :
   TimeSteppingExplicit<DiscretizableInTime>(context, "ExplicitEuler")
 {
-  this->data_ = std::make_shared <Data::TimeStepping<typename DiscretizableInTime::FunctionSpace, DiscretizableInTime::nComponents()>>(context); // create data object for explicit euler
+  this->data_ = std::make_shared <Data::TimeStepping<typename DiscretizableInTime::FunctionSpace, DiscretizableInTime::nComponents()>>(this->context_); // create data object for explicit euler
 }
 
 template<typename DiscretizableInTime>
@@ -38,21 +38,21 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
 
   // loop over time steps
   double currentTime = this->startTime_;
-  for(int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
+  for (int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
   {
     if (timeStepNo % this->timeStepOutputInterval_ == 0 && timeStepNo > 0)
     {
       LOG(INFO) << "Explicit Euler, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
     }
 
-    VLOG(1) << "starting from solution: " << this->data_->solution();
+    VLOG(1) << "starting from solution: " << *this->data_->solution();
 
     // advance computed value
     // compute next delta_u = f(u)
     this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
       solution, increment, timeStepNo, currentTime);
 
-    VLOG(1) << "increment: " << this->data_->increment() << ", dt: " << this->timeStepWidth_;
+    VLOG(1) << "increment: " << *this->data_->increment() << ", dt: " << this->timeStepWidth_;
 
     // integrate, y += dt * delta_u
     PetscErrorCode ierr;
@@ -62,10 +62,19 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
     timeStepNo++;
     currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
 
-    VLOG(1) << "solution after integration: " << this->data_->solution();
+    VLOG(1) << "solution after integration: " << *this->data_->solution();
 
     // apply the prescribed boundary condition values
     this->applyBoundaryConditions();
+
+#ifndef NDEBUG
+    if (this->data_->solution()->containsNanOrInf())
+    {
+      LOG(ERROR) << "At time " << currentTime << ", in ExplicitEuler method: Solution contains Nan or Inf. This probably means that the timestep width, "
+        << this->timeStepWidth_ << " is too high. Note, this expensive check is only performed when compiled for debug target.";
+      LOG(ERROR) << *this->data_->solution();
+    }
+#endif
 
     // stop duration measurement
     if (this->durationLogKey_ != "")

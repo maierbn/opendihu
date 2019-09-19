@@ -19,7 +19,7 @@ samplingPoints()
 {
   std::array<std::array<double,1>,TensorProductBase<1,Quadrature>::numberEvaluations()> samplingPoints;
   std::array<double, Quadrature::numberEvaluations()> samplingPoints1D = Quadrature::samplingPoints();
-  for(int x=0; x<Quadrature::numberEvaluations(); x++)
+  for (int x=0; x<Quadrature::numberEvaluations(); x++)
   {
     samplingPoints[x][0] = samplingPoints1D[x];
   }
@@ -35,9 +35,9 @@ samplingPoints()
   std::array<double, Quadrature::numberEvaluations()> samplingPoints1D = Quadrature::samplingPoints();
 
   int samplingPointNo = 0;
-  for(int y=0; y<Quadrature::numberEvaluations(); y++)
+  for (int y=0; y<Quadrature::numberEvaluations(); y++)
   {
-    for(int x=0; x<Quadrature::numberEvaluations(); x++, samplingPointNo++)
+    for (int x=0; x<Quadrature::numberEvaluations(); x++, samplingPointNo++)
     {
       samplingPoints[samplingPointNo] = {samplingPoints1D[x], samplingPoints1D[y]};
     }
@@ -54,11 +54,11 @@ samplingPoints()
   std::array<double, Quadrature::numberEvaluations()> samplingPoints1D = Quadrature::samplingPoints();
 
   int samplingPointNo = 0;
-  for(int z=0; z<Quadrature::numberEvaluations(); z++)
+  for (int z=0; z<Quadrature::numberEvaluations(); z++)
   {
-    for(int y=0; y<Quadrature::numberEvaluations(); y++)
+    for (int y=0; y<Quadrature::numberEvaluations(); y++)
     {
-      for(int x=0; x<Quadrature::numberEvaluations(); x++, samplingPointNo++)
+      for (int x=0; x<Quadrature::numberEvaluations(); x++, samplingPointNo++)
       {
         samplingPoints[samplingPointNo] = {samplingPoints1D[x], samplingPoints1D[y], samplingPoints1D[z]};
       }
@@ -84,7 +84,7 @@ computeIntegral(const std::array<ValueType, TensorProductBase<2,Quadrature>::num
 {
   // integrate by calling Quadrature in each direction
   std::array<ValueType, Quadrature::numberEvaluations()> evaluationsY;
-  for(int y = 0; y < Quadrature::numberEvaluations(); y++)
+  for (int y = 0; y < Quadrature::numberEvaluations(); y++)
   {
     // index of first evaluation that belongs to the list for the current y
     size_t offset = y*Quadrature::numberEvaluations();
@@ -102,10 +102,10 @@ computeIntegral(const std::array<ValueType, TensorProductBase<3,Quadrature>::num
 {
   // integrate by calling Quadrature in each direction
   std::array<ValueType, Quadrature::numberEvaluations()> evaluationsZ;
-  for(int z=0; z<Quadrature::numberEvaluations(); z++)
+  for (int z=0; z<Quadrature::numberEvaluations(); z++)
   {
     std::array<ValueType, Quadrature::numberEvaluations()> evaluationsY;
-    for(int y=0; y<Quadrature::numberEvaluations(); y++)
+    for (int y=0; y<Quadrature::numberEvaluations(); y++)
     {
       // index of first evaluation that belongs to the list for the current y
       size_t offset = y*Quadrature::numberEvaluations() + z*Quadrature::numberEvaluations()*Quadrature::numberEvaluations();
@@ -117,4 +117,4 @@ computeIntegral(const std::array<ValueType, TensorProductBase<3,Quadrature>::num
   return Quadrature::computeIntegral(evaluationsZ);
 }
 
-}
+}  // namespace

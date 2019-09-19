@@ -31,4 +31,4 @@ setRightHandSide()
   LOG(DEBUG) << *rightHandSide;
 }
 
-};
+} // namespace

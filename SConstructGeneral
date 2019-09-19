@@ -19,6 +19,8 @@
 import os
 import sys
 import random
+import socket
+import platform
 
 sys.path.append("dependencies/scons-config/dist/scons_config-0.1-py2.7.egg")     # load scons_config
 
@@ -33,27 +35,32 @@ opendihu_home = Dir('.').srcnode().abspath  # opendihu home directory is where t
 
 #
 # Select the packages we want to use in the configuration.
+# The order is relevant, depending packages should be after the packages they depend on.
 #
 sconsconfig.select(
-    packages.MPI(required=True),     # This downloads and compiles OpenMPI, but it is recommended to use the system MPI by setting the path in user-variables.scons.py
+    packages.MPI(required=True),     # This searches for the MPI implementation
     packages.LAPACK(required=True),  # This downloads and compiles OpenBLAS which implements the interfaces of both LAPACK and BLAS
     #packages.bison(required=False),   # parser generater needed by PTScotch which is needed by MUMPS which is needed by Petsc
     #packages.flex(required=False),    # "Fast Lexical Analyzer" needed by PTScotch which is needed by MUMPS which is needed by Petsc
     packages.PETSc(required=True),   # Petsc depends on LAPACK/BLAS and bison
     #packages.bzip2(required=False),
     packages.Python(required=True),  # This compiles python 3.6 from source to be able to embedd the python interpreter in opendihu. All further python packages are installed in this installation tree under dependencies/python/install
-    packages.Cython(required=False), # Cython is a dependency for the numpy C API
-    packages.NumpyC(required=False), # The numpy C API. Numpy is needed such that the python config files that are parsed by opendihu can load the numpy package. This needs to be compiled from source and linked to the same LAPACK/BLAS package that also opendihu uses, otherwise there will be errors.
-    packages.SciPy(required=False),  # Scipy to also make it available in the config python files. This just installs from a whl using pip, so no extra compilation.
-    packages.Matplotlib(required=False),   # Matplotlib, again to make it available in the config python files, where you could generate plots in callbacks as the simulation is running. This also installs from a whl using pip, so no extra compilation.
-    packages.NumpySTL(required=False),   # numpy-stl, used for manipulation of stl meshes in fiber test case
-    packages.SvgPath(required=False),   # svg.path python package for manipulating svg paths
+    packages.pythonPackages(required=False),   # all further python utils that can be installed via pip
     packages.Base64(required=True),  # Base64 is an encoding library that is needed for binary VTK output.
     packages.googletest(required=False),   # This is the testing framework.
     #packages.libxml2(required=True),
     #packages.Sphinx(required=True),
     #packages.libcellml(required=True),          # relies on libxml2 and SWIG
-    packages.SEMT(required=True),    # This is a small C++ symbolic differentiation toolbox that is used for solid mechanics.
+    packages.SEMT(required=False),           # This is a small C++ symbolic differentiation toolbox that is used for solid mechanics.
+    packages.MegaMol(required=False),       # Adds the MegaMol visualization framework
+    packages.ADIOS(required=False),       # ADIOS
+    #packages.VTK(required=False),       # VTK, needed only for chaste
+    #packages.HDF5(required=False),       # The parallel output library HDF5, compiled with --enable-parallel as needed for chaste, the version that Petsc can download does not have this feature
+    #packages.XercesC(required=False),       # XML-parser, needed for chaste
+    #packages.xsd(required=False),       # XML Schema to C++ data binding compiler, needed for chaste
+    #packages.boost(required=False),       # boost C++ library, needed for chaste
+    #packages.Chaste(required=False),       # The Chaste framework, only the nonlinear mechanics solver is used
+    packages.Vc(required=True),          # The Vc types for explicit vectorization
     packages.EasyLoggingPP(required=True),      # This is the logging library, it has to be the last package to be included because it contains a source (.c) file that needs to be compiled and linked to opendihu and somehow otherwise scons-config does not work.
 )
 
@@ -77,9 +84,18 @@ vars.Add(EnumVariable('BUILD_TYPE', 'The build type, according to that different
 vars.Add(BoolVariable('no_tests', 'Do not compile and run tests.', 0))
 vars.Add(BoolVariable('no_examples', 'Do not compile examples.', 0))
 vars.Add(BoolVariable('USE_CRAY_PAT', 'Compile with craypat regions.', False))
-vars.Add('cc', help='The c compiler', default='gcc')
-vars.Add('CC', help='The c++ compiler', default='g++')
-vars.Add('mpiCC', help='The mpic++ compiler wrapper', default='mpic++')
+vars.Add(BoolVariable('USE_HPL', 'Compile with -hpl option.', False))
+vars.Add(BoolVariable('USE_MEGAMOL', 'Use additional linker flags to link to the megamol source file.', False))
+if socket.gethostname() != 'cmcs09':
+  vars.Add('mpiCC', help='The mpic++ compiler wrapper', default='mpic++')
+  vars.Add('cc', help='The c compiler', default='gcc')
+  vars.Add('CC', help='The c++ compiler', default='g++')
+else:
+  vars.Add('mpicc', help='The mpicc compiler wrapper', default='/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/bin/mpicc')
+  vars.Add('mpiCC', help='The mpic++ compiler wrapper', default='/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/bin/mpic++')
+  vars.Add('cc', help='The c compiler', default='pgcc')
+  vars.Add('CC', help='The c++ compiler', default='pgc++')
+vars.Add('cmake', help='The cmake executable', default='cmake')
     
 # Add options from any packages we want to use.
 sconsconfig.add_options(vars)
@@ -114,6 +130,8 @@ if ARGUMENTS.get('VERBOSE') != '1' and tty_available:
 # set compiler, "CC" is C++, "cc" is C
 env['CXX'] = env['CC']
 env['CC'] = env['cc']
+if not 'cmake' in env:
+  env['cmake'] = 'cmake'
 
 # Create configuration environment, passing the set of custom tests.
 sconf = env.Configure(custom_tests=sconsconfig.custom_tests)
@@ -125,7 +143,7 @@ sconsconfig.check(sconf)
 sconf.Finish()
 
 # disable unit tests on hazel hen
-if os.environ.get("SITE_PLATFORM_NAME") == "hazelhen":
+if os.environ.get("PE_ENV") is not None:  # if on hazelhen
   env['no_tests'] = True
 
 # -----------------------------------------------
@@ -161,8 +179,20 @@ Progress(progress_function, interval=env["node_count_interval"])
 
 # add notification when compilation is complete
 if os.environ.get("PE_ENV") == None:
-  notify = env.Command(target='notify-send'+str(random.random()), source = None, action = 'notify-send "compilation complete" || true')
-  AlwaysBuild('notify-send')
+  if "notifyset" not in env:
+    env["notifyset"] = True
+    target='notify-send'+str(random.random())
+    notify = env.Command(target=target, source = None, action = 'notify-send "compilation complete" || true')
+    #AlwaysBuild('notify-send')
+    Depends(notify, 'core/build_debug/libopendihud.a')
+    Depends(notify, 'core/build_release/libopendihu.a')
+    
+# ensure that PYTHONPATH points to scripts directory which contains python scripts
+current_python_path = os.environ.get("PYTHONPATH")
+if current_python_path is None:
+  os.environ["PYTHONPATH"] = os.path.join(opendihu_home, "scripts")+":"+os.path.join(opendihu_home, "scripts/geometry_manipulation")
+elif "scripts" not in current_python_path:
+  os.environ["PYTHONPATH"] = current_python_path+":"+os.path.join(opendihu_home, "scripts")+":"+os.path.join(opendihu_home, "scripts/geometry_manipulation")
     
 # -----------------------------------------------
 # Depending on the variable BUILD_TYPE either build with debug, releasewithdebuginfo or release settings and link corresponding version of core
@@ -172,16 +202,26 @@ if os.environ.get("PE_ENV") == None:
 if env["BUILD_TYPE"] == "debug":
   # debug build
   variant_dir = os.path.join(path_where_to_call_sconscript,"build_debug")           # output folder for build
-  env.MergeFlags('-ftemplate-backtrace-limit=0 -fstack-check')
-  env.MergeFlags('-Werror -Wall -Wno-sign-compare -Wno-error=sign-compare')
-  env.MergeFlags('-DDEBUG -ggdb3 -g3 -Og -pg  -DELPP_FEATURE_CRASH_LOG')   # gcc flags, will be sorted automatically into linker and compiler flags
+  if env['CC'] != "pgcc":  # not pgi compiler
+    env.MergeFlags('-ftemplate-backtrace-limit=0 -fstack-check')
+    env.MergeFlags('-Wall -Wpedantic -Wno-sign-compare -Wno-error=sign-compare')
+    env.MergeFlags('-DDEBUG -ggdb3 -g3 -Og  -DELPP_FEATURE_CRASH_LOG')   # gcc flags, will be sorted automatically into linker and compiler flags
+    env.MergeFlags('-I/store/software/opendihu/dependencies/chaste/install/include/chaste/continuum_mechanics/problem')
+    env.MergeFlags('-I/store/software/opendihu/dependencies/chaste/install/include/chaste/continuum_mechanics/common')
+  else: # using pgi compiler here:
+#    env.MergeFlags('-O0 -g -ta=host,tesla:cc60,time -Minfo=accel -noswitcherror -std=c++14 -DELPP_FEATURE_CRASH_LOG -laccg -laccapi -laccn -laccg2 -lcudadevice')
+    env.MergeFlags('-O0 -g -std=c++14 -DELPP_FEATURE_CRASH_LOG')
+    env.MergeFlags('-DDEBUG -D__SSE__')
+  if not env["USE_MEGAMOL"]:
+    #env.MergeFlags('-Werror')
+    pass
   env.Append(LIBPATH = [os.path.join(opendihu_home, 'core/build_debug')])   # add debug version of opendihu library
   env.Prepend(LIBS = ['opendihud'])
-  
+
 elif env["BUILD_TYPE"] == "releasewithdebuginfo":
   # release with debug info build
   variant_dir = os.path.join(path_where_to_call_sconscript,'build_release_with_debug_info')         # folder of build
-  env.MergeFlags('-DDEBUG -O2 -ggdb3 -g3 -pg')   # gcc flags, will be sorted automatically into linker and compiler flags
+  env.MergeFlags('-DRELWITHDEBINFO -O3 -ggdb3 -g3 -pg')   # gcc flags, will be sorted automatically into linker and compiler flags
   env.Append(LIBPATH = [os.path.join(opendihu_home, 'core/build_release_with_debug_info')])   # add release with debug info version of opendihu library
   env.Prepend(LIBS = ['opendihurd'])
 
@@ -189,41 +229,69 @@ elif env["BUILD_TYPE"] == "preprocess":
   # only the preprocessing step
   variant_dir = os.path.join(path_where_to_call_sconscript,'preprocess')         # output folder for build
   env.MergeFlags('-DDEBUG -O2 -ggdb3 -g3 -DELPP_DISABLE_DEBUG_LOGS -DELPP_DISABLE_VERBOSE_LOGS -DELPP_DISABLE_TRACE_LOGS -E -C -P ')   # gcc flags, will be sorted automatically into linker and compiler flags
-  
+
 else:
   # release build
   variant_dir = os.path.join(path_where_to_call_sconscript,'build_release')         # output folder for build
-  env.MergeFlags('-O2 -finstrument-functions -DELPP_DISABLE_DEBUG_LOGS -DELPP_DISABLE_VERBOSE_LOGS -DELPP_DISABLE_TRACE_LOGS -DNDEBUG')
   env.Append(LIBPATH = [os.path.join(opendihu_home, 'core/build_release')])   # add release version of opendihu library
   env.Prepend(LIBS = ['opendihu'])
+  if socket.gethostname() == 'cmcs09':
+    env.MergeFlags('-DNDEBUG')
+  else:
+    env.MergeFlags('-DELPP_DISABLE_DEBUG_LOGS -DELPP_DISABLE_VERBOSE_LOGS -DELPP_DISABLE_TRACE_LOGS -DELPP_DISABLE_LOGGING_FLAGS_FROM_ARG -DNDEBUG')
+  if os.environ.get("PE_ENV") == "CRAY":
+    env.MergeFlags('-O3')   # fastest with cray (same performance as -02)
+  elif env["CC"] == "pgcc":
+    #env.MergeFlags('-g -O3 -fastsse -Mvect=simd -noswitcherror -std=c++14 -acc -ta=host,tesla:managed,cc35,cc60,time,cuda10.0 -laccg -laccapi -laccn -laccg2 -lcudadevice')
+    #env.MergeFlags('-fastsse -g -noswitcherror -std=c++14 -Mvect=simd -acc -ta=host,tesla:cc60,time -Minfo=accel -laccg -laccapi -laccn -laccg2 -lcudadevice')
+    env.MergeFlags('-noswitcherror -std=c++14') # managed,
+  else:
+    env.MergeFlags('-Ofast -pg -g')   # fastest with GNU and Intel
+    env.Append(LINKFLAGS = "-pg")   # add gprof flags for linker
+  
+  if env["USE_CRAY_PAT"]:
+    print("USE_CRAY_PAT=True: Compiling with -DHAVE_PAT (uses PAT_region_begin())\n")
+    env.Append(CPPDEFINES = "-DHAVE_PAT")
+    if os.environ.get("PE_ENV") != "CRAY":
+      env.MergeFlags('-finstrument-functions')   # instrument functions for pat_run,  works with GNU and Intel
 
-# flags to always include, except with cray compiler, which does not recognize them
-if os.environ.get("PE_ENV") != "CRAY":
+# flags to always include, except with cray compiler
+if os.environ.get("PE_ENV") != "CRAY" and "pg" not in env["cc"]:
   env.MergeFlags('-Wunused-variable')   # always warn about unused variables
   env.MergeFlags('-std=c++14 -fopenmp')
+  if "ppc" in platform.processor():
+    env.MergeFlags('-mcpu=native -mtune=native')
+  else:
+    env.MergeFlags('-march=native')
 
-if os.environ.get("PE_ENV") == "CRAY":
-  print("compile for reveal\n")
-  env.MergeFlags('-hpl=my_program.pl')  # insert absolute path here
+  env.MergeFlags('-Wl,--disable-new-dtags')
+
+if os.environ.get("PE_ENV") == "CRAY" and env["USE_HPL"]:
+  print("USE_HPL=True: Compiling with -hpl option\n")
+  env.MergeFlags('-hpl={}/opendihu.pl'.format(opendihu_home))
 
 # add basic linker flags for linux
 env.MergeFlags("-lpthread -ldl -lutil -lm")
 
 # add defines that are used in the code
 env.Append(CPPDEFINES = {'-DOPENDIHU_HOME': '\\"'+str(opendihu_home)+'\\"'})   # add define of the directory where this file is located
-env.Append(CPPDEFINES = {'-DC_COMPILER_COMMAND': '\\"'+env["CC"]+'\\"'})   # add define of the directory where this file is located
-env.Append(CPPDEFINES = "-DELPP_NO_DEFAULT_LOG_FILE")  # disable creation of the "myeasylog.log" default log file
+env.Append(CPPDEFINES = {'-DC_COMPILER_COMMAND': '\\"'+env["CC"]+'\\"'})   # add compile command, e.g. gcc
+env.Append(CPPDEFINES = {'-DCPP_COMPILER_COMMAND': '\\"'+env["CXX"]+'\\"'})   # add compile command, e.g. g++
+if socket.gethostname() == 'cmcs09':
+  env.Append(CPPDEFINES = {'-DMPI_C_COMPILER_COMMAND': '\\"/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/bin/mpicc\\"'})
+  env.Append(CPPDEFINES = {'-DMPI_CPP_COMPILER_COMMAND': '\\"/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/bin/mpic++\\"'})  
 
-if env["USE_CRAY_PAT"]:
-  print("Compile with HAVE_PAT\n")
-  env.Append(CPPDEFINES = "-DHAVE_PAT")
+env.Append(CPPDEFINES = "-DELPP_NO_DEFAULT_LOG_FILE")  # disable creation of the "myeasylog.log" default log file
 
 # Set the include path for header files
 env.Append(CPPPATH = [os.path.join(opendihu_home, 'core/src')])
 
 #print(env.Dump())
 # output compilers
-print("Compilers: C: {}, C++: {}, MPI: {}".format(env['CC'],env['CXX'],env['mpiCC']))
+if "mpiCC" in env:
+  print("Compilers: C: {}, C++: {}, MPI: {}".format(env['CC'],env['CXX'],env['mpiCC']))
+else:
+  print("Compilers: C: {}, C++: {}, MPI: -- ".format(env['CC'],env['CXX']))
 
 # call SConscript file for the actual build in the specified build directory variant_dir
 SConscript(dirs=path_where_to_call_sconscript,

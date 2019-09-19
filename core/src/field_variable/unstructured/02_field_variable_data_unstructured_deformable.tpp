@@ -350,7 +350,7 @@ unifyMappings(FieldVariable<FunctionSpace::FunctionSpace<Mesh::UnstructuredDefor
 
 template<int D, typename BasisFunctionType, int nComponents>
 void FieldVariableData<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
-unifyMappings(std::shared_ptr<FieldVariableBase<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>> fieldVariable2)
+unifyMappings(std::shared_ptr<FieldVariableBaseFunctionSpace<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>> fieldVariable2)
 {
   VLOG(1) << "unifyMappings 2";
   // loop over own components
@@ -802,6 +802,13 @@ valuesGlobal(int componentNo)
 
 template<int D, typename BasisFunctionType, int nComponents>
 Vec &FieldVariableData<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
+valuesGlobal()
+{
+  return this->values_->valuesGlobal();
+}
+
+template<int D, typename BasisFunctionType, int nComponents>
+Vec &FieldVariableData<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
 getValuesContiguous()
 {
   return this->values_->getValuesContiguous();
@@ -1002,7 +1009,7 @@ haveSameExfileRepresentation(element_no_t element1, element_no_t element2)
   // loop over components
   for (auto &component : component_)
   {
-    if(!component.exfileRepresentation()->haveSameExfileRepresentation(element1, element2))
+    if (!component.exfileRepresentation()->haveSameExfileRepresentation(element1, element2))
     {
       LOG(DEBUG) << "  component " << component << " has different exfileRepr for elements " << element1 << " and " << element2;
       return false;
@@ -1072,6 +1079,14 @@ output(std::ostream &stream) const
     stream << "null" << std::endl;
   else
     stream << *exfileRepresentation_ << std::endl;
+  if (values_ == nullptr)
+  {
+    stream << "(no values vector)";
+  }
+  else
+  {
+    stream << "values: " << *values_;
+  }
   /*
     << "  elementToDofMapping: " << std::endl
     << *elementToDofMapping_ << std::endl
@@ -1090,4 +1105,4 @@ partitionedPetscVec()
   return values_; 
 }
 
-};  // namespace
+} // namespace

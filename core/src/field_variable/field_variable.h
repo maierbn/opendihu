@@ -36,17 +36,21 @@ public:
 
   //! set the internal representation to be contiguous, i.e. using the contiguous vectors
   void setRepresentationContiguous();
-};
 
+  //! check if the field variable contains Nan or Inf values
+  bool containsNanOrInf();
+};
 
 // output operator
 template<typename FunctionSpaceType,int nComponents>
 std::ostream &operator<<(std::ostream &stream, const FieldVariable<FunctionSpaceType,nComponents> &rhs)
 {
+#ifndef NDEBUG
   rhs.output(stream);
+#endif
   return stream;
 }
 
-};  // namespace
+} // namespace
 
 #include "field_variable/field_variable.tpp"

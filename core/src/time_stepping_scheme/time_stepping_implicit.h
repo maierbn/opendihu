@@ -18,6 +18,7 @@ class TimeSteppingImplicit :
 public:
   
   typedef typename DiscretizableInTimeType::FunctionSpace FunctionSpace;
+  typedef Data::TimeSteppingImplicit<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()> DataImplicit;
 
   //! constructor
   TimeSteppingImplicit(DihuContext context, const std::string name);
@@ -27,7 +28,16 @@ public:
   
   //! set the system matrix
   virtual void initialize();
-   
+  
+  //! reset the object's state, i.e. delete the linear solver
+  virtual void reset();
+
+  //! data for implicit timestepping
+  DataImplicit &dataImplicit();
+  
+  //! output the given data for debugging
+  //virtual std::string getString(typename TimeSteppingSchemeOde<DiscretizableInTimeType>::OutputConnectorDataType &data);
+
 protected:
   
   //! precomputes the integration matrix for example A = (I-dtM^(-1)K) for the implicit euler scheme
@@ -42,7 +52,6 @@ protected:
   std::shared_ptr<Data::TimeSteppingImplicit<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>> dataImplicit_;  ///< a pointer to the data_ object but of type Data::TimeSteppingImplicit
   std::shared_ptr<Solver::Linear> linearSolver_;   ///< the linear solver used for solving the system
   std::shared_ptr<KSP> ksp_;     ///< the ksp object of the linear solver
-
 };
 
 }  // namespace

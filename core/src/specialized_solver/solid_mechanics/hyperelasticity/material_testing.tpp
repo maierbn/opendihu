@@ -7,7 +7,9 @@
 namespace SpatialDiscretization
 {
 
-double computeSbarC(const Tensor2<3> &Sbar, const Tensor2<3> &C)
+template<typename Term>
+double HyperelasticitySolver<Term>::
+computeSbarC(const Tensor2<3> &Sbar, const Tensor2<3> &C)
 {
   double SbarC = 0;
   for (int a = 0; a < 3; a++)

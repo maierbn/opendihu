@@ -138,10 +138,12 @@ initialize()
         nInstancesToCompute_ += fiberFunctionSpace->nDofsGlobal();
 
         assert(fiberDataNo < fiberData_.size());
-
+        assert(fiberFunctionSpace);
+        assert(motorUnitNo_.size() > 0);
+        
         fiberData_[fiberDataNo].valuesLength = fiberFunctionSpace->nDofsGlobal();
         fiberData_[fiberDataNo].fiberNoGlobal = fiberNoGlobal;
-        fiberData_[fiberDataNo].motorUnitNo = motorUnitNo_[fiberNo % motorUnitNo_.size()];
+        fiberData_[fiberDataNo].motorUnitNo = motorUnitNo_[fiberNoGlobal % motorUnitNo_.size()];
 
         fiberData_[fiberDataNo].valuesOffset = 0;
         if (fiberDataNo > 0)

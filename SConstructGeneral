@@ -262,7 +262,8 @@ if os.environ.get("PE_ENV") != "CRAY" and "pg" not in env["cc"]:
   if "ppc" in platform.processor():
     env.MergeFlags('-mcpu=native -mtune=native')
   else:
-    env.MergeFlags('-march=native')
+    if os.environ.get("PE_ENV") != "INTEL":
+      env.MergeFlags('-march=native')
 
   env.MergeFlags('-Wl,--disable-new-dtags')
 

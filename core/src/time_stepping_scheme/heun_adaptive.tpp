@@ -522,12 +522,6 @@ void HeunAdaptive<DiscretizableInTime>::advanceTimeSpan()
 }
 
 template<typename DiscretizableInTime>
-void HeunAdaptive<DiscretizableInTime>::run()
-{
-  TimeSteppingSchemeOde<DiscretizableInTime>::run();
-}
-
-template<typename DiscretizableInTime>
 double HeunAdaptive<DiscretizableInTime>::currentHeunTime()
 {
   return currentTimeHeun_;

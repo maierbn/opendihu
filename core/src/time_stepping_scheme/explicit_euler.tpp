@@ -95,9 +95,4 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
     Control::PerformanceMeasurement::stop(this->durationLogKey_);
 }
 
-template<typename DiscretizableInTime>
-void ExplicitEuler<DiscretizableInTime>::run()
-{
-  TimeSteppingSchemeOde<DiscretizableInTime>::run();
-}
 } // namespace TimeSteppingScheme

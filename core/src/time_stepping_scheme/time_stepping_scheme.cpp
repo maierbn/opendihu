@@ -155,6 +155,10 @@ OutputWriter::Manager TimeSteppingScheme::outputWriterManager()
   return outputWriterManager_;
 }
 
+std::string TimeSteppingScheme::durationLogKey()
+{
+  return durationLogKey_;
+}
 
 }  // namespace
 

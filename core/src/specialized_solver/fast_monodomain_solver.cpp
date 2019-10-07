@@ -409,8 +409,13 @@ computeMonodomain()
   std::vector<NestedSolversType::TimeSteppingSchemeType> &instances = nestedSolvers_.instancesLocal();
 
   TimeSteppingScheme::Heun<CellmlAdapterType> &heun = instances[0].timeStepping1().instancesLocal()[0];
+  durationLogKey0D_ = heun.durationLogKey();
+
   ImplicitEuler &implicitEuler = instances[0].timeStepping2().instancesLocal()[0];
+  durationLogKey1D_ = implicitEuler.durationLogKey();
   double prefactor = implicitEuler.discretizableInTime().data().context().getPythonConfig().getOptionDouble("prefactor", 1.0);
+
+  LOG(DEBUG) << "durationLogKeys: " << durationLogKey0D_ << "," << durationLogKey1D_;
 
   double startTime = instances[0].startTime();
   double timeStepWidthSplitting = instances[0].timeStepWidth();
@@ -460,7 +465,7 @@ computeMonodomain()
 void FastMonodomainSolver<Control::MultipleInstances<OperatorSplitting::Strang<Control::MultipleInstances<TimeSteppingScheme::Heun<CellmlAdapter<4, 9, FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1> > > > >, Control::MultipleInstances<TimeSteppingScheme::ImplicitEuler<SpatialDiscretization::FiniteElementMethod<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1>, Quadrature::Gauss<2>, Equation::Dynamic::IsotropicDiffusion> > > > > >::
 compute0D(double startTime, double timeStepWidth, int nTimeSteps)
 {
-  Control::PerformanceMeasurement::start("duration_0D");
+  Control::PerformanceMeasurement::start(durationLogKey0D_);
   LOG(DEBUG) << "compute0D(" << startTime << "), " << nTimeSteps << " time steps";
 
   using Vc::double_v;
@@ -611,13 +616,13 @@ compute0D(double startTime, double timeStepWidth, int nTimeSteps)
   }
 
   VLOG(1) << "nFiberPointBuffers: " << fiberPointBuffers_.size();
-  Control::PerformanceMeasurement::stop("duration_0D");
+  Control::PerformanceMeasurement::stop(durationLogKey0D_);
 }
 
 void FastMonodomainSolver<Control::MultipleInstances<OperatorSplitting::Strang<Control::MultipleInstances<TimeSteppingScheme::Heun<CellmlAdapter<4, 9, FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1> > > > >, Control::MultipleInstances<TimeSteppingScheme::ImplicitEuler<SpatialDiscretization::FiniteElementMethod<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1>, Quadrature::Gauss<2>, Equation::Dynamic::IsotropicDiffusion> > > > > >::
 compute1D(double startTime, double timeStepWidth, int nTimeSteps, double prefactor)
 {
-  Control::PerformanceMeasurement::start("duration_1D");
+  Control::PerformanceMeasurement::start(durationLogKey1D_);
 
   // perform implicit euler step
   // (K - 1/dt*M) u^{n+1} = -1/dt*M u^{n})
@@ -812,7 +817,7 @@ compute1D(double startTime, double timeStepWidth, int nTimeSteps, double prefact
     VLOG(1) << " -> " << s.str();
 #endif
   }
-  Control::PerformanceMeasurement::stop("duration_1D");
+  Control::PerformanceMeasurement::stop(durationLogKey1D_);
 }
 
 void FastMonodomainSolver<Control::MultipleInstances<OperatorSplitting::Strang<Control::MultipleInstances<TimeSteppingScheme::Heun<CellmlAdapter<4, 9, FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1> > > > >, Control::MultipleInstances<TimeSteppingScheme::ImplicitEuler<SpatialDiscretization::FiniteElementMethod<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1>, Quadrature::Gauss<2>, Equation::Dynamic::IsotropicDiffusion> > > > > >::

@@ -55,6 +55,9 @@ public:
   
   //! python object containing the value of the python config dict with corresponding key
   PythonConfig specificSettings();
+
+  //! get the duration log key
+  std::string durationLogKey();
   
   //! manager object holding all output writer
   OutputWriter::Manager outputWriterManager(); 

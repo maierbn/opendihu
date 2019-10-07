@@ -168,6 +168,8 @@ private:
   std::vector<int> motorUnitNo_;                  ///< number of motor unit for given fiber no motorUnitNo_[fiberNo]
   double setSpecificStatesCallFrequency_;         ///< value of option with the same name in the python settings
   double setSpecificStatesRepeatAfterFirstCall_;  ///< how long in ms the prescribed value should be set
+  std::string durationLogKey0D_;                  ///< duration log key for the 0D problem
+  std::string durationLogKey1D_;                  ///< duration log key for the 1D problem
 
   std::vector<FiberData> fiberData_;  ///< vector of fibers,
   int nFibersToCompute_;              ///< number of fibers where own rank is involved (>= n.fibers that are computed by own rank)

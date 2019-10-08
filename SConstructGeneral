@@ -184,8 +184,10 @@ if os.environ.get("PE_ENV") == None:
     target='notify-send'+str(random.random())
     notify = env.Command(target=target, source = None, action = 'notify-send "compilation complete" || true')
     #AlwaysBuild('notify-send')
-    Depends(notify, 'core/build_debug/libopendihud.a')
-    Depends(notify, 'core/build_release/libopendihu.a')
+    if env["BUILD_TYPE"] == "debug":
+      Depends(notify, 'core/build_debug/libopendihud.a')
+    else:
+      Depends(notify, 'core/build_release/libopendihu.a')
     
 # ensure that PYTHONPATH points to scripts directory which contains python scripts
 current_python_path = os.environ.get("PYTHONPATH")

@@ -120,4 +120,10 @@ void Heun<DiscretizableInTime>::advanceTimeSpan()
     Control::PerformanceMeasurement::stop(this->durationLogKey_);
 }
 
+template<typename DiscretizableInTime>
+void Heun<DiscretizableInTime>::run()
+{
+  TimeSteppingSchemeOde<DiscretizableInTime>::run();
+}
+
 } // namespace TimeSteppingScheme

@@ -27,6 +27,9 @@ public:
   //! Returns the current time passed in the simulation. Used to trigger rebalancing
   double currentHeunTime();
 
+  //! run the simulation
+  void run();
+
 private:
   // allowed tolerance
   double tolerance_;

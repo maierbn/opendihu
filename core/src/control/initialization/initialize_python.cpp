@@ -171,7 +171,18 @@ void DihuContext::loadPythonScript(std::string text)
     PyObject *numpyModule = PyImport_ImportModule("numpy");
     if (numpyModule == NULL)
     {
-      LOG(ERROR) << "Failed to import numpy.";
+      LOG(ERROR) << "Failed to import numpy. Standard python path: " << standardPythonPath;
+      
+      wchar_t *homeWChar = Py_GetPythonHome();
+      char *home = Py_EncodeLocale(homeWChar, NULL);
+      LOG(ERROR) << "python home: " << home;
+
+      wchar_t *pathWChar = Py_GetPath();
+      char *path = Py_EncodeLocale(pathWChar, NULL);
+      LOG(ERROR) << "python path: " << path;
+
+      const char *version = Py_GetVersion();
+      LOG(ERROR) << "python version: " << version;
     }
 
     // execute config script

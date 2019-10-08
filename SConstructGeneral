@@ -283,6 +283,8 @@ env.Append(CPPDEFINES = {'-DCPP_COMPILER_COMMAND': '\\"'+env["CXX"]+'\\"'})   # 
 if socket.gethostname() == 'cmcs09':
   env.Append(CPPDEFINES = {'-DMPI_C_COMPILER_COMMAND': '\\"/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/bin/mpicc\\"'})
   env.Append(CPPDEFINES = {'-DMPI_CPP_COMPILER_COMMAND': '\\"/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/bin/mpic++\\"'})  
+if os.path.isfile("/.dockerenv"):
+  env.Append(CPPDEFINES = '-DINSIDE_DOCKER_CONTAINER')
 
 env.Append(CPPDEFINES = "-DELPP_NO_DEFAULT_LOG_FILE")  # disable creation of the "myeasylog.log" default log file
 

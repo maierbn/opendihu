@@ -56,9 +56,6 @@ streamline_tracer:
 diffusion:
 	cd testing/system_testing/tests/diffusion &&  python ../../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
 
-quadrature:
-	cd examples/quadrature/own && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
-
 fibers:
 	cd testing/system_testing/tests/fibers &&  python ../../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
 
@@ -71,11 +68,8 @@ shorten:
 cellml:
 	cd examples/electrophysiology/cellml && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
 
-pod:
-	cd examples/diffusion1d && python ../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
-
 multidomain:
-	cd examples/multidomain3d && python ../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+	cd examples/electrophysiology/multidomain3d && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
 
 parallel_fiber_estimation:
 	cd examples/parallel_fiber_estimation && python ../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
@@ -104,14 +98,8 @@ linear_elasticity:
 fibers_linear_elasticity:
 	cd examples/electrophysiology/fibers_emg && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
 
-3d_muscle:
-	cd examples/solid_mechanics/chaste && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
-
 mooney_rivlin_transiso:
 	cd examples/solid_mechanics/mooney_rivlin_transiso  && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
 
 mooney_rivlin:
 	cd examples/solid_mechanics/mooney_rivlin_isotropic  && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
-
-ddebug:
-	cd examples/debug  && python ../../dependencies/scons/scons.py BUILD_TYPE=DEBUG

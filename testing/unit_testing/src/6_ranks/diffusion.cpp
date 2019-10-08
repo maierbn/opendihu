@@ -61,6 +61,8 @@ config = {
           "nElements": [nx, ny],
           "physicalExtent": [2*nx, 2*ny],
           "relativeTolerance": 1e-15,
+          "dirichletBoundaryConditions": {},
+          "neumannBoundaryConditions": [],
         },
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
@@ -115,6 +117,8 @@ config = {
           "nElements": [nx, ny],
           "physicalExtent": [2*nx, 2*ny],
           "relativeTolerance": 1e-15,
+          "dirichletBoundaryConditions": {},
+          "neumannBoundaryConditions": [],
         },
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
@@ -191,6 +195,8 @@ config = {
           "nElements": [nx, ny],
           "physicalExtent": [2*nx, 2*ny],
           "relativeTolerance": 1e-15,
+          "dirichletBoundaryConditions": {},
+          "neumannBoundaryConditions": [],
         },
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
@@ -253,6 +259,8 @@ config = {
           "nRanks": [3,2],
           "physicalExtent": [2*nx, 2*ny],
           "relativeTolerance": 1e-15,
+          "dirichletBoundaryConditions": {},
+          "neumannBoundaryConditions": [],
         },
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}

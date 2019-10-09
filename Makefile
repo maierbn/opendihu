@@ -41,6 +41,9 @@ release_without_tests:
 debug_without_tests:
 	$(python) dependencies/scons/scons.py BUILD_TYPE=DEBUG no_tests=True -j $(shell nproc --all)
 
+travis_ci:
+	$(python) dependencies/scons/scons.py BUILD_TYPE=RELEASE no_tests=True travis_ci=True
+
 system_testing:
 	cd testing/system_testing && ./run.sh
 

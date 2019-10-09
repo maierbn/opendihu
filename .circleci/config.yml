@@ -7,10 +7,9 @@ jobs:
       FOO: bar
     parallelism: 3
     resource_class: large
-    working_directory: /workspace
+    working_directory: /workspace/opendihu
     steps:
-      - checkout # check out the code in the project directory
-      - run: echo "hello world"
+      - checkout 				# pull the current branch from origin
       #- run: make release
       - run: python2.7 dependencies/scons/scons.py BUILD_TYPE=RELEASE -j2
 

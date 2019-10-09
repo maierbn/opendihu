@@ -5,7 +5,7 @@ jobs:
       - image: maierbn/opendihu:latest
     environment:
       FOO: bar
-    parallelism: 3
+    parallelism: 1
     resource_class: large
     working_directory: /workspace/opendihu
     steps:

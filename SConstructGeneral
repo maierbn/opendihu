@@ -81,6 +81,7 @@ vars.Add(EnumVariable('BUILD_TYPE', 'The build type, according to that different
                       '(Shortcuts: ''d'',''r'',''rd''=''dr'', ''p'')', 'release', 
                       allowed_values=('debug', 'release', 'releasewithdebuginfo', 'preprocess'), ignorecase = 2, 
                       map={'d':'debug', 'r':'release', 'rd':'releasewithdebuginfo', 'dr':'releasewithdebuginfo', 'p':'preprocess'}))
+vars.Add(BoolVariable('travis_ci', 'Do not compile and run tests, but compile all examples.', 0))
 vars.Add(BoolVariable('no_tests', 'Do not compile and run tests.', 0))
 vars.Add(BoolVariable('no_examples', 'Do not compile examples.', 0))
 vars.Add(BoolVariable('USE_CRAY_PAT', 'Compile with craypat regions.', False))

@@ -33,7 +33,7 @@ PETSC_REBUILD = False
 PYTHON_DOWNLOAD = True    # This downloads and uses Python, use it to be independent of an eventual system python
 
 # Python packages - they are now all combined with the option PYTHONPACKAGES_DOWNLOAD
-PYTHONPACKAGES_DOWNLOAD = False
+PYTHONPACKAGES_DOWNLOAD = True
 
 # Base64, encoding library for binary vtk (paraview) output files
 BASE64_DOWNLOAD = True

@@ -1,6 +1,4 @@
 version: 2.1
-
-
 jobs:
   build:
     docker:
@@ -11,5 +9,7 @@ jobs:
     resource_class: large
     working_directory: /workspace/opendihu
     steps:
+      - checkout # check out the code in the project directory
+      - run echo "hello world"
       - run: make release
 

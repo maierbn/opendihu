@@ -1,1 +1,0 @@
-This directory contains the cpp-files, in particular dmdexample.cpp.

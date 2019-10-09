@@ -1,0 +1,23 @@
+version: 2.1
+
+executors:
+  opendihu-image:
+    docker:
+      - image: maierbn/opendihu:latest
+
+jobs:
+  build:
+    executor: opendihu-image
+    docker:
+      - image: maierbn/opendihu:latest
+    environment:
+      FOO: bar
+    parallelism: 3
+    resource_class: large
+    working_directory: /workspace/opendihu
+    branches:
+      only:
+        - develop
+    steps:
+      - run: make release
+

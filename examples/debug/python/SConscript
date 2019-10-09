@@ -9,5 +9,5 @@ Import('env')     # import Environment object from calling SConstruct
 
 #env.Program(target = "pythontest", source = "test.cpp")
 #env.Program(target = "numpytest", source = "testnumpy.cpp")
-env.Program(target = "testio", source = "testio.cpp")
-env.Program(target = "testomp", source = "testomp.cpp")
+#env.Program(target = "testio", source = "testio.cpp")
+#env.Program(target = "testomp", source = "testomp.cpp")

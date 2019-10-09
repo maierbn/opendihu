@@ -86,7 +86,7 @@ if not env['no_tests']:
     AlwaysBuild(test)
 
    # summary command, exit -1 if one the three tests failed
-  test = env.Command(target = 'summary', source = None, action = 'cd testing/unit_testing/'+variant_directory+' && [ -f "SUCCESS1" ] && (echo unit tests on 1 rank SUCCEDED) || (echo unit tests on 1 rank FAILED) && [ -f "SUCCESS2" ] && (echo unit tests on 2 ranks SUCCEDED) || (echo unit tests on 2 ranks FAILED)  && [ -f "SUCCESS6" ] && (echo unit tests on 6 ranks SUCCEDED) || (echo unit tests on 6 ranks FAILED) && ([ ! -f "SUCCESS1" ] || [ ! -f "SUCCESS2" ] || [ ! -f "SUCCESS6" ]) && exit -1')
+  test = env.Command(target = 'summary', source = None, action = 'cd testing/unit_testing/'+variant_directory+' && [ -f "SUCCESS1" ] && (echo unit tests on 1 rank SUCCEDED) || (echo unit tests on 1 rank FAILED) && [ -f "SUCCESS2" ] && (echo unit tests on 2 ranks SUCCEDED) || (echo unit tests on 2 ranks FAILED)  && [ -f "SUCCESS6" ] && (echo unit tests on 6 ranks SUCCEDED) || (echo unit tests on 6 ranks FAILED) && (([ ! -f "SUCCESS1" ] || [ ! -f "SUCCESS2" ] || [ ! -f "SUCCESS6" ]) && exit -1) || exit 0')
   Depends(test, ['test_examples', 'test1', 'test2', 'test6'])
 
 if env['travis_ci']:

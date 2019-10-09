@@ -10,9 +10,6 @@ jobs:
     parallelism: 3
     resource_class: large
     working_directory: /workspace/opendihu
-    branches:
-      only:
-        - develop
     steps:
       - run: make release
 

@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
       Equation::Static::Laplace
     >,
     CellmlAdapter<                // Hodgkin-Huxley
-      4,
+      4,9,  // nStates,nIntermediates: 57,1 = Shorten, 4,9 = Hodgkin Huxley
       FunctionSpace::FunctionSpace<MeshType,BasisFunction::LagrangeOfOrder<1>>
     >,
     SpatialDiscretization::FiniteElementMethod<   // anisotropic diffusion

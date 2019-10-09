@@ -4,11 +4,11 @@
 #include <tuple>
 #include "easylogging++.h"
 
-template<typename FunctionSpaceType1, int nComponents1, typename FieldVariableType2>
+template<typename FunctionSpaceType1, int nComponents1a, int nComponents1b, typename FieldVariableType2>
 void SolutionVectorMapping<
-  std::vector<Data::ScaledFieldVariableComponent<FunctionSpaceType1,nComponents1>>,   // <fieldVariableType,componentNo,prefactor>
+  std::vector<CellMLOutputConnectorDataType<nComponents1a,nComponents1b,FunctionSpaceType1>>,   // <fieldVariableType,componentNo,prefactor>
   std::pair<std::vector<Vec>,std::vector<std::shared_ptr<FieldVariableType2>>>  // Petsc Vecs which are the sub-vectors of a nested vector
->::transfer(const std::vector<Data::ScaledFieldVariableComponent<FunctionSpaceType1,nComponents1>> &transferableSolutionData1,
+>::transfer(const std::vector<CellMLOutputConnectorDataType<nComponents1a,nComponents1b,FunctionSpaceType1>> &transferableSolutionData1,
             std::pair<std::vector<Vec>,std::vector<std::shared_ptr<FieldVariableType2>>> transferableSolutionData2,
             const std::string transferSlotName)
 {
@@ -17,9 +17,9 @@ void SolutionVectorMapping<
   // dataMultidomain_.subcellularStates(k)->extractComponentCopy(0, dataMultidomain_.transmembranePotential(k));
 
   // rename input variables
-  const std::vector<Data::ScaledFieldVariableComponent<FunctionSpaceType1,nComponents1>> &subcellularStates = transferableSolutionData1;
+  const std::vector<CellMLOutputConnectorDataType<nComponents1a,nComponents1b,FunctionSpaceType1>> &subcellularStates = transferableSolutionData1;
   std::vector<std::shared_ptr<FieldVariableType2>> &transmembranePotential = transferableSolutionData2.second;
-  typedef FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1> FieldVariableType1;
+  typedef FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1a> FieldVariableType1;
 
   // assert that dimensions match
   int nCompartments = transmembranePotential.size();
@@ -30,9 +30,9 @@ void SolutionVectorMapping<
   // loop over compartments and transfer data from subcellularState(0) (=Vm) to transmembranePotential of multidomain solver
   for (int k = 0; k < nCompartments; k++)
   {
-    std::shared_ptr<FieldVariableType1> subcellularStatesFieldVariable = subcellularStates[k].values;
-    int outputStateIndex = subcellularStates[k].componentNo;  // is 0
-    double prefactor = subcellularStates[k].scalingFactor;  // is 1
+    std::shared_ptr<FieldVariableType1> subcellularStatesFieldVariable = subcellularStates[k].stateVariable.values;
+    int outputStateIndex = subcellularStates[k].stateVariable.componentNo;  // is 0
+    double prefactor = subcellularStates[k].stateVariable.scalingFactor;  // is 1
     std::shared_ptr<FieldVariableType2> transmembranePotentialCompartment = transmembranePotential[k];
     //subcellularStatesFieldVariable->extractComponentShared(outputStateIndex, transmembranePotentialCompartment);  // extract memory location, here it is possible to reuse data
     subcellularStatesFieldVariable->extractComponentCopy(outputStateIndex, transmembranePotentialCompartment);      // copy vector
@@ -46,12 +46,12 @@ void SolutionVectorMapping<
   }
 }
 
-template<typename FieldVariableType1, typename FunctionSpaceType2, int nComponents2>
+template<typename FieldVariableType1, typename FunctionSpaceType2, int nComponents2a, int nComponents2b>
 void SolutionVectorMapping<
   std::pair<std::vector<Vec>,std::vector<std::shared_ptr<FieldVariableType1>>>,  // Petsc Vecs which are the sub-vectors of a nested vector
-  std::vector<Data::ScaledFieldVariableComponent<FunctionSpaceType2,nComponents2>>   // <fieldVariable,componentNo,prefactor>
+  std::vector<CellMLOutputConnectorDataType<nComponents2a,nComponents2b,FunctionSpaceType2>>   // <fieldVariable,componentNo,prefactor>
 >::transfer(const std::pair<std::vector<Vec>,std::vector<std::shared_ptr<FieldVariableType1>>> &transferableSolutionData1,  // <Petsc Vecs which are the sub-vectors of a nested vector, transmembranePotential>
-            const std::vector<Data::ScaledFieldVariableComponent<FunctionSpaceType2,nComponents2>> &transferableSolutionData2,
+            const std::vector<CellMLOutputConnectorDataType<nComponents2a,nComponents2b,FunctionSpaceType2>> &transferableSolutionData2,
             const std::string transferSlotName)
 {
   // transfer from multidomain to cellml
@@ -61,8 +61,8 @@ void SolutionVectorMapping<
   // rename input variables
   const std::vector<Vec> &subVectors = transferableSolutionData1.first;
   const std::vector<std::shared_ptr<FieldVariableType1>> &transmembranePotential = transferableSolutionData1.second;
-  const std::vector<Data::ScaledFieldVariableComponent<FunctionSpaceType2,nComponents2>> &subcellularStates = transferableSolutionData2;
-  typedef FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2> FieldVariableType2;
+  const std::vector<CellMLOutputConnectorDataType<nComponents2a,nComponents2b,FunctionSpaceType2>> &subcellularStates = transferableSolutionData2;
+  typedef FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2a> FieldVariableType2;
 
   // assert that dimensions match
   int nCompartments = subVectors.size() - 1;  // not for phi_e
@@ -74,8 +74,8 @@ void SolutionVectorMapping<
   // loop over compartments and transfer data from subVectors of multidomain solver to subcellularState(0) (=Vm)
   for (int k = 0; k < nCompartments; k++)
   {
-    std::shared_ptr<FieldVariableType2> subcellularStatesFieldVariable = subcellularStates[k].values;
-    int outputStateIndex = subcellularStates[k].componentNo;  // is 0
+    std::shared_ptr<FieldVariableType2> subcellularStatesFieldVariable = subcellularStates[k].stateVariable.values;
+    int outputStateIndex = subcellularStates[k].stateVariable.componentNo;  // is 0
 
     // restore from subcellularStatesFieldVariable extracted data vector to allow usage of subcellularStatesFieldVariable
     if (subcellularStatesFieldVariable->partitionedPetscVec()->currentRepresentation() == Partition::values_representation_t::representationInvalid)

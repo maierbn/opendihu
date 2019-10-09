@@ -12,5 +12,5 @@ if not env['no_examples']:
       
   # create the main executable
   #env.Program(target = 'multidomain', source = "src/multidomain.cpp")
-  #env.Program(target = 'multidomain_strang', source = "src/multidomain_strang.cpp")
+  env.Program(target = 'multidomain_strang', source = "src/multidomain_strang.cpp")
   env.Program(target = 'multidomain_2d_surface', source = "src/multidomain_output.cpp")

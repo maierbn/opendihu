@@ -8,8 +8,6 @@ executors:
 jobs:
   build:
     executor: opendihu-image
-    docker:
-      - image: maierbn/opendihu:latest
     environment:
       FOO: bar
     parallelism: 3

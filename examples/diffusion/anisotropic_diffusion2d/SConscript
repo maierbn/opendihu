@@ -10,11 +10,5 @@ Import('env')     # import Environment object from calling SConstruct
 # if the option no_tests was given, quit the script
 if not env['no_examples']:
      
-  # define the source files
-  src_files = Split(
-  """
-    anisotropic_diffusion2d.cpp
-  """)
-
   # create the main executable
-  env.Program(target = 'anisotropic_diffusion2d', source = src_files)
+  env.Program(target = 'anisotropic_diffusion2d', source = "src/anisotropic_diffusion2d.cpp")

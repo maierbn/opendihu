@@ -1,6 +1,7 @@
-# This file contains all parameters to the fibers_emg examples and their default values.
-# These values will be used but can be overridden on the command line, see settings_fibers_emg.py for details.
-# To run the simulation use the settings_fibers_emg.py file, which imports this file, e.g. ./fibers_emg ../settings_fibers_emg.py
+# This file contains all global variables for the fibers_emg example and their default values. These are the parameters and other internal variables.
+# These values will be used by all involved scripts: helper.py, create_partitioned_meshes_for_settings.py and settings_fibers_emg.py
+# settings_fibers_emg.py handles setting the parameter values. Those can be overridden on the command line and by specifying a custom variables.py script
+# To run the simulation use the settings_fibers_emg.py file, which imports this file, e.g. ./fibers_emg ../settings_fibers_emg.py custom_variables.py
 
 # material parameters
 # --------------------

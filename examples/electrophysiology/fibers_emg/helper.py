@@ -1,5 +1,5 @@
-# Multiple 1D variables.fibers (monodomain) with 3D EMG (static bidomain), biceps geometry
-# arguments: -help
+# Multiple 1D fibers (monodomain) with 3D EMG (static bidomain), biceps geometry
+# This is a helper script that sets a lot of the internal variables which are all defined in variables.py
 #
 # if variables.fiber_file=cuboid.bin, it uses a small cuboid test example
 
@@ -14,7 +14,7 @@ from create_partitioned_meshes_for_settings import *   # file create_partitioned
 
 # parse arguments
 rank_no = (int)(sys.argv[-2])
-n_ranks = (int)(sys.argv[-1])    
+n_ranks = (int)(sys.argv[-1])
 
 # generate cuboid fiber file
 if variables.fiber_file == "cuboid.bin":

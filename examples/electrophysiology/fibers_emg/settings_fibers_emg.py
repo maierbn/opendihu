@@ -1,30 +1,50 @@
-# Multiple 1D variables.fibers (monodomain) with 3D EMG (static bidomain), biceps geometry
+# Multiple 1D fibers (monodomain) with 3D EMG (static bidomain), biceps geometry
 # to see all available arguments, execute: ./fibers_emg ../settings_fibers_emg.py -help
-##
-# if variables.fiber_file=cuboid.bin, it uses a small cuboid test example
+# This is the most complex example, if you need help, can ask BM.
+#
+# if fiber_file=cuboid.bin, it uses a small cuboid test example
 #
 # You have to set n_subdomains such that it matches the number of processes, e.g. 2x2x1 = 4 processes.
 # Decomposition is in x,y,z direction, the fibers are aligned with the z axis.
 # E.g. --n_subdomains 2 2 1 which is 2x2x1 means no subdivision per fiber, 
 # --n_subdomains 8 8 4 means every fiber will be subdivided to 4 processes and all fibers will be computed by 8x8 processes.
 #
-# Example with 4 processes and end time 5:
-#   mpirun -n 4 ./fibers_emg ../settings_fibers_emg.py --n_subdomains 2 2 1 --variables.end_time=5.0
+# Example with 4 processes and end time 5, and otherwise default parameters:
+#   mpirun -n 4 ./fibers_emg ../settings_fibers_emg.py --n_subdomains 2 2 1 --end_time=5.0
 #
 # Three files contribute to the settings:
 # A lot of variables are set by the helper.py script, the variables and their values are defined in variables.py and this file
 # creates the composite config that is needed by opendihu.
-# You should only make changes in the variables.py file to set different parameters or in this file to add functionality.
-# This is the most complex example, you can ask me (BM) how it works exactly.
-
+# You can provided parameter values in a custom_variables.py file in the variables subfolder of fibers_emg. (Instead of custom_variables.py you can choose any filename.)
+# This custom variables file should be the next argument on the command line after settings_fibers_emg.py, e.g.:
+#
+#  ./fibers_emg ../settings_fibers_emg.py custom_variables.py --n_subdomains 1 1 1 --end_time=5.0
 
 import sys
 import timeit
 import argparse
-
+import importlib
 sys.path.insert(0, '..')
-import variables              # file variables.py, defined default values for all parameters, you can set the parameters there
+sys.path.insert(0, '../variables')
+
+# parse rank arguments
+rank_no = (int)(sys.argv[-2])
+n_ranks = (int)(sys.argv[-1])
+
+import variables              # file variables.py, defined default values for all parameters, you can set the parameters there  
 from create_partitioned_meshes_for_settings import *   # file create_partitioned_meshes_for_settings with helper functions about own subdomain
+
+# if first argument contains "*.py", it is a custom variable definition file, load these values
+if ".py" in sys.argv[0]:
+  variables_file = sys.argv[0]
+  variables_module = variables_file[0:variables_file.find(".py")]
+  
+  if rank_no == 0:
+    print("Loading variables from {}.".format(variables_file))
+    
+  custom_variables = importlib.import_module(variables_module)
+  variables.__dict__.update(custom_variables.__dict__)
+  sys.argv = sys.argv[1:]     # remove first argument, which now has already been parsed
 
 # define command line arguments
 parser = argparse.ArgumentParser(description='fibers_emg')
@@ -60,7 +80,7 @@ parser.add_argument('-vmodule',                              help='Enable verbos
 parser.add_argument('-pause',                                help='Stop at parallel debugging barrier', action="store_true")
 parser.add_argument('--rank_reordering',                     help='Enable rank reordering in the c++ code', action="store_true")
 parser.add_argument('--linear_elasticity',                   help='Enable linear elasticity', action="store_true")
- 
+
 # parse command line arguments and assign values to variables module
 args = parser.parse_args(args=sys.argv[:-2], namespace=variables)
 
@@ -73,10 +93,6 @@ if variables.n_subdomains is not None:
 if variables.linear_elasticity:
   variables.cellml_file = "../../input/shorten.cpp"
   variables.emg_solver_type = "cg"
-
-# parse arguments
-rank_no = (int)(sys.argv[-2])
-n_ranks = (int)(sys.argv[-1])
   
 # output information of run
 if rank_no == 0:

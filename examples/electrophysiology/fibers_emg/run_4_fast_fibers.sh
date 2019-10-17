@@ -1,6 +1,6 @@
 #perf stat -e r5301c7,r5304c7,r5310c7,r5340c7 -o perf.txt --delay 3000
-mpirun -n 2 ./fast_fibers_emg ../settings_fibers_emg.py \
---n_subdomains 1 1 2 \
+ ./fast_fibers_emg ../settings_fibers_emg.py review_bw_stiftung.py \
+--n_subdomains 1 1 1 \
 --fiber_file="../../input/2x2fibers.bin" \
 --firing_times_file="../../input/MU_firing_times_immediately.txt" \
 --paraview_output \

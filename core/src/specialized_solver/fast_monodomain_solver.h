@@ -142,37 +142,42 @@ private:
   //! compute the 0D-1D problem with Strang splitting
   void computeMonodomain();
 
-  PythonConfig specificSettings_;    ///< config for this object
+  PythonConfig specificSettings_;    //< config for this object
 
-  NestedSolversType nestedSolvers_;   ///< the nested solvers object that would normally solve the problem
+  NestedSolversType nestedSolvers_;   //< the nested solvers object that would normally solve the problem
 
   /** data to be exchanged for computation of a single fiber
    *  The data stored herein is used for local computation.
    */
   struct FiberData
   {
-    std::vector<double> elementLengths;   ///< lengths of the 1D elements
-    std::vector<double> vmValues;         ///< values of Vm
-    int valuesLength;                     ///< number of vmValues
-    global_no_t valuesOffset;             ///< number of vmValues in previous entries in fiberData_
-    int fiberNoGlobal;                    ///< fiberNo as given in settings (value of additionalArgument)
-    int motorUnitNo;                      ///< motor unit no.
+    std::vector<double> elementLengths;   //< lengths of the 1D elements
+    std::vector<double> vmValues;         //< values of Vm
+    int valuesLength;                     //< number of vmValues
+    global_no_t valuesOffset;             //< number of vmValues in previous entries in fiberData_
+    int fiberNoGlobal;                    //< fiberNo as given in settings (value of additionalArgument)
+    int motorUnitNo;                      //< motor unit no.
+    double lastStimulationCheckTime;      //< last time the fiber was checked for stimulation
+    double setSpecificStatesCallFrequency;        //< value of option with the same name in the python settings
+    std::vector<double> setSpecificStatesFrequencyJitter;      //< value of option with the same name in the python settings
+    double setSpecificStatesRepeatAfterFirstCall; //< how long in ms the prescribed value should be set
+    double setSpecificStatesCallEnableBegin;      //< value of option with the same name in the python settings
+    double currentJitter;                         //< current absolute value of jitter to add to setSpecificStatesCallFrequency
+    int jitterIndex;                              //< index of the vector in setSpecificStatesFrequencyJitter which is the current value to use
   };
 
-  std::vector<FiberPointBuffers> fiberPointBuffers_;    ///< computation buffers for the 0D problem
+  std::vector<FiberPointBuffers> fiberPointBuffers_;    //< computation buffers for the 0D problem
 
-  std::string fiberDistributionFilename_;  ///< filename of the fiberDistributionFile, which contains motor unit numbers for fiber numbers
-  std::string firingTimesFilename_;        ///< filename of the firingTimesFile, which contains time points of stimulation for each motor unit
+  std::string fiberDistributionFilename_;  //< filename of the fiberDistributionFile, which contains motor unit numbers for fiber numbers
+  std::string firingTimesFilename_;        //< filename of the firingTimesFile, which contains time points of stimulation for each motor unit
 
-  std::vector<std::vector<bool>> firingEvents_;   ///< if a motor unit firingEvents_[timeStepNo][motorUnitNo]
-  std::vector<int> motorUnitNo_;                  ///< number of motor unit for given fiber no motorUnitNo_[fiberNo]
-  double setSpecificStatesCallFrequency_;         ///< value of option with the same name in the python settings
-  double setSpecificStatesRepeatAfterFirstCall_;  ///< how long in ms the prescribed value should be set
-  std::string durationLogKey0D_;                  ///< duration log key for the 0D problem
-  std::string durationLogKey1D_;                  ///< duration log key for the 1D problem
+  std::vector<std::vector<bool>> firingEvents_;   //< if a motor unit firingEvents_[timeStepNo][motorUnitNo]
+  std::vector<int> motorUnitNo_;                  //< number of motor unit for given fiber no motorUnitNo_[fiberNo]
+  std::string durationLogKey0D_;                  //< duration log key for the 0D problem
+  std::string durationLogKey1D_;                  //< duration log key for the 1D problem
 
-  std::vector<FiberData> fiberData_;  ///< vector of fibers,
-  int nFibersToCompute_;              ///< number of fibers where own rank is involved (>= n.fibers that are computed by own rank)
-  int nInstancesToCompute_;           ///< number of instances of the Hodgkin-Huxley problem to compute on this rank
-  double currentTime_;                ///< the current time used for the output writer
+  std::vector<FiberData> fiberData_;  //< vector of fibers,
+  int nFibersToCompute_;              //< number of fibers where own rank is involved (>= n.fibers that are computed by own rank)
+  int nInstancesToCompute_;           //< number of instances of the Hodgkin-Huxley problem to compute on this rank
+  double currentTime_;                //< the current time used for the output writer
 };

@@ -125,11 +125,14 @@ initialize()
   this->internalTimeStepNo_ = 0;
 
   this->setSpecificStatesCallFrequency_ = this->specificSettings_.getOptionDouble("setSpecificStatesCallFrequency", 0.0);
+  this->specificSettings_.getOptionVector("setSpecificStatesFrequencyJitter", this->setSpecificStatesFrequencyJitter_);
   this->setSpecificStatesRepeatAfterFirstCall_ = this->specificSettings_.getOptionDouble("setSpecificStatesRepeatAfterFirstCall", 0.0);
+  this->setSpecificStatesCallEnableBegin_ = this->specificSettings_.getOptionDouble("setSpecificStatesCallEnableBegin", 0.0);
 
   // initialize the lastCallSpecificStatesTime_ to something negative, such that the condition is fullfilled already in the fisrrt iteration
   this->lastCallSpecificStatesTime_ = -2*this->setSpecificStatesCallFrequency_;
-
+  this->currentJitter_ = 0;
+  this->jitterIndex_ = 0;
 }
 
 template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
@@ -149,6 +152,7 @@ template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
 void CellmlAdapter<nStates_,nIntermediates_,FunctionSpaceType>::
 evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepNo, double currentTime)
 {
+  // get raw pointers from Petsc data structures
   //PetscUtility::getVectorEntries(input, states_);
   double *states, *rates;
   double *intermediatesData;
@@ -157,6 +161,7 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
   ierr = VecGetArray(output, &rates); CHKERRV(ierr);
   ierr = VecGetArray(this->data_.intermediates()->getValuesContiguous(), &intermediatesData); CHKERRV(ierr);
 
+  // get sizes of input and output Vecs
   int nStatesInput, nRates, nIntermediates = 101;
   ierr = VecGetSize(input, &nStatesInput); CHKERRV(ierr);
   ierr = VecGetSize(output, &nRates); CHKERRV(ierr);
@@ -165,9 +170,9 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
   //double intermediatesData[101];
 
   VLOG(1) << "intermediates array has " << nIntermediates << " entries";
-
   nIntermediates = nIntermediates/this->nInstances_;
 
+  // check validity of sizes
   VLOG(1) << "evaluateTimesteppingRightHandSideExplicit, input nStates_: " << nStatesInput << ", output nRates: " << nRates;
   VLOG(1) << "timeStepNo: " << timeStepNo << ", currentTime: " << currentTime << ", internalTimeStepNo: " << this->internalTimeStepNo_;
 
@@ -219,7 +224,8 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
   if (this->setSpecificStates_
       && (
           (this->setSpecificStatesCallInterval_ != 0 && this->internalTimeStepNo_ % this->setSpecificStatesCallInterval_ == 0)
-          || (this->setSpecificStatesCallFrequency_ != 0.0 && currentTime >= this->lastCallSpecificStatesTime_ + 1./this->setSpecificStatesCallFrequency_)
+          || (this->setSpecificStatesCallFrequency_ != 0.0 && currentTime >= this->lastCallSpecificStatesTime_ + 1./(this->setSpecificStatesCallFrequency_+this->currentJitter_)
+              && currentTime > this->setSpecificStatesCallEnableBegin_)
          )
      )
   {
@@ -230,9 +236,16 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
     }
     else
     {
-      if (currentTime - (this->lastCallSpecificStatesTime_ + 1./this->setSpecificStatesCallFrequency_) > this->setSpecificStatesRepeatAfterFirstCall_)
+      // current stimulation is over
+      if (currentTime - (this->lastCallSpecificStatesTime_ + 1./(this->setSpecificStatesCallFrequency_+this->currentJitter_)) > this->setSpecificStatesRepeatAfterFirstCall_)
       {
-         this->lastCallSpecificStatesTime_ += 1./this->setSpecificStatesCallFrequency_;
+        // advance time of last call to specificStates
+        this->lastCallSpecificStatesTime_ += 1./(this->setSpecificStatesCallFrequency_+this->currentJitter_);
+
+        // get new jitter value
+        double jitterFactor = this->setSpecificStatesFrequencyJitter_[this->jitterIndex_ % this->setSpecificStatesFrequencyJitter_.size()];
+        this->currentJitter_ = jitterFactor * this->setSpecificStatesCallFrequency_;
+        this->jitterIndex_++;
       }
       VLOG(1) << "next call to setSpecificStates,this->setSpecificStatesCallFrequency_: " << this->setSpecificStatesCallFrequency_ << ", set lastCallSpecificStatesTime_ to " << this->lastCallSpecificStatesTime_;
     }
@@ -245,6 +258,7 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
     this->setSpecificStates_((void *)this, this->nInstances_, this->internalTimeStepNo_, currentTime, states);
   }
 
+  // call actual rhs method
   //              this          STATES, RATES, WANTED,                KNOWN
   if (this->rhsRoutine_)
   {

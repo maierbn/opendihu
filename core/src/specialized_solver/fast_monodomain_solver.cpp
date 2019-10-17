@@ -85,7 +85,7 @@ initialize()
   // initialize data structures
   std::vector<NestedSolversType::TimeSteppingSchemeType> &instances = nestedSolvers_.instancesLocal();
 
-  // determine number of fibers
+  // determine number of fibers to compute on the current rank
   int nFibers = 0;
   int fiberNo = 0;
   nFibersToCompute_ = 0;
@@ -97,10 +97,6 @@ initialize()
 
     for (int j = 0; j < innerInstances.size(); j++, fiberNo++)
     {
-      CellmlAdapterType &cellmlAdapter = innerInstances[j].discretizableInTime();
-      setSpecificStatesCallFrequency_ = cellmlAdapter.setSpecificStatesCallFrequency_;
-      setSpecificStatesRepeatAfterFirstCall_ = cellmlAdapter.setSpecificStatesRepeatAfterFirstCall_;
-
       std::shared_ptr<FiberFunctionSpace> fiberFunctionSpace = innerInstances[j].data().functionSpace();
       std::shared_ptr<Partition::RankSubset> rankSubset = fiberFunctionSpace->meshPartition()->rankSubset();
       int computingRank = fiberNo % rankSubset->size();
@@ -150,7 +146,16 @@ initialize()
         fiberData_.at(fiberDataNo).valuesLength = fiberFunctionSpace->nDofsGlobal();
         fiberData_.at(fiberDataNo).fiberNoGlobal = fiberNoGlobal;
         fiberData_.at(fiberDataNo).motorUnitNo = motorUnitNo_[fiberNoGlobal % motorUnitNo_.size()];
+        
+        // copy settings
+        fiberData_.at(fiberDataNo).setSpecificStatesCallFrequency = cellmlAdapter.setSpecificStatesCallFrequency_;
+        fiberData_.at(fiberDataNo).setSpecificStatesFrequencyJitter = cellmlAdapter.setSpecificStatesFrequencyJitter_;
+        fiberData_.at(fiberDataNo).setSpecificStatesRepeatAfterFirstCall = cellmlAdapter.setSpecificStatesRepeatAfterFirstCall_;
+        fiberData_.at(fiberDataNo).setSpecificStatesCallEnableBegin = cellmlAdapter.setSpecificStatesCallEnableBegin_;
 
+        fiberData_.at(fiberDataNo).lastStimulationCheckTime = -2*fiberData_.at(fiberDataNo).setSpecificStatesCallFrequency;
+        fiberData_.at(fiberDataNo).currentJitter = 0;
+        fiberData_.at(fiberDataNo).jitterIndex = 0;
         fiberData_.at(fiberDataNo).valuesOffset = 0;
         if (fiberDataNo > 0)
         {
@@ -274,11 +279,10 @@ fetchFiberData()
         nDofsOnRanks[rankNo] = fiberFunctionSpace->meshPartition()->nNodesLocalWithoutGhosts(0, rankNo);
       }
 
-        /*
-int MPI_Gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
-                void *recvbuf, const int *recvcounts, const int *displs,
-                MPI_Datatype recvtype, int root, MPI_Comm comm)
-*/
+      // int MPI_Gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+      //          void *recvbuf, const int *recvcounts, const int *displs,
+      //          MPI_Datatype recvtype, int root, MPI_Comm comm)
+      //
       LOG(DEBUG) << "Gatherv of element lengths to rank " << computingRank << ", values " << localLengths << ", sizes: " << nElementsOnRanks << ", offsets: " << offsetsOnRanks;
 
       MPI_Gatherv(localLengths.data(), fiberFunctionSpace->nElementsLocal(), MPI_DOUBLE,
@@ -374,10 +378,8 @@ updateFiberData()
         sendBufferVmValues = fiberData_[fiberDataNo].vmValues.data();
       }
 
-        /*
-int MPI_Scatterv(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype,
-                 void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm)
-*/
+      //  int MPI_Scatterv(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype,
+      //                  void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm)
       // communicate Vm values
       std::vector<double> vmValuesLocal(fiberFunctionSpace->nDofsLocalWithoutGhosts());
       MPI_Scatterv(sendBufferVmValues, nDofsOnRanks.data(), offsetsOnRanks.data(), MPI_DOUBLE,
@@ -509,23 +511,59 @@ compute0D(double startTime, double timeStepWidth, int nTimeSteps)
     {
       // determine if fiber gets stimulated
       double currentTime = startTime + timeStepNo * timeStepWidth;
-      int index = round(currentTime * setSpecificStatesCallFrequency_);
 
-      double stimulationStartTime = index*setSpecificStatesCallFrequency_;
-      double stimulationDuration = currentTime - stimulationStartTime;
+      // get time from with testing for stimulation is enabled
+      const double lastStimulationCheckTime = fiberData_[fiberDataNo].lastStimulationCheckTime;
+      
+      const double setSpecificStatesCallFrequency = fiberData_[fiberDataNo].setSpecificStatesCallFrequency;
+      const double setSpecificStatesRepeatAfterFirstCall = fiberData_[fiberDataNo].setSpecificStatesRepeatAfterFirstCall;
+      const double setSpecificStatesCallEnableBegin = fiberData_[fiberDataNo].setSpecificStatesCallEnableBegin;
+      
+      std::vector<double> &setSpecificStatesFrequencyJitter = fiberData_[fiberDataNo].setSpecificStatesFrequencyJitter;
+      int &jitterIndex = fiberData_[fiberDataNo].jitterIndex;
+      double &currentJitter = fiberData_[fiberDataNo].currentJitter;
 
+      // check if time is come to call setSpecificStates
+      bool checkStimulation = false;
+
+      if (currentTime >= lastStimulationCheckTime + 1./(setSpecificStatesCallFrequency+currentJitter)
+          && currentTime > setSpecificStatesCallEnableBegin)
+      {
+        if (lastStimulationCheckTime < 0)
+        {
+          fiberData_[fiberDataNo].lastStimulationCheckTime = 0;
+        }
+        else
+        {
+          // current stimulation is over
+          if (currentTime - (lastStimulationCheckTime + 1./(setSpecificStatesCallFrequency+currentJitter)) > setSpecificStatesRepeatAfterFirstCall)
+          {
+            // advance time of last call to specificStates
+            fiberData_[fiberDataNo].lastStimulationCheckTime += 1./(setSpecificStatesCallFrequency+currentJitter);
+
+            // compute new jitter value
+            double jitterFactor = setSpecificStatesFrequencyJitter[jitterIndex % setSpecificStatesFrequencyJitter.size()];
+            currentJitter = jitterFactor * setSpecificStatesCallFrequency;
+            jitterIndex++;
+          }
+        }
+        checkStimulation = true;
+      }
+
+      // instead of calling setSpecificStates, directly determine whether to stimulate form the firingEvents file
+      int firingEventsIndex = round(currentTime * setSpecificStatesCallFrequency);
       bool stimulate =
-        firingEvents_[index % firingEvents_.size()][motorUnitNo % firingEvents_[index % firingEvents_.size()].size()]
-        && stimulationDuration <= setSpecificStatesRepeatAfterFirstCall_
+        checkStimulation
+        && firingEvents_[firingEventsIndex % firingEvents_.size()][motorUnitNo % firingEvents_[firingEventsIndex % firingEvents_.size()].size()]
         && currentPointIsInCenter;
 
       if (stimulate)
       {
         LOG(DEBUG) << "stimulate fiber " << fiberData_[fiberDataNo].fiberNoGlobal << ", MU " << motorUnitNo << " at t=" << currentTime;
         LOG(DEBUG) << "  pointBuffersNo: " << pointBuffersNo << ", indexInFiber: " << indexInFiber << ", fiberCenterIndex: " << fiberCenterIndex;
-        LOG(DEBUG) << "  motorUnitNo: " << motorUnitNo << " (" << motorUnitNo % firingEvents_[index % firingEvents_.size()].size() << ")";
-        LOG(DEBUG) << "  time index: " << index << " (" << index % firingEvents_.size() << ")";
-        LOG(DEBUG) << "  stimulationStartTime: " << stimulationStartTime << ", stimulationDuration: " << stimulationDuration;
+        LOG(DEBUG) << "  motorUnitNo: " << motorUnitNo << " (" << motorUnitNo % firingEvents_[firingEventsIndex % firingEvents_.size()].size() << ")";
+        LOG(DEBUG) << "  firing events index: " << firingEventsIndex << " (" << firingEventsIndex % firingEvents_.size() << ")";
+        LOG(DEBUG) << "  setSpecificStatesCallEnableBegin: " << setSpecificStatesCallEnableBegin;
       }
 
       // perform one step of the heun scheme

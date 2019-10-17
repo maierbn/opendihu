@@ -96,6 +96,9 @@ elif "hodgkin_huxley" in variables.cellml_file:
 def get_motor_unit_no(fiber_no):
   return int(variables.fiber_distribution[fiber_no % len(variables.fiber_distribution)]-1)
 
+def get_diffusion_prefactor(fiber_no, mu_no):
+  return variables.get_conductivity(fiber_no, mu_no) / (variables.get_am(fiber_no, mu_no) * variables.get_cm(fiber_no, mu_no))
+
 def fiber_gets_stimulated(fiber_no, frequency, current_time):
   """
   determine if fiber fiber_no gets stimulated at simulation time current_time
@@ -318,11 +321,11 @@ if False:
     for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y)):
       for subdomain_coordinate_x in range(variables.n_subdomains_x):
         for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x)):
-          no = fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)
+          no = get_fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)
           if no != counter:
-            print("error: fiber_no({},{},{},{}) = {}, counter = {}".format(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y,no,counter))
+            print("error: get_fiber_no({},{},{},{}) = {}, counter = {}".format(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y,no,counter))
           else:
-            print("   ok: fiber_no({},{},{},{}) = {}, counter = {}".format(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y,no,counter))
+            print("   ok: get_fiber_no({},{},{},{}) = {}, counter = {}".format(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y,no,counter))
           counter += 1
           
 

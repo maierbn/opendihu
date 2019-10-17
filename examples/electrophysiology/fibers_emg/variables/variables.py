@@ -24,13 +24,13 @@ emg_initial_guess_nonzero = False   # If the initial guess for the emg linear sy
 
 # timing parameters
 # -----------------
-end_time = 1000.0
-stimulation_frequency = 100*1e-3    # sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
-dt_1D = 1e-3                        # timestep width of diffusion
-dt_0D = 1.5e-3                      # timestep width of ODEs
-dt_splitting = 3e-3                 # overall timestep width of strang splitting
-dt_3D = 1e0                         # time step width of coupling, when 3D should be performed
-output_timestep = 1e0               # timestep for output files
+end_time = 1000.0                   # [ms] end time of the simulation
+stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
+dt_0D = 1e-3                        # [ms] timestep width of ODEs
+dt_1D = 1.5e-3                      # [ms] timestep width of diffusion
+dt_splitting = 3e-3                 # [ms] overall timestep width of strang splitting
+dt_3D = 1e0                         # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
+output_timestep = 1e0               # [ms] timestep for output files
 
 # input files
 # -----------
@@ -71,6 +71,26 @@ sampling_stride_z = 50
 
 # scenario name for log file
 scenario_name = ""
+
+# functions, here, Am, Cm and Conductivity are constant for all fibers and MU's
+# These functions can be redefined differently in a custom variables script
+def get_am(fiber_no, mu_no):
+  return Am
+
+def get_cm(fiber_no, mu_no):
+  return Cm
+  
+def get_conductivity(fiber_no, mu_no):
+  return Conductivity
+
+def get_specific_states_call_frequency(fiber_no, mu_no):
+  return stimulation_frequency
+
+def get_specific_states_frequency_jitter(fiber_no, mu_no):
+  return [0]
+
+def get_specific_states_call_enable_begin(fiber_no, mu_no):
+  return 0
 
 
 # further internal variables that will be set by the helper.py script and used in the config in settings_fibers_emg.py

@@ -94,23 +94,23 @@ This specifies for which equation the mass and stiffness matrices should be comp
 * ``Equation::Static::Laplace`` for solving the Laplace equation:
   
   .. math::
-    c\cdot ∇ u = 0
+    c\cdot Δ u = 0
     
 * ``Equation::Static::GeneralizedLaplace`` for solving the Laplace equation:
   
   .. math::
-    ∇\cdot(A∇u) u = 0
+    ∇\cdot(A∇u) = 0
     
   
 * ``Equation::Static::Poisson`` for solving the Poisson equation:
   
   .. math::
-    c\cdot ∇ u = f
+    c\cdot Δ u = f
     
 * ``Equation::Static::GeneralizedPoisson`` for solving the Poisson equation:
   
   .. math::
-    ∇\cdot(A∇u) u = f
+    ∇\cdot(A∇u) = f
     
   The right hand side :math:`f` can be given in the python settings.
     

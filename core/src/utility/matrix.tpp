@@ -42,6 +42,20 @@ operator()(int rowIndex, int columnIndex)
   return this->operator[](rowIndex*nColumns + columnIndex);   // row-major
 }
 
+//! return a const reference to the entry (rowIndex,columnIndex)
+template<int nRows, int nColumns>
+const double &Matrix<nRows,nColumns>::
+operator()(int rowIndex, int columnIndex) const
+{
+  assert(rowIndex >= 0);
+  assert(rowIndex < nRows);
+  assert(columnIndex >= 0);
+  assert(columnIndex < nColumns);
+
+  //return operator[](columnIndex*nRows + rowIndex);   // column-major
+  return this->operator[](rowIndex*nColumns + columnIndex);   // row-major
+}
+
 //! fill a PETSc matrix with the own values
 template<int nRows, int nColumns>
 void Matrix<nRows,nColumns>::

@@ -71,7 +71,7 @@ output_timestep = 0.5               # [ms] timestep for output files
 
 # other options
 paraview_output = True
-fiber_file="../../input/2x2fibers.bin"
+fiber_file="../../input/13x13fibers.bin"
 firing_times_file="../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
 fiber_distribution_file="../../input/MU_fibre_distribution_10MUs.txt"
 

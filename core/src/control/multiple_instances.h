@@ -55,8 +55,10 @@ public:
   //! the FastMonodomainSolver accesses the internals of MultipleInstances
   std::vector<TimeSteppingScheme> &instancesLocal();
  
-  //! write data to file using the output writer manager, this is only needed for FastMonodomainSolver
-  void writeOutput(int timeStepNo, double currentTime);
+  /** write data to file using the output writer manager
+   * @param forceWrite if the output should be written now, not considering the set output frequency, this is only needed for FastMonodomainSolver
+   */
+  void writeOutput(int timeStepNo, double currentTime, bool forceWrite=false);
 
 protected:
 

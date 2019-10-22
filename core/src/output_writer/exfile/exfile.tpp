@@ -23,10 +23,10 @@ namespace OutputWriter
 {
 
 template<typename DataType>
-void Exfile::write(DataType& data, int timeStepNo, double currentTime)
+void Exfile::write(DataType& data, int timeStepNo, double currentTime, bool forceWrite)
 {
   // check if output should be written in this timestep and prepare filename
-  if (!Generic::prepareWrite(data, timeStepNo, currentTime))
+  if (!Generic::prepareWrite(data, timeStepNo, currentTime, forceWrite))
   {
     return;
   }

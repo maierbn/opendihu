@@ -320,7 +320,7 @@ config = {
         "OutputWriter": [
           {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + variables.scenario_name + "/surface_emg", "binary": True, "fixedFormat": False, "combineFiles": True},
         ],
-        "face": "1-",
+        "face": "0+",
         "StaticBidomainSolver": {
           "timeStepWidth":          variables.dt_3D,
           "timeStepOutputInterval": 50,

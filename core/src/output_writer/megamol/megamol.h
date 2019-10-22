@@ -33,7 +33,7 @@ public:
 
   //! write out solution to given filename, if timeStepNo is not -1, this value will be part of the filename
   template<typename DataType>
-  void write(DataType &data, int timeStepNo = -1, double currentTime = -1);
+  void write(DataType &data, int timeStepNo = -1, double currentTime = -1, bool forceWrite = false);
 
 #ifdef HAVE_ADIOS
   struct adios_writer_t

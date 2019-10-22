@@ -43,18 +43,20 @@ int main(int argc, char *argv[])
         >
       >
     >,
-    TimeSteppingScheme::StaticBidomainSolver<              // bidomain
-      SpatialDiscretization::FiniteElementMethod<       //FEM for initial potential flow, fibre directions
-        Mesh::StructuredDeformableOfDimension<3>,
-        BasisFunction::LagrangeOfOrder<1>,
-        Quadrature::Gauss<3>,
-        Equation::Static::Laplace
-      >,
-      SpatialDiscretization::FiniteElementMethod<       // anisotropic diffusion
-        Mesh::StructuredDeformableOfDimension<3>,
-        BasisFunction::LagrangeOfOrder<1>,
-        Quadrature::Gauss<5>,
-        Equation::Dynamic::DirectionalDiffusion
+    OutputWriter::OutputSurface<
+      TimeSteppingScheme::StaticBidomainSolver<              // bidomain
+        SpatialDiscretization::FiniteElementMethod<       //FEM for initial potential flow, fibre directions
+          Mesh::StructuredDeformableOfDimension<3>,
+          BasisFunction::LagrangeOfOrder<1>,
+          Quadrature::Gauss<3>,
+          Equation::Static::Laplace
+        >,
+        SpatialDiscretization::FiniteElementMethod<       // anisotropic diffusion
+          Mesh::StructuredDeformableOfDimension<3>,
+          BasisFunction::LagrangeOfOrder<1>,
+          Quadrature::Gauss<5>,
+          Equation::Dynamic::DirectionalDiffusion
+        >
       >
     >
   > problem(settings);

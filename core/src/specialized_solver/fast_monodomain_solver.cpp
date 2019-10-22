@@ -216,7 +216,7 @@ advanceTimeSpan()
 
   for (int i = 0; i < instances.size(); i++)
   {
-    instances[i].timeStepping2().writeOutput(0, currentTime_);
+    instances[i].timeStepping2().writeOutput(0, currentTime_, true);  // force output now, not considering any outputInterval
   }
 }
 

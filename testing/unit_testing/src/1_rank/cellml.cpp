@@ -10,7 +10,7 @@
 #include "stiffness_matrix_tester.h"
 #include "equation/diffusion.h"
 #include "../utility.h"
-/*
+
 TEST(CellMLTest, HodgkinHuxley)
 {
   std::string pythonConfig = R"(
@@ -154,7 +154,7 @@ config = {
   assertFileMatchesContent("out_0000009.py", referenceOutput);
 }
 
-*/
+
 TEST(CellMLTest, FastFibers)
 {
   std::string pythonConfig = R"(

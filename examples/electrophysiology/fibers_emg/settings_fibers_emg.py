@@ -162,7 +162,7 @@ config = {
     "timeStepWidth":          variables.dt_3D,  # 1e-1
     "logTimeStepWidthAsKey":  "dt_3D",
     "durationLogKey":         "duration_total",
-    "timeStepOutputInterval": 10,
+    "timeStepOutputInterval": 1,
     "endTime":                variables.end_time,
     "transferSlotName":       "intermediates" if variables.linear_elasticity else "states",
     "Term1": {        # monodomain, fibers
@@ -223,6 +223,7 @@ config = {
                       "parametersInitialValues":                variables.parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
                       "meshName":                               "MeshFiber_{}".format(fiber_no),
                       "prefactor":                              1.0,
+                      "stimulationLogFilename":                 "out/stimulation.log",
                     },
                   },
                 } for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y)) \
@@ -244,7 +245,7 @@ config = {
                     "logTimeStepWidthAsKey":       "dt_1D",
                     "durationLogKey":              "duration_1D",
                     "timeStepOutputInterval":      1e4,
-                    "dirichletBoundaryConditions": {0: -75.0036, -1: -75.0036},
+                    "dirichletBoundaryConditions": {},                                       # old Dirichlet BC that are not used in FastMonodomainSolver: {0: -75.0036, -1: -75.0036},
                     "inputMeshIsGlobal":           True,
                     "solverName":                  "implicitSolver",
                     "FiniteElementMethod" : {

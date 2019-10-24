@@ -1,6 +1,7 @@
 #include "specialized_solver/fast_monodomain_solver.h"
 
 #include "partition/rank_subset.h"
+#include "control/stimulation_logging.h"
 
 FastMonodomainSolver<Control::MultipleInstances<OperatorSplitting::Strang<Control::MultipleInstances<TimeSteppingScheme::Heun<CellmlAdapter<4, 9, FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1> > > > >, Control::MultipleInstances<TimeSteppingScheme::ImplicitEuler<SpatialDiscretization::FiniteElementMethod<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1>, Quadrature::Gauss<2>, Equation::Dynamic::IsotropicDiffusion> > > > > >::
 FastMonodomainSolver(const DihuContext &context) :
@@ -73,7 +74,7 @@ initialize()
   }
 
   LOG(DEBUG) << "firingEvents.size: " << firingEvents_.size();
-  //LOG(DEBUG) << "firingEvents_:" << firingEvents_;
+  LOG(DEBUG) << "firingEvents_:" << firingEvents_;
   LOG(DEBUG) << "motorUnitNo_: " << motorUnitNo_;
 
   if (motorUnitNo_.empty())
@@ -127,6 +128,9 @@ initialize()
       CellmlAdapterType &cellmlAdapter = innerInstances[j].discretizableInTime();
       int fiberNoGlobal = PythonUtility::convertFromPython<int>::get(cellmlAdapter.pySetFunctionAdditionalParameter_);
 
+      // initialize filename in stimulation logging class from current settings
+      Control::StimulationLogging logging(cellmlAdapter.specificSettings_);
+
       std::shared_ptr<FiberFunctionSpace> fiberFunctionSpace = innerInstances[j].data().functionSpace();
 
       std::shared_ptr<Partition::RankSubset> rankSubset = fiberFunctionSpace->meshPartition()->rankSubset();
@@ -153,10 +157,11 @@ initialize()
         fiberData_.at(fiberDataNo).setSpecificStatesRepeatAfterFirstCall = cellmlAdapter.setSpecificStatesRepeatAfterFirstCall_;
         fiberData_.at(fiberDataNo).setSpecificStatesCallEnableBegin = cellmlAdapter.setSpecificStatesCallEnableBegin_;
 
-        fiberData_.at(fiberDataNo).lastStimulationCheckTime = -2*fiberData_.at(fiberDataNo).setSpecificStatesCallFrequency;
+        fiberData_.at(fiberDataNo).lastStimulationCheckTime = -2*(1./fiberData_.at(fiberDataNo).setSpecificStatesCallFrequency);
         fiberData_.at(fiberDataNo).currentJitter = 0;
         fiberData_.at(fiberDataNo).jitterIndex = 0;
         fiberData_.at(fiberDataNo).valuesOffset = 0;
+        fiberData_.at(fiberDataNo).currentlyStimulating = false;
         if (fiberDataNo > 0)
         {
           fiberData_.at(fiberDataNo).valuesOffset = fiberData_.at(fiberDataNo-1).valuesOffset + fiberData_.at(fiberDataNo-1).valuesLength;
@@ -187,8 +192,8 @@ initialize()
 void FastMonodomainSolver<Control::MultipleInstances<OperatorSplitting::Strang<Control::MultipleInstances<TimeSteppingScheme::Heun<CellmlAdapter<4, 9, FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1> > > > >, Control::MultipleInstances<TimeSteppingScheme::ImplicitEuler<SpatialDiscretization::FiniteElementMethod<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1>, Quadrature::Gauss<2>, Equation::Dynamic::IsotropicDiffusion> > > > > >::
 run()
 {
-  LOG(FATAL) << "not implemented";
-  //nestedSolvers_.run();
+  initialize();
+  advanceTimeSpan();
 }
 
 void FastMonodomainSolver<Control::MultipleInstances<OperatorSplitting::Strang<Control::MultipleInstances<TimeSteppingScheme::Heun<CellmlAdapter<4, 9, FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1> > > > >, Control::MultipleInstances<TimeSteppingScheme::ImplicitEuler<SpatialDiscretization::FiniteElementMethod<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1>, Quadrature::Gauss<2>, Equation::Dynamic::IsotropicDiffusion> > > > > >::
@@ -216,7 +221,7 @@ advanceTimeSpan()
 
   for (int i = 0; i < instances.size(); i++)
   {
-    instances[i].timeStepping2().writeOutput(0, currentTime_, true);  // force output now, not considering any outputInterval
+    instances[i].timeStepping2().writeOutput(0, currentTime_);  // force output now, not considering any outputInterval
   }
 }
 
@@ -493,7 +498,8 @@ compute0D(double startTime, double timeStepWidth, int nTimeSteps)
     int fiberDataNo = pointBuffersNo * Vc::double_v::Size / fiberData_[0].valuesLength;
     int indexInFiber = pointBuffersNo * Vc::double_v::Size - fiberData_[fiberDataNo].valuesOffset;
     int fiberCenterIndex = fiberData_[fiberDataNo].valuesLength / 2;
-    bool currentPointIsInCenter = (abs(indexInFiber - fiberCenterIndex) < Vc::double_v::Size);
+    bool currentPointIsInCenter = ((fiberCenterIndex - indexInFiber) < Vc::double_v::Size);
+    VLOG(3) << "currentPointIsInCenter: " << currentPointIsInCenter << ", pointBuffersNo: " << pointBuffersNo << ", fiberDataNo: " << fiberDataNo << ", indexInFiber:" << indexInFiber << ", fiberCenterIndex: " << fiberCenterIndex << ", " << (indexInFiber - fiberCenterIndex) << " < " << Vc::double_v::Size;
 
     int motorUnitNo = fiberData_[fiberDataNo].motorUnitNo;
     VLOG(3) << "pointBuffersNo: " << pointBuffersNo << ", fiberDataNo: " << fiberDataNo << ", indexInFiber: " << indexInFiber << ", motorUnitNo: " << motorUnitNo;
@@ -523,47 +529,82 @@ compute0D(double startTime, double timeStepWidth, int nTimeSteps)
       int &jitterIndex = fiberData_[fiberDataNo].jitterIndex;
       double &currentJitter = fiberData_[fiberDataNo].currentJitter;
 
-      // check if time is come to call setSpecificStates
+      // check if time has come to call setSpecificStates
       bool checkStimulation = false;
 
+      VLOG(1) << "currentTime: " << currentTime << ", lastStimulationCheckTime: " << lastStimulationCheckTime << ", next time point: " << lastStimulationCheckTime + 1./(setSpecificStatesCallFrequency+currentJitter);
+      VLOG(1) << "setSpecificStatesCallFrequency: " << setSpecificStatesCallFrequency << ", currentJitter: " << currentJitter << ", setSpecificStatesCallEnableBegin: " << setSpecificStatesCallEnableBegin;
+
       if (currentTime >= lastStimulationCheckTime + 1./(setSpecificStatesCallFrequency+currentJitter)
-          && currentTime > setSpecificStatesCallEnableBegin)
+          && currentTime >= setSpecificStatesCallEnableBegin-1e-14)
       {
-        if (lastStimulationCheckTime < 0)
+        VLOG(1) << "-> checkStimulation";
+        checkStimulation = true;
+
+        if (lastStimulationCheckTime >= 0)
         {
-          fiberData_[fiberDataNo].lastStimulationCheckTime = 0;
-        }
-        else
-        {
-          // current stimulation is over
+          VLOG(1) << "check if stimulation is over: duration already: " << currentTime - (lastStimulationCheckTime + 1./(setSpecificStatesCallFrequency+currentJitter)) 
+            << ", setSpecificStatesRepeatAfterFirstCall: " << setSpecificStatesRepeatAfterFirstCall;
+
+          // if current stimulation is over
           if (currentTime - (lastStimulationCheckTime + 1./(setSpecificStatesCallFrequency+currentJitter)) > setSpecificStatesRepeatAfterFirstCall)
           {
             // advance time of last call to specificStates
+            LOG(DEBUG) << " old lastStimulationCheckTime: " << fiberData_[fiberDataNo].lastStimulationCheckTime << ", currentJitter: " << currentJitter << ", add " << 1./(setSpecificStatesCallFrequency+currentJitter);
             fiberData_[fiberDataNo].lastStimulationCheckTime += 1./(setSpecificStatesCallFrequency+currentJitter);
+
+            LOG(DEBUG) << " new lastStimulationCheckTime: " << fiberData_[fiberDataNo].lastStimulationCheckTime;
 
             // compute new jitter value
             double jitterFactor = setSpecificStatesFrequencyJitter[jitterIndex % setSpecificStatesFrequencyJitter.size()];
             currentJitter = jitterFactor * setSpecificStatesCallFrequency;
+            LOG(DEBUG) << " jitterIndex: " << jitterIndex << ", new jitterFactor: " << jitterFactor << ", currentJitter: " << currentJitter;
             jitterIndex++;
+
+            checkStimulation = false;
           }
         }
-        checkStimulation = true;
       }
 
       // instead of calling setSpecificStates, directly determine whether to stimulate form the firingEvents file
       int firingEventsIndex = round(currentTime * setSpecificStatesCallFrequency);
+
       bool stimulate =
         checkStimulation
-        && firingEvents_[firingEventsIndex % firingEvents_.size()][motorUnitNo % firingEvents_[firingEventsIndex % firingEvents_.size()].size()]
-        && currentPointIsInCenter;
+        && firingEvents_[firingEventsIndex % firingEvents_.size()][motorUnitNo % firingEvents_[firingEventsIndex % firingEvents_.size()].size()];
 
-      if (stimulate)
+      if (checkStimulation)
       {
+        VLOG(1) << "setSpecificStatesCallFrequency: " << setSpecificStatesCallFrequency << ", firingEventsIndex: " << firingEventsIndex << ", fires: "
+          << firingEvents_[firingEventsIndex % firingEvents_.size()][motorUnitNo % firingEvents_[firingEventsIndex % firingEvents_.size()].size()];
+        VLOG(1) << "currentPointIsInCenter: " << currentPointIsInCenter;
+      }
+
+      if (stimulate && currentPointIsInCenter)
+      {
+        // if this is the first point in time of the current stimulation, log stimulation time
+        if (!fiberData_[fiberDataNo].currentlyStimulating)
+        {
+          fiberData_[fiberDataNo].currentlyStimulating = true;
+          Control::StimulationLogging::logStimulationBegin(currentTime, fiberData_[fiberDataNo].motorUnitNo, fiberData_[fiberDataNo].fiberNoGlobal);
+        }
+
+        if (lastStimulationCheckTime < 0)
+        {
+          fiberData_[fiberDataNo].lastStimulationCheckTime = currentTime;
+        }
+
         LOG(DEBUG) << "stimulate fiber " << fiberData_[fiberDataNo].fiberNoGlobal << ", MU " << motorUnitNo << " at t=" << currentTime;
         LOG(DEBUG) << "  pointBuffersNo: " << pointBuffersNo << ", indexInFiber: " << indexInFiber << ", fiberCenterIndex: " << fiberCenterIndex;
         LOG(DEBUG) << "  motorUnitNo: " << motorUnitNo << " (" << motorUnitNo % firingEvents_[firingEventsIndex % firingEvents_.size()].size() << ")";
         LOG(DEBUG) << "  firing events index: " << firingEventsIndex << " (" << firingEventsIndex % firingEvents_.size() << ")";
-        LOG(DEBUG) << "  setSpecificStatesCallEnableBegin: " << setSpecificStatesCallEnableBegin;
+        LOG(DEBUG) << "  setSpecificStatesCallEnableBegin: " << setSpecificStatesCallEnableBegin << ", lastStimulationCheckTime: " << lastStimulationCheckTime
+          << ", stimulation already for " << + 1./(setSpecificStatesCallFrequency+currentJitter);
+      }
+
+      if (!stimulate)
+      {
+        fiberData_[fiberDataNo].currentlyStimulating = false;
       }
 
       // perform one step of the heun scheme
@@ -593,7 +634,7 @@ compute0D(double startTime, double timeStepWidth, int nTimeSteps)
       const double_v intermediateState2 = state2 + timeStepWidth*rate2;
       const double_v intermediateState3 = state3 + timeStepWidth*rate3;
 
-      if (stimulate)
+      if (stimulate && currentPointIsInCenter)
       {
         for (int i = 0; i < std::min(3,(int)Vc::double_v::Size); i++)
         {
@@ -631,7 +672,7 @@ compute0D(double startTime, double timeStepWidth, int nTimeSteps)
       state2 = finalState2;
       state3 = finalState3;
 
-      if (stimulate)
+      if (stimulate && currentPointIsInCenter)
       {
         for (int i = 0; i < std::min(3,(int)Vc::double_v::Size); i++)
         {
@@ -661,6 +702,8 @@ void FastMonodomainSolver<Control::MultipleInstances<OperatorSplitting::Strang<C
 compute1D(double startTime, double timeStepWidth, int nTimeSteps, double prefactor)
 {
   Control::PerformanceMeasurement::start(durationLogKey1D_);
+
+  LOG(DEBUG) << "compute1D(" << startTime << ")";
 
   // perform implicit euler step
   // (K - 1/dt*M) u^{n+1} = -1/dt*M u^{n})

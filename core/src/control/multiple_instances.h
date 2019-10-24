@@ -56,9 +56,9 @@ public:
   std::vector<TimeSteppingScheme> &instancesLocal();
  
   /** write data to file using the output writer manager
-   * @param forceWrite if the output should be written now, not considering the set output frequency, this is only needed for FastMonodomainSolver
+   * @param callCountIncrement if the output should be written now, not considering the set output frequency, this is only needed for FastMonodomainSolver
    */
-  void writeOutput(int timeStepNo, double currentTime, bool forceWrite=false);
+  void writeOutput(int timeStepNo, double currentTime, int callCountIncrement = 1);
 
 protected:
 

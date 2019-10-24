@@ -11,6 +11,7 @@
 #include "mesh/structured_regular_fixed.h"
 #include "mesh/mesh_manager/mesh_manager.h"
 #include "function_space/function_space.h"
+#include "control/stimulation_logging.h"
 
 //#include <libcellml>    // libcellml not used here
 
@@ -21,6 +22,9 @@ CellmlAdapter(DihuContext context) :
   Splittable()
 {
   LOG(TRACE) << "CellmlAdapter constructor";
+
+  // initialize filename in stimulation logging class from current settings
+  Control::StimulationLogging logging(this->specificSettings_);
 }
 
 //! constructor from other CellmlAdapter, preserves the outputManager and context
@@ -130,7 +134,7 @@ initialize()
   this->setSpecificStatesCallEnableBegin_ = this->specificSettings_.getOptionDouble("setSpecificStatesCallEnableBegin", 0.0);
 
   // initialize the lastCallSpecificStatesTime_ to something negative, such that the condition is fullfilled already in the fisrrt iteration
-  this->lastCallSpecificStatesTime_ = -2*this->setSpecificStatesCallFrequency_;
+  this->lastCallSpecificStatesTime_ = -2*(1./this->setSpecificStatesCallFrequency_);
   this->currentJitter_ = 0;
   this->jitterIndex_ = 0;
 }
@@ -220,23 +224,26 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
     << ", currentTime=" << currentTime << " >= " << this->lastCallSpecificStatesTime_ << " + " << 1./this->setSpecificStatesCallFrequency_ << " = " << this->lastCallSpecificStatesTime_ + 1./this->setSpecificStatesCallFrequency_ << "? "
     << (currentTime >= this->lastCallSpecificStatesTime_ + 1./this->setSpecificStatesCallFrequency_? "true" : "false");
 
+  bool stimulate = false;
+
   // get new values for parameters, call callback function of python config
   if (this->setSpecificStates_
       && (
           (this->setSpecificStatesCallInterval_ != 0 && this->internalTimeStepNo_ % this->setSpecificStatesCallInterval_ == 0)
           || (this->setSpecificStatesCallFrequency_ != 0.0 && currentTime >= this->lastCallSpecificStatesTime_ + 1./(this->setSpecificStatesCallFrequency_+this->currentJitter_)
-              && currentTime > this->setSpecificStatesCallEnableBegin_)
+              && currentTime >= this->setSpecificStatesCallEnableBegin_-1e-13)
          )
      )
   {
+    stimulate = true;
     if (this->lastCallSpecificStatesTime_ < 0)
     {
       VLOG(1) << "initial call to setSpecificStates, set lastCallSpecificStatesTime_ to 0, was " << this->lastCallSpecificStatesTime_;
-      this->lastCallSpecificStatesTime_ = 0;
+      this->lastCallSpecificStatesTime_ = currentTime;
     }
     else
     {
-      // current stimulation is over
+      // if current stimulation is over
       if (currentTime - (this->lastCallSpecificStatesTime_ + 1./(this->setSpecificStatesCallFrequency_+this->currentJitter_)) > this->setSpecificStatesRepeatAfterFirstCall_)
       {
         // advance time of last call to specificStates
@@ -246,16 +253,38 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
         double jitterFactor = this->setSpecificStatesFrequencyJitter_[this->jitterIndex_ % this->setSpecificStatesFrequencyJitter_.size()];
         this->currentJitter_ = jitterFactor * this->setSpecificStatesCallFrequency_;
         this->jitterIndex_++;
+
+        stimulate = false;
       }
       VLOG(1) << "next call to setSpecificStates,this->setSpecificStatesCallFrequency_: " << this->setSpecificStatesCallFrequency_ << ", set lastCallSpecificStatesTime_ to " << this->lastCallSpecificStatesTime_;
     }
 
     // start critical section for python API calls
     // PythonUtility::GlobalInterpreterLock lock;
+  }
+
+  static bool currentlyStimulating = false;
+  if (stimulate)
+  {
+    // if this is the first point in time of the current stimulation, log stimulation time
+    if (!currentlyStimulating)
+    {
+      currentlyStimulating = true;
+      int fiberNoGlobal = -1;
+      if (this->pySetFunctionAdditionalParameter_)
+      {
+        fiberNoGlobal = PythonUtility::convertFromPython<int>::get(this->pySetFunctionAdditionalParameter_);
+      }
+      Control::StimulationLogging::logStimulationBegin(currentTime, -1, fiberNoGlobal);
+    }
 
     VLOG(1) << "call setSpecificStates, this->internalTimeStepNo_ = " << this->internalTimeStepNo_ << ", this->setSpecificStatesCallInterval_: " << this->setSpecificStatesCallInterval_;
     VLOG(1) << "currentTime: " << currentTime << ", call setSpecificStates, this->internalTimeStepNo_ = " << this->internalTimeStepNo_ << ", this->setSpecificStatesCallInterval_: " << this->setSpecificStatesCallInterval_;
     this->setSpecificStates_((void *)this, this->nInstances_, this->internalTimeStepNo_, currentTime, states);
+  }
+  else
+  {
+    currentlyStimulating = false;
   }
 
   // call actual rhs method

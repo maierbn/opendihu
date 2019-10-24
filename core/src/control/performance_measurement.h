@@ -53,7 +53,7 @@ private:
     //! constructor
     Measurement();
 
-    double start;   ///< last start time point
+    double start;   ///< last start point in time
     double totalDuration;   ///< sum of previous measurements
     int nTimeSpans;     ///< the number of measurements that lead to the total time in totalDuration
 

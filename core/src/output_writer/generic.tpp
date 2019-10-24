@@ -11,7 +11,7 @@ namespace OutputWriter
 {
 
 template<typename DataType>
-bool Generic::prepareWrite(DataType& data, int timeStepNo, double currentTime, bool forceWrite)
+bool Generic::prepareWrite(DataType& data, int timeStepNo, double currentTime, int callCountIncrement)
 {
   VLOG(2) << "Generic::prepareWrite timeStepNo=" << timeStepNo << ", currentTime=" << currentTime;
 
@@ -24,12 +24,12 @@ bool Generic::prepareWrite(DataType& data, int timeStepNo, double currentTime, b
   currentTime_ = currentTime;
 
   int oldWriteCallCount = writeCallCount_;
-  writeCallCount_++;
+  writeCallCount_ += callCountIncrement;
 
   VLOG(2) << " Generic::prepareWrite, writeCallCount_=" << writeCallCount_ << ", outputInterval: " << outputInterval_;
   
   // if no output should be written, because of interval, return false
-  if (oldWriteCallCount % outputInterval_ != 0 && !forceWrite)
+  if (oldWriteCallCount % outputInterval_ != 0)
   {
     VLOG(2) << " do not write";
     return false;

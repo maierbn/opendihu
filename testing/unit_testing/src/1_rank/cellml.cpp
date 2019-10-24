@@ -159,288 +159,201 @@ TEST(CellMLTest, FastFibers)
 {
   std::string pythonConfig = R"(
 
+import numpy as np
+
 # timing parameters
 stimulation_frequency = 10.0      # [1/ms] frequency if which stimulation current can be switched on and off
-dt_0D = 5e-5                      # timestep width of ODEs, cellml integration
-dt_splitting = 1e-4
+dt_0D = 2e-4                      # timestep width of ODEs, cellml integration
+dt_1D = 2e-3
+dt_splitting = 2e-3
+dt_3D = 0.5
+output_timestep = 0.5
+end_time = 30.0
+n_elements = 100
+
+stimulation_frequency = 100*1e-3   # [Hz]*1e-3 = [ms^-1]
+frequency_jitter = 0.1
+call_enable_begin = 15.0  # [s]*1e3 = [ms]
+
+fiber_distribution_file = "../input/MU_fibre_distribution_10MUs.txt"
+firing_times_file = "../input/MU_firing_times_always.txt"
+
+# load MU distribution and firing times
+fiber_distribution = np.genfromtxt(fiber_distribution_file, delimiter=" ")
+firing_times = np.genfromtxt(firing_times_file)
+
+def fiber_gets_stimulated(fiber_no, frequency, current_time):
+  """
+  determine if fiber fiber_no gets stimulated at simulation time current_time
+  """
+
+  # determine motor unit
+  alpha = 1.0   # 0.8
+  mu_no = 0
+
+  # determine if fiber fires now
+  index = int(np.round(current_time * frequency))
+  n_firing_times = np.size(firing_times,0)
+
+  #if firing_times[index % n_firing_times, mu_no] == 1:
+  #print("fiber {} is mu {}, t = {}, row: {}, stimulated: {} {}".format(fiber_no, mu_no, current_time, (index % n_firing_times), firing_times[index % n_firing_times, mu_no], "true" if firing_times[index % n_firing_times, mu_no] == 1 else "false"))
+  print("fiber {} is mu {}, t = {}, row: {}, stimulated: {} {}".format(fiber_no, mu_no, current_time, (index % n_firing_times), firing_times[index % n_firing_times, mu_no], "true" if firing_times[index % n_firing_times, mu_no] == 1 else "false"))
+
+  return firing_times[index % n_firing_times, mu_no] == 1
+
+# callback function that can set states, i.e. prescribed values for stimulation
+def set_specific_states(n_nodes_global, time_step_no, current_time, states, fiber_no):
+
+  #print("call set_specific_states at time {}".format(current_time))
+
+  # determine if fiber gets stimulated at the current time
+  is_fiber_gets_stimulated = fiber_gets_stimulated(fiber_no, stimulation_frequency, current_time)
+
+  if is_fiber_gets_stimulated:
+    # determine nodes to stimulate (center node, left and right neighbour)
+    #innervation_zone_width_n_nodes = innervation_zone_width*100  # 100 nodes per cm
+    innervation_node_global = int(n_nodes_global / 2)  # + np.random.randint(-innervation_zone_width_n_nodes/2,innervation_zone_width_n_nodes/2+1)
+    nodes_to_stimulate_global = [innervation_node_global]
+    if innervation_node_global > 0:
+      nodes_to_stimulate_global.insert(0, innervation_node_global-1)
+    if innervation_node_global < n_nodes_global-1:
+      nodes_to_stimulate_global.append(innervation_node_global+1)
+    print("t: {}, stimulate fiber {} at nodes {}".format(current_time, fiber_no, nodes_to_stimulate_global))
+
+    for node_no_global in nodes_to_stimulate_global:
+      states[(node_no_global,0,0)] = 20.0   # key: ((x,y,z),nodal_dof_index,state_no)
+
 
 # define the config dict
 config = {
+  "scenarioName": "not",
   "Meshes": {
     "MeshFiber_0": {
-      "nNodes": [100],
-      "physicalExtent": [1.0],
+      "nElements": [n_elements],
+      "physicalExtent": [n_elements/100.],
+      "inputMeshIsGlobal": True,
     }
-  }
+  },
   "Solvers": {
     "implicitSolver": {     # solver for the implicit timestepping scheme of the diffusion time step
       "maxIterations":      1e4,
       "relativeTolerance":  1e-10,
+      "dumpFormat": "",
+      "dumpFilename": "",
+      "solverType": "gmres",
+      "preconditionerType": "none"
     },
   },
-  
-      "MultipleInstances": {
-        "ranksAllComputedInstances":  [0],
-        "nInstances":                 1,
-        "instances": 
-        [{
-          "ranks": [0],
-          "StrangSplitting": {
-            #"numberTimeSteps": 1,
-            "timeStepWidth":          dt_0D,
-            "timeStepOutputInterval": 100,
-            "endTime":                dt_splitting,   /*here stopepped
-            "transferSlotName":       "states",   # which output slot of the cellml adapter ("states" or "intermediates") to use for transfer to diffusion, in this case we need "states", states[0] which is Vm
+  "RepeatedCall": {
+    "timeStepWidth":          dt_splitting,
+    "timeStepOutputInterval": 100,
+    "endTime":                end_time,
+    "MultipleInstances": {
+      "ranksAllComputedInstances":  [0],
+      "nInstances":                 1,
+      "instances":
+      [{
+        "ranks": [0],
+        "StrangSplitting": {
+          #"numberTimeSteps": 1,
+          "timeStepWidth":          dt_splitting,
+          "timeStepOutputInterval": 100,
+          "endTime":                dt_splitting,
+          "transferSlotName":       "states",   # which output slot of the cellml adapter ("states" or "intermediates") to use for transfer to diffusion, in this case we need "states", states[0] which is Vm
 
-            "Term1": {      # CellML, i.e. reaction term of Monodomain equation
-              "MultipleInstances": {
-                "logKey":             "duration_subdomains_z",
-                "nInstances":         n_fibers_in_subdomain_x(subdomain_coordinate_x)*n_fibers_in_subdomain_y(subdomain_coordinate_y),
-                "instances": 
-                [{
-                  "ranks":                          list(range(variables.n_subdomains_z)),    # these rank nos are local nos to the outer instance of MultipleInstances, i.e. from 0 to number of ranks in z direction
-                  "Heun" : {
-                    "timeStepWidth":                variables.dt_0D,  # 5e-5
-                    "logTimeStepWidthAsKey":        "dt_0D",
-                    "durationLogKey":               "duration_0D",
-                    "initialValues":                [],
-                    "timeStepOutputInterval":       1e4,
-                    "inputMeshIsGlobal":            True,
-                    "dirichletBoundaryConditions":  {},
-                      
-                    "CellML" : {
-                      "sourceFilename":                         variables.cellml_file,                          # input C++ source file, can be either generated by OpenCMISS or OpenCOR from cellml model
-                      "compilerFlags":                          "-fPIC -O3 -shared ",
-                      #"simdSourceFilename" :                   "simdcode.cpp",                                 # transformed C++ source file that gets generated from sourceFilename and is ready for multiple instances
-                      #"libraryFilename":                       "cellml_simd_lib.so",                           # compiled library
-                      "useGivenLibrary":                        False,
-                      #"statesInitialValues":                   [],
-                      #"setSpecificParametersFunction":         set_specific_parameters,                        # callback function that sets parameters like stimulation current
-                      #"setSpecificParametersCallInterval":     int(1./variables.stimulation_frequency/variables.dt_0D),         # set_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
-                      "setSpecificStatesFunction":              set_specific_states,                                             # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
-                      #"setSpecificStatesCallInterval":         2*int(1./variables.stimulation_frequency/variables.dt_0D),       # set_specific_states should be called variables.stimulation_frequency times per ms, the factor 2 is needed because every Heun step includes two calls to rhs
-                      "setSpecificStatesCallInterval":          0,                                                               # 0 means disabled
-                      "setSpecificStatesCallFrequency":         variables.get_specific_states_call_frequency(fiber_no, mu_no),   # set_specific_states should be called variables.stimulation_frequency times per ms
-                      "setSpecificStatesFrequencyJitter":       variables.get_specific_states_frequency_jitter(fiber_no, mu_no), # random value to add or substract to setSpecificStatesCallFrequency every stimulation, this is to add random jitter to the frequency
-                      "setSpecificStatesRepeatAfterFirstCall":  0.01,                                                            # [ms] simulation time span for which the setSpecificStates callback will be called after a call was triggered
-                      "setSpecificStatesCallEnableBegin":       variables.get_specific_states_call_enable_begin(fiber_no, mu_no),# [ms] first time when to call setSpecificStates
-                      "additionalArgument":                     fiber_no,
-                      
-                      "outputIntermediateIndex":                0,                                              # which intermediate value to use in further computation
-                      "outputStateIndex":                       0,                                              # Shorten / Hodgkin Huxley: state 0 = Vm, Shorten: rate 28 = gamma, intermediate 0 = gamma (OC_WANTED[0])
-                      "parametersUsedAsIntermediate":           variables.parameters_used_as_intermediate,      #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
-                      "parametersUsedAsConstant":               variables.parameters_used_as_constant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
-                      "parametersInitialValues":                variables.parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
-                      "meshName":                               "MeshFiber_{}".format(fiber_no),
-                      "prefactor":                              1.0,
-                    },
+          "Term1": {      # CellML, i.e. reaction term of Monodomain equation
+            "MultipleInstances": {
+              "logKey":             "duration_subdomains_z",
+              "nInstances":         1,
+              "instances":
+              [{
+                "ranks":                          [0],    # these rank nos are local nos to the outer instance of MultipleInstances, i.e. from 0 to number of ranks in z direction
+                "Heun" : {
+                  "timeStepWidth":                dt_0D,  # 5e-5
+                  "logTimeStepWidthAsKey":        "dt_0D",
+                  "durationLogKey":               "duration_0D",
+                  "initialValues":                [],
+                  "timeStepOutputInterval":       1e4,
+                  "inputMeshIsGlobal":            True,
+                  "dirichletBoundaryConditions":  {},
+
+                  "CellML" : {
+                    "sourceFilename":                         "../input/hodgkin_huxley_1952.c",                          # input C++ source file, can be either generated by OpenCMISS or OpenCOR from cellml model
+                    "compilerFlags":                          "-fPIC -O3 -shared ",
+                    "useGivenLibrary":                        False,
+                    "setSpecificStatesFunction":              set_specific_states,                                             # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
+                    "setSpecificStatesCallInterval":          0,                                                               # 0 means disabled
+                    "setSpecificStatesCallFrequency":         stimulation_frequency,   # set_specific_states should be called variables.stimulation_frequency times per ms
+                    "setSpecificStatesFrequencyJitter":       frequency_jitter, # random value to add or substract to setSpecificStatesCallFrequency every stimulation, this is to add random jitter to the frequency
+                    "setSpecificStatesRepeatAfterFirstCall":  0.1,                                                            # [ms] simulation time span for which the setSpecificStates callback will be called after a call was triggered
+                    "setSpecificStatesCallEnableBegin":       call_enable_begin,# [ms] first time when to call setSpecificStates
+                    "additionalArgument":                     0,
+                    "stimulationLogFilename":                 "out/stimulation_log.txt",
+
+                    "outputIntermediateIndex":                0,                                              # which intermediate value to use in further computation
+                    "outputStateIndex":                       0,                                              # Shorten / Hodgkin Huxley: state 0 = Vm, Shorten: rate 28 = gamma, intermediate 0 = gamma (OC_WANTED[0])
+                    "parametersUsedAsIntermediate":           [],      #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
+                    "parametersUsedAsConstant":               [2],          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
+                    "parametersInitialValues":                [0.0],            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
+                    "meshName":                               "MeshFiber_0",
+                    "prefactor":                              1.0,
                   },
-                } for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y)) \
-                    for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x)) \
-                      for fiber_no in [get_fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)] \
-                        for motor_unit_no in [get_motor_unit_no(fiber_no)]],
-              }
-            },
-            "Term2": {     # Diffusion
-              "MultipleInstances": {
-                "nInstances": n_fibers_in_subdomain_x(subdomain_coordinate_x)*n_fibers_in_subdomain_y(subdomain_coordinate_y),
-                "instances": 
-                [{
-                  "ranks":                         list(range(variables.n_subdomains_z)),    # these rank nos are local nos to the outer instance of MultipleInstances, i.e. from 0 to number of ranks in z direction
-                  "ImplicitEuler" : {
-                    "initialValues":               [],
-                    #"numberTimeSteps":            1,
-                    "timeStepWidth":               variables.dt_1D,  # 1e-5
-                    "logTimeStepWidthAsKey":       "dt_1D",
-                    "durationLogKey":              "duration_1D",
-                    "timeStepOutputInterval":      1e4,
-                    "dirichletBoundaryConditions": {0: -75.0036, -1: -75.0036},
-                    "inputMeshIsGlobal":           True,
-                    "solverName":                  "implicitSolver",
-                    "FiniteElementMethod" : {
-                      "maxIterations":             1e4,
-                      "relativeTolerance":         1e-10,
-                      "inputMeshIsGlobal":         True,
-                      "meshName":                  "MeshFiber_{}".format(fiber_no),
-                      "prefactor":                 variables.get_diffusion_prefactor(fiber_no, mu_no),  # resolves to Conductivity / (Am * Cm)
-                      "solverName":                "implicitSolver",
-                    },
-                    "OutputWriter" : [
-                      #{"format": "Paraview", "outputInterval": int(1./variables.dt_1D*variables.output_timestep), "filename": "out/fiber_"+str(fiber_no), "binary": True, "fixedFormat": False, "combineFiles": True},
-                      #{"format": "Paraview", "outputInterval": 1./variables.dt_1D*variables.output_timestep, "filename": "out/fiber_"+str(i)+"_txt", "binary": False, "fixedFormat": False},
-                      #{"format": "ExFile", "filename": "out/fiber_"+str(i), "outputInterval": 1./variables.dt_1D*variables.output_timestep, "sphereSize": "0.02*0.02*0.02"},
-                      #{"format": "PythonFile", "filename": "out/fiber_"+str(i), "outputInterval": 1./variables.dt_1D*variables.output_timestep, "binary":True, "onlyNodalValues":True},
-                    ]
+                },
+              }],
+            }
+          },
+          "Term2": {     # Diffusion
+            "MultipleInstances": {
+              "nInstances": 1,
+              "instances":
+              [{
+                "ranks":                         [0],    # these rank nos are local nos to the outer instance of MultipleInstances, i.e. from 0 to number of ranks in z direction
+                "ImplicitEuler" : {
+                  "initialValues":               [],
+                  #"numberTimeSteps":            1,
+                  "timeStepWidth":               dt_1D,  # 1e-5
+                  "logTimeStepWidthAsKey":       "dt_1D",
+                  "durationLogKey":              "duration_1D",
+                  "timeStepOutputInterval":      1e4,
+                  "dirichletBoundaryConditions": {}, #{0: -75.0036, -1: -75.0036},
+                  "inputMeshIsGlobal":           True,
+                  "solverName":                  "implicitSolver",
+                  "FiniteElementMethod" : {
+                    "maxIterations":             1e4,
+                    "relativeTolerance":         1e-10,
+                    "inputMeshIsGlobal":         True,
+                    "meshName":                  "MeshFiber_0",
+                    "prefactor":                 0.03,  # resolves to Conductivity / (Am * Cm)
+                    "solverName":                "implicitSolver",
                   },
-                } for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y)) \
-                    for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x)) \
-                      for fiber_no in [get_fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)] \
-                        for motor_unit_no in [get_motor_unit_no(fiber_no)]],
-                "OutputWriter" : variables.output_writer_fibers,
-              },
-            },
-          }
-        } if (subdomain_coordinate_x,subdomain_coordinate_y) == (variables.own_subdomain_coordinate_x,variables.own_subdomain_coordinate_y) else None
-        for subdomain_coordinate_y in range(variables.n_subdomains_y)
-            for subdomain_coordinate_x in range(variables.n_subdomains_x)]
-      },
-      "fiberDistributionFile":    variables.fiber_distribution_file,   # for FastMonodomainSolver, e.g. MU_fibre_distribution_3780.txt
-      "firingTimesFile":          variables.firing_times_file,         # for FastMonodomainSolver, e.g. MU_firing_times_real.txt
-    },
-    "Term2": {        # Bidomain, EMG
-      "StaticBidomainSolver": {       # version for fibers_emg
-        "timeStepWidth":          variables.dt_3D,
-        "timeStepOutputInterval": 50,
-        "durationLogKey":         "duration_bidomain",
-        "solverName":             "activationSolver",
-        "initialGuessNonzero":    variables.emg_initial_guess_nonzero,
-        "PotentialFlow": {
-          "FiniteElementMethod" : {  
-            "meshName":           "3Dmesh",
-            "solverName":         "potentialFlowSolver",
-            "prefactor":          1.0,
-            "dirichletBoundaryConditions": variables.potential_flow_dirichlet_bc,
-            "neumannBoundaryConditions":   [],
-            "inputMeshIsGlobal":  True,
-          },
-        },
-        "Activation": {
-          "FiniteElementMethod" : {  
-            "meshName":           "3Dmesh",
-            "solverName":         "activationSolver",
-            "prefactor":          1.0,
-            "inputMeshIsGlobal":  True,
-            "dirichletBoundaryConditions": {},
-            "neumannBoundaryConditions":   [],
-            "diffusionTensor": [      # sigma_i           # fiber direction is (1,0,0)
-              8.93, 0, 0,
-              0, 0.893, 0,
-              0, 0, 0.893
-            ], 
-            "extracellularDiffusionTensor": [      # sigma_e
-              6.7, 0, 0,
-              0, 6.7, 0,
-              0, 0, 6.7,
-            ],
-          },
-        },
-        "OutputWriter" : variables.output_writer_emg,
-      },
-      "OutputSurface": {        # version for fibers_emg_2d_output
-        "OutputWriter": [
-          {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + variables.scenario_name + "/surface_emg", "binary": True, "fixedFormat": False, "combineFiles": True},
-        ],
-        "face": "1-",
-        "StaticBidomainSolver": {
-          "timeStepWidth":          variables.dt_3D,
-          "timeStepOutputInterval": 50,
-          "durationLogKey":         "duration_bidomain",
-          "solverName":             "activationSolver",
-          "initialGuessNonzero":    variables.emg_initial_guess_nonzero,
-          "PotentialFlow": {
-            "FiniteElementMethod" : {  
-              "meshName":           "3Dmesh",
-              "solverName":         "potentialFlowSolver",
-              "prefactor":          1.0,
-              "dirichletBoundaryConditions": variables.potential_flow_dirichlet_bc,
-              "neumannBoundaryConditions":   [],
-              "inputMeshIsGlobal":  True,
+                  "OutputWriter" : [
+                    #{"format": "Paraview", "outputInterval": int(1./variables.dt_1D*variables.output_timestep), "filename": "out/fiber_"+str(fiber_no), "binary": True, "fixedFormat": False, "combineFiles": True},
+                    #{"format": "Paraview", "outputInterval": 1./variables.dt_1D*variables.output_timestep, "filename": "out/fiber_"+str(i)+"_txt", "binary": False, "fixedFormat": False},
+                    #{"format": "ExFile", "filename": "out/fiber_"+str(i), "outputInterval": 1./variables.dt_1D*variables.output_timestep, "sphereSize": "0.02*0.02*0.02"},
+                    #{"format": "PythonFile", "filename": "out/fiber_"+str(i), "outputInterval": 1./variables.dt_1D*variables.output_timestep, "binary":True, "onlyNodalValues":True},
+                  ]
+                },
+              }],
+              "OutputWriter" : [
+                {"format": "PythonFile", "outputInterval": int(1./dt_splitting*output_timestep), "filename": "out/not_fast/fibers", "binary": True, "fixedFormat": False, "combineFiles": True}
+              ]
             },
           },
-          "Activation": {
-            "FiniteElementMethod" : {  
-              "meshName":           "3Dmesh",
-              "solverName":         "activationSolver",
-              "prefactor":          1.0,
-              "inputMeshIsGlobal":  True,
-              "dirichletBoundaryConditions": {},
-              "neumannBoundaryConditions":   [],
-              "diffusionTensor": [      # sigma_i           # fiber direction is (1,0,0)
-                8.93, 0, 0,
-                0, 0.893, 0,
-                0, 0, 0.893
-              ], 
-              "extracellularDiffusionTensor": [      # sigma_e
-                6.7, 0, 0,
-                0, 6.7, 0,
-                0, 0, 6.7,
-              ],
-            },
-          },
-          "OutputWriter" : variables.output_writer_emg,
         }
-      },
-      "QuasiStaticLinearElasticitySolver": {
-        "PotentialFlow": {        # potential flow for fiber directions in the 3D mesh
-          "FiniteElementMethod" : {  
-            "meshName":           "3Dmesh",
-            "solverName":         "potentialFlowSolver",
-            "prefactor":          1.0,
-            "dirichletBoundaryConditions": variables.potential_flow_dirichlet_bc,
-            "neumannBoundaryConditions":   [],
-            "inputMeshIsGlobal":  True,
-          },
-        },
-        "FiniteElementMethod" : {   # linear elasticity finite element method
-          "meshName":             "3Dmesh",
-          "solverName":           "linearElasticitySolver",
-          "prefactor":            1.0,
-          "inputMeshIsGlobal":    True,
-          "dirichletBoundaryConditions": variables.linear_elasticity_dirichlet_bc,
-          "neumannBoundaryConditions":   variables.linear_elasticity_neumann_bc,
-          "bulkModulus":          40e3, #40e3 # https://www.researchgate.net/publication/230248067_Bulk_Modulus
-          "shearModulus":         39e3, #39e3 # https://onlinelibrary.wiley.com/doi/full/10.1002/mus.24104
-        },
-        "maximumActiveStress":      1.0,
-        "strainScalingCurveWidth":  1.0,
-        "scalingFactor":            1e4,   #1e4
-        "OutputWriter" : [
-          {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/deformation", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
-          #{"format": "PythonFile", "filename": "out/deformation", "outputInterval": 1, "binary":False, "onlyNodalValues":True},
-        ]
-      },
-      "QuasiStaticNonlinearElasticitySolverFebio": {
-        "durationLogKey": "febio",
-      }
-    }
+      }]
+    },
+    "fiberDistributionFile":    fiber_distribution_file,   # for FastMonodomainSolver, e.g. MU_fibre_distribution_3780.txt
+    "firingTimesFile":          firing_times_file,         # for FastMonodomainSolver, e.g. MU_firing_times_real.txt
   }
 }
+
 )";
 
-  DihuContext settings(argc, argv, pythonConfig);
+  DihuContext settings1(argc, argv, pythonConfig);
 
 
   // define problem
-  Control::MultipleInstances<                       // fibers
-    OperatorSplitting::Strang<
-      Control::MultipleInstances<
-        TimeSteppingScheme::Heun<                   // fiber reaction term
-          CellmlAdapter<
-            4, 9,  // nStates,nIntermediates: 57,1 = Shorten, 4,9 = Hodgkin Huxley
-            FunctionSpace::FunctionSpace<
-              Mesh::StructuredDeformableOfDimension<1>,
-              BasisFunction::LagrangeOfOrder<1>
-            >
-          >
-        >
-      >,
-      Control::MultipleInstances<
-        TimeSteppingScheme::ImplicitEuler<          // fiber diffusion, note that implicit euler gives lower error in this case than crank nicolson
-          SpatialDiscretization::FiniteElementMethod<
-            Mesh::StructuredDeformableOfDimension<1>,
-            BasisFunction::LagrangeOfOrder<1>,
-            Quadrature::Gauss<2>,
-            Equation::Dynamic::IsotropicDiffusion
-          >
-        >
-      >
-    > 
-  > problem1(settings);
-
-  problem1.run();
-
-  // define problem with FastMonodomainSolver
-  FastMonodomainSolver<                        // a wrapper that improves performance of multidomain
+  TimeSteppingScheme::RepeatedCall<
     Control::MultipleInstances<                       // fibers
       OperatorSplitting::Strang<
         Control::MultipleInstances<
@@ -466,11 +379,113 @@ config = {
         >
       >
     >
-  > problem2(settings);
+  > problem1(settings1);
+
+  problem1.run();
+
+  std::string strToReplace("out/not_fast/fibers");
+  std::size_t pos = pythonConfig.find(strToReplace);
+  pythonConfig.replace(pos, strToReplace.length(), "out/fast/fibers");
+
+  DihuContext settings2(argc, argv, pythonConfig);
+
+  // define problem with FastMonodomainSolver
+  TimeSteppingScheme::RepeatedCall<
+    FastMonodomainSolver<                        // a wrapper that improves performance of multidomain
+      Control::MultipleInstances<                       // fibers
+        OperatorSplitting::Strang<
+          Control::MultipleInstances<
+            TimeSteppingScheme::Heun<                   // fiber reaction term
+              CellmlAdapter<
+                4, 9,  // nStates,nIntermediates: 57,1 = Shorten, 4,9 = Hodgkin Huxley
+                FunctionSpace::FunctionSpace<
+                  Mesh::StructuredDeformableOfDimension<1>,
+                  BasisFunction::LagrangeOfOrder<1>
+                >
+              >
+            >
+          >,
+          Control::MultipleInstances<
+            TimeSteppingScheme::ImplicitEuler<          // fiber diffusion, note that implicit euler gives lower error in this case than crank nicolson
+              SpatialDiscretization::FiniteElementMethod<
+                Mesh::StructuredDeformableOfDimension<1>,
+                BasisFunction::LagrangeOfOrder<1>,
+                Quadrature::Gauss<2>,
+                Equation::Dynamic::IsotropicDiffusion
+              >
+            >
+          >
+        >
+      >
+    >
+  > problem2(settings2);
   
   // run problem
   problem2.run();
 
   // compare results of problem1 and problem2
+  std::string command = R"(
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
+import sys, os
+import py_reader
+import numpy as np
+
+print(os.getcwd());
+directory1 = "out/fast"
+directory2 = "out/not_fast"
+
+# read all files in directories
+files1 = []
+for filename in os.listdir(directory1):
+  if filename.endswith(".py"):
+    files1.append(os.path.join(directory1, filename))
+files1 = sorted(files1)
+
+files2 = []
+for filename in os.listdir(directory2):
+  if filename.endswith(".py"):
+    files2.append(os.path.join(directory2, filename))
+files2 = sorted(files2)
+
+print("files: ",files1,files2)
+
+# load data
+data1 = py_reader.load_data(files1)
+data2 = py_reader.load_data(files2)
+
+n_values = min(len(data1), len(data2))
+
+if len(data1) != len(data2):
+  print("Warning: Directory {} contains {} files, directory {} contains {} files.".format(directory1, len(data1), directory2, len(data2)))
+
+component_name = "0"
+total_error = 0
+for i in range(n_values):
+  values1 = py_reader.get_values(data1[i], "solution", component_name)
+  values2 = py_reader.get_values(data2[i], "solution", component_name)
+
+  error = np.linalg.norm(values1-values2) / np.size(values1);
+  total_error += error
+
+  print("file no. {}, error: {}".format(i, error))
+
+total_error /= n_values
+print("avg error: {}".format(total_error))
+
+)";
+  int returnValue = PyRun_SimpleString(command.c_str());
+  LOG(DEBUG) << returnValue;
+  ASSERT_EQ(returnValue, 0);
+  PythonUtility::checkForError();
+
+  // load main module and extract config
+  PyObject *mainModule = PyImport_AddModule("__main__");
+  PyObject *totalError = PyObject_GetAttrString(mainModule, "total_error");
+
+  double error = PythonUtility::convertFromPython<double>::get(totalError);
+  LOG(DEBUG) << "error: " << error;
+
+  ASSERT_LE(error, 0.1);
 }

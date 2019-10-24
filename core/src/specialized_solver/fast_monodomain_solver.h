@@ -164,12 +164,13 @@ private:
     double setSpecificStatesCallEnableBegin;      //< value of option with the same name in the python settings
     double currentJitter;                         //< current absolute value of jitter to add to setSpecificStatesCallFrequency
     int jitterIndex;                              //< index of the vector in setSpecificStatesFrequencyJitter which is the current value to use
+    bool currentlyStimulating;                    //< if a stimulation is in progress at the current time
   };
 
   std::vector<FiberPointBuffers> fiberPointBuffers_;    //< computation buffers for the 0D problem
 
   std::string fiberDistributionFilename_;  //< filename of the fiberDistributionFile, which contains motor unit numbers for fiber numbers
-  std::string firingTimesFilename_;        //< filename of the firingTimesFile, which contains time points of stimulation for each motor unit
+  std::string firingTimesFilename_;        //< filename of the firingTimesFile, which contains points in time of stimulation for each motor unit
 
   std::vector<std::vector<bool>> firingEvents_;   //< if a motor unit firingEvents_[timeStepNo][motorUnitNo]
   std::vector<int> motorUnitNo_;                  //< number of motor unit for given fiber no motorUnitNo_[fiberNo]

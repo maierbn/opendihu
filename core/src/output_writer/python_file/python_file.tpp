@@ -12,10 +12,10 @@ namespace OutputWriter
 {
 
 template<typename DataType>
-void PythonFile::write(DataType& data, int timeStepNo, double currentTime, bool forceWrite)
+void PythonFile::write(DataType& data, int timeStepNo, double currentTime, int callCountIncrement)
 {
   // check if output should be written in this timestep and prepare filename
-  if (!Generic::prepareWrite(data, timeStepNo, currentTime, forceWrite))
+  if (!Generic::prepareWrite(data, timeStepNo, currentTime, callCountIncrement))
   {
     return;
   }

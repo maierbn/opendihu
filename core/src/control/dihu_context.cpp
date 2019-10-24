@@ -26,6 +26,7 @@
 #include "mesh/mesh_manager/mesh_manager.h"
 #include "solver/solver_manager.h"
 #include "partition/partition_manager.h"
+#include "control/stimulation_logging.h"
 
 #include "easylogging++.h"
 #include "control/settings_file_name.h"
@@ -67,6 +68,7 @@ void handleSignal(int signalNo)
   Control::PerformanceMeasurement::setParameter("exit_signal",signalNo);
   Control::PerformanceMeasurement::setParameter("exit",signalName);
   Control::PerformanceMeasurement::writeLogFile();
+  Control::StimulationLogging::writeLogFile();
 
   int rankNo = DihuContext::ownRankNoCommWorld();
   LOG(INFO) << "Rank " << rankNo << " received signal " << sys_siglist[signalNo]
@@ -434,6 +436,7 @@ DihuContext::~DihuContext()
   {
     // write log file
     Control::PerformanceMeasurement::writeLogFile();
+    Control::StimulationLogging::writeLogFile();
 
     // After a call to MPI_Finalize we cannot call MPI_Initialize() anymore.
     // This is only a problem when the code is tested with the GoogleTest framework, because then we want to run multiple tests in one executable.

@@ -10,8 +10,6 @@ namespace TimeSteppingScheme
 
 template<typename DiscretizableInTimeType>
 TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::TimeSteppingSchemeOdeBaseDiscretizable(DihuContext context, std::string name) :
-//  TimeSteppingSchemeOdeOutputConnectorDataType<typename DiscretizableInTimeType::FunctionSpace,DiscretizableInTimeType::nComponents(), DiscretizableInTimeType>::
-//  TimeSteppingSchemeOdeOutputConnectorDataType(context, name),
   TimeSteppingSchemeOdeBase<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>::
   TimeSteppingSchemeOdeBase(context, name),
   discretizableInTime_(this->context_), initialized_(false)

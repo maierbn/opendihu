@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Python.h>  // has to be the first included header
+
 #include "control/dihu_context.h"
 #include "data_management/time_stepping/time_stepping.h"
 #include "interfaces/discretizable_in_time.h"

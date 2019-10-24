@@ -74,9 +74,17 @@ buildPyFieldVariableObject(CurrentFieldVariableType currentFieldVariable, int &f
 
   PyObject *pyFieldVariable = Py_BuildValue("{s s, s O}", "name", currentFieldVariable->name().c_str(), "components", pyComponents);
 
-  // add to list
-  PyList_SetItem(pyData, (Py_ssize_t)fieldVariableIndex, pyFieldVariable);    // steals reference to pyFieldVariable
-  fieldVariableIndex++;
+  if (fieldVariableIndex >= (int)PyList_Size(pyData))
+  {
+    LOG(ERROR) << "Trying to put one more field variable to list with size " << (int)PyList_Size(pyData) << ", meshName: " << meshName
+      << ", CurrentFieldVariableType: " << StringUtility::demangle(typeid(CurrentFieldVariableType).name());
+  }
+  else
+  {
+    // add to list
+    PyList_SetItem(pyData, (Py_ssize_t)fieldVariableIndex, pyFieldVariable);    // steals reference to pyFieldVariable
+    fieldVariableIndex++;
+  }
 
   return false;  // do not break iteration
 }

@@ -20,7 +20,7 @@ public:
 
   //! write out solution to given filename, if timeStepNo is not -1, this value will be part of the filename
   template<typename DataType>
-  void write(DataType &data, int timeStepNo = -1, double currentTime = -1, bool forceWrite = false);
+  void write(DataType &data, int timeStepNo = -1, double currentTime = -1, int callCountIncrement = 1);
 
   //! write the given field variable as VTK <DataArray> element to file, if onlyParallelDatasetElement write the <PDataArray> element
   template<typename FieldVariableType>

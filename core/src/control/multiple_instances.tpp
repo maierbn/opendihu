@@ -416,12 +416,12 @@ instancesLocal()
 
 template<typename TimeSteppingScheme>
 void MultipleInstances<TimeSteppingScheme>::
-writeOutput(int timeStepNo, double currentTime, bool forceWrite)
+writeOutput(int timeStepNo, double currentTime, int callCountIncrement)
 {
   if (nInstancesLocal_ > 0)
   {
-    LOG(INFO) << "MultipleInstances::writeOutput, timeStepNo: " << timeStepNo << ", currentTime: " << currentTime;
-    this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime, forceWrite);
+    LOG(DEBUG) << "MultipleInstances::writeOutput, timeStepNo: " << timeStepNo << ", currentTime: " << currentTime;
+    this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime, callCountIncrement);
   }  
 }
 

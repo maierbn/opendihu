@@ -11,7 +11,7 @@ namespace OutputWriter
 {
 
 template<typename DataType>
-void Manager::writeOutput(DataType &problemData, int timeStepNo, double currentTime, bool forceWrite) const
+void Manager::writeOutput(DataType &problemData, int timeStepNo, double currentTime, int callCountIncrement) const
 {
   // start duration measurement
   Control::PerformanceMeasurement::start("durationWriteOutput");
@@ -21,27 +21,27 @@ void Manager::writeOutput(DataType &problemData, int timeStepNo, double currentT
     if (std::dynamic_pointer_cast<Exfile>(outputWriter) != nullptr)
     {
       std::shared_ptr<Exfile> writer = std::static_pointer_cast<Exfile>(outputWriter);
-      writer->write<DataType>(problemData, timeStepNo, currentTime, forceWrite);
+      writer->write<DataType>(problemData, timeStepNo, currentTime, callCountIncrement);
     }
     else if (std::dynamic_pointer_cast<Paraview>(outputWriter) != nullptr)
     {
       std::shared_ptr<Paraview> writer = std::static_pointer_cast<Paraview>(outputWriter);
-      writer->write<DataType>(problemData, timeStepNo, currentTime, forceWrite);
+      writer->write<DataType>(problemData, timeStepNo, currentTime, callCountIncrement);
     }
     else if (std::dynamic_pointer_cast<PythonCallback>(outputWriter) != nullptr)
     {
       std::shared_ptr<PythonCallback> writer = std::static_pointer_cast<PythonCallback>(outputWriter);
-      writer->write<DataType>(problemData, timeStepNo, currentTime, forceWrite);
+      writer->write<DataType>(problemData, timeStepNo, currentTime, callCountIncrement);
     }
     else if (std::dynamic_pointer_cast<PythonFile>(outputWriter) != nullptr)
     {
       std::shared_ptr<PythonFile> writer = std::static_pointer_cast<PythonFile>(outputWriter);
-      writer->write<DataType>(problemData, timeStepNo, currentTime, forceWrite);
+      writer->write<DataType>(problemData, timeStepNo, currentTime, callCountIncrement);
     }
     else if (std::dynamic_pointer_cast<MegaMol>(outputWriter) != nullptr)
     {
       std::shared_ptr<MegaMol> writer = std::static_pointer_cast<MegaMol>(outputWriter);
-      writer->write<DataType>(problemData, timeStepNo, currentTime, forceWrite);
+      writer->write<DataType>(problemData, timeStepNo, currentTime, callCountIncrement);
     }
   }
 

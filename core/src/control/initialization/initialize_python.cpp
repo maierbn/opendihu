@@ -163,7 +163,7 @@ void DihuContext::loadPythonScriptFromFile(std::string filename)
       // set a command that assigns the absolute path to the current settings file to the __file__ attribute
       std::stringstream commandToSetFile;
       // if filename of settings is an absolute path, starting with '/'
-      if (filename[0] == '\')
+      if (filename[0] == '/')
       {
         commandToSetFile << "__file__ = '" << filename << "' "<< std::endl;
       }

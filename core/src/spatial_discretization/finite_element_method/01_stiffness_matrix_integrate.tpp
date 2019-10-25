@@ -129,6 +129,7 @@ setStiffnessMatrix()
       VLOG(2) << "samplingPointIndex=" << samplingPointIndex<< ", xi=" <<xi<< ", geometry: " <<geometry<< ", jac: " <<jacobian;
 
       // get evaluations of integrand at xi for all (i,j)-dof pairs, integrand is defined in another class
+      // gradPhi[j](xi)^T * T * gradPhi[k](xi)
       evaluationsArray[samplingPointIndex]
         = IntegrandStiffnessMatrix<D,EvaluationsType,FunctionSpaceType,nComponents,Term>::
           evaluateIntegrand(this->data_, jacobian, elementNo, xi);

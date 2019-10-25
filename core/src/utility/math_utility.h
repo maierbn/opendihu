@@ -48,6 +48,10 @@ void normalize(VecD<D> &vector);
 //! returns the matrix in row major storage order, matrix is symmetric and the determinant of the jacobian
 std::array<double,9> computeTransformationMatrixAndDeterminant(const std::array<Vec3,3> &jacobian, double &determinant);
 
+//! compute the matrix T = J^{-1} A J^{-T} when J is the jacobian and A the symmetric diffusionTensor
+//! returns the matrix in row major storage order, matrix is symmetric and the determinant of the jacobian
+std::array<double,9> computeTransformationDiffusionMatrixAndDeterminant(const std::array<Vec3,3> &jacobian, const Matrix<3,3> &diffusionTensor, double &determinant);
+
 //! computes the determinant of the matrix
 template<int D>
 double computeDeterminant(const Tensor2<D> &jacobian);

@@ -228,7 +228,7 @@ advanceTimeSpan()
 void FastMonodomainSolver<Control::MultipleInstances<OperatorSplitting::Strang<Control::MultipleInstances<TimeSteppingScheme::Heun<CellmlAdapter<4, 9, FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1> > > > >, Control::MultipleInstances<TimeSteppingScheme::ImplicitEuler<SpatialDiscretization::FiniteElementMethod<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1>, Quadrature::Gauss<2>, Equation::Dynamic::IsotropicDiffusion> > > > > >::
 fetchFiberData()
 {
-  LOG(TRACE) << "fetchFiberData";
+  VLOG(1) << "fetchFiberData";
   std::vector<NestedSolversType::TimeSteppingSchemeType> &instances = nestedSolvers_.instancesLocal();
 
   // loop over fibers and communicate element lengths and initial values to the ranks that participate in computing
@@ -288,7 +288,7 @@ fetchFiberData()
       //          void *recvbuf, const int *recvcounts, const int *displs,
       //          MPI_Datatype recvtype, int root, MPI_Comm comm)
       //
-      LOG(DEBUG) << "Gatherv of element lengths to rank " << computingRank << ", values " << localLengths << ", sizes: " << nElementsOnRanks << ", offsets: " << offsetsOnRanks;
+      VLOG(1) << "Gatherv of element lengths to rank " << computingRank << ", values " << localLengths << ", sizes: " << nElementsOnRanks << ", offsets: " << offsetsOnRanks;
 
       MPI_Gatherv(localLengths.data(), fiberFunctionSpace->nElementsLocal(), MPI_DOUBLE,
                   elementLengthsReceiveBuffer, nElementsOnRanks.data(), offsetsOnRanks.data(),
@@ -298,7 +298,7 @@ fetchFiberData()
       std::vector<double> vmValuesLocal;
       innerInstances[j].data().solution()->getValuesWithoutGhosts(0, vmValuesLocal);
 
-      LOG(DEBUG) << "Gatherv of values to rank " << computingRank << ", sizes: " << nDofsOnRanks << ", offsets: " << offsetsOnRanks << ", local values " << vmValuesLocal;
+      VLOG(1) << "Gatherv of values to rank " << computingRank << ", sizes: " << nDofsOnRanks << ", offsets: " << offsetsOnRanks << ", local values " << vmValuesLocal;
 
       MPI_Gatherv(vmValuesLocal.data(), fiberFunctionSpace->nDofsLocalWithoutGhosts(), MPI_DOUBLE,
                   vmValuesReceiveBuffer, nDofsOnRanks.data(), offsetsOnRanks.data(),

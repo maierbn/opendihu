@@ -153,6 +153,28 @@ void DihuContext::loadPythonScriptFromFile(std::string filename)
 
     LOG(INFO) << "File \"" <<filename << "\" loaded.";
 
+    std::string pythonScriptFilePath;
+
+    // get current working directory
+    char currentWorkingDirectory[PATH_MAX+1];
+    if (getcwd(currentWorkingDirectory, sizeof(currentWorkingDirectory)))
+    {
+
+      // set a command that assigns the absolute path to the current settings file to the __file__ attribute
+      std::stringstream commandToSetFile;
+      commandToSetFile << "__file__ = '" << currentWorkingDirectory << "/" << filename << "' "<< std::endl;
+      LOG(DEBUG) << "run " << commandToSetFile.str();
+
+      int ret = PyRun_SimpleString(commandToSetFile.str().c_str());
+      PythonUtility::checkForError();
+
+      // if there was an error in the python code
+      if (ret != 0)
+      {
+        PyErr_Print();
+      }
+    }
+
     loadPythonScript(fileContents);
   }
 }

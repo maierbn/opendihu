@@ -20,16 +20,19 @@
 #
 #  ./fibers_emg ../settings_fibers_emg.py custom_variables.py --n_subdomains 1 1 1 --end_time=5.0
 
-import sys
+import sys, os
 import timeit
 import argparse
 import importlib
-sys.path.insert(0, '..')
-sys.path.insert(0, '../variables')
 
 # parse rank arguments
 rank_no = (int)(sys.argv[-2])
 n_ranks = (int)(sys.argv[-1])
+
+# add variables subfolder to python path where the variables script is located
+script_path = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, script_path)
+sys.path.insert(0, os.path.join(script_path,'variables'))
 
 import variables              # file variables.py, defined default values for all parameters, you can set the parameters there  
 from create_partitioned_meshes_for_settings import *   # file create_partitioned_meshes_for_settings with helper functions about own subdomain

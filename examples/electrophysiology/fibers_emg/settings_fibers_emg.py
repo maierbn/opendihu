@@ -145,7 +145,7 @@ config = {
       "dumpFormat":         "matlab",
     },
     "activationSolver": {   # solver for the static Bidomain equation and the EMG
-      "relativeTolerance":  1e-12,
+      "relativeTolerance":  1e-5,
       "maxIterations":      1e4,
       "solverType":         variables.emg_solver_type,
       "preconditionerType": variables.emg_preconditioner_type,

@@ -42,8 +42,7 @@ void StimulationLogging::writeLogFile()
   int ownRankNo = DihuContext::ownRankNoCommWorld();
   int nRanks = DihuContext::nRanksCommWorld();
 
-  if (ownRankNo == 0)
-    sizesOnRanks.resize(nRanks);
+  sizesOnRanks.resize(nRanks);
 
   MPIUtility::handleReturnValue(MPI_Allgather(&ownSize, 1, MPI_INT, sizesOnRanks.data(), 1, MPI_INT, MPI_COMM_WORLD), "MPI_Allgather");
 

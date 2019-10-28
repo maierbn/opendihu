@@ -30,7 +30,10 @@ void StimulationLogging::logStimulationBegin(double currentTime, int motorUnitNo
 void StimulationLogging::writeLogFile()
 {
   if (filename_.empty())
+  {
+    LOG(DEBUG) << "Don't write StimulationLogging file, because filename is empty.";
     return;
+  }
 
   LOG(DEBUG) << "StimulationLogging::writeLogFile, local entries " << logEntries_;
 
@@ -43,20 +46,18 @@ void StimulationLogging::writeLogFile()
   int nRanks = DihuContext::nRanksCommWorld();
 
   sizesOnRanks.resize(nRanks);
+  //std::cout << "at StimulationLogging::logStimulationBegin, ownRankNo: " << ownRankNo << ", nRanks: " << nRanks << std::endl;
 
   MPIUtility::handleReturnValue(MPI_Allgather(&ownSize, 1, MPI_INT, sizesOnRanks.data(), 1, MPI_INT, MPI_COMM_WORLD), "MPI_Allgather");
 
   // count total number of entries
   int nTotalEntries = 0;
-  if (ownRankNo == 0)
+  for (int rankNo = 0; rankNo < nRanks; rankNo++)
   {
-    for (int rankNo = 0; rankNo < nRanks; rankNo++)
-    {
-      nTotalEntries += sizesOnRanks[rankNo];
-    }
+    nTotalEntries += sizesOnRanks[rankNo];
   }
 
-  LOG(DEBUG) << "nTotalEntries: " << nTotalEntries;
+  LOG(DEBUG) << "nTotalEntries: " << nTotalEntries << ", sizesOnRanks: " << sizesOnRanks;
 
   if (nTotalEntries == 0)
     return;

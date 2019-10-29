@@ -528,6 +528,18 @@ void Paraview::writePolyDataFile(const FieldVariablesForOutputWriterType &fieldV
 
   int nOutputFileParts = 4 + vtkPiece_.properties.pointDataArrays.size();
 
+  // transform current time to string
+  std::vector<double> time(1, this->currentTime_);
+  std::string stringTime;
+  if (binaryOutput_)
+  {
+    stringTime = Paraview::encodeBase64Float(time.begin(), time.end());
+  }
+  else
+  {
+    stringTime = Paraview::convertToAscii(time, fixedFormat_);
+  }
+
   // create the basic structure of the output file
   std::vector<std::stringstream> outputFileParts(nOutputFileParts);
   int outputFilePartNo = 0;
@@ -535,7 +547,13 @@ void Paraview::writePolyDataFile(const FieldVariablesForOutputWriterType &fieldV
     << "<!-- " << DihuContext::versionText() << " " << DihuContext::metaText()
     << ", currentTime: " << this->currentTime_ << ", timeStepNo: " << this->timeStepNo_ << " -->" << std::endl
     << "<VTKFile type=\"PolyData\" version=\"1.0\" byte_order=\"LittleEndian\">" << std::endl    // intel cpus are LittleEndian
-    << std::string(1, '\t') << "<PolyData>" << std::endl;
+    << std::string(1, '\t') << "<PolyData>" << std::endl
+    << std::string(2, '\t') << "<FieldData>" << std::endl
+    << std::string(3, '\t') << "<DataArray type=\"Float32\" Name=\"TIME\" NumberOfTuples=\"1\" format=\"" << (binaryOutput_? "binary" : "ascii")
+    << "\" >" << std::endl
+    << std::string(4, '\t') << stringTime << std::endl
+    << std::string(3, '\t') << "</DataArray>" << std::endl
+    << std::string(2, '\t') << "</FieldData>" << std::endl;
 
   outputFileParts[outputFilePartNo] << std::string(2, '\t') << "<Piece NumberOfPoints=\"" << nPointsGlobal1D_ << "\" NumberOfVerts=\"0\" "
     << "NumberOfLines=\"" << nLinesGlobal1D_ << "\" NumberOfStrips=\"0\" NumberOfPolys=\"0\">" << std::endl
@@ -1023,6 +1041,18 @@ void Paraview::writeCombinedUnstructuredGridFile(const FieldVariablesForOutputWr
 
       int nOutputFileParts = 5 + polyDataPropertiesForMesh.pointDataArrays.size();
 
+      // transform current time to string
+      std::vector<double> time(1, this->currentTime_);
+      std::string stringTime;
+      if (binaryOutput_)
+      {
+        stringTime = Paraview::encodeBase64Float(time.begin(), time.end());
+      }
+      else
+      {
+        stringTime = Paraview::convertToAscii(time, fixedFormat_);
+      }
+
       // create the basic structure of the output file
       std::vector<std::stringstream> outputFileParts(nOutputFileParts);
       int outputFilePartNo = 0;
@@ -1030,7 +1060,13 @@ void Paraview::writeCombinedUnstructuredGridFile(const FieldVariablesForOutputWr
         << "<!-- " << DihuContext::versionText() << " " << DihuContext::metaText()
         << ", currentTime: " << this->currentTime_ << ", timeStepNo: " << this->timeStepNo_ << " -->" << std::endl
         << "<VTKFile type=\"UnstructuredGrid\" version=\"1.0\" byte_order=\"LittleEndian\">" << std::endl    // intel cpus are LittleEndian
-        << std::string(1, '\t') << "<UnstructuredGrid>" << std::endl;
+        << std::string(1, '\t') << "<UnstructuredGrid>" << std::endl
+        << std::string(2, '\t') << "<FieldData>" << std::endl
+        << std::string(3, '\t') << "<DataArray type=\"Float32\" Name=\"TIME\" NumberOfTuples=\"1\" format=\"" << (binaryOutput_? "binary" : "ascii")
+        << "\" >" << std::endl
+        << std::string(4, '\t') << stringTime << std::endl
+        << std::string(3, '\t') << "</DataArray>" << std::endl
+        << std::string(2, '\t') << "</FieldData>" << std::endl;
 
       outputFileParts[outputFilePartNo] << std::string(2, '\t') << "<Piece NumberOfPoints=\"" << nPointsGlobal3D_
         << "\" NumberOfCells=\"" << polyDataPropertiesForMesh.nCellsGlobal << "\">" << std::endl

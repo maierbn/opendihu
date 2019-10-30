@@ -15,7 +15,8 @@ namespace OutputWriter
 {
 
 #ifdef HAVE_ADIOS
-std::array<std::shared_ptr<MegaMol::adios_writer_t>, 2> MegaMol::adiosWriters_({nullptr, nullptr});
+std::map<std::string,std::array<std::shared_ptr<MegaMol::adios_writer_t>, 2>> MegaMol::adiosWriters_;
+std::map<std::string,std::shared_ptr<MegaMol::adios_writer_t>> MegaMol::adiosWriter_;
 #endif
 
 BoundingBox::BoundingBox():

@@ -40,6 +40,7 @@ public:
   {
     MegaMolWriterContext megaMolWriterContext;   ///< all variables that are combined and collected during the calls until combineNInstances_ calls have been made
 
+    std::shared_ptr<adios2::IO> adiosIo;               //< io object that is associated with defined variables, creates the engine
     std::shared_ptr<adios2::Engine> engine;    //< adios writer
     std::atomic_int nOpenWriters;            ///< this writer could be in multiple instances, called at the same time. Then just the first open should really open the file and the last close should close it. This variables counts the number of opens.
   };
@@ -50,7 +51,8 @@ private:
   void notifyMegaMol();
 #endif
 
-  static std::array<std::shared_ptr<adios_writer_t>, 2> adiosWriters_;   ///< the writers for front and back buffer
+  static std::map<std::string,std::array<std::shared_ptr<adios_writer_t>, 2>> adiosWriters_;   ///< the writers for front and back buffer, key in the map is the filenameBase_
+  static std::map<std::string,std::shared_ptr<adios_writer_t>> adiosWriter_;   ///< the currently used writer, key in the map is the filenameBase_
   int currentOpenWriterIndex_ = 0;   ///< which writer the last opened is, 0 or 1
 
   std::shared_ptr<adios2::Variable<double>> adiosFieldVariableGeometry_;    ///< the adios field variable for the geometry, with name "xyz"

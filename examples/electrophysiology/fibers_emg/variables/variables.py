@@ -50,6 +50,7 @@ debug_output = False                # verbose output in this python script, for 
 disable_firing_output = True        # Disables the initial list of fiber firings on the console to save some console space
 paraview_output = False             # If the paraview output writer should be enabled
 adios_output = False                # If the MegaMol/ADIOS output writer should be enabled
+python_output = False               # If the Python output writer should be enabled
 
 # motor unit stimulation times
 fiber_distribution_file = "../../input/MU_fibre_distribution_3780.txt"

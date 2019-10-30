@@ -27,25 +27,48 @@ void MegaMol::write(DataType& data, int timeStepNo, double currentTime, int call
   }
 #ifdef HAVE_ADIOS
 
-  // get io object of adios from context
-  std::shared_ptr<adios2::IO> adiosIo = context_.adiosIo();
   std::shared_ptr<Partition::RankSubset> rankSubset = context_.partitionManager()->rankSubsetForCollectiveOperations();
 
   try
   {
     // create ADIOS writer, if it does not yet exist
-    if (!adiosWriters_[currentOpenWriterIndex_])
+    if (useFrontBackBuffer_)
     {
-      adiosWriters_[currentOpenWriterIndex_] = std::make_shared<adios_writer_t>();
-      adiosWriters_[currentOpenWriterIndex_]->nOpenWriters = 0;
+      // entry in map was not yet created, initialize with nullptr
+      if (adiosWriters_.find(this->filenameBase_) == adiosWriters_.end())
+      {
+        adiosWriters_[this->filenameBase_] = std::array<std::shared_ptr<MegaMol::adios_writer_t>, 2>({nullptr,nullptr});
+      }
+
+      if (!adiosWriters_[this->filenameBase_][currentOpenWriterIndex_])
+      {
+        adiosWriters_[this->filenameBase_][currentOpenWriterIndex_] = std::make_shared<adios_writer_t>();
+        adiosWriters_[this->filenameBase_][currentOpenWriterIndex_]->nOpenWriters = 0;
+        adiosWriters_[this->filenameBase_][currentOpenWriterIndex_]->adiosIo = std::make_shared<adios2::IO>(
+          context_.adios()->DeclareIO(this->filenameBase_+std::string(1,'0'+currentOpenWriterIndex_)));
+        assert(adiosWriters_[this->filenameBase_][currentOpenWriterIndex_]->adiosIo);
+      }
+      adiosWriter_[this->filenameBase_] = adiosWriters_[this->filenameBase_][currentOpenWriterIndex_];
     }
-    std::shared_ptr<adios_writer_t> writer = adiosWriters_[currentOpenWriterIndex_];
+    else
+    {
+      if (!(adiosWriter_[this->filenameBase_]))
+      {
+        adiosWriter_[this->filenameBase_] = std::make_shared<adios_writer_t>();
+        adiosWriter_[this->filenameBase_]->nOpenWriters = 0;
+        adiosWriter_[this->filenameBase_]->adiosIo = std::make_shared<adios2::IO>(
+          context_.adios()->DeclareIO(this->filenameBase_));
+        assert(adiosWriter_[this->filenameBase_]->adiosIo);
+      }
+    }
+    std::shared_ptr<adios_writer_t> &currentWriter = adiosWriter_[this->filenameBase_];
+
     std::vector<double> geometryFieldScalarValues;
 
     // if writer is not open, open it
-    if (writer->nOpenWriters == 0)
+    if (currentWriter->nOpenWriters == 0)
     {
-      assert(adiosIo);
+      assert(currentWriter->adiosIo);
 
       // determine current filename
       std::stringstream outputFileName;
@@ -62,21 +85,22 @@ void MegaMol::write(DataType& data, int timeStepNo, double currentTime, int call
       LOG(DEBUG) << "create new engine, on outputFileName: \"" << outputFileName.str() << "\"";
 
       // create new writer
-      adios2::Engine engine = adiosIo->Open(outputFileName.str(), adios2::Mode::Write, rankSubset->mpiCommunicator());
-      writer->engine = std::make_shared<adios2::Engine>(engine);
+      adios2::Engine engine = currentWriter->adiosIo->Open(outputFileName.str(), adios2::Mode::Write, rankSubset->mpiCommunicator());
+      currentWriter->engine = std::make_shared<adios2::Engine>(engine);
 
-      writer->megaMolWriterContext.approximateDistanceBetweenFibers = -1;  // initialize to not set
+      currentWriter->megaMolWriterContext.approximateDistanceBetweenFibers = -1;  // initialize to not set
 
       // write python script and meta data as attribute
-      //adiosIo->DefineAttribute<std::string>("config", this->context_.pythonScriptText());
-      //adiosIo->DefineAttribute<std::string>("version", this->context_.versionText());
-      //adiosIo->DefineAttribute<std::string>("meta", this->context_.metaText());
+      //currentWriter->adiosIo->DefineAttribute<std::string>("config", this->context_.pythonScriptText());
+      //currentWriter->adiosIo->DefineAttribute<std::string>("version", this->context_.versionText());
+      //currentWriter->adiosIo->DefineAttribute<std::string>("meta", this->context_.metaText());
 
       // begin output to file for current time step
-      writer->engine->BeginStep();
+      currentWriter->engine->BeginStep();
     }
-    writer->nOpenWriters++;
-    LOG(DEBUG) << "in MegaMol::write, opening time step, currentOpenWriterIndex_: " << currentOpenWriterIndex_ << ", nOpenWriters: " << writer->nOpenWriters;
+    currentWriter->nOpenWriters++;
+    LOG(DEBUG) << "in MegaMol::write \"" << this->filenameBase_ << "\", "
+      << "opening time step, currentOpenWriterIndex_: " << currentOpenWriterIndex_ << ", nOpenWriters: " << currentWriter->nOpenWriters;
 
     // collect all available meshes
     std::set<std::string> meshNames;
@@ -87,15 +111,15 @@ void MegaMol::write(DataType& data, int timeStepNo, double currentTime, int call
     {
       // loop over all field variables and output those that are associated with the mesh given by meshName
       MegaMolLoopOverTuple::loopOutput(data.getFieldVariablesForOutputWriter(), data.getFieldVariablesForOutputWriter(), meshName, specificSettings_,
-                                       writer->megaMolWriterContext);
+                                       currentWriter->megaMolWriterContext);
     }
 
     // only write the variables to file when all collecting calls have been made
-    if (writer->nOpenWriters == combineNInstances_)
+    if (currentWriter->nOpenWriters == combineNInstances_)
     {
-      std::vector<Vec3> &geometryFieldValues = writer->megaMolWriterContext.geometryFieldValues;
-      std::vector<double> &scalarFieldVariableValues = writer->megaMolWriterContext.scalarFieldVariableValues;
-      double approximateDistanceBetweenFibers = writer->megaMolWriterContext.approximateDistanceBetweenFibers;
+      std::vector<Vec3> &geometryFieldValues = currentWriter->megaMolWriterContext.geometryFieldValues;
+      std::vector<double> &scalarFieldVariableValues = currentWriter->megaMolWriterContext.scalarFieldVariableValues;
+      double approximateDistanceBetweenFibers = currentWriter->megaMolWriterContext.approximateDistanceBetweenFibers;
 
       // compute local bounding box
       BoundingBox localBoundingBox;
@@ -166,17 +190,18 @@ void MegaMol::write(DataType& data, int timeStepNo, double currentTime, int call
         MPI_Exscan(&localSize, &offset, 1, MPI_LONG_LONG, MPI_SUM, rankSubset->mpiCommunicator());
         MPI_Allreduce(&localSize, &globalSize, 1, MPI_LONG_LONG, MPI_SUM, rankSubset->mpiCommunicator());
 
-        LOG(DEBUG) << rankSubset->ownRankNo() << "/" << rankSubset->size() << ": define variable \"" << variableName 
+        LOG(DEBUG) << rankSubset->ownRankNo() << "/" << rankSubset->size() << ": \"" << this->filenameBase_ << "\" "
+          << "define variable \"" << variableName
           << "\", localSize: " << localSize << ", offset: " << offset << ", globalSize: " << globalSize;
 
         // name, global size, offset, local size
-        adiosFieldVariableGeometry_ = std::make_shared<adios2::Variable<double>>(adiosIo->DefineVariable<double>(
+        adiosFieldVariableGeometry_ = std::make_shared<adios2::Variable<double>>(currentWriter->adiosIo->DefineVariable<double>(
           variableName, {(long unsigned int)globalSize}, {(long unsigned int)offset}, {(long unsigned int)localSize}, adios2::ConstantDims
         ));
       }
 
       // write data to file
-      writer->engine->Put<double>(*adiosFieldVariableGeometry_.get(), geometryFieldScalarValues.data());
+      currentWriter->engine->Put<double>(*adiosFieldVariableGeometry_.get(), geometryFieldScalarValues.data());
 
 
       // write scalar field
@@ -196,13 +221,13 @@ void MegaMol::write(DataType& data, int timeStepNo, double currentTime, int call
         LOG(DEBUG) << "define variable \"" << variableName << "\", localSize: " << localSize << ", offset: " << offset << ", globalSize: " << globalSize;
 
         // name, global size, offset, local size
-        adiosFieldVariableScalar_ = std::make_shared<adios2::Variable<double>>(adiosIo->DefineVariable<double>(
+        adiosFieldVariableScalar_ = std::make_shared<adios2::Variable<double>>(currentWriter->adiosIo->DefineVariable<double>(
           variableName, {(long unsigned int)globalSize}, {(long unsigned int)offset}, {(long unsigned int)localSize}, adios2::ConstantDims
         ));
       }
 
       // write data to file
-      writer->engine->Put<double>(*adiosFieldVariableScalar_.get(), scalarFieldVariableValues.data());
+      currentWriter->engine->Put<double>(*adiosFieldVariableScalar_.get(), scalarFieldVariableValues.data());
 
       // write variables that have to be written by only one rank (rank 0)
       if (rankSubset->ownRankNo() == 0)
@@ -210,9 +235,9 @@ void MegaMol::write(DataType& data, int timeStepNo, double currentTime, int call
         // write box
         if (!boxVariable_)
         {
-          boxVariable_ = std::make_shared<adios2::Variable<double>>(adiosIo->DefineVariable<double>("box", {6},{0},{6}, adios2::ConstantDims));
+          boxVariable_ = std::make_shared<adios2::Variable<double>>(currentWriter->adiosIo->DefineVariable<double>("box", {6},{0},{6}, adios2::ConstantDims));
         }
-        writer->engine->Put<double>(*boxVariable_.get(), boundingBoxValues_.data());
+        currentWriter->engine->Put<double>(*boxVariable_.get(), boundingBoxValues_.data());
 
         // write radius
         globalRadius_ = 0.1;
@@ -222,47 +247,48 @@ void MegaMol::write(DataType& data, int timeStepNo, double currentTime, int call
         }
         if (!globalRadiusVariable_)
         {
-          globalRadiusVariable_ = std::make_shared<adios2::Variable<double>>(adiosIo->DefineVariable<double>("global_radius"));
+          globalRadiusVariable_ = std::make_shared<adios2::Variable<double>>(currentWriter->adiosIo->DefineVariable<double>("global_radius"));
         }
-        writer->engine->Put<double>(*globalRadiusVariable_.get(), &globalRadius_);
+        currentWriter->engine->Put<double>(*globalRadiusVariable_.get(), &globalRadius_);
 
         // write global number of nodes
         if (!globalNumberOfNodesVariable_)
         {
-          globalNumberOfNodesVariable_ = std::make_shared<adios2::Variable<int>>(adiosIo->DefineVariable<int>("p_count"));
+          globalNumberOfNodesVariable_ = std::make_shared<adios2::Variable<int>>(currentWriter->adiosIo->DefineVariable<int>("p_count"));
         }
-        writer->engine->Put<int>(*globalNumberOfNodesVariable_.get(), &nNodesGlobal_);
+        currentWriter->engine->Put<int>(*globalNumberOfNodesVariable_.get(), &nNodesGlobal_);
       }
 
-    }   // endif writer->nOpenWriters == combineNInstances_
+    }   // endif currentWriter->nOpenWriters == combineNInstances_
 
     //LOG(DEBUG) << "timeStepCloseInterval: " << timeStepCloseInterval << ", writeCallCount_: " << writeCallCount_;
 
     //int timeStepCloseInterval = specificSettings_.getOptionInt("timeStepCloseInterval",1);
     //if (writeCallCount_ % timeStepCloseInterval == 0 && writeCallCount_ > 0)
 
-    LOG(DEBUG) << "in MegaMol::write, closing time step, currentOpenWriterIndex_: " << currentOpenWriterIndex_
-      << ", nOpenWriters: " << writer->nOpenWriters << ", combineNInstances_: " << combineNInstances_;
+    LOG(DEBUG) << "in MegaMol::write, \"" << this->filenameBase_ << " closing time step, currentOpenWriterIndex_: " << currentOpenWriterIndex_
+      << ", nOpenWriters: " << currentWriter->nOpenWriters << ", combineNInstances_: " << combineNInstances_;
 
-    if (writer->nOpenWriters > combineNInstances_)
+    if (currentWriter->nOpenWriters > combineNInstances_)
     {
-      LOG(FATAL) << "More open MegaMol writers (" << writer->nOpenWriters << ") than allowed (" << combineNInstances_ << ")";
+      LOG(FATAL) << "More open MegaMol writers (" << currentWriter->nOpenWriters << ") on file \"" << this->filenameBase_
+        << "\" than allowed (combineNInstances_ = " << combineNInstances_ << ")";
     }
 
-    if (writer->nOpenWriters == combineNInstances_)
+    if (currentWriter->nOpenWriters == combineNInstances_)
     {
-      LOG(DEBUG) << "shutdown writer";
+      LOG(DEBUG) << "shutdown writer on \"" << this->filenameBase_ << "\"";
 
       // end output for current time step
-      writer->engine->EndStep();
+      currentWriter->engine->EndStep();
 
-      writer->engine->Close();
-      writer->engine = nullptr;
+      currentWriter->engine->Close();
+      currentWriter->engine = nullptr;
 
       // clear context
-      writer->megaMolWriterContext.geometryFieldValues.clear();
-      writer->megaMolWriterContext.scalarFieldVariableValues.clear();
-      writer->megaMolWriterContext.approximateDistanceBetweenFibers = -1;
+      currentWriter->megaMolWriterContext.geometryFieldValues.clear();
+      currentWriter->megaMolWriterContext.scalarFieldVariableValues.clear();
+      currentWriter->megaMolWriterContext.approximateDistanceBetweenFibers = -1;
 
       lastFilename_ = currentFilename_;
 
@@ -274,8 +300,9 @@ void MegaMol::write(DataType& data, int timeStepNo, double currentTime, int call
       {
         currentOpenWriterIndex_ = 1;
       }
-      writer->nOpenWriters = 0;
-      LOG(DEBUG) << "closing time step and writer, next currentOpenWriterIndex will be " << currentOpenWriterIndex_;
+      currentWriter->nOpenWriters = 0;
+      LOG(DEBUG) << "closing time step and writer \"" << this->filenameBase_ << "\""
+        << ", next currentOpenWriterIndex will be " << currentOpenWriterIndex_;
 
 #ifdef HAVE_MEGAMOL
       notifyMegaMol();
@@ -284,17 +311,17 @@ void MegaMol::write(DataType& data, int timeStepNo, double currentTime, int call
   }
   catch (std::invalid_argument &e)
   {
-    LOG(ERROR) << "Invalid argument exception";
+    LOG(ERROR) << "Writer \"" << this->filenameBase_ << "\": Invalid argument exception";
     LOG(ERROR) << e.what();
   }
   catch (std::ios_base::failure &e)
   {
-    LOG(ERROR) << "System exception";
+    LOG(ERROR) << "Writer \"" << this->filenameBase_ << "\": System exception";
     LOG(ERROR) << e.what();
   }
   catch (std::exception &e)
   {
-    LOG(ERROR) << "Exception";
+    LOG(ERROR) << "Writer \"" << this->filenameBase_ << "\": Exception";
     LOG(ERROR) << e.what();
   }
 

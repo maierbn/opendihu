@@ -55,7 +55,6 @@ std::vector<std::string> DihuContext::megamolArguments_;
 
 #ifdef HAVE_ADIOS
 std::shared_ptr<adios2::ADIOS> DihuContext::adios_ = nullptr;  ///< adios context option
-std::shared_ptr<adios2::IO> DihuContext::io_ = nullptr;        ///< IO object of adios
 #endif
 bool DihuContext::initialized_ = false;
 int DihuContext::nObjects_ = 0;   ///< number of objects of DihuContext, if the last object gets destroyed, call MPI_Finalize
@@ -390,9 +389,9 @@ std::shared_ptr<Solver::Manager> DihuContext::solverManager() const
 }
 
 #ifdef HAVE_ADIOS
-std::shared_ptr<adios2::IO> DihuContext::adiosIo() const
+std::shared_ptr<adios2::ADIOS> DihuContext::adios() const
 {
-  return io_;
+  return adios_;
 }
 #endif
 

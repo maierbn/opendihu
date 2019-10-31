@@ -11,10 +11,14 @@ The core design goals are usability, performance and extensibility.
 
 It is developed at [SGS](https://www.ipvs.uni-stuttgart.de/abteilungen/sgs/index.html?__locale=en) and [IANS](https://www.ians.uni-stuttgart.de/institute/) at [University of Stuttgart](https://www.uni-stuttgart.de/en/index.html).
 
+Opendihu is the compatible HPC version of [OpenCMISS](http://opencmiss.org/). The native format of OpenCMISS, the `Exfile` format, can be used for input and output in Opendihu.
+The implemented skeletal muscle models are the same and are based on the same [CellML](https://www.cellml.org/) descriptions of subcellular models. 
+For details, read the [introduction on the documentation website](https://opendihu.readthedocs.io/en/latest/introduction.html).
+
 # Installation
 Documentation including detailed [installation instructions](https://opendihu.readthedocs.io/en/latest/user/installation.html) can be found at [opendihu.readthedocs.io](https://opendihu.readthedocs.io/en/latest/).
 
-If you usually skip instructions and have Ubuntu 18.04, try the following
+If you usually skip instructions (and have Ubuntu), try the following
 ```
 git clone https://github.com/maierbn/opendihu.git && cd opendihu
 sudo apt-get update && \

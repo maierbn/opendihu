@@ -133,10 +133,10 @@ initialize()
   this->setSpecificStatesRepeatAfterFirstCall_ = this->specificSettings_.getOptionDouble("setSpecificStatesRepeatAfterFirstCall", 0.0);
   this->setSpecificStatesCallEnableBegin_ = this->specificSettings_.getOptionDouble("setSpecificStatesCallEnableBegin", 0.0);
 
-  // initialize the lastCallSpecificStatesTime_ to something negative, such that the condition is fullfilled already in the fisrrt iteration
-  this->lastCallSpecificStatesTime_ = -2*(1./this->setSpecificStatesCallFrequency_);
+  // initialize the lastCallSpecificStatesTime_
   this->currentJitter_ = 0;
   this->jitterIndex_ = 0;
+  this->lastCallSpecificStatesTime_ = this->setSpecificStatesCallEnableBegin_ - 1e-13 - 1./(this->setSpecificStatesCallFrequency_+this->currentJitter_);
 }
 
 template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
@@ -236,28 +236,21 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
      )
   {
     stimulate = true;
-    if (this->lastCallSpecificStatesTime_ < 0)
-    {
-      VLOG(1) << "initial call to setSpecificStates, set lastCallSpecificStatesTime_ to 0, was " << this->lastCallSpecificStatesTime_;
-      this->lastCallSpecificStatesTime_ = currentTime;
-    }
-    else
-    {
-      // if current stimulation is over
-      if (currentTime - (this->lastCallSpecificStatesTime_ + 1./(this->setSpecificStatesCallFrequency_+this->currentJitter_)) > this->setSpecificStatesRepeatAfterFirstCall_)
-      {
-        // advance time of last call to specificStates
-        this->lastCallSpecificStatesTime_ += 1./(this->setSpecificStatesCallFrequency_+this->currentJitter_);
 
-        // get new jitter value
-        double jitterFactor = this->setSpecificStatesFrequencyJitter_[this->jitterIndex_ % this->setSpecificStatesFrequencyJitter_.size()];
-        this->currentJitter_ = jitterFactor * this->setSpecificStatesCallFrequency_;
-        this->jitterIndex_++;
+    // if current stimulation is over
+    if (currentTime - (this->lastCallSpecificStatesTime_ + 1./(this->setSpecificStatesCallFrequency_+this->currentJitter_)) > this->setSpecificStatesRepeatAfterFirstCall_)
+    {
+      // advance time of last call to specificStates
+      this->lastCallSpecificStatesTime_ += 1./(this->setSpecificStatesCallFrequency_+this->currentJitter_);
 
-        stimulate = false;
-      }
-      VLOG(1) << "next call to setSpecificStates,this->setSpecificStatesCallFrequency_: " << this->setSpecificStatesCallFrequency_ << ", set lastCallSpecificStatesTime_ to " << this->lastCallSpecificStatesTime_;
+      // get new jitter value
+      double jitterFactor = this->setSpecificStatesFrequencyJitter_[this->jitterIndex_ % this->setSpecificStatesFrequencyJitter_.size()];
+      this->currentJitter_ = jitterFactor * this->setSpecificStatesCallFrequency_;
+      this->jitterIndex_++;
+
+      stimulate = false;
     }
+    VLOG(1) << "next call to setSpecificStates,this->setSpecificStatesCallFrequency_: " << this->setSpecificStatesCallFrequency_ << ", set lastCallSpecificStatesTime_ to " << this->lastCallSpecificStatesTime_;
 
     // start critical section for python API calls
     // PythonUtility::GlobalInterpreterLock lock;

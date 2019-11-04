@@ -171,7 +171,7 @@ void DihuContext::loadPythonScriptFromFile(std::string filename)
       {
         commandToSetFile << "__file__ = '" << currentWorkingDirectory << "/" << filename << "' "<< std::endl;
       }
-      LOG(INFO) << "run " << commandToSetFile.str();
+      LOG(DEBUG) << "run " << commandToSetFile.str();
 
       int ret = PyRun_SimpleString(commandToSetFile.str().c_str());
       PythonUtility::checkForError();

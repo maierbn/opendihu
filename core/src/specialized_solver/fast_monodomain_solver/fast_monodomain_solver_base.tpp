@@ -1,15 +1,17 @@
-#include "specialized_solver/fast_monodomain_solver.h"
+#include "specialized_solver/fast_monodomain_solver/fast_monodomain_solver_base.h"
 
 #include "partition/rank_subset.h"
 #include "control/stimulation_logging.h"
 
-FastMonodomainSolver<Control::MultipleInstances<OperatorSplitting::Strang<Control::MultipleInstances<TimeSteppingScheme::Heun<CellmlAdapter<4, 9, FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1> > > > >, Control::MultipleInstances<TimeSteppingScheme::ImplicitEuler<SpatialDiscretization::FiniteElementMethod<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1>, Quadrature::Gauss<2>, Equation::Dynamic::IsotropicDiffusion> > > > > >::
-FastMonodomainSolver(const DihuContext &context) :
+template<int nStates, int nIntermediates>
+FastMonodomainSolverBase<nStates,nIntermediates>::
+FastMonodomainSolverBase(const DihuContext &context) :
   specificSettings_(context.getPythonConfig()), nestedSolvers_(context)
 {
 }
 
-void FastMonodomainSolver<Control::MultipleInstances<OperatorSplitting::Strang<Control::MultipleInstances<TimeSteppingScheme::Heun<CellmlAdapter<4, 9, FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1> > > > >, Control::MultipleInstances<TimeSteppingScheme::ImplicitEuler<SpatialDiscretization::FiniteElementMethod<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1>, Quadrature::Gauss<2>, Equation::Dynamic::IsotropicDiffusion> > > > > >::
+template<int nStates, int nIntermediates>
+void FastMonodomainSolverBase<nStates,nIntermediates>::
 initialize()
 {
   nestedSolvers_.initialize();
@@ -84,7 +86,7 @@ initialize()
     LOG(FATAL) << "Could not parse firing times.";
 
   // initialize data structures
-  std::vector<NestedSolversType::TimeSteppingSchemeType> &instances = nestedSolvers_.instancesLocal();
+  std::vector<typename NestedSolversType::TimeSteppingSchemeType> &instances = nestedSolvers_.instancesLocal();
 
   // determine number of fibers to compute on the current rank
   int nFibers = 0;
@@ -157,9 +159,10 @@ initialize()
         fiberData_.at(fiberDataNo).setSpecificStatesRepeatAfterFirstCall = cellmlAdapter.setSpecificStatesRepeatAfterFirstCall_;
         fiberData_.at(fiberDataNo).setSpecificStatesCallEnableBegin = cellmlAdapter.setSpecificStatesCallEnableBegin_;
 
-        fiberData_.at(fiberDataNo).lastStimulationCheckTime = -2*(1./fiberData_.at(fiberDataNo).setSpecificStatesCallFrequency);
         fiberData_.at(fiberDataNo).currentJitter = 0;
         fiberData_.at(fiberDataNo).jitterIndex = 0;
+        fiberData_.at(fiberDataNo).lastStimulationCheckTime = fiberData_.at(fiberDataNo).setSpecificStatesCallEnableBegin - 1e-13 - 1./(fiberData_.at(fiberDataNo).setSpecificStatesCallFrequency+fiberData_.at(fiberDataNo).currentJitter);
+
         fiberData_.at(fiberDataNo).valuesOffset = 0;
         fiberData_.at(fiberDataNo).currentlyStimulating = false;
         if (fiberDataNo > 0)
@@ -179,24 +182,29 @@ initialize()
   LOG(DEBUG) << nInstancesToCompute_ << " instances to compute, " << nVcVectors << " Vc vectors, size of double_v: " << Vc::double_v::Size;
 
   // initialize values
+  std::array<Vc::double_v,nStates> states;
   for (int i = 0; i < fiberPointBuffers_.size(); i++)
   {
-    fiberPointBuffers_[i].states[0] = -75.0;
-    fiberPointBuffers_[i].states[1] = 0.05;
-    fiberPointBuffers_[i].states[2] = 0.6;
-    fiberPointBuffers_[i].states[3] = 0.325;
+    initializeStates(states);
+
+    for (int j = 0; j < nStates; j++)
+    {
+      fiberPointBuffers_[i].states[j] = states[j];
+    }
   }
 
 }
 
-void FastMonodomainSolver<Control::MultipleInstances<OperatorSplitting::Strang<Control::MultipleInstances<TimeSteppingScheme::Heun<CellmlAdapter<4, 9, FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1> > > > >, Control::MultipleInstances<TimeSteppingScheme::ImplicitEuler<SpatialDiscretization::FiniteElementMethod<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1>, Quadrature::Gauss<2>, Equation::Dynamic::IsotropicDiffusion> > > > > >::
+template<int nStates, int nIntermediates>
+void FastMonodomainSolverBase<nStates,nIntermediates>::
 run()
 {
   initialize();
   advanceTimeSpan();
 }
 
-void FastMonodomainSolver<Control::MultipleInstances<OperatorSplitting::Strang<Control::MultipleInstances<TimeSteppingScheme::Heun<CellmlAdapter<4, 9, FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1> > > > >, Control::MultipleInstances<TimeSteppingScheme::ImplicitEuler<SpatialDiscretization::FiniteElementMethod<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1>, Quadrature::Gauss<2>, Equation::Dynamic::IsotropicDiffusion> > > > > >::
+template<int nStates, int nIntermediates>
+void FastMonodomainSolverBase<nStates,nIntermediates>::
 advanceTimeSpan()
 {
   LOG(TRACE) << "FastMonodomainSolver::advanceTimeSpan";
@@ -217,7 +225,7 @@ advanceTimeSpan()
   //nestedSolvers_.advanceTimeSpan();
 
   // call output writer of diffusion
-  std::vector<NestedSolversType::TimeSteppingSchemeType> &instances = nestedSolvers_.instancesLocal();
+  std::vector<typename NestedSolversType::TimeSteppingSchemeType> &instances = nestedSolvers_.instancesLocal();
 
   for (int i = 0; i < instances.size(); i++)
   {
@@ -225,11 +233,12 @@ advanceTimeSpan()
   }
 }
 
-void FastMonodomainSolver<Control::MultipleInstances<OperatorSplitting::Strang<Control::MultipleInstances<TimeSteppingScheme::Heun<CellmlAdapter<4, 9, FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1> > > > >, Control::MultipleInstances<TimeSteppingScheme::ImplicitEuler<SpatialDiscretization::FiniteElementMethod<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1>, Quadrature::Gauss<2>, Equation::Dynamic::IsotropicDiffusion> > > > > >::
+template<int nStates, int nIntermediates>
+void FastMonodomainSolverBase<nStates,nIntermediates>::
 fetchFiberData()
 {
   VLOG(1) << "fetchFiberData";
-  std::vector<NestedSolversType::TimeSteppingSchemeType> &instances = nestedSolvers_.instancesLocal();
+  std::vector<typename NestedSolversType::TimeSteppingSchemeType> &instances = nestedSolvers_.instancesLocal();
 
   // loop over fibers and communicate element lengths and initial values to the ranks that participate in computing
 
@@ -327,7 +336,8 @@ fetchFiberData()
   }
 }
 
-void FastMonodomainSolver<Control::MultipleInstances<OperatorSplitting::Strang<Control::MultipleInstances<TimeSteppingScheme::Heun<CellmlAdapter<4, 9, FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1> > > > >, Control::MultipleInstances<TimeSteppingScheme::ImplicitEuler<SpatialDiscretization::FiniteElementMethod<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1>, Quadrature::Gauss<2>, Equation::Dynamic::IsotropicDiffusion> > > > > >::
+template<int nStates, int nIntermediates>
+void FastMonodomainSolverBase<nStates,nIntermediates>::
 updateFiberData()
 {
   // copy Vm from compute buffers to fiberData_
@@ -347,7 +357,7 @@ updateFiberData()
   }
 
   LOG(TRACE) << "updateFiberData";
-  std::vector<NestedSolversType::TimeSteppingSchemeType> &instances = nestedSolvers_.instancesLocal();
+  std::vector<typename NestedSolversType::TimeSteppingSchemeType> &instances = nestedSolvers_.instancesLocal();
 
   // loop over fibers and communicate element lengths and initial values to the ranks that participate in computing
 
@@ -404,7 +414,8 @@ updateFiberData()
   }
 }
 
-void FastMonodomainSolver<Control::MultipleInstances<OperatorSplitting::Strang<Control::MultipleInstances<TimeSteppingScheme::Heun<CellmlAdapter<4, 9, FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1> > > > >, Control::MultipleInstances<TimeSteppingScheme::ImplicitEuler<SpatialDiscretization::FiniteElementMethod<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1>, Quadrature::Gauss<2>, Equation::Dynamic::IsotropicDiffusion> > > > > >::
+template<int nStates, int nIntermediates>
+void FastMonodomainSolverBase<nStates,nIntermediates>::
 computeMonodomain()
 {
   LOG(TRACE) << "computeMonodomain";
@@ -413,7 +424,7 @@ computeMonodomain()
   // array of vectorized struct
 
   // fetch timestep widths and total time span
-  std::vector<NestedSolversType::TimeSteppingSchemeType> &instances = nestedSolvers_.instancesLocal();
+  std::vector<typename NestedSolversType::TimeSteppingSchemeType> &instances = nestedSolvers_.instancesLocal();
 
   TimeSteppingScheme::Heun<CellmlAdapterType> &heun = instances[0].timeStepping1().instancesLocal()[0];
   durationLogKey0D_ = heun.durationLogKey();
@@ -469,24 +480,15 @@ computeMonodomain()
   currentTime_ = instances[0].endTime();
 }
 
-void FastMonodomainSolver<Control::MultipleInstances<OperatorSplitting::Strang<Control::MultipleInstances<TimeSteppingScheme::Heun<CellmlAdapter<4, 9, FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1> > > > >, Control::MultipleInstances<TimeSteppingScheme::ImplicitEuler<SpatialDiscretization::FiniteElementMethod<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1>, Quadrature::Gauss<2>, Equation::Dynamic::IsotropicDiffusion> > > > > >::
+
+template<int nStates, int nIntermediates>
+void FastMonodomainSolverBase<nStates,nIntermediates>::
 compute0D(double startTime, double timeStepWidth, int nTimeSteps)
 {
   Control::PerformanceMeasurement::start(durationLogKey0D_);
   LOG(DEBUG) << "compute0D(" << startTime << "), " << nTimeSteps << " time steps";
 
   using Vc::double_v;
-
-  // constants
-  const double constant0 = -75;
-  const double constant1 = 1;
-  const double constant2 = 0;
-  const double constant3 = 120;
-  const double constant4 = 36;
-  const double constant5 = 0.3;
-  const double constant6 = constant0 + 115.000;
-  const double constant7 = constant0 - 12.0000;
-  const double constant8 = constant0 + 10.6130;
 
   // Heun scheme:
   // y* = y_n + dt*rhs(y_n)
@@ -505,13 +507,20 @@ compute0D(double startTime, double timeStepWidth, int nTimeSteps)
     VLOG(3) << "pointBuffersNo: " << pointBuffersNo << ", fiberDataNo: " << fiberDataNo << ", indexInFiber: " << indexInFiber << ", motorUnitNo: " << motorUnitNo;
 
     // get state values to prevent aliasing inefficiencies for the compiler
+    std::array<double_v,nStates> states;
+    for (int i = 0; i < nStates; i++)
+    {
+      states[i] = fiberPointBuffers_[pointBuffersNo].states[i];
+    }
+
+    /*
     double_v state0 = fiberPointBuffers_[pointBuffersNo].states[0];
     double_v state1 = fiberPointBuffers_[pointBuffersNo].states[1];
     double_v state2 = fiberPointBuffers_[pointBuffersNo].states[2];
     double_v state3 = fiberPointBuffers_[pointBuffersNo].states[3];
 
     VLOG(3) << "  states [" << state0 << "," << state1 << "," << state2 << "," << state3 << "]";
-
+*/
     // loop over timesteps
     for (int timeStepNo = 0; timeStepNo < nTimeSteps; timeStepNo++)
     {
@@ -520,11 +529,11 @@ compute0D(double startTime, double timeStepWidth, int nTimeSteps)
 
       // get time from with testing for stimulation is enabled
       const double lastStimulationCheckTime = fiberData_[fiberDataNo].lastStimulationCheckTime;
-      
+
       const double setSpecificStatesCallFrequency = fiberData_[fiberDataNo].setSpecificStatesCallFrequency;
       const double setSpecificStatesRepeatAfterFirstCall = fiberData_[fiberDataNo].setSpecificStatesRepeatAfterFirstCall;
       const double setSpecificStatesCallEnableBegin = fiberData_[fiberDataNo].setSpecificStatesCallEnableBegin;
-      
+
       std::vector<double> &setSpecificStatesFrequencyJitter = fiberData_[fiberDataNo].setSpecificStatesFrequencyJitter;
       int &jitterIndex = fiberData_[fiberDataNo].jitterIndex;
       double &currentJitter = fiberData_[fiberDataNo].currentJitter;
@@ -536,37 +545,34 @@ compute0D(double startTime, double timeStepWidth, int nTimeSteps)
       VLOG(1) << "setSpecificStatesCallFrequency: " << setSpecificStatesCallFrequency << ", currentJitter: " << currentJitter << ", setSpecificStatesCallEnableBegin: " << setSpecificStatesCallEnableBegin;
 
       if (currentTime >= lastStimulationCheckTime + 1./(setSpecificStatesCallFrequency+currentJitter)
-          && currentTime >= setSpecificStatesCallEnableBegin-1e-14)
+          && currentTime >= setSpecificStatesCallEnableBegin-1e-13)
       {
         VLOG(1) << "-> checkStimulation";
         checkStimulation = true;
 
-        if (lastStimulationCheckTime >= 0)
+        VLOG(1) << "check if stimulation is over: duration already: " << currentTime - (lastStimulationCheckTime + 1./(setSpecificStatesCallFrequency+currentJitter))
+          << ", setSpecificStatesRepeatAfterFirstCall: " << setSpecificStatesRepeatAfterFirstCall;
+
+        // if current stimulation is over
+        if (currentTime - (lastStimulationCheckTime + 1./(setSpecificStatesCallFrequency+currentJitter)) > setSpecificStatesRepeatAfterFirstCall)
         {
-          VLOG(1) << "check if stimulation is over: duration already: " << currentTime - (lastStimulationCheckTime + 1./(setSpecificStatesCallFrequency+currentJitter)) 
-            << ", setSpecificStatesRepeatAfterFirstCall: " << setSpecificStatesRepeatAfterFirstCall;
+          // advance time of last call to specificStates
+          LOG(DEBUG) << " old lastStimulationCheckTime: " << fiberData_[fiberDataNo].lastStimulationCheckTime << ", currentJitter: " << currentJitter << ", add " << 1./(setSpecificStatesCallFrequency+currentJitter);
+          fiberData_[fiberDataNo].lastStimulationCheckTime += 1./(setSpecificStatesCallFrequency+currentJitter);
 
-          // if current stimulation is over
-          if (currentTime - (lastStimulationCheckTime + 1./(setSpecificStatesCallFrequency+currentJitter)) > setSpecificStatesRepeatAfterFirstCall)
-          {
-            // advance time of last call to specificStates
-            LOG(DEBUG) << " old lastStimulationCheckTime: " << fiberData_[fiberDataNo].lastStimulationCheckTime << ", currentJitter: " << currentJitter << ", add " << 1./(setSpecificStatesCallFrequency+currentJitter);
-            fiberData_[fiberDataNo].lastStimulationCheckTime += 1./(setSpecificStatesCallFrequency+currentJitter);
+          LOG(DEBUG) << " new lastStimulationCheckTime: " << fiberData_[fiberDataNo].lastStimulationCheckTime;
 
-            LOG(DEBUG) << " new lastStimulationCheckTime: " << fiberData_[fiberDataNo].lastStimulationCheckTime;
+          // compute new jitter value
+          double jitterFactor = setSpecificStatesFrequencyJitter[jitterIndex % setSpecificStatesFrequencyJitter.size()];
+          currentJitter = jitterFactor * setSpecificStatesCallFrequency;
+          LOG(DEBUG) << " jitterIndex: " << jitterIndex << ", new jitterFactor: " << jitterFactor << ", currentJitter: " << currentJitter;
+          jitterIndex++;
 
-            // compute new jitter value
-            double jitterFactor = setSpecificStatesFrequencyJitter[jitterIndex % setSpecificStatesFrequencyJitter.size()];
-            currentJitter = jitterFactor * setSpecificStatesCallFrequency;
-            LOG(DEBUG) << " jitterIndex: " << jitterIndex << ", new jitterFactor: " << jitterFactor << ", currentJitter: " << currentJitter;
-            jitterIndex++;
-
-            checkStimulation = false;
-          }
+          checkStimulation = false;
         }
       }
 
-      // instead of calling setSpecificStates, directly determine whether to stimulate form the firingEvents file
+      // instead of calling setSpecificStates, directly determine whether to stimulate from the firingEvents file
       int firingEventsIndex = round(currentTime * setSpecificStatesCallFrequency);
 
       bool stimulate =
@@ -589,11 +595,6 @@ compute0D(double startTime, double timeStepWidth, int nTimeSteps)
           Control::StimulationLogging::logStimulationBegin(currentTime, fiberData_[fiberDataNo].motorUnitNo, fiberData_[fiberDataNo].fiberNoGlobal);
         }
 
-        if (lastStimulationCheckTime < 0)
-        {
-          fiberData_[fiberDataNo].lastStimulationCheckTime = currentTime;
-        }
-
         LOG(DEBUG) << "stimulate fiber " << fiberData_[fiberDataNo].fiberNoGlobal << ", MU " << motorUnitNo << " at t=" << currentTime;
         LOG(DEBUG) << "  pointBuffersNo: " << pointBuffersNo << ", indexInFiber: " << indexInFiber << ", fiberCenterIndex: " << fiberCenterIndex;
         LOG(DEBUG) << "  motorUnitNo: " << motorUnitNo << " (" << motorUnitNo % firingEvents_[firingEventsIndex % firingEvents_.size()].size() << ")";
@@ -607,98 +608,32 @@ compute0D(double startTime, double timeStepWidth, int nTimeSteps)
         fiberData_[fiberDataNo].currentlyStimulating = false;
       }
 
+      if (stimulate && currentPointIsInCenter)
+        LOG(INFO) << "t: " << currentTime << ", stimulate fiber " << fiberData_[fiberDataNo].fiberNoGlobal << ", MU " << motorUnitNo;
+
+
+      compute0DInstance(states, currentTime, timeStepWidth, stimulate && currentPointIsInCenter);
       // perform one step of the heun scheme
-
-      // compute new rates, rhs(y_n)
-      const double_v algebraic1                   = ( - 0.100000*(state0+50.0000))/(exp(- (state0+50.0000)/10.0000) - 1.00000);
-      const double_v algebraic5                   =  4.00000*exp(- (state0+75.0000)/18.0000);
-      const double_v rate1                        =  algebraic1*(1.00000 - state1) -  algebraic5*state1;
-      const double_v algebraic2                   =  0.0700000*exp(- (state0+75.0000)/20.0000);
-      const double_v algebraic6                   = 1.00000/(exp(- (state0+45.0000)/10.0000)+1.00000);
-      const double_v rate2                        =  algebraic2*(1.00000 - state2) -  algebraic6*state2;
-      const double_v algebraic3                   = ( - 0.0100000*(state0+65.0000))/(exp(- (state0+65.0000)/10.0000) - 1.00000);
-      const double_v algebraic7                   =  0.125000*exp((state0+75.0000)/80.0000);
-      const double_v rate3                        =  algebraic3*(1.00000 - state3) -  algebraic7*state3;
-      const double_v algebraic0                   =  constant3*state1*state1*state1*state2*(state0 - constant6);
-      const double_v algebraic4                   =  constant4*state3*state3*state3*state3*(state0 - constant7);
-      const double_v algebraic8                   =  constant5*(state0 - constant8);
-      const double_v rate0                        = - (- constant2+algebraic0+algebraic4+algebraic8)/constant1;
-
-      if (pointBuffersNo == fiberPointBuffers_.size()/2)
-        VLOG(2) << "increment: [" << rate0*timeStepWidth << "," << rate1*timeStepWidth << "," << rate2*timeStepWidth << "," << rate3*timeStepWidth << "], dt: " << timeStepWidth;
-
-      // intermediate step
-      // compute y* = y_n + dt*rhs(y_n), y_n = state, rhs(y_n) = rate, y* = intermediateState
-      double_v intermediateState0 = state0 + timeStepWidth*rate0;
-      const double_v intermediateState1 = state1 + timeStepWidth*rate1;
-      const double_v intermediateState2 = state2 + timeStepWidth*rate2;
-      const double_v intermediateState3 = state3 + timeStepWidth*rate3;
-
-      if (stimulate && currentPointIsInCenter)
-      {
-        for (int i = 0; i < std::min(3,(int)Vc::double_v::Size); i++)
-        {
-          intermediateState0[i] = 20.0;
-        }
-      }
-
-      if (pointBuffersNo == fiberPointBuffers_.size()/2)
-        VLOG(2) << "intermediate solution: [" << intermediateState0 << "," << intermediateState1 << "," << intermediateState2 << "," << intermediateState3 << "]";
-
-      // compute new rates, rhs(y*)
-      const double_v intermediateAlgebraic1       = ( - 0.100000*(intermediateState0+50.0000))/(exp(- (intermediateState0+50.0000)/10.0000) - 1.00000);
-      const double_v intermediateAlgebraic5       =  4.00000*exp(- (intermediateState0+75.0000)/18.0000);
-      const double_v intermediateRate1            =  intermediateAlgebraic1*(1.00000 - intermediateState1) -  intermediateAlgebraic5*intermediateState1;
-      const double_v intermediateAlgebraic2       =  0.0700000*exp(- (intermediateState0+75.0000)/20.0000);
-      const double_v intermediateAlgebraic6       = 1.00000/(exp(- (intermediateState0+45.0000)/10.0000)+1.00000);
-      const double_v intermediateRate2            =  intermediateAlgebraic2*(1.00000 - intermediateState2) -  intermediateAlgebraic6*intermediateState2;
-      const double_v intermediateAlgebraic3       = ( - 0.0100000*(intermediateState0+65.0000))/(exp(- (intermediateState0+65.0000)/10.0000) - 1.00000);
-      const double_v intermediateAlgebraic7       =  0.125000*exp((intermediateState0+75.0000)/80.0000);
-      const double_v intermediateRate3            =  intermediateAlgebraic3*(1.00000 - intermediateState3) -  intermediateAlgebraic7*intermediateState3;
-      const double_v intermediateAlgebraic0       =  constant3*intermediateState1*intermediateState1*intermediateState1*intermediateState2*(intermediateState0 - constant6);
-      const double_v intermediateAlgebraic4       =  constant4*intermediateState3*intermediateState3*intermediateState3*intermediateState3*(intermediateState0 - constant7);
-      const double_v intermediateAlgebraic8       =  constant5*(intermediateState0 - constant8);
-      const double_v intermediateRate0            = - (- constant2+intermediateAlgebraic0+intermediateAlgebraic4+intermediateAlgebraic8)/constant1;
-
-      // final step
-      // y_n+1 = y_n + 0.5*[rhs(y_n) + rhs(y*)]
-      const double_v finalState0 = state0 + 0.5*timeStepWidth*(rate0 + intermediateRate0);
-      const double_v finalState1 = state1 + 0.5*timeStepWidth*(rate1 + intermediateRate1);
-      const double_v finalState2 = state2 + 0.5*timeStepWidth*(rate2 + intermediateRate2);
-      const double_v finalState3 = state3 + 0.5*timeStepWidth*(rate3 + intermediateRate3);
-
-      state0 = finalState0;
-      state1 = finalState1;
-      state2 = finalState2;
-      state3 = finalState3;
-
-      if (stimulate && currentPointIsInCenter)
-      {
-        for (int i = 0; i < std::min(3,(int)Vc::double_v::Size); i++)
-        {
-          state0[i] = 20.0;
-        }
-      }
-
-      if (pointBuffersNo == fiberPointBuffers_.size()/2)
-        VLOG(2) << "resulting solution: [" << state0 << "," << state1 << "," << state2 << "," << state3 << "]";
 
     }
 
     // store resulting state values
-    fiberPointBuffers_[pointBuffersNo].states[0] = state0;
-    fiberPointBuffers_[pointBuffersNo].states[1] = state1;
-    fiberPointBuffers_[pointBuffersNo].states[2] = state2;
-    fiberPointBuffers_[pointBuffersNo].states[3] = state3;
+    for (int i = 0; i < nStates; i++)
+    {
+      fiberPointBuffers_[pointBuffersNo].states[i] = states[i];
+    }
 
-    VLOG(3) << "-> index " << pointBuffersNo << ", states [" << state0 << "," << state1 << "," << state2 << "," << state3 << "]";
+    //VLOG(3) << "-> index " << pointBuffersNo << ", states [" << state0 << "," << state1 << "," << state2 << "," << state3 << "]";
   }
 
   VLOG(1) << "nFiberPointBuffers: " << fiberPointBuffers_.size();
   Control::PerformanceMeasurement::stop(durationLogKey0D_);
 }
 
-void FastMonodomainSolver<Control::MultipleInstances<OperatorSplitting::Strang<Control::MultipleInstances<TimeSteppingScheme::Heun<CellmlAdapter<4, 9, FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1> > > > >, Control::MultipleInstances<TimeSteppingScheme::ImplicitEuler<SpatialDiscretization::FiniteElementMethod<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1>, Quadrature::Gauss<2>, Equation::Dynamic::IsotropicDiffusion> > > > > >::
+void compute0DInstance();
+
+template<int nStates, int nIntermediates>
+void FastMonodomainSolverBase<nStates,nIntermediates>::
 compute1D(double startTime, double timeStepWidth, int nTimeSteps, double prefactor)
 {
   Control::PerformanceMeasurement::start(durationLogKey1D_);
@@ -901,27 +836,29 @@ compute1D(double startTime, double timeStepWidth, int nTimeSteps, double prefact
   Control::PerformanceMeasurement::stop(durationLogKey1D_);
 }
 
-void FastMonodomainSolver<Control::MultipleInstances<OperatorSplitting::Strang<Control::MultipleInstances<TimeSteppingScheme::Heun<CellmlAdapter<4, 9, FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1> > > > >, Control::MultipleInstances<TimeSteppingScheme::ImplicitEuler<SpatialDiscretization::FiniteElementMethod<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1>, Quadrature::Gauss<2>, Equation::Dynamic::IsotropicDiffusion> > > > > >::
+template<int nStates, int nIntermediates>
+void FastMonodomainSolverBase<nStates,nIntermediates>::
 reset()
 {
   nestedSolvers_.reset();
 }
 
-FastMonodomainSolver<Control::MultipleInstances<OperatorSplitting::Strang<Control::MultipleInstances<TimeSteppingScheme::Heun<CellmlAdapter<4, 9, FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1> > > > >, Control::MultipleInstances<TimeSteppingScheme::ImplicitEuler<SpatialDiscretization::FiniteElementMethod<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1>, Quadrature::Gauss<2>, Equation::Dynamic::IsotropicDiffusion> > > > > >::
-Data &FastMonodomainSolver<Control::MultipleInstances<OperatorSplitting::Strang<Control::MultipleInstances<TimeSteppingScheme::Heun<CellmlAdapter<4, 9, FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1> > > > >, Control::MultipleInstances<TimeSteppingScheme::ImplicitEuler<SpatialDiscretization::FiniteElementMethod<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1>, Quadrature::Gauss<2>, Equation::Dynamic::IsotropicDiffusion> > > > > >::
+template<int nStates, int nIntermediates>
+typename FastMonodomainSolverBase<nStates,nIntermediates>::Data &FastMonodomainSolverBase<nStates,nIntermediates>::
 data()
 {
   return nestedSolvers_.data();
 }
 
-void FastMonodomainSolver<Control::MultipleInstances<OperatorSplitting::Strang<Control::MultipleInstances<TimeSteppingScheme::Heun<CellmlAdapter<4, 9, FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1> > > > >, Control::MultipleInstances<TimeSteppingScheme::ImplicitEuler<SpatialDiscretization::FiniteElementMethod<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1>, Quadrature::Gauss<2>, Equation::Dynamic::IsotropicDiffusion> > > > > >::
+template<int nStates, int nIntermediates>
+void FastMonodomainSolverBase<nStates,nIntermediates>::
 setTimeSpan(double startTime, double endTime)
 {
   nestedSolvers_.setTimeSpan(startTime, endTime);
 }
 
-FastMonodomainSolver<Control::MultipleInstances<OperatorSplitting::Strang<Control::MultipleInstances<TimeSteppingScheme::Heun<CellmlAdapter<4, 9, FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1> > > > >, Control::MultipleInstances<TimeSteppingScheme::ImplicitEuler<SpatialDiscretization::FiniteElementMethod<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1>, Quadrature::Gauss<2>, Equation::Dynamic::IsotropicDiffusion> > > > > >::
-OutputConnectorDataType FastMonodomainSolver<Control::MultipleInstances<OperatorSplitting::Strang<Control::MultipleInstances<TimeSteppingScheme::Heun<CellmlAdapter<4, 9, FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1> > > > >, Control::MultipleInstances<TimeSteppingScheme::ImplicitEuler<SpatialDiscretization::FiniteElementMethod<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1>, Quadrature::Gauss<2>, Equation::Dynamic::IsotropicDiffusion> > > > > >::
+template<int nStates, int nIntermediates>
+typename FastMonodomainSolverBase<nStates,nIntermediates>::OutputConnectorDataType FastMonodomainSolverBase<nStates,nIntermediates>::
 getOutputConnectorData()
 {
   return nestedSolvers_.getOutputConnectorData();

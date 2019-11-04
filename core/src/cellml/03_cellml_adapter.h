@@ -71,7 +71,7 @@ public:
   void setBoundaryConditionHandlingEnabled(bool boundaryConditionHandlingEnabled){};
 
   //! the FastMonodomainSolver accesses the internals of CellmlAdapter
-  template<typename T> friend class FastMonodomainSolver;
+  template<int a, int b> friend class FastMonodomainSolverBase;
 
 };
 

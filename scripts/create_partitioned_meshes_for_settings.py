@@ -207,11 +207,13 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
     double_raw = fiber_file_handle.read(4)
     value = struct.unpack('i', double_raw)[0]
     parameters.append(value)
-    
+  
   variables.n_fibers_total = parameters[0]
-  variables.n_fibers_x = (int)(np.round(np.sqrt(variables.n_fibers_total)))
-  variables.n_fibers_y = variables.n_fibers_x
   variables.n_points_whole_fiber = parameters[1]
+  
+  if "cuboid.bin" not in fiber_file:  
+    variables.n_fibers_x = (int)(np.round(np.sqrt(variables.n_fibers_total)))
+    variables.n_fibers_y = variables.n_fibers_x
 
   if rank_no == 0:
     print("n fibers:              {} ({} x {})".format(variables.n_fibers_total, variables.n_fibers_x, variables.n_fibers_y))

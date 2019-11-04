@@ -20,7 +20,7 @@ n_ranks = (int)(sys.argv[-1])
 # generate cuboid fiber file
 if "cuboid.bin" in variables.fiber_file:
   
-  if variables.n_fibers_x is None:
+  if variables.n_fibers_y is None:
     variables.n_fibers_x = 4
     variables.n_fibers_y = variables.n_fibers_x
     variables.n_points_whole_fiber = 20
@@ -39,7 +39,7 @@ if "cuboid.bin" in variables.fiber_file:
       header_str = "opendihu self-generated cuboid  "
       outfile.write(struct.pack('32s',bytes(header_str, 'utf-8')))   # 32 bytes
       outfile.write(struct.pack('i', 40))  # header length
-      outfile.write(struct.pack('i', variables.n_fibers_x*variables.n_fibers_x))   # n_fibers
+      outfile.write(struct.pack('i', variables.n_fibers_x*variables.n_fibers_y))   # n_fibers
       outfile.write(struct.pack('i', variables.n_points_whole_fiber))   # variables.n_points_whole_fiber
       outfile.write(struct.pack('i', 0))   # nBorderPointsXNew
       outfile.write(struct.pack('i', 0))   # nBorderPointsZNew
@@ -50,7 +50,7 @@ if "cuboid.bin" in variables.fiber_file:
       outfile.write(struct.pack('i', 0))   # date
     
       # loop over points
-      for y in range(variables.n_fibers_x):
+      for y in range(variables.n_fibers_y):
         for x in range(variables.n_fibers_x):
           for z in range(variables.n_points_whole_fiber):
             point = [x*(float)(size_x)/(variables.n_fibers_x), y*(float)(size_y)/(variables.n_fibers_y), z*(float)(size_z)/(variables.n_points_whole_fiber)]
@@ -76,7 +76,7 @@ variables.output_writer_emg = []
 if variables.paraview_output:
   #variables.output_writer_emg.append({"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + variables.scenario_name + "/emg", "binary": True, "fixedFormat": False, "combineFiles": True})
   variables.output_writer_fibers.append({"format": "Paraview", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep), "filename": "out/" + variables.scenario_name + "/fibers", "binary": True, "fixedFormat": False, "onlyNodalValues": True, "combineFiles": True})
-  variables.output_writer_fibers.append({"format": "PythonFile", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep), "filename": "out/" + variables.scenario_name + "/fibers", "binary": True, "onlyNodalValue": True, "combineFiles": True})
+  #variables.output_writer_fibers.append({"format": "PythonFile", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep), "filename": "out/" + variables.scenario_name + "/fibers", "binary": True, "onlyNodalValue": True, "combineFiles": True})
 if variables.adios_output:
   #variables.output_writer_emg.append({"format": "MegaMol", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + variables.scenario_name + "/emg", "useFrontBackBuffer": False})
   variables.output_writer_fibers.append({"format": "MegaMol", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep), "filename": "out/" + variables.scenario_name + "/fibers", "combineNInstances": variables.n_subdomains_xy, "useFrontBackBuffer": False})

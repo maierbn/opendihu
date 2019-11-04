@@ -84,6 +84,7 @@ vars.Add(EnumVariable('BUILD_TYPE', 'The build type, according to that different
 vars.Add(BoolVariable('travis_ci', 'Do not compile and run tests, but compile all examples.', 0))
 vars.Add(BoolVariable('no_tests', 'Do not compile and run tests.', 0))
 vars.Add(BoolVariable('no_examples', 'Do not compile examples.', 0))
+vars.Add(BoolVariable('gprof', 'Include flags for gprof profiling.', False))
 vars.Add(BoolVariable('USE_CRAY_PAT', 'Compile with craypat regions.', False))
 vars.Add(BoolVariable('USE_HPL', 'Compile with -hpl option.', False))
 vars.Add(BoolVariable('USE_MEGAMOL', 'Use additional linker flags to link to the megamol source file.', False))
@@ -249,8 +250,10 @@ else:
     #env.MergeFlags('-fastsse -g -noswitcherror -std=c++14 -Mvect=simd -acc -ta=host,tesla:cc60,time -Minfo=accel -laccg -laccapi -laccn -laccg2 -lcudadevice')
     env.MergeFlags('-noswitcherror -std=c++14') # managed,
   else:
-    env.MergeFlags('-Ofast -pg -g')   # fastest with GNU and Intel
-    env.Append(LINKFLAGS = "-pg")   # add gprof flags for linker
+    env.MergeFlags('-Ofast')   # fastest with GNU and Intel
+    if env["gprof"]:
+      env.Append(LINKFLAGS = "-pg")   # add gprof flags for linker
+      env.MergeFlags('-pg -g')
   
   if env["USE_CRAY_PAT"]:
     print("USE_CRAY_PAT=True: Compiling with -DHAVE_PAT (uses PAT_region_begin())\n")

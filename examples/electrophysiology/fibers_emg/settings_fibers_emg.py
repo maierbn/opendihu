@@ -270,7 +270,10 @@ config = {
                     for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x)) \
                       for fiber_no in [get_fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)] \
                         for motor_unit_no in [get_motor_unit_no(fiber_no)]],
-                "OutputWriter" : variables.output_writer_fibers,
+                "OutputWriter" : [
+                   {"format": "MegaMol", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep), "filename": "out/" + variables.scenario_name + "/fibers", 
+                    "combineNInstances": 1, "useFrontBackBuffer": False}
+                ] if variables.adios_output else variables.output_writer_fibers,
               },
             },
           }

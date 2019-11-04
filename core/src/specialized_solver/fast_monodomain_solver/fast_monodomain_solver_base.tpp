@@ -182,15 +182,9 @@ initialize()
   LOG(DEBUG) << nInstancesToCompute_ << " instances to compute, " << nVcVectors << " Vc vectors, size of double_v: " << Vc::double_v::Size;
 
   // initialize values
-  std::array<Vc::double_v,nStates> states;
   for (int i = 0; i < fiberPointBuffers_.size(); i++)
   {
-    initializeStates(states);
-
-    for (int j = 0; j < nStates; j++)
-    {
-      fiberPointBuffers_[i].states[j] = states[j];
-    }
+    initializeStates(fiberPointBuffers_[i].states);
   }
 
 }
@@ -503,15 +497,8 @@ compute0D(double startTime, double timeStepWidth, int nTimeSteps)
     bool currentPointIsInCenter = ((fiberCenterIndex - indexInFiber) < Vc::double_v::Size);
     VLOG(3) << "currentPointIsInCenter: " << currentPointIsInCenter << ", pointBuffersNo: " << pointBuffersNo << ", fiberDataNo: " << fiberDataNo << ", indexInFiber:" << indexInFiber << ", fiberCenterIndex: " << fiberCenterIndex << ", " << (indexInFiber - fiberCenterIndex) << " < " << Vc::double_v::Size;
 
-    int motorUnitNo = fiberData_[fiberDataNo].motorUnitNo;
+    const int &motorUnitNo = fiberData_[fiberDataNo].motorUnitNo;
     VLOG(3) << "pointBuffersNo: " << pointBuffersNo << ", fiberDataNo: " << fiberDataNo << ", indexInFiber: " << indexInFiber << ", motorUnitNo: " << motorUnitNo;
-
-    // get state values to prevent aliasing inefficiencies for the compiler
-    std::array<double_v,nStates> states;
-    for (int i = 0; i < nStates; i++)
-    {
-      states[i] = fiberPointBuffers_[pointBuffersNo].states[i];
-    }
 
     /*
     double_v state0 = fiberPointBuffers_[pointBuffersNo].states[0];
@@ -612,16 +599,11 @@ compute0D(double startTime, double timeStepWidth, int nTimeSteps)
         LOG(INFO) << "t: " << currentTime << ", stimulate fiber " << fiberData_[fiberDataNo].fiberNoGlobal << ", MU " << motorUnitNo;
 
 
-      compute0DInstance(states, currentTime, timeStepWidth, stimulate && currentPointIsInCenter);
+      compute0DInstance(fiberPointBuffers_[pointBuffersNo].states, currentTime, timeStepWidth, stimulate && currentPointIsInCenter);
       // perform one step of the heun scheme
 
     }
 
-    // store resulting state values
-    for (int i = 0; i < nStates; i++)
-    {
-      fiberPointBuffers_[pointBuffersNo].states[i] = states[i];
-    }
 
     //VLOG(3) << "-> index " << pointBuffersNo << ", states [" << state0 << "," << state1 << "," << state2 << "," << state3 << "]";
   }

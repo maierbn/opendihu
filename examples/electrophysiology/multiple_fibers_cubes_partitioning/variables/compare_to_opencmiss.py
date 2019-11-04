@@ -13,9 +13,9 @@ Cm = 0.58                           # [uF/cm^2] membrane capacitance, (1 = fast 
 # -----------------
 end_time = 10.0                     # [ms] end time of the simulation
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
-dt_0D = 1e-4                        # [ms] timestep width of ODEs
-dt_1D = 5e-4                        # [ms] timestep width of diffusion
-dt_splitting = 5e-4                 # [ms] overall timestep width of strang splitting
+dt_0D = 1e-3                        # [ms] timestep width of ODEs
+dt_1D = 1e-3                        # [ms] timestep width of diffusion
+dt_splitting = dt_1D                 # [ms] overall timestep width of strang splitting
 output_timestep = 0.1               # [ms] timestep for output files
 activation_start_time = 1           # [ms] time when to start checking for stimulation
 

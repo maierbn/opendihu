@@ -17,9 +17,26 @@ Vc::double_v pow4(Vc::double_v x)
   return sqr(sqr(x));
 }
 
+double maxX = 0;
+double minX = 0;
+
+Vc::double_v exponential(Vc::double_v x)
+{
+  //return Vc::exp(x);
+  // it was determined the x is always in the range [-12,+12]
+
+  // exp(x) = lim n→∞ (1 + x/n)^n, we set n=1024
+  x = 1.0 + x / 1024.;
+  for (int i = 0; i < 10; i++)
+  {
+    x *= x;
+  }
+  return x;
+}
+
 // new_slow_TK_2014_12_08
 void FastMonodomainSolver<Control::MultipleInstances<OperatorSplitting::Strang<Control::MultipleInstances<TimeSteppingScheme::Heun<CellmlAdapter<57, 71, FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1> > > > >, Control::MultipleInstances<TimeSteppingScheme::ImplicitEuler<SpatialDiscretization::FiniteElementMethod<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1>, Quadrature::Gauss<2>, Equation::Dynamic::IsotropicDiffusion> > > > > >::
-compute0DInstance(std::array<Vc::double_v,57> &states, double currentTime, double timeStepWidth, bool stimulate)
+compute0DInstance(Vc::double_v states[], double currentTime, double timeStepWidth, bool stimulate)
 {
   using Vc::double_v;
 
@@ -169,38 +186,38 @@ compute0DInstance(std::array<Vc::double_v,57> &states, double currentTime, doubl
   const double_v rate49 = (( ( - constant69*states[31])*states[49]+ constant70*states[50])+ constant86*algebraic13)+ - constant87*states[49];
   const double_v algebraic12 =  ((( (states[52]/constant71)*constant101+ (states[53]/constant71)*constant102) - constant103)/constant104)*Vc::iif(constant67>=0.635000&&constant67<=0.850000,  (0.700000/(0.850000 - 0.635000))*(constant67 - 0.635000) , Vc::iif(constant67>0.850000&&constant67<=1.17000, 0.700000+ (0.300000/(1.17000 - 0.850000))*(constant67 - 0.850000), Vc::iif(constant67>1.17000&&constant67<=1.25500, 1.00000, Vc::iif(constant67>1.25500&&constant67<=1.97000, 1.00000 -  (1.00000/(1.97000 - 1.25500))*(constant67 - 1.25500), 0.00000))));
   const double_v rate28 = algebraic12;
-  const double_v algebraic1 =  constant16*((states[0] - constant21)/(1.00000 - exp(- ((states[0] - constant21)/constant32))));
-  const double_v algebraic15 =  constant19*exp(- ((states[0] - constant21)/constant34));
+  const double_v algebraic1 =  constant16*((states[0] - constant21)/(1.00000 - exponential(- ((states[0] - constant21)/constant32))));
+  const double_v algebraic15 =  constant19*exponential(- ((states[0] - constant21)/constant34));
   const double_v rate8 =  algebraic1*(1.00000 - states[8]) -  algebraic15*states[8];
-  const double_v algebraic2 = 1.00000/(1.00000+exp((states[0] - constant25)/constant28));
-  const double_v algebraic16 =  1000.00*exp(- ((states[0]+40.0000)/25.7500));
+  const double_v algebraic2 = 1.00000/(1.00000+exponential((states[0] - constant25)/constant28));
+  const double_v algebraic16 =  1000.00*exponential(- ((states[0]+40.0000)/25.7500));
   const double_v rate9 = (algebraic2 - states[9])/algebraic16;
-  const double_v algebraic4 =  constant15*((states[0] - constant20)/(1.00000 - exp(- ((states[0] - constant20)/constant31))));
-  const double_v algebraic18 =  constant18*exp(- ((states[0] - constant20)/constant33));
+  const double_v algebraic4 =  constant15*((states[0] - constant20)/(1.00000 - exponential(- ((states[0] - constant20)/constant31))));
+  const double_v algebraic18 =  constant18*exponential(- ((states[0] - constant20)/constant33));
   const double_v rate10 =  algebraic4*(1.00000 - states[10]) -  algebraic18*states[10];
-  const double_v algebraic3 =  constant14*exp(- ((states[0] - constant22)/constant29));
-  const double_v algebraic17 = constant17/(1.00000+exp(- ((states[0] - constant22)/constant30)));
+  const double_v algebraic3 =  constant14*exponential(- ((states[0] - constant22)/constant29));
+  const double_v algebraic17 = constant17/(1.00000+exponential(- ((states[0] - constant22)/constant30)));
   const double_v rate11 =  algebraic3*(1.00000 - states[11]) -  algebraic17*states[11];
-  const double_v algebraic5 = 1.00000/(1.00000+exp((states[0] - constant24)/constant27));
+  const double_v algebraic5 = 1.00000/(1.00000+exponential((states[0] - constant24)/constant27));
   const double_v algebraic19 = 8571.00/(0.200000+ 5.65000*sqr((states[0]+constant48)/100.000));
   const double_v rate12 = (algebraic5 - states[12])/algebraic19;
-  const double_v algebraic6 =  constant16*((states[1] - constant21)/(1.00000 - exp(- ((states[1] - constant21)/constant32))));
-  const double_v algebraic20 =  constant19*exp(- ((states[1] - constant21)/constant34));
+  const double_v algebraic6 =  constant16*((states[1] - constant21)/(1.00000 - exponential(- ((states[1] - constant21)/constant32))));
+  const double_v algebraic20 =  constant19*exponential(- ((states[1] - constant21)/constant34));
   const double_v rate13 =  algebraic6*(1.00000 - states[13]) -  algebraic20*states[13];
-  const double_v algebraic7 = 1.00000/(1.00000+exp((states[1] - constant25)/constant28));
-  const double_v algebraic21 =  1.00000*exp(- ((states[1]+40.0000)/25.7500));
+  const double_v algebraic7 = 1.00000/(1.00000+exponential((states[1] - constant25)/constant28));
+  const double_v algebraic21 =  1.00000*exponential(- ((states[1]+40.0000)/25.7500));
   const double_v rate14 = (algebraic7 - states[14])/algebraic21;
-  const double_v algebraic9 =  constant15*((states[1] - constant20)/(1.00000 - exp(- ((states[1] - constant20)/constant31))));
-  const double_v algebraic23 =  constant18*exp(- ((states[1] - constant20)/constant33));
+  const double_v algebraic9 =  constant15*((states[1] - constant20)/(1.00000 - exponential(- ((states[1] - constant20)/constant31))));
+  const double_v algebraic23 =  constant18*exponential(- ((states[1] - constant20)/constant33));
   const double_v rate15 =  algebraic9*(1.00000 - states[15]) -  algebraic23*states[15];
-  const double_v algebraic8 =  constant14*exp(- ((states[1] - constant22)/constant29));
-  const double_v algebraic22 = constant17/(1.00000+exp(- ((states[1] - constant22)/constant30)));
+  const double_v algebraic8 =  constant14*exponential(- ((states[1] - constant22)/constant29));
+  const double_v algebraic22 = constant17/(1.00000+exponential(- ((states[1] - constant22)/constant30)));
   const double_v rate16 =  algebraic8*(1.00000 - states[16]) -  algebraic22*states[16];
-  const double_v algebraic10 = 1.00000/(1.00000+exp((states[1] - constant24)/constant27));
+  const double_v algebraic10 = 1.00000/(1.00000+exponential((states[1] - constant24)/constant27));
   const double_v algebraic24 = 8571.00/(0.200000+ 5.65000*sqr((states[1]+constant48)/100.000));
   const double_v rate17 = (algebraic10 - states[17])/algebraic24;
-  const double_v algebraic11 =  0.500000*constant58*exp((states[1] - constant60)/( 8.00000*constant59));
-  const double_v algebraic25 =  0.500000*constant58*exp((constant60 - states[1])/( 8.00000*constant59));
+  const double_v algebraic11 =  0.500000*constant58*exponential((states[1] - constant60)/( 8.00000*constant59));
+  const double_v algebraic25 =  0.500000*constant58*exponential((constant60 - states[1])/( 8.00000*constant59));
   const double_v rate23 =  - constant55*states[23]+ constant56*states[18]+ -4.00000*algebraic11*states[23]+ algebraic25*states[24];
   const double_v rate18 =  constant55*states[23]+ - constant56*states[18]+( -4.00000*algebraic11*states[18])/constant57+ constant57*algebraic25*states[19];
   const double_v rate24 =  4.00000*algebraic11*states[23]+ - algebraic25*states[24]+( - constant55*states[24])/constant57+ constant57*constant56*states[19]+ -3.00000*algebraic11*states[24]+ 2.00000*algebraic25*states[25];
@@ -211,57 +228,57 @@ compute0DInstance(std::array<Vc::double_v,57> &states, double currentTime, doubl
   const double_v rate21 = ( constant55*states[26])/pow(constant57, 3.00000)+ - constant56*pow(constant57, 3.00000)*states[21]+( 2.00000*algebraic11*states[20])/constant57+ -3.00000*algebraic25*constant57*states[21]+( - algebraic11*states[21])/constant57+ 4.00000*constant57*algebraic25*states[22];
   const double_v rate27 =  algebraic11*states[26]+ -4.00000*algebraic25*states[27]+( - constant55*states[27])/pow(constant57, 4.00000)+ constant56*pow(constant57, 4.00000)*states[22];
   const double_v rate22 = ( algebraic11*states[21])/constant57+ -4.00000*constant57*algebraic25*states[22]+( constant55*states[27])/pow(constant57, 4.00000)+ - constant56*pow(constant57, 4.00000)*states[22];
-  const double_v algebraic31 =  states[0]*((states[3] -  states[4]*exp(( -1.00000*constant6*states[0])/( constant35*constant36)))/(1.00000 - exp(( -1.00000*constant6*states[0])/( constant35*constant36))));
+  const double_v algebraic31 =  states[0]*((states[3] -  states[4]*exponential(( -1.00000*constant6*states[0])/( constant35*constant36)))/(1.00000 - exponential(( -1.00000*constant6*states[0])/( constant35*constant36))));
   const double_v algebraic14 =  (( constant35*constant36)/constant6)*log(states[4]/states[3]);
-  const double_v algebraic37 =  states[4]*exp( ( - constant41*algebraic14)*(constant6/( constant35*constant36)));
+  const double_v algebraic37 =  states[4]*exponential( ( - constant41*algebraic14)*(constant6/( constant35*constant36)));
   const double_v algebraic38 =  constant40*(sqr(algebraic37)/(constant42+sqr(algebraic37)));
-  const double_v algebraic39 = 1.00000 - 1.0/(1.00000+( constant43*(1.00000+sqr(algebraic37)/constant42))/( pow(constant46, 2.00000)*exp(( 2.00000*(1.00000 - constant41)*states[0]*constant6)/( constant35*constant36))));
+  const double_v algebraic39 = 1.00000 - 1.0/(1.00000+( constant43*(1.00000+sqr(algebraic37)/constant42))/( pow(constant46, 2.00000)*exponential(( 2.00000*(1.00000 - constant41)*states[0]*constant6)/( constant35*constant36))));
   const double_v algebraic40 =  algebraic38*algebraic39;
   const double_v algebraic41 =  algebraic40*Vc::iif(algebraic31>0.00000, double_v(Vc::One), double_v(Vc::Zero))*(algebraic31/50.0000);
   const double_v algebraic42 =  ( constant38*pow4(states[8]))*states[9];
   const double_v algebraic43 =  algebraic42*(algebraic31/50.0000);
-  const double_v algebraic47 =  (1.00000/7.00000)*(exp(states[7]/67.3000) - 1.00000);
-  const double_v algebraic48 = 1.0/(1.00000+ 0.120000*exp( -0.100000*states[0]*(constant6/( constant35*constant36)))+ 0.0400000*algebraic47*exp(- ( states[0]*(constant6/( constant35*constant36)))));
+  const double_v algebraic47 =  (1.00000/7.00000)*(exponential(states[7]/67.3000) - 1.00000);
+  const double_v algebraic48 = 1.0/(1.00000+ 0.120000*exponential( -0.100000*states[0]*(constant6/( constant35*constant36)))+ 0.0400000*algebraic47*exponential(- ( states[0]*(constant6/( constant35*constant36)))));
   const double_v algebraic49 =  constant6*(constant47/( sqr(1.00000+constant44/states[4])*pow3(1.00000+constant45/states[5])));
   const double_v algebraic50 =  algebraic49*algebraic48;
   const double_v rate4 = (algebraic41+algebraic43+constant12+ - 2.00000*algebraic50)/( (1000.00/1.00000)*constant6*constant5)+(states[2] - states[4])/constant10;
   const double_v algebraic45 =  ( ( constant39*pow3(states[10]))*states[11])*states[12];
-  const double_v algebraic44 =  states[0]*((states[5] -  states[7]*exp(( -1.00000*constant6*states[0])/( constant35*constant36)))/(1.00000 - exp(( -1.00000*constant6*states[0])/( constant35*constant36))));
+  const double_v algebraic44 =  states[0]*((states[5] -  states[7]*exponential(( -1.00000*constant6*states[0])/( constant35*constant36)))/(1.00000 - exponential(( -1.00000*constant6*states[0])/( constant35*constant36))));
   const double_v algebraic46 =  algebraic45*(algebraic44/75.0000);
   const double_v rate7 = (algebraic46+constant13+ 3.00000*algebraic50)/( (1000.00/1.00000)*constant6*constant5)+(states[6] - states[7])/constant11;
   const double_v algebraic0 =  (1000.00/1.00000)*((states[0] - states[1])/constant2);
-  const double_v algebraic27 = 156.500/(5.00000+exp(( - constant6*algebraic14)/( constant35*constant36)));
+  const double_v algebraic27 = 156.500/(5.00000+exponential(( - constant6*algebraic14)/( constant35*constant36)));
   const double_v algebraic28 = 156.500 -  5.00000*algebraic27;
-  const double_v algebraic34 =  states[0]*((algebraic27 -  algebraic28*exp(( constant6*states[0])/( constant35*constant36)))/(1.00000 - exp(( constant6*states[0])/( constant35*constant36))));
-  const double_v algebraic33 = 1.00000/(1.00000+exp((states[0] - constant23)/constant26));
+  const double_v algebraic34 =  states[0]*((algebraic27 -  algebraic28*exponential(( constant6*states[0])/( constant35*constant36)))/(1.00000 - exponential(( constant6*states[0])/( constant35*constant36))));
+  const double_v algebraic33 = 1.00000/(1.00000+exponential((states[0] - constant23)/constant26));
   const double_v algebraic35 =  constant37*pow4(algebraic33);
   const double_v algebraic36 =  algebraic35*(algebraic34/45.0000);
   const double_v algebraic51 = algebraic36+algebraic41+algebraic43+algebraic46+algebraic50+- constant54;
   const double_v rate0 = - ((algebraic51+algebraic0)/constant0);
-  const double_v algebraic32 =  states[1]*((states[3] -  states[2]*exp(( -1.00000*constant6*states[1])/( constant35*constant36)))/(1.00000 - exp(( -1.00000*constant6*states[1])/( constant35*constant36))));
+  const double_v algebraic32 =  states[1]*((states[3] -  states[2]*exponential(( -1.00000*constant6*states[1])/( constant35*constant36)))/(1.00000 - exponential(( -1.00000*constant6*states[1])/( constant35*constant36))));
   const double_v algebraic26 =  (( constant35*constant36)/constant6)*log(states[2]/states[3]);
-  const double_v algebraic56 =  states[2]*exp( ( - constant41*algebraic26)*(constant6/( constant35*constant36)));
+  const double_v algebraic56 =  states[2]*exponential( ( - constant41*algebraic26)*(constant6/( constant35*constant36)));
   const double_v algebraic57 =  constant40*(sqr(algebraic56)/(constant42+sqr(algebraic56)));
-  const double_v algebraic58 = 1.00000 - 1.0/(1.00000+( constant43*(1.00000+sqr(algebraic56)/constant42))/( pow(constant46, 2.00000)*exp(( 2.00000*(1.00000 - constant41)*states[1]*constant6)/( constant35*constant36))));
+  const double_v algebraic58 = 1.00000 - 1.0/(1.00000+( constant43*(1.00000+sqr(algebraic56)/constant42))/( pow(constant46, 2.00000)*exponential(( 2.00000*(1.00000 - constant41)*states[1]*constant6)/( constant35*constant36))));
   const double_v algebraic59 =  algebraic57*algebraic58;
   const double_v algebraic60 =  constant50*algebraic59*(algebraic32/50.0000);
   const double_v algebraic61 =  ( constant38*pow4(states[13]))*states[14];
   const double_v algebraic62 =  constant51*algebraic61*(algebraic32/50.0000);
-  const double_v algebraic66 =  (1.00000/7.00000)*(exp(states[6]/67.3000) - 1.00000);
-  const double_v algebraic67 = 1.0/(1.00000+ 0.120000*exp( -0.100000*states[1]*(constant6/( constant35*constant36)))+ 0.0400000*algebraic66*exp(- ( states[1]*(constant6/( constant35*constant36)))));
+  const double_v algebraic66 =  (1.00000/7.00000)*(exponential(states[6]/67.3000) - 1.00000);
+  const double_v algebraic67 = 1.0/(1.00000+ 0.120000*exponential( -0.100000*states[1]*(constant6/( constant35*constant36)))+ 0.0400000*algebraic66*exponential(- ( states[1]*(constant6/( constant35*constant36)))));
   const double_v algebraic68 =  constant6*(constant47/( sqr(1.00000+constant44/states[2])*pow3(1.00000+constant45/states[5])));
   const double_v algebraic69 =  constant53*algebraic68*algebraic67;
   const double_v rate3 =  - constant9*((algebraic60+algebraic62+constant12+ - 2.00000*algebraic69)/( (1000.00/1.00000)*constant6*constant3)) - (algebraic41+algebraic43+constant12+ -2.00000*algebraic50)/( (1000.00/1.00000)*constant6*constant4);
   const double_v rate2 = (algebraic60+algebraic62+constant12+ - 2.00000*algebraic69)/( (1000.00/1.00000)*constant6*constant3) - (states[2] - states[4])/constant7;
   const double_v algebraic64 =  ( ( constant39*pow3(states[15]))*states[16])*states[17];
-  const double_v algebraic63 =  states[1]*((states[5] -  states[6]*exp(( -1.00000*constant6*states[1])/( constant35*constant36)))/(1.00000 - exp(( -1.00000*constant6*states[1])/( constant35*constant36))));
+  const double_v algebraic63 =  states[1]*((states[5] -  states[6]*exponential(( -1.00000*constant6*states[1])/( constant35*constant36)))/(1.00000 - exponential(( -1.00000*constant6*states[1])/( constant35*constant36))));
   const double_v algebraic65 =  constant52*algebraic64*(algebraic63/75.0000);
   const double_v rate5 =  - constant9*((algebraic65+constant13+ 3.00000*algebraic69)/( (1000.00/1.00000)*constant6*constant3)) - (algebraic46+constant13+ 3.00000*algebraic50)/( (1000.00/1.00000)*constant6*constant4);
   const double_v rate6 = (algebraic65+constant13+ 3.00000*algebraic69)/( (1000.00/1.00000)*constant6*constant3) - (states[6] - states[7])/constant8;
-  const double_v algebraic29 = 156.500/(5.00000+exp(( - constant6*algebraic26)/( constant35*constant36)));
+  const double_v algebraic29 = 156.500/(5.00000+exponential(( - constant6*algebraic26)/( constant35*constant36)));
   const double_v algebraic30 = 156.500 -  5.00000*algebraic29;
-  const double_v algebraic53 =  states[1]*((algebraic29 -  algebraic30*exp(( constant6*states[1])/( constant35*constant36)))/(1.00000 - exp(( constant6*states[1])/( constant35*constant36))));
-  const double_v algebraic52 = 1.00000/(1.00000+exp((states[1] - constant23)/constant26));
+  const double_v algebraic53 =  states[1]*((algebraic29 -  algebraic30*exponential(( constant6*states[1])/( constant35*constant36)))/(1.00000 - exponential(( constant6*states[1])/( constant35*constant36))));
+  const double_v algebraic52 = 1.00000/(1.00000+exponential((states[1] - constant23)/constant26));
   const double_v algebraic54 =  constant37*pow4(algebraic52);
   const double_v algebraic55 =  constant49*algebraic54*(algebraic53/45.0000);
   const double_v algebraic70 = algebraic55+algebraic60+algebraic62+algebraic65+algebraic69;
@@ -369,38 +386,38 @@ compute0DInstance(std::array<Vc::double_v,57> &states, double currentTime, doubl
   const double_v intermediateRate49 = (( ( - constant69*intermediateState31)*intermediateState49+ constant70*intermediateState50)+ constant86*intermediateAlgebraic13)+ - constant87*intermediateState49;
   const double_v intermediateAlgebraic12 =  ((( (intermediateState52/constant71)*constant101+ (intermediateState53/constant71)*constant102) - constant103)/constant104)*Vc::iif(constant67>=0.635000&&constant67<=0.850000 ,  (0.700000/(0.850000 - 0.635000))*(constant67 - 0.635000) , Vc::iif(constant67>0.850000&&constant67<=1.17000 , 0.700000+ (0.300000/(1.17000 - 0.850000))*(constant67 - 0.850000) , Vc::iif(constant67>1.17000&&constant67<=1.25500 , 1.00000 , Vc::iif(constant67>1.25500&&constant67<=1.97000 , 1.00000 -  (1.00000/(1.97000 - 1.25500))*(constant67 - 1.25500) , 0.00000))));
   const double_v intermediateRate28 = intermediateAlgebraic12;
-  const double_v intermediateAlgebraic1 =  constant16*((intermediateState0 - constant21)/(1.00000 - exp(- ((intermediateState0 - constant21)/constant32))));
-  const double_v intermediateAlgebraic15 =  constant19*exp(- ((intermediateState0 - constant21)/constant34));
+  const double_v intermediateAlgebraic1 =  constant16*((intermediateState0 - constant21)/(1.00000 - exponential(- ((intermediateState0 - constant21)/constant32))));
+  const double_v intermediateAlgebraic15 =  constant19*exponential(- ((intermediateState0 - constant21)/constant34));
   const double_v intermediateRate8 =  intermediateAlgebraic1*(1.00000 - intermediateState8) -  intermediateAlgebraic15*intermediateState8;
-  const double_v intermediateAlgebraic2 = 1.00000/(1.00000+exp((intermediateState0 - constant25)/constant28));
-  const double_v intermediateAlgebraic16 =  1000.00*exp(- ((intermediateState0+40.0000)/25.7500));
+  const double_v intermediateAlgebraic2 = 1.00000/(1.00000+exponential((intermediateState0 - constant25)/constant28));
+  const double_v intermediateAlgebraic16 =  1000.00*exponential(- ((intermediateState0+40.0000)/25.7500));
   const double_v intermediateRate9 = (intermediateAlgebraic2 - intermediateState9)/intermediateAlgebraic16;
-  const double_v intermediateAlgebraic4 =  constant15*((intermediateState0 - constant20)/(1.00000 - exp(- ((intermediateState0 - constant20)/constant31))));
-  const double_v intermediateAlgebraic18 =  constant18*exp(- ((intermediateState0 - constant20)/constant33));
+  const double_v intermediateAlgebraic4 =  constant15*((intermediateState0 - constant20)/(1.00000 - exponential(- ((intermediateState0 - constant20)/constant31))));
+  const double_v intermediateAlgebraic18 =  constant18*exponential(- ((intermediateState0 - constant20)/constant33));
   const double_v intermediateRate10 =  intermediateAlgebraic4*(1.00000 - intermediateState10) -  intermediateAlgebraic18*intermediateState10;
-  const double_v intermediateAlgebraic3 =  constant14*exp(- ((intermediateState0 - constant22)/constant29));
-  const double_v intermediateAlgebraic17 = constant17/(1.00000+exp(- ((intermediateState0 - constant22)/constant30)));
+  const double_v intermediateAlgebraic3 =  constant14*exponential(- ((intermediateState0 - constant22)/constant29));
+  const double_v intermediateAlgebraic17 = constant17/(1.00000+exponential(- ((intermediateState0 - constant22)/constant30)));
   const double_v intermediateRate11 =  intermediateAlgebraic3*(1.00000 - intermediateState11) -  intermediateAlgebraic17*intermediateState11;
-  const double_v intermediateAlgebraic5 = 1.00000/(1.00000+exp((intermediateState0 - constant24)/constant27));
+  const double_v intermediateAlgebraic5 = 1.00000/(1.00000+exponential((intermediateState0 - constant24)/constant27));
   const double_v intermediateAlgebraic19 = 8571.00/(0.200000+ 5.65000*sqr((intermediateState0+constant48)/100.000));
   const double_v intermediateRate12 = (intermediateAlgebraic5 - intermediateState12)/intermediateAlgebraic19;
-  const double_v intermediateAlgebraic6 =  constant16*((intermediateState1 - constant21)/(1.00000 - exp(- ((intermediateState1 - constant21)/constant32))));
-  const double_v intermediateAlgebraic20 =  constant19*exp(- ((intermediateState1 - constant21)/constant34));
+  const double_v intermediateAlgebraic6 =  constant16*((intermediateState1 - constant21)/(1.00000 - exponential(- ((intermediateState1 - constant21)/constant32))));
+  const double_v intermediateAlgebraic20 =  constant19*exponential(- ((intermediateState1 - constant21)/constant34));
   const double_v intermediateRate13 =  intermediateAlgebraic6*(1.00000 - intermediateState13) -  intermediateAlgebraic20*intermediateState13;
-  const double_v intermediateAlgebraic7 = 1.00000/(1.00000+exp((intermediateState1 - constant25)/constant28));
-  const double_v intermediateAlgebraic21 =  1.00000*exp(- ((intermediateState1+40.0000)/25.7500));
+  const double_v intermediateAlgebraic7 = 1.00000/(1.00000+exponential((intermediateState1 - constant25)/constant28));
+  const double_v intermediateAlgebraic21 =  1.00000*exponential(- ((intermediateState1+40.0000)/25.7500));
   const double_v intermediateRate14 = (intermediateAlgebraic7 - intermediateState14)/intermediateAlgebraic21;
-  const double_v intermediateAlgebraic9 =  constant15*((intermediateState1 - constant20)/(1.00000 - exp(- ((intermediateState1 - constant20)/constant31))));
-  const double_v intermediateAlgebraic23 =  constant18*exp(- ((intermediateState1 - constant20)/constant33));
+  const double_v intermediateAlgebraic9 =  constant15*((intermediateState1 - constant20)/(1.00000 - exponential(- ((intermediateState1 - constant20)/constant31))));
+  const double_v intermediateAlgebraic23 =  constant18*exponential(- ((intermediateState1 - constant20)/constant33));
   const double_v intermediateRate15 =  intermediateAlgebraic9*(1.00000 - intermediateState15) -  intermediateAlgebraic23*intermediateState15;
-  const double_v intermediateAlgebraic8 =  constant14*exp(- ((intermediateState1 - constant22)/constant29));
-  const double_v intermediateAlgebraic22 = constant17/(1.00000+exp(- ((intermediateState1 - constant22)/constant30)));
+  const double_v intermediateAlgebraic8 =  constant14*exponential(- ((intermediateState1 - constant22)/constant29));
+  const double_v intermediateAlgebraic22 = constant17/(1.00000+exponential(- ((intermediateState1 - constant22)/constant30)));
   const double_v intermediateRate16 =  intermediateAlgebraic8*(1.00000 - intermediateState16) -  intermediateAlgebraic22*intermediateState16;
-  const double_v intermediateAlgebraic10 = 1.00000/(1.00000+exp((intermediateState1 - constant24)/constant27));
+  const double_v intermediateAlgebraic10 = 1.00000/(1.00000+exponential((intermediateState1 - constant24)/constant27));
   const double_v intermediateAlgebraic24 = 8571.00/(0.200000+ 5.65000*sqr((intermediateState1+constant48)/100.000));
   const double_v intermediateRate17 = (intermediateAlgebraic10 - intermediateState17)/intermediateAlgebraic24;
-  const double_v intermediateAlgebraic11 =  0.500000*constant58*exp((intermediateState1 - constant60)/( 8.00000*constant59));
-  const double_v intermediateAlgebraic25 =  0.500000*constant58*exp((constant60 - intermediateState1)/( 8.00000*constant59));
+  const double_v intermediateAlgebraic11 =  0.500000*constant58*exponential((intermediateState1 - constant60)/( 8.00000*constant59));
+  const double_v intermediateAlgebraic25 =  0.500000*constant58*exponential((constant60 - intermediateState1)/( 8.00000*constant59));
   const double_v intermediateRate23 =  - constant55*intermediateState23+ constant56*intermediateState18+ -4.00000*intermediateAlgebraic11*intermediateState23+ intermediateAlgebraic25*intermediateState24;
   const double_v intermediateRate18 =  constant55*intermediateState23+ - constant56*intermediateState18+( -4.00000*intermediateAlgebraic11*intermediateState18)/constant57+ constant57*intermediateAlgebraic25*intermediateState19;
   const double_v intermediateRate24 =  4.00000*intermediateAlgebraic11*intermediateState23+ - intermediateAlgebraic25*intermediateState24+( - constant55*intermediateState24)/constant57+ constant57*constant56*intermediateState19+ -3.00000*intermediateAlgebraic11*intermediateState24+ 2.00000*intermediateAlgebraic25*intermediateState25;
@@ -411,57 +428,57 @@ compute0DInstance(std::array<Vc::double_v,57> &states, double currentTime, doubl
   const double_v intermediateRate21 = ( constant55*intermediateState26)/pow(constant57, 3.00000)+ - constant56*pow(constant57, 3.00000)*intermediateState21+( 2.00000*intermediateAlgebraic11*intermediateState20)/constant57+ -3.00000*intermediateAlgebraic25*constant57*intermediateState21+( - intermediateAlgebraic11*intermediateState21)/constant57+ 4.00000*constant57*intermediateAlgebraic25*intermediateState22;
   const double_v intermediateRate27 =  intermediateAlgebraic11*intermediateState26+ -4.00000*intermediateAlgebraic25*intermediateState27+( - constant55*intermediateState27)/pow(constant57, 4.00000)+ constant56*pow(constant57, 4.00000)*intermediateState22;
   const double_v intermediateRate22 = ( intermediateAlgebraic11*intermediateState21)/constant57+ -4.00000*constant57*intermediateAlgebraic25*intermediateState22+( constant55*intermediateState27)/pow(constant57, 4.00000)+ - constant56*pow(constant57, 4.00000)*intermediateState22;
-  const double_v intermediateAlgebraic31 =  intermediateState0*((intermediateState3 -  intermediateState4*exp(( -1.00000*constant6*intermediateState0)/( constant35*constant36)))/(1.00000 - exp(( -1.00000*constant6*intermediateState0)/( constant35*constant36))));
+  const double_v intermediateAlgebraic31 =  intermediateState0*((intermediateState3 -  intermediateState4*exponential(( -1.00000*constant6*intermediateState0)/( constant35*constant36)))/(1.00000 - exponential(( -1.00000*constant6*intermediateState0)/( constant35*constant36))));
   const double_v intermediateAlgebraic14 =  (( constant35*constant36)/constant6)*log(intermediateState4/intermediateState3);
-  const double_v intermediateAlgebraic37 =  intermediateState4*exp( ( - constant41*intermediateAlgebraic14)*(constant6/( constant35*constant36)));
+  const double_v intermediateAlgebraic37 =  intermediateState4*exponential( ( - constant41*intermediateAlgebraic14)*(constant6/( constant35*constant36)));
   const double_v intermediateAlgebraic38 =  constant40*(sqr(intermediateAlgebraic37)/(constant42+sqr(intermediateAlgebraic37)));
-  const double_v intermediateAlgebraic39 = 1.00000 - 1.0/(1.00000+( constant43*(1.00000+sqr(intermediateAlgebraic37)/constant42))/( pow(constant46, 2.00000)*exp(( 2.00000*(1.00000 - constant41)*intermediateState0*constant6)/( constant35*constant36))));
+  const double_v intermediateAlgebraic39 = 1.00000 - 1.0/(1.00000+( constant43*(1.00000+sqr(intermediateAlgebraic37)/constant42))/( pow(constant46, 2.00000)*exponential(( 2.00000*(1.00000 - constant41)*intermediateState0*constant6)/( constant35*constant36))));
   const double_v intermediateAlgebraic40 =  intermediateAlgebraic38*intermediateAlgebraic39;
   const double_v intermediateAlgebraic41 =  intermediateAlgebraic40*Vc::iif(intermediateAlgebraic31>0.00000 , double_v(Vc::One) , double_v(Vc::Zero))*(intermediateAlgebraic31/50.0000);
   const double_v intermediateAlgebraic42 =  ( constant38*pow4(intermediateState8))*intermediateState9;
   const double_v intermediateAlgebraic43 =  intermediateAlgebraic42*(intermediateAlgebraic31/50.0000);
-  const double_v intermediateAlgebraic47 =  (1.00000/7.00000)*(exp(intermediateState7/67.3000) - 1.00000);
-  const double_v intermediateAlgebraic48 = 1.0/(1.00000+ 0.120000*exp( -0.100000*intermediateState0*(constant6/( constant35*constant36)))+ 0.0400000*intermediateAlgebraic47*exp(- ( intermediateState0*(constant6/( constant35*constant36)))));
+  const double_v intermediateAlgebraic47 =  (1.00000/7.00000)*(exponential(intermediateState7/67.3000) - 1.00000);
+  const double_v intermediateAlgebraic48 = 1.0/(1.00000+ 0.120000*exponential( -0.100000*intermediateState0*(constant6/( constant35*constant36)))+ 0.0400000*intermediateAlgebraic47*exponential(- ( intermediateState0*(constant6/( constant35*constant36)))));
   const double_v intermediateAlgebraic49 =  constant6*(constant47/( sqr(1.00000+constant44/intermediateState4)*pow3(1.00000+constant45/intermediateState5)));
   const double_v intermediateAlgebraic50 =  intermediateAlgebraic49*intermediateAlgebraic48;
   const double_v intermediateRate4 = (intermediateAlgebraic41+intermediateAlgebraic43+constant12+ - 2.00000*intermediateAlgebraic50)/( (1000.00/1.00000)*constant6*constant5)+(intermediateState2 - intermediateState4)/constant10;
   const double_v intermediateAlgebraic45 =  ( ( constant39*pow3(intermediateState10))*intermediateState11)*intermediateState12;
-  const double_v intermediateAlgebraic44 =  intermediateState0*((intermediateState5 -  intermediateState7*exp(( -1.00000*constant6*intermediateState0)/( constant35*constant36)))/(1.00000 - exp(( -1.00000*constant6*intermediateState0)/( constant35*constant36))));
+  const double_v intermediateAlgebraic44 =  intermediateState0*((intermediateState5 -  intermediateState7*exponential(( -1.00000*constant6*intermediateState0)/( constant35*constant36)))/(1.00000 - exponential(( -1.00000*constant6*intermediateState0)/( constant35*constant36))));
   const double_v intermediateAlgebraic46 =  intermediateAlgebraic45*(intermediateAlgebraic44/75.0000);
   const double_v intermediateRate7 = (intermediateAlgebraic46+constant13+ 3.00000*intermediateAlgebraic50)/( (1000.00/1.00000)*constant6*constant5)+(intermediateState6 - intermediateState7)/constant11;
   const double_v intermediateAlgebraic0 =  (1000.00/1.00000)*((intermediateState0 - intermediateState1)/constant2);
-  const double_v intermediateAlgebraic27 = 156.500/(5.00000+exp(( - constant6*intermediateAlgebraic14)/( constant35*constant36)));
+  const double_v intermediateAlgebraic27 = 156.500/(5.00000+exponential(( - constant6*intermediateAlgebraic14)/( constant35*constant36)));
   const double_v intermediateAlgebraic28 = 156.500 -  5.00000*intermediateAlgebraic27;
-  const double_v intermediateAlgebraic34 =  intermediateState0*((intermediateAlgebraic27 -  intermediateAlgebraic28*exp(( constant6*intermediateState0)/( constant35*constant36)))/(1.00000 - exp(( constant6*intermediateState0)/( constant35*constant36))));
-  const double_v intermediateAlgebraic33 = 1.00000/(1.00000+exp((intermediateState0 - constant23)/constant26));
+  const double_v intermediateAlgebraic34 =  intermediateState0*((intermediateAlgebraic27 -  intermediateAlgebraic28*exponential(( constant6*intermediateState0)/( constant35*constant36)))/(1.00000 - exponential(( constant6*intermediateState0)/( constant35*constant36))));
+  const double_v intermediateAlgebraic33 = 1.00000/(1.00000+exponential((intermediateState0 - constant23)/constant26));
   const double_v intermediateAlgebraic35 =  constant37*pow4(intermediateAlgebraic33);
   const double_v intermediateAlgebraic36 =  intermediateAlgebraic35*(intermediateAlgebraic34/45.0000);
   const double_v intermediateAlgebraic51 = intermediateAlgebraic36+intermediateAlgebraic41+intermediateAlgebraic43+intermediateAlgebraic46+intermediateAlgebraic50+- constant54;
   const double_v intermediateRate0 = - ((intermediateAlgebraic51+intermediateAlgebraic0)/constant0);
-  const double_v intermediateAlgebraic32 =  intermediateState1*((intermediateState3 -  intermediateState2*exp(( -1.00000*constant6*intermediateState1)/( constant35*constant36)))/(1.00000 - exp(( -1.00000*constant6*intermediateState1)/( constant35*constant36))));
+  const double_v intermediateAlgebraic32 =  intermediateState1*((intermediateState3 -  intermediateState2*exponential(( -1.00000*constant6*intermediateState1)/( constant35*constant36)))/(1.00000 - exponential(( -1.00000*constant6*intermediateState1)/( constant35*constant36))));
   const double_v intermediateAlgebraic26 =  (( constant35*constant36)/constant6)*log(intermediateState2/intermediateState3);
-  const double_v intermediateAlgebraic56 =  intermediateState2*exp( ( - constant41*intermediateAlgebraic26)*(constant6/( constant35*constant36)));
+  const double_v intermediateAlgebraic56 =  intermediateState2*exponential( ( - constant41*intermediateAlgebraic26)*(constant6/( constant35*constant36)));
   const double_v intermediateAlgebraic57 =  constant40*(sqr(intermediateAlgebraic56)/(constant42+sqr(intermediateAlgebraic56)));
-  const double_v intermediateAlgebraic58 = 1.00000 - 1.0/(1.00000+( constant43*(1.00000+sqr(intermediateAlgebraic56)/constant42))/( pow(constant46, 2.00000)*exp(( 2.00000*(1.00000 - constant41)*intermediateState1*constant6)/( constant35*constant36))));
+  const double_v intermediateAlgebraic58 = 1.00000 - 1.0/(1.00000+( constant43*(1.00000+sqr(intermediateAlgebraic56)/constant42))/( pow(constant46, 2.00000)*exponential(( 2.00000*(1.00000 - constant41)*intermediateState1*constant6)/( constant35*constant36))));
   const double_v intermediateAlgebraic59 =  intermediateAlgebraic57*intermediateAlgebraic58;
   const double_v intermediateAlgebraic60 =  constant50*intermediateAlgebraic59*(intermediateAlgebraic32/50.0000);
   const double_v intermediateAlgebraic61 =  ( constant38*pow4(intermediateState13))*intermediateState14;
   const double_v intermediateAlgebraic62 =  constant51*intermediateAlgebraic61*(intermediateAlgebraic32/50.0000);
-  const double_v intermediateAlgebraic66 =  (1.00000/7.00000)*(exp(intermediateState6/67.3000) - 1.00000);
-  const double_v intermediateAlgebraic67 = 1.0/(1.00000+ 0.120000*exp( -0.100000*intermediateState1*(constant6/( constant35*constant36)))+ 0.0400000*intermediateAlgebraic66*exp(- ( intermediateState1*(constant6/( constant35*constant36)))));
+  const double_v intermediateAlgebraic66 =  (1.00000/7.00000)*(exponential(intermediateState6/67.3000) - 1.00000);
+  const double_v intermediateAlgebraic67 = 1.0/(1.00000+ 0.120000*exponential( -0.100000*intermediateState1*(constant6/( constant35*constant36)))+ 0.0400000*intermediateAlgebraic66*exponential(- ( intermediateState1*(constant6/( constant35*constant36)))));
   const double_v intermediateAlgebraic68 =  constant6*(constant47/( sqr(1.00000+constant44/intermediateState2)*pow3(1.00000+constant45/intermediateState5)));
   const double_v intermediateAlgebraic69 =  constant53*intermediateAlgebraic68*intermediateAlgebraic67;
   const double_v intermediateRate3 =  - constant9*((intermediateAlgebraic60+intermediateAlgebraic62+constant12+ - 2.00000*intermediateAlgebraic69)/( (1000.00/1.00000)*constant6*constant3)) - (intermediateAlgebraic41+intermediateAlgebraic43+constant12+ -2.00000*intermediateAlgebraic50)/( (1000.00/1.00000)*constant6*constant4);
   const double_v intermediateRate2 = (intermediateAlgebraic60+intermediateAlgebraic62+constant12+ - 2.00000*intermediateAlgebraic69)/( (1000.00/1.00000)*constant6*constant3) - (intermediateState2 - intermediateState4)/constant7;
   const double_v intermediateAlgebraic64 =  ( ( constant39*pow3(intermediateState15))*intermediateState16)*intermediateState17;
-  const double_v intermediateAlgebraic63 =  intermediateState1*((intermediateState5 -  intermediateState6*exp(( -1.00000*constant6*intermediateState1)/( constant35*constant36)))/(1.00000 - exp(( -1.00000*constant6*intermediateState1)/( constant35*constant36))));
+  const double_v intermediateAlgebraic63 =  intermediateState1*((intermediateState5 -  intermediateState6*exponential(( -1.00000*constant6*intermediateState1)/( constant35*constant36)))/(1.00000 - exponential(( -1.00000*constant6*intermediateState1)/( constant35*constant36))));
   const double_v intermediateAlgebraic65 =  constant52*intermediateAlgebraic64*(intermediateAlgebraic63/75.0000);
   const double_v intermediateRate5 =  - constant9*((intermediateAlgebraic65+constant13+ 3.00000*intermediateAlgebraic69)/( (1000.00/1.00000)*constant6*constant3)) - (intermediateAlgebraic46+constant13+ 3.00000*intermediateAlgebraic50)/( (1000.00/1.00000)*constant6*constant4);
   const double_v intermediateRate6 = (intermediateAlgebraic65+constant13+ 3.00000*intermediateAlgebraic69)/( (1000.00/1.00000)*constant6*constant3) - (intermediateState6 - intermediateState7)/constant8;
-  const double_v intermediateAlgebraic29 = 156.500/(5.00000+exp(( - constant6*intermediateAlgebraic26)/( constant35*constant36)));
+  const double_v intermediateAlgebraic29 = 156.500/(5.00000+exponential(( - constant6*intermediateAlgebraic26)/( constant35*constant36)));
   const double_v intermediateAlgebraic30 = 156.500 -  5.00000*intermediateAlgebraic29;
-  const double_v intermediateAlgebraic53 =  intermediateState1*((intermediateAlgebraic29 -  intermediateAlgebraic30*exp(( constant6*intermediateState1)/( constant35*constant36)))/(1.00000 - exp(( constant6*intermediateState1)/( constant35*constant36))));
-  const double_v intermediateAlgebraic52 = 1.00000/(1.00000+exp((intermediateState1 - constant23)/constant26));
+  const double_v intermediateAlgebraic53 =  intermediateState1*((intermediateAlgebraic29 -  intermediateAlgebraic30*exponential(( constant6*intermediateState1)/( constant35*constant36)))/(1.00000 - exponential(( constant6*intermediateState1)/( constant35*constant36))));
+  const double_v intermediateAlgebraic52 = 1.00000/(1.00000+exponential((intermediateState1 - constant23)/constant26));
   const double_v intermediateAlgebraic54 =  constant37*pow4(intermediateAlgebraic52);
   const double_v intermediateAlgebraic55 =  constant49*intermediateAlgebraic54*(intermediateAlgebraic53/45.0000);
   const double_v intermediateAlgebraic70 = intermediateAlgebraic55+intermediateAlgebraic60+intermediateAlgebraic62+intermediateAlgebraic65+intermediateAlgebraic69;
@@ -535,11 +552,12 @@ compute0DInstance(std::array<Vc::double_v,57> &states, double currentTime, doubl
       states[0][i] = 20.0;
     }
   }
+  //LOG(INFO) << "min: " << minX << ", max: " << maxX;
 }
 
 //! set the initial values for all states
 void FastMonodomainSolver<Control::MultipleInstances<OperatorSplitting::Strang<Control::MultipleInstances<TimeSteppingScheme::Heun<CellmlAdapter<57, 71, FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1> > > > >, Control::MultipleInstances<TimeSteppingScheme::ImplicitEuler<SpatialDiscretization::FiniteElementMethod<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1>, Quadrature::Gauss<2>, Equation::Dynamic::IsotropicDiffusion> > > > > >::
-initializeStates(std::array<Vc::double_v,57> &states)
+initializeStates(Vc::double_v states[])
 {
   states[0] = -79.974;
   states[1] = -80.2;

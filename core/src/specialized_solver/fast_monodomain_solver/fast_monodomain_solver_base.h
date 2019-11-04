@@ -129,7 +129,7 @@ protected:
   void compute0D(double startTime, double timeStepWidth, int nTimeSteps);
 
   //! compute one time step of the right hand side for a single simd vector of instances
-  virtual void compute0DInstance(std::array<Vc::double_v,nStates> &states, double currentTime, double timeStepWidth, bool stimulate) = 0;
+  virtual void compute0DInstance(Vc::double_v states[], double currentTime, double timeStepWidth, bool stimulate) = 0;
 
   //! solve the 1D problem (diffusion), starting from startTime
   void compute1D(double startTime, double timeStepWidth, int nTimeSteps, double prefactor);
@@ -138,7 +138,7 @@ protected:
   void computeMonodomain();
 
   //! set the initial values for all states
-  virtual void initializeStates(std::array<Vc::double_v,nStates> &states) = 0;
+  virtual void initializeStates(Vc::double_v states[]) = 0;
 
   PythonConfig specificSettings_;    //< config for this object
 

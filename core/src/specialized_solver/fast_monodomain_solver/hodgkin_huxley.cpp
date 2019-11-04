@@ -5,7 +5,7 @@
 
 //! set the initial values for all states
 void FastMonodomainSolver<Control::MultipleInstances<OperatorSplitting::Strang<Control::MultipleInstances<TimeSteppingScheme::Heun<CellmlAdapter<4, 9, FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1> > > > >, Control::MultipleInstances<TimeSteppingScheme::ImplicitEuler<SpatialDiscretization::FiniteElementMethod<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1>, Quadrature::Gauss<2>, Equation::Dynamic::IsotropicDiffusion> > > > > >::
-initializeStates(std::array<Vc::double_v,4> &states)
+initializeStates(Vc::double_v states[])
 {
   states[0] = -75.0;
   states[1] = 0.05;
@@ -15,7 +15,7 @@ initializeStates(std::array<Vc::double_v,4> &states)
 
 // Hodgkin-Huxley
 void FastMonodomainSolver<Control::MultipleInstances<OperatorSplitting::Strang<Control::MultipleInstances<TimeSteppingScheme::Heun<CellmlAdapter<4, 9, FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1> > > > >, Control::MultipleInstances<TimeSteppingScheme::ImplicitEuler<SpatialDiscretization::FiniteElementMethod<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1>, Quadrature::Gauss<2>, Equation::Dynamic::IsotropicDiffusion> > > > > >::
-compute0DInstance(std::array<Vc::double_v,4> &states, double currentTime, double timeStepWidth, bool stimulate)
+compute0DInstance(Vc::double_v states[], double currentTime, double timeStepWidth, bool stimulate)
 {
   using Vc::double_v;
 

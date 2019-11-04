@@ -16,11 +16,6 @@ innervation_zone_width = 0.         # not used [cm], this will later be used to 
 # -------
 diffusion_solver_type = "cg"        # solver and preconditioner for the diffusion part of the Monodomain equation
 diffusion_preconditioner_type = "none"      # preconditioner
-potential_flow_solver_type = "gmres"        # solver and preconditioner for an initial Laplace flow on the domain, from which fiber directions are determined
-potential_flow_preconditioner_type = "none" # preconditioner
-emg_solver_type = "cg"              # solver and preconditioner for the 3D static Bidomain equation that solves the intra-muscular EMG signal
-emg_preconditioner_type = "none"    # preconditioner
-emg_initial_guess_nonzero = False   # If the initial guess for the emg linear system should be set to the previous solution
 
 # timing parameters
 # -----------------
@@ -29,7 +24,6 @@ stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in f
 dt_0D = 1e-3                        # [ms] timestep width of ODEs
 dt_1D = 1.5e-3                      # [ms] timestep width of diffusion
 dt_splitting = 3e-3                 # [ms] overall timestep width of strang splitting
-dt_3D = 1e0                         # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
 output_timestep = 1e0               # [ms] timestep for output files
 activation_start_time = 0           # [ms] time when to start checking for stimulation
 
@@ -51,7 +45,6 @@ debug_output = False                # verbose output in this python script, for 
 disable_firing_output = True        # Disables the initial list of fiber firings on the console to save some console space
 paraview_output = False             # If the paraview output writer should be enabled
 adios_output = False                # If the MegaMol/ADIOS output writer should be enabled
-python_output = False               # If the Python output writer should be enabled
 
 
 # motor unit stimulation times
@@ -93,7 +86,7 @@ def get_specific_states_frequency_jitter(fiber_no, mu_no):
   return [0]
 
 def get_specific_states_call_enable_begin(fiber_no, mu_no):
-  return 0
+  return activation_start_time
 
 
 # further internal variables that will be set by the helper.py script and used in the config in settings_fibers_emg.py

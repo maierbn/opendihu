@@ -163,7 +163,8 @@ void StimulationLogging::writeLogFile()
       file << logEntries_[i].time << ";";
     }
 
-    LOG(INFO) << "Wrote " << logEntries_.size() << " stimulation times to file \"" << filename_ << "\".";
+    LOG(INFO) << "Wrote " << logEntries_.size() << " stimulation time" << (logEntries_.size() != 1? "s" : "")
+      << " to file \"" << filename_ << "\".";
     file.close();
   }
 }

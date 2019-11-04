@@ -1,7 +1,7 @@
 ./fibers_emg ../settings_fibers_emg.py \
 --n_subdomains 1 1 1 \
 --fiber_file="../../input/2x2fibers.bin" \
---paraview_output \
+--adios_output \
 --dt_0D=1e-3 \
 --dt_1D=1e-3 \
 --dt_splitting=1e-3 \

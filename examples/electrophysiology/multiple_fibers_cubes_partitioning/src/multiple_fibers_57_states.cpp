@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
       Control::MultipleInstances<
         TimeSteppingScheme::Heun<
           CellmlAdapter<
-            4,9,  // nStates,nIntermediates: 57,1 = Shorten, 4,9 = Hodgkin Huxley, 57,71 = slow_TK_2014_12_08
+            57,71,  // nStates,nIntermediates: 57,1 = Shorten, 4,9 = Hodgkin Huxley, 57,71 = slow_TK_2014_12_08
             FunctionSpace::FunctionSpace<
               Mesh::StructuredDeformableOfDimension<1>,
               BasisFunction::LagrangeOfOrder<1>

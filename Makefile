@@ -29,7 +29,7 @@ rebuild: purge_dependencies purge clean debug release
 
 # on hazel hen rebuild everying including dependencies
 rebuild_hazelhen:
-	rm -rf dependencies/easyloggingpp/install dependencies/easyloggingpp/src dependencies/python/install dependencies/python/src  dependencies/base64/install dependencies/base64/src dependencies/numpyc/install dependencies/numpyc/src dependencies/semt/src dependencies/semt/install && rm -rf core/build_release && $(python) dependencies/scons/scons.py BUILD_TYPE=RELEASE; cd dependencies/matplotlib && ../python/install/bin/pip3 install *.whl
+	unset OPENDIHU_HOME; rm -rf dependencies/easyloggingpp/install dependencies/easyloggingpp/src dependencies/python/install dependencies/python/src  dependencies/base64/install dependencies/base64/src dependencies/numpyc/install dependencies/numpyc/src dependencies/semt/src dependencies/semt/install && rm -rf core/build_release && $(python) dependencies/scons/scons.py BUILD_TYPE=RELEASE; cd dependencies/matplotlib && ../python/install/bin/pip3 install *.whl
 
 doc:
 	cd doc/doxygen; doxygen

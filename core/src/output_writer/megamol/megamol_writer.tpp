@@ -28,7 +28,25 @@ outputData(FieldVariablesForOutputWriterType fieldVariables, std::string meshNam
   // get first other scalar field variable
   if (scalarFieldVariables.size() > 0)
   {
-    scalarFieldVariables[0]->getValuesWithoutGhosts(megaMolWriterContext.scalarFieldVariableValues);
+    scalarFieldVariables[0]->getValuesWithoutGhosts(megaMolWriterContext.vmValues);
+    //LOG(INFO) << "mesh \"" << meshName << "\", retrieve field variable \"" << scalarFieldVariables[0]->name() << "\", n values: " << megaMolWriterContext.scalarFieldVariableValues.size();
+  }
+  else if (scalarFieldVariables.size() >= 5)
+  {
+    for (typename std::vector<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>>::iterator iter = scalarFieldVariables.begin();
+         iter != scalarFieldVariables.end(); iter++)
+    {
+      if ((*iter)->name() == "phi_e")
+      {
+        (*iter)->getValuesWithoutGhosts(megaMolWriterContext.emgValues);
+      }
+      else if ((*iter)->name() == "transmembraneFlow")
+      {
+        (*iter)->getValuesWithoutGhosts(megaMolWriterContext.transmembraneFlowValues);
+      }
+    }
+
+
     //LOG(INFO) << "mesh \"" << meshName << "\", retrieve field variable \"" << scalarFieldVariables[0]->name() << "\", n values: " << megaMolWriterContext.scalarFieldVariableValues.size();
   }
 

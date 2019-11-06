@@ -5,7 +5,7 @@ class MegaMol(Package):
 
   def __init__(self, **kwargs):
     defaults = {
-      'download_url': 'https://github.com/UniStuttgart-VISUS/megamol/archive/master.zip'
+      'download_url': 'https://github.com/UniStuttgart-VISUS/megamol/archive/v1.3.zip'
     }
     defaults.update(kwargs)
     super(MegaMol, self).__init__(**defaults)

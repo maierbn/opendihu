@@ -150,11 +150,7 @@ void MegaMol::write(DataType& data, int timeStepNo, double currentTime, int call
       */
 
       // clear context
-      currentWriter->megaMolWriterContext.geometryFieldValues.clear();
-      currentWriter->megaMolWriterContext.vmValues.clear();
-      currentWriter->megaMolWriterContext.emgValues.clear();
-      currentWriter->megaMolWriterContext.transmembraneFlowValues.clear();
-      currentWriter->megaMolWriterContext.approximateDistanceBetweenFibers = -1;
+      currentWriter->megaMolWriterContext.clear();
 
       lastFilename_ = currentFilename_;
 

@@ -407,7 +407,6 @@ initializePetscVariables()
   }
 }
 
-
 //! get the PartitionedPetsVec for the residual and result of the nonlinear function
 template<typename Term>
 std::shared_ptr<PartitionedPetscVecForHyperelasticity<typename HyperelasticitySolver<Term>::DisplacementsFunctionSpace,typename HyperelasticitySolver<Term>::PressureFunctionSpace>> HyperelasticitySolver<Term>::

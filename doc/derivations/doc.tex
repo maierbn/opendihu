@@ -2939,7 +2939,29 @@ with
 \end{equation*}
 (Zienkiewicz I p.470)
 
-Solve with \emph{leapfrog} integration.
+In the case $\bfC = \bfzero$ we can use the second order, symplectic \emph{Leapfrog} integration. There is also an extension to using damping. But since we don't have conservation of energy anyways, use a RK4 scheme instead:
+
+In the general case with damping we use a transformation to a system of first order ODEs.
+\begin{equation*}
+  \begin{array}{lll}
+    \bfw = \mat{\bfu \\ \bfv} = \mat{\bfu \\ \dot{\bfu}}\\[4mm]
+    \bfw' = \mat{\bfv\\ \bfM^{-1}(\bff - \bfK\,\bfu - \bfC\,\bfv)} =: \mat{\bfv \\ \bfa(\bfu,\bfv)}
+  \end{array}
+\end{equation*}
+Applying the 4th order Runge-Kutta scheme gives the following algorithm:
+%
+\begin{equation*}
+  \begin{array}{lll}
+    \bfk_1 = Δt\,\bfa(\bfu^{(n)}, \bfv^{(n)}, t^{(n)}), \qquad & \bfl_1 = Δt\,\bfv^{(n)}\\[4mm]
+    \bfk_2 = Δt\,\bfa(\bfu^{(n)}+\frac12\bfl_1, \bfv^{(n)}+\frac12\bfk_1, t^{(n+\frac12)}), \qquad & \bfl_2 = Δt\,(\bfv^{(n)} + \frac12 \bfk_1)\\[4mm]
+    \bfk_3 = Δt\,\bfa(\bfu^{(n)}+\frac12\bfl_2, \bfv^{(n)}+\frac12\bfk_2, t^{(n+\frac12)}), \qquad & \bfl_3 = Δt\,(\bfv^{(n)} + \frac12 \bfk_2)\\[4mm]
+    \bfk_4 = Δt\,\bfa(\bfu^{(n)}+\bfl_3, \bfv^{(n)} + \bfk_3, t^{(n+1)}), \qquad & \bfl_4 = Δt\,(\bfv^{(n)} + \bfk_3)\\[4mm]
+    \bfv^{(n+1)} = \bfv^{(n)} + \frac16(\bfk_1 + 2\,\bfk_2 + 2\,\bfk_3 + \bfk_4), & 
+    \bfu^{(n+1)} = \bfu^{(n)} + \frac16(\bfl_1 + 2\,\bfl_2 + 2\,\bfl_3 + \bfl_4)
+  \end{array}
+\end{equation*}
+Computing $\bfa(\bfu,\bfv)$ yields
+
 
 \subsection{Examples with analytical solution}
 \subsubsection{Uniaxial extension with constant total load}

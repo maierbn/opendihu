@@ -1,7 +1,5 @@
 #include "data_management/specialized_solver/hyperelasticity_solver.h"
 
-#include "utility/static_if.h"
-
 namespace Data
 {
 

@@ -17,8 +17,31 @@ namespace SpatialDiscretization
 
 /** This solver is for the nonlinear finite elasticity problem with Mooney-Rivlin material in 3D.
  *
- * Further improvements for solving: https://github.com/jedbrown/spectral-petsc/blob/master/stokes.C
- * https://lists.mcs.anl.gov/pipermail/petsc-dev/2008-April/000711.html
+ * Further numerical improvements for solving the nonlinear system that may be implemented later:
+ *   https://github.com/jedbrown/spectral-petsc/blob/master/stokes.C
+ *   https://lists.mcs.anl.gov/pipermail/petsc-dev/2008-April/000711.html
+ *
+ * The implementation of this solver is contained in the following files:
+ *
+ * - "specialized_solver/solid_mechanics/hyperelasticity/hyperelasticity_solver.tpp":
+ * This contains the top-level methods and the initialization of data structures.
+ *
+ * - "specialized_solver/solid_mechanics/hyperelasticity/material_computations.tpp":
+ * This contains the implementation of equations, like the residual Wint-Wext, the stress, the analytic jacobian
+ *
+ * - "specialized_solver/solid_mechanics/hyperelasticity/material_testing.tpp"
+ * This contains methods to test the implementations in material_computations.tpp. It is not used for production.
+ *
+ * - "specialized_solver/solid_mechanics/hyperelasticity/petsc_callbacks.tpp"
+ * This contains plain callback functions that are passed to the PETSc nonlinear solver.
+ * They call the HyperelasticitySolver object through methods that are implemented in nonlinear_solve.tpp.
+ *
+ * - "specialized_solver/solid_mechanics/hyperelasticity/nonlinear_solve.tpp"
+ * This contains interfaces that are called by PETSc during the nonlinear solution process.
+ *
+ * - The material equation is given by the structs in equation/mooney_rivlin_incompressible.h, e.g.
+ *    Equation::SolidMechanics::MooneyRivlinIncompressible3D or Equation::SolidMechanics::TransverselyIsotropicMooneyRivlinIncompressibleActive3D
+ *
   */
 template<typename Term = Equation::SolidMechanics::MooneyRivlinIncompressible3D>
 class HyperelasticitySolver :

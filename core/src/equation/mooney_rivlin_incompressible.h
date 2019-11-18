@@ -10,7 +10,7 @@ namespace Equation
 namespace SolidMechanics
 {
 
-/** Hyperelastic solid mechanics formulation with arbitrary strain energy density function
+/** Isotropic hyperelastic solid mechanics formulation with arbitrary strain energy density function
  */
 struct MooneyRivlinIncompressible3D
 {
@@ -35,6 +35,8 @@ struct MooneyRivlinIncompressible3D
     //= c1*(pow(Ibar1,INT(3)) - INT(3)) + c2*(pow(Ibar2,INT(2))*Ibar1 - INT(3));  // complicated artifical equation for debugging
 };
 
+/** Transversely-isotropic hyperelastic solid mechanics formulation, here Mooney-Rivlin
+ */
 struct TransverselyIsotropicMooneyRivlinIncompressible3D
 {
   static constexpr bool usesFiberDirection = true;   //< if the equation depends on a fiber direction, i.e. has 4th and 5th invariant
@@ -62,6 +64,9 @@ struct TransverselyIsotropicMooneyRivlinIncompressible3D
     = c1*(Ibar1 - INT(3)) + c2*(Ibar2 - INT(3)) + b/d * (pow(lambda, d) - INT(1)) - b*ln(lambda);
 };
 
+//! this is not yet fully implemented
+/** Model used in chemo-electro-mechanical model
+ */
 struct TransverselyIsotropicMooneyRivlinIncompressibleActive3D
 {
   static constexpr bool usesFiberDirection = true;   //< if the equation depends on a fiber direction, i.e. has 4th and 5th invariant

@@ -4,9 +4,6 @@
 
 #include "equation/mooney_rivlin_incompressible.h"
 
-#define SYMMETRIC             // yes
-//#define SYMMETRICP_PK2        // does not matter
-
 namespace SpatialDiscretization
 {
 
@@ -309,7 +306,7 @@ materialComputeResidual()
   }
 
   // compute F = δW_int - δW_ext,
-  // δW_ext = int_∂Ω T_a phi_L dS was precomputed in initialize
+  // δW_ext = int_∂Ω T_a phi_L dS was precomputed in initialize, in variable externalVirtualWork_
   ierr = VecAXPY(solverVariableResidual_, -1, externalVirtualWork_); CHKERRV(ierr);
 
   if(outputValues)
@@ -1051,9 +1048,6 @@ computePK2Stress(const double pressure,                             //< [in] pre
 
       // compute P : Sbar
       double pSbar = 0;
-      //double ccs = 0;  // (C^-1 dyad C)*Sbar
-      //double cSbar = 0;  // C:Sbar
-
       // row index
       for (int k=0; k<3; k++)        // alternative indices: C
       {
@@ -1064,25 +1058,14 @@ computePK2Stress(const double pressure,                             //< [in] pre
         {
           const int delta_jl = (j == l? 1 : 0);
 
-#ifdef SYMMETRICP_PK2
-          // symmetric version
-          const int delta_il = (i == l? 1 : 0);
-          const int delta_jk = (j == k? 1 : 0);
-
-          const double Ii = 0.5 * (delta_ik * delta_jl + delta_il * delta_jk);       // II = (δ_AC*δ_BD + δ_AD*δ_BC) / 2
-#else
-          // not symmetric version
-          const int Ii = delta_ik * delta_jl;       // II = (δ_AC*δ_BD + δ_AD*δ_BC) / 2
-#endif
+          // this is a non-symmetric version for Ii but it is also correct, the symmetric version would be given by Ii = (δ_AC*δ_BD + δ_AD*δ_BC) / 2
+          const int Ii = delta_ik * delta_jl;
           const double Cc = inverseRightCauchyGreen[j][i] * rightCauchyGreen[l][k];     // CC = C^{-1}_AB * C_CD
           const double Pp = (Ii - 1./3 * Cc);
 
           //LOG(DEBUG) << "    PP_" << i << j << k << l << " = " << Pp << " = " << Ii << "-1/3*" << Cc << " (" << inverseRightCauchyGreen[j][i] << "," << rightCauchyGreen[l][k] << "), Ii: " << Ii;
 
           pSbar += Pp * fictitiousPK2Stress[l][k];
-
-          //cSbar += rightCauchyGreen[l][k] * fictitiousPK2Stress[l][k];
-          //ccs += Cc * fictitiousPK2Stress[l][k];
         }
       }
 
@@ -1365,14 +1348,14 @@ computeElasticityTensor(const Tensor2<3> &rightCauchyGreen,         //< [in] C
   const double factorJ23 = pow(J,-2./3);   // J^{-2/3}
   const double factorJ43 = pow(J,-4./3);   // J^{-4/3}
 
-  // distinct entries
+  // distinct entries, only those have to be computed as the rest is symmetric
   const int indices[21][4] = {
     {0,0,0,0},{0,1,0,0},{0,2,0,0},{1,1,0,0},{1,2,0,0},{2,2,0,0},{0,1,0,1},{0,2,0,1},{1,1,0,1},{1,2,0,1},
     {2,2,0,1},{0,2,0,2},{1,1,0,2},{1,2,0,2},{2,2,0,2},{1,1,1,1},{1,2,1,1},{2,2,1,1},{1,2,1,2},{2,2,1,2},
     {2,2,2,2}
   };
 
-  // all entries
+  // to compute all entries and verify the symmetry, use the following code (needs further adjustments at  the loop boundaries: "entryNo<21" -> "entryNo<81")
 #if 0
   int indices[81][4];
 
@@ -1397,7 +1380,7 @@ computeElasticityTensor(const Tensor2<3> &rightCauchyGreen,         //< [in] C
 #endif
 
   // loop over distinct entries in elasticity tensor
-  for (int entryNo = 0; entryNo < 21; entryNo++)  // 21
+  for (int entryNo = 0; entryNo < 21; entryNo++)
   {
     // get indices of current entry
     const int a = indices[entryNo][0];
@@ -1409,14 +1392,7 @@ computeElasticityTensor(const Tensor2<3> &rightCauchyGreen,         //< [in] C
     const double cInv_cd = inverseRightCauchyGreen[d][c];
 
     // compute C_vol
-    // symmetric version
-#ifdef SYMMETRIC
     const double cInvDotCInv = 0.5 * (inverseRightCauchyGreen[c][a] * inverseRightCauchyGreen[d][b] + inverseRightCauchyGreen[d][a] * inverseRightCauchyGreen[c][b]);
-#else
-     // version for not symmetric C
-    const double cInvDotCInv = inverseRightCauchyGreen[c][a] * inverseRightCauchyGreen[d][b];
-#endif
-
 
     const double cInvDyadCInv = inverseRightCauchyGreen[b][a] * inverseRightCauchyGreen[d][c];
     const double jp = deformationGradientDeterminant * pressure;
@@ -1452,14 +1428,8 @@ computeElasticityTensor(const Tensor2<3> &rightCauchyGreen,         //< [in] C
             int iI_efgh = delta_eg * delta_fh;
             int iIbar_efgh = delta_eh * delta_fg;
 
-#ifdef SYMMETRIC
             // symmetric version
             double sS_efgh = 0.5 * (iI_efgh + iIbar_efgh);
-#else
-            // non-symmetric version
-            double sS_efgh = iI_efgh;
-            //sS_efgh = iIbar_efgh;   // both should work because of symmetry
-#endif
 
             const double summand1 = factor1 * delta_ef * delta_gh;
             const double summand2 = factor2 * (delta_ef * factorJ23*c_gh + factorJ23*c_ef * delta_gh);

@@ -75,8 +75,11 @@ containsNanOrInf()
     {
       for (int componentNo = 0; componentNo < nComponents; componentNo++)
       {
-        if (!std::isfinite(values[componentNo][i]))
+        if (!std::isfinite(values[i][componentNo]))
+        {
+          LOG(ERROR) << "containsNanOrInf(): value " << i << "/" << values.size() << ", component " << componentNo << "/" << nComponents << ": " << values[componentNo][i];
           return true;
+        }
       }
     }
   }

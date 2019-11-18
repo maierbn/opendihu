@@ -1,1 +1,1 @@
-cd $OPENDIHU_HOME && scons BUILD_TYPE=releasewithdebuginfo no_tests=True -j 4 && (cd - && echo "opendihu release with debug info build without tests succeeded") || (echo "opendihu release with debug info build without tests failed" && cd - && exit -1)
+cd $OPENDIHU_HOME && time scons BUILD_TYPE=releasewithdebuginfo no_tests=True -j 4 && (cd - && echo "opendihu release with debug info build without tests succeeded") || (echo "opendihu release with debug info build without tests failed" && cd - && exit -1)

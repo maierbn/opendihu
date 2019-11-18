@@ -1,0 +1,15 @@
+version: 2.1
+jobs:
+  build:
+    docker:
+      - image: maierbn/opendihu:latest
+    environment:
+      FOO: bar
+    parallelism: 1
+    resource_class: large
+    working_directory: /workspace/opendihu
+    steps:
+      - checkout 				# pull the current branch from origin
+      #- run: make release
+      - run: python2.7 dependencies/scons/scons.py BUILD_TYPE=RELEASE -j1
+

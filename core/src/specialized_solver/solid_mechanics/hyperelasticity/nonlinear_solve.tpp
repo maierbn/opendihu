@@ -63,7 +63,7 @@ nonlinearSolve()
   {
     if (useNumericJacobian_)   // use combination of analytic jacobian also with finite differences
     {
-      // use the analytic jacobian for the preconditioner and the numeric jacobian as normal jacobian
+      // use the analytic jacobian for the preconditioner and the numeric jacobian (from finite differences) as normal jacobian
       ierr = SNESSetJacobian(*snes, solverMatrixAdditionalNumericJacobian_, solverMatrixJacobian_, callbackJacobianCombined, this); CHKERRV(ierr);
       //ierr = SNESSetJacobian(*snes, solverMatrixAdditionalNumericJacobian_, solverMatrixAdditionalNumericJacobian_, callbackJacobianCombined, this); CHKERRV(ierr);
       LOG(DEBUG) << "Use combination of numeric and analytic jacobian: " << solverMatrixJacobian_;
@@ -109,7 +109,6 @@ nonlinearSolve()
     LOG(DEBUG) << "------------------  start solve " << i << " ------------------";
 
     // solve the system nonlinearFunction(displacements) = 0
-    // not sure if displacements has to be a different vector from the one used in the provided functions
     ierr = SNESSolve(*snes, NULL, solverVariableSolution_); CHKERRV(ierr);
 
     // get information about the solution process

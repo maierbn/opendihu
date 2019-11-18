@@ -21,6 +21,8 @@ namespace Control
 std::map<std::string, PerformanceMeasurement::Measurement> PerformanceMeasurement::measurements_;
 std::map<std::string,std::string> PerformanceMeasurement::parameters_;
 std::map<std::string, int> PerformanceMeasurement::sums_;
+std::shared_ptr<std::thread> PerformanceMeasurement::perfThread_;
+int PerformanceMeasurement::perfThreadHandle_;
 
 PerformanceMeasurement::Measurement::Measurement() :
   start(0.0), totalDuration(0.0), nTimeSpans(0), totalError(0.0), nErrors(0)
@@ -59,6 +61,45 @@ void PerformanceMeasurement::stop(std::string name, int numberAccumulated)
 
     VLOG(2) << "PerformanceMeasurement::stop(" << name << "), time span [" << measurement.start << "," << stopTime << "], duration=" << duration
       << ", now total: " << measurement.totalDuration << ", nTimeSpans: " << measurement.nTimeSpans;
+  }
+}
+
+void PerformanceMeasurement::startFlops()
+{
+  // get process id
+  int pid = getpid();
+
+  perfThread_ = std::make_shared<std::thread>([pid](){
+
+    std::stringstream filename;
+    filename << "perf." << DihuContext::ownRankNoCommWorld() << ".txt";
+
+    std::stringstream command;
+    command << "perf stat -e r5301c7 -p " << pid << " -o " << filename.str();
+
+    LOG(INFO) << "starting perf with command " << command.str();
+
+    int returnValue = system(command.str().c_str());
+    LOG(DEBUG) << returnValue;
+  });
+  perfThreadHandle_ = perfThread_->native_handle();
+
+  perfThread_->detach();
+}
+
+void PerformanceMeasurement::endFlops()
+{
+  pthread_cancel(perfThreadHandle_);
+
+  std::stringstream filename;
+  filename << "perf." << DihuContext::ownRankNoCommWorld() << ".txt";
+
+  // parse file
+  std::ifstream file(filename.str());
+  if (file.is_open())
+  {
+     std::string content((std::istreambuf_iterator<char>(file)), (std::istreambuf_iterator<char>()));
+     LOG(DEBUG) << content;
   }
 }
 

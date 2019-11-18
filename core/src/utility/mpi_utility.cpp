@@ -85,4 +85,41 @@ void gdbParallelDebuggingBarrier()
   }
 }
 
+std::string loadFile(std::string filename, MPI_Comm mpiCommunicator)
+{
+  int nRanks, rankNo;
+  handleReturnValue (MPI_Comm_size(mpiCommunicator, &nRanks));
+  handleReturnValue (MPI_Comm_rank(mpiCommunicator, &rankNo));
+
+  unsigned long long fileLength = 0;
+
+  // on master rank, check if file exists and how many bytes it contains
+  if (rankNo == 0)
+  {
+    std::ifstream in(filename, std::ifstream::ate | std::ifstream::binary);
+    if (!in.is_open())
+    {
+      LOG(FATAL) << "Could not open file \""  << filename << "\".";
+    }
+    fileLength = in.tellg();
+    in.close();
+  }
+
+  handleReturnValue(MPI_Bcast(&fileLength, 1, MPI_UNSIGNED_LONG_LONG, 0, mpiCommunicator), "MPI_Bcast");
+
+  // collectively open the file for reading
+  MPI_File fileHandle;
+  handleReturnValue(MPI_File_open(mpiCommunicator, filename.c_str(),
+                                  MPI_MODE_RDONLY,
+                                  MPI_INFO_NULL, &fileHandle), "MPI_File_open");
+
+  std::vector<char> fileContents(fileLength);
+  int offset = 0;
+  handleReturnValue(MPI_File_read_at_all(fileHandle, offset, fileContents.data(), fileLength, MPI_BYTE, MPI_STATUS_IGNORE), "MPI_Read_at_all");
+
+  handleReturnValue(MPI_File_close(&fileHandle), "MPI_File_close");
+
+  return std::string(fileContents.begin(), fileContents.end());
+}
+
 }  // namespace MPIUtility

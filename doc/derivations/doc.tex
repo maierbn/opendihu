@@ -668,7 +668,7 @@ We first compute element-wise stencils that state the contribution of a single e
   \end{equation*}
 \end{minipage}
 \end{tabular}
-\caption{Stencils of the Finite Element stiffness matrix of $-Δu$ for an equidistant mesh with uniform resolution}
+\caption{Stencils of the Finite Element stiffness matrix of $-Δu$ for an equidistant mesh with uniform resolution. Note, that for 1D, 2D and 3D elements of mesh width $h$, the prefactors of the integral over the element domain are $1/h$, 1 and $h$.}
 \end{table}
 
 \subsection{Boundary Conditions}
@@ -909,7 +909,7 @@ For the remaining integral, $\int_{\Omega} \phi_i\cdot \phi_j\,\d\bfxi$ node ste
   \end{equation*}
 \end{minipage}
 \end{tabular}
-\caption{Stencils of the Finite Element right hand side for an equidistant mesh with uniform resolution}
+\caption{Stencils of the Finite Element right hand side for an equidistant mesh with uniform resolution. Note, that for 1D, 2D and 3D elements of mesh width $h$, the prefactors of the integral over the element domain are $h$, $h^2$ and $h^3$.}
 \end{table}
 
 

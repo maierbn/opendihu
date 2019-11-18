@@ -31,6 +31,7 @@ public:
 
   //! run the simulation
   void run();
+
 };
 
 }  // namespace

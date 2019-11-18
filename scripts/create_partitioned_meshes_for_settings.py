@@ -54,7 +54,7 @@ def n_fibers_in_previous_subdomains_x(subdomain_coordinate_x):
     return a1 * (variables.n_fibers_per_subdomain_x+1) + (subdomain_coordinate_x-a1) * variables.n_fibers_per_subdomain_x
 
 # global fiber no, from subdomain coordinate and coordinate inside the subdomain
-def fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y):
+def get_fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y):
   return (n_fibers_in_previous_subdomains_y(subdomain_coordinate_y) + fiber_in_subdomain_coordinate_y)*variables.n_fibers_x \
     + n_fibers_in_previous_subdomains_x(subdomain_coordinate_x) + fiber_in_subdomain_coordinate_x
 
@@ -207,11 +207,13 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
     double_raw = fiber_file_handle.read(4)
     value = struct.unpack('i', double_raw)[0]
     parameters.append(value)
-    
+  
   variables.n_fibers_total = parameters[0]
-  variables.n_fibers_x = (int)(np.round(np.sqrt(variables.n_fibers_total)))
-  variables.n_fibers_y = variables.n_fibers_x
   variables.n_points_whole_fiber = parameters[1]
+  
+  if "cuboid.bin" not in fiber_file:  
+    variables.n_fibers_x = (int)(np.round(np.sqrt(variables.n_fibers_total)))
+    variables.n_fibers_y = variables.n_fibers_x
 
   if rank_no == 0:
     print("n fibers:              {} ({} x {})".format(variables.n_fibers_total, variables.n_fibers_x, variables.n_fibers_y))
@@ -288,7 +290,7 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
         #print("{}: sampling_stride_x: {}, i: {}, x: {}/{}".format(rank_no, variables.sampling_stride_x, i, fiber_in_subdomain_coordinate_x, n_fibers_in_subdomain_x(own_subdomain_coordinate_x)))
         
         # get fiber no
-        fiber_index = fiber_no(own_subdomain_coordinate_x, own_subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)
+        fiber_index = get_fiber_no(own_subdomain_coordinate_x, own_subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)
         
         # read point from fiber file
         memory_size_fiber = variables.n_points_whole_fiber*3*8
@@ -506,6 +508,10 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
   # output information about partitioning on rank 0
   if rank_no == 0:
     n_states_cellml = 4
+    if "shorten" in variables.cellml_file:
+      n_states_cellml = 57
+    elif "slow_TK_2014" in variables.cellml_file:
+      n_states_cellml = 56
     print("{} rank{}, partitioning: x{} x y{} x z{}".format(n_ranks, "s" if n_ranks > 1 else "", variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z))
     print("{} x {} = {} fibers, per partition: {} x {} = {}".format(variables.n_fibers_x, variables.n_fibers_y, variables.n_fibers_total, variables.n_fibers_per_subdomain_x, variables.n_fibers_per_subdomain_y, variables.n_fibers_per_subdomain_x*variables.n_fibers_per_subdomain_y))
     print("per fiber: 1D mesh nodes global: {}, local: {}".format(variables.n_points_whole_fiber, variables.n_points_per_subdomain_z))
@@ -521,7 +527,7 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
   # determine 1D meshes of variables.fibers
 
   # fiber nos of the variables.fibers that are handled on the own subdomain
-  variables.fibers_on_own_rank = [fiber_no(own_subdomain_coordinate_x, own_subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y) \
+  variables.fibers_on_own_rank = [get_fiber_no(own_subdomain_coordinate_x, own_subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y) \
     for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(own_subdomain_coordinate_y)) \
     for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(own_subdomain_coordinate_x))]
     
@@ -620,7 +626,7 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
         for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y)):
           for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x)):
             print("  fiber {} ({},{}) in subdomain uses ranks {}".format(\
-              fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y), \
+              get_fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y), \
               fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y, \
               list(range(subdomain_coordinate_y*variables.n_subdomains_x + subdomain_coordinate_x, n_ranks, variables.n_subdomains_x*variables.n_subdomains_y))))
 

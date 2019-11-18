@@ -94,7 +94,6 @@ int Generic::outputFileNo()
 
 void Generic::setOutputFileNo(int outputFileNo)
 {
-  LOG(INFO) << "setOutputFileNo to " << outputFileNo;
   outputFileNo_ = outputFileNo;
 }
 

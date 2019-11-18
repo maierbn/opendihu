@@ -152,6 +152,26 @@ class Package(object):
       return os.path.join(self.base_dir, 'lib', 'lib' + self._used_libs[0] + '.so')
     else:
       return ''
+      
+  def determine_dependencies_dir(self, ctx):
+    
+    dependencies_dir_candidates = [
+        os.path.join(os.getcwd(),'dependencies'), os.path.join(os.getcwd(),'../dependencies'), os.path.join(os.getcwd(),'../../dependencies')]
+    
+    # add directory from environment variable "OPENDIHU_HOME"
+    if os.environ.get('OPENDIHU_HOME') is not None:
+      if os.environ.get('OPENDIHU_HOME') != "":
+        dependencies_dir_candidates = [os.path.join(os.environ.get('OPENDIHU_HOME'),'dependencies')] + dependencies_dir_candidates
+    
+    dependencies_dir = os.path.join(os.getcwd(),'dependencies')
+    for directory in dependencies_dir_candidates:
+      if directory is not None:
+        if os.path.exists(directory):
+          dependencies_dir = directory
+          break
+    
+    self.check_text = self.check_text.replace('${DEPENDENCIES_DIR}', dependencies_dir)
+    return dependencies_dir
 
   ## Run the configuration checks for this package.
   # @param[in,out] ctx The configuration context, retrieved from SCons.
@@ -169,6 +189,8 @@ class Package(object):
     # check if compiler works
     if not self.check_compilers(ctx):
       return (False, 0)
+    
+    dependencies_dir = self.determine_dependencies_dir(ctx)
     
     #ctx.Log("ctx.env.items: "+str(ctx.env.items())+"\n")
     
@@ -425,22 +447,9 @@ class Package(object):
     #ctx.Log("ctx.env.items: "+str(ctx.env.items()))
     #ctx.Log("ctx.env.items['ENV']: "+str(ctx.env['ENV'].items()))
     
-    dependencies_dir_candidates = [
-        os.path.join(os.getcwd(),'dependencies'), os.path.join(os.getcwd(),'../dependencies'), os.path.join(os.getcwd(),'../../dependencies')]
-    
-    # add directory from environment variable "OPENDIHU_HOME"
-    if os.environ.get('OPENDIHU_HOME') is not None:
-      if os.environ.get('OPENDIHU_HOME') != "":
-        dependencies_dir_candidates = [os.path.join(os.environ.get('OPENDIHU_HOME'),'dependencies')] + dependencies_dir_candidates
-    
-    dependencies_dir = os.path.join(os.getcwd(),'dependencies')
-    for directory in dependencies_dir_candidates:
-      if directory is not None:
-        if os.path.exists(directory):
-          dependencies_dir = directory
-          break
-    
+    dependencies_dir = self.determine_dependencies_dir(ctx)
     base_dir = os.path.join(dependencies_dir,self.name.lower())
+
 
     ctx.Log("  dependencies:["+dependencies_dir+"]\n")
     ctx.Log("  base_dir:    ["+base_dir+"] (where to download the archive to)\n")
@@ -493,6 +502,7 @@ class Package(object):
     ctx.Log("  source_dir:  ["+source_dir+"] (where the unpacked sources are)\n")
 
     ctx.Log(" force_redownload: "+str(force_redownload)+", force_rebuild: "+str(force_rebuild)+", not success: "+str(not os.path.exists('scons_build_success'))+"\n")
+    
 
     # Build the package.
     if (not os.path.exists('scons_build_success')) or force_redownload or force_rebuild:
@@ -803,6 +813,7 @@ class Package(object):
   ## try to compile (self.run=0) or compile and run (self.run=1) the given code snippet in self.check_text
   # Returns (1,'program output') on success and (0,'') on failure
   def try_link(self, ctx, **kwargs):
+    
     text = self.check_text+'\n'   # ensure that file ends with newline for extra picky cray compiler
     #text = self.check_text+'//'+"{:%Y/%m/%d %H:%m:%S}".format(datetime.datetime.now())+'\n'   # ensure that file ends with newline for extra picky cray compiler
     
@@ -812,8 +823,20 @@ class Package(object):
     
     # add sources directly to test program
     for source in self.sources:
-      object_filename = os.path.join(self.base_dir, os.path.join("src", os.path.splitext(source)[0]+".o"))
-      ctx.env.AppendUnique(LINKFLAGS = object_filename)
+      
+      if ctx.env["BUILD_TYPE"] == "debug":
+        ctx.Log("debug mode detected, using debug version of {}".format(source))
+        object_filename = os.path.join(self.base_dir, os.path.join("src", os.path.splitext(source)[0]+".o"))
+      else:
+        ctx.Log("not debug mode detected, using release version of {}".format(source))
+        object_filename = os.path.join(self.base_dir, os.path.join("src", os.path.splitext(source)[0]+".release.o"))
+      
+      if os.path.isfile(object_filename):
+        ctx.env.AppendUnique(LINKFLAGS = object_filename)
+      else:
+        sys.stdout.write("Error: Could not find file \"{}\".".format(object_filename))
+        ctx.Log("Error: Could not find file \"{}\".".format(object_filename))
+        
       #with open(filename) as file:
       #  text += "\n"+file.read()
     
@@ -821,13 +844,6 @@ class Package(object):
       ctx.env.PrependUnique(CCFLAGS = '-static')
       ctx.env.PrependUnique(LINKFLAGS = '-static')
      
-    ## hack:
-    #import socket
-    #if socket.gethostname() == 'cmcs09':
-    #  print("! ! ! ! ! ! ! ! ! CCFLAG for mpi.h set manually in Package.py ! ! ! ! ! ! ! ! !")
-    #  ctx.env.PrependUnique(CCFLAGS = "('-I', '/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2')")
-    #  #ctx.env.PrependUnique(CCFLAGS = '-I/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2')
- 
     if self.link_flags is not None:
       ctx.Log("  link_flags is set, use additional link flags: {}\n".format(self.link_flags))
       ctx.env.PrependUnique(LINKFLAGS = self.link_flags)
@@ -890,7 +906,10 @@ class Package(object):
       
     if not res[0]:
       ctx.Log("Compile/Run failed.\n");
-      ctx.Log("Output: \""+str(ctx.lastTarget)+"\"\n")
+      
+      if os.path.isfile(str(ctx.lastTarget)+".out"):
+        with open(str(ctx.lastTarget)+".out", "rb") as f:
+          ctx.Log("Program output: \""+f.read()+"\"\n")
  
       disable_checks = False
       if ctx.env.get('DISABLE_CHECKS', []):

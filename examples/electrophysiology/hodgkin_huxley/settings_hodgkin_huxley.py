@@ -17,17 +17,19 @@ innervation_zone_width = 0.  # cm
 cellml_file = "../../input/hodgkin_huxley_1952.c"
 solver_type = "gmres"
 
+print("prefactor: {}".format(Conductivity/(Am*Cm)))
+
 # timing parameters
 stimulation_frequency = 10.0      # stimulations per ms
-dt_1D = 1e-3                      # timestep width of diffusion
 dt_0D = 1e-3                      # timestep width of ODEs
-dt_3D = 1e-3                      # overall timestep width of splitting
+dt_1D = 1e-3                      # timestep width of diffusion
+dt_splitting = 1e-3                      # overall timestep width of splitting
 
-dt_1D = 0.004                      # timestep width of diffusion
-dt_0D = 0.002                     # timestep width of ODEs
-dt_3D = dt_1D                      # overall timestep width of splitting
+dt_0D = 2e-3                     # timestep width of ODEs
+dt_1D = 4e-3                     # timestep width of diffusion
+dt_splitting = dt_1D                      # overall timestep width of splitting
 
-output_timestep = 1e-1            # timestep for output files
+output_timestep = 1e2            # timestep for output files
 
 # input files
 #cellml_file = "../../input/shorten_ocallaghan_davidson_soboleva_2007.c"
@@ -194,13 +196,15 @@ config = {
       "relativeTolerance": 1e-10,
       "solverType": solver_type,
       "preconditionerType": "none",
+      "dumpFormat": "default",
+      "dumpFilename": "",   # dump of rhs and system matrix disabled (no filename specified)
     }
   },
   "GodunovSplitting": {
     #"numberTimeSteps": 1,
-    "timeStepWidth": dt_3D,  # 1e-1
+    "timeStepWidth": dt_splitting,  # 1e-1
     "endTime": end_time,
-    "logTimeStepWidthAsKey": "dt_3D",
+    "logTimeStepWidthAsKey": "dt_splitting",
     "durationLogKey": "duration_total",
     "timeStepOutputInterval": 1000,
     "Term1": {      # CellML
@@ -268,11 +272,12 @@ config = {
     
   "StrangSplitting": {
     #"numberTimeSteps": 1,
-    "timeStepWidth": dt_3D,  # 1e-1
+    "timeStepWidth": dt_splitting,  # 1e-1
     "endTime": end_time,
-    "logTimeStepWidthAsKey": "dt_3D",
+    "logTimeStepWidthAsKey": "dt_splitting",
     "durationLogKey": "duration_total",
     "timeStepOutputInterval": 1000,
+    "transferSlotName": "",     #result of Strang splitting is not further used, therefore no transfer slot here
     "Term1": {      # CellML
       "Heun" : {
         "timeStepWidth": dt_0D,  # 5e-5
@@ -287,6 +292,7 @@ config = {
           #"simdSourceFilename" : "simdcode.cpp",     # transformed C++ source file that gets generated from sourceFilename and is ready for multiple instances
           #"libraryFilename": "cellml_simd_lib.so",   # compiled library
           "useGivenLibrary": False,
+          "compilerFlags": "-fPIC -ftree-vectorize -shared",
           #"statesInitialValues": [],
           #"setParametersFunction": set_parameters,    # callback function that sets parameters like stimulation current
           #"setParametersCallInterval": int(1./stimulation_frequency/dt_0D),     # set_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
@@ -297,8 +303,11 @@ config = {
           "additionalArgument": 0,
            #"handleResultFunction": handleResult,
            #"handleResultCallInterval": 2e3,
+          "setSpecificStatesCallFrequency": 0,        # not used
+          "setSpecificStatesRepeatAfterFirstCall": 0,  # not used
           
           "outputStateIndex": 0,     # state 0 = Vm
+          "outputIntermediateIndex": 0,    # no intermediates are used, so this value doesn't matter
           "parametersUsedAsIntermediate": parameters_used_as_intermediate,  #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
           "parametersUsedAsConstant": parameters_used_as_constant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
           "parametersInitialValues": parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
@@ -307,12 +316,12 @@ config = {
         },
         
         "OutputWriter" : [
-          {"format": "PythonFile", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/states", "binary": True},
+          {"format": "PythonFile", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/states", "binary": True, "onlyNodalValues": True},
         ],
       },
     },
     "Term2": {     # Diffusion
-      "CrankNicolson" : {
+      "ImplicitEuler" : {
         "initialValues": [],
         #"numberTimeSteps": 1,
         "timeStepWidth": dt_1D,

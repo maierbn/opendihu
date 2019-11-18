@@ -184,6 +184,9 @@ protected:
   //! compute P : Sbar
   Tensor2<3> computePSbar(const Tensor2<3> &fictitiousPK2Stress, const Tensor2<3> &rightCauchyGreen);
 
+  //! compute the value of Sbar : C
+  double computeSbarC(const Tensor2<3> &Sbar, const Tensor2<3> &C);
+
   DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
 
   OutputWriter::Manager outputWriterManager_; ///< manager object holding all output writer for displacements based variables

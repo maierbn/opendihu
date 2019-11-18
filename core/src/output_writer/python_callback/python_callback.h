@@ -20,7 +20,7 @@ public:
 
   //! write out solution i.e. call the callback function in this case
   template<typename DataType>
-  void write(DataType &data, int timeStepNo = -1, double currentTime = -1);
+  void write(DataType &data, int timeStepNo = -1, double currentTime = -1, int callCountIncrement = 1);
 
 private:
 

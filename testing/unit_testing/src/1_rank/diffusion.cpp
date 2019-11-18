@@ -174,7 +174,7 @@ TEST(DiffusionTest, ImplicitEuler1DPOD)
   std::string pythonConfigReduction = R"(
     # Diffusion 1D POD
 n = 5   # number of elements
-k = 5   # number of the reduced modes is equal to k+1 because there are 6 snapshots (initial value and five time steps) avalable from the full order model
+k = 6   # number of the reduced modes is equal to k+1 because there are 6 snapshots (initial value and five time steps) avalable from the full order model
 
 config = {
   "ModelOrderReduction": {

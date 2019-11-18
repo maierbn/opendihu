@@ -248,10 +248,7 @@ advanceTimeSpan()
 
   LOG(DEBUG) << "multipleInstances::advanceTimeSpan() complete, now call writeOutput, hasOutputWriters: " << this->outputWriterManager_.hasOutputWriters();
 
-  if (nInstancesLocal_ > 0)
-  {
-    this->outputWriterManager_.writeOutput(this->data_, instancesLocal_[0].numberTimeSteps(), instancesLocal_[0].endTime());
-  }
+  writeOutput(instancesLocal_[0].numberTimeSteps(), instancesLocal_[0].endTime());
 }
 
 template<typename TimeSteppingScheme>
@@ -407,6 +404,27 @@ getOutputConnectorData()
   }
   return output;
 }
+
+
+template<typename TimeSteppingScheme>
+std::vector<TimeSteppingScheme> &MultipleInstances<TimeSteppingScheme>::
+instancesLocal()
+{
+  return instancesLocal_;
+}
+
+
+template<typename TimeSteppingScheme>
+void MultipleInstances<TimeSteppingScheme>::
+writeOutput(int timeStepNo, double currentTime, int callCountIncrement)
+{
+  if (nInstancesLocal_ > 0)
+  {
+    LOG(DEBUG) << "MultipleInstances::writeOutput, timeStepNo: " << timeStepNo << ", currentTime: " << currentTime;
+    this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime, callCountIncrement);
+  }  
+}
+
 
 template<typename TimeSteppingScheme>
 std::string MultipleInstances<TimeSteppingScheme>::

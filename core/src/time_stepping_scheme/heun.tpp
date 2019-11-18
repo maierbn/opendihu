@@ -74,8 +74,9 @@ void Heun<DiscretizableInTime>::advanceTimeSpan()
     this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
       solution, intermediateIncrement, timeStepNo + 1, currentTime + this->timeStepWidth_);
 
-    // integrate u_{t+1} = u_{t} + dt*0.5(delta_u + delta_u_star)
-    // however, use: u_{t+1} = u* + 0.5*dt*(f(u*)-f(u_{t}))     (#)
+    // we need       u_{t+1} = u_{t} + dt*0.5*(delta_u + delta_u*)
+    // however, use: u_{t+1} = u*    + dt*0.5*(delta_u* - delta_u)     (#)
+    // where         u*      = u_{t} + dt*delta_u
     //
     // first calculate (f(u*)-f(u_{t})). to save storage we store into f(u*):
     VecAXPY(intermediateIncrement, -1.0, increment);
@@ -124,4 +125,5 @@ void Heun<DiscretizableInTime>::run()
 {
   TimeSteppingSchemeOde<DiscretizableInTime>::run();
 }
+
 } // namespace TimeSteppingScheme

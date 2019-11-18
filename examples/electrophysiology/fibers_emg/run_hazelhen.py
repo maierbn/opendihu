@@ -62,6 +62,7 @@ def run(x,y,z,n_fibers_per_dimension):
     --emg_initial_guess_nonzero \
     --firing_times_file {FIRING_TIMES_FILE} \
     --end_time 10000.0 \
+    --adios_output \
     --disable_firing_output \
 ".format(OPENDIHU_HOME=opendihu_home, X=x, Y=y, Z=z, NP=x*y*z, N=pes_per_node, EXAMPLE_HOME=example_home, SETTINGS_FILE=settings_file, SCENARIO_NAME=scenario_name, FIBER_FILE=fiber_file, n_available_nodes=n_available_nodes, FIRING_TIMES_FILE=firing_times_file, EMG_SOLVER_TYPE=emg_solver_type, DURATION=sleep_duration)
 
@@ -103,8 +104,8 @@ partitionings = [
 #  [4,  4,  4,  25],   # 3
 #  [5,  5,  6,  37],   # 7 nodes
 #  [7,  8,  8,  67],   # 19 nodes
-  [10, 10, 12, 109],  # 50 nodes
-#  [17, 17, 12, 187],
+#  [10, 10, 12, 109],  # 50 nodes
+  [17, 17, 12, 187],   # 145 nodes
 #  [18, 18, 24, 277],
 #  [27, 27, 24, 427],
 #  [34, 34, 24, 523],

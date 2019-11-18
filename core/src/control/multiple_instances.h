@@ -22,6 +22,7 @@ public:
   typedef std::vector<typename TimeSteppingScheme::OutputConnectorDataType> OutputConnectorDataType;
   typedef typename TimeSteppingScheme::FunctionSpace FunctionSpace;
   typedef typename ::Data::MultipleInstances<typename TimeSteppingScheme::FunctionSpace, TimeSteppingScheme> Data;
+  typedef TimeSteppingScheme TimeSteppingSchemeType;
 
   //! constructor
   MultipleInstances(DihuContext context);
@@ -50,6 +51,14 @@ public:
 
   //! output the given data for debugging
   std::string getString(OutputConnectorDataType &data);
+
+  //! the FastMonodomainSolver accesses the internals of MultipleInstances
+  std::vector<TimeSteppingScheme> &instancesLocal();
+ 
+  /** write data to file using the output writer manager
+   * @param callCountIncrement if the output should be written now, not considering the set output frequency, this is only needed for FastMonodomainSolver
+   */
+  void writeOutput(int timeStepNo, double currentTime, int callCountIncrement = 1);
 
 protected:
 

@@ -127,11 +127,16 @@ initializeRhsRoutine()
     if (libraryFilename.find("/") != std::string::npos)
     {
       std::string path = libraryFilename.substr(0, libraryFilename.rfind("/"));
-      int ret = system((std::string("mkdir -p ")+path).c_str());
-
-      if (ret != 0)
+      // if directory does not yet exist, create it
+      struct stat info;
+      if (stat(path.c_str(), &info) != 0)
       {
-        LOG(ERROR) << "Could not create path \"" << path << "\".";
+        int ret = system((std::string("mkdir -p ")+path).c_str());
+
+        if (ret != 0)
+        {
+          LOG(ERROR) << "Could not create path \"" << path << "\".";
+        }
       }
     }
 
@@ -141,7 +146,7 @@ initializeRhsRoutine()
     std::vector<int> nInstancesRanks(nRanksCommunicator);
     nInstancesRanks[ownRankNoCommunicator] = this->nInstances_;
 
-    LOG(DEBUG) << "ownRankNoCommunicator: " << ownRankNoCommunicator << ", Communicator has " << nRanksCommunicator << " ranks, nInstancesRanks: " << nInstancesRanks;
+    //std::cout << "ownRankNoCommunicator: " << ownRankNoCommunicator << ", Communicator has " << nRanksCommunicator << " ranks, nInstancesRanks: " << nInstancesRanks << std::endl;
 
     MPIUtility::handleReturnValue(MPI_Allgather(MPI_IN_PLACE, 0, MPI_DATATYPE_NULL, nInstancesRanks.data(),
                                                 1, MPI_INT, this->functionSpace_->meshPartition()->mpiCommunicator()), "MPI_Allgather");
@@ -631,6 +636,7 @@ createSimdSourceFile(std::string &simdSourceFilename)
             << "#ifndef TEST_WITHOUT_PRAGMAS" << std::endl
             << "  #pragma omp for simd" << std::endl
             << "#endif" << std::endl
+            << "#pragma GCC ivdep  // this disabled alias checking for the compiler (GCC only)" << std::endl
             << "  for (int i = 0; i < " << this->nInstances_ << "; i++)" << std::endl
             << "  {" << std::endl
             << "    ";
@@ -1136,6 +1142,11 @@ scanSourceFile(std::string sourceFilename, std::array<double,nStates> &statesIni
         int posEnd = line.rfind(" in");
         name = line.substr(posBegin,posEnd-posBegin);
         LOG(DEBUG) << "index= " << index << ", this->stateNames_size = " << this->stateNames_.size();
+        if (index >= this->stateNames_.size())
+        {
+          LOG(FATAL) << "The CellML file \"" << sourceFilename << "\" contains more than " << index << " states "
+            << " but only " << this->stateNames_.size() << " were given as template argument to CellMLAdapter.";
+        }
         this->stateNames_[index] = name;
       }
       else if (line.find("STATES[") == 0)   // line contains assignment in OpenCOR generated input file

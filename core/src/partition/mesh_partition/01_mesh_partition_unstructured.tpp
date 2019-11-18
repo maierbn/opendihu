@@ -99,6 +99,16 @@ nNodesGlobal() const
 //! number of nodes in total
 template<int D, typename BasisFunctionType>
 global_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+nNodesGlobal(int coordinateDirection) const
+{
+  if (coordinateDirection == 0)
+    return nNodes_;
+  return 1;
+}
+
+//! number of nodes in total
+template<int D, typename BasisFunctionType>
+global_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
 nDofs() const
 {
   return nDofs_;

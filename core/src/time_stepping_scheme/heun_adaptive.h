@@ -24,11 +24,11 @@ public:
   //! advance simulation by the given time span [startTime_, endTime_] with given numberTimeSteps, data in solution is used, afterwards new data is in solution
   void advanceTimeSpan();
 
-  //! run the simulation
-  void run();
-
   //! Returns the current time passed in the simulation. Used to trigger rebalancing
   double currentHeunTime();
+
+  //! run the simulation
+  void run();
 
 private:
   // allowed tolerance

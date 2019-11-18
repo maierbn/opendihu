@@ -79,28 +79,33 @@ protected:
   //! call Py_CLEAR on all python objects
   void clearPyObjects();
 
-  void (*setParameters_) (void *context, int nInstances, int timeStepNo, double currentTime, std::vector<double> &parameters);  ///< callback function that will be called before new states are computed. It can set new parameters ("known" variables) for the computation.
-  void (*setSpecificParameters_) (void *context, int nInstances, int timeStepNo, double currentTime, std::vector<double> &localParameters);  ///< callback function that will be called before new states are computed. It can set values for global parameters ("known" variables) for the computation.
-  void (*setSpecificStates_) (void *context, int nInstances, int timeStepNo, double currentTime, double *states);  ///< callback function that will be called before new states are computed. It can set values for states.
-  void (*handleResult_) (void *context, int nInstances, int timeStepNo, double currentTime, double *states, double *intermediates);   ///< callback function that will be called after new states and intermediates were computed
+  void (*setParameters_) (void *context, int nInstances, int timeStepNo, double currentTime, std::vector<double> &parameters);  //< callback function that will be called before new states are computed. It can set new parameters ("known" variables) for the computation.
+  void (*setSpecificParameters_) (void *context, int nInstances, int timeStepNo, double currentTime, std::vector<double> &localParameters);  //< callback function that will be called before new states are computed. It can set values for global parameters ("known" variables) for the computation.
+  void (*setSpecificStates_) (void *context, int nInstances, int timeStepNo, double currentTime, double *states);  //< callback function that will be called before new states are computed. It can set values for states.
+  void (*handleResult_) (void *context, int nInstances, int timeStepNo, double currentTime, double *states, double *intermediates);   //< callback function that will be called after new states and intermediates were computed
 
-  int setParametersCallInterval_;      ///< setParameters_ will be called every callInterval_ time steps
-  int setSpecificParametersCallInterval_;      ///< setSpecificParameters_ will be called every callInterval_ time steps
-  int setSpecificStatesCallInterval_;      ///< setSpecificStates_ will be called every callInterval_ time steps
-  int handleResultCallInterval_;      ///< handleResult will be called every callInterval_ time steps
-  double setSpecificStatesCallFrequency_;   ///< frequency, after which the setSpecificStates callback function will be called, either this condition or the condition with setSpecificStatesCallInterval_ is used
-  double lastCallSpecificStatesTime_;      ///< last time the setSpecificStates_ method was called
-  double setSpecificStatesRepeatAfterFirstCall_; ///< duration of continuation of calling the setSpecificStates callback after it was triggered
+  int setParametersCallInterval_;      //< setParameters_ will be called every callInterval_ time steps
+  int setSpecificParametersCallInterval_;      //< setSpecificParameters_ will be called every callInterval_ time steps
+  int setSpecificStatesCallInterval_;      //< setSpecificStates_ will be called every callInterval_ time steps
+  int handleResultCallInterval_;      //< handleResult will be called every callInterval_ time steps
+  double setSpecificStatesCallFrequency_;   //< frequency, after which the setSpecificStates callback function will be called, either this condition or the condition with setSpecificStatesCallInterval_ is used
+  std::vector<double> setSpecificStatesFrequencyJitter_;   //< relative jitter values: factors of setSpecificStatesCallFrequency_, random jitter to add or substract from frequency
+  double currentJitter_;                      //< the absolute value of the current jitter
+  int jitterIndex_;                           //< which of the stored jitter values in setSpecificStatesFrequencyJitter_ to use
+
+  double lastCallSpecificStatesTime_;      //< last time the setSpecificStates_ method was called
+  double setSpecificStatesRepeatAfterFirstCall_; //< duration of continuation of calling the setSpecificStates callback after it was triggered
+  double setSpecificStatesCallEnableBegin_;    //< first time when setSpecificStates should be called
  
-  PyObject *pythonSetParametersFunction_;   ///< Python function handle that is called to set parameters to the CellML problem from the python config
-  PyObject *pythonSetSpecificParametersFunction_;   ///< Python function handle that is called to set parameters to the CellML problem from the python config
-  PyObject *pythonSetSpecificStatesFunction_;   ///< Python function handle that is called to set states to the CellML problem from the python config
-  PyObject *pythonHandleResultFunction_;   ///< Python function handle that is called to process results from CellML problem from the python config
+  PyObject *pythonSetParametersFunction_;   //< Python function handle that is called to set parameters to the CellML problem from the python config
+  PyObject *pythonSetSpecificParametersFunction_;   //< Python function handle that is called to set parameters to the CellML problem from the python config
+  PyObject *pythonSetSpecificStatesFunction_;   //< Python function handle that is called to set states to the CellML problem from the python config
+  PyObject *pythonHandleResultFunction_;   //< Python function handle that is called to process results from CellML problem from the python config
 
-  PyObject *pySetFunctionAdditionalParameter_;  ///< an additional python object that will be passed as last argument to the setParameters, setSpecificParameters and setSpecificStates callback function
-  PyObject *pyHandleResultFunctionAdditionalParameter_;   ///< an additional python object that will be passed as last argument to the handleResult callback function
+  PyObject *pySetFunctionAdditionalParameter_;  //< an additional python object that will be passed as last argument to the setParameters, setSpecificParameters and setSpecificStates callback function
+  PyObject *pyHandleResultFunctionAdditionalParameter_;   //< an additional python object that will be passed as last argument to the handleResult callback function
 
-  PyObject *pyGlobalNaturalDofsList_;    ///< python list of global dof nos
+  PyObject *pyGlobalNaturalDofsList_;    //< python list of global dof nos
 };
 
 #include "cellml/02_callback_handler.tpp"

@@ -41,8 +41,9 @@ public:
 protected:
 
   //! check if output should be written in this timestep and prepare filename, i.e. set filename_ from config
+  //! @param callCountIncrement number of times the callCount is incremented, affects the frequency in which output files are written (outputInterval_)
   template<typename DataType>
-  bool prepareWrite(DataType &data, int timeStepNo = -1, double currentTime = 0.0);
+  bool prepareWrite(DataType &data, int timeStepNo = -1, double currentTime = 0.0, int callCountIncrement = 1);
 
   DihuContext context_;         ///< the context object
 

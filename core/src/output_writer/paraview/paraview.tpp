@@ -17,10 +17,10 @@ namespace OutputWriter
 {
 
 template<typename DataType>
-void Paraview::write(DataType& data, int timeStepNo, double currentTime)
+void Paraview::write(DataType& data, int timeStepNo, double currentTime, int callCountIncrement)
 {
   // check if output should be written in this timestep and prepare filename
-  if (!Generic::prepareWrite(data, timeStepNo, currentTime))
+  if (!Generic::prepareWrite(data, timeStepNo, currentTime, callCountIncrement))
   {
     return;
   }

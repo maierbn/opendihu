@@ -14,9 +14,15 @@ namespace OutputWriter
 class Manager
 {
 public:
-  //! call all output writers to write output, timeStepNo of -1 means no time step number in output filename
+
+  /** call all output writers to write output, timeStepNo of -1 means no time step number in output filename
+   * @param timeStepNo -1 means no time step number in output filename
+   * @param callCountIncrement if the output should be written now, not considering the set output frequency, this is only needed for FastMonodomainSolver
+   */
+  void writeOutput(int timeStepNo, double currentTime);
+
   template<typename DataType>
-  void writeOutput(DataType &problemData, int timeStepNo = -1, double currentTime = 0.0) const;
+  void writeOutput(DataType &problemData, int timeStepNo = -1, double currentTime = 0.0, int callCountIncrement = 1) const;
 
   //! parse settings and create output writers from specification in "OutputWriter" list, if rankSubset is not given, use the rankSubsetForCollectiveOperations, which is the collection of all available ranks
   void initialize(DihuContext context, PythonConfig settings, std::shared_ptr<Partition::RankSubset> rankSubset = nullptr);

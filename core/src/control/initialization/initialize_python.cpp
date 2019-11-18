@@ -153,6 +153,40 @@ void DihuContext::loadPythonScriptFromFile(std::string filename)
 
     LOG(INFO) << "File \"" <<filename << "\" loaded.";
 
+    std::string pythonScriptFilePath;
+
+    // get current working directory
+    char currentWorkingDirectory[PATH_MAX+1];
+    if (getcwd(currentWorkingDirectory, sizeof(currentWorkingDirectory)))
+    {
+
+      // set a command that assigns the absolute path to the current settings file to the __file__ attribute
+      std::stringstream commandToSetFile;
+      // if filename of settings is an absolute path, starting with '/'
+      if (filename[0] == '/')
+      {
+        commandToSetFile << "__file__ = '" << filename << "' "<< std::endl;
+      }
+      else 
+      {
+        commandToSetFile << "__file__ = '" << currentWorkingDirectory << "/" << filename << "' "<< std::endl;
+      }
+      LOG(DEBUG) << "run " << commandToSetFile.str();
+
+      int ret = PyRun_SimpleString(commandToSetFile.str().c_str());
+      PythonUtility::checkForError();
+
+      // if there was an error in the python code
+      if (ret != 0)
+      {
+        PyErr_Print();
+      }
+    }
+    else
+    {
+      LOG(WARNING) << "Could not set __file__ constant.";
+    }
+
     loadPythonScript(fileContents);
   }
 }
@@ -171,7 +205,22 @@ void DihuContext::loadPythonScript(std::string text)
     PyObject *numpyModule = PyImport_ImportModule("numpy");
     if (numpyModule == NULL)
     {
-      LOG(ERROR) << "Failed to import numpy.";
+      // get standard python path
+      wchar_t *standardPythonPathWChar = Py_GetPath();
+      std::wstring standardPythonPath(standardPythonPathWChar);
+      LOG(ERROR) << "Failed to import numpy. \n Python home directory: \"" << PYTHON_HOME_DIRECTORY 
+        << "\", Standard python path: " << standardPythonPath;
+      
+      wchar_t *homeWChar = Py_GetPythonHome();
+      char *home = Py_EncodeLocale(homeWChar, NULL);
+      LOG(ERROR) << "python home: " << home;
+
+      wchar_t *pathWChar = Py_GetPath();
+      char *path = Py_EncodeLocale(pathWChar, NULL);
+      LOG(ERROR) << "python path: " << path;
+
+      const char *version = Py_GetVersion();
+      LOG(ERROR) << "python version: " << version;
     }
 
     // execute config script

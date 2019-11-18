@@ -66,6 +66,8 @@ void TimeSteppingScheme::initialize()
   // initialize time stepping values
   startTime_ = 0.0;
   endTime_ = 1.0;
+
+  VLOG(1) << "in TimeSteppingScheme::initalize, specificSettings_: " << specificSettings_;
   if (specificSettings_.hasKey("endTime"))
     endTime_ = specificSettings_.getOptionDouble("endTime", 1.0, PythonUtility::Positive);
 
@@ -155,6 +157,10 @@ OutputWriter::Manager TimeSteppingScheme::outputWriterManager()
   return outputWriterManager_;
 }
 
+std::string TimeSteppingScheme::durationLogKey()
+{
+  return durationLogKey_;
+}
 
 }  // namespace
 

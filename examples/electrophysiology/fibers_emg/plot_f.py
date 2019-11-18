@@ -26,10 +26,21 @@ def fl(lambda_f):
   return 0.0
 
 
+def fm(lambda_f):
+  lambda_f_opt = 1.2
+  l = lambda_f/lambda_f_opt
+  if l <= 0.6:
+    return 9*(l - 0.4)**2
+  elif l >= 1.4:
+    return 9.*(l - 1.6)**2
+  return 1.-4.*(1.-l)**2
+
+
 xlist = np.linspace(0, 2.0, 100)
 ylist = [fl(x) for x in xlist]
+ylist2 = [fm(x) for x in xlist]
 
-plt.plot(xlist, ylist, '-')
+plt.plot(xlist, ylist2, '-')
 plt.grid(which='major')
 plt.title(r'force-length relation function $f_l(\lambda_f)$')
 plt.xlabel(r'$\lambda_f$ [-]')

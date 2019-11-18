@@ -1,496 +1,192 @@
 # Multiple 1D fibers (monodomain), biceps geometry
-# arguments: <scenario_name> <n_subdomains_x> <n_subdomains_y> <n_subdomains_z> <diffusion_solver_type>
+# This is similar to the fibers_emg example, but without EMG.
+# To see all available arguments, execute: ./multiple_fibers settings_multiple_fibers_cubes_partitioning.py -help
 #
+# if fiber_file=cuboid.bin, it uses a small cuboid test example
+#
+# You have to set n_subdomains such that it matches the number of processes, e.g. 2x2x1 = 4 processes.
+# Decomposition is in x,y,z direction, the fibers are aligned with the z axis.
+# E.g. --n_subdomains 2 2 1 which is 2x2x1 means no subdivision per fiber, 
+# --n_subdomains 8 8 4 means every fiber will be subdivided to 4 processes and all fibers will be computed by 8x8 processes.
+#
+# Example with 4 processes and end time 5, and otherwise default parameters:
+#   mpirun -n 4 ./multiple_fibers settings_multiple_fibers_cubes_partitioning.py --n_subdomains 2 2 1 --end_time=5.0
+#
+# Three files contribute to the settings:
+# A lot of variables are set by the helper.py script, the variables and their values are defined in variables.py and this file
+# creates the composite config that is needed by opendihu.
+# You can provided parameter values in a custom_variables.py file in the variables subfolder. (Instead of custom_variables.py you can choose any filename.)
+# This custom variables file should be the next argument on the command line after settings_fibers_emg.py, e.g.:
+#
+#  ./multiple_fibers settings_multiple_fibers_cubes_partitioning.py custom_variables.py --n_subdomains 1 1 1 --end_time=5.0
 
-end_time = 10.0
+import sys, os
+import timeit
+import argparse
+import importlib
+import copy
 
-import numpy as np
-import matplotlib 
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-import pickle
-import sys
-import struct
-
-# global parameters
-PMax = 7.3              # maximum stress [N/cm^2]
-Conductivity = 3.828    # sigma, conductivity [mS/cm]
-Am = 500.0              # surface area to volume ratio [cm^-1]
-Cm = 0.58               # membrane capacitance [uF/cm^2]
-innervation_zone_width = 1.  # cm
-innervation_zone_width = 0.  # cm
-diffusion_solver_type = "gmres"
-
-# timing parameters
-stimulation_frequency = 10.0      # stimulations per ms
-dt_1D = 1e-3                      # timestep width of diffusion
-dt_0D = 3e-3                      # timestep width of ODEs
-dt_3D = 3e-3                      # overall timestep width of splitting
-output_timestep = 4e-1             # timestep for output files
-
-# input files
-#cellml_file = "../../input/shorten_ocallaghan_davidson_soboleva_2007.c"
-#cellml_file = "../../input/shorten.cpp"
-cellml_file = "../../input/hodgkin_huxley_1952.c"
-
-fibre_file = "../../input/15x15fibers.bin"
-fiber_file = "../../input/3000fibers.bin"
-fiber_file = "../../input/7x7fibers.bin"
-#fiber_file = "../../input/15x15fibers.bin"
-#fiber_file = "../../input/49fibers.bin"
-load_data_from_file = False
-debug_output = False
-
-fiber_distribution_file = "../../input/MU_fibre_distribution_3780.txt"
-#firing_times_file = "../../input/MU_firing_times_real.txt"
-firing_times_file = "../../input/MU_firing_times_immediately.txt"
-
-#print("prefactor: ",Conductivity/(Am*Cm))
-#print("numpy path: ",np.__path__)
-
-# partitioning
-# this has to match the total number of processes
-n_subdomains_x = 2   # example values for 4 processes
-n_subdomains_y = 1
-n_subdomains_z = 2
-
-# stride for sampling the 3D elements from the fiber data
-# here any number is possible
-sampling_stride_x = 2
-sampling_stride_y = 2
-sampling_stride_z = 3
-
-# parse arguments
-scenario_name = ""
-if len(sys.argv) > 2:
-  scenario_name = sys.argv[0]
-if len(sys.argv) > 3:
-  try:
-    n_subdomains_x = (int)(sys.argv[1])
-    n_subdomains_y = (int)(sys.argv[2])
-    n_subdomains_z = (int)(sys.argv[3])
-  except:
-    pass
-
-if len(sys.argv) > 4:
-  diffusion_solver_type = sys.argv[4]
-
+# parse rank arguments
 rank_no = (int)(sys.argv[-2])
 n_ranks = (int)(sys.argv[-1])
 
-#print("rank: {}/{}".format(rank_no,n_ranks))
+# add variables subfolder to python path where the variables script is located
+script_path = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, script_path)
+sys.path.insert(0, os.path.join(script_path,'variables'))
 
-# set values for cellml model
-if "shorten" in cellml_file:
-  parameters_used_as_intermediate = [32]
-  parameters_used_as_constant = [65]
-  parameters_initial_values = [0.0, 1.0]
-  nodal_stimulation_current = 400.
-  
-elif "hodgkin_huxley" in cellml_file:
-  parameters_used_as_intermediate = []
-  parameters_used_as_constant = [2]
-  parameters_initial_values = [0.0]
-  nodal_stimulation_current = 40.
+import variables              # file variables.py, defined default values for all parameters, you can set the parameters there  
+from create_partitioned_meshes_for_settings import *   # file create_partitioned_meshes_for_settings with helper functions about own subdomain
 
-def get_motor_unit_no(fiber_no):
-  return int(fiber_distribution[fiber_no % len(fiber_distribution)]-1)
-
-def fiber_gets_stimulated(fiber_no, frequency, current_time):
-
-  # determine motor unit
-  mu_no = (int)(get_motor_unit_no(fiber_no)*0.8)
+# if first argument contains "*.py", it is a custom variable definition file, load these values
+if ".py" in sys.argv[0]:
+  variables_file = sys.argv[0]
+  variables_module = variables_file[0:variables_file.find(".py")]
   
-  # determine if fiber fires now
-  index = int(current_time * frequency)
-  n_firing_times = np.size(firing_times,0)
-  return firing_times[index % n_firing_times, mu_no] == 1
-  
-def set_parameters_null(n_nodes_global, time_step_no, current_time, parameters, dof_nos_global, fiber_no):
-  pass
-  
-def set_parameters(n_nodes_global, time_step_no, current_time, parameters, dof_nos_global, fiber_no):
-  
-  # determine if fiber gets stimulated at the current time
-  is_fiber_gets_stimulated = fiber_gets_stimulated(fiber_no, stimulation_frequency, current_time)
-  
-  # determine nodes to stimulate (center node, left and right neighbour)
-  innervation_zone_width_n_nodes = innervation_zone_width*100  # 100 nodes per cm
-  innervation_node_global = int(n_nodes_global / 2)  # + np.random.randint(-innervation_zone_width_n_nodes/2,innervation_zone_width_n_nodes/2+1)
-  nodes_to_stimulate_global = [innervation_node_global]
-  if innervation_node_global > 0:
-    nodes_to_stimulate_global.insert(0, innervation_node_global-1)
-  if innervation_node_global < n_nodes_global-1:
-    nodes_to_stimulate_global.append(innervation_node_global+1)
-  
-  # stimulation value
-  if is_fiber_gets_stimulated:
-    stimulation_current = nodal_stimulation_current
-  else:
-    stimulation_current = 0.
-  
-  first_dof_global = dof_nos_global[0]
-  last_dof_global = dof_nos_global[-1]
+  if rank_no == 0:
+    print("Loading variables from {}.".format(variables_file))
     
-  for node_no_global in nodes_to_stimulate_global:
-    if first_dof_global <= node_no_global <= last_dof_global:
-      # get local no for global no (1D)
-      dof_no_local = node_no_global - first_dof_global
-      parameters[dof_no_local] = stimulation_current
- 
-      #print("       {}: set stimulation for local dof {}".format(rank_no, dof_no_local))
+  custom_variables = importlib.import_module(variables_module)
+  variables.__dict__.update(custom_variables.__dict__)
+  sys.argv = sys.argv[1:]     # remove first argument, which now has already been parsed
+
+# define command line arguments
+parser = argparse.ArgumentParser(description='fibers_emg')
+parser.add_argument('--scenario_name',                       help='The name to identify this run in the log.',   default=variables.scenario_name)
+parser.add_argument('--n_subdomains', nargs=3,               help='Number of subdomains in x,y,z direction.',    type=int)
+parser.add_argument('--n_subdomains_x', '-x',                help='Number of subdomains in x direction.',        type=int, default=variables.n_subdomains_x)
+parser.add_argument('--n_subdomains_y', '-y',                help='Number of subdomains in y direction.',        type=int, default=variables.n_subdomains_y)
+parser.add_argument('--n_subdomains_z', '-z',                help='Number of subdomains in z direction.',        type=int, default=variables.n_subdomains_z)
+parser.add_argument('--diffusion_solver_type',               help='The solver for the diffusion.',               default=variables.diffusion_solver_type, choices=["gmres","cg","lu","gamg","richardson","chebyshev","cholesky","jacobi","sor","preonly"])
+parser.add_argument('--diffusion_preconditioner_type',       help='The preconditioner for the diffusion.',       default=variables.diffusion_preconditioner_type, choices=["jacobi","sor","lu","ilu","gamg","none"])
+parser.add_argument('--paraview_output',                     help='Enable the paraview output writer.',          default=variables.paraview_output, action='store_true')
+parser.add_argument('--adios_output',                        help='Enable the MegaMol/ADIOS output writer.',          default=variables.adios_output, action='store_true')
+parser.add_argument('--fiber_file',                          help='The filename of the file that contains the fiber data.', default=variables.fiber_file)
+parser.add_argument('--cellml_file',                         help='The filename of the file that contains the cellml model.', default=variables.cellml_file)
+parser.add_argument('--fiber_distribution_file',             help='The filename of the file that contains the MU firing times.', default=variables.fiber_distribution_file)
+parser.add_argument('--firing_times_file',                   help='The filename of the file that contains the cellml model.', default=variables.firing_times_file)
+parser.add_argument('--end_time', '--tend', '-t',            help='The end simulation time.',                    type=float, default=variables.end_time)
+parser.add_argument('--output_timestep',                     help='The timestep for writing outputs.',           type=float, default=variables.output_timestep)
+parser.add_argument('--dt_0D',                               help='The timestep for the 0D model.',              type=float, default=variables.dt_0D)
+parser.add_argument('--dt_1D',                               help='The timestep for the 1D model.',              type=float, default=variables.dt_1D)
+parser.add_argument('--dt_splitting',                        help='The timestep for the splitting.',             type=float, default=variables.dt_splitting)
+parser.add_argument('--disable_firing_output',               help='Disables the initial list of fiber firings.', default=variables.disable_firing_output, action='store_true')
+parser.add_argument('--v',                                   help='Enable full verbosity in c++ code')
+parser.add_argument('-v',                                    help='Enable verbosity level in c++ code', action="store_true")
+parser.add_argument('-vmodule',                              help='Enable verbosity level for given file in c++ code')
+parser.add_argument('-pause',                                help='Stop at parallel debugging barrier', action="store_true")
+
+# parse command line arguments and assign values to variables module
+args = parser.parse_args(args=sys.argv[:-2], namespace=variables)
+
+# initialize some dependend variables
+if variables.n_subdomains is not None:
+  variables.n_subdomains_x = variables.n_subdomains[0]
+  variables.n_subdomains_y = variables.n_subdomains[1]
+  variables.n_subdomains_z = variables.n_subdomains[2]
   
-  #print("       {}: setParameters at timestep {}, t={}, n_nodes_global={}, range: [{},{}], fiber no {}, MU {}, stimulated: {}".\
-        #format(rank_no, time_step_no, current_time, n_nodes_global, first_dof_global, last_dof_global, fiber_no, get_motor_unit_no(fiber_no), is_fiber_gets_stimulated))
-    
-  #wait = input("Press any key to continue...")
-    
-# callback function that can set parameters, i.e. stimulation current
-def set_specific_parameters(n_nodes_global, time_step_no, current_time, parameters, fiber_no):
-  
-  # determine if fiber gets stimulated at the current time
-  is_fiber_gets_stimulated = fiber_gets_stimulated(fiber_no, stimulation_frequency, current_time)
-  
-  # determine nodes to stimulate (center node, left and right neighbour)
-  innervation_zone_width_n_nodes = innervation_zone_width*100  # 100 nodes per cm
-  innervation_node_global = int(n_nodes_global / 2)  # + np.random.randint(-innervation_zone_width_n_nodes/2,innervation_zone_width_n_nodes/2+1)
-  nodes_to_stimulate_global = [innervation_node_global]
-  
-  for k in range(10):
-    if innervation_node_global-k >= 0:
-      nodes_to_stimulate_global.insert(0, innervation_node_global-k)
-    if innervation_node_global+k <= n_nodes_global-1:
-      nodes_to_stimulate_global.append(innervation_node_global+k)
-  
-  # stimulation value
-  if is_fiber_gets_stimulated:
-    stimulation_current = 40.
-  else:
-    stimulation_current = 0.
-
-  for node_no_global in nodes_to_stimulate_global:
-    parameters[(node_no_global,0)] = stimulation_current   # key: ((x,y,z),nodal_dof_index)
-
-# callback function that can set states, i.e. prescribed values for stimulation
-def set_specific_states(n_nodes_global, time_step_no, current_time, states, fiber_no):
-  
-  # determine if fiber gets stimulated at the current time
-  is_fiber_gets_stimulated = fiber_gets_stimulated(fiber_no, stimulation_frequency, current_time)
-
-  if is_fiber_gets_stimulated:  
-    # determine nodes to stimulate (center node, left and right neighbour)
-    innervation_zone_width_n_nodes = innervation_zone_width*100  # 100 nodes per cm
-    innervation_node_global = int(n_nodes_global / 2)  # + np.random.randint(-innervation_zone_width_n_nodes/2,innervation_zone_width_n_nodes/2+1)
-    nodes_to_stimulate_global = [innervation_node_global]
-
-    for node_no_global in nodes_to_stimulate_global:
-      states[(node_no_global,0,0)] = 20.0   # key: ((x,y,z),nodal_dof_index,state_no)
-
-def callback(data, shape, nEntries, dim, timeStepNo, currentTime):
-  pass
-    
-# create fiber meshes
-meshes = {}
-
-try:
-  fiber_file_handle = open(fiber_file, "rb")
-except:
-  print("Error: Could not open fiber file \"{}\"".format(fiber_file))
-  quit()
-
-# parse fibers from a binary fiber file that was created by parallel_fiber_estimation
-# parse file header to extract number of fibers
-bytes_raw = fiber_file_handle.read(32)
-header_str = struct.unpack('32s', bytes_raw)[0]
-header_length_raw = fiber_file_handle.read(4)
-header_length = struct.unpack('i', header_length_raw)[0]
-
-parameters = []
-for i in range(int(header_length/4.) - 1):
-  double_raw = fiber_file_handle.read(4)
-  value = struct.unpack('i', double_raw)[0]
-  parameters.append(value)
-  
-n_fibers_total = parameters[0]
-n_fibers_x = (int)(np.round(np.sqrt(n_fibers_total)))
-n_fibers_y = n_fibers_x
-n_points_whole_fiber = parameters[1]
-
-# for debugging:
-#n_fibers_total = 4
-#n_fibers_x = 2
-#n_fibers_y = 2
-  
+# output information of run
 if rank_no == 0:
-  print("nFibersTotal:      {} ({} x {})".format(n_fibers_total, n_fibers_x, n_fibers_y))
-  print("nPointsWholeFiber: {}".format(n_points_whole_fiber))
+  print("scenario_name: {},  n_subdomains: {} {} {},  n_ranks: {},  end_time: {}".format(variables.scenario_name, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, n_ranks, variables.end_time))
+  print("dt_0D:           {:0.0e}, diffusion_solver_type:      {}".format(variables.dt_0D, variables.diffusion_solver_type))
+  print("dt_1D:           {:0.0e},".format(variables.dt_1D))
+  print("dt_splitting:    {:0.0e}, paraview_output: {}".format(variables.dt_splitting, variables.paraview_output))
+  print("output_timestep: {:0.0e}  stimulation_frequency: {} 1/ms = {} Hz".format(variables.output_timestep, variables.stimulation_frequency, variables.stimulation_frequency*1e3))
+  print("fiber_file:              {}".format(variables.fiber_file))
+  print("cellml_file:             {}".format(variables.cellml_file))
+  print("fiber_distribution_file: {}".format(variables.fiber_distribution_file))
+  print("firing_times_file:       {}".format(variables.firing_times_file))
+  print("********************************************************************************")
   
-# parse whole fiber file
-if load_data_from_file:
-  fibers = []
-  for fiber_no in range(n_fibers_total):
-    fiber = []
-    for point_no in range(n_points_whole_fiber):
-      point = []
-      for i in range(3):
-        double_raw = fiber_file_handle.read(8)
-        value = struct.unpack('d', double_raw)[0]
-        point.append(value)
-      fiber.append(point)
-    fibers.append(fiber)
-          
-# load MU distribution and firing times
-fiber_distribution = np.genfromtxt(fiber_distribution_file, delimiter=" ")
-firing_times = np.genfromtxt(firing_times_file)
-
-# for debugging output show when the first 20 fibers will fire
-if rank_no == 0:
-  print("Debugging output about fiber firing: Taking input from file \"{}\"".format(firing_times_file))
+  print("prefactor: sigma_eff/(Am*Cm) = {} = {} / ({}*{})".format(variables.Conductivity/(variables.Am*variables.Cm), variables.Conductivity, variables.Am, variables.Cm))
   
-  n_firing_times = np.size(firing_times,0)
-  for fiber_no_index in range(min(n_fibers_total,20)):
-    first_stimulation = None
-    for current_time in np.linspace(0,1./stimulation_frequency*n_firing_times,n_firing_times):
-      if fiber_gets_stimulated(fiber_no_index, stimulation_frequency, current_time):
-        first_stimulation = current_time
-        break
-  
-    print("   Fiber {} is of MU {} and will be stimulated for the first time at {}".format(fiber_no_index, get_motor_unit_no(fiber_no_index), first_stimulation))
-
-# compute partitioning
-
-if rank_no == 0:
-  if n_ranks != n_subdomains_x*n_subdomains_y*n_subdomains_z:
-    print("\n\nError! Number of ranks {} does not match given partitioning {} x {} x {} = {}.\n\n".format(n_ranks, n_subdomains_x, n_subdomains_y, n_subdomains_z, n_subdomains_x*n_subdomains_y*n_subdomains_z))
-    quit()
-  
-n_subdomains_xy = n_subdomains_x * n_subdomains_y
-n_fibers_per_subdomain_x = (int)(np.ceil(n_fibers_x / n_subdomains_x))
-n_fibers_per_subdomain_y = (int)(np.ceil(n_fibers_y / n_subdomains_y))
-
-if rank_no == 0:
-  print("{} ranks, partitioning: x{} x y{} x z{}".format(n_ranks, n_subdomains_x, n_subdomains_y, n_subdomains_z))
-  print("{} x {} fibers, per partition: {} x {}".format(n_fibers_x, n_fibers_y, n_fibers_per_subdomain_x, n_fibers_per_subdomain_y))
-
-# number of fibers that are handled inside the subdomain x
-def n_fibers_in_subdomain_x(subdomain_coordinate_x):
-  return min(n_fibers_per_subdomain_x, n_fibers_x-subdomain_coordinate_x*n_fibers_per_subdomain_x)
-  
-# number of fibers that are handled inside the subdomain y
-def n_fibers_in_subdomain_y(subdomain_coordinate_y):
-  return min(n_fibers_per_subdomain_y, n_fibers_y-subdomain_coordinate_y*n_fibers_per_subdomain_y)
-
-# global fiber no, from subdomain coordinate and coordinate inside the subdomain
-def fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y):
-  return (subdomain_coordinate_y*n_fibers_per_subdomain_y + fiber_in_subdomain_coordinate_y)*n_fibers_x + subdomain_coordinate_x*n_fibers_per_subdomain_x + fiber_in_subdomain_coordinate_x
-
-own_subdomain_coordinate_x = rank_no % n_subdomains_x
-own_subdomain_coordinate_y = (int)(rank_no / n_subdomains_x) % n_subdomains_y
-own_subdomain_coordinate_z = (int)(rank_no / n_subdomains_xy)
-
-if rank_no == 0:
-  print("rank configuration: ")
-  
-  for subdomain_coordinate_y in range(n_subdomains_y):
-    for subdomain_coordinate_x in range(n_subdomains_x):
-      print("subdomain ({},{})".format(subdomain_coordinate_x, subdomain_coordinate_y))
-      #for rankNo in range(subdomain_coordinate_y*n_subdomains_x + subdomain_coordinate_x, n_ranks, n_subdomains_x*n_subdomains_y):
-      #  print("rank {}".format(rankNo))
-      #print("  n_subdomains_z: {}".format(n_subdomains_z))
-      for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y)):
-        for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x)):
-          print("  fiber {} in subdomain ({},{}) uses ranks {}".format(fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y), fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y, list(range(subdomain_coordinate_y*n_subdomains_x + subdomain_coordinate_x, n_ranks, n_subdomains_x*n_subdomains_y))))
-
-fibers_on_own_rank = [fiber_no(own_subdomain_coordinate_x, own_subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y) \
-  for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(own_subdomain_coordinate_y)) \
-  for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(own_subdomain_coordinate_x))]
-print("{}: rank {}, subdomain coordinate ({},{},{})/({},{},{})".format(rank_no, rank_no, own_subdomain_coordinate_x, own_subdomain_coordinate_y, own_subdomain_coordinate_z, n_subdomains_x, n_subdomains_y, n_subdomains_z))
-print("{}:    fibers x: [{}, {}]".format(rank_no, 0, n_fibers_in_subdomain_x(own_subdomain_coordinate_x)))
-print("{}:    fibers y: [{}, {}]".format(rank_no, 0, n_fibers_in_subdomain_y(own_subdomain_coordinate_y)))
-print("{}:       ({})".format(rank_no, fibers_on_own_rank))
-      
-for i in range(n_fibers_total):
-
-  # determine number of elements of the local part of a fiber
-  n_fiber_elements_on_subdomain = (int)((n_points_whole_fiber-1)/n_subdomains_z)
-  extra_elements = (n_points_whole_fiber-1) % n_fiber_elements_on_subdomain
-  
-  if own_subdomain_coordinate_z < extra_elements:
-    n_fiber_elements_on_subdomain += 1
-    fiber_start_node_no = own_subdomain_coordinate_z * n_fiber_elements_on_subdomain
-  else:
-    fiber_start_node_no = extra_elements * (n_fiber_elements_on_subdomain+1) + (own_subdomain_coordinate_z-extra_elements) * n_fiber_elements_on_subdomain
+  # start timer to measure duration of parsing of this script  
+  t_start_script = timeit.default_timer()
     
-  n_fiber_nodes_on_subdomain = n_fiber_elements_on_subdomain
-  if own_subdomain_coordinate_z == n_subdomains_z-1:
-    n_fiber_nodes_on_subdomain += 1
-    
-  # if fiber is computed on own rank
-  if i in fibers_on_own_rank:
-    
-    if debug_output:
-      print("{}: fiber {} is in fibers on own rank, {}".format(rank_no, i, str(fibers_on_own_rank)))
-    
-    # read in fiber data
-    memory_size_fiber = n_points_whole_fiber * 3 * 8
-    offset = 32 + header_length + i*memory_size_fiber + fiber_start_node_no*3*8
-    
-    if load_data_from_file:
-      fiber_file_handle.seek(offset)
-      
-      fiber_node_positions = []
-      for point_no in range(n_fiber_nodes_on_subdomain):
-        point = []
-        for j in range(3):
-          double_raw = fiber_file_handle.read(8)
-          value = struct.unpack('d', double_raw)[0]
-          point.append(value)
-        
-        fiber_node_positions.append(point)
-        
-        if debug_output:
-          print("------")  
-          print("i: ",i)
-          print("fiber_node_positions: ",fiber_node_positions[0:10])
-          print("fiber_start_node_no: ",fiber_start_node_no,", n_fiber_elements_on_subdomain: ",n_fiber_elements_on_subdomain)
-          print("fibers[i]: ",fibers[i][fiber_start_node_no:fiber_start_node_no+10])
-          
-        if np.linalg.norm(np.array(fibers[i][fiber_start_node_no:fiber_start_node_no+n_fiber_elements_on_subdomain]) - np.array(fiber_node_positions[0:n_fiber_elements_on_subdomain])) > 1e-3:
-          print("mismatch fiber node positions!")
-          quit()
-          
-    else:
-      fiber_node_positions = [fiber_file, [(offset, n_fiber_nodes_on_subdomain)]]
-    
-    if debug_output:
-      print("{}: define mesh \"{}\" with {} elements, {} nodes, first node: {}".format(rank_no, "MeshFiber_{}".format(i), \
-        n_fiber_elements_on_subdomain, len(fiber_node_positions), str(fiber_node_positions[0])))
-    
-  else:    
-    fiber_node_positions = []
-    n_fiber_elements_on_subdomain = []
-  
-  # define mesh
-  meshes["MeshFiber_{}".format(i)] = {
-    "nElements": n_fiber_elements_on_subdomain,
-    "nodePositions": fiber_node_positions,
-    "inputMeshIsGlobal": False,
-    "nRanks": [n_subdomains_z],
-    "setHermiteDerivatives": False,
-    "logKey": "Fiber{}".format(i)
-  }
-    
-if rank_no == 0 and n_ranks < 10:
-  print("rank configuration: ")
-  
-  for subdomain_coordinate_y in range(n_subdomains_y):
-    for subdomain_coordinate_x in range(n_subdomains_x):
-      print("subdomain (x,y)=({},{})".format(subdomain_coordinate_x, subdomain_coordinate_y))
-      print("n_subdomains_z: {}".format(n_subdomains_z))
-      for rankNo in range(subdomain_coordinate_y*n_subdomains_x + subdomain_coordinate_x, n_ranks, n_subdomains_x*n_subdomains_y):
-        print("  rank {}".format(rankNo))
-      for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y)):
-        for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x)):
-          print("  fiber {} ({},{}) in subdomain uses ranks {}".format(\
-            fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y), \
-            fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y, \
-            list(range(subdomain_coordinate_y*n_subdomains_x + subdomain_coordinate_x, n_ranks, n_subdomains_x*n_subdomains_y))))
-  
-# create megamol config file
-config_file_contents = \
-"""print('Hi, I am the megamolconfig.lua!')
+# initialize all helper variables
+from helper import *
 
--- mmSetAppDir("{megamol_home}/bin")
-mmSetAppDir(".")
+variables.n_subdomains_xy = variables.n_subdomains_x * variables.n_subdomains_y
+variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
 
-mmSetLogFile("")
-mmSetLogLevel(0)
-mmSetEchoLevel('*')
-
-mmAddShaderDir("{megamol_home}/share/shaders")
-mmAddResourceDir("{megamol_home}/share/resources")
-
-mmPluginLoaderInfo("{megamol_home}/lib", "*.mmplg", "include")
-
--- mmSetConfigValue("*-window", "w1280h720")
-mmSetConfigValue("*-window", "w720h720")
-mmSetConfigValue("consolegui", "on")
-
-mmSetConfigValue("LRHostEnable", "true")
-
-return "done with megamolconfig.lua."
--- error("megamolconfig.lua is not happy!")
-""".format(megamol_home="/store/software/opendihu/dependencies/megamol/install")
-
-config_filename = "megamol_config.lua"
-with open(config_filename, "w") as f:
-  f.write(config_file_contents)
-
-config = {  
-  #"MegaMolArguments": "--configfile {} -p ../../input/adios_project.lua ".format(config_filename),
-  "scenarioName": scenario_name,
-  "Meshes": meshes,
+# define the config dict
+config = {
+  "scenarioName": variables.scenario_name,
+  "Meshes": variables.meshes,
   "Solvers": {
-    "implicitSolver": {
-      "maxIterations": 1e4,
-      "relativeTolerance": 1e-10,
-      "solverType": diffusion_solver_type,
-      "preconditionerType": "none",
-    }
+    "implicitSolver": {     # solver for the implicit timestepping scheme of the diffusion time step
+      "maxIterations":      1e4,
+      "relativeTolerance":  1e-10,
+      "solverType":         variables.diffusion_solver_type,
+      "preconditionerType": variables.diffusion_preconditioner_type,
+      "dumpFilename":       "",   # "out/dump_"
+      "dumpFormat":         "matlab",
+    }, 
   },
   "MultipleInstances": {
-    "logKey": "duration_subdomains_xy",
-    "nInstances": n_subdomains_xy,
+    "logKey":                     "duration_subdomains_xy",
+    "ranksAllComputedInstances":  list(range(n_ranks)),
+    "nInstances":                 variables.n_subdomains_xy,
     "instances": 
     [{
-      "ranks": list(range(subdomain_coordinate_y*n_subdomains_x + subdomain_coordinate_x, n_ranks, n_subdomains_x*n_subdomains_y)),
+      "ranks": list(range(subdomain_coordinate_y*variables.n_subdomains_x + subdomain_coordinate_x, n_ranks, variables.n_subdomains_x*variables.n_subdomains_y)),
       "StrangSplitting": {
         #"numberTimeSteps": 1,
-        "timeStepWidth": dt_3D,  # 3e-1
-        "logTimeStepWidthAsKey": "dt_3D",
-        "durationLogKey": "duration_total",
-        "timeStepOutputInterval" : 1000,
-        "endTime": end_time,
+        "timeStepWidth":          variables.dt_splitting,  # 1e-1
+        "logTimeStepWidthAsKey":  "dt_splitting",
+        "durationLogKey":         "duration_monodomain",
+        "timeStepOutputInterval": 100,
+        "endTime":                variables.end_time,
+        "transferSlotName":       "states",   # which output slot of the cellml adapter ("states" or "intermediates") to use for transfer to diffusion, in this case we need "states", states[0] which is Vm
 
-        "Term1": {      # CellML
+        "Term1": {      # CellML, i.e. reaction term of Monodomain equation
           "MultipleInstances": {
-            "logKey": "duration_subdomains_z",
-            "nInstances": n_fibers_in_subdomain_x(subdomain_coordinate_x)*n_fibers_in_subdomain_y(subdomain_coordinate_y),
+            "logKey":             "duration_subdomains_z",
+            "nInstances":         n_fibers_in_subdomain_x(subdomain_coordinate_x)*n_fibers_in_subdomain_y(subdomain_coordinate_y),
             "instances": 
             [{
-              "ranks": list(range(n_subdomains_z)),    # these rank nos are local nos to the outer instance of MultipleInstances, i.e. from 0 to number of ranks in z direction
+              "ranks":                          list(range(variables.n_subdomains_z)),    # these rank nos are local nos to the outer instance of MultipleInstances, i.e. from 0 to number of ranks in z direction
               "Heun" : {
-                "timeStepWidth": dt_0D,  # 5e-5
-                "logTimeStepWidthAsKey": "dt_0D",
-                "durationLogKey": "duration_0D",
-                "initialValues": [],
-                "timeStepOutputInterval": 1e4,
-                "inputMeshIsGlobal": True,
-                "dirichletBoundaryConditions": {},
+                "timeStepWidth":                variables.dt_0D,  # 5e-5
+                "logTimeStepWidthAsKey":        "dt_0D",
+                "durationLogKey":               "duration_0D",
+                "initialValues":                [],
+                "timeStepOutputInterval":       1e4,
+                "inputMeshIsGlobal":            True,
+                "dirichletBoundaryConditions":  {},
                   
                 "CellML" : {
-                  "sourceFilename": cellml_file,             # input C++ source file, can be either generated by OpenCMISS or OpenCOR from cellml model
-                  "compilerFlags": "-fPIC -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared ",
-                  #"simdSourceFilename" : "simdcode.cpp",     # transformed C++ source file that gets generated from sourceFilename and is ready for multiple instances
-                  #"libraryFilename": "cellml_simd_lib.so",   # compiled library
-                  "useGivenLibrary": False,
-                  #"statesInitialValues": [],
-                  #"setSpecificParametersFunction": set_specific_parameters,    # callback function that sets parameters like stimulation current
-                  #"setSpecificParametersCallInterval": int(1./stimulation_frequency/dt_0D),     # set_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
-                  "setSpecificStatesFunction": set_specific_states,    # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
-                  "setSpecificStatesCallInterval": int(1./stimulation_frequency/dt_0D),     # set_specific_states should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
-                  "additionalArgument": fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y),
+                  "sourceFilename":                         variables.cellml_file,                          # input C++ source file, can be either generated by OpenCMISS or OpenCOR from cellml model
+                  "compilerFlags":                          "-fPIC -O3 -shared -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log",
+                  #"simdSourceFilename" :                   "simdcode.cpp",                                 # transformed C++ source file that gets generated from sourceFilename and is ready for multiple instances
+                  #"libraryFilename":                       "cellml_simd_lib.so",                           # compiled library
+                  "useGivenLibrary":                        False,
+                  #"statesInitialValues":                   [],
+                  #"setSpecificParametersFunction":         set_specific_parameters,                        # callback function that sets parameters like stimulation current
+                  #"setSpecificParametersCallInterval":     int(1./variables.stimulation_frequency/variables.dt_0D),         # set_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
+                  "setSpecificStatesFunction":              set_specific_states,                                             # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
+                  #"setSpecificStatesCallInterval":         2*int(1./variables.stimulation_frequency/variables.dt_0D),       # set_specific_states should be called variables.stimulation_frequency times per ms, the factor 2 is needed because every Heun step includes two calls to rhs
+                  "setSpecificStatesCallInterval":          0,                                                               # 0 means disabled
+                  "setSpecificStatesCallFrequency":         variables.get_specific_states_call_frequency(fiber_no, motor_unit_no),   # set_specific_states should be called variables.stimulation_frequency times per ms
+                  "setSpecificStatesFrequencyJitter":       variables.get_specific_states_frequency_jitter(fiber_no, motor_unit_no), # random value to add or substract to setSpecificStatesCallFrequency every stimulation, this is to add random jitter to the frequency
+                  "setSpecificStatesRepeatAfterFirstCall":  0.01,                                                            # [ms] simulation time span for which the setSpecificStates callback will be called after a call was triggered
+                  "setSpecificStatesCallEnableBegin":       variables.get_specific_states_call_enable_begin(fiber_no, motor_unit_no),# [ms] first time when to call setSpecificStates
+                  "additionalArgument":                     fiber_no,
                   
-                  "outputStateIndex": 0,     # state 0 = Vm, rate 28 = gamma
-                  "parametersUsedAsIntermediate": parameters_used_as_intermediate,  #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
-                  "parametersUsedAsConstant": parameters_used_as_constant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
-                  "parametersInitialValues": parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
-                  "meshName": "MeshFiber_{}".format(fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)),
-                  "prefactor": 1.0,
+                  "outputIntermediateIndex":                variables.output_intermediate_index,            # which intermediate values to use in further computation
+                  "outputStateIndex":                       variables.output_state_index,                   # which state values to use in further computation, Shorten / Hodgkin Huxley: state 0 = Vm
+                  "parametersUsedAsIntermediate":           variables.parameters_used_as_intermediate,      #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
+                  "parametersUsedAsConstant":               variables.parameters_used_as_constant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
+                  "parametersInitialValues":                variables.parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
+                  "meshName":                               "MeshFiber_{}".format(fiber_no),
+                  "prefactor":                              1.0,
+                  "stimulationLogFilename":                 "out/stimulation.log",
                 },
               },
             } for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y)) \
-                for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x))],
+                for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x)) \
+                  for fiber_no in [get_fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)] \
+                    for motor_unit_no in [get_motor_unit_no(fiber_no)]],
           }
         },
         "Term2": {     # Diffusion
@@ -498,42 +194,69 @@ config = {
             "nInstances": n_fibers_in_subdomain_x(subdomain_coordinate_x)*n_fibers_in_subdomain_y(subdomain_coordinate_y),
             "instances": 
             [{
-              "ranks": list(range(n_subdomains_z)),    # these rank nos are local nos to the outer instance of MultipleInstances, i.e. from 0 to number of ranks in z direction
+              "ranks":                         list(range(variables.n_subdomains_z)),    # these rank nos are local nos to the outer instance of MultipleInstances, i.e. from 0 to number of ranks in z direction
               "ImplicitEuler" : {
-                "initialValues": [],
-                #"numberTimeSteps": 1,
-                "timeStepWidth": dt_1D,  # 1e-5
-                "logTimeStepWidthAsKey": "dt_1D",
-                "durationLogKey": "duration_1D",
-                "timeStepOutputInterval": 1e4,
-                "dirichletBoundaryConditions": {0: -75, -1: -75},
-                "inputMeshIsGlobal": True,
-                "solverName": "implicitSolver",
+                "initialValues":               [],
+                #"numberTimeSteps":            1,
+                "timeStepWidth":               variables.dt_1D,  # 1e-5
+                "logTimeStepWidthAsKey":       "dt_1D",
+                "durationLogKey":              "duration_1D",
+                "timeStepOutputInterval":      1e4,
+                "dirichletBoundaryConditions": {},                                       # old Dirichlet BC that are not used in FastMonodomainSolver: {0: -75.0036, -1: -75.0036},
+                "inputMeshIsGlobal":           True,
+                "solverName":                  "implicitSolver",
                 "FiniteElementMethod" : {
-                  "maxIterations": 1e4,
-                  "relativeTolerance": 1e-10,
-                  "inputMeshIsGlobal": True,
-                  "meshName": "MeshFiber_{}".format(fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)),
-                  "prefactor": Conductivity/(Am*Cm),
-                  "solverName": "implicitSolver",
+                  "maxIterations":             1e4,
+                  "relativeTolerance":         1e-10,
+                  "inputMeshIsGlobal":         True,
+                  "meshName":                  "MeshFiber_{}".format(fiber_no),
+                  "prefactor":                 get_diffusion_prefactor(fiber_no, motor_unit_no),  # resolves to Conductivity / (Am * Cm)
+                  "solverName":                "implicitSolver",
                 },
                 "OutputWriter" : [
-                  #{"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/fiber_"+str(fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)), "binary": True, "fixedFormat": False, "combineFiles": True},
-                  #{"format": "Paraview", "outputInterval": 1./dt_1D*output_timestep, "filename": "out/fiber_"+str(i)+"_txt", "binary": False, "fixedFormat": False},
-                  #{"format": "ExFile", "filename": "out/fiber_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "sphereSize": "0.02*0.02*0.02"},
-                  #{"format": "PythonFile", "filename": "out/fiber_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "binary":True, "onlyNodalValues":True},
+                  #{"format": "Paraview", "outputInterval": int(1./variables.dt_1D*variables.output_timestep), "filename": "out/fiber_"+str(fiber_no), "binary": True, "fixedFormat": False, "combineFiles": True},
+                  #{"format": "Paraview", "outputInterval": 1./variables.dt_1D*variables.output_timestep, "filename": "out/fiber_"+str(i)+"_txt", "binary": False, "fixedFormat": False},
+                  #{"format": "ExFile", "filename": "out/fiber_"+str(i), "outputInterval": 1./variables.dt_1D*variables.output_timestep, "sphereSize": "0.02*0.02*0.02"},
+                  #{"format": "PythonFile", "filename": "out/fiber_"+str(i), "outputInterval": 1./variables.dt_1D*variables.output_timestep, "binary":True, "onlyNodalValues":True},
                 ]
               },
             } for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y)) \
-                for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x))],
-            "OutputWriter" : [
-              {"format": "Paraview", "outputInterval": int(1./dt_3D*output_timestep), "filename": "out/all_fibers", "binary": True, "fixedFormat": False, "combineFiles": True},
-              {"format": "MegaMol", "outputInterval": int(1./dt_3D*output_timestep), "filename": "out/all_fibers", "combineNInstances": n_subdomains_xy, "useFrontBackBuffer": False},
-            ],
+                for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x)) \
+                  for fiber_no in [get_fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)] \
+                    for motor_unit_no in [get_motor_unit_no(fiber_no)]],
+            "OutputWriter" : variables.output_writer_fibers,
           },
         },
       }
-    } for subdomain_coordinate_y in range(n_subdomains_y)
-        for subdomain_coordinate_x in range(n_subdomains_x)]
-  }
+    } if (subdomain_coordinate_x,subdomain_coordinate_y) == (variables.own_subdomain_coordinate_x,variables.own_subdomain_coordinate_y) else None
+    for subdomain_coordinate_y in range(variables.n_subdomains_y)
+        for subdomain_coordinate_x in range(variables.n_subdomains_x)]
+  },
 }
+
+# add entry for when fast_fibers with "RepeatedCall" as top solver is used
+config["RepeatedCall"] = {
+  "timeStepWidth":          variables.output_timestep,  # 1e-1
+  "logTimeStepWidthAsKey":  "dt_output_timestep",
+  "durationLogKey":         "duration_repeated_call",
+  "timeStepOutputInterval": 1,
+  "endTime":                variables.end_time,
+  "MultipleInstances": copy.deepcopy(config["MultipleInstances"]),
+  "fiberDistributionFile":    variables.fiber_distribution_file,   # for FastMonodomainSolver, e.g. MU_fibre_distribution_3780.txt
+  "firingTimesFile":          variables.firing_times_file,         # for FastMonodomainSolver, e.g. MU_firing_times_real.txt
+}
+
+# loop over instances (fibers)
+for i in range(len(config["RepeatedCall"]["MultipleInstances"]["instances"])):
+  #config["RepeatedCall"]["MultipleInstances"]["instances"][i]["StrangSplitting"]["endTime"] = variables.output_timestep
+  
+  # loop over output writers
+  for j in range(len(config["RepeatedCall"]["MultipleInstances"]["instances"][i]["StrangSplitting"]["Term2"]["MultipleInstances"]["OutputWriter"])):
+    
+    # set outputInterval to 1
+    config["RepeatedCall"]["MultipleInstances"]["instances"][i]["StrangSplitting"]["Term2"]["MultipleInstances"]["OutputWriter"][j]["outputInterval"] = 1
+
+# stop timer and calculate how long parsing lasted
+if rank_no == 0:
+  t_stop_script = timeit.default_timer()
+  print("Python config parsed in {:.1f}s.".format(t_stop_script - t_start_script))

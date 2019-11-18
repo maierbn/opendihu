@@ -60,6 +60,7 @@ sconsconfig.select(
     #packages.xsd(required=False),       # XML Schema to C++ data binding compiler, needed for chaste
     #packages.boost(required=False),       # boost C++ library, needed for chaste
     #packages.Chaste(required=False),       # The Chaste framework, only the nonlinear mechanics solver is used
+    packages.Vc(required=True),          # The Vc types for explicit vectorization
     packages.EasyLoggingPP(required=True),      # This is the logging library, it has to be the last package to be included because it contains a source (.c) file that needs to be compiled and linked to opendihu and somehow otherwise scons-config does not work.
 )
 
@@ -80,8 +81,10 @@ vars.Add(EnumVariable('BUILD_TYPE', 'The build type, according to that different
                       '(Shortcuts: ''d'',''r'',''rd''=''dr'', ''p'')', 'release', 
                       allowed_values=('debug', 'release', 'releasewithdebuginfo', 'preprocess'), ignorecase = 2, 
                       map={'d':'debug', 'r':'release', 'rd':'releasewithdebuginfo', 'dr':'releasewithdebuginfo', 'p':'preprocess'}))
+vars.Add(BoolVariable('travis_ci', 'Do not compile and run tests, but compile all examples.', 0))
 vars.Add(BoolVariable('no_tests', 'Do not compile and run tests.', 0))
 vars.Add(BoolVariable('no_examples', 'Do not compile examples.', 0))
+vars.Add(BoolVariable('gprof', 'Include flags for gprof profiling.', False))
 vars.Add(BoolVariable('USE_CRAY_PAT', 'Compile with craypat regions.', False))
 vars.Add(BoolVariable('USE_HPL', 'Compile with -hpl option.', False))
 vars.Add(BoolVariable('USE_MEGAMOL', 'Use additional linker flags to link to the megamol source file.', False))
@@ -178,8 +181,15 @@ Progress(progress_function, interval=env["node_count_interval"])
 
 # add notification when compilation is complete
 if os.environ.get("PE_ENV") == None:
-  notify = env.Command(target='notify-send'+str(random.random()), source = None, action = 'notify-send "compilation complete" || true')
-  AlwaysBuild('notify-send')
+  if "notifyset" not in env:
+    env["notifyset"] = True
+    target='notify-send'+str(random.random())
+    notify = env.Command(target=target, source = None, action = 'notify-send "compilation complete" || true')
+    #AlwaysBuild('notify-send')
+    if env["BUILD_TYPE"] == "debug":
+      Depends(notify, 'core/build_debug/libopendihud.a')
+    else:
+      Depends(notify, 'core/build_release/libopendihu.a')
     
 # ensure that PYTHONPATH points to scripts directory which contains python scripts
 current_python_path = os.environ.get("PYTHONPATH")
@@ -199,7 +209,7 @@ if env["BUILD_TYPE"] == "debug":
   if env['CC'] != "pgcc":  # not pgi compiler
     env.MergeFlags('-ftemplate-backtrace-limit=0 -fstack-check')
     env.MergeFlags('-Wall -Wpedantic -Wno-sign-compare -Wno-error=sign-compare')
-    env.MergeFlags('-DDEBUG -ggdb3 -g3 -Og -pg  -DELPP_FEATURE_CRASH_LOG')   # gcc flags, will be sorted automatically into linker and compiler flags
+    env.MergeFlags('-DDEBUG -ggdb3 -g3 -Og  -DELPP_FEATURE_CRASH_LOG')   # gcc flags, will be sorted automatically into linker and compiler flags
     env.MergeFlags('-I/store/software/opendihu/dependencies/chaste/install/include/chaste/continuum_mechanics/problem')
     env.MergeFlags('-I/store/software/opendihu/dependencies/chaste/install/include/chaste/continuum_mechanics/common')
   else: # using pgi compiler here:
@@ -232,7 +242,7 @@ else:
   if socket.gethostname() == 'cmcs09':
     env.MergeFlags('-DNDEBUG')
   else:
-    env.MergeFlags('-DELPP_DISABLE_DEBUG_LOGS -DELPP_DISABLE_VERBOSE_LOGS -DELPP_DISABLE_TRACE_LOGS -DNDEBUG')
+    env.MergeFlags('-DELPP_DISABLE_DEBUG_LOGS -DELPP_DISABLE_VERBOSE_LOGS -DELPP_DISABLE_TRACE_LOGS -DELPP_DISABLE_LOGGING_FLAGS_FROM_ARG -DNDEBUG')
   if os.environ.get("PE_ENV") == "CRAY":
     env.MergeFlags('-O3')   # fastest with cray (same performance as -02)
   elif env["CC"] == "pgcc":
@@ -240,7 +250,10 @@ else:
     #env.MergeFlags('-fastsse -g -noswitcherror -std=c++14 -Mvect=simd -acc -ta=host,tesla:cc60,time -Minfo=accel -laccg -laccapi -laccn -laccg2 -lcudadevice')
     env.MergeFlags('-noswitcherror -std=c++14') # managed,
   else:
-    env.MergeFlags('-Ofast -pg -g')   # fastest with GNU and Intel
+    env.MergeFlags('-Ofast')   # fastest with GNU and Intel
+    if env["gprof"]:
+      env.Append(LINKFLAGS = "-pg")   # add gprof flags for linker
+      env.MergeFlags('-pg -g')
   
   if env["USE_CRAY_PAT"]:
     print("USE_CRAY_PAT=True: Compiling with -DHAVE_PAT (uses PAT_region_begin())\n")
@@ -255,7 +268,8 @@ if os.environ.get("PE_ENV") != "CRAY" and "pg" not in env["cc"]:
   if "ppc" in platform.processor():
     env.MergeFlags('-mcpu=native -mtune=native')
   else:
-    env.MergeFlags('-march=native')
+    if os.environ.get("PE_ENV") != "INTEL":
+      env.MergeFlags('-march=native')
 
   env.MergeFlags('-Wl,--disable-new-dtags')
 
@@ -273,6 +287,8 @@ env.Append(CPPDEFINES = {'-DCPP_COMPILER_COMMAND': '\\"'+env["CXX"]+'\\"'})   # 
 if socket.gethostname() == 'cmcs09':
   env.Append(CPPDEFINES = {'-DMPI_C_COMPILER_COMMAND': '\\"/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/bin/mpicc\\"'})
   env.Append(CPPDEFINES = {'-DMPI_CPP_COMPILER_COMMAND': '\\"/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/bin/mpic++\\"'})  
+if os.path.isfile("/.dockerenv"):
+  env.Append(CPPDEFINES = '-DINSIDE_DOCKER_CONTAINER')
 
 env.Append(CPPDEFINES = "-DELPP_NO_DEFAULT_LOG_FILE")  # disable creation of the "myeasylog.log" default log file
 

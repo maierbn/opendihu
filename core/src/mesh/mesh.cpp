@@ -16,7 +16,7 @@ void Mesh::setMeshName(std::string meshName)
 }
 
 //! get the name of the mesh
-std::string Mesh::meshName()
+std::string Mesh::meshName() const
 {
   return meshName_;
 }

@@ -33,7 +33,7 @@ PETSC_REBUILD = False
 PYTHON_DOWNLOAD = True    # This downloads and uses Python, use it to be independent of an eventual system python
 
 # Python packages - they are now all combined with the option PYTHONPACKAGES_DOWNLOAD
-PYTHONPACKAGES_DOWNLOAD = False
+PYTHONPACKAGES_DOWNLOAD = True
 
 # Base64, encoding library for binary vtk (paraview) output files
 BASE64_DOWNLOAD = True
@@ -52,6 +52,9 @@ ADIOS_DOWNLOAD = True
 
 # MegaMol, visualization framework of VISUS, optional, needs ADIOS2
 MEGAMOL_DOWNLOAD = False    # install MegaMol from official git repo, but needed is the private repo, ask for access to use MegaMol with opendihu
+
+# Vc, vectorization types
+VC_DOWNLOAD=True
 
 # MPI
 # MPI is normally detected by runnig the mpicc command. If this is not available, you can provide the MPI_DIR as usual.
@@ -93,8 +96,8 @@ try:
   # on neon use custom cmake
   import socket
   if socket.gethostname() == "neon" or socket.gethostname() == "helium" or "argon" in socket.gethostname():
-    if os.path.isfile("~/software/cmake/cmake-3.13.3-Linux-x86_64/bin/cmake"):
-      cmake="~/software/cmake/cmake-3.13.3-Linux-x86_64/bin/cmake"
+    if os.path.isfile("/home/maierbn/software/cmake/cmake-3.13.3-Linux-x86_64/bin/cmake"):
+      cmake="/home/maierbn/software/cmake/cmake-3.13.3-Linux-x86_64/bin/cmake"
 
   if "sgscl" in socket.gethostname():
     MPI_DIR="/scratch-nfs/maierbn/openmpi/install-3.1"

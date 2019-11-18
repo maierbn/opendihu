@@ -70,6 +70,9 @@ public:
   //! if the class should handle Dirichlet boundary conditions, this does not apply here
   void setBoundaryConditionHandlingEnabled(bool boundaryConditionHandlingEnabled){};
 
+  //! the FastMonodomainSolver accesses the internals of CellmlAdapter
+  template<int a, int b> friend class FastMonodomainSolverBase;
+
 };
 
 #include "cellml/03_cellml_adapter.tpp"

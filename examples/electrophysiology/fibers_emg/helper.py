@@ -1,5 +1,5 @@
-# Multiple 1D variables.fibers (monodomain) with 3D EMG (static bidomain), biceps geometry
-# arguments: -help
+# Multiple 1D fibers (monodomain) with 3D EMG (static bidomain), biceps geometry
+# This is a helper script that sets a lot of the internal variables which are all defined in variables.py
 #
 # if variables.fiber_file=cuboid.bin, it uses a small cuboid test example
 
@@ -14,7 +14,7 @@ from create_partitioned_meshes_for_settings import *   # file create_partitioned
 
 # parse arguments
 rank_no = (int)(sys.argv[-2])
-n_ranks = (int)(sys.argv[-1])    
+n_ranks = (int)(sys.argv[-1])
 
 # generate cuboid fiber file
 if variables.fiber_file == "cuboid.bin":
@@ -76,25 +76,65 @@ if variables.paraview_output:
   variables.output_writer_fibers.append({"format": "Paraview", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep), "filename": "out/" + variables.scenario_name + "/fibers", "binary": True, "fixedFormat": False, "combineFiles": True})
 if variables.adios_output:
   variables.output_writer_emg.append({"format": "MegaMol", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + variables.scenario_name + "/emg", "useFrontBackBuffer": False})
-  variables.output_writer_fibers.append({"format": "MegaMol", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep), "filename": "out/" + variables.scenario_name + "/fibers", "combineNInstances": variables.n_subdomains_x*variables.n_subdomains_y, "useFrontBackBuffer": False})
+  variables.output_writer_fibers.append({"format": "MegaMol", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep), "filename": "out/" + variables.scenario_name + "/fibers", "combineNInstances": variables.n_subdomains_xy, "useFrontBackBuffer": False})
+if variables.python_output:
+  variables.output_writer_emg.append({"format": "PythonFile", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + variables.scenario_name + "/emg", "binary": True})
+  variables.output_writer_fibers.append({"format": "PythonFile", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep), "filename": "out/" + variables.scenario_name + "/fibers", "binary": True})
 
 # set values for cellml model
 if "shorten" in variables.cellml_file:
+  # parameters: stimulation current I_stim, fiber stretch λ
   variables.parameters_used_as_intermediate = [32]    # 
   variables.parameters_used_as_constant = [65]        # fiber stretch λ, this indicates how much the fiber has stretched, 1 means no extension. CONSTANTS[65] in the shorten model
   variables.parameters_initial_values = [0.0, 1.0]    # stimulation current I_stim, fiber stretch λ, OpenCMISS generated files: OC_KNOWN will be set by this
   variables.nodal_stimulation_current = 1200.
+  variables.output_state_index = 0                    # use state 0 = Vm
+  variables.output_intermediate_index = 0             # do not use any intermediate
   
 elif "hodgkin_huxley" in variables.cellml_file:
+  # parameters: I_stim
   variables.parameters_used_as_intermediate = []
   variables.parameters_used_as_constant = [2]
   variables.parameters_initial_values = [0.0]
   variables.nodal_stimulation_current = 40.
+  variables.output_state_index = 0                    # use state 0 = Vm
+  variables.output_intermediate_index = 0             # do not use any intermediate
+
+elif "slow_TK_2014" in variables.cellml_file:   # this is (3a, "MultiPhysStrain", old tomo mechanics) in OpenCMISS
+  # parameters: I_stim, fiber stretch λ
+  variables.parameters_used_as_intermediate = []
+  variables.parameters_used_as_constant = [54, 67]     # wal_environment/I_HH = I_stim, razumova/L_S = λ
+  variables.parameters_initial_values = [0.0, 1.0]     # wal_environment/I_HH = I_stim, razumova/L_S = λ
+  variables.nodal_stimulation_current = 40. 
+  variables.output_state_index = 0                     # use state 0, wal_environment/vS = Vm
+  variables.output_intermediate_index = 12             # use intermediate 12, razumova/stress = γ
+  
+elif "Aliev_Panfilov_Razumova_2016_08_22" in variables.cellml_file :   # this is (3, "MultiPhysStrain", numerically more stable) in OpenCMISS, this only computes A1,A2,x1,x2 not the stress
+  # parameters: I_stim, fiber stretch λ, fiber contraction velocity, \dot{λ}
+  variables.parameters_used_as_intermediate = []
+  variables.parameters_used_as_constant = [0, 8, 9]    # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/velo = \dot{λ}
+  variables.parameters_initial_values = [0, 1, 0]      # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/velo = \dot{λ}
+  variables.nodal_stimulation_current = 40. 
+  variables.output_state_index = 0                     # use state 0, Aliev_Panfilov/V_m = Vm
+  variables.output_intermediate_index = 0              # no intermediates are used
+  
+elif "Aliev_Panfilov_Razumova_Titin" in variables.cellml_file:   # this is (4, "Titin") in OpenCMISS
+  # parameters: I_stim, fiber stretch λ, fiber contraction velocity, \dot{λ}
+  variables.parameters_used_as_intermediate = []
+  variables.parameters_used_as_constant = [0, 11, 12]  # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/rel_velo = \dot{λ}
+  variables.parameters_initial_values = [0, 1, 0]      # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/rel_velo = \dot{λ}
+  variables.nodal_stimulation_current = 40. 
+  variables.output_state_index = 0                     # use state 0, Aliev_Panfilov/V_m = Vm
+  variables.output_intermediate_index = [4,5]          # Razumova/ActiveStress = γ, Razumova/Activation = α 
+  
 
 # callback functions
 # --------------------------
 def get_motor_unit_no(fiber_no):
   return int(variables.fiber_distribution[fiber_no % len(variables.fiber_distribution)]-1)
+
+def get_diffusion_prefactor(fiber_no, mu_no):
+  return variables.get_conductivity(fiber_no, mu_no) / (variables.get_am(fiber_no, mu_no) * variables.get_cm(fiber_no, mu_no))
 
 def fiber_gets_stimulated(fiber_no, frequency, current_time):
   """
@@ -318,11 +358,11 @@ if False:
     for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y)):
       for subdomain_coordinate_x in range(variables.n_subdomains_x):
         for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x)):
-          no = fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)
+          no = get_fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)
           if no != counter:
-            print("error: fiber_no({},{},{},{}) = {}, counter = {}".format(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y,no,counter))
+            print("error: get_fiber_no({},{},{},{}) = {}, counter = {}".format(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y,no,counter))
           else:
-            print("   ok: fiber_no({},{},{},{}) = {}, counter = {}".format(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y,no,counter))
+            print("   ok: get_fiber_no({},{},{},{}) = {}, counter = {}".format(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y,no,counter))
           counter += 1
           
 

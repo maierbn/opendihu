@@ -1,30 +1,53 @@
-# Multiple 1D variables.fibers (monodomain) with 3D EMG (static bidomain), biceps geometry
+# Multiple 1D fibers (monodomain) with 3D EMG (static bidomain), biceps geometry
 # to see all available arguments, execute: ./fibers_emg ../settings_fibers_emg.py -help
-##
-# if variables.fiber_file=cuboid.bin, it uses a small cuboid test example
+# This is the most complex example, if you need help, can ask BM.
+#
+# if fiber_file=cuboid.bin, it uses a small cuboid test example
 #
 # You have to set n_subdomains such that it matches the number of processes, e.g. 2x2x1 = 4 processes.
 # Decomposition is in x,y,z direction, the fibers are aligned with the z axis.
 # E.g. --n_subdomains 2 2 1 which is 2x2x1 means no subdivision per fiber, 
 # --n_subdomains 8 8 4 means every fiber will be subdivided to 4 processes and all fibers will be computed by 8x8 processes.
 #
-# Example with 4 processes and end time 5:
-#   mpirun -n 4 ./fibers_emg ../settings_fibers_emg.py --n_subdomains 2 2 1 --variables.end_time=5.0
+# Example with 4 processes and end time 5, and otherwise default parameters:
+#   mpirun -n 4 ./fibers_emg ../settings_fibers_emg.py --n_subdomains 2 2 1 --end_time=5.0
 #
 # Three files contribute to the settings:
 # A lot of variables are set by the helper.py script, the variables and their values are defined in variables.py and this file
 # creates the composite config that is needed by opendihu.
-# You should only make changes in the variables.py file to set different parameters or in this file to add functionality.
-# This is the most complex example, you can ask me (BM) how it works exactly.
+# You can provided parameter values in a custom_variables.py file in the variables subfolder of fibers_emg. (Instead of custom_variables.py you can choose any filename.)
+# This custom variables file should be the next argument on the command line after settings_fibers_emg.py, e.g.:
+#
+#  ./fibers_emg ../settings_fibers_emg.py custom_variables.py --n_subdomains 1 1 1 --end_time=5.0
 
-
-import sys
+import sys, os
 import timeit
 import argparse
+import importlib
 
-sys.path.insert(0, '..')
-import variables              # file variables.py, defined default values for all parameters, you can set the parameters there
+# parse rank arguments
+rank_no = (int)(sys.argv[-2])
+n_ranks = (int)(sys.argv[-1])
+
+# add variables subfolder to python path where the variables script is located
+script_path = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, script_path)
+sys.path.insert(0, os.path.join(script_path,'variables'))
+
+import variables              # file variables.py, defined default values for all parameters, you can set the parameters there  
 from create_partitioned_meshes_for_settings import *   # file create_partitioned_meshes_for_settings with helper functions about own subdomain
+
+# if first argument contains "*.py", it is a custom variable definition file, load these values
+if ".py" in sys.argv[0]:
+  variables_file = sys.argv[0]
+  variables_module = variables_file[0:variables_file.find(".py")]
+  
+  if rank_no == 0:
+    print("Loading variables from {}.".format(variables_file))
+    
+  custom_variables = importlib.import_module(variables_module)
+  variables.__dict__.update(custom_variables.__dict__)
+  sys.argv = sys.argv[1:]     # remove first argument, which now has already been parsed
 
 # define command line arguments
 parser = argparse.ArgumentParser(description='fibers_emg')
@@ -57,9 +80,10 @@ parser.add_argument('--disable_firing_output',               help='Disables the 
 parser.add_argument('--v',                                   help='Enable full verbosity in c++ code')
 parser.add_argument('-v',                                    help='Enable verbosity level in c++ code', action="store_true")
 parser.add_argument('-vmodule',                              help='Enable verbosity level for given file in c++ code')
+parser.add_argument('-pause',                                help='Stop at parallel debugging barrier', action="store_true")
 parser.add_argument('--rank_reordering',                     help='Enable rank reordering in the c++ code', action="store_true")
 parser.add_argument('--linear_elasticity',                   help='Enable linear elasticity', action="store_true")
- 
+
 # parse command line arguments and assign values to variables module
 args = parser.parse_args(args=sys.argv[:-2], namespace=variables)
 
@@ -72,10 +96,6 @@ if variables.n_subdomains is not None:
 if variables.linear_elasticity:
   variables.cellml_file = "../../input/shorten.cpp"
   variables.emg_solver_type = "cg"
-
-# parse arguments
-rank_no = (int)(sys.argv[-2])
-n_ranks = (int)(sys.argv[-1])
   
 # output information of run
 if rank_no == 0:
@@ -90,6 +110,8 @@ if rank_no == 0:
   print("fiber_distribution_file: {}".format(variables.fiber_distribution_file))
   print("firing_times_file:       {}".format(variables.firing_times_file))
   print("********************************************************************************")
+  
+  print("prefactor: sigma_eff/(Am*Cm) = {} = {} / ({}*{})".format(variables.Conductivity/(variables.Am*variables.Cm), variables.Conductivity, variables.Am, variables.Cm))
   
   # start timer to measure duration of parsing of this script  
   t_start_script = timeit.default_timer()
@@ -123,7 +145,7 @@ config = {
       "dumpFormat":         "matlab",
     },
     "activationSolver": {   # solver for the static Bidomain equation and the EMG
-      "relativeTolerance":  1e-100,
+      "relativeTolerance":  1e-5,
       "maxIterations":      1e4,
       "solverType":         variables.emg_solver_type,
       "preconditionerType": variables.emg_preconditioner_type,
@@ -143,7 +165,7 @@ config = {
     "timeStepWidth":          variables.dt_3D,  # 1e-1
     "logTimeStepWidthAsKey":  "dt_3D",
     "durationLogKey":         "duration_total",
-    "timeStepOutputInterval": 10,
+    "timeStepOutputInterval": 1,
     "endTime":                variables.end_time,
     "transferSlotName":       "intermediates" if variables.linear_elasticity else "states",
     "Term1": {        # monodomain, fibers
@@ -187,25 +209,30 @@ config = {
                       "useGivenLibrary":                        False,
                       #"statesInitialValues":                   [],
                       #"setSpecificParametersFunction":         set_specific_parameters,                        # callback function that sets parameters like stimulation current
-                      #"setSpecificParametersCallInterval":     int(1./variables.stimulation_frequency/variables.dt_0D),     # set_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
-                      "setSpecificStatesFunction":              set_specific_states,                            # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
-                      #"setSpecificStatesCallInterval":         2*int(1./variables.stimulation_frequency/variables.dt_0D),     # set_specific_states should be called variables.stimulation_frequency times per ms, the factor 2 is needed because every Heun step includes two calls to rhs
-                      "setSpecificStatesCallInterval":          0,                                              # 0 means disabled
-                      "setSpecificStatesCallFrequency":         variables.stimulation_frequency,                # set_specific_states should be called variables.stimulation_frequency times per ms, the factor 2 is needed because every Heun step includes two calls to rhs
-                      "setSpecificStatesRepeatAfterFirstCall":  0.01,                                           # simulation time span for which the setSpecificStates callback will be called after a call was triggered
-                      "additionalArgument":                     fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y),
+                      #"setSpecificParametersCallInterval":     int(1./variables.stimulation_frequency/variables.dt_0D),         # set_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
+                      "setSpecificStatesFunction":              set_specific_states,                                             # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
+                      #"setSpecificStatesCallInterval":         2*int(1./variables.stimulation_frequency/variables.dt_0D),       # set_specific_states should be called variables.stimulation_frequency times per ms, the factor 2 is needed because every Heun step includes two calls to rhs
+                      "setSpecificStatesCallInterval":          0,                                                               # 0 means disabled
+                      "setSpecificStatesCallFrequency":         variables.get_specific_states_call_frequency(fiber_no, motor_unit_no),   # set_specific_states should be called variables.stimulation_frequency times per ms
+                      "setSpecificStatesFrequencyJitter":       variables.get_specific_states_frequency_jitter(fiber_no, motor_unit_no), # random value to add or substract to setSpecificStatesCallFrequency every stimulation, this is to add random jitter to the frequency
+                      "setSpecificStatesRepeatAfterFirstCall":  0.01,                                                            # [ms] simulation time span for which the setSpecificStates callback will be called after a call was triggered
+                      "setSpecificStatesCallEnableBegin":       variables.get_specific_states_call_enable_begin(fiber_no, motor_unit_no),# [ms] first time when to call setSpecificStates
+                      "additionalArgument":                     fiber_no,
                       
-                      "outputIntermediateIndex":                0,                                              # which intermediate value to use in further computation
-                      "outputStateIndex":                       0,                                              # Shorten / Hodgkin Huxley: state 0 = Vm, Shorten: rate 28 = gamma, intermediate 0 = gamma (OC_WANTED[0])
+                      "outputIntermediateIndex":                variables.output_intermediate_index,            # which intermediate values to use in further computation
+                      "outputStateIndex":                       variables.output_state_index,                   # which state values to use in further computation, Shorten / Hodgkin Huxley: state 0 = Vm
                       "parametersUsedAsIntermediate":           variables.parameters_used_as_intermediate,      #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
                       "parametersUsedAsConstant":               variables.parameters_used_as_constant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
                       "parametersInitialValues":                variables.parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
-                      "meshName":                               "MeshFiber_{}".format(fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)),
+                      "meshName":                               "MeshFiber_{}".format(fiber_no),
                       "prefactor":                              1.0,
+                      "stimulationLogFilename":                 "out/stimulation.log",
                     },
                   },
                 } for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y)) \
-                    for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x))],
+                    for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x)) \
+                      for fiber_no in [get_fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)] \
+                        for motor_unit_no in [get_motor_unit_no(fiber_no)]],
               }
             },
             "Term2": {     # Diffusion
@@ -221,34 +248,41 @@ config = {
                     "logTimeStepWidthAsKey":       "dt_1D",
                     "durationLogKey":              "duration_1D",
                     "timeStepOutputInterval":      1e4,
-                    "dirichletBoundaryConditions": {0: -75.0036, -1: -75.0036},
+                    "dirichletBoundaryConditions": {},                                       # old Dirichlet BC that are not used in FastMonodomainSolver: {0: -75.0036, -1: -75.0036},
                     "inputMeshIsGlobal":           True,
                     "solverName":                  "implicitSolver",
                     "FiniteElementMethod" : {
                       "maxIterations":             1e4,
                       "relativeTolerance":         1e-10,
                       "inputMeshIsGlobal":         True,
-                      "meshName":                  "MeshFiber_{}".format(fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)),
-                      "prefactor":                 variables.Conductivity/(variables.Am*variables.Cm),
+                      "meshName":                  "MeshFiber_{}".format(fiber_no),
+                      "prefactor":                 get_diffusion_prefactor(fiber_no, motor_unit_no),  # resolves to Conductivity / (Am * Cm)
                       "solverName":                "implicitSolver",
                     },
                     "OutputWriter" : [
-                      #{"format": "Paraview", "outputInterval": int(1./variables.dt_1D*variables.output_timestep), "filename": "out/fiber_"+str(fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)), "binary": True, "fixedFormat": False, "combineFiles": True},
+                      #{"format": "Paraview", "outputInterval": int(1./variables.dt_1D*variables.output_timestep), "filename": "out/fiber_"+str(fiber_no), "binary": True, "fixedFormat": False, "combineFiles": True},
                       #{"format": "Paraview", "outputInterval": 1./variables.dt_1D*variables.output_timestep, "filename": "out/fiber_"+str(i)+"_txt", "binary": False, "fixedFormat": False},
                       #{"format": "ExFile", "filename": "out/fiber_"+str(i), "outputInterval": 1./variables.dt_1D*variables.output_timestep, "sphereSize": "0.02*0.02*0.02"},
                       #{"format": "PythonFile", "filename": "out/fiber_"+str(i), "outputInterval": 1./variables.dt_1D*variables.output_timestep, "binary":True, "onlyNodalValues":True},
                     ]
                   },
                 } for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y)) \
-                    for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x))],
-                "OutputWriter" : variables.output_writer_fibers,
+                    for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x)) \
+                      for fiber_no in [get_fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)] \
+                        for motor_unit_no in [get_motor_unit_no(fiber_no)]],
+                "OutputWriter" : [
+                   {"format": "MegaMol", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep), "filename": "out/" + variables.scenario_name + "/fibers", 
+                    "combineNInstances": 1, "useFrontBackBuffer": False}
+                ] if variables.adios_output else variables.output_writer_fibers,
               },
             },
           }
         } if (subdomain_coordinate_x,subdomain_coordinate_y) == (variables.own_subdomain_coordinate_x,variables.own_subdomain_coordinate_y) else None
         for subdomain_coordinate_y in range(variables.n_subdomains_y)
             for subdomain_coordinate_x in range(variables.n_subdomains_x)]
-      }
+      },
+      "fiberDistributionFile":    variables.fiber_distribution_file,   # for FastMonodomainSolver, e.g. MU_fibre_distribution_3780.txt
+      "firingTimesFile":          variables.firing_times_file,         # for FastMonodomainSolver, e.g. MU_firing_times_real.txt
     },
     "Term2": {        # Bidomain, EMG
       "StaticBidomainSolver": {       # version for fibers_emg
@@ -293,7 +327,7 @@ config = {
         "OutputWriter": [
           {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + variables.scenario_name + "/surface_emg", "binary": True, "fixedFormat": False, "combineFiles": True},
         ],
-        "face": "1-",
+        "face": "0+",
         "StaticBidomainSolver": {
           "timeStepWidth":          variables.dt_3D,
           "timeStepOutputInterval": 50,
@@ -356,11 +390,14 @@ config = {
         },
         "maximumActiveStress":      1.0,
         "strainScalingCurveWidth":  1.0,
-        "scalingFactor":        1e4,   #1e4
+        "scalingFactor":            1e4,   #1e4
         "OutputWriter" : [
           {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/deformation", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
           #{"format": "PythonFile", "filename": "out/deformation", "outputInterval": 1, "binary":False, "onlyNodalValues":True},
         ]
+      },
+      "QuasiStaticNonlinearElasticitySolverFebio": {
+        "durationLogKey": "febio",
       }
     }
   }

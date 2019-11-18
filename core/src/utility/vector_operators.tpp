@@ -278,7 +278,8 @@ std::ostream &operator<<(std::ostream &stream, const std::vector<T> &values)
       stream << "," << values[i];
     }
     if (i == 100 && i < values.size())
-      stream << "... " << values.size() << " entries total, only showing the first 100 (call with -vmodule=vector_operators*=1 to show all)";
+      stream << "..." << values[values.size()-3] << "," << values[values.size()-2] << "," << values[values.size()-1]
+        << " (" << values.size() << " entries total, only showing the first 100 (call with -vmodule=vector_operators*=1 to show all))";
   }
 
   stream << "]";

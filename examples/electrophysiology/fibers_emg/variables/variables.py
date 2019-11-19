@@ -52,6 +52,7 @@ disable_firing_output = True        # Disables the initial list of fiber firings
 paraview_output = False             # If the paraview output writer should be enabled
 adios_output = False                # If the MegaMol/ADIOS output writer should be enabled
 python_output = False               # If the Python output writer should be enabled
+exfile_output = False               # If the Exfile output writer should be enabled
 
 
 # motor unit stimulation times

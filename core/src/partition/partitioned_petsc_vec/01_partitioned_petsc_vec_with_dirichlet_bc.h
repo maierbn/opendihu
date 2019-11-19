@@ -54,37 +54,43 @@ public:
   void setValue(int componentNo, PetscInt row, PetscScalar value, InsertMode mode = INSERT_VALUES);
 
   //! wrapper to the PETSc VecGetValues, acting on the local data or global data, the indices ix are the local dof nos
-  void getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[]);
+  void getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[]) const;
 
   //! get values from a different vector but using the indexing for the global vector
-  void getValuesGlobal(Vec vector, int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[]);
+  void getValuesGlobal(Vec vector, int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[]) const;
+
+  //! get a single value
+  double getValue(int componentNo, PetscInt row) const;
 
   //! set all entries to zero, wraps VecZeroEntries
   void zeroEntries();
   
   //! output the vector to stream, for debugging
-  void output(std::ostream &stream);
+  void output(std::ostream &stream) const;
 
   //! get the index in the internal vector in global numbering, from componentNo and local dof no
-  global_no_t nonBCDofNoGlobal(int componentNo, dof_no_t localDofNo);
+  global_no_t nonBCDofNoGlobal(int componentNo, dof_no_t localDofNo) const;
 
   //! get number of local entries
-  int nEntriesLocal();
+  int nEntriesLocal() const;
 
   //! get number of global entries
-  global_no_t nEntriesGlobal();
+  global_no_t nEntriesGlobal() const;
 
   //! get the Petsc Vec that contains all components but no values for dirichlet BC dofs
   Vec &valuesGlobal();
 
   //! get the index in the internal vector in local numbering, from componentNo and local dof no
-  dof_no_t nonBCDofNoLocal(int componentNo, dof_no_t localDofNo);
+  dof_no_t nonBCDofNoLocal(int componentNo, dof_no_t localDofNo) const;
 
   //! determine if the dof entry is prescribed
-  bool isPrescribed(int componentNo, dof_no_t localDofNo);
+  bool isPrescribed(int componentNo, dof_no_t localDofNo) const;
 
   //! get a reference to the internal dofNoLocalToDofNoNonBcGlobal_ data structure
-  const std::array<std::vector<dof_no_t>,nComponents> &dofNoLocalToDofNoNonBcGlobal();
+  const std::array<std::vector<dof_no_t>,nComponents> &dofNoLocalToDofNoNonBcGlobal() const;
+
+  //! set the internal representation to be combined global, i.e. using the global vector (vectorCombinedWithoutDirichletDofsGlobal_), if it was local, ghost buffer entries are discarded (use finishGhostManipulation to consider ghost dofs)
+  void setRepresentationGlobal();
 
 protected:
 
@@ -95,9 +101,6 @@ protected:
 
   //! create the distributed Petsc vector vectorCombinedWithoutDirichletDofs_
   void createVector();
-
-  //! set the internal representation to be combined global, i.e. using the global vector (vectorCombinedWithoutDirichletDofsGlobal_), if it was local, ghost buffer entries are discarded (use finishGhostManipulation to consider ghost dofs)
-  void setRepresentationGlobal();
 
   //! set the internal representation to be combined local, i.e. using the local vector (vectorCombinedWithoutDirichletDofsLocal_), ghost buffer is not filled (use startGhostManipulation to consider ghost dofs)
   void setRepresentationLocal();
@@ -130,6 +133,6 @@ protected:
 };
 
 template<typename FunctionSpaceType, int nComponents>
-std::ostream &operator<<(std::ostream &stream, PartitionedPetscVecWithDirichletBc<FunctionSpaceType,nComponents> &vector);
+std::ostream &operator<<(std::ostream &stream, const PartitionedPetscVecWithDirichletBc<FunctionSpaceType,nComponents> &vector);
 
 #include "partition/partitioned_petsc_vec/01_partitioned_petsc_vec_with_dirichlet_bc.tpp"

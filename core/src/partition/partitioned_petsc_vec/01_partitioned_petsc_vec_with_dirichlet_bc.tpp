@@ -15,21 +15,21 @@ PartitionedPetscVecWithDirichletBc(std::shared_ptr<Partition::MeshPartition<Func
 
 template<typename FunctionSpaceType, int nComponents, int nComponentsDirichletBc>
 global_no_t PartitionedPetscVecWithDirichletBc<FunctionSpaceType, nComponents, nComponentsDirichletBc>::
-nonBCDofNoGlobal(int componentNo, dof_no_t localDofNo)
+nonBCDofNoGlobal(int componentNo, dof_no_t localDofNo) const
 {
   return dofNoLocalToDofNoNonBcGlobal_[componentNo][localDofNo];
 }
 
 template<typename FunctionSpaceType, int nComponents, int nComponentsDirichletBc>
 dof_no_t PartitionedPetscVecWithDirichletBc<FunctionSpaceType, nComponents, nComponentsDirichletBc>::
-nonBCDofNoLocal(int componentNo, dof_no_t localDofNo)
+nonBCDofNoLocal(int componentNo, dof_no_t localDofNo) const
 {
   return dofNoLocalToDofNoNonBcLocal_[componentNo][localDofNo];
 }
 
 template<typename FunctionSpaceType, int nComponents, int nComponentsDirichletBc>
 bool PartitionedPetscVecWithDirichletBc<FunctionSpaceType, nComponents, nComponentsDirichletBc>::
-isPrescribed(int componentNo, dof_no_t localDofNo)
+isPrescribed(int componentNo, dof_no_t localDofNo) const
 {
   return isPrescribed_[componentNo][localDofNo];
 }
@@ -37,7 +37,7 @@ isPrescribed(int componentNo, dof_no_t localDofNo)
 //! get a reference to the internal dofNoLocalToDofNoNonBcGlobal_ data structure
 template<typename FunctionSpaceType, int nComponents, int nComponentsDirichletBc>
 const std::array<std::vector<dof_no_t>,nComponents> &PartitionedPetscVecWithDirichletBc<FunctionSpaceType, nComponents, nComponentsDirichletBc>::
-dofNoLocalToDofNoNonBcGlobal()
+dofNoLocalToDofNoNonBcGlobal() const
 {
   return dofNoLocalToDofNoNonBcGlobal_;
 }
@@ -436,7 +436,7 @@ createVector()
 //! get number of local entries
 template<typename FunctionSpaceType, int nComponents, int nComponentsDirichletBc>
 int PartitionedPetscVecWithDirichletBc<FunctionSpaceType, nComponents, nComponentsDirichletBc>::
-nEntriesLocal()
+nEntriesLocal() const
 {
   return nEntriesLocal_;
 }
@@ -444,7 +444,7 @@ nEntriesLocal()
 //! get number of global entries
 template<typename FunctionSpaceType, int nComponents, int nComponentsDirichletBc>
 global_no_t PartitionedPetscVecWithDirichletBc<FunctionSpaceType, nComponents, nComponentsDirichletBc>::
-nEntriesGlobal()
+nEntriesGlobal() const
 {
   return nEntriesGlobal_;
 }
@@ -526,6 +526,11 @@ setRepresentationGlobal()
 {
   VLOG(2) << "\"" << this->name_ << "\" setRepresentationGlobal, previous representation: "
     << Partition::valuesRepresentationString[this->currentRepresentation_];
+
+  if (this->currentRepresentation_ == Partition::values_representation_t::representationCombinedGlobal)
+  {
+    return;
+  }
 
     // set the internal representation to be global, i.e. using the global vectors
   if (this->currentRepresentation_ == Partition::values_representation_t::representationCombinedLocal)
@@ -732,7 +737,7 @@ setValue(int componentNo, PetscInt row, PetscScalar value, InsertMode mode)
 //! wrapper to the PETSc VecGetValues, acting only on the local data, the indices ix are the local dof nos
 template<typename FunctionSpaceType, int nComponents, int nComponentsDirichletBc>
 void PartitionedPetscVecWithDirichletBc<FunctionSpaceType, nComponents, nComponentsDirichletBc>::
-getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[])
+getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[]) const
 {
   VLOG(3) << "\"" << this->name_ << "\" getValues, representation: " << Partition::valuesRepresentationString[this->currentRepresentation_];
 
@@ -825,7 +830,7 @@ getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[])
 //! wrapper to the PETSc VecGetValues, acting only on the local data, the indices ix are the local dof nos
 template<typename FunctionSpaceType, int nComponents, int nComponentsDirichletBc>
 void PartitionedPetscVecWithDirichletBc<FunctionSpaceType, nComponents, nComponentsDirichletBc>::
-getValuesGlobal(Vec vector, int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[])
+getValuesGlobal(Vec vector, int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[]) const
 {
   LOG(FATAL) << "getValuesGlobal should not be called.";
 
@@ -882,6 +887,16 @@ getValuesGlobal(Vec vector, int componentNo, PetscInt ni, const PetscInt ix[], P
     VLOG(1) << y[i];
 }
 
+//! get a single value
+template<typename FunctionSpaceType, int nComponents, int nComponentsDirichletBc>
+double PartitionedPetscVecWithDirichletBc<FunctionSpaceType, nComponents, nComponentsDirichletBc>::
+getValue(int componentNo, PetscInt row) const
+{
+  double result;
+  this->getValues(componentNo, 1, &row, &result);
+  return result;
+}
+
 //! set all entries to zero, wraps VecZeroEntries
 template<typename FunctionSpaceType, int nComponents, int nComponentsDirichletBc>
 void PartitionedPetscVecWithDirichletBc<FunctionSpaceType, nComponents, nComponentsDirichletBc>::
@@ -903,7 +918,7 @@ zeroEntries()
 //! output the vector to stream, for debugging
 template<typename FunctionSpaceType, int nComponents, int nComponentsDirichletBc>
 void PartitionedPetscVecWithDirichletBc<FunctionSpaceType, nComponents, nComponentsDirichletBc>::
-output(std::ostream &stream)
+output(std::ostream &stream) const
 {
   stream << "\"" << this->name_ << "\" " << this->nEntriesGlobal_ << " entries global, " << nEntriesLocal_ << " entries local." << std::endl
     << "nNonBcDofsWithoutGhosts: " << nNonBcDofsWithoutGhosts_ << ", nNonBcDofsGhosts: " << nNonBcDofsGhosts_ << ", nonBcGhostDofNosGlobal_: " << nonBcGhostDofNosGlobal_ << std::endl
@@ -913,7 +928,7 @@ output(std::ostream &stream)
 }
 
 template<typename FunctionSpaceType, int nComponents, int nComponentsDirichletBc>
-std::ostream &operator<<(std::ostream &stream, PartitionedPetscVecWithDirichletBc<FunctionSpaceType,nComponents> &vector)
+std::ostream &operator<<(std::ostream &stream, const PartitionedPetscVecWithDirichletBc<FunctionSpaceType,nComponents> &vector)
 {
   vector.output(stream);
   return stream;

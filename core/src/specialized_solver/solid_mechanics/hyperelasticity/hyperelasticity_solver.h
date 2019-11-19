@@ -8,6 +8,7 @@
 #include "data_management/specialized_solver/hyperelasticity_solver.h"
 #include "partition/partitioned_petsc_vec/02_partitioned_petsc_vec_for_hyperelasticity.h"
 #include "partition/partitioned_petsc_mat/partitioned_petsc_mat_for_hyperelasticity.h"
+#include "solver/nonlinear.h"
 #include "output_writer/manager.h"
 #include "spatial_discretization/boundary_conditions/dirichlet_boundary_conditions.h"
 #include "spatial_discretization/boundary_conditions/neumann_boundary_conditions.h"
@@ -86,8 +87,8 @@ public:
   //! this evaluates the analytic jacobian for the Newton scheme, or the material stiffness
   void evaluateAnalyticJacobian(Vec x, Mat jac);
 
-  //! if not useNestedMat_, copy entries of combined vector x to this->data_.displacements() and this->data_.pressure()
-  void setInputVector(Vec x);
+  //! copy entries of combined vector x to u and p, if both u and p are nullptr, use this->data_.displacements() and this->data_.pressure(), if only p is nullptr, only copy to u
+  void setDisplacementsAndPressureFromCombinedVec(Vec x, std::shared_ptr<DisplacementsFieldVariableType> u = nullptr, std::shared_ptr<PressureFieldVariableType> p = nullptr);
 
   //! copy the entries in the combined solution vector to this->data_.displacements() and this->data_.pressure()
   void setSolutionVector();
@@ -96,10 +97,10 @@ public:
   std::string getString(Vec x);
 
   //! get the PartitionedPetsVec for the residual and result of the nonlinear function
-  std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>> combinedVecResidual();      //< the
+  std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>> combinedVecResidual();      //< the vector that holds the computed residual
 
   //! get the PartitionedPetsVec for the solution
-  std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>> combinedVecSolution();      //< the Vec for the solution
+  std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>> combinedVecSolution();
 
   //! output the jacobian matrix for debugging
   void dumpJacobianMatrix(Mat jac);
@@ -121,6 +122,28 @@ public:
   //! callback after each nonlinear iteration
   void monitorSolvingIteration(SNES snes, PetscInt its, PetscReal norm);
 
+  //! create a new shared_ptr of a PartitionedPetscVecForHyperelasticity
+  std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>> createPartitionedPetscVec(std::string name);
+
+  //! create a new shared_ptr of a PartitionedPetscMatForHyperelasticity
+  std::shared_ptr<PartitionedPetscMatForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>> createPartitionedPetscMat(std::string name);
+
+  //! get the precomputed external virtual work
+  Vec externalVirtualWork();
+
+  //! compute δWint from given displacements, this is a wrapper to materialComputeInternalVirtualWork
+  void materialComputeInternalVirtualWork(
+    std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>> displacements,
+    std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>> internalVirtualWork
+  );
+
+  //! compute u from the equation ∂W_int - externalVirtualWork = 0 and J = 1, the result will be in displacements,
+  //! the previous value in displacements will be used as initial guess (call zeroEntries() of displacements beforehand, if no initial guess should be provided)
+  void solveForDisplacements(
+    std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>> externalVirtualWork,
+    std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>> displacements
+  );
+
 protected:
 
   //! initialize all Petsc Vec's and Mat's that will be used in the computation
@@ -135,8 +158,18 @@ protected:
   //! set the solution variable to zero and the initial values
   void initializeSolutionVariable();
 
+  //! set all PETSc callback functions, e.g. for computation jacobian or the nonlinear function itself
+  void initializePetscCallbackFunctions();
+
+  //! do some steps after nonlinearSolve(): close log file, copy the solution values back to this->data_.displacements() and this->data.pressure(),
+  //! compute the PK2 stress at every node, update the geometry field by the new displacements, dump files containing rhs and system matrix
+  void postprocessSolution();
+
   //! check if the solution satisfies Dirichlet BC and the residual is zero, only for debugging output
   void checkSolution(Vec x);
+
+  //! compute δW_int, input is in this->data_.displacements() and this->data_.pressure(), output is in solverVariableResidual_
+  void materialComputeInternalVirtualWork();
 
   //! compute the nonlinear function F(x), x=solverVariableSolution_, F=solverVariableResidual_
   //! solverVariableResidual_[0-2] contains δW_int - δW_ext, solverVariableResidual_[3] contains int_Ω (J-1)*Ψ dV
@@ -193,6 +226,7 @@ protected:
   OutputWriter::Manager outputWriterManagerPressure_; ///< manager object holding all output writer for pressure based variables
   Data data_;                 ///< data object
   PressureDataCopy pressureDataCopy_;   ///< a helper object that is used to write the pressure function space based variables with the output writers
+  std::shared_ptr<Solver::Nonlinear> nonlinearSolver_;  ///< the nonlinear solver object that will provide the PETSc SNES context
 
   std::string durationLogKey_;   ///< key with with the duration of the computation is written to the performance measurement log
   std::shared_ptr<DisplacementsFunctionSpace> displacementsFunctionSpace_;  ///< the function space with quadratic Lagrange basis functions, used for discretization of displacements
@@ -200,8 +234,8 @@ protected:
 
   Mat solverMatrixJacobian_;           //< the jacobian matrix for the Newton solver, which in case of nonlinear elasticity is the tangent stiffness matrix
   Mat solverMatrixAdditionalNumericJacobian_;           //< only used when both analytic and numeric jacobians are computed, then this holds the numeric jacobian
-  Vec solverVariableResidual_;         //< PETSc Vec to store the residual
-  Vec solverVariableSolution_;         //< PETSc Vec to store the solution
+  Vec solverVariableResidual_;         //< PETSc Vec to store the residual, equal to combinedVecResidual_->valuesGlobal()
+  Vec solverVariableSolution_;         //< PETSc Vec to store the solution, equal to combinedVecSolution_->valuesGlobal()
   Vec zeros_;                          // a solver that contains all zeros, needed to zero the diagonal of the jacobian matrix
 
   std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>> combinedVecResidual_;      //< the Vec for the residual and result of the nonlinear function
@@ -209,7 +243,7 @@ protected:
   std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>> combinedVecExternalVirtualWork_;      //< the Vec for the external virtual work
 
   //std::shared_ptr<PartitionedPetscMat<FunctionSpace::Generic>> combinedMatrixJacobian_;    //< single jacobian matrix, when useNestedMat_ is false
-  std::shared_ptr<PartitionedPetscMatForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>> combinedMatrixJacobian_;    //< single jacobian matrix, when useNestedMat_ is false
+  std::shared_ptr<PartitionedPetscMatForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>> combinedMatrixJacobian_;    //< single jacobian matrix
   std::shared_ptr<PartitionedPetscMatForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>> combinedMatrixAdditionalNumericJacobian_;   //< only used when both analytic and numeric jacobians are computed, then this holds the numeric jacobian
 
   Vec externalVirtualWork_;     // the external virtual work resulting from the traction, this is a dead load, i.e. it does not change during deformation
@@ -235,5 +269,6 @@ protected:
 
 #include "specialized_solver/solid_mechanics/hyperelasticity/hyperelasticity_solver.tpp"
 #include "specialized_solver/solid_mechanics/hyperelasticity/material_computations.tpp"
+#include "specialized_solver/solid_mechanics/hyperelasticity/material_computations_wrappers.tpp"
 #include "specialized_solver/solid_mechanics/hyperelasticity/nonlinear_solve.tpp"
 #include "specialized_solver/solid_mechanics/hyperelasticity/material_testing.tpp"

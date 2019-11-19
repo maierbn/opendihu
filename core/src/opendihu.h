@@ -35,6 +35,7 @@
 #include "specialized_solver/solid_mechanics/quasi_static/quasi_static_nonlinear_elasticity_solver_febio.h"
 #include "specialized_solver/solid_mechanics/quasi_static/quasi_static_linear_elasticity_solver.h"
 #include "specialized_solver/solid_mechanics/hyperelasticity/hyperelasticity_solver.h"
+#include "specialized_solver/solid_mechanics/dynamic_hyperelasticity/dynamic_hyperelasticity_solver.h"
 #include "specialized_solver/fast_monodomain_solver/fast_monodomain_solver.h"
 #include "time_stepping_scheme/heun_adaptive.h"
 

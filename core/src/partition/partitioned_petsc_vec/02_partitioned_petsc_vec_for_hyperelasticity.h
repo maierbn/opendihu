@@ -34,7 +34,7 @@ public:
 
   //! get a string representation of the whole vector in global natural ordering
   //! @param horizontal if the string is for console output (less newlines) or for file output
-  std::string getString(bool horizontal = true, std::string vectorName = "");
+  std::string getString(bool horizontal = true, std::string vectorName = "") const;
 
   //! get the number of displacement dofs ux,uy,uz without Dirichlet Bc constraint dofs
   dof_no_t nDisplacementDofsWithoutBcLocal();
@@ -55,6 +55,6 @@ protected:
 };
 
 template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType>
-std::ostream &operator<<(std::ostream &stream, PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType> &vector);
+std::ostream &operator<<(std::ostream &stream, const PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType> &vector);
 
 #include "partition/partitioned_petsc_vec/02_partitioned_petsc_vec_for_hyperelasticity.tpp"

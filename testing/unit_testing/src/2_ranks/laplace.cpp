@@ -28,8 +28,8 @@ config = {
     "dirichletBoundaryConditions": bc,
     "relativeTolerance": 1e-15,
     "OutputWriter" : [
-      {"format": "Paraview", "filename": "out", "outputInterval": 1, "binary": False},
-      {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
+      {"format": "Paraview", "filename": "out4", "outputInterval": 1, "binary": False},
+      {"format": "PythonFile", "filename": "out4", "outputInterval": 1, "binary": False}
     ]
   }
 }
@@ -54,8 +54,8 @@ config = {
 
   if (settings.ownRankNo() == 0)
   {
-    assertFileMatchesContent("out.0.py", referenceOutput0);
-    assertFileMatchesContent("out.1.py", referenceOutput1);
+    assertFileMatchesContent("out4.0.py", referenceOutput0);
+    assertFileMatchesContent("out4.1.py", referenceOutput1);
   }
 
   nFails += ::testing::Test::HasFailure();
@@ -80,8 +80,8 @@ config = {
     "dirichletBoundaryConditions": bc,
     "relativeTolerance": 1e-15,
     "OutputWriter" : [
-      {"format": "Paraview", "filename": "out", "outputInterval": 1, "binary": False},
-      {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
+      {"format": "Paraview", "filename": "out5", "outputInterval": 1, "binary": False},
+      {"format": "PythonFile", "filename": "out5", "outputInterval": 1, "binary": False}
     ]
   }
 }
@@ -106,8 +106,8 @@ config = {
 
   if (settings.ownRankNo() == 0)
   {
-    assertFileMatchesContent("out.0.py", referenceOutput0);
-    assertFileMatchesContent("out.1.py", referenceOutput1);
+    assertFileMatchesContent("out5.0.py", referenceOutput0);
+    assertFileMatchesContent("out5.1.py", referenceOutput1);
   }
 
   nFails += ::testing::Test::HasFailure();
@@ -132,8 +132,8 @@ config = {
     "dirichletBoundaryConditions": bc,
     "relativeTolerance": 1e-15,
     "OutputWriter" : [
-      {"format": "Paraview", "filename": "out", "outputInterval": 1, "binary": False},
-      {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False, "onlyNodalValues": True}
+      {"format": "Paraview", "filename": "out6", "outputInterval": 1, "binary": False},
+      {"format": "PythonFile", "filename": "out6", "outputInterval": 1, "binary": False, "onlyNodalValues": True}
     ]
   }
 }
@@ -155,8 +155,8 @@ config = {
 
   if (settings.ownRankNo() == 0)
   {
-    assertFileMatchesContent("out.0.py", referenceOutput0);
-    assertFileMatchesContent("out.1.py", referenceOutput1);
+    assertFileMatchesContent("out6.0.py", referenceOutput0);
+    assertFileMatchesContent("out6.1.py", referenceOutput1);
   }
 
   nFails += ::testing::Test::HasFailure();
@@ -184,8 +184,8 @@ config = {
     "solverType": "gmres",
     "preconditionerType": "sor",
     "OutputWriter" : [
-      {"format": "Paraview", "filename": "out", "outputInterval": 1, "binary": False},
-      {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False, "onlyNodalValues": False}
+      {"format": "Paraview", "filename": "out7", "outputInterval": 1, "binary": False},
+      {"format": "PythonFile", "filename": "out7", "outputInterval": 1, "binary": False, "onlyNodalValues": False}
     ]
   }
 }
@@ -207,8 +207,8 @@ config = {
 
   if (settings.ownRankNo() == 0)
   {
-    assertFileMatchesContent("out.0.py", referenceOutput0);
-    assertFileMatchesContent("out.1.py", referenceOutput1);
+    assertFileMatchesContent("out7.0.py", referenceOutput0);
+    assertFileMatchesContent("out7.1.py", referenceOutput1);
   }
 
   nFails += ::testing::Test::HasFailure();
@@ -343,8 +343,8 @@ config = {
 
   nFails += ::testing::Test::HasFailure();
 }
-/*
-// the following tests only fail on travis ci but success anywhere else
+
+// the following tests only fail on travis ci but succeed anywhere else
 #ifndef ON_TRAVIS_CI
 TEST(LaplaceTest, Structured2DLinearParallelWithMultipleInstances)
 {
@@ -453,7 +453,7 @@ config = {
         "solverType": "gmres",
         "preconditionerType": "sor",
         "OutputWriter" : [
-          {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
+          {"format": "PythonFile", "filename": "out8", "outputInterval": 1, "binary": False}
         ]
       }
     }]
@@ -511,8 +511,8 @@ config = {
         "solverType": "gmres",
         "preconditionerType": "sor",
         "OutputWriter" : [
-          {"format": "Paraview", "filename": "out", "outputInterval": 1, "binary": False},
-          {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
+          {"format": "Paraview", "filename": "out8", "outputInterval": 1, "binary": False},
+          {"format": "PythonFile", "filename": "out8", "outputInterval": 1, "binary": False}
         ]
       }
     }]
@@ -533,7 +533,7 @@ config = {
 
   problemParallel.run();
 
-  std::vector<std::string> outputFilesToCheck = {"out.py", "out.0.py", "out.1.py"};
+  std::vector<std::string> outputFilesToCheck = {"out8.py", "out8.0.py", "out8.1.py"};
   if (ownRankNo == 0)
   {
     assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
@@ -578,7 +578,7 @@ config = {
         "solverType": "gmres",
         "preconditionerType": "sor",
         "OutputWriter" : [
-          {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
+          {"format": "PythonFile", "filename": "out9", "outputInterval": 1, "binary": False}
         ]
       }
     }]
@@ -635,7 +635,7 @@ config = {
         "solverType": "gmres",
         "preconditionerType": "sor",
         "OutputWriter" : [
-          {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
+          {"format": "PythonFile", "filename": "out9", "outputInterval": 1, "binary": False}
         ]
       }
     }]
@@ -650,7 +650,7 @@ config = {
 
   problemParallel.run();
 
-  std::vector<std::string> outputFilesToCheck = {"out.py", "out.0.py", "out.1.py"};
+  std::vector<std::string> outputFilesToCheck = {"out9.py", "out9.0.py", "out9.1.py"};
   if (ownRankNo == 0)
   {
     assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
@@ -747,7 +747,7 @@ config = {
         "solverType": "gmres",
         "preconditionerType": "sor",
         "OutputWriter" : [
-          {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
+          {"format": "PythonFile", "filename": "out10", "outputInterval": 1, "binary": False}
         ]
       }
     }]
@@ -854,7 +854,7 @@ config = {
         "solverType": "gmres",
         "preconditionerType": "sor",
         "OutputWriter" : [
-          {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
+          {"format": "PythonFile", "filename": "out10", "outputInterval": 1, "binary": False}
         ]
       }
     }]
@@ -869,7 +869,7 @@ config = {
 
   problemParallel.run();
 
-  std::vector<std::string> outputFilesToCheck = {"out.py", "out.0.py", "out.1.py"};
+  std::vector<std::string> outputFilesToCheck = {"out10.py", "out10.0.py", "out10.1.py"};
   if (ownRankNo == 0)
   {
     assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
@@ -923,7 +923,7 @@ config = {
         "solverType": "gmres",
         "preconditionerType": "sor",
         "OutputWriter" : [
-          {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
+          {"format": "PythonFile", "filename": "out11", "outputInterval": 1, "binary": False}
         ]
       }
     }]
@@ -983,7 +983,7 @@ config = {
         "solverType": "gmres",
         "preconditionerType": "sor",
         "OutputWriter" : [
-          {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
+          {"format": "PythonFile", "filename": "out11", "outputInterval": 1, "binary": False}
         ]
       }
     }]
@@ -1004,7 +1004,7 @@ config = {
 
   problemParallel.run();
 
-  std::vector<std::string> outputFilesToCheck = {"out.py", "out.0.py", "out.1.py"};
+  std::vector<std::string> outputFilesToCheck = {"out11.py", "out11.0.py", "out11.1.py"};
   if (ownRankNo == 0)
   {
     assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
@@ -1053,7 +1053,7 @@ config = {
         "solverType": "gmres",
         "preconditionerType": "sor",
         "OutputWriter" : [
-          {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
+          {"format": "PythonFile", "filename": "out12", "outputInterval": 1, "binary": False}
         ]
       }
     }]
@@ -1110,7 +1110,7 @@ config = {
         "solverType": "gmres",
         "preconditionerType": "sor",
         "OutputWriter" : [
-          {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
+          {"format": "PythonFile", "filename": "out12", "outputInterval": 1, "binary": False}
         ]
       }
     }]
@@ -1125,7 +1125,7 @@ config = {
 
   problemParallel.run();
 
-  std::vector<std::string> outputFilesToCheck = {"out.py", "out.0.py", "out.1.py"};
+  std::vector<std::string> outputFilesToCheck = {"out12.py", "out12.0.py", "out12.1.py"};
   if (ownRankNo == 0)
   {
     assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
@@ -1227,7 +1227,7 @@ config = {
         "solverType": "gmres",
         "preconditionerType": "sor",
         "OutputWriter" : [
-          {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
+          {"format": "PythonFile", "filename": "out13", "outputInterval": 1, "binary": False}
         ]
       }
     }]
@@ -1337,7 +1337,7 @@ config = {
         "solverType": "gmres",
         "preconditionerType": "sor",
         "OutputWriter" : [
-          {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
+          {"format": "PythonFile", "filename": "out13", "outputInterval": 1, "binary": False}
         ]
       }
     }]
@@ -1352,7 +1352,7 @@ config = {
 
   problemParallel.run();
 
-  std::vector<std::string> outputFilesToCheck = {"out.py", "out.0.py", "out.1.py"};
+  std::vector<std::string> outputFilesToCheck = {"out13.py", "out13.0.py", "out13.1.py"};
   if (ownRankNo == 0)
   {
     assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
@@ -1400,7 +1400,7 @@ config = {
         "solverType": "gmres",
         "preconditionerType": "sor",
         "OutputWriter" : [
-          {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
+          {"format": "PythonFile", "filename": "out14", "outputInterval": 1, "binary": False}
         ]
       }
     }]
@@ -1456,7 +1456,7 @@ config = {
         "solverType": "gmres",
         "preconditionerType": "sor",
         "OutputWriter" : [
-          {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
+          {"format": "PythonFile", "filename": "out14", "outputInterval": 1, "binary": False}
         ]
       }
     }]
@@ -1477,7 +1477,7 @@ config = {
 
   problemParallel.run();
 
-  std::vector<std::string> outputFilesToCheck = {"out.py", "out.0.py", "out.1.py"};
+  std::vector<std::string> outputFilesToCheck = {"out14.py", "out14.0.py", "out14.1.py"};
   if (ownRankNo == 0)
   {
     assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
@@ -1578,7 +1578,7 @@ config = {
         "solverType": "gmres",
         "preconditionerType": "sor",
         "OutputWriter" : [
-          {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
+          {"format": "PythonFile", "filename": "out15", "outputInterval": 1, "binary": False}
         ]
       }
     }]
@@ -1687,7 +1687,7 @@ config = {
         "solverType": "gmres",
         "preconditionerType": "sor",
         "OutputWriter" : [
-          {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
+          {"format": "PythonFile", "filename": "out15", "outputInterval": 1, "binary": False}
         ]
       }
     }]
@@ -1702,7 +1702,7 @@ config = {
 
   problemParallel.run();
 
-  std::vector<std::string> outputFilesToCheck = {"out.py", "out.0.py", "out.1.py"};
+  std::vector<std::string> outputFilesToCheck = {"out15.py", "out15.0.py", "out15.1.py"};
   if (ownRankNo == 0)
   {
     assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
@@ -1751,7 +1751,7 @@ config = {
         "solverType": "gmres",
         "preconditionerType": "sor",
         "OutputWriter" : [
-          {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
+          {"format": "PythonFile", "filename": "out16", "outputInterval": 1, "binary": False}
         ]
       }
     }]
@@ -1809,7 +1809,7 @@ config = {
         "solverType": "gmres",
         "preconditionerType": "sor",
         "OutputWriter" : [
-          {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
+          {"format": "PythonFile", "filename": "out16", "outputInterval": 1, "binary": False}
         ]
       }
     }]
@@ -1824,7 +1824,7 @@ config = {
 
   problemParallel.run();
 
-  std::vector<std::string> outputFilesToCheck = {"out.py", "out.0.py", "out.1.py"};
+  std::vector<std::string> outputFilesToCheck = {"out16.py", "out16.0.py", "out16.1.py"};
   if (ownRankNo == 0)
   {
     assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
@@ -1872,7 +1872,7 @@ config = {
         "solverType": "gmres",
         "preconditionerType": "sor",
         "OutputWriter" : [
-          {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
+          {"format": "PythonFile", "filename": "out17", "outputInterval": 1, "binary": False}
         ]
       }
     }]
@@ -1928,7 +1928,7 @@ config = {
         "solverType": "gmres",
         "preconditionerType": "sor",
         "OutputWriter" : [
-          {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
+          {"format": "PythonFile", "filename": "out17", "outputInterval": 1, "binary": False}
         ]
       }
     }]
@@ -1949,7 +1949,7 @@ config = {
 
   problemParallel.run();
 
-  std::vector<std::string> outputFilesToCheck = {"out.py", "out.0.py", "out.1.py"};
+  std::vector<std::string> outputFilesToCheck = {"out17.py", "out17.0.py", "out17.1.py"};
   if (ownRankNo == 0)
   {
     assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
@@ -2046,7 +2046,7 @@ config = {
         "solverType": "gmres",
         "preconditionerType": "sor",
         "OutputWriter" : [
-          {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
+          {"format": "PythonFile", "filename": "out18", "outputInterval": 1, "binary": False}
         ]
       }
     }]
@@ -2154,7 +2154,7 @@ config = {
         "solverType": "gmres",
         "preconditionerType": "sor",
         "OutputWriter" : [
-          {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
+          {"format": "PythonFile", "filename": "out18", "outputInterval": 1, "binary": False}
         ]
       }
     }]
@@ -2169,7 +2169,7 @@ config = {
 
   problemParallel.run();
 
-  std::vector<std::string> outputFilesToCheck = {"out.py", "out.0.py", "out.1.py"};
+  std::vector<std::string> outputFilesToCheck = {"out18.py", "out18.0.py", "out18.1.py"};
   if (ownRankNo == 0)
   {
     assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
@@ -2323,7 +2323,7 @@ config = {
         "solverType": "gmres",
         "preconditionerType": "sor",
         "OutputWriter" : [
-          {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
+          {"format": "PythonFile", "filename": "out19", "outputInterval": 1, "binary": False}
         ]
       }
     }]
@@ -2485,7 +2485,7 @@ config = {
         "solverType": "gmres",
         "preconditionerType": "sor",
         "OutputWriter" : [
-          {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
+          {"format": "PythonFile", "filename": "out19", "outputInterval": 1, "binary": False}
         ]
       }
     }]
@@ -2500,7 +2500,7 @@ config = {
 
   problemParallel.run();
 
-  std::vector<std::string> outputFilesToCheck = {"out.py", "out.0.py", "out.1.py"};
+  std::vector<std::string> outputFilesToCheck = {"out19.py", "out19.0.py", "out19.1.py"};
   if (ownRankNo == 0)
  {
    assertParallelEqualsSerialOutputFiles(outputFilesToCheck);

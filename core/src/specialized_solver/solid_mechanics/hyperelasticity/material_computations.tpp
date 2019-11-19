@@ -9,21 +9,17 @@ namespace SpatialDiscretization
 
 template<typename Term>
 void HyperelasticitySolver<Term>::
-materialComputeResidual()
+materialComputeInternalVirtualWork()
 {
-  // compute Wint - Wext in solverVariableResidual_
-  //  output is solverVariableResidual_, a normal Vec, no Dirichlet BC dofs
+  // compute Wint in solverVariableResidual_
+  //  output is solverVariableResidual_, a normal Vec, no Dirichlet BC dofs, also accessible by combinedVecResidual_
   //  input is solverVariableSolution_, a normal Vec, the same values have already been assigned to this->data_.displacements() and this->data_.pressure()
 
   // -----------------------------
   // compute internal virtual work
   // δW_int = int_Ω 1/2 S_AB (F_aB phi_L,A + F_aA phi_L,B) dV
 
-  //LOG(TRACE) << "materialComputeResidual";
-  const bool outputValues = false;
   const bool outputFiles = false;
-  if (outputValues)
-    LOG(DEBUG) << "input: " << getString(solverVariableSolution_);
 
   // assert that data representation is global
   assert(combinedVecResidual_->currentRepresentation() == Partition::values_representation_t::representationCombinedGlobal);
@@ -52,8 +48,6 @@ materialComputeResidual()
   // setup arrays used for integration
   std::array<Vec3, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
 
-  PetscErrorCode ierr;
-
   // set values to zero
   combinedVecResidual_->zeroEntries();
   combinedVecResidual_->startGhostManipulation();
@@ -65,7 +59,7 @@ materialComputeResidual()
     // dump input vector
     // dumpVector(std::string filename, std::string format, Vec &vector, MPI_Comm mpiCommunicator, int componentNo=0, int nComponents=1);
     std::stringstream filename;
-    filename << "out/x" << std::setw(3) << std::setfill('0') << evaluationNo;
+    filename << "out/x" << std::setw(3) << std::setfill('0') << evaluationNo++;
     //PetscUtility::dumpVector(filename.str(), "matlab", solverVariableSolution_, displacementsFunctionSpace->meshPartition()->mpiCommunicator());
     combinedVecSolution_->dumpGlobalNatural(filename.str());
   }
@@ -293,7 +287,25 @@ materialComputeResidual()
   // assemble result vector
   combinedVecResidual_->finishGhostManipulation();
 
-  // solverVariableResidual_ contains δW_int
+  // now, solverVariableResidual_, which is the globalValues() of combinedVecResidual_, contains δW_int
+}
+
+template<typename Term>
+void HyperelasticitySolver<Term>::
+materialComputeResidual()
+{
+  // compute Wint - Wext in solverVariableResidual_
+  //  output is solverVariableResidual_, a normal Vec, no Dirichlet BC dofs, also accessible by combinedVecResidual_
+  //  input is solverVariableSolution_, a normal Vec, the same values have already been assigned to this->data_.displacements() and this->data_.pressure()
+
+  //LOG(TRACE) << "materialComputeResidual";
+  const bool outputValues = false;
+  const bool outputFiles = false;
+  if (outputValues)
+    LOG(DEBUG) << "input: " << getString(solverVariableSolution_);
+
+  materialComputeInternalVirtualWork();
+  // now, solverVariableResidual_, which is the globalValues() of combinedVecResidual_, contains δW_int
 
   // output values for debugging
   if (outputValues)
@@ -307,25 +319,26 @@ materialComputeResidual()
 
   // compute F = δW_int - δW_ext,
   // δW_ext = int_∂Ω T_a phi_L dS was precomputed in initialize, in variable externalVirtualWork_
+  PetscErrorCode ierr;
   ierr = VecAXPY(solverVariableResidual_, -1, externalVirtualWork_); CHKERRV(ierr);
 
   if(outputValues)
     LOG(DEBUG) << "total:   " << getString(solverVariableResidual_);
+
+  static int evaluationNo = 0;  // counter how often this function was called
 
   // dump output vector to file
   if (outputFiles)
   {
     // dumpVector(std::string filename, std::string format, Vec &vector, MPI_Comm mpiCommunicator, int componentNo=0, int nComponents=1);
     std::stringstream filename;
-    filename << "out/F" << std::setw(3) << std::setfill('0') << evaluationNo;
+    filename << "out/F" << std::setw(3) << std::setfill('0') << evaluationNo++;
     //PetscUtility::dumpVector(filename.str(), "matlab", solverVariableResidual_, displacementsFunctionSpace->meshPartition()->mpiCommunicator());
     combinedVecResidual_->dumpGlobalNatural(filename.str());
   }
 
   assert(combinedVecResidual_->currentRepresentation() == Partition::values_representation_t::representationCombinedGlobal);
   assert(combinedVecSolution_->currentRepresentation() == Partition::values_representation_t::representationCombinedGlobal);
-
-  evaluationNo++;
 }
 
 template<typename Term>

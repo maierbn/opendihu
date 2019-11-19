@@ -4,6 +4,7 @@
 
 #include "utility/python_utility.h"
 #include "utility/petsc_utility.h"
+#include "solver/solver_manager.h"
 #include "data_management/specialized_solver/multidomain.h"
 #include "control/performance_measurement.h"
 
@@ -74,6 +75,7 @@ advanceTimeSpan()
   this->outputWriterManagerPressure_.writeOutput(this->pressureDataCopy_, 0, 0.0);
 
   nonlinearSolve();
+  postprocessSolution();
 
   // stop duration measurement
   if (this->durationLogKey_ != "")
@@ -157,6 +159,10 @@ initialize()
   data_.initialize();
   pressureDataCopy_.initialize(data_.pressure(), data_.displacementsLinearMesh());
   pressureDataCopy_.setFunctionSpace(pressureFunctionSpace_);
+
+  // create nonlinear solver PETSc context (snes)
+  nonlinearSolver_ = this->context_.solverManager()->template solver<Solver::Nonlinear>(
+    this->specificSettings_, this->displacementsFunctionSpace_->meshPartition()->mpiCommunicator());
 
   // initialize Dirichlet boundary conditions
   if (dirichletBoundaryConditions_ == nullptr)
@@ -277,6 +283,37 @@ initializeFiberDirections()
 }
 
 template<typename Term>
+std::shared_ptr<PartitionedPetscVecForHyperelasticity<typename HyperelasticitySolver<Term>::DisplacementsFunctionSpace,typename HyperelasticitySolver<Term>::PressureFunctionSpace>>
+HyperelasticitySolver<Term>::
+createPartitionedPetscVec(std::string name)
+{
+  return std::make_shared<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>>(
+    displacementsFunctionSpace_->meshPartition(), pressureFunctionSpace_->meshPartition(), dirichletBoundaryConditions_, name);
+}
+
+template<typename Term>
+std::shared_ptr<PartitionedPetscMatForHyperelasticity<typename HyperelasticitySolver<Term>::DisplacementsFunctionSpace,typename HyperelasticitySolver<Term>::PressureFunctionSpace>>
+HyperelasticitySolver<Term>::
+createPartitionedPetscMat(std::string name)
+{
+  // determine number of non zero entries in matrix
+  int diagonalNonZeros, offdiagonalNonZeros;
+  ::Data::FiniteElementsBase<DisplacementsFunctionSpace,1>::getPetscMemoryParameters(diagonalNonZeros, offdiagonalNonZeros);
+
+  return std::make_shared<PartitionedPetscMatForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>>(
+    combinedVecSolution_, 4*diagonalNonZeros, 4*offdiagonalNonZeros, name);
+}
+
+
+//! get the precomputed external virtual work
+template<typename Term>
+Vec HyperelasticitySolver<Term>::
+externalVirtualWork()
+{
+  return externalVirtualWork_;
+}
+
+template<typename Term>
 void HyperelasticitySolver<Term>::
 initializePetscVariables()
 {
@@ -287,24 +324,16 @@ initializePetscVariables()
    *  (U U U P)
    *  (P P P 0)
    */
-
-  // determine number of non zero entries in matrix
-  int diagonalNonZeros, offdiagonalNonZeros;
-  ::Data::FiniteElementsBase<DisplacementsFunctionSpace,1>::getPetscMemoryParameters(diagonalNonZeros, offdiagonalNonZeros);
-
   // prepare for data structures without ghost dofs, these are normal Petsc Mat's and Vec's for which all solvers are available
 
   // solution vector
-  combinedVecSolution_ = std::make_shared<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>>(
-    displacementsFunctionSpace_->meshPartition(), pressureFunctionSpace_->meshPartition(), dirichletBoundaryConditions_, "combinedSolution");
+  combinedVecSolution_ = createPartitionedPetscVec("combinedSolution");
 
   // residual vector
-  combinedVecResidual_ = std::make_shared<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>>(
-    displacementsFunctionSpace_->meshPartition(), pressureFunctionSpace_->meshPartition(), dirichletBoundaryConditions_, "combinedResidual");
+  combinedVecResidual_ = createPartitionedPetscVec("combinedResidual");
 
   // vector for the external virtual work contribution, δW_ext
-  combinedVecExternalVirtualWork_ = std::make_shared<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>>(
-    displacementsFunctionSpace_->meshPartition(), pressureFunctionSpace_->meshPartition(), dirichletBoundaryConditions_, "combinedVecExternalVirtualWork");
+  combinedVecExternalVirtualWork_ = createPartitionedPetscVec("combinedVecExternalVirtualWork");
 
   // get number of local entries of the vectors, this will be the number of rows and columns of the matrix
   int nMatrixRowsLocal = combinedVecSolution_->nEntriesLocal();
@@ -320,16 +349,14 @@ initializePetscVariables()
   // create matrix with same dof mapping as vectors
   std::shared_ptr<FunctionSpace::Generic> genericFunctionSpace = context_.meshManager()->createGenericFunctionSpace(nMatrixRowsLocal, displacementsFunctionSpace_->meshPartition(), "genericMesh");
 
-  combinedMatrixJacobian_ = std::make_shared<PartitionedPetscMatForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>>(
-    combinedVecSolution_, 4*diagonalNonZeros, 4*offdiagonalNonZeros, "combinedJacobian");
+  combinedMatrixJacobian_ = createPartitionedPetscMat("combinedJacobian");
 
   solverMatrixAdditionalNumericJacobian_ = PETSC_NULL;
 
   // if both numeric and analytic jacobian are used, create additional matrix that will hold the numeric jacobian
   if (useNumericJacobian_ && useAnalyticJacobian_)
   {
-    combinedMatrixAdditionalNumericJacobian_ = std::make_shared<PartitionedPetscMatForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>>(
-      combinedVecSolution_, 4*diagonalNonZeros, 4*offdiagonalNonZeros, "combinedJacobianNumeric");
+    combinedMatrixAdditionalNumericJacobian_ = createPartitionedPetscMat("combinedJacobianNumeric");
 
     solverMatrixAdditionalNumericJacobian_ = combinedMatrixAdditionalNumericJacobian_->valuesGlobal();
   }
@@ -405,6 +432,12 @@ initializePetscVariables()
     LOG(DEBUG) << "initial analytic jacobian matrix: ";
     dumpJacobianMatrix(solverMatrixJacobian_);
   }
+
+  // assign all callback functions
+  this->initializePetscCallbackFunctions();
+
+  // set solution vector to zero
+  this->initializeSolutionVariable();
 }
 
 //! get the PartitionedPetsVec for the residual and result of the nonlinear function

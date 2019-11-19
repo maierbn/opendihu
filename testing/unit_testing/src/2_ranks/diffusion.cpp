@@ -42,7 +42,7 @@ config = {
           "relativeTolerance": 1e-15,
         },
         "OutputWriter" : [
-          {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
+          {"format": "PythonFile", "filename": "out2", "outputInterval": 1, "binary": False}
         ]
       }
     }]
@@ -96,7 +96,7 @@ config = {
           "relativeTolerance": 1e-15,
         },
         "OutputWriter" : [
-          {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
+          {"format": "PythonFile", "filename": "out2", "outputInterval": 1, "binary": False}
         ]
       }
     }]
@@ -109,7 +109,7 @@ config = {
 
   problemParallel.run();
 
-  std::vector<std::string> outputFilesToCheck = {"out_0000010.py", "out_0000010.0.py", "out_0000010.1.py"};
+  std::vector<std::string> outputFilesToCheck = {"out2_0000010.py", "out2_0000010.0.py", "out2_0000010.1.py"};
   assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
 
   nFails += ::testing::Test::HasFailure();
@@ -148,7 +148,7 @@ config = {
           "relativeTolerance": 1e-15,
         },
         "OutputWriter" : [
-          {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
+          {"format": "PythonFile", "filename": "out3", "outputInterval": 1, "binary": False}
         ]
       }
     }]
@@ -202,7 +202,7 @@ config = {
           "relativeTolerance": 1e-15,
         },
         "OutputWriter" : [
-          {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
+          {"format": "PythonFile", "filename": "out3", "outputInterval": 1, "binary": False}
         ]
       }
     }]
@@ -215,7 +215,7 @@ config = {
 
   problemParallel.run();
 
-  std::vector<std::string> outputFilesToCheck = {"out_0000010.py", "out_0000010.0.py", "out_0000010.1.py"};
+  std::vector<std::string> outputFilesToCheck = {"out3_0000010.py", "out3_0000010.0.py", "out3_0000010.1.py"};
   assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
 
   nFails += ::testing::Test::HasFailure();

@@ -128,7 +128,7 @@ dumpGlobalNatural(std::string filename)
 
 template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType>
 std::string PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>::
-getString(bool horizontal, std::string vectorName)
+getString(bool horizontal, std::string vectorName) const
 {
   // do not assemble a horizontal string for console in release mode, because this is only needed for debugging output
 #ifdef NDEBUG
@@ -521,8 +521,9 @@ nDisplacementDofsWithoutBcLocal()
 }
 
 template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType>
-std::ostream &operator<<(std::ostream &stream, PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType> &vector)
+std::ostream &operator<<(std::ostream &stream, const PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType> &vector)
 {
   vector.output(stream);
+  stream << vector.getString();
   return stream;
 }

@@ -2924,7 +2924,7 @@ The following is a summary of the steps to compute the 2nd Piola-Kirchhoff stres
  
 \subsection{Dynamic elasticity}
 
-Governing equation
+For the linear case we have the governing equation,
 \begin{equation*}
   \begin{array}{lll}
     \bfM\,\ddot{\bfu} + \bfC\,\dot{\bfu} + \bfK\,\bfu - \bff = \bfzero
@@ -2960,8 +2960,22 @@ Applying the 4th order Runge-Kutta scheme gives the following algorithm:
     \bfu^{(n+1)} = \bfu^{(n)} + \frac16(\bfl_1 + 2\,\bfl_2 + 2\,\bfl_3 + \bfl_4)
   \end{array}
 \end{equation*}
-Computing $\bfa(\bfu,\bfv)$ yields
+Computing $\bfa(\bfu,\bfv)$ is done by
+\begin{equation*}
+  \begin{array}{lll}
+    \bfa(\bfu,\bfv) = \bfM^{-1}(\bff - \bfK\,\bfu - \bfC\,\bfv).
+  \end{array}
+\end{equation*}
+After each update of $\bfu$, we enforce incompressibility by solving
+\begin{equation*}
+  \begin{array}{lll}
+    \bfK\,\bfu^{(n+1,\text{new})} &= \bff - \bfC\,\bfv^{(n+1)} - \bfM\,\bfa(\bfu^{(n+1)},\bfv^{(n+1)},t^{(n+1)})\\[4mm]
+     &= \bfK\,\bfu^{(n+1)}
+  \end{array}
+\end{equation*}
+Note that in the program, the vector used for $\bfu$ contains the values of displacements and pressure.
 
+\newpage
 
 \subsection{Examples with analytical solution}
 \subsubsection{Uniaxial extension with constant total load}

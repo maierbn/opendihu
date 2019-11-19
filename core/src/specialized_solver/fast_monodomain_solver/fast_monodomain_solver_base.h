@@ -13,55 +13,47 @@
 #include "time_stepping_scheme/implicit_euler.h"
 #include "spatial_discretization/finite_element_method/finite_element_method.h"
 
-/** Buffers for Hodgkin-Huxley computation
-  *  Includes Vc::double_v::size() instances of the HH problem (usually 4).
-  *  These will be computed at once using vector instructions.
-  */
-struct FiberPointBuffers
-{
-  Vc::double_v states[4];
-};
-Vc_DECLARE_ALLOCATOR(FiberPointBuffers)
 
 /** A specialized implementation for the monodomain equation, as in fibers_emg example.
- *  This is the general class, relevant is the specialization below.
+ *  This is the general class, relevant are the specializations.
   */
 template<typename FibersEMG>
 class FastMonodomainSolver
 {
 };
 
-/** Partial specialization for exactly the combination of nested solvers for which it is optimized.
- *  (fibers_emg for Hodgkin-Huxley model)
+/** Buffers for Hodgkin-Huxley computation
+  *  Includes Vc::double_v::size() instances of the HH problem (usually 4).
+  *  These will be computed at once using vector instructions.
+  */
+template<int nStates>
+struct FiberPointBuffers
+{
+  Vc::double_v states[nStates];
+};
+
+/** Specialize the default allocator for the FiberPointBuffers struct to use the aligned allocated provieded by Vc.
  */
-template<>
-class FastMonodomainSolver<
-  Control::MultipleInstances<                       // fibers
-    OperatorSplitting::Strang<
-      Control::MultipleInstances<
-        TimeSteppingScheme::Heun<                   // fiber reaction term
-          CellmlAdapter<
-            4,9,  // nStates,nIntermediates: 57,1 = Shorten, 4,9 = Hodgkin Huxley
-            FunctionSpace::FunctionSpace<
-              Mesh::StructuredDeformableOfDimension<1>,
-              BasisFunction::LagrangeOfOrder<1>
-            >
-          >
-        >
-      >,
-      Control::MultipleInstances<
-        TimeSteppingScheme::ImplicitEuler<          // fiber diffusion, note that implicit euler gives lower error in this case than crank nicolson
-          SpatialDiscretization::FiniteElementMethod<
-            Mesh::StructuredDeformableOfDimension<1>,
-            BasisFunction::LagrangeOfOrder<1>,
-            Quadrature::Gauss<2>,
-            Equation::Dynamic::IsotropicDiffusion
-          >
-        >
-      >
-    >
-  >
-> : public Runnable
+namespace std
+{
+template<int nStates>
+class allocator<FiberPointBuffers<nStates>> :
+  public ::Vc::Allocator<FiberPointBuffers<nStates>>
+{
+public:
+  template <typename U>
+  struct rebind
+  {
+    typedef ::std::allocator<U> other;
+  };
+};
+}
+
+/** The implementation of a monodomain solver as used in the fibers_emg example, number of states and intermediates is templated.
+ *  This class contains all functionality except the reaction term. Deriving classes only need to implement compute0D.
+  */
+template<int nStates, int nIntermediates>
+class FastMonodomainSolverBase : public Runnable
 {
 public:
 
@@ -71,7 +63,7 @@ public:
   > FiberFunctionSpace;
 
   typedef CellmlAdapter<
-    4,9,  // nStates,nIntermediates: 57,1 = Shorten, 4,9 = Hodgkin Huxley
+    nStates, nIntermediates,  // nStates,nIntermediates: 57,1 = Shorten, 4,9 = Hodgkin Huxley
     FiberFunctionSpace
   > CellmlAdapterType;
 
@@ -102,7 +94,7 @@ public:
   typedef typename NestedSolversType::OutputConnectorDataType OutputConnectorDataType;
 
   //! constructor
-  FastMonodomainSolver(const DihuContext &context);
+  FastMonodomainSolverBase(const DihuContext &context);
 
   //! initialize the simulation, this is called from run
   void initialize();
@@ -125,7 +117,7 @@ public:
   //! get the output connector data, to be used for a surrounding solver
   OutputConnectorDataType getOutputConnectorData();
 
-private:
+protected:
 
   //! get element lengths and vmValues from the other ranks
   void fetchFiberData();
@@ -133,14 +125,20 @@ private:
   //! send vmValues data from fiberData_ back to the fibers where it belongs to and set in the respective field variable
   void updateFiberData();
 
-  //! solve the 0D problem (Hodgkin-Huxley reaction term), starting from startTime
+  //! solve the 0D problem, starting from startTime. This is the part that is usually provided by the cellml file
   void compute0D(double startTime, double timeStepWidth, int nTimeSteps);
+
+  //! compute one time step of the right hand side for a single simd vector of instances
+  virtual void compute0DInstance(Vc::double_v states[], double currentTime, double timeStepWidth, bool stimulate) = 0;
 
   //! solve the 1D problem (diffusion), starting from startTime
   void compute1D(double startTime, double timeStepWidth, int nTimeSteps, double prefactor);
 
   //! compute the 0D-1D problem with Strang splitting
   void computeMonodomain();
+
+  //! set the initial values for all states
+  virtual void initializeStates(Vc::double_v states[]) = 0;
 
   PythonConfig specificSettings_;    //< config for this object
 
@@ -167,7 +165,7 @@ private:
     bool currentlyStimulating;                    //< if a stimulation is in progress at the current time
   };
 
-  std::vector<FiberPointBuffers> fiberPointBuffers_;    //< computation buffers for the 0D problem
+  std::vector<FiberPointBuffers<nStates>> fiberPointBuffers_;    //< computation buffers for the 0D problem
 
   std::string fiberDistributionFilename_;  //< filename of the fiberDistributionFile, which contains motor unit numbers for fiber numbers
   std::string firingTimesFilename_;        //< filename of the firingTimesFile, which contains points in time of stimulation for each motor unit
@@ -182,3 +180,5 @@ private:
   int nInstancesToCompute_;           //< number of instances of the Hodgkin-Huxley problem to compute on this rank
   double currentTime_;                //< the current time used for the output writer
 };
+
+#include "specialized_solver/fast_monodomain_solver/fast_monodomain_solver_base.tpp"

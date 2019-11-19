@@ -21,8 +21,6 @@ void DihuContext::initializeAdios(int argc, char *argv[])
   LOG(DEBUG) << "initializeAdios";
 
   adios_ = std::make_shared<adios2::ADIOS>(MPI_COMM_WORLD);
-  io_ = std::make_shared<adios2::IO>(adios_->DeclareIO("Output"));
-  assert(io_);
 #endif
 }
 

@@ -219,8 +219,8 @@ config = {
                       "setSpecificStatesCallEnableBegin":       variables.get_specific_states_call_enable_begin(fiber_no, motor_unit_no),# [ms] first time when to call setSpecificStates
                       "additionalArgument":                     fiber_no,
                       
-                      "outputIntermediateIndex":                0,                                              # which intermediate value to use in further computation
-                      "outputStateIndex":                       0,                                              # Shorten / Hodgkin Huxley: state 0 = Vm, Shorten: rate 28 = gamma, intermediate 0 = gamma (OC_WANTED[0])
+                      "outputIntermediateIndex":                variables.output_intermediate_index,            # which intermediate values to use in further computation
+                      "outputStateIndex":                       variables.output_state_index,                   # which state values to use in further computation, Shorten / Hodgkin Huxley: state 0 = Vm
                       "parametersUsedAsIntermediate":           variables.parameters_used_as_intermediate,      #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
                       "parametersUsedAsConstant":               variables.parameters_used_as_constant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
                       "parametersInitialValues":                variables.parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
@@ -270,7 +270,10 @@ config = {
                     for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x)) \
                       for fiber_no in [get_fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)] \
                         for motor_unit_no in [get_motor_unit_no(fiber_no)]],
-                "OutputWriter" : variables.output_writer_fibers,
+                "OutputWriter" : [
+                   {"format": "MegaMol", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep), "filename": "out/" + variables.scenario_name + "/fibers", 
+                    "combineNInstances": 1, "useFrontBackBuffer": False}
+                ] if variables.adios_output else variables.output_writer_fibers,
               },
             },
           }

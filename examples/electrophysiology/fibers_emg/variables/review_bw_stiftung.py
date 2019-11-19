@@ -1,6 +1,6 @@
 
 # scenario name for log file
-scenario_name = "review_bw_stiftung"
+scenario_name = "ramp_for_visualization"
 
 # material parameters
 # --------------------
@@ -67,11 +67,18 @@ stimulation_frequency_jitter = 0    # [-] jitter in percent of the frequency, ad
 dt_0D = 2e-3                        # [ms] timestep width of ODEs
 dt_1D = 4e-3                        # [ms] timestep width of diffusion
 dt_splitting = 4e-3                 # [ms] overall timestep width of strang splitting
-dt_3D = 0.5                         # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
-output_timestep = 0.5               # [ms] timestep for output files
+dt_3D = 2.5                         # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
+output_timestep = 2.5               # [ms] timestep for output files, 0.5
+
+# simulation time:  4s
+# final video time: 40s
+# 40 frames/s => output every 4s / (40s * 40fr/s) = 4000ms/1600 = 2.5
 
 # other options
 paraview_output = True
+adios_output = True
+exfile_output = True
+python_output = False
 fiber_file="../../input/37x37fibers.bin"
 firing_times_file="../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
 fiber_distribution_file="../../input/MU_fibre_distribution_10MUs.txt"

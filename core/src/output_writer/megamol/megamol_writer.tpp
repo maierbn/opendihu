@@ -22,15 +22,57 @@ outputData(FieldVariablesForOutputWriterType fieldVariables, std::string meshNam
   MegaMolLoopOverTuple::loopCollectFieldVariables(fieldVariables, meshName, geometryField, scalarFieldVariables);
 
   // retrieve the new geometry field values
-  int oldSize = megaMolWriterContext.geometryFieldValues.size();
-  geometryField->getValuesWithoutGhosts(megaMolWriterContext.geometryFieldValues);
+  int oldSize = megaMolWriterContext.geometryFieldVectorValues.size();
+  geometryField->getValuesWithoutGhosts(megaMolWriterContext.geometryFieldVectorValues);
+
+  LOG(DEBUG) << "nPointsPerCoordinateDirection: " << megaMolWriterContext.nPointsPerCoordinateDirection;
+  LOG(DEBUG) << "number of scalar field variables: " << scalarFieldVariables.size();
 
   // get first other scalar field variable
-  if (scalarFieldVariables.size() > 0)
+  if (scalarFieldVariables.size() > 0 && scalarFieldVariables.size() <= 1)
   {
-    scalarFieldVariables[0]->getValuesWithoutGhosts(megaMolWriterContext.scalarFieldVariableValues);
+    scalarFieldVariables[0]->getValuesWithoutGhosts(megaMolWriterContext.vmValues);
+    LOG(INFO) << "mesh \"" << meshName << "\", retrieve field variable \"" << scalarFieldVariables[0]->name() << "\", n values: " << megaMolWriterContext.vmValues.size();
+
+    megaMolWriterContext.nPointsPerCoordinateDirection[0] = geometryField->functionSpace()->meshPartition()->nNodesGlobal(0);
+    megaMolWriterContext.nPointsPerCoordinateDirection[1] = 0;
+    megaMolWriterContext.nPointsPerCoordinateDirection[2] = 0;
+  }
+  else
+  {
+    megaMolWriterContext.nPointsPerCoordinateDirection[0] = geometryField->functionSpace()->meshPartition()->nNodesGlobal(0);
+    megaMolWriterContext.nPointsPerCoordinateDirection[1] = geometryField->functionSpace()->meshPartition()->nNodesGlobal(1);
+    megaMolWriterContext.nPointsPerCoordinateDirection[2] = geometryField->functionSpace()->meshPartition()->nNodesGlobal(2);
+
+    LOG(DEBUG) << "evaluate names of field variables";
+    for (typename std::vector<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>>::iterator iter = scalarFieldVariables.begin();
+         iter != scalarFieldVariables.end(); iter++)
+    {
+      LOG(DEBUG) << "field variable \"" << (*iter)->name() << "\".";
+      if ((*iter)->name() == "Vm")
+      {
+        (*iter)->getValuesWithoutGhosts(megaMolWriterContext.vmValues);
+        LOG(DEBUG) << "->vmValues";
+        LOG(DEBUG) << "n values: " << megaMolWriterContext.vmValues.size();
+      }
+      else if ((*iter)->name() == "phi_e")
+      {
+        (*iter)->getValuesWithoutGhosts(megaMolWriterContext.emgValues);
+        LOG(DEBUG) << "->phi_e";
+        LOG(DEBUG) << "n values: " << megaMolWriterContext.emgValues.size();
+      }
+      else if ((*iter)->name() == "transmembraneFlow")
+      {
+        (*iter)->getValuesWithoutGhosts(megaMolWriterContext.transmembraneFlowValues);
+        LOG(DEBUG) << "->trans";
+        LOG(DEBUG) << "n values: " << megaMolWriterContext.transmembraneFlowValues.size();
+      }
+    }
     //LOG(INFO) << "mesh \"" << meshName << "\", retrieve field variable \"" << scalarFieldVariables[0]->name() << "\", n values: " << megaMolWriterContext.scalarFieldVariableValues.size();
   }
+
+  int nNodes = megaMolWriterContext.geometryFieldVectorValues.size();
+  megaMolWriterContext.rankNo.resize(nNodes, DihuContext::ownRankNoCommWorld());
 
   LOG(DEBUG) << "MegaMolWriter::outputData, mesh \"" << meshName << "\".";
 
@@ -39,8 +81,8 @@ outputData(FieldVariablesForOutputWriterType fieldVariables, std::string meshNam
 
   // compute distance between the last points of the previous and the new fiber
   double approximateDistanceBetweenFibers = MathUtility::distance<3>(
-    megaMolWriterContext.geometryFieldValues[oldSize-1],
-    megaMolWriterContext.geometryFieldValues[megaMolWriterContext.geometryFieldValues.size()-1]
+    megaMolWriterContext.geometryFieldVectorValues[oldSize-1],
+    megaMolWriterContext.geometryFieldVectorValues[megaMolWriterContext.geometryFieldVectorValues.size()-1]
   );
 
   // store value as minimum to approximateDistanceBetweenFibers

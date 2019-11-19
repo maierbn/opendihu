@@ -7,8 +7,8 @@
 
 Import('env')     # import Environment object from calling SConstruct
 
-#env.Program(target = "fibers_emg", source = "src/fibers_emg.cpp")
-env.Program(target = "fibers_emg_2d_output", source = "src/fibers_emg_2d_output.cpp")
+env.Program(target = "fibers_emg", source = "src/fibers_emg.cpp")
+#env.Program(target = "fibers_emg_2d_output", source = "src/fibers_emg_2d_output.cpp")
 #env.Program(target = "fibers_linear_elasticity", source = "src/fibers_linear_elasticity.cpp")
 #env.Program(target = "fibers_febio", source = "src/fibers_febio.cpp")
 #env.Program(target = "fast_fibers_emg", source = "src/fast_fibers_emg.cpp")

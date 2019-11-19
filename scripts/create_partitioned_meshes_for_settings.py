@@ -207,11 +207,13 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
     double_raw = fiber_file_handle.read(4)
     value = struct.unpack('i', double_raw)[0]
     parameters.append(value)
-    
+  
   variables.n_fibers_total = parameters[0]
-  variables.n_fibers_x = (int)(np.round(np.sqrt(variables.n_fibers_total)))
-  variables.n_fibers_y = variables.n_fibers_x
   variables.n_points_whole_fiber = parameters[1]
+  
+  if "cuboid.bin" not in fiber_file:  
+    variables.n_fibers_x = (int)(np.round(np.sqrt(variables.n_fibers_total)))
+    variables.n_fibers_y = variables.n_fibers_x
 
   if rank_no == 0:
     print("n fibers:              {} ({} x {})".format(variables.n_fibers_total, variables.n_fibers_x, variables.n_fibers_y))
@@ -506,6 +508,10 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
   # output information about partitioning on rank 0
   if rank_no == 0:
     n_states_cellml = 4
+    if "shorten" in variables.cellml_file:
+      n_states_cellml = 57
+    elif "slow_TK_2014" in variables.cellml_file:
+      n_states_cellml = 56
     print("{} rank{}, partitioning: x{} x y{} x z{}".format(n_ranks, "s" if n_ranks > 1 else "", variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z))
     print("{} x {} = {} fibers, per partition: {} x {} = {}".format(variables.n_fibers_x, variables.n_fibers_y, variables.n_fibers_total, variables.n_fibers_per_subdomain_x, variables.n_fibers_per_subdomain_y, variables.n_fibers_per_subdomain_x*variables.n_fibers_per_subdomain_y))
     print("per fiber: 1D mesh nodes global: {}, local: {}".format(variables.n_points_whole_fiber, variables.n_points_per_subdomain_z))

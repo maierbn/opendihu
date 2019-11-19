@@ -6,7 +6,7 @@ class ADIOS(Package):
 
   def __init__(self, **kwargs):
     defaults = {
-        'download_url': 'https://github.com/ornladios/ADIOS2/archive/v2.3.1.zip',
+        'download_url': 'https://github.com/ornladios/ADIOS2/archive/v2.4.0.zip',
     }
     defaults.update(kwargs)
     super(ADIOS, self).__init__(**defaults)

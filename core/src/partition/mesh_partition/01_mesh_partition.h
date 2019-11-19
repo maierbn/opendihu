@@ -304,7 +304,10 @@ public:
   
   //! number of nodes in total
   global_no_t nNodesGlobal() const;
-  
+
+  //! return the number of nodes for coordinateDirection == 0 and 1 otherwise
+  global_no_t nNodesGlobal(int coordinateDirection) const;
+
   //! number of dofs
   global_no_t nDofs() const;
 

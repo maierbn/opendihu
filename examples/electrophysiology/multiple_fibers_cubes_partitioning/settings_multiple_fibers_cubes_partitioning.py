@@ -75,6 +75,7 @@ parser.add_argument('--v',                                   help='Enable full v
 parser.add_argument('-v',                                    help='Enable verbosity level in c++ code', action="store_true")
 parser.add_argument('-vmodule',                              help='Enable verbosity level for given file in c++ code')
 parser.add_argument('-pause',                                help='Stop at parallel debugging barrier', action="store_true")
+parser.add_argument('--n_fibers_y',                          help='Number of fibers when simulating a cuboid example.',        type=int, default=variables.n_fibers_y)
 
 # parse command line arguments and assign values to variables module
 args = parser.parse_args(args=sys.argv[:-2], namespace=variables)
@@ -84,7 +85,8 @@ if variables.n_subdomains is not None:
   variables.n_subdomains_x = variables.n_subdomains[0]
   variables.n_subdomains_y = variables.n_subdomains[1]
   variables.n_subdomains_z = variables.n_subdomains[2]
-  
+ 
+ 
 # output information of run
 if rank_no == 0:
   print("scenario_name: {},  n_subdomains: {} {} {},  n_ranks: {},  end_time: {}".format(variables.scenario_name, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, n_ranks, variables.end_time))

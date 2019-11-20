@@ -636,7 +636,7 @@ createSimdSourceFile(std::string &simdSourceFilename)
             << "#ifndef TEST_WITHOUT_PRAGMAS" << std::endl
             << "  #pragma omp for simd" << std::endl
             << "#endif" << std::endl
-            << "#pragma GCC ivdep  // this disabled alias checking for the compiler (GCC only)" << std::endl
+            //<< "#pragma GCC ivdep  // this disabled alias checking for the compiler (GCC only)" << std::endl   // does not work on hazelhen
             << "  for (int i = 0; i < " << this->nInstances_ << "; i++)" << std::endl
             << "  {" << std::endl
             << "    ";

@@ -101,7 +101,7 @@ config = {
         "preconditionerType": "none",
         "maxIterations": 10000,
         "OutputWriter" : [
-          {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary":False, "onlyNodalValues":True}
+          {"format": "PythonFile", "filename": "out20", "outputInterval": 1, "binary":False, "onlyNodalValues":True}
         ]
       },
     }],
@@ -215,7 +215,7 @@ config = {
         "preconditionerType": "none",
         "maxIterations": 10000,
         "OutputWriter" : [
-          {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary":False, "onlyNodalValues":True}
+          {"format": "PythonFile", "filename": "out20", "outputInterval": 1, "binary":False, "onlyNodalValues":True}
         ]
       },
     }],
@@ -231,7 +231,7 @@ config = {
 
   problemParallel.run();
 
-  std::vector<std::string> outputFilesToCheck = {"out.py", "out.0.py", "out.1.py"};
+  std::vector<std::string> outputFilesToCheck = {"out20.py", "out20.0.py", "out20.1.py"};
   if (ownRankNo == 0)
   {
     assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
@@ -329,7 +329,7 @@ config = {
         "preconditionerType": "none",
         "maxIterations": 10000,
         "OutputWriter" : [
-          {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary":False, "onlyNodalValues":True}
+          {"format": "PythonFile", "filename": "out21", "outputInterval": 1, "binary":False, "onlyNodalValues":True}
         ]
       },
     }],
@@ -443,7 +443,7 @@ config = {
         "preconditionerType": "none",
         "maxIterations": 10000,
         "OutputWriter" : [
-          {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary":False, "onlyNodalValues":True}
+          {"format": "PythonFile", "filename": "out21", "outputInterval": 1, "binary":False, "onlyNodalValues":True}
         ]
       },
     }],
@@ -459,7 +459,7 @@ config = {
 
   problemParallel.run();
 
-  std::vector<std::string> outputFilesToCheck = {"out.py", "out.0.py", "out.1.py"};
+  std::vector<std::string> outputFilesToCheck = {"out21.py", "out21.0.py", "out21.1.py"};
   if (ownRankNo == 0)
   {
     assertParallelEqualsSerialOutputFiles(outputFilesToCheck);

@@ -75,8 +75,9 @@ output_timestep = 2.5               # [ms] timestep for output files, 0.5
 # 40 frames/s => output every 4s / (40s * 40fr/s) = 4000ms/1600 = 2.5
 
 # other options
-paraview_output = False
+paraview_output = True
 adios_output = True
+exfile_output = True
 python_output = False
 fiber_file="../../input/37x37fibers.bin"
 firing_times_file="../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency

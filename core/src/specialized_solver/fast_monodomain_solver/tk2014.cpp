@@ -32,6 +32,15 @@ Vc::double_v exponential(Vc::double_v x)
     x *= x;
   }
   return x;
+
+  // relative error of this implementation:
+  // x    rel error
+  // 0    0
+  // 1    0.00048784455634225593
+  // 3    0.0043763626896140342
+  // 5    0.012093715791500804
+  // 9    0.038557535762274039
+  // 12   0.067389808619653505
 }
 
 // new_slow_TK_2014_12_08
@@ -314,7 +323,7 @@ compute0DInstance(Vc::double_v states[], double currentTime, double timeStepWidt
   const double_v intermediateState25 = states[25] + timeStepWidth*rate25;
   const double_v intermediateState26 = states[26] + timeStepWidth*rate26;
   const double_v intermediateState27 = states[27] + timeStepWidth*rate27;
-  const double_v intermediateState28 = states[28] + timeStepWidth*rate28;
+//  const double_v intermediateState28 = states[28] + timeStepWidth*rate28;
   const double_v intermediateState29 = states[29] + timeStepWidth*rate29;
   const double_v intermediateState30 = states[30] + timeStepWidth*rate30;
   const double_v intermediateState31 = states[31] + timeStepWidth*rate31;

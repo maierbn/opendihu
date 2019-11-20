@@ -44,7 +44,7 @@ config = {
         "physicalExtent": [2*nx, 2*ny],
         "relativeTolerance": 1e-15,
         "OutputWriter" : [
-          {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
+          {"format": "PythonFile", "filename": "out22", "outputInterval": 1, "binary": False}
         ]
       }
     }]
@@ -99,7 +99,7 @@ config = {
         "physicalExtent": [2*nx, 2*ny],
         "relativeTolerance": 1e-15,
         "OutputWriter" : [
-          {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
+          {"format": "PythonFile", "filename": "out22", "outputInterval": 1, "binary": False}
         ]
       }
     }]
@@ -112,7 +112,7 @@ config = {
 
   problemParallel.run();
 
-  std::vector<std::string> outputFilesToCheck = {"out.py", "out.0.py", "out.1.py"};
+  std::vector<std::string> outputFilesToCheck = {"out22.py", "out22.0.py", "out22.1.py"};
   assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
 
   nFails += ::testing::Test::HasFailure();
@@ -162,7 +162,7 @@ config = {
         "physicalExtent": [2*nx, 2*ny],
         "relativeTolerance": 1e-15,
         "OutputWriter" : [
-          {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
+          {"format": "PythonFile", "filename": "out23", "outputInterval": 1, "binary": False}
         ]
       }
     }]
@@ -225,7 +225,7 @@ config = {
         "physicalExtent": physicalExtent,
         "relativeTolerance": 1e-15,
         "OutputWriter" : [
-          {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
+          {"format": "PythonFile", "filename": "out23", "outputInterval": 1, "binary": False}
         ]
       }
     }]
@@ -238,7 +238,7 @@ config = {
 
   problemParallel.run();
 
-  std::vector<std::string> outputFilesToCheck = {"out.py", "out.0.py", "out.1.py"};
+  std::vector<std::string> outputFilesToCheck = {"out23.py", "out23.0.py", "out23.1.py"};
   assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
 
   nFails += ::testing::Test::HasFailure();

@@ -110,8 +110,8 @@ config = {
     "displacementsScalingFactor": 1,
     
     "residualNormLogFilename": "log_residual_norm.txt",
-    "useAnalyticJacobian": True,
-    "useNumericJacobian": False,   # only works with non-nested matrices, if both numeric and analytic are enable, it uses the analytic for the preconditioner and the numeric as normal jacobian
+    "useAnalyticJacobian": False,
+    "useNumericJacobian": True,   # only works with non-nested matrices, if both numeric and analytic are enable, it uses the analytic for the preconditioner and the numeric as normal jacobian
       
     "dumpDenseMatlabVariables": False,   # extra output of matlab vectors, x,r, jacobian matrix
     # if useAnalyticJacobian,useNumericJacobian and dumpDenseMatlabVariables all all three true, the analytic and numeric jacobian matrices will get compared to see if there are programming errors for the analytic jacobian

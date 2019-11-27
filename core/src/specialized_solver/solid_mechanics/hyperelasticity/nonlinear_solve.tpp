@@ -24,7 +24,7 @@ nonlinearSolve()
   std::shared_ptr<SNES> snes = nonlinearSolver_->snes();
   std::shared_ptr<KSP> ksp = nonlinearSolver_->ksp();
 
-  // try two times to solve nonlinear problem
+  // try two times to solve the nonlinear problem
   for (int i = 0; i < 2; i++)
   {
     LOG(DEBUG) << "------------------  start solve " << i << " ------------------";
@@ -306,6 +306,7 @@ initializePetscCallbackFunctions()
       // use the analytic jacobian for the preconditioner and the numeric jacobian (from finite differences) as normal jacobian
       ierr = SNESSetJacobian(*snes, solverMatrixAdditionalNumericJacobian_, solverMatrixJacobian_, callbackJacobianCombined, this); CHKERRV(ierr);
       //ierr = SNESSetJacobian(*snes, solverMatrixAdditionalNumericJacobian_, solverMatrixAdditionalNumericJacobian_, callbackJacobianCombined, this); CHKERRV(ierr);
+      //ierr = SNESSetJacobian(*snes, solverMatrixJacobian_, solverMatrixJacobian_, callbackJacobianCombined, this); CHKERRV(ierr);
       LOG(DEBUG) << "Use combination of numeric and analytic jacobian: " << solverMatrixJacobian_;
     }
     else    // use pure analytic jacobian, without fd
@@ -474,16 +475,22 @@ dumpJacobianMatrix(Mat jac)
   // if there are both numeric and analytic jacobian in use, this is the numeric jacobian
   if (jac == solverMatrixAdditionalNumericJacobian_)
   {
-    filename << "n";
+    filename << "_numeric";
     combinedMatrixAdditionalNumericJacobian_->dumpMatrixGlobalNatural(filename.str());
   }
   else if (jac == solverMatrixJacobian_)
   {
-    // this is the normal jacobian, either numeric or analytic, if only one of both is is use
-    combinedMatrixJacobian_->dumpMatrixGlobalNatural(filename.str());
+    // this is the normal jacobian, either numeric or analytic, if only one of both is in use
 
+    // if both matrices are used
     if (solverMatrixAdditionalNumericJacobian_ != PETSC_NULL)
     {
+      filename << "_analytic";
+      combinedMatrixJacobian_->dumpMatrixGlobalNatural(filename.str());
+
+      evaluationNo--;
+
+      // if matrix is not all zeros
       double numericJacobianNorm = 0;
       MatNorm(solverMatrixAdditionalNumericJacobian_, NORM_1, &numericJacobianNorm);
       if (numericJacobianNorm > 1)
@@ -511,19 +518,24 @@ dumpJacobianMatrix(Mat jac)
         MatNorm(difference, NORM_1, &norm1);
         MatNorm(difference, NORM_FROBENIUS, &normF);
         MatNorm(difference, NORM_INFINITY, &normInf);
-        LOG(DEBUG) << "difference between analytic and numeric jacobian matrices: 1-norm: " << norm1 << ", frobenius norm: " << normF << ", infinity norm: " << normInf;
+        LOG(INFO) << "difference between analytic and numeric jacobian matrices: "
+          << "1-norm: " << norm1 << ", frobenius norm: " << normF << ", infinity norm: " << normInf;
 
 
         MatNorm(differenceSubmatrixU, NORM_1, &norm1);
         MatNorm(differenceSubmatrixU, NORM_FROBENIUS, &normF);
         MatNorm(differenceSubmatrixU, NORM_INFINITY, &normInf);
-        LOG(DEBUG) << "only uu submatrix: 1-norm: " << norm1 << ", frobenius norm: " << normF << ", infinity norm: " << normInf;
+        LOG(INFO) << "only uu submatrix: 1-norm: " << norm1 << ", frobenius norm: " << normF << ", infinity norm: " << normInf;
 
 
         if (norm1 > 1)
           LOG(ERROR) << "norm mismatch";
       }
 
+    }
+    else
+    {
+      combinedMatrixJacobian_->dumpMatrixGlobalNatural(filename.str());
     }
   }
   else

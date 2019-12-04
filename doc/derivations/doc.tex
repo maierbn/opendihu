@@ -2975,6 +2975,8 @@ After each update of $\bfu$, we enforce incompressibility by solving
 \end{equation*}
 Note that in the program, the vector used for $\bfu$ contains the values of displacements and pressure.
 
+The problem is this algorithm does not work, because the incompressibility is not enforced correctly on both $u$ and $v$.
+
 \newpage
 
 \subsection{Examples with analytical solution}

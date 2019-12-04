@@ -54,6 +54,9 @@ private:
   //! compute the next displacements and velocities by the RK-4 scheme
   void computeRungeKutta4();
 
+  //! compute the next displacements and velocities by an explicit Euler scheme
+  void computeExplicitEuler();
+
   StaticSolverType staticSolver_;  //< hyperelasticity solver that solver the static problem
   Data::DynamicHyperelasticitySolver<DisplacementsFunctionSpace> data_;
 

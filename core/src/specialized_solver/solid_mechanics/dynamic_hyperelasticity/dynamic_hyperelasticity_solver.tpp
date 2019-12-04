@@ -16,6 +16,9 @@ DynamicHyperelasticitySolver(DihuContext context) :
   specificSettings_ = this->context_.getPythonConfig();
   density_ = specificSettings_.getOptionDouble("density", 1.0, PythonUtility::Positive);
   viscosity_ = specificSettings_.getOptionDouble("viscosity", 0.0, PythonUtility::NonNegative);
+
+  // initialize output writers
+  this->outputWriterManager_.initialize(this->context_, this->specificSettings_);
 }
 
 template<typename Term>
@@ -27,11 +30,12 @@ initialize()
   data_.setFunctionSpace(staticSolver_.data().functionSpace());
   data_.initialize(staticSolver_.data().displacements());
 
-  // initialize temporary vectors
+  // initialize state vectors
   u_ = staticSolver_.createPartitionedPetscVec("u");
   v_ = staticSolver_.createPartitionedPetscVec("v");
   a_ = staticSolver_.createPartitionedPetscVec("a");
 
+  // initialize temporary vectors
   for (int i = 0; i < 9; i++)
   {
     std::stringstream name;
@@ -39,6 +43,7 @@ initialize()
     temp_[i] = staticSolver_.createPartitionedPetscVec(name.str());
   }
 
+  // initialize helper vectors for Runge-Kutte scheme
   for (int i = 0; i < 4; i++)
   {
     std::stringstream name;
@@ -51,6 +56,13 @@ initialize()
   }
 
   initializeMassMatrix();
+
+  // δW_ext = int_∂Ω T_a phi_L dS was precomputed in initialize of staticSolver_
+  PetscErrorCode ierr;
+  ierr = VecCopy(staticSolver_.externalVirtualWork(), temp_[0]->valuesGlobal()); CHKERRV(ierr);
+
+  // copy the temp0 values to data for output
+  staticSolver_.setDisplacementsAndPressureFromCombinedVec(temp_[0]->valuesGlobal(), this->data_.externalVirtualWork());
 }
 
 template<typename Term>
@@ -67,11 +79,6 @@ advanceTimeSpan()
   LOG(DEBUG) << "DynamicHyperelasticitySolver::advanceTimeSpan, timeSpan=" << timeSpan<< ", timeStepWidth=" << this->timeStepWidth_
     << " n steps: " << this->numberTimeSteps_;
 
-  // get PETSc vectors to work on
-  //Vec &displacements = this->data_.displacements()->valuesGlobal();
-  //Vec &velocity = this->data_.velocity()->valuesGlobal();
-  //Vec &acceleration = this->data_.acceleration()->valuesGlobal();
-
   // loop over time steps
   double currentTime = this->startTime_;
   for (int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
@@ -81,9 +88,10 @@ advanceTimeSpan()
       LOG(INFO) << "DynamicHyperelasticitySolver, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
     }
 
-    computeRungeKutta4();
+    //computeRungeKutta4();
+    computeExplicitEuler();
 
-    staticSolver_.run();
+    //staticSolver_.run();
 
     // advance simulation time
     timeStepNo++;
@@ -94,6 +102,9 @@ advanceTimeSpan()
       Control::PerformanceMeasurement::stop(this->durationLogKey_);
 
     // write current output values
+    staticSolver_.setDisplacementsAndPressureFromCombinedVec(u_->valuesGlobal(), this->data_.displacements());
+    staticSolver_.setDisplacementsAndPressureFromCombinedVec(v_->valuesGlobal(), this->data_.velocity());
+
     this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime);
 
     // start duration measurement
@@ -105,13 +116,6 @@ advanceTimeSpan()
   // stop duration measurement
   if (this->durationLogKey_ != "")
     Control::PerformanceMeasurement::stop(this->durationLogKey_);
-
-  // stop duration measurement
-  if (this->durationLogKey_ != "")
-    Control::PerformanceMeasurement::stop(this->durationLogKey_);
-
-  // write current output values
-  this->outputWriterManager_.writeOutput(this->data_, 1, endTime_);
 }
 
 template<typename Term>
@@ -246,6 +250,7 @@ computeAcceleration(std::shared_ptr<VecHyperelasticity> u, std::shared_ptr<VecHy
   // compute δW_int, store in temp_[0]
   staticSolver_.materialComputeInternalVirtualWork(u, temp_[0]);
 
+  LOG(DEBUG) << "δW_int: " << *temp_[0];
   // subtract external virtual work f
 
   // δW_ext = int_∂Ω T_a phi_L dS was precomputed in initialize of staticSolver_
@@ -432,11 +437,76 @@ computeRungeKutta4()
 
   LOG(DEBUG) << "enforce incompressibility";
 
-  // enforce incompressibility, solve K*u^(new) = K*u
-  staticSolver_.materialComputeInternalVirtualWork(u_, temp_[8]);
+  // enforce incompressibility by solving K*u^(new) = K*u
+
+  // compute temp8 = K*u
+  //staticSolver_.materialComputeInternalVirtualWork(u_, temp_[8]);
 
   // solve ∂W_int(u) - temp8 = 0 with J = 1 for u. The previous values in u_ are the initial guess.
-  staticSolver_.solveForDisplacements(temp_[8], u_);
+  //staticSolver_.solveForDisplacements(temp_[8], u_);
+}
+
+template<typename Term>
+void DynamicHyperelasticitySolver<Term>::
+computeExplicitEuler()
+{
+  PetscErrorCode ierr;
+
+  LOG(DEBUG) << "computeExplicitEuler, timeStepWidth_: " << this->timeStepWidth_;
+
+  // compute k0 = Δt*a(u^(n), v^(n))
+  computeAcceleration(u_, v_, k_[0]);
+  LOG(DEBUG) << "k0: " << *k_[0];
+  staticSolver_.setDisplacementsAndPressureFromCombinedVec(k_[0]->valuesGlobal(), this->data_.acceleration());
+
+  ierr = VecScale(k_[0]->valuesGlobal(), this->timeStepWidth_); CHKERRV(ierr);
+
+  // compute l0 = Δt*v^(n)
+  ierr = VecCopy(v_->valuesGlobal(), l_[0]->valuesGlobal()); CHKERRV(ierr);
+  ierr = VecScale(l_[0]->valuesGlobal(), this->timeStepWidth_); CHKERRV(ierr);
+
+  // compute v^(n+1) = v^(n) + k0
+  ierr = VecAXPY(v_->valuesGlobal(), 1., k_[0]->valuesGlobal()); CHKERRV(ierr);
+
+  // compute u^(n+1) = u^(n) + l0
+  ierr = VecAXPY(u_->valuesGlobal(), 1., l_[0]->valuesGlobal()); CHKERRV(ierr);
+
+
+  // copy the temp8 values to data.rhs to be output after this time step
+  staticSolver_.setDisplacementsAndPressureFromCombinedVec(u_->valuesGlobal(), this->data_.displacementsCompressible());
+  staticSolver_.setDisplacementsAndPressureFromCombinedVec(v_->valuesGlobal(), this->data_.velocityCompressible());
+
+  LOG(DEBUG) << "enforce incompressibility";
+
+  // enforce incompressibility by solving K*u^(new) = K*u
+
+
+  staticSolver_.materialComputeInternalVirtualWork(u_, temp_[8]);
+  staticSolver_.solveForDisplacements(temp_[8], u_);    // solveForDisplacements(externalVirtualWork, displacements)
+  return;
+  // compute temp8 = K*u
+  computeAcceleration(u_, v_, k_[0]);
+
+  // temp0 = M*a^(n+1)
+  ierr = MatMult(massMatrix_->valuesGlobal(), k_[0]->valuesGlobal(), temp_[0]->valuesGlobal()); CHKERRV(ierr);
+
+  // δW_ext = int_∂Ω T_a phi_L dS was precomputed in initialize of staticSolver_
+  ierr = VecCopy(staticSolver_.externalVirtualWork(), temp_[1]->valuesGlobal()); CHKERRV(ierr);
+
+  // temp1 = temp1 - M*a^(n+1) = δW_ext - M*a^(n+1)
+  VecAXPY(temp_[1]->valuesGlobal(), -1, temp_[0]->valuesGlobal());
+
+
+
+  // copy the temp8 values to data.rhs to be output after this time step
+  staticSolver_.setDisplacementsAndPressureFromCombinedVec(temp_[1]->valuesGlobal(), this->data_.internalVirtualWorkCompressible());
+
+
+
+  // solve ∂W_int(u) - temp8 = 0 with J = 1 for u. The previous values in u_ are the initial guess.
+  staticSolver_.solveForDisplacements(temp_[1], u_);    // solveForDisplacements(externalVirtualWork, displacements)
+
+
 }
 
 template<typename Term>

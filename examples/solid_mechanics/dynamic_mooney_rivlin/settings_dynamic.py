@@ -3,9 +3,9 @@ import numpy as np
 import sys, os
 
 # number of elements
-nx = 1    # 2
-ny = 1    # 2
-nz = 1    # 5
+nx = 2    # 2
+ny = 2    # 2
+nz = 5    # 5
 
 # boundary conditions (for quadratic elements)
 dirichlet_bc = {}
@@ -14,7 +14,7 @@ xpos = 0.0
 ypos = 0.0
 zpos = 0.0
 
-# bottom plane
+# fix bottom plane in z direction, displacements are quadratic
 for j in range(0,2*ny+1):
   for i in range(0,2*nx+1):
     dirichlet_bc[j*(2*nx+1) + i] = [None,None,zpos]
@@ -35,7 +35,7 @@ if False:
     dirichlet_bc[k*(2*nx+1)*(2*ny+1)] = [xpos,ypos,None]
 
 if True:
-  # horizontal edge
+  # fix points on bottom horizontal edge in y and z direction
   for i in range(0,2*nx+1):
     dirichlet_bc[i] = [None,ypos,zpos]
 
@@ -44,11 +44,14 @@ if False:
   for j in range(0,2*ny+1):
     dirichlet_bc[j*(2*nx+1)] = [xpos,None,zpos]
 
-# corner
+# fix corner completely
 dirichlet_bc[0] = [xpos,ypos,zpos]
-dirichlet_bc[1] = [None,ypos,zpos]
 
+# Neumann boundary conditions, specify upward force for top elements, slightly in y-direction
 neumann_bc = [{"element": (nz-1)*nx*ny + j*nx + i, "constantVector": [0,1e-1,5e-1], "face": "2+"} for j in range(ny) for i in range(nx)]
+
+dt = 1e-5
+output_interval = 1e-3
 
 #dirichlet_bc = {}
 #neumann_bc = []
@@ -56,8 +59,9 @@ neumann_bc = [{"element": (nz-1)*nx*ny + j*nx + i, "constantVector": [0,1e-1,5e-
 config = {
   "scenarioName": "3d_box",
   "DynamicHyperelasticitySolver": {
-    "numberTimeSteps": 1,
-    "endTime": 1.0,
+    #"numberTimeSteps": 1,
+    #"endTime": 1.0,
+    "timeStepWidth": dt,
     "HyperelasticitySolver": {
       "durationLogKey": "nonlinear",
       
@@ -65,8 +69,8 @@ config = {
       "materialParameters": [0.0,1.0],
       "displacementsScalingFactor": 1.0,   # scaling factor for displacements
       "residualNormLogFilename": "log_residual_norm.txt",
-      "useAnalyticJacobian": False,
-      "useNumericJacobian": True,   # only works with non-nested matrices, if both numeric and analytic are enable, it uses the analytic for the preconditioner and the numeric as normal jacobian
+      "useAnalyticJacobian": True,
+      "useNumericJacobian": False,   # only works with non-nested matrices, if both numeric and analytic are enable, it uses the analytic for the preconditioner and the numeric as normal jacobian
         
       "dumpDenseMatlabVariables": False,   # extra output of matlab vectors, x,r, jacobian matrix
       # if useAnalyticJacobian,useNumericJacobian and dumpDenseMatlabVariables all all three true, the analytic and numeric jacobian matrices will get compared to see if there are programming errors for the analytic jacobian
@@ -99,7 +103,7 @@ config = {
       }
     },    
     "OutputWriter" : [   # output files for displacements function space (quadratic elements)
-      {"format": "Paraview", "outputInterval": 1, "filename": "out/dynamic", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
+      {"format": "Paraview", "outputInterval": int(output_interval/dt), "filename": "out/dynamic", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
     ],
   }
 }

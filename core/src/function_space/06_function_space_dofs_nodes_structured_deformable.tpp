@@ -374,6 +374,12 @@ setGeometryFieldValues()
   // fill geometry vector from nodePositions, initialize non-node position entries to 0 (for Hermite)
   std::vector<Vec3> geometryValues(nDofsLocal, Vec3{0.0});
 
+  if (this->nNodesLocalWithoutGhosts()*3 > localNodePositions_.size())
+  {
+    LOG(FATAL) << "Given number of node positions (" << localNodePositions_.size() << ", i.e. " << localNodePositions_.size()/3
+      << " points) is smaller than required number (" << this->nNodesLocalWithGhosts()*3 << ", i.e. " << this->nNodesLocalWithoutGhosts() << " points)";
+  }
+
   int geometryValuesIndex = 0;
   int nodePositionsIndex = 0;
   // loop over nodes

@@ -29,7 +29,13 @@ createPetscObjects()
 
   assert(this->functionSpace_);
 
-  this->activation_ = this->functionSpace_->template createFieldVariable<1>("activation");
+  activation_          = this->functionSpace_->template createFieldVariable<1>("activation");
+  geometry_            = this->functionSpace_->template createFieldVariable<3>("geometry_temp");
+  displacements_       = this->functionSpace_->template createFieldVariable<3>("u");
+  reactionForce_       = this->functionSpace_->template createFieldVariable<3>("reactionForce");
+  cauchyStress_        = this->functionSpace_->template createFieldVariable<6>("sigma");
+  greenLagrangeStrain_ = this->functionSpace_->template createFieldVariable<6>("E");
+  relativeVolume_      = this->functionSpace_->template createFieldVariable<1>("J");
 }
 
 std::shared_ptr<typename QuasiStaticNonlinearElasticityFebio::FieldVariableType>
@@ -39,20 +45,75 @@ activation()
   return this->activation_;
 }
 
+//! return the field variable
+std::shared_ptr<typename QuasiStaticNonlinearElasticityFebio::FieldVariableTypeVector>
+QuasiStaticNonlinearElasticityFebio::
+geometry()
+{
+  return this->geometry_;
+}
+
+//! return the field variable
+std::shared_ptr<typename QuasiStaticNonlinearElasticityFebio::FieldVariableTypeVector>
+QuasiStaticNonlinearElasticityFebio::
+displacements()
+{
+  return this->displacements_;
+}
+
+//! return the field variable
+std::shared_ptr<typename QuasiStaticNonlinearElasticityFebio::FieldVariableTypeVector>
+QuasiStaticNonlinearElasticityFebio::
+reactionForce()
+{
+  return this->reactionForce_;
+}
+
+//! return the field variable
+std::shared_ptr<typename QuasiStaticNonlinearElasticityFebio::FieldVariableTypeTensor>
+QuasiStaticNonlinearElasticityFebio::
+cauchyStress()
+{
+  return this->cauchyStress_;
+}
+
+//! return the field variable
+std::shared_ptr<typename QuasiStaticNonlinearElasticityFebio::FieldVariableTypeTensor>
+QuasiStaticNonlinearElasticityFebio::
+greenLagrangeStrain()
+{
+  return this->greenLagrangeStrain_;
+}
+
+//! return the field variable
+std::shared_ptr<typename QuasiStaticNonlinearElasticityFebio::FieldVariableType>
+QuasiStaticNonlinearElasticityFebio::
+relativeVolume()
+{
+  return this->relativeVolume_;
+}
+
 void QuasiStaticNonlinearElasticityFebio::
 print()
 {
-  if (!VLOG_IS_ON(4))
-    return;
-
-  VLOG(4) << *this->activation_;
 }
 
 typename QuasiStaticNonlinearElasticityFebio::FieldVariablesForOutputWriter QuasiStaticNonlinearElasticityFebio::
 getFieldVariablesForOutputWriter()
 {
   // these field variables will be written to output files
-  return std::tuple<std::shared_ptr<FieldVariableType>>(this->activation_);
+
+  std::shared_ptr<FieldVariableTypeVector> geometryField = std::make_shared<FieldVariableTypeVector>(this->functionSpace_->geometryField());
+
+  return std::tuple_cat(
+    std::tuple<std::shared_ptr<FieldVariableTypeVector>>(geometryField),
+    std::tuple<std::shared_ptr<FieldVariableType>>(this->activation_),
+    std::tuple<std::shared_ptr<FieldVariableTypeVector>>(this->displacements_),
+    std::tuple<std::shared_ptr<FieldVariableTypeVector>>(this->reactionForce_),
+    std::tuple<std::shared_ptr<FieldVariableTypeTensor>>(this->cauchyStress_),
+    std::tuple<std::shared_ptr<FieldVariableTypeTensor>>(this->greenLagrangeStrain_),
+    std::tuple<std::shared_ptr<FieldVariableType>>(this->relativeVolume_)
+  );
 }
 
 } // namespace

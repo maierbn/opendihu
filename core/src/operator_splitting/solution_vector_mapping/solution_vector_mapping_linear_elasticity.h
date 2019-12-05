@@ -10,7 +10,7 @@
 #include "cellml/00_cellml_adapter_base.h"
 #include "specialized_solver/solid_mechanics/quasi_static/quasi_static_linear_elasticity_solver.h"
 
-/** Transfer between the output from cubes partitioned fibers (MultipleInstances<Strang<...) and StaticBidomainSolver
+/** Transfer between the output from cubes partitioned fibers (MultipleInstances<Strang<...) and an elasticity solver, e.g. QuasiStaticNonlinearElasticitySolverFebio
  *
  * template <int nStates, int nIntermediates, typename FunctionSpaceType>
  * struct CellMLOutputConnectorDataType

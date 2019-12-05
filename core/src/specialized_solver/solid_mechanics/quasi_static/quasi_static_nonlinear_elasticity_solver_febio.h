@@ -56,6 +56,9 @@ protected:
   //! load the file that was created by the febio simulation
   void loadFebioOutputFile();
 
+  //! run the febio program on the generated input file
+  void runFebio();
+
   DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
 
   OutputWriter::Manager outputWriterManager_; ///< manager object holding all output writer

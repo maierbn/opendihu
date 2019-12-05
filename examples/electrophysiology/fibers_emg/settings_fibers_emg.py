@@ -94,7 +94,6 @@ if variables.n_subdomains is not None:
   variables.n_subdomains_z = variables.n_subdomains[2]
   
 if variables.linear_elasticity:
-  variables.cellml_file = "../../input/shorten.cpp"
   variables.emg_solver_type = "cg"
   
 # output information of run
@@ -126,7 +125,7 @@ variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
 config = {
   "scenarioName": variables.scenario_name,
   "Meshes": variables.meshes,
-  "MappingsBetweenMeshes": {"MeshFiber_{}".format(i) : "3Dmesh" for i in range(variables.n_fibers_total)},
+  "MappingsBetweenMeshes": {"MeshFiber_{}".format(i) : meshName3D for i in range(variables.n_fibers_total) for meshName3D in ["3Dmesh", "3Dmesh_quadratic"]},
   "Solvers": {
     "implicitSolver": {     # solver for the implicit timestepping scheme of the diffusion time step
       "maxIterations":      1e4,
@@ -398,6 +397,8 @@ config = {
       },
       "QuasiStaticNonlinearElasticitySolverFebio": {
         "durationLogKey": "febio",
+        "meshName":       "3Dmesh_quadratic",
+        "OutputWriter" : variables.output_writer_elasticity,
       }
     }
   }

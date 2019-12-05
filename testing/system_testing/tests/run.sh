@@ -26,8 +26,8 @@ cd $basedir/$name
 # compile
 START=$(date +%s.%N)
 
-../../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
-../../../../dependencies/scons/scons.py BUILD_TYPE=RELEASE
+../../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG -j $(expr `nproc` / 2)
+../../../../dependencies/scons/scons.py BUILD_TYPE=RELEASE -j $(expr `nproc` / 2)
 
 END=$(date +%s.%N)
 DIFF=$(python -c "print $END - $START")

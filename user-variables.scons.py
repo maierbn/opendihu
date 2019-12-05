@@ -124,7 +124,7 @@ try:
     PETSC_DISABLE_CHECKS=True
     GOOGLETEST_DISABLE_CHECKS=True
 
-  elif "argon" in socket.gethostname():
+  elif "argon" in socket.gethostname() and False:
     cc = "pgcc"
     CC = "pgc++"
     mpiCC = "mpic++"

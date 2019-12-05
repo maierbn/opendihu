@@ -181,7 +181,7 @@ createFebioInputFile()
   // fix x direction for left row
   for (int j = 0; j < nNodesY; j++)
   {
-    dof_no_t dofNoLocal = j*nNodesX + nNodesX-1;
+    dof_no_t dofNoLocal = j*nNodesX;
     fileContents << "\t\t\t<node id=\"" << dofNoLocal+1 << "\" bc=\"x\"></node>" << std::endl;
   }
 
@@ -204,7 +204,7 @@ createFebioInputFile()
   {
     for (int i = 0; i < nNodesX; i++)
     {
-      dof_no_t dofNoLocal = i;
+      dof_no_t dofNoLocal = j*nNodesX + i;
       fileContents << "\t\t\t<node id=\"" << dofNoLocal+1 << "\" bc=\"z\"></node>" << std::endl;
     }
   }

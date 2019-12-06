@@ -47,14 +47,14 @@ stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in f
 dt_0D = 1e-3                        # [ms] timestep width of ODEs
 dt_1D = 1e-3                        # [ms] timestep width of diffusion
 dt_splitting = dt_1D                # [ms] overall timestep width of strang splitting
-dt_3D = 1e-3                        # [ms] timestep width of elasticity problem
-output_timestep = 1e-3              # [ms] timestep for output files
-activation_start_time = 1           # [ms] time when to start checking for stimulation
+dt_3D = 1e-2                        # [ms] timestep width of elasticity problem
+output_timestep = 1e-1              # [ms] timestep for output files
+activation_start_time = 0           # [ms] time when to start checking for stimulation
 
 # other options
 paraview_output = True
 linear_elasticity = True
-generate_quadratic_3d_mesh = True
+generate_quadratic_3d_mesh = False
 
 sampling_stride_x = 7
 sampling_stride_y = 7

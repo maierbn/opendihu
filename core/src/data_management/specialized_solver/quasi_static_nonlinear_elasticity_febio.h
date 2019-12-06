@@ -16,10 +16,10 @@ namespace Data
 /**  The datastructures for the febio adapter where febio computes a static hyperelastic problem.
  */
 class QuasiStaticNonlinearElasticityFebio :
-  public Data<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunction::LagrangeOfOrder<2>>>
+  public Data<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunction::LagrangeOfOrder<1>>>
 {
 public:
-  typedef ::FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunction::LagrangeOfOrder<2>> FunctionSpace;
+  typedef ::FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunction::LagrangeOfOrder<1>> FunctionSpace;
 
   typedef FieldVariable::FieldVariable<FunctionSpace,1> FieldVariableType;
   typedef FieldVariable::FieldVariable<FunctionSpace,3> FieldVariableTypeVector;
@@ -32,7 +32,7 @@ public:
   std::shared_ptr<FieldVariableType> activation();
 
   //! return the field variable
-  std::shared_ptr<FieldVariableTypeVector> geometry();
+  std::shared_ptr<FieldVariableTypeVector> referenceGeometry();
 
   //! return the field variable
   std::shared_ptr<FieldVariableTypeVector> displacements();
@@ -76,7 +76,7 @@ private:
   void createPetscObjects() override;
 
   std::shared_ptr<FieldVariableType> activation_; ///< field variable of the activation factor field
-  std::shared_ptr<FieldVariableTypeVector> geometry_; ///< field variable of the geometry value
+  std::shared_ptr<FieldVariableTypeVector> referenceGeometry_; ///< field variable of the geometry value
   std::shared_ptr<FieldVariableTypeVector> displacements_; ///< field variable of the displacements
   std::shared_ptr<FieldVariableTypeVector> reactionForce_; ///< field variable of the reaction forces
   std::shared_ptr<FieldVariableTypeTensor> cauchyStress_; ///< field variable of the Cauchy stress, sigma

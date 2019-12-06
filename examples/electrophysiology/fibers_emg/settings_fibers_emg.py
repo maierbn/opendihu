@@ -397,7 +397,7 @@ config = {
       },
       "QuasiStaticNonlinearElasticitySolverFebio": {
         "durationLogKey": "febio",
-        "meshName":       "3Dmesh_quadratic",
+        "meshName":       "3Dmesh",
         "OutputWriter" : variables.output_writer_elasticity,
       }
     }

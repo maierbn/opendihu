@@ -15,7 +15,7 @@ class QuasiStaticNonlinearElasticitySolverFebio :
   public Runnable
 {
 public:
-  typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunction::LagrangeOfOrder<2>> FunctionSpace;
+  typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunction::LagrangeOfOrder<1>> FunctionSpace;
   typedef ::Data::QuasiStaticNonlinearElasticityFebio Data;
   typedef FieldVariable::FieldVariable<FunctionSpace,1> FieldVariableType;
   typedef ElasticitySolverOutputConnectorDataType<FieldVariableType> OutputConnectorDataType;

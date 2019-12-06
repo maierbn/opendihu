@@ -30,12 +30,15 @@ createPetscObjects()
   assert(this->functionSpace_);
 
   activation_          = this->functionSpace_->template createFieldVariable<1>("activation");
-  geometry_            = this->functionSpace_->template createFieldVariable<3>("geometry_temp");
   displacements_       = this->functionSpace_->template createFieldVariable<3>("u");
   reactionForce_       = this->functionSpace_->template createFieldVariable<3>("reactionForce");
   cauchyStress_        = this->functionSpace_->template createFieldVariable<6>("sigma");
   greenLagrangeStrain_ = this->functionSpace_->template createFieldVariable<6>("E");
   relativeVolume_      = this->functionSpace_->template createFieldVariable<1>("J");
+
+
+  // copy initial geometry to referenceGeometry
+  referenceGeometry_ = std::make_shared<FieldVariableTypeVector>(this->functionSpace_->geometryField());
 }
 
 std::shared_ptr<typename QuasiStaticNonlinearElasticityFebio::FieldVariableType>
@@ -48,9 +51,9 @@ activation()
 //! return the field variable
 std::shared_ptr<typename QuasiStaticNonlinearElasticityFebio::FieldVariableTypeVector>
 QuasiStaticNonlinearElasticityFebio::
-geometry()
+referenceGeometry()
 {
-  return this->geometry_;
+  return this->referenceGeometry_;
 }
 
 //! return the field variable

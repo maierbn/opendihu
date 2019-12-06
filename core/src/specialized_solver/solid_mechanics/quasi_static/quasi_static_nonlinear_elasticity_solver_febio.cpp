@@ -100,6 +100,7 @@ createFebioInputFile()
     << "\t\t<etol>0.01</etol>" << std::endl
     << "\t\t<rtol>0</rtol>" << std::endl
     << "\t\t<lstol>0.9</lstol>" << std::endl
+    << "\t\t<analysis type=\"dynamic\"></analysis>" << std::endl
     << "\t\t<time_stepper>" << std::endl
     << "\t\t\t<dtmin>0.01</dtmin>" << std::endl
     << "\t\t\t<dtmax>0.1</dtmax>" << std::endl
@@ -126,7 +127,7 @@ createFebioInputFile()
       << "\t\t\t<Lofl>1.07</Lofl>" << std::endl
       << "\t\t\t<lam_max>1.4</lam_max>" << std::endl
       << "\t\t\t<k>1e6</k>" << std::endl
-      << "\t\t\t<fiber type=\"local\">1, 5</fiber>    <!-- fiber direction is from local node 1 to 5 in every element -->" << std::endl
+      << "\t\t\t<fiber type=\"local\">1, 5</fiber>    <!-- fiber direction is from local node 1 to 5 in every element, i.e. upwards -->" << std::endl
       << "\t\t\t<activation lc=\"1\">" << activationValue << "</activation>" << std::endl
       << "\t\t</material>" << std::endl;
   }
@@ -139,7 +140,8 @@ createFebioInputFile()
   for (node_no_t nodeNoLocal = 0; nodeNoLocal < data_.functionSpace()->nNodesLocalWithoutGhosts(); nodeNoLocal++)
   {
     dof_no_t dofNoLocal = nodeNoLocal;
-    Vec3 position = data_.functionSpace()->geometryField().getValue(dofNoLocal);
+    //Vec3 position = data_.functionSpace()->geometryField().getValue(dofNoLocal);
+    Vec3 position = data_.referenceGeometry()->getValue(dofNoLocal);
     fileContents << "\t\t\t<node id=\"" << nodeNoLocal+1 << "\">" << position[0] << "," << position[1] << "," << position[2]
       << "</node>" << std::endl;
   }
@@ -152,20 +154,10 @@ createFebioInputFile()
   {
     std::array<dof_no_t,FunctionSpace::nNodesPerElement()> elementNodeNos = data_.functionSpace()->getElementNodeNos(elementNoLocal);
 
+    // elements types: https://help.febio.org/FEBio/FEBio_um_2_8/FEBio_um_2-8-3.8.2.1.html
     fileContents << "\t\t\t<hex8 id=\"" << elementNoLocal+1 << "\" mat=\"" << elementNoLocal+1 << "\"> ";
-    fileContents << elementNodeNos[0]+1 << ", " << elementNodeNos[2]+1 << ", " << elementNodeNos[8]+1 << ", " << elementNodeNos[6]+1 << ", "
-      << elementNodeNos[18]+1 << ", " << elementNodeNos[20]+1 << ", " << elementNodeNos[26]+1 << ", " << elementNodeNos[24]+1 << ", "
-      << elementNodeNos[1]+1 << ", " << elementNodeNos[5]+1 << ", " << elementNodeNos[7]+1 << ", " << elementNodeNos[3]+1 << ", "
-      << elementNodeNos[19]+1 << ", " << elementNodeNos[23]+1 << ", " << elementNodeNos[25]+1 << ", " << elementNodeNos[21]+1 << ", "
-      << elementNodeNos[9]+1 << ", " << elementNodeNos[11]+1 << ", " << elementNodeNos[17]+1 << ", " << elementNodeNos[15]+1;
-      /*<< elementNodeNos[10] << ", " << elementNodeNos[14] << ", " << elementNodeNos[16] << ", " << elementNodeNos[12] << ", "
-      << elementNodeNos[18] << ", " << elementNodeNos[13];*/
-    /*for (int i = 0; i < FunctionSpace::nNodesPerElement(); i++)
-    {
-      if (i != 0)
-        fileContents << ", ";
-      fileContents << elementNodeNos[i];
-    }*/
+    fileContents << elementNodeNos[0]+1 << ", " << elementNodeNos[1]+1 << ", " << elementNodeNos[3]+1 << ", " << elementNodeNos[2]+1 << ", "
+      << elementNodeNos[4]+1 << ", " << elementNodeNos[5]+1 << ", " << elementNodeNos[7]+1 << ", " << elementNodeNos[6]+1;
     fileContents << "</hex8>" << std::endl;
   }
 
@@ -175,8 +167,9 @@ createFebioInputFile()
     << "\t\t<fix>" << std::endl;
 
   // fix bottom dofs
-  int nNodesX = FunctionSpace::FunctionSpaceBaseDim<1,typename FunctionSpace::BasisFunction>::averageNNodesPerElement() + 1;
-  int nNodesY = nNodesX;
+  int nNodesX = this->data_.functionSpace()->nNodesGlobal(0);
+  int nNodesY = this->data_.functionSpace()->nNodesGlobal(1);
+  int nNodesZ = this->data_.functionSpace()->nNodesGlobal(2);
 
   // fix x direction for left row
   for (int j = 0; j < nNodesY; j++)
@@ -210,12 +203,54 @@ createFebioInputFile()
   }
 
   fileContents << "\t\t</fix>" << std::endl
-    << "\t</Boundary>" << std::endl
-    << "\t<LoadData>" << std::endl
-    << "\t\t<loadcurve id=\"1\"> " << std::endl
+    << "\t</Boundary>" << std::endl;
+
+  // force that stretches the muscle
+  fileContents << "\t<Loads>" << std::endl
+    << "\t\t<force>" << std::endl;
+
+  // add force for top nodes
+  for (int j = 0; j < nNodesY; j++)
+  {
+    for (int i = 0; i < nNodesX; i++)
+    {
+      dof_no_t dofNoLocal = (nNodesZ-1)*nNodesY*nNodesX + j*nNodesX + i;
+
+      std::string value = "1.0";
+      if (i == 0 || i == nNodesX-1)
+      {
+        if (j == 0 || j == nNodesY-1)
+        {
+          value = "0.25";
+        }
+        else
+        {
+          value = "0.5";
+        }
+      }
+      else if (j == 0 || j == nNodesY-1)
+      {
+        value = "0.5";
+      }
+
+      fileContents << "\t\t\t<node id=\"" << dofNoLocal+1 << "\" bc=\"z\" lc=\"2\">"
+        << value << "</node>" << std::endl;
+    }
+  }
+
+
+  fileContents << "\t\t</force>" << std::endl
+    << "\t</Loads>" << std::endl;
+
+  fileContents << "\t<LoadData>" << std::endl
+    << "\t\t<loadcurve id=\"1\"> <!-- for activation -->" << std::endl
     << "\t\t\t<loadpoint>0,0</loadpoint>" << std::endl
     << "\t\t\t<loadpoint>1,1e-5</loadpoint>" << std::endl
     << "\t\t</loadcurve>" << std::endl
+		<< "\t\t<loadcurve id=\"2\"> <!-- for external load that stretches the muscle -->" << std::endl
+    << "\t\t\t<loadpoint>0,0</loadpoint>" << std::endl
+		<< "\t\t\t<loadpoint>1,100</loadpoint>" << std::endl
+		<< "\t\t</loadcurve>" << std::endl
     << "\t</LoadData>" << std::endl
     << "\t<Output>" << std::endl
     << "\t\t<plotfile type=\"febio\">" << std::endl
@@ -316,7 +351,6 @@ loadFebioOutputFile()
         geometryValues.push_back(Vec3{x,y,z});
 
         node_no_t nodeNo = id - 1;
-        this->data_.geometry()->setValue(nodeNo, Vec3{x,y,z});
         this->data_.displacements()->setValue(nodeNo, Vec3{ux,uy,uz});
         this->data_.reactionForce()->setValue(nodeNo, Vec3{Rx,Ry,Rz});
       }
@@ -357,67 +391,6 @@ loadFebioOutputFile()
       }
     }
   }
-
-  // given nodal values seem to be only set on the corner nodes, interpolate other values
-  // loop over elements
-  for (element_no_t elementNoLocal = 0; elementNoLocal < data_.functionSpace()->nElementsLocal(); elementNoLocal++)
-  {
-    std::array<dof_no_t,FunctionSpace::nNodesPerElement()> elementNodeNos = data_.functionSpace()->getElementNodeNos(elementNoLocal);
-
-    // get corner values of element, i.e. values of the linear element's nodes
-    std::array<Vec3,8> uCornerValues;
-    std::array<int,8> indices {elementNodeNos[0], elementNodeNos[2], elementNodeNos[6], elementNodeNos[8], elementNodeNos[18], elementNodeNos[20], elementNodeNos[24],  elementNodeNos[26]};
-
-    this->data_.displacements()->getValues<8>(indices, uCornerValues);
-
-    // set interpolated nodal values of quadratic element
-    this->data_.displacements()->setValue(elementNodeNos[1], 0.5*(uCornerValues[0] + uCornerValues[1]));
-    this->data_.displacements()->setValue(elementNodeNos[3], 0.5*(uCornerValues[0] + uCornerValues[2]));
-    this->data_.displacements()->setValue(elementNodeNos[4], 0.25*(uCornerValues[0] + uCornerValues[1] + uCornerValues[2] + uCornerValues[3]));
-    this->data_.displacements()->setValue(elementNodeNos[5], 0.5*(uCornerValues[1] + uCornerValues[3]));
-    this->data_.displacements()->setValue(elementNodeNos[7], 0.5*(uCornerValues[2] + uCornerValues[3]));
-    this->data_.displacements()->setValue(elementNodeNos[9], 0.5*(uCornerValues[0] + uCornerValues[4]));
-    this->data_.displacements()->setValue(elementNodeNos[10], 0.25*(uCornerValues[0] + uCornerValues[1] + uCornerValues[4] + uCornerValues[5]));
-    this->data_.displacements()->setValue(elementNodeNos[11], 0.5*(uCornerValues[1] + uCornerValues[5]));
-    this->data_.displacements()->setValue(elementNodeNos[12], 0.25*(uCornerValues[0] + uCornerValues[2] + uCornerValues[4] + uCornerValues[6]));
-    this->data_.displacements()->setValue(elementNodeNos[13], 0.125*(uCornerValues[0] + uCornerValues[1] + uCornerValues[2] + uCornerValues[3] + uCornerValues[4] + uCornerValues[5] + uCornerValues[6] + uCornerValues[7]));
-    this->data_.displacements()->setValue(elementNodeNos[14], 0.25*(uCornerValues[1] + uCornerValues[3] + uCornerValues[5] + uCornerValues[7]));
-    this->data_.displacements()->setValue(elementNodeNos[15], 0.5*(uCornerValues[2] + uCornerValues[6]));
-    this->data_.displacements()->setValue(elementNodeNos[16], 0.25*(uCornerValues[2] + uCornerValues[3] + uCornerValues[6] + uCornerValues[7]));
-    this->data_.displacements()->setValue(elementNodeNos[17], 0.5*(uCornerValues[3] + uCornerValues[7]));
-    this->data_.displacements()->setValue(elementNodeNos[19], 0.5*(uCornerValues[4] + uCornerValues[5]));
-    this->data_.displacements()->setValue(elementNodeNos[21], 0.5*(uCornerValues[4] + uCornerValues[6]));
-    this->data_.displacements()->setValue(elementNodeNos[22], 0.25*(uCornerValues[4] + uCornerValues[5] + uCornerValues[6] + uCornerValues[7]));
-    this->data_.displacements()->setValue(elementNodeNos[23], 0.5*(uCornerValues[5] + uCornerValues[7]));
-    this->data_.displacements()->setValue(elementNodeNos[25], 0.5*(uCornerValues[6] + uCornerValues[7]));
-
-    // same for reaction force
-    // get corner values of element, i.e. values of the linear element's nodes
-    std::array<Vec3,8> rCornerValues;
-    this->data_.reactionForce()->getValues<8>(indices, rCornerValues);
-
-    // set interpolated nodal values of quadratic element
-    this->data_.reactionForce()->setValue(elementNodeNos[1], 0.5*(rCornerValues[0] + rCornerValues[1]));
-    this->data_.reactionForce()->setValue(elementNodeNos[3], 0.5*(rCornerValues[0] + rCornerValues[2]));
-    this->data_.reactionForce()->setValue(elementNodeNos[4], 0.25*(rCornerValues[0] + rCornerValues[1] + rCornerValues[2] + rCornerValues[3]));
-    this->data_.reactionForce()->setValue(elementNodeNos[5], 0.5*(rCornerValues[1] + rCornerValues[3]));
-    this->data_.reactionForce()->setValue(elementNodeNos[7], 0.5*(rCornerValues[2] + rCornerValues[3]));
-    this->data_.reactionForce()->setValue(elementNodeNos[9], 0.5*(rCornerValues[0] + rCornerValues[4]));
-    this->data_.reactionForce()->setValue(elementNodeNos[10], 0.25*(rCornerValues[0] + rCornerValues[1] + rCornerValues[4] + rCornerValues[5]));
-    this->data_.reactionForce()->setValue(elementNodeNos[11], 0.5*(rCornerValues[1] + rCornerValues[5]));
-    this->data_.reactionForce()->setValue(elementNodeNos[12], 0.25*(rCornerValues[0] + rCornerValues[2] + rCornerValues[4] + rCornerValues[6]));
-    this->data_.reactionForce()->setValue(elementNodeNos[13], 0.125*(rCornerValues[0] + rCornerValues[1] + rCornerValues[2] + rCornerValues[3] + rCornerValues[4] + rCornerValues[5] + rCornerValues[6] + rCornerValues[7]));
-    this->data_.reactionForce()->setValue(elementNodeNos[14], 0.25*(rCornerValues[1] + rCornerValues[3] + rCornerValues[5] + rCornerValues[7]));
-    this->data_.reactionForce()->setValue(elementNodeNos[15], 0.5*(rCornerValues[2] + rCornerValues[6]));
-    this->data_.reactionForce()->setValue(elementNodeNos[16], 0.25*(rCornerValues[2] + rCornerValues[3] + rCornerValues[6] + rCornerValues[7]));
-    this->data_.reactionForce()->setValue(elementNodeNos[17], 0.5*(rCornerValues[3] + rCornerValues[7]));
-    this->data_.reactionForce()->setValue(elementNodeNos[19], 0.5*(rCornerValues[4] + rCornerValues[5]));
-    this->data_.reactionForce()->setValue(elementNodeNos[21], 0.5*(rCornerValues[4] + rCornerValues[6]));
-    this->data_.reactionForce()->setValue(elementNodeNos[22], 0.25*(rCornerValues[4] + rCornerValues[5] + rCornerValues[6] + rCornerValues[7]));
-    this->data_.reactionForce()->setValue(elementNodeNos[23], 0.5*(rCornerValues[5] + rCornerValues[7]));
-    this->data_.reactionForce()->setValue(elementNodeNos[25], 0.5*(rCornerValues[6] + rCornerValues[7]));
-  }
-
 
   this->data_.cauchyStress()->zeroEntries();
   this->data_.greenLagrangeStrain()->zeroEntries();

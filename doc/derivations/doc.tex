@@ -2832,12 +2832,12 @@ In summary we get
 \end{equation*}
 
 leading to the matrix formulation of the Newton iteration:
-\begin{equation*}
+\begin{equation}\label{eq:static_newton_iteration}
   \begin{array}{lll}
     \matt{\bfk_{δ\bfu,Δ\bfu} & \bfk_{δp,Δ\bfu}^\top \\[2mm]
     \bfk_{δp,Δ\bfu} & \bfzero} \, \matt{Δ\hat{\bfu} \\[2mm] Δ\hat{p}} =  \matt{\bfR_{δ\bfu} \\[2mm] \bfR_{δp}}.
   \end{array}
-\end{equation*}
+\end{equation}
 The stiffness matrix is symmetric.
 
 Given the number of spatial dimensions $a,b=1,\dots,D=3$, the blocks of the Jacobian or tangent stiffness matrix are given by:
@@ -2855,7 +2855,7 @@ The blocks of the residual on the righ-hand side (quasi-static case and neglecti
   \begin{array}{lll}
     -\bfR_{δ\bfu, (L,a)} = D_{δ\bfu, (L,a)}\Pi_L(\bfu,p) = δW_{\text{int}, (L,a)} - δW_{\text{ext}, (L,a)} = -\big(\bfR_{δ\bfu, (L,a)}^{\text{int}} + \bfR^{\text{ext}}_{δ\bfu, (L,a)}\big)  \mbox{ with}\\[4mm]
 \quad    -\bfR_{δ\bfu, (L,a)}^{\text{int}} = \ds\int_{\Omega}\dfrac12  S_{AB}\, \left(F_{aB}\phi_{(a),A}^L + F_{aA}\phi_{(a),B}^L\,\right) \,\d V \\[4mm]
-\quad    -\bfR_{δ\bfu, (L,a)}^{\text{ext}} = \ds\int_{\Omega} \big(B_a^M\,\phi_{(a)}^M - \rho_0\,\hat{\ddot{u}}_a^M\,\phi_{(a)}^M\big) \phi_{(a)}^L \,\d V + \ds\int_{∂\Omega}  \bar{T}_a^M \,\phi_{(a)}^M\, \phi_{(a)}^L\,\d S \\[4mm]
+\quad    -\bfR_{δ\bfu, (L,a)}^{\text{ext}} = -\ds\int_{\Omega} \big(B_a^M\,\phi_{(a)}^M - \rho_0\,\hat{\ddot{u}}_a^M\,\phi_{(a)}^M\big) \phi_{(a)}^L \,\d V - \ds\int_{∂\Omega}  \bar{T}_a^M \,\phi_{(a)}^M\, \phi_{(a)}^L\,\d S \\[4mm]
     d \mbox{ blocks of subvectors with length } u_{\text{dofs}}\\[4mm]
     -\bfR_{δp,L} = D_{δp, L}\Pi_L(\bfu,p) = \ds\int_\Omega (J-1)\,\psi^L\,\d V \\[4mm]
     1 \mbox{ subvector of length } p_{\text{dofs}}
@@ -2924,6 +2924,8 @@ The following is a summary of the steps to compute the 2nd Piola-Kirchhoff stres
  
 \subsection{Dynamic elasticity}
 
+\subsubsection{Dynamic linear elasticity}
+
 For the linear case we have the governing equation,
 \begin{equation*}
   \begin{array}{lll}
@@ -2966,16 +2968,101 @@ Computing $\bfa(\bfu,\bfv)$ is done by
     \bfa(\bfu,\bfv) = \bfM^{-1}(\bff - \bfK\,\bfu - \bfC\,\bfv).
   \end{array}
 \end{equation*}
-After each update of $\bfu$, we enforce incompressibility by solving
+
+\subsubsection{Dynamic nonlinear elasticity}
+Governing equations
+\begin{equation}\label{eq:dynamic_nonlinear_gov}
+  \begin{array}{lll}
+    \left\{
+    \begin{array}{lll}
+      δW_\text{int}({\bfu},{p}) - δW_\text{ext}(\dot{\bfv}) = 0 \qquad &\forall\,δ\bfu,\\[4mm]
+      \dot{\bfu} = \bfv,\\[4mm]
+      D_{δp}\Pi_L(\bfu) = 0 \qquad &\forall\,δp
+    \end{array}\right.    
+  \end{array}
+\end{equation}
+where
+\begin{equation}\label{eq:first_ders}
+  \begin{array}{lll}
+    δW_\text{int}({\bfu},{p})  = \ds\int_{\Omega}\dfrac12  S_{AB}(\bfu,p)\, \left(F_{aB}\, \phi_{(a),A}^M + F_{aA}\, \phi_{(a),B}^M\right)δ\hat{u}_{a}^M \,\d V\\[4mm]
+    δW_\text{ext}  = \ds\int_{\Omega} (B_{(a)}^L - \rho_0\,\dot{v}_{(a)}^L)\,\phi_{(a)}^L\, \phi_{(a)}^M\,δ\hat{u}^M_a \,\d V +\ds\int_{∂\Omega}  \bar{T}^L_{(a)}\,\phi_{(a)}^L\, \phi_{(a)}^M\,δ\hat{u}^M_a\,\d S \\[4mm]
+    D_{δp}\Pi_L(\bfu) = \ds\int_\Omega \big(J(\bfu) - 1)\,δp\,\d V 
+  \end{array}
+\end{equation}
+We discretize it in time
 \begin{equation*}
   \begin{array}{lll}
-    \bfK\,\bfu^{(n+1,\text{new})} &= \bff - \bfC\,\bfv^{(n+1)} - \bfM\,\bfa(\bfu^{(n+1)},\bfv^{(n+1)},t^{(n+1)})\\[4mm]
-     &= \bfK\,\bfu^{(n+1)}
+    \dot{\bfu}: \qquad &\dfrac{1}{dt}(\bfu^{(n+1)} - \bfu^{(n)}) = \theta \dot{\bfu}^{(n+1)} + (1-\theta) \dot{\bfu}^{(n)},\\[4mm]
+    \dot{\bfv}: \qquad &\dfrac{1}{dt}(\bfv^{(n+1)} - \bfv^{(n)}) = \theta \dot{\bfv}^{(n+1)} + (1-\theta) \dot{\bfv}^{(n)},\\[4mm]
   \end{array}
 \end{equation*}
-Note that in the program, the vector used for $\bfu$ contains the values of displacements and pressure.
+For Crank-Nicolson method, $\theta = \frac12$, for implicit Euler, $\theta = 1$. Plugging this into \eqref{eq:dynamic_nonlinear_gov} yields the following three equations. 
+Given values for $\bfu^{(n)}, \bfv^{(n)}, p^{(n)}$, solve the following to get $\bfu^{(n+1)}, \bfv^{(n+1)}, p^{(n+1)}$:
+\begin{equation*}
+  \begin{array}{lll}
+    δW_\text{int}(\bfu,{p})|_{
+      \substack{
+        \bfu=\theta \bfu^{(n+1)} + (1-\theta)\bfu^{(n)},\\  
+        p=\theta p^{(n+1)} + (1-\theta)p^{(n)} }} - δW_\text{ext,dead} + \ds\int_{\Omega} \rho_0\,\dfrac{v^{(n+1),L}_{(a)} - v^{(n),L}_{(a)}}{dt}\,\phi_{(a)}^L\, \phi_{(a)}^M\,δ\hat{u}^M_a \,\d V = 0 \qquad &\forall\,δ\bfu,\\[8mm]
+    \dfrac{1}{dt}(\bfu^{(n+1)} - \bfu^{(n)}) - \theta \bfv^{(n+1)} - (1-\theta) \bfv^{(n)} = 0.\\[4mm]
+    D_{δp}\Pi_L(\bfu^{(n+1)}) = 0 \qquad &\forall\,δp,\\[4mm]    
+  \end{array}
+\end{equation*}
+where
+\begin{equation}\label{eq:first_ders}
+  \begin{array}{lll}
+    δW_\text{int}({\bfu},{p})  = \ds\int_{\Omega}\dfrac12  S_{AB}(\bfu,p)\, \left(F_{aB}\, \phi_{(a),A}^M + F_{aA}\, \phi_{(a),B}^M\right)δ\hat{u}_{a}^M \,\d V\\[4mm]
+    δW_\text{ext,dead}  = \ds\int_{\Omega} B_{(a)}^M\,\phi_{(a)}^M\, \phi_{(a)}^M\,δ\hat{u}^M_a \,\d V +\ds\int_{∂\Omega}  \bar{T}^L_{(a)}\,\phi_{(a)}^L\, \phi_{(a)}^M\,δ\hat{u}^M_a\,\d S \\[4mm]
+    D_{δp}\Pi_L(\bfu) = \ds\int_\Omega \big(J(\bfu) - 1)\,δp\,\d V 
+  \end{array}
+\end{equation}
+This is a vectorial function, $F(\hat{\bfu}^{(n+1)},\hat{\bfv}^{(n+1)},\hat{\p}^{(n+1)})=-R=0$ that can be solved by a Newton scheme.
 
-The problem is this algorithm does not work, because the incompressibility is not enforced correctly on both $u$ and $v$.
+The linear system for each Newton iteration takes the form
+\begin{equation*}
+  \begin{array}{llll}
+    \matt{
+      \bfk_{δ\bfu,Δ\bfu} & \bfl_{δ\bfu,Δ\bfv} & \bfk_{δp,Δ\bfu}^\top \\[2mm]
+      \bfl_{δ\bfv,Δ\bfu} & \bfl_{δ\bfv,Δ\bfv} & \bfzero \\[2mm]
+      \bfk_{δp,Δ\bfu} & \bfzero & \bfzero
+    } \, 
+    \matt{Δ\hat{\bfu} \\[2mm] Δ\hat{\bfv} \\[2mm] Δ\hat{p}} =  \matt{\bfR_{δ\bfu} \\[2mm] \bfR_{δ\bfv} \\[2mm] \bfR_{δp}}.
+  \end{array}
+\end{equation*}
+with
+\begin{equation*}
+  \begin{array}{lll}
+    -\bfR_{δ\bfu, (L,a)} = δW_{\text{int}, (L,a)} - δW_{\text{ext}, (L,a)}
+      = -\big(\bfR_{δ\bfu, (L,a)}^{\text{int}} + \bfR^{\text{ext,old}}_{δ\bfu, (L,a)} + \bfR^{\text{ext,new}}_{δ\bfu, (L,a)} + \bfR^{\text{ext,dead}}_{δ\bfu, (L,a)}\big)  \mbox{ with}\\[4mm]
+\quad    -\bfR_{δ\bfu, (L,a)}^{\text{int}} = \ds\int_{\Omega}\dfrac12  S_{AB}(\bfu^{(n+1/2)}(\bfX),p^{(n+1/2)}(\bfX))    \, \left(F_{aB}\phi_{(a),A}^L + F_{aA}\phi_{(a),B}^L\,\right) \,\d V \\[4mm]
+                      \hspace{3cm} \text{with } \bfu^{(n+1/2)}(\bfX) = \theta \bfu^{(n+1)}(\bfX) + (1-\theta)\bfu^{(n)}(\bfX),\\[4mm]
+                      \hspace{4cm}              p^{(n+1/2)}(\bfX)  = \theta p^{(n+1)}(\bfX) + (1-\theta)p^{(n)}(\bfX)\\[4mm]
+                      
+\quad    -\bfR_{δ\bfu, (L,a)}^{\text{ext,old}} =  \dfrac1{dt}\ds\int_{\Omega} \rho_0\,\hat{v}^{(n+1),M}_a\,\phi_{(a)}^M \phi_{(a)}^L \,\d V + \ds\int_{∂\Omega}  \bar{T}_a^M \,\phi_{(a)}^M\, \phi_{(a)}^L\,\d S \\[4mm]
+\quad    -\bfR_{δ\bfu, (L,a)}^{\text{ext,new}} =  -\dfrac1{dt}\ds\int_{\Omega} \rho_0\,\hat{v}^{(n,M)}_a\,\phi_{(a)}^M \phi_{(a)}^L \,\d V + \ds\int_{∂\Omega}  \bar{T}_a^M \,\phi_{(a)}^M\, \phi_{(a)}^L\,\d S \\[4mm]
+\quad    -\bfR_{δ\bfu, (L,a)}^{\text{ext,dead}} = -\ds\int_{\Omega} B_a^M\,\phi_{(a)}^M \phi_{(a)}^L \,\d V - \ds\int_{∂\Omega}  \bar{T}_a^M \,\phi_{(a)}^M\, \phi_{(a)}^L\,\d S \\[4mm]
+    d \mbox{ blocks of subvectors with length } u_{\text{dofs}}\\[4mm]
+    -\bfR_{δ\bfv,(L,a)} = \dfrac1{dt} \hat{u}^{(n+1)}_{(L,a)} - \theta \hat{v}^{(n+1)}_{(L,a)} - \dfrac1{dt} \hat{u}^{(n)}_{(L,a)} + (\theta - 1)\,\hat{v}^{(n)}_{(L,a)} \\[4mm]
+    d \mbox{ blocks of subvectors with length } u_{\text{dofs}}\\[4mm]
+    -\bfR_{δp,L} = \ds\int_\Omega (J(\bfu^{(n+1)}(\bfX)-1)\,\psi^L\,\d V \\[4mm]
+    1 \mbox{ subvector of length } p_{\text{dofs}}\\[4mm]    
+  \end{array}
+\end{equation*}
+
+To reuse the derivation of the static case, we restrict to implicit Euler, $\theta = 1$. Then, $\bfk_{δ\bfu,Δ\bfu}$ and $\bfk_{δp,Δ\bfu}$ are the same as in \eqref{eq:static_newton_iteration}.
+
+\begin{equation*}
+  \begin{array}{lll}
+    \bfl_{δ\bfu,Δ\bfv,(L,a),(M,b)} = \dfrac{\partial}{\partial \hat{v}^{(n+1),M}_{b}}\left(\dfrac1{dt}\ds\int_{\Omega} \rho_0\,\hat{v}^{(n+1),N}_a\,\phi_{(a)}^N \phi_{(a)}^L \,\d V\right)
+    = \dfrac1{dt}\delta_{ab} \ds\int_{\Omega} \rho_0\,\,\phi_{(b)}^M \,\phi_{(a)}^L \,\d V\\[4mm]
+    \bfl_{δ\bfv,Δ\bfu,(L,a),(M,b)} = \dfrac{\partial}{\partial \hat{u}^{(n+1),M}_{b}}(-\bfR_{δ\bfv,(L,a)}) = \dfrac{1}{dt}\delta_{ab}\,\delta^{LM}\\[4mm]
+    \bfl_{δ\bfv,Δ\bfv,(L,a),(M,b)} = \dfrac{\partial}{\partial \hat{v}^{(n+1),M}_{b}}(-\bfR_{δ\bfv,(L,a)}) = -\delta_{ab}\,\delta^{LM}\\[4mm]
+  \end{array}
+\end{equation*}
+
+Note, the matrix is unsymmetric, it would be symmetric if $\bfl_{δ\bfu,Δ\bfv}  = \bfl_{δ\bfv,Δ\bfu}^\top$ which is the case if $\rho_0 = 1$ and $\int_{\Omega} \phi_{b}^M \phi_{a}^L \,\d V = \delta_{ab}\delta^{LM}$, i.e. lumped mass matrix with row-sum.
+
+\newpage
 
 \newpage
 

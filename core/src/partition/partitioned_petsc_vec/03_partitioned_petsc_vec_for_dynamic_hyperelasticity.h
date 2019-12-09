@@ -13,24 +13,18 @@
  *  It is a combined vector of 3 displacements components and 1 pressure component.
  */
 template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType>
-class PartitionedPetscVecForHyperelasticity:
-  public PartitionedPetscVecWithDirichletBc<DisplacementsFunctionSpaceType,4,3>
+class PartitionedPetscVecForDynamicHyperelasticity:
+  public PartitionedPetscVecWithDirichletBc<DisplacementsFunctionSpaceType,7,6>
 {
 public:
  
   //! constructor
-  PartitionedPetscVecForHyperelasticity(
+  PartitionedPetscVecForDynamicHyperelasticity(
     std::shared_ptr<Partition::MeshPartition<DisplacementsFunctionSpaceType>> meshPartitionDisplacements,
     std::shared_ptr<Partition::MeshPartition<PressureFunctionSpaceType>> meshPartitionPressure,
-    std::shared_ptr<SpatialDiscretization::DirichletBoundaryConditions<DisplacementsFunctionSpaceType,3>> dirichletBoundaryConditions,
+    std::shared_ptr<SpatialDiscretization::DirichletBoundaryConditions<DisplacementsFunctionSpaceType,6>> dirichletBoundaryConditions,
     std::string name
   );
-
-  //! write the vector values to a file in natural ordering, such that the output for different numbers of ranks can be compared
-  void dumpGlobalNatural(std::string filename);
-
-  //! the meshPartition of the pressure function space, the other meshPartition, the one of the displacements function space can be obtained by meshPartition()
-  std::shared_ptr<Partition::MeshPartition<PressureFunctionSpaceType>> meshPartitionPressure();
 
   //! get a string representation of the whole vector in global natural ordering
   //! @param horizontal if the string is for console output (less newlines) or for file output
@@ -51,10 +45,10 @@ protected:
   void initializeForPressure();
 
   std::shared_ptr<Partition::MeshPartition<PressureFunctionSpaceType>> meshPartitionPressure_;   ///< the mesh partition for the pressure function space, which has a lower degree of ansatz function than the displacement function space
-  int componentNoPressure_ = 3;     //< which of the component is dedicated for the pressure, this is the last component
+
 };
 
 template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType>
-std::ostream &operator<<(std::ostream &stream, const PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType> &vector);
+std::ostream &operator<<(std::ostream &stream, const PartitionedPetscVecForDynamicHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType> &vector);
 
 #include "partition/partitioned_petsc_vec/02_partitioned_petsc_vec_for_hyperelasticity.tpp"

@@ -4,17 +4,17 @@
 
 //! constructor
 template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType>
-PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>::
-PartitionedPetscVecForHyperelasticity(
+PartitionedPetscVecForDynamicHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>::
+PartitionedPetscVecForDynamicHyperelasticity(
   std::shared_ptr<Partition::MeshPartition<DisplacementsFunctionSpaceType>> meshPartitionDisplacements,
   std::shared_ptr<Partition::MeshPartition<PressureFunctionSpaceType>> meshPartitionPressure,
-  std::shared_ptr<SpatialDiscretization::DirichletBoundaryConditions<DisplacementsFunctionSpaceType,3>> dirichletBoundaryConditions, std::string name) :
-  PartitionedPetscVecWithDirichletBc<DisplacementsFunctionSpaceType,4,3>(meshPartitionDisplacements, dirichletBoundaryConditions, name), meshPartitionPressure_(meshPartitionPressure)
+  std::shared_ptr<SpatialDiscretization::DirichletBoundaryConditions<DisplacementsFunctionSpaceType,6>> dirichletBoundaryConditions, std::string name) :
+  PartitionedPetscVecWithDirichletBc<DisplacementsFunctionSpaceType,7,6>(meshPartitionDisplacements, dirichletBoundaryConditions, name), meshPartitionPressure_(meshPartitionPressure)
 {
-  componentNoPressure_ = 3;
+  componentNoPressure_ = 6;
 
-  // initialize variables for 3 displacement components
-  this->initialize(3, meshPartitionPressure_->nDofsLocalWithoutGhosts());
+  // initialize variables for 3 displacement + 3 velocity components, this means that boundary conditions will have 6 components
+  this->initialize(6, meshPartitionPressure_->nDofsLocalWithoutGhosts());
 
   // initialize last component for pressure
   initializeForPressure();
@@ -29,107 +29,7 @@ PartitionedPetscVecForHyperelasticity(
 }
 
 template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType>
-void PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>::
-initializeForPressure()
-{
-  VLOG(1) << "initializeForPressure, nEntriesGlobal_: " << this->nEntriesGlobal_ << ", nEntriesLocal_: " << this->nEntriesLocal_;
-
-  const int nDofsLocalWithGhosts = meshPartitionPressure_->nDofsLocalWithGhosts();
-  const int nDofsLocalWithoutGhosts = meshPartitionPressure_->nDofsLocalWithoutGhosts();
-
-  VLOG(1) << "initializeForPressure nDofsLocalWithGhosts: " << nDofsLocalWithGhosts << ", nDofsLocalWithoutGhosts: " << nDofsLocalWithoutGhosts;
-
-  // the local without ghosts number of entries in the vector, without the Dirichlet BC dofs
-  this->nNonBcDofsWithoutGhosts_[componentNoPressure_] = nDofsLocalWithoutGhosts;
-
-  // number of ghost values
-  int nGhostsPressure = nDofsLocalWithGhosts - nDofsLocalWithoutGhosts;
-
-  this->nonBcGhostDofNosGlobal_.reserve(this->nonBcGhostDofNosGlobal_.size() + nGhostsPressure);
-
-  // set mapping from component no and local dof no to the global numbering, for non-ghost dofs
-  this->dofNoLocalToDofNoNonBcGlobal_[componentNoPressure_].resize(nDofsLocalWithoutGhosts);
-  std::iota(this->dofNoLocalToDofNoNonBcGlobal_[componentNoPressure_].begin(), this->dofNoLocalToDofNoNonBcGlobal_[componentNoPressure_].end(),
-            this->nonBcDofNoGlobalBegin_+this->nDofsLocal_);
-  this->dofNoLocalToDofNoNonBcGlobal_[componentNoPressure_].reserve(nDofsLocalWithGhosts);
-
-  // add ghost numbers for pressure
-  const std::vector<PetscInt> &ghostDofNosGlobalPetsc = meshPartitionPressure_->ghostDofNosGlobalPetsc();
-
-  int nRanks = this->meshPartitionPressure_->nRanks();
-  std::vector<int> nDisplacementDofs(nRanks);
-
-  // spread the sizes on the processes
-  int nPreviousDisplacementDofs = 0;
-  MPIUtility::handleReturnValue(MPI_Scan(&this->nDofsLocal_, &nPreviousDisplacementDofs, 1, MPI_INT, MPI_SUM, this->meshPartitionPressure_->mpiCommunicator()), "MPI_Scan");
-  MPIUtility::handleReturnValue(MPI_Allgather(&nPreviousDisplacementDofs, 1, MPI_INT, nDisplacementDofs.data(), 1, MPI_INT, this->meshPartitionPressure_->mpiCommunicator()), "MPI_Allgather");
-
-  VLOG(1) << "nPreviousDisplacementDofs: " << nPreviousDisplacementDofs << ", nDisplacementDofs: " << nDisplacementDofs;
-
-  int i = 0;
-  for (int dofNoLocal = nDofsLocalWithoutGhosts; dofNoLocal < nDofsLocalWithGhosts; dofNoLocal++, i++)
-  {
-    node_no_t nodeNoLocal = dofNoLocal / PressureFunctionSpaceType::nDofsPerNode();
-
-    int neighbourRankNo;
-    meshPartitionPressure_->isNonGhost(nodeNoLocal, neighbourRankNo);
-
-    global_no_t nonBcGhostDofNoGlobal = ghostDofNosGlobalPetsc[i] + nDisplacementDofs[neighbourRankNo];
-    this->nonBcGhostDofNosGlobal_.push_back(nonBcGhostDofNoGlobal);
-
-    this->dofNoLocalToDofNoNonBcGlobal_[componentNoPressure_].push_back(nonBcGhostDofNoGlobal);
-
-    VLOG(1) << "dofNoLocal " << dofNoLocal << " is on rank " << neighbourRankNo << ", this rank has previous nDisplacementDofs: "
-      << nDisplacementDofs[neighbourRankNo]
-      << ", ghost dof globalPetsc: " << ghostDofNosGlobalPetsc[i] << ", nonBcGhostDofNoGlobal: " << nonBcGhostDofNoGlobal;
-  }
-
-  // set mapping from component no and local dof no to the local number of the non-bc dof numbering
-  this->dofNoLocalToDofNoNonBcLocal_[componentNoPressure_].resize(nDofsLocalWithGhosts);
-
-  // non-ghost dofs
-  std::iota(this->dofNoLocalToDofNoNonBcLocal_[componentNoPressure_].begin(), this->dofNoLocalToDofNoNonBcLocal_[componentNoPressure_].begin()+nDofsLocalWithoutGhosts,
-            this->nEntriesLocal_-nDofsLocalWithoutGhosts);
-
-  // ghost dofs
-  std::iota(this->dofNoLocalToDofNoNonBcLocal_[componentNoPressure_].begin()+nDofsLocalWithoutGhosts, this->dofNoLocalToDofNoNonBcLocal_[componentNoPressure_].end(),
-            this->nEntriesLocal_+this->nNonBcDofsGhosts_);
-
-  this->nNonBcDofsGhosts_ += nGhostsPressure;
-
-  // there are no boundary conditions for pressure component
-  this->boundaryConditionValues_[componentNoPressure_].resize(nDofsLocalWithGhosts, -1.0);
-  this->isPrescribed_[componentNoPressure_].resize(nDofsLocalWithGhosts, false);
-}
-
-template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType>
-std::shared_ptr<Partition::MeshPartition<PressureFunctionSpaceType>> PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>::
-meshPartitionPressure()
-{
-  return meshPartitionPressure_;
-}
-
-template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType>
-void PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>::
-dumpGlobalNatural(std::string filename)
-{
-  // write file
-  std::ofstream file;
-  std::string vectorName = filename;
-  if (vectorName.find("/") != std::string::npos)
-    vectorName = vectorName.substr(vectorName.rfind("/")+1);
-  filename += std::string(".m");
-  OutputWriter::Generic::openFile(file, filename);
-
-  // write header
-  file << "% " << this->name_ << ", " << this->nEntriesGlobal_ << " entries, " << this->meshPartition_->nRanks() << " MPI ranks" << std::endl;
-  file << getString(false, vectorName);
-  LOG(INFO) << "Vector \"" << filename << "\" written.";
-  file.close();
-}
-
-template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType>
-std::string PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>::
+std::string PartitionedPetscVecForDynamicHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>::
 getString(bool horizontal, std::string vectorName) const
 {
   // do not assemble a horizontal string for console in release mode, because this is only needed for debugging output
@@ -480,7 +380,7 @@ getString(bool horizontal, std::string vectorName) const
 }
 
 template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType>
-IS PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>::
+IS PartitionedPetscVecForDynamicHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>::
 displacementDofsGlobal()
 {
   MPI_Comm mpiCommunicator = this->meshPartition_->mpiCommunicator();
@@ -498,13 +398,13 @@ displacementDofsGlobal()
 }
 
 template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType>
-IS PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>::
+IS PartitionedPetscVecForDynamicHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>::
 pressureDofsGlobal()
 {
   MPI_Comm mpiCommunicator = this->meshPartition_->mpiCommunicator();
 
   // create index sets of rows of displacement dofs
-  int nPressureDofsLocal = this->nNonBcDofsWithoutGhosts_[componentNoPressure_];
+  int nPressureDofsLocal = this->nNonBcDofsWithoutGhosts_[3];
   std::vector<int> indices(nPressureDofsLocal);
   std::iota(indices.begin(), indices.end(), this->nonBcDofNoGlobalBegin_ + nDisplacementDofsWithoutBcLocal());
 
@@ -516,14 +416,14 @@ pressureDofsGlobal()
 }
 
 template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType>
-dof_no_t PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>::
+dof_no_t PartitionedPetscVecForDynamicHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>::
 nDisplacementDofsWithoutBcLocal()
 {
   return this->nNonBcDofsWithoutGhosts_[0] + this->nNonBcDofsWithoutGhosts_[1] + this->nNonBcDofsWithoutGhosts_[2];
 }
 
 template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType>
-std::ostream &operator<<(std::ostream &stream, const PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType> &vector)
+std::ostream &operator<<(std::ostream &stream, const PartitionedPetscVecForDynamicHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType> &vector)
 {
   vector.output(stream);
   stream << vector.getString();

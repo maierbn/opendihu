@@ -130,6 +130,15 @@ getElementNoGlobalNatural(element_no_t elementNoLocal) const
   return (global_no_t)(elementNoLocal);
 }
   
+//! get the local element no. from the global no., set isOnLocalDomain to true if the node with global coordinates is in the local domain
+template<int D, typename BasisFunctionType>
+element_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+getElementNoLocal(global_no_t elementNoGlobalPetsc, bool &isOnLocalDomain) const
+{
+  isOnLocalDomain = true;
+  return elementNoGlobalPetsc;
+}
+
 template<int D, typename BasisFunctionType>
 template <typename T>
 void MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::

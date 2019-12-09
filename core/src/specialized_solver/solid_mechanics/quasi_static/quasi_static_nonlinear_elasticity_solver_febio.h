@@ -59,6 +59,12 @@ protected:
   //! run the febio program on the generated input file
   void runFebio();
 
+  //! communicate elemtal values such as global node nos and activation values to rank 0
+  void communicateElementValues(std::vector<double> &activationValuesGlobal, std::vector<int> &nodeNosGlobal);
+
+  //! communicate all nodal values to rank 0 to be written to the febio input file
+  void communicateNodeValues(std::vector<double> &nodePositionValuesGlobal);
+
   DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
 
   OutputWriter::Manager outputWriterManager_; ///< manager object holding all output writer

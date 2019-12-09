@@ -156,6 +156,9 @@ public:
   //! get the local element no. from coordinates
   element_no_t getElementNoLocal(std::array<int,MeshType::dim()> elementCoordinates) const;
 
+  //! get the local element no. from the global no., set isOnLocalDomain to true if the node with global coordinates is in the local domain
+  element_no_t getElementNoLocal(global_no_t elementNoGlobalPetsc, bool &isOnLocalDomain) const;
+
   //! get the local node no for a global petsc node no, does not work for ghost nodes
   node_no_t getNodeNoLocal(global_no_t nodeNoGlobalPetsc) const;
 
@@ -342,6 +345,9 @@ public:
 
   //! get the local dof no for a global petsc dof no, does not work for ghost nodes
   dof_no_t getDofNoLocal(global_no_t dofNoGlobalPetsc) const;
+
+  //! get the local element no from the global element no, isOnLocalDomain is true
+  element_no_t getElementNoLocal(global_no_t elementNoGlobalPetsc, bool &isOnLocalDomain) const;
 
   //! this does nothing for unstructured meshes, only for structured meshes
   void initializeDofNosLocalNaturalOrdering(std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>> functionSpace){};

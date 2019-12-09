@@ -47,8 +47,9 @@ stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in f
 dt_0D = 1e-3                        # [ms] timestep width of ODEs
 dt_1D = 1e-3                        # [ms] timestep width of diffusion
 dt_splitting = dt_1D                # [ms] overall timestep width of strang splitting
-dt_3D = 1e-2                        # [ms] timestep width of elasticity problem
+dt_3D = 1e-3                        # [ms] timestep width of elasticity problem
 output_timestep = 1e-1              # [ms] timestep for output files
+output_timestep=1e-3
 activation_start_time = 0           # [ms] time when to start checking for stimulation
 
 # other options
@@ -66,6 +67,7 @@ n_points_whole_fiber = 1480
     
 # input files
 fiber_file              = "../../input/13x13fibers.bin"
+#fiber_file              = "../../input/7x7fibers.bin"
 firing_times_file       = "../../input/MU_firing_times_always.txt"
 fiber_distribution_file = "../../input/MU_fibre_distribution_3780.txt"
 cellml_file             = "../../input/new_slow_TK_2014_12_08.c"

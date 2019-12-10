@@ -38,7 +38,10 @@ createPetscObjects()
 
 
   // copy initial geometry to referenceGeometry
-  referenceGeometry_ = std::make_shared<FieldVariableTypeVector>(this->functionSpace_->geometryField());
+  referenceGeometry_ = std::make_shared<FieldVariableTypeVector>(this->functionSpace_->geometryField(), "referenceGeometry");
+
+  LOG(DEBUG) << "pointer referenceGeometry: " << referenceGeometry_->partitionedPetscVec();
+  LOG(DEBUG) << "pointer geometryField: " << this->functionSpace_->geometryField().partitionedPetscVec();
 }
 
 std::shared_ptr<typename QuasiStaticNonlinearElasticityFebio::FieldVariableType>

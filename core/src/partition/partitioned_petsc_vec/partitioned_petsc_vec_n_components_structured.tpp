@@ -25,6 +25,8 @@ PartitionedPetscVecNComponentsStructured(PartitionedPetscVec<FunctionSpace::Func
 
   LOG(DEBUG) << "\"" << this->name_ << "\" contruct empty vector from rhs \"" << rhs.name() << "\", representation: "
     << Partition::valuesRepresentationString[rhs.currentRepresentation()];
+
+  setValues(rhs);
 }
   
 /*

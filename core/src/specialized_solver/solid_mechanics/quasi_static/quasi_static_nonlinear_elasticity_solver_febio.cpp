@@ -24,6 +24,10 @@ QuasiStaticNonlinearElasticitySolverFebio(DihuContext context) :
     this->durationLogKey_ = specificSettings_.getOptionString("durationLogKey", "");
   }
 
+  // load settings
+  this->activationFactor_ = this->specificSettings_.getOptionDouble("activationFactor", 1e-5, PythonUtility::NonNegative);
+  this->preLoadFactor_ = this->specificSettings_.getOptionDouble("preLoadFactor", 100, PythonUtility::NonNegative);
+
   // initialize output writers
   this->outputWriterManager_.initialize(this->context_, this->specificSettings_);
 
@@ -268,11 +272,11 @@ createFebioInputFile()
     fileContents << "\t<LoadData>" << std::endl
       << "\t\t<loadcurve id=\"1\"> <!-- for activation -->" << std::endl
       << "\t\t\t<loadpoint>0,0</loadpoint>" << std::endl
-      << "\t\t\t<loadpoint>1,1e-5</loadpoint>" << std::endl
+      << "\t\t\t<loadpoint>1," << activationFactor_ << "</loadpoint>" << std::endl
       << "\t\t</loadcurve>" << std::endl
       << "\t\t<loadcurve id=\"2\"> <!-- for external load that stretches the muscle -->" << std::endl
       << "\t\t\t<loadpoint>0,0</loadpoint>" << std::endl
-      << "\t\t\t<loadpoint>1,100</loadpoint>" << std::endl
+      << "\t\t\t<loadpoint>1," << preLoadFactor_ << "</loadpoint>" << std::endl
       << "\t\t</loadcurve>" << std::endl
       << "\t</LoadData>" << std::endl
       << "\t<Output>" << std::endl
@@ -529,6 +533,9 @@ loadFebioOutputFile()
 
   // update function space
   this->data_.functionSpace()->geometryField().setValuesWithoutGhosts(geometryValues);
+
+  LOG(DEBUG) << "geometryField pointer: " << this->data_.functionSpace()->geometryField().partitionedPetscVec();
+  LOG(DEBUG) << "referenceGeometry pointer: " << this->data_.referenceGeometry()->partitionedPetscVec();
 }
 
 void QuasiStaticNonlinearElasticitySolverFebio::
@@ -720,6 +727,9 @@ initialize()
   // store mesh in data
   data_.setFunctionSpace(functionSpace);
   data_.initialize();
+
+  // write initial geometry
+  this->outputWriterManager_.writeOutput(this->data_, 0, 0);
 
   LOG(DEBUG) << "initialization done";
   this->initialized_ = true;

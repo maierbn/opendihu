@@ -73,6 +73,9 @@ protected:
   std::string durationLogKey_;   ///< key with with the duration of the computation is written to the performance measurement log
 
   PythonConfig specificSettings_;    ///< python object containing the value of the python config dict with corresponding key
+  double preLoadFactor_;            ///< factor of force that is applied in axial direction of the muscle
+  double activationFactor_;         ///< factor with which to multiply activation
+
   double endTime_;     ///< end time of current time step
   bool initialized_;   ///< if initialize() was already called
 };

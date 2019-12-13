@@ -42,14 +42,13 @@ Cm = 0.58                           # [uF/cm^2] membrane capacitance, (1 = fast 
 
 # timing parameters
 # -----------------
-end_time = 10.0                     # [ms] end time of the simulation
+end_time = 10000.0                     # [ms] end time of the simulation
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
 dt_0D = 1e-3                        # [ms] timestep width of ODEs
 dt_1D = 1e-3                        # [ms] timestep width of diffusion
 dt_splitting = dt_1D                # [ms] overall timestep width of strang splitting
-dt_3D = 1e-3                        # [ms] timestep width of elasticity problem
+dt_3D = 1e-1                        # [ms] timestep width of elasticity problem
 output_timestep = 1e-1              # [ms] timestep for output files
-output_timestep=1e-3
 activation_start_time = 0           # [ms] time when to start checking for stimulation
 
 # other options
@@ -57,9 +56,9 @@ paraview_output = True
 linear_elasticity = True
 generate_quadratic_3d_mesh = False
 
-sampling_stride_x = 7
-sampling_stride_y = 7
-sampling_stride_z = 296
+sampling_stride_x = 3
+sampling_stride_y = 3
+sampling_stride_z = 80
 
 #n_fibers_x = 1
 #n_fibers_y = 1
@@ -67,7 +66,6 @@ n_points_whole_fiber = 1480
     
 # input files
 fiber_file              = "../../input/13x13fibers.bin"
-#fiber_file              = "../../input/7x7fibers.bin"
 firing_times_file       = "../../input/MU_firing_times_always.txt"
 fiber_distribution_file = "../../input/MU_fibre_distribution_3780.txt"
 cellml_file             = "../../input/new_slow_TK_2014_12_08.c"

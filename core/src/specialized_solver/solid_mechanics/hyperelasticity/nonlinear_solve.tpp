@@ -10,8 +10,8 @@
 namespace SpatialDiscretization
 {
 
-template<typename Term>
-void HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+void HyperelasticitySolver<Term,nDisplacementComponents>::
 nonlinearSolve()
 {
   LOG(TRACE) << "nonlinear solve";
@@ -58,8 +58,8 @@ nonlinearSolve()
 
 }
 
-template<typename Term>
-void HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+void HyperelasticitySolver<Term,nDisplacementComponents>::
 postprocessSolution()
 {
   // close log file
@@ -84,8 +84,8 @@ postprocessSolution()
 #endif
 }
 
-template<typename Term>
-void HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+void HyperelasticitySolver<Term,nDisplacementComponents>::
 monitorSolvingIteration(SNES snes, PetscInt its, PetscReal norm)
 {
   //T* object = static_cast<T*>(mctx);
@@ -117,8 +117,8 @@ monitorSolvingIteration(SNES snes, PetscInt its, PetscReal norm)
   }
 }
 
-template<typename Term>
-void HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+void HyperelasticitySolver<Term,nDisplacementComponents>::
 debug()
 {
 
@@ -249,8 +249,8 @@ debug()
   LOG(FATAL) << "end";
 }
 
-template<typename Term>
-void HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+void HyperelasticitySolver<Term,nDisplacementComponents>::
 initializeSolutionVariable()
 {
   // set variable to all zero and dirichlet boundary condition value
@@ -261,8 +261,8 @@ initializeSolutionVariable()
   LOG(DEBUG) << "after initialization: " << combinedVecSolution_->getString();
 }
 
-template<typename Term>
-void HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+void HyperelasticitySolver<Term,nDisplacementComponents>::
 initializePetscCallbackFunctions()
 {
   assert(nonlinearSolver_);
@@ -340,8 +340,8 @@ initializePetscCallbackFunctions()
 
 }
 
-template<typename Term>
-void HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+void HyperelasticitySolver<Term,nDisplacementComponents>::
 evaluateNonlinearFunction(Vec x, Vec f)
 {
   //VLOG(1) << "evaluateNonlinearFunction at " << getString(x);
@@ -375,8 +375,8 @@ evaluateNonlinearFunction(Vec x, Vec f)
   //VLOG(1) << "f: " << getString(f);
 }
 
-template<typename Term>
-void HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+void HyperelasticitySolver<Term,nDisplacementComponents>::
 evaluateAnalyticJacobian(Vec x, Mat jac)
 {
   setDisplacementsAndPressureFromCombinedVec(x);
@@ -387,8 +387,8 @@ evaluateAnalyticJacobian(Vec x, Mat jac)
   //MatAssemblyEnd(jac, MAT_FINAL_ASSEMBLY);
 }
 
-template<typename Term>
-void HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+void HyperelasticitySolver<Term,nDisplacementComponents>::
 setDisplacementsAndPressureFromCombinedVec(Vec x, std::shared_ptr<DisplacementsFieldVariableType> u, std::shared_ptr<PressureFieldVariableType> p)
 {
   // copy entries of combined vector x to this->data_.displacements() and this->data_.pressure()
@@ -458,8 +458,8 @@ setDisplacementsAndPressureFromCombinedVec(Vec x, std::shared_ptr<DisplacementsF
   //VLOG(1) << *p;
 }
 
-template<typename Term>
-void HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+void HyperelasticitySolver<Term,nDisplacementComponents>::
 dumpJacobianMatrix(Mat jac)
 {
   if (!dumpDenseMatlabVariables_)
@@ -502,8 +502,8 @@ dumpJacobianMatrix(Mat jac)
         ierr = MatCopy(solverMatrixAdditionalNumericJacobian_, difference, SAME_NONZERO_PATTERN); CHKERRV(ierr);
         MatAXPY(difference, -1, solverMatrixJacobian_, DIFFERENT_NONZERO_PATTERN);
 
-        Mat analyticJacobianSubmatrixU = combinedMatrixJacobian_->getSubmatrixUU();
-        Mat numericJacobianSubmatrixU = combinedMatrixAdditionalNumericJacobian_->getSubmatrixUU();
+        Mat analyticJacobianSubmatrixU = combinedMatrixJacobian_->getSubmatrix(0,0);
+        Mat numericJacobianSubmatrixU = combinedMatrixAdditionalNumericJacobian_->getSubmatrix(0,0);
 
         Mat differenceSubmatrixU;
         ierr = MatDuplicate(analyticJacobianSubmatrixU, MAT_COPY_VALUES, &differenceSubmatrixU); CHKERRV(ierr);
@@ -544,8 +544,8 @@ dumpJacobianMatrix(Mat jac)
   }
 }
 
-template<typename Term>
-void HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+void HyperelasticitySolver<Term,nDisplacementComponents>::
 checkSolution(Vec x)
 {
   // check if function is zero
@@ -592,8 +592,8 @@ checkSolution(Vec x)
   }
 }
 
-template<typename Term>
-std::string HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+std::string HyperelasticitySolver<Term,nDisplacementComponents>::
 getString(Vec x)
 {
   if (x == solverVariableSolution_)

@@ -7,8 +7,8 @@
 namespace SpatialDiscretization
 {
 
-template<typename Term>
-void HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+void HyperelasticitySolver<Term,nDisplacementComponents>::
 materialComputeInternalVirtualWork()
 {
   // compute Wint in solverVariableResidual_
@@ -279,7 +279,8 @@ materialComputeInternalVirtualWork()
       dof_no_t dofNoLocal = pressureDofNosLocal[aDof];
 
       // set value of result vector
-      combinedVecResidual_->setValue(3, dofNoLocal, integratedValue, ADD_VALUES);
+      const int pressureDofNo = nDisplacementComponents;  // 3 or 6, depending if static or dynamic problem
+      combinedVecResidual_->setValue(pressureDofNo, dofNoLocal, integratedValue, ADD_VALUES);
       VLOG(1) << "p: set value " << integratedValue << " at dofNoLocal: " << dofNoLocal;
     }
   }  // elementNoLocal
@@ -290,8 +291,8 @@ materialComputeInternalVirtualWork()
   // now, solverVariableResidual_, which is the globalValues() of combinedVecResidual_, contains δW_int
 }
 
-template<typename Term>
-void HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+void HyperelasticitySolver<Term,nDisplacementComponents>::
 materialComputeResidual()
 {
   // compute Wint - Wext in solverVariableResidual_
@@ -317,19 +318,39 @@ materialComputeResidual()
     LOG(DEBUG) << "δW_ext: " << getString(externalVirtualWork_);
   }
 
-  // compute F = δW_int - δW_ext,
-  // δW_ext = int_∂Ω T_a phi_L dS was precomputed in initialize, in variable externalVirtualWork_
-  PetscErrorCode ierr;
-  ierr = VecAXPY(solverVariableResidual_, -1, externalVirtualWork_); CHKERRV(ierr);
+  // for static case: F = δW_int - δW_ext
 
-  if(outputValues)
-    LOG(DEBUG) << "total:   " << getString(solverVariableResidual_);
+  if (nDisplacementComponents == 3)
+  {
+    // compute F = δW_int - δW_ext,
+    // δW_ext = int_∂Ω T_a phi_L dS was precomputed in initialize, in variable externalVirtualWork_
+    PetscErrorCode ierr;
+    ierr = VecAXPY(solverVariableResidual_, -1, externalVirtualWork_); CHKERRV(ierr);
 
-  static int evaluationNo = 0;  // counter how often this function was called
+    if(outputValues)
+      LOG(DEBUG) << "total:   " << getString(solverVariableResidual_);
+
+  }
+  else if (nDisplacementComponents == 6)
+  {
+    // for dynamic case, add acceleration term to residual
+
+    // compute F = δW_int - δW_ext,dead + accelerationTerm
+    // δW_ext = int_∂Ω T_a phi_L dS was precomputed in initialize, in variable externalVirtualWork_
+    // also add the incompressibility equation in the pressure slot
+    PetscErrorCode ierr;
+    ierr = VecAXPY(solverVariableResidual_, -1, externalVirtualWorkDead_); CHKERRV(ierr);
+
+    // add acceleration term (int_Ω rho_0 (v^(n+1) - v^(n)) / dt * phi^L * phi^M * δu^M dV) to solverVariableResidual_
+    // also add the velocity equation in the velocity slot
+    materialAddAccelerationTermAndVelocityEquation();
+  }
 
   // dump output vector to file
   if (outputFiles)
   {
+    static int evaluationNo = 0;  // counter how often this function was called
+
     // dumpVector(std::string filename, std::string format, Vec &vector, MPI_Comm mpiCommunicator, int componentNo=0, int nComponents=1);
     std::stringstream filename;
     filename << "out/F" << std::setw(3) << std::setfill('0') << evaluationNo++;
@@ -341,8 +362,256 @@ materialComputeResidual()
   assert(combinedVecSolution_->currentRepresentation() == Partition::values_representation_t::representationCombinedGlobal);
 }
 
-template<typename Term>
-void HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+void HyperelasticitySolver<Term,nDisplacementComponents>::
+materialComputeExternalVirtualWorkDead()
+{
+  // compute δW_ext,dead = int_Ω B^L * phi^L * phi^M * δu^M dx + int_∂Ω T^L * phi^L * phi^M * δu^M dS
+
+  combinedVecExternalVirtualWorkDead_->zeroEntries();               // clear entries to 0
+  combinedVecExternalVirtualWorkDead_->startGhostManipulation();    // fill ghost buffers
+
+  // get traction directly from neumann boundary conditions, they are defined element wise and the integration takes place in neumann_boundary_conditions.tpp
+  std::vector<double> values;
+  for (int componentNo = 0; componentNo < nDisplacementComponents; componentNo++)
+  {
+    values.clear();
+    neumannBoundaryConditions_->rhs()->getValuesWithoutGhosts(componentNo, values);
+    LOG(DEBUG) << "component " << componentNo << ", neumannBoundaryConditions_ rhs values: " << values;
+
+
+    combinedVecExternalVirtualWorkDead_->setValues(componentNo, displacementsFunctionSpace_->meshPartition()->nDofsLocalWithoutGhosts(),
+                                                displacementsFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data(), INSERT_VALUES);
+  }
+
+  // integrate to account for body forces
+  // -------------------------------------
+  if (constantBodyForce_[0] != 0.0 || constantBodyForce_[1] != 0.0 || constantBodyForce_[2] != 0.0)
+  {
+    LOG(DEBUG) << "add contribution of body force " << constantBodyForce_;
+
+    const int D = 3;  // dimension
+    std::shared_ptr<DisplacementsFunctionSpace> functionSpace = this->data_.displacementsFunctionSpace();
+    const int nDisplacementsDofsPerElement = DisplacementsFunctionSpace::nDofsPerElement();
+    const int nUnknowsPerElement = nDisplacementsDofsPerElement*D;    // D directions for displacements per dof
+    const int nDofsPerElement = DisplacementsFunctionSpace::nDofsPerElement();
+
+    // define shortcuts for quadrature
+    typedef Quadrature::TensorProduct<D,Quadrature::Gauss<3>> QuadratureDD;   // quadratic*quadratic = 4th order polynomial, 3 gauss points = 2*3-1 = 5th order exact
+
+    // define type to hold evaluations of integrand
+    typedef std::array<double, 3*nUnknowsPerElement> EvaluationsType;
+    std::array<EvaluationsType, QuadratureDD::numberEvaluations()> evaluationsArray{};
+
+    // setup arrays used for integration
+    std::array<Vec3, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
+
+    // initialize variables
+    functionSpace->geometryField().setRepresentationGlobal();
+    functionSpace->geometryField().startGhostManipulation();   // ensure that local ghost values of geometry field are set
+
+    // loop over elements
+    for (element_no_t elementNoLocal = 0; elementNoLocal < functionSpace->nElementsLocal(); elementNoLocal++)
+    {
+      // get geometry field values
+      std::array<Vec3,DisplacementsFunctionSpace::nDofsPerElement()> geometry;
+      functionSpace->getElementGeometry(elementNoLocal, geometry);
+
+      // In case it is required to have a varying body force, get the body force values here, also update the integrand
+      //std::array<Vec3,nDisplacementsDofsPerElement> displacementsValues;
+      //this->data_.bodyForce()->getElementValues(elementNoLocal, bodyForceValues);
+
+      // evaluate integrand at sampling points
+      for (unsigned int samplingPointIndex = 0; samplingPointIndex < samplingPoints.size(); samplingPointIndex++)
+      {
+        // evaluate function to integrate at samplingPoints[i*2], write value to evaluations[i]
+        std::array<double,D> xi = samplingPoints[samplingPointIndex];
+
+        // compute the 3xD jacobian of the parameter space to world space mapping
+        auto jacobian = DisplacementsFunctionSpace::computeJacobian(geometry, xi);
+        double integrationFactor = MathUtility::computeIntegrationFactor<D>(jacobian);
+
+        for (unsigned int elementalDofNoM = 0; elementalDofNoM < nDofsPerElement; elementalDofNoM++)   // dof index M
+        {
+          for (int dimensionNo = 0; dimensionNo < 3; dimensionNo++)
+          {
+            double integrand = 0;
+
+            for (unsigned int elementalDofNoL = 0; elementalDofNoL < nDofsPerElement; elementalDofNoL++)   // dof index L
+            {
+              integrand += DisplacementsFunctionSpace::phi(elementalDofNoL,xi) * DisplacementsFunctionSpace::phi(elementalDofNoM,xi)
+                * constantBodyForce_[dimensionNo];
+            }
+
+            evaluationsArray[samplingPointIndex][elementalDofNoM*3 + dimensionNo] = integrand * integrationFactor;
+          }
+        }
+      }  // function evaluations
+
+      // integrate all values for the (M,d) dofs at once
+      EvaluationsType integratedValues = QuadratureDD::computeIntegral(evaluationsArray);
+
+      std::array<dof_no_t,nDisplacementsDofsPerElement> dofNosLocal = functionSpace->getElementDofNosLocal(elementNoLocal);
+
+      // add integrated entries to result vector
+      for (unsigned int elementalDofNoM = 0; elementalDofNoM < nDofsPerElement; elementalDofNoM++)   // dof index M
+      {
+        for (int dimensionNo = 0; dimensionNo < 3; dimensionNo++)
+        {
+
+          // get local dof no, elementalDofNoM is the dof within the element, dofNoLocal is the dof within the local subdomain
+          dof_no_t dofNoLocal = dofNosLocal[elementalDofNoM];
+
+          double integratedValue = integratedValues[elementalDofNoM*3 + dimensionNo];
+          combinedVecExternalVirtualWorkDead_->setValue(dimensionNo, dofNoLocal, integratedValue, ADD_VALUES);
+
+        }  // D
+      }  // L
+    }  // elementNoLocal
+  }
+
+  // for the static case, combinedVecExternalVirtualWorkDead_ and combinedVecExternalVirtualWork_ is the same pointer
+
+  combinedVecExternalVirtualWorkDead_->finishGhostManipulation();     // communicate and add up values in ghost buffers
+  combinedVecExternalVirtualWorkDead_->startGhostManipulation();      // communicate ghost buffers values back in place
+
+  LOG(DEBUG) << "combinedVecExternalVirtualWork: " << combinedVecExternalVirtualWork_->getString();
+  //combinedVecExternalVirtualWork_->startGhostManipulation();
+}
+
+template<typename Term,int nDisplacementComponents>
+void HyperelasticitySolver<Term,nDisplacementComponents>::
+materialAddAccelerationTermAndVelocityEquation()
+{
+  assert (nDisplacementComponents == 6);
+
+  // add to solverVariableResidual_ (=combinedVecResidual_) -= int_Ω phi_0 * (v^(n+1),L - v^(n),L) / dt * phi^L * phi^M * δu^M dx
+  // solverVariableSolution_
+
+  combinedVecResidual_->startGhostManipulation();      // communicate ghost buffers values back in place
+
+  LOG(DEBUG) << "add contribution of body force " << constantBodyForce_;
+
+  const int D = 3;  // dimension
+  std::shared_ptr<DisplacementsFunctionSpace> functionSpace = this->data_.displacementsFunctionSpace();
+  const int nDisplacementsDofsPerElement = DisplacementsFunctionSpace::nDofsPerElement();
+  const int nUnknowsPerElement = nDisplacementsDofsPerElement*D;    // D directions for displacements per dof
+  const int nDofsPerElement = DisplacementsFunctionSpace::nDofsPerElement();
+
+  // define shortcuts for quadrature
+  typedef Quadrature::TensorProduct<D,Quadrature::Gauss<3>> QuadratureDD;   // quadratic*quadratic = 4th order polynomial, 3 gauss points = 2*3-1 = 5th order exact
+
+  // define type to hold evaluations of integrand
+  typedef std::array<double, 3*nUnknowsPerElement> EvaluationsType;
+  std::array<EvaluationsType, QuadratureDD::numberEvaluations()> evaluationsArray{};
+
+  // setup arrays used for integration
+  std::array<Vec3, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
+
+  // loop over elements
+  for (element_no_t elementNoLocal = 0; elementNoLocal < functionSpace->nElementsLocal(); elementNoLocal++)
+  {
+    std::array<dof_no_t,nDisplacementsDofsPerElement> dofNosLocal = functionSpace->getElementDofNosLocal(elementNoLocal);
+
+    // get geometry field values
+    std::array<Vec3,DisplacementsFunctionSpace::nDofsPerElement()> geometry;
+    functionSpace->getElementGeometry(elementNoLocal, geometry);
+
+    // get the old displacements values at the previous timestep for all dofs of the element
+    std::array<Vec3,nDisplacementsDofsPerElement> oldDisplacementValues;
+    this->data_.displacements()->getElementValues(elementNoLocal, oldDisplacementValues);
+
+    // get the old velocity values at the previous timestep  for all dofs of the element
+    std::array<Vec3,nDisplacementsDofsPerElement> oldVelocityValues;
+    this->data_.velocities()->getElementValues(elementNoLocal, oldVelocityValues);
+
+    // get the new displacement values for all dofs of the element
+    std::array<std::array<double,nDisplacementsDofsPerElement>,3> newDisplacementValues;
+    combinedVecSolution_->getValues(0, dofNosLocal.size(), dofNosLocal.data(), newDisplacementValues[0]);
+    combinedVecSolution_->getValues(1, dofNosLocal.size(), dofNosLocal.data(), newDisplacementValues[1]);
+    combinedVecSolution_->getValues(2, dofNosLocal.size(), dofNosLocal.data(), newDisplacementValues[2]);
+
+    // get the new velocity values for all dofs of the element
+    std::array<std::array<double,nDisplacementsDofsPerElement>,3> newVelocityValues;
+    combinedVecSolution_->getValues(3, dofNosLocal.size(), dofNosLocal.data(), newVelocityValues[0]);
+    combinedVecSolution_->getValues(4, dofNosLocal.size(), dofNosLocal.data(), newVelocityValues[1]);
+    combinedVecSolution_->getValues(5, dofNosLocal.size(), dofNosLocal.data(), newVelocityValues[2]);
+
+    // evaluate integrand at sampling points
+    for (unsigned int samplingPointIndex = 0; samplingPointIndex < samplingPoints.size(); samplingPointIndex++)
+    {
+      // evaluate function to integrate at samplingPoints[i*2], write value to evaluations[i]
+      std::array<double,D> xi = samplingPoints[samplingPointIndex];
+
+      // compute the 3xD jacobian of the parameter space to world space mapping
+      auto jacobian = DisplacementsFunctionSpace::computeJacobian(geometry, xi);
+      double integrationFactor = MathUtility::computeIntegrationFactor<D>(jacobian);
+
+      // loop over elemantal dofs, M
+      for (unsigned int elementalDofNoM = 0; elementalDofNoM < nDofsPerElement; elementalDofNoM++)   // dof index M
+      {
+        for (int dimensionNo = 0; dimensionNo < 3; dimensionNo++)
+        {
+          double integrand = 0;
+
+          // loop over elemental dofs, L
+          for (unsigned int elementalDofNoL = 0; elementalDofNoL < nDofsPerElement; elementalDofNoL++)   // dof index L
+          {
+
+            const double oldVelocity = oldVelocityValues[elementalDofNoL][dimensionNo];
+            const double newVelocity = newVelocityValues[dimensionNo][elementalDofNoL];
+
+            integrand += density_ * (newVelocity - oldVelocity) / this->timeStepWidth_ * DisplacementsFunctionSpace::phi(elementalDofNoL,xi)
+              * DisplacementsFunctionSpace::phi(elementalDofNoM,xi);
+          }
+
+          evaluationsArray[samplingPointIndex][elementalDofNoM*3 + dimensionNo] = integrand * integrationFactor;
+        }
+      }
+    }  // function evaluations
+
+    // integrate all values for the (M,d) dofs at once
+    EvaluationsType integratedValues = QuadratureDD::computeIntegral(evaluationsArray);
+
+    for (unsigned int elementalDofNoM = 0; elementalDofNoM < nDofsPerElement; elementalDofNoM++)   // dof index M
+    {
+      for (int dimensionNo = 0; dimensionNo < 3; dimensionNo++)
+      {
+
+        // get local dof no, elementalDofNoM is the dof within the element, dofNoLocal is the dof within the local subdomain
+        dof_no_t dofNoLocal = dofNosLocal[elementalDofNoM];
+
+        // add integrated entries of velocityTerm to result vector
+        double integratedValue = integratedValues[elementalDofNoM*3 + dimensionNo];
+        combinedVecResidual_->setValue(dimensionNo, dofNoLocal, integratedValue, ADD_VALUES);
+
+        // compute velocity equation
+        const double oldDisplacement = oldDisplacementValues[elementalDofNoM][dimensionNo];
+        const double newDisplacement = newDisplacementValues[dimensionNo][elementalDofNoM];
+
+        //double oldVelocity = oldVelocityValues[elementalDofNoM][dimensionNo];
+        const double newVelocity = newVelocityValues[dimensionNo][elementalDofNoM];
+
+        // add the velocity/displacement equation 1/dt (u^(n+1) - u^(n)) - v^(n+1) - v^n = 0 in the velocity slot
+        double residuum = 1.0 / this->timeStepWidth_ * (newDisplacement - oldDisplacement) - newVelocity = 0;
+
+        combinedVecResidual_->setValue(dimensionNo, dofNoLocal, residuum, ADD_VALUES);
+
+      }  // D
+    }  // L
+  }  // elementNoLocal
+
+  // for the static case, combinedVecExternalVirtualWorkDead_ and combinedVecExternalVirtualWork_ is the same pointer
+
+  combinedVecResidual_->finishGhostManipulation();     // communicate and add up values in ghost buffers
+  combinedVecResidual_->startGhostManipulation();      // communicate ghost buffers values back in place
+
+  LOG(DEBUG) << "combinedVecExternalVirtualWork: " << combinedVecExternalVirtualWork_->getString();
+  //combinedVecExternalVirtualWork_->startGhostManipulation();
+}
+
+template<typename Term,int nDisplacementComponents>
+void HyperelasticitySolver<Term,nDisplacementComponents>::
 materialComputeJacobian()
 {
   // analytic jacobian combinedMatrixJacobian_
@@ -772,8 +1041,8 @@ materialComputeJacobian()
   combinedMatrixJacobian_->assembly(MAT_FINAL_ASSEMBLY);
 }
 
-template<typename Term>
-Tensor2<3> HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+Tensor2<3> HyperelasticitySolver<Term,nDisplacementComponents>::
 computeDeformationGradient(const std::array<Vec3,DisplacementsFunctionSpace::nDofsPerElement()> &displacements,
                            const Tensor2<3> &inverseJacobianMaterial,
                            const std::array<double, 3> xi
@@ -833,8 +1102,8 @@ computeDeformationGradient(const std::array<Vec3,DisplacementsFunctionSpace::nDo
   return deformationGradient;
 }
 
-template<typename Term>
-Tensor2<3> HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+Tensor2<3> HyperelasticitySolver<Term,nDisplacementComponents>::
 computeRightCauchyGreenTensor(const Tensor2<3> &deformationGradient)
 {
   // compute C = F^T*F where F is the deformationGradient and C is the right Cauchy-Green Tensor
@@ -860,8 +1129,8 @@ computeRightCauchyGreenTensor(const Tensor2<3> &deformationGradient)
   return rightCauchyGreenTensor;
 }
 
-template<typename Term>
-std::array<double,5> HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+std::array<double,5> HyperelasticitySolver<Term,nDisplacementComponents>::
 computeInvariants(const Tensor2<3> &rightCauchyGreen, const double rightCauchyGreenDeterminant, const Vec3 fiberDirection)
 {
   std::array<double,5> invariants;
@@ -933,8 +1202,8 @@ computeInvariants(const Tensor2<3> &rightCauchyGreen, const double rightCauchyGr
   return invariants;
 }
 
-template<typename Term>
-std::array<double,5> HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+std::array<double,5> HyperelasticitySolver<Term,nDisplacementComponents>::
 computeReducedInvariants(const std::array<double,5> invariants, const double deformationGradientDeterminant)
 {
   std::array<double,5> reducedInvariants;
@@ -968,8 +1237,8 @@ computeReducedInvariants(const std::array<double,5> invariants, const double def
   return reducedInvariants;
 }
 
-template<typename Term>
-Tensor2<3> HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+Tensor2<3> HyperelasticitySolver<Term,nDisplacementComponents>::
 computePK2Stress(const double pressure,                             //< [in] pressure value p
                  const Tensor2<3> &rightCauchyGreen,                //< [in] C
                  const Tensor2<3> &inverseRightCauchyGreen,         //< [in] C^{-1}
@@ -1160,8 +1429,8 @@ computePK2Stress(const double pressure,                             //< [in] pre
   return pK2Stress;
 }
 
-template<typename Term>
-void HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+void HyperelasticitySolver<Term,nDisplacementComponents>::
 computePK2StressField()
 {
   //LOG(TRACE) << "computePK2StressField";
@@ -1295,9 +1564,9 @@ computePK2StressField()
   this->data_.pK2Stress()->startGhostManipulation();
 }
 
-template<typename Term>
+template<typename Term,int nDisplacementComponents>
 //! compute the material elasticity tensor
-void HyperelasticitySolver<Term>::
+void HyperelasticitySolver<Term,nDisplacementComponents>::
 computeElasticityTensor(const Tensor2<3> &rightCauchyGreen,         //< [in] C
                         const Tensor2<3> &inverseRightCauchyGreen,  //< [in] C^{-1}
                         double deformationGradientDeterminant,      //< [in] J = det(F)
@@ -1594,8 +1863,8 @@ computeElasticityTensor(const Tensor2<3> &rightCauchyGreen,         //< [in] C
   }
 }
 
-template<typename Term>
-Tensor2<3> HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+Tensor2<3> HyperelasticitySolver<Term,nDisplacementComponents>::
 computePSbar(const Tensor2<3> &fictitiousPK2Stress, const Tensor2<3> &rightCauchyGreen)
 {
   // only needed for debugging in materialTesting

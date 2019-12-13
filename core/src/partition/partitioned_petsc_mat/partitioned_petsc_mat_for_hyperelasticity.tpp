@@ -1,7 +1,7 @@
 #include "partition/partitioned_petsc_mat/partitioned_petsc_mat_for_hyperelasticity.h"
 
-template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType>
-PartitionedPetscMatForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>::
+template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType, int nDisplacementComponents>
+PartitionedPetscMatForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,nDisplacementComponents>::
 PartitionedPetscMatForHyperelasticity(
     std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>> partitionedPetscVecForHyperelasticity,
     int diagonalNonZeros, int offdiagonalNonZeros,
@@ -23,8 +23,8 @@ partitionedPetscVecForHyperelasticity_(partitionedPetscVecForHyperelasticity)
  */
 }
 
-template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType>
-void PartitionedPetscMatForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>::
+template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType, int nDisplacementComponents>
+void PartitionedPetscMatForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,nDisplacementComponents>::
 setValue(int componentNoRow, PetscInt row, int componentNoColumn, PetscInt column, PetscScalar value, InsertMode mode)
 {
   if (VLOG_IS_ON(2))
@@ -41,8 +41,9 @@ setValue(int componentNoRow, PetscInt row, int componentNoColumn, PetscInt colum
     return;
   }
 
-  assert(componentNoRow < 4);
-  assert(componentNoColumn < 4);
+  assert(componentNoRow < nDisplacementComponents+1);
+  assert(componentNoColumn < nDisplacementComponents+1);  //  < 4
+
   //assert(row < this->meshPartitionRows_->nDofsLocalWithGhosts());
   //assert(column < this->meshPartitionColumns_->nDofsLocalWithGhosts());
 
@@ -55,8 +56,8 @@ setValue(int componentNoRow, PetscInt row, int componentNoColumn, PetscInt colum
   ierr = MatSetValues(this->globalMatrix_, 1, &row, 1, &column, &value, mode); CHKERRV(ierr);
 }
 
-template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType>
-void PartitionedPetscMatForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>::
+template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType, int nDisplacementComponents>
+void PartitionedPetscMatForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,nDisplacementComponents>::
 dumpMatrixGlobalNatural(std::string filename)
 {
   VLOG(1) << "dumpMatrixGlobalNatural, name: " << this->name_;
@@ -93,7 +94,7 @@ dumpMatrixGlobalNatural(std::string filename)
   int nPressureDofsLocal = meshPartitionPressure->nDofsLocalWithoutGhosts();
 
   // get global matrix sizes
-  nRowsGlobal = 3*nDisplacementDofsGlobal + nPressureDofsGlobal;
+  nRowsGlobal = nDisplacementComponents*nDisplacementDofsGlobal + nPressureDofsGlobal;
   nColumnsGlobal = nRowsGlobal;
 
   int nRowsMatrixNonBc = 0;
@@ -157,7 +158,7 @@ dumpMatrixGlobalNatural(std::string filename)
               matrixGlobalNonBc.data(), sizesOnRanks.data(), offsets.data(), MPI_DOUBLE, 0, meshPartition->mpiCommunicator());
 
   // gather number of local dofs
-  const int nComponents = 4;
+  const int nComponents = nDisplacementComponents+1;
   std::vector<int> nDofsLocalRanks(nRanks*2);   // nDisplacementDofs, nPressureDofs for every rank
 
   std::vector<int> nDofsLocal{nDisplacementDofsLocal, nPressureDofsLocal};
@@ -186,7 +187,7 @@ dumpMatrixGlobalNatural(std::string filename)
     {
       offsets[0] = 0;
 
-      if (componentNo < 3)
+      if (componentNo < nDisplacementComponents)
       {
         sizes[0] = nDisplacementDofsLocal;
       }
@@ -198,7 +199,7 @@ dumpMatrixGlobalNatural(std::string filename)
 
       for (int rankNo = 1; rankNo < nRanks; rankNo++)
       {
-        if (componentNo < 3)
+        if (componentNo < nDisplacementComponents)
         {
           sizes[rankNo] = nDofsLocalRanks[2*rankNo+0];
         }
@@ -237,7 +238,7 @@ dumpMatrixGlobalNatural(std::string filename)
 
     std::vector<global_no_t> dofNosGlobalNatural;
 
-    if (componentNo < 3)
+    if (componentNo < nDisplacementComponents)
     {
       meshPartition->getDofNosGlobalNatural(dofNosGlobalNatural);
     }
@@ -321,7 +322,7 @@ dumpMatrixGlobalNatural(std::string filename)
       for (int componentNoRow = 0; componentNoRow < nComponents; componentNoRow++)
       {
         int nDofsLocalRankRow = nDofsLocalRanks[2*rankNoRow + 0];
-        if (componentNoRow == 3)   // pressure value
+        if (componentNoRow == nDisplacementComponents)   // pressure value
         {
           nDofsLocalRankRow = nDofsLocalRanks[2*rankNoRow + 1];
         }
@@ -346,7 +347,7 @@ dumpMatrixGlobalNatural(std::string filename)
             for (int componentNoColumn = 0; componentNoColumn < nComponents; componentNoColumn++)
             {
               int nDofsLocalRankColumn = nDofsLocalRanks[2*rankNoColumn + 0];
-              if (componentNoColumn == 3)   // pressure value
+              if (componentNoColumn == nDisplacementComponents)   // pressure value
               {
                 nDofsLocalRankColumn = nDofsLocalRanks[2*rankNoColumn + 1];
               }
@@ -440,54 +441,83 @@ dumpMatrixGlobalNatural(std::string filename)
 }
 
 //! get a submatrix of the upper left part (only displacements)
-template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType>
-Mat PartitionedPetscMatForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>::
-getSubmatrixUU()
+template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType, int nDisplacementComponents>
+Mat PartitionedPetscMatForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,nDisplacementComponents>::
+getSubmatrix(int rowVariableNo, int columnVariableNo)
 {
+  // assert that rowVariableNo and columnVariableNo have valid values
+  if (nDisplacementComponents == 3)
+  {
+    assert(rowVariableNo >= 0 && rowVariableNo < 2);
+    assert(columnVariableNo >= 0 && columnVariableNo < 2);
+  }
+  else if (nDisplacementComponents == 6)
+  {
+    assert(rowVariableNo >= 0 && rowVariableNo < 3);
+    assert(columnVariableNo >= 0 && columnVariableNo < 3);
+  }
+
   MPI_Comm mpiCommunicator = partitionedPetscVecForHyperelasticity_->meshPartition()->mpiCommunicator();
 
-  // create index sets of rows of displacement dofs
-  IS displacementDofs = partitionedPetscVecForHyperelasticity_->displacementDofsGlobal();
+  IS indexSetRows = nullptr;
+  IS indexSetColumns = nullptr;
 
-  Mat submatrixUU;
+  // no velocity components
+  if (nDisplacementComponents == 3)
+  {
+    if (rowVariableNo == 0)
+    {
+      indexSetRows = partitionedPetscVecForHyperelasticity_->displacementDofsGlobal();
+    }
+    else if (rowVariableNo == 1)
+    {
+      indexSetRows = partitionedPetscVecForHyperelasticity_->pressureDofsGlobal();
+    }
+
+    if (columnVariableNo == 0)
+    {
+      indexSetColumns = partitionedPetscVecForHyperelasticity_->displacementDofsGlobal();
+    }
+    else if (columnVariableNo == 1)
+    {
+      indexSetColumns = partitionedPetscVecForHyperelasticity_->pressureDofsGlobal();
+    }
+  }
+  else    // with velocity components
+  {
+    if (rowVariableNo == 0)
+    {
+      indexSetRows = partitionedPetscVecForHyperelasticity_->displacementDofsGlobal();
+    }
+    else if (rowVariableNo == 1)
+    {
+      indexSetRows = partitionedPetscVecForHyperelasticity_->velocityDofsGlobal();
+    }
+    else if (rowVariableNo == 2)
+    {
+      indexSetRows = partitionedPetscVecForHyperelasticity_->pressureDofsGlobal();
+    }
+
+    if (columnVariableNo == 0)
+    {
+      indexSetColumns = partitionedPetscVecForHyperelasticity_->displacementDofsGlobal();
+    }
+    else if (columnVariableNo == 1)
+    {
+      indexSetColumns = partitionedPetscVecForHyperelasticity_->velocityDofsGlobal();
+    }
+    else if (columnVariableNo == 2)
+    {
+      indexSetColumns = partitionedPetscVecForHyperelasticity_->pressureDofsGlobal();
+    }
+  }
+
+  assert(indexSetRows);
+  assert(indexSetColumns);
+
+  Mat submatrix;
   PetscErrorCode ierr;
-  ierr = MatGetSubMatrix(this->globalMatrix_, displacementDofs, displacementDofs, MAT_INITIAL_MATRIX, &submatrixUU); CHKERRABORT(mpiCommunicator,ierr);
+  ierr = MatGetSubMatrix(this->globalMatrix_, indexSetRows, indexSetColumns, MAT_INITIAL_MATRIX, &submatrix); CHKERRABORT(mpiCommunicator,ierr);
 
-  return submatrixUU;
-}
-
-//! get a submatrix of the lower left part (pressure)
-template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType>
-Mat PartitionedPetscMatForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>::
-getSubmatrixPU()
-{
-  MPI_Comm mpiCommunicator = partitionedPetscVecForHyperelasticity_->meshPartition()->mpiCommunicator();
-
-  // create index sets of rows of pressure dofs
-  IS pressureDofs = partitionedPetscVecForHyperelasticity_->pressureDofsGlobal();
-  IS displacementDofs = partitionedPetscVecForHyperelasticity_->displacementDofsGlobal();
-
-  Mat submatrixPU;
-  PetscErrorCode ierr;
-  ierr = MatGetSubMatrix(this->globalMatrix_, pressureDofs, displacementDofs, MAT_INITIAL_MATRIX, &submatrixPU); CHKERRABORT(mpiCommunicator,ierr);
-
-  return submatrixPU;
-}
-
-//! get a submatrix of the lower left part (pressure)
-template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType>
-Mat PartitionedPetscMatForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>::
-getSubmatrixUP()
-{
-  MPI_Comm mpiCommunicator = partitionedPetscVecForHyperelasticity_->meshPartition()->mpiCommunicator();
-
-  // create index sets of rows of pressure dofs
-  IS pressureDofs = partitionedPetscVecForHyperelasticity_->pressureDofsGlobal();
-  IS displacementDofs = partitionedPetscVecForHyperelasticity_->displacementDofsGlobal();
-
-  Mat submatrixUP;
-  PetscErrorCode ierr;
-  ierr = MatGetSubMatrix(this->globalMatrix_, displacementDofs, pressureDofs, MAT_INITIAL_MATRIX, &submatrixUP); CHKERRABORT(mpiCommunicator,ierr);
-
-  return submatrixUP;
+  return submatrix;
 }

@@ -35,12 +35,12 @@ if False:
     dirichlet_bc[k*(2*nx+1)*(2*ny+1)] = [xpos,ypos,None]
 
 if True:
-  # horizontal edge
+  # horizontal edge y=0
   for i in range(0,2*nx+1):
     dirichlet_bc[i] = [None,ypos,zpos]
 
-if False:
-  # horizontal edge
+if True:
+  # horizontal edge, x=0
   for j in range(0,2*ny+1):
     dirichlet_bc[j*(2*nx+1)] = [xpos,None,zpos]
 
@@ -51,7 +51,7 @@ dirichlet_bc[1] = [None,ypos,zpos]
 neumann_bc = [{"element": (nz-1)*nx*ny + j*nx + i, "constantVector": [0,1e-1,5e-1], "face": "2+"} for j in range(ny) for i in range(nx)]
 
 #dirichlet_bc = {}
-#neumann_bc = []
+neumann_bc = []
 
 config = {
   "scenarioName": "3d_box",
@@ -61,11 +61,12 @@ config = {
     #"materialParameters": [1.5,2.0],
     "materialParameters": [0.0,1.0],
     "displacementsScalingFactor": 1.0,   # scaling factor for displacements
+    "constantBodyForce": [5e-2, 0.0, 0.0],   # body force in whole body region
     "residualNormLogFilename": "log_residual_norm.txt",
     "useAnalyticJacobian": True,
     "useNumericJacobian": False,   # Only works in parallel execution. If both numeric and analytic are enable, it uses the analytic for the preconditioner and the numeric as normal jacobian
       
-    "dumpDenseMatlabVariables": True,   # extra output of matlab vectors, x,r, jacobian matrix
+    "dumpDenseMatlabVariables": False,   # extra output of matlab vectors, x,r, jacobian matrix
     # if useAnalyticJacobian,useNumericJacobian and dumpDenseMatlabVariables are all three true, the analytic and numeric jacobian matrices will get compared to see if there are programming errors for the analytic jacobian
     
     # mesh

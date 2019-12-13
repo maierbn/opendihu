@@ -5,11 +5,11 @@
 namespace SpatialDiscretization
 {
 
-template<typename Term>
-void HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+void HyperelasticitySolver<Term,nDisplacementComponents>::
 materialComputeInternalVirtualWork(
-  std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>> displacements,
-  std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>> internalVirtualWork
+  std::shared_ptr<PetscVec> displacements,
+  std::shared_ptr<PetscVec> internalVirtualWork
 )
 {
   assert(displacements);
@@ -30,11 +30,11 @@ materialComputeInternalVirtualWork(
   VecSwap(result, solverVariableResidual_); CHKERRV(ierr);
 }
 
-template<typename Term>
-void HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+void HyperelasticitySolver<Term,nDisplacementComponents>::
 solveForDisplacements(
-  std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>> externalVirtualWork,
-  std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>> displacements
+  std::shared_ptr<PetscVec> externalVirtualWork,
+  std::shared_ptr<PetscVec> displacements
 )
 {
   // solve ∂W_int - ∂W_ext = 0 with J = 1

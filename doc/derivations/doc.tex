@@ -3012,11 +3012,11 @@ where
 \begin{equation}\label{eq:first_ders}
   \begin{array}{lll}
     δW_\text{int}({\bfu},{p})  = \ds\int_{\Omega}\dfrac12  S_{AB}(\bfu,p)\, \left(F_{aB}\, \phi_{(a),A}^M + F_{aA}\, \phi_{(a),B}^M\right)δ\hat{u}_{a}^M \,\d V\\[4mm]
-    δW_\text{ext,dead}  = \ds\int_{\Omega} B_{(a)}^M\,\phi_{(a)}^M\, \phi_{(a)}^M\,δ\hat{u}^M_a \,\d V +\ds\int_{∂\Omega}  \bar{T}^L_{(a)}\,\phi_{(a)}^L\, \phi_{(a)}^M\,δ\hat{u}^M_a\,\d S \\[4mm]
+    δW_\text{ext,dead}  = \ds\int_{\Omega} B_{(a)}^L\,\phi_{(a)}^L\, \phi_{(a)}^M\,δ\hat{u}^M_a \,\d V +\ds\int_{∂\Omega}  \bar{T}^L_{(a)}\,\phi_{(a)}^L\, \phi_{(a)}^M\,δ\hat{u}^M_a\,\d S \\[4mm]
     D_{δp}\Pi_L(\bfu) = \ds\int_\Omega \big(J(\bfu) - 1)\,δp\,\d V 
   \end{array}
 \end{equation}
-This is a vectorial function, $F(\hat{\bfu}^{(n+1)},\hat{\bfv}^{(n+1)},\hat{\p}^{(n+1)})=-R=0$ that can be solved by a Newton scheme.
+This is a vectorial function, $F(\hat{\bfu}^{(n+1)},\hat{\bfv}^{(n+1)},\hat{p}^{(n+1)})=-R=0$ that can be solved by a Newton scheme.
 
 The linear system for each Newton iteration takes the form
 \begin{equation*}

@@ -3,18 +3,18 @@
 #include "utility/mpi_utility.h"
 
 //! constructor
-template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType>
-PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>::
+template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType, int nComponents>
+PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,nComponents>::
 PartitionedPetscVecForHyperelasticity(
   std::shared_ptr<Partition::MeshPartition<DisplacementsFunctionSpaceType>> meshPartitionDisplacements,
   std::shared_ptr<Partition::MeshPartition<PressureFunctionSpaceType>> meshPartitionPressure,
-  std::shared_ptr<SpatialDiscretization::DirichletBoundaryConditions<DisplacementsFunctionSpaceType,3>> dirichletBoundaryConditions, std::string name) :
-  PartitionedPetscVecWithDirichletBc<DisplacementsFunctionSpaceType,4,3>(meshPartitionDisplacements, dirichletBoundaryConditions, name), meshPartitionPressure_(meshPartitionPressure)
+  std::shared_ptr<SpatialDiscretization::DirichletBoundaryConditions<DisplacementsFunctionSpaceType,nComponents>> dirichletBoundaryConditions, std::string name) :
+  PartitionedPetscVecWithDirichletBc<DisplacementsFunctionSpaceType,nComponents+1,nComponents>(meshPartitionDisplacements, dirichletBoundaryConditions, name), meshPartitionPressure_(meshPartitionPressure)
 {
-  componentNoPressure_ = 3;
+  componentNoPressure_ = nComponents;   // the pressure component is the last one, equal to nComponents (=3 or 6)
 
-  // initialize variables for 3 displacement components
-  this->initialize(3, meshPartitionPressure_->nDofsLocalWithoutGhosts());
+  // initialize variables for 3 or 6 displacement/velocity components
+  this->initialize(nComponents, meshPartitionPressure_->nDofsLocalWithoutGhosts());
 
   // initialize last component for pressure
   initializeForPressure();
@@ -28,8 +28,8 @@ PartitionedPetscVecForHyperelasticity(
   LOG(DEBUG) << stream.str();*/
 }
 
-template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType>
-void PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>::
+template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType, int nComponents>
+void PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,nComponents>::
 initializeForPressure()
 {
   VLOG(1) << "initializeForPressure, nEntriesGlobal_: " << this->nEntriesGlobal_ << ", nEntriesLocal_: " << this->nEntriesLocal_;
@@ -59,7 +59,7 @@ initializeForPressure()
   int nRanks = this->meshPartitionPressure_->nRanks();
   std::vector<int> nDisplacementDofs(nRanks);
 
-  // spread the sizes on the processes
+  // distribute the sizes on the processes
   int nPreviousDisplacementDofs = 0;
   MPIUtility::handleReturnValue(MPI_Scan(&this->nDofsLocal_, &nPreviousDisplacementDofs, 1, MPI_INT, MPI_SUM, this->meshPartitionPressure_->mpiCommunicator()), "MPI_Scan");
   MPIUtility::handleReturnValue(MPI_Allgather(&nPreviousDisplacementDofs, 1, MPI_INT, nDisplacementDofs.data(), 1, MPI_INT, this->meshPartitionPressure_->mpiCommunicator()), "MPI_Allgather");
@@ -102,15 +102,15 @@ initializeForPressure()
   this->isPrescribed_[componentNoPressure_].resize(nDofsLocalWithGhosts, false);
 }
 
-template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType>
-std::shared_ptr<Partition::MeshPartition<PressureFunctionSpaceType>> PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>::
+template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType, int nComponents>
+std::shared_ptr<Partition::MeshPartition<PressureFunctionSpaceType>> PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,nComponents>::
 meshPartitionPressure()
 {
   return meshPartitionPressure_;
 }
 
-template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType>
-void PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>::
+template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType, int nComponents>
+void PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,nComponents>::
 dumpGlobalNatural(std::string filename)
 {
   // write file
@@ -128,8 +128,8 @@ dumpGlobalNatural(std::string filename)
   file.close();
 }
 
-template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType>
-std::string PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>::
+template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType, int nComponents>
+std::string PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,nComponents>::
 getString(bool horizontal, std::string vectorName) const
 {
   // do not assemble a horizontal string for console in release mode, because this is only needed for debugging output
@@ -164,10 +164,11 @@ getString(bool horizontal, std::string vectorName) const
     std::copy(dofNosGlobalNaturalOwn.begin(), dofNosGlobalNaturalOwn.end(), dofNosGlobalNatural[0].begin());
 
     // get displacement values
-    values[0].resize(3*nDofsLocalWithoutGhosts);
-    this->getValues(0, nDofsLocalWithoutGhosts, this->meshPartition_->dofNosLocal().data(), values[0].data());
-    this->getValues(1, nDofsLocalWithoutGhosts, this->meshPartition_->dofNosLocal().data(), values[0].data()+nDofsLocalWithoutGhosts);
-    this->getValues(2, nDofsLocalWithoutGhosts, this->meshPartition_->dofNosLocal().data(), values[0].data()+2*nDofsLocalWithoutGhosts);
+    values[0].resize(nComponents*nDofsLocalWithoutGhosts);
+    for (int i = 0; i < nComponents; i++)
+    {
+      this->getValues(i, nDofsLocalWithoutGhosts, this->meshPartition_->dofNosLocal().data(), values[0].data() + i*nDofsLocalWithoutGhosts);
+    }
 
     VLOG(1) << "get own displacement values: " << values;
 
@@ -203,8 +204,8 @@ getString(bool horizontal, std::string vectorName) const
           VLOG(1) << "received displacements dofs: " << dofNosGlobalNatural[rankNo];
 
           // receive values
-          values[rankNo].resize(3*nDofsOnRank[rankNo]);
-          MPIUtility::handleReturnValue(MPI_Recv(values[rankNo].data(), 3*nDofsOnRank[rankNo], MPI_DOUBLE,
+          values[rankNo].resize(nComponents*nDofsOnRank[rankNo]);
+          MPIUtility::handleReturnValue(MPI_Recv(values[rankNo].data(), nComponents*nDofsOnRank[rankNo], MPI_DOUBLE,
                                                 rankNo, 0, this->meshPartition_->rankSubset()->mpiCommunicator(), MPI_STATUS_IGNORE), "MPI_Recv");
 
           VLOG(1) << "received displacements values: " << values[rankNo];
@@ -233,7 +234,7 @@ getString(bool horizontal, std::string vectorName) const
 
     // get pressure values
     valuesPressure[0].resize(nDofsLocalWithoutGhosts);
-    this->getValues(3, nDofsLocalWithoutGhosts, this->meshPartitionPressure_->dofNosLocal().data(), valuesPressure[0].data());
+    this->getValues(componentNoPressure_, nDofsLocalWithoutGhosts, this->meshPartitionPressure_->dofNosLocal().data(), valuesPressure[0].data());
 
     // loop over other ranks
     for (int rankNoK = 0; rankNoK < this->meshPartitionPressure_->nRanks(2); rankNoK++)
@@ -274,8 +275,9 @@ getString(bool horizontal, std::string vectorName) const
         }
       }
     }
+
     // sort displacement values according to global natural dof no
-    std::vector<std::pair<global_no_t,std::array<double,3>>> displacementEntries;
+    std::vector<std::pair<global_no_t,std::array<double,nComponents>>> displacementEntries;
     displacementEntries.reserve(this->nEntriesGlobal_);
 
     for (int rankNo = 0; rankNo < this->meshPartition_->nRanks(); rankNo++)
@@ -283,13 +285,14 @@ getString(bool horizontal, std::string vectorName) const
       assert(nDofsOnRank[rankNo] == dofNosGlobalNatural[rankNo].size());
       for (int i = 0; i < nDofsOnRank[rankNo]; i++)
       {
-        std::pair<global_no_t,std::array<double,3>> displacementEntry;
+        std::pair<global_no_t,std::array<double,nComponents>> displacementEntry;
         displacementEntry.first = dofNosGlobalNatural[rankNo][i];
 
-        std::array<double,3> valuesDof;
-        valuesDof[0] = values[rankNo][0*nDofsOnRank[rankNo] + i];
-        valuesDof[1] = values[rankNo][1*nDofsOnRank[rankNo] + i];
-        valuesDof[2] = values[rankNo][2*nDofsOnRank[rankNo] + i];
+        std::array<double,nComponents> valuesDof;
+        for (int componentNo = 0; componentNo < nComponents; componentNo++)
+        {
+          valuesDof[componentNo] = values[rankNo][componentNo*nDofsOnRank[rankNo] + i];
+        }
         displacementEntry.second = valuesDof;
 
         displacementEntries.push_back(displacementEntry);
@@ -297,7 +300,8 @@ getString(bool horizontal, std::string vectorName) const
     }
 
     // sort list according to dof no.s
-    std::sort(displacementEntries.begin(), displacementEntries.end(), [&](std::pair<global_no_t,std::array<double,3>> a, std::pair<global_no_t,std::array<double,3>> b)
+    std::sort(displacementEntries.begin(), displacementEntries.end(),
+              [&](std::pair<global_no_t,std::array<double,nComponents>> a, std::pair<global_no_t,std::array<double,nComponents>> b)
     {
       return a.first < b.first;
     });
@@ -319,7 +323,8 @@ getString(bool horizontal, std::string vectorName) const
     }
 
     // sort list according to dof no.s
-    std::sort(pressureEntries.begin(), pressureEntries.end(), [&](std::pair<global_no_t,double> a, std::pair<global_no_t,double> b)
+    std::sort(pressureEntries.begin(), pressureEntries.end(),
+              [&](std::pair<global_no_t,double> a, std::pair<global_no_t,double> b)
     {
       return a.first < b.first;
     });
@@ -340,65 +345,60 @@ getString(bool horizontal, std::string vectorName) const
     // write file
     std::string newline = "\n";
     std::string separator = ", ";
+    std::array<std::string,nComponents> componentNames;
+
+    componentNames[0] = "ux";
+    componentNames[1] = "uy";
+    componentNames[2] = "uz";
+    if (nComponents == 6)
+    {
+      componentNames[3] = "vx";
+      componentNames[4] = "vy";
+      componentNames[5] = "vz";
+    }
+
     if (horizontal)
     {
       newline = "";
       separator = ", ";
       result << std::endl;
     }
-
-    if (horizontal)
-    {
-      result << "ux = [" << newline;
-    }
     else
     {
       result << vectorName << "r" << this->meshPartitionPressure_->nRanks() << " = [";
     }
 
-    // write displacement values
-    for (int i = 0; i < displacementEntries.size(); i++)
+    // loop over not-pressure components (u and possibly v)
+    for (int componentNo = 0; componentNo < nComponents; componentNo++)
     {
-      if (i != 0)
-        result << separator;
-      result << displacementEntries[i].second[0];
+      // start of component
+      if (horizontal)
+      {
+        result << componentNames[componentNo] << " = [" << newline;  // print e.g. "ux = ["
+      }
+
+      // write displacement values
+      for (int i = 0; i < displacementEntries.size(); i++)
+      {
+        if (i != 0)
+          result << separator;
+        result << displacementEntries[i].second[0];
+      }
+
+      // end of component
+      if (horizontal)
+      {
+        result << newline << "]; " << std::endl;
+      }
+      else
+      {
+        result << ", ...\n ";
+      }
     }
 
     if (horizontal)
     {
-      result << newline << "]; " << std::endl << "uy = [" << newline;
-    }
-    else
-    {
-      result << ", ...\n ";
-    }
-
-    for (int i = 0; i < displacementEntries.size(); i++)
-    {
-      if (i != 0)
-        result << separator;
-      result << displacementEntries[i].second[1];
-    }
-
-    if (horizontal)
-    {
-      result << newline << "];" << std::endl << "uz = [" << newline;
-    }
-    else
-    {
-      result << ", ...\n ";
-    }
-
-    for (int i = 0; i < displacementEntries.size(); i++)
-    {
-      if (i != 0)
-        result << separator;
-      result << displacementEntries[i].second[2];
-    }
-
-    if (horizontal)
-    {
-      result << newline << "];" << std::endl << " p = [" << newline;
+      result << " p = [" << newline;
     }
     else
     {
@@ -420,7 +420,6 @@ getString(bool horizontal, std::string vectorName) const
     {
       result << "]; " << std::endl;
     }
-
   }
   else
   {
@@ -440,13 +439,14 @@ getString(bool horizontal, std::string vectorName) const
     VLOG(1) << "sent displacements dofs: " << dofNosGlobalNatural;
 
     // send displacement values
-    std::vector<double> values(3*nDofsLocalWithoutGhosts);
+    std::vector<double> values(nComponents*nDofsLocalWithoutGhosts);
 
-    this->getValues(0, nDofsLocalWithoutGhosts, this->meshPartition_->dofNosLocal().data(), values.data());
-    this->getValues(1, nDofsLocalWithoutGhosts, this->meshPartition_->dofNosLocal().data(), values.data()+nDofsLocalWithoutGhosts);
-    this->getValues(2, nDofsLocalWithoutGhosts, this->meshPartition_->dofNosLocal().data(), values.data()+2*nDofsLocalWithoutGhosts);
+    for (int componentNo = 0; componentNo < nComponents; componentNo++)
+    {
+      this->getValues(componentNo, nDofsLocalWithoutGhosts, this->meshPartition_->dofNosLocal().data(), values.data() + componentNo*nDofsLocalWithoutGhosts);
+    }
 
-    MPIUtility::handleReturnValue(MPI_Send(values.data(), 3*nDofsLocalWithoutGhosts, MPI_DOUBLE,
+    MPIUtility::handleReturnValue(MPI_Send(values.data(), nComponents*nDofsLocalWithoutGhosts, MPI_DOUBLE,
                                            0, 0, this->meshPartition_->rankSubset()->mpiCommunicator()), "MPI_Send");
 
     VLOG(1) << "sent displacements values: " << values;
@@ -469,7 +469,7 @@ getString(bool horizontal, std::string vectorName) const
     // send pressure values
     std::vector<double> valuesPressure(nDofsLocalWithoutGhosts);
 
-    this->getValues(3, nDofsLocalWithoutGhosts, this->meshPartitionPressure_->dofNosLocal().data(), valuesPressure.data());
+    this->getValues(componentNoPressure_, nDofsLocalWithoutGhosts, this->meshPartitionPressure_->dofNosLocal().data(), valuesPressure.data());
 
     MPIUtility::handleReturnValue(MPI_Send(valuesPressure.data(), nDofsLocalWithoutGhosts, MPI_DOUBLE,
                                            0, 0, this->meshPartitionPressure_->rankSubset()->mpiCommunicator()), "MPI_Send");
@@ -479,8 +479,8 @@ getString(bool horizontal, std::string vectorName) const
   return result.str();
 }
 
-template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType>
-IS PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>::
+template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType, int nComponents>
+IS PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,nComponents>::
 displacementDofsGlobal()
 {
   MPI_Comm mpiCommunicator = this->meshPartition_->mpiCommunicator();
@@ -497,16 +497,36 @@ displacementDofsGlobal()
   return indexSet;
 }
 
-template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType>
-IS PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>::
-pressureDofsGlobal()
+template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType, int nComponents>
+IS PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,nComponents>::
+velocityDofsGlobal()
 {
   MPI_Comm mpiCommunicator = this->meshPartition_->mpiCommunicator();
 
   // create index sets of rows of displacement dofs
+  int nDisplacementDofsLocal = nDisplacementDofsWithoutBcLocal();
+  int nVelocityDofsLocal = nVelocityDofsWithoutBcLocal();
+  std::vector<int> indices(nVelocityDofsLocal);
+  std::iota(indices.begin(), indices.end(), this->nonBcDofNoGlobalBegin_ + nDisplacementDofsLocal);
+
+  IS indexSet;
+  PetscErrorCode ierr;
+  ierr = ISCreateGeneral(mpiCommunicator, nVelocityDofsLocal, indices.data(), PETSC_COPY_VALUES, &indexSet); CHKERRABORT(mpiCommunicator,ierr);
+
+  return indexSet;
+}
+
+template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType, int nComponents>
+IS PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,nComponents>::
+pressureDofsGlobal()
+{
+  MPI_Comm mpiCommunicator = this->meshPartition_->mpiCommunicator();
+
+  // create index sets of rows of pressure dofs
   int nPressureDofsLocal = this->nNonBcDofsWithoutGhosts_[componentNoPressure_];
   std::vector<int> indices(nPressureDofsLocal);
-  std::iota(indices.begin(), indices.end(), this->nonBcDofNoGlobalBegin_ + nDisplacementDofsWithoutBcLocal());
+  int startIndex = this->nonBcDofNoGlobalBegin_ + nDisplacementDofsWithoutBcLocal() + nVelocityDofsWithoutBcLocal();
+  std::iota(indices.begin(), indices.end(), startIndex);
 
   IS indexSet;
   PetscErrorCode ierr;
@@ -515,14 +535,31 @@ pressureDofsGlobal()
   return indexSet;
 }
 
-template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType>
-dof_no_t PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>::
+template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType, int nComponents>
+dof_no_t PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,nComponents>::
 nDisplacementDofsWithoutBcLocal()
 {
-  return this->nNonBcDofsWithoutGhosts_[0] + this->nNonBcDofsWithoutGhosts_[1] + this->nNonBcDofsWithoutGhosts_[2];
+  dof_no_t result = 0;
+  for (int componentNo = 0; componentNo < 3; componentNo++)
+  {
+    result += this->nNonBcDofsWithoutGhosts_[componentNo];
+  }
+  return result;
 }
 
-template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType>
+template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType, int nComponents>
+dof_no_t PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,nComponents>::
+nVelocityDofsWithoutBcLocal()
+{
+  dof_no_t result = 0;
+  for (int componentNo = 3; componentNo < nComponents; componentNo++)
+  {
+    result += this->nNonBcDofsWithoutGhosts_[componentNo];
+  }
+  return result;
+}
+
+template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType, int nComponents>
 std::ostream &operator<<(std::ostream &stream, const PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType> &vector)
 {
   vector.output(stream);

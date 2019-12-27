@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Python.h>  // has to be the first included header
-#include "time_stepping_scheme/time_stepping_scheme_ode.h"
+#include "time_stepping_scheme/02_time_stepping_scheme_ode.h"
 #include "interfaces/runnable.h"
 #include "data_management/specialized_solver/multidomain.h"
 #include "control/dihu_context.h"
@@ -38,8 +38,8 @@ public:
   Data &data();
 
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
-  //! the transfer is done by the solution_vector_mapping class
-  OutputConnectorDataType getOutputConnectorData();
+  //! the transfer is done by the output_connector_data_transfer class
+  OutputConnectorDataType &getOutputConnectorData();
 
 protected:
 

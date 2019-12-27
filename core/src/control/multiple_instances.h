@@ -40,8 +40,8 @@ public:
   Data &data();
 
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
-  //! the transfer is done by the solution_vector_mapping class
-  OutputConnectorDataType getOutputConnectorData();
+  //! the transfer is done by the output_connector_data_transfer class
+  OutputConnectorDataType &getOutputConnectorData();
 
   //! run solution process
   void run();
@@ -75,6 +75,8 @@ protected:
   std::string logKey_;   ///< the key under which the duration of all instances together is saved in the log
 
   Data data_;  ///< the data object
+
+  std::vector<typename TimeSteppingScheme::OutputConnectorDataType> outputConnectorData_;
 
   bool outputInitializeThisInstance_;   ///< if this instance displays progress of initialization
 };

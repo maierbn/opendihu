@@ -8,6 +8,8 @@ FastMonodomainSolverBase<nStates,nIntermediates>::
 FastMonodomainSolverBase(const DihuContext &context) :
   specificSettings_(context.getPythonConfig()), nestedSolvers_(context)
 {
+  // initialize output writers
+  this->outputWriterManager_.initialize(context, specificSettings_);
 }
 
 template<int nStates, int nIntermediates>
@@ -19,6 +21,14 @@ initialize()
   // initialize motor unit numbers and firing times
   fiberDistributionFilename_ = specificSettings_.getOptionString("fiberDistributionFile", "");
   firingTimesFilename_ = specificSettings_.getOptionString("firingTimesFile", "");
+
+
+  // output warning if there are output writers
+  if (this->outputWriterManager_.hasOutputWriters())
+  {
+    LOG(WARNING) << "The FastMonodomainSolver has output writers. Those will output all states of the 0D problem every splitting step. "
+      << "This may be slow! Maybe you do not want to have this because the 1D fiber output writers can also be called.";
+  }
 
   LOG(DEBUG) << "config: " << specificSettings_;
   LOG(DEBUG) << "fiberDistributionFilename: " << fiberDistributionFilename_;
@@ -225,6 +235,9 @@ advanceTimeSpan()
   {
     instances[i].timeStepping2().writeOutput(0, currentTime_);  // force output now, not considering any outputInterval
   }
+
+  // call own output writers, write current 0D output values, not yet implemented
+  //this->outputWriterManager_.writeOutput(*this->data_, 0, currentTime_);
 }
 
 template<int nStates, int nIntermediates>
@@ -840,7 +853,7 @@ setTimeSpan(double startTime, double endTime)
 }
 
 template<int nStates, int nIntermediates>
-typename FastMonodomainSolverBase<nStates,nIntermediates>::OutputConnectorDataType FastMonodomainSolverBase<nStates,nIntermediates>::
+typename FastMonodomainSolverBase<nStates,nIntermediates>::OutputConnectorDataType &FastMonodomainSolverBase<nStates,nIntermediates>::
 getOutputConnectorData()
 {
   return nestedSolvers_.getOutputConnectorData();

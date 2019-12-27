@@ -438,9 +438,9 @@ data()
 }
 
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
-//! the transfer is done by the solution_vector_mapping class
+//! the transfer is done by the output_connector_data_transfer class
 template<int D>
-typename QuasiStaticNonlinearElasticitySolverChaste<D>::OutputConnectorDataType
+typename QuasiStaticNonlinearElasticitySolverChaste<D>::OutputConnectorDataType &
 QuasiStaticNonlinearElasticitySolverChaste<D>::
 getOutputConnectorData()
 {

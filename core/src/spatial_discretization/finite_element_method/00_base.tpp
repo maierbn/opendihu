@@ -172,6 +172,13 @@ solve()
   VLOG(1) << "solution: " << *data_.solution();
 }
 
+template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term>
+typename FiniteElementMethodBase<FunctionSpaceType,QuadratureType,nComponents,Term>::OutputConnectorDataType &FiniteElementMethodBase<FunctionSpaceType,QuadratureType,nComponents,Term>::
+getOutputConnectorData()
+{
+  return data_.getOutputConnectorData();
+}
+
 template<typename FunctionSpaceType,typename QuadratureType,int nComponents>
 void FiniteElementMethodInitializeData<FunctionSpaceType,QuadratureType,nComponents,Equation::Dynamic::DirectionalDiffusion>::
 initialize(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> direction,

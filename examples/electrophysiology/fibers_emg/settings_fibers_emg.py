@@ -167,6 +167,8 @@ config = {
     "timeStepOutputInterval": 1,
     "endTime":                variables.end_time,
     "transferSlotName":       "intermediates" if variables.linear_elasticity else "states",
+    "connectedSlotsTerm1To2": [0,1],  # transfer state (Vm) and intermediate (gamma)
+    "connectedSlotsTerm2To1": [],     # only transfer back geometry (this happens automatically)
     "Term1": {        # monodomain, fibers
       "MultipleInstances": {
         "logKey":                     "duration_subdomains_xy",
@@ -183,6 +185,8 @@ config = {
             "timeStepOutputInterval": 100,
             "endTime":                variables.dt_splitting,
             "transferSlotName":       "states",   # which output slot of the cellml adapter ("states" or "intermediates") to use for transfer to diffusion, in this case we need "states", states[0] which is Vm
+            "connectedSlotsTerm1To2": [0],   # transfer Vm to term2
+            "connectedSlotsTerm2To1": [],    # nothing to transfer back
 
             "Term1": {      # CellML, i.e. reaction term of Monodomain equation
               "MultipleInstances": {
@@ -217,16 +221,20 @@ config = {
                       "setSpecificStatesRepeatAfterFirstCall":  0.01,                                                            # [ms] simulation time span for which the setSpecificStates callback will be called after a call was triggered
                       "setSpecificStatesCallEnableBegin":       variables.get_specific_states_call_enable_begin(fiber_no, motor_unit_no),# [ms] first time when to call setSpecificStates
                       "additionalArgument":                     fiber_no,
+                      "statesForTransfer":                      variables.output_intermediate_index,            # which intermediate values to use in further computation
+                      "intermediatesForTransfer":               variables.output_state_index,                   # which state values to use in further computation, Shorten / Hodgkin Huxley: state 0 = Vm
                       
-                      "outputIntermediateIndex":                variables.output_intermediate_index,            # which intermediate values to use in further computation
-                      "outputStateIndex":                       variables.output_state_index,                   # which state values to use in further computation, Shorten / Hodgkin Huxley: state 0 = Vm
                       "parametersUsedAsIntermediate":           variables.parameters_used_as_intermediate,      #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
                       "parametersUsedAsConstant":               variables.parameters_used_as_constant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
                       "parametersInitialValues":                variables.parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
                       "meshName":                               "MeshFiber_{}".format(fiber_no),
                       "prefactor":                              1.0,
                       "stimulationLogFilename":                 "out/stimulation.log",
-                    },
+                    },      
+                    "OutputWriter" : [
+                      {"format": "Paraview", "outputInterval": 1, "filename": "out/" + variables.scenario_name + "/0D_states({},{})".format(fiber_in_subdomain_coordinate_x,fiber_in_subdomain_coordinate_y), "binary": True, "fixedFormat": False, "combineFiles": True}
+                    ] if variables.states_output else []
+                    
                   },
                 } for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y)) \
                     for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x)) \

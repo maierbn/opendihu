@@ -3,7 +3,7 @@
 #include <Python.h>  // has to be the first included header
 
 #include "data_management/specialized_solver/quasi_static_nonlinear_elasticity_febio.h"
-#include "specialized_solver/solid_mechanics/quasi_static/output_connector_data_type.h"
+#include "data_management/output_connector_data.h"
 #include "output_writer/manager.h"
 
 namespace TimeSteppingScheme
@@ -18,7 +18,7 @@ public:
   typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunction::LagrangeOfOrder<1>> FunctionSpace;
   typedef ::Data::QuasiStaticNonlinearElasticityFebio Data;
   typedef FieldVariable::FieldVariable<FunctionSpace,1> FieldVariableType;
-  typedef ElasticitySolverOutputConnectorDataType<FieldVariableType> OutputConnectorDataType;
+  typedef Data::OutputConnectorDataType OutputConnectorDataType;
 
   //! constructor
   QuasiStaticNonlinearElasticitySolverFebio(DihuContext context);
@@ -42,8 +42,8 @@ public:
   Data &data();
 
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
-  //! the transfer is done by the solution_vector_mapping class
-  OutputConnectorDataType getOutputConnectorData();
+  //! the transfer is done by the output_connector_data_transfer class
+  OutputConnectorDataType &getOutputConnectorData();
 
   //! output the given data for debugging
   std::string getString(OutputConnectorDataType &data);

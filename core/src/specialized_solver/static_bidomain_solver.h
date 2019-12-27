@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Python.h>  // has to be the first included header
-#include "time_stepping_scheme/time_stepping_scheme_ode.h"
+#include "time_stepping_scheme/02_time_stepping_scheme_ode.h"
 #include "interfaces/runnable.h"
 #include "data_management/specialized_solver/static_bidomain.h"
 #include "control/dihu_context.h"
@@ -19,8 +19,8 @@ class StaticBidomainSolver :
 public:
   typedef typename FiniteElementMethodDiffusion::FunctionSpace FunctionSpace;
   typedef typename Data::StaticBidomain<typename FiniteElementMethodDiffusion::FunctionSpace>::FieldVariableType FieldVariableType;
-  typedef std::shared_ptr<FieldVariableType> OutputConnectorDataType;
   typedef typename Data::StaticBidomain<typename FiniteElementMethodDiffusion::FunctionSpace> Data;
+  typedef typename Data::OutputConnectorDataType OutputConnectorDataType;
 
   //! constructor
   StaticBidomainSolver(DihuContext context);
@@ -44,8 +44,8 @@ public:
   Data &data();
 
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
-  //! the transfer is done by the solution_vector_mapping class
-  OutputConnectorDataType getOutputConnectorData();
+  //! the transfer is done by the output_connector_data class
+  OutputConnectorDataType &getOutputConnectorData();
 
   //! output the given data for debugging
   std::string getString(OutputConnectorDataType &data);

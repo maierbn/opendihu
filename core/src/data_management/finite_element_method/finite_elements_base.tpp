@@ -37,6 +37,8 @@ initialize()
 {
   LOG(DEBUG) << "Data::FiniteElementsBase::initialize";
   Data<FunctionSpaceType>::initialize();
+
+  outputConnectorData_.addFieldVariable(this->solution());
 }
 template<typename FunctionSpaceType, int nComponents>
 void FiniteElementsBase<FunctionSpaceType,nComponents>::
@@ -168,10 +170,10 @@ setNegativeRightHandSideNeumannBoundaryConditions(std::shared_ptr<FieldVariable:
 }
 
 template<typename FunctionSpaceType, int nComponents>
-typename FiniteElementsBase<FunctionSpaceType,nComponents>::OutputConnectorDataType FiniteElementsBase<FunctionSpaceType,nComponents>::
+typename FiniteElementsBase<FunctionSpaceType,nComponents>::OutputConnectorDataType &FiniteElementsBase<FunctionSpaceType,nComponents>::
 getOutputConnectorData()
 {
-  return this->solution_;
+  return this->outputConnectorData_;
 }
 
 template<typename FunctionSpaceType, int nComponents>

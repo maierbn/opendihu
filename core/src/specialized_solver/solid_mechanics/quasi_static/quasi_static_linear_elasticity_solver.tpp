@@ -204,16 +204,13 @@ data()
 }
 
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
-//! the transfer is done by the solution_vector_mapping class
+//! the transfer is done by the output_connector_data_transfer class
 template<typename FiniteElementMethod>
-typename QuasiStaticLinearElasticitySolver<FiniteElementMethod>::OutputConnectorDataType
+typename QuasiStaticLinearElasticitySolver<FiniteElementMethod>::OutputConnectorDataType &
 QuasiStaticLinearElasticitySolver<FiniteElementMethod>::
 getOutputConnectorData()
 {
-  ElasticitySolverOutputConnectorDataType<FieldVariableType> outputConnectorData;
-  outputConnectorData.activation = this->data_.activation();
-
-  return outputConnectorData;
+  return this->data_.getOutputConnectorData();
 }
 
 //! output the given data for debugging

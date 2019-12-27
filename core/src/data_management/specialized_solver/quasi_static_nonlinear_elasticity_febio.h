@@ -9,6 +9,7 @@
 #include "data_management/data.h"
 #include "field_variable/field_variable.h"
 #include "function_space/function_space.h"
+#include "data_management/output_connector_data.h"
 
 namespace Data
 {
@@ -24,6 +25,8 @@ public:
   typedef FieldVariable::FieldVariable<FunctionSpace,1> FieldVariableType;
   typedef FieldVariable::FieldVariable<FunctionSpace,3> FieldVariableTypeVector;
   typedef FieldVariable::FieldVariable<FunctionSpace,6> FieldVariableTypeTensor;
+
+  typedef OutputConnectorData<FunctionSpace,1> OutputConnectorDataType;
 
   //! constructor
   QuasiStaticNonlinearElasticityFebio(DihuContext context);
@@ -55,6 +58,9 @@ public:
   //! print all stored data to stdout
   void print();
 
+  //! get the output connection da
+  OutputConnectorDataType &getOutputConnectorData();
+
   //! field variables that will be output by outputWriters
   typedef std::tuple<
       std::shared_ptr<FieldVariableTypeVector>,        // geometry field
@@ -83,6 +89,7 @@ private:
   std::shared_ptr<FieldVariableTypeTensor> greenLagrangeStrain_; ///< field variable of the Green-Lagrange strain, E
   std::shared_ptr<FieldVariableType> relativeVolume_; ///< field variable of the relative volume (determinant of deformation gradient)
 
+  OutputConnectorDataType outputConnectorData_;    ///< the object that stores all components of field variables that will be transferred to other solvers
 };
 
 } // namespace Data

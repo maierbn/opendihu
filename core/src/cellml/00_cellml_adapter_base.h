@@ -8,26 +8,8 @@
 #include "output_writer/manager.h"
 #include "function_space/function_space.h"
 #include "data_management/cellml_adapter.h"
+#include "data_management/output_connector_data.h"
 
-/** The data type of the output connector of the CellML adapter.
- *  This is the data that will be transferred to connected solvers.
- *  The stateVariable can, e.g., be configured to contain Vm (by setting "outputStateIndex" in python settings).
- *  The intermediateVariable can, e.g., be configured to contain alpha (by setting "outputIntermediateIndex" in python settings).
- */
-template <int nStates, int nIntermediates, typename FunctionSpaceType>
-struct CellMLOutputConnectorDataType
-{
-  Data::ScaledFieldVariableComponent<FunctionSpaceType,nStates> stateVariable;          //< one component of the states
-  Data::ScaledFieldVariableComponent<FunctionSpaceType,nIntermediates> intermediateVariable;   //< one component of the intermediates
-};
-
-// operator used for output
-template <int nStates, int nIntermediates, typename FunctionSpaceType>
-std::ostream &operator<<(std::ostream &stream, const CellMLOutputConnectorDataType<nStates,nIntermediates,FunctionSpaceType> &rhs)
-{
-  stream << "<states: " << rhs.stateVariable << ", intermediates: " << rhs.intermediateVariable << ")>";
-  return stream;
-}
 
 
 /** This is the base class of the CellmlAdapter, that handles common functionality.
@@ -48,7 +30,13 @@ public:
   typedef FieldVariable::FieldVariable<FunctionSpaceType,nIntermediates_> FieldVariableIntermediates;
   typedef FieldVariable::FieldVariable<FunctionSpaceType,nStates> FieldVariableStates;
   typedef Data::CellmlAdapter<nStates, nIntermediates_, FunctionSpaceType> Data;
-  typedef CellMLOutputConnectorDataType<nStates,nIntermediates_,FunctionSpaceType> OutputConnectorDataType;
+
+/** The data type of the output connector of the CellML adapter.
+ *  This is the data that will be transferred to connected solvers.
+ *  The first value, value0, is the state variable and can, e.g., be configured to contain Vm (by setting "outputStateIndex" in python settings).
+ *  The second value, value1, can, e.g., be configured to contain alpha (by setting "outputIntermediateIndex" in python settings).
+ */
+  typedef ::Data::OutputConnectorData<FunctionSpaceType,nStates,nIntermediates_> OutputConnectorDataType;
 
   //! constructor from context
   CellmlAdapterBase(DihuContext context, bool noNewOutputWriter);
@@ -84,15 +72,6 @@ public:
   //! get a vector with the names of the states
   void getStateNames(std::vector<std::string> &stateNames);
 
-  //! get the outputStateIndex value, which is the index of the state that should be used further in an operator splitting scheme, for electrophysiology application this is the states of Vm
-  int outputStateIndex();
-
-  //! get the outputIntermediateIndex, which is the index of the intermediate that should be used for further computation in the operator splitting
-  int outputIntermediateIndex();
-
-  //! get the prefactor value, i.e. the factor with which the solution will be scaled before the transfer in an operator splitting scheme
-  double prefactor();
-
   //! get the const number of intermediates
   constexpr int nIntermediates() const;
 
@@ -100,8 +79,8 @@ public:
   std::shared_ptr<FieldVariableIntermediates> intermediates();
 
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
-  //! the transfer is done by the solution_vector_mapping class
-  CellMLOutputConnectorDataType<nStates,nIntermediates_,FunctionSpaceType> getOutputConnectorData();
+  //! the transfer is done by the output_connector_data class
+  OutputConnectorDataType &getOutputConnectorData();
 
 
 protected:
@@ -123,7 +102,6 @@ protected:
    
   int outputStateIndex_ = 0;   ///< the index of the state that should be used further in an operator splitting scheme, for electrophysiology application this is the states of Vm
   int outputIntermediateIndex_ = 0;  ///< the index of the intermediates that should be transferred to further solvers, analogous to outputStateIndex
-  double prefactor_ = 0;       ///< the factor with which the solution will be scaled before the transfer in an operator splitting scheme
   int internalTimeStepNo_ = 0; ///< the counter how often the right hand side was called
 
   //std::vector<double> states_;    ///< vector of states, that are computed by rhsRoutine, this is not needed as member variable, because the states are directly stored in the Petsc Vecs of the solving time stepping scheme

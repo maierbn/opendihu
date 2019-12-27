@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Python.h>  // has to be the first included header
-#include "time_stepping_scheme/time_stepping_explicit.h"
+#include "time_stepping_scheme/03_time_stepping_explicit.h"
 #include "interfaces/runnable.h"
 #include "data_management/time_stepping/time_stepping.h"
 #include "control/dihu_context.h"

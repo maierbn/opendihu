@@ -209,27 +209,6 @@ getStateNames(std::vector<std::string> &stateNames)
 }
 
 template<int nStates, int nIntermediates_, typename FunctionSpaceType>
-int CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
-outputStateIndex()
-{
-  return outputStateIndex_;
-}
-
-template<int nStates, int nIntermediates_, typename FunctionSpaceType>
-int CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
-outputIntermediateIndex()
-{
-  return outputIntermediateIndex_;
-}
-
-template<int nStates, int nIntermediates_, typename FunctionSpaceType>
-double CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
-prefactor()
-{
-  return prefactor_;
-}
-
-template<int nStates, int nIntermediates_, typename FunctionSpaceType>
 std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nIntermediates_>> CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
 intermediates()
 {
@@ -244,19 +223,8 @@ nIntermediates() const
 }
 
 template<int nStates, int nIntermediates_, typename FunctionSpaceType>
-CellMLOutputConnectorDataType<nStates,nIntermediates_,FunctionSpaceType> CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
+typename CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::OutputConnectorDataType &CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
 getOutputConnectorData()
 {
-  // create an object that contains the solution data
-  CellMLOutputConnectorDataType<nStates,nIntermediates_,FunctionSpaceType> outputConnectorData;
-
-  outputConnectorData.stateVariable.values = this->data_.states();
-  outputConnectorData.stateVariable.componentNo = outputStateIndex_;
-  outputConnectorData.stateVariable.scalingFactor = prefactor_;
-
-  outputConnectorData.intermediateVariable.values = this->data_.intermediates();
-  outputConnectorData.intermediateVariable.componentNo = outputIntermediateIndex_;
-  outputConnectorData.intermediateVariable.scalingFactor = prefactor_;
-
-  return outputConnectorData;
+  return this->data_.getOutputConnectorData();
 }

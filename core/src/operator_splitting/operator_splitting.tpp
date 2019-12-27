@@ -17,7 +17,8 @@ OperatorSplitting<TimeStepping1, TimeStepping2>::
 OperatorSplitting(DihuContext context, std::string schemeName) :
   ::TimeSteppingScheme::TimeSteppingScheme(context),
   timeStepping1_(context_[schemeName]["Term1"]),
-  timeStepping2_(context_[schemeName]["Term2"]), initialized_(false)
+  timeStepping2_(context_[schemeName]["Term2"]),
+  outputConnection_(context_[schemeName].getPythonConfig()), initialized_(false)
 {
 
   PythonConfig topLevelSettings = context_.getPythonConfig();
@@ -45,7 +46,8 @@ initialize()
   TimeSteppingScheme::initialize();
   timeStepOutputInterval_ = specificSettings_.getOptionInt("timeStepOutputInterval", 100, PythonUtility::Positive);
 
-  transferSlotName_ = specificSettings_.getOptionString("transferSlotName", "");
+  if (specificSettings_.hasKey("transferSlotName"))
+    LOG(WARNING) << "In " << specificSettings_ << ", option \"transferSlotName\" is no longer used, use \"connectedSlotsTerm1To2\" and \"connectedSlotsTerm2To1\" instead.";
 
   LOG(TRACE) << "  OperatorSplitting::initialize done, timeSpan=[" << this->startTime_<< "," << this->endTime_<< "]"
     << ", n steps: " << this->numberTimeSteps_;
@@ -69,7 +71,6 @@ initialize()
   logKeyTimeStepping2AdvanceTimeSpan_ = this->durationLogKey_ + std::string("_advanceTimeSpan2");  ///< key for logging of the duration of the advanceTimeSpan() call of timeStepping2
   logKeyTransfer12_ = this->durationLogKey_ + std::string("_transfer12");  ///< key for logging of the duration of data transfer from timestepping 1 to 2
   logKeyTransfer21_ = this->durationLogKey_ + std::string("_transfer21");  ///< key for logging of the duration of data transfer from timestepping 2 to 1
-
 
   initialized_ = true;
 }
@@ -108,7 +109,7 @@ run()
 }
 
 template<typename TimeStepping1, typename TimeStepping2>
-typename OperatorSplitting<TimeStepping1, TimeStepping2>::OutputConnectorDataType OperatorSplitting<TimeStepping1, TimeStepping2>::
+typename OperatorSplitting<TimeStepping1, TimeStepping2>::OutputConnectorDataType &OperatorSplitting<TimeStepping1, TimeStepping2>::
 getOutputConnectorData()
 {
   return timeStepping1_.getOutputConnectorData();

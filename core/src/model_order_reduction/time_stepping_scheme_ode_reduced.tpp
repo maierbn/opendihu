@@ -6,8 +6,8 @@
 #include<petscmat.h>
 #include "mesh/mesh_manager/mesh_manager.h"
 #include "function_space/function_space.h"
-#include "time_stepping_scheme/time_stepping_scheme.h"
-#include "time_stepping_scheme/time_stepping_scheme_ode.h"
+#include "time_stepping_scheme/00_time_stepping_scheme.h"
+#include "time_stepping_scheme/02_time_stepping_scheme_ode.h"
 #include "data_management/time_stepping/time_stepping.h"
 #include "control/python_config.h"
 
@@ -151,6 +151,8 @@ namespace ModelOrderReduction
   typename TimeSteppingSchemeOdeReduced<TimeSteppingType>::OutputConnectorDataType TimeSteppingSchemeOdeReduced<TimeSteppingType>::
   getOutputConnectorData()
   {
-    return this->data_->solution();
+    OutputConnectorDataType outputConnectorData;
+    outputConnectorData.addFieldVariable(this->data_->solution());
+    return outputConnectorData;
   }
 } //namespace

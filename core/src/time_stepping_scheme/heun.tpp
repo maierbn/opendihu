@@ -55,7 +55,7 @@ void Heun<DiscretizableInTime>::advanceTimeSpan()
       LOG(INFO) << "Heun, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
     }
 
-    VLOG(1) << "starting from solution: " << *this->data_->solution();
+    VLOG(1) << "starting from solution (" << this->data_->solution() << "): " << *this->data_->solution();
 
     // advance solution value to compute u* first
     // compute  delta_u = f(u_{t})
@@ -87,7 +87,7 @@ void Heun<DiscretizableInTime>::advanceTimeSpan()
     // apply the prescribed boundary condition values
     this->applyBoundaryConditions();
 
-    VLOG(1) << *this->data_->solution();
+    VLOG(1) << "final solution (" << this->data_->solution() << "): " << *this->data_->solution();
 
 #ifndef NDEBUG
     if (this->data_->solution()->containsNanOrInf())

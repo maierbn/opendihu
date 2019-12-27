@@ -155,7 +155,8 @@ MappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSourc
 
 template<typename FunctionSpaceSourceType, typename FunctionSpaceTargetType>
   template<int nComponentsSource, int nComponentsTarget>
-void MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>::mapLowToHighDimension(
+void MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>::
+mapLowToHighDimension(
   FieldVariable::FieldVariable<FunctionSpaceSourceType,nComponentsSource> &fieldVariableSource, int componentNoSource,
   FieldVariable::FieldVariable<FunctionSpaceTargetType,nComponentsTarget> &fieldVariableTarget, int componentNoTarget,
   FieldVariable::FieldVariable<FunctionSpaceTargetType,1> &targetFactorSum)
@@ -215,7 +216,8 @@ void MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>::map
 
 template<typename FunctionSpaceSourceType, typename FunctionSpaceTargetType>
   template<int nComponents>
-void MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>::mapLowToHighDimension(
+void MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>::
+mapLowToHighDimension(
   FieldVariable::FieldVariable<FunctionSpaceSourceType,nComponents> &fieldVariableSource,
   FieldVariable::FieldVariable<FunctionSpaceTargetType,nComponents> &fieldVariableTarget,
   FieldVariable::FieldVariable<FunctionSpaceTargetType,1> &targetFactorSum
@@ -275,7 +277,8 @@ void MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>::map
 //! but the function space names are different than in the other methods.
 template<typename FunctionSpaceTargetType, typename FunctionSpaceSourceType>
 template<int nComponents>
-void MappingBetweenMeshes<FunctionSpaceTargetType, FunctionSpaceSourceType>::mapHighToLowDimension(
+void MappingBetweenMeshes<FunctionSpaceTargetType, FunctionSpaceSourceType>::
+mapHighToLowDimension(
   FieldVariable::FieldVariable<FunctionSpaceSourceType,nComponents> &fieldVariableSource,
   FieldVariable::FieldVariable<FunctionSpaceTargetType,nComponents> &fieldVariableTarget
 )
@@ -283,11 +286,11 @@ void MappingBetweenMeshes<FunctionSpaceTargetType, FunctionSpaceSourceType>::map
   const dof_no_t nDofsLocalTarget = fieldVariableTarget.functionSpace()->nDofsLocalWithoutGhosts();
   const int nDofsPerSourceElement = FunctionSpaceSourceType::nDofsPerElement();
 
-  std::vector<VecD<nComponents>> sourceValues;
-  fieldVariableSource.getValuesWithoutGhosts(sourceValues);
-
   if (VLOG_IS_ON(1))
   {
+    std::vector<VecD<nComponents>> sourceValues;
+    fieldVariableSource.getValuesWithoutGhosts(sourceValues);
+
     VLOG(1) << "map " << fieldVariableSource.name() << " (" << fieldVariableSource.functionSpace()->meshName()
       << ") -> " << fieldVariableTarget.name() << " (" << fieldVariableTarget.functionSpace()->meshName() << ")";
 
@@ -314,6 +317,70 @@ void MappingBetweenMeshes<FunctionSpaceTargetType, FunctionSpaceSourceType>::map
 
     VecD<nComponents> targetValue = sourceValues * targetMappingInfo_[targetDofNoLocal].scalingFactors;
     fieldVariableTarget.setValue(targetDofNoLocal, targetValue);
+
+    if (VLOG_IS_ON(2))
+    {
+      VLOG(2) << "  target dof " << targetDofNoLocal << ", source element no local: " << sourceElementNoLocal
+        << ", sourceValues: " << sourceValues
+        << ", scaling factors: " << targetMappingInfo_[targetDofNoLocal].scalingFactors << ", target value: " << targetValue;
+    }
+  }
+}
+
+//! map data between specific components of the field variables in the source and target function spaces
+//! note the swapped template arguments of MappingBetweenMeshes, in this whole method the mapping is still source->target,
+//! but the function space names are different than in the other methods.
+template<typename FunctionSpaceTargetType, typename FunctionSpaceSourceType>
+template<int nComponentsSource, int nComponentsTarget>
+void MappingBetweenMeshes<FunctionSpaceTargetType, FunctionSpaceSourceType>::
+mapHighToLowDimension(
+  FieldVariable::FieldVariable<FunctionSpaceSourceType,nComponentsSource> &fieldVariableSource, int componentNoSource,
+  FieldVariable::FieldVariable<FunctionSpaceTargetType,nComponentsTarget> &fieldVariableTarget, int componentNoTarget
+)
+{
+  assert(componentNoSource >= 0 && componentNoSource < nComponentsSource);
+  assert(componentNoTarget >= 0 && componentNoTarget < nComponentsTarget);
+
+  const dof_no_t nDofsLocalTarget = fieldVariableTarget.functionSpace()->nDofsLocalWithoutGhosts();
+  const int nDofsPerSourceElement = FunctionSpaceSourceType::nDofsPerElement();
+
+  if (VLOG_IS_ON(1))
+  {
+    std::vector<double> sourceValues;
+    fieldVariableSource.getValuesWithoutGhosts(componentNoSource, sourceValues);
+
+    VLOG(1) << "map " << fieldVariableSource.name() << "." << componentNoSource
+      << " (" << fieldVariableSource.functionSpace()->meshName()
+      << ") -> " << fieldVariableTarget.name() << "." << componentNoTarget
+      << " (" << fieldVariableTarget.functionSpace()->meshName() << ")";
+
+    VLOG(1) << "source has " << nDofsLocalTarget << " local dofs";
+    VLOG(1) << fieldVariableSource;
+    VLOG(1) << "extracted source values: " << sourceValues;
+  }
+
+  // visualization for 1D-1D: s=source, t=target
+  // s--t--------s-----t-----s
+
+  // loop over all local dofs of the target functionSpace, which was the source function space when the mapping was initialized
+  for (dof_no_t targetDofNoLocal = 0; targetDofNoLocal != nDofsLocalTarget; targetDofNoLocal++)
+  {
+    // if source dof is outside of target mesh
+    if (!targetMappingInfo_[targetDofNoLocal].mapThisDof)
+      continue;
+
+    element_no_t sourceElementNoLocal = targetMappingInfo_[targetDofNoLocal].elementNoLocal;
+
+    // get source values of the element where targetDofNoLocal is in
+    std::array<double,nDofsPerSourceElement> sourceValues;
+    fieldVariableSource.getElementValues(componentNoSource, sourceElementNoLocal, sourceValues);
+
+    double targetValue = 0;
+    for (int i = 0; i < nDofsPerSourceElement; i++)
+    {
+      targetValue += sourceValues[i] * targetMappingInfo_[targetDofNoLocal].scalingFactors[i];
+    }
+    fieldVariableTarget.setValue(componentNoTarget, targetDofNoLocal, targetValue, INSERT_VALUES);
 
     if (VLOG_IS_ON(2))
     {

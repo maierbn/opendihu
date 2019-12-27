@@ -68,8 +68,6 @@ CellmlAdapter(const CellmlAdapter &rhs, std::shared_ptr<FunctionSpace> functionS
   this->nIntermediatesInSource_ = rhs.nIntermediatesInSource_;
   this->nParameters_ = rhs.nParameters_;
   this->nConstants_ = rhs.nConstants_;
-  this->outputStateIndex_ = rhs.outputStateIndex_;
-  this->prefactor_ = rhs.prefactor_;
   this->internalTimeStepNo_ = rhs.internalTimeStepNo_;
   this->inputFileTypeOpenCMISS_ = rhs.inputFileTypeOpenCMISS_;
 
@@ -121,10 +119,10 @@ initialize()
   
   Control::PerformanceMeasurement::stop("durationInitCellml");
 
-  this->outputStateIndex_ = this->specificSettings_.getOptionInt("outputStateIndex", 0, PythonUtility::NonNegative);
-  this->outputIntermediateIndex_ = this->specificSettings_.getOptionInt("outputIntermediateIndex", 0, PythonUtility::NonNegative);
-
-  this->prefactor_ = this->specificSettings_.getOptionDouble("prefactor", 1.0);
+  if (this->specificSettings_.hasKey("prefactor"))
+  {
+    LOG(WARNING) << this->specificSettings_ << "[\"prefactor\"] is no longer an option! There is no more functionality to scale values during transfer.";
+  }
 
   this->internalTimeStepNo_ = 0;
 

@@ -309,6 +309,19 @@ initialize()
   
   data_.setInstancesData(instancesLocal_);
 
+  // initialize output connector data
+  outputConnectorData_.resize(nInstancesLocal_);
+  for (int i = 0; i < nInstancesLocal_; i++)
+  {
+    VLOG(1) << "MultipleInstances::getOutputConnectorData";
+    outputConnectorData_[i] = instancesLocal_[i].getOutputConnectorData();
+
+    if (VLOG_IS_ON(1))
+    {
+      VLOG(1) << "instance " << i << "/" << nInstancesLocal_ << " is " << outputConnectorData_[i];
+    }
+  }
+
   if (this->logKey_ != "")
   {
     std::stringstream logKey;
@@ -387,22 +400,10 @@ reset()
 }
 
 template<typename TimeSteppingScheme>
-typename MultipleInstances<TimeSteppingScheme>::OutputConnectorDataType MultipleInstances<TimeSteppingScheme>::
+typename MultipleInstances<TimeSteppingScheme>::OutputConnectorDataType &MultipleInstances<TimeSteppingScheme>::
 getOutputConnectorData()
 {
-  std::vector<typename TimeSteppingScheme::OutputConnectorDataType> output(nInstancesLocal_);
-
-  for (int i = 0; i < nInstancesLocal_; i++)
-  {
-    VLOG(1) << "MultipleInstances::getOutputConnectorData";
-    output[i] = instancesLocal_[i].getOutputConnectorData();
-
-    if (VLOG_IS_ON(1))
-    {
-      VLOG(1) << "instance " << i << "/" << nInstancesLocal_ << " is " << output[i];
-    }
-  }
-  return output;
+  return outputConnectorData_;
 }
 
 

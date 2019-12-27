@@ -29,6 +29,9 @@ initialize()
 {
   // call initialize of base class
   Data<FunctionSpaceType>::initialize();
+
+  outputConnectorData_.addFieldVariable(this->activation_);
+  outputConnectorData_.addGeometryField(std::make_shared<VectorFieldVariableType>(this->functionSpace_->geometryField()));
 }
 
 template<typename DataLinearElasticityType>
@@ -139,6 +142,14 @@ debug()
   aa++;
   LOG(INFO) << "--";
   solution->setValuesWithoutGhosts(values);
+}
+
+
+template<typename DataLinearElasticityType>
+typename QuasiStaticLinearElasticity<DataLinearElasticityType>::OutputConnectorDataType &QuasiStaticLinearElasticity<DataLinearElasticityType>::
+getOutputConnectorData()
+{
+  return outputConnectorData_;
 }
 
 template<typename DataLinearElasticityType>

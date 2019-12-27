@@ -90,7 +90,7 @@ data()
 }
 
 template<typename Solver>
-typename OutputSurface<Solver>::OutputConnectorDataType OutputSurface<Solver>::
+typename OutputSurface<Solver>::OutputConnectorDataType &OutputSurface<Solver>::
 getOutputConnectorData()
 {
   return solver_.getOutputConnectorData();

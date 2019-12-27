@@ -20,6 +20,8 @@ initialize()
 {
   // call initialize of base class
   Data<FunctionSpace>::initialize();
+
+  outputConnectorData_.addFieldVariable(activation());
 }
 
 void QuasiStaticNonlinearElasticityFebio::
@@ -102,6 +104,12 @@ relativeVolume()
 void QuasiStaticNonlinearElasticityFebio::
 print()
 {
+}
+
+typename QuasiStaticNonlinearElasticityFebio::OutputConnectorDataType &QuasiStaticNonlinearElasticityFebio::
+getOutputConnectorData()
+{
+  return outputConnectorData_;
 }
 
 typename QuasiStaticNonlinearElasticityFebio::FieldVariablesForOutputWriter QuasiStaticNonlinearElasticityFebio::

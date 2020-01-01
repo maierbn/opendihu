@@ -22,6 +22,7 @@ public:
 
   typedef FieldVariable::FieldVariable<FunctionSpaceType,1> FieldVariableType;
   typedef FieldVariable::FieldVariable<FunctionSpaceType,3> GradientFieldVariableType;
+  typedef std::pair<std::vector<Vec>,std::vector<std::shared_ptr<FieldVariableType>>> OutputConnectorDataType;
 
   //! constructor
   Multidomain(DihuContext context);
@@ -56,8 +57,15 @@ public:
   //! initialize and set nCompartments_
   void initialize(int nCompartments);
 
+  //! set the subvectors solution data
+  void setSubvectorsSolution(const std::vector<Vec> &subvectorsSolution);
+
   //! print all stored data to stdout
   void print();
+
+  //! get the output connection da
+  OutputConnectorDataType &getOutputConnectorData();
+
 
   //! field variables that will be output by outputWriters
   typedef std::tuple<
@@ -86,6 +94,10 @@ private:
   std::shared_ptr<FieldVariableType> relativeFactorTotal_;  ///< relative factor for phi_e, (1 + sum_k f_r^k), at each point
   std::shared_ptr<FieldVariableType> extraCellularPotential_;  ///< the phi_e value which is the extra-cellular potential
   std::shared_ptr<FieldVariableType> zero_;  ///< a field variable with constant value of zero, needed for the nested rhs vector
+  std::vector<Vec> subvectorsSolution_;   ///< a vector of the Petsc vecs that are used during computation
+
+  OutputConnectorDataType outputConnectorData_;    ///< the object that stores all components of field variables that will be transferred to other solvers
+
 };
 
 } // namespace Data

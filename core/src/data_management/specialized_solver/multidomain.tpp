@@ -35,6 +35,17 @@ initialize(int nCompartments)
 
 template<typename FunctionSpaceType>
 void Multidomain<FunctionSpaceType>::
+setSubvectorsSolution(const std::vector<Vec> &subvectorsSolution)
+{
+  subvectorsSolution_ = subvectorsSolution;
+
+  // initialize output connector data
+  outputConnectorData_.first = this->subvectorsSolution_;
+  outputConnectorData_.second = this->transmembranePotential_;
+}
+
+template<typename FunctionSpaceType>
+void Multidomain<FunctionSpaceType>::
 createPetscObjects()
 {
   LOG(DEBUG) << "Multidomain::createPetscObject for " << nCompartments_ << " compartments.";
@@ -132,6 +143,13 @@ std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> Multidomain<F
 zero()
 {
   return this->zero_;
+}
+
+template<typename FunctionSpaceType>
+typename Multidomain<FunctionSpaceType>::OutputConnectorDataType &Multidomain<FunctionSpaceType>::
+getOutputConnectorData()
+{
+  return outputConnectorData_;
 }
 
 template<typename FunctionSpaceType>

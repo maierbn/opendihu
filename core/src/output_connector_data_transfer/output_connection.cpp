@@ -109,7 +109,7 @@ std::string OutputConnection::getDebugInformation() const
   {
     result << "  Term1.slot " << i << " (";
 
-    int vectorNo = i/nFieldVariablesTerm1Vector1_;
+    int vectorNo = std::min(1,i/nFieldVariablesTerm1Vector1_);
     int vectorIndex = i - vectorNo*nFieldVariablesTerm1Vector1_;
 
     result << "Term1.variable" << vectorNo+1 << "[" << vectorIndex << "], ";
@@ -120,32 +120,53 @@ std::string OutputConnection::getDebugInformation() const
     }
     else
     {
-      result << fieldVariableNamesTerm1Vector2_[vectorIndex];
+      if (vectorIndex < fieldVariableNamesTerm1Vector2_.size())
+      {
+        result << fieldVariableNamesTerm1Vector2_[vectorIndex];
+      }
+      else
+      {
+        result << "(unknown field variable)";
+      }
     }
 
     result << ") -> Term2.slot " << connectorTerm1To2_[i].index << " (";
 
-    vectorNo = connectorTerm1To2_[i].index/nFieldVariablesTerm2Vector1_;
-    vectorIndex = connectorTerm1To2_[i].index - vectorNo*nFieldVariablesTerm2Vector1_;
-
-    result << "Term2.variable" << vectorNo+1 << "[" << vectorIndex << "], ";
-
-    if (vectorNo == 0)
+    if (connectorTerm1To2_[i].index == -1)
     {
-      result << fieldVariableNamesTerm2Vector1_[vectorIndex];
+      result << "None)";
     }
     else
     {
-      result << fieldVariableNamesTerm2Vector2_[vectorIndex];
-    }
+      vectorNo = std::min(1,connectorTerm1To2_[i].index/nFieldVariablesTerm2Vector1_);
+      vectorIndex = connectorTerm1To2_[i].index - vectorNo*nFieldVariablesTerm2Vector1_;
 
-    if (connectorTerm1To2_[i].avoidCopyIfPossible)
-    {
-      result << ") avoidCopyIfPossible";
-    }
-    else
-    {
-      result << ") data copy";
+      result << "Term2.variable" << vectorNo+1 << "[" << vectorIndex << "], ";
+
+      if (vectorNo == 0)
+      {
+        result << fieldVariableNamesTerm2Vector1_[vectorIndex];
+      }
+      else
+      {
+        if (vectorIndex < fieldVariableNamesTerm2Vector2_.size())
+        {
+          result << fieldVariableNamesTerm2Vector2_[vectorIndex];
+        }
+        else
+        {
+          result << "(unknown field variable)";
+        }
+      }
+
+      if (connectorTerm1To2_[i].avoidCopyIfPossible)
+      {
+        result << ") avoidCopyIfPossible";
+      }
+      else
+      {
+        result << ") data copy";
+      }
     }
     result << std::endl;
   }
@@ -161,7 +182,7 @@ std::string OutputConnection::getDebugInformation() const
   {
     result << "  Term2.slot " << i << " (";
 
-    int vectorNo = i/nFieldVariablesTerm2Vector1_;
+    int vectorNo = std::min(1,i/nFieldVariablesTerm2Vector1_);
     int vectorIndex = i - vectorNo*nFieldVariablesTerm2Vector1_;
 
     result << "Term2.variable" << vectorNo+1 << "[" << vectorIndex << "], ";
@@ -172,32 +193,53 @@ std::string OutputConnection::getDebugInformation() const
     }
     else
     {
-      result << fieldVariableNamesTerm2Vector2_[vectorIndex];
+      if (vectorIndex < fieldVariableNamesTerm2Vector2_.size())
+      {
+        result << fieldVariableNamesTerm2Vector2_[vectorIndex];
+      }
+      else
+      {
+        result << "(unknown field variable)";
+      }
     }
 
     result << ") -> Term1.slot " << connectorTerm2To1_[i].index << " (";
 
-    vectorNo = connectorTerm2To1_[i].index/nFieldVariablesTerm1Vector1_;
-    vectorIndex = connectorTerm2To1_[i].index - vectorNo*nFieldVariablesTerm1Vector1_;
-
-    result << "Term1.variable" << vectorNo+1 << "[" << vectorIndex << "], ";
-
-    if (vectorNo == 0)
+    if (connectorTerm2To1_[i].index == -1)
     {
-      result << fieldVariableNamesTerm1Vector1_[vectorIndex];
+      result << "None)";
     }
     else
     {
-      result << fieldVariableNamesTerm1Vector2_[vectorIndex];
-    }
+      vectorNo = std::min(1,connectorTerm2To1_[i].index/nFieldVariablesTerm1Vector1_);
+      vectorIndex = connectorTerm2To1_[i].index - vectorNo*nFieldVariablesTerm1Vector1_;
 
-    if (connectorTerm2To1_[i].avoidCopyIfPossible)
-    {
-      result << ") avoidCopyIfPossible";
-    }
-    else
-    {
-      result << ") data copy";
+      result << "Term1.variable" << vectorNo+1 << "[" << vectorIndex << "], ";
+
+      if (vectorNo == 0)
+      {
+        result << fieldVariableNamesTerm1Vector1_[vectorIndex];
+      }
+      else
+      {
+        if (vectorIndex < fieldVariableNamesTerm1Vector2_.size())
+        {
+          result << fieldVariableNamesTerm1Vector2_[vectorIndex];
+        }
+        else
+        {
+          result << "(unknown field variable)";
+        }
+      }
+
+      if (connectorTerm2To1_[i].avoidCopyIfPossible)
+      {
+        result << ") avoidCopyIfPossible";
+      }
+      else
+      {
+        result << ") data copy";
+      }
     }
     result << std::endl;
   }
@@ -250,7 +292,11 @@ bool OutputConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
 
     int toIndex = connectorTerm1To2_[fromIndex].index;
 
-    toVectorNo = int(toIndex/nFieldVariablesTerm2Vector1_);
+    // if toIndex is set to None in the python config, this means we do not want to have a connection in this slot and it is no warning
+    if (toIndex == -1)
+      return false;
+
+    toVectorNo = std::min(1,int(toIndex/nFieldVariablesTerm2Vector1_));
     toVectorIndex = toIndex - toVectorNo*nFieldVariablesTerm2Vector1_;
 
     avoidCopyIfPossible = connectorTerm1To2_[fromIndex].avoidCopyIfPossible;
@@ -309,10 +355,13 @@ bool OutputConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
       return false;
     }
 
-
     int toIndex = connectorTerm2To1_[fromIndex].index;
 
-    toVectorNo = int(toIndex/nFieldVariablesTerm1Vector1_);
+    // if toIndex is set to None in the python config, this means we do not want to have a connection in this slot and it is no warning
+    if (toIndex == -1)
+      return false;
+
+    toVectorNo = std::min(1,int(toIndex/nFieldVariablesTerm1Vector1_));
     toVectorIndex = toIndex - toVectorNo*nFieldVariablesTerm1Vector1_;
 
     avoidCopyIfPossible = connectorTerm2To1_[fromIndex].avoidCopyIfPossible;

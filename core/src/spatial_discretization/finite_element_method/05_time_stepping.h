@@ -56,6 +56,10 @@ public:
   //! return the mesh that is stored in the data class
   std::shared_ptr<FunctionSpaceType> functionSpace();
 
+  //! pass on the output connector data object from the timestepping scheme object to be modified,
+  //! this is needed for other DiscretizableInTime objects, but not for finite element method
+  void setOutputConnectorData(Data::OutputConnectorData<FunctionSpaceType,nComponents_> &outputConnectorDataTimeStepping){}
+
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
   //! the transfer is done by the output_connector_data_transfer class
   OutputConnectorDataType &getOutputConnectorData();

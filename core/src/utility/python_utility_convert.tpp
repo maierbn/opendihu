@@ -37,7 +37,7 @@ struct PythonUtility::convertFromPython<int>
 
       if (double(int(valueDouble)) != valueDouble)      // if value is not e.g. 2.0
       {
-        LOG(WARNING) << "convertFromPython: object is float and not int: " << object;
+        LOG(WARNING) << "convertFromPython<int>: object is float and not int: " << object;
       }
 
       return int(valueDouble);
@@ -47,9 +47,14 @@ struct PythonUtility::convertFromPython<int>
       std::string valueString = pyUnicodeToString(object);
       return atoi(valueString.c_str());
     }
+    else if (object == Py_None)
+    {
+      LOG(DEBUG) << "convertFromPython<int>: object is None, parse as -1";
+      return -1;    // None translates to -1
+    }
     else
     {
-      LOG(WARNING) << "convertFromPython: object is no int: " << object;
+      LOG(WARNING) << "convertFromPython<int>: object is no int: " << object;
     }
     return defaultValue;
   }

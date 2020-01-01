@@ -11,7 +11,7 @@ void SolutionVectorMapping<
   std::vector<OutputConnectorDataType1>,
   std::vector<OutputConnectorDataType2>
 >::transfer(const std::vector<OutputConnectorDataType1> &transferableSolutionData1,
-            const std::vector<OutputConnectorDataType2> &transferableSolutionData2,
+            std::vector<OutputConnectorDataType2> &transferableSolutionData2,
             OutputConnection &outputConnection)
 {
   VLOG(1) << "Solution vector mapping (output_connector_data_transfer_vector.tpp)";

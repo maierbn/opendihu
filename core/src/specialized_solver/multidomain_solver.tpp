@@ -217,6 +217,8 @@ initialize()
   subvectorsSolution_[nCompartments_] = dataMultidomain_.extraCellularPotential()->valuesGlobal();
   ierr = VecZeroEntries(subvectorsSolution_[nCompartments_]); CHKERRV(ierr);
 
+  dataMultidomain_.setSubvectorsSolution(subvectorsSolution_);
+
   // create the nested vectors
   LOG(DEBUG) << "create nested vector";
   ierr = VecCreateNest(this->rankSubset_->mpiCommunicator(), nCompartments_+1, NULL, subvectorsRightHandSide_.data(), &rightHandSide_); CHKERRV(ierr);
@@ -461,8 +463,7 @@ getOutputConnectorData()
 {
   LOG(DEBUG) << "getOutputConnectorData, size of Vm vector: " << this->dataMultidomain_.transmembranePotential().size();
 
-  return std::pair<std::vector<Vec>,std::vector<std::shared_ptr<FieldVariableType>>>(
-    this->subvectorsSolution_, this->dataMultidomain_.transmembranePotential());
+  return dataMultidomain_.getOutputConnectorData();
 }
 
 } // namespace TimeSteppingScheme

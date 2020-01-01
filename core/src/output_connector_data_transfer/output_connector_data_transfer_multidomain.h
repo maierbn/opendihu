@@ -8,6 +8,7 @@
 #include "cellml/00_cellml_adapter_base.h"
 #include "control/types.h"
 #include "mesh/mesh.h"
+#include "output_connector_data_transfer/output_connection.h"
 
 /** Transfer between the output from multiple_instances and MultidomainSolver
  */
@@ -21,7 +22,7 @@ public:
   //! transfer the data from transferableSolutionData1 to transferableSolutionData2, as efficient as possible, where there are multiple slots that could be transferred (e.g. at cellmlAdapter), use the one specified by transferSlotName
   static void transfer(const std::vector<Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>> &transferableSolutionData1,
                        std::pair<std::vector<Vec>,std::vector<std::shared_ptr<FieldVariableType2>>> transferableSolutionData2,
-                       const std::string transferSlotName);
+                       OutputConnection &outputConnection);
 };
 
 /** Transfer between the output from MultidomainSolver and MultipleInstances
@@ -36,7 +37,7 @@ public:
   //! transfer the data from transferableSolutionData1 to transferableSolutionData2, as efficient as possible, where there are multiple slots that could be transferred (e.g. at cellmlAdapter), use the one specified by transferSlotName
   static void transfer(const std::pair<std::vector<Vec>,std::vector<std::shared_ptr<FieldVariableType1>>> &transferableSolutionData1,
                        const std::vector<Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>> &transferableSolutionData2,
-                       const std::string transferSlotName);
+                       OutputConnection &outputConnection);
 };
 
 #include "output_connector_data_transfer/output_connector_data_transfer_multidomain.tpp"

@@ -11,7 +11,7 @@ void SolutionVectorMapping<
   Data::ComponentOfFieldVariable<FunctionSpaceType1,nComponents1>,   // <fieldVariableType,componentNo,prefactor>
   Data::ComponentOfFieldVariable<FunctionSpaceType2,nComponents2>
 >::transfer(const Data::ComponentOfFieldVariable<FunctionSpaceType1,nComponents1> &transferableSolutionData1,
-            const Data::ComponentOfFieldVariable<FunctionSpaceType2,nComponents2> &transferableSolutionData2,
+            Data::ComponentOfFieldVariable<FunctionSpaceType2,nComponents2> &transferableSolutionData2,
             const std::string transferSlotName)
 {
   // rename input data
@@ -19,7 +19,7 @@ void SolutionVectorMapping<
   typedef FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2> FieldVariable2;
 
   std::shared_ptr<FieldVariable1> fieldVariable1 = transferableSolutionData1.values;
-  std::shared_ptr<FieldVariable2> fieldVariable2 = transferableSolutionData2.values;
+  std::shared_ptr<FieldVariable2> &fieldVariable2 = transferableSolutionData2.values;
 
   // disable checking for nans and infs because it takes a lot of time
   //fieldVariable1->checkNansInfs();
@@ -64,7 +64,7 @@ void SolutionVectorMapping<
   Data::ComponentOfFieldVariable<FunctionSpaceType1,nComponents1>,   // <fieldVariableType,componentNo,prefactor>
   Data::ComponentOfFieldVariable<FunctionSpaceType2,1>
 >::transfer(const Data::ComponentOfFieldVariable<FunctionSpaceType1,nComponents1> &transferableSolutionData1,
-            const Data::ComponentOfFieldVariable<FunctionSpaceType2,1> &transferableSolutionData2,
+            Data::ComponentOfFieldVariable<FunctionSpaceType2,1> &transferableSolutionData2,
             const std::string transferSlotName)
 {
   // rename input data

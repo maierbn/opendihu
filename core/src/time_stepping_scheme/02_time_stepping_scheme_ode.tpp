@@ -101,8 +101,7 @@ initialize()
   discretizableInTime_.initializeForImplicitTimeStepping();   // this performs extra initialization for implicit timestepping methods, i.e. it sets the inverse lumped mass matrix
 
   // retrieve the function space from the discretizable in time object, this is used for the data object
-  std::shared_ptr<typename DiscretizableInTimeType::FunctionSpace> functionSpace
-    = discretizableInTime_.functionSpace();
+  std::shared_ptr<typename DiscretizableInTimeType::FunctionSpace> functionSpace = discretizableInTime_.functionSpace();
 
   assert(functionSpace->meshPartition());   // assert that the function space was retrieved correctly
   assert(this->data_);
@@ -116,8 +115,11 @@ initialize()
   // create the vectors in the data object
   this->data_->initialize();
 
-  // pass the solution field variable on to the discretizableInTime object
+  // pass the solution field variable on to the discretizableInTime object, by this e.g. CellMLAdapter gets the solution field variable
   discretizableInTime_.setSolutionVariable(this->data_->solution());
+
+  // pass the full output connector data to the discretizableInTime object, by this e.g. CellMLAdapter can set additional intermediate variables that will be used further
+  discretizableInTime_.setOutputConnectorData(this->data_->getOutputConnectorData());
 
   // parse boundary conditions, needs functionSpace set
   // initialize dirichlet boundary conditions object which parses dirichlet boundary condition dofs and values from config
@@ -147,6 +149,14 @@ initialize()
   
   initialized_ = true;
 }
+
+template<typename DiscretizableInTimeType>
+void TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::
+prepareForGetOutputConnectorData()
+{
+  discretizableInTime_.prepareForGetOutputConnectorData();
+}
+
 
 template<typename DiscretizableInTimeType>
 std::shared_ptr<SpatialDiscretization::DirichletBoundaryConditions<typename DiscretizableInTimeType::FunctionSpace,DiscretizableInTimeType::nComponents()>>

@@ -62,6 +62,7 @@ CellmlAdapter(const CellmlAdapter &rhs, std::shared_ptr<FunctionSpace> functionS
   this->parametersUsedAsIntermediate_ = rhs.parametersUsedAsIntermediate_;
   this->parametersUsedAsConstant_ = rhs.parametersUsedAsConstant_;
   this->stateNames_ = rhs.stateNames_;
+  this->intermediateNames_ = rhs.intermediateNames_;
 
   this->sourceFilename_ = rhs.sourceFilename_;
   this->nIntermediates_ = rhs.nIntermediates_;
@@ -313,6 +314,19 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
   VLOG(1) << "intermediates: " << *this->data_.intermediates();
 
   this->internalTimeStepNo_++;
+}
+
+
+template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
+void CellmlAdapter<nStates_,nIntermediates_,FunctionSpaceType>::
+prepareForGetOutputConnectorData()
+{
+  // make representation of intermediates global, such that field variables in outputConnectorData that share the Petsc Vec's with
+  // intermediates have the correct data assigned
+  LOG(DEBUG) << "Transform intermediates field variable to global representation in order to transfer them to other solver.";
+  VLOG(1) << *this->data_.intermediates();
+  this->data_.intermediates()->setRepresentationGlobal();
+  VLOG(1) << *this->data_.intermediates();
 }
 
 template<int nStates_, int nIntermediates_, typename FunctionSpaceType>

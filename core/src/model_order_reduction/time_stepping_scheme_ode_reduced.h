@@ -50,7 +50,10 @@ namespace ModelOrderReduction
   protected:
     //! read initial values from settings and set field accordingly
     void setInitialValues();
-    
+
+    //! prepare the discretizableInTime object for the following call to getOutputConnectorData()
+    virtual void prepareForGetOutputConnectorData() {}
+
     std::shared_ptr<GenericFunctionSpace> functionSpaceRed;
     std::shared_ptr<GenericFunctionSpace> functionSpaceRowsSnapshots;
     

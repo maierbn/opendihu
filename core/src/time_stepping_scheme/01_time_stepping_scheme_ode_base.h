@@ -58,6 +58,9 @@ protected:
   //! read initial values from settings and set field accordingly
   void setInitialValues();
 
+  //! prepare the discretizableInTime object for the following call to getOutputConnectorData()
+  virtual void prepareForGetOutputConnectorData() = 0;
+
   std::shared_ptr<Data> data_;     ///< data object that holds all PETSc vectors and matrices
 
   bool initialized_;     ///< if initialize() was already called

@@ -11,7 +11,7 @@ void SolutionVectorMapping<
   Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>,
   Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>
 >::transfer(const Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b> &transferableSolutionData1,
-            const Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b> &transferableSolutionData2,
+            Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b> &transferableSolutionData2,
             OutputConnection &outputConnection)
 {
   // initialize output connection object
@@ -52,7 +52,7 @@ void SolutionVectorMapping<
     if (toVectorNo == 0)
     {
       typedef FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2a> FieldVariable2;
-      std::shared_ptr<FieldVariable2> fieldVariable2 = transferableSolutionData2.variable1[toVectorIndex].values;
+      std::shared_ptr<FieldVariable2> &fieldVariable2 = transferableSolutionData2.variable1[toVectorIndex].values;
       int componentNo2 = transferableSolutionData2.variable1[toVectorIndex].componentNo;
       assert(fieldVariable2);
 
@@ -67,7 +67,7 @@ void SolutionVectorMapping<
     else
     {
       typedef FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2b> FieldVariable2;
-      std::shared_ptr<FieldVariable2> fieldVariable2 = transferableSolutionData2.variable2[toVectorIndex].values;
+      std::shared_ptr<FieldVariable2> &fieldVariable2 = transferableSolutionData2.variable2[toVectorIndex].values;
       int componentNo2 = transferableSolutionData2.variable2[toVectorIndex].componentNo;
       assert(fieldVariable2);
 
@@ -117,7 +117,7 @@ void SolutionVectorMapping<
     if (toVectorNo == 0)
     {
       typedef FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2a> FieldVariable2;
-      std::shared_ptr<FieldVariable2> fieldVariable2 = transferableSolutionData2.variable1[toVectorIndex].values;
+      std::shared_ptr<FieldVariable2> &fieldVariable2 = transferableSolutionData2.variable1[toVectorIndex].values;
       int componentNo2 = transferableSolutionData2.variable1[toVectorIndex].componentNo;
       assert(fieldVariable2);
 
@@ -132,7 +132,7 @@ void SolutionVectorMapping<
     else
     {
       typedef FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2b> FieldVariable2;
-      std::shared_ptr<FieldVariable2> fieldVariable2 = transferableSolutionData2.variable2[toVectorIndex].values;
+      std::shared_ptr<FieldVariable2> &fieldVariable2 = transferableSolutionData2.variable2[toVectorIndex].values;
       int componentNo2 = transferableSolutionData2.variable2[toVectorIndex].componentNo;
       assert(fieldVariable2);
 

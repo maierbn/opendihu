@@ -104,6 +104,8 @@ template<typename FunctionSpaceType, int nComponents>
 typename TimeSteppingSchemeOdeBase<FunctionSpaceType, nComponents>::OutputConnectorDataType &TimeSteppingSchemeOdeBase<FunctionSpaceType, nComponents>::
 getOutputConnectorData()
 {
+  prepareForGetOutputConnectorData();
+
   return this->data_->getOutputConnectorData();
 }
 

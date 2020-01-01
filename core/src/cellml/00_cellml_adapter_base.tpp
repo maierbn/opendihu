@@ -8,6 +8,7 @@
 #include "utility/python_utility.h"
 #include "utility/petsc_utility.h"
 #include "utility/string_utility.h"
+#include "data_management/output_connector_data.h"
 #include "mesh/mesh_manager/mesh_manager.h"
 
 template<int nStates, int nIntermediates_, typename FunctionSpaceType>
@@ -46,6 +47,37 @@ setSolutionVariable(std::shared_ptr<FieldVariableStates> states)
   this->data_.setStatesVariable(states);
 }
 
+template<int nStates, int nIntermediates_, typename FunctionSpaceType>
+void CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
+setOutputConnectorData(::Data::OutputConnectorData<FunctionSpaceType,nStates> &outputConnectorDataTimeStepping)
+{
+  // add all intermediate values for transfer (option "intermediatesForTransfer"), which are stored in this->data_.getOutputConnectorData()
+  // at the end of outputConnectorDataTimeStepping
+
+  // loop over intermediates that should be transferred
+  for (typename std::vector<::Data::ComponentOfFieldVariable<FunctionSpaceType,nIntermediates_>>::iterator iter = this->data_.getOutputConnectorData().variable2.begin(); iter != this->data_.getOutputConnectorData().variable2.end(); iter++)
+  {
+    int componentNo = iter->componentNo;
+    std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nIntermediates_>> values = iter->values;
+
+    values->setRepresentationGlobal();
+
+    // The intermediate field variables have 'nIntermediates_' components, but the field variables in the outputConnectorDataTimeStepping object
+    // have only 1 component. Therefore, we create new field variables with 1 components each that reuse the Petsc Vec's of the intermediate field variables.
+
+    // get the parameters to create the new field variable
+    std::string name = values->componentName(componentNo);
+    const std::vector<std::string> componentNames{values->componentName(componentNo)};
+    const bool reuseData = true;
+
+    // create the new field variable with only the one component
+    std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> newFieldVariable
+      = std::make_shared<FieldVariable::FieldVariable<FunctionSpaceType,1>>(*values, name, componentNames, reuseData);
+
+    // add this component to outputConnector of data time stepping
+    outputConnectorDataTimeStepping.addFieldVariable2(newFieldVariable);
+  }
+}
 
 template<int nStates, int nIntermediates_, typename FunctionSpaceType>
 void CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
@@ -71,6 +103,7 @@ initialize()
   nInstances_ = functionSpace_->nNodesLocalWithoutGhosts();
 
   stateNames_.resize(nStates);
+  intermediateNames_.resize(nIntermediates_);
   sourceFilename_ = this->specificSettings_.getOptionString("sourceFilename", "");
   this->scanSourceFile(this->sourceFilename_, statesInitialValues_);   // this sets nIntermediatesInSource_
   
@@ -109,6 +142,7 @@ initialize()
 
   // initialize data, i.e. states and intermediates field variables
   data_.setFunctionSpace(functionSpace_);
+  data_.setIntermediateNames(intermediateNames_);
   data_.initialize();
 }
 

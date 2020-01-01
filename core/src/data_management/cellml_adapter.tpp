@@ -65,9 +65,16 @@ setStatesVariable(std::shared_ptr<CellmlAdapter<nStates,nIntermediates,FunctionS
 
 template <int nStates, int nIntermediates, typename FunctionSpaceType>
 void CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::
+setIntermediateNames(std::vector<std::string> &intermediateNames)
+{
+  intermediateNames_ = intermediateNames;
+}
+
+template <int nStates, int nIntermediates, typename FunctionSpaceType>
+void CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::
 createPetscObjects()
 {
-  this->intermediates_ = this->functionSpace_->template createFieldVariable<nIntermediates>("intermediates");
+  this->intermediates_ = this->functionSpace_->template createFieldVariable<nIntermediates>("intermediates", intermediateNames_);
   this->intermediates_->setRepresentationContiguous();
 }
 

@@ -10,7 +10,7 @@ void SolutionVectorMapping<
   std::pair<std::vector<Vec>,std::vector<std::shared_ptr<FieldVariableType2>>>  // Petsc Vecs which are the sub-vectors of a nested vector
 >::transfer(const std::vector<Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>> &transferableSolutionData1,
             std::pair<std::vector<Vec>,std::vector<std::shared_ptr<FieldVariableType2>>> transferableSolutionData2,
-            const std::string transferSlotName)
+            OutputConnection &outputConnection)
 {
   // transfer from cellml to multidomain
   // this is analogous to the following code line in the old code:
@@ -30,8 +30,8 @@ void SolutionVectorMapping<
   // loop over compartments and transfer data from subcellularState(0) (=Vm) to transmembranePotential of multidomain solver
   for (int k = 0; k < nCompartments; k++)
   {
-    std::shared_ptr<FieldVariableType1> subcellularStatesFieldVariable = subcellularStates[k].variable1.values;   // states variable
-    int outputStateIndex = subcellularStates[k].variable1.componentNo;  // is 0
+    std::shared_ptr<FieldVariableType1> &subcellularStatesFieldVariable = subcellularStates[k].variable1[0].values;   // states variable
+    int outputStateIndex = subcellularStates[k].variable1[0].componentNo;  // is 0
     std::shared_ptr<FieldVariableType2> transmembranePotentialCompartment = transmembranePotential[k];
     //subcellularStatesFieldVariable->extractComponentShared(outputStateIndex, transmembranePotentialCompartment);  // extract memory location, here it is possible to reuse data
     subcellularStatesFieldVariable->extractComponentCopy(outputStateIndex, transmembranePotentialCompartment);      // copy vector
@@ -46,7 +46,7 @@ void SolutionVectorMapping<
   std::vector<Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>>   // <fieldVariable,componentNo,prefactor>
 >::transfer(const std::pair<std::vector<Vec>,std::vector<std::shared_ptr<FieldVariableType1>>> &transferableSolutionData1,  // <Petsc Vecs which are the sub-vectors of a nested vector, transmembranePotential>
             const std::vector<Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>> &transferableSolutionData2,
-            const std::string transferSlotName)
+            OutputConnection &outputConnection)
 {
   // transfer from multidomain to cellml
   // this is analogous to the following code line in the old code:
@@ -68,8 +68,8 @@ void SolutionVectorMapping<
   // loop over compartments and transfer data from subVectors of multidomain solver to subcellularState(0) (=Vm)
   for (int k = 0; k < nCompartments; k++)
   {
-    std::shared_ptr<FieldVariableType2> subcellularStatesFieldVariable = subcellularStates[k].variable1.values;
-    int outputStateIndex = subcellularStates[k].variable1.componentNo;  // is 0
+    std::shared_ptr<FieldVariableType2> &subcellularStatesFieldVariable = subcellularStates[k].variable1[0].values;
+    int outputStateIndex = subcellularStates[k].variable1[0].componentNo;  // is 0
 
     // restore from subcellularStatesFieldVariable extracted data vector to allow usage of subcellularStatesFieldVariable
     if (subcellularStatesFieldVariable->partitionedPetscVec()->currentRepresentation() == Partition::values_representation_t::representationInvalid)

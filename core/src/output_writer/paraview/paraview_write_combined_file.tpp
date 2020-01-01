@@ -514,6 +514,27 @@ void Paraview::writePolyDataFile(const FieldVariablesForOutputWriterType &fieldV
 
   assert(fieldVariableValues.size() == vtkPiece_.properties.pointDataArrays.size());
 
+  // check if field variable names have changed since last initialization
+  for (std::vector<std::pair<std::string,int>>::iterator pointDataArrayIter = vtkPiece_.properties.pointDataArrays.begin();
+       pointDataArrayIter != vtkPiece_.properties.pointDataArrays.end(); pointDataArrayIter++)
+  {
+    // if there is a field variable with a name that was not present when vtkPiece_ was created
+    if (fieldVariableValues.find(pointDataArrayIter->first) == fieldVariableValues.end())
+    {
+      LOG(DEBUG) << "Field variable names have changed, reinitialize Paraview output writer.";
+
+      // reset now old variables
+      meshPropertiesInitialized = false;
+      meshPropertiesPolyDataFile_.clear();
+      vtkPiece_ = VTKPiece();
+
+      // recursively call this method
+      writePolyDataFile(fieldVariables, meshNames);
+
+      return;
+    }
+  }
+
   // collect all data for the geometry field variable
   std::vector<double> geometryFieldValues;
   ParaviewLoopOverTuple::loopGetGeometryFieldNodalValues<FieldVariablesForOutputWriterType>(fieldVariables, vtkPiece_.meshNamesCombinedMeshes, geometryFieldValues);

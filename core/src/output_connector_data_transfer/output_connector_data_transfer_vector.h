@@ -30,7 +30,7 @@ class SolutionVectorMapping<
 public:
   //! transfer the data from transferableSolutionData1 to transferableSolutionData2, as efficient as possible, where there are multiple slots that could be transferred (e.g. at cellmlAdapter), use the one specified by transferSlotName
   static void transfer(const std::vector<OutputConnectorDataType1> &transferableSolutionData1,
-                       const std::vector<OutputConnectorDataType2> &transferableSolutionData2,
+                       std::vector<OutputConnectorDataType2> &transferableSolutionData2,
                        OutputConnection &outputConnection);
 };
 

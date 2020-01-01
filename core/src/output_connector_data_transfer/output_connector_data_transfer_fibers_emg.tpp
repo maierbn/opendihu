@@ -41,7 +41,7 @@ transfer(const std::vector<std::vector<
 
     typedef FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1a> FieldVariable1;
 
-    std::shared_ptr<FieldVariable1> fieldVariable1 = transferableSolutionData1[0][0].variable1[fromVectorIndex].values;
+    std::shared_ptr<FieldVariable1> &fieldVariable1 = transferableSolutionData1[0][0].variable1[fromVectorIndex].values;
     int componentNo1 = transferableSolutionData1[0][0].variable1[fromVectorIndex].componentNo;
 
     LOG(DEBUG) << "map slot from variable1, index " << fromVectorIndex
@@ -73,7 +73,7 @@ transfer(const std::vector<std::vector<
           // map from transferableSolutionData1.variable1 to transferableSolutionData2.variable1
 
           typedef FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1a> FieldVariable1;
-          std::shared_ptr<FieldVariable1> fieldVariable1 = transferableSolutionData1[fiberIndexI][fiberIndexJ].variable1[fromVectorIndex].values;
+          std::shared_ptr<FieldVariable1> &fieldVariable1 = transferableSolutionData1[fiberIndexI][fiberIndexJ].variable1[fromVectorIndex].values;
           int componentNo1 = transferableSolutionData1[fiberIndexI][fiberIndexJ].variable1[fromVectorIndex].componentNo;
 
           // map values
@@ -104,7 +104,7 @@ transfer(const std::vector<std::vector<
           // map from transferableSolutionData1.variable1 to transferableSolutionData2.variable2
 
           typedef FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1a> FieldVariable1;
-          std::shared_ptr<FieldVariable1> fieldVariable1 = transferableSolutionData1[fiberIndexI][fiberIndexJ].variable1[fromVectorIndex].values;
+          std::shared_ptr<FieldVariable1> &fieldVariable1 = transferableSolutionData1[fiberIndexI][fiberIndexJ].variable1[fromVectorIndex].values;
           int componentNo1 = transferableSolutionData1[fiberIndexI][fiberIndexJ].variable1[fromVectorIndex].componentNo;
 
           // map values
@@ -132,7 +132,7 @@ transfer(const std::vector<std::vector<
 
     typedef FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1b> FieldVariable1;
 
-    std::shared_ptr<FieldVariable1> fieldVariable1 = transferableSolutionData1[0][0].variable2[fromVectorIndex].values;
+    std::shared_ptr<FieldVariable1> &fieldVariable1 = transferableSolutionData1[0][0].variable2[fromVectorIndex].values;
     int componentNo1 = transferableSolutionData1[0][0].variable2[fromVectorIndex].componentNo;
 
     LOG(DEBUG) << "map slot from variable1, index " << fromVectorIndex
@@ -164,7 +164,7 @@ transfer(const std::vector<std::vector<
           // map from transferableSolutionData1.variable2 to transferableSolutionData2.variable1
 
           typedef FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1b> FieldVariable1;
-          std::shared_ptr<FieldVariable1> fieldVariable1 = transferableSolutionData1[fiberIndexI][fiberIndexJ].variable2[fromVectorIndex].values;
+          std::shared_ptr<FieldVariable1> &fieldVariable1 = transferableSolutionData1[fiberIndexI][fiberIndexJ].variable2[fromVectorIndex].values;
           int componentNo1 = transferableSolutionData1[fiberIndexI][fiberIndexJ].variable2[fromVectorIndex].componentNo;
 
           // map values
@@ -195,7 +195,7 @@ transfer(const std::vector<std::vector<
           // map from transferableSolutionData1.variable2 to transferableSolutionData2.variable2
 
           typedef FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1b> FieldVariable1;
-          std::shared_ptr<FieldVariable1> fieldVariable1 = transferableSolutionData1[fiberIndexI][fiberIndexJ].variable2[fromVectorIndex].values;
+          std::shared_ptr<FieldVariable1> &fieldVariable1 = transferableSolutionData1[fiberIndexI][fiberIndexJ].variable2[fromVectorIndex].values;
           int componentNo1 = transferableSolutionData1[fiberIndexI][fiberIndexJ].variable2[fromVectorIndex].componentNo;
 
           // map values
@@ -246,7 +246,7 @@ transfer(const Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nCompo
 
     typedef FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1a> FieldVariable1;
 
-    std::shared_ptr<FieldVariable1> fieldVariable1 = transferableSolutionData1.variable1[fromVectorIndex].values;
+    std::shared_ptr<FieldVariable1> &fieldVariable1 = transferableSolutionData1.variable1[fromVectorIndex].values;
     int componentNo1 = transferableSolutionData1.variable1[fromVectorIndex].componentNo;
 
     LOG(DEBUG) << "map slot from variable1, index " << fromVectorIndex
@@ -261,7 +261,7 @@ transfer(const Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nCompo
     if (toVectorNo == 0)
     {
       typedef FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2a> FieldVariable2;
-      std::shared_ptr<FieldVariable2> fieldVariable2 = transferableSolutionData2[0][0].variable1[toVectorIndex].values;
+      std::shared_ptr<FieldVariable2> &fieldVariable2 = transferableSolutionData2[0][0].variable1[toVectorIndex].values;
       int componentNo2 = transferableSolutionData2[0][0].variable1[toVectorIndex].componentNo;
 
       LOG(DEBUG) << "  " << fieldVariable1->name() << "[" << componentNo1 << "] -> "
@@ -292,7 +292,7 @@ transfer(const Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nCompo
     else
     {
       typedef FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2b> FieldVariable2;
-      std::shared_ptr<FieldVariable2> fieldVariable2 = transferableSolutionData2[0][0].variable2[toVectorIndex].values;
+      std::shared_ptr<FieldVariable2> &fieldVariable2 = transferableSolutionData2[0][0].variable2[toVectorIndex].values;
       int componentNo2 = transferableSolutionData2[0][0].variable2[toVectorIndex].componentNo;
 
       LOG(DEBUG) << "  " << fieldVariable1->name() << "[" << componentNo1 << "] -> "
@@ -337,7 +337,7 @@ transfer(const Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nCompo
 
     typedef FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1b> FieldVariable1;
 
-    std::shared_ptr<FieldVariable1> fieldVariable1 = transferableSolutionData1.variable2[fromVectorIndex].values;
+    std::shared_ptr<FieldVariable1> &fieldVariable1 = transferableSolutionData1.variable2[fromVectorIndex].values;
     int componentNo1 = transferableSolutionData1.variable2[fromVectorIndex].componentNo;
 
     LOG(DEBUG) << "map slot from variable1, index " << fromVectorIndex
@@ -352,7 +352,7 @@ transfer(const Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nCompo
     if (toVectorNo == 0)
     {
       typedef FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2a> FieldVariable2;
-      std::shared_ptr<FieldVariable2> fieldVariable2 = transferableSolutionData2[0][0].variable1[toVectorIndex].values;
+      std::shared_ptr<FieldVariable2> &fieldVariable2 = transferableSolutionData2[0][0].variable1[toVectorIndex].values;
       int componentNo2 = transferableSolutionData2[0][0].variable1[toVectorIndex].componentNo;
 
       LOG(DEBUG) << "  " << fieldVariable1->name() << "[" << componentNo1 << "] -> "
@@ -383,7 +383,7 @@ transfer(const Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nCompo
     else
     {
       typedef FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2b> FieldVariable2;
-      std::shared_ptr<FieldVariable2> fieldVariable2 = transferableSolutionData2[0][0].variable2[toVectorIndex].values;
+      std::shared_ptr<FieldVariable2> &fieldVariable2 = transferableSolutionData2[0][0].variable2[toVectorIndex].values;
       int componentNo2 = transferableSolutionData2[0][0].variable2[toVectorIndex].componentNo;
 
       LOG(DEBUG) << "  " << fieldVariable1->name() << "[" << componentNo1 << "] -> "

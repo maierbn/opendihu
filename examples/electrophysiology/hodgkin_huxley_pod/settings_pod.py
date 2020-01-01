@@ -1,6 +1,7 @@
 # Electrophysiology
 # Monodomain with Hodgkin-Huxley model as rhs
 #
+# This file was created by Nehzat.
 # parameters: [<n_elements> [<end_time>]]
 
 end_time = 200.0   # [ms] end time of simulation
@@ -141,9 +142,9 @@ config = {
     #"numberTimeSteps": 1,
     "timeStepWidth": dt_3D,  # 1e-1
     "endTime": end_time,
-    "outputData1": False,
-    "outputData2": False,
-
+    "connectedSlotsTerm1To2": [0],   # transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion)
+    "connectedSlotsTerm2To1": [0],   # transfer the same back
+    
     "OutputWriter" : [
       {"format": "Paraview", "outputInterval": 1e5, "filename": "out/fibre_splitting", "binaryOutput": True, "fixedFormat": False},
       {"format": "ExFile", "filename": "out/fibre_splitting", "outputInterval": 1e5, "sphereSize": "2*2*2"},
@@ -168,7 +169,7 @@ config = {
             #"handleResultFunction": handleResult,
             #"handleResultCallInterval": 2e3,
           
-            "outputStateIndex": 0,     # state 0 = Vm
+            "statesForTransfer": 0,     # state 0 = Vm
             "parametersUsedAsIntermediate": [],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
             "parametersUsedAsConstant": [2],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
             "parametersInitialValues": [0.0],      # initial values for the parameters: I_Stim

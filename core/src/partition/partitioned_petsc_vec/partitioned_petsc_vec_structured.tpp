@@ -45,9 +45,13 @@ restoreValuesContiguous()
   const double *valuesDataContiguous;
   ierr = VecGetArrayRead(this->valuesContiguous_, &valuesDataContiguous); CHKERRV(ierr);
 
+  VLOG(3) << "\"" << this->name_ << "\" VecGetArrayRead";
+
   // loop over components
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
   {
+    VLOG(3) << "\"" << this->name_ << "\" componentNo " << componentNo << ", vectorLocal size: " << this->vectorLocal_.size();
+
     double *valuesDataComponent;
     ierr = VecGetArray(this->vectorLocal_[componentNo], &valuesDataComponent); CHKERRV(ierr);
 
@@ -63,6 +67,8 @@ restoreValuesContiguous()
 
   ierr = VecRestoreArrayRead(this->valuesContiguous_, &valuesDataContiguous); CHKERRV(ierr);
   this->currentRepresentation_ = Partition::values_representation_t::representationLocal;
+
+  VLOG(2) << "restored contiguous representation to local representation.";
 }
 
 

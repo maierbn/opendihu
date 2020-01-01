@@ -19,8 +19,8 @@ class MultidomainSolver :
 public:
   typedef typename FiniteElementMethodDiffusion::FunctionSpace FunctionSpace;
   typedef typename Data::Multidomain<typename FiniteElementMethodDiffusion::FunctionSpace>::FieldVariableType FieldVariableType;
-  typedef std::pair<std::vector<Vec>,std::vector<std::shared_ptr<FieldVariableType>>> OutputConnectorDataType;
   typedef typename Data::Multidomain<typename FiniteElementMethodDiffusion::FunctionSpace> Data;
+  typedef typename Data::OutputConnectorDataType OutputConnectorDataType;
 
   //! constructor
   MultidomainSolver(DihuContext context);

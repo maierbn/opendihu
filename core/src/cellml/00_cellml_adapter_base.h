@@ -63,6 +63,10 @@ public:
   //! set the solution field variable in the data object, that actual data is stored in the timestepping scheme object
   void setSolutionVariable(std::shared_ptr<FieldVariableStates> states);
 
+  //! pass on the output connector data object from the timestepping scheme object to be modified,
+  //! if there are intermediates for transfer, they will be set in the outputConnectorDataTimeStepping
+  void setOutputConnectorData(::Data::OutputConnectorData<FunctionSpaceType,nStates> &outputConnectorDataTimeStepping);
+
   //! return the mesh
   std::shared_ptr<FunctionSpaceType> functionSpace();
 
@@ -115,7 +119,8 @@ protected:
   std::vector<int> parametersUsedAsIntermediate_;  ///< explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array
   std::vector<int> parametersUsedAsConstant_;  ///< explicitely defined parameters that will be copied to constants, this vector contains the indices of the constants 
   
-  std::vector<std::string> stateNames_;    ///< the specifier for the states as given in the input source file
+  std::vector<std::string> stateNames_;    ///< the names for the states as given in the input source file
+  std::vector<std::string> intermediateNames_;    ///< the names for the intermediates as given in the input source file
   
   std::string sourceFilename_; ///<file name of provided CellML right hand side routine
   bool inputFileTypeOpenCMISS_;   ///< if the input file that is being parsed is from OpenCMISS and not from OpenCOR

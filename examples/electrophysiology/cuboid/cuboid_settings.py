@@ -2,7 +2,7 @@
 #
 # arguments: <n_processes_per_fiber> <n_fibers> <n_nodes_per_fiber> <scenario_name>
 
-end_time = 0.2
+end_time = 20
 
 import numpy as np
 import pickle
@@ -235,8 +235,8 @@ def get_instance_config(i):
       "durationLogKey": "duration_total",
       "timeStepOutputInterval" : 100,
       "endTime": end_time,
-      "outputData1": False,
-      "outputData2": True,
+      "connectedSlotsTerm1To2": [0],   # transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion)
+      "connectedSlotsTerm2To1": [0],   # transfer the same back
 
       "Term1": {      # CellML
         "Heun" : {
@@ -261,12 +261,13 @@ def get_instance_config(i):
             #"setSpecificStatesCallInterval": 2*int(1./stimulation_frequency/dt_0D),     # set_specific_states should be called stimulation_frequency times per ms, the factor 2 is needed because every Heun step includes two calls to rhs
             "additionalArgument": i,
             
-            "outputStateIndex": 0,     # state 0 = Vm, rate 28 = gamma
+            "intermediatesForTransfer":               [],                                              # which intermediate values to use in further computation
+            "statesForTransfer":                      0,                                              # Shorten / Hodgkin Huxley: state 0 = Vm, Shorten: rate 28 = gamma, intermediate 0 = gamma (OC_WANTED[0])
             "parametersUsedAsIntermediate": parameters_used_as_intermediate,  #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
             "parametersUsedAsConstant": parameters_used_as_constant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
             "parametersInitialValues": parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
             "meshName": "MeshFiber_{}".format(i),
-            "prefactor": 1.0,
+            "stimulationLogFilename": "out/stimulation.log",
           },
         },
       },

@@ -70,6 +70,7 @@ createPetscObjects()
     additionalFieldVariables_[i] = this->functionSpace_->template createFieldVariable<1>(name.str());
 
     outputConnectorData_.addFieldVariable2(additionalFieldVariables_[i]);
+    LOG(DEBUG) << "  add field variable " << name.str();
   }
 }
 
@@ -153,6 +154,15 @@ template<typename FunctionSpaceType,int nComponents>
 typename TimeStepping<FunctionSpaceType,nComponents>::FieldVariablesForOutputWriter TimeStepping<FunctionSpaceType,nComponents>::
 getFieldVariablesForOutputWriter()
 {
+  // recover additional field variables from outputConnectorData_, they may have been changed by transfer
+  assert(outputConnectorData_.variable2.size() >= additionalFieldVariables_.size());
+  for (int i = 0; i < additionalFieldVariables_.size(); i++)
+  {
+    LOG(DEBUG) << " get field variable \"" << outputConnectorData_.variable2[i].values->name()
+      << "\" for additionalFieldVariables_[" << i << "]";
+    additionalFieldVariables_[i] = outputConnectorData_.variable2[i].values;
+  }
+
   // these field variables will be written to output files
   return FieldVariablesForOutputWriter(
     std::make_shared<FieldVariable::FieldVariable<FunctionSpaceType,3>>(this->functionSpace_->geometryField()),

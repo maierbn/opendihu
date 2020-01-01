@@ -57,6 +57,9 @@ protected:
   //! read initial values from settings and set field accordingly
   void setInitialValues();
 
+  //! prepare the discretizableInTime object for the following call to getOutputConnectorData()
+  virtual void prepareForGetOutputConnectorData() override;
+
   //int timeStepOutputInterval_;    ///< time step number and time is output every timeStepOutputInterval_ time steps
   DiscretizableInTimeType discretizableInTime_;    ///< the object to be discretized
   bool initialized_;     ///< if initialize() was already called

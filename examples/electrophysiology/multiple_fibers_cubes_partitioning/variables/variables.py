@@ -24,6 +24,7 @@ stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in f
 dt_0D = 1e-3                        # [ms] timestep width of ODEs
 dt_1D = 1.5e-3                      # [ms] timestep width of diffusion
 dt_splitting = 3e-3                 # [ms] overall timestep width of strang splitting
+dt_3D = 1e0                         # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
 output_timestep = 1e0               # [ms] timestep for output files
 activation_start_time = 0           # [ms] time when to start checking for stimulation
 
@@ -45,6 +46,8 @@ debug_output = False                # verbose output in this python script, for 
 disable_firing_output = True        # Disables the initial list of fiber firings on the console to save some console space
 paraview_output = False             # If the paraview output writer should be enabled
 adios_output = False                # If the MegaMol/ADIOS output writer should be enabled
+python_output = False               # If the Python output writer should be enabled
+exfile_output = False               # If the Exfile output writer should be enabled
 
 
 # motor unit stimulation times
@@ -123,3 +126,4 @@ linear_elasticity_neumann_bc = None
 fibers_on_own_rank = None
 n_fiber_nodes_on_subdomain = None
 fiber_start_node_no = None
+generate_quadratic_3d_mesh = False

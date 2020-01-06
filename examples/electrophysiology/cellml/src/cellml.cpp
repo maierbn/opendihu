@@ -11,7 +11,7 @@ int main(int argc, char *argv[])
   DihuContext settings(argc, argv);
   
   TimeSteppingScheme::ExplicitEuler<
-    CellmlAdapter<57,1>  // nStates,nIntermediates: 57,1 = Shorten, 4,9 = Hodgkin Huxley
+    CellmlAdapter<57,71>  // nStates,nIntermediates: 57,71 = Shorten, 4,9 = Hodgkin Huxley
   > equationDiscretized(settings);
   
    

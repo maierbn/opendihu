@@ -196,6 +196,15 @@ callPythonSetSpecificParametersFunction(int nInstances, int timeStepNo, double c
     // extract the value
     double value = PythonUtility::convertFromPython<double>::get(valuePy);
 
+    // error checking on parameter
+    if (parameterNo >= this->nParameters_)
+    {
+      LOG(FATAL) << "In setSpecificParametersFunction: the parameters have an assignment "
+          << "parameters[(coordinatesGlobal=" << coordinatesGlobal << ", nodalDofIndex=" << nodalDofIndex
+          << ", parameterNo=" << parameterNo <<")] = " << value << ". But there are only " << this->nParameters_
+          << " specified. Set \"parametersUsedAsIntermediate\" and \"parametersUsedAsConstant\" appropriately.";
+    }
+
     VLOG(1) << "coordinatesGlobal: " << coordinatesGlobal << ", nodalDofIndex: " << nodalDofIndex
       << ", parameterNo: " << parameterNo << ", value: " << value;
 
@@ -209,6 +218,14 @@ callPythonSetSpecificParametersFunction(int nInstances, int timeStepNo, double c
     if (isOnLocalDomain)   // if the given parameter values is for a dof inside the current domain
     {
       // set first parameter value to given value
+      const int index = parameterNo*nDofsLocalWithoutGhosts + dofNoLocal;
+
+      if (index >= localParameters.size())
+      {
+        LOG(FATAL) << "in setSpecificParametersFunction: the parameters have an assignment "
+          << "parameters[(coordinatesGlobal=" << coordinatesGlobal << ", nodalDofIndex=" << nodalDofIndex
+          << ", parameterNo=" << parameterNo <<")] = " << value << ". There are " << nDofsLocalWithoutGhosts << " local dof(s).";
+      }
       localParameters[parameterNo*nDofsLocalWithoutGhosts + dofNoLocal] = value;
     }
     VLOG(1) << "localParameters: " << localParameters;

@@ -2,7 +2,7 @@
 # This is similar to the fibers_emg example, but without EMG.
 # To see all available arguments, execute: ./multiple_fibers settings_multiple_fibers_cubes_partitioning.py -help
 #
-# if fiber_file=cuboid.bin, it uses a small cuboid test example
+# if fiber_file=cuboid.bin, it uses a small cuboid test example (Contrary to the "cuboid" example, this produces a real cuboid).
 #
 # You have to set n_subdomains such that it matches the number of processes, e.g. 2x2x1 = 4 processes.
 # Decomposition is in x,y,z direction, the fibers are aligned with the z axis.
@@ -10,15 +10,19 @@
 # --n_subdomains 8 8 4 means every fiber will be subdivided to 4 processes and all fibers will be computed by 8x8 processes.
 #
 # Example with 4 processes and end time 5, and otherwise default parameters:
-#   mpirun -n 4 ./multiple_fibers settings_multiple_fibers_cubes_partitioning.py --n_subdomains 2 2 1 --end_time=5.0
+#   mpirun -n 4 ./multiple_fibers ../settings_multiple_fibers_cubes_partitioning.py --n_subdomains 2 2 1 --end_time=5.0
 #
 # Three files contribute to the settings:
 # A lot of variables are set by the helper.py script, the variables and their values are defined in variables.py and this file
 # creates the composite config that is needed by opendihu.
-# You can provided parameter values in a custom_variables.py file in the variables subfolder. (Instead of custom_variables.py you can choose any filename.)
+# You can provide parameter values in a custom_variables.py file in the variables subfolder. (Instead of custom_variables.py you can choose any filename.)
 # This custom variables file should be the next argument on the command line after settings_fibers_emg.py, e.g.:
 #
-#  ./multiple_fibers settings_multiple_fibers_cubes_partitioning.py custom_variables.py --n_subdomains 1 1 1 --end_time=5.0
+#  ./multiple_fibers ../settings_multiple_fibers_cubes_partitioning.py custom_variables.py --n_subdomains 1 1 1 --end_time=5.0
+#
+# E.g. try
+# ./multiple_fibers_57_states ../settings_multiple_fibers_cubes_partitioning.py compare_to_opencmiss.py
+# mpirun -n 2 ./multiple_fibers_57_states ../settings_multiple_fibers_cubes_partitioning.py --n_subdomains 2 1 1
 
 import sys, os
 import timeit
@@ -256,10 +260,11 @@ for i in range(len(config["RepeatedCall"]["MultipleInstances"]["instances"])):
   #config["RepeatedCall"]["MultipleInstances"]["instances"][i]["StrangSplitting"]["endTime"] = variables.output_timestep
   
   # loop over output writers
-  for j in range(len(config["RepeatedCall"]["MultipleInstances"]["instances"][i]["StrangSplitting"]["Term2"]["MultipleInstances"]["OutputWriter"])):
-    
-    # set outputInterval to 1
-    config["RepeatedCall"]["MultipleInstances"]["instances"][i]["StrangSplitting"]["Term2"]["MultipleInstances"]["OutputWriter"][j]["outputInterval"] = 1
+  if config["RepeatedCall"]["MultipleInstances"]["instances"][i]:
+    for j in range(len(config["RepeatedCall"]["MultipleInstances"]["instances"][i]["StrangSplitting"]["Term2"]["MultipleInstances"]["OutputWriter"])):
+      
+      # set outputInterval to 1
+      config["RepeatedCall"]["MultipleInstances"]["instances"][i]["StrangSplitting"]["Term2"]["MultipleInstances"]["OutputWriter"][j]["outputInterval"] = 1
 
 # stop timer and calculate how long parsing lasted
 if rank_no == 0:

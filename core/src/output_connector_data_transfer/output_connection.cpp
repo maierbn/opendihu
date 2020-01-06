@@ -281,7 +281,7 @@ std::string OutputConnection::getDebugInformation() const
 bool OutputConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
                                           int &toVectorNo, int &toVectorIndex, bool &avoidCopyIfPossible, bool disableWarnings) const
 {
-//#ifdef NDEBUG
+#ifdef NDEBUG
   if (slotInformationInitialized_)
   {
     const Result &result = slotInformation_[transferDirectionTerm1To2_][fromVectorNo][fromVectorIndex];
@@ -290,7 +290,7 @@ bool OutputConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
     avoidCopyIfPossible = result.avoidCopyIfPossible;
     return result.successful;
   }
-//#endif
+#endif
 
   // fromVectorNo and toVectorNo are 0 or 1
 

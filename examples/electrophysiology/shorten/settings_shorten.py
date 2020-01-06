@@ -1,7 +1,10 @@
 # Electrophysiology
-# Monodomain with Hodgkin-Huxley model as rhs
+# Monodomain with Shorten model as the rhs. 
 #
 # parameters: [<scenario_name>]
+#
+# Plot in the "out" folder:
+# plot strang_000*
 
 import sys
 

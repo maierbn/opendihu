@@ -226,25 +226,57 @@ initialize()
       int furtherDataIndex = 0;
       for (int stateIndex = 1; stateIndex < statesForTransfer_.size(); stateIndex++, furtherDataIndex++)
       {
-        // get field variable
-        std::shared_ptr<FieldVariable::FieldVariable<FiberFunctionSpace,1>> fieldVariableStates
-          = instances[i].timeStepping2().instancesLocal()[j].getOutputConnectorData()->variable1[stateIndex].values;
-
         std::string name = cellmlAdapter.data().states()->componentName(statesForTransfer_[stateIndex]);
 
-        fieldVariableStates->setName(name);
+        // get field variable
+        std::vector<::Data::ComponentOfFieldVariable<FiberFunctionSpace,1>> &variable1
+          = instances[i].timeStepping2().instancesLocal()[j].getOutputConnectorData()->variable1;
+
+        if (stateIndex >= variable1.size())
+        {
+          LOG(WARNING) << "There are " << statesForTransfer_.size() << " statesForTransfer specified in StrangSplitting, "
+            << " but the diffusion solver has only " << variable1.size() << " slots to get these states. "
+            << "This means that state no. " << statesForTransfer_[stateIndex] << ", \"" << name << "\" cannot be transferred." << std::endl
+            << "Maybe you need to increase \"nAdditionalFieldVariables\" in \"ImplicitEuler\" or reduce the number of entries in \"statesForTransfer\".";
+        }
+        else
+        {
+          std::shared_ptr<FieldVariable::FieldVariable<FiberFunctionSpace,1>> fieldVariableStates
+            = variable1[stateIndex].values;
+
+          fieldVariableStates->setName(name);
+        }
       }
 
       // loop over intermediates to transfer
       for (int intermediateIndex = 0; intermediateIndex < intermediatesForTransfer_.size(); intermediateIndex++, furtherDataIndex++)
       {
-        // get field variable
-        std::shared_ptr<FieldVariable::FieldVariable<FiberFunctionSpace,1>> fieldVariableIntermediates
-          = instances[i].timeStepping2().instancesLocal()[j].getOutputConnectorData()->variable2[intermediateIndex].values;
-
         std::string name = cellmlAdapter.data().intermediates()->componentName(intermediatesForTransfer_[intermediateIndex]);
 
-        fieldVariableIntermediates->setName(name);
+        LOG(DEBUG) << "intermediateIndex " << intermediateIndex << ", intermediate " << intermediatesForTransfer_[intermediateIndex] << ", name: \"" << name << "\".";
+
+        assert (i < instances.size());
+        assert (j < instances[i].timeStepping2().instancesLocal().size());
+
+        // get field variable
+        std::vector<::Data::ComponentOfFieldVariable<FiberFunctionSpace,1>> &variable2
+          = instances[i].timeStepping2().instancesLocal()[j].getOutputConnectorData()->variable2;
+
+        if (intermediateIndex >= variable2.size())
+        {
+          LOG(WARNING) << "There are " << intermediatesForTransfer_.size() << " intermediatesForTransfer specified in StrangSplitting, "
+            << " but the diffusion solver has only " << variable2.size() << " slots to get these intermediates. "
+            << "This means that intermediate no. " << intermediatesForTransfer_[intermediateIndex] << ", \"" << name << "\" cannot be transferred." << std::endl
+            << "Maybe you need to increase \"nAdditionalFieldVariables\" in \"ImplicitEuler\" or reduce the number of entries in \"intermediatesForTransfer\".";
+
+        }
+        else
+        {
+          std::shared_ptr<FieldVariable::FieldVariable<FiberFunctionSpace,1>> fieldVariableIntermediates
+            = variable2[intermediateIndex].values;
+
+          fieldVariableIntermediates->setName(name);
+        }
       }
     }
   }
@@ -527,8 +559,17 @@ updateFiberData()
       for (int stateIndex = 1; stateIndex < statesForTransfer_.size(); stateIndex++, furtherDataIndex++)
       {
         // store in diffusion
+
+        // get field variable
+        std::vector<::Data::ComponentOfFieldVariable<FiberFunctionSpace,1>> &variable1
+          = instances[i].timeStepping2().instancesLocal()[j].getOutputConnectorData()->variable1;
+
+        if (stateIndex >= variable1.size())
+        {
+          continue;
+        }
         std::shared_ptr<FieldVariable::FieldVariable<FiberFunctionSpace,1>> fieldVariableStates
-          = instances[i].timeStepping2().instancesLocal()[j].getOutputConnectorData()->variable1[stateIndex].values;
+          = variable1[stateIndex].values;
 
         int nValues = fiberFunctionSpace->nDofsLocalWithoutGhosts();
         double *values = valuesLocal.data() + furtherDataIndex * nValues;
@@ -552,8 +593,18 @@ updateFiberData()
       for (int intermediateIndex = 0; intermediateIndex < intermediatesForTransfer_.size(); intermediateIndex++, furtherDataIndex++)
       {
         // store in diffusion
+
+        // get field variable
+        std::vector<::Data::ComponentOfFieldVariable<FiberFunctionSpace,1>> &variable2
+          = instances[i].timeStepping2().instancesLocal()[j].getOutputConnectorData()->variable2;
+
+        if (intermediateIndex >= variable2.size())
+        {
+          continue;
+        }
+
         std::shared_ptr<FieldVariable::FieldVariable<FiberFunctionSpace,1>> fieldVariableIntermediates
-          = instances[i].timeStepping2().instancesLocal()[j].getOutputConnectorData()->variable2[intermediateIndex].values;
+          = variable2[intermediateIndex].values;
 
         int nValues = fiberFunctionSpace->nDofsLocalWithoutGhosts();
         double *values = valuesLocal.data() + furtherDataIndex * nValues;

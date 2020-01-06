@@ -88,7 +88,7 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
       Control::PerformanceMeasurement::start(this->durationLogKey_);
   }
 
-  this->data_->solution()->restoreValuesContiguous();
+  //this->data_->solution()->restoreValuesContiguous();
 
   // stop duration measurement
   if (this->durationLogKey_ != "")

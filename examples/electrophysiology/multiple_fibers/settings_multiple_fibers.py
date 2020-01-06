@@ -1,6 +1,15 @@
-# This Python file uses the following encoding: utf-8
-# multiple fibers, biceps
+# Multiple fibers from biceps geometry.
+# This example has MegaMol integration but also outputs Paraview files.
+# The number of fibers depends on the number of processes.
 #
+# arguments:  [<n_processes_per_fiber> [<scenario_name>]]
+#
+# E.g. to have 2 fibers with 2 processes, each:
+# mpirun -n 4 ./multiple_fibers ../settings_multiple_fibers.py 2
+#
+# It is not possible with this example to have cube-shaped partitions because of the solver structure. 
+# In order to have a process compute multiple fibers but only a part of them, use the multiple_fibers_cubes_partitioning example.
+# Compare  multiple_fibers_cubes_partitioning/src/multiple_fibers.cpp  with multiple_fibers/src/multiple_fibers.cpp to get the difference.
 
 end_time = 100.0
 

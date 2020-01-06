@@ -19,6 +19,7 @@
 # This custom variables file should be the next argument on the command line after settings_fibers_emg.py, e.g.:
 #
 #  ./fibers_emg ../settings_fibers_emg.py custom_variables.py --n_subdomains 1 1 1 --end_time=5.0
+#  ./fibers_febio ../settings_fibers_emg.py febio.py
 
 import sys, os
 import timeit
@@ -211,7 +212,7 @@ config = {
                       "useGivenLibrary":                        False,
                       #"statesInitialValues":                   [],
                       #"setSpecificParametersFunction":         set_specific_parameters,                        # callback function that sets parameters like stimulation current
-                      #"setSpecificParametersCallInterval":     int(1./variables.stimulation_frequency/variables.dt_0D),         # set_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
+                      #"setSpecificParametersCallInterval":     int(1./variables.stimulation_frequency/variables.dt_0D),         # set_specific_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
                       "setSpecificStatesFunction":              set_specific_states,                                             # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
                       #"setSpecificStatesCallInterval":         2*int(1./variables.stimulation_frequency/variables.dt_0D),       # set_specific_states should be called variables.stimulation_frequency times per ms, the factor 2 is needed because every Heun step includes two calls to rhs
                       "setSpecificStatesCallInterval":          0,                                                               # 0 means disabled

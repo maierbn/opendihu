@@ -1,5 +1,7 @@
 # Electrophysiology
-# Monodomain with Hodgkin-Huxley model as rhs
+# Monodomain with Hodgkin-Huxley model as rhs. This also demonstrates how to pass on intermediate values to the diffusion solver.
+# The paraview output files will include the selected intermediate values no. 0,1 and 2 of the CellML problem. 
+# Adjust "intermediatesForTransfer" and "statesForTransfer" to select different states, adjust "connectedSlotsTerm1To2" and connectedSlotsTerm2To1 accordingly.
 #
 # parameters: [<scenario_name>]
 
@@ -232,6 +234,7 @@ config = {
           #"setSpecificParametersCallInterval": int(1./stimulation_frequency/dt_0D),     # set_specific_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
           "setSpecificStatesFunction": set_specific_states,    # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
           "setSpecificStatesCallInterval": int(1./stimulation_frequency/dt_0D),     # set_specific_states should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
+          "setSpecificStatesCallEnableBegin": 0,   # [ms] first time when to call setSpecificStates
           "additionalArgument": 0,
            #"handleResultFunction": handleResult,
            #"handleResultCallInterval": 2e3,
@@ -244,6 +247,7 @@ config = {
           "parametersUsedAsConstant": parameters_used_as_constant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
           "parametersInitialValues": parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
           "meshName": "MeshFiber",
+          "stimulationLogFilename": "out/stimulation.log",
         },
         
         "OutputWriter" : [

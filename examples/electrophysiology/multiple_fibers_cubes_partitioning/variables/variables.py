@@ -30,9 +30,9 @@ activation_start_time = 0           # [ms] time when to start checking for stimu
 # input files
 # -----------
 # CellML model, Shorten or Hodgkin-Huxley
-#cellml_file = "../../input/shorten_ocallaghan_davidson_soboleva_2007.c"
+cellml_file = "../../input/shorten_ocallaghan_davidson_soboleva_2007.c"
 #cellml_file = "../../input/shorten.cpp"
-cellml_file = "../../input/hodgkin_huxley_1952.c"
+#cellml_file = "../../input/hodgkin_huxley_1952.c"
 
 # Fiber geometry, binary file
 #fiber_file = "../../input/3000fibers.bin"

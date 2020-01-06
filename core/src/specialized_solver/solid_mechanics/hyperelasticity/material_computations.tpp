@@ -295,9 +295,10 @@ template<typename Term,int nDisplacementComponents>
 void HyperelasticitySolver<Term,nDisplacementComponents>::
 materialComputeResidual()
 {
-  // compute Wint - Wext in solverVariableResidual_
+  // This computes the residual, i.e. the nonlinear function to be solved.
+  // Compute Wint - Wext in variable solverVariableResidual_.
   //  output is solverVariableResidual_, a normal Vec, no Dirichlet BC dofs, also accessible by combinedVecResidual_
-  //  input is solverVariableSolution_, a normal Vec, the same values have already been assigned to this->data_.displacements() and this->data_.pressure()
+  //  input is solverVariableSolution_, a normal Vec, the same values have already been assigned to this->data_.displacements() and this->data_.pressure() (!)
 
   //LOG(TRACE) << "materialComputeResidual";
   const bool outputValues = false;
@@ -307,6 +308,7 @@ materialComputeResidual()
 
   materialComputeInternalVirtualWork();
   // now, solverVariableResidual_, which is the globalValues() of combinedVecResidual_, contains δW_int
+  // also the pressure equation residual has been set at the last component
 
   // output values for debugging
   if (outputValues)
@@ -315,7 +317,7 @@ materialComputeResidual()
     //LOG(DEBUG) << "input p: " << *this->data_.pressure();
 
     LOG(DEBUG) << "δW_int: " << getString(solverVariableResidual_);
-    LOG(DEBUG) << "δW_ext: " << getString(externalVirtualWork_);
+    LOG(DEBUG) << "δW_ext: " << getString(externalVirtualWorkDead_);
   }
 
   // for static case: F = δW_int - δW_ext
@@ -323,9 +325,10 @@ materialComputeResidual()
   if (nDisplacementComponents == 3)
   {
     // compute F = δW_int - δW_ext,
-    // δW_ext = int_∂Ω T_a phi_L dS was precomputed in initialize, in variable externalVirtualWork_
+    // δW_ext = int_∂Ω T_a phi_L dS was precomputed in initialize (materialComputeExternalVirtualWorkDead()), in variable externalVirtualWorkDead_
+    // for static case, externalVirtualWorkDead_ = externalVirtualWorkDead_
     PetscErrorCode ierr;
-    ierr = VecAXPY(solverVariableResidual_, -1, externalVirtualWork_); CHKERRV(ierr);
+    ierr = VecAXPY(solverVariableResidual_, -1, externalVirtualWorkDead_); CHKERRV(ierr);
 
     if(outputValues)
       LOG(DEBUG) << "total:   " << getString(solverVariableResidual_);
@@ -336,14 +339,15 @@ materialComputeResidual()
     // for dynamic case, add acceleration term to residual
 
     // compute F = δW_int - δW_ext,dead + accelerationTerm
-    // δW_ext = int_∂Ω T_a phi_L dS was precomputed in initialize, in variable externalVirtualWork_
-    // also add the incompressibility equation in the pressure slot
+    // δW_ext = int_∂Ω T_a phi_L dS was precomputed in initialize, in variable externalVirtualWorkDead_
     PetscErrorCode ierr;
     ierr = VecAXPY(solverVariableResidual_, -1, externalVirtualWorkDead_); CHKERRV(ierr);
 
     // add acceleration term (int_Ω rho_0 (v^(n+1) - v^(n)) / dt * phi^L * phi^M * δu^M dV) to solverVariableResidual_
     // also add the velocity equation in the velocity slot
     materialAddAccelerationTermAndVelocityEquation();
+
+    // the incompressibility equation has been added in the pressure slot by materialComputeInternalVirtualWork
   }
 
   // dump output vector to file
@@ -470,13 +474,11 @@ materialComputeExternalVirtualWorkDead()
     }  // elementNoLocal
   }
 
-  // for the static case, combinedVecExternalVirtualWorkDead_ and combinedVecExternalVirtualWork_ is the same pointer
-
   combinedVecExternalVirtualWorkDead_->finishGhostManipulation();     // communicate and add up values in ghost buffers
   combinedVecExternalVirtualWorkDead_->startGhostManipulation();      // communicate ghost buffers values back in place
 
-  LOG(DEBUG) << "combinedVecExternalVirtualWork: " << combinedVecExternalVirtualWork_->getString();
-  //combinedVecExternalVirtualWork_->startGhostManipulation();
+  LOG(DEBUG) << "combinedVecExternalVirtualWorkDead: " << combinedVecExternalVirtualWorkDead_->getString();
+  //combinedVecExternalVirtualWorkDead_->startGhostManipulation();
 }
 
 template<typename Term,int nDisplacementComponents>
@@ -485,7 +487,7 @@ materialAddAccelerationTermAndVelocityEquation()
 {
   assert (nDisplacementComponents == 6);
 
-  // add to solverVariableResidual_ (=combinedVecResidual_) -= int_Ω phi_0 * (v^(n+1),L - v^(n),L) / dt * phi^L * phi^M * δu^M dx
+  // add to solverVariableResidual_ (=combinedVecResidual_) += int_Ω rho_0 * (v^(n+1),L - v^(n),L) / dt * phi^L * phi^M * δu^M dx
   // solverVariableSolution_
 
   combinedVecResidual_->startGhostManipulation();      // communicate ghost buffers values back in place
@@ -519,11 +521,11 @@ materialAddAccelerationTermAndVelocityEquation()
 
     // get the old displacements values at the previous timestep for all dofs of the element
     std::array<Vec3,nDisplacementsDofsPerElement> oldDisplacementValues;
-    this->data_.displacements()->getElementValues(elementNoLocal, oldDisplacementValues);
+    this->data_.displacementsPreviousTimestep()->getElementValues(elementNoLocal, oldDisplacementValues);
 
     // get the old velocity values at the previous timestep  for all dofs of the element
     std::array<Vec3,nDisplacementsDofsPerElement> oldVelocityValues;
-    this->data_.velocities()->getElementValues(elementNoLocal, oldVelocityValues);
+    this->data_.velocitiesPreviousTimestep()->getElementValues(elementNoLocal, oldVelocityValues);
 
     // get the new displacement values for all dofs of the element
     std::array<std::array<double,nDisplacementsDofsPerElement>,3> newDisplacementValues;
@@ -536,6 +538,27 @@ materialAddAccelerationTermAndVelocityEquation()
     combinedVecSolution_->getValues(3, dofNosLocal.size(), dofNosLocal.data(), newVelocityValues[0]);
     combinedVecSolution_->getValues(4, dofNosLocal.size(), dofNosLocal.data(), newVelocityValues[1]);
     combinedVecSolution_->getValues(5, dofNosLocal.size(), dofNosLocal.data(), newVelocityValues[2]);
+
+    // get the new displacements values, to compare with newDisplacementValues (should be the same)
+    std::array<Vec3,nDisplacementsDofsPerElement> newDisplacementValues2;
+    this->data_.displacementsPreviousTimestep()->getElementValues(elementNoLocal, oldDisplacementValues);
+
+    // get the new velocity values, to compare with newVelocityValues (should be the same)
+    std::array<Vec3,nDisplacementsDofsPerElement> newVelocityValues2;
+    this->data_.velocitiesPreviousTimestep()->getElementValues(elementNoLocal, oldVelocityValues);
+
+    LOG(DEBUG) << " element " << elementNoLocal << ":";
+    for (int dofIndex = 0; dofIndex < nDisplacementsDofsPerElement; dofIndex++)
+    {
+      dof_no_t dofNo = dofNosLocal[dofIndex];
+      LOG(DEBUG) << " dof " << dofNo << ": displacements ("
+        << newDisplacementValues[0][dofIndex] << "=" << newDisplacementValues2[dofIndex][0] << ", "
+        << newDisplacementValues[1][dofIndex] << "=" << newDisplacementValues2[dofIndex][1] << ", "
+        << newDisplacementValues[2][dofIndex] << "=" << newDisplacementValues2[dofIndex][2] << "), velocities ("
+        << newVelocityValues[0][dofIndex] << "=" << newVelocityValues2[dofIndex][0] << ", "
+        << newVelocityValues[1][dofIndex] << "=" << newVelocityValues2[dofIndex][1] << ", "
+        << newVelocityValues[2][dofIndex] << "=" << newVelocityValues2[dofIndex][2] << ")";
+    }
 
     // evaluate integrand at sampling points
     for (unsigned int samplingPointIndex = 0; samplingPointIndex < samplingPoints.size(); samplingPointIndex++)
@@ -593,21 +616,19 @@ materialAddAccelerationTermAndVelocityEquation()
         const double newVelocity = newVelocityValues[dimensionNo][elementalDofNoM];
 
         // add the velocity/displacement equation 1/dt (u^(n+1) - u^(n)) - v^(n+1) - v^n = 0 in the velocity slot
-        double residuum = 1.0 / this->timeStepWidth_ * (newDisplacement - oldDisplacement) - newVelocity = 0;
+        double residuum = 1.0 / this->timeStepWidth_ * (newDisplacement - oldDisplacement) - newVelocity;
 
-        combinedVecResidual_->setValue(dimensionNo, dofNoLocal, residuum, ADD_VALUES);
+        combinedVecResidual_->setValue(3 + dimensionNo, dofNoLocal, residuum, ADD_VALUES);
 
       }  // D
     }  // L
   }  // elementNoLocal
 
-  // for the static case, combinedVecExternalVirtualWorkDead_ and combinedVecExternalVirtualWork_ is the same pointer
-
   combinedVecResidual_->finishGhostManipulation();     // communicate and add up values in ghost buffers
   combinedVecResidual_->startGhostManipulation();      // communicate ghost buffers values back in place
 
-  LOG(DEBUG) << "combinedVecExternalVirtualWork: " << combinedVecExternalVirtualWork_->getString();
-  //combinedVecExternalVirtualWork_->startGhostManipulation();
+  LOG(DEBUG) << "combinedVecExternalVirtualWorkDead: " << combinedVecExternalVirtualWorkDead_->getString();
+  //combinedVecExternalVirtualWorkDead_->startGhostManipulation();
 }
 
 template<typename Term,int nDisplacementComponents>
@@ -638,17 +659,18 @@ materialComputeJacobian()
   // define shortcuts for quadrature
   typedef Quadrature::TensorProduct<D,Quadrature::Gauss<3>> QuadratureDD;   // quadratic*quadratic = 4th order polynomial, 3 gauss points = 2*3-1 = 5th order exact
 
-  // define type to hold evaluations of integrand
+  // define types to hold evaluations of integrand
   typedef std::array<double, nUnknowsPerElement*nUnknowsPerElement> EvaluationsDisplacementsType;
   std::array<EvaluationsDisplacementsType, QuadratureDD::numberEvaluations()> evaluationsArrayDisplacements{};
 
   typedef std::array<double, nPressureDofsPerElement*nUnknowsPerElement> EvaluationsPressureType;
   std::array<EvaluationsPressureType, QuadratureDD::numberEvaluations()> evaluationsArrayPressure{};
 
+  typedef std::array<double, nDisplacementsDofsPerElement*nDisplacementsDofsPerElement> EvaluationsUVType;
+  std::array<EvaluationsUVType, QuadratureDD::numberEvaluations()> evaluationsArrayUV{};
+
   // setup arrays used for integration
   std::array<Vec3, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
-
-  // set values to zero to be able to add values later
 
   // loop over elements
   for (int elementNoLocal = 0; elementNoLocal < nElementsLocal; elementNoLocal++)
@@ -657,6 +679,9 @@ materialComputeJacobian()
     std::array<dof_no_t,nDisplacementsDofsPerElement> dofNosLocal = displacementsFunctionSpace->getElementDofNosLocal(elementNoLocal);
     std::array<dof_no_t,nPressureDofsPerElement> dofNosLocalPressure = pressureFunctionSpace->getElementDofNosLocal(elementNoLocal);
 
+    // set values to zero to be able to add values later
+
+    // initialize top-left submatrix to zero
     // loop over indices of unknows (aDof,aComponent),(bDof,bComponent) or (L,a),(M,b)
     for (int aDof = 0; aDof < nDisplacementsDofsPerElement; aDof++)        // L
     {
@@ -671,11 +696,33 @@ materialComputeJacobian()
             dof_no_t dofBNoLocal = dofNosLocal[bDof];
 
             combinedMatrixJacobian_->setValue(aComponent, dofANoLocal, bComponent, dofBNoLocal, 0.0, INSERT_VALUES);
+
+            // for dynamic case also initialize center-left, top-center and center-center sub matrices
+            if (nDisplacementComponents == 6)
+            {
+              // set entry of top-center sub matrix, l_δu,Δv
+              // this entry will be computed by an integral
+              combinedMatrixJacobian_->setValue(aComponent, dofANoLocal, 3+bComponent, dofBNoLocal, 0.0, INSERT_VALUES);
+
+              // set entry of center-left sub matrix, l_δv,Δu
+              // this entry can directly be computed
+              const int delta_ab = (aComponent == bComponent? 1 : 0);
+              const int delta_LM = (aDof == bDof? 1 : 0);
+
+              const double entryVU = 1./this->timeStepWidth_ * delta_ab * delta_LM;
+              combinedMatrixJacobian_->setValue(3+aComponent, dofANoLocal, bComponent, dofBNoLocal, entryVU, INSERT_VALUES);
+
+              // set entry of center-center sub matrix, l_δv,Δv
+              // this entry can directly be computed
+              const double entryVV = -delta_ab * delta_LM;
+              combinedMatrixJacobian_->setValue(3+aComponent, dofANoLocal, 3+bComponent, dofBNoLocal, entryVV, INSERT_VALUES);
+            }
           }  // b
         }  // M
       }  // a
     }  // L
 
+    // initialize top right and bottom left sub matrices to zero
     // loop over indices of unknows aDof,(bDof,bComponent) or L,(M,b)
     for (int lDof = 0; lDof < nPressureDofsPerElement; lDof++)           // L
     {
@@ -687,19 +734,21 @@ materialComputeJacobian()
           dof_no_t dofLNoLocal = dofNosLocalPressure[lDof];     // dof with respect to pressure function space
           dof_no_t dofMNoLocal = dofNosLocal[aDof];             // dof with respect to displacements function space
 
+          const int pressureDofNo = nDisplacementComponents;  // 3 or 6, depending if static or dynamic problem
+
           // set entry in lower left submatrix
           // parameters: componentNoRow, dofNoLocalRow, componentNoColumn, dofNoLocalColumn, value
-          combinedMatrixJacobian_->setValue(3, dofLNoLocal, aComponent, dofMNoLocal, 0.0, INSERT_VALUES);
+          combinedMatrixJacobian_->setValue(pressureDofNo, dofLNoLocal, aComponent, dofMNoLocal, 0.0, INSERT_VALUES);
 
           // set entry in upper right submatrix
-          combinedMatrixJacobian_->setValue(aComponent, dofMNoLocal, 3, dofLNoLocal, 0.0, INSERT_VALUES);
+          combinedMatrixJacobian_->setValue(aComponent, dofMNoLocal, pressureDofNo, dofLNoLocal, 0.0, INSERT_VALUES);
 
         }  // aComponent
       }  // aDof
     }  // lDof
 
 
-    // loop over diagonal matrix entries in p-part (bottom left submatrix), set diagonal entries to 0
+    // loop over diagonal matrix entries in p-part (bottom right submatrix), set diagonal entries to 0
     // This allocates nonzero entries and sets them to zero. It is needed for the solver.
 
     // The direct solvers are not able to solve the saddle point problem in serial execution, add an artifical regularization term.
@@ -711,12 +760,14 @@ materialComputeJacobian()
 
     for (int lDof = 0; lDof < nPressureDofsPerElement; lDof++)           // L
     {
+      const int pressureDofNo = nDisplacementComponents;  // 3 or 6, depending if static or dynamic problem
+
       dof_no_t dofLNoLocal = dofNosLocalPressure[lDof];     // dof with respect to pressure function space
-      combinedMatrixJacobian_->setValue(3, dofLNoLocal, 3, dofLNoLocal, epsilon, INSERT_VALUES);
+      combinedMatrixJacobian_->setValue(pressureDofNo, dofLNoLocal, pressureDofNo, dofLNoLocal, epsilon, INSERT_VALUES);
     }
   }  // elementNoLocal
 
-  // set diagonal to zero
+  // set diagonal to zero, this would be correct but for some reason the solvers do not like systems with zero diagonal, therefore epsilon was set on the diagonal
   //PetscErrorCode ierr;
   //ierr = MatDiagonalSet(combinedMatrixJacobian_->valuesGlobal(), zeros_, INSERT_VALUES); CHKERRV(ierr);
 
@@ -959,11 +1010,36 @@ materialComputeJacobian()
         }  // M
       }  // L
 
+      // add contributions of submatrix uv (top-center, only for dynamic problem)
+      if (nDisplacementComponents == 6)
+      {
+        for (int lDof = 0; lDof < nDisplacementsDofsPerElement; lDof++)    // index over dofs, each dof has D components, L in derivation
+        {
+          for (int mDof = 0; mDof < nDisplacementsDofsPerElement; mDof++)  // index over dofs, each dof has D components, M in derivation
+          {
+            // integrate ∫_Ω ρ0 ϕ^L ϕ^M dV, the actual needed value is 1/dt δ_ab ∫_Ω ρ0 ϕ^L ϕ^M dV, but this will be computed later
+            const double integrand = density_ * displacementsFunctionSpace->phi(lDof, xi) * displacementsFunctionSpace->phi(mDof, xi);
+
+            // compute index of degree of freedom and component (result vector index)
+            const int index = lDof*nDisplacementsDofsPerElement + mDof;
+
+            // store integrand in evaluations array
+            evaluationsArrayUV[samplingPointIndex][index] = integrand;
+
+          }   // M, mDof
+        }   // L, lDof
+
+      }  // if dynamic problem
     }   // sampling points
 
     // integrate all values for result vector entries at once
     EvaluationsDisplacementsType integratedValuesDisplacements = QuadratureDD::computeIntegral(evaluationsArrayDisplacements);
     EvaluationsPressureType integratedValuesPressure = QuadratureDD::computeIntegral(evaluationsArrayPressure);
+    EvaluationsUVType integratedValuesUV;
+    if (nDisplacementComponents == 6)
+    {
+      integratedValuesUV = QuadratureDD::computeIntegral(evaluationsArrayUV);
+    }
 
     // get indices of element-local dofs
     std::array<dof_no_t,nDisplacementsDofsPerElement> dofNosLocal = displacementsFunctionSpace->getElementDofNosLocal(elementNoLocal);
@@ -1017,7 +1093,7 @@ materialComputeJacobian()
           const int i = aDof*D + aComponent;
           const int index = j*nUnknowsPerElement + i;
 
-          // integrate value and set entry
+          // get result of quadrature
           double integratedValue = integratedValuesPressure[index];
 
           // get local dof no, aDof is the dof within the element, dofNoLocal is the dof within the local subdomain
@@ -1026,16 +1102,55 @@ materialComputeJacobian()
 
           // set entry in lower left submatrix
 
+          const int pressureDofNo = nDisplacementComponents;  // 3 or 6, depending if static or dynamic problem
+
           // parameters: componentNoRow, dofNoLocalRow, componentNoColumn, dofNoLocalColumn, value
-          combinedMatrixJacobian_->setValue(3, dofLNoLocal, aComponent, dofMNoLocal, integratedValue, ADD_VALUES);
+          combinedMatrixJacobian_->setValue(pressureDofNo, dofLNoLocal, aComponent, dofMNoLocal, integratedValue, ADD_VALUES);
 
           // set entry in upper right submatrix
-          combinedMatrixJacobian_->setValue(aComponent, dofMNoLocal, 3, dofLNoLocal, integratedValue, ADD_VALUES);
+          combinedMatrixJacobian_->setValue(aComponent, dofMNoLocal, pressureDofNo, dofLNoLocal, integratedValue, ADD_VALUES);
 
         }  // aComponent
       }  // aDof
     }  // lDof
 
+    // add entries in resulting stiffness matrix for submatrix uv (top-center, only for dynamic problem)
+    if (nDisplacementComponents == 6)
+    {
+      for (int lDof = 0; lDof < nDisplacementsDofsPerElement; lDof++)    // index over dofs, each dof has D components, L in derivation
+      {
+        for (int mDof = 0; mDof < nDisplacementsDofsPerElement; mDof++)  // index over dofs, each dof has D components, M in derivation
+        {
+          // get local dof no, lDof is the dof within the element, dofNoLocal is the dof within the local subdomain
+          dof_no_t dofLNoLocal = dofNosLocal[lDof];
+          dof_no_t dofMNoLocal = dofNosLocal[mDof];
+
+          // compute index
+          const int index = lDof*nDisplacementsDofsPerElement + mDof;
+
+          // get result of quadrature
+          const double integratedValue = integratedValuesUV[index];
+
+          // integratedValue is only ∫_Ω ρ0 ϕ^L ϕ^M dV,
+          // but we need 1/dt δ_ab ∫_Ω ρ0 ϕ^L ϕ^M dV
+
+          for (int aComponent = 0; aComponent < D; aComponent++)           // a
+          {
+            for (int bComponent = 0; bComponent < D; bComponent++)           // b
+            {
+              if (aComponent != bComponent)
+                continue;
+
+              double resultingValue = 1./this->timeStepWidth_ * integratedValue;
+
+              // set entrie
+              // parameters: componentNoRow, dofNoLocalRow, componentNoColumn, dofNoLocalColumn, value
+              combinedMatrixJacobian_->setValue(aComponent, dofMNoLocal, 3+bComponent, dofLNoLocal, resultingValue, ADD_VALUES);
+
+            }  // bComponent
+          }  // aComponent
+        }  // M
+      }  // L
   }  // local elements
 
   combinedMatrixJacobian_->assembly(MAT_FINAL_ASSEMBLY);

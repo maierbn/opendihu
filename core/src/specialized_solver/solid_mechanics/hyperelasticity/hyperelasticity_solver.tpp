@@ -318,7 +318,7 @@ template<typename Term,int nDisplacementComponents>
 Vec HyperelasticitySolver<Term,nDisplacementComponents>::
 externalVirtualWork()
 {
-  return externalVirtualWork_;
+  return externalVirtualWorkDead_;
 }
 
 template<typename Term,int nDisplacementComponents>
@@ -342,18 +342,6 @@ initializePetscVariables()
 
   // vector for the external virtual work contribution that does not depend on u, δW_ext,dead (this is the same as δW_ext for static case)
   combinedVecExternalVirtualWorkDead_ = createPartitionedPetscVec("combinedVecExternalVirtualWorkDead");
-
-  // vector for the external virtual work contribution, δW_ext (this is only different from δW_ext,dead for the dynamic case)
-  if (nDisplacementComponents == 3)
-  {
-    // static equation
-    combinedVecExternalVirtualWork_ = combinedVecExternalVirtualWorkDead_;
-  }
-  else
-  {
-    // dynamic equation
-    combinedVecExternalVirtualWork_ = createPartitionedPetscVec("combinedVecExternalVirtualWork");
-  }
 
   // get number of local entries of the vectors, this will be the number of rows and columns of the matrix
   int nMatrixRowsLocal = combinedVecSolution_->nEntriesLocal();
@@ -397,7 +385,7 @@ initializePetscVariables()
   solverMatrixJacobian_ = combinedMatrixJacobian_->valuesGlobal();
   solverVariableSolution_ = combinedVecSolution_->valuesGlobal();
   solverVariableResidual_ = combinedVecResidual_->valuesGlobal();
-  externalVirtualWork_ = combinedVecExternalVirtualWork_->valuesGlobal();
+  externalVirtualWorkDead_ = combinedVecExternalVirtualWorkDead_->valuesGlobal();
 
   // create vector with all zeros in it, this is needed for zeroing the diagonal of the stiffness matrix for initialization in evaluateAnalyticJacobian
   PetscErrorCode ierr;

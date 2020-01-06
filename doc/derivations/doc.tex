@@ -2992,8 +2992,8 @@ where
 We discretize it in time
 \begin{equation*}
   \begin{array}{lll}
-    \dot{\bfu}: \qquad &\dfrac{1}{dt}(\bfu^{(n+1)} - \bfu^{(n)}) = \theta \dot{\bfu}^{(n+1)} + (1-\theta) \dot{\bfu}^{(n)},\\[4mm]
-    \dot{\bfv}: \qquad &\dfrac{1}{dt}(\bfv^{(n+1)} - \bfv^{(n)}) = \theta \dot{\bfv}^{(n+1)} + (1-\theta) \dot{\bfv}^{(n)},\\[4mm]
+    \bfv=\dot{\bfu}: \qquad &\dfrac{1}{dt}(\bfu^{(n+1)} - \bfu^{(n)}) = \theta \bfv^{(n+1)} + (1-\theta) \bfv^{(n)},\\[4mm]
+    \bfa=\dot{\bfv}: \qquad &\dfrac{1}{dt}(\bfv^{(n+1)} - \bfv^{(n)}) = \theta \bfa^{(n+1)} + (1-\theta) \bfa^{(n)},\\[4mm]
   \end{array}
 \end{equation*}
 For Crank-Nicolson method, $\theta = \frac12$, for implicit Euler, $\theta = 1$. Plugging this into \eqref{eq:dynamic_nonlinear_gov} yields the following three equations. 
@@ -3033,18 +3033,18 @@ with
 \begin{equation*}
   \begin{array}{lll}
     -\bfR_{δ\bfu, (L,a)} = δW_{\text{int}, (L,a)} - δW_{\text{ext}, (L,a)}
-      = -\big(\bfR_{δ\bfu, (L,a)}^{\text{int}} + \bfR^{\text{ext,old}}_{δ\bfu, (L,a)} + \bfR^{\text{ext,new}}_{δ\bfu, (L,a)} + \bfR^{\text{ext,dead}}_{δ\bfu, (L,a)}\big)  \mbox{ with}\\[4mm]
+      =: -\big(\bfR_{δ\bfu, (L,a)}^{\text{int}} + \bfR^{\text{ext,old}}_{δ\bfu, (L,a)} + \bfR^{\text{ext,new}}_{δ\bfu, (L,a)} + \bfR^{\text{ext,dead}}_{δ\bfu, (L,a)}\big)  \mbox{ with}\\[4mm]
 \quad    -\bfR_{δ\bfu, (L,a)}^{\text{int}} = \ds\int_{\Omega}\dfrac12  S_{AB}(\bfu^{(n+1/2)}(\bfX),p^{(n+1/2)}(\bfX))    \, \left(F_{aB}\phi_{(a),A}^L + F_{aA}\phi_{(a),B}^L\,\right) \,\d V \\[4mm]
                       \hspace{3cm} \text{with } \bfu^{(n+1/2)}(\bfX) = \theta \bfu^{(n+1)}(\bfX) + (1-\theta)\bfu^{(n)}(\bfX),\\[4mm]
                       \hspace{4cm}              p^{(n+1/2)}(\bfX)  = \theta p^{(n+1)}(\bfX) + (1-\theta)p^{(n)}(\bfX)\\[4mm]
                       
-\quad    -\bfR_{δ\bfu, (L,a)}^{\text{ext,old}} =  \dfrac1{dt}\ds\int_{\Omega} \rho_0\,\hat{v}^{(n+1),M}_a\,\phi_{(a)}^M \phi_{(a)}^L \,\d V + \ds\int_{∂\Omega}  \bar{T}_a^M \,\phi_{(a)}^M\, \phi_{(a)}^L\,\d S \\[4mm]
-\quad    -\bfR_{δ\bfu, (L,a)}^{\text{ext,new}} =  -\dfrac1{dt}\ds\int_{\Omega} \rho_0\,\hat{v}^{(n,M)}_a\,\phi_{(a)}^M \phi_{(a)}^L \,\d V + \ds\int_{∂\Omega}  \bar{T}_a^M \,\phi_{(a)}^M\, \phi_{(a)}^L\,\d S \\[4mm]
+\quad    -\bfR_{δ\bfu, (L,a)}^{\text{ext,new}} =  \dfrac1{dt}\ds\int_{\Omega} \rho_0\,\hat{v}^{(n+1),M}_a\,\phi_{(a)}^M \phi_{(a)}^L \,\d V\\[4mm]
+\quad    -\bfR_{δ\bfu, (L,a)}^{\text{ext,old}} =  -\dfrac1{dt}\ds\int_{\Omega} \rho_0\,\hat{v}^{(n,M)}_a\,\phi_{(a)}^M \phi_{(a)}^L \,\d V\\[4mm]
 \quad    -\bfR_{δ\bfu, (L,a)}^{\text{ext,dead}} = -\ds\int_{\Omega} B_a^M\,\phi_{(a)}^M \phi_{(a)}^L \,\d V - \ds\int_{∂\Omega}  \bar{T}_a^M \,\phi_{(a)}^M\, \phi_{(a)}^L\,\d S \\[4mm]
     d \mbox{ blocks of subvectors with length } u_{\text{dofs}}\\[4mm]
     -\bfR_{δ\bfv,(L,a)} = \dfrac1{dt} \hat{u}^{(n+1)}_{(L,a)} - \theta \hat{v}^{(n+1)}_{(L,a)} - \dfrac1{dt} \hat{u}^{(n)}_{(L,a)} + (\theta - 1)\,\hat{v}^{(n)}_{(L,a)} \\[4mm]
     d \mbox{ blocks of subvectors with length } u_{\text{dofs}}\\[4mm]
-    -\bfR_{δp,L} = \ds\int_\Omega (J(\bfu^{(n+1)}(\bfX)-1)\,\psi^L\,\d V \\[4mm]
+    -\bfR_{δp,L} = \ds\int_\Omega \bigg(J\big(\bfu^{(n+1)}(\bfX)\big)-1\bigg)\,\psi^L\,\d V \\[4mm]
     1 \mbox{ subvector of length } p_{\text{dofs}}\\[4mm]    
   \end{array}
 \end{equation*}

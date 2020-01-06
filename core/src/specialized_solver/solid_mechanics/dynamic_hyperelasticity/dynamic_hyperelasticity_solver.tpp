@@ -58,11 +58,12 @@ initialize()
   initializeMassMatrix();
 
   // δW_ext = int_∂Ω T_a phi_L dS was precomputed in initialize of staticSolver_
-  PetscErrorCode ierr;
+  /*PetscErrorCode ierr;
   ierr = VecCopy(staticSolver_.externalVirtualWork(), temp_[0]->valuesGlobal()); CHKERRV(ierr);
 
   // copy the temp0 values to data for output
   staticSolver_.setDisplacementsAndPressureFromCombinedVec(temp_[0]->valuesGlobal(), this->data_.externalVirtualWork());
+  */
 }
 
 template<typename Term>
@@ -102,8 +103,8 @@ advanceTimeSpan()
       Control::PerformanceMeasurement::stop(this->durationLogKey_);
 
     // write current output values
-    staticSolver_.setDisplacementsAndPressureFromCombinedVec(u_->valuesGlobal(), this->data_.displacements());
-    staticSolver_.setDisplacementsAndPressureFromCombinedVec(v_->valuesGlobal(), this->data_.velocity());
+    staticSolver_.setDisplacementsVelocitiesAndPressureFromCombinedVec(uvp_->valuesGlobal(),
+                                                                       this->data_.displacements(), this->data_.velocities(), this->data_.pressure());
 
     this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime);
 
@@ -453,7 +454,7 @@ computeExplicitEuler()
   PetscErrorCode ierr;
 
   LOG(DEBUG) << "computeExplicitEuler, timeStepWidth_: " << this->timeStepWidth_;
-
+/*
   // compute k0 = Δt*a(u^(n), v^(n))
   computeAcceleration(u_, v_, k_[0]);
   LOG(DEBUG) << "k0: " << *k_[0];
@@ -472,7 +473,7 @@ computeExplicitEuler()
   ierr = VecAXPY(u_->valuesGlobal(), 1., l_[0]->valuesGlobal()); CHKERRV(ierr);
 
 
-  // copy the temp8 values to data.rhs to be output after this time step
+  // copy the u^(n+1) and v^(n+1) values to data.rhs to be output after this time step
   staticSolver_.setDisplacementsAndPressureFromCombinedVec(u_->valuesGlobal(), this->data_.displacementsCompressible());
   staticSolver_.setDisplacementsAndPressureFromCombinedVec(v_->valuesGlobal(), this->data_.velocityCompressible());
 
@@ -505,7 +506,7 @@ computeExplicitEuler()
 
   // solve ∂W_int(u) - temp8 = 0 with J = 1 for u. The previous values in u_ are the initial guess.
   staticSolver_.solveForDisplacements(temp_[1], u_);    // solveForDisplacements(externalVirtualWork, displacements)
-
+*/
 
 }
 

@@ -97,6 +97,15 @@ public:
   //! copy entries of combined vector x to u and p, if both u and p are nullptr, use this->data_.displacements() and this->data_.pressure(), if only p is nullptr, only copy to u
   void setDisplacementsAndPressureFromCombinedVec(Vec x, std::shared_ptr<DisplacementsFieldVariableType> u = nullptr, std::shared_ptr<PressureFieldVariableType> p = nullptr);
 
+  //! copy entries of combined vector x to u, v and p, if all u,v and p are nullptr, use this->data_.displacements(), this->data_.velocities() and this->data_.pressure(), if only p is nullptr, only copy to u
+  void setDisplacementsVelocitiesAndPressureFromCombinedVec(Vec x, std::shared_ptr<DisplacementsFieldVariableType> u = nullptr,
+                                                            std::shared_ptr<DisplacementsFieldVariableType> v = nullptr,
+                                                            std::shared_ptr<PressureFieldVariableType> p = nullptr);
+
+  //! copy the values of the vector x which contains (u and p) or (u,v and p) values to this->data_.displacements(), this->data_.velocities() and this->data_.pressure();
+  //! This simply calls setDisplacementsAndPressureFromCombinedVec or setDisplacementsVelocitiesAndPressureFromCombinedVec depending on static or dynamic problem.
+  void setUVP(Vec x);
+
   //! copy the entries in the combined solution vector to this->data_.displacements() and this->data_.pressure()
   void setSolutionVector();
 
@@ -254,14 +263,12 @@ protected:
   std::shared_ptr<PetscVec> combinedVecResidual_;      //< the Vec for the residual and result of the nonlinear function
   std::shared_ptr<PetscVec> combinedVecSolution_;      //< the Vec for the solution, combined means that ux,uy,uz and p components are combined in one vector
   std::shared_ptr<PetscVec> combinedVecExternalVirtualWorkDead_;      //< the Vec for the external virtual work part that does not change with u, δW_ext,dead
-  std::shared_ptr<PetscVec> combinedVecExternalVirtualWork_;      //< the Vec for the total external virtual work, δW_ext, involves additional contribution with acceleration for dynamic case
 
   //std::shared_ptr<PartitionedPetscMat<FunctionSpace::Generic>> combinedMatrixJacobian_;    //< single jacobian matrix, when useNestedMat_ is false
   std::shared_ptr<PetscMat> combinedMatrixJacobian_;    //< single jacobian matrix
   std::shared_ptr<PetscMat> combinedMatrixAdditionalNumericJacobian_;   //< only used when both analytic and numeric jacobians are computed, then this holds the numeric jacobian
 
   Vec externalVirtualWorkDead_;     // the external virtual work resulting from the traction, this is a dead load, i.e. it does not change during deformation
-  Vec externalVirtualWork_;     // helper vector if the external virtual work is not dead, i.e. has contributions from accelaration in the dynamic equation
 
   // settings variables
   bool initialized_;   ///< if this object was already initialized

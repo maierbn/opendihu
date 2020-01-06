@@ -65,8 +65,8 @@ postprocessSolution()
   // close log file
   residualNormLogFile_.close();
 
-  // copy the solution values back to this->data_.displacements() and this->data.pressure()
-  setDisplacementsAndPressureFromCombinedVec(combinedVecSolution_->valuesGlobal());
+  // copy the solution values back to this->data_.displacements() and this->data.pressure() (and this->data_.velocities() for the dynamic case)
+  setUVP(combinedVecSolution_->valuesGlobal());
 
   // compute the PK2 stress at every node
   computePK2StressField();
@@ -358,8 +358,8 @@ evaluateNonlinearFunction(Vec x, Vec f)
     VecSwap(f, solverVariableResidual_);
   }
 
-  // set the solverVariableSolution_ values in displacements and pressure, this is needed for materialComputeResidual
-  setDisplacementsAndPressureFromCombinedVec(solverVariableSolution_);
+  // set the solverVariableSolution_ values in displacements, velocities and pressure, this is needed for materialComputeResidual
+  setUVP(solverVariableSolution_);
 
   // compute the actual output of the nonlinear function
   materialComputeResidual();
@@ -379,8 +379,10 @@ template<typename Term,int nDisplacementComponents>
 void HyperelasticitySolver<Term,nDisplacementComponents>::
 evaluateAnalyticJacobian(Vec x, Mat jac)
 {
-  setDisplacementsAndPressureFromCombinedVec(x);
+  // copy the values of x to the internal data vectors in this->data_
+  setUVP(x);
 
+  // compute the jacobian
   materialComputeJacobian();
 
   //MatAssemblyBegin(jac, MAT_FINAL_ASSEMBLY);
@@ -389,8 +391,11 @@ evaluateAnalyticJacobian(Vec x, Mat jac)
 
 template<typename Term,int nDisplacementComponents>
 void HyperelasticitySolver<Term,nDisplacementComponents>::
-setDisplacementsAndPressureFromCombinedVec(Vec x, std::shared_ptr<DisplacementsFieldVariableType> u, std::shared_ptr<PressureFieldVariableType> p)
+setDisplacementsAndPressureFromCombinedVec(Vec x, std::shared_ptr<DisplacementsFieldVariableType> u,
+                                           std::shared_ptr<PressureFieldVariableType> p)
 {
+  assert(nDisplacementComponents == 3);
+
   // copy entries of combined vector x to this->data_.displacements() and this->data_.pressure()
   std::vector<double> values;
 
@@ -442,7 +447,8 @@ setDisplacementsAndPressureFromCombinedVec(Vec x, std::shared_ptr<DisplacementsF
     int nEntries = pressureFunctionSpace_->nDofsLocalWithoutGhosts();
     values.resize(nEntries);
 
-    combinedVecSolution_->getValues(3, nEntries, pressureFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
+    const int pressureComponent = nDisplacementComponents;
+    combinedVecSolution_->getValues(pressureComponent, nEntries, pressureFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
     p->setValues(0, nEntries, pressureFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
     p->finishGhostManipulation();
     p->startGhostManipulation();
@@ -456,6 +462,110 @@ setDisplacementsAndPressureFromCombinedVec(Vec x, std::shared_ptr<DisplacementsF
 
   //VLOG(1) << *u;
   //VLOG(1) << *p;
+}
+
+template<typename Term,int nDisplacementComponents>
+void HyperelasticitySolver<Term,nDisplacementComponents>::
+setDisplacementsVelocitiesAndPressureFromCombinedVec(Vec x,
+                                                     std::shared_ptr<DisplacementsFieldVariableType> u,
+                                                     std::shared_ptr<DisplacementsFieldVariableType> v,
+                                                     std::shared_ptr<PressureFieldVariableType> p)
+{
+  assert(nDisplacementComponents == 6);
+
+  // copy entries of combined vector x to this->data_.displacements() and this->data_.pressure()
+  std::vector<double> values;
+
+  if (VLOG_IS_ON(1))
+  {
+    PetscUtility::getVectorEntries(x, values);
+    VLOG(1) << "setDisplacementsVelocitiesAndPressureFromCombinedVec, x=" << PetscUtility::getStringVector(x);
+  }
+
+  bool backupVecs = false;
+  if (x != solverVariableSolution_)
+  {
+    backupVecs = true;
+  }
+
+  // move the values of x to variable solverVariableSolution_
+  if (backupVecs)
+  {
+    // this happens in computation of the numeric jacobian
+    VecSwap(x, solverVariableSolution_);
+  }
+
+  if (!u && !v && !p)
+  {
+    u = this->data_.displacements();
+    v = this->data_.velocities();
+    p = this->data_.pressure();
+  }
+
+  // set displacement entries
+  u->zeroGhostBuffer();
+  for (int componentNo = 0; componentNo < 3; componentNo++)
+  {
+    int nEntries = displacementsFunctionSpace_->nDofsLocalWithoutGhosts();
+    values.resize(nEntries);
+    combinedVecSolution_->getValues(componentNo, nEntries, displacementsFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
+
+    u->setValues(componentNo, nEntries, displacementsFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
+  }
+  u->finishGhostManipulation();
+  u->startGhostManipulation();
+
+  // set velocity entries
+  if (v)
+  {
+    v->zeroGhostBuffer();
+    for (int componentNo = 0; componentNo < 3; componentNo++)
+    {
+      int nEntries = displacementsFunctionSpace_->nDofsLocalWithoutGhosts();
+      values.resize(nEntries);
+      combinedVecSolution_->getValues(3 + componentNo, nEntries, displacementsFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
+
+      v->setValues(componentNo, nEntries, displacementsFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
+    }
+    v->finishGhostManipulation();
+    v->startGhostManipulation();
+  }
+  // set pressure entries
+  if (p)
+  {
+    p->zeroGhostBuffer();
+    int nEntries = pressureFunctionSpace_->nDofsLocalWithoutGhosts();
+    values.resize(nEntries);
+
+    const int pressureComponent = nDisplacementComponents;
+    combinedVecSolution_->getValues(pressureComponent, nEntries, pressureFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
+    p->setValues(0, nEntries, pressureFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
+    p->finishGhostManipulation();
+    p->startGhostManipulation();
+  }
+
+  // undo the backup operation
+  if (backupVecs)
+  {
+    VecSwap(x, solverVariableSolution_);
+  }
+
+  //VLOG(1) << *u;
+  //VLOG(1) << *p;
+}
+
+template<typename Term,int nDisplacementComponents>
+void HyperelasticitySolver<Term,nDisplacementComponents>::
+setUVP(Vec x)
+{
+  if (nDisplacementComponents == 3)
+  {
+    setDisplacementsAndPressureFromCombinedVec(x);
+  }
+  else if (nDisplacementComponents == 6)
+  {
+    setDisplacementsVelocitiesAndPressureFromCombinedVec(x);
+  }
 }
 
 template<typename Term,int nDisplacementComponents>
@@ -502,16 +612,6 @@ dumpJacobianMatrix(Mat jac)
         ierr = MatCopy(solverMatrixAdditionalNumericJacobian_, difference, SAME_NONZERO_PATTERN); CHKERRV(ierr);
         MatAXPY(difference, -1, solverMatrixJacobian_, DIFFERENT_NONZERO_PATTERN);
 
-        Mat analyticJacobianSubmatrixU = combinedMatrixJacobian_->getSubmatrix(0,0);
-        Mat numericJacobianSubmatrixU = combinedMatrixAdditionalNumericJacobian_->getSubmatrix(0,0);
-
-        Mat differenceSubmatrixU;
-        ierr = MatDuplicate(analyticJacobianSubmatrixU, MAT_COPY_VALUES, &differenceSubmatrixU); CHKERRV(ierr);
-        ierr = MatCopy(analyticJacobianSubmatrixU, differenceSubmatrixU, SAME_NONZERO_PATTERN); CHKERRV(ierr);
-        MatAXPY(differenceSubmatrixU, -1, numericJacobianSubmatrixU, DIFFERENT_NONZERO_PATTERN);
-
-
-
         double norm1 = 0;
         double normF = 0;
         double normInf = 0;
@@ -521,12 +621,29 @@ dumpJacobianMatrix(Mat jac)
         LOG(INFO) << "difference between analytic and numeric jacobian matrices: "
           << "1-norm: " << norm1 << ", frobenius norm: " << normF << ", infinity norm: " << normInf;
 
+        // compute differences for submatrices
+        int nRows = 2;
+        if (nDisplacementComponents == 6)
+          nRows = 3;
 
-        MatNorm(differenceSubmatrixU, NORM_1, &norm1);
-        MatNorm(differenceSubmatrixU, NORM_FROBENIUS, &normF);
-        MatNorm(differenceSubmatrixU, NORM_INFINITY, &normInf);
-        LOG(INFO) << "only uu submatrix: 1-norm: " << norm1 << ", frobenius norm: " << normF << ", infinity norm: " << normInf;
+        for (int i = 0; i < nRows; i++)
+        {
+          for (int j = 0; j < nRows; j++)
+          {
+            Mat analyticJacobianSubmatrix = combinedMatrixJacobian_->getSubmatrix(i,j);
+            Mat numericJacobianSubmatrix = combinedMatrixAdditionalNumericJacobian_->getSubmatrix(i,j);
 
+            Mat differenceSubmatrix;
+            ierr = MatDuplicate(analyticJacobianSubmatrix, MAT_COPY_VALUES, &differenceSubmatrix); CHKERRV(ierr);
+            ierr = MatCopy(analyticJacobianSubmatrix, differenceSubmatrix, SAME_NONZERO_PATTERN); CHKERRV(ierr);
+            MatAXPY(differenceSubmatrix, -1, numericJacobianSubmatrix, DIFFERENT_NONZERO_PATTERN);
+
+            MatNorm(differenceSubmatrix, NORM_1, &norm1);
+            MatNorm(differenceSubmatrix, NORM_FROBENIUS, &normF);
+            MatNorm(differenceSubmatrix, NORM_INFINITY, &normInf);
+            LOG(INFO) << " submatrix (" << i << "," << j << "): 1-norm: " << norm1 << ", frobenius norm: " << normF << ", infinity norm: " << normInf;
+          }
+        }
 
         if (norm1 > 1)
           LOG(ERROR) << "norm mismatch";
@@ -604,9 +721,9 @@ getString(Vec x)
   {
     return combinedVecResidual_->getString();
   }
-  else if (x == externalVirtualWork_)
+  else if (x == externalVirtualWorkDead_)
   {
-    return combinedVecExternalVirtualWork_->getString();
+    return combinedVecExternalVirtualWorkDead_->getString();
   }
   else
   {

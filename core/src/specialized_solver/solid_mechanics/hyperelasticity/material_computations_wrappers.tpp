@@ -12,6 +12,8 @@ materialComputeInternalVirtualWork(
   std::shared_ptr<PetscVec> internalVirtualWork
 )
 {
+  // this is only for the static problem
+  assert(nDisplacementComponents == 3);
   assert(displacements);
   assert(internalVirtualWork);
 
@@ -42,7 +44,7 @@ solveForDisplacements(
   // assign new value for ∂W_ext, save previous vector
   Vec rhs = externalVirtualWork->valuesGlobal();
   PetscErrorCode ierr;
-  ierr = VecSwap(rhs, externalVirtualWork_); CHKERRV(ierr);
+  ierr = VecSwap(rhs, externalVirtualWorkDead_); CHKERRV(ierr);
 
   Vec result = displacements->valuesGlobal();
   ierr = VecSwap(result, solverVariableSolution_); CHKERRV(ierr);
@@ -50,7 +52,36 @@ solveForDisplacements(
   nonlinearSolve();
 
   // restore value of ∂W_ext and solution
-  ierr = VecSwap(rhs, externalVirtualWork_); CHKERRV(ierr);
+  ierr = VecSwap(rhs, externalVirtualWorkDead_); CHKERRV(ierr);
+  ierr = VecSwap(result, solverVariableSolution_); CHKERRV(ierr);
+}
+
+template<typename Term,int nDisplacementComponents>
+void HyperelasticitySolver<Term,nDisplacementComponents>::
+solveDynamicProblem(
+  std::shared_ptr<PetscVec> displacementsVelocitiesPressure
+)
+{
+  // solve δW_int - δW_ext,dead + ∫_Ω ρ0 1/dt (v^(n+1),L - v^(n),L)/dt ϕ^L ϕ^M δu dV = 0,
+  // 1/dt (u^(n+1) - u^(n)) - v^(n+1) = 0
+  // ∫ (J-1) δp = 0   ∀ δp,δu,δv
+
+  assert(nDisplacementComponents == 6);
+
+  PetscErrorCode ierr;
+  Vec result = displacementsVelocitiesPressure->valuesGlobal();
+  ierr = VecSwap(result, solverVariableSolution_); CHKERRV(ierr);
+
+  // save u,v,p of previous timestep
+  setDisplacementsVelocitiesAndPressureFromCombinedVec(result,
+                                                       this->data_.displacementsPreviousTimestep(),
+                                                       this->data_.velocitiesPreviousTimestep()
+                                                       this->data_.pressurePreviousTimestep());
+
+  // find the solution for u,v,p of the nonlinear equation
+  nonlinearSolve();
+
+  // restore value of ∂W_ext and solution
   ierr = VecSwap(result, solverVariableSolution_); CHKERRV(ierr);
 }
 

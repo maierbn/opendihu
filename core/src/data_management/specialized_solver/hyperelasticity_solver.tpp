@@ -28,12 +28,15 @@ createPetscObjects()
   assert(this->pressureFunctionSpace_);
   assert(this->functionSpace_);
 
-
   std::vector<std::string> displacementsComponentNames({"x","y","z"});
-  displacements_           = this->displacementsFunctionSpace_->template createFieldVariable<3>("u", displacementsComponentNames);     //< u, the displacements
-  fiberDirection_          = this->displacementsFunctionSpace_->template createFieldVariable<3>("fiberDirection", displacementsComponentNames);
-  displacementsLinearMesh_ = this->pressureFunctionSpace_->template createFieldVariable<3>("uLin", displacementsComponentNames);     //< u, the displacements
-  pressure_                = this->pressureFunctionSpace_->template createFieldVariable<1>("p");     //<  p, the pressure variable
+  displacements_                 = this->displacementsFunctionSpace_->template createFieldVariable<3>("u", displacementsComponentNames);     //< u, the displacements
+  displacementsPreviousTimestep_ = this->displacementsFunctionSpace_->template createFieldVariable<3>("u_previous", displacementsComponentNames);     //< u, the displacements
+  velocities_                    = this->displacementsFunctionSpace_->template createFieldVariable<3>("v", displacementsComponentNames);     //< u, the displacements
+  velocitiesPreviousTimestep_    = this->displacementsFunctionSpace_->template createFieldVariable<3>("v_previous", displacementsComponentNames);     //< u, the displacements
+  fiberDirection_                = this->displacementsFunctionSpace_->template createFieldVariable<3>("fiberDirection", displacementsComponentNames);
+  displacementsLinearMesh_       = this->pressureFunctionSpace_->template createFieldVariable<3>("uLin", displacementsComponentNames);     //< u, the displacements
+  pressure_                      = this->pressureFunctionSpace_->template createFieldVariable<1>("p");     //<  p, the pressure variable
+  pressurePreviousTimestep_      = this->pressureFunctionSpace_->template createFieldVariable<1>("p_previous");     //<  p, the pressure variable
 
   std::vector<std::string> componentNames({"S_11", "S_22", "S_33", "S_12", "S_13", "S_23"});
   pK2Stress_               = this->displacementsFunctionSpace_->template createFieldVariable<6>("PK2-Stress (Voigt)", componentNames);     //<  the symmetric PK2 stress tensor in Voigt notation
@@ -48,12 +51,34 @@ geometryReference()
   return this->geometryReference_;
 }
 
-//! field variable of u
+//! field variable of u or u^(n+1)
 template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term>
 std::shared_ptr<typename QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::DisplacementsFieldVariableType> QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::
 displacements()
 {
   return this->displacements_;
+}
+//! field variable of u^(n)
+template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term>
+std::shared_ptr<typename QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::DisplacementsFieldVariableType> QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::
+displacementsPreviousTimestep()
+{
+  return this->displacementsPreviousTimestep_;
+}
+
+//! field variable of v or v^(n+1)
+template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term>
+std::shared_ptr<typename QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::DisplacementsFieldVariableType> QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::
+velocities()
+{
+  return this->velocities_;
+}
+//! field variable of v^(n)
+template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term>
+std::shared_ptr<typename QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::DisplacementsFieldVariableType> QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::
+velocitiesPreviousTimestep()
+{
+  return this->velocitiesPreviousTimestep_;
 }
 
 //! field variable of fiber direction
@@ -72,12 +97,20 @@ displacementsLinearMesh()
   return this->displacementsLinearMesh_;
 }
 
-//! field variable of p
+//! field variable of p or p^(n+1)
 template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term>
 std::shared_ptr<typename QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::PressureFieldVariableType> QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::
 pressure()
 {
   return this->pressure_;
+}
+
+//! field variable of p^(n)
+template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term>
+std::shared_ptr<typename QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::PressureFieldVariableType> QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::
+pressurePreviousTimestep()
+{
+  return this->pressurePreviousTimestep_;
 }
 
 //! field variable of S

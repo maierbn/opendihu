@@ -112,7 +112,6 @@ void Heun<DiscretizableInTime>::advanceTimeSpan()
     // start duration measurement
     if (this->durationLogKey_ != "")
       Control::PerformanceMeasurement::start(this->durationLogKey_);
-    //this->data_->print();
   }
 
   // stop duration measurement

@@ -19,7 +19,6 @@ namespace TimeSteppingScheme
  */
 template<typename DiscretizableInTimeType>
 class TimeSteppingSchemeOdeBaseDiscretizable:
-//  public TimeSteppingSchemeOdeOutputConnectorDataType<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents(), DiscretizableInTimeType>
   public TimeSteppingSchemeOdeBase<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>
 {
 public:
@@ -79,35 +78,6 @@ public:
   
   //using TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::initialize;
 };
-
-/**
- * Specialization for CellmlAdapter
- */
-/*template<int nStates,int nIntermediates,typename FunctionSpaceType>
-class TimeSteppingSchemeOde<CellmlAdapter<nStates, nIntermediates, FunctionSpaceType>> :
-  public TimeSteppingSchemeOdeBaseDiscretizable<CellmlAdapter<nStates, nIntermediates, FunctionSpaceType>>
-{
-public:
-  //! use constructor of parent class
-  using TimeSteppingSchemeOdeBaseDiscretizable<CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>>::TimeSteppingSchemeOdeBaseDiscretizable;
-  
-  //! use data type for solution transfer
-  typedef typename TimeSteppingSchemeOdeBaseDiscretizable<CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>>::OutputConnectorDataType OutputConnectorDataType;
-
-  //! initialize CellMLAdapter and get outputStateIndex and prefactor from CellMLAdapter to set them in data_
-  virtual void initialize();
-
-  //! get the data that will be transferred in the operator splitting to the other term of the splitting
-  //! the transfer is done by the output_connector_data_transfer class
-  virtual OutputConnectorDataType getOutputConnectorData();
-
-  //! output the given data for debugging
-  virtual std::string getString(OutputConnectorDataType &data);
-
-protected:
-  int outputIntermediateIndex_ = -1;   ///< component index of the intermediates field variable to use for solution transfer
-};*/
-
 }  // namespace
 
 #include "time_stepping_scheme/02_time_stepping_scheme_ode.tpp"

@@ -139,7 +139,8 @@ config = {
         "durationLogKey":         "duration_monodomain",
         "timeStepOutputInterval": 100,
         "endTime":                variables.end_time,
-        "transferSlotName":       "states",   # which output slot of the cellml adapter ("states" or "intermediates") to use for transfer to diffusion, in this case we need "states", states[0] which is Vm
+        "connectedSlotsTerm1To2": [0,1],   # transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion)
+        "connectedSlotsTerm2To1": [0,1],   # transfer the same back
 
         "Term1": {      # CellML, i.e. reaction term of Monodomain equation
           "MultipleInstances": {
@@ -176,13 +177,12 @@ config = {
                   "setSpecificStatesCallEnableBegin":       variables.get_specific_states_call_enable_begin(fiber_no, motor_unit_no),# [ms] first time when to call setSpecificStates
                   "additionalArgument":                     fiber_no,
                   
-                  "statesForTransfer":                      variables.output_intermediate_index,            # which intermediate values to use in further computation
-                  "intermediatesForTransfer":               variables.output_state_index,                   # which state values to use in further computation, Shorten / Hodgkin Huxley: state 0 = Vm
+                  "intermediatesForTransfer":               variables.output_intermediate_index,            # which intermediate values to use in further computation
+                  "statesForTransfer":                      variables.output_state_index,                   # which state values to use in further computation, Shorten / Hodgkin Huxley: state 0 = Vm
                   "parametersUsedAsIntermediate":           variables.parameters_used_as_intermediate,      #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
                   "parametersUsedAsConstant":               variables.parameters_used_as_constant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
                   "parametersInitialValues":                variables.parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
                   "meshName":                               "MeshFiber_{}".format(fiber_no),
-                  "prefactor":                              1.0,
                   "stimulationLogFilename":                 "out/stimulation.log",
                 },
               },
@@ -208,7 +208,7 @@ config = {
                 "dirichletBoundaryConditions": {},                                       # old Dirichlet BC that are not used in FastMonodomainSolver: {0: -75.0036, -1: -75.0036},
                 "inputMeshIsGlobal":           True,
                 "solverName":                  "implicitSolver",
-                "nAdditionalFieldVariables":   0,
+                "nAdditionalFieldVariables":   1,     # for stress that will be transferred from CellML and then written with output writer
                     
                 "FiniteElementMethod" : {
                   "maxIterations":             1e4,

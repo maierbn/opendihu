@@ -94,7 +94,7 @@ def get_specific_states_frequency_jitter(fiber_no, mu_no):
   return [0]
 
 def get_specific_states_call_enable_begin(fiber_no, mu_no):
-  return 0
+  return activation_start_time
 
 
 # further internal variables that will be set by the helper.py script and used in the config in settings_fibers_emg.py
@@ -128,8 +128,8 @@ z_point_index_end = None
 n_elements_3D_mesh = None
 meshes = None
 potential_flow_dirichlet_bc = None
-linear_elasticity_dirichlet_bc = None
-linear_elasticity_neumann_bc = None
+use_elasticity_dirichlet_bc = None
+use_elasticity_neumann_bc = None
 fibers_on_own_rank = None
 n_fiber_nodes_on_subdomain = None
 fiber_start_node_no = None

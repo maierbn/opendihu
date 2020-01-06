@@ -79,5 +79,7 @@ initialize(const Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nCom
       }
       fieldVariableNamesTerm2Vector2_.push_back(name.str());
     }
+
+    initializeSlotInformation();
   }
 }

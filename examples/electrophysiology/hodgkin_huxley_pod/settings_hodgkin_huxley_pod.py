@@ -240,12 +240,11 @@ config = {
             #"handleResultFunction": handleResult,
             #"handleResultCallInterval": 2e3,
             
-            "outputStateIndex": 0,     # state 0 = Vm
+            "statesForTransfer": 0,     # state 0 = Vm
             "parametersUsedAsIntermediate": parameters_used_as_intermediate,  #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
             "parametersUsedAsConstant": parameters_used_as_constant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
             "parametersInitialValues": parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
             "meshName": "MeshFibre",
-            "prefactor": 1.0,
           },
           
           "OutputWriter" : [
@@ -277,6 +276,7 @@ config = {
             #"handleResultCallInterval": 2e3,
             
             "statesForTransfer": 0,     # state 0 = Vm
+          "intermediatesForTransfer": [],
             "parametersUsedAsIntermediate": parameters_used_as_intermediate,  #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
             "parametersUsedAsConstant": parameters_used_as_constant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
             "parametersInitialValues": parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
@@ -375,6 +375,7 @@ config = {
            #"handleResultCallInterval": 2e3,
           
           "statesForTransfer": 0,     # state 0 = Vm
+          "intermediatesForTransfer": [],
           "parametersUsedAsIntermediate": parameters_used_as_intermediate,  #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
           "parametersUsedAsConstant": parameters_used_as_constant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
           "parametersInitialValues": parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs

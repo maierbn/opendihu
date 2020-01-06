@@ -55,7 +55,7 @@ public:
   void print();
 
   //! return the object that will be used to transfer values between solvers, in this case this includes only Vm
-  OutputConnectorDataType &getOutputConnectorData();
+  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
 
   //! field variables that will be output by outputWriters
   typedef std::tuple<
@@ -82,7 +82,7 @@ private:
   std::shared_ptr<FieldVariableType> transmembranePotential_;  ///< the Vm value (transmembrane potential)
   std::shared_ptr<FieldVariableType> extraCellularPotential_;  ///< the phi_e value which is the extra-cellular potential
   std::shared_ptr<FieldVariableType> zero_;  ///< a field variable with constant value of zero, needed for the nested rhs vector
-  OutputConnectorDataType outputConnectorData_;  ///< the field variables that will be transferred to other solvers for the output connector
+  std::shared_ptr<OutputConnectorDataType> outputConnectorData_;  ///< the field variables that will be transferred to other solvers for the output connector
 };
 
 } // namespace Data

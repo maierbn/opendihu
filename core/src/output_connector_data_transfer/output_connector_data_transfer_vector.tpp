@@ -8,17 +8,17 @@
  */
 template<typename OutputConnectorDataType1, typename OutputConnectorDataType2>
 void SolutionVectorMapping<
-  std::vector<OutputConnectorDataType1>,
-  std::vector<OutputConnectorDataType2>
->::transfer(const std::vector<OutputConnectorDataType1> &transferableSolutionData1,
-            std::vector<OutputConnectorDataType2> &transferableSolutionData2,
+  std::vector<std::shared_ptr<OutputConnectorDataType1>>,
+  std::vector<std::shared_ptr<OutputConnectorDataType2>>
+>::transfer(const std::shared_ptr<std::vector<std::shared_ptr<OutputConnectorDataType1>>> transferableSolutionData1,
+            std::shared_ptr<std::vector<std::shared_ptr<OutputConnectorDataType2>>> transferableSolutionData2,
             OutputConnection &outputConnection)
 {
   VLOG(1) << "Solution vector mapping (output_connector_data_transfer_vector.tpp)";
-  int nTransferableVariables = std::min(transferableSolutionData1.size(), transferableSolutionData2.size());
-  if (transferableSolutionData1.size() != transferableSolutionData2.size())
+  int nTransferableVariables = std::min(transferableSolutionData1->size(), transferableSolutionData2->size());
+  if (transferableSolutionData1->size() != transferableSolutionData2->size())
   {
-    LOG(ERROR) << "Trying to transfer data from " << transferableSolutionData1.size() << " variables to " << transferableSolutionData2.size() << ", number has to be equal. "
+    LOG(ERROR) << "Trying to transfer data from " << transferableSolutionData1->size() << " variables to " << transferableSolutionData2->size() << ", number has to be equal. "
       << "Now only using the first " << nTransferableVariables << " variable" << (nTransferableVariables != 1? "s" : "") << ". Types: " << std::endl
       << StringUtility::demangle(typeid(OutputConnectorDataType1).name()) << std::endl
       << StringUtility::demangle(typeid(OutputConnectorDataType2).name());
@@ -28,9 +28,11 @@ void SolutionVectorMapping<
   for (int i = 0; i < nTransferableVariables; i++)
   {
     SolutionVectorMapping<OutputConnectorDataType1,OutputConnectorDataType2>::transfer(
-      transferableSolutionData1[i],
-      transferableSolutionData2[i],
+      (*transferableSolutionData1)[i],
+      (*transferableSolutionData2)[i],
       outputConnection
     );
   }
+
+  VLOG(1) << "at the end of std::vector transfer: transferableSolutionData2: " << (*transferableSolutionData2);
 }

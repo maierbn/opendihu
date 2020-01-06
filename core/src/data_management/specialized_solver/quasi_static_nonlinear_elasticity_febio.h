@@ -59,7 +59,7 @@ public:
   void print();
 
   //! get the output connection da
-  OutputConnectorDataType &getOutputConnectorData();
+  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
 
   //! field variables that will be output by outputWriters
   typedef std::tuple<
@@ -89,7 +89,7 @@ private:
   std::shared_ptr<FieldVariableTypeTensor> greenLagrangeStrain_; ///< field variable of the Green-Lagrange strain, E
   std::shared_ptr<FieldVariableType> relativeVolume_; ///< field variable of the relative volume (determinant of deformation gradient)
 
-  OutputConnectorDataType outputConnectorData_;    ///< the object that stores all components of field variables that will be transferred to other solvers
+  std::shared_ptr<OutputConnectorDataType> outputConnectorData_;    ///< the object that stores all components of field variables that will be transferred to other solvers
 };
 
 } // namespace Data

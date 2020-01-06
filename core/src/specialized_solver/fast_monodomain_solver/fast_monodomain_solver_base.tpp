@@ -186,15 +186,67 @@ initialize()
     }
   }
 
+  // get the states and intermediates no.s to be transferred as output connector data
+  CellmlAdapterType &cellmlAdapter = instances[0].timeStepping1().instancesLocal()[0].discretizableInTime();
+  cellmlAdapter.getStatesIntermediatesForTransfer(statesForTransfer_, intermediatesForTransfer_);
+
   int nVcVectors = (nInstancesToCompute_ + Vc::double_v::Size - 1) / Vc::double_v::Size;
 
   fiberPointBuffers_.resize(nVcVectors);
-  LOG(DEBUG) << nInstancesToCompute_ << " instances to compute, " << nVcVectors << " Vc vectors, size of double_v: " << Vc::double_v::Size;
+  fiberPointBuffersIntermediatesForTransfer_.resize(nVcVectors);
+
+  for (int i = 0; i < fiberPointBuffersIntermediatesForTransfer_.size(); i++)
+  {
+    fiberPointBuffersIntermediatesForTransfer_[i].resize(intermediatesForTransfer_.size());
+  }
+
+  LOG(DEBUG) << nInstancesToCompute_ << " instances to compute, " << nVcVectors
+    << " Vc vectors, size of double_v: " << Vc::double_v::Size << ", "
+    << statesForTransfer_.size()-1 << " additional states for transfer, "
+    << intermediatesForTransfer_.size() << " intermediates for transfer";
 
   // initialize values
   for (int i = 0; i < fiberPointBuffers_.size(); i++)
   {
     initializeStates(fiberPointBuffers_[i].states);
+  }
+
+  // initialize field variable names
+  for (int i = 0; i < instances.size(); i++)
+  {
+    std::vector<TimeSteppingScheme::Heun<CellmlAdapterType>> &innerInstances
+      = instances[i].timeStepping1().instancesLocal();  // TimeSteppingScheme::Heun<CellmlAdapter...
+
+    for (int j = 0; j < innerInstances.size(); j++, fiberNo++)
+    {
+      std::shared_ptr<FiberFunctionSpace> fiberFunctionSpace = innerInstances[j].data().functionSpace();
+      CellmlAdapterType &cellmlAdapter = innerInstances[j].discretizableInTime();
+
+      // loop over further states to transfer
+      int furtherDataIndex = 0;
+      for (int stateIndex = 1; stateIndex < statesForTransfer_.size(); stateIndex++, furtherDataIndex++)
+      {
+        // get field variable
+        std::shared_ptr<FieldVariable::FieldVariable<FiberFunctionSpace,1>> fieldVariableStates
+          = instances[i].timeStepping2().instancesLocal()[j].getOutputConnectorData()->variable1[stateIndex].values;
+
+        std::string name = cellmlAdapter.data().states()->componentName(statesForTransfer_[stateIndex]);
+
+        fieldVariableStates->setName(name);
+      }
+
+      // loop over intermediates to transfer
+      for (int intermediateIndex = 0; intermediateIndex < intermediatesForTransfer_.size(); intermediateIndex++, furtherDataIndex++)
+      {
+        // get field variable
+        std::shared_ptr<FieldVariable::FieldVariable<FiberFunctionSpace,1>> fieldVariableIntermediates
+          = instances[i].timeStepping2().instancesLocal()[j].getOutputConnectorData()->variable2[intermediateIndex].values;
+
+        std::string name = cellmlAdapter.data().intermediates()->componentName(intermediatesForTransfer_[intermediateIndex]);
+
+        fieldVariableIntermediates->setName(name);
+      }
+    }
   }
 
 }
@@ -233,13 +285,15 @@ advanceTimeSpan()
 
   for (int i = 0; i < instances.size(); i++)
   {
-    instances[i].timeStepping2().writeOutput(0, currentTime_);  // force output now, not considering any outputInterval
+    // call write output of MultipleInstances, callCountIncrement is the number of times the output writer would have been called without FastMonodomainSolver
+    instances[i].timeStepping2().writeOutput(0, currentTime_, nTimeStepsSplitting_);
   }
 
   // call own output writers, write current 0D output values, not yet implemented
   //this->outputWriterManager_.writeOutput(*this->data_, 0, currentTime_);
 }
 
+//! get element lengths and vmValues from the other ranks
 template<int nStates, int nIntermediates>
 void FastMonodomainSolverBase<nStates,nIntermediates>::
 fetchFiberData()
@@ -288,6 +342,10 @@ fetchFiberData()
       {
         fiberData_[fiberDataNo].elementLengths.resize(fiberFunctionSpace->nElementsGlobal());
         fiberData_[fiberDataNo].vmValues.resize(fiberFunctionSpace->nDofsGlobal());
+
+        // resize buffer of further data that will be transferred back in updateFiberData()
+        int nStatesAndIntermediatesValues = statesForTransfer_.size() + intermediatesForTransfer_.size() - 1;
+        fiberData_[fiberDataNo].furtherStatesAndIntermediatesValues.resize(fiberFunctionSpace->nDofsGlobal() * nStatesAndIntermediatesValues);
         
         elementLengthsReceiveBuffer = fiberData_[fiberDataNo].elementLengths.data();
         vmValuesReceiveBuffer = fiberData_[fiberDataNo].vmValues.data();
@@ -343,11 +401,12 @@ fetchFiberData()
   }
 }
 
+//! send vmValues data from fiberData_ back to the fibers where it belongs to and set in the respective field variable
 template<int nStates, int nIntermediates>
 void FastMonodomainSolverBase<nStates,nIntermediates>::
 updateFiberData()
 {
-  // copy Vm from compute buffers to fiberData_
+  // copy Vm and other states/intermediates from compute buffers to fiberData_
   for (int fiberDataNo = 0; fiberDataNo < fiberData_.size(); fiberDataNo++)
   {
     int nValues = fiberData_[fiberDataNo].vmValues.size();
@@ -359,8 +418,29 @@ updateFiberData()
       global_no_t pointBuffersNo = valueIndexAllFibers / Vc::double_v::Size;
       int entryNo = valueIndexAllFibers % Vc::double_v::Size;
 
-      fiberData_[fiberDataNo].vmValues[valueNo] = fiberPointBuffers_[pointBuffersNo].states[0][entryNo];
+      assert(statesForTransfer_.size() > 0);
+      const int stateToTransfer = statesForTransfer_[0];  // transfer the first state value
+      fiberData_[fiberDataNo].vmValues[valueNo] = fiberPointBuffers_[pointBuffersNo].states[stateToTransfer][entryNo];
+
+      // loop over further states to transfer
+      int furtherDataIndex = 0;
+      for (int i = 1; i < statesForTransfer_.size(); i++, furtherDataIndex++)
+      {
+        const int stateToTransfer = statesForTransfer_[i];
+
+        fiberData_[fiberDataNo].furtherStatesAndIntermediatesValues[furtherDataIndex*nValues + valueNo]
+          = fiberPointBuffers_[pointBuffersNo].states[stateToTransfer][entryNo];
+      }
+
+      // loop over intermediates to transfer
+      for (int i = 0; i < intermediatesForTransfer_.size(); i++, furtherDataIndex++)
+      {
+        fiberData_[fiberDataNo].furtherStatesAndIntermediatesValues[furtherDataIndex*nValues + valueNo]
+          = fiberPointBuffersIntermediatesForTransfer_[pointBuffersNo][i][entryNo];
+      }
     }
+    LOG(DEBUG) << "states and intermediates for transfer at fiberDataNo=" << fiberDataNo << ": " << fiberData_[fiberDataNo].furtherStatesAndIntermediatesValues;
+    LOG(DEBUG) << "size: " << fiberData_[fiberDataNo].furtherStatesAndIntermediatesValues.size() << ", nValues: " << nValues;
   }
 
   LOG(TRACE) << "updateFiberData";
@@ -380,6 +460,7 @@ updateFiberData()
       std::shared_ptr<FiberFunctionSpace> fiberFunctionSpace = innerInstances[j].data().functionSpace();
       //CellmlAdapterType &cellmlAdapter = innerInstances[j].discretizableInTime();
 
+      // prepare helper variables for Scatterv
       std::shared_ptr<Partition::RankSubset> rankSubset = fiberFunctionSpace->meshPartition()->rankSubset();
       MPI_Comm mpiCommunicator = rankSubset->mpiCommunicator();
       int computingRank = fiberNo % rankSubset->size();
@@ -394,7 +475,6 @@ updateFiberData()
       }
 
       double *sendBufferVmValues = nullptr;
-
       if (computingRank == rankSubset->ownRankNo())
       {
         sendBufferVmValues = fiberData_[fiberDataNo].vmValues.data();
@@ -410,9 +490,89 @@ updateFiberData()
 
       LOG(DEBUG) << "Scatterv from rank " << computingRank << ", sizes: " << nDofsOnRanks << ", offsets: " << offsetsOnRanks << ", received local values " << vmValuesLocal;
 
+      // store Vm values in CellmlAdapter and diffusion FiniteElementMethod
       LOG(DEBUG) << "fiber " << fiberDataNo << ", set values " << vmValuesLocal;
       innerInstances[j].data().solution()->setValuesWithoutGhosts(0, vmValuesLocal);
       instances[i].timeStepping2().instancesLocal()[j].data().solution()->setValuesWithoutGhosts(0, vmValuesLocal);
+
+      // ----------------------
+      // communicate further states and intermediates that are selected by the options "statesForTransfer" and "intermediatesForTransfer"
+
+      std::vector<int> nValuesOnRanks(rankSubset->size());
+      int nStatesAndIntermediatesValues = statesForTransfer_.size() + intermediatesForTransfer_.size() - 1;
+
+      for (int rankNo = 0; rankNo < rankSubset->size(); rankNo++)
+      {
+        offsetsOnRanks[rankNo] = fiberFunctionSpace->meshPartition()->beginNodeGlobalNatural(0, rankNo) * nStatesAndIntermediatesValues;
+        nValuesOnRanks[rankNo] = fiberFunctionSpace->meshPartition()->nNodesLocalWithoutGhosts(0, rankNo) * nStatesAndIntermediatesValues;
+      }
+
+      double *sendBuffer = nullptr;
+      if (computingRank == rankSubset->ownRankNo())
+      {
+        sendBuffer = fiberData_[fiberDataNo].furtherStatesAndIntermediatesValues.data();
+      }
+
+      std::vector<double> valuesLocal(fiberFunctionSpace->nDofsLocalWithoutGhosts() * nStatesAndIntermediatesValues);
+      MPI_Scatterv(sendBuffer, nValuesOnRanks.data(), offsetsOnRanks.data(), MPI_DOUBLE,
+                   valuesLocal.data(), fiberFunctionSpace->nDofsLocalWithoutGhosts() * nStatesAndIntermediatesValues, MPI_DOUBLE,
+                   computingRank, mpiCommunicator);
+
+      LOG(DEBUG) << "Scatterv furtherStatesAndIntermediatesValues from rank " << computingRank << ", sizes: " << nValuesOnRanks << ", offsets: " << offsetsOnRanks
+        << ", sendBuffer: " << sendBuffer << ", received local values: " << valuesLocal;
+
+      // store received states and intermediates values in diffusion outputConnectorData
+      // loop over further states to transfer
+      int furtherDataIndex = 0;
+      for (int stateIndex = 1; stateIndex < statesForTransfer_.size(); stateIndex++, furtherDataIndex++)
+      {
+        // store in diffusion
+        std::shared_ptr<FieldVariable::FieldVariable<FiberFunctionSpace,1>> fieldVariableStates
+          = instances[i].timeStepping2().instancesLocal()[j].getOutputConnectorData()->variable1[stateIndex].values;
+
+        int nValues = fiberFunctionSpace->nDofsLocalWithoutGhosts();
+        double *values = valuesLocal.data() + furtherDataIndex * nValues;
+
+        // int componentNo, int nValues, const dof_no_t *dofNosLocal, const double *values
+        fieldVariableStates->setValues(0, nValues, fiberFunctionSpace->meshPartition()->dofNosLocal().data(), values);
+
+        // store in cellmlAdapter
+        std::shared_ptr<FieldVariable::FieldVariable<FiberFunctionSpace,nStates>> fieldVariableStatesCellML
+          = instances[i].timeStepping1().instancesLocal()[j].getOutputConnectorData()->variable1[stateIndex].values;
+
+        const int componentNo = statesForTransfer_[stateIndex];
+
+        // int componentNo, int nValues, const dof_no_t *dofNosLocal, const double *values
+        fieldVariableStatesCellML->setValues(componentNo, nValues, fiberFunctionSpace->meshPartition()->dofNosLocal().data(), values);
+
+        LOG(DEBUG) << "store " << nValues << " values for additional state " << statesForTransfer_[stateIndex];
+      }
+
+      // loop over intermediates to transfer
+      for (int intermediateIndex = 0; intermediateIndex < intermediatesForTransfer_.size(); intermediateIndex++, furtherDataIndex++)
+      {
+        // store in diffusion
+        std::shared_ptr<FieldVariable::FieldVariable<FiberFunctionSpace,1>> fieldVariableIntermediates
+          = instances[i].timeStepping2().instancesLocal()[j].getOutputConnectorData()->variable2[intermediateIndex].values;
+
+        int nValues = fiberFunctionSpace->nDofsLocalWithoutGhosts();
+        double *values = valuesLocal.data() + furtherDataIndex * nValues;
+
+        // int componentNo, int nValues, const dof_no_t *dofNosLocal, const double *values
+        fieldVariableIntermediates->setValues(0, nValues, fiberFunctionSpace->meshPartition()->dofNosLocal().data(), values);
+
+        // store in CellmlAdapter
+        std::shared_ptr<FieldVariable::FieldVariable<FiberFunctionSpace,1>> fieldVariableIntermediatesCellML
+          = instances[i].timeStepping1().instancesLocal()[j].getOutputConnectorData()->variable2[intermediateIndex].values;
+
+        //const int componentNo = intermediatesForTransfer_[intermediateIndex];
+
+        // int componentNo, int nValues, const dof_no_t *dofNosLocal, const double *values
+        fieldVariableIntermediatesCellML->setValues(0, nValues, fiberFunctionSpace->meshPartition()->dofNosLocal().data(), values);
+
+        LOG(DEBUG) << "store " << nValues << " values for intermediate " << intermediatesForTransfer_[intermediateIndex];
+        LOG(DEBUG) << *fieldVariableIntermediates;
+      }
 
       // increase index for fiberData_ struct
       if (computingRank == rankSubset->ownRankNo())
@@ -444,7 +604,7 @@ computeMonodomain()
 
   double startTime = instances[0].startTime();
   double timeStepWidthSplitting = instances[0].timeStepWidth();
-  const int nTimeStepsSplitting = instances[0].numberTimeSteps();
+  nTimeStepsSplitting_ = instances[0].numberTimeSteps();
 
   heun.setTimeSpan(startTime, startTime + 0.5 * timeStepWidthSplitting);
   double dt0D = heun.timeStepWidth();
@@ -454,7 +614,7 @@ computeMonodomain()
   double dt1D = implicitEuler.timeStepWidth();
   int nTimeSteps1D = implicitEuler.numberTimeSteps();
 
-  LOG(DEBUG) << "prefactor: " << prefactor << ", dtSplitting: " << timeStepWidthSplitting << ", n steps: " << nTimeStepsSplitting;
+  LOG(DEBUG) << "prefactor: " << prefactor << ", dtSplitting: " << timeStepWidthSplitting << ", n steps: " << nTimeStepsSplitting_;
   LOG(DEBUG) << "dt0D: " << dt0D << ", n steps: " << nTimeSteps0D << ", dt1D: " << dt1D << ", n steps: " << nTimeSteps1D;
 
   // picture for strang splitting:
@@ -468,29 +628,29 @@ computeMonodomain()
   //        2
 
   // loop over splitting time steps
-  for (int timeStepNo = 0; timeStepNo < nTimeStepsSplitting; timeStepNo++)
+  for (int timeStepNo = 0; timeStepNo < nTimeStepsSplitting_; timeStepNo++)
   {
     // perform Strang splitting
     double currentTime = startTime + timeStepNo * timeStepWidthSplitting;
 
-    LOG(DEBUG) << "splitting " << timeStepNo << "/" << nTimeStepsSplitting << ", t: " << currentTime;
+    LOG(DEBUG) << "splitting " << timeStepNo << "/" << nTimeStepsSplitting_ << ", t: " << currentTime;
 
     // compute midTime once per step to reuse it. [currentTime, midTime=currentTime+0.5*timeStepWidth, currentTime+timeStepWidth]
     double midTime = currentTime + 0.5 * timeStepWidthSplitting;
+    bool storeIntermediatesForTransfer = timeStepNo == nTimeStepsSplitting_-1;   // after the last timestep, store the intermediates for transfer
 
     // perform splitting
-    compute0D(currentTime, dt0D, nTimeSteps0D);
+    compute0D(currentTime, dt0D, nTimeSteps0D, false);
     compute1D(currentTime, dt1D, nTimeSteps1D, prefactor);
-    compute0D(midTime,     dt0D, nTimeSteps0D);
+    compute0D(midTime,     dt0D, nTimeSteps0D, storeIntermediatesForTransfer);
   }
 
   currentTime_ = instances[0].endTime();
 }
 
-
 template<int nStates, int nIntermediates>
 void FastMonodomainSolverBase<nStates,nIntermediates>::
-compute0D(double startTime, double timeStepWidth, int nTimeSteps)
+compute0D(double startTime, double timeStepWidth, int nTimeSteps, bool storeIntermediatesForTransfer)
 {
   Control::PerformanceMeasurement::start(durationLogKey0D_);
   LOG(DEBUG) << "compute0D(" << startTime << "), " << nTimeSteps << " time steps";
@@ -563,7 +723,9 @@ compute0D(double startTime, double timeStepWidth, int nTimeSteps)
           LOG(DEBUG) << " new lastStimulationCheckTime: " << fiberData_[fiberDataNo].lastStimulationCheckTime;
 
           // compute new jitter value
-          double jitterFactor = setSpecificStatesFrequencyJitter[jitterIndex % setSpecificStatesFrequencyJitter.size()];
+          double jitterFactor = 0.0;
+          if (setSpecificStatesFrequencyJitter.size() > 0)
+            jitterFactor = setSpecificStatesFrequencyJitter[jitterIndex % setSpecificStatesFrequencyJitter.size()];
           currentJitter = jitterFactor * setSpecificStatesCallFrequency;
           LOG(DEBUG) << " jitterIndex: " << jitterIndex << ", new jitterFactor: " << jitterFactor << ", currentJitter: " << currentJitter;
           jitterIndex++;
@@ -611,8 +773,15 @@ compute0D(double startTime, double timeStepWidth, int nTimeSteps)
       if (stimulate && currentPointIsInCenter)
         LOG(INFO) << "t: " << currentTime << ", stimulate fiber " << fiberData_[fiberDataNo].fiberNoGlobal << ", MU " << motorUnitNo;
 
+      const bool argumentStimulate = stimulate && currentPointIsInCenter;
+      const bool argumentStoreIntermediates = storeIntermediatesForTransfer && timeStepNo == nTimeSteps-1;
 
-      compute0DInstance(fiberPointBuffers_[pointBuffersNo].states, currentTime, timeStepWidth, stimulate && currentPointIsInCenter);
+      /*LOG(DEBUG) << "storeIntermediatesForTransfer: " << storeIntermediatesForTransfer << ", timeStepNo " << timeStepNo << ", nTimeSteps: " << nTimeSteps
+        << ", argumentStoreIntermediates: " << argumentStoreIntermediates;*/
+
+      compute0DInstance(fiberPointBuffers_[pointBuffersNo].states, currentTime, timeStepWidth, argumentStimulate,
+                        argumentStoreIntermediates, fiberPointBuffersIntermediatesForTransfer_[pointBuffersNo]);
+
       // perform one step of the heun scheme
 
     }
@@ -853,7 +1022,8 @@ setTimeSpan(double startTime, double endTime)
 }
 
 template<int nStates, int nIntermediates>
-typename FastMonodomainSolverBase<nStates,nIntermediates>::OutputConnectorDataType &FastMonodomainSolverBase<nStates,nIntermediates>::
+std::shared_ptr<typename FastMonodomainSolverBase<nStates,nIntermediates>::OutputConnectorDataType>
+FastMonodomainSolverBase<nStates,nIntermediates>::
 getOutputConnectorData()
 {
   return nestedSolvers_.getOutputConnectorData();

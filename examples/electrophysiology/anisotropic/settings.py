@@ -86,8 +86,8 @@ config = {
     "disableMatrixPrinting": False,
     "timeStepWidth": 1e-1,
     "endTime": endTime,
-    "outputData1": False,
-    "outputData2": True,
+    "connectedSlotsTerm1To2": 0,   # transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion), for elasticity also transfer gamma
+    "connectedSlotsTerm2To1": 0,   # transfer the same back
 
     "OutputWriter" : [
        #{"format": "Callback", "outputInterval": 1e4, "callback": callback},
@@ -108,10 +108,10 @@ config = {
           "numberStates": 57,
           "numberIntermediates": 1,   # intermediates: gamma
           "numberParameters": 2,      # parameters: I_Stim, l_hs
-          "outputStateIndex": 0,     # state 0 = Vm, rate 28 = gamma
+          "statesForTransfer": 0,     # state 0 = Vm, rate 28 = gamma
+          "intermediatesForTransfer": [],  # no intermediates to reuse
           "parametersInitialValues": [0.0, 1.0],      # parameters: I_Stim, l_hs
           "meshName": "MeshFibre",
-          "prefactor": 1.0,
         },
       },
     },

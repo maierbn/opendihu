@@ -79,7 +79,7 @@ public:
 
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
   //! the transfer is done by the output_connector_data_transfer class
-  OutputConnectorDataType &getOutputConnectorData();
+  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
 
   //! field variables that will be output by outputWriters
   typedef std::tuple<
@@ -105,7 +105,7 @@ private:
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> negativeRhsNeumannBoundaryConditions_;                 ///< the rhs vector in weak formulation, only contribution from neumann boundary conditions
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> solution_;            ///< the vector of the quantity of interest, e.g. displacement
 
-  OutputConnectorDataType outputConnectorData_;       //< the object that holds all output connector components of field variables
+  std::shared_ptr<OutputConnectorDataType> outputConnectorData_;       //< the object that holds all output connector components of field variables
 };
 
 /*

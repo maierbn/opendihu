@@ -40,8 +40,9 @@ setSubvectorsSolution(const std::vector<Vec> &subvectorsSolution)
   subvectorsSolution_ = subvectorsSolution;
 
   // initialize output connector data
-  outputConnectorData_.first = this->subvectorsSolution_;
-  outputConnectorData_.second = this->transmembranePotential_;
+  outputConnectorData_ = std::make_shared<OutputConnectorDataType>();
+  outputConnectorData_->first = this->subvectorsSolution_;
+  outputConnectorData_->second = this->transmembranePotential_;
 }
 
 template<typename FunctionSpaceType>
@@ -146,7 +147,7 @@ zero()
 }
 
 template<typename FunctionSpaceType>
-typename Multidomain<FunctionSpaceType>::OutputConnectorDataType &Multidomain<FunctionSpaceType>::
+std::shared_ptr<typename Multidomain<FunctionSpaceType>::OutputConnectorDataType> Multidomain<FunctionSpaceType>::
 getOutputConnectorData()
 {
   return outputConnectorData_;

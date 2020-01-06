@@ -20,6 +20,8 @@ public:
   
   typedef typename DiscretizableInTimeType::FunctionSpace FunctionSpace;
   typedef Data::TimeSteppingImplicit<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()> DataImplicit;
+  typedef typename DataImplicit::OutputConnectorDataType OutputConnectorDataType;
+
 
   //! constructor
   TimeSteppingImplicit(DihuContext context, const std::string name);
@@ -38,6 +40,8 @@ public:
   
   //! output the given data for debugging
   //virtual std::string getString(typename TimeSteppingSchemeOde<DiscretizableInTimeType>::OutputConnectorDataType &data);
+
+  //! there should be no getOutputConnectorData here!
 
 protected:
   

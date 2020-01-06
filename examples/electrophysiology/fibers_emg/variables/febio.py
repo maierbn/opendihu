@@ -54,9 +54,9 @@ activation_start_time = 0           # [ms] time when to start checking for stimu
 
 # other options
 paraview_output = True
-linear_elasticity = True
+use_elasticity = True
 generate_quadratic_3d_mesh = False
-states_output = True                # output states of the 0D problem in a separate file
+states_output = False                # output states of the 0D problem in a separate file
 
 sampling_stride_x = 7
 sampling_stride_y = 7

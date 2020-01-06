@@ -37,7 +37,7 @@ public:
 
   //! Get the data that will be transferred in the operator splitting to the other term of the splitting.
   //! The transfer is done by the output_connector_data_transfer class.
-  //virtual OutputConnectorDataType &getOutputConnectorData();
+  //virtual std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
 
   //! this will be called right before getOutputConnectorData
   virtual void prepareForGetOutputConnectorData();

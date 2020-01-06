@@ -65,7 +65,7 @@ public:
 
   //! pass on the output connector data object from the timestepping scheme object to be modified,
   //! if there are intermediates for transfer, they will be set in the outputConnectorDataTimeStepping
-  void setOutputConnectorData(::Data::OutputConnectorData<FunctionSpaceType,nStates> &outputConnectorDataTimeStepping);
+  void setOutputConnectorData(std::shared_ptr<::Data::OutputConnectorData<FunctionSpaceType,nStates>> outputConnectorDataTimeStepping);
 
   //! return the mesh
   std::shared_ptr<FunctionSpaceType> functionSpace();
@@ -73,18 +73,21 @@ public:
   //! get number of instances, number of intermediates and number of parameters
   void getNumbers(int &nInstances, int &nIntermediates, int &nParameters);
 
+  //! return references to statesForTransfer and intermediatesForTransfer, the states and intermediates that should be used for output connector data transfer
+  void getStatesIntermediatesForTransfer(std::vector<int> &statesForTransfer, std::vector<int> &intermediatesForTransfer);
+
   //! get a vector with the names of the states
   void getStateNames(std::vector<std::string> &stateNames);
 
   //! get the const number of intermediates
   constexpr int nIntermediates() const;
 
-  //! return vector of the intermediate values
-  std::shared_ptr<FieldVariableIntermediates> intermediates();
+  //! return reference to the data object that stores all field variables
+  Data &data();
 
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
   //! the transfer is done by the output_connector_data class
-  OutputConnectorDataType &getOutputConnectorData();
+  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
 
 
 protected:
@@ -104,8 +107,6 @@ protected:
   int nIntermediatesInSource_ = 0; ///< number of intermediate values (=CellML name "wanted") in one instance of the CellML problem, as detected from the source file
   int nConstants_ = 0;     ///< number of entries in the "CONSTANTS" array
    
-  int outputStateIndex_ = 0;   ///< the index of the state that should be used further in an operator splitting scheme, for electrophysiology application this is the states of Vm
-  int outputIntermediateIndex_ = 0;  ///< the index of the intermediates that should be transferred to further solvers, analogous to outputStateIndex
   int internalTimeStepNo_ = 0; ///< the counter how often the right hand side was called
 
   //std::vector<double> states_;    ///< vector of states, that are computed by rhsRoutine, this is not needed as member variable, because the states are directly stored in the Petsc Vecs of the solving time stepping scheme

@@ -54,7 +54,7 @@ public:
 
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
   //! the transfer is done by the output_connector_data_transfer class
-  OutputConnectorDataType &getOutputConnectorData();
+  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
 
   friend class StiffnessMatrixTester;    ///< a class used for testing
 protected:

@@ -90,7 +90,7 @@ data()
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
 //! the transfer is done by the output_connector_data_transfer class
 template<class TimeStepping>
-typename LoadBalancingBase<TimeStepping>::OutputConnectorDataType &LoadBalancingBase<TimeStepping>::
+std::shared_ptr<typename LoadBalancingBase<TimeStepping>::OutputConnectorDataType> LoadBalancingBase<TimeStepping>::
 getOutputConnectorData()
 {
   return timeSteppingScheme_.getOutputConnectorData();

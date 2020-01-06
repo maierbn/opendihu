@@ -23,6 +23,14 @@ name() const
   return this->name_;
 }
 
+//! set the name of the field variable
+template<typename FunctionSpaceType>
+void FieldVariableBaseFunctionSpace<FunctionSpaceType>::
+setName(std::string name)
+{
+  this->name_ = name;
+}
+
 template<typename FunctionSpaceType>
 bool FieldVariableBaseFunctionSpace<FunctionSpaceType>::
 isGeometryField() const

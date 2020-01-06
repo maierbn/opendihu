@@ -49,13 +49,14 @@ setSolutionVariable(std::shared_ptr<FieldVariableStates> states)
 
 template<int nStates, int nIntermediates_, typename FunctionSpaceType>
 void CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
-setOutputConnectorData(::Data::OutputConnectorData<FunctionSpaceType,nStates> &outputConnectorDataTimeStepping)
+setOutputConnectorData(std::shared_ptr<::Data::OutputConnectorData<FunctionSpaceType,nStates>> outputConnectorDataTimeStepping)
 {
   // add all intermediate values for transfer (option "intermediatesForTransfer"), which are stored in this->data_.getOutputConnectorData()
   // at the end of outputConnectorDataTimeStepping
 
   // loop over intermediates that should be transferred
-  for (typename std::vector<::Data::ComponentOfFieldVariable<FunctionSpaceType,nIntermediates_>>::iterator iter = this->data_.getOutputConnectorData().variable2.begin(); iter != this->data_.getOutputConnectorData().variable2.end(); iter++)
+  for (typename std::vector<::Data::ComponentOfFieldVariable<FunctionSpaceType,nIntermediates_>>::iterator iter
+    = this->data_.getOutputConnectorData()->variable2.begin(); iter != this->data_.getOutputConnectorData()->variable2.end(); iter++)
   {
     int componentNo = iter->componentNo;
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nIntermediates_>> values = iter->values;
@@ -74,8 +75,10 @@ setOutputConnectorData(::Data::OutputConnectorData<FunctionSpaceType,nStates> &o
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> newFieldVariable
       = std::make_shared<FieldVariable::FieldVariable<FunctionSpaceType,1>>(*values, name, componentNames, reuseData);
 
+    LOG(DEBUG) << "CellmlAdapterBase::setOutputConnectorData add FieldVariable " << newFieldVariable << " for intermediate " << componentNo << "," << name;
+
     // add this component to outputConnector of data time stepping
-    outputConnectorDataTimeStepping.addFieldVariable2(newFieldVariable);
+    outputConnectorDataTimeStepping->addFieldVariable2(newFieldVariable);
   }
 }
 
@@ -237,16 +240,23 @@ getNumbers(int& nInstances, int& nIntermediates, int& nParameters)
 
 template<int nStates, int nIntermediates_, typename FunctionSpaceType>
 void CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
+getStatesIntermediatesForTransfer(std::vector<int> &statesForTransfer, std::vector<int> &intermediatesForTransfer)
+{
+  data_.getStatesIntermediatesForTransfer(statesForTransfer, intermediatesForTransfer);
+}
+
+template<int nStates, int nIntermediates_, typename FunctionSpaceType>
+void CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
 getStateNames(std::vector<std::string> &stateNames)
 {
   stateNames = this->stateNames_;
 }
 
 template<int nStates, int nIntermediates_, typename FunctionSpaceType>
-std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nIntermediates_>> CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
-intermediates()
+typename CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::Data &CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
+data()
 {
-  return this->data_.intermediates();
+  return this->data_;
 }
 
 template<int nStates, int nIntermediates_, typename FunctionSpaceType>
@@ -257,7 +267,8 @@ nIntermediates() const
 }
 
 template<int nStates, int nIntermediates_, typename FunctionSpaceType>
-typename CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::OutputConnectorDataType &CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
+std::shared_ptr<typename CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::OutputConnectorDataType>
+CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
 getOutputConnectorData()
 {
   return this->data_.getOutputConnectorData();

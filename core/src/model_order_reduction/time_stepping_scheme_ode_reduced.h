@@ -45,7 +45,7 @@ namespace ModelOrderReduction
 
     //! get the data that will be transferred in the operator splitting to the other term of the splitting
     //! the transfer is done by the output_connector_data_transfer class
-    OutputConnectorDataType getOutputConnectorData();
+    std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
 
   protected:
     //! read initial values from settings and set field accordingly
@@ -58,6 +58,7 @@ namespace ModelOrderReduction
     std::shared_ptr<GenericFunctionSpace> functionSpaceRowsSnapshots;
     
     TimeSteppingType fullTimestepping_;
+    std::shared_ptr<OutputConnectorDataType> outputConnectorData_;
 
     bool initialized_;     ///< if initialize() was already called
 

@@ -49,6 +49,10 @@ struct OutputConnectorData
 template<typename FunctionSpaceType, int nComponents1, int nComponents2>
 std::ostream &operator<<(std::ostream &stream, const OutputConnectorData<FunctionSpaceType,nComponents1,nComponents2> &rhs);
 
+// operator used for output
+template<typename FunctionSpaceType, int nComponents1, int nComponents2>
+std::ostream &operator<<(std::ostream &stream, const std::shared_ptr<OutputConnectorData<FunctionSpaceType,nComponents1,nComponents2>> &rhs);
+
 } // namespace
 
 #include "data_management/output_connector_data.tpp"

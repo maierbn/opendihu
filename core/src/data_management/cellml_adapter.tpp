@@ -22,24 +22,24 @@ template <int nStates, int nIntermediates, typename FunctionSpaceType>
 void CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::
 initializeOutputConnectorData()
 {
-  std::vector<int> statesForTransfer;
-  std::vector<int> intermediatesForTransfer;
+  this->specificSettings_.getOptionVector<int>("statesForTransfer", statesForTransfer_);
+  this->specificSettings_.getOptionVector<int>("intermediatesForTransfer", intermediatesForTransfer_);
 
-  this->specificSettings_.getOptionVector<int>("statesForTransfer", statesForTransfer);
-  this->specificSettings_.getOptionVector<int>("intermediatesForTransfer", intermediatesForTransfer);
+  LOG(DEBUG) << "parsed the following states for transfer: " << statesForTransfer_ << " (states: " << this->states()
+    << "), intermediates: " << intermediatesForTransfer_;
 
-  LOG(DEBUG) << "parsed the following states for transfer: " << statesForTransfer << " (states: " << this->states() << "), intermediates: " << intermediatesForTransfer;
+  outputConnectorData_ = std::make_shared<OutputConnectorDataType>();
 
   // add states components
-  for (std::vector<int>::iterator iter = statesForTransfer.begin(); iter != statesForTransfer.end(); iter++)
+  for (std::vector<int>::iterator iter = statesForTransfer_.begin(); iter != statesForTransfer_.end(); iter++)
   {
-    outputConnectorData_.addFieldVariable(this->states(), *iter);
+    outputConnectorData_->addFieldVariable(this->states(), *iter);
   }
 
   // add intermediate components
-  for (std::vector<int>::iterator iter = intermediatesForTransfer.begin(); iter != intermediatesForTransfer.end(); iter++)
+  for (std::vector<int>::iterator iter = intermediatesForTransfer_.begin(); iter != intermediatesForTransfer_.end(); iter++)
   {
-    outputConnectorData_.addFieldVariable2(this->intermediates(), *iter);
+    outputConnectorData_->addFieldVariable2(this->intermediates(), *iter);
   }
 
   if (this->specificSettings_.hasKey("outputIntermediateIndex"))
@@ -93,7 +93,16 @@ states()
 }
 
 template <int nStates, int nIntermediates, typename FunctionSpaceType>
-typename CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::OutputConnectorDataType &CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::
+void CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::
+getStatesIntermediatesForTransfer(std::vector<int> &statesForTransfer, std::vector<int> &intermediatesForTransfer)
+{
+  statesForTransfer = statesForTransfer_;
+  intermediatesForTransfer = intermediatesForTransfer_;
+}
+
+template <int nStates, int nIntermediates, typename FunctionSpaceType>
+std::shared_ptr<typename CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::OutputConnectorDataType>
+CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::
 getOutputConnectorData()
 {
   return this->outputConnectorData_;

@@ -20,10 +20,11 @@ PartitionedPetscVecNComponentsStructured(PartitionedPetscVec<FunctionSpace::Func
                                          std::string name, bool reuseData) :
   PartitionedPetscVecBase<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>>(rhs.meshPartition(), name)
 {
-  if (nComponents > nComponents2)
+  if (reuseData && nComponents > nComponents2)
   {
     reuseData = false;
-    LOG(WARNING) << "Could not create PartitionedPetscVec as copy with reuseData=true, nComponents=" << nComponents << " > " << nComponents2;
+    LOG(WARNING) << "Could not create PartitionedPetscVec \"" << name << "\" as copy of rhs (\"" << rhs.name() << "\") with reuseData=true, nComponents="
+      << nComponents << " > " << nComponents2 << ". Setting reuseData to false.";
   }
 
   if (reuseData)

@@ -6,114 +6,168 @@
 
 /** Transfer between two field variables with given component number
  */
-template<typename FunctionSpaceType1, int nComponents1, typename FunctionSpaceType2, int nComponents2>
+template<typename FunctionSpaceType1, int nComponents1a, int nComponents1b, typename FunctionSpaceType2, int nComponents2a, int nComponents2b>
 void SolutionVectorMapping<
-  Data::ComponentOfFieldVariable<FunctionSpaceType1,nComponents1>,   // <fieldVariableType,componentNo,prefactor>
-  Data::ComponentOfFieldVariable<FunctionSpaceType2,nComponents2>
->::transfer(const Data::ComponentOfFieldVariable<FunctionSpaceType1,nComponents1> &transferableSolutionData1,
-            Data::ComponentOfFieldVariable<FunctionSpaceType2,nComponents2> &transferableSolutionData2,
-            const std::string transferSlotName)
+  Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>,
+  Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>
+>::transfer(const std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>> transferableSolutionData1,
+            std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>> transferableSolutionData2,
+            OutputConnection &outputConnection)
 {
-  // rename input data
-  typedef FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1> FieldVariable1;
-  typedef FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2> FieldVariable2;
+  // initialize output connection object
+  outputConnection.initialize(*transferableSolutionData1, *transferableSolutionData2);
 
-  std::shared_ptr<FieldVariable1> fieldVariable1 = transferableSolutionData1.values;
-  std::shared_ptr<FieldVariable2> &fieldVariable2 = transferableSolutionData2.values;
+  typedef FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1a> FieldVariable1;
 
-  // disable checking for nans and infs because it takes a lot of time
-  //fieldVariable1->checkNansInfs();
-
-  int componentNo1 = transferableSolutionData1.componentNo;
-  int componentNo2 = transferableSolutionData2.componentNo;
-  VLOG(1) << "solution vector mapping (output_connector_data_transfer.tpp), transfer from component "
-    << componentNo1 << " (" << fieldVariable1->nDofsLocalWithoutGhosts() << " dofs)" <<
-    << " to " << componentNo2 << " (" << fieldVariable2->nDofsLocalWithoutGhosts() << " dofs),";
-
-  assert(fieldVariable1->nDofsLocalWithoutGhosts() == fieldVariable2->nDofsLocalWithoutGhosts());
-  assert(fieldVariable1->nDofsGlobal() == fieldVariable2->nDofsGlobal());
-
-  // perform the mapping
-  DihuContext::meshManager()->template prepareMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2);
-  DihuContext::meshManager()->template map<FieldVariable1,FieldVariable2>(fieldVariable1, componentNo1, fieldVariable2, componentNo2);
-  DihuContext::meshManager()->template finalizeMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2);
-
-  /*
-  // if representation of fieldVariable1 is invalid, this means that it has been extracted to another field variable
-  if (fieldVariable2->partitionedPetscVec()->currentRepresentation() == Partition::values_representation_t::representationInvalid)
+  // for the first vector of variables (the "states" in case of CellMLAdapter)
+  for (int i = 0; i < transferableSolutionData1->variable1.size(); i++)
   {
-    VLOG(1) << "SolutionVectorMapping restoreExtractedComponent";
-    // tranfer from finite elements back to cellml
-    fieldVariable2->restoreExtractedComponent(fieldVariable1->partitionedPetscVec());
+    int fromVectorNo = 0;
+    int fromVectorIndex = i;
+    int toVectorNo = 0;
+    int toVectorIndex = 0;
+    bool avoidCopyIfPossible = true;
+    bool slotIsConnected = outputConnection.getSlotInformation(fromVectorNo, fromVectorIndex, toVectorNo, toVectorIndex, avoidCopyIfPossible);
+
+    if (!slotIsConnected)
+      continue;
+
+    std::shared_ptr<FieldVariable1> fieldVariable1 = transferableSolutionData1->variable1[fromVectorIndex].values;
+    int componentNo1 = transferableSolutionData1->variable1[fromVectorIndex].componentNo;
+
+    LOG(DEBUG) << "map slot from variable1, index " << fromVectorIndex
+      << " to variable" << toVectorIndex+1 << ", index " << toVectorIndex;
+
+    if (componentNo1 < 0)
+    {
+      LOG(DEBUG) << "do not map this slot";
+      continue;
+    }
+
+    if (!fieldVariable1)
+    {
+      LOG(FATAL) << "FieldVariable1 is null!";
+    }
+
+    if (toVectorNo == 0)
+    {
+      typedef FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2a> FieldVariable2;
+      std::shared_ptr<FieldVariable2> &fieldVariable2 = transferableSolutionData2->variable1[toVectorIndex].values;
+      int componentNo2 = transferableSolutionData2->variable1[toVectorIndex].componentNo;
+      assert(fieldVariable2);
+
+      LOG(DEBUG) << "  " << fieldVariable1->name() << "[" << componentNo1 << "] -> "
+        << fieldVariable2->name() << "[" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible;
+
+      // perform the mapping
+      DihuContext::meshManager()->template prepareMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2);
+      DihuContext::meshManager()->template map<FieldVariable1,FieldVariable2>(fieldVariable1, componentNo1, fieldVariable2, componentNo2, avoidCopyIfPossible);
+      DihuContext::meshManager()->template finalizeMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2);
+    }
+    else
+    {
+      typedef FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2b> FieldVariable2;
+      std::shared_ptr<FieldVariable2> &fieldVariable2 = transferableSolutionData2->variable2[toVectorIndex].values;
+      int componentNo2 = transferableSolutionData2->variable2[toVectorIndex].componentNo;
+      assert(fieldVariable2);
+
+
+      LOG(DEBUG) << "  " << fieldVariable1->name() << "[" << componentNo1 << "] -> "
+        << fieldVariable2->name() << "[" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible;
+
+      // perform the mapping
+      DihuContext::meshManager()->template prepareMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2);
+      DihuContext::meshManager()->template map<FieldVariable1,FieldVariable2>(fieldVariable1, componentNo1, fieldVariable2, componentNo2, avoidCopyIfPossible);
+      DihuContext::meshManager()->template finalizeMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2);
+    }
   }
-  else
+
+  // for the second vector of variables (the "intermediates" in case of CellMLAdapter)
+  for (int i = 0; i < transferableSolutionData1->variable2.size(); i++)
   {
-    // here we copy the given component of fieldVariable1 to the component of field variable2, because field variable 2 has > 1 components
-    // if field fariable 2 has only 1 component, it could be extracted from fieldVariable1 without copy, this is done in the other specialization
-    VLOG(1) << "SolutionVectorMapping VecCopy";
-    PetscErrorCode ierr;
-    ierr = VecCopy(fieldVariable1->valuesGlobal(componentNo1), fieldVariable2->valuesGlobal(componentNo2)); CHKERRV(ierr);
-  }*/
-}
+    int fromVectorNo = 1;
+    int fromVectorIndex = i;
+    int toVectorNo = 0;
+    int toVectorIndex = 0;
+    bool avoidCopyIfPossible = true;
+    bool slotIsConnected = outputConnection.getSlotInformation(fromVectorNo, fromVectorIndex, toVectorNo, toVectorIndex, avoidCopyIfPossible);
 
-/** Transfer between two field variables, the first is vector-valued, use given component number, store in second, which is scalar
- */
+    if (!slotIsConnected)
+      continue;
 
-template<typename FunctionSpaceType1, int nComponents1, typename FunctionSpaceType2>
-void SolutionVectorMapping<
-  Data::ComponentOfFieldVariable<FunctionSpaceType1,nComponents1>,   // <fieldVariableType,componentNo,prefactor>
-  Data::ComponentOfFieldVariable<FunctionSpaceType2,1>
->::transfer(const Data::ComponentOfFieldVariable<FunctionSpaceType1,nComponents1> &transferableSolutionData1,
-            Data::ComponentOfFieldVariable<FunctionSpaceType2,1> &transferableSolutionData2,
-            const std::string transferSlotName)
-{
-  // rename input data
-  typedef FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1> FieldVariable1;
-  typedef FieldVariable::FieldVariable<FunctionSpaceType2,1> FieldVariable2;
+    typedef FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1b> FieldVariable1;
 
-  std::shared_ptr<FieldVariable1> fieldVariable1 = transferableSolutionData1.values;
-  std::shared_ptr<FieldVariable2> &fieldVariable2 = transferableSolutionData2.values;
+    std::shared_ptr<FieldVariable1> fieldVariable1 = transferableSolutionData1->variable2[fromVectorIndex].values;
+    int componentNo1 = transferableSolutionData1->variable2[fromVectorIndex].componentNo;
 
-  // disable checking for nans and infs because it takes a lot of time
-  //fieldVariable1->checkNansInfs();
+    LOG(DEBUG) << "map slot from variable2, index " << fromVectorIndex
+      << " to variable" << toVectorIndex+1 << ", index " << toVectorIndex;
 
-  int componentNo1 = transferableSolutionData1.componentNo;
-  int componentNo2 = 0;
+    if (componentNo1 < 0)
+    {
+      LOG(DEBUG) << "do not map this slot";
+      continue;
+    }
 
-  VLOG(1) << "solution vector mapping (output_connector_data_transfer.tpp), transfer from component "
-    << componentNo1 << " (" << fieldVariable1->nDofsLocalWithoutGhosts() << " dofs), " <<
-    << " to " << componentNo2 << " (" << fieldVariable2->nDofsLocalWithoutGhosts() << " dofs),";
+    if (!fieldVariable1)
+    {
+      LOG(FATAL) << "FieldVariable1 is null!";
+    }
 
-  assert(fieldVariable1->nDofsLocalWithoutGhosts() == fieldVariable2->nDofsLocalWithoutGhosts());
-  assert(fieldVariable1->nDofsGlobal() == fieldVariable2->nDofsGlobal());
+    if (toVectorNo == 0)
+    {
+      typedef FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2a> FieldVariable2;
+      std::shared_ptr<FieldVariable2> &fieldVariable2 = transferableSolutionData2->variable1[toVectorIndex].values;
+      int componentNo2 = transferableSolutionData2->variable1[toVectorIndex].componentNo;
+      assert(fieldVariable2);
 
-  // perform the mapping
-  DihuContext::meshManager()->prepareMapping(fieldVariable1, fieldVariable2);
-  DihuContext::meshManager()->map(fieldVariable1, componentNo1, fieldVariable2, componentNo2);
-  DihuContext::meshManager()->finalizeMapping(fieldVariable1, fieldVariable2);
-/*DihuContext::meshManager()->template prepareMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2);
-  DihuContext::meshManager()->template map<FieldVariable1,FieldVariable2>(fieldVariable1, componentNo1, fieldVariable2, componentNo2);
-  DihuContext::meshManager()->template finalizeMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2);*/
+      LOG(DEBUG) << "  " << fieldVariable1->name() << "[" << componentNo1 << "] -> "
+        << fieldVariable2->name() << "[" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible;
 
-  /*
-  // if representation of fieldVariable1 is invalid, this means that it has been extracted to another field variable
-  if (fieldVariable2->partitionedPetscVec()->currentRepresentation() == Partition::values_representation_t::representationInvalid)
-  {
-    VLOG(1) << "SolutionVectorMapping restoreExtractedComponent";
+      // perform the mapping
+      DihuContext::meshManager()->template prepareMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2);
+      DihuContext::meshManager()->template map<FieldVariable1,FieldVariable2>(fieldVariable1, componentNo1, fieldVariable2, componentNo2, avoidCopyIfPossible);
+      DihuContext::meshManager()->template finalizeMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2);
+    }
+    else
+    {
+      typedef FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2b> FieldVariable2;
+      std::shared_ptr<FieldVariable2> &fieldVariable2 = transferableSolutionData2->variable2[toVectorIndex].values;
+      int componentNo2 = transferableSolutionData2->variable2[toVectorIndex].componentNo;
+      assert(fieldVariable2);
 
-    // transfer from finite elements back to cellml
-    fieldVariable2->restoreExtractedComponent(fieldVariable1->partitionedPetscVec());
+      LOG(DEBUG) << "  " << fieldVariable1->name() << "[" << componentNo1 << "] -> "
+        << fieldVariable2->name() << "[" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible;
+
+      // perform the mapping
+      DihuContext::meshManager()->template prepareMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2);
+      DihuContext::meshManager()->template map<FieldVariable1,FieldVariable2>(fieldVariable1, componentNo1, fieldVariable2, componentNo2, avoidCopyIfPossible);
+      DihuContext::meshManager()->template finalizeMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2);
+    }
   }
-  else
+
+  // transfer geometry field if it was set in transferableSolutionData1
+  if (transferableSolutionData1->geometryField && !transferableSolutionData2->variable1.empty())
   {
-    VLOG(1) << "SolutionVectorMapping extractComponentShared";
-    VLOG(2) << "original field variable: " << *fieldVariable1;
+    LOG(DEBUG) << "transfer geometry field";
 
-    // fieldVariable2 has only 1 component
-    // The following retrieves the raw memory pointer from the Petsc vector in fieldVariable1 and reuses it for fieldVariable2
-    // that means that fieldVariable cannot be used anymore, only after restoreExtractedComponent was called on fieldVariable1. This is done in the other output_connector_data_transfer transfer call.
-    fieldVariable1->extractComponentShared(componentNo1, fieldVariable2);
+    // get source field variable, this is the same for all fibers
+    typedef FieldVariable::FieldVariable<FunctionSpaceType1,3> FieldVariableSource;
+    typedef FieldVariable::FieldVariable<FunctionSpaceType2,3> FieldVariableTarget;
 
-    VLOG(2) << "resulting field variable: " << *fieldVariable2;
-  }*/
+    std::shared_ptr<FieldVariableSource> geometryFieldSource = transferableSolutionData1->geometryField;
+    std::shared_ptr<FieldVariableTarget> geometryFieldTarget = std::make_shared<FieldVariableTarget>(transferableSolutionData2->variable1[0].values->functionSpace()->geometryField());
+
+
+    // perform the mapping
+    DihuContext::meshManager()->template prepareMapping<FieldVariableSource,FieldVariableTarget>(geometryFieldSource, geometryFieldTarget);
+
+    // map the whole geometry field (all components), do not avoid copy
+    DihuContext::meshManager()->template map<FieldVariableSource,FieldVariableTarget>(geometryFieldSource, -1, geometryFieldTarget, -1, false);
+    DihuContext::meshManager()->template finalizeMapping<FieldVariableSource,FieldVariableTarget>(geometryFieldSource, geometryFieldTarget);
+  }
+
+  VLOG(1) << "at the end of output_connector_data_transfer_cellml.";
+  VLOG(1) << "transferableSolutionData1: " << *transferableSolutionData1;
+  VLOG(1) << "transferableSolutionData2: " << *transferableSolutionData2;
 }

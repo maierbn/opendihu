@@ -5,6 +5,7 @@
 #include <map>
 #include <set>
 #include <vector>
+#include <functional>
 #include <petscmat.h>
 
 /** This file contains elemental operators for vectors, stored as `std::array<double,nComponents>`.
@@ -77,6 +78,9 @@ std::ostream &operator<<(std::ostream &stream, const std::array<T,N> &vector);
 //! output array content to stream
 template<std::size_t N>
 std::ostream &operator<<(std::ostream &stream, const std::array<std::size_t,N> vector);
+
+template<typename T>
+std::ostream &operator<<(std::ostream &stream, std::reference_wrapper<T> value);
 
 //! output arbitrary vector
 template<typename T>

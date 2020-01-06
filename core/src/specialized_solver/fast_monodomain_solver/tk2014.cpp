@@ -45,7 +45,8 @@ Vc::double_v exponential(Vc::double_v x)
 
 // new_slow_TK_2014_12_08
 void FastMonodomainSolver<Control::MultipleInstances<OperatorSplitting::Strang<Control::MultipleInstances<TimeSteppingScheme::Heun<CellmlAdapter<57, 71, FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1> > > > >, Control::MultipleInstances<TimeSteppingScheme::ImplicitEuler<SpatialDiscretization::FiniteElementMethod<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1>, Quadrature::Gauss<2>, Equation::Dynamic::IsotropicDiffusion> > > > > >::
-compute0DInstance(Vc::double_v states[], double currentTime, double timeStepWidth, bool stimulate)
+compute0DInstance(Vc::double_v states[], double currentTime, double timeStepWidth, bool stimulate,
+                  bool storeIntermediatesForTransfer, std::vector<Vc::double_v> &intermediatesForTransfer)
 {
   using Vc::double_v;
 
@@ -561,6 +562,236 @@ compute0DInstance(Vc::double_v states[], double currentTime, double timeStepWidt
       states[0][i] = 20.0;
     }
   }
+
+  // store intermediates for transfer
+  if (storeIntermediatesForTransfer)
+  {
+    //LOG(DEBUG) << "store intermediates for transfer: ";
+    for (int i = 0; i < intermediatesForTransfer_.size(); i++)
+    {
+      const int intermediate = intermediatesForTransfer_[i];
+
+      switch (intermediate)
+      {
+        case 0:
+          intermediatesForTransfer[i] = intermediateAlgebraic0;
+          break;
+        case 1:
+          intermediatesForTransfer[i] = intermediateAlgebraic1;
+          break;
+        case 2:
+          intermediatesForTransfer[i] = intermediateAlgebraic2;
+          break;
+        case 3:
+          intermediatesForTransfer[i] = intermediateAlgebraic3;
+          break;
+        case 4:
+          intermediatesForTransfer[i] = intermediateAlgebraic4;
+          break;
+        case 5:
+          intermediatesForTransfer[i] = intermediateAlgebraic5;
+          break;
+        case 6:
+          intermediatesForTransfer[i] = intermediateAlgebraic6;
+          break;
+        case 7:
+          intermediatesForTransfer[i] = intermediateAlgebraic7;
+          break;
+        case 8:
+          intermediatesForTransfer[i] = intermediateAlgebraic8;
+          break;
+        case 9:
+          intermediatesForTransfer[i] = intermediateAlgebraic9;
+          break;
+        case 10:
+          intermediatesForTransfer[i] = intermediateAlgebraic10;
+          break;
+        case 11:
+          intermediatesForTransfer[i] = intermediateAlgebraic11;
+          break;
+        case 12:
+          intermediatesForTransfer[i] = intermediateAlgebraic12;
+          break;
+        case 13:
+          intermediatesForTransfer[i] = intermediateAlgebraic13;
+          break;
+        case 14:
+          intermediatesForTransfer[i] = intermediateAlgebraic14;
+          break;
+        case 15:
+          intermediatesForTransfer[i] = intermediateAlgebraic15;
+          break;
+        case 16:
+          intermediatesForTransfer[i] = intermediateAlgebraic16;
+          break;
+        case 17:
+          intermediatesForTransfer[i] = intermediateAlgebraic17;
+          break;
+        case 18:
+          intermediatesForTransfer[i] = intermediateAlgebraic18;
+          break;
+        case 19:
+          intermediatesForTransfer[i] = intermediateAlgebraic19;
+          break;
+        case 20:
+          intermediatesForTransfer[i] = intermediateAlgebraic20;
+          break;
+        case 21:
+          intermediatesForTransfer[i] = intermediateAlgebraic21;
+          break;
+        case 22:
+          intermediatesForTransfer[i] = intermediateAlgebraic22;
+          break;
+        case 23:
+          intermediatesForTransfer[i] = intermediateAlgebraic23;
+          break;
+        case 24:
+          intermediatesForTransfer[i] = intermediateAlgebraic24;
+          break;
+        case 25:
+          intermediatesForTransfer[i] = intermediateAlgebraic25;
+          break;
+        case 26:
+          intermediatesForTransfer[i] = intermediateAlgebraic26;
+          break;
+        case 27:
+          intermediatesForTransfer[i] = intermediateAlgebraic27;
+          break;
+        case 28:
+          intermediatesForTransfer[i] = intermediateAlgebraic28;
+          break;
+        case 29:
+          intermediatesForTransfer[i] = intermediateAlgebraic29;
+          break;
+        case 30:
+          intermediatesForTransfer[i] = intermediateAlgebraic30;
+          break;
+        case 31:
+          intermediatesForTransfer[i] = intermediateAlgebraic31;
+          break;
+        case 32:
+          intermediatesForTransfer[i] = intermediateAlgebraic32;
+          break;
+        case 33:
+          intermediatesForTransfer[i] = intermediateAlgebraic33;
+          break;
+        case 34:
+          intermediatesForTransfer[i] = intermediateAlgebraic34;
+          break;
+        case 35:
+          intermediatesForTransfer[i] = intermediateAlgebraic35;
+          break;
+        case 36:
+          intermediatesForTransfer[i] = intermediateAlgebraic36;
+          break;
+        case 37:
+          intermediatesForTransfer[i] = intermediateAlgebraic37;
+          break;
+        case 38:
+          intermediatesForTransfer[i] = intermediateAlgebraic38;
+          break;
+        case 39:
+          intermediatesForTransfer[i] = intermediateAlgebraic39;
+          break;
+        case 40:
+          intermediatesForTransfer[i] = intermediateAlgebraic40;
+          break;
+        case 41:
+          intermediatesForTransfer[i] = intermediateAlgebraic41;
+          break;
+        case 42:
+          intermediatesForTransfer[i] = intermediateAlgebraic42;
+          break;
+        case 43:
+          intermediatesForTransfer[i] = intermediateAlgebraic43;
+          break;
+        case 44:
+          intermediatesForTransfer[i] = intermediateAlgebraic44;
+          break;
+        case 45:
+          intermediatesForTransfer[i] = intermediateAlgebraic45;
+          break;
+        case 46:
+          intermediatesForTransfer[i] = intermediateAlgebraic46;
+          break;
+        case 47:
+          intermediatesForTransfer[i] = intermediateAlgebraic47;
+          break;
+        case 48:
+          intermediatesForTransfer[i] = intermediateAlgebraic48;
+          break;
+        case 49:
+          intermediatesForTransfer[i] = intermediateAlgebraic49;
+          break;
+        case 50:
+          intermediatesForTransfer[i] = intermediateAlgebraic50;
+          break;
+        case 51:
+          intermediatesForTransfer[i] = intermediateAlgebraic51;
+          break;
+        case 52:
+          intermediatesForTransfer[i] = intermediateAlgebraic52;
+          break;
+        case 53:
+          intermediatesForTransfer[i] = intermediateAlgebraic53;
+          break;
+        case 54:
+          intermediatesForTransfer[i] = intermediateAlgebraic54;
+          break;
+        case 55:
+          intermediatesForTransfer[i] = intermediateAlgebraic55;
+          break;
+        case 56:
+          intermediatesForTransfer[i] = intermediateAlgebraic56;
+          break;
+        case 57:
+          intermediatesForTransfer[i] = intermediateAlgebraic57;
+          break;
+        case 58:
+          intermediatesForTransfer[i] = intermediateAlgebraic58;
+          break;
+        case 59:
+          intermediatesForTransfer[i] = intermediateAlgebraic59;
+          break;
+        case 60:
+          intermediatesForTransfer[i] = intermediateAlgebraic60;
+          break;
+        case 61:
+          intermediatesForTransfer[i] = intermediateAlgebraic61;
+          break;
+        case 62:
+          intermediatesForTransfer[i] = intermediateAlgebraic62;
+          break;
+        case 63:
+          intermediatesForTransfer[i] = intermediateAlgebraic63;
+          break;
+        case 64:
+          intermediatesForTransfer[i] = intermediateAlgebraic64;
+          break;
+        case 65:
+          intermediatesForTransfer[i] = intermediateAlgebraic65;
+          break;
+        case 66:
+          intermediatesForTransfer[i] = intermediateAlgebraic66;
+          break;
+        case 67:
+          intermediatesForTransfer[i] = intermediateAlgebraic67;
+          break;
+        case 68:
+          intermediatesForTransfer[i] = intermediateAlgebraic68;
+          break;
+        case 69:
+          intermediatesForTransfer[i] = intermediateAlgebraic69;
+          break;
+        case 70:
+          intermediatesForTransfer[i] = intermediateAlgebraic70;
+          break;
+      }
+
+      //LOG(DEBUG) << "  intermediate " << intermediate << ", value: " << intermediatesForTransfer[i];
+    }
+  }
+
   //LOG(INFO) << "min: " << minX << ", max: " << maxX;
 }
 

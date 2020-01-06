@@ -14,7 +14,6 @@ template<typename TimeStepping1, typename TimeStepping2>
 class OperatorSplitting :
   public ::TimeSteppingScheme::TimeSteppingScheme,    // contains also Multipliable
   public Runnable
-  //public Printer<typename TimeStepping2::OutputConnectorDataType>
 {
 public:
   typedef typename TimeStepping1::FunctionSpace FunctionSpace;
@@ -32,7 +31,7 @@ public:
   void run();
 
   //! get the data to be reused in further computations
-  OutputConnectorDataType &getOutputConnectorData();
+  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
 
   //! set the subset of ranks that will compute the work
   void setRankSubset(Partition::RankSubset rankSubset);
@@ -53,7 +52,7 @@ public:
   TimeStepping2 &timeStepping2();
 
   //! output the given data for debugging
-  std::string getString(OutputConnectorDataType &data);
+  std::string getString(std::shared_ptr<OutputConnectorDataType> data);
 
 protected:
 
@@ -71,15 +70,6 @@ protected:
 
   bool initialized_;               ///< if initialize() was already called
 };
-
-/*
-template<typename OutputConnectorDataType>
-class Printer
-{
-  void print(OutputConnectorDataType &data);
-};
-
-*/
 
 }  // namespace
 

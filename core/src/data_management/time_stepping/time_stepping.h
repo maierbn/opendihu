@@ -29,8 +29,6 @@ public:
 
   typedef FieldVariable::FieldVariable<FunctionSpaceType,nComponents> FieldVariableType;
   typedef FieldVariable::FieldVariable<FunctionSpaceType,1> ScalarFieldVariableType;
-  //typedef std::tuple<std::shared_ptr<FieldVariableType>,int,double> OutputConnectorDataType;  // <field variable, output component no., prefactor>
-
   typedef OutputConnectorData<FunctionSpaceType,nComponents> OutputConnectorDataType;
 
   //! constructor
@@ -68,7 +66,7 @@ public:
 
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
   //! the transfer is done by the output_connector_data_transfer class
-  OutputConnectorDataType &getOutputConnectorData();
+  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
 
   //! field variables that will be output by outputWriters
   typedef std::tuple<
@@ -81,7 +79,7 @@ public:
   FieldVariablesForOutputWriter getFieldVariablesForOutputWriter();
 
   //! output the given data for debugging
-  std::string getString(OutputConnectorDataType &data);
+  std::string getString(std::shared_ptr<OutputConnectorDataType> data);
 
 protected:
 
@@ -95,7 +93,7 @@ protected:
   
   std::string debuggingName_;   //< a name identifier only used for debugging
 
-  OutputConnectorDataType outputConnectorData_;  //< the object that holds output connector data that will be transferred between solvers
+  std::shared_ptr<OutputConnectorDataType> outputConnectorData_;  //< the object that holds output connector data that will be transferred between solvers
 
 private:
   //! get maximum number of expected non-zeros in the system matrix

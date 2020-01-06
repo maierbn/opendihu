@@ -27,7 +27,7 @@ public:
   void setTransferDirection(bool term1To2);
 
   //! get the information to which slot the slot (fromVectorNo, fromIndex) should be mapped, @return: if there was no error, if it returns false, do not perform this mapping as the slot is not connected
-  bool getSlotInformation(int fromVectorNo, int fromVectorIndex, int &toVectorNo, int &toVectorIndex, bool &avoidCopyIfPossible) const;
+  bool getSlotInformation(int fromVectorNo, int fromVectorIndex, int &toVectorNo, int &toVectorIndex, bool &avoidCopyIfPossible, bool disableWarnings=false) const;
 
 private:
   /** Specifies one slot
@@ -40,6 +40,9 @@ private:
 
   //! assemble some debugging information to the mapping that will be displayed on error
   std::string getDebugInformation() const;
+
+  //! fill the look-up table slotInformation_
+  void initializeSlotInformation();
 
   std::vector<Connector> connectorTerm1To2_;    //< the connector information which variables to map to which for mapping from term 1 to term 2
   std::vector<Connector> connectorTerm2To1_;    //< the connector information for mapping from term 2 to term 1
@@ -55,6 +58,17 @@ private:
   int nFieldVariablesTerm2Vector1_; //< the number of slots of term 2 in vector 1
   int nFieldVariablesTerm2Vector2_; //< the number of slots of term 2 in vector 2
   bool transferDirectionTerm1To2_;   //< if the current mapping is from term 1 to 2
+
+  struct Result
+  {
+    int toVectorNo;
+    int toVectorIndex;
+    bool avoidCopyIfPossible;
+    bool successful;
+  };
+
+  std::array<std::array<std::vector<Result>,2>,2> slotInformation_;   // [transferDirectionTerm1To2_][fromVectorNo][fromVectorIndex], look-up table of getSlotInformation
+  bool slotInformationInitialized_;          //< if slotInformation has been initialized
 
   PythonConfig settings_;         //< the settings object
 };

@@ -36,9 +36,12 @@ public:
   //! give the names of all intermediates, will be called before initialize()
   void setIntermediateNames(std::vector<std::string> &intermediateNames);
 
+  //! return references to statesForTransfer_ and intermediatesForTransfer_
+  void getStatesIntermediatesForTransfer(std::vector<int> &statesForTransfer, std::vector<int> &intermediatesForTransfer);
+
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
   //! the transfer is done by the output_connector_data_transfer class
-  OutputConnectorDataType &getOutputConnectorData();
+  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
 
   //! field variables that will be output by outputWriters
   typedef std::tuple<
@@ -62,8 +65,12 @@ private:
   std::shared_ptr<FieldVariableStates> states_;                 //< states field variable, this is a shared pointer with the timestepping scheme, which own the actual variable (creates it)
   std::vector<std::string> intermediateNames_;                  //< component names of the intermediates field variable
 
-  OutputConnectorDataType outputConnectorData_;                 //< the object that holds all components of field variables that will be transferred to other solvers
+  std::shared_ptr<OutputConnectorDataType> outputConnectorData_;//< the object that holds all components of field variables that will be transferred to other solvers
   PythonConfig specificSettings_;                               //< the settings object
+
+  std::vector<int> statesForTransfer_;                          //< state no.s to transfer to other solvers within output connector data
+  std::vector<int> intermediatesForTransfer_;                   //< intermediate no.s to transfer to other solvers within output connector data
+
 };
 
 } // namespace Data

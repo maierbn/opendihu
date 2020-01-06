@@ -64,7 +64,7 @@ public:
   void print();
 
   //! get the output connection da
-  OutputConnectorDataType &getOutputConnectorData();
+  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
 
 
   //! field variables that will be output by outputWriters
@@ -96,7 +96,7 @@ private:
   std::shared_ptr<FieldVariableType> zero_;  ///< a field variable with constant value of zero, needed for the nested rhs vector
   std::vector<Vec> subvectorsSolution_;   ///< a vector of the Petsc vecs that are used during computation
 
-  OutputConnectorDataType outputConnectorData_;    ///< the object that stores all components of field variables that will be transferred to other solvers
+  std::shared_ptr<OutputConnectorDataType> outputConnectorData_;    ///< the object that stores all components of field variables that will be transferred to other solvers
 
 };
 

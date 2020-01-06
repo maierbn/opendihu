@@ -1,7 +1,7 @@
 #include "output_connector_data_transfer/output_connection.h"
 
 OutputConnection::OutputConnection(PythonConfig settings):
-  fieldVariableNamesInitialized_(false), settings_(settings)
+  fieldVariableNamesInitialized_(false), slotInformationInitialized_(false), settings_(settings)
 {
   // parse values from settings
   std::vector<int> indicesTerm1To2;
@@ -42,6 +42,37 @@ OutputConnection::OutputConnection(PythonConfig settings):
       }
     }
   }
+}
+
+void OutputConnection::initializeSlotInformation()
+{
+  if (slotInformationInitialized_)
+    return;
+
+  // fill look-up table slotInformation_[transferDirectionTerm1To2][fromVectorNo][fromVectorIndex]
+  for (int transferDirectionTerm1To2 = 0; transferDirectionTerm1To2 < 2; transferDirectionTerm1To2++)
+  {
+    for (int fromVectorNo = 0; fromVectorNo < 2; fromVectorNo++)
+    {
+      int nUnsuccessful = 0;
+      for (int fromVectorIndex = 0; ; fromVectorIndex++)
+      {
+        transferDirectionTerm1To2_ = transferDirectionTerm1To2;
+        Result result;
+        result.successful = getSlotInformation(fromVectorNo, fromVectorIndex, result.toVectorNo, result.toVectorIndex, result.avoidCopyIfPossible, true);
+
+        slotInformation_[transferDirectionTerm1To2][fromVectorNo].push_back(result);
+
+        if (!result.successful)
+          nUnsuccessful++;
+
+        if (nUnsuccessful == 3)
+          break;
+      }
+    }
+  }
+
+  slotInformationInitialized_ = true;
 }
 
 void OutputConnection::setTransferDirection(bool term1To2)
@@ -247,8 +278,20 @@ std::string OutputConnection::getDebugInformation() const
   return result.str();
 }
 
-bool OutputConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex, int &toVectorNo, int &toVectorIndex, bool &avoidCopyIfPossible) const
+bool OutputConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
+                                          int &toVectorNo, int &toVectorIndex, bool &avoidCopyIfPossible, bool disableWarnings) const
 {
+//#ifdef NDEBUG
+  if (slotInformationInitialized_)
+  {
+    const Result &result = slotInformation_[transferDirectionTerm1To2_][fromVectorNo][fromVectorIndex];
+    toVectorNo = result.toVectorNo;
+    toVectorIndex = result.toVectorIndex;
+    avoidCopyIfPossible = result.avoidCopyIfPossible;
+    return result.successful;
+  }
+//#endif
+
   // fromVectorNo and toVectorNo are 0 or 1
 
 #ifndef NDEBUG
@@ -265,28 +308,31 @@ bool OutputConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
     // check for wrong indices and output errors
     if (fromIndex >= connectorTerm1To2_.size())
     {
-      LOG(WARNING) << "Unconnected slot " << fromIndex << " of Term1 in " << settings_ << ": " << getDebugInformation() << ", fromIndex ("
-        << fromIndex << "=" << fromVectorNo << "*" << nFieldVariablesTerm1Vector1_ << "+" << fromVectorIndex << ") >= " << connectorTerm1To2_.size()
-        << "\nThere are only " << connectorTerm1To2_.size() << " slots to connect to, but a connection for slot no " << fromIndex << " is needed."
-        << "\nMaybe not enough entries are given for \"connectedSlotsTerm1To2\" or \"connectedSlotsTerm2To1\" "
-        << "or unneccessary slots have been created (e.g. intermediates in cellml that are not used further).";
+      if (!disableWarnings)
+        LOG(WARNING) << "Unconnected slot " << fromIndex << " of Term1 in " << settings_ << ": " << getDebugInformation() << ", fromIndex ("
+          << fromIndex << "=" << fromVectorNo << "*" << nFieldVariablesTerm1Vector1_ << "+" << fromVectorIndex << ") >= " << connectorTerm1To2_.size()
+          << "\nThere are only " << connectorTerm1To2_.size() << " slots to connect to, but a connection for slot no " << fromIndex << " is needed."
+          << "\nMaybe not enough entries are given for \"connectedSlotsTerm1To2\" or \"connectedSlotsTerm2To1\" "
+          << "or unneccessary slots have been created (e.g. intermediates in cellml that are not used further).";
       return false;
     }
 
     if (fromVectorNo == 0 && fromVectorIndex >= nFieldVariablesTerm1Vector1_)
     {
-      LOG(WARNING) << "Unconnected slot " << fromIndex << " of Term1 in " << settings_ << ": " << getDebugInformation() << ", from vector 0 (variable1), index " << fromVectorIndex
-        << ", but this vector has only " << nFieldVariablesTerm1Vector1_ << "entries." << std::endl
-        << "\nMaybe wrong numbers are given for \"connectedSlotsTerm1To2\" or \"connectedSlotsTerm2To1\" "
-        << "or unneccessary slots have been created (e.g. intermediates in cellml that are not used further).";
+      if (!disableWarnings)
+        LOG(WARNING) << "Unconnected slot " << fromIndex << " of Term1 in " << settings_ << ": " << getDebugInformation() << ", from vector 0 (variable1), index " << fromVectorIndex
+          << ", but this vector has only " << nFieldVariablesTerm1Vector1_ << "entries." << std::endl
+          << "\nMaybe wrong numbers are given for \"connectedSlotsTerm1To2\" or \"connectedSlotsTerm2To1\" "
+          << "or unneccessary slots have been created (e.g. intermediates in cellml that are not used further).";
       return false;
     }
     else if (fromVectorNo == 1 && fromVectorIndex >= nFieldVariablesTerm1Vector2_)
     {
-      LOG(WARNING) << "Unconnected slot " << fromIndex << " of Term1 in " << settings_ << ": " << getDebugInformation() << ", from vector 1 (variable2), index " << fromVectorIndex
-        << ", but this vector has only " << nFieldVariablesTerm1Vector2_ << "entries." << std::endl
-        << "\nMaybe wrong numbers are given for \"connectedSlotsTerm1To2\" or \"connectedSlotsTerm2To1\" "
-        << "or unneccessary slots have been created (e.g. intermediates in cellml that are not used further).";
+      if (!disableWarnings)
+        LOG(WARNING) << "Unconnected slot " << fromIndex << " of Term1 in " << settings_ << ": " << getDebugInformation() << ", from vector 1 (variable2), index " << fromVectorIndex
+          << ", but this vector has only " << nFieldVariablesTerm1Vector2_ << "entries." << std::endl
+          << "\nMaybe wrong numbers are given for \"connectedSlotsTerm1To2\" or \"connectedSlotsTerm2To1\" "
+          << "or unneccessary slots have been created (e.g. intermediates in cellml that are not used further).";
       return false;
     }
 
@@ -304,20 +350,22 @@ bool OutputConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
 
     if (toVectorNo == 0 && fromVectorIndex >= nFieldVariablesTerm2Vector1_)
     {
-      LOG(WARNING) << "Unconnected slot " << toIndex << " of Term2 in " << settings_ << ": " << getDebugInformation() << ", from vector 0 (variable1), index " << fromVectorIndex
-        << " to vector 0 (variable1), index " << toVectorIndex
-        << ", but this vector has only " << nFieldVariablesTerm2Vector1_ << "entries." << std::endl
-        << "\nMaybe wrong numbers are given for \"connectedSlotsTerm1To2\" or \"connectedSlotsTerm2To1\" "
-        << "or unneccessary slots have been created (e.g. intermediates in cellml that are not used further).";
+      if (!disableWarnings)
+        LOG(WARNING) << "Unconnected slot " << toIndex << " of Term2 in " << settings_ << ": " << getDebugInformation() << ", from vector 0 (variable1), index " << fromVectorIndex
+          << " to vector 0 (variable1), index " << toVectorIndex
+          << ", but this vector has only " << nFieldVariablesTerm2Vector1_ << "entries." << std::endl
+          << "\nMaybe wrong numbers are given for \"connectedSlotsTerm1To2\" or \"connectedSlotsTerm2To1\" "
+          << "or unneccessary slots have been created (e.g. intermediates in cellml that are not used further).";
       return false;
     }
     else if (toVectorNo == 1 && fromVectorIndex >= nFieldVariablesTerm2Vector2_)
     {
-      LOG(WARNING) << "Unconnected slot " << toIndex << " of Term2 in " << settings_ << ": " << getDebugInformation() << ", from vector 1 (variable2), index " << fromVectorIndex
-        << " to vector 1 (variable2), index " << toVectorIndex
-        << ", but this vector has only " << nFieldVariablesTerm2Vector2_ << "entries." << std::endl
-        << "\nMaybe wrong numbers are given for \"connectedSlotsTerm1To2\" or \"connectedSlotsTerm2To1\" "
-        << "or unneccessary slots have been created (e.g. intermediates in cellml that are not used further).";
+      if (!disableWarnings)
+        LOG(WARNING) << "Unconnected slot " << toIndex << " of Term2 in " << settings_ << ": " << getDebugInformation() << ", from vector 1 (variable2), index " << fromVectorIndex
+          << " to vector 1 (variable2), index " << toVectorIndex
+          << ", but this vector has only " << nFieldVariablesTerm2Vector2_ << "entries." << std::endl
+          << "\nMaybe wrong numbers are given for \"connectedSlotsTerm1To2\" or \"connectedSlotsTerm2To1\" "
+          << "or unneccessary slots have been created (e.g. intermediates in cellml that are not used further).";
       return false;
     }
   }
@@ -331,27 +379,30 @@ bool OutputConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
     // check for wrong indices and output errors
     if (fromIndex >= connectorTerm2To1_.size())
     {
-      LOG(WARNING) << "Unconnected slot " << fromIndex << " of Term2 in " << settings_ << ": " << getDebugInformation() << ", fromIndex (" << fromIndex << ") >= " << connectorTerm2To1_.size()
-        << "\nThere are only " << connectorTerm2To1_.size() << " slots to connect to, but a connection for slot no " << fromIndex << " is needed."
-        << "\nMaybe not enough entries are given for \"connectedSlotsTerm1To2\" or \"connectedSlotsTerm2To1\" "
-        << "or unneccessary slots have been created (e.g. intermediates in cellml that are not used further).";
+      if (!disableWarnings)
+        LOG(WARNING) << "Unconnected slot " << fromIndex << " of Term2 in " << settings_ << ": " << getDebugInformation() << ", fromIndex (" << fromIndex << ") >= " << connectorTerm2To1_.size()
+          << "\nThere are only " << connectorTerm2To1_.size() << " slots to connect to, but a connection for slot no " << fromIndex << " is needed."
+          << "\nMaybe not enough entries are given for \"connectedSlotsTerm1To2\" or \"connectedSlotsTerm2To1\" "
+          << "or unneccessary slots have been created (e.g. intermediates in cellml that are not used further).";
       return false;
     }
 
     if (fromVectorNo == 0 && fromVectorIndex >= nFieldVariablesTerm2Vector1_)
     {
-      LOG(WARNING) << "Unconnected slot " << fromIndex << " of Term2 in " << settings_ << ": " << getDebugInformation() << ", from vector 0 (variable1), index " << fromVectorIndex
-        << ", but this vector has only " << nFieldVariablesTerm2Vector1_ << "entries." << std::endl
-        << "\nMaybe wrong numbers are given for \"connectedSlotsTerm1To2\" or \"connectedSlotsTerm2To1\" "
-        << "or unneccessary slots have been created (e.g. intermediates in cellml that are not used further).";
+      if (!disableWarnings)
+        LOG(WARNING) << "Unconnected slot " << fromIndex << " of Term2 in " << settings_ << ": " << getDebugInformation() << ", from vector 0 (variable1), index " << fromVectorIndex
+          << ", but this vector has only " << nFieldVariablesTerm2Vector1_ << "entries." << std::endl
+          << "\nMaybe wrong numbers are given for \"connectedSlotsTerm1To2\" or \"connectedSlotsTerm2To1\" "
+          << "or unneccessary slots have been created (e.g. intermediates in cellml that are not used further).";
       return false;
     }
     else if (fromVectorNo == 1 && fromVectorIndex >= nFieldVariablesTerm2Vector2_)
     {
-      LOG(WARNING) << "Unconnected slot " << fromIndex << " of Term2 in " << settings_ << ": " << getDebugInformation() << ", from vector 1 (variable2), index " << fromVectorIndex
-        << ", but this vector has only " << nFieldVariablesTerm2Vector2_ << "entries." << std::endl
-        << "\nMaybe wrong numbers are given for \"connectedSlotsTerm1To2\" or \"connectedSlotsTerm2To1\" "
-        << "or unneccessary slots have been created (e.g. intermediates in cellml that are not used further).";
+      if (!disableWarnings)
+        LOG(WARNING) << "Unconnected slot " << fromIndex << " of Term2 in " << settings_ << ": " << getDebugInformation() << ", from vector 1 (variable2), index " << fromVectorIndex
+          << ", but this vector has only " << nFieldVariablesTerm2Vector2_ << "entries." << std::endl
+          << "\nMaybe wrong numbers are given for \"connectedSlotsTerm1To2\" or \"connectedSlotsTerm2To1\" "
+          << "or unneccessary slots have been created (e.g. intermediates in cellml that are not used further).";
       return false;
     }
 
@@ -368,20 +419,22 @@ bool OutputConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
 
     if (toVectorNo == 0 && fromVectorIndex >= nFieldVariablesTerm1Vector1_)
     {
-      LOG(WARNING) << "Unconnected slot " << toIndex << " of Term1 in " << settings_ << ": " << getDebugInformation() << ", from vector 0 (variable1), index " << fromVectorIndex
-        << " to vector 0 (variable1), index " << toVectorIndex
-        << ", but this vector has only " << nFieldVariablesTerm1Vector1_ << "entries." << std::endl
-        << "\nMaybe wrong numbers are given for \"connectedSlotsTerm1To2\" or \"connectedSlotsTerm2To1\" "
-        << "or unneccessary slots have been created (e.g. intermediates in cellml that are not used further).";
+      if (!disableWarnings)
+        LOG(WARNING) << "Unconnected slot " << toIndex << " of Term1 in " << settings_ << ": " << getDebugInformation() << ", from vector 0 (variable1), index " << fromVectorIndex
+          << " to vector 0 (variable1), index " << toVectorIndex
+          << ", but this vector has only " << nFieldVariablesTerm1Vector1_ << "entries." << std::endl
+          << "\nMaybe wrong numbers are given for \"connectedSlotsTerm1To2\" or \"connectedSlotsTerm2To1\" "
+          << "or unneccessary slots have been created (e.g. intermediates in cellml that are not used further).";
       return false;
     }
     else if (toVectorNo == 1 && fromVectorIndex >= nFieldVariablesTerm1Vector2_)
     {
-      LOG(WARNING) << "Unconnected slot " << toIndex << " of Term1 in " << settings_ << ": " << getDebugInformation() << ", from vector 1 (variable2), index " << fromVectorIndex
-        << " to vector 1 (variable2), index " << toVectorIndex
-        << ", but this vector has only " << nFieldVariablesTerm1Vector2_ << "entries." << std::endl
-        << "\nMaybe wrong numbers are given for \"connectedSlotsTerm1To2\" or \"connectedSlotsTerm2To1\" "
-        << "or unneccessary slots have been created (e.g. intermediates in cellml that are not used further).";
+      if (!disableWarnings)
+        LOG(WARNING) << "Unconnected slot " << toIndex << " of Term1 in " << settings_ << ": " << getDebugInformation() << ", from vector 1 (variable2), index " << fromVectorIndex
+          << " to vector 1 (variable2), index " << toVectorIndex
+          << ", but this vector has only " << nFieldVariablesTerm1Vector2_ << "entries." << std::endl
+          << "\nMaybe wrong numbers are given for \"connectedSlotsTerm1To2\" or \"connectedSlotsTerm2To1\" "
+          << "or unneccessary slots have been created (e.g. intermediates in cellml that are not used further).";
       return false;
     }
   }

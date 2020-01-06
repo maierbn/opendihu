@@ -37,12 +37,12 @@ public:
   Data &data();
 
   //! output the given data for debugging
-  //virtual std::string getString(OutputConnectorDataType &data);
+  //virtual std::string getString(std::shared_ptr<OutputConnectorDataType> data);
 
   //! Get the data that will be transferred in the operator splitting to the other term of the splitting.
   //! The transfer is done by the output_connector_data_transfer class.
   //! The data is passed on from the DiscretizableInTime object.
-  OutputConnectorDataType &getOutputConnectorData();
+  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
 
   //! initialize discretizableInTime
   virtual void initialize();

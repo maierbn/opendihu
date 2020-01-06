@@ -126,6 +126,9 @@ namespace ModelOrderReduction
 
     LOG(DEBUG) << "fullTimestepping_ has function space: " << this->fullTimestepping_.data().functionSpace()->meshName();
 
+    outputConnectorData_ = std::make_shared<OutputConnectorDataType>();
+    outputConnectorData_->addFieldVariable(this->data_->solution());
+
     initialized_ = true;
   }
 
@@ -148,11 +151,10 @@ namespace ModelOrderReduction
   }
 
   template<typename TimeSteppingType>
-  typename TimeSteppingSchemeOdeReduced<TimeSteppingType>::OutputConnectorDataType TimeSteppingSchemeOdeReduced<TimeSteppingType>::
+  std::shared_ptr<typename TimeSteppingSchemeOdeReduced<TimeSteppingType>::OutputConnectorDataType>
+  TimeSteppingSchemeOdeReduced<TimeSteppingType>::
   getOutputConnectorData()
   {
-    OutputConnectorDataType outputConnectorData;
-    outputConnectorData.addFieldVariable(this->data_->solution());
-    return outputConnectorData;
+    return outputConnectorData_;
   }
 } //namespace

@@ -59,6 +59,8 @@ private:
   std::shared_ptr<FieldVariableType> redIncrement_; //reduced increment
   
   std::shared_ptr<FunctionSpaceRowsType> functionSpaceRows_;
+
+
   
   //! Create the matrices and vectors for model order reduction
   void createPetscObjects();

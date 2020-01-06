@@ -58,11 +58,11 @@ public:
 
   //! pass on the output connector data object from the timestepping scheme object to be modified,
   //! this is needed for other DiscretizableInTime objects, but not for finite element method
-  void setOutputConnectorData(Data::OutputConnectorData<FunctionSpaceType,nComponents_> &outputConnectorDataTimeStepping){}
+  void setOutputConnectorData(std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType,nComponents_>> outputConnectorDataTimeStepping){}
 
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
   //! the transfer is done by the output_connector_data_transfer class
-  OutputConnectorDataType &getOutputConnectorData();
+  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
 
   typedef FunctionSpaceType FunctionSpace;   ///< the FunctionSpace type needed for time stepping scheme
 

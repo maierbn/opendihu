@@ -16,10 +16,11 @@ PartitionedPetscVec(PartitionedPetscVec<FunctionSpaceType,nComponents2> &rhs, st
   PartitionedPetscVecBase<FunctionSpaceType>(rhs.meshPartition(), name)
  
 {
-  if (nComponents > nComponents2)
+  if (reuseData && nComponents > nComponents2)
   {
     reuseData = false;
-    LOG(WARNING) << "Could not create PartitionedPetscVec as copy with reuseData=true, nComponents=" << nComponents << " > " << nComponents2;
+    LOG(WARNING) << "Could not create PartitionedPetscVec \"" << name << "\" as copy of rhs (\"" << rhs.name() << "\") with reuseData=true, nComponents="
+      << nComponents << " > " << nComponents2 << ". Setting reuseData to false.";
   }
 
   if (reuseData)

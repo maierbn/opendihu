@@ -95,6 +95,8 @@ public:
   //! output the vector to stream, for debugging
   void output(std::ostream &stream);
 
+  template<typename FunctionSpaceType2, int nComponents2, typename Dummy> friend class PartitionedPetscVec;
+
 protected:
   
   //! create the values vectors

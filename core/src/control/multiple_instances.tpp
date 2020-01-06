@@ -310,15 +310,16 @@ initialize()
   data_.setInstancesData(instancesLocal_);
 
   // initialize output connector data
-  outputConnectorData_.resize(nInstancesLocal_);
+  outputConnectorData_ = std::make_shared<OutputConnectorDataType>();
+  outputConnectorData_->reserve(nInstancesLocal_);
   for (int i = 0; i < nInstancesLocal_; i++)
   {
     VLOG(1) << "MultipleInstances::getOutputConnectorData";
-    outputConnectorData_[i] = instancesLocal_[i].getOutputConnectorData();
+    outputConnectorData_->push_back(instancesLocal_[i].getOutputConnectorData());
 
     if (VLOG_IS_ON(1))
     {
-      VLOG(1) << "instance " << i << "/" << nInstancesLocal_ << " is " << outputConnectorData_[i];
+      VLOG(1) << "instance " << i << "/" << nInstancesLocal_ << " is " << (*outputConnectorData_)[i];
     }
   }
 
@@ -400,9 +401,17 @@ reset()
 }
 
 template<typename TimeSteppingScheme>
-typename MultipleInstances<TimeSteppingScheme>::OutputConnectorDataType &MultipleInstances<TimeSteppingScheme>::
+std::shared_ptr<typename MultipleInstances<TimeSteppingScheme>::OutputConnectorDataType>
+MultipleInstances<TimeSteppingScheme>::
 getOutputConnectorData()
 {
+  // call getOutputConnectorData on all instances such that they can prepare themselves
+  // (e.g. timestepping schemes call prepareForGetOutputConnectorData)
+  for (int i = 0; i < nInstancesLocal_; i++)
+  {
+    instancesLocal_[i].getOutputConnectorData();
+  }
+
   return outputConnectorData_;
 }
 
@@ -429,15 +438,15 @@ writeOutput(int timeStepNo, double currentTime, int callCountIncrement)
 
 template<typename TimeSteppingScheme>
 std::string MultipleInstances<TimeSteppingScheme>::
-getString(typename MultipleInstances<TimeSteppingScheme>::OutputConnectorDataType &data)
+getString(std::shared_ptr<typename MultipleInstances<TimeSteppingScheme>::OutputConnectorDataType> data)
 {
   std::stringstream s;
   s << "<MultipleInstances(" << nInstancesLocal_ << "):";
-  for (int i = 0; i < std::min((int)data.size(), nInstancesLocal_); i++)
+  for (int i = 0; i < std::min((int)data->size(), nInstancesLocal_); i++)
   {
     if (i != 0)
       s << ", ";
-    s << instancesLocal_[i].getString(data[i]);
+    s << instancesLocal_[i].getString((*data)[i]);
   }
   s << ">";
   return s.str();

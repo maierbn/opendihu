@@ -243,7 +243,9 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
       this->lastCallSpecificStatesTime_ += 1./(this->setSpecificStatesCallFrequency_+this->currentJitter_);
 
       // get new jitter value
-      double jitterFactor = this->setSpecificStatesFrequencyJitter_[this->jitterIndex_ % this->setSpecificStatesFrequencyJitter_.size()];
+      double jitterFactor = 0.0;
+      if (this->setSpecificStatesFrequencyJitter_.size() > 0)
+        jitterFactor = this->setSpecificStatesFrequencyJitter_[this->jitterIndex_ % this->setSpecificStatesFrequencyJitter_.size()];
       this->currentJitter_ = jitterFactor * this->setSpecificStatesCallFrequency_;
       this->jitterIndex_++;
 

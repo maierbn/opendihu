@@ -54,7 +54,9 @@ public:
 protected:
 
   //! compute one time step of the right hand side for a single simd vector of instances
-  virtual void compute0DInstance(Vc::double_v states[], double currentTime, double timeStepWidth, bool stimulate) override;
+  virtual void compute0DInstance(Vc::double_v states[], double currentTime, double timeStepWidth,
+                                 bool stimulate, bool storeIntermediatesForTransfer,
+                                 std::vector<Vc::double_v> &intermediatesForTransfer) override;
 
   //! set the initial values for all states
   virtual void initializeStates(Vc::double_v states[]) override;

@@ -45,6 +45,8 @@ debug_output = False                # verbose output in this python script, for 
 disable_firing_output = True        # Disables the initial list of fiber firings on the console to save some console space
 paraview_output = False             # If the paraview output writer should be enabled
 adios_output = False                # If the MegaMol/ADIOS output writer should be enabled
+python_output = False               # If the Python output writer should be enabled
+exfile_output = False               # If the Exfile output writer should be enabled
 
 
 # motor unit stimulation times
@@ -100,6 +102,8 @@ n_fibers_y = None
 n_points_whole_fiber = None
 output_writer_fibers = None
 output_writer_emg = None
+output_writer_0D_states = None
+states_output = False
 parameters_used_as_intermediate = None
 parameters_used_as_constant = None
 parameters_initial_values = None
@@ -118,8 +122,9 @@ z_point_index_end = None
 n_elements_3D_mesh = None
 meshes = None
 potential_flow_dirichlet_bc = None
-linear_elasticity_dirichlet_bc = None
-linear_elasticity_neumann_bc = None
+use_elasticity_dirichlet_bc = None
+use_elasticity_neumann_bc = None
 fibers_on_own_rank = None
 n_fiber_nodes_on_subdomain = None
 fiber_start_node_no = None
+generate_quadratic_3d_mesh = False

@@ -67,7 +67,7 @@ advanceTimeSpan()
     this->outputConnection_.setTransferDirection(true);
 
     // transfer actual values
-    typename TimeStepping1::OutputConnectorDataType solutionTimeStepping1 = this->timeStepping1_.getOutputConnectorData();
+    std::shared_ptr<typename TimeStepping1::OutputConnectorDataType> solutionTimeStepping1 = this->timeStepping1_.getOutputConnectorData();
 
     if (VLOG_IS_ON(1))
       VLOG(1) << "  timeStepping1_.getOutputConnectorData(): " << solutionTimeStepping1;

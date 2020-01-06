@@ -759,7 +759,7 @@ data()
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
 //! the transfer is done by the output_connector_data_transfer class
 
-typename QuasiStaticNonlinearElasticitySolverFebio::OutputConnectorDataType &
+std::shared_ptr<typename QuasiStaticNonlinearElasticitySolverFebio::OutputConnectorDataType>
 QuasiStaticNonlinearElasticitySolverFebio::
 getOutputConnectorData()
 {
@@ -769,7 +769,7 @@ getOutputConnectorData()
 //! output the given data for debugging
 
 std::string QuasiStaticNonlinearElasticitySolverFebio::
-getString(typename QuasiStaticNonlinearElasticitySolverFebio::OutputConnectorDataType &data)
+getString(std::shared_ptr<typename QuasiStaticNonlinearElasticitySolverFebio::OutputConnectorDataType> data)
 {
   std::stringstream s;
   //s << "<QuasiStaticNonlinearElasticitySolverFebio:" << *data.activation() << ">";

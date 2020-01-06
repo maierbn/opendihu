@@ -9,7 +9,10 @@ namespace TimeSteppingScheme
 
 /** This solver is an adapter to the chaste software framework and uses the hyperelasticity implementation of chaste.
  *  It solves the nonlinear finite elasticity problem with Mooney-Rivlin material, for either 2D or 3D.
-  */
+ *  Because Chaste is not able to solve nonlinear elasticity in parallel, nor solve anything else than the quasi-static case,
+ *  integration in opendihu is not complete. This class should be deleted now.
+ *
+ */
 template<int D>
 class QuasiStaticNonlinearElasticitySolverChaste :
   public Runnable
@@ -18,7 +21,7 @@ public:
   typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>, BasisFunction::LagrangeOfOrder<2>> FunctionSpaceType;
   typedef Data::QuasiStaticNonlinearElasticityChaste<FunctionSpaceType> Data;
   typedef FieldVariable::FieldVariable<FunctionSpaceType,1> FieldVariableType;
-  typedef std::shared_ptr<FieldVariableType> OutputConnectorDataType;
+  typedef ::Data::OutputConnectorData<FunctionSpaceType,1> OutputConnectorDataType;
 
   //! constructor
   QuasiStaticNonlinearElasticitySolverChaste(DihuContext context);
@@ -43,10 +46,10 @@ public:
 
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
   //! the transfer is done by the output_connector_data_transfer class
-  OutputConnectorDataType &getOutputConnectorData();
+  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
 
   //! output the given data for debugging
-  std::string getString(OutputConnectorDataType &data);
+  std::string getString(std::shared_ptr<OutputConnectorDataType> data);
 
 protected:
 

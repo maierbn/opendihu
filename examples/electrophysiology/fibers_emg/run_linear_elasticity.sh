@@ -2,7 +2,7 @@
 /data/scratch/maierbn/opendihu/dependencies/mpi/install/bin/mpirun -n 4 \
 ./fibers_linear_elasticity ../settings_fibers_emg.py \
 --n_subdomains 2 2 1 \
---linear_elasticity \
+--use_elasticity \
 --fiber_file="../../input/7x7fibers.bin" \
 --paraview_output \
 --dt_0D=2e-3 \

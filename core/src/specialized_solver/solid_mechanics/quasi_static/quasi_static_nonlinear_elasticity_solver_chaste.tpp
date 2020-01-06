@@ -440,20 +440,20 @@ data()
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
 //! the transfer is done by the output_connector_data_transfer class
 template<int D>
-typename QuasiStaticNonlinearElasticitySolverChaste<D>::OutputConnectorDataType &
+std::shared_ptr<typename QuasiStaticNonlinearElasticitySolverChaste<D>::OutputConnectorDataType>
 QuasiStaticNonlinearElasticitySolverChaste<D>::
 getOutputConnectorData()
 {
-  return this->data_.activation();
+  return nullptr;
 }
 
 //! output the given data for debugging
 template<int D>
 std::string QuasiStaticNonlinearElasticitySolverChaste<D>::
-getString(typename QuasiStaticNonlinearElasticitySolverChaste<D>::OutputConnectorDataType &data)
+getString(std::shared_ptr<typename QuasiStaticNonlinearElasticitySolverChaste<D>::OutputConnectorDataType> data)
 {
   std::stringstream s;
-  s << "<QuasiStaticNonlinearElasticitySolverChaste:" << *data << ">";
+  s << "<QuasiStaticNonlinearElasticitySolverChaste:" << data << ">";
   return s.str();
 }
 

@@ -32,7 +32,7 @@ outputData(FieldVariablesForOutputWriterType fieldVariables, std::string meshNam
   if (scalarFieldVariables.size() > 0 && scalarFieldVariables.size() <= 1)
   {
     scalarFieldVariables[0]->getValuesWithoutGhosts(megaMolWriterContext.vmValues);
-    LOG(INFO) << "mesh \"" << meshName << "\", retrieve field variable \"" << scalarFieldVariables[0]->name() << "\", n values: " << megaMolWriterContext.vmValues.size();
+    LOG(DEBUG) << "mesh \"" << meshName << "\", retrieve field variable \"" << scalarFieldVariables[0]->name() << "\", n values: " << megaMolWriterContext.vmValues.size();
 
     megaMolWriterContext.nPointsPerCoordinateDirection[0] = geometryField->functionSpace()->meshPartition()->nNodesGlobal(0);
     megaMolWriterContext.nPointsPerCoordinateDirection[1] = 0;

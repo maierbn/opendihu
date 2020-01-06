@@ -47,12 +47,27 @@ std::ostream &operator<<(std::ostream &stream, const OutputConnectorData<Functio
   stream << "<";
   for (const ComponentOfFieldVariable<FunctionSpaceType,nComponents1> &entry : rhs.variable1)
   {
-    stream << "[" << *(entry.values) << " component " << entry.componentNo << "], ";
+    stream << "[" << entry.values << ": " << *(entry.values) << " component " << entry.componentNo << "], " << std::endl;
   }
-  stream << ";";
+  stream << ";" << std::endl;
   for (const ComponentOfFieldVariable<FunctionSpaceType,nComponents2> &entry : rhs.variable2)
   {
-    stream << "[" << *(entry.values) << " component " << entry.componentNo << "], ";
+    stream << "[" << entry.values << ": " << *(entry.values) << " component " << entry.componentNo << "], " << std::endl;
+  }
+  return stream;
+}
+
+// operator used for output
+template<typename FunctionSpaceType, int nComponents1, int nComponents2>
+std::ostream &operator<<(std::ostream &stream, const std::shared_ptr<OutputConnectorData<FunctionSpaceType,nComponents1,nComponents2>> &rhs)
+{
+  stream << rhs.get();
+  if (rhs)
+    stream << ":" << *rhs;
+  else
+  {
+    // the program should not have any OutputConnectorData pointer uninitialized any time after initialize()
+    LOG(FATAL) << "OutputConnectorData is null!";
   }
   return stream;
 }

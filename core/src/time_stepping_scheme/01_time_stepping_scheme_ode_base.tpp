@@ -101,9 +101,11 @@ run()
 }
 
 template<typename FunctionSpaceType, int nComponents>
-typename TimeSteppingSchemeOdeBase<FunctionSpaceType, nComponents>::OutputConnectorDataType &TimeSteppingSchemeOdeBase<FunctionSpaceType, nComponents>::
+std::shared_ptr<typename TimeSteppingSchemeOdeBase<FunctionSpaceType, nComponents>::OutputConnectorDataType>
+TimeSteppingSchemeOdeBase<FunctionSpaceType, nComponents>::
 getOutputConnectorData()
 {
+  LOG(TRACE) << "\ncall prepareForGetOutputConnectorData";
   prepareForGetOutputConnectorData();
 
   return this->data_->getOutputConnectorData();

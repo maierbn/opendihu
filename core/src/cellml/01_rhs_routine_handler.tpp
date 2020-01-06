@@ -69,11 +69,13 @@ initializeRhsRoutine()
  //"-fPIC -fopenmp -finstrument-functions -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared "
       std::string compilerFlags = this->specificSettings_.getOptionString("compilerFlags", "-ta=host,tesla,time");
 
-#ifndef NDEBUG
+#ifdef NDEBUG
+      // release mode
       std::stringstream s;
       s << C_COMPILER_COMMAND << " -fast " << compilerFlags << " ";
       compileCommandOptions = s.str();
 #else
+      // debug mode
       std::stringstream s;
       s << C_COMPILER_COMMAND << " -O0 -ggdb " << compilerFlags << " ";
       compileCommandOptions = s.str();
@@ -98,7 +100,8 @@ initializeRhsRoutine()
       // load compiler flags     
       std::string compilerFlags = this->specificSettings_.getOptionString("compilerFlags", "-fPIC -finstrument-functions -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared ");
 
-#ifndef NDEBUG
+#ifdef NDEBUG
+      // release mode
       // other possible options
       // -fopt-info-vec-missed=vectorizer_missed.log
       // -fopt-info-vec-all=vectorizer_all.log
@@ -106,6 +109,7 @@ initializeRhsRoutine()
       s << C_COMPILER_COMMAND << " -O3 " << compilerFlags << " ";
       compileCommandOptions = s.str();
 #else
+      // debug mode
       std::stringstream s;
       s << C_COMPILER_COMMAND << " -O0 -ggdb " << compilerFlags << " ";
       compileCommandOptions = s.str();

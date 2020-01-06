@@ -173,7 +173,8 @@ solve()
 }
 
 template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term>
-typename FiniteElementMethodBase<FunctionSpaceType,QuadratureType,nComponents,Term>::OutputConnectorDataType &FiniteElementMethodBase<FunctionSpaceType,QuadratureType,nComponents,Term>::
+std::shared_ptr<typename FiniteElementMethodBase<FunctionSpaceType,QuadratureType,nComponents,Term>::OutputConnectorDataType>
+FiniteElementMethodBase<FunctionSpaceType,QuadratureType,nComponents,Term>::
 getOutputConnectorData()
 {
   return data_.getOutputConnectorData();

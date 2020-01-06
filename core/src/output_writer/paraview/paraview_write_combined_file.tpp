@@ -514,10 +514,20 @@ void Paraview::writePolyDataFile(const FieldVariablesForOutputWriterType &fieldV
 
   assert(fieldVariableValues.size() == vtkPiece_.properties.pointDataArrays.size());
 
+#ifndef NDEBUG
+  LOG(DEBUG) << "fieldVariableValues: ";
+  for (std::map<std::string, std::vector<double>>::iterator iter = fieldVariableValues.begin(); iter != fieldVariableValues.end(); iter++)
+  {
+    LOG(DEBUG) << iter->first;
+  }
+#endif
+
   // check if field variable names have changed since last initialization
   for (std::vector<std::pair<std::string,int>>::iterator pointDataArrayIter = vtkPiece_.properties.pointDataArrays.begin();
        pointDataArrayIter != vtkPiece_.properties.pointDataArrays.end(); pointDataArrayIter++)
   {
+    LOG(DEBUG) << "  field variable \"" << pointDataArrayIter->first << "\".";
+
     // if there is a field variable with a name that was not present when vtkPiece_ was created
     if (fieldVariableValues.find(pointDataArrayIter->first) == fieldVariableValues.end())
     {

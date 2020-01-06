@@ -8,6 +8,8 @@
 #include "control/types.h"
 #include "mesh/mesh.h"
 #include "data_management/time_stepping/time_stepping.h"
+#include "cellml/00_cellml_adapter_base.h"
+#include "output_connector_data_transfer/output_connection.h"
 
 /**
  * The Data classes contain each a vector that stores the solution. Often, the values need to be accessed to
@@ -25,52 +27,29 @@ class SolutionVectorMapping
 {
 };
 
-/** Transfer between two field variables with given component number, both field variables have a component no. != 1
+/** Transfer between a pair of states and intermediates field variables from CellML, with given component numbers each, to a normal field variable with component no, both field variables have a component no. != 1
  *
- *  template<typename FunctionSpaceType, int nComponents>
- *  struct ComponentOfFieldVariable
- *  {
- *    std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> values;    //< a field variable containing the payload data that is to be exchangend to another solver
- *    int componentNo;                              //< the component of values that is relevant, only this component out of the potentially multi-component field variable in values will be transferred.
- *  };
+ *   template<typename FunctionSpaceType, int nComponents1, int nComponents2>
+ *   struct OutputConnectorData
+ *   {
+ *     std::vector<ComponentOfFieldVariable<FunctionSpaceType,nComponents1>> variable1;    //< vector of indications of components of field variables, the field variables have all the same number of components
+ *     std::vector<ComponentOfFieldVariable<FunctionSpaceType,nComponents2>> variable2;    //< second vector with different number of components for the field variables
+ *   }
  */
-/*template<typename FunctionSpaceType1, int nComponents1, typename FunctionSpaceType2, int nComponents2>
+template<typename FunctionSpaceType1, int nComponents1a, int nComponents1b, typename FunctionSpaceType2, int nComponents2a, int nComponents2b>
 class SolutionVectorMapping<
-  Data::ComponentOfFieldVariable<FunctionSpaceType1,nComponents1>,   // <fieldVariableType,componentNo,prefactor>
-  Data::ComponentOfFieldVariable<FunctionSpaceType2,nComponents2>
+  Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>,      //< intermediates and states from cellmlAdapter
+  Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>
 >
 {
 public:
   //! transfer the data from transferableSolutionData1 to transferableSolutionData2, as efficient as possible, where there are multiple slots that could be transferred (e.g. at cellmlAdapter), use the one specified by transferSlotName
-  static void transfer(const Data::ComponentOfFieldVariable<FunctionSpaceType1,nComponents1> &transferableSolutionData1,
-                       const Data::ComponentOfFieldVariable<FunctionSpaceType2,nComponents2> &transferableSolutionData2,
-                       const std::string transferSlotName
-                      );
-};
-*/
-/** Transfer between two field variables with given component number,
- *  the second field variable has only 1 component
- */
-/*template<typename FunctionSpaceType1, int nComponents1, typename FunctionSpaceType2>
-class SolutionVectorMapping<
-  Data::ComponentOfFieldVariable<FunctionSpaceType1,nComponents1>,   // <fieldVariableType,componentNo,prefactor>
-  Data::ComponentOfFieldVariable<FunctionSpaceType2,1>
->
-{
-public:
-  //! transfer the data from transferableSolutionData1 to transferableSolutionData2, as efficient as possible, where there are multiple slots that could be transferred (e.g. at cellmlAdapter), use the one specified by transferSlotName
-  static void transfer(const Data::ComponentOfFieldVariable<FunctionSpaceType1,nComponents1> &transferableSolutionData1,
-                       const Data::ComponentOfFieldVariable<FunctionSpaceType2,1> &transferableSolutionData2,
-                       const std::string transferSlotName);
+  static void transfer(const std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>> transferableSolutionData1,
+                       std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>> transferableSolutionData2,
+                       OutputConnection &outputConnection);
 };
 
 #include "output_connector_data_transfer/output_connector_data_transfer.tpp"
-*/
-// include all other output_connector_data_transfer partial specializations
-//#include "output_connector_data_transfer/output_connector_data_transfer_finite_element_method_cellml.h"
+#include "output_connector_data_transfer/output_connector_data_transfer_fibers_emg.h"
 #include "output_connector_data_transfer/output_connector_data_transfer_multidomain.h"
 #include "output_connector_data_transfer/output_connector_data_transfer_vector.h"
-//#include "output_connector_data_transfer/output_connector_data_transfer_bidomain.h"
-#include "output_connector_data_transfer/output_connector_data_transfer_cellml.h"
-#include "output_connector_data_transfer/output_connector_data_transfer_fibers_emg.h"
-//#include "output_connector_data_transfer/output_connector_data_transfer_linear_elasticity.h"

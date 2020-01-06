@@ -206,7 +206,7 @@ data()
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
 //! the transfer is done by the output_connector_data_transfer class
 template<typename FiniteElementMethod>
-typename QuasiStaticLinearElasticitySolver<FiniteElementMethod>::OutputConnectorDataType &
+std::shared_ptr<typename QuasiStaticLinearElasticitySolver<FiniteElementMethod>::OutputConnectorDataType>
 QuasiStaticLinearElasticitySolver<FiniteElementMethod>::
 getOutputConnectorData()
 {
@@ -216,7 +216,7 @@ getOutputConnectorData()
 //! output the given data for debugging
 template<typename FiniteElementMethod>
 std::string QuasiStaticLinearElasticitySolver<FiniteElementMethod>::
-getString(typename QuasiStaticLinearElasticitySolver<FiniteElementMethod>::OutputConnectorDataType &data)
+getString(std::shared_ptr<typename QuasiStaticLinearElasticitySolver<FiniteElementMethod>::OutputConnectorDataType> data)
 {
   std::stringstream s;
   s << "<QuasiStaticLinearElasticitySolver:" << *data << ">";

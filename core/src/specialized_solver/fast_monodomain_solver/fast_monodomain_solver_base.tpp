@@ -116,7 +116,7 @@ initialize()
 
       if (computingRank == rankSubset->ownRankNo())
       {
-        LOG(DEBUG) << "compute (i,j)=(" << i << "," << j << "), computingRank " << computingRank 
+        LOG(DEBUG) << "compute (i,j)=(" << i << "," << j << "), computingRank " << computingRank
           << ", fiberNo: " << fiberNo << ", rankSubset->size(): " << rankSubset->size() << ", own: " << rankSubset->ownRankNo();
         nFibersToCompute_++;
       }
@@ -150,7 +150,7 @@ initialize()
 
       if (computingRank == rankSubset->ownRankNo())
       {
-        LOG(DEBUG) << "compute (i,j)=(" << i << "," << j << "), computingRank " << computingRank 
+        LOG(DEBUG) << "compute (i,j)=(" << i << "," << j << "), computingRank " << computingRank
           << ", fiberNo: " << fiberNo << ", fiberDataNo: " << fiberDataNo 
           << ", rankSubset->size(): " << rankSubset->size() << ", own: " << rankSubset->ownRankNo();
         nInstancesToCompute_ += fiberFunctionSpace->nDofsGlobal();
@@ -775,9 +775,6 @@ compute0D(double startTime, double timeStepWidth, int nTimeSteps, bool storeInte
 
       const bool argumentStimulate = stimulate && currentPointIsInCenter;
       const bool argumentStoreIntermediates = storeIntermediatesForTransfer && timeStepNo == nTimeSteps-1;
-
-      /*LOG(DEBUG) << "storeIntermediatesForTransfer: " << storeIntermediatesForTransfer << ", timeStepNo " << timeStepNo << ", nTimeSteps: " << nTimeSteps
-        << ", argumentStoreIntermediates: " << argumentStoreIntermediates;*/
 
       compute0DInstance(fiberPointBuffers_[pointBuffersNo].states, currentTime, timeStepWidth, argumentStimulate,
                         argumentStoreIntermediates, fiberPointBuffersIntermediatesForTransfer_[pointBuffersNo]);

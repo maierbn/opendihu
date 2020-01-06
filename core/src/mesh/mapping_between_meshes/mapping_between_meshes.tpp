@@ -80,12 +80,6 @@ MappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSourc
 
     if (nTries == nTriesMax)
     {
-      /*
-      LOG(DEBUG) << "Could not create mapping between meshes \"" << functionSpaceSource->meshName() << "\" and \""
-        << functionSpaceTarget->meshName() << "\", dof local " << sourceDofNoLocal
-        << " of mesh \"" << functionSpaceSource->meshName() << "\" at position " << position << " is outside of mesh \""
-        << functionSpaceTarget->meshName() << "\" with tolerance " << xiTolerance << ".";
-      mappingSucceeded = false;*/
       LOG(DEBUG) << "In mapping between meshes \"" << functionSpaceSource->meshName() << "\" and \""
         << functionSpaceTarget->meshName() << "\", source dof local " << sourceDofNoLocal
         << " of mesh \"" << functionSpaceSource->meshName() << "\" at position " << position << " is outside of target mesh \""

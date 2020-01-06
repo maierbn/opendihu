@@ -18,35 +18,6 @@ initializeRhs()
   LOG(TRACE) << "NeumannBoundaryConditions::initializeRhs, D=" << FunctionSpaceType::dim() << ", nComponents=" << nComponents;
   // initialize RHS for mesh dimension 2 or 3, this is the same for nComponents == 1 and nComponents > 1
 
-/*
-  LOG(DEBUG) << "test";
-
-  const int nComponentsTest = 1;
-
-  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponentsTest>> test = this->data_.functionSpace()->template createFieldVariable<nComponentsTest>("test");
-  test->zeroEntries();
-  test->zeroGhostBuffer();
-  test->setRepresentationGlobal();
-  test->startGhostManipulation();
-  LOG(DEBUG) << "inititalized, test: " << *test;
-
-
-  int ownRankNo = this->data_.functionSpace()->meshPartition()->rankSubset()->ownRankNo();
-  if (ownRankNo == 0)
-  {
-    std::array<double,nComponentsTest> value({10.0});
-    test->setValue(0, value, INSERT_VALUES);
-  }
-  else
-  {
-    std::array<double,nComponentsTest> value({11.0});
-    test->setValue(0, value, INSERT_VALUES);
-  }
-
-  LOG(DEBUG) << "before finishGhostManipulation, test: " << *test;
-  test->finishGhostManipulation();
-
-  LOG(DEBUG) << "after finishGhostManipulation, test: " << *test;*/
 
   this->data_.rhs()->setRepresentationGlobal();
   this->data_.rhs()->zeroEntries();
@@ -111,16 +82,6 @@ initializeRhs()
       << geometryVolume << ", face " << Mesh::getString(elementIter->face) << ", geometrySurface: " << geometrySurface;
 
     // show node positions
-      /*
-    if (VLOG_IS_ON(1))
-    {
-      std::array<dof_no_t,FunctionSpaceType::nNodesPerElement()> elementNodeNos = functionSpace->getElementNodeNos(elementNoLocal);
-      for (int elementalNodeIndex = 0; elementalNodeIndex < FunctionSpaceType::nNodesPerElement(); elementalNodeIndex++)
-      {
-        dof_no_t nodeNoLocal = elementNodeNos[elementalNodeIndex];
-        //LOG(DEBUG) << ", global coordinates of element: " << functionSpace->meshPartition()->getCoordinatesGlobal(nodeNoLocal);
-      }
-    }*/
 
     // loop over integration points (e.g. gauss points)
     for (unsigned int samplingPointIndex = 0; samplingPointIndex < samplingPointsSurface.size(); samplingPointIndex++)
@@ -456,21 +417,7 @@ parseElementWithFaces(PythonConfig specificSettings, std::shared_ptr<FunctionSpa
     if (specificSettings.hasKey("constantValue"))
     {
       double constantValue = specificSettings.getOptionDouble("constantValue", 0.0);
-/*
-      // determine directionFactor
-      // if the surface normal is facing in opposite direction of the normal coordinate direction, this is -1, else 1
-      VecD<D-1> xiSurface;
-      for (int i = 0; i < D-1; i++)
-        xiSurface[i] = 0.5;
 
-      VecD<D> xi = Mesh::getXiOnFace(result.face, xiSurface);
-
-      LOG(DEBUG) << "face: " << Mesh::getString(result.face) << ", elementNoLocal: " << result.elementNoLocal << ", xi: " << xi << ", xiSurface: " << xiSurface;
-
-      Vec3 normal = functionSpace->getNormal(result.face, result.elementNoLocal, xi);
-      double directionFactor = normal[(int)(result.face)/2];
-      VLOG(1) << "normal: " << normal << ", directionFactor: " << directionFactor;
-*/
       // for normal flux BC
       constantVector[0] = constantValue;
     }

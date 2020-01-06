@@ -313,8 +313,7 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
   ierr = VecRestoreArray(output, &rates); CHKERRV(ierr);
   ierr = VecRestoreArray(this->data_.intermediates()->getValuesContiguous(), &intermediatesData); CHKERRV(ierr);
 
-  VLOG(1) << "intermediates: " << *this->data_.intermediates();
-
+  VLOG(1) << "at end of cellml_adapter, intermediates: " << this->data_.intermediates() << " " << *this->data_.intermediates();
   this->internalTimeStepNo_++;
 }
 
@@ -325,7 +324,7 @@ prepareForGetOutputConnectorData()
 {
   // make representation of intermediates global, such that field variables in outputConnectorData that share the Petsc Vec's with
   // intermediates have the correct data assigned
-  LOG(DEBUG) << "Transform intermediates field variable to global representation in order to transfer them to other solver.";
+  LOG(DEBUG) << "Transform intermediates field variable " << this->data_.intermediates() << " to global representation in order to transfer them to other solver.";
   VLOG(1) << *this->data_.intermediates();
   this->data_.intermediates()->setRepresentationGlobal();
   VLOG(1) << *this->data_.intermediates();

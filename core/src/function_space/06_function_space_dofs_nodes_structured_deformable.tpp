@@ -432,12 +432,6 @@ setGeometryFieldValues()
   LOG(DEBUG) << "in setGeometryFieldValues, geometry field ghost values: " << stream.str();
 #endif
 
-/*
-  LOG(TRACE) << "Abort";
-  MPI_Barrier(this->meshPartition_->mpiCommunicator());
-  MPI_Abort(this->meshPartition_->mpiCommunicator(), 0);
-*/
-
   VLOG(1) << "setGeometryField, geometryValues: " << geometryValues;
 }
 

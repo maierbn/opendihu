@@ -428,39 +428,6 @@ struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
       }
       return result;
     }
-    /*
-  #ifdef HAVE_NUMPYC
-    else if (PyArray_Check(object))
-    {
-      LOG(DEBUG) << "object is a pyarray ";
-
-      const PyArrayObject *arrayObject = (PyArrayObject*)object;
-
-      int nElementsInNumpyArray = PyArray_Size(object);
-      int nElementsToCopy = std::min(nComponents, nElementsInNumpyArray);
-
-      int typenumber = PyArray_TYPE(arrayObject);  // get the type of the contained data in the numpy array, e.g. NPY_DOUBLE
-
-      if (sizeof(ValueType) == PyArray_ITEMSIZE(arrayObject))
-      {
-        PyArray_DescrFromType(typenumber)->f->copyswapn(
-        result.data(), 1, PyArray_DATA((PyArrayObject*)arrayObject), 1, nElementsToCopy, 0, NULL);
-      }
-      else
-      {
-        LOG(ERROR) << "Could not convert numpy array with itemsize " << PyArray_ITEMSIZE(arrayObject) << " bytes to type " << typeid(ValueType).name() << " with size " << sizeof(ValueType) << ".";
-        nElementsToCopy = 0;
-      }
-
-      // fill rest of values with default values
-      for (int i = nElementsToCopy; i < nComponents; i++)
-      {
-        result[i] = defaultValue[i];
-      }
-      LOG(DEBUG) << "converted to " << nComponents << " entries: " << result;
-    }
-  #endif
-  */
     else if (PyDict_Check(object))
     {
       PyObject *itemList = PyDict_Items(object);
@@ -546,39 +513,6 @@ struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
       }
       return result;
     }
-    /*
-  #ifdef HAVE_NUMPYC
-    else if (PyArray_Check(object))
-    {
-      LOG(DEBUG) << "object is a pyarray ";
-
-      const PyArrayObject *arrayObject = (PyArrayObject*)object;
-
-      int nElementsInNumpyArray = PyArray_Size(object);
-      int nElementsToCopy = std::min(nComponents, nElementsInNumpyArray);
-
-      int typenumber = PyArray_TYPE(arrayObject);  // get the type of the contained data in the numpy array, e.g. NPY_DOUBLE
-
-      if (sizeof(ValueType) == PyArray_ITEMSIZE(arrayObject))
-      {
-        PyArray_DescrFromType(typenumber)->f->copyswapn(
-        result.data(), 1, PyArray_DATA((PyArrayObject*)arrayObject), 1, nElementsToCopy, 0, NULL);
-      }
-      else
-      {
-        LOG(ERROR) << "Could not convert numpy array with itemsize " << PyArray_ITEMSIZE(arrayObject) << " bytes to type " << typeid(ValueType).name() << " with size " << sizeof(ValueType) << ".";
-        nElementsToCopy = 0;
-      }
-
-      // fill rest of values with default values
-      for (int i = nElementsToCopy; i < nComponents; i++)
-      {
-        result[i] = defaultValue[i];
-      }
-      LOG(DEBUG) << "converted to " << nComponents << " entries: " << result;
-    }
-  #endif
-  */
     else if (PyDict_Check(object))
     {
       PyObject *itemList = PyDict_Items(object);
@@ -664,39 +598,6 @@ struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
       }
       return result;
     }
-    /*
-  #ifdef HAVE_NUMPYC
-    else if (PyArray_Check(object))
-    {
-      LOG(DEBUG) << "object is a pyarray ";
-
-      const PyArrayObject *arrayObject = (PyArrayObject*)object;
-
-      int nElementsInNumpyArray = PyArray_Size(object);
-      int nElementsToCopy = std::min(nComponents, nElementsInNumpyArray);
-
-      int typenumber = PyArray_TYPE(arrayObject);  // get the type of the contained data in the numpy array, e.g. NPY_DOUBLE
-
-      if (sizeof(ValueType) == PyArray_ITEMSIZE(arrayObject))
-      {
-        PyArray_DescrFromType(typenumber)->f->copyswapn(
-        result.data(), 1, PyArray_DATA((PyArrayObject*)arrayObject), 1, nElementsToCopy, 0, NULL);
-      }
-      else
-      {
-        LOG(ERROR) << "Could not convert numpy array with itemsize " << PyArray_ITEMSIZE(arrayObject) << " bytes to type " << typeid(ValueType).name() << " with size " << sizeof(ValueType) << ".";
-        nElementsToCopy = 0;
-      }
-
-      // fill rest of values with default values
-      for (int i = nElementsToCopy; i < nComponents; i++)
-      {
-        result[i] = defaultValue[i];
-      }
-      LOG(DEBUG) << "converted to " << nComponents << " entries: " << result;
-    }
-  #endif
-*/
     else if (PyDict_Check(object))
     {
       PyObject *itemList = PyDict_Items(object);

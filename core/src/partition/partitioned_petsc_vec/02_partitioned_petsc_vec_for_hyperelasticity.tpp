@@ -20,10 +20,6 @@ PartitionedPetscVecForHyperelasticity(
   // create the Petsc Vec
   this->createVector();
 
-  // debugging output
-  /*std::stringstream stream;
-  this->output(stream);
-  LOG(DEBUG) << stream.str();*/
 }
 
 template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType>

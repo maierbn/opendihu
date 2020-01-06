@@ -71,46 +71,13 @@ PartitionedPetscVecNComponentsStructured(PartitionedPetscVec<FunctionSpace::Func
   }
 }
   
-/*
-//! create a distributed Petsc vector, according to partition
-template<typename MeshType,typename BasisFunctionType,int nComponents>
-void PartitionedPetscVecNComponentsStructured<MeshType,BasisFunctionType,nComponents>::
-debug()
-{
-  const int componentNo = 0;
-
-  int nEntriesGlobal;
-  VecGetSize(vectorGlobal_[componentNo], &nEntriesGlobal);
-
-  LOG(DEBUG) << "global vector has " << nEntriesGlobal << " entries";
-
-  std::vector<int> indices(nEntriesGlobal);
-  std::iota(indices.begin(), indices.end(), 0);
-  std::vector<double> values(nEntriesGlobal);
-
-  VecGetValues(vectorGlobal_[componentNo], nEntriesGlobal, indices.data(), values.data());
-  LOG(DEBUG) << "global values: " << values;
-
-  int nEntriesLocal;
-  VecGetSize(vectorLocal_[componentNo], &nEntriesLocal);
-  LOG(DEBUG) << "local vector has " << nEntriesLocal << " entries";
-
-  std::vector<int> indices2(nEntriesLocal);
-  std::iota(indices2.begin(), indices2.end(), 0);
-  std::vector<double> values2(nEntriesLocal);
-
-  VecGetValues(vectorLocal_[componentNo], nEntriesLocal, indices2.data(), values2.data());
-
-  LOG(DEBUG) << "local values: " << values2;
-  VecView(vectorGlobal_[componentNo], PETSC_VIEWER_STDOUT_WORLD);
-}*/
 
 //! create a distributed Petsc vector, according to partition
 template<typename MeshType,typename BasisFunctionType,int nComponents>
 void PartitionedPetscVecNComponentsStructured<MeshType,BasisFunctionType,nComponents>::
 createVector()
 {
-  VLOG(2) << "\"" << this->name_ << "\" createVector with " << nComponents << " components, size local: " << this->meshPartition_->nNodesLocalWithoutGhosts() 
+  VLOG(2) << "\"" << this->name_ << "\" createVector with " << nComponents << " components, size local: " << this->meshPartition_->nNodesLocalWithoutGhosts()
     << ", global: " << this->meshPartition_->nNodesGlobal() << ", ghost dof nos global/petsc: " << this->meshPartition_->ghostDofNosGlobalPetsc();
   PetscErrorCode ierr;
   
@@ -1137,7 +1104,7 @@ output(std::ostream &stream)
 
   stream << "vector \"" << this->name_ << "\", (" << nEntries << " global, " << nEntriesLocal
     << " local entries (per component), representation " << Partition::valuesRepresentationString[this->currentRepresentation_]
-    << ")";
+    << ", vectors local[0]: " << vectorLocal_[0] << ", global[0]: " << vectorGlobal_[0] << ", contiguous: " << valuesContiguous_ << ")";
 
   // loop over components
   for (int componentNo = 0; componentNo < nComponents; componentNo++)

@@ -130,11 +130,11 @@ initialize()
     this->specificSettings_.getOptionVector("parametersUsedAsConstant", parametersUsedAsConstant_);
     nParameters_ += parametersUsedAsIntermediate_.size() + parametersUsedAsConstant_.size();
     
-    //LOG(DEBUG) << "parametersUsedAsIntermediate_: " << parametersUsedAsIntermediate_ 
+    //LOG(DEBUG) << "parametersUsedAsIntermediate_: " << parametersUsedAsIntermediate_
     //  << ", parametersUsedAsConstant_: " << parametersUsedAsConstant_;
   }
   
-  LOG(DEBUG) << "Initialize CellML with nInstances = " << nInstances_ << ", nParameters_ = " << nParameters_ 
+  LOG(DEBUG) << "Initialize CellML with nInstances = " << nInstances_ << ", nParameters_ = " << nParameters_
     << ", nStates = " << nStates << ", nIntermediates = " << nIntermediates_;
     
   // allocate data vectors

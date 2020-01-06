@@ -42,7 +42,7 @@ void ImplicitEuler<DiscretizableInTimeType>::advanceTimeSpan()
       LOG(INFO) << "Implicit Euler, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
     }
     
-    //VLOG(1) << "initial solution: " << *this->data_->solution();
+    VLOG(1) << "initial solution (" << this->data_->solution() << "): " << *this->data_->solution();
 
     // advance simulation time
     timeStepNo++;
@@ -59,7 +59,7 @@ void ImplicitEuler<DiscretizableInTimeType>::advanceTimeSpan()
     
     if (VLOG_IS_ON(1))
     {
-      VLOG(1) << "new solution: " << *this->data_->solution();
+      VLOG(1) << "new solution (" << this->data_->solution() << "): " << *this->data_->solution();
     }
 
     // stop duration measurement

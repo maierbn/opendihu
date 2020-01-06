@@ -95,6 +95,9 @@ template<typename FieldVariableType>
 void Paraview::writeParaviewFieldVariable(FieldVariableType &fieldVariable,
                                           std::ofstream &file, bool binaryOutput, bool fixedFormat, bool onlyParallelDatasetElement)
 {
+  LOG(DEBUG) << "Paraview write field variable " << fieldVariable.name();
+  VLOG(1) << fieldVariable;
+
   // here we have the type of the mesh with meshName (which is typedef to FunctionSpace)
   //typedef typename FieldVariableType::FunctionSpace FunctionSpace;
 

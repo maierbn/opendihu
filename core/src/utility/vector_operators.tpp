@@ -249,6 +249,12 @@ std::ostream &operator<<(std::ostream &stream, const std::array<std::size_t,N> v
   return stream;
 }
 
+template<typename T>
+std::ostream &operator<<(std::ostream &stream, std::reference_wrapper<T> value)
+{
+  stream << value.get();
+  return stream;
+}
 
 template<typename T>
 std::ostream &operator<<(std::ostream &stream, const std::vector<T> &values)

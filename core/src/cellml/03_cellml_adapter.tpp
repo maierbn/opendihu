@@ -62,14 +62,13 @@ CellmlAdapter(const CellmlAdapter &rhs, std::shared_ptr<FunctionSpace> functionS
   this->parametersUsedAsIntermediate_ = rhs.parametersUsedAsIntermediate_;
   this->parametersUsedAsConstant_ = rhs.parametersUsedAsConstant_;
   this->stateNames_ = rhs.stateNames_;
+  this->intermediateNames_ = rhs.intermediateNames_;
 
   this->sourceFilename_ = rhs.sourceFilename_;
   this->nIntermediates_ = rhs.nIntermediates_;
   this->nIntermediatesInSource_ = rhs.nIntermediatesInSource_;
   this->nParameters_ = rhs.nParameters_;
   this->nConstants_ = rhs.nConstants_;
-  this->outputStateIndex_ = rhs.outputStateIndex_;
-  this->prefactor_ = rhs.prefactor_;
   this->internalTimeStepNo_ = rhs.internalTimeStepNo_;
   this->inputFileTypeOpenCMISS_ = rhs.inputFileTypeOpenCMISS_;
 
@@ -121,10 +120,10 @@ initialize()
   
   Control::PerformanceMeasurement::stop("durationInitCellml");
 
-  this->outputStateIndex_ = this->specificSettings_.getOptionInt("outputStateIndex", 0, PythonUtility::NonNegative);
-  this->outputIntermediateIndex_ = this->specificSettings_.getOptionInt("outputIntermediateIndex", 0, PythonUtility::NonNegative);
-
-  this->prefactor_ = this->specificSettings_.getOptionDouble("prefactor", 1.0);
+  if (this->specificSettings_.hasKey("prefactor"))
+  {
+    LOG(WARNING) << this->specificSettings_ << "[\"prefactor\"] is no longer an option! There is no more functionality to scale values during transfer.";
+  }
 
   this->internalTimeStepNo_ = 0;
 
@@ -244,7 +243,9 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
       this->lastCallSpecificStatesTime_ += 1./(this->setSpecificStatesCallFrequency_+this->currentJitter_);
 
       // get new jitter value
-      double jitterFactor = this->setSpecificStatesFrequencyJitter_[this->jitterIndex_ % this->setSpecificStatesFrequencyJitter_.size()];
+      double jitterFactor = 0.0;
+      if (this->setSpecificStatesFrequencyJitter_.size() > 0)
+        jitterFactor = this->setSpecificStatesFrequencyJitter_[this->jitterIndex_ % this->setSpecificStatesFrequencyJitter_.size()];
       this->currentJitter_ = jitterFactor * this->setSpecificStatesCallFrequency_;
       this->jitterIndex_++;
 
@@ -312,9 +313,21 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
   ierr = VecRestoreArray(output, &rates); CHKERRV(ierr);
   ierr = VecRestoreArray(this->data_.intermediates()->getValuesContiguous(), &intermediatesData); CHKERRV(ierr);
 
-  VLOG(1) << "intermediates: " << *this->data_.intermediates();
-
+  VLOG(1) << "at end of cellml_adapter, intermediates: " << this->data_.intermediates() << " " << *this->data_.intermediates();
   this->internalTimeStepNo_++;
+}
+
+
+template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
+void CellmlAdapter<nStates_,nIntermediates_,FunctionSpaceType>::
+prepareForGetOutputConnectorData()
+{
+  // make representation of intermediates global, such that field variables in outputConnectorData that share the Petsc Vec's with
+  // intermediates have the correct data assigned
+  LOG(DEBUG) << "Transform intermediates field variable " << this->data_.intermediates() << " to global representation in order to transfer them to other solver.";
+  VLOG(1) << *this->data_.intermediates();
+  this->data_.intermediates()->setRepresentationGlobal();
+  VLOG(1) << *this->data_.intermediates();
 }
 
 template<int nStates_, int nIntermediates_, typename FunctionSpaceType>

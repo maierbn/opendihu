@@ -32,6 +32,9 @@ public:
   //! get the name of the field variable
   std::string name() const;
 
+  //! set the name of the field variable
+  void setName(std::string name);
+
   //! if the field has the flag "geometry field", i.e. in the exelem file its type was specified as "coordinate"
   bool isGeometryField() const;
 

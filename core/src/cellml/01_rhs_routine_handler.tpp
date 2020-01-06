@@ -70,10 +70,12 @@ initializeRhsRoutine()
       std::string compilerFlags = this->specificSettings_.getOptionString("compilerFlags", "-ta=host,tesla,time");
 
 #ifdef NDEBUG
+      // release mode
       std::stringstream s;
       s << C_COMPILER_COMMAND << " -fast " << compilerFlags << " ";
       compileCommandOptions = s.str();
 #else
+      // debug mode
       std::stringstream s;
       s << C_COMPILER_COMMAND << " -O0 -ggdb " << compilerFlags << " ";
       compileCommandOptions = s.str();
@@ -99,6 +101,7 @@ initializeRhsRoutine()
       std::string compilerFlags = this->specificSettings_.getOptionString("compilerFlags", "-fPIC -finstrument-functions -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared ");
 
 #ifdef NDEBUG
+      // release mode
       // other possible options
       // -fopt-info-vec-missed=vectorizer_missed.log
       // -fopt-info-vec-all=vectorizer_all.log
@@ -106,6 +109,7 @@ initializeRhsRoutine()
       s << C_COMPILER_COMMAND << " -O3 " << compilerFlags << " ";
       compileCommandOptions = s.str();
 #else
+      // debug mode
       std::stringstream s;
       s << C_COMPILER_COMMAND << " -O0 -ggdb " << compilerFlags << " ";
       compileCommandOptions = s.str();
@@ -432,7 +436,7 @@ createSimdSourceFile(std::string &simdSourceFilename)
         simdSource << std::endl;
         break;
       }
-      // line contains OpenCMISS function head
+      // line contains OpenCMISS function head (OC_CellML_RHS_routine) or OpenCOR function head (computeRates)
       else if (line.find("void OC_CellML_RHS_routine") != std::string::npos || line.find("computeRates") != std::string::npos)
       {
         if (line.find("void OC_CellML_RHS_routine") != std::string::npos)
@@ -475,8 +479,9 @@ createSimdSourceFile(std::string &simdSourceFilename)
             simdSource << "  " << constantAssignmentsLine << std::endl;
           }
           simdSource << std::endl
-            << "  double ALGEBRAIC[" << this->nIntermediatesInSource_*this->nInstances_ << "];  "
-            << "  /* " << this->nIntermediatesInSource_ << " per instance * " << this->nInstances_ << " instances */ " << std::endl;
+            << "  /* double ALGEBRAIC[" << this->nIntermediatesInSource_*this->nInstances_ << "];  */"
+            << "        /* " << this->nIntermediatesInSource_ << " per instance * " << this->nInstances_ << " instances */ " << std::endl
+            << "  double *ALGEBRAIC = intermediates;   /* use the storage for intermediates allocated by opendihu */" << std::endl;
         }
       }
       // line contains OpenCMISS assignment
@@ -1141,13 +1146,28 @@ scanSourceFile(std::string sourceFilename, std::array<double,nStates> &statesIni
         int posBegin = line.find("is",12)+3;
         int posEnd = line.rfind(" in");
         name = line.substr(posBegin,posEnd-posBegin);
-        LOG(DEBUG) << "index= " << index << ", this->stateNames_size = " << this->stateNames_.size();
+        LOG(DEBUG) << "index= " << index << ", this->stateNames_.size() = " << this->stateNames_.size();
         if (index >= this->stateNames_.size())
         {
           LOG(FATAL) << "The CellML file \"" << sourceFilename << "\" contains more than " << index << " states "
             << " but only " << this->stateNames_.size() << " were given as template argument to CellMLAdapter.";
         }
         this->stateNames_[index] = name;
+      }
+      else if (line.find(" * ALGEBRAIC") == 0)  // line in OpenCOR generated input file of type " * ALGEBRAIC[35] is g_Cl in component sarco_Cl_channel (milliS_per_cm2)."
+      {
+        // parse name of intermediate
+        unsigned int index = atoi(line.substr(13,line.find("]")-13).c_str());
+        int posBegin = line.find("is",15)+3;
+        int posEnd = line.rfind(" in");
+        name = line.substr(posBegin,posEnd-posBegin);
+        LOG(DEBUG) << "index= " << index << ", this->intermediateNames_.size() = " << this->intermediateNames_.size();
+        if (index >= this->intermediateNames_.size())
+        {
+          LOG(FATAL) << "The CellML file \"" << sourceFilename << "\" contains more than " << index << " intermediates "
+            << " but only " << this->intermediateNames_.size() << " were given as template argument to CellMLAdapter.";
+        }
+        this->intermediateNames_[index] = name;
       }
       else if (line.find("STATES[") == 0)   // line contains assignment in OpenCOR generated input file
       {

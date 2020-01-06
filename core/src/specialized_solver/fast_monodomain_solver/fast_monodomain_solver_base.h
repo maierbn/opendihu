@@ -32,7 +32,7 @@ struct FiberPointBuffers
   Vc::double_v states[nStates];
 };
 
-/** Specialize the default allocator for the FiberPointBuffers struct to use the aligned allocated provieded by Vc.
+/** Specialize the default allocator for the FiberPointBuffers struct to use the aligned allocated provided by Vc.
  */
 namespace std
 {
@@ -115,7 +115,7 @@ public:
   void setTimeSpan(double startTime, double endTime);
 
   //! get the output connector data, to be used for a surrounding solver
-  OutputConnectorDataType getOutputConnectorData();
+  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
 
 protected:
 
@@ -126,10 +126,12 @@ protected:
   void updateFiberData();
 
   //! solve the 0D problem, starting from startTime. This is the part that is usually provided by the cellml file
-  void compute0D(double startTime, double timeStepWidth, int nTimeSteps);
+  void compute0D(double startTime, double timeStepWidth, int nTimeSteps, bool storeIntermediatesForTransfer);
 
   //! compute one time step of the right hand side for a single simd vector of instances
-  virtual void compute0DInstance(Vc::double_v states[], double currentTime, double timeStepWidth, bool stimulate) = 0;
+  virtual void compute0DInstance(Vc::double_v states[], double currentTime, double timeStepWidth,
+                                 bool stimulate, bool storeIntermediatesForTransfer,
+                                 std::vector<Vc::double_v> &intermediatesForTransfer) = 0;
 
   //! solve the 1D problem (diffusion), starting from startTime
   void compute1D(double startTime, double timeStepWidth, int nTimeSteps, double prefactor);
@@ -151,15 +153,19 @@ protected:
   {
     std::vector<double> elementLengths;   //< lengths of the 1D elements
     std::vector<double> vmValues;         //< values of Vm
+    std::vector<double> furtherStatesAndIntermediatesValues;    //< all data to be transferred back to the fibers, apart from vmValues, corresponding to statesForTransfer_ and intermediatesForTransfer_ (array of struct memory layout)
     int valuesLength;                     //< number of vmValues
     global_no_t valuesOffset;             //< number of vmValues in previous entries in fiberData_
+
     int fiberNoGlobal;                    //< fiberNo as given in settings (value of additionalArgument)
     int motorUnitNo;                      //< motor unit no.
+
     double lastStimulationCheckTime;      //< last time the fiber was checked for stimulation
     double setSpecificStatesCallFrequency;        //< value of option with the same name in the python settings
     std::vector<double> setSpecificStatesFrequencyJitter;      //< value of option with the same name in the python settings
     double setSpecificStatesRepeatAfterFirstCall; //< how long in ms the prescribed value should be set
     double setSpecificStatesCallEnableBegin;      //< value of option with the same name in the python settings
+
     double currentJitter;                         //< current absolute value of jitter to add to setSpecificStatesCallFrequency
     int jitterIndex;                              //< index of the vector in setSpecificStatesFrequencyJitter which is the current value to use
     bool currentlyStimulating;                    //< if a stimulation is in progress at the current time
@@ -175,10 +181,19 @@ protected:
   std::string durationLogKey0D_;                  //< duration log key for the 0D problem
   std::string durationLogKey1D_;                  //< duration log key for the 1D problem
 
+  OutputWriter::Manager outputWriterManager_;     ///< manager object holding all output writers
+
   std::vector<FiberData> fiberData_;  //< vector of fibers,
   int nFibersToCompute_;              //< number of fibers where own rank is involved (>= n.fibers that are computed by own rank)
   int nInstancesToCompute_;           //< number of instances of the Hodgkin-Huxley problem to compute on this rank
   double currentTime_;                //< the current time used for the output writer
+  int nTimeStepsSplitting_;           //< number of times to repeat the Strang splitting for one advanceTimeSpan() call of FastMonodomainSolver
+
+  std::vector<int> statesForTransfer_;                          //< state no.s to transfer to other solvers within output connector data
+  std::vector<int> intermediatesForTransfer_;   //< which intermediates should be transferred to other solvers as part of output connector data
+
+  std::vector<std::vector<Vc::double_v>> fiberPointBuffersIntermediatesForTransfer_;   //<  [fiberPointNo][intermediateToTransferNo], intermediate values to use for output connector data
+
 };
 
 #include "specialized_solver/fast_monodomain_solver/fast_monodomain_solver_base.tpp"

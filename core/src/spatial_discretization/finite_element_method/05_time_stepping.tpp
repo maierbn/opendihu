@@ -145,7 +145,7 @@ nComponents()
 }
 
 template<typename FunctionSpaceType, typename QuadratureType, int nComponents_, typename Term>
-typename FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, nComponents_, Term>::OutputConnectorDataType
+std::shared_ptr<typename FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, nComponents_, Term>::OutputConnectorDataType>
 FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, nComponents_, Term>::
 getOutputConnectorData()
 {

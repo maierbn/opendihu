@@ -217,6 +217,8 @@ initialize()
   subvectorsSolution_[nCompartments_] = dataMultidomain_.extraCellularPotential()->valuesGlobal();
   ierr = VecZeroEntries(subvectorsSolution_[nCompartments_]); CHKERRV(ierr);
 
+  dataMultidomain_.setSubvectorsSolution(subvectorsSolution_);
+
   // create the nested vectors
   LOG(DEBUG) << "create nested vector";
   ierr = VecCreateNest(this->rankSubset_->mpiCommunicator(), nCompartments_+1, NULL, subvectorsRightHandSide_.data(), &rightHandSide_); CHKERRV(ierr);
@@ -453,16 +455,15 @@ data()
 }
 
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
-//! the transfer is done by the solution_vector_mapping class
+//! the transfer is done by the output_connector_data_transfer class
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
-typename MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::OutputConnectorDataType
+std::shared_ptr<typename MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::OutputConnectorDataType>
 MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
 getOutputConnectorData()
 {
   LOG(DEBUG) << "getOutputConnectorData, size of Vm vector: " << this->dataMultidomain_.transmembranePotential().size();
 
-  return std::pair<std::vector<Vec>,std::vector<std::shared_ptr<FieldVariableType>>>(
-    this->subvectorsSolution_, this->dataMultidomain_.transmembranePotential());
+  return dataMultidomain_.getOutputConnectorData();
 }
 
 } // namespace TimeSteppingScheme

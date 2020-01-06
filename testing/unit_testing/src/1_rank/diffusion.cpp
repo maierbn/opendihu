@@ -28,15 +28,25 @@ config = {
     "initialValues": [2,2,4,5,2,2],
     "numberTimeSteps": 5,
     "endTime": 0.1,
+    "timeStepOutputInterval": 1,
+    "dirichletBoundaryConditions": [],
+
     "FiniteElementMethod" : {
       "nElements": n,
       "physicalExtent": 4.0,
       "relativeTolerance": 1e-15,
       "diffusionTensor": [5.0],
+      "prefactor": 1,
+      "inputMeshIsGlobal": True,
+      "maxIterations": 1000,
+      "dumpFormat": "default",
+      "dumpFilename": "",      # disable dump
+      "solverType": "gmres",
+      "preconditionerType": "none",
     },
     "OutputWriter" : [
       #{"format": "Paraview", "outputInterval": 1, "filename": "out", "binary": "false", "fixedFormat": False},
-      {"format": "PythonFile", "filename": "out_diffusion1d", "outputInterval": 1, "binary":False}
+      {"format": "PythonFile", "filename": "out_diffusion1d", "outputInterval": 1, "binary":False, "onlyNodalValues": True}
     ]
   },
 }

@@ -49,6 +49,12 @@ public:
   void mapHighToLowDimension(FieldVariable::FieldVariable<FunctionSpaceTargetType,nComponents> &fieldVariableSource,
                              FieldVariable::FieldVariable<FunctionSpaceSourceType,nComponents> &fieldVariableTarget);
 
+  //! map data between between a single component of the field variables in the source and target function spaces
+  //! the naming of the parameters is such that source->target, however the data types have swapped source/target semantics, because the mapping is the reverse one.
+  template<int nComponentsTarget, int nComponentsSource>
+  void mapHighToLowDimension(FieldVariable::FieldVariable<FunctionSpaceTargetType,nComponentsTarget> &fieldVariableSource, int componentNoSource,
+                             FieldVariable::FieldVariable<FunctionSpaceSourceType,nComponentsSource> &fieldVariableTarget, int componentNoTarget);
+
 private:
 
   std::shared_ptr<FunctionSpaceSourceType> functionSpaceSource_;   ///< the function space of the mesh from which to map data

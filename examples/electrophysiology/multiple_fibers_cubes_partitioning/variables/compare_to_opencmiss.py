@@ -23,7 +23,7 @@ activation_start_time = 1           # [ms] time when to start checking for stimu
 paraview_output = True
 
 n_fibers_x = 1
-n_fibers_y = 1
+n_fibers_y = 1  # this hardcodes 1 fiber and is meant for serial execution
 n_points_whole_fiber = 1480
     
 # input files

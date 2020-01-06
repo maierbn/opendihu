@@ -261,7 +261,8 @@ config = {
           "timeStepWidth":          dt_splitting,
           "timeStepOutputInterval": 100,
           "endTime":                dt_splitting,
-          "transferSlotName":       "states",   # which output slot of the cellml adapter ("states" or "intermediates") to use for transfer to diffusion, in this case we need "states", states[0] which is Vm
+          "connectedSlotsTerm1To2": [0],   # transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion)
+          "connectedSlotsTerm2To1": [0],   # transfer the same back
 
           "Term1": {      # CellML, i.e. reaction term of Monodomain equation
             "MultipleInstances": {
@@ -292,13 +293,13 @@ config = {
                     "additionalArgument":                     0,
                     "stimulationLogFilename":                 "out/stimulation_log.txt",
 
-                    "outputIntermediateIndex":                0,                                              # which intermediate value to use in further computation
-                    "outputStateIndex":                       0,                                              # Shorten / Hodgkin Huxley: state 0 = Vm, Shorten: rate 28 = gamma, intermediate 0 = gamma (OC_WANTED[0])
+                    "intermediatesForTransfer":               [],                                              # which intermediate values to use in further computation
+                    "statesForTransfer":                      0,                                              # Shorten / Hodgkin Huxley: state 0 = Vm, Shorten: rate 28 = gamma, intermediate 0 = gamma (OC_WANTED[0])
+
                     "parametersUsedAsIntermediate":           [],      #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
                     "parametersUsedAsConstant":               [2],          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
                     "parametersInitialValues":                [0.0],            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
                     "meshName":                               "MeshFiber_0",
-                    "prefactor":                              1.0,
                   },
                 },
               }],
@@ -337,7 +338,7 @@ config = {
                 },
               }],
               "OutputWriter" : [
-                {"format": "PythonFile", "outputInterval": int(1./dt_splitting*output_timestep), "filename": "out/not_fast/fibers", "binary": True, "fixedFormat": False, "combineFiles": True}
+                {"format": "PythonFile", "outputInterval": int(1./dt_splitting*output_timestep), "filename": "out/not_fast/fibers", "binary": True, "fixedFormat": False, "combineFiles": True, "onlyNodalValues": True}
               ]
             },
           },

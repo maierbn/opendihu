@@ -20,6 +20,9 @@ initialize()
 {
   // call initialize of base class
   Data<FunctionSpace>::initialize();
+
+  outputConnectorData_ = std::make_shared<OutputConnectorDataType>();
+  outputConnectorData_->addFieldVariable(activation());
 }
 
 void QuasiStaticNonlinearElasticityFebio::
@@ -102,6 +105,12 @@ relativeVolume()
 void QuasiStaticNonlinearElasticityFebio::
 print()
 {
+}
+
+std::shared_ptr<typename QuasiStaticNonlinearElasticityFebio::OutputConnectorDataType> QuasiStaticNonlinearElasticityFebio::
+getOutputConnectorData()
+{
+  return outputConnectorData_;
 }
 
 typename QuasiStaticNonlinearElasticityFebio::FieldVariablesForOutputWriter QuasiStaticNonlinearElasticityFebio::

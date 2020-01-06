@@ -553,6 +553,9 @@ communicateElementValues(std::vector<double> &activationValuesGlobal, std::vecto
   {
     std::array<double,FunctionSpace::nDofsPerElement()> activationElementalValues;
     data_.activation()->getElementValues(elementNoLocal, activationElementalValues);
+
+    LOG(DEBUG) << "element " << elementNoLocal << ", activationElementalValues: " << activationElementalValues;
+
     Vec3 xi({0.5,0.5,0.5});
     double activationValue = this->data().functionSpace()->interpolateValueInElement(activationElementalValues, xi);
 
@@ -631,6 +634,11 @@ communicateElementValues(std::vector<double> &activationValuesGlobal, std::vecto
                                             activationValuesGlobal.data(), sizesOnRanks.data(), offsets.data(), MPI_DOUBLE, 0, MPI_COMM_WORLD), "MPI_Gatherv");
   MPIUtility::handleReturnValue(MPI_Gatherv(nodeNosLocal.data(),  sizesOnRanksNodeNos[ownRankNo], MPI_INT,
                                             nodeNosGlobal.data(), sizesOnRanksNodeNos.data(), offsetsNodeNos.data(), MPI_INT, 0, MPI_COMM_WORLD), "MPI_Gatherv");
+
+  if (ownRankNo == 0)
+  {
+    LOG(DEBUG) << "activationValuesLocal: " << activationValuesLocal << ", activationValuesGlobal: " << activationValuesGlobal;
+  }
 }
 
 void QuasiStaticNonlinearElasticitySolverFebio::
@@ -749,26 +757,19 @@ data()
 }
 
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
-//! the transfer is done by the solution_vector_mapping class
+//! the transfer is done by the output_connector_data_transfer class
 
-typename QuasiStaticNonlinearElasticitySolverFebio::OutputConnectorDataType
+std::shared_ptr<typename QuasiStaticNonlinearElasticitySolverFebio::OutputConnectorDataType>
 QuasiStaticNonlinearElasticitySolverFebio::
 getOutputConnectorData()
 {
-  // connect activation (input)
-  ElasticitySolverOutputConnectorDataType<FieldVariableType> outputConnectorData;
-  outputConnectorData.activation = this->data_.activation();
-
-  // connect geometry (output) already done in loadFebioOutputFile
-
-
-  return outputConnectorData;
+  return this->data_.getOutputConnectorData();
 }
 
 //! output the given data for debugging
 
 std::string QuasiStaticNonlinearElasticitySolverFebio::
-getString(typename QuasiStaticNonlinearElasticitySolverFebio::OutputConnectorDataType &data)
+getString(std::shared_ptr<typename QuasiStaticNonlinearElasticitySolverFebio::OutputConnectorDataType> data)
 {
   std::stringstream s;
   //s << "<QuasiStaticNonlinearElasticitySolverFebio:" << *data.activation() << ">";

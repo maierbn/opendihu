@@ -11,7 +11,7 @@
 #include "field_variable/field_variable.h"
 #include "partition/partitioned_petsc_vec/partitioned_petsc_vec.h"
 #include "partition/partitioned_petsc_mat/partitioned_petsc_mat.h"
-#include "data_management/scaled_field_variable_component.h"
+#include "data_management/output_connector_data.h"
 
 namespace Data
 {
@@ -22,14 +22,14 @@ namespace Data
  *   E.g. for a cellml model the nComponents should be set to the number of components of this model.
   */
 template<typename FunctionSpaceType, int nComponents>
-class TimeStepping : public Data<FunctionSpaceType>
+class TimeStepping :
+  public Data<FunctionSpaceType>
 {
 public:
 
   typedef FieldVariable::FieldVariable<FunctionSpaceType,nComponents> FieldVariableType;
-  //typedef std::tuple<std::shared_ptr<FieldVariableType>,int,double> OutputConnectorDataType;  // <field variable, output component no., prefactor>
-
-  typedef ScaledFieldVariableComponent<FunctionSpaceType,nComponents> OutputConnectorDataType;
+  typedef FieldVariable::FieldVariable<FunctionSpaceType,1> ScalarFieldVariableType;
+  typedef OutputConnectorData<FunctionSpaceType,nComponents> OutputConnectorDataType;
 
   //! constructor
   TimeStepping(DihuContext context);
@@ -65,31 +65,35 @@ public:
   virtual dof_no_t nUnknownsLocalWithoutGhosts();
 
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
-  //! the transfer is done by the solution_vector_mapping class
-  //OutputConnectorDataType getOutputConnectorData();
+  //! the transfer is done by the output_connector_data_transfer class
+  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
 
   //! field variables that will be output by outputWriters
   typedef std::tuple<
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>>,  // geometry
-    std::shared_ptr<FieldVariableType>  // solution
+    std::shared_ptr<FieldVariableType>,  // solution
+    std::vector<std::shared_ptr<ScalarFieldVariableType>>    // additional field variables that are not computed but transferred
   > FieldVariablesForOutputWriter;
 
   //! get pointers to all field variables that can be written by output writers
   FieldVariablesForOutputWriter getFieldVariablesForOutputWriter();
 
   //! output the given data for debugging
-  std::string getString(OutputConnectorDataType &data);
+  std::string getString(std::shared_ptr<OutputConnectorDataType> data);
 
 protected:
 
   //! initializes the vectors with size
   virtual void createPetscObjects();
 
-  std::shared_ptr<FieldVariableType> solution_;            ///< the vector of the variable of interest
-  std::shared_ptr<FieldVariableType> increment_;        ///< the vector for delta u, (note, this might be reduced in future to only a sub-part of the whole data vector if memory consumption is a problem)
-  std::vector<std::string> componentNames_;      ///< names of the components of the solution and increment variables
+  std::shared_ptr<FieldVariableType> solution_;            //< the vector of the variable of interest
+  std::shared_ptr<FieldVariableType> increment_;        //< the vector for delta u, (note, this might be reduced in future to only a sub-part of the whole data vector if memory consumption is a problem)
+  std::vector<std::string> componentNames_;      //< names of the components of the solution and increment variables
+  std::vector<std::shared_ptr<ScalarFieldVariableType>> additionalFieldVariables_;   //< additional field variables that are not used for computation but can be passed from the discretizableInTime_ object to the surrounding solvers
   
-  std::string debuggingName_;   ///< a name identifier only used for debugging
+  std::string debuggingName_;   //< a name identifier only used for debugging
+
+  std::shared_ptr<OutputConnectorDataType> outputConnectorData_;  //< the object that holds output connector data that will be transferred between solvers
 
 private:
   //! get maximum number of expected non-zeros in the system matrix

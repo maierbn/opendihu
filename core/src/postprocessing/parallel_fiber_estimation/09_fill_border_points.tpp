@@ -244,10 +244,6 @@ fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std
           int i = 0;
           for (std::vector<Vec3>::const_iterator loopPointIter = loopSection.begin(); loopPointIter != loopSection.begin()+nBorderPointsX_; loopPointIter++, i++)
           {
-            /*if (face == 1 && subdomainIndex0==1 && i == 0)
-            {
-              LOG(DEBUG) << "set borderPointsSubdomain[" << subdomainIndex0 << "][" << face << "][" << zLevelIndexSubdomain << "][" << i << "] to " << *loopPointIter;
-            }*/
 
             assert(i < nBorderPointsX_);
             borderPointsSubdomain[subdomainIndex0][face][zLevelIndexSubdomain][i] = *loopPointIter;

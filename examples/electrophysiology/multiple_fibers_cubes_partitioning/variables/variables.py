@@ -31,9 +31,9 @@ activation_start_time = 0           # [ms] time when to start checking for stimu
 # input files
 # -----------
 # CellML model, Shorten or Hodgkin-Huxley
-#cellml_file = "../../input/shorten_ocallaghan_davidson_soboleva_2007.c"
+cellml_file = "../../input/shorten_ocallaghan_davidson_soboleva_2007.c"
 #cellml_file = "../../input/shorten.cpp"
-cellml_file = "../../input/hodgkin_huxley_1952.c"
+#cellml_file = "../../input/hodgkin_huxley_1952.c"
 
 # Fiber geometry, binary file
 #fiber_file = "../../input/3000fibers.bin"
@@ -103,6 +103,8 @@ n_fibers_y = None
 n_points_whole_fiber = None
 output_writer_fibers = None
 output_writer_emg = None
+output_writer_0D_states = None
+states_output = False
 parameters_used_as_intermediate = None
 parameters_used_as_constant = None
 parameters_initial_values = None
@@ -121,8 +123,8 @@ z_point_index_end = None
 n_elements_3D_mesh = None
 meshes = None
 potential_flow_dirichlet_bc = None
-linear_elasticity_dirichlet_bc = None
-linear_elasticity_neumann_bc = None
+use_elasticity_dirichlet_bc = None
+use_elasticity_neumann_bc = None
 fibers_on_own_rank = None
 n_fiber_nodes_on_subdomain = None
 fiber_start_node_no = None

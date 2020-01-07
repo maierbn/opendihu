@@ -291,16 +291,16 @@ initializeFiberDirections()
 }
 
 template<typename Term,int nDisplacementComponents>
-std::shared_ptr<typename HyperelasticitySolver<Term,nDisplacementComponents>::PetscVec>
+std::shared_ptr<typename HyperelasticitySolver<Term,nDisplacementComponents>::VecHyperelasticity>
 HyperelasticitySolver<Term,nDisplacementComponents>::
 createPartitionedPetscVec(std::string name)
 {
-  return std::make_shared<PetscVec>(
+  return std::make_shared<VecHyperelasticity>(
     displacementsFunctionSpace_->meshPartition(), pressureFunctionSpace_->meshPartition(), dirichletBoundaryConditions_, name);
 }
 
 template<typename Term,int nDisplacementComponents>
-std::shared_ptr<typename HyperelasticitySolver<Term,nDisplacementComponents>::PetscMat>
+std::shared_ptr<typename HyperelasticitySolver<Term,nDisplacementComponents>::MatHyperelasticity>
 HyperelasticitySolver<Term,nDisplacementComponents>::
 createPartitionedPetscMat(std::string name)
 {
@@ -308,7 +308,7 @@ createPartitionedPetscMat(std::string name)
   int diagonalNonZeros, offdiagonalNonZeros;
   ::Data::FiniteElementsBase<DisplacementsFunctionSpace,1>::getPetscMemoryParameters(diagonalNonZeros, offdiagonalNonZeros);
 
-  return std::make_shared<PetscMat>(
+  return std::make_shared<MatHyperelasticity>(
     combinedVecSolution_, 4*diagonalNonZeros, 4*offdiagonalNonZeros, name);
 }
 
@@ -442,7 +442,7 @@ initializePetscVariables()
 
 //! get the PartitionedPetsVec for the residual and result of the nonlinear function
 template<typename Term,int nDisplacementComponents>
-std::shared_ptr<typename HyperelasticitySolver<Term,nDisplacementComponents>::PetscVec> HyperelasticitySolver<Term,nDisplacementComponents>::
+std::shared_ptr<typename HyperelasticitySolver<Term,nDisplacementComponents>::VecHyperelasticity> HyperelasticitySolver<Term,nDisplacementComponents>::
 combinedVecResidual()
 {
   return this->combinedVecResidual_;
@@ -450,7 +450,7 @@ combinedVecResidual()
 
 //! get the PartitionedPetsVec for the solution
 template<typename Term,int nDisplacementComponents>
-std::shared_ptr<typename HyperelasticitySolver<Term,nDisplacementComponents>::PetscVec> HyperelasticitySolver<Term,nDisplacementComponents>::
+std::shared_ptr<typename HyperelasticitySolver<Term,nDisplacementComponents>::VecHyperelasticity> HyperelasticitySolver<Term,nDisplacementComponents>::
 combinedVecSolution()
 {
   return this->combinedVecSolution_;

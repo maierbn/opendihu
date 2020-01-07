@@ -8,8 +8,8 @@ namespace SpatialDiscretization
 template<typename Term,int nDisplacementComponents>
 void HyperelasticitySolver<Term,nDisplacementComponents>::
 materialComputeInternalVirtualWork(
-  std::shared_ptr<PetscVec> displacements,
-  std::shared_ptr<PetscVec> internalVirtualWork
+  std::shared_ptr<VecHyperelasticity> displacements,
+  std::shared_ptr<VecHyperelasticity> internalVirtualWork
 )
 {
   // this is only for the static problem
@@ -35,8 +35,8 @@ materialComputeInternalVirtualWork(
 template<typename Term,int nDisplacementComponents>
 void HyperelasticitySolver<Term,nDisplacementComponents>::
 solveForDisplacements(
-  std::shared_ptr<PetscVec> externalVirtualWork,
-  std::shared_ptr<PetscVec> displacements
+  std::shared_ptr<VecHyperelasticity> externalVirtualWork,
+  std::shared_ptr<VecHyperelasticity> displacements
 )
 {
   // solve ∂W_int - ∂W_ext = 0 with J = 1
@@ -59,7 +59,7 @@ solveForDisplacements(
 template<typename Term,int nDisplacementComponents>
 void HyperelasticitySolver<Term,nDisplacementComponents>::
 solveDynamicProblem(
-  std::shared_ptr<PetscVec> displacementsVelocitiesPressure
+  std::shared_ptr<VecHyperelasticity> displacementsVelocitiesPressure
 )
 {
   // solve δW_int - δW_ext,dead + ∫_Ω ρ0 1/dt (v^(n+1),L - v^(n),L)/dt ϕ^L ϕ^M δu dV = 0,

@@ -636,7 +636,7 @@ void HyperelasticitySolver<Term,nDisplacementComponents>::
 materialComputeJacobian()
 {
   // analytic jacobian combinedMatrixJacobian_
-  //  output is combinedMatrixJacobian_, a PartitionedPetscMat or solverMatrixJacobian_, the normal Mat, contains no Dirichlet BC dofs
+  //  output is combinedMatrixJacobian_, a PartitionedMatHyperelasticity or solverMatrixJacobian_, the normal Mat, contains no Dirichlet BC dofs
   //  input is solverVariableSolution_, a normal Vec, the same values have already been assigned to this->data_.displacements() and this->data_.pressure()
 
   const bool outputValues = false;

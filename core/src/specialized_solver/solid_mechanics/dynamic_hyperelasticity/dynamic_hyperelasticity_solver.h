@@ -25,8 +25,8 @@ public:
   typedef typename StaticSolverType::DisplacementsFunctionSpace DisplacementsFunctionSpace;
   typedef typename StaticSolverType::PressureFunctionSpace PressureFunctionSpace;
 
-  typedef PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace> VecHyperelasticity;
-  typedef PartitionedPetscMatForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace> MatHyperelasticity;
+  typedef PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace,6> VecHyperelasticity;
+  typedef PartitionedPetscMatForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace,6> MatHyperelasticity;
 
   //! constructor
   DynamicHyperelasticitySolver(DihuContext context);
@@ -42,6 +42,9 @@ public:
 
 private:
 
+  //! set initial values for u and v from settings
+  void setInitialValues();
+/*
   //! compute the mass matrix and the inverse lumped mass matrix
   void initializeMassMatrix();
 
@@ -55,7 +58,7 @@ private:
   void computeRungeKutta4();
 
   //! compute the next displacements and velocities by an explicit Euler scheme
-  void computeExplicitEuler();
+  void computeExplicitEuler();*/
 
   StaticSolverType staticSolver_;  //< hyperelasticity solver that solver the static problem
   Data::DynamicHyperelasticitySolver<DisplacementsFunctionSpace> data_;
@@ -63,15 +66,14 @@ private:
   double density_;   //< density rho, used for inertia
   double viscosity_;  //< viscosity mu, used for damping, set to 0 to disable damping
 
-  std::shared_ptr<MatHyperelasticity> massMatrix_;    //< mass matrix
-  std::shared_ptr<MatHyperelasticity> inverseLumpedMassMatrix_;    //< mass matrix with inverse row sums on diagonal as combined matrix for u and p, only the u part contains the lumped mass matrix
+  // std::shared_ptr<MatHyperelasticity> massMatrix_;    //< mass matrix
+  // std::shared_ptr<MatHyperelasticity> inverseLumpedMassMatrix_;    //< mass matrix with inverse row sums on diagonal as combined matrix for u and p, only the u part contains the lumped mass matrix
 
-  std::shared_ptr<VecHyperelasticity> u_;     //< helper variable for displacements u, combined vector of u and p values
-  std::shared_ptr<VecHyperelasticity> v_;     //< helper variable for velocities v, combined vector of u and p values
-  std::shared_ptr<VecHyperelasticity> a_;     //< helper variable for acceleration a, combined vector of u and p values
-  std::array<std::shared_ptr<VecHyperelasticity>,4> k_;   //< intermediate values for the RK4 scheme
-  std::array<std::shared_ptr<VecHyperelasticity>,4> l_;   //< intermediate values for the RK4 scheme
-  std::array<std::shared_ptr<VecHyperelasticity>,9> temp_;  //< temporary values for the RK4 scheme
+
+  std::shared_ptr<VecHyperelasticity> uvp_;     //< combined vector of u,v and p values
+  //std::array<std::shared_ptr<VecHyperelasticity>,4> k_;   //< intermediate values for the RK4 scheme
+  //std::array<std::shared_ptr<VecHyperelasticity>,4> l_;   //< intermediate values for the RK4 scheme
+  //std::array<std::shared_ptr<VecHyperelasticity>,9> temp_;  //< temporary values for the RK4 scheme*/
 };
 
 }  // namespace

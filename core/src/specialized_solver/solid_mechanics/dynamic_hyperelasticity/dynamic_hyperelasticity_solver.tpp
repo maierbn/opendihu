@@ -11,7 +11,7 @@ namespace TimeSteppingScheme
 template<typename Term>
 DynamicHyperelasticitySolver<Term>::
 DynamicHyperelasticitySolver(DihuContext context) :
-  TimeSteppingScheme(context["DynamicHyperelasticitySolver"]), staticSolver_(this->context_), data_(context_)
+  TimeSteppingScheme(context["DynamicHyperelasticitySolver"]), staticSolver_(context, "DynamicHyperelasticitySolver"), data_(context_)
 {
   specificSettings_ = this->context_.getPythonConfig();
   density_ = specificSettings_.getOptionDouble("density", 1.0, PythonUtility::Positive);
@@ -27,9 +27,15 @@ initialize()
 {
   TimeSteppingScheme::initialize();
   staticSolver_.initialize();
-  data_.setFunctionSpace(staticSolver_.data().functionSpace());
+  data_.setFunctionSpace(staticSolver_.data().displacementsFunctionSpace());
   data_.initialize(staticSolver_.data().displacements());
 
+  // create variable of unknowns
+  uvp_ = staticSolver_.createPartitionedPetscVec("uvp");
+
+  setInitialValues();
+
+  /*
   // initialize state vectors
   u_ = staticSolver_.createPartitionedPetscVec("u");
   v_ = staticSolver_.createPartitionedPetscVec("v");
@@ -55,7 +61,7 @@ initialize()
     l_[i] = staticSolver_.createPartitionedPetscVec(name.str());
   }
 
-  initializeMassMatrix();
+  initializeMassMatrix();*/
 
   // δW_ext = int_∂Ω T_a phi_L dS was precomputed in initialize of staticSolver_
   /*PetscErrorCode ierr;
@@ -64,6 +70,79 @@ initialize()
   // copy the temp0 values to data for output
   staticSolver_.setDisplacementsAndPressureFromCombinedVec(temp_[0]->valuesGlobal(), this->data_.externalVirtualWork());
   */
+}
+
+template<typename Term>
+void DynamicHyperelasticitySolver<Term>::
+setInitialValues()
+{
+
+  // set initial values as given in settings, or set to zero if not given
+  std::vector<Vec3> localValuesDisplacements;
+  std::vector<Vec3> localValuesVelocities;
+
+  // determine if the initial values are given as global and local array
+  bool inputMeshIsGlobal = this->specificSettings_.getOptionBool("inputMeshIsGlobal", true);
+  if (inputMeshIsGlobal)
+  {
+    // if the settings specify a global list of values, extract the local values
+    assert(this->data_);
+    assert(this->data_->displacementsFunctionSpace());
+
+    // get number of global dofs, i.e. number of values in global list
+    const int nDofsGlobal = this->data_->displacementsFunctionSpace()->nDofsGlobal();
+    LOG(DEBUG) << "setInitialValues, nDofsGlobal = " << nDofsGlobal;
+
+    // extract only the local dofs out of the list of global values
+    this->specificSettings_.getOptionVector<Vec3>("initialValuesDisplacements", nDofsGlobal, localValuesDisplacements);
+    this->data_->displacementsFunctionSpace()->meshPartition()->extractLocalDofsWithoutGhosts(localValuesDisplacements);
+
+    this->specificSettings_.getOptionVector<Vec3>("initialValuesVelocities", nDofsGlobal, localValuesVelocities);
+    this->data_->displacementsFunctionSpace()->meshPartition()->extractLocalDofsWithoutGhosts(localValuesVelocities);
+  }
+  else
+  {
+    // input is already only the local dofs, use all
+    const int nDofsLocal = this->data_->displacementsFunctionSpace()->nDofsLocalWithoutGhosts();
+    this->specificSettings_.getOptionVector<Vec3>("initialValuesDisplacements", nDofsLocal, localValuesDisplacements);
+    this->specificSettings_.getOptionVector<Vec3>("initialValuesVelocities", nDofsLocal, localValuesVelocities);
+  }
+  VLOG(1) << "set initial values for displacements to " << localValuesDisplacements;
+  VLOG(1) << "set initial values for velocities to " << localValuesVelocities;
+
+  // set the first component of the solution variable by the given values
+  this->data_->displacements()->setValuesWithoutGhosts(localValuesDisplacements);
+  this->data_->velocities()->setValuesWithoutGhosts(localValuesVelocities);
+
+  // set displacement entries in uvp
+  int nDofsLocalWithoutGhosts = this->data_->displacementsFunctionSpace()->nDofsLocalWithoutGhosts();
+  std::vector<double> localValues(nDofsLocalWithoutGhosts);
+
+  uvp_->zeroGhostBuffer();
+
+  // set displacement entries in uvp
+  for (int componentNo = 0; componentNo < 3; componentNo++)
+  {
+    for (int entryNo = 0; entryNo < nDofsLocalWithoutGhosts; entryNo++)
+    {
+      localValues[entryNo] = localValuesDisplacements[entryNo][componentNo];
+    }
+
+    uvp_->setValues(componentNo, nDofsLocalWithoutGhosts, this->data_->displacementsFunctionSpace()->meshPartition()->dofNosLocal().data(), localValues.data());
+  }
+
+  // set velocity entries in uvp
+  for (int componentNo = 0; componentNo < 3; componentNo++)
+  {
+    for (int entryNo = 0; entryNo < nDofsLocalWithoutGhosts; entryNo++)
+    {
+      localValues[entryNo] = localValuesVelocities[entryNo][componentNo];
+    }
+
+    uvp_->setValues(3+componentNo, nDofsLocalWithoutGhosts, this->data_->displacementsFunctionSpace()->meshPartition()->dofNosLocal().data(), localValues.data());
+  }
+  uvp_->finishGhostManipulation();
+  uvp_->startGhostManipulation();
 }
 
 template<typename Term>
@@ -90,7 +169,8 @@ advanceTimeSpan()
     }
 
     //computeRungeKutta4();
-    computeExplicitEuler();
+    //computeExplicitEuler();
+    staticSolver_.solveDynamicProblem(uvp_);
 
     //staticSolver_.run();
 
@@ -118,6 +198,18 @@ advanceTimeSpan()
   if (this->durationLogKey_ != "")
     Control::PerformanceMeasurement::stop(this->durationLogKey_);
 }
+
+template<typename Term>
+void DynamicHyperelasticitySolver<Term>::
+run()
+{
+  // initialize everything
+  initialize();
+
+  this->advanceTimeSpan();
+}
+
+/*
 
 template<typename Term>
 void DynamicHyperelasticitySolver<Term>::
@@ -454,7 +546,7 @@ computeExplicitEuler()
   PetscErrorCode ierr;
 
   LOG(DEBUG) << "computeExplicitEuler, timeStepWidth_: " << this->timeStepWidth_;
-/*
+
   // compute k0 = Δt*a(u^(n), v^(n))
   computeAcceleration(u_, v_, k_[0]);
   LOG(DEBUG) << "k0: " << *k_[0];
@@ -506,18 +598,7 @@ computeExplicitEuler()
 
   // solve ∂W_int(u) - temp8 = 0 with J = 1 for u. The previous values in u_ are the initial guess.
   staticSolver_.solveForDisplacements(temp_[1], u_);    // solveForDisplacements(externalVirtualWork, displacements)
-*/
 
-}
-
-template<typename Term>
-void DynamicHyperelasticitySolver<Term>::
-run()
-{
-  // initialize everything
-  initialize();
-
-  this->advanceTimeSpan();
-}
+}*/
 
 } // namespace TimeSteppingScheme

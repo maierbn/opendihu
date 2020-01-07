@@ -64,11 +64,11 @@ public:
   typedef FieldVariable::FieldVariable<PressureFunctionSpace,1> PressureFieldVariableType;
   typedef FieldVariable::FieldVariable<DisplacementsFunctionSpace,6> StressFieldVariableType;
 
-  typedef PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace,nDisplacementComponents> PetscVec;
-  typedef PartitionedPetscMatForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace,nDisplacementComponents> PetscMat;
+  typedef PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace,nDisplacementComponents> VecHyperelasticity;
+  typedef PartitionedPetscMatForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace,nDisplacementComponents> MatHyperelasticity;
 
   //! constructor
-  HyperelasticitySolver(DihuContext context);
+  HyperelasticitySolver(DihuContext context, std::string settingsKey = "HyperelasticitySolver");
 
   //! advance simulation by the given time span, data in solution is used, afterwards new data is in solution
   void advanceTimeSpan();
@@ -113,10 +113,10 @@ public:
   std::string getString(Vec x);
 
   //! get the PartitionedPetsVec for the residual and result of the nonlinear function
-  std::shared_ptr<PetscVec> combinedVecResidual();      //< the vector that holds the computed residual
+  std::shared_ptr<VecHyperelasticity> combinedVecResidual();      //< the vector that holds the computed residual
 
   //! get the PartitionedPetsVec for the solution
-  std::shared_ptr<PetscVec> combinedVecSolution();
+  std::shared_ptr<VecHyperelasticity> combinedVecSolution();
 
   //! output the jacobian matrix for debugging
   void dumpJacobianMatrix(Mat jac);
@@ -139,25 +139,28 @@ public:
   void monitorSolvingIteration(SNES snes, PetscInt its, PetscReal norm);
 
   //! create a new shared_ptr of a PartitionedPetscVecForHyperelasticity
-  std::shared_ptr<PetscVec> createPartitionedPetscVec(std::string name);
+  std::shared_ptr<VecHyperelasticity> createPartitionedPetscVec(std::string name);
 
   //! create a new shared_ptr of a PartitionedPetscMatForHyperelasticity
-  std::shared_ptr<PetscMat> createPartitionedPetscMat(std::string name);
+  std::shared_ptr<MatHyperelasticity> createPartitionedPetscMat(std::string name);
 
   //! get the precomputed external virtual work
   Vec externalVirtualWork();
 
   //! compute δWint from given displacements, this is a wrapper to materialComputeInternalVirtualWork
   void materialComputeInternalVirtualWork(
-    std::shared_ptr<PetscVec> displacements,
-    std::shared_ptr<PetscVec> internalVirtualWork
+    std::shared_ptr<VecHyperelasticity> displacements,
+    std::shared_ptr<VecHyperelasticity> internalVirtualWork
   );
+
+  //! solve the dynamic hyperelastic problem
+  void solveDynamicProblem(std::shared_ptr<VecHyperelasticity> displacementsVelocitiesPressure);
 
   //! compute u from the equation ∂W_int - externalVirtualWork = 0 and J = 1, the result will be in displacements,
   //! the previous value in displacements will be used as initial guess (call zeroEntries() of displacements beforehand, if no initial guess should be provided)
   void solveForDisplacements(
-    std::shared_ptr<PetscVec> externalVirtualWork,
-    std::shared_ptr<PetscVec> displacements
+    std::shared_ptr<VecHyperelasticity> externalVirtualWork,
+    std::shared_ptr<VecHyperelasticity> displacements
   );
 
 protected:
@@ -260,13 +263,13 @@ protected:
   Vec solverVariableSolution_;         //< PETSc Vec to store the solution, equal to combinedVecSolution_->valuesGlobal()
   Vec zeros_;                          // a solver that contains all zeros, needed to zero the diagonal of the jacobian matrix
 
-  std::shared_ptr<PetscVec> combinedVecResidual_;      //< the Vec for the residual and result of the nonlinear function
-  std::shared_ptr<PetscVec> combinedVecSolution_;      //< the Vec for the solution, combined means that ux,uy,uz and p components are combined in one vector
-  std::shared_ptr<PetscVec> combinedVecExternalVirtualWorkDead_;      //< the Vec for the external virtual work part that does not change with u, δW_ext,dead
+  std::shared_ptr<VecHyperelasticity> combinedVecResidual_;      //< the Vec for the residual and result of the nonlinear function
+  std::shared_ptr<VecHyperelasticity> combinedVecSolution_;      //< the Vec for the solution, combined means that ux,uy,uz and p components are combined in one vector
+  std::shared_ptr<VecHyperelasticity> combinedVecExternalVirtualWorkDead_;      //< the Vec for the external virtual work part that does not change with u, δW_ext,dead
 
   //std::shared_ptr<PartitionedPetscMat<FunctionSpace::Generic>> combinedMatrixJacobian_;    //< single jacobian matrix, when useNestedMat_ is false
-  std::shared_ptr<PetscMat> combinedMatrixJacobian_;    //< single jacobian matrix
-  std::shared_ptr<PetscMat> combinedMatrixAdditionalNumericJacobian_;   //< only used when both analytic and numeric jacobians are computed, then this holds the numeric jacobian
+  std::shared_ptr<MatHyperelasticity> combinedMatrixJacobian_;    //< single jacobian matrix
+  std::shared_ptr<MatHyperelasticity> combinedMatrixAdditionalNumericJacobian_;   //< only used when both analytic and numeric jacobians are computed, then this holds the numeric jacobian
 
   Vec externalVirtualWorkDead_;     // the external virtual work resulting from the traction, this is a dead load, i.e. it does not change during deformation
 

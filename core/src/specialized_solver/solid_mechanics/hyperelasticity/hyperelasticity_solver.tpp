@@ -13,8 +13,8 @@ namespace SpatialDiscretization
 
 template<typename Term,int nDisplacementComponents>
 HyperelasticitySolver<Term,nDisplacementComponents>::
-HyperelasticitySolver(DihuContext context) :
-  context_(context["HyperelasticitySolver"]), data_(context_), pressureDataCopy_(context_), initialized_(false), endTime_(0)
+HyperelasticitySolver(DihuContext context, std::string settingsKey) :
+  context_(context[settingsKey]), data_(context_), pressureDataCopy_(context_), initialized_(false), endTime_(0)
 {
   // get python config
   this->specificSettings_ = this->context_.getPythonConfig();
@@ -224,7 +224,7 @@ initializeFiberDirections()
   }
 
   // prepare the target mesh for the mapping, set all factors to zero
-  DihuContext::meshManager()->template prepareMappingLowToHigh<DisplacementsFieldVariableType>(this->data_.fiberDirection());
+  DihuContext::meshManager()->template prepareMapping<DisplacementsFieldVariableType>(this->data_.fiberDirection());
 
 
   // loop over fiber mesh names
@@ -261,11 +261,11 @@ initializeFiberDirections()
 
     // transfer direction values
     DihuContext::meshManager()->mapLowToHighDimension<FieldVariable::FieldVariable<FiberFunctionSpace,3>, DisplacementsFieldVariableType>(
-      direction, -1, this->data_.fiberDirection(), -1);
+      direction, this->data_.fiberDirection());
   }
 
   // finalize the mapping to the target mesh, compute final values by dividing by the factors
-  DihuContext::meshManager()->template finalizeMappingLowToHigh<DisplacementsFieldVariableType>(this->data_.fiberDirection());
+  DihuContext::meshManager()->template finalizeMapping<DisplacementsFieldVariableType>(this->data_.fiberDirection());
 
   LOG(DEBUG) << "normalize fiber direction";
 

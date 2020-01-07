@@ -18,7 +18,7 @@ DynamicHyperelasticitySolver(DihuContext context) :
   viscosity_ = specificSettings_.getOptionDouble("viscosity", 0.0, PythonUtility::NonNegative);
 
   // initialize output writers
-  this->outputWriterManager_.initialize(this->context_, this->specificSettings_);
+  this->outputWriterManager_.initialize(this->context_["dynamic"], this->specificSettings_);
 }
 
 template<typename Term>

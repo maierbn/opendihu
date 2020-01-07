@@ -27,11 +27,7 @@ bool Generic::prepareWrite(DataType& data, int timeStepNo, double currentTime, i
   writeCallCount_ += callCountIncrement;
 
   VLOG(2) << " Generic::prepareWrite (\"" << filenameBase_ << "\"), writeCallCount_=" << writeCallCount_ << ", outputInterval: " << outputInterval_;
-<<<<<<< HEAD
-  
-=======
 
->>>>>>> dd3531d515844c8a491e058f55975cb93181a840
   // if no output should be written, because of interval, return false
   if (oldWriteCallCount % outputInterval_ != 0)
   {

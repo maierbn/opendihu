@@ -1059,18 +1059,7 @@ PythonUtility::GlobalInterpreterLock::~GlobalInterpreterLock()
 #if 0 
   PyGILState_Release(gstate_);
 #endif
-  /*}
-  nGILS_--;
-  //lock_.unlock();
-  
-  omp_unset_nest_lock(&lock_);
-  
-  //LOG(INFO) << omp_get_thread_num() << ": nGILS: " << nGILS_ << "(released)";
-  
-  //PyEval_RestoreThread(mainThreadState_); 
-  //Py_END_ALLOW_THREADS
-  //LOG(DEBUG) << "PyGILState_Release";
-  */
+
 }
 
 std::ostream &operator<<(std::ostream &stream, PyObject *object)

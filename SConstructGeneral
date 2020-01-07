@@ -85,6 +85,7 @@ vars.Add(BoolVariable('travis_ci', 'Do not compile and run tests, but compile al
 vars.Add(BoolVariable('no_tests', 'Do not compile and run tests.', 0))
 vars.Add(BoolVariable('no_examples', 'Do not compile examples.', 0))
 vars.Add(BoolVariable('gprof', 'Include flags for gprof profiling.', False))
+vars.Add(BoolVariable('no_vectorization', 'Turn off SEE and AVX commands.', False))
 vars.Add(BoolVariable('USE_CRAY_PAT', 'Compile with craypat regions.', False))
 vars.Add(BoolVariable('USE_HPL', 'Compile with -hpl option.', False))
 vars.Add(BoolVariable('USE_MEGAMOL', 'Use additional linker flags to link to the megamol source file.', False))
@@ -268,7 +269,7 @@ if os.environ.get("PE_ENV") != "CRAY" and "pg" not in env["cc"]:
   if "ppc" in platform.processor():
     env.MergeFlags('-mcpu=native -mtune=native')
   else:
-    if os.environ.get("PE_ENV") != "INTEL":
+    if os.environ.get("PE_ENV") != "INTEL" and not env["no_vectorization"]:
       env.MergeFlags('-march=native')
 
   env.MergeFlags('-Wl,--disable-new-dtags')
@@ -276,6 +277,10 @@ if os.environ.get("PE_ENV") != "CRAY" and "pg" not in env["cc"]:
 if os.environ.get("PE_ENV") == "CRAY" and env["USE_HPL"]:
   print("USE_HPL=True: Compiling with -hpl option\n")
   env.MergeFlags('-hpl={}/opendihu.pl'.format(opendihu_home))
+
+if env["no_vectorization"]:
+  print("Warning: Compile without vectorization (option no_vectorization)!")
+  env.MergeFlags('-mno-sse2 -mno-sse3 -mno-ssse3 -mno-sse4 -mno-sse4a -mno-fma4 -mno-avx')
 
 # add basic linker flags for linux
 env.MergeFlags("-lpthread -ldl -lutil -lm")

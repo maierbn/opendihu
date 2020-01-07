@@ -2,6 +2,7 @@
 
 #include <Python.h>  // has to be the first included header
 #include <petscvec.h>
+#include <functional>
 
 #include "interfaces/runnable.h"
 #include "control/dihu_context.h"
@@ -19,7 +20,7 @@ class MultipleInstances: public Runnable
 {
 public:
 
-  typedef std::vector<typename TimeSteppingScheme::OutputConnectorDataType> OutputConnectorDataType;
+  typedef std::vector<std::shared_ptr<typename TimeSteppingScheme::OutputConnectorDataType>> OutputConnectorDataType;
   typedef typename TimeSteppingScheme::FunctionSpace FunctionSpace;
   typedef typename ::Data::MultipleInstances<typename TimeSteppingScheme::FunctionSpace, TimeSteppingScheme> Data;
   typedef TimeSteppingScheme TimeSteppingSchemeType;
@@ -40,8 +41,8 @@ public:
   Data &data();
 
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
-  //! the transfer is done by the solution_vector_mapping class
-  OutputConnectorDataType getOutputConnectorData();
+  //! the transfer is done by the output_connector_data_transfer class
+  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
 
   //! run solution process
   void run();
@@ -50,13 +51,13 @@ public:
   void reset();
 
   //! output the given data for debugging
-  std::string getString(OutputConnectorDataType &data);
+  std::string getString(std::shared_ptr<OutputConnectorDataType> data);
 
   //! the FastMonodomainSolver accesses the internals of MultipleInstances
   std::vector<TimeSteppingScheme> &instancesLocal();
  
   /** write data to file using the output writer manager
-   * @param callCountIncrement if the output should be written now, not considering the set output frequency, this is only needed for FastMonodomainSolver
+   * @param callCountIncrement increment to the counter to reduce the output frequency in settings, this is only needed for FastMonodomainSolver
    */
   void writeOutput(int timeStepNo, double currentTime, int callCountIncrement = 1);
 
@@ -75,6 +76,7 @@ protected:
   std::string logKey_;   ///< the key under which the duration of all instances together is saved in the log
 
   Data data_;  ///< the data object
+  std::shared_ptr<OutputConnectorDataType> outputConnectorData_;       ///< the outputConnectorData as vector of references o f teh outputConnectorData's of the instances
 
   bool outputInitializeThisInstance_;   ///< if this instance displays progress of initialization
 };

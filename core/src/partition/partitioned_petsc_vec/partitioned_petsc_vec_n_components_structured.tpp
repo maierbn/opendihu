@@ -16,57 +16,68 @@ PartitionedPetscVecNComponentsStructured(std::shared_ptr<Partition::MeshPartitio
 template<typename MeshType,typename BasisFunctionType,int nComponents>
 template<int nComponents2>
 PartitionedPetscVecNComponentsStructured<MeshType,BasisFunctionType,nComponents>::
-PartitionedPetscVecNComponentsStructured(PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents2> &rhs, std::string name) :
+PartitionedPetscVecNComponentsStructured(PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents2> &rhs,
+                                         std::string name, bool reuseData) :
   PartitionedPetscVecBase<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>>(rhs.meshPartition(), name)
 {
-  //dm_ = rhs.dm_;
-  
-  createVector();
+  if (reuseData && nComponents > nComponents2)
+  {
+    reuseData = false;
+    LOG(WARNING) << "Could not create PartitionedPetscVec \"" << name << "\" as copy of rhs (\"" << rhs.name() << "\") with reuseData=true, nComponents="
+      << nComponents << " > " << nComponents2 << ". Setting reuseData to false.";
+  }
 
-  LOG(DEBUG) << "\"" << this->name_ << "\" contruct empty vector from rhs \"" << rhs.name() << "\", representation: "
-    << Partition::valuesRepresentationString[rhs.currentRepresentation()];
+  if (reuseData)
+  {
+    if (rhs.currentRepresentation_ == Partition::values_representation_t::representationContiguous)
+    {
+      LOG(FATAL) << "Constructor of PartitionedPetscVec with reuseData=true is not for contiguous representation of rhs! Call rhs.setRepresentationGlobal beforehand.";
+    }
+
+    // reuse the Petsc Vec's of the rhs PartitionedPetscVec
+
+    // loop over the components of this field variable
+    for (int componentNo = 0; componentNo < std::min(nComponents,nComponents2); componentNo++)
+    {
+      vectorGlobal_[componentNo] = rhs.vectorGlobal_[componentNo];
+      vectorLocal_[componentNo] = rhs.vectorLocal_[componentNo];
+    }
+
+    valuesContiguous_ = rhs.valuesContiguous_;
+    extractedData_ = rhs.extractedData_;
+    savedVectorLocal_ = rhs.savedVectorLocal_;
+    savedVectorGlobal_ = rhs.savedVectorGlobal_;
+
+    this->currentRepresentation_ = rhs.currentRepresentation_;
+
+    // create VecNest object, if number of components > 1
+    if (nComponents > 1)
+    {
+      VLOG(2) << "\"" << this->name_ << "\" has " << nComponents << " components, VecCreateNest";
+      PetscErrorCode ierr;
+      ierr = VecCreateNest(this->meshPartition_->mpiCommunicator(), nComponents, NULL, vectorGlobal_.data(), &vectorNestedGlobal_); CHKERRV(ierr);
+    }
+  }
+  else
+  {
+    // create new Petsc Vec's
+    createVector();
+
+    LOG(DEBUG) << "\"" << this->name_ << "\" contruct empty vector from rhs \"" << rhs.name() << "\", representation: "
+      << Partition::valuesRepresentationString[rhs.currentRepresentation()];
+
+    // copy the values of rhs
+    setValues(rhs);
+  }
 }
   
-/*
-//! create a distributed Petsc vector, according to partition
-template<typename MeshType,typename BasisFunctionType,int nComponents>
-void PartitionedPetscVecNComponentsStructured<MeshType,BasisFunctionType,nComponents>::
-debug()
-{
-  const int componentNo = 0;
-
-  int nEntriesGlobal;
-  VecGetSize(vectorGlobal_[componentNo], &nEntriesGlobal);
-
-  LOG(DEBUG) << "global vector has " << nEntriesGlobal << " entries";
-
-  std::vector<int> indices(nEntriesGlobal);
-  std::iota(indices.begin(), indices.end(), 0);
-  std::vector<double> values(nEntriesGlobal);
-
-  VecGetValues(vectorGlobal_[componentNo], nEntriesGlobal, indices.data(), values.data());
-  LOG(DEBUG) << "global values: " << values;
-
-  int nEntriesLocal;
-  VecGetSize(vectorLocal_[componentNo], &nEntriesLocal);
-  LOG(DEBUG) << "local vector has " << nEntriesLocal << " entries";
-
-  std::vector<int> indices2(nEntriesLocal);
-  std::iota(indices2.begin(), indices2.end(), 0);
-  std::vector<double> values2(nEntriesLocal);
-
-  VecGetValues(vectorLocal_[componentNo], nEntriesLocal, indices2.data(), values2.data());
-
-  LOG(DEBUG) << "local values: " << values2;
-  VecView(vectorGlobal_[componentNo], PETSC_VIEWER_STDOUT_WORLD);
-}*/
 
 //! create a distributed Petsc vector, according to partition
 template<typename MeshType,typename BasisFunctionType,int nComponents>
 void PartitionedPetscVecNComponentsStructured<MeshType,BasisFunctionType,nComponents>::
 createVector()
 {
-  VLOG(2) << "\"" << this->name_ << "\" createVector with " << nComponents << " components, size local: " << this->meshPartition_->nNodesLocalWithoutGhosts() 
+  VLOG(2) << "\"" << this->name_ << "\" createVector with " << nComponents << " components, size local: " << this->meshPartition_->nNodesLocalWithoutGhosts()
     << ", global: " << this->meshPartition_->nNodesGlobal() << ", ghost dof nos global/petsc: " << this->meshPartition_->ghostDofNosGlobalPetsc();
   PetscErrorCode ierr;
   
@@ -247,6 +258,11 @@ setRepresentationGlobal()
   }
   else if (this->currentRepresentation_ == Partition::values_representation_t::representationContiguous)
   {
+    if (nComponents == 1)
+    {
+      LOG(FATAL) << "nComponents is 1 and representation is contiguous. This should not happen. It would lead to infinite recursion.";
+    }
+
     // this sets the representation to local
     restoreValuesContiguous();
 
@@ -1088,7 +1104,7 @@ output(std::ostream &stream)
 
   stream << "vector \"" << this->name_ << "\", (" << nEntries << " global, " << nEntriesLocal
     << " local entries (per component), representation " << Partition::valuesRepresentationString[this->currentRepresentation_]
-    << ")";
+    << ", vectors local[0]: " << vectorLocal_[0] << ", global[0]: " << vectorGlobal_[0] << ", contiguous: " << valuesContiguous_ << ")";
 
   // loop over components
   for (int componentNo = 0; componentNo < nComponents; componentNo++)

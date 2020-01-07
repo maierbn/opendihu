@@ -25,6 +25,7 @@ public:
   typedef FieldVariable::FieldVariable<FunctionSpaceType,3> VectorFieldVariableType;
   typedef FieldVariable::FieldVariable<FunctionSpaceType,1> FieldVariableType;
   typedef FieldVariable::FieldVariable<FunctionSpaceType,9> StressFieldVariableType;
+  typedef OutputConnectorData<FunctionSpaceType,1> OutputConnectorDataType;
 
   //! constructor
   QuasiStaticLinearElasticity(DihuContext context);
@@ -59,6 +60,9 @@ public:
   //! store the data of the finite element type
   void setData(std::shared_ptr<DataLinearElasticityType> dataLinearElasticity);
 
+  //! get the output connector data
+  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
+
   //! field variables that will be output by outputWriters
   typedef decltype(std::tuple_cat(
     std::declval<typename DataLinearElasticityType::FieldVariablesForOutputWriter>(),
@@ -88,6 +92,8 @@ private:
   std::shared_ptr<VectorFieldVariableType> rightHandSideActive_; ///< field variable of the active stress part of rhs, f_active
   std::shared_ptr<FieldVariableType> flowPotential_; ///< solution of the laplace flow
   std::shared_ptr<VectorFieldVariableType> fiberDirection_; ///< the direction of fibers
+
+  std::shared_ptr<OutputConnectorDataType> outputConnectorData_;   //< the field variables that are used for transfer to other solvers
 
 };
 

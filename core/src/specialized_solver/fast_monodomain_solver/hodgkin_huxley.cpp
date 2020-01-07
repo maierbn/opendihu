@@ -15,7 +15,8 @@ initializeStates(Vc::double_v states[])
 
 // Hodgkin-Huxley
 void FastMonodomainSolver<Control::MultipleInstances<OperatorSplitting::Strang<Control::MultipleInstances<TimeSteppingScheme::Heun<CellmlAdapter<4, 9, FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1> > > > >, Control::MultipleInstances<TimeSteppingScheme::ImplicitEuler<SpatialDiscretization::FiniteElementMethod<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1>, Quadrature::Gauss<2>, Equation::Dynamic::IsotropicDiffusion> > > > > >::
-compute0DInstance(Vc::double_v states[], double currentTime, double timeStepWidth, bool stimulate)
+compute0DInstance(Vc::double_v states[], double currentTime, double timeStepWidth, bool stimulate, bool storeIntermediatesForTransfer,
+                  std::vector<Vc::double_v> &intermediatesForTransfer)
 {
   using Vc::double_v;
 
@@ -104,5 +105,45 @@ compute0DInstance(Vc::double_v states[], double currentTime, double timeStepWidt
     }
   }
 
-  VLOG(2) << "resulting solution: [" << state0 << "," << state1 << "," << state2 << "," << state3 << "]";
+  // store intermediates for transfer
+  if (storeIntermediatesForTransfer)
+  {
+    for (int i = 0; i < intermediatesForTransfer_.size(); i++)
+    {
+      const int intermediate = intermediatesForTransfer_[i];
+
+      switch (intermediate)
+      {
+        case 0:
+          intermediatesForTransfer[i] = intermediateAlgebraic0;
+          break;
+        case 1:
+          intermediatesForTransfer[i] = intermediateAlgebraic1;
+          break;
+        case 2:
+          intermediatesForTransfer[i] = intermediateAlgebraic2;
+          break;
+        case 3:
+          intermediatesForTransfer[i] = intermediateAlgebraic3;
+          break;
+        case 4:
+          intermediatesForTransfer[i] = intermediateAlgebraic4;
+          break;
+        case 5:
+          intermediatesForTransfer[i] = intermediateAlgebraic5;
+          break;
+        case 6:
+          intermediatesForTransfer[i] = intermediateAlgebraic6;
+          break;
+        case 7:
+          intermediatesForTransfer[i] = intermediateAlgebraic7;
+          break;
+        case 8:
+          intermediatesForTransfer[i] = intermediateAlgebraic8;
+          break;
+      }
+    }
+  }
+
+  //VLOG(2) << "resulting solution: [" << state0 << "," << state1 << "," << state2 << "," << state3 << "]";
 }

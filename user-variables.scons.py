@@ -77,11 +77,17 @@ try:
   if "RELEASE" in lsb_info:
     if lsb_info["RELEASE"] == "18.04":
       MPI_DIR="/usr/lib/x86_64-linux-gnu/openmpi"   # this is the standard path on ubuntu 18.04
+except:
+  pass
 
+try:
   import platform
   if 'debian' in platform.dist():
     MPI_DIR="/usr/lib/x86_64-linux-gnu/openmpi"    # path for debian (on Aaron's workstation)
+except:
+  pass
 
+try:
   # use value of environment variable 'MPI_HOME' if it is set
   import os
   if os.environ.get("MPI_HOME") is not None:
@@ -124,7 +130,7 @@ try:
     PETSC_DISABLE_CHECKS=True
     GOOGLETEST_DISABLE_CHECKS=True
 
-  elif "argon" in socket.gethostname():
+  elif "argon" in socket.gethostname() and False:
     cc = "pgcc"
     CC = "pgc++"
     mpiCC = "mpic++"
@@ -135,6 +141,9 @@ try:
     DISABLE_RUN = True   # do not run executables for checks, because they need mpirun as prefix
     #PETSC_DISABLE_CHECKS = True
     GOOGLETEST_DISABLE_CHECK = True
+
+  elif "lead" in socket.gethostname():
+    MPI_DIR = os.environ["MPI_HOME"]
 
 except:
   pass
@@ -177,7 +186,6 @@ if os.environ.get("PE_ENV") is not None:  # if on hazelhen
 #   module swap PrgEnv-cray/6.0.4 PrgEnv-gnu  # to switch to GNU programming environment, however also Intel and Cray environments work
 #   module load cray-libsci
 #   module load cray-petsc  (or cray-petsc-64 for big data)
-
 
 
 

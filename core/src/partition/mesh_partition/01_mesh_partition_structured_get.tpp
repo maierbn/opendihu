@@ -596,6 +596,29 @@ getElementNoLocal(std::array<int,MeshType::dim()> elementCoordinates) const
   return 0;
 }
 
+//! get the local element no. from the global no., set isOnLocalDomain to true if the node with global coordinates is in the local domain
+template<typename MeshType,typename BasisFunctionType>
+element_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+getElementNoLocal(global_no_t elementNoGlobalPetsc, bool &isOnLocalDomain) const
+{
+  // get global coordinates of element
+  std::array<global_no_t,3> coordinatesGlobal;
+  coordinatesGlobal[0] = elementNoGlobalPetsc % nElementsGlobal(0);
+  coordinatesGlobal[1] = (elementNoGlobalPetsc % (nElementsGlobal(0)*nElementsGlobal(1))) / nElementsGlobal(0);
+  coordinatesGlobal[2] = elementNoGlobalPetsc / (nElementsGlobal(0)*nElementsGlobal(1));
+
+  // get local coordinates
+  std::array<int,MeshType::dim()> coordinatesLocal = getCoordinatesLocal(coordinatesGlobal, isOnLocalDomain);
+
+  if (isOnLocalDomain)
+  {
+    // get local element no
+    element_no_t elementNoLocal = getElementNoLocal(coordinatesLocal);
+    return elementNoLocal;
+  }
+
+  return 0;
+}
 
 template<typename MeshType,typename BasisFunctionType>
 global_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::

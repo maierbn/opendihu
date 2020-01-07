@@ -64,7 +64,7 @@ if rank_no == 0:
 result = create_partitioned_meshes_for_settings(
     variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, 
     variables.fiber_file, variables.load_fiber_data,
-    variables.sampling_stride_x, variables.sampling_stride_y, variables.sampling_stride_z)
+    variables.sampling_stride_x, variables.sampling_stride_y, variables.sampling_stride_z, variables.generate_quadratic_3d_mesh)
 [variables.meshes, variables.own_subdomain_coordinate_x, variables.own_subdomain_coordinate_y, variables.own_subdomain_coordinate_z, variables.n_fibers_x, variables.n_fibers_y, variables.n_points_whole_fiber] = result
   
 variables.n_subdomains_xy = variables.n_subdomains_x * variables.n_subdomains_y
@@ -72,14 +72,36 @@ variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
 
 # set output writer    
 variables.output_writer_fibers = []
+variables.output_writer_elasticity = []
 variables.output_writer_emg = []
+variables.output_writer_0D_states = []
+
+subfolder = ""
 if variables.paraview_output:
-  #variables.output_writer_emg.append({"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + variables.scenario_name + "/emg", "binary": True, "fixedFormat": False, "combineFiles": True})
-  variables.output_writer_fibers.append({"format": "Paraview", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep), "filename": "out/" + variables.scenario_name + "/fibers", "binary": True, "fixedFormat": False, "onlyNodalValues": True, "combineFiles": True})
-  #variables.output_writer_fibers.append({"format": "PythonFile", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep), "filename": "out/" + variables.scenario_name + "/fibers", "binary": True, "onlyNodalValue": True, "combineFiles": True})
+  if variables.adios_output:
+    subfolder = "paraview/"
+  variables.output_writer_emg.append({"format": "Paraview", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/emg", "binary": True, "fixedFormat": False, "combineFiles": True})
+  variables.output_writer_fibers.append({"format": "Paraview", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/fibers", "binary": True, "fixedFormat": False, "combineFiles": True})
+  if variables.states_output:
+    variables.output_writer_0D_states.append({"format": "Paraview", "outputInterval": 1, "filename": "out/" + subfolder + variables.scenario_name + "/0D_states", "binary": True, "fixedFormat": False, "combineFiles": True})
+
 if variables.adios_output:
-  #variables.output_writer_emg.append({"format": "MegaMol", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + variables.scenario_name + "/emg", "useFrontBackBuffer": False})
-  variables.output_writer_fibers.append({"format": "MegaMol", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep), "filename": "out/" + variables.scenario_name + "/fibers", "combineNInstances": variables.n_subdomains_xy, "useFrontBackBuffer": False})
+  if variables.paraview_output:
+    subfolder = "adios/"
+  variables.output_writer_emg.append({"format": "MegaMol", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/emg", "useFrontBackBuffer": False, "combineNInstances": 1})
+  variables.output_writer_fibers.append({"format": "MegaMol", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/fibers", "combineNInstances": variables.n_subdomains_xy, "useFrontBackBuffer": False})
+
+if variables.python_output:
+  if variables.adios_output:
+    subfolder = "python/"
+  variables.output_writer_emg.append({"format": "PythonFile", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/emg", "binary": True})
+  variables.output_writer_fibers.append({"format": "PythonFile", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/fibers", "binary": True})
+
+if variables.exfile_output:
+  if variables.adios_output:
+    subfolder = "exfile/"
+  variables.output_writer_emg.append({"format": "Exfile", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/emg"})
+  variables.output_writer_fibers.append({"format": "Exfile", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/fibers"})
 
 # set values for cellml model
 if "shorten" in variables.cellml_file:
@@ -89,7 +111,7 @@ if "shorten" in variables.cellml_file:
   variables.parameters_initial_values = [0.0, 1.0]    # stimulation current I_stim, fiber stretch λ, OpenCMISS generated files: OC_KNOWN will be set by this
   variables.nodal_stimulation_current = 1200.
   variables.output_state_index = 0                    # use state 0 = Vm
-  variables.output_intermediate_index = 0             # do not use any intermediate
+  variables.output_intermediate_index = []            # do not use any intermediate
   
 elif "hodgkin_huxley" in variables.cellml_file:
   # parameters: I_stim
@@ -98,7 +120,7 @@ elif "hodgkin_huxley" in variables.cellml_file:
   variables.parameters_initial_values = [0.0]
   variables.nodal_stimulation_current = 40.
   variables.output_state_index = 0                    # use state 0 = Vm
-  variables.output_intermediate_index = 0             # do not use any intermediate
+  variables.output_intermediate_index = []            # do not use any intermediate
 
 elif "slow_TK_2014" in variables.cellml_file:   # this is (3a, "MultiPhysStrain", old tomo mechanics) in OpenCMISS
   # parameters: I_stim, fiber stretch λ
@@ -110,7 +132,7 @@ elif "slow_TK_2014" in variables.cellml_file:   # this is (3a, "MultiPhysStrain"
   variables.output_intermediate_index = 12             # use intermediate 12, razumova/stress = γ
   
 elif "Aliev_Panfilov_Razumova_2016_08_22" in variables.cellml_file :   # this is (3, "MultiPhysStrain", numerically more stable) in OpenCMISS, this only computes A1,A2,x1,x2 not the stress
-  # parameters: I_stim, fiber stretch λ, fiber contraction velocity, \dot{λ}
+  # parameters: I_stim, fiber stretch λ, fiber contraction velocity \dot{λ}
   variables.parameters_used_as_intermediate = []
   variables.parameters_used_as_constant = [0, 8, 9]    # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/velo = \dot{λ}
   variables.parameters_initial_values = [0, 1, 0]      # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/velo = \dot{λ}
@@ -119,7 +141,7 @@ elif "Aliev_Panfilov_Razumova_2016_08_22" in variables.cellml_file :   # this is
   variables.output_intermediate_index = 0              # no intermediates are used
   
 elif "Aliev_Panfilov_Razumova_Titin" in variables.cellml_file:   # this is (4, "Titin") in OpenCMISS
-  # parameters: I_stim, fiber stretch λ, fiber contraction velocity, \dot{λ}
+  # parameters: I_stim, fiber stretch λ, fiber contraction velocity \dot{λ}
   variables.parameters_used_as_intermediate = []
   variables.parameters_used_as_constant = [0, 11, 12]  # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/rel_velo = \dot{λ}
   variables.parameters_initial_values = [0, 1, 0]      # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/rel_velo = \dot{λ}
@@ -322,16 +344,16 @@ for i in range(n_points_3D_mesh_global_x*n_points_3D_mesh_global_y):
   variables.potential_flow_dirichlet_bc[(n_points_3D_mesh_global_z-1)*n_points_3D_mesh_global_x*n_points_3D_mesh_global_y + i] = 1.0
     
 # set Dirichlet BC at top nodes for linear elasticity problem, fix muscle at top
-variables.linear_elasticity_dirichlet_bc = {}
+variables.use_elasticity_dirichlet_bc = {}
 for i in range(n_points_3D_mesh_global_x*n_points_3D_mesh_global_y):
-  variables.linear_elasticity_dirichlet_bc[(n_points_3D_mesh_global_z-1)*n_points_3D_mesh_global_x*n_points_3D_mesh_global_y + i] = 0.0
+  variables.use_elasticity_dirichlet_bc[(n_points_3D_mesh_global_z-1)*n_points_3D_mesh_global_x*n_points_3D_mesh_global_y + i] = 0.0
     
 # Neumann BC at bottom nodes, traction downwards
 nx = n_points_3D_mesh_global_x-1
 ny = n_points_3D_mesh_global_y-1
 nz = n_points_3D_mesh_global_z-1
-variables.linear_elasticity_neumann_bc = [{"element": 0*nx*ny + j*nx + i, "constantVector": [0.0,0.0,-1.0], "face": "2-"} for j in range(ny) for i in range(nx)]
-#variables.linear_elasticity_neumann_bc = []
+variables.use_elasticity_neumann_bc = [{"element": 0*nx*ny + j*nx + i, "constantVector": [0.0,0.0,-1.0], "face": "2-"} for j in range(ny) for i in range(nx)]
+#variables.use_elasticity_neumann_bc = []
     
 # sanity checking at the end, is disabled and can be copied to after the config in the real settings file
 if False:

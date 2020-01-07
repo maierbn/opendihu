@@ -31,6 +31,10 @@ typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value &
 buildPyFieldVariableObject(CurrentFieldVariableType currentFieldVariable, int &fieldVariableIndex, std::string meshName, 
                            PyObject *pyData, bool onlyNodalValues, std::shared_ptr<Mesh::Mesh> &mesh)
 {
+  // if the field variable is a null pointer, return but do not break iteration
+  if (!currentFieldVariable)
+    return false;
+
   // if mesh name is not the specified meshName step over this field variable but do not exit the loop over field variables
   if (currentFieldVariable->functionSpace()->meshName() != meshName)
   {

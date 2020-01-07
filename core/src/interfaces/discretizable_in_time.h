@@ -17,6 +17,9 @@ public:
   // Classes that derive from DiscretizableInTime must define a constexpr nComponents that specifies the number of components in the solution field variable
   //typedef .. nComponents;
 
+  //typedef ..OutputConnectorDataType;
+
+
   //! initialize timestepping
   virtual void initialize() = 0;
   
@@ -31,6 +34,13 @@ public:
 
   //! get the number of degrees of freedom per node which is 1 by default
   virtual int nComponentsNode();
+
+  //! Get the data that will be transferred in the operator splitting to the other term of the splitting.
+  //! The transfer is done by the output_connector_data_transfer class.
+  //virtual std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
+
+  //! this will be called right before getOutputConnectorData
+  virtual void prepareForGetOutputConnectorData();
 
   //! set initial values and return true or don't do anything and return false
   // this could use std::any (c++17)

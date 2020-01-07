@@ -1,6 +1,6 @@
 ./fibers_linear_elasticity ../settings_fibers_emg.py \
 --n_subdomains 1 1 1 \
---linear_elasticity \
+--use_elasticity \
 --fiber_file="../../input/2x2fibers.bin" \
 --paraview_output \
 --dt_0D=2e-4 \

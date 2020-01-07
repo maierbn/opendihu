@@ -30,6 +30,13 @@ typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value &
 countNFieldVariablesOfMesh(CurrentFieldVariableType currentFieldVariable, std::string meshName,
                            int &nFieldVariablesOfMesh)
 {
+  VLOG(2) << "count number of field variables in type " << StringUtility::demangle(typeid(CurrentFieldVariableType).name())
+    << ", before: " << nFieldVariablesOfMesh;
+
+  // if the field variable is a null pointer, return but do not break iteration
+  if (!currentFieldVariable)
+    return false;
+
   // if mesh name is the specified meshName, count this mesh
   if (currentFieldVariable->functionSpace()->meshName() == meshName)
   {
@@ -45,6 +52,7 @@ typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
 countNFieldVariablesOfMesh(VectorType currentFieldVariableVector, std::string meshName,
                            int &nFieldVariablesOfMesh)
 {
+  VLOG(2) << "count number of field variables in vector with size " << currentFieldVariableVector.size();
   for (auto& currentFieldVariable : currentFieldVariableVector)
   {
     // call function on all vector entries

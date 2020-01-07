@@ -2,7 +2,7 @@
 nice -n 10 mpirun -n 144 \
 ./fibers_linear_elasticity ../settings_fibers_emg.py \
 --n_subdomains 6 6 4 \
---linear_elasticity \
+--use_elasticity \
 --fiber_file="../../input/13x13fibers.bin" \
 --paraview_output \
 --dt_0D=2e-4 \

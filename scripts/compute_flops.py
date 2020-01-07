@@ -9,7 +9,11 @@ import sys
 
 filename = "p.txt"
 if len(sys.argv) > 1:
+<<<<<<< HEAD
   filename = sys.argv[0]
+=======
+  filename = sys.argv[1]
+>>>>>>> dd3531d515844c8a491e058f55975cb93181a840
 
 print("filename: {}".format(filename))
 
@@ -38,4 +42,8 @@ with open(filename,"r") as f:
       nSeconds = (float)(str_number)
 
 nFLOPS = (nOps1 + 2*nOps2 + 4*nOps4)/nSeconds*1e-9
+<<<<<<< HEAD
 print("{} Gflops, {} seconds".format(nFLOPS, nSeconds))
+=======
+print("{} Gflops, {} seconds (Skylake I5-6300U peak: 76.8 Gflops, {:.4}%)".format(nFLOPS, nSeconds, nFLOPS/76.8*100.))
+>>>>>>> dd3531d515844c8a491e058f55975cb93181a840

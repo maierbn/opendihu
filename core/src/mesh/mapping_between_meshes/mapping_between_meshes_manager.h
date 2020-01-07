@@ -68,12 +68,12 @@ namespace Mesh
  *   fieldVariableSource = lower dimension (e.g. 1D)
  *   fieldVariableTarget = higher dimension (e.g. 3D)
  *
- *   prepareMapping(fieldVariableTarget)
+ *   prepareMappingLowToHigh(fieldVariableTarget)
  *
  *   mapLowToHighDimension(fieldVariableSource, fieldVariableTarget)   or   mapLowToHighDimension(fieldVariableSource, componentNoSource, fieldVariableTarget, componentNoTarget)
  *   (can be repeated for multiple lower dimension meshes, that all together should be mapped to the higher dimension space, e.g. multiple 1D fibers to one 3D mesh)
  *
- *   finalizeMapping(fieldVariableTarget)   or   finalizeMapping(fieldVariableTarget, componentNoTarget)
+ *   finalizeMappingLowToHigh(fieldVariableTarget)   or   finalizeMapping(fieldVariableTarget, componentNoTarget)
  *
  * 2. mapping from higher to lower dimension fucntion space (e.g. 3D->1D)
  *   fieldVariableSource = higher dimension (e.g. 3D)
@@ -83,6 +83,13 @@ namespace Mesh
  *
  * Note, how prepareMapping and finalizeMapping are only needed for case 1. Ghosts are handled correctly within prepareMapping and finalizeMapping.
  * The 2. case is completely local and does not set ghost dofs of fieldVariableTarget. If ghost values are needed afterwards, call fieldVariableTarget->startGhostManipulation().
+ *
+ * There is now also the possiblity to use the simplified methods "prepareMapping", "map" and "finalizeMapping".
+ * No initialization is required. Just always call:
+ *
+ * prepareMapping(fieldVariableSource, fieldVariableTarget)
+ * map(fieldVariableSource, componentNoSource, fieldVariableTarget, componentNoTarget)  // set both componentNos to -1 to map all components
+ * finalizeMapping(fieldVariableSource, fieldVariableTarget)
  *
  *
  */
@@ -99,41 +106,57 @@ public:
 
   //! prepare a mapping to the fieldVariableTarget, this zeros the targetFactorsSum for the field variable
   template<typename FieldVariableTargetType>
-  void prepareMapping(std::shared_ptr<FieldVariableTargetType> fieldVariableTarget);
+  void prepareMappingLowToHigh(std::shared_ptr<FieldVariableTargetType> fieldVariableTarget);
 
   //! map data from on component of the source field variable to one component of the target field variable.
   //! Dimensionality source function space <= dimensionality target function space (e.g. 1D -> 3D)
   //! This has to be called between prepareMapping and finalizeMapping, can be called multiple times with different source meshes.
+  //! If componentNoSource and componentNoTarget are both -1, map the whole field variable with all components
   template<typename FieldVariableSourceType, typename FieldVariableTargetType>
   void mapLowToHighDimension(std::shared_ptr<FieldVariableSourceType> fieldVariableSource, int componentNoSource,
-                             std::shared_ptr<FieldVariableTargetType> fieldVariableTarget, int componentNoTarget);
-
-  //! map complete data (all components) from source field variable to the target field variable.
-  //! Dimensionality source function space <= dimensionality target function space (e.g. 1D -> 3D)
-  //! This has to be called between prepareMapping and finalizeMapping, can be called multiple times with different source meshes.
-  template<typename FieldVariableSourceType, typename FieldVariableTargetType>
-  void mapLowToHighDimension(std::shared_ptr<FieldVariableSourceType> fieldVariableSource,
-                             std::shared_ptr<FieldVariableTargetType> fieldVariableTarget);
+                             std::shared_ptr<FieldVariableTargetType> fieldVariableTarget, int componentNoTarget = -1);
 
   //! map complete data (all components) from source field variable to the target field variable.
   //! Dimensionality source function space >= dimensionality target function space (e.g. 3D -> 1D)
+  //! If componentNoSource and componentNoTarget are both -1, map the whole field variable with all components
   template<typename FieldVariableSourceType, typename FieldVariableTargetType>
-  void mapHighToLowDimension(std::shared_ptr<FieldVariableSourceType> fieldVariableSource,
-                             std::shared_ptr<FieldVariableTargetType> fieldVariableTarget);
+  void mapHighToLowDimension(std::shared_ptr<FieldVariableSourceType> fieldVariableSource, int componentNoSource,
+                             std::shared_ptr<FieldVariableTargetType> fieldVariableTarget, int componentNoTarget = -1);
 
   //! finalize the mapping to the fieldVariableTarget, for a mapping of a single component, this computes the final values at the dofs from the accumulated values by dividing by the targetFactorSums
+  //! if componentNoTarget == -1, this means all components were transferred
   template<typename FieldVariableTargetType>
-  void finalizeMapping(std::shared_ptr<FieldVariableTargetType> fieldVariableTarget, int componentNoTarget);
+  void finalizeMappingLowToHigh(std::shared_ptr<FieldVariableTargetType> fieldVariableTarget, int componentNoTarget);
 
   //! finalize the mapping to the fieldVariableTarget, for a mapping of all components, this computes the final values at the dofs from the accumulated values by dividing by the targetFactorSums
   template<typename FieldVariableTargetType>
-  void finalizeMapping(std::shared_ptr<FieldVariableTargetType> fieldVariableTarget);
+  void finalizeMappingLowToHigh(std::shared_ptr<FieldVariableTargetType> fieldVariableTarget);
 
   //! Add and initialize a mapping between meshes, this can be called in the code in initialize, when it is clear, that this mapping will be needed
   //! If it is not clear, whether it will be needed, call initializeMappingsBetweenMeshes instead.
   template<typename FunctionSpaceSourceType, typename FunctionSpaceTargetType>
   std::shared_ptr<MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>>
     createMappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSource, std::shared_ptr<FunctionSpaceTargetType> functionSpaceTarget);
+
+  //! Simplified methods that call the other methods
+
+  //! prepare the mapping for meshes of any dimensionality, this can be called even if not needed
+  template<typename FieldVariableSourceType, typename FieldVariableTargetType>
+  void prepareMapping(std::shared_ptr<FieldVariableSourceType> fieldVariableSource,
+                      std::shared_ptr<FieldVariableTargetType> fieldVariableTarget);
+
+  //! map between meshes of any dimensionality,
+  //! if the field variables share the same function space, do no mapping at all, but copy the values
+  //! If componentNoSource and componentNoTarget are both -1, map the whole field variable with all components
+  template<typename FieldVariableSourceType, typename FieldVariableTargetType>
+  void map(std::shared_ptr<FieldVariableSourceType> fieldVariableSource, int componentNoSource,
+           std::shared_ptr<FieldVariableTargetType> &fieldVariableTarget, int componentNoTarget = -1, bool avoidCopyIfPossible=true);
+
+  //! finalize the mapping for meshes of any dimensionality, this can be called even if not needed
+  //! If componentNoTarget is -1, this means all components were transferred
+  template<typename FieldVariableSourceType, typename FieldVariableTargetType>
+  void finalizeMapping(std::shared_ptr<FieldVariableSourceType> fieldVariableSource,
+                       std::shared_ptr<FieldVariableTargetType> fieldVariableTarget, int componentNoTarget = -1);
 
 protected:
 
@@ -155,3 +178,4 @@ protected:
 }  // namespace
 
 #include "mesh/mapping_between_meshes/mapping_between_meshes_manager.tpp"
+#include "mesh/mapping_between_meshes/mapping_between_meshes_manager_convenience_methods.tpp"

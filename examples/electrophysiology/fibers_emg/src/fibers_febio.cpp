@@ -16,26 +16,28 @@ int main(int argc, char *argv[])
   
   // define problem
   Control::Coupling<
-    Control::MultipleInstances<                       // fibers
-      OperatorSplitting::Strang<
-        Control::MultipleInstances<
-          TimeSteppingScheme::Heun<                   // fiber reaction term
-            CellmlAdapter<
-              57,1,  // nStates,nIntermediates: 57,1 = Shorten, 4,9 = Hodgkin Huxley
-              FunctionSpace::FunctionSpace<
-                Mesh::StructuredDeformableOfDimension<1>,
-                BasisFunction::LagrangeOfOrder<1>
+    FastMonodomainSolver<                        // a wrapper that improves performance of multidomain
+      Control::MultipleInstances<                       // fibers
+        OperatorSplitting::Strang<
+          Control::MultipleInstances<
+            TimeSteppingScheme::Heun<                   // fiber reaction term
+              CellmlAdapter<
+                57,71,  // nStates,nIntermediates: 57,1 = Shorten, 57,71 = Shorten slow_TK, 4,9 = Hodgkin Huxley
+                FunctionSpace::FunctionSpace<
+                  Mesh::StructuredDeformableOfDimension<1>,
+                  BasisFunction::LagrangeOfOrder<1>
+                >
               >
             >
-          >
-        >,
-        Control::MultipleInstances<
-          TimeSteppingScheme::ImplicitEuler<          // fiber diffusion
-            SpatialDiscretization::FiniteElementMethod<
-              Mesh::StructuredDeformableOfDimension<1>,
-              BasisFunction::LagrangeOfOrder<1>,
-              Quadrature::Gauss<2>,
-              Equation::Dynamic::IsotropicDiffusion
+          >,
+          Control::MultipleInstances<
+            TimeSteppingScheme::ImplicitEuler<          // fiber diffusion
+              SpatialDiscretization::FiniteElementMethod<
+                Mesh::StructuredDeformableOfDimension<1>,
+                BasisFunction::LagrangeOfOrder<1>,
+                Quadrature::Gauss<2>,
+                Equation::Dynamic::IsotropicDiffusion
+              >
             >
           >
         >

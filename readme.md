@@ -10,7 +10,7 @@ Opendihu is a software framework that solves static and dynamic multi-physics pr
 The core design goals are usability, performance and extensibility. 
 
 It is developed at [SGS](https://www.ipvs.uni-stuttgart.de/abteilungen/sgs/index.html?__locale=en) and [IANS](https://www.ians.uni-stuttgart.de/institute/) at [University of Stuttgart](https://www.uni-stuttgart.de/en/index.html)
-and funded by the [BW-Stiftung](https://www.bwstiftung.de/).
+and funded by the [DFG](https://www.dfg.de/en/funded_projects/current_projects_programmes/list/projectdetails/index.jsp?id=277536708) as part of the IRTG ["Soft Tissue Robotics"](https://www.irtg.auckland.ac.nz/) and the [BW-Stiftung](https://www.bwstiftung.de/) under the [HPC 2](https://www.bwstiftung.de/hpcii/#c15824) call.
 
 Opendihu is the compatible HPC version of [OpenCMISS](http://opencmiss.org/). The native format of OpenCMISS, the `Exfile` format, can be used for input and output in Opendihu.
 The implemented skeletal muscle models are the same and are based on the same [CellML](https://www.cellml.org/) descriptions of subcellular models. 

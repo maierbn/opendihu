@@ -141,11 +141,6 @@ namespace ModelOrderReduction
       }
       cout << std::endl;
     }
-    /*
-    PetscInt mat_sz_1, mat_sz_2;
-    MatGetSize(basisTransp,&mat_sz_1,&mat_sz_2);
-    LOG(DEBUG) << "mat_sz_1: " << mat_sz_1 << "mat_sz_2" << mat_sz_2 << "==============";
-    */       
   }
 
   template<typename FunctionSpaceRowsType>

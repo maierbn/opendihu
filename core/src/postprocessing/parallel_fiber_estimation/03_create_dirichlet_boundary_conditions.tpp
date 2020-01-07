@@ -115,15 +115,16 @@ createDirichletBoundaryConditions(std::shared_ptr<SpatialDiscretization::Dirichl
     std::fill(boundaryConditionValues.begin() + nBottomDofs, boundaryConditionValues.end(), std::array<double,1>({1.0}));
   }
 
-  /*
-  LOG(DEBUG) << "boundaryConditionElements:";
-  for (auto &boundaryConditionElement : boundaryConditionElements)
+  if (VLOG_IS_ON(1))
   {
-    LOG(DEBUG) << "{el." << boundaryConditionElement.elementNoLocal << ", (dof,v):" << boundaryConditionElement.elementalDofIndex << "}";
+    VLOG(1) << "boundaryConditionElements:";
+    for (auto &boundaryConditionElement : boundaryConditionElements)
+    {
+      VLOG(1) << "{el." << boundaryConditionElement.elementNoLocal << ", (dof,v):" << boundaryConditionElement.elementalDofIndex << "}";
+    }
+    VLOG(1) << "boundaryConditionNonGhostDofLocalNos: " << boundaryConditionNonGhostDofLocalNos;
+    VLOG(1) << "boundaryConditionValues: " << boundaryConditionValues;
   }
-  LOG(DEBUG) << "boundaryConditionNonGhostDofLocalNos: " << boundaryConditionNonGhostDofLocalNos;
-  LOG(DEBUG) << "boundaryConditionValues: " << boundaryConditionValues;
-*/
   dirichletBoundaryConditions->initialize(this->functionSpace_, boundaryConditionElements, boundaryConditionNonGhostDofLocalNos, boundaryConditionValues);
 }
 

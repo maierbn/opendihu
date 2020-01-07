@@ -524,7 +524,7 @@ template<typename FunctionSpaceType, int nComponents, int nComponentsDirichletBc
 void PartitionedPetscVecWithDirichletBc<FunctionSpaceType, nComponents, nComponentsDirichletBc>::
 setRepresentationGlobal()
 {
-  VLOG(2) << "\"" << this->name_ << "\" setRepresentationGlobal, previous representation: "
+  VLOG(2) << "\"" << this->name_ << "\" PartitionedPetscVecWithDirichletBc::setRepresentationGlobal, previous representation: "
     << Partition::valuesRepresentationString[this->currentRepresentation_];
 
   if (this->currentRepresentation_ == Partition::values_representation_t::representationCombinedGlobal)

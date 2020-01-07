@@ -218,6 +218,10 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
   if rank_no == 0:
     print("n fibers:              {} ({} x {})".format(variables.n_fibers_total, variables.n_fibers_x, variables.n_fibers_y))
     print("n points per fiber:    {}".format(variables.n_points_whole_fiber))
+    
+  # if a quadratic mesh is required, we need the point data in order to interpolate, therefore load_fiber_data has to be on
+  if quadratic_3d_mesh:
+    load_fiber_data = True
       
   # parse whole fiber file, only if enabled
   if load_fiber_data:

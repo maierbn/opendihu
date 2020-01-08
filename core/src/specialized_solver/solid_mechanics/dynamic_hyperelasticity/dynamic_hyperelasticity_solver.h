@@ -44,38 +44,27 @@ private:
 
   //! set initial values for u and v from settings
   void setInitialValues();
-/*
-  //! compute the mass matrix and the inverse lumped mass matrix
-  void initializeMassMatrix();
 
-  //! compute the acceleration variable as a = M^-1(f - Ku - Cv), u and v are input, a is output
-  void computeAcceleration(std::shared_ptr<VecHyperelasticity> u, std::shared_ptr<VecHyperelasticity> v, std::shared_ptr<VecHyperelasticity> a);
-
-  //! compute damping d_LaMb = ∫φ_Lb*μ*φ_Mb*v_Mb dV (no sum over b, but over M)
-  void addDamping(std::shared_ptr<VecHyperelasticity> v, std::shared_ptr<VecHyperelasticity> damping);
-
-  //! compute the next displacements and velocities by the RK-4 scheme
-  void computeRungeKutta4();
-
-  //! compute the next displacements and velocities by an explicit Euler scheme
-  void computeExplicitEuler();*/
+  //! call the callback function to update dirichlet boundary condition values
+  void callUpdateDirichletBoundaryConditionsFunction(double t);
 
   HyperelasticitySolverType hyperelasticitySolver_;  //< hyperelasticity solver that solver the static problem
   Data::DynamicHyperelasticitySolver<DisplacementsFunctionSpace> data_;
 
   double density_;   //< density rho, used for inertia
-  //double viscosity_;  //< viscosity mu, used for damping, set to 0 to disable damping
-
-  // std::shared_ptr<MatHyperelasticity> massMatrix_;    //< mass matrix
-  // std::shared_ptr<MatHyperelasticity> inverseLumpedMassMatrix_;    //< mass matrix with inverse row sums on diagonal as combined matrix for u and p, only the u part contains the lumped mass matrix
 
   std::shared_ptr<VecHyperelasticity> uvp_;     //< combined vector of u,v and p values
   Vec internalVirtualWork_;                     //< internal virtual work, computed by the hyperelasticity solver
   Vec accelerationTerm_;                        //< contribution to virtual work from acceleration, computed by the hyperelasticity solver
   Vec externalVirtualWorkDead_;                 //< external virtual work, computed by the hyperelasticity solver, dead load i.e. constant over time
-  //std::array<std::shared_ptr<VecHyperelasticity>,4> k_;   //< intermediate values for the RK4 scheme
-  //std::array<std::shared_ptr<VecHyperelasticity>,4> l_;   //< intermediate values for the RK4 scheme
-  //std::array<std::shared_ptr<VecHyperelasticity>,9> temp_;  //< temporary values for the RK4 scheme*/
+
+  bool inputMeshIsGlobal_;                      //< value of the setting "inputMeshIsGlobal", if the new dirichletBC values are given in global or local numbering
+
+  PyObject *pythonUpdateDirichletBoundaryConditionsFunction_;       //< the callback function
+  int updateDirichletBoundaryConditionsFunctionCallInterval_;       //< the interval with which the function will be called
+  int updateDirichletBoundaryConditionsFunctionCallCount_ = 0;      //< the counter of number of call to the updateDirichletBoundaryConditionsFunction
+
+
 };
 
 }  // namespace

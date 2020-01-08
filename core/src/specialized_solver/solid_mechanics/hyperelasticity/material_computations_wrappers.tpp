@@ -88,8 +88,8 @@ solveDynamicProblem(
 
   LOG(DEBUG) << "saved initial uvp values: ";
   LOG(DEBUG) << *this->data_.displacementsPreviousTimestep();
-  LOG(DEBUG) << *this->data_.velocitiesPreviousTimestep();
-  LOG(DEBUG) << *this->data_.pressurePreviousTimestep();
+  VLOG(1) << *this->data_.velocitiesPreviousTimestep();
+  VLOG(1) << *this->data_.pressurePreviousTimestep();
 
   // find the solution for u,v,p of the nonlinear equation
   nonlinearSolve();

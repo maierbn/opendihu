@@ -15,6 +15,7 @@ void HyperelasticitySolver<Term,nDisplacementComponents>::
 nonlinearSolve()
 {
   LOG(TRACE) << "nonlinear solve";
+  LOG(DEBUG) << "initial solution: " << combinedVecSolution_->getString();
   // solve the system ∂W_int - ∂W_ext = 0 and J = 1 for displacements and pressure, result will be in solverVariableSolution_, combinedVecSolution_
 
   if (this->durationLogKey_ != "")
@@ -82,7 +83,7 @@ postprocessSolution()
   // dump files containing rhs and system matrix
   nonlinearSolver_->dumpMatrixRightHandSide(solverVariableResidual_);
 
-  LOG(DEBUG) << "solution: " << combinedVecResidual_->getString();
+  LOG(DEBUG) << "solution: " << combinedVecSolution_->getString();
 
 #ifndef NDEBUG
   checkSolution(solverVariableSolution_);

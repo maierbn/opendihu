@@ -15,7 +15,10 @@ DynamicHyperelasticitySolver(DihuContext context) :
 {
   specificSettings_ = this->context_.getPythonConfig();
   density_ = specificSettings_.getOptionDouble("density", 1.0, PythonUtility::Positive);
+  inputMeshIsGlobal_ = specificSettings_.getOptionBool("inputMeshIsGlobal", true);
   //viscosity_ = specificSettings_.getOptionDouble("viscosity", 0.0, PythonUtility::NonNegative);
+
+
 
   // initialize output writers
   this->outputWriterManager_.initialize(this->context_["dynamic"], this->context_["dynamic"].getPythonConfig());
@@ -32,13 +35,60 @@ initialize()
 
   // create variable of unknowns
   uvp_ = hyperelasticitySolver_.createPartitionedPetscVec("uvp");
+  //uvp_ = hyperelasticitySolver_.combinedVecSolution();
   setInitialValues();
 
-  VecDuplicate(uvp_->valuesGlobal(), &internalVirtualWork_);
-  VecDuplicate(uvp_->valuesGlobal(), &accelerationTerm_);
-  VecDuplicate(uvp_->valuesGlobal(), &externalVirtualWorkDead_);
+  PetscErrorCode ierr;
+  ierr = VecDuplicate(uvp_->valuesGlobal(), &internalVirtualWork_); CHKERRV(ierr);
+  ierr = VecDuplicate(uvp_->valuesGlobal(), &accelerationTerm_); CHKERRV(ierr);
+  ierr = VecDuplicate(uvp_->valuesGlobal(), &externalVirtualWorkDead_); CHKERRV(ierr);
 
   uvp_->setRepresentationGlobal();
+
+  // parse updateDirichletBoundaryConditionsFunction
+  if (this->specificSettings_.hasKey("updateDirichletBoundaryConditionsFunction"))
+  {
+    pythonUpdateDirichletBoundaryConditionsFunction_ = this->specificSettings_.getOptionFunction("updateDirichletBoundaryConditionsFunction");
+    updateDirichletBoundaryConditionsFunctionCallInterval_ = this->specificSettings_.getOptionInt("updateDirichletBoundaryConditionsFunctionCallInterval", 1, PythonUtility::Positive);
+  }
+}
+
+template<typename Term>
+void DynamicHyperelasticitySolver<Term>::
+callUpdateDirichletBoundaryConditionsFunction(double t)
+{
+  if (pythonUpdateDirichletBoundaryConditionsFunction_ == NULL)
+    return;
+
+  // only call this function at defined intervals
+  if (updateDirichletBoundaryConditionsFunctionCallCount_ % updateDirichletBoundaryConditionsFunctionCallInterval_ != 0)
+  {
+    updateDirichletBoundaryConditionsFunctionCallCount_++;
+    return;
+  }
+  updateDirichletBoundaryConditionsFunctionCallCount_++;
+
+  // compose callback function
+  PyObject *arglist = Py_BuildValue("(d)", t);
+  PyObject *returnValue = PyObject_CallObject(pythonUpdateDirichletBoundaryConditionsFunction_, arglist);
+
+  // if there was an error while executing the function, print the error message
+  if (returnValue == NULL)
+    PyErr_Print();
+
+  // parse the return value of the function
+  std::vector<std::pair<global_no_t,std::array<double,6>>> newDirichletBCValues =
+    PythonUtility::convertFromPython<std::vector<std::pair<global_no_t,std::array<double,6>>>>::get(returnValue);
+
+  LOG(DEBUG) << "newDirichletBCValues: " << newDirichletBCValues << "vecs: " << hyperelasticitySolver_.combinedVecSolution() << "," << uvp_;
+
+  // set the new DirichletBC values
+  hyperelasticitySolver_.combinedVecSolution()->updateDirichletBoundaryConditions(newDirichletBCValues, inputMeshIsGlobal_);
+  uvp_->updateDirichletBoundaryConditions(newDirichletBCValues, inputMeshIsGlobal_);
+
+  // decrement reference counters for python objects
+  Py_CLEAR(returnValue);
+  Py_CLEAR(arglist);
 }
 
 template<typename Term>
@@ -161,6 +211,9 @@ advanceTimeSpan()
 
     // write current output values
     this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime);
+
+    // potentially update DirichletBC by calling "updateDirichletBoundaryConditionsFunction"
+    callUpdateDirichletBoundaryConditionsFunction(currentTime);
 
     // start duration measurement
     if (this->durationLogKey_ != "")

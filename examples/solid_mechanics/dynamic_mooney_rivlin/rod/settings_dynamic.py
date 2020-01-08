@@ -3,9 +3,9 @@ import numpy as np
 import sys, os
 
 # number of elements
-nx = 1    # 2
-ny = 1    # 2
-nz = 3    # 5
+nx = 2    # 2
+ny = 2    # 2
+nz = 5    # 5
 
 # boundary conditions (for quadratic elements)
 dirichlet_bc = {}
@@ -37,7 +37,7 @@ if False:
 if True:
   # fix points on bottom horizontal edge in y and z direction
   for i in range(0,2*nx+1):
-    dirichlet_bc[i] = [None,ypos,zpos]
+    dirichlet_bc[i] = [None,ypos,zpos,None,0]
 
 if True:
   # horizontal edge
@@ -45,7 +45,126 @@ if True:
     dirichlet_bc[j*(2*nx+1)] = [xpos,None,zpos]
 
 # fix corner completely
-dirichlet_bc[0] = [xpos,ypos,zpos]
+dirichlet_bc[0] = [xpos,ypos,zpos,None,0]
+
+# function used to update dirichlet boundary conditions
+def update_dirichlet_boundary_conditions(t):
+  
+  def y(t):
+    a = 1.0
+    t *= 0.1
+    if t > np.pi:
+      return 2*a
+    return (1 + np.cos(t - np.pi))*a
+  
+  def dydt(t):
+    a = 1.0
+    t *= 0.1
+    if t > np.pi:
+      return 0
+    return (-np.sin(t - np.pi))*a
+  
+  # fix points on bottom horizontal edge in y and z direction
+  for i in range(0,2*nx+1):
+    dirichlet_bc[i] = [None,ypos+y(t),zpos,None,dydt(t)]
+    
+  # fix corner completely
+  dirichlet_bc[0] = [xpos,ypos+y(t),zpos,None,dydt(t)]
+  
+  return dirichlet_bc
+
+# function to postprocess the output
+def postprocess(result):
+  result = result[0]
+  #print(result)
+  
+  current_time = result["currentTime"]
+  timestep_no = result["timeStepNo"]
+  
+  field_variables = result["data"]
+  # field_variables[0] is the geometry
+  # field_variables[1] is the displacements u
+  # field_variables[2] is the velocities v
+  # field_variables[3] is the PK2-Stress (Voigt)
+  stress_components = field_variables[3]["components"]
+  # stress_components contains the symmetric 3x3 material stress tensor, in this order: S_11, S_22, S_33, S_12, S_13, S_23
+
+  s11_values = stress_components[0]["values"]
+  s22_values = stress_components[1]["values"]
+  s33_values = stress_components[2]["values"]
+
+  # integrate total forces
+
+  # integration stencils for ∫∫ ϕ_i dxdy with ϕ quadratic Lagrange function
+  # nodes i of a single quadratic 2D element:
+  # 1/36  1/9  1/36      primary   secondary  primary
+  # 1/9   4/9  1/9   =   secondary tertiary   secondary
+  # 1/36  1/9  1/36      primary   secondary  primary
+  #
+  # total mesh: 
+  # interior primary node: 4*1/36 = 1/9, interior secondary node: 2*1/9 = 2/9, interior tertiary node: 4/9
+  # edge primary node: 2*1/36 = 1/18, edge secondary node: 1/9
+  # corner primary node: 1/36
+
+  factors = [1./9. for _ in range((2*nx+1) * (2*ny+1))]
+  
+  # set factors for secondary nodes
+  for j in range(2*ny+1):
+    for i in range(2*nx+1):
+      if (i+j) % 2 == 1:
+        factors[j * (2*nx+1) + i] = 2./9.
+      
+  # set factors for tertiary nodes
+  for j in range(1,2*ny+1,2):
+    for i in range(1,2*nx+1,2):
+      factors[j * (2*nx+1) + i] = 4./9.
+
+  # edges, primary nodes
+  for i in range(0,2*nx+1,2):
+    factors[(2*ny) * (2*nx+1) + i] = 1./18.
+    factors[i] = 1./18.
+  for j in range(0,2*ny+1,2):
+    factors[j * (2*nx+1) + 0] = 1./18.
+    factors[j * (2*nx+1) + (2*nx)] = 1./18.
+    
+  # edges, secondary nodes
+  for i in range(1,2*nx+1,2):
+    factors[(2*ny) * (2*nx+1) + i] = 1./9.
+    factors[i] = 1./9.
+  for j in range(1,2*ny+1,2):
+    factors[j * (2*nx+1) + 0] = 1./9.
+    factors[j * (2*nx+1) + (2*nx)] = 1./9.
+    
+  # corners
+  factors[0] = 1./36
+  factors[2*nx] = 1./36
+  factors[(2*ny) * (2*nx+1) + 0] = 1./36
+  factors[(2*ny) * (2*nx+1) + (2*nx)] = 1./36
+
+  print("factors = 1/36 * ")
+  for j in range(0,2*ny+1):
+    for i in range(0,2*nx+1):
+      print("{}".format(36*factors[j * (2*nx+1) + i]),end =" ")
+    print("")
+
+  # compute force values
+  total_force_x = 0
+  total_force_y = 0
+  total_force_z = 0
+  
+  # loop over nodes on top layer of geometry
+  for j in range(0,2*ny+1):
+    for i in range(0,2*nx+1):
+      k = 2*nz+1-1
+      factor = factors[j * (2*nx+1) + i]
+      
+      index = k*(2*nx+1)*(2*ny+1) + j*(2*nx+1) + i
+      
+      total_force_x += factor * s11_values[index]
+      total_force_y += factor * s22_values[index]
+      total_force_z += factor * s33_values[index]
+  
+  print("t: {}, force: {},{},{}".format(current_time, total_force_x, total_force_y, total_force_z))
 
 # Neumann boundary conditions, specify upward force for top elements, slightly in y-direction
 neumann_bc = [{"element": (nz-1)*nx*ny + j*nx + i, "constantVector": [0,1e-1,5e-1], "face": "2+"} for j in range(ny) for i in range(nx)]
@@ -98,14 +217,17 @@ config = {
     # boundary and initial conditions
     "dirichletBoundaryConditions": dirichlet_bc,
     "neumannBoundaryConditions": neumann_bc,
+    "updateDirichletBoundaryConditionsFunction": update_dirichlet_boundary_conditions,
+    "updateDirichletBoundaryConditionsFunctionCallInterval": 1,
+    
     "initialValuesDisplacements": [],
     #"initialValuesDisplacements": [[0.0,0.0,0.0] for i in range((2*nx+1)*(2*ny+1)*(2*nz+1-1))] + [[1.0,0.0,0.0] for i in range((2*nx+1)*(2*ny+1))],
-    "initialValuesVelocities": [[0.1*z,0.0,0.0] for i in range((2*nx+1)*(2*ny+1)) for z in range((2*nz+1))],
-    "constantBodyForce": [0,0,0],
+    "initialValuesVelocities": [[0.01*z,0.0,0.0] for i in range((2*nx+1)*(2*ny+1)) for z in range((2*nz+1))],
+    #"constantBodyForce": (1,0,0),     # e.g. for gravity
     
     "OutputWriter" : [   # output files for displacements function space (quadratic elements), contains displacements, velocities and PK2 stresses
       {"format": "Paraview", "outputInterval": 1, "filename": "out/u", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
-      #{"format": "PythonFile", "filename": "out/u", "outputInterval": 1, "binary":False, "onlyNodalValues":True},
+      {"format": "PythonCallback", "outputInterval": 1, "callback": postprocess, "onlyNodalValues":True},
     ],
     "pressure": {   # output files for pressure function space (linear elements), contains pressure values, as well as displacements and velocities
       "OutputWriter" : [

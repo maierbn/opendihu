@@ -21,7 +21,6 @@ PartitionedPetscVecForHyperelasticity(
 
   // create the Petsc Vec
   this->createVector();
-
 }
 
 template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType, int nComponents>

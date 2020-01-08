@@ -96,8 +96,7 @@ public:
   //! @param newValues the new BC values as given by the python dict, vector of pairs of (dofNo,Vec of values)
   //! @param inputMeshIsGlobal whether the dofNo is global or local indexing
   void updateDirichletBoundaryConditions(const std::vector<std::pair<global_no_t,std::array<double,nComponentsDirichletBc>>> &newValues,
-    bool inputMeshIsGlobal
-  );
+                                         bool inputMeshIsGlobal);
 
 protected:
 
@@ -134,7 +133,7 @@ protected:
 
   std::array<std::vector<dof_no_t>,nComponents> dofNoLocalToDofNoNonBcGlobal_;   ///< mapping from component no and local dof no to the numbering used for the combined vector, for local dofs with ghosts
   std::array<std::vector<dof_no_t>,nComponents> dofNoLocalToDofNoNonBcLocal_;    ///< mapping from component no and local dof no to the local number of the non-bc dof numbering
-  std::array<std::vector<double>,nComponentsDirichletBc> boundaryConditionValues_;   ///< prescribed boundary condition values for local dof nos (normal local dof numbering)
+  std::array<std::vector<double>,nComponents> boundaryConditionValues_;   ///< prescribed boundary condition values for local dof nos (normal local dof numbering)
   std::array<std::vector<bool>,nComponents> isPrescribed_;                ///< for every local dof no, if the dof has a prescribed Dirichlet BC value
 };
 

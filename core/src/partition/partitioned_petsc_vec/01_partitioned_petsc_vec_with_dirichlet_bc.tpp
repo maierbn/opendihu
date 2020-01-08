@@ -46,9 +46,12 @@ template<typename FunctionSpaceType, int nComponents, int nComponentsDirichletBc
 void PartitionedPetscVecWithDirichletBc<FunctionSpaceType, nComponents, nComponentsDirichletBc>::
 initialize(int offsetInGlobalNumberingPerRank)
 {
-  LOG(DEBUG) << "\"" << this->name_ << "\" PartitionedPetscVecWithDirichletBc createVector with " << nComponents << " components, size local: " << this->meshPartition_->nNodesLocalWithoutGhosts()
+  LOG(DEBUG) << "\"" << this->name_ << "\" PartitionedPetscVecWithDirichletBc createVector with " << nComponentsDirichletBc << " components, size local: " << this->meshPartition_->nNodesLocalWithoutGhosts()
     << ", global: " << this->meshPartition_->nNodesGlobal() << ", offsetInGlobalNumberingPerRank: " << offsetInGlobalNumberingPerRank
     << ", ghost dof nos global/petsc: " << this->meshPartition_->ghostDofNosGlobalPetsc();
+
+  // normally, nComponentsDirichletBc == nComponents
+  // only the deriving class can set nComponents > nComponentsDirichletBc, then it has to also properly initialize everything above nComponentsDirichletBc
 
   // define abbreviation variables
   const int nDofsLocalWithoutGhosts = this->meshPartition_->nDofsLocalWithoutGhosts();
@@ -58,11 +61,10 @@ initialize(int offsetInGlobalNumberingPerRank)
   nEntriesLocal_ = 0;
 
   // loop over components
-  for (int componentNo = 0; componentNo < nComponents; componentNo++)
+  for (int componentNo = 0; componentNo < nComponentsDirichletBc; componentNo++)
   {
     int nBoundaryConditionDofs = 0;
-    if (componentNo < nComponentsDirichletBc)
-      nBoundaryConditionDofs = dirichletBoundaryConditions_->boundaryConditionsByComponent()[componentNo].dofNosLocal.size();
+    nBoundaryConditionDofs = dirichletBoundaryConditions_->boundaryConditionsByComponent()[componentNo].dofNosLocal.size();
     nNonBcDofsWithoutGhosts_[componentNo] = nDofsLocalWithoutGhosts - nBoundaryConditionDofs;
     nEntriesLocal_ += nNonBcDofsWithoutGhosts_[componentNo];
   }
@@ -127,25 +129,6 @@ initialize(int offsetInGlobalNumberingPerRank)
       dofNoNonBcGlobal++;
     }
   }
-
-  // loop over components after nComponentsDirichletBc
-  for (int componentNo = nComponentsDirichletBc; componentNo < nComponents; componentNo++)
-  {
-    dofNoLocalToDofNoNonBcGlobal_[componentNo].resize(nDofsLocalWithGhosts);
-    dofNoLocalToDofNoNonBcLocal_[componentNo].resize(nDofsLocalWithGhosts);
-    isPrescribed_[componentNo].resize(nDofsLocalWithGhosts, false);
-
-    // loop over local dofs
-    for (dof_no_t dofNoLocal = 0; dofNoLocal < nDofsLocalWithoutGhosts; dofNoLocal++)
-    {
-      // here, dofNoLocal is a non-BC dof
-      dofNoLocalToDofNoNonBcGlobal_[componentNo][dofNoLocal] = dofNoNonBcGlobal;
-      dofNoLocalToDofNoNonBcLocal_[componentNo][dofNoLocal] = dofNoNonBcGlobal - nonBcDofNoGlobalBegin_;
-
-      dofNoNonBcGlobal++;
-    }
-  }
-
 
   VLOG(1) << "dofNoLocalToDofNoNonBcGlobal_ (only non-ghost dofs are set so far): " << dofNoLocalToDofNoNonBcGlobal_;
   VLOG(1) << "dofNoLocalToDofNoNonBcLocal_ (only non-ghost dofs are set so far): " << dofNoLocalToDofNoNonBcLocal_;
@@ -309,10 +292,10 @@ initialize(int offsetInGlobalNumberingPerRank)
 
     if (nFromRank != 0)
     {
-      requestedDofsGlobalPetscSendBuffer[i].resize(nFromRank*nComponents);
-      requestedDofsGlobalPetscSendBufferValues[i].resize(nFromRank*nComponents, 0.0);
+      requestedDofsGlobalPetscSendBuffer[i].resize(nFromRank*nComponentsDirichletBc);
+      requestedDofsGlobalPetscSendBufferValues[i].resize(nFromRank*nComponentsDirichletBc, 0.0);
 
-      for (int componentNo = 0; componentNo < nComponents; componentNo++)
+      for (int componentNo = 0; componentNo < nComponentsDirichletBc; componentNo++)
       {
         for (int requestedDofIndex = 0; requestedDofIndex < nFromRank; requestedDofIndex++)
         {
@@ -323,10 +306,7 @@ initialize(int offsetInGlobalNumberingPerRank)
           requestedDofsGlobalPetscSendBuffer[i][componentNo*nFromRank + requestedDofIndex] = dofNoLocalToDofNoNonBcGlobal_[componentNo][requestedDofNoLocal];
           // dofNoLocalToDofNoNonBcGlobal_[componentNo][requestedDofNoLocal] is -1 if it is a dirichlet boundary condition dof
 
-          if (componentNo < nComponentsDirichletBc)
-          {
-            requestedDofsGlobalPetscSendBufferValues[i][componentNo*nFromRank + requestedDofIndex] = this->boundaryConditionValues_[componentNo][requestedDofNoLocal];
-          }
+          requestedDofsGlobalPetscSendBufferValues[i][componentNo*nFromRank + requestedDofIndex] = this->boundaryConditionValues_[componentNo][requestedDofNoLocal];
 
           VLOG(1) << " send to rank " << foreignRankNo << ", component " << componentNo << " requested dofNoGlobalPetsc: " << requestedDofNoGlobalPetsc
             << ", requestedDofNoLocal: " << requestedDofNoLocal << " send dof " << dofNoLocalToDofNoNonBcGlobal_[componentNo][requestedDofNoLocal]
@@ -335,12 +315,12 @@ initialize(int offsetInGlobalNumberingPerRank)
       }
 
       MPI_Request sendRequestDofs;
-      MPIUtility::handleReturnValue(MPI_Isend(requestedDofsGlobalPetscSendBuffer[i].data(), nFromRank*nComponents, MPI_INT, foreignRankNo, 0,
+      MPIUtility::handleReturnValue(MPI_Isend(requestedDofsGlobalPetscSendBuffer[i].data(), nFromRank*nComponentsDirichletBc, MPI_INT, foreignRankNo, 0,
                                               this->meshPartition_->mpiCommunicator(), &sendRequestDofs), "MPI_Isend");
       sendRequests.push_back(sendRequestDofs);
 
       MPI_Request sendRequestValues;
-      MPIUtility::handleReturnValue(MPI_Isend(requestedDofsGlobalPetscSendBufferValues[i].data(), nFromRank*nComponents, MPI_DOUBLE, foreignRankNo, 1,
+      MPIUtility::handleReturnValue(MPI_Isend(requestedDofsGlobalPetscSendBufferValues[i].data(), nFromRank*nComponentsDirichletBc, MPI_DOUBLE, foreignRankNo, 1,
                                               this->meshPartition_->mpiCommunicator(), &sendRequestValues), "MPI_Isend");
       sendRequests.push_back(sendRequestValues);
     }
@@ -357,16 +337,16 @@ initialize(int offsetInGlobalNumberingPerRank)
     int foreignRankNo = requestDofsFromRank.first;
     int nRequestedDofs = requestDofsFromRank.second.dofNosLocal.size();
 
-    requestedDofsGlobalPetscReceiveBuffer[i].resize(nRequestedDofs*nComponents);
-    requestedDofsGlobalPetscReceiveBufferValues[i].resize(nRequestedDofs*nComponents);
+    requestedDofsGlobalPetscReceiveBuffer[i].resize(nRequestedDofs*nComponentsDirichletBc);
+    requestedDofsGlobalPetscReceiveBufferValues[i].resize(nRequestedDofs*nComponentsDirichletBc);
 
     MPI_Request receiveRequestDofs;
-    MPIUtility::handleReturnValue(MPI_Irecv(requestedDofsGlobalPetscReceiveBuffer[i].data(), nRequestedDofs*nComponents, MPI_INT, foreignRankNo, 0,
+    MPIUtility::handleReturnValue(MPI_Irecv(requestedDofsGlobalPetscReceiveBuffer[i].data(), nRequestedDofs*nComponentsDirichletBc, MPI_INT, foreignRankNo, 0,
                                             this->meshPartition_->mpiCommunicator(), &receiveRequestDofs), "MPI_Irecv");
     receiveRequests.push_back(receiveRequestDofs);
 
     MPI_Request receiveRequestValues;
-    MPIUtility::handleReturnValue(MPI_Irecv(requestedDofsGlobalPetscReceiveBufferValues[i].data(), nRequestedDofs*nComponents, MPI_DOUBLE, foreignRankNo, 1,
+    MPIUtility::handleReturnValue(MPI_Irecv(requestedDofsGlobalPetscReceiveBufferValues[i].data(), nRequestedDofs*nComponentsDirichletBc, MPI_DOUBLE, foreignRankNo, 1,
                                             this->meshPartition_->mpiCommunicator(), &receiveRequestValues), "MPI_Irecv");
     receiveRequests.push_back(receiveRequestValues);
     i++;
@@ -393,7 +373,7 @@ initialize(int offsetInGlobalNumberingPerRank)
     //const std::vector<global_no_t> &ghostDofNosGlobalPetsc = requestDofsFromRank.second.dofNosGlobalPetsc;
     const std::vector<dof_no_t> &ghostDofNosLocal = requestDofsFromRank.second.dofNosLocal;
 
-    for (int componentNo = 0; componentNo < nComponents; componentNo++)
+    for (int componentNo = 0; componentNo < nComponentsDirichletBc; componentNo++)
     {
       for (int j = 0; j < nRequestedDofs; j++)
       {
@@ -401,10 +381,7 @@ initialize(int offsetInGlobalNumberingPerRank)
         double value = requestedDofsGlobalPetscReceiveBufferValues[i][componentNo*nRequestedDofs + j];
         dof_no_t dofNoLocal = ghostDofNosLocal[j];    // this value was not sent
 
-        if (componentNo < nComponentsDirichletBc)
-        {
-          boundaryConditionValues_[componentNo][dofNoLocal] = value;
-        }
+        boundaryConditionValues_[componentNo][dofNoLocal] = value;
 
         // if the received dofNoNonBcGlobal does not contain the index, but the value -1, this means the dof has a Dirichlet BC
         if (dofNoNonBcGlobal == -1)
@@ -976,7 +953,11 @@ updateDirichletBoundaryConditions(const std::vector<std::pair<global_no_t,std::a
     }
 
     std::array<double,nComponentsDirichletBc> values = newValues[itemIndex].second;
-    boundaryConditionValues_[dofNoLocal] = values;
+
+    for (int componentNo = 0; componentNo < nComponentsDirichletBc; componentNo++)
+    {
+      boundaryConditionValues_[componentNo][dofNoLocal] = values[componentNo];
+    }
   }
 }
 

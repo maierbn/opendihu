@@ -38,7 +38,7 @@ public:
 
   //! constructor, create square sparse matrix, the number of entries is given by partitionedPetscVecForHyperelasticity
   PartitionedPetscMatForHyperelasticity(
-    std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>> partitionedPetscVecForHyperelasticity,
+    std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,nDisplacementComponents>> partitionedPetscVecForHyperelasticity,
     int diagonalNonZeros, int offdiagonalNonZeros,
     std::string name);
 

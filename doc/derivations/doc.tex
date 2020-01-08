@@ -2992,8 +2992,8 @@ where
 We discretize it in time
 \begin{equation*}
   \begin{array}{lll}
-    \bfv=\dot{\bfu}: \qquad &\dfrac{1}{dt}(\bfu^{(n+1)} - \bfu^{(n)}) = \theta \bfv^{(n+1)} + (1-\theta) \bfv^{(n)},\\[4mm]
-    \bfa=\dot{\bfv}: \qquad &\dfrac{1}{dt}(\bfv^{(n+1)} - \bfv^{(n)}) = \theta \bfa^{(n+1)} + (1-\theta) \bfa^{(n)},\\[4mm]
+    \dot{\bfu}=\bfv: \qquad &\dfrac{1}{dt}(\bfu^{(n+1)} - \bfu^{(n)}) = \theta \bfv^{(n+1)} + (1-\theta) \bfv^{(n)},\\[4mm]
+    \dot{\bfv}=\bfa: \qquad &\dfrac{1}{dt}(\bfv^{(n+1)} - \bfv^{(n)}) = \theta \bfa^{(n+1)} + (1-\theta) \bfa^{(n)},\\[4mm]
   \end{array}
 \end{equation*}
 For Crank-Nicolson method, $\theta = \frac12$, for implicit Euler, $\theta = 1$. Plugging this into \eqref{eq:dynamic_nonlinear_gov} yields the following three equations. 

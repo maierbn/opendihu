@@ -14,7 +14,8 @@ namespace SpatialDiscretization
 template<typename Term,int nDisplacementComponents>
 HyperelasticitySolver<Term,nDisplacementComponents>::
 HyperelasticitySolver(DihuContext context, std::string settingsKey) :
-  context_(context[settingsKey]), data_(context_), pressureDataCopy_(context_), initialized_(false), endTime_(0)
+  context_(context[settingsKey]), data_(context_), pressureDataCopy_(context_), initialized_(false),
+  endTime_(0), lastNorm_(0), secondLastNorm_(0)
 {
   // get python config
   this->specificSettings_ = this->context_.getPythonConfig();
@@ -65,7 +66,7 @@ HyperelasticitySolver(DihuContext context, std::string settingsKey) :
 
   // initialize output writers
   this->outputWriterManager_.initialize(this->context_, this->specificSettings_);
-  this->outputWriterManagerPressure_.initialize(this->context_, this->context_["pressure"].getPythonConfig());
+  this->outputWriterManagerPressure_.initialize(this->context_["pressure"], this->context_["pressure"].getPythonConfig());
 }
 
 template<typename Term,int nDisplacementComponents>
@@ -165,7 +166,7 @@ initialize()
   data_.setPressureFunctionSpace(pressureFunctionSpace_);
 
   data_.initialize();
-  pressureDataCopy_.initialize(data_.pressure(), data_.displacementsLinearMesh());
+  pressureDataCopy_.initialize(data_.pressure(), data_.displacementsLinearMesh(), data_.velocitiesLinearMesh());
   pressureDataCopy_.setFunctionSpace(pressureFunctionSpace_);
 
   // create nonlinear solver PETSc context (snes)
@@ -183,7 +184,7 @@ initialize()
   if (neumannBoundaryConditions_ == nullptr)
   {
     typedef Quadrature::Gauss<3> QuadratureType;
-    neumannBoundaryConditions_ = std::make_shared<NeumannBoundaryConditions<DisplacementsFunctionSpace,QuadratureType,nDisplacementComponents>>(this->context_);
+    neumannBoundaryConditions_ = std::make_shared<NeumannBoundaryConditions<DisplacementsFunctionSpace,QuadratureType,3>>(this->context_);
     neumannBoundaryConditions_->initialize(this->specificSettings_, this->data_.functionSpace(), "neumannBoundaryConditions");
   }
 
@@ -224,8 +225,7 @@ initializeFiberDirections()
   }
 
   // prepare the target mesh for the mapping, set all factors to zero
-  DihuContext::meshManager()->template prepareMapping<DisplacementsFieldVariableType>(this->data_.fiberDirection());
-
+  DihuContext::meshManager()->template prepareMappingLowToHigh<DisplacementsFieldVariableType>(this->data_.fiberDirection());
 
   // loop over fiber mesh names
   for (int fiberNo = 0; fiberNo < fiberMeshNames.size(); fiberNo++)
@@ -253,19 +253,21 @@ initializeFiberDirections()
       dof_no_t index0 = std::max(0, dofNoLocal-1);
       dof_no_t index1 = std::min(nDofsLocalWithoutGhosts-1, dofNoLocal+1);
 
-      Vec3 direction = -geometryFieldValues[index0] + geometryFieldValues[index1];
-      directionValues[dofNoLocal] = direction;
+      // get direction of 1D fiber
+      Vec3 fiberDirection = -geometryFieldValues[index0] + geometryFieldValues[index1];
+      directionValues[dofNoLocal] = fiberDirection;
     }
 
     direction->setValuesWithoutGhosts(directionValues);
 
-    // transfer direction values
+
+    // transfer direction values from 1D fibers to 3D field, -1 means all components
     DihuContext::meshManager()->mapLowToHighDimension<FieldVariable::FieldVariable<FiberFunctionSpace,3>, DisplacementsFieldVariableType>(
-      direction, this->data_.fiberDirection());
+      direction, -1, this->data_.fiberDirection(), -1);
   }
 
   // finalize the mapping to the target mesh, compute final values by dividing by the factors
-  DihuContext::meshManager()->template finalizeMapping<DisplacementsFieldVariableType>(this->data_.fiberDirection());
+  DihuContext::meshManager()->template finalizeMappingLowToHigh<DisplacementsFieldVariableType>(this->data_.fiberDirection());
 
   LOG(DEBUG) << "normalize fiber direction";
 

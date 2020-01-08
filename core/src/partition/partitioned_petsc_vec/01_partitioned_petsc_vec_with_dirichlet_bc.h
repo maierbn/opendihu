@@ -92,12 +92,18 @@ public:
   //! set the internal representation to be combined global, i.e. using the global vector (vectorCombinedWithoutDirichletDofsGlobal_), if it was local, ghost buffer entries are discarded (use finishGhostManipulation to consider ghost dofs)
   void setRepresentationGlobal();
 
+  //! update the dirichlet BC values, the numberings stay the same
+  //! @param newValues the new BC values as given by the python dict, vector of pairs of (dofNo,Vec of values)
+  //! @param inputMeshIsGlobal whether the dofNo is global or local indexing
+  void updateDirichletBoundaryConditions(const std::vector<std::pair<global_no_t,std::array<double,nComponentsDirichletBc>>> &newValues,
+    bool inputMeshIsGlobal
+  );
+
 protected:
 
   //! prepare internal variables such that the vector can be created by createVector afterwards
-  //! @param nComponents_ the actual number of components to initialize, this is usually the number of components of the whole vector, it is just different for PartitionedPetscVecForHyperelasticity
   //! @param offsetInGlobalNumberingPerRank Unused numbers in the non-bc global numbering at the end of the local numbers of each rank, only needed for PartitionedPetscVecForHyperelasticity
-  void initialize(int nComponents_, int offsetInGlobalNumberingPerRank = 0);
+  void initialize(int offsetInGlobalNumberingPerRank = 0);
 
   //! create the distributed Petsc vector vectorCombinedWithoutDirichletDofs_
   void createVector();
@@ -128,7 +134,7 @@ protected:
 
   std::array<std::vector<dof_no_t>,nComponents> dofNoLocalToDofNoNonBcGlobal_;   ///< mapping from component no and local dof no to the numbering used for the combined vector, for local dofs with ghosts
   std::array<std::vector<dof_no_t>,nComponents> dofNoLocalToDofNoNonBcLocal_;    ///< mapping from component no and local dof no to the local number of the non-bc dof numbering
-  std::array<std::vector<double>,nComponents> boundaryConditionValues_;   ///< prescribed boundary condition values for local dof nos (normal local dof numbering)
+  std::array<std::vector<double>,nComponentsDirichletBc> boundaryConditionValues_;   ///< prescribed boundary condition values for local dof nos (normal local dof numbering)
   std::array<std::vector<bool>,nComponents> isPrescribed_;                ///< for every local dof no, if the dof has a prescribed Dirichlet BC value
 };
 

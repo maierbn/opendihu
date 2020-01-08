@@ -35,6 +35,7 @@ createPetscObjects()
   velocitiesPreviousTimestep_    = this->displacementsFunctionSpace_->template createFieldVariable<3>("v_previous", displacementsComponentNames);     //< u, the displacements
   fiberDirection_                = this->displacementsFunctionSpace_->template createFieldVariable<3>("fiberDirection", displacementsComponentNames);
   displacementsLinearMesh_       = this->pressureFunctionSpace_->template createFieldVariable<3>("uLin", displacementsComponentNames);     //< u, the displacements
+  velocitiesLinearMesh_          = this->pressureFunctionSpace_->template createFieldVariable<3>("vLin", displacementsComponentNames);     //< v, the velocities
   pressure_                      = this->pressureFunctionSpace_->template createFieldVariable<1>("p");     //<  p, the pressure variable
   pressurePreviousTimestep_      = this->pressureFunctionSpace_->template createFieldVariable<1>("p_previous");     //<  p, the pressure variable
 
@@ -97,6 +98,14 @@ displacementsLinearMesh()
   return this->displacementsLinearMesh_;
 }
 
+//! field variable velocities v but on the linear mesh
+template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term>
+std::shared_ptr<typename QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::DisplacementsLinearFieldVariableType> QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::
+velocitiesLinearMesh()
+{
+  return this->velocitiesLinearMesh_;
+}
+
 //! field variable of p or p^(n+1)
 template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term>
 std::shared_ptr<typename QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::PressureFieldVariableType> QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::
@@ -123,7 +132,7 @@ pK2Stress()
 
 template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term>
 void QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::
-updateGeometry(double scalingFactor)
+updateGeometry(double scalingFactor, bool updateLinearVariables)
 {
   PetscErrorCode ierr;
 
@@ -136,43 +145,53 @@ updateGeometry(double scalingFactor)
 
   this->displacementsFunctionSpace_->geometryField().startGhostManipulation();
 
-  // for displacements extract linear mesh from quadratic mesh
-  std::vector<Vec3> displacementValues;
-  this->displacements_->getValuesWithGhosts(displacementValues);
-
-  node_no_t nNodesLocal[3] = {
-    this->displacementsFunctionSpace_->meshPartition()->nNodesLocalWithGhosts(0),
-    this->displacementsFunctionSpace_->meshPartition()->nNodesLocalWithGhosts(1),
-    this->displacementsFunctionSpace_->meshPartition()->nNodesLocalWithGhosts(2)
-  };
-
-  std::vector<Vec3> linearMeshDisplacementValues(this->pressureFunctionSpace_->meshPartition()->nNodesLocalWithGhosts());
-  int linearMeshIndex = 0;
-
-  // loop over linear nodes in the quadratic mesh
-  for (int k = 0; k < nNodesLocal[2]; k+=2)
+  // if the linear variables (geometry, displacements, velocities) should be updated in order to output with the pressure output writer
+  if (updateLinearVariables)
   {
-    for (int j = 0; j < nNodesLocal[1]; j+=2)
-    {
-      for (int i = 0; i < nNodesLocal[0]; i+=2, linearMeshIndex++)
-      {
-        int index = k*nNodesLocal[0]*nNodesLocal[1] + j*nNodesLocal[0] + i;
+    // for displacements extract linear mesh from quadratic mesh
+    std::vector<Vec3> displacementValues;
+    this->displacements_->getValuesWithGhosts(displacementValues);
 
-        linearMeshDisplacementValues[linearMeshIndex] = displacementValues[index];
+    std::vector<Vec3> velocityValues;
+    this->velocities_->getValuesWithGhosts(velocityValues);
+
+    node_no_t nNodesLocal[3] = {
+      this->displacementsFunctionSpace_->meshPartition()->nNodesLocalWithGhosts(0),
+      this->displacementsFunctionSpace_->meshPartition()->nNodesLocalWithGhosts(1),
+      this->displacementsFunctionSpace_->meshPartition()->nNodesLocalWithGhosts(2)
+    };
+
+    std::vector<Vec3> linearMeshDisplacementValues(this->pressureFunctionSpace_->meshPartition()->nNodesLocalWithGhosts());
+    std::vector<Vec3> linearMeshVelocityValues(this->pressureFunctionSpace_->meshPartition()->nNodesLocalWithGhosts());
+    int linearMeshIndex = 0;
+
+    // loop over linear nodes in the quadratic mesh
+    for (int k = 0; k < nNodesLocal[2]; k+=2)
+    {
+      for (int j = 0; j < nNodesLocal[1]; j+=2)
+      {
+        for (int i = 0; i < nNodesLocal[0]; i+=2, linearMeshIndex++)
+        {
+          int index = k*nNodesLocal[0]*nNodesLocal[1] + j*nNodesLocal[0] + i;
+
+          linearMeshDisplacementValues[linearMeshIndex] = displacementValues[index];
+          linearMeshVelocityValues[linearMeshIndex] = velocityValues[index];
+        }
       }
     }
+
+    displacementsLinearMesh_->setValuesWithGhosts(linearMeshDisplacementValues, INSERT_VALUES);
+    velocitiesLinearMesh_->setValuesWithGhosts(linearMeshVelocityValues, INSERT_VALUES);
+
+    // update linear function space geometry
+    this->pressureFunctionSpace_->geometryField().finishGhostManipulation();
+
+    // w = alpha * x + y, VecWAXPY(w, alpha, x, y)
+    ierr = VecWAXPY(this->pressureFunctionSpace_->geometryField().valuesGlobal(),
+                    1, this->displacementsLinearMesh_->valuesGlobal(), this->geometryReferenceLinearMesh_->valuesGlobal()); CHKERRV(ierr);
+
+    this->pressureFunctionSpace_->geometryField().startGhostManipulation();
   }
-
-  displacementsLinearMesh_->setValuesWithGhosts(linearMeshDisplacementValues, INSERT_VALUES);
-
-  // update linear function space geometry
-  this->pressureFunctionSpace_->geometryField().finishGhostManipulation();
-
-  // w = alpha * x + y, VecWAXPY(w, alpha, x, y)
-  ierr = VecWAXPY(this->pressureFunctionSpace_->geometryField().valuesGlobal(),
-                  1, this->displacementsLinearMesh_->valuesGlobal(), this->geometryReferenceLinearMesh_->valuesGlobal()); CHKERRV(ierr);
-
-  this->pressureFunctionSpace_->geometryField().startGhostManipulation();
 }
 
 //! set the function space object that discretizes the pressure field variable
@@ -226,7 +245,6 @@ print()
 {
 }
 
-
 template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term>
 typename QuasiStaticHyperelasticity<PressureFunctionSpace, DisplacementsFunctionSpace, Term, std::enable_if_t<Term::usesFiberDirection,Term>>::FieldVariablesForOutputWriter
 QuasiStaticHyperelasticity<PressureFunctionSpace, DisplacementsFunctionSpace, Term, std::enable_if_t<Term::usesFiberDirection,Term>>::
@@ -236,6 +254,7 @@ getFieldVariablesForOutputWriter()
   return std::make_tuple(
     std::shared_ptr<DisplacementsFieldVariableType>(std::make_shared<typename DisplacementsFunctionSpace::GeometryFieldType>(this->displacementsFunctionSpace_->geometryField())), // geometry
     std::shared_ptr<DisplacementsFieldVariableType>(this->displacements_),              // displacements_
+    std::shared_ptr<DisplacementsFieldVariableType>(this->velocities_),              // velocities_
     std::shared_ptr<StressFieldVariableType>(this->pK2Stress_),         // pK2Stress_
     std::shared_ptr<DisplacementsFieldVariableType>(this->fiberDirection_)
   );
@@ -251,6 +270,7 @@ getFieldVariablesForOutputWriter()
   return std::make_tuple(
     std::shared_ptr<DisplacementsFieldVariableType>(std::make_shared<typename DisplacementsFunctionSpace::GeometryFieldType>(this->displacementsFunctionSpace_->geometryField())), // geometry
     std::shared_ptr<DisplacementsFieldVariableType>(this->displacements_),              // displacements_
+    std::shared_ptr<DisplacementsFieldVariableType>(this->velocities_),              // velocities_
     std::shared_ptr<StressFieldVariableType>(this->pK2Stress_)         // pK2Stress_
   );
 
@@ -269,10 +289,13 @@ getFieldVariablesForOutputWriter()
 template<typename PressureFunctionSpace>
 void QuasiStaticHyperelasticityPressureOutput<PressureFunctionSpace>::
 initialize(std::shared_ptr<typename QuasiStaticHyperelasticityPressureOutput<PressureFunctionSpace>::PressureFieldVariableType> pressure,
-           std::shared_ptr<typename QuasiStaticHyperelasticityPressureOutput<PressureFunctionSpace>::DisplacementsLinearFieldVariableType> displacementsLinearMesh)
+           std::shared_ptr<typename QuasiStaticHyperelasticityPressureOutput<PressureFunctionSpace>::DisplacementsLinearFieldVariableType> displacementsLinearMesh,
+           std::shared_ptr<typename QuasiStaticHyperelasticityPressureOutput<PressureFunctionSpace>::DisplacementsLinearFieldVariableType> velocitiesLinearMesh
+          )
 {
   pressure_ = pressure;
   displacementsLinearMesh_ = displacementsLinearMesh;
+  velocitiesLinearMesh_ = velocitiesLinearMesh;
 }
 
 template<typename PressureFunctionSpace>
@@ -283,6 +306,7 @@ getFieldVariablesForOutputWriter()
   return std::tuple_cat(
     std::tuple<std::shared_ptr<DisplacementsLinearFieldVariableType>>(std::make_shared<typename PressureFunctionSpace::GeometryFieldType>(this->functionSpace_->geometryField())), // geometry
     std::tuple<std::shared_ptr<DisplacementsLinearFieldVariableType>>(this->displacementsLinearMesh_),
+    std::tuple<std::shared_ptr<DisplacementsLinearFieldVariableType>>(this->velocitiesLinearMesh_),
     std::tuple<std::shared_ptr<PressureFieldVariableType>>(this->pressure_)
   );
 }

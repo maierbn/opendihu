@@ -53,6 +53,10 @@ nonlinearSolve()
       break;
   }
 
+  // reset value of last residual norm that is needed for computational of experimental order of convergence
+  lastNorm_ = 0;
+  secondLastNorm_ = 0;
+
   if (this->durationLogKey_ != "")
     Control::PerformanceMeasurement::stop(this->durationLogKey_+std::string("_durationSolve"));
 
@@ -71,8 +75,9 @@ postprocessSolution()
   // compute the PK2 stress at every node
   computePK2StressField();
 
-  // update the geometry field by the new displacements
-  this->data_.updateGeometry(displacementsScalingFactor_);
+  // update the geometry field by the new displacements, also update field variables for the pressure output writer if needed
+  bool usePressureOutputWriter = this->outputWriterManagerPressure_.hasOutputWriters();
+  this->data_.updateGeometry(displacementsScalingFactor_, usePressureOutputWriter);
 
   // dump files containing rhs and system matrix
   nonlinearSolver_->dumpMatrixRightHandSide(solverVariableResidual_);
@@ -86,10 +91,24 @@ postprocessSolution()
 
 template<typename Term,int nDisplacementComponents>
 void HyperelasticitySolver<Term,nDisplacementComponents>::
-monitorSolvingIteration(SNES snes, PetscInt its, PetscReal norm)
+monitorSolvingIteration(SNES snes, PetscInt its, PetscReal currentNorm)
 {
+  // compute experimental order of convergence which is a measure for the current convergence velocity
+  PetscReal experimentalOrderOfConvergence = 0;
+
+  if (secondLastNorm_ != 0)
+    experimentalOrderOfConvergence = log(lastNorm_ / currentNorm) / log(secondLastNorm_ / lastNorm_);
+
+  secondLastNorm_ = lastNorm_;
+  lastNorm_ = currentNorm;
+
+
   //T* object = static_cast<T*>(mctx);
-  LOG(INFO) << "  Nonlinear solver: iteration " << its << ", residual norm " << norm;
+  std::stringstream message;
+  message  << "  Nonlinear solver: iteration " << its << ", residual norm " << currentNorm;
+  if (experimentalOrderOfConvergence != 0)
+    message << ", eoc: " << experimentalOrderOfConvergence;
+  LOG(INFO) << message.str();
 
   static int evaluationNo = 0;  // counter how often this function was called
 
@@ -113,7 +132,7 @@ monitorSolvingIteration(SNES snes, PetscInt its, PetscReal norm)
   // if log file was given, write residual norm to log file
   if (residualNormLogFile_.is_open())
   {
-    residualNormLogFile_ << its << ";" << norm << std::endl;
+    residualNormLogFile_ << its << ";" << currentNorm << std::endl;
   }
 }
 
@@ -578,7 +597,7 @@ dumpJacobianMatrix(Mat jac)
   static int evaluationNo = 0;  // counter how often this function was called
 
   std::stringstream filename;
-  filename << "out/jac_" << std::setw(3) << std::setfill('0') << evaluationNo;
+  filename << "out/jac_" << std::setw(3) << std::setfill('0') << evaluationNo << "r" <<  DihuContext::nRanksCommWorld();
 
   evaluationNo++;
 
@@ -603,7 +622,10 @@ dumpJacobianMatrix(Mat jac)
       // if matrix is not all zeros
       double numericJacobianNorm = 0;
       MatNorm(solverMatrixAdditionalNumericJacobian_, NORM_1, &numericJacobianNorm);
-      if (numericJacobianNorm > 1)
+
+      LOG(DEBUG) << "numericJacobianNorm: " << numericJacobianNorm;
+
+      if (numericJacobianNorm > 1e-5)
       {
         // compute difference between analytic and numeric jacobian
         Mat difference;

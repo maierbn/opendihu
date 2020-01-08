@@ -11,14 +11,14 @@ namespace TimeSteppingScheme
 template<typename Term>
 DynamicHyperelasticitySolver<Term>::
 DynamicHyperelasticitySolver(DihuContext context) :
-  TimeSteppingScheme(context["DynamicHyperelasticitySolver"]), staticSolver_(context, "DynamicHyperelasticitySolver"), data_(context_)
+  TimeSteppingScheme(context["DynamicHyperelasticitySolver"]), hyperelasticitySolver_(context, "DynamicHyperelasticitySolver"), data_(context_)
 {
   specificSettings_ = this->context_.getPythonConfig();
   density_ = specificSettings_.getOptionDouble("density", 1.0, PythonUtility::Positive);
-  viscosity_ = specificSettings_.getOptionDouble("viscosity", 0.0, PythonUtility::NonNegative);
+  //viscosity_ = specificSettings_.getOptionDouble("viscosity", 0.0, PythonUtility::NonNegative);
 
   // initialize output writers
-  this->outputWriterManager_.initialize(this->context_["dynamic"], this->specificSettings_);
+  this->outputWriterManager_.initialize(this->context_["dynamic"], this->context_["dynamic"].getPythonConfig());
 }
 
 template<typename Term>
@@ -26,84 +26,54 @@ void DynamicHyperelasticitySolver<Term>::
 initialize()
 {
   TimeSteppingScheme::initialize();
-  staticSolver_.initialize();
-  data_.setFunctionSpace(staticSolver_.data().displacementsFunctionSpace());
-  data_.initialize(staticSolver_.data().displacements());
+  hyperelasticitySolver_.initialize();
+  data_.setFunctionSpace(hyperelasticitySolver_.data().displacementsFunctionSpace());
+  data_.initialize();
 
   // create variable of unknowns
-  uvp_ = staticSolver_.createPartitionedPetscVec("uvp");
-
+  uvp_ = hyperelasticitySolver_.createPartitionedPetscVec("uvp");
   setInitialValues();
 
-  /*
-  // initialize state vectors
-  u_ = staticSolver_.createPartitionedPetscVec("u");
-  v_ = staticSolver_.createPartitionedPetscVec("v");
-  a_ = staticSolver_.createPartitionedPetscVec("a");
+  VecDuplicate(uvp_->valuesGlobal(), &internalVirtualWork_);
+  VecDuplicate(uvp_->valuesGlobal(), &accelerationTerm_);
+  VecDuplicate(uvp_->valuesGlobal(), &externalVirtualWorkDead_);
 
-  // initialize temporary vectors
-  for (int i = 0; i < 9; i++)
-  {
-    std::stringstream name;
-    name << "temp" << i;
-    temp_[i] = staticSolver_.createPartitionedPetscVec(name.str());
-  }
-
-  // initialize helper vectors for Runge-Kutte scheme
-  for (int i = 0; i < 4; i++)
-  {
-    std::stringstream name;
-    name << "k" << i;
-    k_[i] = staticSolver_.createPartitionedPetscVec(name.str());
-
-    name.str();
-    name << "l" << i;
-    l_[i] = staticSolver_.createPartitionedPetscVec(name.str());
-  }
-
-  initializeMassMatrix();*/
-
-  // δW_ext = int_∂Ω T_a phi_L dS was precomputed in initialize of staticSolver_
-  /*PetscErrorCode ierr;
-  ierr = VecCopy(staticSolver_.externalVirtualWork(), temp_[0]->valuesGlobal()); CHKERRV(ierr);
-
-  // copy the temp0 values to data for output
-  staticSolver_.setDisplacementsAndPressureFromCombinedVec(temp_[0]->valuesGlobal(), this->data_.externalVirtualWork());
-  */
+  uvp_->setRepresentationGlobal();
 }
 
 template<typename Term>
 void DynamicHyperelasticitySolver<Term>::
 setInitialValues()
 {
-
   // set initial values as given in settings, or set to zero if not given
   std::vector<Vec3> localValuesDisplacements;
   std::vector<Vec3> localValuesVelocities;
+
+  std::shared_ptr<DisplacementsFunctionSpace> displacementsFunctionSpace = this->data_.functionSpace();
 
   // determine if the initial values are given as global and local array
   bool inputMeshIsGlobal = this->specificSettings_.getOptionBool("inputMeshIsGlobal", true);
   if (inputMeshIsGlobal)
   {
+
     // if the settings specify a global list of values, extract the local values
-    assert(this->data_);
-    assert(this->data_->displacementsFunctionSpace());
+    assert(displacementsFunctionSpace);
 
     // get number of global dofs, i.e. number of values in global list
-    const int nDofsGlobal = this->data_->displacementsFunctionSpace()->nDofsGlobal();
+    const int nDofsGlobal = displacementsFunctionSpace->nDofsGlobal();
     LOG(DEBUG) << "setInitialValues, nDofsGlobal = " << nDofsGlobal;
 
     // extract only the local dofs out of the list of global values
     this->specificSettings_.getOptionVector<Vec3>("initialValuesDisplacements", nDofsGlobal, localValuesDisplacements);
-    this->data_->displacementsFunctionSpace()->meshPartition()->extractLocalDofsWithoutGhosts(localValuesDisplacements);
+    displacementsFunctionSpace->meshPartition()->extractLocalDofsWithoutGhosts(localValuesDisplacements);
 
     this->specificSettings_.getOptionVector<Vec3>("initialValuesVelocities", nDofsGlobal, localValuesVelocities);
-    this->data_->displacementsFunctionSpace()->meshPartition()->extractLocalDofsWithoutGhosts(localValuesVelocities);
+    displacementsFunctionSpace->meshPartition()->extractLocalDofsWithoutGhosts(localValuesVelocities);
   }
   else
   {
     // input is already only the local dofs, use all
-    const int nDofsLocal = this->data_->displacementsFunctionSpace()->nDofsLocalWithoutGhosts();
+    const int nDofsLocal = displacementsFunctionSpace->nDofsLocalWithoutGhosts();
     this->specificSettings_.getOptionVector<Vec3>("initialValuesDisplacements", nDofsLocal, localValuesDisplacements);
     this->specificSettings_.getOptionVector<Vec3>("initialValuesVelocities", nDofsLocal, localValuesVelocities);
   }
@@ -111,11 +81,11 @@ setInitialValues()
   VLOG(1) << "set initial values for velocities to " << localValuesVelocities;
 
   // set the first component of the solution variable by the given values
-  this->data_->displacements()->setValuesWithoutGhosts(localValuesDisplacements);
-  this->data_->velocities()->setValuesWithoutGhosts(localValuesVelocities);
+  this->data_.displacements()->setValuesWithoutGhosts(localValuesDisplacements);
+  this->data_.velocities()->setValuesWithoutGhosts(localValuesVelocities);
 
   // set displacement entries in uvp
-  int nDofsLocalWithoutGhosts = this->data_->displacementsFunctionSpace()->nDofsLocalWithoutGhosts();
+  int nDofsLocalWithoutGhosts = displacementsFunctionSpace->nDofsLocalWithoutGhosts();
   std::vector<double> localValues(nDofsLocalWithoutGhosts);
 
   uvp_->zeroGhostBuffer();
@@ -128,7 +98,7 @@ setInitialValues()
       localValues[entryNo] = localValuesDisplacements[entryNo][componentNo];
     }
 
-    uvp_->setValues(componentNo, nDofsLocalWithoutGhosts, this->data_->displacementsFunctionSpace()->meshPartition()->dofNosLocal().data(), localValues.data());
+    uvp_->setValues(componentNo, nDofsLocalWithoutGhosts, displacementsFunctionSpace->meshPartition()->dofNosLocal().data(), localValues.data());
   }
 
   // set velocity entries in uvp
@@ -139,10 +109,9 @@ setInitialValues()
       localValues[entryNo] = localValuesVelocities[entryNo][componentNo];
     }
 
-    uvp_->setValues(3+componentNo, nDofsLocalWithoutGhosts, this->data_->displacementsFunctionSpace()->meshPartition()->dofNosLocal().data(), localValues.data());
+    uvp_->setValues(3+componentNo, nDofsLocalWithoutGhosts, displacementsFunctionSpace->meshPartition()->dofNosLocal().data(), localValues.data());
   }
-  uvp_->finishGhostManipulation();
-  uvp_->startGhostManipulation();
+  uvp_->setRepresentationGlobal();
 }
 
 template<typename Term>
@@ -168,24 +137,29 @@ advanceTimeSpan()
       LOG(INFO) << "DynamicHyperelasticitySolver, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
     }
 
-    //computeRungeKutta4();
-    //computeExplicitEuler();
-    staticSolver_.solveDynamicProblem(uvp_);
+    LOG(DEBUG) << "solveDynamicProblem";
 
-    //staticSolver_.run();
-
-    // advance simulation time
+    // advance simulation time, staticSolver needs the new time in order to output results after the solve is done
     timeStepNo++;
     currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
+
+    // set the current Time to the hyperelasticity solver and then solve the dynamic problem
+    hyperelasticitySolver_.setTimeSpan(-1, currentTime);
+    hyperelasticitySolver_.solveDynamicProblem(uvp_, timeStepNo==0, internalVirtualWork_, externalVirtualWorkDead_, accelerationTerm_);
 
     // stop duration measurement
     if (this->durationLogKey_ != "")
       Control::PerformanceMeasurement::stop(this->durationLogKey_);
 
-    // write current output values
-    staticSolver_.setDisplacementsVelocitiesAndPressureFromCombinedVec(uvp_->valuesGlobal(),
-                                                                       this->data_.displacements(), this->data_.velocities(), this->data_.pressure());
+    // copy resulting values to data object such that they can be written by output writer
+    hyperelasticitySolver_.setDisplacementsVelocitiesAndPressureFromCombinedVec(
+      uvp_->valuesGlobal(), this->data_.displacements(), this->data_.velocities());
 
+    hyperelasticitySolver_.setDisplacementsVelocitiesAndPressureFromCombinedVec(internalVirtualWork_, this->data_.internalVirtualWork());
+    hyperelasticitySolver_.setDisplacementsVelocitiesAndPressureFromCombinedVec(externalVirtualWorkDead_, this->data_.externalVirtualWorkDead());
+    hyperelasticitySolver_.setDisplacementsVelocitiesAndPressureFromCombinedVec(accelerationTerm_, this->data_.accelerationTerm());
+
+    // write current output values
     this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime);
 
     // start duration measurement
@@ -218,7 +192,7 @@ initializeMassMatrix()
   LOG(TRACE) << "init mass matrix";
 
   // create inverseLumpedMassMatrix
-  massMatrix_ = staticSolver_.createPartitionedPetscMat("massMatrix");
+  massMatrix_ = hyperelasticitySolver_.createPartitionedPetscMat("massMatrix");
 
   const int D = 3;  // dimension
   const int nComponents = 3;
@@ -309,10 +283,10 @@ initializeMassMatrix()
   massMatrix_->assembly(MAT_FINAL_ASSEMBLY);
   LOG(DEBUG) << *massMatrix_;
 
-  inverseLumpedMassMatrix_ = staticSolver_.createPartitionedPetscMat("inverseLumpedMassMatrix");
+  inverseLumpedMassMatrix_ = hyperelasticitySolver_.createPartitionedPetscMat("inverseLumpedMassMatrix");
 
   // row sum vector
-  std::shared_ptr<VecHyperelasticity> rowSum = staticSolver_.createPartitionedPetscVec("rowSum");
+  std::shared_ptr<VecHyperelasticity> rowSum = hyperelasticitySolver_.createPartitionedPetscVec("rowSum");
 
   LOG(DEBUG) << rowSum;
 
@@ -341,14 +315,14 @@ computeAcceleration(std::shared_ptr<VecHyperelasticity> u, std::shared_ptr<VecHy
   LOG(TRACE) << "computeAcceleration";
 
   // compute δW_int, store in temp_[0]
-  staticSolver_.materialComputeInternalVirtualWork(u, temp_[0]);
+  hyperelasticitySolver_.materialComputeInternalVirtualWork(u, temp_[0]);
 
   LOG(DEBUG) << "δW_int: " << *temp_[0];
   // subtract external virtual work f
 
-  // δW_ext = int_∂Ω T_a phi_L dS was precomputed in initialize of staticSolver_
+  // δW_ext = int_∂Ω T_a phi_L dS was precomputed in initialize of hyperelasticitySolver_
   PetscErrorCode ierr;
-  ierr = VecAXPY(temp_[0]->valuesGlobal(), -1, staticSolver_.externalVirtualWork()); CHKERRV(ierr);
+  ierr = VecAXPY(temp_[0]->valuesGlobal(), -1, hyperelasticitySolver_.externalVirtualWork()); CHKERRV(ierr);
 
   LOG(DEBUG) << "-f + Ku: " << *temp_[0];
 
@@ -533,10 +507,10 @@ computeRungeKutta4()
   // enforce incompressibility by solving K*u^(new) = K*u
 
   // compute temp8 = K*u
-  //staticSolver_.materialComputeInternalVirtualWork(u_, temp_[8]);
+  //hyperelasticitySolver_.materialComputeInternalVirtualWork(u_, temp_[8]);
 
   // solve ∂W_int(u) - temp8 = 0 with J = 1 for u. The previous values in u_ are the initial guess.
-  //staticSolver_.solveForDisplacements(temp_[8], u_);
+  //hyperelasticitySolver_.solveForDisplacements(temp_[8], u_);
 }
 
 template<typename Term>
@@ -550,7 +524,7 @@ computeExplicitEuler()
   // compute k0 = Δt*a(u^(n), v^(n))
   computeAcceleration(u_, v_, k_[0]);
   LOG(DEBUG) << "k0: " << *k_[0];
-  staticSolver_.setDisplacementsAndPressureFromCombinedVec(k_[0]->valuesGlobal(), this->data_.acceleration());
+  hyperelasticitySolver_.setDisplacementsAndPressureFromCombinedVec(k_[0]->valuesGlobal(), this->data_.acceleration());
 
   ierr = VecScale(k_[0]->valuesGlobal(), this->timeStepWidth_); CHKERRV(ierr);
 
@@ -566,16 +540,16 @@ computeExplicitEuler()
 
 
   // copy the u^(n+1) and v^(n+1) values to data.rhs to be output after this time step
-  staticSolver_.setDisplacementsAndPressureFromCombinedVec(u_->valuesGlobal(), this->data_.displacementsCompressible());
-  staticSolver_.setDisplacementsAndPressureFromCombinedVec(v_->valuesGlobal(), this->data_.velocityCompressible());
+  hyperelasticitySolver_.setDisplacementsAndPressureFromCombinedVec(u_->valuesGlobal(), this->data_.displacementsCompressible());
+  hyperelasticitySolver_.setDisplacementsAndPressureFromCombinedVec(v_->valuesGlobal(), this->data_.velocityCompressible());
 
   LOG(DEBUG) << "enforce incompressibility";
 
   // enforce incompressibility by solving K*u^(new) = K*u
 
 
-  staticSolver_.materialComputeInternalVirtualWork(u_, temp_[8]);
-  staticSolver_.solveForDisplacements(temp_[8], u_);    // solveForDisplacements(externalVirtualWork, displacements)
+  hyperelasticitySolver_.materialComputeInternalVirtualWork(u_, temp_[8]);
+  hyperelasticitySolver_.solveForDisplacements(temp_[8], u_);    // solveForDisplacements(externalVirtualWork, displacements)
   return;
   // compute temp8 = K*u
   computeAcceleration(u_, v_, k_[0]);
@@ -583,8 +557,8 @@ computeExplicitEuler()
   // temp0 = M*a^(n+1)
   ierr = MatMult(massMatrix_->valuesGlobal(), k_[0]->valuesGlobal(), temp_[0]->valuesGlobal()); CHKERRV(ierr);
 
-  // δW_ext = int_∂Ω T_a phi_L dS was precomputed in initialize of staticSolver_
-  ierr = VecCopy(staticSolver_.externalVirtualWork(), temp_[1]->valuesGlobal()); CHKERRV(ierr);
+  // δW_ext = int_∂Ω T_a phi_L dS was precomputed in initialize of hyperelasticitySolver_
+  ierr = VecCopy(hyperelasticitySolver_.externalVirtualWork(), temp_[1]->valuesGlobal()); CHKERRV(ierr);
 
   // temp1 = temp1 - M*a^(n+1) = δW_ext - M*a^(n+1)
   VecAXPY(temp_[1]->valuesGlobal(), -1, temp_[0]->valuesGlobal());
@@ -592,12 +566,12 @@ computeExplicitEuler()
 
 
   // copy the temp8 values to data.rhs to be output after this time step
-  staticSolver_.setDisplacementsAndPressureFromCombinedVec(temp_[1]->valuesGlobal(), this->data_.internalVirtualWorkCompressible());
+  hyperelasticitySolver_.setDisplacementsAndPressureFromCombinedVec(temp_[1]->valuesGlobal(), this->data_.internalVirtualWorkCompressible());
 
 
 
   // solve ∂W_int(u) - temp8 = 0 with J = 1 for u. The previous values in u_ are the initial guess.
-  staticSolver_.solveForDisplacements(temp_[1], u_);    // solveForDisplacements(externalVirtualWork, displacements)
+  hyperelasticitySolver_.solveForDisplacements(temp_[1], u_);    // solveForDisplacements(externalVirtualWork, displacements)
 
 }*/
 

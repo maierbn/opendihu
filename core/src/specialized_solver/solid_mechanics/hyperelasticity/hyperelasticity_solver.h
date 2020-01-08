@@ -17,8 +17,8 @@ namespace SpatialDiscretization
 {
 
 /** This solver is for the nonlinear finite elasticity problem with Mooney-Rivlin material in 3D.
- *  It implements the static equation ∂W_int(u,p) - ∂W_ext = 0 + incompressibility (set nDisplacementComponents = 3)
- *  and the dynamic equation ∂W_int(u,p) - ∂W_ext,dead + ∂W_ext(v) = 0, dot u = v, incompressibility (see details in doc.pdf) (set nDisplacementComponents = 6)
+ *  It implements the static equation ∂W_int(u,p) - ∂W_ext = 0 + incompressibility (for nDisplacementComponents = 3)
+ *  and the dynamic equation ∂W_int(u,p) - ∂W_ext,dead + ∂W_ext(v) = 0, dot u = v, incompressibility (see details in doc.pdf) (for nDisplacementComponents = 6)
  *
  * Further numerical improvements for solving the nonlinear system that may be implemented later:
  *   https://github.com/jedbrown/spectral-petsc/blob/master/stokes.C
@@ -153,8 +153,10 @@ public:
     std::shared_ptr<VecHyperelasticity> internalVirtualWork
   );
 
-  //! solve the dynamic hyperelastic problem
-  void solveDynamicProblem(std::shared_ptr<VecHyperelasticity> displacementsVelocitiesPressure);
+  //! solve the dynamic hyperelastic problem,
+  //! output internalVirtualWork, externalVirtualWorkDead and accelerationTerm which is the acceleration contribution to δW
+  void solveDynamicProblem(std::shared_ptr<VecHyperelasticity> displacementsVelocitiesPressure, bool isFirstTimeStep,
+                           Vec internalVirtualWork, Vec &externalVirtualWorkDead, Vec accelerationTerm);
 
   //! compute u from the equation ∂W_int - externalVirtualWork = 0 and J = 1, the result will be in displacements,
   //! the previous value in displacements will be used as initial guess (call zeroEntries() of displacements beforehand, if no initial guess should be provided)
@@ -280,7 +282,7 @@ protected:
   std::ofstream residualNormLogFile_;   ///< ofstream of a log file that will contain the residual norm for each iteration
 
   std::shared_ptr<DirichletBoundaryConditions<DisplacementsFunctionSpace,nDisplacementComponents>> dirichletBoundaryConditions_ = nullptr;  ///< object that parses Dirichlet boundary conditions and applies them to rhs
-  std::shared_ptr<NeumannBoundaryConditions<DisplacementsFunctionSpace,Quadrature::Gauss<3>,nDisplacementComponents>> neumannBoundaryConditions_ = nullptr;  ///< object that parses Neumann boundary conditions and applies them to the rhs
+  std::shared_ptr<NeumannBoundaryConditions<DisplacementsFunctionSpace,Quadrature::Gauss<3>,3>> neumannBoundaryConditions_ = nullptr;  ///< object that parses Neumann boundary conditions and applies them to the rhs
 
   std::vector<double> materialParameters_;    ///< material parameters, e.g. c1,c2 for Mooney-Rivlin
   double displacementsScalingFactor_;   ///< factor with which to scale the displacements
@@ -288,6 +290,8 @@ protected:
   Vec3 constantBodyForce_;   ///< the constant body force, if given or [0,0,0]
   double timeStepWidth_;      ///< timeStepWidth, only need for the dynamic problem
   double density_;                ///< density, only needed for the dynamic problem
+  double lastNorm_;            ///< residual norm of the last iteration in the nonlinear solver
+  double secondLastNorm_;            ///< residual norm of the second last iteration in the nonlinear solver
 
   bool useAnalyticJacobian_;   ///< if the analytically computed Jacobian of the Newton scheme should be used. Theoretically if it is correct, this is the fastest option.
   bool useNumericJacobian_;   ///< if a numerically computed Jacobian should be used, approximated by finite differences

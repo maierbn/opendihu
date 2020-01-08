@@ -13,8 +13,8 @@ PartitionedPetscVecForHyperelasticity(
 {
   componentNoPressure_ = nComponents;   // the pressure component is the last one, equal to nComponents (=3 or 6)
 
-  // initialize variables for 3 or 6 displacement/velocity components
-  this->initialize(nComponents, meshPartitionPressure_->nDofsLocalWithoutGhosts());
+  // initialize variables for 3 or 6 displacement/velocity components and 1 pressure component
+  this->initialize(meshPartitionPressure_->nDofsLocalWithoutGhosts());
 
   // initialize last component for pressure
   initializeForPressure();

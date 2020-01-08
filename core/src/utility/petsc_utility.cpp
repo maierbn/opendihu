@@ -532,7 +532,7 @@ void dumpVector(std::string filename, std::string format, Vec &vector, MPI_Comm 
 
   // compose output filename
   std::stringstream vectorOutputFilename;
-  vectorOutputFilename << filename << "_" << std::setw(5) << std::setfill('0') << counter++ << suffix;
+  vectorOutputFilename << filename << "_" << std::setw(3) << std::setfill('0') << counter++ << suffix;
 
   std::stringstream filenameStream;
   filenameStream << vectorOutputFilename.str();
@@ -699,7 +699,7 @@ void dumpMatrix(std::string filename, std::string format, Mat &matrix, MPI_Comm 
 
   // compose output filename
   std::stringstream matrixOutputFilename;
-  matrixOutputFilename << filename << "_" << std::setw(5) << std::setfill('0') << counter++ << suffix;
+  matrixOutputFilename << filename << "_" << std::setw(3) << std::setfill('0') << counter++ << suffix;
 
   // open file given by filename, create directory if necessary
   std::ofstream file;

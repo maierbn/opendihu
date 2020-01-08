@@ -29,36 +29,25 @@ public:
   std::shared_ptr<DisplacementsFieldVariableType> displacements();
 
   //! field variable of v
-  std::shared_ptr<DisplacementsFieldVariableType> velocity();
-
-  //! field variable of a
-  std::shared_ptr<DisplacementsFieldVariableType> acceleration();
-
-  //! field variable of u_compressible
-  std::shared_ptr<DisplacementsFieldVariableType> displacementsCompressible();
-
-  //! field variable of v_compressible
-  std::shared_ptr<DisplacementsFieldVariableType> velocityCompressible();
-
-  //! ∂Wint_compressible, before incompressibility is enforced
-  std::shared_ptr<DisplacementsFieldVariableType> internalVirtualWorkCompressible();
+  std::shared_ptr<DisplacementsFieldVariableType> velocities();
 
   //! ∂Wext
-  std::shared_ptr<DisplacementsFieldVariableType> externalVirtualWork();
+  std::shared_ptr<DisplacementsFieldVariableType> externalVirtualWorkDead();
 
-  //! initialize, get the displacements from the static solver
-  void initialize(std::shared_ptr<DisplacementsFieldVariableType> displacements);
+  //! ∂Wint_stress
+  std::shared_ptr<DisplacementsFieldVariableType> internalVirtualWork();
+
+  //! ∂Wint_acceleration
+  std::shared_ptr<DisplacementsFieldVariableType> accelerationTerm();
 
   //! field variables that will be output by outputWriters
   //type to use if there is no fiber direction field variable
   typedef std::tuple<
     std::shared_ptr<DisplacementsFieldVariableType>,  // current geometry field
     std::shared_ptr<DisplacementsFieldVariableType>,  // displacements
-    std::shared_ptr<DisplacementsFieldVariableType>,  // velocity
-    std::shared_ptr<DisplacementsFieldVariableType>,   // acceleration
-    std::shared_ptr<DisplacementsFieldVariableType>,   // u_compressible
-    std::shared_ptr<DisplacementsFieldVariableType>,   // v_compressible
-    std::shared_ptr<DisplacementsFieldVariableType>,   // ∂Wint_compressible
+    std::shared_ptr<DisplacementsFieldVariableType>,  // velocities
+    std::shared_ptr<DisplacementsFieldVariableType>,  // ∂Wint_stress
+    std::shared_ptr<DisplacementsFieldVariableType>,  // ∂Wint_acceleration
     std::shared_ptr<DisplacementsFieldVariableType>   // ∂Wext
   >
   FieldVariablesForOutputWriter;
@@ -71,13 +60,11 @@ protected:
   //! initializes the vectors with size
   void createPetscObjects() override;
 
-  std::shared_ptr<DisplacementsFieldVariableType> displacements_;       //< the displacements, u
-  std::shared_ptr<DisplacementsFieldVariableType> velocity_;     //< v, the velocity
-  std::shared_ptr<DisplacementsFieldVariableType> acceleration_;     //< u, the acceleration
-  std::shared_ptr<DisplacementsFieldVariableType> internalVirtualWorkCompressible_;     //< ∂Wint_compressible, before incompressibility is enforced
-  std::shared_ptr<DisplacementsFieldVariableType> displacementsCompressible_;       //< u_compressible
-  std::shared_ptr<DisplacementsFieldVariableType> velocityCompressible_;     //< v_compressible
-  std::shared_ptr<DisplacementsFieldVariableType> externalVirtualWork_;     //< ∂Wext
+  std::shared_ptr<DisplacementsFieldVariableType> displacements_;               //< the displacements, u
+  std::shared_ptr<DisplacementsFieldVariableType> velocities_;                  //< v, the velocities
+  std::shared_ptr<DisplacementsFieldVariableType> internalVirtualWork_;         //< ∂Wint_stress
+  std::shared_ptr<DisplacementsFieldVariableType> accelerationTerm_;            //< ∂Wint_acceleration
+  std::shared_ptr<DisplacementsFieldVariableType> externalVirtualWorkDead_;     //< ∂Wext_dead
 };
 
 } // namespace Data

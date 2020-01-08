@@ -3,7 +3,7 @@
 template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType, int nDisplacementComponents>
 PartitionedPetscMatForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,nDisplacementComponents>::
 PartitionedPetscMatForHyperelasticity(
-    std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>> partitionedPetscVecForHyperelasticity,
+    std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,nDisplacementComponents>> partitionedPetscVecForHyperelasticity,
     int diagonalNonZeros, int offdiagonalNonZeros,
     std::string name
 ) : PartitionedPetscMatOneComponent<FunctionSpace::Generic>(
@@ -214,7 +214,7 @@ dumpMatrixGlobalNatural(std::string filename)
     }
     else
     {
-      if (componentNo < 3)
+      if (componentNo < nDisplacementComponents)
       {
         sizes[ownRankNo] = nDisplacementDofsLocal;
       }

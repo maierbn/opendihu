@@ -9,7 +9,7 @@ PartitionedPetscVecWithDirichletBc(std::shared_ptr<Partition::MeshPartition<Func
                                    std::shared_ptr<SpatialDiscretization::DirichletBoundaryConditions<FunctionSpaceType,nComponentsDirichletBc>> dirichletBoundaryConditions, std::string name) :
   PartitionedPetscVec<FunctionSpaceType,nComponents>(meshPartition, name), dirichletBoundaryConditions_(dirichletBoundaryConditions)
 {
-  initialize(nComponentsDirichletBc);
+  initialize();
   createVector();
 }
 
@@ -42,9 +42,9 @@ dofNoLocalToDofNoNonBcGlobal() const
   return dofNoLocalToDofNoNonBcGlobal_;
 }
 
-template<typename FunctionSpaceType, int nComponentsT, int nComponentsDirichletBc>
-void PartitionedPetscVecWithDirichletBc<FunctionSpaceType, nComponentsT, nComponentsDirichletBc>::
-initialize(int nComponents, int offsetInGlobalNumberingPerRank)
+template<typename FunctionSpaceType, int nComponents, int nComponentsDirichletBc>
+void PartitionedPetscVecWithDirichletBc<FunctionSpaceType, nComponents, nComponentsDirichletBc>::
+initialize(int offsetInGlobalNumberingPerRank)
 {
   LOG(DEBUG) << "\"" << this->name_ << "\" PartitionedPetscVecWithDirichletBc createVector with " << nComponents << " components, size local: " << this->meshPartition_->nNodesLocalWithoutGhosts()
     << ", global: " << this->meshPartition_->nNodesGlobal() << ", offsetInGlobalNumberingPerRank: " << offsetInGlobalNumberingPerRank
@@ -60,7 +60,9 @@ initialize(int nComponents, int offsetInGlobalNumberingPerRank)
   // loop over components
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
   {
-    int nBoundaryConditionDofs = dirichletBoundaryConditions_->boundaryConditionsByComponent()[componentNo].dofNosLocal.size();
+    int nBoundaryConditionDofs = 0;
+    if (componentNo < nComponentsDirichletBc)
+      nBoundaryConditionDofs = dirichletBoundaryConditions_->boundaryConditionsByComponent()[componentNo].dofNosLocal.size();
     nNonBcDofsWithoutGhosts_[componentNo] = nDofsLocalWithoutGhosts - nBoundaryConditionDofs;
     nEntriesLocal_ += nNonBcDofsWithoutGhosts_[componentNo];
   }
@@ -81,7 +83,7 @@ initialize(int nComponents, int offsetInGlobalNumberingPerRank)
   global_no_t dofNoNonBcGlobal = nonBcDofNoGlobalBegin_;
 
   // loop over components
-  for (int componentNo = 0; componentNo < nComponents; componentNo++)
+  for (int componentNo = 0; componentNo < nComponentsDirichletBc; componentNo++)
   {
     std::vector<dof_no_t>::const_iterator boundaryConditionDofLocalNosIter = dirichletBoundaryConditions_->boundaryConditionsByComponent()[componentNo].dofNosLocal.begin();
     std::vector<double>::const_iterator boundaryConditionValuesIter = dirichletBoundaryConditions_->boundaryConditionsByComponent()[componentNo].values.begin();
@@ -125,6 +127,25 @@ initialize(int nComponents, int offsetInGlobalNumberingPerRank)
       dofNoNonBcGlobal++;
     }
   }
+
+  // loop over components after nComponentsDirichletBc
+  for (int componentNo = nComponentsDirichletBc; componentNo < nComponents; componentNo++)
+  {
+    dofNoLocalToDofNoNonBcGlobal_[componentNo].resize(nDofsLocalWithGhosts);
+    dofNoLocalToDofNoNonBcLocal_[componentNo].resize(nDofsLocalWithGhosts);
+    isPrescribed_[componentNo].resize(nDofsLocalWithGhosts, false);
+
+    // loop over local dofs
+    for (dof_no_t dofNoLocal = 0; dofNoLocal < nDofsLocalWithoutGhosts; dofNoLocal++)
+    {
+      // here, dofNoLocal is a non-BC dof
+      dofNoLocalToDofNoNonBcGlobal_[componentNo][dofNoLocal] = dofNoNonBcGlobal;
+      dofNoLocalToDofNoNonBcLocal_[componentNo][dofNoLocal] = dofNoNonBcGlobal - nonBcDofNoGlobalBegin_;
+
+      dofNoNonBcGlobal++;
+    }
+  }
+
 
   VLOG(1) << "dofNoLocalToDofNoNonBcGlobal_ (only non-ghost dofs are set so far): " << dofNoLocalToDofNoNonBcGlobal_;
   VLOG(1) << "dofNoLocalToDofNoNonBcLocal_ (only non-ghost dofs are set so far): " << dofNoLocalToDofNoNonBcLocal_;
@@ -289,19 +310,23 @@ initialize(int nComponents, int offsetInGlobalNumberingPerRank)
     if (nFromRank != 0)
     {
       requestedDofsGlobalPetscSendBuffer[i].resize(nFromRank*nComponents);
-      requestedDofsGlobalPetscSendBufferValues[i].resize(nFromRank*nComponents);
+      requestedDofsGlobalPetscSendBufferValues[i].resize(nFromRank*nComponents, 0.0);
 
       for (int componentNo = 0; componentNo < nComponents; componentNo++)
       {
         for (int requestedDofIndex = 0; requestedDofIndex < nFromRank; requestedDofIndex++)
         {
           global_no_t requestedDofNoGlobalPetsc = requestedDofsGlobalPetsc[i][requestedDofIndex];
-          dof_no_t requestedDofNoLocal = this->meshPartition_->getDofNoLocal(requestedDofNoGlobalPetsc);
+          bool isLocal;
+          dof_no_t requestedDofNoLocal = this->meshPartition_->getDofNoLocal(requestedDofNoGlobalPetsc, isLocal);
 
           requestedDofsGlobalPetscSendBuffer[i][componentNo*nFromRank + requestedDofIndex] = dofNoLocalToDofNoNonBcGlobal_[componentNo][requestedDofNoLocal];
           // dofNoLocalToDofNoNonBcGlobal_[componentNo][requestedDofNoLocal] is -1 if it is a dirichlet boundary condition dof
 
-          requestedDofsGlobalPetscSendBufferValues[i][componentNo*nFromRank + requestedDofIndex] = this->boundaryConditionValues_[componentNo][requestedDofNoLocal];
+          if (componentNo < nComponentsDirichletBc)
+          {
+            requestedDofsGlobalPetscSendBufferValues[i][componentNo*nFromRank + requestedDofIndex] = this->boundaryConditionValues_[componentNo][requestedDofNoLocal];
+          }
 
           VLOG(1) << " send to rank " << foreignRankNo << ", component " << componentNo << " requested dofNoGlobalPetsc: " << requestedDofNoGlobalPetsc
             << ", requestedDofNoLocal: " << requestedDofNoLocal << " send dof " << dofNoLocalToDofNoNonBcGlobal_[componentNo][requestedDofNoLocal]
@@ -376,7 +401,10 @@ initialize(int nComponents, int offsetInGlobalNumberingPerRank)
         double value = requestedDofsGlobalPetscReceiveBufferValues[i][componentNo*nRequestedDofs + j];
         dof_no_t dofNoLocal = ghostDofNosLocal[j];    // this value was not sent
 
-        boundaryConditionValues_[componentNo][dofNoLocal] = value;
+        if (componentNo < nComponentsDirichletBc)
+        {
+          boundaryConditionValues_[componentNo][dofNoLocal] = value;
+        }
 
         // if the received dofNoNonBcGlobal does not contain the index, but the value -1, this means the dof has a Dirichlet BC
         if (dofNoNonBcGlobal == -1)
@@ -750,6 +778,15 @@ getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[]) co
 #ifndef NDEBUG
     int ownershipBegin, ownershipEnd;
     ierr = VecGetOwnershipRange(vectorCombinedWithoutDirichletDofsGlobal_, &ownershipBegin, &ownershipEnd); CHKERRV(ierr);
+
+    // check that indices are in range
+    for (int i = 0; i < ni; i++)
+    {
+      if (ix[i] >= this->meshPartition_->nDofsLocalWithoutGhosts())
+      {
+        LOG(ERROR) << "ni = " << ni << ", ix[" << i << "]=" << ix[i] << " >= " << this->meshPartition_->nDofsLocalWithoutGhosts();
+      }
+    }
 #endif
 
     // determine new global indices
@@ -782,7 +819,7 @@ getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[]) co
     // replace dirichlet BC values with the prescribed values
     for (int i = 0; i < ni; i++)
     {
-      if (isPrescribed_[componentNo][ix[i]])
+      if (isPrescribed_[componentNo][ix[i]] && componentNo < nComponentsDirichletBc)
       {
         y[i] = boundaryConditionValues_[componentNo][ix[i]];
       }
@@ -815,7 +852,7 @@ getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[]) co
     // replace dirichlet BC values with the prescribed values
     for (int i = 0; i < ni; i++)
     {
-      if (isPrescribed_[componentNo][ix[i]])
+      if (isPrescribed_[componentNo][ix[i]] && componentNo < nComponentsDirichletBc)
       {
         y[i] = boundaryConditionValues_[componentNo][ix[i]];
       }
@@ -878,7 +915,10 @@ getValuesGlobal(Vec vector, int componentNo, PetscInt ni, const PetscInt ix[], P
   {
     if (isPrescribed_[componentNo][ix[i]])
     {
-      y[i] = boundaryConditionValues_[componentNo][ix[i]];
+      if (componentNo < nComponentsDirichletBc)
+      {
+        y[i] = boundaryConditionValues_[componentNo][ix[i]];
+      }
     }
   }
 
@@ -914,6 +954,32 @@ zeroEntries()
     ierr = VecZeroEntries(vectorCombinedWithoutDirichletDofsGlobal_); CHKERRV(ierr);
   }
 }
+
+template<typename FunctionSpaceType, int nComponents, int nComponentsDirichletBc>
+void PartitionedPetscVecWithDirichletBc<FunctionSpaceType, nComponents, nComponentsDirichletBc>::
+updateDirichletBoundaryConditions(const std::vector<std::pair<global_no_t,std::array<double,nComponentsDirichletBc>>> &newValues,
+                                  bool inputMeshIsGlobal)
+{
+  for (int itemIndex = 0; itemIndex < newValues.size(); itemIndex++)
+  {
+    dof_no_t dofNoLocal = newValues[itemIndex].first;
+
+    if (inputMeshIsGlobal)
+    {
+      global_no_t dofNoGlobal = newValues[itemIndex].first;
+
+      bool isLocal = false;
+      dofNoLocal = this->meshPartition_->getDofNoLocal(dofNoGlobal, isLocal);
+
+      if (!isLocal)
+        continue;
+    }
+
+    std::array<double,nComponentsDirichletBc> values = newValues[itemIndex].second;
+    boundaryConditionValues_[dofNoLocal] = values;
+  }
+}
+
 
 //! output the vector to stream, for debugging
 template<typename FunctionSpaceType, int nComponents, int nComponentsDirichletBc>

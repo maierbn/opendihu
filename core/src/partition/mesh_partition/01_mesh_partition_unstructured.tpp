@@ -183,15 +183,17 @@ getDofNosGlobalNatural(std::vector<global_no_t> &dofNosGlobalNatural) const
 
 template<int D, typename BasisFunctionType>
 node_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
-getNodeNoLocal(global_no_t nodeNoGlobalPetsc) const
+getNodeNoLocal(global_no_t nodeNoGlobalPetsc, bool &isLocal) const
 {
+  isLocal = true;
   return (node_no_t)nodeNoGlobalPetsc;
 }
 
 template<int D, typename BasisFunctionType>
 dof_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
-getDofNoLocal(global_no_t dofNoGlobalPetsc) const
+getDofNoLocal(global_no_t dofNoGlobalPetsc, bool &isLocal) const
 {
+  isLocal = true;
   return (dof_no_t)dofNoGlobalPetsc;
 }
 

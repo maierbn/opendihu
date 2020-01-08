@@ -645,19 +645,21 @@ getNodeNoGlobalNatural(std::array<global_no_t,MeshType::dim()> coordinatesGlobal
 
 template<typename MeshType,typename BasisFunctionType>
 node_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
-getNodeNoLocal(global_no_t nodeNoGlobalPetsc) const
+getNodeNoLocal(global_no_t nodeNoGlobalPetsc, bool &isLocal) const
 {
-  return (node_no_t)(nodeNoGlobalPetsc - nNodesGlobalPetscInPreviousPartitions(ownRankPartitioningIndex_));
+  node_no_t nodeNoLocal = (node_no_t)(nodeNoGlobalPetsc - nNodesGlobalPetscInPreviousPartitions(ownRankPartitioningIndex_));
+  isLocal = (nodeNoLocal >= 0) && (nodeNoLocal < nDofsLocalWithoutGhosts());
+  return nodeNoLocal;
 }
 
 template<typename MeshType,typename BasisFunctionType>
 dof_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
-getDofNoLocal(global_no_t dofNoGlobalPetsc) const
+getDofNoLocal(global_no_t dofNoGlobalPetsc, bool &isLocal) const
 {
   const int nDofsPerNode = FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>::nDofsPerNode();
   global_no_t nodeNoGlobalPetsc = dofNoGlobalPetsc / nDofsPerNode;
   int nodalDofIndex = dofNoGlobalPetsc % nDofsPerNode;
-  return getNodeNoLocal(nodeNoGlobalPetsc) * nDofsPerNode + nodalDofIndex;
+  return getNodeNoLocal(nodeNoGlobalPetsc, isLocal) * nDofsPerNode + nodalDofIndex;
 }
 
 template<typename MeshType,typename BasisFunctionType>

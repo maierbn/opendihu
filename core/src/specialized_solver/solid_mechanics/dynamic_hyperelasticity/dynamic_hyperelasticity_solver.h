@@ -21,9 +21,9 @@ class DynamicHyperelasticitySolver :
 {
 public:
 
-  typedef SpatialDiscretization::HyperelasticitySolver<Term> StaticSolverType;
-  typedef typename StaticSolverType::DisplacementsFunctionSpace DisplacementsFunctionSpace;
-  typedef typename StaticSolverType::PressureFunctionSpace PressureFunctionSpace;
+  typedef SpatialDiscretization::HyperelasticitySolver<Term,6> HyperelasticitySolverType;    // the hyperelasticity solver that solves the nonlinear problem, 6 non-pressure components (u and v)
+  typedef typename HyperelasticitySolverType::DisplacementsFunctionSpace DisplacementsFunctionSpace;
+  typedef typename HyperelasticitySolverType::PressureFunctionSpace PressureFunctionSpace;
 
   typedef PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace,6> VecHyperelasticity;
   typedef PartitionedPetscMatForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace,6> MatHyperelasticity;
@@ -60,17 +60,19 @@ private:
   //! compute the next displacements and velocities by an explicit Euler scheme
   void computeExplicitEuler();*/
 
-  StaticSolverType staticSolver_;  //< hyperelasticity solver that solver the static problem
+  HyperelasticitySolverType hyperelasticitySolver_;  //< hyperelasticity solver that solver the static problem
   Data::DynamicHyperelasticitySolver<DisplacementsFunctionSpace> data_;
 
   double density_;   //< density rho, used for inertia
-  double viscosity_;  //< viscosity mu, used for damping, set to 0 to disable damping
+  //double viscosity_;  //< viscosity mu, used for damping, set to 0 to disable damping
 
   // std::shared_ptr<MatHyperelasticity> massMatrix_;    //< mass matrix
   // std::shared_ptr<MatHyperelasticity> inverseLumpedMassMatrix_;    //< mass matrix with inverse row sums on diagonal as combined matrix for u and p, only the u part contains the lumped mass matrix
 
-
   std::shared_ptr<VecHyperelasticity> uvp_;     //< combined vector of u,v and p values
+  Vec internalVirtualWork_;                     //< internal virtual work, computed by the hyperelasticity solver
+  Vec accelerationTerm_;                        //< contribution to virtual work from acceleration, computed by the hyperelasticity solver
+  Vec externalVirtualWorkDead_;                 //< external virtual work, computed by the hyperelasticity solver, dead load i.e. constant over time
   //std::array<std::shared_ptr<VecHyperelasticity>,4> k_;   //< intermediate values for the RK4 scheme
   //std::array<std::shared_ptr<VecHyperelasticity>,4> l_;   //< intermediate values for the RK4 scheme
   //std::array<std::shared_ptr<VecHyperelasticity>,9> temp_;  //< temporary values for the RK4 scheme*/

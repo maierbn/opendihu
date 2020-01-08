@@ -160,10 +160,10 @@ public:
   element_no_t getElementNoLocal(global_no_t elementNoGlobalPetsc, bool &isOnLocalDomain) const;
 
   //! get the local node no for a global petsc node no, does not work for ghost nodes
-  node_no_t getNodeNoLocal(global_no_t nodeNoGlobalPetsc) const;
+  node_no_t getNodeNoLocal(global_no_t nodeNoGlobalPetsc, bool &isLocal) const;
 
   //! get the local dof no for a global petsc dof no, does not work for ghost nodes
-  dof_no_t getDofNoLocal(global_no_t dofNoGlobalPetsc) const;
+  dof_no_t getDofNoLocal(global_no_t dofNoGlobalPetsc, bool &isLocal) const;
 
   //! from a vector of values of global/natural node numbers remove all that are non-local, nComponents consecutive values for each dof are assumed
   template <typename T>
@@ -341,10 +341,10 @@ public:
   std::array<int,D> getCoordinatesLocal(std::array<global_no_t,D> coordinatesGlobal, bool &isOnLocalDomain) const;
 
   //! get the local node no for a global petsc node no, does not work for ghost nodes
-  node_no_t getNodeNoLocal(global_no_t nodeNoGlobalPetsc) const;
+  node_no_t getNodeNoLocal(global_no_t nodeNoGlobalPetsc, bool &isLocal) const;
 
   //! get the local dof no for a global petsc dof no, does not work for ghost nodes
-  dof_no_t getDofNoLocal(global_no_t dofNoGlobalPetsc) const;
+  dof_no_t getDofNoLocal(global_no_t dofNoGlobalPetsc, bool &isLocal) const;
 
   //! get the local element no from the global element no, isOnLocalDomain is true
   element_no_t getElementNoLocal(global_no_t elementNoGlobalPetsc, bool &isOnLocalDomain) const;

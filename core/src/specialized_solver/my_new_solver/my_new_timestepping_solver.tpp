@@ -1,21 +1,18 @@
-#include "control/load_balancing/load_balancing.h"
+#include "specialized_solver/my_new_solver/my_new_timestepping_solver.h"
 
 #include <omp.h>
 #include <sstream>
 
-namespace Control
-{
-
 template<class TimeStepping>
-LoadBalancingBase<TimeStepping>::
-LoadBalancingBase(DihuContext context) :
+MyNewTimesteppingSolver<TimeStepping>::
+MyNewTimesteppingSolver(DihuContext context) :
   Runnable(), ::TimeSteppingScheme::TimeSteppingScheme(context["LoadBalancing"]),
   timeSteppingScheme_(this->context_)
 {
 }
 
 template<class TimeStepping>
-void LoadBalancingBase<TimeStepping>::
+void MyNewTimesteppingSolver<TimeStepping>::
 advanceTimeSpan()
 {
   // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
@@ -25,7 +22,7 @@ advanceTimeSpan()
   // compute timestep width
   double timeSpan = this->endTime_ - this->startTime_;
 
-  LOG(DEBUG) << "LoadBalancingBase::advanceTimeSpan, timeSpan=" << timeSpan<< ", timeStepWidth=" << this->timeStepWidth_
+  LOG(DEBUG) << "MyNewTimesteppingSolver::advanceTimeSpan, timeSpan=" << timeSpan<< ", timeStepWidth=" << this->timeStepWidth_
     << " n steps: " << this->numberTimeSteps_;
 
   // loop over time steps
@@ -36,7 +33,7 @@ advanceTimeSpan()
 
     if (timeStepNo % this->timeStepOutputInterval_ == 0 && timeStepNo > 0)
     {
-      LOG(INFO) << "LoadBalancingBase, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
+      LOG(INFO) << "MyNewTimesteppingSolver, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
     }
 
     // set timespan for timeSteppingScheme_
@@ -55,17 +52,17 @@ advanceTimeSpan()
 }
 
 template<class TimeStepping>
-void LoadBalancingBase<TimeStepping>::
+void MyNewTimesteppingSolver<TimeStepping>::
 initialize()
 {
-  LOG(TRACE) << "LoadBalancingBase::initialize()";
+  LOG(TRACE) << "MyNewTimesteppingSolver::initialize()";
 
   TimeSteppingScheme::TimeSteppingScheme::initialize();
   timeSteppingScheme_.initialize();
 }
 
 template<class TimeStepping>
-void LoadBalancingBase<TimeStepping>::
+void MyNewTimesteppingSolver<TimeStepping>::
 run()
 {
   initialize();
@@ -74,14 +71,14 @@ run()
 }
 
 template<class TimeStepping>
-void LoadBalancingBase<TimeStepping>::
+void MyNewTimesteppingSolver<TimeStepping>::
 reset()
 {
   timeSteppingScheme_.reset();
 }
 
 template<class TimeStepping>
-typename LoadBalancingBase<TimeStepping>::Data &LoadBalancingBase<TimeStepping>::
+typename MyNewTimesteppingSolver<TimeStepping>::Data &MyNewTimesteppingSolver<TimeStepping>::
 data()
 {
   return timeSteppingScheme_.data();
@@ -90,10 +87,8 @@ data()
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
 //! the transfer is done by the output_connector_data_transfer class
 template<class TimeStepping>
-std::shared_ptr<typename LoadBalancingBase<TimeStepping>::OutputConnectorDataType> LoadBalancingBase<TimeStepping>::
+std::shared_ptr<typename MyNewTimesteppingSolver<TimeStepping>::OutputConnectorDataType> MyNewTimesteppingSolver<TimeStepping>::
 getOutputConnectorData()
 {
   return timeSteppingScheme_.getOutputConnectorData();
 }
-
-} // namespace

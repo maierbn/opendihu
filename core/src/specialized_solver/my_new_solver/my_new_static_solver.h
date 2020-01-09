@@ -9,14 +9,10 @@
 #include "control/dihu_context.h"
 #include "control/python_config.h"
 
-namespace Control
-{
-
-/** This class implements the time stepping, after each time step rebalance() is called, which can do load balancing.
- *  The actual implementation of the rebalancing has to be done in a derived class.
+/**
   */
 template<class TimeStepping>
-class LoadBalancingBase:
+class MyNewStaticSolver:
   public Runnable,
   public TimeSteppingScheme::TimeSteppingScheme
 {
@@ -27,7 +23,7 @@ public:
   typedef typename TimeStepping::OutputConnectorDataType OutputConnectorDataType;
 
   //! constructor
-  LoadBalancingBase(DihuContext context);
+  MyNewStaticSolver(DihuContext context);
 
   //! advance simulation by the given time span [startTime_, endTime_]
   void advanceTimeSpan();
@@ -56,6 +52,4 @@ protected:
   TimeStepping timeSteppingScheme_;   ///< the underlying timestepping method that is controlled by this class, e.g. Heun
 };
 
-}  // namespace
-
-#include "control/load_balancing/load_balancing_base.tpp"
+#include "specialized_solver/my_new_solver/my_new_static_solver.tpp"

@@ -69,6 +69,7 @@ sconsconfig/packages/rapidxml.py
 sconsconfig/packages/re2.py
 sconsconfig/packages/sqlite3.py
 sconsconfig/packages/vc.py
+sconsconfig/packages/xbraid.py
 sconsconfig/packages/xsd.py
 sconsconfig/tools/__init__.py
 sconsconfig/tools/cuda.py

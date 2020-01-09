@@ -106,3 +106,6 @@ mooney_rivlin_transiso:
 
 mooney_rivlin:
 	cd examples/solid_mechanics/mooney_rivlin_isotropic  && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+
+dynamic_mooney_rivlin:
+	cd examples/solid_mechanics/dynamic_mooney_rivlin  && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG

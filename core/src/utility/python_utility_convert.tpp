@@ -775,9 +775,79 @@ struct PythonUtility::convertFromPython<std::vector<ValueType>>
 
       return result;
     }
-    
+
 #ifndef __PGI
     return std::vector<ValueType>();
+#endif
+  }
+};
+
+//partial specialization for std::vector<std::pair<>>, this can convert tuples to [<key,value>,...] vectors
+template<typename KeyType,typename ValueType>
+struct PythonUtility::convertFromPython<std::vector<std::pair<KeyType,ValueType>>>
+{
+  //! convert a python object to its corresponding c type, with type checking, if conversion is not possible use trivial default value (0 or 0.0 or "")
+  static std::vector<std::pair<KeyType,ValueType>> get(PyObject *object)
+  {
+    // start critical section for python API calls
+    // PythonUtility::GlobalInterpreterLock lock;
+
+    std::vector<std::pair<KeyType,ValueType>> result;
+    assert(object != nullptr);
+
+    if (PyDict_Check(object))
+    {
+      PyObject *itemList = PyDict_Items(object);
+
+      for (int itemListIndex = 0; itemListIndex < PyList_Size(itemList); itemListIndex++)
+      {
+        PyObject *tuple = PyList_GetItem(itemList, (Py_ssize_t)itemListIndex);
+        PyObject *pyKey = PyTuple_GetItem(tuple, (Py_ssize_t)0);
+        PyObject *pyValue = PyTuple_GetItem(tuple, (Py_ssize_t)1);
+
+        result.push_back(std::make_pair<KeyType,ValueType>(
+          convertFromPython<KeyType>::get(pyKey),
+          convertFromPython<ValueType>::get(pyValue)
+        ));
+      }
+      return result;
+    }
+    else if (PyList_Check(object))
+    {
+      int nEntries = (int)PyList_Size(object);
+
+      std::vector<std::pair<KeyType,ValueType>> result(nEntries);
+
+      for (int i = 0; i < nEntries; i++)
+      {
+        result[i] = PythonUtility::convertFromPython<std::pair<KeyType,ValueType>>::get(PyList_GetItem(object, (Py_ssize_t)i));
+      }
+      return result;
+    }
+    else if (PyTuple_Check(object))
+    {
+      int nEntries = PyTuple_Size(object);
+
+      std::vector<std::pair<KeyType,ValueType>> result(nEntries);
+
+      for (int i = 0; i < nEntries; i++)
+      {
+        result[i] = PythonUtility::convertFromPython<std::pair<KeyType,ValueType>>::get(PyTuple_GetItem(object, (Py_ssize_t)i));
+      }
+      return result;
+    }
+    else
+    {
+      ValueType valueDouble = PythonUtility::convertFromPython<ValueType>::get(object);
+
+      std::vector<std::pair<KeyType,ValueType>> result(1);
+      result[0] = std::pair<KeyType,ValueType>(KeyType(),valueDouble);
+
+      return result;
+    }
+
+#ifndef __PGI
+    return std::vector<std::pair<KeyType,ValueType>>();
 #endif
   }
 };

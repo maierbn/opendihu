@@ -14,9 +14,23 @@
  *
  *  Everything related to indexing and number of elements is given by a vector of type
  *  PartitionedPetscVecForHyperelasticity. Read that class to understand how it is done.
+ *
+ *  The template parameter nDisplacementComponents specifies the number of displacement components and therefore equals 3.
+ *
+ *  The matrix has the following structure if nDisplacementComponents == 3:
+ *
+ *  (UU UP)   | 3 rows per dof
+ *  (PU PP)   | 1 row per dof
+ *
+ *  The matrix has the following structure if nDisplacementComponents == 6:
+ *
+ *  (UU UV UP)   | 3 rows per dof
+ *  (VU VV VP)   | 3 rows per dof
+ *  (PU PV PP)   | 1 row per dof
+ *
  */
 
-template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType>
+template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType, int nDisplacementComponents = 3>
 class PartitionedPetscMatForHyperelasticity :
   public PartitionedPetscMatOneComponent<FunctionSpace::Generic, FunctionSpace::Generic, typename FunctionSpace::Generic::Mesh>
 {
@@ -24,7 +38,7 @@ public:
 
   //! constructor, create square sparse matrix, the number of entries is given by partitionedPetscVecForHyperelasticity
   PartitionedPetscMatForHyperelasticity(
-    std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>> partitionedPetscVecForHyperelasticity,
+    std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,nDisplacementComponents>> partitionedPetscVecForHyperelasticity,
     int diagonalNonZeros, int offdiagonalNonZeros,
     std::string name);
 
@@ -34,18 +48,15 @@ public:
   //! output the matrix to the file in globalNatural ordering, it has the same form regardless of number of ranks and therefore can be used to compare output with different ranks
   void dumpMatrixGlobalNatural(std::string filename);
 
-  //! get a submatrix of the upper left part (only displacements)
-  Mat getSubmatrixUU();
-
-  //! get a submatrix of the upper right part
-  Mat getSubmatrixUP();
-
-  //! get a submatrix of the lower left part
-  Mat getSubmatrixPU();
+  //! get a submatrix of this matrix. If nDisplacementComponents == 6, rowVariableNo and columnVariableNo can be 0,1 or 2 to select U,V or P.
+  //! If the matrix does not contain velocities and nDisplacementComponents == 3, rowVariableNo and columnVariableNo can be 0 or 1.
+  //! Then, getSubmatrix(0,0) = UU, getSubmatrix(0,1) = UP, getSubmatrix(1,0) = PU, getSubmatrix(1,1) = PP
+  Mat getSubmatrix(int rowVariableNo, int columnVariableNo);
 
 protected:
 
-  std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>> partitionedPetscVecForHyperelasticity_;
+  std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,nDisplacementComponents>>
+    partitionedPetscVecForHyperelasticity_;     //< one instance of the corresponding PartitionedPetscVecForHyperelasticity class, which handles all numbering
 };
 
 #include "partition/partitioned_petsc_mat/partitioned_petsc_mat_for_hyperelasticity.tpp"

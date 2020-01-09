@@ -259,6 +259,9 @@ config["RepeatedCall"] = {
 for i in range(len(config["RepeatedCall"]["MultipleInstances"]["instances"])):
   #config["RepeatedCall"]["MultipleInstances"]["instances"][i]["StrangSplitting"]["endTime"] = variables.output_timestep
   
+  if config["RepeatedCall"]["MultipleInstances"]["instances"][i] is None:
+    continue
+    
   # loop over output writers
   if config["RepeatedCall"]["MultipleInstances"]["instances"][i]:
     for j in range(len(config["RepeatedCall"]["MultipleInstances"]["instances"][i]["StrangSplitting"]["Term2"]["MultipleInstances"]["OutputWriter"])):

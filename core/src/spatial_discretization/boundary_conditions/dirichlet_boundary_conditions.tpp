@@ -524,7 +524,8 @@ applyInSystemMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> syst
     std::vector<PetscInt> rowDofsLocal(rowDofsGlobal.size());
     std::transform(rowDofsGlobal.begin(), rowDofsGlobal.end(), rowDofsLocal.begin(), [this](global_no_t nodeNoGlobalPetsc)
     {
-      return this->functionSpace_->meshPartition()->getNodeNoLocal(nodeNoGlobalPetsc);
+      bool isLocal = true;
+      return this->functionSpace_->meshPartition()->getNodeNoLocal(nodeNoGlobalPetsc, isLocal);
     });
 
     VLOG(1) << "rowDofs (global Petsc): " << rowDofsGlobal << ", local: " << rowDofsLocal;
@@ -606,7 +607,8 @@ applyInSystemMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> syst
     std::vector<PetscInt> rowDofNosLocal(rowDofNoGlobalPetsc.size());
     std::transform(rowDofNoGlobalPetsc.begin(), rowDofNoGlobalPetsc.end(), rowDofNosLocal.begin(), [this](global_no_t nodeNoGlobalPetsc)
     {
-      return this->functionSpace_->meshPartition()->getDofNoLocal(nodeNoGlobalPetsc);
+      bool isLocal = false;
+      return this->functionSpace_->meshPartition()->getDofNoLocal(nodeNoGlobalPetsc, isLocal);
     });
 
     // get the values of the column from the matrix

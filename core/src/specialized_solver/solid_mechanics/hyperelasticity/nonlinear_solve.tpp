@@ -5,110 +5,33 @@
 #include "specialized_solver/solid_mechanics/hyperelasticity/petsc_callbacks.h"
 #include "solver/nonlinear.h"
 #include "control/dihu_context.h"
-#include "solver/solver_manager.h"
 #include "partition/partitioned_petsc_vec/02_partitioned_petsc_vec_for_hyperelasticity.h"
 
 namespace SpatialDiscretization
 {
 
-template<typename Term>
-void HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+void HyperelasticitySolver<Term,nDisplacementComponents>::
 nonlinearSolve()
 {
   LOG(TRACE) << "nonlinear solve";
-
-  // create nonlinear solver PETSc context (snes)
-  std::shared_ptr<Solver::Nonlinear> nonlinearSolver = this->context_.solverManager()->template solver<Solver::Nonlinear>(
-    this->specificSettings_, this->displacementsFunctionSpace_->meshPartition()->mpiCommunicator());
-  std::shared_ptr<SNES> snes = nonlinearSolver->snes();
-  std::shared_ptr<KSP> ksp = nonlinearSolver->ksp();
-
-  assert(snes != nullptr);
-
-  // set solution vector to zero
-  this->initializeSolutionVariable();
-
-  //VLOG(1) << "initial values: " << PetscUtility::getStringVectorVector(solverVariableSolution);
-
-  /*
-  if (!useAnalyticJacobian_)
-  {
-     LOG(DEBUG) << "compute analytic jacobian to initialize non-zero structure of matrix";
-
-     // set the displacement variables according to the values in the solve variable
-     setFromSolverVariableSolution(solverVariableSolution);
-
-     // compute tangent stiffness matrix for the first time. This constructs and initialized a Petsc Mat in solverMatrixTangentStiffness which will be used for all further computeJacobianAnalytic calls
-     computeAnalyticStiffnessMatrix(solverMatrixTangentStiffness);
-
-     LOG(DEBUG) << "done, now object is " << solverMatrixTangentStiffness;
-  }
-  */
-
-  // set callback functions that are defined in petsc_callbacks.h
-  typedef HyperelasticitySolver ThisClass;
-
-  PetscErrorCode (*callbackNonlinearFunction)(SNES, Vec, Vec, void *)              = *nonlinearFunction<ThisClass>;
-  PetscErrorCode (*callbackJacobianAnalytic)(SNES, Vec, Mat, Mat, void *)          = *jacobianFunctionAnalytic<ThisClass>;
-  PetscErrorCode (*callbackJacobianFiniteDifferences)(SNES, Vec, Mat, Mat, void *) = *jacobianFunctionFiniteDifferences<ThisClass>;
-  PetscErrorCode (*callbackJacobianCombined)(SNES, Vec, Mat, Mat, void *)          = *jacobianFunctionCombined<ThisClass>;
-  PetscErrorCode (*callbackMonitorFunction)(SNES, PetscInt, PetscReal, void *)     = *monitorFunction<ThisClass>;
-
-  // set function
-  PetscErrorCode ierr;
-  ierr = SNESSetFunction(*snes, solverVariableResidual_, callbackNonlinearFunction, this); CHKERRV(ierr);
-
-  // set jacobian
-  if (useAnalyticJacobian_)
-  {
-    if (useNumericJacobian_)   // use combination of analytic jacobian also with finite differences
-    {
-      // use the analytic jacobian for the preconditioner and the numeric jacobian (from finite differences) as normal jacobian
-      ierr = SNESSetJacobian(*snes, solverMatrixAdditionalNumericJacobian_, solverMatrixJacobian_, callbackJacobianCombined, this); CHKERRV(ierr);
-      //ierr = SNESSetJacobian(*snes, solverMatrixAdditionalNumericJacobian_, solverMatrixAdditionalNumericJacobian_, callbackJacobianCombined, this); CHKERRV(ierr);
-      LOG(DEBUG) << "Use combination of numeric and analytic jacobian: " << solverMatrixJacobian_;
-    }
-    else    // use pure analytic jacobian, without fd
-    {
-      ierr = SNESSetJacobian(*snes, solverMatrixJacobian_, solverMatrixJacobian_, callbackJacobianAnalytic, this); CHKERRV(ierr);
-      LOG(DEBUG) << "Use only analytic jacobian: " << solverMatrixJacobian_;
-    }
-  }
-  else
-  {
-    // set function to compute jacobian from finite differences
-    ierr = SNESSetJacobian(*snes, solverMatrixJacobian_, solverMatrixJacobian_, callbackJacobianFiniteDifferences, this); CHKERRV(ierr);
-    LOG(DEBUG) << "Use Finite-Differences approximation for jacobian";
-  }
-
-  // prepare log file
-  std::shared_ptr<std::ofstream> logFile = nullptr;
-  if (this->specificSettings_.hasKey("residualNormLogFilename"))
-  {
-    std::string logFileName = this->specificSettings_.getOptionString("residualNormLogFilename", "residual_norm.txt");
-
-    residualNormLogFile_ = std::ofstream(logFileName, std::ios::out | std::ios::binary | std::ios::trunc);
-
-    if (!residualNormLogFile_.is_open())
-    {
-      LOG(WARNING) << "Could not open log file for residual norm, \"" << logFileName << "\".";
-    }
-  }
-
-  // set monitor function
-  ierr = SNESMonitorSet(*snes, callbackMonitorFunction, this, NULL); CHKERRV(ierr);
-
-  //debug();
+  LOG(DEBUG) << "initial solution: " << combinedVecSolution_->getString();
+  // solve the system ∂W_int - ∂W_ext = 0 and J = 1 for displacements and pressure, result will be in solverVariableSolution_, combinedVecSolution_
 
   if (this->durationLogKey_ != "")
     Control::PerformanceMeasurement::start(this->durationLogKey_+std::string("_durationSolve"));
 
-  // try two times to solve nonlinear problem
+  assert(nonlinearSolver_);
+  std::shared_ptr<SNES> snes = nonlinearSolver_->snes();
+  std::shared_ptr<KSP> ksp = nonlinearSolver_->ksp();
+
+  // try two times to solve the nonlinear problem
   for (int i = 0; i < 2; i++)
   {
     LOG(DEBUG) << "------------------  start solve " << i << " ------------------";
 
     // solve the system nonlinearFunction(displacements) = 0
+    PetscErrorCode ierr;
     ierr = SNESSolve(*snes, NULL, solverVariableSolution_); CHKERRV(ierr);
 
     // get information about the solution process
@@ -131,39 +54,62 @@ nonlinearSolve()
       break;
   }
 
+  // reset value of last residual norm that is needed for computational of experimental order of convergence
+  lastNorm_ = 0;
+  secondLastNorm_ = 0;
+
   if (this->durationLogKey_ != "")
     Control::PerformanceMeasurement::stop(this->durationLogKey_+std::string("_durationSolve"));
 
-  // close log file
-  if (logFile != nullptr)
-  {
-    logFile->close();
-  }
+}
 
-  // copy the solution values back to this->data_.displacements() and this->data.pressure()
-  setSolutionVector();
+template<typename Term,int nDisplacementComponents>
+void HyperelasticitySolver<Term,nDisplacementComponents>::
+postprocessSolution()
+{
+  // close log file
+  residualNormLogFile_.close();
+
+  // copy the solution values back to this->data_.displacements() and this->data.pressure() (and this->data_.velocities() for the dynamic case)
+  setUVP(combinedVecSolution_->valuesGlobal());
 
   // compute the PK2 stress at every node
   computePK2StressField();
 
-  // set the geometry field
-  this->data_.updateGeometry(displacementsScalingFactor_);
+  // update the geometry field by the new displacements, also update field variables for the pressure output writer if needed
+  bool usePressureOutputWriter = this->outputWriterManagerPressure_.hasOutputWriters();
+  this->data_.updateGeometry(displacementsScalingFactor_, usePressureOutputWriter);
 
-  nonlinearSolver->dumpMatrixRightHandSide(solverVariableResidual_);
+  // dump files containing rhs and system matrix
+  nonlinearSolver_->dumpMatrixRightHandSide(solverVariableResidual_);
 
-  LOG(DEBUG) << "solution: " << combinedVecResidual_->getString();
+  LOG(DEBUG) << "solution: " << combinedVecSolution_->getString();
 
 #ifndef NDEBUG
   checkSolution(solverVariableSolution_);
 #endif
 }
 
-template<typename Term>
-void HyperelasticitySolver<Term>::
-monitorSolvingIteration(SNES snes, PetscInt its, PetscReal norm)
+template<typename Term,int nDisplacementComponents>
+void HyperelasticitySolver<Term,nDisplacementComponents>::
+monitorSolvingIteration(SNES snes, PetscInt its, PetscReal currentNorm)
 {
+  // compute experimental order of convergence which is a measure for the current convergence velocity
+  PetscReal experimentalOrderOfConvergence = 0;
+
+  if (secondLastNorm_ != 0)
+    experimentalOrderOfConvergence = log(lastNorm_ / currentNorm) / log(secondLastNorm_ / lastNorm_);
+
+  secondLastNorm_ = lastNorm_;
+  lastNorm_ = currentNorm;
+
+
   //T* object = static_cast<T*>(mctx);
-  LOG(INFO) << "  Nonlinear solver: iteration " << its << ", residual norm " << norm;
+  std::stringstream message;
+  message  << "  Nonlinear solver: iteration " << its << ", residual norm " << currentNorm;
+  if (experimentalOrderOfConvergence != 0)
+    message << ", eoc: " << experimentalOrderOfConvergence;
+  LOG(INFO) << message.str();
 
   static int evaluationNo = 0;  // counter how often this function was called
 
@@ -187,12 +133,12 @@ monitorSolvingIteration(SNES snes, PetscInt its, PetscReal norm)
   // if log file was given, write residual norm to log file
   if (residualNormLogFile_.is_open())
   {
-    residualNormLogFile_ << its << ";" << norm << std::endl;
+    residualNormLogFile_ << its << ";" << currentNorm << std::endl;
   }
 }
 
-template<typename Term>
-void HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+void HyperelasticitySolver<Term,nDisplacementComponents>::
 debug()
 {
 
@@ -323,8 +269,8 @@ debug()
   LOG(FATAL) << "end";
 }
 
-template<typename Term>
-void HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+void HyperelasticitySolver<Term,nDisplacementComponents>::
 initializeSolutionVariable()
 {
   // set variable to all zero and dirichlet boundary condition value
@@ -335,8 +281,87 @@ initializeSolutionVariable()
   LOG(DEBUG) << "after initialization: " << combinedVecSolution_->getString();
 }
 
-template<typename Term>
-void HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+void HyperelasticitySolver<Term,nDisplacementComponents>::
+initializePetscCallbackFunctions()
+{
+  assert(nonlinearSolver_);
+  std::shared_ptr<SNES> snes = nonlinearSolver_->snes();
+  std::shared_ptr<KSP> ksp = nonlinearSolver_->ksp();
+
+  assert(snes != nullptr);
+  /*
+  if (!useAnalyticJacobian_)
+  {
+     LOG(DEBUG) << "compute analytic jacobian to initialize non-zero structure of matrix";
+
+     // set the displacement variables according to the values in the solve variable
+     setFromSolverVariableSolution(solverVariableSolution);
+
+     // compute tangent stiffness matrix for the first time. This constructs and initialized a Petsc Mat in solverMatrixTangentStiffness which will be used for all further computeJacobianAnalytic calls
+     computeAnalyticStiffnessMatrix(solverMatrixTangentStiffness);
+
+     LOG(DEBUG) << "done, now object is " << solverMatrixTangentStiffness;
+  }
+  */
+
+  // set callback functions that are defined in petsc_callbacks.h
+  typedef HyperelasticitySolver ThisClass;
+
+  PetscErrorCode (*callbackNonlinearFunction)(SNES, Vec, Vec, void *)              = *nonlinearFunction<ThisClass>;
+  PetscErrorCode (*callbackJacobianAnalytic)(SNES, Vec, Mat, Mat, void *)          = *jacobianFunctionAnalytic<ThisClass>;
+  PetscErrorCode (*callbackJacobianFiniteDifferences)(SNES, Vec, Mat, Mat, void *) = *jacobianFunctionFiniteDifferences<ThisClass>;
+  PetscErrorCode (*callbackJacobianCombined)(SNES, Vec, Mat, Mat, void *)          = *jacobianFunctionCombined<ThisClass>;
+  PetscErrorCode (*callbackMonitorFunction)(SNES, PetscInt, PetscReal, void *)     = *monitorFunction<ThisClass>;
+
+  // set function
+  PetscErrorCode ierr;
+  ierr = SNESSetFunction(*snes, solverVariableResidual_, callbackNonlinearFunction, this); CHKERRV(ierr);
+
+  // set jacobian
+  if (useAnalyticJacobian_)
+  {
+    if (useNumericJacobian_)   // use combination of analytic jacobian also with finite differences
+    {
+      // use the analytic jacobian for the preconditioner and the numeric jacobian (from finite differences) as normal jacobian
+      ierr = SNESSetJacobian(*snes, solverMatrixAdditionalNumericJacobian_, solverMatrixJacobian_, callbackJacobianCombined, this); CHKERRV(ierr);
+      //ierr = SNESSetJacobian(*snes, solverMatrixAdditionalNumericJacobian_, solverMatrixAdditionalNumericJacobian_, callbackJacobianCombined, this); CHKERRV(ierr);
+      //ierr = SNESSetJacobian(*snes, solverMatrixJacobian_, solverMatrixJacobian_, callbackJacobianCombined, this); CHKERRV(ierr);
+      LOG(DEBUG) << "Use combination of numeric and analytic jacobian: " << solverMatrixJacobian_;
+    }
+    else    // use pure analytic jacobian, without fd
+    {
+      ierr = SNESSetJacobian(*snes, solverMatrixJacobian_, solverMatrixJacobian_, callbackJacobianAnalytic, this); CHKERRV(ierr);
+      LOG(DEBUG) << "Use only analytic jacobian: " << solverMatrixJacobian_;
+    }
+  }
+  else
+  {
+    // set function to compute jacobian from finite differences
+    ierr = SNESSetJacobian(*snes, solverMatrixJacobian_, solverMatrixJacobian_, callbackJacobianFiniteDifferences, this); CHKERRV(ierr);
+    LOG(DEBUG) << "Use Finite-Differences approximation for jacobian";
+  }
+
+  // prepare log file
+  if (this->specificSettings_.hasKey("residualNormLogFilename"))
+  {
+    std::string logFileName = this->specificSettings_.getOptionString("residualNormLogFilename", "residual_norm.txt");
+
+    residualNormLogFile_ = std::ofstream(logFileName, std::ios::out | std::ios::binary | std::ios::trunc);
+
+    if (!residualNormLogFile_.is_open())
+    {
+      LOG(WARNING) << "Could not open log file for residual norm, \"" << logFileName << "\".";
+    }
+  }
+
+  // set monitor function
+  ierr = SNESMonitorSet(*snes, callbackMonitorFunction, this, NULL); CHKERRV(ierr);
+
+}
+
+template<typename Term,int nDisplacementComponents>
+void HyperelasticitySolver<Term,nDisplacementComponents>::
 evaluateNonlinearFunction(Vec x, Vec f)
 {
   //VLOG(1) << "evaluateNonlinearFunction at " << getString(x);
@@ -353,8 +378,8 @@ evaluateNonlinearFunction(Vec x, Vec f)
     VecSwap(f, solverVariableResidual_);
   }
 
-  // set the solverVariableSolution_ values in displacements and pressure, this is needed for materialComputeResidual
-  setInputVector(solverVariableSolution_);
+  // set the solverVariableSolution_ values in displacements, velocities and pressure, this is needed for materialComputeResidual
+  setUVP(solverVariableSolution_);
 
   // compute the actual output of the nonlinear function
   materialComputeResidual();
@@ -370,29 +395,34 @@ evaluateNonlinearFunction(Vec x, Vec f)
   //VLOG(1) << "f: " << getString(f);
 }
 
-template<typename Term>
-void HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+void HyperelasticitySolver<Term,nDisplacementComponents>::
 evaluateAnalyticJacobian(Vec x, Mat jac)
 {
-  setInputVector(x);
+  // copy the values of x to the internal data vectors in this->data_
+  setUVP(x);
 
+  // compute the jacobian
   materialComputeJacobian();
 
   //MatAssemblyBegin(jac, MAT_FINAL_ASSEMBLY);
   //MatAssemblyEnd(jac, MAT_FINAL_ASSEMBLY);
 }
 
-template<typename Term>
-void HyperelasticitySolver<Term>::
-setInputVector(Vec x)
+template<typename Term,int nDisplacementComponents>
+void HyperelasticitySolver<Term,nDisplacementComponents>::
+setDisplacementsAndPressureFromCombinedVec(Vec x, std::shared_ptr<DisplacementsFieldVariableType> u,
+                                           std::shared_ptr<PressureFieldVariableType> p)
 {
+  assert(nDisplacementComponents == 3);
+
   // copy entries of combined vector x to this->data_.displacements() and this->data_.pressure()
   std::vector<double> values;
 
   if (VLOG_IS_ON(1))
   {
     PetscUtility::getVectorEntries(x, values);
-    VLOG(1) << "setInputVector, x=" << PetscUtility::getStringVector(x);
+    VLOG(1) << "setDisplacementsAndPressureFromCombinedVec, x=" << PetscUtility::getStringVector(x);
   }
 
   bool backupVecs = false;
@@ -408,28 +438,41 @@ setInputVector(Vec x)
     VecSwap(x, solverVariableSolution_);
   }
 
+  if (!u && !p)
+  {
+    u = this->data_.displacements();
+    p = this->data_.pressure();
+  }
+
   // set displacement entries
-  this->data_.displacements()->zeroGhostBuffer();
-  this->data_.pressure()->zeroGhostBuffer();
+  u->zeroGhostBuffer();
+  if (p)
+  {
+    p->zeroGhostBuffer();
+  }
   for (int componentNo = 0; componentNo < 3; componentNo++)
   {
     int nEntries = displacementsFunctionSpace_->nDofsLocalWithoutGhosts();
     values.resize(nEntries);
     combinedVecSolution_->getValues(componentNo, nEntries, displacementsFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
 
-    this->data_.displacements()->setValues(componentNo, nEntries, displacementsFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
+    u->setValues(componentNo, nEntries, displacementsFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
   }
-  this->data_.displacements()->finishGhostManipulation();
-  this->data_.displacements()->startGhostManipulation();
+  u->finishGhostManipulation();
+  u->startGhostManipulation();
 
   // set pressure entries
-  int nEntries = pressureFunctionSpace_->nDofsLocalWithoutGhosts();
-  values.resize(nEntries);
+  if (p)
+  {
+    int nEntries = pressureFunctionSpace_->nDofsLocalWithoutGhosts();
+    values.resize(nEntries);
 
-  combinedVecSolution_->getValues(3, nEntries, pressureFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
-  this->data_.pressure()->setValues(0, nEntries, pressureFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
-  this->data_.pressure()->finishGhostManipulation();
-  this->data_.pressure()->startGhostManipulation();
+    const int pressureComponent = nDisplacementComponents;
+    combinedVecSolution_->getValues(pressureComponent, nEntries, pressureFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
+    p->setValues(0, nEntries, pressureFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
+    p->finishGhostManipulation();
+    p->startGhostManipulation();
+  }
 
   // undo the backup operation
   if (backupVecs)
@@ -437,19 +480,116 @@ setInputVector(Vec x)
     VecSwap(x, solverVariableSolution_);
   }
 
-  //VLOG(1) << *this->data_.displacements();
-  //VLOG(1) << *this->data_.pressure();
+  //VLOG(1) << *u;
+  //VLOG(1) << *p;
 }
 
-template<typename Term>
-void HyperelasticitySolver<Term>::
-setSolutionVector()
+template<typename Term,int nDisplacementComponents>
+void HyperelasticitySolver<Term,nDisplacementComponents>::
+setDisplacementsVelocitiesAndPressureFromCombinedVec(Vec x,
+                                                     std::shared_ptr<DisplacementsFieldVariableType> u,
+                                                     std::shared_ptr<DisplacementsFieldVariableType> v,
+                                                     std::shared_ptr<PressureFieldVariableType> p)
 {
-  setInputVector(combinedVecSolution_->valuesGlobal());
+  assert(nDisplacementComponents == 6);
+
+  // copy entries of combined vector x to this->data_.displacements() and this->data_.pressure()
+  std::vector<double> values;
+
+  if (VLOG_IS_ON(1))
+  {
+    PetscUtility::getVectorEntries(x, values);
+    VLOG(1) << "setDisplacementsVelocitiesAndPressureFromCombinedVec, x=" << PetscUtility::getStringVector(x);
+  }
+
+  bool backupVecs = false;
+  if (x != solverVariableSolution_)
+  {
+    backupVecs = true;
+  }
+
+  // move the values of x to variable solverVariableSolution_
+  if (backupVecs)
+  {
+    // this happens in computation of the numeric jacobian
+    VecSwap(x, solverVariableSolution_);
+  }
+
+  if (!u && !v && !p)
+  {
+    u = this->data_.displacements();
+    v = this->data_.velocities();
+    p = this->data_.pressure();
+  }
+
+  // set displacement entries
+  u->zeroGhostBuffer();
+  for (int componentNo = 0; componentNo < 3; componentNo++)
+  {
+    int nEntries = displacementsFunctionSpace_->nDofsLocalWithoutGhosts();
+    values.resize(nEntries);
+    combinedVecSolution_->getValues(componentNo, nEntries, displacementsFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
+
+    u->setValues(componentNo, nEntries, displacementsFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
+  }
+  u->finishGhostManipulation();
+  u->startGhostManipulation();
+
+  // set velocity entries
+  if (v)
+  {
+    v->zeroGhostBuffer();
+    for (int componentNo = 0; componentNo < 3; componentNo++)
+    {
+      int nEntries = displacementsFunctionSpace_->nDofsLocalWithoutGhosts();
+      values.resize(nEntries);
+      combinedVecSolution_->getValues(3 + componentNo, nEntries, displacementsFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
+
+      v->setValues(componentNo, nEntries, displacementsFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
+    }
+    v->finishGhostManipulation();
+    v->startGhostManipulation();
+  }
+  // set pressure entries
+  if (p)
+  {
+    p->zeroGhostBuffer();
+    int nEntries = pressureFunctionSpace_->nDofsLocalWithoutGhosts();
+    values.resize(nEntries);
+
+    const int pressureComponent = nDisplacementComponents;
+    combinedVecSolution_->getValues(pressureComponent, nEntries, pressureFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
+    p->setValues(0, nEntries, pressureFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
+    p->finishGhostManipulation();
+    p->startGhostManipulation();
+  }
+
+  // undo the backup operation
+  if (backupVecs)
+  {
+    VecSwap(x, solverVariableSolution_);
+  }
+
+  //VLOG(1) << *u;
+  //VLOG(1) << *p;
 }
 
-template<typename Term>
-void HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+void HyperelasticitySolver<Term,nDisplacementComponents>::
+setUVP(Vec x)
+{
+  if (nDisplacementComponents == 3)
+  {
+    setDisplacementsAndPressureFromCombinedVec(x);
+  }
+  else if (nDisplacementComponents == 6)
+  {
+    setDisplacementsVelocitiesAndPressureFromCombinedVec(x);
+  }
+}
+
+template<typename Term,int nDisplacementComponents>
+void HyperelasticitySolver<Term,nDisplacementComponents>::
 dumpJacobianMatrix(Mat jac)
 {
   if (!dumpDenseMatlabVariables_)
@@ -458,26 +598,35 @@ dumpJacobianMatrix(Mat jac)
   static int evaluationNo = 0;  // counter how often this function was called
 
   std::stringstream filename;
-  filename << "out/jac_" << std::setw(3) << std::setfill('0') << evaluationNo;
+  filename << "out/jac_" << std::setw(3) << std::setfill('0') << evaluationNo << "r" <<  DihuContext::nRanksCommWorld();
 
   evaluationNo++;
 
   // if there are both numeric and analytic jacobian in use, this is the numeric jacobian
   if (jac == solverMatrixAdditionalNumericJacobian_)
   {
-    filename << "n";
+    filename << "_numeric";
     combinedMatrixAdditionalNumericJacobian_->dumpMatrixGlobalNatural(filename.str());
   }
   else if (jac == solverMatrixJacobian_)
   {
-    // this is the normal jacobian, either numeric or analytic, if only one of both is is use
-    combinedMatrixJacobian_->dumpMatrixGlobalNatural(filename.str());
+    // this is the normal jacobian, either numeric or analytic, if only one of both is in use
 
+    // if both matrices are used
     if (solverMatrixAdditionalNumericJacobian_ != PETSC_NULL)
     {
+      filename << "_analytic";
+      combinedMatrixJacobian_->dumpMatrixGlobalNatural(filename.str());
+
+      evaluationNo--;
+
+      // if matrix is not all zeros
       double numericJacobianNorm = 0;
       MatNorm(solverMatrixAdditionalNumericJacobian_, NORM_1, &numericJacobianNorm);
-      if (numericJacobianNorm > 1)
+
+      LOG(DEBUG) << "numericJacobianNorm: " << numericJacobianNorm;
+
+      if (numericJacobianNorm > 1e-5)
       {
         // compute difference between analytic and numeric jacobian
         Mat difference;
@@ -486,35 +635,47 @@ dumpJacobianMatrix(Mat jac)
         ierr = MatCopy(solverMatrixAdditionalNumericJacobian_, difference, SAME_NONZERO_PATTERN); CHKERRV(ierr);
         MatAXPY(difference, -1, solverMatrixJacobian_, DIFFERENT_NONZERO_PATTERN);
 
-        Mat analyticJacobianSubmatrixU = combinedMatrixJacobian_->getSubmatrixUU();
-        Mat numericJacobianSubmatrixU = combinedMatrixAdditionalNumericJacobian_->getSubmatrixUU();
-
-        Mat differenceSubmatrixU;
-        ierr = MatDuplicate(analyticJacobianSubmatrixU, MAT_COPY_VALUES, &differenceSubmatrixU); CHKERRV(ierr);
-        ierr = MatCopy(analyticJacobianSubmatrixU, differenceSubmatrixU, SAME_NONZERO_PATTERN); CHKERRV(ierr);
-        MatAXPY(differenceSubmatrixU, -1, numericJacobianSubmatrixU, DIFFERENT_NONZERO_PATTERN);
-
-
-
         double norm1 = 0;
         double normF = 0;
         double normInf = 0;
         MatNorm(difference, NORM_1, &norm1);
         MatNorm(difference, NORM_FROBENIUS, &normF);
         MatNorm(difference, NORM_INFINITY, &normInf);
-        LOG(DEBUG) << "difference between analytic and numeric jacobian matrices: 1-norm: " << norm1 << ", frobenius norm: " << normF << ", infinity norm: " << normInf;
+        LOG(INFO) << "difference between analytic and numeric jacobian matrices: "
+          << "1-norm: " << norm1 << ", frobenius norm: " << normF << ", infinity norm: " << normInf;
 
+        // compute differences for submatrices
+        int nRows = 2;
+        if (nDisplacementComponents == 6)
+          nRows = 3;
 
-        MatNorm(differenceSubmatrixU, NORM_1, &norm1);
-        MatNorm(differenceSubmatrixU, NORM_FROBENIUS, &normF);
-        MatNorm(differenceSubmatrixU, NORM_INFINITY, &normInf);
-        LOG(DEBUG) << "only uu submatrix: 1-norm: " << norm1 << ", frobenius norm: " << normF << ", infinity norm: " << normInf;
+        for (int i = 0; i < nRows; i++)
+        {
+          for (int j = 0; j < nRows; j++)
+          {
+            Mat analyticJacobianSubmatrix = combinedMatrixJacobian_->getSubmatrix(i,j);
+            Mat numericJacobianSubmatrix = combinedMatrixAdditionalNumericJacobian_->getSubmatrix(i,j);
 
+            Mat differenceSubmatrix;
+            ierr = MatDuplicate(analyticJacobianSubmatrix, MAT_COPY_VALUES, &differenceSubmatrix); CHKERRV(ierr);
+            ierr = MatCopy(analyticJacobianSubmatrix, differenceSubmatrix, SAME_NONZERO_PATTERN); CHKERRV(ierr);
+            MatAXPY(differenceSubmatrix, -1, numericJacobianSubmatrix, DIFFERENT_NONZERO_PATTERN);
+
+            MatNorm(differenceSubmatrix, NORM_1, &norm1);
+            MatNorm(differenceSubmatrix, NORM_FROBENIUS, &normF);
+            MatNorm(differenceSubmatrix, NORM_INFINITY, &normInf);
+            LOG(INFO) << " submatrix (" << i << "," << j << "): 1-norm: " << norm1 << ", frobenius norm: " << normF << ", infinity norm: " << normInf;
+          }
+        }
 
         if (norm1 > 1)
           LOG(ERROR) << "norm mismatch";
       }
 
+    }
+    else
+    {
+      combinedMatrixJacobian_->dumpMatrixGlobalNatural(filename.str());
     }
   }
   else
@@ -523,8 +684,8 @@ dumpJacobianMatrix(Mat jac)
   }
 }
 
-template<typename Term>
-void HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+void HyperelasticitySolver<Term,nDisplacementComponents>::
 checkSolution(Vec x)
 {
   // check if function is zero
@@ -571,8 +732,8 @@ checkSolution(Vec x)
   }
 }
 
-template<typename Term>
-std::string HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+std::string HyperelasticitySolver<Term,nDisplacementComponents>::
 getString(Vec x)
 {
   if (x == solverVariableSolution_)
@@ -583,9 +744,9 @@ getString(Vec x)
   {
     return combinedVecResidual_->getString();
   }
-  else if (x == externalVirtualWork_)
+  else if (x == externalVirtualWorkDead_)
   {
-    return combinedVecExternalVirtualWork_->getString();
+    return combinedVecExternalVirtualWorkDead_->getString();
   }
   else
   {

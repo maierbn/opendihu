@@ -29,17 +29,32 @@ public:
   //! constructor
   QuasiStaticHyperelasticityBase(DihuContext context);
 
-  //! field variable of u
+  //! field variable of u (or u^(n+1) in the dynamic problem)
   std::shared_ptr<DisplacementsFieldVariableType> displacements();
+
+  //! field variable of u^(n) for dynamic problem
+  std::shared_ptr<DisplacementsFieldVariableType> displacementsPreviousTimestep();
+
+  //! field variable of v (or v^(n+1) in the dynamic problem)
+  std::shared_ptr<DisplacementsFieldVariableType> velocities();
+
+  //! field variable of v^(n) for dynamic problem
+  std::shared_ptr<DisplacementsFieldVariableType> velocitiesPreviousTimestep();
+
+  //! field variable of p (or p^(n+1) in the dynamic problem)
+  std::shared_ptr<PressureFieldVariableType> pressure();
+
+  //! field variable of p
+  std::shared_ptr<PressureFieldVariableType> pressurePreviousTimestep();
 
   //! field variable of reference geometry
   std::shared_ptr<DisplacementsFieldVariableType> geometryReference();
 
-  //! field variable of p
-  std::shared_ptr<PressureFieldVariableType> pressure();
-
   //! field variable displacements u but on the linear mesh
   std::shared_ptr<DisplacementsLinearFieldVariableType> displacementsLinearMesh();
+
+  //! field variable velocities v, but on the linear mesh
+  std::shared_ptr<DisplacementsLinearFieldVariableType> velocitiesLinearMesh();
 
   //! field variable of S
   std::shared_ptr<StressFieldVariableType> pK2Stress();
@@ -68,7 +83,8 @@ public:
 
   //! add the displacements to the reference geometry to obtain the current geometry, for both function spaces (linear and quadratic)
   //! \param scalingFactor factor with which to scale the displacements
-  void updateGeometry(double scalingFactor = 1.0);
+  //! \param updateLinearVariables if the variables of the linear discretized mesh should be update from the quadratic mesh, this is only needed if the pressure output writer is used
+  void updateGeometry(double scalingFactor = 1.0, bool updateLinearVariables = true);
 
 
 protected:
@@ -82,11 +98,16 @@ protected:
   std::shared_ptr<DisplacementsFieldVariableType> geometryReference_;       //< the reference configuration geometry
   std::shared_ptr<DisplacementsLinearFieldVariableType> geometryReferenceLinearMesh_;            //< the reference configuration geometry in the pressure function space (linear mesh)
 
-  std::shared_ptr<DisplacementsFieldVariableType> displacements_;     //< u, the displacements
-  std::shared_ptr<PressureFieldVariableType> pressure_;     //<  p, the pressure variable
-  std::shared_ptr<StressFieldVariableType> pK2Stress_;     //<  the symmetric PK2 stress tensor in Voigt notation
-  std::shared_ptr<DisplacementsLinearFieldVariableType> displacementsLinearMesh_;     //<  the displacements u, but on the linear mesh not the quadratic. This is an internal helper field
-  std::shared_ptr<DisplacementsFieldVariableType> fiberDirection_;    //< interpolated direction of fibers
+  std::shared_ptr<DisplacementsFieldVariableType> displacements_;                 //< u^(n+1) or u, the displacements
+  std::shared_ptr<DisplacementsFieldVariableType> displacementsPreviousTimestep_; //< u^(n), the displacements of the previous timestep in the dynamic case
+  std::shared_ptr<DisplacementsFieldVariableType> velocities_;                    //< v^(n+1) or v, the velocities
+  std::shared_ptr<DisplacementsFieldVariableType> velocitiesPreviousTimestep_;    //< v^(n), the velocities of the previous timestep in the dynamic case
+  std::shared_ptr<PressureFieldVariableType> pressure_;                           //< p^(n+1) for dynamic case or p for static case, the pressure variable
+  std::shared_ptr<PressureFieldVariableType> pressurePreviousTimestep_;           //< p^(n), the pressure variable
+  std::shared_ptr<StressFieldVariableType> pK2Stress_;                            //< the symmetric PK2 stress tensor in Voigt notation
+  std::shared_ptr<DisplacementsLinearFieldVariableType> displacementsLinearMesh_; //< the displacements u, but on the linear mesh, not the quadratic. This is an internal helper field
+  std::shared_ptr<DisplacementsLinearFieldVariableType> velocitiesLinearMesh_;    //< the velocities v, but on the linear mesh, not the quadratic. This is an internal helper field
+  std::shared_ptr<DisplacementsFieldVariableType> fiberDirection_;                //< interpolated direction of fibers
 };
 
 /** Helper class that outputs the field variables for the output writer.
@@ -108,6 +129,7 @@ public:
   typedef std::tuple<
     std::shared_ptr<DisplacementsFieldVariableType>,  // current geometry field
     std::shared_ptr<DisplacementsFieldVariableType>,  // displacements_
+    std::shared_ptr<DisplacementsFieldVariableType>,  // velocities_
     std::shared_ptr<StressFieldVariableType>         // pK2Stress_
   >
   FieldVariablesForOutputWriter;
@@ -131,6 +153,7 @@ public:
   typedef std::tuple<
     std::shared_ptr<DisplacementsFieldVariableType>,  // current geometry field
     std::shared_ptr<DisplacementsFieldVariableType>,  // displacements_
+    std::shared_ptr<DisplacementsFieldVariableType>,  // velocities_
     std::shared_ptr<StressFieldVariableType>,         // pK2Stress_
     std::shared_ptr<DisplacementsFieldVariableType>   // fiber direction
   >
@@ -162,6 +185,7 @@ public:
   typedef std::tuple<
       std::shared_ptr<DisplacementsLinearFieldVariableType>,  // current linear geometry field
       std::shared_ptr<DisplacementsLinearFieldVariableType>,  // displacements in linear function space
+      std::shared_ptr<DisplacementsLinearFieldVariableType>,  // velocities in linear function space
       std::shared_ptr<PressureFieldVariableType>  // pressure
     >
   FieldVariablesForOutputWriter;
@@ -170,7 +194,10 @@ public:
   FieldVariablesForOutputWriter getFieldVariablesForOutputWriter();
 
   //! initialize the internal pressure and displacements variables
-  void initialize(std::shared_ptr<PressureFieldVariableType> pressure, std::shared_ptr<DisplacementsLinearFieldVariableType> displacementsLinearMesh);
+  void initialize(std::shared_ptr<PressureFieldVariableType> pressure,
+                  std::shared_ptr<DisplacementsLinearFieldVariableType> displacementsLinearMesh,
+                  std::shared_ptr<DisplacementsLinearFieldVariableType> velocitiesLinearMesh
+                 );
 
 private:
 
@@ -179,6 +206,7 @@ private:
 
   std::shared_ptr<PressureFieldVariableType> pressure_;     //<  p, the pressure variable
   std::shared_ptr<DisplacementsLinearFieldVariableType> displacementsLinearMesh_;     //<  the displacements u, but on the linear mesh not the quadratic. This is an internal helper field
+  std::shared_ptr<DisplacementsLinearFieldVariableType> velocitiesLinearMesh_;     //<  the velocities v, but on the linear mesh not the quadratic. This is an internal helper field
 };
 
 } // namespace Data

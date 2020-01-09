@@ -4,29 +4,22 @@
 
 #include "equation/mooney_rivlin_incompressible.h"
 
-#define SYMMETRIC             // yes
-//#define SYMMETRICP_PK2        // does not matter
-
 namespace SpatialDiscretization
 {
 
-template<typename Term>
-void HyperelasticitySolver<Term>::
-materialComputeResidual()
+template<typename Term,int nDisplacementComponents>
+void HyperelasticitySolver<Term,nDisplacementComponents>::
+materialComputeInternalVirtualWork()
 {
-  // compute Wint - Wext in solverVariableResidual_
-  //  output is solverVariableResidual_, a normal Vec, no Dirichlet BC dofs
+  // compute Wint in solverVariableResidual_
+  //  output is solverVariableResidual_, a normal Vec, no Dirichlet BC dofs, also accessible by combinedVecResidual_
   //  input is solverVariableSolution_, a normal Vec, the same values have already been assigned to this->data_.displacements() and this->data_.pressure()
 
   // -----------------------------
   // compute internal virtual work
   // δW_int = int_Ω 1/2 S_AB (F_aB phi_L,A + F_aA phi_L,B) dV
 
-  //LOG(TRACE) << "materialComputeResidual";
-  const bool outputValues = false;
   const bool outputFiles = false;
-  if (outputValues)
-    LOG(DEBUG) << "input: " << getString(solverVariableSolution_);
 
   // assert that data representation is global
   assert(combinedVecResidual_->currentRepresentation() == Partition::values_representation_t::representationCombinedGlobal);
@@ -55,8 +48,6 @@ materialComputeResidual()
   // setup arrays used for integration
   std::array<Vec3, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
 
-  PetscErrorCode ierr;
-
   // set values to zero
   combinedVecResidual_->zeroEntries();
   combinedVecResidual_->startGhostManipulation();
@@ -68,7 +59,7 @@ materialComputeResidual()
     // dump input vector
     // dumpVector(std::string filename, std::string format, Vec &vector, MPI_Comm mpiCommunicator, int componentNo=0, int nComponents=1);
     std::stringstream filename;
-    filename << "out/x" << std::setw(3) << std::setfill('0') << evaluationNo;
+    filename << "out/x" << std::setw(3) << std::setfill('0') << evaluationNo++;
     //PetscUtility::dumpVector(filename.str(), "matlab", solverVariableSolution_, displacementsFunctionSpace->meshPartition()->mpiCommunicator());
     combinedVecSolution_->dumpGlobalNatural(filename.str());
   }
@@ -288,7 +279,8 @@ materialComputeResidual()
       dof_no_t dofNoLocal = pressureDofNosLocal[aDof];
 
       // set value of result vector
-      combinedVecResidual_->setValue(3, dofNoLocal, integratedValue, ADD_VALUES);
+      const int pressureDofNo = nDisplacementComponents;  // 3 or 6, depending if static or dynamic problem
+      combinedVecResidual_->setValue(pressureDofNo, dofNoLocal, integratedValue, ADD_VALUES);
       VLOG(1) << "p: set value " << integratedValue << " at dofNoLocal: " << dofNoLocal;
     }
   }  // elementNoLocal
@@ -296,7 +288,39 @@ materialComputeResidual()
   // assemble result vector
   combinedVecResidual_->finishGhostManipulation();
 
-  // solverVariableResidual_ contains δW_int
+  // now, solverVariableResidual_, which is the globalValues() of combinedVecResidual_, contains δW_int
+}
+
+template<typename Term,int nDisplacementComponents>
+void HyperelasticitySolver<Term,nDisplacementComponents>::
+materialComputeResidual()
+{
+  // This computes the residual, i.e. the nonlinear function to be solved.
+  // Compute Wint - Wext in variable solverVariableResidual_.
+  //  output is solverVariableResidual_, a normal Vec, no Dirichlet BC dofs, also accessible by combinedVecResidual_
+  //  input is solverVariableSolution_, a normal Vec, the same values have already been assigned to this->data_.displacements() and this->data_.pressure() (!)
+  // before this method, values of u, v and p get stored to the data object by setUVP(solverVariableSolution_);
+
+  //LOG(TRACE) << "materialComputeResidual";
+  const bool outputValues = false;
+  const bool outputFiles = false;
+  if (outputValues)
+    LOG(DEBUG) << "input: " << getString(solverVariableSolution_);
+
+  // dump input vector to file
+  if (outputFiles)
+  {
+    static int evaluationNo = 0;  // counter how often this function was called
+
+    // dumpVector(std::string filename, std::string format, Vec &vector, MPI_Comm mpiCommunicator, int componentNo=0, int nComponents=1);
+    std::stringstream filename;
+    filename << "out/x" << std::setw(3) << std::setfill('0') << evaluationNo++ << "r" << DihuContext::nRanksCommWorld();
+
+    combinedVecSolution_->dumpGlobalNatural(filename.str());
+  }
+  materialComputeInternalVirtualWork();
+  // now, solverVariableResidual_, which is the globalValues() of combinedVecResidual_, contains δW_int
+  // also the pressure equation residual has been set at the last component
 
   // output values for debugging
   if (outputValues)
@@ -305,38 +329,338 @@ materialComputeResidual()
     //LOG(DEBUG) << "input p: " << *this->data_.pressure();
 
     LOG(DEBUG) << "δW_int: " << getString(solverVariableResidual_);
-    LOG(DEBUG) << "δW_ext: " << getString(externalVirtualWork_);
+    LOG(DEBUG) << "δW_ext: " << getString(externalVirtualWorkDead_);
   }
 
-  // compute F = δW_int - δW_ext,
-  // δW_ext = int_∂Ω T_a phi_L dS was precomputed in initialize
-  ierr = VecAXPY(solverVariableResidual_, -1, externalVirtualWork_); CHKERRV(ierr);
+  // for static case: F = δW_int - δW_ext
 
-  if(outputValues)
-    LOG(DEBUG) << "total:   " << getString(solverVariableResidual_);
+  if (nDisplacementComponents == 3)
+  {
+    // compute F = δW_int - δW_ext,
+    // δW_ext = int_∂Ω T_a phi_L dS was precomputed in initialize (materialComputeExternalVirtualWorkDead()), in variable externalVirtualWorkDead_
+    // for static case, externalVirtualWorkDead_ = externalVirtualWorkDead_
+    PetscErrorCode ierr;
+    ierr = VecAXPY(solverVariableResidual_, -1, externalVirtualWorkDead_); CHKERRV(ierr);
+
+    if(outputValues)
+      LOG(DEBUG) << "total:   " << getString(solverVariableResidual_);
+
+  }
+  else if (nDisplacementComponents == 6)
+  {
+    // for dynamic case, add acceleration term to residual
+
+    // compute F = δW_int - δW_ext,dead + accelerationTerm
+    // δW_ext = int_∂Ω T_a phi_L dS was precomputed in initialize, in variable externalVirtualWorkDead_
+    PetscErrorCode ierr;
+    ierr = VecAXPY(solverVariableResidual_, -1, externalVirtualWorkDead_); CHKERRV(ierr);
+
+    if (outputFiles)
+    {
+      static int evaluationNo = 0;  // counter how often this function was called
+
+      // dumpVector(std::string filename, std::string format, Vec &vector, MPI_Comm mpiCommunicator, int componentNo=0, int nComponents=1);
+      std::stringstream filename;
+      filename << "out/id" << std::setw(3) << std::setfill('0') << evaluationNo++ << "r" << DihuContext::nRanksCommWorld();
+
+      combinedVecResidual_->dumpGlobalNatural(filename.str());
+    }
+
+    // add acceleration term (int_Ω rho_0 (v^(n+1) - v^(n)) / dt * phi^L * phi^M * δu^M dV) to solverVariableResidual_
+    // also add the velocity equation in the velocity slot
+    materialAddAccelerationTermAndVelocityEquation();
+
+    // the incompressibility equation has been added in the pressure slot by materialComputeInternalVirtualWork
+  }
 
   // dump output vector to file
   if (outputFiles)
   {
+    static int evaluationNo = 0;  // counter how often this function was called
+
     // dumpVector(std::string filename, std::string format, Vec &vector, MPI_Comm mpiCommunicator, int componentNo=0, int nComponents=1);
     std::stringstream filename;
-    filename << "out/F" << std::setw(3) << std::setfill('0') << evaluationNo;
-    //PetscUtility::dumpVector(filename.str(), "matlab", solverVariableResidual_, displacementsFunctionSpace->meshPartition()->mpiCommunicator());
+    filename << "out/F" << std::setw(3) << std::setfill('0') << evaluationNo++ << "r" << DihuContext::nRanksCommWorld();
     combinedVecResidual_->dumpGlobalNatural(filename.str());
   }
-
   assert(combinedVecResidual_->currentRepresentation() == Partition::values_representation_t::representationCombinedGlobal);
   assert(combinedVecSolution_->currentRepresentation() == Partition::values_representation_t::representationCombinedGlobal);
-
-  evaluationNo++;
 }
 
-template<typename Term>
-void HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+void HyperelasticitySolver<Term,nDisplacementComponents>::
+materialComputeExternalVirtualWorkDead()
+{
+  // compute δW_ext,dead = int_Ω B^L * phi^L * phi^M * δu^M dx + int_∂Ω T^L * phi^L * phi^M * δu^M dS
+
+  combinedVecExternalVirtualWorkDead_->zeroEntries();               // clear entries to 0
+  combinedVecExternalVirtualWorkDead_->startGhostManipulation();    // fill ghost buffers
+
+  // get traction directly from neumann boundary conditions, they are defined element wise and the integration takes place in neumann_boundary_conditions.tpp
+  std::vector<double> values;
+  for (int componentNo = 0; componentNo < 3; componentNo++)
+  {
+    values.clear();
+    neumannBoundaryConditions_->rhs()->getValuesWithoutGhosts(componentNo, values);
+    LOG(DEBUG) << "component " << componentNo << ", neumannBoundaryConditions_ rhs values: " << values;
+
+
+    combinedVecExternalVirtualWorkDead_->setValues(componentNo, displacementsFunctionSpace_->meshPartition()->nDofsLocalWithoutGhosts(),
+                                                displacementsFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data(), INSERT_VALUES);
+  }
+
+  // integrate to account for body forces
+  // -------------------------------------
+  if (fabs(constantBodyForce_[0]) > 1e-12 || fabs(constantBodyForce_[1]) > 1e-12 || fabs(constantBodyForce_[2]) > 1e-12)
+  {
+    LOG(DEBUG) << "add contribution of body force " << constantBodyForce_;
+
+    const int D = 3;  // dimension
+    std::shared_ptr<DisplacementsFunctionSpace> functionSpace = this->data_.displacementsFunctionSpace();
+    const int nDisplacementsDofsPerElement = DisplacementsFunctionSpace::nDofsPerElement();
+    const int nUnknowsPerElement = nDisplacementsDofsPerElement*D;    // D directions for displacements per dof
+    const int nDofsPerElement = DisplacementsFunctionSpace::nDofsPerElement();
+
+    // define shortcuts for quadrature
+    typedef Quadrature::TensorProduct<D,Quadrature::Gauss<3>> QuadratureDD;   // quadratic*quadratic = 4th order polynomial, 3 gauss points = 2*3-1 = 5th order exact
+
+    // define type to hold evaluations of integrand
+    typedef std::array<double, 3*nUnknowsPerElement> EvaluationsType;
+    std::array<EvaluationsType, QuadratureDD::numberEvaluations()> evaluationsArray{};
+
+    // setup arrays used for integration
+    std::array<Vec3, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
+
+    // initialize variables
+    functionSpace->geometryField().setRepresentationGlobal();
+    functionSpace->geometryField().startGhostManipulation();   // ensure that local ghost values of geometry field are set
+
+    // loop over elements
+    for (element_no_t elementNoLocal = 0; elementNoLocal < functionSpace->nElementsLocal(); elementNoLocal++)
+    {
+      // get geometry field values
+      std::array<Vec3,DisplacementsFunctionSpace::nDofsPerElement()> geometry;
+      functionSpace->getElementGeometry(elementNoLocal, geometry);
+
+      // In case it is required to have a varying body force, get the body force values here, also update the integrand
+      //std::array<Vec3,nDisplacementsDofsPerElement> displacementsValues;
+      //this->data_.bodyForce()->getElementValues(elementNoLocal, bodyForceValues);
+
+      // evaluate integrand at sampling points
+      for (unsigned int samplingPointIndex = 0; samplingPointIndex < samplingPoints.size(); samplingPointIndex++)
+      {
+        // evaluate function to integrate at samplingPoints[i*2], write value to evaluations[i]
+        std::array<double,D> xi = samplingPoints[samplingPointIndex];
+
+        // compute the 3xD jacobian of the parameter space to world space mapping
+        auto jacobian = DisplacementsFunctionSpace::computeJacobian(geometry, xi);
+        double integrationFactor = MathUtility::computeIntegrationFactor<D>(jacobian);
+
+        for (unsigned int elementalDofNoM = 0; elementalDofNoM < nDofsPerElement; elementalDofNoM++)   // dof index M
+        {
+          for (int dimensionNo = 0; dimensionNo < 3; dimensionNo++)
+          {
+            double integrand = 0;
+
+            for (unsigned int elementalDofNoL = 0; elementalDofNoL < nDofsPerElement; elementalDofNoL++)   // dof index L
+            {
+              integrand += DisplacementsFunctionSpace::phi(elementalDofNoL,xi) * DisplacementsFunctionSpace::phi(elementalDofNoM,xi)
+                * constantBodyForce_[dimensionNo];
+            }
+
+            evaluationsArray[samplingPointIndex][elementalDofNoM*3 + dimensionNo] = integrand * integrationFactor;
+          }
+        }
+      }  // function evaluations
+
+      // integrate all values for the (M,d) dofs at once
+      EvaluationsType integratedValues = QuadratureDD::computeIntegral(evaluationsArray);
+
+      std::array<dof_no_t,nDisplacementsDofsPerElement> dofNosLocal = functionSpace->getElementDofNosLocal(elementNoLocal);
+
+      // add integrated entries to result vector
+      for (unsigned int elementalDofNoM = 0; elementalDofNoM < nDofsPerElement; elementalDofNoM++)   // dof index M
+      {
+        for (int dimensionNo = 0; dimensionNo < 3; dimensionNo++)
+        {
+
+          // get local dof no, elementalDofNoM is the dof within the element, dofNoLocal is the dof within the local subdomain
+          dof_no_t dofNoLocal = dofNosLocal[elementalDofNoM];
+
+          double integratedValue = integratedValues[elementalDofNoM*3 + dimensionNo];
+          combinedVecExternalVirtualWorkDead_->setValue(dimensionNo, dofNoLocal, integratedValue, ADD_VALUES);
+
+        }  // D
+      }  // L
+    }  // elementNoLocal
+  }
+
+  combinedVecExternalVirtualWorkDead_->finishGhostManipulation();     // communicate and add up values in ghost buffers
+  combinedVecExternalVirtualWorkDead_->startGhostManipulation();      // communicate ghost buffers values back in place
+
+  LOG(DEBUG) << "combinedVecExternalVirtualWorkDead (components 3-6 should be empty): " << combinedVecExternalVirtualWorkDead_->getString();
+  //combinedVecExternalVirtualWorkDead_->startGhostManipulation();
+}
+
+template<typename Term,int nDisplacementComponents>
+void HyperelasticitySolver<Term,nDisplacementComponents>::
+materialAddAccelerationTermAndVelocityEquation()
+{
+  assert (nDisplacementComponents == 6);
+
+  // add to solverVariableResidual_ (=combinedVecResidual_) += int_Ω rho_0 * (v^(n+1),L - v^(n),L) / dt * phi^L * phi^M * δu^M dx
+  // solverVariableSolution_
+
+  combinedVecResidual_->startGhostManipulation();      // communicate ghost buffers values back in place
+
+  const int D = 3;  // dimension
+  std::shared_ptr<DisplacementsFunctionSpace> functionSpace = this->data_.displacementsFunctionSpace();
+  const int nDisplacementsDofsPerElement = DisplacementsFunctionSpace::nDofsPerElement();
+  const int nUnknowsPerElement = nDisplacementsDofsPerElement*D;    // D directions for displacements per dof
+  const int nDofsPerElement = DisplacementsFunctionSpace::nDofsPerElement();
+
+  // define shortcuts for quadrature
+  typedef Quadrature::TensorProduct<D,Quadrature::Gauss<3>> QuadratureDD;   // quadratic*quadratic = 4th order polynomial, 3 gauss points = 2*3-1 = 5th order exact
+
+  // define type to hold evaluations of integrand
+  typedef std::array<double, 3*nUnknowsPerElement> EvaluationsType;
+  std::array<EvaluationsType, QuadratureDD::numberEvaluations()> evaluationsArray{};
+
+  // setup arrays used for integration
+  std::array<Vec3, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
+
+  // loop over elements
+  for (element_no_t elementNoLocal = 0; elementNoLocal < functionSpace->nElementsLocal(); elementNoLocal++)
+  {
+    std::array<dof_no_t,nDisplacementsDofsPerElement> dofNosLocal = functionSpace->getElementDofNosLocal(elementNoLocal);
+    std::vector<dof_no_t> dofNosLocalWithoutGhosts;
+    functionSpace->getElementDofNosLocalWithoutGhosts(elementNoLocal, dofNosLocalWithoutGhosts);
+
+    // get geometry field values
+    std::array<Vec3,DisplacementsFunctionSpace::nDofsPerElement()> geometry;
+    functionSpace->getElementGeometry(elementNoLocal, geometry);
+
+    // get the old displacements values at the previous timestep for all dofs of the element
+    std::array<Vec3,nDisplacementsDofsPerElement> oldDisplacementValues;
+    this->data_.displacementsPreviousTimestep()->getElementValues(elementNoLocal, oldDisplacementValues);
+
+    // get the old velocity values at the previous timestep  for all dofs of the element
+    std::array<Vec3,nDisplacementsDofsPerElement> oldVelocityValues;
+    this->data_.velocitiesPreviousTimestep()->getElementValues(elementNoLocal, oldVelocityValues);
+
+    // get the new displacement values for all dofs of the element
+    std::array<std::array<double,nDisplacementsDofsPerElement>,3> newDisplacementValues;
+    combinedVecSolution_->getValues(0, dofNosLocalWithoutGhosts.size(), dofNosLocalWithoutGhosts.data(), newDisplacementValues[0].data());
+    combinedVecSolution_->getValues(1, dofNosLocalWithoutGhosts.size(), dofNosLocalWithoutGhosts.data(), newDisplacementValues[1].data());
+    combinedVecSolution_->getValues(2, dofNosLocalWithoutGhosts.size(), dofNosLocalWithoutGhosts.data(), newDisplacementValues[2].data());
+
+    // get the new velocity values for all dofs of the element
+    std::array<std::array<double,nDisplacementsDofsPerElement>,3> newVelocityValues;
+    combinedVecSolution_->getValues(3, dofNosLocalWithoutGhosts.size(), dofNosLocalWithoutGhosts.data(), newVelocityValues[0].data());
+    combinedVecSolution_->getValues(4, dofNosLocalWithoutGhosts.size(), dofNosLocalWithoutGhosts.data(), newVelocityValues[1].data());
+    combinedVecSolution_->getValues(5, dofNosLocalWithoutGhosts.size(), dofNosLocalWithoutGhosts.data(), newVelocityValues[2].data());
+
+// debugging check
+#if 0
+    // get the new displacements values, to compare with newDisplacementValues (should be the same)
+    std::array<Vec3,nDisplacementsDofsPerElement> newDisplacementValues2;
+    this->data_.displacements()->getElementValues(elementNoLocal, newDisplacementValues2);
+
+    // get the new velocity values, to compare with newVelocityValues (should be the same)
+    std::array<Vec3,nDisplacementsDofsPerElement> newVelocityValues2;
+    this->data_.velocities()->getElementValues(elementNoLocal, newVelocityValues2);
+
+    LOG(DEBUG) << " element " << elementNoLocal << ":";
+    for (int dofIndex = 0; dofIndex < nDisplacementsDofsPerElement; dofIndex++)
+    {
+      dof_no_t dofNo = dofNosLocal[dofIndex];
+      LOG(DEBUG) << " dof " << dofNo << ": displacements ("
+        << newDisplacementValues[0][dofIndex] << "=" << newDisplacementValues2[dofIndex][0] << ", "
+        << newDisplacementValues[1][dofIndex] << "=" << newDisplacementValues2[dofIndex][1] << ", "
+        << newDisplacementValues[2][dofIndex] << "=" << newDisplacementValues2[dofIndex][2] << "), velocities ("
+        << newVelocityValues[0][dofIndex] << "=" << newVelocityValues2[dofIndex][0] << ", "
+        << newVelocityValues[1][dofIndex] << "=" << newVelocityValues2[dofIndex][1] << ", "
+        << newVelocityValues[2][dofIndex] << "=" << newVelocityValues2[dofIndex][2] << ")";
+    }
+#endif
+
+    // evaluate integrand at sampling points
+    for (unsigned int samplingPointIndex = 0; samplingPointIndex < samplingPoints.size(); samplingPointIndex++)
+    {
+      // evaluate function to integrate at samplingPoints[i*2], write value to evaluations[i]
+      std::array<double,D> xi = samplingPoints[samplingPointIndex];
+
+      // compute the 3xD jacobian of the parameter space to world space mapping
+      auto jacobian = DisplacementsFunctionSpace::computeJacobian(geometry, xi);
+      double integrationFactor = MathUtility::computeIntegrationFactor<D>(jacobian);
+
+      // loop over elemantal dofs, M
+      for (unsigned int elementalDofNoM = 0; elementalDofNoM < nDofsPerElement; elementalDofNoM++)   // dof index M
+      {
+        for (int dimensionNo = 0; dimensionNo < 3; dimensionNo++)
+        {
+          double integrand = 0;
+
+          // loop over elemental dofs, L
+          for (unsigned int elementalDofNoL = 0; elementalDofNoL < nDofsPerElement; elementalDofNoL++)   // dof index L
+          {
+
+            const double oldVelocity = oldVelocityValues[elementalDofNoL][dimensionNo];
+            const double newVelocity = newVelocityValues[dimensionNo][elementalDofNoL];
+
+            integrand += density_ * (newVelocity - oldVelocity) / this->timeStepWidth_ * DisplacementsFunctionSpace::phi(elementalDofNoL,xi)
+              * DisplacementsFunctionSpace::phi(elementalDofNoM,xi);
+          }
+
+          evaluationsArray[samplingPointIndex][elementalDofNoM*3 + dimensionNo] = integrand * integrationFactor;
+        }
+      }
+    }  // function evaluations
+
+    // integrate all values for the (M,d) dofs at once
+    EvaluationsType integratedValues = QuadratureDD::computeIntegral(evaluationsArray);
+
+    for (unsigned int elementalDofNoM = 0; elementalDofNoM < nDofsPerElement; elementalDofNoM++)   // dof index M
+    {
+      for (int dimensionNo = 0; dimensionNo < 3; dimensionNo++)
+      {
+
+        // get local dof no, elementalDofNoM is the dof within the element, dofNoLocal is the dof within the local subdomain
+        dof_no_t dofNoLocal = dofNosLocal[elementalDofNoM];
+
+        // add integrated entries of velocityTerm to result vector
+        double integratedValue = integratedValues[elementalDofNoM*3 + dimensionNo];
+        combinedVecResidual_->setValue(dimensionNo, dofNoLocal, integratedValue, ADD_VALUES);
+
+        // compute velocity equation
+        const double oldDisplacement = oldDisplacementValues[elementalDofNoM][dimensionNo];
+        const double newDisplacement = newDisplacementValues[dimensionNo][elementalDofNoM];
+
+        //double oldVelocity = oldVelocityValues[elementalDofNoM][dimensionNo];
+        const double newVelocity = newVelocityValues[dimensionNo][elementalDofNoM];
+
+        // add the velocity/displacement equation 1/dt (u^(n+1) - u^(n)) - v^(n+1) = 0 in the velocity slot
+        double residuum = 1.0 / this->timeStepWidth_ * (newDisplacement - oldDisplacement) - newVelocity;
+
+        combinedVecResidual_->setValue(3 + dimensionNo, dofNoLocal, residuum, INSERT_VALUES);
+
+      }  // D
+    }  // L
+  }  // elementNoLocal
+
+  combinedVecResidual_->finishGhostManipulation();     // communicate and add up values in ghost buffers
+
+  //LOG(DEBUG) << "combinedVecExternalVirtualWorkDead: " << combinedVecExternalVirtualWorkDead_->getString();
+
+  //combinedVecExternalVirtualWorkDead_->startGhostManipulation();
+}
+
+template<typename Term,int nDisplacementComponents>
+void HyperelasticitySolver<Term,nDisplacementComponents>::
 materialComputeJacobian()
 {
   // analytic jacobian combinedMatrixJacobian_
-  //  output is combinedMatrixJacobian_, a PartitionedPetscMat or solverMatrixJacobian_, the normal Mat, contains no Dirichlet BC dofs
+  //  output is combinedMatrixJacobian_, a PartitionedMatHyperelasticity or solverMatrixJacobian_, the normal Mat, contains no Dirichlet BC dofs
   //  input is solverVariableSolution_, a normal Vec, the same values have already been assigned to this->data_.displacements() and this->data_.pressure()
 
   const bool outputValues = false;
@@ -359,17 +683,18 @@ materialComputeJacobian()
   // define shortcuts for quadrature
   typedef Quadrature::TensorProduct<D,Quadrature::Gauss<3>> QuadratureDD;   // quadratic*quadratic = 4th order polynomial, 3 gauss points = 2*3-1 = 5th order exact
 
-  // define type to hold evaluations of integrand
+  // define types to hold evaluations of integrand
   typedef std::array<double, nUnknowsPerElement*nUnknowsPerElement> EvaluationsDisplacementsType;
   std::array<EvaluationsDisplacementsType, QuadratureDD::numberEvaluations()> evaluationsArrayDisplacements{};
 
   typedef std::array<double, nPressureDofsPerElement*nUnknowsPerElement> EvaluationsPressureType;
   std::array<EvaluationsPressureType, QuadratureDD::numberEvaluations()> evaluationsArrayPressure{};
 
+  typedef std::array<double, nDisplacementsDofsPerElement*nDisplacementsDofsPerElement> EvaluationsUVType;
+  std::array<EvaluationsUVType, QuadratureDD::numberEvaluations()> evaluationsArrayUV{};
+
   // setup arrays used for integration
   std::array<Vec3, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
-
-  // set values to zero to be able to add values later
 
   // loop over elements
   for (int elementNoLocal = 0; elementNoLocal < nElementsLocal; elementNoLocal++)
@@ -378,6 +703,9 @@ materialComputeJacobian()
     std::array<dof_no_t,nDisplacementsDofsPerElement> dofNosLocal = displacementsFunctionSpace->getElementDofNosLocal(elementNoLocal);
     std::array<dof_no_t,nPressureDofsPerElement> dofNosLocalPressure = pressureFunctionSpace->getElementDofNosLocal(elementNoLocal);
 
+    // set values to zero to be able to add values later
+
+    // initialize top-left submatrix to zero, for dynamic case initialize submatrices (1,0), (0,1), (1,1)
     // loop over indices of unknows (aDof,aComponent),(bDof,bComponent) or (L,a),(M,b)
     for (int aDof = 0; aDof < nDisplacementsDofsPerElement; aDof++)        // L
     {
@@ -392,11 +720,33 @@ materialComputeJacobian()
             dof_no_t dofBNoLocal = dofNosLocal[bDof];
 
             combinedMatrixJacobian_->setValue(aComponent, dofANoLocal, bComponent, dofBNoLocal, 0.0, INSERT_VALUES);
+
+            // for dynamic case also initialize center-left, top-center and center-center sub matrices
+            if (nDisplacementComponents == 6)
+            {
+              // set entry of top-center (0,1) sub matrix, l_δu,Δv
+              // this entry will be computed by an integral
+              combinedMatrixJacobian_->setValue(aComponent, dofANoLocal, 3+bComponent, dofBNoLocal, 0.0, INSERT_VALUES);
+
+              // set entry of center-left (1,0) sub matrix, l_δv,Δu
+              // this entry can directly be computed
+              const int delta_ab = (aComponent == bComponent? 1 : 0);
+              const int delta_LM = (aDof == bDof? 1 : 0);
+
+              const double entryVU = 1./this->timeStepWidth_ * delta_ab * delta_LM;
+              combinedMatrixJacobian_->setValue(3+aComponent, dofANoLocal, bComponent, dofBNoLocal, entryVU, INSERT_VALUES);
+
+              // set entry of center-center (1,1) sub matrix, l_δv,Δv
+              // this entry can directly be computed
+              const double entryVV = -delta_ab * delta_LM;
+              combinedMatrixJacobian_->setValue(3+aComponent, dofANoLocal, 3+bComponent, dofBNoLocal, entryVV, INSERT_VALUES);
+            }
           }  // b
         }  // M
       }  // a
     }  // L
 
+    // initialize top right and bottom left sub matrices to zero
     // loop over indices of unknows aDof,(bDof,bComponent) or L,(M,b)
     for (int lDof = 0; lDof < nPressureDofsPerElement; lDof++)           // L
     {
@@ -408,19 +758,21 @@ materialComputeJacobian()
           dof_no_t dofLNoLocal = dofNosLocalPressure[lDof];     // dof with respect to pressure function space
           dof_no_t dofMNoLocal = dofNosLocal[aDof];             // dof with respect to displacements function space
 
+          const int pressureDofNo = nDisplacementComponents;  // 3 or 6, depending if static or dynamic problem
+
           // set entry in lower left submatrix
           // parameters: componentNoRow, dofNoLocalRow, componentNoColumn, dofNoLocalColumn, value
-          combinedMatrixJacobian_->setValue(3, dofLNoLocal, aComponent, dofMNoLocal, 0.0, INSERT_VALUES);
+          combinedMatrixJacobian_->setValue(pressureDofNo, dofLNoLocal, aComponent, dofMNoLocal, 0.0, INSERT_VALUES);
 
           // set entry in upper right submatrix
-          combinedMatrixJacobian_->setValue(aComponent, dofMNoLocal, 3, dofLNoLocal, 0.0, INSERT_VALUES);
+          combinedMatrixJacobian_->setValue(aComponent, dofMNoLocal, pressureDofNo, dofLNoLocal, 0.0, INSERT_VALUES);
 
         }  // aComponent
       }  // aDof
     }  // lDof
 
 
-    // loop over diagonal matrix entries in p-part (bottom left submatrix), set diagonal entries to 0
+    // loop over diagonal matrix entries in p-part (bottom right submatrix), set diagonal entries to 0
     // This allocates nonzero entries and sets them to zero. It is needed for the solver.
 
     // The direct solvers are not able to solve the saddle point problem in serial execution, add an artifical regularization term.
@@ -432,12 +784,14 @@ materialComputeJacobian()
 
     for (int lDof = 0; lDof < nPressureDofsPerElement; lDof++)           // L
     {
+      const int pressureDofNo = nDisplacementComponents;  // 3 or 6, depending if static or dynamic problem
+
       dof_no_t dofLNoLocal = dofNosLocalPressure[lDof];     // dof with respect to pressure function space
-      combinedMatrixJacobian_->setValue(3, dofLNoLocal, 3, dofLNoLocal, epsilon, INSERT_VALUES);
+      combinedMatrixJacobian_->setValue(pressureDofNo, dofLNoLocal, pressureDofNo, dofLNoLocal, epsilon, INSERT_VALUES);
     }
   }  // elementNoLocal
 
-  // set diagonal to zero
+  // set diagonal to zero, this would be correct but for some reason the solvers do not like systems with zero diagonal, therefore epsilon was set on the diagonal
   //PetscErrorCode ierr;
   //ierr = MatDiagonalSet(combinedMatrixJacobian_->valuesGlobal(), zeros_, INSERT_VALUES); CHKERRV(ierr);
 
@@ -680,11 +1034,36 @@ materialComputeJacobian()
         }  // M
       }  // L
 
+      // add contributions of submatrix uv (top-center, only for dynamic problem)
+      if (nDisplacementComponents == 6)
+      {
+        for (int lDof = 0; lDof < nDisplacementsDofsPerElement; lDof++)    // index over dofs, each dof has D components, L in derivation
+        {
+          for (int mDof = 0; mDof < nDisplacementsDofsPerElement; mDof++)  // index over dofs, each dof has D components, M in derivation
+          {
+            // integrate ∫_Ω ρ0 ϕ^L ϕ^M dV, the actual needed value is 1/dt δ_ab ∫_Ω ρ0 ϕ^L ϕ^M dV, but this will be computed later
+            const double integrand = density_ * displacementsFunctionSpace->phi(lDof, xi) * displacementsFunctionSpace->phi(mDof, xi);
+
+            // compute index of degree of freedom and component (result vector index)
+            const int index = lDof*nDisplacementsDofsPerElement + mDof;
+
+            // store integrand in evaluations array
+            evaluationsArrayUV[samplingPointIndex][index] = integrand;
+
+          }   // M, mDof
+        }   // L, lDof
+
+      }  // if dynamic problem
     }   // sampling points
 
     // integrate all values for result vector entries at once
     EvaluationsDisplacementsType integratedValuesDisplacements = QuadratureDD::computeIntegral(evaluationsArrayDisplacements);
     EvaluationsPressureType integratedValuesPressure = QuadratureDD::computeIntegral(evaluationsArrayPressure);
+    EvaluationsUVType integratedValuesUV;
+    if (nDisplacementComponents == 6)
+    {
+      integratedValuesUV = QuadratureDD::computeIntegral(evaluationsArrayUV);
+    }
 
     // get indices of element-local dofs
     std::array<dof_no_t,nDisplacementsDofsPerElement> dofNosLocal = displacementsFunctionSpace->getElementDofNosLocal(elementNoLocal);
@@ -716,6 +1095,8 @@ materialComputeJacobian()
             VLOG(1) << "  result entry (L,a)=(" <<aDof<< "," <<aComponent<< "), (M,b)=(" <<bDof<< "," <<bComponent<< ") "
               << ", dof (" << dofANoLocal << "," << dofBNoLocal << ")"
               << ", integrated value: " <<integratedValue;
+            VLOG(1) << "  jacobian[" << displacementsFunctionSpace->meshPartition()->getDofNoGlobalPetsc(dofANoLocal) << "," << aComponent << "; "
+              << displacementsFunctionSpace->meshPartition()->getDofNoGlobalPetsc(dofBNoLocal) << "," << bComponent << "] = " << integratedValue;
 
             // parameters: componentNoRow, dofNoLocalRow, componentNoColumn, dofNoLocalColumn, value
             combinedMatrixJacobian_->setValue(aComponent, dofANoLocal, bComponent, dofBNoLocal, integratedValue, ADD_VALUES);
@@ -738,7 +1119,7 @@ materialComputeJacobian()
           const int i = aDof*D + aComponent;
           const int index = j*nUnknowsPerElement + i;
 
-          // integrate value and set entry
+          // get result of quadrature
           double integratedValue = integratedValuesPressure[index];
 
           // get local dof no, aDof is the dof within the element, dofNoLocal is the dof within the local subdomain
@@ -747,23 +1128,63 @@ materialComputeJacobian()
 
           // set entry in lower left submatrix
 
+          const int pressureDofNo = nDisplacementComponents;  // 3 or 6, depending if static or dynamic problem
+
           // parameters: componentNoRow, dofNoLocalRow, componentNoColumn, dofNoLocalColumn, value
-          combinedMatrixJacobian_->setValue(3, dofLNoLocal, aComponent, dofMNoLocal, integratedValue, ADD_VALUES);
+          combinedMatrixJacobian_->setValue(pressureDofNo, dofLNoLocal, aComponent, dofMNoLocal, integratedValue, ADD_VALUES);
 
           // set entry in upper right submatrix
-          combinedMatrixJacobian_->setValue(aComponent, dofMNoLocal, 3, dofLNoLocal, integratedValue, ADD_VALUES);
+          combinedMatrixJacobian_->setValue(aComponent, dofMNoLocal, pressureDofNo, dofLNoLocal, integratedValue, ADD_VALUES);
 
         }  // aComponent
       }  // aDof
     }  // lDof
 
+    // add entries in resulting stiffness matrix for submatrix uv (top-center, only for dynamic problem)
+    if (nDisplacementComponents == 6)
+    {
+      for (int lDof = 0; lDof < nDisplacementsDofsPerElement; lDof++)    // index over dofs, each dof has D components, L in derivation
+      {
+        for (int mDof = 0; mDof < nDisplacementsDofsPerElement; mDof++)  // index over dofs, each dof has D components, M in derivation
+        {
+          // get local dof no, lDof is the dof within the element, dofNoLocal is the dof within the local subdomain
+          dof_no_t dofLNoLocal = dofNosLocal[lDof];
+          dof_no_t dofMNoLocal = dofNosLocal[mDof];
+
+          // compute index
+          const int index = lDof*nDisplacementsDofsPerElement + mDof;
+
+          // get result of quadrature
+          const double integratedValue = integratedValuesUV[index];
+
+          // integratedValue is only ∫_Ω ρ0 ϕ^L ϕ^M dV,
+          // but we need 1/dt δ_ab ∫_Ω ρ0 ϕ^L ϕ^M dV
+
+          for (int aComponent = 0; aComponent < D; aComponent++)           // a
+          {
+            for (int bComponent = 0; bComponent < D; bComponent++)           // b
+            {
+              if (aComponent != bComponent)
+                continue;
+
+              double resultingValue = 1./this->timeStepWidth_ * integratedValue;
+
+              // set entrie
+              // parameters: componentNoRow, dofNoLocalRow, componentNoColumn, dofNoLocalColumn, value
+              combinedMatrixJacobian_->setValue(aComponent, dofMNoLocal, 3+bComponent, dofLNoLocal, resultingValue, ADD_VALUES);
+
+            }  // bComponent
+          }  // aComponent
+        }  // M
+      }  // L
+    }
   }  // local elements
 
   combinedMatrixJacobian_->assembly(MAT_FINAL_ASSEMBLY);
 }
 
-template<typename Term>
-Tensor2<3> HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+Tensor2<3> HyperelasticitySolver<Term,nDisplacementComponents>::
 computeDeformationGradient(const std::array<Vec3,DisplacementsFunctionSpace::nDofsPerElement()> &displacements,
                            const Tensor2<3> &inverseJacobianMaterial,
                            const std::array<double, 3> xi
@@ -823,8 +1244,8 @@ computeDeformationGradient(const std::array<Vec3,DisplacementsFunctionSpace::nDo
   return deformationGradient;
 }
 
-template<typename Term>
-Tensor2<3> HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+Tensor2<3> HyperelasticitySolver<Term,nDisplacementComponents>::
 computeRightCauchyGreenTensor(const Tensor2<3> &deformationGradient)
 {
   // compute C = F^T*F where F is the deformationGradient and C is the right Cauchy-Green Tensor
@@ -850,8 +1271,8 @@ computeRightCauchyGreenTensor(const Tensor2<3> &deformationGradient)
   return rightCauchyGreenTensor;
 }
 
-template<typename Term>
-std::array<double,5> HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+std::array<double,5> HyperelasticitySolver<Term,nDisplacementComponents>::
 computeInvariants(const Tensor2<3> &rightCauchyGreen, const double rightCauchyGreenDeterminant, const Vec3 fiberDirection)
 {
   std::array<double,5> invariants;
@@ -923,8 +1344,8 @@ computeInvariants(const Tensor2<3> &rightCauchyGreen, const double rightCauchyGr
   return invariants;
 }
 
-template<typename Term>
-std::array<double,5> HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+std::array<double,5> HyperelasticitySolver<Term,nDisplacementComponents>::
 computeReducedInvariants(const std::array<double,5> invariants, const double deformationGradientDeterminant)
 {
   std::array<double,5> reducedInvariants;
@@ -958,8 +1379,8 @@ computeReducedInvariants(const std::array<double,5> invariants, const double def
   return reducedInvariants;
 }
 
-template<typename Term>
-Tensor2<3> HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+Tensor2<3> HyperelasticitySolver<Term,nDisplacementComponents>::
 computePK2Stress(const double pressure,                             //< [in] pressure value p
                  const Tensor2<3> &rightCauchyGreen,                //< [in] C
                  const Tensor2<3> &inverseRightCauchyGreen,         //< [in] C^{-1}
@@ -1051,9 +1472,6 @@ computePK2Stress(const double pressure,                             //< [in] pre
 
       // compute P : Sbar
       double pSbar = 0;
-      //double ccs = 0;  // (C^-1 dyad C)*Sbar
-      //double cSbar = 0;  // C:Sbar
-
       // row index
       for (int k=0; k<3; k++)        // alternative indices: C
       {
@@ -1064,25 +1482,14 @@ computePK2Stress(const double pressure,                             //< [in] pre
         {
           const int delta_jl = (j == l? 1 : 0);
 
-#ifdef SYMMETRICP_PK2
-          // symmetric version
-          const int delta_il = (i == l? 1 : 0);
-          const int delta_jk = (j == k? 1 : 0);
-
-          const double Ii = 0.5 * (delta_ik * delta_jl + delta_il * delta_jk);       // II = (δ_AC*δ_BD + δ_AD*δ_BC) / 2
-#else
-          // not symmetric version
-          const int Ii = delta_ik * delta_jl;       // II = (δ_AC*δ_BD + δ_AD*δ_BC) / 2
-#endif
+          // this is a non-symmetric version for Ii but it is also correct, the symmetric version would be given by Ii = (δ_AC*δ_BD + δ_AD*δ_BC) / 2
+          const int Ii = delta_ik * delta_jl;
           const double Cc = inverseRightCauchyGreen[j][i] * rightCauchyGreen[l][k];     // CC = C^{-1}_AB * C_CD
           const double Pp = (Ii - 1./3 * Cc);
 
           //LOG(DEBUG) << "    PP_" << i << j << k << l << " = " << Pp << " = " << Ii << "-1/3*" << Cc << " (" << inverseRightCauchyGreen[j][i] << "," << rightCauchyGreen[l][k] << "), Ii: " << Ii;
 
           pSbar += Pp * fictitiousPK2Stress[l][k];
-
-          //cSbar += rightCauchyGreen[l][k] * fictitiousPK2Stress[l][k];
-          //ccs += Cc * fictitiousPK2Stress[l][k];
         }
       }
 
@@ -1164,8 +1571,8 @@ computePK2Stress(const double pressure,                             //< [in] pre
   return pK2Stress;
 }
 
-template<typename Term>
-void HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+void HyperelasticitySolver<Term,nDisplacementComponents>::
 computePK2StressField()
 {
   //LOG(TRACE) << "computePK2StressField";
@@ -1299,9 +1706,9 @@ computePK2StressField()
   this->data_.pK2Stress()->startGhostManipulation();
 }
 
-template<typename Term>
+template<typename Term,int nDisplacementComponents>
 //! compute the material elasticity tensor
-void HyperelasticitySolver<Term>::
+void HyperelasticitySolver<Term,nDisplacementComponents>::
 computeElasticityTensor(const Tensor2<3> &rightCauchyGreen,         //< [in] C
                         const Tensor2<3> &inverseRightCauchyGreen,  //< [in] C^{-1}
                         double deformationGradientDeterminant,      //< [in] J = det(F)
@@ -1365,14 +1772,14 @@ computeElasticityTensor(const Tensor2<3> &rightCauchyGreen,         //< [in] C
   const double factorJ23 = pow(J,-2./3);   // J^{-2/3}
   const double factorJ43 = pow(J,-4./3);   // J^{-4/3}
 
-  // distinct entries
+  // distinct entries, only those have to be computed as the rest is symmetric
   const int indices[21][4] = {
     {0,0,0,0},{0,1,0,0},{0,2,0,0},{1,1,0,0},{1,2,0,0},{2,2,0,0},{0,1,0,1},{0,2,0,1},{1,1,0,1},{1,2,0,1},
     {2,2,0,1},{0,2,0,2},{1,1,0,2},{1,2,0,2},{2,2,0,2},{1,1,1,1},{1,2,1,1},{2,2,1,1},{1,2,1,2},{2,2,1,2},
     {2,2,2,2}
   };
 
-  // all entries
+  // to compute all entries and verify the symmetry, use the following code (needs further adjustments at  the loop boundaries: "entryNo<21" -> "entryNo<81")
 #if 0
   int indices[81][4];
 
@@ -1397,7 +1804,7 @@ computeElasticityTensor(const Tensor2<3> &rightCauchyGreen,         //< [in] C
 #endif
 
   // loop over distinct entries in elasticity tensor
-  for (int entryNo = 0; entryNo < 21; entryNo++)  // 21
+  for (int entryNo = 0; entryNo < 21; entryNo++)
   {
     // get indices of current entry
     const int a = indices[entryNo][0];
@@ -1409,14 +1816,7 @@ computeElasticityTensor(const Tensor2<3> &rightCauchyGreen,         //< [in] C
     const double cInv_cd = inverseRightCauchyGreen[d][c];
 
     // compute C_vol
-    // symmetric version
-#ifdef SYMMETRIC
     const double cInvDotCInv = 0.5 * (inverseRightCauchyGreen[c][a] * inverseRightCauchyGreen[d][b] + inverseRightCauchyGreen[d][a] * inverseRightCauchyGreen[c][b]);
-#else
-     // version for not symmetric C
-    const double cInvDotCInv = inverseRightCauchyGreen[c][a] * inverseRightCauchyGreen[d][b];
-#endif
-
 
     const double cInvDyadCInv = inverseRightCauchyGreen[b][a] * inverseRightCauchyGreen[d][c];
     const double jp = deformationGradientDeterminant * pressure;
@@ -1452,14 +1852,8 @@ computeElasticityTensor(const Tensor2<3> &rightCauchyGreen,         //< [in] C
             int iI_efgh = delta_eg * delta_fh;
             int iIbar_efgh = delta_eh * delta_fg;
 
-#ifdef SYMMETRIC
             // symmetric version
             double sS_efgh = 0.5 * (iI_efgh + iIbar_efgh);
-#else
-            // non-symmetric version
-            double sS_efgh = iI_efgh;
-            //sS_efgh = iIbar_efgh;   // both should work because of symmetry
-#endif
 
             const double summand1 = factor1 * delta_ef * delta_gh;
             const double summand2 = factor2 * (delta_ef * factorJ23*c_gh + factorJ23*c_ef * delta_gh);
@@ -1611,8 +2005,8 @@ computeElasticityTensor(const Tensor2<3> &rightCauchyGreen,         //< [in] C
   }
 }
 
-template<typename Term>
-Tensor2<3> HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+Tensor2<3> HyperelasticitySolver<Term,nDisplacementComponents>::
 computePSbar(const Tensor2<3> &fictitiousPK2Stress, const Tensor2<3> &rightCauchyGreen)
 {
   // only needed for debugging in materialTesting

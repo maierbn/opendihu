@@ -39,3 +39,4 @@ with open(filename,"r") as f:
 
 nFLOPS = (nOps1 + 2*nOps2 + 4*nOps4)/nSeconds*1e-9
 print("{} Gflops, {} seconds (Skylake I5-6300U peak: 76.8 Gflops, {:.4}%)".format(nFLOPS, nSeconds, nFLOPS/76.8*100.))
+

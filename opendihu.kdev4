@@ -1,3 +1,4 @@
 [Project]
-Manager=KDevCustomMakeManager
-Name=opendihu
+CreatedFrom=
+Manager=KDevCustomBuildSystem
+Name=opendihu_dump2

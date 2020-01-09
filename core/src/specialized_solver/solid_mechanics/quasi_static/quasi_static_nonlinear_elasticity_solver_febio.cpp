@@ -386,11 +386,12 @@ loadFebioOutputFile()
         global_no_t nodeNoGlobalPetsc = id - 1;
 
         // convert global node no to local no
-        node_no_t nodeNoLocal = this->data_.functionSpace()->meshPartition()->getNodeNoLocal(nodeNoGlobalPetsc);
+        bool isLocal = false;
+        node_no_t nodeNoLocal = this->data_.functionSpace()->meshPartition()->getNodeNoLocal(nodeNoGlobalPetsc, isLocal);
 
         LOG(DEBUG) << "read point " << id << ": " << Vec3({x,y,z}) << ", global: " << nodeNoGlobalPetsc << ", local: " << nodeNoLocal;
 
-        if (nodeNoLocal >= 0 && nodeNoLocal < this->data_.functionSpace()->nDofsLocalWithoutGhosts())
+        if (isLocal)
         {
           LOG(DEBUG) << "is local";
 

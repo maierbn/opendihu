@@ -8,6 +8,7 @@
 #include "data_management/specialized_solver/hyperelasticity_solver.h"
 #include "partition/partitioned_petsc_vec/02_partitioned_petsc_vec_for_hyperelasticity.h"
 #include "partition/partitioned_petsc_mat/partitioned_petsc_mat_for_hyperelasticity.h"
+#include "solver/nonlinear.h"
 #include "output_writer/manager.h"
 #include "spatial_discretization/boundary_conditions/dirichlet_boundary_conditions.h"
 #include "spatial_discretization/boundary_conditions/neumann_boundary_conditions.h"
@@ -16,11 +17,38 @@ namespace SpatialDiscretization
 {
 
 /** This solver is for the nonlinear finite elasticity problem with Mooney-Rivlin material in 3D.
+ *  It implements the static equation ∂W_int(u,p) - ∂W_ext = 0 + incompressibility (for nDisplacementComponents = 3)
+ *  and the dynamic equation ∂W_int(u,p) - ∂W_ext,dead + ∂W_ext(v) = 0, dot u = v, incompressibility (see details in doc.pdf) (for nDisplacementComponents = 6)
  *
- * Further improvements for solving: https://github.com/jedbrown/spectral-petsc/blob/master/stokes.C
- * https://lists.mcs.anl.gov/pipermail/petsc-dev/2008-April/000711.html
+ * Further numerical improvements for solving the nonlinear system that may be implemented later:
+ *   https://github.com/jedbrown/spectral-petsc/blob/master/stokes.C
+ *   https://lists.mcs.anl.gov/pipermail/petsc-dev/2008-April/000711.html
+ *
+ * The implementation of this solver is contained in the following files:
+ *
+ * - "specialized_solver/solid_mechanics/hyperelasticity/hyperelasticity_solver.tpp":
+ * This contains the top-level methods and the initialization of data structures.
+ *
+ * - "specialized_solver/solid_mechanics/hyperelasticity/material_computations.tpp":
+ * This contains the implementation of equations, like the residual Wint-Wext, the stress, the analytic jacobian
+ *
+ * - "specialized_solver/solid_mechanics/hyperelasticity/material_testing.tpp"
+ * This contains methods to test the implementations in material_computations.tpp. It is not used for production.
+ *
+ * - "specialized_solver/solid_mechanics/hyperelasticity/petsc_callbacks.tpp"
+ * This contains plain callback functions that are passed to the PETSc nonlinear solver.
+ * They call the HyperelasticitySolver object through methods that are implemented in nonlinear_solve.tpp.
+ *
+ * - "specialized_solver/solid_mechanics/hyperelasticity/nonlinear_solve.tpp"
+ * This contains interfaces that are called by PETSc during the nonlinear solution process.
+ *
+ * - The material equation is given by the structs in equation/mooney_rivlin_incompressible.h, e.g.
+ *    Equation::SolidMechanics::MooneyRivlinIncompressible3D or Equation::SolidMechanics::TransverselyIsotropicMooneyRivlinIncompressibleActive3D
+ *
+ * The template parameter @param nDisplacementComponents refers to the number of non-pressure components
+ * and decides if the static (3) or the dynamic (6) case should be computed.
   */
-template<typename Term = Equation::SolidMechanics::MooneyRivlinIncompressible3D>
+template<typename Term = Equation::SolidMechanics::MooneyRivlinIncompressible3D, int nDisplacementComponents = 3>
 class HyperelasticitySolver :
   public Runnable
 {
@@ -36,8 +64,11 @@ public:
   typedef FieldVariable::FieldVariable<PressureFunctionSpace,1> PressureFieldVariableType;
   typedef FieldVariable::FieldVariable<DisplacementsFunctionSpace,6> StressFieldVariableType;
 
+  typedef PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace,nDisplacementComponents> VecHyperelasticity;
+  typedef PartitionedPetscMatForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace,nDisplacementComponents> MatHyperelasticity;
+
   //! constructor
-  HyperelasticitySolver(DihuContext context);
+  HyperelasticitySolver(DihuContext context, std::string settingsKey = "HyperelasticitySolver");
 
   //! advance simulation by the given time span, data in solution is used, afterwards new data is in solution
   void advanceTimeSpan();
@@ -63,8 +94,17 @@ public:
   //! this evaluates the analytic jacobian for the Newton scheme, or the material stiffness
   void evaluateAnalyticJacobian(Vec x, Mat jac);
 
-  //! if not useNestedMat_, copy entries of combined vector x to this->data_.displacements() and this->data_.pressure()
-  void setInputVector(Vec x);
+  //! copy entries of combined vector x to u and p, if both u and p are nullptr, use this->data_.displacements() and this->data_.pressure(), if only p is nullptr, only copy to u
+  void setDisplacementsAndPressureFromCombinedVec(Vec x, std::shared_ptr<DisplacementsFieldVariableType> u = nullptr, std::shared_ptr<PressureFieldVariableType> p = nullptr);
+
+  //! copy entries of combined vector x to u, v and p, if all u,v and p are nullptr, use this->data_.displacements(), this->data_.velocities() and this->data_.pressure(), if only p is nullptr, only copy to u
+  void setDisplacementsVelocitiesAndPressureFromCombinedVec(Vec x, std::shared_ptr<DisplacementsFieldVariableType> u = nullptr,
+                                                            std::shared_ptr<DisplacementsFieldVariableType> v = nullptr,
+                                                            std::shared_ptr<PressureFieldVariableType> p = nullptr);
+
+  //! copy the values of the vector x which contains (u and p) or (u,v and p) values to this->data_.displacements(), this->data_.velocities() and this->data_.pressure();
+  //! This simply calls setDisplacementsAndPressureFromCombinedVec or setDisplacementsVelocitiesAndPressureFromCombinedVec depending on static or dynamic problem.
+  void setUVP(Vec x);
 
   //! copy the entries in the combined solution vector to this->data_.displacements() and this->data_.pressure()
   void setSolutionVector();
@@ -73,10 +113,10 @@ public:
   std::string getString(Vec x);
 
   //! get the PartitionedPetsVec for the residual and result of the nonlinear function
-  std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>> combinedVecResidual();      //< the
+  std::shared_ptr<VecHyperelasticity> combinedVecResidual();      //< the vector that holds the computed residual
 
   //! get the PartitionedPetsVec for the solution
-  std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>> combinedVecSolution();      //< the Vec for the solution
+  std::shared_ptr<VecHyperelasticity> combinedVecSolution();
 
   //! output the jacobian matrix for debugging
   void dumpJacobianMatrix(Mat jac);
@@ -98,6 +138,33 @@ public:
   //! callback after each nonlinear iteration
   void monitorSolvingIteration(SNES snes, PetscInt its, PetscReal norm);
 
+  //! create a new shared_ptr of a PartitionedPetscVecForHyperelasticity
+  std::shared_ptr<VecHyperelasticity> createPartitionedPetscVec(std::string name);
+
+  //! create a new shared_ptr of a PartitionedPetscMatForHyperelasticity
+  std::shared_ptr<MatHyperelasticity> createPartitionedPetscMat(std::string name);
+
+  //! get the precomputed external virtual work
+  Vec externalVirtualWork();
+
+  //! compute δWint from given displacements, this is a wrapper to materialComputeInternalVirtualWork
+  void materialComputeInternalVirtualWork(
+    std::shared_ptr<VecHyperelasticity> displacements,
+    std::shared_ptr<VecHyperelasticity> internalVirtualWork
+  );
+
+  //! solve the dynamic hyperelastic problem,
+  //! output internalVirtualWork, externalVirtualWorkDead and accelerationTerm which is the acceleration contribution to δW
+  void solveDynamicProblem(std::shared_ptr<VecHyperelasticity> displacementsVelocitiesPressure, bool isFirstTimeStep,
+                           Vec internalVirtualWork, Vec &externalVirtualWorkDead, Vec accelerationTerm);
+
+  //! compute u from the equation ∂W_int - externalVirtualWork = 0 and J = 1, the result will be in displacements,
+  //! the previous value in displacements will be used as initial guess (call zeroEntries() of displacements beforehand, if no initial guess should be provided)
+  void solveForDisplacements(
+    std::shared_ptr<VecHyperelasticity> externalVirtualWork,
+    std::shared_ptr<VecHyperelasticity> displacements
+  );
+
 protected:
 
   //! initialize all Petsc Vec's and Mat's that will be used in the computation
@@ -112,12 +179,28 @@ protected:
   //! set the solution variable to zero and the initial values
   void initializeSolutionVariable();
 
+  //! set all PETSc callback functions, e.g. for computation jacobian or the nonlinear function itself
+  void initializePetscCallbackFunctions();
+
+  //! do some steps after nonlinearSolve(): close log file, copy the solution values back to this->data_.displacements() and this->data.pressure(),
+  //! compute the PK2 stress at every node, update the geometry field by the new displacements, dump files containing rhs and system matrix
+  void postprocessSolution();
+
   //! check if the solution satisfies Dirichlet BC and the residual is zero, only for debugging output
   void checkSolution(Vec x);
+
+  //! compute δW_int, input is in this->data_.displacements() and this->data_.pressure(), output is in solverVariableResidual_
+  void materialComputeInternalVirtualWork();
 
   //! compute the nonlinear function F(x), x=solverVariableSolution_, F=solverVariableResidual_
   //! solverVariableResidual_[0-2] contains δW_int - δW_ext, solverVariableResidual_[3] contains int_Ω (J-1)*Ψ dV
   void materialComputeResidual();
+
+  //! compute δW_ext,dead = int_Ω B^L * phi^L * phi^M * δu^M dx + int_∂Ω T^L * phi^L * phi^M * δu^M dS
+  void materialComputeExternalVirtualWorkDead();
+
+  //! add the acceleration term that is needed for the dynamic problem to δW_int - δW_ext,dead, and secondly, add the velocity/displacement equation 1/dt (u^(n+1) - u^(n)) - v^(n+1) - v^n = 0
+  void materialAddAccelerationTermAndVelocityEquation();
 
   //! compute the jacobian of the Newton scheme
   void materialComputeJacobian();
@@ -170,6 +253,7 @@ protected:
   OutputWriter::Manager outputWriterManagerPressure_; ///< manager object holding all output writer for pressure based variables
   Data data_;                 ///< data object
   PressureDataCopy pressureDataCopy_;   ///< a helper object that is used to write the pressure function space based variables with the output writers
+  std::shared_ptr<Solver::Nonlinear> nonlinearSolver_;  ///< the nonlinear solver object that will provide the PETSc SNES context
 
   std::string durationLogKey_;   ///< key with with the duration of the computation is written to the performance measurement log
   std::shared_ptr<DisplacementsFunctionSpace> displacementsFunctionSpace_;  ///< the function space with quadratic Lagrange basis functions, used for discretization of displacements
@@ -177,19 +261,19 @@ protected:
 
   Mat solverMatrixJacobian_;           //< the jacobian matrix for the Newton solver, which in case of nonlinear elasticity is the tangent stiffness matrix
   Mat solverMatrixAdditionalNumericJacobian_;           //< only used when both analytic and numeric jacobians are computed, then this holds the numeric jacobian
-  Vec solverVariableResidual_;         //< PETSc Vec to store the residual
-  Vec solverVariableSolution_;         //< PETSc Vec to store the solution
+  Vec solverVariableResidual_;         //< PETSc Vec to store the residual, equal to combinedVecResidual_->valuesGlobal()
+  Vec solverVariableSolution_;         //< PETSc Vec to store the solution, equal to combinedVecSolution_->valuesGlobal()
   Vec zeros_;                          // a solver that contains all zeros, needed to zero the diagonal of the jacobian matrix
 
-  std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>> combinedVecResidual_;      //< the Vec for the residual and result of the nonlinear function
-  std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>> combinedVecSolution_;      //< the Vec for the solution, combined means that ux,uy,uz and p components are combined in one vector
-  std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>> combinedVecExternalVirtualWork_;      //< the Vec for the external virtual work
+  std::shared_ptr<VecHyperelasticity> combinedVecResidual_;      //< the Vec for the residual and result of the nonlinear function
+  std::shared_ptr<VecHyperelasticity> combinedVecSolution_;      //< the Vec for the solution, combined means that ux,uy,uz and p components are combined in one vector
+  std::shared_ptr<VecHyperelasticity> combinedVecExternalVirtualWorkDead_;      //< the Vec for the external virtual work part that does not change with u, δW_ext,dead
 
   //std::shared_ptr<PartitionedPetscMat<FunctionSpace::Generic>> combinedMatrixJacobian_;    //< single jacobian matrix, when useNestedMat_ is false
-  std::shared_ptr<PartitionedPetscMatForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>> combinedMatrixJacobian_;    //< single jacobian matrix, when useNestedMat_ is false
-  std::shared_ptr<PartitionedPetscMatForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>> combinedMatrixAdditionalNumericJacobian_;   //< only used when both analytic and numeric jacobians are computed, then this holds the numeric jacobian
+  std::shared_ptr<MatHyperelasticity> combinedMatrixJacobian_;    //< single jacobian matrix
+  std::shared_ptr<MatHyperelasticity> combinedMatrixAdditionalNumericJacobian_;   //< only used when both analytic and numeric jacobians are computed, then this holds the numeric jacobian
 
-  Vec externalVirtualWork_;     // the external virtual work resulting from the traction, this is a dead load, i.e. it does not change during deformation
+  Vec externalVirtualWorkDead_;     // the external virtual work resulting from the traction, this is a dead load, i.e. it does not change during deformation
 
   // settings variables
   bool initialized_;   ///< if this object was already initialized
@@ -197,12 +281,17 @@ protected:
   double endTime_;     ///< end time of current time step
   std::ofstream residualNormLogFile_;   ///< ofstream of a log file that will contain the residual norm for each iteration
 
-  std::shared_ptr<DirichletBoundaryConditions<DisplacementsFunctionSpace,3>> dirichletBoundaryConditions_ = nullptr;  ///< object that parses Dirichlet boundary conditions and applies them to rhs
+  std::shared_ptr<DirichletBoundaryConditions<DisplacementsFunctionSpace,nDisplacementComponents>> dirichletBoundaryConditions_ = nullptr;  ///< object that parses Dirichlet boundary conditions and applies them to rhs
   std::shared_ptr<NeumannBoundaryConditions<DisplacementsFunctionSpace,Quadrature::Gauss<3>,3>> neumannBoundaryConditions_ = nullptr;  ///< object that parses Neumann boundary conditions and applies them to the rhs
 
   std::vector<double> materialParameters_;    ///< material parameters, e.g. c1,c2 for Mooney-Rivlin
   double displacementsScalingFactor_;   ///< factor with which to scale the displacements
   bool dumpDenseMatlabVariables_;      ///< the current vector x, the residual, r and the jacobian, jac should be written
+  Vec3 constantBodyForce_;   ///< the constant body force, if given or [0,0,0]
+  double timeStepWidth_;      ///< timeStepWidth, only need for the dynamic problem
+  double density_;                ///< density, only needed for the dynamic problem
+  double lastNorm_;            ///< residual norm of the last iteration in the nonlinear solver
+  double secondLastNorm_;            ///< residual norm of the second last iteration in the nonlinear solver
 
   bool useAnalyticJacobian_;   ///< if the analytically computed Jacobian of the Newton scheme should be used. Theoretically if it is correct, this is the fastest option.
   bool useNumericJacobian_;   ///< if a numerically computed Jacobian should be used, approximated by finite differences
@@ -212,5 +301,6 @@ protected:
 
 #include "specialized_solver/solid_mechanics/hyperelasticity/hyperelasticity_solver.tpp"
 #include "specialized_solver/solid_mechanics/hyperelasticity/material_computations.tpp"
+#include "specialized_solver/solid_mechanics/hyperelasticity/material_computations_wrappers.tpp"
 #include "specialized_solver/solid_mechanics/hyperelasticity/nonlinear_solve.tpp"
 #include "specialized_solver/solid_mechanics/hyperelasticity/material_testing.tpp"

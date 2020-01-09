@@ -4,16 +4,18 @@
 
 #include "utility/python_utility.h"
 #include "utility/petsc_utility.h"
+#include "solver/solver_manager.h"
 #include "data_management/specialized_solver/multidomain.h"
 #include "control/performance_measurement.h"
 
 namespace SpatialDiscretization
 {
 
-template<typename Term>
-HyperelasticitySolver<Term>::
-HyperelasticitySolver(DihuContext context) :
-  context_(context["HyperelasticitySolver"]), data_(context_), pressureDataCopy_(context_), initialized_(false), endTime_(0)
+template<typename Term,int nDisplacementComponents>
+HyperelasticitySolver<Term,nDisplacementComponents>::
+HyperelasticitySolver(DihuContext context, std::string settingsKey) :
+  context_(context[settingsKey]), data_(context_), pressureDataCopy_(context_), initialized_(false),
+  endTime_(0), lastNorm_(0), secondLastNorm_(0)
 {
   // get python config
   this->specificSettings_ = this->context_.getPythonConfig();
@@ -27,6 +29,8 @@ HyperelasticitySolver(DihuContext context) :
   // parse options concerning jacobian
   useAnalyticJacobian_ = this->specificSettings_.getOptionBool("useAnalyticJacobian", true);
   useNumericJacobian_ = this->specificSettings_.getOptionBool("useNumericJacobian", true);
+
+  constantBodyForce_ = this->specificSettings_.template getOptionArray<double,3>("constantBodyForce", Vec3{0.0,0.0,0.0});
 
   if (!useAnalyticJacobian_ && !useNumericJacobian_)
   {
@@ -50,17 +54,23 @@ HyperelasticitySolver(DihuContext context) :
   // set all PARAM(i) values to the values given by materialParameters
   SEMT::set_parameters<Term::nMaterialParameters>::to(materialParameters_);
 
-
   displacementsScalingFactor_ = specificSettings_.getOptionDouble("displacementsScalingFactor", 1.0);
   dumpDenseMatlabVariables_ = specificSettings_.getOptionBool("dumpDenseMatlabVariables", false);
 
+  // for the dynamic equation
+  if (nDisplacementComponents == 6)
+  {
+    density_ = specificSettings_.getOptionDouble("density", 1.0, PythonUtility::Positive);
+    timeStepWidth_ = specificSettings_.getOptionDouble("timeStepWidth", 1.0, PythonUtility::Positive);
+  }
+
   // initialize output writers
   this->outputWriterManager_.initialize(this->context_, this->specificSettings_);
-  this->outputWriterManagerPressure_.initialize(this->context_, this->context_["pressure"].getPythonConfig());
+  this->outputWriterManagerPressure_.initialize(this->context_["pressure"], this->context_["pressure"].getPythonConfig());
 }
 
-template<typename Term>
-void HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+void HyperelasticitySolver<Term,nDisplacementComponents>::
 advanceTimeSpan()
 {
   // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
@@ -74,6 +84,7 @@ advanceTimeSpan()
   this->outputWriterManagerPressure_.writeOutput(this->pressureDataCopy_, 0, 0.0);
 
   nonlinearSolve();
+  postprocessSolution();
 
   // stop duration measurement
   if (this->durationLogKey_ != "")
@@ -84,8 +95,8 @@ advanceTimeSpan()
   this->outputWriterManagerPressure_.writeOutput(this->pressureDataCopy_, 1, endTime_);
 }
 
-template<typename Term>
-void HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+void HyperelasticitySolver<Term,nDisplacementComponents>::
 run()
 {
   // initialize everything
@@ -94,15 +105,15 @@ run()
   this->advanceTimeSpan();
 }
 
-template<typename Term>
-void HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+void HyperelasticitySolver<Term,nDisplacementComponents>::
 setTimeSpan(double startTime, double endTime)
 {
   endTime_ = endTime;
 }
 
-template<typename Term>
-void HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+void HyperelasticitySolver<Term,nDisplacementComponents>::
 initialize()
 {
   if (this->initialized_)
@@ -155,13 +166,17 @@ initialize()
   data_.setPressureFunctionSpace(pressureFunctionSpace_);
 
   data_.initialize();
-  pressureDataCopy_.initialize(data_.pressure(), data_.displacementsLinearMesh());
+  pressureDataCopy_.initialize(data_.pressure(), data_.displacementsLinearMesh(), data_.velocitiesLinearMesh());
   pressureDataCopy_.setFunctionSpace(pressureFunctionSpace_);
+
+  // create nonlinear solver PETSc context (snes)
+  nonlinearSolver_ = this->context_.solverManager()->template solver<Solver::Nonlinear>(
+    this->specificSettings_, this->displacementsFunctionSpace_->meshPartition()->mpiCommunicator());
 
   // initialize Dirichlet boundary conditions
   if (dirichletBoundaryConditions_ == nullptr)
   {
-    dirichletBoundaryConditions_ = std::make_shared<DirichletBoundaryConditions<DisplacementsFunctionSpace,3>>(this->context_);
+    dirichletBoundaryConditions_ = std::make_shared<DirichletBoundaryConditions<DisplacementsFunctionSpace,nDisplacementComponents>>(this->context_);
     dirichletBoundaryConditions_->initialize(this->specificSettings_, this->data_.functionSpace(), "dirichletBoundaryConditions");
   }
 
@@ -186,8 +201,8 @@ initialize()
   this->initialized_ = true;
 }
 
-template<typename Term>
-void HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+void HyperelasticitySolver<Term,nDisplacementComponents>::
 initializeFiberDirections()
 {
   std::vector<std::string> fiberMeshNames;
@@ -211,7 +226,6 @@ initializeFiberDirections()
 
   // prepare the target mesh for the mapping, set all factors to zero
   DihuContext::meshManager()->template prepareMappingLowToHigh<DisplacementsFieldVariableType>(this->data_.fiberDirection());
-
 
   // loop over fiber mesh names
   for (int fiberNo = 0; fiberNo < fiberMeshNames.size(); fiberNo++)
@@ -239,13 +253,15 @@ initializeFiberDirections()
       dof_no_t index0 = std::max(0, dofNoLocal-1);
       dof_no_t index1 = std::min(nDofsLocalWithoutGhosts-1, dofNoLocal+1);
 
-      Vec3 direction = -geometryFieldValues[index0] + geometryFieldValues[index1];
-      directionValues[dofNoLocal] = direction;
+      // get direction of 1D fiber
+      Vec3 fiberDirection = -geometryFieldValues[index0] + geometryFieldValues[index1];
+      directionValues[dofNoLocal] = fiberDirection;
     }
 
     direction->setValuesWithoutGhosts(directionValues);
 
-    // transfer direction values
+
+    // transfer direction values from 1D fibers to 3D field, -1 means all components
     DihuContext::meshManager()->mapLowToHighDimension<FieldVariable::FieldVariable<FiberFunctionSpace,3>, DisplacementsFieldVariableType>(
       direction, -1, this->data_.fiberDirection(), -1);
   }
@@ -276,60 +292,92 @@ initializeFiberDirections()
   this->data_.fiberDirection()->setValuesWithoutGhosts(valuesLocalWithoutGhosts);
 }
 
-template<typename Term>
-void HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+std::shared_ptr<typename HyperelasticitySolver<Term,nDisplacementComponents>::VecHyperelasticity>
+HyperelasticitySolver<Term,nDisplacementComponents>::
+createPartitionedPetscVec(std::string name)
+{
+  return std::make_shared<VecHyperelasticity>(
+    displacementsFunctionSpace_->meshPartition(), pressureFunctionSpace_->meshPartition(), dirichletBoundaryConditions_, name);
+}
+
+template<typename Term,int nDisplacementComponents>
+std::shared_ptr<typename HyperelasticitySolver<Term,nDisplacementComponents>::MatHyperelasticity>
+HyperelasticitySolver<Term,nDisplacementComponents>::
+createPartitionedPetscMat(std::string name)
+{
+  // determine number of non zero entries in matrix
+  int diagonalNonZeros, offdiagonalNonZeros;
+  ::Data::FiniteElementsBase<DisplacementsFunctionSpace,1>::getPetscMemoryParameters(diagonalNonZeros, offdiagonalNonZeros);
+
+  return std::make_shared<MatHyperelasticity>(
+    combinedVecSolution_, 4*diagonalNonZeros, 4*offdiagonalNonZeros, name);
+}
+
+
+//! get the precomputed external virtual work
+template<typename Term,int nDisplacementComponents>
+Vec HyperelasticitySolver<Term,nDisplacementComponents>::
+externalVirtualWork()
+{
+  return externalVirtualWorkDead_;
+}
+
+template<typename Term,int nDisplacementComponents>
+void HyperelasticitySolver<Term,nDisplacementComponents>::
 initializePetscVariables()
 {
   /*
-   * jacobian matrix layout (for one process):
+   * jacobian matrix layout (for one process and nDisplacementComponents==3):
    *  (U U U P)
    *  (U U U P)
    *  (U U U P)
    *  (P P P 0)
    */
-
-  // determine number of non zero entries in matrix
-  int diagonalNonZeros, offdiagonalNonZeros;
-  ::Data::FiniteElementsBase<DisplacementsFunctionSpace,1>::getPetscMemoryParameters(diagonalNonZeros, offdiagonalNonZeros);
-
   // prepare for data structures without ghost dofs, these are normal Petsc Mat's and Vec's for which all solvers are available
 
   // solution vector
-  combinedVecSolution_ = std::make_shared<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>>(
-    displacementsFunctionSpace_->meshPartition(), pressureFunctionSpace_->meshPartition(), dirichletBoundaryConditions_, "combinedSolution");
+  combinedVecSolution_ = createPartitionedPetscVec("combinedSolution");
 
   // residual vector
-  combinedVecResidual_ = std::make_shared<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>>(
-    displacementsFunctionSpace_->meshPartition(), pressureFunctionSpace_->meshPartition(), dirichletBoundaryConditions_, "combinedResidual");
+  combinedVecResidual_ = createPartitionedPetscVec("combinedResidual");
 
-  // vector for the external virtual work contribution, δW_ext
-  combinedVecExternalVirtualWork_ = std::make_shared<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>>(
-    displacementsFunctionSpace_->meshPartition(), pressureFunctionSpace_->meshPartition(), dirichletBoundaryConditions_, "combinedVecExternalVirtualWork");
+  // vector for the external virtual work contribution that does not depend on u, δW_ext,dead (this is the same as δW_ext for static case)
+  combinedVecExternalVirtualWorkDead_ = createPartitionedPetscVec("combinedVecExternalVirtualWorkDead");
 
   // get number of local entries of the vectors, this will be the number of rows and columns of the matrix
   int nMatrixRowsLocal = combinedVecSolution_->nEntriesLocal();
 
   // output
-  LOG(DEBUG) << "n dofs displacements: 3*" << displacementsFunctionSpace_->nDofsLocalWithoutGhosts() << " = " << 3*displacementsFunctionSpace_->nDofsLocalWithoutGhosts();
-  LOG(DEBUG) << "n dofs pressure: " << pressureFunctionSpace_->nDofsLocalWithoutGhosts() << ", total: " << displacementsFunctionSpace_->nDofsLocalWithoutGhosts() * 3 + pressureFunctionSpace_->nDofsLocalWithoutGhosts();
-  LOG(DEBUG) << "n BC dofs: ux:" << dirichletBoundaryConditions_->boundaryConditionsByComponent()[0].dofNosLocal.size()
-    << ", uy: " << dirichletBoundaryConditions_->boundaryConditionsByComponent()[1].dofNosLocal.size()
-    << ", uz: " << dirichletBoundaryConditions_->boundaryConditionsByComponent()[2].dofNosLocal.size();
+  LOG(DEBUG) << "n dofs displacements: " << nDisplacementComponents << "*" << displacementsFunctionSpace_->nDofsLocalWithoutGhosts()
+    << " = " << nDisplacementComponents*displacementsFunctionSpace_->nDofsLocalWithoutGhosts();
+  LOG(DEBUG) << "n dofs pressure: " << pressureFunctionSpace_->nDofsLocalWithoutGhosts() << ", total: "
+    << displacementsFunctionSpace_->nDofsLocalWithoutGhosts() * nDisplacementComponents + pressureFunctionSpace_->nDofsLocalWithoutGhosts();
+  LOG(DEBUG) << "n BC dofs: ";
+
+  LOG(DEBUG) << "  ux: " << dirichletBoundaryConditions_->boundaryConditionsByComponent()[0].dofNosLocal.size();
+  LOG(DEBUG) << "  uy: " << dirichletBoundaryConditions_->boundaryConditionsByComponent()[1].dofNosLocal.size();
+  LOG(DEBUG) << "  uz: " << dirichletBoundaryConditions_->boundaryConditionsByComponent()[2].dofNosLocal.size();
+
+  if (nDisplacementComponents == 6)
+  {
+    LOG(DEBUG) << "  vx: " << dirichletBoundaryConditions_->boundaryConditionsByComponent()[3].dofNosLocal.size();
+    LOG(DEBUG) << "  vy: " << dirichletBoundaryConditions_->boundaryConditionsByComponent()[4].dofNosLocal.size();
+    LOG(DEBUG) << "  vz: " << dirichletBoundaryConditions_->boundaryConditionsByComponent()[5].dofNosLocal.size();
+  }
   LOG(DEBUG) << "number of non-BC dofs total: " << nMatrixRowsLocal;
 
   // create matrix with same dof mapping as vectors
   std::shared_ptr<FunctionSpace::Generic> genericFunctionSpace = context_.meshManager()->createGenericFunctionSpace(nMatrixRowsLocal, displacementsFunctionSpace_->meshPartition(), "genericMesh");
 
-  combinedMatrixJacobian_ = std::make_shared<PartitionedPetscMatForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>>(
-    combinedVecSolution_, 4*diagonalNonZeros, 4*offdiagonalNonZeros, "combinedJacobian");
+  combinedMatrixJacobian_ = createPartitionedPetscMat("combinedJacobian");
 
   solverMatrixAdditionalNumericJacobian_ = PETSC_NULL;
 
   // if both numeric and analytic jacobian are used, create additional matrix that will hold the numeric jacobian
   if (useNumericJacobian_ && useAnalyticJacobian_)
   {
-    combinedMatrixAdditionalNumericJacobian_ = std::make_shared<PartitionedPetscMatForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace>>(
-      combinedVecSolution_, 4*diagonalNonZeros, 4*offdiagonalNonZeros, "combinedJacobianNumeric");
+    combinedMatrixAdditionalNumericJacobian_ = createPartitionedPetscMat("combinedJacobianNumeric");
 
     solverMatrixAdditionalNumericJacobian_ = combinedMatrixAdditionalNumericJacobian_->valuesGlobal();
   }
@@ -339,7 +387,7 @@ initializePetscVariables()
   solverMatrixJacobian_ = combinedMatrixJacobian_->valuesGlobal();
   solverVariableSolution_ = combinedVecSolution_->valuesGlobal();
   solverVariableResidual_ = combinedVecResidual_->valuesGlobal();
-  externalVirtualWork_ = combinedVecExternalVirtualWork_->valuesGlobal();
+  externalVirtualWorkDead_ = combinedVecExternalVirtualWorkDead_->valuesGlobal();
 
   // create vector with all zeros in it, this is needed for zeroing the diagonal of the stiffness matrix for initialization in evaluateAnalyticJacobian
   PetscErrorCode ierr;
@@ -349,26 +397,7 @@ initializePetscVariables()
   LOG(DEBUG) << "for debugging: " << combinedVecSolution_->getString();
 
   // compute the external virtual work, because it is constant throughout the solution process
-  combinedVecExternalVirtualWork_->zeroEntries();
-  combinedVecExternalVirtualWork_->startGhostManipulation();
-
-  // get externalVirtualWork_
-  std::vector<double> values;
-  for (int componentNo = 0; componentNo < 3; componentNo++)
-  {
-    values.clear();
-    neumannBoundaryConditions_->rhs()->getValuesWithoutGhosts(componentNo, values);
-    LOG(DEBUG) << "component " << componentNo << ", neumannBoundaryConditions_ rhs values: " << values;
-
-
-    combinedVecExternalVirtualWork_->setValues(componentNo, displacementsFunctionSpace_->meshPartition()->nDofsLocalWithoutGhosts(),
-                                                displacementsFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data(), INSERT_VALUES);
-  }
-
-  combinedVecExternalVirtualWork_->finishGhostManipulation();
-
-  LOG(DEBUG) << "combinedVecExternalVirtualWork: " << combinedVecExternalVirtualWork_->getString();
-  combinedVecExternalVirtualWork_->startGhostManipulation();
+  materialComputeExternalVirtualWorkDead();
 
   // output pointer values for debugging
   LOG(DEBUG) << "-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.";
@@ -405,33 +434,38 @@ initializePetscVariables()
     LOG(DEBUG) << "initial analytic jacobian matrix: ";
     dumpJacobianMatrix(solverMatrixJacobian_);
   }
+
+  // assign all callback functions
+  this->initializePetscCallbackFunctions();
+
+  // set solution vector to zero
+  this->initializeSolutionVariable();
 }
 
-
 //! get the PartitionedPetsVec for the residual and result of the nonlinear function
-template<typename Term>
-std::shared_ptr<PartitionedPetscVecForHyperelasticity<typename HyperelasticitySolver<Term>::DisplacementsFunctionSpace,typename HyperelasticitySolver<Term>::PressureFunctionSpace>> HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+std::shared_ptr<typename HyperelasticitySolver<Term,nDisplacementComponents>::VecHyperelasticity> HyperelasticitySolver<Term,nDisplacementComponents>::
 combinedVecResidual()
 {
   return this->combinedVecResidual_;
 }
 
 //! get the PartitionedPetsVec for the solution
-template<typename Term>
-std::shared_ptr<PartitionedPetscVecForHyperelasticity<typename HyperelasticitySolver<Term>::DisplacementsFunctionSpace,typename HyperelasticitySolver<Term>::PressureFunctionSpace>> HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+std::shared_ptr<typename HyperelasticitySolver<Term,nDisplacementComponents>::VecHyperelasticity> HyperelasticitySolver<Term,nDisplacementComponents>::
 combinedVecSolution()
 {
   return this->combinedVecSolution_;
 }
 
-template<typename Term>
-void HyperelasticitySolver<Term>::reset()
+template<typename Term,int nDisplacementComponents>
+void HyperelasticitySolver<Term,nDisplacementComponents>::reset()
 {
   this->initialized_ = false;
 }
 
-template<typename Term>
-typename HyperelasticitySolver<Term>::Data &HyperelasticitySolver<Term>::
+template<typename Term,int nDisplacementComponents>
+typename HyperelasticitySolver<Term,nDisplacementComponents>::Data &HyperelasticitySolver<Term,nDisplacementComponents>::
 data()
 {
   return data_;

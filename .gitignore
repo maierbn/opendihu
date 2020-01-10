@@ -23,6 +23,9 @@ out.py
 **/*.out
 **/*.synctex.gz
 **/*.toc
+**/*.fls
+**/*.blg
+**/*.bbl
 **/*[conflicted*
 **/results/*
 **/*.tgz

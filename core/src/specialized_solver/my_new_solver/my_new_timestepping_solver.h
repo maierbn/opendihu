@@ -7,7 +7,8 @@
 #include "data_management/specialized_solver/my_new_timestepping_solver.h"   // adjust this include
 
 /** This is a template class that developers can copy and adjust to create their own solver.
- *  This solver is a timestepping scheme. For a static solver, refer to the other template, "my_new_static_solver.h".
+ *  This solver is a timestepping scheme. This means that something is done iteratively in time.
+ *  For a static solver, refer to the other template, "my_new_static_solver.h".
  *  There are also the files "data_management/my_new_timestepping_solver.{h,cpp}" that need to be adjusted.
  *  At the end, add an #include to this file in "opendihu.h".
  *

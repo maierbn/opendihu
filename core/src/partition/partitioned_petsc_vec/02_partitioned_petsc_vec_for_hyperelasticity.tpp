@@ -9,11 +9,13 @@ PartitionedPetscVecForHyperelasticity(
   std::shared_ptr<Partition::MeshPartition<DisplacementsFunctionSpaceType>> meshPartitionDisplacements,
   std::shared_ptr<Partition::MeshPartition<PressureFunctionSpaceType>> meshPartitionPressure,
   std::shared_ptr<SpatialDiscretization::DirichletBoundaryConditions<DisplacementsFunctionSpaceType,nComponents>> dirichletBoundaryConditions, std::string name) :
-  PartitionedPetscVecWithDirichletBc<DisplacementsFunctionSpaceType,nComponents+1,nComponents>(meshPartitionDisplacements, dirichletBoundaryConditions, name), meshPartitionPressure_(meshPartitionPressure)
+  PartitionedPetscVecWithDirichletBc<DisplacementsFunctionSpaceType,nComponents+1,nComponents>(meshPartitionDisplacements, dirichletBoundaryConditions, name, true),
+  meshPartitionPressure_(meshPartitionPressure)
 {
   componentNoPressure_ = nComponents;   // the pressure component is the last one, equal to nComponents (=3 or 6)
 
   // initialize variables for 3 or 6 displacement/velocity components and 1 pressure component
+  LOG(DEBUG) << "\"" << this->name_ << "\" initialize PartitionedPetscVecForHyperelasticity";
   this->initialize(meshPartitionPressure_->nDofsLocalWithoutGhosts());
 
   // initialize last component for pressure
@@ -27,7 +29,8 @@ template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpace
 void PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,nComponents>::
 initializeForPressure()
 {
-  VLOG(1) << "initializeForPressure, nEntriesGlobal_: " << this->nEntriesGlobal_ << ", nEntriesLocal_: " << this->nEntriesLocal_;
+  VLOG(1) << "initializeForPressure, nEntriesGlobal_: " << this->nEntriesGlobal_ << ", nEntriesLocal_: " << this->nEntriesLocal_
+   << ", nNonBcDofsGhosts_: " << this->nNonBcDofsGhosts_;
 
   const int nDofsLocalWithGhosts = meshPartitionPressure_->nDofsLocalWithGhosts();
   const int nDofsLocalWithoutGhosts = meshPartitionPressure_->nDofsLocalWithoutGhosts();
@@ -95,6 +98,11 @@ initializeForPressure()
   // there are no boundary conditions for pressure component
   this->boundaryConditionValues_[componentNoPressure_].resize(nDofsLocalWithGhosts, -1.0);
   this->isPrescribed_[componentNoPressure_].resize(nDofsLocalWithGhosts, false);
+
+  VLOG(1) << "after initializeForPressure:";
+  VLOG(1) << "dofNoLocalToDofNoNonBcLocal_: " << this->dofNoLocalToDofNoNonBcLocal_;
+  VLOG(1) << "dofNoLocalToDofNoNonBcGlobal_: " << this->dofNoLocalToDofNoNonBcGlobal_;
+  VLOG(1) << "nonBcGhostDofNosGlobal_: " << this->nonBcGhostDofNosGlobal_;
 }
 
 template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType, int nComponents>

@@ -100,6 +100,7 @@ void HyperelasticitySolver<Term,nDisplacementComponents>::
 run()
 {
   // initialize everything
+  LOG(DEBUG) << "call initialize in run()";
   initialize();
 
   this->advanceTimeSpan();
@@ -195,6 +196,7 @@ initialize()
   }
 
   // setup Petsc variables
+  LOG(DEBUG) << "initialize Petsc Variables";
   initializePetscVariables();
 
   LOG(DEBUG) << "initialization done";
@@ -297,6 +299,7 @@ std::shared_ptr<typename HyperelasticitySolver<Term,nDisplacementComponents>::Ve
 HyperelasticitySolver<Term,nDisplacementComponents>::
 createPartitionedPetscVec(std::string name)
 {
+  LOG(DEBUG) << "createPartitionedPetscVec(" << name << ")";
   return std::make_shared<VecHyperelasticity>(
     displacementsFunctionSpace_->meshPartition(), pressureFunctionSpace_->meshPartition(), dirichletBoundaryConditions_, name);
 }

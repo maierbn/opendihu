@@ -13,6 +13,16 @@ PartitionedPetscVecWithDirichletBc(std::shared_ptr<Partition::MeshPartition<Func
   createVector();
 }
 
+//! constructor
+template<typename FunctionSpaceType, int nComponents, int nComponentsDirichletBc>
+PartitionedPetscVecWithDirichletBc<FunctionSpaceType, nComponents, nComponentsDirichletBc>::
+PartitionedPetscVecWithDirichletBc(std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> meshPartition,
+                                   std::shared_ptr<SpatialDiscretization::DirichletBoundaryConditions<FunctionSpaceType,nComponentsDirichletBc>> dirichletBoundaryConditions, std::string name,
+                                   bool dummy) :
+  PartitionedPetscVec<FunctionSpaceType,nComponents>(meshPartition, name), dirichletBoundaryConditions_(dirichletBoundaryConditions)
+{
+}
+
 template<typename FunctionSpaceType, int nComponents, int nComponentsDirichletBc>
 global_no_t PartitionedPetscVecWithDirichletBc<FunctionSpaceType, nComponents, nComponentsDirichletBc>::
 nonBCDofNoGlobal(int componentNo, dof_no_t localDofNo) const
@@ -24,6 +34,13 @@ template<typename FunctionSpaceType, int nComponents, int nComponentsDirichletBc
 dof_no_t PartitionedPetscVecWithDirichletBc<FunctionSpaceType, nComponents, nComponentsDirichletBc>::
 nonBCDofNoLocal(int componentNo, dof_no_t localDofNo) const
 {
+  VLOG(1) << "dofNoLocalToDofNoNonBcLocal_[component " << componentNo << "][dofNolocal " << localDofNo << "]=" << dofNoLocalToDofNoNonBcLocal_[componentNo][localDofNo];
+  if (dofNoLocalToDofNoNonBcLocal_[componentNo][localDofNo] == -1)
+  {
+    VLOG(1) << "(=-1)";
+  }
+  VLOG(1) << "isPrescribed: " << isPrescribed(componentNo, localDofNo);
+
   return dofNoLocalToDofNoNonBcLocal_[componentNo][localDofNo];
 }
 
@@ -328,10 +345,15 @@ setValue(int componentNo, PetscInt row, PetscScalar value, InsertMode mode)
   {
     assert(row < this->meshPartition_->nDofsLocalWithGhosts());
 
+    VLOG(1) << "set value at dof local " << row << "(n without ghosts: "
+      << this->meshPartition_->nDofsLocalWithoutGhosts() << ", with: " << this->meshPartition_->nDofsLocalWithGhosts() << ")";
+
     // determine new index
     row = nonBCDofNoLocal(componentNo, row);
 
     VLOG(1) << "set value " << value << " at non-bc local " << row;
+
+    assert(row < nEntriesLocal_ + nNonBcDofsGhosts_);
 
     // this wraps the standard PETSc VecSetValues on the local vector
     PetscErrorCode ierr;

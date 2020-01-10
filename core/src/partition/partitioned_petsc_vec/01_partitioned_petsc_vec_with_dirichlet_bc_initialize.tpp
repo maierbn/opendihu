@@ -7,9 +7,14 @@ template<typename FunctionSpaceType, int nComponents, int nComponentsDirichletBc
 void PartitionedPetscVecWithDirichletBc<FunctionSpaceType, nComponents, nComponentsDirichletBc>::
 initialize(int offsetInGlobalNumberingPerRank)
 {
-  LOG(DEBUG) << "\"" << this->name_ << "\" PartitionedPetscVecWithDirichletBc createVector with " << nComponentsDirichletBc << " components, size local: " << this->meshPartition_->nNodesLocalWithoutGhosts()
+  LOG(DEBUG) << "\"" << this->name_ << "\" PartitionedPetscVecWithDirichletBc createVector with " << nComponents << "," << nComponentsDirichletBc << " components, size local: " << this->meshPartition_->nNodesLocalWithoutGhosts()
     << ", global: " << this->meshPartition_->nNodesGlobal() << ", offsetInGlobalNumberingPerRank: " << offsetInGlobalNumberingPerRank
     << ", ghost dof nos global/petsc: " << this->meshPartition_->ghostDofNosGlobalPetsc();
+
+  if (!nDofRequestedFromRanks_.empty())
+  {
+    LOG(FATAL) << "is already initialized";
+  }
 
   // normally, nComponentsDirichletBc == nComponents
   // only the deriving class can set nComponents > nComponentsDirichletBc, then it has to also properly initialize everything above nComponentsDirichletBc
@@ -273,7 +278,7 @@ initialize(int offsetInGlobalNumberingPerRank)
 
           VLOG(1) << " send to rank " << foreignRankNo << ", component " << componentNo << " requested dofNoGlobalPetsc: " << requestedDofNoGlobalPetsc
             << ", requestedDofNoLocal: " << requestedDofNoLocal << " send dof " << dofNoLocalToDofNoNonBcGlobal_[componentNo][requestedDofNoLocal]
-            << ", at sendBuffer index " << componentNo*nFromRank + requestedDofIndex;
+            << " and bc value " << this->boundaryConditionValues_[componentNo][requestedDofNoLocal] << " at sendBuffer index " << componentNo*nFromRank + requestedDofIndex;
         }
       }
 
@@ -361,13 +366,16 @@ initialize(int offsetInGlobalNumberingPerRank)
         dofNoLocalToDofNoNonBcGlobal_[componentNo][dofNoLocal] = dofNoNonBcGlobal;
 
         VLOG(1) << "received from rank " << requestDofsFromRank.first << ", component " << componentNo << ", j: " << j << ", i: " << i
-         << ", " << requestedDofsGlobalPetscReceiveBufferValues[i] << " entries, index=" << componentNo << "*" << nRequestedDofs << " + " << j << "=" << componentNo*nRequestedDofs + j
+         << ", " << requestedDofsGlobalPetscReceiveBufferValues[i].size() << " entries, index=" << componentNo << "*" << nRequestedDofs << " + " << j << "=" << componentNo*nRequestedDofs + j
          << " dofNoLocal: " << dofNoLocal << ", value " << value << ", dofNoNonBcGlobal: " << dofNoNonBcGlobal << "(" << (dofNoNonBcGlobal==-1) << ")";
 
       }
     }
     i++;
   }
+
+  nNonBcDofsGhosts_ = nonBcGhostDofNosGlobal_.size();
+
   VLOG(1) << "dofNoLocalToDofNoNonBcLocal_: " << dofNoLocalToDofNoNonBcLocal_;
   VLOG(1) << "dofNoLocalToDofNoNonBcGlobal_: " << dofNoLocalToDofNoNonBcGlobal_;
   VLOG(1) << "nonBcGhostDofNosGlobal_: " << nonBcGhostDofNosGlobal_;

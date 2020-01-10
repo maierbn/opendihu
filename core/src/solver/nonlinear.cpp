@@ -9,8 +9,8 @@ Nonlinear::Nonlinear(PythonConfig specificSettings, MPI_Comm mpiCommunicator, st
   Linear(specificSettings, mpiCommunicator, name)
 {
   snesRelativeTolerance_ = this->specificSettings_.getOptionDouble("snesRelativeTolerance", 1e-10, PythonUtility::Positive);
-  snesMaxIterations_ = this->specificSettings_.getOptionDouble("snesMaxIterations", 10, PythonUtility::Positive);
-  snesMaxFunctionEvaluations_ = this->specificSettings_.getOptionDouble("snesMaxFunctionEvaluations", PythonUtility::Positive);
+  snesMaxIterations_ = this->specificSettings_.getOptionDouble("snesMaxIterations", 50, PythonUtility::Positive);
+  snesMaxFunctionEvaluations_ = this->specificSettings_.getOptionDouble("snesMaxFunctionEvaluations", 1000, PythonUtility::Positive);
 
   // set up SNES object
   snes_ = std::make_shared<SNES>();

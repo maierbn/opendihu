@@ -133,7 +133,7 @@ def postprocess(result):
   factors[(2*ny) * (2*nx+1) + (2*nx)] = 1./36
 
   # output factors for debugging
-  if False:
+  if True:
     print("factors = 1/36 * ")
     for j in range(0,2*ny+1):
       for i in range(0,2*nx+1):

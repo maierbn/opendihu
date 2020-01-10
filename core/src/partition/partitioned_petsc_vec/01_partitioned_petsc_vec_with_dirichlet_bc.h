@@ -35,6 +35,11 @@ public:
   PartitionedPetscVecWithDirichletBc(std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> meshPartition,
                                      std::shared_ptr<SpatialDiscretization::DirichletBoundaryConditions<FunctionSpaceType,nComponentsDirichletBc>> dirichletBoundaryConditions,
                                      std::string name);
+
+  //! constructor only for derived class, does not initialize, dummy is needed to differentiate to normal constructor
+  PartitionedPetscVecWithDirichletBc(std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> meshPartition,
+                                     std::shared_ptr<SpatialDiscretization::DirichletBoundaryConditions<FunctionSpaceType,nComponentsDirichletBc>> dirichletBoundaryConditions,
+                                     std::string name, bool dummy);
  
   //! Communicates the ghost values from the global vectors to the local vector and sets the representation to local.
   //! The representation has to be global, afterwards it is set to local.

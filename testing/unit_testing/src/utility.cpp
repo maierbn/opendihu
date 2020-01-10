@@ -157,7 +157,14 @@ void assertFileMatchesContent(std::string filename, std::string referenceContent
       // if character is diferrent
       if(*iterFileContents != *iterReferenceContents)
       {
-        //msg << "mismatch at character, file: [" << *iterFileContents << "] != reference: [" << *iterReferenceContents << "], pos: " << std::distance(fileContents.begin(),iterFileContents) << " ";
+        // compose message for first mismatch
+        if (referenceContentMatches)
+        {
+          int pos = std::distance(fileContents.begin(),iterFileContents);
+          msg << "mismatch at character, file: [" << *iterFileContents << "] != reference: [" << *iterReferenceContents << "], pos: "
+            << pos << std::endl << "file: ... " << fileContents.substr(std::max(0,pos-50),std::min((int)fileContents.size()-std::max(0,pos-50),50)) << "..."
+            << std::endl << "ref:  ... " << referenceContents.substr(std::max(0,pos-50),std::min((int)referenceContents.size()-std::max(0,pos-50),50)) << "...";
+        }
         referenceContentMatches = false;
         //VLOG(1) << "mismatch!";
       }
@@ -202,6 +209,14 @@ void assertFileMatchesContent(std::string filename, std::string referenceContent
         // if character is diferrent
         if (*iterFileContents, *iterReferenceContents)
         {
+          // compose message for first mismatch
+          if (referenceContentMatches)
+          {
+            int pos = std::distance(fileContents.begin(),iterFileContents);
+            msg << "mismatch at character, file: [" << *iterFileContents << "] != reference2: [" << *iterReferenceContents << "], pos: "
+              << pos << std::endl << "file: ... " << fileContents.substr(std::max(0,pos-50),std::min((int)fileContents.size()-std::max(0,pos-50),50)) << "..."
+              << std::endl << "ref2: ... " << referenceContents2.substr(std::max(0,pos-50),std::min((int)referenceContents2.size()-std::max(0,pos-50),50)) << "...";
+          }
           //msg << "mismatch at character file: [" << *iterFileContents << "] != reference: [" << *iterReferenceContents << "], pos: " << std::distance(fileContents.begin(),iterFileContents);
           referenceContent2Matches = false;
         }
@@ -216,10 +231,28 @@ void assertFileMatchesContent(std::string filename, std::string referenceContent
   if (!referenceContentMatches && (referenceContents2 == "-" || !referenceContent2Matches))
   {
     if (!referenceContentMatches)
-      LOG(INFO) << "file content of file \"" << filename << "\" is different (referenceContents). fileContents: " << std::endl << fileContents << std::endl << ", referenceContents: " << std::endl << referenceContents;
+    {
+      LOG(INFO) << "file content of file \"" << filename << "\" is different (referenceContents). fileContents: " << std::endl
+        << fileContents.substr(0,100) << "..." << std::endl << ", referenceContents: " << std::endl << referenceContents.substr(0,100) << "...";
+    }
     if (!referenceContent2Matches)
-      LOG(INFO) << "file content of file \"" << filename << "\" is different (referenceContents2). fileContents: " << std::endl << fileContents << std::endl << ", referenceContents2: " << std::endl << referenceContents2;
-    
+    {
+      LOG(INFO) << "file content of file \"" << filename << "\" is different (referenceContents2). fileContents: " << std::endl
+        << fileContents.substr(0,100) << "..." << std::endl << ", referenceContents2: " << std::endl << referenceContents2.substr(0,100) << "...";
+    }
+
+    std::ofstream outReferenceContents("referenceContents");
+    outReferenceContents << referenceContents;
+    outReferenceContents.close();
+
+    std::ofstream outReferenceContents2("referenceContents2");
+    outReferenceContents2 << referenceContents2;
+    outReferenceContents2.close();
+
+    std::ofstream out("fileContents");
+    out << fileContents;
+    out.close();
+
     LOG(INFO) << msg.str();
     ASSERT_TRUE(false) << "filename \"" << filename << "\": neither referenceContent nor referenceContent2 matches! " << msg.str();
   }

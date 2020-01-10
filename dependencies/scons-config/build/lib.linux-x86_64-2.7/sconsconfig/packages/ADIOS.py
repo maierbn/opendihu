@@ -126,6 +126,8 @@ int main(int argc, char *argv[])
     }
 
     MPI_Finalize();
+    
+    system("rm -rf fileAttributes.bp*");
 
     return 0;
 }

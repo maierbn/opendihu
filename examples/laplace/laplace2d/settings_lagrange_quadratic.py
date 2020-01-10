@@ -25,6 +25,8 @@ config = {
     "solverType": "gmres",
     "preconditionerType": "none",
     "maxIterations": 10000,
+    "dumpFormat": "default",
+    "dumpFilename": "",
     "OutputWriter" : [
       {"format": "Paraview", "outputInterval": 1, "filename": "out/laplace", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":False},
       {"format": "PythonFile", "filename": "out/laplace", "outputInterval": 1, "binary":False, "onlyNodalValues":True},

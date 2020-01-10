@@ -38,38 +38,35 @@ opendihu_home = Dir('.').srcnode().abspath  # opendihu home directory is where t
 # The order is relevant, depending packages should be after the packages they depend on.
 #
 sconsconfig.select(
-    packages.MPI(required=True),     # This searches for the MPI implementation
-    packages.LAPACK(required=True),  # This downloads and compiles OpenBLAS which implements the interfaces of both LAPACK and BLAS
+    packages.MPI(required=True),       # This searches for the MPI implementation
+    packages.LAPACK(required=True),    # This downloads and compiles OpenBLAS which implements the interfaces of both LAPACK and BLAS
     #packages.bison(required=False),   # parser generater needed by PTScotch which is needed by MUMPS which is needed by Petsc
     #packages.flex(required=False),    # "Fast Lexical Analyzer" needed by PTScotch which is needed by MUMPS which is needed by Petsc
-    packages.PETSc(required=True),   # Petsc depends on LAPACK/BLAS and bison
+    packages.PETSc(required=True),     # Petsc depends on LAPACK/BLAS and bison
     #packages.bzip2(required=False),
-    packages.Python(required=True),  # This compiles python 3.6 from source to be able to embedd the python interpreter in opendihu. All further python packages are installed in this installation tree under dependencies/python/install
+    packages.Python(required=True),    # This compiles python 3.6 from source to be able to embedd the python interpreter in opendihu. All further python packages are installed in this installation tree under dependencies/python/install
     packages.pythonPackages(required=False),   # all further python utils that can be installed via pip
-    packages.Base64(required=True),  # Base64 is an encoding library that is needed for binary VTK output.
+    packages.Base64(required=True),    # Base64 is an encoding library that is needed for binary VTK output.
     packages.googletest(required=False),   # This is the testing framework.
     #packages.libxml2(required=True),
     #packages.Sphinx(required=True),
-    #packages.libcellml(required=True),          # relies on libxml2 and SWIG
-    packages.SEMT(required=False),           # This is a small C++ symbolic differentiation toolbox that is used for solid mechanics.
-    packages.MegaMol(required=False),       # Adds the MegaMol visualization framework
-    packages.ADIOS(required=False),       # ADIOS
-    #packages.VTK(required=False),       # VTK, needed only for chaste
-    #packages.HDF5(required=False),       # The parallel output library HDF5, compiled with --enable-parallel as needed for chaste, the version that Petsc can download does not have this feature
-    #packages.XercesC(required=False),       # XML-parser, needed for chaste
-    #packages.xsd(required=False),       # XML Schema to C++ data binding compiler, needed for chaste
-    #packages.boost(required=False),       # boost C++ library, needed for chaste
-    #packages.Chaste(required=False),       # The Chaste framework, only the nonlinear mechanics solver is used
-    packages.Vc(required=True),          # The Vc types for explicit vectorization
-    packages.EasyLoggingPP(required=True),      # This is the logging library, it has to be the last package to be included because it contains a source (.c) file that needs to be compiled and linked to opendihu and somehow otherwise scons-config does not work.
+    #packages.libcellml(required=True),# relies on libxml2 and SWIG
+    packages.SEMT(required=False),     # This is a small C++ symbolic differentiation toolbox that is used for solid mechanics.
+    packages.MegaMol(required=False),  # Adds the MegaMol visualization framework
+    packages.ADIOS(required=False),    # ADIOS, a library that handles efficient and parallel data output
+    #packages.VTK(required=False),     # VTK, needed only for chaste
+    #packages.HDF5(required=False),    # The parallel output library HDF5, compiled with --enable-parallel as needed for chaste, the version that Petsc can download does not have this feature
+    #packages.XercesC(required=False), # XML-parser, needed for chaste
+    #packages.xsd(required=False),     # XML Schema to C++ data binding compiler, needed for chaste
+    #packages.boost(required=False),   # boost C++ library, needed for chaste
+    #packages.Chaste(required=False),  # The Chaste framework, only the nonlinear mechanics solver is used
+    packages.Vc(required=True),        # The Vc types for explicit vectorization
+    packages.xbraid(required=False),   # framework for multigrid in time methods 
+    packages.EasyLoggingPP(required=True),   # This is the logging library, it has to be the last package to be included because it contains a source (.c) file that needs to be compiled and linked to opendihu and somehow otherwise scons-config does not work.
 )
 
 # By default set the packages' location to the dependency directory. This can be overridden in 'user-variables.scons.py'.
 # Note that an absolute path has to be given, otherwise there are problems finding the libraries
-
-#preset_variables = {'LAPACK_DIR': os.path.join(opendihu_home, 'dependencies/lapack/install'),
-#                    'PETSC_DIR':  os.path.join(opendihu_home, 'dependencies/petsc/install')}
-
 
 # read variables from user file 'user-variables.scons.py' and from command line arguments, e.g. `scons BUILD_TYPE=release`
 variables = ARGUMENTS.copy()        # command line arguments are in the global ARGUMENTS dictionary

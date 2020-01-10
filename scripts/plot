@@ -92,20 +92,33 @@ if dimension == 1:
   plot_over_time = data[0]['nElements'] == [0]   # if the plot should have time as x-axis instead of geometry
   
   def init():
-    global geometry_component, line_2D, lines_3D, line_comp, cbar, top_text, ax1, ax2, cmap, show_geometry, show_components, solution_components, scaling_factors
+    global geometry_component, line_2D, lines_3D, line_comp, cbar, top_text, ax1, ax2, cmap, show_geometry, show_components, solution_components, solution_name, solution_component, scaling_factors
       
     # determine in which direction the 1D fibre extends the most
     min_x, max_x = py_reader.get_min_max(data, "geometry", "x")
     min_y, max_y = py_reader.get_min_max(data, "geometry", "y")
     min_z, max_z = py_reader.get_min_max(data, "geometry", "z")
-    min_s, max_s = py_reader.get_min_max(data, "solution", "0")
-    print( "value range: [{}, {}]".format(min_s, max_s))
-    if np.isinf(min_s) or np.isnan(min_s):
+    
+    field_variable_names = py_reader.get_field_variable_names(data[0])
+    
+    solution_name = "solution"
+    if "solution" not in field_variable_names:
+      for field_variable_name in field_variable_names:
+        if field_variable_name != "geometry":
+          component_names = py_reader.get_component_names(data[0], field_variable_name)
+          if len(component_names) == 1:
+            solution_name = field_variable_name
+            solution_component = component_names[0]
+            break
+    
+    min_s, max_s = py_reader.get_min_max(data, solution_name, solution_component)
+    print( "\"{}\" value range: [{}, {}]".format(solution_name, min_s, max_s))
+    if min_s is None or np.isinf(min_s) or np.isnan(min_s):
       min_s = 0
-    if np.isinf(max_s) or np.isnan(max_s):
+    if max_s is None or np.isinf(max_s) or np.isnan(max_s):
       max_s = 0
     
-    solution_components = py_reader.get_component_names(data[0], "solution")
+    solution_components = py_reader.get_component_names(data[0], solution_name)
     n_components = len(solution_components)
     
     span_x = max_x - min_x
@@ -164,7 +177,7 @@ if dimension == 1:
       ax1.set_xlabel('t')
     else:
       ax1.set_xlabel(xlabel.upper())
-    ax1.set_ylabel('Solution')
+    ax1.set_ylabel(solution_name)
     if solution_components[0] != "0":
       ax1.legend()
     
@@ -201,8 +214,8 @@ if dimension == 1:
       min_value = 0
       max_value = 1
       for (j,component_name) in enumerate(solution_components):
-        min_comp, max_comp = py_reader.get_min_max(data, "solution", component_name)
-        values_comp = py_reader.get_values(data[0], "solution", component_name)
+        min_comp, max_comp = py_reader.get_min_max(data, solution_name, component_name)
+        values_comp = py_reader.get_values(data[0], solution_name, component_name)
         
         v = max(abs(max_comp), abs(min_comp))
         if abs(v) < 1e-5:
@@ -235,7 +248,7 @@ if dimension == 1:
     return top_text,
 
   def animate(i):
-    global top_text
+    global top_text, solution_name, solution_component
     
     ##################
     # 2D plot of main solution component
@@ -247,7 +260,7 @@ if dimension == 1:
       sdata = []
       if plot_over_time:
         for d in data:
-          solution_values = py_reader.get_values(d, "solution", "0")
+          solution_values = py_reader.get_values(d, solution_name, solution_component)
           
           xdata.append(d['currentTime'])
           sdata.append(solution_values[0])
@@ -255,7 +268,7 @@ if dimension == 1:
     else:
       # plot over geometry
       xdata = py_reader.get_values(data[i], "geometry", geometry_component)
-      sdata = py_reader.get_values(data[i], "solution", "0")
+      sdata = py_reader.get_values(data[i], solution_name, solution_component)
 
       # handle Hermite that have derivative values saved
       if data[i]["basisFunction"] == "Hermite" and data[i]["onlyNodalValues"] == False:
@@ -336,12 +349,12 @@ if dimension == 1:
           data_comp = []
           if plot_over_time:
             for d in data:
-              solution_values = py_reader.get_values(d, "solution", component_name)
+              solution_values = py_reader.get_values(d, solution_name, component_name)
               
               xdata.append(d['currentTime'])
               data_comp.append(solution_values[0])
         else:
-          data_comp = py_reader.get_values(data[i], "solution", component_name)
+          data_comp = py_reader.get_values(data[i], solution_name, component_name)
           
         # refresh the line object that is the graph of the curve
         line_comp[j].set_data(xdata,np.array(data_comp)*scaling_factors[j])

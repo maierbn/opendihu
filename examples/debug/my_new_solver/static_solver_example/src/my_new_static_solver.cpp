@@ -5,18 +5,18 @@
 
 int main(int argc, char *argv[])
 {
-  // 1D diffusion equation du/dt = c du^2/dx^2
+  // 2D Laplace quation with linear ansatz functions, cΔu = 0
   
   // initialize everything, handle arguments and parse settings from input file
   DihuContext settings(argc, argv);
   
   // define the problem type, the nested solvers
-  TimeSteppingScheme::ImplicitEuler<
+  MyNewStaticSolver<
     SpatialDiscretization::FiniteElementMethod<
-      Mesh::StructuredRegularFixedOfDimension<1>,
-      BasisFunction::LagrangeOfOrder<>,
-      Quadrature::None,
-      Equation::Dynamic::IsotropicDiffusion
+      Mesh::StructuredDeformableOfDimension<2>,
+      BasisFunction::LagrangeOfOrder<1>,
+      Quadrature::Gauss<3>,
+      Equation::Static::Laplace
     >
   > problem(settings);
     

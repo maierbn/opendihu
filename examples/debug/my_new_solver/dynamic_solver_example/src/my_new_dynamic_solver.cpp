@@ -11,12 +11,14 @@ int main(int argc, char *argv[])
   DihuContext settings(argc, argv);
   
   // define the problem type, the nested solvers
-  TimeSteppingScheme::ImplicitEuler<
-    SpatialDiscretization::FiniteElementMethod<
-      Mesh::StructuredRegularFixedOfDimension<1>,
-      BasisFunction::LagrangeOfOrder<>,
-      Quadrature::None,
-      Equation::Dynamic::IsotropicDiffusion
+  MyNewTimesteppingSolver<
+    TimeSteppingScheme::ImplicitEuler<
+      SpatialDiscretization::FiniteElementMethod<
+        Mesh::StructuredRegularFixedOfDimension<1>,
+        BasisFunction::LagrangeOfOrder<>,
+        Quadrature::None,
+        Equation::Dynamic::IsotropicDiffusion
+      >
     >
   > problem(settings);
     

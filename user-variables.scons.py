@@ -56,6 +56,9 @@ MEGAMOL_DOWNLOAD = False    # install MegaMol from official git repo, but needed
 # Vc, vectorization types
 VC_DOWNLOAD=True
 
+# xbraid, used for parallel-in time methods
+XBRAID_DOWNLOAD=True
+
 # MPI
 # MPI is normally detected by runnig the mpicc command. If this is not available, you can provide the MPI_DIR as usual.
 MPI_DIR = "/usr/lib/openmpi"    # standard path for openmpi on ubuntu 16.04

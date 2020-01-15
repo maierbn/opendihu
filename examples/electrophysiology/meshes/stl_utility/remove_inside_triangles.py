@@ -18,7 +18,7 @@ from svg.path import parse_path
 from svg.path import Path, Line, Arc, CubicBezier, QuadraticBezier
 
 # source: https://github.com/kliment/Printrun/blob/master/printrun/stltool.py
-def ray_triangle_intersection(ray_origin, ray_direction, (v1, v2, v3)):
+def ray_triangle_intersection(ray_origin, ray_direction, v1, v2, v3):
   """
   Möller–Trumbore intersection algorithm in pure python
   Based on http://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
@@ -77,7 +77,7 @@ def get_n_intersections(origin, direction, stl_mesh):
         continue
 
       # check if ray intersects triangle
-      intersects = ray_triangle_intersection(origin, direction, (p1, p2, p3))
+      intersects = ray_triangle_intersection(origin, direction, p1, p2, p3)
 
       if intersects:
         with par.lock:

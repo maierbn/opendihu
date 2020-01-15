@@ -141,6 +141,14 @@ initialize()
   assert(this->linearSolver_->ksp());
   ierr = KSPSetOperators(*this->linearSolver_->ksp(), systemMatrix, systemMatrix); CHKERRV(ierr);
 
+  // set the nullspace of the matrix
+  // as we have Neumann boundary conditions, constant functions are in the nullspace of the matrix
+  MatNullSpace const_functions;
+  MatNullSpaceCreate(PETSC_COMM_WORLD, PETSC_TRUE, 0, nullptr, &const_functions);
+  MatSetNullSpace(systemMatrix, const_functions);
+  MatSetNearNullSpace(systemMatrix, const_functions); // for multigrid methods
+  MatNullSpaceDestroy(&const_functions);
+
   LOG(DEBUG) << "initialization done";
   this->initialized_ = true;
 }
@@ -256,14 +264,6 @@ debugDumpData()
   counter++;
 }
 
-//! return whether the underlying discretizableInTime object has a specified mesh type and is not independent of the mesh type
-template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
-bool StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
-knowsMeshType()
-{
-  return true;
-}
-
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
 typename StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::Data &StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
 data()
@@ -272,22 +272,22 @@ data()
 }
 
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
-//! the transfer is done by the solution_vector_mapping class
+//! the transfer is done by the output_connector_data_transfer class
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
-typename StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::TransferableSolutionDataType
+std::shared_ptr<typename StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::OutputConnectorDataType>
 StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
-getSolutionForTransfer()
+getOutputConnectorData()
 {
-  return this->data_.transmembranePotential();
+  return this->data_.getOutputConnectorData();  // transmembranePotential
 }
 
 //! output the given data for debugging
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
 std::string StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
-getString(typename StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::TransferableSolutionDataType &data)
+getString(std::shared_ptr<typename StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::OutputConnectorDataType> data)
 {
   std::stringstream s;
-  s << "<StaticBidomain:" << *data << ">";
+  s << "<StaticBidomain:" << data << ">";
   return s.str();
 }
 

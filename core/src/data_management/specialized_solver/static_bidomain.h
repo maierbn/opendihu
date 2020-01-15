@@ -22,6 +22,7 @@ public:
 
   typedef FieldVariable::FieldVariable<FunctionSpaceType,1> FieldVariableType;
   typedef FieldVariable::FieldVariable<FunctionSpaceType,3> GradientFieldVariableType;
+  typedef OutputConnectorData<FunctionSpaceType,1> OutputConnectorDataType;
 
   //! constructor
   StaticBidomain(DihuContext context);
@@ -53,6 +54,9 @@ public:
   //! print all stored data to stdout
   void print();
 
+  //! return the object that will be used to transfer values between solvers, in this case this includes only Vm
+  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
+
   //! field variables that will be output by outputWriters
   typedef std::tuple<
     std::shared_ptr<GradientFieldVariableType>,     // geometry
@@ -61,10 +65,10 @@ public:
     std::shared_ptr<FieldVariableType>,              // extra-cellular potential
     std::shared_ptr<FieldVariableType>,              // transmembranePotential
     std::shared_ptr<FieldVariableType>              // transmembraneFlow
-  > OutputFieldVariables;
+  > FieldVariablesForOutputWriter;
 
   //! get pointers to all field variables that can be written by output writers
-  OutputFieldVariables getOutputFieldVariables();
+  FieldVariablesForOutputWriter getFieldVariablesForOutputWriter();
 
 private:
 
@@ -78,6 +82,7 @@ private:
   std::shared_ptr<FieldVariableType> transmembranePotential_;  ///< the Vm value (transmembrane potential)
   std::shared_ptr<FieldVariableType> extraCellularPotential_;  ///< the phi_e value which is the extra-cellular potential
   std::shared_ptr<FieldVariableType> zero_;  ///< a field variable with constant value of zero, needed for the nested rhs vector
+  std::shared_ptr<OutputConnectorDataType> outputConnectorData_;  ///< the field variables that will be transferred to other solvers for the output connector
 };
 
 } // namespace Data

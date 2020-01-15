@@ -5,7 +5,7 @@
 SConscript('core/SConstruct')
 
 # build tests
-if 'no_tests' not in ARGUMENTS:
+if 'no_tests' not in ARGUMENTS or 'travis_ci' in ARGUMENTS:
   SConscript('testing/unit_testing/SConstruct')
 
 # build examples

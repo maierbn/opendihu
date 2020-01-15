@@ -8,12 +8,13 @@
 #include "utility/python_utility.h"
 #include "utility/petsc_utility.h"
 #include "utility/string_utility.h"
-#include "mesh/mesh_manager.h"
+#include "data_management/output_connector_data.h"
+#include "mesh/mesh_manager/mesh_manager.h"
 
 template<int nStates, int nIntermediates_, typename FunctionSpaceType>
 CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
 CellmlAdapterBase(DihuContext context) :
-  context_(context), specificSettings_(PythonConfig(context_.getPythonConfig(), "CellML"))
+  context_(context), specificSettings_(PythonConfig(context_.getPythonConfig(), "CellML")), data_(context_)
 {
   outputWriterManager_.initialize(this->context_, specificSettings_);
   LOG(TRACE) << "CellmlAdapterBase constructor";
@@ -41,6 +42,48 @@ nComponents()
 
 template<int nStates, int nIntermediates_, typename FunctionSpaceType>
 void CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
+setSolutionVariable(std::shared_ptr<FieldVariableStates> states)
+{
+  this->data_.setStatesVariable(states);
+}
+
+template<int nStates, int nIntermediates_, typename FunctionSpaceType>
+void CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
+setOutputConnectorData(std::shared_ptr<::Data::OutputConnectorData<FunctionSpaceType,nStates>> outputConnectorDataTimeStepping)
+{
+  // add all intermediate values for transfer (option "intermediatesForTransfer"), which are stored in this->data_.getOutputConnectorData()
+  // at the end of outputConnectorDataTimeStepping
+
+  // loop over intermediates that should be transferred
+  for (typename std::vector<::Data::ComponentOfFieldVariable<FunctionSpaceType,nIntermediates_>>::iterator iter
+    = this->data_.getOutputConnectorData()->variable2.begin(); iter != this->data_.getOutputConnectorData()->variable2.end(); iter++)
+  {
+    int componentNo = iter->componentNo;
+    std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nIntermediates_>> values = iter->values;
+
+    values->setRepresentationGlobal();
+
+    // The intermediate field variables have 'nIntermediates_' components, but the field variables in the outputConnectorDataTimeStepping object
+    // have only 1 component. Therefore, we create new field variables with 1 components each that reuse the Petsc Vec's of the intermediate field variables.
+
+    // get the parameters to create the new field variable
+    std::string name = values->componentName(componentNo);
+    const std::vector<std::string> componentNames{values->componentName(componentNo)};
+    const bool reuseData = true;
+
+    // create the new field variable with only the one component
+    std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> newFieldVariable
+      = std::make_shared<FieldVariable::FieldVariable<FunctionSpaceType,1>>(*values, name, componentNames, reuseData);
+
+    LOG(DEBUG) << "CellmlAdapterBase::setOutputConnectorData add FieldVariable " << newFieldVariable << " for intermediate " << componentNo << "," << name;
+
+    // add this component to outputConnector of data time stepping
+    outputConnectorDataTimeStepping->addFieldVariable2(newFieldVariable);
+  }
+}
+
+template<int nStates, int nIntermediates_, typename FunctionSpaceType>
+void CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
 initialize()
 {
   LOG(TRACE) << "CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::initialize";
@@ -52,21 +95,18 @@ initialize()
     PythonUtility::printDict(specificSettings_.pyObject());
   }
   
-  // create a mesh if there is not yet one assigned, function space FunctionSpace::Generic, downcasted to Mesh::Mesh
+  // create a mesh if there is not yet one assigned, function space FunctionSpace::Generic
   if (!functionSpace_)
   {
     functionSpace_ = context_.meshManager()->functionSpace<FunctionSpaceType>(specificSettings_);  // create initialized mesh
   }
   LOG(DEBUG) << "Cellml mesh has " << functionSpace_->nNodesLocalWithoutGhosts() << " local nodes";
 
-  // create intermediates field variable
-  intermediates_ = this->functionSpace_->template createFieldVariable<nIntermediates_>("intermediates");  // intermediates do not have names in the source files
-  intermediates_->setRepresentationContiguous();
-
   //store number of instances
   nInstances_ = functionSpace_->nNodesLocalWithoutGhosts();
 
   stateNames_.resize(nStates);
+  intermediateNames_.resize(nIntermediates_);
   sourceFilename_ = this->specificSettings_.getOptionString("sourceFilename", "");
   this->scanSourceFile(this->sourceFilename_, statesInitialValues_);   // this sets nIntermediatesInSource_
   
@@ -90,11 +130,11 @@ initialize()
     this->specificSettings_.getOptionVector("parametersUsedAsConstant", parametersUsedAsConstant_);
     nParameters_ += parametersUsedAsIntermediate_.size() + parametersUsedAsConstant_.size();
     
-    //LOG(DEBUG) << "parametersUsedAsIntermediate_: " << parametersUsedAsIntermediate_ 
+    //LOG(DEBUG) << "parametersUsedAsIntermediate_: " << parametersUsedAsIntermediate_
     //  << ", parametersUsedAsConstant_: " << parametersUsedAsConstant_;
   }
   
-  LOG(DEBUG) << "Initialize CellML with nInstances = " << nInstances_ << ", nParameters_ = " << nParameters_ 
+  LOG(DEBUG) << "Initialize CellML with nInstances = " << nInstances_ << ", nParameters_ = " << nParameters_
     << ", nStates = " << nStates << ", nIntermediates = " << nIntermediates_;
     
   // allocate data vectors
@@ -102,9 +142,12 @@ initialize()
   parameters_.resize(nParameters_*nInstances_);
   LOG(DEBUG) << "parameters.size: " << parameters_.size();
   //<< ", intermediates.size: " << intermediates_.size();
-}
 
-void initializeFromNInstances(int nInstances);
+  // initialize data, i.e. states and intermediates field variables
+  data_.setFunctionSpace(functionSpace_);
+  data_.setIntermediateNames(intermediateNames_);
+  data_.initialize();
+}
 
 template<int nStates, int nIntermediates_, typename FunctionSpaceType>
 template<typename FunctionSpaceType2>
@@ -197,37 +240,23 @@ getNumbers(int& nInstances, int& nIntermediates, int& nParameters)
 
 template<int nStates, int nIntermediates_, typename FunctionSpaceType>
 void CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
+getStatesIntermediatesForTransfer(std::vector<int> &statesForTransfer, std::vector<int> &intermediatesForTransfer)
+{
+  data_.getStatesIntermediatesForTransfer(statesForTransfer, intermediatesForTransfer);
+}
+
+template<int nStates, int nIntermediates_, typename FunctionSpaceType>
+void CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
 getStateNames(std::vector<std::string> &stateNames)
 {
   stateNames = this->stateNames_;
 }
 
 template<int nStates, int nIntermediates_, typename FunctionSpaceType>
-bool CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
-knowsMeshType()
+typename CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::Data &CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
+data()
 {
-  return false;
-}
-
-template<int nStates, int nIntermediates_, typename FunctionSpaceType>
-int CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
-outputStateIndex()
-{
-  return outputStateIndex_;
-}
-
-template<int nStates, int nIntermediates_, typename FunctionSpaceType>
-double CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
-prefactor()
-{
-  return prefactor_;
-}
-
-template<int nStates, int nIntermediates_, typename FunctionSpaceType>
-std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nIntermediates_>> CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
-intermediates()
-{
-  return intermediates_;
+  return this->data_;
 }
 
 template<int nStates, int nIntermediates_, typename FunctionSpaceType>
@@ -237,4 +266,10 @@ nIntermediates() const
   return nIntermediates_;
 }
 
-
+template<int nStates, int nIntermediates_, typename FunctionSpaceType>
+std::shared_ptr<typename CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::OutputConnectorDataType>
+CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
+getOutputConnectorData()
+{
+  return this->data_.getOutputConnectorData();
+}

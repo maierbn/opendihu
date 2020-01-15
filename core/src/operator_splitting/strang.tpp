@@ -2,7 +2,7 @@
 
 #include "utility/python_utility.h"
 #include "data_management/time_stepping/time_stepping.h"
-#include "operator_splitting/solution_vector_mapping/solution_vector_mapping.h"
+#include "data_management/output_connector_data.h"
 
 namespace OperatorSplitting
 {
@@ -76,9 +76,12 @@ advanceTimeSpan()
     // --------------- data transfer 1->2 -------------------------
     LOG(DEBUG) << "  Strang: transfer timeStepping1 -> timeStepping2";
 
-    // scale solution in timeStepping1 and transfer to timestepping2_
-    SolutionVectorMapping<typename TimeStepping1::TransferableSolutionDataType, typename TimeStepping2::TransferableSolutionDataType>::
-      transfer(this->timeStepping1_.getSolutionForTransfer(), this->timeStepping2_.getSolutionForTransfer());
+    // set transfer direction 1->2
+    this->outputConnection_.setTransferDirection(true);
+
+    // transfer to timestepping2_
+    SolutionVectorMapping<typename TimeStepping1::OutputConnectorDataType, typename TimeStepping2::OutputConnectorDataType>::
+      transfer(this->timeStepping1_.getOutputConnectorData(), this->timeStepping2_.getOutputConnectorData(), this->outputConnection_);
 
     if (this->durationLogKey_ != "")
     {
@@ -103,9 +106,13 @@ advanceTimeSpan()
 
     // --------------- data transfer 2->1 -------------------------
     LOG(DEBUG) << "  Strang: transfer timeStepping2 -> timeStepping1";
+
+    // set transfer direction 2->1
+    this->outputConnection_.setTransferDirection(false);
+
     // scale solution in timeStepping2 and transfer to timestepping1_
-    SolutionVectorMapping<typename TimeStepping2::TransferableSolutionDataType, typename TimeStepping1::TransferableSolutionDataType>::
-      transfer(this->timeStepping2_.getSolutionForTransfer(), this->timeStepping1_.getSolutionForTransfer());
+    SolutionVectorMapping<typename TimeStepping2::OutputConnectorDataType, typename TimeStepping1::OutputConnectorDataType>::
+      transfer(this->timeStepping2_.getOutputConnectorData(), this->timeStepping1_.getOutputConnectorData(), this->outputConnection_);
 
     if (this->durationLogKey_ != "")
     {
@@ -140,9 +147,13 @@ advanceTimeSpan()
      */
 #if 0
     LOG(DEBUG) << "  Strang: transfer timeStepping1 -> timeStepping2";
-    // scale solution in timeStepping1 and transfer to timestepping2_
-    SolutionVectorMapping<typename TimeStepping1::TransferableSolutionDataType, typename TimeStepping2::TransferableSolutionDataType>::
-      transfer(this->timeStepping1_.getSolutionForTransfer(), this->timeStepping2_.getSolutionForTransfer());
+
+    // set transfer direction 1->2
+    this->outputConnection_.setTransferDirection(true);
+
+    // transfer to timestepping2_
+    SolutionVectorMapping<typename TimeStepping1::OutputConnectorDataType, typename TimeStepping2::OutputConnectorDataType>::
+      transfer(this->timeStepping1_.getOutputConnectorData(), this->timeStepping2_.getOutputConnectorData(), this->outputConnection_);
 #endif
 
     // advance simulation time

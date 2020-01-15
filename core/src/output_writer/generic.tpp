@@ -11,9 +11,9 @@ namespace OutputWriter
 {
 
 template<typename DataType>
-bool Generic::prepareWrite(DataType& data, int timeStepNo, double currentTime)
+bool Generic::prepareWrite(DataType& data, int timeStepNo, double currentTime, int callCountIncrement)
 {
-  VLOG(2) << "Generic::prepareWrite timeStepNo=" << timeStepNo << ", currentTime=" << currentTime;
+  VLOG(2) << "Generic::prepareWrite (\"" << filenameBase_ << "\") timeStepNo=" << timeStepNo << ", currentTime=" << currentTime;
 
   if (!data.functionSpace())
   {
@@ -24,14 +24,14 @@ bool Generic::prepareWrite(DataType& data, int timeStepNo, double currentTime)
   currentTime_ = currentTime;
 
   int oldWriteCallCount = writeCallCount_;
-  writeCallCount_++;
+  writeCallCount_ += callCountIncrement;
 
-  VLOG(2) << " Generic::prepareWrite, writeCallCount_=" << writeCallCount_ << ", outputInterval: " << outputInterval_;
-  
+  VLOG(2) << " Generic::prepareWrite (\"" << filenameBase_ << "\"), writeCallCount_=" << writeCallCount_ << ", outputInterval: " << outputInterval_;
+
   // if no output should be written, because of interval, return false
   if (oldWriteCallCount % outputInterval_ != 0)
   {
-    VLOG(2) << " do not write";
+    VLOG(2) << " do not write (\"" << filenameBase_ << "\")";
     return false;
   }
 
@@ -45,7 +45,7 @@ bool Generic::prepareWrite(DataType& data, int timeStepNo, double currentTime)
   }
   outputFileNo_++;
   filenameBaseWithNo_ = s.str();
-  
+
   // add rank no to file name base
   if (data.functionSpace()->meshPartition()->nRanks() > 1)
   {

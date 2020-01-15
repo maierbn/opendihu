@@ -109,6 +109,9 @@ public:
   //! global no of first local node in the partition specified by partitionIndex or the current partition if partitionIndex == -1
   global_no_t beginNodeGlobalNatural(int coordinateDirection, int partitionIndex = -1) const;
     
+  //! get the number of nodes in the global Petsc ordering that are in partitions prior to the own rank
+  global_no_t beginNodeGlobalPetsc() const;
+
   //! number of nodes in total
   global_no_t nNodesGlobal(int coordinateDirection) const;
   
@@ -153,11 +156,14 @@ public:
   //! get the local element no. from coordinates
   element_no_t getElementNoLocal(std::array<int,MeshType::dim()> elementCoordinates) const;
 
+  //! get the local element no. from the global no., set isOnLocalDomain to true if the node with global coordinates is in the local domain
+  element_no_t getElementNoLocal(global_no_t elementNoGlobalPetsc, bool &isOnLocalDomain) const;
+
   //! get the local node no for a global petsc node no, does not work for ghost nodes
-  node_no_t getNodeNoLocal(global_no_t nodeNoGlobalPetsc) const;
+  node_no_t getNodeNoLocal(global_no_t nodeNoGlobalPetsc, bool &isLocal) const;
 
   //! get the local dof no for a global petsc dof no, does not work for ghost nodes
-  dof_no_t getDofNoLocal(global_no_t dofNoGlobalPetsc) const;
+  dof_no_t getDofNoLocal(global_no_t dofNoGlobalPetsc, bool &isLocal) const;
 
   //! from a vector of values of global/natural node numbers remove all that are non-local, nComponents consecutive values for each dof are assumed
   template <typename T>
@@ -237,7 +243,7 @@ protected:
   //! get the index in terms of partitions of the partition that contains the given node no
   std::array<int,MeshType::dim()> getPartitioningIndex(std::array<global_no_t,MeshType::dim()> nodeNoGlobalNatural) const;
 
-  //! get the number of nodes in the global Petsc ordering that in partitions prior to the one given by partitionIndex
+  //! get the number of nodes in the global Petsc ordering that are in partitions prior to the one given by partitionIndex
   global_no_t nNodesGlobalPetscInPreviousPartitions(std::array<int,MeshType::dim()> partitionIndex) const;
 
   //! get the node no in global petsc ordering from global coordinates
@@ -301,7 +307,10 @@ public:
   
   //! number of nodes in total
   global_no_t nNodesGlobal() const;
-  
+
+  //! return the number of nodes for coordinateDirection == 0 and 1 otherwise
+  global_no_t nNodesGlobal(int coordinateDirection) const;
+
   //! number of dofs
   global_no_t nDofs() const;
 
@@ -332,10 +341,13 @@ public:
   std::array<int,D> getCoordinatesLocal(std::array<global_no_t,D> coordinatesGlobal, bool &isOnLocalDomain) const;
 
   //! get the local node no for a global petsc node no, does not work for ghost nodes
-  node_no_t getNodeNoLocal(global_no_t nodeNoGlobalPetsc) const;
+  node_no_t getNodeNoLocal(global_no_t nodeNoGlobalPetsc, bool &isLocal) const;
 
   //! get the local dof no for a global petsc dof no, does not work for ghost nodes
-  dof_no_t getDofNoLocal(global_no_t dofNoGlobalPetsc) const;
+  dof_no_t getDofNoLocal(global_no_t dofNoGlobalPetsc, bool &isLocal) const;
+
+  //! get the local element no from the global element no, isOnLocalDomain is true
+  element_no_t getElementNoLocal(global_no_t elementNoGlobalPetsc, bool &isOnLocalDomain) const;
 
   //! this does nothing for unstructured meshes, only for structured meshes
   void initializeDofNosLocalNaturalOrdering(std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>> functionSpace){};

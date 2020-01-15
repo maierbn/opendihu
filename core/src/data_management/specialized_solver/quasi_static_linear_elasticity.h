@@ -13,7 +13,7 @@
 namespace Data
 {
 
-/**  The datastructures used for static bidomain solver.
+/**  The datastructures used for quasi static linear elasticity solver.
   */
 template<typename DataLinearElasticityType>
 class QuasiStaticLinearElasticity :
@@ -22,9 +22,10 @@ class QuasiStaticLinearElasticity :
 public:
 
   typedef typename DataLinearElasticityType::FunctionSpace FunctionSpaceType;
-  typedef FieldVariable::FieldVariable<FunctionSpaceType,3> GradientFieldVariableType;
+  typedef FieldVariable::FieldVariable<FunctionSpaceType,3> VectorFieldVariableType;
   typedef FieldVariable::FieldVariable<FunctionSpaceType,1> FieldVariableType;
   typedef FieldVariable::FieldVariable<FunctionSpaceType,9> StressFieldVariableType;
+  typedef OutputConnectorData<FunctionSpaceType,1> OutputConnectorDataType;
 
   //! constructor
   QuasiStaticLinearElasticity(DihuContext context);
@@ -39,10 +40,16 @@ public:
   std::shared_ptr<StressFieldVariableType> strain();
 
   //! return a reference to the rhs summand vector which is needed to apply the boundary conditions, the PETSc Vec can be obtained via fieldVariable->valuesGlobal()
-  std::shared_ptr<GradientFieldVariableType> fiberDirection();
+  std::shared_ptr<VectorFieldVariableType> fiberDirection();
 
   //! return the field variable of the potential for the Laplace potential flow problem
   std::shared_ptr<FieldVariableType> flowPotential();
+
+  //! return the field variable of the active stress part of rhs, f_active
+  std::shared_ptr<VectorFieldVariableType> rightHandSideActive();
+
+
+  void debug();
 
   //! initialize
   void initialize();
@@ -53,20 +60,24 @@ public:
   //! store the data of the finite element type
   void setData(std::shared_ptr<DataLinearElasticityType> dataLinearElasticity);
 
+  //! get the output connector data
+  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
+
   //! field variables that will be output by outputWriters
   typedef decltype(std::tuple_cat(
-    std::declval<typename DataLinearElasticityType::OutputFieldVariables>(),
+    std::declval<typename DataLinearElasticityType::FieldVariablesForOutputWriter>(),
     std::declval<std::tuple<
       std::shared_ptr<FieldVariableType>,              // activation
       std::shared_ptr<StressFieldVariableType>,         // active stress
-      std::shared_ptr<StressFieldVariableType>,         // strain stress
-      std::shared_ptr<GradientFieldVariableType>,      // fiberDirection
+      std::shared_ptr<StressFieldVariableType>,         // strain
+      std::shared_ptr<VectorFieldVariableType>,      // rightHandSideActive_
+      std::shared_ptr<VectorFieldVariableType>,      // fiberDirection
       std::shared_ptr<FieldVariableType>               // solution of laplace potential flow
     >>()))
-   OutputFieldVariables;
+   FieldVariablesForOutputWriter;
 
   //! get pointers to all field variables that can be written by output writers
-  OutputFieldVariables getOutputFieldVariables();
+  FieldVariablesForOutputWriter getFieldVariablesForOutputWriter();
 
 private:
 
@@ -77,9 +88,12 @@ private:
 
   std::shared_ptr<FieldVariableType> activation_; ///< field variable of the activation factor field
   std::shared_ptr<StressFieldVariableType> activeStress_; ///< field variable of the active stress in the muscle
-  std::shared_ptr<StressFieldVariableType> strain_; ///< field variable of the active stress in the muscle
+  std::shared_ptr<StressFieldVariableType> strain_; ///< field variable of the strain in the muscle
+  std::shared_ptr<VectorFieldVariableType> rightHandSideActive_; ///< field variable of the active stress part of rhs, f_active
   std::shared_ptr<FieldVariableType> flowPotential_; ///< solution of the laplace flow
-  std::shared_ptr<GradientFieldVariableType> fiberDirection_; ///< the direction of fibers
+  std::shared_ptr<VectorFieldVariableType> fiberDirection_; ///< the direction of fibers
+
+  std::shared_ptr<OutputConnectorDataType> outputConnectorData_;   //< the field variables that are used for transfer to other solvers
 
 };
 

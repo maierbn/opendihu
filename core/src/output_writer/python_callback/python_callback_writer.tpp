@@ -9,9 +9,9 @@
 namespace OutputWriter
 {
 
-template<typename FunctionSpaceType, typename OutputFieldVariablesType>
-void PythonCallbackWriter<FunctionSpaceType,OutputFieldVariablesType>::
-callCallback(PyObject *callback, OutputFieldVariablesType fieldVariables,
+template<typename FunctionSpaceType, typename FieldVariablesForOutputWriterType>
+void PythonCallbackWriter<FunctionSpaceType,FieldVariablesForOutputWriterType>::
+callCallback(PyObject *callback, FieldVariablesForOutputWriterType fieldVariables,
              int timeStepNo, double currentTime, bool onlyNodalValues)
 {
   LOG(TRACE) << "callCallback timeStepNo=" << timeStepNo << ", currentTime=" << currentTime;
@@ -24,7 +24,7 @@ callCallback(PyObject *callback, OutputFieldVariablesType fieldVariables,
 
   // collect all available meshes
   std::set<std::string> meshNames;
-  LoopOverTuple::loopCollectMeshNames<OutputFieldVariablesType>(fieldVariables, meshNames);
+  LoopOverTuple::loopCollectMeshNames<FieldVariablesForOutputWriterType>(fieldVariables, meshNames);
 
   // start critical section for python API calls
   // PythonUtility::GlobalInterpreterLock lock;
@@ -54,7 +54,7 @@ callCallback(PyObject *callback, OutputFieldVariablesType fieldVariables,
     // }
 
     // build python object for data
-    PyObject *pyData = Python<FunctionSpaceType,OutputFieldVariablesType>::buildPyDataObject(fieldVariables, meshName, timeStepNo, currentTime, onlyNodalValues);
+    PyObject *pyData = Python<FunctionSpaceType,FieldVariablesForOutputWriterType>::buildPyDataObject(fieldVariables, meshName, timeStepNo, currentTime, onlyNodalValues);
     
     // set entry in list
     PyList_SetItem(pyDataList, (Py_ssize_t)meshIndex, pyData);    // steals reference to pyData

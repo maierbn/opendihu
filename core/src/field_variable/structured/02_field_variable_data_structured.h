@@ -24,15 +24,16 @@ class FieldVariableDataStructured :
   public FieldVariableComponents<FunctionSpaceType,nComponents_>
 {
 public:
-  //! inherited constructor
-  using FieldVariableComponents<FunctionSpaceType,nComponents_>::FieldVariableComponents;
+  //! normal constructor without arguments
+  FieldVariableDataStructured();
 
-  //! contructor as data copy with a different name (component names are the same), note, it is not possible to make rhs const, because VecCopy needs globalValues() and this may change rhs
-  FieldVariableDataStructured(FieldVariable<FunctionSpaceType,nComponents_> &rhs, std::string name);
+  //! contructor as data copy (reuseData=false) or reusing the Petsc Vec's (reuseData=true), with a different name (component names are the same).
+  //! Note, it is not possible to make rhs const, because VecCopy needs globalValues() and this may change rhs
+  FieldVariableDataStructured(FieldVariable<FunctionSpaceType,nComponents_> &rhs, std::string name, bool reuseData=false);
 
-  //! contructor as data copy with a different name and different components
+  //! contructor as data copy (reuseData=false) or reusing the Petsc Vec's (reuseData=true), with a different name and different components
   template <int nComponents2>
-  FieldVariableDataStructured(FieldVariable<FunctionSpaceType,nComponents2> &rhs, std::string name, std::vector<std::string> componentNames);
+  FieldVariableDataStructured(FieldVariable<FunctionSpaceType,nComponents2> &rhs, std::string name, std::vector<std::string> componentNames, bool reuseData=false);
 
   //! constructor with functionSpace, name and components and if it is a geometry field. This constructs a complete field variable
   FieldVariableDataStructured(std::shared_ptr<FunctionSpaceType> functionSpace, std::string name, std::vector<std::string> componentNames, bool isGeometryField=false);

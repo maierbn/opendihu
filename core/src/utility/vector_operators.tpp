@@ -139,6 +139,20 @@ std::array<double,nComponents> operator*(const std::array<double,nComponents> ve
   return result;
 }
 
+//! vector multiplication, outer product
+template<std::size_t nComponents1, std::size_t nComponents2>
+std::array<std::array<double,nComponents1>,nComponents2> operator*(const std::array<double,nComponents2> vector1, const std::array<double,nComponents1> vector2)
+{
+  std::array<std::array<double,nComponents1>,nComponents2> result;
+
+  //#pragma omp simd
+  for (int i = 0; i < nComponents2; i++)
+  {
+    result[i] = vector1[i] * vector2;
+  }
+  return result;
+}
+
 //! matrix-vector multiplication
 template<std::size_t M, std::size_t N>
 std::array<double,M> operator*(const std::array<std::array<double,M>,N> &matrix, const std::array<double,N> vector)
@@ -172,6 +186,20 @@ std::array<T,nComponents> operator/(const std::array<T,nComponents> vector1, con
   return result;
 }
 
+//! scalar division
+template<typename T, std::size_t nComponents>
+std::array<T,nComponents> operator/(const std::array<T,nComponents> vector1, const double value)
+{
+  std::array<T,nComponents> result;
+
+  //#pragma omp simd
+  for (int i = 0; i < nComponents; i++)
+  {
+    result[i] = vector1[i] / value;
+  }
+  return result;
+}
+
 template<typename T, std::size_t N>
 bool operator<(const std::array<T,N> &vector, double value)
 {
@@ -190,9 +218,23 @@ bool operator<(const std::array<T,N> &vector, double value)
 template<typename T, std::size_t N>
 std::ostream &operator<<(std::ostream &stream, const std::array<T,N> &vector)
 {
-  stream << "(" << vector[0];
+  stream << "(";
+
+  // first entry
+  if (vector[0] == std::numeric_limits<T>::max())
+    stream << "None";
+  else
+    stream << vector[0];
+
+  // subsequent entries
   for (std::size_t i = 1; i < N; i++)
-    stream << "," << vector[i];
+  {
+    stream << ",";
+    if (vector[i] == std::numeric_limits<T>::max())
+      stream << "None";
+    else
+      stream << vector[i];
+  }
   stream << ")";
   return stream;
 }
@@ -207,6 +249,12 @@ std::ostream &operator<<(std::ostream &stream, const std::array<std::size_t,N> v
   return stream;
 }
 
+template<typename T>
+std::ostream &operator<<(std::ostream &stream, std::reference_wrapper<T> value)
+{
+  stream << value.get();
+  return stream;
+}
 
 template<typename T>
 std::ostream &operator<<(std::ostream &stream, const std::vector<T> &values)
@@ -223,16 +271,21 @@ std::ostream &operator<<(std::ostream &stream, const std::vector<T> &values)
   {
     // with VLOG output all entries
     for (unsigned long i = 1; i < values.size(); i++)
+    {
       stream << "," << values[i];
+    }
   }
   else
   {
     // without VLOG only output the first 100 entries
     unsigned long i = 1;
     for (; i < std::min(100ul,values.size()); i++)
+    {
       stream << "," << values[i];
+    }
     if (i == 100 && i < values.size())
-      stream << "... " << values.size() << " entries total, only showing the first 100";
+      stream << "..." << values[values.size()-3] << "," << values[values.size()-2] << "," << values[values.size()-1]
+        << " (" << values.size() << " entries total, only showing the first 100 (call with -vmodule=vector_operators*=1 to show all))";
   }
 
   stream << "]";

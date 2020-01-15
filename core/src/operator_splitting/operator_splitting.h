@@ -1,11 +1,11 @@
 #pragma once
 
-#include "time_stepping_scheme/time_stepping_scheme.h"
+#include "time_stepping_scheme/00_time_stepping_scheme.h"
 #include "output_writer/manager.h"
 #include "interfaces/runnable.h"
 #include "data_management/time_stepping/time_stepping.h"
 #include "partition/rank_subset.h"
-#include "operator_splitting/solution_vector_mapping/solution_vector_mapping.h"
+#include "output_connector_data_transfer/output_connector_data_transfer.h"
 
 namespace OperatorSplitting
 {
@@ -14,13 +14,13 @@ template<typename TimeStepping1, typename TimeStepping2>
 class OperatorSplitting :
   public ::TimeSteppingScheme::TimeSteppingScheme,    // contains also Multipliable
   public Runnable
-  //public Printer<typename TimeStepping2::TransferableSolutionDataType>
 {
 public:
   typedef typename TimeStepping1::FunctionSpace FunctionSpace;
   typedef typename TimeStepping1::Data Data;
-  typedef typename TimeStepping1::TransferableSolutionDataType TransferableSolutionDataType;  // needed when this class is itself part of an operator splitting
- 
+  typedef typename TimeStepping1::OutputConnectorDataType OutputConnectorDataType;  // needed when this class is itself part of an operator splitting
+  typedef TimeStepping1 TimeStepping1Type;
+
   //! constructor
   OperatorSplitting(DihuContext context, std::string schemeName);
 
@@ -31,10 +31,7 @@ public:
   void run();
 
   //! get the data to be reused in further computations
-  TransferableSolutionDataType getSolutionForTransfer();
-
-  //! return whether the object has a specified mesh type or if it is independent of any mesh type
-  bool knowsMeshType();
+  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
 
   //! set the subset of ranks that will compute the work
   void setRankSubset(Partition::RankSubset rankSubset);
@@ -55,7 +52,7 @@ public:
   TimeStepping2 &timeStepping2();
 
   //! output the given data for debugging
-  std::string getString(TransferableSolutionDataType &data);
+  std::string getString(std::shared_ptr<OutputConnectorDataType> data);
 
 protected:
 
@@ -69,17 +66,10 @@ protected:
   std::string logKeyTransfer12_;  ///< key for logging of the duration of data transfer from timestepping 1 to 2
   std::string logKeyTransfer21_;  ///< key for logging of the duration of data transfer from timestepping 2 to 1
 
+  OutputConnection outputConnection_; //< information regarding the mapping between the data slots of the two terms
+
   bool initialized_;               ///< if initialize() was already called
 };
-
-/*
-template<typename TransferableSolutionDataType>
-class Printer
-{
-  void print(TransferableSolutionDataType &data);
-};
-
-*/
 
 }  // namespace
 

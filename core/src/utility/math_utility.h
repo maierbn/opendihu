@@ -15,10 +15,10 @@ namespace MathUtility
 {
 
 //! returns v*v (square)
-double sqr(double v);
+inline double sqr(double v){return v*v;}
 
 //! returns v*v (square)
-int sqr(int v);
+inline int sqr(int v){return v*v;}
 
 //! return the euclidean norm of the difference vector, i.e. the distance between the nodes
 template<int D>
@@ -47,6 +47,10 @@ void normalize(VecD<D> &vector);
 //! compute the matrix T = J^{-1}J^{-T} when J is the jacobian
 //! returns the matrix in row major storage order, matrix is symmetric and the determinant of the jacobian
 std::array<double,9> computeTransformationMatrixAndDeterminant(const std::array<Vec3,3> &jacobian, double &determinant);
+
+//! compute the matrix T = J^{-1} A J^{-T} when J is the jacobian and A the symmetric diffusionTensor
+//! returns the matrix in row major storage order, matrix is symmetric and the determinant of the jacobian
+std::array<double,9> computeTransformationDiffusionMatrixAndDeterminant(const std::array<Vec3,3> &jacobian, const Matrix<3,3> &diffusionTensor, double &determinant);
 
 //! computes the determinant of the matrix
 template<int D>

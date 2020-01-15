@@ -44,10 +44,10 @@ public:
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>>,  // geometry
     std::shared_ptr<FieldVariableType>,  // displacements
     std::shared_ptr<FieldVariableType>   // rhs
-  > OutputFieldVariables;
+  > FieldVariablesForOutputWriter;
 
   //! get pointers to all field variables that can be written by output writers
-  OutputFieldVariables getOutputFieldVariables();
+  FieldVariablesForOutputWriter getFieldVariablesForOutputWriter();
 
 private:
 

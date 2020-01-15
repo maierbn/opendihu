@@ -425,6 +425,27 @@ meshPartitionColumns()
   return matrixComponents_[0].meshPartitionColumns();
 }
 
+//! write the vector to a file using PetscViewer, format is "default", "ascii" or "matlab"
+template<typename RowsFunctionSpaceType, typename ColumnsFunctionSpaceType>
+void PartitionedPetscMat<RowsFunctionSpaceType,ColumnsFunctionSpaceType>::
+dumpMatrix(std::string filename, std::string format)
+{
+  std::stringstream filenameStream;
+  filenameStream << filename;
+
+  for (int i = 0; i < MathUtility::sqr(nComponents_); i++)
+  {
+    // if there are multiple components, add component no to filename
+    if (nComponents_ > 1)
+    {
+      filenameStream.str("");
+      filenameStream << filename << i;
+    }
+
+    matrixComponents_[i].dumpMatrix(filenameStream.str(), format);
+  }
+}
+
 //! output matrix to stream, the operator<< is also overloaded to use this method
 template<typename RowsFunctionSpaceType, typename ColumnsFunctionSpaceType>
 void PartitionedPetscMat<RowsFunctionSpaceType,ColumnsFunctionSpaceType>::

@@ -12,10 +12,10 @@ namespace OutputWriter
 {
 
 template<typename DataType>
-void PythonFile::write(DataType& data, int timeStepNo, double currentTime)
+void PythonFile::write(DataType& data, int timeStepNo, double currentTime, int callCountIncrement)
 {
   // check if output should be written in this timestep and prepare filename
-  if (!Generic::prepareWrite(data, timeStepNo, currentTime))
+  if (!Generic::prepareWrite(data, timeStepNo, currentTime, callCountIncrement))
   {
     return;
   }
@@ -24,7 +24,7 @@ void PythonFile::write(DataType& data, int timeStepNo, double currentTime)
 
   // collect all available meshes
   std::set<std::string> meshNames;
-  LoopOverTuple::loopCollectMeshNames<typename DataType::OutputFieldVariables>(data.getOutputFieldVariables(), meshNames);
+  LoopOverTuple::loopCollectMeshNames<typename DataType::FieldVariablesForOutputWriter>(data.getFieldVariablesForOutputWriter(), meshNames);
   
   // loop over meshes and create an output file for each
   for (std::string meshName : meshNames)
@@ -50,8 +50,8 @@ void PythonFile::write(DataType& data, int timeStepNo, double currentTime)
     // PythonUtility::GlobalInterpreterLock lock;
    
     // build python object for data
-    PyObject *pyData = Python<typename DataType::FunctionSpace, typename DataType::OutputFieldVariables>::
-      buildPyDataObject(data.getOutputFieldVariables(), meshName, timeStepNo, currentTime, this->onlyNodalValues_);
+    PyObject *pyData = Python<typename DataType::FunctionSpace, typename DataType::FieldVariablesForOutputWriter>::
+      buildPyDataObject(data.getFieldVariablesForOutputWriter(), meshName, timeStepNo, currentTime, this->onlyNodalValues_);
     //PyObject *pyData = PyDict_New();
     //PyDict_SetItemString(pyData, "a", PyLong_FromLong(5));
     //PyDict_SetItemString(pyData,"b", PyUnicode_FromString("hi"));

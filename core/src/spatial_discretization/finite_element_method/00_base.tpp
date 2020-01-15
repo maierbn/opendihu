@@ -13,7 +13,7 @@
 
 #include "mesh/structured_regular_fixed.h"
 #include "basis_function/lagrange.h"
-#include "mesh/mesh_manager.h"
+#include "mesh/mesh_manager/mesh_manager.h"
 #include "solver/solver_manager.h"
 #include "solver/linear.h"
 #include "partition/partitioned_petsc_vec/partitioned_petsc_vec.h"
@@ -79,6 +79,12 @@ initialize()
     return;
 
   data_.initialize();
+
+  if (specificSettings_.hasKey("updatePrescribedValuesFromSolution"))
+  {
+    updatePrescribedValuesFromSolution_ = specificSettings_.getOptionBool("updatePrescribedValuesFromSolution", false);
+    LOG(DEBUG) << "set updatePrescribedValuesFromSolution = " << updatePrescribedValuesFromSolution_;
+  }
 
   // assemble stiffness matrix
   Control::PerformanceMeasurement::start("durationSetStiffnessMatrix");
@@ -163,7 +169,21 @@ solve()
   // solve the system
   linearSolver->solve(data_.rightHandSide()->valuesGlobal(), data_.solution()->valuesGlobal(), "Solution obtained");
 
+  data_.solution()->setRepresentationGlobal();
+  data_.solution()->startGhostManipulation();
+  data_.solution()->zeroGhostBuffer();
+  data_.solution()->finishGhostManipulation();
+  
+  
   VLOG(1) << "solution: " << *data_.solution();
+}
+
+template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term>
+std::shared_ptr<typename FiniteElementMethodBase<FunctionSpaceType,QuadratureType,nComponents,Term>::OutputConnectorDataType>
+FiniteElementMethodBase<FunctionSpaceType,QuadratureType,nComponents,Term>::
+getOutputConnectorData()
+{
+  return data_.getOutputConnectorData();
 }
 
 template<typename FunctionSpaceType,typename QuadratureType,int nComponents>

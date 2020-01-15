@@ -17,6 +17,9 @@ public:
   // Classes that derive from DiscretizableInTime must define a constexpr nComponents that specifies the number of components in the solution field variable
   //typedef .. nComponents;
 
+  //typedef ..OutputConnectorDataType;
+
+
   //! initialize timestepping
   virtual void initialize() = 0;
   
@@ -32,6 +35,13 @@ public:
   //! get the number of degrees of freedom per node which is 1 by default
   virtual int nComponentsNode();
 
+  //! Get the data that will be transferred in the operator splitting to the other term of the splitting.
+  //! The transfer is done by the output_connector_data_transfer class.
+  //virtual std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
+
+  //! this will be called right before getOutputConnectorData
+  virtual void prepareForGetOutputConnectorData();
+
   //! set initial values and return true or don't do anything and return false
   // this could use std::any (c++17)
   //template<typename FieldVariableType>
@@ -46,13 +56,6 @@ public:
   //! set if the class should handle dirichlet boundary conditions. A time stepping scheme sets this to false, because for dynamic problems the time stepping scheme handles the boundary conditions, not e.g. the FiniteElementMethod.
   //! By default it is set to true, which is needed for static problems, like Laplace.
   virtual void setBoundaryConditionHandlingEnabled(bool boundaryConditionHandlingEnabled) = 0;
-
-  //! return whether the object has a specified mesh type and is not independent of the mesh type
-  virtual bool knowsMeshType() = 0;
-
-  //! return the mesh
-  //virtual std::shared_ptr<FunctionSpaceType> functionSpace() = 0;
-  //old: virtual std::shared_ptr<Mesh::Mesh> mesh() = 0;
 
 protected:
 };

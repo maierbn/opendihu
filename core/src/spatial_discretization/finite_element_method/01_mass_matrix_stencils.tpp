@@ -23,8 +23,6 @@
 #include "mesh/mesh.h"
 #include "control/types.h"
 
-
-
 namespace SpatialDiscretization
 {
 
@@ -117,7 +115,7 @@ setMassMatrix()
 {
   typedef typename FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<2>, BasisFunction::LagrangeOfOrder<1>> FunctionSpaceType;
 
-  LOG(TRACE) << "setMassMatrix 2D for Mesh::RegularFixed using stencils";
+  LOG(INFO) << "setMassMatrix 2D for Mesh::RegularFixed using stencils";
 
   // check if matrix discretization matrix exists
   if (!this->data_.massMatrix())

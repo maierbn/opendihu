@@ -21,11 +21,13 @@ config = {
       "nElements": [n,n],
       "physicalExtent": [4.0,4.0],
       "relativeTolerance": 1e-15,
+      "dumpFilename": "out/",
+      "dumpFormat": "ascii",  # ascii, default or matlab
       "prefactor": 0.1,
     },
     
     "OutputWriter" : [
-      #{"format": "Paraview", "interval": 1, "filename": "out", "binaryOutput": "false", "fixedFormat": False, "frequency": 100},
+      {"format": "Paraview", "interval": 1, "filename": "out/filename", "binary": "false", "fixedFormat": False, "frequency": 10},
       {"format": "PythonFile", "outputInterval": 10, "filename": "out/out_diffusion2d", "binary": True}
     ]
   },

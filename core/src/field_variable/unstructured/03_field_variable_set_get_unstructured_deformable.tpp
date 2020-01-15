@@ -125,6 +125,18 @@ getValues(int componentNo, std::array<dof_no_t,N> dofLocalNo, std::array<double,
   this->component_[componentNo].template getValues<N>(dofLocalNo, values);
 }
 
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
+getValues(int componentNo, int nValues, const dof_no_t *dofLocalNo, std::vector<double> &values) const
+{
+  assert(componentNo >= 0 && componentNo < nComponents);
+  assert(this->values_);
+
+  int valuesPreviousSize = values.size();
+  values.resize(valuesPreviousSize + nValues);
+  this->values_->getValues(componentNo, nValues, (PetscInt *)dofLocalNo, values.data() + valuesPreviousSize);
+}
+
 //! for a specific component, get values from their local dof no.s
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
@@ -255,6 +267,18 @@ setValues(int componentNo, const std::array<dof_no_t,N> &dofNosLocal, const std:
   this->values_->setValues(componentNo, N, dofNosLocal.data(), values.data(), petscInsertMode);
 }
 
+//! set values for a given component for given dofs, using raw pointers
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
+setValues(int componentNo, int nValues, const dof_no_t *dofNosLocal, const double *values, InsertMode petscInsertMode)
+{
+  assert(componentNo >= 0 && componentNo < nComponents);
+  assert(this->values_);
+
+  // set the values for the current component
+  this->values_->setValues(componentNo, nValues, dofNosLocal, values, petscInsertMode);
+}
+
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
 setValues(int componentNo, std::shared_ptr<FieldVariable<FunctionSpaceType,1>> fieldVariable)
@@ -262,6 +286,28 @@ setValues(int componentNo, std::shared_ptr<FieldVariable<FunctionSpaceType,1>> f
   std::vector<double> values;
   fieldVariable->getValuesWithoutGhosts(0, values, false);
   this->setValues(componentNo, values);
+}
+
+template<typename FunctionSpaceType, int nComponents>
+template<int N>
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
+setValues(const std::array<dof_no_t,N> &dofNosLocal, const std::array<std::array<double,nComponents>,N> &values, InsertMode petscInsertMode)
+{
+  assert(this->values_);
+
+  std::array<double,N> valuesBuffer;
+
+  for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
+  {
+    // loop over dofs and prepare values of current component
+    for (int dofIndex = 0; dofIndex < N; dofIndex++)
+    {
+      valuesBuffer[dofIndex] = values[dofIndex][componentIndex];
+    }
+
+    // set the values for the current component
+    this->values_->setValues(componentIndex, N, dofNosLocal.data(), valuesBuffer.data(), petscInsertMode);
+  }
 }
 
 template<typename FunctionSpaceType, int nComponents>

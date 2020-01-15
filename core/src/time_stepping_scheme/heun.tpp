@@ -55,7 +55,7 @@ void Heun<DiscretizableInTime>::advanceTimeSpan()
       LOG(INFO) << "Heun, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
     }
 
-    VLOG(1) << "starting from solution: " << *this->data_->solution();
+    VLOG(1) << "starting from solution (" << this->data_->solution() << "): " << *this->data_->solution();
 
     // advance solution value to compute u* first
     // compute  delta_u = f(u_{t})
@@ -74,8 +74,9 @@ void Heun<DiscretizableInTime>::advanceTimeSpan()
     this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
       solution, intermediateIncrement, timeStepNo + 1, currentTime + this->timeStepWidth_);
 
-    // integrate u_{t+1} = u_{t} + dt*0.5(delta_u + delta_u_star)
-    // however, use: u_{t+1} = u* + 0.5*dt*(f(u*)-f(u_{t}))     (#)
+    // we need       u_{t+1} = u_{t} + dt*0.5*(delta_u + delta_u*)
+    // however, use: u_{t+1} = u*    + dt*0.5*(delta_u* - delta_u)     (#)
+    // where         u*      = u_{t} + dt*delta_u
     //
     // first calculate (f(u*)-f(u_{t})). to save storage we store into f(u*):
     VecAXPY(intermediateIncrement, -1.0, increment);
@@ -86,7 +87,16 @@ void Heun<DiscretizableInTime>::advanceTimeSpan()
     // apply the prescribed boundary condition values
     this->applyBoundaryConditions();
 
-    VLOG(1) << *this->data_->solution();
+    VLOG(1) << "final solution (" << this->data_->solution() << "): " << *this->data_->solution();
+
+#ifndef NDEBUG
+    if (this->data_->solution()->containsNanOrInf())
+    {
+      LOG(ERROR) << "At time " << currentTime << ", in Heun method: Solution contains Nan or Inf. This probably means that the timestep width, "
+        << this->timeStepWidth_ << " is too high. Note, this expensive check is only performed when compiled for debug target.";
+      LOG(ERROR) << *this->data_->solution();
+    }
+#endif
 
     // advance simulation time
     timeStepNo++;
@@ -102,7 +112,6 @@ void Heun<DiscretizableInTime>::advanceTimeSpan()
     // start duration measurement
     if (this->durationLogKey_ != "")
       Control::PerformanceMeasurement::start(this->durationLogKey_);
-    //this->data_->print();
   }
 
   // stop duration measurement
@@ -115,4 +124,5 @@ void Heun<DiscretizableInTime>::run()
 {
   TimeSteppingSchemeOde<DiscretizableInTime>::run();
 }
+
 } // namespace TimeSteppingScheme

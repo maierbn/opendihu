@@ -99,6 +99,16 @@ nNodesGlobal() const
 //! number of nodes in total
 template<int D, typename BasisFunctionType>
 global_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+nNodesGlobal(int coordinateDirection) const
+{
+  if (coordinateDirection == 0)
+    return nNodes_;
+  return 1;
+}
+
+//! number of nodes in total
+template<int D, typename BasisFunctionType>
+global_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
 nDofs() const
 {
   return nDofs_;
@@ -120,6 +130,15 @@ getElementNoGlobalNatural(element_no_t elementNoLocal) const
   return (global_no_t)(elementNoLocal);
 }
   
+//! get the local element no. from the global no., set isOnLocalDomain to true if the node with global coordinates is in the local domain
+template<int D, typename BasisFunctionType>
+element_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+getElementNoLocal(global_no_t elementNoGlobalPetsc, bool &isOnLocalDomain) const
+{
+  isOnLocalDomain = true;
+  return elementNoGlobalPetsc;
+}
+
 template<int D, typename BasisFunctionType>
 template <typename T>
 void MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
@@ -164,15 +183,17 @@ getDofNosGlobalNatural(std::vector<global_no_t> &dofNosGlobalNatural) const
 
 template<int D, typename BasisFunctionType>
 node_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
-getNodeNoLocal(global_no_t nodeNoGlobalPetsc) const
+getNodeNoLocal(global_no_t nodeNoGlobalPetsc, bool &isLocal) const
 {
+  isLocal = true;
   return (node_no_t)nodeNoGlobalPetsc;
 }
 
 template<int D, typename BasisFunctionType>
 dof_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
-getDofNoLocal(global_no_t dofNoGlobalPetsc) const
+getDofNoLocal(global_no_t dofNoGlobalPetsc, bool &isLocal) const
 {
+  isLocal = true;
   return (dof_no_t)dofNoGlobalPetsc;
 }
 

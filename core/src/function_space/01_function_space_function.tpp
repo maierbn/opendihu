@@ -17,7 +17,7 @@ getBasisFunctionIndex1D(int dofIndex, int dimNo)
   const int nDofsPerNode1D = BasisFunctionType::nDofsPerNode();
   int nNodesPerElement1D = FunctionSpaceBaseDim<1,BasisFunctionType>::nNodesPerElement();
 
-  VLOG(2) << "D: " << MeshType::dim() << ", nDofsPerNode: " << nDofsPerNode << ", nNodesPerElement1D: " << nNodesPerElement1D;
+  //VLOG(2) << "D: " << MeshType::dim() << ", nDofsPerNode: " << nDofsPerNode << ", nNodesPerElement1D: " << nNodesPerElement1D;
 
   const int nodeNo = (int)(dofIndex/nDofsPerNode);
   const int nodalDofIndex = dofIndex % nDofsPerNode;    // nodal dof index, counting the D dimensional dofs
@@ -44,7 +44,7 @@ getBasisFunctionIndex1D(int dofIndex, int dimNo)
     return 0;
   }
 
-  VLOG(1) << "getBasisFunctionIndex1D(" << dofIndex << ", dimNo " << dimNo << "), nodalDofIndex: " << nodalDofIndex << ", nodeIndexDimension: " << nodeIndexDimension << ", basisFunctionIndexPerNodeDimension: " << basisFunctionIndexPerNodeDimension;
+  //VLOG(1) << "getBasisFunctionIndex1D(" << dofIndex << ", dimNo " << dimNo << "), nodalDofIndex: " << nodalDofIndex << ", nodeIndexDimension: " << nodeIndexDimension << ", basisFunctionIndexPerNodeDimension: " << basisFunctionIndexPerNodeDimension;
 
   return nodeIndexDimension * nDofsPerNode1D + basisFunctionIndexPerNodeDimension;
 }
@@ -69,7 +69,7 @@ template<typename MeshType,typename BasisFunctionType>
 double FunctionSpaceFunction<MeshType,BasisFunctionType>::
 dphi_dxi(int dofIndex, int derivativeIdx, std::array<double,MeshType::dim()> xi)
 {
-  VLOG(1) << "   dphi" << dofIndex << "/dxi" << derivativeIdx << "(" << xi << ")";
+  //VLOG(1) << "   dphi" << dofIndex << "/dxi" << derivativeIdx << "(" << xi << ")";
   double result = 1.0;
   for (int dimNo = 0; dimNo < MeshType::dim(); dimNo++)
   {
@@ -77,12 +77,12 @@ dphi_dxi(int dofIndex, int derivativeIdx, std::array<double,MeshType::dim()> xi)
     if (dimNo == derivativeIdx)
     {
       result *= BasisFunctionType::dphi_dxi(basisFunctionIndex1D, xi[dimNo]);
-      VLOG(1) << "     dimNo " << dimNo << ", basisFunctionIndex1D " << basisFunctionIndex1D << "   result *= dphi_dxi [" << BasisFunctionType::dphi_dxi(basisFunctionIndex1D, xi[dimNo]) << "]";
+      //VLOG(1) << "     dimNo " << dimNo << ", basisFunctionIndex1D " << basisFunctionIndex1D << "   result *= dphi_dxi [" << BasisFunctionType::dphi_dxi(basisFunctionIndex1D, xi[dimNo]) << "]";
     }
     else
     {
       result *= BasisFunctionType::phi(basisFunctionIndex1D, xi[dimNo]);
-      VLOG(1) << "     dimNo " << dimNo << ", basisFunctionIndex1D " << basisFunctionIndex1D << "   result *= phi [" << BasisFunctionType::phi(basisFunctionIndex1D, xi[dimNo]) << "]";
+      //VLOG(1) << "     dimNo " << dimNo << ", basisFunctionIndex1D " << basisFunctionIndex1D << "   result *= phi [" << BasisFunctionType::phi(basisFunctionIndex1D, xi[dimNo]) << "]";
     }
   }
   return result;

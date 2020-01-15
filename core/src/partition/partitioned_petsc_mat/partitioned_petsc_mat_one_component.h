@@ -1,9 +1,11 @@
 #pragma once
 
+#include <Python.h>  // has to be the first included header
 #include <memory>
 
 #include "control/types.h"
 #include "partition/rank_subset.h"
+//#include "partition/partitioned_petsc_mat/partitioned_petsc_mat.h"
 #include "partition/partitioned_petsc_mat/partitioned_petsc_mat_one_component_base.h"
 #include "partition/mesh_partition/01_mesh_partition.h"
 
@@ -82,6 +84,9 @@ public:
   //! output matrix to stream, the operator<< is also overloaded to use this method
   void output(std::ostream &stream) const;
   
+  //! write the vector to a file using PetscViewer, format is "default", "ascii" or "matlab"
+  void dumpMatrix(std::string filename, std::string format);
+
 protected:
   
   //! create a distributed Petsc matrix, according to the given partition
@@ -162,7 +167,10 @@ public:
     
   //! output matrix to stream, the operator<< is also overloaded to use this method
   void output(std::ostream &stream) const;
-  
+
+  //! write the vector to a file using PetscViewer, format is "default", "ascii" or "matlab"
+  void dumpMatrix(std::string filename, std::string format);
+
 protected:
   
   //! create a distributed Petsc matrix, according to the given partition

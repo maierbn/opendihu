@@ -39,6 +39,7 @@ reset()
 {
   LOG(DEBUG) << "delete dirichlet boundary conditions object";
   this->dirichletBoundaryConditions_ = nullptr;
+  this->systemMatrixAlreadySet_ = false;
 }
 
 template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term,typename Dummy>
@@ -66,20 +67,43 @@ applyBoundaryConditions()
   }
 
   // handle Neumann boundary conditions
+  applyNeumannBoundaryConditions();
+
+  // handle Dirichlet boundary conditions
+  applyDirichletBoundaryConditions();
+
+  if (VLOG_IS_ON(4))
+  {
+    VLOG(4) << "Finite element data after applyBoundaryConditions";
+    this->data_.print();
+  }
+}
+
+template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term,typename Dummy>
+void BoundaryConditions<FunctionSpaceType,QuadratureType,nComponents,Term,Dummy>::
+applyNeumannBoundaryConditions()
+{
+  // handle Neumann boundary conditions, only change the rhs once, not in every timestep, if this solver is in a timestepping scheme
   if (neumannBoundaryConditions_ == nullptr)
   {
     LOG(DEBUG) << "no Neumann boundary conditions are present, create object";
     neumannBoundaryConditions_ = std::make_shared<NeumannBoundaryConditions<FunctionSpaceType,QuadratureType,nComponents>>(this->context_);
     neumannBoundaryConditions_->initialize(this->specificSettings_, this->data_.functionSpace(), "neumannBoundaryConditions");
+    this->data_.setNegativeRightHandSideNeumannBoundaryConditions(neumannBoundaryConditions_->rhs());
+
+    LOG(DEBUG) << "neumann BC rhs: " << *neumannBoundaryConditions_->rhs();
+    LOG(DEBUG) << "rhs: " << *this->data_.rightHandSide();
+
+    // add rhs, rightHandSide += -1 * rhs
+    PetscErrorCode ierr;
+    ierr = VecAXPY(this->data_.rightHandSide()->valuesGlobal(), -1, neumannBoundaryConditions_->rhs()->valuesGlobal()); CHKERRV(ierr);
   }
-  LOG(DEBUG) << "neumann BC rhs: " << *neumannBoundaryConditions_->rhs();
-  LOG(DEBUG) << "rhs: " << *this->data_.rightHandSide();
+}
 
-  // add rhs, rightHandSide += -1 * rhs
-  PetscErrorCode ierr;
-  ierr = VecAXPY(this->data_.rightHandSide()->valuesGlobal(), -1, neumannBoundaryConditions_->rhs()->valuesGlobal()); CHKERRV(ierr);
-
-
+template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term,typename Dummy>
+void BoundaryConditions<FunctionSpaceType,QuadratureType,nComponents,Term,Dummy>::
+applyDirichletBoundaryConditions()
+{
   // handle Dirichlet boundary conditions
   if (dirichletBoundaryConditions_ == nullptr)
   {
@@ -92,21 +116,24 @@ applyBoundaryConditions()
     LOG(DEBUG) << "dirichlet BC object already exists";
   }
 
+  // if the option to use the bc values from solution is set
+  if (this->updatePrescribedValuesFromSolution_)
+  {
+    // update the prescribed boundary condition values
+    dirichletBoundaryConditions_->updatePrescribedValuesFromSolution(this->data_.solution());
+  }
+
   // get abbreviations
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> rightHandSide = this->data_.rightHandSide();
   std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> stiffnessMatrix = this->data_.stiffnessMatrix();
 
   // apply the boundary conditions in stiffness matrix (set bc rows and columns of matrix to 0 and diagonal to 1), also add terms with matrix entries to rhs
-  dirichletBoundaryConditions_->applyInSystemMatrix(stiffnessMatrix, rightHandSide);
+  LOG(DEBUG) << "call applyInSystemMatrix from applyBoundaryConditions, this->systemMatrixAlreadySet: " << this->systemMatrixAlreadySet_;
+  dirichletBoundaryConditions_->applyInSystemMatrix(stiffnessMatrix, rightHandSide, this->systemMatrixAlreadySet_);
+  this->systemMatrixAlreadySet_ = true;
 
   // set prescribed values in rhs
   dirichletBoundaryConditions_->applyInRightHandSide(rightHandSide, rightHandSide);
-
-  if (VLOG_IS_ON(4))
-  {
-    VLOG(4) << "Finite element data after applyBoundaryConditions";
-    this->data_.print();
-  }
 }
 
 } // namespace

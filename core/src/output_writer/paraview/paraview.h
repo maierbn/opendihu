@@ -20,7 +20,7 @@ public:
 
   //! write out solution to given filename, if timeStepNo is not -1, this value will be part of the filename
   template<typename DataType>
-  void write(DataType &data, int timeStepNo = -1, double currentTime = -1);
+  void write(DataType &data, int timeStepNo = -1, double currentTime = -1, int callCountIncrement = 1);
 
   //! write the given field variable as VTK <DataArray> element to file, if onlyParallelDatasetElement write the <PDataArray> element
   template<typename FieldVariableType>
@@ -35,15 +35,15 @@ public:
   
   //! write a single *.vtp file that contains all data of all 1D field variables. This is uses MPI IO. It can be enabled with the "combineFiles" option.
   //! on return, combinedMeshesOut contains the 1D mesh names that were written to the vtp file.
-  template<typename OutputFieldVariablesType>
-  void writePolyDataFile(const OutputFieldVariablesType &fieldVariables, std::set<std::string> &combinedMeshesOut);
+  template<typename FieldVariablesForOutputWriterType>
+  void writePolyDataFile(const FieldVariablesForOutputWriterType &fieldVariables, std::set<std::string> &combinedMeshesOut);
 
 
   //! write a single *.vtu file that contains all data of all 3D or 2D field variables (depending on output3DMeshes).
   //! This is uses MPI IO. It can be enabled with the "combineFiles" option.
   //! on return, combinedMeshesOut contains the 3D or 2D mesh names that were written to the vtu file.
-  template<typename OutputFieldVariablesType>
-  void writeCombinedUnstructuredGridFile(const OutputFieldVariablesType &fieldVariables, std::set<std::string> &combinedMeshesOut,
+  template<typename FieldVariablesForOutputWriterType>
+  void writeCombinedUnstructuredGridFile(const FieldVariablesForOutputWriterType &fieldVariables, std::set<std::string> &combinedMeshesOut,
                                          bool output3DMeshes);
 
   //! encode a Petsc vector in Base64,

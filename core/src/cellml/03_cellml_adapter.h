@@ -54,9 +54,6 @@ public:
   //! evaluate rhs
   void evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepNo, double currentTime);
   
-  //! return false because the object is independent of mesh type
-  bool knowsMeshType();
-
   //! return the mesh
   std::shared_ptr<FunctionSpaceType> functionSpace();
 
@@ -72,6 +69,12 @@ public:
 
   //! if the class should handle Dirichlet boundary conditions, this does not apply here
   void setBoundaryConditionHandlingEnabled(bool boundaryConditionHandlingEnabled){};
+
+  //! after this call, getOutputConnectorData() will be called, transfer intermediate field variable to global representation
+  void prepareForGetOutputConnectorData();
+
+  //! the FastMonodomainSolver accesses the internals of CellmlAdapter
+  template<int a, int b> friend class FastMonodomainSolverBase;
 
 };
 

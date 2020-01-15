@@ -36,28 +36,6 @@ int main(int argc, char *argv[])
       
       return EXIT_SUCCESS;
     }
-    else if(topLevelSettings_timeStepping.hasKey("CrankNicolsonReduced"))
-    {
-      LOG(INFO) << "Reduced order CrankNicolson";
-      
-      ModelOrderReduction::CrankNicolsonReduced<
-        TimeSteppingScheme::CrankNicolson<
-          SpatialDiscretization::FiniteElementMethod<
-            Mesh::StructuredRegularFixedOfDimension<1>,
-            BasisFunction::LagrangeOfOrder<>,
-            Quadrature::None,
-            Equation::Dynamic::IsotropicDiffusion
-          >
-        >
-      > problem(settings);
-      
-      problem.run();
-      
-      return EXIT_SUCCESS;
-    }
-    else
-      LOG(ERROR) << "No valid time integration scheme in settings.py";
-   
   }
   else
     LOG(ERROR) << "No valid Model order reduction technique";

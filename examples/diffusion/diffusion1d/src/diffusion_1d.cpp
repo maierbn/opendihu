@@ -10,60 +10,18 @@ int main(int argc, char *argv[])
   // initialize everything, handle arguments and parse settings from input file
   DihuContext settings(argc, argv);
   
-  PythonConfig topLevelSettings = settings.getPythonConfig(); 
-  
-  if(topLevelSettings.hasKey("ExplicitEuler"))
-  {
-    LOG(INFO) << "ExplicitEuler";
-    
-    TimeSteppingScheme::ExplicitEuler<
+  // define the problem type, the nested solvers
+  TimeSteppingScheme::ImplicitEuler<
     SpatialDiscretization::FiniteElementMethod<
       Mesh::StructuredRegularFixedOfDimension<1>,
       BasisFunction::LagrangeOfOrder<>,
       Quadrature::None,
       Equation::Dynamic::IsotropicDiffusion
     >
-    > problem(settings);
-  
-    problem.run();
-  
-    return EXIT_SUCCESS;
-  } 
-  else if(topLevelSettings.hasKey("ImplicitEuler"))
-  {
-    LOG(INFO) << "ImplicitEuler";
+  > problem(settings);
     
-    TimeSteppingScheme::ImplicitEuler<
-    SpatialDiscretization::FiniteElementMethod<
-      Mesh::StructuredRegularFixedOfDimension<1>,
-      BasisFunction::LagrangeOfOrder<>,
-      Quadrature::None,
-      Equation::Dynamic::IsotropicDiffusion
-    >
-    > problem(settings);
+  // run the simulation
+  problem.run();
     
-    problem.run();
-    
-    return EXIT_SUCCESS;
-  }
-  else if(topLevelSettings.hasKey("CrankNicolson"))
-  {
-    LOG(INFO) << "CrankNicolson";
-    
-    TimeSteppingScheme::CrankNicolson<
-    SpatialDiscretization::FiniteElementMethod<
-    Mesh::StructuredRegularFixedOfDimension<1>,
-    BasisFunction::LagrangeOfOrder<>,
-    Quadrature::None,
-    Equation::Dynamic::IsotropicDiffusion
-    >
-    > problem(settings);
-    
-    problem.run();
-    
-    return EXIT_SUCCESS;
-  }
-  else
-    LOG(ERROR) << "No valid time integration scheme in settings.py";
-   
+  return EXIT_SUCCESS;
 }

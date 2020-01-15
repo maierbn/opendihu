@@ -81,8 +81,8 @@ public:
   std::shared_ptr<Partition::RankSubset> rankSubset() const;
 
 #ifdef HAVE_ADIOS
-  //! return the adios IO object
-  std::shared_ptr<adios2::IO> adiosIo() const;
+  //! return the adios object
+  std::shared_ptr<adios2::ADIOS> adios() const;
 #endif
 
 #ifdef HAVE_MEGAMOL
@@ -136,7 +136,6 @@ private:
 
 #ifdef HAVE_ADIOS
   static std::shared_ptr<adios2::ADIOS> adios_;  ///< adios context option
-  static std::shared_ptr<adios2::IO> io_;        ///< IO object of adios
 #endif
 
 #ifdef HAVE_MEGAMOL

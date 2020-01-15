@@ -4,7 +4,7 @@
 
 namespace MathUtility
 {
-
+/*
 double sqr(double v)
 {
   return v*v;
@@ -13,7 +13,7 @@ double sqr(double v)
 int sqr(int v)
 {
   return v*v;
-}
+}*/
 
 template<>
 double length<2>(const Vec2 node)
@@ -96,6 +96,57 @@ std::array<double,9> computeTransformationMatrixAndDeterminant(const std::array<
   result[6] = result[2];
   result[7] = result[5];
   result[8] = prefactor * (sqr(m11*m22 - m12*m21) + sqr(m11*m32 - m12*m31) + sqr(m21*m32 - m22*m31));
+
+  return result;
+}
+
+
+std::array<double,9> computeTransformationDiffusionMatrixAndDeterminant(const std::array<Vec3,3> &jacobian, const Matrix<3,3> &diffusionTensor, double &determinant)
+{
+  // rename input values
+  const double m11 = jacobian[0][0];
+  const double m21 = jacobian[0][1];
+  const double m31 = jacobian[0][2];
+  const double m12 = jacobian[1][0];
+  const double m22 = jacobian[1][1];
+  const double m32 = jacobian[1][2];
+  const double m13 = jacobian[2][0];
+  const double m23 = jacobian[2][1];
+  const double m33 = jacobian[2][2];
+
+  const double a11 = diffusionTensor(0,0);
+  const double a21 = diffusionTensor(0,1);
+  const double a31 = diffusionTensor(0,2);
+  const double a12 = diffusionTensor(1,0);
+  const double a22 = diffusionTensor(1,1);
+  const double a32 = diffusionTensor(1,2);
+  const double a13 = diffusionTensor(2,0);
+  const double a23 = diffusionTensor(2,1);
+  const double a33 = diffusionTensor(2,2);
+
+  // the following code is copy&pasted from the output of ./invert_mapping.py
+  determinant = m11*m22*m33 - m11*m23*m32 - m12*m21*m33 + m12*m23*m31 + m13*m21*m32 - m13*m22*m31;
+  double prefactor = 1./sqr(determinant);
+
+  // 0 1 2
+  // 3 4 5
+  // 6 7 8
+
+  // compute matrix entries of symmetric matrix  J^-1 A J^-T  assuming that A is symmetric
+  std::array<double, 9> result;
+  result[0] = prefactor * ((m12*m23 - m13*m22)*(a13*(m22*m33 - m23*m32) - a23*(m12*m33 - m13*m32) + a33*(m12*m23 - m13*m22)) - (m12*m33 - m13*m32)*(a12*(m22*m33 - m23*m32) - a22*(m12*m33 - m13*m32) + a32*(m12*m23 - m13*m22)) + (m22*m33 - m23*m32)*(a11*(m22*m33 - m23*m32) - a21*(m12*m33 - m13*m32) + a31*(m12*m23 - m13*m22)));
+  result[1] = prefactor * (-(m11*m23 - m13*m21)*(a13*(m22*m33 - m23*m32) - a23*(m12*m33 - m13*m32) + a33*(m12*m23 - m13*m22)) + (m11*m33 - m13*m31)*(a12*(m22*m33 - m23*m32) - a22*(m12*m33 - m13*m32) + a32*(m12*m23 - m13*m22)) - (m21*m33 - m23*m31)*(a11*(m22*m33 - m23*m32) - a21*(m12*m33 - m13*m32) + a31*(m12*m23 - m13*m22)));
+  result[2] = prefactor * ((m11*m22 - m12*m21)*(a13*(m22*m33 - m23*m32) - a23*(m12*m33 - m13*m32) + a33*(m12*m23 - m13*m22)) - (m11*m32 - m12*m31)*(a12*(m22*m33 - m23*m32) - a22*(m12*m33 - m13*m32) + a32*(m12*m23 - m13*m22)) + (m21*m32 - m22*m31)*(a11*(m22*m33 - m23*m32) - a21*(m12*m33 - m13*m32) + a31*(m12*m23 - m13*m22)));
+  result[4] = prefactor * ((m11*m23 - m13*m21)*(a13*(m21*m33 - m23*m31) - a23*(m11*m33 - m13*m31) + a33*(m11*m23 - m13*m21)) - (m11*m33 - m13*m31)*(a12*(m21*m33 - m23*m31) - a22*(m11*m33 - m13*m31) + a32*(m11*m23 - m13*m21)) + (m21*m33 - m23*m31)*(a11*(m21*m33 - m23*m31) - a21*(m11*m33 - m13*m31) + a31*(m11*m23 - m13*m21)));
+  result[5] = prefactor * (-(m11*m22 - m12*m21)*(a13*(m21*m33 - m23*m31) - a23*(m11*m33 - m13*m31) + a33*(m11*m23 - m13*m21)) + (m11*m32 - m12*m31)*(a12*(m21*m33 - m23*m31) - a22*(m11*m33 - m13*m31) + a32*(m11*m23 - m13*m21)) - (m21*m32 - m22*m31)*(a11*(m21*m33 - m23*m31) - a21*(m11*m33 - m13*m31) + a31*(m11*m23 - m13*m21)));
+  result[8] = prefactor * ((m11*m22 - m12*m21)*(a13*(m21*m32 - m22*m31) - a23*(m11*m32 - m12*m31) + a33*(m11*m22 - m12*m21)) - (m11*m32 - m12*m31)*(a12*(m21*m32 - m22*m31) - a22*(m11*m32 - m12*m31) + a32*(m11*m22 - m12*m21)) + (m21*m32 - m22*m31)*(a11*(m21*m32 - m22*m31) - a21*(m11*m32 - m12*m31) + a31*(m11*m22 - m12*m21)));
+  // we know that the diffusion tensor is symmetric. Therefore  J^-1 A J^-T  is symmetric, too.
+  result[3] = result[1];
+  result[6] = result[2];
+  result[7] = result[5];
+  // result[3] = prefactor * (-(m12*m23 - m13*m22)*(a13*(m21*m33 - m23*m31) - a23*(m11*m33 - m13*m31) + a33*(m11*m23 - m13*m21)) + (m12*m33 - m13*m32)*(a12*(m21*m33 - m23*m31) - a22*(m11*m33 - m13*m31) + a32*(m11*m23 - m13*m21)) - (m22*m33 - m23*m32)*(a11*(m21*m33 - m23*m31) - a21*(m11*m33 - m13*m31) + a31*(m11*m23 - m13*m21)));
+  // result[6] = prefactor * ((m12*m23 - m13*m22)*(a13*(m21*m32 - m22*m31) - a23*(m11*m32 - m12*m31) + a33*(m11*m22 - m12*m21)) - (m12*m33 - m13*m32)*(a12*(m21*m32 - m22*m31) - a22*(m11*m32 - m12*m31) + a32*(m11*m22 - m12*m21)) + (m22*m33 - m23*m32)*(a11*(m21*m32 - m22*m31) - a21*(m11*m32 - m12*m31) + a31*(m11*m22 - m12*m21)));
+  // result[7] = prefactor * (-(m11*m23 - m13*m21)*(a13*(m21*m32 - m22*m31) - a23*(m11*m32 - m12*m31) + a33*(m11*m22 - m12*m21)) + (m11*m33 - m13*m31)*(a12*(m21*m32 - m22*m31) - a22*(m11*m32 - m12*m31) + a32*(m11*m22 - m12*m21)) - (m21*m33 - m23*m31)*(a11*(m21*m32 - m22*m31) - a21*(m11*m32 - m12*m31) + a31*(m11*m22 - m12*m21)));
 
   return result;
 }
@@ -586,35 +637,33 @@ void rotateMatrix<2>(Matrix<2,2> &matrix, Vec3 directionVector)
 template<>
 void rotateMatrix<3>(Matrix<3,3> &matrix, Vec3 directionVector)
 {
-  // derivation in compute_rotation_tensor.py
   const double b1 = directionVector[0];
   const double b2 = directionVector[1];
   const double b3 = directionVector[2];
 
-  Matrix<3,3> rotationMatrix(
+  Matrix<3,3> basis(
   {
-    b1, -b2, -b3,
-    b2, -(b1*sqr(b2) - sqr(b3))/(sqr(b2) + sqr(b3)), -b2*b3*(b1 + 1)/(sqr(b2) + sqr(b3)),
-    b3, -b2*b3*(b1 + 1)/(sqr(b2) + sqr(b3)), -(b1*sqr(b3) - sqr(b2))/(sqr(b2) + sqr(b3))
+    // normalized(b)                       normalized(e_3 x b)                        normalized(b x e_3 x b)
+    b1/sqrt(sqr(b1) + sqr(b2) + sqr(b3)),  -b2/sqrt(sqr(b1) + sqr(b2)),               -b1*b3/sqrt(sqr(b1)*sqr(b3) + sqr(b2)*sqr(b3) + sqr(sqr(b1) + sqr(b2))),
+    b2/sqrt(sqr(b1) + sqr(b2) + sqr(b3)),   b1/sqrt(sqr(b1) + sqr(b2)),               -b2*b3/sqrt(sqr(b1)*sqr(b3) + sqr(b2)*sqr(b3) + sqr(sqr(b1) + sqr(b2))),
+    b3/sqrt(sqr(b1) + sqr(b2) + sqr(b3)),                            0,  (sqr(b1) + sqr(b2))/sqrt(sqr(b1)*sqr(b3) + sqr(b2)*sqr(b3) + sqr(sqr(b1) + sqr(b2)))
   });
 
-  const double determinant = -sqr(b1) + sqr(b2) + sqr(b3);
-  Matrix<3,3> rotationMatrixInverse(
+  Matrix<3,3> basis_T(
   {
-    -b1/determinant, b2/determinant, b3/determinant,
-    -b2/determinant, (-sqr(b1)*sqr(b3) + b1*sqr(b2) + sqr(b2)*sqr(b3) + pow(b3,4))/((sqr(b2) + sqr(b3))*determinant), b2*b3*(sqr(b1) + b1 - sqr(b2) - sqr(b3))/((sqr(b2) + sqr(b3))*determinant),
-    -b3/determinant, b2*b3*(sqr(b1) + b1 - sqr(b2) - sqr(b3))/((sqr(b2) + sqr(b3))*determinant), (-sqr(b1)*sqr(b2) + b1*sqr(b3) + pow(b2,4) + sqr(b2)*sqr(b3))/((sqr(b2) + sqr(b3))*determinant)
+    basis(0,0), basis(1,0), basis(2,0),
+    basis(0,1), basis(1,1), basis(2,1),
+    basis(0,2), basis(1,2), basis(2,2)
   });
 
-  /*VLOG(1) << "direction: " << directionVector << ", determinant: " << determinant;
-  VLOG(1) << "rotationMatrix: " << rotationMatrix << ", rotationMatrixInverse: " << rotationMatrixInverse;
+  /*VLOG(1) << "direction: " << directionVector;
+  VLOG(1) << "rotation basis: " << basis;
 
   VLOG(1) << "matrix before rotation: " << matrix;
-  VLOG(1) << "   rotInv * matrix: " << rotationMatrixInverse * matrix;
-  VLOG(1) << "   rotInv * matrix * rot: " << rotationMatrixInverse * matrix * rotationMatrix;
+  VLOG(1) << "   basis * matrix * basis_T: " << basis * matrix * basis_T;
   */
 
-  matrix = rotationMatrixInverse * matrix * rotationMatrix;
+  matrix = basis * matrix * basis_T;
 
   //VLOG(1) << "matrix after rotation: " << matrix;
 }

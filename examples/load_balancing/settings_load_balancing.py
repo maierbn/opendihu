@@ -1,7 +1,7 @@
 # 2 fibers, biceps, example for load_balancing
 #
 
-end_time = 50.0     # end time for the simulation
+end_time = 30.0     # end time for the simulation
 
 import numpy as np
 import pickle
@@ -18,10 +18,10 @@ solver_type = "gmres"   # solver for the linear system
 
 # timing parameters
 stimulation_frequency = 10.0      # stimulations per ms
-dt_1D = 1e-3                      # timestep width of diffusion
-dt_0D = 3e-3                      # timestep width of ODEs
-dt_3D = 3e-3                      # overall timestep width of splitting
-output_timestep = 1e0             # timestep for output files
+dt_1D = 1e-4                      # timestep width of diffusion
+dt_0D = 1e-5                      # timestep width of ODEs
+dt_3D = 1e-3                      # overall timestep width of splitting
+output_timestep = 1               # timestep for output files
 
 # input files
 fiber_file = "../input/laplace3d_structured_linear"
@@ -110,7 +110,7 @@ def set_specific_states(n_nodes_global, time_step_no, current_time, states, fibe
       nodes_to_stimulate_global.insert(0, innervation_node_global-1)
     if innervation_node_global < n_nodes_global-1:
       nodes_to_stimulate_global.append(innervation_node_global+1)
-    print("rank {}, t: {}, stimulate fiber {} at nodes {}".format(rank_no, current_time, fiber_no, nodes_to_stimulate_global))
+    # print("rank {}, t: {}, stimulate fiber {} at nodes {}".format(rank_no, current_time, fiber_no, nodes_to_stimulate_global))
 
     for node_no_global in nodes_to_stimulate_global:
       states[(node_no_global,0,0)] = 20.0   # key: ((x,y,z),nodal_dof_index,state_no)
@@ -196,11 +196,12 @@ config = {
 
         "Term1": {      # CellML
           "LoadBalancing": {
-            "HeunAdaptiv" : {
+            "HeunAdaptive": {
               "timeStepWidth": dt_0D,  # 5e-5
-              "tolerance": 1e-2,
-              "delta": 1e-6,
-              "maxTimeStepWidth": dt_3D,
+              "tolerance": 1e-4,
+              "minTimeStepWidth": 1e-5,
+              "timeStepAdaptOption": "regular",
+              "lowestMultiplier": 1000,
               "logTimeStepWidthAsKey": "dt_0D",
               "durationLogKey": "duration_0D",
               "initialValues": [],
@@ -217,7 +218,7 @@ config = {
                 #"setParametersFunctionAdditionalParameter": i,
                 
                 "setSpecificStatesFunction": set_specific_states,    # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
-                "setSpecificStatesCallInterval": 2*int(1./stimulation_frequency/dt_0D),     # set_specific_states should be called stimulation_frequency times per ms, the factor 2 is needed because every Heun step includes two calls to rhs
+                "setSpecificStatesCallInterval": 1,     # set_specific_states should be called stimulation_frequency times per ms, the factor 2 is needed because every Heun step includes two calls to rhs
                 "additionalArgument": i,
                 
                 "outputStateIndex": 0,                             # state 0 = Vm, rate 28 = gamma
@@ -254,7 +255,7 @@ config = {
               {"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/fiber_"+str(i), "binary": True, "fixedFormat": False, "combineFiles": False},
               #{"format": "Paraview", "outputInterval": 1./dt_1D*output_timestep, "filename": "out/fiber_"+str(i)+"_txt", "binary": False, "fixedFormat": False},
               #{"format": "ExFile", "filename": "out/fiber_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "sphereSize": "0.02*0.02*0.02"},
-              #{"format": "PythonFile", "filename": "out/fiber_"+str(i), "outputInterval": int(1./dt_1D*output_timestep), "binary":True, "onlyNodalValues":True},
+              {"format": "PythonFile", "filename": "out/fiber_"+str(i), "outputInterval": int(1./dt_1D*output_timestep), "binary":True, "onlyNodalValues":True},
             ]
           },
         },

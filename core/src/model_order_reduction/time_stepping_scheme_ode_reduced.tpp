@@ -4,10 +4,10 @@
 #include "utility/python_utility.h"
 #include "utility/petsc_utility.h"
 #include<petscmat.h>
-#include "mesh/mesh_manager.h"
+#include "mesh/mesh_manager/mesh_manager.h"
 #include "function_space/function_space.h"
-#include "time_stepping_scheme/time_stepping_scheme.h"
-#include "time_stepping_scheme/time_stepping_scheme_ode.h"
+#include "time_stepping_scheme/00_time_stepping_scheme.h"
+#include "time_stepping_scheme/02_time_stepping_scheme_ode.h"
 #include "data_management/time_stepping/time_stepping.h"
 #include "control/python_config.h"
 
@@ -17,7 +17,7 @@ namespace ModelOrderReduction
   TimeSteppingSchemeOdeReduced<TimeSteppingType>::
   TimeSteppingSchemeOdeReduced(DihuContext context, std::string name):
   MORBase<typename TimeSteppingType::FunctionSpace>(context["ModelOrderReduction"]),
-  ::TimeSteppingScheme::TimeSteppingSchemeOdeTransferableSolutionData<::FunctionSpace::Generic,1>(context["ModelOrderReduction"],name),
+  ::TimeSteppingScheme::TimeSteppingSchemeOdeBase<::FunctionSpace::Generic,1>(context["ModelOrderReduction"],name),
     fullTimestepping_(context["ModelOrderReduction"]), initialized_(false)
   {  
     LOG(DEBUG) << "Constructor TimeSteppingSchemeOdeReduced, given context: " << context.getPythonConfig();
@@ -37,12 +37,8 @@ namespace ModelOrderReduction
       LOG(DEBUG) << "nRowsSnapshots: " << this->nRowsSnapshots_;
     }
     
-    std::array<element_no_t, 1> nElementsRed({this -> nReducedBases_});
-    std::array<element_no_t, 1> nElementsRows({this -> nRowsSnapshots_});
-    std::array<double, 1> physicalExtent({0.0}); 
-    
     typedef ::FunctionSpace::Generic GenericFunctionSpace;
-    
+
     if(this->context_.meshManager()->hasFunctionSpace("functionSpaceReduced"))
     {
       // take the existing function space
@@ -51,8 +47,8 @@ namespace ModelOrderReduction
     else
     {
       // create the functionspace for the reduced order
-      LOG(DEBUG) << "nElementsRed: " << nElementsRed;
-      this->functionSpaceRed = this->context_.meshManager()->template createFunctionSpace<GenericFunctionSpace>("functionSpaceReduced", nElementsRed, physicalExtent);
+      LOG(DEBUG) << "nReducedBases: " << this->nReducedBases_;
+      this->functionSpaceRed = this->context_.meshManager()->createGenericFunctionSpace(this->nReducedBases_, "functionSpaceReduced");
       LOG(DEBUG) << "functionSpaceRed";
     }
     
@@ -63,12 +59,12 @@ namespace ModelOrderReduction
     }
     else
     {
-      this->functionSpaceRowsSnapshots = this->context_.meshManager()->template createFunctionSpace<GenericFunctionSpace>("functionSpaceRowsSnapshots", nElementsRows, physicalExtent);        
+      this->functionSpaceRowsSnapshots = this->context_.meshManager()->createGenericFunctionSpace(this->nRowsSnapshots_, "functionSpaceRowsSnapshots");
       LOG(DEBUG) << "functionSpaceRowsSnapshots";
     }
     
     this->data_ = std::make_shared <::Data::TimeStepping<::FunctionSpace::Generic,1>>(context); // create data object
-
+    
   }
 
   template<typename TimeSteppingType>
@@ -78,6 +74,8 @@ namespace ModelOrderReduction
     
     Vec &solution = this->fullTimestepping_.data().solution()->getValuesContiguous();
     Vec &redSolution= this->data().solution()->valuesGlobal();
+    LOG(DEBUG) << "data solution: " << *this->data().solution();
+    
     Mat &basisTransp = this->dataMOR_->basisTransp()->valuesGlobal();
     
     PetscInt mat_sz_1, mat_sz_2;
@@ -109,23 +107,27 @@ namespace ModelOrderReduction
     this->fullTimestepping_.initialize();
     LOG(DEBUG) << "fullTimestepping_ was initialized, has function space: " << this->fullTimestepping_.data().functionSpace()->meshName();
 
-    ::TimeSteppingScheme::TimeSteppingSchemeOdeTransferableSolutionData<::FunctionSpace::Generic,1>::initialize();
+    ::TimeSteppingScheme::TimeSteppingSchemeOdeBase<::FunctionSpace::Generic,1>::initialize();
 
     this->dataMOR_->setFunctionSpace(this->functionSpaceRed);
     this->dataMOR_->setFunctionSpaceRows(this->functionSpaceRowsSnapshots);
     
-    assert(functionSpaceRowsSnapshots->meshPartition());   // assert that the function space was retrieved correctly
-    this->data_->setFunctionSpace(functionSpaceRowsSnapshots);
-    this->data().setOutputComponentNo(0);
+    assert(functionSpaceRed->meshPartition());   // assert that the function space was retrieved correctly
+    this->data_->setFunctionSpace(functionSpaceRed);
+    //this->data().setOutputComponentNo(0);
     this->data_->initialize();
     
     MORBase<typename TimeSteppingType::FunctionSpace>::initialize();  
     
     setInitialValues(); //necessary for the explicit scheme
+    this->outputWriterManager_.writeOutput(*this->data_, 0, 0);
 
     VLOG(1) << "initialized full-order solution: " << *this->fullTimestepping_.data().solution();
 
     LOG(DEBUG) << "fullTimestepping_ has function space: " << this->fullTimestepping_.data().functionSpace()->meshName();
+
+    outputConnectorData_ = std::make_shared<OutputConnectorDataType>();
+    outputConnectorData_->addFieldVariable(this->data_->solution());
 
     initialized_ = true;
   }
@@ -140,13 +142,6 @@ namespace ModelOrderReduction
     // do simulations
     this->advanceTimeSpan();    
   }
-    
-  template<typename TimeSteppingType>
-  bool TimeSteppingSchemeOdeReduced<TimeSteppingType>::
-  knowsMeshType()
-  {
-    return false;
-  }
 
   template<typename TimeSteppingType>
   TimeSteppingType TimeSteppingSchemeOdeReduced<TimeSteppingType>::
@@ -154,5 +149,12 @@ namespace ModelOrderReduction
   {
     return fullTimestepping_;
   }
-  
+
+  template<typename TimeSteppingType>
+  std::shared_ptr<typename TimeSteppingSchemeOdeReduced<TimeSteppingType>::OutputConnectorDataType>
+  TimeSteppingSchemeOdeReduced<TimeSteppingType>::
+  getOutputConnectorData()
+  {
+    return outputConnectorData_;
+  }
 } //namespace

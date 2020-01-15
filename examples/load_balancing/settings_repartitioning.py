@@ -179,7 +179,7 @@ config = {
           "timeStepOutputInterval" : 1,
           "endTime": end_time,
           "Term1": {      # CellML
-            "HeunAdaptiv" : {
+            "HeunAdaptive" : {
               "timeStepWidth": dt_0D,  # 5e-5
               "tolerance": 1e7,
               "lowestMultiplier": 1000,

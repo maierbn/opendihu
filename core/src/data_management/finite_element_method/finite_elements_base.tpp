@@ -37,6 +37,9 @@ initialize()
 {
   LOG(DEBUG) << "Data::FiniteElementsBase::initialize";
   Data<FunctionSpaceType>::initialize();
+
+  outputConnectorData_ = std::make_shared<OutputConnectorDataType>();
+  outputConnectorData_->addFieldVariable(this->solution());
 }
 template<typename FunctionSpaceType, int nComponents>
 void FiniteElementsBase<FunctionSpaceType,nComponents>::
@@ -55,7 +58,7 @@ template<typename FunctionSpaceType, int nComponents>
 void FiniteElementsBase<FunctionSpaceType,nComponents>::
 getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros)
 {
-  const int D = this->functionSpace_->dimension();
+  const int D = FunctionSpaceType::dim();
   const int nDofsPerNode = FunctionSpace::FunctionSpaceBaseDim<1,typename FunctionSpaceType::BasisFunction>::nDofsPerNode();
   const int nDofsPerBasis = FunctionSpace::FunctionSpaceBaseDim<1,typename FunctionSpaceType::BasisFunction>::nDofsPerElement();
   const int nOverlaps = (nDofsPerBasis*2 - 1) * nDofsPerNode;   // number of nodes of 2 neighbouring 1D elements (=number of ansatz functions in support of center ansatz function)
@@ -91,10 +94,9 @@ createPetscObjects()
   std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> meshPartition = this->functionSpace_->meshPartition();
   
   // create field variables on local partition
-  this->rhs_ = this->functionSpace_->template createFieldVariable<nComponents>("rhs");
+  this->rhs_ = this->functionSpace_->template createFieldVariable<nComponents>("rightHandSide");
   this->solution_ = this->functionSpace_->template createFieldVariable<nComponents>("solution");
-
-  this->rhs_->zeroEntries();
+  this->negativeRhsNeumannBoundaryConditions_ = this->functionSpace_->template createFieldVariable<nComponents>("zero");
 
   // create PETSc matrix object
 
@@ -109,7 +111,6 @@ createPetscObjects()
 
   LOG(DEBUG) << "create new stiffnessMatrix";
   this->stiffnessMatrix_ = std::make_shared<PartitionedPetscMat<FunctionSpaceType>>(meshPartition, nComponents, diagonalNonZeros, offdiagonalNonZeros, "stiffnessMatrix");
-
 }
 
 template<typename FunctionSpaceType, int nComponents>
@@ -142,16 +143,39 @@ rightHandSide()
 
 template<typename FunctionSpaceType, int nComponents>
 std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> FiniteElementsBase<FunctionSpaceType,nComponents>::
+negativeRightHandSideNeumannBoundaryConditions()
+{
+  return this->negativeRhsNeumannBoundaryConditions_;
+}
+
+template<typename FunctionSpaceType, int nComponents>
+std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> FiniteElementsBase<FunctionSpaceType,nComponents>::
 solution()
 {
   return this->solution_;
 }
 
+//! set the solution variable if it is initialized externally, such as in a timestepping scheme
 template<typename FunctionSpaceType, int nComponents>
-typename FiniteElementsBase<FunctionSpaceType,nComponents>::TransferableSolutionDataType FiniteElementsBase<FunctionSpaceType,nComponents>::
-getSolutionForTransfer()
+void FiniteElementsBase<FunctionSpaceType,nComponents>::
+setSolutionVariable(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> solution)
 {
-  return this->solution_;
+  this->solution_ = solution;
+}
+
+template<typename FunctionSpaceType, int nComponents>
+void FiniteElementsBase<FunctionSpaceType,nComponents>::
+setNegativeRightHandSideNeumannBoundaryConditions(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> negativeRightHandSideNeumannBoundaryConditions)
+{
+  this->negativeRhsNeumannBoundaryConditions_ = negativeRightHandSideNeumannBoundaryConditions;
+}
+
+template<typename FunctionSpaceType, int nComponents>
+std::shared_ptr<typename FiniteElementsBase<FunctionSpaceType,nComponents>::OutputConnectorDataType>
+FiniteElementsBase<FunctionSpaceType,nComponents>::
+getOutputConnectorData()
+{
+  return this->outputConnectorData_;
 }
 
 template<typename FunctionSpaceType, int nComponents>
@@ -232,23 +256,19 @@ initializeInverseLumpedMassMatrix()
 }
 
 template<typename FunctionSpaceType, int nComponents>
-typename FiniteElementsBase<FunctionSpaceType,nComponents>::OutputFieldVariables FiniteElementsBase<FunctionSpaceType,nComponents>::
-getOutputFieldVariables()
+typename FiniteElementsBase<FunctionSpaceType,nComponents>::FieldVariablesForOutputWriter FiniteElementsBase<FunctionSpaceType,nComponents>::
+getFieldVariablesForOutputWriter()
 {
+  // these field variables will be written to output files
   assert(this->functionSpace_);
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> geometryField
     = std::make_shared<FieldVariable::FieldVariable<FunctionSpaceType,3>>(this->functionSpace_->geometryField());
-  /*
-  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> generalField;
 
-  generalField = std::static_pointer_cast<FieldVariable::FieldVariable<FunctionSpaceType,3>>(this->functionSpace_->fieldVariable("general"));
-  if (!generalField)
-   generalField = geometryField;
-  */
-  return OutputFieldVariables(
+  return FieldVariablesForOutputWriter(
     geometryField,
     solution_,
-    rhs_
+    rhs_,
+    negativeRhsNeumannBoundaryConditions_
   );
 }
 

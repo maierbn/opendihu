@@ -11,29 +11,29 @@ dirichlet_bc = {}
 # left plane
 for k in range(0,nz+1):
   for j in range(0,ny+1):
-    dirichlet_bc[k*(nx+1)*(ny+1) + j*(nx+1)] = [0.0,np.nan,np.nan]
+    dirichlet_bc[k*(nx+1)*(ny+1) + j*(nx+1)] = [0.0,None,None]
 
 # front plane
 for k in range(0,nz+1):
   for i in range(0,nx+1):
-    dirichlet_bc[k*(nx+1)*(ny+1) + i] = [np.nan,0.0,np.nan]
+    dirichlet_bc[k*(nx+1)*(ny+1) + i] = [None,0.0,None]
 
 # bottom plane
 for j in range(0,ny+1):
   for i in range(0,nx+1):
-    dirichlet_bc[j*(nx+1) + i] = [np.nan,np.nan,0.0]
+    dirichlet_bc[j*(nx+1) + i] = [None,None,0.0]
 
 # vertical edge
 for k in range(0,nz+1):
-  dirichlet_bc[k*(nx+1)*(ny+1)] = [0.0,0.0,np.nan]
+  dirichlet_bc[k*(nx+1)*(ny+1)] = [0.0,0.0,None]
 
 # horizontal edge
 for i in range(0,nx+1):
-  dirichlet_bc[i] = [np.nan,0.0,0.0]
+  dirichlet_bc[i] = [None,0.0,0.0]
 
 # horizontal edge
 for j in range(0,ny+1):
-  dirichlet_bc[j*(nx+1)] = [0.0,np.nan,0.0]
+  dirichlet_bc[j*(nx+1)] = [0.0,None,0.0]
 
 # corner
 dirichlet_bc[0] = [0.0,0.0,0.0]

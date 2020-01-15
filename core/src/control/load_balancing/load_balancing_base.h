@@ -24,7 +24,7 @@ public:
 
   typedef typename TimeStepping::FunctionSpace FunctionSpace;
   typedef typename TimeStepping::Data Data;
-  typedef typename TimeStepping::TransferableSolutionDataType TransferableSolutionDataType;
+  typedef typename TimeStepping::OutputConnectorDataType OutputConnectorDataType;
 
   //! constructor
   LoadBalancingBase(DihuContext context);
@@ -34,9 +34,6 @@ public:
 
   //! initialize time span from specificSettings_
   void initialize();
-
-  //! return whether the scheme has a specified mesh type and is not independent of the mesh type
-  bool knowsMeshType();
 
   //! run solution process
   void run();
@@ -48,8 +45,8 @@ public:
   Data &data();
 
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
-  //! the transfer is done by the solution_vector_mapping class
-  TransferableSolutionDataType getSolutionForTransfer();
+  //! the transfer is done by the output_connector_data_transfer class
+  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
 
 protected:
 

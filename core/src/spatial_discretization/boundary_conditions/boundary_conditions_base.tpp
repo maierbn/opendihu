@@ -139,7 +139,6 @@ parseBoundaryConditionsForElements(std::string boundaryConditionsConfigKey)
   LOG(TRACE) << "parseBoundaryConditionsForElements, functionSpace: " <<  functionSpace_->meshName()
     << ", nElementsLocal: " << functionSpace_->nElementsLocal();
 
-  // add weak form of BC to rhs
   const int nDofsPerNode = FunctionSpaceType::nDofsPerNode();
 
   // determine if the BC indices in the config are given for global or local dof nos
@@ -172,7 +171,9 @@ parseBoundaryConditionsForElements(std::string boundaryConditionsConfigKey)
   std::vector<std::pair<int,ValueType>> boundaryConditions;  // (index, value)
   parseBoundaryConditions(this->specificSettings_, functionSpace_, boundaryConditionsConfigKey, boundaryConditions);
 
-  LOG(DEBUG) << "read in Dirichlet boundary conditions from config: " << boundaryConditions;
+  LOG(DEBUG) << "read in Dirichlet boundary conditions from config (None means there is no BC for this dof, "
+    << "the internal representation for this is max double (\"" << std::numeric_limits<double>::max() << "\")). ";
+  LOG(DEBUG) << boundaryConditions;
 
   // sort all parsed boundary conditions for their index no
   auto compareFunction = [](const std::pair<int,ValueType> &item1, const std::pair<int,ValueType> &item2)
@@ -187,6 +188,10 @@ parseBoundaryConditionsForElements(std::string boundaryConditionsConfigKey)
   // which is organized by local elements
   element_no_t lastBoundaryConditionElement = -1;
   std::set<dof_no_t> boundaryConditionNonGhostDofLocalNosSet;   ///< same data as in boundaryConditionNonGhostDofLocalNos_, but as set
+  std::set<dof_no_t> boundaryConditionGhostDofLocalNosSet;   ///< same data as in boundaryConditionGhostDofLocalNos_, but as set
+
+  std::vector<std::pair<int,ValueType>> boundaryConditionsNonGhost_;   ///< boundary condition dof nos and values for non-ghost dofs, used to collect values and sort them afterwards
+  std::vector<std::pair<int,ValueType>> boundaryConditionsGhost_;      ///< boundary condition dof nos and values for ghost dofs, used  to collect values and sort them afterwards
 
   // loop over all local elements
   for (element_no_t elementNoLocal = 0; elementNoLocal < functionSpace_->nElementsLocal(); elementNoLocal++)
@@ -206,6 +211,7 @@ parseBoundaryConditionsForElements(std::string boundaryConditionsConfigKey)
       }
       else
       {
+        // we assume that ghost dofs were also specified in the config
         nodeNo = functionSpace_->getNodeNo(elementNoLocal, nodeIndex);
       }
 
@@ -264,24 +270,56 @@ parseBoundaryConditionsForElements(std::string boundaryConditionsConfigKey)
           // also store localDofNo
           dof_no_t dofLocalNo = functionSpace_->getDofNo(elementNoLocal, elementalDofIndex);
 
+          // if the dof is non-ghost
           if (dofLocalNo < functionSpace_->nDofsLocalWithoutGhosts())
           {
-            // if dofLocalNo is not already contained in boundaryConditionNonGhostDofLocalNos_
+            // if dofLocalNo is not already contained in boundaryConditionGhostDofLocalNos_
             if (boundaryConditionNonGhostDofLocalNosSet.find(dofLocalNo) == boundaryConditionNonGhostDofLocalNosSet.end())
             {
               boundaryConditionNonGhostDofLocalNosSet.insert(dofLocalNo);
-              boundaryConditionNonGhostDofLocalNos_.push_back(dofLocalNo);
-              boundaryConditionValues_.push_back(boundaryConditionValue);
+              boundaryConditionsNonGhost_.push_back(std::pair<int,ValueType>(dofLocalNo, boundaryConditionValue));
+            }
+          }
+          else 
+          {
+            // if the dof is a ghost-dof
+            
+            // if dofLocalNo is not already contained in boundaryConditionGhostDofLocalNos_
+            if (boundaryConditionGhostDofLocalNosSet.find(dofLocalNo) == boundaryConditionGhostDofLocalNosSet.end())
+            {
+              boundaryConditionGhostDofLocalNosSet.insert(dofLocalNo);
+              boundaryConditionsGhost_.push_back(std::pair<int,ValueType>(dofLocalNo, boundaryConditionValue));
             }
           }
         }
       }
     }
   }
+  
+  // sort list according to dof no.s
+  std::sort(boundaryConditionsNonGhost_.begin(), boundaryConditionsNonGhost_.end(), [&](std::pair<int,ValueType> a, std::pair<int,ValueType> b)
+  {
+    return a.first < b.first;
+  });
+  std::sort(boundaryConditionsGhost_.begin(), boundaryConditionsGhost_.end(), [&](std::pair<int,ValueType> a, std::pair<int,ValueType> b)
+  {
+    return a.first < b.first;
+  });
 
+  // transfer data to other data structure
+  boundaryConditionNonGhostDofLocalNos_.reserve(boundaryConditionsNonGhost_.size());
+  boundaryConditionValues_.reserve(boundaryConditionsNonGhost_.size());
+  
+  for (typename std::vector<std::pair<int,ValueType>>::iterator iter = boundaryConditionsNonGhost_.begin(); iter != boundaryConditionsNonGhost_.end(); iter++)
+  {
+    boundaryConditionNonGhostDofLocalNos_.push_back(iter->first);
+    boundaryConditionValues_.push_back(iter->second);
+  }
+  
   generateBoundaryConditionsByComponent();
 
-  LOG(DEBUG) << "boundaryConditionNonGhostDofLocalNos: " << boundaryConditionNonGhostDofLocalNos_
+  LOG(DEBUG) << "boundaryConditionsNonGhost_: " << boundaryConditionsNonGhost_
+    << ", boundaryConditionNonGhostDofLocalNos: " << boundaryConditionNonGhostDofLocalNos_
     << ", boundaryConditionValues: " << boundaryConditionValues_ << ", boundaryConditionsByComponent_: ";
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
   {
@@ -309,33 +347,37 @@ generateBoundaryConditionsByComponent()
   // The boundaryConditionValues_ vector can contain NaN values, where in the config None was set.
   // This indicates that these dofs should not be set as Dirichlet boundary conditions.
 
-  if (nComponents == 1)
+  for (int componentNo = 0; componentNo < nComponents; componentNo++)
   {
-    boundaryConditionsByComponent_[0].dofNosLocal = boundaryConditionNonGhostDofLocalNos_;
-    boundaryConditionsByComponent_[0].values.resize(boundaryConditionValues_.size());
+    // preallocate helper data structure, as if all values were valid boundary conditions
+    std::vector<std::pair<int,double>> dofNosValues;
+    dofNosValues.reserve(boundaryConditionValues_.size());
+
+    // iterate over all values
     for (int i = 0; i < boundaryConditionValues_.size(); i++)
     {
-      boundaryConditionsByComponent_[0].values[i] = boundaryConditionValues_[i][0];
-    }
-  }
-  else
-  {
-    for (int componentNo = 0; componentNo < nComponents; componentNo++)
-    {
-      // preallocate as if all values were valid boundary conditions
-      boundaryConditionsByComponent_[componentNo].dofNosLocal.reserve(boundaryConditionValues_.size());
-      boundaryConditionsByComponent_[componentNo].values.reserve(boundaryConditionValues_.size());
-
-      // iterate over all values
-      for (int i = 0; i < boundaryConditionValues_.size(); i++)
+      // if value is not std::numeric_limits<double>::max() and therefore valid
+      //if (std::isfinite(boundaryConditionValues_[i][componentNo]) && )
+      if (boundaryConditionValues_[i][componentNo] != std::numeric_limits<double>::max())
       {
-        // if value is not nan and therefore valid
-        if (std::isfinite(boundaryConditionValues_[i][componentNo]))
-        {
-          boundaryConditionsByComponent_[componentNo].dofNosLocal.push_back(boundaryConditionNonGhostDofLocalNos_[i]);
-          boundaryConditionsByComponent_[componentNo].values.push_back(boundaryConditionValues_[i][componentNo]);
-        }
+        dofNosValues.push_back(std::pair<int,double>(boundaryConditionNonGhostDofLocalNos_[i], boundaryConditionValues_[i][componentNo]));
       }
+    }
+
+    // sort list according to dof no.s
+    std::sort(dofNosValues.begin(), dofNosValues.end(), [&](std::pair<int,double> a, std::pair<int,double> b)
+    {
+      return a.first < b.first;
+    });
+
+    // assign values in boundaryConditionsByComponent_
+    boundaryConditionsByComponent_[componentNo].dofNosLocal.resize(dofNosValues.size());
+    boundaryConditionsByComponent_[componentNo].values.resize(dofNosValues.size());
+
+    for (int i = 0; i < dofNosValues.size(); i++)
+    {
+      boundaryConditionsByComponent_[componentNo].dofNosLocal[i] = dofNosValues[i].first;
+      boundaryConditionsByComponent_[componentNo].values[i] = dofNosValues[i].second;
     }
   }
 }
@@ -354,6 +396,14 @@ const std::vector<typename BoundaryConditionsBase<FunctionSpaceType,nComponents>
 boundaryConditionValues() const
 {
   return boundaryConditionValues_;
+}
+
+//! get the boundary conditions data organized by component
+template<typename FunctionSpaceType,int nComponents>
+const std::array<typename BoundaryConditionsBase<FunctionSpaceType,nComponents>::BoundaryConditionsForComponent, nComponents> &BoundaryConditionsBase<FunctionSpaceType,nComponents>::
+boundaryConditionsByComponent() const
+{
+  return boundaryConditionsByComponent_;
 }
 
 template<typename FunctionSpaceType, int nComponents>

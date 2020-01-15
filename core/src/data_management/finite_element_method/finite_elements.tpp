@@ -62,8 +62,8 @@ initialize(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> di
 }
 
 //! initialize, store the reference geometry as copy of the current geometry
-template<typename FunctionSpaceType,int nComponents>
-void FiniteElements<FunctionSpaceType,nComponents,Equation::Static::LinearElasticity>::
+template<typename FunctionSpaceType,int nComponents,typename Term>
+void FiniteElements<FunctionSpaceType,nComponents,Term,Equation::isLinearElasticity<Term>>::
 initialize()
 {
   LinearStiffness<FunctionSpaceType,nComponents>::initialize();
@@ -73,19 +73,31 @@ initialize()
 }
 
 //! update the geometry of the mesh and function space with the displacements
-template<typename FunctionSpaceType,int nComponents>
-void FiniteElements<FunctionSpaceType,nComponents,Equation::Static::LinearElasticity>::
-updateGeometry()
+template<typename FunctionSpaceType,int nComponents,typename Term>
+void FiniteElements<FunctionSpaceType,nComponents,Term,Equation::isLinearElasticity<Term>>::
+updateGeometry(double scalingFactor)
 {
   PetscErrorCode ierr;
 
+  //this->solution()->startGhostManipulation();
+
+  this->functionSpace_->geometryField().finishGhostManipulation();
+  
   // w = alpha * x + y, VecWAXPY(w, alpha, x, y)
-  ierr = VecWAXPY(this->functionSpace_->geometryField().valuesGlobal(), 1, this->referenceGeometry_->valuesGlobal(), this->solution()->valuesGlobal()); CHKERRV(ierr);
+  ierr = VecWAXPY(this->functionSpace_->geometryField().valuesGlobal(), scalingFactor, this->solution()->valuesGlobal(), this->referenceGeometry_->valuesGlobal()); CHKERRV(ierr);
+  
+  this->functionSpace_->geometryField().startGhostManipulation();
+  
+  if (VLOG_IS_ON(1))
+  {
+    VLOG(1) << "scalingFactor: " << scalingFactor << ", solution: " << *this->solution() << ", referenceGeometry: " << *this->referenceGeometry_ 
+      << ", geometryField: " << this->functionSpace_->geometryField();
+  }
 }
 
 //! compute the linear strain field epsilon
-template<typename FunctionSpaceType,int nComponents>
-void FiniteElements<FunctionSpaceType,nComponents,Equation::Static::LinearElasticity>::
+template<typename FunctionSpaceType,int nComponents,typename Term>
+void FiniteElements<FunctionSpaceType,nComponents,Term,Equation::isLinearElasticity<Term>>::
 computeStrain(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents*nComponents>> strain)
 {
   // compute strain as epsilon_ab = 1/2(u_Lb dphi_L(x)/dx_a + u_Ma dphi_M(x)/dx_b)

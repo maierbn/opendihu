@@ -12,6 +12,7 @@
 #include "function_space/mixed_function_space.h"
 #include "partition/partitioned_petsc_vec/partitioned_petsc_vec.h"
 #include "partition/partitioned_petsc_mat/partitioned_petsc_mat.h"
+#include "data_management/output_connector_data.h"
 
 namespace Data
 {
@@ -25,7 +26,8 @@ class FiniteElementsBase :
 {
 public:
 
-  typedef std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> TransferableSolutionDataType;
+  //! type of data that will be transferred to nested solvers
+  typedef OutputConnectorData<FunctionSpaceType,nComponents> OutputConnectorDataType;
 
   //! constructor
   FiniteElementsBase(DihuContext context);
@@ -45,6 +47,12 @@ public:
   //! return reference to solution of the system, the PETSc Vec can be obtained via fieldVariable.valuesGlobal()
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> solution();
 
+  //! return reference to rhsNeumannBoundaryConditions, the PETSc Vec can be obtained via fieldVariable.valuesGlobal()
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> negativeRightHandSideNeumannBoundaryConditions();
+
+  //! set the field variable rightHandSideNeumannBoundaryConditions
+  void setNegativeRightHandSideNeumannBoundaryConditions(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> rightHandSideNeumannBoundaryConditions);
+
   //! print all stored data to stdout
   void print();
   
@@ -53,6 +61,9 @@ public:
 
   //! create the inverse of the lumped mass matrix
   void initializeInverseLumpedMassMatrix();
+
+  //! set the solution variable if it is initialized externally, such as in a timestepping scheme
+  void setSolutionVariable(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> solution);
 
   //! return reference to a stiffness matrix
   std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> stiffnessMatrix();
@@ -63,24 +74,25 @@ public:
   //! get the inversed lumped mass matrix
   std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> inverseLumpedMassMatrix();
   
+//! get maximum number of expected non-zeros in stiffness matrix
+  static void getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros);
+
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
-  //! the transfer is done by the solution_vector_mapping class
-  TransferableSolutionDataType getSolutionForTransfer();
+  //! the transfer is done by the output_connector_data_transfer class
+  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
 
   //! field variables that will be output by outputWriters
   typedef std::tuple<
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>>,  // geometry
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>>,  // solution
-    std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>>   // rhs
-  > OutputFieldVariables;
+    std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>>,   // rhs
+    std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>>   // neumann BC rhs
+  > FieldVariablesForOutputWriter;
 
   //! get pointers to all field variables that can be written by output writers
-  OutputFieldVariables getOutputFieldVariables();
+  FieldVariablesForOutputWriter getFieldVariablesForOutputWriter();
 
 private:
-
-  //! get maximum number of expected non-zeros in stiffness matrix
-  void getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros);
 
   //! initializes the vectors and stiffness matrix with size
   void createPetscObjects();
@@ -90,8 +102,10 @@ private:
   std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> inverseLumpedMassMatrix_;         ///< the inverse lumped mass matrix that has only entries on the diagonal, they are the reciprocal of the row sums of the mass matrix
 
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> rhs_;                 ///< the rhs vector in weak formulation
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> negativeRhsNeumannBoundaryConditions_;                 ///< the rhs vector in weak formulation, only contribution from neumann boundary conditions
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> solution_;            ///< the vector of the quantity of interest, e.g. displacement
 
+  std::shared_ptr<OutputConnectorDataType> outputConnectorData_;       //< the object that holds all output connector components of field variables
 };
 
 /*

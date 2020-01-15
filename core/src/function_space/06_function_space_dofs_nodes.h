@@ -35,13 +35,17 @@ public:
   FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, PythonConfig specificSettings);
 
   //! construct from element numbers and physical extent
-  FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, std::array<element_no_t, D> nElements, std::array<double, D> physicalExtent);
+  //! @param inputMeshIsGlobal if the number of elements in nElements is considered to be the global number of elements
+  FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, std::array<element_no_t, D> nElements,
+                         std::array<double, D> physicalExtent, const std::array<int,D> nRanksPerCoordinateDirection, bool inputMeshIsGlobal=true);
 
   //! constructor from python settings, null argument is ignored
   FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, std::vector<double> &null, PythonConfig specificSettings);
 
   //! construct from element numbers and physical extent, null argument is ignored
-  FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, std::vector<double> &null, std::array<element_no_t, D> nElements, std::array<double, D> physicalExtent);
+  FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, std::vector<double> &null,
+                         std::array<element_no_t, D> nElements, std::array<double, D> physicalExtent,
+                         const std::array<int,D> nRanksPerCoordinateDirection, bool inputMeshIsGlobal=true);
 
   typedef FieldVariable::FieldVariable<FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,3> GeometryFieldType;  ///< the class typename of the geometry field variable
 
@@ -74,7 +78,7 @@ public:
   //! constructor from python settings with additionally given node positions
   FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, std::vector<double> &nodePositions, PythonConfig specificSettings, bool noGeometryField=false);
 
-  //! constructor from node positions
+  //! constructor from node positions, nElementsPerCoordinateDirection are the local elements
   FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, const std::vector<Vec3> &nodePositions,
                          const std::array<element_no_t,D> nElementsPerCoordinateDirection, const std::array<int,D> nRanksPerCoordinateDirection);
 

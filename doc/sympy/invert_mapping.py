@@ -9,7 +9,7 @@ init_printing(use_unicode=False, wrap_line=False, no_global=True)
 from sympy.printing import cxxcode
 import sys
 
-if False:
+if True:
   m11,m12,m13 = symbols('m11,m12,m13')
   m21,m22,m23 = symbols('m21,m22,m23')
   m31,m32,m33 = symbols('m31,m32,m33')
@@ -30,6 +30,8 @@ if False:
    
   print "det:",simplify(M.det())
   print "T: 1/(det**2)*",simplify(M.adjugate()*M.adjugate().transpose())
+   
+  sys.exit(0)
    
   # compute inverse of a symmetric matrix
   M=Matrix([[m11,m21,m31],[m21,m22,m32],[m31,m32,m33]])

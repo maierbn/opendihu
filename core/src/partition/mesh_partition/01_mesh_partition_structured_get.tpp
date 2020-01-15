@@ -421,6 +421,13 @@ getPartitioningIndex(std::array<global_no_t,MeshType::dim()> nodeNoGlobalNatural
 
 template<typename MeshType,typename BasisFunctionType>
 global_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+beginNodeGlobalPetsc() const
+{
+  return nNodesGlobalPetscInPreviousPartitions(ownRankPartitioningIndex_);
+}
+
+template<typename MeshType,typename BasisFunctionType>
+global_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 nNodesGlobalPetscInPreviousPartitions(std::array<int,MeshType::dim()> partitionIndex) const
 {
   if (MeshType::dim() == 1)
@@ -589,6 +596,29 @@ getElementNoLocal(std::array<int,MeshType::dim()> elementCoordinates) const
   return 0;
 }
 
+//! get the local element no. from the global no., set isOnLocalDomain to true if the node with global coordinates is in the local domain
+template<typename MeshType,typename BasisFunctionType>
+element_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+getElementNoLocal(global_no_t elementNoGlobalPetsc, bool &isOnLocalDomain) const
+{
+  // get global coordinates of element
+  std::array<global_no_t,3> coordinatesGlobal;
+  coordinatesGlobal[0] = elementNoGlobalPetsc % nElementsGlobal(0);
+  coordinatesGlobal[1] = (elementNoGlobalPetsc % (nElementsGlobal(0)*nElementsGlobal(1))) / nElementsGlobal(0);
+  coordinatesGlobal[2] = elementNoGlobalPetsc / (nElementsGlobal(0)*nElementsGlobal(1));
+
+  // get local coordinates
+  std::array<int,MeshType::dim()> coordinatesLocal = getCoordinatesLocal(coordinatesGlobal, isOnLocalDomain);
+
+  if (isOnLocalDomain)
+  {
+    // get local element no
+    element_no_t elementNoLocal = getElementNoLocal(coordinatesLocal);
+    return elementNoLocal;
+  }
+
+  return 0;
+}
 
 template<typename MeshType,typename BasisFunctionType>
 global_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
@@ -610,23 +640,26 @@ getNodeNoGlobalNatural(std::array<global_no_t,MeshType::dim()> coordinatesGlobal
   {
     assert(false);
   }
+  return 0; // never reached, but pgi compiler does not recognize it
 }
 
 template<typename MeshType,typename BasisFunctionType>
 node_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
-getNodeNoLocal(global_no_t nodeNoGlobalPetsc) const
+getNodeNoLocal(global_no_t nodeNoGlobalPetsc, bool &isLocal) const
 {
-  return (node_no_t)(nodeNoGlobalPetsc - nNodesGlobalPetscInPreviousPartitions(ownRankPartitioningIndex_));
+  node_no_t nodeNoLocal = (node_no_t)(nodeNoGlobalPetsc - nNodesGlobalPetscInPreviousPartitions(ownRankPartitioningIndex_));
+  isLocal = (nodeNoLocal >= 0) && (nodeNoLocal < nDofsLocalWithoutGhosts());
+  return nodeNoLocal;
 }
 
 template<typename MeshType,typename BasisFunctionType>
 dof_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
-getDofNoLocal(global_no_t dofNoGlobalPetsc) const
+getDofNoLocal(global_no_t dofNoGlobalPetsc, bool &isLocal) const
 {
   const int nDofsPerNode = FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>::nDofsPerNode();
   global_no_t nodeNoGlobalPetsc = dofNoGlobalPetsc / nDofsPerNode;
   int nodalDofIndex = dofNoGlobalPetsc % nDofsPerNode;
-  return getNodeNoLocal(nodeNoGlobalPetsc) * nDofsPerNode + nodalDofIndex;
+  return getNodeNoLocal(nodeNoGlobalPetsc, isLocal) * nDofsPerNode + nodalDofIndex;
 }
 
 template<typename MeshType,typename BasisFunctionType>

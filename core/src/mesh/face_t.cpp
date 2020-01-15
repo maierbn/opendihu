@@ -51,7 +51,9 @@ face_t oppositeFace(face_t face)
   default:
     return face_t((int)face - 1);
   }
+#ifndef __PGI
   return face0Minus;
+#endif
 }
 
 template<>

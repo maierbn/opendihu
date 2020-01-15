@@ -11,7 +11,7 @@ namespace OutputWriter
 {
 
 template<typename DataType>
-void Manager::writeOutput(DataType &problemData, int timeStepNo, double currentTime) const
+void Manager::writeOutput(DataType &problemData, int timeStepNo, double currentTime, int callCountIncrement) const
 {
   // start duration measurement
   Control::PerformanceMeasurement::start("durationWriteOutput");
@@ -20,28 +20,48 @@ void Manager::writeOutput(DataType &problemData, int timeStepNo, double currentT
   {
     if (std::dynamic_pointer_cast<Exfile>(outputWriter) != nullptr)
     {
+      Control::PerformanceMeasurement::start("durationWriteOutputExfile");
+
       std::shared_ptr<Exfile> writer = std::static_pointer_cast<Exfile>(outputWriter);
-      writer->write<DataType>(problemData, timeStepNo, currentTime);
+      writer->write<DataType>(problemData, timeStepNo, currentTime, callCountIncrement);
+
+      Control::PerformanceMeasurement::stop("durationWriteOutputExfile");
     }
     else if (std::dynamic_pointer_cast<Paraview>(outputWriter) != nullptr)
     {
+      Control::PerformanceMeasurement::start("durationWriteOutputParaview");
+
       std::shared_ptr<Paraview> writer = std::static_pointer_cast<Paraview>(outputWriter);
-      writer->write<DataType>(problemData, timeStepNo, currentTime);
+      writer->write<DataType>(problemData, timeStepNo, currentTime, callCountIncrement);
+
+      Control::PerformanceMeasurement::stop("durationWriteOutputParaview");
     }
     else if (std::dynamic_pointer_cast<PythonCallback>(outputWriter) != nullptr)
     {
+      Control::PerformanceMeasurement::start("durationWriteOutputPythonCallback");
+
       std::shared_ptr<PythonCallback> writer = std::static_pointer_cast<PythonCallback>(outputWriter);
-      writer->write<DataType>(problemData, timeStepNo, currentTime);
+      writer->write<DataType>(problemData, timeStepNo, currentTime, callCountIncrement);
+
+      Control::PerformanceMeasurement::stop("durationWriteOutputPythonCallback");
     }
     else if (std::dynamic_pointer_cast<PythonFile>(outputWriter) != nullptr)
     {
+      Control::PerformanceMeasurement::start("durationWriteOutputPythonFile");
+
       std::shared_ptr<PythonFile> writer = std::static_pointer_cast<PythonFile>(outputWriter);
-      writer->write<DataType>(problemData, timeStepNo, currentTime);
+      writer->write<DataType>(problemData, timeStepNo, currentTime, callCountIncrement);
+
+      Control::PerformanceMeasurement::stop("durationWriteOutputPythonFile");
     }
     else if (std::dynamic_pointer_cast<MegaMol>(outputWriter) != nullptr)
     {
+      Control::PerformanceMeasurement::start("durationWriteOutputMegamol");
+
       std::shared_ptr<MegaMol> writer = std::static_pointer_cast<MegaMol>(outputWriter);
-      writer->write<DataType>(problemData, timeStepNo, currentTime);
+      writer->write<DataType>(problemData, timeStepNo, currentTime, callCountIncrement);
+
+      Control::PerformanceMeasurement::stop("durationWriteOutputMegamol");
     }
   }
 

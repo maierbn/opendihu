@@ -18,9 +18,9 @@ int main(int argc, char *argv[])
   Control::MultipleInstances<
     Control::LoadBalancing<
       OperatorSplitting::Strang<
-        TimeSteppingScheme::HeunAdaptiv<
+        TimeSteppingScheme::HeunAdaptive<
           CellmlAdapter<
-            4,     // number of states, Hodgkin-Huxley: 4, Shorten: 57
+            4,9,  // nStates,nIntermediates: 57,1 = Shorten, 4,9 = Hodgkin Huxley
             FunctionSpace::FunctionSpace<
               Mesh::StructuredDeformableOfDimension<1>,
               BasisFunction::LagrangeOfOrder<1>

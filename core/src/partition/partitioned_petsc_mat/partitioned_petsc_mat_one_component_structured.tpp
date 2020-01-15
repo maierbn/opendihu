@@ -1,7 +1,7 @@
 #include "partition/partitioned_petsc_mat/partitioned_petsc_mat_one_component.h"
 
 #include "partition/mesh_partition/01_mesh_partition.h"
-#include "petscis.h"
+#include <petscis.h>
 
 //! constructor, create square sparse matrix
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
@@ -16,7 +16,7 @@ PartitionedPetscMatOneComponent(std::shared_ptr<Partition::MeshPartition<Functio
   createMatrix(matrixType, diagonalNonZeros, offdiagonalNonZeros);
 }
 
-//! constructor, create square sparse matrix
+//! constructor, create square dense matrix
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
 PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
 PartitionedPetscMatOneComponent(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>>> meshPartition, std::string name) :
@@ -571,6 +571,14 @@ output(std::ostream &stream) const
   //ierr = MatView(this->globalMatrix_, PETSC_VIEWER_STDOUT_(this->meshPartitionRows_->mpiCommunicator())); CHKERRV(ierr);
 
 #endif
+}
+
+template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
+dumpMatrix(std::string filename, std::string format)
+{
+  // std::string filename, std::string format, Mat &matrix, MPI_Comm mpiCommunicator
+  PetscUtility::dumpMatrix(filename, format, this->globalMatrix_, this->meshPartitionRows_->mpiCommunicator());
 }
 
 template<typename FunctionSpaceType>

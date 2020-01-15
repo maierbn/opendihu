@@ -11,18 +11,18 @@ namespace PythonLoopOverTuple
  /** Static recursive loop from 0 to number of entries in the tuple
  * Loop body
  */
-template<typename OutputFieldVariablesType, int i>
-inline typename std::enable_if<i < std::tuple_size<OutputFieldVariablesType>::value, void>::type
-loopBuildPyFieldVariableObject(const OutputFieldVariablesType &fieldVariables, int &fieldVariableIndex, std::string meshName, 
+template<typename FieldVariablesForOutputWriterType, int i>
+inline typename std::enable_if<i < std::tuple_size<FieldVariablesForOutputWriterType>::value, void>::type
+loopBuildPyFieldVariableObject(const FieldVariablesForOutputWriterType &fieldVariables, int &fieldVariableIndex, std::string meshName, 
                                PyObject *pyData, bool onlyNodalValues, std::shared_ptr<Mesh::Mesh> &mesh)
 {
   // call what to do in the loop body
-  if (buildPyFieldVariableObject<typename std::tuple_element<i,OutputFieldVariablesType>::type>(
+  if (buildPyFieldVariableObject<typename std::tuple_element<i,FieldVariablesForOutputWriterType>::type>(
        std::get<i>(fieldVariables), fieldVariableIndex, meshName, pyData, onlyNodalValues, mesh))
     return;
   
   // advance iteration to next tuple element
-  loopBuildPyFieldVariableObject<OutputFieldVariablesType, i+1>(fieldVariables, fieldVariableIndex, meshName, pyData, onlyNodalValues, mesh);
+  loopBuildPyFieldVariableObject<FieldVariablesForOutputWriterType, i+1>(fieldVariables, fieldVariableIndex, meshName, pyData, onlyNodalValues, mesh);
 }
  
 // current element is of pointer type (not vector)
@@ -31,6 +31,10 @@ typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value &
 buildPyFieldVariableObject(CurrentFieldVariableType currentFieldVariable, int &fieldVariableIndex, std::string meshName, 
                            PyObject *pyData, bool onlyNodalValues, std::shared_ptr<Mesh::Mesh> &mesh)
 {
+  // if the field variable is a null pointer, return but do not break iteration
+  if (!currentFieldVariable)
+    return false;
+
   // if mesh name is not the specified meshName step over this field variable but do not exit the loop over field variables
   if (currentFieldVariable->functionSpace()->meshName() != meshName)
   {
@@ -74,9 +78,17 @@ buildPyFieldVariableObject(CurrentFieldVariableType currentFieldVariable, int &f
 
   PyObject *pyFieldVariable = Py_BuildValue("{s s, s O}", "name", currentFieldVariable->name().c_str(), "components", pyComponents);
 
-  // add to list
-  PyList_SetItem(pyData, (Py_ssize_t)fieldVariableIndex, pyFieldVariable);    // steals reference to pyFieldVariable
-  fieldVariableIndex++;
+  if (fieldVariableIndex >= (int)PyList_Size(pyData))
+  {
+    LOG(ERROR) << "Trying to put one more field variable to list with size " << (int)PyList_Size(pyData) << ", meshName: " << meshName
+      << ", CurrentFieldVariableType: " << StringUtility::demangle(typeid(CurrentFieldVariableType).name());
+  }
+  else
+  {
+    // add to list
+    PyList_SetItem(pyData, (Py_ssize_t)fieldVariableIndex, pyFieldVariable);    // steals reference to pyFieldVariable
+    fieldVariableIndex++;
+  }
 
   return false;  // do not break iteration
 }

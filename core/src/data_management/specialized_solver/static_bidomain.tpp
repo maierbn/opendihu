@@ -29,6 +29,9 @@ initialize()
 {
   // call initialize of base class
   Data<FunctionSpaceType>::initialize();
+
+  outputConnectorData_ = std::make_shared<OutputConnectorDataType>();
+  outputConnectorData_->addFieldVariable(this->transmembranePotential_);
 }
 
 template<typename FunctionSpaceType>
@@ -107,9 +110,17 @@ print() // use override in stead of extending the parents' print output.This way
 }
 
 template<typename FunctionSpaceType>
-typename StaticBidomain<FunctionSpaceType>::OutputFieldVariables StaticBidomain<FunctionSpaceType>::
-getOutputFieldVariables()
+std::shared_ptr<typename StaticBidomain<FunctionSpaceType>::OutputConnectorDataType> StaticBidomain<FunctionSpaceType>::
+getOutputConnectorData()
 {
+  return this->outputConnectorData_;
+}
+
+template<typename FunctionSpaceType>
+typename StaticBidomain<FunctionSpaceType>::FieldVariablesForOutputWriter StaticBidomain<FunctionSpaceType>::
+getFieldVariablesForOutputWriter()
+{
+  // these field variables will be written to output files
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> geometryField
     = std::make_shared<FieldVariable::FieldVariable<FunctionSpaceType,3>>(this->functionSpace_->geometryField());
 

@@ -53,13 +53,6 @@ initialize()
 }
 
 template<typename Solver>
-bool OutputSurface<Solver>::
-knowsMeshType()
-{
-  return solver_.knowsMeshType();
-}
-
-template<typename Solver>
 void OutputSurface<Solver>::
 run()
 {
@@ -90,17 +83,17 @@ setTimeSpan(double startTime, double endTime)
 }
 
 template<typename Solver>
-typename OutputSurface<Solver>::Data3D &OutputSurface<Solver>::
+typename OutputSurface<Solver>::Data &OutputSurface<Solver>::
 data()
 {
   return solver_.data();
 }
 
 template<typename Solver>
-typename OutputSurface<Solver>::TransferableSolutionDataType OutputSurface<Solver>::
-getSolutionForTransfer()
+std::shared_ptr<typename OutputSurface<Solver>::OutputConnectorDataType> OutputSurface<Solver>::
+getOutputConnectorData()
 {
-  return solver_.getSolutionForTransfer();
+  return solver_.getOutputConnectorData();
 }
 
 }  // namespace OutputWriter

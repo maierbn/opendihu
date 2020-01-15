@@ -32,7 +32,7 @@ public:
   typedef ::Data::FiniteElements<FunctionSpaceType,nComponents,Term> Data;
   typedef FunctionSpaceType FunctionSpace;
   typedef QuadratureType Quadrature;
-  typedef typename Data::TransferableSolutionDataType TransferableSolutionDataType;
+  typedef typename Data::OutputConnectorDataType OutputConnectorDataType;
 
   // perform computation
   void run();
@@ -51,6 +51,10 @@ public:
 
   //! get the data object
   Data &data();
+
+  //! get the data that will be transferred in the operator splitting to the other term of the splitting
+  //! the transfer is done by the output_connector_data_transfer class
+  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
 
   friend class StiffnessMatrixTester;    ///< a class used for testing
 protected:
@@ -77,6 +81,9 @@ protected:
   Data data_;     ///< data object that holds all PETSc vectors and matrices
   PythonConfig specificSettings_;    ///< python object containing the value of the python config dict with corresponding key
   OutputWriter::Manager outputWriterManager_; ///< manager object holding all output writer
+
+  bool updatePrescribedValuesFromSolution_ = false;   //< this is an option, where the prescribed values of DirichletBC are changed before the solve() to the values that are then stored in solution, i.e. the initial values
+
   bool initialized_;     ///< if initialize was already called on this object, then further calls to initialize() have no effect
 };
 

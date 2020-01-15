@@ -152,6 +152,26 @@ class Package(object):
       return os.path.join(self.base_dir, 'lib', 'lib' + self._used_libs[0] + '.so')
     else:
       return ''
+      
+  def determine_dependencies_dir(self, ctx):
+    
+    dependencies_dir_candidates = [
+        os.path.join(os.getcwd(),'dependencies'), os.path.join(os.getcwd(),'../dependencies'), os.path.join(os.getcwd(),'../../dependencies')]
+    
+    # add directory from environment variable "OPENDIHU_HOME"
+    if os.environ.get('OPENDIHU_HOME') is not None:
+      if os.environ.get('OPENDIHU_HOME') != "":
+        dependencies_dir_candidates = [os.path.join(os.environ.get('OPENDIHU_HOME'),'dependencies')] + dependencies_dir_candidates
+    
+    dependencies_dir = os.path.join(os.getcwd(),'dependencies')
+    for directory in dependencies_dir_candidates:
+      if directory is not None:
+        if os.path.exists(directory):
+          dependencies_dir = directory
+          break
+    
+    self.check_text = self.check_text.replace('${DEPENDENCIES_DIR}', dependencies_dir)
+    return dependencies_dir
 
   ## Run the configuration checks for this package.
   # @param[in,out] ctx The configuration context, retrieved from SCons.
@@ -169,6 +189,8 @@ class Package(object):
     # check if compiler works
     if not self.check_compilers(ctx):
       return (False, 0)
+    
+    dependencies_dir = self.determine_dependencies_dir(ctx)
     
     #ctx.Log("ctx.env.items: "+str(ctx.env.items())+"\n")
     
@@ -353,11 +375,13 @@ class Package(object):
     name = self.name
     upp = name.upper()
     vars.Add(BoolVariable('DISABLE_CHECKS', help='Allow failure of checks for all packages.', default=False))
+    vars.Add(BoolVariable('DISABLE_RUN', help='Do not attempt to run executables for checks, only compile, for all packages.', default=False))
     vars.Add(upp + '_DIR', help='Location of %s.'%name)
     vars.Add(upp + '_INC_DIR', help='Location of %s header files.'%name)
     vars.Add(upp + '_LIB_DIR', help='Location of %s libraries.'%name)
     vars.Add(upp + '_LIBS', help='%s libraries.'%name)
     vars.Add(upp + '_DISABLE_CHECKS', help='Allow failure of check for %s.'%name)
+    vars.Add(upp + '_DISABLE_RUN', help='Do not attempt to run executables for checks for %s.'%name)
     if self.download_url:
       vars.Add(BoolVariable(upp + '_DOWNLOAD', help='Download and use a local copy of %s.'%name, default=False))
       vars.Add(BoolVariable(upp + '_REDOWNLOAD', help='Force update of previously downloaded copy of %s.'%name, default=False))
@@ -423,22 +447,9 @@ class Package(object):
     #ctx.Log("ctx.env.items: "+str(ctx.env.items()))
     #ctx.Log("ctx.env.items['ENV']: "+str(ctx.env['ENV'].items()))
     
-    dependencies_dir_candidates = [
-        os.path.join(os.getcwd(),'dependencies'), os.path.join(os.getcwd(),'../dependencies'), os.path.join(os.getcwd(),'../../dependencies')]
-    
-    # add directory from environment variable "OPENDIHU_HOME"
-    if os.environ.get('OPENDIHU_HOME') is not None:
-      if os.environ.get('OPENDIHU_HOME') != "":
-        dependencies_dir_candidates = [os.path.join(os.environ.get('OPENDIHU_HOME'),'dependencies')] + dependencies_dir_candidates
-    
-    dependencies_dir = os.path.join(os.getcwd(),'dependencies')
-    for directory in dependencies_dir_candidates:
-      if directory is not None:
-        if os.path.exists(directory):
-          dependencies_dir = directory
-          break
-    
+    dependencies_dir = self.determine_dependencies_dir(ctx)
     base_dir = os.path.join(dependencies_dir,self.name.lower())
+
 
     ctx.Log("  dependencies:["+dependencies_dir+"]\n")
     ctx.Log("  base_dir:    ["+base_dir+"] (where to download the archive to)\n")
@@ -491,6 +502,7 @@ class Package(object):
     ctx.Log("  source_dir:  ["+source_dir+"] (where the unpacked sources are)\n")
 
     ctx.Log(" force_redownload: "+str(force_redownload)+", force_rebuild: "+str(force_rebuild)+", not success: "+str(not os.path.exists('scons_build_success'))+"\n")
+    
 
     # Build the package.
     if (not os.path.exists('scons_build_success')) or force_redownload or force_rebuild:
@@ -653,11 +665,14 @@ class Package(object):
       os.remove('scons_build_success')
 
     # Remove the installation directory.
-    if os.path.exists(install_dir):
-      if os.path.islink(install_dir):
-        os.unlink(install_dir)
-      else:
-        shutil.rmtree(install_dir)
+    try:
+      if os.path.exists(install_dir):
+        if os.path.islink(install_dir):
+          os.unlink(install_dir)
+        else:
+          shutil.rmtree(install_dir)
+    except:
+      ctx.Log("Failed to remove installation directory {}".format(install_dir))
 
     # Hunt down the correct build handler.
     handler = self.get_build_handler()
@@ -711,13 +726,19 @@ class Package(object):
           path_environment_variable = os.environ.get("PATH")
         cmd = cmd.replace('${PATH}', path_environment_variable)
         
+        
+        ctx.Log("MPI_DIR in env: {}\n".format("MPI_DIR" in ctx.env))
+        ctx.Log("env[MPI_DIR]={}, replace in cmd\n".format(ctx.env["MPI_DIR"]))
+        if "MPI_DIR" in ctx.env:
+          cmd = cmd.replace('${MPI_DIR}', ctx.env["MPI_DIR"])
+        
         if substitute_environment_variables:
           cmd = ctx.env.subst(cmd)
           
-        sys.stdout.write("    $"+cmd+"  ")
+        sys.stdout.write("    $ "+cmd+"  ")
         sys.stdout.flush()
     
-        ctx.Log("  $"+cmd+"\n")
+        ctx.Log("  $ "+cmd+"\n")
 
         output = ""
         try:
@@ -792,6 +813,7 @@ class Package(object):
   ## try to compile (self.run=0) or compile and run (self.run=1) the given code snippet in self.check_text
   # Returns (1,'program output') on success and (0,'') on failure
   def try_link(self, ctx, **kwargs):
+    
     text = self.check_text+'\n'   # ensure that file ends with newline for extra picky cray compiler
     #text = self.check_text+'//'+"{:%Y/%m/%d %H:%m:%S}".format(datetime.datetime.now())+'\n'   # ensure that file ends with newline for extra picky cray compiler
     
@@ -801,8 +823,20 @@ class Package(object):
     
     # add sources directly to test program
     for source in self.sources:
-      object_filename = os.path.join(self.base_dir, os.path.join("src", os.path.splitext(source)[0]+".o"))
-      ctx.env.AppendUnique(LINKFLAGS = object_filename)
+      
+      if ctx.env["BUILD_TYPE"] == "debug":
+        ctx.Log("debug mode detected, using debug version of {}".format(source))
+        object_filename = os.path.join(self.base_dir, os.path.join("src", os.path.splitext(source)[0]+".o"))
+      else:
+        ctx.Log("not debug mode detected, using release version of {}".format(source))
+        object_filename = os.path.join(self.base_dir, os.path.join("src", os.path.splitext(source)[0]+".release.o"))
+      
+      if os.path.isfile(object_filename):
+        ctx.env.AppendUnique(LINKFLAGS = object_filename)
+      else:
+        sys.stdout.write("Error: Could not find file \"{}\".".format(object_filename))
+        ctx.Log("Error: Could not find file \"{}\".".format(object_filename))
+        
       #with open(filename) as file:
       #  text += "\n"+file.read()
     
@@ -810,13 +844,6 @@ class Package(object):
       ctx.env.PrependUnique(CCFLAGS = '-static')
       ctx.env.PrependUnique(LINKFLAGS = '-static')
      
-    ## hack:
-    #import socket
-    #if socket.gethostname() == 'cmcs09':
-    #  print("! ! ! ! ! ! ! ! ! CCFLAG for mpi.h set manually in Package.py ! ! ! ! ! ! ! ! !")
-    #  ctx.env.PrependUnique(CCFLAGS = "('-I', '/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2')")
-    #  #ctx.env.PrependUnique(CCFLAGS = '-I/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2')
- 
     if self.link_flags is not None:
       ctx.Log("  link_flags is set, use additional link flags: {}\n".format(self.link_flags))
       ctx.env.PrependUnique(LINKFLAGS = self.link_flags)
@@ -836,16 +863,33 @@ class Package(object):
       ccflags = ctx.env["CCFLAGS"]
       for i in ccflags:
         ctx.Log("  CCFLAGS: "+str(i)+"\n")
-    ctx.Log("=============")
+    ctx.Log("=============\n")
     #ctx.Log("  CCFLAGS:  "+str(ctx.env["CCFLAGS"])+"\n")    # cannot do str(..CCFLAGS..) when it is a tuple
-        
+       
+    if ctx.env.get('DISABLE_RUN', []):
+      ctx.Log('Do not run executable, only link because DISABLE_RUN is set.\n')
+      self.run = False
+
+    name = self.name
+    upp = name.upper()
+    if ctx.env.get(upp + '_DISABLE_RUN', []):
+      ctx.Log('Do not run executable, only link because '+upp + '_DISABLE_RUN is set.\n')
+      self.run = False
+  
+ 
     # compile / run test program
     if self.run:
-      res = ctx.TryRun(text, self.ext)
+      if os.environ.get("PE_ENV") is not None or "pg" in ctx.env["CC"]:
+         ctx.Log("Do not run test, only link\n")
+         ctx.Log("Reason: either on compute cluster ($PE_ENV is set) or PGI compiler (env[\"CC\"] contains \"pg\")\n")
+
+         # on cluster or with PGI compiler, do not run program, only link
+         res = (ctx.TryLink(text, self.ext), '')    
+      else:
+        
+          # compile and run test program normally
+          res = ctx.TryRun(text, self.ext)
       
-      if not res[0] and os.environ.get("PE_ENV") is not None:
-        ctx.Log("Run failed on hazelhen, try again, this time only link")
-        res = (ctx.TryLink(text, self.ext), '')
     else:
       res = (ctx.TryLink(text, self.ext), '')
         
@@ -862,10 +906,14 @@ class Package(object):
       
     if not res[0]:
       ctx.Log("Compile/Run failed.\n");
-      ctx.Log("Output: \""+str(ctx.lastTarget)+"\"\n")
+      
+      if os.path.isfile(str(ctx.lastTarget)+".out"):
+        with open(str(ctx.lastTarget)+".out", "rb") as f:
+          ctx.Log("Program output: \""+f.read()+"\"\n")
  
       disable_checks = False
       if ctx.env.get('DISABLE_CHECKS', []):
+        ctx.Log('Disable checks because DISABLE_CHECKS is set.\n')
         disable_checks = True
       name = self.name
       upp = name.upper()
@@ -1033,7 +1081,7 @@ class Package(object):
 
         system_inc_dirs = []
         for inc_dir in inc_sub_dirs:
-          if socket.gethostname() == 'cmcs09':
+          if "pgcc" in ctx.env["cc"] or "pgcc" in ctx.env["CC"]:
             system_inc_dirs.append(('-I', inc_dir))
           else:
             system_inc_dirs.append(('-isystem', inc_dir))     # -isystem is the same is -I for gcc, except it suppresses warning (useful for dependencies)            

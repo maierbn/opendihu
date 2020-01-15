@@ -31,7 +31,7 @@ public:
   //! initialize directly
   void initialize(std::shared_ptr<FunctionSpaceType> functionSpace, const std::vector<ElementWithFaces> &boundaryConditionElements);
 
-  //! return the rhs with contributions from Neumann boundary conditions
+  //! return the negative rhs with contributions from Neumann boundary conditions, i.e. int_∂Ω T*δu_aL*phi_L ds
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> rhs();
 
   /** An element with faces and corresponding prescribed Neumann boundary condition values

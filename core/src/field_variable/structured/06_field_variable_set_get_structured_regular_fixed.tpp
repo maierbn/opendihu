@@ -260,6 +260,7 @@ getValuesWithoutGhosts(std::vector<std::array<double,nComponents>> &values, bool
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
   {
     // get values into buffer
+    buffer.clear();
     getValuesWithoutGhosts(componentNo, buffer, onlyNodalValues);
     assert(nValues == buffer.size());
 

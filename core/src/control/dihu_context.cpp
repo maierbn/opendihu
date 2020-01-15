@@ -23,9 +23,10 @@
 #include "output_writer/python_callback/python_callback.h"
 #include "output_writer/python_file/python_file.h"
 #include "output_writer/exfile/exfile.h"
-#include "mesh/mesh_manager.h"
+#include "mesh/mesh_manager/mesh_manager.h"
 #include "solver/solver_manager.h"
 #include "partition/partition_manager.h"
+#include "control/stimulation_logging.h"
 
 #include "easylogging++.h"
 #include "control/settings_file_name.h"
@@ -35,6 +36,10 @@
 #endif
 #ifdef HAVE_MEGAMOL
 #include "Console.h"
+#endif
+#ifdef HAVE_CHASTE
+#include "CommandLineArguments.hpp"
+#include "ExecutableSupport.hpp"
 #endif
 
 //INITIALIZE_EASYLOGGINGPP
@@ -50,7 +55,6 @@ std::vector<std::string> DihuContext::megamolArguments_;
 
 #ifdef HAVE_ADIOS
 std::shared_ptr<adios2::ADIOS> DihuContext::adios_ = nullptr;  ///< adios context option
-std::shared_ptr<adios2::IO> DihuContext::io_ = nullptr;        ///< IO object of adios
 #endif
 bool DihuContext::initialized_ = false;
 int DihuContext::nObjects_ = 0;   ///< number of objects of DihuContext, if the last object gets destroyed, call MPI_Finalize
@@ -63,6 +67,7 @@ void handleSignal(int signalNo)
   Control::PerformanceMeasurement::setParameter("exit_signal",signalNo);
   Control::PerformanceMeasurement::setParameter("exit",signalName);
   Control::PerformanceMeasurement::writeLogFile();
+  Control::StimulationLogging::writeLogFile();
 
   int rankNo = DihuContext::ownRankNoCommWorld();
   LOG(INFO) << "Rank " << rankNo << " received signal " << sys_siglist[signalNo]
@@ -75,6 +80,7 @@ void handleSignal(int signalNo)
   if (signalNo == SIGSEGV)
   {
 #ifndef NDEBUG
+#ifndef RELWITHDEBINFO
 #ifdef __GNUC__
     // source: https://stackoverflow.com/questions/77005/how-to-automatically-generate-a-stacktrace-when-my-program-crashes
     void *array[100];
@@ -84,6 +90,7 @@ void handleSignal(int signalNo)
 
     // print stack trace
     backtrace_symbols_fd(array, size, STDERR_FILENO);
+#endif
 #endif
 #endif
   }
@@ -209,6 +216,16 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
     // start megamol console
     LOG(DEBUG) << "initializeMegaMol";
     initializeMegaMol(argc, argv);
+
+    // initialize chaste, if available
+#ifdef HAVE_CHASTE
+    int *argcChaste = new int;
+    char ***argvChaste = new (char**);
+    *argcChaste = argc;
+    *argvChaste = argv;
+    ExecutableSupport::StartupWithoutShowingCopyright(argcChaste, argvChaste);
+    LOG(DEBUG) << "initialize chaste";
+#endif
 
     initialized_ = true;
   }
@@ -372,9 +389,9 @@ std::shared_ptr<Solver::Manager> DihuContext::solverManager() const
 }
 
 #ifdef HAVE_ADIOS
-std::shared_ptr<adios2::IO> DihuContext::adiosIo() const
+std::shared_ptr<adios2::ADIOS> DihuContext::adios() const
 {
-  return io_;
+  return adios_;
 }
 #endif
 
@@ -418,6 +435,7 @@ DihuContext::~DihuContext()
   {
     // write log file
     Control::PerformanceMeasurement::writeLogFile();
+    Control::StimulationLogging::writeLogFile();
 
     // After a call to MPI_Finalize we cannot call MPI_Initialize() anymore.
     // This is only a problem when the code is tested with the GoogleTest framework, because then we want to run multiple tests in one executable.

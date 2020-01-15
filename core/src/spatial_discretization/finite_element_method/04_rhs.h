@@ -15,7 +15,6 @@ public:
   using AssembleRightHandSide<FunctionSpaceType, QuadratureType, nComponents, Term>::AssembleRightHandSide;
 
   friend class StiffnessMatrixTester;    ///< a class used for testing
-protected:
 
   //! read in rhs values from config and transfer to weak form
   void setRightHandSide();
@@ -24,15 +23,14 @@ protected:
 /** rhs featuring active stress, from activation parameter field gamma
  */
 template<typename FunctionSpaceType, typename QuadratureType, int nComponents>
-class FiniteElementMethodRhs<FunctionSpaceType, QuadratureType, nComponents, Equation::Static::LinearElasticity> :
-  public AssembleRightHandSide<FunctionSpaceType, QuadratureType, nComponents, Equation::Static::LinearElasticity>
+class FiniteElementMethodRhs<FunctionSpaceType, QuadratureType, nComponents, Equation::Static::LinearElasticityActiveStress> :
+  public AssembleRightHandSide<FunctionSpaceType, QuadratureType, nComponents, Equation::Static::LinearElasticityActiveStress>
 {
 public:
   //! use constructor of base class
-  using AssembleRightHandSide<FunctionSpaceType, QuadratureType, nComponents, Equation::Static::LinearElasticity>::AssembleRightHandSide;
+  using AssembleRightHandSide<FunctionSpaceType, QuadratureType, nComponents, Equation::Static::LinearElasticityActiveStress>::AssembleRightHandSide;
 
   friend class StiffnessMatrixTester;    ///< a class used for testing
-protected:
 
   //! assemble active stress values into rhs
   void setRightHandSide();

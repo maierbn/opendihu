@@ -8,17 +8,46 @@ PartitionedPetscVec(std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>>
   createVector();
 }
 
-//! constructor from existing vector, values are not copied
+//! constructor from existing vector, values are copied
 template<typename FunctionSpaceType, int nComponents, typename DummyForTraits>
 template<int nComponents2>
 PartitionedPetscVec<FunctionSpaceType,nComponents,DummyForTraits>::
-PartitionedPetscVec(PartitionedPetscVec<FunctionSpaceType,nComponents2> &rhs, std::string name) :
+PartitionedPetscVec(PartitionedPetscVec<FunctionSpaceType,nComponents2> &rhs, std::string name, bool reuseData) :
   PartitionedPetscVecBase<FunctionSpaceType>(rhs.meshPartition(), name)
  
 {
-  createVector();
+  if (reuseData && nComponents > nComponents2)
+  {
+    reuseData = false;
+    LOG(WARNING) << "Could not create PartitionedPetscVec \"" << name << "\" as copy of rhs (\"" << rhs.name() << "\") with reuseData=true, nComponents="
+      << nComponents << " > " << nComponents2 << ". Setting reuseData to false.";
+  }
 
-  setValues(rhs);
+  if (reuseData)
+  {
+    // reuse the Petsc Vec's of the rhs PartitionedPetscVec
+
+    // loop over the components of this field variable
+    for (int componentNo = 0; componentNo < std::min(nComponents,nComponents2); componentNo++)
+    {
+      values_[componentNo] = rhs.values_[componentNo];
+    }
+
+    // create VecNest object, if number of components > 1
+    if (nComponents > 1)
+    {
+      PetscErrorCode ierr;
+      ierr = VecCreateNest(this->meshPartition_->mpiCommunicator(), nComponents, NULL, values_.data(), &vectorNestedGlobal_); CHKERRV(ierr);
+    }
+  }
+  else
+  {
+    // create new Petsc Vec's
+    createVector();
+
+    // copy the values of rhs
+    setValues(rhs);
+  }
 }
 
 template<typename FunctionSpaceType, int nComponents, typename DummyForTraits>
@@ -178,7 +207,7 @@ setValues(int componentNo, PetscInt ni, const PetscInt ix[], const PetscScalar y
     // get value
     double value;
     ierr = VecGetValues(values_[componentNo], ni, ix, &value); CHKERRV(ierr);
-    LOG(DEBUG) << "retrieved value: " << value;
+    //LOG(DEBUG) << "retrieved value: " << value;
   }
 }
 

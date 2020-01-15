@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
         Control::MultipleInstances<
           TimeSteppingScheme::Heun<                   // fiber reaction term
             CellmlAdapter<
-              57,1,  // Shorten
+              57,1,  // nStates,nIntermediates: 57,1 = Shorten, 4,9 = Hodgkin Huxley
               FunctionSpace::FunctionSpace<
                 Mesh::StructuredDeformableOfDimension<1>,
                 BasisFunction::LagrangeOfOrder<1>
@@ -41,12 +41,12 @@ int main(int argc, char *argv[])
         >
       >
     >,
-    TimeSteppingScheme::QuasiStaticLinearElasticitySolver<              // bidomain
+    TimeSteppingScheme::QuasiStaticLinearElasticitySolver<              // linear elasticity
       SpatialDiscretization::FiniteElementMethod<       // linear elasticity
         Mesh::StructuredDeformableOfDimension<3>,
         BasisFunction::LagrangeOfOrder<1>,
         Quadrature::Gauss<3>,
-        Equation::Static::LinearElasticity
+        Equation::Static::LinearElasticityActiveStress
       >
     >
   > problem(settings);

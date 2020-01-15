@@ -19,7 +19,7 @@ public:
 
   //! write out solution to file, if timeStepNo is not -1, this value will be part of the filename
   template<typename DataType>
-  void write(DataType &data, int timeStepNo = -1, double currentTime = -1);
+  void write(DataType &data, int timeStepNo = -1, double currentTime = -1, int callCountIncrement = 1);
 
 private:
 

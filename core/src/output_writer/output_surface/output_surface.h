@@ -16,8 +16,8 @@ class OutputSurface :
 {
 public:
   typedef typename Solver::FunctionSpace FunctionSpace;
-  typedef typename Solver::Data Data3D;
-  typedef typename Solver::TransferableSolutionDataType TransferableSolutionDataType;
+  typedef typename Solver::Data Data;
+  typedef typename Solver::OutputConnectorDataType OutputConnectorDataType;
 
   //! constructor
   OutputSurface(DihuContext context);
@@ -27,9 +27,6 @@ public:
 
   //! initialize time span from specificSettings_
   void initialize();
-
-  //! return whether the scheme has a specified mesh type and is not independent of the mesh type
-  bool knowsMeshType();
 
   //! run solution process
   void run();
@@ -41,11 +38,11 @@ public:
   void setTimeSpan(double startTime, double endTime);
 
   //! return the data object of the timestepping scheme
-  Data3D &data();
+  Data &data();
 
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
-  //! the transfer is done by the solution_vector_mapping class
-  TransferableSolutionDataType getSolutionForTransfer();
+  //! the transfer is done by the output_connector_data_transfer class
+  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
 
 protected:
 
@@ -53,7 +50,7 @@ protected:
   Solver solver_;     ///< the contained solver object
 
   bool initialized_ = false;   ///< if this object is initialized
-  Data::OutputSurface<Data3D> data_;   ///< data object
+  ::Data::OutputSurface<Data> data_;   ///< data object
   bool ownRankInvolvedInOutput_;   ///< if the own rank should call the output writer, because surface meshes are output, it can be that the surface is only contained on a subset of ranks
   int timeStepNo_;     ///< time step no for output writer
   double currentTime_;   ///< current simulation time for output writer

@@ -23,10 +23,15 @@ out.py
 **/*.out
 **/*.synctex.gz
 **/*.toc
+**/*.fls
+**/*.blg
+**/*.bbl
 **/*[conflicted*
 **/results/*
 **/*.tgz
 **/out.txt
+**/anim.mp4
+**/fig.pdf
 config.py
 **/*.csv
 **/input/*

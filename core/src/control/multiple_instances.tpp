@@ -248,10 +248,7 @@ advanceTimeSpan()
 
   LOG(DEBUG) << "multipleInstances::advanceTimeSpan() complete, now call writeOutput, hasOutputWriters: " << this->outputWriterManager_.hasOutputWriters();
 
-  if (nInstancesLocal_ > 0)
-  {
-    this->outputWriterManager_.writeOutput(this->data_, instancesLocal_[0].numberTimeSteps(), instancesLocal_[0].endTime());
-  }
+  writeOutput(instancesLocal_[0].numberTimeSteps(), instancesLocal_[0].endTime());
 }
 
 template<typename TimeSteppingScheme>
@@ -312,6 +309,20 @@ initialize()
   
   data_.setInstancesData(instancesLocal_);
 
+  // initialize output connector data
+  outputConnectorData_ = std::make_shared<OutputConnectorDataType>();
+  outputConnectorData_->reserve(nInstancesLocal_);
+  for (int i = 0; i < nInstancesLocal_; i++)
+  {
+    VLOG(1) << "MultipleInstances::getOutputConnectorData";
+    outputConnectorData_->push_back(instancesLocal_[i].getOutputConnectorData());
+
+    if (VLOG_IS_ON(1))
+    {
+      VLOG(1) << "instance " << i << "/" << nInstancesLocal_ << " is " << (*outputConnectorData_)[i];
+    }
+  }
+
   if (this->logKey_ != "")
   {
     std::stringstream logKey;
@@ -371,16 +382,6 @@ run()
   LOG(DEBUG) << "end of multiple_instances run";
 }
 
-template<typename TimeSteppingScheme>
-bool MultipleInstances<TimeSteppingScheme>::
-knowsMeshType()
-{
-  // This is a dummy method that is currently not used, it is only important if we want to map between multiple data sets.
-  assert(nInstances_ > 0);
-  assert(!instancesLocal_.empty());
-  return instancesLocal_[0].knowsMeshType();
-}
-
 //! return the data object
 template<typename TimeSteppingScheme>
 ::Data::MultipleInstances<typename TimeSteppingScheme::FunctionSpace, TimeSteppingScheme> &MultipleInstances<TimeSteppingScheme>::
@@ -400,35 +401,52 @@ reset()
 }
 
 template<typename TimeSteppingScheme>
-typename MultipleInstances<TimeSteppingScheme>::TransferableSolutionDataType MultipleInstances<TimeSteppingScheme>::
-getSolutionForTransfer()
+std::shared_ptr<typename MultipleInstances<TimeSteppingScheme>::OutputConnectorDataType>
+MultipleInstances<TimeSteppingScheme>::
+getOutputConnectorData()
 {
-  std::vector<typename TimeSteppingScheme::TransferableSolutionDataType> output(nInstancesLocal_);
-
+  // call getOutputConnectorData on all instances such that they can prepare themselves
+  // (e.g. timestepping schemes call prepareForGetOutputConnectorData)
   for (int i = 0; i < nInstancesLocal_; i++)
   {
-    VLOG(1) << "MultipleInstances::getSolutionForTransfer";
-    output[i] = instancesLocal_[i].getSolutionForTransfer();
-
-    if (VLOG_IS_ON(1))
-    {
-      VLOG(1) << "instance " << i << "/" << nInstancesLocal_ << " is " << instancesLocal_[i].getString(output[i]);
-    }
+    instancesLocal_[i].getOutputConnectorData();
   }
-  return output;
+
+  return outputConnectorData_;
 }
+
+
+template<typename TimeSteppingScheme>
+std::vector<TimeSteppingScheme> &MultipleInstances<TimeSteppingScheme>::
+instancesLocal()
+{
+  return instancesLocal_;
+}
+
+
+template<typename TimeSteppingScheme>
+void MultipleInstances<TimeSteppingScheme>::
+writeOutput(int timeStepNo, double currentTime, int callCountIncrement)
+{
+  if (nInstancesLocal_ > 0)
+  {
+    LOG(DEBUG) << "MultipleInstances::writeOutput, timeStepNo: " << timeStepNo << ", currentTime: " << currentTime;
+    this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime, callCountIncrement);
+  }  
+}
+
 
 template<typename TimeSteppingScheme>
 std::string MultipleInstances<TimeSteppingScheme>::
-getString(typename MultipleInstances<TimeSteppingScheme>::TransferableSolutionDataType &data)
+getString(std::shared_ptr<typename MultipleInstances<TimeSteppingScheme>::OutputConnectorDataType> data)
 {
   std::stringstream s;
   s << "<MultipleInstances(" << nInstancesLocal_ << "):";
-  for (int i = 0; i < std::min((int)data.size(), nInstancesLocal_); i++)
+  for (int i = 0; i < std::min((int)data->size(), nInstancesLocal_); i++)
   {
     if (i != 0)
       s << ", ";
-    s << instancesLocal_[i].getString(data[i]);
+    s << instancesLocal_[i].getString((*data)[i]);
   }
   s << ">";
   return s.str();

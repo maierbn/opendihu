@@ -11,6 +11,7 @@
 #include "data_management/finite_element_method/diffusion_tensor_constant.h"
 #include "equation/diffusion.h"
 #include "equation/linear_elasticity.h"
+#include "equation/type_traits.h"
 #include "data_management/finite_element_method/linear_stiffness.h"
 
 namespace Data
@@ -71,8 +72,8 @@ public:
 
 /** for linear elasticity use the class that holds linear elastcity parameters, K and μ
  */
-template<typename FunctionSpaceType,int nComponents>
-class FiniteElements<FunctionSpaceType,nComponents,Equation::Static::LinearElasticity> :
+template<typename FunctionSpaceType,int nComponents,typename Term>
+class FiniteElements<FunctionSpaceType,nComponents,Term,Equation::isLinearElasticity<Term>> :
   public LinearStiffness<FunctionSpaceType,nComponents>
 {
 public:
@@ -80,13 +81,13 @@ public:
   using LinearStiffness<FunctionSpaceType,nComponents>::LinearStiffness;
 
   typedef FunctionSpaceType FunctionSpace;
-  using LinearStiffness<FunctionSpaceType,nComponents>::OutputFieldVariables;
+  using LinearStiffness<FunctionSpaceType,nComponents>::FieldVariablesForOutputWriter;
 
   //! initialize, store the reference geometry as copy of the current geometry
   void initialize();
 
-  //! update the geometry of the mesh and function space with the displacements
-  void updateGeometry();
+  //! update the geometry of the mesh and function space with the displacements, scaled by scalingFactor
+  void updateGeometry(double scalingFactor=1.0);
 
   //! compute the strain from the current displacement (which is the solution field variable)
   void computeStrain(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents*nComponents>> strain);

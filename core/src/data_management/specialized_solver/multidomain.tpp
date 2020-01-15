@@ -35,6 +35,18 @@ initialize(int nCompartments)
 
 template<typename FunctionSpaceType>
 void Multidomain<FunctionSpaceType>::
+setSubvectorsSolution(const std::vector<Vec> &subvectorsSolution)
+{
+  subvectorsSolution_ = subvectorsSolution;
+
+  // initialize output connector data
+  outputConnectorData_ = std::make_shared<OutputConnectorDataType>();
+  outputConnectorData_->first = this->subvectorsSolution_;
+  outputConnectorData_->second = this->transmembranePotential_;
+}
+
+template<typename FunctionSpaceType>
+void Multidomain<FunctionSpaceType>::
 createPetscObjects()
 {
   LOG(DEBUG) << "Multidomain::createPetscObject for " << nCompartments_ << " compartments.";
@@ -135,6 +147,13 @@ zero()
 }
 
 template<typename FunctionSpaceType>
+std::shared_ptr<typename Multidomain<FunctionSpaceType>::OutputConnectorDataType> Multidomain<FunctionSpaceType>::
+getOutputConnectorData()
+{
+  return outputConnectorData_;
+}
+
+template<typename FunctionSpaceType>
 void Multidomain<FunctionSpaceType>::
 print() // use override in stead of extending the parents' print output.This way "solution" is still in the end.
 {
@@ -145,9 +164,10 @@ print() // use override in stead of extending the parents' print output.This way
 }
 
 template<typename FunctionSpaceType>
-typename Multidomain<FunctionSpaceType>::OutputFieldVariables Multidomain<FunctionSpaceType>::
-getOutputFieldVariables()
+typename Multidomain<FunctionSpaceType>::FieldVariablesForOutputWriter Multidomain<FunctionSpaceType>::
+getFieldVariablesForOutputWriter()
 {
+  // these field variables will be written to output files
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> geometryField
     = std::make_shared<FieldVariable::FieldVariable<FunctionSpaceType,3>>(this->functionSpace_->geometryField());
 

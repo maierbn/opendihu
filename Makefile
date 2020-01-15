@@ -9,10 +9,10 @@ python := python2.7
 #endif
 
 debug:
-	$(python) dependencies/scons/scons.py BUILD_TYPE=DEBUG
+	$(python) dependencies/scons/scons.py BUILD_TYPE=DEBUG -j $(shell expr `nproc` / 2)
 
 release:
-	$(python) dependencies/scons/scons.py BUILD_TYPE=RELEASE
+	$(python) dependencies/scons/scons.py BUILD_TYPE=RELEASE -j $(shell expr `nproc` / 2)
 
 clean:
 	rm -rf .sconf_temp
@@ -29,14 +29,20 @@ rebuild: purge_dependencies purge clean debug release
 
 # on hazel hen rebuild everying including dependencies
 rebuild_hazelhen:
-	rm -rf dependencies/easyloggingpp/install dependencies/easyloggingpp/src dependencies/python/install dependencies/python/src  dependencies/base64/install dependencies/base64/src dependencies/numpyc/install dependencies/numpyc/src dependencies/semt/src dependencies/semt/install && rm -rf core/build_release && $(python) dependencies/scons/scons.py BUILD_TYPE=RELEASE; cd dependencies/matplotlib && ../python/install/bin/pip3 install *.whl
+	unset OPENDIHU_HOME; rm -rf dependencies/easyloggingpp/install dependencies/easyloggingpp/src dependencies/python/install dependencies/python/src  dependencies/base64/install dependencies/base64/src dependencies/numpyc/install dependencies/numpyc/src dependencies/semt/src dependencies/semt/install && rm -rf core/build_release && $(python) dependencies/scons/scons.py BUILD_TYPE=RELEASE; cd dependencies/matplotlib && ../python/install/bin/pip3 install *.whl
 
 doc:
 	cd doc/doxygen; doxygen
 	
 # the following targets are just for convenience and could also be deleted
 release_without_tests:
-	$(python) dependencies/scons/scons.py BUILD_TYPE=RELEASE no_tests=True
+	$(python) dependencies/scons/scons.py BUILD_TYPE=RELEASE no_tests=True -j $(shell expr `nproc` / 2)
+
+debug_without_tests:
+	$(python) dependencies/scons/scons.py BUILD_TYPE=DEBUG no_tests=True -j $(shell expr `nproc` / 2)
+
+travis_ci:
+	$(python) dependencies/scons/scons.py BUILD_TYPE=RELEASE no_tests=True travis_ci=True
 
 system_testing:
 	cd testing/system_testing && ./run.sh
@@ -53,9 +59,6 @@ streamline_tracer:
 diffusion:
 	cd testing/system_testing/tests/diffusion &&  python ../../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
 
-quadrature:
-	cd examples/quadrature/own && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
-
 fibers:
 	cd testing/system_testing/tests/fibers &&  python ../../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
 
@@ -68,11 +71,8 @@ shorten:
 cellml:
 	cd examples/electrophysiology/cellml && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
 
-pod:
-	cd examples/diffusion1d && python ../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
-
 multidomain:
-	cd examples/multidomain3d && python ../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+	cd examples/electrophysiology/multidomain3d && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
 
 parallel_fiber_estimation:
 	cd examples/parallel_fiber_estimation && python ../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
@@ -97,3 +97,18 @@ laplace_surface:
 
 linear_elasticity:
 	cd examples/solid_mechanics/linear_elasticity && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+
+fibers_linear_elasticity:
+	cd examples/electrophysiology/fibers_emg && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+
+mooney_rivlin_transiso:
+	cd examples/solid_mechanics/mooney_rivlin_transiso  && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+
+mooney_rivlin:
+	cd examples/solid_mechanics/mooney_rivlin_isotropic  && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+
+dynamic_mooney_rivlin:
+	cd examples/solid_mechanics/dynamic_mooney_rivlin  && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+
+static_biceps_emg:
+	cd examples/electrophysiology/static_biceps_emg  && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG

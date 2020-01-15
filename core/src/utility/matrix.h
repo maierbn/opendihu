@@ -47,6 +47,8 @@ struct Matrix :
   //! return a reference to the entry (rowIndex,columnIndex)
   double &operator()(int rowIndex, int columnIndex);
 
+  const double &operator()(int rowIndex, int columnIndex) const;
+
   //! fill a PETSc matrix with the own values
   void setPetscMatrix(Mat &mat);
 

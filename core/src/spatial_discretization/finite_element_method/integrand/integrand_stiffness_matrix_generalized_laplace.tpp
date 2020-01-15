@@ -114,22 +114,23 @@ evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,1,Term> &data, co
 
   MathUtility::Matrix<3,3> diffusionTensor = data.diffusionTensor(elementNoLocal, xi);
 
-  // compute the 3x3 transformation matrix T = J^{-1}J^{-T} and the absolute of the determinant of the jacobian
+  // compute the combined 3x3 transformation diffusion matrix T = J^{-1} A J^{-T} and the absolute of the determinant of the jacobian
   double determinant;
-  std::array<double,9> transformationMatrix = MathUtility::computeTransformationMatrixAndDeterminant(jacobian, determinant);
+  std::array<double,9> transformationDiffusionMatrix = MathUtility::computeTransformationDiffusionMatrixAndDeterminant(jacobian, diffusionTensor, determinant);
 
-#ifdef DEBUG
-  VLOG(3) << "transformationMatrix:";
+#if 0
+//#ifdef DEBUG
+  LOG(DEBUG) << "transformationDiffusionMatrix:";
   std::stringstream s;
   for (int i=0; i<3; i++)
   {
     for (int j=0; j<3; j++)
     {
-      s << transformationMatrix[i*3+j] << " ";
+      s << transformationDiffusionMatrix[i*3+j] << " ";
     }
     s << std::endl;
   }
-  VLOG(3) << s.str();
+  LOG(DEBUG) << std::endl << s.str();
 #endif
 
   std::array<Vec3,FunctionSpaceType::nDofsPerElement()> gradPhi = data.functionSpace()->getGradPhi(xi);
@@ -137,14 +138,13 @@ evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,1,Term> &data, co
   // loop over pairs of basis functions and evaluation integrand at xi
   for (int i=0; i<FunctionSpaceType::nDofsPerElement(); i++)
   {
-    // compute diffusionTensor * gradPhi[i]
-    Vec3 diffusionTensorGradPhiI = diffusionTensor * gradPhi[i];
     for (int j=0; j<FunctionSpaceType::nDofsPerElement(); j++)
     {
 
-      //! computes gradPhi[i]^T * T * gradPhi[j] where T is the symmetric transformation matrix
-      double integrand = MathUtility::applyTransformation(transformationMatrix, diffusionTensorGradPhiI, gradPhi[j]) * fabs(determinant);
+      //! computes gradPhi[i]^T * T * gradPhi[j] where T is the symmetric transformation matrix combined with the diffusion tensor
+      double integrand = MathUtility::applyTransformation(transformationDiffusionMatrix, gradPhi[i], gradPhi[j]) * fabs(determinant);
 
+#ifndef NDEBUG
       if (!std::isfinite(integrand))
       {
         LOG(ERROR) << "Value entry (" << i << "," << j << ") in stiffness matrix is nan or inf (" << integrand << "). ";
@@ -153,7 +153,7 @@ evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,1,Term> &data, co
         {
           for (int j=0; j<3; j++)
           {
-            s << transformationMatrix[i*3+j] << " ";
+            s << transformationDiffusionMatrix[i*3+j] << " ";
             s2 << diffusionTensor[i*3+j] << " ";
           }
           s << std::endl;
@@ -162,13 +162,13 @@ evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,1,Term> &data, co
         LOG(INFO) << "elementNoLocal: " << elementNoLocal << ", xi: " << xi
           << ", gradPhi[" << i << "] = " << gradPhi[i] << ", gradPhi[" << j << "] = " << gradPhi[j]
           << ", diffusionTensor:";
-        LOG(INFO) << s2.str();
-        LOG(INFO) << "diffusionTensorGradPhiI: " << diffusionTensorGradPhiI;
-        LOG(INFO) << "Transformation matrix: ";
-        LOG(INFO) << s.str();
+        LOG(INFO) << std::endl << s2.str();
+        LOG(INFO) << "Transformation Diffusion matrix: ";
+        LOG(INFO) << std::endl << s.str();
         LOG(INFO) << "determinant: " << determinant;
         LOG(INFO) << "jacobian (column-major): " << jacobian;
       }
+#endif
       evaluations(i,j) = integrand;
     }
   }

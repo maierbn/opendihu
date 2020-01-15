@@ -7,12 +7,11 @@ ny = 4
 dirichlet_bc = {0: [0.0,0.0,0.0]}
 
 for j in range(1,ny+1):
-  dirichlet_bc[j*(nx+1)] = [0.0,np.nan,np.nan]
+  dirichlet_bc[j*(nx+1)] = [0.0,None,None]
 
-dirichlet_bc[1] = [np.nan,0.0]
-dirichlet_bc[2] = [np.nan,0.0]
+dirichlet_bc[1] = [0.0,0.0]
 
-neumann_bc = [{"element": nx-1+j, "constantVector": [-0.1,+0.2], "face": "0+"} for j in range(ny)]
+neumann_bc = [{"element": j*nx+(nx-1), "constantVector": [0.1,+0.2], "face": "0+"} for j in range(ny)]
 
 #dirichlet_bc = {}
 #neumann_bc = []

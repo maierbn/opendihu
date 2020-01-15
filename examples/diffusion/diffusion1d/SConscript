@@ -14,7 +14,6 @@ if not env['no_examples']:
   src_files = [
     "diffusion_1d",
     "diffusion_1d_pod",
-#    "diffusion_1d_implicit_pod"
   ]
 
   # create the main executable

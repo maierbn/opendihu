@@ -36,7 +36,7 @@ createPetscObjects()
   LOG(TRACE) << "NeumannBoundaryConditions::createPetscObjects";
 
   assert(this->functionSpace_);
-  this->rhs_ = this->functionSpace_->template createFieldVariable<nComponents>("neumannBCRhs");
+  this->rhs_ = this->functionSpace_->template createFieldVariable<nComponents>("-rhsNeumannBC");
 }
 
 template<typename FunctionSpaceType,int nComponents>

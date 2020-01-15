@@ -29,6 +29,10 @@ initialize()
 {
   // call initialize of base class
   Data<FunctionSpaceType>::initialize();
+
+  outputConnectorData_ = std::make_shared<OutputConnectorDataType>();
+  outputConnectorData_->addFieldVariable(this->activation_);
+  outputConnectorData_->addGeometryField(std::make_shared<VectorFieldVariableType>(this->functionSpace_->geometryField()));
 }
 
 template<typename DataLinearElasticityType>
@@ -43,6 +47,7 @@ createPetscObjects()
   this->activeStress_ = this->functionSpace_->template createFieldVariable<9>("activeStress");
   this->strain_ = this->functionSpace_->template createFieldVariable<9>("strain");
   this->flowPotential_ = this->functionSpace_->template createFieldVariable<1>("flowPotential");
+  this->rightHandSideActive_ = this->functionSpace_->template createFieldVariable<3>("rightHandSideActive");
   this->fiberDirection_ = this->functionSpace_->template createFieldVariable<3>("fiberDirection");
 }
 
@@ -71,7 +76,7 @@ strain()
 }
 
 template<typename DataLinearElasticityType>
-std::shared_ptr<typename QuasiStaticLinearElasticity<DataLinearElasticityType>::GradientFieldVariableType>
+std::shared_ptr<typename QuasiStaticLinearElasticity<DataLinearElasticityType>::VectorFieldVariableType>
 QuasiStaticLinearElasticity<DataLinearElasticityType>::
 fiberDirection()
 {
@@ -84,6 +89,14 @@ QuasiStaticLinearElasticity<DataLinearElasticityType>::
 flowPotential()
 {
   return this->flowPotential_;
+}
+
+template<typename DataLinearElasticityType>
+std::shared_ptr<typename QuasiStaticLinearElasticity<DataLinearElasticityType>::VectorFieldVariableType>
+QuasiStaticLinearElasticity<DataLinearElasticityType>::
+rightHandSideActive()
+{
+  return this->rightHandSideActive_;
 }
 
 template<typename DataLinearElasticityType>
@@ -104,15 +117,55 @@ print()
 }
 
 template<typename DataLinearElasticityType>
-typename QuasiStaticLinearElasticity<DataLinearElasticityType>::OutputFieldVariables QuasiStaticLinearElasticity<DataLinearElasticityType>::
-getOutputFieldVariables()
+void QuasiStaticLinearElasticity<DataLinearElasticityType>::
+debug()
 {
+  std::shared_ptr<VectorFieldVariableType> solution = this->dataLinearElasticity_->solution();
+
+  int nValues = solution->nDofsLocalWithoutGhosts();
+  std::vector<Vec3> values;
+  solution->getValuesWithoutGhosts(values);
+
+  std::vector<Vec3> geometryValues;
+  solution->functionSpace()->geometryField().getValuesWithoutGhosts(geometryValues);
+
+  static int aa=0;
+
+  for (int i = 0; i < nValues; i++)
+  {
+    std::stringstream s;
+    s << values[i][0] << "," << values[i][1] << "," << values[i][2];
+    values[i][2] = 1e-3;
+    values[i][1] = 1e-3;
+    values[i][0] = 1e-3;
+    LOG(INFO) << "i: " << i << ", geometry: " << geometryValues[i] << ", solution: " << s.str() << " -> " << values[i];
+  }
+  aa++;
+  LOG(INFO) << "--";
+  solution->setValuesWithoutGhosts(values);
+}
+
+
+template<typename DataLinearElasticityType>
+std::shared_ptr<typename QuasiStaticLinearElasticity<DataLinearElasticityType>::OutputConnectorDataType>
+QuasiStaticLinearElasticity<DataLinearElasticityType>::
+getOutputConnectorData()
+{
+  return outputConnectorData_;
+}
+
+template<typename DataLinearElasticityType>
+typename QuasiStaticLinearElasticity<DataLinearElasticityType>::FieldVariablesForOutputWriter QuasiStaticLinearElasticity<DataLinearElasticityType>::
+getFieldVariablesForOutputWriter()
+{
+  // these field variables will be written to output files
   return std::tuple_cat(
-    dataLinearElasticity_->getOutputFieldVariables(),
+    dataLinearElasticity_->getFieldVariablesForOutputWriter(),
     std::tuple<std::shared_ptr<FieldVariableType>>(this->activation_),
     std::tuple<std::shared_ptr<StressFieldVariableType>>(this->activeStress_),
     std::tuple<std::shared_ptr<StressFieldVariableType>>(this->strain_),
-    std::tuple<std::shared_ptr<GradientFieldVariableType>>(this->fiberDirection_),
+    std::tuple<std::shared_ptr<VectorFieldVariableType>>(this->rightHandSideActive_),
+    std::tuple<std::shared_ptr<VectorFieldVariableType>>(this->fiberDirection_),
     std::tuple<std::shared_ptr<FieldVariableType>>(this->flowPotential_)
   );
 }

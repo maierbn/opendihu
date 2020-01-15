@@ -90,14 +90,14 @@ applyNeumannBoundaryConditions()
     neumannBoundaryConditions_ = std::make_shared<NeumannBoundaryConditions<FunctionSpaceType,QuadratureType,nComponents>>(this->context_);
     neumannBoundaryConditions_->initialize(this->specificSettings_, this->data_.functionSpace(), "neumannBoundaryConditions");
     this->data_.setNegativeRightHandSideNeumannBoundaryConditions(neumannBoundaryConditions_->rhs());
-
-    LOG(DEBUG) << "neumann BC rhs: " << *neumannBoundaryConditions_->rhs();
-    LOG(DEBUG) << "rhs: " << *this->data_.rightHandSide();
-
-    // add rhs, rightHandSide += -1 * rhs
-    PetscErrorCode ierr;
-    ierr = VecAXPY(this->data_.rightHandSide()->valuesGlobal(), -1, neumannBoundaryConditions_->rhs()->valuesGlobal()); CHKERRV(ierr);
   }
+
+  LOG(DEBUG) << "neumann BC rhs: " << *neumannBoundaryConditions_->rhs();
+  LOG(DEBUG) << "rhs: " << *this->data_.rightHandSide();
+
+  // add rhs, rightHandSide += -1 * rhs
+  PetscErrorCode ierr;
+  ierr = VecAXPY(this->data_.rightHandSide()->valuesGlobal(), -1, neumannBoundaryConditions_->rhs()->valuesGlobal()); CHKERRV(ierr);
 }
 
 template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term,typename Dummy>

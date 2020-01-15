@@ -171,8 +171,14 @@ protected:
 
   PythonConfig specificSettings_;    ///< python object containing the value of the python config dict with corresponding key, for meshManager
 
+  struct MappingWithSettings
+  {
+    std::shared_ptr<MappingBetweenMeshesBase> mapping;   //< the actual mapping between the two meshes
+    double xiTolerance;         //< the xiTolerance setting, 0 for disabled
+  };
+
   std::map<std::string, std::shared_ptr<FieldVariable::FieldVariableBase>> targetFactorSum_;    ///< for every target function space the field variable which accumulates the interpolation factors
-  std::map<std::string, std::map<std::string, std::shared_ptr<MappingBetweenMeshesBase>>> mappingsBetweenMeshes_;  ///<["key mesh from"]["key mesh to"] mapping between meshes
+  std::map<std::string, std::map<std::string, MappingWithSettings>> mappingsBetweenMeshes_;  ///<["key mesh from"]["key mesh to"] mapping between meshes
 };
 
 }  // namespace

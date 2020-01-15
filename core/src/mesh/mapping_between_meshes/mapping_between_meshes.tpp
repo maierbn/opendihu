@@ -10,9 +10,11 @@ namespace Mesh
 template<typename FunctionSpaceSourceType, typename FunctionSpaceTargetType>
 MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>::
 MappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSource,
-                     std::shared_ptr<FunctionSpaceTargetType> functionSpaceTarget) :
+                     std::shared_ptr<FunctionSpaceTargetType> functionSpaceTarget,
+                     double xiTolerance) :
   functionSpaceSource_(functionSpaceSource),
-  functionSpaceTarget_(functionSpaceTarget)
+  functionSpaceTarget_(functionSpaceTarget),
+  maxAllowedXiTolerance_(xiTolerance)
 {
   // create the mapping
 
@@ -66,7 +68,12 @@ MappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSourc
       elementNo = startElementNo;
       if (functionSpaceTarget->findPosition(position, elementNo, ghostMeshNo, xi, startSearchInCurrentElement, xiTolerance))
       {
-        xiToleranceBase = xiTolerance;
+        // If there was no prescribed maxAllowedXiTolerance_, set the new xiTolerance to the value from which the current search succeeded,
+        // because it is assumed the the current two meshes are located to each other so mismatching that this tolerance is enough.
+        if (maxAllowedXiTolerance_ == 0)
+        {
+          xiToleranceBase = xiTolerance;
+        }
 
         targetMappingInfo.mapThisDof = true;
         break;
@@ -74,11 +81,15 @@ MappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSourc
       else
       {
         xiTolerance *= 2;
+        if (maxAllowedXiTolerance_ != 0 && xiTolerance > maxAllowedXiTolerance_)
+        {
+          break;
+        }
         LOG(DEBUG) << "Try again with xiTolerance = " << xiTolerance;
       }
     }
 
-    if (nTries == nTriesMax)
+    if (nTries == nTriesMax || (maxAllowedXiTolerance_ != 0 && xiTolerance > maxAllowedXiTolerance_))
     {
       LOG(DEBUG) << "In mapping between meshes \"" << functionSpaceSource->meshName() << "\" and \""
         << functionSpaceTarget->meshName() << "\", source dof local " << sourceDofNoLocal

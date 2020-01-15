@@ -28,6 +28,7 @@
 #include "time_stepping_scheme/implicit_euler.h"
 #include "time_stepping_scheme/heun.h"
 #include "time_stepping_scheme/repeated_call.h"
+#include "time_stepping_scheme/repeated_call_static.h"
 #include "specialized_solver/multidomain_solver.h"
 #include "specialized_solver/static_bidomain_solver.h"
 #include "specialized_solver/solid_mechanics/quasi_static/quasi_static_linear_elasticity_solver.h"

@@ -274,6 +274,7 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
     if (!subdomainIsAtBorder[face])
     {
       int neighbourRankNo = meshPartition_->neighbourRank((Mesh::face_t)face);
+      VLOG(1) << neighbourRankNo;
 
 #ifdef WRITE_CHECKPOINT_GHOST_MESH
       std::stringstream filenameOut;

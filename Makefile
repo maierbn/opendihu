@@ -109,3 +109,6 @@ mooney_rivlin:
 
 dynamic_mooney_rivlin:
 	cd examples/solid_mechanics/dynamic_mooney_rivlin  && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+
+static_biceps_emg:
+	cd examples/electrophysiology/static_biceps_emg  && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG

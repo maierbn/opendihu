@@ -30,12 +30,13 @@ void MappingBetweenMeshesManager::initializeMappingsBetweenMeshes(const std::sha
     LOG(DEBUG) << "\"" << functionSpace1->meshName() << "\" declared";
     if (mappingsBetweenMeshes_[sourceMeshName].find(targetMeshName) != mappingsBetweenMeshes_[sourceMeshName].end())
     {
-      if (mappingsBetweenMeshes_[sourceMeshName][targetMeshName] == nullptr)
+      if (mappingsBetweenMeshes_[sourceMeshName][targetMeshName].mapping == nullptr)
       {
         LOG(DEBUG) << "\"" << functionSpace1->meshName() << "\" -> \"" << functionSpace2->meshName() << "\" declared, but not yet created, create mapping";
 
-        mappingsBetweenMeshes_[sourceMeshName][targetMeshName] = std::static_pointer_cast<MappingBetweenMeshesBase>(
-          std::make_shared<MappingBetweenMeshes<FunctionSpace1Type,FunctionSpace2Type>>(functionSpace1,functionSpace2)
+        double xiTolerance = mappingsBetweenMeshes_[sourceMeshName][targetMeshName].xiTolerance;
+        mappingsBetweenMeshes_[sourceMeshName][targetMeshName].mapping = std::static_pointer_cast<MappingBetweenMeshesBase>(
+          std::make_shared<MappingBetweenMeshes<FunctionSpace1Type,FunctionSpace2Type>>(functionSpace1,functionSpace2,xiTolerance)
         );
       }
       else
@@ -61,12 +62,13 @@ void MappingBetweenMeshesManager::initializeMappingsBetweenMeshes(const std::sha
     LOG(DEBUG) << "\"" << functionSpace2->meshName() << "\" declared";
     if (mappingsBetweenMeshes_[sourceMeshName].find(targetMeshName) != mappingsBetweenMeshes_[sourceMeshName].end())
     {
-      if (mappingsBetweenMeshes_[sourceMeshName][targetMeshName] == nullptr)
+      if (mappingsBetweenMeshes_[sourceMeshName][targetMeshName].mapping == nullptr)
       {
         LOG(DEBUG) << "\"" << functionSpace2->meshName() << "\" -> \"" << functionSpace1->meshName() << "\" declared, but not yet created, create mapping";
 
-        mappingsBetweenMeshes_[sourceMeshName][targetMeshName] = std::static_pointer_cast<MappingBetweenMeshesBase>(
-          std::make_shared<MappingBetweenMeshes<FunctionSpace2Type,FunctionSpace1Type>>(functionSpace2,functionSpace1)
+        double xiTolerance = mappingsBetweenMeshes_[sourceMeshName][targetMeshName].xiTolerance;
+        mappingsBetweenMeshes_[sourceMeshName][targetMeshName].mapping = std::static_pointer_cast<MappingBetweenMeshesBase>(
+          std::make_shared<MappingBetweenMeshes<FunctionSpace2Type,FunctionSpace1Type>>(functionSpace2,functionSpace1,xiTolerance)
         );
       }
       else
@@ -92,16 +94,18 @@ createMappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpac
   std::string sourceMeshName = functionSpaceSource->meshName();
   std::string targetMeshName = functionSpaceTarget->meshName();
 
-  if (this->mappingsBetweenMeshes_[sourceMeshName][targetMeshName])
+  if (this->mappingsBetweenMeshes_[sourceMeshName][targetMeshName].mapping)
   {
     LOG(WARNING) << "Mapping from mesh \"" << sourceMeshName << "\" to mesh \"" << targetMeshName << "\" is already defined.";
   }
 
-  this->mappingsBetweenMeshes_[sourceMeshName][targetMeshName] = std::static_pointer_cast<MappingBetweenMeshesBase>(
-    std::make_shared<MappingBetweenMeshes<FunctionSpaceSourceType,FunctionSpaceTargetType>>(functionSpaceSource,functionSpaceTarget)
+  double xiTolerance = this->mappingsBetweenMeshes_[sourceMeshName][targetMeshName].xiTolerance;
+  this->mappingsBetweenMeshes_[sourceMeshName][targetMeshName].mapping = std::static_pointer_cast<MappingBetweenMeshesBase>(
+    std::make_shared<MappingBetweenMeshes<FunctionSpaceSourceType,FunctionSpaceTargetType>>(functionSpaceSource,functionSpaceTarget,xiTolerance)
   );
 
-  return std::static_pointer_cast<MappingBetweenMeshes<FunctionSpaceSourceType,FunctionSpaceTargetType>>(this->mappingsBetweenMeshes_[sourceMeshName][targetMeshName]);
+  return std::static_pointer_cast<MappingBetweenMeshes<FunctionSpaceSourceType,FunctionSpaceTargetType>>(
+    this->mappingsBetweenMeshes_[sourceMeshName][targetMeshName].mapping);
 }
 
 //! prepare a mapping to the fieldVariableTarget, this zeros the targetFactorSum for the field variable
@@ -377,6 +381,7 @@ finalizeMappingLowToHigh(std::shared_ptr<FieldVariableTargetType> fieldVariableT
     }
     else
     {
+#ifndef NDEBUG
       // output warning message, compute helper variables
 
       // get node no from dof no, this is needed for the global coordinates later
@@ -398,6 +403,7 @@ finalizeMappingLowToHigh(std::shared_ptr<FieldVariableTargetType> fieldVariableT
         << " (" << fieldVariableTarget->functionSpace()->meshName() << "), no values for target dof " << targetDofNoLocal
         << ", coordinates global: " << fieldVariableTarget->functionSpace()->meshPartition()->getCoordinatesGlobal(nodeNoLocal)
         << " of (" << s.str() << ")! Assuming 0.0.";
+#endif
     }
   }
 
@@ -446,6 +452,8 @@ finalizeMappingLowToHigh(std::shared_ptr<FieldVariableTargetType> fieldVariableT
     }
     else
     {
+
+#ifndef NDEBUG
       // output warning message, compute helper variables
 
       // get node no from dof no, this is needed for the global coordinates later
@@ -467,6 +475,7 @@ finalizeMappingLowToHigh(std::shared_ptr<FieldVariableTargetType> fieldVariableT
         << " (" << fieldVariableTarget->functionSpace()->meshName() << "), no values for target dof " << targetDofNoLocal
         << ", coordinates global: " << fieldVariableTarget->functionSpace()->meshPartition()->getCoordinatesGlobal(nodeNoLocal)
         << " of (" << s.str() << ")! Assuming 0.0.";
+#endif
     }
   }
 

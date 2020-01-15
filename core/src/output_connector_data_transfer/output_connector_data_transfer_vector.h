@@ -34,4 +34,34 @@ public:
                        OutputConnection &outputConnection);
 };
 
+/** Transfer between a normal entry and a vector, the first entry of the vector is used
+ */
+template<typename OutputConnectorDataType1, typename OutputConnectorDataType2>
+class SolutionVectorMapping<
+  OutputConnectorDataType1,
+  std::vector<std::shared_ptr<OutputConnectorDataType2>>
+>
+{
+public:
+  //! transfer the data from transferableSolutionData1 to transferableSolutionData2, as efficient as possible, where there are multiple slots that could be transferred (e.g. at cellmlAdapter), use the one specified by transferSlotName
+  static void transfer(const std::shared_ptr<OutputConnectorDataType1> transferableSolutionData1,
+                       std::shared_ptr<std::vector<std::shared_ptr<OutputConnectorDataType2>>> transferableSolutionData2,
+                       OutputConnection &outputConnection);
+};
+
+/** Transfer between a normal entry and a vector, the first entry of the vector is used
+ */
+template<typename OutputConnectorDataType1, typename OutputConnectorDataType2>
+class SolutionVectorMapping<
+  std::vector<std::shared_ptr<OutputConnectorDataType1>>,
+  OutputConnectorDataType2
+>
+{
+public:
+  //! transfer the data from transferableSolutionData1 to transferableSolutionData2, as efficient as possible, where there are multiple slots that could be transferred (e.g. at cellmlAdapter), use the one specified by transferSlotName
+  static void transfer(const std::shared_ptr<std::vector<std::shared_ptr<OutputConnectorDataType1>>> transferableSolutionData1,
+                       std::shared_ptr<OutputConnectorDataType2> transferableSolutionData2,
+                       OutputConnection &outputConnection);
+};
+
 #include "output_connector_data_transfer/output_connector_data_transfer_vector.tpp"

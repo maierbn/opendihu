@@ -9,7 +9,7 @@ import collections
 import copy
 import scipy.spatial
 import os
-import pymp
+#import pymp
 
 import stl
 from stl import mesh

@@ -12,5 +12,5 @@ if not env['no_examples']:
       
   #env.Program(target = 'generate', source = "src/generate_quadratic.cpp")
   env.Program(target = 'generate', source = "src/generate.cpp")
-  #env.Program(target = 'refine', source = "src/refine.cpp")
+  env.Program(target = 'refine', source = "src/refine.cpp")
   #env.Program(target = 'fix', source = "src/fix.cpp")

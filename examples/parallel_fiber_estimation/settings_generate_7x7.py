@@ -54,7 +54,7 @@ config = {
     "improveMesh":       True,            # smooth the 2D meshes, required for bigger meshes or larger amount of ranks
     #"refinementFactors": [2,2,2],        # [2,2,2] factors in x,y,z direction by which the mesh should be refined prior to solving the laplace problem and tracing the streamlines
     "refinementFactors": [1,1,1],         # no refinement
-    "maxIterations":     1e5,
+    "maxIterations":     1e5,             # maximum number of iterations per fiber
     "FiniteElementMethod" : {
       "meshName": "potentialFlow",
       "solverName": "linearSolver",

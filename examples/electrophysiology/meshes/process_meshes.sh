@@ -92,11 +92,11 @@ fi
 mv ${current_directory}/processed_meshes/7x7fibers.no_boundary.bin ${current_directory}/processed_meshes/${basename}_05_7x7fibers.bin
 
 echo ""
-echo "--- Move the fibers file back to originial position"
+echo "--- Move the fibers file back to original position"
 # move the fibers in the fibers.bin file back to their original position
-$pyod $opendihu_directory/scripts/geometry_manipulation/translate_bin_fibers.py \
+$pyod $opendihu_directory/scripts/file_manipulation/translate_bin_fibers.py \
   ${current_directory}/processed_meshes/${basename}_05_7x7fibers.bin \
-  ${current_directory}/processed_meshes/${basename}_06_7x7fibers_original_position.bin
+  ${current_directory}/processed_meshes/${basename}_06_7x7fibers_original_position.bin \
   0 0 ${bottom_bounding_box_value}
   
 cp ${current_directory}/processed_meshes/${basename}_06_7x7fibers_original_position.bin ${current_directory}/processed_meshes/${basename}_7x7fibers.bin
@@ -108,7 +108,7 @@ echo ""
 echo "--- Refine fibers file to create more dense fibers"
 
 # input fiber
-input=${current_directory}/processed_meshes/${current_directory}/processed_meshes/${basename}_7x7fibers.bin
+input=${current_directory}/processed_meshes/${basename}_7x7fibers.bin
 
 ${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 1 $input     # 13
 ${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 3 $input     # 25

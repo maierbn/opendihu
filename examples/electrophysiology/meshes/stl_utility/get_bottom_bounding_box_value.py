@@ -21,8 +21,8 @@ if __name__ == '__main__':
     
     # read in arguments
     if len(sys.argv) < 2:
-      print "usage: {} <fileNameIn>\n Show bottom bounding box value.".format(sys.argv[0])
-      exit
+      print("usage: {} <fileNameIn>\n Show bottom bounding box value.".format(sys.argv[0]))
+      sys.exit(0)
     
     fileNameIn = sys.argv[1]
     

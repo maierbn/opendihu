@@ -13,7 +13,7 @@ import pymp
 
 import stl
 from stl import mesh
-from sets import Set
+#from sets import Set
 from svg.path import parse_path
 from svg.path import Path, Line, Arc, CubicBezier, QuadraticBezier
 
@@ -58,13 +58,15 @@ def ray_triangle_intersection(ray_origin, ray_direction, v1, v2, v3):
 # count the number of intersections of a ray origin + t*direction with the stl_mesh
 def get_n_intersections(origin, direction, stl_mesh):
   
-  n_intersections_array = pymp.shared.array((1,), dtype='uint8')
+ # n_intersections_array = pymp.shared.array((1,), dtype='uint8')
+  n_intersections_array = [0]
   n_intersections_array[0] = 0
   
   # loop over all triangles in mesh
   n_triangles = len(stl_mesh.points)
-  with pymp.Parallel(4) as par:
-    for i in par.range(0,n_triangles):
+#  with pymp.Parallel(4) as par:
+#    for i in par.range(0,n_triangles):
+  for i in range(0,n_triangles):
       p = stl_mesh.points[i]
       # p contains the 9 entries [p1x p1y p1z p2x p2y p2z p3x p3y p3z] of the triangle with corner points (p1,p2,p3)
 
@@ -80,7 +82,7 @@ def get_n_intersections(origin, direction, stl_mesh):
       intersects = ray_triangle_intersection(origin, direction, p1, p2, p3)
 
       if intersects:
-        with par.lock:
+#        with par.lock:
           n_intersections_array[0] += 1
       
   return n_intersections_array[0]

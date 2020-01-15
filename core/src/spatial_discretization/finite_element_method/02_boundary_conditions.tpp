@@ -31,6 +31,7 @@ setNeumannBoundaryConditions(std::shared_ptr<NeumannBoundaryConditions<FunctionS
 {
   LOG(DEBUG) << "set Neumann boundary conditions";
   this->neumannBoundaryConditions_ = neumannBoundaryConditions;
+  neumannBoundaryConditionsApplied_ = false;
 }
 
 template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term,typename Dummy>
@@ -92,12 +93,17 @@ applyNeumannBoundaryConditions()
     this->data_.setNegativeRightHandSideNeumannBoundaryConditions(neumannBoundaryConditions_->rhs());
   }
 
-  LOG(DEBUG) << "neumann BC rhs: " << *neumannBoundaryConditions_->rhs();
-  LOG(DEBUG) << "rhs: " << *this->data_.rightHandSide();
+  if (!neumannBoundaryConditionsApplied_)
+  {
+    neumannBoundaryConditionsApplied_ = true;
 
-  // add rhs, rightHandSide += -1 * rhs
-  PetscErrorCode ierr;
-  ierr = VecAXPY(this->data_.rightHandSide()->valuesGlobal(), -1, neumannBoundaryConditions_->rhs()->valuesGlobal()); CHKERRV(ierr);
+    LOG(DEBUG) << "neumann BC rhs: " << *neumannBoundaryConditions_->rhs();
+    LOG(DEBUG) << "rhs: " << *this->data_.rightHandSide();
+
+    // add rhs, rightHandSide += -1 * rhs
+    PetscErrorCode ierr;
+    ierr = VecAXPY(this->data_.rightHandSide()->valuesGlobal(), -1, neumannBoundaryConditions_->rhs()->valuesGlobal()); CHKERRV(ierr);
+  }
 }
 
 template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term,typename Dummy>

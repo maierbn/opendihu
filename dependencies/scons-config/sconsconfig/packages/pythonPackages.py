@@ -62,14 +62,14 @@ class pythonPackages(Package):
         else :
           # Setup the build handler.
           self.set_build_handler([
-              '$${DEPENDENCIES_DIR}/python/install/bin/pip3 install numpy matplotlib scipy numpy-stl svg.path triangle geomdl --prefix=${DEPENDENCIES_DIR}/python/install'
+              '$${DEPENDENCIES_DIR}/python/install/bin/pip3 install numpy matplotlib scipy numpy-stl svg.path triangle geomdl pymp --prefix=${DEPENDENCIES_DIR}/python/install'
           ])
         
         self.number_output_lines = 13780
         
     def check(self, ctx):
         env = ctx.env
-        ctx.Message('Checking for python packages...')
+        ctx.Message('Checking for Python packages...')
         self.check_options(env)
 
         res = super(pythonPackages, self).check(ctx)

@@ -77,11 +77,19 @@ echo ""
 echo "--- Generate 7x7 fibers.bin file"
 #read -p "Press enter to continue"
 
+if [[ ! -f "${current_directory}/processed_meshes/${basename}_05_7x7fibers.bin" ]]; then
+
 ./generate ../settings_generate_7x7.py \
   ${current_directory}/processed_meshes/${basename}_04_spline_surface.pickle \
   ${current_directory}/processed_meshes/${basename}_05_0x0fibers.bin \
   72 220 0.1
+else
 
+echo "file processed_meshes/${basename}_05_7x7fibers.bin already exists"
+
+fi
+
+mv ${current_directory}/processed_meshes/7x7fibers.no_boundary.bin ${current_directory}/processed_meshes/${basename}_05_7x7fibers.bin
 
 echo ""
 echo "--- Move the fibers file back to originial position"

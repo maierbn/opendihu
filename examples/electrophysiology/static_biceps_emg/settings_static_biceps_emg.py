@@ -135,8 +135,9 @@ config = {
       "maxIterations":      1e4,
       "solverType":         variables.emg_solver_type,
       "preconditionerType": variables.emg_preconditioner_type,
+      #"dumpFilename":       "out/ramp/fat_emg",
       "dumpFilename":       "",
-      "dumpFormat":         "matlab",
+      "dumpFormat":         "ascii",
     },
   },
   "Coupling": {
@@ -275,10 +276,10 @@ config = {
         "endTime":                1,                   # not relevant here, will be set by the outer coupling
         "connectedSlotsTerm1To2": [0],                 # transfer Vm from StaticBidomainSolver to fat diffusion
         "connectedSlotsTerm2To1": [None],              # transfer nothing back
-        "Term1": {        # monodomain, fibers
+        "Term1": {        # bidomain
           "OutputSurface": {        # version for fibers_emg_2d_output
             "OutputWriter": [
-              {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + variables.scenario_name + "/surface_emg", "binary": True, "fixedFormat": False, "combineFiles": True},
+              {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_smaller_files), "filename": "out/" + variables.scenario_name + "/surface_emg", "binary": True, "fixedFormat": False, "combineFiles": True},
             ],
             "face": "0+",
             "StaticBidomainSolver": {
@@ -336,7 +337,7 @@ config = {
                   "meshName":             "3DFatMesh",
                   "solverName":           "fatEMGSolver",
                   "prefactor":            1.0,
-                  "dirichletBoundaryConditions": {},
+                  "dirichletBoundaryConditions": variables.fat_dirichlet_bc,
                   "updatePrescribedValuesFromSolution": True,     # update the prescribed Dirichlet boundary condition values at the beginning of each timestep by the values that got transferred from the intra-muscular domain by the coupling.
                   "neumannBoundaryConditions": [],
                   "inputMeshIsGlobal":  False,
@@ -347,7 +348,7 @@ config = {
               },
             }],
             "OutputWriter": [
-              {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + variables.scenario_name + "/emg_fat", "binary": True, "fixedFormat": False, "combineFiles": True},
+              {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_smaller_files), "filename": "out/" + variables.scenario_name + "/emg_fat", "binary": True, "fixedFormat": False, "combineFiles": True},
             ]  
           },
         },

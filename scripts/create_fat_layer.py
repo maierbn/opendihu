@@ -105,9 +105,9 @@ with open(input_filename, "rb") as infile:
   
   # create mesh, oriented in x and z direction along fibers, in y direction normal to muscle belly
   x_stride = 1
-  z_stride = 70
+  z_stride = 50
   y_size = 5
-  thickness = 5.0
+  thickness = 10.0
   
   result_n_points_x = len(range(0, n_fibers_x+n_fibers_y-1, x_stride))
   result_n_points_y = y_size

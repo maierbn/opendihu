@@ -19,15 +19,15 @@ Cm = 0.58                           # [uF/cm^2] membrane capacitance, (1 = fast 
 import random
 motor_units = [
   {"radius": 40.00, "activation_start_time": 0.0, "stimulation_frequency": 23.92, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},    # low number of fibers
-  {"radius": 42.35, "activation_start_time": 0.2, "stimulation_frequency": 23.36, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
-  {"radius": 45.00, "activation_start_time": 0.4, "stimulation_frequency": 23.32, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
-  {"radius": 48.00, "activation_start_time": 0.6, "stimulation_frequency": 22.46, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
-  {"radius": 51.42, "activation_start_time": 0.8, "stimulation_frequency": 20.28, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
-  {"radius": 55.38, "activation_start_time": 1.0, "stimulation_frequency": 16.32, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
-  {"radius": 60.00, "activation_start_time": 1.2, "stimulation_frequency": 12.05, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
-  {"radius": 65.45, "activation_start_time": 1.4, "stimulation_frequency": 10.03, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
-  {"radius": 72.00, "activation_start_time": 1.6, "stimulation_frequency": 8.32,  "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
-  {"radius": 80.00, "activation_start_time": 1.8, "stimulation_frequency": 7.66,  "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},    # high number of fibers
+  {"radius": 42.35, "activation_start_time": -0.2, "stimulation_frequency": 23.36, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
+  {"radius": 45.00, "activation_start_time": -0.4, "stimulation_frequency": 23.32, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
+  {"radius": 48.00, "activation_start_time": -0.6, "stimulation_frequency": 22.46, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
+  {"radius": 51.42, "activation_start_time": -0.8, "stimulation_frequency": 20.28, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
+  {"radius": 55.38, "activation_start_time": -1.0, "stimulation_frequency": 16.32, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
+  {"radius": 60.00, "activation_start_time": -1.2, "stimulation_frequency": 12.05, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
+  {"radius": 65.45, "activation_start_time": -1.4, "stimulation_frequency": 10.03, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
+  {"radius": 72.00, "activation_start_time": -1.6, "stimulation_frequency": 8.32,  "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
+  {"radius": 80.00, "activation_start_time": -1.8, "stimulation_frequency": 7.66,  "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},    # high number of fibers
 ]
 
 end_time = 4000.0                      # [ms] end time of the simulation
@@ -36,9 +36,9 @@ stimulation_frequency_jitter = 0    # [-] jitter in percent of the frequency, ad
 dt_0D = 2e-3                        # [ms] timestep width of ODEs
 dt_1D = 4e-3                        # [ms] timestep width of diffusion
 dt_splitting = 4e-3                 # [ms] overall timestep width of strang splitting
-dt_3D = 2.5                         # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
-output_timestep = 2.5               # [ms] timestep for output files, 0.5
-
+dt_3D = 0.1                         # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
+output_timestep = 10.0              # [ms] timestep for large output files, 5.0
+output_timestep_smaller_files = 0.5 # [ms] timestep for small output files, 0.5
 # simulation time:  4s
 
 # other options
@@ -46,7 +46,7 @@ paraview_output = True
 adios_output = False
 exfile_output = False
 python_output = False
-fiber_file = "../../input/13x13fibers.bin"
+fiber_file = "../../input/7x7fibers.bin"
 fat_mesh_file = fiber_file + "_fat.bin"
 firing_times_file = "../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
 fiber_distribution_file = "../../input/MU_fibre_distribution_10MUs.txt"

@@ -580,7 +580,7 @@ void Paraview::writePolyDataFile(const FieldVariablesForOutputWriterType &fieldV
     << "<VTKFile type=\"PolyData\" version=\"1.0\" byte_order=\"LittleEndian\">" << std::endl    // intel cpus are LittleEndian
     << std::string(1, '\t') << "<PolyData>" << std::endl
     << std::string(2, '\t') << "<FieldData>" << std::endl
-    << std::string(3, '\t') << "<DataArray type=\"Float32\" Name=\"TIME\" NumberOfTuples=\"1\" format=\"" << (binaryOutput_? "binary" : "ascii")
+    << std::string(3, '\t') << "<DataArray type=\"Float32\" Name=\"Time\" NumberOfTuples=\"1\" format=\"" << (binaryOutput_? "binary" : "ascii")
     << "\" >" << std::endl
     << std::string(4, '\t') << stringTime << std::endl
     << std::string(3, '\t') << "</DataArray>" << std::endl
@@ -1093,7 +1093,7 @@ void Paraview::writeCombinedUnstructuredGridFile(const FieldVariablesForOutputWr
         << "<VTKFile type=\"UnstructuredGrid\" version=\"1.0\" byte_order=\"LittleEndian\">" << std::endl    // intel cpus are LittleEndian
         << std::string(1, '\t') << "<UnstructuredGrid>" << std::endl
         << std::string(2, '\t') << "<FieldData>" << std::endl
-        << std::string(3, '\t') << "<DataArray type=\"Float32\" Name=\"TIME\" NumberOfTuples=\"1\" format=\"" << (binaryOutput_? "binary" : "ascii")
+        << std::string(3, '\t') << "<DataArray type=\"Float32\" Name=\"Time\" NumberOfTuples=\"1\" format=\"" << (binaryOutput_? "binary" : "ascii")
         << "\" >" << std::endl
         << std::string(4, '\t') << stringTime << std::endl
         << std::string(3, '\t') << "</DataArray>" << std::endl

@@ -117,6 +117,7 @@ void FiniteElementMethodBase<FunctionSpaceType,QuadratureType,nComponents,Term>:
 run()
 {
   initialize();
+  applyBoundaryConditions();
   solve();
   data_.print();
 

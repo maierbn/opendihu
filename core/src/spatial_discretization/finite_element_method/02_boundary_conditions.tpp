@@ -119,8 +119,13 @@ applyDirichletBoundaryConditions()
   // if the option to use the bc values from solution is set
   if (this->updatePrescribedValuesFromSolution_)
   {
+    LOG(DEBUG) << "updatePrescribedValuesFromSolution";
+
     // update the prescribed boundary condition values
     dirichletBoundaryConditions_->updatePrescribedValuesFromSolution(this->data_.solution());
+
+    // reset right hand side
+    this->setRightHandSide();
   }
 
   // get abbreviations

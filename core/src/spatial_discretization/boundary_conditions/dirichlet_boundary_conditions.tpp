@@ -435,6 +435,8 @@ template<typename FunctionSpaceType,int nComponents>
 void DirichletBoundaryConditions<FunctionSpaceType,nComponents>::
 updateOwnGhostElements()
 {
+  LOG(DEBUG) << "updateOwnGhostElements";
+
   // this method needs initializeGhostElements beforehand
 
   MPI_Comm communicator = this->functionSpace_->meshPartition()->mpiCommunicator();
@@ -573,6 +575,9 @@ updatePrescribedValuesFromSolution(std::shared_ptr<FieldVariable::FieldVariable<
   {
     dof_no_t boundaryConditionNonGhostDofLocalNo = this->boundaryConditionNonGhostDofLocalNos_[i];
     this->boundaryConditionValues_[i] = solutionValues[boundaryConditionNonGhostDofLocalNo];
+
+    LOG(DEBUG) << "set bc value[" << i << "] for dof " << boundaryConditionNonGhostDofLocalNo
+      << " to " << solutionValues[boundaryConditionNonGhostDofLocalNo];
   }
 
 
@@ -591,6 +596,8 @@ updatePrescribedValuesFromSolution(std::shared_ptr<FieldVariable::FieldVariable<
     // get all values of this element
     std::array<ValueType, FunctionSpaceType::nDofsPerElement()> values;
     solution->getElementValues(iter->elementNoLocal, values);
+
+    LOG(DEBUG) << "solution in element has values " << values;
 
     // loop over dofs with prescribed values
     for (int i = 0; i < iter->elementalDofIndex.size(); i++)
@@ -614,6 +621,8 @@ updatePrescribedValuesFromSolution(std::shared_ptr<FieldVariable::FieldVariable<
     std::vector<double> &values = this->boundaryConditionsByComponent_[componentNo].values;
 
     solution->getValues(componentNo, dofNosLocal, values);
+
+    LOG(DEBUG) << "set all values for component " << componentNo << ": " << values << ", dofs: " << dofNosLocal;
   }
 
   // set foreignGhostElements_
@@ -638,6 +647,8 @@ updatePrescribedValuesFromSolution(std::shared_ptr<FieldVariable::FieldVariable<
         dof_no_t dofNoLocal = this->functionSpace_->meshPartition()->getDofNoLocal(boundaryConditionDofGlobalPetsc, isLocal);
 
         ghostElementIter->boundaryConditionValues[i] = solutionValues[dofNoLocal];
+        LOG(DEBUG) << "set foreignGhostElements rank " << iter->first << " no. " << i << " dofGlobalNo "
+          << boundaryConditionDofGlobalPetsc << " to value " << solutionValues[dofNoLocal];
       }
     }
   }

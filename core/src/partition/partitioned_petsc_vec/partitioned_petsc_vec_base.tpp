@@ -1,6 +1,7 @@
 #include "partition/partitioned_petsc_vec/partitioned_petsc_vec_base.h"
 
 #include "output_writer/generic.h"
+#include "partition/partitioned_petsc_vec/values_representation.h"
 
 template<typename FunctionSpaceType>
 int PartitionedPetscVecBase<FunctionSpaceType>::vectorNo_ = 0;
@@ -47,3 +48,12 @@ currentRepresentation()
 {
   return currentRepresentation_;
 }
+
+template<typename FunctionSpaceType>
+std::string PartitionedPetscVecBase<FunctionSpaceType>::
+getCurrentRepresentationString()
+{
+  return std::string(Partition::valuesRepresentationString[currentRepresentation_]);
+}
+
+

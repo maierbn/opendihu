@@ -39,13 +39,13 @@ echo "--- Move geometry such that bottom is at z=0."
 bottom_bounding_box_value=`./stl_utility/get_bottom_bounding_box_value.py processed_meshes/${basename}_02_no_inside_triangles_binary.stl`
 echo "Bottom bounding box value is ${bottom_bounding_box_value}"
 
-bottom_bounding_box_value=`python -c "print(-${bottom_bounding_box_value})"`
-echo "Negative bottom bounding box value is ${bottom_bounding_box_value}"  # 635.0
+translate_value=`python -c "print(-${bottom_bounding_box_value})"`
+echo "Negative bottom bounding box value is ${translate_value}"  # 635.0
 
 $pyod ./stl_utility/translate_stl.py \
   processed_meshes/${basename}_02_no_inside_triangles_binary.stl \
   processed_meshes/${basename}_03_bottom_at_zero.stl \
-  0 0 ${bottom_bounding_box_value}
+  0 0 ${translate_value}
 
 
 # now ${basename}_03_bottom_at_zero.stl is the same as "biceps_full.stl"
@@ -74,8 +74,9 @@ scons
 cd build_release
 
 echo ""
-echo "--- Generate 7x7 fibers.bin file"
+echo "--- Generate 7x7 and 9x9 fibers.bin file"
 #read -p "Press enter to continue"
+
 
 if [[ ! -f "${current_directory}/processed_meshes/${basename}_05_7x7fibers.bin" ]]; then
 
@@ -89,7 +90,8 @@ echo "file processed_meshes/${basename}_05_7x7fibers.bin already exists"
 
 fi
 
-mv ${current_directory}/processed_meshes/7x7fibers.no_boundary.bin ${current_directory}/processed_meshes/${basename}_05_7x7fibers.bin
+cp ${current_directory}/processed_meshes/7x7fibers.no_boundary.bin ${current_directory}/processed_meshes/${basename}_05_7x7fibers.bin
+cp ${current_directory}/processed_meshes/9x9fibers.bin ${current_directory}/processed_meshes/${basename}_05_9x9fibers.bin
 
 echo ""
 echo "--- Move the fibers file back to original position"
@@ -99,7 +101,13 @@ $pyod $opendihu_directory/scripts/file_manipulation/translate_bin_fibers.py \
   ${current_directory}/processed_meshes/${basename}_06_7x7fibers_original_position.bin \
   0 0 ${bottom_bounding_box_value}
   
+$pyod $opendihu_directory/scripts/file_manipulation/translate_bin_fibers.py \
+  ${current_directory}/processed_meshes/${basename}_05_9x9fibers.bin \
+  ${current_directory}/processed_meshes/${basename}_06_9x9fibers_original_position.bin \
+  0 0 ${bottom_bounding_box_value}
+  
 cp ${current_directory}/processed_meshes/${basename}_06_7x7fibers_original_position.bin ${current_directory}/processed_meshes/${basename}_7x7fibers.bin
+cp ${current_directory}/processed_meshes/${basename}_06_9x9fibers_original_position.bin ${current_directory}/processed_meshes/${basename}_9x9fibers.bin
 
 cd $current_directory
 # refine the given, serially created file with 7x7 fibers

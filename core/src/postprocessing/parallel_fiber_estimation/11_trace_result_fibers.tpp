@@ -348,7 +348,7 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
   }
 
   int nInvalid = MathUtility::sqr(nBorderPointsXNew_) - nValid;
-  LOG(DEBUG) << "key fibers, number: " << MathUtility::sqr(nBorderPointsXNew_) << ", valid: " << nValid << ", invalid: " << nInvalid;
+  LOG(INFO) << "key fibers, number: " << MathUtility::sqr(nBorderPointsXNew_) << ", valid: " << nValid << ", invalid: " << nInvalid;
 
   // fix the invalid key fibers in the interior by interpolating from the neighbouring fibers
   LOG(DEBUG) << "fixInvalidKeyFibers";
@@ -510,7 +510,7 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
     filenameStr << "out/level_" << level_ << "/result_0x0_level_" << level_ << ".bin";
   }
 
-  int nFibersRow0 = meshPartition_->nRanks(0) * (nFibersX-1);
+  int nFibersRow0 = meshPartition_->nRanks(0) * (nFibersX-1) + 1;
 
   // write full mesh including boundary layer
   filename = filenameStr.str();
@@ -553,7 +553,7 @@ writeToFile(std::string filename, std::vector<std::vector<Vec3>> &fibers, int nF
 
   int nFibersRow0 = meshPartition_->nRanks(0) * (nFibersX-1) - 1;
   if (withBoundaryLayer)
-    nFibersRow0 = meshPartition_->nRanks(0) * (nFibersX-1);
+    nFibersRow0 = meshPartition_->nRanks(0) * (nFibersX-1) + 1;
 
   int nFibersTotal = MathUtility::sqr(nFibersRow0);
   int ownRankNo = currentRankSubset_->ownRankNo();
@@ -679,6 +679,7 @@ writeToFile(std::string filename, std::vector<std::vector<Vec3>> &fibers, int nF
       int nFibersPreviousRanks0 = meshPartition_->ownRankPartitioningIndex(0) * (nFibersX-1);
       int nFibersPreviousRanks1 = meshPartition_->ownRankPartitioningIndex(1) * (nFibersX-1);
 
+      // if left boundary is contained
       if (withBoundaryLayer)
       {
         nFibersPreviousRanks0++;

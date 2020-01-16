@@ -26,6 +26,9 @@ if len(sys.argv) >= 6:
   translation_x = float(sys.argv[3])
   translation_y = float(sys.argv[4])
   translation_z = float(sys.argv[5])
+else:
+  print("usage: translate_bin_fibers.py <input filename> <output filename> <x> <y> <z>")
+  sys.exit(0)
   
 print("input file:         {}".format(input_filename))
 print("output file:        {}".format(output_filename))
@@ -119,12 +122,21 @@ with open(input_filename, "rb") as infile:
     outfile.seek(32+4)
     outfile.write(struct.pack('i', n_fibers_total))
     
+    # write parameter[1]: n_fibers_total
+    outfile.seek(32+2*4)
+    outfile.write(struct.pack('i', parameters[1]))
+    
     # write parameter[2]: n_fibers_x
-    outfile.seek(32+4*4)
+    outfile.seek(32+3*4)
     outfile.write(struct.pack('i', n_fibers_x))
     
     # write parameter[3]: n_fibers_y
+    outfile.seek(32+4*4)
     outfile.write(struct.pack('i', n_fibers_y))
+    
+    for i in range(5,9):
+      outfile.seek(32+i*4)
+      outfile.write(struct.pack('i', parameters[i-1]))
     
     # write timestamp
     outfile.seek(32+9*4)

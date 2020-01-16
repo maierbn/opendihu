@@ -30,7 +30,10 @@ public:
 
   //! get the current internal data representation
   Partition::values_representation_t currentRepresentation();
-  
+
+  //! get a string of the current representation
+  std::string getCurrentRepresentationString();
+
 protected:
   
   std::string name_;   ///< name of the vector

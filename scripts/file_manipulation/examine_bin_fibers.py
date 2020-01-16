@@ -75,6 +75,13 @@ with open(input_filename, "rb") as infile:
   
   #input("Press any key to continue.")
   
+  xmin = None
+  xmax = None
+  ymin = None
+  ymax = None
+  zmin = None
+  zmax = None
+  
   streamlines = []
   n_streamlines_valid = 0
   n_streamlines_invalid = 0
@@ -93,6 +100,20 @@ with open(input_filename, "rb") as infile:
         double_raw = infile.read(8)
         value = struct.unpack('d', double_raw)[0]
         point.append(value)
+      
+      # set bounding box
+      if xmin is None or point[0] < xmin:
+        xmin = point[0]
+      if xmax is None or point[0] > xmax:
+        xmax = point[0]
+      if ymin is None or point[1] < ymin:
+        ymin = point[1]
+      if ymax is None or point[1] > ymax:
+        ymax = point[1]
+      if zmin is None or point[2] < zmin:
+        zmin = point[2]
+      if zmax is None or point[2] > zmax:
+        zmax = point[2]
         
       # check if point is valid
       if point[0] == 0.0 and point[1] == 0.0 and point[2] == 0.0:
@@ -112,6 +133,7 @@ with open(input_filename, "rb") as infile:
     streamlines.append(streamline)
   
   print("n valid: {}, n invalid: {}".format(n_streamlines_valid, n_streamlines_invalid))
+  print("bounding box: [{}, {}] x [{}, {}] x [{}, {}]".format(xmin, xmax, ymin, ymax, zmin, zmax))
   
   # ------------------------------
   # create pickle file
@@ -305,6 +327,7 @@ with open(input_filename, "rb") as infile:
   
   #---------------------------------------
   # Postprocessing
+  sys.exit(0)
   print("")
   print("Postprocessing where fibres with too high distance to neighbouring fibers are removed (may take long)")
   input("Press any key to continue or Ctrl-C to abort.")

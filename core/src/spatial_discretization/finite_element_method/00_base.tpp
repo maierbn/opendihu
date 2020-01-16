@@ -80,6 +80,12 @@ initialize()
 
   data_.initialize();
 
+  if (specificSettings_.hasKey("updatePrescribedValuesFromSolution"))
+  {
+    updatePrescribedValuesFromSolution_ = specificSettings_.getOptionBool("updatePrescribedValuesFromSolution", false);
+    LOG(DEBUG) << "set updatePrescribedValuesFromSolution = " << updatePrescribedValuesFromSolution_;
+  }
+
   // assemble stiffness matrix
   Control::PerformanceMeasurement::start("durationSetStiffnessMatrix");
   setStiffnessMatrix();
@@ -111,6 +117,7 @@ void FiniteElementMethodBase<FunctionSpaceType,QuadratureType,nComponents,Term>:
 run()
 {
   initialize();
+  applyBoundaryConditions();
   solve();
   data_.print();
 

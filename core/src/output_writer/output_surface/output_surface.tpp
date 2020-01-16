@@ -83,7 +83,7 @@ setTimeSpan(double startTime, double endTime)
 }
 
 template<typename Solver>
-typename OutputSurface<Solver>::Data3D &OutputSurface<Solver>::
+typename OutputSurface<Solver>::Data &OutputSurface<Solver>::
 data()
 {
   return solver_.data();

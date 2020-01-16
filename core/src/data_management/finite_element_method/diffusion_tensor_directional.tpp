@@ -97,8 +97,10 @@ diffusionTensor(element_no_t elementNoLocal, const std::array<double,FunctionSpa
       LOG(ERROR) << "Directional diffusion tensor contains nans or infs.";
       LOG(INFO) << "elementNoLocal: " << elementNoLocal << ", xi: " << xi;
       LOG(INFO) << "directionVector: " << directionVector << " elemental direction values: " << elementalValues;
-      LOG(INFO) << "diffusionTensor: " << diffusionTensor << ", this->additionalDiffusionTensor: " << this->additionalDiffusionTensor_
-        << ", spatiallyVaryingPrefactor: " << spatiallyVaryingPrefactor;
+      LOG(INFO) << ", spatiallyVaryingPrefactor: " << spatiallyVaryingPrefactor;
+      LOG(INFO) << "diffusionTensor from settings: " << std::endl << this->diffusionTensor_;
+      LOG(INFO) << "additionalDiffusionTensor: " << std::endl << this->additionalDiffusionTensor_;
+      LOG(INFO) << "resulting diffusion tensor in direction " << directionVector << ":" << std::endl << diffusionTensor;
      }
   }
   else if (D == 2)

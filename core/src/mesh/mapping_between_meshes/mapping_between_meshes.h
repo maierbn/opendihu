@@ -29,7 +29,7 @@ class MappingBetweenMeshes : public MappingBetweenMeshesBase
 public:
 
   //! constructor, the function spaces need to be initialized
-  MappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSource, std::shared_ptr<FunctionSpaceTargetType> functionSpaceTarget);
+  MappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSource, std::shared_ptr<FunctionSpaceTargetType> functionSpaceTarget, double xiTolerance=0);
 
   //! map data between a single component of the field variables in the source and target function spaces
   template<int nComponentsSource, int nComponentsTarget>
@@ -68,6 +68,7 @@ private:
   };
 
   std::vector<targetDof_t> targetMappingInfo_;  ///< [localDofNo source functionSpace (low dim)] information where in the target (high dim) to store the value from local dof No of the source (low dim)
+  double maxAllowedXiTolerance_;    //< the maximum tolerance in the parameter space (threshold for xi) by which a node is considered still inside the element
 };
 
 }  // namespace

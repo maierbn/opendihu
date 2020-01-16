@@ -160,20 +160,20 @@ initializeGhostElements()
 
   MPIUtility::handleReturnValue(MPI_Win_fence(MPI_MODE_NOSUCCEED, mpiMemoryWindow), "MPI_Win_fence");
 
-  std::vector<std::pair<int,int>> nElementsFromRanks;   /// (foreignRank,nElements), number of elements to receive from foreignRank
+  //std::vector<std::pair<int,int>> nElementsFromRanks_;   /// (foreignRank,nElements), number of elements to receive from foreignRank
   for (int i = 0; i < nRanks; i++)
   {
     VLOG(1) << " rank " << i << " nGhostElements: " << remoteAccessibleMemory[i];
     if (remoteAccessibleMemory[i] > 0)
     {
-      nElementsFromRanks.push_back(std::pair<int,int>(i,remoteAccessibleMemory[i]));
+      nElementsFromRanks_.push_back(std::pair<int,int>(i,remoteAccessibleMemory[i]));
     }
   }
 
   // deallocate mpi memory
   MPIUtility::handleReturnValue(MPI_Win_free(&mpiMemoryWindow), "MPI_Win_free");
 
-  VLOG(1) << "after fence, nElementsFromRanks: " << nElementsFromRanks;
+  VLOG(1) << "after fence, nElementsFromRanks_: " << nElementsFromRanks_;
 
   // send lengths of arrays in ghost elements
   std::vector<std::vector<int>> sendBuffer(foreignGhostElements_.size());
@@ -209,12 +209,12 @@ initializeGhostElements()
   }
 
   // receive lengths of arrays
-  std::vector<std::vector<int>> receiveBuffer(nElementsFromRanks.size());   // for every ghostElements the sizes of nonBoundaryConditionDofsOfRankGlobalPetsc and boundaryConditionDofsGlobalPetsc
+  std::vector<std::vector<int>> receiveBuffer(nElementsFromRanks_.size());   // for every ghostElements the sizes of nonBoundaryConditionDofsOfRankGlobalPetsc and boundaryConditionDofsGlobalPetsc
   std::vector<MPI_Request> receiveRequests;
 
   // receive data
   i = 0;
-  for (std::vector<std::pair<int,int>>::iterator nElementsFromRanksIter = nElementsFromRanks.begin(); nElementsFromRanksIter != nElementsFromRanks.end(); nElementsFromRanksIter++, i++)
+  for (std::vector<std::pair<int,int>>::iterator nElementsFromRanksIter = nElementsFromRanks_.begin(); nElementsFromRanksIter != nElementsFromRanks_.end(); nElementsFromRanksIter++, i++)
   {
     int foreignRankNo = nElementsFromRanksIter->first;
     int nGhostElementsFromRank = nElementsFromRanksIter->second;
@@ -241,7 +241,7 @@ initializeGhostElements()
   if (VLOG_IS_ON(1))
   {
     i = 0;
-    for (std::vector<std::pair<int,int>>::iterator nElementsFromRanksIter = nElementsFromRanks.begin(); nElementsFromRanksIter != nElementsFromRanks.end(); nElementsFromRanksIter++, i++)
+    for (std::vector<std::pair<int,int>>::iterator nElementsFromRanksIter = nElementsFromRanks_.begin(); nElementsFromRanksIter != nElementsFromRanks_.end(); nElementsFromRanksIter++, i++)
     {
       int foreignRank = nElementsFromRanksIter->first;
       int nGhostElementsFromRank = nElementsFromRanksIter->second;
@@ -319,13 +319,13 @@ initializeGhostElements()
   }
 
   // receive ghost elements
-  std::vector<std::vector<long>> receiveBufferGhostElements(nElementsFromRanks.size());
-  std::vector<std::vector<double>> receiveBufferValues(nElementsFromRanks.size());
+  std::vector<std::vector<long>> receiveBufferGhostElements(nElementsFromRanks_.size());
+  std::vector<std::vector<double>> receiveBufferValues(nElementsFromRanks_.size());
   std::vector<MPI_Request> receiveRequestsValues;
 
   // receive data
   i = 0;
-  for (std::vector<std::pair<int,int>>::iterator nElementsFromRanksIter = nElementsFromRanks.begin(); nElementsFromRanksIter != nElementsFromRanks.end(); nElementsFromRanksIter++, i++)
+  for (std::vector<std::pair<int,int>>::iterator nElementsFromRanksIter = nElementsFromRanks_.begin(); nElementsFromRanksIter != nElementsFromRanks_.end(); nElementsFromRanksIter++, i++)
   {
     int foreignRankNo = nElementsFromRanksIter->first;
     int nGhostElementsFromRank = nElementsFromRanksIter->second;
@@ -372,7 +372,7 @@ initializeGhostElements()
 
   // store received values in ownGhostElements_
   i = 0;
-  for (std::vector<std::pair<int,int>>::iterator nElementsFromRanksIter = nElementsFromRanks.begin(); nElementsFromRanksIter != nElementsFromRanks.end(); nElementsFromRanksIter++, i++)
+  for (std::vector<std::pair<int,int>>::iterator nElementsFromRanksIter = nElementsFromRanks_.begin(); nElementsFromRanksIter != nElementsFromRanks_.end(); nElementsFromRanksIter++, i++)
   {
     int nGhostElementsFromRank = nElementsFromRanksIter->second;
 
@@ -431,6 +431,232 @@ initializeGhostElements()
   */
 }
 
+template<typename FunctionSpaceType,int nComponents>
+void DirichletBoundaryConditions<FunctionSpaceType,nComponents>::
+updateOwnGhostElements()
+{
+  LOG(DEBUG) << "updateOwnGhostElements";
+
+  // this method needs initializeGhostElements beforehand
+
+  MPI_Comm communicator = this->functionSpace_->meshPartition()->mpiCommunicator();
+
+  // send actual ghost elements
+  std::vector<MPI_Request> sendRequestsValues;
+  std::vector<std::vector<double>> sendBufferValues(foreignGhostElements_.size());
+  int i = 0;
+  for (typename std::map<int,std::vector<GhostElement>>::const_iterator iter = foreignGhostElements_.cbegin(); iter != foreignGhostElements_.cend(); iter++, i++)
+  {
+    int foreignRankNo = iter->first;
+
+    // determine send buffer size
+    int sendBufferValuesSize = 0;
+    for (typename std::vector<GhostElement>::const_iterator ghostElementIter = iter->second.cbegin(); ghostElementIter != iter->second.cend(); ghostElementIter++)
+    {
+      sendBufferValuesSize += ghostElementIter->boundaryConditionDofsGlobalPetsc.size()*nComponents;
+    }
+
+    if (sendBufferValuesSize != 0)
+    {
+      sendBufferValues[i].resize(sendBufferValuesSize);
+
+      VLOG(1) << " send to " << foreignRankNo << ", len buffer sendBufferValuesSize: " << sendBufferValuesSize;
+
+      // fill send buffer
+      int j2 = 0;
+      for (typename std::vector<GhostElement>::const_iterator ghostElementIter = iter->second.cbegin(); ghostElementIter != iter->second.cend(); ghostElementIter++)
+      {
+        for (int k = 0; k < ghostElementIter->boundaryConditionDofsGlobalPetsc.size(); k++)
+        {
+          VLOG(1) << "store value to send buffer starting at j=" << j2 << " (" << nComponents << " components), "
+            << "values: " << ghostElementIter->boundaryConditionValues[k];
+          for (int componentNo = 0; componentNo < nComponents; componentNo++)
+          {
+            sendBufferValues[i][j2++] = (double)ghostElementIter->boundaryConditionValues[k][componentNo];
+          }
+        }
+      }
+
+      // start send
+      assert(sendBufferValues[i].size() == sendBufferValuesSize);
+      MPI_Request sendRequestValues;
+      MPIUtility::handleReturnValue(MPI_Isend(sendBufferValues[i].data(), sendBufferValuesSize, MPI_DOUBLE, foreignRankNo, 0, communicator, &sendRequestValues), "MPI_Isend");
+      sendRequestsValues.push_back(sendRequestValues);
+    }
+  }
+
+  // receive ghost elements
+  std::vector<std::vector<double>> receiveBufferValues(nElementsFromRanks_.size());
+  std::vector<MPI_Request> receiveRequestsValues;
+
+  // receive data
+  i = 0;
+  int ownGhostElementsIndex = 0;
+  for (std::vector<std::pair<int,int>>::iterator nElementsFromRanksIter = nElementsFromRanks_.begin(); nElementsFromRanksIter != nElementsFromRanks_.end(); nElementsFromRanksIter++, i++)
+  {
+    int foreignRankNo = nElementsFromRanksIter->first;
+    int nGhostElementsFromRank = nElementsFromRanksIter->second;
+
+    // determine sizes of receive buffers
+    int receiveBufferValuesSize = 0;
+    for (int ghostElementIndex = 0; ghostElementIndex < nGhostElementsFromRank; ghostElementIndex++)
+    {
+      receiveBufferValuesSize += ownGhostElements_[ownGhostElementsIndex++].boundaryConditionValues.size()*nComponents;
+    }
+
+    LOG(DEBUG) << "receive from " << foreignRankNo << ", size: " << receiveBufferValuesSize;
+
+    if (receiveBufferValuesSize != 0)
+    {
+      receiveBufferValues[i].resize(receiveBufferValuesSize);
+      MPI_Request receiveRequestValues;
+      MPIUtility::handleReturnValue(MPI_Irecv(receiveBufferValues[i].data(), receiveBufferValuesSize, MPI_DOUBLE, foreignRankNo, 0, communicator, &receiveRequestValues), "MPI_Irecv");
+      receiveRequestsValues.push_back(receiveRequestValues);
+    }
+  }
+
+  // wait for communication to finish
+  if (!sendRequestsValues.empty())
+    MPIUtility::handleReturnValue(MPI_Waitall(sendRequestsValues.size(), sendRequestsValues.data(), MPI_STATUSES_IGNORE), "MPI_Waitall");
+
+  if (!receiveRequestsValues.empty())
+    MPIUtility::handleReturnValue(MPI_Waitall(receiveRequestsValues.size(), receiveRequestsValues.data(), MPI_STATUSES_IGNORE), "MPI_Waitall");
+
+
+  // store received values in ownGhostElements_
+  i = 0;
+  ownGhostElementsIndex = 0;
+  for (std::vector<std::pair<int,int>>::iterator nElementsFromRanksIter = nElementsFromRanks_.begin(); nElementsFromRanksIter != nElementsFromRanks_.end(); nElementsFromRanksIter++, i++)
+  {
+    int nGhostElementsFromRank = nElementsFromRanksIter->second;
+
+    int j2 = 0;
+    for (int ghostElementIndex = 0; ghostElementIndex < nGhostElementsFromRank; ghostElementIndex++)
+    {
+      assert(sizeof(global_no_t) == sizeof(long)); // global_no_t = std::size_t == long should be 8 bytes on 64-bit linux
+
+      GhostElement &ghostElement = ownGhostElements_[ownGhostElementsIndex++];
+
+      // loop over bc dofs
+      for (int valueIndex = 0; valueIndex < ghostElement.boundaryConditionValues.size(); valueIndex++)
+      {
+        // loop over components of single bc value
+        for (int componentNo = 0; componentNo < nComponents; componentNo++)
+        {
+          ghostElement.boundaryConditionValues[valueIndex][componentNo] = receiveBufferValues[i][j2++];
+        }
+      }
+    }
+  }
+
+  VLOG(1) << "received ownGhostElements_: ";
+  for (typename std::vector<GhostElement>::iterator iter = ownGhostElements_.begin(); iter != ownGhostElements_.end(); iter++)
+  {
+    VLOG(1) << "  non-BC: " << iter->nonBoundaryConditionDofsOfRankGlobalPetsc << ", BC: " << iter->boundaryConditionDofsGlobalPetsc
+      << ", values: " << iter->boundaryConditionValues;
+  }
+
+}
+
+template<typename FunctionSpaceType,int nComponents>
+void DirichletBoundaryConditions<FunctionSpaceType,nComponents>::
+updatePrescribedValuesFromSolution(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> solution)
+{
+  // get all values in the solution field variable
+  std::vector<ValueType> solutionValues;
+  solution->getValuesWithoutGhosts(solutionValues);
+
+  // set boundaryConditionValues_
+  // std::vector<dof_no_t> boundaryConditionNonGhostDofLocalNos_;        ///< vector of all local (non-ghost) boundary condition dofs, sorted
+  // std::vector<ValueType> boundaryConditionValues_;               ///< vector of the local (non-ghost) prescribed values, related to boundaryConditionNonGhostDofLocalNos_
+
+  // copy values where a dof is prescribed to boundaryConditionValues_
+  for (int i = 0; i < this->boundaryConditionNonGhostDofLocalNos_.size(); i++)
+  {
+    dof_no_t boundaryConditionNonGhostDofLocalNo = this->boundaryConditionNonGhostDofLocalNos_[i];
+    this->boundaryConditionValues_[i] = solutionValues[boundaryConditionNonGhostDofLocalNo];
+
+    LOG(DEBUG) << "set bc value[" << i << "] for dof " << boundaryConditionNonGhostDofLocalNo
+      << " to " << solutionValues[boundaryConditionNonGhostDofLocalNo];
+  }
+
+
+
+  // set boundaryConditionElements_
+  // std::vector<ElementWithNodes> boundaryConditionElements_;   ///< nodes grouped by elements on which boundary conditions are specified, this includes ghost nodes
+  // struct ElementWithNodes
+  // {
+  //   element_no_t elementNoLocal;   ///< local element no
+  //   std::vector<std::pair<int,ValueType>> elementalDofIndex;   ///< the element-local dof index and the value of the boundary condition on this dof
+  // };
+
+  for (typename std::vector<typename BoundaryConditionsBase<FunctionSpaceType,nComponents>::ElementWithNodes>::iterator iter = this->boundaryConditionElements_.begin();
+       iter != this->boundaryConditionElements_.end(); iter++)
+  {
+    // get all values of this element
+    std::array<ValueType, FunctionSpaceType::nDofsPerElement()> values;
+    solution->getElementValues(iter->elementNoLocal, values);
+
+    LOG(DEBUG) << "solution in element has values " << values;
+
+    // loop over dofs with prescribed values
+    for (int i = 0; i < iter->elementalDofIndex.size(); i++)
+    {
+      int elementalDofIndex = iter->elementalDofIndex[i].first;
+      iter->elementalDofIndex[i].second = values[elementalDofIndex];
+    }
+  }
+
+  // set boundaryConditionsByComponent_
+  // std::array<BoundaryConditionsForComponent, nComponents> boundaryConditionsByComponent_;   ///< the local boundary condition data organized by component, entries are sorted by dofNoLocal, without ghost dofs
+  // struct BoundaryConditionsForComponent
+  // {
+  //   std::vector<dof_no_t> dofNosLocal;    // the local dof no (without ghost dofs), both vectors are sorted according to this
+  //   std::vector<double> values;           // the values corresponding to the dofs
+  // };
+
+  for (int componentNo = 0; componentNo < nComponents; componentNo++)
+  {
+    std::vector<dof_no_t> &dofNosLocal = this->boundaryConditionsByComponent_[componentNo].dofNosLocal;
+    std::vector<double> &values = this->boundaryConditionsByComponent_[componentNo].values;
+
+    solution->getValues(componentNo, dofNosLocal, values);
+
+    LOG(DEBUG) << "set all values for component " << componentNo << ": " << values << ", dofs: " << dofNosLocal;
+  }
+
+  // set foreignGhostElements_
+  // std::map<int,std::vector<GhostElement>> foreignGhostElements_;   ///< ghost elements that are normal elements on this rank, key is the rankNo of the rank to send them to
+  // std::vector<GhostElement> ownGhostElements_;   ///< the ghost elements for this rank
+  // struct GhostElement
+  // {
+  //   std::vector<global_no_t> nonBoundaryConditionDofsOfRankGlobalPetsc;    ///< the non-BC dofs of this element, as global petsc no. that are owned by the rank with no neighbouringRankNo
+  //   std::vector<global_no_t> boundaryConditionDofsGlobalPetsc;      ///< the Dirichlet BC dofs of this element
+  //   std::vector<ValueType> boundaryConditionValues;   ///< the prescribed value, corresponding to boundaryConditionDofsGlobalPetsc
+  // };
+
+  for (typename std::map<int,std::vector<GhostElement>>::iterator iter = foreignGhostElements_.begin(); iter != foreignGhostElements_.end(); iter++)
+  {
+    for (typename std::vector<GhostElement>::iterator ghostElementIter = iter->second.begin(); ghostElementIter != iter->second.end(); ghostElementIter++)
+    {
+      for (int i = 0; i < ghostElementIter->boundaryConditionDofsGlobalPetsc.size(); i++)
+      {
+        global_no_t boundaryConditionDofGlobalPetsc = ghostElementIter->boundaryConditionDofsGlobalPetsc[i];
+
+        bool isLocal = true;
+        dof_no_t dofNoLocal = this->functionSpace_->meshPartition()->getDofNoLocal(boundaryConditionDofGlobalPetsc, isLocal);
+
+        ghostElementIter->boundaryConditionValues[i] = solutionValues[dofNoLocal];
+        LOG(DEBUG) << "set foreignGhostElements rank " << iter->first << " no. " << i << " dofGlobalNo "
+          << boundaryConditionDofGlobalPetsc << " to value " << solutionValues[dofNoLocal];
+      }
+    }
+  }
+
+  // set ownGhostElements_
+  updateOwnGhostElements();
+}
+
 // set the boundary conditions to system matrix, i.e. zero rows and columns of Dirichlet BC dofs and set diagonal to 1
 template<typename FunctionSpaceType,int nComponents>
 void DirichletBoundaryConditions<FunctionSpaceType,nComponents>::
@@ -476,7 +702,7 @@ applyInSystemMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> syst
     VLOG(1) << "element " << elementNoLocal << ", dofNosLocal: " << dofNosLocal << ", rowDofNosLocalWithoutGhosts: " << rowDofNosLocalWithoutGhosts;
 
     // loop over dofs of element that have prescribed Dirichlet boundary condition values
-    for (typename std::vector<std::pair<int,ValueType>>::const_iterator columnDofsIter = iter->elementalDofIndex.begin(); columnDofsIter != iter->elementalDofIndex.end(); columnDofsIter++)
+    for (typename std::vector<std::pair<int,ValueType>>::const_iterator columnDofsIter = iter->elementalDofIndex.cbegin(); columnDofsIter != iter->elementalDofIndex.cend(); columnDofsIter++)
     {
       int elementalDofIndexColumn = columnDofsIter->first;
       ValueType boundaryConditionValue = columnDofsIter->second;
@@ -650,7 +876,7 @@ applyInSystemMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> syst
     }
     else
     {
-      // for equations with multiple components, some components in some dofs may be set to None (NaN) which indicates that they should not be touched
+      // for equations with multiple components, some components in some dofs may be set to None (<double>::max()) which indicates that they should not be touched
       for (int componentNo = 0; componentNo < nComponents; componentNo++)
       {
         // check if column dof has a valid Dirichlet BC, else do nothing for this component

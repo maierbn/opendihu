@@ -31,6 +31,7 @@ setNeumannBoundaryConditions(std::shared_ptr<NeumannBoundaryConditions<FunctionS
 {
   LOG(DEBUG) << "set Neumann boundary conditions";
   this->neumannBoundaryConditions_ = neumannBoundaryConditions;
+  neumannBoundaryConditionsApplied_ = false;
 }
 
 template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term,typename Dummy>
@@ -67,6 +68,23 @@ applyBoundaryConditions()
   }
 
   // handle Neumann boundary conditions
+  applyNeumannBoundaryConditions();
+
+  // handle Dirichlet boundary conditions
+  applyDirichletBoundaryConditions();
+
+  if (VLOG_IS_ON(4))
+  {
+    VLOG(4) << "Finite element data after applyBoundaryConditions";
+    this->data_.print();
+  }
+}
+
+template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term,typename Dummy>
+void BoundaryConditions<FunctionSpaceType,QuadratureType,nComponents,Term,Dummy>::
+applyNeumannBoundaryConditions()
+{
+  // handle Neumann boundary conditions, only change the rhs once, not in every timestep, if this solver is in a timestepping scheme
   if (neumannBoundaryConditions_ == nullptr)
   {
     LOG(DEBUG) << "no Neumann boundary conditions are present, create object";
@@ -74,14 +92,24 @@ applyBoundaryConditions()
     neumannBoundaryConditions_->initialize(this->specificSettings_, this->data_.functionSpace(), "neumannBoundaryConditions");
     this->data_.setNegativeRightHandSideNeumannBoundaryConditions(neumannBoundaryConditions_->rhs());
   }
-  LOG(DEBUG) << "neumann BC rhs: " << *neumannBoundaryConditions_->rhs();
-  LOG(DEBUG) << "rhs: " << *this->data_.rightHandSide();
 
-  // add rhs, rightHandSide += -1 * rhs
-  PetscErrorCode ierr;
-  ierr = VecAXPY(this->data_.rightHandSide()->valuesGlobal(), -1, neumannBoundaryConditions_->rhs()->valuesGlobal()); CHKERRV(ierr);
+  if (!neumannBoundaryConditionsApplied_)
+  {
+    neumannBoundaryConditionsApplied_ = true;
 
+    LOG(DEBUG) << "neumann BC rhs: " << *neumannBoundaryConditions_->rhs();
+    LOG(DEBUG) << "rhs: " << *this->data_.rightHandSide();
 
+    // add rhs, rightHandSide += -1 * rhs
+    PetscErrorCode ierr;
+    ierr = VecAXPY(this->data_.rightHandSide()->valuesGlobal(), -1, neumannBoundaryConditions_->rhs()->valuesGlobal()); CHKERRV(ierr);
+  }
+}
+
+template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term,typename Dummy>
+void BoundaryConditions<FunctionSpaceType,QuadratureType,nComponents,Term,Dummy>::
+applyDirichletBoundaryConditions()
+{
   // handle Dirichlet boundary conditions
   if (dirichletBoundaryConditions_ == nullptr)
   {
@@ -92,6 +120,18 @@ applyBoundaryConditions()
   else
   {
     LOG(DEBUG) << "dirichlet BC object already exists";
+  }
+
+  // if the option to use the bc values from solution is set
+  if (this->updatePrescribedValuesFromSolution_)
+  {
+    LOG(DEBUG) << "updatePrescribedValuesFromSolution";
+
+    // update the prescribed boundary condition values
+    dirichletBoundaryConditions_->updatePrescribedValuesFromSolution(this->data_.solution());
+
+    // reset right hand side
+    this->setRightHandSide();
   }
 
   // get abbreviations
@@ -105,12 +145,6 @@ applyBoundaryConditions()
 
   // set prescribed values in rhs
   dirichletBoundaryConditions_->applyInRightHandSide(rightHandSide, rightHandSide);
-
-  if (VLOG_IS_ON(4))
-  {
-    VLOG(4) << "Finite element data after applyBoundaryConditions";
-    this->data_.print();
-  }
 }
 
 } // namespace

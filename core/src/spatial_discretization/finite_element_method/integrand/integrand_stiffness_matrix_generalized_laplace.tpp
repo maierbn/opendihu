@@ -118,8 +118,9 @@ evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,1,Term> &data, co
   double determinant;
   std::array<double,9> transformationDiffusionMatrix = MathUtility::computeTransformationDiffusionMatrixAndDeterminant(jacobian, diffusionTensor, determinant);
 
-#ifdef DEBUG
-  VLOG(3) << "transformationDiffusionMatrix:";
+#if 0
+//#ifdef DEBUG
+  LOG(DEBUG) << "transformationDiffusionMatrix:";
   std::stringstream s;
   for (int i=0; i<3; i++)
   {
@@ -129,7 +130,7 @@ evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,1,Term> &data, co
     }
     s << std::endl;
   }
-  VLOG(3) << s.str();
+  LOG(DEBUG) << std::endl << s.str();
 #endif
 
   std::array<Vec3,FunctionSpaceType::nDofsPerElement()> gradPhi = data.functionSpace()->getGradPhi(xi);
@@ -161,9 +162,9 @@ evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,1,Term> &data, co
         LOG(INFO) << "elementNoLocal: " << elementNoLocal << ", xi: " << xi
           << ", gradPhi[" << i << "] = " << gradPhi[i] << ", gradPhi[" << j << "] = " << gradPhi[j]
           << ", diffusionTensor:";
-        LOG(INFO) << s2.str();
+        LOG(INFO) << std::endl << s2.str();
         LOG(INFO) << "Transformation Diffusion matrix: ";
-        LOG(INFO) << s.str();
+        LOG(INFO) << std::endl << s.str();
         LOG(INFO) << "determinant: " << determinant;
         LOG(INFO) << "jacobian (column-major): " << jacobian;
       }

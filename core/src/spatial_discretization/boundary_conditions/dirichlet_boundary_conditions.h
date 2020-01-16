@@ -48,20 +48,29 @@ public:
   void applyInRightHandSide(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> rightHandSide,
                             std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> boundaryConditionsRightHandSideSummand);
 
+  //! This methods changes the prescribed boundary condition values to the values of a field variable. The dofs where BC values are prescribed remain the same.
+  //! this is needed for the option "updatePrescribedValuesFromSolution"
+  void updatePrescribedValuesFromSolution(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> solution);
+
 protected:
 
   //! fill auxiliary ghost element data structures
   void initializeGhostElements();
 
+  //! update boundary condition values in ownGhostElements_ from foreignGhostElements_
+  void updateOwnGhostElements();
+
   struct GhostElement
   {
     std::vector<global_no_t> nonBoundaryConditionDofsOfRankGlobalPetsc;    ///< the non-BC dofs of this element, as global petsc no. that are owned by the rank with no neighbouringRankNo
-    std::vector<global_no_t> boundaryConditionDofsGlobalPetsc;      ///< the Dirichlet BC dofs of this element
-    std::vector<ValueType> boundaryConditionValues;   ///< the prescribed value, corresponding to boundaryConditionDofsGlobalPetsc
+    std::vector<global_no_t> boundaryConditionDofsGlobalPetsc;     ///< the Dirichlet BC dofs of this element
+    std::vector<ValueType> boundaryConditionValues;                ///< the prescribed value, corresponding to boundaryConditionDofsGlobalPetsc
   };
   
   std::map<int,std::vector<GhostElement>> foreignGhostElements_;   ///< ghost elements that are normal elements on this rank, key is the rankNo of the rank to send them to
-  std::vector<GhostElement> ownGhostElements_;   ///< the ghost elements for this rank
+  std::vector<GhostElement> ownGhostElements_;                     ///< the ghost elements for this rank
+
+  std::vector<std::pair<int,int>> nElementsFromRanks_;             ///< helper variable, (foreignRank,nElements), number of elements to receive from foreignRank, will be initialized by initializeGhostElements() and used by updateOwnGhostElements().
 };
 
 } // namespace

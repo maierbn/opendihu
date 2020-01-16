@@ -124,7 +124,7 @@ setStiffnessMatrix()
       std::array<double,D> xi = samplingPoints[samplingPointIndex];
 
       // compute the 3xD jacobian of the parameter space to world space mapping
-      auto jacobian = FunctionSpaceType::computeJacobian(geometry, xi);
+      std::array<Vec3,D> jacobian = FunctionSpaceType::computeJacobian(geometry, xi);
 
       VLOG(2) << "samplingPointIndex=" << samplingPointIndex<< ", xi=" <<xi<< ", geometry: " <<geometry<< ", jac: " <<jacobian;
 

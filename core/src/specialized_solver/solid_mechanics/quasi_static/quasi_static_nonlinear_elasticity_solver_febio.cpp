@@ -533,8 +533,8 @@ loadFebioOutputFile()
   fileStress.close();
 
   // update function space
-//  LOG(DEBUG) << "geometry field has representation "
-//    << this->data_.functionSpace()->geometryField().partitionedPetscVec()->getCurrentRepresentationString();
+  LOG(DEBUG) << "geometry field has representation "
+    << this->data_.functionSpace()->geometryField().partitionedPetscVec()->getCurrentRepresentationString();
 
   this->data_.functionSpace()->geometryField().finishGhostManipulation();
   this->data_.functionSpace()->geometryField().setValuesWithoutGhosts(geometryValues);

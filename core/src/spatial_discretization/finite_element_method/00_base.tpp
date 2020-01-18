@@ -89,7 +89,18 @@ initialize()
   // assemble stiffness matrix
   Control::PerformanceMeasurement::start("durationSetStiffnessMatrix");
   setStiffnessMatrix();
+
+  // save the stiffness matrix also in the other slot, that will not be overwritten by applyBoundaryConditions
+  PetscErrorCode ierr = MatCopy(this->data_.stiffnessMatrix()->valuesGlobal(),
+                                this->data_.stiffnessMatrixWithoutBc()->valuesGlobal(), DIFFERENT_NONZERO_PATTERN); CHKERRV(ierr);
+
   Control::PerformanceMeasurement::stop("durationSetStiffnessMatrix");
+
+  if (updatePrescribedValuesFromSolution_)
+  {
+    PetscUtility::dumpMatrix("stiffnessmatrix_w", "matlab", this->data_.stiffnessMatrixWithoutBc()->valuesGlobal(), MPI_COMM_WORLD);
+    PetscUtility::dumpMatrix("stiffnessmatrix", "matlab", this->data_.stiffnessMatrix()->valuesGlobal(), MPI_COMM_WORLD);
+  }
 
   // set the rhs
   Control::PerformanceMeasurement::start("durationSetRightHandSide");

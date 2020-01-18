@@ -50,6 +50,7 @@ reset()
   Data<FunctionSpaceType>::reset();
 
   // deallocate Petsc matrices
+  this->stiffnessMatrixWithoutBc_ = nullptr;
   this->stiffnessMatrix_ = nullptr;
   LOG(DEBUG) << "stiffnessMatrix_ set to nullptr";
 }
@@ -111,6 +112,7 @@ createPetscObjects()
 
   LOG(DEBUG) << "create new stiffnessMatrix";
   this->stiffnessMatrix_ = std::make_shared<PartitionedPetscMat<FunctionSpaceType>>(meshPartition, nComponents, diagonalNonZeros, offdiagonalNonZeros, "stiffnessMatrix");
+  this->stiffnessMatrixWithoutBc_ = std::make_shared<PartitionedPetscMat<FunctionSpaceType>>(meshPartition, nComponents, diagonalNonZeros, offdiagonalNonZeros, "stiffnessMatrixWithoutBc");
 }
 
 template<typename FunctionSpaceType, int nComponents>
@@ -118,6 +120,13 @@ std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> FiniteElementsBase<Funct
 stiffnessMatrix()
 {
   return this->stiffnessMatrix_;
+}
+
+template<typename FunctionSpaceType, int nComponents>
+std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> FiniteElementsBase<FunctionSpaceType,nComponents>::
+stiffnessMatrixWithoutBc()
+{
+  return this->stiffnessMatrixWithoutBc_;
 }
 
 template<typename FunctionSpaceType, int nComponents>

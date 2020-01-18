@@ -20,8 +20,8 @@ namespace Data
 {
 
 //! constructor
-template<typename FunctionSpaceType,int nComponents>
-FiniteElements<FunctionSpaceType,nComponents,Equation::Dynamic::AnisotropicDiffusion>::
+template<typename FunctionSpaceType,int nComponents,typename Term>
+FiniteElements<FunctionSpaceType,nComponents,Term,Equation::hasGeneralizedLaplaceOperator<Term>>::
 FiniteElements(DihuContext context) :
   FiniteElementsBase<FunctionSpaceType,nComponents>(context),
   DiffusionTensorConstant<FunctionSpaceType>(context.getPythonConfig())
@@ -37,8 +37,8 @@ FiniteElements(DihuContext context) :
 {
 }
 
-template<typename FunctionSpaceType,int nComponents>
-void FiniteElements<FunctionSpaceType,nComponents,Equation::Dynamic::AnisotropicDiffusion>::
+template<typename FunctionSpaceType,int nComponents,typename Term>
+void FiniteElements<FunctionSpaceType,nComponents,Term,Equation::hasGeneralizedLaplaceOperator<Term>>::
 initialize()
 {
   LOG(DEBUG) << "Data::FiniteElements::initialize";

@@ -131,10 +131,12 @@ applyDirichletBoundaryConditions()
   // get abbreviations
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> rightHandSide = this->data_.rightHandSide();
   std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> stiffnessMatrix = this->data_.stiffnessMatrix();
+  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> stiffnessMatrixWithoutBc = this->data_.stiffnessMatrixWithoutBc();
 
-  // apply the boundary conditions in stiffness matrix (set bc rows and columns of matrix to 0 and diagonal to 1), also add terms with matrix entries to rhs
+  // apply the boundary conditions in stiffness matrix
+  // (set bc rows and columns of stiffnessMatrix to 0 and diagonal to 1), also add terms with matrix entries to rhs, for the reading of matrix entries, stiffnessMatrixWithoutBc is used.
   LOG(DEBUG) << "call applyInSystemMatrix from applyBoundaryConditions, this->systemMatrixAlreadySet: " << this->systemMatrixAlreadySet_;
-  dirichletBoundaryConditions_->applyInSystemMatrix(stiffnessMatrix, rightHandSide, this->systemMatrixAlreadySet_);
+  dirichletBoundaryConditions_->applyInSystemMatrix(stiffnessMatrixWithoutBc, stiffnessMatrix, rightHandSide, this->systemMatrixAlreadySet_);
   this->systemMatrixAlreadySet_ = true;
 
   // set prescribed values in rhs

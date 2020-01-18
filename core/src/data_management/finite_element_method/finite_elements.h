@@ -34,10 +34,12 @@ public:
 };
 
 /*
- * partial specialization for term with constant diffusion tensor
+ * partial specialization for term with constant diffusion tensor, e.g.
+ * Equation::Dynamic::AnisotropicDiffusion or
+ * Equation::Static::GeneralizedLaplace
  */
-template<typename FunctionSpaceType,int nComponents>
-class FiniteElements<FunctionSpaceType,nComponents,Equation::Dynamic::AnisotropicDiffusion> :
+template<typename FunctionSpaceType,int nComponents,typename Term>
+class FiniteElements<FunctionSpaceType,nComponents,Term,Equation::hasGeneralizedLaplaceOperator<Term>> :
   public FiniteElementsBase<FunctionSpaceType,nComponents>,
   public DiffusionTensorConstant<FunctionSpaceType>
 {
@@ -49,6 +51,7 @@ public:
   // !intialize base class and diffusion tensor
   virtual void initialize();
 };
+
 
 /** for directional diffusion use the diffusion tensor that depends upon a direction field
  */

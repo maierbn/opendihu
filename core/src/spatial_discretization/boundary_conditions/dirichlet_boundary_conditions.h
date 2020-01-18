@@ -37,9 +37,13 @@ public:
 
   typedef std::array<double,nComponents> ValueType;
 
-  //! set the boundary conditions to system matrix, i.e. zero rows and columns of Dirichlet BC dofs and set diagonal to 1. Store the cleared matrix values in boundaryConditionsRightHandSideSummand such that they can be used for adjusting the rhs vector afterwards
-  //! @param systemMatrixAlreadySet: if this is true, then the systemMatrix is not changed. This is useful in a timestepping scheme where the dirichlet BC dofs do not change over time.
-  void applyInSystemMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> systemMatrix,
+  //! Set the boundary conditions in system matrix systemMatrixWrite, i.e. zero rows and columns of Dirichlet BC dofs and set diagonal to 1.
+  //! Store the cleared matrix values (from systemMatrixRead) in boundaryConditionsRightHandSideSummand such that they can be used for adjusting the rhs vector afterwards.
+  //! @param systemMatrixRead This matrix is used to read matrix values. It can be the same as systemMatrixWrite.
+  //! @param systemMatrixWrite This matrix is changed, i.e. zeroed rows and columns.
+  //! @param systemMatrixAlreadySet: if this is true, then the systemMatrixWrite is not changed. This is useful in a timestepping scheme where the dirichlet BC dofs do not change over time.
+  void applyInSystemMatrix(const std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> systemMatrixRead,
+                           std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> systemMatrixWrite,
                            std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> boundaryConditionsRightHandSideSummand,
                            bool systemMatrixAlreadySet=false);
 

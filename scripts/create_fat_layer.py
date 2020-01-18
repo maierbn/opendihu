@@ -104,7 +104,7 @@ with open(input_filename, "rb") as infile:
   print("n valid: {}, n invalid: {}".format(n_streamlines_valid, n_streamlines_invalid))
   
   # create mesh, oriented in x and z direction along fibers, in y direction normal to muscle belly
-  x_stride = 1
+  x_stride = 2
   z_stride = 50
   y_size = 5
   thickness = 10.0

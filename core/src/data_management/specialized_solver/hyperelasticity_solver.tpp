@@ -39,11 +39,11 @@ createPetscObjects()
   pressure_                      = this->pressureFunctionSpace_->template createFieldVariable<1>("p");     //<  p, the pressure variable
   pressurePreviousTimestep_      = this->pressureFunctionSpace_->template createFieldVariable<1>("p_previous");     //<  p, the pressure variable
 
-  std::vector<std::string> componentNamesS({"S_11", "S_22", "S_33", "S_12", "S_13", "S_23"});
+  std::vector<std::string> componentNamesS{"S_11", "S_22", "S_33", "S_12", "S_13", "S_23"};
   pK2Stress_               = this->displacementsFunctionSpace_->template createFieldVariable<6>("PK2-Stress (Voigt)", componentNamesS);     //<  the symmetric PK2 stress tensor in Voigt notation
   activePK2Stress_         = this->displacementsFunctionSpace_->template createFieldVariable<6>("active PK2-Stress (Voigt)", componentNamesS);     //<  the symmetric active PK2 stress tensor in Voigt notation
 
-  std::vector<std::string> componentNamesF({"F_11, F_12, F_13, F_21, F_22, F_23, F_31, F_32, F_33"});
+  std::vector<std::string> componentNamesF{"F_11", "F_12", "F_13", "F_21", "F_22", "F_23", "F_31", "F_32", "F_33"};
   deformationGradient_     = this->displacementsFunctionSpace_->template createFieldVariable<9>("F", componentNamesF);
 }
 

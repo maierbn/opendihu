@@ -6,6 +6,8 @@
 #include "time_stepping_scheme/00_time_stepping_scheme.h"
 #include "data_management/specialized_solver/muscle_contraction_solver.h"
 #include "specialized_solver/solid_mechanics/dynamic_hyperelasticity/dynamic_hyperelasticity_solver.h"
+#include "equation/mooney_rivlin_incompressible.h"
+#include "data_management/specialized_solver/muscle_contraction_solver.h"
 
 /** Solve the incompressible, transversely isotropic Mooney-Rivlin material with active stress contribution.
  */
@@ -14,13 +16,14 @@ class MuscleContractionSolver :
   public TimeSteppingScheme::TimeSteppingScheme
 {
 public:
-  typedef DynamicHyperelasticitySolver<Equation::SolidMechanics::MooneyRivlinIncompressible3D> DynamicHyperelasticitySolverType;
+  typedef Equation::SolidMechanics::TransverselyIsotropicMooneyRivlinIncompressibleActive3D Term;
+  typedef ::TimeSteppingScheme::DynamicHyperelasticitySolver<Term> DynamicHyperelasticitySolverType;
 
   //! make the DisplacementsFunctionSpace of the DynamicHyperelasticitySolver class available
   typedef typename DynamicHyperelasticitySolverType::DisplacementsFunctionSpace FunctionSpace;
 
   //! define the type of the data object,
-  typedef typename DynamicHyperelasticitySolverType::Data Data;
+  typedef typename Data::MuscleContractionSolver<FunctionSpace> Data;
 
   //! Define the type of data that will be transferred between solvers when there is a coupling scheme.
   //! Usually you define this type in the "Data" class and reuse it here.
@@ -50,5 +53,15 @@ public:
 
 protected:
 
+  //! compute the active stress tensor field from lambda
+  void computeActiveStress();
+
+  //! compute λ and λ_dot for data transfer
+  void computeLambda();
+
   DynamicHyperelasticitySolverType dynamicHyperelasticitySolver_;   //< the dynamic hyperelasticity solver that solves for the contraction
+
+  Data data_;   //< the data object that holds all field variables
+
+  double pmax_;   //< settings of "Pmax" maximum active stress of the muscle
 };

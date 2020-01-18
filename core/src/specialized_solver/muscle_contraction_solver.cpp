@@ -1,17 +1,21 @@
-#include "specialized_solver/my_new_solver/my_new_timestepping_solver.h"
+#include "specialized_solver/muscle_contraction_solver.h"
 
 #include <omp.h>
 #include <sstream>
+
+#include "utility/math_utility.h"
 
 MuscleContractionSolver::
 MuscleContractionSolver(DihuContext context) :
   Runnable(),
   ::TimeSteppingScheme::TimeSteppingScheme(context["MuscleContractionSolver"]),
-  dynamicHyperelasticitySolver_(this->context_)
+  dynamicHyperelasticitySolver_(this->context_),
+  data_(this->context_)
 {
   // get python settings object from context
   this->specificSettings_ = this->context_.getPythonConfig();
 
+  pmax_ = this->specificSettings_.getOptionDouble("Pmax", 1.0, PythonUtility::Positive);
 }
 
 void MuscleContractionSolver::
@@ -41,34 +45,28 @@ advanceTimeSpan()
       LOG(INFO) << "MuscleContractionSolver, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
     }
 
+    // compute the current active stress
+    computeActiveStress();
+
     this->dynamicHyperelasticitySolver_.setTimeSpan(currentTime, currentTime+this->timeStepWidth_);
 
     // advance the simulation by the specified time span
     dynamicHyperelasticitySolver_.advanceTimeSpan();
+
+    // compute new values of λ and λ_dot, to be transferred to the CellML solvers
+    computeLambda();
 
     // advance simulation time
     timeStepNo++;
 
     // compute new current simulation time
     currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
-
-    // stop duration measurement
-    if (this->durationLogKey_ != "")
-      Control::PerformanceMeasurement::stop(this->durationLogKey_);
-
-    // write current output values using the output writers
-    this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime);
-
-    // start duration measurement
-    if (this->durationLogKey_ != "")
-      Control::PerformanceMeasurement::start(this->durationLogKey_);
   }
 
   // stop duration measurement
   if (this->durationLogKey_ != "")
     Control::PerformanceMeasurement::stop(this->durationLogKey_);
 }
-
 
 void MuscleContractionSolver::
 initialize()
@@ -80,8 +78,21 @@ initialize()
 
   // call initialize of the nested timestepping solver
   dynamicHyperelasticitySolver_.initialize();
-}
 
+  // In order to initialize the data object and actuall create all variables, we first need to assign a function space to the data object.
+  // A function space object of type FunctionSpace<MeshType,BasisFunctionType> (see "function_space/function_space.h")
+  // is an object that stores the mesh (e.g., all nodes and elements) as well as the basis function (e.g. linear Lagrange basis functions).
+  // The dynamicHyperelasticitySolver_ solver already created a function space that we should use. We already have a typedef "FunctionSpace" that is the class of dynamicHyperelasticitySolver_'s function space type.
+  std::shared_ptr<FunctionSpace> functionSpace = dynamicHyperelasticitySolver_.data().functionSpace();
+
+  // Pass the function space to the data object. data_ stores field variables.
+  // It needs to know the number of nodes and degrees of freedom (dof) from the function space in order to create the vectors with the right size.
+  data_.setFunctionSpace(functionSpace);
+
+  // now call initialize, data will then create all variables (Petsc Vec's)
+  data_.initialize();
+
+}
 
 void MuscleContractionSolver::
 run()
@@ -94,7 +105,6 @@ run()
   advanceTimeSpan();
 }
 
-
 void MuscleContractionSolver::
 reset()
 {
@@ -103,20 +113,131 @@ reset()
   // "uninitialize" everything
 }
 
+void MuscleContractionSolver::
+computeLambda()
+{
+  typedef typename DynamicHyperelasticitySolverType::HyperelasticitySolverType::DisplacementsFieldVariableType DisplacementsFieldVariableType;
+  typedef typename DynamicHyperelasticitySolverType::HyperelasticitySolverType::Data::DeformationGradientFieldVariableType DeformationGradientFieldVariableType;
+  typedef typename Data::ScalarFieldVariableType FieldVariableType;
+
+  std::shared_ptr<DisplacementsFieldVariableType> fiberDirectionVariable = dynamicHyperelasticitySolver_.hyperelasticitySolver().data().fiberDirection();
+  std::shared_ptr<DeformationGradientFieldVariableType> deformationGradientVariable = dynamicHyperelasticitySolver_.hyperelasticitySolver().data().deformationGradient();
+
+
+  // compute lambda and \dot{lambda} (contraction velocity)
+  //std::shared_ptr<DisplacementsFieldVariableType> displacementsVariable = dynamicHyperelasticitySolver_.data().displacements();
+  std::shared_ptr<DisplacementsFieldVariableType> velocitiesVariable = dynamicHyperelasticitySolver_.data().velocities();
+
+  std::shared_ptr<FieldVariableType> lambdaVariable = data_.lambda();
+  std::shared_ptr<FieldVariableType> lambdaDotVariable = data_.lambdaDot();
+
+  // loop over local degrees of freedom
+  for (dof_no_t dofNoLocal = 0; dofNoLocal < data_.functionSpace()->nDofsLocalWithoutGhosts(); dofNoLocal++)
+  {
+    const Vec3 fiberDirection = fiberDirectionVariable->getValue(dofNoLocal);
+    //const Vec3 displacement = displacementsVariable->getValue(dofNoLocal);
+    const VecD<9> deformationGradientValues = deformationGradientVariable->getValue(dofNoLocal);
+
+    // create matrix, deformationGradientValues are in row-major order
+    MathUtility::Matrix<3,3> deformationGradient(deformationGradientValues);
+
+    // fiberDirection is normalized
+    assert (MathUtility::norm<3>(fiberDirection) - 1.0 < 1e-10);
+
+    // get deformation gradient, project lambda and lambda dot
+    // dx = F dX, dx^2 = C dX^2
+    // project displacements on normalized fiberDirection
+    //const double lambda = displacement[0] * fiberDirection[0] + displacement[1] * fiberDirection[1] + displacement[2] * fiberDirection[2];
+
+    Vec3 fiberDirectionCurrentConfiguration = deformationGradient * fiberDirection;
+    const double lambda = MathUtility::norm<3>(fiberDirectionCurrentConfiguration);
+    const double lambdaDot = 0.0;  // TODO
+
+    lambdaVariable->setValue(dofNoLocal, lambda);
+    lambdaDotVariable->setValue(dofNoLocal, lambdaDot);
+  }
+
+  lambdaVariable->zeroGhostBuffer();
+  lambdaVariable->finishGhostManipulation();
+  lambdaVariable->startGhostManipulation();
+
+  lambdaDotVariable->zeroGhostBuffer();
+  lambdaDotVariable->finishGhostManipulation();
+  lambdaDotVariable->startGhostManipulation();
+}
+
+void MuscleContractionSolver::
+computeActiveStress()
+{
+  typedef typename DynamicHyperelasticitySolverType::HyperelasticitySolverType::StressFieldVariableType StressFieldVariableType;
+  typedef typename DynamicHyperelasticitySolverType::HyperelasticitySolverType::DisplacementsFieldVariableType DisplacementsFieldVariableType;
+  typedef typename Data::ScalarFieldVariableType FieldVariableType;
+
+  std::shared_ptr<StressFieldVariableType> activePK2StressVariable = dynamicHyperelasticitySolver_.hyperelasticitySolver().data().activePK2Stress();
+  std::shared_ptr<DisplacementsFieldVariableType> fiberDirectionVariable = dynamicHyperelasticitySolver_.hyperelasticitySolver().data().fiberDirection();
+
+  std::shared_ptr<FieldVariableType> lambdaVariable = data_.lambda();
+  std::shared_ptr<FieldVariableType> gammaVariable = data_.gamma();
+
+  // Heidlauf 2013: "Modeling the Chemoelectromechanical Behavior of Skeletal Muscle Using the Parallel Open-Source Software Library OpenCMISS", p.4, Eq. (11)
+
+  const double lambdaOpt = 1.2;
+
+  // loop over local degrees of freedom
+  for (dof_no_t dofNoLocal = 0; dofNoLocal < data_.functionSpace()->nDofsLocalWithoutGhosts(); dofNoLocal++)
+  {
+    const Vec3 fiberDirection = fiberDirectionVariable->getValue(dofNoLocal);
+
+    const double lambda = lambdaVariable->getValue(dofNoLocal);
+    const double gamma = gammaVariable->getValue(dofNoLocal);
+    const double lambdaRelative = lambda / lambdaOpt;
+
+    // compute f function
+    double f = 0;
+    if (0.6 <= lambdaRelative && lambdaRelative <= 1.4)
+    {
+      f = -25./4 * lambdaRelative*lambdaRelative + 25./2 * lambdaRelative - 5.25;
+    }
+
+    const double factor = 1./lambda * pmax_ * f * gamma;
+
+    // Voigt notation:
+    // [0][0] -> [0];
+    // [1][1] -> [1];
+    // [2][2] -> [2];
+    // [0][1] -> [3];
+    // [1][0] -> [3];
+    // [1][2] -> [4];
+    // [2][1] -> [4];
+    // [0][2] -> [5];
+    // [2][0] -> [5];
+
+    VecD<6> activeStress;
+    activeStress[0] = factor * fiberDirection[0] * fiberDirection[0];
+    activeStress[1] = factor * fiberDirection[1] * fiberDirection[1];
+    activeStress[2] = factor * fiberDirection[2] * fiberDirection[2];
+    activeStress[3] = factor * fiberDirection[0] * fiberDirection[1];
+    activeStress[4] = factor * fiberDirection[1] * fiberDirection[2];
+    activeStress[5] = factor * fiberDirection[0] * fiberDirection[2];
+
+    activePK2StressVariable->setValue(dofNoLocal, activeStress, INSERT_VALUES);
+  }
+
+  activePK2StressVariable->zeroGhostBuffer();
+  activePK2StressVariable->finishGhostManipulation();
+  activePK2StressVariable->startGhostManipulation();
+}
+
 typename MuscleContractionSolver::Data &MuscleContractionSolver::
 data()
 {
-  // get a reference to the data object of dynamicHyperelasticitySolver_
-  return dynamicHyperelasticitySolver_.data();
+  return data_;
 }
 
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
 //! the transfer is done by the output_connector_data_transfer class
-
 std::shared_ptr<typename MuscleContractionSolver::OutputConnectorDataType> MuscleContractionSolver::
 getOutputConnectorData()
 {
-  //! This is relevant only, if this solver is part of a splitting or coupling scheme. Then this method returns the values/variables that will be
-  // transferred to the other solvers. We can just reuse the values of the timeSteppingScheme_.
-  return dynamicHyperelasticitySolver_.getOutputConnectorData();
+  return data_.getOutputConnectorData();
 }

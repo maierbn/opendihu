@@ -83,6 +83,12 @@ materialComputeInternalVirtualWork()
     std::array<Vec3,nDisplacementsDofsPerElement> elementalDirectionValues;
     this->data_.fiberDirection()->getElementValues(elementNoLocal, elementalDirectionValues);
 
+    std::array<VecD<6>,nDisplacementsDofsPerElement> activePK2StressValues;
+    if (Term::usesActiveStress)
+    {
+      this->data_.activePK2Stress()->getElementValues(elementNoLocal, activePK2StressValues);
+    }
+
     // loop over integration points (e.g. gauss points) for displacements field
     for (unsigned int samplingPointIndex = 0; samplingPointIndex < samplingPoints.size(); samplingPointIndex++)
     {
@@ -124,6 +130,23 @@ materialComputeInternalVirtualWork()
                                                       fictitiousPK2Stress, pk2StressIsochoric
                                                    );
 
+      // add active stress contribution if this material has this
+      if (Term::usesActiveStress)
+      {
+        VecD<6> activePK2StressInVoigtNotation = displacementsFunctionSpace->template interpolateValueInElement<6>(activePK2StressValues, xi);
+
+        pK2Stress[0][0] += activePK2StressInVoigtNotation[0];
+        pK2Stress[1][1] += activePK2StressInVoigtNotation[1];
+        pK2Stress[2][2] += activePK2StressInVoigtNotation[2];
+        pK2Stress[0][1] += activePK2StressInVoigtNotation[3];
+        pK2Stress[1][0] += activePK2StressInVoigtNotation[3];
+        pK2Stress[1][2] += activePK2StressInVoigtNotation[4];
+        pK2Stress[2][1] += activePK2StressInVoigtNotation[4];
+        pK2Stress[0][2] += activePK2StressInVoigtNotation[5];
+        pK2Stress[2][0] += activePK2StressInVoigtNotation[5];
+      }
+
+      // call debugging methods, currently disabled
       this->materialTesting(pressure, rightCauchyGreen, inverseRightCauchyGreen, reducedInvariants, deformationGradientDeterminant, fiberDirection,
         fictitiousPK2Stress, pk2StressIsochoric
       );
@@ -1579,6 +1602,7 @@ computePK2StressField()
 
   //this->data_.pK2Stress()->startGhostManipulation();
   this->data_.pK2Stress()->zeroGhostBuffer();
+  this->data_.deformationGradient()->zeroGhostBuffer();
 
   // get pointer to function space
   std::shared_ptr<DisplacementsFunctionSpace> displacementsFunctionSpace = this->data_.displacementsFunctionSpace();
@@ -1671,6 +1695,18 @@ computePK2StressField()
       Tensor2<D> deformationGradient = this->computeDeformationGradient(displacementsValues, inverseJacobianMaterial, xi);
       double deformationGradientDeterminant = MathUtility::computeDeterminant<D>(deformationGradient);  // J
 
+      // store F values
+      std::array<double,9> deformationGradientValues;
+      for (int j = 0; j < 3; j++)
+      {
+        for (int i = 0; i < 3; i++)
+        {
+          // row-major
+          deformationGradientValues[j*3+i] = deformationGradient[j][i];
+        }
+      }
+      this->data_.deformationGradient()->setValue(dofNoLocal, deformationGradientValues, INSERT_VALUES);
+
       Tensor2<D> rightCauchyGreen = this->computeRightCauchyGreenTensor(deformationGradient);  // C = F^T*F
 
       double rightCauchyGreenDeterminant;   // J^2
@@ -1704,6 +1740,10 @@ computePK2StressField()
   this->data_.pK2Stress()->zeroGhostBuffer();
   this->data_.pK2Stress()->finishGhostManipulation();
   this->data_.pK2Stress()->startGhostManipulation();
+
+  this->data_.deformationGradient()->zeroGhostBuffer();
+  this->data_.deformationGradient()->finishGhostManipulation();
+  this->data_.deformationGradient()->startGhostManipulation();
 }
 
 template<typename Term,int nDisplacementComponents>

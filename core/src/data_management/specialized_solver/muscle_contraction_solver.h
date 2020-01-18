@@ -41,14 +41,24 @@ public:
   //! print all stored data to stdout
   void print();
 
+  //! return a reference to lambda
+  std::shared_ptr<ScalarFieldVariableType> lambda();
+
+  //! return a reference to lambdaDot
+  std::shared_ptr<ScalarFieldVariableType> lambdaDot();
+
+  //! return a reference to lambdaDot
+  std::shared_ptr<ScalarFieldVariableType> gamma();
+
   //! return the object that will be used to transfer values between solvers, in this case this includes only Vm
   std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
 
   //! field variables that will be output by outputWriters
   typedef std::tuple<
     std::shared_ptr<VectorFieldVariableType>,     // geometry, this always has to be the first field variable, such that the output writer knows the geometry of the mesh
-    std::shared_ptr<ScalarFieldVariableType>,     // variableA,
-    std::shared_ptr<VectorFieldVariableType>      // variableB
+    std::shared_ptr<ScalarFieldVariableType>,     // lambda,
+    std::shared_ptr<ScalarFieldVariableType>,     // lambdaDot
+    std::shared_ptr<ScalarFieldVariableType>      // gamma
     // ... add all field variables that you want to have in the output file
   > FieldVariablesForOutputWriter;
 
@@ -60,8 +70,9 @@ private:
   //! create all field variables with their respective sizes, this will be called automatically within initialize by the base class
   void createPetscObjects() override;
 
-  std::shared_ptr<ScalarFieldVariableType> fieldVariableA_;   //< .. add a description of field variable A here!
-  std::shared_ptr<VectorFieldVariableType> fieldVariableB_;   //< .. add a description of field variable B here!
+  std::shared_ptr<ScalarFieldVariableType> lambda_;   //< the relative sarcomere length
+  std::shared_ptr<ScalarFieldVariableType> lambdaDot_;   //< the contraction velocity
+  std::shared_ptr<ScalarFieldVariableType> gamma_;   //< the active stress parameter
 
   std::shared_ptr<OutputConnectorDataType> outputConnectorData_;    ///< the object that stores all components of field variables that will be transferred to other solvers
 
@@ -70,4 +81,4 @@ private:
 
 } // namespace Data
 
-#include "data_management/specialized_solver/my_new_timestepping_solver.tpp"
+#include "data_management/specialized_solver/muscle_contraction_solver.tpp"

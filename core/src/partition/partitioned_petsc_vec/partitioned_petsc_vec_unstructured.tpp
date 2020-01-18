@@ -163,7 +163,7 @@ setValues(int componentNo, PetscInt ni, const PetscInt ix[], const PetscScalar y
   {
     std::stringstream str;
     str << "\"" << this->name_ << "\", representation \""
-      << Partition::valuesRepresentationString[this->currentRepresentation_]
+      << this->getCurrentRepresentationString()
       << "\", setValues(componentNo=" << componentNo << ", indices=";
     for (int i = 0; i < ni; i++)
     {
@@ -521,7 +521,7 @@ output(std::ostream &stream)
     if (ownRankNo == 0)
     {
       stream << "vector \"" << this->name_ << "\", representation \""
-        << Partition::valuesRepresentationString[this->currentRepresentation_] << "\"" << std::endl;
+        << this->getCurrentRepresentationString() << "\"" << std::endl;
       stream << "component " << componentNo << ": [";
       for (int rankNo = 0; rankNo < nRanks; rankNo++)
       {

@@ -30,7 +30,9 @@ config = {
       "relativeTolerance": 1e-4,
       "maxIterations": 1e3,
       "solverType": "gmres",
-      "preconditionerType": "sor"
+      "preconditionerType": "sor",
+      "dumpFilename": "",
+      "dumpFormat": "default",
     }
   },
   "ParallelFiberEstimation" : {
@@ -42,7 +44,8 @@ config = {
     "finalTopZClip":     top_z,           # 250 (220), top z value of the final fibers, fibers will be cropped and resampled to nNodesPerFiber between finalBottomZClip and finalTopZClip
     "useNeumannBoundaryConditions": True, # which type of boundary conditions at top and bottom should be used, Neumann or Dirichlet type  
     "nElementsXPerSubdomain": 4,          # 4 number of elements in x and y-direction per subdomain
-    "nElementsZPerSubdomain": 50,         # number of elements in z-direction per subdomain
+    "nElementsZPerSubdomain": 10,         # number of elements in z-direction per subdomain
+    #"nElementsZPerSubdomain": 50,         # number of elements in z-direction per subdomain
     "nFineGridFibers":   0,               # number of additional fine fibers that are interpolated between the main "key" fibers, the key fibers are traced
     "useGradientField":  False,           # set to False
     "maxLevel":          0,               # maximum level (0=1 process, 1=8 processes, 2=64 processes)
@@ -51,12 +54,13 @@ config = {
     "improveMesh":       True,            # smooth the 2D meshes, required for bigger meshes or larger amount of ranks
     #"refinementFactors": [2,2,2],        # [2,2,2] factors in x,y,z direction by which the mesh should be refined prior to solving the laplace problem and tracing the streamlines
     "refinementFactors": [1,1,1],         # no refinement
-    "maxIterations":     1e5,
+    "maxIterations":     1e5,             # maximum number of iterations per fiber
     "FiniteElementMethod" : {
       "meshName": "potentialFlow",
       "solverName": "linearSolver",
       "dirichletBoundaryConditions": {},
       "prefactor": 1.0,
+      "inputMeshIsGlobal": True,
     },
     "OutputWriter" : [
       {"format": "Paraview", "outputInterval": 1, "filename": "out/biceps", "binary": True, "fixedFormat": False, "combineFiles": False},

@@ -273,8 +273,9 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
   {
     if (!subdomainIsAtBorder[face])
     {
+#if defined(WRITE_CHECKPOINT_GHOST_MESH) || defined(USE_CHECKPOINT_GHOST_MESH) || !defined(NDEBUG)
       int neighbourRankNo = meshPartition_->neighbourRank((Mesh::face_t)face);
-      VLOG(1) << neighbourRankNo;
+#endif
 
 #ifdef WRITE_CHECKPOINT_GHOST_MESH
       std::stringstream filenameOut;

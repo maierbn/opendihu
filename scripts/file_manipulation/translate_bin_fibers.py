@@ -23,9 +23,12 @@ n_fibers_x_extract = 1
 if len(sys.argv) >= 6:
   input_filename = sys.argv[1]
   output_filename = sys.argv[2]
-  translation_x = sys.argv[3]
-  translation_y = sys.argv[4]
-  translation_z = sys.argv[5]
+  translation_x = float(sys.argv[3])
+  translation_y = float(sys.argv[4])
+  translation_z = float(sys.argv[5])
+else:
+  print("usage: translate_bin_fibers.py <input filename> <output filename> <x> <y> <z>")
+  sys.exit(0)
   
 print("input file:         {}".format(input_filename))
 print("output file:        {}".format(output_filename))
@@ -51,7 +54,7 @@ with open(input_filename, "rb") as infile:
   n_fibers_x = (int)(np.sqrt(parameters[0]))
   n_fibers_y = n_fibers_x
   
-  if "version 2" in header_str:   # the version 2 has number of fibers explicitly stored and thus also allows non-square dimension of fibers
+  if "version 2" in header_str.decode('utf-8'):   # the version 2 has number of fibers explicitly stored and thus also allows non-square dimension of fibers
     n_fibers_x = parameters[2]
     n_fibers_y = parameters[3]
   
@@ -60,7 +63,7 @@ with open(input_filename, "rb") as infile:
   print("header: {}".format(header_str))
   print("nFibersTotal:      {n_fibers} = {n_fibers_x} x {n_fibers_y}".format(n_fibers=parameters[0], n_fibers_x=n_fibers_x, n_fibers_y=n_fibers_y))
   print("nPointsWholeFiber: {}".format(parameters[1]))
-  if "version 2" not in header_str:
+  if "version 2" not in header_str.decode('utf-8'):
     print("nBorderPointsXNew: {}".format(parameters[2]))
     print("nBorderPointsZNew: {}".format(parameters[3]))
   print("nFineGridFibers_:  {}".format(parameters[4]))
@@ -111,7 +114,7 @@ with open(input_filename, "rb") as infile:
   with open(output_filename,"wb") as outfile:
     
     infile.seek(0)
-    header_str = "opendihu binary fibers version 2".format(header_str)
+    header_str = str.encode("opendihu binary fibers version 2".format(header_str))
     outfile.write(struct.pack('32s', header_str))
     outfile.write(header_length_raw)
      
@@ -119,12 +122,21 @@ with open(input_filename, "rb") as infile:
     outfile.seek(32+4)
     outfile.write(struct.pack('i', n_fibers_total))
     
+    # write parameter[1]: n_fibers_total
+    outfile.seek(32+2*4)
+    outfile.write(struct.pack('i', parameters[1]))
+    
     # write parameter[2]: n_fibers_x
-    outfile.seek(32+4*4)
+    outfile.seek(32+3*4)
     outfile.write(struct.pack('i', n_fibers_x))
     
     # write parameter[3]: n_fibers_y
+    outfile.seek(32+4*4)
     outfile.write(struct.pack('i', n_fibers_y))
+    
+    for i in range(5,9):
+      outfile.seek(32+i*4)
+      outfile.write(struct.pack('i', parameters[i-1]))
     
     # write timestamp
     outfile.seek(32+9*4)

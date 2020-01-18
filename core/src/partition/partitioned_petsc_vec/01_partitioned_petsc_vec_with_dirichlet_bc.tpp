@@ -82,7 +82,7 @@ valuesGlobal()
   if (this->currentRepresentation_ != Partition::values_representation_t::representationCombinedGlobal)
   {
     VLOG(1) << "valuesGlobal called in not combined-global vector representation ("
-      << Partition::valuesRepresentationString[this->currentRepresentation_]
+      << this->getCurrentRepresentationString()
       <<"), now set to combined-global (without considering ghost dofs, call finishGhostManipulation if ghosts are needed!)";
     setRepresentationGlobal();
   }
@@ -105,7 +105,7 @@ startGhostManipulation()
   if (this->currentRepresentation_ != Partition::values_representation_t::representationCombinedGlobal)
   {
     LOG(FATAL) << "\"" << this->name_ << "\", startGhostManipulation called when representation is not combined-global (but "
-      << Partition::valuesRepresentationString[this->currentRepresentation_]
+      << this->getCurrentRepresentationString()
       << "), this overwrites the previous values and fetches the last from the global vectors!" << std::endl
       << "Call setRepresentationGlobal() before startGhostManipulation() or check if startGhostManipulation() "
       << "is even necessary (because the representation is already local).";
@@ -132,7 +132,7 @@ finishGhostManipulation()
   if (this->currentRepresentation_ != Partition::values_representation_t::representationCombinedLocal)
   {
     LOG(ERROR) << "\"" << this->name_ << "\", finishGhostManipulation called when representation is not combined-local (it is "
-      << Partition::valuesRepresentationString[this->currentRepresentation_]
+      << this->getCurrentRepresentationString()
       << "), (probably no previous startGhostManipulation)";
   }
 
@@ -151,7 +151,7 @@ void PartitionedPetscVecWithDirichletBc<FunctionSpaceType, nComponents, nCompone
 setRepresentationGlobal()
 {
   VLOG(2) << "\"" << this->name_ << "\" PartitionedPetscVecWithDirichletBc::setRepresentationGlobal, previous representation: "
-    << Partition::valuesRepresentationString[this->currentRepresentation_];
+    << this->getCurrentRepresentationString();
 
   if (this->currentRepresentation_ == Partition::values_representation_t::representationCombinedGlobal)
   {
@@ -171,7 +171,7 @@ setRepresentationGlobal()
   }
   else
   {
-    LOG(FATAL) << "Cannot set vector representation from \"" << Partition::valuesRepresentationString[this->currentRepresentation_]
+    LOG(FATAL) << "Cannot set vector representation from \"" << this->getCurrentRepresentationString()
       << "\" to \"combined-global\".";
   }
 }
@@ -181,7 +181,7 @@ void PartitionedPetscVecWithDirichletBc<FunctionSpaceType, nComponents, nCompone
 setRepresentationLocal()
 {
   VLOG(2) << "\"" << this->name_ << "\" setRepresentationLocal, previous representation: "
-    << Partition::valuesRepresentationString[this->currentRepresentation_];
+    << this->getCurrentRepresentationString();
 
   if (this->currentRepresentation_ == Partition::values_representation_t::representationCombinedGlobal)
   {
@@ -195,7 +195,7 @@ setRepresentationLocal()
   }
   else
   {
-    LOG(FATAL) << "Cannot set vector representation from \"" << Partition::valuesRepresentationString[this->currentRepresentation_]
+    LOG(FATAL) << "Cannot set vector representation from \"" << this->getCurrentRepresentationString()
       << "\" to \"combined-local\".";
   }
 }
@@ -221,7 +221,7 @@ template<typename FunctionSpaceType, int nComponents, int nComponentsDirichletBc
 void PartitionedPetscVecWithDirichletBc<FunctionSpaceType, nComponents, nComponentsDirichletBc>::
 setValues(int componentNo, PetscInt ni, const PetscInt ix[], const PetscScalar y[], InsertMode iora)
 {
-  VLOG(3) << "\"" << this->name_ << "\" setValues, representation: " << Partition::valuesRepresentationString[this->currentRepresentation_];
+  VLOG(3) << "\"" << this->name_ << "\" setValues, representation: " << this->getCurrentRepresentationString();
 
   assert(componentNo >= 0 && componentNo < nComponents);
 
@@ -303,7 +303,7 @@ template<typename FunctionSpaceType, int nComponents, int nComponentsDirichletBc
 void PartitionedPetscVecWithDirichletBc<FunctionSpaceType, nComponents, nComponentsDirichletBc>::
 setValue(int componentNo, PetscInt row, PetscScalar value, InsertMode mode)
 {
-  VLOG(3) << "\"" << this->name_ << "\" setValue row=" << row << ", representation: " << Partition::valuesRepresentationString[this->currentRepresentation_];
+  VLOG(3) << "\"" << this->name_ << "\" setValue row=" << row << ", representation: " << this->getCurrentRepresentationString();
 
   assert(componentNo >= 0 && componentNo < nComponents);
 
@@ -369,7 +369,7 @@ template<typename FunctionSpaceType, int nComponents, int nComponentsDirichletBc
 void PartitionedPetscVecWithDirichletBc<FunctionSpaceType, nComponents, nComponentsDirichletBc>::
 getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[]) const
 {
-  VLOG(3) << "\"" << this->name_ << "\" getValues, representation: " << Partition::valuesRepresentationString[this->currentRepresentation_];
+  VLOG(3) << "\"" << this->name_ << "\" getValues, representation: " << this->getCurrentRepresentationString();
 
   assert(componentNo >= 0 && componentNo < nComponents);
 
@@ -544,7 +544,7 @@ template<typename FunctionSpaceType, int nComponents, int nComponentsDirichletBc
 void PartitionedPetscVecWithDirichletBc<FunctionSpaceType, nComponents, nComponentsDirichletBc>::
 zeroEntries()
 {
-  VLOG(3) << "\"" << this->name_ << "\" zeroEntries, representation: " << Partition::valuesRepresentationString[this->currentRepresentation_];
+  VLOG(3) << "\"" << this->name_ << "\" zeroEntries, representation: " << this->getCurrentRepresentationString();
 
   PetscErrorCode ierr;
   //if (this->currentRepresentation_ == Partition::values_representation_t::representationCombinedLocal)

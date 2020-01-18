@@ -37,7 +37,7 @@ restoreValuesContiguous()
   if (this->currentRepresentation_ != Partition::values_representation_t::representationContiguous)
   {
     LOG(FATAL) << "Called restoreValuesContiguous() in representation "
-      << Partition::valuesRepresentationString[this->currentRepresentation_] << ", probably without previous getValuesContiguous()";
+      << this->getCurrentRepresentationString() << ", probably without previous getValuesContiguous()";
   }
 
   // copy values from component vectors to contiguous vector

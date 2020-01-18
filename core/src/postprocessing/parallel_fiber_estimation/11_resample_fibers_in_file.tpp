@@ -68,6 +68,9 @@ resampleFibersInFile(int nPointsPerFiber, std::string filename)
   // copy header
   std::vector<char> headerBuffer(32+headerLength);
   fileOld.read(headerBuffer.data(), 32+headerLength);
+
+  // set first 32 bytes
+  strncpy(headerBuffer.data(), "opendihu fibers file            ", 32);
   fileNew.write(headerBuffer.data(), 32+headerLength);
 
   // write new number of points per fiber

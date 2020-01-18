@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Script to examine generated streamlines.
+# Script to examine generated streamlines, for pickle files.
+# For *.bin files, use examine_bin_fibers.py
 #
-# usage: ./examine_fibre.py [<filename> [<no_plots>]]
+# usage: ./examine_pickle_fibers.py [<filename.pickle> [<no_plots>]]
 
 import pickle
 import numpy as np

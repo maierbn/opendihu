@@ -23,16 +23,16 @@ public:
   std::vector<PetscInt> &localDofNos();
   
   //! get the meshPartition
-  const std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> meshPartition();
+  const std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> meshPartition() const;
   
   //! get the name of the vector
-  std::string name();
+  std::string name() const;
 
   //! get the current internal data representation
-  Partition::values_representation_t currentRepresentation();
+  Partition::values_representation_t currentRepresentation() const;
 
   //! get a string of the current representation
-  std::string getCurrentRepresentationString();
+  std::string getCurrentRepresentationString() const;
 
 protected:
   

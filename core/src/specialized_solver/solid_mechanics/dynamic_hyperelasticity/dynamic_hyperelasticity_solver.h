@@ -28,6 +28,8 @@ public:
   typedef PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace,6> VecHyperelasticity;
   typedef PartitionedPetscMatForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace,6> MatHyperelasticity;
 
+  typedef Data::DynamicHyperelasticitySolver<DisplacementsFunctionSpace> Data;
+
   //! constructor
   DynamicHyperelasticitySolver(DihuContext context);
 
@@ -40,6 +42,13 @@ public:
   //! run the whole simulation, repeatedly calls advanceTimeSpan
   void run();
 
+  //! return the data object, with the call to this method the output writers get the data to create their output files
+  Data &data();
+
+  //! get a reference to the underlying HyperelasticitySolver which has the material formulation and the nonlinear solver
+  HyperelasticitySolverType& hyperelasticitySolver();
+
+
 private:
 
   //! set initial values for u and v from settings
@@ -49,7 +58,7 @@ private:
   void callUpdateDirichletBoundaryConditionsFunction(double t);
 
   HyperelasticitySolverType hyperelasticitySolver_;  //< hyperelasticity solver that solver the static problem
-  Data::DynamicHyperelasticitySolver<DisplacementsFunctionSpace> data_;
+  Data data_;
 
   double density_;   //< density rho, used for inertia
 

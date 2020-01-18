@@ -68,6 +68,9 @@ public:
   //! return reference to a stiffness matrix
   std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> stiffnessMatrix();
 
+  //! return reference to a stiffness matrix, this matrix stays the initial stifness matrix and will not be changed for boundary conditions
+  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> stiffnessMatrixWithoutBc();
+
   //! get the mass matrix
   std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> massMatrix();
 
@@ -97,7 +100,8 @@ private:
   //! initializes the vectors and stiffness matrix with size
   void createPetscObjects();
 
-  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> stiffnessMatrix_;      ///< the standard stiffness matrix of the finite element formulation
+  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> stiffnessMatrixWithoutBc_;      ///< the standard stiffness matrix of the finite element formulation, without Dirichlet boundary conditions applied
+  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> stiffnessMatrix_;      ///< the standard stiffness matrix of the finite element formulation, dofs with Dirichlet BCs will get the columns and rows cleared and diagonal set to 1.
   std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> massMatrix_;           ///< the standard mass matrix, which is a matrix that, applied to a rhs vector f, gives the rhs vector in weak formulation
   std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> inverseLumpedMassMatrix_;         ///< the inverse lumped mass matrix that has only entries on the diagonal, they are the reciprocal of the row sums of the mass matrix
 

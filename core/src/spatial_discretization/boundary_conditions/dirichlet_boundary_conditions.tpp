@@ -570,6 +570,9 @@ updatePrescribedValuesFromSolution(std::shared_ptr<FieldVariable::FieldVariable<
   // std::vector<dof_no_t> boundaryConditionNonGhostDofLocalNos_;        ///< vector of all local (non-ghost) boundary condition dofs, sorted
   // std::vector<ValueType> boundaryConditionValues_;               ///< vector of the local (non-ghost) prescribed values, related to boundaryConditionNonGhostDofLocalNos_
 
+  std::stringstream stream;
+  stream << "bc = {";
+
   // copy values where a dof is prescribed to boundaryConditionValues_
   for (int i = 0; i < this->boundaryConditionNonGhostDofLocalNos_.size(); i++)
   {
@@ -578,7 +581,9 @@ updatePrescribedValuesFromSolution(std::shared_ptr<FieldVariable::FieldVariable<
 
     LOG(DEBUG) << "set bc value[" << i << "] for dof " << boundaryConditionNonGhostDofLocalNo
       << " to " << solutionValues[boundaryConditionNonGhostDofLocalNo];
+    stream << boundaryConditionNonGhostDofLocalNo << ": " << solutionValues[boundaryConditionNonGhostDofLocalNo][0] << ", ";
   }
+  LOG(DEBUG) << stream.str() << "}";
 
 
 
@@ -597,14 +602,17 @@ updatePrescribedValuesFromSolution(std::shared_ptr<FieldVariable::FieldVariable<
     std::array<ValueType, FunctionSpaceType::nDofsPerElement()> values;
     solution->getElementValues(iter->elementNoLocal, values);
 
-    LOG(DEBUG) << "solution in element has values " << values;
+    std::stringstream s;
 
     // loop over dofs with prescribed values
     for (int i = 0; i < iter->elementalDofIndex.size(); i++)
     {
       int elementalDofIndex = iter->elementalDofIndex[i].first;
       iter->elementalDofIndex[i].second = values[elementalDofIndex];
+      s << iter->elementalDofIndex[i].second[0] << " ";
     }
+
+    LOG(DEBUG) << "solution in element " << iter->elementNoLocal << " has prescribed values " << s.str();
   }
 
   // set boundaryConditionsByComponent_
@@ -618,11 +626,12 @@ updatePrescribedValuesFromSolution(std::shared_ptr<FieldVariable::FieldVariable<
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
   {
     std::vector<dof_no_t> &dofNosLocal = this->boundaryConditionsByComponent_[componentNo].dofNosLocal;
-    std::vector<double> &values = this->boundaryConditionsByComponent_[componentNo].values;
+    std::vector<double> &solutionValuesComponent = this->boundaryConditionsByComponent_[componentNo].values;
+    solutionValuesComponent.clear();
 
-    solution->getValues(componentNo, dofNosLocal, values);
+    solution->getValues(componentNo, dofNosLocal, solutionValuesComponent);
 
-    LOG(DEBUG) << "set all values for component " << componentNo << ": " << values << ", dofs: " << dofNosLocal;
+    LOG(DEBUG) << "set all values for component " << componentNo << ": " << solutionValuesComponent << ", dofs: " << dofNosLocal;
   }
 
   // set foreignGhostElements_
@@ -660,7 +669,8 @@ updatePrescribedValuesFromSolution(std::shared_ptr<FieldVariable::FieldVariable<
 // set the boundary conditions to system matrix, i.e. zero rows and columns of Dirichlet BC dofs and set diagonal to 1
 template<typename FunctionSpaceType,int nComponents>
 void DirichletBoundaryConditions<FunctionSpaceType,nComponents>::
-applyInSystemMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> systemMatrix,
+applyInSystemMatrix(const std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> systemMatrixRead,
+                    std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> systemMatrixWrite,
                     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> boundaryConditionsRightHandSideSummand,
                     bool systemMatrixAlreadySet
                    )
@@ -723,7 +733,7 @@ applyInSystemMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> syst
 
       // get matrix entries that correspond to column boundaryConditionColumnDofNoLocal
       std::vector<double> values(rowDofNosLocalWithoutGhosts.size());
-      systemMatrix->getValues(rowDofNosLocalWithoutGhosts.size(), rowDofNosLocalWithoutGhosts.data(), 1, &columnNo, values.data());
+      systemMatrixRead->getValues(rowDofNosLocalWithoutGhosts.size(), rowDofNosLocalWithoutGhosts.data(), 1, &columnNo, values.data());
 
       // scale values with -boundaryConditionValue
       for (double &v : values)
@@ -765,7 +775,7 @@ applyInSystemMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> syst
 
       VLOG(1) << "  dof " << columnDofNoGlobalPetsc << " (global PETSc), BC value: " << boundaryConditionValue;
 
-      VLOG(1) << "systemMatrix->getValuesGlobalPetscIndexing(" << rowDofsGlobal << "," << columnDofNoGlobalPetsc << ")";
+      VLOG(1) << "systemMatrixRead->getValuesGlobalPetscIndexing(" << rowDofsGlobal << "," << columnDofNoGlobalPetsc << ")";
 
       // store the boundary condition value to action
       global_no_t boundaryConditionColumnDofNoGlobal = columnDofNoGlobalPetsc;
@@ -777,7 +787,7 @@ applyInSystemMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> syst
       // commented out code would perform action
 /*
       std::vector<double> values(rowDofsGlobal.size());
-      systemMatrix->getValuesGlobalPetscIndexing(rowDofsGlobal.size(), rowDofsGlobal.data(), 1, &columnDofNoGlobalPetsc, values.data());
+      systemMatrixRead->getValuesGlobalPetscIndexing(rowDofsGlobal.size(), rowDofsGlobal.data(), 1, &columnDofNoGlobalPetsc, values.data());
 
       // scale values with -boundaryConditionValue
       for (double &v : values)
@@ -821,6 +831,10 @@ applyInSystemMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> syst
   LOG(DEBUG) << "dirichlet boundary conditions in system matrix: execute actions, adjust rhs summand";
 
   // execute actions
+  // One action is the following:
+  //   1. get matrix entry M_{row,col}
+  //   2. update rhs rhs_{row} -= M_{row,col}*BC_col
+  // The row and column indices are stored in global PETSc ordering.
   for (typename std::map<global_no_t, std::pair<ValueType, std::set<global_no_t>>>::iterator actionIter = action.begin();
        actionIter != action.end(); actionIter++)
   {
@@ -839,7 +853,7 @@ applyInSystemMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> syst
 
     // get the values of the column from the matrix
     std::vector<ValueType> values(rowDofNoGlobalPetsc.size());
-    systemMatrix->template getValuesGlobalPetscIndexing<nComponents>(rowDofNoGlobalPetsc.size(), rowDofNoGlobalPetsc.data(), 1, &columnDofNoGlobalPetsc, values);
+    systemMatrixRead->template getValuesGlobalPetscIndexing<nComponents>(rowDofNoGlobalPetsc.size(), rowDofNoGlobalPetsc.data(), 1, &columnDofNoGlobalPetsc, values);
 
     VLOG(1) << "system matrix, col " << columnDofNoGlobalPetsc << ", rows " << rowDofNoGlobalPetsc << ", values: " << values;
 
@@ -924,7 +938,7 @@ applyInSystemMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> syst
 
   // zero entries in stiffness matrix that correspond to dirichlet dofs
 
-  //systemMatrix->assembly(MAT_FLUSH_ASSEMBLY);
+  //systemMatrixWrite->assembly(MAT_FLUSH_ASSEMBLY);
 
   if (systemMatrixAlreadySet)
   {
@@ -959,7 +973,7 @@ applyInSystemMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> syst
 
           // set entries in nested system matrices to zero
           // Actually, the rows and columns corresponding to each BC dof have to be zeroed out. Here, we set the columns to zero,
-          // later, systemMatrix->zeroRowsColumns zeros out the rows only.
+          // later, systemMatrixWrite->zeroRowsColumns zeros out the rows only.
           // We have to use the global indexing, because the column maybe a non-local dof, but all global columns of the local rows are stored on the own rank always.
 
           // zero out column in all component matrices with row component "componentIndex" and column component "componentNo"
@@ -976,24 +990,24 @@ applyInSystemMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> syst
 
             int zeroComponentNo = componentIndex*nComponents + componentNo;
             VLOG(1) << "zeroComponentNo: " << zeroComponentNo << ", columnDofNoGlobalPetsc: " << columnDofNoGlobalPetsc;
-            systemMatrix->setValuesGlobalPetscIndexing(zeroComponentNo, rowDofNoGlobalPetsc.size(), rowDofNoGlobalPetsc.data(), 1, &columnDofNoGlobalPetsc, zeros.data(), INSERT_VALUES);
+            systemMatrixWrite->setValuesGlobalPetscIndexing(zeroComponentNo, rowDofNoGlobalPetsc.size(), rowDofNoGlobalPetsc.data(), 1, &columnDofNoGlobalPetsc, zeros.data(), INSERT_VALUES);
           }
         }
       }
     }
 
-    systemMatrix->assembly(MAT_FINAL_ASSEMBLY);
+    systemMatrixWrite->assembly(MAT_FINAL_ASSEMBLY);
 
     // set values of row and column of the dofs to zero and diagonal entry to 1
     //LOG(DEBUG) << "apply dirichlet BC: zeroRowsColumns at dofs " << this->boundaryConditionNonGhostDofLocalNos_;
     for (int componentNo = 0; componentNo < nComponents; componentNo++)
     {
       VLOG(1) << "zero rowsColumns componentNo " << componentNo;
-      systemMatrix->zeroRowsColumns(componentNo, this->boundaryConditionsByComponent_[componentNo].dofNosLocal.size(), this->boundaryConditionsByComponent_[componentNo].dofNosLocal.data(), 1.0);
+      systemMatrixWrite->zeroRowsColumns(componentNo, this->boundaryConditionsByComponent_[componentNo].dofNosLocal.size(), this->boundaryConditionsByComponent_[componentNo].dofNosLocal.data(), 1.0);
     }
 
-    systemMatrix->assembly(MAT_FINAL_ASSEMBLY);
-    VLOG(1) << "stiffness matrix after apply Dirichlet BC: " << *systemMatrix;
+    systemMatrixWrite->assembly(MAT_FINAL_ASSEMBLY);
+    VLOG(1) << "stiffness matrix after apply Dirichlet BC: " << *systemMatrixWrite;
   }
 }
 

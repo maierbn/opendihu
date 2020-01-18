@@ -262,7 +262,7 @@ for k in range(fat_mesh_n_points[2]):
   for i in range(fat_mesh_n_points[0]):
     j = 0
     dof_no_local = k * fat_mesh_n_points[0]*fat_mesh_n_points[1] + j * fat_mesh_n_points[0] + i
-    variables.fat_dirichlet_bc[dof_no_local] = 2.0
+    variables.fat_dirichlet_bc[dof_no_local] = dof_no_local
 
 print("Fat mesh on rank {}, subset i: [{},{}], k: [{},{}], {} x {} x {} = {} = {} nodes".format(rank_no, index_i_start, index_i_end, index_k_start, index_k_end, \
   fat_mesh_n_points[0], fat_mesh_n_points[1], fat_mesh_n_points[2], fat_mesh_n_points[0]*fat_mesh_n_points[1]*fat_mesh_n_points[2], len(fat_mesh_node_positions_local) ))
@@ -286,8 +286,6 @@ print("Fat mesh on rank {}, fat_global_rank_nos: {}, fat_mesh_n_ranks: {}".forma
 #print("fat mesh:")
 #print(fat_mesh_node_positions_local)
 
-variables.fat_dirichlet_bc
-
 variables.meshes["3DFatMesh"] = {
   "nElements": fat_mesh_n_elements,
   "nRanks": fat_mesh_n_ranks,
@@ -297,9 +295,14 @@ variables.meshes["3DFatMesh"] = {
   "logKey": "3DFatMesh"
 }
 
+if False:
+  print("settings 3DFatMesh: ")
+  with open("3DFatMesh","w") as f:
+    f.write(str(variables.meshes["3DFatMesh"]))
+
 # create mappings between meshes
 variables.mappings_between_meshes = {"MeshFiber_{}".format(i) : "3Dmesh" for i in range(variables.n_fibers_total)}
-variables.mappings_between_meshes.update({"3Dmesh": {"name": "3DFatMesh", "xiTolerance": 0.1}})    # only include overlapping elements
+variables.mappings_between_meshes.update({"3Dmesh": {"name": "3DFatMesh", "xiTolerance": 1e-2}})    # only include overlapping elements
 
 # set output writer    
 variables.output_writer_fibers = []

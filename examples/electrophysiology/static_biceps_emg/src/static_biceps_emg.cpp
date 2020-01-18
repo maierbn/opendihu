@@ -65,8 +65,8 @@ int main(int argc, char *argv[])
           SpatialDiscretization::FiniteElementMethod<       // anisotropic diffusion 
             Mesh::StructuredDeformableOfDimension<3>,
             BasisFunction::LagrangeOfOrder<1>,
-            Quadrature::Gauss<2>,
-            Equation::Dynamic::AnisotropicDiffusion
+            Quadrature::Gauss<3>,
+            Equation::Static::Laplace
           >
         >
       >

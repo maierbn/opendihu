@@ -232,7 +232,7 @@ protected:
                    Tensor2<3> &pk2StressIsochoric                     //< [out] S_iso, the isochoric part of the 2nd Piola-Kirchhoff stress tensor
                   );
 
-  //! compute the PK2 stress at every node and set value in data, for output
+  //! compute the PK2 stress and the deformation gradient at every node and set value in data, for output
   void computePK2StressField();
 
   //! compute the material elasticity tensor

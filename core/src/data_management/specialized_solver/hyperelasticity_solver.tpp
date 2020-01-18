@@ -29,18 +29,22 @@ createPetscObjects()
   assert(this->functionSpace_);
 
   std::vector<std::string> displacementsComponentNames({"x","y","z"});
-  displacements_                 = this->displacementsFunctionSpace_->template createFieldVariable<3>("u", displacementsComponentNames);     //< u, the displacements
-  displacementsPreviousTimestep_ = this->displacementsFunctionSpace_->template createFieldVariable<3>("u_previous", displacementsComponentNames);     //< u, the displacements
-  velocities_                    = this->displacementsFunctionSpace_->template createFieldVariable<3>("v", displacementsComponentNames);     //< u, the displacements
-  velocitiesPreviousTimestep_    = this->displacementsFunctionSpace_->template createFieldVariable<3>("v_previous", displacementsComponentNames);     //< u, the displacements
+  displacements_                 = this->displacementsFunctionSpace_->template createFieldVariable<3>("u", displacementsComponentNames);
+  displacementsPreviousTimestep_ = this->displacementsFunctionSpace_->template createFieldVariable<3>("u_previous", displacementsComponentNames);
+  velocities_                    = this->displacementsFunctionSpace_->template createFieldVariable<3>("v", displacementsComponentNames);
+  velocitiesPreviousTimestep_    = this->displacementsFunctionSpace_->template createFieldVariable<3>("v_previous", displacementsComponentNames);
   fiberDirection_                = this->displacementsFunctionSpace_->template createFieldVariable<3>("fiberDirection", displacementsComponentNames);
   displacementsLinearMesh_       = this->pressureFunctionSpace_->template createFieldVariable<3>("uLin", displacementsComponentNames);     //< u, the displacements
   velocitiesLinearMesh_          = this->pressureFunctionSpace_->template createFieldVariable<3>("vLin", displacementsComponentNames);     //< v, the velocities
   pressure_                      = this->pressureFunctionSpace_->template createFieldVariable<1>("p");     //<  p, the pressure variable
   pressurePreviousTimestep_      = this->pressureFunctionSpace_->template createFieldVariable<1>("p_previous");     //<  p, the pressure variable
 
-  std::vector<std::string> componentNames({"S_11", "S_22", "S_33", "S_12", "S_13", "S_23"});
-  pK2Stress_               = this->displacementsFunctionSpace_->template createFieldVariable<6>("PK2-Stress (Voigt)", componentNames);     //<  the symmetric PK2 stress tensor in Voigt notation
+  std::vector<std::string> componentNamesS({"S_11", "S_22", "S_33", "S_12", "S_13", "S_23"});
+  pK2Stress_               = this->displacementsFunctionSpace_->template createFieldVariable<6>("PK2-Stress (Voigt)", componentNamesS);     //<  the symmetric PK2 stress tensor in Voigt notation
+  activePK2Stress_         = this->displacementsFunctionSpace_->template createFieldVariable<6>("active PK2-Stress (Voigt)", componentNamesS);     //<  the symmetric active PK2 stress tensor in Voigt notation
+
+  std::vector<std::string> componentNamesF({"F_11, F_12, F_13, F_21, F_22, F_23, F_31, F_32, F_33"});
+  deformationGradient_     = this->displacementsFunctionSpace_->template createFieldVariable<9>("F", componentNamesF);
 }
 
 
@@ -128,6 +132,20 @@ std::shared_ptr<typename QuasiStaticHyperelasticityBase<PressureFunctionSpace,Di
 pK2Stress()
 {
   return this->pK2Stress_;
+}
+
+template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term>
+std::shared_ptr<typename QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::StressFieldVariableType> QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::
+activePK2Stress()
+{
+  return this->activePK2Stress_;
+}
+
+template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term>
+std::shared_ptr<typename QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::DeformationGradientFieldVariableType> QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::
+deformationGradient()
+{
+  return this->deformationGradient_;
 }
 
 template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term>
@@ -256,6 +274,7 @@ getFieldVariablesForOutputWriter()
     std::shared_ptr<DisplacementsFieldVariableType>(this->displacements_),              // displacements_
     std::shared_ptr<DisplacementsFieldVariableType>(this->velocities_),              // velocities_
     std::shared_ptr<StressFieldVariableType>(this->pK2Stress_),         // pK2Stress_
+    std::shared_ptr<StressFieldVariableType>(this->activePK2Stress_),         // actievPK2Stress_
     std::shared_ptr<DisplacementsFieldVariableType>(this->fiberDirection_)
   );
 }

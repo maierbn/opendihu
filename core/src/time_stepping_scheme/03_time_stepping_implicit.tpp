@@ -37,7 +37,8 @@ initialize()
 
   LOG(DEBUG) << "time_stepping_implicit applyInSystemMatrix, from TimeSteppingImplicit::initialize";
   // set the boundary conditions to system matrix, i.e. zero rows and columns of Dirichlet BC dofs and set diagonal to 1
-  this->dirichletBoundaryConditions_->applyInSystemMatrix(this->dataImplicit_->systemMatrix(), this->dataImplicit_->boundaryConditionsRightHandSideSummand());
+  this->dirichletBoundaryConditions_->applyInSystemMatrix(this->dataImplicit_->systemMatrix(), this->dataImplicit_->systemMatrix(),
+                                                          this->dataImplicit_->boundaryConditionsRightHandSideSummand());
 
   // initialize the linear solver that is used for solving the implicit system
   initializeLinearSolver();

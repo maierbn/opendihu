@@ -38,8 +38,14 @@ dt_1D = 4e-3                        # [ms] timestep width of diffusion
 dt_splitting = 4e-3                 # [ms] overall timestep width of strang splitting
 dt_3D = 0.1                         # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
 output_timestep = 10.0              # [ms] timestep for large output files, 5.0
-output_timestep_smaller_files = 0.5 # [ms] timestep for small output files, 0.5
+output_timestep_smaller_files = 0.1 # [ms] timestep for small output files, 0.5
 # simulation time:  4s
+
+# stride for sampling the 3D elements from the fiber data
+# here any number is possible
+sampling_stride_x = 2
+sampling_stride_y = 2
+sampling_stride_z = 50
 
 # other options
 paraview_output = True
@@ -47,7 +53,7 @@ adios_output = False
 exfile_output = False
 python_output = False
 fiber_file = "../../input/7x7fibers.bin"
-fat_mesh_file = fiber_file + "_fat.bin"
+fat_mesh_file = fiber_file + "_fat.bin2"
 firing_times_file = "../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
 fiber_distribution_file = "../../input/MU_fibre_distribution_10MUs.txt"
 

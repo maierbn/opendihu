@@ -130,14 +130,14 @@ config = {
       "dumpFilename":       "",
       "dumpFormat":         "matlab",
     },
-    "fatEMGSolver": {       # solver for the static Bidomain equation and the EMG
+    "fatEMGSolver": {       # solver for the Laplace equation, conduction through fat layer
       "relativeTolerance":  1e-5,
       "maxIterations":      1e4,
-      "solverType":         variables.emg_solver_type,
-      "preconditionerType": variables.emg_preconditioner_type,
+      "solverType":         "lu",
+      "preconditionerType": "none",
       #"dumpFilename":       "out/ramp/fat_emg",
       "dumpFilename":       "",
-      "dumpFormat":         "ascii",
+      "dumpFormat":         "matlab",
     },
   },
   "Coupling": {
@@ -336,14 +336,11 @@ config = {
                 "FiniteElementMethod": {
                   "meshName":             "3DFatMesh",
                   "solverName":           "fatEMGSolver",
-                  "prefactor":            1.0,
+                  "prefactor":            0.4,
                   "dirichletBoundaryConditions": variables.fat_dirichlet_bc,
                   "updatePrescribedValuesFromSolution": True,     # update the prescribed Dirichlet boundary condition values at the beginning of each timestep by the values that got transferred from the intra-muscular domain by the coupling.
                   "neumannBoundaryConditions": [],
                   "inputMeshIsGlobal":  False,
-                  "diffusionTensor": [6.0, 0.0, 0.0,
-                                      0.0, 6.0, 0.0,
-                                      0.0, 0.0, 6.0],
                 },
               },
             }],

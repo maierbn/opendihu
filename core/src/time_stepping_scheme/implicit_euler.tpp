@@ -48,7 +48,7 @@ void ImplicitEuler<DiscretizableInTimeType>::advanceTimeSpan()
     timeStepNo++;
     currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
     
-    // adjust rhs vector such that boundary conditions are satisfied
+    // adjust rhs vector, set prescribed dofs to prescribed values, such that boundary conditions are satisfied
     this->dirichletBoundaryConditions_->applyInRightHandSide(this->data_->solution(), this->dataImplicit_->boundaryConditionsRightHandSideSummand());
 
     //VLOG(1) << "solution after apply BC: " << *this->data_->solution();

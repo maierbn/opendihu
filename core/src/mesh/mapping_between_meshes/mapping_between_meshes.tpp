@@ -131,7 +131,12 @@ MappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSourc
       else
       {
         dof_no_t targetDofNoLocal = targetDofNos[targetDofIndex];
-        targetDofIsMappedTo[targetDofNoLocal] = true;
+
+        // if this dof is local
+        if (targetDofNoLocal < nDofsLocalTarget)
+        {
+          targetDofIsMappedTo[targetDofNoLocal] = true;
+        }
       }
 
       targetMappingInfo.targetElements[0].scalingFactors[targetDofIndex] = phiContribution;
@@ -185,6 +190,10 @@ MappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSourc
       for (int targetDofIndex = 0; targetDofIndex < nDofsPerTargetElement; targetDofIndex++)
       {
         dof_no_t targetDofNoLocal = targetDofNos[targetDofIndex];
+
+        // if this is a ghost dof, do not handle it
+        if (targetDofNoLocal >= nDofsLocalTarget)
+          continue;
 
         Vec3 position = functionSpaceTarget->getGeometry(targetDofNoLocal);
         LOG(DEBUG) << " e" << targetElementNoLocal << " i" << targetDofIndex << ", targetDofIsMappedTo[" << targetDofNoLocal << "]: " << targetDofIsMappedTo[targetDofNoLocal] << ", position: " << position;

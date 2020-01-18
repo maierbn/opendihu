@@ -30,7 +30,9 @@ initialize()
   TimeSteppingSchemeOdeReduced<TimeSteppingImplicitType>::initialize();
   
   // set the boundary conditions to system matrix, i.e. zero rows and columns of Dirichlet BC dofs and set diagonal to 1
-  this->fullTimestepping_.dirichletBoundaryConditions()->applyInSystemMatrix(this->fullTimestepping_.dataImplicit().systemMatrix(), this->fullTimestepping_.dataImplicit().boundaryConditionsRightHandSideSummand());
+  this->fullTimestepping_.dirichletBoundaryConditions()->applyInSystemMatrix(
+    this->fullTimestepping_.dataImplicit().systemMatrix(), this->fullTimestepping_.dataImplicit().systemMatrix(),
+    this->fullTimestepping_.dataImplicit().boundaryConditionsRightHandSideSummand());
   
   // compute the reduced system matrix
   setRedSystemMatrix();

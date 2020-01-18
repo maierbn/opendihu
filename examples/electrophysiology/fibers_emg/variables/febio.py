@@ -48,7 +48,7 @@ dt_0D = 1e-3                        # [ms] timestep width of ODEs
 dt_1D = 1e-3                        # [ms] timestep width of diffusion
 dt_splitting = dt_1D                # [ms] overall timestep width of strang splitting
 dt_3D = 1e-1                        # [ms] timestep width of elasticity problem
-output_timestep = 1e-1              # [ms] timestep for output files
+output_timestep = 1e0              # [ms] timestep for output files
 activation_start_time = 0           # [ms] time when to start checking for stimulation
 
 # other options
@@ -57,9 +57,9 @@ use_elasticity = True
 generate_quadratic_3d_mesh = False
 states_output = False                # output states of the 0D problem in a separate file
 
-sampling_stride_x = 3
-sampling_stride_y = 3
-sampling_stride_z = 80
+sampling_stride_x = 10
+sampling_stride_y = 10
+sampling_stride_z = 100
 
 #n_fibers_x = 1
 #n_fibers_y = 1

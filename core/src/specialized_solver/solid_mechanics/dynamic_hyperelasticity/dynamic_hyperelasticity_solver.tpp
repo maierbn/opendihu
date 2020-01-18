@@ -18,8 +18,6 @@ DynamicHyperelasticitySolver(DihuContext context) :
   inputMeshIsGlobal_ = specificSettings_.getOptionBool("inputMeshIsGlobal", true);
   //viscosity_ = specificSettings_.getOptionDouble("viscosity", 0.0, PythonUtility::NonNegative);
 
-
-
   // initialize output writers
   this->outputWriterManager_.initialize(this->context_["dynamic"], this->context_["dynamic"].getPythonConfig());
 }
@@ -235,6 +233,21 @@ run()
 
   this->advanceTimeSpan();
 }
+
+template<typename Term>
+typename DynamicHyperelasticitySolver<Term>::Data &DynamicHyperelasticitySolver<Term>::
+data()
+{
+  return data_;
+}
+
+template<typename Term>
+typename DynamicHyperelasticitySolver<Term>::HyperelasticitySolverType &DynamicHyperelasticitySolver<Term>::
+hyperelasticitySolver()
+{
+  return hyperelasticitySolver_;
+}
+
 
 /*
 
@@ -627,5 +640,6 @@ computeExplicitEuler()
   hyperelasticitySolver_.solveForDisplacements(temp_[1], u_);    // solveForDisplacements(externalVirtualWork, displacements)
 
 }*/
+
 
 } // namespace TimeSteppingScheme

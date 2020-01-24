@@ -58,21 +58,6 @@ createPetscObjects()
 }
 
 template<typename FunctionSpaceType>
-void MuscleContractionSolver<FunctionSpaceType>::
-setFieldVariables(std::shared_ptr<MuscleContractionSolver<FunctionSpaceType>::VectorFieldVariableType> displacements,
-                  std::shared_ptr<MuscleContractionSolver<FunctionSpaceType>::VectorFieldVariableType> velocities,
-                  std::shared_ptr<MuscleContractionSolver<FunctionSpaceType>::StressFieldVariableType> activePK2Stress,
-                  std::shared_ptr<MuscleContractionSolver<FunctionSpaceType>::StressFieldVariableType> pK2Stress,
-                  std::shared_ptr<MuscleContractionSolver<FunctionSpaceType>::VectorFieldVariableType> fiberDirection)
-{
-  displacements_ = displacements;
-  velocities_ = velocities;
-  activePK2Stress_ = activePK2Stress;
-  pK2Stress_ = pK2Stress;
-  fiberDirection_ = fiberDirection;
-}
-
-template<typename FunctionSpaceType>
 std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> MuscleContractionSolver<FunctionSpaceType>::
 lambda()
 {
@@ -115,13 +100,7 @@ getFieldVariablesForOutputWriter()
     geometryField,
     this->lambda_,
     this->lambdaDot_,
-    this->gamma_,
-    this->displacements_,    //< u, the displacements
-    this->velocities_,       //< v, the velocities
-    this->activePK2Stress_,  //< the symmetric PK2 stress tensor of the active contribution in Voigt notation
-    this->pK2Stress_,        //< the symmetric PK2 stress tensor in Voigt notation
-    this->fiberDirection_   //< direction of fibers at current point
-
+    this->gamma_
   );
 }
 

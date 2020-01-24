@@ -25,7 +25,6 @@ public:
 
   //! define the type of a vector-valued field variable (3 component), for convenience
   typedef FieldVariable::FieldVariable<FunctionSpaceType,3> VectorFieldVariableType;
-  typedef FieldVariable::FieldVariable<FunctionSpaceType,6> StressFieldVariableType;     // stress tensor in Voigt notation
 
   //! define the type of output connection variables, i.e. the values that will be transferred if the solver is part of a splitting or coupling scheme
   //! Two different field variables can be used: they must have the same function space but can have a different number of components. For example, for the CellMLAdapter, there are the "states" and the "intermediates" field variables.
@@ -59,40 +58,23 @@ public:
     std::shared_ptr<VectorFieldVariableType>,     // geometry, this always has to be the first field variable, such that the output writer knows the geometry of the mesh
     std::shared_ptr<ScalarFieldVariableType>,     // lambda,
     std::shared_ptr<ScalarFieldVariableType>,     // lambdaDot
-    std::shared_ptr<ScalarFieldVariableType>,     // gamma
-    std::shared_ptr<VectorFieldVariableType>,     // displacements
-    std::shared_ptr<VectorFieldVariableType>,     // velocities
-    std::shared_ptr<StressFieldVariableType>,     // pK2Stress_
-    std::shared_ptr<StressFieldVariableType>,     // activePK2Stress_
-    std::shared_ptr<VectorFieldVariableType>      // fiber direction
+    std::shared_ptr<ScalarFieldVariableType>      // gamma
+    // ... add all field variables that you want to have in the output file
   > FieldVariablesForOutputWriter;
 
   //! get pointers to all field variables that can be written by output writers
   FieldVariablesForOutputWriter getFieldVariablesForOutputWriter();
-
-  //! set field variables from that were created outside
-  void setFieldVariables(std::shared_ptr<MuscleContractionSolver<FunctionSpaceType>::VectorFieldVariableType> displacements,
-                  std::shared_ptr<MuscleContractionSolver<FunctionSpaceType>::VectorFieldVariableType> velocities,
-                  std::shared_ptr<MuscleContractionSolver<FunctionSpaceType>::StressFieldVariableType> activePK2Stress,
-                  std::shared_ptr<MuscleContractionSolver<FunctionSpaceType>::StressFieldVariableType> pK2Stress,
-                  std::shared_ptr<MuscleContractionSolver<FunctionSpaceType>::VectorFieldVariableType> fiberDirection);
 
 private:
 
   //! create all field variables with their respective sizes, this will be called automatically within initialize by the base class
   void createPetscObjects() override;
 
-  std::shared_ptr<ScalarFieldVariableType> lambda_;           //< the relative sarcomere length
-  std::shared_ptr<ScalarFieldVariableType> lambdaDot_;        //< the contraction velocity
-  std::shared_ptr<ScalarFieldVariableType> gamma_;            //< the active stress parameter
+  std::shared_ptr<ScalarFieldVariableType> lambda_;   //< the relative sarcomere length
+  std::shared_ptr<ScalarFieldVariableType> lambdaDot_;   //< the contraction velocity
+  std::shared_ptr<ScalarFieldVariableType> gamma_;   //< the active stress parameter
 
-  std::shared_ptr<VectorFieldVariableType> displacements_;    //< u, the displacements
-  std::shared_ptr<VectorFieldVariableType> velocities_;       //< v, the velocities
-  std::shared_ptr<StressFieldVariableType> activePK2Stress_;  //< the symmetric PK2 stress tensor of the active contribution in Voigt notation
-  std::shared_ptr<StressFieldVariableType> pK2Stress_;        //< the symmetric PK2 stress tensor in Voigt notation
-  std::shared_ptr<VectorFieldVariableType> fiberDirection_;   //< direction of fibers at current point
-
-  std::shared_ptr<OutputConnectorDataType> outputConnectorData_;    //< the object that stores all components of field variables that will be transferred to other solvers
+  std::shared_ptr<OutputConnectorDataType> outputConnectorData_;    ///< the object that stores all components of field variables that will be transferred to other solvers
 
   // define all needed field variables or other data
 };

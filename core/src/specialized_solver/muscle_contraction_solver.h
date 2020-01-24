@@ -62,7 +62,6 @@ protected:
   DynamicHyperelasticitySolverType dynamicHyperelasticitySolver_;   //< the dynamic hyperelasticity solver that solves for the contraction
 
   Data data_;   //< the data object that holds all field variables
-  OutputWriter::Manager outputWriterManager_;   //< manager object holding all output writers
 
   double pmax_;   //< settings of "Pmax" maximum active stress of the muscle
 };

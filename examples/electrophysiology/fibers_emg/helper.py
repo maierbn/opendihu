@@ -348,16 +348,16 @@ for i in range(n_points_3D_mesh_global_x*n_points_3D_mesh_global_y):
   variables.potential_flow_dirichlet_bc[(n_points_3D_mesh_global_z-1)*n_points_3D_mesh_global_x*n_points_3D_mesh_global_y + i] = 1.0
     
 # set Dirichlet BC at top nodes for linear elasticity problem, fix muscle at top
-variables.elasticity_dirichlet_bc = {}
+variables.use_elasticity_dirichlet_bc = {}
 for i in range(n_points_3D_mesh_global_x*n_points_3D_mesh_global_y):
-  variables.elasticity_dirichlet_bc[(n_points_3D_mesh_global_z-1)*n_points_3D_mesh_global_x*n_points_3D_mesh_global_y + i] = 0.0
+  variables.use_elasticity_dirichlet_bc[(n_points_3D_mesh_global_z-1)*n_points_3D_mesh_global_x*n_points_3D_mesh_global_y + i] = 0.0
     
 # Neumann BC at bottom nodes, traction downwards
 nx = n_points_3D_mesh_global_x-1
 ny = n_points_3D_mesh_global_y-1
 nz = n_points_3D_mesh_global_z-1
-variables.elasticity_neumann_bc = [{"element": 0*nx*ny + j*nx + i, "constantVector": [0.0,0.0,-1.0], "face": "2-"} for j in range(ny) for i in range(nx)]
-#variables.elasticity_neumann_bc = []
+variables.use_elasticity_neumann_bc = [{"element": 0*nx*ny + j*nx + i, "constantVector": [0.0,0.0,-1.0], "face": "2-"} for j in range(ny) for i in range(nx)]
+#variables.use_elasticity_neumann_bc = []
     
 # sanity checking at the end, is disabled and can be copied to after the config in the real settings file
 if False:

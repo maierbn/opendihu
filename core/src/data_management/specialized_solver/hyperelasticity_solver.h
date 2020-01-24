@@ -60,9 +60,6 @@ public:
   //! field variable of F
   std::shared_ptr<DeformationGradientFieldVariableType> deformationGradient();
 
-  //! field variable of Fdot
-  std::shared_ptr<DeformationGradientFieldVariableType> deformationGradientTimeDerivative();
-
   //! field variable of S
   std::shared_ptr<StressFieldVariableType> pK2Stress();
 
@@ -117,7 +114,6 @@ protected:
   std::shared_ptr<StressFieldVariableType> pK2Stress_;                            //< the symmetric PK2 stress tensor in Voigt notation
   std::shared_ptr<StressFieldVariableType> activePK2Stress_;                      //< the symmetric PK2 stress tensor of the active contribution in Voigt notation
   std::shared_ptr<DeformationGradientFieldVariableType> deformationGradient_;     //< the deformation gradient, F, all 9 values in row-major ordering
-  std::shared_ptr<DeformationGradientFieldVariableType> deformationGradientTimeDerivative_;     //< the time derivative of the deformation gradient, \dot{F}, all 9 values in row-major ordering
   std::shared_ptr<DisplacementsLinearFieldVariableType> displacementsLinearMesh_; //< the displacements u, but on the linear mesh, not the quadratic. This is an internal helper field
   std::shared_ptr<DisplacementsLinearFieldVariableType> velocitiesLinearMesh_;    //< the velocities v, but on the linear mesh, not the quadratic. This is an internal helper field
   std::shared_ptr<DisplacementsFieldVariableType> fiberDirection_;                //< interpolated direction of fibers

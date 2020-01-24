@@ -125,9 +125,6 @@ variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
 # define the config dict
 config = {
   "scenarioName": variables.scenario_name,
-  "meta": {
-    "partitioning": str([2,5,8]),
-  },
   "Meshes": variables.meshes,
   "MappingsBetweenMeshes": {"MeshFiber_{}".format(i) : meshName3D for i in range(variables.n_fibers_total) for meshName3D in ["3Dmesh", "3Dmesh_quadratic"]},
   "Solvers": {

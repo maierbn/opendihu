@@ -46,7 +46,7 @@ public:
   Data &data();
 
   //! get a reference to the underlying HyperelasticitySolver which has the material formulation and the nonlinear solver
-  HyperelasticitySolverType &hyperelasticitySolver();
+  HyperelasticitySolverType& hyperelasticitySolver();
 
 
 private:

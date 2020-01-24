@@ -15,9 +15,6 @@ MuscleContractionSolver(DihuContext context) :
   // get python settings object from context
   this->specificSettings_ = this->context_.getPythonConfig();
 
-  // initialize output writers
-  this->outputWriterManager_.initialize(this->context_, this->specificSettings_);
-
   pmax_ = this->specificSettings_.getOptionDouble("Pmax", 1.0, PythonUtility::Positive);
 }
 
@@ -64,17 +61,6 @@ advanceTimeSpan()
 
     // compute new current simulation time
     currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
-
-    // stop duration measurement
-    if (this->durationLogKey_ != "")
-      Control::PerformanceMeasurement::stop(this->durationLogKey_);
-
-    // write current output values using the output writers
-    this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime);
-
-    // start duration measurement
-    if (this->durationLogKey_ != "")
-      Control::PerformanceMeasurement::start(this->durationLogKey_);
   }
 
   // stop duration measurement
@@ -106,15 +92,6 @@ initialize()
   // now call initialize, data will then create all variables (Petsc Vec's)
   data_.initialize();
 
-  typename DynamicHyperelasticitySolverType::HyperelasticitySolverType &hyperelasticitySolver = dynamicHyperelasticitySolver_.hyperelasticitySolver();
-
-  data_.setFieldVariables(dynamicHyperelasticitySolver_.data().displacements(),
-                          dynamicHyperelasticitySolver_.data().velocities(),
-                          hyperelasticitySolver.data().activePK2Stress(),
-                          hyperelasticitySolver.data().pK2Stress(),
-                          hyperelasticitySolver.data().fiberDirection());
-
-
 }
 
 void MuscleContractionSolver::
@@ -145,7 +122,6 @@ computeLambda()
 
   std::shared_ptr<DisplacementsFieldVariableType> fiberDirectionVariable = dynamicHyperelasticitySolver_.hyperelasticitySolver().data().fiberDirection();
   std::shared_ptr<DeformationGradientFieldVariableType> deformationGradientVariable = dynamicHyperelasticitySolver_.hyperelasticitySolver().data().deformationGradient();
-  std::shared_ptr<DeformationGradientFieldVariableType> fDotVariable = dynamicHyperelasticitySolver_.hyperelasticitySolver().data().deformationGradientTimeDerivative();
 
 
   // compute lambda and \dot{lambda} (contraction velocity)
@@ -170,24 +146,12 @@ computeLambda()
 
     // get deformation gradient, project lambda and lambda dot
     // dx = F dX, dx^2 = C dX^2
-    // lambda = ||F * a0||  with a0 = fiber direction in material configuration
-
     // project displacements on normalized fiberDirection
     //const double lambda = displacement[0] * fiberDirection[0] + displacement[1] * fiberDirection[1] + displacement[2] * fiberDirection[2];
 
     Vec3 fiberDirectionCurrentConfiguration = deformationGradient * fiberDirection;
     const double lambda = MathUtility::norm<3>(fiberDirectionCurrentConfiguration);
-
-    // for lambda dot:
-    // lambda_dot = d/dt ||F * a0|| = 1 / ||F*a0|| * (F*a)•(Fdot*a) = 1/lambda * fiberDirectionCurrentConfiguration * FdotA
-
-    // create matrix, deformationGradientValues are in row-major order
-    const VecD<9> fDotValues = fDotVariable->getValue(dofNoLocal);
-    MathUtility::Matrix<3,3> fDot(fDotValues);
-
-
-    Vec3 fDotA = fDot * fiberDirection;
-    const double lambdaDot = 1.0 / lambda * MathUtility::dot(fiberDirectionCurrentConfiguration, fDotA);
+    const double lambdaDot = 0.0;  // TODO
 
     lambdaVariable->setValue(dofNoLocal, lambda);
     lambdaDotVariable->setValue(dofNoLocal, lambdaDot);

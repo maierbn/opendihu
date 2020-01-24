@@ -211,12 +211,6 @@ protected:
                                         const Tensor2<3> &inverseJacobianMaterial,
                                         const std::array<double, 3> xi);
 
-  //! compute the time velocity of the deformation gradient, Fdot inside the current element at position xi, the value of F is still with respect to the reference configuration,
-  //! the formula is Fdot_ij = d/dt x_i,j = v_i,j
-  Tensor2<3> computeDeformationGradientTimeDerivative(const std::array<Vec3,DisplacementsFunctionSpace::nDofsPerElement()> &velocities,
-                                        const Tensor2<3> &inverseJacobianMaterial,
-                                        const std::array<double, 3> xi);
-
   //! compute the right Cauchy Green tensor, C = F^T*F. This is simply a matrix matrix multiplication
   Tensor2<3> computeRightCauchyGreenTensor(const Tensor2<3> &deformationGradient);
 

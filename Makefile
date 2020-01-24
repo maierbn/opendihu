@@ -112,3 +112,6 @@ dynamic_mooney_rivlin:
 
 static_biceps_emg:
 	cd examples/electrophysiology/static_biceps_emg  && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+
+biceps_contraction:
+	cd examples/electrophysiology/biceps_contraction  && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG

@@ -20,6 +20,7 @@
 template<typename FibersEMG>
 class FastMonodomainSolver
 {
+  static_assert(sizeof(FibersEMG) == 0, "This specialization of FastMonodomainSolver is not implemented. Currently only Hodgkin-Huxley and new_slow_TK are implemented!");
 };
 
 /** Buffers for Hodgkin-Huxley computation

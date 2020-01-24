@@ -59,6 +59,8 @@ if "cuboid.bin" in variables.fiber_file:
 if rank_no == 0:
   print("diffusion solver type: {}".format(variables.diffusion_solver_type))
 
+variables.load_fiber_data = True   # load all local node positions from fiber_file, in order to infer partitioning for fat_layer mesh
+
 # create the partitioning using the script in create_partitioned_meshes_for_settings.py
 result = create_partitioned_meshes_for_settings(
     variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, 
@@ -68,6 +70,239 @@ result = create_partitioned_meshes_for_settings(
   
 variables.n_subdomains_xy = variables.n_subdomains_x * variables.n_subdomains_y
 variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
+
+# set fat layer mesh
+# load file, the file is assumed to be small enough to be loaded completely by all ranks
+
+try:
+  fat_mesh_file_handle = open(variables.fat_mesh_file, "rb")
+except:
+  print("Error: Could not open fat mesh file \"{}\"".format(variables.fat_mesh_file))
+  quit()
+
+# parse file header to extract mesh dimensions
+bytes_raw = fat_mesh_file_handle.read(32)
+header_str = struct.unpack('32s', bytes_raw)[0]
+header_length_raw = fat_mesh_file_handle.read(4)
+header_length = struct.unpack('i', header_length_raw)[0]
+
+# parse parameters in the file
+parameters = []
+for i in range(int(header_length/4.) - 1):
+  double_raw = fat_mesh_file_handle.read(4)
+  value = struct.unpack('i', double_raw)[0]
+  parameters.append(value)
+
+n_points_xy = parameters[0]
+n_points_z = parameters[1]
+n_points_x = (int)(np.sqrt(parameters[0]))
+n_points_y = n_points_x
+
+if "version 2" in header_str.decode("utf-8"):   # the version 2 has number of fibers explicitly stored and thus also allows non-square dimension of fibers
+  n_points_x = parameters[2]
+  n_points_y = parameters[3]
+
+n_points = n_points_x*n_points_y*n_points_z
+
+if rank_no == 0:
+  print("fat mesh, n points:    {} ({} x {} x {})".format(n_points, n_points_x, n_points_y, n_points_z))
+  
+# parse whole file
+fat_mesh_node_positions = [None for _ in range(n_points)]
+for j in range(n_points_y):
+  for i in range(n_points_x):
+    for k in range(n_points_z):
+      
+      point = []
+      for component_no in range(3):
+        double_raw = fat_mesh_file_handle.read(8)
+        value = struct.unpack('d', double_raw)[0]
+        point.append(value)
+      fat_mesh_node_positions[k*n_points_xy + j*n_points_x + i] = point
+
+# The fat mesh "3DFatMesh" touches the 3Dmesh of intramuscular EMG at an interface surface.
+# Do the domain decomposition such that neighbouring elements across this interface are on the same rank.
+# This means that the fat mesh will not be computed by all ranks.
+
+#     /xxxxxx
+# ^  /xxxx/xx     x  = 3D fat layer mesh
+# |  |_|_|/xx    |_| = intramuscular 3D mesh
+# y  |_|_|/x/
+#  x-->
+#
+
+fat_mesh_node_positions_local = []
+
+n_elements_3D_mesh = variables.meshes["3Dmesh"]["nElements"]
+n_points_3D_x = (n_elements_3D_mesh[0]+1)
+n_points_3D_y = (n_elements_3D_mesh[1]+1)
+n_points_3D_z = (n_elements_3D_mesh[2]+1)
+
+print("3Dmesh has {} node positions ({} x {} x {} = {})".format(len(variables.meshes["3Dmesh"]["nodePositions"]), n_points_3D_x, n_points_3D_y, n_points_3D_z, n_points_3D_x*n_points_3D_y*n_points_3D_z))
+
+pz0 = variables.meshes["3Dmesh"]["nodePositions"][0*n_points_3D_x*n_points_3D_y + 0*n_points_3D_x + 0]
+pz1 = variables.meshes["3Dmesh"]["nodePositions"][(n_points_3D_z-1)*n_points_3D_x*n_points_3D_y + 0*n_points_3D_x + 0]
+
+# find indices k in z direction of the local part of the fat layer mesh
+index_k_start = None
+index_k_end = None
+
+min_distance_start = None
+min_distance_end = None
+
+# loop over z indices of fat_mesh_node_positions
+for k in range(n_points_z):
+  p = fat_mesh_node_positions[k*n_points_xy + 0*n_points_x + 0]
+  
+  distance_pz0 = np.linalg.norm(np.array(p) - np.array(pz0)) 
+  distance_pz1 = np.linalg.norm(np.array(p) - np.array(pz1)) 
+  
+  if min_distance_start is None or distance_pz0 < min_distance_start:
+    min_distance_start = distance_pz0
+    index_k_start = k
+    
+  if min_distance_end is None or distance_pz1 < min_distance_end:
+    min_distance_end = distance_pz1
+    index_k_end = k
+  
+index_i_start = None
+index_i_end = None
+    
+# if the own subdomain is at the (y+) border (top in sketch)
+if variables.own_subdomain_coordinate_y == variables.n_subdomains_y - 1:
+  
+  px0 = variables.meshes["3Dmesh"]["nodePositions"][(n_points_3D_y-1)*n_points_3D_x + 0]
+  px1 = variables.meshes["3Dmesh"]["nodePositions"][(n_points_3D_y-1)*n_points_3D_x + n_points_3D_x-1]
+  
+  # find range [index_i_start, index_i_end] for x of local node positions of fat mesh
+  index_i_start = None
+  index_i_end = None
+  min_distance_start = None
+  min_distance_end = None
+  
+  for i in range(n_points_x):
+    p = fat_mesh_node_positions[0*n_points_x + i]
+    
+    distance_px0 = np.linalg.norm(np.array(p) - np.array(px0)) 
+    distance_px1 = np.linalg.norm(np.array(p) - np.array(px1)) 
+    
+    if min_distance_start is None or distance_px0 < min_distance_start:
+      min_distance_start = distance_px0
+      index_i_start = i
+      
+    if min_distance_end is None or distance_px1 < min_distance_end:
+      min_distance_end = distance_px1
+      index_i_end = i
+
+# if the own subdomain is at the (x+) border (right in sketch)
+if variables.own_subdomain_coordinate_x == variables.n_subdomains_x - 1:
+  
+  py0 = variables.meshes["3Dmesh"]["nodePositions"][(n_points_3D_y-1)*n_points_3D_x + n_points_3D_x-1]
+  py1 = variables.meshes["3Dmesh"]["nodePositions"][0*n_points_3D_x + n_points_3D_x-1]
+  
+  # find range [index_i_start, index_i_end] for x of local node positions of fat mesh
+  min_distance_start = None
+  min_distance_end = None
+  
+  for i in range(n_points_x):
+    p = fat_mesh_node_positions[0*n_points_x + i]
+    
+    distance_py0 = np.linalg.norm(np.array(p) - np.array(py0)) 
+    distance_py1 = np.linalg.norm(np.array(p) - np.array(py1)) 
+    
+    if not variables.own_subdomain_coordinate_y == variables.n_subdomains_y - 1:
+      if min_distance_start is None or distance_py0 < min_distance_start:
+        min_distance_start = distance_py0
+        index_i_start = i
+      
+    if min_distance_end is None or distance_py1 < min_distance_end:
+      min_distance_end = distance_py1
+      index_i_end = i
+
+# add all local nodes
+previous_point = None
+previous_info = None
+for k in range(index_k_start,index_k_end+1):
+  
+  # do not include ghost nodes (if not at z+ border)
+  if k == index_k_end and index_k_end != n_points_z-1:
+    continue
+  
+  for j in range(n_points_y):
+    for i in range(index_i_start,index_i_end+1):
+          
+      # do not include ghost nodes (if not at x+ border)
+      if i == index_i_end and index_i_end != n_points_x-1:
+        continue
+        
+      point = fat_mesh_node_positions[k*n_points_xy + j*n_points_x + i]
+      fat_mesh_node_positions_local.append(point)
+      
+      if previous_point is not None and np.linalg.norm(np.array(previous_point) - np.array(point)) < 1e-8:
+        print("Error, twice the same point! At i,j,k={},{},{} point {} (previous: {})".format(i,j,k,point, previous_info))
+      
+      previous_point = point
+      previous_info = [i,j,k]
+
+# local size
+fat_mesh_n_points = [index_i_end+1 - index_i_start, n_points_y, index_k_end+1 - index_k_start]
+fat_mesh_n_elements = [fat_mesh_n_points[0]-1, fat_mesh_n_points[1]-1, fat_mesh_n_points[2]-1]
+
+# regarding x direction, if in interior
+if index_i_end != n_points_x-1:
+  fat_mesh_n_points[0] -= 1
+# regarding z direction, if in interior
+if index_k_end != n_points_z-1:
+  fat_mesh_n_points[2] -= 1
+
+fat_mesh_n_ranks = [variables.n_subdomains_x + variables.n_subdomains_y - 1, 1, variables.n_subdomains_z]
+
+variables.fat_dirichlet_bc = {}
+for k in range(fat_mesh_n_points[2]):
+  for i in range(fat_mesh_n_points[0]):
+    j = 0
+    dof_no_local = k * fat_mesh_n_points[0]*fat_mesh_n_points[1] + j * fat_mesh_n_points[0] + i
+    variables.fat_dirichlet_bc[dof_no_local] = dof_no_local
+
+print("Fat mesh on rank {}, subset i: [{},{}], k: [{},{}], {} x {} x {} = {} = {} nodes".format(rank_no, index_i_start, index_i_end, index_k_start, index_k_end, \
+  fat_mesh_n_points[0], fat_mesh_n_points[1], fat_mesh_n_points[2], fat_mesh_n_points[0]*fat_mesh_n_points[1]*fat_mesh_n_points[2], len(fat_mesh_node_positions_local) ))
+#print("dofs: ",variables.fat_dirichlet_bc)
+
+
+# determine all ranks that participate in computing the mesh (global nos)
+variables.fat_global_rank_nos = []
+for coordinate_z in range(variables.n_subdomains_z):
+  for coordinate_x in range(variables.n_subdomains_x):
+    rank_no = coordinate_z * variables.n_subdomains_xy + (variables.n_subdomains_y-1)*variables.n_subdomains_x + coordinate_x
+    variables.fat_global_rank_nos.append(rank_no)
+    
+  for coordinate_y in range(variables.n_subdomains_y-2,-1,-1):
+    rank_no = coordinate_z * variables.n_subdomains_xy + coordinate_y*variables.n_subdomains_x + (variables.n_subdomains_x-1)
+    variables.fat_global_rank_nos.append(rank_no)
+
+
+print("Fat mesh on rank {}, fat_global_rank_nos: {}, fat_mesh_n_ranks: {}".format(rank_no, variables.fat_global_rank_nos, fat_mesh_n_ranks))
+
+#print("fat mesh:")
+#print(fat_mesh_node_positions_local)
+
+variables.meshes["3DFatMesh"] = {
+  "nElements": fat_mesh_n_elements,
+  "nRanks": fat_mesh_n_ranks,
+  "nodePositions": fat_mesh_node_positions_local,
+  "inputMeshIsGlobal": False,
+  "setHermiteDerivatives": False,
+  "logKey": "3DFatMesh"
+}
+
+if False:
+  print("settings 3DFatMesh: ")
+  with open("3DFatMesh","w") as f:
+    f.write(str(variables.meshes["3DFatMesh"]))
+
+# create mappings between meshes
+variables.mappings_between_meshes = {"MeshFiber_{}".format(i) : "3Dmesh" for i in range(variables.n_fibers_total)}
+variables.mappings_between_meshes.update({"3Dmesh": {"name": "3DFatMesh", "xiTolerance": 1e-2}})    # only include overlapping elements
 
 # set output writer    
 variables.output_writer_fibers = []
@@ -356,8 +591,13 @@ for i in range(n_points_3D_mesh_global_x*n_points_3D_mesh_global_y):
 nx = n_points_3D_mesh_global_x-1
 ny = n_points_3D_mesh_global_y-1
 nz = n_points_3D_mesh_global_z-1
+variables.nx = nx
+variables.ny = ny
+variables.nz = nz
 variables.elasticity_neumann_bc = [{"element": 0*nx*ny + j*nx + i, "constantVector": [0.0,0.0,-1.0], "face": "2-"} for j in range(ny) for i in range(nx)]
 #variables.elasticity_neumann_bc = []
+    
+variables.constant_body_force = (0,0,-1e-1)
     
 # sanity checking at the end, is disabled and can be copied to after the config in the real settings file
 if False:

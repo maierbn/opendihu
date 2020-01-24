@@ -100,6 +100,9 @@ private:
   //! execute python script and store global variables
   void loadPythonScript(std::string text);
 
+  //! parse the scenarioName and data under "meta" and set as global parameters
+  void parseGlobalParameters();
+
   //! initiaize the easylogging++ framework
   void initializeLogging(int argc, char *argv[]);
 

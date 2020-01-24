@@ -148,6 +148,14 @@ struct PythonUtility::convertFromPython<std::string>
     }
     else
     {
+      PyObject *unicode = PyObject_Str(object);
+
+      if (unicode != NULL)
+      {
+        std::string valueString = pyUnicodeToString(unicode);
+        return valueString;
+      }
+
       LOG(WARNING) << "convertFromPython: object is no std::string: " << object;
     }
     return defaultValue;

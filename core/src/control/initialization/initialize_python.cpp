@@ -261,6 +261,11 @@ void DihuContext::loadPythonScript(std::string text)
 
   pythonConfig_.setPyObject(config);
 
+  parseGlobalParameters();
+}
+
+void DihuContext::parseGlobalParameters()
+{
   // parse scenario name
   std::string scenarioName = "";
   if (pythonConfig_.hasKey("scenarioName"))
@@ -268,4 +273,29 @@ void DihuContext::loadPythonScript(std::string text)
     scenarioName = pythonConfig_.getOptionString("scenarioName", "");
   }
   Control::PerformanceMeasurement::setParameter("scenarioName", scenarioName);
+
+  // parse all keys under meta
+  if (pythonConfig_.hasKey("meta"))
+  {
+
+    // loop over entries of python dict "meta"
+    std::string keyString("meta");
+    std::pair<std::string,std::string> dictItem
+      = pythonConfig_.getOptionDictBegin<std::string,std::string>(keyString);
+
+    for (; !pythonConfig_.getOptionDictEnd(keyString);
+        pythonConfig_.getOptionDictNext<std::string,std::string>(keyString, dictItem))
+    {
+      // the key is the name of the field
+      std::string key = dictItem.first;
+
+      // the value is the payload string
+      std::string value = dictItem.second;
+
+      std::stringstream logKey;
+      logKey << "meta_" << key;
+      LOG(DEBUG) << "key[" << key << "] value [" << value << "]";
+      Control::PerformanceMeasurement::setParameter(logKey.str(), value);
+    }
+  }
 }

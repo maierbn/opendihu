@@ -45,6 +45,7 @@ createPetscObjects()
 
   std::vector<std::string> componentNamesF{"F_11", "F_12", "F_13", "F_21", "F_22", "F_23", "F_31", "F_32", "F_33"};
   deformationGradient_     = this->displacementsFunctionSpace_->template createFieldVariable<9>("F", componentNamesF);
+  deformationGradientTimeDerivative_     = this->displacementsFunctionSpace_->template createFieldVariable<9>("Fdot", componentNamesF);
 }
 
 
@@ -146,6 +147,13 @@ std::shared_ptr<typename QuasiStaticHyperelasticityBase<PressureFunctionSpace,Di
 deformationGradient()
 {
   return this->deformationGradient_;
+}
+
+template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term>
+std::shared_ptr<typename QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::DeformationGradientFieldVariableType> QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::
+deformationGradientTimeDerivative()
+{
+  return this->deformationGradientTimeDerivative_;
 }
 
 template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term>

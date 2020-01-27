@@ -15,6 +15,9 @@ MuscleContractionSolver(DihuContext context) :
   // get python settings object from context
   this->specificSettings_ = this->context_.getPythonConfig();
 
+  // initialize output writers
+  this->outputWriterManager_.initialize(this->context_, this->specificSettings_);
+
   pmax_ = this->specificSettings_.getOptionDouble("Pmax", 1.0, PythonUtility::Positive);
 }
 
@@ -61,6 +64,17 @@ advanceTimeSpan()
 
     // compute new current simulation time
     currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
+
+    // stop duration measurement
+    if (this->durationLogKey_ != "")
+      Control::PerformanceMeasurement::stop(this->durationLogKey_);
+
+    // write current output values using the output writers
+    this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime);
+
+    // start duration measurement
+    if (this->durationLogKey_ != "")
+      Control::PerformanceMeasurement::start(this->durationLogKey_);
   }
 
   // stop duration measurement
@@ -91,6 +105,15 @@ initialize()
 
   // now call initialize, data will then create all variables (Petsc Vec's)
   data_.initialize();
+
+  typename DynamicHyperelasticitySolverType::HyperelasticitySolverType &hyperelasticitySolver = dynamicHyperelasticitySolver_.hyperelasticitySolver();
+
+  data_.setFieldVariables(dynamicHyperelasticitySolver_.data().displacements(),
+                          dynamicHyperelasticitySolver_.data().velocities(),
+                          hyperelasticitySolver.data().activePK2Stress(),
+                          hyperelasticitySolver.data().pK2Stress(),
+                          hyperelasticitySolver.data().fiberDirection());
+
 
 }
 

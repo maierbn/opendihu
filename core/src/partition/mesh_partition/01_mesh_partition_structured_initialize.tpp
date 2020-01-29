@@ -40,7 +40,7 @@ initializeDofNosLocalNaturalOrdering(std::shared_ptr<FunctionSpace::FunctionSpac
       // loop over local nodes in local natural numbering
       for (node_no_t nodeX = 0; nodeX < nNodesLocalWithGhosts(0); nodeX++)
       {
-        std::array<int,MeshType::dim()> coordinates({nodeX});
+        std::array<node_no_t,MeshType::dim()> coordinates({nodeX});
 
         // loop over dofs of node
         for (int dofOnNodeIndex = 0; dofOnNodeIndex < nDofsPerNode; dofOnNodeIndex++)

@@ -252,8 +252,8 @@ initializeFiberDirections()
     // loop over local nodes
     for (dof_no_t dofNoLocal = 0; dofNoLocal < nDofsLocalWithoutGhosts; dofNoLocal++)
     {
-      dof_no_t index0 = std::max(0, dofNoLocal-1);
-      dof_no_t index1 = std::min(nDofsLocalWithoutGhosts-1, dofNoLocal+1);
+      dof_no_t index0 = std::max((dof_no_t)(0), dofNoLocal-1);
+      dof_no_t index1 = std::min((dof_no_t)(nDofsLocalWithoutGhosts-1), (dof_no_t)(dofNoLocal+1));
 
       // get direction of 1D fiber
       Vec3 fiberDirection = -geometryFieldValues[index0] + geometryFieldValues[index1];

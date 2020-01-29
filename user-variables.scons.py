@@ -16,8 +16,8 @@
 # 4. Set <PACKAGE>_DOWNLOAD=True or additionally <PACKAGE>_REDOWNLOAD=True to let the build system download and install everything on their own.
 
 # set compiler to use
-cc = "gcc"   # c compiler
-CC = "g++"   # c++ compiler
+cc = "gcc -ftemplate-backtrace-limit=0"   # c compiler
+CC = "g++ -ftemplate-backtrace-limit=0"   # c++ compiler
 
 cmake="cmake"
 

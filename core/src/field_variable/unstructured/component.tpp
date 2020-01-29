@@ -251,7 +251,7 @@ getValues(std::vector<double> &values, bool onlyNodalValues) const
     if (std::is_same<typename FunctionSpaceType::BasisFunction, BasisFunction::Hermite>::value)
       nValues = nDofs / FunctionSpaceType::nDofsPerNode();
 
-  std::vector<int> indices(nValues,0);
+  std::vector<dof_no_t> indices(nValues,0);
   dof_no_t indexNo = 0;
   for (dof_no_t dofLocalNo = 0; dofLocalNo < nDofs; dofLocalNo += stride)
   {

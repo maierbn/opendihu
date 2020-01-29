@@ -70,6 +70,9 @@ public:
   
   //! convert to a string with space separated values
   static std::string convertToAscii(const std::vector<element_no_t> &vector, bool humanReadable);
+  
+  //! convert to a string with space separated values
+  static std::string convertToAscii(const std::vector<int> &vector, bool humanReadable);
 
 protected:
 

@@ -428,7 +428,12 @@ std::string getStringLinearConvergedReason(KSPConvergedReason convergedReason)
     return ANSI_COLOR_RED "KSP_DIVERGED_INDEFINITE_MAT" ANSI_COLOR_RESET;
 
 #ifndef __PGI
+
+#if PETSC_VERSION_GE(3,11,0)
+  case KSP_DIVERGED_PC_FAILED:
+#else
   case KSP_DIVERGED_PCSETUP_FAILED:
+#endif
     return ANSI_COLOR_RED "KSP_DIVERGED_PCSETUP_FAILED" ANSI_COLOR_RESET;
 #endif
 
@@ -463,8 +468,13 @@ std::string getStringNonlinearConvergedReason(SNESConvergedReason convergedReaso
   case SNES_CONVERGED_ITS:
     return ANSI_COLOR_GREEN "SNES_CONVERGED_ITS" ANSI_COLOR_RESET ": maximum iterations reached";
 
+#if PETSC_VERSION_GE(3,12,0)
+  case SNES_DIVERGED_TR_DELTA:
+    return ANSI_COLOR_RED "SNES_DIVERGED_TR_DELTA" ANSI_COLOR_RESET;    
+#else 
   case SNES_CONVERGED_TR_DELTA:
     return ANSI_COLOR_GREEN " SNES_CONVERGED_TR_DELTA" ANSI_COLOR_RESET;
+#endif
 
   case SNES_DIVERGED_FUNCTION_DOMAIN:
     return ANSI_COLOR_RED "SNES_DIVERGED_FUNCTION_DOMAIN:" ANSI_COLOR_RESET " the new x location passed the function is not in the domain of F";

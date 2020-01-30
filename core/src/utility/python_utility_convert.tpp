@@ -14,6 +14,60 @@
 
 //partial specialization for int
 template<>
+struct PythonUtility::convertFromPython<long>
+{
+  //! convert a python object to its corresponding c type, with type checking, if conversion is not possible, use defaultValue
+  static int get(PyObject *object, long defaultValue)
+  {
+    if (object == NULL)
+      return defaultValue;
+
+    // start critical section for python API calls
+    // PythonUtility::GlobalInterpreterLock lock;
+
+    assert(object != nullptr);
+    if (PyLong_Check(object))
+    {
+      long valueLong = PyLong_AsLong(object);
+      return valueLong;
+    }
+    else if (PyFloat_Check(object))
+    {
+      double valueDouble = PyFloat_AsDouble(object);
+
+      if (double(int(valueDouble)) != valueDouble)      // if value is not e.g. 2.0
+      {
+        LOG(WARNING) << "convertFromPython<long>: object is float and not long: " << object;
+      }
+
+      return int(valueDouble);
+    }
+    else if (PyUnicode_Check(object))
+    {
+      std::string valueString = pyUnicodeToString(object);
+      return atoi(valueString.c_str());
+    }
+    else if (object == Py_None)
+    {
+      LOG(DEBUG) << "convertFromPython<long>: object is None, parse as -1";
+      return -1;    // None translates to -1
+    }
+    else
+    {
+      LOG(WARNING) << "convertFromPython<long>: object is no long: " << object;
+    }
+    return defaultValue;
+  }
+
+  //! convert a python object to its corresponding c type, with type checking, if conversion is not possible use trivial default value (0 or 0.0 or "")
+  static int get(PyObject *object)
+  {
+    return convertFromPython<long>::get(object, 0);
+  }
+};
+
+//partial specialization for int
+template<>
 struct PythonUtility::convertFromPython<int>
 {
   //! convert a python object to its corresponding c type, with type checking, if conversion is not possible, use defaultValue

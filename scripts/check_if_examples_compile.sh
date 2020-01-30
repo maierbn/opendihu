@@ -32,8 +32,6 @@ for directory in $EXAMPLE_PATH/**/*; do
       START=$(date +%s.%N)
       
       # compile example
-      env
-      echo $SITE_PLATFORM_NAME
       python2.7 $OPENDIHU_HOME/dependencies/scons/scons.py BUILD_TYPE=r
       RESULT=$?
             

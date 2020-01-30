@@ -29,8 +29,8 @@ FieldVariableDataStructuredForSurface(FieldVariable<FunctionSpace::FunctionSpace
   std::shared_ptr<Partition::MeshPartition<FunctionSpace3D>> meshPartition3D = rhs.functionSpace()->meshPartition();
 
   // construct rankSubset
-  std::vector<int> rankNos;
-  std::array<int,3> nRanksPerCoordinateDirection({meshPartition3D->nRanks(0), meshPartition3D->nRanks(1), meshPartition3D->nRanks(2)});
+  std::vector<PetscInt> rankNos;
+  std::array<PetscInt,3> nRanksPerCoordinateDirection({meshPartition3D->nRanks(0), meshPartition3D->nRanks(1), meshPartition3D->nRanks(2)});
   getSurfaceNumbers(nRanksPerCoordinateDirection, 1, face, rankNos);
 
   std::shared_ptr<Partition::RankSubset> rankSubset = std::make_shared<Partition::RankSubset>(rankNos.begin(), rankNos.end(), rhs.functionSpace()->meshPartition()->rankSubset());
@@ -79,12 +79,12 @@ FieldVariableDataStructuredForSurface(FieldVariable<FunctionSpace::FunctionSpace
   std::stringstream functionSpaceName;
   functionSpaceName << rhs.functionSpace()->meshName() << "_surface";
 
-  const int nDofsLocalWithoutGhosts = meshPartition->nDofsLocalWithoutGhosts();
+  const dof_no_t nDofsLocalWithoutGhosts = meshPartition->nDofsLocalWithoutGhosts();
 
   // create node positions (without ghost nodes)
   std::vector<Vec3> localNodePositions2D;
 
-  std::array<int,3> nNodesPerCoordinateDirection({meshPartition3D->nNodesLocalWithoutGhosts(0), meshPartition3D->nNodesLocalWithoutGhosts(1), meshPartition3D->nNodesLocalWithoutGhosts(2)});
+  std::array<PetscInt,3> nNodesPerCoordinateDirection({meshPartition3D->nNodesLocalWithoutGhosts(0), meshPartition3D->nNodesLocalWithoutGhosts(1), meshPartition3D->nNodesLocalWithoutGhosts(2)});
   getSurfaceNumbers(nNodesPerCoordinateDirection, rhs.functionSpace()->nDofsPerNode(), face, surfaceDofs_);
 
   VLOG(1) << "nDofsLocalWithoutGhosts: " << nDofsLocalWithoutGhosts << ", surfaceDofs: " << surfaceDofs_;
@@ -111,7 +111,6 @@ FieldVariableDataStructuredForSurface(FieldVariable<FunctionSpace::FunctionSpace
   assert(this->functionSpace_->meshPartition());
 
   VLOG(1) << "construct field variable \"" << this->name_ << "\" from other field variable \"" << rhs.name() << "\".";
-
   // create new distributed petsc vec as copy of rhs values vector
   // create new values vector
   this->values_ = std::make_shared<PartitionedPetscVec<FunctionSpace2D,nComponents>>(this->functionSpace_->meshPartition(), this->name_);
@@ -144,10 +143,10 @@ setValues(FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableO
 
 template<typename BasisFunctionType, int nComponents>
 void FieldVariableDataStructuredForSurface<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<2>,BasisFunctionType>,nComponents>::
-getSurfaceNumbers(const std::array<int,3> size, int nDofsPerNode, Mesh::face_t face, std::vector<int> &surfaceNumbers)
+getSurfaceNumbers(const std::array<node_no_t,3> size, int nDofsPerNode, Mesh::face_t face, std::vector<node_no_t> &surfaceNumbers)
 {
 
-  int nNumbersTotal;
+  node_no_t nNumbersTotal;
 
   switch(face)
   {
@@ -175,7 +174,7 @@ getSurfaceNumbers(const std::array<int,3> size, int nDofsPerNode, Mesh::face_t f
   {
     int i = 0;
     int rankNo = 0;
-    const int rankNoStride = size[0] * (size[1] - 1);
+    const dof_no_t rankNoStride = size[0] * (size[1] - 1);
     for (int zIndex = 0; zIndex < size[2]; zIndex++, rankNo += rankNoStride)
     {
       for (int xIndex = 0; xIndex < size[0]; xIndex++, rankNo++)
@@ -205,7 +204,7 @@ getSurfaceNumbers(const std::array<int,3> size, int nDofsPerNode, Mesh::face_t f
   }
   else
   {
-    int rankNoEnd = size[0]*size[1]*size[2];
+    node_no_t rankNoEnd = size[0]*size[1]*size[2];
     int rankNoBegin = 0;
     int rankNoStride = 1;
 

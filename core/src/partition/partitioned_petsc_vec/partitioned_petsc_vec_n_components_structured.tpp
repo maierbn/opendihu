@@ -1097,7 +1097,7 @@ output(std::ostream &stream)
     vector = vectorGlobal_[componentNo];
 
   // get global size of vector
-  int nEntries, nEntriesLocal;
+  PetscInt nEntries, nEntriesLocal;
   PetscErrorCode ierr;
   ierr = VecGetSize(vector, &nEntries); CHKERRV(ierr);
   ierr = VecGetLocalSize(vector, &nEntriesLocal); CHKERRV(ierr);
@@ -1120,7 +1120,7 @@ output(std::ostream &stream)
     }
 
     // get global size of vector
-    int nEntries, nEntriesLocal;
+    PetscInt nEntries, nEntriesLocal;
     PetscErrorCode ierr;
     ierr = VecGetSize(vector, &nEntries); CHKERRV(ierr);
     ierr = VecGetLocalSize(vector, &nEntriesLocal); CHKERRV(ierr);
@@ -1216,7 +1216,7 @@ output(std::ostream &stream)
         int dofNoLocalEnd = localSizes[rankNo];
         if (!VLOG_IS_ON(1))
         {
-          dofNoLocalEnd = std::min(400, localSizes[rankNo]);
+          dofNoLocalEnd = std::min((int)400, (int)localSizes[rankNo]);
         }
 
         for (dof_no_t dofNoLocal = 0; dofNoLocal < localSizes[rankNo]; dofNoLocal++)
@@ -1245,7 +1245,7 @@ output(std::ostream &stream)
       dof_no_t dofNoLocalEnd = this->meshPartition_->nDofsLocalWithoutGhosts();
       if (!VLOG_IS_ON(1))
       {
-        dofNoLocalEnd = std::min(100, dofNoLocalEnd);
+        dofNoLocalEnd = std::min((int)100, (int)dofNoLocalEnd);
       }
       for (dof_no_t dofNoLocal = 0; dofNoLocal < dofNoLocalEnd; dofNoLocal++)
       {
@@ -1324,7 +1324,7 @@ output(std::ostream &stream)
         int nGhostValuesShow = nGhostValues;
         if (!VLOG_IS_ON(1))
         {
-          nGhostValuesShow = std::min(100, nGhostValues);
+          nGhostValuesShow = std::min((int)100, (int)nGhostValues);
         }
         for (int i = 0; i < nGhostValuesShow; i++)
         {

@@ -40,7 +40,7 @@ initializeDofNosLocalNaturalOrdering(std::shared_ptr<FunctionSpace::FunctionSpac
       // loop over local nodes in local natural numbering
       for (node_no_t nodeX = 0; nodeX < nNodesLocalWithGhosts(0); nodeX++)
       {
-        std::array<node_no_t,MeshType::dim()> coordinates({nodeX});
+        std::array<int,MeshType::dim()> coordinates({(int)nodeX});
 
         // loop over dofs of node
         for (int dofOnNodeIndex = 0; dofOnNodeIndex < nDofsPerNode; dofOnNodeIndex++)
@@ -58,8 +58,8 @@ initializeDofNosLocalNaturalOrdering(std::shared_ptr<FunctionSpace::FunctionSpac
         for (node_no_t nodeX = 0; nodeX < nNodesLocalWithGhosts(0); nodeX++)
         {
           std::array<int,MeshType::dim()> coordinates;
-          coordinates[0] = nodeX;
-          coordinates[1] = nodeY;
+          coordinates[0] = (int)nodeX;
+          coordinates[1] = (int)nodeY;
 
           // loop over dofs of node
           for (int dofOnNodeIndex = 0; dofOnNodeIndex < nDofsPerNode; dofOnNodeIndex++)
@@ -80,9 +80,9 @@ initializeDofNosLocalNaturalOrdering(std::shared_ptr<FunctionSpace::FunctionSpac
           for (node_no_t nodeX = 0; nodeX < nNodesLocalWithGhosts(0); nodeX++)
           {
             std::array<int,MeshType::dim()> coordinates;
-            coordinates[0] = nodeX;
-            coordinates[1] = nodeY;
-            coordinates[2] = nodeZ;
+            coordinates[0] = (int)nodeX;
+            coordinates[1] = (int)nodeY;
+            coordinates[2] = (int)nodeZ;
 
             // loop over dofs of node
             for (int dofOnNodeIndex = 0; dofOnNodeIndex < nDofsPerNode; dofOnNodeIndex++)
@@ -160,6 +160,7 @@ createDmElements()
   else
   {
 
+
     // create PETSc DMDA object that is a topology interface handling parallel data layout on structured grids
     if (MeshType::dim() == 1)
     {
@@ -174,7 +175,9 @@ createDmElements()
       nElementsLocal_[0] = (element_no_t)m;
 
       // get number of ranks in each coordinate direction
-      ierr = DMDAGetInfo(*dmElements_, NULL, NULL, NULL, NULL, &nRanks_[0], NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL); CHKERRV(ierr);
+      std::array<PetscInt,1> nRanks;
+      ierr = DMDAGetInfo(*dmElements_, NULL, NULL, NULL, NULL, &nRanks[0], NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL); CHKERRV(ierr);
+      nRanks_[0] = nRanks[0];
 
       // get local sizes on the ranks
       const PetscInt *lxData;
@@ -206,7 +209,10 @@ createDmElements()
       nElementsLocal_[1] = (element_no_t)n;
 
       // get number of ranks in each coordinate direction
-      ierr = DMDAGetInfo(*dmElements_, NULL, NULL, NULL, NULL, &nRanks_[0], &nRanks_[1], NULL, NULL, NULL, NULL, NULL, NULL, NULL); CHKERRV(ierr);
+      std::array<PetscInt,2> nRanks;
+      ierr = DMDAGetInfo(*dmElements_, NULL, NULL, NULL, NULL, &nRanks[0], &nRanks[1], NULL, NULL, NULL, NULL, NULL, NULL, NULL); CHKERRV(ierr);
+      nRanks_[0] = nRanks[0];
+      nRanks_[1] = nRanks[1];
 
       // get local sizes on the ranks
       const PetscInt *lxData;
@@ -243,7 +249,11 @@ createDmElements()
         nElementsLocal_[2] = (element_no_t)p;
 
         // get number of ranks in each coordinate direction
-        ierr = DMDAGetInfo(*dmElements_, NULL, NULL, NULL, NULL, &nRanks_[0], &nRanks_[1], &nRanks_[2], NULL, NULL, NULL, NULL, NULL, NULL); CHKERRV(ierr);
+        std::array<PetscInt,3> nRanks;
+        ierr = DMDAGetInfo(*dmElements_, NULL, NULL, NULL, NULL, &nRanks[0], &nRanks[1], &nRanks[2], NULL, NULL, NULL, NULL, NULL, NULL); CHKERRV(ierr);
+        nRanks_[0] = nRanks[0];
+        nRanks_[1] = nRanks[1];
+        nRanks_[2] = nRanks[2];
 
         // get local sizes on the ranks
         const PetscInt *lxData;
@@ -285,8 +295,11 @@ createDmElements()
           nElementsLocal_[2] = (element_no_t)n;
 
           // get number of ranks in each coordinate direction
-          ierr = DMDAGetInfo(*dmElements_, NULL, NULL, NULL, NULL, &nRanks_[1], &nRanks_[2], NULL, NULL, NULL, NULL, NULL, NULL, NULL); CHKERRV(ierr);
+          std::array<PetscInt,3> nRanks;
+          ierr = DMDAGetInfo(*dmElements_, NULL, NULL, NULL, NULL, &nRanks[1], &nRanks[2], NULL, NULL, NULL, NULL, NULL, NULL, NULL); CHKERRV(ierr);
           nRanks_[0] = 1;
+          nRanks_[1] = nRanks[1];
+          nRanks_[2] = nRanks[2];
 
           // get local sizes on the ranks
           const PetscInt *lxData;
@@ -315,8 +328,11 @@ createDmElements()
           nElementsLocal_[2] = (element_no_t)n;
 
           // get number of ranks in each coordinate direction
-          ierr = DMDAGetInfo(*dmElements_, NULL, NULL, NULL, NULL, &nRanks_[0], &nRanks_[2], NULL, NULL, NULL, NULL, NULL, NULL, NULL); CHKERRV(ierr);
+          std::array<PetscInt,3> nRanks;
+          ierr = DMDAGetInfo(*dmElements_, NULL, NULL, NULL, NULL, &nRanks[0], &nRanks[2], NULL, NULL, NULL, NULL, NULL, NULL, NULL); CHKERRV(ierr);
           nRanks_[1] = 1;
+          nRanks_[0] = nRanks[0];
+          nRanks_[2] = nRanks[2];
 
           // get local sizes on the ranks
           const PetscInt *lxData;
@@ -345,8 +361,11 @@ createDmElements()
           nElementsLocal_[2] = 1;
 
           // get number of ranks in each coordinate direction
-          ierr = DMDAGetInfo(*dmElements_, NULL, NULL, NULL, NULL, &nRanks_[0], &nRanks_[1], NULL, NULL, NULL, NULL, NULL, NULL, NULL); CHKERRV(ierr);
+          std::array<PetscInt,2> nRanks;
+          ierr = DMDAGetInfo(*dmElements_, NULL, NULL, NULL, NULL, &nRanks[0], &nRanks[1], NULL, NULL, NULL, NULL, NULL, NULL, NULL); CHKERRV(ierr);
           nRanks_[2] = 1;
+          nRanks_[0] = nRanks[0];
+          nRanks_[1] = nRanks[1];
 
           // get local sizes on the ranks
           const PetscInt *lxData;

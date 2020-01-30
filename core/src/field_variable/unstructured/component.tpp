@@ -299,7 +299,7 @@ double Component<FunctionSpaceType,nComponents>::
 getValue(node_no_t dofLocalNo) const
 {
   double value;
-  std::array<int,1> indices{(int)(dofLocalNo)};
+  std::array<PetscInt,1> indices{(int)(dofLocalNo)};
 
   assert (values_);
   values_->getValues(componentIndex_, 1, indices.data(), &value);

@@ -28,7 +28,7 @@ Paraview::Paraview(DihuContext context, PythonConfig settings, std::shared_ptr<P
 
 std::string Paraview::encodeBase64Vec(const Vec &vector, bool withEncodedSizePrefix)
 {
-  int vectorSize = 0;
+  PetscInt vectorSize = 0;
   VecGetSize(vector, &vectorSize);
 
   std::vector<dof_no_t> indices(vectorSize);

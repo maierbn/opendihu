@@ -165,7 +165,7 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
   ierr = VecGetArray(this->data_.intermediates()->getValuesContiguous(), &intermediatesData); CHKERRV(ierr);
 
   // get sizes of input and output Vecs
-  int nStatesInput, nRates, nIntermediates = 101;
+  PetscInt nStatesInput, nRates, nIntermediates = 101;
   ierr = VecGetSize(input, &nStatesInput); CHKERRV(ierr);
   ierr = VecGetSize(output, &nRates); CHKERRV(ierr);
   ierr = VecGetLocalSize(this->data_.intermediates()->getValuesContiguous(), &nIntermediates); CHKERRV(ierr);
@@ -297,7 +297,7 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
   // handle intermediates, call callback function of python config
   if (this->handleResult_ && this->internalTimeStepNo_ % this->handleResultCallInterval_ == 0)
   {
-    int nStatesInput;
+    PetscInt nStatesInput;
     VecGetSize(input, &nStatesInput);
 
     // start critical section for python API calls

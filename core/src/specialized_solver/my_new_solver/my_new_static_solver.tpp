@@ -3,7 +3,10 @@
 #include <omp.h>
 #include <sstream>
 
+#ifdef HAVE_XBRAID
 #include "braid.h"
+#endif
+
 template<class NestedSolver>
 MyNewStaticSolver<NestedSolver>::
 MyNewStaticSolver(DihuContext context) :
@@ -53,14 +56,14 @@ initialize()
 
   // here is the space to initialize anything else that is needed for your solver
 
-
+#if 0
   // for example, initialize Braid here (not like this)
   braid_Core    core;
   MPI_Comm comm = MPI_COMM_WORLD;
   braid_Init(MPI_COMM_WORLD, comm, 0, 0, 0, nullptr,
         NULL, NULL, NULL, NULL, NULL, NULL,
         NULL, NULL, NULL, NULL, &core);
-
+#endif
   initialized_ = true;
 }
 

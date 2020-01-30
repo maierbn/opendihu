@@ -137,7 +137,7 @@ protected:
   global_no_t nonBcDofNoGlobalBegin_; //< the first no in the non-bc global numbering
   int nDofsLocal_;                    //< same as nEntriesLocal_ (needed for PartitionedPetscVecForHyperelasticity)
 
-  std::vector<int> nonBcGhostDofNosGlobal_;  //< non-bc ghost dofs in non-bc global indexing
+  std::vector<PetscInt> nonBcGhostDofNosGlobal_;  //< non-bc ghost dofs in non-bc global indexing
 
   std::vector<std::pair<int,int>> nDofRequestedFromRanks_;   //< (foreignRank,nDofs), number of dofs requested by and to be send to foreignRank
   std::vector<std::vector<int>> requestedDofsGlobalPetsc_;   //< indexing same as in nDofRequestedFromRanks_, the requested dofs from that rank

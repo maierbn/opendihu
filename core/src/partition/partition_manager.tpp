@@ -132,40 +132,46 @@ createPartitioningStructuredLocal(std::array<global_no_t,FunctionSpace::dim()> &
   std::array<element_no_t,D> globalSizeMpi;   // note: because of MPI this cannot be of type global_no_t, but has to be the same as the send buffer
   if (rankGridCoordinate[1] == 0 && rankGridCoordinate[2] == 0)
   {
-    MPIUtility::handleReturnValue(MPI_Reduce(&nElementsLocal[0], &globalSizeMpi[0], 1, MPI_INT, 
+    MPIUtility::handleReturnValue(MPI_Reduce(&nElementsLocal[0], &globalSizeMpi[0], 1, MPIU_INT, 
                                               MPI_SUM, 0, oneDimensionCommunicator[0]));
   }
   
   if (D >= 2 && rankGridCoordinate[0] == 0 && rankGridCoordinate[2] == 0)
   {
-     MPIUtility::handleReturnValue(MPI_Reduce(&nElementsLocal[1], &globalSizeMpi[1], 1, MPI_INT, 
+     MPIUtility::handleReturnValue(MPI_Reduce(&nElementsLocal[1], &globalSizeMpi[1], 1, MPIU_INT, 
                                                MPI_SUM, 0, oneDimensionCommunicator[1]));
   }
   
   if (D >= 3 && rankGridCoordinate[0] == 0 && rankGridCoordinate[1] == 0)
   {
-     MPIUtility::handleReturnValue(MPI_Reduce(&nElementsLocal[2], &globalSizeMpi[2], 1, MPI_INT, 
+     MPIUtility::handleReturnValue(MPI_Reduce(&nElementsLocal[2], &globalSizeMpi[2], 1, MPIU_INT, 
                                                MPI_SUM, 0, oneDimensionCommunicator[2]));
   }
   
   // now broadcast globalSizeMpi value to all ranks
-  MPIUtility::handleReturnValue(MPI_Bcast(globalSizeMpi.data(), D, MPI_INT, 0, rankSubset->mpiCommunicator()));
+  MPIUtility::handleReturnValue(MPI_Bcast(globalSizeMpi.data(), D, MPIU_INT, 0, rankSubset->mpiCommunicator()));
   
 
   LOG(DEBUG) << "globalSizeMpi: " << globalSizeMpi;
 
   // compute beginGlobal values by prefix sum
-  std::array<int, D> beginGlobal({0});
-  MPIUtility::handleReturnValue(MPI_Exscan(&nElementsLocal[0], &beginGlobal[0], 1, MPI_INT, MPI_SUM, oneDimensionCommunicator[0]));
+  std::array<global_no_t, D> beginGlobal({0});
+  std::array<global_no_t, D> nElementsLocalBigSize;
+  for (int i = 0; i < D; i++)
+  {
+    nElementsLocalBigSize[i] = nElementsLocal[i];
+  }
+
+  MPIUtility::handleReturnValue(MPI_Exscan(&nElementsLocalBigSize[0], &beginGlobal[0], 1, MPI_LONG_LONG_INT, MPI_SUM, oneDimensionCommunicator[0]));
   
   if (D >= 2)
   {
-    MPIUtility::handleReturnValue(MPI_Exscan(&nElementsLocal[1], &beginGlobal[1], 1, MPI_INT, MPI_SUM, oneDimensionCommunicator[1]));
+    MPIUtility::handleReturnValue(MPI_Exscan(&nElementsLocalBigSize[1], &beginGlobal[1], 1, MPI_LONG_LONG_INT, MPI_SUM, oneDimensionCommunicator[1]));
   }
   
   if (D >= 3)
   {
-    MPIUtility::handleReturnValue(MPI_Exscan(&nElementsLocal[2], &beginGlobal[2], 1, MPI_INT, MPI_SUM, oneDimensionCommunicator[2]));
+    MPIUtility::handleReturnValue(MPI_Exscan(&nElementsLocalBigSize[2], &beginGlobal[2], 1, MPI_LONG_LONG_INT, MPI_SUM, oneDimensionCommunicator[2]));
   }
   
   for (int i = 0; i < D; i++)

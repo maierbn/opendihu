@@ -161,7 +161,7 @@ try:
     XBRAID_DOWNLOAD = False
     ADIOS_DOWNLOAD = False
     ADIOS_DIR = os.environ["ADIOS2_ROOT"]
-    cc = "mpicc -cc=gcc -ftemplate-backtrace-limit=0"
+    cc = "mpicc -cc=gcc"
     CC = "mpicxx -cxx=g++ -ftemplate-backtrace-limit=0"   
 except:
   pass

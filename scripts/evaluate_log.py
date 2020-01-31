@@ -91,7 +91,10 @@ if 'durationParaview3DWrite' not in df:
 else:
   df['durationOnlyWrite'] = df['durationParaview3DWrite'] + df['durationParaview1DWrite']
 
-df['duration_init'] = df['totalUsertime'] - df['duration_total'] + df['durationParaview3DInit'] + df['durationParaview1DInit']
+try:
+  df['duration_init'] = df['totalUsertime'] - df['duration_total'] + df['durationParaview3DInit'] + df['durationParaview1DInit']
+except:
+  df['duration_init'] = 0
 
 # Info about the data structure
 #print("df info:")
@@ -150,7 +153,8 @@ def output(df, title, columns_to_print, columns_to_plot, plot_labels=None):
      "durationMap"]))
 
   # create auxiliary columns that will be computed
-  df["memoryResidentSet"] = 0
+  if not "memoryResidentSet" in df:
+    df["memoryResidentSet"] = 0
   df["n"] = 0
 
   # remove column that are not present in the df
@@ -174,7 +178,7 @@ def output(df, title, columns_to_print, columns_to_plot, plot_labels=None):
   
   # define items to be printed, the columns "n" and "memoryResidentSet" need to be already present in the df
   items = merge_dicts(
-    {column_name: lambda v: np.mean if isinstance(v, float) else v[0] for column_name in columns_to_extract},
+    {column_name: (lambda v: (np.mean if isinstance(v, float) else v[0])) for column_name in columns_to_extract},
     {'n': np.size, "memoryResidentSet": lambda v: "{:.3f} GB".format(np.mean(v)/(1024.**3))}
   )
 

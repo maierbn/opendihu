@@ -46,11 +46,16 @@ import numpy as np
 plt.rcParams.update({'font.size': 16})
 plt.rcParams['lines.linewidth'] = 2
 
+def remove_duplicates(seq):
+  seen = set()
+  seen_add = seen.add
+  return [x for x in seq if not (x in seen or seen_add(x))]
+
 # determine columns to load from the log file
 with open(input_filename) as f:
   line = f.readline()
-  if "~nDofsFiber0" in line:
-    pos = line.find("~nDofsFiber0")
+  if "~nDofs" in line:
+    pos = line.find("~nDofs")
     line = line[0:pos]
   column_names = list(line.split(";"))
 
@@ -59,17 +64,35 @@ with open(input_filename) as f:
     if column_name == "n":
       column_names[i] = "{}_n".format(column_names[i-1])
 
+  while "" in column_names:
+    column_names.remove("")
+
+  seen = set()
+  column_names2 = []
+  for x in list(column_names):
+    if x not in seen:
+      seen.add(x)
+      column_names2.append(x)
+    else:
+      print("Note: column \"{}\" appears multiple times".format(x))
+      while x in seen:
+        x = "{}_2".format(x)
+      seen.add(x)
+      column_names2.append(x)
+
+  column_names = column_names2
   n_columns = len(column_names)
+  
+if list_columns:
+	print("File {} contains {} colums: {}".format(input_filename, n_columns, column_names))
 
 # load data frame
-df = pd.read_csv(input_filename, sep=';', error_bad_lines=False, warn_bad_lines=True, comment="#", header=None, names=column_names, usecols=range(n_columns))
+df = pd.read_csv(input_filename, sep=';', error_bad_lines=False, warn_bad_lines=True, comment="#", header=None, names=column_names, usecols=range(n_columns), mangle_dupe_cols=True)
 
 # filter data
 #df = df.loc[df['endTime'] == 1]
 
-if list_columns:
-  print("File {} contains {} rows and {} colums: {}".format(input_filename, len(df.index), n_columns, column_names))
-else:
+if not list_columns:
   print("File {} contains {} rows and {} colums.".format(input_filename, len(df.index), n_columns))
 
 # parse timestamp
@@ -178,7 +201,7 @@ def output(df, title, columns_to_print, columns_to_plot, plot_labels=None):
   
   # define items to be printed, the columns "n" and "memoryResidentSet" need to be already present in the df
   items = merge_dicts(
-    {column_name: (lambda v: (np.mean if isinstance(v, float) else v[0])) for column_name in columns_to_extract},
+    {column_name: lambda v: (np.mean(v) if v.dtype == np.float64 else str(v.iloc[0]) ) for column_name in columns_to_extract},
     {'n': np.size, "memoryResidentSet": lambda v: "{:.3f} GB".format(np.mean(v)/(1024.**3))}
   )
 
@@ -195,7 +218,7 @@ def output(df, title, columns_to_print, columns_to_plot, plot_labels=None):
 #  long_name : short_name
 column_shortnames = {
   "totalUsertime": "user",
-  "duration_total": "total",
+  "duration_total": "total comp.",
   "duration_0D": "0D",
   "duration_1D": "1D",
   "duration_init": "duration_init",

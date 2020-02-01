@@ -40,8 +40,11 @@ for y in range(n_subdomains_y):
   for x in range(n_subdomains_x):
     for z in range(n_subdomains_z):
       cpu_no = z*n_subdomains_y*n_subdomains_x + y*n_subdomains_x + x
-      cpu_list.append(cpu_no*stride)
+      cpu_list.append(cpu_no)
       cpu_no += 1
+
+for i,no in enumerate(list(cpu_list)):
+  cpu_list[no] = i*stride
 
 if output_filename != "":
   with open(output_filename, "w") as outfile:

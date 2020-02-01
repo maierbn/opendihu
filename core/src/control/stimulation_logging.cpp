@@ -142,7 +142,7 @@ void StimulationLogging::writeLogFile()
     LOG(DEBUG) << "StimulationLogging::writeLogFile, all entries " << logEntries_;
 
     std::ofstream file;
-    OutputWriter::Generic::openFile(file, filename_);  // open file, and create directory is necessary, truncate file
+    OutputWriter::Generic::openFile(file, filename_);  // open file, and create directory if necessary, truncate file
 
     // output all entries in logEntries_
     file << "# motor unit no; fiber no; stimulation times" << std::endl;

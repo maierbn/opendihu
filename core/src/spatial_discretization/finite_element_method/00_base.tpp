@@ -91,8 +91,8 @@ initialize()
   setStiffnessMatrix();
 
   // save the stiffness matrix also in the other slot, that will not be overwritten by applyBoundaryConditions
-  PetscErrorCode ierr = MatCopy(this->data_.stiffnessMatrix()->valuesGlobal(),
-                                this->data_.stiffnessMatrixWithoutBc()->valuesGlobal(), DIFFERENT_NONZERO_PATTERN); CHKERRV(ierr);
+  PetscErrorCode ierr = MatDuplicate(this->data_.stiffnessMatrix()->valuesGlobal(), MAT_COPY_VALUES,
+                                &this->data_.stiffnessMatrixWithoutBc()->valuesGlobal()); CHKERRV(ierr);
 
   Control::PerformanceMeasurement::stop("durationSetStiffnessMatrix");
 

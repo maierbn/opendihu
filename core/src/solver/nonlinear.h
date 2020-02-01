@@ -25,6 +25,7 @@ public:
 protected:
   std::shared_ptr<SNES> snes_;   ///< the PETSc SNES (scalable nonlinear equations solvers) object
 
+  double snesAbsoluteTolerance_;         ///< absolute solver tolerance
   double snesRelativeTolerance_;         ///< relative solver tolerance
   long int snesMaxIterations_;           ///< maximum number of iterations
   long int snesMaxFunctionEvaluations_;  ///< maximum number of function evaluations

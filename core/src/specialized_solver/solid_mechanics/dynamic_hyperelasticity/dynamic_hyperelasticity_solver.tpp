@@ -46,8 +46,16 @@ initialize()
   // parse updateDirichletBoundaryConditionsFunction
   if (this->specificSettings_.hasKey("updateDirichletBoundaryConditionsFunction"))
   {
-    pythonUpdateDirichletBoundaryConditionsFunction_ = this->specificSettings_.getOptionFunction("updateDirichletBoundaryConditionsFunction");
-    updateDirichletBoundaryConditionsFunctionCallInterval_ = this->specificSettings_.getOptionInt("updateDirichletBoundaryConditionsFunctionCallInterval", 1, PythonUtility::Positive);
+    PyObject *object = this->specificSettings_.getOptionPyObject("updateDirichletBoundaryConditionsFunction");
+    if (object == Py_None)
+    {
+      pythonUpdateDirichletBoundaryConditionsFunction_ = nullptr;
+    }
+    else
+    {
+      pythonUpdateDirichletBoundaryConditionsFunction_ = this->specificSettings_.getOptionFunction("updateDirichletBoundaryConditionsFunction");
+      updateDirichletBoundaryConditionsFunctionCallInterval_ = this->specificSettings_.getOptionInt("updateDirichletBoundaryConditionsFunctionCallInterval", 1, PythonUtility::Positive);
+    }
   }
 }
 

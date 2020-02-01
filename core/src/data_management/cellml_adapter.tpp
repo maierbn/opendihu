@@ -65,7 +65,7 @@ setStatesVariable(std::shared_ptr<CellmlAdapter<nStates,nIntermediates,FunctionS
 
 template <int nStates, int nIntermediates, typename FunctionSpaceType>
 void CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::
-setIntermediateNames(std::vector<std::string> &intermediateNames)
+setIntermediateNames(const std::vector<std::string> &intermediateNames)
 {
   intermediateNames_ = intermediateNames;
 }

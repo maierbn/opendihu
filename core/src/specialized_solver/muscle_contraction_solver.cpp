@@ -49,15 +49,17 @@ advanceTimeSpan()
     }
 
     // compute the current active stress
-    computeActiveStress();
+    //computeActiveStress();
 
     this->dynamicHyperelasticitySolver_.setTimeSpan(currentTime, currentTime+this->timeStepWidth_);
+
+    LOG(DEBUG) << "call dynamic hyperelasticitySolver";
 
     // advance the simulation by the specified time span
     dynamicHyperelasticitySolver_.advanceTimeSpan();
 
     // compute new values of λ and λ_dot, to be transferred to the CellML solvers
-    computeLambda();
+    //computeLambda();
 
     // advance simulation time
     timeStepNo++;
@@ -107,14 +109,14 @@ initialize()
   data_.initialize();
 
   typename DynamicHyperelasticitySolverType::HyperelasticitySolverType &hyperelasticitySolver = dynamicHyperelasticitySolver_.hyperelasticitySolver();
-
+/*
   data_.setFieldVariables(dynamicHyperelasticitySolver_.data().displacements(),
                           dynamicHyperelasticitySolver_.data().velocities(),
                           hyperelasticitySolver.data().activePK2Stress(),
                           hyperelasticitySolver.data().pK2Stress(),
                           hyperelasticitySolver.data().fiberDirection());
 
-
+*/
 }
 
 void MuscleContractionSolver::
@@ -145,6 +147,7 @@ computeLambda()
 
   std::shared_ptr<DisplacementsFieldVariableType> fiberDirectionVariable = dynamicHyperelasticitySolver_.hyperelasticitySolver().data().fiberDirection();
   std::shared_ptr<DeformationGradientFieldVariableType> deformationGradientVariable = dynamicHyperelasticitySolver_.hyperelasticitySolver().data().deformationGradient();
+  std::shared_ptr<DeformationGradientFieldVariableType> fDotVariable = dynamicHyperelasticitySolver_.hyperelasticitySolver().data().deformationGradientTimeDerivative();
 
 
   // compute lambda and \dot{lambda} (contraction velocity)
@@ -160,21 +163,31 @@ computeLambda()
     const Vec3 fiberDirection = fiberDirectionVariable->getValue(dofNoLocal);
     //const Vec3 displacement = displacementsVariable->getValue(dofNoLocal);
     const VecD<9> deformationGradientValues = deformationGradientVariable->getValue(dofNoLocal);
+    const VecD<9> fDotValues = fDotVariable->getValue(dofNoLocal);
 
     // create matrix, deformationGradientValues are in row-major order
     MathUtility::Matrix<3,3> deformationGradient(deformationGradientValues);
+    MathUtility::Matrix<3,3> fDot(fDotValues);
 
     // fiberDirection is normalized
     assert (MathUtility::norm<3>(fiberDirection) - 1.0 < 1e-10);
 
     // get deformation gradient, project lambda and lambda dot
     // dx = F dX, dx^2 = C dX^2
-    // project displacements on normalized fiberDirection
+    // lambda = ||dx•a0||
+    // project displacements on normalized fiberDirection, a0
     //const double lambda = displacement[0] * fiberDirection[0] + displacement[1] * fiberDirection[1] + displacement[2] * fiberDirection[2];
 
     Vec3 fiberDirectionCurrentConfiguration = deformationGradient * fiberDirection;
     const double lambda = MathUtility::norm<3>(fiberDirectionCurrentConfiguration);
-    const double lambdaDot = 0.0;  // TODO
+
+    // compute lambda lambda dot
+    // d/dt dx = d/dt F
+    // d/dt lambda = d/dt ||dx•a0|| = 1 / ||Fa|| (Fa0 • dot{F}a0) = 1/lambda (Fa • Fdot a0)
+    // d/dt lambda = d/dt
+    const double lambdaDot = 0.0;
+
+    //
 
     lambdaVariable->setValue(dofNoLocal, lambda);
     lambdaDotVariable->setValue(dofNoLocal, lambdaDot);
@@ -192,6 +205,8 @@ computeLambda()
 void MuscleContractionSolver::
 computeActiveStress()
 {
+  LOG(DEBUG) << "computeActiveStress";
+
   typedef typename DynamicHyperelasticitySolverType::HyperelasticitySolverType::StressFieldVariableType StressFieldVariableType;
   typedef typename DynamicHyperelasticitySolverType::HyperelasticitySolverType::DisplacementsFieldVariableType DisplacementsFieldVariableType;
   typedef typename Data::ScalarFieldVariableType FieldVariableType;
@@ -243,6 +258,16 @@ computeActiveStress()
     activeStress[4] = factor * fiberDirection[1] * fiberDirection[2];
     activeStress[5] = factor * fiberDirection[0] * fiberDirection[2];
 
+    LOG(DEBUG) << "dof " << dofNoLocal << ", lambda: " << lambda << ", lambdaRelative: " << lambdaRelative
+      << ", pmax_: " << pmax_ << ", f: " << f << ", gamma: " << gamma << ", => factor: " << factor << ", fiberDirection: " << fiberDirection;
+
+    // if lambda is not yet computed (before first computation), set active stress to zero
+    if (fabs(lambda)  < 1e-12)
+    {
+      activeStress = VecD<6>{0.0};
+    }
+
+    LOG(DEBUG) << "set active stress to " << activeStress;
     activePK2StressVariable->setValue(dofNoLocal, activeStress, INSERT_VALUES);
   }
 

@@ -457,6 +457,8 @@ DihuContext::~DihuContext()
 #endif
 
       LOG(DEBUG) << "MPI_Finalize";
+      // global barrier
+      MPI_Barrier(MPI_COMM_WORLD);
       MPI_Finalize();
     }
   }

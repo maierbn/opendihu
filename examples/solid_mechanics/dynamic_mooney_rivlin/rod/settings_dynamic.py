@@ -5,7 +5,7 @@ import sys, os
 # number of elements
 nx = 2    # 2
 ny = 2    # 2
-nz = 5    # 5
+nz = 3    # 5
 
 # boundary conditions (for quadratic elements)
 dirichlet_bc = {}
@@ -217,7 +217,8 @@ config = {
     # boundary and initial conditions
     "dirichletBoundaryConditions": dirichlet_bc,
     "neumannBoundaryConditions": neumann_bc,
-    "updateDirichletBoundaryConditionsFunction": update_dirichlet_boundary_conditions,
+    #"updateDirichletBoundaryConditionsFunction": update_dirichlet_boundary_conditions,
+    "updateDirichletBoundaryConditionsFunction": None,
     "updateDirichletBoundaryConditionsFunctionCallInterval": 1,
     
     "initialValuesDisplacements": [],

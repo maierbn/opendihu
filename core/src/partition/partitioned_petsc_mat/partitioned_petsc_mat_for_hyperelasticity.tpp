@@ -83,22 +83,23 @@ dumpMatrixGlobalNatural(std::string filename)
   int ownRankNo = meshPartition->ownRankNo();
   int nRanks = meshPartition->nRanks();
 
-  int nRowsGlobal = 0;
-  int nColumnsGlobal = 0;
+  PetscInt nRowsGlobal = 0;
+  PetscInt nColumnsGlobal = 0;
   PetscErrorCode ierr;
 
-  int nDisplacementDofsGlobal = meshPartition->nDofsGlobal();
-  int nPressureDofsGlobal = meshPartitionPressure->nDofsGlobal();
+  global_no_t nDisplacementDofsGlobal = meshPartition->nDofsGlobal();
 
-  int nDisplacementDofsLocal = meshPartition->nDofsLocalWithoutGhosts();
-  int nPressureDofsLocal = meshPartitionPressure->nDofsLocalWithoutGhosts();
+  global_no_t nPressureDofsGlobal = meshPartitionPressure->nDofsGlobal();
+
+  dof_no_t nDisplacementDofsLocal = meshPartition->nDofsLocalWithoutGhosts();
+  dof_no_t nPressureDofsLocal = meshPartitionPressure->nDofsLocalWithoutGhosts();
 
   // get global matrix sizes
   nRowsGlobal = nDisplacementComponents*nDisplacementDofsGlobal + nPressureDofsGlobal;
   nColumnsGlobal = nRowsGlobal;
 
-  int nRowsMatrixNonBc = 0;
-  int nColumnsMatrixNonBc = 0;
+  PetscInt nRowsMatrixNonBc = 0;
+  PetscInt nColumnsMatrixNonBc = 0;
   ierr = MatGetSize(matrix, &nRowsMatrixNonBc, &nColumnsMatrixNonBc); CHKERRV(ierr);
 
 
@@ -106,14 +107,14 @@ dumpMatrixGlobalNatural(std::string filename)
   VLOG(1) << "nColumnsGlobal: " << nColumnsGlobal << ", nColumns actual matrix: " << nColumnsMatrixNonBc;
 
   // get displacement value columns
-  const int *ownershipRanges;
+  const PetscInt *ownershipRanges;
   ierr = MatGetOwnershipRanges(matrix, &ownershipRanges); CHKERRV(ierr);
 
-  int ownershipBegin = 0;
-  int ownershipEnd = 0;
+  PetscInt ownershipBegin = 0;
+  PetscInt ownershipEnd = 0;
   ierr = MatGetOwnershipRange(matrix, &ownershipBegin, &ownershipEnd); CHKERRV(ierr);
 
-  int nRowsMatrixNonBcLocal = ownershipEnd - ownershipBegin;
+  PetscInt nRowsMatrixNonBcLocal = ownershipEnd - ownershipBegin;
   VLOG(1) << "nRowsMatrixNonBcLocal: " << nRowsMatrixNonBcLocal
     << ", nDisplacementDofsLocal: " << nDisplacementDofsLocal << "/" << nDisplacementDofsGlobal << ", nPressureDofsLocal: " << nPressureDofsLocal << "/" << nPressureDofsGlobal;
 
@@ -122,8 +123,8 @@ dumpMatrixGlobalNatural(std::string filename)
   // get values in row-major format with global indexing
   std::vector<double> matrixValuesLocal(nRowsMatrixNonBcLocal*nColumnsMatrixNonBc, 0.0);
 
-  std::vector<int> rowIndices(nRowsMatrixNonBcLocal);
-  std::vector<int> columnIndices(nColumnsMatrixNonBc);
+  std::vector<PetscInt> rowIndices(nRowsMatrixNonBcLocal);
+  std::vector<PetscInt> columnIndices(nColumnsMatrixNonBc);
 
   std::iota(rowIndices.begin(), rowIndices.end(), ownershipBegin);
   std::iota(columnIndices.begin(), columnIndices.end(), 0);
@@ -159,9 +160,9 @@ dumpMatrixGlobalNatural(std::string filename)
 
   // gather number of local dofs
   const int nComponents = nDisplacementComponents+1;
-  std::vector<int> nDofsLocalRanks(nRanks*2);   // nDisplacementDofs, nPressureDofs for every rank
+  std::vector<PetscInt> nDofsLocalRanks(nRanks*2);   // nDisplacementDofs, nPressureDofs for every rank
 
-  std::vector<int> nDofsLocal{nDisplacementDofsLocal, nPressureDofsLocal};
+  std::vector<PetscInt> nDofsLocal{nDisplacementDofsLocal, nPressureDofsLocal};
 
   MPI_Gather(nDofsLocal.data(), 2, MPI_INT,
              nDofsLocalRanks.data(), 2, MPI_INT, 0, meshPartition->mpiCommunicator());
@@ -169,8 +170,8 @@ dumpMatrixGlobalNatural(std::string filename)
   VLOG(1) << "nDofsLocal: " << nDofsLocal << ", nDofsLocalRanks: " << nDofsLocalRanks;
 
   // gather dofNoLocalToDofNoNonBcGlobal_
-  std::array<std::vector<std::vector<int>>,nComponents> dofNoLocalToDofNoNonBcGlobalRanks;
-  std::array<std::vector<int>,nComponents> dofNoLocalToDofNoNonBcGlobalRanksBuffer;
+  std::array<std::vector<std::vector<PetscInt>>,nComponents> dofNoLocalToDofNoNonBcGlobalRanks;
+  std::array<std::vector<PetscInt>,nComponents> dofNoLocalToDofNoNonBcGlobalRanksBuffer;
 
   // and gather localDofNo to globalNaturalDofNo mappings
   std::array<std::vector<std::vector<global_no_t>>,nComponents> dofNosGlobalNaturalRanks;   // dofNosGlobalNaturalRanks[componentNo][rankNo][dofNoLocal];
@@ -182,7 +183,7 @@ dumpMatrixGlobalNatural(std::string filename)
     std::vector<int> offsets(nRanks);
     std::vector<int> sizes(nRanks);
 
-    int totalSize = 0;
+    PetscInt totalSize = 0;
     if (ownRankNo == 0)
     {
       offsets[0] = 0;
@@ -265,7 +266,7 @@ dumpMatrixGlobalNatural(std::string filename)
         dofNosGlobalNaturalRanks[componentNo][rankNo].resize(sizes[rankNo]);
         dofNoLocalToDofNoNonBcGlobalRanks[componentNo][rankNo].resize(sizes[rankNo]);
 
-        for (int dofNoLocal = 0; dofNoLocal < sizes[rankNo]; dofNoLocal++)
+        for (dof_no_t dofNoLocal = 0; dofNoLocal < sizes[rankNo]; dofNoLocal++)
         {
           dofNosGlobalNaturalRanks[componentNo][rankNo][dofNoLocal] = dofNosGlobalNaturalRanksBuffer[componentNo][offsets[rankNo] + dofNoLocal];
           dofNoLocalToDofNoNonBcGlobalRanks[componentNo][rankNo][dofNoLocal] = dofNoLocalToDofNoNonBcGlobalRanksBuffer[componentNo][offsets[rankNo] + dofNoLocal];
@@ -517,7 +518,7 @@ getSubmatrix(int rowVariableNo, int columnVariableNo)
 
   Mat submatrix;
   PetscErrorCode ierr;
-  ierr = MatGetSubMatrix(this->globalMatrix_, indexSetRows, indexSetColumns, MAT_INITIAL_MATRIX, &submatrix); CHKERRABORT(mpiCommunicator,ierr);
+  ierr = MatCreateSubMatrix(this->globalMatrix_, indexSetRows, indexSetColumns, MAT_INITIAL_MATRIX, &submatrix); CHKERRABORT(mpiCommunicator,ierr);
 
   return submatrix;
 }

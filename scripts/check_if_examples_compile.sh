@@ -32,7 +32,7 @@ for directory in $EXAMPLE_PATH/**/*; do
       START=$(date +%s.%N)
       
       # compile example
-      scons BUILD_TYPE=r
+      python2.7 $OPENDIHU_HOME/dependencies/scons/scons.py BUILD_TYPE=r
       RESULT=$?
             
       # measured duration

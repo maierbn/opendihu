@@ -31,6 +31,7 @@ dt_1D = 1.5e-3                      # [ms] timestep width of diffusion
 dt_splitting = 3e-3                 # [ms] overall timestep width of strang splitting
 dt_3D = 1e0                         # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
 output_timestep = 1e0               # [ms] timestep for output files
+output_timestep_big = 1e0           # [ms] timestep for output big files
 activation_start_time = 0           # [ms] time when to start checking for stimulation
 
 # input files

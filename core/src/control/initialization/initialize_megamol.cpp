@@ -20,7 +20,8 @@ void DihuContext::initializeAdios(int argc, char *argv[])
 #ifdef HAVE_ADIOS
   LOG(DEBUG) << "initializeAdios";
 
-  adios_ = std::make_shared<adios2::ADIOS>(MPI_COMM_WORLD);
+  const bool adiosDebugMode = true;
+  adios_ = std::make_shared<adios2::ADIOS>(MPI_COMM_WORLD, adiosDebugMode);
 #endif
 }
 

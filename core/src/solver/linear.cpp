@@ -270,9 +270,9 @@ void Linear::solve(Vec rightHandSide, Vec solution, std::string message)
   Control::PerformanceMeasurement::stop(this->durationLogKey_);
 
   // determine meta data
-  int numberOfIterations = 0;
+  PetscInt numberOfIterations = 0;
   PetscReal residualNorm = 0.0;
-  int nDofsGlobal = 0;
+  PetscInt nDofsGlobal = 0;
 
   ierr = KSPGetIterationNumber(*ksp_, &numberOfIterations); CHKERRV(ierr);
   ierr = KSPGetResidualNorm(*ksp_, &residualNorm); CHKERRV(ierr);

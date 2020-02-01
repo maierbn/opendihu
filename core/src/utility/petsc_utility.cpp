@@ -22,17 +22,17 @@ void getMatrixEntries(const Mat &matrix, std::vector<double> &matrixValues)
   // if matrix is nested, only consider first submatrix
   if (std::string(matrixType) == std::string(MATNEST))
   {
-    int nNestedRows = 1;
-    int nNestedColumns = 1;
+    PetscInt nNestedRows = 1;
+    PetscInt nNestedColumns = 1;
     Mat **nestedMats;
     MatNestGetSubMats(matrix,&nNestedRows,&nNestedColumns,&nestedMats);
 
-    int nRows, nColumns;
+    PetscInt nRows, nColumns;
     MatGetLocalSize(nestedMats[0][0], &nRows, &nColumns);
 
-    std::vector<int> rowIndices(nRows);
+    std::vector<PetscInt> rowIndices(nRows);
     std::iota(rowIndices.begin(), rowIndices.end(), 0);
-    std::vector<int> columnIndices(nColumns);
+    std::vector<PetscInt> columnIndices(nColumns);
     std::iota(columnIndices.begin(), columnIndices.end(), 0);
     matrixValues.resize(nRows*nColumns, 0.0);
 
@@ -42,14 +42,14 @@ void getMatrixEntries(const Mat &matrix, std::vector<double> &matrixValues)
   else
   {
     // normal matrix
-    int nRows, nColumns;
+    PetscInt nRows, nColumns;
     MatGetLocalSize(matrix, &nRows, &nColumns);
 
-    int rowBegin, rowEnd;
+    PetscInt rowBegin, rowEnd;
     MatGetOwnershipRange(matrix, &rowBegin, &rowEnd);
-    std::vector<int> rowIndices(nRows);
+    std::vector<PetscInt> rowIndices(nRows);
     std::iota(rowIndices.begin(), rowIndices.end(), rowBegin);
-    std::vector<int> columnIndices(nColumns);
+    std::vector<PetscInt> columnIndices(nColumns);
     std::iota(columnIndices.begin(), columnIndices.end(), 0);
     matrixValues.resize(nRows*nColumns, 0.0);
     //LOG(DEBUG) << "matrixValues contains " << nRows*nColumns << " local entries for the " << nRows << "x" << nColumns << " local matrix";
@@ -61,14 +61,14 @@ void getMatrixEntries(const Mat &matrix, std::vector<double> &matrixValues)
 
 void getVectorEntries(const Vec &vector, std::vector<double> &vectorValues)
 {
-  int ownershipBegin = 0;
-  int ownershipEnd = 0;
+  PetscInt ownershipBegin = 0;
+  PetscInt ownershipEnd = 0;
 
   PetscErrorCode ierr;
   ierr = VecGetOwnershipRange(vector, &ownershipBegin, &ownershipEnd); CHKERRV(ierr);
-  int nValues = ownershipEnd - ownershipBegin;
+  PetscInt nValues = ownershipEnd - ownershipBegin;
 
-  std::vector<int> dofNosGlobal(nValues);
+  std::vector<PetscInt> dofNosGlobal(nValues);
   std::iota(dofNosGlobal.begin(), dofNosGlobal.end(), ownershipBegin);
   vectorValues.resize(nValues);
 
@@ -78,15 +78,15 @@ void getVectorEntries(const Vec &vector, std::vector<double> &vectorValues)
 
 void setVector(const std::vector<double> &vectorValues, Vec& vector)
 {
-  int ownershipBegin = 0;
-  int ownershipEnd = 0;
+  PetscInt ownershipBegin = 0;
+  PetscInt ownershipEnd = 0;
 
   PetscErrorCode ierr;
   ierr = VecGetOwnershipRange(vector, &ownershipBegin, &ownershipEnd); CHKERRV(ierr);
-  int nValues = ownershipEnd - ownershipBegin;
+  PetscInt nValues = ownershipEnd - ownershipBegin;
   assert (nValues >= vectorValues.size());
 
-  std::vector<int> dofNosGlobal(nValues);
+  std::vector<PetscInt> dofNosGlobal(nValues);
   std::iota(dofNosGlobal.begin(), dofNosGlobal.end(), ownershipBegin);
 
   VecSetValues(vector, vectorValues.size(), dofNosGlobal.data(), vectorValues.data(), INSERT_VALUES);
@@ -123,7 +123,7 @@ std::string getStringMatrixVector(const Mat& matrix, const Vec& vector)
   PetscObjectGetName((PetscObject)vector, (const char **)&cName);
   name = cName;
 
-  int nRows, nColumns;
+  PetscInt nRows, nColumns;
   MatGetLocalSize(matrix, &nRows, &nColumns);
 
   std::vector<double> matrixValues, vectorValues;
@@ -132,16 +132,16 @@ std::string getStringMatrixVector(const Mat& matrix, const Vec& vector)
 
   std::stringstream s;
   s << std::endl<< "    ";
-  for (int j=0; j<nColumns; j++)
+  for (PetscInt j=0; j<nColumns; j++)
   {
     s << std::setw(5) << std::setfill('_') <<j;
   }
   s << std::string(5,'_') << " | " <<name;
   s << std::endl;
-  for (int i=0; i<nRows; i++)
+  for (PetscInt i=0; i<nRows; i++)
   {
     s << std::setw(3) << std::setfill(' ') <<i<< "| ";
-    for (int j=0; j<nColumns; j++)
+    for (PetscInt j=0; j<nColumns; j++)
     {
       if (matrixValues[i*nRows + j] == 0.0)
         s << std::string(5, ' ');
@@ -163,8 +163,8 @@ std::string getStringMatrix(const Mat& matrix)
   return std::string("");
 #else
 
-  int nNestedRows = 1;
-  int nNestedColumns = 1;
+  PetscInt nNestedRows = 1;
+  PetscInt nNestedColumns = 1;
   Mat **nestedMats;
 
   std::stringstream s;
@@ -177,9 +177,9 @@ std::string getStringMatrix(const Mat& matrix)
     MatNestGetSubMats(matrix,&nNestedRows,&nNestedColumns,&nestedMats);
   }
 
-  for (int i = 0; i < nNestedRows; i++)
+  for (PetscInt i = 0; i < nNestedRows; i++)
   {
-    for (int j = 0; j < nNestedColumns; j++)
+    for (PetscInt j = 0; j < nNestedColumns; j++)
     {
       const char *name;
       PetscObjectGetName((PetscObject)matrix, &name);
@@ -195,9 +195,9 @@ std::string getStringMatrix(const Mat& matrix)
         submatrix = nestedMats[i][j];
       }
 
-      int nRows, nColumns;
+      PetscInt nRows, nColumns;
       MatGetLocalSize(submatrix, &nRows, &nColumns);
-      int nRowsGlobal, nColumnsGlobal;
+      PetscInt nRowsGlobal, nColumnsGlobal;
       MatGetSize(submatrix, &nRowsGlobal, &nColumnsGlobal);
 
       std::vector<double> matrixValues;
@@ -231,16 +231,16 @@ std::string getStringMatrix(std::vector<double> &matrixValues, int nRows, int nC
     s << " (global: " << nRowsGlobal << "x" << nColumnsGlobal << ")";
   s << std::endl
     << "    ";
-  for (int j=0; j<nColumns; j++)
+  for (PetscInt j=0; j<nColumns; j++)
   {
     s << std::setw(6) << std::setfill('_') <<j;
   }
   s << std::string(6,'_');
   s << std::endl;
-  for (int i=0; i<nRows; i++)
+  for (PetscInt i=0; i<nRows; i++)
   {
     s << std::setw(4) << std::setfill(' ') <<i<< "| ";
-    for (int j=0; j<nColumns; j++)
+    for (PetscInt j=0; j<nColumns; j++)
     {
       if (fabs(matrixValues[i*nColumns + j]) <= zeroTolerance)
         s << std::string(6, ' ');
@@ -264,14 +264,14 @@ std::string getStringVector(const Vec& vector)
   std::vector<double> vectorValues;
   getVectorEntries(vector, vectorValues);
 
-  int nEntries;
+  PetscInt nEntries;
   VecGetLocalSize(vector, &nEntries);
 
   const double zeroTolerance = 1e-15;
 
   std::stringstream s;
   s << "(" << nEntries << " entries) ";
-  for (int i=0; i<nEntries; i++)
+  for (PetscInt i=0; i<nEntries; i++)
   {
     s << std::setprecision(9) << (fabs(vectorValues[i]) < zeroTolerance? 0.0 : vectorValues[i]) << " ";
   }
@@ -285,8 +285,8 @@ std::string getStringSparsityPattern(const Mat& matrix)
 #ifdef NDEBUG
   return std::string("");
 #else
-  int nNestedRows = 1;
-  int nNestedColumns = 1;
+  PetscInt nNestedRows = 1;
+  PetscInt nNestedColumns = 1;
   Mat **nestedMats;
 
   std::stringstream s;
@@ -299,9 +299,9 @@ std::string getStringSparsityPattern(const Mat& matrix)
     MatNestGetSubMats(matrix,&nNestedRows,&nNestedColumns,&nestedMats);
   }
 
-  for (int i = 0; i < nNestedRows; i++)
+  for (PetscInt i = 0; i < nNestedRows; i++)
   {
-    for (int j = 0; j < nNestedColumns; j++)
+    for (PetscInt j = 0; j < nNestedColumns; j++)
     {
       const char *name;
       PetscObjectGetName((PetscObject)matrix, &name);
@@ -317,16 +317,16 @@ std::string getStringSparsityPattern(const Mat& matrix)
         submatrix = nestedMats[i][j];
       }
 
-      int nRows, nColumns;
+      PetscInt nRows, nColumns;
       MatGetLocalSize(submatrix, &nRows, &nColumns);
-      int nRowsGlobal, nColumnsGlobal;
+      PetscInt nRowsGlobal, nColumnsGlobal;
       MatGetSize(submatrix, &nRowsGlobal, &nColumnsGlobal);
 
       std::vector<double> matrixValues;
       getMatrixEntries(submatrix, matrixValues);
 
       s << std::endl << " ";
-      for (int columnNo=0; columnNo<nColumns; columnNo++)
+      for (PetscInt columnNo=0; columnNo<nColumns; columnNo++)
       {
         if (columnNo%10 == 0)
           s << "|";
@@ -336,10 +336,10 @@ std::string getStringSparsityPattern(const Mat& matrix)
           s << " ";
       }
       s << std::endl;
-      for (int rowNo=0; rowNo<nRows; rowNo++)
+      for (PetscInt rowNo=0; rowNo<nRows; rowNo++)
       {
         s << " ";
-        for (int columnNo=0; columnNo<nColumns; columnNo++)
+        for (PetscInt columnNo=0; columnNo<nColumns; columnNo++)
         {
           if (fabs(matrixValues[rowNo*nColumns + columnNo]) < 1e-7)
             s << ".";
@@ -362,9 +362,9 @@ std::string getStringSparsityPattern(const Mat& matrix)
 void checkDimensionsMatrixVector(Mat &matrix, Vec &input)
 {
 #ifndef NDEBUG
-  int nRows, nColumns;
+  PetscInt nRows, nColumns;
   MatGetSize(matrix, &nRows, &nColumns);
-  int nEntries;
+  PetscInt nEntries;
   VecGetSize(input, &nEntries);
   if (nColumns != nEntries)
   {
@@ -428,7 +428,12 @@ std::string getStringLinearConvergedReason(KSPConvergedReason convergedReason)
     return ANSI_COLOR_RED "KSP_DIVERGED_INDEFINITE_MAT" ANSI_COLOR_RESET;
 
 #ifndef __PGI
+
+#if PETSC_VERSION_GE(3,11,0)
+  case KSP_DIVERGED_PC_FAILED:
+#else
   case KSP_DIVERGED_PCSETUP_FAILED:
+#endif
     return ANSI_COLOR_RED "KSP_DIVERGED_PCSETUP_FAILED" ANSI_COLOR_RESET;
 #endif
 
@@ -463,8 +468,13 @@ std::string getStringNonlinearConvergedReason(SNESConvergedReason convergedReaso
   case SNES_CONVERGED_ITS:
     return ANSI_COLOR_GREEN "SNES_CONVERGED_ITS" ANSI_COLOR_RESET ": maximum iterations reached";
 
+#if PETSC_VERSION_GE(3,12,0)
+  case SNES_DIVERGED_TR_DELTA:
+    return ANSI_COLOR_RED "SNES_DIVERGED_TR_DELTA" ANSI_COLOR_RESET;    
+#else 
   case SNES_CONVERGED_TR_DELTA:
     return ANSI_COLOR_GREEN " SNES_CONVERGED_TR_DELTA" ANSI_COLOR_RESET;
+#endif
 
   case SNES_DIVERGED_FUNCTION_DOMAIN:
     return ANSI_COLOR_RED "SNES_DIVERGED_FUNCTION_DOMAIN:" ANSI_COLOR_RESET " the new x location passed the function is not in the domain of F";
@@ -556,15 +566,15 @@ void dumpVector(std::string filename, std::string format, Vec &vector, MPI_Comm 
   {
     if (std::string(vectorType) == std::string(VECNEST))
     {
-      int nNestedVecs = 1;
+      PetscInt nNestedVecs = 1;
       Vec *nestedVecs;
       VecNestGetSubVecs(vector,&nNestedVecs,&nestedVecs);
 
-      int nEntriesGlobal = 0;
+      PetscInt nEntriesGlobal = 0;
 
       // collect global size
-      int nEntries;
-      for (int i = 0; i < nNestedVecs; i++)
+      PetscInt nEntries;
+      for (PetscInt i = 0; i < nNestedVecs; i++)
       {
         VecGetSize(nestedVecs[i], &nEntries);
 
@@ -602,7 +612,7 @@ void dumpVector(std::string filename, std::string format, Vec &vector, MPI_Comm 
 
         for (int rankNo = 0; rankNo < nRanks; rankNo++)
         {
-          int nRows = ranges[rankNo+1] - ranges[rankNo];
+          PetscInt nRows = ranges[rankNo+1] - ranges[rankNo];
           values.resize(nRows, 0.0);
 
           //LOG(DEBUG) << "(" << j << "," << i << ") rank " << rankNo << " has " << nRows << " rows";
@@ -610,7 +620,7 @@ void dumpVector(std::string filename, std::string format, Vec &vector, MPI_Comm 
           if (ownRankNo == rankNo)
           {
             // get own data
-            std::vector<int> rowIndices(nRows);
+            std::vector<PetscInt> rowIndices(nRows);
             std::iota(rowIndices.begin(), rowIndices.end(), ranges[rankNo]);
 
             ierr = VecGetValues(nestedVecs[j], nRows, rowIndices.data(), values.data()); CHKERRV(ierr);
@@ -635,7 +645,7 @@ void dumpVector(std::string filename, std::string format, Vec &vector, MPI_Comm 
             //LOG(DEBUG) << "receive " << nColumns*nRows << " values from " << rankNo;
 
             // set data
-            std::vector<int> rowIndices(nRows);
+            std::vector<PetscInt> rowIndices(nRows);
             std::iota(rowIndices.begin(), rowIndices.end(), ranges[rankNo]);
 
             VLOG(1) << "insert at (" << ranges[rankNo] << ") " << nRows << " values [" << j << "] from rank " << rankNo << ": " << values;
@@ -714,19 +724,19 @@ void dumpMatrix(std::string filename, std::string format, Mat &matrix, MPI_Comm 
   {
     if (std::string(matrixType) == std::string(MATNEST))
     {
-      int nNestedRows = 1;
-      int nNestedColumns = 1;
+      PetscInt nNestedRows = 1;
+      PetscInt nNestedColumns = 1;
       Mat **nestedMats;
       MatNestGetSubMats(matrix,&nNestedRows,&nNestedColumns,&nestedMats);
 
-      int nRowsGlobal = 0;
-      int nColumnsGlobal = 0;
+      PetscInt nRowsGlobal = 0;
+      PetscInt nColumnsGlobal = 0;
 
       // collect global size
       // number of columns
-      int nRows, nColumns;
-      int j = 0;
-      for (int i = 0; i < nNestedColumns; i++)
+      PetscInt nRows, nColumns;
+      PetscInt j = 0;
+      for (PetscInt i = 0; i < nNestedColumns; i++)
       {
         MatGetSize(nestedMats[j][i], &nRows, &nColumns);
 
@@ -734,8 +744,8 @@ void dumpMatrix(std::string filename, std::string format, Mat &matrix, MPI_Comm 
       }
 
       // number of rows
-      int i = 0;
-      for (int j = 0; j < nNestedRows; j++)
+      PetscInt i = 0;
+      for (PetscInt j = 0; j < nNestedRows; j++)
       {
         MatGetSize(nestedMats[j][i], &nRows, &nColumns);
 
@@ -760,14 +770,14 @@ void dumpMatrix(std::string filename, std::string format, Mat &matrix, MPI_Comm 
 
       PetscErrorCode ierr;
 
-      int globalRowOffset = 0;
-      int globalColumnOffset = 0;
+      PetscInt globalRowOffset = 0;
+      PetscInt globalColumnOffset = 0;
 
       // gather all data from processes and set values in globalMatrix
-      for (int j = 0; j < nNestedRows; j++)
+      for (PetscInt j = 0; j < nNestedRows; j++)
       {
         globalColumnOffset = 0;
-        for (int i = 0; i < nNestedColumns; i++)
+        for (PetscInt i = 0; i < nNestedColumns; i++)
         {
           MatGetSize(nestedMats[j][i], &nRows, &nColumns);
 
@@ -778,7 +788,7 @@ void dumpMatrix(std::string filename, std::string format, Mat &matrix, MPI_Comm 
 
           for (int rankNo = 0; rankNo < nRanks; rankNo++)
           {
-            int nRows = ranges[rankNo+1] - ranges[rankNo];
+            PetscInt nRows = ranges[rankNo+1] - ranges[rankNo];
             values.resize(nColumns * nRows, 0.0);
 
             //LOG(DEBUG) << "(" << j << "," << i << ") rank " << rankNo << " has " << nRows << " rows";
@@ -786,10 +796,10 @@ void dumpMatrix(std::string filename, std::string format, Mat &matrix, MPI_Comm 
             if (ownRankNo == rankNo)
             {
               // get own data
-              std::vector<int> rowIndices(nRows);
+              std::vector<PetscInt> rowIndices(nRows);
               std::iota(rowIndices.begin(), rowIndices.end(), ranges[rankNo]);
 
-              std::vector<int> columnIndices(nColumns);
+              std::vector<PetscInt> columnIndices(nColumns);
               std::iota(columnIndices.begin(), columnIndices.end(), 0);
 
               ierr = MatGetValues(nestedMats[j][i], nRows, rowIndices.data(), nColumns, columnIndices.data(), values.data()); CHKERRV(ierr);
@@ -814,10 +824,10 @@ void dumpMatrix(std::string filename, std::string format, Mat &matrix, MPI_Comm 
               //LOG(DEBUG) << "receive " << nColumns*nRows << " values from " << rankNo;
 
               // set data
-              std::vector<int> rowIndices(nRows);
+              std::vector<PetscInt> rowIndices(nRows);
               std::iota(rowIndices.begin(), rowIndices.end(), globalRowOffset + ranges[rankNo]);
 
-              std::vector<int> columnIndices(nColumns);
+              std::vector<PetscInt> columnIndices(nColumns);
               std::iota(columnIndices.begin(), columnIndices.end(), globalColumnOffset);
 
               VLOG(1) << "insert at (" << globalRowOffset + ranges[rankNo] << "," << globalColumnOffset << ") " << nRows << "x" << nColumns << " values [" << j << "," << i << "] from rank " << rankNo << ": " << values;

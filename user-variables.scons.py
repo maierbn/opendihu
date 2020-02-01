@@ -147,7 +147,22 @@ try:
 
   elif "lead" in socket.gethostname():
     MPI_DIR = os.environ["MPI_HOME"]
-
+  
+  elif "hawk" in os.environ["SITE_PLATFORM_NAME"]:
+    print("on hawk")
+    MPI_DIR = os.environ["MPT_ROOT"]
+    MPI_IGNORE_MPICC
+    LAPACK_DIR = os.environ["SCALAPACK_ROOT"]
+    LAPACK_DOWNLOAD = False
+    PETSC_DOWNLOAD = False
+    PETSC_DIR = os.environ["PETSC_ROOT"]
+    PYTHONPACKAGES_DOWNLOAD = False
+    GOOGLETEST_DOWNLOAD = False  
+    XBRAID_DOWNLOAD = False
+    ADIOS_DOWNLOAD = False
+    ADIOS_DIR = os.environ["ADIOS2_ROOT"]
+    cc = "mpicc -cc=gcc -ftemplate-backtrace-limit=0"
+    CC = "mpicxx -cxx=g++ -ftemplate-backtrace-limit=0"   
 except:
   pass
 

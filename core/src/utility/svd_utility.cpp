@@ -1,12 +1,15 @@
 #include "utility/svd_utility.h"
 
+#ifdef HAVE_LAPACK
 #include <cblas.h>
+#endif
 
 #include <iostream>
 #include <vector>
 #include <string>
 #include <fstream>
 #include <algorithm>
+#include <sstream>
 
 using namespace std;
 
@@ -15,6 +18,7 @@ using namespace std;
 // stores the left-singular vectors (column-wise leftSingularVectors)
 void SvdUtility::getSVD(double input[], int rows, int cols, double leftSingVec[])
 {
+#ifdef HAVE_LAPACK
   int min = std::min(cols, rows);
   double* singVal = new double[min];
   double* superb = new double[min];  
@@ -30,7 +34,7 @@ void SvdUtility::getSVD(double input[], int rows, int cols, double leftSingVec[]
   }
     
   LAPACKE_dgesvd(LAPACK_COL_MAJOR, 's', 's', rows, cols, inputCopy, rows, singVal, leftSingVec, rows, rightSingVecT, min, superb);
-  
+#endif  
 }
 
 // takes real matrix input (rows x cols) as double[] in column major order
@@ -38,6 +42,7 @@ void SvdUtility::getSVD(double input[], int rows, int cols, double leftSingVec[]
 // stores the left-singular vectors (column-wise leftSingularVectors), singular values (singularValues as vector, diagonal entries of sigma as matrix) and right-singular vectors (row-wise rightSingularVectorsTransposed) as double arrays
 void SvdUtility::getSVD(double input[], int rows, int cols, double leftSingVec[], double sigma[], double rightSingVecT[])
 {
+#ifdef HAVE_LAPACK
   int min = std::min(cols, rows);
   double* singVal = new double[min];
   double* superb = new double[min];
@@ -75,6 +80,7 @@ void SvdUtility::getSVD(double input[], int rows, int cols, double leftSingVec[]
   printMatrix("leftSingVec", leftSingVec, rows, min);
   printMatrix("sigma", sigma, min, min);
   printMatrix("rightSingVecT", rightSingVecT, min, cols);
+#endif  
 }
 
 // takes complex matrix input (rows x cols) as double _Complex[] in column major order
@@ -82,6 +88,7 @@ void SvdUtility::getSVD(double input[], int rows, int cols, double leftSingVec[]
 // stores the left-singular vectors (column-wise leftSingularVectors), singular values (singularValues as vector, diagonal entries of sigma as matrix) and right-singular vectors (row-wise rightSingularVectorsTransposed) as double _Complex arrays
 void SvdUtility::getSVD(double _Complex input[], int rows, int cols, double _Complex leftSingVec[], double sigma[], double _Complex rightSingVecT[])
 {
+#ifdef HAVE_LAPACK
   int min = std::min(cols, rows);
   double  * singVal = new double [min];
   double  * superb = new double [min];
@@ -115,10 +122,12 @@ void SvdUtility::getSVD(double _Complex input[], int rows, int cols, double _Com
 
     }
   }
+#endif  
 }
 
 void SvdUtility::reconstructSnapshots(int rows, int cols, double leftSingVec[], double sigma[], double rightSingVecT[], double output[])
 {
+#ifdef HAVE_LAPACK
   
   int rank = std::min(rows, cols);  
   double* C = new double[rank*cols];
@@ -136,13 +145,13 @@ void SvdUtility::reconstructSnapshots(int rows, int cols, double leftSingVec[], 
   }
   
   printMatrix("v_reconst", output, rows, cols);
+#endif  
 }
 
 // takes real matrix input (rows x cols) as double[]
 // prints name and input entry-wise
 void SvdUtility::printMatrix(std::string name, double input[], int rows, int cols)
-{
-  
+{ 
   cout << "    " << name << " =" << endl << "    \\begin{bmatrix*}[r]" << endl << "        " << input[0];
   
   for (int row = 0; row < rows; ++row)
@@ -289,3 +298,5 @@ int SvdUtility::getCSVColumnCount(string filename)
   }
 return j;
 }
+
+

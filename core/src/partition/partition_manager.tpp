@@ -155,7 +155,7 @@ createPartitioningStructuredLocal(std::array<global_no_t,FunctionSpace::dim()> &
   LOG(DEBUG) << "globalSizeMpi: " << globalSizeMpi;
 
   // compute beginGlobal values by prefix sum
-  std::array<PetscInt, D> beginGlobal({0});
+  std::array<int, D> beginGlobal({0});
   MPIUtility::handleReturnValue(MPI_Exscan(&nElementsLocal[0], &beginGlobal[0], 1, MPI_INT, MPI_SUM, oneDimensionCommunicator[0]));
   
   if (D >= 2)

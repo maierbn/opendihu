@@ -46,7 +46,7 @@ namespace ModelOrderReduction
     
     // input data is the transpose of the snapshot matrix    
     std::string inputData = specificSettingsMOR_.getOptionString("snapshots","");
-    cout << inputData;
+    std::cout << inputData;
     std::vector<double> parsedCSV = SvdUtility::readCSV(inputData);  
     
     // input data is the transpose of the snapshot matrix    

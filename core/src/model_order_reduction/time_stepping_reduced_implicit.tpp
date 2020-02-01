@@ -164,7 +164,7 @@ solveLinearSystem(Vec &input, Vec &output)
   // solve the system, KSPSolve(ksp,b,x)
   ierr = KSPSolve(*ksp_, input, output); CHKERRV(ierr);
   
-  int numberOfIterations = 0;
+  PetscInt numberOfIterations = 0;
   PetscReal residualNorm = 0.0;
   ierr = KSPGetIterationNumber(*ksp_, &numberOfIterations); CHKERRV(ierr);
   ierr = KSPGetResidualNorm(*ksp_, &residualNorm); CHKERRV(ierr);

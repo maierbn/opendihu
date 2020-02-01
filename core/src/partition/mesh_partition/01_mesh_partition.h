@@ -60,7 +60,7 @@ public:
   MeshPartition(std::array<global_no_t,MeshType::dim()> nElementsGlobal, std::shared_ptr<RankSubset> rankSubset);
  
   //! constructor from prescribed partition
-  MeshPartition(std::array<node_no_t,MeshType::dim()> nElementsLocal, std::array<global_no_t,MeshType::dim()> nElementsGlobal,
+  MeshPartition(std::array<element_no_t,MeshType::dim()> nElementsLocal, std::array<global_no_t,MeshType::dim()> nElementsGlobal,
                 std::array<int,MeshType::dim()> beginElementGlobal, 
                 std::array<int,MeshType::dim()> nRanks, std::shared_ptr<RankSubset> rankSubset);
   

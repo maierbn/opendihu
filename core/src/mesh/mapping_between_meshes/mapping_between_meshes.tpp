@@ -205,7 +205,7 @@ MappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSourc
 
           // find element and xi position in source mesh where target dof is located
           Vec3 position = functionSpaceTarget->getGeometry(targetDofNoLocal);
-          int sourceElementNo = 0;
+          element_no_t sourceElementNo = 0;
           bool startSearchInCurrentElement = false;
           double xiTolerance = 1e-2;
           std::array<double,FunctionSpaceSourceType::dim()> xiSource;

@@ -74,14 +74,14 @@ CellmlAdapter(const CellmlAdapter &rhs, std::shared_ptr<FunctionSpace> functionS
 
   // allocate data vectors
   //this->intermediates_.resize(this->nIntermediates_*this->nInstances_);
-  this->cellmlSourceCodeGenerator_->parameters().resize(this->nParameters_*this->nInstances_);
+  this->cellmlSourceCodeGenerator_.parameters().resize(this->nParameters_*this->nInstances_);
 
   // copy rhs parameter values to parameters, it is assumed that the parameters are the same for every instance
   for (int instanceNo = 0; instanceNo < this->nInstances_; instanceNo++)
   {
     for (int j = 0; j < this->nParameters_; j++)
     {
-      this->cellmlSourceCodeGenerator_->parameters()[j*this->nInstances_ + instanceNo] = rhs.parameters_[j];
+      this->cellmlSourceCodeGenerator_.parameters()[j*this->nInstances_ + instanceNo] = rhs.parameters_[j];
     }
   }
 
@@ -200,7 +200,7 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
     // PythonUtility::GlobalInterpreterLock lock;
     
     VLOG(1) << "call setParameters";
-    this->setParameters_((void *)this, this->nInstances_, this->internalTimeStepNo_, currentTime, this->cellmlSourceCodeGenerator_->parameters());
+    this->setParameters_((void *)this, this->nInstances_, this->internalTimeStepNo_, currentTime, this->cellmlSourceCodeGenerator_.parameters());
   }
 
   // get new values for parameters, call callback function of python config
@@ -210,7 +210,7 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
     // PythonUtility::GlobalInterpreterLock lock;
 
     VLOG(1) << "call setSpecificParameters";
-    this->setSpecificParameters_((void *)this, this->nInstances_, this->internalTimeStepNo_, currentTime, this->cellmlSourceCodeGenerator_->parameters());
+    this->setSpecificParameters_((void *)this, this->nInstances_, this->internalTimeStepNo_, currentTime, this->cellmlSourceCodeGenerator_.parameters());
   }
 
   VLOG(1) << "currentTime: " << currentTime << ", lastCallSpecificStatesTime_: " << this->lastCallSpecificStatesTime_
@@ -285,12 +285,12 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
   //              this          STATES, RATES, WANTED,                KNOWN
   if (this->rhsRoutine_)
   {
-    VLOG(1) << "call rhsRoutine_ with " << nIntermediates << " intermediates, " << this->cellmlSourceCodeGenerator_->parameters().size() << " parameters";
-    VLOG(2) << "parameters: " << this->cellmlSourceCodeGenerator_->parameters();
+    VLOG(1) << "call rhsRoutine_ with " << nIntermediates << " intermediates, " << this->cellmlSourceCodeGenerator_.parameters().size() << " parameters";
+    VLOG(2) << "parameters: " << this->cellmlSourceCodeGenerator_.parameters();
 
     //Control::PerformanceMeasurement::start("rhsEvaluationTime");  // commented out because it takes too long in this very inner loop
     // call actual rhs routine from cellml code
-    this->rhsRoutine_((void *)this, currentTime, states, rates, intermediatesData, this->cellmlSourceCodeGenerator_->parameters().data());
+    this->rhsRoutine_((void *)this, currentTime, states, rates, intermediatesData, this->cellmlSourceCodeGenerator_.parameters().data());
     //Control::PerformanceMeasurement::stop("rhsEvaluationTime");
   }
 

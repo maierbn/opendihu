@@ -17,7 +17,6 @@ CellmlAdapterBase(DihuContext context) :
   context_(context), specificSettings_(PythonConfig(context_.getPythonConfig(), "CellML")), data_(context_)
 {
   outputWriterManager_.initialize(this->context_, specificSettings_);
-  cellmlSourceCodeGenerator_ = std::make_shared<CellMLSourceCodeGenerator>();
   LOG(TRACE) << "CellmlAdapterBase constructor";
 }
 
@@ -108,7 +107,11 @@ initialize()
 
 
   // initialize source code generator
-  std::string sourceFilename = this->specificSettings_.getOptionString("sourceFilename", "");
+  std::string modelFilename = this->specificSettings_.getOptionString("modelFilename", "");
+  if (this->specificSettings_.hasKey("sourceFilename"))
+  {
+    LOG(WARNING) << this->specificSettings_ << " Option \"sourceFilename\" has been renamed to \"modelFilename\".";
+  }
 
   // add explicitely defined parameters that replace intermediates and constants
   std::vector<int> parametersUsedAsIntermediate;  ///< explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array
@@ -129,12 +132,12 @@ initialize()
     LOG(DEBUG) << "Config does not contain key \"parametersInitialValues\"";
   }
 
-  cellmlSourceCodeGenerator_->initialize(sourceFilename, nInstances_, nStates, nIntermediates_,
+  cellmlSourceCodeGenerator_.initialize(modelFilename, nInstances_, nStates, nIntermediates_,
                                         parametersUsedAsIntermediate, parametersUsedAsConstant, parametersInitialValues);
 
   // initialize data, i.e. states and intermediates field variables
   data_.setFunctionSpace(functionSpace_);
-  data_.setIntermediateNames(cellmlSourceCodeGenerator_->intermediateNames());
+  data_.setIntermediateNames(cellmlSourceCodeGenerator_.intermediateNames());
   data_.initialize();
 }
 
@@ -155,7 +158,7 @@ setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2
     std::array<double,nStates> statesInitialValuesFromConfig = this->specificSettings_.template getOptionArray<double,nStates>("statesInitialValues", 0);
 
     // store initial values to cellmlSourceCodeGenerator_
-    std::vector<double> statesInitialValuesGenerator = cellmlSourceCodeGenerator_->statesInitialValues();
+    std::vector<double> statesInitialValuesGenerator = cellmlSourceCodeGenerator_.statesInitialValues();
     statesInitialValuesGenerator.assign(statesInitialValuesFromConfig.begin(), statesInitialValuesFromConfig.end());
   }
   else
@@ -164,7 +167,7 @@ setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2
 
     // parsing the source file was already done
     // get initial values from source code generator
-    std::vector<double> statesInitialValuesGenerator = cellmlSourceCodeGenerator_->statesInitialValues();
+    std::vector<double> statesInitialValuesGenerator = cellmlSourceCodeGenerator_.statesInitialValues();
     assert(statesInitialValuesGenerator.size() == nStates);
 
     std::copy(statesInitialValuesGenerator.begin(), statesInitialValuesGenerator.end(), statesInitialValues.begin());
@@ -194,7 +197,7 @@ getNumbers(int& nInstances, int& nIntermediates, int& nParameters)
 {
   nInstances = nInstances_;
   nIntermediates = nIntermediates_;
-  nParameters = cellmlSourceCodeGenerator_->nParameters();
+  nParameters = cellmlSourceCodeGenerator_.nParameters();
 }
 
 template<int nStates, int nIntermediates_, typename FunctionSpaceType>
@@ -208,7 +211,7 @@ template<int nStates, int nIntermediates_, typename FunctionSpaceType>
 void CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
 getStateNames(std::vector<std::string> &stateNames)
 {
-  stateNames = this->cellmlSourceCodeGenerator_->stateNames();
+  stateNames = this->cellmlSourceCodeGenerator_.stateNames();
 }
 
 template<int nStates, int nIntermediates_, typename FunctionSpaceType>

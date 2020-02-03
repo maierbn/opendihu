@@ -53,11 +53,14 @@ ADIOS_DOWNLOAD = True
 # MegaMol, visualization framework of VISUS, optional, needs ADIOS2
 MEGAMOL_DOWNLOAD = False    # install MegaMol from official git repo, but needed is the private repo, ask for access to use MegaMol with opendihu
 
-# Vc, vectorization types
-VC_DOWNLOAD=True
+# Vc, vectorization types and C++ utility to produce vectorized code
+VC_DOWNLOAD = True
 
 # xbraid, used for parallel-in time methods
-XBRAID_DOWNLOAD=True
+XBRAID_DOWNLOAD = True
+
+# OpenCOR, utility view CellML models and to convert them from xml format to c code
+OPENCOR_DOWNLOAD =True
 
 # MPI
 # MPI is normally detected by runnig the mpicc command. If this is not available, you can provide the MPI_DIR as usual.
@@ -111,40 +114,6 @@ try:
   if "sgscl" in socket.gethostname():
     MPI_DIR="/scratch-nfs/maierbn/openmpi/install-3.1"
   
-  # on cmcs09 (CPU-GPU):
-  if socket.gethostname() == 'cmcs09':
-    print "Setting PGI settings for GPU-offloading, since host cmcs09 was detected."
-    
-    cc="pgcc"   # c compiler
-    CC="pgc++"   # c++ compiler
-    
-    #PYTHON_DOWNLOAD=True
-    PYTHON_DIR="/usr/local/home/kraemer/python/install"#"/afs/.mathematik.uni-stuttgart.de/home/cmcs/share/environment-modules/Packages/python/python-3.6.5" #"/usr/local/home/kraemer/python/install"
-
-    
-    #del MPI_DIR
-    MPI_DIR="/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2"
-    #MPI_DOWNLOAD=False
-    #cc="/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/18.10/bin/pgcc"
-    #CC="/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/18.10/bin/pgc++"
-    #mpiCC="/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/bin/mpic++"
-    #mpicc="/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/bin/mpicc"
-    MPI_DISABLE_CHECKS=True
-    PETSC_DISABLE_CHECKS=True
-    GOOGLETEST_DISABLE_CHECKS=True
-
-  elif "argon" in socket.gethostname() and False:
-    cc = "pgcc"
-    CC = "pgc++"
-    mpiCC = "mpic++"
-
-    LAPACK_DOWNLOAD = False
-    
-    MPI_DIR = "/usr/local.nfs/sw/pgi/pgi-18.10-u1604/linux86-64/2018/mpi/openmpi/"
-    DISABLE_RUN = True   # do not run executables for checks, because they need mpirun as prefix
-    #PETSC_DISABLE_CHECKS = True
-    GOOGLETEST_DISABLE_CHECK = True
-
   elif "lead" in socket.gethostname():
     MPI_DIR = os.environ["MPI_HOME"]
   
@@ -161,7 +130,7 @@ try:
     XBRAID_DOWNLOAD = False
     ADIOS_DOWNLOAD = False
     ADIOS_DIR = os.environ["ADIOS2_ROOT"]
-    cc = "mpicc -cc=gcc -ftemplate-backtrace-limit=0"
+    cc = "mpicc -cc=gcc"
     CC = "mpicxx -cxx=g++ -ftemplate-backtrace-limit=0"   
 except:
   pass

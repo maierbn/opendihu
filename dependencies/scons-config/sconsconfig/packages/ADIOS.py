@@ -140,7 +140,7 @@ int main(int argc, char *argv[])
 
   def check(self, ctx):
     env = ctx.env
-    ctx.Message('Checking for ADIOS ...         ')
+    ctx.Message('Checking for ADIOS2 ...        ')
     self.check_options(env)
 
     # reference blas, cmake based, dynamic libraries

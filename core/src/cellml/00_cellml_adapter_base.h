@@ -119,7 +119,7 @@ protected:
   /**///std::string sourceFilename_; ///<file name of provided CellML right hand side routine
   /**///bool inputFileTypeOpenCMISS_;   ///< if the input file that is being parsed is from OpenCMISS and not from OpenCOR
 
-  std::shared_ptr<CellMLSourceCodeGenerator> cellmlSourceCodeGenerator_;    ///< object that holds all source code related to the model
+  CellMLSourceCodeGenerator cellmlSourceCodeGenerator_;    ///< object that holds all source code related to the model
 };
 
 #include "cellml/00_cellml_adapter_base.tpp"

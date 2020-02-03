@@ -71,8 +71,11 @@ public:
   //! convert to a string with space separated values
   static std::string convertToAscii(const std::vector<element_no_t> &vector, bool humanReadable);
   
+  // only if Petsc uses long long int for PetscInt, element_no_t is not the same as int and we need to define convertToAscii for int vectors
+#ifdef PETSC_USE_64BIT_INDICES
   //! convert to a string with space separated values
   static std::string convertToAscii(const std::vector<int> &vector, bool humanReadable);
+#endif
 
 protected:
 

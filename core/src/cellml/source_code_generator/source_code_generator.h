@@ -21,7 +21,7 @@ public:
 
   //! generate the source file according to optimizationType
   //! Possible values are: simd vc openmp
-  void generateSourceFile(std::string outputFilename, std::string optimizationType) const;
+  void generateSourceFile(std::string outputFilename, std::string optimizationType);
 
   //! get a reference to the statesInitialValues_ variable
   std::vector<double> &statesInitialValues();
@@ -41,7 +41,13 @@ public:
   //! get the source filename of the initial file (which is inputFilename in initialize)
   const std::string sourceFilename() const;
 
+  //! get additional compile flags that depend on the optimizationType, e.g. -fopenmp for "openmp"
+  std::string additionalCompileFlags() const;
+
 protected:
+
+  //! check if sourceFilename_ is an xml based file and then convert to a c file, updating sourceFilename_
+  void convertFromXmlToC();
 
   //! Scan the given cellml source file and initialize the following:
   //! stateNames_, intermediateNames_, nConstants_ and nIntermediatesInSource_
@@ -51,23 +57,28 @@ protected:
 
   //! write the source file with openmp pragmas in struct-of-array memory ordering
   //! that will be autovectorized by the compiler
-  void generateSourceFileSimdAutovectorization(std::string outputFilename) const;
+  void generateSourceFileSimdAutovectorization(std::string outputFilename);
 
   //! Write the source file with explicit vectorization using Vc
   //! The file contains the source for only the rhs computation
-  void generateSourceFileExplicitVectorization(std::string outputFilename) const;
+  void generateSourceFileExplicitVectorization(std::string outputFilename);
 
   //! write the source file with explicit vectorization using Vc
   //! The file contains the source for the total solve the rhs computation
-  void generateSourceFileSolverExplicitVectorization(std::string outputFilename) const;
+  void generateSourceFileSolverExplicitVectorization(std::string outputFilename);
+
+  //! write the source file with openmp support
+  void generateSourceFileOpenMP(std::string outputFilename);
 
   int nInstances_;                            //< number of instances of the CellML problem. Usually it is the number of mesh nodes when a mesh is used. When running in parallel this is the local number of instances without ghosts.
   int nParameters_ = 0;                       //< number of parameters (=CellML name "known") in one instance of the CellML problem
 
-  int nConstants_ = 0;                        //< number of entries in the "CONSTANTS" array
-  int nStates_;                               //< number of states as given in initialize
-  int nIntermediates_;                        //< number of intermediates as given in initialize
-  int nIntermediatesInSource_ = 0;            //< number of intermediate values (=CellML name "wanted") in one instance of the CellML problem, as detected from the source file
+  unsigned int nConstants_ = 0;                //< number of entries in the "CONSTANTS" array
+  unsigned int nStates_;                       //< number of states as given in initialize
+  unsigned int nIntermediates_;                //< number of intermediates as given in initialize
+  unsigned int nIntermediatesInSource_ = 0;    //< number of intermediate values (=CellML name "wanted") in one instance of the CellML problem, as detected from the source file
+
+  std::string additionalCompileFlags_;         //< additional compile flags that depend on the optimizationType, e.g. -fopenmp for "openmp"
 
   std::vector<int> parametersUsedAsIntermediate_;  //< explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array
   std::vector<int> parametersUsedAsConstant_;  //< explicitely defined parameters that will be copied to constants, this vector contains the indices of the constants
@@ -92,9 +103,9 @@ protected:
   // contains all the essential parts of the parsed cellml source code
   struct CellMLCode
   {
-    std::stringstream header;
+    std::string header;
     std::vector<std::list<assignment_t>> entries;   //< for every line a list of codes
-    std::stringstream footer;
+    std::string footer;
   }
   cellMLCode_;
 };

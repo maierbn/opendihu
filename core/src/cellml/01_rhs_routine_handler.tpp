@@ -58,34 +58,15 @@ initializeRhsRoutine()
       optimizationType_ = "vc";
     }
 
-    // load compiler flags
-    std::string compilerFlags = this->specificSettings_.getOptionString("compilerFlags", "-fPIC -finstrument-functions -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared ");
-
-    // for GPU: -ta=host,tesla,time
-
-    // compose compile command
-    std::stringstream s;
-#ifdef NDEBUG
-    // release mode
-    // other possible options
-    // -fopt-info-vec-missed=vectorizer_missed.log
-    // -fopt-info-vec-all=vectorizer_all.log
-    s << C_COMPILER_COMMAND << " -O3 " << compilerFlags << " ";
-#else
-    // debug mode
-    s << C_COMPILER_COMMAND << " -O0 -ggdb " << compilerFlags << " ";
-#endif
-    std::string compileCommandOptions = s.str();
-
     // compile source file to a library
-    s.str();
-    s << "lib/"+StringUtility::extractBasename(this->cellmlSourceCodeGenerator_->sourceFilename()) << "_" << optimizationType_
+    std::stringstream s;
+    s << "lib/"+StringUtility::extractBasename(this->cellmlSourceCodeGenerator_.sourceFilename()) << "_" << optimizationType_
       << "_" << this->nInstances_ << ".so";
     libraryFilename = s.str();
 
     int rankNoWorldCommunicator = DihuContext::ownRankNoCommWorld();
     s.str("");
-    s << "src/"+StringUtility::extractBasename(this->cellmlSourceCodeGenerator_->sourceFilename()) << "_" << optimizationType_
+    s << "src/"+StringUtility::extractBasename(this->cellmlSourceCodeGenerator_.sourceFilename()) << "_" << optimizationType_
       << "_" << this->nInstances_ << "." << rankNoWorldCommunicator << ".c";
     sourceToCompileFilename_ = s.str();
 
@@ -126,7 +107,7 @@ initializeRhsRoutine()
     else
     {
       // compile the library on only one rank
-      createLibraryOnOneRank(libraryFilename, compileCommandOptions, nInstancesRanks);
+      createLibraryOnOneRank(libraryFilename, nInstancesRanks);
     }
 
     // barrier to wait until the one rank that compiles the library has finished
@@ -221,7 +202,7 @@ loadRhsLibrary(std::string libraryFilename)
 
 template<int nStates, int nIntermediates_, typename FunctionSpaceType>
 void RhsRoutineHandler<nStates,nIntermediates_,FunctionSpaceType>::
-createLibraryOnOneRank(std::string libraryFilename, std::string compileCommandOptions, const std::vector<int> &nInstancesRanks)
+createLibraryOnOneRank(std::string libraryFilename, const std::vector<int> &nInstancesRanks)
 {
   // get the global rank no, needed for the output filenames
   int rankNoWorldCommunicator = DihuContext::ownRankNoCommWorld();
@@ -246,7 +227,7 @@ createLibraryOnOneRank(std::string libraryFilename, std::string compileCommandOp
     LOG(DEBUG) << "compile on this rank";
 
     // create source file
-    this->cellmlSourceCodeGenerator_->generateSourceFile(sourceToCompileFilename_, optimizationType_);
+    this->cellmlSourceCodeGenerator_.generateSourceFile(sourceToCompileFilename_, optimizationType_);
 
     // create library file
     if (libraryFilename.find("/") != std::string::npos)
@@ -261,6 +242,27 @@ createLibraryOnOneRank(std::string libraryFilename, std::string compileCommandOp
     }
 
     std::stringstream compileCommand;
+
+    // load compiler flags
+    std::string compilerFlags = this->specificSettings_.getOptionString("compilerFlags", "-fPIC -finstrument-functions -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared ");
+
+    // for GPU: -ta=host,tesla,time
+
+    // compose compile command
+    std::stringstream s;
+#ifdef NDEBUG
+    // release mode
+    // other possible options
+    // -fopt-info-vec-missed=vectorizer_missed.log
+    // -fopt-info-vec-all=vectorizer_all.log
+    s << C_COMPILER_COMMAND << " -O3 " << compilerFlags << " ";
+#else
+    // debug mode
+    s << C_COMPILER_COMMAND << " -O0 -ggdb " << compilerFlags << " ";
+#endif
+    s << this->cellmlSourceCodeGenerator_.additionalCompileFlags() << " ";
+
+    std::string compileCommandOptions = s.str();
 
     // compile library to filename with "*.rankNoWorldCommunicator", then wait (different wait times for ranks), then rename file to without "*.rankNoWorldCommunicator"
     compileCommand << compileCommandOptions

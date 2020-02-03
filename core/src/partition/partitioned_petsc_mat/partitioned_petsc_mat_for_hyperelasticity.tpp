@@ -518,6 +518,7 @@ getSubmatrix(int rowVariableNo, int columnVariableNo)
 
   Mat submatrix;
   PetscErrorCode ierr;
+
   ierr = MatCreateSubMatrix(this->globalMatrix_, indexSetRows, indexSetColumns, MAT_INITIAL_MATRIX, &submatrix); CHKERRABORT(mpiCommunicator,ierr);
 
   return submatrix;

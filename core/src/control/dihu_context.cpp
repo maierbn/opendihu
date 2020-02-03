@@ -153,8 +153,8 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
     PetscInitialize(&argc, &argv, NULL, "This is an opendihu application.");
 
     // set number of threads to use to 1
-    omp_set_num_threads(1);
-    LOG(DEBUG) << "set number of threads to 1";
+    //omp_set_num_threads(1);
+    //LOG(DEBUG) << "set number of threads to 1";
 
     // output process ID
     int pid = getpid();

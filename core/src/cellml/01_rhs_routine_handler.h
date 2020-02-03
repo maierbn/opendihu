@@ -44,7 +44,7 @@ protected:
   bool loadRhsLibrary(std::string libraryFilename);
 
   //! create the source filename using the CellMLSourceCodeGenerator, then compile to library
-  void createLibraryOnOneRank(std::string libraryFilename, std::string compileCommandOptions, const std::vector<int> &nInstancesRanks);
+  void createLibraryOnOneRank(std::string libraryFilename, const std::vector<int> &nInstancesRanks);
 
   std::string sourceToCompileFilename_;   //< filename of the processed source file that will be used to compile the library
   std::string optimizationType_;          //< type of generated file, e.g. "simd", "gpu", "openmp"

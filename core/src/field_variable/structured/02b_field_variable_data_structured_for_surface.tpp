@@ -64,7 +64,7 @@ FieldVariableDataStructuredForSurface(FieldVariable<FunctionSpace::FunctionSpace
 
   std::array<node_no_t,2> nElementsLocal{meshPartition3D->nElementsLocal(dimensionIndex0), meshPartition3D->nElementsLocal(dimensionIndex1)};
   std::array<global_no_t,2> nElementsGlobal{(global_no_t)meshPartition3D->nElementsGlobal(dimensionIndex0), (global_no_t)meshPartition3D->nElementsGlobal(dimensionIndex1)};
-  std::array<int,2> beginElementGlobal{meshPartition3D->beginElementGlobal(dimensionIndex0), meshPartition3D->beginElementGlobal(dimensionIndex1)};
+  std::array<global_no_t,2> beginElementGlobal{meshPartition3D->beginElementGlobal(dimensionIndex0), meshPartition3D->beginElementGlobal(dimensionIndex1)};
   std::array<int,2> nRanks{meshPartition3D->nRanks(dimensionIndex0), meshPartition3D->nRanks(dimensionIndex1)};
 
   std::shared_ptr<Partition::MeshPartition<FunctionSpace2D>> meshPartition = std::make_shared<Partition::MeshPartition<FunctionSpace2D>>(

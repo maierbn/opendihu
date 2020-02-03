@@ -85,6 +85,7 @@ std::string Paraview::convertToAscii(const std::vector<element_no_t> &vector, bo
   return result.str();
 }
 
+#ifdef PETSC_USE_64BIT_INDICES
 std::string Paraview::convertToAscii(const std::vector<int> &vector, bool fixedFormat)
 {
   std::stringstream result;
@@ -101,7 +102,7 @@ std::string Paraview::convertToAscii(const std::vector<int> &vector, bool fixedF
   }
   return result.str();
 }
-
+#endif
 
 
 }  // namespace

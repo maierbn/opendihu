@@ -704,7 +704,7 @@ void FastMonodomainSolverBase<nStates,nIntermediates>::
 compute0D(double startTime, double timeStepWidth, int nTimeSteps, bool storeIntermediatesForTransfer)
 {
   Control::PerformanceMeasurement::start(durationLogKey0D_);
-  LOG(DEBUG) << "compute0D(" << startTime << "), " << nTimeSteps << " time steps";
+  LOG(DEBUG) << "compute0D(" << startTime << "), " << nTimeSteps << " time step" << (nTimeSteps == 1? "" : "s");
 
   using Vc::double_v;
 

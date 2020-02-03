@@ -197,11 +197,11 @@ callPythonSetSpecificParametersFunction(int nInstances, int timeStepNo, double c
     double value = PythonUtility::convertFromPython<double>::get(valuePy);
 
     // error checking on parameter
-    if (parameterNo >= this->cellmlSourceCodeGenerator_->nParameters())
+    if (parameterNo >= this->cellmlSourceCodeGenerator_.nParameters())
     {
       LOG(FATAL) << "In setSpecificParametersFunction: the parameters have an assignment "
           << "parameters[(coordinatesGlobal=" << coordinatesGlobal << ", nodalDofIndex=" << nodalDofIndex
-          << ", parameterNo=" << parameterNo <<")] = " << value << ". But there are only " << this->cellmlSourceCodeGenerator_->nParameters()
+          << ", parameterNo=" << parameterNo <<")] = " << value << ". But there are only " << this->cellmlSourceCodeGenerator_.nParameters()
           << " specified. Set \"parametersUsedAsIntermediate\" and \"parametersUsedAsConstant\" appropriately.";
     }
 

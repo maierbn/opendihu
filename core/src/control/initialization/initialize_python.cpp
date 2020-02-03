@@ -3,6 +3,7 @@
 #include <Python.h>  // this has to be the first included header
 #include <python_home.h>  // defines PYTHON_HOME_DIRECTORY
 #include "control/performance_measurement.h"
+#include "utility/python_capture_stderr.h"
 
 void DihuContext::initializePython(int argc, char *argv[], bool explicitConfigFileGiven)
 {
@@ -21,6 +22,9 @@ void DihuContext::initializePython(int argc, char *argv[], bool explicitConfigFi
   const wchar_t *pythonSearchPathWChar = Py_DecodeLocale(pythonSearchPath.c_str(), NULL);
   Py_SetPythonHome((wchar_t *)pythonSearchPathWChar);
 
+  // add the emb module that captures stderr to the existing table of built-in modules
+  PyImport_AppendInittab("emb", emb::PyInit_emb);
+    
   // initialize python
   Py_Initialize();
 
@@ -30,6 +34,9 @@ void DihuContext::initializePython(int argc, char *argv[], bool explicitConfigFi
   //PyEval_ReleaseLock();
 
   Py_SetStandardStreamEncoding(NULL, NULL);
+
+  // import emb module which captures stderr
+  PyImport_ImportModule("emb");
 
   // get standard python path
   wchar_t *standardPythonPathWChar = Py_GetPath();
@@ -198,6 +205,7 @@ void DihuContext::loadPythonScript(std::string text)
 
   // execute python code
   int ret = 0;
+  std::string errorBuffer;
   LOG(INFO) << std::string(80, '-');
   try
   {
@@ -223,8 +231,14 @@ void DihuContext::loadPythonScript(std::string text)
       LOG(ERROR) << "python version: " << version;
     }
 
+    // add callback function to capture stderr buffer
+    emb::stderr_write_type write = [&errorBuffer] (std::string s) {errorBuffer += s; };
+    emb::set_stderr(write);
+
     // execute config script
     ret = PyRun_SimpleString(pythonScriptText_.c_str());
+
+    emb::reset_stderr();
 
     PythonUtility::checkForError();
   }
@@ -240,11 +254,11 @@ void DihuContext::loadPythonScript(std::string text)
     {
       // print error message and exit
       PyErr_Print();
-      LOG(FATAL) << "An error occured in the python config.";
+      LOG(FATAL) << "An error occured in the python config.\n" << errorBuffer;
     }
 
     PyErr_Print();
-    LOG(FATAL) << "An error occured in the python config.";
+    LOG(FATAL) << "An error occured in the python config.\n" << errorBuffer;
   }
 
   // load main module and extract config

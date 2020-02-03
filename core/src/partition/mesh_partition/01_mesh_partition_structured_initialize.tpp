@@ -181,7 +181,7 @@ createDmElements()
 
       // get local sizes on the ranks
       const PetscInt *lxData;
-      ierr = DMDAGetOwnershipRanges(*dmElements_, &lxData, NULL, NULL);
+      ierr = DMDAGetOwnershipRanges(*dmElements_, &lxData, NULL, NULL); CHKERRV(ierr);
 
       VLOG(1) << "nRanks_[0] = " << nRanks_[0];
       VLOG(1) << "lxData: " << intptr_t(lxData);
@@ -217,7 +217,7 @@ createDmElements()
       // get local sizes on the ranks
       const PetscInt *lxData;
       const PetscInt *lyData;
-      ierr = DMDAGetOwnershipRanges(*dmElements_, &lxData, &lyData, NULL);
+      ierr = DMDAGetOwnershipRanges(*dmElements_, &lxData, &lyData, NULL); CHKERRV(ierr);
       localSizesOnPartitions_[0].assign(lxData, lxData + nRanks_[0]);
       localSizesOnPartitions_[1].assign(lyData, lyData + nRanks_[1]);
 
@@ -259,7 +259,7 @@ createDmElements()
         const PetscInt *lxData;
         const PetscInt *lyData;
         const PetscInt *lzData;
-        ierr = DMDAGetOwnershipRanges(*dmElements_, &lxData, &lyData, &lzData);
+        ierr = DMDAGetOwnershipRanges(*dmElements_, &lxData, &lyData, &lzData); CHKERRV(ierr);
         localSizesOnPartitions_[0].assign(lxData, lxData + nRanks_[0]);
         localSizesOnPartitions_[1].assign(lyData, lyData + nRanks_[1]);
         localSizesOnPartitions_[2].assign(lzData, lzData + nRanks_[2]);
@@ -304,7 +304,7 @@ createDmElements()
           // get local sizes on the ranks
           const PetscInt *lxData;
           const PetscInt *lyData;
-          ierr = DMDAGetOwnershipRanges(*dmElements_, &lxData, &lyData, NULL);
+          ierr = DMDAGetOwnershipRanges(*dmElements_, &lxData, &lyData, NULL); CHKERRV(ierr);
           localSizesOnPartitions_[0].resize(1);
           localSizesOnPartitions_[0][0] = 1;
           localSizesOnPartitions_[1].assign(lxData, lxData + nRanks_[1]);
@@ -337,7 +337,7 @@ createDmElements()
           // get local sizes on the ranks
           const PetscInt *lxData;
           const PetscInt *lyData;
-          ierr = DMDAGetOwnershipRanges(*dmElements_, &lxData, &lyData, NULL);
+          ierr = DMDAGetOwnershipRanges(*dmElements_, &lxData, &lyData, NULL); CHKERRV(ierr);
           localSizesOnPartitions_[0].assign(lxData, lxData + nRanks_[0]);
           localSizesOnPartitions_[1].resize(1);
           localSizesOnPartitions_[1][0] = 1;
@@ -370,7 +370,7 @@ createDmElements()
           // get local sizes on the ranks
           const PetscInt *lxData;
           const PetscInt *lyData;
-          ierr = DMDAGetOwnershipRanges(*dmElements_, &lxData, &lyData, NULL);
+          ierr = DMDAGetOwnershipRanges(*dmElements_, &lxData, &lyData, NULL); CHKERRV(ierr);
           localSizesOnPartitions_[0].assign(lxData, lxData + nRanks_[0]);
           localSizesOnPartitions_[1].assign(lyData, lyData + nRanks_[1]);
           localSizesOnPartitions_[2].resize(1);

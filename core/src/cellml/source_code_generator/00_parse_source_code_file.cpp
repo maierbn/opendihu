@@ -1,4 +1,4 @@
-#include "cellml/source_code_generator/source_code_generator.h"
+#include "cellml/source_code_generator/00_source_code_generator_base.h"
 
 #include <Python.h>  // has to be the first included header
 
@@ -9,7 +9,7 @@
 #include <iostream>
 #include "easylogging++.h"
 
-void CellMLSourceCodeGenerator::
+void CellmlSourceCodeGeneratorBase::
 parseSourceCodeFile()
 {
   // input source filename is this->sourceFilename_
@@ -263,7 +263,7 @@ parseSourceCodeFile()
   }
 }
 
-void CellMLSourceCodeGenerator::code_expression_t::
+void CellmlSourceCodeGeneratorBase::code_expression_t::
 parse(std::string line)
 {
   VLOG(2) << "line: [" << line << "]";
@@ -507,15 +507,15 @@ parse(std::string line)
 }
 
 
-void CellMLSourceCodeGenerator::code_expression_t::
-visitLeafs(std::function<void(CellMLSourceCodeGenerator::code_expression_t &expression, bool isFirstVariable)> callback)
+void CellmlSourceCodeGeneratorBase::code_expression_t::
+visitLeafs(std::function<void(CellmlSourceCodeGeneratorBase::code_expression_t &expression, bool isFirstVariable)> callback)
 {
   bool isFirstVariable = true;
   visitLeafsCall(callback, isFirstVariable);
 }
 
-void CellMLSourceCodeGenerator::code_expression_t::
-visitLeafsCall(std::function<void(CellMLSourceCodeGenerator::code_expression_t &expression, bool isFirstVariable)> callback, bool &isFirstVariable)
+void CellmlSourceCodeGeneratorBase::code_expression_t::
+visitLeafsCall(std::function<void(CellmlSourceCodeGeneratorBase::code_expression_t &expression, bool isFirstVariable)> callback, bool &isFirstVariable)
 {
   if (type == code_expression_t::tree)
   {
@@ -536,8 +536,8 @@ visitLeafsCall(std::function<void(CellMLSourceCodeGenerator::code_expression_t &
   }
 }
 
-void CellMLSourceCodeGenerator::code_expression_t::
-visitNodes(std::function<void(CellMLSourceCodeGenerator::code_expression_t &expression)> callback)
+void CellmlSourceCodeGeneratorBase::code_expression_t::
+visitNodes(std::function<void(CellmlSourceCodeGeneratorBase::code_expression_t &expression)> callback)
 {
   // call callback for own node
   callback(*this);
@@ -552,7 +552,7 @@ visitNodes(std::function<void(CellMLSourceCodeGenerator::code_expression_t &expr
   }
 }
 
-std::string CellMLSourceCodeGenerator::code_expression_t::getString()
+std::string CellmlSourceCodeGeneratorBase::code_expression_t::getString()
 {
   std::stringstream s;
 

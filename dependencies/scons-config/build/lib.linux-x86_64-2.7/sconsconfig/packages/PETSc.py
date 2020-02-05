@@ -49,8 +49,6 @@ class PETSc(Package):
     defaults = {
       #'download_url': 'http://ftp.mcs.anl.gov/pub/petsc/release-snapshots/petsc-lite-3.7.6.tar.gz',
       'download_url': 'http://ftp.mcs.anl.gov/pub/petsc/release-snapshots/petsc-lite-3.12.3.tar.gz',
-      #'download_url': 'http://ftp.mcs.anl.gov/pub/petsc/release-snapshots/petsc-3.9.4.tar.gz',
-      #'download_url': 'http://ftp.mcs.anl.gov/pub/petsc/release-snapshots/petsc-3.8.4.tar.gz',
     }
     defaults.update(kwargs)
     super(PETSc, self).__init__(**defaults)
@@ -117,7 +115,7 @@ class PETSc(Package):
          'ln -fs ${PREFIX}/lib/libparmetis.so ${PREFIX}/lib/parmetis.so'    # create parmetis.so link for chaste
       ])
     
-    ctx.Message('----------------------------------------------------\nNote that PETSc has been updated to version 3.9.4. \nTo update, run \'scons PETSC_REDOWNLOAD=True\'.\n(This message is independent of the currently installed version.)\n----------------------------------------------------\n')
+    ctx.Message('----------------------------------------------------\nNote that PETSc has been updated to version 3.12.3. \nTo update, run \'scons PETSC_REDOWNLOAD=True\'.\n(This message is independent of the currently installed version.)\n----------------------------------------------------\n')
     ctx.Message('Checking for PETSc ...         ')
     self.check_options(env)
 

@@ -368,7 +368,7 @@ class Package(object):
     # If the package is not required but was found anyway, add a preprocessor
     # flag indicating such.
     elif result:
-      if ctx and not self.required:
+      if ctx:
         ctx.env.AppendUnique(CPPDEFINES=['HAVE_' + upp])
 
   def add_options(self, vars):

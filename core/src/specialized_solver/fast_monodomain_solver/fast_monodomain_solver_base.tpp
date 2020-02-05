@@ -30,15 +30,17 @@ initialize()
       << "This may be slow! Maybe you do not want to have this because the 1D fiber output writers can also be called.";
   }
 
+  initializeCellMLSourceFile();
+  std::shared_ptr<Partition::RankSubset> rankSubset = nestedSolvers_.data().functionSpace()->meshPartition()->rankSubset();
+
   LOG(DEBUG) << "config: " << specificSettings_;
   LOG(DEBUG) << "fiberDistributionFilename: " << fiberDistributionFilename_;
   LOG(DEBUG) << "firingTimesFilename: " << firingTimesFilename_;
 
   // parse firingTimesFilename_
-  std::shared_ptr<Partition::RankSubset> rankSubset = nestedSolvers_.data().functionSpace()->meshPartition()->rankSubset();
   std::string firingTimesFileContents = MPIUtility::loadFile(firingTimesFilename_, rankSubset->mpiCommunicator());
 
-  // parse file contents
+  // parse file contents of firing times file
   while (!firingTimesFileContents.empty())
   {
     // extract line
@@ -126,7 +128,7 @@ initialize()
   fiberData_.resize(nFibersToCompute_);
   LOG(DEBUG) << "nFibers: " << nFibers << ", nFibersToCompute_: " << nFibersToCompute_;
 
-  // determine total number of Hodgkin-Huxley instances to compute on this rank
+  // determine total number of CellML instances to compute on this rank
   nInstancesToCompute_ = 0;
   int fiberDataNo = 0;
   fiberNo = 0;
@@ -190,14 +192,27 @@ initialize()
   CellmlAdapterType &cellmlAdapter = instances[0].timeStepping1().instancesLocal()[0].discretizableInTime();
   cellmlAdapter.getStatesIntermediatesForTransfer(statesForTransfer_, intermediatesForTransfer_);
 
+  int nInstancesLocalCellml;
+  int nIntermediatesLocalCellml;
+  int nParametersPerInstance;
+  cellmlAdapter.getNumbers(nInstancesLocalCellml, nIntermediatesLocalCellml, nParametersPerInstance);
+  std::vector<double> &cellMLParameters = cellmlAdapter.cellmlSourceCodeGenerator().parameters();   //< contains all parameters for all instances, in struct of array ordering (p0inst0, p0inst1, p0inst2,...)
+
   int nVcVectors = (nInstancesToCompute_ + Vc::double_v::Size - 1) / Vc::double_v::Size;
 
   fiberPointBuffers_.resize(nVcVectors);
   fiberPointBuffersIntermediatesForTransfer_.resize(nVcVectors);
+  fiberPointBuffersParameters_.resize(nVcVectors);
 
-  for (int i = 0; i < fiberPointBuffersIntermediatesForTransfer_.size(); i++)
+  for (int i = 0; i < nVcVectors; i++)
   {
     fiberPointBuffersIntermediatesForTransfer_[i].resize(intermediatesForTransfer_.size());
+    fiberPointBuffersParameters_[i].resize(nParametersPerInstance);
+
+    for (int j=0; j<nParametersPerInstance; j++)
+    {
+      fiberPointBuffersParameters_[i][j] = cellMLParameters[j*nInstancesLocalCellml];
+    }
   }
 
   LOG(DEBUG) << nInstancesToCompute_ << " instances to compute, " << nVcVectors
@@ -205,10 +220,17 @@ initialize()
     << statesForTransfer_.size()-1 << " additional states for transfer, "
     << intermediatesForTransfer_.size() << " intermediates for transfer";
 
-  // initialize values
+  // initialize state values
   for (int i = 0; i < fiberPointBuffers_.size(); i++)
   {
-    initializeStates(fiberPointBuffers_[i].states);
+    if (initializeStates_ != nullptr)
+    {
+      initializeStates_(fiberPointBuffers_[i].states);
+    }
+    else
+    {
+      initializeStates(fiberPointBuffers_[i].states);
+    }
   }
 
   // initialize field variable names
@@ -281,6 +303,129 @@ initialize()
     }
   }
 
+}
+
+template<int nStates, int nIntermediates>
+void FastMonodomainSolverBase<nStates,nIntermediates>::
+initializeCellMLSourceFile()
+{
+  // parse options
+  CellmlAdapterType &cellmlAdapter = nestedSolvers_.instancesLocal()[0].timeStepping1().instancesLocal()[0].discretizableInTime();
+  bool approximateExponentialFunction = cellmlAdapter.approximateExponentialFunction();
+
+  PythonConfig specificSettingsCellML = cellmlAdapter.specificSettings();
+  CellmlSourceCodeGenerator &cellmlSourceCodeGenerator = cellmlAdapter.cellmlSourceCodeGenerator();
+
+  // determine filename of library
+  std::stringstream s;
+  s << "lib/"+StringUtility::extractBasename(cellmlSourceCodeGenerator.sourceFilename()) << "_fast_monodomain.so";
+  std::string libraryFilename = s.str();
+
+  std::shared_ptr<Partition::RankSubset> rankSubset = nestedSolvers_.data().functionSpace()->meshPartition()->rankSubset();
+
+  if (rankSubset->ownRankNo() == 0)
+  {
+    // initialize generated source code of cellml model
+
+    // compile source file to a library
+
+    s.str("");
+    s << "src/"+StringUtility::extractBasename(cellmlSourceCodeGenerator.sourceFilename()) << "_fast_monodomain"
+      << cellmlSourceCodeGenerator.sourceFileSuffix();
+    std::string sourceToCompileFilename = s.str();
+
+    // create path of library filename if it does not exist
+    if (libraryFilename.find("/") != std::string::npos)
+    {
+      std::string path = libraryFilename.substr(0, libraryFilename.rfind("/"));
+      // if directory does not yet exist, create it
+      struct stat info;
+      if (stat(path.c_str(), &info) != 0)
+      {
+        int ret = system((std::string("mkdir -p ")+path).c_str());
+
+        if (ret != 0)
+        {
+          LOG(ERROR) << "Could not create path \"" << path << "\".";
+        }
+      }
+    }
+
+    // generate library
+
+    LOG(DEBUG) << "generate source file \"" << sourceToCompileFilename << "\".";
+
+    // create source file
+    cellmlSourceCodeGenerator.generateSourceFileVcFastMonodomain(sourceToCompileFilename, approximateExponentialFunction);
+
+    // create path for library file
+    if (libraryFilename.find("/") != std::string::npos)
+    {
+      std::string path = libraryFilename.substr(0, libraryFilename.rfind("/"));
+      int ret = system((std::string("mkdir -p ")+path).c_str());
+
+      if (ret != 0)
+      {
+        LOG(ERROR) << "Could not create path \"" << path << "\" for library file.";
+      }
+    }
+
+    std::stringstream compileCommand;
+
+    // load compiler flags
+    std::string compilerFlags = specificSettingsCellML.getOptionString("compilerFlags", "-O3 -march=native -fPIC -finstrument-functions -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared ");
+
+  #ifdef NDEBUG
+    if (compilerFlags.find("-O3") == std::string::npos)
+    {
+      LOG(WARNING) << "\"compilerFlags\" does not contain \"-O3\", this may be slow.";
+    }
+    if (compilerFlags.find("-m") == std::string::npos)
+    {
+      LOG(WARNING) << "\"compilerFlags\" does not contain any \"-m\" flag, such as \"-march=native\". "
+        << "Make sure that SIMD instructions sets (SEE, AVX-2 etc.) are the same in opendihu and the compiled library. \n"
+        << " If unsure, use \"-O3 -march-native\".";
+    }
+  #endif
+    // for GPU: -ta=host,tesla,time
+
+    // compose compile command
+    std::stringstream s;
+    s << cellmlSourceCodeGenerator.compilerCommand() << " " << sourceToCompileFilename << " "
+      << compilerFlags << " " << cellmlSourceCodeGenerator.additionalCompileFlags() << " ";
+
+    std::string compileCommandOptions = s.str();
+
+    compileCommand << compileCommandOptions
+      << " -o " << libraryFilename;
+
+    int ret = system(compileCommand.str().c_str());
+    if (ret != 0)
+    {
+      LOG(ERROR) << "Compilation failed. Command: \"" << compileCommand.str() << "\".";
+      libraryFilename = "";
+    }
+    else
+    {
+      LOG(DEBUG) << "Compilation successful. Command: \"" << compileCommand.str() << "\".";
+    }
+  }
+
+  // barrier to wait until the one rank that compiles the library has finished
+  MPIUtility::handleReturnValue(MPI_Barrier(rankSubset->mpiCommunicator()), "MPI_Barrier");
+
+  // load the rhs library
+  void *handle = CellmlAdapterType::loadRhsLibraryGetHandle(libraryFilename);
+
+  compute0DInstance_ = (void (*)(Vc::double_v [], std::vector<Vc::double_v> &, double, double, bool, bool, std::vector<Vc::double_v> &, const std::vector<int> &)) dlsym(handle, "compute0DInstance");
+  initializeStates_ = (void (*)(Vc::double_v states[])) dlsym(handle, "initializeStates");
+
+  LOG(DEBUG) << "compute0DInstance_: " << (compute0DInstance_==nullptr? "no" : "yes") << ", initializeStates_: " << (initializeStates_==nullptr? "no" : "yes");
+
+  if (compute0DInstance_ == nullptr || initializeStates_ == nullptr)
+  {
+    LOG(FATAL) << "Could not load functions from library \"" << libraryFilename << "\".";
+  }
 }
 
 template<int nStates, int nIntermediates>
@@ -404,7 +549,7 @@ fetchFiberData()
       std::vector<double> vmValuesLocal;
       innerInstances[j].data().solution()->getValuesWithoutGhosts(0, vmValuesLocal);
 
-      VLOG(1) << "Gatherv of values to rank " << computingRank << ", sizes: " << nDofsOnRanks << ", offsets: " << offsetsOnRanks << ", local values " << vmValuesLocal;
+      LOG(DEBUG) << "Gatherv of values to rank " << computingRank << ", sizes: " << nDofsOnRanks << ", offsets: " << offsetsOnRanks << ", local values " << vmValuesLocal;
 
       MPI_Gatherv(vmValuesLocal.data(), fiberFunctionSpace->nDofsLocalWithoutGhosts(), MPI_DOUBLE,
                   vmValuesReceiveBuffer, nDofsOnRanks.data(), offsetsOnRanks.data(),
@@ -827,9 +972,19 @@ compute0D(double startTime, double timeStepWidth, int nTimeSteps, bool storeInte
       const bool argumentStimulate = stimulate && currentPointIsInCenter;
       const bool argumentStoreIntermediates = storeIntermediatesForTransfer && timeStepNo == nTimeSteps-1;
 
-      compute0DInstance(fiberPointBuffers_[pointBuffersNo].states, currentTime, timeStepWidth, argumentStimulate,
-                        argumentStoreIntermediates, fiberPointBuffersIntermediatesForTransfer_[pointBuffersNo]);
-
+      if (compute0DInstance_ != nullptr)
+      {
+        compute0DInstance_(fiberPointBuffers_[pointBuffersNo].states, fiberPointBuffersParameters_[pointBuffersNo],
+                           currentTime, timeStepWidth, argumentStimulate,
+                           argumentStoreIntermediates, fiberPointBuffersIntermediatesForTransfer_[pointBuffersNo],
+                           intermediatesForTransfer_);
+      }
+      else
+      {
+        compute0DInstance(fiberPointBuffers_[pointBuffersNo].states, fiberPointBuffersParameters_[pointBuffersNo],
+                          currentTime, timeStepWidth, argumentStimulate,
+                          argumentStoreIntermediates, fiberPointBuffersIntermediatesForTransfer_[pointBuffersNo]);
+      }
       // perform one step of the heun scheme
 
     }

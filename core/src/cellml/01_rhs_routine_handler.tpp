@@ -123,12 +123,11 @@ initializeRhsRoutine()
   loadRhsLibrary(libraryFilename);
 }
 
+
 template<int nStates, int nIntermediates_, typename FunctionSpaceType>
-bool RhsRoutineHandler<nStates,nIntermediates_,FunctionSpaceType>::
-loadRhsLibrary(std::string libraryFilename)
+void *RhsRoutineHandler<nStates,nIntermediates_,FunctionSpaceType>::
+loadRhsLibraryGetHandle(std::string libraryFilename)
 {
-  // load dynamic library
-  //
   std::string currentWorkingDirectory = getcwd(NULL,0);
 
   // append slash if there is none at the end
@@ -157,6 +156,16 @@ loadRhsLibrary(std::string libraryFilename)
       std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
   }
+
+  return handle;
+}
+
+template<int nStates, int nIntermediates_, typename FunctionSpaceType>
+bool RhsRoutineHandler<nStates,nIntermediates_,FunctionSpaceType>::
+loadRhsLibrary(std::string libraryFilename)
+{
+  // load dynamic library
+  void *handle = loadRhsLibraryGetHandle(libraryFilename);
 
   if (handle)
   {
@@ -289,4 +298,10 @@ createLibraryOnOneRank(std::string libraryFilename, const std::vector<int> &nIns
     LOG(DEBUG) << "we are the wrong rank, do not compile library "
       << "wait until library has been compiled";
   }
+}
+
+template<int nStates, int nIntermediates_, typename FunctionSpaceType>
+bool RhsRoutineHandler<nStates,nIntermediates_,FunctionSpaceType>::approximateExponentialFunction()
+{
+  return approximateExponentialFunction_;
 }

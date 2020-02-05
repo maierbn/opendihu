@@ -222,6 +222,20 @@ data()
 }
 
 template<int nStates, int nIntermediates_, typename FunctionSpaceType>
+CellmlSourceCodeGenerator &CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
+cellmlSourceCodeGenerator()
+{
+  return this->cellmlSourceCodeGenerator_;
+}
+
+template<int nStates, int nIntermediates_, typename FunctionSpaceType>
+PythonConfig CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
+specificSettings()
+{
+  return this->specificSettings_;
+}
+
+template<int nStates, int nIntermediates_, typename FunctionSpaceType>
 constexpr int  CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
 nIntermediates() const
 {

@@ -15,7 +15,7 @@ initializeStates(Vc::double_v states[])
 
 // Hodgkin-Huxley
 void FastMonodomainSolver<Control::MultipleInstances<OperatorSplitting::Strang<Control::MultipleInstances<TimeSteppingScheme::Heun<CellmlAdapter<4, 9, FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1> > > > >, Control::MultipleInstances<TimeSteppingScheme::ImplicitEuler<SpatialDiscretization::FiniteElementMethod<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1>, Quadrature::Gauss<2>, Equation::Dynamic::IsotropicDiffusion> > > > > >::
-compute0DInstance(Vc::double_v states[], double currentTime, double timeStepWidth, bool stimulate, bool storeIntermediatesForTransfer,
+compute0DInstance(Vc::double_v states[], std::vector<Vc::double_v> &parameters, double currentTime, double timeStepWidth, bool stimulate, bool storeIntermediatesForTransfer,
                   std::vector<Vc::double_v> &intermediatesForTransfer)
 {
   using Vc::double_v;

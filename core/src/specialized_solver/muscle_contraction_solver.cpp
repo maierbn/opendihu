@@ -108,7 +108,7 @@ initialize()
   // now call initialize, data will then create all variables (Petsc Vec's)
   data_.initialize();
 
-  typename DynamicHyperelasticitySolverType::HyperelasticitySolverType &hyperelasticitySolver = dynamicHyperelasticitySolver_.hyperelasticitySolver();
+  //typename DynamicHyperelasticitySolverType::HyperelasticitySolverType &hyperelasticitySolver = dynamicHyperelasticitySolver_.hyperelasticitySolver();
 /*
   data_.setFieldVariables(dynamicHyperelasticitySolver_.data().displacements(),
                           dynamicHyperelasticitySolver_.data().velocities(),

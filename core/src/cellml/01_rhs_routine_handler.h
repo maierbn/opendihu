@@ -30,6 +30,12 @@ public:
   //! constructor
   using CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::CellmlAdapterBase;
 
+  //! if when using "vc" as optimizationType_, the exp() function should be approximated, this is faster
+  bool approximateExponentialFunction();
+
+  //! load a given shared object library (<file>.so) and return the handle
+  static void *loadRhsLibraryGetHandle(std::string libraryFilename);
+
 protected:
   //! given a normal cellml source file for rhs routine create a second file for multiple instances. @return: if successful
   bool createSimdSourceFile(std::string &simdSourceFilename);
@@ -43,7 +49,7 @@ protected:
   //! load the library (<file>.so) that was created earlier, store
   bool loadRhsLibrary(std::string libraryFilename);
 
-  //! create the source filename using the CellMLSourceCodeGenerator, then compile to library
+  //! create the source filename using the CellmlSourceCodeGenerator, then compile to library
   void createLibraryOnOneRank(std::string libraryFilename, const std::vector<int> &nInstancesRanks);
 
   std::string sourceToCompileFilename_;   //< filename of the processed source file that will be used to compile the library

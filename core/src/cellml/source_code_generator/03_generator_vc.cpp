@@ -1,4 +1,4 @@
-#include "cellml/source_code_generator/source_code_generator.h"
+#include "cellml/source_code_generator/03_generator_vc.h"
 
 #include <Python.h>  // has to be the first included header
 
@@ -10,11 +10,8 @@
 #include <Vc/Vc>
 #include "easylogging++.h"
 
-void CellMLSourceCodeGenerator::
-generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunction)
+void CellmlSourceCodeGeneratorVc::preprocessCode(std::set<std::string> &helperFunctions)
 {
-  // replace pow and ?: functions
-  std::set<std::string> helperFunctions;   //< functions found in the CellML code that need to be provided, usually the pow2, pow3, etc. helper functions for pow(..., 2), pow(...,3) etc.
 
   // loop over lines of CellML code
   for (code_expression_t &codeExpression : cellMLCode_.lines)
@@ -24,7 +21,7 @@ generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunc
     if (codeExpression.type != code_expression_t::commented_out)
     {
       // loop over all nodes in the syntax tree of this line
-      codeExpression.visitNodes([&helperFunctions](CellMLSourceCodeGenerator::code_expression_t &expression)
+      codeExpression.visitNodes([&helperFunctions](CellmlSourceCodeGeneratorVc::code_expression_t &expression)
       {
         // we look for occurences of functions and ternary operators, these can be detected in a tree node
         if (expression.type == code_expression_t::tree)
@@ -209,15 +206,11 @@ generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunc
     }
   }
 
-  VLOG(1) << "helperFunctions: " << helperFunctions;
+}
 
-  std::stringstream simdSource;
-  simdSource << "#include <math.h>" << std::endl
-    << "#include <Vc/Vc>" << std::endl
-    << cellMLCode_.header << std::endl
-    << "using Vc::double_v; " << std::endl;
-
-  // define helper functions
+std::string CellmlSourceCodeGeneratorVc::defineHelperFunctions(std::set<std::string> &helperFunctions, bool approximateExponentialFunction)
+{
+  std::stringstream sourceCode;
 
   // add helper functions for helper functions (e.g. pow4 needs pow2)
   int previousSize = -1;
@@ -253,11 +246,11 @@ generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunc
   }
 
   // generate declarations
-  simdSource << "\n// helper functions\n";
+  sourceCode << "\n// helper functions\n";
   for (std::set<std::string>::iterator iter = helperFunctions.begin(); iter != helperFunctions.end(); iter++)
   {
     std::string functionName = *iter;
-    simdSource << "Vc::double_v " << functionName << "(Vc::double_v x);" << std::endl;
+    sourceCode << "Vc::double_v " << functionName << "(Vc::double_v x);" << std::endl;
   }
 
   // define exp function if needed
@@ -265,7 +258,7 @@ generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunc
   {
     if (approximateExponentialFunction)
     {
-      simdSource << R"(
+      sourceCode << R"(
 Vc::double_v exponential(Vc::double_v x)
 {
   //return Vc::exp(x);
@@ -292,7 +285,7 @@ Vc::double_v exponential(Vc::double_v x)
     }
     else
     {
-      simdSource << R"(
+      sourceCode << R"(
 Vc::double_v exponential(Vc::double_v x)
 {
   return Vc::exp(x);
@@ -319,7 +312,7 @@ Vc::double_v exponential(Vc::double_v x)
       }
       if (exponent == 2)
       {
-      simdSource << R"(
+      sourceCode << R"(
 Vc::double_v pow2(Vc::double_v x)
 {
   return x*x;
@@ -330,66 +323,87 @@ Vc::double_v pow2(Vc::double_v x)
       {
         int exponent0 = int(fabs(exponent)/2);
         int otherExponent = fabs(exponent) - exponent0;
-        simdSource << "Vc::double_v pow" << (exponent < 0? "Reciprocal" : "")
+        sourceCode << "Vc::double_v pow" << (exponent < 0? "Reciprocal" : "")
           << fabs(exponent) << "(Vc::double_v x)" << std::endl
           << "{" << std::endl
           << "  return ";
         if (exponent < 0)
-          simdSource << "1./(";
+          sourceCode << "1./(";
 
         // if exponent == 1 => exponent0 == 0
         if (exponent0 == 0)
         {
-          simdSource << "x";
+          sourceCode << "x";
         }
         else
         {
           if (exponent0 == 1)
           {
-            simdSource << "x*(";
+            sourceCode << "x*(";
           }
           else
           {
-            simdSource << "pow" << exponent0 << "(";
+            sourceCode << "pow" << exponent0 << "(";
           }
-          simdSource << "pow" << otherExponent << "(x))";
+          sourceCode << "pow" << otherExponent << "(x))";
         }
 
         if (exponent < 0)
-          simdSource << ")";
-        simdSource << ";" << std::endl;
+          sourceCode << ")";
+        sourceCode << ";" << std::endl;
 
-        simdSource << "}" << std::endl << std::endl;
+        sourceCode << "}" << std::endl << std::endl;
       }
     }
   }
 
+  return sourceCode.str();
+}
+
+void CellmlSourceCodeGeneratorVc::
+generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunction)
+{
+  std::set<std::string> helperFunctions;   //< functions found in the CellML code that need to be provided, usually the pow2, pow3, etc. helper functions for pow(..., 2), pow(...,3) etc.
+
+  // replace pow and ?: functions
+  preprocessCode(helperFunctions);
+
+  VLOG(1) << "helperFunctions: " << helperFunctions;
+
+  std::stringstream sourceCode;
+  sourceCode << "#include <math.h>" << std::endl
+    << "#include <Vc/Vc>" << std::endl
+    << cellMLCode_.header << std::endl
+    << "using Vc::double_v; " << std::endl;
+
+  // define helper functions
+  sourceCode << defineHelperFunctions(helperFunctions, approximateExponentialFunction);
 
   auto t = std::time(nullptr);
   auto tm = *std::localtime(&t);
-  simdSource << std::endl << "/* This function was created by opendihu at " << StringUtility::timeToString(&tm)  //std::put_time(&tm, "%d/%m/%Y %H:%M:%S")
+  sourceCode << std::endl << "/* This function was created by opendihu at " << StringUtility::timeToString(&tm)  //std::put_time(&tm, "%d/%m/%Y %H:%M:%S")
     << ".\n * It is designed for " << this->nInstances_ << " instances of the CellML problem.\n "
-    << "The \"optimizationType\" is \"vc\". (Other options are \"simd\" and \"openmp\".) */" << std::endl
+    << " * The \"optimizationType\" is \"vc\". (Other options are \"simd\" and \"openmp\".) */" << std::endl
     << "extern \"C\"" << std::endl
     << "void computeCellMLRightHandSide("
     << "void *context, double t, double *states, double *rates, double *intermediates, double *parameters)" << std::endl << "{" << std::endl;
 
-  simdSource << "  double VOI = t;   /* current simulation time */" << std::endl;
-  simdSource << std::endl << "  /* define constants */" << std::endl
+  sourceCode << "  double VOI = t;   /* current simulation time */" << std::endl;
+  sourceCode << std::endl << "  /* define constants */" << std::endl
     << "  double CONSTANTS[" << this->nConstants_ << "];" << std::endl;
 
   // add assignments of constant values
   for (std::string constantAssignmentsLine : constantAssignments_)
   {
-    simdSource << "  " << constantAssignmentsLine << std::endl;
+    sourceCode << "  " << constantAssignmentsLine << std::endl;
   }
 
   // add declaration of algebraic variables
-  simdSource << std::endl;
+  sourceCode << std::endl;
   const int nVcVectors = (int)(ceil((double)this->nInstances_ / Vc::double_v::Size));
   const int nParametersPerInstance = this->parameters_.size() / this->nInstances_;
 
-  simdSource << std::endl
+  sourceCode << std::endl
     << "  const int nInstances = " << this->nInstances_ << ";\n"
     << "  const int nStates = " << this->nStates_ << ";\n"
     << "  const int nIntermediates = " << this->nIntermediates_ << ";\n"
@@ -419,9 +433,9 @@ Vc::double_v pow2(Vc::double_v x)
   {
     if (codeExpression.type != code_expression_t::commented_out)
     {
-      simdSource << "    ";
+      sourceCode << "    ";
 
-      codeExpression.visitLeafs([&simdSource,&nVcVectors,this](CellMLSourceCodeGenerator::code_expression_t &expression, bool isFirstVariable)
+      codeExpression.visitLeafs([&sourceCode,&nVcVectors,this](CellmlSourceCodeGeneratorVc::code_expression_t &expression, bool isFirstVariable)
       {
         switch(expression.type)
         {
@@ -430,26 +444,26 @@ Vc::double_v pow2(Vc::double_v x)
             if (expression.code == "CONSTANTS")
             {
               // constants only exist once for all instances
-              simdSource << expression.code << "[" << expression.arrayIndex<< "]";
+              sourceCode << expression.code << "[" << expression.arrayIndex<< "]";
             }
             else
             {
               // all other variables (states, rates, intermediates, parameters) exist for every instance
               if (expression.code == "states")
               {
-                simdSource << "statesVc[" << expression.arrayIndex << " * nVcVectors + i]";
+                sourceCode << "statesVc[" << expression.arrayIndex << " * nVcVectors + i]";
               }
               else if (expression.code == "rates")
               {
-                simdSource << "ratesVc[" << expression.arrayIndex << " * nVcVectors + i]";
+                sourceCode << "ratesVc[" << expression.arrayIndex << " * nVcVectors + i]";
               }
               else if (expression.code == "intermediates")
               {
-                simdSource << "intermediatesVc[" << expression.arrayIndex << " * nVcVectors + i]";
+                sourceCode << "intermediatesVc[" << expression.arrayIndex << " * nVcVectors + i]";
               }
               else if (expression.code == "parameters")
               {
-                simdSource << "parametersVc[" << expression.arrayIndex << " * nVcVectors + i]";
+                sourceCode << "parametersVc[" << expression.arrayIndex << " * nVcVectors + i]";
               }
               else
               {
@@ -459,23 +473,23 @@ Vc::double_v pow2(Vc::double_v x)
             break;
 
           case code_expression_t::otherCode:
-            simdSource << expression.code;
+            sourceCode << expression.code;
             break;
 
           case code_expression_t::commented_out:
-            simdSource << "  // (not assigning to a parameter) " << expression.code;
+            sourceCode << "  // (not assigning to a parameter) " << expression.code;
             break;
 
           default:
             break;
         }
       });
-      simdSource << std::endl;
+      sourceCode << std::endl;
     }
   }
-  simdSource << std::endl;
+  sourceCode << std::endl;
 
-  simdSource << "  }" << std::endl << std::endl
+  sourceCode << "  }" << std::endl << std::endl
     << "  // store computed values back to pointers\n"
     << "  for (int rateNo = 0; rateNo < nStates; rateNo++)\n"
     << "    for (int i = 0; i < nVcVectors; i++)  // Vc vector no\n"
@@ -498,20 +512,20 @@ Vc::double_v pow2(Vc::double_v x)
 
 
   // add footer
-  simdSource << cellMLCode_.footer << std::endl;
+  sourceCode << cellMLCode_.footer << std::endl;
 
   // write out source file
-  std::ofstream simdSourceFile;
-  OutputWriter::Generic::openFile(simdSourceFile, outputFilename);
-  if (!simdSourceFile.is_open())
+  std::ofstream sourceCodeFile;
+  OutputWriter::Generic::openFile(sourceCodeFile, outputFilename);
+  if (!sourceCodeFile.is_open())
   {
     LOG(FATAL) << "Could not write to file \"" << outputFilename << "\".";
   }
   else
   {
-    std::string fileContents = simdSource.str();
-    simdSourceFile << fileContents;
-    simdSourceFile.close();
+    std::string fileContents = sourceCode.str();
+    sourceCodeFile << fileContents;
+    sourceCodeFile.close();
   }
 
   std::stringstream s;
@@ -521,3 +535,282 @@ Vc::double_v pow2(Vc::double_v x)
   compilerCommand_ = CXX_COMPILER_COMMAND;
   sourceFileSuffix_ = ".cpp";
 }
+
+void CellmlSourceCodeGeneratorVc::
+generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateExponentialFunction)
+{
+  std::set<std::string> helperFunctions;   //< functions found in the CellML code that need to be provided, usually the pow2, pow3, etc. helper functions for pow(..., 2), pow(...,3) etc.
+
+  // replace pow and ?: functions
+  preprocessCode(helperFunctions);
+
+  std::stringstream sourceCode;
+  sourceCode << "#include <math.h>" << std::endl
+    << "#include <Vc/Vc>" << std::endl
+    << "#include <iostream> " << std::endl
+    << cellMLCode_.header << std::endl
+    << "using Vc::double_v; " << std::endl;
+
+  auto t = std::time(nullptr);
+  auto tm = *std::localtime(&t);
+  sourceCode << std::endl << "/* This file was created by opendihu at " << StringUtility::timeToString(&tm)  //std::put_time(&tm, "%d/%m/%Y %H:%M:%S")
+    << ".\n * It is designed for the FastMonodomainSolver.\n "
+    << " */\n";
+
+  // define helper functions
+  sourceCode << defineHelperFunctions(helperFunctions, approximateExponentialFunction);
+
+  // define initializeStates function
+  sourceCode
+    << "// set initial values for all states\n"
+    << "extern \"C\"\n"
+    << "void initializeStates(Vc::double_v states[]) \n"
+    << "{\n";
+
+  for (int stateNo = 0; stateNo < this->nStates_; stateNo++)
+  {
+    sourceCode << "  states[" << stateNo << "] = " << statesInitialValues_[stateNo] << ";\n";
+  }
+  sourceCode << "}\n\n";
+
+  // define compute0D which computes one Heun step
+  sourceCode
+    << "// compute one Heun step\n"
+    << "extern \"C\"\n"
+    << "void compute0DInstance(Vc::double_v states[], std::vector<Vc::double_v> &parameters, double currentTime, double timeStepWidth, bool stimulate,\n"
+    << "                       bool storeIntermediatesForTransfer, std::vector<Vc::double_v> &intermediatesForTransfer, const std::vector<int> &intermediatesForTransferIndices) \n"
+    << "{\n"
+    << "  // assert that Vc::double_v::Size is the same as in opendihu, otherwise there will be problems\n"
+    << "  if (Vc::double_v::Size != " << Vc::double_v::Size << ")\n"
+    << "  {\n"
+    << "    std::cout << \"Fatal error in compiled library of source file \\\"" << outputFilename << "\\\", size of SIMD register in "
+    << "compiled code (\" << Vc::double_v::Size << \") does not match opendihu code (" << Vc::double_v::Size << ").\" << std::endl;\n"
+    << "    std::cout << \"Delete library such that it will be regenerated with the correct compile options!\" << std::endl;\n"
+    << "    exit(1);\n"
+    << "  }\n\n"
+    << "  // define constants\n";
+
+  // add assignments of constant values
+  for (std::string constantAssignmentsLine : constantAssignments_)
+  {
+    constantAssignmentsLine = StringUtility::replaceAll(constantAssignmentsLine, "CONSTANTS[", "constant");
+    constantAssignmentsLine = StringUtility::replaceAll(constantAssignmentsLine, "]", "");
+
+    sourceCode << "  const double " << constantAssignmentsLine << std::endl;
+  }
+  sourceCode << "\n"
+    << "  // compute new rates, rhs(y_n)\n";
+
+  // loop over lines of cellml code
+  for (code_expression_t &codeExpression : cellMLCode_.lines)
+  {
+    if (codeExpression.type != code_expression_t::commented_out)
+    {
+      sourceCode << "  const double_v ";
+
+      codeExpression.visitLeafs([&sourceCode,this](CellmlSourceCodeGeneratorVc::code_expression_t &expression, bool isFirstVariable)
+      {
+        switch(expression.type)
+        {
+          case code_expression_t::variableName:
+
+            if (expression.code == "CONSTANTS")
+            {
+              // constants only exist once for all instances
+              sourceCode << "constant" << expression.arrayIndex;
+            }
+            else
+            {
+              // all other variables (states, rates, intermediates, parameters) exist for every instance
+              if (expression.code == "states")
+              {
+                sourceCode << "states[" << expression.arrayIndex << "]";
+              }
+              else if (expression.code == "rates")
+              {
+                sourceCode << "rate" << expression.arrayIndex;
+              }
+              else if (expression.code == "intermediates")
+              {
+                sourceCode << "algebraic" << expression.arrayIndex;
+              }
+              else if (expression.code == "parameters")
+              {
+                sourceCode << "parameters[" << expression.arrayIndex << "]";
+              }
+              else
+              {
+                LOG(FATAL) << "unhandled variable type \"" << expression.code << "\".";
+              }
+            }
+            break;
+
+          case code_expression_t::otherCode:
+            sourceCode << expression.code;
+            break;
+
+          case code_expression_t::commented_out:
+            sourceCode << "  // (not assigning to a parameter) " << expression.code;
+            break;
+
+          default:
+            break;
+        }
+      });
+      sourceCode << std::endl;
+    }
+  }
+  sourceCode << "\n"
+    << "  // intermediate step\n"
+    << "  // compute y* = y_n + dt*rhs(y_n), y_n = state, rhs(y_n) = rate, y* = intermediateState\n";
+
+  for (int stateNo = 0; stateNo < this->nStates_; stateNo++)
+  {
+    sourceCode << "  ";
+    if (stateNo != 0)
+      sourceCode << "const ";
+
+    sourceCode << "double_v intermediateState" << stateNo << " = states[" << stateNo << "] + timeStepWidth*rate" << stateNo << ";\n";
+  }
+  sourceCode << "\n\n"
+    << R"(
+  // if stimulation, set value of Vm (state0)
+  if (stimulate)
+  {
+    for (int i = 0; i < std::min(3,(int)Vc::double_v::Size); i++)
+    {
+      intermediateState0[i] = 20.0;
+    }
+  }
+
+  // compute new rates, rhs(y*)
+)";
+
+  // loop over lines of cellml code
+  for (code_expression_t &codeExpression : cellMLCode_.lines)
+  {
+    if (codeExpression.type != code_expression_t::commented_out)
+    {
+      sourceCode << "  const double_v ";
+
+      codeExpression.visitLeafs([&sourceCode,this](CellmlSourceCodeGeneratorVc::code_expression_t &expression, bool isFirstVariable)
+      {
+        switch(expression.type)
+        {
+          case code_expression_t::variableName:
+
+            if (expression.code == "CONSTANTS")
+            {
+              // constants only exist once for all instances
+              sourceCode << "constant" << expression.arrayIndex;
+            }
+            else
+            {
+              // all other variables (states, rates, intermediates, parameters) exist for every instance
+              if (expression.code == "states")
+              {
+                sourceCode << "intermediateState" << expression.arrayIndex;
+              }
+              else if (expression.code == "rates")
+              {
+                sourceCode << "intermediateRate" << expression.arrayIndex;
+              }
+              else if (expression.code == "intermediates")
+              {
+                sourceCode << "intermediateAlgebraic" << expression.arrayIndex;
+              }
+              else if (expression.code == "parameters")
+              {
+                sourceCode << "parameters[" << expression.arrayIndex << "]";
+              }
+              else
+              {
+                LOG(FATAL) << "unhandled variable type \"" << expression.code << "\".";
+              }
+            }
+            break;
+
+          case code_expression_t::otherCode:
+            sourceCode << expression.code;
+            break;
+
+          case code_expression_t::commented_out:
+            sourceCode << "  // (not assigning to a parameter) " << expression.code;
+            break;
+
+          default:
+            break;
+        }
+      });
+      sourceCode << std::endl;
+    }
+  }
+  sourceCode << std::endl;
+
+  sourceCode << R"(
+  // final step
+  // y_n+1 = y_n + 0.5*[rhs(y_n) + rhs(y*)]
+)";
+
+  for (int stateNo = 0; stateNo < this->nStates_; stateNo++)
+  {
+    sourceCode << "  states[" << stateNo << "] += 0.5*timeStepWidth*(rate" << stateNo << " + intermediateRate" << stateNo << ");\n";
+  }
+
+  sourceCode << R"(
+
+  if (stimulate)
+  {
+    for (int i = 0; i < std::min(3,(int)Vc::double_v::Size); i++)
+    {
+      states[0][i] = 20.0;
+    }
+  }
+
+  // store intermediates for transfer
+  if (storeIntermediatesForTransfer)
+  {
+    for (int i = 0; i < intermediatesForTransferIndices.size(); i++)
+    {
+      const int intermediate = intermediatesForTransferIndices[i];
+
+      switch (intermediate)
+      {
+)";
+
+  for (int intermediateNo = 0; intermediateNo < this->nIntermediates_; intermediateNo++)
+  {
+    sourceCode << "        case " << intermediateNo << ":\n"
+      << "          intermediatesForTransfer[" << intermediateNo << "] = intermediateAlgebraic" << intermediateNo << ";\n"
+      << "          break;\n";
+  }
+
+  sourceCode << R"(
+      }
+    }
+  }
+}
+)";
+
+  // write out source file
+  std::ofstream sourceCodeFile;
+  OutputWriter::Generic::openFile(sourceCodeFile, outputFilename);
+  if (!sourceCodeFile.is_open())
+  {
+    LOG(FATAL) << "Could not write to file \"" << outputFilename << "\".";
+  }
+  else
+  {
+    std::string fileContents = sourceCode.str();
+    sourceCodeFile << fileContents;
+    sourceCodeFile.close();
+  }
+
+  std::stringstream s;
+  s << "-lVc -I\"" << OPENDIHU_HOME << "/dependencies/vc/install/include\" "
+    << "-L\"" << OPENDIHU_HOME << "/dependencies/vc/install/lib\" ";
+  additionalCompileFlags_ = s.str();
+  compilerCommand_ = CXX_COMPILER_COMMAND;
+  sourceFileSuffix_ = ".cpp";
+}
+

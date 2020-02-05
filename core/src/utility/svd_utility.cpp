@@ -4,6 +4,8 @@
 #include <cblas.h>
 #endif
 
+#include "easylogging++.h"
+
 #include <iostream>
 #include <vector>
 #include <string>
@@ -34,6 +36,8 @@ void SvdUtility::getSVD(double input[], int rows, int cols, double leftSingVec[]
   }
     
   LAPACKE_dgesvd(LAPACK_COL_MAJOR, 's', 's', rows, cols, inputCopy, rows, singVal, leftSingVec, rows, rightSingVecT, min, superb);
+#else
+  LOG(FATAL) << "Not compiled with LAPACK, getSVD is not possible.";
 #endif  
 }
 
@@ -80,6 +84,8 @@ void SvdUtility::getSVD(double input[], int rows, int cols, double leftSingVec[]
   printMatrix("leftSingVec", leftSingVec, rows, min);
   printMatrix("sigma", sigma, min, min);
   printMatrix("rightSingVecT", rightSingVecT, min, cols);
+#else
+  LOG(FATAL) << "Not compiled with LAPACK, getSVD is not possible.";
 #endif  
 }
 
@@ -122,6 +128,8 @@ void SvdUtility::getSVD(double _Complex input[], int rows, int cols, double _Com
 
     }
   }
+#else
+  LOG(FATAL) << "Not compiled with LAPACK, getSVD is not possible.";
 #endif  
 }
 
@@ -145,6 +153,8 @@ void SvdUtility::reconstructSnapshots(int rows, int cols, double leftSingVec[], 
   }
   
   printMatrix("v_reconst", output, rows, cols);
+#else
+  LOG(FATAL) << "Not compiled with LAPACK, reconstructSnapshots is not possible.";
 #endif  
 }
 

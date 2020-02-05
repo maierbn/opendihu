@@ -13,18 +13,8 @@
 #include "time_stepping_scheme/implicit_euler.h"
 #include "spatial_discretization/finite_element_method/finite_element_method.h"
 
-
-/** A specialized implementation for the monodomain equation, as in fibers_emg example.
- *  This is the general class, relevant are the specializations.
-  */
-template<typename FibersEMG>
-class FastMonodomainSolver
-{
-  static_assert(sizeof(FibersEMG) == 0, "This specialization of FastMonodomainSolver is not implemented. Currently only Hodgkin-Huxley and new_slow_TK are implemented!");
-};
-
-/** Buffers for Hodgkin-Huxley computation
-  *  Includes Vc::double_v::size() instances of the HH problem (usually 4).
+/** Buffers for CellML computation
+  *  Includes Vc::double_v::size() instances of the CellML problem (usually 4 when using AVX-2).
   *  These will be computed at once using vector instructions.
   */
 template<int nStates>
@@ -120,6 +110,9 @@ public:
 
 protected:
 
+  //! create a source file with compute0D function from the CellML model
+  void initializeCellMLSourceFile();
+
   //! get element lengths and vmValues from the other ranks
   void fetchFiberData();
 
@@ -130,9 +123,9 @@ protected:
   void compute0D(double startTime, double timeStepWidth, int nTimeSteps, bool storeIntermediatesForTransfer);
 
   //! compute one time step of the right hand side for a single simd vector of instances
-  virtual void compute0DInstance(Vc::double_v states[], double currentTime, double timeStepWidth,
+  virtual void compute0DInstance(Vc::double_v states[], std::vector<Vc::double_v> &parameters, double currentTime, double timeStepWidth,
                                  bool stimulate, bool storeIntermediatesForTransfer,
-                                 std::vector<Vc::double_v> &intermediatesForTransfer) = 0;
+                                 std::vector<Vc::double_v> &intermediatesForTransfer){};
 
   //! solve the 1D problem (diffusion), starting from startTime
   void compute1D(double startTime, double timeStepWidth, int nTimeSteps, double prefactor);
@@ -141,7 +134,7 @@ protected:
   void computeMonodomain();
 
   //! set the initial values for all states
-  virtual void initializeStates(Vc::double_v states[]) = 0;
+  virtual void initializeStates(Vc::double_v states[]){};
 
   PythonConfig specificSettings_;    //< config for this object
 
@@ -193,7 +186,13 @@ protected:
   std::vector<int> statesForTransfer_;                          //< state no.s to transfer to other solvers within output connector data
   std::vector<int> intermediatesForTransfer_;   //< which intermediates should be transferred to other solvers as part of output connector data
 
+  std::vector<std::vector<Vc::double_v>> fiberPointBuffersParameters_;        //< constant parameter values, changing parameters is not implemented
   std::vector<std::vector<Vc::double_v>> fiberPointBuffersIntermediatesForTransfer_;   //<  [fiberPointNo][intermediateToTransferNo], intermediate values to use for output connector data
+
+  CellmlSourceCodeGenerator cellmlSourceCodeGenerator_;    ///< object that holds all source code related to the model
+
+  void (*compute0DInstance_)(Vc::double_v [], std::vector<Vc::double_v> &, double, double, bool, bool, std::vector<Vc::double_v> &, const std::vector<int> &);   //< runtime-created and loaded function to compute one Heun step of the 0D problem
+  void (*initializeStates_)(Vc::double_v states[]);  //< runtime-created and loaded function to set all initial values for the states
 
 };
 

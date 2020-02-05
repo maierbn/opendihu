@@ -15,7 +15,9 @@
 #include "spatial_discretization/finite_element_method/finite_element_method.h"
 
 /** Partial specialization for exactly the combination of nested solvers for which it is optimized.
- *  Hodgkin-Huxley model, i.e. 4 states
+ *  new_slow_TK_2014_12_08 model, i.e. 57 states
+ *
+ *  Note, this file has become obsolete, because the code generator can now automatically generate the code of this class.
  */
 template<>
 class FastMonodomainSolver<
@@ -24,7 +26,7 @@ class FastMonodomainSolver<
       Control::MultipleInstances<
         TimeSteppingScheme::Heun<                   // fiber reaction term
           CellmlAdapter<
-            4,9,  // nStates,nIntermediates: 57,1 = Shorten, 4,9 = Hodgkin Huxley
+            57,71,  // nStates,nIntermediates: 57,1 = Shorten, 4,9 = Hodgkin Huxley
             FunctionSpace::FunctionSpace<
               Mesh::StructuredDeformableOfDimension<1>,
               BasisFunction::LagrangeOfOrder<1>
@@ -44,21 +46,20 @@ class FastMonodomainSolver<
       >
     >
   >
-> : public FastMonodomainSolverBase<4,9>
+> : public FastMonodomainSolverBase<57,71>
 {
 public:
 
   //! use constructor of base class
-  using FastMonodomainSolverBase<4,9>::FastMonodomainSolverBase;
+  using FastMonodomainSolverBase<57,71>::FastMonodomainSolverBase;
 
 protected:
 
   //! compute one time step of the right hand side for a single simd vector of instances
-  virtual void compute0DInstance(Vc::double_v states[], double currentTime, double timeStepWidth,
+  virtual void compute0DInstance(Vc::double_v states[], std::vector<Vc::double_v> &parameters, double currentTime, double timeStepWidth,
                                  bool stimulate, bool storeIntermediatesForTransfer,
                                  std::vector<Vc::double_v> &intermediatesForTransfer) override;
 
   //! set the initial values for all states
   virtual void initializeStates(Vc::double_v states[]) override;
-
 };

@@ -143,6 +143,20 @@ createMatrix(MatType matrixType, int diagonalNonZeros, int offdiagonalNonZeros)
   createLocalMatrix();
 }
 
+
+/*template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
+createMatrix(Mat rhsMat)
+{
+  PetscErrorCode ierr;
+
+  // create matrix as duplicate of rhs matrix, all values are copied
+  ierr = MatDuplicate(rhsMat, MAT_COPY_VALUES, &this->globalMatrix_); CHKERRV(ierr);
+  ierr = PetscObjectSetName((PetscObject) this->globalMatrix_, this->name_.c_str()); CHKERRV(ierr);
+
+  createLocalMatrix();
+}*/
+
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
 void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
 createLocalMatrix()

@@ -45,7 +45,7 @@ Vc::double_v exponential(Vc::double_v x)
 
 // new_slow_TK_2014_12_08
 void FastMonodomainSolver<Control::MultipleInstances<OperatorSplitting::Strang<Control::MultipleInstances<TimeSteppingScheme::Heun<CellmlAdapter<57, 71, FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1> > > > >, Control::MultipleInstances<TimeSteppingScheme::ImplicitEuler<SpatialDiscretization::FiniteElementMethod<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1>, Quadrature::Gauss<2>, Equation::Dynamic::IsotropicDiffusion> > > > > >::
-compute0DInstance(Vc::double_v states[], double currentTime, double timeStepWidth, bool stimulate,
+compute0DInstance(Vc::double_v states[], std::vector<Vc::double_v> &parameters, double currentTime, double timeStepWidth, bool stimulate,
                   bool storeIntermediatesForTransfer, std::vector<Vc::double_v> &intermediatesForTransfer)
 {
   using Vc::double_v;

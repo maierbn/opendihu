@@ -26,8 +26,11 @@ template<typename IterType>
 void outputValuesBlockAdd1(std::ostream &stream, IterType valuesBegin,
                        IterType valuesEnd, int nValuesPerRow=-1);
 
-//! replace from by to
+//! replace the first occurence of from by to
 std::string replace(std::string str, const std::string& from, const std::string& to);
+
+//! replace all occurences of from by to
+std::string replaceAll(std::string str, const std::string& from, const std::string& to);
 
 //! for N=1 output <str>, for N=2 output <str>*<str>, for N=3 output <str>*<str>*<str>
 template<int N>

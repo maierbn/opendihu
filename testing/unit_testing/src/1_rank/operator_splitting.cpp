@@ -173,7 +173,7 @@ config = {
         "CellML" : {
           "modelFilename": "../input/hodgkin_huxley_1952.c",
           #"simdSourceFilename" : "simdcode.cpp",
-          "libraryFilename": "cellml_simd_lib.so",
+          #"libraryFilename": "cellml_simd_lib.so",
           
           "numberStates": 57,
           "numberIntermediates": 1,   # intermediates: gamma

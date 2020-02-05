@@ -12,6 +12,8 @@
 
 void CellmlSourceCodeGeneratorVc::preprocessCode(std::set<std::string> &helperFunctions)
 {
+  if (preprocessingDone_)
+    return;
 
   // loop over lines of CellML code
   for (code_expression_t &codeExpression : cellMLCode_.lines)
@@ -206,10 +208,14 @@ void CellmlSourceCodeGeneratorVc::preprocessCode(std::set<std::string> &helperFu
     }
   }
 
+  preprocessingDone_ = true;
 }
 
 std::string CellmlSourceCodeGeneratorVc::defineHelperFunctions(std::set<std::string> &helperFunctions, bool approximateExponentialFunction)
 {
+  if (!helperFunctionsCode_.empty())
+    return helperFunctionsCode_;
+
   std::stringstream sourceCode;
 
   // add helper functions for helper functions (e.g. pow4 needs pow2)
@@ -244,6 +250,8 @@ std::string CellmlSourceCodeGeneratorVc::defineHelperFunctions(std::set<std::str
       }
     }
   }
+
+  VLOG(1) << "after adding all necessary helperFunctions: " << helperFunctions;
 
   // generate declarations
   sourceCode << "\n// helper functions\n";
@@ -357,7 +365,10 @@ Vc::double_v pow2(Vc::double_v x)
     }
   }
 
-  return sourceCode.str();
+  helperFunctionsCode_ = sourceCode.str();
+  VLOG(1) << "Helper functions produce the following code: " << helperFunctionsCode_;
+
+  return helperFunctionsCode_;
 }
 
 void CellmlSourceCodeGeneratorVc::
@@ -556,6 +567,8 @@ generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateE
   sourceCode << std::endl << "/* This file was created by opendihu at " << StringUtility::timeToString(&tm)  //std::put_time(&tm, "%d/%m/%Y %H:%M:%S")
     << ".\n * It is designed for the FastMonodomainSolver.\n "
     << " */\n";
+
+  VLOG(1) << "call defineHelperFunctions with helperFunctions: " << helperFunctions;
 
   // define helper functions
   sourceCode << defineHelperFunctions(helperFunctions, approximateExponentialFunction);

@@ -31,5 +31,6 @@ protected:
   //! The file contains the source for only the rhs computation
   void generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunction);
 
-
+  bool preprocessingDone_ = false;      ///< if preprocessing of the code tree has been done already
+  std::string helperFunctionsCode_;     ///< code with all helper functions like pow, exponential
 };

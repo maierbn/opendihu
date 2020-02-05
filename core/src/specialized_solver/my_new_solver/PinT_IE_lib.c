@@ -39,6 +39,8 @@
 #include <petscts.h>
 #include <petscdraw.h>
 
+#include <opendihu.h>
+
 #ifdef M_PI
    #define PI M_PI
 #else
@@ -247,12 +249,13 @@ take_step(PetscReal * values,    /* state vector to evolve */
    /* Backward Euler step */
    solve_tridiag(values, temp, size, matrix);
 
-   Vec V;
-   PetscReal Y;
-   VecCreateSeqWithArray(PETSC_COMM_SELF, 1, size, values,&V);
-   VecAssemblyBegin(V);
-   VecAssemblyEnd(V);
-   VecNorm(V,NORM_2,&Y);
+   // Vec V;
+   // PetscReal Y;
+   // VecCreateSeqWithArray(PETSC_COMM_SELF, 1, size, values,&V);
+   // VecAssemblyBegin(V);
+   // VecAssemblyEnd(V);
+   // VecNorm(V,NORM_2,&Y);
+   // nestedSolver_.run();
    //printf("%f", Y);
 }
 

@@ -5,7 +5,8 @@
 
 #include "braid.h"
 #include "/mnt/c/Users/mariu/OneDrive/Dokumente/Masterarbeit/Opendihu/opendihu/dependencies/xbraid/src/xbraid-2.3.0/braid/braid.hpp"
-#include "PinT_IE_Braid.cpp"
+// #include "PinT_IE_Braid.cpp"
+#include "PinT_IE_Braid.c"
 
 template<class NestedSolver>
 PinT<NestedSolver>::
@@ -54,38 +55,43 @@ initialize()
   // it is also possible to pass some field variables from the data of the NestedSolver to own data object
   data_.setSolutionVariable(nestedSolver_.data().solution());
 
+
+  PythonConfig config;
+
+  // this->specificSettings_
+  std::vector<std::shared_ptr<PinT<TimeSteppingScheme::ImplicitEuler<SpatialDiscretization::FiniteElementMethod<
+    Mesh::StructuredRegularFixedOfDimension<1>,
+    BasisFunction::LagrangeOfOrder<>,
+    Quadrature::None,
+    Equation::Dynamic::IsotropicDiffusion>
+  >>>> implicitEulerSolvers_;
+
+
+  PyObject *implicitEulerConfig = this->specificSettings_.getOptionListBegin<PyObject *>("TimeSteppingScheme");
+
+  // loop over other entries of list
+  for (int i = 0;
+    !this->specificSettings_.getOptionListEnd("TimeSteppingScheme");
+    this->specificSettings_.getOptionListNext<PyObject *>("TimeSteppingScheme", implicitEulerConfig))
+  {
+
+    LOG(DEBUG) << "implicitEulerConfig: " << implicitEulerConfig;
+
+    DihuContext implicitEulerContext = context_.createSubContext(implicitEulerConfig);
+
+    implicitEulerSolvers_[i] = std::make_shared<PinT<TimeSteppingScheme::ImplicitEuler<SpatialDiscretization::FiniteElementMethod<
+      Mesh::StructuredRegularFixedOfDimension<1>,
+      BasisFunction::LagrangeOfOrder<>,
+      Quadrature::None,
+      Equation::Dynamic::IsotropicDiffusion>>>>(implicitEulerContext);
+
+    i++;
+  };
+
+
   // here is the space to initialize anything else that is needed for your solver
   // for example, initialize Braid here (not like this)
-  // braid_Core    core;
-  // my_App       *app;
-  // MPI_Comm      comm, comm_x, comm_t;
-  // int           i, rank, arg_index;
-  // double        loglevels;
-  //
-  // /* Define space-time domain */
-  // PetscReal    tstart        =  0.0;
-  // PetscReal   tstop         =  2*PI;
-  // PetscInt       ntime         =  64;
-  // PetscReal    xstart        =  0.0;
-  // PetscReal    xstop         =  PI;
-  // PetscInt       nspace        =  33;
-  //
-  // /* Define XBraid parameters
-  //  * See -help message for descriptions */
-  // int       max_levels    = 2;
-  // int       nrelax        = 1;
-  // int       skip          = 0;
-  // double    tol           = 1.0e-07;
-  // int       cfactor       = 2;
-  // int       max_iter      = 30;
-  // int       min_coarse    = 3;
-  // int       fmg           = 0;
-  // int       scoarsen      = 0;
-  // int       res           = 0;
-  // int       wrapper_tests = 0;
-  // int       print_level   = 2;
-  // int       access_level  = 1;
-  // int       use_sequential= 0;
+
   // double        tstart, tstop;
   // int           ntime, rank;
   //
@@ -107,7 +113,8 @@ initialize()
   // core.SetMaxLevels(2);
   // core.SetAbsTol(1.0e-6);
   // core.SetCFactor(-1, 2);
-  // /* set up app structure */
+  /* set up app structure */
+
   // app = (my_App *) malloc(sizeof(my_App));
   // (app->g)             = (double*) malloc( nspace*sizeof(double) );
   // (app->comm)          = comm;
@@ -144,30 +151,163 @@ run()
   // initialize everything
   initialize();
 
-  double        tstart, tstop;
-  int           ntime, rank;
-  MPI_Comm comm;
-  // Define time domain: ntime intervals
-  ntime  = 10;
-  tstart = 0.0;
-  tstop  = tstart + ntime/2.;
-
-  comm = MPI_COMM_WORLD;
-  // MPI_Init(&argc, &argv);
-  MPI_Comm_rank(comm, &rank);
-
-  // set up app structure
-  MyBraidApp app(comm, rank, tstart, tstop, ntime);
-
-  // Initialize Braid Core Object and set some solver options
-  BraidCore core(comm, &app);
-  core.SetPrintLevel(2);
-  core.SetMaxLevels(2);
-  core.SetAbsTol(1.0e-6);
-  core.SetCFactor(-1, 2);
+  // double        tstart, tstop;
+  // int           ntime, rank;
+  // MPI_Comm comm;
+  // // Define time domain: ntime intervals
+  // ntime  = 10;
+  // tstart = 0.0;
+  // tstop  = tstart + ntime/2.;
+  //
+  // comm = MPI_COMM_WORLD;
+  // // MPI_Init(&argc, &argv);
+  // MPI_Comm_rank(comm, &rank);
+  //
+  // // set up app structure
+  // MyBraidApp app(comm, rank, tstart, tstop, ntime);
+  //
+  // // Initialize Braid Core Object and set some solver options
+  // BraidCore core(comm, &app);
+  // core.SetPrintLevel(2);
+  // core.SetMaxLevels(2);
+  // core.SetAbsTol(1.0e-6);
+  // core.SetCFactor(-1, 2);
 
   // perform the computation of this solver
-  core.Drive();
+  // core.Drive();
+  braid_Core    core;
+  my_App       *app;
+  MPI_Comm      comm, comm_x, comm_t;
+  // int           i, rank, arg_index;
+  int           i, rank;
+  double        loglevels;
+
+  /* Define space-time domain */
+  // PetscReal    tstart        =  0.0;
+  // PetscReal   tstop         =  2*PI;
+  // PetscInt       ntime         =  64;
+  // PetscReal    xstart        =  0.0;
+  // PetscReal    xstop         =  PI;
+  // PetscInt       nspace        =  33;
+  PetscReal    tstart        =  0.0;
+  PetscReal   tstop         =  0.5;
+  PetscInt       ntime         =  100;
+  PetscReal    xstart        =  0.0;
+  PetscReal    xstop         =  4;
+  PetscInt       nspace        =  6;
+
+  /* Define XBraid parameters
+   * See -help message for descriptions */
+  int       max_levels    = 2;
+  int       nrelax        = 1;
+  int       skip          = 0;
+  double    tol           = 1.0e-07;
+  int       cfactor       = 2;
+  int       max_iter      = 30;
+  int       min_coarse    = 3;
+  int       fmg           = 0;
+  int       scoarsen      = 0;
+  int       res           = 0;
+  int       wrapper_tests = 0;
+  int       print_level   = 2;
+  int       access_level  = 1;
+  int       use_sequential= 0;
+
+  comm   = MPI_COMM_WORLD;
+  MPI_Comm_rank(comm, &rank);
+
+  app = (my_App *) malloc(sizeof(my_App));
+  (app->g)             = (double*) malloc( nspace*sizeof(double) );
+  (app->comm)          = comm;
+  (app->tstart)        = tstart;
+  (app->tstop)         = tstop;
+  (app->ntime)         = ntime;
+  (app->xstart)        = xstart;
+  (app->xstop)         = xstop;
+  (app->nspace)        = nspace;
+  (app->print_level)   = print_level;
+  (app->solver)        = &this->nestedSolver_;
+
+  /* Initialize storage for sc_info, for tracking space-time grids visited during the simulation */
+  app->sc_info = (double*) malloc( 2*max_levels*sizeof(double) );
+  for( i = 0; i < 2*max_levels; i++) {
+     app->sc_info[i] = -1.0;
+  }
+
+  /* Initialize Braid */
+  braid_Init(MPI_COMM_WORLD, comm, tstart, tstop, ntime, app,
+         my_Step, my_Init, my_Clone, my_Free, my_Sum, my_SpatialNorm,
+         my_Access, my_BufSize, my_BufPack, my_BufUnpack, &core);
+
+  /* The first step before running simulations, is always to verify the wrapper tests */
+  if(wrapper_tests)
+  {
+     /* Create spatial communicator for wrapper-tests */
+     braid_SplitCommworld(&comm, 1, &comm_x, &comm_t);
+
+     braid_TestAll(app, comm_x, stdout, 0.0, (tstop-tstart)/ntime,
+                   2*(tstop-tstart)/ntime, my_Init, my_Free, my_Clone,
+                   my_Sum, my_SpatialNorm, my_BufSize, my_BufPack,
+                   my_BufUnpack, my_Coarsen, my_Interp, my_Residual, my_Step);
+  }
+  else
+  {
+     /* Scale tol by domain */
+     tol = tol/( sqrt((tstop - tstart)/(ntime-1))*sqrt((xstop - xstart)/(nspace-1)) );
+
+     /* Set Braid options */
+     braid_SetPrintLevel( core, print_level);
+     braid_SetAccessLevel( core, access_level);
+     braid_SetMaxLevels(core, max_levels);
+     braid_SetMinCoarse( core, min_coarse );
+     braid_SetSkip(core, skip);
+     braid_SetNRelax(core, -1, nrelax);
+     braid_SetAbsTol(core, tol);
+     braid_SetCFactor(core, -1, cfactor);
+     braid_SetMaxIter(core, max_iter);
+     braid_SetSeqSoln(core, use_sequential);
+     if (fmg)
+     {
+        braid_SetFMG(core);
+     }
+     if (res)
+     {
+        braid_SetResidual(core, my_Residual);
+     }
+     loglevels = log2(nspace - 1.0);
+     if ( scoarsen && ( fabs(loglevels - round(loglevels)) > 1e-10 ))
+     {
+        if(rank == 0)
+        {
+           fprintf(stderr, "\nWarning!\nFor spatial coarsening, spatial grids must be a "
+                   "power of 2 + 1, \ni.e., nspace = 2^k + 1.  Your spatial grid is of size"
+                   " %d.  Spatial \ncoarsening is therefore being ignored.\n\n", nspace);
+        }
+     }
+     else if (scoarsen)
+     {
+        braid_SetSpatialCoarsen(core, my_Coarsen);
+        braid_SetSpatialRefine(core,  my_Interp);
+     }
+
+     braid_Drive(core);
+
+     /* Print accumulated info on space-time grids visited during the simulation */
+     if( (print_level > 0) && (rank == 0))
+     {
+        print_sc_info(app->sc_info, max_levels);
+     }
+  }
+
+  /* Clean up */
+  braid_Destroy(core);
+  free( app->sc_info);
+  free( app->g);
+  free( app );
+
+  /* Finalize MPI */
+  // MPI_Finalize();
+
   // call the nested solver
   nestedSolver_.run();
 

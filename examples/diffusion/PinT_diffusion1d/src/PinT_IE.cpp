@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
         BasisFunction::LagrangeOfOrder<>,
         Quadrature::None,
         Equation::Dynamic::IsotropicDiffusion
-        >
+      >
     >
   > problem(settings);
 

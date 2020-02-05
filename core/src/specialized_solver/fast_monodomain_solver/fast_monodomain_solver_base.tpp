@@ -321,9 +321,10 @@ initializeCellMLSourceFile()
   s << "lib/"+StringUtility::extractBasename(cellmlSourceCodeGenerator.sourceFilename()) << "_fast_monodomain.so";
   std::string libraryFilename = s.str();
 
-  std::shared_ptr<Partition::RankSubset> rankSubset = nestedSolvers_.data().functionSpace()->meshPartition()->rankSubset();
+  //std::shared_ptr<Partition::RankSubset> rankSubset = nestedSolvers_.data().functionSpace()->meshPartition()->rankSubset();
+  int ownRankNoCommWorld = DihuContext::ownRankNoCommWorld();
 
-  if (rankSubset->ownRankNo() == 0)
+  if (ownRankNoCommWorld == 0)
   {
     // initialize generated source code of cellml model
 
@@ -412,7 +413,7 @@ initializeCellMLSourceFile()
   }
 
   // barrier to wait until the one rank that compiles the library has finished
-  MPIUtility::handleReturnValue(MPI_Barrier(rankSubset->mpiCommunicator()), "MPI_Barrier");
+  MPIUtility::handleReturnValue(MPI_Barrier(MPI_COMM_WORLD), "MPI_Barrier");
 
   // load the rhs library
   void *handle = CellmlAdapterType::loadRhsLibraryGetHandle(libraryFilename);

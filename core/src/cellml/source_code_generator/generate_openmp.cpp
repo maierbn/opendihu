@@ -10,21 +10,19 @@
 #include <Vc/Vc>
 #include "easylogging++.h"
 
-
 void CellMLSourceCodeGenerator::
-generateSourceFileSimd(std::string outputFilename)
+generateSourceFileOpenMP(std::string outputFilename)
 {
-  LOG(DEBUG) << "generateSourceFileSimd";
-
   std::stringstream simdSource;
   simdSource << "#include <math.h>" << std::endl
+    << "#include <omp.h>" << std::endl
     << cellMLCode_.header << std::endl;
 
   auto t = std::time(nullptr);
   auto tm = *std::localtime(&t);
   simdSource << std::endl << "/* This function was created by opendihu at " << StringUtility::timeToString(&tm)  //std::put_time(&tm, "%d/%m/%Y %H:%M:%S")
     << ".\n * It is designed for " << this->nInstances_ << " instances of the CellML problem.\n "
-    << "The \"optimizationType\" is \"simd\". (Other options are \"vc\" and \"openmp\".) */" << std::endl
+    << "The \"optimizationType\" is \"openmp\". (Other options are \"vc\" and \"simd\".) */" << std::endl
     << "void computeCellMLRightHandSide("
     << "void *context, double t, double *states, double *rates, double *intermediates, double *parameters)" << std::endl << "{" << std::endl;
 
@@ -37,24 +35,22 @@ generateSourceFileSimd(std::string outputFilename)
   {
     simdSource << "  " << constantAssignmentsLine << std::endl;
   }
-  simdSource << std::endl;
+
+  simdSource << std::endl
+    << "  #pragma omp parallel for" << std::endl
+    << "  for (int i = 0; i < " << this->nInstances_ << "; i++)" << std::endl
+    << "  {" << std::endl;
 
   // loop over lines of cellml code
   for (code_expression_t &codeExpression : cellMLCode_.lines)
   {
     if (codeExpression.type != code_expression_t::commented_out)
     {
-      simdSource << std::endl
-        << "#ifndef TEST_WITHOUT_PRAGMAS" << std::endl
-        << "  #pragma omp for simd" << std::endl
-        << "#endif" << std::endl
-        //<< "#pragma GCC ivdep  // this disables alias checking for the compiler (GCC only)" << std::endl   // does not work on hazelhen
-        << "  for (int i = 0; i < " << this->nInstances_ << "; i++)" << std::endl
-        << "  {" << std::endl
-        << "    ";
 
+      simdSource << "    ";
       codeExpression.visitLeafs([&simdSource,this](CellMLSourceCodeGenerator::code_expression_t &expression, bool isFirstVariable)
       {
+
         switch(expression.type)
         {
         case code_expression_t::variableName:
@@ -84,9 +80,12 @@ generateSourceFileSimd(std::string outputFilename)
         };
       });
 
-      simdSource << std::endl << "  }" << std::endl;
+      simdSource << std::endl;
     }
   }
+
+  VLOG(2) << "write end of for loop (closing })";
+  simdSource << "  }" << std::endl;
 
   // add footer
   simdSource << cellMLCode_.footer << std::endl;
@@ -104,7 +103,8 @@ generateSourceFileSimd(std::string outputFilename)
     simdSourceFile << fileContents;
     simdSourceFile.close();
   }
+
+  additionalCompileFlags_ = "-fopenmp";
   compilerCommand_ = C_COMPILER_COMMAND;
-  additionalCompileFlags_ = "";
   sourceFileSuffix_ = ".c";
 }

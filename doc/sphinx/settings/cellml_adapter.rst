@@ -246,6 +246,8 @@ meshName
 ------------------------------------------------
 The mesh to use, to be defined under "Meshes". For details, see :ref:`define_meshes`. You can instead also just specify ``nElements`` to directly set the number of instances to be computed.
 
+If no mesh is specified at all, the standard is ``"nElements": 0``. This corresponds to 1 node, i.e. one instance of the CellML problem. There will be the warning about the missing *nElements* though.
+
 stimulationLogFilename
 ------------------------------------------------
 Default: "out/stimulation.log"

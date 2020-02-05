@@ -58,6 +58,12 @@ initializeRhsRoutine()
       optimizationType_ = "vc";
     }
 
+    // for vc optimization, the exponential function can be approximated which is faster than the exact exp function
+    if (optimizationType_ == "vc")
+    {
+      approximateExponentialFunction_ = this->specificSettings_.getOptionBool("approximateExponentialFunction", true);
+    }
+
     // compile source file to a library
     std::stringstream s;
     s << "lib/"+StringUtility::extractBasename(this->cellmlSourceCodeGenerator_.sourceFilename()) << "_" << optimizationType_
@@ -67,7 +73,7 @@ initializeRhsRoutine()
     int rankNoWorldCommunicator = DihuContext::ownRankNoCommWorld();
     s.str("");
     s << "src/"+StringUtility::extractBasename(this->cellmlSourceCodeGenerator_.sourceFilename()) << "_" << optimizationType_
-      << "_" << this->nInstances_ << "." << rankNoWorldCommunicator << ".c";
+      << "_" << this->nInstances_ << "." << rankNoWorldCommunicator << this->cellmlSourceCodeGenerator_.sourceFileSuffix();
     sourceToCompileFilename_ = s.str();
 
     // create path of library filename if it does not exist
@@ -227,7 +233,7 @@ createLibraryOnOneRank(std::string libraryFilename, const std::vector<int> &nIns
     LOG(DEBUG) << "compile on this rank";
 
     // create source file
-    this->cellmlSourceCodeGenerator_.generateSourceFile(sourceToCompileFilename_, optimizationType_);
+    this->cellmlSourceCodeGenerator_.generateSourceFile(sourceToCompileFilename_, optimizationType_, approximateExponentialFunction_);
 
     // create library file
     if (libraryFilename.find("/") != std::string::npos)
@@ -244,29 +250,26 @@ createLibraryOnOneRank(std::string libraryFilename, const std::vector<int> &nIns
     std::stringstream compileCommand;
 
     // load compiler flags
-    std::string compilerFlags = this->specificSettings_.getOptionString("compilerFlags", "-fPIC -finstrument-functions -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared ");
+    std::string compilerFlags = this->specificSettings_.getOptionString("compilerFlags", "-O3 -fPIC -finstrument-functions -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared ");
 
+#ifdef NDEBUG
+    if (compilerFlags.find("-O3") == std::string::npos)
+    {
+      LOG(WARNING) << "\"compilerFlags\" does not contain \"-O3\", this may be slow.";
+    }
+#endif
     // for GPU: -ta=host,tesla,time
 
     // compose compile command
     std::stringstream s;
-#ifdef NDEBUG
-    // release mode
-    // other possible options
-    // -fopt-info-vec-missed=vectorizer_missed.log
-    // -fopt-info-vec-all=vectorizer_all.log
-    s << C_COMPILER_COMMAND << " -O3 " << compilerFlags << " ";
-#else
-    // debug mode
-    s << C_COMPILER_COMMAND << " -O0 -ggdb " << compilerFlags << " ";
-#endif
-    s << this->cellmlSourceCodeGenerator_.additionalCompileFlags() << " ";
+    s << this->cellmlSourceCodeGenerator_.compilerCommand() << " " << sourceToCompileFilename_ << " "
+      << compilerFlags << " " << this->cellmlSourceCodeGenerator_.additionalCompileFlags() << " ";
 
     std::string compileCommandOptions = s.str();
 
     // compile library to filename with "*.rankNoWorldCommunicator", then wait (different wait times for ranks), then rename file to without "*.rankNoWorldCommunicator"
     compileCommand << compileCommandOptions
-      << " -o " << libraryFilename << "." << rankNoWorldCommunicator << " " << sourceToCompileFilename_
+      << " -o " << libraryFilename << "." << rankNoWorldCommunicator << " "
       //<< " && sleep " << int((rankNoWorldCommunicator%100)/10+1)
       << " && mv " << libraryFilename << "." << rankNoWorldCommunicator << " " << libraryFilename;
 

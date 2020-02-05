@@ -10,8 +10,8 @@ petsc_text = r'''
 #include <petsc.h>
 int main(int argc, char* argv[]) {
    PetscInitialize(&argc, &argv, PETSC_NULL, PETSC_NULL);
-   printf("%d\n", MPI_VERSION);
-   printf("%d\n", MPI_SUBVERSION);
+   printf("MPI version %d.%d\n", MPI_VERSION, MPI_SUBVERSION);
+   printf("Petsc version %d.%d.%d\n", PETSC_VERSION_MAJOR,PETSC_VERSION_MINOR,PETSC_VERSION_SUBMINOR);
    PetscFinalize();
    return EXIT_SUCCESS;
 }
@@ -49,6 +49,8 @@ class PETSc(Package):
     defaults = {
       #'download_url': 'http://ftp.mcs.anl.gov/pub/petsc/release-snapshots/petsc-lite-3.7.6.tar.gz',
       'download_url': 'http://ftp.mcs.anl.gov/pub/petsc/release-snapshots/petsc-lite-3.12.3.tar.gz',
+      #'download_url': 'http://ftp.mcs.anl.gov/pub/petsc/release-snapshots/petsc-3.9.4.tar.gz',
+      #'download_url': 'http://ftp.mcs.anl.gov/pub/petsc/release-snapshots/petsc-3.8.4.tar.gz',
     }
     defaults.update(kwargs)
     super(PETSc, self).__init__(**defaults)
@@ -76,6 +78,8 @@ class PETSc(Package):
   
     env = ctx.env
     
+    # --with-cc='+env["CC"]+'\
+    
     # debugging build handler 
     if self.have_option(env, "PETSC_DEBUG"):
       # debug build with MUMPS
@@ -85,7 +89,7 @@ class PETSc(Package):
         #'PATH=${PATH}:${DEPENDENCIES_DIR}/bison/install/bin \
         './configure --prefix=${PREFIX} --with-debugging=yes --with-shared-libraries=1 \
         --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
-        --with-cc='+env["CC"]+'\
+          ---with-cc='+env["mpicc"]+'\
         --download-mumps --download-scalapack --download-parmetis --download-metis | tee out.txt',
         '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt',
         '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt)',
@@ -101,7 +105,7 @@ class PETSc(Package):
           #'PATH=${PATH}:${DEPENDENCIES_DIR}/bison/install/bin \
           './configure --prefix=${PREFIX} --with-debugging=no --with-shared-libraries=1 \
           --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
-          ---with-cc='+env["CC"]+'\
+          ---with-cc='+env["mpicc"]+'\
           --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch --download-sundials --download-hypre \
           COPTFLAGS=-O3\
           CXXOPTFLAGS=-O3\
@@ -113,7 +117,7 @@ class PETSc(Package):
          'ln -fs ${PREFIX}/lib/libparmetis.so ${PREFIX}/lib/parmetis.so'    # create parmetis.so link for chaste
       ])
     
-    ctx.Message('----------------------------------------------------\nNote that PETSc has been updated to version 3.12.3. \nTo update, run \'scons PETSC_REDOWNLOAD=True\'.\n----------------------------------------------------\n')
+    ctx.Message('----------------------------------------------------\nNote that PETSc has been updated to version 3.9.4. \nTo update, run \'scons PETSC_REDOWNLOAD=True\'.\n(This message is independent of the currently installed version.)\n----------------------------------------------------\n')
     ctx.Message('Checking for PETSc ...         ')
     self.check_options(env)
 
@@ -135,7 +139,7 @@ class PETSc(Package):
           'mkdir -p ${PREFIX}',
           './configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=yes \
             --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
-            --with-cc='+env["CC"]+' | tee out.txt',
+            --with-cc='+env["mpicc"]+' | tee out.txt',
           '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt',
           '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt)',
         ])
@@ -145,7 +149,7 @@ class PETSc(Package):
           'mkdir -p ${PREFIX}',
           './configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=no \
           --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
-          --with-cc='+env["CC"]+'\
+          --with-cc='+env["mpicc"]+'\
           COPTFLAGS=-O3\
           CXXOPTFLAGS=-O3\
           FOPTFLAGS=-O3 | tee out.txt',

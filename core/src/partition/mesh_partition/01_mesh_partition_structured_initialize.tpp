@@ -165,8 +165,11 @@ createDmElements()
     if (MeshType::dim() == 1)
     {
       // create 1d decomposition
-      ierr = DMDACreate1d(mpiCommunicator(), DM_BOUNDARY_NONE, nElementsGlobal_[0], nDofsPerElement, ghostLayerWidth,
+      ierr = DMDACreate1d(mpiCommunicator(), DM_BOUNDARY_NONE, (PetscInt)nElementsGlobal_[0], nDofsPerElement, ghostLayerWidth,
                           NULL, dmElements_.get()); CHKERRV(ierr);
+
+      ierr = DMSetFromOptions(*dmElements_); CHKERRV(ierr);
+      ierr = DMSetUp(*dmElements_); CHKERRV(ierr);
 
       // get global coordinates of local partition
       PetscInt x, m;
@@ -182,6 +185,11 @@ createDmElements()
       // get local sizes on the ranks
       const PetscInt *lxData;
       ierr = DMDAGetOwnershipRanges(*dmElements_, &lxData, NULL, NULL); CHKERRV(ierr);
+
+      if (lxData == NULL)
+      {
+        LOG(FATAL) << "Petsc does not set ownership in DMDAGetOwnershipRanges. This might be an error in Petsc!";
+      }
 
       VLOG(1) << "nRanks_[0] = " << nRanks_[0];
       VLOG(1) << "lxData: " << intptr_t(lxData);
@@ -199,6 +207,9 @@ createDmElements()
       ierr = DMDACreate2d(mpiCommunicator(), DM_BOUNDARY_NONE, DM_BOUNDARY_NONE, DMDA_STENCIL_BOX,
                           nElementsGlobal_[0], nElementsGlobal_[1], PETSC_DECIDE, PETSC_DECIDE,
                           nDofsPerElement, ghostLayerWidth, NULL, NULL, dmElements_.get()); CHKERRV(ierr);
+
+      ierr = DMSetFromOptions(*dmElements_); CHKERRV(ierr);
+      ierr = DMSetUp(*dmElements_); CHKERRV(ierr);
 
       // get global coordinates of local partition
       PetscInt x, y, m, n;
@@ -218,6 +229,12 @@ createDmElements()
       const PetscInt *lxData;
       const PetscInt *lyData;
       ierr = DMDAGetOwnershipRanges(*dmElements_, &lxData, &lyData, NULL); CHKERRV(ierr);
+
+      if (lxData == NULL || lyData == NULL)
+      {
+        LOG(FATAL) << "Petsc does not set ownership in DMDAGetOwnershipRanges. This might be an error in Petsc!";
+      }
+
       localSizesOnPartitions_[0].assign(lxData, lxData + nRanks_[0]);
       localSizesOnPartitions_[1].assign(lyData, lyData + nRanks_[1]);
 
@@ -237,6 +254,9 @@ createDmElements()
                             nElementsGlobal_[0], nElementsGlobal_[1], nElementsGlobal_[2],
                             PETSC_DECIDE, PETSC_DECIDE, PETSC_DECIDE,
                             nDofsPerElement, ghostLayerWidth, NULL, NULL, NULL, dmElements_.get()); CHKERRV(ierr);
+
+        ierr = DMSetFromOptions(*dmElements_); CHKERRV(ierr);
+        ierr = DMSetUp(*dmElements_); CHKERRV(ierr);
 
         // get global coordinates of local partition
         PetscInt x, y, z, m, n, p;
@@ -260,6 +280,12 @@ createDmElements()
         const PetscInt *lyData;
         const PetscInt *lzData;
         ierr = DMDAGetOwnershipRanges(*dmElements_, &lxData, &lyData, &lzData); CHKERRV(ierr);
+
+        if (lxData == NULL || lyData == NULL || lzData == NULL)
+        {
+          LOG(FATAL) << "Petsc does not set ownership in DMDAGetOwnershipRanges. This might be an error in Petsc!";
+        }
+
         localSizesOnPartitions_[0].assign(lxData, lxData + nRanks_[0]);
         localSizesOnPartitions_[1].assign(lyData, lyData + nRanks_[1]);
         localSizesOnPartitions_[2].assign(lzData, lzData + nRanks_[2]);
@@ -283,6 +309,9 @@ createDmElements()
           ierr = DMDACreate2d(mpiCommunicator(), DM_BOUNDARY_NONE, DM_BOUNDARY_NONE, DMDA_STENCIL_BOX,
                               nElementsGlobal_[1], nElementsGlobal_[2], PETSC_DECIDE, PETSC_DECIDE,
                               nDofsPerElement, ghostLayerWidth, NULL, NULL, dmElements_.get()); CHKERRV(ierr);
+
+          ierr = DMSetFromOptions(*dmElements_); CHKERRV(ierr);
+          ierr = DMSetUp(*dmElements_); CHKERRV(ierr);
 
           // get global coordinates of local partition
           PetscInt x, y, m, n;
@@ -317,6 +346,9 @@ createDmElements()
                               nElementsGlobal_[0], nElementsGlobal_[2], PETSC_DECIDE, PETSC_DECIDE,
                               nDofsPerElement, ghostLayerWidth, NULL, NULL, dmElements_.get()); CHKERRV(ierr);
 
+          ierr = DMSetFromOptions(*dmElements_); CHKERRV(ierr);
+          ierr = DMSetUp(*dmElements_); CHKERRV(ierr);
+
           // get global coordinates of local partition
           PetscInt x, y, m, n;
           ierr = DMDAGetCorners(*dmElements_, &x, &y, NULL, &m, &n, NULL); CHKERRV(ierr);
@@ -349,6 +381,9 @@ createDmElements()
           ierr = DMDACreate2d(mpiCommunicator(), DM_BOUNDARY_NONE, DM_BOUNDARY_NONE, DMDA_STENCIL_BOX,
                               nElementsGlobal_[0], nElementsGlobal_[1], PETSC_DECIDE, PETSC_DECIDE,
                               nDofsPerElement, ghostLayerWidth, NULL, NULL, dmElements_.get()); CHKERRV(ierr);
+
+          ierr = DMSetFromOptions(*dmElements_); CHKERRV(ierr);
+          ierr = DMSetUp(*dmElements_); CHKERRV(ierr);
 
           // get global coordinates of local partition
           PetscInt x, y, m, n;

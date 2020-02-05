@@ -14,7 +14,7 @@
 #include "opencor.h"
 #endif
 
-CellMLSourceCodeGenerator::CellMLSourceCodeGenerator()
+CellMLSourceCodeGenerator::CellMLSourceCodeGenerator() : sourceFileSuffix_(".c")
 {
 
 }
@@ -45,8 +45,6 @@ void CellMLSourceCodeGenerator::initialize(
 
   // get initial values from source file and parse source code
   this->parseSourceCodeFile();   // this sets nIntermediatesInSource_
-
-
 
   // set initial values of parameters
   VLOG(1) << ", parameters_.size(): " << parameters_.size();
@@ -155,15 +153,25 @@ std::string CellMLSourceCodeGenerator::additionalCompileFlags() const
   return additionalCompileFlags_;
 }
 
-void CellMLSourceCodeGenerator::generateSourceFile(std::string outputFilename, std::string optimizationType)
+std::string CellMLSourceCodeGenerator::sourceFileSuffix() const
+{
+  return sourceFileSuffix_;
+}
+
+std::string CellMLSourceCodeGenerator::compilerCommand() const
+{
+  return compilerCommand_;
+}
+
+void CellMLSourceCodeGenerator::generateSourceFile(std::string outputFilename, std::string optimizationType, bool approximateExponentialFunction)
 {
   if (optimizationType == "vc")
   {
-    generateSourceFileExplicitVectorization(outputFilename);
+    generateSourceFileVc(outputFilename, approximateExponentialFunction);
   }
   else if (optimizationType == "simd")
   {
-    generateSourceFileSimdAutovectorization(outputFilename);
+    generateSourceFileSimd(outputFilename);
   }
   else if (optimizationType == "openmp")
   {

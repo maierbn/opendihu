@@ -10,8 +10,8 @@ petsc_text = r'''
 #include <petsc.h>
 int main(int argc, char* argv[]) {
    PetscInitialize(&argc, &argv, PETSC_NULL, PETSC_NULL);
-   printf("%d\n", MPI_VERSION);
-   printf("%d\n", MPI_SUBVERSION);
+   printf("MPI version %d.%d\n", MPI_VERSION, MPI_SUBVERSION);
+   printf("Petsc version %d.%d.%d\n", PETSC_VERSION_MAJOR,PETSC_VERSION_MINOR,PETSC_VERSION_SUBMINOR);
    PetscFinalize();
    return EXIT_SUCCESS;
 }
@@ -76,6 +76,8 @@ class PETSc(Package):
   
     env = ctx.env
     
+    # --with-cc='+env["CC"]+'\
+    
     # debugging build handler 
     if self.have_option(env, "PETSC_DEBUG"):
       # debug build with MUMPS
@@ -85,7 +87,7 @@ class PETSc(Package):
         #'PATH=${PATH}:${DEPENDENCIES_DIR}/bison/install/bin \
         './configure --prefix=${PREFIX} --with-debugging=yes --with-shared-libraries=1 \
         --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
-        --with-cc='+env["CC"]+'\
+          ---with-cc='+env["mpicc"]+'\
         --download-mumps --download-scalapack --download-parmetis --download-metis | tee out.txt',
         '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt',
         '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt)',
@@ -101,7 +103,7 @@ class PETSc(Package):
           #'PATH=${PATH}:${DEPENDENCIES_DIR}/bison/install/bin \
           './configure --prefix=${PREFIX} --with-debugging=no --with-shared-libraries=1 \
           --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
-          ---with-cc='+env["CC"]+'\
+          ---with-cc='+env["mpicc"]+'\
           --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch --download-sundials --download-hypre \
           COPTFLAGS=-O3\
           CXXOPTFLAGS=-O3\
@@ -135,7 +137,7 @@ class PETSc(Package):
           'mkdir -p ${PREFIX}',
           './configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=yes \
             --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
-            --with-cc='+env["CC"]+' | tee out.txt',
+            --with-cc='+env["mpicc"]+' | tee out.txt',
           '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt',
           '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt)',
         ])
@@ -145,7 +147,7 @@ class PETSc(Package):
           'mkdir -p ${PREFIX}',
           './configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=no \
           --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
-          --with-cc='+env["CC"]+'\
+          --with-cc='+env["mpicc"]+'\
           COPTFLAGS=-O3\
           CXXOPTFLAGS=-O3\
           FOPTFLAGS=-O3 | tee out.txt',

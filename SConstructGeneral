@@ -87,15 +87,10 @@ vars.Add(BoolVariable('no_vectorization', 'Turn off SEE and AVX commands.', Fals
 vars.Add(BoolVariable('USE_CRAY_PAT', 'Compile with craypat regions.', False))
 vars.Add(BoolVariable('USE_HPL', 'Compile with -hpl option.', False))
 vars.Add(BoolVariable('USE_MEGAMOL', 'Use additional linker flags to link to the megamol source file.', False))
-if socket.gethostname() != 'cmcs09':
-  vars.Add('mpiCC', help='The mpic++ compiler wrapper', default='mpic++')
-  vars.Add('cc', help='The c compiler', default='gcc')
-  vars.Add('CC', help='The c++ compiler', default='g++')
-else:
-  vars.Add('mpicc', help='The mpicc compiler wrapper', default='/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/bin/mpicc')
-  vars.Add('mpiCC', help='The mpic++ compiler wrapper', default='/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/bin/mpic++')
-  vars.Add('cc', help='The c compiler', default='pgcc')
-  vars.Add('CC', help='The c++ compiler', default='pgc++')
+vars.Add('mpicc', help='The mpicc compiler wrapper', default='mpicc')
+vars.Add('mpiCC', help='The mpic++ compiler wrapper', default='mpic++')
+vars.Add('cc', help='The c compiler', default='gcc')
+vars.Add('CC', help='The c++ compiler', default='g++')
 vars.Add('cmake', help='The cmake executable', default='cmake')
     
 # Add options from any packages we want to use.
@@ -238,10 +233,7 @@ else:
   variant_dir = os.path.join(path_where_to_call_sconscript,'build_release')         # output folder for build
   env.Append(LIBPATH = [os.path.join(opendihu_home, 'core/build_release')])   # add release version of opendihu library
   env.Prepend(LIBS = ['opendihu'])
-  if socket.gethostname() == 'cmcs09':
-    env.MergeFlags('-DNDEBUG')
-  else:
-    env.MergeFlags('-DELPP_DISABLE_DEBUG_LOGS -DELPP_DISABLE_VERBOSE_LOGS -DELPP_DISABLE_TRACE_LOGS -DELPP_DISABLE_LOGGING_FLAGS_FROM_ARG -DNDEBUG')
+  env.MergeFlags('-DELPP_DISABLE_DEBUG_LOGS -DELPP_DISABLE_VERBOSE_LOGS -DELPP_DISABLE_TRACE_LOGS -DELPP_DISABLE_LOGGING_FLAGS_FROM_ARG -DNDEBUG')
   if os.environ.get("PE_ENV") == "CRAY":
     env.MergeFlags('-O3')   # fastest with cray (same performance as -02)
   elif env["CC"] == "pgcc":
@@ -286,10 +278,7 @@ env.MergeFlags("-lpthread -ldl -lutil -lm")
 # add defines that are used in the code
 env.Append(CPPDEFINES = {'-DOPENDIHU_HOME': '\\"'+str(opendihu_home)+'\\"'})   # add define of the directory where this file is located
 env.Append(CPPDEFINES = {'-DC_COMPILER_COMMAND': '\\"'+env["CC"]+'\\"'})   # add compile command, e.g. gcc
-env.Append(CPPDEFINES = {'-DCPP_COMPILER_COMMAND': '\\"'+env["CXX"]+'\\"'})   # add compile command, e.g. g++
-if socket.gethostname() == 'cmcs09':
-  env.Append(CPPDEFINES = {'-DMPI_C_COMPILER_COMMAND': '\\"/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/bin/mpicc\\"'})
-  env.Append(CPPDEFINES = {'-DMPI_CPP_COMPILER_COMMAND': '\\"/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/bin/mpic++\\"'})  
+env.Append(CPPDEFINES = {'-DCXX_COMPILER_COMMAND': '\\"'+env["CXX"]+'\\"'})   # add compile command, e.g. g++
 if os.path.isfile("/.dockerenv"):
   env.Append(CPPDEFINES = '-DINSIDE_DOCKER_CONTAINER')
 

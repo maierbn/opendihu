@@ -18,6 +18,7 @@
 # set compiler to use
 cc = "gcc"   # c compiler
 CC = "g++"   # c++ compiler
+mpiCC = "mpic++"
 
 cmake="cmake"
 
@@ -26,8 +27,6 @@ LAPACK_DOWNLOAD = True
 
 # PETSc, this downloads and installs MUMPS (direct solver package) and its dependencies PT-Scotch, SCAlapack, ParMETIS, METIS
 PETSC_DOWNLOAD = True
-PETSC_REDOWNLOAD = False
-PETSC_REBUILD = False
 
 # Python 3.6
 PYTHON_DOWNLOAD = True    # This downloads and uses Python, use it to be independent of an eventual system python

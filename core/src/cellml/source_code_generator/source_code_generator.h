@@ -14,5 +14,6 @@ public:
   //! generate the source file according to optimizationType
   //! Possible values are: simd vc openmp
   //! @param approximateExponentialFunction If the exp()-Function should be approximated by the n=1024th series term
-  void generateSourceFile(std::string outputFilename, std::string optimizationType, bool approximateExponentialFunction);
+  void generateSourceFile(std::string outputFilename, std::string optimizationType,
+                          bool approximateExponentialFunction, int maximumNumberOfThreads);
 };

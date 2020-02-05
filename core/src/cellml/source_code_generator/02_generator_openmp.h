@@ -13,7 +13,8 @@ public:
 protected:
 
   //! write the source file with openmp support
-  void generateSourceFileOpenMP(std::string outputFilename);
+  //! @param maximumNumberOfThreads how many threads there should be at maximum
+  void generateSourceFileOpenMP(std::string outputFilename, int maximumNumberOfThreads);
 
 
 };

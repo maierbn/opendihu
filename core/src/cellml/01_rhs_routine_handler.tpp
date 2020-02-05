@@ -63,6 +63,11 @@ initializeRhsRoutine()
     {
       approximateExponentialFunction_ = this->specificSettings_.getOptionBool("approximateExponentialFunction", true);
     }
+    else if (optimizationType_ == "openmp")
+    {
+      // default value 0 means no restriction
+      maximumNumberOfThreads_ = this->specificSettings_.getOptionInt("maximumNumberOfThreads", 0, PythonUtility::NonNegative);
+    }
 
     // compile source file to a library
     std::stringstream s;
@@ -247,7 +252,8 @@ createLibraryOnOneRank(std::string libraryFilename, const std::vector<int> &nIns
     LOG(DEBUG) << "compile on this rank";
 
     // create source file
-    this->cellmlSourceCodeGenerator_.generateSourceFile(sourceToCompileFilename_, optimizationType_, approximateExponentialFunction_);
+    this->cellmlSourceCodeGenerator_.generateSourceFile(sourceToCompileFilename_, optimizationType_,
+                                                        approximateExponentialFunction_, maximumNumberOfThreads_);
 
     // create library file
     if (libraryFilename.find("/") != std::string::npos)

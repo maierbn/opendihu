@@ -138,6 +138,7 @@ config = {
     "CellML" : {
       "modelFilename": "../input/hodgkin_huxley_1952.c",
       "optimizationType": "openmp",
+      "maximumNumberOfThreads": 2,
       "setParametersCallInterval": 1e3,
       "useGivenLibrary": False,
       #"statesInitialValues": [-75,  .05, 0.6, 0.325],

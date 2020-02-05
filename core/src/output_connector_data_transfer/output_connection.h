@@ -5,7 +5,7 @@
 #include "control/python_config.h"
 #include "data_management/output_connector_data.h"
 
-/** This specifies the connections of data slots between to terms, Term 1 and Term 2.
+/** This specifies the connections of data slots between two terms, Term 1 and Term 2.
  *  Each term is assumed to have data of type Data::OutputConnectorData which has the two vectors variable1 and variable2.
  *  Each variable vector can hold multiple components of field variables of the same type (number of components of the field variable).
  *  One such component is referred to as "slot". In the settings, there is the specification which slots to map to which slots by the fields

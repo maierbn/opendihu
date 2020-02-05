@@ -37,10 +37,11 @@ scenario_name = "ramp"
 # Fixed units in mechanics system
 # 1 cm = 1e-2 m
 # 1 ms = 1e-3 s
-# 1 kPa = 1e3 kg/(m*s^2)
-# (kg=Pa*m*s^2) => 1e3 Pa * 1e-2 m * (1e-3)^2 s^2 = 1e-5 Pa*m*s^2 = 1e-5 kg
-# (N=kg*m*s^-2) => 1e-5 kg * 1e-2 m * (1e-3)^-2 s^-2 = 1e-1 N equals 10 g
-# (kg/m^3) => 1e-5 kg * (1e-2)^-3 m^-3 = 10 kg/m^3
+# 1 N
+# 1 N/cm^2 = (kg*m*s^-2) / (1e-2 m)^2 = 1e4 kg*m^-1*s^-2 = 10 kPa
+# (kg = N*s^2*m^-1) => N*ms^2*cm^-1 = N*(1e-3 s)^2 * (1e-2 m)^-1 = 1e-4 N*s^2*m^-1 = 1e-4 kg
+# (kg/m^3) => 1 * 1e-4 kg * (1e-2 m)^-3 = 1e2 kg/m^3
+# (m/s^2) => 1 cm/ms^2 = 1e-2 m * (1e-3 s)^-2 = 1e4 m*s^-2
 
 
 # material parameters
@@ -55,25 +56,26 @@ sigma_e_xf = 3.35           # [mS/cm] conductivity in extracellular space, cross
 Conductivity = sigma_f      # [mS/cm] sigma, conductivity
 Am = 500.0                  # [cm^-1] surface area to volume ratio
 Cm = 0.58                   # [uF/cm^2] membrane capacitance, (1 = fast twitch, 0.58 = slow twitch)
-
+# diffusion prefactor = Conductivity/(Am*Cm)
 
 # quantities in mechanics unit system
-rho = 1e2                   # [1e3 kg/m^3 = 1e2 * 10 kg/m^3] density of the muscle (density of water)
+rho = 10                    # [1e-4 kg/cm^3] density of the muscle (density of water)
 
-#c1 = 0.0                    # first Mooney-Rivlin parameter of c1*(Ibar1 - 3) + c2*(Ibar2 - 3)
-c1 = 6.352e-10              # [6.352e-10 kPa]
-#c2 = 1.0                    # second Mooney-Rivlin parameter of c1*(Ibar1 - 3) + c2*(Ibar2 - 3)
-c2 = 3.627                  # [3.627 kPa]
-b = 2.756e-5                # [2.756e-5 kPa] anisotropy parameter
-d = 43.373                  # anisotropy parameter
+# Mooney-Rivlin parameters [c1,c2,b,d] of c1*(Ibar1 - 3) + c2*(Ibar2 - 3) + b/d (λ - 1) - b*ln(λ)
+# Heidlauf13: [6.352e-10 kPa, 3.627 kPa, 2.756e-5 kPa, 43.373] = [6.352e-11 N/cm^2, 3.627e-1 N/cm^2, 2.756e-6 N/cm^2, 43.373], pmax = 73 kPa = 7.3 N/cm^2
+# Heidlauf16: [3.176e-10 N/cm^2, 1.813 N/cm^2, 1.075e-2 N/cm^2, 9.1733], pmax = 7.3 N/cm^2
+
+c1 = 3.176e-10              # [N/cm^2]
+c2 = 1.813                  # [N/cm^2]
+b  = 1.075e-2               # [N/cm^2] anisotropy parameter
+d  = 9.1733                 # [-] anisotropy parameter
 material_parameters = [c1, c2, b, d]   # material parameters
-pmax = 73                   # [73 kPa] maximum isometric active stress
+pmax = 7.3                  # [N/cm^2] maximum isometric active stress
 
-#constant_body_force = (0,0,-9.81e-4)   # [10 nN/10 pg = 1e-10 N / 1e-14 kg = 1e4 N/kg], gravity constant for the body force
-constant_body_force = (0,0,0)
-bottom_traction = [0.0,0.0,-1e2]        # [10 N = 1e2 * 1e-1 N]
-
-# diffusion prefactor = Conductivity/(Am*Cm)
+constant_body_force = (0,0,-9.81e-4)   # [cm/ms^2], gravity constant for the body force
+#constant_body_force = (0,0,0)
+bottom_traction = [0.0,0.0,-1e-1]        # [1 N]
+#bottom_traction = [0.0,0.0,0.0]        # [1 N]
 
 # timing and activation parameters
 # -----------------
@@ -123,6 +125,7 @@ fiber_file = "../../input/2x2fibers.bin"
 fiber_file = "../../input/7x7fibers.bin"
 firing_times_file = "../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
 fiber_distribution_file = "../../input/MU_fibre_distribution_10MUs.txt"
+cellml_file = "../../input/new_slow_TK_2014_12_08.cellml"
 
 # functions, here, Am, Cm and Conductivity are constant for all fibers and MU's
 def get_am(fiber_no, mu_no):

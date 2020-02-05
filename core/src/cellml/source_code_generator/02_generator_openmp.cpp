@@ -11,7 +11,7 @@
 #include "easylogging++.h"
 
 void CellmlSourceCodeGeneratorOpenMp::
-generateSourceFileOpenMP(std::string outputFilename)
+generateSourceFileOpenMP(std::string outputFilename, int maximumNumberOfThreads)
 {
   std::stringstream sourceCode;
   sourceCode << "#include <math.h>" << std::endl
@@ -25,6 +25,11 @@ generateSourceFileOpenMP(std::string outputFilename)
     << " * The \"optimizationType\" is \"openmp\". (Other options are \"vc\" and \"simd\".) */" << std::endl
     << "void computeCellMLRightHandSide("
     << "void *context, double t, double *states, double *rates, double *intermediates, double *parameters)" << std::endl << "{" << std::endl;
+
+  if (maximumNumberOfThreads > 0)
+  {
+    sourceCode << "  omp_set_num_threads(" << maximumNumberOfThreads << ");\n";
+  }
 
   sourceCode << "  double VOI = t;   /* current simulation time */" << std::endl;
   sourceCode << std::endl << "  /* define constants */" << std::endl

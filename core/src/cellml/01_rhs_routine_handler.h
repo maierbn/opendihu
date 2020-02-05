@@ -54,7 +54,8 @@ protected:
 
   std::string sourceToCompileFilename_;   //< filename of the processed source file that will be used to compile the library
   std::string optimizationType_;          //< type of generated file, e.g. "simd", "gpu", "openmp"
-  bool approximateExponentialFunction_;   //< if when using "vc" as optimizationType_, the exp() function should be approximated, this is faster
+  bool approximateExponentialFunction_;   //< when using "vc" as optimizationType_, the exp() function should be approximated, this is faster
+  int maximumNumberOfThreads_;            //< when using "openmp" as optimizationType_, the maximum number of threads to use, 0 means no restriction
 
   void (*rhsRoutine_)(void *context, double t, double *states, double *rates, double *algebraics, double *parameters);  ///< function pointer to the rhs routine that can compute several instances of the problem in parallel. Data is assumed to contain values for a state contiguously, e.g. (state[1], state[1], state[1], state[2], state[2], state[2], ...). The first parameter is a this pointer.
 

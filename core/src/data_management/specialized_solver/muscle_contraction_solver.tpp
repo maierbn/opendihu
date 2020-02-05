@@ -35,7 +35,7 @@ initialize()
 
   // add all needed field variables to be transferred
 
-  // add component 0 of fieldvariableA_
+  // add λ, λdot and γ as output connectors
   outputConnectorData_->addFieldVariable(this->lambda_);
   outputConnectorData_->addFieldVariable(this->lambdaDot_);
   outputConnectorData_->addFieldVariable(this->gamma_);
@@ -52,9 +52,9 @@ createPetscObjects()
 
   // Here, the actual field variables will be created.
   // The string is the name of the field variable. It will also be used in the VTK output files.
+  this->gamma_     = this->functionSpace_->template createFieldVariable<1>("γ");
   this->lambda_    = this->functionSpace_->template createFieldVariable<1>("λ");
   this->lambdaDot_ = this->functionSpace_->template createFieldVariable<1>("λdot");
-  this->gamma_     = this->functionSpace_->template createFieldVariable<1>("γ");
 }
 
 template<typename FunctionSpaceType>

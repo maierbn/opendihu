@@ -147,7 +147,7 @@ elif "Aliev_Panfilov_Razumova_2016_08_22" in variables.cellml_file :   # this is
   variables.parameters_initial_values = [0, 1, 0]      # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/velo = \dot{λ}
   variables.nodal_stimulation_current = 40. 
   variables.output_state_index = 0                     # use state 0, Aliev_Panfilov/V_m = Vm
-  variables.output_intermediate_index = 0              # no intermediates are used
+  variables.output_intermediate_index = []             # no intermediates are used
   
 elif "Aliev_Panfilov_Razumova_Titin" in variables.cellml_file:   # this is (4, "Titin") in OpenCMISS
   # parameters: I_stim, fiber stretch λ, fiber contraction velocity \dot{λ}

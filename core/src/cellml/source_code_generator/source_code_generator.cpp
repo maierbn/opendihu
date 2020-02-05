@@ -2,7 +2,7 @@
 
 #include <Python.h>  // has to be the first included header
 
-void CellmlSourceCodeGenerator::generateSourceFile(std::string outputFilename, std::string optimizationType, bool approximateExponentialFunction)
+void CellmlSourceCodeGenerator::generateSourceFile(std::string outputFilename, std::string optimizationType, bool approximateExponentialFunction, int maximumNumberOfThreads)
 {
   if (optimizationType == "vc")
   {
@@ -14,6 +14,6 @@ void CellmlSourceCodeGenerator::generateSourceFile(std::string outputFilename, s
   }
   else if (optimizationType == "openmp")
   {
-    generateSourceFileOpenMP(outputFilename);
+    generateSourceFileOpenMP(outputFilename, maximumNumberOfThreads);
   }
 }

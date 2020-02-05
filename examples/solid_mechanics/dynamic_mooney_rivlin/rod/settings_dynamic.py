@@ -209,6 +209,7 @@ config = {
     "snesMaxFunctionEvaluations": 1e8,  # maximum number of function iterations
     "snesMaxIterations": 50,            # maximum number of iterations in the nonlinear solver
     "snesRelativeTolerance": 1e-10,     # tolerance of the nonlinear solver
+    "snesAbsoluteTolerance": 1e-10,     # tolerance of the nonlinear solver
     
     #"dumpFilename": "out/r{}/m".format(sys.argv[-1]),   # dump system matrix and right hand side after every solve
     "dumpFilename": "",         # dump disabled

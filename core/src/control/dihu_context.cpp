@@ -207,10 +207,50 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
     }
 
     initializePython(argc, argv, explicitConfigFileGiven);
+
     // load python script
     if (settingsFromFile)
     {
-      loadPythonScriptFromFile(Control::settingsFileName);
+      if (!loadPythonScriptFromFile(Control::settingsFileName))
+      {
+        // if a settings file was given but could not be loaded
+        if (explicitConfigFileGiven)
+        {
+          LOG(FATAL) << "Could not load settings file \"" << Control::settingsFileName << "\".";
+        }
+        else
+        {
+          // look for settings.py files
+          std::stringstream commandSuggestions;
+          int ret = system("ls ../settings*.py > a");
+          if (ret == 0)
+          {
+            std::ifstream file("a", std::ios::in|std::ios::binary);
+            if (file.is_open())
+            {
+              while (!file.eof())
+              {
+                std::string line;
+                std::getline(file, line);
+                if (file.eof())
+                  break;
+
+                commandSuggestions << "  " << argv[0] << " " << line << std::endl;
+              }
+            }
+          }
+          if (commandSuggestions.str().empty())
+          {
+            commandSuggestions << "  " << argv[0] << " ../settings.py";
+          }
+
+          // if no settings file was given (default file "settings.py" was tried but not successful)
+          LOG(FATAL) << "No settings file was specified!" << std::endl
+            << "Usually you run the executable from within a \"build_release\" or \"build_debug\" directory "
+            << "and the settings file is located one directory higher. Try a command like the following:" << std::endl << std::endl
+            << commandSuggestions.str();
+        }
+      }
     }
 
     // start megamol console

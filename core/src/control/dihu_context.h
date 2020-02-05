@@ -95,7 +95,7 @@ public:
 
 private:
   //! read in file and execute python script and store global variables
-  void loadPythonScriptFromFile(std::string filename);
+  bool loadPythonScriptFromFile(std::string filename);
 
   //! execute python script and store global variables
   void loadPythonScript(std::string text);

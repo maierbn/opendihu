@@ -136,14 +136,15 @@ void DihuContext::initializePython(int argc, char *argv[], bool explicitConfigFi
 
 }
 
-void DihuContext::loadPythonScriptFromFile(std::string filename)
+bool DihuContext::loadPythonScriptFromFile(std::string filename)
 {
   // initialize python interpreter
 
   std::ifstream file(filename);
   if (!file.is_open())
   {
-    LOG(FATAL) << "Could not open settings file \"" <<filename << "\".";
+    LOG(WARNING) << "Could not open settings file \"" <<filename << "\".";
+    return false;
   }
   else
   {
@@ -196,6 +197,7 @@ void DihuContext::loadPythonScriptFromFile(std::string filename)
 
     loadPythonScript(fileContents);
   }
+  return true;
 }
 
 void DihuContext::loadPythonScript(std::string text)

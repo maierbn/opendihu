@@ -250,7 +250,7 @@ createLibraryOnOneRank(std::string libraryFilename, const std::vector<int> &nIns
     std::stringstream compileCommand;
 
     // load compiler flags
-    std::string compilerFlags = this->specificSettings_.getOptionString("compilerFlags", "-O3 -fPIC -finstrument-functions -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared ");
+    std::string compilerFlags = this->specificSettings_.getOptionString("compilerFlags", "-O3 -march=native -fPIC -finstrument-functions -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared ");
 
 #ifdef NDEBUG
     if (compilerFlags.find("-O3") == std::string::npos)

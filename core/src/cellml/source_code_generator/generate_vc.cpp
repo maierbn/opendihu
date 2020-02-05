@@ -13,11 +13,7 @@
 void CellMLSourceCodeGenerator::
 generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunction)
 {
-  //LOG(WARNING) << "In CellmlAdapter optimizationType \"vc\" is not yet implemented, fallback to \"simd\".";
-  //generateSourceFileSimdAutovectorization(outputFilename);
-
   // replace pow and ?: functions
-
   std::set<std::string> helperFunctions;   //< functions found in the CellML code that need to be provided, usually the pow2, pow3, etc. helper functions for pow(..., 2), pow(...,3) etc.
 
   // loop over lines of CellML code
@@ -392,53 +388,31 @@ Vc::double_v pow2(Vc::double_v x)
   simdSource << std::endl;
   const int nVcVectors = (int)(ceil((double)this->nInstances_ / Vc::double_v::Size));
   const int nParametersPerInstance = this->parameters_.size() / this->nInstances_;
-  const int vcVectorSize = (int)Vc::double_v::Size;
 
   simdSource << std::endl
     << "  const int nInstances = " << this->nInstances_ << ";\n"
     << "  const int nStates = " << this->nStates_ << ";\n"
     << "  const int nIntermediates = " << this->nIntermediates_ << ";\n"
     << "  const int nParametersPerInstance = " << nParametersPerInstance << ";\n"
-    << "\n"
-    << "  const int vcVectorSize = " << (int)Vc::double_v::Size << ";\n"
-    << "  const int nVcVectors = " << nVcVectors << ";  // ceil(" << this->nInstances_ << " instances / VcSize " << Vc::double_v::Size << ")" << std::endl
-    << "\n"
-    << "  if (vcVectorSize != " << vcVectorSize << ")\n"
-    << "  {\n"
-    << "    std::cout << \"Error! SIMD register length mismatches between opendihu (" << vcVectorSize
-      << ") and compiled code \" << vcVectorSize << \"!\" << std::endl;\n"
-    << "    return;\n"
-    << "  }\n"
-    << "  Vc::double_v statesVc[" << nStates_*nVcVectors << "];  // " << this->nStates_ << " states * " << nVcVectors << " vectors" << std::endl
-    << "  Vc::double_v ratesVc[" << nStates_*nVcVectors << "];   // " << this->nStates_ << " rates  * " << nVcVectors << " vectors" << std::endl
-    << "  Vc::double_v intermediatesVc[" << nIntermediates_*nVcVectors << "];  // " << this->nIntermediates_ << " intermediates  * " << nVcVectors << " vectors" << std::endl
-    << "  Vc::double_v parametersVc[" << nParametersPerInstance*nVcVectors << "];  // " << nParametersPerInstance << " parameters  * " << nVcVectors << " vectors" << std::endl
+    << "  const int nVcVectors = (int)(ceil((double)nInstances / Vc::double_v::Size));  // ceil(" << this->nInstances_ << " instances / VcSize " << Vc::double_v::Size << ")" << std::endl
+    << "  Vc::double_v statesVc[nStates*nVcVectors];  // " << this->nStates_ << " states * " << nVcVectors << " vectors" << std::endl
+    << "  Vc::double_v ratesVc[nStates*nVcVectors];   // " << this->nStates_ << " rates  * " << nVcVectors << " vectors" << std::endl
+    << "  Vc::double_v intermediatesVc[nIntermediates*nVcVectors];  // " << this->nIntermediates_ << " intermediates  * " << nVcVectors << " vectors" << std::endl
+    << "  Vc::double_v parametersVc[nParametersPerInstance*nVcVectors];  // " << nParametersPerInstance << " parameters  * " << nVcVectors << " vectors" << std::endl
     << "\n"
     << "  // fill input vectors of states and parameters\n"
     << "  for (int stateNo = 0; stateNo < nStates; stateNo++)\n"
     << "    for (int i = 0; i < nVcVectors; i++)  // Vc vector no\n"
-    << "      for (int k = 0; k < vcVectorSize; k++)  // entry no in Vc vector \n"
-    << "      {\n"
-    << "        if (i*" << vcVectorSize << "+k >= " << nInstances_ << ")\n"
-    << "          continue;\n"
-    << "        int index = stateNo*" << nInstances_ << " + i*" << vcVectorSize << "+k;\n"
-    << "        statesVc[stateNo*" << nVcVectors << " + i][k] = states[index];\n"
-    << "      }\n"
+    << "      for (int k = 0; k < Vc::double_v::Size; k++)  // entry no in Vc vector \n"
+    << "        statesVc[stateNo*nVcVectors + i][k] = states[std::min(stateNo*nInstances + i*(int)Vc::double_v::Size+k, nStates*nInstances-1)];\n"
     << "\n"
     << "  for (int parameterNo = 0; parameterNo < nParametersPerInstance; parameterNo++)\n"
     << "    for (int i = 0; i < nVcVectors; i++)  // Vc vector no\n"
-    << "      for (int k = 0; k < vcVectorSize; k++)  // entry no in Vc vector \n"
-    << "      {\n"
-    << "        if (i*" << vcVectorSize << "+k >= " << nInstances_ << ")\n"
-    << "          continue;\n"
-    << "        int index = parameterNo*" << nInstances_ << " + i*" << vcVectorSize << "+k;\n"
-    << "        parametersVc[parameterNo*" << nVcVectors << " + i][k] = parameters[index];\n"
-    << "      }\n"
+    << "      for (int k = 0; k < Vc::double_v::Size; k++)  // entry no in Vc vector \n"
+    << "        parametersVc[parameterNo*nVcVectors + i][k] = parameters[std::min(parameterNo*nInstances + i*(int)Vc::double_v::Size+k, nParametersPerInstance*nInstances-1)];\n"
     << std::endl
     << "  for (int i = 0; i < nVcVectors; i++)" << std::endl
     << "  {" << std::endl;
-
-  std::stringstream debug;
 
   // loop over lines of cellml code
   for (code_expression_t &codeExpression : cellMLCode_.lines)
@@ -446,9 +420,8 @@ Vc::double_v pow2(Vc::double_v x)
     if (codeExpression.type != code_expression_t::commented_out)
     {
       simdSource << "    ";
-      debug << "    ";
 
-      codeExpression.visitLeafs([&simdSource,&nVcVectors,&debug,this](CellMLSourceCodeGenerator::code_expression_t &expression, bool isFirstVariable)
+      codeExpression.visitLeafs([&simdSource,&nVcVectors,this](CellMLSourceCodeGenerator::code_expression_t &expression, bool isFirstVariable)
       {
         switch(expression.type)
         {
@@ -458,47 +431,39 @@ Vc::double_v pow2(Vc::double_v x)
             {
               // constants only exist once for all instances
               simdSource << expression.code << "[" << expression.arrayIndex<< "]";
-              debug << expression.code << "[" << expression.arrayIndex<< "]";
             }
             else
             {
               // all other variables (states, rates, intermediates, parameters) exist for every instance
               if (expression.code == "states")
               {
-                simdSource << "statesVc[" << expression.arrayIndex * nVcVectors << "+i]";
-                debug << "states[" << expression.arrayIndex * this->nInstances_ << "+i]";
+                simdSource << "statesVc[" << expression.arrayIndex << " * nVcVectors + i]";
               }
               else if (expression.code == "rates")
               {
-                simdSource << "ratesVc[" << expression.arrayIndex * nVcVectors << "+i]";
-                debug << "rates[" << expression.arrayIndex * this->nInstances_ << "+i]";
+                simdSource << "ratesVc[" << expression.arrayIndex << " * nVcVectors + i]";
               }
               else if (expression.code == "intermediates")
               {
-                simdSource << "intermediatesVc[" << expression.arrayIndex * nVcVectors << "+i]";
-                debug << "intermediates[" << expression.arrayIndex * this->nInstances_ << "+i]";
+                simdSource << "intermediatesVc[" << expression.arrayIndex << " * nVcVectors + i]";
               }
               else if (expression.code == "parameters")
               {
-                simdSource << "parametersVc[" << expression.arrayIndex * nVcVectors << "+i]";
-                debug << "parameters[" << expression.arrayIndex * this->nInstances_ << "+i]";
+                simdSource << "parametersVc[" << expression.arrayIndex << " * nVcVectors + i]";
               }
               else
               {
                 LOG(FATAL) << "unhandled variable type \"" << expression.code << "\".";
-                simdSource << expression.code << "[" << expression.arrayIndex << " * nInstances + i]";
               }
             }
             break;
 
           case code_expression_t::otherCode:
             simdSource << expression.code;
-            debug << expression.code;
             break;
 
           case code_expression_t::commented_out:
             simdSource << "  // (not assigning to a parameter) " << expression.code;
-            debug << "  // (not assigning to a parameter) " << expression.code;
             break;
 
           default:
@@ -506,32 +471,28 @@ Vc::double_v pow2(Vc::double_v x)
         }
       });
       simdSource << std::endl;
-      debug << std::endl;
     }
   }
   simdSource << std::endl;
-  //  << "/*\n" << debug.str() << "*/\n\n";
 
   simdSource << "  }" << std::endl << std::endl
     << "  // store computed values back to pointers\n"
     << "  for (int rateNo = 0; rateNo < nStates; rateNo++)\n"
     << "    for (int i = 0; i < nVcVectors; i++)  // Vc vector no\n"
-    << "      for (int k = 0; k < " << vcVectorSize << "; k++)  // entry no in Vc vector \n"
+    << "      for (int k = 0; k < Vc::double_v::Size; k++)  // entry no in Vc vector \n"
     << "      {\n"
-    << "        if (i*" << vcVectorSize << "+k >= " << nInstances_ << ")\n"
+    << "        if (rateNo*nInstances + i*Vc::double_v::Size+k >= nStates*nInstances)\n"
     << "          continue;\n"
-    << "        int index = rateNo*" << nInstances_ << " + i*" << vcVectorSize << "+k;\n"
-    << "        rates[index] = ratesVc[rateNo*" << nVcVectors << " + i][k];\n"
+    << "        rates[rateNo*nInstances + i*Vc::double_v::Size+k] = ratesVc[rateNo*nVcVectors + i][k];\n"
     << "      }\n"
     << "\n"
     << "  for (int intermediateNo = 0; intermediateNo < nIntermediates; intermediateNo++)\n"
     << "    for (int i = 0; i < nVcVectors; i++)  // Vc vector no\n"
-    << "      for (int k = 0; k < " << vcVectorSize << "; k++)  // entry no in Vc vector \n"
+    << "      for (int k = 0; k < Vc::double_v::Size; k++)  // entry no in Vc vector \n"
     << "      {\n"
-    << "        if (i*" << vcVectorSize << "+k >= " << nInstances_ << ")\n"
+    << "        if (intermediateNo*nInstances + i*Vc::double_v::Size+k >= nIntermediates*nInstances)\n"
     << "          continue;\n"
-    << "        int index = intermediateNo*" << nInstances_ << "+ i*" << vcVectorSize << "+k;\n"
-    << "        intermediates[index] = intermediatesVc[intermediateNo*" << nVcVectors << " + i][k];\n"
+    << "        intermediates[intermediateNo*nInstances + i*Vc::double_v::Size+k] = intermediatesVc[intermediateNo*nVcVectors + i][k];\n"
     << "      }\n"
     << "\n";
 

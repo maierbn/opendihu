@@ -269,7 +269,7 @@ config = {
           "additionalArgument": 0,
            #"handleResultFunction": handleResult,
            #"handleResultCallInterval": 2e3,
-          "compilerFlags": "-fPIC -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared -lm",
+          "compilerFlags": "-O3 -march=native -fPIC -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared -lm",
           
           "statesForTransfer": 0,     # state 0 = Vm
           "intermediatesForTransfer": [], # no intermediates are reused in different solvers

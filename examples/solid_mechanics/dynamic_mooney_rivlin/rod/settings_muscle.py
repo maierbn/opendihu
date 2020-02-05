@@ -76,8 +76,8 @@ elasticity_neumann_bc = [{"element": 0*nx*ny + j*nx + i, "constantVector": botto
 #neumann_bc = [{"element": (nz-1)*nx*ny + j*nx + i, "constantVector": bottom_traction, "face": "2+"} for j in range(ny) for i in range(nx)]
 
 dt = 3e-2         # [ms] time step width
-dt = 1e1
-end_time = 100
+dt = 3e0
+end_time = 10000
 output_interval = dt
 
 #dirichlet_bc = {}

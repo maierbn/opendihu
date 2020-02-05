@@ -157,6 +157,11 @@ loadRhsLibraryGetHandle(std::string libraryFilename)
     }
   }
 
+  if (handle == NULL)
+  {
+    LOG(ERROR) << "Could not load library \"" << (currentWorkingDirectory+libraryFilename) << "\": " << dlerror();
+  }
+
   return handle;
 }
 

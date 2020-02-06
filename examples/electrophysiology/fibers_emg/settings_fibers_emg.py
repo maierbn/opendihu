@@ -59,11 +59,17 @@ parser.add_argument('--n_subdomains_y', '-y',                help='Number of sub
 parser.add_argument('--n_subdomains_z', '-z',                help='Number of subdomains in z direction.',        type=int, default=variables.n_subdomains_z)
 parser.add_argument('--diffusion_solver_type',               help='The solver for the diffusion.',               default=variables.diffusion_solver_type, choices=["gmres","cg","lu","gamg","richardson","chebyshev","cholesky","jacobi","sor","preonly"])
 parser.add_argument('--diffusion_preconditioner_type',       help='The preconditioner for the diffusion.',       default=variables.diffusion_preconditioner_type, choices=["jacobi","sor","lu","ilu","gamg","none"])
+parser.add_argument('--diffusion_solver_reltol',             help='Ralative tolerance for diffusion solver',     type=float, default=variables.diffusion_solver_reltol)
+parser.add_argument('--diffusion_solver_maxit',              help='Maximum number of iterations for diffusion solver', type=int, default=variables.diffusion_solver_maxit)
 parser.add_argument('--potential_flow_solver_type',          help='The solver for the potential flow (non-spd matrix).', default=variables.potential_flow_solver_type, choices=["gmres","cg","lu","gamg","richardson","chebyshev","cholesky","jacobi","sor","preonly"])
 parser.add_argument('--potential_flow_preconditioner_type',  help='The preconditioner for the potential flow.',  default=variables.potential_flow_preconditioner_type, choices=["jacobi","sor","lu","ilu","gamg","none"])
+parser.add_argument('--potential_flow_solver_maxit',         help='Maximum number of iterations for potential flow solver', type=int, default=variables.potential_flow_solver_maxit)
+parser.add_argument('--potential_flow_solver_reltol',        help='Relative tolerance for potential flow solver', type=float, default=variables.potential_flow_solver_reltol)
 parser.add_argument('--emg_solver_type',                     help='The solver for the static bidomain.',         default=variables.emg_solver_type)
 #parser.add_argument('--emg_solver_type',                    help='The solver for the static bidomain.',         default=variables.emg_solver_type, choices=["gmres","cg","lu","gamg","richardson","chebyshev","cholesky","jacobi","sor","preonly"])
 parser.add_argument('--emg_preconditioner_type',             help='The preconditioner for the static bidomain.', default=variables.emg_preconditioner_type, choices=["jacobi","sor","lu","ilu","gamg","none"])
+parser.add_argument('--emg_solver_maxit',                    help='Maximum number of iterations for activation solver', type=int, default=variables.emg_solver_maxit)
+parser.add_argument('--emg_solver_reltol',                   help='Ralative tolerance for activation solver',    type=float, default=variables.diffusion_solver_reltol)
 parser.add_argument('--emg_initial_guess_nonzero',           help='If the initial guess for the emg linear system should be set to the previous solution.', default=variables.emg_initial_guess_nonzero, action='store_true')
 parser.add_argument('--paraview_output',                     help='Enable the paraview output writer.',          default=variables.paraview_output, action='store_true')
 parser.add_argument('--adios_output',                        help='Enable the MegaMol/ADIOS output writer.',          default=variables.adios_output, action='store_true')
@@ -83,10 +89,7 @@ parser.add_argument('-v',                                    help='Enable verbos
 parser.add_argument('-vmodule',                              help='Enable verbosity level for given file in c++ code')
 parser.add_argument('-pause',                                help='Stop at parallel debugging barrier', action="store_true")
 parser.add_argument('--rank_reordering',                     help='Enable rank reordering in the c++ code', action="store_true")
-parser.add_argument('--use_elasticity',                      help='Enable elasticity solver', action="store_true")
-parser.add_argument('--potential_flow_solver_maxit',         help='Maximum number of iterations for potential flow solver', type=int, default=1e4)
-parser.add_argument('--emg_solver_maxit',                    help='Maximum number of iterations for activation solver', type=int, default=1e4)
-parser.add_argument('--diffusion_solver_maxit',              help='Maximum number of iterations for diffusion solver', type=int, default=1e4)
+parser.add_argument('--use_elasticity',                   help='Enable linear elasticity', action="store_true")
 
 # parse command line arguments and assign values to variables module
 args = parser.parse_args(args=sys.argv[:-2], namespace=variables)
@@ -135,15 +138,15 @@ config = {
   "MappingsBetweenMeshes": {"MeshFiber_{}".format(i) : meshName3D for i in range(variables.n_fibers_total) for meshName3D in ["3Dmesh", "3Dmesh_quadratic"]},
   "Solvers": {
     "implicitSolver": {     # solver for the implicit timestepping scheme of the diffusion time step
+      "relativeTolerance":  variables.diffusion_solver_reltol,
       "maxIterations":      variables.diffusion_solver_maxit,
-      "relativeTolerance":  1e-10,
       "solverType":         variables.diffusion_solver_type,
       "preconditionerType": variables.diffusion_preconditioner_type,
       "dumpFilename":       "",   # "out/dump_"
       "dumpFormat":         "matlab",
     },
     "potentialFlowSolver": {# solver for the initial potential flow, that is needed to estimate fiber directions for the bidomain equation
-      "relativeTolerance":  1e-10,
+      "relativeTolerance":  variables.potential_flow_solver_reltol,
       "maxIterations":      variables.potential_flow_solver_maxit,
       "solverType":         variables.potential_flow_solver_type,
       "preconditionerType": variables.potential_flow_preconditioner_type,
@@ -151,7 +154,7 @@ config = {
       "dumpFormat":         "matlab",
     },
     "activationSolver": {   # solver for the static Bidomain equation and the EMG
-      "relativeTolerance":  1e-5,
+      "relativeTolerance":  variables.emg_solver_reltol,
       "maxIterations":      variables.emg_solver_maxit,
       "solverType":         variables.emg_solver_type,
       "preconditionerType": variables.emg_preconditioner_type,

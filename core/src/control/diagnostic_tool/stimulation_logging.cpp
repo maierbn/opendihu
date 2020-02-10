@@ -118,7 +118,7 @@ void StimulationLogging::writeLogFile()
       logEntry.time = times[i];
       logEntry.fiberNo = fiberNos[i];
       logEntry.motorUnitNo = motorUnitNos[i];
-      LOG(DEBUG) << "add entry " << i << ": " << logEntry;
+      VLOG(1) << "add entry " << i << ": " << logEntry;
       logEntries_.push_back(logEntry);
     }
 

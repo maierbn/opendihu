@@ -6,7 +6,7 @@
 #include "utility/petsc_utility.h"
 #include "data_management/specialized_solver/multidomain.h"
 
-#define MONODOMAIN
+//#define MONODOMAIN
 
 namespace TimeSteppingScheme
 {
@@ -95,6 +95,10 @@ advanceTimeSpan()
 
     // get phi_e
     //dataMultidomain_.extraCellularPotential()->setValues(subVectors[nCompartments_]);
+
+    LOG(DEBUG) << " Vm_solution: ";
+    //dataMultidomain_.subcellularStates(0)->extractComponent(0, dataMultidomain_.transmembranePotential(0));
+    LOG(DEBUG) << *dataMultidomain_.transmembranePotentialSolution(0);
 
     LOG(DEBUG) << " extraCellularPotential: " << PetscUtility::getStringVector(subvectorsSolution_[nCompartments_]);
     LOG(DEBUG) << *dataMultidomain_.extraCellularPotential();
@@ -348,7 +352,7 @@ setSystemMatrix(double timeStepWidth)
 
     // for debugging zero all entries
 #ifdef MONODOMAIN
-/**/    //ierr = MatZeroEntries(matrixOnRightColumn); CHKERRV(ierr);
+/**/    ierr = MatZeroEntries(matrixOnRightColumn); CHKERRV(ierr);
 #endif
 
     // set on right column of the system matrix
@@ -474,7 +478,7 @@ solveLinearSystem()
   ierr = KSPSetInitialGuessNonzero(*this->linearSolver_->ksp(), PETSC_TRUE); CHKERRV(ierr);
 
   // solve the system
-#ifndef NDEBUG
+#ifdef NDEBUG
   this->linearSolver_->solve(rightHandSide_, solution_);
 #else
   this->linearSolver_->solve(rightHandSide_, solution_, "Linear system of multidomain problem solved");

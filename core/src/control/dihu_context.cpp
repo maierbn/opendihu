@@ -187,6 +187,7 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
     sigaction(SIGXCPU, &signalHandler, NULL);
     sigaction(SIGRTMIN, &signalHandler, NULL);
     Control::PerformanceMeasurement::setParameter("exit","normal");
+    Control::PerformanceMeasurement::setParameter("exit_signal","");
 
     // determine settings filename
     Control::settingsFileName = "settings.py";

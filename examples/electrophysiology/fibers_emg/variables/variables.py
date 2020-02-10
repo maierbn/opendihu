@@ -16,11 +16,17 @@ innervation_zone_width = 0.         # not used [cm], this will later be used to 
 # -------
 diffusion_solver_type = "cg"        # solver and preconditioner for the diffusion part of the Monodomain equation
 diffusion_preconditioner_type = "none"      # preconditioner
+diffusion_solver_maxit = 1e4
+diffusion_solver_reltol = 1e-10
 potential_flow_solver_type = "gmres"        # solver and preconditioner for an initial Laplace flow on the domain, from which fiber directions are determined
 potential_flow_preconditioner_type = "none" # preconditioner
+potential_flow_solver_maxit = 1e4
+potential_flow_solver_reltol = 1e-10
 emg_solver_type = "cg"              # solver and preconditioner for the 3D static Bidomain equation that solves the intra-muscular EMG signal
 emg_preconditioner_type = "none"    # preconditioner
 emg_initial_guess_nonzero = False   # If the initial guess for the emg linear system should be set to the previous solution
+emg_solver_maxit = 1e4
+emg_solver_reltol = 1e-5
 
 # timing parameters
 # -----------------

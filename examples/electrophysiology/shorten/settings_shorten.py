@@ -8,7 +8,7 @@
 
 import sys
 
-end_time = 0.1   # [ms] end time of simulation
+end_time = 10   # [ms] end time of simulation
 n_elements = 100
 
 # global parameters
@@ -137,6 +137,7 @@ def callback(data, shape, nEntries, dim, timeStepNo, currentTime, null):
     
 config = {
   "scenarioName": scenario_name,
+  "solverStructureDiagramFile": "solver_structure.txt",     # filename of file that will contain a visualization of the solver structure and data mapping
   "Meshes": {
     "MeshFiber": {
       "nElements": n_elements,

@@ -7,6 +7,6 @@
 
 Import('env')     # import Environment object from calling SConstruct
 
-#env.Program(target = "multiple_fibers", source = "src/multiple_fibers.cpp")
+env.Program(target = "multiple_fibers", source = "src/multiple_fibers.cpp")
 env.Program(target = "multiple_fibers_57_states", source = "src/multiple_fibers_57_states.cpp")
 env.Program(target = "multiple_fast_fibers_57_states", source = "src/multiple_fast_fibers_57_states.cpp")

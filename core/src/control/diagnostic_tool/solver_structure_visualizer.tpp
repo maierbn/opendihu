@@ -12,6 +12,12 @@ setOutputConnectorData(std::shared_ptr<Data::OutputConnectorData<FunctionSpaceTy
   if (!enabled_)
     return;
 
+  if (!outputConnectorData)
+  {
+    LOG(WARNING) << "In SolverStructureVisualizer::setOutputConnectorData, outputConnectorData is not set";
+    return;
+  }
+
   // loop over ComponentOfFieldVariable entries as variable1 in outputConnectorData
   for (int i = 0; i < outputConnectorData->variable1.size(); i++)
   {
@@ -41,6 +47,12 @@ template<typename T>
 void SolverStructureVisualizer::
 setOutputConnectorData(std::shared_ptr<std::vector<T>> outputConnectorData)
 {
+  if (!outputConnectorData)
+  {
+    LOG(WARNING) << "In SolverStructureVisualizer::setOutputConnectorData, outputConnectorData is not set";
+    return;
+  }
+
   // if outputConnectorData is a vector, only use the first entry
   if (!outputConnectorData->empty())
   {

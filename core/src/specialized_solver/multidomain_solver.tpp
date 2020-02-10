@@ -6,7 +6,7 @@
 #include "utility/petsc_utility.h"
 #include "data_management/specialized_solver/multidomain.h"
 
-//#define MONODOMAIN
+#define MONODOMAIN
 
 namespace TimeSteppingScheme
 {
@@ -141,7 +141,6 @@ initialize()
 
   // add this solver to the solvers diagram
   DihuContext::solverStructureVisualizer()->addSolver("MultidomainSolver");
-  DihuContext::solverStructureVisualizer()->setOutputConnectorData(getOutputConnectorData());
 
   // indicate in solverStructureVisualizer that now a child solver will be initialized
   DihuContext::solverStructureVisualizer()->beginChild("PotentialFlow");
@@ -156,16 +155,12 @@ initialize()
   dataMultidomain_.setFunctionSpace(finiteElementMethodPotentialFlow_.functionSpace());
   dataMultidomain_.initialize(nCompartments_);
 
-  LOG(INFO) << "Run potential flow simulation for fiber directions.";
+  DihuContext::solverStructureVisualizer()->setOutputConnectorData(getOutputConnectorData());
 
-  // avoid that solver structure file is created, this should only be done after the whole simulation has finished
-  DihuContext::solverStructureVisualizer()->disable();
+  LOG(INFO) << "Run potential flow simulation for fiber directions.";
 
   // solve potential flow Laplace problem
   finiteElementMethodPotentialFlow_.run();
-
-  // enable again
-  DihuContext::solverStructureVisualizer()->enable();
 
   LOG(DEBUG) << "compute gradient field";
 
@@ -188,6 +183,8 @@ initialize()
 
   // indicate in solverStructureVisualizer that the child solver initialization is done
   DihuContext::solverStructureVisualizer()->endChild();
+  // do not log the compartment finite element method objects
+  DihuContext::solverStructureVisualizer()->disable();
 
   // diffusion objects with spatially varying prefactors (f_r), needed for the bottom row of the matrix eq. or the 1st multidomain eq.
   for (int k = 0; k < nCompartments_; k++)
@@ -197,6 +194,8 @@ initialize()
   }
 
   finiteElementMethodDiffusionTotal_.initialize(dataMultidomain_.fiberDirection(), dataMultidomain_.relativeFactorTotal(), true);
+
+  DihuContext::solverStructureVisualizer()->enable();
 
   // parse parameters
   this->specificSettings_.getOptionVector("am", nCompartments_, am_);
@@ -230,8 +229,8 @@ initialize()
   // set values for Vm in compartments
   for (int k = 0; k < nCompartments_; k++)
   {
-    subvectorsRightHandSide_[k] = dataMultidomain_.transmembranePotential(k)->valuesGlobal();
-    subvectorsSolution_[k] = dataMultidomain_.transmembranePotentialSolution(k)->valuesGlobal(0);
+    subvectorsRightHandSide_[k] = dataMultidomain_.transmembranePotential(k)->valuesGlobal();     // this is for V_mk^(i)
+    subvectorsSolution_[k] = dataMultidomain_.transmembranePotentialSolution(k)->valuesGlobal(0); // this is for V_mk^(i+1)
   }
 
   // set values for phi_e
@@ -239,7 +238,7 @@ initialize()
   subvectorsSolution_[nCompartments_] = dataMultidomain_.extraCellularPotential()->valuesGlobal();
   ierr = VecZeroEntries(subvectorsSolution_[nCompartments_]); CHKERRV(ierr);
 
-  dataMultidomain_.setSubvectorsSolution(subvectorsSolution_);
+  //dataMultidomain_.setSubvectorsSolution(subvectorsSolution_);
 
   // create the nested vectors
   LOG(DEBUG) << "create nested vector";
@@ -309,6 +308,17 @@ setSystemMatrix(double timeStepWidth)
   std::vector<Mat> submatrices(MathUtility::sqr(nCompartments_+1),NULL);
 
   LOG(TRACE) << "setSystemMatrix";
+
+  // The system to be solved here is
+  //
+  // [ -dt/(a_mk*c_mk)*M^{-1}*K_ik + I   ...   -dt/(a_mk*c_mk)*M^{-1}*K   ] [V_mk^(i+1)  ]   [V_mk^(i)]
+  // [  ...                                     ...                       ]*[...         ] = [       ]
+  // [ f_rk * K_ik                       ...    K_ei                      ] [phi_e^(i+1) ]   [       ]
+  //
+  // V_mk^(i) is computed by the 0D part.
+  // The two output connection slots are V_mk^(i) and V_mk^(i+1),
+  // where V_mk^(i) is the input and should be connected to the output of the reaction term.
+  // V_mk^(i+1) is the output and should be connected to the input of the reaction term.
 
   // fill submatrices, empty submatrices may be NULL
   // stiffnessMatrix and inverse lumped mass matrix without prefactor

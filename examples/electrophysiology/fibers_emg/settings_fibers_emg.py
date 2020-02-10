@@ -128,7 +128,8 @@ variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
 
 # define the config dict
 config = {
-  "scenarioName": variables.scenario_name,
+  "scenarioName":                   variables.scenario_name,    # scenario name which will appear in the log file
+  "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "meta": {                 # additional fields that will appear in the log
     "partitioning": [variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z]
   },

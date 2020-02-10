@@ -139,7 +139,8 @@ if False:
   del MPI_DIR
   MPI_DOWNLOAD = True
   MPI_IGNORE_MPICC = True    # this downloads and builds openmpi
-  MPI_DEBUG = True            # this enables debugging flags such that valgrind memcheck can track MPI errors
+
+PETSC_DEBUG = True            # this enables debugging flags such that valgrind memcheck can track MPI errors
 
 # specialized settings for supercomputer (HazelHen)
 import os

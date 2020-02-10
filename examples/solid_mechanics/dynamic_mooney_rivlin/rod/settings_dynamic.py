@@ -178,6 +178,7 @@ output_interval = dt
 
 config = {
   "scenarioName": "3d_box",
+  "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "DynamicHyperelasticitySolver": {
     #"numberTimeSteps": 1,
     "endTime": end_time,

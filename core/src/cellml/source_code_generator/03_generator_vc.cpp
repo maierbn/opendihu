@@ -619,9 +619,10 @@ generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateE
   {
     if (codeExpression.type != code_expression_t::commented_out)
     {
-      sourceCode << "  const double_v ";
-
-      codeExpression.visitLeafs([&sourceCode,this](CellmlSourceCodeGeneratorVc::code_expression_t &expression, bool isFirstVariable)
+      std::stringstream sourceCodeLine;
+      bool isCommentedOut = false;
+      
+      codeExpression.visitLeafs([&sourceCodeLine,&isCommentedOut,this](CellmlSourceCodeGeneratorVc::code_expression_t &expression, bool isFirstVariable)
       {
         switch(expression.type)
         {
@@ -630,26 +631,26 @@ generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateE
             if (expression.code == "CONSTANTS")
             {
               // constants only exist once for all instances
-              sourceCode << "constant" << expression.arrayIndex;
+              sourceCodeLine << "constant" << expression.arrayIndex;
             }
             else
             {
               // all other variables (states, rates, intermediates, parameters) exist for every instance
               if (expression.code == "states")
               {
-                sourceCode << "states[" << expression.arrayIndex << "]";
+                sourceCodeLine << "states[" << expression.arrayIndex << "]";
               }
               else if (expression.code == "rates")
               {
-                sourceCode << "rate" << expression.arrayIndex;
+                sourceCodeLine << "rate" << expression.arrayIndex;
               }
               else if (expression.code == "intermediates")
               {
-                sourceCode << "algebraic" << expression.arrayIndex;
+                sourceCodeLine << "algebraic" << expression.arrayIndex;
               }
               else if (expression.code == "parameters")
               {
-                sourceCode << "parameters[" << expression.arrayIndex << "]";
+                sourceCodeLine << "parameters[" << expression.arrayIndex << "]";
               }
               else
               {
@@ -659,18 +660,27 @@ generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateE
             break;
 
           case code_expression_t::otherCode:
-            sourceCode << expression.code;
+            sourceCodeLine << expression.code;
             break;
 
           case code_expression_t::commented_out:
-            sourceCode << "  // (not assigning to a parameter) " << expression.code;
+            sourceCodeLine << "  // (not assigning to a parameter) " << expression.code;
+            isCommentedOut = true;
             break;
 
           default:
             break;
         }
       });
-      sourceCode << std::endl;
+      
+      if (isCommentedOut)
+      {
+        sourceCode << "  " << sourceCodeLine.str() << std::endl;
+      }
+      else
+      {
+        sourceCode << "  const double_v " << sourceCodeLine.str() << std::endl;
+      }
     }
   }
   sourceCode << "\n"
@@ -704,9 +714,10 @@ generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateE
   {
     if (codeExpression.type != code_expression_t::commented_out)
     {
-      sourceCode << "  const double_v ";
-
-      codeExpression.visitLeafs([&sourceCode,this](CellmlSourceCodeGeneratorVc::code_expression_t &expression, bool isFirstVariable)
+      std::stringstream sourceCodeLine;
+      bool isCommentedOut = false;
+      
+      codeExpression.visitLeafs([&sourceCodeLine,&isCommentedOut,this](CellmlSourceCodeGeneratorVc::code_expression_t &expression, bool isFirstVariable)
       {
         switch(expression.type)
         {
@@ -715,26 +726,26 @@ generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateE
             if (expression.code == "CONSTANTS")
             {
               // constants only exist once for all instances
-              sourceCode << "constant" << expression.arrayIndex;
+              sourceCodeLine << "constant" << expression.arrayIndex;
             }
             else
             {
               // all other variables (states, rates, intermediates, parameters) exist for every instance
               if (expression.code == "states")
               {
-                sourceCode << "intermediateState" << expression.arrayIndex;
+                sourceCodeLine << "intermediateState" << expression.arrayIndex;
               }
               else if (expression.code == "rates")
               {
-                sourceCode << "intermediateRate" << expression.arrayIndex;
+                sourceCodeLine << "intermediateRate" << expression.arrayIndex;
               }
               else if (expression.code == "intermediates")
               {
-                sourceCode << "intermediateAlgebraic" << expression.arrayIndex;
+                sourceCodeLine << "intermediateAlgebraic" << expression.arrayIndex;
               }
               else if (expression.code == "parameters")
               {
-                sourceCode << "parameters[" << expression.arrayIndex << "]";
+                sourceCodeLine << "parameters[" << expression.arrayIndex << "]";
               }
               else
               {
@@ -744,18 +755,27 @@ generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateE
             break;
 
           case code_expression_t::otherCode:
-            sourceCode << expression.code;
+            sourceCodeLine << expression.code;
             break;
 
           case code_expression_t::commented_out:
-            sourceCode << "  // (not assigning to a parameter) " << expression.code;
+            sourceCodeLine << "  // (not assigning to a parameter) " << expression.code;
+            isCommentedOut = true;
             break;
 
           default:
             break;
         }
       });
-      sourceCode << std::endl;
+      
+      if (isCommentedOut)
+      {
+        sourceCode << "  " << sourceCodeLine.str() << std::endl;
+      }
+      else
+      {
+        sourceCode << "  const double_v " << sourceCodeLine.str() << std::endl;
+      }
     }
   }
   sourceCode << std::endl;
@@ -791,11 +811,21 @@ generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateE
       {
 )";
 
+  // loop over intermediates and generate code to copy the updated algebraic values to the intermediates
   for (int intermediateNo = 0; intermediateNo < this->nIntermediates_; intermediateNo++)
   {
-    sourceCode << "        case " << intermediateNo << ":\n"
-      << "          intermediatesForTransfer[" << intermediateNo << "] = intermediateAlgebraic" << intermediateNo << ";\n"
-      << "          break;\n";
+    // only of the intermediate was computed and not replaced by a parameter
+    if (std::find(this->parametersUsedAsIntermediate_.begin(), this->parametersUsedAsIntermediate_.end(), intermediateNo)
+       != this->parametersUsedAsIntermediate_.end())
+    {
+      sourceCode << "        // case " << intermediateNo << ": is a parameter\n";
+    }
+    else
+    {
+      sourceCode << "        case " << intermediateNo << ":\n"
+        << "          intermediatesForTransfer[" << intermediateNo << "] = intermediateAlgebraic" << intermediateNo << ";\n"
+        << "          break;\n";
+    }
   }
 
   sourceCode << R"(

@@ -11,7 +11,7 @@
 # In order to have a process compute multiple fibers but only a part of them, use the multiple_fibers_cubes_partitioning example.
 # Compare  multiple_fibers_cubes_partitioning/src/multiple_fibers.cpp  with multiple_fibers/src/multiple_fibers.cpp to get the difference.
 
-end_time = 1.0
+end_time = 50.0
 
 import numpy as np
 import matplotlib 
@@ -362,6 +362,7 @@ config = {
   "MegaMolArguments": "--configfile {} -p ../../input/adios_project.lua ".format(config_filename),  
   #"MegaMolArguments": "--configfile {} -p ../input/empty_view.lua ".format(config_filename),  
   "scenarioName": scenario_name,
+  "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "Meshes": meshes,
   "Solvers": {
     "implicitSolver": {

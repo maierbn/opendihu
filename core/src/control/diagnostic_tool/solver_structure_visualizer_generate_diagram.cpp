@@ -71,24 +71,31 @@ generateDiagram(std::stringstream &result, std::vector<std::tuple<int,int,int,So
     result << lineStart.str() << "│  slot connections: \n";
     for (int i = 0; i < outputConnections.size(); i++)
     {
-      result << lineStart.str() << "│  " <<  outputConnections[i].fromSlot << "¤";
-
-      switch (outputConnections[i].type)
+      if (outputConnections[i].type == solver_t::OutputConnection::output_connection_t::ba)
       {
-      case solver_t::OutputConnection::output_connection_t::ab:
-      case solver_t::OutputConnection::output_connection_t::ba:
-        result << " -> ";
-        break;
-      case solver_t::OutputConnection::output_connection_t::bidirectionalReuse:
-        result << " <=> ";
-        break;
-      case solver_t::OutputConnection::output_connection_t::bidirectionalCopy:
-        result << " <-> ";
-        break;
+        result << lineStart.str() << "│  " <<  outputConnections[i].toSlot << "¤ <- ¤" << outputConnections[i].fromSlot << "\n";
+      }
+      else
+      {
+        result << lineStart.str() << "│  " <<  outputConnections[i].fromSlot << "¤";
 
-      };
+        switch (outputConnections[i].type)
+        {
+        case solver_t::OutputConnection::output_connection_t::ba:
+        case solver_t::OutputConnection::output_connection_t::ab:
+          result << " -> ";
+          break;
+        case solver_t::OutputConnection::output_connection_t::bidirectionalReuse:
+          result << " <=> ";
+          break;
+        case solver_t::OutputConnection::output_connection_t::bidirectionalCopy:
+          result << " <-> ";
+          break;
 
-      result << "¤" << outputConnections[i].toSlot << "\n";
+        };
+
+        result << "¤" << outputConnections[i].toSlot << "\n";
+      }
     }
     result << lineStart.str() << "│\n";
   }
@@ -121,12 +128,28 @@ generateDiagram(std::stringstream &result, std::vector<std::tuple<int,int,int,So
   {
     if (slotLineNosTerm.size() >= 2)
     {
-      if (slotLineNosTerm[0].size() > outputConnections[i].fromSlot
+      if ((outputConnections[i].type == solver_t::OutputConnection::output_connection_t::ab
+        || outputConnections[i].type == solver_t::OutputConnection::output_connection_t::bidirectionalCopy
+        || outputConnections[i].type == solver_t::OutputConnection::output_connection_t::bidirectionalReuse)
+        && slotLineNosTerm[0].size() > outputConnections[i].fromSlot
         && slotLineNosTerm[1].size() > outputConnections[i].toSlot
       )
       {
         int lineNoFrom = slotLineNosTerm[0][outputConnections[i].fromSlot];
         int lineNoTo = slotLineNosTerm[1][outputConnections[i].toSlot];
+        solver_t::OutputConnection::output_connection_t connectionType = outputConnections[i].type;
+
+        connectionLines.push_back(std::make_tuple(
+          lineNoFrom, lineNoTo, 0, connectionType
+        ));
+      }
+      else if (outputConnections[i].type == solver_t::OutputConnection::output_connection_t::ba
+        && slotLineNosTerm[1].size() > outputConnections[i].fromSlot
+        && slotLineNosTerm[0].size() > outputConnections[i].toSlot
+      )
+      {
+        int lineNoFrom = slotLineNosTerm[0][outputConnections[i].toSlot];
+        int lineNoTo = slotLineNosTerm[1][outputConnections[i].fromSlot];
         solver_t::OutputConnection::output_connection_t connectionType = outputConnections[i].type;
 
         connectionLines.push_back(std::make_tuple(
@@ -199,18 +222,27 @@ writeDiagramFile(std::string filename)
     // count number of starting lines inside this line
     for (int j = 0; j < connectionLines.size(); j++)
     {
+      if (i == j)
+        continue;
       int startLineNo2 = std::get<0>(connectionLines[j]);
+      int endLineNo2 = std::get<1>(connectionLines[j]);
+
       if (startLineNo < startLineNo2 && startLineNo2 < endLineNo)
+        lineColumn++;
+      else if (startLineNo == startLineNo2 && endLineNo2 < endLineNo)
+        lineColumn++;
+      else if (startLineNo < startLineNo2 && endLineNo2 == endLineNo)
         lineColumn++;
     }
     std::get<2>(connectionLines[i]) = lineColumn;
   }
 
-  VLOG(1) << "connectionLines: " << connectionLines;
+  LOG(DEBUG) << "connectionLines: " << connectionLines;
 
   std::size_t pos = 0;
   std::string diagramWithoutDataLinesString = diagramWithoutDataLines.str();
   std::string diagram;
+  diagram += "Solver structure: \n\n";
 
   // print actual diagram, into diagram
   // loop over lines
@@ -237,7 +269,7 @@ writeDiagramFile(std::string filename)
     // here, line contains the current line that should be handled without "\n"
 
     // find out vertial data slot connection lines that go through this output line
-    std::vector<std::pair<int,solver_t::OutputConnection::output_connection_t>> verticalLinesInCurrentRow;    //! <lineColumn,type>, lineColumn is the column in rhe current row where the vertical lines passes through
+    std::vector<std::tuple<int,bool,bool,solver_t::OutputConnection::output_connection_t>> verticalLinesInCurrentRow;    //! <lineColumn,thisLineStartsHere,thisLineEndsHere,type>, lineColumn is the column in rhe current row where the vertical lines passes through
     bool lineStartsHere = false;
     bool lineEndsHere = false;
     solver_t::OutputConnection::output_connection_t lineType = solver_t::OutputConnection::output_connection_t::ab;
@@ -264,28 +296,30 @@ writeDiagramFile(std::string filename)
         lineType = std::get<3>(connectionLines[i]);
         lineStartsHere = true;
         lineColumn = std::get<2>(connectionLines[i]);
-        verticalLinesInCurrentRow.push_back(std::make_pair(lineColumn, lineType));
+        verticalLinesInCurrentRow.push_back(std::make_tuple(lineColumn, true, false, lineType));
       }
       else if (currentLineNo == endLineNo)
       {
         lineType = std::get<3>(connectionLines[i]);
         lineEndsHere = true;
         lineColumn = std::get<2>(connectionLines[i]);
-        verticalLinesInCurrentRow.push_back(std::make_pair(lineColumn, lineType));
+        verticalLinesInCurrentRow.push_back(std::make_tuple(lineColumn, false, true, lineType));
       }
       else if (startLineNo < currentLineNo && currentLineNo < endLineNo)
       {
         // vertical line passes through current row
         solver_t::OutputConnection::output_connection_t lineType = std::get<3>(connectionLines[i]);
         int lineColumn = std::get<2>(connectionLines[i]);
-        verticalLinesInCurrentRow.push_back(std::make_pair(lineColumn, lineType));
+        verticalLinesInCurrentRow.push_back(std::make_tuple(lineColumn, false, false, lineType));
       }
     }
 
     // sort all found lines according to their column
-    std::sort(verticalLinesInCurrentRow.begin(), verticalLinesInCurrentRow.end(), [](const std::pair<int,solver_t::OutputConnection::output_connection_t> &a, const std::pair<int,solver_t::OutputConnection::output_connection_t> &b)
+    std::sort(verticalLinesInCurrentRow.begin(), verticalLinesInCurrentRow.end(), [](
+      const std::tuple<int,bool,bool,solver_t::OutputConnection::output_connection_t> &a,
+      const std::tuple<int,bool,bool,solver_t::OutputConnection::output_connection_t> &b)
     {
-      return a.first < b.first;
+      return std::get<0>(a) < std::get<0>(b);
     });
 
     VLOG(1) << "currentLineNo " << currentLineNo << ", line=[" << line << "] has vertical lines: " << verticalLinesInCurrentRow;
@@ -342,7 +376,7 @@ writeDiagramFile(std::string filename)
     if (!verticalLinesInCurrentRow.empty())
     {
       // loop over columns in the current row, current column is requiredLineLength + 2*i, i.e. it advances always by 2 characters
-      for (int i = 0; i <= verticalLinesInCurrentRow.back().first; i++)
+      for (int i = 0; i <= std::get<0>(verticalLinesInCurrentRow.back()); i++)
       {
 
         // determine events where line starts or ends
@@ -366,14 +400,14 @@ writeDiagramFile(std::string filename)
         }
 
         // if there is a vertical line passing at the current position
-        if (i == verticalLinesInCurrentRow[linesIndex].first)
+        if (i == std::get<0>(verticalLinesInCurrentRow[linesIndex]))
         {
           // depending on the type of the vertical line choose the right sign
-          switch (verticalLinesInCurrentRow[linesIndex].second)
+          switch (std::get<3>(verticalLinesInCurrentRow[linesIndex]))
           {
           case solver_t::OutputConnection::output_connection_t::bidirectionalReuse:
             diagram += space;
-            if (lineCrosses)
+            if (lineCrosses && !std::get<1>(verticalLinesInCurrentRow[linesIndex]) && !std::get<2>(verticalLinesInCurrentRow[linesIndex]))
             {
               diagram += "╬";
             }
@@ -385,6 +419,14 @@ writeDiagramFile(std::string filename)
             {
               diagram += "╝";
             }
+            else if (std::get<1>(verticalLinesInCurrentRow[linesIndex]))
+            {
+              diagram += "╦";
+            }
+            else if (std::get<2>(verticalLinesInCurrentRow[linesIndex]))
+            {
+              diagram += "╩";
+            }
             else
             {
               diagram += "║";
@@ -394,7 +436,7 @@ writeDiagramFile(std::string filename)
           case solver_t::OutputConnection::output_connection_t::ba:
           case solver_t::OutputConnection::output_connection_t::bidirectionalCopy:
             diagram += space;
-            if (lineCrosses)
+            if (lineCrosses && !std::get<1>(verticalLinesInCurrentRow[linesIndex]) && !std::get<2>(verticalLinesInCurrentRow[linesIndex]))
             {
               diagram += "┼";
             }
@@ -405,6 +447,14 @@ writeDiagramFile(std::string filename)
             else if (lineCurveEnd)
             {
               diagram += "┘";
+            }
+            else if (std::get<1>(verticalLinesInCurrentRow[linesIndex]))
+            {
+              diagram += "┬";
+            }
+            else if (std::get<2>(verticalLinesInCurrentRow[linesIndex]))
+            {
+              diagram += "┴";
             }
             else
             {
@@ -426,6 +476,10 @@ writeDiagramFile(std::string filename)
     // add endline at the end of the current line
     diagram += "\n";
   }
+
+  diagram += "connection types:\n";
+  diagram += "  ═══ ... reuse field variable, no copy\n";
+  diagram += "  ──> ... copy data in direction of arrow\n";
 
   //LOG(DEBUG) << "solver structure without connections:\n" << diagramWithoutDataLines.str() << "\n";
   LOG(DEBUG) << "solver structure with connections:\n" << diagram << "\n";

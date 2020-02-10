@@ -80,6 +80,7 @@ for k in range(int(nz)):
                        (k+1)*(nx+1)*(ny+1) + j*(nx+1) + i, (k+1)*(nx+1)*(ny+1) + j*(nx+1) + i+1, (k+1)*(nx+1)*(ny+1) + (j+1)*(nx+1) + i, (k+1)*(nx+1)*(ny+1) + (j+1)*(nx+1) + i+1])
 
 config = {
+  "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "FiniteElementMethod" : {
     "nElements": n_elements,
     "nRanks": [1,1,n_ranks],
@@ -88,13 +89,18 @@ config = {
     "inputMeshIsGlobal": not local,
     "physicalExtent": n_elements,
     "outputInterval": 1.0,
-    "prefactor": 1,
+    
     "dirichletBoundaryConditions": {0:0} if rank_no == 0 else {},
     "neumannBoundaryConditions": bc,
-    "relativeTolerance": 1e-15,
+    "prefactor": 1,
+    
     "solverType": "gmres",
     "preconditionerType": "none",
+    "relativeTolerance": 1e-15,
     "maxIterations": 10000,
+    "dumpFormat": "default",
+    "dumpFilename": "",
+    
     "OutputWriter" : [
       {"format": "Paraview", "outputInterval": 1, "filename": "out/laplace", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},      
       {"format": "PythonFile", "filename": "out/laplace", "outputInterval": 1, "binary":False, "onlyNodalValues":True}

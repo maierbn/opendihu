@@ -51,5 +51,4 @@ public:
 
 #include "output_connector_data_transfer/output_connector_data_transfer.tpp"
 #include "output_connector_data_transfer/output_connector_data_transfer_fibers_emg.h"
-#include "output_connector_data_transfer/output_connector_data_transfer_multidomain.h"
 #include "output_connector_data_transfer/output_connector_data_transfer_vector.h"

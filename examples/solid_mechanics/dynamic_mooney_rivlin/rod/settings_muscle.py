@@ -95,6 +95,7 @@ node_positions = [[(x-nx)*(1+(2*nz-z)*z*belly_width)*width,(y-ny)*(1+(2*nz-z)*z*
 
 config = {
   "scenarioName": "3d_box",
+  "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "Meshes": {
     "3Dmesh_quadratic": {
     'nElements': [nx, ny, nz], 

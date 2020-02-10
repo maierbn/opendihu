@@ -28,8 +28,8 @@ Am = 0.1
 
 # input files
 #mesh_file = "../input/scaled_mesh_tiny"
-#mesh_file = "../input/scaled_mesh_small"
-mesh_file = "../input/scaled_mesh_normal"
+mesh_file = "../input/scaled_mesh_small"
+#mesh_file = "../input/scaled_mesh_normal"
 #mesh_file = "../input/scaled_mesh_big"
 fiber_file = "../input/laplace3d_structured_linear"
 
@@ -175,6 +175,11 @@ if "hodgkin" in cellml_file:
   Cm = 1.0
 
 n_compartments = len(motor_units)
+
+# for debugging
+n_compartments = 1
+relative_factors = np.ones((n_compartments, len(mesh_node_positions)))   # each row is one compartment
+print("DEBUGGING settings")
 
 # create relative factors for compartments
 
@@ -335,6 +340,7 @@ multidomain_solver = {
 }
   
 config = {
+  "solverStructureDiagramFile": "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "Meshes": {
     "mesh": {
       "nElements": n_linear_elements_per_coordinate_direction,
@@ -367,8 +373,8 @@ config = {
     "durationLogKey": "duration_total",
     "timeStepOutputInterval" : 10,
     "endTime": end_time,
-    "connectedSlotsTerm1To2": [0],   # transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion)
-    "connectedSlotsTerm2To1": [0],   # transfer the same back
+    "connectedSlotsTerm1To2": [0],       # CellML V_mk (0) <=> Multidomain V_mk^(i) (0)
+    "connectedSlotsTerm2To1": [None, 0],    # Multidomain V_mk^(i+1) (1) -> CellML V_mk (0)
 
     "Term1": {      # CellML
       "MultipleInstances": {

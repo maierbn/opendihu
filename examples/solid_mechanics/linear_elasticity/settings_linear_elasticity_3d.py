@@ -44,6 +44,7 @@ neumann_bc = [{"element": k*nx*ny + j*nx + nx-1, "constantVector": [+0.1,+0.6,3.
 #neumann_bc = []
 
 config = {
+  "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "FiniteElementMethod" : {
     "nElements": [nx, ny, nz],
     "inputMeshIsGlobal": True,

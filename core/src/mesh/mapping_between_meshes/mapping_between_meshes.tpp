@@ -1,6 +1,6 @@
 #include "mesh/mapping_between_meshes/mapping_between_meshes.h"
 
-#include "control/performance_measurement.h"
+#include "control/diagnostic_tool/performance_measurement.h"
 
 #include "utility/vector_operators.h"
 

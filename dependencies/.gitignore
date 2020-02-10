@@ -7,6 +7,8 @@ libcellml
 libxml2
 numpyc
 petsc
+petsc_debug
+petsc_release
 scons
 scons-config
 SConstruct

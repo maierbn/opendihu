@@ -80,6 +80,19 @@ void OutputConnection::setTransferDirection(bool term1To2)
   transferDirectionTerm1To2_ = term1To2;
 }
 
+
+//! get the connectors from term 1 to term 2
+const std::vector<OutputConnection::Connector> &OutputConnection::connectorTerm1To2() const
+{
+  return connectorTerm1To2_;
+}
+
+//! get the connectors from term 2 to term 1
+const std::vector<OutputConnection::Connector> &OutputConnection::connectorTerm2To1() const
+{
+  return connectorTerm2To1_;
+}
+
 std::string OutputConnection::getDebugInformation() const
 {
   std::stringstream result;

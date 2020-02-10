@@ -8,7 +8,7 @@
 
 import sys
 
-end_time = 10.0   # [ms] end time of simulation
+end_time = 0.1   # [ms] end time of simulation
 n_elements = 100
 
 # global parameters

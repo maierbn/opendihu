@@ -72,7 +72,7 @@ run()
   // do the tracing
   traceStreamlines();
 
-  // output
+  // output data
   outputWriterManager_.writeOutput(data_);
 }
 

@@ -84,11 +84,11 @@ class PETSc(Package):
       print("PETSc debugging build is on!")
       self.set_build_handler([
         'mkdir -p ${PREFIX}',
-        #'PATH=${PATH}:${DEPENDENCIES_DIR}/bison/install/bin \
         './configure --prefix=${PREFIX} --with-debugging=yes --with-shared-libraries=1 \
         --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
           ---with-cc='+env["mpicc"]+'\
-        --download-mumps --download-scalapack --download-parmetis --download-metis | tee out.txt',
+        --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch --download-sundials --download-hypre \
+         | tee out.txt',
         '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt',
         '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt)',
         'ln -fs ${PREFIX}/lib/libparmetis.so ${PREFIX}/lib/parmetis.so'    # create parmetis.so link for chaste

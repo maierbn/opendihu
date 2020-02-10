@@ -2,7 +2,7 @@
 
 #include <Python.h>  // this has to be the first included header
 #include <python_home.h>  // defines PYTHON_HOME_DIRECTORY
-#include "control/performance_measurement.h"
+#include "control/diagnostic_tool/performance_measurement.h"
 #include "utility/python_capture_stderr.h"
 
 void DihuContext::initializePython(int argc, char *argv[], bool explicitConfigFileGiven)
@@ -314,4 +314,7 @@ void DihuContext::parseGlobalParameters()
       Control::PerformanceMeasurement::setParameter(logKey.str(), value);
     }
   }
+
+  // filename for solver structure diagram
+  solverStructureDiagramFile_ = pythonConfig_.getOptionString("solverStructureDiagramFile", "solver_structure.txt");
 }

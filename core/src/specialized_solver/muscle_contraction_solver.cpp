@@ -4,6 +4,7 @@
 #include <sstream>
 
 #include "utility/math_utility.h"
+#include "control/diagnostic_tool/solver_structure_visualizer.h"
 
 MuscleContractionSolver::
 MuscleContractionSolver(DihuContext context) :
@@ -92,8 +93,17 @@ initialize()
   // call initialize of the parent class, this parses the timestepping settings from the settings file
   TimeSteppingScheme::TimeSteppingScheme::initialize();
 
+  // add this solver to the solvers diagram
+  DihuContext::solverStructureVisualizer()->addSolver("MuscleContractionSolver");
+
+  // indicate in solverStructureVisualizer that now a child solver will be initialized
+  DihuContext::solverStructureVisualizer()->beginChild();
+
   // call initialize of the nested timestepping solver
   dynamicHyperelasticitySolver_.initialize();
+
+  // indicate in solverStructureVisualizer that the child solver initialization is done
+  DihuContext::solverStructureVisualizer()->endChild();
 
   // In order to initialize the data object and actuall create all variables, we first need to assign a function space to the data object.
   // A function space object of type FunctionSpace<MeshType,BasisFunctionType> (see "function_space/function_space.h")
@@ -117,6 +127,9 @@ initialize()
                           hyperelasticitySolver.data().fiberDirection());
 
 */
+
+  // set the outputConnectorData for the solverStructureVisualizer to appear in the solver diagram
+  DihuContext::solverStructureVisualizer()->setOutputConnectorData(getOutputConnectorData());
 }
 
 void MuscleContractionSolver::

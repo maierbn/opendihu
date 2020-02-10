@@ -11,7 +11,7 @@
 #include "mesh/structured_regular_fixed.h"
 #include "mesh/mesh_manager/mesh_manager.h"
 #include "function_space/function_space.h"
-#include "control/stimulation_logging.h"
+#include "control/diagnostic_tool/stimulation_logging.h"
 
 //#include <libcellml>    // libcellml not used here
 

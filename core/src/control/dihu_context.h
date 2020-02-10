@@ -21,6 +21,7 @@
 // forward declaration
 namespace Mesh { class Manager; }
 namespace Solver { class Manager; }
+class SolverStructureVisualizer;
 
 /** This class contains global variables (mesh manager and solver manager) and a python config dictionary
  *  which can be a sub-dict of the global config. Different objects of this class are used for the methods
@@ -67,6 +68,9 @@ public:
 
   //! return the partition manager object that creates partitionings
   static std::shared_ptr<Partition::Manager> partitionManager();
+
+  //! return the object that collects information about all nested solvers and produces a diagram, also with data connections
+  static std::shared_ptr<SolverStructureVisualizer> solverStructureVisualizer();
 
   //! get the own MPI rank no in the communicator of this context
   int ownRankNo();
@@ -118,31 +122,33 @@ private:
   //! initialize the library used for network communication with MegaMol
   void initializeZMQ();
 
-  PythonConfig pythonConfig_;    ///< the top level python config dictionary of the current context (i.e. may be a sub-dict of the global config)
-  std::shared_ptr<Partition::RankSubset> rankSubset_; ///< the ranks that collectively run the code where this context is valid
+  PythonConfig pythonConfig_;                         //< the top level python config dictionary of the current context (i.e. may be a sub-dict of the global config)
+  std::shared_ptr<Partition::RankSubset> rankSubset_; //< the ranks that collectively run the code where this context is valid
 
-  static std::shared_ptr<Mesh::Manager> meshManager_;   ///< object that saves all meshes that are used
-//  static std::shared_ptr<Solver::Manager> solverManager_; ///< object that saves all solver configurations that are used
-  static std::map<int, std::shared_ptr<Solver::Manager>> solverManagerForThread_;  ///< object that saves all solver configurations that are used, different for each thread
+  static std::shared_ptr<Mesh::Manager> meshManager_; //< object that saves all meshes that are used
+//  static std::shared_ptr<Solver::Manager> solverManager_; //< object that saves all solver configurations that are used
+  static std::map<int, std::shared_ptr<Solver::Manager>> solverManagerForThread_;  //< object that saves all solver configurations that are used, different for each thread
 
-  static std::shared_ptr<Partition::Manager> partitionManager_;  ///< partition manager object that creates and manages partitionings
-  
-  static int nRanksCommWorld_;   ///< number of ranks in MPI_COMM_WORLD
-  static int ownRankNoCommWorld_;  ///< the own rank no in MPI_COMM_WORLD, using MPI_COMM_WORLD should be avoided in the program, instead use this global variable
-  static bool initialized_;  ///< if MPI, Petsc and easyloggingPP is already initialized. This needs to be done only once in the program.
-  static int nObjects_;   ///< number of objects of DihuContext, if the last object gets destroyed, call MPI_Finalize or MPI_Barrier, depending on doNotFinalizeMpi
-  static std::string pythonScriptText_;  ///< the text of the python config script
-  static std::shared_ptr<std::thread> megamolThread_;   ///< thread that runs megamol
-  static std::vector<char *> megamolArgv_;   ///< the arguments use for the megamol instance
-  static std::vector<std::string> megamolArguments_;  ///< the string data of the megamol arguments
-  bool doNotFinalizeMpi_;  ///< when the last object gets destroyed, either MPI_Finalize() is called (should be used) or MPI_Barrier (only needed in testcases where MPI context needs to be used for the next test cases)
+  static std::shared_ptr<Partition::Manager> partitionManager_;                    //< partition manager object that creates and manages partitionings
+  static std::shared_ptr<SolverStructureVisualizer> solverStructureVisualizer_;    //< object that collects information about all nested solvers and produces a diagram, also with data connections
+
+  static int nRanksCommWorld_;                        //< number of ranks in MPI_COMM_WORLD
+  static int ownRankNoCommWorld_;                     //< the own rank no in MPI_COMM_WORLD, using MPI_COMM_WORLD should be avoided in the program, instead use this global variable
+  static bool initialized_;                           //< if MPI, Petsc and easyloggingPP is already initialized. This needs to be done only once in the program.
+  static int nObjects_;                               //< number of objects of DihuContext, if the last object gets destroyed, call MPI_Finalize or MPI_Barrier, depending on doNotFinalizeMpi
+  static std::string pythonScriptText_;               //< the text of the python config script
+  static std::shared_ptr<std::thread> megamolThread_; //< thread that runs megamol
+  static std::vector<char *> megamolArgv_;            //< the arguments use for the megamol instance
+  static std::vector<std::string> megamolArguments_;  //< the string data of the megamol arguments
+  static std::string solverStructureDiagramFile_;     //< filename of a file produced by solverStructureVisualizer_
+  bool doNotFinalizeMpi_;                             //< when the last object gets destroyed, either MPI_Finalize() is called (should be used) or MPI_Barrier (only needed in testcases where MPI context needs to be used for the next test cases)
 
 #ifdef HAVE_ADIOS
-  static std::shared_ptr<adios2::ADIOS> adios_;  ///< adios context option
+  static std::shared_ptr<adios2::ADIOS> adios_;  //< adios context option
 #endif
 
 #ifdef HAVE_MEGAMOL
-  static std::shared_ptr<zmq::context_t> zmqContext_;  ///< the 0mq context
-  static std::shared_ptr<zmq::socket_t> zmqSocket_;  ///< a socket that is connected to one megamol
+  static std::shared_ptr<zmq::context_t> zmqContext_;  //< the 0mq context
+  static std::shared_ptr<zmq::socket_t> zmqSocket_;  //< a socket that is connected to one megamol
 #endif
 };

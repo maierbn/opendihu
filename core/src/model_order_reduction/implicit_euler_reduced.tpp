@@ -95,7 +95,6 @@ void ImplicitEulerReduced<TimeSteppingImplicitType>::
 run()
 {
   TimeSteppingSchemeOdeReduced<TimeSteppingImplicitType>::run();
-  
 }
   
 } //namespace

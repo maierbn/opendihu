@@ -139,8 +139,18 @@ initialize()
   LOG(DEBUG) << "initialize multidomain_solver, " << nCompartments_ << " compartments";
   assert(this->specificSettings_.pyObject());
 
+  // add this solver to the solvers diagram
+  DihuContext::solverStructureVisualizer()->addSolver("MultidomainSolver");
+  DihuContext::solverStructureVisualizer()->setOutputConnectorData(getOutputConnectorData());
+
+  // indicate in solverStructureVisualizer that now a child solver will be initialized
+  DihuContext::solverStructureVisualizer()->beginChild("PotentialFlow");
+
   // initialize the potential flow finite element method, this also creates the function space
   finiteElementMethodPotentialFlow_.initialize();
+
+  // indicate in solverStructureVisualizer that the child solver initialization is done
+  DihuContext::solverStructureVisualizer()->endChild();
 
   // initialize the data object
   dataMultidomain_.setFunctionSpace(finiteElementMethodPotentialFlow_.functionSpace());
@@ -148,8 +158,14 @@ initialize()
 
   LOG(INFO) << "Run potential flow simulation for fiber directions.";
 
+  // avoid that solver structure file is created, this should only be done after the whole simulation has finished
+  DihuContext::solverStructureVisualizer()->disable();
+
   // solve potential flow Laplace problem
   finiteElementMethodPotentialFlow_.run();
+
+  // enable again
+  DihuContext::solverStructureVisualizer()->enable();
 
   LOG(DEBUG) << "compute gradient field";
 
@@ -162,10 +178,16 @@ initialize()
 
   initializeCompartmentRelativeFactors();
 
+  // indicate in solverStructureVisualizer that now a child solver will be initialized
+  DihuContext::solverStructureVisualizer()->beginChild("Activation");
+
   // initialize the finite element class, from which only the stiffness matrix is needed
   // diffusion object without prefactor, for normal diffusion (2nd multidomain eq.)
   finiteElementMethodDiffusion_.initialize(dataMultidomain_.fiberDirection(), nullptr);
   finiteElementMethodDiffusion_.initializeForImplicitTimeStepping(); // this performs extra initialization for implicit timestepping methods, i.e. it sets the inverse lumped mass matrix
+
+  // indicate in solverStructureVisualizer that the child solver initialization is done
+  DihuContext::solverStructureVisualizer()->endChild();
 
   // diffusion objects with spatially varying prefactors (f_r), needed for the bottom row of the matrix eq. or the 1st multidomain eq.
   for (int k = 0; k < nCompartments_; k++)
@@ -242,6 +264,8 @@ initializeCompartmentRelativeFactors()
     LOG(FATAL) << "Only " << compartmentFields.size() << " relative factors specified under \"compartmentRelativeFactors\". "
       << "Number of compartments is " << nCompartments_ << ".";
   }
+
+
   for (int k = 0; k < nCompartments_; k++)
   {
     std::vector<double> values = PythonUtility::convertFromPython<std::vector<double>>::get(compartmentFields[k].pyObject());
@@ -439,7 +463,7 @@ solveLinearSystem()
   PetscErrorCode ierr;
   ierr = KSPSetInitialGuessNonzero(*this->linearSolver_->ksp(), PETSC_TRUE); CHKERRV(ierr);
 
-  // solve the system, KSPSolve(ksp,b,x)
+  // solve the system
 #ifndef NDEBUG
   this->linearSolver_->solve(rightHandSide_, solution_);
 #else

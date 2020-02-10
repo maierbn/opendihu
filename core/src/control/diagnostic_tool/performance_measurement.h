@@ -3,7 +3,7 @@
 #include <Python.h>  // has to be the first included header
 #include <map>
 
-#include "dihu_context.h"
+#include "control/dihu_context.h"
 #include "interfaces/runnable.h"
 
 namespace Control
@@ -73,4 +73,4 @@ template<>
 void PerformanceMeasurement::measureError<double>(std::string name, double differenceVector);
 
 } // namespace
-#include "control/performance_measurement.tpp"
+#include "control/diagnostic_tool/performance_measurement.tpp"

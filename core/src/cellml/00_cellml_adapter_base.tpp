@@ -10,6 +10,7 @@
 #include "utility/string_utility.h"
 #include "data_management/output_connector_data.h"
 #include "mesh/mesh_manager/mesh_manager.h"
+#include "control/diagnostic_tool/solver_structure_visualizer.h"
 
 template<int nStates, int nIntermediates_, typename FunctionSpaceType>
 CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
@@ -95,6 +96,9 @@ initialize()
     PythonUtility::printDict(specificSettings_.pyObject());
   }
   
+  // add this solver to the solvers diagram, which is a SVG file that will be created at the end of the simulation.
+  DihuContext::solverStructureVisualizer()->addSolver("CellmlAdapter");
+
   // create a mesh if there is not yet one assigned, function space FunctionSpace::Generic
   if (!functionSpace_)
   {

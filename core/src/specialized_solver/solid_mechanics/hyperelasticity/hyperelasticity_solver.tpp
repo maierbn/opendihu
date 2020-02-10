@@ -6,7 +6,8 @@
 #include "utility/petsc_utility.h"
 #include "solver/solver_manager.h"
 #include "data_management/specialized_solver/multidomain.h"
-#include "control/performance_measurement.h"
+#include "control/diagnostic_tool/performance_measurement.h"
+#include "control/diagnostic_tool/solver_structure_visualizer.h"
 
 namespace SpatialDiscretization
 {
@@ -198,6 +199,9 @@ initialize()
   // setup Petsc variables
   LOG(DEBUG) << "initialize Petsc Variables";
   initializePetscVariables();
+
+  // add this solver to the solvers diagram
+  DihuContext::solverStructureVisualizer()->addSolver("HyperelasticitySolver");
 
   LOG(DEBUG) << "initialization done";
   this->initialized_ = true;

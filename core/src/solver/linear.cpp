@@ -1,7 +1,7 @@
 #include "solver/linear.h"
 
 #include "utility/python_utility.h"
-#include "control/performance_measurement.h"
+#include "control/diagnostic_tool/performance_measurement.h"
 #include "partition/partitioned_petsc_mat/partitioned_petsc_mat.h"
 
 namespace Solver

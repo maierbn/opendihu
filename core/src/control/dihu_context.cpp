@@ -26,7 +26,8 @@
 #include "mesh/mesh_manager/mesh_manager.h"
 #include "solver/solver_manager.h"
 #include "partition/partition_manager.h"
-#include "control/stimulation_logging.h"
+#include "control/diagnostic_tool/stimulation_logging.h"
+#include "control/diagnostic_tool/solver_structure_visualizer.h"
 
 #include "easylogging++.h"
 #include "control/settings_file_name.h"
@@ -42,13 +43,14 @@
 #include "ExecutableSupport.hpp"
 #endif
 
-//INITIALIZE_EASYLOGGINGPP
-
 std::shared_ptr<Mesh::Manager> DihuContext::meshManager_ = nullptr;
 //std::shared_ptr<Solver::Manager> DihuContext::solverManager_ = nullptr;
 std::map<int, std::shared_ptr<Solver::Manager>> DihuContext::solverManagerForThread_;
 std::shared_ptr<Partition::Manager> DihuContext::partitionManager_ = nullptr;
+std::shared_ptr<SolverStructureVisualizer> DihuContext::solverStructureVisualizer_ = nullptr;
+std::string DihuContext::solverStructureDiagramFile_ = "";
 std::string DihuContext::pythonScriptText_ = "";
+
 std::shared_ptr<std::thread> DihuContext::megamolThread_ = nullptr;
 std::vector<char *> DihuContext::megamolArgv_;
 std::vector<std::string> DihuContext::megamolArguments_;
@@ -107,7 +109,6 @@ DihuContext::DihuContext(const DihuContext &rhs) : pythonConfig_(rhs.pythonConfi
 
   doNotFinalizeMpi_ = rhs.doNotFinalizeMpi_;
 }
-
 
 DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, PythonConfig pythonConfig, std::shared_ptr<Partition::RankSubset> rankSubset) :
   pythonConfig_(pythonConfig), rankSubset_(rankSubset), doNotFinalizeMpi_(doNotFinalizeMpi)
@@ -294,6 +295,11 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
     solverManagerForThread_[0] = std::make_shared<Solver::Manager>(pythonConfig_);
     solverManagerForThread_[1] = std::make_shared<Solver::Manager>(pythonConfig_);
   }
+
+  if (!solverStructureVisualizer_)
+  {
+    solverStructureVisualizer_ = std::make_shared<SolverStructureVisualizer>();
+  }
 }
 
 DihuContext::DihuContext(int argc, char *argv[], std::string pythonSettings, bool doNotFinalizeMpi) :
@@ -406,6 +412,11 @@ std::shared_ptr<Partition::Manager> DihuContext::partitionManager()
   return partitionManager_;
 }
 
+std::shared_ptr<SolverStructureVisualizer> DihuContext::solverStructureVisualizer()
+{
+  return solverStructureVisualizer_;
+}
+
 std::shared_ptr<Solver::Manager> DihuContext::solverManager() const
 {
   // get number of omp threads
@@ -473,20 +484,18 @@ DihuContext::~DihuContext()
   VLOG(1) << "~DihuContext, nObjects = " << nObjects_;
   if (nObjects_ == 0)
   {
-    // write log file
-    Control::PerformanceMeasurement::writeLogFile();
+    // write log files
+    if (solverStructureVisualizer_)
+      solverStructureVisualizer_->writeDiagramFile(solverStructureDiagramFile_);
+
     Control::StimulationLogging::writeLogFile();
+    Control::PerformanceMeasurement::writeLogFile();
 
     // After a call to MPI_Finalize we cannot call MPI_Initialize() anymore.
     // This is only a problem when the code is tested with the GoogleTest framework, because then we want to run multiple tests in one executable.
     // In this case, do not finalize MPI, but call MPI_Barrier instead which also syncs the ranks.
 
-    if (doNotFinalizeMpi_)
-    {
-      //LOG(DEBUG) << "MPI_Barrier";
-      //MPI_Barrier(MPI_COMM_WORLD);
-    }
-    else
+    if (!doNotFinalizeMpi_)
     {
 #ifdef HAVE_MEGAMOL
       LOG(DEBUG) << "wait for MegaMol to finish";
@@ -496,17 +505,18 @@ DihuContext::~DihuContext()
         megamolThread_->join();
 #endif
 
-      LOG(DEBUG) << "MPI_Finalize";
       // global barrier
       MPI_Barrier(MPI_COMM_WORLD);
+
+      // finalize Petsc and MPI
+      LOG(DEBUG) << "Petsc_Finalize";
+      PetscErrorCode ierr = PetscFinalize(); CHKERRV(ierr);
       MPI_Finalize();
     }
   }
   // do not clear pythonConfig_ here, because it crashes
   //VLOG(4) << "PY_CLEAR(PYTHONCONFIG_)";  // note: calling VLOG in a destructor is critical and can segfault
   //Py_CLEAR(pythonConfig_);
-
-
 
   // do not finalize Python because otherwise tests keep crashing
   //Py_Finalize();

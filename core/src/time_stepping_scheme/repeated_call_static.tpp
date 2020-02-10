@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "utility/python_utility.h"
+#include "control/diagnostic_tool/solver_structure_visualizer.h"
 
 namespace TimeSteppingScheme
 {
@@ -25,15 +26,30 @@ initialize()
   TimeSteppingScheme::initialize();
   LOG(TRACE) << "RepeatedCallStatic::initialize";
 
+  // add this solver to the solvers diagram
+  DihuContext::solverStructureVisualizer()->addSolver("RepeatedCall");
+
+  // indicate in solverStructureVisualizer that now a child solver will be initialized
+  DihuContext::solverStructureVisualizer()->beginChild();
+
   // initialize underlying Solver object, also with time step width
   solver_.initialize();
+
+  // indicate in solverStructureVisualizer that the child solver initialization is done
+  DihuContext::solverStructureVisualizer()->endChild();
 }
 
 template<typename Solver>
 void RepeatedCallStatic<Solver>::advanceTimeSpan()
 {
+  // avoid that solver structure file is created, this should only be done after the whole simulation has finished
+  DihuContext::solverStructureVisualizer()->disable();
+
   // run the solver which does not have advanceTimeSpan
   solver_.run();
+
+  // enable again
+  DihuContext::solverStructureVisualizer()->enable();
 }
 
 template<typename Solver>

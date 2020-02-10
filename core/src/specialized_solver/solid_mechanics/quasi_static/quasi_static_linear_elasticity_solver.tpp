@@ -5,7 +5,7 @@
 #include "utility/python_utility.h"
 #include "utility/petsc_utility.h"
 #include "data_management/specialized_solver/multidomain.h"
-#include "control/performance_measurement.h"
+#include "control/diagnostic_tool/performance_measurement.h"
 
 namespace TimeSteppingScheme
 {
@@ -54,7 +54,15 @@ advanceTimeSpan()
   // solve linear elasticity
   finiteElementMethodLinearElasticity_.setRightHandSide();
   finiteElementMethodLinearElasticity_.applyBoundaryConditions();
+
+  // avoid that solver structure file is created, this should only be done after the whole simulation has finished
+  DihuContext::solverStructureVisualizer()->disable();
+
   finiteElementMethodLinearElasticity_.run();
+
+  // enable again
+  DihuContext::solverStructureVisualizer()->enable();
+
 
   LOG(DEBUG) << "compute strain";
 
@@ -165,6 +173,12 @@ initialize()
   data_.setFunctionSpace(finiteElementMethodLinearElasticity_.functionSpace());
   data_.initialize();
 
+  // add this solver to the solvers diagram
+  DihuContext::solverStructureVisualizer()->addSolver("QuasiStaticLinearElasticitySolver");
+
+  // indicate in solverStructureVisualizer that now a child solver will be initialized
+  DihuContext::solverStructureVisualizer()->beginChild();
+
   // set pointer to active stress in linear elasticity class
   finiteElementMethodLinearElasticity_.data().setActiveStress(data_.activeStress());
   finiteElementMethodLinearElasticity_.data().setRightHandSideActive(data_.rightHandSideActive());
@@ -174,17 +188,33 @@ initialize()
 
   data_.setData(std::make_shared<DataLinearElasticityType>(finiteElementMethodLinearElasticity_.data()));
 
+  // indicate in solverStructureVisualizer that the child solver initialization is done
+  DihuContext::solverStructureVisualizer()->endChild();
+  DihuContext::solverStructureVisualizer()->beginChild("PotentialFlow");
+
   // initialize the potential flow finite element method
   finiteElementMethodPotentialFlow_.initialize();
 
+  // indicate in solverStructureVisualizer that the child solver initialization is done
+  DihuContext::solverStructureVisualizer()->endChild();
+
   LOG(INFO) << "Run potential flow simulation for fiber directions.";
+
+  // avoid that solver structure file is created, this should only be done after the whole simulation has finished
+  DihuContext::solverStructureVisualizer()->disable();
 
   // solve potential flow Laplace problem
   finiteElementMethodPotentialFlow_.run();
 
+  // enable again
+  DihuContext::solverStructureVisualizer()->enable();
+
   // compute a gradient field from the solution of the potential flow
   data_.flowPotential()->setValues(*finiteElementMethodPotentialFlow_.data().solution());
   data_.flowPotential()->computeGradientField(data_.fiberDirection());
+
+  // set the outputConnectorData for the solverStructureVisualizer to appear in the solver diagram
+  DihuContext::solverStructureVisualizer()->setOutputConnectorData(getOutputConnectorData());
 
   LOG(DEBUG) << "initialization done";
   this->initialized_ = true;

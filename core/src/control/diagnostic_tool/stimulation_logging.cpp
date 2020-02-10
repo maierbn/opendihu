@@ -1,4 +1,4 @@
-#include "control/stimulation_logging.h"
+#include "control/diagnostic_tool/stimulation_logging.h"
 
 #include <Python.h>  // has to be the first included header
 

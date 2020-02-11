@@ -823,7 +823,7 @@ generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateE
     else
     {
       sourceCode << "        case " << intermediateNo << ":\n"
-        << "          intermediatesForTransfer[" << intermediateNo << "] = intermediateAlgebraic" << intermediateNo << ";\n"
+        << "          intermediatesForTransfer[i] = intermediateAlgebraic" << intermediateNo << ";\n"
         << "          break;\n";
     }
   }

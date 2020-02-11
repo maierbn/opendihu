@@ -34,7 +34,6 @@ initialize()
   if (initialized_)
     return;
 
-  PythonConfig config;
 
   // this->specificSettings_
 

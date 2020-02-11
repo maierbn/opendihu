@@ -118,15 +118,16 @@ initialize()
   // now call initialize, data will then create all variables (Petsc Vec's)
   data_.initialize();
 
-  //typename DynamicHyperelasticitySolverType::HyperelasticitySolverType &hyperelasticitySolver = dynamicHyperelasticitySolver_.hyperelasticitySolver();
-/*
+  typename DynamicHyperelasticitySolverType::HyperelasticitySolverType &hyperelasticitySolver = dynamicHyperelasticitySolver_.hyperelasticitySolver();
+
+  // set field variables from dynamicHyperelasticitySolver in data_ such that they can be output by the output writer
   data_.setFieldVariables(dynamicHyperelasticitySolver_.data().displacements(),
                           dynamicHyperelasticitySolver_.data().velocities(),
                           hyperelasticitySolver.data().activePK2Stress(),
                           hyperelasticitySolver.data().pK2Stress(),
                           hyperelasticitySolver.data().fiberDirection());
 
-*/
+
 
   // set the outputConnectorData for the solverStructureVisualizer to appear in the solver diagram
   DihuContext::solverStructureVisualizer()->setOutputConnectorData(getOutputConnectorData());

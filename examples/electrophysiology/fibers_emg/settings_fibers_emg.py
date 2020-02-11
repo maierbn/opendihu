@@ -178,7 +178,7 @@ config = {
     "durationLogKey":         "duration_total",
     "timeStepOutputInterval": 1,
     "endTime":                variables.end_time,
-    "connectedSlotsTerm1To2": [None,0] if variables.use_elasticity else [0],  # elasticity: transfer gamma to elasticity, fibers_emg: transfer Vm to StaticBidomainSolver
+    "connectedSlotsTerm1To2": {1:0} if variables.use_elasticity else {0:0},  # elasticity: transfer gamma to elasticity, fibers_emg: transfer Vm to StaticBidomainSolver
     "connectedSlotsTerm2To1": [None]   if variables.use_elasticity else [None],   # elasticity: only transfer back geometry (this happens automatically),   fibers_emg: transfer nothing back
     "Term1": {        # monodomain, fibers
       "MultipleInstances": {

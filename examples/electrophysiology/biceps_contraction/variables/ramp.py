@@ -72,10 +72,13 @@ d  = 9.1733                 # [-] anisotropy parameter
 material_parameters = [c1, c2, b, d]   # material parameters
 pmax = 7.3                  # [N/cm^2] maximum isometric active stress
 
+# for debugging, b = 0 leads to normal Mooney-Rivlin
+b = 0
+
 constant_body_force = (0,0,-9.81e-4)   # [cm/ms^2], gravity constant for the body force
 #constant_body_force = (0,0,0)
-bottom_traction = [0.0,0.0,-1e-1]        # [1 N]
-#bottom_traction = [0.0,0.0,0.0]        # [1 N]
+#bottom_traction = [0.0,0.0,-1e-1]        # [1 N]
+bottom_traction = [0.0,0.0,0.0]        # [1 N]
 
 # timing and activation parameters
 # -----------------
@@ -94,7 +97,7 @@ motor_units = [
   {"radius": 80.00, "activation_start_time": -1.8, "stimulation_frequency": 7.66,  "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},    # high number of fibers
 ]
 
-end_time = 4000.0                      # [ms] end time of the simulation
+end_time = 0.001                      # [ms] end time of the simulation
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
 stimulation_frequency_jitter = 0    # [-] jitter in percent of the frequency, added and substracted to the stimulation_frequency after each stimulation
 dt_0D = 2e-3                        # [ms] timestep width of ODEs
@@ -114,7 +117,7 @@ sampling_stride_z = 50
 
 sampling_stride_x = 4
 sampling_stride_y = 4
-sampling_stride_z = 500
+sampling_stride_z = 200
 
 # other options
 paraview_output = True

@@ -5,7 +5,8 @@
 #include "utility/python_utility.h"
 #include "utility/petsc_utility.h"
 #include "data_management/specialized_solver/multidomain.h"
-#include "control/performance_measurement.h"
+#include "control/diagnostic_tool/performance_measurement.h"
+#include "control/diagnostic_tool/solver_structure_visualizer.h"
 
 namespace TimeSteppingScheme
 {
@@ -533,7 +534,15 @@ loadFebioOutputFile()
   fileStress.close();
 
   // update function space
+  LOG(DEBUG) << "geometry field has representation "
+    << this->data_.functionSpace()->geometryField().partitionedPetscVec()->getCurrentRepresentationString();
+
+  this->data_.functionSpace()->geometryField().finishGhostManipulation();
   this->data_.functionSpace()->geometryField().setValuesWithoutGhosts(geometryValues);
+
+  this->data_.functionSpace()->geometryField().zeroGhostBuffer();
+  this->data_.functionSpace()->geometryField().finishGhostManipulation();
+  this->data_.functionSpace()->geometryField().startGhostManipulation();
 
   LOG(DEBUG) << "geometryField pointer: " << this->data_.functionSpace()->geometryField().partitionedPetscVec();
   LOG(DEBUG) << "referenceGeometry pointer: " << this->data_.referenceGeometry()->partitionedPetscVec();
@@ -739,6 +748,12 @@ initialize()
 
   // write initial geometry
   this->outputWriterManager_.writeOutput(this->data_, 0, 0);
+
+  // add this solver to the solvers diagram
+  DihuContext::solverStructureVisualizer()->addSolver("QuasiStaticNonlinearElasticitySolverFebio");
+
+  // set the outputConnectorData for the solverStructureVisualizer to appear in the solver diagram
+  DihuContext::solverStructureVisualizer()->setOutputConnectorData(getOutputConnectorData());
 
   LOG(DEBUG) << "initialization done";
   this->initialized_ = true;

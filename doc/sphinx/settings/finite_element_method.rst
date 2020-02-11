@@ -159,6 +159,7 @@ The following keywords in the python dictionary are recognized:
     "nElements":          # integer 
     "physicalExtent":     # double
     "dirichletBoundaryConditions": # {} 
+    "updatePrescribedValuesFromSolution": # bool
     "nodePositions":      # [[x,y,z], [x,y,z], ...]
     "elements":           # [[i1,i2,...], [i1,i2,...] ],
     "relativeTolerance":  # double
@@ -338,6 +339,13 @@ This means that you have to specify prescribed nodal values on every process who
 
 When the value to set is a vector, e.g. for solid mechanics problems where displacements can be prescribed, specify a list of the components for each prescribed dof, e.g. ``[1.0, 2.0, 3.0]`` to set a Dirichlet boundary condition of :math:`\bar{u} = (1,2,3)^\top`. When not all components should be prescribed, replace the entry by ``None``, e.g. ``[None, 2.0, None]`` to only prescribe the y component.
 
+updatePrescribedValuesFromSolution
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+*Default:* ``False``
+
+If this option is set to true, the values that are initially set in the solution field variable are used as the prescribed values at the dofs in `dirichletBoundaryConditions`.
+The values that were given in `dirichletBoundaryConditions` have overridden by this. This is useful only if the `FiniteElementMethod` is part of a nested solver structure with a coupling and a timestepping scheme around it, where the solution value is updated in every iteration and the `solve()` gets called. Then the problem adjusts to update Dirichlet boundary conditions.o
+
 inputMeshIsGlobal
 ^^^^^^^^^^^^^^^^^^
 *Default:* ``True``
@@ -345,7 +353,7 @@ inputMeshIsGlobal
 Together with ``rightHandSide`` it specifies whether the given values are interpreted as local values or global values in the context of a parallel execution on multiple processes. It has no effect for serial execution.
 
 * If set to ``True``, values are interpreted as for serial execution. Then the same right hand side values should be given for all processes. Consequently, the program can be run with different numbers of processes with the same settings.
-* If set to ``False``, the specified right hand side values are interpreted to be for the local portion of the own process. In parallel execution, each process has to get only its own range of values, which are typically different for each process. 
+* If set to ``False``, the specified right hand side values are interpreted to be for the local portion of the own process. In parallel execution, each process has to get only its own range of values, which are typically different for each process. Only the non-ghost nodal values have to be given in the settings.
 
 The advantage of the local specification is that each process only has to know its own portion of the whole problem. Internally there is no transfer of the local information to other processes. 
 Thus, large problems can be computed with a high number of processes, where the global problem data would be too big to be stored by a single process.

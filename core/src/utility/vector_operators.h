@@ -83,8 +83,8 @@ template<typename T>
 std::ostream &operator<<(std::ostream &stream, std::reference_wrapper<T> value);
 
 //! output arbitrary vector
-template<typename T>
-std::ostream &operator<<(std::ostream &stream, const std::vector<T> &vector);
+template<typename T, typename A>
+std::ostream &operator<<(std::ostream &stream, const std::vector<T,A> &vector);
 
 template<>
 std::ostream &operator<<(std::ostream &stream, const std::vector<double> &vector);

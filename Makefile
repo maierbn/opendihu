@@ -112,3 +112,7 @@ dynamic_mooney_rivlin:
 
 xbraid:
 	cd examples/diffusion/PinT_diffusion1d  && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+
+static_biceps_emg:
+	cd examples/electrophysiology/static_biceps_emg  && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+

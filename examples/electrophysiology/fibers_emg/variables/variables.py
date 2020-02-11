@@ -16,11 +16,17 @@ innervation_zone_width = 0.         # not used [cm], this will later be used to 
 # -------
 diffusion_solver_type = "cg"        # solver and preconditioner for the diffusion part of the Monodomain equation
 diffusion_preconditioner_type = "none"      # preconditioner
+diffusion_solver_maxit = 1e4
+diffusion_solver_reltol = 1e-10
 potential_flow_solver_type = "gmres"        # solver and preconditioner for an initial Laplace flow on the domain, from which fiber directions are determined
 potential_flow_preconditioner_type = "none" # preconditioner
+potential_flow_solver_maxit = 1e4
+potential_flow_solver_reltol = 1e-10
 emg_solver_type = "cg"              # solver and preconditioner for the 3D static Bidomain equation that solves the intra-muscular EMG signal
 emg_preconditioner_type = "none"    # preconditioner
 emg_initial_guess_nonzero = False   # If the initial guess for the emg linear system should be set to the previous solution
+emg_solver_maxit = 1e4
+emg_solver_reltol = 1e-5
 
 # timing parameters
 # -----------------
@@ -31,6 +37,7 @@ dt_1D = 1.5e-3                      # [ms] timestep width of diffusion
 dt_splitting = 3e-3                 # [ms] overall timestep width of strang splitting
 dt_3D = 1e0                         # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
 output_timestep = 1e0               # [ms] timestep for output files
+output_timestep_big = 1e0           # [ms] timestep for output big files
 activation_start_time = 0           # [ms] time when to start checking for stimulation
 
 # input files

@@ -5,7 +5,7 @@ import sys, os
 # number of elements
 nx = 2    # 2
 ny = 2    # 2
-nz = 5    # 5
+nz = 3    # 5
 
 # boundary conditions (for quadratic elements)
 dirichlet_bc = {}
@@ -178,6 +178,7 @@ output_interval = dt
 
 config = {
   "scenarioName": "3d_box",
+  "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "DynamicHyperelasticitySolver": {
     #"numberTimeSteps": 1,
     "endTime": end_time,
@@ -209,6 +210,7 @@ config = {
     "snesMaxFunctionEvaluations": 1e8,  # maximum number of function iterations
     "snesMaxIterations": 50,            # maximum number of iterations in the nonlinear solver
     "snesRelativeTolerance": 1e-10,     # tolerance of the nonlinear solver
+    "snesAbsoluteTolerance": 1e-10,     # tolerance of the nonlinear solver
     
     #"dumpFilename": "out/r{}/m".format(sys.argv[-1]),   # dump system matrix and right hand side after every solve
     "dumpFilename": "",         # dump disabled
@@ -217,7 +219,8 @@ config = {
     # boundary and initial conditions
     "dirichletBoundaryConditions": dirichlet_bc,
     "neumannBoundaryConditions": neumann_bc,
-    "updateDirichletBoundaryConditionsFunction": update_dirichlet_boundary_conditions,
+    #"updateDirichletBoundaryConditionsFunction": update_dirichlet_boundary_conditions,
+    "updateDirichletBoundaryConditionsFunction": None,
     "updateDirichletBoundaryConditionsFunctionCallInterval": 1,
     
     "initialValuesDisplacements": [],

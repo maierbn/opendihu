@@ -168,6 +168,7 @@ neumann_bc = []
 
 config = {
   "scenarioName": "3d_box",               # specifier to find simulation run in log file
+  "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "DynamicHyperelasticitySolver": {
     #"numberTimeSteps": 1,
     "endTime": end_time,                  # end time of simulation

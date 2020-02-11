@@ -18,6 +18,7 @@
 #include "solver/linear.h"
 #include "partition/partitioned_petsc_vec/partitioned_petsc_vec.h"
 #include "partition/partitioned_petsc_mat/partitioned_petsc_mat.h"
+#include "control/diagnostic_tool/solver_structure_visualizer.h"
 
 namespace SpatialDiscretization
 {
@@ -80,10 +81,28 @@ initialize()
 
   data_.initialize();
 
+  if (specificSettings_.hasKey("updatePrescribedValuesFromSolution"))
+  {
+    updatePrescribedValuesFromSolution_ = specificSettings_.getOptionBool("updatePrescribedValuesFromSolution", false);
+    LOG(DEBUG) << "set updatePrescribedValuesFromSolution = " << updatePrescribedValuesFromSolution_;
+  }
+
   // assemble stiffness matrix
   Control::PerformanceMeasurement::start("durationSetStiffnessMatrix");
   setStiffnessMatrix();
+
+  // save the stiffness matrix also in the other slot, that will not be overwritten by applyBoundaryConditions
+  PetscErrorCode ierr = MatDuplicate(this->data_.stiffnessMatrix()->valuesGlobal(), MAT_COPY_VALUES,
+                                     &this->data_.stiffnessMatrixWithoutBc()->valuesGlobal()); CHKERRV(ierr);
+  this->data_.stiffnessMatrixWithoutBc()->assembly(MAT_FINAL_ASSEMBLY);
+
   Control::PerformanceMeasurement::stop("durationSetStiffnessMatrix");
+
+  if (updatePrescribedValuesFromSolution_)
+  {
+    PetscUtility::dumpMatrix("stiffnessmatrix_w", "matlab", this->data_.stiffnessMatrixWithoutBc()->valuesGlobal(), MPI_COMM_WORLD);
+    PetscUtility::dumpMatrix("stiffnessmatrix", "matlab", this->data_.stiffnessMatrix()->valuesGlobal(), MPI_COMM_WORLD);
+  }
 
   // set the rhs
   Control::PerformanceMeasurement::start("durationSetRightHandSide");
@@ -94,6 +113,10 @@ initialize()
   Control::PerformanceMeasurement::start("durationAssembleBoundaryConditions");
   this->applyBoundaryConditions();
   Control::PerformanceMeasurement::stop("durationAssembleBoundaryConditions");
+
+  // add this solver to the solvers diagram
+  DihuContext::solverStructureVisualizer()->addSolver("FiniteElementMethod");
+  DihuContext::solverStructureVisualizer()->setOutputConnectorData(getOutputConnectorData());
 
   initialized_ = true;
 }
@@ -111,6 +134,7 @@ void FiniteElementMethodBase<FunctionSpaceType,QuadratureType,nComponents,Term>:
 run()
 {
   initialize();
+  applyBoundaryConditions();
   solve();
   data_.print();
 

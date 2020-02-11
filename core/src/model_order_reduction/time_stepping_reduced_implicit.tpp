@@ -30,7 +30,9 @@ initialize()
   TimeSteppingSchemeOdeReduced<TimeSteppingImplicitType>::initialize();
   
   // set the boundary conditions to system matrix, i.e. zero rows and columns of Dirichlet BC dofs and set diagonal to 1
-  this->fullTimestepping_.dirichletBoundaryConditions()->applyInSystemMatrix(this->fullTimestepping_.dataImplicit().systemMatrix(), this->fullTimestepping_.dataImplicit().boundaryConditionsRightHandSideSummand());
+  this->fullTimestepping_.dirichletBoundaryConditions()->applyInSystemMatrix(
+    this->fullTimestepping_.dataImplicit().systemMatrix(), this->fullTimestepping_.dataImplicit().systemMatrix(),
+    this->fullTimestepping_.dataImplicit().boundaryConditionsRightHandSideSummand());
   
   // compute the reduced system matrix
   setRedSystemMatrix();
@@ -162,7 +164,7 @@ solveLinearSystem(Vec &input, Vec &output)
   // solve the system, KSPSolve(ksp,b,x)
   ierr = KSPSolve(*ksp_, input, output); CHKERRV(ierr);
   
-  int numberOfIterations = 0;
+  PetscInt numberOfIterations = 0;
   PetscReal residualNorm = 0.0;
   ierr = KSPGetIterationNumber(*ksp_, &numberOfIterations); CHKERRV(ierr);
   ierr = KSPGetResidualNorm(*ksp_, &residualNorm); CHKERRV(ierr);

@@ -45,21 +45,21 @@ loopCollectMeshProperties(const FieldVariablesForOutputWriterType &fieldVariable
 template<typename VectorType, typename FieldVariablesForOutputWriterType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
 collectMeshProperties(VectorType currentFieldVariableVector, const FieldVariablesForOutputWriterType &fieldVariables,
-                           std::map<std::string,PolyDataPropertiesForMesh> &meshProperties);
+                           std::map<std::string,PolyDataPropertiesForMesh> &meshProperties, int i);
 
 /** Loop body for a tuple element
  */
 template<typename VectorType, typename FieldVariablesForOutputWriterType>
 typename std::enable_if<TypeUtility::isTuple<VectorType>::value, bool>::type
 collectMeshProperties(VectorType currentFieldVariableVector, const FieldVariablesForOutputWriterType &fieldVariables,
-                           std::map<std::string,PolyDataPropertiesForMesh> &meshProperties);
+                           std::map<std::string,PolyDataPropertiesForMesh> &meshProperties, int i);
 
  /**  Loop body for a pointer element
  */
 template<typename CurrentFieldVariableType, typename FieldVariablesForOutputWriterType>
 typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
 collectMeshProperties(CurrentFieldVariableType currentFieldVariable, const FieldVariablesForOutputWriterType &fieldVariables,
-                           std::map<std::string,PolyDataPropertiesForMesh> &meshProperties);
+                           std::map<std::string,PolyDataPropertiesForMesh> &meshProperties, int i);
 
 }  // namespace ParaviewLoopOverTuple
 

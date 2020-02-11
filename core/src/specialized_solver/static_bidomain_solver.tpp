@@ -5,7 +5,7 @@
 #include "utility/python_utility.h"
 #include "utility/petsc_utility.h"
 #include "data_management/specialized_solver/multidomain.h"
-#include "control/performance_measurement.h"
+#include "control/diagnostic_tool/performance_measurement.h"
 
 namespace TimeSteppingScheme
 {
@@ -89,8 +89,17 @@ initialize()
   LOG(DEBUG) << "initialize static_bidomain_solver";
   assert(this->specificSettings_.pyObject());
 
+  // add this solver to the solvers diagram
+  DihuContext::solverStructureVisualizer()->addSolver("StaticBidomainSolver");
+
+  // indicate in solverStructureVisualizer that now a child solver will be initialized
+  DihuContext::solverStructureVisualizer()->beginChild("PotentialFlow");
+
   // initialize the potential flow finite element method, this also creates the function space
   finiteElementMethodPotentialFlow_.initialize();
+
+  // indicate in solverStructureVisualizer that the child solver initialization is done
+  DihuContext::solverStructureVisualizer()->endChild();
 
   // initialize the data object
   data_.setFunctionSpace(finiteElementMethodPotentialFlow_.functionSpace());
@@ -98,8 +107,15 @@ initialize()
 
   LOG(INFO) << "Run potential flow simulation for fiber directions.";
 
+  // avoid that solver structure file is created, this should only be done after the whole simulation has finished
+  DihuContext::solverStructureVisualizer()->disable();
+
   // solve potential flow Laplace problem
   finiteElementMethodPotentialFlow_.run();
+
+  // enable again
+  DihuContext::solverStructureVisualizer()->enable();
+  DihuContext::solverStructureVisualizer()->beginChild("Activation Transmembrane");
 
   LOG(DEBUG) << "compute gradient field";
 
@@ -116,8 +132,15 @@ initialize()
   // initialize(direction, spatiallyVaryingPrefactor, useAdditionalDiffusionTensor)
   finiteElementMethodDiffusionTransmembrane_.initialize(data_.fiberDirection(), nullptr);
 
+  // indicate in solverStructureVisualizer that the child solver initialization is done
+  DihuContext::solverStructureVisualizer()->endChild();
+  DihuContext::solverStructureVisualizer()->beginChild("Activation Extracellular");
+
   // direction, spatiallyVaryingPrefactor, useAdditionalDiffusionTensor=true
   finiteElementMethodDiffusionExtracellular_.initialize(data_.fiberDirection(), nullptr, true);
+
+  // indicate in solverStructureVisualizer that the child solver initialization is done
+  DihuContext::solverStructureVisualizer()->endChild();
 
   // initialize the matrix to be used for computing the rhs
   data_.rhsMatrix() = finiteElementMethodDiffusionTransmembrane_.data().stiffnessMatrix()->valuesGlobal();
@@ -148,6 +171,9 @@ initialize()
   MatSetNullSpace(systemMatrix, const_functions);
   MatSetNearNullSpace(systemMatrix, const_functions); // for multigrid methods
   MatNullSpaceDestroy(&const_functions);
+
+  // set the outputConnectorData for the solverStructureVisualizer to appear in the solver diagram
+  DihuContext::solverStructureVisualizer()->setOutputConnectorData(getOutputConnectorData());
 
   LOG(DEBUG) << "initialization done";
   this->initialized_ = true;

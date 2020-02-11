@@ -54,6 +54,11 @@ int main(int argc, char *argv[])
   {
     values[i].values[0] = 8.0;
   }
+  
+  for (int i = 0; i < 256; i++)
+  {
+    std::cout << i << ":  " << char(i) << std::endl;
+  }
 
   //Vc::Memory<FiberPointData> data(nFiberPoints);
   

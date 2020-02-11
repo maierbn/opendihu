@@ -35,7 +35,7 @@ nonlinearSolve()
     ierr = SNESSolve(*snes, NULL, solverVariableSolution_); CHKERRV(ierr);
 
     // get information about the solution process
-    int numberOfIterations = 0;
+    PetscInt numberOfIterations = 0;
     PetscReal residualNorm = 0.0;
     ierr = SNESGetIterationNumber(*snes, &numberOfIterations); CHKERRV(ierr);
     ierr = SNESGetFunctionNorm(*snes, &residualNorm); CHKERRV(ierr);
@@ -142,7 +142,7 @@ void HyperelasticitySolver<Term,nDisplacementComponents>::
 debug()
 {
 
-  int nRows, nColumns;
+  PetscInt nRows, nColumns;
   MatGetLocalSize(solverMatrixAdditionalNumericJacobian_, &nRows, &nColumns);
 
   std::vector<double> entriesNumericJacobian;
@@ -195,8 +195,8 @@ debug()
 
   //materialComputeResidual();   // solverVariableSolution_ -> solverVariableResidual_ respective combinedVecSolution_ -> combinedVecResidual_
 
-  int i = 46;  // 46  17
-  int j = 47;  // 47  18
+  PetscInt i = 46;  // 46  17
+  PetscInt j = 47;  // 47  18
   double epsilon = 1e-10;
 
   // compute F(x) - F(x+eps_i)
@@ -206,7 +206,7 @@ debug()
   VecDuplicateVecs(solverVariableSolution_, 5, &f);
   VecDuplicateVecs(solverVariableSolution_, 2, &diff);
 
-  int begin,end;
+  PetscInt begin,end;
   VecGetOwnershipRange(solverVariableSolution_,&begin,&end);
 
   // set x0 = x

@@ -24,7 +24,8 @@ public:
   typedef FieldVariable::FieldVariable<DisplacementsFunctionSpace,3> DisplacementsFieldVariableType;
   typedef FieldVariable::FieldVariable<PressureFunctionSpace,3> DisplacementsLinearFieldVariableType;
   typedef FieldVariable::FieldVariable<PressureFunctionSpace,1> PressureFieldVariableType;
-  typedef FieldVariable::FieldVariable<DisplacementsFunctionSpace,6> StressFieldVariableType;
+  typedef FieldVariable::FieldVariable<DisplacementsFunctionSpace,6> StressFieldVariableType;     // Voigt notation
+  typedef FieldVariable::FieldVariable<DisplacementsFunctionSpace,9> DeformationGradientFieldVariableType;  // row-major
 
   //! constructor
   QuasiStaticHyperelasticityBase(DihuContext context);
@@ -56,8 +57,17 @@ public:
   //! field variable velocities v, but on the linear mesh
   std::shared_ptr<DisplacementsLinearFieldVariableType> velocitiesLinearMesh();
 
+  //! field variable of F
+  std::shared_ptr<DeformationGradientFieldVariableType> deformationGradient();
+
+  //! field variable of Fdot
+  std::shared_ptr<DeformationGradientFieldVariableType> deformationGradientTimeDerivative();
+
   //! field variable of S
   std::shared_ptr<StressFieldVariableType> pK2Stress();
+
+  //! field variable of S_act
+  std::shared_ptr<StressFieldVariableType> activePK2Stress();
 
   //! field variable of fiber direction
   std::shared_ptr<DisplacementsFieldVariableType> fiberDirection();
@@ -105,6 +115,9 @@ protected:
   std::shared_ptr<PressureFieldVariableType> pressure_;                           //< p^(n+1) for dynamic case or p for static case, the pressure variable
   std::shared_ptr<PressureFieldVariableType> pressurePreviousTimestep_;           //< p^(n), the pressure variable
   std::shared_ptr<StressFieldVariableType> pK2Stress_;                            //< the symmetric PK2 stress tensor in Voigt notation
+  std::shared_ptr<StressFieldVariableType> activePK2Stress_;                      //< the symmetric PK2 stress tensor of the active contribution in Voigt notation
+  std::shared_ptr<DeformationGradientFieldVariableType> deformationGradient_;     //< the deformation gradient, F, all 9 values in row-major ordering
+  std::shared_ptr<DeformationGradientFieldVariableType> deformationGradientTimeDerivative_;     //< the time derivative of the deformation gradient, \dot{F}, all 9 values in row-major ordering
   std::shared_ptr<DisplacementsLinearFieldVariableType> displacementsLinearMesh_; //< the displacements u, but on the linear mesh, not the quadratic. This is an internal helper field
   std::shared_ptr<DisplacementsLinearFieldVariableType> velocitiesLinearMesh_;    //< the velocities v, but on the linear mesh, not the quadratic. This is an internal helper field
   std::shared_ptr<DisplacementsFieldVariableType> fiberDirection_;                //< interpolated direction of fibers
@@ -155,6 +168,7 @@ public:
     std::shared_ptr<DisplacementsFieldVariableType>,  // displacements_
     std::shared_ptr<DisplacementsFieldVariableType>,  // velocities_
     std::shared_ptr<StressFieldVariableType>,         // pK2Stress_
+    std::shared_ptr<StressFieldVariableType>,         // activePK2Stress_
     std::shared_ptr<DisplacementsFieldVariableType>   // fiber direction
   >
   FieldVariablesForOutputWriter;

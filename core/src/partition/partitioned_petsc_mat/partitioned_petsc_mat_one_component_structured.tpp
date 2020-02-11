@@ -78,7 +78,7 @@ template<typename MeshType, typename BasisFunctionType, typename ColumnsFunction
 PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
 ~PartitionedPetscMatOneComponent()
 {
-  LOG(DEBUG) << "destroy PartitionedPetscMat \"" << this->name_ << "\"";
+  //LOG(DEBUG) << "destroy PartitionedPetscMat \"" << this->name_ << "\"";
   PetscErrorCode ierr;
   ierr = MatDestroy(&this->globalMatrix_); CHKERRV(ierr);
   ierr = MatDestroy(&this->localMatrix_); CHKERRV(ierr);
@@ -143,6 +143,20 @@ createMatrix(MatType matrixType, int diagonalNonZeros, int offdiagonalNonZeros)
   createLocalMatrix();
 }
 
+
+/*template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
+createMatrix(Mat rhsMat)
+{
+  PetscErrorCode ierr;
+
+  // create matrix as duplicate of rhs matrix, all values are copied
+  ierr = MatDuplicate(rhsMat, MAT_COPY_VALUES, &this->globalMatrix_); CHKERRV(ierr);
+  ierr = PetscObjectSetName((PetscObject) this->globalMatrix_, this->name_.c_str()); CHKERRV(ierr);
+
+  createLocalMatrix();
+}*/
+
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
 void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
 createLocalMatrix()
@@ -154,7 +168,7 @@ createLocalMatrix()
   ierr = MatSetLocalToGlobalMapping(this->globalMatrix_, this->meshPartitionRows_->localToGlobalMappingDofs(), this->meshPartitionColumns_->localToGlobalMappingDofs()); CHKERRV(ierr);
 
   // output size of created matrix
-  int nRows, nRowsLocal, nColumns, nColumnsLocal;
+  PetscInt nRows, nRowsLocal, nColumns, nColumnsLocal;
   ierr = MatGetSize(this->globalMatrix_, &nRows, &nColumns); CHKERRV(ierr);
   ierr = MatGetLocalSize(this->globalMatrix_, &nRowsLocal, &nColumnsLocal); CHKERRV(ierr);
   LOG(DEBUG) << "matrix \"" << this->name_ << "\" created, size global: " << nRows << "x" << nColumns << ", local: " << nRowsLocal << "x" << nColumnsLocal;
@@ -187,13 +201,13 @@ setValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], 
   {
     std::stringstream stream;
     stream << "\"" << this->name_ << "\" setValues " << (addv==INSERT_VALUES? "(insert)" : "(add)") << ", rows [";
-    for (int i = 0; i < m; i++)
+    for (PetscInt i = 0; i < m; i++)
       stream << idxm[i] << " ";
     stream << "], cols [";
-    for (int i = 0; i < n; i++)
+    for (PetscInt i = 0; i < n; i++)
       stream << idxn[i] << " ";
     stream << "], values [";
-    for (int i = 0; i < n*m; i++)
+    for (PetscInt i = 0; i < n*m; i++)
       stream << v[i] << " ";
     stream << "]";
     VLOG(2) << stream.str();
@@ -212,7 +226,7 @@ zeroRowsColumns(PetscInt numRows, const PetscInt rows[], PetscScalar diag)
   {
     std::stringstream stream;
     stream << "\"" << this->name_ << "\" zeroRowsColumns rows [";
-    for (int i = 0; i < numRows; i++)
+    for (PetscInt i = 0; i < numRows; i++)
       stream << rows[i] << " ";
     stream << "], diag " << diag;
     VLOG(2) << stream.str();
@@ -270,7 +284,7 @@ zeroRows(PetscInt numRows, const PetscInt rows[])
   //ierr = MatAssemblyBegin(this->globalMatrix_, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
   //ierr = MatAssemblyEnd(this->globalMatrix_, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
 
-  //std::vector<int> rowIndicesGlobal(numRows);
+  //std::vector<PetscInt> rowIndicesGlobal(numRows);
   //ierr = ISLocalToGlobalMappingApply(this->meshPartitionRows_->localToGlobalMappingDofs(), numRows, rows, rowIndicesGlobal.data()); CHKERRV(ierr);
 
   //MatSetOption(this->globalMatrix_, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE);
@@ -351,11 +365,11 @@ getValuesGlobalPetscIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, cons
 
   if (VLOG_IS_ON(1))
   {
-    for (int i = 0; i < m; i++)
+    for (PetscInt i = 0; i < m; i++)
     {
       assert(idxm[i] < this->meshPartitionRows_->nDofsGlobal());
     }
-    for (int i = 0; i < n; i++)
+    for (PetscInt i = 0; i < n; i++)
     {
       assert(idxn[i] < this->meshPartitionColumns_->nDofsGlobal());
     }
@@ -368,13 +382,13 @@ getValuesGlobalPetscIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, cons
   {
     std::stringstream stream;
     stream << "\"" << this->name_ << "\" getValuesGlobalPetscIndexing, rows [";
-    for (int i = 0; i < m; i++)
+    for (PetscInt i = 0; i < m; i++)
       stream << idxm[i] << " ";
     stream << "], cols [";
-    for (int i = 0; i < n; i++)
+    for (PetscInt i = 0; i < n; i++)
       stream << idxn[i] << " ";
     stream << "], values [";
-    for (int i = 0; i < n*m; i++)
+    for (PetscInt i = 0; i < n*m; i++)
       stream << v[i] << " ";
     stream << "]";
     VLOG(2) << stream.str();
@@ -390,11 +404,11 @@ setValuesGlobalPetscIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, cons
 
   if (VLOG_IS_ON(1))
   {
-    for (int i = 0; i < m; i++)
+    for (PetscInt i = 0; i < m; i++)
     {
       assert(idxm[i] < this->meshPartitionRows_->nDofsGlobal());
     }
-    for (int i = 0; i < n; i++)
+    for (PetscInt i = 0; i < n; i++)
     {
       assert(idxn[i] < this->meshPartitionColumns_->nDofsGlobal());
     }
@@ -413,13 +427,13 @@ setValuesGlobalPetscIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, cons
   {
     std::stringstream stream;
     stream << "\"" << this->name_ << "\" setValuesGlobalPetscIndexing, rows [";
-    for (int i = 0; i < m; i++)
+    for (PetscInt i = 0; i < m; i++)
       stream << idxm[i] << " ";
     stream << "], cols [";
-    for (int i = 0; i < n; i++)
+    for (PetscInt i = 0; i < n; i++)
       stream << idxn[i] << " ";
     stream << "], values [";
-    for (int i = 0; i < n*m; i++)
+    for (PetscInt i = 0; i < n*m; i++)
       stream << v[i] << " ";
     stream << "]";
     VLOG(2) << stream.str();
@@ -437,17 +451,17 @@ getValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], 
   {
     std::stringstream stream;
     stream << "\"" << this->name_ << "\" getValues, rows [";
-    for (int i = 0; i < m; i++)
+    for (PetscInt i = 0; i < m; i++)
       stream << idxm[i] << " ";
     stream << "], cols [";
-    for (int i = 0; i < n; i++)
+    for (PetscInt i = 0; i < n; i++)
       stream << idxn[i] << " ";
     stream << "], ";
     VLOG(2) << stream.str();
   }
   // transfer the local indices to global indices
-  std::vector<int> rowIndicesGlobal(m);
-  std::vector<int> columnIndicesGlobal(n);
+  std::vector<PetscInt> rowIndicesGlobal(m);
+  std::vector<PetscInt> columnIndicesGlobal(n);
   ierr = ISLocalToGlobalMappingApply(this->meshPartitionRows_->localToGlobalMappingDofs(), m, idxm, rowIndicesGlobal.data()); CHKERRV(ierr);
   ierr = ISLocalToGlobalMappingApply(this->meshPartitionColumns_->localToGlobalMappingDofs(), n, idxn, columnIndicesGlobal.data()); CHKERRV(ierr);
 
@@ -463,7 +477,7 @@ getValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], 
   {
     std::stringstream stream;
     stream << "values [";
-    for (int i = 0; i < n*m; i++)
+    for (PetscInt i = 0; i < n*m; i++)
       stream << v[i] << " ";
     stream << "]";
     VLOG(2) << stream.str();
@@ -495,14 +509,14 @@ output(std::ostream &stream) const
   PetscMPIInt nRanks = this->meshPartitionRows_->nRanks();
   
   // get global size of matrix 
-  int nRowsGlobal, nColumnsGlobal, nRowsLocal, nColumnsLocal;
+  PetscInt nRowsGlobal, nColumnsGlobal, nRowsLocal, nColumnsLocal;
   PetscErrorCode ierr;
   ierr = MatGetSize(this->globalMatrix_, &nRowsGlobal, &nColumnsGlobal); CHKERRV(ierr);
   ierr = MatGetLocalSize(this->globalMatrix_, &nRowsLocal, &nColumnsLocal); CHKERRV(ierr);
   
   // retrieve local values
-  int nRowDofsLocal = this->meshPartitionRows_->nDofsLocalWithoutGhosts();
-  int nColumnDofsLocal = this->meshPartitionColumns_->nDofsLocalWithoutGhosts();
+  PetscInt nRowDofsLocal = this->meshPartitionRows_->nDofsLocalWithoutGhosts();
+  PetscInt nColumnDofsLocal = this->meshPartitionColumns_->nDofsLocalWithoutGhosts();
   std::vector<double> localValues;
   localValues.resize(nRowDofsLocal*nColumnDofsLocal);
   

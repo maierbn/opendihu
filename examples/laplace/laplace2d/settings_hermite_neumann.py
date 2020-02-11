@@ -22,6 +22,7 @@ if False:
       ]
       
 config = {
+  "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "FiniteElementMethod" : {
     "nElements": [nx, ny],
     "inputMeshIsGlobal": True,
@@ -29,17 +30,22 @@ config = {
     "nodePositions": [[float(i)/nx, float(j)/ny] for j in range(ny+1) for i in range(nx+1)],
     "setHermiteDerivatives": True,
     "elements": [[j*(nx+1)+i, j*(nx+1)+i+1, (j+1)*(nx+1)+i, (j+1)*(nx+1)+i+1] for j in range(ny) for i in range(nx)],
-    "prefactor": 1,
+    
     #"dirichletBoundaryConditions": {
     #  0:0, 1:0.2, 2:0.4, 3:0.6, 4:0.8, 5:1,   
     #  30:0, 31:0.2, 32:0.4, 33:0.6, 34:0.8, 35:1
     #},
     "dirichletBoundaryConditions": {0:0},
     "neumannBoundaryConditions": neumann_bc,        # Neumann BC are always interpolated using Lagrange ansatz functions with one dof per node (not Hermite), even if the solution uses Hermite ansatz functions
-    "relativeTolerance": 1e-15,
+    "prefactor": 1,
+    
     "solverType": "gmres",
     "preconditionerType": "none",
+    "relativeTolerance": 1e-15,
     "maxIterations": 10000,
+    "dumpFilename": "out/",
+    "dumpFormat": "matlab",  # default, ascii, or matlab
+    
     "OutputWriter" : [
       {"format": "Paraview", "outputInterval": 1, "filename": "out/p", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":False},
       {"format": "PythonFile", "filename": "out/p", "outputInterval": 1, "binary":False, "onlyNodalValues":True},

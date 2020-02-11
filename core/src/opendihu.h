@@ -28,6 +28,7 @@
 #include "time_stepping_scheme/implicit_euler.h"
 #include "time_stepping_scheme/heun.h"
 #include "time_stepping_scheme/repeated_call.h"
+#include "time_stepping_scheme/repeated_call_static.h"
 #include "specialized_solver/multidomain_solver.h"
 #include "specialized_solver/static_bidomain_solver.h"
 #include "specialized_solver/solid_mechanics/quasi_static/quasi_static_linear_elasticity_solver.h"
@@ -39,6 +40,7 @@
 #include "specialized_solver/fast_monodomain_solver/fast_monodomain_solver.h"
 #include "specialized_solver/my_new_solver/my_new_static_solver.h"
 #include "specialized_solver/my_new_solver/PinT_IE.h"
+#include "specialized_solver/muscle_contraction_solver.h"
 #include "time_stepping_scheme/heun_adaptive.h"
 
 #include "spatial_discretization/finite_element_method/05_time_stepping.h"

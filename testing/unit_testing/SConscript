@@ -59,7 +59,7 @@ if not env['no_tests']:
                  'src/2_ranks/main.cpp',
                  'src/utility.cpp',
                  'src/2_ranks/partitioned_petsc_vec.cpp']
-    #src_files = ['src/2_ranks/solid_mechanics.cpp', 'src/2_ranks/main.cpp', 'src/utility.cpp']
+    #src_files = ['src/2_ranks/laplace.cpp', 'src/2_ranks/main.cpp', 'src/utility.cpp']
     #print ""
     #print "WARNING: only compiling tests ",src_files
 

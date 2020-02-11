@@ -240,7 +240,7 @@ void PartitionedPetscVecNComponentsStructured<MeshType,BasisFunctionType,nCompon
 setRepresentationGlobal()
 {
   VLOG(2) << "\"" << this->name_ << "\" setRepresentationGlobal, previous representation: "
-    << Partition::valuesRepresentationString[this->currentRepresentation_];
+    << this->getCurrentRepresentationString();
   // set the internal representation to be global, i.e. using the global vectors
 
   if (this->currentRepresentation_ == Partition::values_representation_t::representationLocal)
@@ -274,7 +274,7 @@ setRepresentationGlobal()
   }
   else
   {
-    LOG(FATAL) << "Cannot set vector representation from \"" << Partition::valuesRepresentationString[this->currentRepresentation_]
+    LOG(FATAL) << "Cannot set vector representation from \"" << this->getCurrentRepresentationString()
       << "\" to \"global\".";
   }
 }
@@ -284,7 +284,7 @@ void PartitionedPetscVecNComponentsStructured<MeshType,BasisFunctionType,nCompon
 setRepresentationLocal()
 {
   VLOG(2) << "\"" << this->name_ << "\" setRepresentationLocal, previous representation: "
-    << Partition::valuesRepresentationString[this->currentRepresentation_];
+    << this->getCurrentRepresentationString();
 
   if (this->currentRepresentation_ == Partition::values_representation_t::representationGlobal)
   {
@@ -307,7 +307,7 @@ setRepresentationLocal()
   else if (this->currentRepresentation_ == Partition::values_representation_t::representationInvalid)
   {
     LOG(FATAL) << "\"" << this->name_ << "\" setRepresentationLocal, previous representation: "
-    << Partition::valuesRepresentationString[this->currentRepresentation_] << ". This is not directly possible, call restoreExtractedComponent instead.";
+    << this->getCurrentRepresentationString() << ". This is not directly possible, call restoreExtractedComponent instead.";
   }
   else if (this->currentRepresentation_ == Partition::values_representation_t::representationLocal)
   {
@@ -315,7 +315,7 @@ setRepresentationLocal()
   }
   else
   {
-    LOG(FATAL) << "Cannot set vector representation from \"" << Partition::valuesRepresentationString[this->currentRepresentation_]
+    LOG(FATAL) << "Cannot set vector representation from \"" << this->getCurrentRepresentationString()
       << "\" to \"local\".";
   }
 }
@@ -329,7 +329,7 @@ startGhostManipulation()
   if (this->currentRepresentation_ != Partition::values_representation_t::representationGlobal)
   {
     LOG(FATAL) << "\"" << this->name_ << "\", startGhostManipulation called when representation is not global (but "
-      << Partition::valuesRepresentationString[this->currentRepresentation_]
+      << this->getCurrentRepresentationString()
       << "), this overwrites the previous values and fetches the last from the global vectors!" << std::endl
       << "Call setRepresentationGlobal() before startGhostManipulation() or check if startGhostManipulation() "
       << "is even necessary (because the representation is already local).";
@@ -366,7 +366,7 @@ finishGhostManipulation()
   if (this->currentRepresentation_ != Partition::values_representation_t::representationLocal)
   {
     LOG(ERROR) << "\"" << this->name_ << "\", finishGhostManipulation called when representation is not local (it is "
-      << Partition::valuesRepresentationString[this->currentRepresentation_]
+      << this->getCurrentRepresentationString()
       << "), (probably no previous startGhostManipulation)";
   }
   
@@ -456,7 +456,7 @@ getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[])
     {
       str << ix[i] << " ";
     }
-    str << ") [representation=" << Partition::valuesRepresentationString[this->currentRepresentation_] << "]: ";
+    str << ") [representation=" << this->getCurrentRepresentationString() << "]: ";
     for (int i = 0; i < ni; i++)
     {
       if (fabs(y[i]) > 1e-10)
@@ -530,7 +530,7 @@ setValues(int componentNo, PetscInt ni, const PetscInt ix[], const PetscScalar y
       str << y[i] << " ";
     }
     str << (iora == INSERT_VALUES? "INSERT_VALUES" : (iora == ADD_VALUES? "ADD_VALUES" : "unknown"));
-    str << ") [representation=" << Partition::valuesRepresentationString[this->currentRepresentation_] << "]: ";
+    str << ") [representation=" << this->getCurrentRepresentationString() << "]: ";
     VLOG(3) << str.str();
   }
 
@@ -694,7 +694,7 @@ valuesLocal(int componentNo)
   if (this->currentRepresentation_ != Partition::values_representation_t::representationLocal)
   {
     VLOG(1) << "valuesLocal called in not local vector representation ("
-      << Partition::valuesRepresentationString[this->currentRepresentation_]
+      << this->getCurrentRepresentationString()
       <<"), now set to local (without considering ghost dofs, call startGhostManipulation if ghosts are needed!)";
     setRepresentationLocal();
   }
@@ -720,7 +720,7 @@ valuesGlobal(int componentNo)
   if (this->currentRepresentation_ != Partition::values_representation_t::representationGlobal)
   {
     VLOG(1) << "valuesGlobal called in not global vector representation ("
-      << Partition::valuesRepresentationString[this->currentRepresentation_]
+      << this->getCurrentRepresentationString()
       <<"), now set to global (without considering ghost dofs, call finishGhostManipulation if ghosts are needed!)";
     setRepresentationGlobal();
   }
@@ -859,7 +859,7 @@ extractComponentShared(int componentNo, std::shared_ptr<PartitionedPetscVec<Func
   if (this->currentRepresentation_ != Partition::values_representation_t::representationContiguous)
   {
     VLOG(1) << "Called extractComponentShared with "
-      << Partition::valuesRepresentationString[this->currentRepresentation_]
+      << this->getCurrentRepresentationString()
       << " representation, representation needs to be contiguous, set to contiguous";
     setRepresentationContiguous();
   }
@@ -921,12 +921,12 @@ void PartitionedPetscVecNComponentsStructured<MeshType,BasisFunctionType,nCompon
 restoreExtractedComponent(std::shared_ptr<PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents2>> extractedPartitionedPetscVec)
 {
   VLOG(2) << "\"" << this->name_ << "\" restoreExtractedComponent() nComponents = " << nComponents << ", current representation: "
-   << Partition::valuesRepresentationString[this->currentRepresentation_];
+   << this->getCurrentRepresentationString();
 
   if (this->currentRepresentation_ != Partition::values_representation_t::representationInvalid)
   {
     LOG(ERROR) << "restoreExtractedComponent was called on a vector with representation "
-      << Partition::valuesRepresentationString[this->currentRepresentation_]
+      << this->getCurrentRepresentationString()
       << ", should be representationInvalid. Check that extractComponentShared was called previously.";
     return;
   }
@@ -1020,7 +1020,7 @@ void PartitionedPetscVecNComponentsStructured<MeshType,BasisFunctionType,nCompon
 setValues(int componentNo, Vec petscVector, std::string name)
 {
   VLOG(3) << "\"" << this->name_ << "\" setValues from petscVector, representation: "
-    << Partition::valuesRepresentationString[this->currentRepresentation_] << ".";
+    << this->getCurrentRepresentationString() << ".";
 
   assert(componentNo >= 0);
   assert(componentNo < vectorGlobal_.size());
@@ -1097,13 +1097,13 @@ output(std::ostream &stream)
     vector = vectorGlobal_[componentNo];
 
   // get global size of vector
-  int nEntries, nEntriesLocal;
+  PetscInt nEntries, nEntriesLocal;
   PetscErrorCode ierr;
   ierr = VecGetSize(vector, &nEntries); CHKERRV(ierr);
   ierr = VecGetLocalSize(vector, &nEntriesLocal); CHKERRV(ierr);
 
   stream << "vector \"" << this->name_ << "\", (" << nEntries << " global, " << nEntriesLocal
-    << " local entries (per component), representation " << Partition::valuesRepresentationString[this->currentRepresentation_]
+    << " local entries (per component), representation " << this->getCurrentRepresentationString()
     << ", vectors local[0]: " << vectorLocal_[0] << ", global[0]: " << vectorGlobal_[0] << ", contiguous: " << valuesContiguous_ << ")";
 
   // loop over components
@@ -1120,7 +1120,7 @@ output(std::ostream &stream)
     }
 
     // get global size of vector
-    int nEntries, nEntriesLocal;
+    PetscInt nEntries, nEntriesLocal;
     PetscErrorCode ierr;
     ierr = VecGetSize(vector, &nEntries); CHKERRV(ierr);
     ierr = VecGetLocalSize(vector, &nEntriesLocal); CHKERRV(ierr);
@@ -1216,7 +1216,7 @@ output(std::ostream &stream)
         int dofNoLocalEnd = localSizes[rankNo];
         if (!VLOG_IS_ON(1))
         {
-          dofNoLocalEnd = std::min(400, localSizes[rankNo]);
+          dofNoLocalEnd = std::min((int)400, (int)localSizes[rankNo]);
         }
 
         for (dof_no_t dofNoLocal = 0; dofNoLocal < localSizes[rankNo]; dofNoLocal++)
@@ -1245,7 +1245,7 @@ output(std::ostream &stream)
       dof_no_t dofNoLocalEnd = this->meshPartition_->nDofsLocalWithoutGhosts();
       if (!VLOG_IS_ON(1))
       {
-        dofNoLocalEnd = std::min(100, dofNoLocalEnd);
+        dofNoLocalEnd = std::min((int)100, (int)dofNoLocalEnd);
       }
       for (dof_no_t dofNoLocal = 0; dofNoLocal < dofNoLocalEnd; dofNoLocal++)
       {
@@ -1324,7 +1324,7 @@ output(std::ostream &stream)
         int nGhostValuesShow = nGhostValues;
         if (!VLOG_IS_ON(1))
         {
-          nGhostValuesShow = std::min(100, nGhostValues);
+          nGhostValuesShow = std::min((int)100, (int)nGhostValues);
         }
         for (int i = 0; i < nGhostValuesShow; i++)
         {

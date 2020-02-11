@@ -1,3 +1,4 @@
+from datetime import datetime
 
 # Laplace 1D Hermite
 
@@ -11,6 +12,14 @@ bc[2*n] = 0.0
 bc[2*n+1] = -1./5
 
 config = {
+  "meta": {           # Under the "meta" key you can add any values, they will appear in the log file
+    "key0": datetime.now(),
+    "key1": "test",
+    "key2": [0,1,2],
+    "key3": {"a": "b", 1: "c"},
+    "key4": None,
+    "key5": 3.1415926,
+  },
   "FiniteElementMethod" : {
     "nElements": n,
     "physicalExtent": 5.0,

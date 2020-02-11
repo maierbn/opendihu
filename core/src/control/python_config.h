@@ -42,7 +42,7 @@ public:
   //! iterator to end of path vector, which contains the keys from the top-level config object to the current context
   std::vector<std::string>::const_iterator pathEnd() const;
 
-  //! checks if this settings contain the given key, no warning is printed
+  //! checks if this settings contain the given key, no warning is printed (hasOption)
   bool hasKey(std::string key) const;
 
   //! return all keys of the current dict as vector of strings

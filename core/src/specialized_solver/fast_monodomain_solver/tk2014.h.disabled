@@ -1,0 +1,65 @@
+#pragma once
+
+#include <Python.h>  // has to be the first included header
+#include <Vc/Vc>
+
+#include "specialized_solver/fast_monodomain_solver/fast_monodomain_solver_base.h"
+#include "control/multiple_instances.h"
+#include "operator_splitting/strang.h"
+#include "time_stepping_scheme/heun.h"
+#include "cellml/03_cellml_adapter.h"
+#include "function_space/function_space.h"
+#include "mesh/structured_deformable.h"
+#include "basis_function/lagrange.h"
+#include "time_stepping_scheme/implicit_euler.h"
+#include "spatial_discretization/finite_element_method/finite_element_method.h"
+
+/** Partial specialization for exactly the combination of nested solvers for which it is optimized.
+ *  new_slow_TK_2014_12_08 model, i.e. 57 states
+ *
+ *  Note, this file has become obsolete, because the code generator can now automatically generate the code of this class.
+ */
+template<>
+class FastMonodomainSolver<
+  Control::MultipleInstances<                       // fibers
+    OperatorSplitting::Strang<
+      Control::MultipleInstances<
+        TimeSteppingScheme::Heun<                   // fiber reaction term
+          CellmlAdapter<
+            57,71,  // nStates,nIntermediates: 57,1 = Shorten, 4,9 = Hodgkin Huxley
+            FunctionSpace::FunctionSpace<
+              Mesh::StructuredDeformableOfDimension<1>,
+              BasisFunction::LagrangeOfOrder<1>
+            >
+          >
+        >
+      >,
+      Control::MultipleInstances<
+        TimeSteppingScheme::ImplicitEuler<          // fiber diffusion, note that implicit euler gives lower error in this case than crank nicolson
+          SpatialDiscretization::FiniteElementMethod<
+            Mesh::StructuredDeformableOfDimension<1>,
+            BasisFunction::LagrangeOfOrder<1>,
+            Quadrature::Gauss<2>,
+            Equation::Dynamic::IsotropicDiffusion
+          >
+        >
+      >
+    >
+  >
+> : public FastMonodomainSolverBase<57,71>
+{
+public:
+
+  //! use constructor of base class
+  using FastMonodomainSolverBase<57,71>::FastMonodomainSolverBase;
+
+protected:
+
+  //! compute one time step of the right hand side for a single simd vector of instances
+  virtual void compute0DInstance(Vc::double_v states[], std::vector<Vc::double_v> &parameters, double currentTime, double timeStepWidth,
+                                 bool stimulate, bool storeIntermediatesForTransfer,
+                                 std::vector<Vc::double_v> &intermediatesForTransfer) override;
+
+  //! set the initial values for all states
+  virtual void initializeStates(Vc::double_v states[]) override;
+};

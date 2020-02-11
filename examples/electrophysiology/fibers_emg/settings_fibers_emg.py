@@ -6,7 +6,7 @@
 #
 # You have to set n_subdomains such that it matches the number of processes, e.g. 2x2x1 = 4 processes.
 # Decomposition is in x,y,z direction, the fibers are aligned with the z axis.
-# E.g. --n_subdomains 2 2 1 which is 2x2x1 means no subdivision per fiber, 
+# E.g. --n_subdomains 2 2 1 which is 2x2x1 means no subdivision per fiber,
 # --n_subdomains 8 8 4 means every fiber will be subdivided to 4 processes and all fibers will be computed by 8x8 processes.
 #
 # Example with 4 processes and end time 5, and otherwise default parameters:
@@ -59,11 +59,17 @@ parser.add_argument('--n_subdomains_y', '-y',                help='Number of sub
 parser.add_argument('--n_subdomains_z', '-z',                help='Number of subdomains in z direction.',        type=int, default=variables.n_subdomains_z)
 parser.add_argument('--diffusion_solver_type',               help='The solver for the diffusion.',               default=variables.diffusion_solver_type, choices=["gmres","cg","lu","gamg","richardson","chebyshev","cholesky","jacobi","sor","preonly"])
 parser.add_argument('--diffusion_preconditioner_type',       help='The preconditioner for the diffusion.',       default=variables.diffusion_preconditioner_type, choices=["jacobi","sor","lu","ilu","gamg","none"])
+parser.add_argument('--diffusion_solver_reltol',             help='Ralative tolerance for diffusion solver',     type=float, default=variables.diffusion_solver_reltol)
+parser.add_argument('--diffusion_solver_maxit',              help='Maximum number of iterations for diffusion solver', type=int, default=variables.diffusion_solver_maxit)
 parser.add_argument('--potential_flow_solver_type',          help='The solver for the potential flow (non-spd matrix).', default=variables.potential_flow_solver_type, choices=["gmres","cg","lu","gamg","richardson","chebyshev","cholesky","jacobi","sor","preonly"])
 parser.add_argument('--potential_flow_preconditioner_type',  help='The preconditioner for the potential flow.',  default=variables.potential_flow_preconditioner_type, choices=["jacobi","sor","lu","ilu","gamg","none"])
+parser.add_argument('--potential_flow_solver_maxit',         help='Maximum number of iterations for potential flow solver', type=int, default=variables.potential_flow_solver_maxit)
+parser.add_argument('--potential_flow_solver_reltol',        help='Relative tolerance for potential flow solver', type=float, default=variables.potential_flow_solver_reltol)
 parser.add_argument('--emg_solver_type',                     help='The solver for the static bidomain.',         default=variables.emg_solver_type)
 #parser.add_argument('--emg_solver_type',                    help='The solver for the static bidomain.',         default=variables.emg_solver_type, choices=["gmres","cg","lu","gamg","richardson","chebyshev","cholesky","jacobi","sor","preonly"])
 parser.add_argument('--emg_preconditioner_type',             help='The preconditioner for the static bidomain.', default=variables.emg_preconditioner_type, choices=["jacobi","sor","lu","ilu","gamg","none"])
+parser.add_argument('--emg_solver_maxit',                    help='Maximum number of iterations for activation solver', type=int, default=variables.emg_solver_maxit)
+parser.add_argument('--emg_solver_reltol',                   help='Ralative tolerance for activation solver',    type=float, default=variables.diffusion_solver_reltol)
 parser.add_argument('--emg_initial_guess_nonzero',           help='If the initial guess for the emg linear system should be set to the previous solution.', default=variables.emg_initial_guess_nonzero, action='store_true')
 parser.add_argument('--paraview_output',                     help='Enable the paraview output writer.',          default=variables.paraview_output, action='store_true')
 parser.add_argument('--adios_output',                        help='Enable the MegaMol/ADIOS output writer.',          default=variables.adios_output, action='store_true')
@@ -81,9 +87,10 @@ parser.add_argument('--disable_firing_output',               help='Disables the 
 parser.add_argument('--v',                                   help='Enable full verbosity in c++ code')
 parser.add_argument('-v',                                    help='Enable verbosity level in c++ code', action="store_true")
 parser.add_argument('-vmodule',                              help='Enable verbosity level for given file in c++ code')
+parser.add_argument('-on_error_attach_debugger',                              help='Enable verbosity level for given file in c++ code')
 parser.add_argument('-pause',                                help='Stop at parallel debugging barrier', action="store_true")
 parser.add_argument('--rank_reordering',                     help='Enable rank reordering in the c++ code', action="store_true")
-parser.add_argument('--use_elasticity',                      help='Enable elasticity solver', action="store_true")
+parser.add_argument('--use_elasticity',                   help='Enable linear elasticity', action="store_true")
 
 # parse command line arguments and assign values to variables module
 args = parser.parse_args(args=sys.argv[:-2], namespace=variables)
@@ -124,29 +131,33 @@ variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
 
 # define the config dict
 config = {
-  "scenarioName": variables.scenario_name,
+  "scenarioName":                   variables.scenario_name,    # scenario name which will appear in the log file
+  "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
+  "meta": {                 # additional fields that will appear in the log
+    "partitioning": [variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z]
+  },
   "Meshes": variables.meshes,
   "MappingsBetweenMeshes": {"MeshFiber_{}".format(i) : meshName3D for i in range(variables.n_fibers_total) for meshName3D in ["3Dmesh", "3Dmesh_quadratic"]},
   "Solvers": {
     "implicitSolver": {     # solver for the implicit timestepping scheme of the diffusion time step
-      "maxIterations":      1e4,
-      "relativeTolerance":  1e-10,
+      "relativeTolerance":  variables.diffusion_solver_reltol,
+      "maxIterations":      variables.diffusion_solver_maxit,
       "solverType":         variables.diffusion_solver_type,
       "preconditionerType": variables.diffusion_preconditioner_type,
       "dumpFilename":       "",   # "out/dump_"
       "dumpFormat":         "matlab",
     },
     "potentialFlowSolver": {# solver for the initial potential flow, that is needed to estimate fiber directions for the bidomain equation
-      "relativeTolerance":  1e-10,
-      "maxIterations":      1e4,
+      "relativeTolerance":  variables.potential_flow_solver_reltol,
+      "maxIterations":      variables.potential_flow_solver_maxit,
       "solverType":         variables.potential_flow_solver_type,
       "preconditionerType": variables.potential_flow_preconditioner_type,
       "dumpFilename":       "",
       "dumpFormat":         "matlab",
     },
     "activationSolver": {   # solver for the static Bidomain equation and the EMG
-      "relativeTolerance":  1e-5,
-      "maxIterations":      1e4,
+      "relativeTolerance":  variables.emg_solver_reltol,
+      "maxIterations":      variables.emg_solver_maxit,
       "solverType":         variables.emg_solver_type,
       "preconditionerType": variables.emg_preconditioner_type,
       "dumpFilename":       "",
@@ -167,7 +178,7 @@ config = {
     "durationLogKey":         "duration_total",
     "timeStepOutputInterval": 1,
     "endTime":                variables.end_time,
-    "connectedSlotsTerm1To2": [None,0] if variables.use_elasticity else [0],  # elasticity: transfer gamma to elasticity, fibers_emg: transfer Vm to StaticBidomainSolver
+    "connectedSlotsTerm1To2": {1:0} if variables.use_elasticity else {0:0},  # elasticity: transfer gamma to elasticity, fibers_emg: transfer Vm to StaticBidomainSolver
     "connectedSlotsTerm2To1": [None]   if variables.use_elasticity else [None],   # elasticity: only transfer back geometry (this happens automatically),   fibers_emg: transfer nothing back
     "Term1": {        # monodomain, fibers
       "MultipleInstances": {
@@ -205,11 +216,12 @@ config = {
                     "nAdditionalFieldVariables":    0,
                       
                     "CellML" : {
-                      "sourceFilename":                         variables.cellml_file,                          # input C++ source file, can be either generated by OpenCMISS or OpenCOR from cellml model
-                      "compilerFlags":                          "-fPIC -O3 -shared ",
-                      #"simdSourceFilename" :                   "simdcode.cpp",                                 # transformed C++ source file that gets generated from sourceFilename and is ready for multiple instances
+                      "modelFilename":                          variables.cellml_file,                          # input C++ source file or cellml XML file
+                      "compilerFlags":                          "-fPIC -O3 -march=native -shared ",
+                      "optimizationType":                       "vc",                                           # "vc", "simd", "openmp" type of generated optimizated source file
+                      "approximateExponentialFunction":         False,                                          # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
+                      "maximumNumberOfThreads":                 0,                                              # if optimizationType is "openmp", the maximum number of threads to use. Default value 0 means no restriction.
                       #"libraryFilename":                       "cellml_simd_lib.so",                           # compiled library
-                      "useGivenLibrary":                        False,
                       #"statesInitialValues":                   [],
                       #"setSpecificParametersFunction":         set_specific_parameters,                        # callback function that sets parameters like stimulation current
                       #"setSpecificParametersCallInterval":     int(1./variables.stimulation_frequency/variables.dt_0D),         # set_specific_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
@@ -296,7 +308,7 @@ config = {
         "solverName":             "activationSolver",
         "initialGuessNonzero":    variables.emg_initial_guess_nonzero,
         "PotentialFlow": {
-          "FiniteElementMethod" : {  
+          "FiniteElementMethod" : {
             "meshName":           "3Dmesh",
             "solverName":         "potentialFlowSolver",
             "prefactor":          1.0,
@@ -306,7 +318,7 @@ config = {
           },
         },
         "Activation": {
-          "FiniteElementMethod" : {  
+          "FiniteElementMethod" : {
             "meshName":           "3Dmesh",
             "solverName":         "activationSolver",
             "prefactor":          1.0,
@@ -317,7 +329,7 @@ config = {
               8.93, 0, 0,
               0, 0.893, 0,
               0, 0, 0.893
-            ], 
+            ],
             "extracellularDiffusionTensor": [      # sigma_e
               6.7, 0, 0,
               0, 6.7, 0,
@@ -339,7 +351,7 @@ config = {
           "solverName":             "activationSolver",
           "initialGuessNonzero":    variables.emg_initial_guess_nonzero,
           "PotentialFlow": {
-            "FiniteElementMethod" : {  
+            "FiniteElementMethod" : {
               "meshName":           "3Dmesh",
               "solverName":         "potentialFlowSolver",
               "prefactor":          1.0,
@@ -349,7 +361,7 @@ config = {
             },
           },
           "Activation": {
-            "FiniteElementMethod" : {  
+            "FiniteElementMethod" : {
               "meshName":           "3Dmesh",
               "solverName":         "activationSolver",
               "prefactor":          1.0,
@@ -360,7 +372,7 @@ config = {
                 8.93, 0, 0,
                 0, 0.893, 0,
                 0, 0, 0.893
-              ], 
+              ],
               "extracellularDiffusionTensor": [      # sigma_e
                 6.7, 0, 0,
                 0, 6.7, 0,
@@ -373,7 +385,7 @@ config = {
       },
       "QuasiStaticLinearElasticitySolver": {
         "PotentialFlow": {        # potential flow for fiber directions in the 3D mesh
-          "FiniteElementMethod" : {  
+          "FiniteElementMethod" : {
             "meshName":           "3Dmesh",
             "solverName":         "potentialFlowSolver",
             "prefactor":          1.0,

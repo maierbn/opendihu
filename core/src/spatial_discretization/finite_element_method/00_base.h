@@ -81,6 +81,9 @@ protected:
   Data data_;     ///< data object that holds all PETSc vectors and matrices
   PythonConfig specificSettings_;    ///< python object containing the value of the python config dict with corresponding key
   OutputWriter::Manager outputWriterManager_; ///< manager object holding all output writer
+
+  bool updatePrescribedValuesFromSolution_ = false;   //< this is an option, where the prescribed values of DirichletBC are changed before the solve() to the values that are then stored in solution, i.e. the initial values
+
   bool initialized_;     ///< if initialize was already called on this object, then further calls to initialize() have no effect
 };
 

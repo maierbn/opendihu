@@ -61,10 +61,10 @@ public:
   typedef std::tuple<
     std::shared_ptr<GradientFieldVariableType>,     // geometry
     std::shared_ptr<GradientFieldVariableType>,     // fiberDirection
-    std::shared_ptr<FieldVariableType>,              // solution of laplace potential flow
-    std::shared_ptr<FieldVariableType>,              // extra-cellular potential
-    std::shared_ptr<FieldVariableType>,              // transmembranePotential
-    std::shared_ptr<FieldVariableType>              // transmembraneFlow
+    std::shared_ptr<FieldVariableType>,             // transmembranePotential
+    std::shared_ptr<FieldVariableType>,             // extra-cellular potential
+    std::shared_ptr<FieldVariableType>,             // transmembraneFlow
+    std::shared_ptr<FieldVariableType>              // solution of laplace potential flow
   > FieldVariablesForOutputWriter;
 
   //! get pointers to all field variables that can be written by output writers

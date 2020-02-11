@@ -96,6 +96,10 @@ advanceTimeSpan()
     // get phi_e
     //dataMultidomain_.extraCellularPotential()->setValues(subVectors[nCompartments_]);
 
+    LOG(DEBUG) << " Vm_solution: ";
+    //dataMultidomain_.subcellularStates(0)->extractComponent(0, dataMultidomain_.transmembranePotential(0));
+    LOG(DEBUG) << *dataMultidomain_.transmembranePotentialSolution(0);
+
     LOG(DEBUG) << " extraCellularPotential: " << PetscUtility::getStringVector(subvectorsSolution_[nCompartments_]);
     LOG(DEBUG) << *dataMultidomain_.extraCellularPotential();
 
@@ -139,12 +143,23 @@ initialize()
   LOG(DEBUG) << "initialize multidomain_solver, " << nCompartments_ << " compartments";
   assert(this->specificSettings_.pyObject());
 
+  // add this solver to the solvers diagram
+  DihuContext::solverStructureVisualizer()->addSolver("MultidomainSolver");
+
+  // indicate in solverStructureVisualizer that now a child solver will be initialized
+  DihuContext::solverStructureVisualizer()->beginChild("PotentialFlow");
+
   // initialize the potential flow finite element method, this also creates the function space
   finiteElementMethodPotentialFlow_.initialize();
+
+  // indicate in solverStructureVisualizer that the child solver initialization is done
+  DihuContext::solverStructureVisualizer()->endChild();
 
   // initialize the data object
   dataMultidomain_.setFunctionSpace(finiteElementMethodPotentialFlow_.functionSpace());
   dataMultidomain_.initialize(nCompartments_);
+
+  DihuContext::solverStructureVisualizer()->setOutputConnectorData(getOutputConnectorData());
 
   LOG(INFO) << "Run potential flow simulation for fiber directions.";
 
@@ -162,10 +177,18 @@ initialize()
 
   initializeCompartmentRelativeFactors();
 
+  // indicate in solverStructureVisualizer that now a child solver will be initialized
+  DihuContext::solverStructureVisualizer()->beginChild("Activation");
+
   // initialize the finite element class, from which only the stiffness matrix is needed
   // diffusion object without prefactor, for normal diffusion (2nd multidomain eq.)
   finiteElementMethodDiffusion_.initialize(dataMultidomain_.fiberDirection(), nullptr);
   finiteElementMethodDiffusion_.initializeForImplicitTimeStepping(); // this performs extra initialization for implicit timestepping methods, i.e. it sets the inverse lumped mass matrix
+
+  // indicate in solverStructureVisualizer that the child solver initialization is done
+  DihuContext::solverStructureVisualizer()->endChild();
+  // do not log the compartment finite element method objects
+  DihuContext::solverStructureVisualizer()->disable();
 
   // diffusion objects with spatially varying prefactors (f_r), needed for the bottom row of the matrix eq. or the 1st multidomain eq.
   for (int k = 0; k < nCompartments_; k++)
@@ -175,6 +198,8 @@ initialize()
   }
 
   finiteElementMethodDiffusionTotal_.initialize(dataMultidomain_.fiberDirection(), dataMultidomain_.relativeFactorTotal(), true);
+
+  DihuContext::solverStructureVisualizer()->enable();
 
   // parse parameters
   this->specificSettings_.getOptionVector("am", nCompartments_, am_);
@@ -208,8 +233,8 @@ initialize()
   // set values for Vm in compartments
   for (int k = 0; k < nCompartments_; k++)
   {
-    subvectorsRightHandSide_[k] = dataMultidomain_.transmembranePotential(k)->valuesGlobal();
-    subvectorsSolution_[k] = dataMultidomain_.transmembranePotentialSolution(k)->valuesGlobal(0);
+    subvectorsRightHandSide_[k] = dataMultidomain_.transmembranePotential(k)->valuesGlobal();     // this is for V_mk^(i)
+    subvectorsSolution_[k] = dataMultidomain_.transmembranePotentialSolution(k)->valuesGlobal(0); // this is for V_mk^(i+1)
   }
 
   // set values for phi_e
@@ -217,7 +242,7 @@ initialize()
   subvectorsSolution_[nCompartments_] = dataMultidomain_.extraCellularPotential()->valuesGlobal();
   ierr = VecZeroEntries(subvectorsSolution_[nCompartments_]); CHKERRV(ierr);
 
-  dataMultidomain_.setSubvectorsSolution(subvectorsSolution_);
+  //dataMultidomain_.setSubvectorsSolution(subvectorsSolution_);
 
   // create the nested vectors
   LOG(DEBUG) << "create nested vector";
@@ -242,6 +267,8 @@ initializeCompartmentRelativeFactors()
     LOG(FATAL) << "Only " << compartmentFields.size() << " relative factors specified under \"compartmentRelativeFactors\". "
       << "Number of compartments is " << nCompartments_ << ".";
   }
+
+
   for (int k = 0; k < nCompartments_; k++)
   {
     std::vector<double> values = PythonUtility::convertFromPython<std::vector<double>>::get(compartmentFields[k].pyObject());
@@ -286,6 +313,17 @@ setSystemMatrix(double timeStepWidth)
 
   LOG(TRACE) << "setSystemMatrix";
 
+  // The system to be solved here is
+  //
+  // [ -dt/(a_mk*c_mk)*M^{-1}*K_ik + I   ...   -dt/(a_mk*c_mk)*M^{-1}*K   ] [V_mk^(i+1)  ]   [V_mk^(i)]
+  // [  ...                                     ...                       ]*[...         ] = [       ]
+  // [ f_rk * K_ik                       ...    K_ei                      ] [phi_e^(i+1) ]   [       ]
+  //
+  // V_mk^(i) is computed by the 0D part.
+  // The two output connection slots are V_mk^(i) and V_mk^(i+1),
+  // where V_mk^(i) is the input and should be connected to the output of the reaction term.
+  // V_mk^(i+1) is the output and should be connected to the input of the reaction term.
+
   // fill submatrices, empty submatrices may be NULL
   // stiffnessMatrix and inverse lumped mass matrix without prefactor
   Mat stiffnessMatrix = finiteElementMethodDiffusion_.data().stiffnessMatrix()->valuesGlobal();
@@ -314,7 +352,7 @@ setSystemMatrix(double timeStepWidth)
 
     // for debugging zero all entries
 #ifdef MONODOMAIN
-/**/    //ierr = MatZeroEntries(matrixOnRightColumn); CHKERRV(ierr);
+/**/    ierr = MatZeroEntries(matrixOnRightColumn); CHKERRV(ierr);
 #endif
 
     // set on right column of the system matrix
@@ -439,8 +477,8 @@ solveLinearSystem()
   PetscErrorCode ierr;
   ierr = KSPSetInitialGuessNonzero(*this->linearSolver_->ksp(), PETSC_TRUE); CHKERRV(ierr);
 
-  // solve the system, KSPSolve(ksp,b,x)
-#ifndef NDEBUG
+  // solve the system
+#ifdef NDEBUG
   this->linearSolver_->solve(rightHandSide_, solution_);
 #else
   this->linearSolver_->solve(rightHandSide_, solution_, "Linear system of multidomain problem solved");

@@ -26,7 +26,8 @@
 #include "mesh/mesh_manager/mesh_manager.h"
 #include "solver/solver_manager.h"
 #include "partition/partition_manager.h"
-#include "control/stimulation_logging.h"
+#include "control/diagnostic_tool/stimulation_logging.h"
+#include "control/diagnostic_tool/solver_structure_visualizer.h"
 
 #include "easylogging++.h"
 #include "control/settings_file_name.h"
@@ -42,13 +43,14 @@
 #include "ExecutableSupport.hpp"
 #endif
 
-//INITIALIZE_EASYLOGGINGPP
-
 std::shared_ptr<Mesh::Manager> DihuContext::meshManager_ = nullptr;
 //std::shared_ptr<Solver::Manager> DihuContext::solverManager_ = nullptr;
 std::map<int, std::shared_ptr<Solver::Manager>> DihuContext::solverManagerForThread_;
 std::shared_ptr<Partition::Manager> DihuContext::partitionManager_ = nullptr;
+std::shared_ptr<SolverStructureVisualizer> DihuContext::solverStructureVisualizer_ = nullptr;
+std::string DihuContext::solverStructureDiagramFile_ = "";
 std::string DihuContext::pythonScriptText_ = "";
+
 std::shared_ptr<std::thread> DihuContext::megamolThread_ = nullptr;
 std::vector<char *> DihuContext::megamolArgv_;
 std::vector<std::string> DihuContext::megamolArguments_;
@@ -68,6 +70,7 @@ void handleSignal(int signalNo)
   Control::PerformanceMeasurement::setParameter("exit",signalName);
   Control::PerformanceMeasurement::writeLogFile();
   Control::StimulationLogging::writeLogFile();
+  DihuContext::writeSolverStructureDiagram();
 
   int rankNo = DihuContext::ownRankNoCommWorld();
   LOG(INFO) << "Rank " << rankNo << " received signal " << sys_siglist[signalNo]
@@ -107,7 +110,6 @@ DihuContext::DihuContext(const DihuContext &rhs) : pythonConfig_(rhs.pythonConfi
 
   doNotFinalizeMpi_ = rhs.doNotFinalizeMpi_;
 }
-
 
 DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, PythonConfig pythonConfig, std::shared_ptr<Partition::RankSubset> rankSubset) :
   pythonConfig_(pythonConfig), rankSubset_(rankSubset), doNotFinalizeMpi_(doNotFinalizeMpi)
@@ -153,8 +155,8 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
     PetscInitialize(&argc, &argv, NULL, "This is an opendihu application.");
 
     // set number of threads to use to 1
-    omp_set_num_threads(1);
-    LOG(DEBUG) << "set number of threads to 1";
+    //omp_set_num_threads(1);
+    //LOG(DEBUG) << "set number of threads to 1";
 
     // output process ID
     int pid = getpid();
@@ -186,6 +188,7 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
     sigaction(SIGXCPU, &signalHandler, NULL);
     sigaction(SIGRTMIN, &signalHandler, NULL);
     Control::PerformanceMeasurement::setParameter("exit","normal");
+    Control::PerformanceMeasurement::setParameter("exit_signal","");
 
     // determine settings filename
     Control::settingsFileName = "settings.py";
@@ -207,10 +210,50 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
     }
 
     initializePython(argc, argv, explicitConfigFileGiven);
+
     // load python script
     if (settingsFromFile)
     {
-      loadPythonScriptFromFile(Control::settingsFileName);
+      if (!loadPythonScriptFromFile(Control::settingsFileName))
+      {
+        // if a settings file was given but could not be loaded
+        if (explicitConfigFileGiven)
+        {
+          LOG(FATAL) << "Could not load settings file \"" << Control::settingsFileName << "\".";
+        }
+        else
+        {
+          // look for settings.py files
+          std::stringstream commandSuggestions;
+          int ret = system("ls ../settings*.py > a");
+          if (ret == 0)
+          {
+            std::ifstream file("a", std::ios::in|std::ios::binary);
+            if (file.is_open())
+            {
+              while (!file.eof())
+              {
+                std::string line;
+                std::getline(file, line);
+                if (file.eof())
+                  break;
+
+                commandSuggestions << "  " << argv[0] << " " << line << std::endl;
+              }
+            }
+          }
+          if (commandSuggestions.str().empty())
+          {
+            commandSuggestions << "  " << argv[0] << " ../settings.py";
+          }
+
+          // if no settings file was given (default file "settings.py" was tried but not successful)
+          LOG(FATAL) << "No settings file was specified!" << std::endl
+            << "Usually you run the executable from within a \"build_release\" or \"build_debug\" directory "
+            << "and the settings file is located one directory higher. Try a command like the following:" << std::endl << std::endl
+            << commandSuggestions.str();
+        }
+      }
     }
 
     // start megamol console
@@ -253,6 +296,11 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
     // create solver manager for thread 0
     solverManagerForThread_[0] = std::make_shared<Solver::Manager>(pythonConfig_);
     solverManagerForThread_[1] = std::make_shared<Solver::Manager>(pythonConfig_);
+  }
+
+  if (!solverStructureVisualizer_)
+  {
+    solverStructureVisualizer_ = std::make_shared<SolverStructureVisualizer>();
   }
 }
 
@@ -298,7 +346,7 @@ std::string DihuContext::versionText()
 {
   std::stringstream versionTextStr;
 
-  versionTextStr << "opendihu 1.0, build " << __DATE__ << " " << __TIME__;
+  versionTextStr << "opendihu 1.1, build " << __DATE__; // << " " << __TIME__; // do not add time otherwise it wants to recompile this file every time
 #ifdef __cplusplus
   versionTextStr << ", C++ " << __cplusplus;
 #endif
@@ -364,6 +412,17 @@ std::shared_ptr<Mesh::Manager> DihuContext::meshManager()
 std::shared_ptr<Partition::Manager> DihuContext::partitionManager()
 {
   return partitionManager_;
+}
+
+std::shared_ptr<SolverStructureVisualizer> DihuContext::solverStructureVisualizer()
+{
+  return solverStructureVisualizer_;
+}
+
+void DihuContext::writeSolverStructureDiagram()
+{
+  if (solverStructureVisualizer_ && solverStructureDiagramFile_ != "")
+    solverStructureVisualizer_->writeDiagramFile(solverStructureDiagramFile_);
 }
 
 std::shared_ptr<Solver::Manager> DihuContext::solverManager() const
@@ -433,20 +492,16 @@ DihuContext::~DihuContext()
   VLOG(1) << "~DihuContext, nObjects = " << nObjects_;
   if (nObjects_ == 0)
   {
-    // write log file
-    Control::PerformanceMeasurement::writeLogFile();
+    // write log files
+    writeSolverStructureDiagram();
     Control::StimulationLogging::writeLogFile();
+    Control::PerformanceMeasurement::writeLogFile();
 
     // After a call to MPI_Finalize we cannot call MPI_Initialize() anymore.
     // This is only a problem when the code is tested with the GoogleTest framework, because then we want to run multiple tests in one executable.
     // In this case, do not finalize MPI, but call MPI_Barrier instead which also syncs the ranks.
 
-    if (doNotFinalizeMpi_)
-    {
-      //LOG(DEBUG) << "MPI_Barrier";
-      //MPI_Barrier(MPI_COMM_WORLD);
-    }
-    else
+    if (!doNotFinalizeMpi_)
     {
 #ifdef HAVE_MEGAMOL
       LOG(DEBUG) << "wait for MegaMol to finish";
@@ -456,15 +511,18 @@ DihuContext::~DihuContext()
         megamolThread_->join();
 #endif
 
-      LOG(DEBUG) << "MPI_Finalize";
+      // global barrier
+      MPI_Barrier(MPI_COMM_WORLD);
+
+      // finalize Petsc and MPI
+      LOG(DEBUG) << "Petsc_Finalize";
+      PetscErrorCode ierr = PetscFinalize(); CHKERRV(ierr);
       MPI_Finalize();
     }
   }
   // do not clear pythonConfig_ here, because it crashes
   //VLOG(4) << "PY_CLEAR(PYTHONCONFIG_)";  // note: calling VLOG in a destructor is critical and can segfault
   //Py_CLEAR(pythonConfig_);
-
-
 
   // do not finalize Python because otherwise tests keep crashing
   //Py_Finalize();

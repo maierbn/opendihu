@@ -28,10 +28,10 @@ Paraview::Paraview(DihuContext context, PythonConfig settings, std::shared_ptr<P
 
 std::string Paraview::encodeBase64Vec(const Vec &vector, bool withEncodedSizePrefix)
 {
-  int vectorSize = 0;
+  PetscInt vectorSize = 0;
   VecGetSize(vector, &vectorSize);
 
-  std::vector<int> indices(vectorSize);
+  std::vector<dof_no_t> indices(vectorSize);
   std::iota (indices.begin(), indices.end(), 0);    // fill with increasing numbers: 0,1,2,...
   std::vector<double> values(vectorSize);
   VecGetValues(vector, vectorSize, indices.data(), values.data());
@@ -68,6 +68,24 @@ std::string Paraview::convertToAscii(const std::vector<double> &vector, bool fix
   return result.str();
 }
 
+std::string Paraview::convertToAscii(const std::vector<element_no_t> &vector, bool fixedFormat)
+{
+  std::stringstream result;
+  for (auto value : vector)
+  {
+    if (fixedFormat)
+    {
+      result << std::setw(16) << std::scientific << (float)(value) << " ";
+    }
+    else
+    {
+      result << value << " ";
+    }
+  }
+  return result.str();
+}
+
+#ifdef PETSC_USE_64BIT_INDICES
 std::string Paraview::convertToAscii(const std::vector<int> &vector, bool fixedFormat)
 {
   std::stringstream result;
@@ -84,5 +102,7 @@ std::string Paraview::convertToAscii(const std::vector<int> &vector, bool fixedF
   }
   return result.str();
 }
+#endif
+
 
 }  // namespace

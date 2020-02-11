@@ -26,7 +26,7 @@ loopCollectMeshProperties(const FieldVariablesForOutputWriterType &fieldVariable
 
   // call what to do in the loop body
   if (collectMeshProperties<typename std::tuple_element<i,FieldVariablesForOutputWriterType>::type, FieldVariablesForOutputWriterType>(
-        std::get<i>(fieldVariables), fieldVariables, meshProperties))
+        std::get<i>(fieldVariables), fieldVariables, meshProperties, i))
     return;
   
   // advance iteration to next tuple element
@@ -37,8 +37,15 @@ loopCollectMeshProperties(const FieldVariablesForOutputWriterType &fieldVariable
 template<typename CurrentFieldVariableType, typename FieldVariablesForOutputWriterType>
 typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
 collectMeshProperties(CurrentFieldVariableType currentFieldVariable, const FieldVariablesForOutputWriterType &fieldVariables,
-                           std::map<std::string,PolyDataPropertiesForMesh> &meshProperties)
+                           std::map<std::string,PolyDataPropertiesForMesh> &meshProperties, int i)
 {
+  if (currentFieldVariable == nullptr)
+  {
+    LOG(FATAL) << "In collectMeshProperties, currentFieldVariable is nullptr.\n"
+      << " meshProperties: " << meshProperties
+      << ", fielVariableType: " << StringUtility::demangle(typeid(CurrentFieldVariableType).name())
+      << " fieldVariables: " << fieldVariables << ", i: " << i;
+  }
   assert(currentFieldVariable != nullptr);
   assert(currentFieldVariable->functionSpace());
   std::string meshName = currentFieldVariable->functionSpace()->meshName();
@@ -92,12 +99,12 @@ collectMeshProperties(CurrentFieldVariableType currentFieldVariable, const Field
 template<typename VectorType, typename FieldVariablesForOutputWriterType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
 collectMeshProperties(VectorType currentFieldVariableVector, const FieldVariablesForOutputWriterType &fieldVariables,
-                           std::map<std::string,PolyDataPropertiesForMesh> &meshProperties)
+                           std::map<std::string,PolyDataPropertiesForMesh> &meshProperties, int i)
 {
   for (auto& currentFieldVariable : currentFieldVariableVector)
   {
     // call function on all vector entries
-    if (collectMeshProperties<typename VectorType::value_type,FieldVariablesForOutputWriterType>(currentFieldVariable, fieldVariables, meshProperties))
+    if (collectMeshProperties<typename VectorType::value_type,FieldVariablesForOutputWriterType>(currentFieldVariable, fieldVariables, meshProperties, i))
       return true; // break iteration
   }
   return false;  // do not break iteration 
@@ -107,7 +114,7 @@ collectMeshProperties(VectorType currentFieldVariableVector, const FieldVariable
 template<typename TupleType, typename FieldVariablesForOutputWriterType>
 typename std::enable_if<TypeUtility::isTuple<TupleType>::value, bool>::type
 collectMeshProperties(TupleType currentFieldVariableTuple, const FieldVariablesForOutputWriterType &fieldVariables,
-                           std::map<std::string,PolyDataPropertiesForMesh> &meshProperties)
+                           std::map<std::string,PolyDataPropertiesForMesh> &meshProperties, int i)
 {
   // call for tuple element
   loopCollectMeshProperties<TupleType>(currentFieldVariableTuple, meshProperties);

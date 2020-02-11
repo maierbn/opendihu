@@ -1,6 +1,6 @@
 #include "mesh/mapping_between_meshes/mapping_between_meshes.h"
 
-#include "control/performance_measurement.h"
+#include "control/diagnostic_tool/performance_measurement.h"
 
 #include "utility/vector_operators.h"
 
@@ -10,15 +10,18 @@ namespace Mesh
 template<typename FunctionSpaceSourceType, typename FunctionSpaceTargetType>
 MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>::
 MappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSource,
-                     std::shared_ptr<FunctionSpaceTargetType> functionSpaceTarget) :
+                     std::shared_ptr<FunctionSpaceTargetType> functionSpaceTarget,
+                     double xiTolerance) :
   functionSpaceSource_(functionSpaceSource),
-  functionSpaceTarget_(functionSpaceTarget)
+  functionSpaceTarget_(functionSpaceTarget),
+  maxAllowedXiTolerance_(xiTolerance)
 {
   // create the mapping
 
   Control::PerformanceMeasurement::start("durationComputeMappingBetweenMeshes");
 
   const dof_no_t nDofsLocalSource = functionSpaceSource->nDofsLocalWithoutGhosts();
+  const dof_no_t nDofsLocalTarget = functionSpaceTarget->nDofsLocalWithoutGhosts();
   const int nDofsPerTargetElement = FunctionSpaceTargetType::nDofsPerElement();
 
   element_no_t elementNo = 0;
@@ -26,6 +29,8 @@ MappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSourc
   std::array<double,FunctionSpaceTargetType::dim()> xi;
 
   targetMappingInfo_.resize(nDofsLocalSource);
+
+  std::vector<bool> targetDofIsMappedTo(nDofsLocalTarget, false);
 
   if (VLOG_IS_ON(1))
   {
@@ -50,6 +55,7 @@ MappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSourc
   {
     // determine information how to map a source value to the target mesh
     targetDof_t targetMappingInfo;
+    targetMappingInfo.targetElements.resize(1);
 
     // get node position of the source dof
 
@@ -66,7 +72,12 @@ MappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSourc
       elementNo = startElementNo;
       if (functionSpaceTarget->findPosition(position, elementNo, ghostMeshNo, xi, startSearchInCurrentElement, xiTolerance))
       {
-        xiToleranceBase = xiTolerance;
+        // If there was no prescribed maxAllowedXiTolerance_, set the new xiTolerance to the value from which the current search succeeded,
+        // because it is assumed the the current two meshes are located to each other so mismatching that this tolerance is enough.
+        if (maxAllowedXiTolerance_ == 0)
+        {
+          xiToleranceBase = xiTolerance;
+        }
 
         targetMappingInfo.mapThisDof = true;
         break;
@@ -74,11 +85,15 @@ MappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSourc
       else
       {
         xiTolerance *= 2;
+        if (maxAllowedXiTolerance_ != 0 && xiTolerance > maxAllowedXiTolerance_)
+        {
+          break;
+        }
         LOG(DEBUG) << "Try again with xiTolerance = " << xiTolerance;
       }
     }
 
-    if (nTries == nTriesMax)
+    if (nTries == nTriesMax || (maxAllowedXiTolerance_ != 0 && xiTolerance > maxAllowedXiTolerance_))
     {
       LOG(DEBUG) << "In mapping between meshes \"" << functionSpaceSource->meshName() << "\" and \""
         << functionSpaceTarget->meshName() << "\", source dof local " << sourceDofNoLocal
@@ -90,7 +105,9 @@ MappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSourc
     }
 
     // store element no
-    targetMappingInfo.elementNoLocal = elementNo;
+    targetMappingInfo.targetElements[0].elementNoLocal = elementNo;
+
+    std::array<dof_no_t,FunctionSpaceTargetType::nDofsPerElement()> targetDofNos = functionSpaceTarget->getElementDofNosLocal(elementNo);
 
     // determine factors how to distribute the value to the dofs of the target element
 
@@ -111,7 +128,19 @@ MappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSourc
           phiContribution = -1e-7;
         }
       }
-      targetMappingInfo.scalingFactors[targetDofIndex] = phiContribution;
+      else
+      {
+        dof_no_t targetDofNoLocal = targetDofNos[targetDofIndex];
+
+        // if this dof is local
+        if (targetDofNoLocal < nDofsLocalTarget)
+        {
+          targetDofIsMappedTo[targetDofNoLocal] = true;
+        }
+      }
+
+      targetMappingInfo.targetElements[0].scalingFactors[targetDofIndex] = phiContribution;
+
     }
 
     targetMappingInfo_[sourceDofNoLocal] = targetMappingInfo;
@@ -121,15 +150,121 @@ MappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSourc
       double scalingFactorsSum = 0;
       for (int targetDofIndex = 0; targetDofIndex < nDofsPerTargetElement; targetDofIndex++)
       {
-        scalingFactorsSum += targetMappingInfo_[sourceDofNoLocal].scalingFactors[targetDofIndex];
+        scalingFactorsSum += targetMappingInfo_[sourceDofNoLocal].targetElements[0].scalingFactors[targetDofIndex];
       }
       VLOG(3) << "  source dof local " << sourceDofNoLocal << ", pos: " << position << ", xi: " << xi
-        << ", element no: " << targetMappingInfo.elementNoLocal << ", scaling factors: " << targetMappingInfo_[sourceDofNoLocal].scalingFactors
+        << ", element no: " << targetMappingInfo.targetElements[0].elementNoLocal << ", scaling factors: " << targetMappingInfo_[sourceDofNoLocal].targetElements[0].scalingFactors
         << ", sum: " << scalingFactorsSum;
     }
 
     // next time when searching for the target element, start search from previous element
     startSearchInCurrentElement = true;
+  }
+
+  // find target dofs that do not appear in any targetMappingInfo and therefore will so far not receive any value when mapping from source to target
+
+  // count number of target dofs that have no source dof mapped
+  int nTargetDofsNotMapped = 0;
+
+  for (dof_no_t targetDofNoLocal = 0; targetDofNoLocal < nDofsLocalTarget; targetDofNoLocal++)
+  {
+    if (!targetDofIsMappedTo[targetDofNoLocal])
+    {
+      nTargetDofsNotMapped++;
+    }
+  }
+
+  if (FunctionSpaceSourceType::dim() >= FunctionSpaceTargetType::dim() && nTargetDofsNotMapped > 0)
+  {
+    LOG(DEBUG) << nTargetDofsNotMapped << " target dofs have no source dofs that would contribute values. Source FunctionSpace dim: "
+      << FunctionSpaceSourceType::dim() << " >= target FunctionSpace dim: " << FunctionSpaceTargetType::dim() << ". Now fixing.";
+
+    std::set<dof_no_t> targetDofNoLocalNotFixed;    // collect all dofs that are still not fixed
+
+    // loop over all elements in the target function space
+    for (element_no_t targetElementNoLocal = 0; targetElementNoLocal < functionSpaceTarget->nElementsLocal(); targetElementNoLocal++)
+    {
+      std::array<dof_no_t,FunctionSpaceTargetType::nDofsPerElement()> targetDofNos = functionSpaceTarget->getElementDofNosLocal(targetElementNoLocal);
+
+      // loop over dofs of target element
+      for (int targetDofIndex = 0; targetDofIndex < nDofsPerTargetElement; targetDofIndex++)
+      {
+        dof_no_t targetDofNoLocal = targetDofNos[targetDofIndex];
+
+        // if this is a ghost dof, do not handle it
+        if (targetDofNoLocal >= nDofsLocalTarget)
+          continue;
+
+        Vec3 position = functionSpaceTarget->getGeometry(targetDofNoLocal);
+        LOG(DEBUG) << " e" << targetElementNoLocal << " i" << targetDofIndex << ", targetDofIsMappedTo[" << targetDofNoLocal << "]: " << targetDofIsMappedTo[targetDofNoLocal] << ", position: " << position;
+
+        // if target dof is not being mapped to by any source dof, simply initiate interpolation of the source mesh to this dof
+        if (!targetDofIsMappedTo[targetDofNoLocal])
+        {
+          // get one element of the target dof
+
+          // find element and xi position in source mesh where target dof is located
+          Vec3 position = functionSpaceTarget->getGeometry(targetDofNoLocal);
+          element_no_t sourceElementNo = 0;
+          bool startSearchInCurrentElement = false;
+          double xiTolerance = 1e-2;
+          std::array<double,FunctionSpaceSourceType::dim()> xiSource;
+
+          //LOG(DEBUG) << "target (el." << targetElementNoLocal << ",index" << targetDofIndex << ") dof " << targetDofNoLocal << ", position: " << position
+          //  << " is not mapped, now find element in source function space";
+
+          if (functionSpaceSource->findPosition(position, sourceElementNo, ghostMeshNo, xiSource, startSearchInCurrentElement, xiTolerance))
+          {
+            // get dofs of this source element
+            std::array<dof_no_t,FunctionSpaceSourceType::nDofsPerElement()> sourceDofNos = functionSpaceSource->getElementDofNosLocal(sourceElementNo);
+
+            LOG(DEBUG) << "at position " << position << " found source element " << sourceElementNo << ", xi " << xiSource << ", with dofs " << sourceDofNos;
+
+            // loop over all the source dofs that will contribute to the value of the target dof
+            for (int sourceDofIndex = 0; sourceDofIndex != FunctionSpaceSourceType::nDofsPerElement(); sourceDofIndex++)
+            {
+              dof_no_t sourceDofNoLocal = sourceDofNos[sourceDofIndex];
+
+              // create new entry for the targetMappingInfo_[sourceDofNoLocal]
+              typename targetDof_t::element_t targetElement;
+
+              // set element no
+              targetElement.elementNoLocal = targetElementNoLocal;
+
+              // set scaling factors
+              for (int i = 0; i < FunctionSpaceTargetType::nDofsPerElement(); i++)
+              {
+                targetElement.scalingFactors[i] = 0;
+              }
+
+              double phiContribution = functionSpaceSource->phi(sourceDofIndex, xiSource);
+              targetElement.scalingFactors[targetDofIndex] = phiContribution;
+
+              targetMappingInfo_[sourceDofNoLocal].targetElements.push_back(targetElement);
+
+              //LOG(DEBUG) << "add scaling Factor " << phiContribution << " at targetDofIndex " << targetDofIndex << " of targetELement " << targetElementNoLocal
+              //  << ", now, source dof " << sourceDofNoLocal << " has " << targetMappingInfo_[sourceDofNoLocal].targetElements.size() << " target elements.";
+
+            }
+
+            // now the target dof is fixed
+            targetDofIsMappedTo[targetDofNoLocal] = true;
+          }
+          else
+          {
+            LOG(DEBUG) << "Could not find element of source dof for position " << position;
+            targetDofNoLocalNotFixed.insert(targetDofNoLocal);
+          }
+        }
+      }
+    }
+    LOG(DEBUG) << "after fixing target dofs by source mesh interpolation, " << targetDofNoLocalNotFixed.size()
+      << " remaining targetDofNoLocalNotFixed: " << targetDofNoLocalNotFixed;
+  }
+  else
+  {
+    LOG(DEBUG) << nTargetDofsNotMapped << " target dofs have no source dofs that would contribute values. Source FunctionSpace dim: "
+      << FunctionSpaceSourceType::dim() << ", target FunctionSpace dim: " << FunctionSpaceTargetType::dim() << ".";
   }
 
   Control::PerformanceMeasurement::stop("durationComputeMappingBetweenMeshes");
@@ -185,25 +320,31 @@ mapLowToHighDimension(
     // get value
     double sourceValue = sourceValues[sourceDofNoLocal];
 
-    // store the value to the target function space
-    element_no_t targetElementNoLocal = targetMappingInfo_[sourceDofNoLocal].elementNoLocal;
-    std::array<double,nDofsPerTargetElement> targetValues = targetMappingInfo_[sourceDofNoLocal].scalingFactors * sourceValue;
-
-    // determine dof nos of target element
-    std::array<dof_no_t,nDofsPerTargetElement> dofNosLocal;
-    for (int dofIndex = 0; dofIndex < nDofsPerTargetElement; dofIndex++)
+    // loop over target elements that will be affected by this source value
+    for (int targetElementIndex = 0; targetElementIndex < targetMappingInfo_[sourceDofNoLocal].targetElements.size(); targetElementIndex++)
     {
-      dofNosLocal[dofIndex] = fieldVariableTarget.functionSpace()->getDofNo(targetElementNoLocal, dofIndex);
-    }
+      const typename targetDof_t::element_t &targetElement = targetMappingInfo_[sourceDofNoLocal].targetElements[targetElementIndex];
 
-    fieldVariableTarget.template setValues<nDofsPerTargetElement>(componentNoTarget, dofNosLocal, targetValues, ADD_VALUES);
-    targetFactorSum.template setValues<nDofsPerTargetElement>(dofNosLocal, targetMappingInfo_[sourceDofNoLocal].scalingFactors, ADD_VALUES);
+      // store the value to the target function space
+      element_no_t targetElementNoLocal = targetElement.elementNoLocal;
+      std::array<double,nDofsPerTargetElement> targetValues = targetElement.scalingFactors * sourceValue;
 
-    if (VLOG_IS_ON(2))
-    {
-      VLOG(2) << "  source dof " << sourceDofNoLocal << ", value: " << sourceValue << ", scaling factors: " << targetMappingInfo_[sourceDofNoLocal].scalingFactors
-        << ", targetValues: " << targetValues
-        << ", targetElementNoLocal: " << targetElementNoLocal << ", target dofs: " << dofNosLocal;
+      // determine dof nos of target element
+      std::array<dof_no_t,nDofsPerTargetElement> dofNosLocal;
+      for (int dofIndex = 0; dofIndex < nDofsPerTargetElement; dofIndex++)
+      {
+        dofNosLocal[dofIndex] = fieldVariableTarget.functionSpace()->getDofNo(targetElementNoLocal, dofIndex);
+      }
+
+      fieldVariableTarget.template setValues<nDofsPerTargetElement>(componentNoTarget, dofNosLocal, targetValues, ADD_VALUES);
+      targetFactorSum.template setValues<nDofsPerTargetElement>(dofNosLocal, targetElement.scalingFactors, ADD_VALUES);
+
+      if (VLOG_IS_ON(2))
+      {
+        VLOG(2) << "  source dof " << sourceDofNoLocal << ", value: " << sourceValue << ", scaling factors: " << targetElement.scalingFactors
+          << ", targetValues: " << targetValues
+          << ", targetElementNoLocal: " << targetElementNoLocal << ", target dofs: " << dofNosLocal;
+      }
     }
   }
 }
@@ -243,25 +384,31 @@ mapLowToHighDimension(
     // get value
     VecD<nComponents> sourceValue = sourceValues[sourceDofNoLocal];
 
-    // store the value to the target function space
-    element_no_t targetElementNoLocal = targetMappingInfo_[sourceDofNoLocal].elementNoLocal;
-    std::array<VecD<nComponents>,nDofsPerTargetElement> targetValues = targetMappingInfo_[sourceDofNoLocal].scalingFactors * sourceValue;
-
-    // determine dof nos of target element
-    std::array<dof_no_t,nDofsPerTargetElement> dofNosLocal;
-    for (int dofIndex = 0; dofIndex < nDofsPerTargetElement; dofIndex++)
+    // loop over target elements that will be affected by this source value
+    for (int targetElementIndex = 0; targetElementIndex < targetMappingInfo_[sourceDofNoLocal].targetElements.size(); targetElementIndex++)
     {
-      dofNosLocal[dofIndex] = fieldVariableTarget.functionSpace()->getDofNo(targetElementNoLocal, dofIndex);
-    }
+      const typename targetDof_t::element_t &targetElement = targetMappingInfo_[sourceDofNoLocal].targetElements[targetElementIndex];
 
-    fieldVariableTarget.template setValues<nDofsPerTargetElement>(dofNosLocal, targetValues, ADD_VALUES);
-    targetFactorSum.template setValues<nDofsPerTargetElement>(dofNosLocal, targetMappingInfo_[sourceDofNoLocal].scalingFactors, ADD_VALUES);
+      // store the value to the target function space
+      element_no_t targetElementNoLocal = targetElement.elementNoLocal;
+      std::array<VecD<nComponents>,nDofsPerTargetElement> targetValues = targetElement.scalingFactors * sourceValue;
 
-    if (VLOG_IS_ON(2))
-    {
-      VLOG(2) << "  source dof " << sourceDofNoLocal << ", value: " << sourceValue << ", scaling factors: " << targetMappingInfo_[sourceDofNoLocal].scalingFactors
-        << ", targetValues: " << targetValues
-        << ", targetElementNoLocal: " << targetElementNoLocal << ", target dofs: " << dofNosLocal;
+      // determine dof nos of target element
+      std::array<dof_no_t,nDofsPerTargetElement> dofNosLocal;
+      for (int dofIndex = 0; dofIndex < nDofsPerTargetElement; dofIndex++)
+      {
+        dofNosLocal[dofIndex] = fieldVariableTarget.functionSpace()->getDofNo(targetElementNoLocal, dofIndex);
+      }
+
+      fieldVariableTarget.template setValues<nDofsPerTargetElement>(dofNosLocal, targetValues, ADD_VALUES);
+      targetFactorSum.template setValues<nDofsPerTargetElement>(dofNosLocal, targetElement.scalingFactors, ADD_VALUES);
+
+      if (VLOG_IS_ON(2))
+      {
+        VLOG(2) << "  source dof " << sourceDofNoLocal << ", value: " << sourceValue << ", scaling factors: " << targetElement.scalingFactors
+          << ", targetValues: " << targetValues
+          << ", targetElementNoLocal: " << targetElementNoLocal << ", target dofs: " << dofNosLocal;
+      }
     }
   }
 }
@@ -303,20 +450,23 @@ mapHighToLowDimension(
     if (!targetMappingInfo_[targetDofNoLocal].mapThisDof)
       continue;
 
-    element_no_t sourceElementNoLocal = targetMappingInfo_[targetDofNoLocal].elementNoLocal;
+    // the first set of surrounding nodes (targetElements[0]) is enough
+    const typename targetDof_t::element_t &targetElement = targetMappingInfo_[targetDofNoLocal].targetElements[0];
+
+    element_no_t sourceElementNoLocal = targetElement.elementNoLocal;
 
     // get source values of the element where targetDofNoLocal is in
     std::array<VecD<nComponents>,nDofsPerSourceElement> sourceValues;
     fieldVariableSource.getElementValues(sourceElementNoLocal, sourceValues);
 
-    VecD<nComponents> targetValue = sourceValues * targetMappingInfo_[targetDofNoLocal].scalingFactors;
+    VecD<nComponents> targetValue = sourceValues * targetElement.scalingFactors;
     fieldVariableTarget.setValue(targetDofNoLocal, targetValue);
 
     if (VLOG_IS_ON(2))
     {
       VLOG(2) << "  target dof " << targetDofNoLocal << ", source element no local: " << sourceElementNoLocal
         << ", sourceValues: " << sourceValues
-        << ", scaling factors: " << targetMappingInfo_[targetDofNoLocal].scalingFactors << ", target value: " << targetValue;
+        << ", scaling factors: " << targetElement.scalingFactors << ", target value: " << targetValue;
     }
   }
 }
@@ -363,7 +513,10 @@ mapHighToLowDimension(
     if (!targetMappingInfo_[targetDofNoLocal].mapThisDof)
       continue;
 
-    element_no_t sourceElementNoLocal = targetMappingInfo_[targetDofNoLocal].elementNoLocal;
+    // the first set of surrounding nodes (targetElements[0]) is enough
+    const typename targetDof_t::element_t &targetElement = targetMappingInfo_[targetDofNoLocal].targetElements[0];
+
+    element_no_t sourceElementNoLocal = targetElement.elementNoLocal;
 
     // get source values of the element where targetDofNoLocal is in
     std::array<double,nDofsPerSourceElement> sourceValues;
@@ -372,7 +525,7 @@ mapHighToLowDimension(
     double targetValue = 0;
     for (int i = 0; i < nDofsPerSourceElement; i++)
     {
-      targetValue += sourceValues[i] * targetMappingInfo_[targetDofNoLocal].scalingFactors[i];
+      targetValue += sourceValues[i] * targetElement.scalingFactors[i];
     }
     fieldVariableTarget.setValue(componentNoTarget, targetDofNoLocal, targetValue, INSERT_VALUES);
 
@@ -380,7 +533,7 @@ mapHighToLowDimension(
     {
       VLOG(2) << "  target dof " << targetDofNoLocal << ", source element no local: " << sourceElementNoLocal
         << ", sourceValues: " << sourceValues
-        << ", scaling factors: " << targetMappingInfo_[targetDofNoLocal].scalingFactors << ", target value: " << targetValue;
+        << ", scaling factors: " << targetElement.scalingFactors << ", target value: " << targetValue;
     }
   }
 }

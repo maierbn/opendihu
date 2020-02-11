@@ -10,6 +10,7 @@
 #include "utility/string_utility.h"
 #include "data_management/output_connector_data.h"
 #include "mesh/mesh_manager/mesh_manager.h"
+#include "control/diagnostic_tool/solver_structure_visualizer.h"
 
 template<int nStates, int nIntermediates_, typename FunctionSpaceType>
 CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
@@ -95,6 +96,9 @@ initialize()
     PythonUtility::printDict(specificSettings_.pyObject());
   }
   
+  // add this solver to the solvers diagram, which is a SVG file that will be created at the end of the simulation.
+  DihuContext::solverStructureVisualizer()->addSolver("CellmlAdapter");
+
   // create a mesh if there is not yet one assigned, function space FunctionSpace::Generic
   if (!functionSpace_)
   {
@@ -105,47 +109,39 @@ initialize()
   //store number of instances
   nInstances_ = functionSpace_->nNodesLocalWithoutGhosts();
 
-  stateNames_.resize(nStates);
-  intermediateNames_.resize(nIntermediates_);
-  sourceFilename_ = this->specificSettings_.getOptionString("sourceFilename", "");
-  this->scanSourceFile(this->sourceFilename_, statesInitialValues_);   // this sets nIntermediatesInSource_
-  
-  // check number of intermediates in source file
-  if (nIntermediatesInSource_ > nIntermediates_)
+
+  // initialize source code generator
+  std::string modelFilename = this->specificSettings_.getOptionString("modelFilename", "");
+  if (this->specificSettings_.hasKey("sourceFilename"))
   {
-    LOG(FATAL) << "CellML source file needs " << nIntermediatesInSource_ << " intermediates, but CellMLAdapter only supports " << nIntermediates_
-      << ". You have to set the correct number in the c++ file and recompile." << std::endl
-      << "(Use \"CellMLAdapter<" << nStates << "," << nIntermediatesInSource_ << ">\".)";
-  }
-  else if (nIntermediatesInSource_ != nIntermediates_)
-  {
-    LOG(WARNING) << "CellML source file needs " << nIntermediatesInSource_ << " intermediates, and CellMLAdapter supports " << nIntermediates_
-      << ". You should recompile with the correct number to avoid performance penalties.";
+    LOG(WARNING) << this->specificSettings_ << " Option \"sourceFilename\" has been renamed to \"modelFilename\".";
   }
 
   // add explicitely defined parameters that replace intermediates and constants
-  if (!inputFileTypeOpenCMISS_)
+  std::vector<int> parametersUsedAsIntermediate;  ///< explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array
+  std::vector<int> parametersUsedAsConstant;  ///< explicitely defined parameters that will be copied to constants, this vector contains the indices of the constants
+
+  this->specificSettings_.getOptionVector("parametersUsedAsIntermediate", parametersUsedAsIntermediate);
+  this->specificSettings_.getOptionVector("parametersUsedAsConstant", parametersUsedAsConstant);
+
+  // initialize parameters
+  std::vector<double> parametersInitialValues;
+  if (this->specificSettings_.hasKey("parametersInitialValues"))
   {
-    this->specificSettings_.getOptionVector("parametersUsedAsIntermediate", parametersUsedAsIntermediate_);
-    this->specificSettings_.getOptionVector("parametersUsedAsConstant", parametersUsedAsConstant_);
-    nParameters_ += parametersUsedAsIntermediate_.size() + parametersUsedAsConstant_.size();
-    
-    //LOG(DEBUG) << "parametersUsedAsIntermediate_: " << parametersUsedAsIntermediate_
-    //  << ", parametersUsedAsConstant_: " << parametersUsedAsConstant_;
+    LOG(DEBUG) << "load parametersInitialValues from config";
+    specificSettings_.getOptionVector("parametersInitialValues", parametersInitialValues);
   }
-  
-  LOG(DEBUG) << "Initialize CellML with nInstances = " << nInstances_ << ", nParameters_ = " << nParameters_
-    << ", nStates = " << nStates << ", nIntermediates = " << nIntermediates_;
-    
-  // allocate data vectors
-  //intermediates_.resize(nIntermediatesFromSource_*nInstances_);
-  parameters_.resize(nParameters_*nInstances_);
-  LOG(DEBUG) << "parameters.size: " << parameters_.size();
-  //<< ", intermediates.size: " << intermediates_.size();
+  else
+  {
+    LOG(DEBUG) << "Config does not contain key \"parametersInitialValues\"";
+  }
+
+  cellmlSourceCodeGenerator_.initialize(modelFilename, nInstances_, nStates, nIntermediates_,
+                                        parametersUsedAsIntermediate, parametersUsedAsConstant, parametersInitialValues);
 
   // initialize data, i.e. states and intermediates field variables
   data_.setFunctionSpace(functionSpace_);
-  data_.setIntermediateNames(intermediateNames_);
+  data_.setIntermediateNames(cellmlSourceCodeGenerator_.intermediateNames());
   data_.initialize();
 }
 
@@ -154,72 +150,42 @@ template<typename FunctionSpaceType2>
 bool CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
 setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nStates>> initialValues)
 {
-  LOG(TRACE) << "CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::setInitialValues, sourceFilename_=" << this->sourceFilename_;
+  LOG(TRACE) << "CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::setInitialValues";
+
+  // initialize states
+  std::array<double,nStates> statesInitialValues;
   if (this->specificSettings_.hasKey("statesInitialValues"))
   {
     LOG(DEBUG) << "set initial values from config";
 
     // statesInitialValues gives the initial state values for one instance of the problem. it is used for all instances.
-    statesInitialValues_ = this->specificSettings_.template getOptionArray<double,nStates>("statesInitialValues", 0);
+    std::array<double,nStates> statesInitialValuesFromConfig = this->specificSettings_.template getOptionArray<double,nStates>("statesInitialValues", 0);
+
+    // store initial values to cellmlSourceCodeGenerator_
+    std::vector<double> statesInitialValuesGenerator = cellmlSourceCodeGenerator_.statesInitialValues();
+    statesInitialValuesGenerator.assign(statesInitialValuesFromConfig.begin(), statesInitialValuesFromConfig.end());
   }
-  else if (this->sourceFilename_ != "")
+  else
   {
     LOG(DEBUG) << "set initial values from source file";
-    // parsing the source file was already done, the initial values are stored in the statesInitialValues_ vector
-  }
-  else
-  {
-    LOG(DEBUG) << "initialize to zero";
-    statesInitialValues_.fill(0.0);
-  }
 
-  if (this->specificSettings_.hasKey("parametersInitialValues"))
-  {
-    LOG(DEBUG) << "load parametersInitialValues from config";
+    // parsing the source file was already done
+    // get initial values from source code generator
+    std::vector<double> statesInitialValuesGenerator = cellmlSourceCodeGenerator_.statesInitialValues();
+    assert(statesInitialValuesGenerator.size() == nStates);
 
-    std::vector<double> parametersInitial;
-    specificSettings_.getOptionVector("parametersInitialValues", parametersInitial);
-
-    VLOG(1) << "parametersInitialValues: " << parametersInitial << ", parameters_.size(): " << parameters_.size();
-
-    if (parametersInitial.size() == parameters_.size())
-    {
-      std::copy(parametersInitial.begin(), parametersInitial.end(), parameters_.begin());
-      LOG(DEBUG) << "parameters size is matching for all instances";
-    }
-    else
-    {
-      LOG(DEBUG) << "copy parameters which were given only for one instance to all instances";
-      for (int instanceNo=0; instanceNo<nInstances_; instanceNo++)
-      {
-        for (int j=0; j<nParameters_; j++)
-        {
-          parameters_[j*nInstances_ + instanceNo] = parametersInitial[j];
-        }
-      }
-    }
-    VLOG(1) << "parameters_: " << parameters_;
-  }
-  else
-  {
-    LOG(DEBUG) << "Config does not contain key \"parametersInitialValues\"";
+    std::copy(statesInitialValuesGenerator.begin(), statesInitialValuesGenerator.end(), statesInitialValues.begin());
   }
 
+  // Here we have the initial values for the states in the statesInitialValues vector, only for one instance.
+  VLOG(1) << "statesInitialValues: " << statesInitialValues;
+  const std::vector<std::array<double,nStates>> statesAllInstances(nInstances_, statesInitialValues);
 
-  // Here we have the initial values for the states in the statesInitialValues_ vector, only for one instance.
-  VLOG(1) << "statesInitialValues_: " << statesInitialValues_;
-
-  const std::vector<std::array<double,nStates>> statesAllInstances(nInstances_, statesInitialValues_);
-
-  VLOG(1) << "statesAllInstances: " << statesAllInstances << ", nInstances: " << nInstances_ << ", nStates per instances: " << statesInitialValues_.size();
-
+  VLOG(1) << "statesAllInstances: " << statesAllInstances << ", nInstances: " << nInstances_ << ", nStates per instances: " << statesInitialValues.size();
   initialValues->setValuesWithoutGhosts(statesAllInstances);
 
   VLOG(1) << "initialValues: " << *initialValues;
   return true;
-
-  LOG(DEBUG) << "do not set initial values";
-  return false;
 }
 
 template<int nStates, int nIntermediates_, typename FunctionSpaceType>
@@ -235,7 +201,7 @@ getNumbers(int& nInstances, int& nIntermediates, int& nParameters)
 {
   nInstances = nInstances_;
   nIntermediates = nIntermediates_;
-  nParameters = nParameters_;
+  nParameters = cellmlSourceCodeGenerator_.nParameters();
 }
 
 template<int nStates, int nIntermediates_, typename FunctionSpaceType>
@@ -249,7 +215,7 @@ template<int nStates, int nIntermediates_, typename FunctionSpaceType>
 void CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
 getStateNames(std::vector<std::string> &stateNames)
 {
-  stateNames = this->stateNames_;
+  stateNames = this->cellmlSourceCodeGenerator_.stateNames();
 }
 
 template<int nStates, int nIntermediates_, typename FunctionSpaceType>
@@ -257,6 +223,20 @@ typename CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::Data &Cel
 data()
 {
   return this->data_;
+}
+
+template<int nStates, int nIntermediates_, typename FunctionSpaceType>
+CellmlSourceCodeGenerator &CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
+cellmlSourceCodeGenerator()
+{
+  return this->cellmlSourceCodeGenerator_;
+}
+
+template<int nStates, int nIntermediates_, typename FunctionSpaceType>
+PythonConfig CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
+specificSettings()
+{
+  return this->specificSettings_;
 }
 
 template<int nStates, int nIntermediates_, typename FunctionSpaceType>

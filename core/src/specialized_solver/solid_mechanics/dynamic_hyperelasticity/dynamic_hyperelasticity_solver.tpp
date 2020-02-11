@@ -4,6 +4,7 @@
 
 #include "spatial_discretization/finite_element_method/integrand/integrand_mass_matrix.h"
 #include "partition/partitioned_petsc_vec/02_partitioned_petsc_vec_for_hyperelasticity.h"
+#include "control/diagnostic_tool/solver_structure_visualizer.h"
 
 namespace TimeSteppingScheme
 {
@@ -18,8 +19,6 @@ DynamicHyperelasticitySolver(DihuContext context) :
   inputMeshIsGlobal_ = specificSettings_.getOptionBool("inputMeshIsGlobal", true);
   //viscosity_ = specificSettings_.getOptionDouble("viscosity", 0.0, PythonUtility::NonNegative);
 
-
-
   // initialize output writers
   this->outputWriterManager_.initialize(this->context_["dynamic"], this->context_["dynamic"].getPythonConfig());
 }
@@ -29,9 +28,19 @@ void DynamicHyperelasticitySolver<Term>::
 initialize()
 {
   TimeSteppingScheme::initialize();
+
+  // add this solver to the solvers diagram
+  DihuContext::solverStructureVisualizer()->addSolver("DynamicHyperelasticitySolver");
+
+  // indicate in solverStructureVisualizer that now a child solver will be initialized
+  DihuContext::solverStructureVisualizer()->beginChild();
+
   hyperelasticitySolver_.initialize();
   data_.setFunctionSpace(hyperelasticitySolver_.data().displacementsFunctionSpace());
   data_.initialize();
+
+  // indicate in solverStructureVisualizer that the child solver initialization is done
+  DihuContext::solverStructureVisualizer()->endChild();
 
   // create variable of unknowns
   uvp_ = hyperelasticitySolver_.createPartitionedPetscVec("uvp");
@@ -48,8 +57,16 @@ initialize()
   // parse updateDirichletBoundaryConditionsFunction
   if (this->specificSettings_.hasKey("updateDirichletBoundaryConditionsFunction"))
   {
-    pythonUpdateDirichletBoundaryConditionsFunction_ = this->specificSettings_.getOptionFunction("updateDirichletBoundaryConditionsFunction");
-    updateDirichletBoundaryConditionsFunctionCallInterval_ = this->specificSettings_.getOptionInt("updateDirichletBoundaryConditionsFunctionCallInterval", 1, PythonUtility::Positive);
+    PyObject *object = this->specificSettings_.getOptionPyObject("updateDirichletBoundaryConditionsFunction");
+    if (object == Py_None)
+    {
+      pythonUpdateDirichletBoundaryConditionsFunction_ = nullptr;
+    }
+    else
+    {
+      pythonUpdateDirichletBoundaryConditionsFunction_ = this->specificSettings_.getOptionFunction("updateDirichletBoundaryConditionsFunction");
+      updateDirichletBoundaryConditionsFunctionCallInterval_ = this->specificSettings_.getOptionInt("updateDirichletBoundaryConditionsFunctionCallInterval", 1, PythonUtility::Positive);
+    }
   }
 }
 
@@ -235,6 +252,21 @@ run()
 
   this->advanceTimeSpan();
 }
+
+template<typename Term>
+typename DynamicHyperelasticitySolver<Term>::Data &DynamicHyperelasticitySolver<Term>::
+data()
+{
+  return data_;
+}
+
+template<typename Term>
+typename DynamicHyperelasticitySolver<Term>::HyperelasticitySolverType &DynamicHyperelasticitySolver<Term>::
+hyperelasticitySolver()
+{
+  return hyperelasticitySolver_;
+}
+
 
 /*
 
@@ -627,5 +659,6 @@ computeExplicitEuler()
   hyperelasticitySolver_.solveForDisplacements(temp_[1], u_);    // solveForDisplacements(externalVirtualWork, displacements)
 
 }*/
+
 
 } // namespace TimeSteppingScheme

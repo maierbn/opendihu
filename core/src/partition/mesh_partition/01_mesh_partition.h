@@ -60,8 +60,8 @@ public:
   MeshPartition(std::array<global_no_t,MeshType::dim()> nElementsGlobal, std::shared_ptr<RankSubset> rankSubset);
  
   //! constructor from prescribed partition
-  MeshPartition(std::array<node_no_t,MeshType::dim()> nElementsLocal, std::array<global_no_t,MeshType::dim()> nElementsGlobal,
-                std::array<int,MeshType::dim()> beginElementGlobal, 
+  MeshPartition(std::array<element_no_t,MeshType::dim()> nElementsLocal, std::array<global_no_t,MeshType::dim()> nElementsGlobal,
+                std::array<global_no_t,MeshType::dim()> beginElementGlobal, 
                 std::array<int,MeshType::dim()> nRanks, std::shared_ptr<RankSubset> rankSubset);
   
   //! number of ranks in a coordinate direction
@@ -101,7 +101,7 @@ public:
   element_no_t nElementsGlobal(int coordinateDirection) const;
   
   //! global no of first local element
-  int beginElementGlobal(int coordinateDirection) const;
+  global_no_t beginElementGlobal(int coordinateDirection) const;
 
   //! number of nodes in total
   global_no_t nNodesGlobal() const;
@@ -251,7 +251,7 @@ protected:
 
   std::shared_ptr<DM> dmElements_;    ///< PETSc DMDA object (data management for distributed arrays) that stores topology information and everything needed for communication of ghost values. This particular object is created to get partitioning information on the element level.
   
-  std::array<int,MeshType::dim()> beginElementGlobal_;   ///< global element no.s of the lower left front corner of the domain
+  std::array<global_no_t,MeshType::dim()> beginElementGlobal_;   ///< global element no.s of the lower left front corner of the domain
   std::array<node_no_t,MeshType::dim()> nElementsLocal_;     ///< local size, i.e. number of nodes in the coordinate directions of the local portion
   std::array<global_no_t,MeshType::dim()> nElementsGlobal_;    ///< global number of elements in the coodinate directions
   std::array<int,MeshType::dim()> nRanks_;    ///<  number of ranks in each coordinate direction that decompose the total domain

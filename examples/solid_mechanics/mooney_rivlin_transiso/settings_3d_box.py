@@ -101,6 +101,7 @@ for j in range(ny*2+2):
     
 config = {
   "scenarioName": "3d_box",
+  "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "Meshes": fiber_meshes,
   "HyperelasticitySolver": {
     "durationLogKey": "nonlinear",

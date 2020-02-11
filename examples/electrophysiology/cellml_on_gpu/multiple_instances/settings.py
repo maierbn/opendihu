@@ -40,7 +40,7 @@ config = {
     #],
 
     "CellML" : {
-      "sourceFilename": "cellmlcode.cpp",
+      "modelFilename": "cellmlcode.cpp",
       "simdSourceFilename" : "simdcode.cpp",
       "libraryFilename": "cellml_simd_lib.so",
       #"gpuSourceFilename": "gpucode.cpp",

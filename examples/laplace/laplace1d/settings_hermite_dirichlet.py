@@ -11,18 +11,28 @@ bc[2*n] = 0.0
 bc[2*n+1] = -1./5
 
 config = {
+  "solverStructureDiagramFile":     "solver_structure.txt",
   "FiniteElementMethod" : {
     "nElements": n,
     "physicalExtent": 5.0,
-    "dirichletBoundaryConditions": bc,
     "nodePositions": [[float(i)/n] for i in range(n+1)],
     "elements": [[i, i+1] for i in range(n)],
-    "relativeTolerance": 1e-15,
     "inputMeshIsGlobal": True,
+    
+    "dirichletBoundaryConditions": bc,
+    "neumannBoundaryConditions": [],
     "prefactor": 1.0,
+    
+    "solverType": "gmres",
+    "preconditionerType": "none",
+    "relativeTolerance": 1e-15,
+    "maxIterations": 1e4,
+    "dumpFormat": "matlab",
+    "dumpFilename": "out/hermite",
+    
     "OutputWriter" : [
-      {"format": "Paraview", "outputInterval": 1, "filename": "out/p", "binary": False, "fixedFormat": False, "combineFiles": False},
-      {"format": "PythonFile", "outputInterval": 1, "filename": "out/p", "combineFiles": False, "onlyNodalValues": False}
+      {"format": "Paraview", "outputInterval": 1, "filename": "out/p", "binary": False, "fixedFormat": False, "combineFiles": False, "onlyNodalValues": True},
+      {"format": "PythonFile", "outputInterval": 1, "filename": "out/p", "combineFiles": False, "binary": True, "onlyNodalValues": False}
     ]
   },
 }

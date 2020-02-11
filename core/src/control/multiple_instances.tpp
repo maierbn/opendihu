@@ -10,7 +10,8 @@
 #include "data_management/multiple_instances.h"
 #include "partition/partition_manager.h"
 #include "utility/mpi_utility.h"
-#include "control/performance_measurement.h"
+#include "control/diagnostic_tool/performance_measurement.h"
+#include "control/diagnostic_tool/solver_structure_visualizer.h"
 
 namespace Control
 {
@@ -282,6 +283,10 @@ initialize()
     LOG(INFO) << "Initialize " << nInstancesComputedGlobally_ << " global instances (" << nInstancesLocal_ << " local).";
   }
 
+  // add this solver to the solvers diagram
+  DihuContext::solverStructureVisualizer()->addSolver("MultipleInstances");
+  DihuContext::solverStructureVisualizer()->beginChild();
+
   double progress = 0;
   for (int i = 0; i < nInstancesLocal_; i++)
   {
@@ -298,7 +303,16 @@ initialize()
 
     LOG(DEBUG) << "instance " << i << " initialize";
     instancesLocal_[i].initialize();
+
+    // indicate that the initialize of the child is finished
+    if (i == 0)
+    {
+      LOG(DEBUG) << " in multiple_instances, i=1, endChild and disable solverStructureVisualizer";
+      DihuContext::solverStructureVisualizer()->endChild();
+      DihuContext::solverStructureVisualizer()->disable();
+    }
   }
+  DihuContext::solverStructureVisualizer()->enable();
 
   // end output of progress
   if (outputInitializeThisInstance_ && this->context_.ownRankNo() == 0)
@@ -363,7 +377,14 @@ run()
     
     //instancesLocal_[i].reset();
     instancesLocal_[i].run();
+
+    // avoid that solver structure file is created in every instance
+    if (i == 1)
+    {
+      DihuContext::solverStructureVisualizer()->disable();
+    }
   }
+  DihuContext::solverStructureVisualizer()->enable();
   
 #ifdef HAVE_PAT
   PAT_region_end(2);    // end region "computation", id 

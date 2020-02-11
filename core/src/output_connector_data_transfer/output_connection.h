@@ -5,7 +5,7 @@
 #include "control/python_config.h"
 #include "data_management/output_connector_data.h"
 
-/** This specifies the connections of data slots between to terms, Term 1 and Term 2.
+/** This specifies the connections of data slots between two terms, Term 1 and Term 2.
  *  Each term is assumed to have data of type Data::OutputConnectorData which has the two vectors variable1 and variable2.
  *  Each variable vector can hold multiple components of field variables of the same type (number of components of the field variable).
  *  One such component is referred to as "slot". In the settings, there is the specification which slots to map to which slots by the fields
@@ -29,14 +29,20 @@ public:
   //! get the information to which slot the slot (fromVectorNo, fromIndex) should be mapped, @return: if there was no error, if it returns false, do not perform this mapping as the slot is not connected
   bool getSlotInformation(int fromVectorNo, int fromVectorIndex, int &toVectorNo, int &toVectorIndex, bool &avoidCopyIfPossible, bool disableWarnings=false) const;
 
-private:
   /** Specifies one slot
    */
   struct Connector
   {
-    int index;        //< index in the list of slots
+    int index;                  //< index in the list of slots, -1 means no connection
     bool avoidCopyIfPossible;   //< if the field variable should be reused
   };
+
+  //! get the connectors from term 1 to term 2
+  const std::vector<Connector> &connectorTerm1To2() const;
+
+  //! get the connectors from term 2 to term 1
+  const std::vector<Connector> &connectorTerm2To1() const;
+private:
 
   //! assemble some debugging information to the mapping that will be displayed on error
   std::string getDebugInformation() const;

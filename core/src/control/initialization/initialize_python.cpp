@@ -2,7 +2,8 @@
 
 #include <Python.h>  // this has to be the first included header
 #include <python_home.h>  // defines PYTHON_HOME_DIRECTORY
-#include "control/performance_measurement.h"
+#include "control/diagnostic_tool/performance_measurement.h"
+#include "utility/python_capture_stderr.h"
 
 void DihuContext::initializePython(int argc, char *argv[], bool explicitConfigFileGiven)
 {
@@ -21,6 +22,9 @@ void DihuContext::initializePython(int argc, char *argv[], bool explicitConfigFi
   const wchar_t *pythonSearchPathWChar = Py_DecodeLocale(pythonSearchPath.c_str(), NULL);
   Py_SetPythonHome((wchar_t *)pythonSearchPathWChar);
 
+  // add the emb module that captures stderr to the existing table of built-in modules
+  PyImport_AppendInittab("emb", emb::PyInit_emb);
+    
   // initialize python
   Py_Initialize();
 
@@ -30,6 +34,9 @@ void DihuContext::initializePython(int argc, char *argv[], bool explicitConfigFi
   //PyEval_ReleaseLock();
 
   Py_SetStandardStreamEncoding(NULL, NULL);
+
+  // import emb module which captures stderr
+  PyImport_ImportModule("emb");
 
   // get standard python path
   wchar_t *standardPythonPathWChar = Py_GetPath();
@@ -129,14 +136,15 @@ void DihuContext::initializePython(int argc, char *argv[], bool explicitConfigFi
 
 }
 
-void DihuContext::loadPythonScriptFromFile(std::string filename)
+bool DihuContext::loadPythonScriptFromFile(std::string filename)
 {
   // initialize python interpreter
 
   std::ifstream file(filename);
   if (!file.is_open())
   {
-    LOG(FATAL) << "Could not open settings file \"" <<filename << "\".";
+    LOG(WARNING) << "Could not open settings file \"" <<filename << "\".";
+    return false;
   }
   else
   {
@@ -189,6 +197,7 @@ void DihuContext::loadPythonScriptFromFile(std::string filename)
 
     loadPythonScript(fileContents);
   }
+  return true;
 }
 
 void DihuContext::loadPythonScript(std::string text)
@@ -198,6 +207,7 @@ void DihuContext::loadPythonScript(std::string text)
 
   // execute python code
   int ret = 0;
+  std::string errorBuffer;
   LOG(INFO) << std::string(80, '-');
   try
   {
@@ -223,8 +233,14 @@ void DihuContext::loadPythonScript(std::string text)
       LOG(ERROR) << "python version: " << version;
     }
 
+    // add callback function to capture stderr buffer
+    emb::stderr_write_type write = [&errorBuffer] (std::string s) {errorBuffer += s; };
+    emb::set_stderr(write);
+
     // execute config script
     ret = PyRun_SimpleString(pythonScriptText_.c_str());
+
+    emb::reset_stderr();
 
     PythonUtility::checkForError();
   }
@@ -240,11 +256,11 @@ void DihuContext::loadPythonScript(std::string text)
     {
       // print error message and exit
       PyErr_Print();
-      LOG(FATAL) << "An error occured in the python config.";
+      LOG(FATAL) << "An error occured in the python config.\n" << errorBuffer;
     }
 
     PyErr_Print();
-    LOG(FATAL) << "An error occured in the python config.";
+    LOG(FATAL) << "An error occured in the python config.\n" << errorBuffer;
   }
 
   // load main module and extract config
@@ -261,6 +277,11 @@ void DihuContext::loadPythonScript(std::string text)
 
   pythonConfig_.setPyObject(config);
 
+  parseGlobalParameters();
+}
+
+void DihuContext::parseGlobalParameters()
+{
   // parse scenario name
   std::string scenarioName = "";
   if (pythonConfig_.hasKey("scenarioName"))
@@ -268,4 +289,32 @@ void DihuContext::loadPythonScript(std::string text)
     scenarioName = pythonConfig_.getOptionString("scenarioName", "");
   }
   Control::PerformanceMeasurement::setParameter("scenarioName", scenarioName);
+
+  // parse all keys under meta
+  if (pythonConfig_.hasKey("meta"))
+  {
+
+    // loop over entries of python dict "meta"
+    std::string keyString("meta");
+    std::pair<std::string,std::string> dictItem
+      = pythonConfig_.getOptionDictBegin<std::string,std::string>(keyString);
+
+    for (; !pythonConfig_.getOptionDictEnd(keyString);
+        pythonConfig_.getOptionDictNext<std::string,std::string>(keyString, dictItem))
+    {
+      // the key is the name of the field
+      std::string key = dictItem.first;
+
+      // the value is the payload string
+      std::string value = dictItem.second;
+
+      std::stringstream logKey;
+      logKey << "meta_" << key;
+      LOG(DEBUG) << "key[" << key << "] value [" << value << "]";
+      Control::PerformanceMeasurement::setParameter(logKey.str(), value);
+    }
+  }
+
+  // filename for solver structure diagram
+  solverStructureDiagramFile_ = pythonConfig_.getOptionString("solverStructureDiagramFile", "solver_structure.txt");
 }

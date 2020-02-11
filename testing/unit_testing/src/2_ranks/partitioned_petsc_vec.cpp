@@ -115,7 +115,7 @@ config = {
   // 110-2-+
 
 
-  std::vector<int> indices({0, 1, 2, 3});
+  std::vector<PetscInt> indices({0, 1, 2, 3});
   std::vector<double> values(4);
   vec0->getValues(0, 4, indices.data(), values.data());
 
@@ -235,7 +235,7 @@ config = {
 
   if (settings.ownRankNo() == 0)
   {
-    std::vector<int> indices({0,1,3});
+    std::vector<PetscInt> indices({0,1,3});
     std::vector<double> values({100, 101, 4});
     vec0->setValue(1, 0, 110);
     vec0->setValues(0, indices.size(), indices.data(), values.data());
@@ -273,7 +273,7 @@ config = {
   // 110-2-+
 
 
-  std::vector<int> indices({0, 1, 2, 3});
+  std::vector<PetscInt> indices({0, 1, 2, 3});
   std::vector<double> values(4);
   vec0->getValues(0, 4, indices.data(), values.data());
 
@@ -400,7 +400,7 @@ config = {
   // component 0
   if (settings.ownRankNo() == 0)
   {
-    std::vector<int> indices({0,1,2});
+    std::vector<PetscInt> indices({0,1,2});
     std::vector<double> values(indices.size());
 
     vec0->getValues(0, indices.size(), indices.data(), values.data());
@@ -411,7 +411,7 @@ config = {
   }
   else
   {
-    std::vector<int> indices({19,20});
+    std::vector<PetscInt> indices({19,20});
     std::vector<double> values(indices.size());
 
     vec0->getValues(0, indices.size(), indices.data(), values.data());
@@ -423,7 +423,7 @@ config = {
   // component 1
   if (settings.ownRankNo() == 0)
   {
-    std::vector<int> indices({23,22});
+    std::vector<PetscInt> indices({23,22});
     std::vector<double> values(indices.size());
 
     vec0->getValues(1, indices.size(), indices.data(), values.data());
@@ -433,7 +433,7 @@ config = {
   }
   else
   {
-    std::vector<int> indices({15,12});
+    std::vector<PetscInt> indices({15,12});
     std::vector<double> values(indices.size());
 
     vec0->getValues(1, indices.size(), indices.data(), values.data());
@@ -445,7 +445,7 @@ config = {
   // component 3
   if (settings.ownRankNo() == 0)
   {
-    std::vector<int> indices({3,4});
+    std::vector<PetscInt> indices({3,4});
     std::vector<double> values(indices.size());
 
     vec0->getValues(3, indices.size(), indices.data(), values.data());
@@ -455,7 +455,7 @@ config = {
   }
   else
   {
-    std::vector<int> indices({0,1,2});
+    std::vector<PetscInt> indices({0,1,2});
     std::vector<double> values(indices.size());
 
     vec0->getValues(3, indices.size(), indices.data(), values.data());
@@ -552,7 +552,7 @@ config = {
   // component 0
   if (settings.ownRankNo() == 0)
   {
-    std::vector<int> indices({0,1,2});
+    std::vector<PetscInt> indices({0,1,2});
     std::vector<double> values(indices.size());
 
     vec0->getValues(0, indices.size(), indices.data(), values.data());
@@ -563,7 +563,7 @@ config = {
   }
   else
   {
-    std::vector<int> indices({19,20});
+    std::vector<PetscInt> indices({19,20});
     std::vector<double> values(indices.size());
 
     vec0->getValues(0, indices.size(), indices.data(), values.data());
@@ -578,7 +578,7 @@ config = {
   }
   else
   {
-    std::vector<int> indices({15});
+    std::vector<PetscInt> indices({15});
     std::vector<double> values(indices.size());
 
     vec0->getValues(1, indices.size(), indices.data(), values.data());
@@ -589,7 +589,7 @@ config = {
   // component 3
   if (settings.ownRankNo() == 0)
   {
-    std::vector<int> indices({3});
+    std::vector<PetscInt> indices({3});
     std::vector<double> values(indices.size());
 
     vec0->getValues(3, indices.size(), indices.data(), values.data());
@@ -598,7 +598,7 @@ config = {
   }
   else
   {
-    std::vector<int> indices({1,2});
+    std::vector<PetscInt> indices({1,2});
     std::vector<double> values(indices.size());
 
     vec0->getValues(3, indices.size(), indices.data(), values.data());

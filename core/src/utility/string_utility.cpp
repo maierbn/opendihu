@@ -53,6 +53,17 @@ std::string replace(std::string str, const std::string& from, const std::string&
   return result;
 }
 
+//! replace from by to
+std::string replaceAll(std::string str, const std::string& from, const std::string& to)
+{
+  std::string result(str);
+  while(result.find(from) != std::string::npos)
+  {
+    result = replace(result, from, to);
+  }
+  return result;
+}
+
 template<>
 std::string multiply<1>(std::string str)
 {
@@ -119,6 +130,19 @@ std::string demangle(const char *typeidName)
 #else
   return std::string(typeidName);
 #endif
+}
+
+std::size_t stringLength(std::string string)
+{
+  int length = string.length();
+
+  // unicode characters start with -62 and use 2 chars
+  // or with -30 and use 3 chars
+  length -= std::count(string.begin(), string.end(), char(-50));
+  length -= std::count(string.begin(), string.end(), char(-62));
+  length -= 2*std::count(string.begin(), string.end(), char(-30));
+
+  return length;
 }
 
 }  // namespace

@@ -94,12 +94,12 @@ void SolverStructureVisualizer::addOutputConnection(OutputConnection &outputConn
       outputConnection.toSlot = connectorTerm1To2[i].index;
 
       // if there exists a connection back between the same slots
-      if (connectorTerm2To1.size() >= connectorTerm1To2[i].index)
+      if (connectorTerm2To1.size() > outputConnection.toSlot)
       {
-        if (connectorTerm2To1[connectorTerm1To2[i].index].index == i)
+        if (connectorTerm2To1[outputConnection.toSlot].index == i)
         {
           // if the connection type is to avoid copies in both directions
-          if (connectorTerm1To2[i].avoidCopyIfPossible && connectorTerm2To1[connectorTerm1To2[i].index].avoidCopyIfPossible)
+          if (connectorTerm1To2[i].avoidCopyIfPossible && connectorTerm2To1[outputConnection.toSlot].avoidCopyIfPossible)
           {
             outputConnection.type = solver_t::OutputConnection::bidirectionalReuse;
           }
@@ -127,12 +127,12 @@ void SolverStructureVisualizer::addOutputConnection(OutputConnection &outputConn
       outputConnection.toSlot = connectorTerm2To1[i].index;
 
       // if there exists a connection back between the same slots
-      if (connectorTerm1To2.size() >= connectorTerm2To1[i].index)
+      if (connectorTerm1To2.size() > outputConnection.toSlot)
       {
-        if (connectorTerm1To2[connectorTerm2To1[i].index].index == i)
+        if (connectorTerm1To2[outputConnection.toSlot].index == i)
         {
           // if the connection type is to avoid copies in both directions
-          if (connectorTerm2To1[i].avoidCopyIfPossible && connectorTerm1To2[connectorTerm2To1[i].index].avoidCopyIfPossible)
+          if (connectorTerm2To1[i].avoidCopyIfPossible && connectorTerm1To2[outputConnection.toSlot].avoidCopyIfPossible)
           {
             outputConnection.type = solver_t::OutputConnection::bidirectionalReuse;
           }

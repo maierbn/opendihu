@@ -70,6 +70,7 @@ void handleSignal(int signalNo)
   Control::PerformanceMeasurement::setParameter("exit",signalName);
   Control::PerformanceMeasurement::writeLogFile();
   Control::StimulationLogging::writeLogFile();
+  DihuContext::writeSolverStructureDiagram();
 
   int rankNo = DihuContext::ownRankNoCommWorld();
   LOG(INFO) << "Rank " << rankNo << " received signal " << sys_siglist[signalNo]
@@ -345,7 +346,7 @@ std::string DihuContext::versionText()
 {
   std::stringstream versionTextStr;
 
-  versionTextStr << "opendihu 1.1, build " << __DATE__ << " " << __TIME__;
+  versionTextStr << "opendihu 1.1, build " << __DATE__; // << " " << __TIME__; // do not add time otherwise it wants to recompile this file every time
 #ifdef __cplusplus
   versionTextStr << ", C++ " << __cplusplus;
 #endif
@@ -418,6 +419,12 @@ std::shared_ptr<SolverStructureVisualizer> DihuContext::solverStructureVisualize
   return solverStructureVisualizer_;
 }
 
+void DihuContext::writeSolverStructureDiagram()
+{
+  if (solverStructureVisualizer_ && solverStructureDiagramFile_ != "")
+    solverStructureVisualizer_->writeDiagramFile(solverStructureDiagramFile_);
+}
+
 std::shared_ptr<Solver::Manager> DihuContext::solverManager() const
 {
   // get number of omp threads
@@ -486,9 +493,7 @@ DihuContext::~DihuContext()
   if (nObjects_ == 0)
   {
     // write log files
-    if (solverStructureVisualizer_)
-      solverStructureVisualizer_->writeDiagramFile(solverStructureDiagramFile_);
-
+    writeSolverStructureDiagram();
     Control::StimulationLogging::writeLogFile();
     Control::PerformanceMeasurement::writeLogFile();
 

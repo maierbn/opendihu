@@ -3,6 +3,7 @@
 #include "data_management/output_connector_data.h"
 #include "output_connector_data_transfer/output_connection.h"
 #include "output_writer/generic.h"
+#include "utility/string_utility.h"
 
 //! iterate over all nested solvers
 void SolverStructureVisualizer::
@@ -47,7 +48,8 @@ generateDiagram(std::stringstream &result, std::vector<std::tuple<int,int,int,So
 
       std::string outputSlotString = s.str();
 
-      int currentLineLength = outputSlotString.length() - 2*depth;
+      int currentLineLength = StringUtility::stringLength(outputSlotString)+2;
+
       const int requiredLineLength = 45;
 
       s << std::string(requiredLineLength - currentLineLength, ' ')
@@ -326,12 +328,7 @@ writeDiagramFile(std::string filename)
 
     // fill current line with spaces such that it has the correct length
     const int requiredLineLength = 49;
-    int lineLength = line.length();
-
-    // unicode characters start with -62 and use 2 chars
-    // or with -30 and use 3 chars
-    lineLength -= std::count(line.begin(), line.end(), char(-62));
-    lineLength -= 2*std::count(line.begin(), line.end(), char(-30));
+    int lineLength = StringUtility::stringLength(line);
 
     // determine fill character for horizontal line
     std::string fillCharacter = " ";

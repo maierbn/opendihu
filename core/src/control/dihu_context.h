@@ -72,6 +72,9 @@ public:
   //! return the object that collects information about all nested solvers and produces a diagram, also with data connections
   static std::shared_ptr<SolverStructureVisualizer> solverStructureVisualizer();
 
+  //! writes out the diagram file using the solverStructureVisualizer
+  static void writeSolverStructureDiagram();
+
   //! get the own MPI rank no in the communicator of this context
   int ownRankNo();
 

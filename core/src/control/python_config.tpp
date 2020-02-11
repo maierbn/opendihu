@@ -83,7 +83,7 @@ getOptionVector(std::string keyString, int nEntries, std::vector<T> &values) con
     values.resize(nEntries, T{0.0});
     return;
   }
-  values = PythonUtility::convertFromPython<std::vector<T>>::get(pyLocalValues);
+  values = PythonUtility::convertFromPython<std::vector<T>>::get(pyLocalValues, T{0.0});
   if (values.size() < nEntries)
   {
     LOG(WARNING) << pathString << "[\"" << keyString << "\"]: given vector has only " << values.size() << " entries, fill with 0's to size "

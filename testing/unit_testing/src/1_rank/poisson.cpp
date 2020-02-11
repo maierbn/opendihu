@@ -505,7 +505,7 @@ config = {
   "FiniteElementMethod" : {
     "nElements": [4, 5],
     "physicalExtent": [1.0, 5.0/4.],
-    "rightHandSide": {4:0, 5:0, 2:5, 7:7.0, 3:9, "8":3, 0:1, 1:4, 6.0:5, "10":0},
+    "rightHandSide": {2:5, 7:7.0, 3:9, "8":3, 0:1, 1:4, 6.0:5, "10":0},
     "dirichletBoundaryConditions": {0:0},
     "relativeTolerance": 1e-15,
   },

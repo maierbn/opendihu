@@ -87,6 +87,7 @@ vars.Add(BoolVariable('USE_CRAY_PAT', 'Compile with craypat regions.', False))
 vars.Add(BoolVariable('USE_HPL', 'Compile with -hpl option.', False))
 vars.Add(BoolVariable('USE_MEGAMOL', 'Use additional linker flags to link to the megamol source file.', False))
 if socket.gethostname() != 'cmcs09':
+  vars.Add('mpicc', help='The mpiccc compiler wrapper', default='mpicc')
   vars.Add('mpiCC', help='The mpic++ compiler wrapper', default='mpic++')
   vars.Add('cc', help='The c compiler', default='gcc')
   vars.Add('CC', help='The c++ compiler', default='g++')

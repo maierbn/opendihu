@@ -4,7 +4,7 @@
 #include <sstream>
 
 #include "braid.h"
-#include "/mnt/c/Users/mariu/OneDrive/Dokumente/Masterarbeit/Opendihu/opendihu/dependencies/xbraid/src/xbraid-2.3.0/braid/braid.hpp"
+//#include "/mnt/c/Users/mariu/OneDrive/Dokumente/Masterarbeit/Opendihu/opendihu/dependencies/xbraid/src/xbraid-2.3.0/braid/braid.hpp"
 // #include "PinT_IE_Braid.cpp"
 #include "PinT_IE_Braid.c"
 
@@ -12,7 +12,7 @@ template<class NestedSolver>
 PinT<NestedSolver>::
 PinT(DihuContext context) :
   Runnable(),
-  context_(context["PinT"]), nestedSolver_(this->context_), data_(this->context_), initialized_(false)
+  context_(context["PinT"]), initialized_(false)
 {
   // get python settings object from context
   this->specificSettings_ = this->context_.getPythonConfig();
@@ -34,60 +34,67 @@ initialize()
   if (initialized_)
     return;
 
-  // initialize() will be called before the simulation starts.
-
-  // call initialize of the nested solver
-  nestedSolver_.initialize();
-
-  // In order to initialize the data object and actuall create all variables, we first need to assign a function space to the data object.
-  // A function space object of type FunctionSpace<MeshType,BasisFunctionType> (see "function_space/function_space.h")
-  // is an object that stores the mesh (e.g., all nodes and elements) as well as the basis function (e.g. linear Lagrange basis functions).
-  // The NestedSolver solver already created a function space that we should use. We already have a typedef "FunctionSpace" that is the class of NestedSolver's function space type.
-  std::shared_ptr<FunctionSpace> functionSpace = nestedSolver_.data().functionSpace();
-
-  // Pass the function space to the data object. data_ stores field variables.
-  // It needs to know the number of nodes and degrees of freedom (dof) from the function space in order to create the vectors with the right size.
-  data_.setFunctionSpace(functionSpace);
-
-  // now call initialize, data will then create all variables (Petsc Vec's)
-  data_.initialize();
-
-  // it is also possible to pass some field variables from the data of the NestedSolver to own data object
-  data_.setSolutionVariable(nestedSolver_.data().solution());
-
-
   PythonConfig config;
 
   // this->specificSettings_
-  std::vector<std::shared_ptr<PinT<TimeSteppingScheme::ImplicitEuler<SpatialDiscretization::FiniteElementMethod<
-    Mesh::StructuredRegularFixedOfDimension<1>,
-    BasisFunction::LagrangeOfOrder<>,
-    Quadrature::None,
-    Equation::Dynamic::IsotropicDiffusion>
-  >>>> implicitEulerSolvers_;
 
+
+  std::vector<PyObject *> implicitEulerConfigs;
 
   PyObject *implicitEulerConfig = this->specificSettings_.getOptionListBegin<PyObject *>("TimeSteppingScheme");
 
   // loop over other entries of list
-  for (int i = 0;
+  for (;
     !this->specificSettings_.getOptionListEnd("TimeSteppingScheme");
     this->specificSettings_.getOptionListNext<PyObject *>("TimeSteppingScheme", implicitEulerConfig))
   {
+    implicitEulerConfigs.push_back(implicitEulerConfig);
+  }
+
+  for (int i = 0; i < implicitEulerConfigs.size(); i++)
+  {
+    LOG(DEBUG) << "i = " << i;
+
+    PyObject *implicitEulerConfig = implicitEulerConfigs[i];
 
     LOG(DEBUG) << "implicitEulerConfig: " << implicitEulerConfig;
-
     DihuContext implicitEulerContext = context_.createSubContext(implicitEulerConfig);
 
-    implicitEulerSolvers_[i] = std::make_shared<PinT<TimeSteppingScheme::ImplicitEuler<SpatialDiscretization::FiniteElementMethod<
-      Mesh::StructuredRegularFixedOfDimension<1>,
-      BasisFunction::LagrangeOfOrder<>,
-      Quadrature::None,
-      Equation::Dynamic::IsotropicDiffusion>>>>(implicitEulerContext);
+    LOG(DEBUG) << "implicitEulerContext: " << implicitEulerContext.getPythonConfig();
 
-    i++;
+    implicitEulerSolvers_.push_back(
+      std::make_shared<NestedSolver>(implicitEulerContext)
+    );
+
+    data_.push_back(
+      std::make_shared<Data>(implicitEulerContext)
+    );
+
+    LOG(DEBUG) << "initialize implicit EUler for i = " << i;
+
+    implicitEulerSolvers_.back()->initialize();
+
+    // In order to initialize the data object and actuall create all variables, we first need to assign a function space to the data object.
+    // A function space object of type FunctionSpace<MeshType,BasisFunctionType> (see "function_space/function_space.h")
+    // is an object that stores the mesh (e.g., all nodes and elements) as well as the basis function (e.g. linear Lagrange basis functions).
+    // The NestedSolver solver already created a function space that we should use. We already have a typedef "FunctionSpace" that is the class of NestedSolver's function space type.
+    std::shared_ptr<FunctionSpace> functionSpace = implicitEulerSolvers_.back()->data().functionSpace();
+
+    // Pass the function space to the data object. data_ stores field variables.
+    // It needs to know the number of nodes and degrees of freedom (dof) from the function space in order to create the vectors with the right size.
+    data_.back()->setFunctionSpace(functionSpace);
+
+
+    LOG(DEBUG) << "initialize data for i = " << i;
+    // now call initialize, data will then create all variables (Petsc Vec's)
+    data_.back()->initialize();
+
+    // it is also possible to pass some field variables from the data of the NestedSolver to own data object
+    data_.back()->setSolutionVariable(implicitEulerSolvers_.back()->data().solution());
   };
 
+
+  LOG(DEBUG) << "n: " << implicitEulerSolvers_.size();
 
   // here is the space to initialize anything else that is needed for your solver
   // for example, initialize Braid here (not like this)
@@ -226,7 +233,7 @@ run()
   (app->xstop)         = xstop;
   (app->nspace)        = nspace;
   (app->print_level)   = print_level;
-  (app->solver)        = &this->nestedSolver_;
+  (app->implicitEulerSolvers)        = &this->implicitEulerSolvers_;
 
   /* Initialize storage for sc_info, for tracking space-time grids visited during the simulation */
   app->sc_info = (double*) malloc( 2*max_levels*sizeof(double) );
@@ -243,12 +250,12 @@ run()
   if(wrapper_tests)
   {
      /* Create spatial communicator for wrapper-tests */
-     braid_SplitCommworld(&comm, 1, &comm_x, &comm_t);
+     /*braid_SplitCommworld(&comm, 1, &comm_x, &comm_t);*/
 
-     braid_TestAll(app, comm_x, stdout, 0.0, (tstop-tstart)/ntime,
+     /*braid_TestAll(app, comm_x, stdout, 0.0, (tstop-tstart)/ntime,
                    2*(tstop-tstart)/ntime, my_Init, my_Free, my_Clone,
                    my_Sum, my_SpatialNorm, my_BufSize, my_BufPack,
-                   my_BufUnpack, my_Coarsen, my_Interp, my_Residual, my_Step);
+                   my_BufUnpack, my_Coarsen, my_Interp, my_Residual, my_Step); */
   }
   else
   {
@@ -309,21 +316,19 @@ run()
   // MPI_Finalize();
 
   // call the nested solver
-  nestedSolver_.run();
+  //nestedSolver_.run();
 
   // do something else
-  executeMyHelperMethod();
+  //executeMyHelperMethod();
 
   // write current output values using the output writers
-  this->outputWriterManager_.writeOutput(this->data_);
+  this->outputWriterManager_.writeOutput(*this->data_.back());
 }
 
 template<class NestedSolver>
 void PinT<NestedSolver>::
 reset()
 {
-  nestedSolver_.reset();
-
   initialized_ = false;
   // "uninitialize" everything
 }
@@ -331,7 +336,7 @@ reset()
 template<class NestedSolver>
 void PinT<NestedSolver>::
 executeMyHelperMethod()
-{
+{/*
   // this is the template for an own private method
 
   // Get the solution field variable from the data object. The Petsc object can be retrieved with "valuesGlobal()".
@@ -357,7 +362,7 @@ executeMyHelperMethod()
   // Mat m = stiffnessMatrix->valuesGlobal();
   //
   // // e.g. add identity to m
-  // ierr = MatShift(m, 1.0); CHKERRV(ierr);
+  // ierr = MatShift(m, 1.0); CHKERRV(ierr);*/
 }
 
 template<class NestedSolver>
@@ -365,7 +370,7 @@ typename PinT<NestedSolver>::Data &PinT<NestedSolver>::
 data()
 {
   // get a reference to the data object
-  return data_;
+  return data_.back();
 
   // The nestedSolver_ object also has a data object, we could also directly use this and avoid having an own data object:
   //  return nestedSolver_.data();
@@ -379,5 +384,5 @@ getOutputConnectorData()
 {
   //! This is relevant only, if this solver is part of a splitting or coupling scheme. Then this method returns the values/variables that will be
   // transferred to the other solvers. We can just reuse the values of the nestedSolver_.
-  return nestedSolver_.getOutputConnectorData();
+  return implicitEulerSolvers_.back()->getOutputConnectorData();
 }

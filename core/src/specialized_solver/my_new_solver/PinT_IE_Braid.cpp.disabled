@@ -2,8 +2,9 @@
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
+#include "braid.h"
 
-// #include "braid.hpp"
+#include "braid.hpp"
 #include "PinT_IE_lib.c"
 
 // --------------------------------------------------------------------------
@@ -22,7 +23,7 @@ public:
    BraidVector(double value_) : value(value_) { }
 
    // Deconstructor
-   virtual ~BraidVector() {};
+   virtual ~BraidVector() {}
 
 };
 

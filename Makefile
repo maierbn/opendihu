@@ -109,3 +109,6 @@ mooney_rivlin:
 
 dynamic_mooney_rivlin:
 	cd examples/solid_mechanics/dynamic_mooney_rivlin  && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+
+xbraid:
+	cd examples/diffusion/PinT_diffusion1d  && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG

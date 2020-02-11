@@ -43,9 +43,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <vector>
 
 #include "braid.h"
-#include "/mnt/c/Users/mariu/OneDrive/Dokumente/Masterarbeit/Opendihu/opendihu/dependencies/xbraid/src/xbraid-2.3.0/braid/braid.hpp"
+//#include "/mnt/c/Users/mariu/OneDrive/Dokumente/Masterarbeit/Opendihu/opendihu/dependencies/xbraid/src/xbraid-2.3.0/braid/braid.hpp"
 // #include "braid_test.h"
 #include "PinT_IE_lib.c"
 // #include "PinT_IE_lib.cpp"
@@ -64,25 +65,33 @@
 /* can put anything in my app and name it anything as well */
 typedef struct _braid_App_struct
 {
-   MPI_Comm  comm;
-   double    tstart;       /* Define the temporal domain */
-   double    tstop;
-   int       ntime;
-   double    xstart;       /* Define the spatial domain */
-   double    xstop;
-   int       nspace;
-   double    matrix[3];    /* the three point spatial discretization stencil */
-   double *  g;            /* temporary vector for inversions and mat-vecs */
-   double *  sc_info;      /* Runtime information that tracks the space-time grids visited */
-   int       print_level;  /* Level of output desired by user (see the -help message below) */
-   TimeSteppingScheme::ImplicitEuler<
-     SpatialDiscretization::FiniteElementMethod<
-       Mesh::StructuredRegularFixedOfDimension<1>,
-       BasisFunction::LagrangeOfOrder<>,
-       Quadrature::None,
-       Equation::Dynamic::IsotropicDiffusion
-     >
-   > *solver;
+  MPI_Comm  comm;
+  double    tstart;       /* Define the temporal domain */
+  double    tstop;
+  int       ntime;
+  double    xstart;       /* Define the spatial domain */
+  double    xstop;
+  int       nspace;
+  double    matrix[3];    /* the three point spatial discretization stencil */
+  double *  g;            /* temporary vector for inversions and mat-vecs */
+  double *  sc_info;      /* Runtime information that tracks the space-time grids visited */
+  int       print_level;  /* Level of output desired by user (see the -help message below) */
+
+  typedef  TimeSteppingScheme::ImplicitEuler<
+    SpatialDiscretization::FiniteElementMethod<
+      Mesh::StructuredRegularFixedOfDimension<1>,
+      BasisFunction::LagrangeOfOrder<>,
+      Quadrature::None,
+      Equation::Dynamic::IsotropicDiffusion
+    >
+  > NestedSolver;
+
+  std::vector<
+    std::shared_ptr<
+      NestedSolver
+    >
+  > *implicitEulerSolvers;   //< vector of nested solvers (implicit euler) for solution on different grids
+
 } my_App;
 
 /* Can put anything in my vector and name it anything as well */

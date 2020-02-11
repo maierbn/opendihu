@@ -397,7 +397,16 @@ generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunc
     << " * The \"optimizationType\" is \"vc\". (Other options are \"simd\" and \"openmp\".) */" << std::endl
     << "extern \"C\"" << std::endl
     << "void computeCellMLRightHandSide("
-    << "void *context, double t, double *states, double *rates, double *intermediates, double *parameters)" << std::endl << "{" << std::endl;
+    << "void *context, double t, double *states, double *rates, double *intermediates, double *parameters)" << std::endl 
+    << "{" << std::endl
+    << "  // assert that Vc::double_v::Size is the same as in opendihu, otherwise there will be problems\n"
+    << "  if (Vc::double_v::Size != " << Vc::double_v::Size << ")\n"
+    << "  {\n"
+    << "    std::cout << \"Fatal error in compiled library of source file \\\"" << outputFilename << "\\\", size of SIMD register in "
+    << "compiled code (\" << Vc::double_v::Size << \") does not match opendihu code (" << Vc::double_v::Size << ").\" << std::endl;\n"
+    << "    std::cout << \"Delete library such that it will be regenerated with the correct compile options!\" << std::endl;\n"
+    << "    exit(1);\n"
+    << "  }\n\n";
 
   sourceCode << "  double VOI = t;   /* current simulation time */" << std::endl;
   sourceCode << std::endl << "  /* define constants */" << std::endl
@@ -419,7 +428,7 @@ generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunc
     << "  const int nStates = " << this->nStates_ << ";\n"
     << "  const int nIntermediates = " << this->nIntermediates_ << ";\n"
     << "  const int nParametersPerInstance = " << nParametersPerInstance << ";\n"
-    << "  const int nVcVectors = (int)(ceil((double)nInstances / Vc::double_v::Size));  // ceil(" << this->nInstances_ << " instances / VcSize " << Vc::double_v::Size << ")" << std::endl
+    << "  const int nVcVectors = " << nVcVectors << ";  // ceil(" << this->nInstances_ << " instances / VcSize " << Vc::double_v::Size << ")" << std::endl
     << "  Vc::double_v statesVc[nStates*nVcVectors];  // " << this->nStates_ << " states * " << nVcVectors << " vectors" << std::endl
     << "  Vc::double_v ratesVc[nStates*nVcVectors];   // " << this->nStates_ << " rates  * " << nVcVectors << " vectors" << std::endl
     << "  Vc::double_v intermediatesVc[nIntermediates*nVcVectors];  // " << this->nIntermediates_ << " intermediates  * " << nVcVectors << " vectors" << std::endl
@@ -462,19 +471,19 @@ generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunc
               // all other variables (states, rates, intermediates, parameters) exist for every instance
               if (expression.code == "states")
               {
-                sourceCode << "statesVc[" << expression.arrayIndex << " * nVcVectors + i]";
+                sourceCode << "statesVc[" << expression.arrayIndex * nVcVectors << "+i]";
               }
               else if (expression.code == "rates")
               {
-                sourceCode << "ratesVc[" << expression.arrayIndex << " * nVcVectors + i]";
+                sourceCode << "ratesVc[" << expression.arrayIndex * nVcVectors << "+i]";
               }
               else if (expression.code == "intermediates")
               {
-                sourceCode << "intermediatesVc[" << expression.arrayIndex << " * nVcVectors + i]";
+                sourceCode << "intermediatesVc[" << expression.arrayIndex * nVcVectors << "+i]";
               }
               else if (expression.code == "parameters")
               {
-                sourceCode << "parametersVc[" << expression.arrayIndex << " * nVcVectors + i]";
+                sourceCode << "parametersVc[" << expression.arrayIndex * nVcVectors << "+i]";
               }
               else
               {

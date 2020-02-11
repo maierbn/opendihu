@@ -55,16 +55,16 @@ initialize()
   // it is also possible to pass some field variables from the data of the NestedSolver to own data object
   data_.setSolutionVariable(nestedSolver_.data().solution());
 
-
   PythonConfig config;
-
+  LOG(DEBUG) << config;
+  LOG(DEBUG) << context_.getPythonConfig();
   // this->specificSettings_
   std::vector<std::shared_ptr<PinT<TimeSteppingScheme::ImplicitEuler<SpatialDiscretization::FiniteElementMethod<
-    Mesh::StructuredRegularFixedOfDimension<1>,
-    BasisFunction::LagrangeOfOrder<>,
-    Quadrature::None,
-    Equation::Dynamic::IsotropicDiffusion>
-  >>>> implicitEulerSolvers_;
+      Mesh::StructuredRegularFixedOfDimension<1>,
+      BasisFunction::LagrangeOfOrder<>,
+      Quadrature::None,
+      Equation::Dynamic::IsotropicDiffusion>
+    >>>> implicitEulerSolvers_;
 
 
   PyObject *implicitEulerConfig = this->specificSettings_.getOptionListBegin<PyObject *>("TimeSteppingScheme");

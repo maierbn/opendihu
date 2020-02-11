@@ -86,6 +86,16 @@ void CellmlSourceCodeGeneratorBase::convertFromXmlToC()
         // create a c filename
         std::stringstream s;
         s << "src/" << StringUtility::extractBasename(sourceFilename_) << ".c";
+        std::string cFilename = s.str();
+
+        // check if file already exists
+        std::ifstream cFile(cFilename.c_str());
+        if (cFile.is_open())
+        {
+          LOG(DEBUG) << "C file \"" << cFilename << "\" already exists.";
+          sourceFilename_ = cFilename;
+          return;
+        }
 
         // create src directory
         int ret = system("mkdir -p src");
@@ -94,13 +104,12 @@ void CellmlSourceCodeGeneratorBase::convertFromXmlToC()
           LOG(ERROR) << "Could not create \"src\" directory.";
         }
 
-        std::string cFilename = s.str();
 
         // call OpenCOR, if available
 #ifdef HAVE_OPENCOR
         std::stringstream command;
         command << "\"" << OPENCOR_BINARY << "\" -c CellMLTools::export \"" << sourceFilename_ << "\" \"" << OPENCOR_FORMATS_DIRECTORY << "/C.xml\" > \"" << cFilename << "\"";
-        LOG(DEBUG) << "use opencor to convert file: " << command.str();
+        LOG(DEBUG) << "Use opencor to convert file: \n" << command.str();
         ret = system(command.str().c_str());
         if (ret != 0)
         {

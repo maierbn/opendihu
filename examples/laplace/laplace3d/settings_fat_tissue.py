@@ -54,6 +54,7 @@ config = {
       "dumpFormat":         "matlab",
     },
   },
+  "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "FiniteElementMethod" : {
     "meshName": "3DFatMesh",
     "solverName": "fatEMGSolver",

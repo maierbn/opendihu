@@ -5,7 +5,8 @@
 #include "utility/python_utility.h"
 #include "utility/petsc_utility.h"
 #include "data_management/specialized_solver/multidomain.h"
-#include "control/performance_measurement.h"
+#include "control/diagnostic_tool/performance_measurement.h"
+#include "control/diagnostic_tool/solver_structure_visualizer.h"
 
 namespace TimeSteppingScheme
 {
@@ -747,6 +748,12 @@ initialize()
 
   // write initial geometry
   this->outputWriterManager_.writeOutput(this->data_, 0, 0);
+
+  // add this solver to the solvers diagram
+  DihuContext::solverStructureVisualizer()->addSolver("QuasiStaticNonlinearElasticitySolverFebio");
+
+  // set the outputConnectorData for the solverStructureVisualizer to appear in the solver diagram
+  DihuContext::solverStructureVisualizer()->setOutputConnectorData(getOutputConnectorData());
 
   LOG(DEBUG) << "initialization done";
   this->initialized_ = true;

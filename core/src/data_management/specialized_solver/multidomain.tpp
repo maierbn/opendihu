@@ -31,18 +31,18 @@ initialize(int nCompartments)
 
   // call initialize of base class
   Data<FunctionSpaceType>::initialize();
-}
-
-template<typename FunctionSpaceType>
-void Multidomain<FunctionSpaceType>::
-setSubvectorsSolution(const std::vector<Vec> &subvectorsSolution)
-{
-  subvectorsSolution_ = subvectorsSolution;
 
   // initialize output connector data
   outputConnectorData_ = std::make_shared<OutputConnectorDataType>();
-  outputConnectorData_->first = this->subvectorsSolution_;
-  outputConnectorData_->second = this->transmembranePotential_;
+  outputConnectorData_->resize(nCompartments_);
+
+  // set the two slots V_mk^(i) and V_mk^(i+1) for all compartments
+  for (int compartmentNo = 0; compartmentNo < nCompartments_; compartmentNo++)
+  {
+    outputConnectorData_->at(compartmentNo) = std::make_shared<OutputConnectorData<FunctionSpaceType,1>>();
+    outputConnectorData_->at(compartmentNo)->addFieldVariable(transmembranePotential_[compartmentNo]);          // V_mk^(i)
+    outputConnectorData_->at(compartmentNo)->addFieldVariable(transmembranePotentialSolution_[compartmentNo]);  // V_mk^(i+1)
+  }
 }
 
 template<typename FunctionSpaceType>

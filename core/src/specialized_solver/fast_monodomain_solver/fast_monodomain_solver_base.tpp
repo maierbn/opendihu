@@ -1,7 +1,7 @@
 #include "specialized_solver/fast_monodomain_solver/fast_monodomain_solver_base.h"
 
 #include "partition/rank_subset.h"
-#include "control/stimulation_logging.h"
+#include "control/diagnostic_tool/stimulation_logging.h"
 
 template<int nStates, int nIntermediates>
 FastMonodomainSolverBase<nStates,nIntermediates>::
@@ -16,7 +16,17 @@ template<int nStates, int nIntermediates>
 void FastMonodomainSolverBase<nStates,nIntermediates>::
 initialize()
 {
+  // add this solver to the solvers diagram, which is a SVG file that will be created at the end of the simulation.
+  DihuContext::solverStructureVisualizer()->addSolver("FastMonodomainSolver");
+
+  // indicate in solverStructureVisualizer that now a child solver will be initialized
+  DihuContext::solverStructureVisualizer()->beginChild();
+
+  // initialize all the nested solvers
   nestedSolvers_.initialize();
+
+  // indicate in solverStructureVisualizer that the child solver initialization is done
+  DihuContext::solverStructureVisualizer()->endChild();
 
   // initialize motor unit numbers and firing times
   fiberDistributionFilename_ = specificSettings_.getOptionString("fiberDistributionFile", "");

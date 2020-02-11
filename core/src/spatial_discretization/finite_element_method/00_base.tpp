@@ -18,6 +18,7 @@
 #include "solver/linear.h"
 #include "partition/partitioned_petsc_vec/partitioned_petsc_vec.h"
 #include "partition/partitioned_petsc_mat/partitioned_petsc_mat.h"
+#include "control/diagnostic_tool/solver_structure_visualizer.h"
 
 namespace SpatialDiscretization
 {
@@ -112,6 +113,10 @@ initialize()
   Control::PerformanceMeasurement::start("durationAssembleBoundaryConditions");
   this->applyBoundaryConditions();
   Control::PerformanceMeasurement::stop("durationAssembleBoundaryConditions");
+
+  // add this solver to the solvers diagram
+  DihuContext::solverStructureVisualizer()->addSolver("FiniteElementMethod");
+  DihuContext::solverStructureVisualizer()->setOutputConnectorData(getOutputConnectorData());
 
   initialized_ = true;
 }

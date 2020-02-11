@@ -6,7 +6,8 @@
 
 #include "utility/python_utility.h"
 #include "data_management/time_stepping/time_stepping.h"
-#include "control/performance_measurement.h"
+#include "control/diagnostic_tool/performance_measurement.h"
+#include "control/diagnostic_tool/solver_structure_visualizer.h"
 #include "mesh/mesh_manager/mesh_manager.h"
 
 namespace OperatorSplitting
@@ -43,6 +44,9 @@ initialize()
     return;
   LOG(TRACE) << "  OperatorSplitting::initialize";
 
+  // add this solver to the solvers diagram, which is a SVG file that will be created at the end of the simulation.
+  DihuContext::solverStructureVisualizer()->addSolver(schemeName_);
+
   TimeSteppingScheme::initialize();
   timeStepOutputInterval_ = specificSettings_.getOptionInt("timeStepOutputInterval", 100, PythonUtility::Positive);
 
@@ -52,11 +56,25 @@ initialize()
   LOG(TRACE) << "  OperatorSplitting::initialize done, timeSpan=[" << this->startTime_<< "," << this->endTime_<< "]"
     << ", n steps: " << this->numberTimeSteps_;
 
+
+  // indicate in solverStructureVisualizer that now a child solver will be initialized
+  DihuContext::solverStructureVisualizer()->beginChild("Term1");
+
   // initialize time stepping objects
   LOG(DEBUG) << "  OperatorSplitting::initialize timeStepping1";
   timeStepping1_.initialize();
+
+  // indicate in solverStructureVisualizer that the child solver initialization is done
+  DihuContext::solverStructureVisualizer()->endChild();
+
+  // indicate in solverStructureVisualizer that now a child solver will be initialized
+  DihuContext::solverStructureVisualizer()->beginChild("Term2");
+
   LOG(DEBUG) << "  OperatorSplitting::initialize timeStepping2";
   timeStepping2_.initialize();
+
+  // indicate in solverStructureVisualizer that the child solver initialization is done
+  DihuContext::solverStructureVisualizer()->endChild();
 
   LOG(DEBUG) << "initialize mappings between meshes \"" << timeStepping1_.data().functionSpace()->meshName() << "\" and \""
     << timeStepping2_.data().functionSpace()->meshName() << "\".";
@@ -71,6 +89,12 @@ initialize()
   logKeyTimeStepping2AdvanceTimeSpan_ = this->durationLogKey_ + std::string("_advanceTimeSpan2");  ///< key for logging of the duration of the advanceTimeSpan() call of timeStepping2
   logKeyTransfer12_ = this->durationLogKey_ + std::string("_transfer12");  ///< key for logging of the duration of data transfer from timestepping 1 to 2
   logKeyTransfer21_ = this->durationLogKey_ + std::string("_transfer21");  ///< key for logging of the duration of data transfer from timestepping 2 to 1
+
+  // set the outputConnection information about how the slots are connected to appear in the solver diagram
+  DihuContext::solverStructureVisualizer()->addOutputConnection(outputConnection_);
+
+  // set the outputConnectorData for the solverStructureVisualizer to appear in the solver diagram
+  DihuContext::solverStructureVisualizer()->setOutputConnectorData(getOutputConnectorData());
 
   initialized_ = true;
 }
@@ -105,7 +129,6 @@ run()
   PAT_region_end(2);    // end region "computation", id 
   PAT_record(PAT_STATE_OFF);
 #endif
-
 }
 
 template<typename TimeStepping1, typename TimeStepping2>

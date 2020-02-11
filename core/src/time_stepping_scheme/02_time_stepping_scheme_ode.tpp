@@ -102,9 +102,18 @@ initialize()
   // disable boundary condition handling in finite element method, because Dirichlet BC have to be handled in the system matrix here
   discretizableInTime_.setBoundaryConditionHandlingEnabled(false);
 
+  // add this solver to the solvers diagram
+  DihuContext::solverStructureVisualizer()->addSolver(this->name_);
+
+  // indicate in solverStructureVisualizer that now a child solver will be initialized
+  DihuContext::solverStructureVisualizer()->beginChild();
+
   // initialize underlying DiscretizableInTime object, also with time step width
   discretizableInTime_.initialize();
   discretizableInTime_.initializeForImplicitTimeStepping();   // this performs extra initialization for implicit timestepping methods, i.e. it sets the inverse lumped mass matrix
+
+  // indicate in solverStructureVisualizer that the child solver initialization is done
+  DihuContext::solverStructureVisualizer()->endChild();
 
   // retrieve the function space from the discretizable in time object, this is used for the data object
   std::shared_ptr<typename DiscretizableInTimeType::FunctionSpace> functionSpace = discretizableInTime_.functionSpace();
@@ -152,6 +161,9 @@ initialize()
   this->outputWriterManager_.writeOutput(*this->data_, 0, 0);
   
   this->data_->print();
+
+  // set the output connector data to the solverStructureVisualizer which can then include it in the structured solvers diagram
+  DihuContext::solverStructureVisualizer()->setOutputConnectorData(this->getOutputConnectorData());
   
   initialized_ = true;
 }

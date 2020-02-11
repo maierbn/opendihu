@@ -14,7 +14,7 @@
 #include "output_writer/paraview/loop_get_nodal_values.h"
 #include "output_writer/paraview/loop_get_geometry_field_nodal_values.h"
 #include "output_writer/paraview/poly_data_properties_for_mesh.h"
-#include "control/performance_measurement.h"
+#include "control/diagnostic_tool/performance_measurement.h"
 
 namespace OutputWriter
 {

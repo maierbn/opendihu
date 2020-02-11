@@ -55,6 +55,7 @@ neumann_bc = []
 
 config = {
   "scenarioName": "3d_box",
+  "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "HyperelasticitySolver": {
     "durationLogKey": "nonlinear",
     

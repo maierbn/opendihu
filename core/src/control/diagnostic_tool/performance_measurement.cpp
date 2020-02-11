@@ -1,4 +1,4 @@
-#include "control/performance_measurement.h"
+#include "control/diagnostic_tool/performance_measurement.h"
 
 #include "easylogging++.h"
 #include <memory>

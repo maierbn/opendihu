@@ -822,10 +822,15 @@ struct PythonUtility::convertFromPython<std::vector<ValueType>>
         if (key >= 0)
         {
           if (key >= result.size())
-            result.resize(key + 1);
+            result.resize(key + 1, convertFromPython<ValueType>::get(Py_None));
           result[key] = convertFromPython<ValueType>::get(pyValue);
         }
       }
+      return result;
+    }
+    else if (object == Py_None)
+    {
+      // object is None, this means empty list
       return result;
     }
     else

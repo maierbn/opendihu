@@ -45,6 +45,9 @@ std::string timeToString(const tm* const time);
 //! return the human readable version of the result of typeid(<class>).name()
 std::string demangle(const char *typeidName);
 
+//! get the correct length of the string, also if it contains utf-8 based unicode charactors, such as λ,γ etc.
+std::size_t stringLength(std::string string);
+
 } // namespace
 
 #include "utility/string_utility.tpp"

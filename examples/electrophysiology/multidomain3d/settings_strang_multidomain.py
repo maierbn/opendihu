@@ -5,6 +5,7 @@ import numpy as np
 import scipy.stats
 import pickle
 import sys,os 
+import struct
 
 # global parameters
 PMax = 7.3              # maximum stress [N/cm^2]
@@ -16,9 +17,9 @@ innervation_zone_width = 0.  # cm
 
 # timing parameters
 stimulation_frequency = 10.0      # stimulations per ms
-dt_1D = 1e-3                      # timestep width of diffusion
-dt_0D = 3e-3                      # timestep width of ODEs
-dt_3D = 3e-3                      # overall timestep width of splitting
+dt_1D = 1e-3  #1e-3                    # timestep width of diffusion
+dt_0D = 3e-3  #3e-3                    # timestep width of ODEs
+dt_3D = 3e-3  #1e-3                    # overall timestep width of splitting
 output_timestep = 1e-1             # timestep for output files
 end_time = 500.0                   # end simulation time
 #end_time = dt_0D
@@ -31,9 +32,10 @@ Am = 0.1
 #mesh_file = "../input/scaled_mesh_small"
 mesh_file = "../input/scaled_mesh_normal"
 #mesh_file = "../input/scaled_mesh_big"
+
 fiber_file = "../input/laplace3d_structured_linear"
 
-#fiber_file = "../../input/7x7fibers.bin"
+fiber_file = "../../input/7x7fibers.bin"
 
 cellml_file = "../input/hodgkin_huxley_1952.c"
 fibre_distribution_file = "../input/MU_fibre_distribution_3780.txt"
@@ -42,17 +44,20 @@ firing_times_file = "../input/MU_firing_times_immediately.txt"
 
 # motor unit parameters
 motor_units = [
-  {"fiber_no": 10, "standard_deviation": 2.0, "maximum": 0.5},
-  {"fiber_no": 30, "standard_deviation": 2.0, "maximum": 0.4},
-  {"fiber_no": 50, "standard_deviation": 3.0, "maximum": 0.6},
+  {"fiber_no": 10, "standard_deviation": 20.0, "maximum": 0.5},
+  {"fiber_no": 30, "standard_deviation": 20.0, "maximum": 0.4},
+  {"fiber_no": 40, "standard_deviation": 30.0, "maximum": 0.6},
 ]
 
+# own MPI rank no and number of MPI ranks
 rank_no = (int)(sys.argv[-2])
 n_ranks = (int)(sys.argv[-1])
 
-
+# get the mesh nodes, either from a .bin file or a python pickle file
 if ".bin" in fiber_file:
   # data input from bin files that contain fibers
+
+  sampling_stride_z = 50
 
   try:
     fiber_file_handle = open(fiber_file, "rb")
@@ -76,32 +81,49 @@ if ".bin" in fiber_file:
   n_fibers_total = parameters[0]
   n_fibers_x = (int)(np.round(np.sqrt(n_fibers_total)))
   n_fibers_y = n_fibers_x
-  n_points_whole_fiber = parameters[1]
+  n_points_initial_whole_fiber = parameters[1]
 
-  n_linear_elements_per_coordinate_direction = [n_fibers_x-1, n_fibers_y-1, n_points_whole_fiber-1]
 
-  if rank_no == 0:
-    print("n fibers:              {} ({} x {})".format(n_fibers_total, n_fibers_x, n_fibers_y))
-    print("n points per fiber:    {}".format(n_points_whole_fiber))
-    
   # parse whole fiber file
   fiber_data = []
   mesh_node_positions = []
   for fiber_no in range(n_fibers_total):
     fiber = []
-    for point_no in range(n_points_whole_fiber):
+    for point_no in range(n_points_initial_whole_fiber):
       point = []
       for i in range(3):
         double_raw = fiber_file_handle.read(8)
         value = struct.unpack('d', double_raw)[0]
         point.append(value)
       fiber.append(point)
+      
+    # sample fiber in z direction
+    new_fiber = []
+    for point_no in range(0,n_points_initial_whole_fiber,sampling_stride_z):
+      point = fiber[point_no]
+      new_fiber.append(point)
       mesh_node_positions.append(point)
-    fiber_data.append(fiber)
+    
+    fiber_data.append(new_fiber)
             
+  # set node positions
+  n_points_whole_fiber = len(fiber_data[0])
+  n_linear_elements_per_coordinate_direction = [n_fibers_x-1, n_fibers_y-1, n_points_whole_fiber-1]
+  for k in range(n_points_whole_fiber):
+    for j in range(n_fibers_y):
+      for i in range(n_fibers_x):
+        mesh_node_positions[k*n_fibers_x*n_fibers_y + j*n_fibers_x + i] = fiber_data[j*n_fibers_x + i][k]
+        
+  if rank_no == 0:
+    print("n fibers:              {} ({} x {})".format(n_fibers_total, n_fibers_x, n_fibers_y))
+    print("n points per fiber:    {}, sampling by stride {}".format(n_points_initial_whole_fiber, sampling_stride_z))
+    print("3D mesh: {} x {} x {} nodes".format(n_linear_elements_per_coordinate_direction[0]+1, n_linear_elements_per_coordinate_direction[1]+1, n_linear_elements_per_coordinate_direction[2]+1))
+    
   bottom_node_indices = list(range(n_fibers_x*n_fibers_y))
   n_points = n_fibers_x*n_fibers_y*n_points_whole_fiber
   top_node_indices = list(range(n_points-n_fibers_x*n_fibers_y,n_points))
+  
+  relative_factors_file = "{}.compartment_relative_factors".format(os.path.basename(fiber_file))
 
 else:
   # data input from generating 3D meshes without fiber tracing  
@@ -153,8 +175,9 @@ else:
 
       print("fiber {} bounding box x: [{},{}], y: [{},{}], z:[{},{}]".format(fiber_no, min_x, max_x, min_y, max_y, min_z, max_z))
 
+  relative_factors_file = "{}.compartment_relative_factors".format(os.path.basename(mesh_file))
 # determine relative factor fields fr(x) for compartments
-relative_factors_file = "{}.compartment_relative_factors".format(mesh_file)
+
 if os.path.exists(relative_factors_file):
   with open(relative_factors_file, "rb") as f:
     if rank_no == 0:
@@ -175,8 +198,20 @@ if "hodgkin" in cellml_file:
 
 n_compartments = len(motor_units)
 
-# create relative factors for compartments
+# set dirichlet bc, top and bottom nodes to -75
+activation_dirichlet_bc = {}
+for bottom_node_index in bottom_node_indices:
+  activation_dirichlet_bc[bottom_node_index] = -75.0
 
+for top_node_index in top_node_indices:
+  activation_dirichlet_bc[top_node_index] = -75.0
+
+# for debugging
+#n_compartments = 1
+#relative_factors = np.ones((n_compartments, len(mesh_node_positions)))   # each row is one compartment
+#print("DEBUG settings")
+
+# create relative factors for compartments
 if rank_no == 0:
   for i,factors_list in enumerate(relative_factors.tolist()):
     print("MU {}, maximum fr: {}".format(i,max(factors_list)))
@@ -241,7 +276,8 @@ def set_parameters(n_nodes_global, time_step_no, current_time, parameters, dof_n
       
           parameters[dof_no_local] = stimulation_current
   
-      #print("       {}: set stimulation for local dof {}".format(rank_no, dof_no_local))
+          if is_compartment_gets_stimulated:
+            print("       {}: set stimulation for local dof {}".format(rank_no, dof_no_local))
   
   #print("       {}: setParameters at timestep {}, t={}, n_nodes_global={}, range: [{},{}], fibre no {}, MU {}, stimulated: {}".\
         #format(rank_no, time_step_no, current_time, n_nodes_global, first_dof_global, last_dof_global, fibre_no, get_motor_unit_no(fibre_no), compartment_gets_stimulated))
@@ -270,8 +306,8 @@ def set_specific_states(n_nodes_global, time_step_no, current_time, states, comp
             for i in range(n_nodes_x):
               if x_index_center-1 <= i <= x_index_center+1:
                 key = ((i,j,k),0,0)        # key: ((x,y,z),nodal_dof_index,state_no)
-                states[key] = 400.0
-                #print("set states at ({},{},{}) to 400".format(i,j,k))
+                states[key] = 40.0
+                #print("set states at ({},{},{}) to 40".format(i,j,k))
 
     #print("states: {}".format(states))
     #print("n_nodes: ({},{},{})".format(n_nodes_x, n_nodes_y, n_nodes_z))
@@ -311,7 +347,7 @@ multidomain_solver = {
       "solverName": "activationSolver",
       "prefactor": 1.0,
       "inputMeshIsGlobal": True,
-      "dirichletBoundaryConditions": {},
+      "dirichletBoundaryConditions": activation_dirichlet_bc,
       "neumannBoundaryConditions": [],
       "diffusionTensor": [      # sigma_i           # fiber direction is (1,0,0)
         8.93, 0, 0,
@@ -334,6 +370,7 @@ multidomain_solver = {
 }
   
 config = {
+  "solverStructureDiagramFile": "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "Meshes": {
     "mesh": {
       "nElements": n_linear_elements_per_coordinate_direction,
@@ -345,7 +382,7 @@ config = {
   "Solvers": {
     "potentialFlowSolver": {
       "relativeTolerance": 1e-10,
-      "maxIterations": 1e4,
+      "maxIterations": 1e5,
       "solverType": "gmres",
       "preconditionerType": "none",
       "dumpFormat": "default",
@@ -364,10 +401,10 @@ config = {
     "timeStepWidth": dt_3D,  # 1e-1
     "logTimeStepWidthAsKey": "dt_3D",
     "durationLogKey": "duration_total",
-    "timeStepOutputInterval" : 10,
+    "timeStepOutputInterval" : 100,
     "endTime": end_time,
-    "connectedSlotsTerm1To2": [0],   # transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion)
-    "connectedSlotsTerm2To1": [0],   # transfer the same back
+    "connectedSlotsTerm1To2": [0],       # CellML V_mk (0) <=> Multidomain V_mk^(i) (0)
+    "connectedSlotsTerm2To1": [None, 0],    # Multidomain V_mk^(i+1) (1) -> CellML V_mk (0)
 
     "Term1": {      # CellML
       "MultipleInstances": {
@@ -386,24 +423,25 @@ config = {
             "nAdditionalFieldVariables": 0,
                 
             "CellML" : {
-              "modelFilename": cellml_file,             # input C++ source file, can be either generated by OpenCMISS or OpenCOR from cellml model
-              #"simdSourceFilename" : "simdcode.cpp",     # transformed C++ source file that gets generated from modelFilename and is ready for multiple instances
-              #"libraryFilename": "cellml_simd_lib.so",   # compiled library
-              "compilerFlags": "-fPIC -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared ",
-              "useGivenLibrary": False,
+              "modelFilename": cellml_file,                       # input C++ source file or cellml XML file
+              "compilerFlags": "-fPIC -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared -O3 -march=native",    # compiler flags, should contain -O3 -march=native
+              "optimizationType":                       "vc",     # "vc", "simd", "openmp" type of generated optimizated source file, vc is fastest
+              "approximateExponentialFunction":         False,    # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
+              "maximumNumberOfThreads":                 0,        # if optimizationType is "openmp", the maximum number of threads to use. Default value 0 means no restriction.
+              
               #"statesInitialValues": [],
-              "setSpecificStatesFunction": set_specific_states,    # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
+              "setSpecificStatesFunction": set_specific_states,   # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
               "setSpecificStatesCallInterval": int(1./stimulation_frequency/dt_0D),     # set_specific_states should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
-              "setSpecificStatesCallFrequency":     0,          # set_specific_states should be called variables.stimulation_frequency times per ms
-              "setSpecificStatesFrequencyJitter":   0,          # random value to add or substract to setSpecificStatesCallFrequency every stimulation, this is to add random jitter to the frequency
-              "setSpecificStatesRepeatAfterFirstCall":  0.01,   # [ms] simulation time span for which the setSpecificStates callback will be called after a call was triggered
-              "setSpecificStatesCallEnableBegin":   0,          # [ms] first time when to call setSpecificStates
-              "additionalArgument": compartment_no,
-              #"setParametersFunction": set_parameters,    # callback function that sets parameters like stimulation current
+              "setSpecificStatesCallFrequency":     0,            # set_specific_states should be called variables.stimulation_frequency times per ms
+              "setSpecificStatesFrequencyJitter":   0,            # random value to add or substract to setSpecificStatesCallFrequency every stimulation, this is to add random jitter to the frequency
+              "setSpecificStatesRepeatAfterFirstCall":  0.01,     # [ms] simulation time span for which the setSpecificStates callback will be called after a call was triggered
+              "setSpecificStatesCallEnableBegin":   0,            # [ms] first time when to call setSpecificStates
+              "additionalArgument": compartment_no,               # the compartment no is the last argument to set_specific_states function such that it knows which compartments to stimulate when
+              #"setParametersFunction": set_parameters,           # callback function that sets parameters like stimulation current
               #"setParametersCallInterval": int(1./stimulation_frequency/dt_0D),     # set_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
               #"setParametersFunctionAdditionalParameter": compartment_no,
-              "intermediatesForTransfer":  [],            # which intermediate values to use in further computation
-              "statesForTransfer": 0,                     # which state values to use in further computation, Shorten / Hodgkin Huxley: state 0 = Vm
+              "intermediatesForTransfer":  [],                    # which intermediate values to use in further computation
+              "statesForTransfer": 0,                             # which state values to use in further computation, Shorten / Hodgkin Huxley: state 0 = Vm
                      
               "parametersUsedAsIntermediate": parameters_used_as_intermediate,  #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
               "parametersUsedAsConstant": parameters_used_as_constant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.

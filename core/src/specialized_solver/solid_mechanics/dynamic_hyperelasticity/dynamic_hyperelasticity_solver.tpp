@@ -4,6 +4,7 @@
 
 #include "spatial_discretization/finite_element_method/integrand/integrand_mass_matrix.h"
 #include "partition/partitioned_petsc_vec/02_partitioned_petsc_vec_for_hyperelasticity.h"
+#include "control/diagnostic_tool/solver_structure_visualizer.h"
 
 namespace TimeSteppingScheme
 {
@@ -27,9 +28,19 @@ void DynamicHyperelasticitySolver<Term>::
 initialize()
 {
   TimeSteppingScheme::initialize();
+
+  // add this solver to the solvers diagram
+  DihuContext::solverStructureVisualizer()->addSolver("DynamicHyperelasticitySolver");
+
+  // indicate in solverStructureVisualizer that now a child solver will be initialized
+  DihuContext::solverStructureVisualizer()->beginChild();
+
   hyperelasticitySolver_.initialize();
   data_.setFunctionSpace(hyperelasticitySolver_.data().displacementsFunctionSpace());
   data_.initialize();
+
+  // indicate in solverStructureVisualizer that the child solver initialization is done
+  DihuContext::solverStructureVisualizer()->endChild();
 
   // create variable of unknowns
   uvp_ = hyperelasticitySolver_.createPartitionedPetscVec("uvp");

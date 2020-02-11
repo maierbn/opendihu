@@ -132,4 +132,17 @@ std::string demangle(const char *typeidName)
 #endif
 }
 
+std::size_t stringLength(std::string string)
+{
+  int length = string.length();
+
+  // unicode characters start with -62 and use 2 chars
+  // or with -30 and use 3 chars
+  length -= std::count(string.begin(), string.end(), char(-50));
+  length -= std::count(string.begin(), string.end(), char(-62));
+  length -= 2*std::count(string.begin(), string.end(), char(-30));
+
+  return length;
+}
+
 }  // namespace

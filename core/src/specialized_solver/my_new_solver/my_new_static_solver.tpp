@@ -35,8 +35,17 @@ initialize()
 
   // initialize() will be called before the simulation starts.
 
+  // add this solver to the solvers diagram, which is a SVG file that will be created at the end of the simulation.
+  DihuContext::solverStructureVisualizer()->addSolver("MyNewStaticSolver");
+
+  // indicate in solverStructureVisualizer that now a child solver will be initialized
+  DihuContext::solverStructureVisualizer()->beginChild();
+
   // call initialize of the nested solver
   nestedSolver_.initialize();
+
+  // indicate in solverStructureVisualizer that the child solver initialization is done
+  DihuContext::solverStructureVisualizer()->endChild();
 
   // In order to initialize the data object and actuall create all variables, we first need to assign a function space to the data object.
   // A function space object of type FunctionSpace<MeshType,BasisFunctionType> (see "function_space/function_space.h")
@@ -53,6 +62,10 @@ initialize()
 
   // it is also possible to pass some field variables from the data of the NestedSolver to own data object
   data_.setSolutionVariable(nestedSolver_.data().solution());
+
+  // set the outputConnectorData for the solverStructureVisualizer to appear in the solver diagram
+  DihuContext::solverStructureVisualizer()->setOutputConnectorData(getOutputConnectorData());
+
 
   // here is the space to initialize anything else that is needed for your solver
 

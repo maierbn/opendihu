@@ -8,3 +8,6 @@
 Import('env')     # import Environment object from calling SConstruct
 
 env.Program(target = "biceps_contraction", source = "src/biceps_contraction.cpp")
+env.Program(target = "dynamic_transiso", source = "src/dynamic_transiso.cpp")
+env.Program(target = "static_transiso", source = "src/static_transiso.cpp")
+

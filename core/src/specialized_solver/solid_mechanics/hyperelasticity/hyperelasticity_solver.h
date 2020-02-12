@@ -153,7 +153,7 @@ public:
     std::shared_ptr<VecHyperelasticity> internalVirtualWork
   );
 
-  //! solve the dynamic hyperelastic problem,
+  //! solve the dynamic hyperelastic problem, using a load stepping
   //! output internalVirtualWork, externalVirtualWorkDead and accelerationTerm which is the acceleration contribution to δW
   void solveDynamicProblem(std::shared_ptr<VecHyperelasticity> displacementsVelocitiesPressure, bool isFirstTimeStep,
                            Vec internalVirtualWork, Vec &externalVirtualWorkDead, Vec accelerationTerm);
@@ -194,7 +194,8 @@ protected:
 
   //! compute the nonlinear function F(x), x=solverVariableSolution_, F=solverVariableResidual_
   //! solverVariableResidual_[0-2] contains δW_int - δW_ext, solverVariableResidual_[3] contains int_Ω (J-1)*Ψ dV
-  void materialComputeResidual();
+  //! @param loadFactor: a factor with which the rhs is scaled. This is equivalent to set the body force and traction (neumann bc) to this fraction
+  void materialComputeResidual(double loadFactor = 1.0);
 
   //! compute δW_ext,dead = int_Ω B^L * phi^L * phi^M * δu^M dx + int_∂Ω T^L * phi^L * phi^M * δu^M dS
   void materialComputeExternalVirtualWorkDead();
@@ -253,54 +254,60 @@ protected:
   //! compute the value of Sbar : C
   double computeSbarC(const Tensor2<3> &Sbar, const Tensor2<3> &C);
 
-  DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
+  DihuContext context_;                                     //< object that contains the python config for the current context and the global singletons meshManager and solverManager
 
-  OutputWriter::Manager outputWriterManager_; ///< manager object holding all output writer for displacements based variables
-  OutputWriter::Manager outputWriterManagerPressure_; ///< manager object holding all output writer for pressure based variables
-  Data data_;                 ///< data object
-  PressureDataCopy pressureDataCopy_;   ///< a helper object that is used to write the pressure function space based variables with the output writers
-  std::shared_ptr<Solver::Nonlinear> nonlinearSolver_;  ///< the nonlinear solver object that will provide the PETSc SNES context
+  OutputWriter::Manager outputWriterManager_;               //< manager object holding all output writer for displacements based variables
+  OutputWriter::Manager outputWriterManagerPressure_;       //< manager object holding all output writer for pressure based variables
+  OutputWriter::Manager outputWriterManagerLoadIncrements_; //< manager object holding all output writer that write during computation of several load increments
+  Data data_;                                               //< data object
+  PressureDataCopy pressureDataCopy_;                       //< a helper object that is used to write the pressure function space based variables with the output writers
+  std::shared_ptr<Solver::Nonlinear> nonlinearSolver_;      //< the nonlinear solver object that will provide the PETSc SNES context
 
-  std::string durationLogKey_;   ///< key with with the duration of the computation is written to the performance measurement log
-  std::shared_ptr<DisplacementsFunctionSpace> displacementsFunctionSpace_;  ///< the function space with quadratic Lagrange basis functions, used for discretization of displacements
-  std::shared_ptr<PressureFunctionSpace> pressureFunctionSpace_;  ///< the function space with linear Lagrange basis functions, used for discretization of pressure
+  std::string durationLogKey_;                              //< key with with the duration of the computation is written to the performance measurement log
+  std::shared_ptr<DisplacementsFunctionSpace> displacementsFunctionSpace_;  //< the function space with quadratic Lagrange basis functions, used for discretization of displacements
+  std::shared_ptr<PressureFunctionSpace> pressureFunctionSpace_;  //< the function space with linear Lagrange basis functions, used for discretization of pressure
 
-  Mat solverMatrixJacobian_;           //< the jacobian matrix for the Newton solver, which in case of nonlinear elasticity is the tangent stiffness matrix
-  Mat solverMatrixAdditionalNumericJacobian_;           //< only used when both analytic and numeric jacobians are computed, then this holds the numeric jacobian
-  Vec solverVariableResidual_;         //< PETSc Vec to store the residual, equal to combinedVecResidual_->valuesGlobal()
-  Vec solverVariableSolution_;         //< PETSc Vec to store the solution, equal to combinedVecSolution_->valuesGlobal()
-  Vec zeros_;                          // a solver that contains all zeros, needed to zero the diagonal of the jacobian matrix
+  Mat solverMatrixJacobian_;                                //< the jacobian matrix for the Newton solver, which in case of nonlinear elasticity is the tangent stiffness matrix
+  Mat solverMatrixAdditionalNumericJacobian_;               //< only used when both analytic and numeric jacobians are computed, then this holds the numeric jacobian
+  Vec solverVariableResidual_;                              //< PETSc Vec to store the residual, equal to combinedVecResidual_->valuesGlobal()
+  Vec solverVariableSolution_;                              //< PETSc Vec to store the solution, equal to combinedVecSolution_->valuesGlobal()
+  Vec zeros_;                                               // a solver that contains all zeros, needed to zero the diagonal of the jacobian matrix
 
-  std::shared_ptr<VecHyperelasticity> combinedVecResidual_;      //< the Vec for the residual and result of the nonlinear function
-  std::shared_ptr<VecHyperelasticity> combinedVecSolution_;      //< the Vec for the solution, combined means that ux,uy,uz and p components are combined in one vector
+  std::shared_ptr<VecHyperelasticity> combinedVecResidual_; //< the Vec for the residual and result of the nonlinear function
+  std::shared_ptr<VecHyperelasticity> combinedVecSolution_; //< the Vec for the solution, combined means that ux,uy,uz and p components are combined in one vector
   std::shared_ptr<VecHyperelasticity> combinedVecExternalVirtualWorkDead_;      //< the Vec for the external virtual work part that does not change with u, δW_ext,dead
 
   //std::shared_ptr<PartitionedPetscMat<FunctionSpace::Generic>> combinedMatrixJacobian_;    //< single jacobian matrix, when useNestedMat_ is false
   std::shared_ptr<MatHyperelasticity> combinedMatrixJacobian_;    //< single jacobian matrix
   std::shared_ptr<MatHyperelasticity> combinedMatrixAdditionalNumericJacobian_;   //< only used when both analytic and numeric jacobians are computed, then this holds the numeric jacobian
 
-  Vec externalVirtualWorkDead_;     // the external virtual work resulting from the traction, this is a dead load, i.e. it does not change during deformation
+  Vec externalVirtualWorkDead_;                             // the external virtual work resulting from the traction, this is a dead load, i.e. it does not change during deformation
 
   // settings variables
-  bool initialized_;   ///< if this object was already initialized
-  PythonConfig specificSettings_;    ///< python object containing the value of the python config dict with corresponding key
-  double endTime_;     ///< end time of current time step
-  std::ofstream residualNormLogFile_;   ///< ofstream of a log file that will contain the residual norm for each iteration
+  bool initialized_;                                        //< if this object was already initialized
+  PythonConfig specificSettings_;                           //< python object containing the value of the python config dict with corresponding key
+  double endTime_;                                          //< end time of current time step
+  std::ofstream residualNormLogFile_;                       //< ofstream of a log file that will contain the residual norm for each iteration
 
-  std::shared_ptr<DirichletBoundaryConditions<DisplacementsFunctionSpace,nDisplacementComponents>> dirichletBoundaryConditions_ = nullptr;  ///< object that parses Dirichlet boundary conditions and applies them to rhs
-  std::shared_ptr<NeumannBoundaryConditions<DisplacementsFunctionSpace,Quadrature::Gauss<3>,3>> neumannBoundaryConditions_ = nullptr;  ///< object that parses Neumann boundary conditions and applies them to the rhs
+  std::shared_ptr<DirichletBoundaryConditions<DisplacementsFunctionSpace,nDisplacementComponents>> dirichletBoundaryConditions_ = nullptr;  //< object that parses Dirichlet boundary conditions and applies them to rhs
+  std::shared_ptr<NeumannBoundaryConditions<DisplacementsFunctionSpace,Quadrature::Gauss<3>,3>> neumannBoundaryConditions_ = nullptr;  //< object that parses Neumann boundary conditions and applies them to the rhs
 
-  std::vector<double> materialParameters_;    ///< material parameters, e.g. c1,c2 for Mooney-Rivlin
-  double displacementsScalingFactor_;   ///< factor with which to scale the displacements
-  bool dumpDenseMatlabVariables_;      ///< the current vector x, the residual, r and the jacobian, jac should be written
-  Vec3 constantBodyForce_;   ///< the constant body force, if given or [0,0,0]
-  double timeStepWidth_;      ///< timeStepWidth, only need for the dynamic problem
-  double density_;                ///< density, only needed for the dynamic problem
-  double lastNorm_;            ///< residual norm of the last iteration in the nonlinear solver
-  double secondLastNorm_;            ///< residual norm of the second last iteration in the nonlinear solver
+  std::vector<double> materialParameters_;                  //< material parameters, e.g. c1,c2 for Mooney-Rivlin
+  double displacementsScalingFactor_;                       //< factor with which to scale the displacements
+  bool dumpDenseMatlabVariables_;                           //< the current vector x, the residual, r and the jacobian, jac should be written
+  Vec3 constantBodyForce_;                                  //< the constant body force, if given or [0,0,0]
+  double timeStepWidth_;                                    //< timeStepWidth, only need for the dynamic problem
+  double density_;                                          //< density, only needed for the dynamic problem
+  double lastNorm_;                                         //< residual norm of the last iteration in the nonlinear solver
+  double secondLastNorm_;                                   //< residual norm of the second last iteration in the nonlinear solver
+  double currentLoadFactor_;                                //< current value of the load factor, this value is passed to materialComputeResidual(), 1.0 means normal computation, any lower value reduces the right hand side (scales body and traction forces)
+  int nNonlinearSolveCalls_;                                //< how often the nonlinear solve should be called in sequence
 
-  bool useAnalyticJacobian_;   ///< if the analytically computed Jacobian of the Newton scheme should be used. Theoretically if it is correct, this is the fastest option.
-  bool useNumericJacobian_;   ///< if a numerically computed Jacobian should be used, approximated by finite differences
+  std::vector<double> loadFactors_;                         //< vector of load factors, 1.0 means normal computation, any lower value reduces the right hand side (scales body and traction forces)
+
+  bool useAnalyticJacobian_;                                //< if the analytically computed Jacobian of the Newton scheme should be used. Theoretically if it is correct, this is the fastest option.
+  bool useNumericJacobian_;                                 //< if a numerically computed Jacobian should be used, approximated by finite differences
+  bool extrapolateInitialGuess_;                            //< if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
 };
 
 }  // namespace

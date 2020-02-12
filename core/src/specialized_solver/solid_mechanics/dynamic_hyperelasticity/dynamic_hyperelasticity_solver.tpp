@@ -212,7 +212,8 @@ advanceTimeSpan()
 
     // set the current Time to the hyperelasticity solver and then solve the dynamic problem
     hyperelasticitySolver_.setTimeSpan(-1, currentTime);
-    hyperelasticitySolver_.solveDynamicProblem(uvp_, timeStepNo==0, internalVirtualWork_, externalVirtualWorkDead_, accelerationTerm_);
+    hyperelasticitySolver_.solveDynamicProblem(uvp_, timeStepNo==0,
+                                               internalVirtualWork_, externalVirtualWorkDead_, accelerationTerm_);
 
     // stop duration measurement
     if (this->durationLogKey_ != "")

@@ -385,7 +385,7 @@ getString(bool horizontal, std::string vectorName) const
       {
         if (i != 0)
           result << separator;
-        result << displacementEntries[i].second[0];
+        result << displacementEntries[i].second[componentNo];
       }
 
       // end of component

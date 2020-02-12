@@ -17,20 +17,40 @@ sys.path.insert(0, os.path.join(script_path,'variables'))
 import variables              # file variables.py, defined default values for all parameters, you can set the parameters there  
 from create_partitioned_meshes_for_settings import *   # file create_partitioned_meshes_for_settings with helper functions about own subdomain
 
+# -------------- custom parameters begin --------------
+# Note: the parameters specified here will be overridden 
+#  - by the parameters in the custom variables file that is given on the command line, e.g. "ramp.py"
+#  - by the command line arguments, e.g. --scenario_name "bla"
+# When you're finished with one particular parameter study in this section, please create a new custom variables file in the 'variables' subdirectory where you save these custom parameters.
+# For a list of possible parameters and their default values, see the variables/variables.py file.
+
+c1 = 3.176e-10              # [N/cm^2]
+c2 = 1.813                  # [N/cm^2]
+b  = 1.075e-2               # [N/cm^2] anisotropy parameter
+d  = 9.1733                 # [-] anisotropy parameter
+variables.material_parameters = [c1, c2, b, d]   # material parameters
+variables.pmax = 7.3                  # [N/cm^2] maximum isometric active stress
+
+# loads
+variables.constant_body_force = (0,0,-9.81e-4)   # [cm/ms^2], gravity constant for the body force
+variables.bottom_traction = [0.0,-1e-2,-5e-2]     # [N]
+
+# --------------- custom parameters end ---------------
+
 # if first argument contains "*.py", it is a custom variable definition file, load these values
 if ".py" in sys.argv[0]:
   variables_file = sys.argv[0]
   variables_module = variables_file[0:variables_file.find(".py")]
   
   if rank_no == 0:
-    print("Loading variables from {}.".format(variables_file))
+    print("Loading custom variables file \"{}\".\n".format(variables_file))
     
   custom_variables = importlib.import_module(variables_module)
   variables.__dict__.update(custom_variables.__dict__)
   sys.argv = sys.argv[1:]     # remove first argument, which now has already been parsed
 else:
-  print("Error, please specify variables file, e.g:\n ./biceps_contraction ../settings_biceps_contraction.py ramp.py")
-  exit(0)
+  print("Warning: No custom variables file was specified. The parameters as given in the 'custom parameters' section will be used. To use a custom variables file instead, try, e.g.\n"
+  " ./biceps_contraction ../settings_biceps_contraction.py ramp.py\n")
 
 # define command line arguments
 parser = argparse.ArgumentParser(description='static_biceps_emg')
@@ -96,7 +116,18 @@ variables.n_subdomains_xy = variables.n_subdomains_x * variables.n_subdomains_y
 variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
 
 
-print(variables.meshes["3dmesh_quadratic"])
+# load mesh
+
+import py_reader    # reader utility for opendihu *.py files
+input_files = ["static_result.py"]
+static_data = py_reader.load_data(input_files)
+
+for dataset in static_data:
+  print("dataset:")
+  print(dataset)
+
+variables.meshes
+variables.meshes
 
 # define the config dict
 config = {
@@ -279,6 +310,7 @@ config = {
           "residualNormLogFilename":    "log_residual_norm.txt",   # log file where residual norm values of the nonlinear solver will be written
           "useAnalyticJacobian":        True,                      # whether to use the analytically computed jacobian matrix in the nonlinear solver (fast)
           "useNumericJacobian":         False,                     # whether to use the numerically computed jacobian matrix in the nonlinear solver (slow), only works with non-nested matrices, if both numeric and analytic are enable, it uses the analytic for the preconditioner and the numeric as normal jacobian
+          "extrapolateInitialGuess":    True,                      # if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
             
           "dumpDenseMatlabVariables":   False,                     # whether to have extra output of matlab vectors, x,r, jacobian matrix (very slow)
           # if useAnalyticJacobian,useNumericJacobian and dumpDenseMatlabVariables all all three true, the analytic and numeric jacobian matrices will get compared to see if there are programming errors for the analytic jacobian
@@ -291,13 +323,16 @@ config = {
           # boundary and initial conditions
           "dirichletBoundaryConditions": variables.elasticity_dirichlet_bc,   # the initial Dirichlet boundary conditions that define values for displacements u and velocity v
           "neumannBoundaryConditions":   variables.elasticity_neumann_bc,     # Neumann boundary conditions that define traction forces on surfaces of elements
+          "divideNeumannBoundaryConditionValuesByTotalArea": True,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
           "updateDirichletBoundaryConditionsFunction": None,                  # function that updates the dirichlet BCs while the simulation is running
           "updateDirichletBoundaryConditionsFunctionCallInterval": 1,         # every which step the update function should be called, 1 means every time step
           
           "initialValuesDisplacements":  [[0.0,0.0,0.0] for _ in range((2*variables.nx+1) * (2*variables.ny+1) * (2*variables.nz+1))],     # the initial values for the displacements, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
           "initialValuesVelocities":     [[0.0,0.0,0.0] for _ in range((2*variables.nx+1) * (2*variables.ny+1) * (2*variables.nz+1))],     # the initial values for the velocities, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
           "constantBodyForce":           variables.constant_body_force,                 # a constant force that acts on the whole body, e.g. for gravity
-          
+          #"loadFactors":  [0.1, 0.2, 0.35, 0.5, 1.0],   # load factors for every timestep
+          "nNonlinearSolveCalls": 1,         # how often the nonlinear solve should be repeated
+    
           # define which file formats should be written
           # 1. main output writer that writes output files using the quadratic elements function space. Writes displacements, velocities and PK2 stresses.
           "OutputWriter" : [
@@ -320,14 +355,20 @@ config = {
               #{"format": "Paraview", "outputInterval": int(output_interval/dt), "filename": "out/dynamic", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
               #{"format": "Paraview", "outputInterval": 1, "filename": "out/dynamic", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
             ],
-          }
+          },
+          # 4. output writer for debugging, outputs files after each load increment, the geometry is not changed but u and v are written
+          "LoadIncrements": {   
+            "OutputWriter" : [
+              {"format": "Paraview", "outputInterval": 1, "filename": "out_static/p", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
+            ]
+          },
         }
       }
     }
   }
 }
 
-# stop timer and calculate how long parsing lasted
+# stop timer and calculate how long parsing took
 if rank_no == 0:
   t_stop_script = timeit.default_timer()
   print("Python config parsed in {:.1f}s.".format(t_stop_script - t_start_script))

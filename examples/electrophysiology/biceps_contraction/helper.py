@@ -364,12 +364,9 @@ variables.ny = ny
 variables.nz = nz
 variables.elasticity_neumann_bc = [{"element": 0*nx*ny + j*nx + i, "constantVector": variables.bottom_traction, "face": "2-"} for j in range(ny) for i in range(nx)]
 #variables.elasticity_neumann_bc = []
-print("n=",variables.elasticity_neumann_bc)
 
 with open("mesh","w") as f:
   f.write(str(variables.meshes["3Dmesh_quadratic"]))
-    
-variables.constant_body_force = (0,0,-1e-5)
     
 # sanity checking at the end, is disabled and can be copied to after the config in the real settings file
 if False:

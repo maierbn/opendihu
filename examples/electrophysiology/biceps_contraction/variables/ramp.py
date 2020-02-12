@@ -75,10 +75,11 @@ pmax = 7.3                  # [N/cm^2] maximum isometric active stress
 # for debugging, b = 0 leads to normal Mooney-Rivlin
 b = 0
 
+# loads
 constant_body_force = (0,0,-9.81e-4)   # [cm/ms^2], gravity constant for the body force
 #constant_body_force = (0,0,0)
-#bottom_traction = [0.0,0.0,-1e-1]        # [1 N]
-bottom_traction = [0.0,0.0,0.0]        # [1 N]
+bottom_traction = [0.0,-1e-2,-5e-2]     # [N]
+#bottom_traction = [0.0,0.0,0.0]        # [N]
 
 # timing and activation parameters
 # -----------------

@@ -316,7 +316,7 @@ materialComputeInternalVirtualWork()
 
 template<typename Term,int nDisplacementComponents>
 void HyperelasticitySolver<Term,nDisplacementComponents>::
-materialComputeResidual()
+materialComputeResidual(double loadFactor)
 {
   // This computes the residual, i.e. the nonlinear function to be solved.
   // Compute Wint - Wext in variable solverVariableResidual_.
@@ -363,7 +363,7 @@ materialComputeResidual()
     // δW_ext = int_∂Ω T_a phi_L dS was precomputed in initialize (materialComputeExternalVirtualWorkDead()), in variable externalVirtualWorkDead_
     // for static case, externalVirtualWorkDead_ = externalVirtualWorkDead_
     PetscErrorCode ierr;
-    ierr = VecAXPY(solverVariableResidual_, -1, externalVirtualWorkDead_); CHKERRV(ierr);
+    ierr = VecAXPY(solverVariableResidual_, -loadFactor, externalVirtualWorkDead_); CHKERRV(ierr);
 
     if(outputValues)
       LOG(DEBUG) << "total:   " << getString(solverVariableResidual_);
@@ -376,7 +376,7 @@ materialComputeResidual()
     // compute F = δW_int - δW_ext,dead + accelerationTerm
     // δW_ext = int_∂Ω T_a phi_L dS was precomputed in initialize, in variable externalVirtualWorkDead_
     PetscErrorCode ierr;
-    ierr = VecAXPY(solverVariableResidual_, -1, externalVirtualWorkDead_); CHKERRV(ierr);
+    ierr = VecAXPY(solverVariableResidual_, -loadFactor, externalVirtualWorkDead_); CHKERRV(ierr);
 
     if (outputFiles)
     {
@@ -429,7 +429,7 @@ materialComputeExternalVirtualWorkDead()
 
 
     combinedVecExternalVirtualWorkDead_->setValues(componentNo, displacementsFunctionSpace_->meshPartition()->nDofsLocalWithoutGhosts(),
-                                                displacementsFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data(), INSERT_VALUES);
+                                                   displacementsFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data(), INSERT_VALUES);
   }
 
   // integrate to account for body forces

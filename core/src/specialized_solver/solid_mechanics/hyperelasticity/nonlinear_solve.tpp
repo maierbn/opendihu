@@ -25,38 +25,58 @@ nonlinearSolve()
   std::shared_ptr<SNES> snes = nonlinearSolver_->snes();
   std::shared_ptr<KSP> ksp = nonlinearSolver_->ksp();
 
-  // try two times to solve the nonlinear problem
-  for (int i = 0; i < 2; i++)
+  // newline
+  LOG(INFO);
+
+  // loop over load loadFactors, i.e. load increments
+  for (double loadFactor: loadFactors_)
   {
-    LOG(DEBUG) << "------------------  start solve " << i << " ------------------";
+    currentLoadFactor_ = loadFactor;
+    if (loadFactors_.size() > 1)
+    {
+      LOG(INFO) << "Nonlinear Solver: load factor " << loadFactor << " of list " << loadFactors_;
+    }
 
-    // solve the system nonlinearFunction(displacements) = 0
-    PetscErrorCode ierr;
-    ierr = SNESSolve(*snes, NULL, solverVariableSolution_); CHKERRV(ierr);
 
-    // get information about the solution process
-    PetscInt numberOfIterations = 0;
-    PetscReal residualNorm = 0.0;
-    ierr = SNESGetIterationNumber(*snes, &numberOfIterations); CHKERRV(ierr);
-    ierr = SNESGetFunctionNorm(*snes, &residualNorm); CHKERRV(ierr);
+    // try two times to solve the nonlinear problem
+    for (int i = 0; i < nNonlinearSolveCalls_; i++)
+    {
+      LOG(DEBUG) << "------------------  start solve " << i << "/" << nNonlinearSolveCalls_ << " ------------------";
 
-    SNESConvergedReason convergedReason;
-    KSPConvergedReason kspConvergedReason;
-    ierr = SNESGetConvergedReason(*snes, &convergedReason); CHKERRV(ierr);
-    ierr = KSPGetConvergedReason(*ksp, &kspConvergedReason); CHKERRV(ierr);
+      // solve the system nonlinearFunction(displacements) = 0
+      PetscErrorCode ierr;
+      ierr = SNESSolve(*snes, NULL, solverVariableSolution_); CHKERRV(ierr);
 
-    LOG(INFO) << "Solution done in " << numberOfIterations << " iterations, residual norm " << residualNorm
-      << ": " << PetscUtility::getStringNonlinearConvergedReason(convergedReason) << ", "
-      << PetscUtility::getStringLinearConvergedReason(kspConvergedReason);
+      // get information about the solution process
+      PetscInt numberOfIterations = 0;
+      PetscReal residualNorm = 0.0;
+      ierr = SNESGetIterationNumber(*snes, &numberOfIterations); CHKERRV(ierr);
+      ierr = SNESGetFunctionNorm(*snes, &residualNorm); CHKERRV(ierr);
 
-    // if the nonlinear scheme converged, finish loop
-    if (convergedReason >= 0)
-      break;
+      SNESConvergedReason convergedReason;
+      KSPConvergedReason kspConvergedReason;
+      ierr = SNESGetConvergedReason(*snes, &convergedReason); CHKERRV(ierr);
+      ierr = KSPGetConvergedReason(*ksp, &kspConvergedReason); CHKERRV(ierr);
+
+      LOG(INFO) << "Solution done in " << numberOfIterations << " iterations, residual norm " << residualNorm
+        << ": " << PetscUtility::getStringNonlinearConvergedReason(convergedReason) << ", "
+        << PetscUtility::getStringLinearConvergedReason(kspConvergedReason);
+
+      // if the nonlinear scheme converged, finish loop
+      if (convergedReason >= 0)
+        break;
+    }
+
+    // reset value of last residual norm that is needed for computational of experimental order of convergence
+    lastNorm_ = 0;
+    secondLastNorm_ = 0;
+
+    // write current output values
+    if (this->outputWriterManagerLoadIncrements_.hasOutputWriters())
+    {
+      this->outputWriterManagerLoadIncrements_.writeOutput(this->data_, 1, endTime_);
+    }
   }
-
-  // reset value of last residual norm that is needed for computational of experimental order of convergence
-  lastNorm_ = 0;
-  secondLastNorm_ = 0;
 
   if (this->durationLogKey_ != "")
     Control::PerformanceMeasurement::stop(this->durationLogKey_+std::string("_durationSolve"));
@@ -95,10 +115,22 @@ void HyperelasticitySolver<Term,nDisplacementComponents>::
 monitorSolvingIteration(SNES snes, PetscInt its, PetscReal currentNorm)
 {
   // compute experimental order of convergence which is a measure for the current convergence velocity
-  PetscReal experimentalOrderOfConvergence = 0;
+  //PetscReal experimentalOrderOfConvergence = 0;
 
-  if (secondLastNorm_ != 0)
-    experimentalOrderOfConvergence = log(lastNorm_ / currentNorm) / log(secondLastNorm_ / lastNorm_);
+  //if (secondLastNorm_ != 0)
+  //  experimentalOrderOfConvergence = log(lastNorm_ / currentNorm) / log(secondLastNorm_ / lastNorm_);
+
+  // derivation of experimentalPolynomialDegree
+  // Assume the residual norm ||r|| corresponds to the error e=||r|| and has the form e = p^i where p is the order of convergence, i is an iteration number .
+  // Then we have:
+  // e_current = p^i     = exp(i*log(p))     => log(e_current) = i*log(p)
+  // e_old     = p^(i+1) = exp((i+1)*log(p)) => log(e_old)     = (i+1)*log(p)
+  // => log(e_old) - log(e_current) = log(p)  =>  p = exp(log(e_old) - log(e_current))
+  PetscReal experimentalPolynomialDegree = exp(log(lastNorm_)-log(currentNorm));
+
+  // derivation of experimentalOrderOfConvergence
+  // e_current = e_old ^ c = exp(c*log(e_old)) => c = log(e_current) / log(e_old)
+  PetscReal experimentalOrderOfConvergence = log(currentNorm) / log(lastNorm_);
 
   secondLastNorm_ = lastNorm_;
   lastNorm_ = currentNorm;
@@ -106,9 +138,10 @@ monitorSolvingIteration(SNES snes, PetscInt its, PetscReal currentNorm)
 
   //T* object = static_cast<T*>(mctx);
   std::stringstream message;
-  message  << "  Nonlinear solver: iteration " << its << ", residual norm " << currentNorm;
-  if (experimentalOrderOfConvergence != 0)
-    message << ", eoc: " << experimentalOrderOfConvergence;
+  message  << "  Nonlinear solver: iteration " << std::setw(2) << its << ", residual norm " << std::setw(11) << currentNorm;
+  if (experimentalPolynomialDegree != 0)
+    message << ", e=p^-i with p=" << std::setprecision(2) << std::setw(3) << experimentalPolynomialDegree
+      << ", e_new=e_old^c with c=" <<  std::setw(3) << experimentalOrderOfConvergence << std::setprecision(6);
   LOG(INFO) << message.str();
 
   static int evaluationNo = 0;  // counter how often this function was called
@@ -382,7 +415,7 @@ evaluateNonlinearFunction(Vec x, Vec f)
   setUVP(solverVariableSolution_);
 
   // compute the actual output of the nonlinear function
-  materialComputeResidual();
+  materialComputeResidual(currentLoadFactor_);
 
   //VLOG(1) << "solverVariableResidual_: " << combinedVecResidual_->getString();
 

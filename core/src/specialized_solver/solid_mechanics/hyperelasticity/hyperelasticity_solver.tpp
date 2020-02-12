@@ -16,7 +16,7 @@ template<typename Term,int nDisplacementComponents>
 HyperelasticitySolver<Term,nDisplacementComponents>::
 HyperelasticitySolver(DihuContext context, std::string settingsKey) :
   context_(context[settingsKey]), data_(context_), pressureDataCopy_(context_), initialized_(false),
-  endTime_(0), lastNorm_(0), secondLastNorm_(0)
+  endTime_(0), lastNorm_(0), secondLastNorm_(0), currentLoadFactor_(1.0)
 {
   // get python config
   this->specificSettings_ = this->context_.getPythonConfig();
@@ -28,8 +28,9 @@ HyperelasticitySolver(DihuContext context, std::string settingsKey) :
   }
 
   // parse options concerning jacobian
-  useAnalyticJacobian_ = this->specificSettings_.getOptionBool("useAnalyticJacobian", true);
-  useNumericJacobian_ = this->specificSettings_.getOptionBool("useNumericJacobian", true);
+  useAnalyticJacobian_  = this->specificSettings_.getOptionBool("useAnalyticJacobian", true);
+  useNumericJacobian_   = this->specificSettings_.getOptionBool("useNumericJacobian", true);
+  nNonlinearSolveCalls_ = this->specificSettings_.getOptionInt("nNonlinearSolveCalls", 1, PythonUtility::Positive);
 
   constantBodyForce_ = this->specificSettings_.template getOptionArray<double,3>("constantBodyForce", Vec3{0.0,0.0,0.0});
 
@@ -61,13 +62,15 @@ HyperelasticitySolver(DihuContext context, std::string settingsKey) :
   // for the dynamic equation
   if (nDisplacementComponents == 6)
   {
-    density_ = specificSettings_.getOptionDouble("density", 1.0, PythonUtility::Positive);
-    timeStepWidth_ = specificSettings_.getOptionDouble("timeStepWidth", 1.0, PythonUtility::Positive);
+    density_                 = specificSettings_.getOptionDouble("density", 1.0, PythonUtility::Positive);
+    timeStepWidth_           = specificSettings_.getOptionDouble("timeStepWidth", 1.0, PythonUtility::Positive);
+    extrapolateInitialGuess_ = specificSettings_.getOptionBool("extrapolateInitialGuess", true);
   }
 
   // initialize output writers
   this->outputWriterManager_.initialize(this->context_, this->specificSettings_);
   this->outputWriterManagerPressure_.initialize(this->context_["pressure"], this->context_["pressure"].getPythonConfig());
+  this->outputWriterManagerLoadIncrements_.initialize(this->context_["LoadIncrements"], this->context_["LoadIncrements"].getPythonConfig());
 }
 
 template<typename Term,int nDisplacementComponents>
@@ -199,6 +202,21 @@ initialize()
   // setup Petsc variables
   LOG(DEBUG) << "initialize Petsc Variables";
   initializePetscVariables();
+
+  // parse load factors
+  this->specificSettings_.getOptionVector("loadFactors", loadFactors_);
+
+  if (!loadFactors_.empty())
+  {
+    if (fabs(loadFactors_.back() - 1.0) > 1e-12)
+    {
+      LOG(WARNING) << this->specificSettings_ << "[\"loadFactors\"]: Last load factor " << loadFactors_.back() << " is not 1.0.";
+    }
+  }
+
+  // prepare load factors
+  if (loadFactors_.empty())
+    loadFactors_.push_back(1.0);
 
   // add this solver to the solvers diagram
   DihuContext::solverStructureVisualizer()->addSolver("HyperelasticitySolver");

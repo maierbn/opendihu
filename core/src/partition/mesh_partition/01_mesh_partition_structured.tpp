@@ -42,7 +42,7 @@ MeshPartition(std::array<global_no_t,MeshType::dim()> nElementsGlobal, std::shar
 template<typename MeshType,typename BasisFunctionType>
 MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 MeshPartition(std::array<node_no_t,MeshType::dim()> nElementsLocal, std::array<global_no_t,MeshType::dim()> nElementsGlobal, 
-              std::array<int,MeshType::dim()> beginElementGlobal, 
+              std::array<global_no_t,MeshType::dim()> beginElementGlobal, 
               std::array<int,MeshType::dim()> nRanks, std::shared_ptr<RankSubset> rankSubset) :
   MeshPartitionBase(rankSubset), beginElementGlobal_(beginElementGlobal), nElementsLocal_(nElementsLocal), nElementsGlobal_(nElementsGlobal), 
   nRanks_(nRanks), hasFullNumberOfNodes_({false}), nDofsLocalWithoutGhosts_(-1)
@@ -70,8 +70,8 @@ MeshPartition(std::array<node_no_t,MeshType::dim()> nElementsLocal, std::array<g
 
     for (int i = 0; i < MeshType::dim(); i++)
     {
-      MPIUtility::handleReturnValue(MPI_Allgather(&nElementsLocal_[i], 1, MPI_INT,
-        localSizesOnRanks[i].data(), 1, MPI_INT, rankSubset->mpiCommunicator()));
+      MPIUtility::handleReturnValue(MPI_Allgather(&nElementsLocal_[i], 1, MPIU_INT,
+        localSizesOnRanks[i].data(), 1, MPIU_INT, rankSubset->mpiCommunicator()));
     }
     LOG(DEBUG) << "determined localSizesOnRanks: " << localSizesOnRanks;
     LOG(DEBUG) << "MeshType::dim(): " << MeshType::dim() << ", nRanks: " << nRanks_;

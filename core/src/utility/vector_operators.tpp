@@ -256,8 +256,8 @@ std::ostream &operator<<(std::ostream &stream, std::reference_wrapper<T> value)
   return stream;
 }
 
-template<typename T>
-std::ostream &operator<<(std::ostream &stream, const std::vector<T> &values)
+template<typename T,typename A>
+std::ostream &operator<<(std::ostream &stream, const std::vector<T,A> &values)
 {
   if (values.empty())
   {

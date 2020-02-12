@@ -14,7 +14,7 @@ void testDmda()
 {
   PetscErrorCode ierr;
   
-  std::array<int,2> globalSize_ = {5,5};
+  std::array<PetscInt,2> globalSize_ = {5,5};
   int nDofsPerElement = 1;
   int ghostLayerWidth = 1;
   
@@ -28,7 +28,7 @@ void testDmda()
   // get global coordinates of local partition
   PetscInt x, y, m, n;
   ierr = DMDAGetCorners(da, &x, &y, NULL, &m, &n, NULL); CHKERRV(ierr);
-  std::array<int,2> beginElementGlobal_, nElementsLocal_, nRanks_
+  std::array<PetscInt,2> beginElementGlobal_, nElementsLocal_, nRanks_
   std::array<std::vector<int>,2> localSizesOnRanks_;
   beginElementGlobal_[0] = (global_no_t)x;
   beginElementGlobal_[1] = (global_no_t)y;
@@ -195,9 +195,9 @@ int main(int argc, char *argv[])
   
   LOG(DEBUG) << " ownRankNo: " << ownRankNo << ", size: " << size;
 
-  int nNodesLocal = 0;      // non-ghosts
-  int nNodesGlobal = 0;
-  int nGhosts = 0;
+  PetscInt nNodesLocal = 0;      // non-ghosts
+  PetscInt nNodesGlobal = 0;
+  PetscInt nGhosts = 0;
   
   PetscErrorCode ierr;
   Vec globalVector;
@@ -209,7 +209,7 @@ int main(int argc, char *argv[])
     nNodesLocal = 2;   // non-ghosts
     nNodesGlobal = 6;
     nGhosts = 2;
-    std::array<int,2> ghostDofGlobalNos({2,4});
+    std::array<PetscInt,2> ghostDofGlobalNos({2,4});
  
     ierr = VecCreateGhost(MPI_COMM_WORLD, nNodesLocal, nNodesGlobal, nGhosts, ghostDofGlobalNos.data(), &globalVector); CHKERRQ(ierr);
     VecZeroEntries(globalVector);
@@ -224,7 +224,7 @@ int main(int argc, char *argv[])
     
     VecGhostGetLocalForm(globalVector, &localVector);
     
-    std::array<int,4> indices({0,1,2,3});
+    std::array<PetscInt,4> indices({0,1,2,3});
     std::array<double,4> values({0.1,1.1,2.1,3.1});
       
     // here VecSetValues is used, not VecSetValuesLocal, because it is a plain vector
@@ -245,7 +245,7 @@ int main(int argc, char *argv[])
     nNodesLocal = 4;
     nNodesGlobal = 6;
     nGhosts = 0;
-    std::array<int,0> ghostDofGlobalNos;
+    std::array<PetscInt,0> ghostDofGlobalNos;
  
     ierr = VecCreateGhost(MPI_COMM_WORLD, nNodesLocal, nNodesGlobal, nGhosts, ghostDofGlobalNos.data(), &globalVector); CHKERRQ(ierr);
     VecZeroEntries(globalVector);
@@ -257,7 +257,7 @@ int main(int argc, char *argv[])
     
     VecGhostGetLocalForm(globalVector, &localVector);
     
-    std::array<int,4> indices({0,1,2,3});
+    std::array<PetscInt,4> indices({0,1,2,3});
     std::array<double,4> values({0.2,1.2,2.2,3.2});
       
     VecSetValues(localVector, 4, indices.data(), values.data(), INSERT_VALUES);

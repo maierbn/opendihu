@@ -16,4 +16,5 @@ if not env['no_examples']:
     main.cpp
   """)
   # create the main executable
-  env.Program(target = 'test', source = src_files)
+  env.Program(target = 'test', source = "main.cpp")
+  env.Program(target = 'test3', source = "main3.cpp")

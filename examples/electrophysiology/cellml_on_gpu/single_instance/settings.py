@@ -38,7 +38,7 @@ cde    "initialValues": [],
     ],
 
     "CellML" : {
-      #"sourceFilename": "cellmlcode.cpp",
+      #"modelFilename": "cellmlcode.cpp",
       "gpuSourceFilename": "gpucode.cpp",
       #"simdSourceFilename" : "simdcode.cpp",
       "libraryFilename": "cellml_gpu_lib.so",

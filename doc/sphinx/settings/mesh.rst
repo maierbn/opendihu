@@ -44,6 +44,8 @@ The *Unstructured* mesh type can only be used with serial execution, i.e. no dom
 
 Node positions are always stored as points in :math:`\mathbb{R}^3`. Consequently, it is possible to define a 1D mesh embedded in the 3D space, for example for 1D muscle fibers in a 3D muscle geometry. Similarly, "bended" 2D meshes can be defined, like the 2D surface of a 3D muscle.
    
+.. _define_meshes:
+
 Python settings for Mesh
 ---------------------------
    

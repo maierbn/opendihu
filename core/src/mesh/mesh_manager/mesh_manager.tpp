@@ -4,7 +4,7 @@
 
 #include "easylogging++.h"
 #include "mesh/structured_regular_fixed.h"
-#include "control/performance_measurement.h"
+#include "control/diagnostic_tool/performance_measurement.h"
 
 namespace Mesh
 {

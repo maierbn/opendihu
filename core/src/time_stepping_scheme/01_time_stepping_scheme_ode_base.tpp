@@ -11,7 +11,7 @@ namespace TimeSteppingScheme
 template<typename FunctionSpaceType, int nComponents>
 TimeSteppingSchemeOdeBase<FunctionSpaceType,nComponents>::
 TimeSteppingSchemeOdeBase(DihuContext context, std::string name) :
-TimeSteppingScheme(context[name]), initialized_(false)
+TimeSteppingScheme(context[name]), initialized_(false), name_(name)
 {
   // get python config
   this->specificSettings_ = this->context_.getPythonConfig();
@@ -83,8 +83,8 @@ initialize()
   if (initialized_)
     return;
 
+  // initialize the parent class
   TimeSteppingScheme::initialize();
-  LOG(TRACE) << "TimeSteppingSchemeOdeBase::initialize";
 
   initialized_ = true;
 }

@@ -490,7 +490,7 @@ displacementDofsGlobal()
 
   // create index sets of rows of displacement dofs
   int nDisplacementDofsLocal = nDisplacementDofsWithoutBcLocal();
-  std::vector<int> indices(nDisplacementDofsLocal);
+  std::vector<dof_no_t> indices(nDisplacementDofsLocal);
   std::iota(indices.begin(), indices.end(), this->nonBcDofNoGlobalBegin_);
 
   IS indexSet;
@@ -509,7 +509,7 @@ velocityDofsGlobal()
   // create index sets of rows of displacement dofs
   int nDisplacementDofsLocal = nDisplacementDofsWithoutBcLocal();
   int nVelocityDofsLocal = nVelocityDofsWithoutBcLocal();
-  std::vector<int> indices(nVelocityDofsLocal);
+  std::vector<dof_no_t> indices(nVelocityDofsLocal);
   std::iota(indices.begin(), indices.end(), this->nonBcDofNoGlobalBegin_ + nDisplacementDofsLocal);
 
   IS indexSet;
@@ -527,7 +527,7 @@ pressureDofsGlobal()
 
   // create index sets of rows of pressure dofs
   int nPressureDofsLocal = this->nNonBcDofsWithoutGhosts_[componentNoPressure_];
-  std::vector<int> indices(nPressureDofsLocal);
+  std::vector<dof_no_t> indices(nPressureDofsLocal);
   int startIndex = this->nonBcDofNoGlobalBegin_ + nDisplacementDofsWithoutBcLocal() + nVelocityDofsWithoutBcLocal();
   std::iota(indices.begin(), indices.end(), startIndex);
 

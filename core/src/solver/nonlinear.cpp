@@ -8,6 +8,7 @@ namespace Solver
 Nonlinear::Nonlinear(PythonConfig specificSettings, MPI_Comm mpiCommunicator, std::string name) :
   Linear(specificSettings, mpiCommunicator, name)
 {
+  snesAbsoluteTolerance_ = this->specificSettings_.getOptionDouble("snesAbsoluteTolerance", 1e-10, PythonUtility::Positive);
   snesRelativeTolerance_ = this->specificSettings_.getOptionDouble("snesRelativeTolerance", 1e-10, PythonUtility::Positive);
   snesMaxIterations_ = this->specificSettings_.getOptionDouble("snesMaxIterations", 50, PythonUtility::Positive);
   snesMaxFunctionEvaluations_ = this->specificSettings_.getOptionDouble("snesMaxFunctionEvaluations", 1000, PythonUtility::Positive);
@@ -20,7 +21,7 @@ Nonlinear::Nonlinear(PythonConfig specificSettings, MPI_Comm mpiCommunicator, st
   ierr = SNESSetFromOptions(*snes_); CHKERRV(ierr);
 
   // PetscErrorCode  SNESSetTolerances(SNES snes,PetscReal abstol,PetscReal rtol,PetscReal stol,PetscInt maxit,PetscInt maxf)
-  ierr = SNESSetTolerances(*snes_, PETSC_DEFAULT, snesRelativeTolerance_, PETSC_DEFAULT, snesMaxIterations_, snesMaxFunctionEvaluations_); CHKERRV(ierr);
+  ierr = SNESSetTolerances(*snes_, snesAbsoluteTolerance_, snesRelativeTolerance_, PETSC_DEFAULT, snesMaxIterations_, snesMaxFunctionEvaluations_); CHKERRV(ierr);
 
   // extract linear solver context
   ksp_ = std::make_shared<KSP>();

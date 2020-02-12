@@ -251,7 +251,7 @@ getValues(std::vector<double> &values, bool onlyNodalValues) const
     if (std::is_same<typename FunctionSpaceType::BasisFunction, BasisFunction::Hermite>::value)
       nValues = nDofs / FunctionSpaceType::nDofsPerNode();
 
-  std::vector<int> indices(nValues,0);
+  std::vector<dof_no_t> indices(nValues,0);
   dof_no_t indexNo = 0;
   for (dof_no_t dofLocalNo = 0; dofLocalNo < nDofs; dofLocalNo += stride)
   {
@@ -299,7 +299,7 @@ double Component<FunctionSpaceType,nComponents>::
 getValue(node_no_t dofLocalNo) const
 {
   double value;
-  std::array<int,1> indices{(int)(dofLocalNo)};
+  std::array<PetscInt,1> indices{(int)(dofLocalNo)};
 
   assert (values_);
   values_->getValues(componentIndex_, 1, indices.data(), &value);

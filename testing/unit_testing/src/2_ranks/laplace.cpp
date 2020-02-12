@@ -28,8 +28,8 @@ config = {
     "dirichletBoundaryConditions": bc,
     "relativeTolerance": 1e-15,
     "OutputWriter" : [
-      {"format": "Paraview", "filename": "out4", "outputInterval": 1, "binary": False},
-      {"format": "PythonFile", "filename": "out4", "outputInterval": 1, "binary": False}
+      {"format": "Paraview", "filename": "out4", "outputInterval": 1, "binary": False, "fixedFormat": True, "combineFiles": False, "onlyNodalValues": True},
+      {"format": "PythonFile", "filename": "out4", "outputInterval": 1, "binary": False, "onlyNodalValues": True}
     ]
   }
 }
@@ -60,7 +60,7 @@ config = {
 
   nFails += ::testing::Test::HasFailure();
 }
-
+/*
 TEST(LaplaceTest, Structured1DQuadratic)
 {
   std::string pythonConfig = R"(

@@ -15,6 +15,7 @@ namespace SolidMechanics
 struct MooneyRivlinIncompressible3D
 {
   static constexpr bool usesFiberDirection = false;   //< if the equation depends on a fiber direction, i.e. has 4th and 5th invariant
+  static constexpr bool usesActiveStress = false;   //< if the equation adds an active stress value to the stress
 
   // define helper variables for strain energy density function
   // reduced invariants
@@ -40,6 +41,7 @@ struct MooneyRivlinIncompressible3D
 struct TransverselyIsotropicMooneyRivlinIncompressible3D
 {
   static constexpr bool usesFiberDirection = true;   //< if the equation depends on a fiber direction, i.e. has 4th and 5th invariant
+  static constexpr bool usesActiveStress = false;   //< if the equation adds an active stress value to the stress
 
   // define helper variables for strain energy density function
   // reduced invariants
@@ -59,7 +61,7 @@ struct TransverselyIsotropicMooneyRivlinIncompressible3D
   static constexpr int nMaterialParameters = 4;  //< number of material parameters
 
   //! the isochoric part of the decoupled strain energy density function, Psi_iso, in terms of the reduced invariants
-  // function from chemo-electro-mechanical muscle model (Heidlauf)
+  // function from chemo-electro-mechanical muscle model (Heidlauf 2013 "Modeling the chemo-electro-mechanical behaviour of... p.4)
   static const auto constexpr strainEnergyDensityFunctionIsochoric
     = c1*(Ibar1 - INT(3)) + c2*(Ibar2 - INT(3)) + b/d * (pow(lambda, d) - INT(1)) - b*ln(lambda);
 };
@@ -70,6 +72,7 @@ struct TransverselyIsotropicMooneyRivlinIncompressible3D
 struct TransverselyIsotropicMooneyRivlinIncompressibleActive3D
 {
   static constexpr bool usesFiberDirection = true;   //< if the equation depends on a fiber direction, i.e. has 4th and 5th invariant
+  static constexpr bool usesActiveStress = true;   //< if the equation adds an active stress value to the stress
 
   // define helper variables for strain energy density function
   // reduced invariants
@@ -84,18 +87,13 @@ struct TransverselyIsotropicMooneyRivlinIncompressibleActive3D
   static constexpr auto c2 = PARAM(1);   //< material parameter
   static constexpr auto b = PARAM(2);   //< material parameter
   static constexpr auto d = PARAM(3);   //< material parameter
-  static constexpr auto Pmax = PARAM(4);   //< material parameter
-  static constexpr auto lambdaOpt = PARAM(5);   //< material parameter
 
-  static constexpr int nMaterialParameters = 6;  //< number of material parameters
+  static constexpr int nMaterialParameters = 4;  //< number of material parameters
 
   //! the isochoric part of the decoupled strain energy density function, Psi_iso, in terms of the reduced invariants
-  // function from chemo-electro-mechanical muscle model (Heidlauf)
+  // function from chemo-electro-mechanical muscle model (Heidlauf 2013 "Modeling the chemo-electro-mechanical behaviour of... p.4)
   static const auto constexpr strainEnergyDensityFunctionIsochoric
     = c1*(Ibar1 - INT(3)) + c2*(Ibar2 - INT(3)) + b/d * (pow(lambda, d) - INT(1)) - b*ln(lambda);
-
-  static const auto constexpr fl = INT(-25)/INT(4) * pow(lambda / lambdaOpt, INT(2)) + INT(25)/INT(2) * lambda / lambdaOpt - INT(21)/INT(4);
-  static const auto constexpr Pact = Pmax * fl; // * gamma (this happens in the code)
 };
 
 }  // namespace

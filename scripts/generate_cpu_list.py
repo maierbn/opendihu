@@ -9,6 +9,7 @@ import sys
 n_subdomains_x = 1
 n_subdomains_y = 1
 n_subdomains_z = 1
+stride = 1    # stride to skip CPUs
 output_filename = ""
 
 if len(sys.argv) > 3:
@@ -20,7 +21,13 @@ if len(sys.argv) > 3:
     pass
 
 if len(sys.argv) > 4:
-  output_filename = sys.argv[4]
+  try:
+    stride = (int)(sys.argv[4])
+  except:
+    pass
+
+if len(sys.argv) > 5:
+  output_filename = sys.argv[5]
 
 if output_filename != "":  
   print("n_subdomains: {} {} {}".format(n_subdomains_x, n_subdomains_y, n_subdomains_z))
@@ -33,7 +40,7 @@ for y in range(n_subdomains_y):
   for x in range(n_subdomains_x):
     for z in range(n_subdomains_z):
       cpu_no = z*n_subdomains_y*n_subdomains_x + y*n_subdomains_x + x
-      cpu_list.append(cpu_no)
+      cpu_list.append(cpu_no*stride)
       cpu_no += 1
 
 if output_filename != "":

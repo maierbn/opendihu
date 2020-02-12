@@ -54,6 +54,7 @@ interpolateFineFibersFromFile()
   // copy header
   std::vector<char> headerBuffer(32+headerLength);
   fileOld.read(headerBuffer.data(), 32+headerLength);
+  strncpy(headerBuffer.data(), "opendihu fibers file            ", 32);
 
   int nFibersNewX = (nFibersOldX-1) * nFineGridFibers_ + nFibersOldX;
   int nFibersNew = MathUtility::sqr(nFibersNewX);

@@ -108,7 +108,7 @@ config = {
   vec0->startGhostManipulation();
 
 
-  std::vector<int> indices({0, 1, 2, 3});
+  std::vector<PetscInt> indices({0, 1, 2, 3});
   std::vector<double> values(4);
   vec0->getValues(0, 4, indices.data(), values.data());
 

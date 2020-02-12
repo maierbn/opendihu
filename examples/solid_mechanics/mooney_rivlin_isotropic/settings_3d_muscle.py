@@ -61,6 +61,7 @@ plt.show()
 
 config = {
   "scenarioName": "3d_muscle",
+  "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "Meshes": variables.meshes,
   "QuasiStaticHyperelasticitySolver": {
     "c0": 1.0,       # dummy value

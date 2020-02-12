@@ -98,7 +98,7 @@ setStiffnessMatrix()
   // loop over elements
   for (element_no_t elementNo = 0; elementNo < nElementsLocal; elementNo++)
   {
-    if (outputAssemble3DStiffnessMatrixHere && this->context_.ownRankNo() == 0)
+    if (outputAssemble3DStiffnessMatrixHere && this->context_.ownRankNoCommWorld() == 0)
     {
       double newProgress = (double)elementNo / nElementsLocal;
       if (int(newProgress*10) != int(progress*10))
@@ -124,7 +124,7 @@ setStiffnessMatrix()
       std::array<double,D> xi = samplingPoints[samplingPointIndex];
 
       // compute the 3xD jacobian of the parameter space to world space mapping
-      auto jacobian = FunctionSpaceType::computeJacobian(geometry, xi);
+      std::array<Vec3,D> jacobian = FunctionSpaceType::computeJacobian(geometry, xi);
 
       VLOG(2) << "samplingPointIndex=" << samplingPointIndex<< ", xi=" <<xi<< ", geometry: " <<geometry<< ", jac: " <<jacobian;
 
@@ -187,14 +187,14 @@ setStiffnessMatrix()
     }  // i
   }  // elementNo
 
-  if (outputAssemble3DStiffnessMatrixHere && this->context_.ownRankNo() == 0)
+  if (outputAssemble3DStiffnessMatrixHere && this->context_.ownRankNoCommWorld() == 0)
   {
     std::cout << "\b\b\b\bparallel assembly..." << std::flush;
   }
 
   stiffnessMatrix->assembly(MAT_FINAL_ASSEMBLY);
 
-  if (outputAssemble3DStiffnessMatrixHere && this->context_.ownRankNo() == 0)
+  if (outputAssemble3DStiffnessMatrixHere && this->context_.ownRankNoCommWorld() == 0)
   {
     std::cout << std::string(100,'\b') << "done.                       " << std::endl;
   }

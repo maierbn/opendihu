@@ -1,0 +1,149 @@
+#include "specialized_solver/fast_monodomain_solver/hodgkin_huxley.h"
+
+#include <Vc/Vc>
+
+
+//! set the initial values for all states
+void FastMonodomainSolver<Control::MultipleInstances<OperatorSplitting::Strang<Control::MultipleInstances<TimeSteppingScheme::Heun<CellmlAdapter<4, 9, FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1> > > > >, Control::MultipleInstances<TimeSteppingScheme::ImplicitEuler<SpatialDiscretization::FiniteElementMethod<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1>, Quadrature::Gauss<2>, Equation::Dynamic::IsotropicDiffusion> > > > > >::
+initializeStates(Vc::double_v states[])
+{
+  states[0] = -75.0;
+  states[1] = 0.05;
+  states[2] = 0.6;
+  states[3] = 0.325;
+}
+
+// Hodgkin-Huxley
+void FastMonodomainSolver<Control::MultipleInstances<OperatorSplitting::Strang<Control::MultipleInstances<TimeSteppingScheme::Heun<CellmlAdapter<4, 9, FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1> > > > >, Control::MultipleInstances<TimeSteppingScheme::ImplicitEuler<SpatialDiscretization::FiniteElementMethod<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1>, Quadrature::Gauss<2>, Equation::Dynamic::IsotropicDiffusion> > > > > >::
+compute0DInstance(Vc::double_v states[], std::vector<Vc::double_v> &parameters, double currentTime, double timeStepWidth, bool stimulate, bool storeIntermediatesForTransfer,
+                  std::vector<Vc::double_v> &intermediatesForTransfer)
+{
+  using Vc::double_v;
+
+  double_v &state0 = states[0];
+  double_v &state1 = states[1];
+  double_v &state2 = states[2];
+  double_v &state3 = states[3];
+
+  // constants
+  const double constant0 = -75;
+  const double constant1 = 1;
+  const double constant2 = 0;
+  const double constant3 = 120;
+  const double constant4 = 36;
+  const double constant5 = 0.3;
+  const double constant6 = constant0 + 115.000;
+  const double constant7 = constant0 - 12.0000;
+  const double constant8 = constant0 + 10.6130;
+
+  // compute new rates, rhs(y_n)
+  const double_v algebraic1                   = ( - 0.100000*(state0+50.0000))/(exp(- (state0+50.0000)/10.0000) - 1.00000);
+  const double_v algebraic5                   =  4.00000*exp(- (state0+75.0000)/18.0000);
+  const double_v rate1                        =  algebraic1*(1.00000 - state1) -  algebraic5*state1;
+  const double_v algebraic2                   =  0.0700000*exp(- (state0+75.0000)/20.0000);
+  const double_v algebraic6                   = 1.00000/(exp(- (state0+45.0000)/10.0000)+1.00000);
+  const double_v rate2                        =  algebraic2*(1.00000 - state2) -  algebraic6*state2;
+  const double_v algebraic3                   = ( - 0.0100000*(state0+65.0000))/(exp(- (state0+65.0000)/10.0000) - 1.00000);
+  const double_v algebraic7                   =  0.125000*exp((state0+75.0000)/80.0000);
+  const double_v rate3                        =  algebraic3*(1.00000 - state3) -  algebraic7*state3;
+  const double_v algebraic0                   =  constant3*state1*state1*state1*state2*(state0 - constant6);
+  const double_v algebraic4                   =  constant4*state3*state3*state3*state3*(state0 - constant7);
+  const double_v algebraic8                   =  constant5*(state0 - constant8);
+  const double_v rate0                        = - (- constant2+algebraic0+algebraic4+algebraic8)/constant1;
+
+  VLOG(2) << "increment: [" << rate0*timeStepWidth << "," << rate1*timeStepWidth << "," << rate2*timeStepWidth << "," << rate3*timeStepWidth << "], dt: " << timeStepWidth;
+
+  // intermediate step
+  // compute y* = y_n + dt*rhs(y_n), y_n = state, rhs(y_n) = rate, y* = intermediateState
+  double_v intermediateState0 = state0 + timeStepWidth*rate0;
+  const double_v intermediateState1 = state1 + timeStepWidth*rate1;
+  const double_v intermediateState2 = state2 + timeStepWidth*rate2;
+  const double_v intermediateState3 = state3 + timeStepWidth*rate3;
+
+  if (stimulate)
+  {
+    for (int i = 0; i < std::min(3,(int)Vc::double_v::Size); i++)
+    {
+      intermediateState0[i] = 20.0;
+    }
+  }
+
+  VLOG(2) << "intermediate solution: [" << intermediateState0 << "," << intermediateState1 << "," << intermediateState2 << "," << intermediateState3 << "]";
+
+  // compute new rates, rhs(y*)
+  const double_v intermediateAlgebraic1       = ( - 0.100000*(intermediateState0+50.0000))/(exp(- (intermediateState0+50.0000)/10.0000) - 1.00000);
+  const double_v intermediateAlgebraic5       =  4.00000*exp(- (intermediateState0+75.0000)/18.0000);
+  const double_v intermediateRate1            =  intermediateAlgebraic1*(1.00000 - intermediateState1) -  intermediateAlgebraic5*intermediateState1;
+  const double_v intermediateAlgebraic2       =  0.0700000*exp(- (intermediateState0+75.0000)/20.0000);
+  const double_v intermediateAlgebraic6       = 1.00000/(exp(- (intermediateState0+45.0000)/10.0000)+1.00000);
+  const double_v intermediateRate2            =  intermediateAlgebraic2*(1.00000 - intermediateState2) -  intermediateAlgebraic6*intermediateState2;
+  const double_v intermediateAlgebraic3       = ( - 0.0100000*(intermediateState0+65.0000))/(exp(- (intermediateState0+65.0000)/10.0000) - 1.00000);
+  const double_v intermediateAlgebraic7       =  0.125000*exp((intermediateState0+75.0000)/80.0000);
+  const double_v intermediateRate3            =  intermediateAlgebraic3*(1.00000 - intermediateState3) -  intermediateAlgebraic7*intermediateState3;
+  const double_v intermediateAlgebraic0       =  constant3*intermediateState1*intermediateState1*intermediateState1*intermediateState2*(intermediateState0 - constant6);
+  const double_v intermediateAlgebraic4       =  constant4*intermediateState3*intermediateState3*intermediateState3*intermediateState3*(intermediateState0 - constant7);
+  const double_v intermediateAlgebraic8       =  constant5*(intermediateState0 - constant8);
+  const double_v intermediateRate0            = - (- constant2+intermediateAlgebraic0+intermediateAlgebraic4+intermediateAlgebraic8)/constant1;
+
+  // final step
+  // y_n+1 = y_n + 0.5*[rhs(y_n) + rhs(y*)]
+  const double_v finalState0 = state0 + 0.5*timeStepWidth*(rate0 + intermediateRate0);
+  const double_v finalState1 = state1 + 0.5*timeStepWidth*(rate1 + intermediateRate1);
+  const double_v finalState2 = state2 + 0.5*timeStepWidth*(rate2 + intermediateRate2);
+  const double_v finalState3 = state3 + 0.5*timeStepWidth*(rate3 + intermediateRate3);
+
+  state0 = finalState0;
+  state1 = finalState1;
+  state2 = finalState2;
+  state3 = finalState3;
+
+  if (stimulate)
+  {
+    for (int i = 0; i < std::min(3,(int)Vc::double_v::Size); i++)
+    {
+      state0[i] = 20.0;
+    }
+  }
+
+  // store intermediates for transfer
+  if (storeIntermediatesForTransfer)
+  {
+    for (int i = 0; i < intermediatesForTransfer_.size(); i++)
+    {
+      const int intermediate = intermediatesForTransfer_[i];
+
+      switch (intermediate)
+      {
+        case 0:
+          intermediatesForTransfer[i] = intermediateAlgebraic0;
+          break;
+        case 1:
+          intermediatesForTransfer[i] = intermediateAlgebraic1;
+          break;
+        case 2:
+          intermediatesForTransfer[i] = intermediateAlgebraic2;
+          break;
+        case 3:
+          intermediatesForTransfer[i] = intermediateAlgebraic3;
+          break;
+        case 4:
+          intermediatesForTransfer[i] = intermediateAlgebraic4;
+          break;
+        case 5:
+          intermediatesForTransfer[i] = intermediateAlgebraic5;
+          break;
+        case 6:
+          intermediatesForTransfer[i] = intermediateAlgebraic6;
+          break;
+        case 7:
+          intermediatesForTransfer[i] = intermediateAlgebraic7;
+          break;
+        case 8:
+          intermediatesForTransfer[i] = intermediateAlgebraic8;
+          break;
+      }
+    }
+  }
+
+  //VLOG(2) << "resulting solution: [" << state0 << "," << state1 << "," << state2 << "," << state3 << "]";
+}

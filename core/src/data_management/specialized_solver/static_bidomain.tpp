@@ -127,10 +127,10 @@ getFieldVariablesForOutputWriter()
   return std::make_tuple(
     geometryField,
     this->fiberDirection_,
-    this->flowPotential_,
     extraCellularPotential_,
     transmembranePotential_,
-    transmembraneFlow_
+    transmembraneFlow_,
+    this->flowPotential_
   );
 }
 

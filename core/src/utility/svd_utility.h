@@ -2,7 +2,9 @@
 
 #include <Python.h>  // has to be the first included header
 
+#ifdef HAVE_LAPACK
 #include <lapacke.h>
+#endif
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -38,3 +40,5 @@ class SvdUtility
 
   static int getCSVColumnCount(string filename);
 };
+
+

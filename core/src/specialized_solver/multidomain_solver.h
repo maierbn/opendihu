@@ -11,7 +11,18 @@ namespace TimeSteppingScheme
 {
 
 /** A specialized solver for the multidomain equation, as formulated by Thomas Klotz (2017)
-  */
+ *
+ * The system to be solved here is
+ *
+ * [ -dt/(a_mk*c_mk)*M^{-1}*K_ik + I   ...   -dt/(a_mk*c_mk)*M^{-1}*K   ] [V_mk^(i+1)  ]   [V_mk^(i)]
+ * [  ...                                     ...                       ]*[...         ] = [       ]
+ * [ f_rk * K_ik                       ...    K_ei                      ] [phi_e^(i+1) ]   [       ]
+ *
+ * V_mk^(i) is computed by the 0D part.
+ * The two output connection slots are V_mk^(i) and V_mk^(i+1),
+ * where V_mk^(i) is the input and should be connected to the output of the reaction term.
+ * V_mk^(i+1) is the output and should be connected to the input of the reaction term.
+ */
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
 class MultidomainSolver :
   public TimeSteppingScheme, public Runnable

@@ -34,7 +34,7 @@ public:
   void setStatesVariable(std::shared_ptr<FieldVariableStates> states);
 
   //! give the names of all intermediates, will be called before initialize()
-  void setIntermediateNames(std::vector<std::string> &intermediateNames);
+  void setIntermediateNames(const std::vector<std::string> &intermediateNames);
 
   //! return references to statesForTransfer_ and intermediatesForTransfer_
   void getStatesIntermediatesForTransfer(std::vector<int> &statesForTransfer, std::vector<int> &intermediatesForTransfer);

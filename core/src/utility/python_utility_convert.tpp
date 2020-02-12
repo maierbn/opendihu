@@ -14,6 +14,60 @@
 
 //partial specialization for int
 template<>
+struct PythonUtility::convertFromPython<long>
+{
+  //! convert a python object to its corresponding c type, with type checking, if conversion is not possible, use defaultValue
+  static int get(PyObject *object, long defaultValue)
+  {
+    if (object == NULL)
+      return defaultValue;
+
+    // start critical section for python API calls
+    // PythonUtility::GlobalInterpreterLock lock;
+
+    assert(object != nullptr);
+    if (PyLong_Check(object))
+    {
+      long valueLong = PyLong_AsLong(object);
+      return valueLong;
+    }
+    else if (PyFloat_Check(object))
+    {
+      double valueDouble = PyFloat_AsDouble(object);
+
+      if (double(int(valueDouble)) != valueDouble)      // if value is not e.g. 2.0
+      {
+        LOG(WARNING) << "convertFromPython<long>: object is float and not long: " << object;
+      }
+
+      return int(valueDouble);
+    }
+    else if (PyUnicode_Check(object))
+    {
+      std::string valueString = pyUnicodeToString(object);
+      return atoi(valueString.c_str());
+    }
+    else if (object == Py_None)
+    {
+      LOG(DEBUG) << "convertFromPython<long>: object is None, parse as -1";
+      return -1;    // None translates to -1
+    }
+    else
+    {
+      LOG(WARNING) << "convertFromPython<long>: object is no long: " << object;
+    }
+    return defaultValue;
+  }
+
+  //! convert a python object to its corresponding c type, with type checking, if conversion is not possible use trivial default value (0 or 0.0 or "")
+  static int get(PyObject *object)
+  {
+    return convertFromPython<long>::get(object, 0);
+  }
+};
+
+//partial specialization for int
+template<>
 struct PythonUtility::convertFromPython<int>
 {
   //! convert a python object to its corresponding c type, with type checking, if conversion is not possible, use defaultValue
@@ -148,6 +202,14 @@ struct PythonUtility::convertFromPython<std::string>
     }
     else
     {
+      PyObject *unicode = PyObject_Str(object);
+
+      if (unicode != NULL)
+      {
+        std::string valueString = pyUnicodeToString(unicode);
+        return valueString;
+      }
+
       LOG(WARNING) << "convertFromPython: object is no std::string: " << object;
     }
     return defaultValue;
@@ -715,6 +777,77 @@ struct PythonUtility::convertFromPython<std::vector<ValueType>>
     return defaultValue;
   }
 
+  //! convert a python object to its corresponding c type, with type checking
+  static std::vector<ValueType> get(PyObject *object, ValueType defaultValue)
+  {
+    // start critical section for python API calls
+    // PythonUtility::GlobalInterpreterLock lock;
+
+    std::vector<ValueType> result;
+    assert(object != nullptr);
+    if (PyList_Check(object))
+    {
+      int nEntries = (int)PyList_Size(object);
+      result.resize(nEntries);
+
+      for (int i = 0; i < nEntries; i++)
+      {
+        result[i] = PythonUtility::convertFromPython<ValueType>::get(PyList_GetItem(object, (Py_ssize_t)i));
+      }
+      return result;
+    }
+    else if (PyTuple_Check(object))
+    {
+      int nEntries = PyTuple_Size(object);
+      result.resize(nEntries + 1);
+
+      for (int i = 0; i < nEntries; i++)
+      {
+        result[i] = PythonUtility::convertFromPython<ValueType>::get(PyTuple_GetItem(object, (Py_ssize_t)i));
+      }
+      return result;
+    }
+    else if (PyDict_Check(object))
+    {
+      PyObject *itemList = PyDict_Items(object);
+
+      for (int itemListIndex = 0; itemListIndex < PyList_Size(itemList); itemListIndex++)
+      {
+        PyObject *tuple = PyList_GetItem(itemList, (Py_ssize_t)itemListIndex);
+        PyObject *pyKey = PyTuple_GetItem(tuple, (Py_ssize_t)0);
+        PyObject *pyValue = PyTuple_GetItem(tuple, (Py_ssize_t)1);
+
+        int key = convertFromPython<int>::get(pyKey);
+
+        if (key >= 0)
+        {
+          if (key >= result.size())
+            result.resize(key + 1, defaultValue);
+          result[key] = convertFromPython<ValueType>::get(pyValue);
+        }
+      }
+      return result;
+    }
+    else if (object == Py_None)
+    {
+      // object is None, this means empty list
+      return result;
+    }
+    else
+    {
+      ValueType valueDouble = PythonUtility::convertFromPython<ValueType>::get(object);
+
+      result.resize(1);
+      result[0] = valueDouble;
+
+      return result;
+    }
+
+#ifndef __PGI
+    return std::vector<ValueType>();
+#endif
+  }
+
   //! convert a python object to its corresponding c type, with type checking, if conversion is not possible use trivial default value (0 or 0.0 or "")
   static std::vector<ValueType> get(PyObject *object)
   {
@@ -760,10 +893,15 @@ struct PythonUtility::convertFromPython<std::vector<ValueType>>
         if (key >= 0)
         {
           if (key >= result.size())
-            result.resize(key + 1);
+            result.resize(key + 1, convertFromPython<ValueType>::get(Py_None));
           result[key] = convertFromPython<ValueType>::get(pyValue);
         }
       }
+      return result;
+    }
+    else if (object == Py_None)
+    {
+      // object is None, this means empty list
       return result;
     }
     else

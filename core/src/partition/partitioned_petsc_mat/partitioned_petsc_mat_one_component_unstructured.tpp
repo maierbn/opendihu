@@ -287,7 +287,7 @@ output(std::ostream &stream) const
 {
   // this method gets all values and outputs them to stream
   // get global size of matrix 
-  int nRows, nColumns;
+  PetscInt nRows, nColumns;
   PetscErrorCode ierr;
   ierr = MatGetSize(this->matrix_, &nRows, &nColumns); CHKERRV(ierr);
   

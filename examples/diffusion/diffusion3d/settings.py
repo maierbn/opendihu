@@ -15,6 +15,7 @@ for z in range(int(0.3*nz), int(0.5*nz)):
 #print("iv: ",iv)
 
 config = {
+  "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "Heun" : {
     "initialValues": iv,
     "timeStepWidth": 1e-3,

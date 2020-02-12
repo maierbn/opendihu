@@ -83,6 +83,12 @@ materialComputeInternalVirtualWork()
     std::array<Vec3,nDisplacementsDofsPerElement> elementalDirectionValues;
     this->data_.fiberDirection()->getElementValues(elementNoLocal, elementalDirectionValues);
 
+    std::array<VecD<6>,nDisplacementsDofsPerElement> activePK2StressValues;
+    if (Term::usesActiveStress)
+    {
+      this->data_.activePK2Stress()->getElementValues(elementNoLocal, activePK2StressValues);
+    }
+
     // loop over integration points (e.g. gauss points) for displacements field
     for (unsigned int samplingPointIndex = 0; samplingPointIndex < samplingPoints.size(); samplingPointIndex++)
     {
@@ -124,6 +130,23 @@ materialComputeInternalVirtualWork()
                                                       fictitiousPK2Stress, pk2StressIsochoric
                                                    );
 
+      // add active stress contribution if this material has this
+      if (Term::usesActiveStress)
+      {
+        VecD<6> activePK2StressInVoigtNotation = displacementsFunctionSpace->template interpolateValueInElement<6>(activePK2StressValues, xi);
+
+        pK2Stress[0][0] += activePK2StressInVoigtNotation[0];
+        pK2Stress[1][1] += activePK2StressInVoigtNotation[1];
+        pK2Stress[2][2] += activePK2StressInVoigtNotation[2];
+        pK2Stress[0][1] += activePK2StressInVoigtNotation[3];
+        pK2Stress[1][0] += activePK2StressInVoigtNotation[3];
+        pK2Stress[1][2] += activePK2StressInVoigtNotation[4];
+        pK2Stress[2][1] += activePK2StressInVoigtNotation[4];
+        pK2Stress[0][2] += activePK2StressInVoigtNotation[5];
+        pK2Stress[2][0] += activePK2StressInVoigtNotation[5];
+      }
+
+      // call debugging methods, currently disabled
       this->materialTesting(pressure, rightCauchyGreen, inverseRightCauchyGreen, reducedInvariants, deformationGradientDeterminant, fiberDirection,
         fictitiousPK2Stress, pk2StressIsochoric
       );
@@ -1246,6 +1269,64 @@ computeDeformationGradient(const std::array<Vec3,DisplacementsFunctionSpace::nDo
 
 template<typename Term,int nDisplacementComponents>
 Tensor2<3> HyperelasticitySolver<Term,nDisplacementComponents>::
+computeDeformationGradientTimeDerivative(const std::array<Vec3,DisplacementsFunctionSpace::nDofsPerElement()> &velocities,
+                           const Tensor2<3> &inverseJacobianMaterial,
+                           const std::array<double, 3> xi
+                          )
+{
+  // compute the time derivative of the deformation gradient d(x_i,j)/dt = d/dt(δ_ij + u_i,j) = v_i,j
+  // where j is dimensionColumn and i is component of the used Vec3's
+
+
+  VLOG(3) << "compute deformation gradient time derivative Fdot_ij, velocities: " << velocities;
+
+  const int D = 3;
+  Tensor2<D> deformationGradientTimeDerivative;
+
+  const int nDofsPerElement = DisplacementsFunctionSpace::nDofsPerElement();
+
+  // loop over dimension, i.e. columns of deformation gradient, j
+  for (int dimensionColumn = 0; dimensionColumn < 3; dimensionColumn++)
+  {
+    // compute du_i/dX_dimensionColumn for all i at once
+    Vec3 du_dX({0});    // vector contains entries for all i, du_dXj with j = dimensionColumn
+
+    VLOG(3) << " j = " << dimensionColumn;
+
+    // loop over dof no., M
+    for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
+    {
+      VLOG(3) << "  M = " << dofIndex;
+
+      // compute dphi_dofIndex/dX_dimensionColumn
+      double dphi_dX = 0;
+      for (int l = 0; l < 3; l++)
+      {
+        VLOG(3) << "   l = " << l;
+        double dphi_dxil = DisplacementsFunctionSpace::dphi_dxi(dofIndex, l, xi);
+        double dxil_dX = inverseJacobianMaterial[dimensionColumn][l];     // inverseJacobianMaterial[j][l] = J_lj = dxi_l/dX_j
+
+        VLOG(3) << "     dphi_dxil = " << dphi_dxil << ", dxil_dX = " << dxil_dX;
+
+        // multiply dphi/dxi with dxi/dX to obtain dphi/dX
+        dphi_dX += dphi_dxil * dxil_dX;
+      }
+      VLOG(3) << "   dphi_dX = " << dphi_dX;
+
+      VLOG(3) << "   displ_M: " << velocities[dofIndex];
+      du_dX += dphi_dX * velocities[dofIndex];   // vector-valued addition
+    }
+    VLOG(3) << " du_dXj: " << du_dX;
+
+    deformationGradientTimeDerivative[dimensionColumn] = du_dX;
+  }
+
+  VLOG(3) << "deformationGradientTimeDerivative: " << deformationGradientTimeDerivative;
+  return deformationGradientTimeDerivative;
+}
+
+template<typename Term,int nDisplacementComponents>
+Tensor2<3> HyperelasticitySolver<Term,nDisplacementComponents>::
 computeRightCauchyGreenTensor(const Tensor2<3> &deformationGradient)
 {
   // compute C = F^T*F where F is the deformationGradient and C is the right Cauchy-Green Tensor
@@ -1579,6 +1660,8 @@ computePK2StressField()
 
   //this->data_.pK2Stress()->startGhostManipulation();
   this->data_.pK2Stress()->zeroGhostBuffer();
+  this->data_.deformationGradient()->zeroGhostBuffer();
+  this->data_.deformationGradientTimeDerivative()->zeroGhostBuffer();
 
   // get pointer to function space
   std::shared_ptr<DisplacementsFunctionSpace> displacementsFunctionSpace = this->data_.displacementsFunctionSpace();
@@ -1599,6 +1682,10 @@ computePK2StressField()
     // get displacements field values for element
     std::array<Vec3,nDisplacementsDofsPerElement> displacementsValues;
     this->data_.displacements()->getElementValues(elementNoLocal, displacementsValues);
+
+    // get displacements field values for element
+    std::array<Vec3,nDisplacementsDofsPerElement> velocitiesValues;
+    this->data_.velocities()->getElementValues(elementNoLocal, velocitiesValues);
 
     std::array<double,nPressureDofsPerElement> pressureValuesCurrentElement;
     this->data_.pressure()->getElementValues(elementNoLocal, pressureValuesCurrentElement);
@@ -1669,7 +1756,27 @@ computePK2StressField()
 
       // F
       Tensor2<D> deformationGradient = this->computeDeformationGradient(displacementsValues, inverseJacobianMaterial, xi);
+
       double deformationGradientDeterminant = MathUtility::computeDeterminant<D>(deformationGradient);  // J
+
+      // compute Fdot values
+      Tensor2<D> Fdot = computeDeformationGradientTimeDerivative(velocitiesValues, inverseJacobianMaterial, xi);
+
+      // store F values
+      std::array<double,9> deformationGradientValues;
+      std::array<double,9> deformationGradientTimeDerivativeValues;
+      for (int j = 0; j < 3; j++)
+      {
+        for (int i = 0; i < 3; i++)
+        {
+          // row-major
+          deformationGradientValues[j*3+i] = deformationGradient[j][i];
+          deformationGradientTimeDerivativeValues[j*3+i] = Fdot[j][i];
+        }
+      }
+      this->data_.deformationGradient()->setValue(dofNoLocal, deformationGradientValues, INSERT_VALUES);
+      this->data_.deformationGradientTimeDerivative()->setValue(dofNoLocal, deformationGradientTimeDerivativeValues, INSERT_VALUES);
+
 
       Tensor2<D> rightCauchyGreen = this->computeRightCauchyGreenTensor(deformationGradient);  // C = F^T*F
 
@@ -1704,6 +1811,14 @@ computePK2StressField()
   this->data_.pK2Stress()->zeroGhostBuffer();
   this->data_.pK2Stress()->finishGhostManipulation();
   this->data_.pK2Stress()->startGhostManipulation();
+
+  this->data_.deformationGradient()->zeroGhostBuffer();
+  this->data_.deformationGradient()->finishGhostManipulation();
+  this->data_.deformationGradient()->startGhostManipulation();
+
+  this->data_.deformationGradientTimeDerivative()->zeroGhostBuffer();
+  this->data_.deformationGradientTimeDerivative()->finishGhostManipulation();
+  this->data_.deformationGradientTimeDerivative()->startGhostManipulation();
 }
 
 template<typename Term,int nDisplacementComponents>

@@ -25,11 +25,14 @@ for directory in $EXAMPLE_PATH/**/*; do
       printf "${YELLOW}Check if example $directory compiles successfully... ${RESET}\n"
       cd $directory
       
+      # remove cached scons values
+      rm -rf .scon*
+
       # measure duration
       START=$(date +%s.%N)
       
       # compile example
-      scons BUILD_TYPE=r
+      python2.7 $OPENDIHU_HOME/dependencies/scons/scons.py BUILD_TYPE=r
       RESULT=$?
             
       # measured duration

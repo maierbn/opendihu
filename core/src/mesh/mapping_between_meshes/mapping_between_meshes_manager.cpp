@@ -35,19 +35,41 @@ void MappingBetweenMeshesManager::storeMappingsBetweenMeshes()
         {
           LOG(WARNING) << "Could not extract dict for MappingsBetweenMeshes[\"" << key << "\"].";
         }
-        else if (!PyUnicode_Check(value))
-        {
-          LOG(WARNING) << "Value for MappingsBetweenMeshes from mesh \"" << key << "\" should be a string (the name of the mesh to map to).";
-        }
-        else
+        else if (PyUnicode_Check(value))
         {
           std::string targetMeshToMapTo = PythonUtility::convertFromPython<std::string>::get(value);
           LOG(DEBUG) << "Store mapping between mesh \"" << key << "\" and " << targetMeshToMapTo;
 
           if (mappingsBetweenMeshes_[key].find(key) == mappingsBetweenMeshes_[key].end())
           {
-            mappingsBetweenMeshes_[key].insert(std::pair<std::string,std::shared_ptr<MappingBetweenMeshesBase>>(targetMeshToMapTo,nullptr));
+            MappingWithSettings mappingWithSettings;
+            mappingWithSettings.mapping = nullptr;
+            mappingWithSettings.xiTolerance = 0.0;
+            mappingsBetweenMeshes_[key].insert(std::pair<std::string,MappingWithSettings>(targetMeshToMapTo,mappingWithSettings));
           }
+        }
+        else if (PyDict_Check(value))
+        {
+          std::stringstream stringPath;
+          stringPath << specificSettings_.getStringPath();
+          stringPath << "[\"" << value << "\"]";
+          std::string targetMeshToMapTo = PythonUtility::getOptionString(value, "name", stringPath.str(), "");
+          double xiTolerance = PythonUtility::getOptionDouble(value, "xiTolerance", stringPath.str(), 0.1);
+
+          LOG(DEBUG) << "Store mapping between mesh \"" << key << "\" and " << targetMeshToMapTo << " with xiTolerance " << xiTolerance;
+
+          if (mappingsBetweenMeshes_[key].find(key) == mappingsBetweenMeshes_[key].end())
+          {
+            MappingWithSettings mappingWithSettings;
+            mappingWithSettings.mapping = nullptr;
+            mappingWithSettings.xiTolerance = xiTolerance;
+            mappingsBetweenMeshes_[key].insert(std::pair<std::string,MappingWithSettings>(targetMeshToMapTo,mappingWithSettings));
+          }
+        }
+        else
+        {
+          LOG(WARNING) << "Value for MappingsBetweenMeshes from mesh \"" << key << "\" should be either a string (the name of the mesh to map to)"
+            << " or a dict {\"name\": ..., \"xiTolerance\": ...} ";
         }
       }
     }
@@ -62,7 +84,7 @@ std::shared_ptr<MappingBetweenMeshesBase> MappingBetweenMeshesManager::mappingBe
   if (mappingsBetweenMeshes_[sourceMeshName].find(targetMeshName) == mappingsBetweenMeshes_[sourceMeshName].end())
     return nullptr;
 
-  return mappingsBetweenMeshes_[sourceMeshName][targetMeshName];
+  return mappingsBetweenMeshes_[sourceMeshName][targetMeshName].mapping;
 }
 
 } // namespace

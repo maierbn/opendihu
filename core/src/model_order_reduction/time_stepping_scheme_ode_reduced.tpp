@@ -103,9 +103,18 @@ namespace ModelOrderReduction
       return;
     
     LOG(TRACE) << "TimeSteppingSchemeOdeReduced::initialize()";
-    
+
+    // add this solver to the solvers diagram, which is a SVG file that will be created at the end of the simulation.
+    DihuContext::solverStructureVisualizer()->addSolver("ModelOrderReduction");
+
+    // indicate in solverStructureVisualizer that now a child solver will be initialized
+    DihuContext::solverStructureVisualizer()->beginChild("fullTimestepping");
+
     this->fullTimestepping_.initialize();
     LOG(DEBUG) << "fullTimestepping_ was initialized, has function space: " << this->fullTimestepping_.data().functionSpace()->meshName();
+
+    // indicate in solverStructureVisualizer that the child solver initialization is done
+    DihuContext::solverStructureVisualizer()->endChild();
 
     ::TimeSteppingScheme::TimeSteppingSchemeOdeBase<::FunctionSpace::Generic,1>::initialize();
 
@@ -129,6 +138,9 @@ namespace ModelOrderReduction
     outputConnectorData_ = std::make_shared<OutputConnectorDataType>();
     outputConnectorData_->addFieldVariable(this->data_->solution());
 
+    // set the outputConnectorData for the solverStructureVisualizer to appear in the solver diagram
+    DihuContext::solverStructureVisualizer()->setOutputConnectorData(getOutputConnectorData());
+
     initialized_ = true;
   }
 
@@ -140,7 +152,7 @@ namespace ModelOrderReduction
     this->initialize();
     
     // do simulations
-    this->advanceTimeSpan();    
+    this->advanceTimeSpan();
   }
 
   template<typename TimeSteppingType>

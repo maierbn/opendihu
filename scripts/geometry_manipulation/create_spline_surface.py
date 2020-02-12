@@ -32,8 +32,12 @@ from geomdl import linalg
 from geomdl import operations
 from geomdl import fitting
 from geomdl import exchange
-from geomdl.visualization import VisPlotly
-from geomdl.visualization import VisMPL
+
+try:
+  from geomdl.visualization import VisPlotly
+  from geomdl.visualization import VisMPL
+except:
+  pass
 
 # source: https://stackoverflow.com/questions/13685386/matplotlib-equal-unit-length-with-equal-aspect-ratio-z-axis-is-not-equal-to
 def set_axes_radius(ax, origin, radius):
@@ -63,31 +67,36 @@ def set_axes_equal(ax):
 # load stl mesh and evaluate 
 if __name__ == "__main__":
 
-  if len(sys.argv) < 3:
-    print("usage: {} <input filename> <output filename>".format(sys.argv[0]))
+  if len(sys.argv) < 6:
+    print("usage: {} <input filename> <output stl filename> <output pickle filename> [<bottom clip> <top clip>]".format(sys.argv[0]))
     sys.exit(0)
 
   input_filename = sys.argv[1]
-  output_filename = sys.argv[2]
+  output_stl_filename = sys.argv[2]
+  output_pickle_filename = sys.argv[3]
+  
   bottom_clip = 70
   top_clip = 250
+  if len(sys.argv) == 6:
+    bottom_clip = int(sys.argv[4])
+    top_clip = int(sys.argv[5])
   n_loops = 12
   
   n_points_u = 10          # x-y direction (along rings)
   n_points_v = n_loops    # z direction
 
   
-  print("input_filename: {}".format(input_filename))
-  print("output_filename: {}".format(output_filename))
-  print("bottom_clip: {}".format(bottom_clip))
-  print("top_clip: {}".format(top_clip))
-  print("input_filename: {}".format(input_filename))
+  print("input_filename:         {}".format(input_filename))
+  print("output_stl_filename:    {}".format(output_stl_filename))
+  print("output_pickle_filename: {}".format(output_pickle_filename))
+  print("bottom_clip:            {}".format(bottom_clip))
+  print("top_clip:               {}".format(top_clip))
   
   debug = False
   
   # try to load stored surface
   try:
-    f = open("surface.pickle.py","rb")
+    f = open(output_pickle_filename,"rb")
     surface = pickle.load(f)
   except:
     # create surface
@@ -125,7 +134,7 @@ if __name__ == "__main__":
     [surface0, surface1] = operations.split_surface_u(surface_full, 0.4)
     [surface, surface2] = operations.split_surface_u(surface1, 0.5555)
 
-    pickle_filename = "biceps.surface.pickle"
+    pickle_filename = output_pickle_filename
     print("Write pickle file \"{}\"".format(pickle_filename))
 
     # save surface
@@ -144,8 +153,8 @@ if __name__ == "__main__":
     surface_full.render()
     surface.vis = VisPlotly.VisSurface()
     surface.render()
-  print("write stl file \"{}\"".format(output_filename))
+  print("write stl file \"{}\"".format(output_stl_filename))
   
-  exchange.export_stl(surface, output_filename)
-  print("File \"{}\" written.".format(output_filename))
+  exchange.export_stl(surface, output_stl_filename)
+  print("File \"{}\" written.".format(output_stl_filename))
   

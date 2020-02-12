@@ -29,7 +29,7 @@ class MappingBetweenMeshes : public MappingBetweenMeshesBase
 public:
 
   //! constructor, the function spaces need to be initialized
-  MappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSource, std::shared_ptr<FunctionSpaceTargetType> functionSpaceTarget);
+  MappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSource, std::shared_ptr<FunctionSpaceTargetType> functionSpaceTarget, double xiTolerance=0);
 
   //! map data between a single component of the field variables in the source and target function spaces
   template<int nComponentsSource, int nComponentsTarget>
@@ -62,12 +62,17 @@ private:
 
   struct targetDof_t
   {
-    element_no_t elementNoLocal;   //< local element no of the target element (high dim)
-    std::array<double,FunctionSpaceTargetType::nDofsPerElement()> scalingFactors;          //< factors for the dofs of the element with which to scale the value
+    struct element_t
+    {
+      element_no_t elementNoLocal;   //< local element no of the target element (high dim)
+      std::array<double,FunctionSpaceTargetType::nDofsPerElement()> scalingFactors;          //< factors for the dofs of the element with which to scale the value
+    };
+    std::vector<element_t> targetElements;   //< a list of possibly multiple target elements that are affected by the source dof, this is needed if the source mesh is so coarse that some target mesh nodes would not get any data mapped on
     bool mapThisDof;    //< if this source dof should be mapped to the target dofs in elementNoLocal, if this is false, the dof is outside of the target mesh
   };
 
   std::vector<targetDof_t> targetMappingInfo_;  ///< [localDofNo source functionSpace (low dim)] information where in the target (high dim) to store the value from local dof No of the source (low dim)
+  double maxAllowedXiTolerance_;    //< the maximum tolerance in the parameter space (threshold for xi) by which a node is considered still inside the element
 };
 
 }  // namespace

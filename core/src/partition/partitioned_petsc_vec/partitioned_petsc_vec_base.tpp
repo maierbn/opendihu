@@ -1,6 +1,7 @@
 #include "partition/partitioned_petsc_vec/partitioned_petsc_vec_base.h"
 
 #include "output_writer/generic.h"
+#include "partition/partitioned_petsc_vec/values_representation.h"
 
 template<typename FunctionSpaceType>
 int PartitionedPetscVecBase<FunctionSpaceType>::vectorNo_ = 0;
@@ -29,21 +30,30 @@ localDofNos()
 //! get the meshPartition
 template<typename FunctionSpaceType>
 const std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> PartitionedPetscVecBase<FunctionSpaceType>::
-meshPartition()
+meshPartition() const
 {
   return this->meshPartition_;
 }
 
 template<typename FunctionSpaceType>
 std::string PartitionedPetscVecBase<FunctionSpaceType>::
-name()
+name() const
 {
   return this->name_;
 }
 
 template<typename FunctionSpaceType>
 Partition::values_representation_t PartitionedPetscVecBase<FunctionSpaceType>::
-currentRepresentation()
+currentRepresentation() const
 {
   return currentRepresentation_;
 }
+
+template<typename FunctionSpaceType>
+std::string PartitionedPetscVecBase<FunctionSpaceType>::
+getCurrentRepresentationString() const
+{
+  return std::string(Partition::valuesRepresentationString[currentRepresentation_]);
+}
+
+

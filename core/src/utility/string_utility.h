@@ -26,8 +26,11 @@ template<typename IterType>
 void outputValuesBlockAdd1(std::ostream &stream, IterType valuesBegin,
                        IterType valuesEnd, int nValuesPerRow=-1);
 
-//! replace from by to
+//! replace the first occurence of from by to
 std::string replace(std::string str, const std::string& from, const std::string& to);
+
+//! replace all occurences of from by to
+std::string replaceAll(std::string str, const std::string& from, const std::string& to);
 
 //! for N=1 output <str>, for N=2 output <str>*<str>, for N=3 output <str>*<str>*<str>
 template<int N>
@@ -41,6 +44,9 @@ std::string timeToString(const tm* const time);
 
 //! return the human readable version of the result of typeid(<class>).name()
 std::string demangle(const char *typeidName);
+
+//! get the correct length of the string, also if it contains utf-8 based unicode charactors, such as λ,γ etc.
+std::size_t stringLength(std::string string);
 
 } // namespace
 

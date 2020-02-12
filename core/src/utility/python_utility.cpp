@@ -648,6 +648,7 @@ void PythonUtility::getOptionVector(const PyObject *settings, std::string keyStr
     {
       // extract the value of the key and check its type
       PyObject *value = PyDict_GetItem((PyObject *)settings, key);
+
       if (PyList_Check(value))
       {
         // it is a list
@@ -670,9 +671,8 @@ void PythonUtility::getOptionVector(const PyObject *settings, std::string keyStr
       }
       else
       {
-        // not a list, but a different entry (only 1 entry)
-        int value = PythonUtility::getOptionInt(settings, keyString, pathString, 0);
-        values.push_back(value);
+        // Convert using the convertFromPython helper. This is less efficient because the vector is copied.
+        values = convertFromPython<std::vector<int>>::get(value);
       }
     }
     else

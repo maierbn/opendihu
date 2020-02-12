@@ -44,6 +44,7 @@ initialize(PythonConfig specificSettings, std::shared_ptr<FunctionSpaceType> fun
     return;
   }
 
+  divideNeumannBoundaryConditionValuesByTotalArea_ = false;
   if (nComponents > 1)
   {
     divideNeumannBoundaryConditionValuesByTotalArea_ = specificSettings.getOptionBool("divideNeumannBoundaryConditionValuesByTotalArea", false);

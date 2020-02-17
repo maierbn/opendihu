@@ -91,7 +91,6 @@ solveDynamicProblem(
     Vec v = this->data_.velocities()->valuesGlobal();
     Vec vprev = this->data_.velocitiesPreviousTimestep()->valuesGlobal();
 
-
     LOG(DEBUG) << "extrapolateInitialGuess: initial u: " << *this->data_.displacements();
     LOG(DEBUG) << "extrapolateInitialGuess: initial v: " << *this->data_.velocities();
 

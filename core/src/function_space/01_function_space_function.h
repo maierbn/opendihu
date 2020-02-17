@@ -11,6 +11,9 @@
 
 namespace FunctionSpace
 {
+/** This class adds the basis function to the mesh.
+ *  The basis function can be accessed by phi() and the derivative by dphi_dxi().
+ */
 template<typename MeshType,typename BasisFunctionType>
 class FunctionSpaceFunction :
   public FunctionSpaceBaseDim<MeshType::dim(),BasisFunctionType>,

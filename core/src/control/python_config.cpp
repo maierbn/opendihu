@@ -26,6 +26,30 @@ PythonConfig::PythonConfig(const PythonConfig &rhs, std::string key)
   path_[pathSize] = key;
 }
 
+//! constructor as sub scope of another python config which is a list
+PythonConfig::PythonConfig(const PythonConfig &rhs, int i)
+{
+  if (PyList_Check(rhs))
+  {
+    int nEntries = PyList_Size(rhs);
+    if (i >= nEntries)
+    {
+      LOG(ERROR) << getStringPath() << " list has only " << nEntries << " entries, but entry "
+        << i << " is required.";
+      return PyList_GetItem(rhs, (Py_ssize_t)nEntries-1);
+    }
+    else
+    {
+      return PyList_GetItem(rhs, (Py_ssize_t)i);
+    }
+  }
+  else
+  {
+    LOG(Warning) << getStringPath() << " is not a list";
+    return rhs;
+  }
+}
+
 //! constructor directly from PyObject*, path from rhs + key
 PythonConfig::PythonConfig(const PythonConfig &rhs, std::string key, PyObject *config)
 {

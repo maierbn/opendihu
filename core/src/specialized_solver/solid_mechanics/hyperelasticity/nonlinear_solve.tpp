@@ -120,14 +120,6 @@ monitorSolvingIteration(SNES snes, PetscInt its, PetscReal currentNorm)
   //if (secondLastNorm_ != 0)
   //  experimentalOrderOfConvergence = log(lastNorm_ / currentNorm) / log(secondLastNorm_ / lastNorm_);
 
-  // derivation of experimentalPolynomialDegree
-  // Assume the residual norm ||r|| corresponds to the error e=||r|| and has the form e = p^i where p is the order of convergence, i is an iteration number .
-  // Then we have:
-  // e_current = p^i     = exp(i*log(p))     => log(e_current) = i*log(p)
-  // e_old     = p^(i+1) = exp((i+1)*log(p)) => log(e_old)     = (i+1)*log(p)
-  // => log(e_old) - log(e_current) = log(p)  =>  p = exp(log(e_old) - log(e_current))
-  PetscReal experimentalPolynomialDegree = exp(log(lastNorm_)-log(currentNorm));
-
   // derivation of experimentalOrderOfConvergence
   // e_current = e_old ^ c = exp(c*log(e_old)) => c = log(e_current) / log(e_old)
   PetscReal experimentalOrderOfConvergence = log(currentNorm) / log(lastNorm_);
@@ -135,13 +127,10 @@ monitorSolvingIteration(SNES snes, PetscInt its, PetscReal currentNorm)
   secondLastNorm_ = lastNorm_;
   lastNorm_ = currentNorm;
 
-
   //T* object = static_cast<T*>(mctx);
   std::stringstream message;
-  message  << "  Nonlinear solver: iteration " << std::setw(2) << its << ", residual norm " << std::setw(11) << currentNorm;
-  if (experimentalPolynomialDegree != 0)
-    message << ", e=p^-i with p=" << std::setprecision(2) << std::setw(3) << experimentalPolynomialDegree
-      << ", e_new=e_old^c with c=" <<  std::setw(3) << experimentalOrderOfConvergence << std::setprecision(6);
+  message << "  Nonlinear solver: iteration " << std::setw(2) << its << ", residual norm " << std::setw(11) << currentNorm
+          << ", e_new=e_old^c with c=" <<  std::setw(3) << experimentalOrderOfConvergence << std::setprecision(6);
   LOG(INFO) << message.str();
 
   static int evaluationNo = 0;  // counter how often this function was called
@@ -174,6 +163,30 @@ template<typename Term,int nDisplacementComponents>
 void HyperelasticitySolver<Term,nDisplacementComponents>::
 debug()
 {
+  materialComputeInternalVirtualWork();
+  // now, solverVariableResidual_, which is the globalValues() of combinedVecResidual_, contains δW_int
+  // also the pressure equation residual has been set at the last component
+
+  // for static case: F = δW_int - δW_ext
+
+  // compute F = δW_int - δW_ext,
+  // δW_ext = int_∂Ω T_a phi_L dS was precomputed in initialize (materialComputeExternalVirtualWorkDead()), in variable externalVirtualWorkDead_
+  // for static case, externalVirtualWorkDead_ = externalVirtualWorkDead_
+  PetscErrorCode ierr;
+  ierr = VecAXPY(solverVariableResidual_, -1.0, externalVirtualWorkDead_); CHKERRV(ierr);
+
+  LOG(DEBUG) << "check if initial solution matches static problem. Residual:   " << getString(solverVariableResidual_);
+
+  // compute the residual norm
+
+  PetscReal l2NormResidual;
+  VecNorm(solverVariableResidual_, NORM_2, &l2NormResidual);
+  LOG(DEBUG) << "L2-norm residual: " << l2NormResidual;
+
+  LOG(FATAL) << "done";
+
+  return;
+
 
   PetscInt nRows, nColumns;
   MatGetLocalSize(solverMatrixAdditionalNumericJacobian_, &nRows, &nColumns);

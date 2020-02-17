@@ -68,6 +68,11 @@ initialize()
       updateDirichletBoundaryConditionsFunctionCallInterval_ = this->specificSettings_.getOptionInt("updateDirichletBoundaryConditionsFunctionCallInterval", 1, PythonUtility::Positive);
     }
   }
+
+  // check if initial values satisfy the static equation
+  hyperelasticitySolver_.debug();
+
+
 }
 
 template<typename Term>

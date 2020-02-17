@@ -10,8 +10,6 @@
 namespace Partition 
 {
 class Manager;
-//template<typename FunctionSpaceType, typename DummyForTraits>
-//class MeshPartition;
 }
 
 namespace FunctionSpace
@@ -42,9 +40,9 @@ public:
   std::shared_ptr<Partition::MeshPartitionBase> meshPartitionBase();
 
 protected:
-  std::shared_ptr<Partition::Manager> partitionManager_;  ///< the partition manager object that can create partitions
-  std::shared_ptr<Partition::MeshPartition<FunctionSpace<MeshType,BasisFunctionType>,MeshType>> meshPartition_;   ///< the partition information that is stored locally, i.e. the subdomain of the domain decomposition
-  bool forcePartitioningCreationFromLocalNumberOfElements_;    ///< if the meshPartition should be created from localNodePositions for StructuredDeformable meshes, ignoring values of config "inputMeshIsGlobal"
+  std::shared_ptr<Partition::Manager> partitionManager_;  //< the partition manager object that can create partitions
+  std::shared_ptr<Partition::MeshPartition<FunctionSpace<MeshType,BasisFunctionType>,MeshType>> meshPartition_;   //< the partition information that is stored locally, i.e. the subdomain of the domain decomposition
+  bool forcePartitioningCreationFromLocalNumberOfElements_;    //< if the meshPartition should be created from localNodePositions for StructuredDeformable meshes, ignoring values of config "inputMeshIsGlobal"
 };
 
 /** specialization for structured meshes 
@@ -87,6 +85,24 @@ public:
   // nDofsGlobal() is defined in 06_function_space_dofs_nodes.h
   
 };
+
+/** specialization for composite structured meshes
+ */
+template<int D,int nSubmeshes,typename BasisFunctionType>
+class FunctionSpacePartition<Mesh::CompositeOfDimension<D,nSubmeshes>,BasisFunctionType> :
+  public FunctionSpacePartitionBase<Mesh::CompositeOfDimension<D,nSubmeshes>,BasisFunctionType>
+{
+public:
+  //! use inherited constructor
+  using FunctionSpacePartitionBase<Mesh::CompositeOfDimension<D,nSubmeshes>,BasisFunctionType>::FunctionSpacePartitionBase;
+
+  //! initiate the partitoning and then call the downwards initialize
+  void initialize();
+
+protected:
+  std::array<std::shared_ptr<FunctionSpace<StructuredDeformableOfDimension<D>,BasisFunctionType>>,nSubmeshes> subFunctionSpaces_;   //< all submeshes
+};
+
 
 }  // namespace
 

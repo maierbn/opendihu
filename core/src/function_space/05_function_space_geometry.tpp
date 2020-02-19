@@ -7,12 +7,12 @@ namespace FunctionSpace
 
 template<typename MeshType,typename BasisFunctionType,typename DummyForTraits>
 Vec3 FunctionSpaceGeometry<MeshType,BasisFunctionType,DummyForTraits>::
-getGeometry(node_no_t dofGlobalNo) const
+getGeometry(node_no_t dofLocalNo) const
 {
   // assert that geometry field variable is set
   assert (this->geometryField_);
 
-  return this->geometryField_->getValue(dofGlobalNo);
+  return this->geometryField_->getValue(dofLocalNo);
 }
 
 //! return an array containing all geometry entries for an element

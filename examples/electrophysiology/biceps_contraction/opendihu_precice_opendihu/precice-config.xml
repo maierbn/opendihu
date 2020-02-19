@@ -1,0 +1,88 @@
+<?xml version="1.0"?>
+
+<precice-configuration>
+  <log>
+    <sink type="stream" output="stdout"  filter= "(%Severity% >= debug)" format="\033[0;33m%Rank% [precice]\033[0m %ColorizedSeverity%\033[0;33m%Message%\033[0m" enabled="true" />	
+    <sink type="file" output="debug.log" filter= "(%Severity% >= debug)" format="%Message%" enabled="true" />	
+  </log>
+
+  <solver-interface dimensions="3">
+    
+    <!-- Data fields that are exchanged between the solvers -->
+    <data:vector name="Geometry"/>
+    <data:scalar name="Gamma"/>
+    <!--<data:scalar name="Lambda"/>
+    <data:scalar name="LambdaDot"/>-->
+
+    <!-- A common mesh that uses these data fields -->
+    <mesh name="PartitionedFibersMesh">
+      <use-data name="Geometry"/>
+      <use-data name="Gamma"/>
+    </mesh>
+
+    <mesh name="MuscleContractionMesh">
+      <use-data name="Geometry"/>
+      <use-data name="Gamma"/>
+    </mesh>
+
+    <!-- Represents each solver using preCICE. In a coupled simulation, two participants have to be
+         defined. The name of the participant has to match the name given on construction of the
+         precice::SolverInterface object used by the participant. -->
+    
+    <participant name="PartitionedFibers">
+      
+      <!-- Makes the named mesh available to the participant. Mesh is provided by the solver directly. -->
+      <use-mesh name="PartitionedFibersMesh" provide="yes"/>
+      <use-mesh name="MuscleContractionMesh" from="MuscleContraction"/>
+      <export:vtk directory="precice-output" />
+      
+      <!-- Define input/output of the solver.  -->
+      <write-data name="Gamma" mesh="PartitionedFibersMesh"/>
+      <read-data  name="Geometry" mesh="PartitionedFibersMesh"/>
+
+      <!-- rbf to map from MuscleContractionMesh to PartitionedFibersMesh -->
+      <!--<mapping:rbf-gaussian 
+        direction="read" 
+        from="MuscleContractionMesh" 
+        to="PartitionedFibersMesh" 
+        constraint="consistent" 
+        timing="initial" 
+        shape-parameter="10.0"
+        />-->
+      <!-- rbf-compact-tps-c2 abgeschnittene splines, 3-5 Nachbarn im support radius--> 
+        
+      <!--<mapping:rbf-thin-plate-splines
+        direction="read" 
+        from="MuscleContractionMesh" 
+        to="PartitionedFibersMesh" 
+        constraint="consistent" 
+        />-->
+      <mapping:nearest-neighbor direction="read" from="MuscleContractionMesh" to="PartitionedFibersMesh" constraint="consistent" />
+    
+    </participant>
+    
+    <participant name="MuscleContraction">
+      <use-mesh name="MuscleContractionMesh" provide="yes"/>
+      <use-mesh name="PartitionedFibersMesh" from="PartitionedFibers"/>
+      <write-data name="Geometry" mesh="MuscleContractionMesh"/>
+      <read-data  name="Gamma"    mesh="MuscleContractionMesh"/>
+      <export:vtk directory="precice-output" />
+      
+      <!-- nearest-neighbor to map from PartitionedFibersMesh to  MuscleContractionMesh -->
+      <mapping:nearest-neighbor direction="read" from="PartitionedFibersMesh" to="MuscleContractionMesh" constraint="consistent" timing="initial"/>
+    </participant>
+
+    <!-- Communication method, use TCP sockets, Change network to "ib0" on SuperMUC -->
+    <m2n:sockets from="PartitionedFibers" to="MuscleContraction" network="lo" />
+
+    <coupling-scheme:serial-explicit>
+      <participants first="PartitionedFibers" second="MuscleContraction"/>
+      <max-time value="1.0"/>
+      <time-window-size value="1e-2"/>
+      
+      <exchange data="Gamma"    mesh="PartitionedFibersMesh" from="PartitionedFibers" to="MuscleContraction"/>
+      <exchange data="Geometry" mesh="MuscleContractionMesh" from="MuscleContraction" to="PartitionedFibers"/> <!--initialize="true"-->
+    </coupling-scheme:serial-explicit>
+    
+  </solver-interface>
+</precice-configuration>

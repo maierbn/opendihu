@@ -10,11 +10,24 @@ MuscleContractionSolver::
 MuscleContractionSolver(DihuContext context) :
   Runnable(),
   ::TimeSteppingScheme::TimeSteppingScheme(context["MuscleContractionSolver"]),
-  dynamicHyperelasticitySolver_(this->context_),
-  data_(this->context_)
+  data_(this->context_), initialized_(false)
 {
   // get python settings object from context
   this->specificSettings_ = this->context_.getPythonConfig();
+
+  // determine if the dynamic or the quasi-static formulation is used
+  isDynamic_ = this->specificSettings_.getOptionBool("dynamic", true);
+
+  if (isDynamic_)
+  {
+    LOG(DEBUG) << "use dynamic hyperelasticity solver";
+    dynamicHyperelasticitySolver_ = std::make_shared<DynamicHyperelasticitySolverType>(this->context_);
+  }
+  else
+  {
+    LOG(DEBUG) << "use static hyperelasticity solver";
+    staticHyperelasticitySolver_ = std::make_shared<StaticHyperelasticitySolverType>(this->context_);
+  }
 
   // initialize output writers
   this->outputWriterManager_.initialize(this->context_, this->specificSettings_);
@@ -52,12 +65,19 @@ advanceTimeSpan()
     // compute the current active stress
     //computeActiveStress();
 
-    this->dynamicHyperelasticitySolver_.setTimeSpan(currentTime, currentTime+this->timeStepWidth_);
+    if (isDynamic_)
+    {
+      this->dynamicHyperelasticitySolver_->setTimeSpan(currentTime, currentTime+this->timeStepWidth_);
 
-    LOG(DEBUG) << "call dynamic hyperelasticitySolver";
+      LOG(DEBUG) << "call dynamic hyperelasticitySolver";
 
-    // advance the simulation by the specified time span
-    dynamicHyperelasticitySolver_.advanceTimeSpan();
+      // advance the simulation by the specified time span
+      dynamicHyperelasticitySolver_->advanceTimeSpan();
+    }
+    else
+    {
+      staticHyperelasticitySolver_->run();
+    }
 
     // compute new values of λ and λ_dot, to be transferred to the CellML solvers
     //computeLambda();
@@ -88,6 +108,10 @@ advanceTimeSpan()
 void MuscleContractionSolver::
 initialize()
 {
+  // only initialize once
+  if (initialized_)
+    return;
+
   // initialize() will be called before the simulation starts.
 
   // call initialize of the parent class, this parses the timestepping settings from the settings file
@@ -100,7 +124,14 @@ initialize()
   DihuContext::solverStructureVisualizer()->beginChild();
 
   // call initialize of the nested timestepping solver
-  dynamicHyperelasticitySolver_.initialize();
+  if (isDynamic_)
+  {
+    dynamicHyperelasticitySolver_->initialize();
+  }
+  else
+  {
+    staticHyperelasticitySolver_->initialize();
+  }
 
   // indicate in solverStructureVisualizer that the child solver initialization is done
   DihuContext::solverStructureVisualizer()->endChild();
@@ -109,7 +140,11 @@ initialize()
   // A function space object of type FunctionSpace<MeshType,BasisFunctionType> (see "function_space/function_space.h")
   // is an object that stores the mesh (e.g., all nodes and elements) as well as the basis function (e.g. linear Lagrange basis functions).
   // The dynamicHyperelasticitySolver_ solver already created a function space that we should use. We already have a typedef "FunctionSpace" that is the class of dynamicHyperelasticitySolver_'s function space type.
-  std::shared_ptr<FunctionSpace> functionSpace = dynamicHyperelasticitySolver_.data().functionSpace();
+  std::shared_ptr<FunctionSpace> functionSpace;
+  if (isDynamic_)
+    functionSpace = dynamicHyperelasticitySolver_->data().functionSpace();
+  else
+    functionSpace = staticHyperelasticitySolver_->data().functionSpace();
 
   // Pass the function space to the data object. data_ stores field variables.
   // It needs to know the number of nodes and degrees of freedom (dof) from the function space in order to create the vectors with the right size.
@@ -118,19 +153,31 @@ initialize()
   // now call initialize, data will then create all variables (Petsc Vec's)
   data_.initialize();
 
-  typename DynamicHyperelasticitySolverType::HyperelasticitySolverType &hyperelasticitySolver = dynamicHyperelasticitySolver_.hyperelasticitySolver();
+  if (isDynamic_)
+  {
+    typename DynamicHyperelasticitySolverType::HyperelasticitySolverType &hyperelasticitySolver = dynamicHyperelasticitySolver_->hyperelasticitySolver();
 
-  // set field variables from dynamicHyperelasticitySolver in data_ such that they can be output by the output writer
-  data_.setFieldVariables(dynamicHyperelasticitySolver_.data().displacements(),
-                          dynamicHyperelasticitySolver_.data().velocities(),
-                          hyperelasticitySolver.data().activePK2Stress(),
-                          hyperelasticitySolver.data().pK2Stress(),
-                          hyperelasticitySolver.data().fiberDirection());
-
-
+    // set field variables from dynamicHyperelasticitySolver in data_ such that they can be output by the output writer
+    data_.setFieldVariables(dynamicHyperelasticitySolver_->data().displacements(),
+                            dynamicHyperelasticitySolver_->data().velocities(),
+                            hyperelasticitySolver.data().activePK2Stress(),
+                            hyperelasticitySolver.data().pK2Stress(),
+                            hyperelasticitySolver.data().fiberDirection());
+  }
+  else
+  {
+    // set field variables from dynamicHyperelasticitySolver in data_ such that they can be output by the output writer
+    data_.setFieldVariables(staticHyperelasticitySolver_->data().displacements(),
+                            staticHyperelasticitySolver_->data().velocities(),
+                            staticHyperelasticitySolver_->data().activePK2Stress(),
+                            staticHyperelasticitySolver_->data().pK2Stress(),
+                            staticHyperelasticitySolver_->data().fiberDirection());
+  }
 
   // set the outputConnectorData for the solverStructureVisualizer to appear in the solver diagram
   DihuContext::solverStructureVisualizer()->setOutputConnectorData(getOutputConnectorData());
+
+  initialized_ = true;
 }
 
 void MuscleContractionSolver::
@@ -147,7 +194,10 @@ run()
 void MuscleContractionSolver::
 reset()
 {
-  dynamicHyperelasticitySolver_.reset();
+  if (isDynamic_)
+    dynamicHyperelasticitySolver_->reset();
+  else
+    staticHyperelasticitySolver_->reset();
 
   // "uninitialize" everything
 }
@@ -159,14 +209,28 @@ computeLambda()
   typedef typename DynamicHyperelasticitySolverType::HyperelasticitySolverType::Data::DeformationGradientFieldVariableType DeformationGradientFieldVariableType;
   typedef typename Data::ScalarFieldVariableType FieldVariableType;
 
-  std::shared_ptr<DisplacementsFieldVariableType> fiberDirectionVariable = dynamicHyperelasticitySolver_.hyperelasticitySolver().data().fiberDirection();
-  std::shared_ptr<DeformationGradientFieldVariableType> deformationGradientVariable = dynamicHyperelasticitySolver_.hyperelasticitySolver().data().deformationGradient();
-  std::shared_ptr<DeformationGradientFieldVariableType> fDotVariable = dynamicHyperelasticitySolver_.hyperelasticitySolver().data().deformationGradientTimeDerivative();
+  std::shared_ptr<DisplacementsFieldVariableType> fiberDirectionVariable;
+  std::shared_ptr<DeformationGradientFieldVariableType> deformationGradientVariable;
+  std::shared_ptr<DeformationGradientFieldVariableType> fDotVariable;
+  std::shared_ptr<DisplacementsFieldVariableType> velocitiesVariable;
 
+  if (isDynamic_)
+  {
+    fiberDirectionVariable = dynamicHyperelasticitySolver_->hyperelasticitySolver().data().fiberDirection();
+    deformationGradientVariable = dynamicHyperelasticitySolver_->hyperelasticitySolver().data().deformationGradient();
+    fDotVariable = dynamicHyperelasticitySolver_->hyperelasticitySolver().data().deformationGradientTimeDerivative();
+    velocitiesVariable = dynamicHyperelasticitySolver_->data().velocities();
+  }
+  else
+  {
+    fiberDirectionVariable = staticHyperelasticitySolver_->data().fiberDirection();
+    deformationGradientVariable = staticHyperelasticitySolver_->data().deformationGradient();
+    fDotVariable = staticHyperelasticitySolver_->data().deformationGradientTimeDerivative();
+    velocitiesVariable = staticHyperelasticitySolver_->data().velocities();
+  }
 
   // compute lambda and \dot{lambda} (contraction velocity)
-  //std::shared_ptr<DisplacementsFieldVariableType> displacementsVariable = dynamicHyperelasticitySolver_.data().displacements();
-  std::shared_ptr<DisplacementsFieldVariableType> velocitiesVariable = dynamicHyperelasticitySolver_.data().velocities();
+  //std::shared_ptr<DisplacementsFieldVariableType> displacementsVariable = dynamicHyperelasticitySolver_->data().displacements();
 
   std::shared_ptr<FieldVariableType> lambdaVariable = data_.lambda();
   std::shared_ptr<FieldVariableType> lambdaDotVariable = data_.lambdaDot();
@@ -225,8 +289,19 @@ computeActiveStress()
   typedef typename DynamicHyperelasticitySolverType::HyperelasticitySolverType::DisplacementsFieldVariableType DisplacementsFieldVariableType;
   typedef typename Data::ScalarFieldVariableType FieldVariableType;
 
-  std::shared_ptr<StressFieldVariableType> activePK2StressVariable = dynamicHyperelasticitySolver_.hyperelasticitySolver().data().activePK2Stress();
-  std::shared_ptr<DisplacementsFieldVariableType> fiberDirectionVariable = dynamicHyperelasticitySolver_.hyperelasticitySolver().data().fiberDirection();
+  std::shared_ptr<StressFieldVariableType> activePK2StressVariable;
+  std::shared_ptr<DisplacementsFieldVariableType> fiberDirectionVariable;
+
+  if (isDynamic_)
+  {
+    activePK2StressVariable = dynamicHyperelasticitySolver_->hyperelasticitySolver().data().activePK2Stress();
+    fiberDirectionVariable = dynamicHyperelasticitySolver_->hyperelasticitySolver().data().fiberDirection();
+  }
+  else
+  {
+    activePK2StressVariable = staticHyperelasticitySolver_->data().activePK2Stress();
+    fiberDirectionVariable = staticHyperelasticitySolver_->data().fiberDirection();
+  }
 
   std::shared_ptr<FieldVariableType> lambdaVariable = data_.lambda();
   std::shared_ptr<FieldVariableType> gammaVariable = data_.gamma();

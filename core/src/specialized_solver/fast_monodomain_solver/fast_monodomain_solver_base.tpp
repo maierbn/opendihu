@@ -6,7 +6,7 @@
 template<int nStates, int nIntermediates>
 FastMonodomainSolverBase<nStates,nIntermediates>::
 FastMonodomainSolverBase(const DihuContext &context) :
-  specificSettings_(context.getPythonConfig()), nestedSolvers_(context)
+  specificSettings_(context.getPythonConfig()), nestedSolvers_(context), initialized_(false)
 {
   // initialize output writers
   this->outputWriterManager_.initialize(context, specificSettings_);
@@ -16,6 +16,10 @@ template<int nStates, int nIntermediates>
 void FastMonodomainSolverBase<nStates,nIntermediates>::
 initialize()
 {
+  // only initialize once
+  if (initialized_)
+    return;
+
   // add this solver to the solvers diagram, which is a SVG file that will be created at the end of the simulation.
   DihuContext::solverStructureVisualizer()->addSolver("FastMonodomainSolver");
 
@@ -313,6 +317,7 @@ initialize()
     }
   }
 
+  initialized_ = true;
 }
 
 template<int nStates, int nIntermediates>
@@ -676,10 +681,10 @@ updateFiberData()
                    vmValuesLocal.data(), fiberFunctionSpace->nDofsLocalWithoutGhosts(), MPI_DOUBLE,
                    computingRank, mpiCommunicator);
 
-      LOG(DEBUG) << "Scatterv from rank " << computingRank << ", sizes: " << nDofsOnRanks << ", offsets: " << offsetsOnRanks << ", received local values " << vmValuesLocal;
+      VLOG(1) << "Scatterv from rank " << computingRank << ", sizes: " << nDofsOnRanks << ", offsets: " << offsetsOnRanks << ", received local values " << vmValuesLocal;
 
       // store Vm values in CellmlAdapter and diffusion FiniteElementMethod
-      LOG(DEBUG) << "fiber " << fiberDataNo << ", set values " << vmValuesLocal;
+      VLOG(1) << "fiber " << fiberDataNo << ", set values " << vmValuesLocal;
       innerInstances[j].data().solution()->setValuesWithoutGhosts(0, vmValuesLocal);
       instances[i].timeStepping2().instancesLocal()[j].data().solution()->setValuesWithoutGhosts(0, vmValuesLocal);
 
@@ -706,7 +711,7 @@ updateFiberData()
                    valuesLocal.data(), fiberFunctionSpace->nDofsLocalWithoutGhosts() * nStatesAndIntermediatesValues, MPI_DOUBLE,
                    computingRank, mpiCommunicator);
 
-      LOG(DEBUG) << "Scatterv furtherStatesAndIntermediatesValues from rank " << computingRank << ", sizes: " << nValuesOnRanks << ", offsets: " << offsetsOnRanks
+      VLOG(1) << "Scatterv furtherStatesAndIntermediatesValues from rank " << computingRank << ", sizes: " << nValuesOnRanks << ", offsets: " << offsetsOnRanks
         << ", sendBuffer: " << sendBuffer << ", received local values: " << valuesLocal;
 
       // store received states and intermediates values in diffusion outputConnectorData
@@ -742,7 +747,7 @@ updateFiberData()
         // int componentNo, int nValues, const dof_no_t *dofNosLocal, const double *values
         fieldVariableStatesCellML->setValues(componentNo, nValues, fiberFunctionSpace->meshPartition()->dofNosLocal().data(), values);
 
-        LOG(DEBUG) << "store " << nValues << " values for additional state " << statesForTransfer_[stateIndex];
+        VLOG(1) << "store " << nValues << " values for additional state " << statesForTransfer_[stateIndex];
       }
 
       // loop over intermediates to transfer
@@ -1233,6 +1238,14 @@ void FastMonodomainSolverBase<nStates,nIntermediates>::
 setTimeSpan(double startTime, double endTime)
 {
   nestedSolvers_.setTimeSpan(startTime, endTime);
+}
+
+//! get a reference to the nested solvers
+template<int nStates, int nIntermediates>
+typename FastMonodomainSolverBase<nStates,nIntermediates>::NestedSolversType &FastMonodomainSolverBase<nStates,nIntermediates>::
+nestedSolvers()
+{
+  return nestedSolvers_;
 }
 
 template<int nStates, int nIntermediates>

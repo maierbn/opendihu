@@ -11,6 +11,30 @@ ComponentOfFieldVariable(std::shared_ptr<FieldVariable::FieldVariable<FunctionSp
   componentNo = _componentNo;
 }
 
+template<typename FunctionSpaceType, int nComponents>
+void ComponentOfFieldVariable<FunctionSpaceType,nComponents>::
+setValue(dof_no_t dofNoLocal, double value, InsertMode petscInsertMode)
+{
+  assert(values->nComponents() > componentNo);
+  values->setValue(componentNo, dofNoLocal, value, petscInsertMode);
+}
+
+template<typename FunctionSpaceType, int nComponents>
+void ComponentOfFieldVariable<FunctionSpaceType,nComponents>::
+setValuesWithoutGhosts(const std::vector<double> &values, InsertMode petscInsertMode)
+{
+  assert(this->values->nComponents() > componentNo);
+  this->values->setValuesWithoutGhosts(componentNo, values, petscInsertMode);
+}
+
+template<typename FunctionSpaceType, int nComponents>
+double ComponentOfFieldVariable<FunctionSpaceType,nComponents>::
+getValue(dof_no_t dofNoLocal)
+{
+  assert(values->nComponents() > componentNo);
+  return values->getValue(componentNo, dofNoLocal);
+}
+
 // operator used for output
 template<typename FunctionSpaceType, int nComponents>
 std::ostream &operator<<(std::ostream &stream, const ComponentOfFieldVariable<FunctionSpaceType,nComponents> &rhs)
@@ -47,12 +71,12 @@ std::ostream &operator<<(std::ostream &stream, const OutputConnectorData<Functio
   stream << "<";
   for (const ComponentOfFieldVariable<FunctionSpaceType,nComponents1> &entry : rhs.variable1)
   {
-    stream << "[" << entry.values << ": " << *(entry.values) << " component " << entry.componentNo << "], " << std::endl;
+    stream << "[" << entry.values << ": " << *(entry.values) << "\"" << entry.values->name() << "\", component " << entry.componentNo << "], " << std::endl;
   }
   stream << ";" << std::endl;
   for (const ComponentOfFieldVariable<FunctionSpaceType,nComponents2> &entry : rhs.variable2)
   {
-    stream << "[" << entry.values << ": " << *(entry.values) << " component " << entry.componentNo << "], " << std::endl;
+    stream << "[" << entry.values << ": " << *(entry.values) << "\"" << entry.values->name() << "\", component " << entry.componentNo << "], " << std::endl;
   }
   return stream;
 }

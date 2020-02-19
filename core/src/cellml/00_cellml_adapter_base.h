@@ -13,7 +13,7 @@
 
 
 /** This is the base class of the CellmlAdapter, that handles common functionality.
- * nStates: number of states in one instance of the CellML problem
+ * nStates_: number of states in one instance of the CellML problem
  * 
  *  Naming:
  *   Intermediate (opendihu) = KNOWN (OpenCMISS) = Algebraic (OpenCOR)
@@ -22,21 +22,21 @@
  *   State: state variable
  *   Rate: the time derivative of the state variable, i.e. the increment value in an explicit Euler stepping
  */
-template <int nStates, int nIntermediates_, typename FunctionSpaceType>
+template <int nStates_, int nIntermediates_, typename FunctionSpaceType>
 class CellmlAdapterBase
 {
 public:
 
   typedef FieldVariable::FieldVariable<FunctionSpaceType,nIntermediates_> FieldVariableIntermediates;
-  typedef FieldVariable::FieldVariable<FunctionSpaceType,nStates> FieldVariableStates;
-  typedef Data::CellmlAdapter<nStates, nIntermediates_, FunctionSpaceType> Data;
+  typedef FieldVariable::FieldVariable<FunctionSpaceType,nStates_> FieldVariableStates;
+  typedef Data::CellmlAdapter<nStates_, nIntermediates_, FunctionSpaceType> Data;
 
 /** The data type of the output connector of the CellML adapter.
  *  This is the data that will be transferred to connected solvers.
  *  The first value, value0, is the state variable and can, e.g., be configured to contain Vm (by setting "outputStateIndex" in python settings).
  *  The second value, value1, can, e.g., be configured to contain alpha (by setting "outputIntermediateIndex" in python settings).
  */
-  typedef ::Data::OutputConnectorData<FunctionSpaceType,nStates,nIntermediates_> OutputConnectorDataType;
+  typedef ::Data::OutputConnectorData<FunctionSpaceType,nStates_,nIntermediates_> OutputConnectorDataType;
 
   //! constructor from context
   CellmlAdapterBase(DihuContext context, bool noNewOutputWriter);
@@ -50,6 +50,9 @@ public:
   //! return the compile-time constant number of state variables of one instance that will be integrated
   static constexpr int nComponents();
 
+  //! return the compile-time constant number of state variables of one instance that will be integrated
+  static constexpr int nStates();
+
   //! load model, use settings given in context
   void initialize();
 
@@ -58,14 +61,14 @@ public:
   
   //! set initial values as given in python config
   template<typename FunctionSpaceType2>
-  bool setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nStates>> initialValues);
+  bool setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nStates_>> initialValues);
 
   //! set the solution field variable in the data object, that actual data is stored in the timestepping scheme object
   void setSolutionVariable(std::shared_ptr<FieldVariableStates> states);
 
   //! pass on the output connector data object from the timestepping scheme object to be modified,
   //! if there are intermediates for transfer, they will be set in the outputConnectorDataTimeStepping
-  void setOutputConnectorData(std::shared_ptr<::Data::OutputConnectorData<FunctionSpaceType,nStates>> outputConnectorDataTimeStepping);
+  void setOutputConnectorData(std::shared_ptr<::Data::OutputConnectorData<FunctionSpaceType,nStates_>> outputConnectorDataTimeStepping);
 
   //! return the mesh
   std::shared_ptr<FunctionSpaceType> functionSpace();

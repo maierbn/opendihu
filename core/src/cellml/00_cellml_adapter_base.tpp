@@ -12,8 +12,8 @@
 #include "mesh/mesh_manager/mesh_manager.h"
 #include "control/diagnostic_tool/solver_structure_visualizer.h"
 
-template<int nStates, int nIntermediates_, typename FunctionSpaceType>
-CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
+template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
+CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::
 CellmlAdapterBase(DihuContext context) :
   context_(context), specificSettings_(PythonConfig(context_.getPythonConfig(), "CellML")), data_(context_)
 {
@@ -21,36 +21,43 @@ CellmlAdapterBase(DihuContext context) :
   LOG(TRACE) << "CellmlAdapterBase constructor";
 }
 
-template<int nStates, int nIntermediates_, typename FunctionSpaceType>
-CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
+template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
+CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::
 CellmlAdapterBase(DihuContext context, bool noNewOutputWriter) :
   context_(context), specificSettings_(PythonConfig(context_.getPythonConfig(), "CellML"))
 {
 }
 
-template<int nStates, int nIntermediates_, typename FunctionSpaceType>
-CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
+template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
+CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::
 ~CellmlAdapterBase()
 {
 }
 
-template<int nStates, int nIntermediates_, typename FunctionSpaceType>
-constexpr int CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
+template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
+constexpr int CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::
 nComponents()
 {
-  return nStates;
+  return nStates_;
 }
 
-template<int nStates, int nIntermediates_, typename FunctionSpaceType>
-void CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
+template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
+constexpr int CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::
+nStates()
+{
+  return nStates_;
+}
+
+template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
+void CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::
 setSolutionVariable(std::shared_ptr<FieldVariableStates> states)
 {
   this->data_.setStatesVariable(states);
 }
 
-template<int nStates, int nIntermediates_, typename FunctionSpaceType>
-void CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
-setOutputConnectorData(std::shared_ptr<::Data::OutputConnectorData<FunctionSpaceType,nStates>> outputConnectorDataTimeStepping)
+template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
+void CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::
+setOutputConnectorData(std::shared_ptr<::Data::OutputConnectorData<FunctionSpaceType,nStates_>> outputConnectorDataTimeStepping)
 {
   // add all intermediate values for transfer (option "intermediatesForTransfer"), which are stored in this->data_.getOutputConnectorData()
   // at the end of outputConnectorDataTimeStepping
@@ -83,15 +90,15 @@ setOutputConnectorData(std::shared_ptr<::Data::OutputConnectorData<FunctionSpace
   }
 }
 
-template<int nStates, int nIntermediates_, typename FunctionSpaceType>
-void CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
+template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
+void CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::
 initialize()
 {
-  LOG(TRACE) << "CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::initialize";
+  LOG(TRACE) << "CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::initialize";
 
   if (VLOG_IS_ON(1))
   {
-    LOG(DEBUG) << "CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::initialize querying meshManager for mesh";
+    LOG(DEBUG) << "CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::initialize querying meshManager for mesh";
     LOG(DEBUG) << "specificSettings_: ";
     PythonUtility::printDict(specificSettings_.pyObject());
   }
@@ -136,7 +143,7 @@ initialize()
     LOG(DEBUG) << "Config does not contain key \"parametersInitialValues\"";
   }
 
-  cellmlSourceCodeGenerator_.initialize(modelFilename, nInstances_, nStates, nIntermediates_,
+  cellmlSourceCodeGenerator_.initialize(modelFilename, nInstances_, nStates_, nIntermediates_,
                                         parametersUsedAsIntermediate, parametersUsedAsConstant, parametersInitialValues);
 
   // initialize data, i.e. states and intermediates field variables
@@ -145,21 +152,21 @@ initialize()
   data_.initialize();
 }
 
-template<int nStates, int nIntermediates_, typename FunctionSpaceType>
+template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
 template<typename FunctionSpaceType2>
-bool CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
-setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nStates>> initialValues)
+bool CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::
+setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nStates_>> initialValues)
 {
-  LOG(TRACE) << "CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::setInitialValues";
+  LOG(TRACE) << "CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::setInitialValues";
 
   // initialize states
-  std::array<double,nStates> statesInitialValues;
+  std::array<double,nStates_> statesInitialValues;
   if (this->specificSettings_.hasKey("statesInitialValues"))
   {
     LOG(DEBUG) << "set initial values from config";
 
     // statesInitialValues gives the initial state values for one instance of the problem. it is used for all instances.
-    std::array<double,nStates> statesInitialValuesFromConfig = this->specificSettings_.template getOptionArray<double,nStates>("statesInitialValues", 0);
+    std::array<double,nStates_> statesInitialValuesFromConfig = this->specificSettings_.template getOptionArray<double,nStates_>("statesInitialValues", 0);
 
     // store initial values to cellmlSourceCodeGenerator_
     std::vector<double> statesInitialValuesGenerator = cellmlSourceCodeGenerator_.statesInitialValues();
@@ -172,31 +179,31 @@ setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2
     // parsing the source file was already done
     // get initial values from source code generator
     std::vector<double> statesInitialValuesGenerator = cellmlSourceCodeGenerator_.statesInitialValues();
-    assert(statesInitialValuesGenerator.size() == nStates);
+    assert(statesInitialValuesGenerator.size() == nStates_);
 
     std::copy(statesInitialValuesGenerator.begin(), statesInitialValuesGenerator.end(), statesInitialValues.begin());
   }
 
   // Here we have the initial values for the states in the statesInitialValues vector, only for one instance.
   VLOG(1) << "statesInitialValues: " << statesInitialValues;
-  const std::vector<std::array<double,nStates>> statesAllInstances(nInstances_, statesInitialValues);
+  const std::vector<std::array<double,nStates_>> statesAllInstances(nInstances_, statesInitialValues);
 
-  VLOG(1) << "statesAllInstances: " << statesAllInstances << ", nInstances: " << nInstances_ << ", nStates per instances: " << statesInitialValues.size();
+  VLOG(1) << "statesAllInstances: " << statesAllInstances << ", nInstances: " << nInstances_ << ", nStates_ per instances: " << statesInitialValues.size();
   initialValues->setValuesWithoutGhosts(statesAllInstances);
 
   VLOG(1) << "initialValues: " << *initialValues;
   return true;
 }
 
-template<int nStates, int nIntermediates_, typename FunctionSpaceType>
-std::shared_ptr<FunctionSpaceType> CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
+template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
+std::shared_ptr<FunctionSpaceType> CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::
 functionSpace()
 {
   return functionSpace_;
 }
 
-template<int nStates, int nIntermediates_, typename FunctionSpaceType>
-void CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
+template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
+void CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::
 getNumbers(int& nInstances, int& nIntermediates, int& nParameters)
 {
   nInstances = nInstances_;
@@ -204,51 +211,51 @@ getNumbers(int& nInstances, int& nIntermediates, int& nParameters)
   nParameters = cellmlSourceCodeGenerator_.nParameters();
 }
 
-template<int nStates, int nIntermediates_, typename FunctionSpaceType>
-void CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
+template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
+void CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::
 getStatesIntermediatesForTransfer(std::vector<int> &statesForTransfer, std::vector<int> &intermediatesForTransfer)
 {
   data_.getStatesIntermediatesForTransfer(statesForTransfer, intermediatesForTransfer);
 }
 
-template<int nStates, int nIntermediates_, typename FunctionSpaceType>
-void CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
+template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
+void CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::
 getStateNames(std::vector<std::string> &stateNames)
 {
   stateNames = this->cellmlSourceCodeGenerator_.stateNames();
 }
 
-template<int nStates, int nIntermediates_, typename FunctionSpaceType>
-typename CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::Data &CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
+template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
+typename CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::Data &CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::
 data()
 {
   return this->data_;
 }
 
-template<int nStates, int nIntermediates_, typename FunctionSpaceType>
-CellmlSourceCodeGenerator &CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
+template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
+CellmlSourceCodeGenerator &CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::
 cellmlSourceCodeGenerator()
 {
   return this->cellmlSourceCodeGenerator_;
 }
 
-template<int nStates, int nIntermediates_, typename FunctionSpaceType>
-PythonConfig CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
+template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
+PythonConfig CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::
 specificSettings()
 {
   return this->specificSettings_;
 }
 
-template<int nStates, int nIntermediates_, typename FunctionSpaceType>
-constexpr int  CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
+template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
+constexpr int  CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::
 nIntermediates() const
 {
   return nIntermediates_;
 }
 
-template<int nStates, int nIntermediates_, typename FunctionSpaceType>
-std::shared_ptr<typename CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::OutputConnectorDataType>
-CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::
+template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
+std::shared_ptr<typename CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::OutputConnectorDataType>
+CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::
 getOutputConnectorData()
 {
   return this->data_.getOutputConnectorData();

@@ -17,6 +17,17 @@ struct ComponentOfFieldVariable
 
   //! constructor
   ComponentOfFieldVariable(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> fieldVariable, int componentNo);
+
+  //! setValue convenience method, sets the value at the given dofNoLocal
+  void setValue(dof_no_t dofNoLocal, double value, InsertMode petscInsertMode=INSERT_VALUES);
+
+  //! set all values
+  void setValuesWithoutGhosts(const std::vector<double> &values, InsertMode petscInsertMode=INSERT_VALUES);
+
+  //! get the value of the local dof no
+  double getValue(dof_no_t dofNoLocal);
+
+
 };
 
 // operator used for output

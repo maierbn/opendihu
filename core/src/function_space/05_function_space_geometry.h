@@ -71,7 +71,7 @@ public:
   typedef FieldVariable::FieldVariable<FunctionSpace<MeshType,BasisFunctionType>,3> GeometryFieldType;  ///< the class typename of the geometry field variable
 
   //! return the geometry field entry (node position for Lagrange elements) of a specific dof
-  Vec3 getGeometry(node_no_t dofGlobalNo) const;
+  Vec3 getGeometry(node_no_t dofLocalNo) const;
 
   //! get all geometry entries for an element
   void getElementGeometry(element_no_t elementNoLocal, std::array<Vec3, FunctionSpaceBaseDim<MeshType::dim(),BasisFunctionType>::nDofsPerElement()> &values);

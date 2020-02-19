@@ -60,7 +60,7 @@ config = {
 
   nFails += ::testing::Test::HasFailure();
 }
-/*
+
 TEST(LaplaceTest, Structured1DQuadratic)
 {
   std::string pythonConfig = R"(

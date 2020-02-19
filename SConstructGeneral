@@ -263,6 +263,7 @@ if os.environ.get("PE_ENV") != "CRAY" and "pg" not in env["cc"]:
       env.MergeFlags('-march=native')
 
   env.MergeFlags('-Wl,--disable-new-dtags')
+  env.MergeFlags('-lprecice')
 
 if os.environ.get("PE_ENV") == "CRAY" and env["USE_HPL"]:
   print("USE_HPL=True: Compiling with -hpl option\n")

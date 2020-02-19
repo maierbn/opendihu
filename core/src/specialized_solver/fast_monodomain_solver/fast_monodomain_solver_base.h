@@ -108,6 +108,9 @@ public:
   //! get the output connector data, to be used for a surrounding solver
   std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
 
+  //! get a reference to the nested solvers
+  NestedSolversType &nestedSolvers();
+
 protected:
 
   //! create a source file with compute0D function from the CellML model
@@ -194,6 +197,7 @@ protected:
   void (*compute0DInstance_)(Vc::double_v [], std::vector<Vc::double_v> &, double, double, bool, bool, std::vector<Vc::double_v> &, const std::vector<int> &);   //< runtime-created and loaded function to compute one Heun step of the 0D problem
   void (*initializeStates_)(Vc::double_v states[]);  //< runtime-created and loaded function to set all initial values for the states
 
+  bool initialized_;                  //< if initialize was already called
 };
 
 #include "specialized_solver/fast_monodomain_solver/fast_monodomain_solver_base.tpp"

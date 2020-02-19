@@ -111,7 +111,7 @@ rebalance()
   diffusionSolution->getValuesWithoutGhosts(diffusionValues);
 
   // save old cellML values
-  const int nCellMLComponents = CellMLAdapter::nComponents();
+  const int nCellMLComponents = CellMLAdapter::nStates();
   std::array<std::vector<double>,nCellMLComponents> cellmlValues;
   cellMLSolution->getValuesWithoutGhosts(cellmlValues);
 

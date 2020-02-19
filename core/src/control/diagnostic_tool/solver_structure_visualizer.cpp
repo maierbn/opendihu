@@ -24,6 +24,12 @@ void SolverStructureVisualizer::addSolver(std::string name)
 
   if (!currentSolver_)
     LOG(FATAL) << "addSolver on invalid currentSolver";
+
+  if (currentSolver_->name != "" && currentSolver_->name != name)
+  {
+    LOG(WARNING) << "SolverStructureVisualizer::addSolver(\"" <<  name << "\") under \"" << currentSolver_->parent->name << "\", nDisableCalls_: " << nDisableCalls_ << ", enabled: " << enabled_
+      << " overwrites solver name \"" << currentSolver_->name << "\".";
+  }
   currentSolver_->name = name;
 
   LOG(DEBUG) << "addSolver \"" << name << "\".";

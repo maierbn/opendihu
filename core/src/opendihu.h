@@ -5,6 +5,8 @@
 #include "control/dihu_context.h"
 #include "control/multiple_instances.h"
 #include "control/load_balancing/load_balancing.h"
+#include "control/precice/partitioned_fibers.h"
+#include "control/precice/muscle_contraction.h"
 
 #include "basis_function/lagrange.h"
 #include "basis_function/hermite.h"

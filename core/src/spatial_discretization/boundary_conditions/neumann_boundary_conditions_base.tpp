@@ -44,6 +44,12 @@ initialize(PythonConfig specificSettings, std::shared_ptr<FunctionSpaceType> fun
     return;
   }
 
+  divideNeumannBoundaryConditionValuesByTotalArea_ = false;
+  if (nComponents > 1)
+  {
+    divideNeumannBoundaryConditionValuesByTotalArea_ = specificSettings.getOptionBool("divideNeumannBoundaryConditionValuesByTotalArea", false);
+  }
+
   // read out if the element nos are specified as local or global values
   bool inputMeshIsGlobal = specificSettings.getOptionBool("inputMeshIsGlobal", true);
 

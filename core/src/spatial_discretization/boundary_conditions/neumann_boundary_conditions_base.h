@@ -60,6 +60,8 @@ protected:
   std::shared_ptr<FunctionSpaceType> functionSpace_;   /// the function space of the computational mesh (not the edges/faces) in which the Neumann bc are set
   std::vector<ElementWithFaces> boundaryConditionElements_;    /// elements with prescribed Neumman boundary condition values
 
+  bool divideNeumannBoundaryConditionValuesByTotalArea_;      //< if the value in dofVectors is to be divided by the total area of the surface of all elements that have neumann bc
+
   Data::NeumannBoundaryConditions<FunctionSpaceType, nComponents> data_;    //< data object that contains the rhs vector with the BC contribution
 };
 

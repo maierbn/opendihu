@@ -12,6 +12,9 @@ public:
   //! constructor as sub scope of another python config
   PythonConfig(const PythonConfig &rhs, std::string key);
 
+  //! constructor as sub scope of another python config which is a list
+  PythonConfig(const PythonConfig &rhs, int i);
+
   //! constructor directly from PyObject*, path from rhs + key
   PythonConfig(const PythonConfig &rhs, std::string key, PyObject *config);
 

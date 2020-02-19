@@ -42,7 +42,7 @@ initializeRhs()
   // define shortcuts for quadrature
   typedef Quadrature::TensorProduct<D-1,QuadratureTypeSurface> QuadratureSurface;
 
-  // define type to hold evaluations of integrand for result vector
+  // define type to hold evaluations of integrand for result vector, for Neumann BC values
   typedef std::array<double, nDofsPerElement*nComponents> EvaluationsType;
   typedef std::array<
             EvaluationsType,
@@ -51,6 +51,19 @@ initializeRhs()
 
   std::array<std::array<double,D-1>, QuadratureSurface::numberEvaluations()> samplingPointsSurface = QuadratureSurface::samplingPoints();
   EvaluationsArraySurfaceType evaluationsArraySurface;
+
+
+  // define type to hold evaluations of integrand for result vector, for surface area
+  typedef std::array<double, nDofsPerElement> EvaluationsTypeSurfaceArea;
+  typedef std::array<
+            EvaluationsTypeSurfaceArea,
+            QuadratureSurface::numberEvaluations()
+          > EvaluationsArraySurfaceAreaType;     // evaluations[nGP^D](nDofs)
+
+  EvaluationsArraySurfaceAreaType evaluationsArraySurfaceArea;
+
+
+  double surfaceArea = 0;    // surface area of all elements that have Neumann BC
 
   // assemble rhs contribution
   // loop over elements that have boundary conditions on their faces
@@ -98,6 +111,7 @@ initializeRhs()
 
       // set all entries to 0
       evaluationsArraySurface[samplingPointIndex] = {0.0};
+      evaluationsArraySurfaceArea[samplingPointIndex] = {0.0};
 
       // integral to solve:
       // int_e phi_i(xi) * f(xi) dxi
@@ -135,14 +149,19 @@ initializeRhs()
         {
           evaluationsArraySurface[samplingPointIndex][surfaceDofIndex*nComponents + i] = dofIntegrand[i];
         }
+
+        // integrate constant 1 over area to get surface area
+        evaluationsArraySurfaceArea[samplingPointIndex][surfaceDofIndex] = 1.0 * functionSpace->phi(surfaceDofIndex, xi) * integrationFactor;
+
       }  // surfaceDofIndex
 
     }  // function evaluations
 
     // integrate all values for result vector entries at once
-    EvaluationsType integratedValues = QuadratureSurface::computeIntegral(evaluationsArraySurface);
+    EvaluationsType integratedValuesBcValues = QuadratureSurface::computeIntegral(evaluationsArraySurface);
+    EvaluationsTypeSurfaceArea integratedValuesSurfaceArea = QuadratureSurface::computeIntegral(evaluationsArraySurfaceArea);
 
-    VLOG(1) << "evaluationsArraySurface: " << evaluationsArraySurface << ", integratedValues: " << integratedValues;
+    VLOG(1) << "evaluationsArraySurface: " << evaluationsArraySurface << ", integratedValuesBcValues: " << integratedValuesBcValues;
 
     // get indices of element-local dofs
     std::array<dof_no_t,nDofsPerElement> dofNosLocal = functionSpace->getElementDofNosLocal(elementNoLocal);
@@ -152,7 +171,7 @@ initializeRhs()
     for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
     {
       std::array<double,nComponents> dofValues;
-      std::copy(integratedValues.begin() + dofIndex*nComponents, integratedValues.begin() + (dofIndex+1)*nComponents, dofValues.begin());
+      std::copy(integratedValuesBcValues.begin() + dofIndex*nComponents, integratedValuesBcValues.begin() + (dofIndex+1)*nComponents, dofValues.begin());
 
       VLOG(2) << "set values " << dofValues << " at dof " << dofNosLocal[dofIndex];
 
@@ -169,17 +188,32 @@ initializeRhs()
         const int i = dofIndex*nComponents + dofComponent;
 
         // get integrated value
-        double integratedValue = integratedValues[i];
+        double integratedValue = integratedValuesBcValues[i];
 
         VLOG(2) << "  dof " << dofIndex << ", component " << dofComponent << " integrated value: " << integratedValue;
       }  // dofComponent
 #endif
+
+      surfaceArea += integratedValuesSurfaceArea[dofIndex];
+
     }  // dofIndex
   } // elementGlobalNo
 
+  // allreduce surface area
+  double surfaceAreaGlobal;
+  MPI_Comm mpiCommunicator = this->data_.functionSpace()->meshPartition()->rankSubset()->mpiCommunicator();
+  MPIUtility::handleReturnValue(MPI_Allreduce(&surfaceArea, &surfaceAreaGlobal, 1, MPI_DOUBLE, MPI_SUM, mpiCommunicator), "MPI_Allreduce");
+
+  LOG(DEBUG) << "surface area of elements with neumann bc: surfaceAreaGlobal: " << surfaceAreaGlobal;
 
   VLOG(1) << "before finishGhostManipulation, rhs: " << *this->data_.rhs();
   this->data_.rhs()->finishGhostManipulation();
+
+  if (this->divideNeumannBoundaryConditionValuesByTotalArea_)
+  {
+    PetscErrorCode ierr;
+    ierr = VecScale(this->data_.rhs()->valuesGlobal(), 1./surfaceAreaGlobal); CHKERRV(ierr);
+  }
 
   VLOG(1) << "after initializeRhs, rhs: " << *this->data_.rhs();
   //LOG(DEBUG) << "after initializeRhs, rhs: " << *this->data_.rhs();
@@ -360,6 +394,7 @@ parseElementWithFaces(PythonConfig specificSettings, std::shared_ptr<FunctionSpa
   {
     LOG(ERROR) << "Neumann boundary condition on element " << result.elementNoLocal << " has neither specified \"constantValue\", \"constantVector\" nor \"dofVectors\".";
   }
+
   return result;
 }
 

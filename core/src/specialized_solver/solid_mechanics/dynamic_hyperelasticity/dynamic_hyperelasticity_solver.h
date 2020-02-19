@@ -72,8 +72,6 @@ private:
   PyObject *pythonUpdateDirichletBoundaryConditionsFunction_;       //< the callback function
   int updateDirichletBoundaryConditionsFunctionCallInterval_;       //< the interval with which the function will be called
   int updateDirichletBoundaryConditionsFunctionCallCount_ = 0;      //< the counter of number of call to the updateDirichletBoundaryConditionsFunction
-
-
 };
 
 }  // namespace

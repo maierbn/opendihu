@@ -27,6 +27,7 @@ setOutputConnectorData(std::shared_ptr<Data::OutputConnectorData<FunctionSpaceTy
     currentSolver_->outputSlots.back().fieldVariableName = entry.values->name();
     currentSolver_->outputSlots.back().componentName = entry.values->componentName(entry.componentNo);
     currentSolver_->outputSlots.back().nComponents = nComponents1;
+    currentSolver_->outputSlots.back().variableNo = 1;
   }
 
   // loop over ComponentOfFieldVariable entries as variable2 in outputConnectorData
@@ -38,6 +39,7 @@ setOutputConnectorData(std::shared_ptr<Data::OutputConnectorData<FunctionSpaceTy
     currentSolver_->outputSlots.back().fieldVariableName = entry.values->name();
     currentSolver_->outputSlots.back().componentName = entry.values->componentName(entry.componentNo);
     currentSolver_->outputSlots.back().nComponents = nComponents2;
+    currentSolver_->outputSlots.back().variableNo = 2;
   }
 
   LOG(DEBUG) << "added " << currentSolver_->outputSlots.size() << " output slots";

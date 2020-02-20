@@ -46,11 +46,23 @@ generateDiagram(std::stringstream &result, std::vector<std::tuple<int,int,int,So
       s << lineStart.str() << "│  " << currentSolver_->outputSlots[i].fieldVariableName << "."
         << currentSolver_->outputSlots[i].componentName;
 
+      if (currentSolver_->outputSlots[i].variableNo != 1)
+        s << " (in variable" << currentSolver_->outputSlots[i].variableNo << ")";
+
       std::string outputSlotString = s.str();
 
       int currentLineLength = StringUtility::stringLength(outputSlotString)+2;
 
       const int requiredLineLength = 45;
+
+      // shorten string if neccessary
+      if (currentLineLength >= requiredLineLength)
+      {
+        outputSlotString = outputSlotString.substr(0, outputSlotString.length() - (currentLineLength - requiredLineLength));
+        currentLineLength = StringUtility::stringLength(outputSlotString)+2;
+        s.str("");
+        s << outputSlotString;
+      }
 
       s << std::string(requiredLineLength - currentLineLength, ' ')
         << "── ¤" << i << "\n";

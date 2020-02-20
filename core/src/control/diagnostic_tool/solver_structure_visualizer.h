@@ -65,6 +65,7 @@ public:
      */
     struct OutputSlot
     {
+      int variableNo;       //< either 0 or 1, if the slot is internally stored in variable1 or variable2 of OutputConnectorData
       std::string fieldVariableName;
       std::string componentName;
       int nComponents;      // number of components the field variable has in order to distinguish scalar field variables

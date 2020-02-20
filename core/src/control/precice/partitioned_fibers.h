@@ -5,8 +5,6 @@
 #include "interfaces/runnable.h"
 #include "data_management/specialized_solver/my_new_static_solver.h"   // adjust this include
 
-#define HAVE_PRECICE  // TODO: integrate into scons-config
-
 #ifdef HAVE_PRECICE
 #include "precice/SolverInterface.hpp"
 #endif
@@ -52,21 +50,27 @@ public:
 
 protected:
 
+#ifdef HAVE_PRECICE
   //! read the data from the other partiticipant
   void preciceReadData();
 
   //! write the data to the other partiticipant
   void preciceWriteData();
 
+  std::unique_ptr<precice::SolverInterface> preciceSolverInterface_;  //< the precice solver interface that makes all preCICE functionality accessible
+#endif
+
   DihuContext context_;                       //< object that contains the python config for the current context and the global singletons meshManager and solverManager
-  OutputWriter::Manager outputWriterManager_; //< manager object holding all output writers
   PythonConfig specificSettings_;             //< python object containing the value of the python config dict with corresponding key
 
   NestedSolver nestedSolver_;                 //< the nested solver that is controlled by this class
 
-  std::unique_ptr<precice::SolverInterface> preciceSolverInterface_;  //< the precice solver interface that makes all preCICE functionality accessible
   double maximumPreciceTimestepSize_;         //< maximum timestep size that precice will allow for the current time step
-  double timeStepWidth_;                      //< time step width of the solver
+  double currentTimeStepWidth_;               //< current time step width of the solver
+  double normalTimeStepWidth_;                //< the normal standard timestep width to use
+
+  int timeStepOutputInterval_;    ///< time step number and time is output every timeStepOutputInterval_ time steps
+
   std::vector<int> preciceVertexIds_;         //< the vertex ids in precice of the geometry values
 
   int preciceMeshId_;                         //< mesh ID of precice of the mesh that contains all fiber nodes

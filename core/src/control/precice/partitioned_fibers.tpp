@@ -14,19 +14,16 @@ PartitionedFibers(DihuContext context) :
   // get python settings object from context
   this->specificSettings_ = this->context_.getPythonConfig();
 
-  // initialize output writers
-  this->outputWriterManager_.initialize(this->context_, this->specificSettings_);
-
   // parse options
-  int myOption = this->specificSettings_.getOptionInt("myOption", 1, PythonUtility::Positive);
-
-  LOG(DEBUG) << "myOption: " << myOption;
+  timeStepOutputInterval_ = specificSettings_.getOptionInt("timeStepOutputInterval", 100, PythonUtility::Positive);
 }
 
 template<class NestedSolver>
 void PartitionedFibers<NestedSolver>::
 initialize()
 {
+#ifdef HAVE_PRECICE
+
   // make sure that we initialize only once, in the next call, initialized_ is true
   if (initialized_)
     return;
@@ -47,6 +44,10 @@ initialize()
 
   // set the outputConnectorData for the solverStructureVisualizer to appear in the solver diagram
   DihuContext::solverStructureVisualizer()->setOutputConnectorData(getOutputConnectorData());
+
+  // get the splitting time step width which is the time step width to use here (not dt_3D which is the time window of precice)
+  normalTimeStepWidth_ = nestedSolver_.nestedSolvers().instancesLocal()[0].timeStepWidth();
+  currentTimeStepWidth_ = normalTimeStepWidth_;
 
   // check that the output connector is correct
 
@@ -173,12 +174,18 @@ initialize()
   LOG(DEBUG) << "precice initialization done, dt: " << maximumPreciceTimestepSize_;
 
   initialized_ = true;
+
+#else
+  LOG(FATAL) << "Not compiled with preCICE!";
+#endif
 }
 
 template<class NestedSolver>
 void PartitionedFibers<NestedSolver>::
 run()
 {
+#ifdef HAVE_PRECICE
+
   // initialize everything
   initialize();
 
@@ -194,8 +201,6 @@ run()
 
   if (preciceSolverInterface_->isActionRequired(precice::constants::actionWriteInitialData()))
   {
-    LOG(DEBUG) << "isActionRequired(actionWriteInitialData) is true";
-
     // writeData
     preciceWriteData();
 
@@ -204,11 +209,6 @@ run()
     // initialize data in precice
     preciceSolverInterface_->initializeData();
   }
-  else
-  {
-    LOG(DEBUG) << "isActionRequired(actionWriteInitialData) is false";
-  }
-
 
   double currentSimulationTime = 0;
 
@@ -222,16 +222,17 @@ run()
     // - lambdaDot
     preciceReadData();
 
-    // get the splitting time step width which is the time step width to use here (not dt_3D which is the time window of precice)
-    timeStepWidth_ = nestedSolver_.nestedSolvers().instancesLocal()[0].timeStepWidth();
-
     // compute the time step width such that it fits in the remaining time in the current time window
-    timeStepWidth_ = std::min(maximumPreciceTimestepSize_, timeStepWidth_);
-
-    LOG(DEBUG) << "call advanceTimeSpan on [" << currentSimulationTime << "," << currentSimulationTime+timeStepWidth_ << "]";
+    currentTimeStepWidth_ = std::min(maximumPreciceTimestepSize_, normalTimeStepWidth_);
 
     // set the timestep width in the solver
-    nestedSolver_.setTimeSpan(currentSimulationTime, currentSimulationTime+timeStepWidth_);
+    nestedSolver_.setTimeSpan(currentSimulationTime, currentSimulationTime+currentTimeStepWidth_);
+
+    if (timeStepNo % this->timeStepOutputInterval_ == 0 && timeStepNo > 0)
+    {
+      LOG(INFO) << "PartitionedFibers, timestep " << timeStepNo << ", t=" << currentSimulationTime
+        << ", dt: " << currentTimeStepWidth_;
+    }
 
     // call the nested solver
     nestedSolver_.advanceTimeSpan();
@@ -241,16 +242,19 @@ run()
     // - gamma
     preciceWriteData();
 
-    currentSimulationTime += timeStepWidth_;
+    currentSimulationTime += currentTimeStepWidth_;
 
-    LOG(DEBUG) << "precice::advance(" << timeStepWidth_ << ")";
+    LOG(DEBUG) << "precice::advance(" << currentTimeStepWidth_ << ")";
 
     // advance precice
-    maximumPreciceTimestepSize_ = preciceSolverInterface_->advance(timeStepWidth_);
+    maximumPreciceTimestepSize_ = preciceSolverInterface_->advance(currentTimeStepWidth_);
   }
 
   preciceSolverInterface_->finalize();
+#endif
 }
+
+#ifdef HAVE_PRECICE
 
 template<class NestedSolver>
 void PartitionedFibers<NestedSolver>::
@@ -328,7 +332,7 @@ template<class NestedSolver>
 void PartitionedFibers<NestedSolver>::
 preciceWriteData()
 {
-  if (!preciceSolverInterface_->isWriteDataRequired(timeStepWidth_))
+  if (!preciceSolverInterface_->isWriteDataRequired(currentTimeStepWidth_))
     return;
 
   LOG(DEBUG) << "write gamma data to precice, one by one";
@@ -377,6 +381,8 @@ preciceWriteData()
 
   LOG(DEBUG) << "write gamma data to precice complete";
 }
+
+#endif
 
 template<class NestedSolver>
 void PartitionedFibers<NestedSolver>::

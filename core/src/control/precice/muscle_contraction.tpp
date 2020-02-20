@@ -1,11 +1,5 @@
 #include "control/precice/muscle_contraction.h"
 
-#define HAVE_PRECICE  // TODO: integrate into scons-config
-
-#ifdef HAVE_PRECICE
-#include "precice/SolverInterface.hpp"
-#endif
-
 #include <sstream>
 
 namespace PreciceAdapter
@@ -19,20 +13,14 @@ MuscleContraction(DihuContext context) :
 {
   // get python settings object from context
   this->specificSettings_ = this->context_.getPythonConfig();
-
-  // initialize output writers
-  this->outputWriterManager_.initialize(this->context_, this->specificSettings_);
-
-  // parse options
-  int myOption = this->specificSettings_.getOptionInt("myOption", 1, PythonUtility::Positive);
-
-  LOG(DEBUG) << "myOption: " << myOption;
 }
 
 template<class NestedSolver>
 void MuscleContraction<NestedSolver>::
 initialize()
 {
+#ifdef HAVE_PRECICE
+
   // make sure that we initialize only once, in the next call, initialized_ is true
   if (initialized_)
     return;
@@ -107,12 +95,18 @@ initialize()
   LOG(DEBUG) << "precice initialization done, dt: " << maximumPreciceTimestepSize_ << "," << timeStepWidth_;
 
   initialized_ = true;
+
+#else
+  LOG(FATAL) << "Not compiled with preCICE!";
+#endif
 }
 
 template<class NestedSolver>
 void MuscleContraction<NestedSolver>::
 run()
 {
+#ifdef HAVE_PRECICE
+
   // initialize everything
   initialize();
 
@@ -152,12 +146,8 @@ run()
     // hard-code 1 time step for the static problem
     double timeStepWidth = maximumPreciceTimestepSize_;
 
-    LOG(DEBUG) << "set timeStepWidth to " << timeStepWidth << ", equal to maximumPreciceTimestepSize_: " << maximumPreciceTimestepSize_;
-
     // call the nested solver
     nestedSolver_.run();
-
-    LOG(DEBUG) << "timeStepWidth: " << timeStepWidth << ", maximumPreciceTimestepSize_: " << maximumPreciceTimestepSize_;
 
     // write data to precice
     // data to send:
@@ -172,7 +162,11 @@ run()
     maximumPreciceTimestepSize_ = preciceSolverInterface_->advance(timeStepWidth);
   }
   preciceSolverInterface_->finalize();
+
+#endif
 }
+
+#ifdef HAVE_PRECICE
 
 template<class NestedSolver>
 void MuscleContraction<NestedSolver>::
@@ -239,6 +233,8 @@ preciceWriteData()
 
   LOG(DEBUG) << "write geometry data to precice complete";
 }
+
+#endif
 
 template<class NestedSolver>
 void MuscleContraction<NestedSolver>::

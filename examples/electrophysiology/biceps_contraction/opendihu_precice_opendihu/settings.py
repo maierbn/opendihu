@@ -1,4 +1,6 @@
-# Multiple 1D fibers (monodomain) with 3D dynamic mooney rivlin with active contraction term, on biceps geometry
+# Multiple 1D fibers (monodomain) with 3D static mooney rivlin with active contraction term, on biceps geometry.
+# This example uses precice to couple the Monodomain eq. on fibers with the 3D contraction, both inside opendihu.
+# You need to run both executables at the same time.
 
 import sys, os
 import timeit
@@ -33,7 +35,18 @@ else:
   #exit(0)
 
 
-# -------------- begin user pararmeters ----------------
+# -------------- begin user parameters ----------------
+
+# timing parameters
+# -----------------
+variables.dt_0D = 1e-3                        # [ms] timestep width of ODEs
+variables.dt_1D = 1.5e-3                      # [ms] timestep width of diffusion
+variables.dt_splitting = 3e-3                 # [ms] overall timestep width of strang splitting
+variables.dt_3D = 1e0                         # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
+# The values of dt_3D and end_time have to be also defined in "precice-config.xml" with the same value (the value is only significant in the precice-config.xml, the value here is used for output writer time intervals)
+# <max-time value="100.0"/>           <!-- end time of the whole simulation -->
+# <time-window-size value="1e0"/>   <!-- timestep width dt_3D -->
+      
 
 # quantities in mechanics unit system
 rho = 10                    # [1e-4 kg/cm^3] density of the muscle (density of water)
@@ -69,12 +82,12 @@ variables.sampling_stride_x = 1
 variables.sampling_stride_y = 1
 variables.sampling_stride_z = 200
 
+# enable paraview output
 variables.paraview_output = True
-variables.output_timestep = 1e-1               # [ms] timestep for output files
-
+variables.output_timestep = 1e-1               # [ms] timestep for output files of fibers
 variables.disable_firing_output = False
 
-# -------------- end user pararmeters ----------------
+# -------------- end user parameters ----------------
 
 
 
@@ -183,7 +196,8 @@ config = {
     }
   },
   "PartitionedFibers": {        # monodomain, fibers
-    "preciceConfigFilename":        "../precice-config.xml",         # the preCICE configuration file
+    "preciceConfigFilename":    "../precice-config.xml",             # the preCICE configuration file
+    "timeStepOutputInterval":   100,                                 # interval in which to display current timestep and time in console
     "MultipleInstances": {
       "logKey":                     "duration_subdomains_xy",
       "ranksAllComputedInstances":  list(range(n_ranks)),
@@ -311,7 +325,7 @@ config = {
       "timeStepOutputInterval":       100,                       # do not output time steps
       "Pmax": variables.pmax,                                    # maximum PK2 active stress
       "OutputWriter" : [
-        {"format": "Paraview", "outputInterval": 100, "filename": "out/" + variables.scenario_name + "/mechanics", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
+        {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + variables.scenario_name + "/mechanics", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
       ],
       "DynamicHyperelasticitySolver": {
         "timeStepWidth":              variables.dt_3D,           # time step width 
@@ -338,6 +352,7 @@ config = {
         "neumannBoundaryConditions":   variables.elasticity_neumann_bc,     # Neumann boundary conditions that define traction forces on surfaces of elements
         "updateDirichletBoundaryConditionsFunction": None,                  # function that updates the dirichlet BCs while the simulation is running
         "updateDirichletBoundaryConditionsFunctionCallInterval": 1,         # every which step the update function should be called, 1 means every time step
+        "divideNeumannBoundaryConditionValuesByTotalArea": True,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
         
         "initialValuesDisplacements":  [[0.0,0.0,0.0] for _ in range((2*variables.nx+1) * (2*variables.ny+1) * (2*variables.nz+1))],     # the initial values for the displacements, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
         "initialValuesVelocities":     [[0.0,0.0,0.0] for _ in range((2*variables.nx+1) * (2*variables.ny+1) * (2*variables.nz+1))],     # the initial values for the velocities, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
@@ -394,6 +409,7 @@ config = {
         "neumannBoundaryConditions":   variables.elasticity_neumann_bc,     # Neumann boundary conditions that define traction forces on surfaces of elements
         "updateDirichletBoundaryConditionsFunction": None,                  # function that updates the dirichlet BCs while the simulation is running
         "updateDirichletBoundaryConditionsFunctionCallInterval": 1,         # every which step the update function should be called, 1 means every time step
+        "divideNeumannBoundaryConditionValuesByTotalArea": True,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
         
         "initialValuesDisplacements":  [[0.0,0.0,0.0] for _ in range((2*variables.nx+1) * (2*variables.ny+1) * (2*variables.nz+1))],     # the initial values for the displacements, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
         "constantBodyForce":           variables.constant_body_force,                 # a constant force that acts on the whole body, e.g. for gravity

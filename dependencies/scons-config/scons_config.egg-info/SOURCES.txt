@@ -64,6 +64,7 @@ sconsconfig/packages/libsndfile.py
 sconsconfig/packages/libusb.py
 sconsconfig/packages/libxml2.py
 sconsconfig/packages/opencor.py
+sconsconfig/packages/precice.py
 sconsconfig/packages/pugixml.py
 sconsconfig/packages/pythonPackages.py
 sconsconfig/packages/rapidxml.py

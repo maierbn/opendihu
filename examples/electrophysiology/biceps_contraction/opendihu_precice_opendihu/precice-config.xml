@@ -2,8 +2,8 @@
 
 <precice-configuration>
   <log>
-    <sink type="stream" output="stdout"  filter= "(%Severity% >= debug)" format="\033[0;33m%Rank% [precice]\033[0m %ColorizedSeverity%\033[0;33m%Message%\033[0m" enabled="true" />	
-    <sink type="file" output="debug.log" filter= "(%Severity% >= debug)" format="%Message%" enabled="true" />	
+    <sink type="stream" output="stdout"  filter='(%Severity% >= debug) and (not (%Function% = "advance"))' format="\033[0;33m%Rank% [precice]\033[0m %ColorizedSeverity%\033[0;33m%Message%\033[0m" enabled="true" />
+    <!--<sink type="file" output="debug.log" filter= "(%Severity% >= debug)" format="%Message%" enabled="true" />	-->
   </log>
 
   <solver-interface dimensions="3">
@@ -70,7 +70,16 @@
       <export:vtk directory="precice-output" />
       
       <!-- nearest-neighbor to map from PartitionedFibersMesh to  MuscleContractionMesh -->
-      <mapping:nearest-neighbor direction="read" from="PartitionedFibersMesh" to="MuscleContractionMesh" constraint="consistent" timing="initial"/>
+      <!--<mapping:nearest-neighbor 
+        direction="read" from="PartitionedFibersMesh" to="MuscleContractionMesh" constraint="consistent" timing="initial"/>-->
+      
+      <mapping:rbf-thin-plate-splines
+        direction="read" 
+        from="PartitionedFibersMesh" 
+        to="MuscleContractionMesh" 
+        constraint="consistent" 
+        />
+      
     </participant>
 
     <!-- Communication method, use TCP sockets, Change network to "ib0" on SuperMUC -->
@@ -78,8 +87,8 @@
 
     <coupling-scheme:serial-explicit>
       <participants first="PartitionedFibers" second="MuscleContraction"/>
-      <max-time value="1.0"/>
-      <time-window-size value="1e-3"/>
+      <max-time value="100.0"/>           <!-- end time of the whole simulation -->
+      <time-window-size value="1e0"/>   <!-- timestep width dt_3D -->
       
       <exchange data="Gamma"    mesh="PartitionedFibersMesh" from="PartitionedFibers" to="MuscleContraction"/>
       <exchange data="Geometry" mesh="MuscleContractionMesh" from="MuscleContraction" to="PartitionedFibers"/> <!--initialize="true"-->

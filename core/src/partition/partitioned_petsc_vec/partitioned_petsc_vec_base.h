@@ -1,7 +1,9 @@
 #pragma once
 
 #include <memory>
-#include "partition/mesh_partition/01_mesh_partition.h"
+#include "partition/mesh_partition/01_mesh_partition_structured.h"
+#include "partition/mesh_partition/01_mesh_partition_unstructured.h"
+#include "partition/mesh_partition/01_mesh_partition_composite.h"
 #include "partition/partitioned_petsc_vec/values_representation.h"
 
 /** Base class for partitioned petsc vectors, this just holds a pointer to the meshPartion object and stores the data representation.

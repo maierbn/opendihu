@@ -4,10 +4,12 @@
 #include <petscdmda.h>
 
 #include "partition/mesh_partition/00_mesh_partition_base.h"
+#include "partition/mesh_partition/01_mesh_partition.h"
 #include "control/types.h"
 #include "partition/rank_subset.h"
 #include "mesh/type_traits.h"
 #include "mesh/face_t.h"
+#include "mesh/structured_deformable.h"
 
 // forward declaration
 namespace FunctionSpace 
@@ -30,9 +32,10 @@ public:
 
   using MeshPartitionBase::nRanks;
 
+  typedef FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType> FunctionSpaceType;
+
   //! constructor
-  MeshPartition(const std::vector<std::shared_ptr<FunctionSpace<StructuredDeformableOfDimension<D>,BasisFunctionType>>> &subFunctionSpaces,
-                std::shared_ptr<RankSubset> rankSubset);
+  MeshPartition(const std::vector<std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>> &subFunctionSpaces);
 
   //! number of ranks in a coordinate direction
   int nRanks(int coordinateDirection) const;
@@ -100,7 +103,7 @@ public:
   global_no_t getElementNoGlobalNatural(element_no_t elementNoLocal) const;
 
   //! get the global natural node no for the global coordinates of this node, this can be combined with getCoordinatesGlobal
-  global_no_t getNodeNoGlobalNatural(std::array<global_no_t,MeshType::dim()> coordinatesGlobal) const;
+  global_no_t getNodeNoGlobalNatural(std::array<global_no_t,D> coordinatesGlobal) const;
 
   //! get the node no in global petsc ordering from a local node no
   global_no_t getNodeNoGlobalPetsc(node_no_t nodeNoLocal) const;
@@ -112,19 +115,19 @@ public:
   global_no_t getDofNoGlobalPetsc(dof_no_t dofNoLocal) const;
 
   //! get the global node coordinates (x,y,z) of the node given by its local node no. This also works for ghost nodes.
-  std::array<global_no_t,MeshType::dim()> getCoordinatesGlobal(node_no_t nodeNoLocal) const;
+  std::array<global_no_t,D> getCoordinatesGlobal(node_no_t nodeNoLocal) const;
 
   //! get the local coordinates for a local node no, also for ghost nodes. With this method and functionSpace->getNodeNo(coordinatesLocal) it is possible to implement a global-to-local mapping.
-  std::array<int,MeshType::dim()> getCoordinatesLocal(node_no_t nodeNoLocal) const;
+  std::array<int,D> getCoordinatesLocal(node_no_t nodeNoLocal) const;
 
   //! from global natural coordinates compute the local coordinates, set isOnLocalDomain to true if the node with global coordinates is in the local domain
-  std::array<int,MeshType::dim()> getCoordinatesLocal(std::array<global_no_t,MeshType::dim()> coordinatesGlobal, bool &isOnLocalDomain) const;
+  std::array<int,D> getCoordinatesLocal(std::array<global_no_t,D> coordinatesGlobal, bool &isOnLocalDomain) const;
 
   //! get the local coordinates for a local element no
-  std::array<int,MeshType::dim()> getElementCoordinatesLocal(element_no_t elementNoLocal) const;
+  std::array<int,D> getElementCoordinatesLocal(element_no_t elementNoLocal) const;
 
   //! get the local element no. from coordinates
-  element_no_t getElementNoLocal(std::array<int,MeshType::dim()> elementCoordinates) const;
+  element_no_t getElementNoLocal(std::array<int,D> elementCoordinates) const;
 
   //! get the local element no. from the global no., set isOnLocalDomain to true if the node with global coordinates is in the local domain
   element_no_t getElementNoLocal(global_no_t elementNoGlobalPetsc, bool &isOnLocalDomain) const;
@@ -164,10 +167,6 @@ public:
   //! get the global dof nos of the ghost dofs in the local partition
   const std::vector<PetscInt> &ghostDofNosGlobalPetsc() const;
   
-  //! Initialize the vector dofNosLocalNaturalOrdering_, this needs the functionSpace and has to be called before dofNosLocalNaturalOrdering() can be used.
-  //! If the vector is already initialized by a previous call to this method, it has no effect.
-  void initializeDofNosLocalNaturalOrdering(std::shared_ptr<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>> functionSpace);
-
   //! Get a vector of local dof nos in local natural ordering, initializeDofNosLocalNaturalOrdering has to be called beforehand.
   const std::vector<dof_no_t> &dofNosLocalNaturalOrdering() const;
 
@@ -176,7 +175,7 @@ public:
 
   //! get information about neighbouring rank and boundary elements for specified face,
   //! @param neighbourRankNo: the rank of the neighbouring process that shares the face, @param nElements: Size of one-layer mesh that contains boundary elements that touch the neighbouring process
-  void getBoundaryElements(Mesh::face_t face, int &neighbourRankNo, std::array<element_no_t,MeshType::dim()> &nBoundaryElements, std::vector<dof_no_t> &dofNos);
+  void getBoundaryElements(Mesh::face_t face, int &neighbourRankNo, std::array<element_no_t,D> &nBoundaryElements, std::vector<dof_no_t> &dofNos);
 
   //! get the rank no of the neighbour in direction face, -1 if there is no such neighbour
   int neighbourRank(Mesh::face_t face);
@@ -185,11 +184,11 @@ public:
   int ownRankPartitioningIndex(int coordinateDirection);
 
   //! refine the partitioning by multiplying the number of elements by refinementFactor
-  void refine(std::array<int,MeshType::dim()> refinementFactor);
+  void refine(std::array<int,D> refinementFactor);
 
 protected:
 
-  const std::vector<std::shared_ptr<FunctionSpace<StructuredDeformableOfDimension<D>,BasisFunctionType>>> &subFunctionSpaces_;
+  const std::vector<std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>> &subFunctionSpaces_;
 
   element_no_t nElementsLocal_;   //< local number of elements of all meshes combined
   global_no_t nElementsGlobal_;   //< global number of elements of all meshes combined

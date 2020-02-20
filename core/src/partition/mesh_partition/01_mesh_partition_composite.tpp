@@ -1,11 +1,11 @@
-#include "partition/mesh_partition/00_mesh_partition_composite.h"
+#include "partition/mesh_partition/01_mesh_partition_composite.h"
 
 namespace Partition
 {
 
 template<int D, typename BasisFunctionType>
 MeshPartition<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,Mesh::CompositeOfDimension<D>>::
-MeshPartition(const std::vector<std::shared_ptr<FunctionSpace<StructuredDeformableOfDimension<D>,BasisFunctionType>>> &subFunctionSpaces) :
+MeshPartition(const std::vector<std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>> &subFunctionSpaces) :
   subFunctionSpaces_(subFunctionSpaces)
 {
   // initialize number of local and global elements
@@ -13,7 +13,7 @@ MeshPartition(const std::vector<std::shared_ptr<FunctionSpace<StructuredDeformab
   this->nElementsGlobal_ = 0;
 
   // iterate over submeshes
-  for(const std::shared_ptr<StructuredDeformableOfDimension<D>> &subFunctionSpace : subFunctionSpaces_)
+  for(const std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>> &subFunctionSpace : subFunctionSpaces_)
   {
     // count number of elements
     this->nElementsLocal_ += subFunctionSpace->nElementsLocal();
@@ -28,7 +28,8 @@ MeshPartition(const std::vector<std::shared_ptr<FunctionSpace<StructuredDeformab
 
   // iterate over submeshes and save all node positions
   int i = 0;
-  for(const std::shared_ptr<StructuredDeformableOfDimension<D>> &subFunctionSpace : subFunctionSpaces_)
+  for(const std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>> &subFunctionSpace : subFunctionSpaces_)
+
   {
     // get geometry field
     subFunctionSpace->geometry()->getValuesWithGhosts(nodePositions[i]);
@@ -37,34 +38,35 @@ MeshPartition(const std::vector<std::shared_ptr<FunctionSpace<StructuredDeformab
     {
       nodePositionsDofs[i].push_back(std::make_pair(nodePositions[i][dofNoLocal], dofNoLocal));
     }
+
+    // sort according to x coordinate of node positions
+    std::sort(nodePositionsDofs[i].begin(), nodePositionsDofs[i].end(), [](const std::pair<Vec3,dof_no_t> &a, const std::pair<Vec3,dof_no_t> &b)
+    {
+      return a.first[0] < b.first[0];
+    });
     i++;
   }
 
-  // sort according to x coordinate of node positions
-  std::sort(nodePositionsDofs.begin(), nodePositionsDofs.end(), [](const std::pair<Vec3,dof_no_t> &a, const std::pair<Vec3,dof_no_t> &b)
-  {
-    return a.first[0] < b.first[0];
-  });
 
-  sharedDofs_.resize(subFunctionSpace_.size());
+  sharedDofs_.resize(subFunctionSpaces_.size());
   // std::vector<std::map<dof_no_t,std::pair<int,dof_no_t>>>
 
   // iterate over submeshes
   const double nodePositionEqualTolerance = 1e-3;
   i = 0;
-  for(const std::vector<std::shared_ptr<FunctionSpace<StructuredDeformableOfDimension<D>,BasisFunctionType>>>::const_iterator iter = subFunctionSpace_.cbegin();
-      iter != subFunctionSpace_.cend(); iter++, i++)
+  for(const typename std::vector<std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>>::const_iterator iter = subFunctionSpaces_.cbegin();
+      iter != subFunctionSpaces_.cend(); iter++, i++)
   {
     // find shared dofs in all next meshes
 
     // loop over node positions of this mesh
     for (dof_no_t dofNoLocal = 0; dofNoLocal < nodePositions[i].size(); dofNoLocal++)
     {
-      Vec position = nodePositions[i][dofNoLocal].first;
+      Vec3 position = nodePositions[i][dofNoLocal];
 
       // iterate over further submeshes
       int indexOtherMesh = 0;
-      for(int indexOtherMesh = i; indexOtherMesh < subFunctionSpace_.size(); indexOtherMesh++)
+      for(int indexOtherMesh = i; indexOtherMesh < subFunctionSpaces_.size(); indexOtherMesh++)
       {
         // find node that has closest x coordinate
 
@@ -76,7 +78,8 @@ MeshPartition(const std::vector<std::shared_ptr<FunctionSpace<StructuredDeformab
 
         while (k != kPrevious)
         {
-          if (nodePositionsDofs[indexOtherMesh][k].first[0] < position[0]-nodePositionEqualTolerance)
+          Vec3 currentNodePosition = nodePositionsDofs[indexOtherMesh][k].first;
+          if (currentNodePosition[0] < position[0]-nodePositionEqualTolerance)
           {
             lower = k;
           }
@@ -90,7 +93,7 @@ MeshPartition(const std::vector<std::shared_ptr<FunctionSpace<StructuredDeformab
         // check all node positions
         for (;;)
         {
-          Vec nodePositionOtherMesh = nodePositionsDofs[indexOtherMesh][k].first;
+          Vec3 nodePositionOtherMesh = nodePositionsDofs[indexOtherMesh][k].first;
           dof_no_t dofNoLocalOtherMesh = nodePositionsDofs[indexOtherMesh][k].second;
 
           if (nodePositionOtherMesh[0] > position[0]+nodePositionEqualTolerance)
@@ -122,9 +125,9 @@ MeshPartition(const std::vector<std::shared_ptr<FunctionSpace<StructuredDeformab
   {
     std::map<dof_no_t,std::pair<int,dof_no_t>> &sharedDofsInMesh = sharedDofs_[meshIndex];
 
-    for (std::map<dof_no_t,std::pair<int,dof_no_t>>::iterator iter = sharedDofsInMesh.begin(); iter != sharedDofsInMesh.end(); iter++)
+    for (std::map<dof_no_t,std::pair<int,dof_no_t>>::iterator iter2 = sharedDofsInMesh.begin(); iter2 != sharedDofsInMesh.end(); iter2++)
     {
-      if (iter->second < subFunctionSpaces_[iter->first].nDofsLocalWithoutGhosts())
+      if (iter2->second < subFunctionSpaces_[iter2->first].nDofsLocalWithoutGhosts())
       {
         nDofsSharedLocal_++;
       }
@@ -160,7 +163,7 @@ nDofsLocalWithGhosts() const
   dof_no_t nDofsLocalWithGhosts = 0;
 
   // iterate over submeshes
-  for(std::shared_ptr<StructuredDeformableOfDimension<D>> &subFunctionSpace : subFunctionSpaces_)
+  for(const std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>> &subFunctionSpace : subFunctionSpaces_)
   {
     nDofsLocalWithGhosts += subFunctionSpace->nDofsLocalWithGhosts();
   }
@@ -179,7 +182,7 @@ nDofsLocalWithoutGhosts() const
   dof_no_t nDofsLocalWithoutGhosts = 0;
 
   // iterate over submeshes
-  for(std::shared_ptr<StructuredDeformableOfDimension<D>> &subFunctionSpace : subFunctionSpaces_)
+  for(const std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>> &subFunctionSpace : subFunctionSpaces_)
   {
     nDofsLocalWithoutGhosts += subFunctionSpace->nDofsLocalWithoutGhosts();
   }
@@ -188,6 +191,7 @@ nDofsLocalWithoutGhosts() const
   return nDofsLocalWithoutGhosts;
 }
 
+/*
 //! number of dofs in total
 template<int D, typename BasisFunctionType>
 global_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,Mesh::CompositeOfDimension<D>>::
@@ -196,7 +200,7 @@ nDofsGlobal() const
   int nDofsGlobal = 0;
 
   // iterate over submeshes
-  for(std::shared_ptr<StructuredDeformableOfDimension<D>> &subFunctionSpace : subFunctionSpaces_)
+  for(const std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>> &subFunctionSpace : subFunctionSpaces_)
   {
     nDofsGlobal += subFunctionSpace->nDofsGlobal();
   }
@@ -211,7 +215,7 @@ nNodesLocalWithGhosts() const
   int nNodesLocalWithGhosts = 0;
 
   // iterate over submeshes
-  for(std::shared_ptr<StructuredDeformableOfDimension<D>> &subFunctionSpace : subFunctionSpaces_)
+  for(const std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>> &subFunctionSpace : subFunctionSpaces_)
   {
     nNodesLocalWithGhosts += subFunctionSpace->nNodesLocalWithGhosts();
   }
@@ -226,7 +230,7 @@ nNodesLocalWithoutGhosts() const
   int nNodesLocalWithoutGhosts = 0;
 
   // iterate over submeshes
-  for(std::shared_ptr<StructuredDeformableOfDimension<D>> &subFunctionSpace : subFunctionSpaces_)
+  for(const std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>> &subFunctionSpace : subFunctionSpaces_)
   {
     nNodesLocalWithoutGhosts += subFunctionSpace->nNodesLocalWithoutGhosts();
   }
@@ -241,7 +245,7 @@ nNodesGlobal() const
   int nNodesGlobal = 0;
 
   // iterate over submeshes
-  for(std::shared_ptr<StructuredDeformableOfDimension<D>> &subFunctionSpace : subFunctionSpaces_)
+  for(const std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>> &subFunctionSpace : subFunctionSpaces_)
   {
     nNodesGlobal += subFunctionSpace->nNodesGlobal();
   }
@@ -256,7 +260,7 @@ beginNodeGlobalPetsc() const
   global_no_t beginNodeGlobalPetsc = 0;
 
   // iterate over submeshes
-  for(std::shared_ptr<StructuredDeformableOfDimension<D>> &subFunctionSpace : subFunctionSpaces_)
+  for(const std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>> &subFunctionSpace : subFunctionSpaces_)
   {
     beginNodeGlobalPetsc += subFunctionSpace->beginNodeGlobalPetsc();
   }
@@ -433,8 +437,7 @@ ownRankPartitioningIndex(int coordinateDirection);
 template<int D, typename BasisFunctionType>
 void MeshPartition<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,Mesh::CompositeOfDimension<D>>::
 refine(std::array<int,MeshType::dim()> refinementFactor);
-
+*/
 
 }  // namespace
 
-#include "partition/mesh_partition/01_mesh_partition_composite.tpp"

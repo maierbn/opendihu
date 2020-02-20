@@ -6,6 +6,13 @@
 #include "partition/mesh_partition/01_mesh_partition.h"
 #include "control/python_config.h"
 
+// forward declaration
+namespace FunctionSpace
+{
+template<typename MeshType,typename BasisFunctionType>
+class FunctionSpace;
+}
+
 namespace Partition
 {
 
@@ -39,10 +46,10 @@ public:
                                                                                 const std::array<int,FunctionSpace::dim()> nRanks);
 
   //! create new partitioning of a composite mesh, this emulates a normal mesh but the values are taken from the submeshes
-  template<typename BasisFunctionType, int D, nSubmeshes>
+  /*template<typename BasisFunctionType, int D, int nSubmeshes>
   std::shared_ptr<MeshPartition<::FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>>> createPartitioningComposite(
     const std::vector<std::shared_ptr<FunctionSpace<StructuredDeformableOfDimension<D>,BasisFunctionType>>> &subFunctionSpaces);
-
+*/
   //! store a rank subset that will be used for the next partitioning that will be created
   void setRankSubsetForNextCreatedPartitioning(std::shared_ptr<RankSubset> nextRankSubset);
   

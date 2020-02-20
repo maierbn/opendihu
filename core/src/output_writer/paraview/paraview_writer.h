@@ -6,6 +6,7 @@
 
 #include "control/types.h"
 #include "output_writer/generic.h"
+#include "mesh/structured_regular_fixed.h"
 
 namespace OutputWriter
 {
@@ -48,13 +49,13 @@ private:
  *  Outputs a rectilinear grid.
  */
 template<int D, typename BasisFunctionType, typename FieldVariablesForOutputWriterType>
-class ParaviewWriter<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>, BasisFunctionType>, FieldVariablesForOutputWriterType>
+class ParaviewWriter<FunctionSpace::FunctionSpace<::Mesh::StructuredRegularFixedOfDimension<D>, BasisFunctionType>, FieldVariablesForOutputWriterType>
 {
 public:
   //! write paraview file to given filename, only output fieldVariables that are on a mesh with the given meshName 
   static void outputFile(std::string filename, FieldVariablesForOutputWriterType fieldVariables,
                          std::string meshName, 
-                         std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>, BasisFunctionType>> mesh, 
+                         std::shared_ptr<FunctionSpace::FunctionSpace<::Mesh::StructuredRegularFixedOfDimension<D>, BasisFunctionType>> mesh,
                          int nFieldVariablesOfMesh, PythonConfig specificSettings);
 };
 
@@ -62,13 +63,13 @@ public:
  *  Outputs a structured grid.
  */
 template<int D, typename BasisFunctionType, typename FieldVariablesForOutputWriterType>
-class ParaviewWriter<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>, BasisFunctionType>, FieldVariablesForOutputWriterType>
+class ParaviewWriter<FunctionSpace::FunctionSpace<::Mesh::StructuredDeformableOfDimension<D>, BasisFunctionType>, FieldVariablesForOutputWriterType>
 {
 public:
   //! write paraview file to given filename, only output fieldVariables that are on a mesh with the given meshName 
   static void outputFile(std::string filename, FieldVariablesForOutputWriterType fieldVariables,
                          std::string meshName, 
-                         std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>, BasisFunctionType>> mesh, 
+                         std::shared_ptr<FunctionSpace::FunctionSpace<::Mesh::StructuredDeformableOfDimension<D>, BasisFunctionType>> mesh,
                          int nFieldVariablesOfMesh, PythonConfig specificSettings);
 };
 
@@ -76,13 +77,13 @@ public:
  *  Outputs an unstructured grid.
  */
 template<int D, typename BasisFunctionType, typename FieldVariablesForOutputWriterType>
-class ParaviewWriter<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FieldVariablesForOutputWriterType>
+class ParaviewWriter<FunctionSpace::FunctionSpace<::Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FieldVariablesForOutputWriterType>
 {
 public:
   //! write paraview file to given filename, only output fieldVariables that are on a mesh with the given meshName 
   static void outputFile(std::string filename, FieldVariablesForOutputWriterType fieldVariables,
                          std::string meshName, 
-                         std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>> mesh, 
+                         std::shared_ptr<FunctionSpace::FunctionSpace<::Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>> mesh,
                          int nFieldVariablesOfMesh, PythonConfig specificSettings);
 };
 

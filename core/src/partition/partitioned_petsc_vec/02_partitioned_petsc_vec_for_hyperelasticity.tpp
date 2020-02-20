@@ -563,6 +563,33 @@ nVelocityDofsWithoutBcLocal()
 }
 
 template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType, int nComponents>
+bool PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,nComponents>::
+containsNanOrInf()
+{
+  // get all local values
+  std::vector<double> values;
+
+  for (int componentNo = 0; componentNo < nComponents-1; componentNo++)
+  {
+    values.resize(this->meshPartition_->nDofsLocalWithoutGhosts());
+
+    // void getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[]) const;
+    this->getValues(componentNo, this->meshPartition_->nDofsLocalWithoutGhosts(), this->meshPartition_->dofNosLocal().data(), values.data());
+
+    // loop over values and check if they are neither nan nor inf
+    for (int i = 0; i < values.size(); i++)
+    {
+      if (!std::isfinite(values[i]))
+      {
+        LOG(ERROR) << "containsNanOrInf(): value " << i << "/" << values.size() << ", component " << componentNo << "/" << nComponents << ": " << values[i];
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType, int nComponents>
 std::ostream &operator<<(std::ostream &stream, const PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType> &vector)
 {
   vector.output(stream);

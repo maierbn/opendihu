@@ -228,8 +228,9 @@ createPartitioningStructuredGlobal(const std::array<global_no_t,FunctionSpace::d
   return meshPartition;
 }
 
+/*
 //! create new partitioning of a composite mesh, this emulates a normal mesh but the values are taken from the submeshes
-template<typename BasisFunctionType, int D, nSubmeshes>
+template<typename BasisFunctionType, int D, int nSubmeshes>
 std::shared_ptr<MeshPartition<::FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>>> Manager::
 createPartitioningComposite(const std::vector<std::shared_ptr<FunctionSpace<StructuredDeformableOfDimension<D>,BasisFunctionType>>> &subFunctionSpaces)
 {
@@ -256,6 +257,6 @@ createPartitioningComposite(const std::vector<std::shared_ptr<FunctionSpace<Stru
 
   return meshPartition;
 }
-
+*/
 
 }  // namespace

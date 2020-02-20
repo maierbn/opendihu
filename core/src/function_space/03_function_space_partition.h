@@ -5,6 +5,7 @@
 #include "function_space/02_function_space_jacobian.h"
 #include "partition/mesh_partition/01_mesh_partition.h"
 #include "partition/mesh_partition/00_mesh_partition_base.h"
+#include "mesh/composite.h"
 
 // forward declaration
 namespace Partition 
@@ -88,19 +89,19 @@ public:
 
 /** specialization for composite structured meshes
  */
-template<int D,int nSubmeshes,typename BasisFunctionType>
-class FunctionSpacePartition<Mesh::CompositeOfDimension<D,nSubmeshes>,BasisFunctionType> :
-  public FunctionSpacePartitionBase<Mesh::CompositeOfDimension<D,nSubmeshes>,BasisFunctionType>
+template<int D,typename BasisFunctionType>
+class FunctionSpacePartition<Mesh::CompositeOfDimension<D>,BasisFunctionType> :
+  public FunctionSpacePartitionBase<Mesh::CompositeOfDimension<D>,BasisFunctionType>
 {
 public:
   //! use inherited constructor
-  using FunctionSpacePartitionBase<Mesh::CompositeOfDimension<D,nSubmeshes>,BasisFunctionType>::FunctionSpacePartitionBase;
+  using FunctionSpacePartitionBase<Mesh::CompositeOfDimension<D>,BasisFunctionType>::FunctionSpacePartitionBase;
 
   //! initiate the partitoning and then call the downwards initialize
   void initialize();
 
 protected:
-  std::array<std::shared_ptr<FunctionSpace<StructuredDeformableOfDimension<D>,BasisFunctionType>>,nSubmeshes> subFunctionSpaces_;   //< all submeshes
+  std::vector<std::shared_ptr<FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>> subFunctionSpaces_;   //< all submeshes
 };
 
 
@@ -109,3 +110,4 @@ protected:
 #include "function_space/03_function_space_partition_base.tpp"
 #include "function_space/03_function_space_partition_structured.tpp"
 #include "function_space/03_function_space_partition_unstructured.tpp"
+#include "function_space/03_function_space_partition_composite.tpp"

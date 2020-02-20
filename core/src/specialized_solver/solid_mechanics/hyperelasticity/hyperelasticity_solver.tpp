@@ -8,6 +8,7 @@
 #include "data_management/specialized_solver/multidomain.h"
 #include "control/diagnostic_tool/performance_measurement.h"
 #include "control/diagnostic_tool/solver_structure_visualizer.h"
+#include "partition/mesh_partition/01_mesh_partition_structured.h"
 
 namespace SpatialDiscretization
 {

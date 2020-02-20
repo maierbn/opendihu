@@ -29,24 +29,24 @@ PythonConfig::PythonConfig(const PythonConfig &rhs, std::string key)
 //! constructor as sub scope of another python config which is a list
 PythonConfig::PythonConfig(const PythonConfig &rhs, int i)
 {
-  if (PyList_Check(rhs))
+  if (PyList_Check(rhs.pyObject()))
   {
-    int nEntries = PyList_Size(rhs);
+    int nEntries = PyList_Size(rhs.pyObject());
     if (i >= nEntries)
     {
       LOG(ERROR) << getStringPath() << " list has only " << nEntries << " entries, but entry "
         << i << " is required.";
-      return PyList_GetItem(rhs, (Py_ssize_t)nEntries-1);
+      pythonConfig_ = PyList_GetItem(rhs.pyObject(), (Py_ssize_t)nEntries-1);
     }
     else
     {
-      return PyList_GetItem(rhs, (Py_ssize_t)i);
+      pythonConfig_ = PyList_GetItem(rhs.pyObject(), (Py_ssize_t)i);
     }
   }
   else
   {
-    LOG(Warning) << getStringPath() << " is not a list";
-    return rhs;
+    LOG(WARNING) << getStringPath() << " is not a list";
+    pythonConfig_ = rhs.pyObject();
   }
 }
 

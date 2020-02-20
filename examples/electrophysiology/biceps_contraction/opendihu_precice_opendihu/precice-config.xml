@@ -41,6 +41,8 @@
       <read-data  name="Geometry" mesh="PartitionedFibersMesh"/>
 
       <!-- rbf to map from MuscleContractionMesh to PartitionedFibersMesh -->
+      <!--<mapping:nearest-neighbor direction="read" from="MuscleContractionMesh" to="PartitionedFibersMesh" constraint="consistent" />-->
+      
       <!--<mapping:rbf-gaussian 
         direction="read" 
         from="MuscleContractionMesh" 
@@ -51,13 +53,12 @@
         />-->
       <!-- rbf-compact-tps-c2 abgeschnittene splines, 3-5 Nachbarn im support radius--> 
         
-      <!--<mapping:rbf-thin-plate-splines
+      <mapping:rbf-thin-plate-splines
         direction="read" 
         from="MuscleContractionMesh" 
         to="PartitionedFibersMesh" 
         constraint="consistent" 
-        />-->
-      <mapping:nearest-neighbor direction="read" from="MuscleContractionMesh" to="PartitionedFibersMesh" constraint="consistent" />
+        />
     
     </participant>
     
@@ -78,7 +79,7 @@
     <coupling-scheme:serial-explicit>
       <participants first="PartitionedFibers" second="MuscleContraction"/>
       <max-time value="1.0"/>
-      <time-window-size value="1e-2"/>
+      <time-window-size value="1e-3"/>
       
       <exchange data="Gamma"    mesh="PartitionedFibersMesh" from="PartitionedFibers" to="MuscleContraction"/>
       <exchange data="Geometry" mesh="MuscleContractionMesh" from="MuscleContraction" to="PartitionedFibers"/> <!--initialize="true"-->

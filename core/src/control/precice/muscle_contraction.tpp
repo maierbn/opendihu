@@ -147,13 +147,17 @@ run()
     preciceReadData();
 
     // compute the time step width such that it fits in the remaining time in the current time window
-    int timeStepWidth = std::min(maximumPreciceTimestepSize_, timeStepWidth_);
+    //int timeStepWidth = std::min(maximumPreciceTimestepSize_, timeStepWidth_);
 
     // hard-code 1 time step for the static problem
-    timeStepWidth = maximumPreciceTimestepSize_;
+    double timeStepWidth = maximumPreciceTimestepSize_;
+
+    LOG(DEBUG) << "set timeStepWidth to " << timeStepWidth << ", equal to maximumPreciceTimestepSize_: " << maximumPreciceTimestepSize_;
 
     // call the nested solver
     nestedSolver_.run();
+
+    LOG(DEBUG) << "timeStepWidth: " << timeStepWidth << ", maximumPreciceTimestepSize_: " << maximumPreciceTimestepSize_;
 
     // write data to precice
     // data to send:

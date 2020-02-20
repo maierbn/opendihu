@@ -325,7 +325,7 @@ materialComputeResidual(double loadFactor)
   // before this method, values of u, v and p get stored to the data object by setUVP(solverVariableSolution_);
 
   //LOG(TRACE) << "materialComputeResidual";
-  const bool outputValues = false;
+  const bool outputValues = true;
   const bool outputFiles = false;
   if (outputValues)
     LOG(DEBUG) << "input: " << getString(solverVariableSolution_);
@@ -366,7 +366,7 @@ materialComputeResidual(double loadFactor)
     ierr = VecAXPY(solverVariableResidual_, -loadFactor, externalVirtualWorkDead_); CHKERRV(ierr);
 
     if(outputValues)
-      LOG(DEBUG) << "total:   " << getString(solverVariableResidual_);
+      LOG(DEBUG) << "static problem, total F = δW_int - δW_ext:" << getString(solverVariableResidual_);
 
   }
   else if (nDisplacementComponents == 6)
@@ -415,6 +415,8 @@ void HyperelasticitySolver<Term,nDisplacementComponents>::
 materialComputeExternalVirtualWorkDead()
 {
   // compute δW_ext,dead = int_Ω B^L * phi^L * phi^M * δu^M dx + int_∂Ω T^L * phi^L * phi^M * δu^M dS
+
+  LOG(DEBUG) << "materialComputeExternalVirtualWorkDead";
 
   combinedVecExternalVirtualWorkDead_->zeroEntries();               // clear entries to 0
   combinedVecExternalVirtualWorkDead_->startGhostManipulation();    // fill ghost buffers
@@ -520,6 +522,12 @@ materialComputeExternalVirtualWorkDead()
 
   combinedVecExternalVirtualWorkDead_->finishGhostManipulation();     // communicate and add up values in ghost buffers
   combinedVecExternalVirtualWorkDead_->startGhostManipulation();      // communicate ghost buffers values back in place
+
+  if (combinedVecExternalVirtualWorkDead_->containsNanOrInf())
+  {
+    LOG(FATAL) << "The external virtual work, δW_ext,dead contains nan or inf values. " << std::endl
+      << "Check that the constantBodyForce (" << constantBodyForce_ << ") and the Neumann boundary condition values are valid.";
+  }
 
   LOG(DEBUG) << "combinedVecExternalVirtualWorkDead (components 3-6 should be empty): " << combinedVecExternalVirtualWorkDead_->getString();
   //combinedVecExternalVirtualWorkDead_->startGhostManipulation();

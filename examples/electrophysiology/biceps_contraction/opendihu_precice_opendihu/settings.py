@@ -53,18 +53,26 @@ b = 0
 variables.material_parameters = [c1, c2, b, d]   # material parameters
 
 #variables.constant_body_force = (0,0,-9.81e-4)   # [cm/ms^2], gravity constant for the body force
-#variables.constant_body_force = (0,0,0)
+variables.constant_body_force = (0,0,0)
 #variables.bottom_traction = [0.0,0.0,-1e-1]        # [1 N]
-variables.bottom_traction = [0.0,0.0,-1e-3]        # [1 N]
+#variables.bottom_traction = [0.0,0.0,-1e-3]        # [1 N]
+variables.bottom_traction = [0.0,0.0,0.0]        # [1 N]
+#variables.bottom_traction = [0.0,-1e-2,-5e-2]        # [N]
 
-variables.fiber_file = "../../../input/7x7fibers.bin"
-#variables.fiber_file = "../../../input/2x2fibers.bin"
+
+#variables.fiber_file = "../../../input/7x7fibers.bin"
+variables.fiber_file = "../../../input/2x2fibers.bin"
 
 # stride for sampling the 3D elements from the fiber data
 # here any number is possible
-#variables.sampling_stride_x = 1
-#variables.sampling_stride_y = 1
-#variables.sampling_stride_z = 200
+variables.sampling_stride_x = 1
+variables.sampling_stride_y = 1
+variables.sampling_stride_z = 200
+
+variables.paraview_output = True
+variables.output_timestep = 1e-1               # [ms] timestep for output files
+
+variables.disable_firing_output = False
 
 # -------------- end user pararmeters ----------------
 
@@ -135,7 +143,7 @@ variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
 
 print("output_intermediate_index:",variables.output_intermediate_index)
 print("output_state_index:",variables.output_state_index)
-
+print("output_rwitrs: {}".format( variables.output_writer_fibers))
 
 # define the config dict
 config = {
@@ -167,8 +175,9 @@ config = {
       "maxIterations":       1e4,           # maximum number of iterations in the linear solver
       "snesMaxFunctionEvaluations": 1e8,    # maximum number of function iterations
       "snesMaxIterations":   10,            # maximum number of iterations in the nonlinear solver
-      "snesRelativeTolerance": 1e-10,       # relative tolerance of the nonlinear solver
+      "snesRelativeTolerance": 1e-5,       # relative tolerance of the nonlinear solver
       "snesAbsoluteTolerance": 1e-5,        # absolute tolerance of the nonlinear solver
+      "snesLineSearchType": "l2",        # type of linesearch, possible values: "bt" "nleqerr" "basic" "l2" "cp" "ncglinear"
       "dumpFilename":        "",
       "dumpFormat":          "matlab",
     }
@@ -189,8 +198,8 @@ config = {
           "durationLogKey":         "duration_monodomain",
           "timeStepOutputInterval": 100,
           "endTime":                variables.dt_splitting,
-          "connectedSlotsTerm1To2": [0],   # transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion)
-          "connectedSlotsTerm2To1": [0],   # transfer the same back, this avoids data copy
+          "connectedSlotsTerm1To2": {0:0, 1:1},   # transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion)
+          "connectedSlotsTerm2To1": {0:0, 1:1},   # transfer the same back, this avoids data copy
           "nAdditionalFieldVariables": 2,
 
           "Term1": {      # CellML, i.e. reaction term of Monodomain equation
@@ -302,7 +311,7 @@ config = {
       "timeStepOutputInterval":       100,                       # do not output time steps
       "Pmax": variables.pmax,                                    # maximum PK2 active stress
       "OutputWriter" : [
-        {"format": "Paraview", "outputInterval": 1, "filename": "out/" + variables.scenario_name + "/mechanics", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
+        {"format": "Paraview", "outputInterval": 100, "filename": "out/" + variables.scenario_name + "/mechanics", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
       ],
       "DynamicHyperelasticitySolver": {
         "timeStepWidth":              variables.dt_3D,           # time step width 
@@ -372,6 +381,9 @@ config = {
         "dumpDenseMatlabVariables":   False,                     # whether to have extra output of matlab vectors, x,r, jacobian matrix (very slow)
         # if useAnalyticJacobian,useNumericJacobian and dumpDenseMatlabVariables all all three true, the analytic and numeric jacobian matrices will get compared to see if there are programming errors for the analytic jacobian
         
+        #"loadFactors":  [0.1, 0.2, 0.35, 0.5, 1.0],   # load factors for every timestep
+        "nNonlinearSolveCalls": 1,         # how often the nonlinear solve should be repeated
+    
         # mesh
         "inputMeshIsGlobal":          False,                     # the mesh is given locally
         "meshName":                   "3Dmesh_quadratic",        # name of the 3D mesh, it is defined under "Meshes" at the beginning of this config
@@ -408,7 +420,13 @@ config = {
             #{"format": "Paraview", "outputInterval": int(output_interval/dt), "filename": "out/dynamic", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
             #{"format": "Paraview", "outputInterval": 1, "filename": "out/dynamic", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
           ],
-        }
+        },
+        # output writer for debugging, outputs files after each load increment, the geometry is not changed but u and v are written
+        "LoadIncrements": {   
+          "OutputWriter" : [
+            #{"format": "Paraview", "outputInterval": 1, "filename": "out/load_increment_", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
+          ]
+        },
       }
     }
   }

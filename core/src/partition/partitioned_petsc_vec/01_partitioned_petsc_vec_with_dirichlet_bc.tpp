@@ -590,6 +590,34 @@ updateDirichletBoundaryConditions(const std::vector<std::pair<global_no_t,std::a
   communicateBoundaryConditionGhostValues();
 }
 
+
+template<typename FunctionSpaceType, int nComponents, int nComponentsDirichletBc>
+bool PartitionedPetscVecWithDirichletBc<FunctionSpaceType, nComponents, nComponentsDirichletBc>::
+containsNanOrInf()
+{
+  // get all local values
+  std::vector<double> values;
+
+  for (int componentNo = 0; componentNo < nComponents; componentNo++)
+  {
+    values.resize(this->meshPartition_->nDofsLocalWithoutGhosts());
+
+    // void getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[]) const;
+    this->getValues(componentNo, this->meshPartition_->nDofsLocalWithoutGhosts(), this->meshPartition_->dofNosLocal().data(), values.data());
+
+    // loop over values and check if they are neither nan nor inf
+    for (int i = 0; i < values.size(); i++)
+    {
+      if (!std::isfinite(values[i]))
+      {
+        LOG(ERROR) << "containsNanOrInf(): value " << i << "/" << values.size() << ", component " << componentNo << "/" << nComponents << ": " << values[i];
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 //! output the vector to stream, for debugging
 template<typename FunctionSpaceType, int nComponents, int nComponentsDirichletBc>
 void PartitionedPetscVecWithDirichletBc<FunctionSpaceType, nComponents, nComponentsDirichletBc>::

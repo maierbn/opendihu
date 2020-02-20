@@ -21,6 +21,7 @@
 // forward declaration
 namespace Mesh { class Manager; }
 namespace Solver { class Manager; }
+namespace Partition { class RankSubset; }
 class SolverStructureVisualizer;
 
 /** This class contains global variables (mesh manager and solver manager) and a python config dictionary

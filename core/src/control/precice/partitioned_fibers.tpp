@@ -75,16 +75,16 @@ initialize()
       std::shared_ptr<::FunctionSpace::FunctionSpace<::Mesh::StructuredDeformableOfDimension<1>, ::BasisFunction::LagrangeOfOrder<1>>> functionSpace
         = fiberData->variable1[0].values->functionSpace();
 
-      LOG(INFO) << "output connection slots:";
-      LOG(INFO) << "  " << fiberData->variable1.size() << " in variable1";
+      LOG(DEBUG) << "output connection slots:";
+      LOG(DEBUG) << "  " << fiberData->variable1.size() << " in variable1:";
       for (int k = 0; k < fiberData->variable1.size(); k++)
       {
-        LOG(INFO) << "  " << k << ": " << fiberData->variable1[k].values->name();
+        LOG(DEBUG) << "  " << k << ": " << fiberData->variable1[k].values->name();
       }
-      LOG(INFO) << "  " << fiberData->variable2.size() << " in variable2";
+      LOG(DEBUG) << "  " << fiberData->variable2.size() << " in variable2:";
       for (int k = 0; k < fiberData->variable2.size(); k++)
       {
-        LOG(INFO) << "  " << k << ": " << fiberData->variable2[k].values->name();
+        LOG(DEBUG) << "  " << k << ": " << fiberData->variable2[k].values->name();
       }
 
       //TODO: checking
@@ -138,7 +138,7 @@ initialize()
       std::shared_ptr<::FunctionSpace::FunctionSpace<::Mesh::StructuredDeformableOfDimension<1>, ::BasisFunction::LagrangeOfOrder<1>>> functionSpace
         = fiberData->variable1[0].values->functionSpace();
 
-      LOG(INFO) << "fiberData " << i << " " << j << ": " << fiberData->variable1.size() << "," << fiberData->variable2.size() << ": " << *fiberData;
+      LOG(DEBUG) << "fiberData " << i << " " << j << ": " << fiberData->variable1.size() << "," << fiberData->variable2.size() << ": " << *fiberData;
 
       // loop over dofs of fiber
       for (int dofNoLocal = 0; dofNoLocal < nDofsLocalWithoutGhosts; dofNoLocal++)

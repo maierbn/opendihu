@@ -84,7 +84,7 @@ variables.sampling_stride_z = 200
 
 # enable paraview output
 variables.paraview_output = True
-variables.output_timestep = 1e-1               # [ms] timestep for output files of fibers
+variables.output_timestep = 1e0               # [ms] timestep for output files of fibers
 variables.disable_firing_output = False
 
 # -------------- end user parameters ----------------
@@ -319,6 +319,7 @@ config = {
   "MuscleContraction": {        # solid mechanics
     "preciceConfigFilename":          "../precice-config.xml",   # the preCICE configuration file
     "timestepWidth":                  variables.dt_3D,           # timestep width to tell precice
+    "outputConnectorSlotIdGamma":     2,                         # which output slot is gamma to be transferred over the precice adapter, there are: λ, λdot, γ
     "MuscleContractionSolver": {
       "dynamic":                      False,                     # if the dynamic formulation with velocity or the quasi-static formulation is computed
       "numberTimeSteps":              1,                         # only use 1 timestep per interval

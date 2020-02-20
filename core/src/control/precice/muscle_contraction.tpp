@@ -42,6 +42,8 @@ initialize()
   // set the outputConnectorData for the solverStructureVisualizer to appear in the solver diagram
   DihuContext::solverStructureVisualizer()->setOutputConnectorData(getOutputConnectorData());
 
+  outputConnectorSlotIdGamma_ = this->specificSettings_.getOptionInt("outputConnectorSlotIdGamma", 2, PythonUtility::Positive);
+
   // initialize precice
   const std::string solverName = "MuscleContraction";
   const std::string configFileName = this->specificSettings_.getOptionString("preciceConfigFilename", "../precice-config.xml");
@@ -187,7 +189,7 @@ preciceReadData()
   preciceSolverInterface_->readBlockScalarData(preciceDataIdGamma_, nDofsLocalWithoutGhosts, preciceVertexIds_.data(), gammaValues.data());
 
   // set gamma values
-  getOutputConnectorData()->variable1[0].setValuesWithoutGhosts(gammaValues);
+  getOutputConnectorData()->variable1[outputConnectorSlotIdGamma_].setValuesWithoutGhosts(gammaValues);
 
   LOG(DEBUG) << "read data from precice complete, gamma values: " << gammaValues;
 }

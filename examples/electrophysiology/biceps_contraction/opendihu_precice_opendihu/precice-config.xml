@@ -3,6 +3,7 @@
 <precice-configuration>
   <log>
     <sink type="stream" output="stdout"  filter='(%Severity% >= debug) and (not (%Function% = "advance"))' format="\033[0;33m%Rank% [precice]\033[0m %ColorizedSeverity%\033[0;33m%Message%\033[0m" enabled="true" />
+    <!--<sink type="stream" output="stdout"  filter='%Severity% >= debug' format="\033[0;33m%Rank% [precice]\033[0m %ColorizedSeverity%\033[0;33m%Message%\033[0m" enabled="true" />-->
     <!--<sink type="file" output="debug.log" filter= "(%Severity% >= debug)" format="%Message%" enabled="true" />	-->
   </log>
 
@@ -69,16 +70,40 @@
       <read-data  name="Gamma"    mesh="MuscleContractionMesh"/>
       <export:vtk directory="precice-output" />
       
-      <!-- nearest-neighbor to map from PartitionedFibersMesh to  MuscleContractionMesh -->
+      <!-- map from PartitionedFibersMesh to  MuscleContractionMesh -->
+      
+      <!-- available mappings:
+        rbf-thin-plate-splines
+        rbf-multiquadrics
+        rbf-inverse-multiquadrics
+        rbf-volume-splines
+        rbf-gaussian
+        rbf-compact-tps-c2
+        rbf-compact-polynomial-c0
+        rbf-compact-polynomial-c6
+        nearest-neighbor
+        nearest-projection
+      -->
+
       <!--<mapping:nearest-neighbor 
         direction="read" from="PartitionedFibersMesh" to="MuscleContractionMesh" constraint="consistent" timing="initial"/>-->
-      
+      <!--
+      rbf is very slow!
       <mapping:rbf-thin-plate-splines
         direction="read" 
         from="PartitionedFibersMesh" 
         to="MuscleContractionMesh" 
         constraint="consistent" 
-        />
+        />-->
+      
+      <!-- rbf-compact-tps-c2 abgeschnittene splines, 3-5 Nachbarn im support radius--> 
+      <mapping:rbf-compact-polynomial-c6
+        direction="read" 
+        from="PartitionedFibersMesh" 
+        to="MuscleContractionMesh" 
+        constraint="consistent" 
+        support-radius="0.01"
+      />
       
     </participant>
 

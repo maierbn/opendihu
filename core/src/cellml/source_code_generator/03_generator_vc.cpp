@@ -534,6 +534,9 @@ generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunc
   // add footer
   sourceCode << cellMLCode_.footer << std::endl;
 
+  // add code for a single instance
+  sourceCode << singleInstanceCode_;
+  
   // write out source file
   std::ofstream sourceCodeFile;
   OutputWriter::Generic::openFile(sourceCodeFile, outputFilename);
@@ -843,6 +846,9 @@ generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateE
   }
 }
 )";
+
+  // add code for a single instance
+  sourceCode << singleInstanceCode_;
 
   // write out source file
   std::ofstream sourceCodeFile;

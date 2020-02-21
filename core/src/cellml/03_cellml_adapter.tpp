@@ -352,3 +352,79 @@ setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2
 {
   return CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::template setInitialValues<FunctionSpaceType2>(initialValues);
 }
+
+template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
+void CellmlAdapter<nStates_,nIntermediates_,FunctionSpaceType>::
+initializeToEquilibriumValues(std::array<double,nStates_> &statesInitialValues)
+{
+  if (!this->rhsRoutineSingleInstance_)
+  {
+    LOG(ERROR) << "rhsRoutineSingleInstance is not compiled, not initializing equilibrium values for states.";
+  }
+
+  LOG(DEBUG) << "initializeToEquilibriumValues";
+
+  double currentTime = 0.0;
+  double maximumIncrement = 0;
+  double dt = this->initializeStatesToEquilibriumTimestepWidth_;
+  std::array<double,nStates_> previousU = statesInitialValues;
+  std::array<double,nStates_> &u = statesInitialValues;
+  std::array<double,nIntermediates_> intermediates;
+
+  std::array<double,nStates_> k1;
+  std::array<double,nStates_> u2, k2;
+  std::array<double,nStates_> u3, k3;
+  std::array<double,nStates_> u4, k4;
+
+  const int nInterations = 1e7;
+  for (int iterationNo = 0; iterationNo < nInterations; iterationNo++)
+  {
+    // compute k1 = f(t, u)
+    this->rhsRoutineSingleInstance_((void *)this, currentTime, u.data(), k1.data(), intermediates.data(), this->cellmlSourceCodeGenerator_.parameters().data());
+
+    // compute k2 = f(t+dt/2, u+dt/2.*k1)
+    for (int stateNo = 0; stateNo < nStates_; stateNo++)
+      u2[stateNo] = u[stateNo] + dt/2. * k1[stateNo];
+    this->rhsRoutineSingleInstance_((void *)this, currentTime+dt/2., u2.data(), k2.data(), intermediates.data(), this->cellmlSourceCodeGenerator_.parameters().data());
+
+    // compute k3 = f(t+dt/2, u+dt/2.*k2)
+    for (int stateNo = 0; stateNo < nStates_; stateNo++)
+      u3[stateNo] = u[stateNo] + dt/2. * k2[stateNo];
+    this->rhsRoutineSingleInstance_((void *)this, currentTime+dt/2., u3.data(), k3.data(), intermediates.data(), this->cellmlSourceCodeGenerator_.parameters().data());
+
+    // compute k4 = f(t+dt, u+dt*k3)
+    for (int stateNo = 0; stateNo < nStates_; stateNo++)
+      u4[stateNo] = u[stateNo] + dt * k3[stateNo];
+    this->rhsRoutineSingleInstance_((void *)this, currentTime+dt, u4.data(), k4.data(), intermediates.data(), this->cellmlSourceCodeGenerator_.parameters().data());
+
+    // compute u += dt/6 * (k1 + 2*k2 + 2*k3 + k4)
+    maximumIncrement = 0;
+    for (int stateNo = 0; stateNo < nStates_; stateNo++)
+    {
+      double increment = (k1[stateNo] + 2*k2[stateNo] + 2*k3[stateNo] + k4[stateNo])/6.;
+      maximumIncrement = std::max(maximumIncrement, fabs(increment));
+
+      u[stateNo] += dt * increment;
+    }
+
+    // if iteration diverges, restart from initial values with half the current timestep width
+    if (maximumIncrement > 1e4)
+    {
+      LOG(WARNING) << "Search for equilibrium of states with dt=" << dt << " diverged, restarting with dt=" << dt/2.0 << "\n"
+        << "Decrease value of \"initializeStatesToEquilibriumTimestepWidth\".";
+      dt /= 2.0;
+      u = previousU;
+    }
+
+    if (maximumIncrement < 1e-5)
+    {
+      LOG(INFO) << "Determined equilibrium of states after " << iterationNo << " iterations, dt=" << dt;
+      break;
+    }
+  }
+
+  if (maximumIncrement >= 1e-5)
+  {
+    LOG(ERROR) << "Equilibrium values for states were not found within " << nInterations << " RK-4 iterations! Last increment of a state: " << maximumIncrement << ", Last timestep width: " << dt;
+  }
+}

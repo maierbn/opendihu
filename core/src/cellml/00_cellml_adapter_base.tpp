@@ -13,6 +13,12 @@
 #include "control/diagnostic_tool/solver_structure_visualizer.h"
 
 template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
+std::array<double,nStates_> CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::statesInitialValues_;
+
+template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
+bool CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::statesInitialValuesinitialized_ = false;
+
+template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
 CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::
 CellmlAdapterBase(DihuContext context) :
   context_(context), specificSettings_(PythonConfig(context_.getPythonConfig(), "CellML")), data_(context_)
@@ -150,6 +156,12 @@ initialize()
   data_.setFunctionSpace(functionSpace_);
   data_.setIntermediateNames(cellmlSourceCodeGenerator_.intermediateNames());
   data_.initialize();
+
+  initializeStatesToEquilibrium_ = this->specificSettings_.getOptionBool("initializeStatesToEquilibrium", false);
+  if (initializeStatesToEquilibrium_)
+  {
+    initializeStatesToEquilibriumTimestepWidth_ = this->specificSettings_.getOptionDouble("initializeStatesToEquilibriumTimestepWidth", 1e-4);
+  }
 }
 
 template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
@@ -159,36 +171,44 @@ setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2
 {
   LOG(TRACE) << "CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::setInitialValues";
 
-  // initialize states
-  std::array<double,nStates_> statesInitialValues;
-  if (this->specificSettings_.hasKey("statesInitialValues"))
+  if (!statesInitialValuesinitialized_)
   {
-    LOG(DEBUG) << "set initial values from config";
 
-    // statesInitialValues gives the initial state values for one instance of the problem. it is used for all instances.
-    std::array<double,nStates_> statesInitialValuesFromConfig = this->specificSettings_.template getOptionArray<double,nStates_>("statesInitialValues", 0);
+    // initialize states
+    if (this->specificSettings_.hasKey("statesInitialValues"))
+    {
+      LOG(DEBUG) << "set initial values from config";
 
-    // store initial values to cellmlSourceCodeGenerator_
-    std::vector<double> statesInitialValuesGenerator = cellmlSourceCodeGenerator_.statesInitialValues();
-    statesInitialValuesGenerator.assign(statesInitialValuesFromConfig.begin(), statesInitialValuesFromConfig.end());
-  }
-  else
-  {
-    LOG(DEBUG) << "set initial values from source file";
+      // statesInitialValues gives the initial state values for one instance of the problem. it is used for all instances.
+      std::array<double,nStates_> statesInitialValuesFromConfig = this->specificSettings_.template getOptionArray<double,nStates_>("statesInitialValues", 0);
 
-    // parsing the source file was already done
-    // get initial values from source code generator
-    std::vector<double> statesInitialValuesGenerator = cellmlSourceCodeGenerator_.statesInitialValues();
-    assert(statesInitialValuesGenerator.size() == nStates_);
+      // store initial values to statesInitialValues_
+      std::copy(statesInitialValuesFromConfig.begin(), statesInitialValuesFromConfig.end(), statesInitialValues_.begin());
+    }
+    else
+    {
+      LOG(DEBUG) << "set initial values from source file";
 
-    std::copy(statesInitialValuesGenerator.begin(), statesInitialValuesGenerator.end(), statesInitialValues.begin());
+      // parsing the source file was already done
+      // get initial values from source code generator
+      std::vector<double> statesInitialValuesGenerator = cellmlSourceCodeGenerator_.statesInitialValues();
+      assert(statesInitialValuesGenerator.size() == nStates_);
+
+      std::copy(statesInitialValuesGenerator.begin(), statesInitialValuesGenerator.end(), statesInitialValues_.begin());
+    }
+
+    if (initializeStatesToEquilibrium_)
+    {
+      this->initializeToEquilibriumValues(statesInitialValues_);
+    }
+    statesInitialValuesinitialized_ = true;
   }
 
   // Here we have the initial values for the states in the statesInitialValues vector, only for one instance.
-  VLOG(1) << "statesInitialValues: " << statesInitialValues;
-  const std::vector<std::array<double,nStates_>> statesAllInstances(nInstances_, statesInitialValues);
+  VLOG(1) << "statesInitialValues: " << statesInitialValues_;
+  const std::vector<std::array<double,nStates_>> statesAllInstances(nInstances_, statesInitialValues_);
 
-  VLOG(1) << "statesAllInstances: " << statesAllInstances << ", nInstances: " << nInstances_ << ", nStates_ per instances: " << statesInitialValues.size();
+  VLOG(1) << "statesAllInstances: " << statesAllInstances << ", nInstances: " << nInstances_ << ", nStates_ per instances: " << statesInitialValues_.size();
   initialValues->setValuesWithoutGhosts(statesAllInstances);
 
   VLOG(1) << "initialValues: " << *initialValues;

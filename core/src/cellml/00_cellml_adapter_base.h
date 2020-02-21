@@ -100,18 +100,26 @@ public:
 
 protected:
 
-  DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
-  PythonConfig specificSettings_;    ///< python object containing the value of the python config dict with corresponding key
-  OutputWriter::Manager outputWriterManager_; ///< manager object holding all output writer
+  //! compute equilibrium of states for option "initializeStatesToEquilibrium"
+  virtual void initializeToEquilibriumValues(std::array<double,nStates_> &statesInitialValues) = 0;
 
-  std::shared_ptr<FunctionSpaceType> functionSpace_;    ///< a mesh, there are as many instances of the same CellML problem as there are nodes in the mesh
-  Data data_;     ///< the data object that stores all variables, i.e. intermediates and states
 
-  int nInstances_;         ///< number of instances of the CellML problem. Usually it is the number of mesh nodes when a mesh is used. When running in parallel this is the local number of instances without ghosts.
+  DihuContext context_;                                    //< object that contains the python config for the current context and the global singletons meshManager and solverManager
+  PythonConfig specificSettings_;                          //< python object containing the value of the python config dict with corresponding key
+  OutputWriter::Manager outputWriterManager_;              //< manager object holding all output writer
 
-  int internalTimeStepNo_ = 0; ///< the counter how often the right hand side was called
+  std::shared_ptr<FunctionSpaceType> functionSpace_;       //< a mesh, there are as many instances of the same CellML problem as there are nodes in the mesh
+  Data data_;                                              //< the data object that stores all variables, i.e. intermediates and states
+  static std::array<double,nStates_> statesInitialValues_;        //< the initial values for the states, see setInitialValues
+  static bool statesInitialValuesinitialized_;                  //< if the statesInitialValues_ variables has been initialized
 
-  CellmlSourceCodeGenerator cellmlSourceCodeGenerator_;    ///< object that holds all source code related to the model
+  int nInstances_;                                         //< number of instances of the CellML problem. Usually it is the number of mesh nodes when a mesh is used. When running in parallel this is the local number of instances without ghosts.
+  int internalTimeStepNo_ = 0;                             //< the counter how often the right hand side was called
+
+  bool initializeStatesToEquilibrium_;                     //< if the initial states should be computed until they reach an equilibrium
+  double initializeStatesToEquilibriumTimestepWidth_;      //< timestep width for computation of equilibrium states
+
+  CellmlSourceCodeGenerator cellmlSourceCodeGenerator_;    //< object that holds all source code related to the model
 };
 
 #include "cellml/00_cellml_adapter_base.tpp"

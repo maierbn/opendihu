@@ -65,6 +65,9 @@ void CellmlSourceCodeGeneratorBase::initialize(
     }
   }
   VLOG(1) << "parameters_: " << parameters_;
+
+  // Generate the rhs code for a single instance. This is needed for computing the equilibrium of the states.
+  this->generateSingleInstanceCode();
 }
 
 void CellmlSourceCodeGeneratorBase::convertFromXmlToC()
@@ -125,6 +128,67 @@ void CellmlSourceCodeGeneratorBase::convertFromXmlToC()
       }
     }
   }
+}
+
+void CellmlSourceCodeGeneratorBase::generateSingleInstanceCode()
+{
+
+  LOG(DEBUG) << "generateSingleInstanceCode";
+
+  std::stringstream sourceCode;
+
+  sourceCode << std::endl
+    << "// compute the rhs for a single instance, this can be used for computation of the equilibrium values of the states" << std::endl
+    << "extern \"C\"\n"
+    << "void computeCellMLRightHandSideSingleInstance("
+    << "void *context, double t, double *states, double *rates, double *intermediates, double *parameters)" << std::endl << "{" << std::endl;
+
+  sourceCode << "  double VOI = t;   /* current simulation time */" << std::endl;
+  sourceCode << std::endl << "  /* define constants */" << std::endl
+    << "  double CONSTANTS[" << this->nConstants_ << "];" << std::endl;
+
+  // add assignments of constant values
+  for (std::string constantAssignmentsLine : constantAssignments_)
+  {
+    sourceCode << "  " << constantAssignmentsLine << std::endl;
+  }
+  sourceCode << std::endl;
+
+  // loop over lines of cellml code
+  for (code_expression_t &codeExpression : cellMLCode_.lines)
+  {
+
+    if (codeExpression.type != code_expression_t::commented_out)
+    {
+      sourceCode << "  ";
+      codeExpression.visitLeafs([&sourceCode,this](code_expression_t &expression, bool isFirstVariable)
+      {
+        switch(expression.type)
+        {
+        case code_expression_t::variableName:
+          sourceCode << expression.code << "[" << expression.arrayIndex<< "]";
+          break;
+
+        case code_expression_t::otherCode:
+          sourceCode << expression.code;
+          break;
+
+        case code_expression_t::commented_out:
+          sourceCode << "  // (not assigning to a parameter) " << expression.code;
+          break;
+
+        default:
+          break;
+        };
+      });
+
+      sourceCode << std::endl;
+    }
+  }
+
+  sourceCode << "}\n";
+
+  singleInstanceCode_ = sourceCode.str();
 }
 
 std::vector<double> &CellmlSourceCodeGeneratorBase::statesInitialValues()

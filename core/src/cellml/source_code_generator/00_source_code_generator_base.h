@@ -95,6 +95,10 @@ protected:
   //! cellMLCode_
   void parseSourceCodeFile();
 
+  //! Generate the rhs code for a single instance. This is needed for computing the equilibrium of the states.
+  void generateSingleInstanceCode();
+
+
 
   int nInstances_;                             //< number of instances of the CellML problem. Usually it is the number of mesh nodes when a mesh is used. When running in parallel this is the local number of instances without ghosts.
   int nParameters_ = 0;                        //< number of parameters (=CellML name "known") in one instance of the CellML problem
@@ -115,7 +119,8 @@ protected:
   std::vector<std::string> stateNames_;        //< the names for the states as given in the input source file
   std::vector<std::string> intermediateNames_; //< the names for the intermediates as given in the input source file
 
-  std::string sourceFilename_;                 //<file name of provided CellML source file
+  std::string sourceFilename_;                 //< file name of provided CellML source file
+  std::string singleInstanceCode_;             //< c++ code that computes the rhs for a single instance, as in the original source file. This is needed to compute the equilibrium of states.
 
   std::vector<double> statesInitialValues_;    //< initial values of the states for one instances, as parsed from source file
 

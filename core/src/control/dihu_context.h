@@ -112,7 +112,7 @@ private:
   void parseGlobalParameters();
 
   //! initiaize the easylogging++ framework
-  void initializeLogging(int argc, char *argv[]);
+  void initializeLogging(int &argc, char *argv[]);
 
   //! start MegaMol in a new thread
   void initializeMegaMol(int argc, char *argv[]);

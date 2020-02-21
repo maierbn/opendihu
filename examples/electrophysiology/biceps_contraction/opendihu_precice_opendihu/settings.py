@@ -248,6 +248,9 @@ config = {
                     "setSpecificStatesFrequencyJitter":       variables.get_specific_states_frequency_jitter(fiber_no, motor_unit_no), # random value to add or substract to setSpecificStatesCallFrequency every stimulation, this is to add random jitter to the frequency
                     "setSpecificStatesRepeatAfterFirstCall":  0.01,                                                            # [ms] simulation time span for which the setSpecificStates callback will be called after a call was triggered
                     "setSpecificStatesCallEnableBegin":       variables.get_specific_states_call_enable_begin(fiber_no, motor_unit_no),# [ms] first time when to call setSpecificStates
+                    "initializeStatesToEquilibrium":          True,                                                            # if the initial states should be computed until they reach an equilibrium
+                    "initializeStatesToEquilibriumTimestepWidth": 1e-3,                                             # timestep width for computation of equilibrium states
+
                     "additionalArgument":                     fiber_no,
                     "intermediatesForTransfer":               variables.output_intermediate_index,            # which intermediate values to use in further computation
                     "statesForTransfer":                      variables.output_state_index,                   # which state values to use in further computation, Shorten / Hodgkin Huxley: state 0 = Vm
@@ -315,6 +318,8 @@ config = {
     },
     "fiberDistributionFile":    variables.fiber_distribution_file,   # for FastMonodomainSolver, e.g. MU_fibre_distribution_3780.txt
     "firingTimesFile":          variables.firing_times_file,         # for FastMonodomainSolver, e.g. MU_firing_times_real.txt
+    "onlyComputeIfHasBeenStimulated": True,                          # only compute fibers after they have been stimulated for the first time
+    "disableComputationWhenStatesAreCloseToEquilibrium": True,       # optimization where states that are close to their equilibrium will not be computed again
   },
   "MuscleContraction": {        # solid mechanics
     "preciceConfigFilename":          "../precice-config.xml",   # the preCICE configuration file

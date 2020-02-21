@@ -91,6 +91,9 @@ generateSourceFileSimd(std::string outputFilename)
   // add footer
   simdSource << cellMLCode_.footer << std::endl;
 
+  // add code for a single instance
+  simdSource << singleInstanceCode_;
+
   // write out source file
   std::ofstream simdSourceFile;
   OutputWriter::Generic::openFile(simdSourceFile, outputFilename);

@@ -136,6 +136,16 @@ protected:
   //! compute the 0D-1D problem with Strang splitting
   void computeMonodomain();
 
+  //! check if the current point will be stimulated now
+  struct FiberData;
+  bool isCurrentPointStimulated(int fiberDataNo, double currentTime, bool currentPointIsInCenter);
+
+  //! method to be called after the compute0D, updates the information in fiberPointBuffersStatesAreCloseToEquilibrium_
+  void equilibriumAccelerationUpdate(const Vc::double_v statesPreviousValues[], int pointBuffersNo);
+
+  //! check if the 0D computations for the current point are disabled because the states are in equilibrium
+  bool isEquilibriumAccelerationCurrentPointDisabled(bool stimulateCurrentPoint, int pointBuffersNo);
+
   //! set the initial values for all states
   virtual void initializeStates(Vc::double_v states[]){};
 
@@ -186,6 +196,18 @@ protected:
   double currentTime_;                //< the current time used for the output writer
   int nTimeStepsSplitting_;           //< number of times to repeat the Strang splitting for one advanceTimeSpan() call of FastMonodomainSolver
 
+  bool onlyComputeIfHasBeenStimulated_;       //< option if fiber should only be computed after it has been stimulated for the first time
+  std::vector<bool> fiberHasBeenStimulated_;  //< for every fiber if it has been stimulated
+
+  bool disableComputationWhenStatesAreCloseToEquilibrium_;                  //< option to avoid computation when the states won't change much
+  enum state_t {
+    constant,                         //< the state values at the own point did not change in the last computation (according to a tolerance). This means the current point does not need to be computed.
+    neighbour_not_constant,           //< the state values did not change, so the state is constant, but at a neighbouring point the value changed. This means the own value has to be computed because it can change due to diffusion.
+    not_constant                      //< the state values at the own point change and have to be computed
+  };                                                                        //< type for fiberPointBuffersStatesAreCloseToEquilibrium_
+  std::vector<state_t> fiberPointBuffersStatesAreCloseToEquilibrium_;       //< for every entry in fiberPointBuffers_, constant if the states didn't change too much in the last compute0D, neighbour_not_constant if the state of the neighbouring pointBuffer changes
+  int nFiberPointBufferStatesCloseToEquilibrium_;                           //< number of "constant" entries in fiberPointBuffersStatesAreCloseToEquilibrium_
+
   std::vector<int> statesForTransfer_;                          //< state no.s to transfer to other solvers within output connector data
   std::vector<int> intermediatesForTransfer_;   //< which intermediates should be transferred to other solvers as part of output connector data
 
@@ -201,3 +223,6 @@ protected:
 };
 
 #include "specialized_solver/fast_monodomain_solver/fast_monodomain_solver_base.tpp"
+#include "specialized_solver/fast_monodomain_solver/fast_monodomain_solver_communication.tpp"
+#include "specialized_solver/fast_monodomain_solver/fast_monodomain_solver_compute.tpp"
+#include "specialized_solver/fast_monodomain_solver/fast_monodomain_solver_initialization.tpp"

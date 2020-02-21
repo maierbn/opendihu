@@ -2,7 +2,7 @@
 
 #include <Python.h>  // this has to be the first included header
 
-void DihuContext::initializeLogging(int argc, char *argv[])
+void DihuContext::initializeLogging(int &argc, char *argv[])
 {
   START_EASYLOGGINGPP(argc, argv);
 /*
@@ -83,13 +83,22 @@ void DihuContext::initializeLogging(int argc, char *argv[])
 
   if (argc >= 3)
   {
+    // if the 3rd argument starts with '/', interpret it as logging path under /tmp/logs/
     std::string argument(argv[2]);
     if (argument[0] == '/')
     {
+      // ensure that last character is '/'
       if (argument[argument.size()-1] != '/')
         argument += "/";
 
       logFilesPath += argument.substr(1);
+
+      // remove argument
+      argc--;
+      for (int i = 2; i < argc; i++)
+      {
+        argv[i] = argv[i+1];
+      }
     }
   }
 

@@ -184,6 +184,7 @@ loadRhsLibrary(std::string libraryFilename)
     // try to load several routine names
     rhsRoutine_ = (void (*)(void *,double,double*,double*,double*,double*)) dlsym(handle, "computeCellMLRightHandSide");
     rhsRoutineGPU_ = (void (*)(void *,double,double*,double*,double*,double*)) dlsym(handle, "computeGPUCellMLRightHandSide");
+    rhsRoutineSingleInstance_ = (void (*)(void *,double,double*,double*,double*,double*)) dlsym(handle, "computeCellMLRightHandSideSingleInstance");
     initConstsOpenCOR_ = (void(*)(double*, double*, double*)) dlsym(handle, "initConsts");
     computeRatesOpenCOR_ = (void(*)(double, double*, double*, double*, double*)) dlsym(handle, "computeRates");
     computeVariablesOpenCOR_  = (void(*)(double, double*, double*, double*, double*)) dlsym(handle, "computeVariables");
@@ -191,6 +192,7 @@ loadRhsLibrary(std::string libraryFilename)
     LOG(DEBUG) << "Library \"" << libraryFilename << "\" loaded. "
       << "rhsRoutine_: " << (rhsRoutine_==NULL? "NULL" : "yes")
       << ", rhsRoutineGPU_: " << (rhsRoutineGPU_==NULL? "NULL" : "yes")
+      << ", rhsRoutineSingleInstance: " << (rhsRoutineSingleInstance_==NULL? "NULL" : "yes")
       << ", initConstsOpenCOR_: " << (initConstsOpenCOR_==NULL? "NULL" : "yes")
       << ", computeRatesOpenCOR_: " << (computeRatesOpenCOR_==NULL? "NULL" : "yes")
       << ", computeVariablesOpenCOR_: " << (computeVariablesOpenCOR_==NULL? "NULL" : "yes");

@@ -141,7 +141,7 @@ void CellmlSourceCodeGeneratorBase::generateSingleInstanceCode()
     << "// compute the rhs for a single instance, this can be used for computation of the equilibrium values of the states" << std::endl
     << "#ifdef __cplusplus\n"
     << "extern \"C\"\n"
-    << "#endif"
+    << "#endif\n"
     << "void computeCellMLRightHandSideSingleInstance("
     << "void *context, double t, double *states, double *rates, double *intermediates, double *parameters)" << std::endl << "{" << std::endl;
 

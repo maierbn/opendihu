@@ -86,17 +86,6 @@ initialize()
       {
         LOG(DEBUG) << "  " << k << ": " << fiberData->variable2[k].values->name();
       }
-
-      //TODO: checking
-/*
-      if (fiberData->variable1.size() != 1)
-      {
-        LOG(FATAL) << "Fiber (" << i << "," << j << ") has " << fiberData->variable1.size() << " slots in variable1, but 1 (Vm) is required.";
-      }
-*/
-      //fiberData->variable1[0].values->name();
-
-      //break;
     }
   }
 

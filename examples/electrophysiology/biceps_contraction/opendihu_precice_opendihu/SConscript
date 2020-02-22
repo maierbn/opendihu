@@ -8,4 +8,4 @@
 Import('env')     # import Environment object from calling SConstruct
 
 env.Program(target = "fibers", source = "src/fibers.cpp")
-env.Program(target = "contraction", source = "src/contraction.cpp")
+#env.Program(target = "contraction", source = "src/contraction.cpp")

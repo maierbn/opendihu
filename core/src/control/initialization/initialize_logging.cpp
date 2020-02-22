@@ -81,19 +81,20 @@ void DihuContext::initializeLogging(int &argc, char *argv[])
   // set location of log files
   std::string logFilesPath = "/tmp/logs/";   // must end with '/'
 
+  // if the 3rd argument starts with '--log=', interpret it as logging path under /tmp/logs/
   if (argc >= 3)
   {
-    // if the 3rd argument starts with '/', interpret it as logging path under /tmp/logs/
     std::string argument(argv[2]);
-    if (argument[0] == '/')
+    if (argument.substr(0,6) == "--log=")
     {
-      // ensure that last character is '/'
-      if (argument[argument.size()-1] != '/')
-        argument += "/";
+      // parse logging directory, ensure that last character is '/'
+      std::string logDirectory = argument.substr(6);
+      if (logDirectory[logDirectory.size()-1] != '/')
+        logDirectory += "/";
 
-      logFilesPath += argument.substr(1);
+      logFilesPath += logDirectory;
 
-      // remove argument
+      // remove this argument
       argc--;
       for (int i = 2; i < argc; i++)
       {

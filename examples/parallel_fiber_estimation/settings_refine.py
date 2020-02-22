@@ -27,6 +27,7 @@ print("nFineGridFibers: {}".format(nFineGridFibers))
 bc = {}
 
 config = {
+  "solverStructureDiagramFile": "solver_structure.txt",
   "Solvers": {
     "linearSolver": {
       "relativeTolerance": 1e-12,

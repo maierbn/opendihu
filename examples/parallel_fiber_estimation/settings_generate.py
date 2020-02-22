@@ -17,6 +17,7 @@ if len(sys.argv) > 0:
 bc = {}
 
 config = {
+  "solverStructureDiagramFile": "solver_structure.txt",
   "scenarioName": "72 220 splines 2,2,2 improve",
   "Solvers": {
     "linearSolver": {

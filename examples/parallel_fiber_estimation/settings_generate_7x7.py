@@ -14,8 +14,8 @@ if len(sys.argv) < 7:
 else:
   input_filename = sys.argv[0]        # e.g. ../../electrophysiology/input/biceps_splines.stl
   output_filename = sys.argv[1]       # e.g. result_0x0fibers.bin
-  bottom_z = int(sys.argv[2])
-  top_z = int(sys.argv[3])
+  bottom_z = float(sys.argv[2])
+  top_z = float(sys.argv[3])
   element_size = float(sys.argv[4])
   
 print("input_filename:  {}".format(input_filename))
@@ -25,6 +25,7 @@ print("element_size: {}, number of elements per fiber: {}".format(element_size, 
 
 config = {
   "scenarioName": "7x7fibers",
+  "solverStructureDiagramFile": "solver_structure.txt",
   "Solvers": {
     "linearSolver": {
       "relativeTolerance": 1e-4,

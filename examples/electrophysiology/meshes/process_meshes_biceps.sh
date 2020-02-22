@@ -22,7 +22,12 @@ mkdir -p processed_meshes
 # scale mesh from mm to cm, i.e. scale coordinates by factor 0.1
 echo ""
 echo "--- Scale mesh from mm to cm."
-$pyod ./stl_utility/scale_stl.py ${input_file} original_meshes/cm_${basename}.stl 0.1 0.1 0.1
+if [[ ! -f "original_meshes/cm_${basename}.stl" ]]; then
+  echo "create file \"original_meshes/cm_${basename}.stl\""
+  $pyod ./stl_utility/scale_stl.py ${input_file} original_meshes/cm_${basename}.stl 0.1 0.1 0.1
+else
+  echo "File \"original_meshes/cm_${basename}.stl\" already exists, do not create again."
+fi
 
 # remove inside triangles
 echo ""
@@ -36,8 +41,6 @@ fi
 $pyod ./stl_utility/stl_to_binary.py \
   processed_meshes/${basename}_01_no_inside_triangles.stl \
   processed_meshes/${basename}_02_no_inside_triangles_binary.stl
-
-
 
 # move mesh such that bottom is at 0
 echo ""
@@ -85,16 +88,15 @@ echo "--- Generate 7x7 and 9x9 fibers.bin file"
 
 
 if [[ ! -f "${current_directory}/processed_meshes/${basename}_05_7x7fibers.bin" ]]; then
-
-./generate ../settings_generate_7x7.py \
-  ${current_directory}/processed_meshes/${basename}_04_spline_surface.pickle \
-  ${current_directory}/processed_meshes/${basename}_05_0x0fibers.bin \
-  7.2 22 0.01
+  echo "./generate ../settings_generate_7x7.py ${current_directory}/processed_meshes/${basename}_04_spline_surface.pickle ${current_directory}/processed_meshes/${basename}_05_0x0fibers.bin 7.2 22 0.01"
+  ./generate ../settings_generate_7x7.py \
+    ${current_directory}/processed_meshes/${basename}_04_spline_surface.pickle \
+    ${current_directory}/processed_meshes/${basename}_05_0x0fibers.bin \
+    7.2 22 0.01
 else
-
-echo "file processed_meshes/${basename}_05_7x7fibers.bin already exists"
-
+  echo "file processed_meshes/${basename}_05_7x7fibers.bin already exists"
 fi
+
 
 cp ${current_directory}/processed_meshes/7x7fibers.no_boundary.bin ${current_directory}/processed_meshes/${basename}_05_7x7fibers.bin
 cp ${current_directory}/processed_meshes/9x9fibers.bin ${current_directory}/processed_meshes/${basename}_05_9x9fibers.bin

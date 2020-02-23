@@ -1,44 +1,3 @@
-/*BHEADER**********************************************************************
- * Copyright (c) 2013, Lawrence Livermore National Security, LLC.
- * Produced at the Lawrence Livermore National Laboratory. Written by
- * Jacob Schroder, Rob Falgout, Tzanio Kolev, Ulrike Yang, Veselin
- * Dobrev, et al. LLNL-CODE-660355. All rights reserved.
- *
- * This file is part of XBraid. For support, post issues to the XBraid Github page.
- *
- * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License (as published by the Free Software
- * Foundation) version 2.1 dated February 1999.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY
- * WARRANTY; without even the IMPLIED WARRANTY OF MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the terms and conditions of the GNU General Public
- * License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc., 59
- * Temple Place, Suite 330, Boston, MA 02111-1307 USA
- *
- ***********************************************************************EHEADER*/
-
-/**
- * Example:       ex-02.c
- *
- * Interface:     C
- *
- * Requires:      only C-language support
- *
- * Compile with:  make ex-02
- *
- * Help with:     ex-02 -help
- *
- * Sample run:    mpirun -np 2 ex-02
- *
- * Description:   Solves the 1D heat equation, with only parallelism in time
- *                Space-time domain:  [0, PI] x [0, 2*PI]
- *                Exact solution:     u(t,x) = sin(x)*cos(t)
- *
- **/
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -58,6 +17,8 @@
 #include <petscvec.h>
 
 #include <opendihu.h>
+
+// #include "time_stepping_scheme/implicit_euler.h"
 
 /*--------------------------------------------------------------------------
  * My App and Vector structures
@@ -125,15 +86,22 @@ int my_Step(braid_App        app,
 {
    PetscReal tstart;             /* current time */
    PetscReal tstop;              /* evolve to this time*/
-   PetscInt level, i;
+   PetscInt level, i, solver;
    PetscReal deltaX, deltaT;
 
+   // get level and start and stop time from braid status
    braid_StepStatusGetLevel(status, &level);
    braid_StepStatusGetTstartTstop(status, &tstart, &tstop);
-   deltaT = tstop - tstart;
-   deltaX = (app->xstop - app->xstart) / (ustop->size - 1.0);
+
+   // determine, which solver is needed (depends on size)
+   solver=log2(u->size - 1);
+
+   // printf("%d\n", level);
+   // printf("%d\n", u->size);
+   // printf("%d\n", n);
 
    /* XBraid forcing */
+
    if(fstop != NULL)
    {
       for(i = 0; i < u->size; i++)
@@ -142,19 +110,34 @@ int my_Step(braid_App        app,
       }
    }
 
-   /* Take backward Euler step
-    * Note: if an iterative solver were used, ustop->values would
-    *       contain the XBraid's best initial guess. */
-   take_step(u->values, u->size, tstop, app->xstart, deltaX, deltaT,
-         app->matrix, app->g);
+   Vec V; //create vector V with the given values of u
+   VecCreateSeqWithArray(PETSC_COMM_SELF, 1, u->size, u->values,&V);
+   VecAssemblyBegin(V);
+   VecAssemblyEnd(V);
 
-   // (app->solver)->run();
-   // printf(" %d",app->ntime);
-   // printf(" %d",app->nspace);
+   // Set the initial guess for the solver
+   (*app->implicitEulerSolvers)[solver]->data().solution()->valuesGlobal()=V;
+
+   // set time span for the solver, which is calculated by braid status
+   (*app->implicitEulerSolvers)[solver]->setTimeSpan(tstart, tstop);
+
+   // run solver
+   (*app->implicitEulerSolvers)[solver]->run();
+
+   // functions for debugging:
+   // VecView((*app->implicitEulerSolvers)[0]->data().solution()->valuesGlobal(), 	PETSC_VIEWER_STDOUT_SELF);
+   // PetscRealView(6, u->values, 0);
+
+   // put the calculated solution into braid vector u
+   VecGetArray(&(*((*app->implicitEulerSolvers)[solver]->data().solution()->valuesGlobal())),&(u->values));
+
+   deltaT = tstop - tstart;
+   deltaX = (app->xstop - app->xstart) / (ustop->size - 1.0);
+
    /* Store info on space-time grids visited during the simulation */
    (app->sc_info)[ (2*level) ] = deltaX;
    (app->sc_info)[ (2*level) + 1] = deltaT;
-   // printf(" %f",deltaX);
+
    /* no refinement */
    braid_StepStatusSetRFactor(status, 1);
 
@@ -189,12 +172,12 @@ my_Init(braid_App     app,
          (u->values)[i] = ((double)braid_Rand())/braid_RAND_MAX;
       }
    }
-   (u->values)[0] =200;
-   (u->values)[1] =200;
-   (u->values)[2] =400;
-   (u->values)[3] =500;
-   (u->values)[4] =200;
-   (u->values)[5] =200;
+   // (u->values)[0] =2;
+   // (u->values)[1] =2;
+   // (u->values)[2] =4;
+   // (u->values)[3] =5;
+   // (u->values)[4] =2;
+   // (u->values)[5] =2;
    *u_ptr = u;
 
    return 0;
@@ -247,24 +230,6 @@ my_Sum(braid_App     app,
    return 0;
 }
 
-// int
-// my_Sum(braid_App     app,
-//        PetscReal        alpha,
-//        braid_Vector  x,
-//        PetscReal        beta,
-//        braid_Vector  y)
-// {
-//   Vec X,Y;
-//   VecCreateSeqWithArray(PETSC_COMM_SELF,x->size,x->size,x->values,&X);
-//   VecAssemblyBegin(X);
-//   VecAssemblyEnd(X);
-//   VecCreateSeqWithArray(PETSC_COMM_SELF,y->size,y->size,y->values,&Y);
-//   VecAssemblyBegin(Y);
-//   VecAssemblyEnd(Y);
-//   VecAXPBY(Y,alpha,beta,X);
-//
-//    return 0;
-// }
 
 int
 my_SpatialNorm(braid_App     app,
@@ -302,7 +267,7 @@ my_Access(braid_App          app,
    if(done)
    {
       MPI_Comm_rank( (app->comm), &rank);
-      sprintf(filename, "%s.%07d.%05d", "ex-02.out", index, rank);
+      sprintf(filename, "%s.%07d.%05d", "PinT_diffusion.out", index, rank);
       save_solution(filename, u->values, u->size, app->xstart,
             app->xstop, app->ntime, app->tstart, app->tstop);
    }

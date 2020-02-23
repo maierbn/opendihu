@@ -52,6 +52,7 @@ public:
 protected:
 
   //! Here you can define private methods
+  void PinT_initialize();
   void executeMyHelperMethod();
 
   DihuContext context_;                       //< object that contains the python config for the current context and the global singletons meshManager and solverManager
@@ -70,6 +71,10 @@ protected:
   > data_;                                 //< the data objects that stores at least all field variables that should be output by output writers, one for each implicit euler
 
   bool initialized_;                          //< if initialize() was already called
+
+  double tstart_;
+  double tstop_;
+  int ntime_;
 };
 
 #include "specialized_solver/my_new_solver/PinT_IE.tpp"

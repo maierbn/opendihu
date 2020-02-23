@@ -4,6 +4,12 @@
 #include <sstream>
 
 #include "braid.h"
+
+#include <petscdm.h>
+#include <petscdmda.h>
+#include <petscts.h>
+#include <petscdraw.h>
+#include <petscvec.h>
 //#include "/mnt/c/Users/mariu/OneDrive/Dokumente/Masterarbeit/Opendihu/opendihu/dependencies/xbraid/src/xbraid-2.3.0/braid/braid.hpp"
 // #include "PinT_IE_Braid.cpp"
 #include "PinT_IE_Braid.c"
@@ -97,56 +103,6 @@ initialize()
 
   // here is the space to initialize anything else that is needed for your solver
   // for example, initialize Braid here (not like this)
-
-  // double        tstart, tstop;
-  // int           ntime, rank;
-  //
-  // // Define time domain: ntime intervals
-  // ntime  = 10;
-  // tstart = 0.0;
-  // tstop  = tstart + ntime/2.;
-  //
-  // // comm = MPI_COMM_WORLD;
-  // // MPI_Init(&argc, &argv);
-  // MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  //
-  // // set up app structure
-  // MyBraidApp app(MPI_COMM_WORLD, rank, tstart, tstop, ntime);
-  //
-  // // Initialize Braid Core Object and set some solver options
-  // BraidCore core(MPI_COMM_WORLD, &app);
-  // core.SetPrintLevel(2);
-  // core.SetMaxLevels(2);
-  // core.SetAbsTol(1.0e-6);
-  // core.SetCFactor(-1, 2);
-  /* set up app structure */
-
-  // app = (my_App *) malloc(sizeof(my_App));
-  // (app->g)             = (double*) malloc( nspace*sizeof(double) );
-  // (app->comm)          = comm;
-  // (app->tstart)        = tstart;
-  // (app->tstop)         = tstop;
-  // (app->ntime)         = ntime;
-  // (app->xstart)        = xstart;
-  // (app->xstop)         = xstop;
-  // (app->nspace)        = nspace;
-  // (app->print_level)   = print_level;
-  //
-  // /* Initialize storage for sc_info, for tracking space-time grids visited during the simulation */
-  // app->sc_info = (double*) malloc( 2*max_levels*sizeof(double) );
-  // for( i = 0; i < 2*max_levels; i++) {
-  //    app->sc_info[i] = -1.0;
-  // }
-  //
-  // /* Initialize Braid */
-  // braid_Init(MPI_COMM_WORLD, comm, tstart, tstop, ntime, app,
-  //        my_Step, my_Init, my_Clone, my_Free, my_Sum, my_SpatialNorm,
-  //        my_Access, my_BufSize, my_BufPack, my_BufUnpack, &core);
-
-  // braid_Init(MPI_COMM_WORLD, comm, 0, 0, 0, nullptr,
-  //       NULL, NULL, NULL, NULL, NULL, NULL,
-  //       NULL, NULL, NULL, NULL, &core);
-
   initialized_ = true;
 }
 
@@ -156,55 +112,26 @@ run()
 {
   // initialize everything
   initialize();
+  PinT_initialize();
 
-  // double        tstart, tstop;
-  // int           ntime, rank;
-  // MPI_Comm comm;
-  // // Define time domain: ntime intervals
-  // ntime  = 10;
-  // tstart = 0.0;
-  // tstop  = tstart + ntime/2.;
-  //
-  // comm = MPI_COMM_WORLD;
-  // // MPI_Init(&argc, &argv);
-  // MPI_Comm_rank(comm, &rank);
-  //
-  // // set up app structure
-  // MyBraidApp app(comm, rank, tstart, tstop, ntime);
-  //
-  // // Initialize Braid Core Object and set some solver options
-  // BraidCore core(comm, &app);
-  // core.SetPrintLevel(2);
-  // core.SetMaxLevels(2);
-  // core.SetAbsTol(1.0e-6);
-  // core.SetCFactor(-1, 2);
-
-  // perform the computation of this solver
-  // core.Drive();
   braid_Core    core;
   my_App       *app;
-  MPI_Comm      comm, comm_x, comm_t;
+  // MPI_Comm      comm, comm_x, comm_t;
+  MPI_Comm comm;
   // int           i, rank, arg_index;
   int           i, rank;
   double        loglevels;
 
-  /* Define space-time domain */
-  // PetscReal    tstart        =  0.0;
-  // PetscReal   tstop         =  2*PI;
-  // PetscInt       ntime         =  64;
-  // PetscReal    xstart        =  0.0;
-  // PetscReal    xstop         =  PI;
-  // PetscInt       nspace        =  33;
-  PetscReal    tstart        =  0.0;
-  PetscReal   tstop         =  0.5;
-  PetscInt       ntime         =  100;
+  PetscReal    tstart        =  this->tstart_;
+  PetscReal    tstop         =  this->tstop_;
+  PetscInt     ntime         =  this->ntime_;
   PetscReal    xstart        =  0.0;
   PetscReal    xstop         =  4;
-  PetscInt       nspace        =  6;
+  PetscInt     nspace        =  33;
 
   /* Define XBraid parameters
    * See -help message for descriptions */
-  int       max_levels    = 2;
+  int       max_levels    = 5;
   int       nrelax        = 1;
   int       skip          = 0;
   double    tol           = 1.0e-07;
@@ -212,10 +139,10 @@ run()
   int       max_iter      = 30;
   int       min_coarse    = 3;
   int       fmg           = 0;
-  int       scoarsen      = 0;
+  int       scoarsen      = 1;
   int       res           = 0;
   int       wrapper_tests = 0;
-  int       print_level   = 2;
+  int       print_level   = 3;
   int       access_level  = 1;
   int       use_sequential= 0;
 
@@ -304,7 +231,6 @@ run()
         print_sc_info(app->sc_info, max_levels);
      }
   }
-
   /* Clean up */
   braid_Destroy(core);
   free( app->sc_info);
@@ -314,9 +240,63 @@ run()
   /* Finalize MPI */
   // MPI_Finalize();
 
-  // call the nested solver
-  //nestedSolver_.run();
+  // hässlicher Versuch das Ergebnis zu vergleichen, noch nicht fertig
 
+  // call the nested solver
+  // Vec test1 = implicitEulerSolvers_[5]->data().solution()->valuesGlobal();
+  // Vec U; //create vector V with the given values of u
+  // PetscReal blub[33];
+  // blub[0]=2;
+  // blub[1]=2;
+  // blub[2]=4;
+  // blub[3]=5;
+  // blub[4]=2;
+  // blub[5]=2;
+  // blub[6]=2;
+  // blub[7]=2;
+  // blub[8]=2;
+  // blub[9]=2;
+  // blub[10]=2;
+  // blub[11]=2;
+  // blub[12]=2;
+  // blub[13]=2;
+  // blub[14]=2;
+  // blub[15]=2;
+  // blub[16]=2;
+  // blub[17]=2;
+  // blub[18]=2;
+  // blub[19]=2;
+  // blub[20]=2;
+  // blub[21]=2;
+  // blub[22]=2;
+  // blub[23]=2;
+  // blub[24]=2;
+  // blub[25]=2;
+  // blub[26]=2;
+  // blub[27]=2;
+  // blub[28]=2;
+  // blub[29]=2;
+  // blub[30]=2;
+  // blub[31]=2;
+  // blub[32]=2;
+  //
+  // PetscInt numbers[]={1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32};
+  // VecDuplicate(test1, &U);
+  // VecSetValues(U,33,numbers,blub,INSERT_VALUES);
+  // VecAssemblyBegin(U);
+  // VecAssemblyEnd(U);
+  // VecView(test1, 	PETSC_VIEWER_STDOUT_SELF);
+  // // VecView(implicitEulerSolvers_[5]->data().solution()->valuesGlobal(), 	PETSC_VIEWER_STDOUT_SELF);
+  // implicitEulerSolvers_[5]->data().solution()->valuesGlobal()=U;
+  // // VecView(implicitEulerSolvers_[5]->data().solution()->valuesGlobal(), 	PETSC_VIEWER_STDOUT_SELF);
+  // implicitEulerSolvers_[5]->setTimeSpan(0.0, 5.0);
+  // implicitEulerSolvers_[5]->run();
+  // Vec test2 = implicitEulerSolvers_[5]->data().solution()->valuesGlobal();
+  // VecView(test2, 	PETSC_VIEWER_STDOUT_SELF);
+  // // VecView(implicitEulerSolvers_[5]->data().solution()->valuesGlobal(), 	PETSC_VIEWER_STDOUT_SELF);
+  // VecAXPY(test2, -1, test1);
+  // VecView(test2, 	PETSC_VIEWER_STDOUT_SELF);
+  
   // do something else
   //executeMyHelperMethod();
 
@@ -362,6 +342,25 @@ executeMyHelperMethod()
   //
   // // e.g. add identity to m
   // ierr = MatShift(m, 1.0); CHKERRV(ierr);*/
+}
+
+template<class NestedSolver>
+void PinT<NestedSolver>::
+PinT_initialize()
+{
+  // initialize time stepping values
+  tstart_ = 0.0;
+  tstop_ = 1.0;
+  ntime_ = 10;
+  // PetscReal *initialGuess_=[2,2,4,5,2,2];
+  if (specificSettings_.hasKey("tstart"))
+    tstart_ = specificSettings_.getOptionDouble("tstart", 0.0);
+  if (specificSettings_.hasKey("tstop"))
+    tstop_ = specificSettings_.getOptionDouble("tstop", 1.0, PythonUtility::Positive);
+  if (specificSettings_.hasKey("ntime"))
+    ntime_ = specificSettings_.getOptionDouble("ntime", 1.0, PythonUtility::Positive);
+  // if (specificSettings_.hasKey("Initial Guess"))
+  //   specificSettings_.getOptionVector("Initial Guess", initialGuess_);
 }
 
 template<class NestedSolver>

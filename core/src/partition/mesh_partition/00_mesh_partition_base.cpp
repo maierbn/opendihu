@@ -40,24 +40,23 @@ MPI_Comm MeshPartitionBase::mpiCommunicator() const
 }
 
 //! fill the dofNosLocal_ vectors
-void MeshPartitionBase::createLocalDofOrderings(dof_no_t nDofsLocal)
+void MeshPartitionBase::createLocalDofOrderings()
 {
+  dof_no_t nDofsLocalWithGhosts = this->nDofsLocalWithGhosts();
+  dof_no_t nDofsLocalWithoutGhosts = this->nDofsLocalWithoutGhosts();
+
   // fill dofNosLocal_ 
-  dofNosLocal_.resize(nDofsLocal);
+  dofNosLocal_.resize(nDofsLocalWithGhosts);
   std::iota(dofNosLocal_.begin(), dofNosLocal_.end(), 0);
   
-  
   LOG(DEBUG) << " MeshPartitionBase::createLocalDofOrderings: " << dofNosLocal_;
-  
+
   // create IS (indexSet) dofNosLocalIS_;
   PetscErrorCode ierr;
-  ierr = ISCreateGeneral(PETSC_COMM_SELF, dofNosLocal_.size(), dofNosLocal_.data(), PETSC_COPY_VALUES, &dofNosLocalIS_); CHKERRV(ierr);
+  ierr = ISCreateGeneral(PETSC_COMM_SELF, nDofsLocalWithGhosts, dofNosLocal_.data(), PETSC_COPY_VALUES, &dofNosLocalIS_); CHKERRV(ierr);
 
   // create IS dofNosLocalNonGhostIS_;
-  LOG(DEBUG) << "create index set for dofs without ghosts, n: " << this->nDofsLocalWithoutGhosts();
-  LOG(DEBUG) << "dofNosLocal: " << dofNosLocal_;
-
-  ierr = ISCreateGeneral(PETSC_COMM_SELF, this->nDofsLocalWithoutGhosts(), dofNosLocal_.data(), PETSC_COPY_VALUES, &dofNosLocalNonGhostIS_); CHKERRV(ierr);
+  ierr = ISCreateGeneral(PETSC_COMM_SELF, nDofsLocalWithoutGhosts, dofNosLocal_.data(), PETSC_COPY_VALUES, &dofNosLocalNonGhostIS_); CHKERRV(ierr);
 }
 
 const std::vector<PetscInt> &MeshPartitionBase::dofNosLocal() const

@@ -42,11 +42,14 @@ public:
   MPI_Comm mpiCommunicator() const;
   
   //! fill the dofNosLocal vector
-  void createLocalDofOrderings(dof_no_t nDofsLocal);
+  void createLocalDofOrderings();
   
   //! get a vector of local dof nos, range [0,nDofsLocalWithoutGhosts] are the dofs without ghost dofs, the whole vector are the dofs with ghost dofs (only for structured mesh)e
   const std::vector<PetscInt> &dofNosLocal() const;
   
+  //! get the number of local dofs, with ghosts
+  virtual dof_no_t nDofsLocalWithGhosts() const = 0;
+
   //! get the number of local dofs, without ghosts
   virtual dof_no_t nDofsLocalWithoutGhosts() const = 0;
 

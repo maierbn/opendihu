@@ -459,7 +459,8 @@ createLocalDofOrderings()
   VLOG(1) << "--------------------";
   VLOG(1) << "createLocalDofOrderings " << MeshType::dim() << "D";
 
-  MeshPartitionBase::createLocalDofOrderings(nDofsLocalWithGhosts());
+  // initialize dofNosLocalIS_ and dofNosLocalNonGhostIS_
+  MeshPartitionBase::createLocalDofOrderings();
 
   // fill onlyNodalDofLocalNos_
   const int nDofsPerNode = FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>::nDofsPerNode();

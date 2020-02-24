@@ -10,8 +10,8 @@ MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimensi
 MeshPartition(global_no_t nElementsGlobal, global_no_t nNodesGlobal, global_no_t nDofsGlobal, std::shared_ptr<RankSubset> rankSubset):
   MeshPartitionBase(rankSubset), nElements_(nElementsGlobal), nNodes_(nNodesGlobal), nDofs_(nDofsGlobal)
 {
-  global_no_t nDofsLocal = nDofsGlobal;
-  this->createLocalDofOrderings(nDofsLocal);
+  // initialize dofNosLocalIS_ and dofNosLocalNonGhostIS_
+  this->createLocalDofOrderings();
 }
 
 //! get the local to global mapping for the current partition

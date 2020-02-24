@@ -104,7 +104,7 @@ public:
                                          bool inputMeshIsGlobal);
 
   //! check if the vector contains nan or inf values and output error
-  bool containsNanOrInf();
+  virtual bool containsNanOrInf();
 
 protected:
 

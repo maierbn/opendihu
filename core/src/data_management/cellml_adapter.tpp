@@ -22,8 +22,8 @@ template <int nStates, int nIntermediates, typename FunctionSpaceType>
 void CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::
 initializeOutputConnectorData()
 {
-  this->specificSettings_.getOptionVector<int>("statesForTransfer", statesForTransfer_);
-  this->specificSettings_.getOptionVector<int>("intermediatesForTransfer", intermediatesForTransfer_);
+  this->specificSettings_.template getOptionVector<int>("statesForTransfer", statesForTransfer_);
+  this->specificSettings_.template getOptionVector<int>("intermediatesForTransfer", intermediatesForTransfer_);
 
   LOG(DEBUG) << "parsed the following states for transfer: " << statesForTransfer_ << " (states: " << this->states()
     << "), intermediates: " << intermediatesForTransfer_;

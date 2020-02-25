@@ -46,12 +46,12 @@ initialize()
 
   std::vector<PyObject *> implicitEulerConfigs;
 
-  PyObject *implicitEulerConfig = this->specificSettings_.getOptionListBegin<PyObject *>("TimeSteppingScheme");
+  PyObject *implicitEulerConfig = this->specificSettings_.template getOptionListBegin<PyObject *>("TimeSteppingScheme");
 
   // loop over other entries of list
   for (;
     !this->specificSettings_.getOptionListEnd("TimeSteppingScheme");
-    this->specificSettings_.getOptionListNext<PyObject *>("TimeSteppingScheme", implicitEulerConfig))
+    this->specificSettings_.template getOptionListNext<PyObject *>("TimeSteppingScheme", implicitEulerConfig))
   {
     implicitEulerConfigs.push_back(implicitEulerConfig);
   }

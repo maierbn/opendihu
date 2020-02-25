@@ -218,7 +218,7 @@ getOptionVector(std::string keyString, std::vector<PythonConfig> &values) const
           return;
 
         // get the first value from the list
-        PyObject *item = this->getOptionListBegin<PyObject *>(keyString);
+        PyObject *item = this->template getOptionListBegin<PyObject *>(keyString);
 
         // loop over other values
         for (;

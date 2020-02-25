@@ -135,9 +135,9 @@ class PETSc(Package):
         # debug build, without MUMPS
         self.set_build_handler([
           'mkdir -p ${PREFIX}',
-          './configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=yes \
+          './configure --prefix=${PREFIX} --with-fc=0 --with-shared-libraries=1 --with-debugging=yes \
             --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
-            --with-cc='+env["mpicc"]+' | tee out.txt',
+            --with-cc='+env["mpicc"]+' --with-cxx='+env["mpiCC"]+' | tee out.txt',
           '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt',
           '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt)',
         ])
@@ -145,9 +145,9 @@ class PETSc(Package):
         # release build without MUMPS
         self.set_build_handler([
           'mkdir -p ${PREFIX}',
-          './configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=no \
+          './configure --prefix=${PREFIX} --with-fc=0 --with-shared-libraries=1 --with-debugging=no \
           --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
-          --with-cc='+env["mpicc"]+'\
+          --with-cc='+env["mpicc"]+' --with-cxx='+env["mpiCC"]+'\
           COPTFLAGS=-O3\
           CXXOPTFLAGS=-O3\
           FOPTFLAGS=-O3 | tee out.txt',

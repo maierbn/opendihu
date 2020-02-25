@@ -1,13 +1,13 @@
 # parallel fiber estimation, Laplace 3D
 # refine given fiber file and interpolate fibers in between
 #
-# command arguments: <nFineGridFibers> <input_filename>
+# command arguments: <nFineGridFibers> <input_filename> <bottom_z_clip> <top_z_clip> <element_length>
 
 import numpy as np
 import sys
 import pickle
 
-print("args:",sys.argv)
+print("settings_refine.py args:",sys.argv)
 
 nFineGridFibers = 1
 if len(sys.argv) > 0+2:
@@ -16,13 +16,27 @@ if len(sys.argv) > 0+2:
 input_filename = "7x7fibers.bin"
 if len(sys.argv) > 1+2:
   input_filename = sys.argv[1]
+
+bottom_z_clip = 72.0
+if len(sys.argv) > 2+2:
+  bottom_z_clip = (float)(sys.argv[2])
     
+top_z_clip = 220.0
+if len(sys.argv) > 3+2:
+  top_z_clip = (float)(sys.argv[3])
+
+element_length = 0.1 # [cm]
+if len(sys.argv) > 4+2:
+  element_length = (float)(sys.argv[4])
+
 if nFineGridFibers == 0:
   print("Error, nFineGridFibers is 0")
   exit
 
 print("input_filename: \"{}\"".format(input_filename))
 print("nFineGridFibers: {}".format(nFineGridFibers))
+print("bottom z clip: {}, top z clip: {}".format(bottom_z_clip, top_z_clip))
+print("element_length: {}".format(element_length))
 
 bc = {}
 
@@ -39,10 +53,10 @@ config = {
     "stlFilename": "",        # not relevant here
     "resultFilename": input_filename,
     "waitIfFileGetsBig": False,
-    "bottomZClip":  72.0,   # 82 (72), bottom z value of the muscle volume  
-    "topZClip": 220.0,      # 250 (220), top z value of the muscle volume
-    "finalBottomZClip":  72.0,            # 82 (72), bottom z value of the final fibers, fibers will be cropped and resampled to nNodesPerFiber between finalBottomZClip and finalTopZClip
-    "finalTopZClip": 220.0,               # 250 (220), top z value of the final fibers, fibers will be cropped and resampled to nNodesPerFiber between finalBottomZClip and finalTopZClip
+    "bottomZClip":  bottom_z_clip,   # 82 (72), bottom z value of the muscle volume  
+    "topZClip": top_z_clip,      # 250 (220), top z value of the muscle volume
+    "finalBottomZClip":  bottom_z_clip,            # 82 (72), bottom z value of the final fibers, fibers will be cropped and resampled to nNodesPerFiber between finalBottomZClip and finalTopZClip
+    "finalTopZClip": top_z_clip,               # 250 (220), top z value of the final fibers, fibers will be cropped and resampled to nNodesPerFiber between finalBottomZClip and finalTopZClip
     "useNeumannBoundaryConditions": True, # which type of boundary conditions at top and bottom should be used, Neumann or Dirichlet type  
     "nElementsXPerSubdomain": 4,  # number of elements in x and y-direction per subdomain
     "nElementsZPerSubdomain": 50,  # number of elements in z-direction per subdomain
@@ -50,7 +64,7 @@ config = {
     "useGradientField": False,    # set to False
     "maxLevel": 2,          # maximum level (1=8 processes, 2=64 processes)
     "lineStepWidth":  0.1,  # line width for tracing of fibers
-    "nNodesPerFiber": (220.-72.) / 0.1,   # number of nodes in each final fiber
+    "nNodesPerFiber": (top_z_clip-bottom_z_clip) / element_length,   # number of nodes in each final fiber
     "improveMesh": True,     # smooth the 2D meshes, required for bigger meshes or larger amount of ranks
     "refinementFactors": [1,1,1],         # no refinement
     "maxIterations":     1e5,

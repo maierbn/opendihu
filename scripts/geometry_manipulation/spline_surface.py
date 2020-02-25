@@ -39,7 +39,12 @@ def get_u_by_z_value(curve, value):
   
   if debug:
     print("get_u_by_z_value, value={}".format(value))
-  
+ 
+  if value <= curve.evaluate_single(0)[2]:
+    return 0
+  if value >= curve.evaluate_single(1)[2]:
+    return 1
+ 
   u = 0.5
   epsilon = 1e-5
   
@@ -47,6 +52,10 @@ def get_u_by_z_value(curve, value):
   increment = 2*epsilon
   while abs(increment) > epsilon:
     #x = curve.evaluate_single(u)
+    #u = max(0,min(1,u))  # clamp u to [0,1]
+    if u < 0 or u > 1:
+      print("error: u is {}, should be in [0,1]".format(u))
+      print("increment: {}, epsilon: {}, z value to search for: {}, c(0):{}, c(1):{}".format(increment, epsilon, value, curve.evaluate_single(0), curve.evaluate_single(1)))
     x,x_prime = curve.derivatives(u, 1)
     x = x[2] - value
     x_prime = x_prime[2]
@@ -201,9 +210,16 @@ def create_loop(z_value, spline_surface, v_curve, n_points, loop):
   v = get_u_by_z_value(v_curve, z_value)
   
   # extract u curve in surface at that v value
-  [s0, s1] = operations.split_surface_v(spline_surface, v)
-  extracted_curves = construct.extract_curves(s1)
-  curve = extracted_curves["u"][0]
+  try:
+    if v == 0: v = 1e-5
+    if v == 1: v = 1-1e-5
+    [s0, s1] = operations.split_surface_v(spline_surface, v)
+    extracted_curves = construct.extract_curves(s1)
+    curve = extracted_curves["u"][0]
+  except Exception as e:
+    print("Error in extracting u curve in surface at a v value")
+    print("v: {}".format(v))
+    raise e
   
   curve.delta = 0.01
   curve_length = operations.length_curve(curve)
@@ -252,6 +268,8 @@ def create_ring_section(spline_surface, start_point, end_point, z_value, n_point
     print("create_ring_section z_value={}, n_points={}, v: {}".format(z_value, n_points, v))
   
   # extract u curve in surface at that v value
+  if v == 0: v = 1e-5
+  if v == 1: v = 1-1e-5
   [s0, s1] = operations.split_surface_v(spline_surface, v)
   extracted_curves = construct.extract_curves(s1)
   curve = extracted_curves["u"][0]

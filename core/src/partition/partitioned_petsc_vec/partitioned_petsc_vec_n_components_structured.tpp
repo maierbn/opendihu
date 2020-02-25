@@ -1240,8 +1240,6 @@ output(std::ostream &stream)
       stream << "\"" << this->name_ << "\" component " << componentNo << ": local values (dof global:value) [";
 
       //VLOG(1) << "localValues: " << localValues;
-
-      const int nDofsPerNode = FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>::nDofsPerNode();
       dof_no_t dofNoLocalEnd = this->meshPartition_->nDofsLocalWithoutGhosts();
       if (!VLOG_IS_ON(1))
       {
@@ -1253,15 +1251,7 @@ output(std::ostream &stream)
           stream << "  ";
 
         double value = localValues[dofNoLocal];
-
-        // store value for global dof no
-        node_no_t nodeNoLocal = dofNoLocal / nDofsPerNode;
-        int dofOnNodeIndex = dofNoLocal % nDofsPerNode;
-
-        std::array<global_no_t,MeshType::dim()> globalCoordinates = this->meshPartition_->getCoordinatesGlobal(nodeNoLocal);
-        global_no_t nodeNoGlobal = this->meshPartition_->getNodeNoGlobalNatural(globalCoordinates);
-
-        global_no_t dofNoGlobal = nodeNoGlobal*nDofsPerNode + dofOnNodeIndex;
+        global_no_t dofNoGlobal = this->meshPartition_->getDofNoGlobalPetsc(dofNoLocal);
 
         stream << dofNoGlobal << ":" << value;
         if (dofNoLocal == 99 && !VLOG_IS_ON(1))

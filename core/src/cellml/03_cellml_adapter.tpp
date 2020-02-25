@@ -363,6 +363,7 @@ initializeToEquilibriumValues(std::array<double,nStates_> &statesInitialValues)
   }
 
   LOG(DEBUG) << "initializeToEquilibriumValues";
+  LOG(INFO) << "Computing equilibrium values of states for model \"" << this->cellmlSourceCodeGenerator_.sourceFilename() << "\"...";
 
   double currentTime = 0.0;
   double maximumIncrement = 0;
@@ -426,5 +427,31 @@ initializeToEquilibriumValues(std::array<double,nStates_> &statesInitialValues)
   if (maximumIncrement >= 1e-5)
   {
     LOG(ERROR) << "Equilibrium values for states were not found within " << nInterations << " RK-4 iterations! Last increment of a state: " << maximumIncrement << ", Last timestep width: " << dt;
+  }
+
+  // write computed equilibrium values to a file
+  if (this->functionSpace_->meshPartition()->rankSubset()->ownRankNo() == 0)
+  {
+    std::stringstream filename;
+    filename << this->cellmlSourceCodeGenerator_.sourceFilename() << "_equilibrium_values.txt";
+    std::ofstream file(filename.str().c_str());
+    if (file.is_open())
+    {
+      // time stamp
+      auto t = std::time(nullptr);
+      auto tm = *std::localtime(&t);
+      std::string timeString = StringUtility::timeToString(&tm);
+      file << "// Result of computation of equilibrium values for the states by opendihu on " << timeString << "\n"
+        << "// Number of iterations: " << nInterations << ", dt: " << dt << "\n"
+        << "// Maximum ∂u/dt = " << maximumIncrement << "\n"
+        << "// (If this is a high value, it indicates that the equilibrium was not fully reached.)\n\n";
+      for (int stateNo = 0; stateNo < nStates_; stateNo++)
+      {
+        file << "state[" << stateNo << "] = " << u[stateNo] << ";\n";
+      }
+
+      file.close();
+      LOG(INFO) << "Values were written to \"" << filename.str() << "\".";
+    }
   }
 }

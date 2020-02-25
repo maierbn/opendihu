@@ -3,6 +3,7 @@
 #include <memory>
 #include <petscdmda.h>
 
+#include "utility/vector_operators.h"
 #include "partition/mesh_partition/00_mesh_partition_base.h"
 #include "partition/mesh_partition/01_mesh_partition.h"
 #include "control/types.h"
@@ -42,7 +43,8 @@ public:
   typedef FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType> FunctionSpaceType;
 
   //! constructor
-  MeshPartition(const std::vector<std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>> &subFunctionSpaces);
+  MeshPartition(const std::vector<std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>> &subFunctionSpaces,
+                std::shared_ptr<RankSubset> rankSubset);
 
   //! number of elements in the current partition
   element_no_t nElementsLocal() const;
@@ -74,8 +76,15 @@ public:
   //! get the local to global mapping for the current partition, for the dof numbering
   ISLocalToGlobalMapping localToGlobalMappingDofs();
   
+  //! get the global natural element no for a local element no, this is used for parsing elemental boundary conditions
+  //! the global natural ordering is here defined to be the global natural ordering of all submeshes concatenated
+  global_no_t getElementNoGlobalNatural(element_no_t elementNoLocal) const;
+
   //! get the node no in global petsc ordering from a local node no
   global_no_t getNodeNoGlobalPetsc(node_no_t nodeNoLocal) const;
+
+  //! get the node no in a composite global natural ordering where the natural orders of the submeshes are concatenated, call this method from the function space to be compatible with structured meshes!
+  global_no_t getNodeNoGlobalNatural(element_no_t elementNoLocal, int nodeIndex) const;
 
   //! transfer the local nos in global dof nos, using the PETSc localToGlobal mapping for the dofs
   void getDofNoGlobalPetsc(const std::vector<dof_no_t> &dofNosLocal, std::vector<PetscInt> &dofNosGlobalPetsc) const;
@@ -100,6 +109,9 @@ public:
   template <typename T>
   void extractLocalDofsWithoutGhosts(std::vector<T> &values) const;
 
+  //! from a vector of values of global/natural dofs remove all that are non-local
+  void extractLocalDofsWithoutGhosts(std::vector<double> &values) const;
+
   //! output to stream for debugging
   void output(std::ostream &stream);
   
@@ -121,6 +133,18 @@ public:
 
   //! get the rank no of the neighbour in direction face, -1 if there is no such neighbour
   int neighbourRank(Mesh::face_t face);
+
+  //! from a local element no in the composite numbering get the subMeshNo and the no in the submesh-based numbering
+  void getSubMeshNoAndElementNoLocal(element_no_t elementNoLocal, int &subMeshNo, element_no_t &elementOnMeshNoLocal) const;
+
+  //! from a local node no in the composite numbering get the subMeshNo and the no in the submesh-based numbering
+  void getSubMeshNoAndNodeNoLocal(node_no_t nodeNoLocal, int &subMeshNo, node_no_t &nodeOnMeshNoLocal);
+
+  //! for the local node no in the composite numbering return all sub meshes and the corresponding local node nos in non-composite numbering of this node. This may be multiple if the node is shared.o
+  void getSubMeshesWithNodes(node_no_t nodeNoLocal, std::vector<std::pair<int,node_no_t>> &subMeshesWithNodes);
+
+  //! from the submesh no and the local node no in the submesh numbering get the local node no in the composite numbering
+  node_no_t getNodeNoLocalFromSubmesh(int subMeshNo, int nodeNoDuplicateOnSubmesh);
 
 protected:
 

@@ -32,7 +32,7 @@
 
 template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType, int nDisplacementComponents = 3>
 class PartitionedPetscMatForHyperelasticity :
-  public PartitionedPetscMatOneComponent<FunctionSpace::Generic, FunctionSpace::Generic, typename FunctionSpace::Generic::Mesh>
+  public PartitionedPetscMatOneComponent<FunctionSpace::Generic, FunctionSpace::Generic>
 {
 public:
 

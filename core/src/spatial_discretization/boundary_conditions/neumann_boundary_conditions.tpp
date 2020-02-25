@@ -6,6 +6,7 @@
 #include "control/types.h"
 #include "quadrature/gauss.h"
 #include "quadrature/tensor_product.h"
+#include "mesh/surface_mesh.h"
 
 namespace SpatialDiscretization
 {
@@ -33,8 +34,12 @@ initializeRhs()
 
   std::shared_ptr<FunctionSpaceType> functionSpace = this->data_.functionSpace();
 
+
   const int D = FunctionSpaceType::dim();  // = 2 or 3
   const int nDofsPerElement = FunctionSpaceType::nDofsPerElement();
+
+  static_assert(FunctionSpaceType::Mesh::dim()-1 == FunctionSpaceType::SurfaceMesh::dim(), "D mismatch (1)");
+  static_assert(D-1 == FunctionSpaceSurface::dim(), "D mismatch (2)");
 
   // use gauss quadrature with 3 points for surface BCs, theoretically, QuadratureType could be used, but then there would be a partial specialization necessary for Quadrature::None and regular meshes
   typedef Quadrature::Gauss<3> QuadratureTypeSurface;

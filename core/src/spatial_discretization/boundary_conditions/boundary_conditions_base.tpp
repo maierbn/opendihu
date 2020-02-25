@@ -206,8 +206,7 @@ parseBoundaryConditionsForElements(std::string boundaryConditionsConfigKey)
       global_no_t nodeNo = 0;
       if (inputMeshIsGlobal)
       {
-        global_no_t elementNoGlobalNatural = functionSpace_->meshPartition()->getElementNoGlobalNatural(elementNoLocal);
-        nodeNo = functionSpace_->getNodeNoGlobalNatural(elementNoGlobalNatural, nodeIndex);
+        nodeNo = functionSpace_->getNodeNoGlobalNatural(elementNoLocal, nodeIndex);
       }
       else
       {

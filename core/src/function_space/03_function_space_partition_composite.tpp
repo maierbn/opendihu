@@ -17,7 +17,7 @@ template<int D,typename BasisFunctionType>
 void FunctionSpacePartition<Mesh::CompositeOfDimension<D>,BasisFunctionType>::
 initialize()
 {
-  PyObject *pyObject = this->specificSettings.pyObject();
+  PyObject *pyObject = this->specificSettings_.pyObject();
 
   int nSubmeshes = 1;
   if (PyList_Check(pyObject))
@@ -27,10 +27,12 @@ initialize()
   LOG(DEBUG) << "initialize " << nSubmeshes << " submeshes";
   subFunctionSpaces_.resize(nSubmeshes);
 
+  typedef FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType> SubFunctionSpaceType;
+
   // created sub meshes
   for (int i = 0; i < nSubmeshes; i++)
   {
-    subFunctionSpaces_[i] = std::make_shared<Mesh::StructuredDeformableOfDimension<D>>(PythonConfig(this->specificSettings,i));
+    subFunctionSpaces_[i] = std::make_shared<SubFunctionSpaceType>(this->partitionManager_, PythonConfig(this->specificSettings_,i));
   }
 
   // Creation of the partitioning is only possible after the number of elements is known.
@@ -44,10 +46,8 @@ initialize()
   this->nElementsLocal_ = 0;
   this->nElementsGlobal_ = 0;
 
-  typedef FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType> FunctionSpaceType;
-
   // iterate over submeshes
-  for(std::shared_ptr<FunctionSpaceType> &subFunctionSpace : subFunctionSpaces_)
+  for(std::shared_ptr<SubFunctionSpaceType> &subFunctionSpace : subFunctionSpaces_)
   {
     subFunctionSpace->initialize();
 
@@ -58,12 +58,20 @@ initialize()
 
   // create partitioning
   assert(this->partitionManager_ != nullptr);
-  this->meshPartition_ = this->partitionManager_->template createPartitioningComposite<FunctionSpaceType>(subFunctionSpaces_);
+  this->meshPartition_ = this->partitionManager_->template createPartitioningComposite<BasisFunctionType,D>(subFunctionSpaces_);
 
   assert(this->meshPartition_);
 
   // set initalized_ to true which indicates that initialize has been called
   this->initialized_ = true;
+}
+
+template<int D,typename BasisFunctionType>
+const std::vector<std::shared_ptr<FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>> &
+FunctionSpacePartition<Mesh::CompositeOfDimension<D>,BasisFunctionType>::
+subFunctionSpaces()
+{
+  return subFunctionSpaces_;
 }
 
 } // namespace

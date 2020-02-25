@@ -18,6 +18,9 @@ template<typename MeshType,typename BasisFunctionType,typename DummyForTraits=Me
 class FunctionSpaceFindPosition :
   public FunctionSpaceNodes<MeshType,BasisFunctionType>
 {
+  //! inherit constructor
+  using FunctionSpaceNodes<MeshType,BasisFunctionType>::FunctionSpaceNodes;
+
 };
 
 /** Partial specialization for structured meshes

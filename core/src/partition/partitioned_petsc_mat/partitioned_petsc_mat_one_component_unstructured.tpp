@@ -2,7 +2,7 @@
 
 //! constructor, create square sparse matrix
 template<int D, typename BasisFunctionType>
-PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>>::
 PartitionedPetscMatOneComponent(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>>> meshPartition,
                                 int diagonalNonZeros, int offdiagonalNonZeros, std::string name) :
   PartitionedPetscMatOneComponentBase<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>(meshPartition, meshPartition, name)
@@ -13,7 +13,7 @@ PartitionedPetscMatOneComponent(std::shared_ptr<Partition::MeshPartition<Functio
 
 //! constructor, create square dense matrix
 template<int D, typename BasisFunctionType>
-PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>>::
 PartitionedPetscMatOneComponent(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>>> meshPartition,
                                 std::string name) :
   PartitionedPetscMatOneComponentBase<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>(meshPartition, meshPartition, name)
@@ -24,7 +24,7 @@ PartitionedPetscMatOneComponent(std::shared_ptr<Partition::MeshPartition<Functio
 
 //! constructor, create non-square sparse matrix
 template<int D, typename BasisFunctionType>
-PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>>::
 PartitionedPetscMatOneComponent(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>> meshPartitionRows,
                                 std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>> meshPartitionColumns,
                                 int diagonalNonZeros, int offdiagonalNonZeros, std::string name) :
@@ -36,7 +36,7 @@ PartitionedPetscMatOneComponent(std::shared_ptr<Partition::MeshPartition<Functio
 
 //! constructor, create non-square dense matrix
 template<int D, typename BasisFunctionType>
-PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>>::
 PartitionedPetscMatOneComponent(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>> meshPartitionRows,
                                 std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>> meshPartitionColumns,
                                 std::string name) :
@@ -48,7 +48,7 @@ PartitionedPetscMatOneComponent(std::shared_ptr<Partition::MeshPartition<Functio
 
 //! constructor, use provided global matrix
 template<int D, typename BasisFunctionType>
-PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>>::
 PartitionedPetscMatOneComponent(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>> meshPartition,
                                 Mat &globalMatrix, std::string name) :
   PartitionedPetscMatOneComponentBase<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>(meshPartition, meshPartition, name)
@@ -62,7 +62,7 @@ PartitionedPetscMatOneComponent(std::shared_ptr<Partition::MeshPartition<Functio
 
 //! create a distributed Petsc matrix, according to the given partition
 template<int D, typename BasisFunctionType>
-void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>>::
 createMatrix(MatType matrixType, int diagonalNonZeros, int offdiagonalNonZeros)
 {
   PetscErrorCode ierr;
@@ -105,7 +105,7 @@ createMatrix(MatType matrixType, int diagonalNonZeros, int offdiagonalNonZeros)
 }
 
 template<int D, typename BasisFunctionType>
-void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>>::
 setValue(PetscInt row, PetscInt col, PetscScalar value, InsertMode mode)
 {
   if (VLOG_IS_ON(2))
@@ -121,7 +121,7 @@ setValue(PetscInt row, PetscInt col, PetscScalar value, InsertMode mode)
 }
 
 template<int D, typename BasisFunctionType>
-void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>>::
 setValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], const PetscScalar v[], InsertMode addv)
 {
   if (VLOG_IS_ON(2))
@@ -146,7 +146,7 @@ setValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], 
 }
 
 template<int D, typename BasisFunctionType>
-void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>>::
 zeroRowsColumns(PetscInt numRows, const PetscInt rows[], PetscScalar diag)
 {
   if (VLOG_IS_ON(2))
@@ -168,7 +168,7 @@ zeroRowsColumns(PetscInt numRows, const PetscInt rows[], PetscScalar diag)
 }
 
 template<int D, typename BasisFunctionType>
-void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>>::
 zeroRows(PetscInt numRows, const PetscInt rows[])
 {
   if (VLOG_IS_ON(2))
@@ -195,7 +195,7 @@ zeroRows(PetscInt numRows, const PetscInt rows[])
   }
 }
 template<int D, typename BasisFunctionType>
-void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>>::
 zeroEntries()
 {
   PetscErrorCode ierr;
@@ -208,7 +208,7 @@ zeroEntries()
 }
 
 template<int D, typename BasisFunctionType>
-void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>>::
 assembly(MatAssemblyType type)
 {
   VLOG(2) << " \"" << this->name_ << "\" assembly " << (type == MAT_FINAL_ASSEMBLY? "(MAT_FINAL_ASSEMBLY)" : "(MAT_FLUSH_ASSEMBLY)");
@@ -223,7 +223,7 @@ assembly(MatAssemblyType type)
 }
 
 template<int D, typename BasisFunctionType>
-void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>>::
 getValuesGlobalPetscIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], PetscScalar v[]) const
 {
   // this wraps the standard PETSc MatGetValues, for the global indexing, only retrieves locally stored indices
@@ -238,7 +238,7 @@ getValuesGlobalPetscIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, cons
 }
 
 template<int D, typename BasisFunctionType>
-void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>>::
 setValuesGlobalPetscIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], const PetscScalar v[], InsertMode addv)
 {
   // this wraps the standard PETSc MatSetValues, for the global indexing, only retrieves locally stored indices
@@ -249,7 +249,7 @@ setValuesGlobalPetscIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, cons
 }
 
 template<int D, typename BasisFunctionType>
-void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>>::
 getValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], PetscScalar v[]) const
 {
   // this wraps the standard PETSc MatGetValues, for the global indexing, only retrieves locally stored indices
@@ -260,21 +260,21 @@ getValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], 
 }
 
 template<int D, typename BasisFunctionType>
-Mat &PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+Mat &PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>>::
 valuesLocal()
 {
   return this->matrix_;
 }
 
 template<int D, typename BasisFunctionType>
-Mat &PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+Mat &PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>>::
 valuesGlobal()
 {
   return this->matrix_;
 }
 
 template<int D, typename BasisFunctionType>
-void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>>::
 dumpMatrix(std::string filename, std::string format)
 {
   // std::string filename, std::string format, Mat &matrix, MPI_Comm mpiCommunicator
@@ -282,7 +282,7 @@ dumpMatrix(std::string filename, std::string format)
 }
 
 template<int D, typename BasisFunctionType>
-void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>>::
 output(std::ostream &stream) const
 {
   // this method gets all values and outputs them to stream

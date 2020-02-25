@@ -3,7 +3,7 @@
 //! fill a contiguous vector with all components after each other, "struct of array"-type data layout.
 //! after manipulation of the vector has finished one has to call restoreValuesContiguous
 template<typename MeshType,typename BasisFunctionType,int nComponents>
-Vec &PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
+Vec &PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructuredOrComposite<MeshType>>::
 getValuesContiguous()
 {
   VLOG(2) << "\"" << this->name_ << "\" getValuesContiguous()";
@@ -16,7 +16,7 @@ getValuesContiguous()
 //! fill a contiguous vector with all components after each other, "struct of array"-type data layout.
 //! after manipulation of the vector has finished one has to call restoreValuesContiguous
 template<typename MeshType,typename BasisFunctionType>
-Vec &PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,1,Mesh::isStructured<MeshType>>::
+Vec &PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,1,Mesh::isStructuredOrComposite<MeshType>>::
 getValuesContiguous()
 {
   VLOG(2) << "\"" << this->name_ << "\" getValuesContiguous(), nComponents=1";
@@ -27,7 +27,7 @@ getValuesContiguous()
 //! copy the values back from a contiguous representation where all components are in one vector to the standard internal format of PartitionedPetscVec where there is one local vector with ghosts for each component.
 //! this has to be called
 template<typename MeshType,typename BasisFunctionType,int nComponents>
-void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
+void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructuredOrComposite<MeshType>>::
 restoreValuesContiguous()
 {
   VLOG(2) << "\"" << this->name_ << "\" restoreValuesContiguous() nComponents=" << nComponents;
@@ -75,7 +75,7 @@ restoreValuesContiguous()
 //! copy the values back from a contiguous representation where all components are in one vector to the standard internal format of PartitionedPetscVec where there is one local vector with ghosts for each component.
 //! this has to be called
 template<typename MeshType,typename BasisFunctionType>
-void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,1,Mesh::isStructured<MeshType>>::
+void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,1,Mesh::isStructuredOrComposite<MeshType>>::
 restoreValuesContiguous()
 {
   VLOG(2) << "\"" << this->name_ << "\" restoreValuesContiguous() nComponents=1";

@@ -128,6 +128,28 @@ public:
   node_no_t getNodeNo(std::array<int,MeshType::dim()> coordinateLocal) const;
 };
 
+/** class that provides a numbering method that is the same for all dimensionalities
+ */
+template<typename MeshType,typename BasisFunctionType,typename DummyForTraits=MeshType>
+class FunctionSpaceNumbersCommon
+{};
+
+/** partial specialization for StructuredDeformableOfDimension<D> (not CompositeOfDimension<D>)
+ */
+template<typename MeshType,typename BasisFunctionType>
+class FunctionSpaceNumbersCommon<MeshType,BasisFunctionType,Mesh::isStructured<MeshType>> :
+  public FunctionSpaceNumbers<MeshType,BasisFunctionType>
+{
+public:
+  //! inherit constructor
+  using FunctionSpaceNumbers<MeshType,BasisFunctionType>::FunctionSpaceNumbers;
+
+  //! get the node no in the global natural ordering
+  global_no_t getNodeNoGlobalNatural(element_no_t elementNoLocal, int nodeIndex) const;
+
+};
+
+
 
 }  // namespace
 

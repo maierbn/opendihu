@@ -146,8 +146,11 @@ class FunctionSpaceDofsNodes<Mesh::CompositeOfDimension<D>,BasisFunctionType> :
   public FunctionSpaceGeometry<Mesh::CompositeOfDimension<D>,BasisFunctionType>
 {
 public:
-  //! inherit constructor
-  using FunctionSpaceGeometry<Mesh::CompositeOfDimension<D>,BasisFunctionType>::FunctionSpaceGeometry;
+  //! constructor from python settings, it is possible to create a basisOnMesh object without geometry field, e.g. for the lower order mesh of a mixed formulation
+  FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, PythonConfig specificSettings, bool noGeometryField=false);
+
+  //! constructor from python settings with additionally given node positions
+  FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, std::vector<double> &nodePositions, PythonConfig specificSettings, bool noGeometryField=false);
 
   //! fill a vector with the node position entries, nodes will contain consecutively the (x,y,z) values of just all nodes, i.e. for Hermite not the derivatives
   void getNodePositions(std::vector<double> &nodes) const;

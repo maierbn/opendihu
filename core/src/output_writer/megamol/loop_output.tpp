@@ -3,6 +3,7 @@
 #include "output_writer/megamol/megamol_writer.h"
 
 #include <cstdlib>
+#include "field_variable/field_variable.h"
 
 #ifdef HAVE_ADIOS
 namespace OutputWriter
@@ -32,7 +33,7 @@ loopOutput(const FieldVariablesForOutputWriterType &fieldVariables, const AllFie
  
 // current element is of pointer type (not vector)
 template<typename CurrentFieldVariableType, typename FieldVariablesForOutputWriterType>
-typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
+typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value && !Mesh::isComposite<CurrentFieldVariableType>::value, bool>::type
 output(CurrentFieldVariableType currentFieldVariable, const FieldVariablesForOutputWriterType &fieldVariables, std::string meshName, 
        PythonConfig specificSettings, MegaMolWriterContext &megaMolWriterContext)
 {
@@ -88,6 +89,31 @@ output(TupleType currentFieldVariableTuple, const AllFieldVariablesForOutputWrit
   return false;  // do not break iteration 
 }
 
+// element i is a field variables with Mesh::CompositeOfDimension<D>
+template<typename CurrentFieldVariableType, typename AllFieldVariablesForOutputWriterType>
+typename std::enable_if<Mesh::isComposite<CurrentFieldVariableType>::value, bool>::type
+output(CurrentFieldVariableType currentFieldVariable, const AllFieldVariablesForOutputWriterType &fieldVariables, std::string meshName,
+      PythonConfig specificSettings, MegaMolWriterContext &megaMolWriterContext)
+{
+  const int D = CurrentFieldVariableType::element_type::FunctionSpace::dim();
+  typedef typename CurrentFieldVariableType::element_type::FunctionSpace::BasisFunction BasisFunctionType;
+  typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>, BasisFunctionType> SubFunctionSpaceType;
+  const int nComponents = CurrentFieldVariableType::element_type::nComponents();
+
+  typedef FieldVariable::FieldVariable<SubFunctionSpaceType, nComponents> SubFieldVariableType;
+
+  std::vector<std::shared_ptr<SubFieldVariableType>> subFieldVariables;
+  currentFieldVariable->getSubFieldVariables(subFieldVariables);
+
+  for (auto& currentSubFieldVariable : subFieldVariables)
+  {
+    // call function on all vector entries
+    if (output<std::shared_ptr<SubFieldVariableType>,AllFieldVariablesForOutputWriterType>(currentSubFieldVariable, fieldVariables, meshName, specificSettings, megaMolWriterContext))
+      return true;
+  }
+
+  return false;  // do not break iteration
+}
 }  // namespace MegaMolLoopOverTuple
 }  // namespace OutputWriter
 #endif

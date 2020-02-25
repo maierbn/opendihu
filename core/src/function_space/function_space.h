@@ -7,6 +7,7 @@
 #include "mesh/type_traits.h"
 #include "function_space/11_function_space_xi.h"
 #include "mesh/mesh.h"
+#include "mesh/surface_mesh.h"
 #include "basis_function/lagrange.h"
 #include "function_space/function_space_generic.h"
 

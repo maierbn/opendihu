@@ -5,7 +5,7 @@
 
 //! constructor, create square sparse matrix
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
-PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
+PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
 PartitionedPetscMatOneComponent(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>>> meshPartition,
                                 int diagonalNonZeros, int offdiagonalNonZeros, std::string name) :
   PartitionedPetscMatOneComponentBase<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>>(meshPartition, meshPartition, name)
@@ -18,7 +18,7 @@ PartitionedPetscMatOneComponent(std::shared_ptr<Partition::MeshPartition<Functio
 
 //! constructor, create square dense matrix
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
-PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
+PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
 PartitionedPetscMatOneComponent(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>>> meshPartition, std::string name) :
   PartitionedPetscMatOneComponentBase<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>>(meshPartition, meshPartition, name)
 {
@@ -30,7 +30,7 @@ PartitionedPetscMatOneComponent(std::shared_ptr<Partition::MeshPartition<Functio
 
 //! constructor, create non-square matrix
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
-PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
+PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
 PartitionedPetscMatOneComponent(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>>> meshPartitionRows,
                                 std::shared_ptr<Partition::MeshPartition<ColumnsFunctionSpaceType>> meshPartitionColumns,
                                 int diagonalNonZeros, int offdiagonalNonZeros, std::string name) :
@@ -45,7 +45,7 @@ PartitionedPetscMatOneComponent(std::shared_ptr<Partition::MeshPartition<Functio
 
 //! constructor, create non-square matrix
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
-PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
+PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
 PartitionedPetscMatOneComponent(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>>> meshPartitionRows,
                                 std::shared_ptr<Partition::MeshPartition<ColumnsFunctionSpaceType>> meshPartitionColumns,
                                 std::string name) :
@@ -60,7 +60,7 @@ PartitionedPetscMatOneComponent(std::shared_ptr<Partition::MeshPartition<Functio
 
 //! constructor, use provided global matrix
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
-PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
+PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
 PartitionedPetscMatOneComponent(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>>> meshPartition,
                                 Mat &globalMatrix, std::string name) :
   PartitionedPetscMatOneComponentBase<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>>(meshPartition, meshPartition, name)
@@ -75,7 +75,7 @@ PartitionedPetscMatOneComponent(std::shared_ptr<Partition::MeshPartition<Functio
 }
 
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
-PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
+PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
 ~PartitionedPetscMatOneComponent()
 {
   //LOG(DEBUG) << "destroy PartitionedPetscMat \"" << this->name_ << "\"";
@@ -86,7 +86,7 @@ PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunct
 
 //! create a distributed Petsc matrix, according to the given partition
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
-void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
 createMatrix(MatType matrixType, int diagonalNonZeros, int offdiagonalNonZeros)
 {
   PetscErrorCode ierr;
@@ -145,7 +145,7 @@ createMatrix(MatType matrixType, int diagonalNonZeros, int offdiagonalNonZeros)
 
 
 /*template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
-void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
 createMatrix(Mat rhsMat)
 {
   PetscErrorCode ierr;
@@ -158,7 +158,7 @@ createMatrix(Mat rhsMat)
 }*/
 
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
-void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
 createLocalMatrix()
 {
   VLOG(1) << "set local to global mapping for matrix: rows: " << (ISLocalToGlobalMapping)this->meshPartitionRows_->localToGlobalMappingDofs()
@@ -178,7 +178,7 @@ createLocalMatrix()
 }
 
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
-void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
 setValue(PetscInt row, PetscInt col, PetscScalar value, InsertMode mode)
 {
   if (VLOG_IS_ON(2))
@@ -194,7 +194,7 @@ setValue(PetscInt row, PetscInt col, PetscScalar value, InsertMode mode)
 }
 
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
-void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
 setValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], const PetscScalar v[], InsertMode addv)
 {
   if (VLOG_IS_ON(2))
@@ -219,7 +219,7 @@ setValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], 
 }
 
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
-void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
 zeroRowsColumns(PetscInt numRows, const PetscInt rows[], PetscScalar diag)
 {
   if (VLOG_IS_ON(2))
@@ -265,7 +265,7 @@ zeroRowsColumns(PetscInt numRows, const PetscInt rows[], PetscScalar diag)
 }
 
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
-void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
 zeroRows(PetscInt numRows, const PetscInt rows[])
 {
   if (VLOG_IS_ON(2))
@@ -312,7 +312,7 @@ zeroRows(PetscInt numRows, const PetscInt rows[])
 }
 
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
-void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
 zeroEntries()
 {
   PetscErrorCode ierr;
@@ -328,7 +328,7 @@ zeroEntries()
 }
 
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
-void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
 assembly(MatAssemblyType type)
 {
   VLOG(2) << "\"" << this->name_ << "\" assembly " << (type == MAT_FINAL_ASSEMBLY? "(MAT_FINAL_ASSEMBLY)" : "(MAT_FLUSH_ASSEMBLY)");
@@ -349,7 +349,7 @@ assembly(MatAssemblyType type)
 }
 
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
-void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
 getValuesGlobalPetscIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], PetscScalar v[]) const
 {
   // this wraps the standard PETSc MatGetValues, for the global indexing, only retrieves locally stored indices
@@ -396,7 +396,7 @@ getValuesGlobalPetscIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, cons
 }
 
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
-void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
 setValuesGlobalPetscIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], const PetscScalar v[], InsertMode addv)
 {
   // this wraps the standard PETSc MatSetValues, for the global indexing
@@ -441,7 +441,7 @@ setValuesGlobalPetscIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, cons
 }
 
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
-void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
 getValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], PetscScalar v[]) const
 {
   // this wraps the standard PETSc MatGetValues, for the global indexing, only retrieves locally stored indices
@@ -486,21 +486,21 @@ getValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], 
 }
 
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
-Mat &PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
+Mat &PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
 valuesLocal()
 {
   return this->localMatrix_;
 }
 
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
-Mat &PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
+Mat &PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
 valuesGlobal()
 {
   return this->globalMatrix_;
 }
 
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
-void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
 output(std::ostream &stream) const
 {
 #ifndef NDEBUG  
@@ -588,7 +588,7 @@ output(std::ostream &stream) const
 }
 
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
-void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
 dumpMatrix(std::string filename, std::string format)
 {
   // std::string filename, std::string format, Mat &matrix, MPI_Comm mpiCommunicator

@@ -4,6 +4,7 @@
 #include "easylogging++.h"
 #include "utility/vector_operators.h"
 #include <cstdlib>
+#include "field_variable/field_variable.h"
 
 namespace OutputWriter
 {
@@ -31,7 +32,7 @@ loopGetGeometryFieldNodalValues(const FieldVariablesForOutputWriterType &fieldVa
 
 // current element is of pointer type (not vector)
 template<typename CurrentFieldVariableType, typename FieldVariablesForOutputWriterType>
-typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
+typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value && !Mesh::isComposite<CurrentFieldVariableType>::value, bool>::type
 getGeometryFieldNodalValues(CurrentFieldVariableType currentFieldVariable, const FieldVariablesForOutputWriterType &fieldVariables, std::set<std::string> meshNames,
                std::vector<double> &values)
 {
@@ -108,7 +109,7 @@ getGeometryFieldNodalValues(VectorType currentFieldVariableVector, const FieldVa
 template<typename TupleType, typename FieldVariablesForOutputWriterType>
 typename std::enable_if<TypeUtility::isTuple<TupleType>::value, bool>::type
 getGeometryFieldNodalValues(TupleType currentFieldVariableTuple, const FieldVariablesForOutputWriterType &fieldVariables, std::set<std::string> meshNames,
-               std::vector<double> &values)
+                            std::vector<double> &values)
 {
   // call for tuple element
   loopGetGeometryFieldNodalValues<TupleType>(currentFieldVariableTuple, meshNames, values);
@@ -116,5 +117,30 @@ getGeometryFieldNodalValues(TupleType currentFieldVariableTuple, const FieldVari
   return false;  // do not break iteration
 }
 
+// element i is a field variables with Mesh::CompositeOfDimension<D>
+template<typename CurrentFieldVariableType, typename FieldVariablesForOutputWriterType>
+typename std::enable_if<Mesh::isComposite<CurrentFieldVariableType>::value, bool>::type
+getGeometryFieldNodalValues(CurrentFieldVariableType currentFieldVariable, const FieldVariablesForOutputWriterType &fieldVariables, std::set<std::string> meshNames,
+                            std::vector<double> &values)
+{
+  const int D = CurrentFieldVariableType::element_type::FunctionSpace::dim();
+  typedef typename CurrentFieldVariableType::element_type::FunctionSpace::BasisFunction BasisFunctionType;
+  typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>, BasisFunctionType> SubFunctionSpaceType;
+  const int nComponents = CurrentFieldVariableType::element_type::nComponents();
+
+  typedef FieldVariable::FieldVariable<SubFunctionSpaceType, nComponents> SubFieldVariableType;
+
+  std::vector<std::shared_ptr<SubFieldVariableType>> subFieldVariables;
+  currentFieldVariable->getSubFieldVariables(subFieldVariables);
+
+  for (auto& currentSubFieldVariable : subFieldVariables)
+  {
+    // call function on all vector entries
+    if (getGeometryFieldNodalValues<std::shared_ptr<SubFieldVariableType>,FieldVariablesForOutputWriterType>(currentSubFieldVariable, fieldVariables, meshNames, values))
+      return true;
+  }
+
+  return false;  // do not break iteration
+}
 }  // namespace ParaviewLoopOverTuple
 }  // namespace OutputWriter

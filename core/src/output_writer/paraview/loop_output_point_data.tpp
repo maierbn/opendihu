@@ -2,6 +2,7 @@
 
 #include <cstdlib>
 
+#include "field_variable/field_variable.h"
 #include "output_writer/paraview/paraview.h"
 
 namespace OutputWriter
@@ -33,7 +34,7 @@ loopOutputPointData(const FieldVariablesForOutputWriterType &fieldVariables, std
  
 // current element is of pointer type (not vector)
 template<typename CurrentFieldVariableType, typename FieldVariablesForOutputWriterType>
-typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
+typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value && !Mesh::isComposite<CurrentFieldVariableType>::value, bool>::type
 outputPointData(CurrentFieldVariableType currentFieldVariable, const FieldVariablesForOutputWriterType &fieldVariables, std::string meshName, 
                 std::ofstream &file, bool binaryOutput, bool fixedFormat, bool onlyParallelDatasetElement)
 {
@@ -73,5 +74,30 @@ outputPointData(TupleType currentFieldVariableTuple, const FieldVariablesForOutp
   return false;  // do not break iteration 
 }
 
+// element i is a field variables with Mesh::CompositeOfDimension<D>
+template<typename CurrentFieldVariableType, typename FieldVariablesForOutputWriterType>
+typename std::enable_if<Mesh::isComposite<CurrentFieldVariableType>::value, bool>::type
+outputPointData(CurrentFieldVariableType currentFieldVariable, const FieldVariablesForOutputWriterType &fieldVariables, std::string meshName,
+                std::ofstream &file, bool binaryOutput, bool fixedFormat, bool onlyParallelDatasetElement)
+{
+  const int D = CurrentFieldVariableType::element_type::FunctionSpace::dim();
+  typedef typename CurrentFieldVariableType::element_type::FunctionSpace::BasisFunction BasisFunctionType;
+  typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>, BasisFunctionType> SubFunctionSpaceType;
+  const int nComponents = CurrentFieldVariableType::element_type::nComponents();
+
+  typedef FieldVariable::FieldVariable<SubFunctionSpaceType, nComponents> SubFieldVariableType;
+
+  std::vector<std::shared_ptr<SubFieldVariableType>> subFieldVariables;
+  currentFieldVariable->getSubFieldVariables(subFieldVariables);
+
+  for (auto& currentSubFieldVariable : subFieldVariables)
+  {
+    // call function on all vector entries
+    if (outputPointData<std::shared_ptr<SubFieldVariableType>,FieldVariablesForOutputWriterType>(currentSubFieldVariable, fieldVariables, meshName, file, binaryOutput, fixedFormat, onlyParallelDatasetElement))
+      return true;
+  }
+
+  return false;  // do not break iteration
+}
 }  // namespace ParaviewLoopOverTuple
 }  // namespace OutputWriter

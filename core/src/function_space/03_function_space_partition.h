@@ -100,6 +100,9 @@ public:
   //! initiate the partitoning and then call the downwards initialize
   void initialize();
 
+  //! get a reference to the sub function spaces
+  const std::vector<std::shared_ptr<FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>> &subFunctionSpaces();
+
 protected:
   std::vector<std::shared_ptr<FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>> subFunctionSpaces_;   //< all submeshes
 };

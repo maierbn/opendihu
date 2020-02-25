@@ -132,13 +132,13 @@ callPythonSetParametersFunction(int nInstances, int timeStepNo, double currentTi
   if (pyGlobalNaturalDofsList_ == nullptr)
   {
     std::vector<global_no_t> dofNosGlobalNatural;
-    this->functionSpace_->meshPartitionBase()->getDofNosGlobalNatural(dofNosGlobalNatural);
+    this->functionSpace_->meshPartition()->getDofNosGlobalNatural(dofNosGlobalNatural);
     pyGlobalNaturalDofsList_ = PythonUtility::convertToPythonList(dofNosGlobalNatural);
   }
 
   // compose callback function
   PyObject *parametersList = PythonUtility::convertToPythonList(parameters);
-  PyObject *arglist = Py_BuildValue("(i,i,d,O,O,O)", this->functionSpace_->meshPartitionBase()->nDofsGlobal(),
+  PyObject *arglist = Py_BuildValue("(i,i,d,O,O,O)", this->functionSpace_->meshPartition()->nDofsGlobal(),
                                     timeStepNo, currentTime, parametersList, pyGlobalNaturalDofsList_, pySetFunctionAdditionalParameter_);
   PyObject *returnValue = PyObject_CallObject(pythonSetParametersFunction_, arglist);
 
@@ -171,7 +171,7 @@ callPythonSetSpecificParametersFunction(int nInstances, int timeStepNo, double c
 
   // compose callback function
   PyObject *globalParametersDict = PyDict_New();
-  PyObject *arglist = Py_BuildValue("(i,i,d,O,O)", this->functionSpace_->meshPartitionBase()->nDofsGlobal(),
+  PyObject *arglist = Py_BuildValue("(i,i,d,O,O)", this->functionSpace_->meshPartition()->nDofsGlobal(),
                                     timeStepNo, currentTime, globalParametersDict, pySetFunctionAdditionalParameter_);
   PyObject *returnValue = PyObject_CallObject(pythonSetSpecificParametersFunction_, arglist);
 
@@ -248,7 +248,7 @@ callPythonSetSpecificStatesFunction(int nInstances, int timeStepNo, double curre
 
   // compose callback function
   PyObject *globalStatesDict = PyDict_New();
-  PyObject *arglist = Py_BuildValue("(i,i,d,O,O)", this->functionSpace_->meshPartitionBase()->nDofsGlobal(),
+  PyObject *arglist = Py_BuildValue("(i,i,d,O,O)", this->functionSpace_->meshPartition()->nDofsGlobal(),
                                     timeStepNo, currentTime, globalStatesDict, pySetFunctionAdditionalParameter_);
   PyObject *returnValue = PyObject_CallObject(pythonSetSpecificStatesFunction_, arglist);
 

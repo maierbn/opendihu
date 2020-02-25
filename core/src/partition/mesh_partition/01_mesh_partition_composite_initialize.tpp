@@ -2,13 +2,14 @@
 
 #include <iterator>
 
+
 namespace Partition
 {
 
 template<int D, typename BasisFunctionType>
 MeshPartition<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,Mesh::CompositeOfDimension<D>>::
-MeshPartition(const std::vector<std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>> &subFunctionSpaces) :
-  subFunctionSpaces_(subFunctionSpaces)
+MeshPartition(const std::vector<std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>> &subFunctionSpaces, std::shared_ptr<RankSubset> rankSubset) :
+  MeshPartitionBase(rankSubset), subFunctionSpaces_(subFunctionSpaces)
 {
   nSubMeshes_ = this->subFunctionSpaces_.size();
 
@@ -22,11 +23,16 @@ MeshPartition(const std::vector<std::shared_ptr<FunctionSpace::FunctionSpace<Mes
     // count number of elements
     this->nElementsLocal_ += subFunctionSpace->nElementsLocal();
     this->nElementsGlobal_ += subFunctionSpace->nElementsGlobal();
+    LOG(DEBUG) << "sub function space \"" << subFunctionSpace->meshName() << "\" has " << subFunctionSpace->nElementsLocal() << " local, "
+      << subFunctionSpace->nElementsGlobal() << " global elements.";
   }
 
   elementNoGlobalBegin_ = 0;
   global_no_t nElementsLocalValue = nElementsLocal_;
-  MPIUtility::handleReturnValue(MPI_Exscan(&nElementsLocalValue, &elementNoGlobalBegin_, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, this->meshPartition_->mpiCommunicator()), "MPI_Exscan");
+  MPIUtility::handleReturnValue(MPI_Exscan(&nElementsLocalValue, &elementNoGlobalBegin_, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, this->mpiCommunicator()), "MPI_Exscan");
+
+  LOG(DEBUG) << "total elements local: " << this->nElementsLocal_ << ", global: " << this->nElementsGlobal_
+    << ", elementNoGlobalBegin_: " << elementNoGlobalBegin_;
 
 
   // determine nodes that are the same on multiple meshes
@@ -50,12 +56,13 @@ MeshPartition(const std::vector<std::shared_ptr<FunctionSpace::FunctionSpace<Mes
     // iterate over nodes of this mesh that have an equal node in other meshes
     for (std::map<node_no_t,std::pair<int,node_no_t>>::iterator iter2 = sharedNodesInMesh.begin(); iter2 != sharedNodesInMesh.end(); iter2++)
     {
-      int otherMeshNo = iter2->first;
-      node_no_t otherMeshNodeNo = iter2->second;
+      node_no_t sharedNodeNo = iter2->first;
 
       // if node is non-ghost
-      if (otherMeshNodeNo < subFunctionSpaces_[otherMeshNo].nNodesLocalWithoutGhosts())
+      if (sharedNodeNo < subFunctionSpaces_[meshIndex]->nNodesLocalWithoutGhosts())
       {
+        LOG(DEBUG) << "[meshNo " << meshIndex << ", nodeNo " << sharedNodeNo << "] equals [meshNo " << iter2->second.first << ", nodeNo " << iter2->second.second << "], remove";
+
         nRemovedNodesNonGhost_[meshIndex]++;
         nNodesSharedLocal_++;
       }
@@ -128,20 +135,20 @@ initializeSharedNodes()
   // determine nodes that are the same on multiple meshes
 
   // get node positions of all meshes
+  const int nDofsPerNode = FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::nDofsPerNode();
   std::vector<std::vector<Vec3>> nodePositions(nSubMeshes_);
   std::vector<std::vector<std::pair<Vec3,node_no_t>>> nodePositionsNodes(nSubMeshes_);  // the node positions with nodes for every submesh
 
   // iterate over submeshes and save all node positions
   int i = 0;
   for(const std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>> &subFunctionSpace : subFunctionSpaces_)
-
   {
     // get geometry field
-    subFunctionSpace->geometry()->getValuesWithGhosts(nodePositions[i]);
+    subFunctionSpace->geometryField().getValuesWithGhosts(nodePositions[i]);
 
     for (node_no_t nodeNoLocal = 0; nodeNoLocal < subFunctionSpace->nNodesLocalWithGhosts(); nodeNoLocal++)
     {
-      nodePositionsNodes[i].push_back(std::make_pair(nodePositions[i][nodeNoLocal], nodeNoLocal));
+      nodePositionsNodes[i].push_back(std::make_pair(nodePositions[i][nodeNoLocal*nDofsPerNode + 0], nodeNoLocal));
     }
 
     // sort according to x coordinate of node positions
@@ -149,9 +156,10 @@ initializeSharedNodes()
     {
       return a.first[0] < b.first[0];
     });
+
+    LOG(DEBUG) << "nodePositionsNodes of subFunctionSpace " << i << ": " << nodePositionsNodes[i];
     i++;
   }
-
 
   removedSharedNodes_.resize(nSubMeshes_);
   // std::vector<std::map<node_no_t,std::pair<int,node_no_t>>>
@@ -159,18 +167,20 @@ initializeSharedNodes()
   // iterate over submeshes
   const double nodePositionEqualTolerance = 1e-3;
   i = 0;
-  for(const typename std::vector<std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>>::const_iterator iter = subFunctionSpaces_.cbegin();
+  for(typename std::vector<std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>>::const_iterator iter = subFunctionSpaces_.cbegin();
       iter != subFunctionSpaces_.cend(); iter++, i++)
   {
     // find shared nodes in all next meshes
+
+    LOG(DEBUG) << "find shared nodes in subFunctionSpace " << i;
 
     // loop over node positions of this mesh
     for (node_no_t nodeNoLocal = 0; nodeNoLocal < nodePositions[i].size(); nodeNoLocal++)
     {
       Vec3 position = nodePositions[i][nodeNoLocal];
+      LOG(DEBUG) << "nodeNo " << nodeNoLocal << " at x=" << position[0];
 
       // iterate over further submeshes
-      int indexOtherMesh = 0;
       for(int indexOtherMesh = i; indexOtherMesh < nSubMeshes_; indexOtherMesh++)
       {
         // find node that has closest x coordinate
@@ -193,10 +203,12 @@ initializeSharedNodes()
             upper = k;
           }
           k = (upper + lower) / 2;
+
+          LOG(DEBUG) << "  [" << lower << "," << upper << "] x:" << currentNodePosition[0];
         }
 
         // check all node positions
-        for (;;)
+        for (;k < nodePositionsNodes[indexOtherMesh].size(); k++)
         {
           Vec3 nodePositionOtherMesh = nodePositionsNodes[indexOtherMesh][k].first;
           node_no_t nodeNoLocalOtherMesh = nodePositionsNodes[indexOtherMesh][k].second;
@@ -207,14 +219,18 @@ initializeSharedNodes()
           }
 
           double distance = MathUtility::distance<3>(position, nodePositionOtherMesh);
+          LOG(DEBUG) << "  k: " << k << ", distance: " << distance;
 
           // if the other mesh node is at the same position as the first node
           if (distance <= nodePositionEqualTolerance)
           {
+            LOG(DEBUG) << "   node is shared.";
             node_no_t nodeNoOtherMesh = k;
             if (removedSharedNodes_[indexOtherMesh].find(nodeNoOtherMesh) != removedSharedNodes_[indexOtherMesh].end())
             {
-              removedSharedNodes_[indexOtherMesh][nodeNoOtherMesh] = std::make_pair(nodeNoLocalOtherMesh, indexOtherMesh);
+              LOG(DEBUG) << "   node is not yet included in removedSharedNodes_, add (indexOtherMesh,nodeNoLocalOtherMesh) = ("
+                << indexOtherMesh << "," << nodeNoLocalOtherMesh << ")";
+              removedSharedNodes_[indexOtherMesh][nodeNoOtherMesh] = std::make_pair(indexOtherMesh, nodeNoLocalOtherMesh);
             }
             break;
           }
@@ -222,6 +238,8 @@ initializeSharedNodes()
       }
     }
   }
+
+  LOG(DEBUG) << "removedSharedNodes_: " << removedSharedNodes_;
 }
 
 template<int D, typename BasisFunctionType>
@@ -248,11 +266,11 @@ initializeGhostNodeNos()
   // determine global number of duplicate-free nodes over all submeshes
   nNodesGlobal_ = 0;
   global_no_t nNodesLocalValue = nNodesLocalWithoutGhosts_;
-  MPIUtility::handleReturnValue(MPI_Allreduce(&nNodesLocalValue, &nNodesGlobal_, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, this->meshPartition_->mpiCommunicator()), "MPI_Allreduce");
+  MPIUtility::handleReturnValue(MPI_Allreduce(&nNodesLocalValue, &nNodesGlobal_, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, this->mpiCommunicator()), "MPI_Allreduce");
 
   // get number of duplicate-free nodes on previous ranks
   nonDuplicateNodeNoGlobalBegin_ = 0;
-  MPIUtility::handleReturnValue(MPI_Exscan(&nNodesLocalValue, &nonDuplicateNodeNoGlobalBegin_, 1, MPI_INT, MPI_SUM, this->meshPartition_->mpiCommunicator()), "MPI_Exscan");
+  MPIUtility::handleReturnValue(MPI_Exscan(&nNodesLocalValue, &nonDuplicateNodeNoGlobalBegin_, 1, MPI_INT, MPI_SUM, this->mpiCommunicator()), "MPI_Exscan");
 
   // setup duplicate-free numberings (local and global) for non-ghost nodes, also store isDuplicate_ for non-ghost nodes
   meshAndNodeNoLocalToNodeNoNonDuplicateGlobal_.resize(nSubMeshes_);
@@ -357,17 +375,17 @@ initializeGhostNodeNos()
   }
 
   // exchange, how many values should be sent to which rank
-  VLOG(1) << "rankSubset " << *this->meshPartition_->rankSubset() << ", create new window";
+  VLOG(1) << "rankSubset " << *this->rankSubset() << ", create new window";
 
-  int nRanks = this->meshPartition_->nRanks();
-  int ownRankNo = this->meshPartition_->ownRankNo();
+  int nRanks = this->nRanks();
+  int ownRankNo = this->ownRankNo();
 
   // create remote accessible memory
   std::vector<int> remoteAccessibleMemory(nRanks, 0);
   int nBytes = nRanks * nSubMeshes_ * sizeof(int);
   int displacementUnit = sizeof(int);
   MPI_Win mpiMemoryWindow;
-  MPIUtility::handleReturnValue(MPI_Win_create((void *)remoteAccessibleMemory.data(), nBytes, displacementUnit, MPI_INFO_NULL, this->meshPartition_->mpiCommunicator(), &mpiMemoryWindow), "MPI_Win_create");
+  MPIUtility::handleReturnValue(MPI_Win_create((void *)remoteAccessibleMemory.data(), nBytes, displacementUnit, MPI_INFO_NULL, this->mpiCommunicator(), &mpiMemoryWindow), "MPI_Win_create");
 
   std::vector<int> localMemory(nRanks * nSubMeshes_);
 
@@ -440,7 +458,7 @@ initializeGhostNodeNos()
 
     MPI_Request sendRequest;
     MPIUtility::handleReturnValue(MPI_Isend(sendBuffer[i].data(), nRequestedNodes, MPI_INT, foreignRankNo, 0,
-                                            this->meshPartition_->mpiCommunicator(), &sendRequest), "MPI_Isend");
+                                            this->mpiCommunicator(), &sendRequest), "MPI_Isend");
 
     VLOG(1) << "to rank " << foreignRankNo << " send " << nRequestedNodes << " requests: " << sendBuffer[i];
 
@@ -467,7 +485,7 @@ initializeGhostNodeNos()
       requestedNodesGlobalPetsc[i].resize(nFromRank);
       MPI_Request receiveRequest;
       MPIUtility::handleReturnValue(MPI_Irecv(requestedNodesGlobalPetsc[i].data(), nFromRank, MPI_INT, foreignRankNo, 0,
-                                              this->meshPartition_->mpiCommunicator(), &receiveRequest), "MPI_Irecv");
+                                              this->mpiCommunicator(), &receiveRequest), "MPI_Irecv");
       receiveRequests.push_back(receiveRequest);
     }
   }
@@ -481,7 +499,7 @@ initializeGhostNodeNos()
 
   sendRequests.clear();
   receiveRequests.clear();
-
+/*
   if (VLOG_IS_ON(1))
   {
     std::stringstream s;
@@ -503,7 +521,7 @@ initializeGhostNodeNos()
     VLOG(1) << "requestNodesFromRanks_: " << s.str();
     VLOG(1) << "requestedNodesGlobalPetsc: " << requestedNodesGlobalPetsc;
   }
-
+*/
   // send nodes in nonDuplicateGlobal ordering
   i = 0;
   std::vector<std::vector<int>>    requestedNodesGlobalPetscSendBuffer(nNodesRequestedFromRanks.size());
@@ -540,7 +558,7 @@ initializeGhostNodeNos()
 
       MPI_Request sendRequestNodes;
       MPIUtility::handleReturnValue(MPI_Isend(requestedNodesGlobalPetscSendBuffer[i].data(), nFromRank, MPI_INT, foreignRankNo, 0,
-                                              this->meshPartition_->mpiCommunicator(), &sendRequestNodes), "MPI_Isend");
+                                              this->mpiCommunicator(), &sendRequestNodes), "MPI_Isend");
       sendRequests.push_back(sendRequestNodes);
     }
     i++;
@@ -561,7 +579,7 @@ initializeGhostNodeNos()
 
     MPI_Request receiveRequestNodes;
     MPIUtility::handleReturnValue(MPI_Irecv(requestedNodesGlobalPetscReceiveBuffer[i].data(), nRequestedNodes, MPI_INT, foreignRankNo, 0,
-                                            this->meshPartition_->mpiCommunicator(), &receiveRequestNodes), "MPI_Irecv");
+                                            this->mpiCommunicator(), &receiveRequestNodes), "MPI_Irecv");
     receiveRequests.push_back(receiveRequestNodes);
     i++;
   }
@@ -637,6 +655,12 @@ initializeGhostNodeNos()
   nNodesLocalWithGhosts_ -= nNodesSharedLocal_;      // substract double nodes that are included only once
   nNodesLocalWithGhosts_ -= nGhostNodesSharedLocal_; // substract double ghost nodes that are included only once
 
+  LOG(DEBUG) << "meshAndNodeNoLocalToNodeNoNonDuplicateLocal_:   " << meshAndNodeNoLocalToNodeNoNonDuplicateLocal_;
+  LOG(DEBUG) << "meshAndNodeNoLocalToNodeNoNonDuplicateGlobal_:  " << meshAndNodeNoLocalToNodeNoNonDuplicateGlobal_;
+  LOG(DEBUG) << "isDuplicate_:  " << isDuplicate_;
+  LOG(DEBUG) << "nodeNoNonDuplicateLocalToMeshAndDuplicateLocal_:" << nodeNoNonDuplicateLocalToMeshAndDuplicateLocal_;
+  LOG(DEBUG) << "nNodesLocalWithGhosts_: " << nNodesLocalWithGhosts_;
+
 }
 
 template<int D, typename BasisFunctionType>
@@ -650,7 +674,7 @@ createLocalDofOrderings()
   onlyNodalDofLocalNos_.clear();
   for (int subMeshNo = 0; subMeshNo < nSubMeshes_; subMeshNo++)
   {
-    int nNodesLocalWithoutGhosts = subFunctionSpaces_->nNodesLocalWithoutGhosts();
+    int nNodesLocalWithoutGhosts = subFunctionSpaces_[subMeshNo]->nNodesLocalWithoutGhosts();
 
     for (dof_no_t nodeNoLocal = 0; nodeNoLocal < nNodesLocalWithoutGhosts; nodeNoLocal++)
     {

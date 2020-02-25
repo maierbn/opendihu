@@ -5,7 +5,8 @@ namespace Mesh
 
 template<int D>
 CompositeOfDimension<D>::
-CompositeOfDimension(PythonConfig specificSettings)
+CompositeOfDimension(PythonConfig specificSettings) :
+  MeshOfDimension<D>(specificSettings)
 {
 }
 

@@ -10,6 +10,24 @@
 namespace FunctionSpace
 {
 
+// constructor
+template<int D,typename BasisFunctionType>
+FunctionSpaceDofsNodes<Mesh::CompositeOfDimension<D>,BasisFunctionType>::
+FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, PythonConfig specificSettings, bool noGeometryField) :
+  FunctionSpaceGeometry<Mesh::CompositeOfDimension<D>,BasisFunctionType>(partitionManager, specificSettings)
+{
+  this->noGeometryField_ = noGeometryField;
+}
+
+// constructor
+template<int D,typename BasisFunctionType>
+FunctionSpaceDofsNodes<Mesh::CompositeOfDimension<D>,BasisFunctionType>::
+FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, std::vector<double> &localNodePositions, PythonConfig specificSettings, bool noGeometryField) :
+  FunctionSpaceGeometry<Mesh::CompositeOfDimension<D>,BasisFunctionType>(partitionManager, specificSettings)
+{
+  LOG(FATAL) << "Constructor of composite mesh with node positions is not possible.";
+}
+
 template<int D,typename BasisFunctionType>
 node_no_t FunctionSpaceDofsNodes<Mesh::CompositeOfDimension<D>,BasisFunctionType>::
 nNodesLocalWithGhosts() const

@@ -244,7 +244,7 @@ template<typename MeshType, typename BasisFunctionType, int nComponents>
 class PartitionedPetscVec<
   FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,
   nComponents,
-  Mesh::isStructured<MeshType>> : 
+  Mesh::isStructuredOrComposite<MeshType>> :
   public PartitionedPetscVecNComponentsStructured<MeshType,BasisFunctionType,nComponents>
 {
 public:
@@ -265,7 +265,7 @@ template<typename MeshType, typename BasisFunctionType>
 class PartitionedPetscVec<
   FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,
   1,
-  Mesh::isStructured<MeshType>> : 
+  Mesh::isStructuredOrComposite<MeshType>> :
   public PartitionedPetscVecNComponentsStructured<MeshType,BasisFunctionType,1>
 {
 public:

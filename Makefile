@@ -115,3 +115,6 @@ static_biceps_emg:
 
 precice0:	
 	cd examples/electrophysiology/biceps_contraction/opendihu_precice_opendihu && python ../../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+
+laplace2d_split:
+	cd examples/laplace/laplace2d_split && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG

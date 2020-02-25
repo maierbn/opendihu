@@ -1,6 +1,7 @@
 #pragma once
 
 #include "utility/type_utility.h"
+#include "mesh/type_traits.h"
 
 #include <cstdlib>
 
@@ -51,8 +52,16 @@ outputHeaderExnode(VectorType currentFieldVariableVector, int &fieldVariableInde
  /**  Loop body for a pointer element
  */
 template<typename CurrentFieldVariableType>
-typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
+typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value
+  && !Mesh::isComposite<CurrentFieldVariableType>::value, bool>::type
 outputHeaderExnode(CurrentFieldVariableType currentFieldVariable, int &fieldVariableIndex, std::string meshName, 
+                   std::ostream &stream, node_no_t currentNodeGlobalNo, int &valueIndex);
+
+/** Loop body for a field variables with Mesh::CompositeOfDimension<D>
+ */
+template<typename CurrentFieldVariableType>
+typename std::enable_if<Mesh::isComposite<CurrentFieldVariableType>::value, bool>::type
+outputHeaderExnode(CurrentFieldVariableType currentFieldVariable, int &fieldVariableIndex, std::string meshName,
                    std::ostream &stream, node_no_t currentNodeGlobalNo, int &valueIndex);
 
 }  // namespace ExfileLoopOverTuple

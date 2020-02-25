@@ -228,11 +228,10 @@ createPartitioningStructuredGlobal(const std::array<global_no_t,FunctionSpace::d
   return meshPartition;
 }
 
-/*
 //! create new partitioning of a composite mesh, this emulates a normal mesh but the values are taken from the submeshes
-template<typename BasisFunctionType, int D, int nSubmeshes>
+template<typename BasisFunctionType, int D>
 std::shared_ptr<MeshPartition<::FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>>> Manager::
-createPartitioningComposite(const std::vector<std::shared_ptr<FunctionSpace<StructuredDeformableOfDimension<D>,BasisFunctionType>>> &subFunctionSpaces)
+createPartitioningComposite(const std::vector<std::shared_ptr<::FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>> &subFunctionSpaces)
 {
   // the subset of ranks for the partition to be created
   std::shared_ptr<RankSubset> rankSubset;
@@ -251,12 +250,13 @@ createPartitioningComposite(const std::vector<std::shared_ptr<FunctionSpace<Stru
 
   LOG(DEBUG) << "using rankSubset " << *rankSubset;
 
+  typedef ::FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType> FunctionSpace;
+
   // create meshPartition
-  std::shared_ptr<MeshPartition<::FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>>> meshPartition
+  std::shared_ptr<MeshPartition<FunctionSpace>> meshPartition
     = std::make_shared<MeshPartition<FunctionSpace>>(subFunctionSpaces, rankSubset);
 
   return meshPartition;
 }
-*/
 
 }  // namespace

@@ -1,6 +1,7 @@
 #include "output_writer/loop_count_n_field_variables_of_mesh.h"
 
 #include <cstdlib>
+#include "field_variable/field_variable.h"
 
 namespace OutputWriter
 {
@@ -26,7 +27,7 @@ loopCountNFieldVariablesOfMesh(const FieldVariablesForOutputWriterType &fieldVar
  
 // current element is of pointer type (not vector)
 template<typename CurrentFieldVariableType>
-typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
+typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value && !Mesh::isComposite<CurrentFieldVariableType>::value, bool>::type
 countNFieldVariablesOfMesh(CurrentFieldVariableType currentFieldVariable, std::string meshName,
                            int &nFieldVariablesOfMesh)
 {
@@ -75,5 +76,30 @@ countNFieldVariablesOfMesh(TupleType currentFieldVariableTuple, std::string mesh
   return false;  // do not break iteration
 }
 
+// element i is a field variables with Mesh::CompositeOfDimension<D>
+template<typename CurrentFieldVariableType>
+typename std::enable_if<Mesh::isComposite<CurrentFieldVariableType>::value, bool>::type
+countNFieldVariablesOfMesh(CurrentFieldVariableType currentFieldVariable, std::string meshName,
+                           int &nFieldVariablesOfMesh)
+{
+  const int D = CurrentFieldVariableType::element_type::FunctionSpace::dim();
+  typedef typename CurrentFieldVariableType::element_type::FunctionSpace::BasisFunction BasisFunctionType;
+  typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>, BasisFunctionType> SubFunctionSpaceType;
+  const int nComponents = CurrentFieldVariableType::element_type::nComponents();
+
+  typedef FieldVariable::FieldVariable<SubFunctionSpaceType, nComponents> SubFieldVariableType;
+
+  std::vector<std::shared_ptr<SubFieldVariableType>> subFieldVariables;
+  currentFieldVariable->getSubFieldVariables(subFieldVariables);
+
+  for (auto& currentSubFieldVariable : subFieldVariables)
+  {
+    // call function on all vector entries
+    if (countNFieldVariablesOfMesh<std::shared_ptr<SubFieldVariableType>>(currentSubFieldVariable, meshName, nFieldVariablesOfMesh))
+      return true;
+  }
+
+  return false;  // do not break iteration
+}
 }  // namespace LoopOverTuple
 }  // namespace OutputWriter

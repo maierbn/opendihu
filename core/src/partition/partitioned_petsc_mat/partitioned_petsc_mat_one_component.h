@@ -12,14 +12,14 @@
 /** Global numbering: such that each rank has its own contiguous subset of the total range.
  *  Local numbering: ghost elements
  */
-template<typename RowsFunctionSpaceType, typename ColumnsFunctionSpaceType = RowsFunctionSpaceType, typename = typename RowsFunctionSpaceType::Mesh>
+template<typename RowsFunctionSpaceType, typename ColumnsFunctionSpaceType = RowsFunctionSpaceType>
 class PartitionedPetscMatOneComponent
 {
 };
 
-/** partial specialization for structured meshes */
+/** partial specialization for structured meshes and composite mesh*/
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
-class PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>> :
+class PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType> :
   public PartitionedPetscMatOneComponentBase<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>
 {
 public:
@@ -105,8 +105,7 @@ protected:
 template<int D, typename BasisFunctionType>
 class PartitionedPetscMatOneComponent<
   FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>,
-  FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>,
-  Mesh::UnstructuredDeformableOfDimension<D>> :
+  FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>> :
   public PartitionedPetscMatOneComponentBase<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>,FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>>
 {
 public:

@@ -848,4 +848,13 @@ getNodeNo(std::array<int,MeshType::dim()> coordinateLocal) const
 #endif
 }
 
+//! get the node no in the global natural ordering
+template<typename MeshType,typename BasisFunctionType>
+global_no_t FunctionSpaceNumbersCommon<MeshType,BasisFunctionType,Mesh::isStructured<MeshType>>::
+getNodeNoGlobalNatural(element_no_t elementNoLocal, int nodeIndex) const
+{
+  global_no_t elementNoGlobalNatural = this->meshPartition_->getElementNoGlobalNatural(elementNoLocal);
+  return getNodeNoGlobalNatural(elementNoGlobalNatural, nodeIndex);
+}
+
 } // namespace

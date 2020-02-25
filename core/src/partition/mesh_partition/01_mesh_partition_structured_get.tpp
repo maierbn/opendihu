@@ -537,7 +537,6 @@ getDofNoGlobalPetsc(dof_no_t dofNoLocal) const
   return (global_no_t)dofNoGlobal;
 }
 
-
 template<typename MeshType,typename BasisFunctionType>
 global_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 getElementNoGlobalNatural(element_no_t elementNoLocal) const

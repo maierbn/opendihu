@@ -40,10 +40,6 @@ initialize()
   if (initialized_)
     return;
 
-
-  // this->specificSettings_
-
-
   std::vector<PyObject *> implicitEulerConfigs;
 
   PyObject *implicitEulerConfig = this->specificSettings_.getOptionListBegin<PyObject *>("TimeSteppingScheme");
@@ -66,6 +62,16 @@ initialize()
     DihuContext implicitEulerContext = context_.createSubContext(implicitEulerConfig);
 
     LOG(DEBUG) << "implicitEulerContext: " << implicitEulerContext.getPythonConfig();
+
+
+    // create rank subset
+    //std::shared_ptr<RankSubset> nextRankSubet = std::make_shared<RankSubset>();
+
+    //template<typename Iter>
+    //RankSubset(Iter ranksBegin, Iter ranksEnd, std::shared_ptr<RankSubset> parentRankSubset = nullptr);
+
+    //DihuContext::partitionManager()->setRankSubsetForNextCreatedPartitioning(nextRankSubset);
+
 
     implicitEulerSolvers_.push_back(
       std::make_shared<NestedSolver>(implicitEulerContext)

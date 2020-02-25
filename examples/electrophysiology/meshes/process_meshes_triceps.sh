@@ -1,7 +1,19 @@
 #!/bin/bash
 
+# This scripts creates the 1D fiber meshes and the 3D mesh of the muscle. 
+# Input is one stl file of the geometry that was extracted from cmgui.
+# Multiple files with different number of fibers are created as *.bin files that can directly be used by opendihu.
+# In order to visualize a bin file, run `examine_bin_fibers.py <filename.bin>`
+ 
 input_file=original_meshes/left_triceps_brachii.stl
 # if you change the input file, you probably also have to experiment with the bottom_z and top_z clipping parameters for the muscle 
+
+# [cm] range along z-axis for which the muscle volume is extracted
+bottom_z_clip=2
+top_z_clip=22
+
+# [cm] length of one 1D element in z-direction, the number of elements per fiber is thus (top_z_clip-bottom_z_clip)/element_length
+element_length=0.01
 
 # get filename and basename
 filename=${input_file##*/}    # left_triceps_brachii.stl
@@ -68,7 +80,7 @@ $pyod ./create_spline_surface.py \
   ${current_directory}/processed_meshes/${basename}_03_bottom_at_zero.stl \
   ${current_directory}/processed_meshes/${basename}_04_spline_surface.stl \
   ${current_directory}/processed_meshes/${basename}_04_spline_surface.pickle \
-  2 22
+  $bottom_z_clip $top_z_clip
 
 echo ""
 echo "--- Compile opendihu"
@@ -92,14 +104,12 @@ if [[ ! -f "${current_directory}/processed_meshes/${basename}_05_7x7fibers.bin" 
   ./generate ../settings_generate_7x7.py \
     ${current_directory}/processed_meshes/${basename}_04_spline_surface.pickle \
     ${current_directory}/processed_meshes/${basename}_05_0x0fibers.bin \
-    2 22 0.01
+    $bottom_z_clip $top_z_clip $element_length
 else
   echo "file processed_meshes/${basename}_05_7x7fibers.bin already exists"
 fi
 
-
-cp ${current_directory}/processed_meshes/7x7fibers.no_boundary.bin ${current_directory}/processed_meshes/${basename}_05_7x7fibers.bin
-cp ${current_directory}/processed_meshes/9x9fibers.bin ${current_directory}/processed_meshes/${basename}_05_9x9fibers.bin
+cp ${current_directory}/processed_meshes/${basename}_05_7x7fibers.no_boundary.bin ${current_directory}/processed_meshes/${basename}_05_7x7fibers.bin
 
 echo ""
 echo "--- Move the fibers file back to original position"
@@ -126,12 +136,12 @@ echo "--- Refine fibers file to create more dense fibers"
 # input fiber
 input=${current_directory}/processed_meshes/${basename}_7x7fibers.bin
 
-${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 1 $input     # 13
-${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 3 $input     # 25
-${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 5 $input     # 37
-${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 10 $input     # 67
-${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 17 $input     # 109
-${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 30 $input     # 187
-${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 45 $input     # 277
-${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 70 $input     # 427
-${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 86 $input     # 523
+${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 1 $input $bottom_z_clip $top_z_clip $element_length    # 13
+${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 3 $input $bottom_z_clip $top_z_clip $element_length     # 25
+${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 5 $input $bottom_z_clip $top_z_clip $element_length     # 37
+${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 10 $input $bottom_z_clip $top_z_clip $element_length     # 67
+${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 17 $input $bottom_z_clip $top_z_clip $element_length     # 109
+${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 30 $input $bottom_z_clip $top_z_clip $element_length     # 187
+${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 45 $input $bottom_z_clip $top_z_clip $element_length     # 277
+${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 70 $input $bottom_z_clip $top_z_clip $element_length     # 427
+${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 86 $input $bottom_z_clip $top_z_clip $element_length     # 523

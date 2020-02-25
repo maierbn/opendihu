@@ -56,3 +56,4 @@ from chaste import Chaste
 from vc import Vc
 from xbraid import xbraid
 from opencor import OpenCOR
+from precice import precice

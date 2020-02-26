@@ -88,6 +88,8 @@ vars.Add(BoolVariable('no_vectorization', 'Turn off SEE and AVX commands.', Fals
 vars.Add(BoolVariable('USE_CRAY_PAT', 'Compile with craypat regions.', False))
 vars.Add(BoolVariable('USE_HPL', 'Compile with -hpl option.', False))
 vars.Add(BoolVariable('USE_MEGAMOL', 'Use additional linker flags to link to the megamol source file.', False))
+vars.Add(BoolVariable('VERBOSE', 'Output raw shell commands for compilation.', False))
+vars.Add(BoolVariable('ph', 'Build precompiled headers.', False))
 vars.Add('mpicc', help='The mpicc compiler wrapper', default='mpicc')
 vars.Add('mpiCC', help='The mpic++ compiler wrapper', default='mpic++')
 vars.Add('cc', help='The c compiler', default='gcc')
@@ -123,6 +125,7 @@ if ARGUMENTS.get('VERBOSE') != '1' and tty_available:
   env['LINKCOMSTR'] = "\x1b[32mLinking   $TARGET\x1b[0m"
   env['ARCOMSTR'] = "\x1b[36mBuilding archive $TARGET\x1b[0m"
   env['RANLIBCOMSTR'] = "\x1b[36mCreating archive index\x1b[0m"
+  env['GCHSTR'] = "\x1b[32mCompiling header $SOURCE\x1b[0m"
            
 # set compiler, "CC" is C++, "cc" is C
 env['CXX'] = env['CC']
@@ -179,7 +182,7 @@ if os.environ.get("PE_ENV") == None:
   if "notifyset" not in env:
     env["notifyset"] = True
     target='notify-send'+str(random.random())
-    notify = env.Command(target=target, source = None, action = 'notify-send "compilation complete" || true')
+    notify = env.Command(target=target, source = None, action = 'notify-send "Compilation of core completed." || true')
     #AlwaysBuild('notify-send')
     if env["BUILD_TYPE"] == "debug":
       Depends(notify, 'core/build_debug/libopendihud.a')

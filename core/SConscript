@@ -18,6 +18,14 @@ elif env["BUILD_TYPE"] == "releasewithdebuginfo":    # will build releasewithdeb
 else:
   target = 'opendihu'       # will build release version
 
+# precompiled headers
+if env["ph"]:
+  import gch
+  
+  gch.generate(env)
+  env['precompiled_header'] = File('src/opendihu.h')
+  env['Gch'] = env.Gch(target='src/opendihu.h.gch', source=env['precompiled_header'])
+
 # build the library  
 env.Library(target = target, source = src_files)
 

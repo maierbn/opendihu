@@ -4,6 +4,7 @@
 
 #include "data_management/output_connector_data.h"
 #include "control/python_config.h"
+#include "data_management/data.h"
 
 namespace Data
 {

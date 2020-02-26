@@ -12,7 +12,7 @@
 namespace FunctionSpace
 {
 
-/** base class for structured meshes, geometry field is declared here for structured meshes
+/** base class for structured meshes and composite mesh, geometry field is declared here for structured meshes
  */
 template<typename MeshType,typename BasisFunctionType>
 class FunctionSpaceGeometryData :

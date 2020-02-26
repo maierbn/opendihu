@@ -38,6 +38,9 @@ public:
   //! if the field has the flag "geometry field", i.e. in the exelem file its type was specified as "coordinate"
   bool isGeometryField() const;
 
+  //! set the field variable to be a "geometry field"
+  void setGeometryField(bool isGeometryField);
+
   //! check if there are NaNs or high values in the current variable, if yes output a warning
   void checkNansInfs(int componentNo = 0) const;
 

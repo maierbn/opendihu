@@ -8,6 +8,7 @@
 #include "interfaces/discretizable_in_time.h"
 #include "control/dihu_context.h"
 #include "control/python_config.h"
+#include "time_stepping_scheme/00_time_stepping_scheme.h"
 
 namespace Control
 {

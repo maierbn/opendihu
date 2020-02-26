@@ -131,4 +131,6 @@ protected:
 } // namespace
 
 #include "output_writer/paraview/paraview.tpp"
-#include "output_writer/paraview/paraview_write_combined_file.tpp"
+#include "output_writer/paraview/paraview_write_combined_values.tpp"
+#include "output_writer/paraview/paraview_write_combined_file_1D.tpp"
+#include "output_writer/paraview/paraview_write_combined_file_2D3D.tpp"

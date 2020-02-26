@@ -16,6 +16,7 @@ getSubFieldVariables(std::vector<std::shared_ptr<FieldVariable<FunctionSpace::Fu
   // get own values
   std::vector<VecD<nComponents>> ownValues;
   this->getValuesWithoutGhosts(ownValues);
+  assert(ownValues.size() == this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts());
 
   // loop over sub function spaces
   int subMeshNo = 0;
@@ -27,7 +28,9 @@ getSubFieldVariables(std::vector<std::shared_ptr<FieldVariable<FunctionSpace::Fu
 
     // create sub field variable
     std::vector<std::string> componentNames(this->componentNames_.begin(), this->componentNames_.end());
-    std::shared_ptr<FieldVariable<SubFunctionSpaceType,nComponents>> newFieldVariable = subFunctionSpace->template createFieldVariable<nComponents>(fieldVariableName.str(), componentNames);
+    std::shared_ptr<FieldVariable<SubFunctionSpaceType,nComponents>> newFieldVariable
+      = subFunctionSpace->template createFieldVariable<nComponents>(fieldVariableName.str(), componentNames);
+    newFieldVariable->setGeometryField(this->isGeometryField());
 
     // determine values for the sub field variable
     std::vector<VecD<nComponents>> subFieldVariableValues(subFunctionSpace->nDofsLocalWithoutGhosts());
@@ -37,19 +40,28 @@ getSubFieldVariables(std::vector<std::shared_ptr<FieldVariable<FunctionSpace::Fu
     {
       node_no_t compositeNodeNo = this->functionSpace_->meshPartition()->getNodeNoLocalFromSubmesh(subMeshNo, nodeNoLocal);
 
-      for (int nodalDofNo = 0; nodalDofNo < subFunctionSpace->nDofsPerNode(); nodalDofNo++)
+      if (compositeNodeNo != -1)
       {
-        dof_no_t compositeDofNo = compositeNodeNo*subFunctionSpace->nDofsPerNode() + nodalDofNo;
-        dof_no_t subFunctionSpaceDofNo = nodeNoLocal*subFunctionSpace->nDofsPerNode() + nodalDofNo;
+        for (int nodalDofNo = 0; nodalDofNo < subFunctionSpace->nDofsPerNode(); nodalDofNo++)
+        {
+          dof_no_t compositeDofNo = compositeNodeNo*subFunctionSpace->nDofsPerNode() + nodalDofNo;
+          dof_no_t subFunctionSpaceDofNo = nodeNoLocal*subFunctionSpace->nDofsPerNode() + nodalDofNo;
 
-        subFieldVariableValues[subFunctionSpaceDofNo] = ownValues[compositeDofNo];
+          assert (subFunctionSpaceDofNo < subFunctionSpace->nDofsLocalWithoutGhosts());
+          assert (compositeDofNo < this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts());
+
+          //LOG(DEBUG) << subFieldVariableValues.size() << "," << subFunctionSpaceDofNo << ", " << ownValues.size() << "," << compositeDofNo;
+          subFieldVariableValues[subFunctionSpaceDofNo] = ownValues[compositeDofNo];
+        }
       }
     }
 
     // set values in the sub field variable
-    newFieldVariable->startGhostManipulation();
+    //newFieldVariable->startGhostManipulation();
     newFieldVariable->setValuesWithoutGhosts(subFieldVariableValues);
     newFieldVariable->finishGhostManipulation();
+
+    VLOG(1) << "new field variable: " << *newFieldVariable;
 
     // add field variable to subFieldVariables
     subFieldVariables.push_back(newFieldVariable);

@@ -80,7 +80,7 @@ public:
   //! the global natural ordering is here defined to be the global natural ordering of all submeshes concatenated
   global_no_t getElementNoGlobalNatural(element_no_t elementNoLocal) const;
 
-  //! get the node no in global petsc ordering from a local node no
+  //! get the node no in global petsc ordering from a local node no (works also for ghosts)
   global_no_t getNodeNoGlobalPetsc(node_no_t nodeNoLocal) const;
 
   //! get the node no in a composite global natural ordering where the natural orders of the submeshes are concatenated, call this method from the function space to be compatible with structured meshes!
@@ -138,13 +138,16 @@ public:
   void getSubMeshNoAndElementNoLocal(element_no_t elementNoLocal, int &subMeshNo, element_no_t &elementOnMeshNoLocal) const;
 
   //! from a local node no in the composite numbering get the subMeshNo and the no in the submesh-based numbering
-  void getSubMeshNoAndNodeNoLocal(node_no_t nodeNoLocal, int &subMeshNo, node_no_t &nodeOnMeshNoLocal);
+  void getSubMeshNoAndNodeNoLocal(node_no_t nodeNoLocal, int &subMeshNo, node_no_t &nodeOnMeshNoLocal) const;
 
   //! for the local node no in the composite numbering return all sub meshes and the corresponding local node nos in non-composite numbering of this node. This may be multiple if the node is shared.o
-  void getSubMeshesWithNodes(node_no_t nodeNoLocal, std::vector<std::pair<int,node_no_t>> &subMeshesWithNodes);
+  void getSubMeshesWithNodes(node_no_t nodeNoLocal, std::vector<std::pair<int,node_no_t>> &subMeshesWithNodes) const;
 
   //! from the submesh no and the local node no in the submesh numbering get the local node no in the composite numbering
-  node_no_t getNodeNoLocalFromSubmesh(int subMeshNo, int nodeNoDuplicateOnSubmesh);
+  node_no_t getNodeNoLocalFromSubmesh(int subMeshNo, node_no_t nodeNoDuplicateOnSubmesh) const;
+
+  //! get a string with all information, this is used in the regression tests (unit test) to compare it to a reference string
+  std::string getString();
 
 protected:
 
@@ -187,7 +190,7 @@ protected:
 
   // mappings from local numbering in every submesh to the composite numbering
   std::vector<std::vector<node_no_t>> meshAndNodeNoLocalToNodeNoNonDuplicateGlobal_;   //< mapping from submesh no and local node no to the composite numbering used for the whole mesh, for local nodes with ghosts, -1 for removed nodes
-  std::vector<std::vector<node_no_t>> meshAndNodeNoLocalToNodeNoNonDuplicateLocal_;    //< mapping from submesh no and local node no to the local number of the composite node numbering
+  std::vector<std::vector<node_no_t>> meshAndNodeNoLocalToNodeNoNonDuplicateLocal_;    //< mapping from submesh no and local node no to the local number of the composite node numbering, also for ghost nodes
   std::vector<std::vector<bool>> isDuplicate_;                //< for every local node no, if the node has a prescribed Dirichlet BC value
   std::vector<std::pair<int,node_no_t>> nodeNoNonDuplicateLocalToMeshAndDuplicateLocal_;   //< mapping from non-duplicate local number to submesh no and local node no on the submesh
 

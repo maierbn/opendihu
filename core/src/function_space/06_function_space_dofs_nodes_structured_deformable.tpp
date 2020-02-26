@@ -104,8 +104,6 @@ initialize()
   assert(thisFunctionSpace != nullptr);
   
   // create empty field variable for geometry field
-  LOG(DEBUG) << "step 1: construct geometryField";
-
   std::vector<std::string> componentNames{"x", "y", "z"};
   this->geometryField_ = std::make_shared<GeometryFieldType>(thisFunctionSpace, "geometry", componentNames, true);
   
@@ -269,8 +267,9 @@ parseNodePositionsFromSettings(PythonConfig specificSettings)
   else   // there was no "nodePositions" given in config, use physicalExtent instead
   {
     // if node positions are not given in settings but physicalExtent, generate node positions such that physicalExtent is reached
-    std::array<double, D> physicalExtent, meshWidth;
+    std::array<double, D> physicalExtent, meshWidth, physicalOffset;
     physicalExtent = specificSettings.getOptionArray<double, D>("physicalExtent", 1.0, PythonUtility::Positive);
+    physicalOffset = specificSettings.getOptionArray<double, D>("physicalOffset", 0.0);
 
     for (unsigned int dimNo = 0; dimNo < D; dimNo++)
     {
@@ -335,13 +334,13 @@ parseNodePositionsFromSettings(PythonConfig specificSettings)
       {
       case 3:
         nodeZ = global_no_t(nodeNo / (nNodesInXDirection*nNodesInYDirection));
-        position[2] = meshWidth[2] * (offsetZ + nodeZ);
+        position[2] = physicalOffset[2] + meshWidth[2] * (offsetZ + nodeZ);
       case 2:
         nodeY = global_no_t(nodeNo / nNodesInXDirection) % nNodesInYDirection;
-        position[1] = meshWidth[1] * (offsetY + nodeY);
+        position[1] = physicalOffset[1] + meshWidth[1] * (offsetY + nodeY);
       case 1:
         nodeX = nodeNo % nNodesInXDirection;
-        position[0] = meshWidth[0] * (offsetX + nodeX);
+        position[0] = physicalOffset[0] + meshWidth[0] * (offsetX + nodeX);
       }
 
       VLOG(1) << "position: " << position;

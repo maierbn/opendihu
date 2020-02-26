@@ -5,41 +5,29 @@
 #include <sstream>
 
 #include "easylogging++.h"
+#include "utility/python_utility.h"
 
 namespace FunctionSpace
 {
- 
+
 // forward declaration
 template<typename MeshType,typename BasisFunctionType>
 class FunctionSpace;
 
 template<int D,typename BasisFunctionType>
+FunctionSpacePartition<Mesh::CompositeOfDimension<D>,BasisFunctionType>::
+FunctionSpacePartition(std::shared_ptr<Partition::Manager> partitionManager,
+                       std::vector<std::shared_ptr<FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>> subFunctionSpaces) :
+  FunctionSpacePartitionBase<Mesh::CompositeOfDimension<D>,BasisFunctionType>::FunctionSpacePartitionBase(partitionManager, PythonConfig()),
+  subFunctionSpaces_(subFunctionSpaces)
+{
+  // the subFunctionSpaces have been created and initialized by the mesh manager
+}
+
+template<int D,typename BasisFunctionType>
 void FunctionSpacePartition<Mesh::CompositeOfDimension<D>,BasisFunctionType>::
 initialize()
 {
-  PyObject *pyObject = this->specificSettings_.pyObject();
-
-  int nSubmeshes = 1;
-  if (PyList_Check(pyObject))
-  {
-    nSubmeshes = PyList_Size(pyObject);
-  }
-  LOG(DEBUG) << "initialize " << nSubmeshes << " submeshes";
-  subFunctionSpaces_.resize(nSubmeshes);
-
-  typedef FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType> SubFunctionSpaceType;
-
-  // created sub meshes
-  for (int i = 0; i < nSubmeshes; i++)
-  {
-    subFunctionSpaces_[i] = std::make_shared<SubFunctionSpaceType>(this->partitionManager_, PythonConfig(this->specificSettings_,i));
-  }
-
-  // Creation of the partitioning is only possible after the number of elements is known.
-  // Because this may need file I/O (e.g. reading from exfiles)
- 
-  // This initialize() method is called from parseFromSettings(), 04_function_space_data_unstructured_exfile_io.tpp
-  
   VLOG(1) << "FunctionSpacePartition<Composite>::initialize()";
 
   // initialize number of local and global elements

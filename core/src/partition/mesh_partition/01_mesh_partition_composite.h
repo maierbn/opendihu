@@ -73,6 +73,9 @@ public:
   //! get the number of nodes in the global Petsc ordering that are in partitions prior to the own rank
   global_no_t beginNodeGlobalPetsc() const;
 
+  //! returns the number of submeshes
+  int nSubMeshes() const;
+
   //! get the local to global mapping for the current partition, for the dof numbering
   ISLocalToGlobalMapping localToGlobalMappingDofs();
   
@@ -144,7 +147,7 @@ public:
   void getSubMeshesWithNodes(node_no_t nodeNoLocal, std::vector<std::pair<int,node_no_t>> &subMeshesWithNodes) const;
 
   //! from the submesh no and the local node no in the submesh numbering get the local node no in the composite numbering
-  node_no_t getNodeNoLocalFromSubmesh(int subMeshNo, node_no_t nodeNoDuplicateOnSubmesh) const;
+  node_no_t getNodeNoLocalFromSubmesh(int subMeshNo, node_no_t nodeNoDuplicateOnSubmesh, bool &nodeIsSharedAndRemovedInCurrentMesh) const;
 
   //! get a string with all information, this is used in the regression tests (unit test) to compare it to a reference string
   std::string getString();

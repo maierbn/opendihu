@@ -3,7 +3,7 @@
 #include <Python.h>  // has to be the first included header
 
 #include "data_management/output_connector_data.h"
-#include "control/python_config.h"
+#include "control/python_config/python_config.h"
 #include "data_management/data.h"
 
 namespace Data

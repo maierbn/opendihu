@@ -80,16 +80,17 @@ initialize()
     // loop over dofs
     for (node_no_t nodeNoLocal = 0; nodeNoLocal < this->subFunctionSpaces_[subMeshNo]->nNodesLocalWithoutGhosts(); nodeNoLocal++)
     {
-      node_no_t compositeNodeNo = this->meshPartition()->getNodeNoLocalFromSubmesh(subMeshNo, nodeNoLocal);
+      bool nodeIsSharedAndRemovedInCurrentMesh = false;
+      node_no_t compositeNodeNo = this->meshPartition()->getNodeNoLocalFromSubmesh(subMeshNo, nodeNoLocal, nodeIsSharedAndRemovedInCurrentMesh);
 
-      if (compositeNodeNo != -1)
+      if (!nodeIsSharedAndRemovedInCurrentMesh)
       {
         for (int nodalDofNo = 0; nodalDofNo < this->subFunctionSpaces_[subMeshNo]->nDofsPerNode(); nodalDofNo++)
         {
           dof_no_t compositeDofNo = compositeNodeNo * this->subFunctionSpaces_[subMeshNo]->nDofsPerNode() + nodalDofNo;
           dof_no_t subFunctionSpaceDofNo = nodeNoLocal * this->subFunctionSpaces_[subMeshNo]->nDofsPerNode() + nodalDofNo;
 
-          LOG(DEBUG) << "  dof " << compositeDofNo << " <- [" << subFunctionSpaceDofNo << "], mesh " << subMeshNo;
+          VLOG(1) << "  dof " << compositeDofNo << " <- [" << subFunctionSpaceDofNo << "], mesh " << subMeshNo;
 
           targetGeometryValues[compositeDofNo] = geometryValues[subFunctionSpaceDofNo];
         }

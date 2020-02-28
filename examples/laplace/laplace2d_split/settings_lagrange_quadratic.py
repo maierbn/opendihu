@@ -14,7 +14,7 @@ for i in range(int(n_nodes_x1)):
 n_nodes_x2 = 2*nx2+1
 for i in range(int(n_nodes_x2)):
   x = i/n_nodes_x2
-  i2 = (2*nx1+1)*(2*ny+1) + n_nodes_x2*(2*ny) + i
+  i2 = (2*nx1+1)*(2*ny+1) - 3 + n_nodes_x2*(2*ny) + i
   bc[i2] = np.sin(x*np.pi)
   
   print("bc[{}] = {}, bc[{}] = {}".format(i, bc[i], i2, bc[i2]))

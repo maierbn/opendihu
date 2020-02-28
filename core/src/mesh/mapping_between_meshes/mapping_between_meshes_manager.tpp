@@ -385,24 +385,25 @@ finalizeMappingLowToHigh(std::shared_ptr<FieldVariableTargetType> fieldVariableT
       // output warning message, compute helper variables
 
       // get node no from dof no, this is needed for the global coordinates later
-      node_no_t nodeNoLocal = int(targetDofNoLocal/fieldVariableTarget->functionSpace()->nDofsPerNode());
+      //node_no_t nodeNoLocal = int(targetDofNoLocal/fieldVariableTarget->functionSpace()->nDofsPerNode());
 
       // get current global node coordinates
       std::stringstream s;
-      for (int i = 0; i < FieldVariableTargetType::FunctionSpace::dim(); i++)
+      /*for (int i = 0; i < FieldVariableTargetType::FunctionSpace::dim(); i++)
       {
         if (i != 0)
         {
           s << ",";
         }
         s << fieldVariableTarget->functionSpace()->meshPartition()->nNodesGlobal(i);
-      }
+      }*/
 
       // output the warning
       LOG(WARNING) << "In mapping to " << fieldVariableTarget->name() << "." << componentNoTarget
         << " (" << fieldVariableTarget->functionSpace()->meshName() << "), no values for target dof " << targetDofNoLocal
-        << ", coordinates global: " << fieldVariableTarget->functionSpace()->meshPartition()->getCoordinatesGlobal(nodeNoLocal)
-        << " of (" << s.str() << ")! Assuming 0.0.";
+        //<< ", coordinates global: " << fieldVariableTarget->functionSpace()->meshPartition()->getCoordinatesGlobal(nodeNoLocal)
+        //<< " of (" << s.str() << ")! "
+        << ". Assuming 0.0.";
 #endif
     }
   }
@@ -457,11 +458,11 @@ finalizeMappingLowToHigh(std::shared_ptr<FieldVariableTargetType> fieldVariableT
       // output warning message, compute helper variables
 
       // get node no from dof no, this is needed for the global coordinates later
-      node_no_t nodeNoLocal = int(targetDofNoLocal/fieldVariableTarget->functionSpace()->nDofsPerNode());
+      //node_no_t nodeNoLocal = int(targetDofNoLocal/fieldVariableTarget->functionSpace()->nDofsPerNode());
 
       // get current global node coordinates
       std::stringstream s;
-      for (int i = 0; i < FieldVariableTargetType::FunctionSpace::dim(); i++)
+/*      for (int i = 0; i < FieldVariableTargetType::FunctionSpace::dim(); i++)
       {
         if (i != 0)
         {
@@ -469,12 +470,13 @@ finalizeMappingLowToHigh(std::shared_ptr<FieldVariableTargetType> fieldVariableT
         }
         s << fieldVariableTarget->functionSpace()->meshPartition()->nNodesGlobal(i);
       }
-
+*/
       // output the warning
       LOG(WARNING) << "In mapping to " << fieldVariableTarget->name()
         << " (" << fieldVariableTarget->functionSpace()->meshName() << "), no values for target dof " << targetDofNoLocal
-        << ", coordinates global: " << fieldVariableTarget->functionSpace()->meshPartition()->getCoordinatesGlobal(nodeNoLocal)
-        << " of (" << s.str() << ")! Assuming 0.0.";
+        //<< ", coordinates global: " << fieldVariableTarget->functionSpace()->meshPartition()->getCoordinatesGlobal(nodeNoLocal)
+        //<< " of (" << s.str() << ")! Assuming 0.0.";
+        << ". Assuming 0.0.";
 #endif
     }
   }

@@ -11,7 +11,7 @@
 #include "easylogging++.h"
 
 #include "control/types.h"
-#include "control/settings_file_name.h"
+#include "control/python_config/settings_file_name.h"
 
 PyObject *PythonUtility::itemList = NULL;
 int PythonUtility::itemListIndex = 0;

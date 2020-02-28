@@ -2,7 +2,7 @@
 
 #include <Python.h>  // has to be the first included header
 
-#include "control/python_config.h"
+#include "control/python_config/python_config.h"
 #include "data_management/output_connector_data.h"
 
 /** This specifies the connections of data slots between two terms, Term 1 and Term 2.

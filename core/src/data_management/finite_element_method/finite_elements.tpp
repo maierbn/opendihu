@@ -46,7 +46,7 @@ initialize()
   FiniteElementsBase<FunctionSpaceType,nComponents>::initialize();
 
   // set up diffusion tensor if there is any
-  DiffusionTensorConstant<FunctionSpaceType>::initialize();
+  DiffusionTensorConstant<FunctionSpaceType>::initialize(this->functionSpace_);
 }
 
 template<typename FunctionSpaceType,int nComponents>
@@ -58,7 +58,7 @@ initialize(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> di
   FiniteElementsBase<FunctionSpaceType,nComponents>::initialize();
 
   // set up diffusion tensor, initialize with given direction field
-  DiffusionTensorDirectional<FunctionSpaceType>::initialize(direction, spatiallyVaryingPrefactor, useAdditionalDiffusionTensor);
+  DiffusionTensorDirectional<FunctionSpaceType>::initialize(this->functionSpace_, direction, spatiallyVaryingPrefactor, useAdditionalDiffusionTensor);
 }
 
 //! initialize, store the reference geometry as copy of the current geometry

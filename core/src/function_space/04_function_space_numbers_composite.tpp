@@ -63,7 +63,29 @@ getNodeNo(element_no_t elementNoLocal, int nodeIndex) const
   element_no_t elementOnMeshNoLocal = 0;
   this->meshPartition_->getSubMeshNoAndElementNoLocal(elementNoLocal, subMeshNo, elementOnMeshNoLocal);
 
-  return this->subFunctionSpaces_[subMeshNo]->getNodeNo(elementOnMeshNoLocal, nodeIndex);
+  node_no_t nodeNoLocalSubMesh = this->subFunctionSpaces_[subMeshNo]->getNodeNo(elementOnMeshNoLocal, nodeIndex);
+
+  bool nodeIsSharedAndRemovedInCurrentMesh;
+
+  node_no_t nodeNoLocal = this->meshPartition_->getNodeNoLocalFromSubmesh(subMeshNo, nodeNoLocalSubMesh, nodeIsSharedAndRemovedInCurrentMesh);
+
+  bool show = false;
+  /*for (int n=0; n < this->nNodesPerElement(); n++)
+  {
+    if (getNodeNo(elementNoLocal, n) == 27)
+    {
+      show = true;
+    }
+  }*/
+
+  if (nodeNoLocal == 27 || show)
+  {
+    VLOG(2) << "getNodeNo(elementNoLocal: " << elementNoLocal << ", nodeIndex: " << nodeIndex << "), subMeshNo: " << subMeshNo << ", "
+      << "elementOnMeshNoLocal: " << elementOnMeshNoLocal << ", nodeNoLocalSubMesh: " << nodeNoLocalSubMesh << ", nodeIsSharedAndRemovedInCurrentMesh: "
+      << nodeIsSharedAndRemovedInCurrentMesh << ", nodeNoLocal: " << nodeNoLocal;
+  }
+
+  return nodeNoLocal;
 }
 
 // local node no of neighbour node, may be a ghost node,
@@ -73,12 +95,14 @@ getNeighbourNodeNoLocal(node_no_t nodeNoLocal, Mesh::face_t direction) const
 {
   assert (nodeNoLocal < this->nNodesLocalWithoutGhosts());
 
+  // this method is used e.g. in the computation of gradient fields
+
   // get all submesh + nodeNo combinations of the current node, since the node could be shared by multiple submeshes
   std::vector<std::pair<int,node_no_t>> subMeshesWithNodes;
   this->meshPartition_->getSubMeshesWithNodes(nodeNoLocal, subMeshesWithNodes);
 
   // loop over submesh + nodeNos
-  for (const std::pair<int,node_no_t>& subMeshWithNodes : subMeshesWithNodes)
+  for (const std::pair<int,node_no_t> &subMeshWithNodes : subMeshesWithNodes)
   {
     int subMeshNo = subMeshWithNodes.first;
     node_no_t subMeshNodeNo = subMeshWithNodes.second;
@@ -89,7 +113,8 @@ getNeighbourNodeNoLocal(node_no_t nodeNoLocal, Mesh::face_t direction) const
     // if yes, transform the node no to the composite numbering
     if (neighbourNodeNoLocal != -1)
     {
-      return this->meshPartition_->getNodeNoLocalFromSubmesh(subMeshNodeNo, subMeshNodeNo);
+      bool nodeIsShared = false;
+      return this->meshPartition_->getNodeNoLocalFromSubmesh(subMeshNodeNo, subMeshNodeNo, nodeIsShared);
     }
   }
 
@@ -99,7 +124,7 @@ getNeighbourNodeNoLocal(node_no_t nodeNoLocal, Mesh::face_t direction) const
 
 template<int D,typename BasisFunctionType>
 global_no_t FunctionSpaceNumbersCommon<Mesh::CompositeOfDimension<D>,BasisFunctionType>::
-getNodeNoGlobalNatural(element_no_t elementNoLocal, int nodeIndex) const
+getNodeNoGlobalNaturalFromElementNoLocal(element_no_t elementNoLocal, int nodeIndex) const
 {
   // this is implemented in the mesh partition
   return this->meshPartition_->getNodeNoGlobalNatural(elementNoLocal, nodeIndex);

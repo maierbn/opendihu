@@ -127,4 +127,4 @@ protected:
 //! output operator
 std::ostream &operator<<(std::ostream &stream, const PythonConfig rhs);
 
-#include "control/python_config.tpp"
+#include "control/python_config/python_config.tpp"

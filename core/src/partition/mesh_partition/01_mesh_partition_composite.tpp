@@ -78,6 +78,14 @@ beginNodeGlobalPetsc() const
   return nonDuplicateNodeNoGlobalBegin_;
 }
 
+//! returns the number of submeshes
+template<int D, typename BasisFunctionType>
+int MeshPartition<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,Mesh::CompositeOfDimension<D>>::
+nSubMeshes() const
+{
+  return nSubMeshes_;
+}
+
 //! get the local to global mapping for the current partition, for the dof numbering
 template<int D, typename BasisFunctionType>
 ISLocalToGlobalMapping MeshPartition<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,Mesh::CompositeOfDimension<D>>::
@@ -464,15 +472,29 @@ getSubMeshesWithNodes(node_no_t nodeNoLocal, std::vector<std::pair<int,node_no_t
   }
 }
 
-
 //! from the submesh no and the local node no in the submesh numbering get the local node no in the composite numbering
 template<int D, typename BasisFunctionType>
 node_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,Mesh::CompositeOfDimension<D>>::
-getNodeNoLocalFromSubmesh(int subMeshNo, node_no_t nodeNoDuplicateOnSubmesh) const
+getNodeNoLocalFromSubmesh(int subMeshNo, node_no_t nodeNoDuplicateOnSubmesh, bool &nodeIsSharedAndRemovedInCurrentMesh) const
 {
   assert(subMeshNo >= 0 && subMeshNo < meshAndNodeNoLocalToNodeNoNonDuplicateLocal_.size());
   assert(nodeNoDuplicateOnSubmesh >= 0 && nodeNoDuplicateOnSubmesh < meshAndNodeNoLocalToNodeNoNonDuplicateLocal_[subMeshNo].size());
 
+  nodeIsSharedAndRemovedInCurrentMesh = isDuplicate_[subMeshNo][nodeNoDuplicateOnSubmesh];
+
+  // std::vector<std::map<node_no_t,std::pair<int,node_no_t>>> removedSharedNodes_;   //< removedSharedNodes_[meshNo][nodeNo] = <sameAsInMeshNo,nodeNoOfThatMesh> nodes that are shared between function spaces, they appear only once in the second function space and are removed there (not included in the composite mapping)
+
+  // if the node on the mesh subMeshNo is a duplicate node and therefore its entry in meshAndNodeNoLocalToNodeNoNonDuplicateLocal_ is -1
+  if (nodeIsSharedAndRemovedInCurrentMesh)
+  {
+    // get the same shared node in the other mesh that has its entry in meshAndNodeNoLocalToNodeNoNonDuplicateLocal_
+    std::pair<int,node_no_t> sharedNode = removedSharedNodes_[subMeshNo].at(nodeNoDuplicateOnSubmesh);
+
+    // use this entry
+    return meshAndNodeNoLocalToNodeNoNonDuplicateLocal_[sharedNode.first][sharedNode.second];
+  }
+
+  // node is a normal, non-shared node
   return meshAndNodeNoLocalToNodeNoNonDuplicateLocal_[subMeshNo][nodeNoDuplicateOnSubmesh];
 }
 

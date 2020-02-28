@@ -75,7 +75,7 @@ getGeometryFieldNodalValues(CurrentFieldVariableType currentFieldVariable, const
         index += nDofsPerNode;
       }
     }
-    values.reserve(componentValues[0].size()*nComponents);
+    values.reserve(values.size()+componentValues[0].size()*nComponents);
 
     // copy values in consecutive order (x y z x y z) to output
     for (int i = 0; i < componentValues[0].size(); i++)

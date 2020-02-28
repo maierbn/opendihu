@@ -16,7 +16,7 @@
 #endif
 
 #include "partition/partition_manager.h"
-#include "control/python_config.h"
+#include "control/python_config/python_config.h"
 
 // forward declaration
 namespace Mesh { class Manager; }

@@ -249,12 +249,10 @@ fat_mesh_n_points = [index_i_end+1 - index_i_start, n_points_y, index_k_end+1 - 
 fat_mesh_n_elements = [fat_mesh_n_points[0]-1, fat_mesh_n_points[1]-1, fat_mesh_n_points[2]-1]
 
 # regarding x direction, if in interior
-# if the own subdomain is at the (x+) border (right in sketch)
-if variables.own_subdomain_coordinate_x != variables.n_subdomains_x - 1:
+if index_i_end != n_points_x-1:
   fat_mesh_n_points[0] -= 1
 # regarding z direction, if in interior
-# if the own subdomain is at the (z+) border
-if variables.own_subdomain_coordinate_z != variables.n_subdomains_z - 1:
+if index_k_end != n_points_z-1:
   fat_mesh_n_points[2] -= 1
 
 fat_mesh_n_ranks = [variables.n_subdomains_x + variables.n_subdomains_y - 1, 1, variables.n_subdomains_z]

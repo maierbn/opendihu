@@ -843,7 +843,7 @@ getNodeNo(std::array<int,MeshType::dim()> coordinateLocal) const
     return this->meshPartition_->nNodesLocalWithoutGhosts(0)*this->meshPartition_->nNodesLocalWithoutGhosts(1)*localZ
       + this->meshPartition_->nNodesLocalWithoutGhosts(0)*localY + localX;
   }
-#ifndef 	__PGI
+#ifndef __PGI
   return 0;  // should not happen, but cray compiler does not recognize it
 #endif
 }
@@ -851,10 +851,10 @@ getNodeNo(std::array<int,MeshType::dim()> coordinateLocal) const
 //! get the node no in the global natural ordering
 template<typename MeshType,typename BasisFunctionType>
 global_no_t FunctionSpaceNumbersCommon<MeshType,BasisFunctionType,Mesh::isStructured<MeshType>>::
-getNodeNoGlobalNatural(element_no_t elementNoLocal, int nodeIndex) const
+getNodeNoGlobalNaturalFromElementNoLocal(element_no_t elementNoLocal, int nodeIndex) const
 {
   global_no_t elementNoGlobalNatural = this->meshPartition_->getElementNoGlobalNatural(elementNoLocal);
-  return getNodeNoGlobalNatural(elementNoGlobalNatural, nodeIndex);
+  return this->getNodeNoGlobalNatural(elementNoGlobalNatural, nodeIndex);
 }
 
 } // namespace

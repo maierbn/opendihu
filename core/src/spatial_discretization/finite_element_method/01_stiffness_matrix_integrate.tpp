@@ -21,9 +21,6 @@ setStiffnessMatrix()
   LOG(TRACE) << "setStiffnessMatrix " << D << "D using integration, FunctionSpaceType: " << StringUtility::demangle(typeid(FunctionSpaceType).name())
     << ", QuadratureType: " << StringUtility::demangle(typeid(QuadratureType).name());
 
-  // get prefactor value
-  const double prefactor = this->specificSettings_.getOptionDouble("prefactor", 1.0);
-
   // define shortcuts for integrator and basis
   typedef Quadrature::TensorProduct<D,QuadratureType> QuadratureDD;
   const int nDofsPerElement = FunctionSpaceType::nDofsPerElement();
@@ -55,16 +52,30 @@ setStiffnessMatrix()
   LOG(DEBUG) << " nElementsLocal: " << functionSpace->nElementsLocal();
 
   // loop over elements
-  for (element_no_t elementNo = 0; elementNo < functionSpace->nElementsLocal(); elementNo++)
+  for (element_no_t elementNoLocal = 0; elementNoLocal < functionSpace->nElementsLocal(); elementNoLocal++)
   {
-    std::array<dof_no_t,nDofsPerElement> dofNosLocal = functionSpace->getElementDofNosLocal(elementNo);
+    std::array<dof_no_t,nDofsPerElement> dofNosLocal = functionSpace->getElementDofNosLocal(elementNoLocal);
+
+    bool show = false;
+    for (int i = 0; i < nDofsPerElement; i++)
+    {
+      if (dofNosLocal[i] == 27)
+        show = true;
+    }
 
     for (int i = 0; i < nDofsPerElement; i++)
     {
       for (int j = 0; j < nDofsPerElement; j++)
       {
-        VLOG(3) << " initialize stiffnessMatrix entry for element " << elementNo << " elementalDofs (" << i << "," << j << "), "
-          << "localDofs " << dofNosLocal[i] << "," << dofNosLocal[j] << ") (entry no. " << cntr++ << ")";
+        if (show)
+        {
+          Vec3 nodePosition0 = functionSpace->getGeometry(dofNosLocal[i]);
+          Vec3 nodePosition1 = functionSpace->getGeometry(dofNosLocal[j]);
+
+          VLOG(1) << " initialize stiffnessMatrix entry for element " << elementNoLocal << " elementalDofs (" << i << "," << j << "), "
+            << "localDofs " << dofNosLocal[i] << "," << dofNosLocal[j] << ") (entry no. " << cntr++ << "), node positions: "
+            << "(" << nodePosition0 << "," << nodePosition1 << ")";
+        }
 
         // loop over components (1,...,D for solid mechanics)
         for (int rowComponentNo = 0; rowComponentNo < nComponents; rowComponentNo++)
@@ -96,11 +107,11 @@ setStiffnessMatrix()
 
   // fill entries in stiffness matrix
   // loop over elements
-  for (element_no_t elementNo = 0; elementNo < nElementsLocal; elementNo++)
+  for (element_no_t elementNoLocal = 0; elementNoLocal < nElementsLocal; elementNoLocal++)
   {
     if (outputAssemble3DStiffnessMatrixHere && this->context_.ownRankNoCommWorld() == 0)
     {
-      double newProgress = (double)elementNo / nElementsLocal;
+      double newProgress = (double)elementNoLocal / nElementsLocal;
       if (int(newProgress*10) != int(progress*10))
       {
         std::cout << "\b\b\b\b" << int(newProgress*100) << "%" << std::flush;
@@ -109,13 +120,13 @@ setStiffnessMatrix()
     }
 
     // get indices of element-local dofs
-    std::array<dof_no_t,nDofsPerElement> dofNosLocal = functionSpace->getElementDofNosLocal(elementNo);
+    std::array<dof_no_t,nDofsPerElement> dofNosLocal = functionSpace->getElementDofNosLocal(elementNoLocal);
 
-    VLOG(2) << "element " << elementNo;
+    VLOG(2) << "element " << elementNoLocal;
 
     // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
     std::array<Vec3,FunctionSpaceType::nDofsPerElement()> geometry;
-    functionSpace->getElementGeometry(elementNo, geometry);
+    functionSpace->getElementGeometry(elementNoLocal, geometry);
 
     // compute integral
     for (unsigned int samplingPointIndex = 0; samplingPointIndex < samplingPoints.size(); samplingPointIndex++)
@@ -128,11 +139,13 @@ setStiffnessMatrix()
 
       VLOG(2) << "samplingPointIndex=" << samplingPointIndex<< ", xi=" <<xi<< ", geometry: " <<geometry<< ", jac: " <<jacobian;
 
+      const double prefactor = this->prefactor_.value(elementNoLocal);
+
       // get evaluations of integrand at xi for all (i,j)-dof pairs, integrand is defined in another class
       // gradPhi[j](xi)^T * T * gradPhi[k](xi)
       evaluationsArray[samplingPointIndex]
-        = IntegrandStiffnessMatrix<D,EvaluationsType,FunctionSpaceType,nComponents,Term>::
-          evaluateIntegrand(this->data_, jacobian, elementNo, xi);
+        = prefactor * IntegrandStiffnessMatrix<D,EvaluationsType,FunctionSpaceType,nComponents,Term>::
+          evaluateIntegrand(this->data_, jacobian, elementNoLocal, xi);
 
           /*
       for (int i = 0; i < nDofsPerElement; i++)
@@ -173,19 +186,19 @@ setStiffnessMatrix()
           {
             // integrate value and set entry in stiffness matrix
             double integratedValue = integratedValues(i*nComponents + rowComponentNo, j*nComponents + columnComponentNo);
-            double value = -prefactor * integratedValue;
+            double value = -integratedValue;
             int componentNo = rowComponentNo*nComponents + columnComponentNo;
 
             VLOG(2) << "  dof pair (" << i<< "," <<j<< ") dofs (" << dofNosLocal[i]<< "," << dofNosLocal[j]<< "), "
               << "component (" << rowComponentNo << "," << columnComponentNo << "), " << componentNo
-              << ", prefactor: " << prefactor << ", integrated value: " <<integratedValue;
+              << ", integrated value: " <<integratedValue;
 
             stiffnessMatrix->setValue(componentNo, dofNosLocal[i], dofNosLocal[j], value, ADD_VALUES);
           }
         }
       }  // j
     }  // i
-  }  // elementNo
+  }  // elementNoLocal
 
   if (outputAssemble3DStiffnessMatrixHere && this->context_.ownRankNoCommWorld() == 0)
   {

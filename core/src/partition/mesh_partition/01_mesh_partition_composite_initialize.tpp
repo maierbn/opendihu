@@ -222,14 +222,14 @@ initializeSharedNodes()
       for (node_no_t nodeNoLocal = 0; nodeNoLocal < nodePositions[i].size(); nodeNoLocal++)
       {
         Vec3 position = nodePositions[i][nodeNoLocal];
-        LOG(DEBUG) << "nodeNo " << nodeNoLocal << ", position " << position << " at x=" << position[0];
+        VLOG(1) << "nodeNo " << nodeNoLocal << ", position " << position << " at x=" << position[0];
 
         // iterate over further submeshes
         for(int indexOtherMesh = i+1; indexOtherMesh < nSubMeshes_; indexOtherMesh++)
         {
           // find node that has closest x coordinate
-          LOG(DEBUG) << "  otherMesh " << indexOtherMesh << ", find node that has the closest x coordinate to " << position[0];
-          LOG(DEBUG) << "  get last node with x coordinate that is lower than " << position[0] << " by more than tolerance " << nodePositionEqualTolerance;
+          VLOG(1) << "  otherMesh " << indexOtherMesh << ", find node that has the closest x coordinate to " << position[0];
+          VLOG(1) << "  get last node with x coordinate that is lower than " << position[0] << " by more than tolerance " << nodePositionEqualTolerance;
 
           // get last node with x coordinate that is lower by more than tolerance
           int k = nodePositionsNodes[indexOtherMesh].size() / 2;
@@ -251,9 +251,9 @@ initializeSharedNodes()
             kPrevious = k;
             k = (upper + lower) / 2;
 
-            LOG(DEBUG) << "  range [" << lower << "," << upper << "] k:" << k << ", x:" << currentNodePosition[0];
+            VLOG(1) << "  range [" << lower << "," << upper << "] k:" << k << ", x:" << currentNodePosition[0];
           }
-          LOG(DEBUG) << "  now check all node positions of otherMesh " << indexOtherMesh << " that have x=" << position[0] << " within tolerance";
+          VLOG(1) << "  now check all node positions of otherMesh " << indexOtherMesh << " that have x=" << position[0] << " within tolerance";
 
           // check all node positions after k
           for (;k < nodePositionsNodes[indexOtherMesh].size(); k++)
@@ -263,21 +263,21 @@ initializeSharedNodes()
 
             if (nodePositionOtherMesh[0] > position[0]+nodePositionEqualTolerance)
             {
-              LOG(DEBUG) << "  node k: " << k << ", nodeNo: " << nodeNoLocalOtherMesh << ", position: " << nodePositionOtherMesh
+              VLOG(1) << "  node k: " << k << ", nodeNo: " << nodeNoLocalOtherMesh << ", position: " << nodePositionOtherMesh
                 << " is over " << position[0]+nodePositionEqualTolerance << " -> break";
               break;
             }
 
             double distance = MathUtility::distance<3>(position, nodePositionOtherMesh);
-            LOG(DEBUG) << "  node k: " << k << ", nodeNo: " << nodeNoLocalOtherMesh << ", position: " << nodePositionOtherMesh << ", distance: " << distance;
+            VLOG(1) << "  node k: " << k << ", nodeNo: " << nodeNoLocalOtherMesh << ", position: " << nodePositionOtherMesh << ", distance: " << distance;
 
             // if the other mesh node is at the same position as the first node
             if (distance <= nodePositionEqualTolerance)
             {
-              LOG(DEBUG) << "   node is shared.";
+              VLOG(1) << "   node is shared.";
               if (removedSharedNodes_[indexOtherMesh].find(nodeNoLocal) == removedSharedNodes_[indexOtherMesh].end())
               {
-                LOG(DEBUG) << "   node is not yet included in removedSharedNodes_, set (indexOtherMesh,nodeNoLocalOtherMesh) = ("
+                VLOG(1) << "   node is not yet included in removedSharedNodes_, set (indexOtherMesh,nodeNoLocalOtherMesh) = ("
                   << i << "," << nodeNoLocal << ") at [" << indexOtherMesh << "][" << nodeNoLocalOtherMesh << "]";
                 removedSharedNodes_[indexOtherMesh][nodeNoLocalOtherMesh] = std::make_pair(i, nodeNoLocal);
               }
@@ -336,7 +336,7 @@ initializeGhostNodeNos()
   // loop over submeshes
   for (int subMeshNo = 0; subMeshNo < nSubMeshes_; subMeshNo++)
   {
-    LOG(DEBUG) << "subMeshNo " << subMeshNo;
+    VLOG(1) << "subMeshNo " << subMeshNo;
 
     int nNodesLocalWithGhosts = subFunctionSpaces_[subMeshNo]->nNodesLocalWithGhosts();
     meshAndNodeNoLocalToNodeNoNonDuplicateGlobal_[subMeshNo].resize(nNodesLocalWithGhosts);
@@ -655,6 +655,9 @@ initializeGhostNodeNos()
     MPIUtility::handleReturnValue(MPI_Waitall(receiveRequests.size(), receiveRequests.data(), MPI_STATUSES_IGNORE), "MPI_Waitall");
 
   node_no_t nodeNoNonDuplicateLocal = nNodesLocalWithoutGhosts_;
+  VLOG(1) << "initialize nodeNoNonDuplicateLocal to " << nodeNoNonDuplicateLocal;
+  VLOG(1) << "nodeNoNonDuplicateLocalToMeshAndDuplicateLocal_: " << nodeNoNonDuplicateLocalToMeshAndDuplicateLocal_
+    << ", size: " << nodeNoNonDuplicateLocalToMeshAndDuplicateLocal_.size();
 
   // copy received nodes to new vector
   i = 0;
@@ -690,9 +693,15 @@ initializeGhostNodeNos()
 
           // inverse mapping
           nodeNoNonDuplicateLocalToMeshAndDuplicateLocal_.push_back(std::make_pair(subMeshNo, nodeNoLocal));
-          assert(nodeNoNonDuplicateLocalToMeshAndDuplicateLocal_.size() == nodeNoNonDuplicateLocal);
+
+          VLOG(1) << "nodeNoNonDuplicate global: " << nodeNoNonDuplicateGlobal << ", local: " << nodeNoNonDuplicateLocal;
+          VLOG(1) << ", add to nodeNoNonDuplicateLocalToMeshAndDuplicateLocal_ (subMeshNo,nodeNoLocal)=(" << subMeshNo << "," << nodeNoLocal << "), "
+            << "now nodeNoNonDuplicateLocalToMeshAndDuplicateLocal_: " << nodeNoNonDuplicateLocalToMeshAndDuplicateLocal_
+            << ", size: " << nodeNoNonDuplicateLocalToMeshAndDuplicateLocal_.size();
 
           nodeNoNonDuplicateLocal++;
+
+          assert(nodeNoNonDuplicateLocalToMeshAndDuplicateLocal_.size() == nodeNoNonDuplicateLocal);
         }
         meshAndNodeNoLocalToNodeNoNonDuplicateGlobal_[subMeshNo][nodeNoLocal] = nodeNoNonDuplicateGlobal;
 

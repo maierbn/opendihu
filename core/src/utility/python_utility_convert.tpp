@@ -11,6 +11,7 @@
 
 #include "utility/vector_operators.h"
 #include "control/types.h"
+#include "utility/matrix.h"
 
 //partial specialization for int
 template<>
@@ -698,6 +699,23 @@ struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
     std::array<ValueType,nComponents> defaultValue;
     defaultValue.fill(ValueType());
     return convertFromPython<std::array<ValueType,nComponents>>::get(object, defaultValue);
+  }
+};
+
+//partial specialization for MathUtility::Matrix
+template<int nRows, int nColumns>
+struct PythonUtility::convertFromPython<MathUtility::Matrix<nRows,nColumns>>
+{
+  //! convert a python object to its corresponding c type, with type checking, if conversion is not possible, use defaultValue
+  static MathUtility::Matrix<nRows,nColumns> get(PyObject *object, MathUtility::Matrix<nRows,nColumns> defaultValue)
+  {
+    return PythonUtility::convertFromPython<std::array<double, nRows*nColumns>>::get(object, defaultValue);
+  }
+
+  //! convert a python object to its corresponding c type, with type checking, if conversion is not possible use trivial default value (0 or 0.0 or "")
+  static MathUtility::Matrix<nRows,nColumns> get(PyObject *object)
+  {
+    return convertFromPython<std::array<double, nRows*nColumns>>::get(object);
   }
 };
 

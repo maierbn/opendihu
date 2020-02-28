@@ -30,7 +30,7 @@
 #include "control/diagnostic_tool/solver_structure_visualizer.h"
 
 #include "easylogging++.h"
-#include "control/settings_file_name.h"
+#include "control/python_config/settings_file_name.h"
 #include "utility/mpi_utility.h"
 #ifdef HAVE_PAT
 #include <pat_api.h>    // perftools, only available on hazel hen

@@ -52,7 +52,7 @@ void Manager::storePreconfiguredMeshes()
         }
         else
         {
-          LOG(DEBUG) << "Store mesh configuration with key \"" << key << "\".";
+          VLOG(1) << "Store mesh configuration with key \"" << key << "\".";
           if (meshConfiguration_.find(key) != meshConfiguration_.end())
           {
             meshConfiguration_.at(key).setPyObject(value);

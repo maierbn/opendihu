@@ -84,6 +84,7 @@ protected:
   struct VTKPiece
   {
     std::set<std::string> meshNamesCombinedMeshes;   ///< the meshNames of the combined meshes, or only one meshName if it is not a merged mesh
+    std::vector<std::string> meshNamesCombinedMeshesVector;   ///< the same as meshNamesCombinedMeshes, but as vector that preserves the order, this is important for the output file
     PolyDataPropertiesForMesh properties;   ///< the properties of the merged mesh
 
     std::string firstScalarName;   ///< name of the first scalar field variable of the mesh
@@ -110,7 +111,7 @@ protected:
   template<typename FieldVariablesForOutputWriterType>
   void writeCombinedUnstructuredGridFile(const FieldVariablesForOutputWriterType &fieldVariables, PolyDataPropertiesForMesh &polyDataPropertiesForMesh,
                                          const std::map<std::string, PolyDataPropertiesForMesh> &meshPropertiesUnstructuredGridFile,
-                                         std::set<std::string> meshNames,
+                                         std::vector<std::string> meshNames,
                                          bool meshPropertiesInitialized, std::string filename);
 
   bool binaryOutput_;  ///< if the data output should be binary encoded using base64
@@ -124,7 +125,8 @@ protected:
   std::map<std::string, PolyDataPropertiesForMesh> meshPropertiesUnstructuredGridFile2D_;    ///< mesh information for a combined unstructured grid file (*.vtu), for 2D data
   std::map<std::string, PolyDataPropertiesForMesh> meshPropertiesUnstructuredGridFile3D_;    ///< mesh information for a combined unstructured grid file (*.vtu), for 3D data
   std::map<std::string, PolyDataPropertiesForMesh> meshPropertiesPolyDataFile_;    ///< mesh information for a poly data file (*.vtp), for 1D data
-  VTKPiece vtkPiece_;   ///< the VTKPiece data structure used for PolyDataFile
+  VTKPiece vtkPiece1D_;   ///< the VTKPiece data structure used for PolyDataFile, 1D
+  VTKPiece vtkPiece3D_;   ///< the VTKPiece data structure used for
 
   int nCellsPreviousRanks1D_ = 0;   ///< sum of number of cells on other processes with lower rank no., for vtp file
   int nPointsPreviousRanks1D_ = 0;  ///< sum of number of points on other processes with lower rank no., for vtp file

@@ -83,6 +83,9 @@ findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::ar
                                                                                        startSearchInCurrentElement, xiTolerance);
     if (nodeFound)
     {
+      // transform elementOnMeshNoLocal, which is the element local no in the subMesh based numbering to the composite numbering
+      elementNoLocal = this->meshPartition_->getElementNoLocalFromSubmesh(subMeshOfElementSubmeshNo, elementOnMeshNoLocal);
+
       return true;
     }
     else
@@ -97,10 +100,14 @@ findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::ar
     if (subMeshNo == subMeshOfElementSubmeshNo)
       continue;
 
-    bool nodeFound = this->subFunctionSpaces_[subMeshNo]->findPosition(point, elementNoLocal, ghostMeshNo, xi,
+    element_no_t elementOnMeshNoLocal = 0;
+    bool nodeFound = this->subFunctionSpaces_[subMeshNo]->findPosition(point, elementOnMeshNoLocal, ghostMeshNo, xi,
                                                                        false, xiTolerance);
     if (nodeFound)
     {
+      // transform elementOnMeshNoLocal, which is the element local no in the subMesh based numbering to the composite numbering
+      elementNoLocal = this->meshPartition_->getElementNoLocalFromSubmesh(subMeshNo, elementOnMeshNoLocal);
+
       return true;
     }
   }

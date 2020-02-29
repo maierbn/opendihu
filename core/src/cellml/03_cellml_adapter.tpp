@@ -377,6 +377,7 @@ initializeToEquilibriumValues(std::array<double,nStates_> &statesInitialValues)
   std::array<double,nStates_> u3, k3;
   std::array<double,nStates_> u4, k4;
 
+  int maxRateNo = 0;
   const int nInterations = 1e7;
   for (int iterationNo = 0; iterationNo < nInterations; iterationNo++)
   {
@@ -403,7 +404,11 @@ initializeToEquilibriumValues(std::array<double,nStates_> &statesInitialValues)
     for (int stateNo = 0; stateNo < nStates_; stateNo++)
     {
       double increment = (k1[stateNo] + 2*k2[stateNo] + 2*k3[stateNo] + k4[stateNo])/6.;
-      maximumIncrement = std::max(maximumIncrement, fabs(increment));
+      if (fabs(increment) > maximumIncrement)
+      {
+        maximumIncrement = fabs(increment);
+        maxRateNo = stateNo;
+      }
 
       u[stateNo] += dt * increment;
     }
@@ -432,6 +437,7 @@ initializeToEquilibriumValues(std::array<double,nStates_> &statesInitialValues)
   // write computed equilibrium values to a file
   if (this->functionSpace_->meshPartition()->rankSubset()->ownRankNo() == 0)
   {
+
     std::stringstream filename;
     filename << this->cellmlSourceCodeGenerator_.sourceFilename() << "_equilibrium_values.txt";
     std::ofstream file(filename.str().c_str());
@@ -443,12 +449,27 @@ initializeToEquilibriumValues(std::array<double,nStates_> &statesInitialValues)
       std::string timeString = StringUtility::timeToString(&tm);
       file << "// Result of computation of equilibrium values for the states by opendihu on " << timeString << "\n"
         << "// Number of iterations: " << nInterations << ", dt: " << dt << "\n"
-        << "// Maximum ∂u/dt = " << maximumIncrement << "\n"
+        << "// Maximum ∂u/∂t = " << maximumIncrement << " for state " << maxRateNo << "\n"
         << "// (If this is a high value, it indicates that the equilibrium was not fully reached.)\n\n";
+
       for (int stateNo = 0; stateNo < nStates_; stateNo++)
       {
-        file << "state[" << stateNo << "] = " << u[stateNo] << ";\n";
+        double lastIncrement = (k1[stateNo] + 2*k2[stateNo] + 2*k3[stateNo] + k4[stateNo])/6.;
+
+        std::stringstream line;
+        line << "state[" << stateNo << "] = " << u[stateNo] << ";";
+        file << line.str() << std::string(26-line.str().length(),' ') << "// residuum: " << lastIncrement << "\n";
       }
+
+      file << "\n  Line to copy for settings:\n  \"statesInitialValues\": [";
+      for (int stateNo = 0; stateNo < nStates_; stateNo++)
+      {
+        if (stateNo != 0)
+          file << ", ";
+        file << u[stateNo];
+      }
+      file << "],\n";
+
 
       file.close();
       LOG(INFO) << "Values were written to \"" << filename.str() << "\".";

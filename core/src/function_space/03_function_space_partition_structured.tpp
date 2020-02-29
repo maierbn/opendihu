@@ -54,16 +54,22 @@ initialize()
     LOG(DEBUG) << "got inputMeshIsGlobal = " << std::boolalpha << inputMeshIsGlobal << " from config";
   }
 
+  // get rankNos if it was set
+  std::vector<int> rankNos;
+  if (this->specificSettings_.hasKey("rankNos"))
+    this->specificSettings_.template getOptionVector<int>("rankNos", rankNos);
+
   if (inputMeshIsGlobal)
   {
     this->meshPartition_ = this->partitionManager_->template createPartitioningStructuredGlobal<FunctionSpace<MeshType,BasisFunctionType>>(
-      this->nElementsPerCoordinateDirectionGlobal_, this->nElementsPerCoordinateDirectionLocal_, this->nRanks_);
+      this->nElementsPerCoordinateDirectionGlobal_, this->nElementsPerCoordinateDirectionLocal_, this->nRanks_, rankNos);
   }
   else 
   {
     this->meshPartition_ = this->partitionManager_->template createPartitioningStructuredLocal<FunctionSpace<MeshType,BasisFunctionType>>(
-      this->nElementsPerCoordinateDirectionGlobal_, this->nElementsPerCoordinateDirectionLocal_, this->nRanks_);
+      this->nElementsPerCoordinateDirectionGlobal_, this->nElementsPerCoordinateDirectionLocal_, this->nRanks_, rankNos);
   }
+
   assert(this->meshPartition_);
 }
 

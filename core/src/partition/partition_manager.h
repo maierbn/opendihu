@@ -34,21 +34,24 @@ public:
   //! use globalSize, fill localSize and nRanks
   template<typename FunctionSpace>
   std::shared_ptr<MeshPartition<FunctionSpace>> createPartitioningStructuredGlobal(const std::array<global_no_t,FunctionSpace::dim()> nElementsGlobal,
-                                                                                 std::array<element_no_t,FunctionSpace::dim()> &nElementsLocal, 
-                                                                                 std::array<int,FunctionSpace::dim()> &nRanks);
+                                                                                   std::array<element_no_t,FunctionSpace::dim()> &nElementsLocal,
+                                                                                   std::array<int,FunctionSpace::dim()> &nRanks,
+                                                                                   std::vector<int> rankNos);
 
   //! create new partitioning over all available processes, respective the rank subset that was set by the last call to setRankSubsetForNextCreatedPartitioning, for a structured mesh, from local sizes
   //! use localSize and nRanks, fill globalSize
   //! @param nRanks The number of ranks in the coordinate directions.
   template<typename FunctionSpace>
   std::shared_ptr<MeshPartition<FunctionSpace>> createPartitioningStructuredLocal(std::array<global_no_t,FunctionSpace::dim()> &nElementsGlobal,
-                                                                                const std::array<element_no_t,FunctionSpace::dim()> nElementsLocal,
-                                                                                const std::array<int,FunctionSpace::dim()> nRanks);
+                                                                                  const std::array<element_no_t,FunctionSpace::dim()> nElementsLocal,
+                                                                                  const std::array<int,FunctionSpace::dim()> nRanks,
+                                                                                  std::vector<int> rankNos);
 
   //! create new partitioning of a composite mesh, this emulates a normal mesh but the values are taken from the submeshes
   template<typename BasisFunctionType, int D>
   std::shared_ptr<MeshPartition<::FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>>> createPartitioningComposite(
-    const std::vector<std::shared_ptr<::FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>> &subFunctionSpaces);
+    const std::vector<std::shared_ptr<::FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>> &subFunctionSpaces,
+    std::vector<int> rankNos);
 
   //! store a rank subset that will be used for the next partitioning that will be created
   void setRankSubsetForNextCreatedPartitioning(std::shared_ptr<RankSubset> nextRankSubset);

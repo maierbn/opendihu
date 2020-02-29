@@ -63,7 +63,7 @@ public:
   void setFunctionSpace(std::shared_ptr<FunctionSpaceType> functionSpace);
 
   //! set the property to be geometry field to this field variable
-  void setGeometryField(bool isGeometryField=true);
+  void setIsGeometryField(bool isGeometryField=true);
 
   //! get the number of entries of the internal values_ Vector
   std::size_t nEntries() const;

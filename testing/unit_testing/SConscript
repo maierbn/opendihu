@@ -36,9 +36,10 @@ if not env['no_tests']:
                 'src/1_rank/poisson.cpp',
                 'src/1_rank/solid_mechanics.cpp',
                 'src/1_rank/unstructured_deformable.cpp',
+                'src/1_rank/composite_mesh.cpp',
                 'src/utility.cpp']
 
-    #src_files = ['src/1_rank/cellml.cpp', 'src/1_rank/main.cpp', 'src/utility.cpp']
+    #src_files = ['src/1_rank/composite_mesh.cpp', 'src/1_rank/main.cpp', 'src/utility.cpp']
     #print ""
     #print "WARNING: only compiling tests ",src_files
 
@@ -58,8 +59,9 @@ if not env['no_tests']:
                  'src/2_ranks/solid_mechanics.cpp',
                  'src/2_ranks/main.cpp',
                  'src/utility.cpp',
-                 'src/2_ranks/partitioned_petsc_vec.cpp']
-    #src_files = ['src/2_ranks/laplace.cpp', 'src/2_ranks/main.cpp', 'src/utility.cpp']
+                 'src/2_ranks/partitioned_petsc_vec.cpp',
+                 'src/2_ranks/composite_mesh.cpp']
+    #src_files = ['src/2_ranks/composite_mesh.cpp', 'src/2_ranks/main.cpp', 'src/utility.cpp']
     #print ""
     #print "WARNING: only compiling tests ",src_files
 

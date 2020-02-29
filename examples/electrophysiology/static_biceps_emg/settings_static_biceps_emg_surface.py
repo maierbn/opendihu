@@ -29,8 +29,7 @@ if ".py" in sys.argv[0]:
   variables.__dict__.update(custom_variables.__dict__)
   sys.argv = sys.argv[1:]     # remove first argument, which now has already been parsed
 else:
-  if rank_no == 0:
-    print("Warning: There is no variables file, e.g:\n ./static_biceps_emg ../settings_static_biceps_emg.py ramp.py\n")
+  print("Warning: There is no variables file, e.g:\n ./static_biceps_emg ../settings_static_biceps_emg.py ramp.py\n")
   #exit(0)
 
 # -------------- begin user parameters ----------------
@@ -46,14 +45,13 @@ variables.output_timestep_smaller_files = 0.1 # [ms] timestep for small output f
 
 # stride for sampling the 3D elements from the fiber data
 # here any number is possible
-variables.sampling_stride_x = 2       # this value has to match the generated fat mesh
+variables.sampling_stride_x = 2
 variables.sampling_stride_y = 2
-variables.sampling_stride_z = 50      # this value has to match the generated fat mesh
+variables.sampling_stride_z = 50
 
-# fiber and fat layer mesh, use opendihu/scripts/create_fat_layer.py to create the fat layer mesh
+# mesh
 variables.fiber_file = "../../input/7x7fibers.bin"
-variables.fiber_file = "../../input/13x13fibers.bin"
-variables.fat_mesh_file = variables.fiber_file + "_fat.bin"
+variables.fat_mesh_file = variables.fiber_file + "_fat.bin2"
 
 # enable paraview output
 variables.paraview_output = True
@@ -156,7 +154,7 @@ config = {
       "dumpFormat":         "matlab",
     },
     "muscularEMGSolver": {   # solver for the static Bidomain equation and the EMG
-      "relativeTolerance":  1e-15,
+      "relativeTolerance":  1e-5,
       "maxIterations":      1e4,
       "solverType":         variables.emg_solver_type,
       "preconditionerType": variables.emg_preconditioner_type,
@@ -295,58 +293,64 @@ config = {
       "disableComputationWhenStatesAreCloseToEquilibrium": True,       # optimization where states that are close to their equilibrium will not be computed again
     },
     "Term2": {        # Bidomain, EMG
-      "StaticBidomainSolver": {             # solves Bidomain equation: K(sigma_i) Vm + K(sigma_i+sigma_e) phi_e = 0   => K(sigma_i+sigma_e) phi_e = -K(sigma_i) Vm
-        "numberTimeSteps":        1,
-        "timeStepOutputInterval": 50,
-        "durationLogKey":         "duration_bidomain",
-        "solverName":             "muscularEMGSolver",
-        "initialGuessNonzero":    variables.emg_initial_guess_nonzero,
-        "PotentialFlow": {
-          "FiniteElementMethod" : {  
-            "meshName":           ["3Dmesh","3DFatMesh"],
-            "solverName":         "potentialFlowSolver",
-            "prefactor":          1.0,
-            "dirichletBoundaryConditions": variables.potential_flow_dirichlet_bc,
-            "neumannBoundaryConditions":   [],
-            "inputMeshIsGlobal":  True,
+      "OutputSurface": {        # version for fibers_emg_2d_output
+        "OutputWriter": [
+          {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_smaller_files), "filename": "out/" + variables.scenario_name + "/surface_emg", "binary": True, "fixedFormat": False, "combineFiles": True},
+        ],
+        "face": "0+",
+        "StaticBidomainSolver": {             # solves Bidomain equation: K(sigma_i) Vm + K(sigma_i+sigma_e) phi_e = 0   => K(sigma_i+sigma_e) phi_e = -K(sigma_i) Vm
+          "numberTimeSteps":        1,
+          "timeStepOutputInterval": 50,
+          "durationLogKey":         "duration_bidomain",
+          "solverName":             "muscularEMGSolver",
+          "initialGuessNonzero":    variables.emg_initial_guess_nonzero,
+          "PotentialFlow": {
+            "FiniteElementMethod" : {  
+              "meshName":           ["3Dmesh","3DFatMesh"],
+              "solverName":         "potentialFlowSolver",
+              "prefactor":          1.0,
+              "dirichletBoundaryConditions": variables.potential_flow_dirichlet_bc,
+              "neumannBoundaryConditions":   [],
+              "inputMeshIsGlobal":  True,
+            },
           },
-        },
-        "Activation": {
-          "FiniteElementMethod" : {  
-            "meshName":           ["3Dmesh","3DFatMesh"],       # composite mesh that consists of the muscle value mesh and the fat layer mesh
-            "solverName":         "muscularEMGSolver",
-            "prefactor":          1.0,
-            "inputMeshIsGlobal":  True,
-            "dirichletBoundaryConditions": {},
-            "neumannBoundaryConditions":   [],
-            
-            # ∇•(sigma_i+sigma_e)∇phi_e = -∇•(sigma_i)∇Vm
-            "diffusionTensor": [
-              [                
-                8.93, 0, 0,     # sigma_i, for muscle volume                # fiber direction is (1,0,0)
-                0, 0.893, 0,
-                0, 0, 0.893
-              ],[ 
-                0, 0, 0,        # no sigma_i for fat mesh!
-                0, 0, 0,
-                0, 0, 0
-              ]
-            ],
-            "extracellularDiffusionTensor": [      # sigma_e
-              [
-                6.7, 0, 0,      # sigma_e, conductivity in extra-cellular space
-                0, 6.7, 0,
-                0, 0, 6.7,
-              ],[
-                0.4, 0, 0,      # sigma, conductivity in fat layer
-                0, 0.4, 0,
-                0, 0, 0.4,
+          "Activation": {
+            "FiniteElementMethod" : {  
+              "meshName":           ["3Dmesh","3DFatMesh"],       # composite mesh that consists of the muscle value mesh and the fat layer mesh
+              "solverName":         "muscularEMGSolver",
+              "prefactor":          1.0,
+              "inputMeshIsGlobal":  True,
+              "dirichletBoundaryConditions": {},
+              "neumannBoundaryConditions":   [],
+              
+              # ∇•(sigma_i+sigma_e)∇phi_e = -∇•(sigma_i)∇Vm
+              "diffusionTensor": [
+                [                
+                  8.93, 0, 0,     # sigma_i, for muscle volume                # fiber direction is (1,0,0)
+                  0, 0.893, 0,
+                  0, 0, 0.893
+                ],[ 
+                  0, 0, 0,        # no sigma_i for fat mesh!
+                  0, 0, 0,
+                  0, 0, 0
+                ]
               ],
-            ]
+              "extracellularDiffusionTensor": [      # sigma_e
+                [
+                  6.7, 0, 0,      # sigma_e, conductivity in extra-cellular space
+                  0, 6.7, 0,
+                  0, 0, 6.7,
+                ],[
+                  0.4, 0, 0,      # sigma, conductivity in fat layer
+                  0, 0.4, 0,
+                  0, 0, 0.4,
+                ],
+              ]
+            },
           },
-        },
-        "OutputWriter" : variables.output_writer_emg,
-      }
+          "OutputWriter" : variables.output_writer_emg,
+        }
+      },
     },
   }
 }

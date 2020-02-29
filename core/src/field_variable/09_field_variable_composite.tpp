@@ -44,7 +44,7 @@ getSubFieldVariables(std::vector<std::shared_ptr<FieldVariable<FunctionSpace::Fu
       std::vector<std::string> componentNames(this->componentNames_.begin(), this->componentNames_.end());
 
       subFieldVariables_[subMeshNo] = subFunctionSpace->template createFieldVariable<nComponents>(fieldVariableName.str(), componentNames);
-      subFieldVariables_[subMeshNo]->setGeometryField(this->isGeometryField());
+      subFieldVariables_[subMeshNo]->setIsGeometryField(this->isGeometryField());
     }
 
     // determine values for the sub field variable
@@ -73,8 +73,11 @@ getSubFieldVariables(std::vector<std::shared_ptr<FieldVariable<FunctionSpace::Fu
     //subFieldVariables_[subMeshNo]->startGhostManipulation();
     subFieldVariables_[subMeshNo]->setValuesWithoutGhosts(subFieldVariableValues);
     subFieldVariables_[subMeshNo]->finishGhostManipulation();
+    subFieldVariables_[subMeshNo]->startGhostManipulation();
+    subFieldVariables_[subMeshNo]->zeroGhostBuffer();
+    subFieldVariables_[subMeshNo]->finishGhostManipulation();
 
-    VLOG(1) << "new field variable: " << *subFieldVariables_[subMeshNo];
+    VLOG(1) << "new field variable : " << *subFieldVariables_[subMeshNo];
 
     subMeshNo++;
   }

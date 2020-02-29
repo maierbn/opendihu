@@ -56,6 +56,9 @@ public:
   //! number of dofs in total
   virtual global_no_t nDofsGlobal() const = 0;
 
+  //! number of dofs in total for the numbering used with boundary conditions
+  virtual global_no_t nDofsGlobalForBoundaryConditions() const;
+
   //! get a vector of local dof nos including ghost dofs, in the natural ordering
   virtual const std::vector<dof_no_t> &dofNosLocalNaturalOrdering() const;
 

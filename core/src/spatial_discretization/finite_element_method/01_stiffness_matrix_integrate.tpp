@@ -47,7 +47,7 @@ setStiffnessMatrix()
   }
 
   // initialize values to zero
-  int cntr = 1;
+  //int cntr = 1;
 
   LOG(DEBUG) << " nElementsLocal: " << functionSpace->nElementsLocal();
 
@@ -55,7 +55,7 @@ setStiffnessMatrix()
   for (element_no_t elementNoLocal = 0; elementNoLocal < functionSpace->nElementsLocal(); elementNoLocal++)
   {
     std::array<dof_no_t,nDofsPerElement> dofNosLocal = functionSpace->getElementDofNosLocal(elementNoLocal);
-
+/*
     bool show = false;
     for (int i = 0; i < nDofsPerElement; i++)
     {
@@ -63,20 +63,27 @@ setStiffnessMatrix()
         show = true;
     }
 
+    if (show)
+    {
+      for (int i = 0; i < nDofsPerElement; i++)
+      {
+        Vec3 nodePosition0 = functionSpace->getGeometry(dofNosLocal[i]);
+
+        VLOG(1) << "node_position_dof" << dofNosLocal[i] << " = " << nodePosition0;
+      }
+    }
+*/
     for (int i = 0; i < nDofsPerElement; i++)
     {
       for (int j = 0; j < nDofsPerElement; j++)
       {
+/*
         if (show)
         {
-          Vec3 nodePosition0 = functionSpace->getGeometry(dofNosLocal[i]);
-          Vec3 nodePosition1 = functionSpace->getGeometry(dofNosLocal[j]);
-
           VLOG(1) << " initialize stiffnessMatrix entry for element " << elementNoLocal << " elementalDofs (" << i << "," << j << "), "
-            << "localDofs " << dofNosLocal[i] << "," << dofNosLocal[j] << ") (entry no. " << cntr++ << "), node positions: "
-            << "(" << nodePosition0 << "," << nodePosition1 << ")";
+            << "localDofs " << dofNosLocal[i] << "," << dofNosLocal[j] << ") (entry no. " << cntr++ << ")";
         }
-
+*/
         // loop over components (1,...,D for solid mechanics)
         for (int rowComponentNo = 0; rowComponentNo < nComponents; rowComponentNo++)
         {

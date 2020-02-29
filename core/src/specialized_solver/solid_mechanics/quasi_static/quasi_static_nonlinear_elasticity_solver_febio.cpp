@@ -537,11 +537,11 @@ loadFebioOutputFile()
   LOG(DEBUG) << "geometry field has representation "
     << this->data_.functionSpace()->geometryField().partitionedPetscVec()->getCurrentRepresentationString();
 
-  this->data_.functionSpace()->geometryField().finishGhostManipulation();
+  //this->data_.functionSpace()->geometryField().finishGhostManipulation();
   this->data_.functionSpace()->geometryField().setValuesWithoutGhosts(geometryValues);
 
   this->data_.functionSpace()->geometryField().zeroGhostBuffer();
-  this->data_.functionSpace()->geometryField().finishGhostManipulation();
+  this->data_.functionSpace()->geometryField().setRepresentationGlobal();
   this->data_.functionSpace()->geometryField().startGhostManipulation();
 
   LOG(DEBUG) << "geometryField pointer: " << this->data_.functionSpace()->geometryField().partitionedPetscVec();

@@ -46,7 +46,11 @@ initialize()
 
   // create partitioning
   assert(this->partitionManager_ != nullptr);
-  this->meshPartition_ = this->partitionManager_->template createPartitioningComposite<BasisFunctionType,D>(subFunctionSpaces_);
+  std::vector<int> rankNos;
+  if (this->specificSettings_.hasKey("rankNos"))
+    this->specificSettings_.template getOptionVector<int>("rankNos", rankNos);
+
+  this->meshPartition_ = this->partitionManager_->template createPartitioningComposite<BasisFunctionType,D>(subFunctionSpaces_, rankNos);
 
   assert(this->meshPartition_);
 

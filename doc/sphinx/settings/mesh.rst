@@ -111,7 +111,7 @@ StructuredDeformable
 ^^^^^^^^^^^^^^^^^^^^^^^ 
 For specifying the **Structured Deformable** mesh there are two possibilities: 
 
-1. Specify ``nElements`` and ``physicalExtent``, like for a *StructuredRegularFixed* mesh. A rectilinear mesh is constructed, analogous to the *StructuredRegularFixed* mesh. There is the additional option ``physicalOffset`` that offsets all node positions by the given vector.
+1. Specify ``nElements`` and ``physicalExtent``, like for a *StructuredRegularFixed* mesh. A rectilinear mesh is constructed, analogous to the *StructuredRegularFixed* mesh. There is the additional option ``physicalOffset`` that offsets all node positions by the given vector. The physicalOffset is always global, i.e. even when ``inputMeshIsGlobal`` is set to ``False``, the ``physicalOffset`` specifies the offset to the front lower left corner of the global mesh.
 
   Note, that now the mesh widths does not need to be the same in every coordinate direction, so there is no restriction on the values of ``nElements`` and ``physicalExtent``.
   Again, the value of ``inputMeshIsGlobal`` applies.

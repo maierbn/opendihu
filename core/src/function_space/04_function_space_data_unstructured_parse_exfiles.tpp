@@ -354,7 +354,7 @@ remapFieldVariables(PythonConfig settings)
     {
       this->geometryField_ = std::static_pointer_cast<FieldVariable::FieldVariable<FunctionSpaceType,3>>(
          this->fieldVariable_.at("geometry"));
-      this->geometryField_->setGeometryField();
+      this->geometryField_->setIsGeometryField();
       this->fieldVariable_.erase("geometry");
     }
   }

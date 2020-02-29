@@ -46,6 +46,20 @@ nDofsGlobal() const
   return nNodesGlobal_ * nDofsPerNode;
 }
 
+//! number of dofs when summing up all global dofs of the sub meshes, this counts the shared dofs multiple times, for each mesh
+template<int D, typename BasisFunctionType>
+global_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,Mesh::CompositeOfDimension<D>>::
+nDofsGlobalForBoundaryConditions() const
+{
+  global_no_t result = 0;
+
+  for (int subMeshIndex = 0; subMeshIndex < nSubMeshes_; subMeshIndex++)
+  {
+    result += subFunctionSpaces_[subMeshIndex]->nDofsGlobal();
+  }
+  return result;
+}
+
 //! number of nodes in the local partition
 template<int D, typename BasisFunctionType>
 node_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,Mesh::CompositeOfDimension<D>>::
@@ -197,6 +211,22 @@ getElementNoLocal(global_no_t elementNoGlobalPetsc, bool &isOnLocalDomain) const
     isOnLocalDomain = false;
     return -1;
   }
+}
+
+//! from the submesh no and the local element no in the submesh numbering get the local element no in the composite numbering
+template<int D, typename BasisFunctionType>
+element_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,Mesh::CompositeOfDimension<D>>::
+getElementNoLocalFromSubmesh(int subMeshNo, element_no_t elementNoLocalOnSubMesh)
+{
+  assert (subMeshNo >= 0 && subMeshNo < nSubMeshes_);
+
+  element_no_t elementNoLocal = 0;
+  for (int subMeshIndex = 0; subMeshIndex < subMeshNo; subMeshIndex++)
+  {
+    elementNoLocal += subFunctionSpaces_[subMeshIndex]->nElementsLocal();
+  }
+  elementNoLocal += elementNoLocalOnSubMesh;
+  return elementNoLocal;
 }
 
 //! get the local node no for a global petsc node no, does not work for ghost nodes
@@ -357,23 +387,32 @@ isNonGhost(node_no_t nodeNoLocal, int &neighbourRankNo) const
   std::vector<std::pair<int,node_no_t>> subMeshesWithNodes;
   getSubMeshesWithNodes(nodeNoLocal, subMeshesWithNodes);
 
+  VLOG(2) << "isNonGhost, nodeNoLocal: " << nodeNoLocal << ", subMeshesWithNodes: " << subMeshesWithNodes;
+
   for (const std::pair<int,node_no_t> &subMeshWithNodes : subMeshesWithNodes)
   {
     int subMeshNo = subMeshWithNodes.first;
-    node_no_t nodeNoLocal = subMeshWithNodes.second;
-    if (subFunctionSpaces_[subMeshNo]->meshPartition()->isNonGhost(nodeNoLocal, neighbourRankNo))
+    node_no_t nodeNoLocalOnMesh = subMeshWithNodes.second;
+    if (subFunctionSpaces_[subMeshNo]->meshPartition()->isNonGhost(nodeNoLocalOnMesh, neighbourRankNo))
     {
+      VLOG(2) << "yes, isNonGhost on rank " << neighbourRankNo;
+
       return true;
     }
   }
 
-  // mesh was no non-ghost on any submesh, this means it is a ghost node
+  //return false;
+
+  // node was no non-ghost on any submesh, this means it is a ghost node
   // the rank that owns it is the one from the submesh where the node is located
   std::pair<int,node_no_t> result = nodeNoNonDuplicateLocalToMeshAndDuplicateLocal_[nodeNoLocal];
   int subMeshNo = result.first;
-  nodeNoLocal = result.second;
+  node_no_t nodeNoLocalOnMesh = result.second;
 
-  subFunctionSpaces_[subMeshNo]->meshPartition()->isNonGhost(nodeNoLocal, neighbourRankNo);
+  subFunctionSpaces_[subMeshNo]->meshPartition()->isNonGhost(nodeNoLocalOnMesh, neighbourRankNo);
+
+  VLOG(2) << "isNonGhost, nodeNoLocal: " << nodeNoLocal << ", subMeshesWithNodes: " << subMeshesWithNodes;
+  VLOG(2) << "  -> is ghost, subMeshNo: " << subMeshNo << ", nodeNoLocalOnMesh: " << nodeNoLocalOnMesh << ", neighbourRankNo: " << neighbourRankNo;
 
   return false;
 }
@@ -413,13 +452,28 @@ getSubMeshNoAndNodeNoLocal(node_no_t nodeNoLocal, int &subMeshNo, node_no_t &nod
     {
       subMeshNo = subMeshIndex;
       nodeOnMeshNoLocal = nodeNoLocal - nNodesPreviousSubMeshes;
-      break;
+      return;
     }
 
     nNodesPreviousSubMeshes += nNodesCurrentSubMesh;
   }
 
-  assert (nNodesPreviousSubMeshes < nNodesLocalWithoutGhosts_);
+  // if we are here, the requested node is a ghost node
+  assert (nNodesPreviousSubMeshes == nNodesLocalWithoutGhosts_);
+
+  for (int subMeshIndex = 0; subMeshIndex < nSubMeshes_; subMeshIndex++)
+  {
+    node_no_t nGhostNodesCurrentSubMesh = nNonDuplicateGhostNodes_[subMeshIndex];
+
+    if (nodeNoLocal < nNodesPreviousSubMeshes + nGhostNodesCurrentSubMesh)
+    {
+      subMeshNo = subMeshIndex;
+      nodeOnMeshNoLocal = nodeNoLocal - nNodesPreviousSubMeshes;
+      break;
+    }
+
+    nNodesPreviousSubMeshes += nGhostNodesCurrentSubMesh;
+  }
 }
 
 //! from a local element no in the composite numbering get the subMeshNo and the no in the submesh-based numbering
@@ -461,10 +515,10 @@ getSubMeshesWithNodes(node_no_t nodeNoLocal, std::vector<std::pair<int,node_no_t
     for (std::map<node_no_t,std::pair<int,node_no_t>>::const_iterator iter = removedSharedNodes_[subMeshIndex].begin();
          iter != removedSharedNodes_[subMeshIndex].end(); iter++)
     {
-      int meshNo = iter->second.first;
-      int nodeNo = iter->second.second;
+      int meshNoOtherMesh = iter->second.first;
+      node_no_t nodeNoOnOtherMesh = iter->second.second;
 
-      if (meshNo == subMeshNo && nodeNo == nodeOnMeshNoLocal)
+      if (meshNoOtherMesh == subMeshNo && nodeNoOnOtherMesh == nodeOnMeshNoLocal)
       {
         subMeshesWithNodes.push_back(std::make_pair(subMeshIndex, iter->first));
       }

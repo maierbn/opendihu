@@ -59,7 +59,7 @@ void removeVaryingContent(std::string &contents)
   }
 
   // also remove timestamp and meta information in python files
-  // example: {"version": "opendihu 0.1, build Jan 18 2019 20:51:36, C++ 201402, GCC 7.3.0", "meta": "current time: 2019/01/18 20:57:17, hostname: lapsgs05, n ranks: 4", "meshType" ...
+  // example: {"version": "opendihu 0.1, built Jan 18 2019 20:51:36, C++ 201402, GCC 7.3.0", "meta": "current time: 2019/01/18 20:57:17, hostname: lapsgs05, n ranks: 4", "meshType" ...
 
   while(contents.find("\"version") != std::string::npos)
   {

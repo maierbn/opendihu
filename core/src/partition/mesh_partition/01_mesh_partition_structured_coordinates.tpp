@@ -89,6 +89,16 @@ getCoordinatesGlobal(node_no_t nodeNoLocal) const
         {
           if (hasFullNumberOfNodes(2))
           {
+            // for degenerate mesh partition
+            if (nNodesLocalWithoutGhosts() == 0)
+            {
+              coordinates[0] = 0;
+              coordinates[1] = 0;
+              coordinates[2] = 0;
+
+              return coordinates;
+            }
+
             // domain has no ghost nodes, should be handled by other if branch
             assert(false);
           }

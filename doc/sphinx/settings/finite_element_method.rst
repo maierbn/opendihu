@@ -135,8 +135,7 @@ For the following equations, the ``FiniteElementMethod`` class needs to be wrapp
   where the diffusion tensor, :math:`A`, depends on a direction field :math:`v`.
     
 
-  
-Equations are defined in the directory `equation <https://github.com/maierbn/opendihu/tree/develop/core/src/equation>`_.
+Equations are defined in the directory `equation <https://github.com/maierbn/opendihu/tree/develop/core/src/equation>`_. The prefactors :math:`c` and :math:`A` can vary over the domain.
 
   
 Python Settings
@@ -285,6 +284,10 @@ prefactor
 
 The prefactor is a scalar multiplier of the Laplace operator term, i.e. :math:`c` in :math:`c\cdot  Δu` or :math:`c\cdot∇ \cdot (A ∇u)`. 
 
+It can be specified spatially varying, :math:`c(x)` by providing a list with as many entries as degrees of freedom (dofs). Depending on ``"inputMeshIsGlobal"``, you have to set as many entries as there are global or local dofs.
+
+When using a composite mesh, you can also provide a list with as many entries as there are sub meshes. Then each value will be set in a sub mesh and :math:`c(x)` will be constant in the sub mesh.
+
 rightHandSide
 ^^^^^^^^^^^^^^^
 *Default: lists of zeros*
@@ -304,7 +307,24 @@ Negative dof nos are interpreted as counted from the end, i.e. -1 is the last do
 
 Dirichlet boundary conditions are specified for dof numbers, not nodes, such that for Hermite it is possible to prescribe derivatives. For Lagrange ansatz functions, dof numbers are equivalent to node numbers.
 
-For unstructured meshes, the ordering of the dofs cannot be known at the time when the settings are parsed, because they depend on the mesh which could be read from ``*.ex`` files after the settings get parsed.
+If `inputMeshIsGlobal` is set to ``True``, the numbering of the dofs is in *global natural* order. This means that the dofs are numbered fastest in `x`-direction then in `y`-direction, then in `z`-direction (Note for developers: this is different from the internal *global petsc* ordering of the actual memory layout in the local Petsc Vecs).
+
+If `inputMeshIsGlobal` is set to ``False``, the specified dofs are interpreted as local numbers in the subdomain. Then you have to specify values **also for the ghost dofs**. This means that you have to specify prescribed nodal values for a node on every process whose subdomain is adjacent to that node.
+
+The ghost dof numbers are after the non-ghost numbers. For example, consider the following mesh oft two linear elements, ``e1`` and ``e2`` on two ranks, ``r1`` and ``r2``:
+
+.. code-block:: python
+
+  dof numberings:
+  local           global natural
+  (e1)  (e2)      (e1)   (e2)
+  1-3   2-3       4-5    6-7
+  0-2   0-1       0-1    2-3
+  r0     r1
+
+Note how the left element has two ghost nodes, with local numbers 2 and 3 and how the local numbering is different from the right element which has no ghost nodes.
+
+For **unstructured meshes**, the ordering of the dofs cannot be known at the time when the settings are parsed, because they depend on the mesh which could be read from ``*.ex`` files after the settings get parsed.
 Therefore the ordering is special.
 For every node there are as many values as dofs, in contiguous order.
 
@@ -334,8 +354,7 @@ To specifiy u=0 on the bottom, you would set:
   
   bc[0] = 0, bc[2] = 0, bc[4] = 0
 
-When `inputMeshIsGlobal` is set to ``False``, the specified dofs are interpreted as local to the subdomain. Then you have to specify values also for ghost dofs. 
-This means that you have to specify prescribed nodal values on every process whose subdomain is adjacent to that node.
+For **composite meshes** the numbering proceeds through all sub mesh after each other. This means, numbers 0 to ``nDofsMesh0-1``, where ``nDofsMesh0`` is the number of dofs in the first submesh directly map to the dofs of the first submesh. Then the numbers ``nDofsMesh0`` to ``nDofsMesh0+nDofsMesh1-1`` map to the second sub mesh and so on. Note, that negative values therefore count from the end of the last submesh, i.e. ``-1`` specifies the last dof of the last submesh.
 
 When the value to set is a vector, e.g. for solid mechanics problems where displacements can be prescribed, specify a list of the components for each prescribed dof, e.g. ``[1.0, 2.0, 3.0]`` to set a Dirichlet boundary condition of :math:`\bar{u} = (1,2,3)^\top`. When not all components should be prescribed, replace the entry by ``None``, e.g. ``[None, 2.0, None]`` to only prescribe the y component.
 
@@ -394,6 +413,10 @@ For anisotropic diffusion, the diffusion tensor can be given as a list of double
     # further options of FiniteElementMethod
     # ...
   }
+
+The ``diffusionTensor`` can be specified spatially varying, :math:`A(x)` just like the ``prefactor``. This can be achieved by providing a list with as many entries as degrees of freedom (dofs). Depending on ``"inputMeshIsGlobal"``, you have to set as many items as there are global or local dofs. Note that one item is again a list of the entries of the matrix.
+
+When using a composite mesh, you can also provide a list with as many items as there are sub meshes. Then each tensor will be set in a sub mesh and :math:`A(x)` will be constant in the sub mesh.
 
 Properties
 ----------

@@ -69,6 +69,11 @@ const std::vector<dof_no_t> &MeshPartitionBase::dofNosLocalNaturalOrdering() con
   return dofNosLocal_;
 }
 
+global_no_t MeshPartitionBase::nDofsGlobalForBoundaryConditions() const
+{
+  return nDofsGlobal();
+}
+
 //! get a PETSc IS (index set) with the same information as dofNosLocal_
 const IS &MeshPartitionBase::dofNosLocalIS() const
 {

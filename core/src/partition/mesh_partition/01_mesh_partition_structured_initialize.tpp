@@ -169,7 +169,10 @@ createDmElements()
                           NULL, dmElements_.get()); CHKERRV(ierr);
 
       ierr = DMSetFromOptions(*dmElements_); CHKERRV(ierr);
-      ierr = DMSetUp(*dmElements_); CHKERRV(ierr);
+      ierr = DMSetUp(*dmElements_);
+      if (ierr)
+        LOG(ERROR) << "Could not create 1D decomposition of domain with " << nElementsGlobal_ << " global elements for " << nRanks_ << " MPI ranks";
+      CHKERRV(ierr);
 
       // get global coordinates of local partition
       PetscInt x, m;
@@ -209,7 +212,10 @@ createDmElements()
                           nDofsPerElement, ghostLayerWidth, NULL, NULL, dmElements_.get()); CHKERRV(ierr);
 
       ierr = DMSetFromOptions(*dmElements_); CHKERRV(ierr);
-      ierr = DMSetUp(*dmElements_); CHKERRV(ierr);
+      ierr = DMSetUp(*dmElements_);
+      if (ierr)
+        LOG(ERROR) << "Could not create 2D decomposition of domain with " << nElementsGlobal_ << " global elements for " << nRanks_ << " MPI ranks";
+      CHKERRV(ierr);
 
       // get global coordinates of local partition
       PetscInt x, y, m, n;
@@ -256,7 +262,10 @@ createDmElements()
                             nDofsPerElement, ghostLayerWidth, NULL, NULL, NULL, dmElements_.get()); CHKERRV(ierr);
 
         ierr = DMSetFromOptions(*dmElements_); CHKERRV(ierr);
-        ierr = DMSetUp(*dmElements_); CHKERRV(ierr);
+        ierr = DMSetUp(*dmElements_);
+        if (ierr)
+          LOG(ERROR) << "Could not create 3D decomposition of domain with " << nElementsGlobal_ << " global elements for " << nRanks_ << " MPI ranks";
+        CHKERRV(ierr);
 
         // get global coordinates of local partition
         PetscInt x, y, z, m, n, p;
@@ -311,7 +320,10 @@ createDmElements()
                               nDofsPerElement, ghostLayerWidth, NULL, NULL, dmElements_.get()); CHKERRV(ierr);
 
           ierr = DMSetFromOptions(*dmElements_); CHKERRV(ierr);
-          ierr = DMSetUp(*dmElements_); CHKERRV(ierr);
+          ierr = DMSetUp(*dmElements_);
+          if (ierr)
+            LOG(ERROR) << "Could not create 2D decomposition of domain with " << nElementsGlobal_ << " global elements for " << nRanks_ << " MPI ranks";
+          CHKERRV(ierr);
 
           // get global coordinates of local partition
           PetscInt x, y, m, n;
@@ -347,7 +359,10 @@ createDmElements()
                               nDofsPerElement, ghostLayerWidth, NULL, NULL, dmElements_.get()); CHKERRV(ierr);
 
           ierr = DMSetFromOptions(*dmElements_); CHKERRV(ierr);
-          ierr = DMSetUp(*dmElements_); CHKERRV(ierr);
+          ierr = DMSetUp(*dmElements_);
+          if (ierr)
+            LOG(ERROR) << "Could not create 2D decomposition of domain with " << nElementsGlobal_ << " global elements for " << nRanks_ << " MPI ranks";
+          CHKERRV(ierr);
 
           // get global coordinates of local partition
           PetscInt x, y, m, n;
@@ -383,7 +398,10 @@ createDmElements()
                               nDofsPerElement, ghostLayerWidth, NULL, NULL, dmElements_.get()); CHKERRV(ierr);
 
           ierr = DMSetFromOptions(*dmElements_); CHKERRV(ierr);
-          ierr = DMSetUp(*dmElements_); CHKERRV(ierr);
+          ierr = DMSetUp(*dmElements_);
+          if (ierr)
+            LOG(ERROR) << "Could not create 2D decomposition of domain with " << nElementsGlobal_ << " global elements for " << nRanks_ << " MPI ranks";
+          CHKERRV(ierr);
 
           // get global coordinates of local partition
           PetscInt x, y, m, n;

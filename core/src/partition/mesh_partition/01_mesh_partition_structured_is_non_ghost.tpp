@@ -11,6 +11,9 @@ template<typename MeshType,typename BasisFunctionType>
 bool MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 isNonGhost(node_no_t nodeNoLocal, int &neighbourRankNo) const
 {
+  assert(nodeNoLocal >= 0);
+  assert(nodeNoLocal < nNodesLocalWithGhosts());
+
   std::array<int,MeshType::dim()> coordinatesLocal = getCoordinatesLocal(nodeNoLocal);
 
   VLOG(2) << "isNonGhost(" << nodeNoLocal << "), coordinatesLocal: " << coordinatesLocal;
@@ -281,6 +284,7 @@ neighbourRank(Mesh::face_t face)
   }
   return -1;  // does not happen (but intel compiler does not recognize it)
 }
+
 template<typename MeshType,typename BasisFunctionType>
 void MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 getBoundaryElements(Mesh::face_t face, int &neighbourRankNo, std::array<element_no_t,MeshType::dim()> &nBoundaryElements, std::vector<dof_no_t> &dofNos)

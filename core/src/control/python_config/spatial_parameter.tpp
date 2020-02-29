@@ -84,7 +84,7 @@ set(std::shared_ptr<FunctionSpaceType> functionSpace, bool inputMeshIsGlobal, st
   // if number of given values in the config equals the number of elements in the function space
   if (inputMeshIsGlobal)
   {
-    if (values.size() != nElementsGlobal)
+    if (values.size() != nElementsGlobal && values.size() != 1)
     {
       LOG(ERROR) << path << ": The number of entries given (" << values.size() << ") does not match "
         << "the global number of elements (" << nElementsGlobal << "). \"inputMeshIsGlobal\" is True.";
@@ -107,7 +107,7 @@ set(std::shared_ptr<FunctionSpaceType> functionSpace, bool inputMeshIsGlobal, st
   }
   else
   {
-    if (values.size() != nElementsLocal)
+    if (values.size() != nElementsLocal && values.size() != 1)
     {
       LOG(ERROR) << path << ": The number of entries given (" << values.size() << ") does not match "
         << "the local number of elements (" << nElementsLocal << "). \"inputMeshIsGlobal\" is False.";
@@ -152,7 +152,7 @@ set(std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,B
     // if number of given values in the config equals the number of elements in the function space
     if (inputMeshIsGlobal)
     {
-      if (values.size() != nElementsGlobal)
+      if (values.size() != nElementsGlobal && values.size() != 1)
       {
         LOG(ERROR) << path << ": The number of entries given (" << values.size() << ") does not match "
           << "the global number of elements (" << nElementsGlobal << "). \"inputMeshIsGlobal\" is True.";
@@ -175,7 +175,7 @@ set(std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,B
     }
     else
     {
-      if (values.size() != nElementsLocal)
+      if (values.size() != nElementsLocal && values.size() != 1)
       {
         LOG(ERROR) << path << ": The number of entries given (" << values.size() << ") does not match "
           << "the local number of elements (" << nElementsLocal << "). \"inputMeshIsGlobal\" is False.";

@@ -40,7 +40,7 @@ isGeometryField() const
 
 template<typename FunctionSpaceType>
 void FieldVariableBaseFunctionSpace<FunctionSpaceType>::
-setGeometryField(bool isGeometryField)
+setIsGeometryField(bool isGeometryField)
 {
   isGeometryField_ = isGeometryField;
 }

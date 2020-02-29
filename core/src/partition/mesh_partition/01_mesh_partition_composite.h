@@ -61,6 +61,9 @@ public:
   //! number of dofs in total
   global_no_t nDofsGlobal() const;
 
+  //! number of dofs when summing up all global dofs of the sub meshes, this counts the shared dofs multiple times, for each mesh
+  global_no_t nDofsGlobalForBoundaryConditions() const;
+
   //! number of nodes in the local partition
   node_no_t nNodesLocalWithGhosts() const;
   
@@ -140,7 +143,7 @@ public:
   //! from a local element no in the composite numbering get the subMeshNo and the no in the submesh-based numbering
   void getSubMeshNoAndElementNoLocal(element_no_t elementNoLocal, int &subMeshNo, element_no_t &elementOnMeshNoLocal) const;
 
-  //! from a local node no in the composite numbering get the subMeshNo and the no in the submesh-based numbering
+  //! from a local node no in the composite numbering get the subMeshNo and the no in the submesh-based numbering, works also for ghost nodes
   void getSubMeshNoAndNodeNoLocal(node_no_t nodeNoLocal, int &subMeshNo, node_no_t &nodeOnMeshNoLocal) const;
 
   //! for the local node no in the composite numbering return all sub meshes and the corresponding local node nos in non-composite numbering of this node. This may be multiple if the node is shared.o
@@ -149,10 +152,19 @@ public:
   //! from the submesh no and the local node no in the submesh numbering get the local node no in the composite numbering
   node_no_t getNodeNoLocalFromSubmesh(int subMeshNo, node_no_t nodeNoDuplicateOnSubmesh, bool &nodeIsSharedAndRemovedInCurrentMesh) const;
 
+  //! from the submesh no and the local element no in the submesh numbering get the local element no in the composite numbering
+  element_no_t getElementNoLocalFromSubmesh(int subMeshNo, element_no_t elementNoLocalOnSubMesh);
+
   //! get a string with all information, this is used in the regression tests (unit test) to compare it to a reference string
   std::string getString();
 
 protected:
+
+  //! initialize the basic numbers
+  void initializeElementNumbers();
+
+  //! initialize the basic numbers
+  void initializeNodeNumbers();
 
   //! initialize removedSharedNodes_, find nodes that are the same on multiple meshes
   void initializeSharedNodes();
@@ -162,6 +174,12 @@ protected:
 
   //! fill the dofLocalNo vectors, onlyNodalDofLocalNos_, ghostDofNosGlobalPetsc_ and localToGlobalPetscMappingDofs_
   void createLocalDofOrderings();
+
+  //! check if the partitioning is valid and output an error message if it is not, this involves expensive Allgather operations and should only be executed in debug mode
+  void checkIfSharedNodesAreOnSameSubdomain();
+
+  //! create a string of information about locally shared nodes
+  std::string getStringSharedNodesInformation();
 
   int nSubMeshes_;                //< number of sub function spaces, = subFunctionSpaces_.size()
   const std::vector<std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>> &subFunctionSpaces_;
@@ -178,6 +196,7 @@ protected:
   // -------------- everything below is initialized by initializeGhostNodeNos()
   std::vector<int> nRemovedNodesNonGhost_;            //< for every mesh the number of duplicate (non-ghost) nodes that are thus not included in the mesh
   std::vector<int> nNonDuplicateNodesWithoutGhosts_;  //< the local without ghosts number of nodes in each submesh
+  std::vector<int> nNonDuplicateGhostNodes_;          //< the local number of ghost nodes in each submesh that are not removed
   node_no_t nNodesLocalWithoutGhosts_;                //< number of local nodes without ghosts in the total mesh in the duplicate-free numbering
   node_no_t nNodesLocalWithGhosts_;                   //< number of local nodes with ghosts in the total mesh in the duplicate-free numbering
   global_no_t nNodesGlobal_;                          //< the global number of nodes on all submeshes

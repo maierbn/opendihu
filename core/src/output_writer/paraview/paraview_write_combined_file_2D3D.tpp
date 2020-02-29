@@ -28,6 +28,7 @@ void Paraview::writeCombinedUnstructuredGridFile(const FieldVariablesForOutputWr
   std::map<std::string, PolyDataPropertiesForMesh> &meshPropertiesUnstructuredGridFile_ = (output3DMeshes? meshPropertiesUnstructuredGridFile3D_ : meshPropertiesUnstructuredGridFile2D_);
 
   bool meshPropertiesInitialized = !meshPropertiesUnstructuredGridFile_.empty();
+  std::vector<std::string> meshNamesVector;
 
   if (!meshPropertiesInitialized)
   {
@@ -35,7 +36,7 @@ void Paraview::writeCombinedUnstructuredGridFile(const FieldVariablesForOutputWr
     Control::PerformanceMeasurement::start("durationParaview3DInit");
 
     // collect the size data that is needed to compute offsets for parallel file output
-    ParaviewLoopOverTuple::loopCollectMeshProperties<FieldVariablesForOutputWriterType>(fieldVariables, meshPropertiesUnstructuredGridFile_);
+    ParaviewLoopOverTuple::loopCollectMeshProperties<FieldVariablesForOutputWriterType>(fieldVariables, meshPropertiesUnstructuredGridFile_, meshNamesVector);
 
     Control::PerformanceMeasurement::stop("durationParaview3DInit");
   }
@@ -58,34 +59,34 @@ void Paraview::writeCombinedUnstructuredGridFile(const FieldVariablesForOutputWr
     Control::PerformanceMeasurement::start("durationParaview2D3DInit");
 
     // parse the collected properties of the meshes that will be output to the file
-    for (std::map<std::string,PolyDataPropertiesForMesh>::iterator iter = meshPropertiesPolyDataFile_.begin(); iter != meshPropertiesPolyDataFile_.end(); iter++)
+    for (std::string meshName : meshNamesVector)
     {
-      std::string meshName = iter->first;
+      PolyDataPropertiesForMesh &polyDataPropertiesForMesh = meshPropertiesPolyDataFile_[meshName];
 
       // do not combine meshes other than 1D meshes
-      if (iter->second.dimensionality != targetDimensionality)
+      if (polyDataPropertiesForMesh.dimensionality != targetDimensionality)
         continue;
 
       // check if this mesh should be combined with other meshes
       bool combineMesh = true;
 
       // check if mesh can be merged into previous meshes
-      if (!vtkPiece_.properties.pointDataArrays.empty())   // if properties are already assigned by an earlier mesh
+      if (!vtkPiece3D_.properties.pointDataArrays.empty())   // if properties are already assigned by an earlier mesh
       {
-        if (vtkPiece_.properties.pointDataArrays.size() != iter->second.pointDataArrays.size())
+        if (vtkPiece3D_.properties.pointDataArrays.size() != polyDataPropertiesForMesh.pointDataArrays.size())
         {
-          LOG(DEBUG) << "Mesh " << meshName << " cannot be combined with " << vtkPiece_.meshNamesCombinedMeshes << ". Number of field variables mismatches for "
-            << meshName << " (is " << iter->second.pointDataArrays.size() << " instead of " << vtkPiece_.properties.pointDataArrays.size() << ")";
+          LOG(DEBUG) << "Mesh " << meshName << " cannot be combined with " << vtkPiece3D_.meshNamesCombinedMeshes << ". Number of field variables mismatches for "
+            << meshName << " (is " << polyDataPropertiesForMesh.pointDataArrays.size() << " instead of " << vtkPiece3D_.properties.pointDataArrays.size() << ")";
           combineMesh = false;
         }
         else
         {
-          for (int j = 0; j < iter->second.pointDataArrays.size(); j++)
+          for (int j = 0; j < polyDataPropertiesForMesh.pointDataArrays.size(); j++)
           {
-            if (vtkPiece_.properties.pointDataArrays[j].first != iter->second.pointDataArrays[j].first)  // if the name of the jth field variable is different
+            if (vtkPiece3D_.properties.pointDataArrays[j].first != polyDataPropertiesForMesh.pointDataArrays[j].first)  // if the name of the jth field variable is different
             {
-              LOG(DEBUG) << "Mesh " << meshName << " cannot be combined with " << vtkPiece_.meshNamesCombinedMeshes << ". Field variable names mismatch for "
-                << meshName << " (there is \"" << vtkPiece_.properties.pointDataArrays[j].first << "\" instead of \"" << iter->second.pointDataArrays[j].first << "\")";
+              LOG(DEBUG) << "Mesh " << meshName << " cannot be combined with " << vtkPiece3D_.meshNamesCombinedMeshes << ". Field variable names mismatch for "
+                << meshName << " (there is \"" << vtkPiece3D_.properties.pointDataArrays[j].first << "\" instead of \"" << polyDataPropertiesForMesh.pointDataArrays[j].first << "\")";
               combineMesh = false;
             }
           }
@@ -93,16 +94,16 @@ void Paraview::writeCombinedUnstructuredGridFile(const FieldVariablesForOutputWr
 
         if (combineMesh)
         {
-          VLOG(1) << "Combine mesh " << meshName << " with " << vtkPiece_.meshNamesCombinedMeshes
-            << ", add " << iter->second.nPointsLocal << " points, " << iter->second.nCellsLocal << " elements to "
-            << vtkPiece_.properties.nPointsLocal << " points, " << vtkPiece_.properties.nCellsLocal << " elements";
+          VLOG(1) << "Combine mesh " << meshName << " with " << vtkPiece3D_.meshNamesCombinedMeshes
+            << ", add " << polyDataPropertiesForMesh.nPointsLocal << " points, " << polyDataPropertiesForMesh.nCellsLocal << " elements to "
+            << vtkPiece3D_.properties.nPointsLocal << " points, " << vtkPiece3D_.properties.nCellsLocal << " elements";
 
-          vtkPiece_.properties.nPointsLocal += iter->second.nPointsLocal;
-          vtkPiece_.properties.nCellsLocal += iter->second.nCellsLocal;
+          vtkPiece3D_.properties.nPointsLocal += polyDataPropertiesForMesh.nPointsLocal;
+          vtkPiece3D_.properties.nCellsLocal += polyDataPropertiesForMesh.nCellsLocal;
 
-          vtkPiece_.properties.nPointsGlobal += iter->second.nPointsGlobal;
-          vtkPiece_.properties.nCellsGlobal += iter->second.nCellsGlobal;
-          vtkPiece_.setVTKValues();
+          vtkPiece3D_.properties.nPointsGlobal += polyDataPropertiesForMesh.nPointsGlobal;
+          vtkPiece3D_.properties.nCellsGlobal += polyDataPropertiesForMesh.nCellsGlobal;
+          vtkPiece3D_.setVTKValues();
         }
       }
       else
@@ -110,45 +111,50 @@ void Paraview::writeCombinedUnstructuredGridFile(const FieldVariablesForOutputWr
         VLOG(1) << "this is the first " << targetDimensionality << "D mesh";
 
         // properties are not yet assigned
-        vtkPiece_.properties = iter->second; // store properties
-        vtkPiece_.setVTKValues();
+        vtkPiece3D_.properties = polyDataPropertiesForMesh; // store properties
+        vtkPiece3D_.setVTKValues();
       }
 
       VLOG(1) << "combineMesh: " << combineMesh;
       if (combineMesh)
       {
-        vtkPiece_.meshNamesCombinedMeshes.insert(meshName);
+        // if the mesh is not yet present in meshNamesCombinedMeshes, add it
+        if (vtkPiece3D_.meshNamesCombinedMeshes.find(meshName) == vtkPiece3D_.meshNamesCombinedMeshes.end())
+        {
+          vtkPiece3D_.meshNamesCombinedMeshes.insert(meshName);
+          vtkPiece3D_.meshNamesCombinedMeshesVector.push_back(meshName);
+        }
       }
     }
 
-    LOG(DEBUG) << "vtkPiece_: meshNamesCombinedMeshes: " << vtkPiece_.meshNamesCombinedMeshes << ", properties: " << vtkPiece_.properties
-      << ", firstScalarName: " << vtkPiece_.firstScalarName << ", firstVectorName: " << vtkPiece_.firstVectorName;
+    LOG(DEBUG) << "vtkPiece3D_: meshNamesCombinedMeshes: " << vtkPiece3D_.meshNamesCombinedMeshes << ", properties: " << vtkPiece3D_.properties
+      << ", firstScalarName: " << vtkPiece3D_.firstScalarName << ", firstVectorName: " << vtkPiece3D_.firstVectorName;
 
     Control::PerformanceMeasurement::stop("durationParaview2D3DInit");
   }
 
   // write combined mesh
-  if (!vtkPiece_.meshNamesCombinedMeshes.empty())
+  if (!vtkPiece3D_.meshNamesCombinedMeshes.empty())
   {
-    PolyDataPropertiesForMesh &polyDataPropertiesForMesh = vtkPiece_.properties;
+    PolyDataPropertiesForMesh &polyDataPropertiesForMesh = vtkPiece3D_.properties;
 
     VLOG(1) << "polyDataPropertiesForMesh combined: " << polyDataPropertiesForMesh;
 
     // if the meshes have the right dimensionality (2D or 3D)
-    if (vtkPiece_.properties.dimensionality == targetDimensionality)
+    if (vtkPiece3D_.properties.dimensionality == targetDimensionality)
     {
-      meshNames = vtkPiece_.meshNamesCombinedMeshes;
+      meshNames = vtkPiece3D_.meshNamesCombinedMeshes;
 
       std::stringstream filename;
       filename << this->filenameBaseWithNo_ << ".vtu";
 
       // write actual file
       writeCombinedUnstructuredGridFile<FieldVariablesForOutputWriterType>(
-        fieldVariables, vtkPiece_.properties, meshPropertiesUnstructuredGridFile_, vtkPiece_.meshNamesCombinedMeshes, meshPropertiesInitialized, filename.str());
+        fieldVariables, vtkPiece3D_.properties, meshPropertiesUnstructuredGridFile_, vtkPiece3D_.meshNamesCombinedMeshesVector, meshPropertiesInitialized, filename.str());
     }
     else
     {
-      VLOG(1) << "skip meshes " << vtkPiece_.meshNamesCombinedMeshes << " because " << vtkPiece_.properties.dimensionality << " != " << targetDimensionality;
+      VLOG(1) << "skip meshes " << vtkPiece3D_.meshNamesCombinedMeshes << " because " << vtkPiece3D_.properties.dimensionality << " != " << targetDimensionality;
     }
   }
 
@@ -159,7 +165,9 @@ void Paraview::writeCombinedUnstructuredGridFile(const FieldVariablesForOutputWr
   {
     PolyDataPropertiesForMesh &polyDataPropertiesForMesh = meshPropertiesIter->second;
 
-    LOG(DEBUG) << "meshNames: " << meshNames << ", next mesh to write: " << meshPropertiesIter->first;
+    // if the current mesh does not have the correct dimensionality, skip this mesh
+    if (polyDataPropertiesForMesh.dimensionality != targetDimensionality)
+      continue;
 
     // if the current mesh was already output within the combined file, skip this mesh
     if (meshNames.find(meshPropertiesIter->first) != meshNames.end())
@@ -176,9 +184,11 @@ void Paraview::writeCombinedUnstructuredGridFile(const FieldVariablesForOutputWr
       filename << this->filenameBaseWithNo_ << ".vtu";
     }
 
+    LOG(DEBUG) << "meshNames: " << meshNames << ", next mesh to write: " << meshPropertiesIter->first << ", filename: " << filename.str();
+
     // write actual file
-    std::set<std::string> currentMesh;
-    currentMesh.insert(meshPropertiesIter->first);
+    std::vector<std::string> currentMesh;
+    currentMesh.push_back(meshPropertiesIter->first);
     meshNames.insert(meshPropertiesIter->first);
 
     writeCombinedUnstructuredGridFile<FieldVariablesForOutputWriterType>(
@@ -193,11 +203,15 @@ void Paraview::writeCombinedUnstructuredGridFile(const FieldVariablesForOutputWr
 template<typename FieldVariablesForOutputWriterType>
 void Paraview::writeCombinedUnstructuredGridFile(const FieldVariablesForOutputWriterType &fieldVariables, PolyDataPropertiesForMesh &polyDataPropertiesForMesh,
                                                  const std::map<std::string, PolyDataPropertiesForMesh> &meshPropertiesUnstructuredGridFile,
-                                                 std::set<std::string> meshNames,
+                                                 std::vector<std::string> meshNames,
                                                  bool meshPropertiesInitialized, std::string filename)
 {
   int targetDimensionality = polyDataPropertiesForMesh.dimensionality;
   bool output3DMeshes = targetDimensionality == 3;
+
+  std::set<std::string> meshNamesSet(meshNames.begin(), meshNames.end());
+
+  VLOG(1) << "writeCombinedUnstructuredGridFile, filename=" << filename << ", meshNames: " << meshNames << ", meshPropertiesInitialized=" << meshPropertiesInitialized << ", targetDimensionality: " << targetDimensionality;
 
   //! find out name of first scalar and vector field variables
   std::string firstScalarName;
@@ -278,8 +292,10 @@ void Paraview::writeCombinedUnstructuredGridFile(const FieldVariablesForOutputWr
       << nCellsPreviousRanks3D_ << ", " << nPointsPreviousRanks3D_ << ", " << nPointsGlobal3D_;
   }
 
+#ifndef NDEBUG
   std::vector<node_no_t> &nNodesLocalWithGhosts = polyDataPropertiesForMesh.nNodesLocalWithGhosts;
   assert(nNodesLocalWithGhosts.size() == targetDimensionality);
+#endif
 
   int nNodesPerCell = 4;
   if (output3DMeshes)
@@ -294,7 +310,10 @@ void Paraview::writeCombinedUnstructuredGridFile(const FieldVariablesForOutputWr
   for (std::string meshName : meshNames)
   {
     nConnectivityValues += meshPropertiesUnstructuredGridFile.at(meshName).nCellsLocal * nNodesPerCell;
+    VLOG(1) << "  mesh \"" << meshName << "\" has " << meshPropertiesUnstructuredGridFile.at(meshName).nCellsLocal << " local cells, " << nNodesPerCell
+      << ", " << meshPropertiesUnstructuredGridFile.at(meshName).nCellsLocal * nNodesPerCell << " connectivity values for this mesh";
   }
+  VLOG(1) << "nConnectivityValues: " << nConnectivityValues;
 
   std::vector<int> connectivityValues(nConnectivityValues);
 
@@ -322,12 +341,18 @@ void Paraview::writeCombinedUnstructuredGridFile(const FieldVariablesForOutputWr
       connectivityValuesOffset += nPointsPreviousRanks3D_[meshName];
     }
 
+    VLOG(1) << "connectivityValuesOffset start: " << connectivityValuesOffset;
+
     // loop over meshes
     for (std::string meshName : meshNames)
     {
       int nPointsPreviousRanks3D = connectivityValuesOffset;
 
       const std::vector<node_no_t> &nNodesLocalWithGhosts = meshPropertiesUnstructuredGridFile.at(meshName).nNodesLocalWithGhosts;
+
+      VLOG(1) << "connectivity for mesh \"" << meshName << "\",  nPointsPreviousRanks3D: " << nPointsPreviousRanks3D << ", nNodesLocalWithGhosts: " << nNodesLocalWithGhosts;
+      VLOG(1) << "connectivityValuesIndexOffset: " << connectivityValuesIndexOffset;
+      VLOG(1) << "nNodesLocalWithGhosts: " << nNodesLocalWithGhosts;
 
       // for structured meshes create connectivity values now
       if (output3DMeshes)
@@ -442,7 +467,7 @@ void Paraview::writeCombinedUnstructuredGridFile(const FieldVariablesForOutputWr
     for (int i = 0; i < meshPropertiesUnstructuredGridFile.at(meshName).nCellsLocal; i++)
     {
       assert(offsetValuesIndexOffset + i < offsetValues.size());
-      offsetValues[offsetValuesIndexOffset + i] = offsetValuesOffset + (nCellsPreviousRanks3D_[meshName] + i + 1) * nNodesPerCell;    // specifies the end, i.e. one after the last, of the last of nodes for each element
+      offsetValues[offsetValuesIndexOffset + i] = offsetValuesOffset + (i + 1) * nNodesPerCell;    // specifies the end, i.e. one after the last, of the last of nodes for each element
     }
 
     offsetValuesIndexOffset += meshPropertiesUnstructuredGridFile.at(meshName).nCellsLocal;
@@ -453,7 +478,7 @@ void Paraview::writeCombinedUnstructuredGridFile(const FieldVariablesForOutputWr
 
   // collect all data for the field variables, organized by field variable names
   std::map<std::string, std::vector<double>> fieldVariableValues;
-  ParaviewLoopOverTuple::loopGetNodalValues<FieldVariablesForOutputWriterType>(fieldVariables, meshNames, fieldVariableValues);
+  ParaviewLoopOverTuple::loopGetNodalValues<FieldVariablesForOutputWriterType>(fieldVariables, meshNamesSet, fieldVariableValues);
 
   if (!meshPropertiesInitialized)
   {
@@ -520,7 +545,7 @@ void Paraview::writeCombinedUnstructuredGridFile(const FieldVariablesForOutputWr
 
   // collect all data for the geometry field variable
   std::vector<double> geometryFieldValues;
-  ParaviewLoopOverTuple::loopGetGeometryFieldNodalValues<FieldVariablesForOutputWriterType>(fieldVariables, meshNames, geometryFieldValues);
+  ParaviewLoopOverTuple::loopGetGeometryFieldNodalValues<FieldVariablesForOutputWriterType>(fieldVariables, meshNamesSet, geometryFieldValues);
 
   VLOG(1) << "meshNames: " << meshNames << ", rank " << this->rankSubset_->ownRankNo() << ", n geometryFieldValues: " << geometryFieldValues.size();
   if (geometryFieldValues.size() == 0)

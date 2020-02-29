@@ -68,23 +68,14 @@ getNodeNo(element_no_t elementNoLocal, int nodeIndex) const
   bool nodeIsSharedAndRemovedInCurrentMesh;
 
   node_no_t nodeNoLocal = this->meshPartition_->getNodeNoLocalFromSubmesh(subMeshNo, nodeNoLocalSubMesh, nodeIsSharedAndRemovedInCurrentMesh);
-
-  bool show = false;
-  /*for (int n=0; n < this->nNodesPerElement(); n++)
-  {
-    if (getNodeNo(elementNoLocal, n) == 27)
-    {
-      show = true;
-    }
-  }*/
-
-  if (nodeNoLocal == 27 || show)
+/*
+  if (nodeNoLocal == 27 || nodeNoLocal == 552 || nodeNoLocal == 39)
   {
     VLOG(2) << "getNodeNo(elementNoLocal: " << elementNoLocal << ", nodeIndex: " << nodeIndex << "), subMeshNo: " << subMeshNo << ", "
       << "elementOnMeshNoLocal: " << elementOnMeshNoLocal << ", nodeNoLocalSubMesh: " << nodeNoLocalSubMesh << ", nodeIsSharedAndRemovedInCurrentMesh: "
       << nodeIsSharedAndRemovedInCurrentMesh << ", nodeNoLocal: " << nodeNoLocal;
   }
-
+*/
   return nodeNoLocal;
 }
 

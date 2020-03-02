@@ -59,6 +59,7 @@ variables.fat_mesh_file = variables.fiber_file + "_fat.bin"
 variables.paraview_output = True
 variables.disable_firing_output = False
 
+
 # -------------- end user parameters ----------------
 
 # define command line arguments
@@ -128,6 +129,41 @@ from helper import *
 variables.n_subdomains_xy = variables.n_subdomains_x * variables.n_subdomains_y
 variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
 
+# Function to postprocess the output
+# This function gets periodically called by the running simulation. 
+# It provides all current variables for each node
+def postprocess(result):
+  result = result[0]
+  # print result for debugging
+  print(result)
+  
+  # get current time
+  current_time = result["currentTime"]
+  timestep_no = result["timeStepNo"]
+  
+  # parse variables
+  field_variables = result["data"]
+  
+  offset = len(variables.meshes["3DMesh"]["nodePositions"])
+  nx = variables.fat_mesh_n_points[0]
+  ny = variables.fat_mesh_n_points[1]
+  nz = variables.fat_mesh_n_points[2]
+  
+  # select nodes of the fat layer mesh
+  i_begin = 2
+  i_end = i_begin + 8
+  j_begin = 2
+  j_end = j_end + 8
+  
+  
+  
+  # loop over selected nodes
+  
+  # field_variables[0] is the geometry
+  # field_variables[1] is the displacements u
+  # field_variables[2] is the velocities v
+  # field_variables[3] is the PK2-Stress (Voigt)
+  
 
 # define the config dict
 config = {
@@ -345,7 +381,9 @@ config = {
             ]
           },
         },
-        "OutputWriter" : variables.output_writer_emg,
+        "OutputWriter" : variables.output_writer_emg + [
+          {"format": "PythonCallback", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_electrodes), "onlyNodalValues":True, "filename": "", "callback": postprocess}
+        ],
       }
     },
   }

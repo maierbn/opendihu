@@ -145,3 +145,16 @@ ${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_est
 ${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 45 $input $bottom_z_clip $top_z_clip $element_length     # 277
 ${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 70 $input $bottom_z_clip $top_z_clip $element_length     # 427
 ${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 86 $input $bottom_z_clip $top_z_clip $element_length     # 523
+
+# create fat layer meshes
+cd $current_directory/processed_meshes
+$pyod $opendihu_directory/scripts/create_fat_layer.py ${basename}_7x7fibers.bin
+$pyod $opendihu_directory/scripts/create_fat_layer.py ${basename}_9x9fibers.bin
+$pyod $opendihu_directory/scripts/create_fat_layer.py ${basename}_13x13fibers.bin
+$pyod $opendihu_directory/scripts/create_fat_layer.py ${basename}_25x25fibers.bin
+$pyod $opendihu_directory/scripts/create_fat_layer.py ${basename}_37x37fibers.bin
+$pyod $opendihu_directory/scripts/create_fat_layer.py ${basename}_67x67fibers.bin
+$pyod $opendihu_directory/scripts/create_fat_layer.py ${basename}_109x109fibers.bin
+
+cd $current_directory
+

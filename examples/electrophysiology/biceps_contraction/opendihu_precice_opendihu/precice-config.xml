@@ -42,24 +42,33 @@
       <read-data  name="Geometry" mesh="PartitionedFibersMesh"/>
 
       <!-- rbf to map from MuscleContractionMesh to PartitionedFibersMesh -->
-      <!--<mapping:nearest-neighbor direction="read" from="MuscleContractionMesh" to="PartitionedFibersMesh" constraint="consistent" />-->
-      
-      <!--<mapping:rbf-gaussian 
+      <!--
+      $./rbfShape.py 10 3
+      Using values:
+        h     = 10.0
+        m     = 3
+        decay = 1e-09
+      Result:
+        s = 0.15174271293851463
+        -->
+
+      <mapping:rbf-gaussian 
         direction="read" 
         from="MuscleContractionMesh" 
         to="PartitionedFibersMesh" 
         constraint="consistent" 
         timing="initial" 
-        shape-parameter="10.0"
-        />-->
+        shape-parameter="1.51"
+      />
+      
+      <!--<mapping:nearest-neighbor direction="read" from="MuscleContractionMesh" to="PartitionedFibersMesh" constraint="consistent" />-->
       <!-- rbf-compact-tps-c2 abgeschnittene splines, 3-5 Nachbarn im support radius--> 
-        
-      <mapping:rbf-thin-plate-splines
+      <!-- <mapping:rbf-thin-plate-splines
         direction="read" 
         from="MuscleContractionMesh" 
         to="PartitionedFibersMesh" 
         constraint="consistent" 
-        />
+        />-->
     
     </participant>
     
@@ -71,6 +80,23 @@
       <export:vtk directory="precice-output" />
       
       <!-- map from PartitionedFibersMesh to  MuscleContractionMesh -->
+      <!-- shape-parameter: 
+      ./rbfShape.py 0.01 3
+      Using values:
+        h     = 0.01
+        m     = 3
+        decay = 1e-09
+      Result:
+        s = 151.74271293851464
+      -->
+      <mapping:rbf-gaussian 
+        direction="read" 
+        from="PartitionedFibersMesh" 
+        to="MuscleContractionMesh" 
+        constraint="consistent" 
+        timing="initial" 
+        shape-parameter="151.74"
+      />
       
       <!-- available mappings:
         rbf-thin-plate-splines
@@ -97,13 +123,13 @@
         />-->
       
       <!-- rbf-compact-tps-c2 abgeschnittene splines, 3-5 Nachbarn im support radius--> 
-      <mapping:rbf-compact-polynomial-c6
+      <!--<mapping:rbf-compact-polynomial-c6
         direction="read" 
         from="PartitionedFibersMesh" 
         to="MuscleContractionMesh" 
         constraint="consistent" 
-        support-radius="0.01"
-      />
+        support-radius="0.1"
+      />-->
       
     </participant>
 

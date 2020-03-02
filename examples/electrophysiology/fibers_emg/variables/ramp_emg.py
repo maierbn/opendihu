@@ -83,6 +83,7 @@ exfile_output = False
 python_output = False
 #fiber_file="../../input/13x13fibers.bin"
 fiber_file="../../input/37x37fibers.bin"
+fiber_file="../../input/left_biceps_brachii_37x37fibers.bin"
 firing_times_file="../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
 fiber_distribution_file="../../input/MU_fibre_distribution_10MUs.txt"
 

@@ -221,6 +221,7 @@ config = {
                       "optimizationType":                       "vc",                                           # "vc", "simd", "openmp" type of generated optimizated source file
                       "approximateExponentialFunction":         False,                                          # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
                       "maximumNumberOfThreads":                 0,                                              # if optimizationType is "openmp", the maximum number of threads to use. Default value 0 means no restriction.
+                      "initializeStatesToEquilibrium":          True,
                       #"libraryFilename":                       "cellml_simd_lib.so",                           # compiled library
                       #"statesInitialValues":                   [],
                       #"setSpecificParametersFunction":         set_specific_parameters,                        # callback function that sets parameters like stimulation current

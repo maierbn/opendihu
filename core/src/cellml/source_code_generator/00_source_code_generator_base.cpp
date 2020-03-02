@@ -40,7 +40,7 @@ void CellmlSourceCodeGeneratorBase::initializeNames(std::string inputFilename, i
 
 void CellmlSourceCodeGeneratorBase::initializeSourceCode(
   const std::vector<int> &parametersUsedAsIntermediate, const std::vector<int> &parametersUsedAsConstant,
-  const std::vector<double> &parametersInitialValues
+  std::vector<double> &parametersInitialValues
 )
 {
   parametersUsedAsIntermediate_.assign(parametersUsedAsIntermediate.begin(), parametersUsedAsIntermediate.end());
@@ -58,7 +58,12 @@ void CellmlSourceCodeGeneratorBase::initializeSourceCode(
   }
   else
   {
-    assert(parametersInitialValues.size() == nParameters_);
+    if (parametersInitialValues.size() != nParameters_)
+    {
+      LOG(WARNING) << "In CellML: There should be " << nParameters_ << " parameters but " << parametersInitialValues.size()
+        << " initial values are given by \"parametersInitialValues\". Using default values 0.";
+      parametersInitialValues.resize(nParameters_, 0.0);
+    }
 
     LOG(DEBUG) << "copy parameters which were given only for one instance to all instances";
     for (int instanceNo = 0; instanceNo < nInstances_; instanceNo++)

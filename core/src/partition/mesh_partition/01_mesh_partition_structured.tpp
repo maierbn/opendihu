@@ -62,6 +62,11 @@ MeshPartition(std::array<node_no_t,MeshType::dim()> nElementsLocal, std::array<g
   {
     initialize1NodeMesh();
   }
+  else if (!rankSubset->ownRankIsContained())
+  {
+    isDegenerate_ = true;
+    initializeDegenerateMesh();
+  }
   else
   {
     initializeHasFullNumberOfNodes();

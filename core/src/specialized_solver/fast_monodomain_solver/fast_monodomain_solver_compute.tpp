@@ -62,8 +62,7 @@ computeMonodomain()
 
   ImplicitEuler &implicitEuler = instances[0].timeStepping2().instancesLocal()[0];
   durationLogKey1D_ = implicitEuler.durationLogKey();
-  //double prefactor = implicitEuler.discretizableInTime().data().context().getPythonConfig().getOptionDouble("prefactor", 1.0);
-  const double prefactor = 1.0;   // prefactor is no longer an option in cellml adapter
+  double prefactor = implicitEuler.discretizableInTime().data().context().getPythonConfig().getOptionDouble("prefactor", 1.0);
 
   LOG(DEBUG) << "durationLogKeys: " << durationLogKey0D_ << "," << durationLogKey1D_;
 

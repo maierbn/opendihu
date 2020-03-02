@@ -55,6 +55,17 @@ public:
 
 };
 
+/** Partial specialization for composite meshes
+ */
+template<int D,typename BasisFunctionType>
+class FunctionSpaceFindPosition<Mesh::CompositeOfDimension<D>,BasisFunctionType,Mesh::CompositeOfDimension<D>> :
+  public FunctionSpaceStructuredCheckNeighbouringElements<Mesh::CompositeOfDimension<D>,BasisFunctionType>
+{
+public:
+
+  //! inherit constructor
+  using FunctionSpaceStructuredCheckNeighbouringElements<Mesh::CompositeOfDimension<D>,BasisFunctionType>::FunctionSpaceStructuredCheckNeighbouringElements;
+};
 
 
 }  // namespace

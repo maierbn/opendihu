@@ -94,8 +94,12 @@ class FunctionSpacePartition<Mesh::CompositeOfDimension<D>,BasisFunctionType> :
   public FunctionSpacePartitionBase<Mesh::CompositeOfDimension<D>,BasisFunctionType>
 {
 public:
-  //! use inherited constructor
-  using FunctionSpacePartitionBase<Mesh::CompositeOfDimension<D>,BasisFunctionType>::FunctionSpacePartitionBase;
+
+  typedef FunctionSpace<Mesh::StructuredDeformableOfDimension<D>, BasisFunctionType> SubFunctionSpaceType;
+
+  //! constructor
+  FunctionSpacePartition(std::shared_ptr<Partition::Manager> partitionManager,
+                         std::vector<std::shared_ptr<FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>> subFunctionSpaces);
 
   //! initiate the partitoning and then call the downwards initialize
   void initialize();

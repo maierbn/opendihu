@@ -7,4 +7,5 @@
 
 Import('env')     # import Environment object from calling SConstruct
 
+#env.Program(target = "static_biceps_emg_surface", source = "src/static_biceps_emg_surface.cpp")
 env.Program(target = "static_biceps_emg", source = "src/static_biceps_emg.cpp")

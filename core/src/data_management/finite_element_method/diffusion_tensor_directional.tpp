@@ -14,13 +14,12 @@ DiffusionTensorDirectional(PythonConfig specificSettings) :
   {
     PythonUtility::printDict(this->specificSettings_.pyObject());
   }
-
-  this->diffusionTensor_ = this->parseDiffusionTensor("diffusionTensor");
 }
 
 template<typename FunctionSpaceType>
 void DiffusionTensorDirectional<FunctionSpaceType>::
-initialize(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> direction,
+initialize(std::shared_ptr<FunctionSpaceType> functionSpace,
+           std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> direction,
            std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> spatiallyVaryingPrefactor,
            bool useAdditionalDiffusionTensor)
 {
@@ -28,10 +27,32 @@ initialize(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> di
   useAdditionalDiffusionTensor_ = useAdditionalDiffusionTensor;
   direction_ = direction;
   spatiallyVaryingPrefactor_ = spatiallyVaryingPrefactor;
+  this->dataFunctionSpace_ = functionSpace;
 
+  // initialize diffusion tensor
+  const int D = FunctionSpaceType::dim();
+
+  // create identity matrix as default values
+  MathUtility::Matrix<D,D> defaultValue({0});
+
+  for (int i = 0; i < D; i++)
+    defaultValue(i,i) = 1.0;
+
+  // parse diffusion tensor
+  this->diffusionTensor_.initialize(this->specificSettings_, "diffusionTensor", defaultValue, this->dataFunctionSpace_);
+
+  // parse additional diffusion tensor
   if (useAdditionalDiffusionTensor_)
   {
-    this->additionalDiffusionTensor_ = this->parseDiffusionTensor("extracellularDiffusionTensor");
+    const int D = FunctionSpaceType::dim();
+
+    // create identity matrix as default values
+    MathUtility::Matrix<D,D> defaultValue({0});
+
+    for (int i = 0; i < D; i++)
+      defaultValue(i,i) = 1.0;
+
+    this->additionalDiffusionTensor_.initialize(this->specificSettings_, "extracellularDiffusionTensor", defaultValue, this->dataFunctionSpace_);
   }
 }
 
@@ -55,7 +76,7 @@ diffusionTensor(element_no_t elementNoLocal, const std::array<double,FunctionSpa
   if (!std::isfinite(directionVector[0]) || !std::isfinite(directionVector[1]) || !std::isfinite(directionVector[2]))
     directionVector = Vec3({0.0,0.0,1.0});
 
-  MathUtility::Matrix<D,D> diffusionTensor = this->diffusionTensor_;
+  MathUtility::Matrix<D,D> diffusionTensor = this->diffusionTensor_.value(elementNoLocal);
 
   // if the extracellular diffusion tensor should be added
   if (useAdditionalDiffusionTensor_)
@@ -63,7 +84,7 @@ diffusionTensor(element_no_t elementNoLocal, const std::array<double,FunctionSpa
     //LOG(DEBUG) << " add extracellular diffusion tensor " << this->additionalDiffusionTensor_;
 
     // add extracellular diffusion tensor
-    diffusionTensor = diffusionTensor + this->additionalDiffusionTensor_;
+    diffusionTensor = diffusionTensor + this->additionalDiffusionTensor_.value(elementNoLocal);
   }
 
   //VLOG(3) << "directionVector: " << directionVector;
@@ -98,8 +119,8 @@ diffusionTensor(element_no_t elementNoLocal, const std::array<double,FunctionSpa
       LOG(INFO) << "elementNoLocal: " << elementNoLocal << ", xi: " << xi;
       LOG(INFO) << "directionVector: " << directionVector << " elemental direction values: " << elementalValues;
       LOG(INFO) << ", spatiallyVaryingPrefactor: " << spatiallyVaryingPrefactor;
-      LOG(INFO) << "diffusionTensor from settings: " << std::endl << this->diffusionTensor_;
-      LOG(INFO) << "additionalDiffusionTensor: " << std::endl << this->additionalDiffusionTensor_;
+      LOG(INFO) << "diffusionTensor from settings: " << std::endl << this->diffusionTensor_.value(elementNoLocal);
+      LOG(INFO) << "additionalDiffusionTensor: " << std::endl << this->additionalDiffusionTensor_.value(elementNoLocal);
       LOG(INFO) << "resulting diffusion tensor in direction " << directionVector << ":" << std::endl << diffusionTensor;
      }
   }
@@ -111,7 +132,7 @@ diffusionTensor(element_no_t elementNoLocal, const std::array<double,FunctionSpa
       LOG(ERROR) << "Directional diffusion tensor contains nans or infs.";
       LOG(INFO) << "elementNoLocal: " << elementNoLocal << ", xi: " << xi;
       LOG(INFO) << "directionVector: " << directionVector << " elemental direction values: " << elementalValues;
-      LOG(INFO) << "diffusionTensor: " << diffusionTensor << ", this->additionalDiffusionTensor: " << this->additionalDiffusionTensor_
+      LOG(INFO) << "diffusionTensor: " << diffusionTensor << ", this->additionalDiffusionTensor: " << this->additionalDiffusionTensor_.value(elementNoLocal)
         << ", spatiallyVaryingPrefactor: " << spatiallyVaryingPrefactor;
      }
   }
@@ -122,7 +143,7 @@ diffusionTensor(element_no_t elementNoLocal, const std::array<double,FunctionSpa
       LOG(ERROR) << "Directional diffusion tensor contains nans.";
       LOG(INFO) << "elementNoLocal: " << elementNoLocal << ", xi: " << xi;
       LOG(INFO) << "directionVector: " << directionVector << " elemental direction values: " << elementalValues;
-      LOG(INFO) << "diffusionTensor: " << diffusionTensor << ", this->additionalDiffusionTensor: " << this->additionalDiffusionTensor_
+      LOG(INFO) << "diffusionTensor: " << diffusionTensor << ", this->additionalDiffusionTensor: " << this->additionalDiffusionTensor_.value(elementNoLocal)
         << ", spatiallyVaryingPrefactor: " << spatiallyVaryingPrefactor;
      }
   }

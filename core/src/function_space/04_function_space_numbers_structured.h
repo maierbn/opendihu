@@ -145,7 +145,7 @@ public:
   using FunctionSpaceNumbers<MeshType,BasisFunctionType>::FunctionSpaceNumbers;
 
   //! get the node no in the global natural ordering
-  global_no_t getNodeNoGlobalNatural(element_no_t elementNoLocal, int nodeIndex) const;
+  global_no_t getNodeNoGlobalNaturalFromElementNoLocal(element_no_t elementNoLocal, int nodeIndex) const;
 
 };
 

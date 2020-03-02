@@ -4,7 +4,7 @@
 #include <control/types.h>
 #include <memory>
 #include "partition/mesh_partition/00_mesh_partition_base.h"
-#include "control/python_config.h"
+#include "control/python_config/python_config.h"
 
 namespace Mesh
 {

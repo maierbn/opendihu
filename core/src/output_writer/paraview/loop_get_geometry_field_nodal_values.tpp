@@ -51,6 +51,11 @@ getGeometryFieldNodalValues(CurrentFieldVariableType currentFieldVariable, const
     // initialize the dofNosLocalNaturalOrdering vector of the meshPartition to be able to get the values in the natural ordering
     currentFieldVariable->functionSpace()->meshPartition()->initializeDofNosLocalNaturalOrdering(currentFieldVariable->functionSpace());
 
+    // ensure that ghost values are in place
+    currentFieldVariable->zeroGhostBuffer();
+    currentFieldVariable->setRepresentationGlobal();
+    currentFieldVariable->startGhostManipulation();
+
     VLOG(1) << "nComponents: " << nComponents;
 
     // get all local values with ghosts for the components
@@ -75,7 +80,7 @@ getGeometryFieldNodalValues(CurrentFieldVariableType currentFieldVariable, const
         index += nDofsPerNode;
       }
     }
-    values.reserve(componentValues[0].size()*nComponents);
+    values.reserve(values.size()+componentValues[0].size()*nComponents);
 
     // copy values in consecutive order (x y z x y z) to output
     for (int i = 0; i < componentValues[0].size(); i++)

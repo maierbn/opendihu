@@ -151,4 +151,12 @@ nElementsGlobal() const
   return this->geometryField_->nElements();
 }
 
+template<int D,typename BasisFunctionType>
+global_no_t FunctionSpaceDataUnstructured<D,BasisFunctionType>::
+getNodeNoGlobalNaturalFromElementNoLocal(element_no_t elementNoLocal, int nodeIndex) const
+{
+  global_no_t elementNoGlobalNatural = this->meshPartition_->getElementNoGlobalNatural(elementNoLocal);
+  return this->getNodeNoGlobalNatural(elementNoGlobalNatural, nodeIndex);
+}
+
 } // namespace

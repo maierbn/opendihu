@@ -14,16 +14,13 @@
 #include "opencor.h"
 #endif
 
-CellmlSourceCodeGeneratorBase::CellmlSourceCodeGeneratorBase() : sourceFileSuffix_(".c")
+CellmlSourceCodeGeneratorBase::CellmlSourceCodeGeneratorBase(std::shared_ptr<std::vector<double>> parameters) :
+  sourceFileSuffix_(".c"), parameters_(parameters)
 {
 
 }
 
-void CellmlSourceCodeGeneratorBase::initialize(
-  std::string inputFilename, int nInstances, int nStates, int nIntermediates,
-  const std::vector<int> &parametersUsedAsIntermediate, const std::vector<int> &parametersUsedAsConstant,
-  const std::vector<double> &parametersInitialValues
-)
+void CellmlSourceCodeGeneratorBase::initializeNames(std::string inputFilename, int nInstances, int nStates, int nIntermediates)
 {
   sourceFilename_ = inputFilename;
   nInstances_ = nInstances;
@@ -34,37 +31,48 @@ void CellmlSourceCodeGeneratorBase::initialize(
   intermediateNames_.resize(nIntermediates);
   statesInitialValues_.resize(nStates);
 
-  parametersUsedAsIntermediate_.assign(parametersUsedAsIntermediate.begin(), parametersUsedAsIntermediate.end());
-  parametersUsedAsConstant_.assign(parametersUsedAsConstant.begin(), parametersUsedAsConstant.end());
-
-  nParameters_ = parametersUsedAsIntermediate_.size() + parametersUsedAsConstant_.size();
-  parameters_.resize(nParameters_*nInstances_);
-
   // convert a xml file to a c file using OpenCOR, if necessary
   this->convertFromXmlToC();
 
   // get initial values from source file and parse source code
-  this->parseSourceCodeFile();   // this sets nIntermediatesInSource_
+  this->parseNamesInSourceCodeFile();   // this sets nIntermediatesInSource_
+}
+
+void CellmlSourceCodeGeneratorBase::initializeSourceCode(
+  const std::vector<int> &parametersUsedAsIntermediate, const std::vector<int> &parametersUsedAsConstant,
+  const std::vector<double> &parametersInitialValues
+)
+{
+  parametersUsedAsIntermediate_.assign(parametersUsedAsIntermediate.begin(), parametersUsedAsIntermediate.end());
+  parametersUsedAsConstant_.assign(parametersUsedAsConstant.begin(), parametersUsedAsConstant.end());
+
+  nParameters_ = parametersUsedAsIntermediate_.size() + parametersUsedAsConstant_.size();
+  parameters_->resize(nParameters_*nInstances_);
 
   // set initial values of parameters
-  VLOG(1) << ", parameters_.size(): " << parameters_.size();
-  if (parametersInitialValues.size() == parameters_.size())
+  VLOG(1) << ", parameters_->size(): " << parameters_->size();
+  if (parametersInitialValues.size() == parameters_->size())
   {
-    std::copy(parametersInitialValues.begin(), parametersInitialValues.end(), parameters_.begin());
+    std::copy(parametersInitialValues.begin(), parametersInitialValues.end(), parameters_->begin());
     LOG(DEBUG) << "parameters size is matching for all instances";
   }
   else
   {
+    assert(parametersInitialValues.size() == nParameters_);
+
     LOG(DEBUG) << "copy parameters which were given only for one instance to all instances";
-    for (int instanceNo=0; instanceNo<nInstances_; instanceNo++)
+    for (int instanceNo = 0; instanceNo < nInstances_; instanceNo++)
     {
-      for (int j=0; j<nParameters_; j++)
+      for (int j = 0; j < nParameters_; j++)
       {
-        parameters_[j*nInstances_ + instanceNo] = parametersInitialValues[j];
+        parameters_->at(j*nInstances_ + instanceNo) = parametersInitialValues[j];
       }
     }
   }
   VLOG(1) << "parameters_: " << parameters_;
+
+  // parse all the source code from the model file
+  this->parseSourceCodeFile();
 
   // Generate the rhs code for a single instance. This is needed for computing the equilibrium of the states.
   this->generateSingleInstanceCode();
@@ -208,12 +216,17 @@ const std::vector<std::string> &CellmlSourceCodeGeneratorBase::stateNames() cons
   return stateNames_;
 }
 
+const std::vector<std::string> &CellmlSourceCodeGeneratorBase::constantNames() const
+{
+  return constantNames_;
+}
+
 const int CellmlSourceCodeGeneratorBase::nParameters() const
 {
   return nParameters_;
 }
 
-std::vector<double> &CellmlSourceCodeGeneratorBase::parameters()
+std::shared_ptr<std::vector<double>> CellmlSourceCodeGeneratorBase::parameters()
 {
   return parameters_;
 }

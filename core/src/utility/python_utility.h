@@ -196,4 +196,5 @@ std::ostream &operator<<(std::ostream &stream, PyObject *object);
 
 
 #include "utility/python_utility.tpp"
-#include "utility/python_utility_convert.tpp"
+#include "utility/python_utility_convert_scalar.tpp"
+#include "utility/python_utility_convert_lists.tpp"

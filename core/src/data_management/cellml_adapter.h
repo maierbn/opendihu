@@ -3,7 +3,8 @@
 #include <Python.h>  // has to be the first included header
 
 #include "data_management/output_connector_data.h"
-#include "control/python_config.h"
+#include "control/python_config/python_config.h"
+#include "data_management/data.h"
 
 namespace Data
 {
@@ -36,8 +37,17 @@ public:
   //! give the names of all intermediates, will be called before initialize()
   void setIntermediateNames(const std::vector<std::string> &intermediateNames);
 
-  //! return references to statesForTransfer_ and intermediatesForTransfer_
-  void getStatesIntermediatesForTransfer(std::vector<int> &statesForTransfer, std::vector<int> &intermediatesForTransfer);
+  //! return a reference to the parameters vector
+  std::shared_ptr<std::vector<double>> parameters();
+
+  //! return a reference to statesForTransfer_
+  std::vector<int> &statesForTransfer();
+
+  //! return a reference intermediatesForTransfer_
+  std::vector<int> &intermediatesForTransfer();
+
+  //! return a reference parametersForTransfer_
+  std::vector<int> &parametersForTransfer();
 
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
   //! the transfer is done by the output_connector_data_transfer class
@@ -63,6 +73,7 @@ private:
 
   std::shared_ptr<FieldVariableIntermediates> intermediates_;   //< intermediates field variable
   std::shared_ptr<FieldVariableStates> states_;                 //< states field variable, this is a shared pointer with the timestepping scheme, which own the actual variable (creates it)
+  std::shared_ptr<std::vector<double>> parameters_;             //< parameter values
   std::vector<std::string> intermediateNames_;                  //< component names of the intermediates field variable
 
   std::shared_ptr<OutputConnectorDataType> outputConnectorData_;//< the object that holds all components of field variables that will be transferred to other solvers
@@ -70,6 +81,7 @@ private:
 
   std::vector<int> statesForTransfer_;                          //< state no.s to transfer to other solvers within output connector data
   std::vector<int> intermediatesForTransfer_;                   //< intermediate no.s to transfer to other solvers within output connector data
+  std::vector<int> parametersForTransfer_;                      //< parameter no.s to transfer to other solvers within output connector data
 
 };
 

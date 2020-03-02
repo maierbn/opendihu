@@ -38,10 +38,10 @@ setStiffnessMatrix()
   std::shared_ptr<FunctionSpaceType> functionSpace = std::static_pointer_cast<FunctionSpaceType>(this->data_.functionSpace());
   element_no_t nElements = functionSpace->nElementsLocal();
   node_no_t nNodes0 = functionSpace->nNodesLocalWithGhosts(0);
-  double elementLength = functionSpace->meshWidth();
+  const double elementLength = functionSpace->meshWidth();
 
   double integralFactor = 1./elementLength;
-  double prefactor = this->specificSettings_.getOptionDouble("prefactor", 1.0);
+  const double prefactor = this->prefactor_.value(0);  // prefactor value is constant over the domain
 
   integralFactor = prefactor*integralFactor;
 
@@ -126,7 +126,7 @@ setStiffnessMatrix()
   }
 
   double integralFactor = 1.;
-  double prefactor = this->specificSettings_.getOptionDouble("prefactor", 1.0);
+  const double prefactor = this->prefactor_.value(0);  // prefactor value is constant over the domain
 
   integralFactor = prefactor*integralFactor;
 
@@ -348,7 +348,7 @@ setStiffnessMatrix()
   }
 
   double integralFactor = elementLength0;
-  double prefactor = this->specificSettings_.getOptionDouble("prefactor", 1.0);
+  const double prefactor = this->prefactor_.value(0);  // prefactor value is constant over the domain
 
   integralFactor = prefactor*integralFactor;
 

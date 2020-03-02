@@ -2,14 +2,154 @@
 
 #include <iterator>
 
+#include "easylogging++.h"
+#include "utility/string_utility.h"
+#include "utility/vector_operators.h"
 
 namespace Partition
 {
+
+const double nodePositionEqualTolerance = 1e-5;
 
 template<int D, typename BasisFunctionType>
 MeshPartition<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,Mesh::CompositeOfDimension<D>>::
 MeshPartition(const std::vector<std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>> &subFunctionSpaces, std::shared_ptr<RankSubset> rankSubset) :
   MeshPartitionBase(rankSubset), subFunctionSpaces_(subFunctionSpaces)
+{
+  // initialize number of local and global elements
+  initializeElementNumbers();
+
+  // determine nodes that are the same on multiple meshes
+  initializeSharedNodes();
+
+  // initialize nNodesSharedLocal_, nGhostNodesSharedLocal_, nRemovedNodesNonGhost_, nNodesLocalWithoutGhosts_, nNonDuplicateNodesWithoutGhosts_, nNodesGlobal_, nonDuplicateNodeNoGlobalBegin_
+  initializeNodeNumbers();
+
+  // initialize numberings with ghost nos
+  initializeGhostNodeNos();
+
+  // create the dof vectors
+  createLocalDofOrderings();
+
+  // print warning if composite mesh does not overlap
+  for (int subMeshNo = 1; subMeshNo < nSubMeshes_; subMeshNo++)
+  {
+    if (removedSharedNodes_[subMeshNo].empty())
+    {
+      LOG(ERROR) << "In composite mesh: sub mesh " << subMeshNo << " \"" << subFunctionSpaces_[subMeshNo]->meshName()
+        << "\" (" << subFunctionSpaces_[subMeshNo]->nNodesGlobal() << " global nodes) does not overlap with any other sub mesh. "
+        << "This was probably not intended.";
+    }
+  }
+
+  // checking
+#ifndef NDEBUG
+
+  for (int subMeshNo = 1; subMeshNo < nSubMeshes_; subMeshNo++)
+  {
+    LOG(DEBUG) << "sub mesh " << subMeshNo << " \"" << subFunctionSpaces_[subMeshNo]->meshName()
+      << "\" (" << subFunctionSpaces_[subMeshNo]->nNodesGlobal() << " global nodes) shares " << removedSharedNodes_[subMeshNo].size() << " nodes";
+  }
+
+  // iterate over meshes
+  for (int subMeshNo = 0; subMeshNo < nSubMeshes_; subMeshNo++)
+  {
+    // removedSharedNodes_[meshNo][nodeNo] = <sameAsInMeshNo,nodeNoOfThatMesh>
+    std::map<node_no_t,std::pair<int,node_no_t>> &sharedNodesInMesh = removedSharedNodes_[subMeshNo];
+
+    // iterate over nodes of this mesh that have an equal node in other meshes
+    for (std::map<node_no_t,std::pair<int,node_no_t>>::iterator iter2 = sharedNodesInMesh.begin(); iter2 != sharedNodesInMesh.end(); iter2++)
+    {
+      node_no_t sharedNodeNo = iter2->first;
+
+      // if node is non-ghost
+      if (sharedNodeNo < subFunctionSpaces_[subMeshNo]->nNodesLocalWithoutGhosts())
+      {
+        // check if node positions equal
+
+        int subMeshNo1 = subMeshNo;
+        int subMeshNo2 = iter2->second.first;
+        int sharedNodeNoOnMesh1 = sharedNodeNo;
+        int sharedNodeNoOnMesh2 = iter2->second.second;
+
+        const int nDofsPerNode = FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::nDofsPerNode();
+        Vec3 position0 = subFunctionSpaces_[subMeshNo1]->geometryField().getValue(sharedNodeNoOnMesh1*nDofsPerNode);
+        Vec3 position1 = subFunctionSpaces_[subMeshNo2]->geometryField().getValue(sharedNodeNoOnMesh2*nDofsPerNode);
+        double distance = MathUtility::distance<3>(position0, position1);
+
+        bool nodeIsSharedAndRemovedInCurrentMesh;
+        node_no_t nodeNoLocal1 = getNodeNoLocalFromSubmesh(subMeshNo1, sharedNodeNoOnMesh1, nodeIsSharedAndRemovedInCurrentMesh);
+        node_no_t nodeNoLocal2 = getNodeNoLocalFromSubmesh(subMeshNo2, sharedNodeNoOnMesh2, nodeIsSharedAndRemovedInCurrentMesh);
+
+        VLOG(1) << "[meshNo " << subMeshNo1 << ", nodeNo on sub mesh: " << std::setw(3) << sharedNodeNoOnMesh1 << ", nodeNoLocal: " << nodeNoLocal1 << " (non-ghost)] " << position0
+          << " equals [meshNo " << subMeshNo2 << ", nodeNo on sub mesh: " << std::setw(3) << sharedNodeNoOnMesh2 << ", nodeNoLocal: " << nodeNoLocal2 << "] " << position1
+          << ", distance=" << distance;
+      }
+      else
+      {
+        VLOG(1) << "[meshNo " << subMeshNo << ", nodeNo " << sharedNodeNo << " (ghost)] equals [meshNo " << iter2->second.first << ", nodeNo " << iter2->second.second << "]";
+      }
+    }
+  }
+
+  int nRemovedNodesNonGhostTotal = 0;
+  for (int i = 0; i < nRemovedNodesNonGhost_.size(); i++)
+  {
+    nRemovedNodesNonGhostTotal += nRemovedNodesNonGhost_[i];
+  }
+  assert(nNodesSharedLocal_ == nRemovedNodesNonGhostTotal);
+
+  int nNodesLocal = 0;
+  for (int i = 0; i < nRemovedNodesNonGhost_.size(); i++)
+  {
+    nNodesLocal += nNonDuplicateNodesWithoutGhosts_[i];
+  }
+  assert(nNodesLocalWithoutGhosts_ == nNodesLocal);
+
+  // count number of ghost and non-ghost local dofs
+  int nNodesLocalWithGhosts = 0;
+  VLOG(1) << "meshAndNodeNoLocalToNodeNoNonDuplicateLocal: " << meshAndNodeNoLocalToNodeNoNonDuplicateLocal_;
+  for (const std::vector<node_no_t> &meshAndNodeNoNonDuplicateLocal : meshAndNodeNoLocalToNodeNoNonDuplicateLocal_)
+  {
+    for (const node_no_t nodeNoNonDuplicateLocal : meshAndNodeNoNonDuplicateLocal)
+    {
+      if (nodeNoNonDuplicateLocal != -1)
+      {
+        nNodesLocalWithGhosts++;
+      }
+    }
+  }
+  LOG(DEBUG) << "nNodesLocalWithGhosts: " << nNodesLocalWithGhosts << "=" << nNodesLocalWithGhosts_;
+  assert (nNodesLocalWithGhosts == nNodesLocalWithGhosts_);
+
+  // count number of ghost and non-ghost local dofs
+  nNodesLocalWithGhosts = 0;
+  for (const std::vector<node_no_t> &meshAndNodeNoNonDuplicateLocal : meshAndNodeNoLocalToNodeNoNonDuplicateGlobal_)
+  {
+    for (const node_no_t nodeNoNonDuplicateLocal : meshAndNodeNoNonDuplicateLocal)
+    {
+      if (nodeNoNonDuplicateLocal != -1)
+      {
+        nNodesLocalWithGhosts++;
+      }
+    }
+  }
+  assert (nNodesLocalWithGhosts == nNodesLocalWithGhosts_);
+
+
+
+  VLOG(2) << "getString: ";
+  VLOG(2) << getString();
+
+#endif
+
+  // output information to shared nodes
+  LOG(DEBUG) << getStringSharedNodesInformation();
+}
+
+template<int D, typename BasisFunctionType>
+void MeshPartition<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,Mesh::CompositeOfDimension<D>>::
+initializeElementNumbers()
 {
   nSubMeshes_ = this->subFunctionSpaces_.size();
 
@@ -33,17 +173,18 @@ MeshPartition(const std::vector<std::shared_ptr<FunctionSpace::FunctionSpace<Mes
 
   LOG(DEBUG) << "total elements local: " << this->nElementsLocal_ << ", global: " << this->nElementsGlobal_
     << ", elementNoGlobalBegin_: " << elementNoGlobalBegin_;
+}
 
-
-  // determine nodes that are the same on multiple meshes
-  initializeSharedNodes();
-
+template<int D, typename BasisFunctionType>
+void MeshPartition<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,Mesh::CompositeOfDimension<D>>::
+initializeNodeNumbers()
+{
   assert(removedSharedNodes_.size() == nSubMeshes_);
 
   // count number of shared local nodes, without ghosts and with ghosts
   nNodesSharedLocal_ = 0;
   nGhostNodesSharedLocal_ = 0;
-  removedSharedNodes_.resize(nSubMeshes_);
+  nRemovedNodesNonGhost_.resize(nSubMeshes_);
 
   // iterate over meshes
   for (int meshIndex = 0; meshIndex < nSubMeshes_; meshIndex++)
@@ -61,8 +202,6 @@ MeshPartition(const std::vector<std::shared_ptr<FunctionSpace::FunctionSpace<Mes
       // if node is non-ghost
       if (sharedNodeNo < subFunctionSpaces_[meshIndex]->nNodesLocalWithoutGhosts())
       {
-        LOG(DEBUG) << "[meshNo " << meshIndex << ", nodeNo " << sharedNodeNo << "] equals [meshNo " << iter2->second.first << ", nodeNo " << iter2->second.second << "], remove";
-
         nRemovedNodesNonGhost_[meshIndex]++;
         nNodesSharedLocal_++;
       }
@@ -73,59 +212,348 @@ MeshPartition(const std::vector<std::shared_ptr<FunctionSpace::FunctionSpace<Mes
     }
   }
 
-  initializeGhostNodeNos();
+  LOG(DEBUG) << "nRemovedNodesNonGhost_: " << nRemovedNodesNonGhost_;
+  LOG(DEBUG) << "nNodesSharedLocal_: " << nNodesSharedLocal_ << ", nGhostNodesSharedLocal_: " << nGhostNodesSharedLocal_;
 
-  createLocalDofOrderings();
-  // initialize
 
-  // checking
-#ifndef NDEBUG
+  // determine the local number of non-duplicate nodes for all meshes together
+  nNodesLocalWithoutGhosts_ = 0;
+  nNonDuplicateNodesWithoutGhosts_.resize(nSubMeshes_);
 
-  int nRemovedNodesNonGhostTotal = 0;
-  for (int i = 0; i < nRemovedNodesNonGhost_.size(); i++)
+  // loop over submeshes
+  for (int subMeshNo = 0; subMeshNo < nSubMeshes_; subMeshNo++)
   {
-    nRemovedNodesNonGhostTotal += nRemovedNodesNonGhost_[i];
+    int nDuplicateNodes = nRemovedNodesNonGhost_[subMeshNo];
+    int nNodesLocalWithoutGhosts = subFunctionSpaces_[subMeshNo]->nNodesLocalWithoutGhosts();
+    nNonDuplicateNodesWithoutGhosts_[subMeshNo] = nNodesLocalWithoutGhosts - nDuplicateNodes;
+    nNodesLocalWithoutGhosts_ += nNonDuplicateNodesWithoutGhosts_[subMeshNo];
   }
-  assert(nNodesSharedLocal_ == nRemovedNodesNonGhostTotal);
 
-  int nNodesLocal = 0;
-  for (int i = 0; i < nRemovedNodesNonGhost_.size(); i++)
-  {
-    nNodesLocal += nNonDuplicateNodesWithoutGhosts_[i];
-  }
-  assert(nNodesLocalWithoutGhosts_ == nNodesLocal);
+  // determine global number of duplicate-free nodes over all submeshes
+  nNodesGlobal_ = 0;
+  global_no_t nNodesLocalValue = nNodesLocalWithoutGhosts_;
+  MPIUtility::handleReturnValue(MPI_Allreduce(&nNodesLocalValue, &nNodesGlobal_, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, this->mpiCommunicator()), "MPI_Allreduce");
 
-  // count number of ghost and non-ghost local dofs
-  int nNodesLocalWithGhosts = 0;
-  for (const std::vector<node_no_t> &meshAndNodeNoNonDuplicateLocal : meshAndNodeNoLocalToNodeNoNonDuplicateLocal_)
+  // get number of duplicate-free nodes on previous ranks
+  nonDuplicateNodeNoGlobalBegin_ = 0;
+  MPIUtility::handleReturnValue(MPI_Exscan(&nNodesLocalValue, &nonDuplicateNodeNoGlobalBegin_, 1, MPI_INT, MPI_SUM, this->mpiCommunicator()), "MPI_Exscan");
+
+}
+
+template<int D, typename BasisFunctionType>
+void MeshPartition<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,Mesh::CompositeOfDimension<D>>::
+checkIfSharedNodesAreOnSameSubdomain()
+{
+  LOG(DEBUG) << "checkIfSharedNodesAreOnSameSubdomain";
+
+  // this method needs nNodesLocalWithoutGhosts_, nonDuplicateNodeNoGlobalBegin_, nNonDuplicateNodesWithoutGhosts_, isDuplicate_
+
+  LOG(DEBUG) << "nNodesLocalWithoutGhosts_: " << nNodesLocalWithoutGhosts_ << ", nonDuplicateNodeNoGlobalBegin_: " << nonDuplicateNodeNoGlobalBegin_
+  << ", nNonDuplicateNodesWithoutGhosts_: " << nNonDuplicateNodesWithoutGhosts_;
+
+
+  const int nDofsPerNode = FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::nDofsPerNode();
+  int nRanks = this->nRanks();
+  int ownRankNo = this->ownRankNo();
+
+  // get all local node positions in localMemory
+  std::vector<double> localMemory;
+  localMemory.reserve(nNodesLocalWithoutGhosts_*3);
+
+  // loop over sub meshes
+  for (int subMeshNo = 0; subMeshNo < nSubMeshes_; subMeshNo++)
   {
-    for (const node_no_t nodeNoNonDuplicateLocal : meshAndNodeNoNonDuplicateLocal)
+    std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>> subFunctionSpace = subFunctionSpaces_[subMeshNo];
+
+    // loop over non-removed nodes on the submesh and add all node positions
+    for (node_no_t nodeNoLocal = 0; nodeNoLocal < subFunctionSpace->nNodesLocalWithoutGhosts(); nodeNoLocal++)
     {
-      if (nodeNoNonDuplicateLocal != -1)
+      if (!isDuplicate_[subMeshNo][nodeNoLocal])
       {
-        nNodesLocalWithGhosts++;
+        Vec3 nodePosition = subFunctionSpace->getGeometry(nodeNoLocal*nDofsPerNode + 0);
+        localMemory.push_back(nodePosition[0]);
+        localMemory.push_back(nodePosition[1]);
+        localMemory.push_back(nodePosition[2]);
       }
     }
   }
-  assert (nNodesLocalWithGhosts == nNodesLocalWithGhosts_);
+  assert (localMemory.size() == nNodesLocalWithoutGhosts_*3);
 
-  // count number of ghost and non-ghost local dofs
-  nNodesLocalWithGhosts = 0;
-  for (const std::vector<node_no_t> &meshAndNodeNoNonDuplicateLocal : meshAndNodeNoLocalToNodeNoNonDuplicateGlobal_)
+  for (node_no_t nodeNoLocal = 0; nodeNoLocal < nNodesLocalWithoutGhosts_; nodeNoLocal++)
   {
-    for (const node_no_t nodeNoNonDuplicateLocal : meshAndNodeNoNonDuplicateLocal)
+    VLOG(3) << "nodeNoLocal: " << nodeNoLocal << ", position: (" << localMemory[3*nodeNoLocal + 0] << "," << localMemory[3*nodeNoLocal + 1] << "," << localMemory[3*nodeNoLocal + 2] << ")";
+  }
+
+  std::vector<double> remoteAccessibleMemory(nNodesGlobal_*3, 0);
+  // put local node positions to remote memory of rank 0
+  if (ownRankNo == 0)
+  {
+    std::copy(localMemory.begin(),localMemory.end(),remoteAccessibleMemory.begin());
+  }
+
+  // create remote accessible memory
+  int nBytes = nNodesGlobal_*3 * sizeof(double);
+  int displacementUnit = sizeof(double);
+  MPI_Win mpiMemoryWindow;
+
+  // on other ranks than rank 0, do not expose memory
+  if (ownRankNo != 0)
+  {
+    nBytes = 0;
+  }
+
+  VLOG(2) << "rank " << ownRankNo << ", create window";
+  MPIUtility::handleReturnValue(MPI_Win_create((void *)remoteAccessibleMemory.data(), nBytes, displacementUnit, MPI_INFO_NULL, this->mpiCommunicator(), &mpiMemoryWindow), "MPI_Win_create");
+
+  if (ownRankNo != 0)
+  {
+    const int foreignRankNo = 0;
+    int offset = nonDuplicateNodeNoGlobalBegin_*3;
+
+    VLOG(2) << "MPI_Win_lock on rank " << foreignRankNo;
+
+    // start passive target communication (see http://www.mcs.anl.gov/research/projects/mpi/mpi-standard/mpi-report-2.0/node126.htm for introduction)
+    MPIUtility::handleReturnValue(MPI_Win_lock(MPI_LOCK_SHARED, foreignRankNo, 0, mpiMemoryWindow), "MPI_Win_lock");
+
+    MPIUtility::handleReturnValue(MPI_Put(localMemory.data(), nNodesLocalWithoutGhosts_*3, MPI_DOUBLE, foreignRankNo, offset, nNodesLocalWithoutGhosts_*3, MPI_DOUBLE, mpiMemoryWindow), "MPI_Put");
+
+    MPIUtility::handleReturnValue(MPI_Win_unlock(foreignRankNo, mpiMemoryWindow), "MPI_Win_unlock");
+  }
+
+  MPIUtility::handleReturnValue(MPI_Win_fence(MPI_MODE_NOSUCCEED, mpiMemoryWindow), "MPI_Win_fence");
+
+  // gather what number of local nodes all ranks have
+  std::vector<int> nNodesOnRanks(nRanks);
+  nNodesOnRanks[ownRankNo] = this->nNodesLocalWithoutGhosts_;
+
+  MPIUtility::handleReturnValue(MPI_Allgather(MPI_IN_PLACE, 0, MPI_DATATYPE_NULL, nNodesOnRanks.data(),
+                                              1, MPI_INT, this->mpiCommunicator()), "MPI_Allgather");
+
+  std::vector<int> nodesOnRanksBegin(nRanks);
+
+  nodesOnRanksBegin[0] = 0;
+  for (int rankNo = 1; rankNo < nRanks; rankNo++)
+  {
+    nodesOnRanksBegin[rankNo] = nodesOnRanksBegin[rankNo-1] + nNodesOnRanks[rankNo-1];
+  }
+
+  LOG(DEBUG) << "nNodesOnRanks: " << nNodesOnRanks << ", nodesOnRanksBegin: " << nodesOnRanksBegin;
+
+  // on rank 0 read all node positions and do check
+  if (ownRankNo == 0)
+  {
+
+    // output remoteAccessibleMemory
+    for (global_no_t nodeNoGlobal = 0; nodeNoGlobal < nNodesGlobal_; nodeNoGlobal++)
     {
-      if (nodeNoNonDuplicateLocal != -1)
+      VLOG(1) << "nodeNoGlobal: " << nodeNoGlobal << ", position: (" << remoteAccessibleMemory[3*nodeNoGlobal + 0] << "," << remoteAccessibleMemory[3*nodeNoGlobal + 1] << "," << remoteAccessibleMemory[3*nodeNoGlobal + 2] << ")";
+    }
+
+    // parse own memory what other ranks have written there and do check
+
+    bool partitioningInvalid = false;
+    std::stringstream message;
+
+    // loop over ranks
+    for (int rankNo1 = 0; rankNo1 < nRanks; rankNo1++)
+    {
+      // loop over other ranks
+      for (int rankNo2 = rankNo1+1; rankNo2 < nRanks; rankNo2++)
       {
-        nNodesLocalWithGhosts++;
+        // check if there are node positions on rankNo that are also on rankNo2
+        // loop over node positions on rankNo
+        for (node_no_t nodeNoLocalRank1 = 0; nodeNoLocalRank1 < nNodesOnRanks[rankNo1]; nodeNoLocalRank1++)
+        {
+          global_no_t globalNo1 = nodesOnRanksBegin[rankNo1] + nodeNoLocalRank1;
+          Vec3 nodePositionRank1;
+          for (int i = 0; i < 3; i++)
+            nodePositionRank1[i] = remoteAccessibleMemory[3*globalNo1 + i];
+
+          // loop over node positions on rankNo2
+          for (node_no_t nodeNoLocalRank2 = 0; nodeNoLocalRank2 < nNodesOnRanks[rankNo2]; nodeNoLocalRank2++)
+          {
+            global_no_t globalNo2 = nodesOnRanksBegin[rankNo2] + nodeNoLocalRank2;
+            Vec3 nodePositionRank2;
+            for (int i = 0; i < 3; i++)
+              nodePositionRank2[i] = remoteAccessibleMemory[3*globalNo2 + i];
+
+            double distance = MathUtility::distance<3>(nodePositionRank1, nodePositionRank2);
+            if (distance <= nodePositionEqualTolerance)
+            {
+              int subMeshNo1 = -1;
+              int subMeshNo2 = -1;
+              node_no_t nodeOnMeshNoLocal1 = -1;
+              node_no_t nodeOnMeshNoLocal2 = -1;
+              getSubMeshNoAndNodeNoLocal(nodeNoLocalRank1, subMeshNo1, nodeOnMeshNoLocal1);
+              getSubMeshNoAndNodeNoLocal(nodeNoLocalRank2, subMeshNo2, nodeOnMeshNoLocal2);
+
+              std::string subMeshName1 = "1";
+              std::string subMeshName2 = "2";
+              std::array<global_no_t,D> coordinate1, total1;
+              std::array<global_no_t,D> coordinate2, total2;
+              std::string coordinateString1;
+              std::string coordinateString2;
+              if (subMeshNo1 >= 0 && subMeshNo1 < subFunctionSpaces_.size())
+              {
+                subMeshName1 = subFunctionSpaces_[subMeshNo1]->meshName();
+                coordinate1 = subFunctionSpaces_[subMeshNo1]->meshPartition()->getCoordinatesGlobal(nodeNoLocalRank1);
+                total1[0] = subFunctionSpaces_[subMeshNo1]->meshPartition()->nNodesGlobal(0);
+                if (D >= 2)
+                  total1[1] = subFunctionSpaces_[subMeshNo1]->meshPartition()->nNodesGlobal(1);
+                if (D == 3)
+                  total1[2] = subFunctionSpaces_[subMeshNo1]->meshPartition()->nNodesGlobal(2);
+
+                std::stringstream coordinateStream;
+                coordinateStream << "coordinates (";
+                for (int i = 0; i < D; i++)
+                {
+                  if (i != 0)
+                    coordinateStream << ",";
+                  coordinateStream << coordinate1[i];
+                }
+
+                coordinateStream << ") of (";
+                for (int i = 0; i < D; i++)
+                {
+                  if (i != 0)
+                    coordinateStream << ",";
+                  coordinateStream << total1[i];
+                }
+                coordinateStream << ")";
+                coordinateString1 = coordinateStream.str();
+              }
+              if (subMeshNo2 >= 0 && subMeshNo2 < subFunctionSpaces_.size())
+              {
+                subMeshName2 = subFunctionSpaces_[subMeshNo2]->meshName();
+                coordinate2 = subFunctionSpaces_[subMeshNo2]->meshPartition()->getCoordinatesGlobal(nodeNoLocalRank2);
+                total2[0] = subFunctionSpaces_[subMeshNo2]->meshPartition()->nNodesGlobal(0);
+                if (D >= 2)
+                  total2[1] = subFunctionSpaces_[subMeshNo2]->meshPartition()->nNodesGlobal(1);
+                if (D == 3)
+                  total2[2] = subFunctionSpaces_[subMeshNo2]->meshPartition()->nNodesGlobal(2);
+
+                std::stringstream coordinateStream;
+                coordinateStream << "coordinates (";
+                for (int i = 0; i < D; i++)
+                {
+                  if (i != 0)
+                    coordinateStream << ",";
+                  coordinateStream << coordinate2[i];
+                }
+
+                coordinateStream << ") of (";
+                for (int i = 0; i < D; i++)
+                {
+                  if (i != 0)
+                    coordinateStream << ",";
+                  coordinateStream << total2[i];
+                }
+                coordinateStream << ")";
+                coordinateString2 = coordinateStream.str();
+              }
+
+
+              partitioningInvalid = true;
+              message << "  Node on rank " << rankNo1 << " with global no " << globalNo1 << ", local no " << nodeNoLocalRank1
+                << " (local no " << nodeOnMeshNoLocal1 << " on sub mesh " << subMeshNo1 << " \"" << subMeshName1 << "\", "
+                << coordinateString1
+                << ") has node position (" << nodePositionRank1[0] << "," << nodePositionRank1[1] << "," << nodePositionRank1[2] << ")\n";
+              message << "  Node on rank " << rankNo2 << " with global no " << globalNo2 << ", local no " << nodeNoLocalRank2;
+              if (nodeOnMeshNoLocal2 != -1 && subMeshNo2 != -1)
+                message << " (local no " << nodeOnMeshNoLocal2 << " on sub mesh " << subMeshNo2 << " \"" << subMeshName2 << "\", "
+                  << coordinateString2;
+              message << " has node position (" << nodePositionRank2[0] << "," << nodePositionRank2[1] << "," << nodePositionRank2[2] << ")\n";
+              message << "  The distance between these nodes (" << distance << ") is <= the tolerance (" << nodePositionEqualTolerance << "), the node positions are therefore equal.\n\n";
+            }
+          }
+        }
       }
     }
+
+    if (partitioningInvalid)
+    {
+      LOG(ERROR) << "The composite mesh has nodes that should be shared between sub meshes but they are on different ranks. Therefore they cannot be shared and are two distinct nodes. "
+        << "This will cause problems, e.g., when assembling the stiffness matrix. It means you specified a wrong domain decomposition in the settings.\n"
+        << "The following pairs of shared nodes were found:\n\n"
+        << message.str();
+    }
+    else
+    {
+      std::stringstream subMeshNames;
+      // loop over sub meshes
+      for (int subMeshNo = 0; subMeshNo < nSubMeshes_; subMeshNo++)
+      {
+        std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>> subFunctionSpace = subFunctionSpaces_[subMeshNo];
+
+        if (subMeshNo != 0)
+          subMeshNames << ", ";
+        subMeshNames << "\"" << subFunctionSpace->meshName() << "\"";
+      }
+      LOG(DEBUG) << "The partitioning of sub meshes " << subMeshNames.str() << " was checked and it is valid. "
+        << " There are no distinct nodes on different ranks that have the same position and all shared nodes are on the same rank.";
+    }
   }
-  assert (nNodesLocalWithGhosts == nNodesLocalWithGhosts_);
+}
 
+template<int D, typename BasisFunctionType>
+std::string MeshPartition<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,Mesh::CompositeOfDimension<D>>::
+getStringSharedNodesInformation()
+{
 
-#endif
+  std::stringstream subMeshNames;
+  std::vector<std::string> subMeshName(nSubMeshes_);
 
+  // store mesh names of all sub meshes
+  // loop over sub meshes
+  for (int subMeshNo = 0; subMeshNo < nSubMeshes_; subMeshNo++)
+  {
+    std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>> subFunctionSpace = subFunctionSpaces_[subMeshNo];
+
+    if (subMeshNo != 0)
+      subMeshNames << ", ";
+    subMeshName[subMeshNo] = subFunctionSpace->meshName();
+    subMeshNames << "\"" << subFunctionSpace->meshName() << "\"";
+  }
+
+  // determine the number of local shared nodes with each other sub mesh
+  std::stringstream s;
+  int meshNo = 0;
+  for (std::map<node_no_t,std::pair<int,node_no_t>> removedSharedNodes : removedSharedNodes_)
+  {
+    // determine the number of shared nodes with all other sub meshes, fill variable nSharedNodesOnMesh
+
+    std::map<int,int> nSharedNodesOnMesh;   // [otherMeshNo,nsharedNodesWithThatMesh]
+    for (std::map<node_no_t,std::pair<int,node_no_t>>::iterator iter = removedSharedNodes.begin(); iter != removedSharedNodes.end(); iter++)
+    {
+      int otherMeshNo = iter->second.first;
+
+      if (nSharedNodesOnMesh.find(otherMeshNo) == nSharedNodesOnMesh.end())
+      {
+        nSharedNodesOnMesh[otherMeshNo] = 1;
+      }
+      else
+      {
+        nSharedNodesOnMesh[otherMeshNo]++;
+      }
+    }
+
+    if (!nSharedNodesOnMesh.empty())
+    {
+      s << "  Sub mesh " << meshNo << " \"" << subMeshName[meshNo] << "\" shares ";
+    }
+
+    // compose message from nSharedNodesOnMesh
+    for (std::map<int,int>::iterator iter = nSharedNodesOnMesh.begin(); iter != nSharedNodesOnMesh.end(); iter++)
+    {
+      s << iter->second << " nodes with sub mesh " << iter->first << " \"" << subMeshName[iter->first] << "\", ";
+    }
+    s << "\n";
+    meshNo++;
+  }
+
+  std::stringstream result;
+  result << "The partitioning of sub meshes " << subMeshNames.str() << " locally shares the following number of nodes.\n" << s.str();
+  return result.str();
 }
 
 template<int D, typename BasisFunctionType>
@@ -157,7 +585,7 @@ initializeSharedNodes()
       return a.first[0] < b.first[0];
     });
 
-    LOG(DEBUG) << "nodePositionsNodes of subFunctionSpace " << i << ": " << nodePositionsNodes[i];
+    VLOG(2) << "nodePositionsNodes of subFunctionSpace " << i << ", sorted by x: " << nodePositionsNodes[i];
     i++;
   }
 
@@ -165,81 +593,89 @@ initializeSharedNodes()
   // std::vector<std::map<node_no_t,std::pair<int,node_no_t>>>
 
   // iterate over submeshes
-  const double nodePositionEqualTolerance = 1e-3;
   i = 0;
   for(typename std::vector<std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>>::const_iterator iter = subFunctionSpaces_.cbegin();
       iter != subFunctionSpaces_.cend(); iter++, i++)
   {
     // find shared nodes in all next meshes
 
-    LOG(DEBUG) << "find shared nodes in subFunctionSpace " << i;
+    VLOG(2) << "find nodes of subFunctionSpace " << i << " that are the same in further meshes " << i+1 << " to " << subFunctionSpaces_.size()-1;
 
-    // loop over node positions of this mesh
-    for (node_no_t nodeNoLocal = 0; nodeNoLocal < nodePositions[i].size(); nodeNoLocal++)
+    if (i+1 < nSubMeshes_)
     {
-      Vec3 position = nodePositions[i][nodeNoLocal];
-      LOG(DEBUG) << "nodeNo " << nodeNoLocal << " at x=" << position[0];
-
-      // iterate over further submeshes
-      for(int indexOtherMesh = i; indexOtherMesh < nSubMeshes_; indexOtherMesh++)
+      // loop over node positions of this mesh
+      for (node_no_t nodeNoLocal = 0; nodeNoLocal < nodePositions[i].size(); nodeNoLocal++)
       {
-        // find node that has closest x coordinate
+        Vec3 position = nodePositions[i][nodeNoLocal];
+        VLOG(2) << "nodeNo " << nodeNoLocal << ", position " << position << " at x=" << position[0];
 
-        // get node with last x coordinate that is lower by more than tolerance
-        int k = nodePositionsNodes[indexOtherMesh].size() / 2;
-        int kPrevious = -1;
-        int lower = 0;
-        int upper = nodePositionsNodes[indexOtherMesh].size();
-
-        while (k != kPrevious)
+        // iterate over further submeshes
+        for(int indexOtherMesh = i+1; indexOtherMesh < nSubMeshes_; indexOtherMesh++)
         {
-          Vec3 currentNodePosition = nodePositionsNodes[indexOtherMesh][k].first;
-          if (currentNodePosition[0] < position[0]-nodePositionEqualTolerance)
-          {
-            lower = k;
-          }
-          else
-          {
-            upper = k;
-          }
-          k = (upper + lower) / 2;
+          // find node that has closest x coordinate
+          VLOG(2) << "  otherMesh " << indexOtherMesh << ", find node that has the closest x coordinate to " << position[0];
+          VLOG(2) << "  get last node with x coordinate that is lower than " << position[0] << " by more than tolerance " << nodePositionEqualTolerance;
 
-          LOG(DEBUG) << "  [" << lower << "," << upper << "] x:" << currentNodePosition[0];
-        }
+          // get last node with x coordinate that is lower by more than tolerance
+          int k = nodePositionsNodes[indexOtherMesh].size() / 2;
+          int kPrevious = -1;
+          int lower = 0;
+          int upper = nodePositionsNodes[indexOtherMesh].size();
 
-        // check all node positions
-        for (;k < nodePositionsNodes[indexOtherMesh].size(); k++)
-        {
-          Vec3 nodePositionOtherMesh = nodePositionsNodes[indexOtherMesh][k].first;
-          node_no_t nodeNoLocalOtherMesh = nodePositionsNodes[indexOtherMesh][k].second;
-
-          if (nodePositionOtherMesh[0] > position[0]+nodePositionEqualTolerance)
-          {
-            break;
-          }
-
-          double distance = MathUtility::distance<3>(position, nodePositionOtherMesh);
-          LOG(DEBUG) << "  k: " << k << ", distance: " << distance;
-
-          // if the other mesh node is at the same position as the first node
-          if (distance <= nodePositionEqualTolerance)
-          {
-            LOG(DEBUG) << "   node is shared.";
-            node_no_t nodeNoOtherMesh = k;
-            if (removedSharedNodes_[indexOtherMesh].find(nodeNoOtherMesh) != removedSharedNodes_[indexOtherMesh].end())
+          if (upper > 0)
+            while (k != kPrevious)
             {
-              LOG(DEBUG) << "   node is not yet included in removedSharedNodes_, add (indexOtherMesh,nodeNoLocalOtherMesh) = ("
-                << indexOtherMesh << "," << nodeNoLocalOtherMesh << ")";
-              removedSharedNodes_[indexOtherMesh][nodeNoOtherMesh] = std::make_pair(indexOtherMesh, nodeNoLocalOtherMesh);
+              Vec3 currentNodePosition = nodePositionsNodes[indexOtherMesh][k].first;
+              if (currentNodePosition[0] < position[0]-nodePositionEqualTolerance)
+              {
+                lower = k;
+              }
+              else
+              {
+                upper = k;
+              }
+              kPrevious = k;
+              k = (upper + lower) / 2;
+
+              VLOG(2) << "  range [" << lower << "," << upper << "] k:" << k << ", x:" << currentNodePosition[0];
             }
-            break;
+          VLOG(2) << "  now check all node positions of otherMesh " << indexOtherMesh << " that have x=" << position[0] << " within tolerance";
+
+          // check all node positions after k
+          for (;k < nodePositionsNodes[indexOtherMesh].size(); k++)
+          {
+            Vec3 nodePositionOtherMesh = nodePositionsNodes[indexOtherMesh][k].first;
+            node_no_t nodeNoLocalOtherMesh = nodePositionsNodes[indexOtherMesh][k].second;
+
+            if (nodePositionOtherMesh[0] > position[0]+nodePositionEqualTolerance)
+            {
+              VLOG(2) << "  node k: " << k << ", nodeNo: " << nodeNoLocalOtherMesh << ", position: " << nodePositionOtherMesh
+                << " is over " << position[0]+nodePositionEqualTolerance << " -> break";
+              break;
+            }
+
+            double distance = MathUtility::distance<3>(position, nodePositionOtherMesh);
+            VLOG(2) << "  node k: " << k << ", nodeNo: " << nodeNoLocalOtherMesh << ", position: " << nodePositionOtherMesh << ", distance: " << distance;
+
+            // if the other mesh node is at the same position as the first node
+            if (distance <= nodePositionEqualTolerance)
+            {
+              VLOG(2) << "   node is shared.";
+              if (removedSharedNodes_[indexOtherMesh].find(nodeNoLocalOtherMesh) == removedSharedNodes_[indexOtherMesh].end())
+              {
+                VLOG(2) << "   node is not yet included in removedSharedNodes_, set (indexOtherMesh,nodeNoLocalOtherMesh) = ("
+                  << i << "," << nodeNoLocal << ") at [" << indexOtherMesh << "][" << nodeNoLocalOtherMesh << "]";
+                removedSharedNodes_[indexOtherMesh][nodeNoLocalOtherMesh] = std::make_pair(i, nodeNoLocal);
+              }
+              break;
+            }
           }
         }
       }
     }
   }
 
-  LOG(DEBUG) << "removedSharedNodes_: " << removedSharedNodes_;
+  VLOG(1) << "removedSharedNodes_: " << removedSharedNodes_;
 }
 
 template<int D, typename BasisFunctionType>
@@ -249,28 +685,13 @@ initializeGhostNodeNos()
   // input values that have to be set before this initialize() method:
   // nRemovedNodesNonGhost_
   // removedSharedNodes_
+  // nNodesLocalWithoutGhosts_
+  // nNonDuplicateNodesWithoutGhosts_
+  // nNodesGlobal_
+  // nonDuplicateNodeNoGlobalBegin_
 
   // determine the local number of non-duplicate nodes for all meshes together
-  nNodesLocalWithoutGhosts_ = 0;
-  nNonDuplicateNodesWithoutGhosts_.resize(nSubMeshes_);
-
-  // loop over submeshes
-  for (int subMeshNo = 0; subMeshNo < nSubMeshes_; subMeshNo++)
-  {
-    int nDuplicateNodes = nRemovedNodesNonGhost_[subMeshNo];
-    int nNodesLocalWithoutGhosts = subFunctionSpaces_[subMeshNo]->nNodesLocalWithoutGhosts();
-    nNonDuplicateNodesWithoutGhosts_[subMeshNo] = nNodesLocalWithoutGhosts - nDuplicateNodes;
-    nNodesLocalWithoutGhosts_ += nNonDuplicateNodesWithoutGhosts_[subMeshNo];
-  }
-
-  // determine global number of duplicate-free nodes over all submeshes
-  nNodesGlobal_ = 0;
-  global_no_t nNodesLocalValue = nNodesLocalWithoutGhosts_;
-  MPIUtility::handleReturnValue(MPI_Allreduce(&nNodesLocalValue, &nNodesGlobal_, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, this->mpiCommunicator()), "MPI_Allreduce");
-
-  // get number of duplicate-free nodes on previous ranks
-  nonDuplicateNodeNoGlobalBegin_ = 0;
-  MPIUtility::handleReturnValue(MPI_Exscan(&nNodesLocalValue, &nonDuplicateNodeNoGlobalBegin_, 1, MPI_INT, MPI_SUM, this->mpiCommunicator()), "MPI_Exscan");
+  nNonDuplicateGhostNodes_.resize(nSubMeshes_);
 
   // setup duplicate-free numberings (local and global) for non-ghost nodes, also store isDuplicate_ for non-ghost nodes
   meshAndNodeNoLocalToNodeNoNonDuplicateGlobal_.resize(nSubMeshes_);
@@ -279,30 +700,36 @@ initializeGhostNodeNos()
 
   global_no_t nodeNoNonDuplicateGlobal = nonDuplicateNodeNoGlobalBegin_;
 
+  LOG(DEBUG) << "nNodesLocalWithoutGhosts: " << nNodesLocalWithoutGhosts_ << ", nNodesGlobal: " << nNodesGlobal_
+    << ", nonDuplicateNodeNoGlobalBegin_: " << nonDuplicateNodeNoGlobalBegin_;
+  LOG(DEBUG) << "now initialize numberings";
+
   // loop over submeshes
   for (int subMeshNo = 0; subMeshNo < nSubMeshes_; subMeshNo++)
   {
+    VLOG(1) << "subMeshNo " << subMeshNo;
+
     int nNodesLocalWithGhosts = subFunctionSpaces_[subMeshNo]->nNodesLocalWithGhosts();
     meshAndNodeNoLocalToNodeNoNonDuplicateGlobal_[subMeshNo].resize(nNodesLocalWithGhosts);
     meshAndNodeNoLocalToNodeNoNonDuplicateLocal_[subMeshNo].resize(nNodesLocalWithGhosts);
     isDuplicate_[subMeshNo].resize(nNodesLocalWithGhosts, false);
     nodeNoNonDuplicateLocalToMeshAndDuplicateLocal_.reserve(nNodesLocalWithoutGhosts_);   // will contain also the entries for ghost nodes
 
+    std::map<node_no_t,std::pair<int,node_no_t>>::iterator removedSharedNodesLocalNosIter = removedSharedNodes_[subMeshNo].begin();
+
     // loop over local nodes of current submesh
     for (node_no_t nodeNoLocal = 0; nodeNoLocal < subFunctionSpaces_[subMeshNo]->nNodesLocalWithoutGhosts(); nodeNoLocal++)
     {
-      VLOG(1) << "subMeshNo " << subMeshNo << " nodeǸoLocal " << nodeNoLocal;
-
-      std::map<node_no_t,std::pair<int,node_no_t>>::iterator removedSharedNodesLocalNosIter = removedSharedNodes_[subMeshNo].begin();
+      VLOG(2) << "subMeshNo " << subMeshNo << " nodeNoLocal " << nodeNoLocal;
 
       // if node is to be removed from the composite numbering
       if (removedSharedNodesLocalNosIter != removedSharedNodes_[subMeshNo].end())
       {
-        VLOG(1) << " next removed node: " << *removedSharedNodesLocalNosIter;
+        VLOG(2) << " next removed node: " << *removedSharedNodesLocalNosIter;
 
         if (removedSharedNodesLocalNosIter->first == nodeNoLocal)
         {
-          VLOG(1) << " -> is to be removed";
+          VLOG(2) << " -> is to be removed";
 
           // -1 indicates that this node is removed in the nonDuplicate numbering
           meshAndNodeNoLocalToNodeNoNonDuplicateGlobal_[subMeshNo][nodeNoLocal] = -1;
@@ -310,18 +737,25 @@ initializeGhostNodeNos()
           isDuplicate_[subMeshNo][nodeNoLocal] = true;
 
           removedSharedNodesLocalNosIter++;
+
           continue;
         }
       }
-      VLOG(1) << " is not removed, assign new no. " << nodeNoNonDuplicateGlobal;
+      VLOG(2) << " is not removed, assign new no. " << nodeNoNonDuplicateGlobal;
 
       // here, nodeNoLocal is a normal, non-duplicate node
       meshAndNodeNoLocalToNodeNoNonDuplicateGlobal_[subMeshNo][nodeNoLocal] = nodeNoNonDuplicateGlobal;
 
       node_no_t nodeNoNonDuplicateLocal = nodeNoNonDuplicateGlobal - nonDuplicateNodeNoGlobalBegin_;
       meshAndNodeNoLocalToNodeNoNonDuplicateLocal_[subMeshNo][nodeNoLocal] = nodeNoNonDuplicateLocal;
-      nodeNoNonDuplicateLocalToMeshAndDuplicateLocal_.push_back(std::make_pair(subMeshNo, nodeNoLocal));
+
+      VLOG(2) << "   g: " << nodeNoNonDuplicateGlobal
+        << ", nodeNoLocal " << nodeNoLocal << ", nodeNoNonDuplicateLocal: " << nodeNoNonDuplicateLocal
+        << " = " << nodeNoNonDuplicateLocalToMeshAndDuplicateLocal_.size();
+
       assert(nodeNoNonDuplicateLocalToMeshAndDuplicateLocal_.size() == nodeNoNonDuplicateLocal);
+
+      nodeNoNonDuplicateLocalToMeshAndDuplicateLocal_.push_back(std::make_pair(subMeshNo, nodeNoLocal));
 
       nodeNoNonDuplicateGlobal++;
     }
@@ -329,6 +763,12 @@ initializeGhostNodeNos()
 
   VLOG(1) << "meshAndNodeNoLocalToNodeNoNonDuplicateGlobal_ (only non-ghost nodes are set so far): " << meshAndNodeNoLocalToNodeNoNonDuplicateGlobal_;
   VLOG(1) << "meshAndNodeNoLocalToNodeNoNonDuplicateLocal_ (only non-ghost nodes are set so far): " << meshAndNodeNoLocalToNodeNoNonDuplicateLocal_;
+
+#ifndef NDEBUG
+  // check if shared nodes are on the same subdomain
+  // on rank 0 receive all global node positions and check if it is valid
+  checkIfSharedNodesAreOnSameSubdomain();
+#endif
 
   // next, we communicate with neighbors to obtain duplicate-free numbering for ghost nodes
 
@@ -349,6 +789,8 @@ initializeGhostNodeNos()
     int nNodesLocalWithoutGhosts = subFunctionSpaces_[subMeshNo]->nNodesLocalWithoutGhosts();
     int nNodesLocalWithGhosts = subFunctionSpaces_[subMeshNo]->nNodesLocalWithGhosts();
 
+    VLOG(1) << "subMesh " << subMeshNo << ", nNodesLocalWithoutGhosts: " << nNodesLocalWithoutGhosts << ", nNodesLocalWithGhosts: " << nNodesLocalWithGhosts;
+
     // loop over ghost nodes of current submesh
     for (node_no_t nodeNoLocal = nNodesLocalWithoutGhosts; nodeNoLocal < nNodesLocalWithGhosts; nodeNoLocal++)
     {
@@ -358,6 +800,8 @@ initializeGhostNodeNos()
       int neighbourRankNo = 0;
       if (!subFunctionSpaces_[subMeshNo]->meshPartition()->isNonGhost(nodeNoLocal, neighbourRankNo))
       {
+        VLOG(2) << "subMesh " << subMeshNo << ", ghost nodeNoLocal: " << nodeNoLocal << ", nodeNoGlobalPetsc: " << nodeNoGlobalPetsc << ", isNonGhost, neighbourRankNo: " << neighbourRankNo;
+
         // allocate space for requests for every submesh
         if (requestNodesFromRanks_.find(neighbourRankNo) == requestNodesFromRanks_.end())
         {
@@ -381,13 +825,25 @@ initializeGhostNodeNos()
   int ownRankNo = this->ownRankNo();
 
   // create remote accessible memory
-  std::vector<int> remoteAccessibleMemory(nRanks, 0);
+  std::vector<int> remoteAccessibleMemory(nRanks*nSubMeshes_, 0);
   int nBytes = nRanks * nSubMeshes_ * sizeof(int);
   int displacementUnit = sizeof(int);
   MPI_Win mpiMemoryWindow;
   MPIUtility::handleReturnValue(MPI_Win_create((void *)remoteAccessibleMemory.data(), nBytes, displacementUnit, MPI_INFO_NULL, this->mpiCommunicator(), &mpiMemoryWindow), "MPI_Win_create");
 
   std::vector<int> localMemory(nRanks * nSubMeshes_);
+
+  // output requestNodesFromRanks_
+#ifndef NDEBUG
+  for (const std::pair<int,std::vector<NodesRequest>> &requestNodesFromRank : requestNodesFromRanks_)
+  {
+    VLOG(1) << "from rank " << requestNodesFromRank.first << " request: ";
+    for (const NodesRequest &nodesRequest : requestNodesFromRank.second)
+    {
+      VLOG(1) << "  nodeNosGlobalPetsc: " << nodesRequest.nodeNosGlobalPetsc << ", nodeNosLocal: " << nodesRequest.nodeNosLocal;
+    }
+  }
+#endif
 
   // put number of requested ghost nodes to the corresponding processes
   for (const std::pair<int,std::vector<NodesRequest>> &requestNodesFromRank : requestNodesFromRanks_)
@@ -400,6 +856,7 @@ initializeGhostNodeNos()
 
       int offset = ownRankNo*nSubMeshes_ + subMeshNo;
       VLOG(1) << "put value " << localMemory[foreignRankNo*nSubMeshes_ + subMeshNo] << " to rank " << foreignRankNo << ", offset " << offset;
+      VLOG(1) << "MPI_Win_lock on rank " << foreignRankNo;
 
       // start passive target communication (see http://www.mcs.anl.gov/research/projects/mpi/mpi-standard/mpi-report-2.0/node126.htm for introduction)
       MPIUtility::handleReturnValue(MPI_Win_lock(MPI_LOCK_SHARED, foreignRankNo, 0, mpiMemoryWindow), "MPI_Win_lock");
@@ -550,7 +1007,7 @@ initializeGhostNodeNos()
           // meshAndNodeNoLocalToNodeNoNonDuplicateGlobal_[subMeshNo][requestedNodeNoLocal] is -1 if it is a removed node
 
           VLOG(1) << " send to rank " << foreignRankNo << ", subMeshNo " << subMeshNo << " requested nodeNoGlobalPetsc: " << requestedNodeNoGlobalPetsc
-            << ", requestedNodeNoLocal: " << requestedNodeNoLocal << " send node " << nodeNoNonDuplicatGlobalPetsc
+            << ", requestedNodeNoLocal: (composite) " << requestedNodeNoLocal << " send node composite global " << nodeNoNonDuplicatGlobalPetsc
             << " at sendBuffer index " << requestedNodeIndex;
         }
       }
@@ -592,6 +1049,9 @@ initializeGhostNodeNos()
     MPIUtility::handleReturnValue(MPI_Waitall(receiveRequests.size(), receiveRequests.data(), MPI_STATUSES_IGNORE), "MPI_Waitall");
 
   node_no_t nodeNoNonDuplicateLocal = nNodesLocalWithoutGhosts_;
+  VLOG(1) << "initialize nodeNoNonDuplicateLocal to " << nodeNoNonDuplicateLocal;
+  VLOG(1) << "nodeNoNonDuplicateLocalToMeshAndDuplicateLocal_: " << nodeNoNonDuplicateLocalToMeshAndDuplicateLocal_
+    << ", size: " << nodeNoNonDuplicateLocalToMeshAndDuplicateLocal_.size();
 
   // copy received nodes to new vector
   i = 0;
@@ -621,15 +1081,24 @@ initializeGhostNodeNos()
         }
         else
         {
+          // else we get a normal ghost node
+          nNonDuplicateGhostNodes_[subMeshNo]++;
+
           // global and local mapping
           nonDuplicateGhostNodeNosGlobal_.push_back(nodeNoNonDuplicateGlobal);
           meshAndNodeNoLocalToNodeNoNonDuplicateLocal_[subMeshNo][nodeNoLocal] = nodeNoNonDuplicateLocal;
 
           // inverse mapping
           nodeNoNonDuplicateLocalToMeshAndDuplicateLocal_.push_back(std::make_pair(subMeshNo, nodeNoLocal));
-          assert(nodeNoNonDuplicateLocalToMeshAndDuplicateLocal_.size() == nodeNoNonDuplicateLocal);
+
+          VLOG(1) << "nodeNoNonDuplicate global: " << nodeNoNonDuplicateGlobal << ", local: " << nodeNoNonDuplicateLocal;
+          VLOG(1) << ", add to nodeNoNonDuplicateLocalToMeshAndDuplicateLocal_ (subMeshNo,nodeNoLocal)=(" << subMeshNo << "," << nodeNoLocal << "), "
+            << "now nodeNoNonDuplicateLocalToMeshAndDuplicateLocal_: " << nodeNoNonDuplicateLocalToMeshAndDuplicateLocal_
+            << ", size: " << nodeNoNonDuplicateLocalToMeshAndDuplicateLocal_.size();
 
           nodeNoNonDuplicateLocal++;
+
+          assert(nodeNoNonDuplicateLocalToMeshAndDuplicateLocal_.size() == nodeNoNonDuplicateLocal);
         }
         meshAndNodeNoLocalToNodeNoNonDuplicateGlobal_[subMeshNo][nodeNoLocal] = nodeNoNonDuplicateGlobal;
 
@@ -655,18 +1124,37 @@ initializeGhostNodeNos()
   nNodesLocalWithGhosts_ -= nNodesSharedLocal_;      // substract double nodes that are included only once
   nNodesLocalWithGhosts_ -= nGhostNodesSharedLocal_; // substract double ghost nodes that are included only once
 
-  LOG(DEBUG) << "meshAndNodeNoLocalToNodeNoNonDuplicateLocal_:   " << meshAndNodeNoLocalToNodeNoNonDuplicateLocal_;
-  LOG(DEBUG) << "meshAndNodeNoLocalToNodeNoNonDuplicateGlobal_:  " << meshAndNodeNoLocalToNodeNoNonDuplicateGlobal_;
-  LOG(DEBUG) << "isDuplicate_:  " << isDuplicate_;
-  LOG(DEBUG) << "nodeNoNonDuplicateLocalToMeshAndDuplicateLocal_:" << nodeNoNonDuplicateLocalToMeshAndDuplicateLocal_;
-  LOG(DEBUG) << "nNodesLocalWithGhosts_: " << nNodesLocalWithGhosts_;
+  VLOG(1) << "meshAndNodeNoLocalToNodeNoNonDuplicateLocal_:   " << meshAndNodeNoLocalToNodeNoNonDuplicateLocal_;
+  VLOG(1) << "meshAndNodeNoLocalToNodeNoNonDuplicateGlobal_:  " << meshAndNodeNoLocalToNodeNoNonDuplicateGlobal_;
+  VLOG(1) << "isDuplicate_:  " << isDuplicate_;
+  VLOG(1) << "nodeNoNonDuplicateLocalToMeshAndDuplicateLocal_:" << nodeNoNonDuplicateLocalToMeshAndDuplicateLocal_;
+  VLOG(1) << "nNodesLocalWithGhosts_: " << nNodesLocalWithGhosts_;
+  VLOG(1) << "nNonDuplicateGhostNodes_: " << nNonDuplicateGhostNodes_;
 
+  node_no_t nNodesLocalWithGhosts = nNodesLocalWithoutGhosts_;
+  for (int subMeshIndex = 0; subMeshIndex < nSubMeshes_; subMeshIndex++)
+  {
+    nNodesLocalWithGhosts += nNonDuplicateGhostNodes_[subMeshIndex];
+  }
+  if (nNodesLocalWithGhosts != nNodesLocalWithGhosts_)
+  {
+    LOG(FATAL) << "Creating mesh partition for composite mesh failed. "
+      << "Most certainly there are nodes that are ghost nodes on one sub mesh and non-ghost nodes on another sub mesh.\n"
+      << "This is not allowed. Fix your partitioning. You can run the program from debug target, there will be a more"
+      << " useful error message that says which nodes are wrong.";
+      //<< "Received " << nNodesLocalWithGhosts-nNodesLocalWithoutGhosts_ << " ghost nodes from neighboring ranks. "
+      //<< "Locally, " << nNodesSharedLocal_ << " nodes are non-ghosts and " << nGhostNodesSharedLocal_ << " are shared, therefore "
+      //<< nNodesLocalWithGhosts_ - nNodesLocalWithoutGhosts_ << " nodes of all (" << nNodesLocalWithGhosts_ << ") should be ghosts.";
+  }
+  assert(nNodesLocalWithGhosts == nNodesLocalWithGhosts_);
 }
 
 template<int D, typename BasisFunctionType>
 void MeshPartition<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,Mesh::CompositeOfDimension<D>>::
 createLocalDofOrderings()
 {
+  MeshPartitionBase::createLocalDofOrderings();
+
   // fill the dofLocalNo vectors, onlyNodalDofLocalNos_, ghostDofNosGlobalPetsc_ and localToGlobalPetscMappingDofs_
   const int nDofsPerNode = FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::nDofsPerNode();
 
@@ -712,6 +1200,248 @@ createLocalDofOrderings()
   //ierr = VecDestroy(&temporaryVector); CHKERRV(ierr);
   VLOG(1) << "n=" << nDofsLocalWithoutGhosts() << ", N=" << nDofsGlobal() << ", nghost=" << nGhostDofs << " ghosts:" << ghostDofNosGlobalPetsc_;
   VLOG(1) << "Result: " << localToGlobalPetscMappingDofs_;
+}
+
+template<int D, typename BasisFunctionType>
+std::string MeshPartition<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,Mesh::CompositeOfDimension<D>>::
+getString()
+{
+  std::stringstream result;
+
+  // member variables
+  result << "CompositeMesh, nSubMeshes: " << nSubMeshes_
+    << ", removedSharedNodes: [";
+  int i = 0;
+  for (std::vector<std::map<int, std::pair<int,int>>>::iterator iter = removedSharedNodes_.begin(); iter != removedSharedNodes_.end(); iter++, i++)
+  {
+    for (std::map<int, std::pair<int,int>>::iterator iter2 = iter->begin(); iter2 != iter->end(); iter2++)
+    {
+      result << "[" << i << "," << iter2->first << "] -> [" << iter2->second.first << "," << iter2->second.second << "] ";
+    }
+    result << ", ";
+  }
+  result << "]"
+    << ", nElementsLocal: " << nElementsLocal_
+    << ", nElementsGlobal: " << nElementsGlobal_
+    << ", elementNoGlobalBegin: " << elementNoGlobalBegin_
+    << ", nNodesSharedLocal: " << nNodesSharedLocal_
+    << ", nGhostNodesSharedLocal: " << nGhostNodesSharedLocal_
+    << ", nRemovedNodesNonGhost: [";
+  for (int nRemovedNodesNonGhost : nRemovedNodesNonGhost_)
+  {
+    result << nRemovedNodesNonGhost << ", ";
+  }
+  result << "]"
+    << ", nNonDuplicateNodesWithoutGhosts: [";
+  for (int a : nNonDuplicateNodesWithoutGhosts_)
+  {
+    result << a << ", ";
+  }
+  result << "]"
+    << ", nNodesLocalWithoutGhosts: " << nNodesLocalWithoutGhosts_
+    << ", nNodesLocalWithGhosts: " << nNodesLocalWithGhosts_
+    << ", nNodesGlobal: " << nNodesGlobal_
+    << ", nonDuplicateNodeNoGlobalBegin: " << nonDuplicateNodeNoGlobalBegin_
+    << ", meshAndNodeNoLocalToNodeNoNonDuplicateGlobal: [";
+
+  for (std::vector<int> a: meshAndNodeNoLocalToNodeNoNonDuplicateGlobal_)
+  {
+    result << "[";
+    for (int b: a)
+      result << b << ",";
+    result << "],";
+  }
+  result << "]"
+    << ", meshAndNodeNoLocalToNodeNoNonDuplicateLocal: [";
+
+  for (std::vector<int> a: meshAndNodeNoLocalToNodeNoNonDuplicateLocal_)
+  {
+    result << "[";
+    for (int b: a)
+      result << b << ",";
+    result << "],";
+  }
+  result << "]"
+    << ", isDuplicate: [";
+
+  for (std::vector<bool> a: isDuplicate_)
+  {
+    result << "[";
+    for (bool b: a)
+      result << b << ",";
+    result << "],";
+  }
+  result << "]"
+    << ", nodeNoNonDuplicateLocalToMeshAndDuplicateLocal: [";
+
+  for (std::pair<int,node_no_t> a: nodeNoNonDuplicateLocalToMeshAndDuplicateLocal_)
+  {
+    result << "<" << a.first << "," << a.second << ">,";
+  }
+  result << "]"
+    << ", nonDuplicateGhostNodeNosGlobal: [";
+  for (PetscInt a: nonDuplicateGhostNodeNosGlobal_)
+    result << a << ",";
+  result << "]"
+    << ", onlyNodalDofLocalNos: [";
+  for (node_no_t a: onlyNodalDofLocalNos_)
+    result << a << ",";
+  result << "]"
+    << ", ghostDofNosGlobalPetsc: [";
+  for (PetscInt a: ghostDofNosGlobalPetsc_)
+    result << a << ",";
+  result << "]";
+
+  // methods
+  result << ", nElementsLocal(): " << nElementsLocal()
+    << ", nElementsGlobal(): " << nElementsGlobal()
+    << ", nDofsLocalWithGhosts(): " << nDofsLocalWithGhosts()
+    << ", nDofsLocalWithoutGhosts(): " << nDofsLocalWithoutGhosts()
+    << ", nDofsGlobal(): " << nDofsGlobal()
+    << ", nNodesLocalWithGhosts(): " << nNodesLocalWithGhosts()
+    << ", nNodesLocalWithoutGhosts(): " << nNodesLocalWithoutGhosts()
+    << ", nNodesGlobal(): " << nNodesGlobal()
+    << ", beginNodeGlobalPetsc(): " << beginNodeGlobalPetsc()
+    << ", dofNosLocal(true): [";
+
+  const std::vector<PetscInt> &d0 = dofNosLocal(true);
+
+  for (int i = 0; i < d0.size(); i++)
+    result << d0[i] << ",";
+
+  result << "], dofNosLocal(false): [";
+
+  const std::vector<PetscInt> &d1 = dofNosLocal(false);
+
+  for (int i = 0; i < d1.size(); i++)
+    result << d1[i] << ",";
+
+  result << "], ghostDofNosGlobalPetsc(): [";
+
+  const std::vector<PetscInt> &d2 = ghostDofNosGlobalPetsc();
+
+  for (int i = 0; i < d2.size(); i++)
+    result << d2[i] << ",";
+
+  result << "]";
+
+  // getElementNoGlobalNatural
+  result << ", getElementNoGlobalNatural: ";
+  for (element_no_t elementNoLocal = 0; elementNoLocal < nElementsLocal(); elementNoLocal++)
+  {
+    result << elementNoLocal << "->" << getElementNoGlobalNatural(elementNoLocal) << " ";
+  }
+
+  // getNodeNoGlobalPetsc
+  result << ", getNodeNoGlobalPetsc: ";
+  for (node_no_t nodeNoLocal = 0; nodeNoLocal < nNodesLocalWithGhosts(); nodeNoLocal++)
+  {
+    result << nodeNoLocal << "->" << getNodeNoGlobalPetsc(nodeNoLocal) << " ";
+  }
+
+  // getNodeNoGlobalNatural
+  result << ", getNodeNoGlobalNatural: ";
+  for (element_no_t elementNoLocal = 0; elementNoLocal < nElementsLocal(); elementNoLocal++)
+  {
+    for (int nodeIndex = 0; nodeIndex < FunctionSpaceType::nNodesPerElement(); nodeIndex++)
+    {
+      result << elementNoLocal << "," << nodeIndex << "->" << getNodeNoGlobalNatural(elementNoLocal, nodeIndex) << " ";
+    }
+  }
+
+  // getDofNoGlobalPetsc
+  result << ", getDofNoGlobalPetsc: [";
+  std::vector<dof_no_t> dofNosLocal(this->nDofsLocalWithGhosts());
+  std::iota(dofNosLocal.begin(), dofNosLocal.end(), 0);
+  std::vector<PetscInt> dofNosGlobalPetsc;
+  getDofNoGlobalPetsc(dofNosLocal, dofNosGlobalPetsc);
+  for (PetscInt i : dofNosGlobalPetsc)
+    result << i << ",";
+  result << "]";
+
+  // getDofNoGlobalPetsc
+  result << ", getDofNoGlobalPetsc: ";
+  for (dof_no_t dofNoLocal = 0; dofNoLocal < nDofsLocalWithGhosts(); dofNoLocal++)
+  {
+    result << dofNoLocal << "->" << getDofNoGlobalPetsc(dofNoLocal) << " ";
+  }
+
+  // getElementNoGlobalNatural
+  result << ", getElementNoLocal: ";
+  bool isOnLocalDomain = false;
+  for (global_no_t elementNoGlobalPetsc = 0; elementNoGlobalPetsc < nElementsGlobal(); elementNoGlobalPetsc++)
+  {
+    result << elementNoGlobalPetsc << "->" << getElementNoLocal(elementNoGlobalPetsc, isOnLocalDomain);
+    result << "->" << isOnLocalDomain << " ";
+  }
+
+  // getNodeNoLocal
+  result << ", getNodeNoLocal: ";
+  for (global_no_t nodeNoGlobalPetsc = 0; nodeNoGlobalPetsc < nNodesGlobal(); nodeNoGlobalPetsc++)
+  {
+    result << nodeNoGlobalPetsc << "->" << getNodeNoLocal(nodeNoGlobalPetsc, isOnLocalDomain);
+    result << "->" << isOnLocalDomain << " ";
+  }
+
+  // getDofNoLocal
+  result << ", getDofNoLocal: ";
+  for (global_no_t nodeNoGlobalPetsc = 0; nodeNoGlobalPetsc < nNodesGlobal(); nodeNoGlobalPetsc++)
+  {
+    result << nodeNoGlobalPetsc << "->" << getDofNoLocal(nodeNoGlobalPetsc, isOnLocalDomain);
+    result << "->" << isOnLocalDomain << " ";
+  }
+
+  // extractLocalNodesWithoutGhosts
+  std::vector<global_no_t> globalNodes(this->nNodesGlobal());
+  std::iota(globalNodes.begin(), globalNodes.end(), 0);
+  extractLocalNodesWithoutGhosts(globalNodes);
+  result << ", extractLocalNodesWithoutGhosts: [";
+  for (global_no_t i : globalNodes)
+    result << i << ",";
+  result << "]";
+
+  // extractLocalDofsWithoutGhosts
+  std::vector<global_no_t> globalDofs(this->nNodesGlobal());
+  std::iota(globalDofs.begin(), globalDofs.end(), 0);
+  extractLocalDofsWithoutGhosts(globalDofs);
+  result << ", extractLocalDofsWithoutGhosts: [";
+  for (global_no_t i : globalDofs)
+    result << i << ",";
+  result << "]";
+
+  // getSubMeshNoAndElementNoLocal
+  result << ", getSubMeshNoAndElementNoLocal: ";
+  for (element_no_t elementNoLocal = 0; elementNoLocal < nElementsLocal(); elementNoLocal++)
+  {
+    int subMeshNo = 0;
+    element_no_t elementOnMeshNoLocal = 0;
+    getSubMeshNoAndElementNoLocal(elementNoLocal, subMeshNo, elementOnMeshNoLocal);
+    result << elementNoLocal << "->" << subMeshNo << "," << elementOnMeshNoLocal << " ";
+  }
+
+  // getSubMeshNoAndNodeNoLocal
+  result << ", getSubMeshNoAndNodeNoLocal: ";
+  for (node_no_t nodeNoLocal = 0; nodeNoLocal < nNodesLocalWithGhosts(); nodeNoLocal++)
+  {
+    int subMeshNo = 0;
+    node_no_t nodeOnMeshNoLocal = 0;
+    getSubMeshNoAndNodeNoLocal(nodeNoLocal, subMeshNo, nodeOnMeshNoLocal);
+    result << nodeNoLocal << "->" << subMeshNo << "," << nodeOnMeshNoLocal << " ";
+  }
+
+  // getSubMeshesWithNodes
+  result << ", getSubMeshesWithNodes: ";
+  for (node_no_t nodeNoLocal = 0; nodeNoLocal < nNodesLocalWithGhosts(); nodeNoLocal++)
+  {
+    std::vector<std::pair<int,node_no_t>> subMeshesWithNodes;
+    getSubMeshesWithNodes(nodeNoLocal, subMeshesWithNodes);
+    result << nodeNoLocal << "->[";
+    for (std::pair<int,node_no_t> a : subMeshesWithNodes)
+      result << "<" << a.first << "," << a.second << "> ";
+    result << "] ";
+  }
+
+  return result.str();
 }
 
 

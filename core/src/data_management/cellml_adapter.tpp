@@ -8,6 +8,7 @@ CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::
 CellmlAdapter(DihuContext context) :
   Data<FunctionSpaceType>::Data(context), specificSettings_(PythonConfig(context.getPythonConfig(), "CellML"))
 {
+  parameters_ = std::make_shared<std::vector<double>>();
 }
 
 template <int nStates, int nIntermediates, typename FunctionSpaceType>
@@ -22,10 +23,7 @@ template <int nStates, int nIntermediates, typename FunctionSpaceType>
 void CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::
 initializeOutputConnectorData()
 {
-  this->specificSettings_.getOptionVector<int>("statesForTransfer", statesForTransfer_);
-  this->specificSettings_.getOptionVector<int>("intermediatesForTransfer", intermediatesForTransfer_);
-
-  LOG(DEBUG) << "parsed the following states for transfer: " << statesForTransfer_ << " (states: " << this->states()
+  LOG(DEBUG) << "got the following states for transfer: " << statesForTransfer_ << " (states: " << this->states()
     << "), intermediates: " << intermediatesForTransfer_;
 
   outputConnectorData_ = std::make_shared<OutputConnectorDataType>();
@@ -42,14 +40,10 @@ initializeOutputConnectorData()
     outputConnectorData_->addFieldVariable2(this->intermediates(), *iter);
   }
 
-  if (this->specificSettings_.hasKey("outputIntermediateIndex"))
+  // add parameters components
+  for (std::vector<int>::iterator iter = parametersForTransfer_.begin(); iter != parametersForTransfer_.end(); iter++)
   {
-    LOG(WARNING) << specificSettings_ << "[\"outputIntermediateIndex\"] is no longer a valid option, use \"intermediatesForTransfer\" instead!";
-  }
-
-  if (this->specificSettings_.hasKey("outputStateIndex"))
-  {
-    LOG(WARNING) << specificSettings_ << "[\"outputStateIndex\"] is no longer a valid option, use \"statesForTransfer\" instead!";
+    //outputConnectorData_->addFieldVariable2(this->intermediates(), *iter);
   }
 }
 
@@ -78,6 +72,14 @@ createPetscObjects()
   this->intermediates_->setRepresentationContiguous();
 }
 
+//! return a reference to the parameters vector
+template <int nStates, int nIntermediates, typename FunctionSpaceType>
+std::shared_ptr<std::vector<double>> CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::
+parameters()
+{
+  return this->parameters_;
+}
+
 template <int nStates, int nIntermediates, typename FunctionSpaceType>
 std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nIntermediates>> CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::
 intermediates()
@@ -93,11 +95,24 @@ states()
 }
 
 template <int nStates, int nIntermediates, typename FunctionSpaceType>
-void CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::
-getStatesIntermediatesForTransfer(std::vector<int> &statesForTransfer, std::vector<int> &intermediatesForTransfer)
+std::vector<int> &CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::
+statesForTransfer()
 {
-  statesForTransfer = statesForTransfer_;
-  intermediatesForTransfer = intermediatesForTransfer_;
+  return statesForTransfer_;
+}
+
+template <int nStates, int nIntermediates, typename FunctionSpaceType>
+std::vector<int> &CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::
+intermediatesForTransfer()
+{
+  return intermediatesForTransfer_;
+}
+
+template <int nStates, int nIntermediates, typename FunctionSpaceType>
+std::vector<int> &CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::
+parametersForTransfer()
+{
+  return parametersForTransfer_;
 }
 
 template <int nStates, int nIntermediates, typename FunctionSpaceType>

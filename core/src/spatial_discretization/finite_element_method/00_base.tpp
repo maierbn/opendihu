@@ -89,6 +89,10 @@ initialize()
 
   // assemble stiffness matrix
   Control::PerformanceMeasurement::start("durationSetStiffnessMatrix");
+
+  // initialize spatial parameter prefactor
+  prefactor_.initialize(specificSettings_, "prefactor", 1.0, this->data_.functionSpace());
+
   setStiffnessMatrix();
 
   // save the stiffness matrix also in the other slot, that will not be overwritten by applyBoundaryConditions

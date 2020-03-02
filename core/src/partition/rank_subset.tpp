@@ -38,14 +38,20 @@ RankSubset::RankSubset(Iter ranksBegin, Iter ranksEnd, std::shared_ptr<RankSubse
   
   std::copy(ranksBegin, ranksEnd, std::inserter(rankNo_, rankNo_.begin()));
 
+  int orderKey = 0;
   // if ownRankParentCommunicator is contained in rank subset
-  if (std::find(ranksBegin,ranksEnd,ownRankParentCommunicator) != ranksEnd)
+  Iter pos = std::find(ranksBegin,ranksEnd,ownRankParentCommunicator);
+  if (pos != ranksEnd)
+  {
     color = 1;
-  
-  VLOG(1) << "RankSubset constructor from rank list " << rankNo_ << ", ownRankParentCommunicator=" << ownRankParentCommunicator << ", color=" << color;
+    orderKey = std::distance(ranksBegin, pos);
+  }
+
+  VLOG(1) << "RankSubset constructor from rank list " << rankNo_ << ", ownRankParentCommunicator=" << ownRankParentCommunicator
+    << ", color=" << color << ", orderKey: " << orderKey;
 
   // create new communicator which contains all ranks that have the same value of color (and not MPI_UNDEFINED)
-  MPIUtility::handleReturnValue(MPI_Comm_split(parentCommunicator, color, 0, &mpiCommunicator_), "MPI_Comm_split");
+  MPIUtility::handleReturnValue(MPI_Comm_split(parentCommunicator, color, orderKey, &mpiCommunicator_), "MPI_Comm_split");
 
   // update rankNo_ set
   if (color == 1)

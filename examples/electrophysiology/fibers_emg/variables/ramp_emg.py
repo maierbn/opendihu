@@ -69,7 +69,7 @@ dt_0D = 2e-3                        # [ms] timestep width of ODEs
 dt_1D = 4e-3                        # [ms] timestep width of diffusion
 dt_splitting = 4e-3                 # [ms] overall timestep width of strang splitting
 dt_3D = 2.5                         # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
-output_timestep = 2.5               # [ms] timestep for output files, 0.5
+output_timestep = 0.5               # [ms] timestep for output files, 0.5
 output_timestep_big = 100           # [ms] timestep for output big files, 100
 
 # simulation time:  4s
@@ -82,14 +82,15 @@ adios_output = False
 exfile_output = False
 python_output = False
 #fiber_file="../../input/13x13fibers.bin"
-fiber_file="../../input/37x37fibers.bin"
-fiber_file="../../input/left_biceps_brachii_37x37fibers.bin"
+#fiber_file="../../input/37x37fibers.bin"
+#fiber_file="../../input/left_biceps_brachii_37x37fibers.bin"
+fiber_file = "../../input/left_biceps_brachii_7x7fibers.bin"
 firing_times_file="../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
 fiber_distribution_file="../../input/MU_fibre_distribution_10MUs.txt"
 
 # functions, here, Am, Cm and Conductivity are constant for all fibers and MU's
 def get_am(fiber_no, mu_no):
-  r = motor_units[mu_no]["radius"]*1e-2
+  r = motor_units[mu_no]["radius"]*1e-1
   # cylinder surface: A = 2*π*r*l, V = cylinder volume: π*r^2*l, Am = A/V = 2*π*r*l / (π*r^2*l) = 2/r
   return 2./r
 

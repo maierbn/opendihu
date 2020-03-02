@@ -30,7 +30,7 @@
 #include "control/diagnostic_tool/solver_structure_visualizer.h"
 
 #include "easylogging++.h"
-#include "control/settings_file_name.h"
+#include "control/python_config/settings_file_name.h"
 #include "utility/mpi_utility.h"
 #ifdef HAVE_PAT
 #include <pat_api.h>    // perftools, only available on hazel hen
@@ -157,6 +157,7 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
     // set number of threads to use to 1
     //omp_set_num_threads(1);
     //LOG(DEBUG) << "set number of threads to 1";
+    LOG(INFO) << "This is " << versionText() << ", " << metaText();
 
     // output process ID
     int pid = getpid();
@@ -346,7 +347,7 @@ std::string DihuContext::versionText()
 {
   std::stringstream versionTextStr;
 
-  versionTextStr << "opendihu 1.1, build " << __DATE__; // << " " << __TIME__; // do not add time otherwise it wants to recompile this file every time
+  versionTextStr << "opendihu 1.1, built " << __DATE__; // << " " << __TIME__; // do not add time otherwise it wants to recompile this file every time
 #ifdef __cplusplus
   versionTextStr << ", C++ " << __cplusplus;
 #endif

@@ -31,7 +31,7 @@ if ".py" in sys.argv[0]:
   variables.__dict__.update(custom_variables.__dict__)
   sys.argv = sys.argv[1:]     # remove first argument, which now has already been parsed
 else:
-  print("Warning: There is no variables file, e.g:\n ./biceps_contraction ../settings_biceps_contraction.py ramp.py")
+  print("Warning: There is no variables file, e.g:\n ./biceps_contraction ../settings_biceps_contraction.py ramp.py\n")
   #exit(0)
 
 

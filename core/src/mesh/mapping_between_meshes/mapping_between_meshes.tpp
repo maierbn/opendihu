@@ -30,7 +30,7 @@ MappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSourc
 
   targetMappingInfo_.resize(nDofsLocalSource);
 
-  std::vector<bool> targetDofIsMappedTo(nDofsLocalTarget, false);
+  std::vector<bool> targetDofIsMappedTo(nDofsLocalTarget, false);   //< for every target dof if it will get a value from any source dof
 
   if (VLOG_IS_ON(1))
   {
@@ -85,6 +85,7 @@ MappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSourc
       else
       {
         xiTolerance *= 2;
+        // if there was no element found increase tolerance for the local coordinate of the element, xi, for which the point is considered to be inside the element
         if (maxAllowedXiTolerance_ != 0 && xiTolerance > maxAllowedXiTolerance_)
         {
           break;
@@ -117,6 +118,7 @@ MappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSourc
       VLOG(3) << "   phi_" << targetDofIndex << "(" << xi << ")=" << functionSpaceTarget->phi(targetDofIndex, xi);
       double phiContribution = functionSpaceTarget->phi(targetDofIndex, xi);
 
+      // if phi is close to zero, set to 1e-7
       if (fabs(phiContribution) < 1e-7)
       {
         if (phiContribution >= 0)
@@ -132,7 +134,7 @@ MappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSourc
       {
         dof_no_t targetDofNoLocal = targetDofNos[targetDofIndex];
 
-        // if this dof is local
+        // if this dof is local, store inforamtion thta this target dof will get a value in the mapping, i.e. there is a source dof the influences the mapped value of the target dof
         if (targetDofNoLocal < nDofsLocalTarget)
         {
           targetDofIsMappedTo[targetDofNoLocal] = true;
@@ -140,7 +142,6 @@ MappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSourc
       }
 
       targetMappingInfo.targetElements[0].scalingFactors[targetDofIndex] = phiContribution;
-
     }
 
     targetMappingInfo_[sourceDofNoLocal] = targetMappingInfo;
@@ -157,7 +158,7 @@ MappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSourc
         << ", sum: " << scalingFactorsSum;
     }
 
-    // next time when searching for the target element, start search from previous element
+    // next time when searching for the target element, start search from previous element (the current element), because here we found the point and the next point is probably in one of the neighbouring elements
     startSearchInCurrentElement = true;
   }
 
@@ -313,7 +314,7 @@ mapLowToHighDimension(
   // loop over all local dofs of the source functionSpace
   for (dof_no_t sourceDofNoLocal = 0; sourceDofNoLocal != nDofsLocalSource; sourceDofNoLocal++)
   {
-    // if source dof is outside of target mesh
+    // if source dof is outside of target mesh, do nothing
     if (!targetMappingInfo_[sourceDofNoLocal].mapThisDof)
       continue;
 

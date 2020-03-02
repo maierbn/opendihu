@@ -3,7 +3,7 @@
 
 #include "easylogging++.h"
 #include "utility/python_utility.h"
-#include "control/python_config.h"
+#include "control/python_config/python_config.h"
 
 namespace Mesh
 {

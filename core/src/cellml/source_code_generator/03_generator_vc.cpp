@@ -395,7 +395,7 @@ generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunc
   sourceCode << std::endl << "/* This function was created by opendihu at " << StringUtility::timeToString(&tm)  //std::put_time(&tm, "%d/%m/%Y %H:%M:%S")
     << ".\n * It is designed for " << this->nInstances_ << " instances of the CellML problem.\n "
     << " * The \"optimizationType\" is \"vc\". (Other options are \"simd\" and \"openmp\".) */" << std::endl
-    << "extern \"C\"" << std::endl
+    << "#ifdef __cplusplus\n" << "extern \"C\"\n" << "#endif\n" << std::endl
     << "void computeCellMLRightHandSide("
     << "void *context, double t, double *states, double *rates, double *intermediates, double *parameters)" << std::endl 
     << "{" << std::endl
@@ -421,7 +421,7 @@ generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunc
   // add declaration of algebraic variables
   sourceCode << std::endl;
   const int nVcVectors = (int)(ceil((double)this->nInstances_ / Vc::double_v::Size));
-  const int nParametersPerInstance = this->parameters_.size() / this->nInstances_;
+  const int nParametersPerInstance = this->parameters_->size() / this->nInstances_;
 
   sourceCode << std::endl
     << "  const int nInstances = " << this->nInstances_ << ";\n"
@@ -588,7 +588,7 @@ generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateE
   // define initializeStates function
   sourceCode
     << "// set initial values for all states\n"
-    << "extern \"C\"\n"
+    << "#ifdef __cplusplus\n" << "extern \"C\"\n" << "#endif\n" << std::endl
     << "void initializeStates(Vc::double_v states[]) \n"
     << "{\n";
 
@@ -601,7 +601,7 @@ generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateE
   // define compute0D which computes one Heun step
   sourceCode
     << "// compute one Heun step\n"
-    << "extern \"C\"\n"
+    << "#ifdef __cplusplus\n" << "extern \"C\"\n" << "#endif\n" << std::endl
     << "void compute0DInstance(Vc::double_v states[], std::vector<Vc::double_v> &parameters, double currentTime, double timeStepWidth, bool stimulate,\n"
     << "                       bool storeIntermediatesForTransfer, std::vector<Vc::double_v> &intermediatesForTransfer, const std::vector<int> &intermediatesForTransferIndices) \n"
     << "{\n"

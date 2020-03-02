@@ -6,7 +6,8 @@
 template<int nStates, int nIntermediates>
 FastMonodomainSolverBase<nStates,nIntermediates>::
 FastMonodomainSolverBase(const DihuContext &context) :
-  specificSettings_(context.getPythonConfig()), nestedSolvers_(context), initialized_(false)
+  specificSettings_(context.getPythonConfig()), nestedSolvers_(context),
+  initialized_(false)
 {
   // initialize output writers
   this->outputWriterManager_.initialize(context, specificSettings_);
@@ -206,13 +207,14 @@ initialize()
 
   // get the states and intermediates no.s to be transferred as output connector data
   CellmlAdapterType &cellmlAdapter = instances[0].timeStepping1().instancesLocal()[0].discretizableInTime();
-  cellmlAdapter.getStatesIntermediatesForTransfer(statesForTransfer_, intermediatesForTransfer_);
+  statesForTransfer_ = cellmlAdapter.statesForTransfer();
+  intermediatesForTransfer_ = cellmlAdapter.intermediatesForTransfer();
 
   int nInstancesLocalCellml;
   int nIntermediatesLocalCellml;
   int nParametersPerInstance;
   cellmlAdapter.getNumbers(nInstancesLocalCellml, nIntermediatesLocalCellml, nParametersPerInstance);
-  std::vector<double> &cellMLParameters = cellmlAdapter.cellmlSourceCodeGenerator().parameters();   //< contains all parameters for all instances, in struct of array ordering (p0inst0, p0inst1, p0inst2,...)
+  std::vector<double> &cellMLParameters = *cellmlAdapter.cellmlSourceCodeGenerator().parameters();   //< contains all parameters for all instances, in struct of array ordering (p0inst0, p0inst1, p0inst2,...)
 
   int nVcVectors = (nInstancesToCompute_ + Vc::double_v::Size - 1) / Vc::double_v::Size;
 

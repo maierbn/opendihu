@@ -111,13 +111,16 @@ with open(input_filename, "rb") as infile:
   
   result_n_points_x = len(range(0, n_fibers_x+n_fibers_y-1, x_stride))
   result_n_points_y = y_size
-  result_n_points_z = len(range(0, n_points_whole_fiber, z_stride))
+  
+  # for z range, ensure that last value is contained
+  z_range = range(0, n_points_whole_fiber, z_stride)+([n_points_whole_fiber-1] if (n_points_whole_fiber-1)%z_stride !=0 else [])
+  result_n_points_z = len(z_range)
   result_n_points = result_n_points_x * result_n_points_y * result_n_points_z
   
   print("create mesh of size {}x{}x{} = {}".format(result_n_points_x, result_n_points_y, result_n_points_z, result_n_points))
   
   result_mesh = []
-  for k in range(0, n_points_whole_fiber, z_stride):
+  for k in z_range:
     for j in range(0, y_size):
       for i in range(0, n_fibers_x+n_fibers_y-1, x_stride):
         

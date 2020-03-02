@@ -837,9 +837,10 @@ rebalance()
   // create meshPartition for function space with the currently used ranks
   this->context_.partitionManager()->setRankSubsetForNextCreatedPartitioning(rankSubsetFiber);
 
+  std::vector<int> rankNos;
   std::shared_ptr<Partition::MeshPartition<FiberFunctionSpaceType>> meshPartition
     = this->context_.partitionManager()->template createPartitioningStructuredLocal<FiberFunctionSpaceType>(
-        nElementsPerDimensionGlobal, nElementsPerDimensionLocal, nRanks);
+        nElementsPerDimensionGlobal, nElementsPerDimensionLocal, nRanks, rankNos);
 
   // number of nodes on own rank after rebalancing
   int nNodesLocalWithoutGhostsNew = meshPartition->nNodesLocalWithoutGhosts();

@@ -30,6 +30,10 @@ template<typename MeshType,typename BasisFunctionType>
 element_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 nElementsLocal() const
 {
+  //for degenerate mesh
+  if (isDegenerate_)
+    return 0;
+
   VLOG(1) << "determine nElementsLocal";
   element_no_t result = 1;
   for (int i = 0; i < MeshType::dim(); i++)
@@ -44,6 +48,10 @@ template<typename MeshType,typename BasisFunctionType>
 global_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 nElementsGlobal() const
 {
+  //for degenerate mesh
+  if (isDegenerate_)
+    return 0;
+
   global_no_t result = 1;
   for (int i = 0; i < MeshType::dim(); i++)
   {
@@ -82,6 +90,10 @@ template<typename MeshType,typename BasisFunctionType>
 node_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 nNodesLocalWithGhosts() const
 {
+  //for degenerate mesh
+  if (isDegenerate_)
+    return 0;
+
   element_no_t result = 1;
   for (int i = 0; i < MeshType::dim(); i++)
   {
@@ -95,6 +107,10 @@ template<typename MeshType,typename BasisFunctionType>
 node_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 nNodesLocalWithoutGhosts() const
 {
+  //for degenerate mesh
+  if (isDegenerate_)
+    return 0;
+
   element_no_t result = 1;
   for (int i = 0; i < MeshType::dim(); i++)
   {
@@ -108,6 +124,10 @@ template<typename MeshType,typename BasisFunctionType>
 node_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 nNodesLocalWithGhosts(int coordinateDirection, int partitionIndex) const
 {
+  //for degenerate mesh
+  if (isDegenerate_)
+    return 0;
+
   assert(0 <= coordinateDirection);
   assert(coordinateDirection < MeshType::dim());
 
@@ -160,6 +180,10 @@ template<typename MeshType,typename BasisFunctionType>
 node_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 nNodesLocalWithoutGhosts(int coordinateDirection, int partitionIndex) const
 {
+  //for degenerate mesh
+  if (isDegenerate_)
+    return 0;
+
   assert(0 <= coordinateDirection);
   assert(coordinateDirection < MeshType::dim());
 
@@ -196,6 +220,10 @@ template<typename MeshType,typename BasisFunctionType>
 global_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 nNodesGlobal() const
 {
+  //for degenerate mesh
+  if (isDegenerate_)
+    return 0;
+
   global_no_t result = 1;
   for (int i = 0; i < MeshType::dim(); i++)
   {
@@ -208,6 +236,11 @@ template<typename MeshType,typename BasisFunctionType>
 global_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 beginNodeGlobalNatural(int coordinateDirection, int partitionIndex) const
 {
+  //for degenerate mesh
+	//for degenerate mesh
+  if (isDegenerate_)
+    return 0;
+
   assert(0 <= coordinateDirection);
   assert(coordinateDirection < MeshType::dim());
 
@@ -307,7 +340,6 @@ template<typename MeshType,typename BasisFunctionType>
 void MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 getDofNosGlobalNatural(std::vector<global_no_t> &dofNosGlobalNatural) const
 {
-
   dof_no_t nDofsPerNode = FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>::nDofsPerNode();
   dofNosGlobalNatural.resize(nDofsLocalWithoutGhosts());
   global_no_t resultIndex = 0;
@@ -524,7 +556,8 @@ getDofNoGlobalPetsc(const std::vector<dof_no_t> &dofNosLocal, std::vector<PetscI
 
   // transfer the local indices to global indices
   PetscErrorCode ierr;
-  ierr = ISLocalToGlobalMappingApply(localToGlobalPetscMappingDofs_, dofNosLocal.size(), dofNosLocal.data(), dofNosGlobalPetsc.data()); CHKERRV(ierr);
+  if (localToGlobalPetscMappingDofs_)
+    ierr = ISLocalToGlobalMappingApply(localToGlobalPetscMappingDofs_, dofNosLocal.size(), dofNosLocal.data(), dofNosGlobalPetsc.data()); CHKERRV(ierr);
 }
 
 template<typename MeshType,typename BasisFunctionType>
@@ -533,7 +566,8 @@ getDofNoGlobalPetsc(dof_no_t dofNoLocal) const
 {
   PetscInt dofNoGlobal;
   PetscErrorCode ierr;
-  ierr = ISLocalToGlobalMappingApply(localToGlobalPetscMappingDofs_, 1, &dofNoLocal, &dofNoGlobal); CHKERRQ(ierr);
+  if (localToGlobalPetscMappingDofs_)
+    ierr = ISLocalToGlobalMappingApply(localToGlobalPetscMappingDofs_, 1, &dofNoLocal, &dofNoGlobal); CHKERRQ(ierr);
   return (global_no_t)dofNoGlobal;
 }
 

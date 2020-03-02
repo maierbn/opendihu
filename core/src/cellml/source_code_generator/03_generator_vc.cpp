@@ -614,7 +614,14 @@ generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateE
     << "    exit(1);\n"
     << "  }\n\n"
     << "  // define constants\n";
-
+    /*
+    << R"(  std::cout << "currentTime=" << currentTime << ", timeStepWidth=" << timeStepWidth << ", stimulate=" << stimulate << std::endl;)" << "\n"
+    << R"(  std::cout << "states[0]=" << states[0][0] << "," << states[0][1] << "," << states[0][2] << "," << states[0][3] << "," << std::endl;)" << "\n"
+    << R"(  std::cout << "states[1]=" << states[1][0] << "," << states[1][1] << "," << states[1][2] << "," << states[1][3] << "," << std::endl;)" << "\n"
+    << R"(  std::cout << "states[2]=" << states[2][0] << "," << states[2][1] << "," << states[2][2] << "," << states[2][3] << "," << std::endl;)" << "\n"
+    << R"(  std::cout << "states[3]=" << states[3][0] << "," << states[3][1] << "," << states[3][2] << "," << states[3][3] << "," << std::endl;)" << "\n"
+    << R"(  std::cout << "parameters[0]=" << parameters[0][0] << "," << parameters[0][1] << "," << parameters[0][2] << "," << parameters[0][3] << "," << std::endl;)" << "\n";
+*/
   // add assignments of constant values
   for (std::string constantAssignmentsLine : constantAssignments_)
   {

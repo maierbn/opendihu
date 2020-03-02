@@ -21,7 +21,7 @@ public:
   //! initialize all variables, parses the source code
   void initializeSourceCode(
     const std::vector<int> &parametersUsedAsIntermediate, const std::vector<int> &parametersUsedAsConstant,
-    const std::vector<double> &parametersInitialValues
+    std::vector<double> &parametersInitialValues
   );
 
   //! generate the source file according to optimizationType

@@ -197,6 +197,7 @@ config = {
           "relativeTolerance": 1e-15,
           "dirichletBoundaryConditions": {},
           "neumannBoundaryConditions": [],
+          "prefactor": 1,
         },
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out1", "outputInterval": 1, "binary": False}

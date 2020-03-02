@@ -50,7 +50,7 @@ MeshPartition(std::array<node_no_t,MeshType::dim()> nElementsLocal, std::array<g
               std::array<global_no_t,MeshType::dim()> beginElementGlobal, 
               std::array<int,MeshType::dim()> nRanks, std::shared_ptr<RankSubset> rankSubset) :
   MeshPartitionBase(rankSubset), beginElementGlobal_(beginElementGlobal), nElementsLocal_(nElementsLocal), nElementsGlobal_(nElementsGlobal), 
-  nRanks_(nRanks), hasFullNumberOfNodes_({false}), nDofsLocalWithoutGhosts_(-1)
+  nRanks_(nRanks), isDegenerate_(false), hasFullNumberOfNodes_({false}), nDofsLocalWithoutGhosts_(-1)
 {
   // partitioning is already prescribed as every rank knows its own local size
  
@@ -61,6 +61,11 @@ MeshPartition(std::array<node_no_t,MeshType::dim()> nElementsLocal, std::array<g
   if (MeshType::dim() == 1 && nElementsGlobal_[0] == 0)
   {
     initialize1NodeMesh();
+  }
+  else if (!rankSubset->ownRankIsContained())
+  {
+    isDegenerate_ = true;
+    initializeDegenerateMesh();
   }
   else
   {

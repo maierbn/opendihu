@@ -62,8 +62,8 @@ sconsconfig.select(
     packages.Vc(required=True),        # The Vc types for explicit vectorization
     packages.xbraid(required=False),   # framework for multigrid in time methods 
     packages.OpenCOR(required=False),  # binary that converts CellML files from xml to c
-    packages.libxml2(required=False),  # parser for xml files, needed for precice
-    packages.precice(required=False),  # numerical coupling library
+    #packages.libxml2(required=False),  # parser for xml files, needed for precice
+    #packages.precice(required=False),  # numerical coupling library
     packages.EasyLoggingPP(required=True),   # This is the logging library, it has to be the last package to be included because it contains a source (.c) file that needs to be compiled and linked to opendihu and somehow otherwise scons-config does not work.
 )
 

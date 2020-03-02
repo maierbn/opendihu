@@ -43,6 +43,7 @@ variables.dt_splitting = 4e-3                 # [ms] overall timestep width of s
 variables.dt_3D = 0.1                         # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
 variables.output_timestep = 10.0              # [ms] timestep for large output files, 5.0
 variables.output_timestep_smaller_files = 0.1 # [ms] timestep for small output files, 0.5
+variables.output_timestep_electrodes = 0.1    # [ms] timestep for electrode measurement output
 
 # stride for sampling the 3D elements from the fiber data
 # here any number is possible
@@ -135,7 +136,7 @@ variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
 def postprocess(result):
   result = result[0]
   # print result for debugging
-  print(result)
+  #print(result)
   
   # get current time
   current_time = result["currentTime"]
@@ -143,26 +144,34 @@ def postprocess(result):
   
   # parse variables
   field_variables = result["data"]
+  for f in field_variables:
+    print(f["name"])
+    for c in f["components"]:
+      print(c["name"])
+    print("--")
   
-  offset = len(variables.meshes["3DMesh"]["nodePositions"])
-  nx = variables.fat_mesh_n_points[0]
-  ny = variables.fat_mesh_n_points[1]
-  nz = variables.fat_mesh_n_points[2]
+  offset = len(variables.meshes["3Dmesh"]["nodePositions"])
+  #nx = variables.fat_mesh_n_points[0]
+  #ny = variables.fat_mesh_n_points[1]
+  #nz = variables.fat_mesh_n_points[2]
   
   # select nodes of the fat layer mesh
   i_begin = 2
   i_end = i_begin + 8
   j_begin = 2
-  j_end = j_end + 8
+  j_end = j_begin + 8
   
   
-  
+  #print(field_variables)
+  quit()
   # loop over selected nodes
   
-  # field_variables[0] is the geometry
-  # field_variables[1] is the displacements u
-  # field_variables[2] is the velocities v
-  # field_variables[3] is the PK2-Stress (Voigt)
+  # field_variables[0] is geometry (3 components "x","y","z")
+  # field_variables[1] is fiberDirection (3 components)
+  # field_variables[2] is phi_e (1 component)
+  # field_variables[3] is Vm (1 component)
+  # field_variables[4] is transmembraneFlow (1 component)
+  # field_variables[5] is flowPotential (1 component)
   
 
 # define the config dict
@@ -245,11 +254,17 @@ config = {
                       
                     "CellML" : {
                       "modelFilename":                          variables.cellml_file,                          # input C++ source file or cellml XML file
-                      "compilerFlags":                          "-fPIC -O3 -march=native -shared ",
+                      #"statesInitialValues":                   [],                                             # if given, the initial values for the the states of one instance
+                      "initializeStatesToEquilibrium":          False,                                          # if the equilibrium values of the states should be computed before the simulation starts
+                      "initializeStatesToEquilibriumTimestepWidth": 1e-4,                                       # if initializeStatesToEquilibrium is enable, the timestep width to use to solve the equilibrium equation
+                      
+                      # optimization parameters
                       "optimizationType":                       "vc",                                           # "vc", "simd", "openmp" type of generated optimizated source file
                       "approximateExponentialFunction":         False,                                          # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
+                      "compilerFlags":                          "-fPIC -O3 -march=native -shared ",             # compiler flags used to compile the optimized model code
                       "maximumNumberOfThreads":                 0,                                              # if optimizationType is "openmp", the maximum number of threads to use. Default value 0 means no restriction.
-                      #"statesInitialValues":                   [],
+                      
+                      # stimulation callbacks
                       #"setSpecificParametersFunction":         set_specific_parameters,                        # callback function that sets parameters like stimulation current
                       #"setSpecificParametersCallInterval":     int(1./variables.stimulation_frequency/variables.dt_0D),         # set_specific_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
                       "setSpecificStatesFunction":              set_specific_states,                                             # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
@@ -259,14 +274,11 @@ config = {
                       "setSpecificStatesFrequencyJitter":       variables.get_specific_states_frequency_jitter(fiber_no, motor_unit_no), # random value to add or substract to setSpecificStatesCallFrequency every stimulation, this is to add random jitter to the frequency
                       "setSpecificStatesRepeatAfterFirstCall":  0.01,                                                            # [ms] simulation time span for which the setSpecificStates callback will be called after a call was triggered
                       "setSpecificStatesCallEnableBegin":       variables.get_specific_states_call_enable_begin(fiber_no, motor_unit_no),# [ms] first time when to call setSpecificStates
-                      "initializeStatesToEquilibrium":          False,                                                            # if the initial states should be computed until they reach an equilibrium
                       "additionalArgument":                     fiber_no,
-                      "intermediatesForTransfer":               variables.output_intermediate_index,            # which intermediate values to use in further computation
-                      "statesForTransfer":                      variables.output_state_index,                   # which state values to use in further computation, Shorten / Hodgkin Huxley: state 0 = Vm
                       
-                      "parametersUsedAsIntermediate":           variables.parameters_used_as_intermediate,      #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
-                      "parametersUsedAsConstant":               variables.parameters_used_as_constant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
+                      "mappings":                               variables.mappings,                             # mappings between parameters and intermediates/constants and between outputConnectorSlots and states, intermediates or parameters, they are defined in helper.py
                       "parametersInitialValues":                variables.parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
+                      
                       "meshName":                               "MeshFiber_{}".format(fiber_no),
                       "stimulationLogFilename":                 "out/stimulation.log",
                     },      

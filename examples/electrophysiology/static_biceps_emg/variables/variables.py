@@ -32,6 +32,7 @@ dt_splitting = 3e-3                 # [ms] overall timestep width of strang spli
 dt_3D = 1e0                         # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
 output_timestep = 1e0               # [ms] timestep for output files
 activation_start_time = 0           # [ms] time when to start checking for stimulation
+output_timestep_electrodes = 0.1    # [ms] timestep for electrode output files
 
 # input files
 # -----------

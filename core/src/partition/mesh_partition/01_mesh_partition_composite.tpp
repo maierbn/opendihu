@@ -451,7 +451,19 @@ getSubMeshNoAndNodeNoLocal(node_no_t nodeNoLocal, int &subMeshNo, node_no_t &nod
     if (nodeNoLocal < nNodesPreviousSubMeshes + nNodesCurrentSubMesh)
     {
       subMeshNo = subMeshIndex;
-      nodeOnMeshNoLocal = nodeNoLocal - nNodesPreviousSubMeshes;
+      node_no_t nodeNoCompositeOnMeshNoLocal = nodeNoLocal - nNodesPreviousSubMeshes;
+
+      nodeOnMeshNoLocal = nodeNoCompositeOnMeshNoLocal;
+
+      for (node_no_t nodeNo = 0; nodeNo <= nodeOnMeshNoLocal; nodeNo++)
+      {
+        // if node is removed
+        if (removedSharedNodes_[subMeshIndex].find(nodeNo) != removedSharedNodes_[subMeshIndex].end())
+        {
+          nodeOnMeshNoLocal++;
+        }
+      }
+
       return;
     }
 
@@ -468,7 +480,7 @@ getSubMeshNoAndNodeNoLocal(node_no_t nodeNoLocal, int &subMeshNo, node_no_t &nod
     if (nodeNoLocal < nNodesPreviousSubMeshes + nGhostNodesCurrentSubMesh)
     {
       subMeshNo = subMeshIndex;
-      nodeOnMeshNoLocal = nodeNoLocal - nNodesPreviousSubMeshes;
+      nodeOnMeshNoLocal = nodeNoLocal - nNodesPreviousSubMeshes + nRemovedNodesNonGhost_[subMeshNo];
       break;
     }
 

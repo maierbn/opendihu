@@ -48,14 +48,14 @@ with open(input_filename, "rb") as infile:
   n_fibers_x = (int)(np.sqrt(parameters[0]))
   n_fibers_y = n_fibers_x
   
-  if "version 2" in header_str:   # the version 2 has number of fibers explicitly stored and thus also allows non-square dimension of fibers
+  if "version 2" in str(header_str):   # the version 2 has number of fibers explicitly stored and thus also allows non-square dimension of fibers
     n_fibers_x = parameters[2]
     n_fibers_y = parameters[3]
   
-  print("header: {}".format(header_str))
+  print("header: {}".format(str(header_str)))
   print("nFibersTotal:      {n_fibers} = {n_fibers_x} x {n_fibers_y}".format(n_fibers=parameters[0], n_fibers_x=n_fibers_x, n_fibers_y=n_fibers_y))
   print("nPointsWholeFiber: {}".format(parameters[1]))
-  if "version 2" not in header_str:
+  if "version 2" not in str(header_str):
     print("nBorderPointsXNew: {}".format(parameters[2]))
     print("nBorderPointsZNew: {}".format(parameters[3]))
   print("nFineGridFibers_:  {}".format(parameters[4]))
@@ -155,7 +155,7 @@ with open(input_filename, "rb") as infile:
     
     infile.seek(0)
     header_str = "opendihu binary fibers version 2".format(header_str)
-    outfile.write(struct.pack('32s', header_str))
+    outfile.write(struct.pack('32s', str(header_str).encode('utf-8')))
     outfile.write(header_length_raw)
     
     # write header

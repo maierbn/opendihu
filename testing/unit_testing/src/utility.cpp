@@ -162,8 +162,8 @@ void assertFileMatchesContent(std::string filename, std::string referenceContent
         {
           int pos = std::distance(fileContents.begin(),iterFileContents);
           msg << "mismatch at character, file: [" << *iterFileContents << "] != reference: [" << *iterReferenceContents << "], pos: "
-            << pos << std::endl << "file: ... " << fileContents.substr(std::max(0,pos-50),std::min((int)fileContents.size()-std::max(0,pos-50),50)) << "..."
-            << std::endl << "ref:  ... " << referenceContents.substr(std::max(0,pos-50),std::min((int)referenceContents.size()-std::max(0,pos-50),50)) << "...";
+            << pos << std::endl << "file: ... " << fileContents.substr(std::max(0,pos-50),std::min((int)fileContents.size()-std::max(0,pos-50),100)) << "..."
+            << std::endl << "ref:  ... " << referenceContents.substr(std::max(0,pos-50),std::min((int)referenceContents.size()-std::max(0,pos-50),100)) << "...";
         }
         referenceContentMatches = false;
         //VLOG(1) << "mismatch!";

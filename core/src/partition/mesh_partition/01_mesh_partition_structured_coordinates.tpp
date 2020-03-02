@@ -11,6 +11,9 @@ template<typename MeshType,typename BasisFunctionType>
 std::array<global_no_t,MeshType::dim()> MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 getCoordinatesGlobal(node_no_t nodeNoLocal) const
 {
+  if (nNodesLocalWithoutGhosts() == 0)
+    return std::array<global_no_t,MeshType::dim()>({0});
+
   if (MeshType::dim() == 1)
   {
     return std::array<global_no_t,MeshType::dim()>({beginNodeGlobalNatural(0) + nodeNoLocal});
@@ -90,17 +93,17 @@ getCoordinatesGlobal(node_no_t nodeNoLocal) const
           if (hasFullNumberOfNodes(2))
           {
             // for degenerate mesh partition
-            if (nNodesLocalWithoutGhosts() == 0)
-            {
-              coordinates[0] = 0;
-              coordinates[1] = 0;
-              coordinates[2] = 0;
+            coordinates[0] = 0;
+            coordinates[1] = 0;
+            coordinates[2] = 0;
 
-              return coordinates;
-            }
+            LOG(ERROR) << "degenerate mesh partition: " << nNodesLocalWithoutGhosts() << " local nodes";
+
+            return coordinates;
+
 
             // domain has no ghost nodes, should be handled by other if branch
-            assert(false);
+            //assert(false);
           }
           else
           {
@@ -250,6 +253,9 @@ template<typename MeshType,typename BasisFunctionType>
 std::array<int,MeshType::dim()> MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 getCoordinatesLocal(node_no_t nodeNoLocal) const
 {
+  if (nNodesLocalWithoutGhosts() == 0)
+    return std::array<int,MeshType::dim()>({0});
+
   std::array<global_no_t,MeshType::dim()> coordinatesGlobal = getCoordinatesGlobal(nodeNoLocal);
   std::array<int,MeshType::dim()> coordinatesLocal;
 

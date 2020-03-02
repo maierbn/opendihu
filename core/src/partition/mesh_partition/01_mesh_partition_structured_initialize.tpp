@@ -109,6 +109,7 @@ initialize1NodeMesh()
 
   LOG(DEBUG) << "initialize mesh partition for mesh with 1 dof";
 
+  isDegenerate_ = false;
   dmElements_ = nullptr;
   beginElementGlobal_[0] = 0;
   nElementsLocal_[0] = 0;
@@ -133,6 +134,34 @@ initialize1NodeMesh()
   PetscErrorCode ierr;
   PetscInt index = 0;
   ierr = ISLocalToGlobalMappingCreate(rankSubset_->mpiCommunicator(), 1, 1, &index, PETSC_COPY_VALUES, &localToGlobalPetscMappingDofs_); CHKERRV(ierr);
+}
+
+template<typename MeshType,typename BasisFunctionType>
+void MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+initializeDegenerateMesh()
+{
+  // We initialize for a mesh with 0 elements and 0 nodes and dofs, this occurs when the mpi communicator is MPI_COMM_NULL
+  LOG(DEBUG) << "initialize mesh partition for degenerate mesh";
+
+  isDegenerate_ = true;
+  dmElements_ = nullptr;
+  beginElementGlobal_.fill(0);
+  nElementsLocal_.fill(0);
+  nElementsGlobal_.fill(0);
+  nRanks_.fill(0);
+  ownRankPartitioningIndex_.fill(0);
+  localSizesOnPartitions_.fill(std::vector<element_no_t>({0}));
+  hasFullNumberOfNodes_.fill(false);
+
+  onlyNodalDofLocalNos_.clear();
+
+  dofNosLocalNaturalOrdering_.clear();
+  localToGlobalPetscMappingDofs_ = NULL;
+  nDofsLocalWithoutGhosts_ = 0;
+
+  this->dofNosLocal_.clear();
+
+  localToGlobalPetscMappingDofs_ = nullptr;
 }
 
 template<typename MeshType,typename BasisFunctionType>

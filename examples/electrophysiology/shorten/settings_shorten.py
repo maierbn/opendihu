@@ -25,9 +25,9 @@ dt_1D = 7e-4                      # timestep width of diffusion
 dt_0D = 7e-4                      # timestep width of ODEs
 dt_splitting = 7e-4                      # overall timestep width of splitting
 
-dt_0D = 2e-3                        # [ms] timestep width of ODEs
-dt_1D = 4e-3                        # [ms] timestep width of diffusion
-dt_splitting = 4e-3                 # [ms] overall timestep width of strang splitting
+dt_0D = 1e-3                        # [ms] timestep width of ODEs
+dt_1D = 3e-3                        # [ms] timestep width of diffusion
+dt_splitting = 3e-3                 # [ms] overall timestep width of strang splitting
 
 #dt_1D = 0.004                      # timestep width of diffusion
 #dt_0D = 0.002                     # timestep width of ODEs

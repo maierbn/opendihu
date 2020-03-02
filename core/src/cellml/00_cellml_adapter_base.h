@@ -39,7 +39,7 @@ public:
   typedef ::Data::OutputConnectorData<FunctionSpaceType,nStates_,nIntermediates_> OutputConnectorDataType;
 
   //! constructor from context
-  CellmlAdapterBase(DihuContext context, bool noNewOutputWriter);
+  CellmlAdapterBase(DihuContext context, bool initializeOutputWriter);
 
   //! constructor from context
   CellmlAdapterBase(DihuContext context);
@@ -63,6 +63,10 @@ public:
   template<typename FunctionSpaceType2>
   bool setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nStates_>> initialValues);
 
+  //! initialize all information from python settings key "mappings", this sets parametersUsedAsIntermediates/States and outputIntermediate/StatesIndex
+  void initializeMappings(std::vector<int> &parametersUsedAsIntermediate, std::vector<int> &parametersUsedAsConstant,
+                          std::vector<int> &statesForTransfer, std::vector<int> &intermediatesForTransfer, std::vector<int> &parametersForTransfer);
+
   //! set the solution field variable in the data object, that actual data is stored in the timestepping scheme object
   void setSolutionVariable(std::shared_ptr<FieldVariableStates> states);
 
@@ -76,8 +80,11 @@ public:
   //! get number of instances, number of intermediates and number of parameters
   void getNumbers(int &nInstances, int &nIntermediates, int &nParameters);
 
-  //! return references to statesForTransfer and intermediatesForTransfer, the states and intermediates that should be used for output connector data transfer
-  void getStatesIntermediatesForTransfer(std::vector<int> &statesForTransfer, std::vector<int> &intermediatesForTransfer);
+  //! return a reference to statesForTransfer, the states that should be used for output connector data transfer
+  std::vector<int> &statesForTransfer();
+
+  //! return a reference to intermediatesForTransfer, the intermediates that should be used for output connector data transfer
+  std::vector<int> &intermediatesForTransfer();
 
   //! get a vector with the names of the states
   void getStateNames(std::vector<std::string> &stateNames);

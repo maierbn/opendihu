@@ -248,6 +248,9 @@ config = {
                       "parametersUsedAsIntermediate":           variables.parameters_used_as_intermediate,      #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array.
                       "parametersUsedAsConstant":               variables.parameters_used_as_constant,          #[65],           # list of constant value indices, that will be set by parameters.
                       "parametersInitialValues":                variables.parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
+                      
+                      "mappings":                               variables.mappings,                             # mappings between parameters and intermediates/constants and between outputConnectorSlots and states, intermediates or parameters, they are defined in helper.py
+                      
                       "meshName":                               "MeshFiber_{}".format(fiber_no),
                       "stimulationLogFilename":                 "out/stimulation.log",                          # a file that will contain the times of stimulations
                     },      
@@ -308,6 +311,8 @@ config = {
       },
       "fiberDistributionFile":    variables.fiber_distribution_file,   # for FastMonodomainSolver, e.g. MU_fibre_distribution_3780.txt
       "firingTimesFile":          variables.firing_times_file,         # for FastMonodomainSolver, e.g. MU_firing_times_real.txt
+      "onlyComputeIfHasBeenStimulated": True,                          # only compute fibers after they have been stimulated for the first time
+      "disableComputationWhenStatesAreCloseToEquilibrium": True,       # optimization where states that are close to their equilibrium will not be computed again
     },
     "Term2": {        # Bidomain, EMG
       "StaticBidomainSolver": {       # version for fibers_emg
@@ -334,16 +339,16 @@ config = {
             "inputMeshIsGlobal":  True,
             "dirichletBoundaryConditions": {},
             "neumannBoundaryConditions":   [],
-            "diffusionTensor": [      # sigma_i           # fiber direction is (1,0,0)
+            "diffusionTensor": [[      # sigma_i,  fiber direction is (1,0,0), one list item = same tensor for all elements, multiple list items = a different tensor for each element
               8.93, 0, 0,
               0, 0.893, 0,
               0, 0, 0.893
-            ],
-            "extracellularDiffusionTensor": [      # sigma_e
+            ]],
+            "extracellularDiffusionTensor": [[      # sigma_e, one list item = same tensor for all elements, multiple list items = a different tensor for each element
               6.7, 0, 0,
               0, 6.7, 0,
               0, 0, 6.7,
-            ],
+            ]],
           },
         },
         "OutputWriter" : variables.output_writer_emg,
@@ -377,16 +382,16 @@ config = {
               "inputMeshIsGlobal":  True,
               "dirichletBoundaryConditions": {},
               "neumannBoundaryConditions":   [],
-              "diffusionTensor": [      # sigma_i           # fiber direction is (1,0,0)
+              "diffusionTensor": [[      # sigma_i, fiber direction is (1,0,0), one list item = same tensor for all elements, multiple list items = a different tensor for each element
                 8.93, 0, 0,
                 0, 0.893, 0,
                 0, 0, 0.893
-              ],
-              "extracellularDiffusionTensor": [      # sigma_e
+              ]],
+              "extracellularDiffusionTensor": [[      # sigma_e, one list item = same tensor for all elements, multiple list items = a different tensor for each element
                 6.7, 0, 0,
                 0, 6.7, 0,
                 0, 0, 6.7,
-              ],
+              ]],
             },
           },
           "OutputWriter" : variables.output_writer_emg,

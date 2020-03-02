@@ -35,6 +35,32 @@ int f(int a)
   return v;
 }
 
+class A
+{
+public:
+
+  void init()
+  {
+    v_.resize(5);
+    std::iota(v_.begin(), v_.end(), 0);
+  }
+  
+  void print()
+  {
+    LOG(DEBUG) << "v: ";
+    for (int i = 0; i < v_.size(); i++)
+      LOG(DEBUG) << v_[i];
+  }
+
+  void getV(std::vector<int> &&v)
+  {
+    v = v_;
+  }
+protected:
+
+  std::vector<int> v_;
+};
+
 int main(int argc, char *argv[])
 {
   LOG(DEBUG) << "debug" << f(1);
@@ -43,7 +69,7 @@ int main(int argc, char *argv[])
   LOG(ERROR) << "logerror" << f(4);
   
   cout << "double vector size: " << Vc::double_v::size() << ", float vector size: " << Vc::float_v::size() << endl;
-
+  
   // test Vc
   int nFiberPoints = 100;
   int nVcVectors = (nFiberPoints + Vc::double_v::Size - 1) / Vc::double_v::Size;

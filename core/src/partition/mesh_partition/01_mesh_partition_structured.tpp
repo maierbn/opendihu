@@ -10,7 +10,7 @@ namespace Partition
 template<typename MeshType,typename BasisFunctionType>
 MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 MeshPartition(std::array<global_no_t,MeshType::dim()> nElementsGlobal, std::shared_ptr<RankSubset> rankSubset) :
-  MeshPartitionBase(rankSubset), nElementsGlobal_(nElementsGlobal), hasFullNumberOfNodes_({false}), nDofsLocalWithoutGhosts_(-1)
+  MeshPartitionBase(rankSubset), nElementsGlobal_(nElementsGlobal), isDegenerate_(false), hasFullNumberOfNodes_({false}), nDofsLocalWithoutGhosts_(-1)
 {
   VLOG(1) << "create MeshPartition where only the global size is known, " 
     << "nElementsGlobal: " << nElementsGlobal_ << ", rankSubset: " << *rankSubset << ", mesh dimension: " << MeshType::dim();
@@ -18,6 +18,11 @@ MeshPartition(std::array<global_no_t,MeshType::dim()> nElementsGlobal, std::shar
   if (MeshType::dim() == 1 && nElementsGlobal_[0] == 0)
   {
     initialize1NodeMesh();
+  }
+  else if (!rankSubset->ownRankIsContained())
+  {
+    isDegenerate_ = true;
+    initializeDegenerateMesh();
   }
   else
   {

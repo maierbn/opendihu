@@ -13,10 +13,13 @@ class CellmlSourceCodeGeneratorBase
 {
 public:
   //! constructor
-  CellmlSourceCodeGeneratorBase();
+  CellmlSourceCodeGeneratorBase(std::shared_ptr<std::vector<double>> parameters);
+
+  //! initialize the intermediateNames, stateNames and constantNames by parsing the source code. There will be an error if the number of states/intermediates does not match
+  void initializeNames(std::string inputFilename, int nInstances, int nStates, int nIntermediates);
 
   //! initialize all variables, parses the source code
-  void initialize(std::string inputFilename, int nInstances, int nStates, int nIntermediates,
+  void initializeSourceCode(
     const std::vector<int> &parametersUsedAsIntermediate, const std::vector<int> &parametersUsedAsConstant,
     const std::vector<double> &parametersInitialValues
   );
@@ -35,11 +38,14 @@ public:
   //! get a reference to the names of the state variables
   const std::vector<std::string> &stateNames() const;
 
+  //! get a reference to the names of the constants
+  const std::vector<std::string> &constantNames() const;
+
   //! get the number of parameters
   const int nParameters() const;
 
   //! get a reference to the parameters, this allows to change the parameters
-  std::vector<double> &parameters();
+  std::shared_ptr<std::vector<double>> parameters();
 
   //! get the source filename of the initial file (which is inputFilename in initialize)
   const std::string sourceFilename() const;
@@ -89,8 +95,11 @@ protected:
   //! check if sourceFilename_ is an xml based file and then convert to a c file, updating sourceFilename_
   void convertFromXmlToC();
 
-  //! Scan the given cellml source file and initialize the following:
+  //! Scan the cellml source file and initialize the following:
   //! stateNames_, intermediateNames_, nConstants_ and nIntermediatesInSource_
+  void parseNamesInSourceCodeFile();
+
+  //! Scan the given cellml source file and initialize the following:
   //! constantAssignments_, statesInitialValues_,
   //! cellMLCode_
   void parseSourceCodeFile();
@@ -114,10 +123,11 @@ protected:
 
   std::vector<int> parametersUsedAsIntermediate_;  //< explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array
   std::vector<int> parametersUsedAsConstant_;  //< explicitely defined parameters that will be copied to constants, this vector contains the indices of the constants
-  std::vector<double> parameters_;             //< vector of nParameters_*nInstances_ values that will be provided to CellML by the code, given by python config, CellML name: known
+  std::shared_ptr<std::vector<double>> parameters_;            //< vector of nParameters_*nInstances_ values that will be provided to CellML by the code, given by python config, CellML name: known
 
   std::vector<std::string> stateNames_;        //< the names for the states as given in the input source file
   std::vector<std::string> intermediateNames_; //< the names for the intermediates as given in the input source file
+  std::vector<std::string> constantNames_;     //< the names of the constants
 
   std::string sourceFilename_;                 //< file name of provided CellML source file
   std::string singleInstanceCode_;             //< c++ code that computes the rhs for a single instance, as in the original source file. This is needed to compute the equilibrium of states.

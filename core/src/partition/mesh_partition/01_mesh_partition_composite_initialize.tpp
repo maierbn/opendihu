@@ -622,22 +622,23 @@ initializeSharedNodes()
           int lower = 0;
           int upper = nodePositionsNodes[indexOtherMesh].size();
 
-          while (k != kPrevious)
-          {
-            Vec3 currentNodePosition = nodePositionsNodes[indexOtherMesh][k].first;
-            if (currentNodePosition[0] < position[0]-nodePositionEqualTolerance)
+          if (upper > 0)
+            while (k != kPrevious)
             {
-              lower = k;
-            }
-            else
-            {
-              upper = k;
-            }
-            kPrevious = k;
-            k = (upper + lower) / 2;
+              Vec3 currentNodePosition = nodePositionsNodes[indexOtherMesh][k].first;
+              if (currentNodePosition[0] < position[0]-nodePositionEqualTolerance)
+              {
+                lower = k;
+              }
+              else
+              {
+                upper = k;
+              }
+              kPrevious = k;
+              k = (upper + lower) / 2;
 
-            VLOG(2) << "  range [" << lower << "," << upper << "] k:" << k << ", x:" << currentNodePosition[0];
-          }
+              VLOG(2) << "  range [" << lower << "," << upper << "] k:" << k << ", x:" << currentNodePosition[0];
+            }
           VLOG(2) << "  now check all node positions of otherMesh " << indexOtherMesh << " that have x=" << position[0] << " within tolerance";
 
           // check all node positions after k

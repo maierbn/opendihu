@@ -9,15 +9,159 @@
 #include <iostream>
 #include "easylogging++.h"
 
+
+void CellmlSourceCodeGeneratorBase::
+parseNamesInSourceCodeFile()
+{
+  // input source filename is this->sourceFilename_
+  nIntermediatesInSource_ = 0;
+  unsigned int nStatesInSource = 0;
+  bool errorWrongNumberOfIntermediatesOrStates = false;
+
+  // read in source from file
+  std::ifstream sourceFile(this->sourceFilename_.c_str());
+  if (!sourceFile.is_open())
+  {
+    LOG(FATAL) << "Could not open source file \"" << this->sourceFilename_<< "\" for reading!";
+  }
+  else
+  {
+    // read whole file contents to source
+    std::stringstream source;
+    source << sourceFile.rdbuf();
+    sourceFile.close();
+
+    // step through lines
+    while(!source.eof())
+    {
+      std::string line;
+      getline(source, line);
+
+      if (line.find(" * STATES") == 0)  // line in OpenCOR generated input file of type " * STATES[55] is P_C_SR in component razumova (milliM)."
+      {
+        // parse name of state
+        unsigned int index = atoi(line.substr(10,line.find("]")-10).c_str());
+        int posBegin = line.find("is",12)+3;
+        int posEnd = line.rfind(" in");
+        std::string name = line.substr(posBegin,posEnd-posBegin);
+
+        posBegin = line.find("component")+10;
+        posEnd = line.find(" (",posBegin);
+        std::string cellMLComponentName = line.substr(posBegin,posEnd-posBegin);
+
+        VLOG(1) << "state parse name=[" << name << "], cellMLComponentName=[" << cellMLComponentName << "], line=[" << line << "]";
+        std::stringstream fullName;
+        fullName << cellMLComponentName << "/" << name;
+
+        nStatesInSource = std::max(nStatesInSource, index+1);
+
+        if (index >= this->stateNames_.size())
+        {
+          LOG(ERROR) << "The CellML file \"" << sourceFilename_ << "\" contains more than " << index << " states "
+            << " but only " << this->stateNames_.size() << " were given as template argument to CellMLAdapter.";
+          errorWrongNumberOfIntermediatesOrStates = true;
+        }
+        else
+        {
+          this->stateNames_[index] = fullName.str();
+        }
+
+        VLOG(1) << "store stateName [" << fullName.str() << "] at index " << index << ", now: " << this->stateNames_;
+      }
+      else if (line.find(" * ALGEBRAIC") == 0)  // line in OpenCOR generated input file of type " * ALGEBRAIC[35] is g_Cl in component sarco_Cl_channel (milliS_per_cm2)."
+      {
+        // parse name of intermediate
+        unsigned int index = atoi(line.substr(13,line.find("]")-13).c_str());
+        int posBegin = line.find("is",15)+3;
+        int posEnd = line.rfind(" in");
+        std::string name = line.substr(posBegin,posEnd-posBegin);
+
+        posBegin = line.find("component")+10;
+        posEnd = line.find(" (",posBegin);
+        std::string cellMLComponentName = line.substr(posBegin,posEnd-posBegin);
+
+        VLOG(1) << "intermediate parse name=[" << name << "], cellMLComponentName=[" << cellMLComponentName << "], line=[" << line << "]";
+        std::stringstream fullName;
+        fullName << cellMLComponentName << "/" << name;
+
+        nIntermediatesInSource_ = std::max(nIntermediatesInSource_, index+1);
+
+        if (index >= this->intermediateNames_.size())
+        {
+          LOG(ERROR) << "The CellML file \"" << sourceFilename_ << "\" contains more than " << index << " intermediates "
+            << " but only " << this->intermediateNames_.size() << " were given as template argument to CellMLAdapter.";
+          errorWrongNumberOfIntermediatesOrStates = true;
+        }
+        else
+        {
+          this->intermediateNames_[index] = fullName.str();
+        }
+
+        VLOG(1) << "store intermediateName [" << fullName.str() << "] at index " << index << ", now: " << this->intermediateNames_;
+      }
+      else if (line.find(" * CONSTANTS") == 0)  // line in OpenCOR generated input file of type " * ALGEBRAIC[35] is g_Cl in component sarco_Cl_channel (milliS_per_cm2)."
+      {
+        // parse name of intermediate
+        unsigned int index = atoi(line.substr(13,line.find("]")-13).c_str());
+        int posBegin = line.find("is",15)+3;
+        int posEnd = line.rfind(" in");
+        std::string name = line.substr(posBegin,posEnd-posBegin);
+
+        posBegin = line.find("component")+10;
+        posEnd = line.find(" (",posBegin);
+        std::string cellMLComponentName = line.substr(posBegin,posEnd-posBegin);
+
+        VLOG(1) << "constant parse name=[" << name << "], cellMLComponentName=[" << cellMLComponentName << "], line=[" << line << "]";
+        std::stringstream fullName;
+        fullName << cellMLComponentName << "/" << name;
+
+        if (index >= this->constantNames_.size())
+        {
+          this->constantNames_.resize(index+1);
+        }
+        this->constantNames_[index] = fullName.str();
+
+        VLOG(1) << "store constantName [" << fullName.str() << "] at index " << index << ", now: " << this->constantNames_;
+      }
+
+      // if the initConsts function starts, we are done with parsing stateNames, intermediateNames and constantNames
+      if (line.find("initConsts") != std::string::npos)
+      {
+        break;
+      }
+    }
+
+    if (errorWrongNumberOfIntermediatesOrStates)
+    {
+      LOG(FATAL) << "The CellML model \"" << sourceFilename_ << "\" has " << nStatesInSource << " states and "
+        << nIntermediatesInSource_ << " intermediates, but the CellMLAdapter only supports "
+        << nStates_ << " states and " << nIntermediates_ << " intermediates." << std::endl
+        << "You have to set the correct number in the c++ file and recompile. " << std::endl
+        << "(Use \" CellmlAdapter<" << nStatesInSource << "," << nIntermediatesInSource_ << ">\".)";
+    }
+
+    // check number of intermediates and states in source file
+    if (nIntermediatesInSource_ != nIntermediates_)
+    {
+      LOG(WARNING) << "The CellML model \"" << sourceFilename_ << "\" needs " << nIntermediatesInSource_ << " intermediates and CellMLAdapter supports " << nIntermediates_
+        << ". You should recompile with the correct number to avoid performance penalties." << std::endl
+        << "(Use \" CellmlAdapter<" << nStatesInSource << "," << nIntermediatesInSource_ << ">\".)";
+    }
+    if (nStatesInSource != nStates_)
+    {
+      LOG(ERROR) << "The CellML model \"" << sourceFilename_ << "\" has " << nStatesInSource << " states and CellMLAdapter supports " << nStates_
+        << ". This means the last " << nStates_ - nStatesInSource << " state(s) will have undefined values. You should recompile with the correct number of states." << std::endl
+        << "(Use \" CellmlAdapter<" << nStatesInSource << "," << nIntermediatesInSource_ << ">\".)";
+    }
+  }
+}
+
 void CellmlSourceCodeGeneratorBase::
 parseSourceCodeFile()
 {
   // input source filename is this->sourceFilename_
 
   // parse source file, set initial values for states (only one instance) and nParameters_, nConstants_ and nIntermediatesInSource_
-  nIntermediatesInSource_ = 0;
-  unsigned int nStatesInSource = 0;
-  bool errorWrongNumberOfIntermediatesOrStates = false;
   bool currentlyInInitConstsFunction = false;
 
   // read in source from file
@@ -62,62 +206,19 @@ parseSourceCodeFile()
       // parse initial values for states, constants and intermediates
       if (!headerDone)
       {
-        if (line.find(" * STATES") == 0)  // line in OpenCOR generated input file of type " * STATES[55] is P_C_SR in component razumova (milliM)."
-        {
-          // parse name of state
-          unsigned int index = atoi(line.substr(10,line.find("]")-10).c_str());
-          int posBegin = line.find("is",12)+3;
-          int posEnd = line.rfind(" in");
-          name = line.substr(posBegin,posEnd-posBegin);
-          VLOG(1) << "index= " << index << ", this->stateNames_.size() = " << this->stateNames_.size();
-          nStatesInSource = std::max(nStatesInSource, index+1);
-
-          if (index >= this->stateNames_.size())
-          {
-            LOG(ERROR) << "The CellML file \"" << sourceFilename_ << "\" contains more than " << index << " states "
-              << " but only " << this->stateNames_.size() << " were given as template argument to CellMLAdapter.";
-            errorWrongNumberOfIntermediatesOrStates = true;
-          }
-          else
-          {
-            this->stateNames_[index] = name;
-          }
-        }
-        else if (line.find(" * ALGEBRAIC") == 0)  // line in OpenCOR generated input file of type " * ALGEBRAIC[35] is g_Cl in component sarco_Cl_channel (milliS_per_cm2)."
-        {
-          // parse name of intermediate
-          unsigned int index = atoi(line.substr(13,line.find("]")-13).c_str());
-          int posBegin = line.find("is",15)+3;
-          int posEnd = line.rfind(" in");
-          name = line.substr(posBegin,posEnd-posBegin);
-          VLOG(1) << "index= " << index << ", this->intermediateNames_.size() = " << this->intermediateNames_.size();
-          nIntermediatesInSource_ = std::max(nIntermediatesInSource_, index+1);
-
-          if (index >= this->intermediateNames_.size())
-          {
-            LOG(ERROR) << "The CellML file \"" << sourceFilename_ << "\" contains more than " << index << " intermediates "
-              << " but only " << this->intermediateNames_.size() << " were given as template argument to CellMLAdapter.";
-            errorWrongNumberOfIntermediatesOrStates = true;
-          }
-          else
-          {
-            this->intermediateNames_[index] = name;
-          }
-        }
-        else if (line.find("STATES[") == 0)   // line contains assignment in OpenCOR generated input file
+        if (line.find("STATES[") == 0)   // line contains assignment in OpenCOR generated input file
         {
           // parse initial value of state
           unsigned int index = atoi(line.substr(7,line.find("]",7)-7).c_str());
           double value = atof(line.substr(line.find("= ")+2).c_str());
           if (index >= statesInitialValues_.size())
           {
-            errorWrongNumberOfIntermediatesOrStates = true;
+            LOG(FATAL) << "The CellML model \"" << sourceFilename_ << "\" initializes at least " << index+1 << " states but " << statesInitialValues_.size() << " are specified by the template argument.";
           }
           else
           {
             statesInitialValues_[index] = value;
           }
-          nStatesInSource = std::max(nStatesInSource, index+1);
         }
         else if (line.find("ALGEBRAIC[") == 0)  // assignment to an algebraic variable in both OpenCMISS and OpenCOR generated files, in OpenCMISS generated files, this does not count towards the algebraic variables that are hold by opendihu
         {
@@ -133,7 +234,7 @@ parseSourceCodeFile()
         else if (line.find("OC_CellML_RHS_routine") != std::string::npos)
         {
           LOG(FATAL) << "Cellml sourceFilename \"" << sourceFilename_ << "\" is OpenCMISS generated. This is not supported. "
-            << "Please use OpenCOR to generate the c source file.";
+            << "Please use OpenCOR to generate the C source file or let opendihu do the conversion by just providing the cellml file as \"modelFilename\".";
         }
       }
 
@@ -236,29 +337,6 @@ parseSourceCodeFile()
 
         VLOG(2) << "line is not special, copy: [" << line << "]";
       }
-    }
-
-    if (errorWrongNumberOfIntermediatesOrStates)
-    {
-      LOG(FATAL) << "The CellML model \"" << sourceFilename_ << "\" has " << nStatesInSource << " states and "
-        << nIntermediatesInSource_ << " intermediates, but the CellMLAdapter only supports "
-        << nStates_ << " states and " << nIntermediates_ << " intermediates." << std::endl
-        << "You have to set the correct number in the c++ file and recompile. " << std::endl
-        << "(Use \" CellmlAdapter<" << nStatesInSource << "," << nIntermediatesInSource_ << ">\".)";
-    }
-
-    // check number of intermediates and states in source file
-    if (nIntermediatesInSource_ != nIntermediates_)
-    {
-      LOG(WARNING) << "The CellML model \"" << sourceFilename_ << "\" needs " << nIntermediatesInSource_ << " intermediates and CellMLAdapter supports " << nIntermediates_
-        << ". You should recompile with the correct number to avoid performance penalties." << std::endl
-        << "(Use \" CellmlAdapter<" << nStatesInSource << "," << nIntermediatesInSource_ << ">\".)";
-    }
-    if (nStatesInSource != nStates_)
-    {
-      LOG(ERROR) << "The CellML model \"" << sourceFilename_ << "\" has " << nStatesInSource << " states and CellMLAdapter supports " << nStates_
-        << ". This means the last " << nStates_ - nStatesInSource << " state(s) will have undefined values. You should recompile with the correct number of states." << std::endl
-        << "(Use \" CellmlAdapter<" << nStatesInSource << "," << nIntermediatesInSource_ << ">\".)";
     }
   }
 }

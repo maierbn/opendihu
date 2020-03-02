@@ -74,14 +74,14 @@ CellmlAdapter(const CellmlAdapter &rhs, std::shared_ptr<FunctionSpace> functionS
 
   // allocate data vectors
   //this->intermediates_.resize(this->nIntermediates_*this->nInstances_);
-  this->cellmlSourceCodeGenerator_.parameters().resize(this->nParameters_*this->nInstances_);
+  this->data_.parameters()->resize(this->nParameters_*this->nInstances_);
 
   // copy rhs parameter values to parameters, it is assumed that the parameters are the same for every instance
   for (int instanceNo = 0; instanceNo < this->nInstances_; instanceNo++)
   {
     for (int j = 0; j < this->nParameters_; j++)
     {
-      this->cellmlSourceCodeGenerator_.parameters()[j*this->nInstances_ + instanceNo] = rhs.parameters_[j];
+      this->data_.parameters()[j*this->nInstances_ + instanceNo] = rhs.parameters_[j];
     }
   }
 
@@ -200,7 +200,7 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
     // PythonUtility::GlobalInterpreterLock lock;
     
     VLOG(1) << "call setParameters";
-    this->setParameters_((void *)this, this->nInstances_, this->internalTimeStepNo_, currentTime, this->cellmlSourceCodeGenerator_.parameters());
+    this->setParameters_((void *)this, this->nInstances_, this->internalTimeStepNo_, currentTime, *this->data_.parameters());
   }
 
   // get new values for parameters, call callback function of python config
@@ -210,7 +210,7 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
     // PythonUtility::GlobalInterpreterLock lock;
 
     VLOG(1) << "call setSpecificParameters";
-    this->setSpecificParameters_((void *)this, this->nInstances_, this->internalTimeStepNo_, currentTime, this->cellmlSourceCodeGenerator_.parameters());
+    this->setSpecificParameters_((void *)this, this->nInstances_, this->internalTimeStepNo_, currentTime, *this->data_.parameters());
   }
 
   VLOG(1) << "currentTime: " << currentTime << ", lastCallSpecificStatesTime_: " << this->lastCallSpecificStatesTime_
@@ -285,12 +285,12 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
   //              this          STATES, RATES, WANTED,                KNOWN
   if (this->rhsRoutine_)
   {
-    VLOG(1) << "call rhsRoutine_ with " << nIntermediates << " intermediates, " << this->cellmlSourceCodeGenerator_.parameters().size() << " parameters";
-    VLOG(2) << "parameters: " << this->cellmlSourceCodeGenerator_.parameters();
+    VLOG(1) << "call rhsRoutine_ with " << nIntermediates << " intermediates, " << this->data_.parameters()->size() << " parameters";
+    VLOG(2) << "parameters: " << this->data_.parameters();
 
     //Control::PerformanceMeasurement::start("rhsEvaluationTime");  // commented out because it takes too long in this very inner loop
     // call actual rhs routine from cellml code
-    this->rhsRoutine_((void *)this, currentTime, states, rates, intermediatesData, this->cellmlSourceCodeGenerator_.parameters().data());
+    this->rhsRoutine_((void *)this, currentTime, states, rates, intermediatesData, this->data_.parameters()->data());
     //Control::PerformanceMeasurement::stop("rhsEvaluationTime");
   }
 
@@ -382,22 +382,22 @@ initializeToEquilibriumValues(std::array<double,nStates_> &statesInitialValues)
   for (int iterationNo = 0; iterationNo < nInterations; iterationNo++)
   {
     // compute k1 = f(t, u)
-    this->rhsRoutineSingleInstance_((void *)this, currentTime, u.data(), k1.data(), intermediates.data(), this->cellmlSourceCodeGenerator_.parameters().data());
+    this->rhsRoutineSingleInstance_((void *)this, currentTime, u.data(), k1.data(), intermediates.data(), this->data_.parameters()->data());
 
     // compute k2 = f(t+dt/2, u+dt/2.*k1)
     for (int stateNo = 0; stateNo < nStates_; stateNo++)
       u2[stateNo] = u[stateNo] + dt/2. * k1[stateNo];
-    this->rhsRoutineSingleInstance_((void *)this, currentTime+dt/2., u2.data(), k2.data(), intermediates.data(), this->cellmlSourceCodeGenerator_.parameters().data());
+    this->rhsRoutineSingleInstance_((void *)this, currentTime+dt/2., u2.data(), k2.data(), intermediates.data(), this->data_.parameters()->data());
 
     // compute k3 = f(t+dt/2, u+dt/2.*k2)
     for (int stateNo = 0; stateNo < nStates_; stateNo++)
       u3[stateNo] = u[stateNo] + dt/2. * k2[stateNo];
-    this->rhsRoutineSingleInstance_((void *)this, currentTime+dt/2., u3.data(), k3.data(), intermediates.data(), this->cellmlSourceCodeGenerator_.parameters().data());
+    this->rhsRoutineSingleInstance_((void *)this, currentTime+dt/2., u3.data(), k3.data(), intermediates.data(), this->data_.parameters()->data());
 
     // compute k4 = f(t+dt, u+dt*k3)
     for (int stateNo = 0; stateNo < nStates_; stateNo++)
       u4[stateNo] = u[stateNo] + dt * k3[stateNo];
-    this->rhsRoutineSingleInstance_((void *)this, currentTime+dt, u4.data(), k4.data(), intermediates.data(), this->cellmlSourceCodeGenerator_.parameters().data());
+    this->rhsRoutineSingleInstance_((void *)this, currentTime+dt, u4.data(), k4.data(), intermediates.data(), this->data_.parameters()->data());
 
     // compute u += dt/6 * (k1 + 2*k2 + 2*k3 + k4)
     maximumIncrement = 0;

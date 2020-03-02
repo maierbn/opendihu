@@ -53,6 +53,7 @@ adios_output = False
 exfile_output = False
 python_output = False
 fiber_file = "../../input/7x7fibers.bin"
+#fiber_file = "../../input/left_biceps_brachii_7x7fibers.bin"
 fat_mesh_file = fiber_file + "_fat.bin2"
 firing_times_file = "../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
 fiber_distribution_file = "../../input/MU_fibre_distribution_10MUs.txt"

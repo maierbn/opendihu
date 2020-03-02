@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
     OperatorSplitting::Strang<
       TimeSteppingScheme::Heun<
         CellmlAdapter<
-          4,   // 57 for Hodgkin-Huxley
+          4, 9,   // 57 for Hodgkin-Huxley
           FunctionSpace::FunctionSpace<
             Mesh::StructuredDeformableOfDimension<1>,
             BasisFunction::LagrangeOfOrder<1>

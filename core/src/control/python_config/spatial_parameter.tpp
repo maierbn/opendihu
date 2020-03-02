@@ -86,10 +86,12 @@ set(std::shared_ptr<FunctionSpaceType> functionSpace, bool inputMeshIsGlobal, st
   {
     if (values.size() != nElementsGlobal && values.size() != 1)
     {
-      LOG(ERROR) << path << ": The number of entries given (" << values.size() << ") does not match "
-        << "the global number of elements (" << nElementsGlobal << "). \"inputMeshIsGlobal\" is True.";
+      LOG(ERROR) << path << ": The number of entries given in the list (" << values.size() << ") does not match "
+        << "the global number of elements (" << nElementsGlobal << "). \"inputMeshIsGlobal\" is True. \n"
+        << "Note, if you only specify one entry, it will be used for all elements. "
+        << " If you specify more than one, every element gets its own value and, thus, the number of entries must match the number of elements.";
     }
-    else
+    else if (values.size() != 1)
     {
       std::vector<ValueType> localValues;
       localValues.reserve(nElementsLocal);
@@ -99,7 +101,7 @@ set(std::shared_ptr<FunctionSpaceType> functionSpace, bool inputMeshIsGlobal, st
       {
         global_no_t elementNoGlobalNatural = functionSpace->meshPartition()->getElementNoGlobalNatural(elementNoLocal);
 
-        assert(elementNoGlobalNatural > 0 && elementNoGlobalNatural < values.size());
+        assert(elementNoGlobalNatural >= 0 && elementNoGlobalNatural < values.size());
         localValues.push_back(values[elementNoGlobalNatural]);
       }
       values.assign(localValues.begin(), localValues.end());
@@ -109,8 +111,10 @@ set(std::shared_ptr<FunctionSpaceType> functionSpace, bool inputMeshIsGlobal, st
   {
     if (values.size() != nElementsLocal && values.size() != 1)
     {
-      LOG(ERROR) << path << ": The number of entries given (" << values.size() << ") does not match "
-        << "the local number of elements (" << nElementsLocal << "). \"inputMeshIsGlobal\" is False.";
+      LOG(ERROR) << path << ": The number of entries given in the list (" << values.size() << ") does not match "
+        << "the local number of elements (" << nElementsLocal << "). \"inputMeshIsGlobal\" is False. \n"
+        << "Note, if you only specify one entry, it will be used for all elements. "
+        << " If you specify more than one, every element gets its own value and, thus, the number of entries must match the number of elements.";
     }
   }
 

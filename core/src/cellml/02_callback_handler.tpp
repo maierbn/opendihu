@@ -12,8 +12,8 @@
 
 template<int nStates, int nIntermediates_, typename FunctionSpaceType>
 CallbackHandler<nStates,nIntermediates_,FunctionSpaceType>::
-CallbackHandler(DihuContext context, bool noNewOutputWriter) :
-  RhsRoutineHandler<nStates,nIntermediates_,FunctionSpaceType>(context, noNewOutputWriter),
+CallbackHandler(DihuContext context, bool initializeOutputWriter) :
+  RhsRoutineHandler<nStates,nIntermediates_,FunctionSpaceType>(context, initializeOutputWriter),
   DiscretizableInTime(),
   setParameters_(NULL), setSpecificParameters_(NULL), setSpecificStates_(NULL), handleResult_(NULL),
   pythonSetParametersFunction_(NULL), pythonSetSpecificParametersFunction_(NULL), pythonSetSpecificStatesFunction_(NULL), pythonHandleResultFunction_(NULL),

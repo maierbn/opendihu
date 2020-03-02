@@ -71,6 +71,9 @@ public:
   //! get the total number of elements on the global domain, for structured meshes this is directly implemented in the Mesh itself (not FunctionSpace like here)
   global_no_t nElementsGlobal() const;
 
+  //! get the node no in the global natural ordering
+  global_no_t getNodeNoGlobalNaturalFromElementNoLocal(element_no_t elementNoLocal, int nodeIndex) const;
+
   // nDofsGlobal() is defined in 06_function_space_dofs_nodes.h
   
   //! initialize geometry

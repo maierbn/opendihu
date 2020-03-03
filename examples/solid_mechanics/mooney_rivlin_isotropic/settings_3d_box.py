@@ -95,6 +95,7 @@ config = {
     "snesAbsoluteTolerance": 1e-5,     # absolute tolerance of the nonlinear solver
     
     #"loadFactors":  [0.1, 0.2, 0.35, 0.5, 1.0],   # load factors for every timestep
+    "loadFactors": [],                 # no load factors, solve problem directly
     "nNonlinearSolveCalls": 1,         # how often the nonlinear solve should be repeated
     
     # boundary conditions

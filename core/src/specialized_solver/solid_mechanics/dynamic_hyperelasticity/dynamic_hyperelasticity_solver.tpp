@@ -69,10 +69,8 @@ initialize()
     }
   }
 
-  // check if initial values satisfy the static equation
-  hyperelasticitySolver_.debug();
-
-
+  // check if initial values satisfy the static equation (for debugging)
+  //hyperelasticitySolver_.debug();
 }
 
 template<typename Term>

@@ -137,3 +137,6 @@ n_fiber_nodes_on_subdomain = None
 fiber_start_node_no = None
 generate_quadratic_3d_mesh = False
 fat_mesh_n_points = None
+fat_mesh_n_points_global = None
+local_range_i = None
+local_range_k = None

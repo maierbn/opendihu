@@ -33,12 +33,14 @@ Am = 0.1
 mesh_file = "../input/scaled_mesh_normal"
 #mesh_file = "../input/scaled_mesh_big"
 
-fiber_file = "../input/laplace3d_structured_linear"
-
-fiber_file = "../../input/7x7fibers.bin"
+#fiber_file = "../input/laplace3d_structured_linear"
+#fiber_file = "../../input/7x7fibers.bin"
+fiber_file = "../../input/left_biceps_brachii_7x7fibers.bin"
 
 cellml_file = "../input/hodgkin_huxley_1952.c"
+
 fibre_distribution_file = "../input/MU_fibre_distribution_3780.txt"
+
 #firing_times_file = "../input/MU_firing_times_real.txt"
 firing_times_file = "../input/MU_firing_times_immediately.txt"
 
@@ -349,16 +351,16 @@ multidomain_solver = {
       "inputMeshIsGlobal": True,
       "dirichletBoundaryConditions": activation_dirichlet_bc,
       "neumannBoundaryConditions": [],
-      "diffusionTensor": [      # sigma_i           # fiber direction is (1,0,0)
+      "diffusionTensor": [[      # sigma_i           # fiber direction is (1,0,0)
         8.93, 0, 0,
         0, 0.893, 0,
         0, 0, 0.893
-      ], 
-      "extracellularDiffusionTensor": [      # sigma_e
+      ]], 
+      "extracellularDiffusionTensor": [[      # sigma_e
         6.7, 0, 0,
         0, 6.7, 0,
         0, 0, 6.7,
-      ],
+      ]],
     },
   },
   
@@ -424,11 +426,16 @@ config = {
                 
             "CellML" : {
               "modelFilename": cellml_file,                       # input C++ source file or cellml XML file
-              "compilerFlags": "-fPIC -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared -O3 -march=native",    # compiler flags, should contain -O3 -march=native
-              "optimizationType":                       "vc",     # "vc", "simd", "openmp" type of generated optimizated source file, vc is fastest
-              "approximateExponentialFunction":         False,    # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
-              "maximumNumberOfThreads":                 0,        # if optimizationType is "openmp", the maximum number of threads to use. Default value 0 means no restriction.
+              "initializeStatesToEquilibrium":          False,                                          # if the equilibrium values of the states should be computed before the simulation starts
+              "initializeStatesToEquilibriumTimestepWidth": 1e-4,                                       # if initializeStatesToEquilibrium is enable, the timestep width to use to solve the equilibrium equation
               
+              # optimization parameters
+              "optimizationType":                       "vc",                                           # "vc", "simd", "openmp" type of generated optimizated source file
+              "approximateExponentialFunction":         False,                                          # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
+              "compilerFlags":                          "-fPIC -O3 -march=native -shared ",             # compiler flags used to compile the optimized model code
+              "maximumNumberOfThreads":                 0,                                              # if optimizationType is "openmp", the maximum number of threads to use. Default value 0 means no restriction.
+              
+              # stimulation callbacks
               #"statesInitialValues": [],
               "setSpecificStatesFunction": set_specific_states,   # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
               "setSpecificStatesCallInterval": int(1./stimulation_frequency/dt_0D),     # set_specific_states should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
@@ -440,12 +447,14 @@ config = {
               #"setParametersFunction": set_parameters,           # callback function that sets parameters like stimulation current
               #"setParametersCallInterval": int(1./stimulation_frequency/dt_0D),     # set_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
               #"setParametersFunctionAdditionalParameter": compartment_no,
-              "intermediatesForTransfer":  [],                    # which intermediate values to use in further computation
-              "statesForTransfer": 0,                             # which state values to use in further computation, Shorten / Hodgkin Huxley: state 0 = Vm
-                     
-              "parametersUsedAsIntermediate": parameters_used_as_intermediate,  #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
-              "parametersUsedAsConstant": parameters_used_as_constant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
+
+              # parameters to the cellml model
+              "mappings":  {
+                ("parameter", 0):           ("constant", "membrane/i_Stim"),      # parameter 0 is constant 2 = I_stim
+                ("outputConnectorSlot", 0): ("state", "membrane/V"),              # expose state 0 = Vm to the operator splitting
+              },              
               "parametersInitialValues": parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
+              
               "meshName": "mesh",
               "stimulationLogFilename": "out/stimulation.log",
             }

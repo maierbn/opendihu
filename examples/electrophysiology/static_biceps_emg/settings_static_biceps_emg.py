@@ -135,37 +135,10 @@ variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
 # It provides all current variables for each node
 def postprocess(result):
   result = result[0]
-  # print result for debugging
-  #print(result)
-  
-  # get current time
   current_time = result["currentTime"]
-  timestep_no = result["timeStepNo"]
-  
-  # parse variables
   field_variables = result["data"]
-  for f in field_variables:
-    print(f["name"])
-    for c in f["components"]:
-      print(c["name"])
-    print("--")
   
-  offset = len(variables.meshes["3Dmesh"]["nodePositions"])
-  #nx = variables.fat_mesh_n_points[0]
-  #ny = variables.fat_mesh_n_points[1]
-  #nz = variables.fat_mesh_n_points[2]
-  
-  # select nodes of the fat layer mesh
-  i_begin = 2
-  i_end = i_begin + 8
-  j_begin = 2
-  j_end = j_begin + 8
-  
-  
-  #print(field_variables)
-  quit()
-  # loop over selected nodes
-  
+  # result contains the most recent data
   # field_variables[0] is geometry (3 components "x","y","z")
   # field_variables[1] is fiberDirection (3 components)
   # field_variables[2] is phi_e (1 component)
@@ -173,6 +146,55 @@ def postprocess(result):
   # field_variables[4] is transmembraneFlow (1 component)
   # field_variables[5] is flowPotential (1 component)
   
+  # get all emg values
+  phi_e_values = field_variables[2]["components"][0]["values"]
+  
+  # select nodes of the fat layer mesh, k = direction along muscle, i = across
+  i_begin = 2           # first index to select
+  i_end = i_begin + 13   # one after last index to select
+  i_step = 2            # stride which node to select
+  
+  k_begin = 4
+  k_end = k_begin + 20
+  k_step = 2
+  
+  # get helper variables, dimensions of the fat layer mesh
+  n_points_local_x = variables.fat_mesh_n_points_local[0]
+  n_points_local_y = variables.fat_mesh_n_points_local[1]
+  n_points_local_z = variables.fat_mesh_n_points_local[2]
+  n_points_global_x = variables.fat_mesh_n_points_global[0]
+  n_points_global_y = variables.fat_mesh_n_points_global[1]
+  n_points_global_z = variables.fat_mesh_n_points_global[2]
+  #offset = len(variables.meshes["3Dmesh"]["nodePositions"])
+  offset = 0
+  
+  # loop over the local domain of the selected global nodes
+  for k in range(k_begin, k_end, k_step):
+    if not (variables.local_range_k[0] <= k < variables.local_range_k[1]):
+      continue
+    for i in range(i_begin, i_end, i_step):
+      if not (variables.local_range_i[0] <= i < variables.local_range_i[1]):
+        continue
+      
+      # get the local coordinates for (i,k)
+      k_local = k - variables.local_range_k[0]
+      i_local = i - variables.local_range_i[0]
+      j_local = n_points_y - 1
+      
+      # get the value
+      phi_e_value = phi_e_values[offset + k_local*n_points_x*n_points_y + j_local*n_points_x + i_local]
+      
+      # save to file
+      filename = "out/emg_{:02}_{:02}.csv".format(i,k)
+      
+      # clear file at the beginning
+      if current_time < 0.1 + 1e-5:
+        with open(filename,"w") as f:
+          f.write("time;phi_e;\n".format(current_time,phi_e_value))
+      
+      # append line
+      with open(filename,"a") as f:
+        f.write("{};{};\n".format(current_time,phi_e_value))
 
 # define the config dict
 config = {
@@ -260,7 +282,7 @@ config = {
                       
                       # optimization parameters
                       "optimizationType":                       "vc",                                           # "vc", "simd", "openmp" type of generated optimizated source file
-                      "approximateExponentialFunction":         False,                                          # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
+                      "approximateExponentialFunction":         True,                                          # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
                       "compilerFlags":                          "-fPIC -O3 -march=native -shared ",             # compiler flags used to compile the optimized model code
                       "maximumNumberOfThreads":                 0,                                              # if optimizationType is "openmp", the maximum number of threads to use. Default value 0 means no restriction.
                       

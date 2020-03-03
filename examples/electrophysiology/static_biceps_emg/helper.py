@@ -237,7 +237,12 @@ if index_i_end is None:
 # local size
 fat_mesh_n_points = [index_i_end+1 - index_i_start, n_points_y, index_k_end+1 - index_k_start]
 fat_mesh_n_elements = [fat_mesh_n_points[0]-1, fat_mesh_n_points[1]-1, fat_mesh_n_points[2]-1]
-variables.fat_mesh_n_points = fat_mesh_n_points
+
+# store values to be used in postprocess callback function
+variables.fat_mesh_n_points_local = fat_mesh_n_points
+variables.fat_mesh_n_points_global = [n_points_x, n_points_y, n_points_z]
+variables.local_range_i = [index_i_start,index_i_end+1]
+variables.local_range_k = [index_k_start,index_k_end+1]
 
 # regarding x direction, if in interior of fat mesh, adjust number of points in i(x) direction
 if index_i_end != n_points_x-1:

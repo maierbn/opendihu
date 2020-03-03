@@ -677,8 +677,8 @@ void PythonUtility::getOptionVector(const PyObject *settings, std::string keyStr
     }
     else
     {
-      // this is no warning
-      LOG(DEBUG) << "" << pathString << "[\"" << keyString << "\"] not set in \"" << Control::settingsFileName << "\". Assuming " << values;
+      // this is now a warning
+      LOG(WARNING) << "" << pathString << "[\"" << keyString << "\"] not set in \"" << Control::settingsFileName << "\". Assuming " << values;
     }
     Py_CLEAR(key);
   }
@@ -726,8 +726,8 @@ void PythonUtility::getOptionVector(const PyObject *settings, std::string keyStr
     }
     else
     {
-      // this is no warning
-      LOG(DEBUG) << "" << pathString << "[\"" << keyString << "\"] not set in \"" << Control::settingsFileName << "\". Assuming " << values;
+      // this is now a warning
+      LOG(WARNING) << "" << pathString << "[\"" << keyString << "\"] not set in \"" << Control::settingsFileName << "\". Assuming " << values;
     }
     Py_CLEAR(key);
   }
@@ -772,8 +772,8 @@ void PythonUtility::getOptionVector(const PyObject *settings, std::string keyStr
     }
     else
     {
-      // this is no warning
-      LOG(DEBUG) << "" << pathString << "[\"" << keyString << "\"] not set in \"" << Control::settingsFileName << "\". Assuming " << values;
+      // this is now a warning
+      LOG(WARNING) << "" << pathString << "[\"" << keyString << "\"] not set in \"" << Control::settingsFileName << "\". Assuming " << values;
     }
     Py_CLEAR(key);
   }
@@ -818,8 +818,8 @@ void PythonUtility::getOptionVector(const PyObject *settings, std::string keyStr
     }
     else
     {
-      // this is no warning
-      LOG(DEBUG) << "" << pathString << "[\"" << keyString << "\"] not set in \"" << Control::settingsFileName << "\". Assuming vector " << values;
+      // this is now a warning
+      LOG(WARNING) << "" << pathString << "[\"" << keyString << "\"] not set in \"" << Control::settingsFileName << "\". Assuming vector " << values;
     }
     Py_CLEAR(key);
   }

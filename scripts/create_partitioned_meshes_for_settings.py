@@ -499,6 +499,10 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
     if own_subdomain_coordinate_z == variables.n_subdomains_z-1:
       n_sampled_points_in_own_subdomain_z -= 1
 
+    # set information on how many nodes there are in the quadratic 3D mesh, this is not needed for the opendihu core
+    meshes["3Dmesh_quadratic"]["nPointsLocal"] = [n_sampled_points_in_own_subdomain_x, n_sampled_points_in_own_subdomain_y, n_sampled_points_in_own_subdomain_z]
+    meshes["3Dmesh_quadratic"]["nPointsGlobal"] = [n_points_3D_mesh_global_x, n_points_3D_mesh_global_y, n_points_3D_mesh_global_z]
+     
   n_points_3D_mesh_global = n_points_3D_mesh_global_x*n_points_3D_mesh_global_y*n_points_3D_mesh_global_z
    
   # output for debugging
@@ -605,7 +609,7 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
         "nodePositions": fiber_node_positions,
         "inputMeshIsGlobal": False,
         "nRanks": [variables.n_subdomains_z],
-        "setHermiteDerivatives": False
+        "setHermiteDerivatives": False,
       }
       
     else:

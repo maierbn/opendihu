@@ -143,6 +143,7 @@ prepareMappingLowToHigh(std::shared_ptr<FieldVariableTargetType> fieldVariableTa
   Control::PerformanceMeasurement::stop("durationMapPrepare");
 }
 
+/*
 // helper function, calls the map function of the mapping if field variables have same number of components
 template<typename FieldVariableSourceType, typename FieldVariableTargetType, typename Dummy=void>
 struct MapLowToHighDimensionAllComponents
@@ -160,21 +161,40 @@ struct MapLowToHighDimensionAllComponents
       << " but a mapping between all components was requested.";
   }
 };
-
-template<typename FieldVariableSourceType, typename FieldVariableTargetType>
-struct MapLowToHighDimensionAllComponents<FieldVariableSourceType,FieldVariableTargetType,
-  typename std::enable_if<FieldVariableSourceType::nComponents() == FieldVariableTargetType::nComponents(),int>::type
->
+*/
+// helper function, calls the map function of the mapping if field variables have same number of components
+template<typename FieldVariableSourceType, typename FieldVariableTargetType, typename Dummy=void>
+struct MapLowToHighDimensionAllComponents
 {
+
   // actual function
-  static void call(
-    std::shared_ptr<MappingBetweenMeshes<typename FieldVariableTargetType::FunctionSpace, typename FieldVariableSourceType::FunctionSpace>> mapping,
+  static typename std::enable_if<FieldVariableSourceType::nComponents() == FieldVariableTargetType::nComponents(),void>::type call(
+    std::shared_ptr<MappingBetweenMeshes<typename FieldVariableSourceType::FunctionSpace, typename FieldVariableTargetType::FunctionSpace>> mapping,
     std::shared_ptr<FieldVariableSourceType> fieldVariableSource, std::shared_ptr<FieldVariableTargetType> fieldVariableTarget,
     std::shared_ptr<FieldVariable::FieldVariable<typename FieldVariableTargetType::FunctionSpace,1>> targetFactorSum)
   {
     mapping->template mapLowToHighDimension<FieldVariableSourceType::nComponents()>(
       *fieldVariableSource, *fieldVariableTarget, *targetFactorSum
     );
+  }
+
+};
+
+template<typename FieldVariableSourceType, typename FieldVariableTargetType>
+struct MapLowToHighDimensionAllComponents<FieldVariableSourceType,FieldVariableTargetType,
+  typename std::enable_if<FieldVariableSourceType::nComponents() != FieldVariableTargetType::nComponents(),int>::type
+>
+{
+  // helper function, does nothing
+  template<typename T1, typename T2>
+  static void call(
+    T1 mapping,
+    std::shared_ptr<FieldVariableSourceType> fieldVariableSource, std::shared_ptr<FieldVariableTargetType> fieldVariableTarget,
+    T2 targetFactorSum)
+  {
+    LOG(FATAL) << "Number of components of field variables does not match"
+      << "(" << FieldVariableSourceType::nComponents() << " != " << FieldVariableTargetType::nComponents() << "),"
+      << " but a mapping between all components was requested.";
   }
 
 };

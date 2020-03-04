@@ -16,6 +16,9 @@ if len(sys.argv) > 0:
 
 bc = {}
 
+n_nodes_per_fiber = (220.-72.) / 0.1
+n_nodes_per_fiber = 2*(n_nodes_per_fiber//2)+1   # make number odd
+
 config = {
   "solverStructureDiagramFile": "solver_structure.txt",
   "scenarioName": "72 220 splines 2,2,2 improve",
@@ -44,7 +47,7 @@ config = {
     "useGradientField": False,            # set to False
     "maxLevel": 2,                        # maximum level (0=1 process, 1=8 processes, 2=64 processes)
     "lineStepWidth":  0.01,                # line width for tracing of fibers
-    "nNodesPerFiber": (220.-72.) / 0.1,   # number of nodes in each final fiber
+    "nNodesPerFiber": n_nodes_per_fiber,   # number of nodes in each final fiber
     "improveMesh": True,                  # smooth the 2D meshes, required for bigger meshes or larger amount of ranks
     #"refinementFactors": [2,2,2],         # [2,2,2] factors in x,y,z direction by which the mesh should be refined prior to solving the laplace problem and tracing the streamlines
     "FiniteElementMethod" : {

@@ -17,11 +17,14 @@ else:
   bottom_z = float(sys.argv[2])
   top_z = float(sys.argv[3])
   element_size = float(sys.argv[4])
-  
+
+n_nodes_per_fiber = (top_z-bottom_z) / element_size
+n_nodes_per_fiber = 2*(n_nodes_per_fiber//2)+1   # make number odd
+
 print("input_filename:  {}".format(input_filename))
 print("output_filename: {}".format(output_filename))
 print("z range to extract: [{}, {}]".format(bottom_z, top_z))
-print("element_size: {}, number of elements per fiber: {}".format(element_size, (top_z-bottom_z) / element_size))
+print("element_size: {}, number of elements per fiber: {}".format(element_size, n_nodes_per_fiber))
 
 config = {
   "scenarioName": "7x7fibers",
@@ -51,7 +54,7 @@ config = {
     "useGradientField":  False,           # set to False
     "maxLevel":          0,               # maximum level (0=1 process, 1=8 processes, 2=64 processes)
     "lineStepWidth":     0.01,            # line width for tracing of fibers
-    "nNodesPerFiber":    (top_z-bottom_z) / element_size,   # number of nodes in each final fiber
+    "nNodesPerFiber":    n_nodes_per_fiber,   # number of nodes in each final fiber
     "improveMesh":       True,            # smooth the 2D meshes, required for bigger meshes or larger amount of ranks
     #"refinementFactors": [2,2,2],        # [2,2,2] factors in x,y,z direction by which the mesh should be refined prior to solving the laplace problem and tracing the streamlines
     "refinementFactors": [1,1,1],         # no refinement

@@ -112,51 +112,61 @@ if variables.exfile_output:
   variables.output_writer_elasticity.append({"format": "Exfile", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/elasticity"})
   variables.output_writer_fibers.append({"format": "Exfile", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/fibers"})
 
-# set values for cellml model
-if "shorten" in variables.cellml_file:
-  # parameters: stimulation current I_stim, fiber stretch λ
-  variables.parameters_used_as_intermediate = [32]    # 
-  variables.parameters_used_as_constant = [65]        # fiber stretch λ, this indicates how much the fiber has stretched, 1 means no extension. CONSTANTS[65] in the shorten model
-  variables.parameters_initial_values = [0.0, 1.0]    # stimulation current I_stim, fiber stretch λ, OpenCMISS generated files: OC_KNOWN will be set by this
-  variables.nodal_stimulation_current = 1200.
-  variables.output_state_index = 0                    # use state 0 = Vm
-  variables.output_intermediate_index = []            # do not use any intermediate
-  
-elif "hodgkin_huxley" in variables.cellml_file:
+# set variable mappings for cellml model
+if "hodgkin_huxley" in variables.cellml_file:
   # parameters: I_stim
-  variables.parameters_used_as_intermediate = []
-  variables.parameters_used_as_constant = [2]
-  variables.parameters_initial_values = [0.0]
-  variables.nodal_stimulation_current = 40.
-  variables.output_state_index = 0                    # use state 0 = Vm
-  variables.output_intermediate_index = []            # do not use any intermediate
+  variables.mappings = {
+    ("parameter", 0):           ("constant", "membrane/i_Stim"),      # parameter 0 is constant 2 = I_stim
+    ("outputConnectorSlot", 0): ("state", "membrane/V"),              # expose state 0 = Vm to the operator splitting
+  }
+  variables.parameters_initial_values = [0.0]                         # initial value for stimulation current
+  variables.nodal_stimulation_current = 40.                           # not used
 
+elif "shorten" in variables.cellml_file:
+  # parameters: stimulation current I_stim, fiber stretch λ
+  variables.mappings = {
+    ("parameter", 0):           ("intermediate", "wal_environment/I_HH"), # parameter is intermediate 32
+    ("parameter", 1):           ("constant", "razumova/L_x"),             # parameter is constant 65, fiber stretch λ, this indicates how much the fiber has stretched, 1 means no extension
+    ("outputConnectorSlot", 0): ("state", "wal_environment/vS"),          # expose state 0 = Vm to the operator splitting
+  }
+  variables.parameters_initial_values = [0.0, 1.0]                        # stimulation current I_stim, fiber stretch λ
+  variables.nodal_stimulation_current = 1200.                             # not used
+  
 elif "slow_TK_2014" in variables.cellml_file:   # this is (3a, "MultiPhysStrain", old tomo mechanics) in OpenCMISS
   # parameters: I_stim, fiber stretch λ
-  variables.parameters_used_as_intermediate = []
-  variables.parameters_used_as_constant = [54, 67]     # wal_environment/I_HH = I_stim, razumova/L_S = λ
-  variables.parameters_initial_values = [0.0, 1.0]     # wal_environment/I_HH = I_stim, razumova/L_S = λ
-  variables.nodal_stimulation_current = 40. 
-  variables.output_state_index = 0                     # use state 0, wal_environment/vS = Vm
-  variables.output_intermediate_index = 12             # use intermediate 12, razumova/stress = γ
+  variables.mappings = {
+    ("parameter", 0):           ("constant", "wal_environment/I_HH"), # parameter 0 is constant 54 = I_stim
+    ("parameter", 1):           ("constant", "razumova/L_S"),         # parameter 1 is constant 67 = fiber stretch λ
+    ("outputConnectorSlot", 0): ("state", "wal_environment/vS"),      # expose state 0 = Vm to the operator splitting
+    ("outputConnectorSlot", 1): ("intermediate", "razumova/stress"),  # expose intermediate 12 = γ to the operator splitting
+  }
+  variables.parameters_initial_values = [0.0, 1.0]                    # wal_environment/I_HH = I_stim, razumova/L_S = λ
+  variables.nodal_stimulation_current = 40.                           # not used
   
 elif "Aliev_Panfilov_Razumova_2016_08_22" in variables.cellml_file :   # this is (3, "MultiPhysStrain", numerically more stable) in OpenCMISS, this only computes A1,A2,x1,x2 not the stress
   # parameters: I_stim, fiber stretch λ, fiber contraction velocity \dot{λ}
-  variables.parameters_used_as_intermediate = []
-  variables.parameters_used_as_constant = [0, 8, 9]    # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/velo = \dot{λ}
-  variables.parameters_initial_values = [0, 1, 0]      # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/velo = \dot{λ}
-  variables.nodal_stimulation_current = 40. 
-  variables.output_state_index = 0                     # use state 0, Aliev_Panfilov/V_m = Vm
-  variables.output_intermediate_index = []             # no intermediates are used
+  variables.mappings = {
+    ("parameter", 0):           ("constant", "Aliev_Panfilov/I_HH"),  # parameter 0 is constant 0 = I_stim
+    ("parameter", 1):           ("constant", "Razumova/l_hs"),        # parameter 1 is constant 8 = fiber stretch λ
+    ("parameter", 2):           ("constant", "Razumova/velo"),        # parameter 2 is constant 9 = fiber contraction velocity \dot{λ}
+    ("outputConnectorSlot", 0): ("state", "Aliev_Panfilov/V_m"),      # expose state 0 = Vm to the operator splitting
+    ("outputConnectorSlot", 1): ("intermediate", "Razumova/sigma"),   # expose intermediate 0 = γ to the operator splitting
+  }
+  variables.parameters_initial_values = [0, 1, 0]                     # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/velo = \dot{λ}
+  variables.nodal_stimulation_current = 40.                           # not used
   
 elif "Aliev_Panfilov_Razumova_Titin" in variables.cellml_file:   # this is (4, "Titin") in OpenCMISS
   # parameters: I_stim, fiber stretch λ, fiber contraction velocity \dot{λ}
-  variables.parameters_used_as_intermediate = []
-  variables.parameters_used_as_constant = [0, 11, 12]  # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/rel_velo = \dot{λ}
-  variables.parameters_initial_values = [0, 1, 0]      # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/rel_velo = \dot{λ}
-  variables.nodal_stimulation_current = 40. 
-  variables.output_state_index = 0                     # use state 0, Aliev_Panfilov/V_m = Vm
-  variables.output_intermediate_index = [4,5]          # Razumova/ActiveStress = γ, Razumova/Activation = α 
+  variables.mappings = {
+    ("parameter", 0):           ("constant", "Aliev_Panfilov/I_HH"),  # parameter 0 is constant 0 = I_stim
+    ("parameter", 1):           ("constant", "Razumova/l_hs"),        # parameter 1 is constant 11 = fiber stretch λ
+    ("parameter", 2):           ("constant", "Razumova/rel_velo"),    # parameter 2 is constant 12 = fiber contraction velocity \dot{λ}
+    ("outputConnectorSlot", 0): ("state", "Aliev_Panfilov/V_m"),      # expose state 0 = Vm to the operator splitting
+    ("outputConnectorSlot", 1): ("intermediate", "Razumova/ActiveStress"),   # expose intermediate 4 = γ to the operator splitting
+    ("outputConnectorSlot", 2): ("intermediate", "Razumova/Activation"),     # expose intermediate 5 = α to the operator splitting
+  }
+  variables.parameters_initial_values = [0, 1, 0]                     # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/rel_velo = \dot{λ}
+  variables.nodal_stimulation_current = 40.                           # not used
   
 
 # callback functions
@@ -350,10 +360,25 @@ n_points_3D_mesh_quadratic_global_x = 2*n_points_3D_mesh_linear_global_x - 1
 n_points_3D_mesh_quadratic_global_y = 2*n_points_3D_mesh_linear_global_y - 1
 n_points_3D_mesh_quadratic_global_z = 2*n_points_3D_mesh_linear_global_z - 1
  
+# set boundary conditions for the elasticity
+[mx, my, mz] = variables.meshes["3Dmesh_quadratic"]["nPointsGlobal"]
+[nx, ny, nz] = variables.meshes["3Dmesh_quadratic"]["nElements"]
+
+variables.fiber_mesh_names = [mesh_name for mesh_name in variables.meshes.keys() if "MeshFiber" in mesh_name]
+
 # set Dirichlet BC at top nodes for linear elasticity problem, fix muscle at top
 variables.elasticity_dirichlet_bc = {}
-for i in range(n_points_3D_mesh_quadratic_global_x*n_points_3D_mesh_quadratic_global_y):
-  variables.elasticity_dirichlet_bc[(n_points_3D_mesh_quadratic_global_z-1)*n_points_3D_mesh_quadratic_global_x*n_points_3D_mesh_quadratic_global_y + i] = 0.0
+for j in range(my):
+  for i in range(mx):
+    variables.elasticity_dirichlet_bc[(mz-1)*mx*my + j*mx + i] = [None,None,0.0,None,None,None]
+  
+# fix edge
+for i in range(mx):
+  variables.elasticity_dirichlet_bc[(mz-1)*mx*my + 0*mx + i] = [0.0,None,0.0,None,None,None]
+  
+# fix corner completely
+variables.elasticity_dirichlet_bc[(mz-1)*mx*my + 0] = [0.0,0.0,0.0,None,None,None]
+
     
 # Neumann BC at bottom nodes, traction downwards
 nx = n_points_3D_mesh_linear_global_x-1
@@ -364,12 +389,9 @@ variables.ny = ny
 variables.nz = nz
 variables.elasticity_neumann_bc = [{"element": 0*nx*ny + j*nx + i, "constantVector": variables.bottom_traction, "face": "2-"} for j in range(ny) for i in range(nx)]
 #variables.elasticity_neumann_bc = []
-print("n=",variables.elasticity_neumann_bc)
 
 with open("mesh","w") as f:
   f.write(str(variables.meshes["3Dmesh_quadratic"]))
-    
-variables.constant_body_force = (0,0,-1e-5)
     
 # sanity checking at the end, is disabled and can be copied to after the config in the real settings file
 if False:

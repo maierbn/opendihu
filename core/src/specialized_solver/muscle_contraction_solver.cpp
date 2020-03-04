@@ -183,9 +183,6 @@ initialize()
 void MuscleContractionSolver::
 run()
 {
-  // The run method should not be changed. It is the method that gets called directly from the example main file.
-  // If this solver itself is nested in other solvers or coupling schemes,
-  // run() will not be called, but the surrounding solver will call initialize() and advanceTimeSpan().
   initialize();
 
   advanceTimeSpan();

@@ -36,14 +36,14 @@ activation_start_time = 0           # [ms] time when to start checking for stimu
 # input files
 # -----------
 # CellML model, Shorten or Hodgkin-Huxley
-cellml_file = "../../input/shorten_ocallaghan_davidson_soboleva_2007.c"
+cellml_file = "../../../input/shorten_ocallaghan_davidson_soboleva_2007.c"
 #cellml_file = "../../input/shorten.cpp"
 #cellml_file = "../../input/hodgkin_huxley_1952.c"
 
 # Fiber geometry, binary file
 #fiber_file = "../../input/3000fibers.bin"
 #fiber_file = "../../input/7x7fibers.bin"
-fiber_file = "../../input/13x13fibers.bin"
+fiber_file = "../../../input/13x13fibers.bin"
 #fiber_file = "../../input/49fibers.bin"
 fat_mesh_file = fiber_file + "_fat.bin"
 
@@ -57,8 +57,8 @@ exfile_output = False               # If the Exfile output writer should be enab
 
 
 # motor unit stimulation times
-fiber_distribution_file = "../../input/MU_fibre_distribution_3780.txt"
-firing_times_file = "../../input/MU_firing_times_real.txt"
+fiber_distribution_file = "../../../input/MU_fibre_distribution_3780.txt"
+firing_times_file = "../../../input/MU_firing_times_real.txt"
 #firing_times_file = "../../input/MU_firing_times_immediately.txt"
 
 # partitioning
@@ -143,3 +143,5 @@ nz = None
 constant_body_force = None
 pmax = None
 bottom_traction = None
+cellml_file = ""
+

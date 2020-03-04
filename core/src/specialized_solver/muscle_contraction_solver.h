@@ -10,6 +10,9 @@
 #include "data_management/specialized_solver/muscle_contraction_solver.h"
 
 /** Solve the incompressible, transversely isotropic Mooney-Rivlin material with active stress contribution.
+ *
+ * This solver encapsulates the DynamicHyperelasticitySolver or HyperelasticitySolver (static). Which one to use can be chosen at runtime in the config.
+ * This class adds functionality to compute and transfer active stresses, fiber stretches and contraction velocity and so on.
  */
 class MuscleContractionSolver :
   public Runnable,

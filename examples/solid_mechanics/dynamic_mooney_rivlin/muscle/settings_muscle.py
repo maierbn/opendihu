@@ -2,10 +2,15 @@
 import sys, os
 import numpy as np
 import pickle
+import argparse
 import sys
 sys.path.insert(0, '..')
 import variables              # file variables.py, defined default values for all parameters, you can set the parameters there
 from create_partitioned_meshes_for_settings import *   # file create_partitioned_meshes_for_settings with helper functions about own subdomain
+
+# parse arguments
+rank_no = (int)(sys.argv[-2])
+n_ranks = (int)(sys.argv[-1])
 
 # input mesh file
 fiber_file = "../../../../electrophysiology/input/left_biceps_brachii_13x13fibers.bin"
@@ -14,13 +19,30 @@ fiber_file = "../../../../electrophysiology/input/left_biceps_brachii_13x13fiber
 
 load_fiber_data = True             # If the fiber geometry data should be loaded completely in the python script. If True, this reads the binary file and assigns the node positions in the config. If False, the C++ code will read the binary file and only extract the local node positions. This is more performant for highly parallel runs.
 
+# define command line arguments
+parser = argparse.ArgumentParser(description='fibers_emg')
+parser.add_argument('--n_subdomains', nargs=3,               help='Number of subdomains in x,y,z direction.',    type=int)
+parser.add_argument('--n_subdomains_x', '-x',                help='Number of subdomains in x direction.',        type=int, default=variables.n_subdomains_x)
+parser.add_argument('--n_subdomains_y', '-y',                help='Number of subdomains in y direction.',        type=int, default=variables.n_subdomains_y)
+parser.add_argument('--n_subdomains_z', '-z',                help='Number of subdomains in z direction.',        type=int, default=variables.n_subdomains_z)
+
+# parse command line arguments and assign values to variables module
+args = parser.parse_args(args=sys.argv[:-2], namespace=variables)
+
 # partitioning
 # ------------
 # this has to match the total number of processes
-n_subdomains_x = 1
-n_subdomains_y = 1
-n_subdomains_z = 1
+if variables.n_subdomains is not None:
+  variables.n_subdomains_x = variables.n_subdomains[0]
+  variables.n_subdomains_y = variables.n_subdomains[1]
+  variables.n_subdomains_z = variables.n_subdomains[2]
 
+# compute partitioning
+if rank_no == 0:
+  if n_ranks != variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z:
+    print("\n\nError! Number of ranks {} does not match given partitioning {} x {} x {} = {}.\n\n".format(n_ranks, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z))
+    sys.exit(-1)
+    
 # stride for sampling the 3D elements from the fiber data
 # here any number is possible
 sampling_stride_x = 7
@@ -29,12 +51,20 @@ sampling_stride_z = 500
 
 # create the partitioning using the script in create_partitioned_meshes_for_settings.py
 result = create_partitioned_meshes_for_settings(
-    n_subdomains_x, n_subdomains_y, n_subdomains_z, 
+    variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, 
     fiber_file, load_fiber_data,
     sampling_stride_x, sampling_stride_y, sampling_stride_z, True)
 
 #parse result
 [variables.meshes, variables.own_subdomain_coordinate_x, variables.own_subdomain_coordinate_y, variables.own_subdomain_coordinate_z, variables.n_fibers_x, variables.n_fibers_y, variables.n_points_whole_fiber] = result
+
+n_points_3D_mesh_linear_global_x = sum([n_sampled_points_in_subdomain_x(subdomain_coordinate_x) for subdomain_coordinate_x in range(variables.n_subdomains_x)])
+n_points_3D_mesh_linear_global_y = sum([n_sampled_points_in_subdomain_y(subdomain_coordinate_y) for subdomain_coordinate_y in range(variables.n_subdomains_y)])
+n_points_3D_mesh_linear_global_z = sum([n_sampled_points_in_subdomain_z(subdomain_coordinate_z) for subdomain_coordinate_z in range(variables.n_subdomains_z)])
+n_points_3D_mesh_linear_global = n_points_3D_mesh_linear_global_x*n_points_3D_mesh_linear_global_y*n_points_3D_mesh_linear_global_z
+nx = n_points_3D_mesh_linear_global_x-1
+ny = n_points_3D_mesh_linear_global_y-1
+nz = n_points_3D_mesh_linear_global_z-1
 
 node_positions = variables.meshes["3Dmesh_quadratic"]["nodePositions"]
 
@@ -61,7 +91,7 @@ bottom_traction = [0.0,0.0,0.0]        # [N]
 
 
 # boundary conditions (for quadratic elements)
-[mx, my, mz] = variables.meshes["3Dmesh_quadratic"]["nPointsGlobal"]
+[mx, my, mz] = variables.meshes["3Dmesh_quadratic"]["nPointsLocal"]
 [nx, ny, nz] = variables.meshes["3Dmesh_quadratic"]["nElements"]
 
 fiber_mesh_names = [mesh_name for mesh_name in variables.meshes.keys() if "MeshFiber" in mesh_name]

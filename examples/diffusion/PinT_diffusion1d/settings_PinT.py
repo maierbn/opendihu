@@ -3,7 +3,7 @@
 
 import numpy as np
 
-n = 6   # number of elements
+n = 8   # number of elements
 
 config = {
 "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
@@ -13,8 +13,8 @@ config = {
      "preconditionerType": "none",   # the preconditioner type (https://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/PC/PCType.html#PCType)
      "relativeTolerance": 1e-15,     # the relative tolerance of the linear solver
      "maxIterations": 1e4,           # maximum number of iterations of the linear solver
-     "dumpFilename": "",             # a filename to dump the system matrix and rhs in every timestep, "" to disable
-     "dumpFormat": "matlab",         # the file format of the dump file, "matlab", "ascii" or "default"
+     "dumpFilename": "dump",             # a filename to dump the system matrix and rhs in every timestep, "" to disable
+     "dumpFormat": "ascii",         # the file format of the dump file, "matlab", "ascii" or "default"
    },
   },
   # for k in range (n):
@@ -29,17 +29,19 @@ config = {
   },
   "PinT": {        # this is the name of the solver, as given in the constructor to the timestepping object
     "tstart": 0,                    # Start time
-    "tstop": 5,                     # End time
-    "ntime": 50,                      # number of time steps
-    "Initial Guess": [2,2,4,5,2,2],
+    "tstop": 1,                     # End time
+    "ntime": 1,                      # number of time steps
+    "nspace": 8,
+    "Initial Guess": [2,2,4,5,2,2,2,2],
     "option1": "blabla",              # another example option that is parsed in the data object
     "TimeSteppingScheme": [
     {
       "ImplicitEuler": {
-        "numberTimeSteps": 3,
+        "numberTimeSteps": 1,
         "startTime":0.0,
-        "endTime": 5,
-        "initialValues": [2,2,4,5,2,2],    # the initial values
+        "endTime": 10,
+        "timeStepWidth": 1,
+        "initialValues": [2,2,4,5,2,2,2,2],    # the initial values
         "dirichletBoundaryConditions": {}, # Dirichlet boundary conditions as dict
         "inputMeshIsGlobal": True,         # initial values and BC's are given for all dofs, even if executed in parallel
         "timeStepOutputInterval": 1,       # how often to print the current timestep to console
@@ -53,8 +55,8 @@ config = {
            "nAdditionalFieldVariables": 0, # for more complex nested solvers, the number of additional field variables that will be transferred without being touched
         },
         "OutputWriter" : [
-          #{"format": "Paraview", "outputInterval": 1, "filename": "out", "binaryOutput": "false", "fixedFormat": False, "onlyNodalValues": True},
-          {"format": "PythonFile", "filename": "out/diffusion1d_implicit", "outputInterval": 100, "binary":False, "onlyNodalValues": True}
+          # {"format": "Paraview", "outputInterval": 1, "filename": "out", "binary": "false", "fixedFormat": False, "onlyNodalValues": True},
+          {"format": "PythonFile", "filename": "out/diffusion1d_PinT", "outputInterval": 1, "binary":False, "onlyNodalValues": True}
         ],
       }
     } for j in range(n)],

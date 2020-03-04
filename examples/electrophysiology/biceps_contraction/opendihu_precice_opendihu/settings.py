@@ -73,7 +73,7 @@ variables.bottom_traction = [0.0,0.0,0.0]        # [1 N]
 #variables.bottom_traction = [0.0,-1e-2,-5e-2]        # [N]
 
 
-variables.fiber_file = "../../../input/7x7fibers_cm.bin"
+variables.fiber_file = "../../../input/left_biceps_brachii_7x7fibers.bin"
 #variables.fiber_file = "../../../input/2x2fibers.bin"
 
 # stride for sampling the 3D elements from the fiber data

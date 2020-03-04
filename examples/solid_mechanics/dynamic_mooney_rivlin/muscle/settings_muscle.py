@@ -74,7 +74,7 @@ for j in range(my):
   
 # fix edge
 for i in range(mx):
-  elasticity_dirichlet_bc[(mz-1)*mx*my + 0*mx + i] = [None,0.0,0.0,None,None,None]
+  elasticity_dirichlet_bc[(mz-1)*mx*my + 0*mx + i] = [0.0,None,0.0,None,None,None]
   
 # fix corner completely
 elasticity_dirichlet_bc[(mz-1)*mx*my + 0] = [0.0,0.0,0.0,None,None,None]

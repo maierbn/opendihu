@@ -23,7 +23,8 @@ class FunctionSpace;
  * *
  *  This particular standard specialization is for non-structured meshes or no meshes and currently completely serial, 
  *  it is the placeholder as long as the partial specialization for unstructured meshes is not implemented. (It will never be)
- *  This means some of the methods here have no effect.
+ *  This means some of the methods here have no effect. Most likely you want to have a look at the partial specialization for
+ *  structured meshes, below this class.
  */
 template<typename FunctionSpaceType, int nComponents, typename = typename FunctionSpaceType::Mesh>
 class PartitionedPetscVec : 
@@ -107,8 +108,27 @@ protected:
   Vec vectorNestedGlobal_;       ///< a VecNest object containing the global values, only in used if nComponents > 1
 };
 
-/** This is the partial specialization for structured meshes.
- *  An own DMDA object is generated, separately from the one in MeshPartition. This object now refers to nodes (as opposite the one of MeshPartition which refers to elements). 
+/** This is the partial specialization of Petsc Vec's on a mesh for structured meshes.
+ *  This class represents the values of a field which is defined on the domain discretized by a mesh and basis function type.
+ *  The field can be scalar or have multiple components.
+ *  This means that for every degree of freedom (=node for Lagrange ansatz functions) its stores as many values as components.
+ *
+ *  This class wraps the normal Petsc Vec and mainly wraps the setValues and getValues functions.
+ *  There is one Vec per component.
+ *  There is a local and a global version of the vecs, vectorLocal_ and vectorGlobal_. The local vectors only store the values
+ *  that are on the local domain. The global vector also only stores the local values but additionally the ghost values.
+ *  The global vector is the one that should be used in any computation with Petsc functions on the data. The local vectors
+ *  will internally be used when setValues and getValues are called with local indices, whereas the global vector needs global indices.
+ *  Petsc does the data transfer between the local and the global vector and fills and accumulates the correct ghost values.
+ *
+ *  Only one of the local or global vector contain the currently valid data at any time, because they even share memory.
+ *  Which one this is is save in this->currentRepresentation_ (read the comments there). The transformations between representations
+ *  is done internally and should not be cared about from the outside of this class
+ *  (except you have to properly call startGhostManipulation() and finishGhostManipulation()).
+ *
+ *  valuesGlobal(componentNo) returns the global Petsc Vec of the given component. valuesGlobal() returns a nested Petsc Vec of all components.
+ *
+ *  Internally, an own DMDA object is generated, separately from the one in MeshPartition. This object now refers to nodes (as opposite the one of MeshPartition which refers to elements).
  *  This object is created such that it matches the partition given by the meshPartition.
  */
 template<typename MeshType, typename BasisFunctionType, int nComponents>

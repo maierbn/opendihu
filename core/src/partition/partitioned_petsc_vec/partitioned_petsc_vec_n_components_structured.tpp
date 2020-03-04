@@ -734,6 +734,9 @@ template<typename MeshType,typename BasisFunctionType,int nComponents>
 Vec &PartitionedPetscVecNComponentsStructured<MeshType,BasisFunctionType,nComponents>::
 valuesGlobal()
 {
+  if (this->currentRepresentation_ != Partition::values_representation_t::representationGlobal)
+    setRepresentationGlobal();
+
   if (nComponents == 1)
     return valuesGlobal(0);
 

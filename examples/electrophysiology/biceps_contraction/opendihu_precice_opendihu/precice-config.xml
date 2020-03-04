@@ -43,22 +43,21 @@
 
       <!-- rbf to map from MuscleContractionMesh to PartitionedFibersMesh -->
       <!--
-      $./rbfShape.py 10 3
-      Using values:
-        h     = 10.0
-        m     = 3
-        decay = 1e-09
-      Result:
-        s = 0.15174271293851463
-        -->
-
+$./rbfShape.py 0.01 5
+Using values:
+  h     = 0.01
+  m     = 5
+  decay = 1e-09
+Result:
+  s = 91.0456277631
+-->
       <mapping:rbf-gaussian 
         direction="read" 
         from="MuscleContractionMesh" 
         to="PartitionedFibersMesh" 
         constraint="consistent" 
         timing="initial" 
-        shape-parameter="1.51"
+        shape-parameter="91.05"
       />
       
       <!--<mapping:nearest-neighbor direction="read" from="MuscleContractionMesh" to="PartitionedFibersMesh" constraint="consistent" />-->

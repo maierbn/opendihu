@@ -1,7 +1,7 @@
 #include "partition/partitioned_petsc_vec/01_partitioned_petsc_vec_with_dirichlet_bc.h"
 
 #include "utility/mpi_utility.h"
-
+#include "spatial_discretization/boundary_conditions/boundary_conditions_base.h"
 
 template<typename FunctionSpaceType, int nComponents, int nComponentsDirichletBc>
 void PartitionedPetscVecWithDirichletBc<FunctionSpaceType, nComponents, nComponentsDirichletBc>::
@@ -38,6 +38,8 @@ initialize(int offsetInGlobalNumberingPerRank)
   // add space for pressure components, this is only !=0 for PartitionedPetscVecForHyperelasticity
   nDofsLocal_ = nEntriesLocal_;
   nEntriesLocal_ += offsetInGlobalNumberingPerRank;
+
+  LOG(DEBUG) << "nDofsLocalWithoutGhosts: " << nDofsLocalWithoutGhosts << ", nDofsLocal_: " << nDofsLocal_ << ", nEntriesLocal_: " << nEntriesLocal_;
 
   // determine global number of non-BC dofs over all components
   nEntriesGlobal_ = 0;

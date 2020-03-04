@@ -430,6 +430,12 @@ getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[]) co
     VLOG(1) << "modified values: ";
     for (dof_no_t i = 0; i < ni; i++)
       VLOG(1) << y[i];
+
+    VLOG(1) << "component " << componentNo << ", nComponentsDirichletBc: " << nComponentsDirichletBc
+      << "\n isPrescribed: " << isPrescribed_[componentNo]
+      << "\n boundaryConditionValues: " << boundaryConditionValues_[componentNo] << "\nmodified values: ";
+    for (dof_no_t i = 0; i < ni; i++)
+      VLOG(1) << "local index " << ix[i] << " global " << indices[i] << ", isPrescribed: " << isPrescribed_[componentNo][ix[i]] << ", bc value: " << boundaryConditionValues_[componentNo][ix[i]] << ", final value: " << y[i];
   }
   else if (this->currentRepresentation_ == Partition::values_representation_t::representationCombinedLocal)
   {
@@ -460,9 +466,11 @@ getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[]) co
       }
     }
 
-    VLOG(1) << "modified values: ";
+    VLOG(1) << "component " << componentNo << ", nComponentsDirichletBc: " << nComponentsDirichletBc
+      << "\n isPrescribed: " << isPrescribed_[componentNo]
+      << "\n boundaryConditionValues: " << boundaryConditionValues_[componentNo] << "\nmodified values: ";
     for (dof_no_t i = 0; i < ni; i++)
-      VLOG(1) << y[i];
+      VLOG(1) << "local index " << ix[i] << ", value: " << y[i];
   }
 }
 

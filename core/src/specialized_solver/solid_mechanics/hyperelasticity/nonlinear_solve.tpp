@@ -96,6 +96,8 @@ postprocessSolution()
   // compute the PK2 stress at every node
   computePK2StressField();
 
+  LOG(DEBUG) << "solution: " << combinedVecSolution_->getString();
+
   // update the geometry field by the new displacements, also update field variables for the pressure output writer if needed
   bool usePressureOutputWriter = this->outputWriterManagerPressure_.hasOutputWriters();
   this->data_.updateGeometry(displacementsScalingFactor_, usePressureOutputWriter);
@@ -103,7 +105,6 @@ postprocessSolution()
   // dump files containing rhs and system matrix
   nonlinearSolver_->dumpMatrixRightHandSide(solverVariableResidual_);
 
-  LOG(DEBUG) << "solution: " << combinedVecSolution_->getString();
 
 #ifndef NDEBUG
   checkSolution(solverVariableSolution_);
@@ -576,6 +577,9 @@ setDisplacementsVelocitiesAndPressureFromCombinedVec(Vec x,
     values.resize(nEntries);
     combinedVecSolution_->getValues(componentNo, nEntries, displacementsFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
 
+    if (VLOG_IS_ON(1))
+      VLOG(1) << "setDisplacementsVelocitiesAndPressureFromCombinedVec, " << nEntries << " u values: " << values;
+
     u->setValues(componentNo, nEntries, displacementsFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
   }
   u->finishGhostManipulation();
@@ -591,6 +595,9 @@ setDisplacementsVelocitiesAndPressureFromCombinedVec(Vec x,
       values.resize(nEntries);
       combinedVecSolution_->getValues(3 + componentNo, nEntries, displacementsFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
 
+    if (VLOG_IS_ON(1))
+      VLOG(1) << "setDisplacementsVelocitiesAndPressureFromCombinedVec, " << nEntries << " v values: " << values;
+
       v->setValues(componentNo, nEntries, displacementsFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
     }
     v->finishGhostManipulation();
@@ -605,6 +612,10 @@ setDisplacementsVelocitiesAndPressureFromCombinedVec(Vec x,
 
     const int pressureComponent = nDisplacementComponents;
     combinedVecSolution_->getValues(pressureComponent, nEntries, pressureFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
+
+    if (VLOG_IS_ON(1))
+      VLOG(1) << "setDisplacementsVelocitiesAndPressureFromCombinedVec, " << nEntries << " p values: " << values;
+
     p->setValues(0, nEntries, pressureFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
     p->finishGhostManipulation();
     p->startGhostManipulation();

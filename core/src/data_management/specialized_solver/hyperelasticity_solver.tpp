@@ -160,14 +160,63 @@ template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, ty
 void QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::
 updateGeometry(double scalingFactor, bool updateLinearVariables)
 {
+  LOG(DEBUG) << "updateGeometry, scalingFactor=" << scalingFactor << ", updateLinearVariables: " << updateLinearVariables;
   PetscErrorCode ierr;
 
   this->displacementsFunctionSpace_->geometryField().finishGhostManipulation();
+
+  LOG(DEBUG) << "a";
+
+  Vec vector = this->displacements_->valuesGlobal();
+  int nValues = 0;
+  LOG(DEBUG) << "vector: " << vector;
+  ierr = VecGetSize(vector, &nValues); CHKERRV(ierr);
+  LOG(DEBUG) << "size=" << nValues;
+  std::vector<double> solutionValues(nValues);
+
+  LOG(DEBUG) << "c";
+  std::vector<PetscInt> dofNosLocal(nValues);
+  std::iota(dofNosLocal.begin(), dofNosLocal.end(), 0);
+  LOG(DEBUG) << "d";
+  LOG(DEBUG) << "dofNosLocal: " << dofNosLocal;
+
+  // get the values
+  ierr = VecGetValues(vector, nValues, dofNosLocal.data(), solutionValues.data()); CHKERRV(ierr);
+
+  LOG(DEBUG) << "e";
+
+  LOG(DEBUG) << solutionValues.size() << " solutionValues " << solutionValues;
+  // ---------------------
+
+  vector = this->geometryReference_->valuesGlobal();
+  ierr = VecGetSize(vector, &nValues); CHKERRV(ierr);
+  std::vector<double> referenceValues(nValues);
+
+  dofNosLocal.resize(nValues);
+  std::iota(dofNosLocal.begin(), dofNosLocal.end(), 0);
+
+  // get the values
+  ierr = VecGetValues(vector, nValues, dofNosLocal.data(), referenceValues.data()); CHKERRV(ierr);
+  LOG(DEBUG) << referenceValues.size() << " referenceValues: " << referenceValues;
+
+  // TODO zero out Dirichlet BC values in this->displacements_->valuesGlobal()
 
   // update quadratic function space geometry
   // w = alpha * x + y, VecWAXPY(w, alpha, x, y)
   ierr = VecWAXPY(this->displacementsFunctionSpace_->geometryField().valuesGlobal(),
                   scalingFactor, this->displacements_->valuesGlobal(), this->geometryReference_->valuesGlobal()); CHKERRV(ierr);
+// ---------------------
+
+  vector = this->displacementsFunctionSpace_->geometryField().valuesGlobal();
+  ierr = VecGetSize(vector, &nValues); CHKERRV(ierr);
+  std::vector<double> newGeometryValues(nValues);
+
+  dofNosLocal.resize(nValues);
+  std::iota(dofNosLocal.begin(), dofNosLocal.end(), 0);
+
+  // get the values
+  ierr = VecGetValues(vector, nValues, dofNosLocal.data(), newGeometryValues.data()); CHKERRV(ierr);
+  LOG(DEBUG) << newGeometryValues.size() << " newGeometryValues: " << newGeometryValues;
 
   this->displacementsFunctionSpace_->geometryField().startGhostManipulation();
 

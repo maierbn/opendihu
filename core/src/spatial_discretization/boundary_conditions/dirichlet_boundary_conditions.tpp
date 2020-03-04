@@ -1059,5 +1059,4 @@ applyInRightHandSide(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceT
  
 }
 
-
 }  // namespace

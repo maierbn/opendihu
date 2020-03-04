@@ -9,6 +9,8 @@ from create_partitioned_meshes_for_settings import *   # file create_partitioned
 
 # input mesh file
 fiber_file = "../../../../electrophysiology/input/left_biceps_brachii_13x13fibers.bin"
+#fiber_file = "../../../../electrophysiology/input/left_biceps_brachii_7x7fibers.bin"
+#fiber_file = "../../../../electrophysiology/input/left_biceps_brachii_7x7fibers.bin"
 
 load_fiber_data = True             # If the fiber geometry data should be loaded completely in the python script. If True, this reads the binary file and assigns the node positions in the config. If False, the C++ code will read the binary file and only extract the local node positions. This is more performant for highly parallel runs.
 
@@ -76,6 +78,8 @@ for i in range(mx):
   
 # fix corner completely
 elasticity_dirichlet_bc[(mz-1)*mx*my + 0] = [0.0,0.0,0.0,None,None,None]
+
+print("elasticity_dirichlet_bc: {}".format(elasticity_dirichlet_bc))
        
 # Neumann BC at bottom nodes, traction downwards
 elasticity_neumann_bc = [{"element": 0*nx*ny + j*nx + i, "constantVector": bottom_traction, "face": "2-"} for j in range(ny) for i in range(nx)]
@@ -83,7 +87,7 @@ elasticity_neumann_bc = [{"element": 0*nx*ny + j*nx + i, "constantVector": botto
 # Neumann boundary conditions, specify upward force for top elements, slightly in y-direction
 #neumann_bc = [{"element": (nz-1)*nx*ny + j*nx + i, "constantVector": bottom_traction, "face": "2+"} for j in range(ny) for i in range(nx)]
 
-dt = 3e0         # [ms] time step width
+dt = 50e0         # [ms] time step width
 end_time = 10000
 output_interval = dt
 
@@ -183,21 +187,22 @@ config = {
     "fiberMeshNames": fiber_mesh_names,   # fiber meshes that will be used to determine the fiber direction
     
     # nonlinear solver
-    "relativeTolerance": 1e-10,         # 1e-10 relative tolerance of the linear solver
+    "relativeTolerance": 1e-5,         # 1e-10 relative tolerance of the linear solver
     "solverType": "preonly",            # type of the linear solver: cg groppcg pipecg pipecgrr cgne nash stcg gltr richardson chebyshev gmres tcqmr fcg pipefcg bcgs ibcgs fbcgs fbcgsr bcgsl cgs tfqmr cr pipecr lsqr preonly qcg bicg fgmres pipefgmres minres symmlq lgmres lcd gcr pipegcr pgmres dgmres tsirm cgls
     "preconditionerType": "lu",         # type of the preconditioner
     "maxIterations": 1e4,               # maximum number of iterations in the linear solver
     "snesMaxFunctionEvaluations": 1e8,  # maximum number of function iterations
-    "snesMaxIterations": 50,            # maximum number of iterations in the nonlinear solver
-    "snesRelativeTolerance": 1e-10,     # relative tolerance of the nonlinear solver
+    "snesMaxIterations": 10,            # maximum number of iterations in the nonlinear solver
+    "snesRelativeTolerance": 1e-5,     # relative tolerance of the nonlinear solver
     "snesLineSearchType": "l2",        # type of linesearch, possible values: "bt" "nleqerr" "basic" "l2" "cp" "ncglinear"
-    "snesAbsoluteTolerance": 1e-10,     # absolute tolerance of the nonlinear solver
+    "snesAbsoluteTolerance": 1e-5,     # absolute tolerance of the nonlinear solver
     
     #"dumpFilename": "out/r{}/m".format(sys.argv[-1]),   # dump system matrix and right hand side after every solve
     "dumpFilename": "",         # dump disabled
     "dumpFormat": "matlab",   # default, ascii, matlab
     
-    "loadFactors":  [0.1, 0.2, 0.35, 0.5, 1.0],   # load factors for every timestep
+    #"loadFactors":  [0.1, 0.2, 0.35, 0.5, 1.0],   # load factors for every timestep
+    "loadFactors":  [0.5, 1.0],   # load factors for every timestep
     #"loadFactors": [],                 # no load factors, solve problem directly
     "nNonlinearSolveCalls": 1,         # how often the nonlinear solve should be repeated
     

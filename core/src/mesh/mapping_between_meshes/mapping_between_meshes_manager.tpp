@@ -143,9 +143,8 @@ prepareMappingLowToHigh(std::shared_ptr<FieldVariableTargetType> fieldVariableTa
   Control::PerformanceMeasurement::stop("durationMapPrepare");
 }
 
-/*
 // helper function, calls the map function of the mapping if field variables have same number of components
-template<typename FieldVariableSourceType, typename FieldVariableTargetType, typename Dummy=void>
+template<typename FieldVariableSourceType, typename FieldVariableTargetType, typename Dummy = FieldVariableSourceType>
 struct MapLowToHighDimensionAllComponents
 {
 
@@ -161,14 +160,15 @@ struct MapLowToHighDimensionAllComponents
       << " but a mapping between all components was requested.";
   }
 };
-*/
+
 // helper function, calls the map function of the mapping if field variables have same number of components
-template<typename FieldVariableSourceType, typename FieldVariableTargetType, typename Dummy=void>
-struct MapLowToHighDimensionAllComponents
+template<typename FieldVariableSourceType, typename FieldVariableTargetType>
+struct MapLowToHighDimensionAllComponents<FieldVariableSourceType, FieldVariableTargetType,
+    typename std::enable_if<FieldVariableSourceType::nComponents() == FieldVariableTargetType::nComponents(),FieldVariableSourceType>::type>
 {
 
   // actual function
-  static typename std::enable_if<FieldVariableSourceType::nComponents() == FieldVariableTargetType::nComponents(),void>::type call(
+  static void call(
     std::shared_ptr<MappingBetweenMeshes<typename FieldVariableSourceType::FunctionSpace, typename FieldVariableTargetType::FunctionSpace>> mapping,
     std::shared_ptr<FieldVariableSourceType> fieldVariableSource, std::shared_ptr<FieldVariableTargetType> fieldVariableTarget,
     std::shared_ptr<FieldVariable::FieldVariable<typename FieldVariableTargetType::FunctionSpace,1>> targetFactorSum)
@@ -178,7 +178,7 @@ struct MapLowToHighDimensionAllComponents
     );
   }
 
-};
+};/*
 
 template<typename FieldVariableSourceType, typename FieldVariableTargetType>
 struct MapLowToHighDimensionAllComponents<FieldVariableSourceType,FieldVariableTargetType,
@@ -197,7 +197,7 @@ struct MapLowToHighDimensionAllComponents<FieldVariableSourceType,FieldVariableT
       << " but a mapping between all components was requested.";
   }
 
-};
+};*/
 
 
 //! map data from the source to the target field variable. This has to be called between prepareMapping and finalizeMapping, can be called multiple times with different source meshes.

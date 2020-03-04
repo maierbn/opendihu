@@ -227,6 +227,19 @@ config = {
   "scenarioName": "3d_box",
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "Meshes": fiber_meshes,  
+  "Solvers": {
+    "nonlinearSolver": {
+      "relativeTolerance": 1e-10,         # 1e-10 relative tolerance of the linear solver
+      "solverType": "preonly",            # type of the linear solver: cg groppcg pipecg pipecgrr cgne nash stcg gltr richardson chebyshev gmres tcqmr fcg pipefcg bcgs ibcgs fbcgs fbcgsr bcgsl cgs tfqmr cr pipecr lsqr preonly qcg bicg fgmres pipefgmres minres symmlq lgmres lcd gcr pipegcr pgmres dgmres tsirm cgls
+      "preconditionerType": "lu",         # type of the preconditioner
+      "maxIterations": 1e4,               # maximum number of iterations in the linear solver
+      "snesMaxFunctionEvaluations": 1e8,  # maximum number of function iterations
+      "snesMaxIterations": 50,            # maximum number of iterations in the nonlinear solver
+      "snesRelativeTolerance": 1e-5,     # relative tolerance of the nonlinear solver
+      "snesLineSearchType": "l2",        # type of linesearch, possible values: "bt" "nleqerr" "basic" "l2" "cp" "ncglinear"
+      "snesAbsoluteTolerance": 1e-5,     # absolute tolerance of the nonlinear solver
+    }
+  },
   "DynamicHyperelasticitySolver": {
     #"numberTimeSteps": 1,
     "endTime": end_time,
@@ -254,15 +267,7 @@ config = {
     "fiberMeshNames": fiber_mesh_names,   # fiber meshes that will be used to determine the fiber direction
     
     # nonlinear solver
-    "relativeTolerance": 1e-10,         # 1e-10 relative tolerance of the linear solver
-    "solverType": "preonly",            # type of the linear solver: cg groppcg pipecg pipecgrr cgne nash stcg gltr richardson chebyshev gmres tcqmr fcg pipefcg bcgs ibcgs fbcgs fbcgsr bcgsl cgs tfqmr cr pipecr lsqr preonly qcg bicg fgmres pipefgmres minres symmlq lgmres lcd gcr pipegcr pgmres dgmres tsirm cgls
-    "preconditionerType": "lu",         # type of the preconditioner
-    "maxIterations": 1e4,               # maximum number of iterations in the linear solver
-    "snesMaxFunctionEvaluations": 1e8,  # maximum number of function iterations
-    "snesMaxIterations": 50,            # maximum number of iterations in the nonlinear solver
-    "snesRelativeTolerance": 1e-10,     # relative tolerance of the nonlinear solver
-    "snesLineSearchType": "l2",        # type of linesearch, possible values: "bt" "nleqerr" "basic" "l2" "cp" "ncglinear"
-    "snesAbsoluteTolerance": 1e-10,     # absolute tolerance of the nonlinear solver
+    "solverName": "nonlinearSolver",
     
     #"dumpFilename": "out/r{}/m".format(sys.argv[-1]),   # dump system matrix and right hand side after every solve
     "dumpFilename": "",         # dump disabled

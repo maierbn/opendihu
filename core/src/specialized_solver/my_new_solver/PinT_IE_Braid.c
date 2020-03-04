@@ -88,6 +88,7 @@ int my_Step(braid_App        app,
    PetscReal tstop;              /* evolve to this time*/
    PetscInt level, i, solver;
    PetscReal deltaX, deltaT;
+   PetscReal * help;
 
    // get level and start and stop time from braid status
    braid_StepStatusGetLevel(status, &level);
@@ -110,27 +111,40 @@ int my_Step(braid_App        app,
       }
    }
 
-   Vec V; //create vector V with the given values of u
-   VecCreateSeqWithArray(PETSC_COMM_SELF, 1, u->size, u->values,&V);
-   VecAssemblyBegin(V);
-   VecAssemblyEnd(V);
+   // Vec V; //create vector V with the given values of u
+   // VecCreateSeqWithArray(PETSC_COMM_SELF, 1, u->size, u->values,&V);
+   // // VecCreateMPIWithArray(app->comm, 1, u->size, PETSC_DECIDE, u->values,&V);
+   // VecAssemblyBegin(V);
+   // VecAssemblyEnd(V);
 
+   std::shared_ptr<typename Data::PinT<typename _braid_App_struct::NestedSolver::FunctionSpace>::ScalarFieldVariableType> solution=(*app->implicitEulerSolvers)[solver]->data().solution();
+   assert(u->size == solution->nDofsGlobal());
    // Set the initial guess for the solver
-   (*app->implicitEulerSolvers)[solver]->data().solution()->valuesGlobal()=V;
-
+   PetscErrorCode ierr =VecSetValues(solution->valuesGlobal(), u->size, solution->functionSpace()->meshPartition()->dofNosLocal().data(), u->values, INSERT_VALUES);
+   VecAssemblyBegin(solution->valuesGlobal());
+   VecAssemblyEnd(solution->valuesGlobal());
+   CHKERRQ(ierr);
    // set time span for the solver, which is calculated by braid status
    (*app->implicitEulerSolvers)[solver]->setTimeSpan(tstart, tstop);
+   (*app->implicitEulerSolvers)[solver]->setNumberTimeSteps(1);
+   (*app->implicitEulerSolvers)[solver]->setSystemMatrix((tstop-tstart)/1);
+
+   PetscRealView(u->size, u->values, 0);
+   // VecView((*app->implicitEulerSolvers)[solver]->data().solution()->valuesGlobal(), 	PETSC_VIEWER_STDOUT_SELF);
 
    // run solver
    (*app->implicitEulerSolvers)[solver]->run();
+   // VecView((*app->implicitEulerSolvers)[solver]->data().solution()->valuesGlobal(), 	PETSC_VIEWER_STDOUT_SELF);
 
    // functions for debugging:
    // VecView((*app->implicitEulerSolvers)[0]->data().solution()->valuesGlobal(), 	PETSC_VIEWER_STDOUT_SELF);
    // PetscRealView(6, u->values, 0);
 
    // put the calculated solution into braid vector u
-   VecGetArray(&(*((*app->implicitEulerSolvers)[solver]->data().solution()->valuesGlobal())),&(u->values));
-
+   // VecGetArray(&(*((*app->implicitEulerSolvers)[solver]->data().solution()->valuesGlobal())),&(u->values));
+   VecGetArray(&(*((*app->implicitEulerSolvers)[solver]->data().solution()->valuesGlobal())),&help);
+   u->values=help;
+   VecRestoreArray(&(*((*app->implicitEulerSolvers)[solver]->data().solution()->valuesGlobal())),&help);
    deltaT = tstop - tstart;
    deltaX = (app->xstop - app->xstart) / (ustop->size - 1.0);
 
@@ -178,6 +192,12 @@ my_Init(braid_App     app,
    // (u->values)[3] =5;
    // (u->values)[4] =2;
    // (u->values)[5] =2;
+   PetscReal * help;
+   PetscInt solver;
+   solver=log2(nspace - 1);
+   VecGetArray(&(*((*app->implicitEulerSolvers)[solver]->data().solution()->valuesGlobal())),&help);
+   u->values=help;
+   VecRestoreArray(&(*((*app->implicitEulerSolvers)[solver]->data().solution()->valuesGlobal())),&help);
    *u_ptr = u;
 
    return 0;

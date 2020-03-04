@@ -127,11 +127,12 @@ run()
   PetscInt     ntime         =  this->ntime_;
   PetscReal    xstart        =  0.0;
   PetscReal    xstop         =  4;
-  PetscInt     nspace        =  33;
+  PetscInt     nspace        =  this->nspace_+1;
+
 
   /* Define XBraid parameters
    * See -help message for descriptions */
-  int       max_levels    = 5;
+  int       max_levels    = 3;
   int       nrelax        = 1;
   int       skip          = 0;
   double    tol           = 1.0e-07;
@@ -144,7 +145,7 @@ run()
   int       wrapper_tests = 0;
   int       print_level   = 3;
   int       access_level  = 1;
-  int       use_sequential= 0;
+  int       use_sequential= 1;
 
   comm   = MPI_COMM_WORLD;
   MPI_Comm_rank(comm, &rank);
@@ -296,7 +297,7 @@ run()
   // // VecView(implicitEulerSolvers_[5]->data().solution()->valuesGlobal(), 	PETSC_VIEWER_STDOUT_SELF);
   // VecAXPY(test2, -1, test1);
   // VecView(test2, 	PETSC_VIEWER_STDOUT_SELF);
-  
+
   // do something else
   //executeMyHelperMethod();
 
@@ -352,6 +353,7 @@ PinT_initialize()
   tstart_ = 0.0;
   tstop_ = 1.0;
   ntime_ = 10;
+  nspace_=8;
   // PetscReal *initialGuess_=[2,2,4,5,2,2];
   if (specificSettings_.hasKey("tstart"))
     tstart_ = specificSettings_.getOptionDouble("tstart", 0.0);
@@ -359,8 +361,8 @@ PinT_initialize()
     tstop_ = specificSettings_.getOptionDouble("tstop", 1.0, PythonUtility::Positive);
   if (specificSettings_.hasKey("ntime"))
     ntime_ = specificSettings_.getOptionDouble("ntime", 1.0, PythonUtility::Positive);
-  // if (specificSettings_.hasKey("Initial Guess"))
-  //   specificSettings_.getOptionVector("Initial Guess", initialGuess_);
+  if (specificSettings_.hasKey("nspace"))
+    nspace_ = specificSettings_.getOptionDouble("nspace", 1.0, PythonUtility::Positive);
 }
 
 template<class NestedSolver>

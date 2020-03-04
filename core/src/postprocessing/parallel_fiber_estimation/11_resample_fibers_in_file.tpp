@@ -96,8 +96,8 @@ resampleFibersInFile(int nPointsPerFiber, std::string filename)
     Vec3 previousPoint;
     Vec3 nextPoint;
 
-    int oldZIndexPrevious0 = -1;    /// z index of the point that is currently loadad in previousPoint
-    int oldZIndexNext0 = -1;        /// z index of the point that is currently loadad in nextPoint
+    int oldZIndexPrevious0 = -1;    /// z index of the point that is currently loaded in previousPoint
+    int oldZIndexNext0 = -1;        /// z index of the point that is currently loaded in nextPoint
 
     // loop over nodes of the new fiber and write them to the new file
     for (int zIndex = 0; zIndex < nNodesPerFiber_; zIndex++)

@@ -33,6 +33,9 @@ if nFineGridFibers == 0:
   print("Error, nFineGridFibers is 0")
   exit
 
+n_nodes_per_fiber = (top_z_clip-bottom_z_clip) / element_length
+n_nodes_per_fiber = 2*(n_nodes_per_fiber//2)+1   # make number odd
+
 print("input_filename: \"{}\"".format(input_filename))
 print("nFineGridFibers: {}".format(nFineGridFibers))
 print("bottom z clip: {}, top z clip: {}".format(bottom_z_clip, top_z_clip))
@@ -64,7 +67,7 @@ config = {
     "useGradientField": False,    # set to False
     "maxLevel": 2,          # maximum level (1=8 processes, 2=64 processes)
     "lineStepWidth":  0.1,  # line width for tracing of fibers
-    "nNodesPerFiber": (top_z_clip-bottom_z_clip) / element_length,   # number of nodes in each final fiber
+    "nNodesPerFiber": n_nodes_per_fiber,   # number of nodes in each final fiber
     "improveMesh": True,     # smooth the 2D meshes, required for bigger meshes or larger amount of ranks
     "refinementFactors": [1,1,1],         # no refinement
     "maxIterations":     1e5,

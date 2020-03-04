@@ -441,9 +441,9 @@ initializeMappings(std::vector<int> &parametersUsedAsIntermediate, std::vector<i
     this->specificSettings_.getOptionVector("parametersUsedAsIntermediate", parametersUsedAsIntermediate);
     this->specificSettings_.getOptionVector("parametersUsedAsConstant", parametersUsedAsConstant);
 
-    this->specificSettings_.getOptionVector<int>("statesForTransfer", statesForTransfer);
-    this->specificSettings_.getOptionVector<int>("intermediatesForTransfer", intermediatesForTransfer);
-    this->specificSettings_.getOptionVector<int>("parametersForTransfer", parametersForTransfer);
+    this->specificSettings_.template getOptionVector<int>("statesForTransfer", statesForTransfer);
+    this->specificSettings_.template getOptionVector<int>("intermediatesForTransfer", intermediatesForTransfer);
+    this->specificSettings_.template getOptionVector<int>("parametersForTransfer", parametersForTransfer);
   }
 
   LOG(DEBUG) << "parametersUsedAsIntermediate: " << parametersUsedAsIntermediate;

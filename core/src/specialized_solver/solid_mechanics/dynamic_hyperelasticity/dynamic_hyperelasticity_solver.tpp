@@ -134,18 +134,18 @@ setInitialValues()
     LOG(DEBUG) << "setInitialValues, nDofsGlobal = " << nDofsGlobal;
 
     // extract only the local dofs out of the list of global values
-    this->specificSettings_.getOptionVector<Vec3>("initialValuesDisplacements", nDofsGlobal, localValuesDisplacements);
+    this->specificSettings_.template getOptionVector<Vec3>("initialValuesDisplacements", nDofsGlobal, localValuesDisplacements);
     displacementsFunctionSpace->meshPartition()->extractLocalDofsWithoutGhosts(localValuesDisplacements);
 
-    this->specificSettings_.getOptionVector<Vec3>("initialValuesVelocities", nDofsGlobal, localValuesVelocities);
+    this->specificSettings_.template getOptionVector<Vec3>("initialValuesVelocities", nDofsGlobal, localValuesVelocities);
     displacementsFunctionSpace->meshPartition()->extractLocalDofsWithoutGhosts(localValuesVelocities);
   }
   else
   {
     // input is already only the local dofs, use all
     const int nDofsLocal = displacementsFunctionSpace->nDofsLocalWithoutGhosts();
-    this->specificSettings_.getOptionVector<Vec3>("initialValuesDisplacements", nDofsLocal, localValuesDisplacements);
-    this->specificSettings_.getOptionVector<Vec3>("initialValuesVelocities", nDofsLocal, localValuesVelocities);
+    this->specificSettings_.template getOptionVector<Vec3>("initialValuesDisplacements", nDofsLocal, localValuesDisplacements);
+    this->specificSettings_.template getOptionVector<Vec3>("initialValuesVelocities", nDofsLocal, localValuesVelocities);
   }
   VLOG(1) << "set initial values for displacements to " << localValuesDisplacements;
   VLOG(1) << "set initial values for velocities to " << localValuesVelocities;

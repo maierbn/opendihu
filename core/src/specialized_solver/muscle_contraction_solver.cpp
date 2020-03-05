@@ -63,7 +63,7 @@ advanceTimeSpan()
     }
 
     // compute the current active stress
-    //computeActiveStress();
+    computeActiveStress();
 
     if (isDynamic_)
     {
@@ -80,7 +80,7 @@ advanceTimeSpan()
     }
 
     // compute new values of λ and λ_dot, to be transferred to the CellML solvers
-    //computeLambda();
+    computeLambda();
 
     // advance simulation time
     timeStepNo++;

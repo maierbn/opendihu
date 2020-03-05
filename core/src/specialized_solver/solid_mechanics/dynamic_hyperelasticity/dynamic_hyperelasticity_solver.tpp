@@ -69,6 +69,9 @@ initialize()
     }
   }
 
+  // write initial mesh
+  this->outputWriterManager_.writeOutput(this->data_, 0, 0.0);
+
   // check if initial values satisfy the static equation (for debugging)
   //hyperelasticitySolver_.debug();
 }

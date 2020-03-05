@@ -233,6 +233,8 @@ initializeFiberDirections()
   std::vector<std::string> fiberMeshNames;
   this->specificSettings_.template getOptionVector<std::string>("fiberMeshNames", fiberMeshNames);
 
+  LOG(INFO) << "initializing fiber directions...";
+
   // loop over fiber mesh names
   for (int fiberNo = 0; fiberNo < fiberMeshNames.size(); fiberNo++)
   {

@@ -46,14 +46,14 @@ scenario_name = "ramp"
 # timing parameters
 # -----------------
 # simulation time:  4s
-end_time = 0.001                      # [ms] end time of the simulation
+end_time = 1000                      # [ms] end time of the simulation
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
 stimulation_frequency_jitter = 0    # [-] jitter in percent of the frequency, added and substracted to the stimulation_frequency after each stimulation
 
 dt_0D = 1e-3                        # [ms] timestep width of ODEs
 dt_1D = 1e-3                        # [ms] timestep width of diffusion
 dt_splitting = 1e-3                 # [ms] overall timestep width of strang splitting
-dt_3D = 0.1                         # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
+dt_3D = 1                         # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
 output_timestep = 10.0              # [ms] timestep for large output files, 5.0
 output_timestep_smaller_files = 0.1 # [ms] timestep for small output files, 0.5
 
@@ -84,20 +84,25 @@ bottom_traction = [0.0,0.0,0.0]        # [N]
 
 # stride for sampling the 3D elements from the fiber data
 # here any number is possible
-sampling_stride_x = 2
-sampling_stride_y = 2
-sampling_stride_z = 50
+sampling_stride_x = 4
+sampling_stride_y = 4
+sampling_stride_z = 74
+
+sampling_stride_x = 1
+sampling_stride_y = 1
+sampling_stride_z = 74
 
 # input files
-#fiber_file             = "../../../input/left_biceps_brachii_7x7fibers.bin"
-fiber_file              = "../../../input/left_biceps_brachii_13x13fibers.bin"
+fiber_file             = "../../../input/left_biceps_brachii_7x7fibers.bin"
+#fiber_file              = "../../../input/left_biceps_brachii_13x13fibers.bin"
 firing_times_file       = "../../../input/MU_firing_times_always.txt"         # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
 fiber_distribution_file = "../../../input/MU_fibre_distribution_10MUs.txt"
-cellml_file             = "../../../input/new_slow_TK_2014_12_08.cellml"
+cellml_file             = "../../../input/new_slow_TK_2014_12_08.c"
 
 # enable paraview output
 paraview_output = True
 disable_firing_output = False
+debug_output = False
 
 # Monodomain parameters
 # --------------------

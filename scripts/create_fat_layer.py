@@ -113,7 +113,7 @@ with open(input_filename, "rb") as infile:
   result_n_points_y = y_size
   
   # for z range, ensure that last value is contained
-  z_range = range(0, n_points_whole_fiber, z_stride)+([n_points_whole_fiber-1] if (n_points_whole_fiber-1)%z_stride !=0 else [])
+  z_range = list(range(0, n_points_whole_fiber, z_stride))+([n_points_whole_fiber-1] if (n_points_whole_fiber-1)%z_stride !=0 else [])
   result_n_points_z = len(z_range)
   result_n_points = result_n_points_x * result_n_points_y * result_n_points_z
   

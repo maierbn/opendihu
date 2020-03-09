@@ -3,6 +3,7 @@
 namespace Mesh
 {
 
+/** helper classes */
 template<typename FieldVariableSourceType, typename FieldVariableTargetType, typename Dummy=void>
 struct ExtractComponentShared
 {
@@ -27,11 +28,35 @@ struct ExtractComponentShared<FieldVariableSourceType,FieldVariableTargetType,
   }
 };
 
+template<typename FieldVariableSourceType, typename FieldVariableTargetType, typename Dummy=void>
+struct ExtractComponentCopy
+{
+  // helper function, does nothing
+  static void call(int componentNoSource, std::shared_ptr<FieldVariableSourceType> fieldVariableSource, std::shared_ptr<FieldVariableTargetType> fieldVariableTarget)
+  {
+    LOG(FATAL) << "This method should not be called, something went wrong! Target field variable has "
+      << FieldVariableTargetType::nComponents() << " != 1 components or dimension mismatch: "
+      << FieldVariableSourceType::FunctionSpace::dim() << " != "<< FieldVariableTargetType::FunctionSpace::dim();
+  }
+};
+
+template<typename FieldVariableSourceType, typename FieldVariableTargetType>
+struct ExtractComponentCopy<FieldVariableSourceType,FieldVariableTargetType,
+  typename std::enable_if<FieldVariableTargetType::nComponents() == 1 && FieldVariableSourceType::FunctionSpace::dim() == FieldVariableTargetType::FunctionSpace::dim(),void>::type
+>
+{
+  // extract the component from the field variable
+  static void call(int componentNoSource, std::shared_ptr<FieldVariableSourceType> fieldVariableSource, std::shared_ptr<FieldVariableTargetType> fieldVariableTarget)
+  {
+    fieldVariableSource->extractComponentCopy(componentNoSource, fieldVariableTarget);
+  }
+};
+
 
 template<typename FieldVariableSourceType, typename FieldVariableTargetType, typename Dummy=void>
 struct RestoreExtractedComponent
 {
-  static void call(std::shared_ptr<FieldVariableSourceType> fieldVariableSource, std::shared_ptr<FieldVariableTargetType> fieldVariableTarget)
+  static void call(std::shared_ptr<FieldVariableSourceType> fieldVariableSource, std::shared_ptr<FieldVariableTargetType> fieldVariableTarget, int componentNoTarget)
   {
     LOG(FATAL) << "This method should not be called, something went wrong! Dimension of field variables mismatches, "
       << FieldVariableTargetType::FunctionSpace::dim() << "!=" << FieldVariableSourceType::FunctionSpace::dim();
@@ -43,9 +68,9 @@ struct RestoreExtractedComponent<FieldVariableSourceType,FieldVariableTargetType
   typename std::enable_if<FieldVariableTargetType::FunctionSpace::dim() == FieldVariableSourceType::FunctionSpace::dim(),void>::type
 >
 {
-  static void call(std::shared_ptr<FieldVariableSourceType> fieldVariableSource, std::shared_ptr<FieldVariableTargetType> fieldVariableTarget)
+  static void call(std::shared_ptr<FieldVariableSourceType> fieldVariableSource, std::shared_ptr<FieldVariableTargetType> fieldVariableTarget, int componentNoTarget)
   {
-    fieldVariableTarget->restoreExtractedComponent(fieldVariableSource->partitionedPetscVec());
+    fieldVariableTarget->restoreExtractedComponent(fieldVariableSource->partitionedPetscVec(), componentNoTarget);
   };
 };
 
@@ -76,15 +101,16 @@ map(std::shared_ptr<FieldVariableSourceType> fieldVariableSource, int componentN
     if (fieldVariableSource->functionSpace()->meshName() == fieldVariableTarget->functionSpace()->meshName())
     {
       VLOG(1) << "mesh is the same: " << fieldVariableSource->functionSpace()->meshName() << " -> " << fieldVariableTarget->functionSpace()->meshName();
+      VLOG(1) << "target representation: " << fieldVariableTarget->partitionedPetscVec()->getCurrentRepresentationString();
 
       // if representation of fieldVariableTarget is invalid, this means that it has been extracted to another field variable
       if (fieldVariableTarget->partitionedPetscVec()->currentRepresentation() == Partition::values_representation_t::representationInvalid)
       {
-        VLOG(1) << "call restore extracted component";
+        VLOG(1) << "call restore extracted component " << componentNoTarget;
 
         // transfer back, e.g. from finite elements back to cellml
         //fieldVariableTarget->restoreExtractedComponent(fieldVariableSource->partitionedPetscVec());
-        RestoreExtractedComponent<FieldVariableSourceType,FieldVariableTargetType>::call(fieldVariableSource, fieldVariableTarget);
+        RestoreExtractedComponent<FieldVariableSourceType,FieldVariableTargetType>::call(fieldVariableSource, fieldVariableTarget, componentNoTarget);
       }
       else
       {
@@ -106,7 +132,7 @@ map(std::shared_ptr<FieldVariableSourceType> fieldVariableSource, int componentN
                 VLOG(1) << "Field variable is already the same";
               }
             }
-            else
+            else if (fieldVariableSource->isExtractComponentSharedPossible(componentNoSource))
             {
               // fieldVariableTarget has only 1 component
               // The following retrieves the raw memory pointer from the Petsc vector in fieldVariableSource and reuses it for fieldVariableTarget
@@ -119,6 +145,23 @@ map(std::shared_ptr<FieldVariableSourceType> fieldVariableSource, int componentN
 
               //fieldVariableSource->extractComponentShared(componentNoSource, fieldVariableTarget);
               ExtractComponentShared<FieldVariableSourceType,FieldVariableTargetType>::call(componentNoSource, fieldVariableSource, fieldVariableTarget);
+
+              VLOG(1) << "source representation: " << fieldVariableSource->partitionedPetscVec()->getCurrentRepresentationString();
+
+              return;
+            }
+            else
+            {
+              // extractComponentShared is not possible, because the last component cannot be extracted by this
+              if (componentNoSource == -1)
+                componentNoSource = 0;
+
+              VLOG(1) << "source component no " << componentNoSource << " of " << FieldVariableSourceType::nComponents() << ", call extract component copy";
+
+              //fieldVariableSource->extractComponentCopy(componentNoSource, fieldVariableTarget);
+              ExtractComponentCopy<FieldVariableSourceType,FieldVariableTargetType>::call(componentNoSource, fieldVariableSource, fieldVariableTarget);
+
+              VLOG(1) << "source representation: " << fieldVariableSource->partitionedPetscVec()->getCurrentRepresentationString();
 
               return;
             }

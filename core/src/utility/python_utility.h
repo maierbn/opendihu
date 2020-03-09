@@ -147,6 +147,9 @@ public:
   //! create a python list out of the long vector
   static PyObject *convertToPythonList(unsigned int nEntries, double *data);
 
+  //! create a python list from a double *
+  static PyObject *convertToPythonList(double *value, int nValues);
+
   //! convert a PyUnicode object to a std::string
   static std::string pyUnicodeToString(PyObject *object);
 

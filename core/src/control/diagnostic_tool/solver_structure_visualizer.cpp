@@ -77,25 +77,44 @@ void SolverStructureVisualizer::endChild()
 }
 
 //! add the output connection information between two children to the current solver
-void SolverStructureVisualizer::addOutputConnection(OutputConnection &outputConnection)
+void SolverStructureVisualizer::addOutputConnection(std::shared_ptr<OutputConnection> outputConnection)
 {
   LOG(DEBUG) << "SolverStructureVisualizer::addOutputConnection() nDisableCalls_: " << nDisableCalls_ << ", enabled: " << enabled_ << ", currently at \"" << currentSolver_->name << "\".";
 
   if (!enabled_)
     return;
 
+  currentSolver_->outputConnection = outputConnection;
+}
+
+void SolverStructureVisualizer::parseOutputConnection()
+{
+  LOG(DEBUG) << "parseOutputConnection";
+
+  if (!currentSolver_->outputConnection)
+  {
+    LOG(DEBUG) << "output connection not set";
+    return;
+  }
+
+  LOG(DEBUG) << "currentSolver_->outputConnection: " << currentSolver_->outputConnection;
+
+  currentSolver_->outputConnections.clear();
+
   // get output connector data from outputConnection
-  const std::vector<OutputConnection::Connector> &connectorTerm1To2 = outputConnection.connectorTerm1To2();
-  const std::vector<OutputConnection::Connector> &connectorTerm2To1 = outputConnection.connectorTerm2To1();
+  const std::vector<OutputConnection::Connector> &connectorTerm1To2 = currentSolver_->outputConnection->connectorTerm1To2();
+  const std::vector<OutputConnection::Connector> &connectorTerm2To1 = currentSolver_->outputConnection->connectorTerm2To1();
 
   // loop over connectors from term1 to term2
   for (int i = 0; i < connectorTerm1To2.size(); i++)
   {
+    LOG(DEBUG) << "term1 -> term2 i=" << i << ", map to " << connectorTerm1To2[i].index << ", avoidCopyIfPossible: " << connectorTerm1To2[i].avoidCopyIfPossible;
+
     // if connector is not open
     if (connectorTerm1To2[i].index != -1)
     {
-      solver_t::OutputConnection outputConnection;
-      outputConnection.type = solver_t::OutputConnection::ab;
+      solver_t::OutputConnectionRepresentation outputConnection;
+      outputConnection.type = solver_t::OutputConnectionRepresentation::ab;
       outputConnection.fromSlot = i;
       outputConnection.toSlot = connectorTerm1To2[i].index;
 
@@ -107,11 +126,11 @@ void SolverStructureVisualizer::addOutputConnection(OutputConnection &outputConn
           // if the connection type is to avoid copies in both directions
           if (connectorTerm1To2[i].avoidCopyIfPossible && connectorTerm2To1[outputConnection.toSlot].avoidCopyIfPossible)
           {
-            outputConnection.type = solver_t::OutputConnection::bidirectionalReuse;
+            outputConnection.type = solver_t::OutputConnectionRepresentation::bidirectionalReuse;
           }
           else
           {
-            outputConnection.type = solver_t::OutputConnection::bidirectionalCopy;
+            outputConnection.type = solver_t::OutputConnectionRepresentation::bidirectionalCopy;
           }
         }
       }
@@ -124,11 +143,13 @@ void SolverStructureVisualizer::addOutputConnection(OutputConnection &outputConn
   // loop over connectors from term2 to term1
   for (int i = 0; i < connectorTerm2To1.size(); i++)
   {
+    LOG(DEBUG) << "term2 -> term1 i=" << i << ", map to " << connectorTerm2To1[i].index << ", avoidCopyIfPossible: " << connectorTerm2To1[i].avoidCopyIfPossible;
+
     // if connector is not open
     if (connectorTerm2To1[i].index != -1)
     {
-      solver_t::OutputConnection outputConnection;
-      outputConnection.type = solver_t::OutputConnection::ba;
+      solver_t::OutputConnectionRepresentation outputConnection;
+      outputConnection.type = solver_t::OutputConnectionRepresentation::ba;
       outputConnection.fromSlot = i;
       outputConnection.toSlot = connectorTerm2To1[i].index;
 
@@ -140,18 +161,18 @@ void SolverStructureVisualizer::addOutputConnection(OutputConnection &outputConn
           // if the connection type is to avoid copies in both directions
           if (connectorTerm2To1[i].avoidCopyIfPossible && connectorTerm1To2[outputConnection.toSlot].avoidCopyIfPossible)
           {
-            outputConnection.type = solver_t::OutputConnection::bidirectionalReuse;
+            outputConnection.type = solver_t::OutputConnectionRepresentation::bidirectionalReuse;
           }
           else
           {
-            outputConnection.type = solver_t::OutputConnection::bidirectionalCopy;
+            outputConnection.type = solver_t::OutputConnectionRepresentation::bidirectionalCopy;
           }
         }
       }
 
       // add parsed output connection
-      if (outputConnection.type != solver_t::OutputConnection::bidirectionalReuse
-          && outputConnection.type != solver_t::OutputConnection::bidirectionalCopy)
+      if (outputConnection.type != solver_t::OutputConnectionRepresentation::bidirectionalReuse
+          && outputConnection.type != solver_t::OutputConnectionRepresentation::bidirectionalCopy)
       {
         currentSolver_->outputConnections.push_back(outputConnection);
       }

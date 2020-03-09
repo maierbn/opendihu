@@ -46,16 +46,16 @@ public:
 
 protected:
 
-  DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
-  Solver solver_;     ///< the contained solver object
+  DihuContext context_;               //< object that contains the python config for the current context and the global singletons meshManager and solverManager
+  Solver solver_;                     //< the contained solver object
 
-  bool initialized_ = false;   ///< if this object is initialized
-  ::Data::OutputSurface<Data> data_;   ///< data object
-  bool ownRankInvolvedInOutput_;   ///< if the own rank should call the output writer, because surface meshes are output, it can be that the surface is only contained on a subset of ranks
-  int timeStepNo_;     ///< time step no for output writer
-  double currentTime_;   ///< current simulation time for output writer
+  bool initialized_ = false;          //< if this object is initialized
+  ::Data::OutputSurface<Data> data_;  //< data object
+  bool ownRankInvolvedInOutput_;      //< if the own rank should call the output writer, because surface meshes are output, it can be that the surface is only contained on a subset of ranks
+  int timeStepNo_;                    //< time step no for output writer
+  double currentTime_;                //< current simulation time for output writer
 
-  Manager outputWriterManager_; ///< manager object holding all output writers
+  Manager outputWriterManager_;       //< manager object holding all output writers
 
 };
 

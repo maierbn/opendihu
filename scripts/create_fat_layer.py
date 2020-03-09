@@ -107,7 +107,7 @@ with open(input_filename, "rb") as infile:
   x_stride = 2
   z_stride = 50
   y_size = 5
-  thickness = 10.0
+  thickness = 1.0  #[cm]
   
   result_n_points_x = len(range(0, n_fibers_x+n_fibers_y-1, x_stride))
   result_n_points_y = y_size

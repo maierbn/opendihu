@@ -62,10 +62,10 @@ initializeCallbackFunctions()
   {
     pythonSetParametersFunction_ = this->specificSettings_.getOptionFunction("setParametersFunction");
     setParametersCallInterval_ = this->specificSettings_.getOptionInt("setParametersCallInterval", 1, PythonUtility::Positive);
-    setParameters_ = [](void *context, int nInstances, int timeStepNo, double currentTime, std::vector<double> &parameters)
+    setParameters_ = [](void *context, int nInstances, int timeStepNo, double currentTime, double *parameterValues, int nParameters)
     {
       CallbackHandler *cellmlAdapter = (CallbackHandler *)context;
-      cellmlAdapter->callPythonSetParametersFunction(nInstances, timeStepNo, currentTime, parameters);
+      cellmlAdapter->callPythonSetParametersFunction(nInstances, timeStepNo, currentTime, parameterValues, nParameters);
     };
 
     pySetFunctionAdditionalParameter_ = this->specificSettings_.getOptionPyObject("additionalArgument", Py_None);
@@ -77,10 +77,10 @@ initializeCallbackFunctions()
   {
     pythonSetSpecificParametersFunction_ = this->specificSettings_.getOptionFunction("setSpecificParametersFunction");
     setSpecificParametersCallInterval_ = this->specificSettings_.getOptionInt("setSpecificParametersCallInterval", 1, PythonUtility::Positive);
-    setSpecificParameters_ = [](void *context, int nInstances, int timeStepNo, double currentTime, std::vector<double> &localParameters)
+    setSpecificParameters_ = [](void *context, int nInstances, int timeStepNo, double currentTime, double *localParameterValues, int nLocalParameters)
     {
       CallbackHandler *cellmlAdapter = (CallbackHandler *)context;
-      cellmlAdapter->callPythonSetSpecificParametersFunction(nInstances, timeStepNo, currentTime, localParameters);
+      cellmlAdapter->callPythonSetSpecificParametersFunction(nInstances, timeStepNo, currentTime, localParameterValues, nLocalParameters);
     };
 
     pySetFunctionAdditionalParameter_ = this->specificSettings_.getOptionPyObject("additionalArgument", Py_None);
@@ -123,7 +123,7 @@ initializeCallbackFunctions()
 
 template<int nStates, int nIntermediates_, typename FunctionSpaceType>
 void CallbackHandler<nStates,nIntermediates_,FunctionSpaceType>::
-callPythonSetParametersFunction(int nInstances, int timeStepNo, double currentTime, std::vector<double> &parameters)
+callPythonSetParametersFunction(int nInstances, int timeStepNo, double currentTime, double *parameterValues, int nParameters)
 {
   if (pythonSetParametersFunction_ == NULL)
     return;
@@ -137,7 +137,7 @@ callPythonSetParametersFunction(int nInstances, int timeStepNo, double currentTi
   }
 
   // compose callback function
-  PyObject *parametersList = PythonUtility::convertToPythonList(parameters);
+  PyObject *parametersList = PythonUtility::convertToPythonList(parameterValues, nParameters);
   PyObject *arglist = Py_BuildValue("(i,i,d,O,O,O)", this->functionSpace_->meshPartition()->nDofsGlobal(),
                                     timeStepNo, currentTime, parametersList, pyGlobalNaturalDofsList_, pySetFunctionAdditionalParameter_);
   PyObject *returnValue = PyObject_CallObject(pythonSetParametersFunction_, arglist);
@@ -147,10 +147,10 @@ callPythonSetParametersFunction(int nInstances, int timeStepNo, double currentTi
     PyErr_Print();
 
   // copy new values in parametersList to parameters_ vector
-  for (unsigned int i=0; i<parameters.size(); i++)
+  for (unsigned int i=0; i<nParameters; i++)
   {
     PyObject *item = PyList_GetItem(parametersList, (Py_ssize_t)i);
-    parameters[i] = PythonUtility::convertFromPython<double>::get(item);
+    *(parameterValues+i) = PythonUtility::convertFromPython<double>::get(item);
   }
 
   // decrement reference counters for python objects
@@ -162,7 +162,7 @@ callPythonSetParametersFunction(int nInstances, int timeStepNo, double currentTi
 
 template<int nStates, int nIntermediates_, typename FunctionSpaceType>
 void CallbackHandler<nStates,nIntermediates_,FunctionSpaceType>::
-callPythonSetSpecificParametersFunction(int nInstances, int timeStepNo, double currentTime, std::vector<double> &localParameters)
+callPythonSetSpecificParametersFunction(int nInstances, int timeStepNo, double currentTime, double *localParameters, int nLocalParameters)
 {
   if (pythonSetSpecificParametersFunction_ == NULL)
     return;
@@ -220,15 +220,14 @@ callPythonSetSpecificParametersFunction(int nInstances, int timeStepNo, double c
       // set first parameter value to given value
       const int index = parameterNo*nDofsLocalWithoutGhosts + dofNoLocal;
 
-      if (index >= localParameters.size())
+      if (index >= nLocalParameters)
       {
         LOG(FATAL) << "in setSpecificParametersFunction: the parameters have an assignment "
           << "parameters[(coordinatesGlobal=" << coordinatesGlobal << ", nodalDofIndex=" << nodalDofIndex
           << ", parameterNo=" << parameterNo <<")] = " << value << ". There are " << nDofsLocalWithoutGhosts << " local dof(s).";
       }
-      localParameters[parameterNo*nDofsLocalWithoutGhosts + dofNoLocal] = value;
+      *(localParameters + parameterNo*nDofsLocalWithoutGhosts + dofNoLocal) = value;
     }
-    VLOG(1) << "localParameters: " << localParameters;
   }
 
   // decrement reference counters for python objects

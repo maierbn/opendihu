@@ -1,5 +1,7 @@
 #include "output_connector_data_transfer/output_connection.h"
 
+#include "control/diagnostic_tool/solver_structure_visualizer.h"
+
 OutputConnection::OutputConnection(PythonConfig settings):
   fieldVariableNamesInitialized_(false), slotInformationInitialized_(false), settings_(settings)
 {
@@ -42,37 +44,7 @@ OutputConnection::OutputConnection(PythonConfig settings):
       }
     }
   }
-}
 
-void OutputConnection::initializeSlotInformation()
-{
-  if (slotInformationInitialized_)
-    return;
-
-  // fill look-up table slotInformation_[transferDirectionTerm1To2][fromVectorNo][fromVectorIndex]
-  for (int transferDirectionTerm1To2 = 0; transferDirectionTerm1To2 < 2; transferDirectionTerm1To2++)
-  {
-    for (int fromVectorNo = 0; fromVectorNo < 2; fromVectorNo++)
-    {
-      int nUnsuccessful = 0;
-      for (int fromVectorIndex = 0; ; fromVectorIndex++)
-      {
-        transferDirectionTerm1To2_ = transferDirectionTerm1To2;
-        Result result;
-        result.successful = getSlotInformation(fromVectorNo, fromVectorIndex, result.toVectorNo, result.toVectorIndex, result.avoidCopyIfPossible, true);
-
-        slotInformation_[transferDirectionTerm1To2][fromVectorNo].push_back(result);
-
-        if (!result.successful)
-          nUnsuccessful++;
-
-        if (nUnsuccessful == 3)
-          break;
-      }
-    }
-  }
-
-  slotInformationInitialized_ = true;
 }
 
 void OutputConnection::setTransferDirection(bool term1To2)
@@ -326,26 +298,31 @@ bool OutputConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
           << fromIndex << "=" << fromVectorNo << "*" << nFieldVariablesTerm1Vector1_ << "+" << fromVectorIndex << ") >= " << connectorTerm1To2_.size()
           << "\nThere are only " << connectorTerm1To2_.size() << " slots to connect to, but a connection for slot no " << fromIndex << " is needed."
           << "\nMaybe not enough entries are given for \"connectedSlotsTerm1To2\" or \"connectedSlotsTerm2To1\" "
-          << "or unneccessary slots have been created (e.g. intermediates in cellml that are not used further).";
+          << "or unneccessary slots have been created (e.g. intermediates in cellml that are not used further)."
+          << DihuContext::solverStructureVisualizer()->getDiagram();
       return false;
     }
 
     if (fromVectorNo == 0 && fromVectorIndex >= nFieldVariablesTerm1Vector1_)
     {
       if (!disableWarnings)
-        LOG(WARNING) << "(1) Unconnected slot " << fromIndex << " of Term1 in " << settings_ << ": " << getDebugInformation() << ", from vector 0 (variable1), index " << fromVectorIndex
+        LOG(WARNING) << "(1) Unconnected slot " << fromIndex << " of Term1 in " << settings_ << ": " << getDebugInformation()
+          << ", from vector 0 (variable1), index " << fromVectorIndex
           << ", but this vector has only " << nFieldVariablesTerm1Vector1_ << " entries." << std::endl
           << "\nMaybe wrong numbers are given for \"connectedSlotsTerm1To2\" or \"connectedSlotsTerm2To1\" "
-          << "or unneccessary slots have been created (e.g. intermediates in cellml that are not used further).";
+          << "or unneccessary slots have been created (e.g. intermediates in cellml that are not used further)."
+          << DihuContext::solverStructureVisualizer()->getDiagram();
       return false;
     }
     else if (fromVectorNo == 1 && fromVectorIndex >= nFieldVariablesTerm1Vector2_)
     {
       if (!disableWarnings)
-        LOG(WARNING) << "(2) Unconnected slot " << fromIndex << " of Term1 in " << settings_ << ": " << getDebugInformation() << ", from vector 1 (variable2), index " << fromVectorIndex
+        LOG(WARNING) << "(2) Unconnected slot " << fromIndex << " of Term1 in " << settings_ << ": " << getDebugInformation()
+          << ", from vector 1 (variable2), index " << fromVectorIndex
           << ", but this vector has only " << nFieldVariablesTerm1Vector2_ << " entries." << std::endl
           << "\nMaybe wrong numbers are given for \"connectedSlotsTerm1To2\" or \"connectedSlotsTerm2To1\" "
-          << "or unneccessary slots have been created (e.g. intermediates in cellml that are not used further).";
+          << "or unneccessary slots have been created (e.g. intermediates in cellml that are not used further)."
+          << DihuContext::solverStructureVisualizer()->getDiagram();
       return false;
     }
 
@@ -361,24 +338,28 @@ bool OutputConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
     avoidCopyIfPossible = connectorTerm1To2_[fromIndex].avoidCopyIfPossible;
 
 
-    if (toVectorNo == 0 && fromVectorIndex >= nFieldVariablesTerm2Vector1_)
+    if (toVectorNo == 0 && toVectorIndex >= nFieldVariablesTerm2Vector1_)
     {
       if (!disableWarnings)
-        LOG(WARNING) << "(3) Unconnected slot " << toIndex << " of Term2 in " << settings_ << ": " << getDebugInformation() << ", from vector 0 (variable1), index " << fromVectorIndex
+        LOG(WARNING) << "(3) Unconnected slot " << toIndex << " of Term2 in " << settings_ << ": " << getDebugInformation()
+          << ", from vector " << fromVectorNo << " (variable" << fromVectorNo+1 << "), index " << fromVectorIndex
           << " to vector 0 (variable1), index " << toVectorIndex
           << ", but this vector has only " << nFieldVariablesTerm2Vector1_ << " entries." << std::endl
           << "\nMaybe wrong numbers are given for \"connectedSlotsTerm1To2\" or \"connectedSlotsTerm2To1\" "
-          << "or unneccessary slots have been created (e.g. intermediates in cellml that are not used further).";
+          << "or unneccessary slots have been created (e.g. intermediates in cellml that are not used further)."
+          << DihuContext::solverStructureVisualizer()->getDiagram();
       return false;
     }
-    else if (toVectorNo == 1 && fromVectorIndex >= nFieldVariablesTerm2Vector2_)
+    else if (toVectorNo == 1 && toVectorIndex >= nFieldVariablesTerm2Vector2_)
     {
       if (!disableWarnings)
-        LOG(WARNING) << "(4) Unconnected slot " << toIndex << " of Term2 in " << settings_ << ": " << getDebugInformation() << ", from vector 1 (variable2), index " << fromVectorIndex
+        LOG(WARNING) << "(4) Unconnected slot " << toIndex << " of Term2 in " << settings_ << ": " << getDebugInformation()
+          << ", from vector " << fromVectorNo << " (variable" << fromVectorNo+1 << "), index " << fromVectorIndex
           << " to vector 1 (variable2), index " << toVectorIndex
           << ", but this vector has only " << nFieldVariablesTerm2Vector2_ << " entries." << std::endl
           << "\nMaybe wrong numbers are given for \"connectedSlotsTerm1To2\" or \"connectedSlotsTerm2To1\" "
-          << "or unneccessary slots have been created (e.g. intermediates in cellml that are not used further).";
+          << "or unneccessary slots have been created (e.g. intermediates in cellml that are not used further)."
+          << DihuContext::solverStructureVisualizer()->getDiagram();
       return false;
     }
   }
@@ -389,14 +370,17 @@ bool OutputConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
     // transform from index
     int fromIndex = fromVectorNo*nFieldVariablesTerm2Vector1_ + fromVectorIndex;
 
+    LOG(DEBUG) << "fromVectorNo=" << fromVectorNo << ", fromVectorIndex=" << fromVectorIndex << ", fromIndex=" << fromIndex;
+
     // check for wrong indices and output errors
     if (fromIndex >= connectorTerm2To1_.size())
     {
       if (!disableWarnings)
         LOG(WARNING) << "(5) Unconnected slot " << fromIndex << " of Term2 in " << settings_ << ": " << getDebugInformation() << ", fromIndex (" << fromIndex << ") >= " << connectorTerm2To1_.size()
-          << "\nThere are only " << connectorTerm2To1_.size() << " slots to connect to, but a connection for slot no " << fromIndex << " is needed."
+          << "\nThere are only " << connectorTerm2To1_.size() << " slots to connect from, but a connection from slot no " << fromIndex << " is needed."
           << "\nMaybe not enough entries are given for \"connectedSlotsTerm1To2\" or \"connectedSlotsTerm2To1\" "
-          << "or unneccessary slots have been created (e.g. intermediates in cellml that are not used further).";
+          << "or unneccessary slots have been created (e.g. intermediates in cellml that are not used further)."
+          << DihuContext::solverStructureVisualizer()->getDiagram();
       return false;
     }
 
@@ -406,7 +390,8 @@ bool OutputConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
         LOG(WARNING) << "(6) Unconnected slot " << fromIndex << " of Term2 in " << settings_ << ": " << getDebugInformation() << ", from vector 0 (variable1), index " << fromVectorIndex
           << ", but this vector has only " << nFieldVariablesTerm2Vector1_ << " entries." << std::endl
           << "\nMaybe wrong numbers are given for \"connectedSlotsTerm1To2\" or \"connectedSlotsTerm2To1\" "
-          << "or unneccessary slots have been created (e.g. intermediates in cellml that are not used further).";
+          << "or unneccessary slots have been created (e.g. intermediates in cellml that are not used further)."
+          << DihuContext::solverStructureVisualizer()->getDiagram();
       return false;
     }
     else if (fromVectorNo == 1 && fromVectorIndex >= nFieldVariablesTerm2Vector2_)
@@ -415,7 +400,8 @@ bool OutputConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
         LOG(WARNING) << "(7) Unconnected slot " << fromIndex << " of Term2 in " << settings_ << ": " << getDebugInformation() << ", from vector 1 (variable2), index " << fromVectorIndex
           << ", but this vector has only " << nFieldVariablesTerm2Vector2_ << " entries." << std::endl
           << "\nMaybe wrong numbers are given for \"connectedSlotsTerm1To2\" or \"connectedSlotsTerm2To1\" "
-          << "or unneccessary slots have been created (e.g. intermediates in cellml that are not used further).";
+          << "or unneccessary slots have been created (e.g. intermediates in cellml that are not used further)."
+          << DihuContext::solverStructureVisualizer()->getDiagram();
       return false;
     }
 
@@ -428,26 +414,32 @@ bool OutputConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
     toVectorNo = std::min(1,int(toIndex/nFieldVariablesTerm1Vector1_));
     toVectorIndex = toIndex - toVectorNo*nFieldVariablesTerm1Vector1_;
 
+    LOG(DEBUG) << "toVectorNo=" << toVectorNo << ", toVectorIndex=" << toVectorIndex << ", toIndex=" << toIndex;
+
     avoidCopyIfPossible = connectorTerm2To1_[fromIndex].avoidCopyIfPossible;
 
-    if (toVectorNo == 0 && fromVectorIndex >= nFieldVariablesTerm2Vector1_)
+    if (toVectorNo == 0 && toVectorIndex >= nFieldVariablesTerm1Vector1_)
     {
       if (!disableWarnings)
-        LOG(WARNING) << "(8) Unconnected slot " << toIndex << " of Term1 in " << settings_ << ": " << getDebugInformation() << ", from vector 0 (variable1), index " << fromVectorIndex
+        LOG(WARNING) << "(8) Unconnected slot " << toIndex << " of Term1 in " << settings_ << ": " << getDebugInformation()
+          << ", from vector " << fromVectorNo << " (variable" << fromVectorNo+1 << "), index " << fromVectorIndex
           << " to vector 0 (variable1), index " << toVectorIndex
           << ", but this vector has only " << nFieldVariablesTerm1Vector1_ << " entries." << std::endl
           << "\nMaybe wrong numbers are given for \"connectedSlotsTerm1To2\" or \"connectedSlotsTerm2To1\" "
-          << "or unneccessary slots have been created (e.g. intermediates in cellml that are not used further).";
+          << "or unneccessary slots have been created (e.g. intermediates in cellml that are not used further)."
+          << DihuContext::solverStructureVisualizer()->getDiagram();
       return false;
     }
-    else if (toVectorNo == 1 && fromVectorIndex >= nFieldVariablesTerm2Vector2_)
+    else if (toVectorNo == 1 && toVectorIndex >= nFieldVariablesTerm1Vector2_)
     {
       if (!disableWarnings)
-        LOG(WARNING) << "(9) Unconnected slot " << toIndex << " of Term1 in " << settings_ << ": " << getDebugInformation() << ", from vector 1 (variable2), index " << fromVectorIndex
+        LOG(WARNING) << "(9) Unconnected slot " << toIndex << " of Term1 in " << settings_ << ": " << getDebugInformation()
+          << ", from vector " << fromVectorNo << " (variable" << fromVectorNo+1 << "), index " << fromVectorIndex
           << " to vector 1 (variable2), index " << toVectorIndex
           << ", but this vector has only " << nFieldVariablesTerm1Vector2_ << " entries." << std::endl
           << "\nMaybe wrong numbers are given for \"connectedSlotsTerm1To2\" or \"connectedSlotsTerm2To1\" "
-          << "or unneccessary slots have been created (e.g. intermediates in cellml that are not used further).";
+          << "or unneccessary slots have been created (e.g. intermediates in cellml that are not used further)."
+          << DihuContext::solverStructureVisualizer()->getDiagram();
       return false;
     }
   }

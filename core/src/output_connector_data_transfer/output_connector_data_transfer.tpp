@@ -36,7 +36,7 @@ void SolutionVectorMapping<
     int componentNo1 = transferableSolutionData1->variable1[fromVectorIndex].componentNo;
 
     LOG(DEBUG) << "map slot from variable1, index " << fromVectorIndex
-      << " to variable" << toVectorIndex+1 << ", index " << toVectorIndex;
+      << " to variable" << toVectorNo+1 << ", index " << toVectorIndex;
 
     if (componentNo1 < 0)
     {
@@ -101,7 +101,7 @@ void SolutionVectorMapping<
     int componentNo1 = transferableSolutionData1->variable2[fromVectorIndex].componentNo;
 
     LOG(DEBUG) << "map slot from variable2, index " << fromVectorIndex
-      << " to variable" << toVectorIndex+1 << ", index " << toVectorIndex;
+      << " to variable" << toVectorNo+1 << ", index " << toVectorIndex;
 
     if (componentNo1 < 0)
     {

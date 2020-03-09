@@ -25,13 +25,14 @@ emg_initial_guess_nonzero = False   # If the initial guess for the emg linear sy
 # timing parameters
 # -----------------
 end_time = 1000.0                   # [ms] end time of the simulation
-stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
+stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz. This is not used here.
 dt_0D = 1e-3                        # [ms] timestep width of ODEs
 dt_1D = 1.5e-3                      # [ms] timestep width of diffusion
 dt_splitting = 3e-3                 # [ms] overall timestep width of strang splitting
 dt_3D = 1e0                         # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
 output_timestep = 1e0               # [ms] timestep for output files
 activation_start_time = 0           # [ms] time when to start checking for stimulation
+output_timestep_surface = 0.1       # [ms] timestep for python callback, which is electrode measurement output
 output_timestep_electrodes = 0.1    # [ms] timestep for electrode output files
 
 # input files

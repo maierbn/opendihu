@@ -62,7 +62,7 @@ transfer(const std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shar
     int componentNo1 = transferableSolutionData1Front->variable1[fromVectorIndex].componentNo;
 
     LOG(DEBUG) << "map slot from variable1, index " << fromVectorIndex
-      << " to variable " << toVectorIndex << ", index " << toVectorIndex;
+      << " to variable" << toVectorNo+1 << ", index " << toVectorIndex;
 
     if (componentNo1 < 0)
     {
@@ -153,7 +153,7 @@ transfer(const std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shar
     int componentNo1 = transferableSolutionData1Front->variable2[fromVectorIndex].componentNo;
 
     LOG(DEBUG) << "map slot from variable1, index " << fromVectorIndex
-      << " to variable " << toVectorIndex << ", index " << toVectorIndex;
+      << " to variable" << toVectorNo+1 << ", index " << toVectorIndex;
 
     if (componentNo1 < 0)
     {
@@ -272,7 +272,7 @@ transfer(const std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType1,nCom
     int componentNo1 = transferableSolutionData1->variable1[fromVectorIndex].componentNo;
 
     LOG(DEBUG) << "map slot from variable1, index " << fromVectorIndex
-      << " to variable " << toVectorIndex << ", index " << toVectorIndex;
+      << " to variable" << toVectorNo+1 << ", index " << toVectorIndex;
 
     if (componentNo1 < 0)
     {
@@ -363,7 +363,7 @@ transfer(const std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType1,nCom
     int componentNo1 = transferableSolutionData1->variable2[fromVectorIndex].componentNo;
 
     LOG(DEBUG) << "map slot from variable1, index " << fromVectorIndex
-      << " to variable " << toVectorIndex << ", index " << toVectorIndex;
+      << " to variable" << toVectorNo+1 << ", index " << toVectorIndex;
 
     if (componentNo1 < 0)
     {

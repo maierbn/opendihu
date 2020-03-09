@@ -388,12 +388,20 @@ extractComponentShared(int componentNo, std::shared_ptr<FieldVariable<FunctionSp
 }
 
 template<typename FunctionSpaceType, int nComponents>
-template<int nComponents2>
-void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
-restoreExtractedComponent(std::shared_ptr<PartitionedPetscVec<FunctionSpaceType,nComponents2>> extractedVec)
+bool FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
+isExtractComponentSharedPossible(int componentNo)
 {
   assert(this->values_);
-  this->values_->template restoreExtractedComponent<nComponents2>(extractedVec);
+  return this->values_->isExtractComponentSharedPossible(componentNo);
+}
+
+template<typename FunctionSpaceType, int nComponents>
+template<int nComponents2>
+void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
+restoreExtractedComponent(std::shared_ptr<PartitionedPetscVec<FunctionSpaceType,nComponents2>> extractedVec, int componentNo)
+{
+  assert(this->values_);
+  this->values_->template restoreExtractedComponent<nComponents2>(extractedVec, componentNo);
 }
 
 template<typename FunctionSpaceType, int nComponents>

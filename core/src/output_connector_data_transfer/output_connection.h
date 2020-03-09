@@ -44,6 +44,12 @@ public:
   const std::vector<Connector> &connectorTerm2To1() const;
 private:
 
+  //! initialize the slotInformation_ variable
+  template<typename FunctionSpaceType1, int nComponents1a, int nComponents1b, typename FunctionSpaceType2, int nComponents2a, int nComponents2b>
+  void initializeSlotInformation(const Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b> &transferableSolutionData1,
+                                 const Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b> &transferableSolutionData2);
+
+
   //! assemble some debugging information to the mapping that will be displayed on error
   std::string getDebugInformation() const;
 

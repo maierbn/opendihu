@@ -907,11 +907,28 @@ PyObject *PythonUtility::convertToPythonList(std::vector<double> &data)
 {
   // start critical section for python API calls
   // PythonUtility::GlobalInterpreterLock lock;
-  
+
   PyObject *result = PyList_New((Py_ssize_t)data.size());
   for (unsigned int i=0; i<data.size(); i++)
   {
     PyObject *item = PyFloat_FromDouble(data[i]);
+    PyList_SetItem(result, (Py_ssize_t)i, item);    // steals reference to item
+  }
+  return result;    // return value: new reference
+}
+
+PyObject *PythonUtility::convertToPythonList(double *value, int nValues)
+{
+  // start critical section for python API calls
+  // PythonUtility::GlobalInterpreterLock lock;
+  
+
+  //! create a python list from a double *
+
+  PyObject *result = PyList_New((Py_ssize_t)nValues);
+  for (unsigned int i = 0; i < nValues; i++)
+  {
+    PyObject *item = PyFloat_FromDouble(*(value+i));
     PyList_SetItem(result, (Py_ssize_t)i, item);    // steals reference to item
   }
   return result;    // return value: new reference

@@ -190,7 +190,7 @@ protected:
 
   OutputWriter::Manager outputWriterManager_;     ///< manager object holding all output writers
 
-  std::vector<FiberData> fiberData_;  //< vector of fibers,
+  std::vector<FiberData> fiberData_;  //< vector of fibers, the number of entries is the number of fibers to computed by the own rank (nFibersToCompute_)
   int nFibersToCompute_;              //< number of fibers where own rank is involved (>= n.fibers that are computed by own rank)
   int nInstancesToCompute_;           //< number of instances of the Hodgkin-Huxley problem to compute on this rank
   double currentTime_;                //< the current time used for the output writer

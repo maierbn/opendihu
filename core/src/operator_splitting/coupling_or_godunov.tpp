@@ -64,7 +64,7 @@ advanceTimeSpan()
     LOG(DEBUG) << "  CouplingOrGodunov: transfer timeStepping1 -> timeStepping2";
 
     // set transfer direction 1->2
-    this->outputConnection_.setTransferDirection(true);
+    this->outputConnection_->setTransferDirection(true);
 
     // transfer actual values
     std::shared_ptr<typename TimeStepping1::OutputConnectorDataType> solutionTimeStepping1 = this->timeStepping1_.getOutputConnectorData();
@@ -74,7 +74,7 @@ advanceTimeSpan()
 
     // transfer to timestepping2_
     SolutionVectorMapping<typename TimeStepping1::OutputConnectorDataType, typename TimeStepping2::OutputConnectorDataType>::
-      transfer(solutionTimeStepping1, this->timeStepping2_.getOutputConnectorData(), this->outputConnection_);
+      transfer(solutionTimeStepping1, this->timeStepping2_.getOutputConnectorData(), *this->outputConnection_);
 
     if (this->durationLogKey_ != "")
     {
@@ -101,11 +101,11 @@ advanceTimeSpan()
     LOG(DEBUG) << "  CouplingOrGodunov: transfer timeStepping2 -> timeStepping1";
 
     // set transfer direction 1->2
-    this->outputConnection_.setTransferDirection(false);
+    this->outputConnection_->setTransferDirection(false);
 
     // transfer to timestepping1_
     SolutionVectorMapping<typename TimeStepping2::OutputConnectorDataType, typename TimeStepping1::OutputConnectorDataType>::
-      transfer(this->timeStepping2_.getOutputConnectorData(), this->timeStepping1_.getOutputConnectorData(), this->outputConnection_);
+      transfer(this->timeStepping2_.getOutputConnectorData(), this->timeStepping1_.getOutputConnectorData(), *this->outputConnection_);
 
     if (this->durationLogKey_ != "")
     {

@@ -55,10 +55,10 @@ public:
                                                   double *states, double intermediates[]));
   
   //! directly call the python callback if it exists
-  void callPythonSetParametersFunction(int nInstances, int timeStepNo, double currentTime, std::vector<double> &parameters);
+  void callPythonSetParametersFunction(int nInstances, int timeStepNo, double currentTime, double *parameterValues, int nParameters);
 
   //! directly call the python callback if it exists
-  void callPythonSetSpecificParametersFunction(int nInstances, int timeStepNo, double currentTime, std::vector<double> &localParameters);
+  void callPythonSetSpecificParametersFunction(int nInstances, int timeStepNo, double currentTime, double *localParameterValues, int nLocalParameters);
 
   //! directly call the python callback if it exists
   void callPythonSetSpecificStatesFunction(int nInstances, int timeStepNo, double currentTime, double *states);
@@ -80,8 +80,8 @@ protected:
   //! call Py_CLEAR on all python objects
   void clearPyObjects();
 
-  void (*setParameters_) (void *context, int nInstances, int timeStepNo, double currentTime, std::vector<double> &parameters);  //< callback function that will be called before new states are computed. It can set new parameters ("known" variables) for the computation.
-  void (*setSpecificParameters_) (void *context, int nInstances, int timeStepNo, double currentTime, std::vector<double> &localParameters);  //< callback function that will be called before new states are computed. It can set values for global parameters ("known" variables) for the computation.
+  void (*setParameters_) (void *context, int nInstances, int timeStepNo, double currentTime, double *parameterValues, int nParameterValues);  //< callback function that will be called before new states are computed. It can set new parameters ("known" variables) for the computation.
+  void (*setSpecificParameters_) (void *context, int nInstances, int timeStepNo, double currentTime, double *localParameterValues, int nLocalParameters);  //< callback function that will be called before new states are computed. It can set values for global parameters ("known" variables) for the computation.
   void (*setSpecificStates_) (void *context, int nInstances, int timeStepNo, double currentTime, double *states);  //< callback function that will be called before new states are computed. It can set values for states.
   void (*handleResult_) (void *context, int nInstances, int timeStepNo, double currentTime, double *states, double *intermediates);   //< callback function that will be called after new states and intermediates were computed
 

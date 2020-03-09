@@ -34,8 +34,9 @@ public:
   //! indicate the end of the current child
   void endChild();
 
+  //! TODO update outputConnection after it has been initialize after the first transfers, or use pointer
   //! add the output connection information between two children to the current solver
-  void addOutputConnection(OutputConnection &outputConnection);
+  void addOutputConnection(std::shared_ptr<OutputConnection> outputConnection);
 
   //! set the output connector data
   template<typename FunctionSpaceType, int nComponents1, int nComponents2>
@@ -53,6 +54,9 @@ public:
 
   //! produce the resulting file, only if solverAddingEnabled_
   void writeDiagramFile(std::string filename);
+
+  //! get the diagram as string
+  std::string getDiagram();
 
   /** Representation of one solver, will be a box in the SVG file
    */
@@ -73,27 +77,33 @@ public:
 
     std::vector<OutputSlot> outputSlots;
 
+    std::shared_ptr<OutputConnection> outputConnection; //< pointer to the actual outputConnection object of the operator splitting
+
     /** connection between two output slots of two children
      */
-    struct OutputConnection
+    struct OutputConnectionRepresentation
     {
       int fromSlot;
       int toSlot;
       enum output_connection_t {ab, ba, bidirectionalCopy, bidirectionalReuse} type;    //< ab=term1 -> term2, ba=term2 -> term1, bidirectional=shared between term1 and term2
     };
 
-    std::vector<OutputConnection> outputConnections; //< connections between output slots
+    std::vector<OutputConnectionRepresentation> outputConnections;    //< connections between output slots
 
-    std::vector<std::shared_ptr<solver_t>> children;   //< the nested solvers inside the current solver
-    std::shared_ptr<solver_t> parent;                  //< pointer to the parent of the current nested solver
+    std::vector<std::shared_ptr<solver_t>> children;    //< the nested solvers inside the current solver
+    std::shared_ptr<solver_t> parent;                   //< pointer to the parent of the current nested solver
   };
 
 protected:
 
   //! print the nested solver structure to result
   //! @param connectionLines <fromLineNo, toLineNo, linePosition, type>
-  void generateDiagram(std::stringstream &result, std::vector<std::tuple<int,int,int,SolverStructureVisualizer::solver_t::OutputConnection::output_connection_t>> &connectionLines,
-                       std::vector<int> &slotLineNos, int depth=0, bool isFirstChildSolver=false, bool isLastChildSolver=false);
+  void generateDiagram(std::stringstream &result, std::vector<std::tuple<int,int,int,SolverStructureVisualizer::solver_t::OutputConnectionRepresentation::output_connection_t>> &connectionLines,
+                       std::vector<int> &slotLineNos, std::vector<int> &allSlotLineNos, int depth=0, bool isFirstChildSolver=false, bool isLastChildSolver=false);
+
+  //! in the currentSolver_ fill outputConnections vector from outputConnection
+  void parseOutputConnection();
+
 
   std::shared_ptr<solver_t> solverRoot_;          //< the whole nested solver structure
   std::shared_ptr<solver_t> currentSolver_;       //< a pointer to the current solver for which call to addSolver sets the name and data

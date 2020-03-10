@@ -15,6 +15,11 @@ class OutputSurface :
   public Data<typename ConvertFieldVariablesForOutputWriter<typename Data3D::FieldVariablesForOutputWriter>::FunctionSpaceFirstFieldVariable> // function space of data object is the function space of the first converted 2D field variable
 {
 public:
+
+  using FirstFieldVariable = typename ConvertFieldVariablesForOutputWriter<typename Data3D::FieldVariablesForOutputWriter>::FirstFieldVariable;
+  using SecondFieldVariable = typename ConvertFieldVariablesForOutputWriter<typename Data3D::FieldVariablesForOutputWriter>::SecondFieldVariable;
+  using FunctionSpaceFirstFieldVariable = typename ConvertFieldVariablesForOutputWriter<typename Data3D::FieldVariablesForOutputWriter>::FunctionSpaceFirstFieldVariable;
+
   //! constructor
   OutputSurface(DihuContext context);
 
@@ -30,6 +35,9 @@ public:
   //! get if the own rank hold part of the 2D surface field variable data and thus should call the output writer for output
   bool ownRankInvolvedInOutput();
 
+  //! get all function spaces of the faces that are extracted
+  void getFunctionSpaces(std::vector<std::shared_ptr<FunctionSpaceFirstFieldVariable>> &functionSpaces);
+
   //! field variables that will be output by outputWriters
   typedef typename ConvertFieldVariablesForOutputWriter<typename Data3D::FieldVariablesForOutputWriter>::type FieldVariablesForOutputWriter;
 
@@ -38,7 +46,7 @@ public:
 
 private:
 
-  Mesh::face_t face_;     ///< one of Mesh::face_t::face2Minus and Mesh::face_t::face2Plus, for which face to extract surface (other faces are not supported)
+  std::vector<Mesh::face_t> faces_;     ///< one of Mesh::face_t::face2Minus and Mesh::face_t::face2Plus, for which face to extract surface (other faces are not supported)
   std::shared_ptr<Data3D> data3d_;   ///< other data object that contains the 3D field variables
   bool ownRankInvolvedInOutput_;     ///< if the own rank hold part of the 2D surface field variable data and thus should call the output writer for output
 

@@ -562,21 +562,68 @@ int permutation(int i, int j, int k)
 
 void quadrilateralGetPointCoordinates(const std::array<Vec3,4> geometryValues, const Vec3 point, Vec2 &xi)
 {
+  // determine the two coordinates out of {x,y,z} that will be used
+  int coordinate0 = 0;
+  int coordinate1 = 1;
+
+  // determine bounding box of element
+  double xMin = geometryValues[0][0];
+  double xMax = geometryValues[0][0];
+  double yMin = geometryValues[0][1];
+  double yMax = geometryValues[0][1];
+  double zMin = geometryValues[0][2];
+  double zMax = geometryValues[0][2];
+
+  for (int i = 1; i < 4; i++)
+  {
+    xMin = std::min(xMin, geometryValues[i][0]);
+    xMax = std::max(xMax, geometryValues[i][0]);
+    yMin = std::min(yMin, geometryValues[i][1]);
+    yMax = std::max(yMax, geometryValues[i][1]);
+    zMin = std::min(zMin, geometryValues[i][2]);
+    zMax = std::max(zMax, geometryValues[i][2]);
+  }
+  double extentX = fabs(xMax - xMin);
+  double extentY = fabs(yMax - yMin);
+  double extentZ = fabs(zMax - zMin);
+
+  // the lowest extent will not be used as coordinate
+  /*if (extentX < extentY && extentX < extentZ)
+  {
+    // use y and z
+    coordinate0 = 1;
+    coordinate1 = 2;
+  }
+  else if (extentY <= extentX && extentY < extentZ)
+  {
+    // use x and z
+    coordinate0 = 0;
+    coordinate1 = 2;
+  }
+  else*/
+  {
+    // use x and y
+    coordinate0 = 0;
+    coordinate1 = 1;
+  }
+    coordinate0 = 1;
+    coordinate1 = 2;
+
   // derivation using sympy in script invert_mapping.py
-  const double xp1 = point[0];
-  const double xp2 = point[1];
+  const double xp1 = point[coordinate0];
+  const double xp2 = point[coordinate1];
 
-  double x11 = geometryValues[0][0];
-  double x12 = geometryValues[0][1];
+  double x11 = geometryValues[0][coordinate0];
+  double x12 = geometryValues[0][coordinate1];
 
-  const double x21 = geometryValues[1][0];
-  const double x22 = geometryValues[1][1];
+  const double x21 = geometryValues[1][coordinate0];
+  const double x22 = geometryValues[1][coordinate1];
 
-  const double x31 = geometryValues[2][0];
-  const double x32 = geometryValues[2][1];
+  const double x31 = geometryValues[2][coordinate0];
+  const double x32 = geometryValues[2][coordinate1];
 
-  const double x41 = geometryValues[3][0];
-  const double x42 = geometryValues[3][1];
+  const double x41 = geometryValues[3][coordinate0];
+  const double x42 = geometryValues[3][coordinate1];
 
   // compute analytic solution for xi
   // avoid division by 0
@@ -602,6 +649,11 @@ void quadrilateralGetPointCoordinates(const std::array<Vec3,4> geometryValues, c
 
   xi[0] = xi1;
   xi[1] = xi2;
+
+  VLOG(1) << "quadrilateralGetPointCoordinates, extents: [" << extentX << "," << extentY << "," << extentZ
+    << "], coordinates: [" << coordinate0 << "," << coordinate1 << "], element: [" << x11 << "," << x12
+    << "], [" << x21 << "," << x22 << "], [" << x31 << "," << x32 << "], [" << x41 << "," << x42 << "], p: ["
+    << xp1 << "," << xp2 << "], xi: [" << xi1 << "," << xi2 << "]";
 }
 
 template<>
@@ -686,7 +738,7 @@ double estimateMaximumEigenvalue(const Tensor2<3> &matrix)
     normV = norm<3>(v);
     v /= normV;
 
-    VLOG(1) << " eigenvalue estimation, it " << i << ", v: " << v << ", value: " << normV << ", error: " << fabs(normVPrevious - normV);
+    //VLOG(1) << " eigenvalue estimation, it " << i << ", v: " << v << ", value: " << normV << ", error: " << fabs(normVPrevious - normV);
   }
 
   return normV;

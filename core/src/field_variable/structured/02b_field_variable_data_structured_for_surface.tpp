@@ -77,7 +77,7 @@ FieldVariableDataStructuredForSurface(FieldVariable<FunctionSpace::FunctionSpace
 
   // create surface function space
   std::stringstream functionSpaceName;
-  functionSpaceName << rhs.functionSpace()->meshName() << "_surface";
+  functionSpaceName << rhs.functionSpace()->meshName() << "_surface" << Mesh::getString(face);
 
   const dof_no_t nDofsLocalWithoutGhosts = meshPartition->nDofsLocalWithoutGhosts();
 
@@ -119,6 +119,14 @@ FieldVariableDataStructuredForSurface(FieldVariable<FunctionSpace::FunctionSpace
 }
 
 template<typename BasisFunctionType, int nComponents>
+FieldVariableDataStructuredForSurface<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<2>,BasisFunctionType>,nComponents>::
+FieldVariableDataStructuredForSurface(FieldVariable<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<3>,BasisFunctionType>,nComponents> &rhs, Mesh::face_t face, bool &ownRankInvolvedInOutput) :
+  FieldVariableDataStructuredForSurface<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<2>,BasisFunctionType>,nComponents>::
+  FieldVariableDataStructuredForSurface(*rhs.subFieldVariable(-1), face, ownRankInvolvedInOutput)
+{
+}
+
+template<typename BasisFunctionType, int nComponents>
 void FieldVariableDataStructuredForSurface<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<2>,BasisFunctionType>,nComponents>::
 setValues(FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>,BasisFunctionType>,nComponents> &rhs)
 {
@@ -132,6 +140,30 @@ setValues(FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableO
   {
     values.clear();
     rhs.getValues(componentNo, surfaceDofs_, values);
+
+    //VLOG(1) << "component " << componentNo << ", values: " << values;
+    this->values_->setValues(componentNo, this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts(), this->functionSpace_->meshPartition()->dofNosLocal().data(), values.data(), INSERT_VALUES);
+  }
+
+  this->values_->setRepresentationGlobal();
+  this->values_->startGhostManipulation();
+}
+
+template<typename BasisFunctionType, int nComponents>
+void FieldVariableDataStructuredForSurface<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<2>,BasisFunctionType>,nComponents>::
+setValues(FieldVariable<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<3>,BasisFunctionType>,nComponents> &rhs)
+{
+  VLOG(1) << "copy values from rhs field variable (composite)";
+
+  // copy values from rhs
+  static std::vector<double> values;
+
+  // for every component, get values from rhs and set in values
+  for (int componentNo = 0; componentNo < nComponents; componentNo++)
+  {
+    values.clear();
+    // get values from last sub field variable of composite mesh
+    rhs.subFieldVariable(-1)->getValues(componentNo, surfaceDofs_, values);
 
     //VLOG(1) << "component " << componentNo << ", values: " << values;
     this->values_->setValues(componentNo, this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts(), this->functionSpace_->meshPartition()->dofNosLocal().data(), values.data(), INSERT_VALUES);

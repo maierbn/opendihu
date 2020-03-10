@@ -10,14 +10,36 @@ getSubFieldVariables(std::vector<std::shared_ptr<FieldVariable<FunctionSpace::Fu
 {
   subFieldVariables.clear();
 
+  initializeSubFieldVariables();
+  subFieldVariables = subFieldVariables_;
+}
+
+//! get the sub field variable no i
+template<int D,typename BasisFunctionType,int nComponents>
+std::shared_ptr<FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>, BasisFunctionType>, nComponents>> FieldVariableComposite<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,nComponents>::
+subFieldVariable(int i)
+{
+  initializeSubFieldVariables();
+
+  if (i == -1)
+    i = subFieldVariables_.size() - 1;
+  assert(i < subFieldVariables_.size());
+  return subFieldVariables_[i];
+}
+
+template<int D,typename BasisFunctionType,int nComponents>
+void FieldVariableComposite<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,nComponents>::
+initializeSubFieldVariables()
+{
+  if (!subFieldVariables_.empty())
+    return;
+
+  // if sub field variables have not been initialized
+
   // get subFunctionSpaces
   std::vector<std::shared_ptr<SubFunctionSpaceType>> subFunctionSpaces = this->functionSpace_->subFunctionSpaces();
 
-  // if sub field variables have not been initialized
-  if (subFieldVariables_.empty())
-  {
-    subFieldVariables_.resize(subFunctionSpaces.size());
-  }
+  subFieldVariables_.resize(subFunctionSpaces.size());
 
   // get own values
   std::vector<VecD<nComponents>> ownValues;
@@ -81,8 +103,6 @@ getSubFieldVariables(std::vector<std::shared_ptr<FieldVariable<FunctionSpace::Fu
 
     subMeshNo++;
   }
-
-  subFieldVariables = subFieldVariables_;
 }
 
 } // namespace

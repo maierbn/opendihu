@@ -33,7 +33,13 @@ public:
   //! split this field variables into field variables for the sub function space and set the corresponding values
   void getSubFieldVariables(std::vector<std::shared_ptr<FieldVariable<SubFunctionSpaceType, nComponents>>> &subFieldVariables);
 
+  //! get the sub field variable no i
+  std::shared_ptr<FieldVariable<SubFunctionSpaceType,nComponents>> subFieldVariable(int i);
+
 protected:
+
+  //! initialize the subFieldVariables_ vector
+  void initializeSubFieldVariables();
 
   std::vector<std::shared_ptr<FieldVariable<SubFunctionSpaceType,nComponents>>> subFieldVariables_;     //< field variables that have the values of this field variable on the submeshes
 };

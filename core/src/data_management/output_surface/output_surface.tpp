@@ -29,6 +29,7 @@ template<typename Data3D>
 void OutputSurface<Data3D>::
 initialize()
 {
+  return;
   // convert initially, this creates all 2D field variables
   typename Data3D::FieldVariablesForOutputWriter outputFieldVariables3D = this->data3d_->getFieldVariablesForOutputWriter();
 
@@ -37,7 +38,6 @@ initialize()
   // set function space of data3d as the function space of the first 2D field variable
   this->functionSpace_ = ConvertFieldVariablesForOutputWriter<typename Data3D::FieldVariablesForOutputWriter>::
     getFunctionSpaceFirstFieldVariable(outputFieldVariables2D_);
-
 }
 
 template<typename Data3D>
@@ -69,21 +69,24 @@ template<typename Data3D>
 void OutputSurface<Data3D>::
 getFunctionSpaces(std::vector<std::shared_ptr<typename OutputSurface<Data3D>::FunctionSpaceFirstFieldVariable>> &functionSpaces)
 {
+  /*
   ConvertFieldVariablesForOutputWriter<typename Data3D::FieldVariablesForOutputWriter>::
     getFunctionSpacesFirstFieldVariable(outputFieldVariables2D_, functionSpaces);
+    */
 }
 
 template<typename Data3D>
 typename OutputSurface<Data3D>::FieldVariablesForOutputWriter OutputSurface<Data3D>::
 getFieldVariablesForOutputWriter()
 {
+  /*
   typename Data3D::FieldVariablesForOutputWriter outputFieldVariables3D = this->data3d_->getFieldVariablesForOutputWriter();
 
   // create surface field variables for 3D field variables (the template magic happens in convert_output_field_variables.h)
   ConvertFieldVariablesForOutputWriter<typename Data3D::FieldVariablesForOutputWriter>::convert(outputFieldVariables3D, outputFieldVariables2D_, faces_, ownRankInvolvedInOutput_);
 
   //LOG(INFO) << StringUtility::demangle(typeid(typename Data3D::FieldVariablesForOutputWriter).name());
-
+*/
   return outputFieldVariables2D_;
 }
 

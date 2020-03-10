@@ -370,13 +370,13 @@ config = {
       "disableComputationWhenStatesAreCloseToEquilibrium": True,       # optimization where states that are close to their equilibrium will not be computed again
     },
     "Term2": {        # Bidomain, EMG
-      "OutputSurface": {        # version for fibers_emg_2d_output
-        "OutputWriter": [
-          {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_surface), "filename": "out/" + variables.scenario_name + "/surface_emg", "binary": True, "fixedFormat": False, "combineFiles": True},
-        ],
-        "face":                     ["1+","0+"],         # which faces of the 3D mesh should be written into the 2D mesh
-        "samplingPoints":           [[10.3, 17.2, -47.8], [9.3, 15.2, -47.8], [10.6, 15.3, -48.3], [6, 19, -50], [4, 18, -50]],
-        "filename":                 "out/electrodes.csv",
+#      "MyNewTimesteppingSolver": {        # version for fibers_emg_2d_output
+#        "OutputWriter": [
+        #  {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_surface), "filename": "out/" + variables.scenario_name + "/surface_emg", "binary": True, "fixedFormat": False, "combineFiles": True},
+#        ],
+        #"face":                     ["1+","0+"],         # which faces of the 3D mesh should be written into the 2D mesh
+        #"samplingPoints":           [[10.3, 17.2, -47.8], [9.3, 15.2, -47.8], [10.6, 15.3, -48.3], [6, 19, -50], [4, 18, -50]],
+        #"filename":                 "out/electrodes.csv",
         "StaticBidomainSolver": {             # solves Bidomain equation: K(sigma_i) Vm + K(sigma_i+sigma_e) phi_e = 0   => K(sigma_i+sigma_e) phi_e = -K(sigma_i) Vm
           "numberTimeSteps":        1,
           "timeStepOutputInterval": 50,
@@ -433,7 +433,7 @@ config = {
         }
       }
     }
-  }
+#  }
 }
 
 # stop timer and calculate how long parsing lasted

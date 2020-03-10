@@ -20,7 +20,8 @@ struct ConvertFieldVariable<std::shared_ptr<FieldVariable::FieldVariable<Functio
 {
   typedef std::vector<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<2>,BasisFunctionType>,nComponents>>> type;
 
-  static void convert(const std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>,BasisFunctionType>,nComponents>> fieldVariable3D, type &fieldVariables2D, std::vector<Mesh::face_t> &faces, bool &ownRankInvolvedInOutput)
+  static void convert(const std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>,BasisFunctionType>,nComponents>> fieldVariable3D,
+                      type &fieldVariables2D, std::vector<Mesh::face_t> &faces, bool &ownRankInvolvedInOutput)
   {
     using FieldVariable2D = FieldVariable::FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<2>,BasisFunctionType>,nComponents>;
 
@@ -53,7 +54,8 @@ struct ConvertFieldVariable<std::shared_ptr<FieldVariable::FieldVariable<Functio
 {
   typedef std::vector<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<2>,BasisFunctionType>,nComponents>>> type;
 
-  static void convert(const std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<3>,BasisFunctionType>,nComponents>> fieldVariable3D, type &fieldVariables2D, std::vector<Mesh::face_t> &faces, bool &ownRankInvolvedInOutput)
+  static void convert(const std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<3>,BasisFunctionType>,nComponents>> fieldVariable3D,
+                      type &fieldVariables2D, std::vector<Mesh::face_t> &faces, bool &ownRankInvolvedInOutput)
   {
     using FieldVariable2D = FieldVariable::FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<2>,BasisFunctionType>,nComponents>;
 
@@ -86,7 +88,8 @@ struct ConvertFieldVariable<std::vector<FieldVariableType>>
 {
   typedef std::vector<typename ConvertFieldVariable<FieldVariableType>::type> type;
 
-  static void convert(const std::vector<FieldVariableType> &fieldVariable3D, type &fieldVariable2D, std::vector<Mesh::face_t> &faces, bool &ownRankInvolvedInOutput)
+  static void convert(const std::vector<FieldVariableType> &fieldVariable3D,
+                      type &fieldVariable2D, std::vector<Mesh::face_t> &faces, bool &ownRankInvolvedInOutput)
   {
     fieldVariable2D.resize(fieldVariable3D.size());
 
@@ -113,7 +116,8 @@ struct ConvertTuple
   typedef typename ConvertTupleClass::type type;
 
   // convert a tuple of field variables from 3D function spaces to 2D function spaces
-  static void convert(const FieldVariablesForOutputWriter3D fieldVariables3D, type &fieldVariables2D, std::vector<Mesh::face_t> &faces, bool &ownRankInvolvedInOutput)
+  static void convert(const FieldVariablesForOutputWriter3D fieldVariables3D,
+                      type &fieldVariables2D, std::vector<Mesh::face_t> &faces, bool &ownRankInvolvedInOutput)
   {
     VLOG(1) << "convert: currentIndex = " << currentIndex << ", call previous ConvertTuple, convertedTail: " << StringUtility::demangle(typeid(ConvertedTail).name());
 
@@ -134,7 +138,8 @@ struct ConvertTuple<FieldVariablesForOutputWriter3D, 0, ConvertedTail>
 {
   typedef ConvertedTail type;
 
-  static void convert(const FieldVariablesForOutputWriter3D fieldVariables3D, type &fieldVariables2D, std::vector<Mesh::face_t> &faces, bool &ownRankInvolvedInOutput)
+  static void convert(const FieldVariablesForOutputWriter3D fieldVariables3D,
+                      type &fieldVariables2D, std::vector<Mesh::face_t> &faces, bool &ownRankInvolvedInOutput)
   {
     VLOG(1) << "convert: recursion end, convertedTail: " << StringUtility::demangle(typeid(ConvertedTail).name());
     VLOG(1) << "call convert on field variable " << StringUtility::demangle(typeid(typename std::tuple_element<0,FieldVariablesForOutputWriter3D>::type).name());
@@ -169,16 +174,23 @@ struct ConvertFieldVariablesForOutputWriter
   typedef typename std::tuple_element<2,type>::type::value_type::element_type SecondFieldVariable;  // the first field variable
 
   // convert a tuple of field variables from 3D function spaces to 2D function spaces by taking the surface at the given face
-  static void convert(const FieldVariablesForOutputWriter3D fieldVariables3D, type &fieldVariables2D, std::vector<Mesh::face_t> &faces, bool &ownRankInvolvedInOutput)
+  static void convert(const FieldVariablesForOutputWriter3D fieldVariables3D,
+                      type &fieldVariables2D, std::vector<Mesh::face_t> &faces, bool &ownRankInvolvedInOutput)
   {
-    VLOG(1) << "convert: start 3D: " << StringUtility::demangle(typeid(FieldVariablesForOutputWriter3D).name()) << ", n field variables: " << std::tuple_size<std::tuple<FieldVariablesForOutputWriter3D>>::value;
+    VLOG(1) << "convert: start 3D: " << StringUtility::demangle(typeid(FieldVariablesForOutputWriter3D).name())
+      << ", n field variables: " << std::tuple_size<std::tuple<FieldVariablesForOutputWriter3D>>::value;
     ConvertTupleClass::convert(fieldVariables3D, fieldVariables2D, faces, ownRankInvolvedInOutput);
   }
 
   // extract the function space of the first field variable
   static std::shared_ptr<FunctionSpaceFirstFieldVariable> getFunctionSpaceFirstFieldVariable(type &fieldVariables2D)
   {
-    return std::get<0>(fieldVariables2D)[0]->functionSpace();
+    VLOG(1) << "getFunctionSpaceFirstFieldVariable, type of fieldVariable2D: " << StringUtility::demangle(typeid(type).name());
+    int n2DFunctionSpaces = std::get<0>(fieldVariables2D).size();
+    if (n2DFunctionSpaces > 0)
+      return std::get<0>(fieldVariables2D)[0]->functionSpace();
+
+    return nullptr;
   }
 
   // extract all the function spaces for the different faces of the first field variable

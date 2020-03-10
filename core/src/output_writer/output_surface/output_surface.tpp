@@ -8,7 +8,9 @@ namespace OutputWriter
 template<typename Solver>
 OutputSurface<Solver>::
 OutputSurface(DihuContext context) :
-  context_(context["OutputSurface"]), solver_(context_), data_(context_), ownRankInvolvedInOutput_(true), timeStepNo_(0), currentTime_(0.0)
+  context_(context["OutputSurface"]), solver_(context_),
+  //data_(context_),
+  ownRankInvolvedInOutput_(true), timeStepNo_(0), currentTime_(0.0)
 {
 
 }
@@ -18,31 +20,31 @@ void OutputSurface<Solver>::
 advanceTimeSpan()
 {
   solver_.advanceTimeSpan();
-
+/*
   LOG(DEBUG) << "OutputSurface: writeOutput";
   if (ownRankInvolvedInOutput_)
   {
     outputWriterManager_.writeOutput(data_, timeStepNo_++);
-  }
+  }*/
 
   // write out values at points
-  writeSampledPoints();
+  //writeSampledPoints();
 }
 
 template<typename Solver>
 void OutputSurface<Solver>::
 initialize()
 {
-  if (initialized_)
-    return;
+  //if (initialized_)
+  //  return;
 
 
   // initialize solvers
   solver_.initialize();
-
-  data_.setData(solver_.data());
-  data_.initialize();
-  ownRankInvolvedInOutput_ = data_.ownRankInvolvedInOutput();
+return;
+  //data_.setData(solver_.data());
+  //data_.initialize();
+  //ownRankInvolvedInOutput_ = data_.ownRankInvolvedInOutput();
 
   // initialize output writers
   PythonConfig specificSettings = context_.getPythonConfig();
@@ -54,17 +56,17 @@ initialize()
   if (!sampledPoints_.empty())
     filename_ = specificSettings.getOptionString("filename", "out/sampledPoints.csv");
 
-  initializeSampledPoints();
+  //initializeSampledPoints();
 
   LOG(DEBUG) << "OutputSurface: initialize output writers";
 
   // initialize output writer to use smaller rank subset that only contains the ranks that have parts of the surface
   // if the last argument is not given, by default the common rank subset would be used
-  if (ownRankInvolvedInOutput_)
+  /*if (ownRankInvolvedInOutput_)
   {
     rankSubset_ = data_.functionSpace()->meshPartition()->rankSubset();
     outputWriterManager_.initialize(context_, specificSettings, rankSubset_);
-  }
+  }*/
   initialized_ = true;
 }
 
@@ -72,6 +74,7 @@ template<typename Solver>
 void OutputSurface<Solver>::
 initializeSampledPoints()
 {
+  /*
   if (sampledPoints_.empty())
     return;
 
@@ -118,7 +121,56 @@ initializeSampledPoints()
   LOG(DEBUG) << "foundPointNos_: " << foundPointNos_;
   LOG(DEBUG) << "elementXis: " << elementXis_;
 
-  // write positions of sampling points
+  // write positions of found sampling points
+  std::ofstream fileFoundPoints;
+  std::stringstream filenameFoundPoints;
+
+  std::string filenameBase;
+  if (filename_.rfind(".") != std::string::npos)
+  {
+    filenameBase = filename_.substr(0, filename_.rfind("."));
+  }
+  else
+  {
+    filenameBase = filename_;
+  }
+
+  filenameFoundPoints << filenameBase << "_found." << rankSubset_->ownRankNo() << ".csv";
+  Generic::openFile(fileFoundPoints, filenameFoundPoints.str(), true);
+
+  // write found points
+  for (int i = 0; i < foundPointNos_.size(); i++)
+  {
+    int samplingPointNo = foundPointNos_[i];
+    Vec3 point = sampledPoints_[samplingPointNo];
+
+    fileFoundPoints << point[0] << ";"
+      << point[1] << ";"
+      << point[2] << "\n";
+  }
+  fileFoundPoints.close();
+
+  std::ofstream fileNotFoundPoints;
+  std::stringstream filenameNotFoundPoints;
+
+
+  filenameNotFoundPoints << filenameBase << "_not_found." << rankSubset_->ownRankNo() << ".csv";
+  Generic::openFile(fileNotFoundPoints, filenameNotFoundPoints.str(), true);
+
+  // write not found points
+  for (int samplingPointNo = 0; samplingPointNo < sampledPoints_.size(); samplingPointNo++)
+  {
+    if (std::find(foundPointNos_.begin(), foundPointNos_.end(), samplingPointNo) == foundPointNos_.end())
+    {
+      Vec3 point = sampledPoints_[samplingPointNo];
+
+      fileNotFoundPoints << point[0] << ";"
+        << point[1] << ";"
+        << point[2] << "\n";
+    }
+  }
+
+  fileNotFoundPoints.close();*/
 }
 
 template<typename Solver>
@@ -136,9 +188,8 @@ writeSampledPoints()
 
   const int nDofsPerElement = DataSurface::FunctionSpaceFirstFieldVariable::nDofsPerElement();
   const int nComponents = DataSurface::SecondFieldVariable::nComponents();
-  //const int nComponents = std::get<1>(outputFieldVariables2D)[0]->nComponents();
-  //using ValueType = VecD<nComponents>;
-  using ValueType = double;
+  if (nComponents != 1)
+    LOG(FATAL) << "Output of sampled points is only possible for scalar field variables.";
 
   std::vector<int> indicesLocal;
   std::vector<double> sampledValuesLocal;
@@ -155,28 +206,26 @@ writeSampledPoints()
     element_no_t elementNoLocal = std::get<1>(elementXis_[samplingPointNo]);
     Vec2 xi = std::get<2>(elementXis_[samplingPointNo]);
 
-    int nFieldVariables = std::get<0>(outputFieldVariables2D).size();
+    std::shared_ptr<typename DataSurface::SecondFieldVariable> fieldVariable = std::get<2>(outputFieldVariables2D)[functionSpaceNo];
+
+    int nFieldVariables = std::get<2>(outputFieldVariables2D).size();
     if (functionSpaceNo < nFieldVariables)
     {
       // get values in the element
-      std::array<ValueType,nDofsPerElement> elementalValues;
-      std::get<2>(outputFieldVariables2D)[functionSpaceNo]->getElementValues(elementNoLocal, elementalValues);
-      LOG(DEBUG) << "get from field variable \"" << std::get<1>(outputFieldVariables2D)[functionSpaceNo]->name() << "\", nComponents: " << nComponents << " = " << std::get<1>(outputFieldVariables2D)[functionSpaceNo]->nComponents();
+      std::array<double,nDofsPerElement> elementalValues;
+      fieldVariable->getElementValues(elementNoLocal, elementalValues);
+      LOG(DEBUG) << "get from field variable \"" << fieldVariable->name() << "\", nComponents: " << fieldVariable->nComponents();
 
       // interpolate value
-      ValueType value = std::get<2>(outputFieldVariables2D)[functionSpaceNo]->functionSpace()->template interpolateValueInElement<nComponents>(elementalValues, xi);
-
-      //for (int componentNo = 0; componentNo < nComponents; componentNo++)
-      //{
-        sampledValuesLocal.push_back(value);
-      //}
+      double value = fieldVariable->functionSpace()->interpolateValueInElement(elementalValues, xi);
+      sampledValuesLocal.push_back(value);
 
       // get geometry values
       std::array<Vec3,nDofsPerElement> elementalGeometryValues;
-      std::get<0>(outputFieldVariables2D)[functionSpaceNo]->functionSpace()->geometryField().getElementValues(elementNoLocal, elementalGeometryValues);
+      fieldVariable->functionSpace()->geometryField().getElementValues(elementNoLocal, elementalGeometryValues);
 
       // interpolate value
-      Vec3 geometryValue = std::get<0>(outputFieldVariables2D)[functionSpaceNo]->functionSpace()->template interpolateValueInElement<3>(elementalGeometryValues, xi);
+      Vec3 geometryValue = fieldVariable->functionSpace()->template interpolateValueInElement<3>(elementalGeometryValues, xi);
 
       for (int componentNo = 0; componentNo < 3; componentNo++)
       {
@@ -348,15 +397,15 @@ template<typename Solver>
 void OutputSurface<Solver>::
 run()
 {
-  initialize();
+  //initialize();
 
   solver_.run();
-
+/*
   LOG(DEBUG) << "OutputSurface: writeOutput";
   if (ownRankInvolvedInOutput_)
   {
     outputWriterManager_.writeOutput(data_);
-  }
+  }*/
 }
 
 template<typename Solver>

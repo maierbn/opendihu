@@ -41,6 +41,7 @@
 #include "specialized_solver/solid_mechanics/dynamic_hyperelasticity/dynamic_hyperelasticity_solver.h"
 #include "specialized_solver/fast_monodomain_solver/fast_monodomain_solver.h"
 #include "specialized_solver/my_new_solver/my_new_static_solver.h"
+#include "specialized_solver/my_new_solver/my_new_timestepping_solver.h"
 #include "specialized_solver/muscle_contraction_solver.h"
 #include "time_stepping_scheme/heun_adaptive.h"
 

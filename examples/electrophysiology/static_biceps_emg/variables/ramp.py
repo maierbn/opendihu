@@ -40,10 +40,9 @@ dt_0D = 3e-3                        # [ms] timestep width of ODEs (2e-3)
 dt_1D = 1e-3                        # [ms] timestep width of diffusion (4e-3)
 dt_splitting = 3e-3                 # [ms] overall timestep width of strang splitting (4e-3)
 dt_3D = 4e-1                        # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
-output_timestep = 4e-1              # [ms] timestep for output surface EMG, 0.5
 output_timestep_fibers = 4e-1       # [ms] timestep for fiber output, 0.5
-output_timestep_big = 25            # [ms] timestep for output big files of 3D EMG, 100
-output_timestep_surface = 0.1       # [ms] timestep for python callback, which is electrode measurement output
+output_timestep_3D_emg = 4e-1            # [ms] timestep for output big files of 3D EMG, 100
+output_timestep_surface = 4e-1              # [ms] timestep for output surface EMG, 0.5
 output_timestep_electrodes = 0.1    # [ms] timestep for python callback, which is electrode measurement output
 
 # input files

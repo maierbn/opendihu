@@ -43,7 +43,8 @@ int main(int argc, char *argv[])
         >
       >
     >,
-    OutputWriter::OutputSurface<
+//    OutputWriter::OutputSurface<
+//    MyNewTimesteppingSolver<
       TimeSteppingScheme::StaticBidomainSolver<              // bidomain in muscle volume
         SpatialDiscretization::FiniteElementMethod<       //FEM for initial potential flow, fibre directions
           Mesh::CompositeOfDimension<3>,
@@ -58,7 +59,7 @@ int main(int argc, char *argv[])
           Equation::Dynamic::DirectionalDiffusion
         >
       >
-    >
+//    >
   > problem(settings);
   
   // run problem

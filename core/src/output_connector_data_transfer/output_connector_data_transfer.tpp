@@ -14,6 +14,8 @@ void SolutionVectorMapping<
             std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>> transferableSolutionData2,
             OutputConnection &outputConnection)
 {
+  LOG(DEBUG) << "transfer standard";
+
   // initialize output connection object
   outputConnection.initialize(*transferableSolutionData1, *transferableSolutionData2);
 

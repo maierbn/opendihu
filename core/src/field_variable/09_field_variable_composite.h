@@ -38,10 +38,11 @@ public:
 
 protected:
 
-  //! initialize the subFieldVariables_ vector
-  void initializeSubFieldVariables();
+  //! initialize the subFieldVariables_ vector or update the value if it was already initialized
+  void updateSubFieldVariables();
 
   std::vector<std::shared_ptr<FieldVariable<SubFunctionSpaceType,nComponents>>> subFieldVariables_;     //< field variables that have the values of this field variable on the submeshes
+  std::vector<VecD<nComponents>> subFieldVariableValues_;     //< temporary buffer
 };
 
 

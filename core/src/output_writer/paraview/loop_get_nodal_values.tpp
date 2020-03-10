@@ -78,7 +78,7 @@ getNodalValues(CurrentFieldVariableType currentFieldVariable, const FieldVariabl
 
     // create entry for field variable name if it does not exist and reserve enough space for all values
     values[fieldVariableName].reserve(values[fieldVariableName].size() + componentValues[0].size()*nComponents);
-    LOG(DEBUG) << "add \"" << fieldVariableName << "\".";
+    LOG(DEBUG) << "get nodal values of \"" << fieldVariableName << "\" (" << currentFieldVariable << ").";
 
     // copy values in consecutive order (x y z x y z) to output
     for (int i = 0; i < componentValues[0].size(); i++)

@@ -56,8 +56,8 @@ if "cuboid.bin" in variables.fiber_file:
             outfile.write(struct.pack('3d', point[0], point[1], point[2]))   # data point
 
 # output diffusion solver type
-if rank_no == 0:
-  print("diffusion solver type: {}".format(variables.diffusion_solver_type))
+#if rank_no == 0:
+#  print("diffusion solver type: {}".format(variables.diffusion_solver_type))
 
 variables.n_subdomains = variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z
 
@@ -110,8 +110,9 @@ if "version 2" in header_str.decode("utf-8"):   # the version 2 has number of fi
 
 n_points = n_points_x*n_points_y*n_points_z
 
-if rank_no == 0:
-  print("    fat mesh, n points total:    {} ({} x {} x {})".format(n_points, n_points_x, n_points_y, n_points_z))
+# output of global size
+#if rank_no == 0:
+#  print("    fat mesh, n points total:    {} ({} x {} x {})".format(n_points, n_points_x, n_points_y, n_points_z))
   
 # parse whole file
 fat_mesh_node_positions = [None for _ in range(n_points)]
@@ -155,131 +156,142 @@ if variables.own_subdomain_coordinate_y == variables.n_subdomains_y - 1:
 if variables.own_subdomain_coordinate_z == variables.n_subdomains_z - 1:
   n_points_3D_z += 1
 
-print("{}: 3Dmesh has {} local node positions ({} x {} x {} = {}), nElements: {}".format(rank_no, len(variables.meshes["3Dmesh"]["nodePositions"]), n_points_3D_x, n_points_3D_y, n_points_3D_z, n_points_3D_x*n_points_3D_y*n_points_3D_z, n_elements_3D_mesh))
+if False:
+  print("{}: 3Dmesh has {} local node positions ({} x {} x {} = {}), nElements: {}".format(rank_no, len(variables.meshes["3Dmesh"]["nodePositions"]), n_points_3D_x, n_points_3D_y, n_points_3D_z, n_points_3D_x*n_points_3D_y*n_points_3D_z, n_elements_3D_mesh))
 
-# get bottom and top points in z direction of the own subdomain of the 3D mesh
-pz0 = variables.meshes["3Dmesh"]["nodePositions"][0*n_points_3D_x*n_points_3D_y + 0*n_points_3D_x + 0][2]
-pz1 = variables.meshes["3Dmesh"]["nodePositions"][(n_points_3D_z-1)*n_points_3D_x*n_points_3D_y + 0*n_points_3D_x + 0][2]
+# determine nodes of the fat layer mesh
+fat_mesh_node_indices = []
 
-## find indices k in z direction of the local part of the fat layer mesh
-index_k_start = None
-index_k_end = None
+# range of points in z direction is [variables.z_point_index_start, variables.z_point_index_end)
+# these variables were set by create_partitioned_meshes_for_settings
+n_sampled_points_3D_in_own_subdomain_x = n_sampled_points_in_subdomain_x(variables.own_subdomain_coordinate_x)
+n_sampled_points_3D_in_own_subdomain_y = n_sampled_points_in_subdomain_y(variables.own_subdomain_coordinate_y)
+n_sampled_points_3D_in_own_subdomain_z = n_sampled_points_in_subdomain_z(variables.own_subdomain_coordinate_z)
 
-min_distance_start = None
-min_distance_end = None
+n_points_on_previous_ranks_x = 0
 
-# loop over z indices of fat_mesh_node_positions
-for k in range(n_points_z):
-  p = fat_mesh_node_positions[k*n_points_xy + 0*n_points_x + 0][2]
-  
-  distance_pz0 = abs(p - pz0)
-  distance_pz1 = abs(p - pz1)
-  
-  if min_distance_start is None or distance_pz0 < min_distance_start:
-    min_distance_start = distance_pz0
-    index_k_start = k
-    
-  if min_distance_end is None or distance_pz1 < min_distance_end:
-    min_distance_end = distance_pz1
-    index_k_end = k
-  
-index_i_start = None
-index_i_end = None
-    
-# if the own subdomain is at the (y+) border (top in sketch), it will have a part of the fat layer mesh
 if variables.own_subdomain_coordinate_y == variables.n_subdomains_y - 1:
+  #print("{}: previous subdomains: y+: {}".format(rank_no, list(range(variables.own_subdomain_coordinate_x))))
+  n_points_on_previous_ranks_x = n_fibers_in_previous_subdomains_x(variables.own_subdomain_coordinate_x)
+
+elif variables.own_subdomain_coordinate_x == variables.n_subdomains_x - 1:
+  #print("{}: previous subdomains y+: {}, x+: {}".format(rank_no, list(range(variables.n_subdomains_x)), list(range(variables.n_subdomains_y-1, variables.own_subdomain_coordinate_y, -1))))
+  n_points_on_previous_ranks_x = variables.n_fibers_x \
+    + sum([n_fibers_in_subdomain_y(subdomain_coordinate_y) for subdomain_coordinate_y in range(variables.n_subdomains_y-1, variables.own_subdomain_coordinate_y, -1)]) \
+    - 1
+
+#print("{}: n_points_on_previous_ranks_x: {}".format(rank_no, n_points_on_previous_ranks_x))
+
+# loop over z point indices of the 3D mesh
+for k in range(n_sampled_points_3D_in_own_subdomain_z):
+  z_point_index = variables.z_point_index_start + k*variables.sampling_stride_z
   
-  px0 = variables.meshes["3Dmesh"]["nodePositions"][(n_points_3D_y-1)*n_points_3D_x + 0]
-  px1 = variables.meshes["3Dmesh"]["nodePositions"][(n_points_3D_y-1)*n_points_3D_x + n_points_3D_x-1]
-  
-  # find range [index_i_start, index_i_end] for x of local node positions of fat mesh
-  min_distance_start = None
-  min_distance_end = None
-  
-  for i in range(n_points_x):
-    p = fat_mesh_node_positions[index_k_start*n_points_x*n_points_y + 0*n_points_x + i]
+  if variables.own_subdomain_coordinate_z == variables.n_subdomains_z-1 and k == n_sampled_points_3D_in_own_subdomain_z-1:
+    z_point_index = variables.z_point_index_end-1
     
-    distance_px0 = np.linalg.norm(np.array(p) - np.array(px0)) 
-    distance_px1 = np.linalg.norm(np.array(p) - np.array(px1)) 
+  #print("{}: sampling_stride_z: {}, k: {}, z: {}/{}".format(rank_no, variables.sampling_stride_z, k, z_point_index, variables.z_point_index_end))
+  
+  # loop over points of the fat layer mesh in y direction
+  for j in range(n_points_y):
+    y_point_index = j
     
-    if min_distance_start is None or distance_px0 < min_distance_start:
-      min_distance_start = distance_px0
-      index_i_start = i
+    # loop over the points in x direction of the fat layer mesh, this corresponds to x and negative y direction of the 3D mesh (see figure above in the code)
+    
+    # loop over points in 3D mesh in x direction
+    x_point_index_offset = n_points_on_previous_ranks_x
+    fat_mesh_n_points_x = 0
+    if variables.own_subdomain_coordinate_y == variables.n_subdomains_y-1:
       
-    if min_distance_end is None or distance_px1 < min_distance_end:
-      min_distance_end = distance_px1
-      index_i_end = i
-
-# if the own subdomain is at the (x+) border (right in sketch), it will have a part of the fat layer mesh
-if variables.own_subdomain_coordinate_x == variables.n_subdomains_x - 1:
-  
-  py0 = variables.meshes["3Dmesh"]["nodePositions"][(n_points_3D_y-1)*n_points_3D_x + n_points_3D_x-1]
-  py1 = variables.meshes["3Dmesh"]["nodePositions"][0*n_points_3D_x + n_points_3D_x-1]
-  
-  # find range [index_i_start, index_i_end] for x of local node positions of fat mesh
-  min_distance_start = None
-  min_distance_end = None
-  
-  for i in range(n_points_x):
-    p = fat_mesh_node_positions[index_k_start*n_points_x*n_points_y + 0*n_points_x + i]
-    
-    distance_py0 = np.linalg.norm(np.array(p) - np.array(py0)) 
-    distance_py1 = np.linalg.norm(np.array(p) - np.array(py1)) 
+      
+      for i_3D in range(n_sampled_points_3D_in_own_subdomain_x):
+        x_point_index = n_points_on_previous_ranks_x + i_3D*variables.sampling_stride_x
         
-    # if the own subdomain is not at the (y+) border (top in sketch), search for new index_i_start
-    if not variables.own_subdomain_coordinate_y == variables.n_subdomains_y - 1:
-      if min_distance_start is None or distance_py0 < min_distance_start:
-        min_distance_start = distance_py0
-        index_i_start = i
-    
-    if min_distance_end is None or distance_py1 < min_distance_end:
-      min_distance_end = distance_py1
-      index_i_end = i
+        # on border rank set last node positions to be the border nodes (it could be that they are not yet the outermost nodes because of sampling_stride)
+        if variables.own_subdomain_coordinate_x == variables.n_subdomains_x-1 and i_3D == n_sampled_points_3D_in_own_subdomain_x-1:
+          x_point_index = n_points_on_previous_ranks_x + n_fibers_in_subdomain_x(variables.own_subdomain_coordinate_x)-1
+            
+        # store index of node
+        fat_mesh_node_indices.append([x_point_index, y_point_index, z_point_index])
+        fat_mesh_n_points_x += 1
+            
+        #if j == 0 and k == 0:
+        #  print("{}, at y+, x={}".format(rank_no, x_point_index, point))
+            
+      x_point_index_offset = x_point_index
+      
+    # loop over points in 3D mesh in negative y direction
+    if variables.own_subdomain_coordinate_x == variables.n_subdomains_x-1:
+        
+      for j_3D in reversed(range(n_sampled_points_3D_in_own_subdomain_y)):
+        y_index_3D_mesh = j_3D*variables.sampling_stride_y
+        
+        # on top border rank do not use the top node again, it was already visited within the x traversal
+        if variables.own_subdomain_coordinate_y == variables.n_subdomains_y-1 and j_3D == n_sampled_points_3D_in_own_subdomain_y-1:
+          continue
+        
+        x_point_index = x_point_index_offset + n_fibers_in_subdomain_y(variables.own_subdomain_coordinate_y)-1 - y_index_3D_mesh
+        
+        # store index of node
+        fat_mesh_node_indices.append([x_point_index, y_point_index, z_point_index])
+        fat_mesh_n_points_x += 1
+        
+        #if j == 0 and k == 0:
+        #  print("{}, at x+, x={}".format(rank_no, x_point_index))
 
-if index_i_end is None:
-  index_i_end = -1
-  index_i_start = 0
-
+# load local nodes
+fat_mesh_node_positions_local = []
+for (index_x, index_y, index_z) in fat_mesh_node_indices:
+  
+  # get point from all node positions of fat mesh
+  point = fat_mesh_node_positions[index_z*n_points_xy + index_y*n_points_x + index_x] 
+  
+  # store point in the list of local node positions of the fat mesh
+  fat_mesh_node_positions_local.append(point)
+  
 # local size
-fat_mesh_n_points = [index_i_end+1 - index_i_start, n_points_y, index_k_end+1 - index_k_start]
+fat_mesh_n_points = [fat_mesh_n_points_x, n_points_y, n_sampled_points_3D_in_own_subdomain_z]
 fat_mesh_n_elements = [fat_mesh_n_points[0]-1, fat_mesh_n_points[1]-1, fat_mesh_n_points[2]-1]
 
+# regarding x direction, if in interior of fat mesh (i.e., not bottom right subdomain), adjust number of elements in x direction (which is in negative y direction)
+if not (variables.own_subdomain_coordinate_y == 0 and variables.own_subdomain_coordinate_x == variables.n_subdomains_x - 1):
+  fat_mesh_n_elements[0] += 1
+# regarding z direction, if in interior of fat mesh, adjust number of elements in z direction
+if variables.own_subdomain_coordinate_z != variables.n_subdomains_z - 1:
+  fat_mesh_n_elements[2] += 1
+          
 # store values to be used in postprocess callback function
 variables.fat_mesh_n_points_local = fat_mesh_n_points
-variables.fat_mesh_n_points_global = [n_points_x, n_points_y, n_points_z]
-variables.local_range_i = [index_i_start,index_i_end+1]
-variables.local_range_k = [index_k_start,index_k_end+1]
+variables.fat_mesh_n_points_global = [variables.n_points_3D_mesh_global_x+variables.n_points_3D_mesh_global_y-1, n_points_y, variables.n_points_3D_mesh_global_z]
 
-# regarding x direction, if in interior of fat mesh, adjust number of points in i(x) direction
-if index_i_end != n_points_x-1:
-  fat_mesh_n_elements[0] += 1
-# regarding z direction, if in interior of fat mesh, adjust number of points in k(z) direction
-if index_k_end != n_points_z-1:
-  fat_mesh_n_elements[2] += 1
-  
-# add all local nodes
-previous_point = None
-previous_info = None
-fat_mesh_node_positions_local = []
-for k in range(index_k_start,index_k_end+1):
-  for j in range(n_points_y):
-    for i in range(index_i_start,index_i_end+1):
-          
-      point = fat_mesh_node_positions[k*n_points_xy + j*n_points_x + i]
-      fat_mesh_node_positions_local.append(point)
+# debugging output
+if False:
+  # if the own subdomain is at the (y+) border
+  if variables.own_subdomain_coordinate_y == variables.n_subdomains_y - 1:
+    # output top row node positions of 3D mesh
+    for i in range(n_points_3D_x):
+      point = variables.meshes["3Dmesh"]["nodePositions"][0*n_points_3D_x*n_points_3D_y + (n_points_3D_y-1)*n_points_3D_x + i]
       
-      if previous_point is not None and np.linalg.norm(np.array(previous_point) - np.array(point)) < 1e-8:
-        print("Error, twice the same point! At i,j,k={},{},{} point {} (previous: {})".format(i,j,k,point, previous_info))
+      print("{}: 3Dmesh top node i={}, {}".format(rank_no, i, point))
+    
+  # if the own subdomain is at the (x+) border
+  if variables.own_subdomain_coordinate_x == variables.n_subdomains_x - 1:
+    # output top row node positions of 3D mesh
+    for j in reversed(range(n_points_3D_y)):
+      point = variables.meshes["3Dmesh"]["nodePositions"][0*n_points_3D_x*n_points_3D_y + j*n_points_3D_x + (n_points_3D_x-1)]
       
-      previous_point = point
-      previous_info = [i,j,k]
-
+      print("{}: 3Dmesh right node j={}, {}".format(rank_no, j, point))
+    
+  # output fat layer mesh on bottom
+  for i in range(fat_mesh_n_points[0]):
+    point = fat_mesh_node_positions_local[i]
+    print("{}: fat mesh bottom node i={}, {}".format(rank_no, i, point))
   
 fat_mesh_n_ranks = [variables.n_subdomains_x + variables.n_subdomains_y - 1, 1, variables.n_subdomains_z]
 
-print("{}: Rank {} has subset of fat layer mesh: i: [{},{}], k: [{},{}], {} x {} x {} = {} = {} nodes, nElements: {}".format(rank_no, rank_no, index_i_start, index_i_end, index_k_start, index_k_end, \
-  fat_mesh_n_points[0], fat_mesh_n_points[1], fat_mesh_n_points[2], fat_mesh_n_points[0]*fat_mesh_n_points[1]*fat_mesh_n_points[2], 
-  len(fat_mesh_node_positions_local), fat_mesh_n_elements))
+if False:
+  print("{}: Rank {} has subset of fat layer mesh: {} x {} x {} = {} = {} nodes, n elements local: {}, n points local: {}, global: {}".format(rank_no, rank_no, \
+    fat_mesh_n_points[0], fat_mesh_n_points[1], fat_mesh_n_points[2], fat_mesh_n_points[0]*fat_mesh_n_points[1]*fat_mesh_n_points[2], 
+    len(fat_mesh_node_positions_local), fat_mesh_n_elements, variables.fat_mesh_n_points_local, variables.fat_mesh_n_points_global))
 
 # determine all ranks that participate in computing the mesh (global nos)
 variables.fat_global_rank_nos = []
@@ -291,11 +303,14 @@ for coordinate_z in range(variables.n_subdomains_z):
   for coordinate_y in range(variables.n_subdomains_y-2,-1,-1):
     fat_rank_no = coordinate_z * variables.n_subdomains_xy + coordinate_y*variables.n_subdomains_x + (variables.n_subdomains_x-1)
     variables.fat_global_rank_nos.append(fat_rank_no)
+    
+if False:
+  print("{}: Fat mesh will be computed by the following ranks: fat_global_rank_nos: {}, fat_mesh_n_ranks: {}".
+    format(rank_no, variables.fat_global_rank_nos, fat_mesh_n_ranks))
 
-
-print("{}: Fat mesh will be computed by the following ranks: fat_global_rank_nos: {}, fat_mesh_n_ranks: {}".
-format(rank_no, variables.fat_global_rank_nos, fat_mesh_n_ranks))
-
+if rank_no == 0:
+  print("    fat mesh, n points total:    {} ({} x {} x {}), (per process: {} x {} x {} = {})".format(variables.fat_mesh_n_points_global[0]*variables.fat_mesh_n_points_global[1]*variables.fat_mesh_n_points_global[2], variables.fat_mesh_n_points_global[0], variables.fat_mesh_n_points_global[1], variables.fat_mesh_n_points_global[2], fat_mesh_n_points[0], fat_mesh_n_points[1], fat_mesh_n_points[2], fat_mesh_n_points[0]*fat_mesh_n_points[1]*fat_mesh_n_points[2]))
+  
 #print("fat mesh:")
 #print(fat_mesh_node_positions_local)
 

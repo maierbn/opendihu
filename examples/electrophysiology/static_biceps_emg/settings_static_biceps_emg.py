@@ -88,7 +88,7 @@ if n_ranks != variables.n_subdomains:
   optimal_value = n_ranks**(1/3)
   possible_partitionings = []
   for i in range(1,n_ranks):
-    for j in range(1,n_ranks):
+    for j in [1]:
       if i*j <= n_ranks and n_ranks % (i*j) == 0:
         k = (int)(n_ranks / (i*j))
         performance = (k-optimal_value)**2 + (j-optimal_value)**2 + 1.1*(i-optimal_value)**2

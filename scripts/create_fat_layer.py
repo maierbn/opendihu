@@ -104,8 +104,9 @@ with open(input_filename, "rb") as infile:
   print("n valid: {}, n invalid: {}".format(n_streamlines_valid, n_streamlines_invalid))
   
   # create mesh, oriented in x and z direction along fibers, in y direction normal to muscle belly
-  x_stride = 2
-  z_stride = 50
+  # set the sampling stride to 1, the mesh will be sampled by the script that does the partitioning in the simulation
+  x_stride = 1
+  z_stride = 1
   y_size = 5
   thickness = 1.0  #[cm]
   

@@ -52,16 +52,24 @@ getValue(element_no_t elementNoLocal, ValueType &value) const
 }
 
 //! the value of the parameter in the given element
-template <typename FunctionSpaceType, typename ValueType>
+/*template <typename FunctionSpaceType, typename ValueType>
 ValueType SpatialParameter<FunctionSpaceType,ValueType>::
 value(element_no_t elementNoLocal) const
 {
   assert (elementNoLocal >= 0 && elementNoLocal < valueIndices_.size());
   int index = valueIndices_[elementNoLocal];
   return values_[index];
+}*/
+
+//! the value of the parameter in the given element
+template <typename FunctionSpaceType, typename ValueType>
+const ValueType &SpatialParameter<FunctionSpaceType,ValueType>::
+value(element_no_t elementNoLocal) const
+{
+  assert (elementNoLocal >= 0 && elementNoLocal < valueIndices_.size());
+  int index = valueIndices_[elementNoLocal];
+  return values_[index];
 }
-
-
 
 template<typename FunctionSpaceType, typename ValueType>
 void SetValueNos<FunctionSpaceType,ValueType>::

@@ -76,7 +76,7 @@ PyObject *PythonUtility::getOptionPyObject(const PyObject *settings, std::string
   }
   else
   {
-    LOG(ERROR) << "Dict does not contain " << pathString << "[\"" << keyString << "\"]!" << std::endl;
+    LOG(WARNING) << "Dict does not contain " << pathString << "[\"" << keyString << "\"]!" << std::endl;
     Py_CLEAR(key);
     return defaultValue;
   }

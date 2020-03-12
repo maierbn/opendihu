@@ -243,6 +243,8 @@ fat_mesh_node_positions_local = []
 for (index_x, index_y, index_z) in fat_mesh_node_indices:
   
   # get point from all node positions of fat mesh
+  if index_z*n_points_xy + index_y*n_points_x + index_x >= len(fat_mesh_node_positions):
+    print("{} index {} is out of range ({}), index: ({},{},{}), size: ({},{},{})".format(rank_no, index_z*n_points_xy + index_y*n_points_x + index_x, len(fat_mesh_node_positions), index_x, index_y, index_z, n_points_x, n_points_y, n_points_z))
   point = fat_mesh_node_positions[index_z*n_points_xy + index_y*n_points_x + index_x] 
   
   # store point in the list of local node positions of the fat mesh

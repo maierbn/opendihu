@@ -79,12 +79,11 @@ if variables.n_subdomains is not None:
   variables.n_subdomains_z = variables.n_subdomains[2]
   
 variables.n_subdomains = variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z
+
+# automatically initialize partitioning if it has not been set
 if n_ranks != variables.n_subdomains:
-  #variables.n_subdomains_x = 1
-  #variables.n_subdomains_y = 1
-  #variables.n_subdomains_z = n_ranks
   
-  # determine partitioning
+  # create all possible partitionings to the given number of ranks
   optimal_value = n_ranks**(1/3)
   possible_partitionings = []
   for i in range(1,n_ranks):
@@ -94,8 +93,8 @@ if n_ranks != variables.n_subdomains:
         performance = (k-optimal_value)**2 + (j-optimal_value)**2 + 1.1*(i-optimal_value)**2
         possible_partitionings.append([i,j,k,performance])
         
+  # if no possible partitioning was found
   if len(possible_partitionings) == 0:
-    
     if rank_no == 0:
       print("\n\nError! Number of ranks {} does not match given partitioning {} x {} x {} = {} and no automatic partitioning could be done.\n\n".format(n_ranks, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z))
     quit()
@@ -154,50 +153,64 @@ def postprocess(result):
   # get all emg values
   phi_e_values = field_variables[2]["components"][0]["values"]
   
-  # select nodes of the fat layer mesh, k = direction along muscle, i = across
-  i_begin = 2           # first index to select
-  i_end = i_begin + 13   # one after last index to select
-  i_step = 2            # stride which node to select
+  # select nodes of the fat layer mesh, z = direction along muscle, x = across muscle (i.e. in x and y direction)
+  x_begin = 2           # first index to select
+  x_end = x_begin + 13   # one after last index to select
+  x_step = 2            # stride which node to select
   
-  k_begin = 4
-  k_end = k_begin + 20
-  k_step = 2
+  # in fiber direction
+  z_begin = 4
+  z_end = z_begin + 20
+  z_step = 2
   
   # get helper variables, dimensions of the fat layer mesh
   n_points_local_x = variables.fat_mesh_n_points_local[0]
   n_points_local_y = variables.fat_mesh_n_points_local[1]
   n_points_local_z = variables.fat_mesh_n_points_local[2]
+  
   n_points_global_x = variables.fat_mesh_n_points_global[0]
   n_points_global_y = variables.fat_mesh_n_points_global[1]
   n_points_global_z = variables.fat_mesh_n_points_global[2]
-  #offset = len(variables.meshes["3Dmesh"]["nodePositions"])
-  offset = 0
   
-  # loop over the local domain of the selected global nodes
-  for k in range(k_begin, k_end, k_step):
-    if not (variables.local_range_k[0] <= k < variables.local_range_k[1]):
+  index_offset_x = variables.fat_mesh_index_offset[0]
+  index_offset_y = variables.fat_mesh_index_offset[1]
+  index_offset_z = variables.fat_mesh_index_offset[2]
+  
+  #print("current_time: {}, index offset: {},{},{}".format(current_time, index_offset_x, index_offset_y, index_offset_z))
+  
+  # loop over the global indices and only continue if they are on the local domain
+  for z_index in range(z_begin, z_end, z_step):
+    if not (index_offset_z <= z_index < index_offset_z+n_points_local_z):
       continue
-    for i in range(i_begin, i_end, i_step):
-      if not (variables.local_range_i[0] <= i < variables.local_range_i[1]):
+    for x_index in range(x_begin, x_end, x_step):
+      if not (index_offset_x <= x_index < index_offset_x+n_points_local_x):
         continue
       
-      # get the local coordinates for (i,k)
-      k_local = k - variables.local_range_k[0]
-      i_local = i - variables.local_range_i[0]
-      j_local = n_points_y - 1
+      # here, (x_index,z_index) are the global indices of a point that is in the local domain
+      
+      # get the local coordinates for (x_index,z_index)
+      k_local = z_index - index_offset_z
+      j_local = n_points_local_y-1        # select top layer of fat mesh
+      i_local = x_index - index_offset_x
+      
+      index = k_local*n_points_local_y*n_points_local_x + j_local*n_points_local_x + i_local
+      
+      # output message if index is out of bounds
+      if index >= len(phi_e_values):
+        print("{}: local index {} ({},{},{}) is >= size {} ({} x {} x {}) ".format(rank_no, index, i_local, j_local, k_local, len(phi_e_values), n_points_local_x, n_points_local_y, n_points_local_z))
       
       # get the value
-      phi_e_value = phi_e_values[offset + k_local*n_points_x*n_points_y + j_local*n_points_x + i_local]
+      phi_e_value = phi_e_values[index]
       
       # save to file
-      filename = "out/emg_{:02}_{:02}.csv".format(i,k)
+      filename = "out/emg_{:02}_{:02}.csv".format(x_index,z_index)
       
-      # clear file at the beginning
-      if current_time < 0.1 + 1e-5:
+      # clear file at the beginning of the simulation
+      if current_time <= variables.output_timestep_electrodes + 1e-5:
         with open(filename,"w") as f:
           f.write("time;phi_e;\n".format(current_time,phi_e_value))
       
-      # append line
+      # append line with current time and EMG value
       with open(filename,"a") as f:
         f.write("{};{};\n".format(current_time,phi_e_value))
 

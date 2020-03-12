@@ -43,7 +43,7 @@ dt_3D = 2e-1                        # [ms] time step width of coupling, when 3D 
 output_timestep_fibers = 2e-1       # [ms] timestep for fiber output, 0.5
 output_timestep_3D_emg = 2e-1            # [ms] timestep for output big files of 3D EMG, 100
 output_timestep_surface = 2e-1              # [ms] timestep for output surface EMG, 0.5
-output_timestep_electrodes = 0.1    # [ms] timestep for python callback, which is electrode measurement output
+output_timestep_electrodes = 2e-1    # [ms] timestep for python callback, which is electrode measurement output, has to be >= dt_3D
 
 # input files
 fiber_file = "../../input/left_biceps_brachii_7x7fibers.bin"

@@ -124,7 +124,7 @@ fetchFiberData()
         }
       }
 
-      LOG(DEBUG) << "send parameter values, send buffer: " << parametersSendBuffer << " contains " << nParametersLocal << " parameters "
+      LOG(DEBUG) << "Gatherv of parameters to rank " << computingRank << ", send buffer: " << parametersSendBuffer << " contains " << nParametersLocal << " parameters "
         << " " << nParametersPerInstance << " per instances with " << fiberFunctionSpace->nDofsLocalWithoutGhosts() << " local instances.";
 
       // send data
@@ -134,21 +134,31 @@ fetchFiberData()
 
       // store result from parametersReceiveBuffer (for current fiber) to fiberPointBuffersParameters_ (for a vc vector)
       // loop over number of instances of the problem on the current fiber
-      int nInstancesOnFiber = fiberData_[fiberDataNo].vmValues.size();
-      for (int instanceNo = 0; instanceNo < nInstancesOnFiber; instanceNo++)
+      if (computingRank == rankSubset->ownRankNo())
       {
-        // compute indices for fiberPointBuffersParameters_
-        global_no_t valueIndexAllFibers = fiberData_[fiberDataNo].valuesOffset + instanceNo;
+        int nInstancesOnFiber = fiberData_[fiberDataNo].vmValues.size();
 
-        global_no_t pointBuffersNo = valueIndexAllFibers / Vc::double_v::Size;
-        int entryNo = valueIndexAllFibers % Vc::double_v::Size;
-
-        // set all received parameter values for the current instance in the correct slot in the vc vector of the current pointBuffer compute buffer
-        for (int j = 0; j < nParametersPerInstance; j++)
+        for (int instanceNo = 0; instanceNo < nInstancesOnFiber; instanceNo++)
         {
-          fiberPointBuffersParameters_[pointBuffersNo][j][entryNo] = parametersReceiveBuffer[instanceNo*nParametersPerInstance + j];
+          // compute indices for fiberPointBuffersParameters_
+          global_no_t valueIndexAllFibers = fiberData_[fiberDataNo].valuesOffset + instanceNo;
 
-          VLOG(1) << "receive parameter, buffer no " << pointBuffersNo << ", parameter no " << j << ", value: " << fiberPointBuffersParameters_[pointBuffersNo][j][entryNo];
+
+          global_no_t pointBuffersNo = valueIndexAllFibers / Vc::double_v::Size;
+          int entryNo = valueIndexAllFibers % Vc::double_v::Size;
+
+          //LOG(DEBUG) << "valueIndexAllFibers: " << valueIndexAllFibers << ", (" << pointBuffersNo << "," << entryNo << ")";
+
+          // set all received parameter values for the current instance in the correct slot in the vc vector of the current pointBuffer compute buffer
+          for (int parameterNo = 0; parameterNo < nParametersPerInstance; parameterNo++)
+          {
+            fiberPointBuffersParameters_[pointBuffersNo][parameterNo][entryNo] = parametersReceiveBuffer[instanceNo*nParametersPerInstance + parameterNo];
+          }
+
+          if (entryNo == Vc::double_v::Size-1)
+          {
+            LOG(DEBUG) << "stored " << nParametersPerInstance << " parameters in buffer no " << pointBuffersNo << ": " << fiberPointBuffersParameters_[pointBuffersNo];
+          }
         }
       }
 

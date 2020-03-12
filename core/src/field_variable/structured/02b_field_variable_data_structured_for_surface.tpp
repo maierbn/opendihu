@@ -21,7 +21,7 @@ FieldVariableDataStructuredForSurface(FieldVariable<FunctionSpace::FunctionSpace
   this->name_ = rhs.name();
   this->isGeometryField_ = rhs.isGeometryField();
 
-  LOG(DEBUG) << "create 2D surface field variable from 3D field variable \"" << rhs.name() << "\", is geometry: " << this->isGeometryField_;
+  LOG(DEBUG) << "create 2D surface field variable from 3D field variable \"" << rhs.name() << "\", face: " << Mesh::getString(face) << ", is geometry: " << this->isGeometryField_;
 
   typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>,BasisFunctionType> FunctionSpace3D;
   typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<2>,BasisFunctionType> FunctionSpace2D;
@@ -35,7 +35,7 @@ FieldVariableDataStructuredForSurface(FieldVariable<FunctionSpace::FunctionSpace
 
   std::shared_ptr<Partition::RankSubset> rankSubset = std::make_shared<Partition::RankSubset>(rankNos.begin(), rankNos.end(), rhs.functionSpace()->meshPartition()->rankSubset());
 
-  VLOG(1) << "created rank subset from ranks " << rankNos << ", own is contained: " << rankSubset->ownRankIsContained();
+  VLOG(1) << "created rank subset from ranks " << rankNos << " " << nRanksPerCoordinateDirection << ", own is contained: " << rankSubset->ownRankIsContained();
 
   ownRankInvolvedInOutput = true;
   if (!rankSubset->ownRankIsContained())
@@ -132,6 +132,12 @@ setValues(FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableO
 {
   VLOG(1) << "copy values from rhs field variable";
 
+  // if this->values_ is nullptr, this means the current rank is not part of the computation of this face
+  if (!this->values_)
+    return;
+
+  assert(this->values_);
+
   // copy values from rhs
   static std::vector<double> values;
 
@@ -154,6 +160,13 @@ void FieldVariableDataStructuredForSurface<FunctionSpace::FunctionSpace<Mesh::St
 setValues(FieldVariable<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<3>,BasisFunctionType>,nComponents> &rhs)
 {
   VLOG(1) << "copy values from rhs field variable (composite)";
+  rhs.updateSubFieldVariables();
+
+  // if this->values_ is nullptr, this means the current rank is not part of the computation of this face
+  if (!this->values_)
+    return;
+
+  assert(this->values_);
 
   // copy values from rhs
   static std::vector<double> values;
@@ -163,7 +176,7 @@ setValues(FieldVariable<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<
   {
     values.clear();
     // get values from last sub field variable of composite mesh
-    rhs.subFieldVariable(-1)->getValues(componentNo, surfaceDofs_, values);
+    rhs.subFieldVariableWithoutUpdate(-1)->getValues(componentNo, surfaceDofs_, values);
 
     //VLOG(1) << "component " << componentNo << ", values: " << values;
     this->values_->setValues(componentNo, this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts(), this->functionSpace_->meshPartition()->dofNosLocal().data(), values.data(), INSERT_VALUES);

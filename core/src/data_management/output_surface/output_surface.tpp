@@ -9,9 +9,7 @@ OutputSurface(DihuContext context) :
   Data<typename ConvertFieldVariablesForOutputWriter<typename Data3D::FieldVariablesForOutputWriter>::FunctionSpaceFirstFieldVariable>(context),
   ownRankInvolvedInOutput_(true)
 {
-  // parse the face from which the surface will be taken
-  //std::string faceStr = this->context_.getPythonConfig().getOptionString("face","2-");
-
+  // parse the faces from which the surface will be taken
   PythonConfig specificSettings = this->context_.getPythonConfig();
 
   std::vector<std::string> faceStrings;
@@ -29,7 +27,6 @@ template<typename Data3D>
 void OutputSurface<Data3D>::
 initialize()
 {
-  return;
   // convert initially, this creates all 2D field variables
   typename Data3D::FieldVariablesForOutputWriter outputFieldVariables3D = this->data3d_->getFieldVariablesForOutputWriter();
 
@@ -69,24 +66,22 @@ template<typename Data3D>
 void OutputSurface<Data3D>::
 getFunctionSpaces(std::vector<std::shared_ptr<typename OutputSurface<Data3D>::FunctionSpaceFirstFieldVariable>> &functionSpaces)
 {
-  /*
   ConvertFieldVariablesForOutputWriter<typename Data3D::FieldVariablesForOutputWriter>::
     getFunctionSpacesFirstFieldVariable(outputFieldVariables2D_, functionSpaces);
-    */
 }
 
 template<typename Data3D>
 typename OutputSurface<Data3D>::FieldVariablesForOutputWriter OutputSurface<Data3D>::
 getFieldVariablesForOutputWriter()
 {
-  /*
   typename Data3D::FieldVariablesForOutputWriter outputFieldVariables3D = this->data3d_->getFieldVariablesForOutputWriter();
 
+  bool ownRankInvolvedInOutput;  // this variable is only set the first time when convert() is called, i.e. in initialize
+
   // create surface field variables for 3D field variables (the template magic happens in convert_output_field_variables.h)
-  ConvertFieldVariablesForOutputWriter<typename Data3D::FieldVariablesForOutputWriter>::convert(outputFieldVariables3D, outputFieldVariables2D_, faces_, ownRankInvolvedInOutput_);
+  ConvertFieldVariablesForOutputWriter<typename Data3D::FieldVariablesForOutputWriter>::convert(outputFieldVariables3D, outputFieldVariables2D_, faces_, ownRankInvolvedInOutput);
 
   //LOG(INFO) << StringUtility::demangle(typeid(typename Data3D::FieldVariablesForOutputWriter).name());
-*/
   return outputFieldVariables2D_;
 }
 

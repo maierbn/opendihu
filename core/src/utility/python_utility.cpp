@@ -830,7 +830,7 @@ void PythonUtility::checkForError()
 
   if (PyErr_Occurred())
   {
-    LOG(ERROR) << "Python exception";
+    //LOG(ERROR) << "Python exception";
 
     PyObject *type = NULL, *value = NULL, *traceback = NULL;
     PyErr_Fetch(&type, &value, &traceback);
@@ -843,12 +843,12 @@ void PythonUtility::checkForError()
     PyObject* strType = PyObject_Str(type);
     PyObject* reprType = PyObject_Repr(type);
     if (strType != NULL && reprType != NULL)
-      LOG(INFO) << "type: " << convertFromPython<std::string>::get(strType) << ", " << convertFromPython<std::string>::get(reprType);
+      LOG(DEBUG) << "type: " << convertFromPython<std::string>::get(strType) << ", " << convertFromPython<std::string>::get(reprType);
 
     PyObject* strValue = PyObject_Str(value);
     PyObject* reprValue = PyObject_Repr(value);
     if (strValue != NULL && reprValue != NULL)
-      LOG(ERROR) << convertFromPython<std::string>::get(strValue);
+      LOG(DEBUG) << convertFromPython<std::string>::get(strValue);
 
     Py_XDECREF(strType);
     Py_XDECREF(strValue);

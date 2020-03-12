@@ -152,6 +152,9 @@ def postprocess(result):
   
   # get all emg values
   phi_e_values = field_variables[2]["components"][0]["values"]
+  geometry_x_values = field_variables[0]["components"][0]["values"]
+  geometry_y_values = field_variables[0]["components"][1]["values"]
+  geometry_z_values = field_variables[0]["components"][2]["values"]
   
   # select nodes of the fat layer mesh, z = direction along muscle, x = across muscle (i.e. in x and y direction)
   x_begin = 2           # first index to select
@@ -209,6 +212,10 @@ def postprocess(result):
       if current_time <= variables.output_timestep_electrodes + 1e-5:
         with open(filename,"w") as f:
           f.write("time;phi_e;\n".format(current_time,phi_e_value))
+          
+        filename_points = "out/points.{}.csv".format(rank_no)
+        with open(filename_points,"w") as f:
+          f.write("{};{};{}".format(geometry_x_values[index], geometry_y_values[index], geometry_z_values[index]))
       
       # append line with current time and EMG value
       with open(filename,"a") as f:
@@ -383,13 +390,14 @@ config = {
       "disableComputationWhenStatesAreCloseToEquilibrium": True,       # optimization where states that are close to their equilibrium will not be computed again
     },
     "Term2": {        # Bidomain, EMG
-#      "MyNewTimesteppingSolver": {        # version for fibers_emg_2d_output
-#        "OutputWriter": [
-        #  {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_surface), "filename": "out/" + variables.scenario_name + "/surface_emg", "binary": True, "fixedFormat": False, "combineFiles": True},
-#        ],
+      "OutputSurface": {
+        "OutputWriter": [
+          {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_surface), "filename": "out/" + variables.scenario_name + "/surface_emg", "binary": True, "fixedFormat": False, "combineFiles": True},
+        ],
         #"face":                     ["1+","0+"],         # which faces of the 3D mesh should be written into the 2D mesh
+        #"face":                     ["1+"],         # which faces of the 3D mesh should be written into the 2D mesh
         #"samplingPoints":           [[10.3, 17.2, -47.8], [9.3, 15.2, -47.8], [10.6, 15.3, -48.3], [6, 19, -50], [4, 18, -50]],
-        #"filename":                 "out/electrodes.csv",
+        "filename":                 "out/electrodes.csv",
         "StaticBidomainSolver": {             # solves Bidomain equation: K(sigma_i) Vm + K(sigma_i+sigma_e) phi_e = 0   => K(sigma_i+sigma_e) phi_e = -K(sigma_i) Vm
           "numberTimeSteps":        1,
           "timeStepOutputInterval": 50,
@@ -446,7 +454,7 @@ config = {
         }
       }
     }
-#  }
+  }
 }
 
 # stop timer and calculate how long parsing lasted

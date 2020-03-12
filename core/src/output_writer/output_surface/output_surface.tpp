@@ -9,8 +9,7 @@ template<typename Solver>
 OutputSurface<Solver>::
 OutputSurface(DihuContext context) :
   context_(context["OutputSurface"]), solver_(context_),
-  //data_(context_),
-  ownRankInvolvedInOutput_(true), timeStepNo_(0), currentTime_(0.0)
+  data_(context_), ownRankInvolvedInOutput_(true), timeStepNo_(0), currentTime_(0.0)
 {
 
 }
@@ -20,31 +19,30 @@ void OutputSurface<Solver>::
 advanceTimeSpan()
 {
   solver_.advanceTimeSpan();
-/*
-  LOG(DEBUG) << "OutputSurface: writeOutput";
+
+  LOG(DEBUG) << "OutputSurface: writeOutput, ownRankInvolvedInOutput_: " << ownRankInvolvedInOutput_;
   if (ownRankInvolvedInOutput_)
   {
     outputWriterManager_.writeOutput(data_, timeStepNo_++);
-  }*/
+  }
 
   // write out values at points
-  //writeSampledPoints();
+  writeSampledPoints();
 }
 
 template<typename Solver>
 void OutputSurface<Solver>::
 initialize()
 {
-  //if (initialized_)
-  //  return;
+  if (initialized_)
+    return;
 
 
   // initialize solvers
   solver_.initialize();
-return;
-  //data_.setData(solver_.data());
-  //data_.initialize();
-  //ownRankInvolvedInOutput_ = data_.ownRankInvolvedInOutput();
+  data_.setData(solver_.data());
+  data_.initialize();
+  ownRankInvolvedInOutput_ = data_.ownRankInvolvedInOutput();
 
   // initialize output writers
   PythonConfig specificSettings = context_.getPythonConfig();
@@ -56,17 +54,17 @@ return;
   if (!sampledPoints_.empty())
     filename_ = specificSettings.getOptionString("filename", "out/sampledPoints.csv");
 
-  //initializeSampledPoints();
+  initializeSampledPoints();
 
   LOG(DEBUG) << "OutputSurface: initialize output writers";
 
   // initialize output writer to use smaller rank subset that only contains the ranks that have parts of the surface
   // if the last argument is not given, by default the common rank subset would be used
-  /*if (ownRankInvolvedInOutput_)
+  if (ownRankInvolvedInOutput_)
   {
     rankSubset_ = data_.functionSpace()->meshPartition()->rankSubset();
     outputWriterManager_.initialize(context_, specificSettings, rankSubset_);
-  }*/
+  }
   initialized_ = true;
 }
 
@@ -74,7 +72,6 @@ template<typename Solver>
 void OutputSurface<Solver>::
 initializeSampledPoints()
 {
-  /*
   if (sampledPoints_.empty())
     return;
 
@@ -170,13 +167,13 @@ initializeSampledPoints()
     }
   }
 
-  fileNotFoundPoints.close();*/
+  fileNotFoundPoints.close();
 }
 
 template<typename Solver>
 void OutputSurface<Solver>::
 writeSampledPoints()
-{/*
+{
   if (!ownRankInvolvedInOutput_ || sampledPoints_.empty())
     return;
 
@@ -390,22 +387,22 @@ writeSampledPoints()
       }
       fileGeometry.close();
     }
-  }*/
+  }
 }
 
 template<typename Solver>
 void OutputSurface<Solver>::
 run()
 {
-  //initialize();
+  initialize();
 
   solver_.run();
-/*
+
   LOG(DEBUG) << "OutputSurface: writeOutput";
   if (ownRankInvolvedInOutput_)
   {
     outputWriterManager_.writeOutput(data_);
-  }*/
+  }
 }
 
 template<typename Solver>

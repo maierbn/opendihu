@@ -38,6 +38,9 @@ getNodalValues(CurrentFieldVariableType currentFieldVariable, const FieldVariabl
   VLOG(1) << "field variable " << StringUtility::demangle(typeid(currentFieldVariable).name()) << " name \"" << currentFieldVariable->name()
     << "\", is geometry: " << currentFieldVariable->isGeometryField() << ", values size: " << values.size();
 
+  if (!currentFieldVariable->functionSpace())
+    return false;
+
   // if mesh name is one of the specified meshNames (and it is not a geometry field)
   if (meshNames.find(currentFieldVariable->functionSpace()->meshName()) != meshNames.end()
     && !currentFieldVariable->isGeometryField())

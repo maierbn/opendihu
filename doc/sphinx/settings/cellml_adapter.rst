@@ -1,7 +1,8 @@
 CellMLAdapter
 ==============
 
-A CellMLAdapter class is used to run a CellML model. It contains a code generator that produces efficient code for the given model at compile time.
+A CellMLAdapter class is used to run a CellML model.
+It uses a code generator to produce efficient code for the given model at compile time.
 
 The given CellML model is always computed for all nodes of a mesh, i.e. there are multiple instances being computed.
 By specifying a mesh with 0 elements, you get a single instance of the model.
@@ -19,15 +20,15 @@ There are also constants , :math:`\hat{\textbf{c}}`, that are given in the CellM
 
 There exist several different names for the quantities :math:`\textbf{u}, \frac{\partial \textbf{u}}{\partial t}, \textbf{y}` and :math:`\hat{\textbf{p}}`:
 
-=============================================== ================ =========== ==========
-symbol                                          opendihu         OpenCOR     OpenCMISS 
-=============================================== ================ =========== ==========
-:math:`\textbf{u}`                              states           states      STATES
-:math:`\frac{\partial \textbf{u}}{\partial t}`  rates            rates       RATES
-:math:`\textbf{y}`                              intermediates    algebraic   WANTED  
-:math:`\hat{\textbf{p}}`                        parameters       algebraic   KNOWN
-:math:`\hat{\textbf{c}}`                        constants        constants   CONSTANTS
-=============================================== ================ =========== ==========
+=============================================== ================ =========== ========== ================== ==========================
+symbol                                          opendihu         OpenCOR     OpenCMISS  computed by model  initial values can be set
+=============================================== ================ =========== ========== ================== ==========================
+:math:`\textbf{u}`                              states           states      STATES     by timestepping    yes
+:math:`\frac{\partial \textbf{u}}{\partial t}`  rates            rates       RATES      yes                no
+:math:`\textbf{y}`                              intermediates    algebraic   WANTED     yes                no
+:math:`\hat{\textbf{c}}`                        constants        constants   CONSTANTS  no                 no
+:math:`\hat{\textbf{p}}`                        parameters       algebraic   KNOWN      no                 yes
+=============================================== ================ =========== ========== ================== ==========================
  
 Initially the CellML model does not have any 'parameters', all values are given some defined value. 
 In opendihu, any *constants* and *intermediates* can be transformed into *parameters* and then have changing values assigned.
@@ -46,16 +47,56 @@ The following C++ code shows the typical usage inside a time stepping scheme to 
 The two template arguments of `CellmlAdapter` are the *number of states* and the *number of intermediates*.
 This has to match the actual numbers of the CellML model that is to be computed. Consequently, when a specific model should be computed, the CellmlAdapter has be adjusted.
 
-If the numbers are not correct a corresponding error will be shown from which the correct numbers can be learned.
+If the numbers are not correct a corresponding error will be shown from which the correct numbers can be determined.
+
+Note that only explicit timestepping schemes are possible, which is current ``TimeSteppingScheme::ExplicitEuler`` or ``TimeSteppingScheme::Heun``.
 
 .. code-block:: python
 
+  "CellML" : {
+    "modelFilename":                          "../../input/hodgkin_huxley_1952.c",    # input C++ source file or cellml XML file
+    #"statesInitialValues":                   [],                                             # if given, the initial values for the the states of one instance
+    "initializeStatesToEquilibrium":          False,                                          # if the equilibrium values of the states should be computed before the simulation starts
+    "initializeStatesToEquilibriumTimestepWidth": 1e-4,                                       # if initializeStatesToEquilibrium is enable, the timestep width to use to solve the equilibrium equation
+    
+    # optimization parameters
+    "optimizationType":                       "vc",                                           # "vc", "simd", "openmp" type of generated optimizated source file
+    "approximateExponentialFunction":         True,                                          # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
+    "compilerFlags":                          "-fPIC -O3 -march=native -shared ",             # compiler flags used to compile the optimized model code
+    "maximumNumberOfThreads":                 0,                                              # if optimizationType is "openmp", the maximum number of threads to use. Default value 0 means no restriction.
+    
+    # stimulation callbacks
+    #"setSpecificParametersFunction":         set_specific_parameters,                        # callback function that sets parameters like stimulation current
+    #"setSpecificParametersCallInterval":     int(1./variables.stimulation_frequency/variables.dt_0D),         # set_specific_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
+    "setSpecificStatesFunction":              set_specific_states,                                             # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
+    #"setSpecificStatesCallInterval":         2*int(1./variables.stimulation_frequency/variables.dt_0D),       # set_specific_states should be called variables.stimulation_frequency times per ms, the factor 2 is needed because every Heun step includes two calls to rhs
+    "setSpecificStatesCallInterval":          0,                                                               # 0 means disabled
+    "setSpecificStatesCallFrequency":         variables.get_specific_states_call_frequency(fiber_no, motor_unit_no),   # set_specific_states should be called variables.stimulation_frequency times per ms
+    "setSpecificStatesFrequencyJitter":       variables.get_specific_states_frequency_jitter(fiber_no, motor_unit_no), # random value to add or substract to setSpecificStatesCallFrequency every stimulation, this is to add random jitter to the frequency
+    "setSpecificStatesRepeatAfterFirstCall":  0.01,                                                            # [ms] simulation time span for which the setSpecificStates callback will be called after a call was triggered
+    "setSpecificStatesCallEnableBegin":       variables.get_specific_states_call_enable_begin(fiber_no, motor_unit_no),# [ms] first time when to call setSpecificStates
+    "additionalArgument":                     fiber_no,
+    
+    "mappings":                               mappings,                             # mappings between parameters and intermediates/constants and between outputConnectorSlots and states, intermediates or parameters, they are defined in helper.py
+    "parametersInitialValues":                parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
+    
+    "meshName":                               "MeshFiber_{}".format(fiber_no),
+    "stimulationLogFilename":                 "out/stimulation.log",
+  }  
   "CellML": {
-    "modelFilename":                          "../../input/hodgkin_huxley_1952.c",    # Cellml file or C++ source file
+    "modelFilename":                          "../../input/hodgkin_huxley_1952.c",    # CellML file (xml) or C++ source file
     #"libraryFilename":                       "cellml_simd_lib.so",                   # (optional) filename of a compiled library, overrides modelFilename
-    "optimizationType":                       "simd",                                 # "vc", "simd", "openmp" type of generated optimizated source file
-    "compilerFlags":                          "-fPIC -O3 -shared ",                   # additional compiler flags for the compilation of the model source file
     #"statesInitialValues":                   [],                                     # (optional) initial values of all states, if not set, values from CellML model are used
+    "initializeStatesToEquilibrium":          False,                                  # if the equilibrium values of the states should be computed before the simulation starts
+    "initializeStatesToEquilibriumTimestepWidth": 1e-4,                               # if initializeStatesToEquilibrium is enable, the timestep width to use to solve the equilibrium equation
+   
+    # optimization parameters
+    "optimizationType":                       "simd",                                 # "vc", "simd", "openmp": type of generated optimizated source file
+    "approximateExponentialFunction":         True,                                   # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
+    "compilerFlags":                          "-fPIC -O3 -march=native -shared ",     # compiler flags used to compile the optimized model code
+    "maximumNumberOfThreads":                 0,                                      # if optimizationType is "openmp", the maximum number of threads to use. Default value 0 means no restriction.
+    
+    # stimulation callbacks
     #"setSpecificParametersFunction":         set_specific_parameters,                # callback function that sets parameters like stimulation current
     #"setSpecificParametersCallInterval":     int(1./stimulation_frequency/dt_0D),    # set_specific_parameters should be called every 1/stimulation_frequency seconds
     "setSpecificStatesFunction":              set_specific_states,                    # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
@@ -66,29 +107,35 @@ If the numbers are not correct a corresponding error will be shown from which th
     "setSpecificStatesRepeatAfterFirstCall":  0.01,                                   # [ms] simulation time span for which the setSpecificStates callback will be called after a call was triggered
     "setSpecificStatesCallEnableBegin":       get_specific_states_call_enable_begin,  # [ms] first time when to call setSpecificStates
     "additionalArgument":                     fiber_no,                               # any additional value that will be given to the callback functions
-    "intermediatesForTransfer":               [],                                     # which intermediate values to use in further computation
-    "statesForTransfer":                      [0],                                    # which state values to use in further computation, Shorten / Hodgkin Huxley: state 0 = Vm
     
-    "parametersUsedAsIntermediate":           [32],                                   # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
-    "parametersUsedAsConstant":               [65],                                   # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
-    "parametersInitialValues":                [0.0, 1.0],                             # initial values for the parameters, e.g. I_Stim, l_hs
+    
+    "mappings": {                                                                     # mappings between parameters and intermediates/constants and between outputConnectorSlots and states, intermediates or parameters
+      ("parameter", 0):           ("constant", "membrane/i_Stim"),                    # parameter 0 is mapped to constant with name "membrane/i_Stim"
+      ("outputConnectorSlot", 0): ("state", "membrane/V"),                            # as output connector slot 0 expose state with name "membrane/V"
+    },
+    
+    #"intermediatesForTransfer":              [],                                    # alternative way of specifying "mappings": which intermediate values to use in further computation
+    #"statesForTransfer":                     [0],                                   # alternative way of specifying "mappings": which state values to use in further computation, Shorten / Hodgkin Huxley: state 0 = Vm
+    #"parametersUsedAsIntermediate":          [32],                                  # alternative way of specifying "mappings": list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
+    #"parametersUsedAsConstant":              [65],                                  # alternative way of specifying "mappings": list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
+    "parametersInitialValues":                [0.0, 1.0],                            # initial values for the parameters, e.g. I_Stim, l_hs
     "meshName":                               "MeshFiber_{}".format(fiber_no),
     "stimulationLogFilename":                 "out/stimulation.log",
   },      
   
-In the following all parameters are explained.
+In the following all parameters will be explained.
 
 modelFilename
 ---------------
 
-This is the CellML model file. It can either be the XML file or a C code file. If it is an XML file, *opendihu* will use *OpenCOR* to convert it a c code file first. 
-Afterwards, optimized C code is generated and stored in another file in the 'src' directory. The code is compiled to a shared library (extension ’\*.so’) that gets loaded at runtime.
+This is the filename of the CellML model file. It can either be the XML file or a C/C++ code file. If it is an XML file, *opendihu* will use *OpenCOR* to convert it to a C source code file first.
+Afterwards, *opendihu* will generate optimized C code (using the options given by the *optimization parameters*) and will store it as another file in the `src` subdirectory. The code will be compiled to a shared library (extension ’\*.so’) that will get loaded at runtime of the simulation. The shared library will be stored in the `lib` subdirectory.
 
 libraryFilename
 ---------------
 
-Optional, if given it should be a shared object library (*.so) that contains the model.
-This will be used instead of the model given in *modelFilename*.
+Optional, if given, it should be the filename of a shared object library (*.so) that will be used to compute the model.
+This will be used instead of the model given in *modelFilename*. Usually this is only used to reuse library created by opendihu earlier.
 
 statesInitialValues
 ---------------------
@@ -97,7 +144,46 @@ If there are multiple instances (multiple nodes of a mesh where the model is com
 
 Or you only specify each state once, then all instances will be initialized by the same values.
 
-If *statesInitialValues* is not specified, the initial values will be parsed from the model. Usually this is what is needed.
+If *statesInitialValues* is not specified, the initial values will be taken from the CellML model file (either XML or C). Usually this is what you want.
+
+initializeStatesToEquilibrium and initializeStatesToEquilibriumTimestepWidth
+--------------------------------------------------------------------------------
+If `initializeStatesToEquilibrium` is set to `True`, equilibrum values of the states in the CellML model will be computed before the simulation starts. Then, these values will be used to initialize the states.
+
+Given the CellML model as
+
+.. math::
+   \frac{\partial \textbf{u}}{\partial t} = f(t,\textbf{u}(t),\textbf{y}(t),\hat{\textbf{c}},\hat{\textbf{p}}(t)),
+   
+the equation is solved by a 4th order Runge-Kutta timestepping scheme, until
+
+.. math::
+   \Vert\frac{\partial \textbf{u}}{\partial t}\vert < \eps
+   
+is reached, with :math:`\eps = 1e-5`. The timestep width of the Runge-Kutta scheme can be given by `initializeStatesToEquilibriumTimestepWidth`. If an instability with this timestep width is detected (any value gets `inf` or `nan`), the timestep width will be decreased automatically and the computation will be restarted.
+
+The resulting equilibrium values and the residuals are written to a file `<modelfilename>_equilibrium_values.txt`, where `<modelfilename>` is the file name of the model. An example for such a file is given below:
+
+.. code-block:: c++
+
+  // Result of computation of equilibrium values for the states by opendihu on 2020/2/29 10:17:12
+  // Number of iterations: 10000000, dt: 0.0015625
+  // Maximum ∂u/∂t = 0.0424747 for state 28
+  // (If this is a high value, it indicates that the equilibrium was not fully reached.)
+
+  state[0] = -81.0764;      // residuum: 3.15938e-05
+  state[1] = -81.0242;      // residuum: 3.15353e-05
+  state[2] = 7.25855;       // residuum: 5.68619e-06
+  (...more lines follow...)
+  state[53] = 0.00249843;   // residuum: 1.95519e-11
+  state[54] = 0.213378;     // residuum: -6.67943e-07
+  state[55] = 0.228239;     // residuum: -1.38375e-06
+  state[56] = 2.8029e-10;   // residuum: -1.57379e-13
+
+    Line to copy for settings:
+    "statesInitialValues": [-81.0764, -81.0242, 7.25855, 150.928, 6.13908, 12.6374, 131.485, 132.853, 0.00809159, 0.995921, 0.0312117, 0.546801, 0.784615, 0.0081521, 0.995806, 0.0314177, 0.544509, 0.783771, 1.75163e-06, 5.90311e-06, 7.46021e-06, 4.19024e-06, 8.82585e-07, 0.875814, 0.118062, 0.00596817, 0.000134088, 1.12971e-06, -1580.24, 0.0284811, 53.9751, 0.0284799, 1687.43, 2.98746, 615, 615, 811, 811, 1283.85, 17808.2, 0.107779, 0.107778, 7243.03, 7243.03, 756.867, 756.867, 956.975, 956.975, 0.0343446, 0.0102602, 0.0136077, 0.0314302, 0.00312304, 0.00249843, 0.213378, 0.228239, 2.8029e-10],
+
+The last line can be copy&pasted into the settings file and then specifies the initial values to be used in the next run.
 
 Callbacks
 -------------
@@ -218,21 +304,44 @@ This function can be used to postprocess the result and has the following signat
     #                       i.e. [instance0intermediate0, instance1intermediate0, ... instanceNintermediate0, instance0intermediate1, instance1intermediate1, ...]
     # additional_argument: The value of the option "additionalArgument", can be any Python object.
 
+How to specify mappings of states, intermediates and parameters
+--------------------------------------------------------------------
+
+The intermediates and constants in the CellML model can be replaced by so-called `parameters`. It is possible to define an arbitrary number of parameters (not completely arbitrary - the number has to be lower than the number of intermediates). This parameters act like constants during computation of the model. After each computation, their values can be changed either by callback functions or if they are connected via an output slot to another solver, the values are set by the other solver.
+
+The model to be computed appears as if the specified `intermediates` and `constants` had been replaced by the respective parameters.
+This replacing relation is called `mapping` and can be defined in two different ways: the older way is by setting `parametersUsedAsIntermediate` and `parametersUsedAsConstant`. The newer and recommended way is by using `mappings`.
+
+Furthermore, some of the `states` and `intermediates` and can be connected to an output slot of the timestepping scheme and thereby reused by a different solver within a coupling or operator splitting scheme. Which `states` and `intermediates` to connect, can again be specified in two ways: either by `intermediatesForTransfer` and `statesForTransfer` or by `mappings`.
+
+These parameters will be explained in the following.
+
 parametersUsedAsIntermediate
-------------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 (list of int) List of intermediate numbers that will be replaced by parameters.
 There are explicitely defined parameter values that will be copied to these intermediates. 
 This vector contains the indices of the algebraic array. 
+Note, that these values can also be set by the ``mappings`` option, which is more clear.
 
 parametersUsedAsConstant
-------------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 (list of int) List of indices, which constants in the computation will be replaced by parameters.
+Note, that these values can also be set by the ``mappings`` option, which is more clear.
+
+*intermediatesForTransfer* and *statesForTransfer*
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(list of ints) Which intermediates and states should be transferred to the other solver in either a `Coupling`, `GodunovSplitting` or `StrangSplitting`.
+
+The total number of field variables to be transferred is the sum of the length of these two settings (+number of parameters if specified).
+
+Note, that these values can also be set by the ``mappings`` option, which is more clear.
 
 parametersInitialValues
----------------------------------
+---------------------------
 (list of float) List of values of the parameters. This also defines the number of parameters.
 
 Example:
+
 .. code-block:: python
 
   parametersInitialValues = [1.0, 2.0, 3.0]
@@ -242,6 +351,96 @@ Example:
 This example will compute the given CellML model with the following modifications: The intermediate/algebraic values ``intermediates[5]`` and ``intermediates[2]`` will not be computed by the model, but get the values ``1.0`` and ``2.0``. These values may be changed later using one of the callback functions.
 The variable ``constants[10]`` will be set to ``3.0`` and not changed.
   
+mappings
+-------------
+(dict)
+Under ``mapping`` it is possible to specify the connection of `parameters` to `intermediates` and `constants`, 
+as well as the connection of `outputConnectorSlots` to `states`, `intermediates` and `parameters`. An example is given below (the actual names are only dummies and make no sense):
+  
+.. code-block:: python
+
+  "mappings" : {
+      ("parameter", 0):           ("intermediate", "wal_environment/I_HH"),
+      ("parameter", 1):           ("constant", "razumova/L_x"),
+      
+      ("outputConnectorSlot", 0): ("state", "wal_environment/vS"),
+      ("outputConnectorSlot", 1): ("state", 5),  
+      ("outputConnectorSlot", 2): ("state", "potassium_channel_n_gate/n"),
+      ("outputConnectorSlot", 3): ("intermediate", "leakage_current/i_L"),
+      ("outputConnectorSlot", 4): ("parameter", 0),
+    }
+    
+The value of `mappings` is a Python Dict. Each key is either ``("parameter", 0)`` or ``("outputConnectorSlot", 0)``, where ``0`` can be any integer number.
+The value that corresponds to the key is a two-element tuple of the form 
+
+``("name", "cellml name")`` or ``("name", 0)`` 
+
+where ``"name"`` has to be either ``"constant"``, ``"state"``, ``"intermediate"`` or ``"parameter"``, the ``"cellml name"`` is the name of the variable in the CellML model in the form ``"componentName/variableName"`` and ``0`` can be any valid index. This means, it is possible to identify, e.g. a state by its name as well as by its index in the C code file.
+
+For the parameters, the index must start with `0` and increase by one for all further parameters. As already mentioned, the mapped variable for a parameter can be an `"intermediate"` or a `"constant"`. The beginning of the parameters list must all map to intermediates and the rest must map to constants. I.e., every constant must be mapped to a parameter with lower index than all the parameters that are mapped to intermediates. The specified mappings will internally be transferred to the ``parametersUsedAsIntermediate`` and ``parametersUsedAsConstant`` lists that can otherwise also be set directly by these options.
+
+Also for the `"outputConnectorSlots"` there is a required order. At first, all mapped `"states"` have to be given, then all `"intermediates"` and then all `"parameters"`. 
+
+Note that the values of parameters will not be changed by the CellML model. If you need to reuse values computed within the CellML model, use states or intermediates. The purpose of connecting parameters to output slots is to allow the initial parameter value to be set by a different solver.
+
+(It is also possible to reverse the left and the right side of each mapping, i.e. like ``("constant",0"):("parameter",0)``.)
+
+Typical mappings and initial values of parameters by commonly used cellml models (in variable ``cellml_file``) are given below:
+
+.. code-block:: python
+
+  # set variable mappings for cellml model
+  if "hodgkin_huxley" in cellml_file:
+    # parameters: I_stim
+    mappings = {
+      ("parameter", 0):           ("constant", "membrane/i_Stim"),      # parameter 0 is constant 2 = I_stim
+      ("outputConnectorSlot", 0): ("state", "membrane/V"),              # expose state 0 = Vm to the operator splitting
+    }
+    parameters_initial_values = [0.0]                         # initial value for stimulation current
+    
+  elif "shorten" in cellml_file:
+    # parameters: stimulation current I_stim, fiber stretch λ
+    mappings = {
+      ("parameter", 0):           ("intermediate", "wal_environment/I_HH"), # parameter is intermediate 32
+      ("parameter", 1):           ("constant", "razumova/L_x"),             # parameter is constant 65, fiber stretch λ, this indicates how much the fiber has stretched, 1 means no extension
+      ("outputConnectorSlot", 0): ("state", "wal_environment/vS"),          # expose state 0 = Vm to the operator splitting
+    }
+    parameters_initial_values = [0.0, 1.0]                        # stimulation current I_stim, fiber stretch λ
+    
+  elif "slow_TK_2014" in cellml_file:   # this is (3a, "MultiPhysStrain", old tomo mechanics) in OpenCMISS
+    # parameters: I_stim, fiber stretch λ
+    mappings = {
+      ("parameter", 0):           ("constant", "wal_environment/I_HH"), # parameter 0 is constant 54 = I_stim
+      ("parameter", 1):           ("constant", "razumova/L_S"),         # parameter 1 is constant 67 = fiber stretch λ
+      ("outputConnectorSlot", 0): ("state", "wal_environment/vS"),      # expose state 0 = Vm to the operator splitting
+      ("outputConnectorSlot", 1): ("intermediate", "razumova/stress"),  # expose intermediate 12 = γ to the operator splitting
+    }
+    parameters_initial_values = [0.0, 1.0]                    # wal_environment/I_HH = I_stim, razumova/L_S = λ
+    
+  elif "Aliev_Panfilov_Razumova_2016_08_22" in cellml_file :   # this is (3, "MultiPhysStrain", numerically more stable) in OpenCMISS, this only computes A1,A2,x1,x2 not the stress
+    # parameters: I_stim, fiber stretch λ, fiber contraction velocity \dot{λ}
+    mappings = {
+      ("parameter", 0):           ("constant", "Aliev_Panfilov/I_HH"),  # parameter 0 is constant 0 = I_stim
+      ("parameter", 1):           ("constant", "Razumova/l_hs"),        # parameter 1 is constant 8 = fiber stretch λ
+      ("parameter", 2):           ("constant", "Razumova/velo"),        # parameter 2 is constant 9 = fiber contraction velocity \dot{λ}
+      ("outputConnectorSlot", 0): ("state", "Aliev_Panfilov/V_m"),      # expose state 0 = Vm to the operator splitting
+      ("outputConnectorSlot", 1): ("intermediate", "Razumova/sigma"),   # expose intermediate 0 = γ to the operator splitting
+    }
+    parameters_initial_values = [0, 1, 0]                     # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/velo = \dot{λ}
+    
+  elif "Aliev_Panfilov_Razumova_Titin" in cellml_file:   # this is (4, "Titin") in OpenCMISS
+    # parameters: I_stim, fiber stretch λ, fiber contraction velocity \dot{λ}
+    mappings = {
+      ("parameter", 0):           ("constant", "Aliev_Panfilov/I_HH"),  # parameter 0 is constant 0 = I_stim
+      ("parameter", 1):           ("constant", "Razumova/l_hs"),        # parameter 1 is constant 11 = fiber stretch λ
+      ("parameter", 2):           ("constant", "Razumova/rel_velo"),    # parameter 2 is constant 12 = fiber contraction velocity \dot{λ}
+      ("outputConnectorSlot", 0): ("state", "Aliev_Panfilov/V_m"),      # expose state 0 = Vm to the operator splitting
+      ("outputConnectorSlot", 1): ("intermediate", "Razumova/ActiveStress"),   # expose intermediate 4 = γ to the operator splitting
+      ("outputConnectorSlot", 2): ("intermediate", "Razumova/Activation"),     # expose intermediate 5 = α to the operator splitting
+    }
+    parameters_initial_values = [0, 1, 0]                     # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/rel_velo = \dot{λ}
+    
+
 meshName
 ------------------------------------------------
 The mesh to use, to be defined under "Meshes". For details, see :ref:`define_meshes`. You can instead also just specify ``nElements`` to directly set the number of instances to be computed.
@@ -253,12 +452,6 @@ stimulationLogFilename
 Default: "out/stimulation.log"
 
 A file name of an output file that will contain all firing times.
-
-*intermediatesForTransfer* and *statesForTransfer*
-------------------------------------------------------
-(list of ints) Which intermediates and states should be transferred to the other solver in either a `Coupling`, `GodunovSplitting` or `StrangSplitting`.
-
-The total number of field variables to be transferred is the sum of the length of these two settings.
 
 optimizationType
 --------------------

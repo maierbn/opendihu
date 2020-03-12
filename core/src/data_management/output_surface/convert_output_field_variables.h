@@ -62,11 +62,21 @@ struct ConvertFieldVariable<std::shared_ptr<FieldVariable::FieldVariable<Functio
     VLOG(1) << "convert composite field variable \"" << fieldVariable3D->name() << "\": transform shared_ptr<field variable 3D> to vector<shared_ptr<field variable 2D>>";
     if (fieldVariables2D.empty())
     {
+      ownRankInvolvedInOutput = false;
+      bool ownRankInvolvedInOutputForFace = false;
+
       // fill vector with field variables
+      int i = 0;
       for (Mesh::face_t face : faces)
       {
-        std::shared_ptr<FieldVariable2D> fieldVariable2D = std::make_shared<FieldVariable2D>(*fieldVariable3D, face, ownRankInvolvedInOutput);
+        std::shared_ptr<FieldVariable2D> fieldVariable2D = std::make_shared<FieldVariable2D>(*fieldVariable3D, face, ownRankInvolvedInOutputForFace);
         fieldVariables2D.push_back(fieldVariable2D);
+
+        if (ownRankInvolvedInOutputForFace)
+          ownRankInvolvedInOutput = true;
+
+        LOG(DEBUG) <<  "i=" << i << "/" << faces.size() << ", initialize field variable \"" << fieldVariable2D->name() << "\", values: " << fieldVariable2D->partitionedPetscVec();
+        i++;
       }
     }
     else
@@ -76,6 +86,9 @@ struct ConvertFieldVariable<std::shared_ptr<FieldVariable::FieldVariable<Functio
       // fill vector with field variables
       for (int i = 0; i < faces.size(); i++)
       {
+        LOG(DEBUG) << "i=" << i << "/" << faces.size() << ", use field variable \""
+          << fieldVariables2D[i]->name() << "\", values: " << fieldVariables2D[i]->partitionedPetscVec();
+
         // this just updates the values, which dofs to use is already stored inside the field variable
         fieldVariables2D[i]->setValues(*fieldVariable3D);
       }

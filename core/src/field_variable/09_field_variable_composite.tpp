@@ -27,6 +27,29 @@ subFieldVariable(int i)
   return subFieldVariables_[i];
 }
 
+//! get the sub field variable no i
+template<int D,typename BasisFunctionType,int nComponents>
+std::shared_ptr<FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>, BasisFunctionType>, nComponents>> FieldVariableComposite<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,nComponents>::
+subFieldVariableWithoutUpdate(int i)
+{
+  // Do not update the sub field variables because this would need a collective call by all ranks of this field variable. This is not the case for face computations.
+
+  if (subFieldVariables_.empty())
+  {
+    LOG(FATAL) << "subFieldVariableWithoutUpdate(" << i << ") called when sub field variables have not yet been initialized.";
+  }
+
+  if (i == -1)
+    i = subFieldVariables_.size() - 1;
+
+  if (i >= subFieldVariables_.size())
+  {
+    LOG(FATAL) << "Index of subFieldVariable is wrong. i: " << i << ", size: " << subFieldVariables_.size();
+  }
+  assert(i < subFieldVariables_.size());
+  return subFieldVariables_[i];
+}
+
 template<int D,typename BasisFunctionType,int nComponents>
 void FieldVariableComposite<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,nComponents>::
 updateSubFieldVariables()

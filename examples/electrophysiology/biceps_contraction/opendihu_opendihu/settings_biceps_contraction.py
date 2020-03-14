@@ -110,10 +110,11 @@ if False:
           print("({},{}) n instances: {}".format(fiber_in_subdomain_coordinate_x,fiber_in_subdomain_coordinate_y,
               n_fibers_in_subdomain_x(subdomain_coordinate_x)*n_fibers_in_subdomain_y(subdomain_coordinate_y)))
 
+
 # define the config dict
 config = {
   "scenarioName":          variables.scenario_name,
-  "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
+  "solverStructureDiagramFile":     "out/solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "Meshes":                variables.meshes,
   "MappingsBetweenMeshes": variables.mappings_between_meshes,
   "Solvers": {
@@ -193,12 +194,13 @@ config = {
                     "CellML" : {
                       "modelFilename":                          variables.cellml_file,                          # input C++ source file or cellml XML file
                       #"statesInitialValues":                   [],                                             # if given, the initial values for the the states of one instance
+                      "statesInitialValues":                    variables.states_initial_values,                # initial values for new_slow_TK
                       "initializeStatesToEquilibrium":          False,                                          # if the equilibrium values of the states should be computed before the simulation starts
                       "initializeStatesToEquilibriumTimestepWidth": 1e-4,                                       # if initializeStatesToEquilibrium is enable, the timestep width to use to solve the equilibrium equation
                       
                       # optimization parameters
                       "optimizationType":                       "vc",                                           # "vc", "simd", "openmp" type of generated optimizated source file
-                      "approximateExponentialFunction":         False,                                          # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
+                      "approximateExponentialFunction":         True,                                           # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
                       "compilerFlags":                          "-fPIC -O3 -march=native -shared ",             # compiler flags used to compile the optimized model code
                       "maximumNumberOfThreads":                 0,                                              # if optimizationType is "openmp", the maximum number of threads to use. Default value 0 means no restriction.
                       
@@ -216,8 +218,8 @@ config = {
                       "additionalArgument":                     fiber_no,                                       # last argument that will be passed to the callback functions set_specific_states, set_specific_parameters, etc.
                       
                       # parameters to the cellml model
-                      "parametersInitialValues":                variables.parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
                       "mappings":                               variables.mappings,                             # mappings between parameters and intermediates/constants and between outputConnectorSlots and states, intermediates or parameters, they are defined in helper.py
+                      "parametersInitialValues":                variables.parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
                       
                       "meshName":                               "MeshFiber_{}".format(fiber_no),
                       "stimulationLogFilename":                 "out/stimulation.log",                          # a file that will contain the times of stimulations
@@ -288,7 +290,7 @@ config = {
         "timeStepOutputInterval":       100,                       # do not output time steps
         "Pmax": variables.pmax,                                    # maximum PK2 active stress
         "OutputWriter" : [
-          {"format": "Paraview", "outputInterval": 1, "filename": "out/" + variables.scenario_name + "/mechanics", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
+          {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D), "filename": "out/" + variables.scenario_name + "/mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
         ],
         "dynamic":                      True,                      # if the dynamic solid mechanics solver should be used, else it computes the quasi-static problem
         
@@ -336,7 +338,7 @@ config = {
           "OutputWriter" : [
             
             # Paraview files
-            {"format": "Paraview", "outputInterval": 1, "filename": variables.scenario_name+"/u", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
+            #{"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/u", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
             
             # Python callback function "postprocess"
             #{"format": "PythonCallback", "outputInterval": 1, "callback": postprocess, "onlyNodalValues":True, "filename": ""},
@@ -344,14 +346,14 @@ config = {
           # 2. additional output writer that writes also the hydrostatic pressure
           "pressure": {   # output files for pressure function space (linear elements), contains pressure values, as well as displacements and velocities
             "OutputWriter" : [
-              {"format": "Paraview", "outputInterval": 1, "filename": variables.scenario_name+"/p", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
+              #{"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/p", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
             ]
           },
           # 3. additional output writer that writes virtual work terms
           "dynamic": {    # output of the dynamic solver, has additional virtual work values 
             "OutputWriter" : [   # output files for displacements function space (quadratic elements)
               #{"format": "Paraview", "outputInterval": int(output_interval/dt), "filename": "out/dynamic", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
-              {"format": "Paraview", "outputInterval": 1, "filename": variables.scenario_name+"/dynamic", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
+              {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/virtual_work", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
             ],
           },
           # 4. output writer for debugging, outputs files after each load increment, the geometry is not changed but u and v are written
@@ -365,6 +367,9 @@ config = {
     }
   }
 }
+print("Cellml:",config["Coupling"]["Term1"]["MultipleInstances"]["instances"][0]["StrangSplitting"]["Term1"]["MultipleInstances"]["instances"][0]["Heun"]["CellML"])
+print("prefactor: ",config["Coupling"]["Term1"]["MultipleInstances"]["instances"][0]["StrangSplitting"]["Term2"]["MultipleInstances"]["instances"][0]["ImplicitEuler"]["FiniteElementMethod"]["prefactor"])
+
 
 # stop timer and calculate how long parsing lasted
 if rank_no == 0:

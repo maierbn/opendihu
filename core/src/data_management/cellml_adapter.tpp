@@ -8,7 +8,6 @@ CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::
 CellmlAdapter(DihuContext context) :
   Data<FunctionSpaceType>::Data(context), specificSettings_(PythonConfig(context.getPythonConfig(), "CellML"))
 {
-  parameters_ = std::make_shared<std::vector<double>>();
 }
 
 template <int nStates, int nIntermediates, typename FunctionSpaceType>
@@ -43,7 +42,7 @@ initializeOutputConnectorData()
   // add parameters components
   for (std::vector<int>::iterator iter = parametersForTransfer_.begin(); iter != parametersForTransfer_.end(); iter++)
   {
-    //outputConnectorData_->addFieldVariable2(this->intermediates(), *iter);
+    outputConnectorData_->addFieldVariable2(this->parameters(), *iter);
   }
 }
 
@@ -68,16 +67,55 @@ template <int nStates, int nIntermediates, typename FunctionSpaceType>
 void CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::
 createPetscObjects()
 {
+  // The states field variable is allocated by the timestepping class because this is the solution vector that the timestepping scheme operates on.
+  // It gets then passed to this class by the call to setStatesVariable.
+  // Therefore, here we only create the intermediates and the parameters field variables
   this->intermediates_ = this->functionSpace_->template createFieldVariable<nIntermediates>("intermediates", intermediateNames_);
   this->intermediates_->setRepresentationContiguous();
+
+  std::vector<std::string> parameterNames(nIntermediates);
+  for (int i = 0; i < nIntermediates; i++)
+  {
+    std::stringstream s;
+    s << "parameter_" << i;
+    parameterNames[i] = s.str();
+  }
+
+  this->parameters_ = this->functionSpace_->template createFieldVariable<nIntermediates>("parameters", parameterNames);
 }
 
 //! return a reference to the parameters vector
 template <int nStates, int nIntermediates, typename FunctionSpaceType>
-std::shared_ptr<std::vector<double>> CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::
+std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nIntermediates>> CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::
 parameters()
 {
   return this->parameters_;
+}
+
+template <int nStates, int nIntermediates, typename FunctionSpaceType>
+double *CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::
+parameterValues()
+{
+  return this->parameterValues_;
+}
+
+//! get the parameteValues_ pointer from the parameters field variable, then the field variable can no longer be used until restoreParameterValues() gets called
+template <int nStates, int nIntermediates, typename FunctionSpaceType>
+void CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::
+prepareParameterValues()
+{
+  this->parameters_->setRepresentationContiguous();
+  PetscErrorCode ierr;
+  ierr = VecGetArray(this->parameters_->getValuesContiguous(), &parameterValues_); CHKERRV(ierr);
+}
+
+//! restore the parameterValues_ pointer, such that the field variable can be used again
+template <int nStates, int nIntermediates, typename FunctionSpaceType>
+void CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::
+restoreParameterValues()
+{
+  PetscErrorCode ierr;
+  ierr = VecRestoreArray(this->parameters_->getValuesContiguous(), &parameterValues_); CHKERRV(ierr);
 }
 
 template <int nStates, int nIntermediates, typename FunctionSpaceType>

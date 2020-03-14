@@ -75,7 +75,12 @@ materialComputeInternalVirtualWork()
     std::array<Vec3,nDisplacementsDofsPerElement> displacementsValues;
     this->data_.displacements()->getElementValues(elementNoLocal, displacementsValues);
 
-    //LOG(DEBUG) << "elementNoLocal " << elementNoLocal << ", displacementsValues: " << displacementsValues;
+    if (VLOG_IS_ON(1))
+    {
+      global_no_t elementNoGlobal = displacementsFunctionSpace->meshPartition()->getElementNoGlobalNatural(elementNoLocal);
+      VLOG(1) << "elementNoGlobal " << elementNoGlobal << ", displacementsValues: " << displacementsValues;
+      VLOG(1) << "elementNoGlobal " << elementNoGlobal << ", geometryReferenceValues: " << geometryReferenceValues;
+    }
 
     std::array<double,nPressureDofsPerElement> pressureValuesCurrentElement;
     this->data_.pressure()->getElementValues(elementNoLocal, pressureValuesCurrentElement);
@@ -304,12 +309,20 @@ materialComputeInternalVirtualWork()
       // set value of result vector
       const int pressureDofNo = nDisplacementComponents;  // 3 or 6, depending if static or dynamic problem
       combinedVecResidual_->setValue(pressureDofNo, dofNoLocal, integratedValue, ADD_VALUES);
-      VLOG(1) << "p: set value " << integratedValue << " at dofNoLocal: " << dofNoLocal;
+
+      if (VLOG_IS_ON(1))
+      {
+        global_no_t dofNoGlobalPetsc = pressureFunctionSpace->meshPartition()->getDofNoGlobalPetsc(dofNoLocal);
+        VLOG(1) << "p: add value " << integratedValue << " at dofNoGlobalPetsc: " << dofNoGlobalPetsc;
+      }
     }
   }  // elementNoLocal
 
   // assemble result vector
   combinedVecResidual_->finishGhostManipulation();
+  //combinedVecResidual_->startGhostManipulation();
+  //combinedVecResidual_->zeroGhostBuffer();
+  //combinedVecResidual_->finishGhostManipulation();
 
   // now, solverVariableResidual_, which is the globalValues() of combinedVecResidual_, contains δW_int
 }
@@ -328,7 +341,9 @@ materialComputeResidual(double loadFactor)
   const bool outputValues = true;
   const bool outputFiles = false;
   if (outputValues)
+  {
     LOG(DEBUG) << "input: " << getString(solverVariableSolution_);
+  }
 
   // dump input vector to file
   if (outputFiles)
@@ -542,7 +557,10 @@ materialAddAccelerationTermAndVelocityEquation()
   // add to solverVariableResidual_ (=combinedVecResidual_) += int_Ω rho_0 * (v^(n+1),L - v^(n),L) / dt * phi^L * phi^M * δu^M dx
   // solverVariableSolution_
 
+  combinedVecSolution_->startGhostManipulation();
+
   combinedVecResidual_->startGhostManipulation();      // communicate ghost buffers values back in place
+  combinedVecResidual_->zeroGhostBuffer();      // communicate ghost buffers values back in place
 
   const int D = 3;  // dimension
   std::shared_ptr<DisplacementsFunctionSpace> functionSpace = this->data_.displacementsFunctionSpace();
@@ -579,20 +597,29 @@ materialAddAccelerationTermAndVelocityEquation()
     std::array<Vec3,nDisplacementsDofsPerElement> oldVelocityValues;
     this->data_.velocitiesPreviousTimestep()->getElementValues(elementNoLocal, oldVelocityValues);
 
+    // get the old displacements values at the previous timestep for all dofs of the element
+    std::array<Vec3,nDisplacementsDofsPerElement> newDisplacementValues;
+    this->data_.displacements()->getElementValues(elementNoLocal, newDisplacementValues);
+
+    // get the old velocity values at the previous timestep  for all dofs of the element
+    std::array<Vec3,nDisplacementsDofsPerElement> newVelocityValues;
+    this->data_.velocities()->getElementValues(elementNoLocal, newVelocityValues);
+
+    // debugging check
+#if 1
+    //if reproducing this debugging check, add calls to startGhostManipulation and finishGhostManipulation on combinedVecSolution_
     // get the new displacement values for all dofs of the element
-    std::array<std::array<double,nDisplacementsDofsPerElement>,3> newDisplacementValues;
-    combinedVecSolution_->getValues(0, dofNosLocalWithoutGhosts.size(), dofNosLocalWithoutGhosts.data(), newDisplacementValues[0].data());
-    combinedVecSolution_->getValues(1, dofNosLocalWithoutGhosts.size(), dofNosLocalWithoutGhosts.data(), newDisplacementValues[1].data());
-    combinedVecSolution_->getValues(2, dofNosLocalWithoutGhosts.size(), dofNosLocalWithoutGhosts.data(), newDisplacementValues[2].data());
+    std::array<std::array<double,nDisplacementsDofsPerElement>,3> newDisplacementValues1;
+    combinedVecSolution_->getValues(0, dofNosLocalWithoutGhosts.size(), dofNosLocalWithoutGhosts.data(), newDisplacementValues1[0].data());
+    combinedVecSolution_->getValues(1, dofNosLocalWithoutGhosts.size(), dofNosLocalWithoutGhosts.data(), newDisplacementValues1[1].data());
+    combinedVecSolution_->getValues(2, dofNosLocalWithoutGhosts.size(), dofNosLocalWithoutGhosts.data(), newDisplacementValues1[2].data());
 
     // get the new velocity values for all dofs of the element
-    std::array<std::array<double,nDisplacementsDofsPerElement>,3> newVelocityValues;
-    combinedVecSolution_->getValues(3, dofNosLocalWithoutGhosts.size(), dofNosLocalWithoutGhosts.data(), newVelocityValues[0].data());
-    combinedVecSolution_->getValues(4, dofNosLocalWithoutGhosts.size(), dofNosLocalWithoutGhosts.data(), newVelocityValues[1].data());
-    combinedVecSolution_->getValues(5, dofNosLocalWithoutGhosts.size(), dofNosLocalWithoutGhosts.data(), newVelocityValues[2].data());
+    std::array<std::array<double,nDisplacementsDofsPerElement>,3> newVelocityValues1;
+    combinedVecSolution_->getValues(3, dofNosLocalWithoutGhosts.size(), dofNosLocalWithoutGhosts.data(), newVelocityValues1[0].data());
+    combinedVecSolution_->getValues(4, dofNosLocalWithoutGhosts.size(), dofNosLocalWithoutGhosts.data(), newVelocityValues1[1].data());
+    combinedVecSolution_->getValues(5, dofNosLocalWithoutGhosts.size(), dofNosLocalWithoutGhosts.data(), newVelocityValues1[2].data());
 
-// debugging check
-#if 0
     // get the new displacements values, to compare with newDisplacementValues (should be the same)
     std::array<Vec3,nDisplacementsDofsPerElement> newDisplacementValues2;
     this->data_.displacements()->getElementValues(elementNoLocal, newDisplacementValues2);
@@ -606,12 +633,12 @@ materialAddAccelerationTermAndVelocityEquation()
     {
       dof_no_t dofNo = dofNosLocal[dofIndex];
       LOG(DEBUG) << " dof " << dofNo << ": displacements ("
-        << newDisplacementValues[0][dofIndex] << "=" << newDisplacementValues2[dofIndex][0] << ", "
-        << newDisplacementValues[1][dofIndex] << "=" << newDisplacementValues2[dofIndex][1] << ", "
-        << newDisplacementValues[2][dofIndex] << "=" << newDisplacementValues2[dofIndex][2] << "), velocities ("
-        << newVelocityValues[0][dofIndex] << "=" << newVelocityValues2[dofIndex][0] << ", "
-        << newVelocityValues[1][dofIndex] << "=" << newVelocityValues2[dofIndex][1] << ", "
-        << newVelocityValues[2][dofIndex] << "=" << newVelocityValues2[dofIndex][2] << ")";
+        << newDisplacementValues1[0][dofIndex] << "=" << newDisplacementValues2[dofIndex][0] << ", "
+        << newDisplacementValues1[1][dofIndex] << "=" << newDisplacementValues2[dofIndex][1] << ", "
+        << newDisplacementValues1[2][dofIndex] << "=" << newDisplacementValues2[dofIndex][2] << "), velocities ("
+        << newVelocityValues1[0][dofIndex] << "=" << newVelocityValues2[dofIndex][0] << ", "
+        << newVelocityValues1[1][dofIndex] << "=" << newVelocityValues2[dofIndex][1] << ", "
+        << newVelocityValues1[2][dofIndex] << "=" << newVelocityValues2[dofIndex][2] << ")";
     }
 #endif
 
@@ -637,10 +664,12 @@ materialAddAccelerationTermAndVelocityEquation()
           {
 
             const double oldVelocity = oldVelocityValues[elementalDofNoL][dimensionNo];
-            const double newVelocity = newVelocityValues[dimensionNo][elementalDofNoL];
+            const double newVelocity = newVelocityValues[elementalDofNoL][dimensionNo];
 
             integrand += density_ * (newVelocity - oldVelocity) / this->timeStepWidth_ * DisplacementsFunctionSpace::phi(elementalDofNoL,xi)
               * DisplacementsFunctionSpace::phi(elementalDofNoM,xi);
+
+            evaluationsArray[samplingPointIndex][elementalDofNoM*3 + dimensionNo] = integrand * integrationFactor;
           }
 
           evaluationsArray[samplingPointIndex][elementalDofNoM*3 + dimensionNo] = integrand * integrationFactor;
@@ -663,17 +692,28 @@ materialAddAccelerationTermAndVelocityEquation()
         double integratedValue = integratedValues[elementalDofNoM*3 + dimensionNo];
         combinedVecResidual_->setValue(dimensionNo, dofNoLocal, integratedValue, ADD_VALUES);
 
+        if (VLOG_IS_ON(1))
+        {
+          global_no_t dofNoGlobal = functionSpace->meshPartition()->getDofNoGlobalPetsc(dofNoLocal);
+          global_no_t elementNoGlobal = functionSpace->meshPartition()->getElementNoGlobalNatural(elementNoLocal);
+          VLOG(1) << "el global " << elementNoGlobal << " add to dof global " << dofNoGlobal << " value " << integratedValue;
+        }
+
         // compute velocity equation
         const double oldDisplacement = oldDisplacementValues[elementalDofNoM][dimensionNo];
-        const double newDisplacement = newDisplacementValues[dimensionNo][elementalDofNoM];
+        const double newDisplacement = newDisplacementValues[elementalDofNoM][dimensionNo];
 
         //double oldVelocity = oldVelocityValues[elementalDofNoM][dimensionNo];
-        const double newVelocity = newVelocityValues[dimensionNo][elementalDofNoM];
+        const double newVelocity = newVelocityValues[elementalDofNoM][dimensionNo];
 
         // add the velocity/displacement equation 1/dt (u^(n+1) - u^(n)) - v^(n+1) = 0 in the velocity slot
         double residuum = 1.0 / this->timeStepWidth_ * (newDisplacement - oldDisplacement) - newVelocity;
 
-        combinedVecResidual_->setValue(3 + dimensionNo, dofNoLocal, residuum, INSERT_VALUES);
+        // only set value if current dof is local, we must not set dof values here, even when "INSERT_VALUES" is used, because the dof values would still be summed up by finishGhostManipulation() (even though it is INSERT_VALUES and not ADD_VALUES)
+        if (dofNoLocal < functionSpace->nDofsLocalWithoutGhosts())
+        {
+          combinedVecResidual_->setValue(3 + dimensionNo, dofNoLocal, residuum, INSERT_VALUES);
+        }
 
       }  // D
     }  // L
@@ -681,6 +721,8 @@ materialAddAccelerationTermAndVelocityEquation()
 
   combinedVecResidual_->finishGhostManipulation();     // communicate and add up values in ghost buffers
 
+  combinedVecSolution_->zeroGhostBuffer();
+  combinedVecSolution_->finishGhostManipulation();
   //LOG(DEBUG) << "combinedVecExternalVirtualWorkDead: " << combinedVecExternalVirtualWorkDead_->getString();
 
   //combinedVecExternalVirtualWorkDead_->startGhostManipulation();

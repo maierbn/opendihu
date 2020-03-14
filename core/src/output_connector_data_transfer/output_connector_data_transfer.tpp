@@ -14,6 +14,8 @@ void SolutionVectorMapping<
             std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>> transferableSolutionData2,
             OutputConnection &outputConnection)
 {
+  LOG(DEBUG) << "transfer standard";
+
   // initialize output connection object
   outputConnection.initialize(*transferableSolutionData1, *transferableSolutionData2);
 
@@ -36,7 +38,7 @@ void SolutionVectorMapping<
     int componentNo1 = transferableSolutionData1->variable1[fromVectorIndex].componentNo;
 
     LOG(DEBUG) << "map slot from variable1, index " << fromVectorIndex
-      << " to variable" << toVectorIndex+1 << ", index " << toVectorIndex;
+      << " to variable" << toVectorNo+1 << ", index " << toVectorIndex;
 
     if (componentNo1 < 0)
     {
@@ -101,7 +103,7 @@ void SolutionVectorMapping<
     int componentNo1 = transferableSolutionData1->variable2[fromVectorIndex].componentNo;
 
     LOG(DEBUG) << "map slot from variable2, index " << fromVectorIndex
-      << " to variable" << toVectorIndex+1 << ", index " << toVectorIndex;
+      << " to variable" << toVectorNo+1 << ", index " << toVectorIndex;
 
     if (componentNo1 < 0)
     {

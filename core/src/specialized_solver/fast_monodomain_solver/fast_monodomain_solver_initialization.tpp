@@ -210,11 +210,15 @@ initialize()
   statesForTransfer_ = cellmlAdapter.statesForTransfer();
   intermediatesForTransfer_ = cellmlAdapter.intermediatesForTransfer();
 
+
   int nInstancesLocalCellml;
   int nIntermediatesLocalCellml;
   int nParametersPerInstance;
   cellmlAdapter.getNumbers(nInstancesLocalCellml, nIntermediatesLocalCellml, nParametersPerInstance);
-  std::vector<double> &cellMLParameters = *cellmlAdapter.cellmlSourceCodeGenerator().parameters();   //< contains all parameters for all instances, in struct of array ordering (p0inst0, p0inst1, p0inst2,...)
+
+  // make parameterValues() of cellmlAdapter.data() available
+  cellmlAdapter.data().prepareParameterValues();
+  double *parameterValues = cellmlAdapter.data().parameterValues();   //< contains nIntermediates parameters for all instances, in struct of array ordering (p0inst0, p0inst1, p0inst2,...)
 
   int nVcVectors = (nInstancesToCompute_ + Vc::double_v::Size - 1) / Vc::double_v::Size;
 
@@ -231,9 +235,14 @@ initialize()
 
     for (int j=0; j<nParametersPerInstance; j++)
     {
-      fiberPointBuffersParameters_[i][j] = cellMLParameters[j*nInstancesLocalCellml];
+      fiberPointBuffersParameters_[i][j] = parameterValues[j*nIntermediatesLocalCellml];    // note, the stride in parameterValues is "nIntermediatesLocalCellml", not "nParametersPerInstance"
+
+      VLOG(1) << "fiberPointBuffersParameters_ buffer no " << i << ", parameter no " << j << ", value: " <<  fiberPointBuffersParameters_[i][j];
     }
   }
+
+  // close raw array representation of parameterValues() of cellmlAdapter.data()
+  cellmlAdapter.data().restoreParameterValues();
 
   LOG(DEBUG) << nInstancesToCompute_ << " instances to compute, " << nVcVectors
     << " Vc vectors, size of double_v: " << Vc::double_v::Size << ", "

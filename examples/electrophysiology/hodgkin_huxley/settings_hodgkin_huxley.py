@@ -82,10 +82,10 @@ elif "hodgkin_huxley" in cellml_file:
   mappings = {
     ("parameter", 0):           ("constant", "membrane/i_Stim"),      # parameter 0 is constant 2 = I_stim
     ("outputConnectorSlot", 0): ("state", "membrane/V"),              # expose state 0 = Vm to the operator splitting
-    #("outputConnectorSlot", 1): ("state", "sodium_channel_m_gate/m"),     # expose state
-    #("outputConnectorSlot", 2): ("state", "sodium_channel_h_gate/h"),     # expose state
-    #("outputConnectorSlot", 3): ("state", "potassium_channel_n_gate/n"),  # expose state
-    ("outputConnectorSlot", 1): ("intermediate", "leakage_current/i_L"),  # expose algebraic 8 = leakage current
+    ("outputConnectorSlot", 1): ("state", "sodium_channel_m_gate/m"),     # expose state 1 = m
+    ("outputConnectorSlot", 2): ("state", "sodium_channel_h_gate/h"),     # expose state 2 = h
+    ("outputConnectorSlot", 3): ("state", "potassium_channel_n_gate/n"),  # expose state 3 = n
+    ("outputConnectorSlot", 4): ("intermediate", "leakage_current/i_L"),  # expose algebraic 8 = leakage current
   }
   parameters_initial_values = [0.0]
   nodal_stimulation_current = 40.
@@ -218,8 +218,8 @@ config = {
     #"numberTimeSteps": 1,
     "timeStepWidth": dt_splitting,  # 1e-1
     "endTime": end_time,
-    "connectedSlotsTerm1To2": [0,1],   # Transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion), slots 1-3: intermediates that should only be transferred to Diffusion because of the output writer (such that they will be included in the output files), not for actual computation.
-    "connectedSlotsTerm2To1": [0,1],   # Transfer the same values back. Use None for slots that should not be connected. In case of the intermediates it is good to have them connected both directions, 1->2 and 2->1, only then copying will be avoided (variables are reused) because it is asserted that Term 2 does not change the values.
+    "connectedSlotsTerm1To2": [0,1,2,3,4],   # Transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion), slots 1-3: intermediates that should only be transferred to Diffusion because of the output writer (such that they will be included in the output files), not for actual computation.
+    "connectedSlotsTerm2To1": [0,1,2,3,4],   # Transfer the same values back. Use None for slots that should not be connected. In case of the intermediates it is good to have them connected both directions, 1->2 and 2->1, only then copying will be avoided (variables are reused) because it is asserted that Term 2 does not change the values.
     "logTimeStepWidthAsKey": "dt_splitting",
     "durationLogKey": "duration_total",
     "timeStepOutputInterval": 1000,
@@ -281,7 +281,7 @@ config = {
         "durationLogKey": "duration_1D",
         "inputMeshIsGlobal": True,
         "dirichletBoundaryConditions": {},
-        "nAdditionalFieldVariables": 1,
+        "nAdditionalFieldVariables": 5,
         "solverName": "implicitSolver",
         
         "FiniteElementMethod" : {

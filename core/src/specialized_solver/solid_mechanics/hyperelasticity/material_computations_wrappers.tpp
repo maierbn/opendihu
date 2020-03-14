@@ -152,9 +152,12 @@ solveDynamicProblem(
     combinedVecSolution_->finishGhostManipulation();
 
     this->data_.displacements()->zeroGhostBuffer();
-    this->data_.velocities()->zeroGhostBuffer();
     this->data_.displacements()->finishGhostManipulation();
+    this->data_.velocities()->zeroGhostBuffer();
     this->data_.velocities()->finishGhostManipulation();
+
+    this->data_.displacements()->startGhostManipulation();
+    this->data_.velocities()->startGhostManipulation();
 
     LOG(DEBUG) << "extrapolateInitialGuess: initial values: " << getString(solverVariableSolution_);
   }

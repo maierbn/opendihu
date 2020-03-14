@@ -50,6 +50,9 @@ Python settings:
     "durationLogKey": "duration_total",
     "timeStepOutputInterval": 10,
     
+    "connectedSlotsTerm1To2": [0],  # list of slots of term 2 that are connected to the slots of term 1
+    "connectedSlotsTerm2To1": [0],  # list of slots of term 1 that are connected to the slots of term 2
+    
     "Term1": {
       "ExplicitEuler" : {  # these are the properties for the first timestepping
       }
@@ -96,6 +99,9 @@ Python settings:
     "durationLogKey": "duration_total",
     "timeStepOutputInterval": 10,
     
+    "connectedSlotsTerm1To2": [0],  # list of slots of term 2 that are connected to the slots of term 1
+    "connectedSlotsTerm2To1": [0],  # list of slots of term 1 that are connected to the slots of term 2
+    
     "Term1": {
       "ExplicitEuler" : {  # these are the properties for the first timestepping
       }
@@ -111,3 +117,6 @@ As the StrangSplitting is also a time stepping scheme, the common options descri
 The StrangSplitting scheme perform two data transfers: 
 * At the beginning from timestepping 1 to timestepping 2
 * at the end from timestepping 2 to timestepping 1
+
+Which values to transfer can be specified by the settings ``connectedSlotsTerm1To2`` 
+and ``connectedSlotsTerm2To1``. See the notes on :doc:`/settings/output_connector_slots`.

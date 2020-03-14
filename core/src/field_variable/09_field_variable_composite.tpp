@@ -10,14 +10,56 @@ getSubFieldVariables(std::vector<std::shared_ptr<FieldVariable<FunctionSpace::Fu
 {
   subFieldVariables.clear();
 
+  updateSubFieldVariables();
+  subFieldVariables = subFieldVariables_;
+}
+
+//! get the sub field variable no i
+template<int D,typename BasisFunctionType,int nComponents>
+std::shared_ptr<FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>, BasisFunctionType>, nComponents>> FieldVariableComposite<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,nComponents>::
+subFieldVariable(int i)
+{
+  updateSubFieldVariables();
+
+  if (i == -1)
+    i = subFieldVariables_.size() - 1;
+  assert(i < subFieldVariables_.size());
+  return subFieldVariables_[i];
+}
+
+//! get the sub field variable no i
+template<int D,typename BasisFunctionType,int nComponents>
+std::shared_ptr<FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>, BasisFunctionType>, nComponents>> FieldVariableComposite<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,nComponents>::
+subFieldVariableWithoutUpdate(int i)
+{
+  // Do not update the sub field variables because this would need a collective call by all ranks of this field variable. This is not the case for face computations.
+
+  if (subFieldVariables_.empty())
+  {
+    LOG(FATAL) << "subFieldVariableWithoutUpdate(" << i << ") called when sub field variables have not yet been initialized.";
+  }
+
+  if (i == -1)
+    i = subFieldVariables_.size() - 1;
+
+  if (i >= subFieldVariables_.size())
+  {
+    LOG(FATAL) << "Index of subFieldVariable is wrong. i: " << i << ", size: " << subFieldVariables_.size();
+  }
+  assert(i < subFieldVariables_.size());
+  return subFieldVariables_[i];
+}
+
+template<int D,typename BasisFunctionType,int nComponents>
+void FieldVariableComposite<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,nComponents>::
+updateSubFieldVariables()
+{
+  // update sub field variables
+
   // get subFunctionSpaces
   std::vector<std::shared_ptr<SubFunctionSpaceType>> subFunctionSpaces = this->functionSpace_->subFunctionSpaces();
 
-  // if sub field variables have not been initialized
-  if (subFieldVariables_.empty())
-  {
-    subFieldVariables_.resize(subFunctionSpaces.size());
-  }
+  subFieldVariables_.resize(subFunctionSpaces.size());
 
   // get own values
   std::vector<VecD<nComponents>> ownValues;
@@ -48,7 +90,7 @@ getSubFieldVariables(std::vector<std::shared_ptr<FieldVariable<FunctionSpace::Fu
     }
 
     // determine values for the sub field variable
-    std::vector<VecD<nComponents>> subFieldVariableValues(subFunctionSpace->nDofsLocalWithoutGhosts());
+    subFieldVariableValues_.resize(subFunctionSpace->nDofsLocalWithoutGhosts());
 
     // loop over dofs
     for (node_no_t nodeNoLocal = 0; nodeNoLocal < subFunctionSpace->nNodesLocalWithoutGhosts(); nodeNoLocal++)
@@ -56,22 +98,23 @@ getSubFieldVariables(std::vector<std::shared_ptr<FieldVariable<FunctionSpace::Fu
       bool nodeIsShared = false;
       node_no_t compositeNodeNo = this->functionSpace_->meshPartition()->getNodeNoLocalFromSubmesh(subMeshNo, nodeNoLocal, nodeIsShared);
 
-      for (int nodalDofNo = 0; nodalDofNo < subFunctionSpace->nDofsPerNode(); nodalDofNo++)
+      const int nDofsPerNode = subFunctionSpace->nDofsPerNode();
+      for (int nodalDofNo = 0; nodalDofNo < nDofsPerNode; nodalDofNo++)
       {
-        dof_no_t compositeDofNo = compositeNodeNo*subFunctionSpace->nDofsPerNode() + nodalDofNo;
-        dof_no_t subFunctionSpaceDofNo = nodeNoLocal*subFunctionSpace->nDofsPerNode() + nodalDofNo;
+        dof_no_t compositeDofNo = compositeNodeNo*nDofsPerNode + nodalDofNo;
+        dof_no_t subFunctionSpaceDofNo = nodeNoLocal*nDofsPerNode + nodalDofNo;
 
         assert (subFunctionSpaceDofNo < subFunctionSpace->nDofsLocalWithoutGhosts());
         assert (compositeDofNo < this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts());
 
         VLOG(2) << "subFieldVariableValues[" << subFunctionSpaceDofNo << "] = values[ " << compositeDofNo << "], nodeIsShared: " << nodeIsShared;
-        subFieldVariableValues[subFunctionSpaceDofNo] = ownValues[compositeDofNo];
+        subFieldVariableValues_[subFunctionSpaceDofNo] = ownValues[compositeDofNo];
       }
     }
 
     // set values in the sub field variable
     //subFieldVariables_[subMeshNo]->startGhostManipulation();
-    subFieldVariables_[subMeshNo]->setValuesWithoutGhosts(subFieldVariableValues);
+    subFieldVariables_[subMeshNo]->setValuesWithoutGhosts(subFieldVariableValues_);
     subFieldVariables_[subMeshNo]->finishGhostManipulation();
     subFieldVariables_[subMeshNo]->startGhostManipulation();
     subFieldVariables_[subMeshNo]->zeroGhostBuffer();
@@ -81,8 +124,6 @@ getSubFieldVariables(std::vector<std::shared_ptr<FieldVariable<FunctionSpace::Fu
 
     subMeshNo++;
   }
-
-  subFieldVariables = subFieldVariables_;
 }
 
 } // namespace

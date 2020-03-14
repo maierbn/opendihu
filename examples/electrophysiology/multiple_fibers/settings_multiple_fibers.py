@@ -19,6 +19,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import pickle
 import sys
+import struct
 
 # global parameters
 PMax = 7.3              # maximum stress [N/cm^2]
@@ -42,9 +43,10 @@ megamol_output_timestep = 5e-2    # timestep frequency for megamol
 #cellml_file = "../../input/shorten.cpp"
 cellml_file = "../../input/hodgkin_huxley_1952.c"
 
-#fibre_file = "../../input/laplace3d_structured_quadratic"
-fibre_file = "../../input/laplace3d_structured_linear"
-#fibre_file = "../../input1000/laplace3d_structured_quadratic"
+#fiber_file = "../../input/laplace3d_structured_quadratic"
+fiber_file = "../../input/laplace3d_structured_linear"
+fiber_file = "../../input/left_biceps_brachii_7x7fibers.bin"
+#fiber_file = "../../input1000/laplace3d_structured_quadratic"
 
 fibre_distribution_file = "../../input/MU_fibre_distribution_3780.txt"
 #firing_times_file = "../../input/MU_firing_times_real.txt"
@@ -94,7 +96,7 @@ elif "hodgkin_huxley" in cellml_file:
 def get_motor_unit_no(fibre_no):
   return int(fibre_distribution[fibre_no % len(fibre_distribution)]-1)
 
-def fibre_gets_stimulated(fibre_no, frequency, current_time):
+def fiber_gets_stimulated(fibre_no, frequency, current_time):
 
   # determine motor unit
   mu_no = (int)(get_motor_unit_no(fibre_no)*0.8)
@@ -110,7 +112,7 @@ def set_parameters_null(n_nodes_global, time_step_no, current_time, parameters, 
 def set_parameters(n_nodes_global, time_step_no, current_time, parameters, dof_nos_global, fibre_no):
   
   # determine if fibre gets stimulated at the current time
-  is_fibre_gets_stimulated = fibre_gets_stimulated(fibre_no, stimulation_frequency, current_time)
+  is_fiber_gets_stimulated = fiber_gets_stimulated(fibre_no, stimulation_frequency, current_time)
   
   # determine nodes to stimulate (center node, left and right neighbour)
   innervation_zone_width_n_nodes = innervation_zone_width*100  # 100 nodes per cm
@@ -122,7 +124,7 @@ def set_parameters(n_nodes_global, time_step_no, current_time, parameters, dof_n
     nodes_to_stimulate_global.append(innervation_node_global+1)
   
   # stimulation value
-  if is_fibre_gets_stimulated:
+  if is_fiber_gets_stimulated:
     stimulation_current = nodal_stimulation_current
   else:
     stimulation_current = 0.
@@ -139,7 +141,7 @@ def set_parameters(n_nodes_global, time_step_no, current_time, parameters, dof_n
       #print("       {}: set stimulation for local dof {}".format(rank_no, dof_no_local))
   
   #print("       {}: setParameters at timestep {}, t={}, n_nodes_global={}, range: [{},{}], fibre no {}, MU {}, stimulated: {}".\
-        #format(rank_no, time_step_no, current_time, n_nodes_global, first_dof_global, last_dof_global, fibre_no, get_motor_unit_no(fibre_no), is_fibre_gets_stimulated))
+        #format(rank_no, time_step_no, current_time, n_nodes_global, first_dof_global, last_dof_global, fibre_no, get_motor_unit_no(fibre_no), is_fiber_gets_stimulated))
     
   #wait = input("Press any key to continue...")
     
@@ -147,7 +149,7 @@ def set_parameters(n_nodes_global, time_step_no, current_time, parameters, dof_n
 def set_specific_parameters(n_nodes_global, time_step_no, current_time, parameters, fibre_no):
   
   # determine if fibre gets stimulated at the current time
-  is_fibre_gets_stimulated = fibre_gets_stimulated(fibre_no, stimulation_frequency, current_time)
+  is_fiber_gets_stimulated = fiber_gets_stimulated(fibre_no, stimulation_frequency, current_time)
   
   # determine nodes to stimulate (center node, left and right neighbour)
   innervation_zone_width_n_nodes = innervation_zone_width*100  # 100 nodes per cm
@@ -161,7 +163,7 @@ def set_specific_parameters(n_nodes_global, time_step_no, current_time, paramete
       nodes_to_stimulate_global.append(innervation_node_global+k)
   
   # stimulation value
-  if is_fibre_gets_stimulated:
+  if is_fiber_gets_stimulated:
     stimulation_current = 40.
   else:
     stimulation_current = 0.
@@ -173,9 +175,9 @@ def set_specific_parameters(n_nodes_global, time_step_no, current_time, paramete
 def set_specific_states(n_nodes_global, time_step_no, current_time, states, fibre_no):
   
   # determine if fibre gets stimulated at the current time
-  is_fibre_gets_stimulated = fibre_gets_stimulated(fibre_no, stimulation_frequency, current_time)
+  is_fiber_gets_stimulated = fiber_gets_stimulated(fibre_no, stimulation_frequency, current_time)
 
-  if is_fibre_gets_stimulated:  
+  if is_fiber_gets_stimulated:  
     # determine nodes to stimulate (center node, left and right neighbour)
     innervation_zone_width_n_nodes = innervation_zone_width*100  # 100 nodes per cm
     innervation_node_global = int(n_nodes_global / 2)  # + np.random.randint(-innervation_zone_width_n_nodes/2,innervation_zone_width_n_nodes/2+1)
@@ -285,8 +287,59 @@ def get_instance_config(i):
 # create fibre meshes
 meshes = {}
 
-with open(fibre_file, "rb") as f:
-  streamlines = pickle.load(f)
+# load streamlines from file, either from a .bin file or a python pickle file
+if ".bin" in fiber_file:
+  # data input from bin files that contain fibers
+  try:
+    fiber_file_handle = open(fiber_file, "rb")
+  except:
+    print("Error: Could not open fiber file \"{}\"".format(fiber_file))
+    quit()
+
+  # parse fibers from a binary fiber file that was created by parallel_fiber_estimation
+  # parse file header to extract number of fibers
+  bytes_raw = fiber_file_handle.read(32)
+  header_str = struct.unpack('32s', bytes_raw)[0]
+  header_length_raw = fiber_file_handle.read(4)
+  header_length = struct.unpack('i', header_length_raw)[0]
+
+  parameters = []
+  for i in range(int(header_length/4.) - 1):
+    double_raw = fiber_file_handle.read(4)
+    value = struct.unpack('i', double_raw)[0]
+    parameters.append(value)
+    
+  n_fibers_total = parameters[0]
+  n_fibers_x = (int)(np.round(np.sqrt(n_fibers_total)))
+  n_fibers_y = n_fibers_x
+  n_points_initial_whole_fiber = parameters[1]
+
+  # parse whole fiber file
+  streamlines = []
+  mesh_node_positions = []
+  for fiber_no in range(n_fibers_total):
+    fiber = []
+    for point_no in range(n_points_initial_whole_fiber):
+      point = []
+      for i in range(3):
+        double_raw = fiber_file_handle.read(8)
+        value = struct.unpack('d', double_raw)[0]
+        point.append(value)
+      fiber.append(point)
+      
+    # sample fiber in z direction
+    new_fiber = []
+    for point_no in range(n_points_initial_whole_fiber):
+      point = fiber[point_no]
+      new_fiber.append(point)
+      mesh_node_positions.append(point)
+    
+    streamlines.append(new_fiber)
+        
+else:
+  # load pickle file that contains streamlines
+  with open(fiber_file, "rb") as f:
+    streamlines = pickle.load(f)
     
 nInstances = len(streamlines)
 if rank_no == 0:
@@ -320,7 +373,7 @@ if rank_no == 0:
   for fibre_no_index in range(nInstances):
     first_stimulation = None
     for current_time in np.linspace(0,1./stimulation_frequency*n_firing_times,n_firing_times):
-      if fibre_gets_stimulated(fibre_no_index, stimulation_frequency, current_time):
+      if fiber_gets_stimulated(fibre_no_index, stimulation_frequency, current_time):
         first_stimulation = current_time
         break
   

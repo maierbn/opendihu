@@ -373,8 +373,8 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
         if own_subdomain_coordinate_x == variables.n_subdomains_x-1 and i == n_sampled_points_in_own_subdomain_x-1:
           fiber_in_subdomain_coordinate_x = n_fibers_in_subdomain_x(own_subdomain_coordinate_x)-1
         
-        #if k==0 and j==0:
-        #  print("{}: sampling_stride_x: {}, i: {}/{}, x: {}/{}".format(rank_no, variables.sampling_stride_x, i, n_sampled_points_in_own_subdomain_x, fiber_in_subdomain_coordinate_x, n_fibers_in_subdomain_x(own_subdomain_coordinate_x)))
+        #if j == 0 and k == 0:
+        #  print("{}: sampling_stride_x: {}, i: {}, x: {}/{} (j={},k={}) point: {}".format(rank_no, variables.sampling_stride_x, i, fiber_in_subdomain_coordinate_x, n_fibers_in_subdomain_x(own_subdomain_coordinate_x),j,k))
         
         # get fiber no
         fiber_index = get_fiber_no(own_subdomain_coordinate_x, own_subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)
@@ -405,6 +405,9 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
             print("Error, point does not match: reference_point: ", reference_point, ", point: ", point)
             quit()
           node_positions_3d_mesh.append(point)
+            
+          #if j == n_sampled_points_in_own_subdomain_y-1 and k == 0:
+          #  print("{}: sampling_stride_x: {}, i: {}, x: {}/{} (j={},k={}) point: {} (f{}, z{})".format(rank_no, variables.sampling_stride_x, i, fiber_in_subdomain_coordinate_x, n_fibers_in_subdomain_x(own_subdomain_coordinate_x),j,k,point,fiber_index,z_point_index))
           
         else:
           node_positions_3d_mesh[1].append((offset, 1))   # command to read 1 point from offset
@@ -438,12 +441,10 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
       "logKey": "3Dmesh"
     }
   
-  n_points_3D_mesh_global_x = sum([n_sampled_points_in_subdomain_x(subdomain_coordinate_x) for subdomain_coordinate_x in range(variables.n_subdomains_x)])
-  n_points_3D_mesh_global_y = sum([n_sampled_points_in_subdomain_y(subdomain_coordinate_y) for subdomain_coordinate_y in range(variables.n_subdomains_y)])
-  n_points_3D_mesh_global_z = sum([n_sampled_points_in_subdomain_z(subdomain_coordinate_z) for subdomain_coordinate_z in range(variables.n_subdomains_z)])
+  variables.n_points_3D_mesh_global_x = sum([n_sampled_points_in_subdomain_x(subdomain_coordinate_x) for subdomain_coordinate_x in range(variables.n_subdomains_x)])
+  variables.n_points_3D_mesh_global_y = sum([n_sampled_points_in_subdomain_y(subdomain_coordinate_y) for subdomain_coordinate_y in range(variables.n_subdomains_y)])
+  variables.n_points_3D_mesh_global_z = sum([n_sampled_points_in_subdomain_z(subdomain_coordinate_z) for subdomain_coordinate_z in range(variables.n_subdomains_z)])
   
-  n_points_3D_mesh_global = n_points_3D_mesh_global_x*n_points_3D_mesh_global_y*n_points_3D_mesh_global_z
-   
   # create quadratic 3D mesh
   if quadratic_3d_mesh:
     
@@ -464,13 +465,15 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
       
       # set information on how many nodes there are in the quadratic 3D mesh, this is not needed for the opendihu core 
       "nPointsLocal": [n_sampled_points_in_own_subdomain_x, n_sampled_points_in_own_subdomain_y, n_sampled_points_in_own_subdomain_z],
-      "nPointsGlobal": [n_points_3D_mesh_global_x, n_points_3D_mesh_global_y, n_points_3D_mesh_global_z],
+      "nPointsGlobal": [variables.n_points_3D_mesh_global_x, variables.n_points_3D_mesh_global_y, variables.n_points_3D_mesh_global_z],
     }
     
+  n_points_3D_mesh_global = variables.n_points_3D_mesh_global_x*variables.n_points_3D_mesh_global_y*variables.n_points_3D_mesh_global_z
+   
   # output for debugging
   if variables.debug_output:
     print("{}: point sampling for elements, unsampled points: {} x {} x {}, sampling stride: {}, {}, {}".format(rank_no, variables.n_fibers_x, variables.n_fibers_y, variables.n_points_whole_fiber, variables.sampling_stride_x, variables.sampling_stride_y, variables.sampling_stride_z))
-    print("{}: sampled points, n_points_3D_mesh_global: {} x {} x {} = sum({}) x sum({}) x sum({})".format(rank_no, n_points_3D_mesh_global_x, n_points_3D_mesh_global_y, n_points_3D_mesh_global_z, \
+    print("{}: sampled points, n_points_3D_mesh_global: {} x {} x {} = sum({}) x sum({}) x sum({})".format(rank_no, variables.n_points_3D_mesh_global_x, variables.n_points_3D_mesh_global_y, variables.n_points_3D_mesh_global_z, \
       [n_sampled_points_in_subdomain_x(subdomain_coordinate_x) for subdomain_coordinate_x in range(variables.n_subdomains_x)],\
       [n_sampled_points_in_subdomain_y(subdomain_coordinate_y) for subdomain_coordinate_y in range(variables.n_subdomains_y)],\
       [n_sampled_points_in_subdomain_z(subdomain_coordinate_z) for subdomain_coordinate_z in range(variables.n_subdomains_z)]))
@@ -483,14 +486,14 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
   if rank_no == 0:      
     # compute helper variables only for output
     if quadratic_3d_mesh:
-      n_elements_3D_global_x = (int)((n_points_3D_mesh_global_x-1)/2)
-      n_elements_3D_global_y = (int)((n_points_3D_mesh_global_y-1)/2)
-      n_elements_3D_global_z = (int)((n_points_3D_mesh_global_z-1)/2)
+      n_elements_3D_global_x = (int)((variables.n_points_3D_mesh_global_x-1)/2)
+      n_elements_3D_global_y = (int)((variables.n_points_3D_mesh_global_y-1)/2)
+      n_elements_3D_global_z = (int)((variables.n_points_3D_mesh_global_z-1)/2)
       n_elements_3D_local = variables.n_elements_3D_mesh_quadratic[0] * variables.n_elements_3D_mesh_quadratic[1] * variables.n_elements_3D_mesh_quadratic[2]
     else:
-      n_elements_3D_global_x = (int)(n_points_3D_mesh_global_x-1)
-      n_elements_3D_global_y = (int)(n_points_3D_mesh_global_y-1)
-      n_elements_3D_global_z = (int)(n_points_3D_mesh_global_z-1)
+      n_elements_3D_global_x = (int)(variables.n_points_3D_mesh_global_x-1)
+      n_elements_3D_global_y = (int)(variables.n_points_3D_mesh_global_y-1)
+      n_elements_3D_global_z = (int)(variables.n_points_3D_mesh_global_z-1)
       n_elements_3D_local = variables.n_elements_3D_mesh[0] * variables.n_elements_3D_mesh[1] * variables.n_elements_3D_mesh[2]
     n_elements_3D_global = n_elements_3D_global_x * n_elements_3D_global_y * n_elements_3D_global_z
       
@@ -503,7 +506,7 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
     print("{} x {} = {} fibers, per partition: {} x {} = {}".format(variables.n_fibers_x, variables.n_fibers_y, variables.n_fibers_total, variables.n_fibers_per_subdomain_x, variables.n_fibers_per_subdomain_y, variables.n_fibers_per_subdomain_x*variables.n_fibers_per_subdomain_y))
     print("per fiber: 1D mesh    nodes global: {}, local: {}".format(variables.n_points_whole_fiber, n_points_in_subdomain_z(own_subdomain_coordinate_z)))
     print(" {} 3D mesh    nodes global: {} x {} x {} = {}, local: {} x {} x {} = {}".format("quadratic" if quadratic_3d_mesh else "   linear", 
-      n_points_3D_mesh_global_x, n_points_3D_mesh_global_y, n_points_3D_mesh_global_z, n_points_3D_mesh_global, 
+      variables.n_points_3D_mesh_global_x, variables.n_points_3D_mesh_global_y, variables.n_points_3D_mesh_global_z, n_points_3D_mesh_global, 
       n_sampled_points_in_own_subdomain_x, n_sampled_points_in_own_subdomain_y, n_sampled_points_in_own_subdomain_z, n_sampled_points_in_own_subdomain_x*n_sampled_points_in_own_subdomain_y*n_sampled_points_in_own_subdomain_z))
     if quadratic_3d_mesh:
       print(" quadratic 3D mesh elements global: {} x {} x {} = {}, local: {} x {} x {} = {}".format(
@@ -514,6 +517,7 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
         n_elements_3D_global_x, n_elements_3D_global_y, n_elements_3D_global_z, n_elements_3D_global,
         variables.n_elements_3D_mesh[0], variables.n_elements_3D_mesh[1], variables.n_elements_3D_mesh[2], n_elements_3D_local))
     print(" (sampling 3D mesh with stride {} x {} x {})".format(variables.sampling_stride_x, variables.sampling_stride_y, variables.sampling_stride_z))
+
     print("number of degrees of freedom:")
     print("                    1D fiber: {:10d}  (per process: {})".format(variables.n_points_whole_fiber, n_points_in_subdomain_z(own_subdomain_coordinate_z)))
     print("            0D-1D monodomain: {:10d}  (per process: {})".format(variables.n_points_whole_fiber*n_states_cellml, n_points_in_subdomain_z(own_subdomain_coordinate_z)*n_states_cellml))

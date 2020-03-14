@@ -5,6 +5,7 @@
 
 #include "easylogging++.h"
 #include "output_writer/python/python.h"
+#include "utility/python_capture_stderr.h"
 
 namespace OutputWriter
 {
@@ -66,16 +67,38 @@ callCallback(PyObject *callback, FieldVariablesForOutputWriterType fieldVariable
   //new signature def callback([data0,data1,...])
   PyObject *pyArglist = Py_BuildValue("(O)", pyDataList);
 
+  // import emb module which captures stderr
+  PyImport_ImportModule("emb");
+
+  // add callback function to capture stderr buffer
+  std::string errorBuffer;
+  emb::stderr_write_type write = [&errorBuffer] (std::string s) {errorBuffer += s; };
+  emb::set_stderr(write);
+
   // call callback function
   PyObject *pyReturnValue = PyObject_CallObject(callback, pyArglist);
 
+  emb::reset_stderr();
+
   // if there was an error while executing the function, print the error message
   if (pyReturnValue == NULL)
+  {
+    PythonUtility::checkForError();
     PyErr_Print();
+    LOG(ERROR) << "An error occured in the callback function of the output writer.\n" << errorBuffer;
+  }
+
+  if (pyReturnValue == Py_None)
+    LOG(DEBUG) << "callback returns None";
+  else
+  {
+    LOG(DEBUG) << "callback returns:";
+    LOG(DEBUG) << pyReturnValue;
+  }
 
   // decrement reference counters for python objects
-  Py_DECREF(pyReturnValue);
-  Py_DECREF(pyArglist);
+  Py_XDECREF(pyReturnValue);
+  Py_XDECREF(pyArglist);
 }
 
 }  // namespace

@@ -49,6 +49,14 @@ collectMeshProperties(CurrentFieldVariableType currentFieldVariable, const Field
       << " fieldVariables: " << fieldVariables << ", i: " << i;
   }
   assert(currentFieldVariable != nullptr);
+  if (!currentFieldVariable->functionSpace())
+  {
+    LOG(DEBUG) << "In collectMeshProperties, currentFieldVariable->functionSpace() is nullptr.\n"
+      << " meshProperties: " << meshProperties
+      << ", fielVariableType: " << StringUtility::demangle(typeid(CurrentFieldVariableType).name())
+      << " fieldVariables: " << fieldVariables << ", i: " << i;
+    return false;
+  }
   assert(currentFieldVariable->functionSpace());
   std::string meshName = currentFieldVariable->functionSpace()->meshName();
 

@@ -31,6 +31,9 @@ dt_1D = 1.5e-3                      # [ms] timestep width of diffusion
 dt_splitting = 3e-3                 # [ms] overall timestep width of strang splitting
 dt_3D = 1e0                         # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
 output_timestep = 1e0               # [ms] timestep for output files
+output_timestep_3D_emg = 1e0        # [ms] timestep for output files
+output_timestep_3D = 1e0            # [ms] timestep for output files
+output_timestep_fibers = 1e0        # [ms] timestep for output files
 activation_start_time = 0           # [ms] time when to start checking for stimulation
 
 # input files
@@ -107,6 +110,9 @@ own_subdomain_coordinate_z = None
 n_fibers_x = None
 n_fibers_y = None
 n_points_whole_fiber = None
+n_points_3D_mesh_global_x = None
+n_points_3D_mesh_global_y = None
+n_points_3D_mesh_global_z = None
 output_writer_fibers = None
 output_writer_emg = None
 output_writer_0D_states = None
@@ -144,4 +150,6 @@ constant_body_force = None
 pmax = None
 bottom_traction = None
 cellml_file = ""
+states_initial_values = []
+
 

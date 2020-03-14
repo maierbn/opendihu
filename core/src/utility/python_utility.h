@@ -30,6 +30,9 @@ public:
   //! checks if the settings contain the given key, no warning is printed
   static bool hasKey(const PyObject *settings, std::string key);
 
+  //! checks if this settings is the empty list or None
+  static bool isEmpty(const PyObject *settings, std::string key);
+
   //! checks if the object is a python list
   static bool isTypeList(const PyObject *object);
 
@@ -146,6 +149,9 @@ public:
 
   //! create a python list out of the long vector
   static PyObject *convertToPythonList(unsigned int nEntries, double *data);
+
+  //! create a python list from a double *
+  static PyObject *convertToPythonList(double *value, int nValues);
 
   //! convert a PyUnicode object to a std::string
   static std::string pyUnicodeToString(PyObject *object);

@@ -15,6 +15,9 @@ The Coupling is itself a timestepping scheme and has all options listed on the (
 
 It is equivalent to :doc:`splitting`, but with the keyword "Coupling" instead of "GodunovSplitting".
 
+Note that usually data should be transferred between the two solvers. This is done with the settings ``connectedSlotsTerm1To2`` 
+and ``connectedSlotsTerm2To1``. See the notes on :doc:`/settings/output_connector_slots`.
+
 C++ code:
 
 .. code-block:: c
@@ -35,6 +38,9 @@ Python settings:
     "logTimeStepWidthAsKey": "dt_3D",
     "durationLogKey": "duration_total",
     "timeStepOutputInterval": 10,
+    
+    "connectedSlotsTerm1To2": [0],  # list of slots of term 2 that are connected to the slots of term 1
+    "connectedSlotsTerm2To1": [0],  # list of slots of term 1 that are connected to the slots of term 2
     
     "Term1": {
       "ExplicitEuler" : {  # these are the properties for the first timestepping

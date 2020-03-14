@@ -1,10 +1,10 @@
 #!/usr/bin/env ../../../dependencies/python/install/bin/python3
 # -*- coding: utf-8 -*-
 #
-# This script reads a fiber file and extracts fibers at regular distances.
+# This script reverses the order of the numbering in y direction.
 # For .bin files.
 #
-# usage: extract_fibers.py <input filename> <output filename> <n_fibers_x target> [<offset>]
+# usage: reverse_y_order_bin_fibers.py <input filename> [<output filename>]
 
 import sys, os
 import numpy as np
@@ -18,18 +18,12 @@ import time
 input_filename = "fibers.bin"
 output_filename = "{}.out.bin".format(input_filename)
 
-n_fibers_x_extract = 1
-
-if len(sys.argv) >= 3:
+if len(sys.argv) >= 2:
   input_filename = sys.argv[1]
-  output_filename = sys.argv[2]
 
-if len(sys.argv) >= 4:
-  n_fibers_x_extract = (int)(sys.argv[3])
-  
-offset = -1  # -1 means compute
-if len(sys.argv) >= 5:
-  offset = (int)(sys.argv[4])
+output_filename = "{}.reversed".format(input_filename)
+if len(sys.argv) >= 3:
+  output_filename = sys.argv[2]
   
 print("{} -> {}".format(input_filename, output_filename))
 
@@ -53,11 +47,11 @@ with open(input_filename, "rb") as infile:
   n_fibers_x = (int)(np.sqrt(parameters[0]))
   n_fibers_y = n_fibers_x
   
-  if "version 2" in str(header_str):   # the version 2 has number of fibers explicitly stored and thus also allows non-square dimension of fibers
+  if "version 2" in header_str.decode('utf-8'):   # the version 2 has number of fibers explicitly stored and thus also allows non-square dimension of fibers
     n_fibers_x = parameters[2]
     n_fibers_y = parameters[3]
   
-  print("extract {} x {} fibers from file with {} x {} fibers, offset: {}\n".format(n_fibers_x_extract,n_fibers_x_extract,n_fibers_x,n_fibers_y, offset))
+  print("reverse y numbering in file with {} x {} fibers\n".format(n_fibers_x,n_fibers_y))
 
   print("header: {}".format(header_str))
   print("nFibersTotal:      {n_fibers} = {n_fibers_x} x {n_fibers_y}".format(n_fibers=parameters[0], n_fibers_x=n_fibers_x, n_fibers_y=n_fibers_y))
@@ -72,9 +66,6 @@ with open(input_filename, "rb") as infile:
   print("date:              {:%d.%m.%Y %H:%M:%S}".format(datetime.datetime.fromtimestamp(parameters[8])))
   
   streamlines = []
-  n_streamlines_valid = 0
-  n_streamlines_invalid = 0
-  
   # loop over fibers
   for streamline_no in range(n_fibers_total):
     streamline = []
@@ -89,36 +80,19 @@ with open(input_filename, "rb") as infile:
         double_raw = infile.read(8)
         value = struct.unpack('d', double_raw)[0]
         point.append(value)
-        
-      # check if point is valid
-      if point[0] == 0.0 and point[1] == 0.0 and point[2] == 0.0:
-        if streamline_valid:
-          coordinate_x = streamline_no % n_fibers_x
-          coordinate_y = (int)(streamline_no / n_fibers_x)
-          print("Error: streamline {}, ({},{})/({},{}) is invalid ({}. point)".format(streamline_no, coordinate_x, coordinate_y, n_fibers_x, n_fibers_y, point_no))
-          print("streamline so far: ",streamline[0:10])
-        streamline_valid = False
       streamline.append(point)
-      
-    if streamline_valid:
-      n_streamlines_valid += 1
-    else:
-      n_streamlines_invalid += 1
-      streamline = []
     streamlines.append(streamline)
-  
-  print("n valid: {}, n invalid: {}".format(n_streamlines_valid, n_streamlines_invalid))
-  
+    
   # create output file
   with open(output_filename,"wb") as outfile:
     
     infile.seek(0)
-    header_str = "opendihu binary fibers version 2".format(header_str)
-    outfile.write(struct.pack('32s', str(header_str).encode('utf-8')))
+    header_str = str.encode("opendihu binary fibers version 2".format(header_str))
+    outfile.write(struct.pack('32s', header_str))
     outfile.write(header_length_raw)
      
     # write parameter[0]: n_fibers_total
-    n_fibers = n_fibers_x_extract * n_fibers_x_extract
+    n_fibers = n_fibers_x * n_fibers_y
     outfile.seek(32+4)
     outfile.write(struct.pack('i', n_fibers))
     
@@ -126,28 +100,21 @@ with open(input_filename, "rb") as infile:
     outfile.seek(32+2*4)
     outfile.write(struct.pack('i', n_points_whole_fiber))
     
-    # write parameter[2]: n_fibers_x_extract
+    # write parameter[2]: n_fibers_x
     outfile.seek(32+3*4)
-    outfile.write(struct.pack('i', n_fibers_x_extract))
+    outfile.write(struct.pack('i', n_fibers_x))
     
-    # write parameter[3]: n_fibers_x_extract
+    # write parameter[3]: n_fibers_y
     outfile.seek(32+4*4)
-    outfile.write(struct.pack('i', n_fibers_x_extract))
+    outfile.write(struct.pack('i', n_fibers_y))
     
     # write timestamp
     outfile.seek(32+9*4)
     outfile.write(struct.pack('i', (int)(time.time())))
     
     # write fiber
-    stride = (int)(np.floor(n_fibers_x / n_fibers_x_extract))
-    if offset == -1:
-      offset = (int)((n_fibers_x - (n_fibers_x_extract-1)*stride) / 2)
-    print("stride: {}, offset: {}".format(stride, offset))
-    
-    for y in range(offset, n_fibers_x_extract*stride, stride):
-      print("select fiber {}/{}".format(y, n_fibers_x))
-      
-      for x in range(offset, n_fibers_x_extract*stride, stride):
+    for y in reversed(range(n_fibers_y)):
+      for x in range(n_fibers_x):
         fiber = streamlines[y*n_fibers_x + x]
         # loop over points of fiber
         for point_no in range(n_points_whole_fiber):

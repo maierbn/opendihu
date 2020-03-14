@@ -1,3 +1,5 @@
+# Linear elasticity, use paraview and the warp filter for visualization
+
 import numpy as np
 
 nx = 4

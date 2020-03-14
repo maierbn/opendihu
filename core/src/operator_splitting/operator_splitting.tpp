@@ -19,12 +19,14 @@ OperatorSplitting(DihuContext context, std::string schemeName) :
   ::TimeSteppingScheme::TimeSteppingScheme(context),
   timeStepping1_(context_[schemeName]["Term1"]),
   timeStepping2_(context_[schemeName]["Term2"]),
-  outputConnection_(context_[schemeName].getPythonConfig()), initialized_(false)
+  initialized_(false)
 {
 
   PythonConfig topLevelSettings = context_.getPythonConfig();
   specificSettings_ = PythonConfig(topLevelSettings, schemeName);
   schemeName_ = schemeName;
+
+  outputConnection_ = std::make_shared<OutputConnection>(specificSettings_);
 }
 
 template<typename TimeStepping1, typename TimeStepping2>

@@ -17,7 +17,9 @@ The following pages contain all settings that are possible to specify for the di
    settings/output_writer
    settings/splitting
    settings/coupling
+   settings/output_connector_slots
    settings/cellml_adapter
+   settings/fast_monodomain_solver
    settings/mappings_between_meshes
    settings/multidomain_solver
    settings/multiple_instances

@@ -18,6 +18,11 @@ nonlinearSolve()
   LOG(DEBUG) << "initial solution: " << combinedVecSolution_->getString();
   // solve the system ∂W_int - ∂W_ext = 0 and J = 1 for displacements and pressure, result will be in solverVariableSolution_, combinedVecSolution_
 
+#ifndef NDEBUG
+  materialComputeResidual(1.0);   // compute residual with load factor 1.0
+  LOG(DEBUG) << "initial residual: " << combinedVecResidual_->getString();
+#endif
+
   if (this->durationLogKey_ != "")
     Control::PerformanceMeasurement::start(this->durationLogKey_+std::string("_durationSolve"));
 
@@ -577,8 +582,8 @@ setDisplacementsVelocitiesAndPressureFromCombinedVec(Vec x,
     values.resize(nEntries);
     combinedVecSolution_->getValues(componentNo, nEntries, displacementsFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
 
-    if (VLOG_IS_ON(1))
-      VLOG(1) << "setDisplacementsVelocitiesAndPressureFromCombinedVec, " << nEntries << " u values: " << values;
+    //if (VLOG_IS_ON(1))
+      LOG(DEBUG) << "setDisplacementsVelocitiesAndPressureFromCombinedVec, " << nEntries << " u values: " << values;
 
     u->setValues(componentNo, nEntries, displacementsFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
   }

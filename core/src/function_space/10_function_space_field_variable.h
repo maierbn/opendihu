@@ -46,7 +46,7 @@ public:
   //! interpolate the nComponents values within an element at the given xi position using the basis functions
   template <int nComponents>
   std::array<double,nComponents> interpolateValueInElement(std::array<std::array<double,nComponents>,FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement()> &elementalDofValues,
-                                                  std::array<double,MeshType::dim()> xi) const;
+                                                           std::array<double,MeshType::dim()> xi) const;
 
   //! interpolate the value within an element at the given xi position using the basis functions
   double interpolateValueInElement(std::array<double,FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement()> &elementalDofValues,

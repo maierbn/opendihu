@@ -34,6 +34,8 @@ transfer(const std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shar
    *  and again map data to "2".variable1 and "2".variable2.
    */
 
+  LOG(DEBUG) << "transfer fibers_emg (1)";
+
   assert(transferableSolutionData1->size() > 0);
   assert((*transferableSolutionData1)[0]->size() > 0);
 
@@ -62,7 +64,7 @@ transfer(const std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shar
     int componentNo1 = transferableSolutionData1Front->variable1[fromVectorIndex].componentNo;
 
     LOG(DEBUG) << "map slot from variable1, index " << fromVectorIndex
-      << " to variable " << toVectorIndex << ", index " << toVectorIndex;
+      << " to variable" << toVectorNo+1 << ", index " << toVectorIndex;
 
     if (componentNo1 < 0)
     {
@@ -77,7 +79,7 @@ transfer(const std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shar
       int componentNo2 = transferableSolutionData2->variable1[toVectorIndex].componentNo;
 
       LOG(DEBUG) << "  " << fieldVariable1->name() << "[" << componentNo1 << "] -> "
-        << fieldVariable2->name() << "[" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible;
+        << fieldVariable2->name() << "[" << componentNo2 << "] (" << fieldVariable2 << "), avoidCopyIfPossible: " << avoidCopyIfPossible << "(5)";
 
       // initialize the mapping
       DihuContext::meshManager()->template prepareMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2);
@@ -108,7 +110,7 @@ transfer(const std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shar
       int componentNo2 = transferableSolutionData2->variable2[toVectorIndex].componentNo;
 
       LOG(DEBUG) << "  " << fieldVariable1->name() << "[" << componentNo1 << "] -> "
-        << fieldVariable2->name() << "[" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible;
+        << fieldVariable2->name() << "[" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible << "(6)";
 
       // initialize the mapping
       DihuContext::meshManager()->template prepareMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2);
@@ -153,7 +155,7 @@ transfer(const std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shar
     int componentNo1 = transferableSolutionData1Front->variable2[fromVectorIndex].componentNo;
 
     LOG(DEBUG) << "map slot from variable1, index " << fromVectorIndex
-      << " to variable " << toVectorIndex << ", index " << toVectorIndex;
+      << " to variable" << toVectorNo+1 << ", index " << toVectorIndex;
 
     if (componentNo1 < 0)
     {
@@ -168,7 +170,7 @@ transfer(const std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shar
       int componentNo2 = transferableSolutionData2->variable1[toVectorIndex].componentNo;
 
       LOG(DEBUG) << "  " << fieldVariable1->name() << "[" << componentNo1 << "] -> "
-        << fieldVariable2->name() << "[" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible;
+        << fieldVariable2->name() << "[" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible << "(7)";
 
       // initialize the mapping
       DihuContext::meshManager()->template prepareMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2);
@@ -199,7 +201,7 @@ transfer(const std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shar
       int componentNo2 = transferableSolutionData2->variable2[toVectorIndex].componentNo;
 
       LOG(DEBUG) << "  " << fieldVariable1->name() << "[" << componentNo1 << "] -> "
-        << fieldVariable2->name() << "[" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible;
+        << fieldVariable2->name() << "[" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible << "(8)";
 
       // initialize the mapping
       DihuContext::meshManager()->template prepareMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2);
@@ -244,6 +246,8 @@ transfer(const std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType1,nCom
          >>>>> transferableSolutionData2,
          OutputConnection &outputConnection)
 {
+  LOG(DEBUG) << "transfer fibers_emg (2)";
+
   assert(transferableSolutionData2->size() > 0);
   assert((*transferableSolutionData2)[0]->size() > 0);
 
@@ -272,7 +276,7 @@ transfer(const std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType1,nCom
     int componentNo1 = transferableSolutionData1->variable1[fromVectorIndex].componentNo;
 
     LOG(DEBUG) << "map slot from variable1, index " << fromVectorIndex
-      << " to variable " << toVectorIndex << ", index " << toVectorIndex;
+      << " to variable" << toVectorNo+1 << ", index " << toVectorIndex;
 
     if (componentNo1 < 0)
     {
@@ -287,7 +291,7 @@ transfer(const std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType1,nCom
       int componentNo2 = transferableSolutionData2Front->variable1[toVectorIndex].componentNo;
 
       LOG(DEBUG) << "  " << fieldVariable1->name() << "[" << componentNo1 << "] -> "
-        << fieldVariable2->name() << "[" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible;
+        << fieldVariable2->name() << "[" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible << "(9)";
 
       // initialize the mapping
       DihuContext::meshManager()->template prepareMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2);
@@ -318,7 +322,7 @@ transfer(const std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType1,nCom
       int componentNo2 = transferableSolutionData2Front->variable2[toVectorIndex].componentNo;
 
       LOG(DEBUG) << "  " << fieldVariable1->name() << "[" << componentNo1 << "] -> "
-        << fieldVariable2->name() << "[" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible;
+        << fieldVariable2->name() << "[" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible << "(10)";
 
       // initialize the mapping
       DihuContext::meshManager()->template prepareMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2);
@@ -363,7 +367,7 @@ transfer(const std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType1,nCom
     int componentNo1 = transferableSolutionData1->variable2[fromVectorIndex].componentNo;
 
     LOG(DEBUG) << "map slot from variable1, index " << fromVectorIndex
-      << " to variable " << toVectorIndex << ", index " << toVectorIndex;
+      << " to variable" << toVectorNo+1 << ", index " << toVectorIndex;
 
     if (componentNo1 < 0)
     {
@@ -378,7 +382,7 @@ transfer(const std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType1,nCom
       int componentNo2 = transferableSolutionData2Front->variable1[toVectorIndex].componentNo;
 
       LOG(DEBUG) << "  " << fieldVariable1->name() << "[" << componentNo1 << "] -> "
-        << fieldVariable2->name() << "[" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible;
+        << fieldVariable2->name() << "[" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible << "(11)";
 
       // initialize the mapping
       DihuContext::meshManager()->template prepareMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2);
@@ -409,7 +413,7 @@ transfer(const std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType1,nCom
       int componentNo2 = transferableSolutionData2Front->variable2[toVectorIndex].componentNo;
 
       LOG(DEBUG) << "  " << fieldVariable1->name() << "[" << componentNo1 << "] -> "
-        << fieldVariable2->name() << "[" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible;
+        << fieldVariable2->name() << "[" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible << "(12)";
 
       // initialize the mapping
       DihuContext::meshManager()->template prepareMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2);

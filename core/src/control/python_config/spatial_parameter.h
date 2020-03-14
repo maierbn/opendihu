@@ -32,7 +32,10 @@ public:
   void getValue(element_no_t elementNoLocal, ValueType &value) const;
 
   //! the value of the parameter in the given element
-  ValueType value(element_no_t elementNoLocal) const;
+  //ValueType value(element_no_t elementNoLocal) const;
+
+  //! the value of the parameter in the given element
+  const ValueType &value(element_no_t elementNoLocal) const;
 
 protected:
 

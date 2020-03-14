@@ -7,14 +7,17 @@
 
 //! iterate over all nested solvers
 void SolverStructureVisualizer::
-generateDiagram(std::stringstream &result, std::vector<std::tuple<int,int,int,SolverStructureVisualizer::solver_t::OutputConnection::output_connection_t>> &connectionLines,
-      std::vector<int> &slotLineNos, int depth, bool isFirstChildSolver, bool isLastChildSolver)
+generateDiagram(std::stringstream &result, std::vector<std::tuple<int,int,int,SolverStructureVisualizer::solver_t::OutputConnectionRepresentation::output_connection_t>> &connectionLines,
+      std::vector<int> &slotLineNos, std::vector<int> &allSlotLineNos, int depth, bool isFirstChildSolver, bool isLastChildSolver)
 {
   if (!currentSolver_)
     return;
 
   if (!enabled_)
     return;
+
+  // prepare the output connections
+  parseOutputConnection();
 
   slotLineNos.clear();
 
@@ -43,8 +46,17 @@ generateDiagram(std::stringstream &result, std::vector<std::tuple<int,int,int,So
     for (int i = 0; i < currentSolver_->outputSlots.size(); i++)
     {
       std::stringstream s;
-      s << lineStart.str() << "│  " << currentSolver_->outputSlots[i].fieldVariableName << "."
-        << currentSolver_->outputSlots[i].componentName;
+      std::string fieldVariableName = currentSolver_->outputSlots[i].fieldVariableName;
+      std::string componentName = currentSolver_->outputSlots[i].componentName;
+      if (fieldVariableName != componentName)
+      {
+        s << lineStart.str() << "│  " << fieldVariableName << "."
+          << componentName;
+      }
+      else
+      {
+        s << lineStart.str() << "│  " << fieldVariableName;
+      }
 
       if (currentSolver_->outputSlots[i].variableNo != 1)
         s << " (in variable" << currentSolver_->outputSlots[i].variableNo << ")";
@@ -78,14 +90,16 @@ generateDiagram(std::stringstream &result, std::vector<std::tuple<int,int,int,So
     result << lineStart.str() << "│\n";
   }
 
+  // maybe todo for later: show also internal connections of all slots to the first subsolver
+
   // print the output slot connections of the solver
-  std::vector<solver_t::OutputConnection> &outputConnections = currentSolver_->outputConnections;
+  std::vector<solver_t::OutputConnectionRepresentation> &outputConnections = currentSolver_->outputConnections;
   if (!outputConnections.empty())
   {
     result << lineStart.str() << "│  slot connections: \n";
     for (int i = 0; i < outputConnections.size(); i++)
     {
-      if (outputConnections[i].type == solver_t::OutputConnection::output_connection_t::ba)
+      if (outputConnections[i].type == solver_t::OutputConnectionRepresentation::output_connection_t::ba)
       {
         result << lineStart.str() << "│  " <<  outputConnections[i].toSlot << "¤ <- ¤" << outputConnections[i].fromSlot << "\n";
       }
@@ -95,14 +109,14 @@ generateDiagram(std::stringstream &result, std::vector<std::tuple<int,int,int,So
 
         switch (outputConnections[i].type)
         {
-        case solver_t::OutputConnection::output_connection_t::ba:
-        case solver_t::OutputConnection::output_connection_t::ab:
+        case solver_t::OutputConnectionRepresentation::output_connection_t::ba:
+        case solver_t::OutputConnectionRepresentation::output_connection_t::ab:
           result << " -> ";
           break;
-        case solver_t::OutputConnection::output_connection_t::bidirectionalReuse:
+        case solver_t::OutputConnectionRepresentation::output_connection_t::bidirectionalReuse:
           result << " <=> ";
           break;
-        case solver_t::OutputConnection::output_connection_t::bidirectionalCopy:
+        case solver_t::OutputConnectionRepresentation::output_connection_t::bidirectionalCopy:
           result << " <-> ";
           break;
 
@@ -128,7 +142,7 @@ generateDiagram(std::stringstream &result, std::vector<std::tuple<int,int,int,So
     bool isLastChildSolver = i == children.size()-1;
 
     // recursively call generateDiagram on subsolvers
-    generateDiagram(result, connectionLines, slotLineNosTerm[i], depth+1, isFirstChildSolver, isLastChildSolver);
+    generateDiagram(result, connectionLines, slotLineNosTerm[i], allSlotLineNos, depth+1, isFirstChildSolver, isLastChildSolver);
 
     // add end of subsolver
     if (isLastChildSolver)
@@ -142,29 +156,29 @@ generateDiagram(std::stringstream &result, std::vector<std::tuple<int,int,int,So
   {
     if (slotLineNosTerm.size() >= 2)
     {
-      if ((outputConnections[i].type == solver_t::OutputConnection::output_connection_t::ab
-        || outputConnections[i].type == solver_t::OutputConnection::output_connection_t::bidirectionalCopy
-        || outputConnections[i].type == solver_t::OutputConnection::output_connection_t::bidirectionalReuse)
+      if ((outputConnections[i].type == solver_t::OutputConnectionRepresentation::output_connection_t::ab
+        || outputConnections[i].type == solver_t::OutputConnectionRepresentation::output_connection_t::bidirectionalCopy
+        || outputConnections[i].type == solver_t::OutputConnectionRepresentation::output_connection_t::bidirectionalReuse)
         && slotLineNosTerm[0].size() > outputConnections[i].fromSlot
         && slotLineNosTerm[1].size() > outputConnections[i].toSlot
       )
       {
         int lineNoFrom = slotLineNosTerm[0][outputConnections[i].fromSlot];
         int lineNoTo = slotLineNosTerm[1][outputConnections[i].toSlot];
-        solver_t::OutputConnection::output_connection_t connectionType = outputConnections[i].type;
+        solver_t::OutputConnectionRepresentation::output_connection_t connectionType = outputConnections[i].type;
 
         connectionLines.push_back(std::make_tuple(
           lineNoFrom, lineNoTo, 0, connectionType
         ));
       }
-      else if (outputConnections[i].type == solver_t::OutputConnection::output_connection_t::ba
+      else if (outputConnections[i].type == solver_t::OutputConnectionRepresentation::output_connection_t::ba
         && slotLineNosTerm[1].size() > outputConnections[i].fromSlot
         && slotLineNosTerm[0].size() > outputConnections[i].toSlot
       )
       {
         int lineNoFrom = slotLineNosTerm[0][outputConnections[i].toSlot];
         int lineNoTo = slotLineNosTerm[1][outputConnections[i].fromSlot];
-        solver_t::OutputConnection::output_connection_t connectionType = outputConnections[i].type;
+        solver_t::OutputConnectionRepresentation::output_connection_t connectionType = outputConnections[i].type;
 
         connectionLines.push_back(std::make_tuple(
           lineNoFrom, lineNoTo, 0, connectionType
@@ -189,16 +203,17 @@ generateDiagram(std::stringstream &result, std::vector<std::tuple<int,int,int,So
   {
     slotLineNos = slotLineNosTerm[0];
   }
+  allSlotLineNos.insert(allSlotLineNos.end(), slotLineNos.begin(), slotLineNos.end());
 }
 
 //! produce the resulting file
-void SolverStructureVisualizer::
-writeDiagramFile(std::string filename)
+std::string SolverStructureVisualizer::
+getDiagram()
 {
-  LOG(DEBUG) << "SolverStructureVisualizer::writeDiagramFile() nDisableCalls_: " << nDisableCalls_ << ", enabled: " << enabled_ << ", currently at \"" << currentSolver_->name << "\".";
-
   if (!enabled_)
-    return;
+    return std::string("");
+
+  std::string diagram;
 
   // only produce file on rank 0
   if (DihuContext::ownRankNoCommWorld() == 0)
@@ -212,14 +227,16 @@ writeDiagramFile(std::string filename)
     // set to root of nested solvers to start printing from there
     currentSolver_ = solverRoot_;
 
+    LOG(DEBUG) << "SolverStructureVisualizer::getDiagram() nDisableCalls_: " << nDisableCalls_ << ", enabled: " << enabled_ << ", currently at \"" << currentSolver_->name << "\".";
+
     //! connection lines contains the following information <lineNoFrom, lineNoTo, lineColumn, lineType>
     // lineColumn is the horizontal position of the vertical data connection line
-    std::vector<std::tuple<int,int,int,SolverStructureVisualizer::solver_t::OutputConnection::output_connection_t>> connectionLines;
-    std::vector<int> slotLineNos;
+    std::vector<std::tuple<int,int,int,SolverStructureVisualizer::solver_t::OutputConnectionRepresentation::output_connection_t>> connectionLines;
+    std::vector<int> slotLineNos, allSlotLineNos;
     std::stringstream diagramWithoutDataLines;
 
     // call generateDiagram on the nested solvers
-    generateDiagram(diagramWithoutDataLines, connectionLines, slotLineNos);
+    generateDiagram(diagramWithoutDataLines, connectionLines, slotLineNos, allSlotLineNos);
 
     // restore currentSolver
     currentSolver_ = currentSolverBeforePrint;
@@ -254,7 +271,6 @@ writeDiagramFile(std::string filename)
 
     std::size_t pos = 0;
     std::string diagramWithoutDataLinesString = diagramWithoutDataLines.str();
-    std::string diagram;
     diagram += "Solver structure: \n\n";
 
     // print actual diagram, into diagram
@@ -282,19 +298,20 @@ writeDiagramFile(std::string filename)
       // here, line contains the current line that should be handled without "\n"
 
       // find out vertial data slot connection lines that go through this output line
-      std::vector<std::tuple<int,bool,bool,solver_t::OutputConnection::output_connection_t>> verticalLinesInCurrentRow;    //! <lineColumn,thisLineStartsHere,thisLineEndsHere,type>, lineColumn is the column in rhe current row where the vertical lines passes through
+      std::vector<std::tuple<int,bool,bool,solver_t::OutputConnectionRepresentation::output_connection_t>> verticalLinesInCurrentRow;    //! <lineColumn,thisLineStartsHere,thisLineEndsHere,type>, lineColumn is the column in rhe current row where the vertical lines passes through
       bool lineStartsHere = false;
       bool lineEndsHere = false;
-      solver_t::OutputConnection::output_connection_t lineType = solver_t::OutputConnection::output_connection_t::ab;
+      bool unconnectedSlotHere = false;
+      solver_t::OutputConnectionRepresentation::output_connection_t lineType = solver_t::OutputConnectionRepresentation::output_connection_t::ab;
       int lineColumn = 0;
-  #if 0
+#if 0
       // get maximum lineColumn
       int maximumLinePosition = 0;
       for (int i = 0; i < connectionLines.size(); i++)
       {
         maximumLinePosition = std::max((int)(std::get<2>(connectionLines[i])), maximumLinePosition);
       }
-  #endif
+#endif
       // loop over all connectionLines and see if they pass through the current line
       // collect all those rows into data structure verticalLinesInCurrentRow
       for (int i = 0; i < connectionLines.size(); i++)
@@ -321,7 +338,7 @@ writeDiagramFile(std::string filename)
         else if (startLineNo < currentLineNo && currentLineNo < endLineNo)
         {
           // vertical line passes through current row
-          solver_t::OutputConnection::output_connection_t lineType = std::get<3>(connectionLines[i]);
+          solver_t::OutputConnectionRepresentation::output_connection_t lineType = std::get<3>(connectionLines[i]);
           int lineColumn = std::get<2>(connectionLines[i]);
           verticalLinesInCurrentRow.push_back(std::make_tuple(lineColumn, false, false, lineType));
         }
@@ -329,8 +346,8 @@ writeDiagramFile(std::string filename)
 
       // sort all found lines according to their column
       std::sort(verticalLinesInCurrentRow.begin(), verticalLinesInCurrentRow.end(), [](
-        const std::tuple<int,bool,bool,solver_t::OutputConnection::output_connection_t> &a,
-        const std::tuple<int,bool,bool,solver_t::OutputConnection::output_connection_t> &b)
+        const std::tuple<int,bool,bool,solver_t::OutputConnectionRepresentation::output_connection_t> &a,
+        const std::tuple<int,bool,bool,solver_t::OutputConnectionRepresentation::output_connection_t> &b)
       {
         return std::get<0>(a) < std::get<0>(b);
       });
@@ -345,7 +362,7 @@ writeDiagramFile(std::string filename)
       std::string fillCharacter = " ";
       if (lineStartsHere || lineEndsHere)
       {
-        if (lineType == solver_t::OutputConnection::output_connection_t::bidirectionalReuse || lineType == solver_t::OutputConnection::output_connection_t::bidirectionalCopy)
+        if (lineType == solver_t::OutputConnectionRepresentation::output_connection_t::bidirectionalReuse)
         {
           fillCharacter = "═";
         }
@@ -354,6 +371,10 @@ writeDiagramFile(std::string filename)
           fillCharacter = "─";
         }
       }
+      else if (std::find(allSlotLineNos.begin(), allSlotLineNos.end(), currentLineNo) != allSlotLineNos.end())
+      {
+        unconnectedSlotHere = true;
+      }
 
       // if the line is yet too short, add fillCharacter until is has the correct length
       if (requiredLineLength > lineLength)
@@ -361,11 +382,13 @@ writeDiagramFile(std::string filename)
         for (int i = 0; i < requiredLineLength - lineLength; i++)
         {
           // starting tip of arrow if the line starts or ends in the current row and has the according type
-          if (i == 0 && lineStartsHere && lineType == solver_t::OutputConnection::output_connection_t::ba)
+          if (i == 0 && lineStartsHere && (lineType == solver_t::OutputConnectionRepresentation::output_connection_t::ba
+            || lineType == solver_t::OutputConnectionRepresentation::output_connection_t::bidirectionalCopy))
           {
             line += "<";
           }
-          else if (i == 0 && lineEndsHere && lineType == solver_t::OutputConnection::output_connection_t::ab)
+          else if (i == 0 && lineEndsHere && (lineType == solver_t::OutputConnectionRepresentation::output_connection_t::ab
+            || lineType == solver_t::OutputConnectionRepresentation::output_connection_t::bidirectionalCopy))
           {
             line += "<";
           }
@@ -396,8 +419,7 @@ writeDiagramFile(std::string filename)
           std::string space = " ";
           if (lineCrosses || ( (lineStartsHere || lineEndsHere) && i <= lineColumn))
           {
-            if (lineType == solver_t::OutputConnection::output_connection_t::bidirectionalReuse
-                || lineType == solver_t::OutputConnection::output_connection_t::bidirectionalCopy)
+            if (lineType == solver_t::OutputConnectionRepresentation::output_connection_t::bidirectionalReuse)
             {
               space = "═";
             }
@@ -406,6 +428,10 @@ writeDiagramFile(std::string filename)
               space = "─";
             }
           }
+          else if (unconnectedSlotHere && i == 0)
+          {
+            space = "x";
+          }
 
           // if there is a vertical line passing at the current position
           if (i == std::get<0>(verticalLinesInCurrentRow[linesIndex]))
@@ -413,7 +439,7 @@ writeDiagramFile(std::string filename)
             // depending on the type of the vertical line choose the right sign
             switch (std::get<3>(verticalLinesInCurrentRow[linesIndex]))
             {
-            case solver_t::OutputConnection::output_connection_t::bidirectionalReuse:
+            case solver_t::OutputConnectionRepresentation::output_connection_t::bidirectionalReuse:
               diagram += space;
               if (lineCrosses && !std::get<1>(verticalLinesInCurrentRow[linesIndex]) && !std::get<2>(verticalLinesInCurrentRow[linesIndex]))
               {
@@ -440,9 +466,9 @@ writeDiagramFile(std::string filename)
                 diagram += "║";
               }
               break;
-            case solver_t::OutputConnection::output_connection_t::ab:
-            case solver_t::OutputConnection::output_connection_t::ba:
-            case solver_t::OutputConnection::output_connection_t::bidirectionalCopy:
+            case solver_t::OutputConnectionRepresentation::output_connection_t::ab:
+            case solver_t::OutputConnectionRepresentation::output_connection_t::ba:
+            case solver_t::OutputConnectionRepresentation::output_connection_t::bidirectionalCopy:
               diagram += space;
               if (lineCrosses && !std::get<1>(verticalLinesInCurrentRow[linesIndex]) && !std::get<2>(verticalLinesInCurrentRow[linesIndex]))
               {
@@ -472,6 +498,10 @@ writeDiagramFile(std::string filename)
             };
             linesIndex++;
           }
+          else if (unconnectedSlotHere && i == 0)
+          {
+            diagram += std::string("x ");
+          }
           else
           {
             // there is no vertical line passing through the current position, add two spaces
@@ -479,6 +509,10 @@ writeDiagramFile(std::string filename)
             diagram += space;
           }
         }
+      }
+      else if (unconnectedSlotHere)
+      {
+        diagram += std::string("x");
       }
 
       // add endline at the end of the current line
@@ -491,6 +525,20 @@ writeDiagramFile(std::string filename)
 
     //LOG(DEBUG) << "solver structure without connections:\n" << diagramWithoutDataLines.str() << "\n";
     LOG(DEBUG) << "solver structure with connections:\n" << diagram << "\n";
+
+  }
+
+  return diagram;
+}
+
+//! produce the resulting file
+void SolverStructureVisualizer::
+writeDiagramFile(std::string filename)
+{
+  // only produce file on rank 0
+  if (DihuContext::ownRankNoCommWorld() == 0)
+  {
+    std::string diagram = getDiagram();
 
     // output diagram to a text file
     std::ofstream file;

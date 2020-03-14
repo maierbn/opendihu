@@ -22,7 +22,7 @@ template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
 CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::
 CellmlAdapterBase(DihuContext context) :
   context_(context), specificSettings_(PythonConfig(context_.getPythonConfig(), "CellML")),
-  data_(context_), cellmlSourceCodeGenerator_(data_.parameters())
+  data_(context_), cellmlSourceCodeGenerator_()
 {
   outputWriterManager_.initialize(this->context_, specificSettings_);
   LOG(TRACE) << "CellmlAdapterBase constructor";
@@ -32,7 +32,7 @@ template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
 CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::
 CellmlAdapterBase(DihuContext context, bool initializeOutputWriter) :
   context_(context), specificSettings_(PythonConfig(context_.getPythonConfig(), "CellML")),
-  data_(context_), cellmlSourceCodeGenerator_(data_.parameters())
+  data_(context_), cellmlSourceCodeGenerator_()
 {
 }
 
@@ -67,8 +67,30 @@ template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
 void CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::
 setOutputConnectorData(std::shared_ptr<::Data::OutputConnectorData<FunctionSpaceType,nStates_>> outputConnectorDataTimeStepping)
 {
-  // add all intermediate values for transfer (option "intermediatesForTransfer"), which are stored in this->data_.getOutputConnectorData()
+  // add all state and intermediate values for transfer (option "intermediatesForTransfer"), which are stored in this->data_.getOutputConnectorData()
   // at the end of outputConnectorDataTimeStepping
+
+  // loop over states that should be transferred
+  for (typename std::vector<::Data::ComponentOfFieldVariable<FunctionSpaceType,nStates_>>::iterator iter
+    = this->data_.getOutputConnectorData()->variable1.begin(); iter != this->data_.getOutputConnectorData()->variable1.end(); iter++)
+  {
+    // skip the first "states" entry of statesToTransfer, because this is the solution variable of the timestepping scheme and therefore
+    // the timestepping scheme has already added it to the outputConnectorDataTimeStepping object
+    if (iter == this->data_.getOutputConnectorData()->variable1.begin())
+      continue;
+
+    int componentNo = iter->componentNo;
+    std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nStates_>> values = iter->values;
+
+    values->setRepresentationGlobal();
+
+    // The state field variables have 'nStates_' components and can be reused.
+    std::string name = values->componentName(componentNo);
+    LOG(DEBUG) << "CellmlAdapterBase::setOutputConnectorData add FieldVariable " << *values << " for state " << componentNo << "," << name;
+
+    // add this component to outputConnector of data time stepping
+    outputConnectorDataTimeStepping->addFieldVariable(values, componentNo);
+  }
 
   // loop over intermediates that should be transferred
   for (typename std::vector<::Data::ComponentOfFieldVariable<FunctionSpaceType,nIntermediates_>>::iterator iter
@@ -154,13 +176,19 @@ initialize()
   initializeMappings(parametersUsedAsIntermediate, parametersUsedAsConstant,
                      statesForTransfer, intermediatesForTransfer, parametersForTransfer);
 
-  // parse the source code completely and store source code
-  cellmlSourceCodeGenerator_.initializeSourceCode(parametersUsedAsIntermediate, parametersUsedAsConstant, parametersInitialValues);
-
   // initialize data, i.e. states and intermediates field variables
   data_.setFunctionSpace(functionSpace_);
   data_.setIntermediateNames(cellmlSourceCodeGenerator_.intermediateNames());
   data_.initialize();
+
+  // get the data_.parameters() raw pointer
+  data_.prepareParameterValues();
+
+  // parse the source code completely and store source code, needs data initialized in order to store initial parameter values
+  cellmlSourceCodeGenerator_.initializeSourceCode(parametersUsedAsIntermediate, parametersUsedAsConstant, parametersInitialValues, nIntermediates_, data_.parameterValues());
+
+  // restore the raw pointer of data_.parameters()
+  data_.restoreParameterValues();
 
   initializeStatesToEquilibrium_ = this->specificSettings_.getOptionBool("initializeStatesToEquilibrium", false);
   if (initializeStatesToEquilibrium_)
@@ -299,6 +327,7 @@ initializeMappings(std::vector<int> &parametersUsedAsIntermediate, std::vector<i
         }
       }
 
+      LOG(DEBUG) << "parsed next item, entriesWithNos: " << entriesWithNos;
 
       // make sure that the first part is "paramater" or "outputConnectorSlot"
       if (entriesWithNos[1].first == "parameter" || entriesWithNos[1].first == "outputConnectorSlot")
@@ -311,6 +340,8 @@ initializeMappings(std::vector<int> &parametersUsedAsIntermediate, std::vector<i
       {
         int parameterNo = entriesWithNos[0].second;    // the no. of the parameter
         int fieldNo = entriesWithNos[1].second;        // the no. of the state, intermediate or constant
+
+        LOG(DEBUG) << "parameter " << parameterNo << " to \"" << entriesWithNos[1].first << "\", fieldNo " << fieldNo;
 
         if (entriesWithNos[1].first == "intermediate")
         {
@@ -342,6 +373,8 @@ initializeMappings(std::vector<int> &parametersUsedAsIntermediate, std::vector<i
 
         int slotNo = entriesWithNos[0].second;    // the no. of the output connector slot
         int fieldNo = entriesWithNos[1].second;        // the no. of the state, intermediate or constant
+
+        LOG(DEBUG) << "output connector slot " << slotNo << " to \"" << entriesWithNos[1].first << "\", fieldNo " << fieldNo;
 
         if (entriesWithNos[1].first == "state")
         {
@@ -474,7 +507,7 @@ setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2
   {
 
     // initialize states
-    if (this->specificSettings_.hasKey("statesInitialValues"))
+    if (this->specificSettings_.hasKey("statesInitialValues") && !this->specificSettings_.isEmpty("statesInitialValues"))
     {
       LOG(DEBUG) << "set initial values from config";
 

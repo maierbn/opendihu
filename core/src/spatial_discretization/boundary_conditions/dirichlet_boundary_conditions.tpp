@@ -412,10 +412,10 @@ initializeGhostElements()
     }
   }
 
-  VLOG(1) << "received ownGhostElements_: ";
+  LOG(DEBUG) << "received ownGhostElements_: ";
   for (typename std::vector<GhostElement>::iterator iter = ownGhostElements_.begin(); iter != ownGhostElements_.end(); iter++)
   {
-    VLOG(1) << "  non-BC: " << iter->nonBoundaryConditionDofsOfRankGlobalPetsc << ", BC: " << iter->boundaryConditionDofsGlobalPetsc
+    LOG(DEBUG) << "  non-BC dofs global: " << iter->nonBoundaryConditionDofsOfRankGlobalPetsc << ", bc dofs global: " << iter->boundaryConditionDofsGlobalPetsc
       << ", values: " << iter->boundaryConditionValues;
   }
 

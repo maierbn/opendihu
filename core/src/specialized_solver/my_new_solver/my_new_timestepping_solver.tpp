@@ -62,7 +62,7 @@ advanceTimeSpan()
     timeSteppingScheme_.advanceTimeSpan();
 
     // probably do something more here, maybe in a separate method:
-    executeMyHelperMethod();
+    //executeMyHelperMethod();
 
     // ...
 

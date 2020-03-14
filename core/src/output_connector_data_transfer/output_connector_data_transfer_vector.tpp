@@ -14,6 +14,8 @@ void SolutionVectorMapping<
             std::shared_ptr<std::vector<std::shared_ptr<OutputConnectorDataType2>>> transferableSolutionData2,
             OutputConnection &outputConnection)
 {
+  LOG(DEBUG) << "transfer vector (1)";
+
   VLOG(1) << "Solution vector mapping (output_connector_data_transfer_vector.tpp)";
   int nTransferableVariables = std::min(transferableSolutionData1->size(), transferableSolutionData2->size());
   if (transferableSolutionData1->size() != transferableSolutionData2->size())
@@ -47,6 +49,7 @@ void SolutionVectorMapping<
             std::shared_ptr<std::vector<std::shared_ptr<OutputConnectorDataType2>>> transferableSolutionData2,
             OutputConnection &outputConnection)
 {
+  LOG(DEBUG) << "transfer vector (2)";
   VLOG(1) << "Solution vector mapping (output_connector_data_transfer_vector.tpp)";
 
   if (transferableSolutionData2->empty())
@@ -74,6 +77,7 @@ void SolutionVectorMapping<
             std::shared_ptr<OutputConnectorDataType2> transferableSolutionData2,
             OutputConnection &outputConnection)
 {
+  LOG(DEBUG) << "transfer vector (3)";
   VLOG(1) << "Solution vector mapping (output_connector_data_transfer_vector.tpp)";
 
   if (transferableSolutionData1->empty())

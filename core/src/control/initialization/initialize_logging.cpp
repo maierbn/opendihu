@@ -64,19 +64,6 @@ void DihuContext::initializeLogging(int &argc, char *argv[])
     s << ownRankNoCommWorld_ << "/" << nRanksCommWorld_ << " ";
     prefix = s.str();
   }
-  
-#ifdef NDEBUG      // if release
-  if (nRanksCommWorld_ > 1)
-  {
-    conf.setGlobally(el::ConfigurationType::Format, prefix+": %msg");
-  }
-  else
-  {
-    conf.setGlobally(el::ConfigurationType::Format, "%msg");
-  }
-#else
-  conf.setGlobally(el::ConfigurationType::Format, prefix+"INFO : %msg");
-#endif
 
   // set location of log files
   std::string logFilesPath = "/tmp/logs/";   // must end with '/'
@@ -101,7 +88,31 @@ void DihuContext::initializeLogging(int &argc, char *argv[])
         argv[i] = argv[i+1];
       }
     }
+    else if (argument.substr(0,15) == "--log-no-prefix")
+    {
+      prefix = "";
+
+      // remove this argument
+      argc--;
+      for (int i = 2; i < argc; i++)
+      {
+        argv[i] = argv[i+1];
+      }
+    }
   }
+  
+#ifdef NDEBUG      // if release
+  if (nRanksCommWorld_ > 1)
+  {
+    conf.setGlobally(el::ConfigurationType::Format, prefix+": %msg");
+  }
+  else
+  {
+    conf.setGlobally(el::ConfigurationType::Format, "%msg");
+  }
+#else
+  conf.setGlobally(el::ConfigurationType::Format, prefix+"INFO : %msg");
+#endif
 
   if (nRanksCommWorld_ > 1)
   {

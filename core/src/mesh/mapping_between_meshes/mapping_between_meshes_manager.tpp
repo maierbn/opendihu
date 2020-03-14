@@ -428,7 +428,7 @@ finalizeMappingLowToHigh(std::shared_ptr<FieldVariableTargetType> fieldVariableT
     }
   }
 
-  VLOG(1) << "targetValues: " << targetValues;
+  VLOG(1) << "low to high, targetValues: " << targetValues;
 
   // set the computed values
   fieldVariableTarget->setValuesWithoutGhosts(componentNoTarget, targetValues);
@@ -500,6 +500,8 @@ finalizeMappingLowToHigh(std::shared_ptr<FieldVariableTargetType> fieldVariableT
 #endif
     }
   }
+
+  VLOG(1) << "low to high all, targetValues: " << targetValues;
 
   // set the computed values
   fieldVariableTarget->setValuesWithoutGhosts(targetValues);

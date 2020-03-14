@@ -170,7 +170,7 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,1> &xi, d
   
   return -xiTolerance <= xi1 && xi1 <= 1.0+xiTolerance;
 }
-
+/*
 // 2D deformable meshes and linear shape function
 template<typename MeshType>
 bool FunctionSpaceXi<MeshType, BasisFunction::LagrangeOfOrder<1>, Mesh::isDeformableWithDim<2,MeshType>>::
@@ -184,12 +184,14 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,2> &xi, d
   this->getElementGeometry(elementNo, geometryValues);
   
   MathUtility::quadrilateralGetPointCoordinates(geometryValues, point, xi);
- 
+
+  VLOG(2) << "pointIsInElement (2D linear) el no. " << elementNo << ", point " << point << ", xiTolerance: " << xiTolerance << " -> xi: " << xi;
+
   const double xi1 = xi[0];
   const double xi2 = xi[1];
 
   return (-xiTolerance <= xi1 && xi1 <= 1.0+xiTolerance) && (-xiTolerance <= xi2 && xi2 <= 1.0+xiTolerance);
-}
+}*/
 
 // 3D deformable meshes and linear shape function
 

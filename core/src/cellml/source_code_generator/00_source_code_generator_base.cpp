@@ -14,8 +14,8 @@
 #include "opencor.h"
 #endif
 
-CellmlSourceCodeGeneratorBase::CellmlSourceCodeGeneratorBase(std::shared_ptr<std::vector<double>> parameters) :
-  sourceFileSuffix_(".c"), parameters_(parameters)
+CellmlSourceCodeGeneratorBase::CellmlSourceCodeGeneratorBase() :
+  sourceFileSuffix_(".c")
 {
 
 }
@@ -40,20 +40,24 @@ void CellmlSourceCodeGeneratorBase::initializeNames(std::string inputFilename, i
 
 void CellmlSourceCodeGeneratorBase::initializeSourceCode(
   const std::vector<int> &parametersUsedAsIntermediate, const std::vector<int> &parametersUsedAsConstant,
-  std::vector<double> &parametersInitialValues
+  std::vector<double> &parametersInitialValues, int maximumNumberOfParameters, double *parameterValues
 )
 {
   parametersUsedAsIntermediate_.assign(parametersUsedAsIntermediate.begin(), parametersUsedAsIntermediate.end());
   parametersUsedAsConstant_.assign(parametersUsedAsConstant.begin(), parametersUsedAsConstant.end());
 
   nParameters_ = parametersUsedAsIntermediate_.size() + parametersUsedAsConstant_.size();
-  parameters_->resize(nParameters_*nInstances_);
+
+  if (nParameters_ > maximumNumberOfParameters)
+  {
+    LOG(FATAL) << "There can only be as many parameters as there are intermediates. This is an arbitrary restriction, if you need more parameters, try increasing the number of intermediates in the C++ source file."
+      << "Now you have (" << nParameters_ << " parameters and the maximum possible number is " << maximumNumberOfParameters << ".";
+  }
 
   // set initial values of parameters
-  VLOG(1) << ", parameters_->size(): " << parameters_->size();
-  if (parametersInitialValues.size() == parameters_->size())
+  if (parametersInitialValues.size() == nParameters_)
   {
-    std::copy(parametersInitialValues.begin(), parametersInitialValues.end(), parameters_->begin());
+    std::copy(parametersInitialValues.begin(), parametersInitialValues.end(), parameterValues);
     LOG(DEBUG) << "parameters size is matching for all instances";
   }
   else
@@ -70,11 +74,10 @@ void CellmlSourceCodeGeneratorBase::initializeSourceCode(
     {
       for (int j = 0; j < nParameters_; j++)
       {
-        parameters_->at(j*nInstances_ + instanceNo) = parametersInitialValues[j];
+        *(parameterValues+(j*nInstances_ + instanceNo)) = parametersInitialValues[j];
       }
     }
   }
-  VLOG(1) << "parameters_: " << parameters_;
 
   // parse all the source code from the model file
   this->parseSourceCodeFile();
@@ -229,11 +232,6 @@ const std::vector<std::string> &CellmlSourceCodeGeneratorBase::constantNames() c
 const int CellmlSourceCodeGeneratorBase::nParameters() const
 {
   return nParameters_;
-}
-
-std::shared_ptr<std::vector<double>> CellmlSourceCodeGeneratorBase::parameters()
-{
-  return parameters_;
 }
 
 const std::string CellmlSourceCodeGeneratorBase::sourceFilename() const

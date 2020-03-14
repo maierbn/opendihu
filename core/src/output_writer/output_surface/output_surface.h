@@ -17,6 +17,7 @@ class OutputSurface :
 public:
   typedef typename Solver::FunctionSpace FunctionSpace;
   typedef typename Solver::Data Data;
+  typedef typename ::Data::OutputSurface<Data> DataSurface;
   typedef typename Solver::OutputConnectorDataType OutputConnectorDataType;
 
   //! constructor
@@ -46,16 +47,29 @@ public:
 
 protected:
 
-  DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
-  Solver solver_;     ///< the contained solver object
+  //! find where the sampling points given in samplingPoints_ are located in the surface mesh
+  void initializeSampledPoints();
 
-  bool initialized_ = false;   ///< if this object is initialized
-  ::Data::OutputSurface<Data> data_;   ///< data object
-  bool ownRankInvolvedInOutput_;   ///< if the own rank should call the output writer, because surface meshes are output, it can be that the surface is only contained on a subset of ranks
-  int timeStepNo_;     ///< time step no for output writer
-  double currentTime_;   ///< current simulation time for output writer
+  //! output the actual sampling points to the file
+  void writeSampledPoints();
 
-  Manager outputWriterManager_; ///< manager object holding all output writers
+  DihuContext context_;               //< object that contains the python config for the current context and the global singletons meshManager and solverManager
+  Solver solver_;                     //< the contained solver object
+
+  bool initialized_ = false;          //< if this object is initialized
+  DataSurface data_;  //< data object
+  bool ownRankInvolvedInOutput_;      //< if the own rank should call the output writer, because surface meshes are output, it can be that the surface is only contained on a subset of ranks
+  std::shared_ptr<Partition::RankSubset> rankSubset_;  //< the ranks that are involved in computing the surface
+  int timeStepNo_;                    //< time step no for output writer
+  double currentTime_;                //< current simulation time for output writer
+
+  std::vector<std::shared_ptr<typename ::Data::OutputSurface<Data>::FunctionSpaceFirstFieldVariable>> functionSpaces_;    //< the 2D function spaces for the faces
+  std::vector<Vec3> sampledPoints_;   //< if set, the point coordinates where to sample the 2D surface mesh
+  std::vector<int> foundPointNos_;    //< the point nos of the found points
+  std::map<int,std::tuple<int,element_no_t,Vec2>> elementXis_;   //< the function space no (which face), element no and xi value for each sampling point on the local domain
+  std::string filename_;              //< filename of the file to write the sampled points to
+
+  Manager outputWriterManager_;       //< manager object holding all output writers
 
 };
 

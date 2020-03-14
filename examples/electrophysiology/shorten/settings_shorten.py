@@ -9,7 +9,7 @@
 import sys
 import numpy as np
 
-end_time = 1000   # [ms] end time of simulation
+end_time = 10_000   # [ms] end time of simulation
 n_elements = 200
 
 # global parameters
@@ -20,20 +20,20 @@ innervation_zone_width = 0.  # [cm]
 solver_type = "gmres"
 
 # timing parameters
-stimulation_frequency = 10.0      # stimulations per ms
+stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
 dt_1D = 7e-4                      # timestep width of diffusion
 dt_0D = 7e-4                      # timestep width of ODEs
 dt_splitting = 7e-4                      # overall timestep width of splitting
 
 dt_0D = 1e-3                        # [ms] timestep width of ODEs
-dt_1D = 3e-3                        # [ms] timestep width of diffusion
-dt_splitting = 3e-3                 # [ms] overall timestep width of strang splitting
+dt_1D = 1e-3                        # [ms] timestep width of diffusion
+dt_splitting = 1e-3                 # [ms] overall timestep width of strang splitting
 
 #dt_1D = 0.004                      # timestep width of diffusion
 #dt_0D = 0.002                     # timestep width of ODEs
 #dt_splitting = dt_1D                      # overall timestep width of splitting
 
-output_timestep = 4e-1             # timestep for output files
+output_timestep = 3             # timestep for output files
 #output_timestep = 1e-1             # timestep for output files
 
 # input files
@@ -44,8 +44,9 @@ output_timestep = 4e-1             # timestep for output files
 cellml_file = "../../input/new_slow_TK_2014_12_08.c"
 
 fiber_distribution_file = "../../input/MU_fibre_distribution_3780.txt"
-firing_times_file = "../../input/MU_firing_times_real.txt"
+#firing_times_file = "../../input/MU_firing_times_real.txt"
 #firing_times_file = "../../input/MU_firing_times_immediately.txt"
+firing_times_file = "../../input/MU_firing_times_always.txt"
 
 # parse command line options (scenario name)
 scenario_name = ""
@@ -62,19 +63,6 @@ if rank_no == 0:
 
   print("n elements: {}, end time: {}".format(n_elements,end_time))
   print("prefactor: ",Conductivity/(Am*Cm))
-
-# set values for cellml model
-if "shorten" in cellml_file or "TK" in cellml_file:
-  parameters_used_as_intermediate = [32]
-  parameters_used_as_constant = [65]
-  parameters_initial_values = [0.0, 1.0]
-  nodal_stimulation_current = 1200.
-  
-elif "hodgkin_huxley" in cellml_file:
-  parameters_used_as_intermediate = []
-  parameters_used_as_constant = [2]
-  parameters_initial_values = [0.0]
-  nodal_stimulation_current = 40.
 
 # load MU distribution and firing times
 fiber_distribution = np.genfromtxt(fiber_distribution_file, delimiter=" ")
@@ -121,7 +109,8 @@ def set_specific_states(n_nodes_global, time_step_no, current_time, states, fibe
       nodes_to_stimulate_global.insert(0, innervation_node_global-1)
     if innervation_node_global < n_nodes_global-1:
       nodes_to_stimulate_global.append(innervation_node_global+1)
-    print("rank {}, t: {}, stimulate fiber {} at nodes {}".format(rank_no, current_time, fiber_no, nodes_to_stimulate_global))
+    if rank_no == 0:
+      print("t: {}, stimulate fiber {} at nodes {}".format(current_time, fiber_no, nodes_to_stimulate_global))
 
     for node_no_global in nodes_to_stimulate_global:
       states[(node_no_global,0,0)] = 20.0   # key: ((x,y,z),nodal_dof_index,state_no)
@@ -159,8 +148,8 @@ config = {
     "logTimeStepWidthAsKey": "dt_splitting",
     "durationLogKey": "duration_total",
     "timeStepOutputInterval": 1000,
-    "connectedSlotsTerm1To2": [0],   # transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion)
-    "connectedSlotsTerm2To1": [0],   # transfer the same back
+    "connectedSlotsTerm1To2": [0,1,2,3],   # transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion), slot 1 = stress for output writer in diffusion
+    "connectedSlotsTerm2To1": [0,1,2,3],   # transfer the same back
     
     "Term1": {      # CellML
       "Heun" : {
@@ -175,14 +164,14 @@ config = {
         
         "CellML" : {
           "modelFilename":                          cellml_file,                                    # input C++ source file or cellml XML file
-          #"statesInitialValues":                   [],                                             # if given, the initial values for the the states of one instance
-          "statesInitialValues": [-81.5938, -81.5407, 7.166, 150.916, 6.03857, 12.6618, 131.577, 132.928, 0.00751472, 0.996183, 0.0292367, 0.569413, 0.731601, 0.0075721, 0.996084, 0.0294341, 0.567101, 0.730931, 1.75811e-06, 5.75735e-06, 7.07019e-06, 3.85884e-06, 7.89791e-07, 0.879053, 0.115147, 0.00565615, 0.000123483, 1.01094e-06, -916.582, 0.0284792, 56.5564, 0.0284779, 1687.31, 2.98725, 615, 615, 811, 811, 1342.65, 17807.7, 0.107772, 0.10777, 7243.03, 7243.03, 756.867, 756.867, 956.975, 956.975, 0.0343398, 0.0102587, 0.0136058, 0.0314258, 0.0031226, 0.00249808, 0.223377, 0.264145, 1.74046e-06],
+          "statesInitialValues":                   [],                                             # if given, the initial values for the the states of one instance
+          #"statesInitialValues": [-81.5938, -81.5407, 7.166, 150.916, 6.03857, 12.6618, 131.577, 132.928, 0.00751472, 0.996183, 0.0292367, 0.569413, 0.731601, 0.0075721, 0.996084, 0.0294341, 0.567101, 0.730931, 1.75811e-06, 5.75735e-06, 7.07019e-06, 3.85884e-06, 7.89791e-07, 0.879053, 0.115147, 0.00565615, 0.000123483, 1.01094e-06, -916.582, 0.0284792, 56.5564, 0.0284779, 1687.31, 2.98725, 615, 615, 811, 811, 1342.65, 17807.7, 0.107772, 0.10777, 7243.03, 7243.03, 756.867, 756.867, 956.975, 956.975, 0.0343398, 0.0102587, 0.0136058, 0.0314258, 0.0031226, 0.00249808, 0.223377, 0.264145, 1.74046e-06],
           "initializeStatesToEquilibrium":          False,                                           # if the equilibrium values of the states should be computed before the simulation starts
-          "initializeStatesToEquilibriumTimestepWidth": 1e-1,                                       # if initializeStatesToEquilibrium is enable, the timestep width to use to solve the equilibrium equation
+          "initializeStatesToEquilibriumTimestepWidth": 1e-4,                                       # if initializeStatesToEquilibrium is enable, the timestep width to use to solve the equilibrium equation
           
           # optimization parameters
           "optimizationType":                       "vc",                                           # "vc", "simd", "openmp" type of generated optimizated source file
-          "approximateExponentialFunction":         False,                                          # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
+          "approximateExponentialFunction":         True,                                          # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
           "compilerFlags":                          "-fPIC -O3 -march=native -shared ",             # compiler flags used to compile the optimized model code
           "maximumNumberOfThreads":                 0,                                              # if optimizationType is "openmp", the maximum number of threads to use. Default value 0 means no restriction.
           
@@ -202,20 +191,23 @@ config = {
           #"handleResultFunction": handleResult,
           #"handleResultCallInterval": 2e3,
           
-          # output connector slots
-          "statesForTransfer": 0,                                                                   # which state values to use in further computation, Shorten / Hodgkin Huxley: state 0 = Vm
-          "intermediatesForTransfer": [],                                                           # no intermediates are reused in different solvers
-          
           # parameters to the cellml model
-          "parametersUsedAsIntermediate":           parameters_used_as_intermediate,  #[32],        # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array.
-          "parametersUsedAsConstant":               parameters_used_as_constant,      #[65],        # list of constant value indices, that will be set by parameters
-          "parametersInitialValues":                parameters_initial_values,        #[0.0, 1.0],  # initial values for the parameters: I_Stim, l_hs
+          "mappings": {
+            ("parameter", 0):           ("constant", "wal_environment/I_HH"), # parameter 0 is constant 54 = I_stim
+            ("parameter", 1):           ("constant", "razumova/L_S"),         # parameter 1 is constant 67 = fiber stretch λ
+            ("outputConnectorSlot", 0): ("state", "wal_environment/vS"),      # expose state 0 = Vm to the operator splitting
+            ("outputConnectorSlot", 1): ("state", "razumova/Ca_SR1"),
+            ("outputConnectorSlot", 2): ("state", "razumova/Ca_SR2"),
+            ("outputConnectorSlot", 3): ("intermediate", "razumova/stress"),  # expose intermediate 12 = γ to the operator splitting
+          },
+          "parametersInitialValues":                [0.0,1.0],                                      #[0.0, 1.0],  # initial values for the parameters: I_Stim, l_hs
+          
           "meshName": "MeshFiber",                                                                  # name of the mesh to use, this has to be defined under config["Meshes"]
           "stimulationLogFilename": "out/stimulation.log",                                          # a file that will contain the times of stimulations
         },
         
         "OutputWriter" : [
-          {"format": "PythonFile", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/states", "binary": True, "onlyNodalValues": True},
+          #{"format": "PythonFile", "outputInterval": int(1./dt_0D*output_timestep), "filename": "out/states", "binary": True, "onlyNodalValues": True},
         ],
       },
     },
@@ -230,7 +222,7 @@ config = {
         "inputMeshIsGlobal": True,
         "dirichletBoundaryConditions": {},
         "solverName": "implicitSolver",
-        "nAdditionalFieldVariables": 0,
+        "nAdditionalFieldVariables": 3,
         
         "FiniteElementMethod" : {
           "meshName": "MeshFiber",
@@ -239,11 +231,13 @@ config = {
           "inputMeshIsGlobal": True,
         },
         "OutputWriter" : [
-          {"format": "PythonFile", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/vm", "binary": True, "onlyNodalValues": False},
-          #{"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/vm", "binary": True, "fixedFormat": False, "combineFiles": True},
+          #{"format": "PythonFile", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/vm", "binary": True, "onlyNodalValues": False},
+          {"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out2/vm", "binary": True, "fixedFormat": False, "combineFiles": True},
           #{"format": "ExFile", "filename": "out/fiber", "outputInterval": 1e5, "sphereSize": "0.02*0.02*0.02"},
         ],
       },
     },
   }
 }
+print("Cellml:",config["StrangSplitting"]["Term1"]["Heun"]["CellML"])
+print("prefactor: ",config["StrangSplitting"]["Term2"]["CrankNicolson"]["FiniteElementMethod"]["prefactor"])

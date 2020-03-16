@@ -29,6 +29,7 @@ config = {
     "dirichletBoundaryConditions": dirichlet_bc,
     "neumannBoundaryConditions": neumann_bc,
     "relativeTolerance": 1e-15,
+    "absoluteTolerance": 1e-10,         # 1e-10 absolute tolerance of the residual    
     "solverType": "gmres",
     "preconditionerType": "none",
     "maxIterations": 1e4,

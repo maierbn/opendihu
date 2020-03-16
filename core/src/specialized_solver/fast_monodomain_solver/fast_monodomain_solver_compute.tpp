@@ -3,16 +3,16 @@
 #include "partition/rank_subset.h"
 #include "control/diagnostic_tool/stimulation_logging.h"
 
-template<int nStates, int nIntermediates>
-void FastMonodomainSolverBase<nStates,nIntermediates>::
+template<int nStates, int nIntermediates, typename DiffusionTimeSteppingScheme>
+void FastMonodomainSolverBase<nStates,nIntermediates,DiffusionTimeSteppingScheme>::
 run()
 {
   initialize();
   advanceTimeSpan();
 }
 
-template<int nStates, int nIntermediates>
-void FastMonodomainSolverBase<nStates,nIntermediates>::
+template<int nStates, int nIntermediates, typename DiffusionTimeSteppingScheme>
+void FastMonodomainSolverBase<nStates,nIntermediates,DiffusionTimeSteppingScheme>::
 advanceTimeSpan()
 {
   LOG(TRACE) << "FastMonodomainSolver::advanceTimeSpan";
@@ -45,8 +45,8 @@ advanceTimeSpan()
   //this->outputWriterManager_.writeOutput(*this->data_, 0, currentTime_);
 }
 
-template<int nStates, int nIntermediates>
-void FastMonodomainSolverBase<nStates,nIntermediates>::
+template<int nStates, int nIntermediates, typename DiffusionTimeSteppingScheme>
+void FastMonodomainSolverBase<nStates,nIntermediates,DiffusionTimeSteppingScheme>::
 computeMonodomain()
 {
   LOG(TRACE) << "computeMonodomain";
@@ -60,7 +60,7 @@ computeMonodomain()
   TimeSteppingScheme::Heun<CellmlAdapterType> &heun = instances[0].timeStepping1().instancesLocal()[0];
   durationLogKey0D_ = heun.durationLogKey();
 
-  ImplicitEuler &implicitEuler = instances[0].timeStepping2().instancesLocal()[0];
+  DiffusionTimeSteppingScheme &implicitEuler = instances[0].timeStepping2().instancesLocal()[0];
   durationLogKey1D_ = implicitEuler.durationLogKey();
   double prefactor = implicitEuler.discretizableInTime().data().context().getPythonConfig().getOptionDouble("prefactor", 1.0);
 
@@ -112,8 +112,8 @@ computeMonodomain()
   currentTime_ = instances[0].endTime();
 }
 
-template<int nStates, int nIntermediates>
-void FastMonodomainSolverBase<nStates,nIntermediates>::
+template<int nStates, int nIntermediates, typename DiffusionTimeSteppingScheme>
+void FastMonodomainSolverBase<nStates,nIntermediates,DiffusionTimeSteppingScheme>::
 compute0D(double startTime, double timeStepWidth, int nTimeSteps, bool storeIntermediatesForTransfer)
 {
   Control::PerformanceMeasurement::start(durationLogKey0D_);
@@ -228,8 +228,8 @@ compute0D(double startTime, double timeStepWidth, int nTimeSteps, bool storeInte
   Control::PerformanceMeasurement::stop(durationLogKey0D_);
 }
 
-template<int nStates, int nIntermediates>
-void FastMonodomainSolverBase<nStates,nIntermediates>::
+template<int nStates, int nIntermediates, typename DiffusionTimeSteppingScheme>
+void FastMonodomainSolverBase<nStates,nIntermediates,DiffusionTimeSteppingScheme>::
 compute1D(double startTime, double timeStepWidth, int nTimeSteps, double prefactor)
 {
   // if all entries are at equilibrium, nothing will be computed, skip also 1D computation
@@ -243,11 +243,18 @@ compute1D(double startTime, double timeStepWidth, int nTimeSteps, double prefact
 
   LOG(DEBUG) << "compute1D(" << startTime << ")";
 
-  // perform implicit euler step
+  // depending on DiffusionTimeSteppingScheme either do Implicit Euler or Crank-Nicolson
+  // Implicit Euler step:
   // (K - 1/dt*M) u^{n+1} = -1/dt*M u^{n})
+  // Crank-Nicolson step:
+  // (1/2*K - 1/dt*M) u^{n+1} = (-1/2*K -1/dt*M) u^{n})
 
   // stencil K: 1/h*[_-1_  1  ]*prefactor
   // stencil M:   h*[_1/3_ 1/6]
+
+  bool useImplicitEuler = std::is_same<DiffusionTimeSteppingScheme,
+                            TimeSteppingScheme::ImplicitEuler<typename DiffusionTimeSteppingScheme::DiscretizableInTime>
+                          >::value;
 
   const double dt = timeStepWidth;
 
@@ -331,13 +338,29 @@ compute1D(double startTime, double timeStepWidth, int nTimeSteps, double prefact
         double h_left = fiberData_[fiberDataNo].elementLengths[valueNo-1];
         double k_left = 1./h_left*(1) * prefactor;
         double m_left = h_left*1./6;
-        a = (k_left - 1/dt*m_left);
+
+        if (useImplicitEuler)
+        {
+          a = (k_left - 1/dt*m_left);
+        }
+        else  // Crank-Nicolson
+        {
+          a = (k_left/2. - 1/dt*m_left);
+        }
 
         double k_right = 1./h_left*(-1) * prefactor;
         double m_right = h_left*1./3;
-        b += (k_right - 1/dt*m_right);
 
-        d += (-1/dt*m_left) * u_previous + (-1/dt*m_right) * u_center;
+        if (useImplicitEuler)
+        {
+          b += (k_right - 1/dt*m_right);
+          d += (-1/dt*m_left) * u_previous + (-1/dt*m_right) * u_center;
+        }
+        else  // Crank-Nicolson
+        {
+          b += (k_right/2. - 1/dt*m_right);
+          d += (-k_left/2. - 1/dt*m_left) * u_previous + (-k_right/2. - 1/dt*m_right) * u_center;
+        }
       }
 
       // contribution from right element
@@ -354,13 +377,29 @@ compute1D(double startTime, double timeStepWidth, int nTimeSteps, double prefact
         double h_right = fiberData_[fiberDataNo].elementLengths[valueNo];
         double k_right = 1./h_right*(1) * prefactor;
         double m_right = h_right*1./6;
-        c = (k_right - 1/dt*m_right);
+
+        if (useImplicitEuler)
+        {
+          c = (k_right - 1/dt*m_right);
+        }
+        else  // Crank-Nicolson
+        {
+          c = (k_right/2. - 1/dt*m_right);
+        }
 
         double k_left = 1./h_right*(-1) * prefactor;
         double m_left = h_right*1./3;
-        b += (k_left - 1/dt*m_left);
 
-        d += (-1/dt*m_left) * u_center + (-1/dt*m_right) * u_next;
+        if (useImplicitEuler)
+        {
+          b += (k_left - 1/dt*m_left);
+          d += (-1/dt*m_left) * u_center + (-1/dt*m_right) * u_next;
+        }
+        else  // Crank-Nicolson
+        {
+          b += (k_left/2. - 1/dt*m_left);
+          d += (-k_left/2. - 1/dt*m_left) * u_center + (-k_right/2. - 1/dt*m_right) * u_next;
+        }
       }
 
       if (valueNo == 0)
@@ -439,8 +478,8 @@ compute1D(double startTime, double timeStepWidth, int nTimeSteps, double prefact
   Control::PerformanceMeasurement::stop(durationLogKey1D_);
 }
 
-template<int nStates, int nIntermediates>
-bool FastMonodomainSolverBase<nStates,nIntermediates>::
+template<int nStates, int nIntermediates, typename DiffusionTimeSteppingScheme>
+bool FastMonodomainSolverBase<nStates,nIntermediates,DiffusionTimeSteppingScheme>::
 isCurrentPointStimulated(int fiberDataNo, double currentTime, bool currentPointIsInCenter)
 {
   FiberData &fiberDataCurrentPoint = fiberData_[fiberDataNo];
@@ -540,8 +579,8 @@ isCurrentPointStimulated(int fiberDataNo, double currentTime, bool currentPointI
 }
 
 // methods to improve speed by only computing states that are not in equilibrium
-template<int nStates, int nIntermediates>
-void FastMonodomainSolverBase<nStates,nIntermediates>::
+template<int nStates, int nIntermediates, typename DiffusionTimeSteppingScheme>
+void FastMonodomainSolverBase<nStates,nIntermediates,DiffusionTimeSteppingScheme>::
 equilibriumAccelerationUpdate(const Vc::double_v statesPreviousValues[], int pointBuffersNo)
 {
   // check if states for the current point are at their equilibrium
@@ -668,8 +707,8 @@ equilibriumAccelerationUpdate(const Vc::double_v statesPreviousValues[], int poi
   }
 }
 
-template<int nStates, int nIntermediates>
-bool FastMonodomainSolverBase<nStates,nIntermediates>::
+template<int nStates, int nIntermediates, typename DiffusionTimeSteppingScheme>
+bool FastMonodomainSolverBase<nStates,nIntermediates,DiffusionTimeSteppingScheme>::
 isEquilibriumAccelerationCurrentPointDisabled(bool stimulateCurrentPoint, int pointBuffersNo)
 {
   if (disableComputationWhenStatesAreCloseToEquilibrium_)

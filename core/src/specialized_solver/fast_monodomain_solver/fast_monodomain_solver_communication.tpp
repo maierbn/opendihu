@@ -4,8 +4,8 @@
 #include "control/diagnostic_tool/stimulation_logging.h"
 
 //! get element lengths and vmValues from the other ranks
-template<int nStates, int nIntermediates>
-void FastMonodomainSolverBase<nStates,nIntermediates>::
+template<int nStates, int nIntermediates, typename DiffusionTimeSteppingScheme>
+void FastMonodomainSolverBase<nStates,nIntermediates,DiffusionTimeSteppingScheme>::
 fetchFiberData()
 {
   VLOG(1) << "fetchFiberData";
@@ -189,8 +189,8 @@ fetchFiberData()
 }
 
 //! send vmValues data from fiberData_ back to the fibers where it belongs to and set in the respective field variable
-template<int nStates, int nIntermediates>
-void FastMonodomainSolverBase<nStates,nIntermediates>::
+template<int nStates, int nIntermediates, typename DiffusionTimeSteppingScheme>
+void FastMonodomainSolverBase<nStates,nIntermediates,DiffusionTimeSteppingScheme>::
 updateFiberData()
 {
   // copy Vm and other states/intermediates from compute buffers to fiberData_

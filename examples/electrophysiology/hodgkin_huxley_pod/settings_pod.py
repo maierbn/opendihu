@@ -195,6 +195,7 @@ config = {
             #"nElements": 0,
             "physicalExtend": 1.0,
             "relativeTolerance": 1e-15,
+            "absoluteTolerance": 1e-10,         # 1e-10 absolute tolerance of the residual    
             "meshName": "MeshFibre",
             "prefactor": Conductivity/(Am*Cm),
             },

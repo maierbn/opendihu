@@ -72,6 +72,34 @@ if variables.n_subdomains is not None:
   variables.n_subdomains_y = variables.n_subdomains[1]
   variables.n_subdomains_z = variables.n_subdomains[2]
   
+# automatically initialize partitioning if it has not been set
+if n_ranks != variables.n_subdomains:
+  
+  # create all possible partitionings to the given number of ranks
+  optimal_value = n_ranks**(1/3)
+  possible_partitionings = []
+  for i in range(1,n_ranks):
+    for j in range(1,n_ranks):
+      if i*j <= n_ranks and n_ranks % (i*j) == 0:
+        k = (int)(n_ranks / (i*j))
+        performance = (k-optimal_value)**2 + (j-optimal_value)**2 + 1.1*(i-optimal_value)**2
+        possible_partitionings.append([i,j,k,performance])
+        
+  # if no possible partitioning was found
+  if len(possible_partitionings) == 0:
+    if rank_no == 0:
+      print("\n\nError! Number of ranks {} does not match given partitioning {} x {} x {} = {} and no automatic partitioning could be done.\n\n".format(n_ranks, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z))
+    quit()
+    
+  # select the partitioning with the lowest value of performance which is the best
+  lowest_performance = possible_partitionings[0][3]+1
+  for i in range(len(possible_partitionings)):
+    if possible_partitionings[i][3] < lowest_performance:
+      lowest_performance = possible_partitionings[i][3]
+      variables.n_subdomains_x = possible_partitionings[i][0]
+      variables.n_subdomains_y = possible_partitionings[i][1]
+      variables.n_subdomains_z = possible_partitionings[i][2]
+
 # output information of run
 if rank_no == 0:
   print("scenario_name: {},  n_subdomains: {} {} {},  n_ranks: {},  end_time: {}".format(variables.scenario_name, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, n_ranks, variables.end_time))
@@ -121,6 +149,7 @@ config = {
     "diffusionTermSolver": {# solver for the implicit timestepping scheme of the diffusion time step
       "maxIterations":      1e4,
       "relativeTolerance":  1e-10,
+      "absoluteTolerance":  1e-10,         # 1e-10 absolute tolerance of the residual          
       "solverType":         variables.diffusion_solver_type,
       "preconditionerType": variables.diffusion_preconditioner_type,
       "dumpFilename":       "",   # "out/dump_"
@@ -128,6 +157,7 @@ config = {
     },
     "potentialFlowSolver": {# solver for the initial potential flow, that is needed to estimate fiber directions for the bidomain equation
       "relativeTolerance":  1e-10,
+      "absoluteTolerance":  1e-10,         # 1e-10 absolute tolerance of the residual          
       "maxIterations":      1e4,
       "solverType":         variables.potential_flow_solver_type,
       "preconditionerType": variables.potential_flow_preconditioner_type,
@@ -136,6 +166,7 @@ config = {
     },
     "mechanicsSolver": {   # solver for the dynamic mechanics problem
       "relativeTolerance":  1e-5,           # 1e-10 relative tolerance of the linear solver
+      "absoluteTolerance":  1e-10,          # 1e-10 absolute tolerance of the residual of the linear solver
       "solverType":         "preonly",      # type of the linear solver: cg groppcg pipecg pipecgrr cgne nash stcg gltr richardson chebyshev gmres tcqmr fcg pipefcg bcgs ibcgs fbcgs fbcgsr bcgsl cgs tfqmr cr pipecr lsqr preonly qcg bicg fgmres pipefgmres minres symmlq lgmres lcd gcr pipegcr pgmres dgmres tsirm cgls
       "preconditionerType": "lu",           # type of the preconditioner
       "maxIterations":       1e4,           # maximum number of iterations in the linear solver
@@ -171,8 +202,8 @@ config = {
             "durationLogKey":         "duration_monodomain",
             "timeStepOutputInterval": 100,
             "endTime":                variables.dt_splitting,
-            "connectedSlotsTerm1To2": [0],   # transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion)
-            "connectedSlotsTerm2To1": [0],   # transfer the same back, this avoids data copy
+            "connectedSlotsTerm1To2": [0,1],   # transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion)
+            "connectedSlotsTerm2To1": [0,1],   # transfer the same back, this avoids data copy
 
             "Term1": {      # CellML, i.e. reaction term of Monodomain equation
               "MultipleInstances": {
@@ -241,7 +272,7 @@ config = {
                 "instances": 
                 [{
                   "ranks":                         list(range(variables.n_subdomains_z)),    # these rank nos are local nos to the outer instance of MultipleInstances, i.e. from 0 to number of ranks in z direction
-                  "ImplicitEuler" : {
+                  "CrankNicolson" : {
                     "initialValues":               [],
                     #"numberTimeSteps":            1,
                     "timeStepWidth":               variables.dt_1D,  # 1e-5
@@ -255,6 +286,7 @@ config = {
                     "FiniteElementMethod" : {
                       "maxIterations":             1e4,
                       "relativeTolerance":         1e-10,
+                      "absoluteTolerance":         1e-10,         # 1e-10 absolute tolerance of the residual                          
                       "inputMeshIsGlobal":         True,
                       "meshName":                  "MeshFiber_{}".format(fiber_no),
                       "prefactor":                 get_diffusion_prefactor(fiber_no, motor_unit_no),  # resolves to Conductivity / (Am * Cm)
@@ -367,8 +399,6 @@ config = {
     }
   }
 }
-print("Cellml:",config["Coupling"]["Term1"]["MultipleInstances"]["instances"][0]["StrangSplitting"]["Term1"]["MultipleInstances"]["instances"][0]["Heun"]["CellML"])
-print("prefactor: ",config["Coupling"]["Term1"]["MultipleInstances"]["instances"][0]["StrangSplitting"]["Term2"]["MultipleInstances"]["instances"][0]["ImplicitEuler"]["FiniteElementMethod"]["prefactor"])
 
 
 # stop timer and calculate how long parsing lasted

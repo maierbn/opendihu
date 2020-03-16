@@ -208,6 +208,7 @@ config = {
     "implicitSolver": {
       "maxIterations": 1e4,
       "relativeTolerance": 1e-10,
+      "absoluteTolerance": 1e-10,         # 1e-10 absolute tolerance of the residual    
       "solverType": solver_type,
       "preconditionerType": "none",
       "dumpFormat": "default",

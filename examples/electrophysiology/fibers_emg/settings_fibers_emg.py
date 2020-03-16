@@ -141,6 +141,7 @@ config = {
   "Solvers": {
     "implicitSolver": {     # solver for the implicit timestepping scheme of the diffusion time step
       "relativeTolerance":  variables.diffusion_solver_reltol,
+      "absoluteTolerance":  1e-10,         # 1e-10 absolute tolerance of the residual    
       "maxIterations":      variables.diffusion_solver_maxit,
       "solverType":         variables.diffusion_solver_type,
       "preconditionerType": variables.diffusion_preconditioner_type,
@@ -149,6 +150,7 @@ config = {
     },
     "potentialFlowSolver": {# solver for the initial potential flow, that is needed to estimate fiber directions for the bidomain equation
       "relativeTolerance":  variables.potential_flow_solver_reltol,
+      "absoluteTolerance":  1e-10,         # 1e-10 absolute tolerance of the residual    
       "maxIterations":      variables.potential_flow_solver_maxit,
       "solverType":         variables.potential_flow_solver_type,
       "preconditionerType": variables.potential_flow_preconditioner_type,
@@ -157,6 +159,7 @@ config = {
     },
     "activationSolver": {   # solver for the static Bidomain equation and the EMG
       "relativeTolerance":  variables.emg_solver_reltol,
+      "absoluteTolerance":  1e-10,         # 1e-10 absolute tolerance of the residual    
       "maxIterations":      variables.emg_solver_maxit,
       "solverType":         variables.emg_solver_type,
       "preconditionerType": variables.emg_preconditioner_type,
@@ -164,7 +167,8 @@ config = {
       "dumpFormat":         "matlab",
     },
     "linearElasticitySolver": {   # solver for linear elasticity
-      "relativeTolerance":  1e-1,
+      "relativeTolerance":  1e-1
+      "absoluteTolerance":  1e-10,         # 1e-10 absolute tolerance of the residual    ,
       "maxIterations":      1e4,
       "solverType":         "gmres",
       "preconditionerType": "none",
@@ -278,6 +282,7 @@ config = {
                     "FiniteElementMethod" : {
                       "maxIterations":             1e4,
                       "relativeTolerance":         1e-10,
+                      "absoluteTolerance":         1e-10,         # 1e-10 absolute tolerance of the residual    
                       "inputMeshIsGlobal":         True,
                       "meshName":                  "MeshFiber_{}".format(fiber_no),
                       "prefactor":                 get_diffusion_prefactor(fiber_no, motor_unit_no),  # resolves to Conductivity / (Am * Cm)

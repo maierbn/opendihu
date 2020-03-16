@@ -148,14 +148,13 @@ def get_conductivity(fiber_no, mu_no):
   return Conductivity
 
 def get_specific_states_call_frequency(fiber_no, mu_no):
-  return stimulation_frequency
-  #stimulation_frequency = motor_units[mu_no % len(motor_units)]["stimulation_frequency"]
-  #sreturn stimulation_frequency*1e-3
+  stimulation_frequency = motor_units[mu_no % len(motor_units)]["stimulation_frequency"]
+  return stimulation_frequency*1e-3
 
 def get_specific_states_frequency_jitter(fiber_no, mu_no):
-  return 0
+  #return 0
   return motor_units[mu_no % len(motor_units)]["jitter"]
 
 def get_specific_states_call_enable_begin(fiber_no, mu_no):
-  return 0
+  #return 0
   return motor_units[mu_no % len(motor_units)]["activation_start_time"]*1e3

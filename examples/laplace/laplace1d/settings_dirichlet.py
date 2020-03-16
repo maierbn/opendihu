@@ -27,6 +27,7 @@ config = {
     "nodePositions": [[float(i)/n] for i in range(n+1)],
     "elements": [[i, i+1] for i in range(n)],
     "relativeTolerance": 1e-15,
+    "absoluteTolerance": 1e-10,         # 1e-10 absolute tolerance of the residual        
     "inputMeshIsGlobal": True,
     "prefactor": 1.0,
     "OutputWriter" : [

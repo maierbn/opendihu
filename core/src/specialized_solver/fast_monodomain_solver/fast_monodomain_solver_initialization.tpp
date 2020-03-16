@@ -3,8 +3,8 @@
 #include "partition/rank_subset.h"
 #include "control/diagnostic_tool/stimulation_logging.h"
 
-template<int nStates, int nIntermediates>
-FastMonodomainSolverBase<nStates,nIntermediates>::
+template<int nStates, int nIntermediates, typename DiffusionTimeSteppingScheme>
+FastMonodomainSolverBase<nStates,nIntermediates,DiffusionTimeSteppingScheme>::
 FastMonodomainSolverBase(const DihuContext &context) :
   specificSettings_(context.getPythonConfig()), nestedSolvers_(context),
   initialized_(false)
@@ -13,13 +13,23 @@ FastMonodomainSolverBase(const DihuContext &context) :
   this->outputWriterManager_.initialize(context, specificSettings_);
 }
 
-template<int nStates, int nIntermediates>
-void FastMonodomainSolverBase<nStates,nIntermediates>::
+template<int nStates, int nIntermediates, typename DiffusionTimeSteppingScheme>
+void FastMonodomainSolverBase<nStates,nIntermediates,DiffusionTimeSteppingScheme>::
 initialize()
 {
   // only initialize once
   if (initialized_)
     return;
+
+  if (!std::is_same<DiffusionTimeSteppingScheme,
+        TimeSteppingScheme::ImplicitEuler<typename DiffusionTimeSteppingScheme::DiscretizableInTime>
+      >::value
+     && !std::is_same<DiffusionTimeSteppingScheme,
+        TimeSteppingScheme::CrankNicolson<typename DiffusionTimeSteppingScheme::DiscretizableInTime>
+      >::value)
+  {
+    LOG(FATAL) << "Timestepping scheme of diffusion in FastMonodomainSolver must be either ImplicitEuler or CrankNicolson!";
+  }
 
   // add this solver to the solvers diagram, which is a SVG file that will be created at the end of the simulation.
   DihuContext::solverStructureVisualizer()->addSolver("FastMonodomainSolver");
@@ -335,8 +345,8 @@ initialize()
   initialized_ = true;
 }
 
-template<int nStates, int nIntermediates>
-void FastMonodomainSolverBase<nStates,nIntermediates>::
+template<int nStates, int nIntermediates, typename DiffusionTimeSteppingScheme>
+void FastMonodomainSolverBase<nStates,nIntermediates,DiffusionTimeSteppingScheme>::
 initializeCellMLSourceFile()
 {
   // parse options

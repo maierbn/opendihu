@@ -11,7 +11,7 @@ namespace ModelOrderReduction
   public TimeSteppingSchemeOdeReduced<TimeSteppingImplicitType>
   {
   public:
-    typedef typename TimeSteppingImplicitType::DiscretizableInTime_Type DiscretizableInTimeType;
+    typedef typename TimeSteppingImplicitType::DiscretizableInTime DiscretizableInTimeType;
     
     //! constructor
     TimeSteppingSchemeOdeReducedImplicit(DihuContext context,std::string name);

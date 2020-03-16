@@ -22,7 +22,7 @@ class TimeSteppingSchemeOdeBaseDiscretizable:
   public TimeSteppingSchemeOdeBase<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>
 {
 public:
-  typedef DiscretizableInTimeType DiscretizableInTime_Type;
+  typedef DiscretizableInTimeType DiscretizableInTime;
   typedef typename DiscretizableInTimeType::FunctionSpace FunctionSpace;
   //typedef typename DiscretizableInTimeType::OutputConnectorDataType OutputConnectorDataType;
 

@@ -503,7 +503,10 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
     elif "slow_TK_2014" in variables.cellml_file:
       n_states_cellml = 56
     print("{} rank{}, partitioning: x{} x y{} x z{}".format(n_ranks, "s" if n_ranks > 1 else "", variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z))
-    print("{} x {} = {} fibers, per partition: {} x {} = {}".format(variables.n_fibers_x, variables.n_fibers_y, variables.n_fibers_total, variables.n_fibers_per_subdomain_x, variables.n_fibers_per_subdomain_y, variables.n_fibers_per_subdomain_x*variables.n_fibers_per_subdomain_y))
+    if n_ranks > 0:
+      print("{} x {} = {} fibers, per partition: {} x {} = {}".format(variables.n_fibers_x, variables.n_fibers_y, variables.n_fibers_total, variables.n_fibers_per_subdomain_x, variables.n_fibers_per_subdomain_y, variables.n_fibers_per_subdomain_x*variables.n_fibers_per_subdomain_y))
+    else:
+      print("{} x {} = {} fibers".format(variables.n_fibers_x, variables.n_fibers_y, variables.n_fibers_total))
     print("per fiber: 1D mesh    nodes global: {}, local: {}".format(variables.n_points_whole_fiber, n_points_in_subdomain_z(own_subdomain_coordinate_z)))
     print(" {} 3D mesh    nodes global: {} x {} x {} = {}, local: {} x {} x {} = {}".format("quadratic" if quadratic_3d_mesh else "   linear", 
       variables.n_points_3D_mesh_global_x, variables.n_points_3D_mesh_global_y, variables.n_points_3D_mesh_global_z, n_points_3D_mesh_global, 

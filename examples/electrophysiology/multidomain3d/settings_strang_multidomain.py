@@ -384,6 +384,7 @@ config = {
   "Solvers": {
     "potentialFlowSolver": {
       "relativeTolerance": 1e-10,
+      "absoluteTolerance": 1e-10,         # 1e-10 absolute tolerance of the residual          
       "maxIterations": 1e5,
       "solverType": "gmres",
       "preconditionerType": "none",
@@ -392,6 +393,7 @@ config = {
     },
     "activationSolver": {
       "relativeTolerance": 1e-5,
+      "absoluteTolerance": 1e-10,         # 1e-10 absolute tolerance of the residual          
       "maxIterations": 1e5,
       "solverType": "gmres",
       "preconditionerType": "none",

@@ -25,6 +25,7 @@ config = {
   "Solvers": {
     "linearSolver": {
       "relativeTolerance": 1e-4,
+      "absoluteTolerance": 1e-10,         # 1e-10 absolute tolerance of the residual    
       "maxIterations": 1e3,
       "solverType": "gmres",
       "preconditionerType": "sor"

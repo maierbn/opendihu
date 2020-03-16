@@ -43,7 +43,7 @@ public:
 /** The implementation of a monodomain solver as used in the fibers_emg example, number of states and intermediates is templated.
  *  This class contains all functionality except the reaction term. Deriving classes only need to implement compute0D.
   */
-template<int nStates, int nIntermediates>
+template<int nStates, int nIntermediates, typename DiffusionTimeSteppingScheme>
 class FastMonodomainSolverBase : public Runnable
 {
 public:
@@ -58,15 +58,6 @@ public:
     FiberFunctionSpace
   > CellmlAdapterType;
 
-  typedef TimeSteppingScheme::ImplicitEuler<          // fiber diffusion, note that implicit euler gives lower error in this case than crank nicolson
-    SpatialDiscretization::FiniteElementMethod<
-      Mesh::StructuredDeformableOfDimension<1>,
-      BasisFunction::LagrangeOfOrder<1>,
-      Quadrature::Gauss<2>,
-      Equation::Dynamic::IsotropicDiffusion
-    >
-  > ImplicitEuler;
-
   typedef Control::MultipleInstances<                       // fibers
     OperatorSplitting::Strang<
       Control::MultipleInstances<
@@ -75,7 +66,7 @@ public:
         >
       >,
       Control::MultipleInstances<
-        ImplicitEuler
+        DiffusionTimeSteppingScheme
       >
     >
   > NestedSolversType;

@@ -17,10 +17,11 @@ config = {
     "endTime": 1.0,
     
     "FiniteElementMethod" : {
-      "nElements": [n,n],
-      "physicalExtent": [4.0,4.0],
-      "relativeTolerance": 1e-15,
-      "prefactor": 0.1,
+      "nElements":         [n,n],         # number of elements in x and y direction
+      "physicalExtent":    [4.0,4.0],     # the size of the domain in physical space
+      "relativeTolerance": 1e-15,         # relative tolerance of the residual normal, respective to the initial residual norm, linear solver
+      "absoluteTolerance": 1e-10,         # 1e-10 absolute tolerance of the residual    
+      "prefactor":         0.1,           # prefactor c
     },
     "OutputWriter" : [
       #{"format": "Paraview", "interval": 1, "filename": "out", "binaryOutput": "false", "fixedFormat": False, "frequency": 100},

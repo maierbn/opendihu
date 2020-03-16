@@ -36,7 +36,7 @@ rebalance()
 
   // get information about finite element method object
   // first, define types
-  typedef typename DiffusionTimeStepping::DiscretizableInTime_Type FiniteElementMethodType;
+  typedef typename DiffusionTimeStepping::DiscretizableInTime FiniteElementMethodType;
   typedef typename FiniteElementMethodType::FunctionSpace FiberFunctionSpaceType;
   typedef typename DiffusionTimeStepping::Data::FieldVariableType DiffusionFieldVariableType;
 

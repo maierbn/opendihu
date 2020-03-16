@@ -22,6 +22,7 @@ Linear::Linear(PythonConfig specificSettings, MPI_Comm mpiCommunicator, std::str
 
   // parse options
   relativeTolerance_ = this->specificSettings_.getOptionDouble("relativeTolerance", 1e-5, PythonUtility::Positive);
+  absoluteTolerance_ = this->specificSettings_.getOptionDouble("absoluteTolerance", 1e-5, PythonUtility::Positive);
   maxIterations_ = this->specificSettings_.getOptionDouble("maxIterations", 10000, PythonUtility::Positive);
 
   //parse information to use for dumping matrices and vectors
@@ -117,7 +118,7 @@ void Linear::setupKsp(KSP ksp)
   ierr = PCSetFromOptions(pc); CHKERRV(ierr);
 
   //                                    relative tol,      absolute tol,  diverg tol.,   max_iterations
-  ierr = KSPSetTolerances (ksp, relativeTolerance_, PETSC_DEFAULT, PETSC_DEFAULT, maxIterations_); CHKERRV(ierr);
+  ierr = KSPSetTolerances (ksp, relativeTolerance_, absoluteTolerance_, PETSC_DEFAULT, maxIterations_); CHKERRV(ierr);
 
 }
 

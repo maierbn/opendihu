@@ -111,7 +111,7 @@ PyObject *PythonUtility::getOptionPyObject(const PyObject *settings, std::string
   }
   else
   {
-    LOG(WARNING) << "" << pathString << "[\"" << keyString << "\"] not set in \"" << Control::settingsFileName << "\". Assimung default value " << getString(defaultValue);
+    LOG(WARNING) << "" << pathString << "[\"" << keyString << "\"] not set in \"" << Control::settingsFileName << "\". Assuming default value " << getString(defaultValue);
     Py_CLEAR(key);
     return defaultValue;
   }

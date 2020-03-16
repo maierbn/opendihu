@@ -121,6 +121,7 @@ if "hodgkin_huxley" in variables.cellml_file:
   }
   variables.parameters_initial_values = [0.0]                         # initial value for stimulation current
   variables.nodal_stimulation_current = 40.                           # not used
+  variables.vm_value_stimulated = 20.                                 # to which value of Vm the stimulated node should be set (option "valueForStimulatedPoint" of FastMonodomainSolver)
 
 elif "shorten" in variables.cellml_file:
   # parameters: stimulation current I_stim, fiber stretch λ
@@ -131,6 +132,7 @@ elif "shorten" in variables.cellml_file:
   }
   variables.parameters_initial_values = [0.0, 1.0]                        # stimulation current I_stim, fiber stretch λ
   variables.nodal_stimulation_current = 1200.                             # not used
+  variables.vm_value_stimulated = 40.                                 # to which value of Vm the stimulated node should be set (option "valueForStimulatedPoint" of FastMonodomainSolver)
   
 elif "slow_TK_2014" in variables.cellml_file:   # this is (3a, "MultiPhysStrain", old tomo mechanics) in OpenCMISS
   # parameters: I_stim, fiber stretch λ
@@ -142,7 +144,7 @@ elif "slow_TK_2014" in variables.cellml_file:   # this is (3a, "MultiPhysStrain"
   }
   variables.parameters_initial_values = [0.0, 1.0]                    # wal_environment/I_HH = I_stim, razumova/L_S = λ
   variables.nodal_stimulation_current = 40.                           # not used
-  #variables.states_initial_values = [-81.0764, -81.0242, 7.25855, 150.928, 6.13908, 12.6374, 131.485, 132.853, 0.00809159, 0.995921, 0.0312117, 0.546801, 0.784615, 0.0081521, 0.995806, 0.0314177, 0.544509, 0.783771, 1.75163e-06, 5.90311e-06, 7.46021e-06, 4.19024e-06, 8.82585e-07, 0.875814, 0.118062, 0.00596817, 0.000134088, 1.12971e-06, -1580.24, 0.0284811, 53.9751, 0.0284799, 1687.43, 2.98746, 615, 615, 811, 811, 1283.85, 17808.2, 0.107779, 0.107778, 7243.03, 7243.03, 756.867, 756.867, 956.975, 956.975, 0.0343446, 0.0102602, 0.0136077, 0.0314302, 0.00312304, 0.00249843, 0.213378, 0.228239, 2.8029e-10]
+  variables.vm_value_stimulated = 40.                                 # to which value of Vm the stimulated node should be set (option "valueForStimulatedPoint" of FastMonodomainSolver)
   
 elif "Aliev_Panfilov_Razumova_2016_08_22" in variables.cellml_file :   # this is (3, "MultiPhysStrain", numerically more stable) in OpenCMISS, this only computes A1,A2,x1,x2 not the stress
   # parameters: I_stim, fiber stretch λ, fiber contraction velocity \dot{λ}
@@ -155,6 +157,7 @@ elif "Aliev_Panfilov_Razumova_2016_08_22" in variables.cellml_file :   # this is
   }
   variables.parameters_initial_values = [0, 1, 0]                     # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/velo = \dot{λ}
   variables.nodal_stimulation_current = 40.                           # not used
+  variables.vm_value_stimulated = 40.                                 # to which value of Vm the stimulated node should be set (option "valueForStimulatedPoint" of FastMonodomainSolver)
   
 elif "Aliev_Panfilov_Razumova_Titin" in variables.cellml_file:   # this is (4, "Titin") in OpenCMISS
   # parameters: I_stim, fiber stretch λ, fiber contraction velocity \dot{λ}
@@ -168,7 +171,8 @@ elif "Aliev_Panfilov_Razumova_Titin" in variables.cellml_file:   # this is (4, "
   }
   variables.parameters_initial_values = [0, 1, 0]                     # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/rel_velo = \dot{λ}
   variables.nodal_stimulation_current = 40.                           # not used
-  
+  variables.vm_value_stimulated = 40.                                 # to which value of Vm the stimulated node should be set (option "valueForStimulatedPoint" of FastMonodomainSolver)
+
 
 # callback functions
 # --------------------------

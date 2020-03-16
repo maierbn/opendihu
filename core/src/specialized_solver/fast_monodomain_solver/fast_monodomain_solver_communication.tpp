@@ -107,7 +107,9 @@ fetchFiberData()
       // get the data_.parameters() raw pointer
       innerInstances[j].discretizableInTime().data().prepareParameterValues();
 
-      double *parametersLocal = innerInstances[j].discretizableInTime().data().parameterValues();   // size of this array is fiberFunctionSpace->nDofsLocalWithoutGhosts() * nInstances
+      double *parameterValuesLocal = innerInstances[j].discretizableInTime().data().parameterValues();  
+      // size of this array is fiberFunctionSpace->nDofsLocalWithoutGhosts() * nIntermediates
+      // parameterValuesLocal has struct of array memory layout with space for a total of nIntermediates_ parameters [i0p0, i1p0, i2p0, ... i0p1, i1p1, i2p1, ...]
 
       // only the actual parameter values should be sent, not the rest of the parameters buffer
       // therefore allocate a send buffer with the according size
@@ -120,12 +122,15 @@ fetchFiberData()
         for (int parameterNo = 0; parameterNo < nParametersPerInstance; parameterNo++)
         {
           // store parameter values to send buffer
-          parametersSendBuffer[dofNoLocal*nParametersPerInstance + parameterNo] = parametersLocal[dofNoLocal*nIntermediates + parameterNo];
+          parametersSendBuffer[dofNoLocal*nParametersPerInstance + parameterNo] = parameterValuesLocal[parameterNo*fiberFunctionSpace->nDofsLocalWithoutGhosts() + dofNoLocal];
         }
       }
 
-      LOG(DEBUG) << "Gatherv of parameters to rank " << computingRank << ", send buffer: " << parametersSendBuffer << " contains " << nParametersLocal << " parameters "
-        << " " << nParametersPerInstance << " per instances with " << fiberFunctionSpace->nDofsLocalWithoutGhosts() << " local instances.";
+      if (VLOG_IS_ON(1))
+      {
+        VLOG(1) << "Gatherv of parameters to rank " << computingRank << ", send buffer: " << parametersSendBuffer << " contains " << nParametersLocal << " parameters "
+          << " " << nParametersPerInstance << " per instances with " << fiberFunctionSpace->nDofsLocalWithoutGhosts() << " local instances.";
+      }
 
       // send data
       MPI_Gatherv(parametersSendBuffer.data(), nParametersLocal, MPI_DOUBLE,

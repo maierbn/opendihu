@@ -79,7 +79,8 @@ void SolverStructureVisualizer::endChild()
 //! add the output connection information between two children to the current solver
 void SolverStructureVisualizer::addOutputConnection(std::shared_ptr<OutputConnection> outputConnection)
 {
-  LOG(DEBUG) << "SolverStructureVisualizer::addOutputConnection() nDisableCalls_: " << nDisableCalls_ << ", enabled: " << enabled_ << ", currently at \"" << currentSolver_->name << "\".";
+  if (currentSolver_)
+    LOG(DEBUG) << "SolverStructureVisualizer::addOutputConnection() nDisableCalls_: " << nDisableCalls_ << ", enabled: " << enabled_ << ", currently at \"" << currentSolver_->name << "\".";
 
   if (!enabled_)
     return;

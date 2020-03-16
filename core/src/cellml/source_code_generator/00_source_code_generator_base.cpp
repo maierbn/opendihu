@@ -43,10 +43,14 @@ void CellmlSourceCodeGeneratorBase::initializeSourceCode(
   std::vector<double> &parametersInitialValues, int maximumNumberOfParameters, double *parameterValues
 )
 {
+  // parametersInitialValues is the list of initial parameter values as given in the settings
+  
   parametersUsedAsIntermediate_.assign(parametersUsedAsIntermediate.begin(), parametersUsedAsIntermediate.end());
   parametersUsedAsConstant_.assign(parametersUsedAsConstant.begin(), parametersUsedAsConstant.end());
 
   nParameters_ = parametersUsedAsIntermediate_.size() + parametersUsedAsConstant_.size();
+
+  // nParameters_ is the number of parameters per instance as determined from mappings
 
   if (nParameters_ > maximumNumberOfParameters)
   {
@@ -54,31 +58,67 @@ void CellmlSourceCodeGeneratorBase::initializeSourceCode(
       << "Now you have (" << nParameters_ << " parameters and the maximum possible number is " << maximumNumberOfParameters << ".";
   }
 
+  LOG(DEBUG) << "nParameters_: " << nParameters_ << ", parametersInitialValues.size(): " << parametersInitialValues.size() << ", nIntermediates_: " << nIntermediates_ << ", nInstances_: " << nInstances_;
+
   // set initial values of parameters
   if (parametersInitialValues.size() == nParameters_)
   {
-    std::copy(parametersInitialValues.begin(), parametersInitialValues.end(), parameterValues);
-    LOG(DEBUG) << "parameters size is matching for all instances";
-  }
-  else
-  {
-    if (parametersInitialValues.size() != nParameters_)
-    {
-      LOG(WARNING) << "In CellML: There should be " << nParameters_ << " parameters but " << parametersInitialValues.size()
-        << " initial values are given by \"parametersInitialValues\". Using default values 0.";
-      parametersInitialValues.resize(nParameters_, 0.0);
-    }
-
+    LOG(DEBUG) << "parameters size is matching for one instances";
     LOG(DEBUG) << "copy parameters which were given only for one instance to all instances";
     for (int instanceNo = 0; instanceNo < nInstances_; instanceNo++)
     {
       for (int j = 0; j < nParameters_; j++)
       {
-        *(parameterValues+(j*nInstances_ + instanceNo)) = parametersInitialValues[j];
+        // parameterValues has struct of array memory layout with space for a total of nIntermediates_ parameters [i0p0, i1p0, i2p0, ... i0p1, i1p1, i2p1, ...]
+        parameterValues[j*nInstances_ + instanceNo] = parametersInitialValues[j];
+        
+        VLOG(1) << "  " << instanceNo << "," << j << " set index " << (j*nInstances_ + instanceNo) << " to value " << parametersInitialValues[j] << "=" << parameterValues[j*nInstances_ + instanceNo];
       }
     }
   }
-
+  else if (parametersInitialValues.size() == nParameters_ * nInstances_)
+  {
+    LOG(DEBUG) << "parameters size is matching for all instances";
+    for (int instanceNo = 0; instanceNo < nInstances_; instanceNo++)
+    {
+      for (int j = 0; j < nParameters_; j++)
+      {
+        // parameters are given in array of struct ordering with nParameters_ parameters per instance: [inst0p0, inst0p1, ... inst0pn, inst1p0, inst1p1, ...]
+        parameterValues[j*nInstances_ + instanceNo] = parametersInitialValues[instanceNo*nParameters_ + j];
+      }
+    }
+  }
+  else 
+  {
+    LOG(WARNING) << "In CellML: There should be " << nParameters_ << " parameters but " << parametersInitialValues.size()
+      << " initial values are given by \"parametersInitialValues\". Using default values 0.";
+    parametersInitialValues.resize(nParameters_, 0.0);
+  
+    LOG(DEBUG) << "copy parameters which were given only for one instance to all instances";
+    for (int instanceNo = 0; instanceNo < nInstances_; instanceNo++)
+    {
+      for (int j = 0; j < nParameters_; j++)
+      {
+        // parameterValues has struct of array memory layout with space for a total of nIntermediates_ parameters [i0p0, i1p0, i2p0, ... i0p1, i1p1, i2p1, ...]
+        parameterValues[j*nInstances_ + instanceNo] = parametersInitialValues[j];
+      }
+    }
+  }
+  
+#ifndef NDEBUG
+  std::stringstream s;
+  for (int instanceNo = 0; instanceNo < nInstances_; instanceNo++)
+  {
+    for (int j = 0; j < nParameters_; j++)
+    {
+      // parameters are given in array of struct ordering: [inst0p0, inst0p1, ... inst0pn, inst1p0, inst1p1, ...]
+      s << parameterValues[j*nInstances_ + instanceNo] << " ";
+    }
+    s << ",";
+  }
+  LOG(DEBUG) << "parameterValues (only up to nParameters=" << nParameters_ << " parameter, allocated space is for " << nIntermediates_ << " parameters: \n" << s.str();
+#endif  
+  
   // parse all the source code from the model file
   this->parseSourceCodeFile();
 

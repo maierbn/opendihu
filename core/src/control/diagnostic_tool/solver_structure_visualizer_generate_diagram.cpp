@@ -227,7 +227,8 @@ getDiagram()
     // set to root of nested solvers to start printing from there
     currentSolver_ = solverRoot_;
 
-    LOG(DEBUG) << "SolverStructureVisualizer::getDiagram() nDisableCalls_: " << nDisableCalls_ << ", enabled: " << enabled_ << ", currently at \"" << currentSolver_->name << "\".";
+    if (currentSolver_)
+      LOG(DEBUG) << "SolverStructureVisualizer::getDiagram() nDisableCalls_: " << nDisableCalls_ << ", enabled: " << enabled_ << ", currently at \"" << currentSolver_->name << "\".";
 
     //! connection lines contains the following information <lineNoFrom, lineNoTo, lineColumn, lineType>
     // lineColumn is the horizontal position of the vertical data connection line

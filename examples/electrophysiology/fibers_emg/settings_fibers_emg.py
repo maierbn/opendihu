@@ -311,6 +311,7 @@ config = {
       "firingTimesFile":          variables.firing_times_file,         # for FastMonodomainSolver, e.g. MU_firing_times_real.txt
       "onlyComputeIfHasBeenStimulated": True,                          # only compute fibers after they have been stimulated for the first time
       "disableComputationWhenStatesAreCloseToEquilibrium": True,       # optimization where states that are close to their equilibrium will not be computed again
+      "valueForStimulatedPoint":  variables.vm_value_stimulated,       # to which value of Vm the stimulated node should be set
     },
     "Term2": {        # Bidomain, EMG
       "StaticBidomainSolver": {       # version for fibers_emg

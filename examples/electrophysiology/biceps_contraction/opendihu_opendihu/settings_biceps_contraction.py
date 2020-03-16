@@ -78,8 +78,8 @@ if n_ranks != variables.n_subdomains:
   # create all possible partitionings to the given number of ranks
   optimal_value = n_ranks**(1/3)
   possible_partitionings = []
-  for i in range(1,n_ranks):
-    for j in range(1,n_ranks):
+  for i in range(1,n_ranks+1):
+    for j in range(1,n_ranks+1):
       if i*j <= n_ranks and n_ranks % (i*j) == 0:
         k = (int)(n_ranks / (i*j))
         performance = (k-optimal_value)**2 + (j-optimal_value)**2 + 1.1*(i-optimal_value)**2
@@ -202,8 +202,8 @@ config = {
             "durationLogKey":         "duration_monodomain",
             "timeStepOutputInterval": 100,
             "endTime":                variables.dt_splitting,
-            "connectedSlotsTerm1To2": [0,1],   # transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion)
-            "connectedSlotsTerm2To1": [0,1],   # transfer the same back, this avoids data copy
+            "connectedSlotsTerm1To2": [0,1,2],   # transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion)
+            "connectedSlotsTerm2To1": [0,None,2],   # transfer the same back, this avoids data copy
 
             "Term1": {      # CellML, i.e. reaction term of Monodomain equation
               "MultipleInstances": {
@@ -231,7 +231,7 @@ config = {
                       
                       # optimization parameters
                       "optimizationType":                       "vc",                                           # "vc", "simd", "openmp" type of generated optimizated source file
-                      "approximateExponentialFunction":         True,                                           # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
+                      "approximateExponentialFunction":         False,                                           # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
                       "compilerFlags":                          "-fPIC -O3 -march=native -shared ",             # compiler flags used to compile the optimized model code
                       "maximumNumberOfThreads":                 0,                                              # if optimizationType is "openmp", the maximum number of threads to use. Default value 0 means no restriction.
                       
@@ -282,7 +282,7 @@ config = {
                     "dirichletBoundaryConditions": {},                                       # old Dirichlet BC that are not used in FastMonodomainSolver: {0: -75.0036, -1: -75.0036},
                     "inputMeshIsGlobal":           True,
                     "solverName":                  "diffusionTermSolver",
-                    "nAdditionalFieldVariables":   1,
+                    "nAdditionalFieldVariables":   2,
                     "FiniteElementMethod" : {
                       "maxIterations":             1e4,
                       "relativeTolerance":         1e-10,
@@ -315,6 +315,7 @@ config = {
       "firingTimesFile":          variables.firing_times_file,         # for FastMonodomainSolver, e.g. MU_firing_times_real.txt
       "onlyComputeIfHasBeenStimulated": True,                          # only compute fibers after they have been stimulated for the first time
       "disableComputationWhenStatesAreCloseToEquilibrium": True,       # optimization where states that are close to their equilibrium will not be computed again      
+      "valueForStimulatedPoint":  variables.vm_value_stimulated,       # to which value of Vm the stimulated node should be set      
     },
     "Term2": {        # solid mechanics
       "MuscleContractionSolver": {

@@ -23,6 +23,9 @@ n_fibers_x_extract = 1
 if len(sys.argv) >= 3:
   input_filename = sys.argv[1]
   output_filename = sys.argv[2]
+else:
+  print("usage: extract_fibers.py <input filename> <output filename> <n_fibers_x target> [<offset>]")
+  quit()
 
 if len(sys.argv) >= 4:
   n_fibers_x_extract = (int)(sys.argv[3])
@@ -31,7 +34,7 @@ offset = -1  # -1 means compute
 if len(sys.argv) >= 5:
   offset = (int)(sys.argv[4])
   
-print("{} -> {}".format(input_filename, output_filename))
+print("input filename: {}\noutput filename: {}".format(input_filename, output_filename))
 
 with open(input_filename, "rb") as infile:
   

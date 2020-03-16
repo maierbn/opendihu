@@ -173,6 +173,9 @@ createLocalMatrix()
   ierr = MatGetLocalSize(this->globalMatrix_, &nRowsLocal, &nColumnsLocal); CHKERRV(ierr);
   LOG(DEBUG) << "matrix \"" << this->name_ << "\" created, size global: " << nRows << "x" << nColumns << ", local: " << nRowsLocal << "x" << nColumnsLocal;
 
+  if (nRows == 1 && nColumns == 1)
+    LOG(ERROR) << "Trying to create a " << nRows << "x" << nColumns << " matrix.";
+
   // get the local submatrix from the global matrix
   ierr = MatGetLocalSubMatrix(this->globalMatrix_, this->meshPartitionRows_->dofNosLocalIS(), this->meshPartitionColumns_->dofNosLocalIS(), &this->localMatrix_); CHKERRV(ierr);
 }

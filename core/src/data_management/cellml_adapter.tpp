@@ -106,7 +106,14 @@ prepareParameterValues()
 {
   this->parameters_->setRepresentationContiguous();
   PetscErrorCode ierr;
-  ierr = VecGetArray(this->parameters_->getValuesContiguous(), &parameterValues_); CHKERRV(ierr);
+  Vec contiguousVec = this->parameters_->getValuesContiguous();
+  ierr = VecGetArray(contiguousVec, &parameterValues_); CHKERRV(ierr);
+  
+#ifndef NDEBUG  
+  PetscInt nValues;
+  ierr = VecGetLocalSize(contiguousVec, &nValues); CHKERRV(ierr);
+  LOG(DEBUG) << "parameter values has " << nValues << " entries.";
+#endif
 }
 
 //! restore the parameterValues_ pointer, such that the field variable can be used again

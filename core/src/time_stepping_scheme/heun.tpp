@@ -57,6 +57,14 @@ void Heun<DiscretizableInTime>::advanceTimeSpan()
 
     VLOG(1) << "starting from solution (" << this->data_->solution() << "): " << *this->data_->solution();
 
+    {
+      std::vector<int> indices(10);
+      std::iota(indices.begin(), indices.end(), this->data_->functionSpace()->nDofsLocalWithoutGhosts()/2-5);
+      std::vector<VecD<DiscretizableInTime::nComponents()>> values;
+      this->data_->solution()->getValues(indices, values);
+      LOG(DEBUG) << "currentTime: " << currentTime << ", Heun 0D, previous values: " << values;
+    }
+
     // advance solution value to compute u* first
     // compute  delta_u = f(u_{t})
     // we call f(u_{t}) the "increment"
@@ -89,6 +97,7 @@ void Heun<DiscretizableInTime>::advanceTimeSpan()
 
     VLOG(1) << "final solution (" << this->data_->solution() << "): " << *this->data_->solution();
 
+    // check if the solution contains Nans or Inf values, only in debug target
 #ifndef NDEBUG
     if (this->data_->solution()->containsNanOrInf())
     {

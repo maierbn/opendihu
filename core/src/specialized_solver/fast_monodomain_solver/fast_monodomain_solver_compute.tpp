@@ -183,8 +183,7 @@ compute0D(double startTime, double timeStepWidth, int nTimeSteps, bool storeInte
       compute0DInstance_(fiberPointBuffers_[pointBuffersNo].states, fiberPointBuffersParameters_[pointBuffersNo],
                          currentTime, timeStepWidth, stimulateCurrentPoint,
                          argumentStoreIntermediates, fiberPointBuffersIntermediatesForTransfer_[pointBuffersNo],
-                         intermediatesForTransfer_);
-
+                         intermediatesForTransfer_, valueForStimulatedPoint_);
     }  // loop over timesteps
 
     equilibriumAccelerationUpdate(statesPreviousValues, pointBuffersNo);
@@ -310,6 +309,7 @@ compute1D(double startTime, double timeStepWidth, int nTimeSteps, double prefact
     // loop over entries / rows of matrices
     for (int valueNo = 0; valueNo < nValues; valueNo++)
     {
+     // new with CN
       double a = 0;
       double b = 0;
       double c = 0;
@@ -430,7 +430,6 @@ compute1D(double startTime, double timeStepWidth, int nTimeSteps, double prefact
           << " = (" << d << "-" << dIntermediate[valueNo-1]*a << ")/(" << b << "-" << cIntermediate[valueNo-1]*a << ") = " << (d - dIntermediate[valueNo-1]*a) << "/" << (b - cIntermediate[valueNo-1]*a);
       }
 #endif
-
     }
 
     //LOG(DEBUG) << "cIntermediate: " << cIntermediate;
@@ -459,6 +458,9 @@ compute1D(double startTime, double timeStepWidth, int nTimeSteps, double prefact
 
       previousValue = resultValue;
     }
+
+    int nPointBuffers = fiberPointBuffers_.size();
+    pointBuffersNo = int(nPointBuffers/2);
 
 #ifndef NDEBUG
     s.str("");

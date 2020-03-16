@@ -109,7 +109,7 @@ prepareParameterValues()
   Vec contiguousVec = this->parameters_->getValuesContiguous();
   ierr = VecGetArray(contiguousVec, &parameterValues_); CHKERRV(ierr);
   
-#ifndef 0
+#ifdef 0
   PetscInt nValues;
   ierr = VecGetLocalSize(contiguousVec, &nValues); CHKERRV(ierr);
   LOG(DEBUG) << "parameter values has " << nValues << " entries.";

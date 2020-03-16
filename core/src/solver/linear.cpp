@@ -22,7 +22,7 @@ Linear::Linear(PythonConfig specificSettings, MPI_Comm mpiCommunicator, std::str
 
   // parse options
   relativeTolerance_ = this->specificSettings_.getOptionDouble("relativeTolerance", 1e-5, PythonUtility::Positive);
-  absoluteTolerance_ = this->specificSettings_.getOptionDouble("absoluteTolerance", 1e-5, PythonUtility::Positive);
+  absoluteTolerance_ = this->specificSettings_.getOptionDouble("absoluteTolerance", 0, PythonUtility::NonNegative);  // 0 means disabled
   maxIterations_ = this->specificSettings_.getOptionDouble("maxIterations", 10000, PythonUtility::Positive);
 
   //parse information to use for dumping matrices and vectors

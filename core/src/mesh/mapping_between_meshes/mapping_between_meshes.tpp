@@ -146,14 +146,14 @@ MappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSourc
 
     targetMappingInfo_[sourceDofNoLocal] = targetMappingInfo;
 
-    //if (VLOG_IS_ON(2))
+    if (VLOG_IS_ON(2))
     {
       double scalingFactorsSum = 0;
       for (int targetDofIndex = 0; targetDofIndex < nDofsPerTargetElement; targetDofIndex++)
       {
         scalingFactorsSum += targetMappingInfo_[sourceDofNoLocal].targetElements[0].scalingFactors[targetDofIndex];
       }
-      LOG(INFO) << "  source dof local " << sourceDofNoLocal << ", pos: " << position << ", xi: " << xi
+      VLOG(2) << "  source dof local " << sourceDofNoLocal << ", pos: " << position << ", xi: " << xi
         << ", element no: " << targetMappingInfo.targetElements[0].elementNoLocal << ", scaling factors: " << targetMappingInfo_[sourceDofNoLocal].targetElements[0].scalingFactors
         << ", sum: " << scalingFactorsSum;
     }

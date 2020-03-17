@@ -72,7 +72,7 @@ MeshPartition(std::array<node_no_t,MeshType::dim()> nElementsLocal, std::array<g
     initializeHasFullNumberOfNodes();
 
     // determine localSizesOnRanks
-    std::array<std::vector<element_no_t>,MeshType::dim()> localSizesOnRanks;
+    std::array<std::vector<element_no_t>,MeshType::dim()> localSizesOnRanks;    // [dimensionIndex][rankNo]
     for (int i = 0; i < MeshType::dim(); i++)
     {
       localSizesOnRanks[i].resize(rankSubset->size());
@@ -86,7 +86,7 @@ MeshPartition(std::array<node_no_t,MeshType::dim()> nElementsLocal, std::array<g
     LOG(DEBUG) << "determined localSizesOnRanks: " << localSizesOnRanks;
     LOG(DEBUG) << "MeshType::dim(): " << MeshType::dim() << ", nRanks: " << nRanks_;
     
-    // create localSizesOnPartitions_ from localSizesOnRanks, they are not used, but to check if the program crashes here
+    // create localSizesOnPartitions_ from localSizesOnRanks
     for (int dimensionIndex = 0; dimensionIndex < MeshType::dim(); dimensionIndex++)
     {
       VLOG(1) << "dimensionIndex: " << dimensionIndex << ", resize to " << nRanks_[dimensionIndex];

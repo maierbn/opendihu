@@ -11,6 +11,8 @@ initialize(int offsetInGlobalNumberingPerRank)
     << ", global: " << this->meshPartition_->nNodesGlobal() << ", offsetInGlobalNumberingPerRank: " << offsetInGlobalNumberingPerRank
     << ", ghost dof nos global/petsc: " << this->meshPartition_->ghostDofNosGlobalPetsc();
 
+  VLOG(1) << "meshPartition: " << *this->meshPartition_;
+
   if (!nDofRequestedFromRanks_.empty())
   {
     LOG(FATAL) << "is already initialized";
@@ -60,7 +62,7 @@ initialize(int offsetInGlobalNumberingPerRank)
 
     dofNoLocalToDofNoNonBcGlobal_[componentNo].resize(nDofsLocalWithGhosts);
     dofNoLocalToDofNoNonBcLocal_[componentNo].resize(nDofsLocalWithGhosts);
-    boundaryConditionValues_[componentNo].resize(nDofsLocalWithGhosts);
+    boundaryConditionValues_[componentNo].resize(nDofsLocalWithGhosts, -2);  // these initial values should all be overwritten later, by -1 for not prescribed values or by the actual value
     isPrescribed_[componentNo].resize(nDofsLocalWithGhosts, false);
 
     // loop over local dofs
@@ -273,13 +275,18 @@ initialize(int offsetInGlobalNumberingPerRank)
           bool isLocal;
           dof_no_t requestedDofNoLocal = this->meshPartition_->getDofNoLocal(requestedDofNoGlobalPetsc, isLocal);
 
+          if (!isLocal)
+          {
+            LOG(FATAL) << "Error in partitioning, global dof no " << requestedDofNoGlobalPetsc << " is not on rank " << ownRankNo << ", but rank " << foreignRankNo << " thought it would be.";
+          }
+
           requestedDofsGlobalPetscSendBuffer[i][componentNo*nFromRank + requestedDofIndex] = dofNoLocalToDofNoNonBcGlobal_[componentNo][requestedDofNoLocal];
           // dofNoLocalToDofNoNonBcGlobal_[componentNo][requestedDofNoLocal] is -1 if it is a dirichlet boundary condition dof
 
           requestedDofsGlobalPetscSendBufferValues[i][componentNo*nFromRank + requestedDofIndex] = this->boundaryConditionValues_[componentNo][requestedDofNoLocal];
 
           VLOG(1) << " send to rank " << foreignRankNo << ", component " << componentNo << " requested dofNoGlobalPetsc: " << requestedDofNoGlobalPetsc
-            << ", requestedDofNoLocal: " << requestedDofNoLocal << " send dof " << dofNoLocalToDofNoNonBcGlobal_[componentNo][requestedDofNoLocal]
+            << ", requestedDofNoLocal: " << requestedDofNoLocal << " (isLocal: " << isLocal << " should be true), send dof " << dofNoLocalToDofNoNonBcGlobal_[componentNo][requestedDofNoLocal]
             << " and bc value " << this->boundaryConditionValues_[componentNo][requestedDofNoLocal] << " at sendBuffer index " << componentNo*nFromRank + requestedDofIndex;
         }
       }

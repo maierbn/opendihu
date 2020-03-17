@@ -27,7 +27,8 @@ public:
   static std::array<Vec3,MeshType::dim()> computeJacobian(const std::array<Vec3,FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement()> &geometryField,
                                                           const std::array<double,MeshType::dim()> xi)
   {
-    VLOG(3) << "computeJacobian generic for " << xi;
+    //VLOG(3) << "computeJacobian generic for " << xi;
+
     std::array<Vec3,MeshType::dim()> jacobian;
     // loop over columns
     for (int dimNo = 0; dimNo < MeshType::dim(); dimNo++)
@@ -37,8 +38,10 @@ public:
       {
         double coefficient = FunctionSpaceFunction<MeshType,BasisFunctionType>::dphi_dxi(dofIndex, dimNo, xi);
         jacobian[dimNo] += coefficient * geometryField[dofIndex];
-        VLOG(3) << "   col " << dimNo << " dof " << dofIndex << ", coeff: " << coefficient << ", node " << geometryField[dofIndex]
-         << " -> " << jacobian[dimNo];
+
+        if (VLOG_IS_ON(3))
+          VLOG(3) << "   col " << dimNo << " dof " << dofIndex << ", coeff: " << coefficient << ", node " << geometryField[dofIndex]
+            << " -> " << jacobian[dimNo];
       }
     }
 

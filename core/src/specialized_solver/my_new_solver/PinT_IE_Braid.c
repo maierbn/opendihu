@@ -88,7 +88,7 @@ int my_Step(braid_App        app,
    PetscReal tstop;              /* evolve to this time*/
    PetscInt level, i, solver;
    PetscReal deltaX, deltaT;
-   PetscReal * help;
+   // PetscReal * help;
 
    // get level and start and stop time from braid status
    braid_StepStatusGetLevel(status, &level);
@@ -142,9 +142,11 @@ int my_Step(braid_App        app,
 
    // put the calculated solution into braid vector u
    // VecGetArray(&(*((*app->implicitEulerSolvers)[solver]->data().solution()->valuesGlobal())),&(u->values));
-   VecGetArray(&(*((*app->implicitEulerSolvers)[solver]->data().solution()->valuesGlobal())),&help);
-   u->values=help;
-   VecRestoreArray(&(*((*app->implicitEulerSolvers)[solver]->data().solution()->valuesGlobal())),&help);
+   // VecGetArray(&(*((*app->implicitEulerSolvers)[solver]->data().solution()->valuesGlobal())),&help);
+   // u->values=help;
+   // VecRestoreArray(&(*((*app->implicitEulerSolvers)[solver]->data().solution()->valuesGlobal())),&help);
+   ierr =VecGetValues(solution->valuesGlobal(), u->size, solution->functionSpace()->meshPartition()->dofNosLocal().data(), u->values);  CHKERRQ(ierr);
+   PetscRealView(u->size, u->values, 0);
    deltaT = tstop - tstart;
    deltaX = (app->xstop - app->xstart) / (ustop->size - 1.0);
 

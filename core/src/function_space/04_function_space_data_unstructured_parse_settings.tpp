@@ -27,12 +27,12 @@ parseFromSettings(PythonConfig settings)
   bool listWarningIssued = false;    // if the warning about lists was already shown
 
   // get the first node position from the list
-  PyObject *pyNodePositions = settings.getOptionListBegin<PyObject *>("nodePositions");
+  PyObject *pyNodePositions = settings.template getOptionListBegin<PyObject *>("nodePositions");
 
   // loop over other entries of list
   for (;
       !settings.getOptionListEnd("nodePositions");
-      settings.getOptionListNext<PyObject *>("nodePositions", pyNodePositions))
+      settings.template getOptionListNext<PyObject *>("nodePositions", pyNodePositions))
   {
     if (!PythonUtility::isTypeList(pyNodePositions) && !listWarningIssued)
     {
@@ -61,12 +61,12 @@ parseFromSettings(PythonConfig settings)
   //  "elements": [[[0,0], [1,0], [2,1], [3,0]], [next element]]   # each node is [node no, version-at-that-node no] or just node-no then it assumes version no 0
 
   // get the first node position from the list
-  PyObject *pyElement = settings.getOptionListBegin<PyObject *>("elements");
+  PyObject *pyElement = settings.template getOptionListBegin<PyObject *>("elements");
 
   // loop over other entries of list
   for (;
       !settings.getOptionListEnd("elements");
-      settings.getOptionListNext<PyObject *>("elements", pyElement))
+      settings.template getOptionListNext<PyObject *>("elements", pyElement))
   {
     // get the python list that makes up the element, e.g. [[0,0], [1,0], [2,1], [3,0]]
     typedef std::array<PyObject *,this->nNodesPerElement()> PyElementNodes;

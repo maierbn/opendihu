@@ -51,7 +51,7 @@ MultipleInstances(DihuContext context) :
   std::vector<std::shared_ptr<PythonConfig>> instanceConfigs;
   
   // get the config for the first InstancesDataset instance from the list
-  PyObject *instanceConfig = specificSettings_.getOptionListBegin<PyObject *>("instances");
+  PyObject *instanceConfig = specificSettings_.template getOptionListBegin<PyObject *>("instances");
 
   int i = 0;
   for (;

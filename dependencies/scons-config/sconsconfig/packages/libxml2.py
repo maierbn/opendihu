@@ -34,7 +34,7 @@ int main(int argc, char* argv[]) {
 
     def check(self, ctx):
         env = ctx.env
-        ctx.Message('Checking for libxml2 ... ')
+        ctx.Message('Checking for libxml2 ...       ')
         self.check_options(env)
 
         res = super(libxml2, self).check(ctx)

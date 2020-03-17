@@ -606,7 +606,7 @@ materialAddAccelerationTermAndVelocityEquation()
     this->data_.velocities()->getElementValues(elementNoLocal, newVelocityValues);
 
     // debugging check
-#if 1
+#if 0
     //if reproducing this debugging check, add calls to startGhostManipulation and finishGhostManipulation on combinedVecSolution_
     // get the new displacement values for all dofs of the element
     std::array<std::array<double,nDisplacementsDofsPerElement>,3> newDisplacementValues1;

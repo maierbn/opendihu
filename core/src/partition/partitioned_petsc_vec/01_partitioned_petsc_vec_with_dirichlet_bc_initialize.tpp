@@ -506,4 +506,6 @@ createVector()
 
   // createVector acts like startGhostManipulation as it also gets the local vector (VecGhostGetLocalForm) to work on.
   this->currentRepresentation_ = Partition::values_representation_t::representationCombinedLocal;
+
+  LOG(DEBUG) << "createVector \"" << this->name_ << "\", global: " << vectorCombinedWithoutDirichletDofsGlobal_ << ", local: " << vectorCombinedWithoutDirichletDofsLocal_;
 }

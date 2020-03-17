@@ -9,7 +9,7 @@ namespace SpatialDiscretization
 
 template<typename Term,int nDisplacementComponents>
 void HyperelasticitySolver<Term,nDisplacementComponents>::
-materialComputeInternalVirtualWork()
+materialComputeInternalVirtualWork(bool communicateGhosts)
 {
   // compute Wint in solverVariableResidual_
   //  output is solverVariableResidual_, a normal Vec, no Dirichlet BC dofs, also accessible by combinedVecResidual_
@@ -49,8 +49,11 @@ materialComputeInternalVirtualWork()
   std::array<Vec3, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
 
   // set values to zero
-  combinedVecResidual_->zeroEntries();
-  combinedVecResidual_->startGhostManipulation();
+  if (communicateGhosts)
+  {
+    combinedVecResidual_->zeroEntries();
+    combinedVecResidual_->startGhostManipulation();
+  }
 
   static int evaluationNo = 0;  // counter how often this function was called
 
@@ -319,7 +322,10 @@ materialComputeInternalVirtualWork()
   }  // elementNoLocal
 
   // assemble result vector
-  combinedVecResidual_->finishGhostManipulation();
+  if (communicateGhosts)
+  {
+    combinedVecResidual_->finishGhostManipulation();
+  }
   //combinedVecResidual_->startGhostManipulation();
   //combinedVecResidual_->zeroGhostBuffer();
   //combinedVecResidual_->finishGhostManipulation();
@@ -337,8 +343,9 @@ materialComputeResidual(double loadFactor)
   //  input is solverVariableSolution_, a normal Vec, the same values have already been assigned to this->data_.displacements() and this->data_.pressure() (!)
   // before this method, values of u, v and p get stored to the data object by setUVP(solverVariableSolution_);
 
-  //LOG(TRACE) << "materialComputeResidual";
-  const bool outputValues = true;
+  LOG(DEBUG) << "materialComputeResidual";
+
+  const bool outputValues = false;
   const bool outputFiles = false;
   if (outputValues)
   {
@@ -356,7 +363,13 @@ materialComputeResidual(double loadFactor)
 
     combinedVecSolution_->dumpGlobalNatural(filename.str());
   }
-  materialComputeInternalVirtualWork();
+
+  // prepare combinedVecResidual_ where internal virtual work will be computed
+  combinedVecResidual_->zeroEntries();
+  combinedVecResidual_->startGhostManipulation();
+
+  materialComputeInternalVirtualWork(false);    // compute without communicating ghost values, because startGhostManipulation has been called
+
   // now, solverVariableResidual_, which is the globalValues() of combinedVecResidual_, contains δW_int
   // also the pressure equation residual has been set at the last component
 
@@ -374,6 +387,8 @@ materialComputeResidual(double loadFactor)
 
   if (nDisplacementComponents == 3)
   {
+    combinedVecResidual_->finishGhostManipulation();     // communicate and add up values in ghost buffers
+
     // compute F = δW_int - δW_ext,
     // δW_ext = int_∂Ω T_a phi_L dS was precomputed in initialize (materialComputeExternalVirtualWorkDead()), in variable externalVirtualWorkDead_
     // for static case, externalVirtualWorkDead_ = externalVirtualWorkDead_
@@ -387,6 +402,14 @@ materialComputeResidual(double loadFactor)
   else if (nDisplacementComponents == 6)
   {
     // for dynamic case, add acceleration term to residual
+
+    // add acceleration term (int_Ω rho_0 (v^(n+1) - v^(n)) / dt * phi^L * phi^M * δu^M dV) to solverVariableResidual_
+    // also add the velocity equation in the velocity slot
+    materialAddAccelerationTermAndVelocityEquation(false);
+
+    // the incompressibility equation has been added in the pressure slot by materialComputeInternalVirtualWork
+
+    combinedVecResidual_->finishGhostManipulation();     // communicate and add up values in ghost buffers
 
     // compute F = δW_int - δW_ext,dead + accelerationTerm
     // δW_ext = int_∂Ω T_a phi_L dS was precomputed in initialize, in variable externalVirtualWorkDead_
@@ -403,12 +426,6 @@ materialComputeResidual(double loadFactor)
 
       combinedVecResidual_->dumpGlobalNatural(filename.str());
     }
-
-    // add acceleration term (int_Ω rho_0 (v^(n+1) - v^(n)) / dt * phi^L * phi^M * δu^M dV) to solverVariableResidual_
-    // also add the velocity equation in the velocity slot
-    materialAddAccelerationTermAndVelocityEquation();
-
-    // the incompressibility equation has been added in the pressure slot by materialComputeInternalVirtualWork
   }
 
   // dump output vector to file
@@ -550,7 +567,7 @@ materialComputeExternalVirtualWorkDead()
 
 template<typename Term,int nDisplacementComponents>
 void HyperelasticitySolver<Term,nDisplacementComponents>::
-materialAddAccelerationTermAndVelocityEquation()
+materialAddAccelerationTermAndVelocityEquation(bool communicateGhosts)
 {
   assert (nDisplacementComponents == 6);
 
@@ -558,9 +575,11 @@ materialAddAccelerationTermAndVelocityEquation()
   // solverVariableSolution_
 
   //combinedVecSolution_->startGhostManipulation();
-
-  combinedVecResidual_->startGhostManipulation();      // communicate ghost buffers values back in place
-  combinedVecResidual_->zeroGhostBuffer();      // communicate ghost buffers values back in place
+  if (communicateGhosts)
+  {
+    combinedVecResidual_->startGhostManipulation();      // communicate ghost buffers values back in place
+    combinedVecResidual_->zeroGhostBuffer();      // communicate ghost buffers values back in place
+  }
 
   const int D = 3;  // dimension
   std::shared_ptr<DisplacementsFunctionSpace> functionSpace = this->data_.displacementsFunctionSpace();
@@ -719,7 +738,10 @@ materialAddAccelerationTermAndVelocityEquation()
     }  // L
   }  // elementNoLocal
 
-  combinedVecResidual_->finishGhostManipulation();     // communicate and add up values in ghost buffers
+  if (communicateGhosts)
+  {
+    combinedVecResidual_->finishGhostManipulation();     // communicate and add up values in ghost buffers
+  }
 
   //combinedVecSolution_->zeroGhostBuffer();
   //combinedVecSolution_->finishGhostManipulation();

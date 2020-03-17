@@ -439,25 +439,36 @@ transfer(const std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType1,nCom
     }
   }
 
-
   // transfer geometry field if it was set
   if (transferableSolutionData1->geometryField && !transferableSolutionData2Front->variable1.empty())
   {
-    LOG(DEBUG) << "transfer geometry field";
+    LOG(DEBUG) << "transfer geometry field (1)";
 
     // get source field variable, this is the same for all fibers
     typedef FieldVariable::FieldVariable<FunctionSpaceType1,3> FieldVariableSource;
     typedef FieldVariable::FieldVariable<FunctionSpaceType2,3> FieldVariableTarget;
 
     std::shared_ptr<FieldVariableSource> geometryFieldSource = transferableSolutionData1->geometryField;
+
+    // the following prepareMapping would not be necessary for mapping from high to low dimension, as is the case here, mapping from 3D domain to 1D fibers
     std::shared_ptr<FieldVariableTarget> geometryFieldTarget = std::make_shared<FieldVariableTarget>(transferableSolutionData2Front->variable1[0].values->functionSpace()->geometryField());
-
-
-    // perform the mapping
     DihuContext::meshManager()->template prepareMapping<FieldVariableSource,FieldVariableTarget>(geometryFieldSource, geometryFieldTarget);
 
-    // map the whole geometry field (all components), do not avoid copy
-    DihuContext::meshManager()->template map<FieldVariableSource,FieldVariableTarget>(geometryFieldSource, -1, geometryFieldTarget, -1, false);
+    // loop over vector of fibers
+    for (int fiberIndexI = 0; fiberIndexI < transferableSolutionData2->size(); fiberIndexI++)
+    {
+      for (int fiberIndexJ = 0; fiberIndexJ < (*transferableSolutionData2)[fiberIndexI]->size(); fiberIndexJ++)
+      {
+        // map from transferableSolutionData1->geometryField to transferableSolutionData2->variable1[0]->geometryField
+
+        typedef FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2a> FieldVariable2;
+        std::shared_ptr<FieldVariableTarget> geometryFieldTarget = std::make_shared<FieldVariableTarget>((*(*transferableSolutionData2)[fiberIndexI])[fiberIndexJ]->variable1[0].values->functionSpace()->geometryField());
+
+        // map the whole geometry field (all components), do not avoid copy
+        DihuContext::meshManager()->template map<FieldVariableSource,FieldVariableTarget>(geometryFieldSource, -1, geometryFieldTarget, -1, false);
+      }
+    }
+
     DihuContext::meshManager()->template finalizeMapping<FieldVariableSource,FieldVariableTarget>(geometryFieldSource, geometryFieldTarget);
   }
 }

@@ -391,8 +391,14 @@ finalizeMappingLowToHigh(std::shared_ptr<FieldVariableTargetType> fieldVariableT
   std::vector<double> targetFactorSums;
   targetFactorSum->getValuesWithoutGhosts(targetFactorSums);
 
+  std::stringstream info;
+
   for (dof_no_t targetDofNoLocal = 0; targetDofNoLocal != nDofsLocalTarget; targetDofNoLocal++)
   {
+    info << "  target dof " << targetDofNoLocal << ", divide value " << targetValues[targetDofNoLocal]
+      << " by " << targetFactorSums[targetDofNoLocal] << ": " << targetValues[targetDofNoLocal]/targetFactorSums[targetDofNoLocal];
+
+
     VLOG(2) << "  target dof " << targetDofNoLocal << ", divide value " << targetValues[targetDofNoLocal]
       << " by " << targetFactorSums[targetDofNoLocal] << ": " << targetValues[targetDofNoLocal]/targetFactorSums[targetDofNoLocal];
     if (fabs(targetFactorSums[targetDofNoLocal]) > 1e-12)

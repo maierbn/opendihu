@@ -190,7 +190,8 @@ protected:
   void checkSolution(Vec x);
 
   //! compute δW_int, input is in this->data_.displacements() and this->data_.pressure(), output is in solverVariableResidual_
-  void materialComputeInternalVirtualWork();
+  //! @param communicateGhosts if startGhostManipulation() and finishGhostManipulation() will be called on combinedVecResidual_ inside this method, if set to false, you have to do it manually before and after this method
+  void materialComputeInternalVirtualWork(bool communicateGhosts=true);
 
   //! compute the nonlinear function F(x), x=solverVariableSolution_, F=solverVariableResidual_
   //! solverVariableResidual_[0-2] contains δW_int - δW_ext, solverVariableResidual_[3] contains int_Ω (J-1)*Ψ dV
@@ -201,7 +202,8 @@ protected:
   void materialComputeExternalVirtualWorkDead();
 
   //! add the acceleration term that is needed for the dynamic problem to δW_int - δW_ext,dead, and secondly, add the velocity/displacement equation 1/dt (u^(n+1) - u^(n)) - v^(n+1) - v^n = 0
-  void materialAddAccelerationTermAndVelocityEquation();
+  //! @param communicateGhosts if startGhostManipulation() and finishGhostManipulation() will be called on combinedVecResidual_ inside this method, if set to false, you have to do it manually before and after this method
+  void materialAddAccelerationTermAndVelocityEquation(bool communicateGhosts=true);
 
   //! compute the jacobian of the Newton scheme
   void materialComputeJacobian();

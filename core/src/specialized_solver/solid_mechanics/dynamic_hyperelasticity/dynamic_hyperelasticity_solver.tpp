@@ -52,7 +52,10 @@ initialize()
   ierr = VecDuplicate(uvp_->valuesGlobal(), &accelerationTerm_); CHKERRV(ierr);
   ierr = VecDuplicate(uvp_->valuesGlobal(), &externalVirtualWorkDead_); CHKERRV(ierr);
 
-  uvp_->setRepresentationGlobal();
+  LOG(DEBUG) << "internalVirtualWork_: " << internalVirtualWork_;
+  LOG(DEBUG) << "accelerationTerm_: " << accelerationTerm_;
+  LOG(DEBUG) << "externalVirtualWorkDead_: " << externalVirtualWorkDead_;
+  LOG(DEBUG) << "uvp_: " << uvp_->valuesGlobal();
 
   // parse updateDirichletBoundaryConditionsFunction
   if (this->specificSettings_.hasKey("updateDirichletBoundaryConditionsFunction"))
@@ -184,7 +187,9 @@ setInitialValues()
 
     uvp_->setValues(3+componentNo, nDofsLocalWithoutGhosts, displacementsFunctionSpace->meshPartition()->dofNosLocal().data(), localValues.data());
   }
-  uvp_->setRepresentationGlobal();
+  uvp_->zeroGhostBuffer();
+  uvp_->finishGhostManipulation();
+  //uvp_->setRepresentationGlobal();
 }
 
 template<typename Term>

@@ -10,7 +10,7 @@
 
 namespace TimeSteppingScheme
 {
-
+#if 0
 QuasiStaticNonlinearElasticitySolverFebio::
 QuasiStaticNonlinearElasticitySolverFebio(DihuContext context) :
   context_(context["QuasiStaticNonlinearElasticitySolverFebio"]), data_(context_), initialized_(false)
@@ -791,5 +791,6 @@ getString(std::shared_ptr<typename QuasiStaticNonlinearElasticitySolverFebio::Ou
   //s << "<QuasiStaticNonlinearElasticitySolverFebio:" << *data.activation() << ">";
   return s.str();
 }
+#endif
 
 } // namespace TimeSteppingScheme

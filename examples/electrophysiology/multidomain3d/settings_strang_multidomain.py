@@ -16,13 +16,12 @@ innervation_zone_width = 1.  # cm
 innervation_zone_width = 0.  # cm
 
 # timing parameters
-stimulation_frequency = 10.0      # stimulations per ms
-dt_1D = 1e-3  #1e-3                    # timestep width of diffusion
-dt_0D = 3e-3  #3e-3                    # timestep width of ODEs
-dt_3D = 3e-3  #1e-3                    # overall timestep width of splitting
-output_timestep = 1e-1             # timestep for output files
-end_time = 500.0                   # end simulation time
-#end_time = dt_0D
+end_time = 4000.0                   # [ms] end time of the simulation
+stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
+dt_0D = 3e-3                        # [ms] timestep width of ODEs (1e-3)
+dt_1D = 1e-3                        # [ms] timestep width of diffusion (1e-3)
+dt_3D = 3e-3                        # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
+output_timestep_fibers = 1e-1       # [ms] timestep for output files
 
 Am = 0.2   # mesh_small
 Am = 0.1
@@ -178,8 +177,8 @@ else:
       print("fiber {} bounding box x: [{},{}], y: [{},{}], z:[{},{}]".format(fiber_no, min_x, max_x, min_y, max_y, min_z, max_z))
 
   relative_factors_file = "{}.compartment_relative_factors".format(os.path.basename(mesh_file))
-# determine relative factor fields fr(x) for compartments
 
+# determine relative factor fields fr(x) for compartments
 if os.path.exists(relative_factors_file):
   with open(relative_factors_file, "rb") as f:
     if rank_no == 0:
@@ -329,7 +328,7 @@ multidomain_solver = {
   "cm": Cm,
   "timeStepWidth": dt_0D,
   "endTime": end_time,
-  "timeStepOutputInterval": 50,
+  "timeStepOutputInterval": 1,
   "solverName": "activationSolver",
   "inputIsGlobal": True,
   "compartmentRelativeFactors": relative_factors.tolist(),
@@ -353,8 +352,8 @@ multidomain_solver = {
       "neumannBoundaryConditions": [],
       "diffusionTensor": [[      # sigma_i           # fiber direction is (1,0,0)
         8.93, 0, 0,
-        0, 0.893, 0,
-        0, 0, 0.893
+        0, 0.0, 0,
+        0, 0, 0.0
       ]], 
       "extracellularDiffusionTensor": [[      # sigma_e
         6.7, 0, 0,
@@ -365,7 +364,7 @@ multidomain_solver = {
   },
   
   "OutputWriter" : [
-    {"format": "Paraview", "outputInterval": (int)(1./dt_1D*output_timestep), "filename": "out/output", "binary": True, "fixedFormat": False, "combineFiles": False},
+    {"format": "Paraview", "outputInterval": (int)(1./dt_1D*output_timestep), "filename": "out/output", "binary": True, "fixedFormat": False, "combineFiles": True},
     #{"format": "ExFile", "filename": "out/fibre_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "sphereSize": "0.02*0.02*0.02"},
     #{"format": "PythonFile", "filename": "out/fibre_"+str(i), "outputInterval": int(1./dt_1D*output_timestep), "binary":True, "onlyNodalValues":True},
   ]
@@ -433,7 +432,7 @@ config = {
               
               # optimization parameters
               "optimizationType":                       "vc",                                           # "vc", "simd", "openmp" type of generated optimizated source file
-              "approximateExponentialFunction":         False,                                          # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
+              "approximateExponentialFunction":         True,                                           # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
               "compilerFlags":                          "-fPIC -O3 -march=native -shared ",             # compiler flags used to compile the optimized model code
               "maximumNumberOfThreads":                 0,                                              # if optimizationType is "openmp", the maximum number of threads to use. Default value 0 means no restriction.
               

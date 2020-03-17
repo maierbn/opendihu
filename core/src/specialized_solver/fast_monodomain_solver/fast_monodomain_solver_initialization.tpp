@@ -299,7 +299,8 @@ initialize()
           LOG(WARNING) << "There are " << statesForTransfer_.size() << " statesForTransfer specified in StrangSplitting, "
             << " but the diffusion solver has only " << variable1.size() << " slots to get these states. "
             << "This means that state no. " << statesForTransfer_[stateIndex] << ", \"" << name << "\" cannot be transferred." << std::endl
-            << "Maybe you need to increase \"nAdditionalFieldVariables\" in \"ImplicitEuler\" or reduce the number of entries in \"statesForTransfer\".";
+            << "Maybe you need to increase \"nAdditionalFieldVariables\" in the diffusion solver (\"ImplicitEuler\" or \"CrankNicolson\") "
+            << "or reduce the number of entries in \"statesForTransfer\".";
         }
         else
         {
@@ -329,7 +330,8 @@ initialize()
           LOG(WARNING) << "There are " << intermediatesForTransfer_.size() << " intermediatesForTransfer specified in StrangSplitting, "
             << " but the diffusion solver has only " << variable2.size() << " slots to get these intermediates. "
             << "This means that intermediate no. " << intermediatesForTransfer_[intermediateIndex] << ", \"" << name << "\" cannot be transferred." << std::endl
-            << "Maybe you need to increase \"nAdditionalFieldVariables\" in \"ImplicitEuler\" or reduce the number of entries in \"intermediatesForTransfer\".";
+            << "Maybe you need to increase \"nAdditionalFieldVariables\" in  the diffusion solver (\"ImplicitEuler\" or \"CrankNicolson\") "
+            << "or reduce the number of entries in \"intermediatesForTransfer\".";
 
         }
         else

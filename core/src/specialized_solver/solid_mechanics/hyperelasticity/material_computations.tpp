@@ -557,7 +557,7 @@ materialAddAccelerationTermAndVelocityEquation()
   // add to solverVariableResidual_ (=combinedVecResidual_) += int_Ω rho_0 * (v^(n+1),L - v^(n),L) / dt * phi^L * phi^M * δu^M dx
   // solverVariableSolution_
 
-  combinedVecSolution_->startGhostManipulation();
+  //combinedVecSolution_->startGhostManipulation();
 
   combinedVecResidual_->startGhostManipulation();      // communicate ghost buffers values back in place
   combinedVecResidual_->zeroGhostBuffer();      // communicate ghost buffers values back in place
@@ -721,8 +721,8 @@ materialAddAccelerationTermAndVelocityEquation()
 
   combinedVecResidual_->finishGhostManipulation();     // communicate and add up values in ghost buffers
 
-  combinedVecSolution_->zeroGhostBuffer();
-  combinedVecSolution_->finishGhostManipulation();
+  //combinedVecSolution_->zeroGhostBuffer();
+  //combinedVecSolution_->finishGhostManipulation();
   //LOG(DEBUG) << "combinedVecExternalVirtualWorkDead: " << combinedVecExternalVirtualWorkDead_->getString();
 
   //combinedVecExternalVirtualWorkDead_->startGhostManipulation();

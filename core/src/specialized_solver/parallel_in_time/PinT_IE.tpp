@@ -51,8 +51,7 @@ initialize()
     implicitEulerConfigs.push_back(implicitEulerConfig);
   }
 
-  // split communicator
-  /*
+  // split MPI communicator, create communicators with rank numbering in x domain
   MPI_Comm communicatorTotal = MPI_COMM_WORLD;
   MPI_Comm communicatorX;
   MPI_Comm communicatorT;
@@ -60,8 +59,11 @@ initialize()
   int nRanksInSpace = this->specificSettings_.getOptionInt("nRanksInSpace", 1, PythonUtility::Positive);
   braid_SplitCommworld(&communicatorTotal, nRanksInSpace, &communicatorX, &communicatorT);
 
-  //Partition::RankSubset rankSubsetX(communicatorX);
-  */
+  // create rankSubset and assign to partitionManager, to be used by all further created meshes and solvers
+  rankSubsetX_ = std::make_shared<Partition::RankSubset>(communicatorX);
+  //DihuContext::partitionManager()->setRankSubsetForNextCreatedPartitioning(rankSubsetX_);
+
+  LOG(DEBUG) << "rankSubsetX: " << *rankSubsetX_;
 
   // loop over parsed config objects of implicit eulers
   for (int i = 0; i < implicitEulerConfigs.size(); i++)
@@ -128,8 +130,7 @@ template<class NestedSolver>
 void PinT<NestedSolver>::
 run()
 {
-  // initialize everything
-  initialize();
+  // initialize settings
   PinT_initialize();
 
   braid_Core    core;
@@ -190,6 +191,9 @@ run()
   braid_Init(MPI_COMM_WORLD, comm, tstart, tstop, ntime, app,
          my_Step, my_Init, my_Clone, my_Free, my_Sum, my_SpatialNorm,
          my_Access, my_BufSize, my_BufPack, my_BufUnpack, &core);
+
+  // initialize implicit solvers
+  initialize();
 
   /* The first step before running simulations, is always to verify the wrapper tests */
   if(wrapper_tests)

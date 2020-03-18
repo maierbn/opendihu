@@ -139,14 +139,22 @@ RankSubset::RankSubset(MPI_Comm mpiCommunicator)
 
   // get own rank no
   MPIUtility::handleReturnValue(MPI_Comm_rank(mpiCommunicator_, &ownRankNo_), "MPI_Comm_rank");
+  
+  // get size
+  int nRanksInCommunicator;
+  MPIUtility::handleReturnValue(MPI_Comm_size(mpiCommunicator_, &nRanksInCommunicator), "MPI_Comm_size");
 
+  // fill rankNo_ set 
+  for (int rankNo = 0; rankNo < nRanksInCommunicator; rankNo++)
+    rankNo_.insert(rankNo);
+    
   // get name of communicator
   std::vector<char> communicatorNameStr(MPI_MAX_OBJECT_NAME);
   int communicatorNameLength = 0;
   MPIUtility::handleReturnValue(MPI_Comm_get_name(mpiCommunicator_, communicatorNameStr.data(), &communicatorNameLength), "MPI_Comm_get_name");
 
   communicatorName_ = std::string(communicatorNameStr.begin(), communicatorNameStr.begin()+communicatorNameLength);
-  LOG(DEBUG) << "created new rankSubset with communicator \"" << communicatorName_ << "\".";
+  LOG(DEBUG) << "created new rankSubset with communicator \"" << communicatorName_ << "\"" << (isWorldCommunicator_? " (is world communicator)" : "") << ".";
 }
 
 

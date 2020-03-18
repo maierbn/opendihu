@@ -70,6 +70,8 @@ protected:
     std::shared_ptr<Data>
   > data_;                                 //< the data objects that stores at least all field variables that should be output by output writers, one for each implicit euler
 
+  std::shared_ptr<Partition::RankSubset> rankSubsetX_;   //< a rank subset containing the MPI communicator with numbering of ranks in space, created by xbraid
+
   bool initialized_;                          //< if initialize() was already called
 
   double tstart_;

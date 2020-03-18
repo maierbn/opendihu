@@ -34,6 +34,7 @@ config = {
     "nspace": 8,
     "Initial Guess": [2,2,4,5,2,2,2,2],
     "option1": "blabla",              # another example option that is parsed in the data object
+    "nRanksInSpace": 1,            # number of processes that compute the spatial domain in parallel
     "TimeSteppingScheme": [
     {
       "ImplicitEuler": {

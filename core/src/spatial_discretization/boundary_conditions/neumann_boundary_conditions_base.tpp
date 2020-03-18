@@ -48,10 +48,10 @@ initialize(PythonConfig specificSettings, std::shared_ptr<FunctionSpaceType> fun
   bool inputMeshIsGlobal = specificSettings.getOptionBool("inputMeshIsGlobal", true);
 
   // loop over items in config list
-  PyObject *listItem = specificSettings.getOptionListBegin<PyObject*>(boundaryConditionsConfigKey);
+  PyObject *listItem = specificSettings.template getOptionListBegin<PyObject*>(boundaryConditionsConfigKey);
   for (;
         !specificSettings.getOptionListEnd(boundaryConditionsConfigKey);
-        specificSettings.getOptionListNext<PyObject*>(boundaryConditionsConfigKey, listItem))
+        specificSettings.template getOptionListNext<PyObject*>(boundaryConditionsConfigKey, listItem))
   {
     PythonConfig pythonConfigItem = PythonConfig(specificSettings, boundaryConditionsConfigKey, listItem);
 

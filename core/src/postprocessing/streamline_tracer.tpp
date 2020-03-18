@@ -29,12 +29,12 @@ StreamlineTracer(DihuContext context) :
   csvFilenameBeforePostprocessing_ = specificSettings_.getOptionString("csvFilenameBeforePostprocessing", "");
   
   // get the first seed position from the list
-  PyObject *pySeedPositions = specificSettings_.getOptionListBegin<PyObject *>("seedPoints");
+  PyObject *pySeedPositions = specificSettings_.template getOptionListBegin<PyObject *>("seedPoints");
 
   // loop over other entries of list
   for (;
       !specificSettings_.getOptionListEnd("seedPoints");
-      specificSettings_.getOptionListNext<PyObject *>("seedPoints", pySeedPositions))
+      specificSettings_.template getOptionListNext<PyObject *>("seedPoints", pySeedPositions))
   {
     Vec3 seedPosition = PythonUtility::convertFromPython<Vec3>::get(pySeedPositions);
     seedPositions_.push_back(seedPosition);

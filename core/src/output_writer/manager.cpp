@@ -33,12 +33,12 @@ void Manager::initialize(DihuContext context, PythonConfig settings, std::shared
     LOG(DEBUG) << "OutputWriter::Manager::initialize(), settings has key OutputWriter";
 
     // get the first value from the list
-    PyObject *writerSettings = settings.getOptionListBegin<PyObject *>("OutputWriter");
+    PyObject *writerSettings = settings.template getOptionListBegin<PyObject *>("OutputWriter");
 
     // loop over other values
     for (;
         !settings.getOptionListEnd("OutputWriter");
-        settings.getOptionListNext<PyObject *>("OutputWriter", writerSettings))
+        settings.template getOptionListNext<PyObject *>("OutputWriter", writerSettings))
     {
       if (VLOG_IS_ON(1))
       {

@@ -75,6 +75,7 @@ protected:
   double tstart_;
   double tstop_;
   int ntime_;
+  int nspace_;
 };
 
 #include "specialized_solver/my_new_solver/PinT_IE.tpp"

@@ -48,7 +48,6 @@ sconsconfig.select(
     packages.pythonPackages(required=False),   # all further python utils that can be installed via pip
     packages.Base64(required=True),    # Base64 is an encoding library that is needed for binary VTK output.
     packages.googletest(required=False),   # This is the testing framework.
-    #packages.libxml2(required=True),
     #packages.Sphinx(required=True),
     #packages.libcellml(required=True),# relies on libxml2 and SWIG
     packages.SEMT(required=False),     # This is a small C++ symbolic differentiation toolbox that is used for solid mechanics.
@@ -63,6 +62,8 @@ sconsconfig.select(
     packages.Vc(required=True),        # The Vc types for explicit vectorization
     packages.xbraid(required=False),   # framework for multigrid in time methods 
     packages.OpenCOR(required=False),  # binary that converts CellML files from xml to c
+    #packages.libxml2(required=False),  # parser for xml files, needed for precice
+    #packages.precice(required=False),  # numerical coupling library
     packages.EasyLoggingPP(required=True),   # This is the logging library, it has to be the last package to be included because it contains a source (.c) file that needs to be compiled and linked to opendihu and somehow otherwise scons-config does not work.
 )
 
@@ -87,6 +88,8 @@ vars.Add(BoolVariable('no_vectorization', 'Turn off SEE and AVX commands.', Fals
 vars.Add(BoolVariable('USE_CRAY_PAT', 'Compile with craypat regions.', False))
 vars.Add(BoolVariable('USE_HPL', 'Compile with -hpl option.', False))
 vars.Add(BoolVariable('USE_MEGAMOL', 'Use additional linker flags to link to the megamol source file.', False))
+vars.Add(BoolVariable('VERBOSE', 'Output raw shell commands for compilation.', False))
+vars.Add(BoolVariable('ph', 'Build precompiled headers.', False))
 vars.Add('mpicc', help='The mpicc compiler wrapper', default='mpicc')
 vars.Add('mpiCC', help='The mpic++ compiler wrapper', default='mpic++')
 vars.Add('cc', help='The c compiler', default='gcc')
@@ -122,6 +125,7 @@ if ARGUMENTS.get('VERBOSE') != '1' and tty_available:
   env['LINKCOMSTR'] = "\x1b[32mLinking   $TARGET\x1b[0m"
   env['ARCOMSTR'] = "\x1b[36mBuilding archive $TARGET\x1b[0m"
   env['RANLIBCOMSTR'] = "\x1b[36mCreating archive index\x1b[0m"
+  env['GCHSTR'] = "\x1b[32mCompiling header $SOURCE\x1b[0m"
            
 # set compiler, "CC" is C++, "cc" is C
 env['CXX'] = env['CC']
@@ -178,7 +182,7 @@ if os.environ.get("PE_ENV") == None:
   if "notifyset" not in env:
     env["notifyset"] = True
     target='notify-send'+str(random.random())
-    notify = env.Command(target=target, source = None, action = 'notify-send "compilation complete" || true')
+    notify = env.Command(target=target, source = None, action = 'notify-send "Compilation of core completed." || true')
     #AlwaysBuild('notify-send')
     if env["BUILD_TYPE"] == "debug":
       Depends(notify, 'core/build_debug/libopendihud.a')

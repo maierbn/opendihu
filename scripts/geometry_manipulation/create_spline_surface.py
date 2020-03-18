@@ -78,8 +78,8 @@ if __name__ == "__main__":
   bottom_clip = 70
   top_clip = 250
   if len(sys.argv) == 6:
-    bottom_clip = int(sys.argv[4])
-    top_clip = int(sys.argv[5])
+    bottom_clip = float(sys.argv[4])
+    top_clip = float(sys.argv[5])
   n_loops = 12
   
   n_points_u = 10          # x-y direction (along rings)

@@ -48,6 +48,8 @@ createPetscObjects()
   this->fiberDirection_ = this->functionSpace_->template createFieldVariable<3>("fiberDirection");
   this->extraCellularPotential_ = this->functionSpace_->template createFieldVariable<1>("phi_e");
   this->zero_ = this->functionSpace_->template createFieldVariable<1>("zero");
+
+  LOG(DEBUG) << "Vm field variable (" << this->transmembranePotential_ << ")";
 }
 
 template<typename FunctionSpaceType>

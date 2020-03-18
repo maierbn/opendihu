@@ -3,7 +3,7 @@
 #include <Python.h>  // has to be the first included header
 #include <iostream>
 
-#include "control/python_config.h"
+#include "control/python_config/python_config.h"
 
 namespace Solver
 {

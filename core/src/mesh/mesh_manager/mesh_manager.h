@@ -77,6 +77,10 @@ public:
 
 private:
 
+  //! Helper method to create a composite function space from the given settings, this uses the ManagerCompositeMesh helper class, in turn
+  template<typename FunctionSpaceType>
+  std::shared_ptr<FunctionSpaceType> createCompositeMesh(PythonConfig settings);
+
   struct NodePositionsFromFile
   {
     std::string filename;            ///< filename of the file to read
@@ -97,6 +101,31 @@ private:
   std::map<std::string, PythonConfig> meshConfiguration_;         ///< the python dicts for the meshes that were defined under "Meshes"
   std::map<std::string, std::shared_ptr<Mesh>> functionSpaces_;    ///< the managed function spaces with their string key
   std::map<std::string, NodePositionsFromFile> nodePositionsFromFile_;   ///< filename, offset, length, data of nodePosition data specified in a binary file
+};
+
+/** Helper class to create the composite meshes
+ */
+template<typename FunctionSpaceType>
+class ManagerCompositeMesh
+{
+public:
+
+  //! helper function to create a composite mesh
+  static std::shared_ptr<FunctionSpaceType> createCompositeMesh(std::shared_ptr<Partition::Manager> partitionManager,
+                                                                std::vector<std::shared_ptr<FunctionSpace::FunctionSpace<::Mesh::StructuredDeformableOfDimension<FunctionSpaceType::dim()>,typename FunctionSpaceType::BasisFunction>>> subFunctionSpaces);
+};
+
+/** Helper class to create the composite meshes
+ */
+template<int D, typename BasisFunctionType>
+class ManagerCompositeMesh<FunctionSpace::FunctionSpace<::Mesh::CompositeOfDimension<D>,BasisFunctionType>>
+{
+public:
+  typedef FunctionSpace::FunctionSpace<::Mesh::CompositeOfDimension<D>,BasisFunctionType> FunctionSpaceType;
+
+  //! helper function to create a composite mesh
+  static std::shared_ptr<FunctionSpaceType> createCompositeMesh(std::shared_ptr<Partition::Manager> partitionManager,
+                                                                std::vector<std::shared_ptr<FunctionSpace::FunctionSpace<::Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>> subFunctionSpaces);
 };
 
 }  // namespace

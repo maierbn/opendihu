@@ -40,6 +40,13 @@ isGeometryField() const
 
 template<typename FunctionSpaceType>
 void FieldVariableBaseFunctionSpace<FunctionSpaceType>::
+setIsGeometryField(bool isGeometryField)
+{
+  isGeometryField_ = isGeometryField;
+}
+
+template<typename FunctionSpaceType>
+void FieldVariableBaseFunctionSpace<FunctionSpaceType>::
 checkNansInfs(int componentNo) const
 {
   // get all local values without ghosts for the given componentNo

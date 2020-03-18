@@ -8,6 +8,7 @@
 #include "data_management/specialized_solver/multidomain.h"
 #include "control/diagnostic_tool/performance_measurement.h"
 #include "control/diagnostic_tool/solver_structure_visualizer.h"
+#include "partition/mesh_partition/01_mesh_partition_structured.h"
 
 namespace SpatialDiscretization
 {
@@ -16,7 +17,7 @@ template<typename Term,int nDisplacementComponents>
 HyperelasticitySolver<Term,nDisplacementComponents>::
 HyperelasticitySolver(DihuContext context, std::string settingsKey) :
   context_(context[settingsKey]), data_(context_), pressureDataCopy_(context_), initialized_(false),
-  endTime_(0), lastNorm_(0), secondLastNorm_(0)
+  endTime_(0), lastNorm_(0), secondLastNorm_(0), currentLoadFactor_(1.0)
 {
   // get python config
   this->specificSettings_ = this->context_.getPythonConfig();
@@ -28,8 +29,9 @@ HyperelasticitySolver(DihuContext context, std::string settingsKey) :
   }
 
   // parse options concerning jacobian
-  useAnalyticJacobian_ = this->specificSettings_.getOptionBool("useAnalyticJacobian", true);
-  useNumericJacobian_ = this->specificSettings_.getOptionBool("useNumericJacobian", true);
+  useAnalyticJacobian_  = this->specificSettings_.getOptionBool("useAnalyticJacobian", true);
+  useNumericJacobian_   = this->specificSettings_.getOptionBool("useNumericJacobian", true);
+  nNonlinearSolveCalls_ = this->specificSettings_.getOptionInt("nNonlinearSolveCalls", 1, PythonUtility::Positive);
 
   constantBodyForce_ = this->specificSettings_.template getOptionArray<double,3>("constantBodyForce", Vec3{0.0,0.0,0.0});
 
@@ -61,13 +63,15 @@ HyperelasticitySolver(DihuContext context, std::string settingsKey) :
   // for the dynamic equation
   if (nDisplacementComponents == 6)
   {
-    density_ = specificSettings_.getOptionDouble("density", 1.0, PythonUtility::Positive);
-    timeStepWidth_ = specificSettings_.getOptionDouble("timeStepWidth", 1.0, PythonUtility::Positive);
+    density_                 = specificSettings_.getOptionDouble("density", 1.0, PythonUtility::Positive);
+    timeStepWidth_           = specificSettings_.getOptionDouble("timeStepWidth", 1.0, PythonUtility::Positive);
+    extrapolateInitialGuess_ = specificSettings_.getOptionBool("extrapolateInitialGuess", true);
   }
 
   // initialize output writers
   this->outputWriterManager_.initialize(this->context_, this->specificSettings_);
   this->outputWriterManagerPressure_.initialize(this->context_["pressure"], this->context_["pressure"].getPythonConfig());
+  this->outputWriterManagerLoadIncrements_.initialize(this->context_["LoadIncrements"], this->context_["LoadIncrements"].getPythonConfig());
 }
 
 template<typename Term,int nDisplacementComponents>
@@ -200,6 +204,21 @@ initialize()
   LOG(DEBUG) << "initialize Petsc Variables";
   initializePetscVariables();
 
+  // parse load factors
+  this->specificSettings_.getOptionVector("loadFactors", loadFactors_);
+
+  if (!loadFactors_.empty())
+  {
+    if (fabs(loadFactors_.back() - 1.0) > 1e-12)
+    {
+      LOG(WARNING) << this->specificSettings_ << "[\"loadFactors\"]: Last load factor " << loadFactors_.back() << " is not 1.0.";
+    }
+  }
+
+  // prepare load factors
+  if (loadFactors_.empty())
+    loadFactors_.push_back(1.0);
+
   // add this solver to the solvers diagram
   DihuContext::solverStructureVisualizer()->addSolver("HyperelasticitySolver");
 
@@ -213,6 +232,8 @@ initializeFiberDirections()
 {
   std::vector<std::string> fiberMeshNames;
   this->specificSettings_.template getOptionVector<std::string>("fiberMeshNames", fiberMeshNames);
+
+  LOG(INFO) << "initializing fiber directions...";
 
   // loop over fiber mesh names
   for (int fiberNo = 0; fiberNo < fiberMeshNames.size(); fiberNo++)

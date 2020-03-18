@@ -124,6 +124,7 @@ config = {
     "implicitSolver": {     # solver for the implicit timestepping scheme of the diffusion time step
       "maxIterations":      1e4,
       "relativeTolerance":  1e-10,
+      "absoluteTolerance":  1e-10,         # 1e-10 absolute tolerance of the residual          
       "solverType":         variables.diffusion_solver_type,
       "preconditionerType": variables.diffusion_preconditioner_type,
       "dumpFilename":       "",   # "out/dump_"
@@ -165,28 +166,43 @@ config = {
                 "nAdditionalFieldVariables":   0,
                   
                 "CellML" : {
-                  "modelFilename":                          variables.cellml_file,                          # input C++ source file or cellml XML file
-                  "compilerFlags":                          "-fPIC -O3 -march=native -shared ",
+                  "modelFilename":                          variables.cellml_file,                                    # input C++ source file or cellml XML file
+                  "statesInitialValues":                   [],                                             # if given, the initial values for the the states of one instance
+                  #"statesInitialValues": [-81.5938, -81.5407, 7.166, 150.916, 6.03857, 12.6618, 131.577, 132.928, 0.00751472, 0.996183, 0.0292367, 0.569413, 0.731601, 0.0075721, 0.996084, 0.0294341, 0.567101, 0.730931, 1.75811e-06, 5.75735e-06, 7.07019e-06, 3.85884e-06, 7.89791e-07, 0.879053, 0.115147, 0.00565615, 0.000123483, 1.01094e-06, -916.582, 0.0284792, 56.5564, 0.0284779, 1687.31, 2.98725, 615, 615, 811, 811, 1342.65, 17807.7, 0.107772, 0.10777, 7243.03, 7243.03, 756.867, 756.867, 956.975, 956.975, 0.0343398, 0.0102587, 0.0136058, 0.0314258, 0.0031226, 0.00249808, 0.223377, 0.264145, 1.74046e-06],
+                  "initializeStatesToEquilibrium":          False,                                           # if the equilibrium values of the states should be computed before the simulation starts
+                  "initializeStatesToEquilibriumTimestepWidth": 1e-4,                                       # if initializeStatesToEquilibrium is enable, the timestep width to use to solve the equilibrium equation
+                  
+                  # optimization parameters
                   "optimizationType":                       "vc",                                           # "vc", "simd", "openmp" type of generated optimizated source file
-                  "approximateExponentialFunction":         False,                                          # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
-                  "maximumNumberOfThreads":                 0,                                              # if optimizationType is "openmp", the maximum number of threads to use. Default value 0 means no restriction.      
-                  #"statesInitialValues":                   [],
+                  "approximateExponentialFunction":         False,                                           # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
+                  "compilerFlags":                          "-fPIC -O3 -march=native -shared ",             # compiler flags used to compile the optimized model code
+                  "maximumNumberOfThreads":                 0,                                              # if optimizationType is "openmp", the maximum number of threads to use. Default value 0 means no restriction.
+                  
+                  # stimulation callbacks
+                  #"libraryFilename":                       "cellml_simd_lib.so",                           # compiled library
+                  #"setParametersFunction":                 set_parameters,                                 # callback function that sets parameters like stimulation current
+                  #"setParametersCallInterval":             int(1./stimulation_frequency/dt_0D),            # set_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
                   #"setSpecificParametersFunction":         set_specific_parameters,                        # callback function that sets parameters like stimulation current
-                  #"setSpecificParametersCallInterval":     int(1./variables.stimulation_frequency/variables.dt_0D),         # set_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
-                  "setSpecificStatesFunction":              set_specific_states,                                             # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
-                  #"setSpecificStatesCallInterval":         2*int(1./variables.stimulation_frequency/variables.dt_0D),       # set_specific_states should be called variables.stimulation_frequency times per ms, the factor 2 is needed because every Heun step includes two calls to rhs
-                  "setSpecificStatesCallInterval":          0,                                                               # 0 means disabled
+                  #"setSpecificParametersCallInterval":     int(1./stimulation_frequency/dt_0D),            # set_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
+                  "setSpecificStatesFunction":              set_specific_states,                            # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
+                  "setSpecificStatesCallInterval":          0,                                              # int(1./stimulation_frequency/dt_0D),     # set_specific_states should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
                   "setSpecificStatesCallFrequency":         variables.get_specific_states_call_frequency(fiber_no, motor_unit_no),   # set_specific_states should be called variables.stimulation_frequency times per ms
                   "setSpecificStatesFrequencyJitter":       variables.get_specific_states_frequency_jitter(fiber_no, motor_unit_no), # random value to add or substract to setSpecificStatesCallFrequency every stimulation, this is to add random jitter to the frequency
-                  "setSpecificStatesRepeatAfterFirstCall":  0.01,                                                            # [ms] simulation time span for which the setSpecificStates callback will be called after a call was triggered
+                  "setSpecificStatesRepeatAfterFirstCall":  0.01,                                           # simulation time span for which the setSpecificStates callback will be called after a call was triggered
                   "setSpecificStatesCallEnableBegin":       variables.get_specific_states_call_enable_begin(fiber_no, motor_unit_no),# [ms] first time when to call setSpecificStates
                   "additionalArgument":                     fiber_no,
+                  #"handleResultFunction": handleResult,
+                  #"handleResultCallInterval": 2e3,
                   
-                  "intermediatesForTransfer":               variables.output_intermediate_index,            # which intermediate values to use in further computation
-                  "statesForTransfer":                      variables.output_state_index,                   # which state values to use in further computation, Shorten / Hodgkin Huxley: state 0 = Vm
-                  "parametersUsedAsIntermediate":           variables.parameters_used_as_intermediate,      #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
-                  "parametersUsedAsConstant":               variables.parameters_used_as_constant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
-                  "parametersInitialValues":                variables.parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
+                  # parameters to the cellml model
+                  "mappings": {
+                    ("parameter", 0):           ("constant", "wal_environment/I_HH"), # parameter 0 is constant 54 = I_stim
+                    ("parameter", 1):           ("constant", "razumova/L_S"),         # parameter 1 is constant 67 = fiber stretch λ
+                    ("outputConnectorSlot", 0): ("state", "wal_environment/vS"),      # expose state 0 = Vm to the operator splitting
+                    ("outputConnectorSlot", 1): ("intermediate", "razumova/stress"),  # expose intermediate 12 = γ to the operator splitting
+                  },
+                  "parametersInitialValues":                [0.0,1.0],                                      #[0.0, 1.0],  # initial values for the parameters: I_Stim, l_hs
+                  
                   "meshName":                               "MeshFiber_{}".format(fiber_no),
                   "stimulationLogFilename":                 "out/stimulation.log",
                 },
@@ -203,7 +219,7 @@ config = {
             "instances": 
             [{
               "ranks":                         list(range(variables.n_subdomains_z)),    # these rank nos are local nos to the outer instance of MultipleInstances, i.e. from 0 to number of ranks in z direction
-              "ImplicitEuler" : {
+              "CrankNicolson" : {
                 "initialValues":               [],
                 #"numberTimeSteps":            1,
                 "timeStepWidth":               variables.dt_1D,  # 1e-5
@@ -218,6 +234,7 @@ config = {
                 "FiniteElementMethod" : {
                   "maxIterations":             1e4,
                   "relativeTolerance":         1e-10,
+                  "absoluteTolerance":         1e-10,         # 1e-10 absolute tolerance of the residual                      
                   "inputMeshIsGlobal":         True,
                   "meshName":                  "MeshFiber_{}".format(fiber_no),
                   "prefactor":                 get_diffusion_prefactor(fiber_no, motor_unit_no),  # resolves to Conductivity / (Am * Cm)
@@ -254,6 +271,9 @@ config["RepeatedCall"] = {
   "MultipleInstances": copy.deepcopy(config["MultipleInstances"]),
   "fiberDistributionFile":    variables.fiber_distribution_file,   # for FastMonodomainSolver, e.g. MU_fibre_distribution_3780.txt
   "firingTimesFile":          variables.firing_times_file,         # for FastMonodomainSolver, e.g. MU_firing_times_real.txt
+  "onlyComputeIfHasBeenStimulated": False,                          # only compute fibers after they have been stimulated for the first time
+  "disableComputationWhenStatesAreCloseToEquilibrium": False,       # optimization where states that are close to their equilibrium will not be computed again
+  "valueForStimulatedPoint":  variables.vm_value_stimulated,       # to which value of Vm the stimulated node should be set
 }
 
 # loop over instances (fibers)
@@ -269,6 +289,8 @@ for i in range(len(config["RepeatedCall"]["MultipleInstances"]["instances"])):
       
       # set outputInterval to 1
       config["RepeatedCall"]["MultipleInstances"]["instances"][i]["StrangSplitting"]["Term2"]["MultipleInstances"]["OutputWriter"][j]["outputInterval"] = 1
+
+#print(config["RepeatedCall"]["MultipleInstances"]["instances"][0]["StrangSplitting"]["Term1"]["MultipleInstances"]["instances"][0]["Heun"]["CellML"]);
 
 # stop timer and calculate how long parsing lasted
 if rank_no == 0:

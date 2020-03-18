@@ -66,7 +66,7 @@ protected:
   std::string logKeyTransfer12_;  ///< key for logging of the duration of data transfer from timestepping 1 to 2
   std::string logKeyTransfer21_;  ///< key for logging of the duration of data transfer from timestepping 2 to 1
 
-  OutputConnection outputConnection_; //< information regarding the mapping between the data slots of the two terms
+  std::shared_ptr<OutputConnection> outputConnection_; //< information regarding the mapping between the data slots of the two terms
 
   bool initialized_;               ///< if initialize() was already called
 };

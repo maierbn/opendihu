@@ -16,11 +16,12 @@
 #endif
 
 #include "partition/partition_manager.h"
-#include "control/python_config.h"
+#include "control/python_config/python_config.h"
 
 // forward declaration
 namespace Mesh { class Manager; }
 namespace Solver { class Manager; }
+namespace Partition { class RankSubset; }
 class SolverStructureVisualizer;
 
 /** This class contains global variables (mesh manager and solver manager) and a python config dictionary
@@ -111,7 +112,7 @@ private:
   void parseGlobalParameters();
 
   //! initiaize the easylogging++ framework
-  void initializeLogging(int argc, char *argv[]);
+  void initializeLogging(int &argc, char *argv[]);
 
   //! start MegaMol in a new thread
   void initializeMegaMol(int argc, char *argv[]);

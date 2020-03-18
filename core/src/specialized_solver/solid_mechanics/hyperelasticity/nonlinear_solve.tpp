@@ -18,6 +18,11 @@ nonlinearSolve()
   LOG(DEBUG) << "initial solution: " << combinedVecSolution_->getString();
   // solve the system ∂W_int - ∂W_ext = 0 and J = 1 for displacements and pressure, result will be in solverVariableSolution_, combinedVecSolution_
 
+#ifndef NDEBUG
+  materialComputeResidual(1.0);   // compute residual with load factor 1.0
+  LOG(DEBUG) << "initial residual: " << combinedVecResidual_->getString();
+#endif
+
   if (this->durationLogKey_ != "")
     Control::PerformanceMeasurement::start(this->durationLogKey_+std::string("_durationSolve"));
 
@@ -25,38 +30,58 @@ nonlinearSolve()
   std::shared_ptr<SNES> snes = nonlinearSolver_->snes();
   std::shared_ptr<KSP> ksp = nonlinearSolver_->ksp();
 
-  // try two times to solve the nonlinear problem
-  for (int i = 0; i < 2; i++)
+  // newline
+  LOG(INFO);
+
+  // loop over load loadFactors, i.e. load increments
+  for (double loadFactor: loadFactors_)
   {
-    LOG(DEBUG) << "------------------  start solve " << i << " ------------------";
+    currentLoadFactor_ = loadFactor;
+    if (loadFactors_.size() > 1)
+    {
+      LOG(INFO) << "Nonlinear Solver: load factor " << loadFactor << " of list " << loadFactors_;
+    }
 
-    // solve the system nonlinearFunction(displacements) = 0
-    PetscErrorCode ierr;
-    ierr = SNESSolve(*snes, NULL, solverVariableSolution_); CHKERRV(ierr);
 
-    // get information about the solution process
-    PetscInt numberOfIterations = 0;
-    PetscReal residualNorm = 0.0;
-    ierr = SNESGetIterationNumber(*snes, &numberOfIterations); CHKERRV(ierr);
-    ierr = SNESGetFunctionNorm(*snes, &residualNorm); CHKERRV(ierr);
+    // try two times to solve the nonlinear problem
+    for (int i = 0; i < nNonlinearSolveCalls_; i++)
+    {
+      LOG(DEBUG) << "------------------  start solve " << i << "/" << nNonlinearSolveCalls_ << " ------------------";
 
-    SNESConvergedReason convergedReason;
-    KSPConvergedReason kspConvergedReason;
-    ierr = SNESGetConvergedReason(*snes, &convergedReason); CHKERRV(ierr);
-    ierr = KSPGetConvergedReason(*ksp, &kspConvergedReason); CHKERRV(ierr);
+      // solve the system nonlinearFunction(displacements) = 0
+      PetscErrorCode ierr;
+      ierr = SNESSolve(*snes, NULL, solverVariableSolution_); CHKERRV(ierr);
 
-    LOG(INFO) << "Solution done in " << numberOfIterations << " iterations, residual norm " << residualNorm
-      << ": " << PetscUtility::getStringNonlinearConvergedReason(convergedReason) << ", "
-      << PetscUtility::getStringLinearConvergedReason(kspConvergedReason);
+      // get information about the solution process
+      PetscInt numberOfIterations = 0;
+      PetscReal residualNorm = 0.0;
+      ierr = SNESGetIterationNumber(*snes, &numberOfIterations); CHKERRV(ierr);
+      ierr = SNESGetFunctionNorm(*snes, &residualNorm); CHKERRV(ierr);
 
-    // if the nonlinear scheme converged, finish loop
-    if (convergedReason >= 0)
-      break;
+      SNESConvergedReason convergedReason;
+      KSPConvergedReason kspConvergedReason;
+      ierr = SNESGetConvergedReason(*snes, &convergedReason); CHKERRV(ierr);
+      ierr = KSPGetConvergedReason(*ksp, &kspConvergedReason); CHKERRV(ierr);
+
+      LOG(INFO) << "Solution done in " << numberOfIterations << " iterations, residual norm " << residualNorm
+        << ": " << PetscUtility::getStringNonlinearConvergedReason(convergedReason) << ", "
+        << PetscUtility::getStringLinearConvergedReason(kspConvergedReason);
+
+      // if the nonlinear scheme converged, finish loop
+      if (convergedReason >= 0)
+        break;
+    }
+
+    // reset value of last residual norm that is needed for computational of experimental order of convergence
+    lastNorm_ = 0;
+    secondLastNorm_ = 0;
+
+    // write current output values
+    if (this->outputWriterManagerLoadIncrements_.hasOutputWriters())
+    {
+      this->outputWriterManagerLoadIncrements_.writeOutput(this->data_, 1, endTime_);
+    }
   }
-
-  // reset value of last residual norm that is needed for computational of experimental order of convergence
-  lastNorm_ = 0;
-  secondLastNorm_ = 0;
 
   if (this->durationLogKey_ != "")
     Control::PerformanceMeasurement::stop(this->durationLogKey_+std::string("_durationSolve"));
@@ -76,6 +101,8 @@ postprocessSolution()
   // compute the PK2 stress at every node
   computePK2StressField();
 
+  LOG(DEBUG) << "solution: " << combinedVecSolution_->getString();
+
   // update the geometry field by the new displacements, also update field variables for the pressure output writer if needed
   bool usePressureOutputWriter = this->outputWriterManagerPressure_.hasOutputWriters();
   this->data_.updateGeometry(displacementsScalingFactor_, usePressureOutputWriter);
@@ -83,7 +110,6 @@ postprocessSolution()
   // dump files containing rhs and system matrix
   nonlinearSolver_->dumpMatrixRightHandSide(solverVariableResidual_);
 
-  LOG(DEBUG) << "solution: " << combinedVecSolution_->getString();
 
 #ifndef NDEBUG
   checkSolution(solverVariableSolution_);
@@ -95,20 +121,22 @@ void HyperelasticitySolver<Term,nDisplacementComponents>::
 monitorSolvingIteration(SNES snes, PetscInt its, PetscReal currentNorm)
 {
   // compute experimental order of convergence which is a measure for the current convergence velocity
-  PetscReal experimentalOrderOfConvergence = 0;
+  //PetscReal experimentalOrderOfConvergence = 0;
 
-  if (secondLastNorm_ != 0)
-    experimentalOrderOfConvergence = log(lastNorm_ / currentNorm) / log(secondLastNorm_ / lastNorm_);
+  //if (secondLastNorm_ != 0)
+  //  experimentalOrderOfConvergence = log(lastNorm_ / currentNorm) / log(secondLastNorm_ / lastNorm_);
+
+  // derivation of experimentalOrderOfConvergence
+  // e_current = e_old ^ c = exp(c*log(e_old)) => c = log(e_current) / log(e_old)
+  PetscReal experimentalOrderOfConvergence = log(currentNorm) / log(lastNorm_);
 
   secondLastNorm_ = lastNorm_;
   lastNorm_ = currentNorm;
 
-
   //T* object = static_cast<T*>(mctx);
   std::stringstream message;
-  message  << "  Nonlinear solver: iteration " << its << ", residual norm " << currentNorm;
-  if (experimentalOrderOfConvergence != 0)
-    message << ", eoc: " << experimentalOrderOfConvergence;
+  message << "  Nonlinear solver: iteration " << std::setw(2) << its << ", residual norm " << std::setw(11) << currentNorm
+          << ", e_new=e_old^c with c=" <<  std::setw(3) << experimentalOrderOfConvergence << std::setprecision(6);
   LOG(INFO) << message.str();
 
   static int evaluationNo = 0;  // counter how often this function was called
@@ -141,6 +169,30 @@ template<typename Term,int nDisplacementComponents>
 void HyperelasticitySolver<Term,nDisplacementComponents>::
 debug()
 {
+  materialComputeInternalVirtualWork();
+  // now, solverVariableResidual_, which is the globalValues() of combinedVecResidual_, contains δW_int
+  // also the pressure equation residual has been set at the last component
+
+  // for static case: F = δW_int - δW_ext
+
+  // compute F = δW_int - δW_ext,
+  // δW_ext = int_∂Ω T_a phi_L dS was precomputed in initialize (materialComputeExternalVirtualWorkDead()), in variable externalVirtualWorkDead_
+  // for static case, externalVirtualWorkDead_ = externalVirtualWorkDead_
+  PetscErrorCode ierr;
+  ierr = VecAXPY(solverVariableResidual_, -1.0, externalVirtualWorkDead_); CHKERRV(ierr);
+
+  LOG(DEBUG) << "check if initial solution matches static problem. Residual:   " << getString(solverVariableResidual_);
+
+  // compute the residual norm
+
+  PetscReal l2NormResidual;
+  VecNorm(solverVariableResidual_, NORM_2, &l2NormResidual);
+  LOG(DEBUG) << "L2-norm residual: " << l2NormResidual;
+
+  LOG(FATAL) << "done";
+
+  return;
+
 
   PetscInt nRows, nColumns;
   MatGetLocalSize(solverMatrixAdditionalNumericJacobian_, &nRows, &nColumns);
@@ -382,7 +434,7 @@ evaluateNonlinearFunction(Vec x, Vec f)
   setUVP(solverVariableSolution_);
 
   // compute the actual output of the nonlinear function
-  materialComputeResidual();
+  materialComputeResidual(currentLoadFactor_);
 
   //VLOG(1) << "solverVariableResidual_: " << combinedVecResidual_->getString();
 
@@ -530,6 +582,9 @@ setDisplacementsVelocitiesAndPressureFromCombinedVec(Vec x,
     values.resize(nEntries);
     combinedVecSolution_->getValues(componentNo, nEntries, displacementsFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
 
+    //if (VLOG_IS_ON(1))
+      LOG(DEBUG) << "setDisplacementsVelocitiesAndPressureFromCombinedVec, " << nEntries << " u values: " << values;
+
     u->setValues(componentNo, nEntries, displacementsFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
   }
   u->finishGhostManipulation();
@@ -545,6 +600,9 @@ setDisplacementsVelocitiesAndPressureFromCombinedVec(Vec x,
       values.resize(nEntries);
       combinedVecSolution_->getValues(3 + componentNo, nEntries, displacementsFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
 
+    if (VLOG_IS_ON(1))
+      VLOG(1) << "setDisplacementsVelocitiesAndPressureFromCombinedVec, " << nEntries << " v values: " << values;
+
       v->setValues(componentNo, nEntries, displacementsFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
     }
     v->finishGhostManipulation();
@@ -559,6 +617,10 @@ setDisplacementsVelocitiesAndPressureFromCombinedVec(Vec x,
 
     const int pressureComponent = nDisplacementComponents;
     combinedVecSolution_->getValues(pressureComponent, nEntries, pressureFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
+
+    if (VLOG_IS_ON(1))
+      VLOG(1) << "setDisplacementsVelocitiesAndPressureFromCombinedVec, " << nEntries << " p values: " << values;
+
     p->setValues(0, nEntries, pressureFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
     p->finishGhostManipulation();
     p->startGhostManipulation();

@@ -10,7 +10,7 @@ namespace FunctionSpace
 {
 
 //const double POINT_IN_ELEMENT_EPSILON = 1e-4;    // (1e-5 is too small)
-const int N_NEWTON_ITERATIONS = 7;    // (4) (5) number of newton iterations to find out if a point is inside an element
+const int N_NEWTON_ITERATIONS = 32;    // (7) (4) (5) number of newton iterations to find out if a point is inside an element
 const double RESIDUUM_NORM_TOLERANCE = 1e-4;    // usually 1e-2 takes 2-3 iterations
  
 // general implementation
@@ -56,7 +56,7 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType:
   {
     VLOG(2) << " xi0 = " << xi << ", residuum: " << residuum << " (norm: " << sqrt(residuumNormSquared) << ")";
   }
-  
+
   for (int iterationNo = 0; iterationNo < N_NEWTON_ITERATIONS && residuumNormSquared > MathUtility::sqr(RESIDUUM_NORM_TOLERANCE); iterationNo++)
   {
     Tensor2<D> inverseJacobian = this->getInverseJacobian(geometryValues, elementNo, xi);
@@ -67,8 +67,37 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType:
     
     if (VLOG_IS_ON(2))
     {
-      VLOG(2) << " xi_i = " << xi << ", residuum: " << residuum << " (norm: " << sqrt(residuumNormSquared) << ")";
+      VLOG(2) << " xi_" << iterationNo << " = "  << xi << ", residuum: " << residuum << " (norm: " << sqrt(residuumNormSquared) << ")";
     }
+  }
+
+  // if solution was not found, reiterate again and note the best found xi on the way
+  if (residuumNormSquared > MathUtility::sqr(RESIDUUM_NORM_TOLERANCE))
+  {
+    std::array<double,MeshType::dim()> bestXi;
+    double bestResidual = std::numeric_limits<double>::max();
+
+    for (int iterationNo = 0; iterationNo < N_NEWTON_ITERATIONS && residuumNormSquared > MathUtility::sqr(RESIDUUM_NORM_TOLERANCE); iterationNo++)
+    {
+      Tensor2<D> inverseJacobian = this->getInverseJacobian(geometryValues, elementNo, xi);
+      xi += inverseJacobian * MathUtility::transformToD<D,3>(residuum);
+
+      residuum = point - this->template interpolateValueInElement<3>(geometryValues, xi);
+      residuumNormSquared = MathUtility::normSquared<3>(residuum);
+
+      if (residuumNormSquared < bestResidual)
+      {
+        bestResidual = residuumNormSquared;
+        bestXi = xi;
+      }
+
+      if (VLOG_IS_ON(2))
+      {
+        VLOG(2) << " xi_" << iterationNo << " = "  << xi << ", residuum: " << residuum << " (norm: " << sqrt(residuumNormSquared) << ")";
+      }
+    }
+
+    xi = bestXi;
   }
   
   // Phi(xi) = point
@@ -170,7 +199,7 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,1> &xi, d
   
   return -xiTolerance <= xi1 && xi1 <= 1.0+xiTolerance;
 }
-
+/*
 // 2D deformable meshes and linear shape function
 template<typename MeshType>
 bool FunctionSpaceXi<MeshType, BasisFunction::LagrangeOfOrder<1>, Mesh::isDeformableWithDim<2,MeshType>>::
@@ -184,12 +213,14 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,2> &xi, d
   this->getElementGeometry(elementNo, geometryValues);
   
   MathUtility::quadrilateralGetPointCoordinates(geometryValues, point, xi);
- 
+
+  VLOG(2) << "pointIsInElement (2D linear) el no. " << elementNo << ", point " << point << ", xiTolerance: " << xiTolerance << " -> xi: " << xi;
+
   const double xi1 = xi[0];
   const double xi2 = xi[1];
 
   return (-xiTolerance <= xi1 && xi1 <= 1.0+xiTolerance) && (-xiTolerance <= xi2 && xi2 <= 1.0+xiTolerance);
-}
+}*/
 
 // 3D deformable meshes and linear shape function
 

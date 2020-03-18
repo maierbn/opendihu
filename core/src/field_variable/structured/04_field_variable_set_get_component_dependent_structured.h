@@ -28,8 +28,6 @@ public:
 
   //! get a single value from local dof no. for all components
   std::array<double,nComponents> getValue(node_no_t dofLocalNo) const;
-
-
 };
 
 /** For 1 component

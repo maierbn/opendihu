@@ -3,6 +3,8 @@
 #include <sstream>
 
 #include "utility/petsc_utility.h"
+#include "utility/string_utility.h"
+#include "control/types.h"
 #include "easylogging++.h"
 
 //! vector difference
@@ -230,8 +232,8 @@ std::ostream &operator<<(std::ostream &stream, const std::array<T,N> &vector)
   for (std::size_t i = 1; i < N; i++)
   {
     stream << ",";
-    if (vector[i] == std::numeric_limits<T>::max())
-      stream << "None";
+    if (vector[i] == std::numeric_limits<T>::max() && !std::is_same<Vec3,T>::value)
+      stream << "None[" << StringUtility::demangle(typeid(T).name()) << "]";
     else
       stream << vector[i];
   }

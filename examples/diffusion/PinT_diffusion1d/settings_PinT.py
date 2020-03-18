@@ -14,7 +14,7 @@ config = {
      "relativeTolerance": 1e-15,     # the relative tolerance of the linear solver
      "maxIterations": 1e4,           # maximum number of iterations of the linear solver
      "dumpFilename": "dump",             # a filename to dump the system matrix and rhs in every timestep, "" to disable
-     "dumpFormat": "ascii",         # the file format of the dump file, "matlab", "ascii" or "default"
+     "dumpFormat": "matlab",         # the file format of the dump file, "matlab", "ascii" or "default"
    },
   },
   # for k in range (n):

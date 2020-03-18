@@ -59,7 +59,11 @@ VC_DOWNLOAD = True
 XBRAID_DOWNLOAD = True
 
 # OpenCOR, utility view CellML models and to convert them from xml format to c code
-OPENCOR_DOWNLOAD =True
+OPENCOR_DOWNLOAD = True
+
+# preCICE coupling library
+#LIBXML2_DOWNLOAD = True
+#PRECICE_DOWNLOAD = True
 
 # MPI
 # MPI is normally detected by runnig the mpicc command. If this is not available, you can provide the MPI_DIR as usual.

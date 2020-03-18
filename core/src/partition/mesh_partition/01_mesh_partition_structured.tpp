@@ -1,4 +1,4 @@
-#include "partition/mesh_partition/01_mesh_partition.h"
+#include "partition/mesh_partition/01_mesh_partition_structured.h"
 
 #include <cstdlib>
 #include "utility/vector_operators.h"
@@ -10,7 +10,7 @@ namespace Partition
 template<typename MeshType,typename BasisFunctionType>
 MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 MeshPartition(std::array<global_no_t,MeshType::dim()> nElementsGlobal, std::shared_ptr<RankSubset> rankSubset) :
-  MeshPartitionBase(rankSubset), nElementsGlobal_(nElementsGlobal), hasFullNumberOfNodes_({false}), nDofsLocalWithoutGhosts_(-1)
+  MeshPartitionBase(rankSubset), nElementsGlobal_(nElementsGlobal), isDegenerate_(false), hasFullNumberOfNodes_({false}), nDofsLocalWithoutGhosts_(-1)
 {
   VLOG(1) << "create MeshPartition where only the global size is known, " 
     << "nElementsGlobal: " << nElementsGlobal_ << ", rankSubset: " << *rankSubset << ", mesh dimension: " << MeshType::dim();
@@ -18,6 +18,11 @@ MeshPartition(std::array<global_no_t,MeshType::dim()> nElementsGlobal, std::shar
   if (MeshType::dim() == 1 && nElementsGlobal_[0] == 0)
   {
     initialize1NodeMesh();
+  }
+  else if (!rankSubset->ownRankIsContained())
+  {
+    isDegenerate_ = true;
+    initializeDegenerateMesh();
   }
   else
   {
@@ -45,7 +50,7 @@ MeshPartition(std::array<node_no_t,MeshType::dim()> nElementsLocal, std::array<g
               std::array<global_no_t,MeshType::dim()> beginElementGlobal, 
               std::array<int,MeshType::dim()> nRanks, std::shared_ptr<RankSubset> rankSubset) :
   MeshPartitionBase(rankSubset), beginElementGlobal_(beginElementGlobal), nElementsLocal_(nElementsLocal), nElementsGlobal_(nElementsGlobal), 
-  nRanks_(nRanks), hasFullNumberOfNodes_({false}), nDofsLocalWithoutGhosts_(-1)
+  nRanks_(nRanks), isDegenerate_(false), hasFullNumberOfNodes_({false}), nDofsLocalWithoutGhosts_(-1)
 {
   // partitioning is already prescribed as every rank knows its own local size
  
@@ -57,12 +62,17 @@ MeshPartition(std::array<node_no_t,MeshType::dim()> nElementsLocal, std::array<g
   {
     initialize1NodeMesh();
   }
+  else if (!rankSubset->ownRankIsContained())
+  {
+    isDegenerate_ = true;
+    initializeDegenerateMesh();
+  }
   else
   {
     initializeHasFullNumberOfNodes();
 
     // determine localSizesOnRanks
-    std::array<std::vector<element_no_t>,MeshType::dim()> localSizesOnRanks;
+    std::array<std::vector<element_no_t>,MeshType::dim()> localSizesOnRanks;    // [dimensionIndex][rankNo]
     for (int i = 0; i < MeshType::dim(); i++)
     {
       localSizesOnRanks[i].resize(rankSubset->size());
@@ -76,11 +86,11 @@ MeshPartition(std::array<node_no_t,MeshType::dim()> nElementsLocal, std::array<g
     LOG(DEBUG) << "determined localSizesOnRanks: " << localSizesOnRanks;
     LOG(DEBUG) << "MeshType::dim(): " << MeshType::dim() << ", nRanks: " << nRanks_;
     
-    // create localSizesOnPartitions_ from localSizesOnRanks, they are not used, but to check if the program crashes here
+    // create localSizesOnPartitions_ from localSizesOnRanks
     for (int dimensionIndex = 0; dimensionIndex < MeshType::dim(); dimensionIndex++)
     {
       VLOG(1) << "dimensionIndex: " << dimensionIndex << ", resize to " << nRanks_[dimensionIndex];
-      assert (nRanks_[dimensionIndex] != 0);
+      //assert (nRanks_[dimensionIndex] != 0);
       localSizesOnPartitions_[dimensionIndex].resize(nRanks_[dimensionIndex]);
 
       // loop over the first rank of the respective portion

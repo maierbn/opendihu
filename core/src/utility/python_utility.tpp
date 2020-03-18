@@ -10,7 +10,7 @@
 #include <array>
 
 #include "utility/vector_operators.h"
-#include "control/settings_file_name.h"
+#include "control/python_config/settings_file_name.h"
 
 template<typename Key, typename Value>
 std::pair<Key, Value> PythonUtility::getOptionDictBegin(const PyObject *settings, std::string keyString, std::string pathString)

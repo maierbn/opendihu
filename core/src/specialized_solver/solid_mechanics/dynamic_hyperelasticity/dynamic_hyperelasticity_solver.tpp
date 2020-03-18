@@ -52,7 +52,10 @@ initialize()
   ierr = VecDuplicate(uvp_->valuesGlobal(), &accelerationTerm_); CHKERRV(ierr);
   ierr = VecDuplicate(uvp_->valuesGlobal(), &externalVirtualWorkDead_); CHKERRV(ierr);
 
-  uvp_->setRepresentationGlobal();
+  LOG(DEBUG) << "internalVirtualWork_: " << internalVirtualWork_;
+  LOG(DEBUG) << "accelerationTerm_: " << accelerationTerm_;
+  LOG(DEBUG) << "externalVirtualWorkDead_: " << externalVirtualWorkDead_;
+  LOG(DEBUG) << "uvp_: " << uvp_->valuesGlobal();
 
   // parse updateDirichletBoundaryConditionsFunction
   if (this->specificSettings_.hasKey("updateDirichletBoundaryConditionsFunction"))
@@ -68,6 +71,12 @@ initialize()
       updateDirichletBoundaryConditionsFunctionCallInterval_ = this->specificSettings_.getOptionInt("updateDirichletBoundaryConditionsFunctionCallInterval", 1, PythonUtility::Positive);
     }
   }
+
+  // write initial mesh
+  this->outputWriterManager_.writeOutput(this->data_, 0, 0.0);
+
+  // check if initial values satisfy the static equation (for debugging)
+  //hyperelasticitySolver_.debug();
 }
 
 template<typename Term>
@@ -178,7 +187,9 @@ setInitialValues()
 
     uvp_->setValues(3+componentNo, nDofsLocalWithoutGhosts, displacementsFunctionSpace->meshPartition()->dofNosLocal().data(), localValues.data());
   }
-  uvp_->setRepresentationGlobal();
+  uvp_->zeroGhostBuffer();
+  uvp_->finishGhostManipulation();
+  //uvp_->setRepresentationGlobal();
 }
 
 template<typename Term>
@@ -212,7 +223,8 @@ advanceTimeSpan()
 
     // set the current Time to the hyperelasticity solver and then solve the dynamic problem
     hyperelasticitySolver_.setTimeSpan(-1, currentTime);
-    hyperelasticitySolver_.solveDynamicProblem(uvp_, timeStepNo==0, internalVirtualWork_, externalVirtualWorkDead_, accelerationTerm_);
+    hyperelasticitySolver_.solveDynamicProblem(uvp_, timeStepNo==0,
+                                               internalVirtualWork_, externalVirtualWorkDead_, accelerationTerm_);
 
     // stop duration measurement
     if (this->durationLogKey_ != "")

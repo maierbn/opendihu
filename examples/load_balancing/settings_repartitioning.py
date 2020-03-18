@@ -153,6 +153,7 @@ config = {
     "implicitSolver": {
       "maxIterations": 1e4,
       "relativeTolerance": 1e-10,
+      "absoluteTolerance": 1e-10,         # 1e-10 absolute tolerance of the residual    
       "solverType": solver_type,
       "preconditionerType": "none",
     }
@@ -230,6 +231,7 @@ config = {
               "FiniteElementMethod" : {
                 "maxIterations": 1e4,
                 "relativeTolerance": 1e-10,
+                "absoluteTolerance": 1e-10,         # 1e-10 absolute tolerance of the residual    
                 "inputMeshIsGlobal": True,
                 "meshName": "MeshFiber"+str(i),
                 "prefactor": Conductivity/(Am*Cm),

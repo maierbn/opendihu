@@ -92,7 +92,9 @@ parseBoundaryConditions(PythonConfig settings, std::shared_ptr<FunctionSpaceType
   int nDofs = 0;
   if (inputMeshIsGlobal)
   {
-    nDofs = functionSpace->nDofsGlobal();
+    // For composite meshes, the maximum number of dofs is the sum of the numbers of dofs of each sub mesh, i.e. counting the shared nodes multiple times.
+    // For all other meshes it equals nDofsGlobal.
+    nDofs = functionSpace->meshPartition()->nDofsGlobalForBoundaryConditions();
   }
   else
   {
@@ -206,8 +208,8 @@ parseBoundaryConditionsForElements(std::string boundaryConditionsConfigKey)
       global_no_t nodeNo = 0;
       if (inputMeshIsGlobal)
       {
-        global_no_t elementNoGlobalNatural = functionSpace_->meshPartition()->getElementNoGlobalNatural(elementNoLocal);
-        nodeNo = functionSpace_->getNodeNoGlobalNatural(elementNoGlobalNatural, nodeIndex);
+        nodeNo = functionSpace_->getNodeNoGlobalNaturalFromElementNoLocal(elementNoLocal, nodeIndex);
+        VLOG(2) << "elementNoLocal: " << elementNoLocal << ", nodeIndex: " << nodeIndex << " -> global nodeNo: " << nodeNo;
       }
       else
       {
@@ -419,5 +421,7 @@ std::ostream &operator<<(std::ostream &stream, const typename BoundaryConditions
   stream << "{el." << rhs.elementNoLocal << ", (dof,v):" << rhs.elementalDofIndex << "}";
   return stream;
 }
+
+
 
 }  // namespace

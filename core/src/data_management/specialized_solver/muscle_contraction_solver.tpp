@@ -70,6 +70,8 @@ setFieldVariables(std::shared_ptr<MuscleContractionSolver<FunctionSpaceType>::Ve
   activePK2Stress_ = activePK2Stress;
   pK2Stress_ = pK2Stress;
   fiberDirection_ = fiberDirection;
+
+  outputConnectorData_->addGeometryField(std::make_shared<typename FunctionSpaceType::GeometryFieldType>(this->displacements_->functionSpace()->geometryField()));
 }
 
 template<typename FunctionSpaceType>

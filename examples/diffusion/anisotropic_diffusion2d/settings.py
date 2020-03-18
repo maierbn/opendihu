@@ -20,6 +20,7 @@ config = {
       "nElements": [n,n],
       "physicalExtend": [4.0,4.0],
       "relativeTolerance": 1e-15,
+      "absoluteTolerance": 1e-10,         # 1e-10 absolute tolerance of the residual    
       "prefactor": 0.1,
       "diffusionTensor": [1.0, 0.0,
                           0.0, 0.1],

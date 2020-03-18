@@ -2,6 +2,7 @@
 
 #include "utility/type_utility.h"
 #include "field_variable/field_variable.h"
+#include "mesh/type_traits.h"
 
 #include <cstdlib>
 
@@ -57,6 +58,7 @@ collectFieldVariables(TupleType currentFieldVariableVector, std::string meshName
  */
 template<typename CurrentFieldVariableType, typename FunctionSpaceType>
 typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value
+                        && !Mesh::isComposite<CurrentFieldVariableType>::value
                         && CurrentFieldVariableType::element_type::nComponents() == 1, bool>::type
 collectFieldVariables(CurrentFieldVariableType currentFieldVariable, std::string meshName,
                       std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> &geometryField,
@@ -66,7 +68,16 @@ collectFieldVariables(CurrentFieldVariableType currentFieldVariable, std::string
  */
 template<typename CurrentFieldVariableType, typename FunctionSpaceType>
 typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value
+                        && !Mesh::isComposite<CurrentFieldVariableType>::value
                         && CurrentFieldVariableType::element_type::nComponents() != 1, bool>::type
+collectFieldVariables(CurrentFieldVariableType currentFieldVariable, std::string meshName,
+                      std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> &geometryField,
+                      std::vector<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>> &scalarFieldVariables);
+
+/** Loop body for a field variables with Mesh::CompositeOfDimension<D>
+ */
+template<typename CurrentFieldVariableType, typename FunctionSpaceType>
+typename std::enable_if<Mesh::isComposite<CurrentFieldVariableType>::value, bool>::type
 collectFieldVariables(CurrentFieldVariableType currentFieldVariable, std::string meshName,
                       std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> &geometryField,
                       std::vector<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>> &scalarFieldVariables);

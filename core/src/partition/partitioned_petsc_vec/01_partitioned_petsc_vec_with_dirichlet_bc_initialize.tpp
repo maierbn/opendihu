@@ -1,7 +1,7 @@
 #include "partition/partitioned_petsc_vec/01_partitioned_petsc_vec_with_dirichlet_bc.h"
 
 #include "utility/mpi_utility.h"
-
+#include "spatial_discretization/boundary_conditions/boundary_conditions_base.h"
 
 template<typename FunctionSpaceType, int nComponents, int nComponentsDirichletBc>
 void PartitionedPetscVecWithDirichletBc<FunctionSpaceType, nComponents, nComponentsDirichletBc>::
@@ -10,6 +10,8 @@ initialize(int offsetInGlobalNumberingPerRank)
   LOG(DEBUG) << "\"" << this->name_ << "\" PartitionedPetscVecWithDirichletBc createVector with " << nComponents << "," << nComponentsDirichletBc << " components, size local: " << this->meshPartition_->nNodesLocalWithoutGhosts()
     << ", global: " << this->meshPartition_->nNodesGlobal() << ", offsetInGlobalNumberingPerRank: " << offsetInGlobalNumberingPerRank
     << ", ghost dof nos global/petsc: " << this->meshPartition_->ghostDofNosGlobalPetsc();
+
+  VLOG(1) << "meshPartition: " << *this->meshPartition_;
 
   if (!nDofRequestedFromRanks_.empty())
   {
@@ -39,6 +41,8 @@ initialize(int offsetInGlobalNumberingPerRank)
   nDofsLocal_ = nEntriesLocal_;
   nEntriesLocal_ += offsetInGlobalNumberingPerRank;
 
+  LOG(DEBUG) << "nDofsLocalWithoutGhosts: " << nDofsLocalWithoutGhosts << ", nDofsLocal_: " << nDofsLocal_ << ", nEntriesLocal_: " << nEntriesLocal_;
+
   // determine global number of non-BC dofs over all components
   nEntriesGlobal_ = 0;
   MPIUtility::handleReturnValue(MPI_Allreduce(&nEntriesLocal_, &nEntriesGlobal_, 1, MPI_INT, MPI_SUM, this->meshPartition_->mpiCommunicator()), "MPI_Allreduce");
@@ -58,7 +62,7 @@ initialize(int offsetInGlobalNumberingPerRank)
 
     dofNoLocalToDofNoNonBcGlobal_[componentNo].resize(nDofsLocalWithGhosts);
     dofNoLocalToDofNoNonBcLocal_[componentNo].resize(nDofsLocalWithGhosts);
-    boundaryConditionValues_[componentNo].resize(nDofsLocalWithGhosts);
+    boundaryConditionValues_[componentNo].resize(nDofsLocalWithGhosts, -2);  // these initial values should all be overwritten later, by -1 for not prescribed values or by the actual value
     isPrescribed_[componentNo].resize(nDofsLocalWithGhosts, false);
 
     // loop over local dofs
@@ -271,13 +275,18 @@ initialize(int offsetInGlobalNumberingPerRank)
           bool isLocal;
           dof_no_t requestedDofNoLocal = this->meshPartition_->getDofNoLocal(requestedDofNoGlobalPetsc, isLocal);
 
+          if (!isLocal)
+          {
+            LOG(FATAL) << "Error in partitioning, global dof no " << requestedDofNoGlobalPetsc << " is not on rank " << ownRankNo << ", but rank " << foreignRankNo << " thought it would be.";
+          }
+
           requestedDofsGlobalPetscSendBuffer[i][componentNo*nFromRank + requestedDofIndex] = dofNoLocalToDofNoNonBcGlobal_[componentNo][requestedDofNoLocal];
           // dofNoLocalToDofNoNonBcGlobal_[componentNo][requestedDofNoLocal] is -1 if it is a dirichlet boundary condition dof
 
           requestedDofsGlobalPetscSendBufferValues[i][componentNo*nFromRank + requestedDofIndex] = this->boundaryConditionValues_[componentNo][requestedDofNoLocal];
 
           VLOG(1) << " send to rank " << foreignRankNo << ", component " << componentNo << " requested dofNoGlobalPetsc: " << requestedDofNoGlobalPetsc
-            << ", requestedDofNoLocal: " << requestedDofNoLocal << " send dof " << dofNoLocalToDofNoNonBcGlobal_[componentNo][requestedDofNoLocal]
+            << ", requestedDofNoLocal: " << requestedDofNoLocal << " (isLocal: " << isLocal << " should be true), send dof " << dofNoLocalToDofNoNonBcGlobal_[componentNo][requestedDofNoLocal]
             << " and bc value " << this->boundaryConditionValues_[componentNo][requestedDofNoLocal] << " at sendBuffer index " << componentNo*nFromRank + requestedDofIndex;
         }
       }
@@ -497,4 +506,6 @@ createVector()
 
   // createVector acts like startGhostManipulation as it also gets the local vector (VecGhostGetLocalForm) to work on.
   this->currentRepresentation_ = Partition::values_representation_t::representationCombinedLocal;
+
+  LOG(DEBUG) << "createVector \"" << this->name_ << "\", global: " << vectorCombinedWithoutDirichletDofsGlobal_ << ", local: " << vectorCombinedWithoutDirichletDofsLocal_;
 }

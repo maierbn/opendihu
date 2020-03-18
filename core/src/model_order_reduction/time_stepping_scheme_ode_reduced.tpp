@@ -9,7 +9,7 @@
 #include "time_stepping_scheme/00_time_stepping_scheme.h"
 #include "time_stepping_scheme/02_time_stepping_scheme_ode.h"
 #include "data_management/time_stepping/time_stepping.h"
-#include "control/python_config.h"
+#include "control/python_config/python_config.h"
 
 namespace ModelOrderReduction
 {

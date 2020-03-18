@@ -36,7 +36,8 @@ protected:
   void parseSolverTypes();
 
   std::shared_ptr<KSP> ksp_;   ///< the PETSc KSP (Krylov subspace) object
-  double relativeTolerance_;    ///< relative solver tolerance
+  double relativeTolerance_;    ///< relative solver tolerance of the residuum norm relative to the initial value of the residual norm
+  double absoluteTolerance_;    ///< absolute solver tolerance of the residuum norm
   long int maxIterations_;     ///< maximum number of iterations
 
   std::string dumpFormat_;     ///< format to use for dumping matrices and vectors

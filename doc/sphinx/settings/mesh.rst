@@ -15,6 +15,12 @@ On the C++ side, there exist three mesh types,
 
 with ``D`` equals to 1, 2 or 3.
 
+Additionally, there is a composite mesh,
+
+* ``Mesh::CompositeOfDimension<D>``,
+
+which forms a single mesh that consists of multiple meshes of type ``Mesh::StructuredDeformableOfDimension<D>``. 
+
 :numref:`meshes` shows the different mesh types for linear and quadratic basis functions. As can be seen, the meshes all have quadrilateral elements, corresponding to lines in 1D, quadrilaterals in 2D and hexaeders in 3D.
 
 .. _meshes:
@@ -43,6 +49,8 @@ The node positions need to be specified and can move during the computation, lik
 The *Unstructured* mesh type can only be used with serial execution, i.e. no domain decomposition is implemented.
 
 Node positions are always stored as points in :math:`\mathbb{R}^3`. Consequently, it is possible to define a 1D mesh embedded in the 3D space, for example for 1D muscle fibers in a 3D muscle geometry. Similarly, "bended" 2D meshes can be defined, like the 2D surface of a 3D muscle.
+
+The **Composite** mesh is used when the geometry cannot be described by a single structured mesh because it does not have the shape of a cuboid. Then, 2 or more structured meshes are combined into a single mesh.
    
 .. _define_meshes:
 
@@ -101,13 +109,22 @@ Whether the values of ``nElements`` and ``physicalExtent`` describe the global d
 
 StructuredDeformable
 ^^^^^^^^^^^^^^^^^^^^^^^ 
-For specifying the **Structured Deformable** mesh. there are two possibilities: 
+For specifying the **Structured Deformable** mesh there are two possibilities: 
 
-1. Specify ``nElements`` and ``physicalExtent``, like for a *StructuredRegularFixed* mesh. A rectilinear mesh is constructed, analogous to the *StructuredRegularFixed* mesh. 
+1. Specify ``nElements`` and ``physicalExtent``, like for a *StructuredRegularFixed* mesh. A rectilinear mesh is constructed, analogous to the *StructuredRegularFixed* mesh. There is the additional option ``physicalOffset`` that offsets all node positions by the given vector. The physicalOffset is always global, i.e. even when ``inputMeshIsGlobal`` is set to ``False``, the ``physicalOffset`` specifies the offset to the front lower left corner of the global mesh.
 
   Note, that now the mesh widths does not need to be the same in every coordinate direction, so there is no restriction on the values of ``nElements`` and ``physicalExtent``.
   Again, the value of ``inputMeshIsGlobal`` applies.
   
+  An example is given below:
+  
+.. code-block:: python
+
+  "nElements": [nx, ny],      # example for a 2D mesh
+  "physicalExtent": [2.5, 5.0],
+  "physicalOffset": [0.5, 0.0],
+  "inputMeshIsGlobal": True,
+
 2. Specify ``nElements`` and the node positions.
 
 .. code-block:: python
@@ -264,3 +281,40 @@ exnode
 
 The file name of the *exnode* file.
     
+
+CompositeOfDimension<D>
+^^^^^^^^^^^^^^^^^^^^^^^
+The composite mesh consists of multiple meshes of type ``StructuredDeformableOfDimension<D>``, called `submeshes`. In order to create a composite mesh, all submeshes need to be defined under the ``"Meshes"`` section of the config. The composite mesh itself is not defined extra. 
+
+In the solver that will use the composite mesh, the ``"meshName"`` option has to be a list containing all mesh names of the submeshes.
+
+All submeshes will be partitioned independently when running in parallel. Consequently, it is also possible to specify only the local partitions of the submeshes, as described earlier (set ``"inputMeshIsGlobal": False``).
+
+.. code-block:: python
+
+  config = {
+    "Meshes": {
+      "submesh0": {
+        "nElements": [2, 2],
+        "physicalExtent": [2.0, 1.0],
+        "physicalOffset": [0.0, 0.0],
+        "inputMeshIsGlobal": True,
+      },
+      "submesh1": {
+        "nElements": [1, 2],
+        "physicalExtent": [1.0, 1.0],
+        "physicalOffset": [2.0, 0.5],
+        "inputMeshIsGlobal": True,
+      },
+    },
+    ...
+    "MySolver": {   # name of the solver that uses the composite mesh
+      ...
+      "meshName": ["submesh0", "submesh1"],
+    }
+  }
+
+A composite mesh consists of the elements of all submeshes and therefore it contains also all nodes. Duplicate or shared nodes of different submeshes that would be on the same position appear only once. Whether two nodes have the same position is determined by computing the distance of the points. If the distance is below the tolerance of 1e-5, the nodes are considered to be shared. 
+
+Note, that shared nodes have to be on the same subdomain. I.e. when the program is run with multiple processes, make sure that the shared nodes of different submeshes are in the same partition.
+

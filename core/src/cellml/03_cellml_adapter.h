@@ -74,8 +74,11 @@ public:
   void prepareForGetOutputConnectorData();
 
   //! the FastMonodomainSolver accesses the internals of CellmlAdapter
-  template<int a, int b> friend class FastMonodomainSolverBase;
+  template<int a, int b, typename c> friend class FastMonodomainSolverBase;
 
+protected:
+  //! compute equilibrium of states for option "initializeStatesToEquilibrium"
+  void initializeToEquilibriumValues(std::array<double,nStates_> &statesInitialValues);
 };
 
 #include "cellml/03_cellml_adapter.tpp"

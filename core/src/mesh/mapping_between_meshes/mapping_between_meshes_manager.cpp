@@ -38,7 +38,7 @@ void MappingBetweenMeshesManager::storeMappingsBetweenMeshes()
         else if (PyUnicode_Check(value))
         {
           std::string targetMeshToMapTo = PythonUtility::convertFromPython<std::string>::get(value);
-          LOG(DEBUG) << "Store mapping between mesh \"" << key << "\" and " << targetMeshToMapTo;
+          VLOG(1) << "Store mapping between mesh \"" << key << "\" and " << targetMeshToMapTo;
 
           if (mappingsBetweenMeshes_[key].find(key) == mappingsBetweenMeshes_[key].end())
           {
@@ -56,7 +56,7 @@ void MappingBetweenMeshesManager::storeMappingsBetweenMeshes()
           std::string targetMeshToMapTo = PythonUtility::getOptionString(value, "name", stringPath.str(), "");
           double xiTolerance = PythonUtility::getOptionDouble(value, "xiTolerance", stringPath.str(), 0.1);
 
-          LOG(DEBUG) << "Store mapping between mesh \"" << key << "\" and " << targetMeshToMapTo << " with xiTolerance " << xiTolerance;
+          VLOG(1) << "Store mapping between mesh \"" << key << "\" and " << targetMeshToMapTo << " with xiTolerance " << xiTolerance;
 
           if (mappingsBetweenMeshes_[key].find(key) == mappingsBetweenMeshes_[key].end())
           {

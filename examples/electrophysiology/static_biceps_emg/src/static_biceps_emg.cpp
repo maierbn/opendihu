@@ -43,31 +43,19 @@ int main(int argc, char *argv[])
         >
       >
     >,
-    Control::Coupling<
-      OutputWriter::OutputSurface<
-        TimeSteppingScheme::StaticBidomainSolver<              // bidomain in muscle volume
-          SpatialDiscretization::FiniteElementMethod<       //FEM for initial potential flow, fibre directions
-            Mesh::StructuredDeformableOfDimension<3>,
-            BasisFunction::LagrangeOfOrder<1>,
-            Quadrature::Gauss<3>,
-            Equation::Static::Laplace
-          >,
-          SpatialDiscretization::FiniteElementMethod<       // anisotropic diffusion for fiber direction
-            Mesh::StructuredDeformableOfDimension<3>,
-            BasisFunction::LagrangeOfOrder<1>,
-            Quadrature::Gauss<5>,
-            Equation::Dynamic::DirectionalDiffusion
-          >
-        >
-      >,
-      Control::MultipleInstances<
-        TimeSteppingScheme::RepeatedCallStatic<
-          SpatialDiscretization::FiniteElementMethod<       // anisotropic diffusion 
-            Mesh::StructuredDeformableOfDimension<3>,
-            BasisFunction::LagrangeOfOrder<1>,
-            Quadrature::Gauss<3>,
-            Equation::Static::Laplace
-          >
+    OutputWriter::OutputSurface<
+      TimeSteppingScheme::StaticBidomainSolver<              // bidomain in muscle volume
+        SpatialDiscretization::FiniteElementMethod<       //FEM for initial potential flow, fibre directions
+          Mesh::CompositeOfDimension<3>,
+          BasisFunction::LagrangeOfOrder<1>,
+          Quadrature::Gauss<3>,
+          Equation::Static::Laplace
+        >,
+        SpatialDiscretization::FiniteElementMethod<       // anisotropic diffusion for fiber direction
+          Mesh::CompositeOfDimension<3>,
+          BasisFunction::LagrangeOfOrder<1>,
+          Quadrature::Gauss<5>,
+          Equation::Dynamic::DirectionalDiffusion
         >
       >
     >

@@ -103,5 +103,3 @@ protected:
 }  // namespace
 
 #include "data_management/finite_element_method/finite_elements.tpp"
-//#include "data_management/finite_element_method/finite_elements_mixed.h"
-//#include "data_management/finite_element_method/finite_elements_solid_mechanics.h"

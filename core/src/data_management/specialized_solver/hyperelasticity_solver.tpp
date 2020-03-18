@@ -160,6 +160,7 @@ template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, ty
 void QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::
 updateGeometry(double scalingFactor, bool updateLinearVariables)
 {
+  VLOG(1) << "updateGeometry, scalingFactor=" << scalingFactor << ", updateLinearVariables: " << updateLinearVariables;
   PetscErrorCode ierr;
 
   this->displacementsFunctionSpace_->geometryField().finishGhostManipulation();
@@ -170,6 +171,12 @@ updateGeometry(double scalingFactor, bool updateLinearVariables)
                   scalingFactor, this->displacements_->valuesGlobal(), this->geometryReference_->valuesGlobal()); CHKERRV(ierr);
 
   this->displacementsFunctionSpace_->geometryField().startGhostManipulation();
+
+  VLOG(1) << "update done.";
+  VLOG(1) << "displacements representation: " << this->displacements_->partitionedPetscVec()->getCurrentRepresentationString();
+  VLOG(1) << "geometryReference_ representation: " << this->geometryReference_->partitionedPetscVec()->getCurrentRepresentationString();
+  VLOG(1) << "displacementsFunctionSpace_ representation: " << this->displacementsFunctionSpace_->geometryField().partitionedPetscVec()->getCurrentRepresentationString();
+
 
   // if the linear variables (geometry, displacements, velocities) should be updated in order to output with the pressure output writer
   if (updateLinearVariables)
@@ -254,6 +261,8 @@ template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, ty
 std::shared_ptr<DisplacementsFunctionSpace> QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::
 displacementsFunctionSpace()
 {
+  if (!displacementsFunctionSpace_)
+    LOG(FATAL) << "displacementsFunctionSpace is not set!";
   return displacementsFunctionSpace_;
 }
 
@@ -262,6 +271,8 @@ template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, ty
 std::shared_ptr<PressureFunctionSpace> QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::
 pressureFunctionSpace()
 {
+  if (!pressureFunctionSpace_)
+    LOG(FATAL) << "pressureFunctionSpace is not set!";
   return pressureFunctionSpace_;
 }
 

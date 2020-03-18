@@ -70,6 +70,8 @@ ParallelFiberEstimation(DihuContext context) :
   finalTopZClip_ = specificSettings_.getOptionDouble("finalTopZClip", topZClip_);
   refinementFactors_ = specificSettings_.getOptionArray<int,3>("refinementFactors", std::array<int,3>({1,1,1}));
 
+LOG(INFO) << "ere[" << resultFilename_ << "]";
+
   this->lineStepWidth_ = specificSettings_.getOptionDouble("lineStepWidth", 1e-2, PythonUtility::Positive);
   this->maxNIterations_ = specificSettings_.getOptionInt("maxIterations", 100000, PythonUtility::Positive);
   this->useGradientField_ = specificSettings_.getOptionBool("useGradientField", false);
@@ -442,9 +444,10 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     // create meshPartition for function space with the currently used ranks
     context_.partitionManager()->setRankSubsetForNextCreatedPartitioning(currentRankSubset_);
 
+    std::vector<int> rankNos;
     //std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunctionType>>> meshPartition
     meshPartition_ = context_.partitionManager()->template createPartitioningStructuredLocal<FunctionSpaceType>(
-        nElementsPerCoordinateDirectionGlobal, nElementsPerCoordinateDirectionLocal, nRanksPerCoordinateDirection_);
+        this->specificSettings_, nElementsPerCoordinateDirectionGlobal, nElementsPerCoordinateDirectionLocal, nRanksPerCoordinateDirection_, rankNos);
 
     LOG(DEBUG) << "nElementsPerCoordinateDirectionGlobal: " << nElementsPerCoordinateDirectionGlobal;
 

@@ -80,9 +80,12 @@ public:
   //! extract the specified component from the field variable by using the raw data array in the given field variable. Afterwards this field variable is invalid and can only be used again after restoreExtractedComponent has been called
   void extractComponentShared(int componentNo, std::shared_ptr<FieldVariable<FunctionSpaceType,1>> extractedFieldVariable);
 
-  //! restore the extracted raw array to petsc and make the field variable usable again
+  //! if it is possible to extract a component in the shared way
+  bool isExtractComponentSharedPossible(int componentNo);
+
+  //! restore the extracted raw array to petsc and make the field variable usable again, the restored array was from componentNo
   template<int nComponents2>
-  void restoreExtractedComponent(std::shared_ptr<PartitionedPetscVec<FunctionSpaceType,nComponents2>> extractedVec);
+  void restoreExtractedComponent(std::shared_ptr<PartitionedPetscVec<FunctionSpaceType,nComponents2>> extractedVec, int componentNo);
 
   //! set the values for the given component from a petsc Vec
   void setValues(int componentNo, Vec petscVector);

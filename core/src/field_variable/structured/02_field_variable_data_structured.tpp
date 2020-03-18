@@ -107,12 +107,12 @@ FieldVariableDataStructured(std::shared_ptr<FunctionSpaceType> functionSpace, st
   // create a new values vector for the new field variable
   if (!this->isGeometryField_ || !isStructuredRegularFixed)
   {
-    LOG(DEBUG) << "create a field variable with values_ vector";
+    //LOG(DEBUG) << "create a field variable with values_ vector";
     this->values_ = std::make_shared<PartitionedPetscVec<FunctionSpaceType,nComponents>>(this->functionSpace_->meshPartition(), name);
   }
   else
   {
-    LOG(DEBUG) << "create a geometry field variable without values_ vector (because it isStructuredRegularFixed)";
+    //LOG(DEBUG) << "create a geometry field variable without values_ vector (because it isStructuredRegularFixed)";
   }
 }
 

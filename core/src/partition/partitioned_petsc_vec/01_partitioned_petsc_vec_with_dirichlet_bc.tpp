@@ -34,12 +34,12 @@ template<typename FunctionSpaceType, int nComponents, int nComponentsDirichletBc
 dof_no_t PartitionedPetscVecWithDirichletBc<FunctionSpaceType, nComponents, nComponentsDirichletBc>::
 nonBCDofNoLocal(int componentNo, dof_no_t localDofNo) const
 {
-  VLOG(1) << "dofNoLocalToDofNoNonBcLocal_[component " << componentNo << "][dofNolocal " << localDofNo << "]=" << dofNoLocalToDofNoNonBcLocal_[componentNo][localDofNo];
+  VLOG(2) << "dofNoLocalToDofNoNonBcLocal_[component " << componentNo << "][dofNolocal " << localDofNo << "]=" << dofNoLocalToDofNoNonBcLocal_[componentNo][localDofNo];
   if (dofNoLocalToDofNoNonBcLocal_[componentNo][localDofNo] == -1)
   {
-    VLOG(1) << "(=-1)";
+    VLOG(2) << "(=-1)";
   }
-  VLOG(1) << "isPrescribed: " << isPrescribed(componentNo, localDofNo);
+  VLOG(2) << "isPrescribed: " << isPrescribed(componentNo, localDofNo);
 
   return dofNoLocalToDofNoNonBcLocal_[componentNo][localDofNo];
 }
@@ -221,7 +221,7 @@ template<typename FunctionSpaceType, int nComponents, int nComponentsDirichletBc
 void PartitionedPetscVecWithDirichletBc<FunctionSpaceType, nComponents, nComponentsDirichletBc>::
 setValues(int componentNo, PetscInt ni, const PetscInt ix[], const PetscScalar y[], InsertMode iora)
 {
-  VLOG(3) << "\"" << this->name_ << "\" setValues, representation: " << this->getCurrentRepresentationString();
+  VLOG(1) << "\"" << this->name_ << "\" setValues, representation: " << this->getCurrentRepresentationString();
 
   assert(componentNo >= 0 && componentNo < nComponents);
 
@@ -261,7 +261,7 @@ setValues(int componentNo, PetscInt ni, const PetscInt ix[], const PetscScalar y
       }
     }
 
-    VLOG(1) << "non-bc indices: " << indices << ", values: " << values;
+    VLOG(2) << "non-bc indices: " << indices << ", values: " << values;
     // this wraps the standard PETSc VecSetValues on the local vector
     ierr = VecSetValues(vectorCombinedWithoutDirichletDofsGlobal_, indices.size(), indices.data(), values.data(), iora); CHKERRV(ierr);
 
@@ -288,7 +288,7 @@ setValues(int componentNo, PetscInt ni, const PetscInt ix[], const PetscScalar y
       }
     }
 
-    VLOG(1) << "non-bc indices: " << indices << ", values: " << values;
+    VLOG(2) << "non-bc indices: " << indices << ", values: " << values;
     // this wraps the standard PETSc VecSetValues on the local vector
     PetscErrorCode ierr;
     ierr = VecSetValues(vectorCombinedWithoutDirichletDofsLocal_, indices.size(), indices.data(), values.data(), iora); CHKERRV(ierr);
@@ -303,14 +303,14 @@ template<typename FunctionSpaceType, int nComponents, int nComponentsDirichletBc
 void PartitionedPetscVecWithDirichletBc<FunctionSpaceType, nComponents, nComponentsDirichletBc>::
 setValue(int componentNo, PetscInt row, PetscScalar value, InsertMode mode)
 {
-  VLOG(3) << "\"" << this->name_ << "\" setValue row=" << row << ", representation: " << this->getCurrentRepresentationString();
+  VLOG(1) << "\"" << this->name_ << "\" setValue row=" << row << ", representation: " << this->getCurrentRepresentationString();
 
   assert(componentNo >= 0 && componentNo < nComponents);
 
   // replace dirichlet BC values with the prescribed values
   if (isPrescribed_[componentNo][row])
   {
-    VLOG(1) << "row " << row << ", value is prescribed, do not change";
+    VLOG(2) << "row " << row << ", value is prescribed, do not change";
     return;
   }
 
@@ -336,7 +336,7 @@ setValue(int componentNo, PetscInt row, PetscScalar value, InsertMode mode)
     assert(row >= ownershipBegin && row < ownershipEnd);
 #endif
 
-    VLOG(1) << "set value " << value << " at non-bc global " << row;
+    VLOG(2) << "set value " << value << " at non-bc global " << row;
 
     // this wraps the standard PETSc VecSetValues on the local vector
     ierr = VecSetValue(vectorCombinedWithoutDirichletDofsGlobal_, row, value, mode); CHKERRV(ierr);
@@ -345,13 +345,13 @@ setValue(int componentNo, PetscInt row, PetscScalar value, InsertMode mode)
   {
     assert(row < this->meshPartition_->nDofsLocalWithGhosts());
 
-    VLOG(1) << "set value at dof local " << row << "(n without ghosts: "
+    VLOG(2) << "set value at dof local " << row << " (n without ghosts: "
       << this->meshPartition_->nDofsLocalWithoutGhosts() << ", with: " << this->meshPartition_->nDofsLocalWithGhosts() << ")";
 
     // determine new index
     row = nonBCDofNoLocal(componentNo, row);
 
-    VLOG(1) << "set value " << value << " at non-bc local " << row;
+    VLOG(2) << "set value " << value << " at non-bc local " << row;
 
     assert(row < nEntriesLocal_ + nNonBcDofsGhosts_);
 
@@ -369,7 +369,7 @@ template<typename FunctionSpaceType, int nComponents, int nComponentsDirichletBc
 void PartitionedPetscVecWithDirichletBc<FunctionSpaceType, nComponents, nComponentsDirichletBc>::
 getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[]) const
 {
-  VLOG(3) << "\"" << this->name_ << "\" getValues, representation: " << this->getCurrentRepresentationString();
+  VLOG(1) << "\"" << this->name_ << "\" getValues, representation: " << this->getCurrentRepresentationString();
 
   assert(componentNo >= 0 && componentNo < nComponents);
 
@@ -430,6 +430,12 @@ getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[]) co
     VLOG(1) << "modified values: ";
     for (dof_no_t i = 0; i < ni; i++)
       VLOG(1) << y[i];
+
+    VLOG(1) << "component " << componentNo << ", nComponentsDirichletBc: " << nComponentsDirichletBc
+      << "\n isPrescribed: " << isPrescribed_[componentNo]
+      << "\n boundaryConditionValues: " << boundaryConditionValues_[componentNo] << "\nmodified values: ";
+    for (dof_no_t i = 0; i < ni; i++)
+      VLOG(1) << "local index " << ix[i] << " global " << indices[i] << ", isPrescribed: " << isPrescribed_[componentNo][ix[i]] << ", bc value: " << boundaryConditionValues_[componentNo][ix[i]] << ", final value: " << y[i];
   }
   else if (this->currentRepresentation_ == Partition::values_representation_t::representationCombinedLocal)
   {
@@ -460,9 +466,11 @@ getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[]) co
       }
     }
 
-    VLOG(1) << "modified values: ";
+    VLOG(1) << "component " << componentNo << ", nComponentsDirichletBc: " << nComponentsDirichletBc
+      << "\n isPrescribed: " << isPrescribed_[componentNo]
+      << "\n boundaryConditionValues: " << boundaryConditionValues_[componentNo] << "\nmodified values: ";
     for (dof_no_t i = 0; i < ni; i++)
-      VLOG(1) << y[i];
+      VLOG(1) << "local index " << ix[i] << ", value: " << y[i];
   }
 }
 
@@ -588,6 +596,34 @@ updateDirichletBoundaryConditions(const std::vector<std::pair<global_no_t,std::a
   }
 
   communicateBoundaryConditionGhostValues();
+}
+
+
+template<typename FunctionSpaceType, int nComponents, int nComponentsDirichletBc>
+bool PartitionedPetscVecWithDirichletBc<FunctionSpaceType, nComponents, nComponentsDirichletBc>::
+containsNanOrInf()
+{
+  // get all local values
+  std::vector<double> values;
+
+  for (int componentNo = 0; componentNo < nComponents; componentNo++)
+  {
+    values.resize(this->meshPartition_->nDofsLocalWithoutGhosts());
+
+    // void getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[]) const;
+    this->getValues(componentNo, this->meshPartition_->nDofsLocalWithoutGhosts(), this->meshPartition_->dofNosLocal().data(), values.data());
+
+    // loop over values and check if they are neither nan nor inf
+    for (int i = 0; i < values.size(); i++)
+    {
+      if (!std::isfinite(values[i]))
+      {
+        LOG(ERROR) << "containsNanOrInf(): value " << i << "/" << values.size() << ", component " << componentNo << "/" << nComponents << ": " << values[i];
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 //! output the vector to stream, for debugging

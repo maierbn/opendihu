@@ -29,6 +29,7 @@ protected:
   double snesRelativeTolerance_;         ///< relative solver tolerance
   long int snesMaxIterations_;           ///< maximum number of iterations
   long int snesMaxFunctionEvaluations_;  ///< maximum number of function evaluations
+  std::string snesLineSearchType_;       ///< linesearch type of the snes object (SNESLineSearchType)
 };
 
 }  // namespace

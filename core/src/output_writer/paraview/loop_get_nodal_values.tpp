@@ -3,6 +3,7 @@
 #include "output_writer/paraview/paraview_writer.h"
 
 #include <cstdlib>
+#include "field_variable/field_variable.h"
 
 namespace OutputWriter
 {
@@ -30,12 +31,15 @@ loopGetNodalValues(const FieldVariablesForOutputWriterType &fieldVariables, std:
  
 // current element is of pointer type (not vector)
 template<typename CurrentFieldVariableType, typename FieldVariablesForOutputWriterType>
-typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
+typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value && !Mesh::isComposite<CurrentFieldVariableType>::value, bool>::type
 getNodalValues(CurrentFieldVariableType currentFieldVariable, const FieldVariablesForOutputWriterType &fieldVariables, std::set<std::string> meshNames,
                std::map<std::string,std::vector<double>> &values)
 {
   VLOG(1) << "field variable " << StringUtility::demangle(typeid(currentFieldVariable).name()) << " name \"" << currentFieldVariable->name()
     << "\", is geometry: " << currentFieldVariable->isGeometryField() << ", values size: " << values.size();
+
+  if (!currentFieldVariable->functionSpace())
+    return false;
 
   // if mesh name is one of the specified meshNames (and it is not a geometry field)
   if (meshNames.find(currentFieldVariable->functionSpace()->meshName()) != meshNames.end()
@@ -77,7 +81,7 @@ getNodalValues(CurrentFieldVariableType currentFieldVariable, const FieldVariabl
 
     // create entry for field variable name if it does not exist and reserve enough space for all values
     values[fieldVariableName].reserve(values[fieldVariableName].size() + componentValues[0].size()*nComponents);
-    LOG(DEBUG) << "add \"" << fieldVariableName << "\".";
+    LOG(DEBUG) << "get nodal values of \"" << fieldVariableName << "\" (" << currentFieldVariable << ").";
 
     // copy values in consecutive order (x y z x y z) to output
     for (int i = 0; i < componentValues[0].size(); i++)
@@ -120,5 +124,30 @@ getNodalValues(TupleType currentFieldVariableTuple, const FieldVariablesForOutpu
   return false;  // do not break iteration 
 }
 
+// element i is a field variables with Mesh::CompositeOfDimension<D>
+template<typename CurrentFieldVariableType, typename FieldVariablesForOutputWriterType>
+typename std::enable_if<Mesh::isComposite<CurrentFieldVariableType>::value, bool>::type
+getNodalValues(CurrentFieldVariableType currentFieldVariable, const FieldVariablesForOutputWriterType &fieldVariables, std::set<std::string> meshNames,
+               std::map<std::string,std::vector<double>> &values)
+{
+  const int D = CurrentFieldVariableType::element_type::FunctionSpace::dim();
+  typedef typename CurrentFieldVariableType::element_type::FunctionSpace::BasisFunction BasisFunctionType;
+  typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>, BasisFunctionType> SubFunctionSpaceType;
+  const int nComponents = CurrentFieldVariableType::element_type::nComponents();
+
+  typedef FieldVariable::FieldVariable<SubFunctionSpaceType, nComponents> SubFieldVariableType;
+
+  std::vector<std::shared_ptr<SubFieldVariableType>> subFieldVariables;
+  currentFieldVariable->getSubFieldVariables(subFieldVariables);
+
+  for (auto& currentSubFieldVariable : subFieldVariables)
+  {
+    // call function on all vector entries
+    if (getNodalValues<std::shared_ptr<SubFieldVariableType>,FieldVariablesForOutputWriterType>(currentSubFieldVariable, fieldVariables, meshNames, values))
+      return true;
+  }
+
+  return false;  // do not break iteration
+}
 }  // namespace ParaviewLoopOverTuple
 }  // namespace OutputWriter

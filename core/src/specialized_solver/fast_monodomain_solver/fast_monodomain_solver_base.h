@@ -43,7 +43,7 @@ public:
 /** The implementation of a monodomain solver as used in the fibers_emg example, number of states and intermediates is templated.
  *  This class contains all functionality except the reaction term. Deriving classes only need to implement compute0D.
   */
-template<int nStates, int nIntermediates>
+template<int nStates, int nIntermediates, typename DiffusionTimeSteppingScheme>
 class FastMonodomainSolverBase : public Runnable
 {
 public:
@@ -58,15 +58,6 @@ public:
     FiberFunctionSpace
   > CellmlAdapterType;
 
-  typedef TimeSteppingScheme::ImplicitEuler<          // fiber diffusion, note that implicit euler gives lower error in this case than crank nicolson
-    SpatialDiscretization::FiniteElementMethod<
-      Mesh::StructuredDeformableOfDimension<1>,
-      BasisFunction::LagrangeOfOrder<1>,
-      Quadrature::Gauss<2>,
-      Equation::Dynamic::IsotropicDiffusion
-    >
-  > ImplicitEuler;
-
   typedef Control::MultipleInstances<                       // fibers
     OperatorSplitting::Strang<
       Control::MultipleInstances<
@@ -75,7 +66,7 @@ public:
         >
       >,
       Control::MultipleInstances<
-        ImplicitEuler
+        DiffusionTimeSteppingScheme
       >
     >
   > NestedSolversType;
@@ -108,6 +99,9 @@ public:
   //! get the output connector data, to be used for a surrounding solver
   std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
 
+  //! get a reference to the nested solvers
+  NestedSolversType &nestedSolvers();
+
 protected:
 
   //! create a source file with compute0D function from the CellML model
@@ -132,6 +126,16 @@ protected:
 
   //! compute the 0D-1D problem with Strang splitting
   void computeMonodomain();
+
+  //! check if the current point will be stimulated now
+  struct FiberData;
+  bool isCurrentPointStimulated(int fiberDataNo, double currentTime, bool currentPointIsInCenter);
+
+  //! method to be called after the compute0D, updates the information in fiberPointBuffersStatesAreCloseToEquilibrium_
+  void equilibriumAccelerationUpdate(const Vc::double_v statesPreviousValues[], int pointBuffersNo);
+
+  //! check if the 0D computations for the current point are disabled because the states are in equilibrium
+  bool isEquilibriumAccelerationCurrentPointDisabled(bool stimulateCurrentPoint, int pointBuffersNo);
 
   //! set the initial values for all states
   virtual void initializeStates(Vc::double_v states[]){};
@@ -177,23 +181,39 @@ protected:
 
   OutputWriter::Manager outputWriterManager_;     ///< manager object holding all output writers
 
-  std::vector<FiberData> fiberData_;  //< vector of fibers,
+  std::vector<FiberData> fiberData_;  //< vector of fibers, the number of entries is the number of fibers to computed by the own rank (nFibersToCompute_)
   int nFibersToCompute_;              //< number of fibers where own rank is involved (>= n.fibers that are computed by own rank)
   int nInstancesToCompute_;           //< number of instances of the Hodgkin-Huxley problem to compute on this rank
   double currentTime_;                //< the current time used for the output writer
   int nTimeStepsSplitting_;           //< number of times to repeat the Strang splitting for one advanceTimeSpan() call of FastMonodomainSolver
 
-  std::vector<int> statesForTransfer_;                          //< state no.s to transfer to other solvers within output connector data
+  bool onlyComputeIfHasBeenStimulated_;       //< option if fiber should only be computed after it has been stimulated for the first time
+  std::vector<bool> fiberHasBeenStimulated_;  //< for every fiber if it has been stimulated
+
+  bool disableComputationWhenStatesAreCloseToEquilibrium_;                  //< option to avoid computation when the states won't change much
+  enum state_t {
+    constant,                         //< the state values at the own point did not change in the last computation (according to a tolerance). This means the current point does not need to be computed.
+    neighbour_not_constant,           //< the state values did not change, so the state is constant, but at a neighbouring point the value changed. This means the own value has to be computed because it can change due to diffusion.
+    not_constant                      //< the state values at the own point change and have to be computed
+  };                                                                        //< type for fiberPointBuffersStatesAreCloseToEquilibrium_
+  std::vector<state_t> fiberPointBuffersStatesAreCloseToEquilibrium_;       //< for every entry in fiberPointBuffers_, constant if the states didn't change too much in the last compute0D, neighbour_not_constant if the state of the neighbouring pointBuffer changes
+  int nFiberPointBufferStatesCloseToEquilibrium_;                           //< number of "constant" entries in fiberPointBuffersStatesAreCloseToEquilibrium_
+
+  std::vector<int> statesForTransfer_;          //< state no.s to transfer to other solvers within output connector data
   std::vector<int> intermediatesForTransfer_;   //< which intermediates should be transferred to other solvers as part of output connector data
+  std::vector<double> parameters_;              //< parameters vector
+  double valueForStimulatedPoint_;              //< value to which the first state will be set if stimulated
 
   std::vector<std::vector<Vc::double_v>> fiberPointBuffersParameters_;        //< constant parameter values, changing parameters is not implemented
   std::vector<std::vector<Vc::double_v>> fiberPointBuffersIntermediatesForTransfer_;   //<  [fiberPointNo][intermediateToTransferNo], intermediate values to use for output connector data
 
-  CellmlSourceCodeGenerator cellmlSourceCodeGenerator_;    ///< object that holds all source code related to the model
-
-  void (*compute0DInstance_)(Vc::double_v [], std::vector<Vc::double_v> &, double, double, bool, bool, std::vector<Vc::double_v> &, const std::vector<int> &);   //< runtime-created and loaded function to compute one Heun step of the 0D problem
+  void (*compute0DInstance_)(Vc::double_v [], std::vector<Vc::double_v> &, double, double, bool, bool, std::vector<Vc::double_v> &, const std::vector<int> &, double);   //< runtime-created and loaded function to compute one Heun step of the 0D problem
   void (*initializeStates_)(Vc::double_v states[]);  //< runtime-created and loaded function to set all initial values for the states
 
+  bool initialized_;                  //< if initialize was already called
 };
 
 #include "specialized_solver/fast_monodomain_solver/fast_monodomain_solver_base.tpp"
+#include "specialized_solver/fast_monodomain_solver/fast_monodomain_solver_communication.tpp"
+#include "specialized_solver/fast_monodomain_solver/fast_monodomain_solver_compute.tpp"
+#include "specialized_solver/fast_monodomain_solver/fast_monodomain_solver_initialization.tpp"

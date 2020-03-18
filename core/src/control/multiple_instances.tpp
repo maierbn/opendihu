@@ -6,6 +6,7 @@
 
 #include <omp.h>
 #include <sstream>
+#include <string>
 
 #include "data_management/multiple_instances.h"
 #include "partition/partition_manager.h"

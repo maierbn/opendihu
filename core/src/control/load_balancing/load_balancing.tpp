@@ -36,7 +36,7 @@ rebalance()
 
   // get information about finite element method object
   // first, define types
-  typedef typename DiffusionTimeStepping::DiscretizableInTime_Type FiniteElementMethodType;
+  typedef typename DiffusionTimeStepping::DiscretizableInTime FiniteElementMethodType;
   typedef typename FiniteElementMethodType::FunctionSpace FiberFunctionSpaceType;
   typedef typename DiffusionTimeStepping::Data::FieldVariableType DiffusionFieldVariableType;
 
@@ -111,7 +111,7 @@ rebalance()
   diffusionSolution->getValuesWithoutGhosts(diffusionValues);
 
   // save old cellML values
-  const int nCellMLComponents = CellMLAdapter::nComponents();
+  const int nCellMLComponents = CellMLAdapter::nStates();
   std::array<std::vector<double>,nCellMLComponents> cellmlValues;
   cellMLSolution->getValuesWithoutGhosts(cellmlValues);
 
@@ -837,9 +837,10 @@ rebalance()
   // create meshPartition for function space with the currently used ranks
   this->context_.partitionManager()->setRankSubsetForNextCreatedPartitioning(rankSubsetFiber);
 
+  std::vector<int> rankNos;
   std::shared_ptr<Partition::MeshPartition<FiberFunctionSpaceType>> meshPartition
     = this->context_.partitionManager()->template createPartitioningStructuredLocal<FiberFunctionSpaceType>(
-        nElementsPerDimensionGlobal, nElementsPerDimensionLocal, nRanks);
+        this->context_.getPythonConfig(), nElementsPerDimensionGlobal, nElementsPerDimensionLocal, nRanks, rankNos);
 
   // number of nodes on own rank after rebalancing
   int nNodesLocalWithoutGhostsNew = meshPartition->nNodesLocalWithoutGhosts();

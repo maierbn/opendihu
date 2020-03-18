@@ -18,13 +18,31 @@ std::shared_ptr<FunctionSpaceType> Manager::functionSpace(PythonConfig settings)
   // if mesh was already created earlier
   if (settings.hasKey("meshName"))
   {
-    std::string meshName = settings.getOptionString("meshName", "");
+    PyObject *meshNamePy = settings.getOptionPyObject("meshName");
 
-    std::shared_ptr<FunctionSpaceType> functionSpace = this->functionSpace<FunctionSpaceType>(meshName);
-
-    if (functionSpace)
+    // if the value to "meshName" has multiple mesh names, this is to indicate a composite mesh
+    if (PyList_Check(meshNamePy))
     {
-      return functionSpace;
+      return this->createCompositeMesh<FunctionSpaceType>(settings);
+    }
+    else
+    {
+      // this is not a composite mesh, but just a normal mesh, get the meshName and create the mesh
+      std::string meshName = settings.getOptionString("meshName", "");
+
+      // output error message if for a composite mesh the meshName is no list
+      if (isComposite<std::shared_ptr<FunctionSpaceType>>::value)
+      {
+        LOG(FATAL) << "Function space of type " << StringUtility::demangle(typeid(FunctionSpaceType).name())
+          << " is composite and requires a list of mesh names under " << settings << "[\"meshName\"]. "
+          << "Currently, \"meshName\" is not a list, but the entry \"" << meshName << "\".";
+      }
+      std::shared_ptr<FunctionSpaceType> functionSpace = this->functionSpace<FunctionSpaceType>(meshName);
+
+      if (functionSpace)
+      {
+        return functionSpace;
+      }
     }
   }
   else
@@ -147,6 +165,83 @@ std::shared_ptr<FunctionSpaceType> Manager::createFunctionSpace(std::string name
     << ", with ghosts: " << functionSpace->nNodesLocalWithGhosts() << "), stored under key \"" << name << "\"";
 
   return functionSpace;
+}
+
+template<typename FunctionSpaceType>
+std::shared_ptr<FunctionSpaceType> Manager::createCompositeMesh(PythonConfig settings)
+{
+  std::vector<std::string> meshNames;
+  settings.template getOptionVector<std::string>("meshName", meshNames);
+
+  LOG(DEBUG) << "create composite Mesh from meshes " << meshNames;
+
+  // create the meshName of the composite mesh as concatenation of all sub mesh names with the '+' sign
+  std::stringstream compositeName;
+  int i = 0;
+  for (std::vector<std::string>::iterator iter = meshNames.begin(); iter != meshNames.end(); iter++, i++)
+  {
+    if (i != 0)
+      compositeName << "+";
+    compositeName << *iter;
+  }
+
+  // check if this mesh has already been created
+  if (hasFunctionSpaceOfType<FunctionSpaceType>(compositeName.str()))
+  {
+    LOG(DEBUG) << "Composite mesh with meshName \"" << compositeName.str() << "\" requested, found and type matches, type is "
+      << StringUtility::demangle(typeid(functionSpaces_[compositeName.str()]).name())
+    << ", cast to " << StringUtility::demangle(typeid(FunctionSpaceType).name());
+    return std::static_pointer_cast<FunctionSpaceType>(functionSpaces_[compositeName.str()]);
+  }
+  else
+  {
+    // create sub meshes
+    typedef FunctionSpace::FunctionSpace<::Mesh::StructuredDeformableOfDimension<FunctionSpaceType::dim()>,typename FunctionSpaceType::BasisFunction> SubFunctionSpaceType;
+    std::vector<std::shared_ptr<SubFunctionSpaceType>> subFunctionSpaces;
+    int i = 0;
+    for (std::vector<std::string>::iterator iter = meshNames.begin(); iter != meshNames.end(); iter++, i++)
+    {
+      LOG(DEBUG) << "For composite mesh create submesh " << i << "/" << meshNames.size();
+      subFunctionSpaces.push_back(this->functionSpace<SubFunctionSpaceType>(*iter));
+    }
+
+    // create new composite mesh and initialize
+    std::shared_ptr<FunctionSpaceType> functionSpace = ManagerCompositeMesh<FunctionSpaceType>::createCompositeMesh(this->partitionManager_, subFunctionSpaces);
+
+    functionSpace->setMeshName(compositeName.str());
+    functionSpace->initialize();
+
+    // store created mesh
+    functionSpaces_[compositeName.str()] = functionSpace;
+
+    // add statistics information to log
+    std::string logKey = compositeName.str();
+    Control::PerformanceMeasurement::setParameter(std::string("~nDofs") + logKey, functionSpace->nDofsGlobal());
+    Control::PerformanceMeasurement::setParameter(std::string("~nNodes") + logKey, functionSpace->nNodesGlobal());
+    Control::PerformanceMeasurement::setParameter(std::string("~nElements") + logKey, functionSpace->nElementsGlobal());
+
+    return functionSpace;
+  }
+}
+
+template<typename FunctionSpaceType>
+std::shared_ptr<FunctionSpaceType> ManagerCompositeMesh<FunctionSpaceType>::
+createCompositeMesh(std::shared_ptr<Partition::Manager> partitionManager,
+                    std::vector<std::shared_ptr<FunctionSpace::FunctionSpace<::Mesh::StructuredDeformableOfDimension<FunctionSpaceType::dim()>,typename FunctionSpaceType::BasisFunction>>> subFunctionSpaces)
+{
+  LOG(FATAL) << "Trying to create a composite function space from the Python Confing but the C++ mesh type is not Mesh::CompositeOfDimension<D> "
+    << "but " << StringUtility::demangle(typeid(typename FunctionSpaceType::Mesh).name());
+  return nullptr;
+}
+
+template<int D, typename BasisFunctionType>
+std::shared_ptr<FunctionSpace::FunctionSpace<::Mesh::CompositeOfDimension<D>,BasisFunctionType>>
+ManagerCompositeMesh<FunctionSpace::FunctionSpace<::Mesh::CompositeOfDimension<D>,BasisFunctionType>>::
+createCompositeMesh(std::shared_ptr<Partition::Manager> partitionManager,
+                    std::vector<std::shared_ptr<FunctionSpace::FunctionSpace<::Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>> subFunctionSpaces)
+{
+  // create the composite function space, directly using the subFunctionSpaces
+  return std::make_shared<FunctionSpace::FunctionSpace<::Mesh::CompositeOfDimension<D>,BasisFunctionType>>(partitionManager, subFunctionSpaces);
 }
 
 template<typename FunctionSpaceType, typename ...Args>

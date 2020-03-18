@@ -2,7 +2,7 @@
 
 #include <Python.h>  // has to be the first included header
 
-#include "control/python_config.h"
+#include "control/python_config/python_config.h"
 #include "data_management/output_connector_data.h"
 
 /** This specifies the connections of data slots between two terms, Term 1 and Term 2.
@@ -43,6 +43,12 @@ public:
   //! get the connectors from term 2 to term 1
   const std::vector<Connector> &connectorTerm2To1() const;
 private:
+
+  //! initialize the slotInformation_ variable
+  template<typename FunctionSpaceType1, int nComponents1a, int nComponents1b, typename FunctionSpaceType2, int nComponents2a, int nComponents2b>
+  void initializeSlotInformation(const Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b> &transferableSolutionData1,
+                                 const Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b> &transferableSolutionData2);
+
 
   //! assemble some debugging information to the mapping that will be displayed on error
   std::string getDebugInformation() const;

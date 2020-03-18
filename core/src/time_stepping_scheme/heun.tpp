@@ -89,6 +89,7 @@ void Heun<DiscretizableInTime>::advanceTimeSpan()
 
     VLOG(1) << "final solution (" << this->data_->solution() << "): " << *this->data_->solution();
 
+    // check if the solution contains Nans or Inf values, only in debug target
 #ifndef NDEBUG
     if (this->data_->solution()->containsNanOrInf())
     {

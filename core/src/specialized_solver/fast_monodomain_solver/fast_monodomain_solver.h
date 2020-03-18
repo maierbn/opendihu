@@ -28,7 +28,7 @@ class FastMonodomainSolver
 
 /** The main implemented class.
  */
-template<int nStates, int nIntermediates>
+template<int nStates, int nIntermediates, typename DiffusionTimeSteppingScheme>
 class FastMonodomainSolver
 <
   Control::MultipleInstances<                       // fibers
@@ -45,19 +45,12 @@ class FastMonodomainSolver
         >
       >,
       Control::MultipleInstances<
-        TimeSteppingScheme::ImplicitEuler<          // fiber diffusion, note that implicit euler gives lower error in this case than crank nicolson
-          SpatialDiscretization::FiniteElementMethod<
-            Mesh::StructuredDeformableOfDimension<1>,
-            BasisFunction::LagrangeOfOrder<1>,
-            Quadrature::Gauss<2>,
-            Equation::Dynamic::IsotropicDiffusion
-          >
-        >
+        DiffusionTimeSteppingScheme
       >
     >
   >
-> : public FastMonodomainSolverBase<nStates,nIntermediates>
+> : public FastMonodomainSolverBase<nStates,nIntermediates,DiffusionTimeSteppingScheme>
 {
 public:
-  using FastMonodomainSolverBase<nStates,nIntermediates>::FastMonodomainSolverBase;
+  using FastMonodomainSolverBase<nStates,nIntermediates,DiffusionTimeSteppingScheme>::FastMonodomainSolverBase;
 };

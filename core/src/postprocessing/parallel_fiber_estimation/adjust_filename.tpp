@@ -19,7 +19,7 @@ adjustFilename(std::string &filename, int nFibersX)
     fileBase = fileBase.substr(fileBase.rfind("/")+1);
   }
 
-  LOG(DEBUG) << "adjust filename [" << filename << "], nFibersX: " << nFibersX << ", path: [" << path << "], fileBase: [" << fileBase << "]";
+  LOG(INFO) << "adjust filename [" << filename << "], nFibersX: " << nFibersX << ", path: [" << path << "], fileBase: [" << fileBase << "]";
 
   // create directory and wait until system has created it
   if (path != "")
@@ -33,10 +33,18 @@ adjustFilename(std::string &filename, int nFibersX)
   // check if filename contains x
   bool xFound = false;
   bool filenameHasXFormat = false;
-  int suffixPos = 0;
+  int suffixPos = 0;  // character position of the suffix
+  int xNumbersBeginPos = 0;
+  int firstDigitPos = -1;
+
   for(int i = 0; i < fileBase.size(); i++)
   {
-    if (!isdigit(fileBase[i]))
+    if (isdigit(fileBase[i]))
+    {
+      if (firstDigitPos == -1)
+        firstDigitPos = i;
+    }
+    else
     {
       if (xFound)
       {
@@ -47,7 +55,9 @@ adjustFilename(std::string &filename, int nFibersX)
       if (fileBase[i] == 'x')
       {
         xFound = true;
+        xNumbersBeginPos = firstDigitPos;
       }
+      firstDigitPos = -1;
     }
   }
 
@@ -56,9 +66,9 @@ adjustFilename(std::string &filename, int nFibersX)
   if (filenameHasXFormat)
   {
     std::stringstream newFilename;
-    newFilename << path << nFibersX << "x" << nFibersX  << fileBase.substr(suffixPos);
+    newFilename << path << fileBase.substr(0,xNumbersBeginPos) << nFibersX << "x" << nFibersX  << fileBase.substr(suffixPos);
     filename = newFilename.str();
-    LOG(DEBUG) << "newFilename: [" << filename << "]";
+    LOG(INFO) << "newFilename: [" << filename << "]";
     return true;
   }
   else

@@ -1,6 +1,7 @@
 #include "output_writer/megamol/loop_collect_field_variables.h"
 
 #include <cstdlib>
+#include "field_variable/field_variable.h"
 
 namespace OutputWriter
 {
@@ -27,7 +28,7 @@ loopCollectFieldVariables(const FieldVariablesForOutputWriterType &fieldVariable
  
 // current element is of pointer type (not vector)
 template<typename CurrentFieldVariableType, typename FunctionSpaceType>
-typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value
+typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value && !Mesh::isComposite<CurrentFieldVariableType>::value
                         && CurrentFieldVariableType::element_type::nComponents() == 1, bool>::type
 collectFieldVariables(CurrentFieldVariableType currentFieldVariable, std::string meshName,
                       std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> &geometryField,
@@ -49,7 +50,7 @@ collectFieldVariables(CurrentFieldVariableType currentFieldVariable, std::string
 
 // current element is of pointer type (not vector)
 template<typename CurrentFieldVariableType, typename FunctionSpaceType>
-typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value
+typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value && !Mesh::isComposite<CurrentFieldVariableType>::value
                         && CurrentFieldVariableType::element_type::nComponents() != 1, bool>::type
 collectFieldVariables(CurrentFieldVariableType currentFieldVariable, std::string meshName,
                       std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> &geometryField,
@@ -97,5 +98,31 @@ collectFieldVariables(VectorType currentFieldVariableVector, std::string meshNam
   return false;  // do not break iteration
 }
 
+// element i is a field variables with Mesh::CompositeOfDimension<D>
+template<typename CurrentFieldVariableType, typename FunctionSpaceType>
+typename std::enable_if<Mesh::isComposite<CurrentFieldVariableType>::value, bool>::type
+collectFieldVariables(CurrentFieldVariableType currentFieldVariable, std::string meshName,
+                      std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> &geometryField,
+                      std::vector<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>> &scalarFieldVariables)
+{
+  const int D = CurrentFieldVariableType::element_type::FunctionSpace::dim();
+  typedef typename CurrentFieldVariableType::element_type::FunctionSpace::BasisFunction BasisFunctionType;
+  typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>, BasisFunctionType> SubFunctionSpaceType;
+  const int nComponents = CurrentFieldVariableType::element_type::nComponents();
+
+  typedef FieldVariable::FieldVariable<SubFunctionSpaceType, nComponents> SubFieldVariableType;
+
+  std::vector<std::shared_ptr<SubFieldVariableType>> subFieldVariables;
+  currentFieldVariable->getSubFieldVariables(subFieldVariables);
+
+  for (auto& currentSubFieldVariable : subFieldVariables)
+  {
+    // call function on all vector entries
+    if (collectFieldVariables<std::shared_ptr<SubFieldVariableType>,FunctionSpaceType>(currentSubFieldVariable, meshName, geometryField, scalarFieldVariables))
+      return true;
+  }
+
+  return false;  // do not break iteration
+}
 }  // namespace MegaMolLoopOverTuple
 }  // namespace OutputWriter

@@ -22,10 +22,7 @@ template <int nStates, int nIntermediates, typename FunctionSpaceType>
 void CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::
 initializeOutputConnectorData()
 {
-  this->specificSettings_.template getOptionVector<int>("statesForTransfer", statesForTransfer_);
-  this->specificSettings_.template getOptionVector<int>("intermediatesForTransfer", intermediatesForTransfer_);
-
-  LOG(DEBUG) << "parsed the following states for transfer: " << statesForTransfer_ << " (states: " << this->states()
+  LOG(DEBUG) << "got the following states for transfer: " << statesForTransfer_ << " (states: " << this->states()
     << "), intermediates: " << intermediatesForTransfer_;
 
   outputConnectorData_ = std::make_shared<OutputConnectorDataType>();
@@ -42,14 +39,10 @@ initializeOutputConnectorData()
     outputConnectorData_->addFieldVariable2(this->intermediates(), *iter);
   }
 
-  if (this->specificSettings_.hasKey("outputIntermediateIndex"))
+  // add parameters components
+  for (std::vector<int>::iterator iter = parametersForTransfer_.begin(); iter != parametersForTransfer_.end(); iter++)
   {
-    LOG(WARNING) << specificSettings_ << "[\"outputIntermediateIndex\"] is no longer a valid option, use \"intermediatesForTransfer\" instead!";
-  }
-
-  if (this->specificSettings_.hasKey("outputStateIndex"))
-  {
-    LOG(WARNING) << specificSettings_ << "[\"outputStateIndex\"] is no longer a valid option, use \"statesForTransfer\" instead!";
+    outputConnectorData_->addFieldVariable2(this->parameters(), *iter);
   }
 }
 
@@ -74,8 +67,62 @@ template <int nStates, int nIntermediates, typename FunctionSpaceType>
 void CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::
 createPetscObjects()
 {
+  // The states field variable is allocated by the timestepping class because this is the solution vector that the timestepping scheme operates on.
+  // It gets then passed to this class by the call to setStatesVariable.
+  // Therefore, here we only create the intermediates and the parameters field variables
   this->intermediates_ = this->functionSpace_->template createFieldVariable<nIntermediates>("intermediates", intermediateNames_);
   this->intermediates_->setRepresentationContiguous();
+
+  std::vector<std::string> parameterNames(nIntermediates);
+  for (int i = 0; i < nIntermediates; i++)
+  {
+    std::stringstream s;
+    s << "parameter_" << i;
+    parameterNames[i] = s.str();
+  }
+
+  this->parameters_ = this->functionSpace_->template createFieldVariable<nIntermediates>("parameters", parameterNames);
+}
+
+//! return a reference to the parameters vector
+template <int nStates, int nIntermediates, typename FunctionSpaceType>
+std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nIntermediates>> CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::
+parameters()
+{
+  return this->parameters_;
+}
+
+template <int nStates, int nIntermediates, typename FunctionSpaceType>
+double *CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::
+parameterValues()
+{
+  return this->parameterValues_;
+}
+
+//! get the parameteValues_ pointer from the parameters field variable, then the field variable can no longer be used until restoreParameterValues() gets called
+template <int nStates, int nIntermediates, typename FunctionSpaceType>
+void CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::
+prepareParameterValues()
+{
+  this->parameters_->setRepresentationContiguous();
+  PetscErrorCode ierr;
+  Vec contiguousVec = this->parameters_->getValuesContiguous();
+  ierr = VecGetArray(contiguousVec, &parameterValues_); CHKERRV(ierr);
+  
+#if 0
+  PetscInt nValues;
+  ierr = VecGetLocalSize(contiguousVec, &nValues); CHKERRV(ierr);
+  LOG(DEBUG) << "parameter values has " << nValues << " entries.";
+#endif
+}
+
+//! restore the parameterValues_ pointer, such that the field variable can be used again
+template <int nStates, int nIntermediates, typename FunctionSpaceType>
+void CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::
+restoreParameterValues()
+{
+  PetscErrorCode ierr;
+  ierr = VecRestoreArray(this->parameters_->getValuesContiguous(), &parameterValues_); CHKERRV(ierr);
 }
 
 template <int nStates, int nIntermediates, typename FunctionSpaceType>
@@ -93,11 +140,24 @@ states()
 }
 
 template <int nStates, int nIntermediates, typename FunctionSpaceType>
-void CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::
-getStatesIntermediatesForTransfer(std::vector<int> &statesForTransfer, std::vector<int> &intermediatesForTransfer)
+std::vector<int> &CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::
+statesForTransfer()
 {
-  statesForTransfer = statesForTransfer_;
-  intermediatesForTransfer = intermediatesForTransfer_;
+  return statesForTransfer_;
+}
+
+template <int nStates, int nIntermediates, typename FunctionSpaceType>
+std::vector<int> &CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::
+intermediatesForTransfer()
+{
+  return intermediatesForTransfer_;
+}
+
+template <int nStates, int nIntermediates, typename FunctionSpaceType>
+std::vector<int> &CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::
+parametersForTransfer()
+{
+  return parametersForTransfer_;
 }
 
 template <int nStates, int nIntermediates, typename FunctionSpaceType>

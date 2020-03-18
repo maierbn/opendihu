@@ -12,8 +12,8 @@
 
 template<int nStates, int nIntermediates_, typename FunctionSpaceType>
 CallbackHandler<nStates,nIntermediates_,FunctionSpaceType>::
-CallbackHandler(DihuContext context, bool noNewOutputWriter) :
-  RhsRoutineHandler<nStates,nIntermediates_,FunctionSpaceType>(context, noNewOutputWriter),
+CallbackHandler(DihuContext context, bool initializeOutputWriter) :
+  RhsRoutineHandler<nStates,nIntermediates_,FunctionSpaceType>(context, initializeOutputWriter),
   DiscretizableInTime(),
   setParameters_(NULL), setSpecificParameters_(NULL), setSpecificStates_(NULL), handleResult_(NULL),
   pythonSetParametersFunction_(NULL), pythonSetSpecificParametersFunction_(NULL), pythonSetSpecificStatesFunction_(NULL), pythonHandleResultFunction_(NULL),
@@ -62,10 +62,10 @@ initializeCallbackFunctions()
   {
     pythonSetParametersFunction_ = this->specificSettings_.getOptionFunction("setParametersFunction");
     setParametersCallInterval_ = this->specificSettings_.getOptionInt("setParametersCallInterval", 1, PythonUtility::Positive);
-    setParameters_ = [](void *context, int nInstances, int timeStepNo, double currentTime, std::vector<double> &parameters)
+    setParameters_ = [](void *context, int nInstances, int timeStepNo, double currentTime, double *parameterValues, int nParameters)
     {
       CallbackHandler *cellmlAdapter = (CallbackHandler *)context;
-      cellmlAdapter->callPythonSetParametersFunction(nInstances, timeStepNo, currentTime, parameters);
+      cellmlAdapter->callPythonSetParametersFunction(nInstances, timeStepNo, currentTime, parameterValues, nParameters);
     };
 
     pySetFunctionAdditionalParameter_ = this->specificSettings_.getOptionPyObject("additionalArgument", Py_None);
@@ -77,10 +77,10 @@ initializeCallbackFunctions()
   {
     pythonSetSpecificParametersFunction_ = this->specificSettings_.getOptionFunction("setSpecificParametersFunction");
     setSpecificParametersCallInterval_ = this->specificSettings_.getOptionInt("setSpecificParametersCallInterval", 1, PythonUtility::Positive);
-    setSpecificParameters_ = [](void *context, int nInstances, int timeStepNo, double currentTime, std::vector<double> &localParameters)
+    setSpecificParameters_ = [](void *context, int nInstances, int timeStepNo, double currentTime, double *localParameterValues, int nLocalParameters)
     {
       CallbackHandler *cellmlAdapter = (CallbackHandler *)context;
-      cellmlAdapter->callPythonSetSpecificParametersFunction(nInstances, timeStepNo, currentTime, localParameters);
+      cellmlAdapter->callPythonSetSpecificParametersFunction(nInstances, timeStepNo, currentTime, localParameterValues, nLocalParameters);
     };
 
     pySetFunctionAdditionalParameter_ = this->specificSettings_.getOptionPyObject("additionalArgument", Py_None);
@@ -123,7 +123,7 @@ initializeCallbackFunctions()
 
 template<int nStates, int nIntermediates_, typename FunctionSpaceType>
 void CallbackHandler<nStates,nIntermediates_,FunctionSpaceType>::
-callPythonSetParametersFunction(int nInstances, int timeStepNo, double currentTime, std::vector<double> &parameters)
+callPythonSetParametersFunction(int nInstances, int timeStepNo, double currentTime, double *parameterValues, int nParameters)
 {
   if (pythonSetParametersFunction_ == NULL)
     return;
@@ -132,13 +132,13 @@ callPythonSetParametersFunction(int nInstances, int timeStepNo, double currentTi
   if (pyGlobalNaturalDofsList_ == nullptr)
   {
     std::vector<global_no_t> dofNosGlobalNatural;
-    this->functionSpace_->meshPartitionBase()->getDofNosGlobalNatural(dofNosGlobalNatural);
+    this->functionSpace_->meshPartition()->getDofNosGlobalNatural(dofNosGlobalNatural);
     pyGlobalNaturalDofsList_ = PythonUtility::convertToPythonList(dofNosGlobalNatural);
   }
 
   // compose callback function
-  PyObject *parametersList = PythonUtility::convertToPythonList(parameters);
-  PyObject *arglist = Py_BuildValue("(i,i,d,O,O,O)", this->functionSpace_->meshPartitionBase()->nDofsGlobal(),
+  PyObject *parametersList = PythonUtility::convertToPythonList(parameterValues, nParameters);
+  PyObject *arglist = Py_BuildValue("(i,i,d,O,O,O)", this->functionSpace_->meshPartition()->nDofsGlobal(),
                                     timeStepNo, currentTime, parametersList, pyGlobalNaturalDofsList_, pySetFunctionAdditionalParameter_);
   PyObject *returnValue = PyObject_CallObject(pythonSetParametersFunction_, arglist);
 
@@ -147,10 +147,10 @@ callPythonSetParametersFunction(int nInstances, int timeStepNo, double currentTi
     PyErr_Print();
 
   // copy new values in parametersList to parameters_ vector
-  for (unsigned int i=0; i<parameters.size(); i++)
+  for (unsigned int i=0; i<nParameters; i++)
   {
     PyObject *item = PyList_GetItem(parametersList, (Py_ssize_t)i);
-    parameters[i] = PythonUtility::convertFromPython<double>::get(item);
+    *(parameterValues+i) = PythonUtility::convertFromPython<double>::get(item);
   }
 
   // decrement reference counters for python objects
@@ -162,7 +162,7 @@ callPythonSetParametersFunction(int nInstances, int timeStepNo, double currentTi
 
 template<int nStates, int nIntermediates_, typename FunctionSpaceType>
 void CallbackHandler<nStates,nIntermediates_,FunctionSpaceType>::
-callPythonSetSpecificParametersFunction(int nInstances, int timeStepNo, double currentTime, std::vector<double> &localParameters)
+callPythonSetSpecificParametersFunction(int nInstances, int timeStepNo, double currentTime, double *localParameters, int nLocalParameters)
 {
   if (pythonSetSpecificParametersFunction_ == NULL)
     return;
@@ -171,7 +171,7 @@ callPythonSetSpecificParametersFunction(int nInstances, int timeStepNo, double c
 
   // compose callback function
   PyObject *globalParametersDict = PyDict_New();
-  PyObject *arglist = Py_BuildValue("(i,i,d,O,O)", this->functionSpace_->meshPartitionBase()->nDofsGlobal(),
+  PyObject *arglist = Py_BuildValue("(i,i,d,O,O)", this->functionSpace_->meshPartition()->nDofsGlobal(),
                                     timeStepNo, currentTime, globalParametersDict, pySetFunctionAdditionalParameter_);
   PyObject *returnValue = PyObject_CallObject(pythonSetSpecificParametersFunction_, arglist);
 
@@ -220,15 +220,14 @@ callPythonSetSpecificParametersFunction(int nInstances, int timeStepNo, double c
       // set first parameter value to given value
       const int index = parameterNo*nDofsLocalWithoutGhosts + dofNoLocal;
 
-      if (index >= localParameters.size())
+      if (index >= nLocalParameters)
       {
         LOG(FATAL) << "in setSpecificParametersFunction: the parameters have an assignment "
           << "parameters[(coordinatesGlobal=" << coordinatesGlobal << ", nodalDofIndex=" << nodalDofIndex
           << ", parameterNo=" << parameterNo <<")] = " << value << ". There are " << nDofsLocalWithoutGhosts << " local dof(s).";
       }
-      localParameters[parameterNo*nDofsLocalWithoutGhosts + dofNoLocal] = value;
+      *(localParameters + parameterNo*nDofsLocalWithoutGhosts + dofNoLocal) = value;
     }
-    VLOG(1) << "localParameters: " << localParameters;
   }
 
   // decrement reference counters for python objects
@@ -248,7 +247,7 @@ callPythonSetSpecificStatesFunction(int nInstances, int timeStepNo, double curre
 
   // compose callback function
   PyObject *globalStatesDict = PyDict_New();
-  PyObject *arglist = Py_BuildValue("(i,i,d,O,O)", this->functionSpace_->meshPartitionBase()->nDofsGlobal(),
+  PyObject *arglist = Py_BuildValue("(i,i,d,O,O)", this->functionSpace_->meshPartition()->nDofsGlobal(),
                                     timeStepNo, currentTime, globalStatesDict, pySetFunctionAdditionalParameter_);
   PyObject *returnValue = PyObject_CallObject(pythonSetSpecificStatesFunction_, arglist);
 

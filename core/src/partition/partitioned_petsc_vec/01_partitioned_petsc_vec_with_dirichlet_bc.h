@@ -103,6 +103,9 @@ public:
   void updateDirichletBoundaryConditions(const std::vector<std::pair<global_no_t,std::array<double,nComponentsDirichletBc>>> &newValues,
                                          bool inputMeshIsGlobal);
 
+  //! check if the vector contains nan or inf values and output error
+  virtual bool containsNanOrInf();
+
 protected:
 
   //! prepare internal variables such that the vector can be created by createVector afterwards

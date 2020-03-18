@@ -14,9 +14,15 @@ plt.rcParams.update({'font.size': 20})
 plt.rcParams['lines.linewidth'] = 3
 plt.rcParams['lines.markersize'] = 8
 
+cellml_file = "../input/hodgkin_huxley_1952.c"
+result_file_prefix = "hodgkin_huxley"
+
+cellml_file = "../input/shorten_ocallaghan_davidson_soboleva_2007.c"
+result_file_prefix = "shorten"
+
 def run(dt_0D, dt_1D, dt_3D, output_name):   
-  command = "rm -f out/{output_name}* && mpirun -n 2 --allow-run-as-root ./multiple_fibers ../multiple_fibers_settings.py {dt_0D} {dt_1D} {dt_3D} {output_name}"\
-   .format(dt_0D=dt_0D, dt_1D=dt_1D, dt_3D=dt_3D, output_name=output_name)
+  command = "rm -f out/{output_name}* && mpirun -n 2 --allow-run-as-root ./multiple_fibers ../multiple_fibers_settings.py {dt_0D} {dt_1D} {dt_3D} {output_name} {cellml_file}"\
+   .format(dt_0D=dt_0D, dt_1D=dt_1D, dt_3D=dt_3D, output_name=output_name, cellml_file=cellml_file)
 
   try:
     print(command)
@@ -55,7 +61,7 @@ if True:
     print("dt_1D: {}, error: {}".format(dt_1D,error))
 
   # print to console and save to file
-  with open("dt_1D.csv", "w") as f:
+  with open("{}_dt_1D.csv".format(result_file_prefix), "w") as f:
     f.write("dt_1D;error\n")
     for t,error in zip(xlist,ylist):
       print("dt_1D: {}, error: {}".format(t,error))
@@ -69,7 +75,7 @@ if True:
   plt.xscale('log')
   plt.yscale('log')
 
-  plt.savefig("dt_1D.pdf")
+  plt.savefig("{}_dt_1D.pdf".format(result_file_prefix))
   #
   #dt_1D: 1e-06, error: 9.223602548973777e-07
   #dt_1D: 2.782559402207126e-06, error: 6.918122701955344e-07
@@ -103,7 +109,7 @@ if True:
     print("dt_0D: {}, error: {}".format(dt_0D,error))
 
   # print to console and save to file
-  with open("dt_0D.csv", "w") as f:
+  with open("{}_dt_0D.csv".format(result_file_prefix), "w") as f:
     f.write("dt_0D;error\n")
     for t,error in zip(xlist,ylist):
       print("dt_0D: {}, error: {}".format(t,error))
@@ -117,7 +123,7 @@ if True:
   plt.xscale('log')
   plt.yscale('log')
 
-  plt.savefig("dt_0D.pdf")
+  plt.savefig("{}_dt_0D.pdf".format(result_file_prefix))
 
   #####################################
   # evaluate dt_3D
@@ -136,7 +142,7 @@ if True:
     print("dt_3D: {}, error: {}".format(dt_3D,error))
 
   # print to console and save to file
-  with open("dt_3D.csv", "w") as f:
+  with open("{}_dt_3D.csv".format(result_file_prefix), "w") as f:
     f.write("dt_3D;error\n")
     for t,error in zip(xlist,ylist):
       print("dt_3D: {}, error: {}".format(t,error))
@@ -150,7 +156,7 @@ if True:
   plt.xscale('log')
   plt.yscale('log')
 
-  plt.savefig("dt_3D.pdf")
+  plt.savefig("{}_dt_3D.pdf".format(result_file_prefix))
 
 
   # results: error = 10^-4: dt_1D=10^-3, dt_0D=3*10^-3
@@ -174,7 +180,7 @@ for i,dt_3D in enumerate(xlist):
   print("dt_3D: {}, error: {}".format(dt_3D,error))
 
 # print to console and save to file
-with open("dt_3Db.csv", "w") as f:
+with open("{}_dt_3Db.csv".format(result_file_prefix), "w") as f:
   f.write("dt_3D;error\n")
   for t,error in zip(xlist,ylist):
     print("dt_3D: {}, error: {}".format(t,error))
@@ -188,5 +194,5 @@ plt.ylabel('relative error')
 plt.xscale('log')
 plt.yscale('log')
 
-plt.savefig("dt_3Db.pdf")
+plt.savefig("{}_dt_3Db.pdf".format(result_file_prefix))
 

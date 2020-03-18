@@ -35,6 +35,8 @@ void Paraview::write(DataType& data, int timeStepNo, double currentTime, int cal
   {
     Control::PerformanceMeasurement::start("durationParaview1D");
 
+    LOG(DEBUG) << "FieldVariablesForOutputWriter: " << StringUtility::demangle(typeid(typename DataType::FieldVariablesForOutputWriter).name());
+
     // create a PolyData file that combines all 1D meshes into one file
     writePolyDataFile<typename DataType::FieldVariablesForOutputWriter>(data.getFieldVariablesForOutputWriter(), combined1DMeshes);
 

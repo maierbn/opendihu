@@ -10,7 +10,7 @@
 
 namespace TimeSteppingScheme
 {
-
+#if 0
 QuasiStaticNonlinearElasticitySolverFebio::
 QuasiStaticNonlinearElasticitySolverFebio(DihuContext context) :
   context_(context["QuasiStaticNonlinearElasticitySolverFebio"]), data_(context_), initialized_(false)
@@ -537,11 +537,11 @@ loadFebioOutputFile()
   LOG(DEBUG) << "geometry field has representation "
     << this->data_.functionSpace()->geometryField().partitionedPetscVec()->getCurrentRepresentationString();
 
-  this->data_.functionSpace()->geometryField().finishGhostManipulation();
+  //this->data_.functionSpace()->geometryField().finishGhostManipulation();
   this->data_.functionSpace()->geometryField().setValuesWithoutGhosts(geometryValues);
 
   this->data_.functionSpace()->geometryField().zeroGhostBuffer();
-  this->data_.functionSpace()->geometryField().finishGhostManipulation();
+  this->data_.functionSpace()->geometryField().setRepresentationGlobal();
   this->data_.functionSpace()->geometryField().startGhostManipulation();
 
   LOG(DEBUG) << "geometryField pointer: " << this->data_.functionSpace()->geometryField().partitionedPetscVec();
@@ -791,5 +791,6 @@ getString(std::shared_ptr<typename QuasiStaticNonlinearElasticitySolverFebio::Ou
   //s << "<QuasiStaticNonlinearElasticitySolverFebio:" << *data.activation() << ">";
   return s.str();
 }
+#endif
 
 } // namespace TimeSteppingScheme

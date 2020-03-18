@@ -7,6 +7,7 @@
 #include "function_space/00_function_space_base_dim.h"
 
 #include <cstdlib>
+#include "field_variable/field_variable.h"
 
 namespace OutputWriter
 {
@@ -19,25 +20,26 @@ namespace ParaviewLoopOverTuple
  */
 template<typename FieldVariablesForOutputWriterType, int i>
 inline typename std::enable_if<i < std::tuple_size<FieldVariablesForOutputWriterType>::value, void>::type
-loopCollectMeshProperties(const FieldVariablesForOutputWriterType &fieldVariables, std::map<std::string,PolyDataPropertiesForMesh> &meshProperties
+loopCollectMeshProperties(const FieldVariablesForOutputWriterType &fieldVariables, std::map<std::string,PolyDataPropertiesForMesh> &meshProperties,
+                          std::vector<std::string> &meshNamesVector
 )
 {
   //LOG(DEBUG) << "loopCollectMeshProperties i=" << i << " type " << StringUtility::demangle(typeid(typename std::tuple_element<i,FieldVariablesForOutputWriterType>::type).name());
 
   // call what to do in the loop body
   if (collectMeshProperties<typename std::tuple_element<i,FieldVariablesForOutputWriterType>::type, FieldVariablesForOutputWriterType>(
-        std::get<i>(fieldVariables), fieldVariables, meshProperties, i))
+        std::get<i>(fieldVariables), fieldVariables, meshProperties, meshNamesVector, i))
     return;
   
   // advance iteration to next tuple element
-  loopCollectMeshProperties<FieldVariablesForOutputWriterType, i+1>(fieldVariables, meshProperties);
+  loopCollectMeshProperties<FieldVariablesForOutputWriterType, i+1>(fieldVariables, meshProperties, meshNamesVector);
 }
  
 // current element is of pointer type (not vector)
 template<typename CurrentFieldVariableType, typename FieldVariablesForOutputWriterType>
-typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
+typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value && !Mesh::isComposite<CurrentFieldVariableType>::value, bool>::type
 collectMeshProperties(CurrentFieldVariableType currentFieldVariable, const FieldVariablesForOutputWriterType &fieldVariables,
-                           std::map<std::string,PolyDataPropertiesForMesh> &meshProperties, int i)
+                           std::map<std::string,PolyDataPropertiesForMesh> &meshProperties, std::vector<std::string> &meshNamesVector, int i)
 {
   if (currentFieldVariable == nullptr)
   {
@@ -47,8 +49,21 @@ collectMeshProperties(CurrentFieldVariableType currentFieldVariable, const Field
       << " fieldVariables: " << fieldVariables << ", i: " << i;
   }
   assert(currentFieldVariable != nullptr);
+  if (!currentFieldVariable->functionSpace())
+  {
+    LOG(DEBUG) << "In collectMeshProperties, currentFieldVariable->functionSpace() is nullptr.\n"
+      << " meshProperties: " << meshProperties
+      << ", fielVariableType: " << StringUtility::demangle(typeid(CurrentFieldVariableType).name())
+      << " fieldVariables: " << fieldVariables << ", i: " << i;
+    return false;
+  }
   assert(currentFieldVariable->functionSpace());
   std::string meshName = currentFieldVariable->functionSpace()->meshName();
+
+  // if meshName is not already in meshNamesVector, add it there
+  std::set<std::string> meshNamesSet(meshNamesVector.begin(),meshNamesVector.end());
+  if (meshNamesSet.find(meshName) == meshNamesSet.end())
+    meshNamesVector.push_back(meshName);
   //LOG(DEBUG) << "field variable \"" << currentFieldVariable->name() << "\", mesh \"" << meshName << "\".";
 
   /*
@@ -99,12 +114,14 @@ collectMeshProperties(CurrentFieldVariableType currentFieldVariable, const Field
 template<typename VectorType, typename FieldVariablesForOutputWriterType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
 collectMeshProperties(VectorType currentFieldVariableVector, const FieldVariablesForOutputWriterType &fieldVariables,
-                           std::map<std::string,PolyDataPropertiesForMesh> &meshProperties, int i)
+                      std::map<std::string,PolyDataPropertiesForMesh> &meshProperties,
+                      std::vector<std::string> &meshNamesVector, int i)
 {
   for (auto& currentFieldVariable : currentFieldVariableVector)
   {
     // call function on all vector entries
-    if (collectMeshProperties<typename VectorType::value_type,FieldVariablesForOutputWriterType>(currentFieldVariable, fieldVariables, meshProperties, i))
+    if (collectMeshProperties<typename VectorType::value_type,FieldVariablesForOutputWriterType>(
+          currentFieldVariable, fieldVariables, meshProperties, meshNamesVector, i))
       return true; // break iteration
   }
   return false;  // do not break iteration 
@@ -114,13 +131,41 @@ collectMeshProperties(VectorType currentFieldVariableVector, const FieldVariable
 template<typename TupleType, typename FieldVariablesForOutputWriterType>
 typename std::enable_if<TypeUtility::isTuple<TupleType>::value, bool>::type
 collectMeshProperties(TupleType currentFieldVariableTuple, const FieldVariablesForOutputWriterType &fieldVariables,
-                           std::map<std::string,PolyDataPropertiesForMesh> &meshProperties, int i)
+                      std::map<std::string,PolyDataPropertiesForMesh> &meshProperties,
+                      std::vector<std::string> &meshNamesVector, int i)
 {
   // call for tuple element
-  loopCollectMeshProperties<TupleType>(currentFieldVariableTuple, meshProperties);
+  loopCollectMeshProperties<TupleType>(currentFieldVariableTuple, meshProperties, meshNamesVector);
  
   return false;  // do not break iteration 
 }
 
+// element i is a field variables with Mesh::CompositeOfDimension<D>
+template<typename CurrentFieldVariableType, typename FieldVariablesForOutputWriterType>
+typename std::enable_if<Mesh::isComposite<CurrentFieldVariableType>::value, bool>::type
+collectMeshProperties(CurrentFieldVariableType currentFieldVariable, const FieldVariablesForOutputWriterType &fieldVariables,
+                      std::map<std::string,PolyDataPropertiesForMesh> &meshProperties,
+                      std::vector<std::string> &meshNamesVector, int i)
+{
+  const int D = CurrentFieldVariableType::element_type::FunctionSpace::dim();
+  typedef typename CurrentFieldVariableType::element_type::FunctionSpace::BasisFunction BasisFunctionType;
+  typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>, BasisFunctionType> SubFunctionSpaceType;
+  const int nComponents = CurrentFieldVariableType::element_type::nComponents();
+
+  typedef FieldVariable::FieldVariable<SubFunctionSpaceType, nComponents> SubFieldVariableType;
+
+  std::vector<std::shared_ptr<SubFieldVariableType>> subFieldVariables;
+  currentFieldVariable->getSubFieldVariables(subFieldVariables);
+
+  for (auto& currentSubFieldVariable : subFieldVariables)
+  {
+    // call function on all vector entries
+    if (collectMeshProperties<std::shared_ptr<SubFieldVariableType>,FieldVariablesForOutputWriterType>(
+          currentSubFieldVariable, fieldVariables, meshProperties, meshNamesVector, i))
+      return true;
+  }
+
+  return false;  // do not break iteration
+}
 }  // namespace ParaviewLoopOverTuple
 }  // namespace OutputWriter

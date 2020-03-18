@@ -3,12 +3,13 @@
 #include <Python.h>  // has to be the first included header
 #include <petscvec.h>
 #include <functional>
+#include <vector>
 
 #include "interfaces/runnable.h"
 #include "control/dihu_context.h"
 #include "data_management/multiple_instances.h"
 #include "output_writer/manager.h"
-#include "partition/mesh_partition/01_mesh_partition.h"
+#include "partition/mesh_partition/02_mesh_partition.h"
 
 namespace Control
 {

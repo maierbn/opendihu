@@ -208,7 +208,7 @@ void DihuContext::loadPythonScript(std::string text)
   // execute python code
   int ret = 0;
   std::string errorBuffer;
-  LOG(INFO) << std::string(80, '-');
+  LOG(INFO) << std::string(40, '-') << " begin python output " << std::string(40, '-');
   try
   {
     // check if numpy module could be loaded
@@ -247,7 +247,7 @@ void DihuContext::loadPythonScript(std::string text)
   catch(...)
   {
   }
-  LOG(INFO) << std::string(80, '-');
+  LOG(INFO) << std::string(40, '-') << "- end python output -" << std::string(40, '-');
 
   // if there was an error in the python code
   if (ret != 0)

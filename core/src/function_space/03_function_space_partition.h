@@ -5,13 +5,12 @@
 #include "function_space/02_function_space_jacobian.h"
 #include "partition/mesh_partition/01_mesh_partition.h"
 #include "partition/mesh_partition/00_mesh_partition_base.h"
+#include "mesh/composite.h"
 
 // forward declaration
 namespace Partition 
 {
 class Manager;
-//template<typename FunctionSpaceType, typename DummyForTraits>
-//class MeshPartition;
 }
 
 namespace FunctionSpace
@@ -42,9 +41,9 @@ public:
   std::shared_ptr<Partition::MeshPartitionBase> meshPartitionBase();
 
 protected:
-  std::shared_ptr<Partition::Manager> partitionManager_;  ///< the partition manager object that can create partitions
-  std::shared_ptr<Partition::MeshPartition<FunctionSpace<MeshType,BasisFunctionType>,MeshType>> meshPartition_;   ///< the partition information that is stored locally, i.e. the subdomain of the domain decomposition
-  bool forcePartitioningCreationFromLocalNumberOfElements_;    ///< if the meshPartition should be created from localNodePositions for StructuredDeformable meshes, ignoring values of config "inputMeshIsGlobal"
+  std::shared_ptr<Partition::Manager> partitionManager_;  //< the partition manager object that can create partitions
+  std::shared_ptr<Partition::MeshPartition<FunctionSpace<MeshType,BasisFunctionType>,MeshType>> meshPartition_;   //< the partition information that is stored locally, i.e. the subdomain of the domain decomposition
+  bool forcePartitioningCreationFromLocalNumberOfElements_;    //< if the meshPartition should be created from localNodePositions for StructuredDeformable meshes, ignoring values of config "inputMeshIsGlobal"
 };
 
 /** specialization for structured meshes 
@@ -88,8 +87,34 @@ public:
   
 };
 
+/** specialization for composite structured meshes
+ */
+template<int D,typename BasisFunctionType>
+class FunctionSpacePartition<Mesh::CompositeOfDimension<D>,BasisFunctionType> :
+  public FunctionSpacePartitionBase<Mesh::CompositeOfDimension<D>,BasisFunctionType>
+{
+public:
+
+  typedef FunctionSpace<Mesh::StructuredDeformableOfDimension<D>, BasisFunctionType> SubFunctionSpaceType;
+
+  //! constructor
+  FunctionSpacePartition(std::shared_ptr<Partition::Manager> partitionManager,
+                         std::vector<std::shared_ptr<FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>> subFunctionSpaces);
+
+  //! initiate the partitoning and then call the downwards initialize
+  void initialize();
+
+  //! get a reference to the sub function spaces
+  const std::vector<std::shared_ptr<FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>> &subFunctionSpaces();
+
+protected:
+  std::vector<std::shared_ptr<FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>> subFunctionSpaces_;   //< all submeshes
+};
+
+
 }  // namespace
 
 #include "function_space/03_function_space_partition_base.tpp"
 #include "function_space/03_function_space_partition_structured.tpp"
 #include "function_space/03_function_space_partition_unstructured.tpp"
+#include "function_space/03_function_space_partition_composite.tpp"

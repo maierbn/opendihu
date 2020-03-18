@@ -38,55 +38,6 @@ CellmlAdapter(const CellmlAdapter &rhs, std::shared_ptr<FunctionSpace> functionS
 
   this->functionSpace_ = functionSpace;
   this->outputWriterManager_ = rhs.outputWriterManager_;
-
-  return;
-
-  // copy member variables from rhs
-  this->specificSettings_ = rhs.specificSettings_;
-  this->setParameters_ = rhs.setParameters_;
-  this->setSpecificParameters_ = rhs.setSpecificParameters_;
-  this->setSpecificStates_ = rhs.setSpecificStates_;
-  this->handleResult_ = rhs.handleResult_;
-  this->pythonSetParametersFunction_ = rhs.pythonSetParametersFunction_;
-  this->pythonSetSpecificParametersFunction_ = rhs.pythonSetSpecificParametersFunction_;
-  this->pythonSetSpecificStatesFunction_ = rhs.pythonSetSpecificStatesFunction_;
-  this->pythonHandleResultFunction_ = rhs.pythonHandleResultFunction_;
-  this->pySetFunctionAdditionalParameter_ = rhs.pySetFunctionAdditionalParameter_;
-  this->pyHandleResultFunctionAdditionalParameter_ = rhs.pyHandleResultFunctionAdditionalParameter_;
-  this->pyGlobalNaturalDofsList_ = rhs.pyGlobalNaturalDofsList_;
-
-  this->nInstances_ = this->functionSpace_->nNodesLocalWithoutGhosts();
-  assert(this->nInstances_ > 1);
-
-  // copy member variables from rhs
-  this->parametersUsedAsIntermediate_ = rhs.parametersUsedAsIntermediate_;
-  this->parametersUsedAsConstant_ = rhs.parametersUsedAsConstant_;
-  this->stateNames_ = rhs.stateNames_;
-  this->intermediateNames_ = rhs.intermediateNames_;
-
-  this->sourceFilename_ = rhs.sourceFilename_;
-  this->nIntermediates_ = rhs.nIntermediates_;
-  this->nIntermediatesInSource_ = rhs.nIntermediatesInSource_;
-  this->nParameters_ = rhs.nParameters_;
-  this->nConstants_ = rhs.nConstants_;
-  this->internalTimeStepNo_ = rhs.internalTimeStepNo_;
-  this->inputFileTypeOpenCMISS_ = rhs.inputFileTypeOpenCMISS_;
-
-  // allocate data vectors
-  //this->intermediates_.resize(this->nIntermediates_*this->nInstances_);
-  this->cellmlSourceCodeGenerator_.parameters().resize(this->nParameters_*this->nInstances_);
-
-  // copy rhs parameter values to parameters, it is assumed that the parameters are the same for every instance
-  for (int instanceNo = 0; instanceNo < this->nInstances_; instanceNo++)
-  {
-    for (int j = 0; j < this->nParameters_; j++)
-    {
-      this->cellmlSourceCodeGenerator_.parameters()[j*this->nInstances_ + instanceNo] = rhs.parameters_[j];
-    }
-  }
-
-  LOG(DEBUG) << "Initialize CellML with nInstances = " << this->nInstances_ << ", nParameters_ = " << this->nParameters_
-    << ", nStates = " << nStates << ", nIntermediates = " << this->nIntermediates();
 }
 
 template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
@@ -170,6 +121,9 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
   ierr = VecGetSize(output, &nRates); CHKERRV(ierr);
   ierr = VecGetLocalSize(this->data_.intermediates()->getValuesContiguous(), &nIntermediates); CHKERRV(ierr);
 
+  // get parameterValues_ vector
+  this->data_.prepareParameterValues();
+
   //double intermediatesData[101];
 
   VLOG(1) << "intermediates array has " << nIntermediates << " entries";
@@ -200,7 +154,7 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
     // PythonUtility::GlobalInterpreterLock lock;
     
     VLOG(1) << "call setParameters";
-    this->setParameters_((void *)this, this->nInstances_, this->internalTimeStepNo_, currentTime, this->cellmlSourceCodeGenerator_.parameters());
+    this->setParameters_((void *)this, this->nInstances_, this->internalTimeStepNo_, currentTime, this->data_.parameterValues(), this->cellmlSourceCodeGenerator_.nParameters());
   }
 
   // get new values for parameters, call callback function of python config
@@ -210,7 +164,7 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
     // PythonUtility::GlobalInterpreterLock lock;
 
     VLOG(1) << "call setSpecificParameters";
-    this->setSpecificParameters_((void *)this, this->nInstances_, this->internalTimeStepNo_, currentTime, this->cellmlSourceCodeGenerator_.parameters());
+    this->setSpecificParameters_((void *)this, this->nInstances_, this->internalTimeStepNo_, currentTime, this->data_.parameterValues(), this->cellmlSourceCodeGenerator_.nParameters());
   }
 
   VLOG(1) << "currentTime: " << currentTime << ", lastCallSpecificStatesTime_: " << this->lastCallSpecificStatesTime_
@@ -285,12 +239,11 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
   //              this          STATES, RATES, WANTED,                KNOWN
   if (this->rhsRoutine_)
   {
-    VLOG(1) << "call rhsRoutine_ with " << nIntermediates << " intermediates, " << this->cellmlSourceCodeGenerator_.parameters().size() << " parameters";
-    VLOG(2) << "parameters: " << this->cellmlSourceCodeGenerator_.parameters();
+    VLOG(1) << "call rhsRoutine_ with " << nIntermediates << " intermediates";
 
     //Control::PerformanceMeasurement::start("rhsEvaluationTime");  // commented out because it takes too long in this very inner loop
     // call actual rhs routine from cellml code
-    this->rhsRoutine_((void *)this, currentTime, states, rates, intermediatesData, this->cellmlSourceCodeGenerator_.parameters().data());
+    this->rhsRoutine_((void *)this, currentTime, states, rates, intermediatesData, this->data_.parameterValues());
     //Control::PerformanceMeasurement::stop("rhsEvaluationTime");
   }
 
@@ -312,6 +265,8 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
   ierr = VecRestoreArray(input, &states); CHKERRV(ierr);
   ierr = VecRestoreArray(output, &rates); CHKERRV(ierr);
   ierr = VecRestoreArray(this->data_.intermediates()->getValuesContiguous(), &intermediatesData); CHKERRV(ierr);
+
+  this->data_.restoreParameterValues();
 
   VLOG(1) << "at end of cellml_adapter, intermediates: " << this->data_.intermediates() << " " << *this->data_.intermediates();
   this->internalTimeStepNo_++;
@@ -351,4 +306,128 @@ bool CellmlAdapter<nStates_,nIntermediates_,FunctionSpaceType>::
 setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nStates_>> initialValues)
 {
   return CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::template setInitialValues<FunctionSpaceType2>(initialValues);
+}
+
+template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
+void CellmlAdapter<nStates_,nIntermediates_,FunctionSpaceType>::
+initializeToEquilibriumValues(std::array<double,nStates_> &statesInitialValues)
+{
+  if (!this->rhsRoutineSingleInstance_)
+  {
+    LOG(ERROR) << "rhsRoutineSingleInstance is not compiled, not initializing equilibrium values for states.";
+  }
+
+  LOG(DEBUG) << "initializeToEquilibriumValues";
+  LOG(INFO) << "Computing equilibrium values of states for model \"" << this->cellmlSourceCodeGenerator_.sourceFilename() << "\"...";
+
+  double currentTime = 0.0;
+  double maximumIncrement = 0;
+  double dt = this->initializeStatesToEquilibriumTimestepWidth_;
+  std::array<double,nStates_> previousU = statesInitialValues;
+  std::array<double,nStates_> &u = statesInitialValues;
+  std::array<double,nIntermediates_> intermediates;
+
+  std::array<double,nStates_> k1;
+  std::array<double,nStates_> u2, k2;
+  std::array<double,nStates_> u3, k3;
+  std::array<double,nStates_> u4, k4;
+
+  int maxRateNo = 0;
+  const int nInterations = 1e7;
+  for (int iterationNo = 0; iterationNo < nInterations; iterationNo++)
+  {
+    // compute k1 = f(t, u)
+    this->rhsRoutineSingleInstance_((void *)this, currentTime, u.data(), k1.data(), intermediates.data(), this->data_.parameterValues());
+
+    // compute k2 = f(t+dt/2, u+dt/2.*k1)
+    for (int stateNo = 0; stateNo < nStates_; stateNo++)
+      u2[stateNo] = u[stateNo] + dt/2. * k1[stateNo];
+    this->rhsRoutineSingleInstance_((void *)this, currentTime+dt/2., u2.data(), k2.data(), intermediates.data(), this->data_.parameterValues());
+
+    // compute k3 = f(t+dt/2, u+dt/2.*k2)
+    for (int stateNo = 0; stateNo < nStates_; stateNo++)
+      u3[stateNo] = u[stateNo] + dt/2. * k2[stateNo];
+    this->rhsRoutineSingleInstance_((void *)this, currentTime+dt/2., u3.data(), k3.data(), intermediates.data(), this->data_.parameterValues());
+
+    // compute k4 = f(t+dt, u+dt*k3)
+    for (int stateNo = 0; stateNo < nStates_; stateNo++)
+      u4[stateNo] = u[stateNo] + dt * k3[stateNo];
+    this->rhsRoutineSingleInstance_((void *)this, currentTime+dt, u4.data(), k4.data(), intermediates.data(), this->data_.parameterValues());
+
+    // compute u += dt/6 * (k1 + 2*k2 + 2*k3 + k4)
+    maximumIncrement = 0;
+    for (int stateNo = 0; stateNo < nStates_; stateNo++)
+    {
+      double increment = (k1[stateNo] + 2*k2[stateNo] + 2*k3[stateNo] + k4[stateNo])/6.;
+      if (fabs(increment) > maximumIncrement)
+      {
+        maximumIncrement = fabs(increment);
+        maxRateNo = stateNo;
+      }
+
+      u[stateNo] += dt * increment;
+    }
+
+    // if iteration diverges, restart from initial values with half the current timestep width
+    if (maximumIncrement > 1e4)
+    {
+      LOG(WARNING) << "Search for equilibrium of states with dt=" << dt << " diverged, restarting with dt=" << dt/2.0 << "\n"
+        << "Decrease value of \"initializeStatesToEquilibriumTimestepWidth\".";
+      dt /= 2.0;
+      u = previousU;
+    }
+
+    if (maximumIncrement < 1e-5)
+    {
+      LOG(INFO) << "Determined equilibrium of states after " << iterationNo << " iterations, dt=" << dt;
+      break;
+    }
+  }
+
+  if (maximumIncrement >= 1e-5)
+  {
+    LOG(ERROR) << "Equilibrium values for states were not found within " << nInterations << " RK-4 iterations! Last increment of a state: " << maximumIncrement << ", Last timestep width: " << dt;
+  }
+
+  // write computed equilibrium values to a file
+  if (this->functionSpace_->meshPartition()->rankSubset()->ownRankNo() == 0)
+  {
+
+    std::stringstream filename;
+    filename << this->cellmlSourceCodeGenerator_.sourceFilename() << "_equilibrium_values.txt";
+    std::ofstream file(filename.str().c_str());
+    if (file.is_open())
+    {
+      // time stamp
+      auto t = std::time(nullptr);
+      auto tm = *std::localtime(&t);
+      std::string timeString = StringUtility::timeToString(&tm);
+      file << "// Result of computation of equilibrium values for the states by opendihu on " << timeString << "\n"
+        << "// Number of iterations: " << nInterations << ", dt: " << dt << "\n"
+        << "// Maximum ∂u/∂t = " << maximumIncrement << " for state " << maxRateNo << "\n"
+        << "// (If this is a high value, it indicates that the equilibrium was not fully reached.)\n\n";
+
+      for (int stateNo = 0; stateNo < nStates_; stateNo++)
+      {
+        double lastIncrement = (k1[stateNo] + 2*k2[stateNo] + 2*k3[stateNo] + k4[stateNo])/6.;
+
+        std::stringstream line;
+        line << "state[" << stateNo << "] = " << u[stateNo] << ";";
+        file << line.str() << std::string(26-line.str().length(),' ') << "// residuum: " << lastIncrement << "\n";
+      }
+
+      file << "\n  Line to copy for settings:\n  \"statesInitialValues\": [";
+      for (int stateNo = 0; stateNo < nStates_; stateNo++)
+      {
+        if (stateNo != 0)
+          file << ", ";
+        file << u[stateNo];
+      }
+      file << "],\n";
+
+
+      file.close();
+      LOG(INFO) << "Values were written to \"" << filename.str() << "\".";
+    }
+  }
 }

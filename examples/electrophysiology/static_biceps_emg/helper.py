@@ -56,9 +56,15 @@ if "cuboid.bin" in variables.fiber_file:
             outfile.write(struct.pack('3d', point[0], point[1], point[2]))   # data point
 
 # output diffusion solver type
-if rank_no == 0:
-  print("diffusion solver type: {}".format(variables.diffusion_solver_type))
+#if rank_no == 0:
+#  print("diffusion solver type: {}".format(variables.diffusion_solver_type))
 
+variables.n_subdomains = variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z
+
+if variables.n_subdomains != n_ranks:
+  print("\n\nError! Number of ranks {} does not match given partitioning {} x {} x {} = {}.\n\n".format(n_ranks, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z))
+  quit()
+  
 variables.load_fiber_data = True   # load all local node positions from fiber_file, in order to infer partitioning for fat_layer mesh
 
 # create the partitioning using the script in create_partitioned_meshes_for_settings.py
@@ -85,12 +91,13 @@ bytes_raw = fat_mesh_file_handle.read(32)
 header_str = struct.unpack('32s', bytes_raw)[0]
 header_length_raw = fat_mesh_file_handle.read(4)
 header_length = struct.unpack('i', header_length_raw)[0]
+print("header_length: {}".format(header_length))
 
-# parse parameters in the file
+# parse parameters like number of points from the fat layer mesh file
 parameters = []
 for i in range(int(header_length/4.) - 1):
-  double_raw = fat_mesh_file_handle.read(4)
-  value = struct.unpack('i', double_raw)[0]
+  int_raw = fat_mesh_file_handle.read(4)
+  value = struct.unpack('i', int_raw)[0]
   parameters.append(value)
 
 n_points_xy = parameters[0]
@@ -104,21 +111,23 @@ if "version 2" in header_str.decode("utf-8"):   # the version 2 has number of fi
 
 n_points = n_points_x*n_points_y*n_points_z
 
-if rank_no == 0:
-  print("fat mesh, n points:    {} ({} x {} x {})".format(n_points, n_points_x, n_points_y, n_points_z))
+# output of global size
+#if rank_no == 0:
+#  print("    fat mesh, n points total:    {} ({} x {} x {})".format(n_points, n_points_x, n_points_y, n_points_z))
   
-# parse whole file
-fat_mesh_node_positions = [None for _ in range(n_points)]
-for j in range(n_points_y):
-  for i in range(n_points_x):
-    for k in range(n_points_z):
-      
-      point = []
-      for component_no in range(3):
-        double_raw = fat_mesh_file_handle.read(8)
-        value = struct.unpack('d', double_raw)[0]
-        point.append(value)
-      fat_mesh_node_positions[k*n_points_xy + j*n_points_x + i] = point
+if False:
+  # parse whole file, this is no longer needed as only the local node positions will get parsed
+  fat_mesh_node_positions = [None for _ in range(n_points)]
+  for j in range(n_points_y):
+    for i in range(n_points_x):
+      for k in range(n_points_z):
+        
+        point = []
+        for component_no in range(3):
+          double_raw = fat_mesh_file_handle.read(8)
+          value = struct.unpack('d', double_raw)[0]
+          point.append(value)
+        fat_mesh_node_positions[k*n_points_xy + j*n_points_x + i] = point
 
 # The fat mesh "3DFatMesh" touches the 3Dmesh of intramuscular EMG at an interface surface.
 # Do the domain decomposition such that neighbouring elements across this interface are on the same rank.
@@ -131,164 +140,205 @@ for j in range(n_points_y):
 #  x-->
 #
 
-fat_mesh_node_positions_local = []
-
+# determine number of nodes of the 3Dmesh
 n_elements_3D_mesh = variables.meshes["3Dmesh"]["nElements"]
-n_points_3D_x = (n_elements_3D_mesh[0]+1)
-n_points_3D_y = (n_elements_3D_mesh[1]+1)
-n_points_3D_z = (n_elements_3D_mesh[2]+1)
+n_points_3D_x = n_elements_3D_mesh[0]
+n_points_3D_y = n_elements_3D_mesh[1]
+n_points_3D_z = n_elements_3D_mesh[2]
 
-print("3Dmesh has {} node positions ({} x {} x {} = {})".format(len(variables.meshes["3Dmesh"]["nodePositions"]), n_points_3D_x, n_points_3D_y, n_points_3D_z, n_points_3D_x*n_points_3D_y*n_points_3D_z))
-
-pz0 = variables.meshes["3Dmesh"]["nodePositions"][0*n_points_3D_x*n_points_3D_y + 0*n_points_3D_x + 0]
-pz1 = variables.meshes["3Dmesh"]["nodePositions"][(n_points_3D_z-1)*n_points_3D_x*n_points_3D_y + 0*n_points_3D_x + 0]
-
-# find indices k in z direction of the local part of the fat layer mesh
-index_k_start = None
-index_k_end = None
-
-min_distance_start = None
-min_distance_end = None
-
-# loop over z indices of fat_mesh_node_positions
-for k in range(n_points_z):
-  p = fat_mesh_node_positions[k*n_points_xy + 0*n_points_x + 0]
-  
-  distance_pz0 = np.linalg.norm(np.array(p) - np.array(pz0)) 
-  distance_pz1 = np.linalg.norm(np.array(p) - np.array(pz1)) 
-  
-  if min_distance_start is None or distance_pz0 < min_distance_start:
-    min_distance_start = distance_pz0
-    index_k_start = k
-    
-  if min_distance_end is None or distance_pz1 < min_distance_end:
-    min_distance_end = distance_pz1
-    index_k_end = k
-  
-index_i_start = None
-index_i_end = None
-    
-# if the own subdomain is at the (y+) border (top in sketch)
-if variables.own_subdomain_coordinate_y == variables.n_subdomains_y - 1:
-  
-  px0 = variables.meshes["3Dmesh"]["nodePositions"][(n_points_3D_y-1)*n_points_3D_x + 0]
-  px1 = variables.meshes["3Dmesh"]["nodePositions"][(n_points_3D_y-1)*n_points_3D_x + n_points_3D_x-1]
-  
-  # find range [index_i_start, index_i_end] for x of local node positions of fat mesh
-  index_i_start = None
-  index_i_end = None
-  min_distance_start = None
-  min_distance_end = None
-  
-  for i in range(n_points_x):
-    p = fat_mesh_node_positions[0*n_points_x + i]
-    
-    distance_px0 = np.linalg.norm(np.array(p) - np.array(px0)) 
-    distance_px1 = np.linalg.norm(np.array(p) - np.array(px1)) 
-    
-    if min_distance_start is None or distance_px0 < min_distance_start:
-      min_distance_start = distance_px0
-      index_i_start = i
-      
-    if min_distance_end is None or distance_px1 < min_distance_end:
-      min_distance_end = distance_px1
-      index_i_end = i
-
-# if the own subdomain is at the (x+) border (right in sketch)
+# if the own subdomain is at the (x+) border
 if variables.own_subdomain_coordinate_x == variables.n_subdomains_x - 1:
-  
-  py0 = variables.meshes["3Dmesh"]["nodePositions"][(n_points_3D_y-1)*n_points_3D_x + n_points_3D_x-1]
-  py1 = variables.meshes["3Dmesh"]["nodePositions"][0*n_points_3D_x + n_points_3D_x-1]
-  
-  # find range [index_i_start, index_i_end] for x of local node positions of fat mesh
-  min_distance_start = None
-  min_distance_end = None
-  
-  for i in range(n_points_x):
-    p = fat_mesh_node_positions[0*n_points_x + i]
-    
-    distance_py0 = np.linalg.norm(np.array(p) - np.array(py0)) 
-    distance_py1 = np.linalg.norm(np.array(p) - np.array(py1)) 
-    
-    if not variables.own_subdomain_coordinate_y == variables.n_subdomains_y - 1:
-      if min_distance_start is None or distance_py0 < min_distance_start:
-        min_distance_start = distance_py0
-        index_i_start = i
-      
-    if min_distance_end is None or distance_py1 < min_distance_end:
-      min_distance_end = distance_py1
-      index_i_end = i
+  n_points_3D_x += 1
 
-# add all local nodes
-previous_point = None
-previous_info = None
-for k in range(index_k_start,index_k_end+1):
+# if the own subdomain is at the (y+) border
+if variables.own_subdomain_coordinate_y == variables.n_subdomains_y - 1:
+  n_points_3D_y += 1
   
-  # do not include ghost nodes (if not at z+ border)
-  if k == index_k_end and index_k_end != n_points_z-1:
-    continue
+# if the own subdomain is at the (z+) border
+if variables.own_subdomain_coordinate_z == variables.n_subdomains_z - 1:
+  n_points_3D_z += 1
+
+if False:
+  print("{}: 3Dmesh has {} local node positions ({} x {} x {} = {}), nElements: {}".format(rank_no, len(variables.meshes["3Dmesh"]["nodePositions"]), n_points_3D_x, n_points_3D_y, n_points_3D_z, n_points_3D_x*n_points_3D_y*n_points_3D_z, n_elements_3D_mesh))
+
+# determine nodes of the fat layer mesh
+fat_mesh_node_indices = []
+
+# range of points in z direction is [variables.z_point_index_start, variables.z_point_index_end)
+# these variables were set by create_partitioned_meshes_for_settings
+n_sampled_points_3D_in_own_subdomain_x = n_sampled_points_in_subdomain_x(variables.own_subdomain_coordinate_x)
+n_sampled_points_3D_in_own_subdomain_y = n_sampled_points_in_subdomain_y(variables.own_subdomain_coordinate_y)
+n_sampled_points_3D_in_own_subdomain_z = n_sampled_points_in_subdomain_z(variables.own_subdomain_coordinate_z)
+
+n_points_on_previous_ranks_all_x = 0
+n_points_on_previous_ranks_sampled_x = 0
+
+if variables.own_subdomain_coordinate_y == variables.n_subdomains_y - 1:
+  #print("{}: previous subdomains: y+: {}".format(rank_no, list(range(variables.own_subdomain_coordinate_x))))
+  n_points_on_previous_ranks_all_x = n_fibers_in_previous_subdomains_x(variables.own_subdomain_coordinate_x)
+  n_points_on_previous_ranks_sampled_x = sum([n_sampled_points_in_subdomain_x(subdomain_coordinate_x) for subdomain_coordinate_x in range(variables.own_subdomain_coordinate_x)])
   
+
+elif variables.own_subdomain_coordinate_x == variables.n_subdomains_x - 1:
+  #print("{}: previous subdomains y+: {}, x+: {}".format(rank_no, list(range(variables.n_subdomains_x)), list(range(variables.n_subdomains_y-1, variables.own_subdomain_coordinate_y, -1))))
+  n_points_on_previous_ranks_all_x = variables.n_fibers_x \
+    + sum([n_fibers_in_subdomain_y(subdomain_coordinate_y) for subdomain_coordinate_y in range(variables.n_subdomains_y-1, variables.own_subdomain_coordinate_y, -1)]) \
+    - 1
+  n_points_on_previous_ranks_sampled_x = variables.n_points_3D_mesh_global_x \
+    + sum([n_sampled_points_in_subdomain_y(subdomain_coordinate_y) for subdomain_coordinate_y in range(variables.n_subdomains_y-1, variables.own_subdomain_coordinate_y, -1)]) \
+    - 1
+
+n_points_on_previous_ranks_sampled_z = sum([n_sampled_points_in_subdomain_z(subdomain_coordinate_z) for subdomain_coordinate_z in range(variables.own_subdomain_coordinate_z)])
+  
+#print("{}: n_points_on_previous_ranks_all_x: {}".format(rank_no, n_points_on_previous_ranks_all_x))
+#print("{}: z range: [{},{}), stride: {}".format(rank_no, variables.z_point_index_start, variables.z_point_index_end, variables.sampling_stride_z))
+
+# loop over z point indices of the 3D mesh
+for k in range(n_sampled_points_3D_in_own_subdomain_z):
+  z_point_index = variables.z_point_index_start + k*variables.sampling_stride_z
+  
+  if variables.own_subdomain_coordinate_z == variables.n_subdomains_z-1 and k == n_sampled_points_3D_in_own_subdomain_z-1:
+    z_point_index = variables.z_point_index_end-1
+    
+  #print("{}: sampling_stride_z: {}, k: {}, z: {}/{}".format(rank_no, variables.sampling_stride_z, k, z_point_index, variables.z_point_index_end))
+  
+  # loop over points of the fat layer mesh in y direction
   for j in range(n_points_y):
-    for i in range(index_i_start,index_i_end+1):
-          
-      # do not include ghost nodes (if not at x+ border)
-      if i == index_i_end and index_i_end != n_points_x-1:
-        continue
+    y_point_index = j
+    
+    # loop over the points in x direction of the fat layer mesh, this corresponds to x and negative y direction of the 3D mesh (see figure above in the code)
+    
+    # loop over points in 3D mesh in x direction
+    x_point_index_offset = n_points_on_previous_ranks_all_x
+    fat_mesh_n_points_x = 0
+    if variables.own_subdomain_coordinate_y == variables.n_subdomains_y-1:
+      
+      
+      for i_3D in range(n_sampled_points_3D_in_own_subdomain_x):
+        x_point_index = n_points_on_previous_ranks_all_x + i_3D*variables.sampling_stride_x
         
-      point = fat_mesh_node_positions[k*n_points_xy + j*n_points_x + i]
-      fat_mesh_node_positions_local.append(point)
+        # on border rank set last node positions to be the border nodes (it could be that they are not yet the outermost nodes because of sampling_stride)
+        if variables.own_subdomain_coordinate_x == variables.n_subdomains_x-1 and i_3D == n_sampled_points_3D_in_own_subdomain_x-1:
+          x_point_index = n_points_on_previous_ranks_all_x + n_fibers_in_subdomain_x(variables.own_subdomain_coordinate_x)-1
+            
+        # store index of node
+        fat_mesh_node_indices.append([x_point_index, y_point_index, z_point_index])
+        fat_mesh_n_points_x += 1
+            
+        #if j == 0 and k == 0:
+        #  print("{}, at y+, x={}".format(rank_no, x_point_index, point))
+            
+      x_point_index_offset = x_point_index
       
-      if previous_point is not None and np.linalg.norm(np.array(previous_point) - np.array(point)) < 1e-8:
-        print("Error, twice the same point! At i,j,k={},{},{} point {} (previous: {})".format(i,j,k,point, previous_info))
-      
-      previous_point = point
-      previous_info = [i,j,k]
+    # loop over points in 3D mesh in negative y direction
+    if variables.own_subdomain_coordinate_x == variables.n_subdomains_x-1:
+        
+      for j_3D in reversed(range(n_sampled_points_3D_in_own_subdomain_y)):
+        y_index_3D_mesh = j_3D*variables.sampling_stride_y
+        
+        # on top border rank do not use the top node again, it was already visited within the x traversal
+        if variables.own_subdomain_coordinate_y == variables.n_subdomains_y-1 and j_3D == n_sampled_points_3D_in_own_subdomain_y-1:
+          continue
+        
+        x_point_index = x_point_index_offset + n_fibers_in_subdomain_y(variables.own_subdomain_coordinate_y)-1 - y_index_3D_mesh
+        
+        # store index of node
+        fat_mesh_node_indices.append([x_point_index, y_point_index, z_point_index])
+        fat_mesh_n_points_x += 1
+        
+        #if j == 0 and k == 0:
+        #  print("{}, at x+, x={}".format(rank_no, x_point_index))
 
+# load local nodes from file
+fat_mesh_node_positions_local = []
+for (index_x, index_y, index_z) in fat_mesh_node_indices:
+  point = []
+  # note, ordering in bin file is fastest in z, then in x then in y direction
+  global_index = index_y*n_points_x*n_points_z + index_x*n_points_z + index_z
+  
+  # set file pointer to position of current index
+  fat_mesh_file_handle.seek(32+10*4+global_index*3*8)
+  
+  # parse point
+  for component_no in range(3):
+    double_raw = fat_mesh_file_handle.read(8)
+    value = struct.unpack('d', double_raw)[0]
+    point.append(value)
+  
+  # store point in the list of local node positions of the fat mesh
+  fat_mesh_node_positions_local.append(point)
+  
 # local size
-fat_mesh_n_points = [index_i_end+1 - index_i_start, n_points_y, index_k_end+1 - index_k_start]
+fat_mesh_n_points = [fat_mesh_n_points_x, n_points_y, n_sampled_points_3D_in_own_subdomain_z]
 fat_mesh_n_elements = [fat_mesh_n_points[0]-1, fat_mesh_n_points[1]-1, fat_mesh_n_points[2]-1]
 
-# regarding x direction, if in interior
-if index_i_end != n_points_x-1:
-  fat_mesh_n_points[0] -= 1
-# regarding z direction, if in interior
-if index_k_end != n_points_z-1:
-  fat_mesh_n_points[2] -= 1
+# regarding x direction, if in interior of fat mesh (i.e., not bottom right subdomain), adjust number of elements in x direction (which is in negative y direction)
+if not (variables.own_subdomain_coordinate_y == 0 and variables.own_subdomain_coordinate_x == variables.n_subdomains_x - 1):
+  fat_mesh_n_elements[0] += 1
+# regarding z direction, if in interior of fat mesh, adjust number of elements in z direction
+if variables.own_subdomain_coordinate_z != variables.n_subdomains_z - 1:
+  fat_mesh_n_elements[2] += 1
+          
+# store values to be used in postprocess callback function
+variables.fat_mesh_n_points_local = fat_mesh_n_points
+variables.fat_mesh_n_points_global = [variables.n_points_3D_mesh_global_x+variables.n_points_3D_mesh_global_y-1, n_points_y, variables.n_points_3D_mesh_global_z]
+variables.fat_mesh_index_offset = [n_points_on_previous_ranks_sampled_x, 0, n_points_on_previous_ranks_sampled_z]
 
+# debugging output
+if False:
+  # if the own subdomain is at the (y+) border
+  if variables.own_subdomain_coordinate_y == variables.n_subdomains_y - 1:
+    # output top row node positions of 3D mesh
+    for i in range(n_points_3D_x):
+      point = variables.meshes["3Dmesh"]["nodePositions"][0*n_points_3D_x*n_points_3D_y + (n_points_3D_y-1)*n_points_3D_x + i]
+      
+      print("{}: 3Dmesh top node i={}, {}".format(rank_no, i, point))
+    
+  # if the own subdomain is at the (x+) border
+  if variables.own_subdomain_coordinate_x == variables.n_subdomains_x - 1:
+    # output top row node positions of 3D mesh
+    for j in reversed(range(n_points_3D_y)):
+      point = variables.meshes["3Dmesh"]["nodePositions"][0*n_points_3D_x*n_points_3D_y + j*n_points_3D_x + (n_points_3D_x-1)]
+      
+      print("{}: 3Dmesh right node j={}, {}".format(rank_no, j, point))
+    
+  # output fat layer mesh on bottom
+  for i in range(fat_mesh_n_points[0]):
+    point = fat_mesh_node_positions_local[i]
+    print("{}: fat mesh bottom node i={}, {}".format(rank_no, i, point))
+  
 fat_mesh_n_ranks = [variables.n_subdomains_x + variables.n_subdomains_y - 1, 1, variables.n_subdomains_z]
 
-variables.fat_dirichlet_bc = {}
-for k in range(fat_mesh_n_points[2]):
-  for i in range(fat_mesh_n_points[0]):
-    j = 0
-    dof_no_local = k * fat_mesh_n_points[0]*fat_mesh_n_points[1] + j * fat_mesh_n_points[0] + i
-    variables.fat_dirichlet_bc[dof_no_local] = dof_no_local
-
-print("Fat mesh on rank {}, subset i: [{},{}], k: [{},{}], {} x {} x {} = {} = {} nodes".format(rank_no, index_i_start, index_i_end, index_k_start, index_k_end, \
-  fat_mesh_n_points[0], fat_mesh_n_points[1], fat_mesh_n_points[2], fat_mesh_n_points[0]*fat_mesh_n_points[1]*fat_mesh_n_points[2], len(fat_mesh_node_positions_local) ))
-#print("dofs: ",variables.fat_dirichlet_bc)
-
+if False:
+  print("{}: Rank {} has subset of fat layer mesh: {} x {} x {} = {} = {} nodes, n elements local: {}, n points local: {}, global: {}".format(rank_no, rank_no, \
+    fat_mesh_n_points[0], fat_mesh_n_points[1], fat_mesh_n_points[2], fat_mesh_n_points[0]*fat_mesh_n_points[1]*fat_mesh_n_points[2], 
+    len(fat_mesh_node_positions_local), fat_mesh_n_elements, variables.fat_mesh_n_points_local, variables.fat_mesh_n_points_global))
 
 # determine all ranks that participate in computing the mesh (global nos)
 variables.fat_global_rank_nos = []
 for coordinate_z in range(variables.n_subdomains_z):
   for coordinate_x in range(variables.n_subdomains_x):
-    rank_no = coordinate_z * variables.n_subdomains_xy + (variables.n_subdomains_y-1)*variables.n_subdomains_x + coordinate_x
-    variables.fat_global_rank_nos.append(rank_no)
+    fat_rank_no = coordinate_z * variables.n_subdomains_xy + (variables.n_subdomains_y-1)*variables.n_subdomains_x + coordinate_x
+    variables.fat_global_rank_nos.append(fat_rank_no)
     
   for coordinate_y in range(variables.n_subdomains_y-2,-1,-1):
-    rank_no = coordinate_z * variables.n_subdomains_xy + coordinate_y*variables.n_subdomains_x + (variables.n_subdomains_x-1)
-    variables.fat_global_rank_nos.append(rank_no)
+    fat_rank_no = coordinate_z * variables.n_subdomains_xy + coordinate_y*variables.n_subdomains_x + (variables.n_subdomains_x-1)
+    variables.fat_global_rank_nos.append(fat_rank_no)
+    
+if False:
+  print("{}: Fat mesh will be computed by the following ranks: fat_global_rank_nos: {}, fat_mesh_n_ranks: {}".
+    format(rank_no, variables.fat_global_rank_nos, fat_mesh_n_ranks))
 
-
-print("Fat mesh on rank {}, fat_global_rank_nos: {}, fat_mesh_n_ranks: {}".format(rank_no, variables.fat_global_rank_nos, fat_mesh_n_ranks))
-
+if rank_no == 0:
+  print("    fat mesh, n points total:    {} ({} x {} x {}), (per process: {} x {} x {} = {})".format(variables.fat_mesh_n_points_global[0]*variables.fat_mesh_n_points_global[1]*variables.fat_mesh_n_points_global[2], variables.fat_mesh_n_points_global[0], variables.fat_mesh_n_points_global[1], variables.fat_mesh_n_points_global[2], fat_mesh_n_points[0], fat_mesh_n_points[1], fat_mesh_n_points[2], fat_mesh_n_points[0]*fat_mesh_n_points[1]*fat_mesh_n_points[2]))
+  
 #print("fat mesh:")
 #print(fat_mesh_node_positions_local)
 
 variables.meshes["3DFatMesh"] = {
   "nElements": fat_mesh_n_elements,
   "nRanks": fat_mesh_n_ranks,
+  "rankNos": variables.fat_global_rank_nos,
   "nodePositions": fat_mesh_node_positions_local,
   "inputMeshIsGlobal": False,
   "setHermiteDerivatives": False,
@@ -297,7 +347,7 @@ variables.meshes["3DFatMesh"] = {
 
 if False:
   print("settings 3DFatMesh: ")
-  with open("3DFatMesh","w") as f:
+  with open("3DFatMesh_{}".format(rank_no),"w") as f:
     f.write(str(variables.meshes["3DFatMesh"]))
 
 # create mappings between meshes
@@ -314,80 +364,94 @@ subfolder = ""
 if variables.paraview_output:
   if variables.adios_output:
     subfolder = "paraview/"
-  variables.output_writer_emg.append({"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/emg", "binary": True, "fixedFormat": False, "combineFiles": True})
-  variables.output_writer_elasticity.append({"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/elasticity", "binary": True, "fixedFormat": False, "combineFiles": True})
-  variables.output_writer_fibers.append({"format": "Paraview", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/fibers", "binary": True, "fixedFormat": False, "combineFiles": True})
+  variables.output_writer_emg.append({"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D_emg), "filename": "out/" + subfolder + variables.scenario_name + "/emg", "binary": True, "fixedFormat": False, "combineFiles": True})
+  variables.output_writer_elasticity.append({"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D_emg), "filename": "out/" + subfolder + variables.scenario_name + "/elasticity", "binary": True, "fixedFormat": False, "combineFiles": True})
+  variables.output_writer_fibers.append({"format": "Paraview", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep_fibers), "filename": "out/" + subfolder + variables.scenario_name + "/fibers", "binary": True, "fixedFormat": False, "combineFiles": True})
   if variables.states_output:
     variables.output_writer_0D_states.append({"format": "Paraview", "outputInterval": 1, "filename": "out/" + subfolder + variables.scenario_name + "/0D_states", "binary": True, "fixedFormat": False, "combineFiles": True})
 
 if variables.adios_output:
   if variables.paraview_output:
     subfolder = "adios/"
-  variables.output_writer_emg.append({"format": "MegaMol", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/emg", "useFrontBackBuffer": False, "combineNInstances": 1})
-  variables.output_writer_elasticity.append({"format": "MegaMol", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/elasticity", "useFrontBackBuffer": False})
-  variables.output_writer_fibers.append({"format": "MegaMol", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/fibers", "combineNInstances": variables.n_subdomains_xy, "useFrontBackBuffer": False})
+  variables.output_writer_emg.append({"format": "MegaMol", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D_emg), "filename": "out/" + subfolder + variables.scenario_name + "/emg", "useFrontBackBuffer": False, "combineNInstances": 1})
+  variables.output_writer_elasticity.append({"format": "MegaMol", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D_emg), "filename": "out/" + subfolder + variables.scenario_name + "/elasticity", "useFrontBackBuffer": False})
+  variables.output_writer_fibers.append({"format": "MegaMol", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep_fibers), "filename": "out/" + subfolder + variables.scenario_name + "/fibers", "combineNInstances": variables.n_subdomains_xy, "useFrontBackBuffer": False})
   #variables.output_writer_fibers.append({"format": "MegaMol", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep), "filename": "out/" + variables.scenario_name + "/fibers", "combineNInstances": 1, "useFrontBackBuffer": False}
 
 if variables.python_output:
   if variables.adios_output:
     subfolder = "python/"
-  variables.output_writer_emg.append({"format": "PythonFile", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/emg", "binary": True})
-  variables.output_writer_elasticity.append({"format": "PythonFile", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/elasticity", "binary": True})
-  variables.output_writer_fibers.append({"format": "PythonFile", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/fibers", "binary": True})
+  variables.output_writer_emg.append({"format": "PythonFile", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D_emg), "filename": "out/" + subfolder + variables.scenario_name + "/emg", "binary": True})
+  variables.output_writer_elasticity.append({"format": "PythonFile", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D_emg), "filename": "out/" + subfolder + variables.scenario_name + "/elasticity", "binary": True})
+  variables.output_writer_fibers.append({"format": "PythonFile", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep_fibers), "filename": "out/" + subfolder + variables.scenario_name + "/fibers", "binary": True})
 
 if variables.exfile_output:
   if variables.adios_output:
     subfolder = "exfile/"
-  variables.output_writer_emg.append({"format": "Exfile", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/emg"})
-  variables.output_writer_elasticity.append({"format": "Exfile", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/elasticity"})
-  variables.output_writer_fibers.append({"format": "Exfile", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/fibers"})
+  variables.output_writer_emg.append({"format": "Exfile", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D_emg), "filename": "out/" + subfolder + variables.scenario_name + "/emg"})
+  variables.output_writer_elasticity.append({"format": "Exfile", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D_emg), "filename": "out/" + subfolder + variables.scenario_name + "/elasticity"})
+  variables.output_writer_fibers.append({"format": "Exfile", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep_fibers), "filename": "out/" + subfolder + variables.scenario_name + "/fibers"})
 
-# set values for cellml model
-if "shorten" in variables.cellml_file:
-  # parameters: stimulation current I_stim, fiber stretch λ
-  variables.parameters_used_as_intermediate = [32]    # 
-  variables.parameters_used_as_constant = [65]        # fiber stretch λ, this indicates how much the fiber has stretched, 1 means no extension. CONSTANTS[65] in the shorten model
-  variables.parameters_initial_values = [0.0, 1.0]    # stimulation current I_stim, fiber stretch λ, OpenCMISS generated files: OC_KNOWN will be set by this
-  variables.nodal_stimulation_current = 1200.
-  variables.output_state_index = 0                    # use state 0 = Vm
-  variables.output_intermediate_index = []            # do not use any intermediate
-  
-elif "hodgkin_huxley" in variables.cellml_file:
+# set variable mappings for cellml model
+if "hodgkin_huxley" in variables.cellml_file:
   # parameters: I_stim
-  variables.parameters_used_as_intermediate = []
-  variables.parameters_used_as_constant = [2]
-  variables.parameters_initial_values = [0.0]
-  variables.nodal_stimulation_current = 40.
-  variables.output_state_index = 0                    # use state 0 = Vm
-  variables.output_intermediate_index = []            # do not use any intermediate
+  variables.mappings = {
+    ("parameter", 0):           ("constant", "membrane/i_Stim"),      # parameter 0 is constant 2 = I_stim
+    ("outputConnectorSlot", 0): ("state", "membrane/V"),              # expose state 0 = Vm to the operator splitting
+  }
+  variables.parameters_initial_values = [0.0]                         # initial value for stimulation current
+  variables.nodal_stimulation_current = 40.                           # not used
+  variables.vm_value_stimulated = 20.                                 # to which value of Vm the stimulated node should be set (option "valueForStimulatedPoint" of FastMonodomainSolver)
 
+elif "shorten" in variables.cellml_file:
+  # parameters: stimulation current I_stim, fiber stretch λ
+  variables.mappings = {
+    ("parameter", 0):           ("intermediate", "wal_environment/I_HH"), # parameter is intermediate 32
+    ("parameter", 1):           ("constant", "razumova/L_x"),             # parameter is constant 65, fiber stretch λ, this indicates how much the fiber has stretched, 1 means no extension
+    ("outputConnectorSlot", 0): ("state", "wal_environment/vS"),          # expose state 0 = Vm to the operator splitting
+  }
+  variables.parameters_initial_values = [0.0, 1.0]                        # stimulation current I_stim, fiber stretch λ
+  variables.nodal_stimulation_current = 1200.                             # not used
+  variables.vm_value_stimulated = 40.                                 # to which value of Vm the stimulated node should be set (option "valueForStimulatedPoint" of FastMonodomainSolver)
+  
 elif "slow_TK_2014" in variables.cellml_file:   # this is (3a, "MultiPhysStrain", old tomo mechanics) in OpenCMISS
   # parameters: I_stim, fiber stretch λ
-  variables.parameters_used_as_intermediate = []
-  variables.parameters_used_as_constant = [54, 67]     # wal_environment/I_HH = I_stim, razumova/L_S = λ
-  variables.parameters_initial_values = [0.0, 1.0]     # wal_environment/I_HH = I_stim, razumova/L_S = λ
-  variables.nodal_stimulation_current = 40. 
-  variables.output_state_index = 0                     # use state 0, wal_environment/vS = Vm
-  variables.output_intermediate_index = 12             # use intermediate 12, razumova/stress = γ
+  variables.mappings = {
+    ("parameter", 0):           ("constant", "wal_environment/I_HH"), # parameter 0 is constant 54 = I_stim
+    ("parameter", 1):           ("constant", "razumova/L_S"),         # parameter 1 is constant 67 = fiber stretch λ
+    ("outputConnectorSlot", 0): ("state", "wal_environment/vS"),      # expose state 0 = Vm to the operator splitting
+    ("outputConnectorSlot", 1): ("intermediate", "razumova/stress"),  # expose intermediate 12 = γ to the operator splitting
+  }
+  variables.parameters_initial_values = [0.0, 1.0]                    # wal_environment/I_HH = I_stim, razumova/L_S = λ
+  variables.nodal_stimulation_current = 40.                           # not used
+  variables.vm_value_stimulated = 40.                                 # to which value of Vm the stimulated node should be set (option "valueForStimulatedPoint" of FastMonodomainSolver)
   
 elif "Aliev_Panfilov_Razumova_2016_08_22" in variables.cellml_file :   # this is (3, "MultiPhysStrain", numerically more stable) in OpenCMISS, this only computes A1,A2,x1,x2 not the stress
   # parameters: I_stim, fiber stretch λ, fiber contraction velocity \dot{λ}
-  variables.parameters_used_as_intermediate = []
-  variables.parameters_used_as_constant = [0, 8, 9]    # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/velo = \dot{λ}
-  variables.parameters_initial_values = [0, 1, 0]      # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/velo = \dot{λ}
-  variables.nodal_stimulation_current = 40. 
-  variables.output_state_index = 0                     # use state 0, Aliev_Panfilov/V_m = Vm
-  variables.output_intermediate_index = 0              # no intermediates are used
+  variables.mappings = {
+    ("parameter", 0):           ("constant", "Aliev_Panfilov/I_HH"),  # parameter 0 is constant 0 = I_stim
+    ("parameter", 1):           ("constant", "Razumova/l_hs"),        # parameter 1 is constant 8 = fiber stretch λ
+    ("parameter", 2):           ("constant", "Razumova/velo"),        # parameter 2 is constant 9 = fiber contraction velocity \dot{λ}
+    ("outputConnectorSlot", 0): ("state", "Aliev_Panfilov/V_m"),      # expose state 0 = Vm to the operator splitting
+    ("outputConnectorSlot", 1): ("intermediate", "Razumova/sigma"),   # expose intermediate 0 = γ to the operator splitting
+  }
+  variables.parameters_initial_values = [0, 1, 0]                     # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/velo = \dot{λ}
+  variables.nodal_stimulation_current = 40.                           # not used
+  variables.vm_value_stimulated = 40.                                 # to which value of Vm the stimulated node should be set (option "valueForStimulatedPoint" of FastMonodomainSolver)
   
 elif "Aliev_Panfilov_Razumova_Titin" in variables.cellml_file:   # this is (4, "Titin") in OpenCMISS
   # parameters: I_stim, fiber stretch λ, fiber contraction velocity \dot{λ}
-  variables.parameters_used_as_intermediate = []
-  variables.parameters_used_as_constant = [0, 11, 12]  # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/rel_velo = \dot{λ}
-  variables.parameters_initial_values = [0, 1, 0]      # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/rel_velo = \dot{λ}
-  variables.nodal_stimulation_current = 40. 
-  variables.output_state_index = 0                     # use state 0, Aliev_Panfilov/V_m = Vm
-  variables.output_intermediate_index = [4,5]          # Razumova/ActiveStress = γ, Razumova/Activation = α 
-  
+  variables.mappings = {
+    ("parameter", 0):           ("constant", "Aliev_Panfilov/I_HH"),  # parameter 0 is constant 0 = I_stim
+    ("parameter", 1):           ("constant", "Razumova/l_hs"),        # parameter 1 is constant 11 = fiber stretch λ
+    ("parameter", 2):           ("constant", "Razumova/rel_velo"),    # parameter 2 is constant 12 = fiber contraction velocity \dot{λ}
+    ("outputConnectorSlot", 0): ("state", "Aliev_Panfilov/V_m"),      # expose state 0 = Vm to the operator splitting
+    ("outputConnectorSlot", 1): ("intermediate", "Razumova/ActiveStress"),   # expose intermediate 4 = γ to the operator splitting
+    ("outputConnectorSlot", 2): ("intermediate", "Razumova/Activation"),     # expose intermediate 5 = α to the operator splitting
+  }
+  variables.parameters_initial_values = [0, 1, 0]                     # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/rel_velo = \dot{λ}
+  variables.nodal_stimulation_current = 40.                           # not used
+  variables.vm_value_stimulated = 40.                                 # to which value of Vm the stimulated node should be set (option "valueForStimulatedPoint" of FastMonodomainSolver)
 
 # callback functions
 # --------------------------
@@ -395,6 +459,8 @@ def get_motor_unit_no(fiber_no):
   return int(variables.fiber_distribution[fiber_no % len(variables.fiber_distribution)]-1)
 
 def get_diffusion_prefactor(fiber_no, mu_no):
+  diffusion_prefactor = variables.get_conductivity(fiber_no, mu_no) / (variables.get_am(fiber_no, mu_no) * variables.get_cm(fiber_no, mu_no))
+  #print("diffusion_prefactor: {}/({}*{}) = {}".format(variables.get_conductivity(fiber_no, mu_no), variables.get_am(fiber_no, mu_no), variables.get_cm(fiber_no, mu_no), diffusion_prefactor))
   return variables.get_conductivity(fiber_no, mu_no) / (variables.get_am(fiber_no, mu_no) * variables.get_cm(fiber_no, mu_no))
 
 def fiber_gets_stimulated(fiber_no, frequency, current_time):
@@ -559,10 +625,6 @@ if rank_no == 0 and not variables.disable_firing_output:
   print("duration of assembling this list: {:.3f} s\n".format(t_end-t_start))  
   
 # compute partitioning
-if rank_no == 0:
-  if n_ranks != variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z:
-    print("\n\nError! Number of ranks {} does not match given partitioning {} x {} x {} = {}.\n\n".format(n_ranks, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z))
-    quit()
   
 variables.n_fibers_per_subdomain_x = (int)(variables.n_fibers_x / variables.n_subdomains_x)
 variables.n_fibers_per_subdomain_y = (int)(variables.n_fibers_y / variables.n_subdomains_y)

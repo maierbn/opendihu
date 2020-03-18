@@ -21,7 +21,8 @@ config = {
     "FiniteElementMethod" : {
       "nElements": [n,n],
       "physicalExtent": [4.0,4.0],
-      "relativeTolerance": 1e-15,
+      "relativeTolerance": 1e-15,    
+      "absoluteTolerance": 1e-10,         # 1e-10 absolute tolerance of the residual    
       "dumpFilename": "out/",
       "dumpFormat": "ascii",  # ascii, default or matlab
       "prefactor": 0.1,

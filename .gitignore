@@ -37,3 +37,6 @@ config.py
 **/input/*
 **/scaled_mesh*
 prepare_arm.sh
+*.zip
+*.avi
+*.srct*

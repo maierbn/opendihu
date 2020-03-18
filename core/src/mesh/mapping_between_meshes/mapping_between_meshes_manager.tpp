@@ -144,7 +144,7 @@ prepareMappingLowToHigh(std::shared_ptr<FieldVariableTargetType> fieldVariableTa
 }
 
 // helper function, calls the map function of the mapping if field variables have same number of components
-template<typename FieldVariableSourceType, typename FieldVariableTargetType, typename Dummy=void>
+template<typename FieldVariableSourceType, typename FieldVariableTargetType, typename Dummy = FieldVariableSourceType>
 struct MapLowToHighDimensionAllComponents
 {
 
@@ -161,14 +161,15 @@ struct MapLowToHighDimensionAllComponents
   }
 };
 
+// helper function, calls the map function of the mapping if field variables have same number of components
 template<typename FieldVariableSourceType, typename FieldVariableTargetType>
-struct MapLowToHighDimensionAllComponents<FieldVariableSourceType,FieldVariableTargetType,
-  typename std::enable_if<FieldVariableSourceType::nComponents() == FieldVariableTargetType::nComponents(),int>::type
->
+struct MapLowToHighDimensionAllComponents<FieldVariableSourceType, FieldVariableTargetType,
+    typename std::enable_if<FieldVariableSourceType::nComponents() == FieldVariableTargetType::nComponents(),FieldVariableSourceType>::type>
 {
+
   // actual function
   static void call(
-    std::shared_ptr<MappingBetweenMeshes<typename FieldVariableTargetType::FunctionSpace, typename FieldVariableSourceType::FunctionSpace>> mapping,
+    std::shared_ptr<MappingBetweenMeshes<typename FieldVariableSourceType::FunctionSpace, typename FieldVariableTargetType::FunctionSpace>> mapping,
     std::shared_ptr<FieldVariableSourceType> fieldVariableSource, std::shared_ptr<FieldVariableTargetType> fieldVariableTarget,
     std::shared_ptr<FieldVariable::FieldVariable<typename FieldVariableTargetType::FunctionSpace,1>> targetFactorSum)
   {
@@ -177,7 +178,26 @@ struct MapLowToHighDimensionAllComponents<FieldVariableSourceType,FieldVariableT
     );
   }
 
-};
+};/*
+
+template<typename FieldVariableSourceType, typename FieldVariableTargetType>
+struct MapLowToHighDimensionAllComponents<FieldVariableSourceType,FieldVariableTargetType,
+  typename std::enable_if<FieldVariableSourceType::nComponents() != FieldVariableTargetType::nComponents(),int>::type
+>
+{
+  // helper function, does nothing
+  template<typename T1, typename T2>
+  static void call(
+    T1 mapping,
+    std::shared_ptr<FieldVariableSourceType> fieldVariableSource, std::shared_ptr<FieldVariableTargetType> fieldVariableTarget,
+    T2 targetFactorSum)
+  {
+    LOG(FATAL) << "Number of components of field variables does not match"
+      << "(" << FieldVariableSourceType::nComponents() << " != " << FieldVariableTargetType::nComponents() << "),"
+      << " but a mapping between all components was requested.";
+  }
+
+};*/
 
 
 //! map data from the source to the target field variable. This has to be called between prepareMapping and finalizeMapping, can be called multiple times with different source meshes.
@@ -371,8 +391,14 @@ finalizeMappingLowToHigh(std::shared_ptr<FieldVariableTargetType> fieldVariableT
   std::vector<double> targetFactorSums;
   targetFactorSum->getValuesWithoutGhosts(targetFactorSums);
 
+  std::stringstream info;
+
   for (dof_no_t targetDofNoLocal = 0; targetDofNoLocal != nDofsLocalTarget; targetDofNoLocal++)
   {
+    info << "  target dof " << targetDofNoLocal << ", divide value " << targetValues[targetDofNoLocal]
+      << " by " << targetFactorSums[targetDofNoLocal] << ": " << targetValues[targetDofNoLocal]/targetFactorSums[targetDofNoLocal];
+
+
     VLOG(2) << "  target dof " << targetDofNoLocal << ", divide value " << targetValues[targetDofNoLocal]
       << " by " << targetFactorSums[targetDofNoLocal] << ": " << targetValues[targetDofNoLocal]/targetFactorSums[targetDofNoLocal];
     if (fabs(targetFactorSums[targetDofNoLocal]) > 1e-12)
@@ -385,29 +411,30 @@ finalizeMappingLowToHigh(std::shared_ptr<FieldVariableTargetType> fieldVariableT
       // output warning message, compute helper variables
 
       // get node no from dof no, this is needed for the global coordinates later
-      node_no_t nodeNoLocal = int(targetDofNoLocal/fieldVariableTarget->functionSpace()->nDofsPerNode());
+      //node_no_t nodeNoLocal = int(targetDofNoLocal/fieldVariableTarget->functionSpace()->nDofsPerNode());
 
       // get current global node coordinates
       std::stringstream s;
-      for (int i = 0; i < FieldVariableTargetType::FunctionSpace::dim(); i++)
+      /*for (int i = 0; i < FieldVariableTargetType::FunctionSpace::dim(); i++)
       {
         if (i != 0)
         {
           s << ",";
         }
         s << fieldVariableTarget->functionSpace()->meshPartition()->nNodesGlobal(i);
-      }
+      }*/
 
       // output the warning
       LOG(WARNING) << "In mapping to " << fieldVariableTarget->name() << "." << componentNoTarget
         << " (" << fieldVariableTarget->functionSpace()->meshName() << "), no values for target dof " << targetDofNoLocal
-        << ", coordinates global: " << fieldVariableTarget->functionSpace()->meshPartition()->getCoordinatesGlobal(nodeNoLocal)
-        << " of (" << s.str() << ")! Assuming 0.0.";
+        //<< ", coordinates global: " << fieldVariableTarget->functionSpace()->meshPartition()->getCoordinatesGlobal(nodeNoLocal)
+        //<< " of (" << s.str() << ")! "
+        << ". Assuming 0.0.";
 #endif
     }
   }
 
-  VLOG(1) << "targetValues: " << targetValues;
+  VLOG(1) << "low to high, targetValues: " << targetValues;
 
   // set the computed values
   fieldVariableTarget->setValuesWithoutGhosts(componentNoTarget, targetValues);
@@ -457,11 +484,11 @@ finalizeMappingLowToHigh(std::shared_ptr<FieldVariableTargetType> fieldVariableT
       // output warning message, compute helper variables
 
       // get node no from dof no, this is needed for the global coordinates later
-      node_no_t nodeNoLocal = int(targetDofNoLocal/fieldVariableTarget->functionSpace()->nDofsPerNode());
+      //node_no_t nodeNoLocal = int(targetDofNoLocal/fieldVariableTarget->functionSpace()->nDofsPerNode());
 
       // get current global node coordinates
       std::stringstream s;
-      for (int i = 0; i < FieldVariableTargetType::FunctionSpace::dim(); i++)
+/*      for (int i = 0; i < FieldVariableTargetType::FunctionSpace::dim(); i++)
       {
         if (i != 0)
         {
@@ -469,15 +496,18 @@ finalizeMappingLowToHigh(std::shared_ptr<FieldVariableTargetType> fieldVariableT
         }
         s << fieldVariableTarget->functionSpace()->meshPartition()->nNodesGlobal(i);
       }
-
+*/
       // output the warning
       LOG(WARNING) << "In mapping to " << fieldVariableTarget->name()
         << " (" << fieldVariableTarget->functionSpace()->meshName() << "), no values for target dof " << targetDofNoLocal
-        << ", coordinates global: " << fieldVariableTarget->functionSpace()->meshPartition()->getCoordinatesGlobal(nodeNoLocal)
-        << " of (" << s.str() << ")! Assuming 0.0.";
+        //<< ", coordinates global: " << fieldVariableTarget->functionSpace()->meshPartition()->getCoordinatesGlobal(nodeNoLocal)
+        //<< " of (" << s.str() << ")! Assuming 0.0.";
+        << ". Assuming 0.0.";
 #endif
     }
   }
+
+  VLOG(1) << "low to high all, targetValues: " << targetValues;
 
   // set the computed values
   fieldVariableTarget->setValuesWithoutGhosts(targetValues);

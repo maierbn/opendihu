@@ -13,7 +13,7 @@
 
 
 /** This is the base class of the CellmlAdapter, that handles common functionality.
- * nStates: number of states in one instance of the CellML problem
+ * nStates_: number of states in one instance of the CellML problem
  * 
  *  Naming:
  *   Intermediate (opendihu) = KNOWN (OpenCMISS) = Algebraic (OpenCOR)
@@ -22,24 +22,24 @@
  *   State: state variable
  *   Rate: the time derivative of the state variable, i.e. the increment value in an explicit Euler stepping
  */
-template <int nStates, int nIntermediates_, typename FunctionSpaceType>
+template <int nStates_, int nIntermediates_, typename FunctionSpaceType>
 class CellmlAdapterBase
 {
 public:
 
   typedef FieldVariable::FieldVariable<FunctionSpaceType,nIntermediates_> FieldVariableIntermediates;
-  typedef FieldVariable::FieldVariable<FunctionSpaceType,nStates> FieldVariableStates;
-  typedef Data::CellmlAdapter<nStates, nIntermediates_, FunctionSpaceType> Data;
+  typedef FieldVariable::FieldVariable<FunctionSpaceType,nStates_> FieldVariableStates;
+  typedef Data::CellmlAdapter<nStates_, nIntermediates_, FunctionSpaceType> Data;
 
 /** The data type of the output connector of the CellML adapter.
  *  This is the data that will be transferred to connected solvers.
  *  The first value, value0, is the state variable and can, e.g., be configured to contain Vm (by setting "outputStateIndex" in python settings).
  *  The second value, value1, can, e.g., be configured to contain alpha (by setting "outputIntermediateIndex" in python settings).
  */
-  typedef ::Data::OutputConnectorData<FunctionSpaceType,nStates,nIntermediates_> OutputConnectorDataType;
+  typedef ::Data::OutputConnectorData<FunctionSpaceType,nStates_,nIntermediates_> OutputConnectorDataType;
 
   //! constructor from context
-  CellmlAdapterBase(DihuContext context, bool noNewOutputWriter);
+  CellmlAdapterBase(DihuContext context, bool initializeOutputWriter);
 
   //! constructor from context
   CellmlAdapterBase(DihuContext context);
@@ -50,6 +50,9 @@ public:
   //! return the compile-time constant number of state variables of one instance that will be integrated
   static constexpr int nComponents();
 
+  //! return the compile-time constant number of state variables of one instance that will be integrated
+  static constexpr int nStates();
+
   //! load model, use settings given in context
   void initialize();
 
@@ -58,14 +61,18 @@ public:
   
   //! set initial values as given in python config
   template<typename FunctionSpaceType2>
-  bool setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nStates>> initialValues);
+  bool setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nStates_>> initialValues);
+
+  //! initialize all information from python settings key "mappings", this sets parametersUsedAsIntermediates/States and outputIntermediate/StatesIndex
+  void initializeMappings(std::vector<int> &parametersUsedAsIntermediate, std::vector<int> &parametersUsedAsConstant,
+                          std::vector<int> &statesForTransfer, std::vector<int> &intermediatesForTransfer, std::vector<int> &parametersForTransfer);
 
   //! set the solution field variable in the data object, that actual data is stored in the timestepping scheme object
   void setSolutionVariable(std::shared_ptr<FieldVariableStates> states);
 
   //! pass on the output connector data object from the timestepping scheme object to be modified,
   //! if there are intermediates for transfer, they will be set in the outputConnectorDataTimeStepping
-  void setOutputConnectorData(std::shared_ptr<::Data::OutputConnectorData<FunctionSpaceType,nStates>> outputConnectorDataTimeStepping);
+  void setOutputConnectorData(std::shared_ptr<::Data::OutputConnectorData<FunctionSpaceType,nStates_>> outputConnectorDataTimeStepping);
 
   //! return the mesh
   std::shared_ptr<FunctionSpaceType> functionSpace();
@@ -73,8 +80,11 @@ public:
   //! get number of instances, number of intermediates and number of parameters
   void getNumbers(int &nInstances, int &nIntermediates, int &nParameters);
 
-  //! return references to statesForTransfer and intermediatesForTransfer, the states and intermediates that should be used for output connector data transfer
-  void getStatesIntermediatesForTransfer(std::vector<int> &statesForTransfer, std::vector<int> &intermediatesForTransfer);
+  //! return a reference to statesForTransfer, the states that should be used for output connector data transfer
+  std::vector<int> &statesForTransfer();
+
+  //! return a reference to intermediatesForTransfer, the intermediates that should be used for output connector data transfer
+  std::vector<int> &intermediatesForTransfer();
 
   //! get a vector with the names of the states
   void getStateNames(std::vector<std::string> &stateNames);
@@ -97,18 +107,26 @@ public:
 
 protected:
 
-  DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
-  PythonConfig specificSettings_;    ///< python object containing the value of the python config dict with corresponding key
-  OutputWriter::Manager outputWriterManager_; ///< manager object holding all output writer
+  //! compute equilibrium of states for option "initializeStatesToEquilibrium"
+  virtual void initializeToEquilibriumValues(std::array<double,nStates_> &statesInitialValues) = 0;
 
-  std::shared_ptr<FunctionSpaceType> functionSpace_;    ///< a mesh, there are as many instances of the same CellML problem as there are nodes in the mesh
-  Data data_;     ///< the data object that stores all variables, i.e. intermediates and states
 
-  int nInstances_;         ///< number of instances of the CellML problem. Usually it is the number of mesh nodes when a mesh is used. When running in parallel this is the local number of instances without ghosts.
+  DihuContext context_;                                    //< object that contains the python config for the current context and the global singletons meshManager and solverManager
+  PythonConfig specificSettings_;                          //< python object containing the value of the python config dict with corresponding key
+  OutputWriter::Manager outputWriterManager_;              //< manager object holding all output writer
 
-  int internalTimeStepNo_ = 0; ///< the counter how often the right hand side was called
+  std::shared_ptr<FunctionSpaceType> functionSpace_;       //< a mesh, there are as many instances of the same CellML problem as there are nodes in the mesh
+  Data data_;                                              //< the data object that stores all variables, i.e. intermediates and states
+  static std::array<double,nStates_> statesInitialValues_;        //< the initial values for the states, see setInitialValues
+  static bool statesInitialValuesinitialized_;                  //< if the statesInitialValues_ variables has been initialized
 
-  CellmlSourceCodeGenerator cellmlSourceCodeGenerator_;    ///< object that holds all source code related to the model
+  int nInstances_;                                         //< number of instances of the CellML problem. Usually it is the number of mesh nodes when a mesh is used. When running in parallel this is the local number of instances without ghosts.
+  int internalTimeStepNo_ = 0;                             //< the counter how often the right hand side was called
+
+  bool initializeStatesToEquilibrium_;                     //< if the initial states should be computed until they reach an equilibrium
+  double initializeStatesToEquilibriumTimestepWidth_;      //< timestep width for computation of equilibrium states
+
+  CellmlSourceCodeGenerator cellmlSourceCodeGenerator_;    //< object that holds all source code related to the model
 };
 
 #include "cellml/00_cellml_adapter_base.tpp"

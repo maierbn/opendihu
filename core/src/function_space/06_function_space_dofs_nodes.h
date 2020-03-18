@@ -124,19 +124,65 @@ public:
 
   //! return number of nodes that are owned by this partition
   node_no_t nNodesLocalWithoutGhosts() const;
-  
+
   //! return number of dofs
   dof_no_t nDofsLocalWithGhosts() const;
-  
+
   //! return number of dofs
   dof_no_t nDofsLocalWithoutGhosts() const;
-  
+
   //! return global number of nodes
   global_no_t nNodesGlobal() const;
 
   //! return global number of dofs
   global_no_t nDofsGlobal() const;
-  
+
+};
+
+/** Partial specialization for composite mesh
+ */
+template<int D,typename BasisFunctionType>
+class FunctionSpaceDofsNodes<Mesh::CompositeOfDimension<D>,BasisFunctionType> :
+  public FunctionSpaceGeometry<Mesh::CompositeOfDimension<D>,BasisFunctionType>,
+  public std::enable_shared_from_this<FunctionSpaceDofsNodes<Mesh::CompositeOfDimension<D>,BasisFunctionType>>
+{
+public:
+  //! constructor from sub function spaces, it is possible to create a basisOnMesh object without geometry field, e.g. for the lower order mesh of a mixed formulation
+  FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager,
+                         std::vector<std::shared_ptr<FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>> subFunctionSpaces, bool noGeometryField=false);
+
+  //! constructor with PythonConfig, this is needed such that mesh manager compiles but never called
+  FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager,
+                         PythonConfig settings, bool noGeometryField=false);
+
+  //! constructor with additionally given node positions, this is needed such that mesh manager compiles but never called
+  FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, std::vector<double> &nodePositions,
+                         PythonConfig settings, bool noGeometryField=false);
+
+  //! initialize geometry
+  virtual void initialize();
+
+  //! fill a vector with the node position entries, nodes will contain consecutively the (x,y,z) values of just all nodes, i.e. for Hermite not the derivatives
+  void getNodePositions(std::vector<double> &nodes) const;
+
+  //! return number of nodes including ghost nodes, i.e. these nodes are known locally but some of them are owned by other ranks
+  node_no_t nNodesLocalWithGhosts() const;
+
+  //! return number of nodes that are owned by this partition
+  node_no_t nNodesLocalWithoutGhosts() const;
+
+  //! return number of dofs
+  dof_no_t nDofsLocalWithGhosts() const;
+
+  //! return number of dofs
+  dof_no_t nDofsLocalWithoutGhosts() const;
+
+  //! return global number of nodes
+  global_no_t nNodesGlobal() const;
+
+  //! return global number of dofs
+  global_no_t nDofsGlobal() const;
+
 };
 
 }  // namespace
@@ -144,3 +190,4 @@ public:
 #include "function_space/06_function_space_dofs_nodes_regular_fixed.tpp"
 #include "function_space/06_function_space_dofs_nodes_structured_deformable.tpp"
 #include "function_space/06_function_space_dofs_nodes_unstructured_deformable.tpp"
+#include "function_space/06_function_space_dofs_nodes_composite.tpp"

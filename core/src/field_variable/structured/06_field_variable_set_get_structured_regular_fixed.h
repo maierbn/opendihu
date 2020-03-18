@@ -2,7 +2,7 @@
 
 #include <Python.h>  // has to be the first included header
 
-#include "field_variable/structured/05_field_variable_data_structured_regular_fixed.h"
+#include "field_variable/structured/04_field_variable_set_get_component_dependent_structured.h"
 #include "field_variable/field_variable_set_get.h"
 #include "function_space/function_space.h"
 
@@ -13,20 +13,20 @@ namespace FieldVariable
  */
 template<typename FunctionSpaceType, int nComponents>
 class FieldVariableSetGetRegularFixed :
-  public FieldVariableData<FunctionSpaceType,nComponents>
+  public FieldVariableSetGetComponent<FunctionSpaceType,nComponents>
 {
 public:
 
   //! inherited constructor
-  using FieldVariableData<FunctionSpaceType,nComponents>::FieldVariableData;
+  using FieldVariableSetGetComponent<FunctionSpaceType,nComponents>::FieldVariableSetGetComponent;
 
-  using FieldVariableData<FunctionSpaceType,nComponents>::getValues;
-  using FieldVariableData<FunctionSpaceType,nComponents>::getElementValues;
-  using FieldVariableData<FunctionSpaceType,nComponents>::getValue;
-  using FieldVariableData<FunctionSpaceType,nComponents>::getValuesWithGhosts;
-  using FieldVariableData<FunctionSpaceType,nComponents>::getValuesWithoutGhosts;
-  using FieldVariableData<FunctionSpaceType,nComponents>::setValue;
-  using FieldVariableData<FunctionSpaceType,nComponents>::setValues;
+  using FieldVariableSetGetComponent<FunctionSpaceType,nComponents>::getValues;
+  using FieldVariableSetGetComponent<FunctionSpaceType,nComponents>::getElementValues;
+  using FieldVariableSetGetComponent<FunctionSpaceType,nComponents>::getValue;
+  using FieldVariableSetGetComponent<FunctionSpaceType,nComponents>::getValuesWithGhosts;
+  using FieldVariableSetGetComponent<FunctionSpaceType,nComponents>::getValuesWithoutGhosts;
+  using FieldVariableSetGetComponent<FunctionSpaceType,nComponents>::setValue;
+  using FieldVariableSetGetComponent<FunctionSpaceType,nComponents>::setValues;
 
   //! for a specific component, get all values
   void getValuesWithGhosts(int componentNo, std::vector<double> &values, bool onlyNodalValues=false) const;

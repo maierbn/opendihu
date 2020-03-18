@@ -55,6 +55,9 @@ public:
   //! get the number of velocity dofs vx,vy,vz without Dirichlet Bc constraint dofs (if nComponents == 6), or 0 if there are no velocities (if nComponents == 3)
   dof_no_t nVelocityDofsWithoutBcLocal();
 
+  //! check if the vector contains nan or inf values and output error
+  virtual bool containsNanOrInf();
+
   //! get a Petsc index set (IS) of all global non-bc indices comprising ux,uy,uz.
   //! This is a sequence of consecutive numbers (e.g. 5,6,7,...) and can be used to access submatrices of the global system matrix.
   IS displacementDofsGlobal();

@@ -554,7 +554,7 @@ generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunc
   std::stringstream s;
   s << "-lVc -I\"" << OPENDIHU_HOME << "/dependencies/vc/install/include\" "
     << "-L\"" << OPENDIHU_HOME << "/dependencies/vc/install/lib\" ";
-  if (CXX_COMPILER_COMMAND == "g++")
+  if (std::string(CXX_COMPILER_COMMAND) == std::string("g++"))
     s << "-std=c++14";
   additionalCompileFlags_ = s.str();
   compilerCommand_ = CXX_COMPILER_COMMAND;
@@ -877,7 +877,7 @@ generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateE
   std::stringstream s;
   s << "-lVc -I\"" << OPENDIHU_HOME << "/dependencies/vc/install/include\" "
     << "-L\"" << OPENDIHU_HOME << "/dependencies/vc/install/lib\" ";
-  if (CXX_COMPILER_COMMAND == "g++")
+  if (std::string(CXX_COMPILER_COMMAND) == std::string("g++"))
     s << "-std=c++14";
   additionalCompileFlags_ = s.str();
   compilerCommand_ = CXX_COMPILER_COMMAND;

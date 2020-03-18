@@ -6,14 +6,13 @@ import scipy.stats
 import pickle
 import sys,os 
 import struct
+sys.path.insert(0, "..")
 
 # global parameters
 PMax = 7.3              # maximum stress [N/cm^2]
 Conductivity = 3.828    # sigma, conductivity [mS/cm]
 Am = 500.0              # surface area to volume ratio [cm^-1]
 Cm = 0.58               # membrane capacitance [uF/cm^2]
-innervation_zone_width = 1.  # cm
-innervation_zone_width = 0.  # cm
 
 # timing parameters
 end_time = 4000.0                   # [ms] end time of the simulation
@@ -21,24 +20,27 @@ stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in f
 dt_0D = 3e-3                        # [ms] timestep width of ODEs (1e-3)
 dt_1D = 1e-3                        # [ms] timestep width of diffusion (1e-3)
 dt_3D = 3e-3                        # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
-output_timestep_fibers = 1e-1       # [ms] timestep for output files
+output_timestep = 1e-1              # [ms] timestep for output files
 
-Am = 0.2   # mesh_small
-Am = 0.1
+#Am = 0.2   # mesh_small
+#Am = 0.1
 
-# input files
-#mesh_file = "../input/scaled_mesh_tiny"
-#mesh_file = "../input/scaled_mesh_small"
-mesh_file = "../input/scaled_mesh_normal"
-#mesh_file = "../input/scaled_mesh_big"
+# input files, these are old files, better use "left_biceps_brachii_*"
+#fiber_file = "../input/scaled_mesh_tiny"
+#fiber_file = "../input/scaled_mesh_small"
+fiber_file = "../input/scaled_mesh_normal"
+#fiber_file = "../input/scaled_mesh_big"
 
 #fiber_file = "../input/laplace3d_structured_linear"
 #fiber_file = "../../input/7x7fibers.bin"
 fiber_file = "../../input/left_biceps_brachii_7x7fibers.bin"
 
+# stride which points to select for the 3D mesh, along the muscle (z-direction)
+sampling_stride_z = 20
+
 cellml_file = "../input/hodgkin_huxley_1952.c"
 
-fibre_distribution_file = "../input/MU_fibre_distribution_3780.txt"
+fiber_distribution_file = "../input/MU_fibre_distribution_3780.txt"
 
 #firing_times_file = "../input/MU_firing_times_real.txt"
 firing_times_file = "../input/MU_firing_times_immediately.txt"
@@ -49,134 +51,22 @@ motor_units = [
   {"fiber_no": 30, "standard_deviation": 20.0, "maximum": 0.4},
   {"fiber_no": 40, "standard_deviation": 30.0, "maximum": 0.6},
 ]
+n_compartments = len(motor_units)
 
 # own MPI rank no and number of MPI ranks
 rank_no = (int)(sys.argv[-2])
 n_ranks = (int)(sys.argv[-1])
 
-# get the mesh nodes, either from a .bin file or a python pickle file
-if ".bin" in fiber_file:
-  # data input from bin files that contain fibers
-
-  sampling_stride_z = 50
-
-  try:
-    fiber_file_handle = open(fiber_file, "rb")
-  except:
-    print("Error: Could not open fiber file \"{}\"".format(fiber_file))
-    quit()
-
-  # parse fibers from a binary fiber file that was created by parallel_fiber_estimation
-  # parse file header to extract number of fibers
-  bytes_raw = fiber_file_handle.read(32)
-  header_str = struct.unpack('32s', bytes_raw)[0]
-  header_length_raw = fiber_file_handle.read(4)
-  header_length = struct.unpack('i', header_length_raw)[0]
-
-  parameters = []
-  for i in range(int(header_length/4.) - 1):
-    double_raw = fiber_file_handle.read(4)
-    value = struct.unpack('i', double_raw)[0]
-    parameters.append(value)
-    
-  n_fibers_total = parameters[0]
-  n_fibers_x = (int)(np.round(np.sqrt(n_fibers_total)))
-  n_fibers_y = n_fibers_x
-  n_points_initial_whole_fiber = parameters[1]
-
-
-  # parse whole fiber file
-  fiber_data = []
-  mesh_node_positions = []
-  for fiber_no in range(n_fibers_total):
-    fiber = []
-    for point_no in range(n_points_initial_whole_fiber):
-      point = []
-      for i in range(3):
-        double_raw = fiber_file_handle.read(8)
-        value = struct.unpack('d', double_raw)[0]
-        point.append(value)
-      fiber.append(point)
-      
-    # sample fiber in z direction
-    new_fiber = []
-    for point_no in range(0,n_points_initial_whole_fiber,sampling_stride_z):
-      point = fiber[point_no]
-      new_fiber.append(point)
-      mesh_node_positions.append(point)
-    
-    fiber_data.append(new_fiber)
-            
-  # set node positions
-  n_points_whole_fiber = len(fiber_data[0])
-  n_linear_elements_per_coordinate_direction = [n_fibers_x-1, n_fibers_y-1, n_points_whole_fiber-1]
-  for k in range(n_points_whole_fiber):
-    for j in range(n_fibers_y):
-      for i in range(n_fibers_x):
-        mesh_node_positions[k*n_fibers_x*n_fibers_y + j*n_fibers_x + i] = fiber_data[j*n_fibers_x + i][k]
-        
-  if rank_no == 0:
-    print("n fibers:              {} ({} x {})".format(n_fibers_total, n_fibers_x, n_fibers_y))
-    print("n points per fiber:    {}, sampling by stride {}".format(n_points_initial_whole_fiber, sampling_stride_z))
-    print("3D mesh: {} x {} x {} nodes".format(n_linear_elements_per_coordinate_direction[0]+1, n_linear_elements_per_coordinate_direction[1]+1, n_linear_elements_per_coordinate_direction[2]+1))
-    
-  bottom_node_indices = list(range(n_fibers_x*n_fibers_y))
-  n_points = n_fibers_x*n_fibers_y*n_points_whole_fiber
-  top_node_indices = list(range(n_points-n_fibers_x*n_fibers_y,n_points))
+# load MU distribution and firing times
+fiber_distribution = np.genfromtxt(fiber_distribution_file, delimiter=" ")
+firing_times = np.genfromtxt(firing_times_file)
   
-  relative_factors_file = "{}.compartment_relative_factors".format(os.path.basename(fiber_file))
+# load mesh
+import helper
+(mesh_node_positions,fiber_data,bottom_node_indices,top_node_indices,n_linear_elements_per_coordinate_direction) = helper.load_mesh(fiber_file, sampling_stride_z, rank_no)
 
-else:
-  # data input from generating 3D meshes without fiber tracing  
-  # load fibers
-  with open(fiber_file, "rb") as f:
-    fiber_data = pickle.load(f, encoding='latin1')
-  # list of fibers, fiber = list of points, point = list with 3 coordinate entries
-
-  # load mesh
-  with open(mesh_file, "rb") as f:
-    mesh_data = pickle.load(f, encoding='latin1')
-
-  n_linear_elements_per_coordinate_direction = mesh_data["n_linear_elements_per_coordinate_direction"]
-  mesh_node_positions = mesh_data["node_positions"]
-
-  bottom_node_indices = mesh_data["bottom_nodes"]
-  top_node_indices = mesh_data["top_nodes"]
-
-  #
-  #  "node_positions": node_positions, 
-  #  "linear_elements": linear_elements, 
-  #  "quadratic_elements": quadratic_elements, 
-  #  "seed_points": seed_points,
-  #  "bottom_nodes": bottom_node_indices,
-  #  "top_nodes": top_node_indices,
-  #  "n_linear_elements_per_coordinate_direction": n_linear_elements_per_coordinate_direction,
-  #  "n_quadratic_elements_per_coordinate_direction": n_quadratic_elements_per_coordinate_direction,
-  #
-
-  # output bounding box for debugging
-  if rank_no == 0:
-    min_x = min([x for [x,y,z] in mesh_data["node_positions"]])
-    max_x = max([x for [x,y,z] in mesh_data["node_positions"]])
-    min_y = min([y for [x,y,z] in mesh_data["node_positions"]])
-    max_y = max([y for [x,y,z] in mesh_data["node_positions"]])
-    min_z = min([z for [x,y,z] in mesh_data["node_positions"]])
-    max_z = max([z for [x,y,z] in mesh_data["node_positions"]])
-
-    print("mesh bounding box x: [{},{}], y: [{},{}], z:[{},{}]".format(min_x, max_x, min_y, max_y, min_z, max_z))
-
-    for fiber_no in [10, 30, 50]:
-      data = fiber_data[fiber_no]
-      min_x = min([x for [x,y,z] in data])
-      max_x = max([x for [x,y,z] in data])
-      min_y = min([y for [x,y,z] in data])
-      max_y = max([y for [x,y,z] in data])
-      min_z = min([z for [x,y,z] in data])
-      max_z = max([z for [x,y,z] in data])
-
-      print("fiber {} bounding box x: [{},{}], y: [{},{}], z:[{},{}]".format(fiber_no, min_x, max_x, min_y, max_y, min_z, max_z))
-
-  relative_factors_file = "{}.compartment_relative_factors".format(os.path.basename(mesh_file))
+# load relative factors for motor units
+relative_factors_file = "{}.compartment_relative_factors".format(os.path.basename(fiber_file))
 
 # determine relative factor fields fr(x) for compartments
 if os.path.exists(relative_factors_file):
@@ -187,53 +77,39 @@ if os.path.exists(relative_factors_file):
 
 else:
   sys.path.append(os.path.abspath(".."))
-  import initialize_compartment_relative_factors
-  relative_factors = initialize_compartment_relative_factors.compute_compartment_relative_factors(mesh_node_positions, fiber_data, motor_units)
+  relative_factors = helper.compute_compartment_relative_factors(mesh_node_positions, fiber_data, motor_units)
   if rank_no == 0:
     print("save relative factors to file \"{}\"".format(relative_factors_file))
     with open(relative_factors_file, "wb") as f:
       pickle.dump(relative_factors, f)
+
+# set variable mappings for cellml model
+if "hodgkin_huxley" in cellml_file:
+  # parameters: I_stim
+  mappings = {
+    ("parameter", 0):           ("constant", "membrane/i_Stim"),      # parameter 0 is constant 2 = I_stim
+    ("outputConnectorSlot", 0): ("state", "membrane/V"),              # expose state 0 = Vm to the operator splitting
+  }
+  parameters_initial_values = [0.0]                         # initial value for stimulation current
+  nodal_stimulation_current = 40.                           # not used
+  vm_value_stimulated = 20.                                 # to which value of Vm the stimulated node should be set (option "valueForStimulatedPoint" of FastMonodomainSolver)
   
-if "hodgkin" in cellml_file:
-  Cm = 1.0
-
-n_compartments = len(motor_units)
-
-# set dirichlet bc, top and bottom nodes to -75
-activation_dirichlet_bc = {}
-for bottom_node_index in bottom_node_indices:
-  activation_dirichlet_bc[bottom_node_index] = -75.0
-
-for top_node_index in top_node_indices:
-  activation_dirichlet_bc[top_node_index] = -75.0
+  #Cm = 1.0
 
 # for debugging
 #n_compartments = 1
 #relative_factors = np.ones((n_compartments, len(mesh_node_positions)))   # each row is one compartment
 #print("DEBUG settings")
 
-# create relative factors for compartments
+# debugging output
 if rank_no == 0:
   for i,factors_list in enumerate(relative_factors.tolist()):
     print("MU {}, maximum fr: {}".format(i,max(factors_list)))
 
-# load MU distribution and firing times
-fibre_distribution = np.genfromtxt(fibre_distribution_file, delimiter=" ")
-firing_times = np.genfromtxt(firing_times_file)
-
-# cellml settings
-if "shorten" in cellml_file:
-  parameters_used_as_intermediate = [32]
-  parameters_used_as_constant = [65]
-  parameters_initial_values = [0.0, 1.0]
-  
-elif "hodgkin_huxley" in cellml_file:
-  parameters_used_as_intermediate = []
-  parameters_used_as_constant = [2]
-  parameters_initial_values = [0.0]
-  
-def get_motor_unit_no(fibre_no):
-  return int(fibre_distribution[fibre_no % len(fibre_distribution)]-1)
+# ---------------------
+# callback functions
+def get_motor_unit_no(fiber_no):
+  return int(fiber_distribution[fiber_no % len(fiber_distribution)]-1)
 
 def compartment_gets_stimulated(compartment_no, current_time):
   # determine motor unit
@@ -246,7 +122,7 @@ def compartment_gets_stimulated(compartment_no, current_time):
   
 def set_parameters(n_nodes_global, time_step_no, current_time, parameters, dof_nos_global, compartment_no):
   
-  # determine if fibre gets stimulated at the current time
+  # determine if fiber gets stimulated at the current time
   is_compartment_gets_stimulated = compartment_gets_stimulated(compartment_no, current_time)
   
   # determine nodes to stimulate (center node, left and right neighbour)
@@ -280,15 +156,15 @@ def set_parameters(n_nodes_global, time_step_no, current_time, parameters, dof_n
           if is_compartment_gets_stimulated:
             print("       {}: set stimulation for local dof {}".format(rank_no, dof_no_local))
   
-  #print("       {}: setParameters at timestep {}, t={}, n_nodes_global={}, range: [{},{}], fibre no {}, MU {}, stimulated: {}".\
-        #format(rank_no, time_step_no, current_time, n_nodes_global, first_dof_global, last_dof_global, fibre_no, get_motor_unit_no(fibre_no), compartment_gets_stimulated))
+  #print("       {}: setParameters at timestep {}, t={}, n_nodes_global={}, range: [{},{}], fiber no {}, MU {}, stimulated: {}".\
+        #format(rank_no, time_step_no, current_time, n_nodes_global, first_dof_global, last_dof_global, fiber_no, get_motor_unit_no(fiber_no), compartment_gets_stimulated))
     
   #wait = input("Press any key to continue...")
 
 # callback function that can set states, i.e. prescribed values for stimulation
 def set_specific_states(n_nodes_global, time_step_no, current_time, states, compartment_no):
   
-  # determine if fibre gets stimulated at the current time
+  # determine if fiber gets stimulated at the current time
   is_compartment_gets_stimulated = compartment_gets_stimulated(compartment_no, current_time)
 
   if is_compartment_gets_stimulated:  
@@ -315,41 +191,53 @@ def set_specific_states(n_nodes_global, time_step_no, current_time, states, comp
     #print("n_nodes_global: {}, time_step_no: {}, current_time: {}, compartment_no: {}".format(n_nodes_global, time_step_no, current_time, compartment_no))
     #wait = input("Press any key to continue...")
     
-# boundary conditions
+# boundary conditions for potential flow
 potential_flow_bc = {}
 for bottom_node_index in bottom_node_indices:
   potential_flow_bc[bottom_node_index] = 0.0
+  
 for top_node_index in top_node_indices:
   potential_flow_bc[top_node_index] = 1.0
   
+# set dirichlet bc, top and bottom nodes to -75
+activation_dirichlet_bc = {}
+if False:
+  for bottom_node_index in bottom_node_indices:
+    activation_dirichlet_bc[bottom_node_index] = -75.0
+
+  for top_node_index in top_node_indices:
+    activation_dirichlet_bc[top_node_index] = -75.0
+
+# settings for the multidomain solver
 multidomain_solver = {
-  "nCompartments": n_compartments,
-  "am": Am,
-  "cm": Cm,
-  "timeStepWidth": dt_0D,
-  "endTime": end_time,
-  "timeStepOutputInterval": 1,
-  "solverName": "activationSolver",
-  "inputIsGlobal": True,
-  "compartmentRelativeFactors": relative_factors.tolist(),
+  "nCompartments":                    n_compartments,                     # number of compartments
+  "am":                               Am,                                 # Am parameter (ration of surface to volume of fibers)
+  "cm":                               Cm,                                 # Cm parameter (capacitance of the cellular membrane)
+  "timeStepWidth":                    dt_0D,                              # time step width of the subcellular problem
+  "endTime":                          end_time,                           # end time, this is not relevant because it will be overridden by the splitting scheme
+  "timeStepOutputInterval":           100,                                # how often the output timestep should be printed
+  "solverName":                       "activationSolver",                 # reference to the solver used for the global linear system of the multidomain eq.
+  "initialGuessNonzero":              True,                              # if the initial guess for the 3D system should be set as the solution of the previous timestep, this only makes sense for iterative solvers
+  "inputIsGlobal":                    True,                               # if values and dofs correspond to the global numbering
+  "compartmentRelativeFactors":       relative_factors.tolist(),          # list of lists of the factors for every dof, because "inputIsGlobal": True, this contains the global dofs
   "PotentialFlow": {
     "FiniteElementMethod" : {  
-      "meshName": "mesh",
-      "solverName": "potentialFlowSolver",
-      "prefactor": 1.0,
-      "dirichletBoundaryConditions": potential_flow_bc,
-      "neumannBoundaryConditions": [],
-      "inputMeshIsGlobal": True,
+      "meshName":                     "mesh",
+      "solverName":                   "potentialFlowSolver",
+      "prefactor":                    1.0,
+      "dirichletBoundaryConditions":  potential_flow_bc,
+      "neumannBoundaryConditions":    [],
+      "inputMeshIsGlobal":            True,
     },
   },
   "Activation": {
     "FiniteElementMethod" : {  
-      "meshName": "mesh",
-      "solverName": "activationSolver",
-      "prefactor": 1.0,
-      "inputMeshIsGlobal": True,
-      "dirichletBoundaryConditions": activation_dirichlet_bc,
-      "neumannBoundaryConditions": [],
+      "meshName":                     "mesh",
+      "solverName":                   "activationSolver",
+      "prefactor":                    1.0,
+      "inputMeshIsGlobal":            True,
+      "dirichletBoundaryConditions":  activation_dirichlet_bc,
+      "neumannBoundaryConditions":    [],
       "diffusionTensor": [[      # sigma_i           # fiber direction is (1,0,0)
         8.93, 0, 0,
         0, 0.0, 0,
@@ -365,8 +253,8 @@ multidomain_solver = {
   
   "OutputWriter" : [
     {"format": "Paraview", "outputInterval": (int)(1./dt_1D*output_timestep), "filename": "out/output", "binary": True, "fixedFormat": False, "combineFiles": True},
-    #{"format": "ExFile", "filename": "out/fibre_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "sphereSize": "0.02*0.02*0.02"},
-    #{"format": "PythonFile", "filename": "out/fibre_"+str(i), "outputInterval": int(1./dt_1D*output_timestep), "binary":True, "onlyNodalValues":True},
+    #{"format": "ExFile", "filename": "out/fiber_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "sphereSize": "0.02*0.02*0.02"},
+    #{"format": "PythonFile", "filename": "out/fiber_"+str(i), "outputInterval": int(1./dt_1D*output_timestep), "binary":True, "onlyNodalValues":True},
   ]
 }
   
@@ -374,39 +262,39 @@ config = {
   "solverStructureDiagramFile": "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "Meshes": {
     "mesh": {
-      "nElements": n_linear_elements_per_coordinate_direction,
-      "nodePositions": mesh_node_positions,
-      "inputMeshIsGlobal": True,
+      "nElements":             n_linear_elements_per_coordinate_direction,
+      "nodePositions":         mesh_node_positions,
+      "inputMeshIsGlobal":     True,
       "setHermiteDerivatives": False
     }
   },
   "Solvers": {
     "potentialFlowSolver": {
-      "relativeTolerance": 1e-10,
-      "absoluteTolerance": 1e-10,         # 1e-10 absolute tolerance of the residual          
-      "maxIterations": 1e5,
-      "solverType": "gmres",
+      "relativeTolerance":  1e-10,
+      "absoluteTolerance":  1e-10,         # 1e-10 absolute tolerance of the residual          
+      "maxIterations":      1e5,
+      "solverType":         "gmres",
       "preconditionerType": "none",
-      "dumpFormat": "default",
-      "dumpFilename": "",
+      "dumpFormat":         "default",
+      "dumpFilename":       "",
     },
     "activationSolver": {
-      "relativeTolerance": 1e-5,
-      "absoluteTolerance": 1e-10,         # 1e-10 absolute tolerance of the residual          
-      "maxIterations": 1e5,
-      "solverType": "gmres",
+      "relativeTolerance":  1e-10,
+      "absoluteTolerance":  1e-10,         # 1e-10 absolute tolerance of the residual          
+      "maxIterations":      1e5,
+      "solverType":         "gmres",
       "preconditionerType": "none",
-      "dumpFormat": "default",
-      "dumpFilename": "",
+      "dumpFormat":         "default",
+      "dumpFilename":       "",
     }
   },
   "StrangSplitting": {
-    "timeStepWidth": dt_3D,  # 1e-1
-    "logTimeStepWidthAsKey": "dt_3D",
-    "durationLogKey": "duration_total",
-    "timeStepOutputInterval" : 100,
-    "endTime": end_time,
-    "connectedSlotsTerm1To2": [0],       # CellML V_mk (0) <=> Multidomain V_mk^(i) (0)
+    "timeStepWidth":          dt_3D,  # 1e-1
+    "logTimeStepWidthAsKey":  "dt_3D",
+    "durationLogKey":         "duration_total",
+    "timeStepOutputInterval": 100,
+    "endTime":                end_time,
+    "connectedSlotsTerm1To2": [0],          # CellML V_mk (0) <=> Multidomain V_mk^(i) (0)
     "connectedSlotsTerm2To1": [None, 0],    # Multidomain V_mk^(i+1) (1) -> CellML V_mk (0)
 
     "Term1": {      # CellML
@@ -417,44 +305,41 @@ config = {
           "ranks": list(range(n_ranks)),
           "Heun" : {
             "timeStepWidth": dt_0D,  # 5e-5
-            "logTimeStepWidthAsKey": "dt_0D",
-            "durationLogKey": "duration_0D",
-            "initialValues": [],
-            "timeStepOutputInterval": 1e4,
-            "inputMeshIsGlobal": True,
-            "dirichletBoundaryConditions": {},
-            "nAdditionalFieldVariables": 0,
+            "logTimeStepWidthAsKey":        "dt_0D",
+            "durationLogKey":               "duration_0D",
+            "initialValues":                [],
+            "timeStepOutputInterval":       1e4,
+            "inputMeshIsGlobal":            True,
+            "dirichletBoundaryConditions":  {},
+            "nAdditionalFieldVariables":    0,
                 
             "CellML" : {
-              "modelFilename": cellml_file,                       # input C++ source file or cellml XML file
-              "initializeStatesToEquilibrium":          False,                                          # if the equilibrium values of the states should be computed before the simulation starts
-              "initializeStatesToEquilibriumTimestepWidth": 1e-4,                                       # if initializeStatesToEquilibrium is enable, the timestep width to use to solve the equilibrium equation
+              "modelFilename":                          cellml_file,                            # input C++ source file or cellml XML file
+              "initializeStatesToEquilibrium":          False,                                  # if the equilibrium values of the states should be computed before the simulation starts
+              "initializeStatesToEquilibriumTimestepWidth": 1e-4,                               # if initializeStatesToEquilibrium is enable, the timestep width to use to solve the equilibrium equation
               
               # optimization parameters
-              "optimizationType":                       "vc",                                           # "vc", "simd", "openmp" type of generated optimizated source file
-              "approximateExponentialFunction":         True,                                           # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
-              "compilerFlags":                          "-fPIC -O3 -march=native -shared ",             # compiler flags used to compile the optimized model code
-              "maximumNumberOfThreads":                 0,                                              # if optimizationType is "openmp", the maximum number of threads to use. Default value 0 means no restriction.
+              "optimizationType":                       "vc",                                   # "vc", "simd", "openmp" type of generated optimizated source file
+              "approximateExponentialFunction":         True,                                   # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
+              "compilerFlags":                          "-fPIC -O3 -march=native -shared ",     # compiler flags used to compile the optimized model code
+              "maximumNumberOfThreads":                 0,                                      # if optimizationType is "openmp", the maximum number of threads to use. Default value 0 means no restriction.
               
               # stimulation callbacks
               #"statesInitialValues": [],
-              "setSpecificStatesFunction": set_specific_states,   # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
-              "setSpecificStatesCallInterval": int(1./stimulation_frequency/dt_0D),     # set_specific_states should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
-              "setSpecificStatesCallFrequency":     0,            # set_specific_states should be called variables.stimulation_frequency times per ms
-              "setSpecificStatesFrequencyJitter":   0,            # random value to add or substract to setSpecificStatesCallFrequency every stimulation, this is to add random jitter to the frequency
-              "setSpecificStatesRepeatAfterFirstCall":  0.01,     # [ms] simulation time span for which the setSpecificStates callback will be called after a call was triggered
-              "setSpecificStatesCallEnableBegin":   0,            # [ms] first time when to call setSpecificStates
-              "additionalArgument": compartment_no,               # the compartment no is the last argument to set_specific_states function such that it knows which compartments to stimulate when
-              #"setParametersFunction": set_parameters,           # callback function that sets parameters like stimulation current
-              #"setParametersCallInterval": int(1./stimulation_frequency/dt_0D),     # set_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
+              "setSpecificStatesFunction":              set_specific_states,                    # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
+              "setSpecificStatesCallInterval":          int(1./stimulation_frequency/dt_0D),    # set_specific_states should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
+              "setSpecificStatesCallFrequency":         0,                                      # set_specific_states should be called  stimulation_frequency times per ms
+              "setSpecificStatesFrequencyJitter":       0,                                      # random value to add or substract to setSpecificStatesCallFrequency every stimulation, this is to add random jitter to the frequency
+              "setSpecificStatesRepeatAfterFirstCall":  0.01,                                   # [ms] simulation time span for which the setSpecificStates callback will be called after a call was triggered
+              "setSpecificStatesCallEnableBegin":       0,                                      # [ms] first time when to call setSpecificStates
+              "additionalArgument":                     compartment_no,                         # the compartment no is the last argument to set_specific_states function such that it knows which compartments to stimulate when
+              #"setParametersFunction":                 set_parameters,                         # callback function that sets parameters like stimulation current
+              #"setParametersCallInterval":             int(1./stimulation_frequency/dt_0D),    # set_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
               #"setParametersFunctionAdditionalParameter": compartment_no,
 
               # parameters to the cellml model
-              "mappings":  {
-                ("parameter", 0):           ("constant", "membrane/i_Stim"),      # parameter 0 is constant 2 = I_stim
-                ("outputConnectorSlot", 0): ("state", "membrane/V"),              # expose state 0 = Vm to the operator splitting
-              },              
-              "parametersInitialValues": parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
+              "mappings":                               mappings,
+              "parametersInitialValues":                parameters_initial_values,              #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
               
               "meshName": "mesh",
               "stimulationLogFilename": "out/stimulation.log",
@@ -463,7 +348,7 @@ config = {
         } for compartment_no in range(n_compartments)]
       },
     },
-    "Term2": {     # Diffusion
+    "Term2": {     # Diffusion, i.e. Multidomain
       "MultidomainSolver" : multidomain_solver,
       "OutputSurface": {        # version for fibers_emg_2d_output
         "OutputWriter": [

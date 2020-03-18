@@ -1,10 +1,11 @@
-#include "specialized_solver/multidomain_solver.h"
+#include "specialized_solver/multidomain_solver/multidomain_solver.h"
 
 #include <Python.h>  // has to be the first included header
 
 #include "utility/python_utility.h"
 #include "utility/petsc_utility.h"
 #include "data_management/specialized_solver/multidomain.h"
+#include "specialized_solver/multidomain_solver/nested_mat_vec_utility.h"
 
 //#define MONODOMAIN
 
@@ -27,6 +28,7 @@ MultidomainSolver(DihuContext context) :
 
   // parse number of motor units
   nCompartments_ = this->specificSettings_.getOptionInt("nCompartments", 1, PythonUtility::NonNegative);
+  initialGuessNonzero_ = this->specificSettings_.getOptionBool("initialGuessNonzero", true);
 
   // create finiteElement objects for diffusion in compartments
   finiteElementMethodDiffusionCompartment_.reserve(nCompartments_);
@@ -34,6 +36,10 @@ MultidomainSolver(DihuContext context) :
   {
     finiteElementMethodDiffusionCompartment_.emplace_back(this->context_["Activation"]);
   }
+
+  singleSystemMatrix_ = PETSC_NULL;
+  singleSolution_ = PETSC_NULL;
+  singleRightHandSide_ = PETSC_NULL;
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
@@ -73,29 +79,9 @@ advanceTimeSpan()
     // advance diffusion
     VLOG(1) << "---- diffusion term";
 
-    // fill nested right hand side vector with subvectors
-    /*std::vector<PetscInt> indices(nCompartments_+1);
-    std::iota(indices.begin(), indices.end(), 0);
-    ierr = VecNestSetSubVecs(rightHandSide_, nCompartments_+1, indices.data(), subvectorsRightHandSide_.data()); CHKERRV(ierr);
-*/
     // solve A*u^{t+1} = u^{t} for u^{t+1} where A is the system matrix, solveLinearSystem(b,x)
     this->solveLinearSystem();
-    //ierr = VecCopy(rightHandSide_, solution_); CHKERRV(ierr);  // for debugging just copy rhs (Vm_k^{*}) to solution (Vm_k^{i+1})
-
-    // write the solution from the nested vector back to data
-    // Note, thte subvectors are actually the global vectors for component 0 of dataMultidomain_.subcellularStates(k).
-    // dataMultidomain_.subcellularStates(k) is currently stored in contiguous representation. The setValues(0, subVectors[k]) copies the data to the contiguous vector.
-
-    /*int nSubVectors = 0;
-    Vec *subVectors;
-    ierr = VecNestGetSubVecs(solution_, &nSubVectors, &subVectors); CHKERRV(ierr);
-    assert(nSubVectors == nCompartments_+1);
-*/
-    //VLOG(2) << "copy phi_e";
-
-    // get phi_e
-    //dataMultidomain_.extraCellularPotential()->setValues(subVectors[nCompartments_]);
-
+    
     LOG(DEBUG) << " Vm_solution: ";
     //dataMultidomain_.subcellularStates(0)->extractComponent(0, dataMultidomain_.transmembranePotential(0));
     LOG(DEBUG) << *dataMultidomain_.transmembranePotentialSolution(0);
@@ -224,7 +210,7 @@ initialize()
   // set matrix used for linear solver and preconditioner to ksp context
   assert(this->linearSolver_->ksp());
   PetscErrorCode ierr;
-  ierr = KSPSetOperators(*this->linearSolver_->ksp(), systemMatrix_, systemMatrix_); CHKERRV(ierr);
+  ierr = KSPSetOperators(*this->linearSolver_->ksp(), singleSystemMatrix_, singleSystemMatrix_); CHKERRV(ierr);
 
   // initialize rhs and solution vector
   subvectorsRightHandSide_.resize(nCompartments_+1);
@@ -246,8 +232,11 @@ initialize()
 
   // create the nested vectors
   LOG(DEBUG) << "create nested vector";
-  ierr = VecCreateNest(this->rankSubset_->mpiCommunicator(), nCompartments_+1, NULL, subvectorsRightHandSide_.data(), &rightHandSide_); CHKERRV(ierr);
-  ierr = VecCreateNest(this->rankSubset_->mpiCommunicator(), nCompartments_+1, NULL, subvectorsSolution_.data(), &solution_); CHKERRV(ierr);
+  ierr = VecCreateNest(this->rankSubset_->mpiCommunicator(), nCompartments_+1, NULL, subvectorsRightHandSide_.data(), &nestedRightHandSide_); CHKERRV(ierr);
+  ierr = VecCreateNest(this->rankSubset_->mpiCommunicator(), nCompartments_+1, NULL, subvectorsSolution_.data(), &nestedSolution_); CHKERRV(ierr);
+
+  // copy the values from a nested Petsc Vec to a single Vec that contains all entries
+  NestedMatVecUtility::createVecFromNestedVec(nestedRightHandSide_, singleRightHandSide_);
 
   LOG(DEBUG) << "initialization done";
   this->initialized_ = true;
@@ -464,7 +453,10 @@ setSystemMatrix(double timeStepWidth)
 
   // create nested matrix
   ierr = MatCreateNest(this->rankSubset_->mpiCommunicator(),
-                       nCompartments_+1, NULL, nCompartments_+1, NULL, submatrices.data(), &this->systemMatrix_); CHKERRV(ierr);
+                       nCompartments_+1, NULL, nCompartments_+1, NULL, submatrices.data(), &nestedSystemMatrix_); CHKERRV(ierr);
+
+  // create a single Mat object from the nested Mat
+  NestedMatVecUtility::createMatFromNestedMat(nestedSystemMatrix_, singleSystemMatrix_);
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
@@ -475,14 +467,29 @@ solveLinearSystem()
 
   // configure that the initial value for the iterative solver is the value in solution, not zero
   PetscErrorCode ierr;
-  ierr = KSPSetInitialGuessNonzero(*this->linearSolver_->ksp(), PETSC_TRUE); CHKERRV(ierr);
+  if (initialGuessNonzero_)
+  {
+    LOG(DEBUG) << "set initial guess nonzero";
+    ierr = KSPSetInitialGuessNonzero(*this->linearSolver_->ksp(), PETSC_TRUE); CHKERRV(ierr);
+  }
 
-  // solve the system
-#ifdef NDEBUG
-  this->linearSolver_->solve(rightHandSide_, solution_);
-#else
-  this->linearSolver_->solve(rightHandSide_, solution_, "Linear system of multidomain problem solved");
-#endif
+  // copy the values from a nested Petsc Vec to a single Vec that contains all entries
+  NestedMatVecUtility::createVecFromNestedVec(nestedSolution_, singleSolution_);
+
+  // solve the linear system
+  // this can be done using the nested Vecs and nested Mat (nestedSolution_, nestedRightHandSide_, nestedSystemMatrix_),
+  // or the single Vecs and Mats that contain all values directly  (singleSolution_, singleRightHandSide_, singleSystemMatrix_) 
+
+
+//#ifdef NDEBUG
+//  this->linearSolver_->solve(rightHandSide_, solution_);
+//#else
+  this->linearSolver_->solve(singleRightHandSide_, singleSolution_, "Linear system of multidomain problem solved");
+//#endif
+
+  // copy the values back from a single Vec that contains all entries to a nested Petsc Vec
+  NestedMatVecUtility::fillNestedVec(singleSolution_, nestedSolution_);
+
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>

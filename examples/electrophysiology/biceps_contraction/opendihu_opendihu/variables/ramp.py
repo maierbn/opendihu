@@ -113,8 +113,8 @@ output_timestep_3D = 1e0              # [ms] timestep for output of fibers and m
 
 
 # input files
-fiber_file = "../../../input/left_biceps_brachii_7x7fibers.bin"
-#fiber_file = "../../../input/left_biceps_brachii_9x9fibers.bin"
+fiber_file = "../../../input/left_biceps_brachii_9x9fibers.bin"
+#fiber_file = "../../../input/left_biceps_brachii_13x13fibers.bin"
 fat_mesh_file = fiber_file + "_fat.bin"
 firing_times_file = "../../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
 fiber_distribution_file = "../../../input/MU_fibre_distribution_10MUs.txt"
@@ -156,5 +156,4 @@ def get_specific_states_frequency_jitter(fiber_no, mu_no):
   return motor_units[mu_no % len(motor_units)]["jitter"]
 
 def get_specific_states_call_enable_begin(fiber_no, mu_no):
-  return 0
   return motor_units[mu_no % len(motor_units)]["activation_start_time"]*1e3

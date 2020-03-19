@@ -130,6 +130,47 @@ void Linear::parseSolverTypes()
   // parse preconditioner type
   preconditionerType_ = this->specificSettings_.getOptionString("preconditionerType", "none");
   
+
+  // all pc types: https://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/PC/PCType.html
+  pcType_ = PCNONE;
+  if (preconditionerType_ == "jacobi")
+  {
+    pcType_ = PCJACOBI;
+  }
+  else if (preconditionerType_ == "sor")
+  {
+    pcType_ = PCSOR;
+  }
+  else if (preconditionerType_ == "lu")
+  {
+    pcType_ = PCLU;
+  }
+  else if (preconditionerType_ == "ilu")
+  {
+    pcType_ = PCILU;
+  }
+  else if (preconditionerType_ == "gamg")
+  {
+    pcType_ = PCGAMG;
+  }
+  else if (preconditionerType_ == "pcmg")
+  {
+    pcType_ = PCMG;
+  }
+  // the hypre boomeramg as the only solver does not provide the correct solution 
+  else if (preconditionerType_ == "pchypre" && kspType_ != KSPPREONLY)
+  {
+    pcType_ = PCHYPRE;
+  }
+  else if (preconditionerType_ == "none")
+  {
+    pcType_ = PCNONE;
+  }
+  else if (preconditionerType_ != "none" && preconditionerType_ != "")
+  {
+    pcType_ = preconditionerType_.c_str();
+  }
+  
   // all ksp types: https://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/KSP/KSPType.html#KSPType
   kspType_ = KSPGMRES;
   if (solverType_ == "richardson")
@@ -184,46 +225,6 @@ void Linear::parseSolverTypes()
   else if (solverType_ != "")
   {
     kspType_ = solverType_.c_str();
-  }
-
-  // all pc types: https://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/PC/PCType.html
-  pcType_ = PCNONE;
-  if (preconditionerType_ == "jacobi")
-  {
-    pcType_ = PCJACOBI;
-  }
-  else if (preconditionerType_ == "sor")
-  {
-    pcType_ = PCSOR;
-  }
-  else if (preconditionerType_ == "lu")
-  {
-    pcType_ = PCLU;
-  }
-  else if (preconditionerType_ == "ilu")
-  {
-    pcType_ = PCILU;
-  }
-  else if (preconditionerType_ == "gamg")
-  {
-    pcType_ = PCGAMG;
-  }
-  else if (preconditionerType_ == "pcmg")
-  {
-    pcType_ = PCMG;
-  }
-  // the hypre boomeramg as the only solver does not provide the correct solution 
-  else if (preconditionerType_ == "pchypre" && kspType_ != KSPPREONLY)
-  {
-    pcType_ = PCHYPRE;
-  }
-  else if (preconditionerType_ == "none")
-  {
-    pcType_ = PCNONE;
-  }
-  else if (preconditionerType_ != "none" && preconditionerType_ != "")
-  {
-    pcType_ = preconditionerType_.c_str();
   }
 
   std::stringstream optionKey;

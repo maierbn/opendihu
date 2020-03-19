@@ -29,6 +29,7 @@ MultidomainSolver(DihuContext context) :
   // parse number of motor units
   nCompartments_ = this->specificSettings_.getOptionInt("nCompartments", 1, PythonUtility::NonNegative);
   initialGuessNonzero_ = this->specificSettings_.getOptionBool("initialGuessNonzero", true);
+  showLinearSolverOutput_ = this->specificSettings_.getOptionBool("showLinearSolverOutput", true);
 
   // create finiteElement objects for diffusion in compartments
   finiteElementMethodDiffusionCompartment_.reserve(nCompartments_);
@@ -212,6 +213,14 @@ initialize()
   PetscErrorCode ierr;
   ierr = KSPSetOperators(*this->linearSolver_->ksp(), singleSystemMatrix_, singleSystemMatrix_); CHKERRV(ierr);
 
+  // set the nullspace of the matrix
+  // as we have Neumann boundary conditions, constant functions are in the nullspace of the matrix
+  MatNullSpace nullSpace;
+  ierr = MatNullSpaceCreate(data().functionSpace()->meshPartition()->mpiCommunicator(), PETSC_TRUE, 0, PETSC_NULL, &nullSpace); CHKERRV(ierr);
+  ierr = MatSetNullSpace(singleSystemMatrix_, nullSpace); CHKERRV(ierr);
+  ierr = MatSetNearNullSpace(singleSystemMatrix_, nullSpace); CHKERRV(ierr); // for multigrid methods
+  //ierr = MatNullSpaceDestroy(&nullSpace); CHKERRV(ierr);
+
   // initialize rhs and solution vector
   subvectorsRightHandSide_.resize(nCompartments_+1);
   subvectorsSolution_.resize(nCompartments_+1);
@@ -236,7 +245,7 @@ initialize()
   ierr = VecCreateNest(this->rankSubset_->mpiCommunicator(), nCompartments_+1, NULL, subvectorsSolution_.data(), &nestedSolution_); CHKERRV(ierr);
 
   // copy the values from a nested Petsc Vec to a single Vec that contains all entries
-  NestedMatVecUtility::createVecFromNestedVec(nestedRightHandSide_, singleRightHandSide_);
+  NestedMatVecUtility::createVecFromNestedVec(nestedRightHandSide_, singleRightHandSide_, data().functionSpace()->meshPartition()->rankSubset());
 
   LOG(DEBUG) << "initialization done";
   this->initialized_ = true;
@@ -456,7 +465,7 @@ setSystemMatrix(double timeStepWidth)
                        nCompartments_+1, NULL, nCompartments_+1, NULL, submatrices.data(), &nestedSystemMatrix_); CHKERRV(ierr);
 
   // create a single Mat object from the nested Mat
-  NestedMatVecUtility::createMatFromNestedMat(nestedSystemMatrix_, singleSystemMatrix_);
+  NestedMatVecUtility::createMatFromNestedMat(nestedSystemMatrix_, singleSystemMatrix_, data().functionSpace()->meshPartition()->rankSubset());
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
@@ -474,22 +483,28 @@ solveLinearSystem()
   }
 
   // copy the values from a nested Petsc Vec to a single Vec that contains all entries
-  NestedMatVecUtility::createVecFromNestedVec(nestedSolution_, singleSolution_);
+  NestedMatVecUtility::createVecFromNestedVec(nestedRightHandSide_, singleRightHandSide_, data().functionSpace()->meshPartition()->rankSubset());
+
+  // copy the values from a nested Petsc Vec to a single Vec that contains all entries
+  NestedMatVecUtility::createVecFromNestedVec(nestedSolution_, singleSolution_, data().functionSpace()->meshPartition()->rankSubset());
 
   // solve the linear system
   // this can be done using the nested Vecs and nested Mat (nestedSolution_, nestedRightHandSide_, nestedSystemMatrix_),
   // or the single Vecs and Mats that contain all values directly  (singleSolution_, singleRightHandSide_, singleSystemMatrix_) 
 
 
-//#ifdef NDEBUG
-//  this->linearSolver_->solve(rightHandSide_, solution_);
-//#else
-  this->linearSolver_->solve(singleRightHandSide_, singleSolution_, "Linear system of multidomain problem solved");
-//#endif
-
+  if (showLinearSolverOutput_)
+  {
+    this->linearSolver_->solve(singleRightHandSide_, singleSolution_, "Linear system of multidomain problem solved");
+  }
+  else
+  {
+    // solve without showing output
+    this->linearSolver_->solve(singleRightHandSide_, singleSolution_);
+  }
+  
   // copy the values back from a single Vec that contains all entries to a nested Petsc Vec
   NestedMatVecUtility::fillNestedVec(singleSolution_, nestedSolution_);
-
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>

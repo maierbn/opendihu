@@ -37,6 +37,7 @@ fiber_file = "../../input/left_biceps_brachii_7x7fibers.bin"
 
 # stride which points to select for the 3D mesh, along the muscle (z-direction)
 sampling_stride_z = 20
+#sampling_stride_z = 100  # faster
 
 cellml_file = "../input/hodgkin_huxley_1952.c"
 
@@ -51,6 +52,7 @@ motor_units = [
   {"fiber_no": 30, "standard_deviation": 20.0, "maximum": 0.4},
   {"fiber_no": 40, "standard_deviation": 30.0, "maximum": 0.6},
 ]
+#motor_units = motor_units[0:2]
 n_compartments = len(motor_units)
 
 # own MPI rank no and number of MPI ranks
@@ -217,8 +219,9 @@ multidomain_solver = {
   "endTime":                          end_time,                           # end time, this is not relevant because it will be overridden by the splitting scheme
   "timeStepOutputInterval":           100,                                # how often the output timestep should be printed
   "solverName":                       "activationSolver",                 # reference to the solver used for the global linear system of the multidomain eq.
-  "initialGuessNonzero":              True,                              # if the initial guess for the 3D system should be set as the solution of the previous timestep, this only makes sense for iterative solvers
+  "initialGuessNonzero":              True,                               # if the initial guess for the 3D system should be set as the solution of the previous timestep, this only makes sense for iterative solvers
   "inputIsGlobal":                    True,                               # if values and dofs correspond to the global numbering
+  "showLinearSolverOutput":           True,                              # if convergence information of the linear solver in every timestep should be printed, this is a lot of output for fast computations
   "compartmentRelativeFactors":       relative_factors.tolist(),          # list of lists of the factors for every dof, because "inputIsGlobal": True, this contains the global dofs
   "PotentialFlow": {
     "FiniteElementMethod" : {  
@@ -281,11 +284,11 @@ config = {
     "activationSolver": {
       "relativeTolerance":  1e-10,
       "absoluteTolerance":  1e-10,         # 1e-10 absolute tolerance of the residual          
-      "maxIterations":      1e5,
+      "maxIterations":      1e3,
       "solverType":         "gmres",
       "preconditionerType": "none",
-      "dumpFormat":         "default",
-      "dumpFilename":       "",
+      "dumpFormat":         "matlab",
+      "dumpFilename":       "out/a",
     }
   },
   "StrangSplitting": {
@@ -360,3 +363,5 @@ config = {
     }
   }
 }
+
+print("Linear solver type: {}".format(config["Solvers"]["activationSolver"]["solverType"]))

@@ -86,6 +86,7 @@ protected:
 
   std::vector<double> am_, cm_;  //< the Am and Cm prefactors for the compartments, Am = surface-volume ratio, Cm = capacitance
   bool initialGuessNonzero_;     //< if the initial guess should be set to the last solution
+  bool showLinearSolverOutput_;  //< if convergence information of the linear solver in every timestep should be printed
   int lastNumberOfIterations_;   //< the number of iterations that were needed the last time to solve the linear system
 };
 

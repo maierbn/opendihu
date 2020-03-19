@@ -135,7 +135,9 @@ def n_sampled_points_in_subdomain_z(subdomain_coordinate_z):
   return result
 
 # this is the main function that creates the meshes and partitioning
-def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_subdomains_z, fiber_file, load_fiber_data, sampling_stride_x, sampling_stride_y, sampling_stride_z, quadratic_3d_mesh=False, fiber_set_rank_nos=False):
+def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_subdomains_z, 
+                                           fiber_file, load_fiber_data, sampling_stride_x, sampling_stride_y, sampling_stride_z, 
+                                           quadratic_3d_mesh=False, fiber_set_rank_nos=False, have_fibers=True):
   """
   Parse the binary fiber geometry file and creates 1D fiber meshes and a 3D mesh (linear or quadratic elements for the 3D mesh)
   It create the `meshes` Dict that can directly be used in the Python config like: 
@@ -168,7 +170,7 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
     "logKey": "3Dmesh"
   }
   or (if quadratic_3d_mesh):
-  meshes["3Dmesh"] = {
+  meshes["3Dmesh_quadratic"] = {
     "nElements":             variables.n_elements_3D_mesh_quadratic,             # the number of elements on the own process
     "nRanks":                [n_subdomains_x, n_subdomains_y, n_subdomains_z],   # the number of subdomains = processes of the 3D mesh
     "nodePositions":         node_positions_3d_mesh_quadratic,                   # all local node positions
@@ -209,6 +211,7 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
   :param quadratic_3d_mesh: Whether to create the linear or the quadratic mesh (under "3Dmesh" or "3Dmesh_quadratic"), only one of both
                             will be created.
   :param fiber_set_rank_nos: If the "rankNos" option of the fiber meshes should be set to the ranks that take part in the computation of the fiber.
+  :param have_fibers:        If fiber meshes should be created.
   
   :return: a list of the following entries:
   [meshes, own_subdomain_coordinate_x, own_subdomain_coordinate_y, own_subdomain_coordinate_z, n_fibers_x, n_fibers_y, n_points_whole_fiber],
@@ -269,7 +272,7 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
     variables.n_fibers_x = (int)(np.round(np.sqrt(variables.n_fibers_total)))
     variables.n_fibers_y = variables.n_fibers_x
 
-  if rank_no == 0:
+  if rank_no == 0 and have_fibers:
     print("n fibers:              {} ({} x {})".format(variables.n_fibers_total, variables.n_fibers_x, variables.n_fibers_y))
     print("n points per fiber:    {}".format(variables.n_points_whole_fiber))
     
@@ -503,11 +506,12 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
     elif "slow_TK_2014" in variables.cellml_file:
       n_states_cellml = 56
     print("{} rank{}, partitioning: x{} x y{} x z{}".format(n_ranks, "s" if n_ranks > 1 else "", variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z))
-    if n_ranks > 0:
-      print("{} x {} = {} fibers, per partition: {} x {} = {}".format(variables.n_fibers_x, variables.n_fibers_y, variables.n_fibers_total, variables.n_fibers_per_subdomain_x, variables.n_fibers_per_subdomain_y, variables.n_fibers_per_subdomain_x*variables.n_fibers_per_subdomain_y))
-    else:
-      print("{} x {} = {} fibers".format(variables.n_fibers_x, variables.n_fibers_y, variables.n_fibers_total))
-    print("per fiber: 1D mesh    nodes global: {}, local: {}".format(variables.n_points_whole_fiber, n_points_in_subdomain_z(own_subdomain_coordinate_z)))
+    if have_fibers:
+      if n_ranks > 0:
+        print("{} x {} = {} fibers, per partition: {} x {} = {}".format(variables.n_fibers_x, variables.n_fibers_y, variables.n_fibers_total, variables.n_fibers_per_subdomain_x, variables.n_fibers_per_subdomain_y, variables.n_fibers_per_subdomain_x*variables.n_fibers_per_subdomain_y))
+      else:
+        print("{} x {} = {} fibers".format(variables.n_fibers_x, variables.n_fibers_y, variables.n_fibers_total))
+      print("per fiber: 1D mesh    nodes global: {}, local: {}".format(variables.n_points_whole_fiber, n_points_in_subdomain_z(own_subdomain_coordinate_z)))
     print(" {} 3D mesh    nodes global: {} x {} x {} = {}, local: {} x {} x {} = {}".format("quadratic" if quadratic_3d_mesh else "   linear", 
       variables.n_points_3D_mesh_global_x, variables.n_points_3D_mesh_global_y, variables.n_points_3D_mesh_global_z, n_points_3D_mesh_global, 
       n_sampled_points_in_own_subdomain_x, n_sampled_points_in_own_subdomain_y, n_sampled_points_in_own_subdomain_z, n_sampled_points_in_own_subdomain_x*n_sampled_points_in_own_subdomain_y*n_sampled_points_in_own_subdomain_z))
@@ -521,140 +525,143 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
         variables.n_elements_3D_mesh[0], variables.n_elements_3D_mesh[1], variables.n_elements_3D_mesh[2], n_elements_3D_local))
     print(" (sampling 3D mesh with stride {} x {} x {})".format(variables.sampling_stride_x, variables.sampling_stride_y, variables.sampling_stride_z))
 
-    print("number of degrees of freedom:")
-    print("                    1D fiber: {:10d}  (per process: {})".format(variables.n_points_whole_fiber, n_points_in_subdomain_z(own_subdomain_coordinate_z)))
-    print("            0D-1D monodomain: {:10d}  (per process: {})".format(variables.n_points_whole_fiber*n_states_cellml, n_points_in_subdomain_z(own_subdomain_coordinate_z)*n_states_cellml))
-    print(" all fibers 0D-1D monodomain: {:10d}  (per process: {})".format(variables.n_fibers_total*variables.n_points_whole_fiber*n_states_cellml, variables.n_fibers_per_subdomain_x*variables.n_fibers_per_subdomain_y*n_points_in_subdomain_z(own_subdomain_coordinate_z)*n_states_cellml))
-    print("                 3D bidomain: {:10d}  (per process: {})".format(n_points_3D_mesh_global, n_sampled_points_in_own_subdomain_x*n_sampled_points_in_own_subdomain_y*n_sampled_points_in_own_subdomain_z))
-    print("                       total: {:10d}  (per process: {})".format(variables.n_fibers_total*variables.n_points_whole_fiber*n_states_cellml+n_points_3D_mesh_global, variables.n_fibers_per_subdomain_x*variables.n_fibers_per_subdomain_y*n_points_in_subdomain_z(own_subdomain_coordinate_z)*n_states_cellml+n_sampled_points_in_own_subdomain_x*n_sampled_points_in_own_subdomain_y*n_sampled_points_in_own_subdomain_z))
+    if have_fibers:
+      print("number of degrees of freedom:")
+      print("                    1D fiber: {:10d}  (per process: {})".format(variables.n_points_whole_fiber, n_points_in_subdomain_z(own_subdomain_coordinate_z)))
+      print("            0D-1D monodomain: {:10d}  (per process: {})".format(variables.n_points_whole_fiber*n_states_cellml, n_points_in_subdomain_z(own_subdomain_coordinate_z)*n_states_cellml))
+      print(" all fibers 0D-1D monodomain: {:10d}  (per process: {})".format(variables.n_fibers_total*variables.n_points_whole_fiber*n_states_cellml, variables.n_fibers_per_subdomain_x*variables.n_fibers_per_subdomain_y*n_points_in_subdomain_z(own_subdomain_coordinate_z)*n_states_cellml))
+      print("                 3D bidomain: {:10d}  (per process: {})".format(n_points_3D_mesh_global, n_sampled_points_in_own_subdomain_x*n_sampled_points_in_own_subdomain_y*n_sampled_points_in_own_subdomain_z))
+      print("                       total: {:10d}  (per process: {})".format(variables.n_fibers_total*variables.n_points_whole_fiber*n_states_cellml+n_points_3D_mesh_global, variables.n_fibers_per_subdomain_x*variables.n_fibers_per_subdomain_y*n_points_in_subdomain_z(own_subdomain_coordinate_z)*n_states_cellml+n_sampled_points_in_own_subdomain_x*n_sampled_points_in_own_subdomain_y*n_sampled_points_in_own_subdomain_z))
 
   ###############################
   # determine 1D meshes of variables.fibers
 
-  # fiber nos of the variables.fibers that are handled on the own subdomain
-  variables.fibers_on_own_rank = [get_fiber_no(own_subdomain_coordinate_x, own_subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y) \
-    for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(own_subdomain_coordinate_y)) \
-    for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(own_subdomain_coordinate_x))]
-    
-  if variables.debug_output:
-    print("{}: rank {}, n_elements_3D_mesh: {}, subdomain coordinate ({},{},{})/({},{},{})".format(rank_no, rank_no, variables.n_elements_3D_mesh, own_subdomain_coordinate_x, own_subdomain_coordinate_y, own_subdomain_coordinate_z, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z))
-    print("{}:    fibers x: [{}, {}]".format(rank_no, 0, n_fibers_in_subdomain_x(own_subdomain_coordinate_x)))
-    print("{}:    fibers y: [{}, {}]".format(rank_no, 0, n_fibers_in_subdomain_y(own_subdomain_coordinate_y)))
-    print("{}:       ({})".format(rank_no, variables.fibers_on_own_rank))
-    print("{}:    points z: [{}, {}] ({})".format(rank_no, variables.z_point_index_start, variables.z_point_index_end, n_points_in_subdomain_z(own_subdomain_coordinate_z)))
+  if have_fibers:
+
+    # fiber nos of the variables.fibers that are handled on the own subdomain
+    variables.fibers_on_own_rank = [get_fiber_no(own_subdomain_coordinate_x, own_subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y) \
+      for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(own_subdomain_coordinate_y)) \
+      for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(own_subdomain_coordinate_x))]
       
-  # determine number of nodes and elements of the local part of a fiber  
-  variables.n_fiber_nodes_on_subdomain = n_points_in_subdomain_z(own_subdomain_coordinate_z)   # number of nodes without ghosts
-
-  variables.fiber_start_node_no = n_points_in_previous_subdomains_z(own_subdomain_coordinate_z)
-
-  # loop over all fibers
-  for i in range(variables.n_fibers_total):
-
-    # if fiber is computed on own rank
-    if i in variables.fibers_on_own_rank or fiber_set_rank_nos:
-      
-      if variables.debug_output:
-        if variables.fibers_on_own_rank:
-          print("{}: fiber {} is in fibers on own rank, {}".format(rank_no, i, str(variables.fibers_on_own_rank)))
-      
-      n_fiber_elements_on_subdomain = variables.n_fiber_nodes_on_subdomain
-
-      # top subdomain has one element less than nodes
-      if own_subdomain_coordinate_z == variables.n_subdomains_z-1:
-        n_fiber_elements_on_subdomain -= 1
-
-      # address fiber data
-      memory_size_fiber = variables.n_points_whole_fiber * 3 * 8
-      offset = 32 + header_length + i*memory_size_fiber + variables.fiber_start_node_no*3*8
-      
-      # fill fiber_node_positions
-      # if data was loaded directly here in the python script, assign the corresponding node positions
-      if load_fiber_data:
-        fiber_file_handle.seek(offset)
+    if variables.debug_output:
+      print("{}: rank {}, n_elements_3D_mesh: {}, subdomain coordinate ({},{},{})/({},{},{})".format(rank_no, rank_no, variables.n_elements_3D_mesh, own_subdomain_coordinate_x, own_subdomain_coordinate_y, own_subdomain_coordinate_z, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z))
+      print("{}:    fibers x: [{}, {}]".format(rank_no, 0, n_fibers_in_subdomain_x(own_subdomain_coordinate_x)))
+      print("{}:    fibers y: [{}, {}]".format(rank_no, 0, n_fibers_in_subdomain_y(own_subdomain_coordinate_y)))
+      print("{}:       ({})".format(rank_no, variables.fibers_on_own_rank))
+      print("{}:    points z: [{}, {}] ({})".format(rank_no, variables.z_point_index_start, variables.z_point_index_end, n_points_in_subdomain_z(own_subdomain_coordinate_z)))
         
-        fiber_node_positions = []
-        for point_no in range(variables.n_fiber_nodes_on_subdomain):
-          point = []
-          for j in range(3):
-            double_raw = fiber_file_handle.read(8)
-            value = struct.unpack('d', double_raw)[0]
-            point.append(value)
+    # determine number of nodes and elements of the local part of a fiber  
+    variables.n_fiber_nodes_on_subdomain = n_points_in_subdomain_z(own_subdomain_coordinate_z)   # number of nodes without ghosts
+
+    variables.fiber_start_node_no = n_points_in_previous_subdomains_z(own_subdomain_coordinate_z)
+
+    # loop over all fibers
+    for i in range(variables.n_fibers_total):
+
+      # if fiber is computed on own rank
+      if i in variables.fibers_on_own_rank or fiber_set_rank_nos:
+        
+        if variables.debug_output:
+          if variables.fibers_on_own_rank:
+            print("{}: fiber {} is in fibers on own rank, {}".format(rank_no, i, str(variables.fibers_on_own_rank)))
+        
+        n_fiber_elements_on_subdomain = variables.n_fiber_nodes_on_subdomain
+
+        # top subdomain has one element less than nodes
+        if own_subdomain_coordinate_z == variables.n_subdomains_z-1:
+          n_fiber_elements_on_subdomain -= 1
+
+        # address fiber data
+        memory_size_fiber = variables.n_points_whole_fiber * 3 * 8
+        offset = 32 + header_length + i*memory_size_fiber + variables.fiber_start_node_no*3*8
+        
+        # fill fiber_node_positions
+        # if data was loaded directly here in the python script, assign the corresponding node positions
+        if load_fiber_data:
+          fiber_file_handle.seek(offset)
           
-          fiber_node_positions.append(point)
+          fiber_node_positions = []
+          for point_no in range(variables.n_fiber_nodes_on_subdomain):
+            point = []
+            for j in range(3):
+              double_raw = fiber_file_handle.read(8)
+              value = struct.unpack('d', double_raw)[0]
+              point.append(value)
+            
+            fiber_node_positions.append(point)
+          
+          if variables.debug_output and False:
+            print("------")  
+            print("i: ",i)
+            print("fiber_node_positions: ",fiber_node_positions[0:10])
+            print("fiber_start_node_no: ",variables.fiber_start_node_no,", n_fiber_elements_on_subdomain: ",n_fiber_elements_on_subdomain)
+            print("fibers[i]: ",variables.fibers[i][variables.fiber_start_node_no:variables.fiber_start_node_no+10])
+            
+          if np.linalg.norm(np.array(variables.fibers[i][variables.fiber_start_node_no:variables.fiber_start_node_no+n_fiber_elements_on_subdomain]) - np.array(fiber_node_positions[0:n_fiber_elements_on_subdomain])) > 1e-3:
+            print("mismatch fiber node positions!")
+            quit()
+            
+        else:   # add command at which position the node data in the binary file can be found, the c++ core will load the data
+          fiber_node_positions = [fiber_file, [(offset, variables.n_fiber_nodes_on_subdomain)]]
         
         if variables.debug_output and False:
-          print("------")  
-          print("i: ",i)
-          print("fiber_node_positions: ",fiber_node_positions[0:10])
-          print("fiber_start_node_no: ",variables.fiber_start_node_no,", n_fiber_elements_on_subdomain: ",n_fiber_elements_on_subdomain)
-          print("fibers[i]: ",variables.fibers[i][variables.fiber_start_node_no:variables.fiber_start_node_no+10])
+          print("{}: define mesh \"{}\", n_fiber_elements_on_subdomain: {}, fiber_node_positions: {}".format(rank_no, "MeshFiber_{}".format(i), \
+            str(n_fiber_elements_on_subdomain), str(fiber_node_positions)))
           
-        if np.linalg.norm(np.array(variables.fibers[i][variables.fiber_start_node_no:variables.fiber_start_node_no+n_fiber_elements_on_subdomain]) - np.array(fiber_node_positions[0:n_fiber_elements_on_subdomain])) > 1e-3:
-          print("mismatch fiber node positions!")
-          quit()
-          
-      else:   # add command at which position the node data in the binary file can be found, the c++ core will load the data
-        fiber_node_positions = [fiber_file, [(offset, variables.n_fiber_nodes_on_subdomain)]]
-      
-      if variables.debug_output and False:
-        print("{}: define mesh \"{}\", n_fiber_elements_on_subdomain: {}, fiber_node_positions: {}".format(rank_no, "MeshFiber_{}".format(i), \
-          str(n_fiber_elements_on_subdomain), str(fiber_node_positions)))
+        # define 1D fiber mesh
+        meshes["MeshFiber_{}".format(i)] = {
+          "nElements": n_fiber_elements_on_subdomain,
+          "nodePositions": fiber_node_positions,
+          "inputMeshIsGlobal": False,
+          "nRanks": [variables.n_subdomains_z],
+          "setHermiteDerivatives": False,
+        }
         
-      # define 1D fiber mesh
-      meshes["MeshFiber_{}".format(i)] = {
-        "nElements": n_fiber_elements_on_subdomain,
-        "nodePositions": fiber_node_positions,
-        "inputMeshIsGlobal": False,
-        "nRanks": [variables.n_subdomains_z],
-        "setHermiteDerivatives": False,
-      }
-      
-      if fiber_set_rank_nos:
-        rank_nos = []
-        fiber_coordinate_x = i % variables.n_fibers_x
-        fiber_coordinate_y = (int)(i / variables.n_fibers_y)
+        if fiber_set_rank_nos:
+          rank_nos = []
+          fiber_coordinate_x = i % variables.n_fibers_x
+          fiber_coordinate_y = (int)(i / variables.n_fibers_y)
+          
+          for k in range(variables.n_subdomains_z):
+            
+            for x in range(variables.n_subdomains_x):
+              if n_fibers_in_previous_subdomains_x(x) + n_fibers_in_subdomain_x(x) > fiber_coordinate_x:
+                break
+            
+            for y in range(variables.n_subdomains_y):
+              if n_fibers_in_previous_subdomains_y(y) + n_fibers_in_subdomain_y(y) > fiber_coordinate_y:
+                break
+            
+            rank_no_fiber = k*variables.n_subdomains_x*variables.n_subdomains_y + y*variables.n_subdomains_x + x
+            rank_nos.append(rank_no_fiber)
+          
+          meshes["MeshFiber_{}".format(i)]["rankNos"] = rank_nos
+          print("{}: fiber {} gets rank_nos {}".format(rank_no,i,rank_nos))
         
-        for k in range(variables.n_subdomains_z):
-          
-          for x in range(variables.n_subdomains_x):
-            if n_fibers_in_previous_subdomains_x(x) + n_fibers_in_subdomain_x(x) > fiber_coordinate_x:
-              break
-          
-          for y in range(variables.n_subdomains_y):
-            if n_fibers_in_previous_subdomains_y(y) + n_fibers_in_subdomain_y(y) > fiber_coordinate_y:
-              break
-          
-          rank_no_fiber = k*variables.n_subdomains_x*variables.n_subdomains_y + y*variables.n_subdomains_x + x
-          rank_nos.append(rank_no_fiber)
-        
-        meshes["MeshFiber_{}".format(i)]["rankNos"] = rank_nos
-        print("{}: fiber {} gets rank_nos {}".format(rank_no,i,rank_nos))
-      
-    else:
-      # for variables.fibers that are not computed on own rank, set empty lists for node positions and number of elements
-      fiber_node_positions = []
-      n_fiber_elements_on_subdomain = []
+      else:
+        # for variables.fibers that are not computed on own rank, set empty lists for node positions and number of elements
+        fiber_node_positions = []
+        n_fiber_elements_on_subdomain = []
 
-    # only add log key for fiber 0 to prevent too much data in the log files
-    if i == 0 and "MeshFiber_{}".format(i) in meshes:
-      meshes["MeshFiber_{}".format(i)]["logKey"] = "Fiber{}".format(i)
+      # only add log key for fiber 0 to prevent too much data in the log files
+      if i == 0 and "MeshFiber_{}".format(i) in meshes:
+        meshes["MeshFiber_{}".format(i)]["logKey"] = "Fiber{}".format(i)
+        
+    # output more detailed partitioning information, disabled
+    if rank_no == 0 and n_ranks < 10 and False:
+      print("rank configuration: ")
       
-  # output more detailed partitioning information, disabled
-  if rank_no == 0 and n_ranks < 10 and False:
-    print("rank configuration: ")
-    
-    for subdomain_coordinate_y in range(variables.n_subdomains_y):
-      for subdomain_coordinate_x in range(variables.n_subdomains_x):
-        print("subdomain (x,y)=({},{})".format(subdomain_coordinate_x, subdomain_coordinate_y))
-        print("variables.n_subdomains_z: {}".format(variables.n_subdomains_z))
-        for rankNo in range(subdomain_coordinate_y*variables.n_subdomains_x + subdomain_coordinate_x, n_ranks, variables.n_subdomains_x*variables.n_subdomains_y):
-          print("  rank {}".format(rankNo))
-        for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y)):
-          for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x)):
-            print("  fiber {} ({},{}) in subdomain uses ranks {}".format(\
-              get_fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y), \
-              fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y, \
-              list(range(subdomain_coordinate_y*variables.n_subdomains_x + subdomain_coordinate_x, n_ranks, variables.n_subdomains_x*variables.n_subdomains_y))))
+      for subdomain_coordinate_y in range(variables.n_subdomains_y):
+        for subdomain_coordinate_x in range(variables.n_subdomains_x):
+          print("subdomain (x,y)=({},{})".format(subdomain_coordinate_x, subdomain_coordinate_y))
+          print("variables.n_subdomains_z: {}".format(variables.n_subdomains_z))
+          for rankNo in range(subdomain_coordinate_y*variables.n_subdomains_x + subdomain_coordinate_x, n_ranks, variables.n_subdomains_x*variables.n_subdomains_y):
+            print("  rank {}".format(rankNo))
+          for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y)):
+            for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x)):
+              print("  fiber {} ({},{}) in subdomain uses ranks {}".format(\
+                get_fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y), \
+                fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y, \
+                list(range(subdomain_coordinate_y*variables.n_subdomains_x + subdomain_coordinate_x, n_ranks, variables.n_subdomains_x*variables.n_subdomains_y))))
 
   return [meshes, own_subdomain_coordinate_x, own_subdomain_coordinate_y, own_subdomain_coordinate_z, variables.n_fibers_x, variables.n_fibers_y, variables.n_points_whole_fiber]

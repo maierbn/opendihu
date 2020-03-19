@@ -95,7 +95,7 @@ advanceTimeSpan()
       Control::PerformanceMeasurement::stop(this->durationLogKey_);
 
     // write current output values
-    this->outputWriterManager_.writeOutput(this->dataMultidomain_, timeStepNo, currentTime);
+    callOutputWriter(timeStepNo, currentTime);
 
     // start duration measurement
     if (this->durationLogKey_ != "")
@@ -116,6 +116,14 @@ run()
   initialize();
 
   this->advanceTimeSpan();
+}
+
+template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
+void MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
+callOutputWriter(int timeStepNo, double currentTime)
+{
+  // write current output values
+  this->outputWriterManager_.writeOutput(this->dataMultidomain_, timeStepNo, currentTime);
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>

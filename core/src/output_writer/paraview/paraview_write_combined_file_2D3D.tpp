@@ -30,6 +30,9 @@ void Paraview::writeCombinedUnstructuredGridFile(const FieldVariablesForOutputWr
   bool meshPropertiesInitialized = !meshPropertiesUnstructuredGridFile_.empty();
   std::vector<std::string> meshNamesVector;
 
+  // a counter that increments over every call to writeCombinedValuesVector per timestep and is used to access cached information
+  int callIdentifier = 0;
+
   if (!meshPropertiesInitialized)
   {
     LOG(DEBUG) << "initialize meshPropertiesUnstructuredGridFile_";
@@ -150,7 +153,8 @@ void Paraview::writeCombinedUnstructuredGridFile(const FieldVariablesForOutputWr
 
       // write actual file
       writeCombinedUnstructuredGridFile<FieldVariablesForOutputWriterType>(
-        fieldVariables, vtkPiece3D_.properties, meshPropertiesUnstructuredGridFile_, vtkPiece3D_.meshNamesCombinedMeshesVector, meshPropertiesInitialized, filename.str());
+        fieldVariables, vtkPiece3D_.properties, meshPropertiesUnstructuredGridFile_, vtkPiece3D_.meshNamesCombinedMeshesVector, meshPropertiesInitialized, callIdentifier, filename.str());
+      callIdentifier++;
     }
     else
     {
@@ -176,7 +180,22 @@ void Paraview::writeCombinedUnstructuredGridFile(const FieldVariablesForOutputWr
     std::stringstream filename;
     if (meshPropertiesUnstructuredGridFile_.size() > 1)
     {
-      filename << this->filenameBaseWithNo_ << "_" << meshPropertiesIter->first << ".vtu";
+      // split the current filename into base part and number part, e.g. "output_0000010" -> "output" + "_0000010"
+      std::string filenamePartBase;
+      std::string filenamePartNumber;
+      
+      if (this->filenameBaseWithNo_.find("_") != std::string::npos)
+      {
+        filenamePartBase = this->filenameBaseWithNo_.substr(0, this->filenameBaseWithNo_.rfind("_"));
+        filenamePartNumber = this->filenameBaseWithNo_.substr(this->filenameBaseWithNo_.rfind("_"));
+      }
+      else 
+      {
+        filenamePartBase = this->filenameBaseWithNo_;
+      }
+
+      // add mesh name in filename
+      filename << filenamePartBase << "_" << meshPropertiesIter->first << filenamePartNumber << ".vtu";
     }
     else
     {
@@ -192,7 +211,8 @@ void Paraview::writeCombinedUnstructuredGridFile(const FieldVariablesForOutputWr
     meshNames.insert(meshPropertiesIter->first);
 
     writeCombinedUnstructuredGridFile<FieldVariablesForOutputWriterType>(
-      fieldVariables, polyDataPropertiesForMesh, meshPropertiesUnstructuredGridFile_, currentMesh, meshPropertiesInitialized, filename.str());
+      fieldVariables, polyDataPropertiesForMesh, meshPropertiesUnstructuredGridFile_, currentMesh, meshPropertiesInitialized, callIdentifier, filename.str());
+    callIdentifier++;
 
     // for the next meshes, reinitialize, the initialized information can only be shared if there is exactly 1 mesh to write in this method
     meshPropertiesInitialized = false;
@@ -204,7 +224,7 @@ template<typename FieldVariablesForOutputWriterType>
 void Paraview::writeCombinedUnstructuredGridFile(const FieldVariablesForOutputWriterType &fieldVariables, PolyDataPropertiesForMesh &polyDataPropertiesForMesh,
                                                  const std::map<std::string, PolyDataPropertiesForMesh> &meshPropertiesUnstructuredGridFile,
                                                  std::vector<std::string> meshNames,
-                                                 bool meshPropertiesInitialized, std::string filename)
+                                                 bool meshPropertiesInitialized, int &callIdentifier, std::string filename)
 {
   int targetDimensionality = polyDataPropertiesForMesh.dimensionality;
   bool output3DMeshes = targetDimensionality == 3;
@@ -265,8 +285,8 @@ void Paraview::writeCombinedUnstructuredGridFile(const FieldVariablesForOutputWr
 
     Control::PerformanceMeasurement::start("durationParaview3DInit");
     Control::PerformanceMeasurement::start("durationParaview3DReduction");
-    nPointsGlobal3D_ = 0;
-    MPIUtility::handleReturnValue(MPI_Reduce(&polyDataPropertiesForMesh.nPointsLocal, &nPointsGlobal3D_, 1, MPI_INT, MPI_SUM, 0, this->rankSubset_->mpiCommunicator()), "MPI_Reduce");
+    nPointsGlobal3D_[callIdentifier] = 0;
+    MPIUtility::handleReturnValue(MPI_Reduce(&polyDataPropertiesForMesh.nPointsLocal, &nPointsGlobal3D_[callIdentifier], 1, MPI_INT, MPI_SUM, 0, this->rankSubset_->mpiCommunicator()), "MPI_Reduce");
 
     for (std::string meshName : meshNames)
     {
@@ -284,7 +304,7 @@ void Paraview::writeCombinedUnstructuredGridFile(const FieldVariablesForOutputWr
     Control::PerformanceMeasurement::stop("durationParaview3DReduction");
     Control::PerformanceMeasurement::stop("durationParaview3DInit");
 
-    VLOG(1) << "nPointsGlobal: " << nPointsGlobal3D_;
+    VLOG(1) << "nPointsGlobal: " << nPointsGlobal3D_[callIdentifier];
   }
   else
   {
@@ -582,7 +602,7 @@ void Paraview::writeCombinedUnstructuredGridFile(const FieldVariablesForOutputWr
     << std::string(3, '\t') << "</DataArray>" << std::endl
     << std::string(2, '\t') << "</FieldData>" << std::endl;
 
-  outputFileParts[outputFilePartNo] << std::string(2, '\t') << "<Piece NumberOfPoints=\"" << nPointsGlobal3D_
+  outputFileParts[outputFilePartNo] << std::string(2, '\t') << "<Piece NumberOfPoints=\"" << nPointsGlobal3D_[callIdentifier]
     << "\" NumberOfCells=\"" << polyDataPropertiesForMesh.nCellsGlobal << "\">" << std::endl
     << std::string(3, '\t') << "<PointData";
 
@@ -696,9 +716,8 @@ void Paraview::writeCombinedUnstructuredGridFile(const FieldVariablesForOutputWr
 
   // write field variables
   // loop over field variables
-  int fieldVariableNo = 0;
   for (std::vector<std::pair<std::string,int>>::iterator pointDataArrayIter = polyDataPropertiesForMesh.pointDataArrays.begin();
-      pointDataArrayIter != polyDataPropertiesForMesh.pointDataArrays.end(); pointDataArrayIter++, fieldVariableNo++)
+      pointDataArrayIter != polyDataPropertiesForMesh.pointDataArrays.end(); pointDataArrayIter++)
   {
     assert(fieldVariableValues.find(pointDataArrayIter->first) != fieldVariableValues.end());
 
@@ -706,7 +725,7 @@ void Paraview::writeCombinedUnstructuredGridFile(const FieldVariablesForOutputWr
 
     // write values
     bool writeFloatsAsInt = pointDataArrayIter->first == "partitioning";    // for partitioning, convert float values to integer values for output
-    writeCombinedValuesVector(fileHandle, ownRankNo, fieldVariableValues[pointDataArrayIter->first], fieldVariableNo, writeFloatsAsInt);
+    writeCombinedValuesVector(fileHandle, ownRankNo, fieldVariableValues[pointDataArrayIter->first], callIdentifier++, writeFloatsAsInt);
 
     // write next xml constructs
     writeAsciiDataShared(fileHandle, ownRankNo, outputFileParts[outputFilePartNo].str());
@@ -716,28 +735,28 @@ void Paraview::writeCombinedUnstructuredGridFile(const FieldVariablesForOutputWr
   VLOG(1) << "write vector for geometry data";
 
   // write geometry field data
-  writeCombinedValuesVector(fileHandle, ownRankNo, geometryFieldValues, fieldVariableNo++);
+  writeCombinedValuesVector(fileHandle, ownRankNo, geometryFieldValues, callIdentifier++);
 
   // write next xml constructs
   writeAsciiDataShared(fileHandle, ownRankNo, outputFileParts[outputFilePartNo].str());
   outputFilePartNo++;
 
   // write connectivity values
-  writeCombinedValuesVector(fileHandle, ownRankNo, connectivityValues, fieldVariableNo++);
+  writeCombinedValuesVector(fileHandle, ownRankNo, connectivityValues, callIdentifier++);
 
   // write next xml constructs
   writeAsciiDataShared(fileHandle, ownRankNo, outputFileParts[outputFilePartNo].str());
   outputFilePartNo++;
 
   // write offset values
-  writeCombinedValuesVector(fileHandle, ownRankNo, offsetValues, fieldVariableNo++);
+  writeCombinedValuesVector(fileHandle, ownRankNo, offsetValues, callIdentifier++);
 
   // write next xml constructs
   writeAsciiDataShared(fileHandle, ownRankNo, outputFileParts[outputFilePartNo].str());
   outputFilePartNo++;
 
   // write types values
-  writeCombinedTypesVector(fileHandle, ownRankNo, polyDataPropertiesForMesh.nCellsGlobal, output3DMeshes, fieldVariableNo++);
+  writeCombinedTypesVector(fileHandle, ownRankNo, polyDataPropertiesForMesh.nCellsGlobal, output3DMeshes, callIdentifier++);
 
   // write next xml constructs
   writeAsciiDataShared(fileHandle, ownRankNo, outputFileParts[outputFilePartNo].str());

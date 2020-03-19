@@ -19,7 +19,7 @@ Cm = 0.58                   # [uF/cm^2] membrane capacitance, (1 = fast twitch, 
 # motor units from paper Klotz2019 "Modelling the electrical activity of skeletal muscle tissue using a multi‐domain approach"
 import random
 random.seed(0)  # ensure that random numbers are the same on every rank
-# radius: [μm], stimulation frequency [Hz], jitter [-]
+# radius: [μm], stimulation frequency [Hz], jitter [-], activation_start_time [s]
 motor_units = [
   {"radius": 40.00, "activation_start_time": 0.0, "stimulation_frequency": 23.92, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},    # low number of fibers
   {"radius": 42.35, "activation_start_time": 0.2, "stimulation_frequency": 23.36, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},

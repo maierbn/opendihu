@@ -112,7 +112,7 @@ protected:
   void writeCombinedUnstructuredGridFile(const FieldVariablesForOutputWriterType &fieldVariables, PolyDataPropertiesForMesh &polyDataPropertiesForMesh,
                                          const std::map<std::string, PolyDataPropertiesForMesh> &meshPropertiesUnstructuredGridFile,
                                          std::vector<std::string> meshNames,
-                                         bool meshPropertiesInitialized, std::string filename);
+                                         bool meshPropertiesInitialized, int &callIdentifier, std::string filename);
 
   bool binaryOutput_;  ///< if the data output should be binary encoded using base64
   bool fixedFormat_;   ///< if non-binary output is selected, if the ascii values should be written with a fixed precision, like 1.000000e5
@@ -135,7 +135,7 @@ protected:
 
   std::map<std::string, int> nCellsPreviousRanks3D_;   ///< sum of number of cells on other processes with lower rank no., for vtu file
   std::map<std::string, int> nPointsPreviousRanks3D_;  ///< sum of number of points on other processes with lower rank no., for vtu file
-  int nPointsGlobal3D_ = 0;       ///< total number of points on all ranks, for vtu file
+  std::map<int,int> nPointsGlobal3D_ ;                 ///< total number of points on all ranks, for vtu file, key is the callIdentifier
 };
 
 } // namespace

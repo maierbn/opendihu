@@ -54,11 +54,14 @@ public:
 
 protected:
 
+  //! call the output writer on the data object
+  virtual void callOutputWriter(int timeStepNo, double currentTime);
+
   //! assemble the system matrix which is a block matrix containing stiffness matrices of the diffusion sub problems
-  void setSystemMatrix(double timeStepWidth);
+  virtual void setSystemMatrix(double timeStepWidth);
 
   //! solve the linear system of equations of the implicit scheme with rightHandSide_ and solution_
-  void solveLinearSystem();
+  virtual void solveLinearSystem();
 
   //! initialize the relative factors fr_k
   void initializeCompartmentRelativeFactors();

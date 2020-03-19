@@ -39,12 +39,12 @@ fiber_file = "../../input/left_biceps_brachii_7x7fibers.bin"
 sampling_stride_z = 20
 #sampling_stride_z = 100  # faster
 
-cellml_file = "../input/hodgkin_huxley_1952.c"
+cellml_file = "../../input/hodgkin_huxley_1952.c"
 
-fiber_distribution_file = "../input/MU_fibre_distribution_3780.txt"
+fiber_distribution_file = "../../input/MU_fibre_distribution_3780.txt"
 
-#firing_times_file = "../input/MU_firing_times_real.txt"
-firing_times_file = "../input/MU_firing_times_immediately.txt"
+#firing_times_file = "../../input/MU_firing_times_real.txt"
+firing_times_file = "../../input/MU_firing_times_immediately.txt"
 
 # motor unit parameters
 motor_units = [
@@ -201,15 +201,6 @@ for bottom_node_index in bottom_node_indices:
 for top_node_index in top_node_indices:
   potential_flow_bc[top_node_index] = 1.0
   
-# set dirichlet bc, top and bottom nodes to -75
-activation_dirichlet_bc = {}
-if False:
-  for bottom_node_index in bottom_node_indices:
-    activation_dirichlet_bc[bottom_node_index] = -75.0
-
-  for top_node_index in top_node_indices:
-    activation_dirichlet_bc[top_node_index] = -75.0
-
 # settings for the multidomain solver
 multidomain_solver = {
   "nCompartments":                    n_compartments,                     # number of compartments
@@ -221,7 +212,7 @@ multidomain_solver = {
   "solverName":                       "activationSolver",                 # reference to the solver used for the global linear system of the multidomain eq.
   "initialGuessNonzero":              True,                               # if the initial guess for the 3D system should be set as the solution of the previous timestep, this only makes sense for iterative solvers
   "inputIsGlobal":                    True,                               # if values and dofs correspond to the global numbering
-  "showLinearSolverOutput":           True,                              # if convergence information of the linear solver in every timestep should be printed, this is a lot of output for fast computations
+  "showLinearSolverOutput":           False,                              # if convergence information of the linear solver in every timestep should be printed, this is a lot of output for fast computations
   "compartmentRelativeFactors":       relative_factors.tolist(),          # list of lists of the factors for every dof, because "inputIsGlobal": True, this contains the global dofs
   "PotentialFlow": {
     "FiniteElementMethod" : {  
@@ -239,7 +230,7 @@ multidomain_solver = {
       "solverName":                   "activationSolver",
       "prefactor":                    1.0,
       "inputMeshIsGlobal":            True,
-      "dirichletBoundaryConditions":  activation_dirichlet_bc,
+      "dirichletBoundaryConditions":  {},
       "neumannBoundaryConditions":    [],
       "diffusionTensor": [[      # sigma_i           # fiber direction is (1,0,0)
         8.93, 0, 0,
@@ -288,7 +279,7 @@ config = {
       "solverType":         "gmres",
       "preconditionerType": "none",
       "dumpFormat":         "matlab",
-      "dumpFilename":       "out/a",
+      "dumpFilename":       "",
     }
   },
   "StrangSplitting": {

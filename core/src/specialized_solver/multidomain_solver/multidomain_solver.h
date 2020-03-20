@@ -57,8 +57,11 @@ protected:
   //! call the output writer on the data object
   virtual void callOutputWriter(int timeStepNo, double currentTime);
 
-  //! assemble the system matrix which is a block matrix containing stiffness matrices of the diffusion sub problems
-  virtual void setSystemMatrix(double timeStepWidth);
+  //! assemble the sub matrices of the system matrix, that is a block matrix containing stiffness matrices of the diffusion sub problems
+  virtual void setSystemMatrixSubmatrices(double timeStepWidth);
+
+  //! create the nested and single system matrix from the initialized submatrices
+  void createSystemMatrix();
 
   //! solve the linear system of equations of the implicit scheme with rightHandSide_ and solution_
   virtual void solveLinearSystem();
@@ -86,11 +89,14 @@ protected:
 
   std::vector<Vec> subvectorsRightHandSide_;  //< the sub vectors that are used in the nested vector nestedRightHandSide_
   std::vector<Vec> subvectorsSolution_;       //< the sub vectors that are used in the nested vector nestedSolution_
+  std::vector<Mat> submatricesSystemMatrix_;  //< the sub matrices of the whole system matrix
+  int nColumnSubmatricesSystemMatrix_;           //< number of rows of nested submatrices in the system matrix
 
   std::vector<double> am_, cm_;  //< the Am and Cm prefactors for the compartments, Am = surface-volume ratio, Cm = capacitance
   bool initialGuessNonzero_;     //< if the initial guess should be set to the last solution
   bool showLinearSolverOutput_;  //< if convergence information of the linear solver in every timestep should be printed
   int lastNumberOfIterations_;   //< the number of iterations that were needed the last time to solve the linear system
+  double timeStepWidthOfSystemMatrix_;        //< the timestep width that was used to setup the system matrix
 };
 
 }  // namespace

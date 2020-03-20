@@ -95,24 +95,6 @@ void setVector(const std::vector<double> &vectorValues, Vec& vector)
   VecAssemblyEnd(vector);
 }
 
-void createVector(Vec& vector, int nEntries, std::string name)
-{
-  PetscErrorCode ierr;
-  // create PETSc vector object
-  ierr = VecCreate(PETSC_COMM_WORLD, &vector);  CHKERRV(ierr);
-
-  if (name != "")
-  {
-    ierr = PetscObjectSetName((PetscObject)vector, name.c_str()); CHKERRV(ierr);
-  }
-
-  // initialize size of vector
-  ierr = VecSetSizes(vector, PETSC_DECIDE, nEntries); CHKERRV(ierr);
-
-  // set sparsity type and other options
-  ierr = VecSetFromOptions(vector);  CHKERRV(ierr);
-}
-
 std::string getStringMatrixVector(const Mat& matrix, const Vec& vector)
 {
 #ifdef NDEBUG

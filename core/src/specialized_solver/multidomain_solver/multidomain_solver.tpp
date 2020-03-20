@@ -18,7 +18,7 @@ MultidomainSolver(DihuContext context) :
   TimeSteppingScheme(context["MultidomainSolver"]),
   dataMultidomain_(this->context_), finiteElementMethodPotentialFlow_(this->context_["PotentialFlow"]),
   finiteElementMethodDiffusion_(this->context_["Activation"]), finiteElementMethodDiffusionTotal_(this->context_["Activation"]),
-  rankSubset_(std::make_shared<Partition::RankSubset>())
+  rankSubset_(std::make_shared<Partition::RankSubset>()), nColumnSubmatricesSystemMatrix_(0)
 {
   // get python config
   this->specificSettings_ = this->context_.getPythonConfig();
@@ -77,6 +77,14 @@ advanceTimeSpan()
     //dataMultidomain_.subcellularStates(0)->extractComponent(0, dataMultidomain_.transmembranePotential(0));
     LOG(DEBUG) << *dataMultidomain_.transmembranePotential(0);
 
+    if (this->timeStepWidthOfSystemMatrix_ != this->timeStepWidth_)
+    {
+      LOG(WARNING) << "In multidomain solver, timestep width changed from " << this->timeStepWidthOfSystemMatrix_ << " to " << timeStepWidth_ << ", need to recreate system matrix.";
+      this->timeStepWidthOfSystemMatrix_ = this->timeStepWidth_;
+      setSystemMatrixSubmatrices(this->timeStepWidthOfSystemMatrix_);
+      createSystemMatrix();
+    }
+  
     // advance diffusion
     VLOG(1) << "---- diffusion term";
 
@@ -185,6 +193,13 @@ initialize()
   // do not log the compartment finite element method objects
   DihuContext::solverStructureVisualizer()->disable();
 
+  // system to be solved:
+  //
+  // [A^1_Vm,Vm   |            |             | B^1_Vm,phie]   [ V^1_m^(i+1) ]   [V^1_m^(i)]
+  // [            | A^2_Vm,Vm  |             | B^2_Vm,phie] * [ V^2_m^(i+1) ] = [V^2_m^(i)]
+  // [   ...      |            |  A^M_Vm,Vm  | B^M_Vm,phie]   [ V^M_m^(i+1) ]   [V^M_m^(i)]
+  // [B^1_phie,Vm |B^2_phie,Vm | B^M_phie,Vm | B_phie,phie]   [ phi_e^(i+1) ]   [0        ]
+
   // diffusion objects with spatially varying prefactors (f_r), needed for the bottom row of the matrix eq. or the 1st multidomain eq.
   for (int k = 0; k < nCompartments_; k++)
   {
@@ -202,7 +217,9 @@ initialize()
   LOG(DEBUG) << "Am: " << am_ << ", Cm: " << cm_;
 
   // initialize system matrix
-  setSystemMatrix(this->timeStepWidth_);
+  this->timeStepWidthOfSystemMatrix_ = this->timeStepWidth_;
+  setSystemMatrixSubmatrices(this->timeStepWidthOfSystemMatrix_);
+  createSystemMatrix();
 
   LOG(DEBUG) << "initialize linear solver";
 
@@ -313,9 +330,13 @@ initializeCompartmentRelativeFactors()
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
 void MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
-setSystemMatrix(double timeStepWidth)
+setSystemMatrixSubmatrices(double timeStepWidth)
 {
-  std::vector<Mat> submatrices(MathUtility::sqr(nCompartments_+1),NULL);
+  // initialize the number of rows, this will already be set when the method is called for the inherited class MultidomainWithFatSolver
+  if (nColumnSubmatricesSystemMatrix_ == 0)
+    nColumnSubmatricesSystemMatrix_ = nCompartments_+1;
+    
+  this->submatricesSystemMatrix_.resize(MathUtility::sqr(nColumnSubmatricesSystemMatrix_),NULL);
 
   LOG(TRACE) << "setSystemMatrix";
 
@@ -330,24 +351,24 @@ setSystemMatrix(double timeStepWidth)
   // where V_mk^(i) is the input and should be connected to the output of the reaction term.
   // V_mk^(i+1) is the output and should be connected to the input of the reaction term.
 
-  // fill submatrices, empty submatrices may be NULL
+  // fill submatricesSystemMatrix_, empty submatricesSystemMatrix_ may be NULL
   // stiffnessMatrix and inverse lumped mass matrix without prefactor
   Mat stiffnessMatrix = finiteElementMethodDiffusion_.data().stiffnessMatrix()->valuesGlobal();
   Mat inverseLumpedMassMatrix = finiteElementMethodDiffusion_.data().inverseLumpedMassMatrix()->valuesGlobal();
 
   PetscErrorCode ierr;
-  // set all submatrices
+  // set all submatricesSystemMatrix_
   for (int k = 0; k < nCompartments_; k++)
   {
 
     // right column matrix
-    double prefactor = -this->timeStepWidth_ / (am_[k]*cm_[k]);
+    double prefactor = -timeStepWidth / (am_[k]*cm_[k]);
 
     VLOG(2) << "k=" << k << ", am: " << am_[k] << ", cm: " << cm_[k] << ", prefactor: " << prefactor;
 
     // create matrix as M^{-1}*K
     Mat matrixOnRightColumn;
-    ierr = MatMatMult(inverseLumpedMassMatrix, stiffnessMatrix, MAT_INITIAL_MATRIX, PETSC_DEFAULT, &matrixOnRightColumn);
+    ierr = MatMatMult(inverseLumpedMassMatrix, stiffnessMatrix, MAT_INITIAL_MATRIX, PETSC_DEFAULT, &matrixOnRightColumn); CHKERRV(ierr);
 
     // scale matrix on right column with prefactor
     ierr = MatScale(matrixOnRightColumn, prefactor); CHKERRV(ierr);
@@ -362,12 +383,12 @@ setSystemMatrix(double timeStepWidth)
 #endif
 
     // set on right column of the system matrix
-    submatrices[k*(nCompartments_+1) + (nCompartments_+1) - 1] = matrixOnRightColumn;
+    submatricesSystemMatrix_[k*nColumnSubmatricesSystemMatrix_ + (nCompartments_+1) - 1] = matrixOnRightColumn;
 
     if (VLOG_IS_ON(2))
     {
       VLOG(2) << "matrixOnRightColumn: " << PetscUtility::getStringMatrix(matrixOnRightColumn);
-      VLOG(2) << "set at index " << k*(nCompartments_+1) + (nCompartments_+1) - 1;
+      VLOG(2) << "set at index " << k*nColumnSubmatricesSystemMatrix_ + (nCompartments_+1) - 1;
     }
 
     // ---
@@ -376,22 +397,24 @@ setSystemMatrix(double timeStepWidth)
     ierr = MatShift(matrixOnDiagonalBlock, 1); CHKERRV(ierr);
 
     // set on diagonal
-    submatrices[k*(nCompartments_+1) + k] = matrixOnDiagonalBlock;
+    submatricesSystemMatrix_[k*nColumnSubmatricesSystemMatrix_ + k] = matrixOnDiagonalBlock;
 
     if (VLOG_IS_ON(2))
     {
       VLOG(2) << "matrixOnDiagonalBlock:" << PetscUtility::getStringMatrix(matrixOnDiagonalBlock);
-      VLOG(2) << "set at index " << k*(nCompartments_+1) + k;
+      VLOG(2) << "set at index " << k*nColumnSubmatricesSystemMatrix_ + k;
     }
 
     // ---
     // bottom row matrices
-    // create matrix as copy of stiffnessMatrix
+
+    // stiffnessMatrixWithPrefactor is f_k*K
     Mat stiffnessMatrixWithPrefactor = finiteElementMethodDiffusionCompartment_[k].data().stiffnessMatrix()->valuesGlobal();
 
+    // create matrix as copy of stiffnessMatrix
     Mat matrixOnBottomRow;
     ierr = MatConvert(stiffnessMatrixWithPrefactor, MATSAME, MAT_INITIAL_MATRIX, &matrixOnBottomRow); CHKERRV(ierr);
-
+    
 #if 0
     // debugging test, gives slightly different results due to approximation of test
     Mat test;
@@ -445,9 +468,9 @@ setSystemMatrix(double timeStepWidth)
 #endif
 
     // set on bottom row of the system matrix
-    submatrices[((nCompartments_+1) - 1)*(nCompartments_+1) + k] = matrixOnBottomRow;
+    submatricesSystemMatrix_[((nCompartments_+1) - 1)*nColumnSubmatricesSystemMatrix_ + k] = matrixOnBottomRow;
 
-    VLOG(2) << "set at index " << ((nCompartments_+1) - 1)*(nCompartments_+1) + k;
+    VLOG(2) << "set at index " << ((nCompartments_+1) - 1)*nColumnSubmatricesSystemMatrix_ + k;
   }
 
   // set bottom right matrix
@@ -465,12 +488,22 @@ setSystemMatrix(double timeStepWidth)
 #endif
 
   // set on bottom right
-  submatrices[(nCompartments_+1)*(nCompartments_+1)-1] = stiffnessMatrixBottomRight;
-  VLOG(2) << "set at index " << (nCompartments_+1)*(nCompartments_+1)-1;
+  submatricesSystemMatrix_[((nCompartments_+1) - 1)*nColumnSubmatricesSystemMatrix_ + (nCompartments_+1)-1] = stiffnessMatrixBottomRight;
+  VLOG(2) << "set at index " << ((nCompartments_+1) - 1)*nColumnSubmatricesSystemMatrix_ + (nCompartments_+1)-1;
+
+}
+
+template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
+void MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
+createSystemMatrix()
+{
+  // delete previous matrix if set
+  PetscErrorCode ierr;
+  ierr = MatDestroy(&nestedSystemMatrix_); CHKERRV(ierr);
 
   // create nested matrix
   ierr = MatCreateNest(this->rankSubset_->mpiCommunicator(),
-                       nCompartments_+1, NULL, nCompartments_+1, NULL, submatrices.data(), &nestedSystemMatrix_); CHKERRV(ierr);
+                       nColumnSubmatricesSystemMatrix_, NULL, nColumnSubmatricesSystemMatrix_, NULL, submatricesSystemMatrix_.data(), &nestedSystemMatrix_); CHKERRV(ierr);
 
   // create a single Mat object from the nested Mat
   NestedMatVecUtility::createMatFromNestedMat(nestedSystemMatrix_, singleSystemMatrix_, data().functionSpace()->meshPartition()->rankSubset());

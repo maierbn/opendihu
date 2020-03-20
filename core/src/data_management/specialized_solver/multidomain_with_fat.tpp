@@ -29,7 +29,7 @@ createPetscObjects()
 {
   LOG(DEBUG) << "MultidomainWithFat::createPetscObjects";
 
-  this->extraCellularPotentialFat_ = this->functionSpace_->template createFieldVariable<1>("phi_e");
+  this->extraCellularPotentialFat_ = this->functionSpace_->template createFieldVariable<1>("phi_b");
 }
 
 //! initialize the function space

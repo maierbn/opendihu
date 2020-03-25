@@ -57,11 +57,17 @@ protected:
   //! call the output writer on the data object
   virtual void callOutputWriter(int timeStepNo, double currentTime);
 
+  //! initialize everything except the matrices and vectors, this will also be called by the inherited class
+  void initializeObjects();
+
+  //! initialize the matrices and vectors
+  void initializeMatricesAndVectors();
+
   //! assemble the sub matrices of the system matrix, that is a block matrix containing stiffness matrices of the diffusion sub problems
   virtual void setSystemMatrixSubmatrices(double timeStepWidth);
 
   //! create the nested and single system matrix from the initialized submatrices
-  void createSystemMatrix();
+  void createSystemMatrixFromSubmatrices();
 
   //! solve the linear system of equations of the implicit scheme with rightHandSide_ and solution_
   virtual void solveLinearSystem();

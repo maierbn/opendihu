@@ -83,7 +83,7 @@ advanceTimeSpan()
         << " (relative: " << fabs(this->timeStepWidthOfSystemMatrix_ - this->timeStepWidth_) / this->timeStepWidth_ << ", need to recreate system matrix.";
       this->timeStepWidthOfSystemMatrix_ = this->timeStepWidth_;
       setSystemMatrixSubmatrices(this->timeStepWidthOfSystemMatrix_);
-      createSystemMatrix();
+      createSystemMatrixFromSubmatrices();
     }
   
     // advance diffusion
@@ -92,7 +92,7 @@ advanceTimeSpan()
     // solve A*u^{t+1} = u^{t} for u^{t+1} where A is the system matrix, solveLinearSystem(b,x)
     this->solveLinearSystem();
     
-    LOG(DEBUG) << " Vm_solution: ";
+    LOG(DEBUG) << " Vm[k=0]: ";
     //dataMultidomain_.subcellularStates(0)->extractComponent(0, dataMultidomain_.transmembranePotential(0));
     LOG(DEBUG) << *dataMultidomain_.transmembranePotentialSolution(0);
 
@@ -142,6 +142,19 @@ initialize()
   if (this->initialized_)
     return;
 
+  initializeObjects();
+  initializeMatricesAndVectors();
+
+  LOG(DEBUG) << "initialization done";
+  this->initialized_ = true;
+}
+
+template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
+void MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
+initializeObjects()
+{
+  //! initialize everything except the matrices and vectors, this will also be called by the inherited class
+  // call initialize of the timestepping scheme to set timestep width
   TimeSteppingScheme::initialize();
 
   LOG(DEBUG) << "initialize multidomain_solver, " << nCompartments_ << " compartments";
@@ -217,16 +230,6 @@ initialize()
   this->specificSettings_.getOptionVector("cm", nCompartments_, cm_);
   LOG(DEBUG) << "Am: " << am_ << ", Cm: " << cm_;
 
-  // initialize system matrix
-  this->timeStepWidthOfSystemMatrix_ = this->timeStepWidth_;
-  setSystemMatrixSubmatrices(this->timeStepWidthOfSystemMatrix_);
-
-  bool isSystemMatrixInitialized = nColumnSubmatricesSystemMatrix_ == nCompartments_+1;
-
-  // only create nested submatrix here, if this is normal multidomain without fat layer
-  if (isSystemMatrixInitialized)
-    createSystemMatrix();
-
   LOG(DEBUG) << "initialize linear solver";
 
   // initialize linear solver
@@ -236,24 +239,33 @@ initialize()
     linearSolver_ = this->context_.solverManager()->template solver<Solver::Linear>(
       this->specificSettings_, this->rankSubset_->mpiCommunicator());
   }
+}
+
+template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
+void MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
+initializeMatricesAndVectors()
+{
+  // initialize system matrix
+  this->timeStepWidthOfSystemMatrix_ = this->timeStepWidth_;
+  setSystemMatrixSubmatrices(this->timeStepWidthOfSystemMatrix_);
+
+  // create nested submatrix
+  createSystemMatrixFromSubmatrices();
 
   LOG(DEBUG) << "set system matrix to linear solver";
 
-  if (isSystemMatrixInitialized)
-  {
-    // set matrix used for linear solver and preconditioner to ksp context
-    assert(this->linearSolver_->ksp());
-    PetscErrorCode ierr;
-    ierr = KSPSetOperators(*this->linearSolver_->ksp(), singleSystemMatrix_, singleSystemMatrix_); CHKERRV(ierr);
+  // set matrix used for linear solver and preconditioner to ksp context
+  assert(this->linearSolver_->ksp());
+  PetscErrorCode ierr;
+  ierr = KSPSetOperators(*this->linearSolver_->ksp(), singleSystemMatrix_, singleSystemMatrix_); CHKERRV(ierr);
 
-    // set the nullspace of the matrix
-    // as we have Neumann boundary conditions, constant functions are in the nullspace of the matrix
-    MatNullSpace nullSpace;
-    ierr = MatNullSpaceCreate(data().functionSpace()->meshPartition()->mpiCommunicator(), PETSC_TRUE, 0, PETSC_NULL, &nullSpace); CHKERRV(ierr);
-    ierr = MatSetNullSpace(singleSystemMatrix_, nullSpace); CHKERRV(ierr);
-    ierr = MatSetNearNullSpace(singleSystemMatrix_, nullSpace); CHKERRV(ierr); // for multigrid methods
-    //ierr = MatNullSpaceDestroy(&nullSpace); CHKERRV(ierr);
-  }
+  // set the nullspace of the matrix
+  // as we have Neumann boundary conditions, constant functions are in the nullspace of the matrix
+  MatNullSpace nullSpace;
+  ierr = MatNullSpaceCreate(data().functionSpace()->meshPartition()->mpiCommunicator(), PETSC_TRUE, 0, PETSC_NULL, &nullSpace); CHKERRV(ierr);
+  ierr = MatSetNullSpace(singleSystemMatrix_, nullSpace); CHKERRV(ierr);
+  ierr = MatSetNearNullSpace(singleSystemMatrix_, nullSpace); CHKERRV(ierr); // for multigrid methods
+  //ierr = MatNullSpaceDestroy(&nullSpace); CHKERRV(ierr);
 
   // initialize rhs and solution vector
   subvectorsRightHandSide_.resize(nCompartments_+1);
@@ -269,24 +281,16 @@ initialize()
   // set values for phi_e
   subvectorsRightHandSide_[nCompartments_] = dataMultidomain_.zero()->valuesGlobal();
   subvectorsSolution_[nCompartments_] = dataMultidomain_.extraCellularPotential()->valuesGlobal();
-  PetscErrorCode ierr;
   ierr = VecZeroEntries(subvectorsSolution_[nCompartments_]); CHKERRV(ierr);
 
-  //dataMultidomain_.setSubvectorsSolution(subvectorsSolution_);
+  // create the nested vectors
+  LOG(DEBUG) << "create nested vector";
+  ierr = VecCreateNest(this->rankSubset_->mpiCommunicator(), nCompartments_+1, NULL, subvectorsRightHandSide_.data(), &nestedRightHandSide_); CHKERRV(ierr);
+  ierr = VecCreateNest(this->rankSubset_->mpiCommunicator(), nCompartments_+1, NULL, subvectorsSolution_.data(), &nestedSolution_); CHKERRV(ierr);
 
-  if (isSystemMatrixInitialized)
-  {
-    // create the nested vectors
-    LOG(DEBUG) << "create nested vector";
-    ierr = VecCreateNest(this->rankSubset_->mpiCommunicator(), nCompartments_+1, NULL, subvectorsRightHandSide_.data(), &nestedRightHandSide_); CHKERRV(ierr);
-    ierr = VecCreateNest(this->rankSubset_->mpiCommunicator(), nCompartments_+1, NULL, subvectorsSolution_.data(), &nestedSolution_); CHKERRV(ierr);
+  // copy the values from a nested Petsc Vec to a single Vec that contains all entries
+  NestedMatVecUtility::createVecFromNestedVec(nestedRightHandSide_, singleRightHandSide_, data().functionSpace()->meshPartition()->rankSubset());
 
-    // copy the values from a nested Petsc Vec to a single Vec that contains all entries
-    NestedMatVecUtility::createVecFromNestedVec(nestedRightHandSide_, singleRightHandSide_, data().functionSpace()->meshPartition()->rankSubset());
-  }
-
-  LOG(DEBUG) << "initialization done";
-  this->initialized_ = true;
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
@@ -508,7 +512,7 @@ setSystemMatrixSubmatrices(double timeStepWidth)
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
 void MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
-createSystemMatrix()
+createSystemMatrixFromSubmatrices()
 {
   PetscErrorCode ierr;
   assert(submatricesSystemMatrix_.size() == nColumnSubmatricesSystemMatrix_*nColumnSubmatricesSystemMatrix_);
@@ -525,13 +529,18 @@ createSystemMatrix()
       
       if (!subMatrix)
       {
-        LOG(DEBUG) << "submatrix (" << rowNo << "," << columnNo << ") is empty (NULL)";
+        LOG(DEBUG) << "submatrix (" << rowNo << "," << columnNo << ") is " << subMatrix << ", empty (NULL)";
       }
       else
       {
         PetscInt nRows, nColumns;
         ierr = MatGetSize(subMatrix, &nRows, &nColumns); CHKERRV(ierr);
-        LOG(DEBUG) << "submatrix (" << rowNo << "," << columnNo << ") is " << nRows << "x" << nColumns;
+        std::string name;
+        char *cName;
+        ierr = PetscObjectGetName((PetscObject)subMatrix, (const char **)&cName); CHKERRV(ierr);
+        name = cName;
+        
+        LOG(DEBUG) << "submatrix (" << rowNo << "," << columnNo << ") is " << subMatrix << ", \"" << name << "\" (" << nRows << "x" << nColumns << ")";
       }
     }
   }

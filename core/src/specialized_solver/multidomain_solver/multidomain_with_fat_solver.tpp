@@ -19,6 +19,8 @@ template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodD
 void MultidomainWithFatSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusionMuscle,FiniteElementMethodDiffusionFat>::
 initialize()
 {
+  MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusionMuscle>::initializeObjects();
+
   // indicate in solverStructureVisualizer that now a child solver will be initialized
   DihuContext::solverStructureVisualizer()->beginChild("Fat");
 
@@ -28,8 +30,6 @@ initialize()
 
   // indicate in solverStructureVisualizer that the child solver initialization is done
   DihuContext::solverStructureVisualizer()->endChild();
-
-  MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusionMuscle>::initialize();
 
   LOG(DEBUG) << "function space \"" << finiteElementMethodFat_.functionSpace()->meshName() << "\".";
 
@@ -41,38 +41,58 @@ initialize()
   
   dataFat_.initialize();
 
-  // θ value for Crank-Nicolson scheme
+  // get θ value for Crank-Nicolson scheme
   theta_ = this->specificSettings_.getOptionDouble("theta", 0.5, PythonUtility::Positive);
 
   DihuContext::solverStructureVisualizer()->setOutputConnectorData(this->getOutputConnectorData());
+
+  // initialize sharedNodes_ i.e. the border nodes that are shared between muscle and fat mesh
+  findSharedNodesBetweenMuscleAndFat();
+
+
+  // system to be solved (here for nCompartments_=3):
+  //
+  // [A^1_Vm,Vm   |            |             | B^1_Vm,phie |             ]   [ V^1_m^(i+1) ]    [b^1^(i)]  <── n rows: number of dofs in muscle mesh
+  // [            | A^2_Vm,Vm  |             | B^2_Vm,phie |             ]   [ V^2_m^(i+1) ]    [b^2^(i)]  <── n rows: number of dofs in muscle mesh
+  // [   ...      |            | A^M_Vm,Vm   | B^M_Vm,phie |             ] * [ V^M_m^(i+1) ] =  [b^M^(i)]  <── n rows: number of dofs in muscle mesh
+  // [B^1_phie,Vm |B^2_phie,Vm | B^M_phie,Vm | B_phie,phie |      D      ]   [ phi_e^(i+1) ]    [ 0     ]  <── n rows: number of dofs in muscle mesh
+  // [            |            |             |     E       | C_phib,phib ]   [ phi_b^(i+1) ]    [ 0     ]  <── n rows: number of dofs in fat mesh minus number of shared dofs
+  //     ^              ^          ^               ^              ^
+  //     |              |          |               |              |
+  //  -----n------cols: n dofs in muscle mesh--------------     n cols: n dofs in fat mesh minus number of shared dofs
+  //
+  // see multidomain.pdf for the definition of the submatrices, B_phie,phie is also called B and C_phib,phib is called C
 
   // initialize rhs and solution vector, the entries up to this->nCompartments_ were already set by the MultidomainSolver
   this->subvectorsRightHandSide_.resize(this->nCompartments_+2);
   this->subvectorsSolution_.resize(this->nCompartments_+2);
 
-  // resize the submatrices vector
+  // initialize all submatrices for system matrix, except B,C,D,E
+  this->timeStepWidthOfSystemMatrix_ = this->timeStepWidth_;
   setSystemMatrixSubmatrices(this->timeStepWidthOfSystemMatrix_);
 
-  // initialize sharedNodes_ 
-  findSharedNodesBetweenMuscleAndFat();
-
-  // initialize I_ΓM and -I_ΓM and set in submatrices for system matrix, also set the last zero entry of the rhs
+  // initialize matices B,C,D,E in submatrices for system matrix,
+  // also set the last zero entry of the rhs and the entry for phi_b^(i+1) in the solution vector
   initializeBorderVariables();
 
-  // create the actual system matrix from the initialize submatrices
-  this->createSystemMatrix();
+  // from the initialize submatrices create the actual system matrix, this->nestedSystemMatrix_ 
+  // as nested Petsc Mat and also the single Mat, this->singleSystemMatrix_ 
+  this->createSystemMatrixFromSubmatrices();
 
-  // system to be solved:
-  //
-  // [A^1_Vm,Vm   |            |             | B^1_Vm,phie |             ]   [ V^1_m^(i+1) ]    [b^1^(i)]
-  // [            | A^2_Vm,Vm  |             | B^2_Vm,phie |             ]   [ V^2_m^(i+1) ]    [b^2^(i)]
-  // [   ...      |            | A^M_Vm,Vm   | B^M_Vm,phie |             ] * [ V^M_m^(i+1) ] =  [b^M^(i)]
-  // [B^1_phie,Vm |B^2_phie,Vm | B^M_phie,Vm | B_phie,phie |      D      ]   [ phi_e^(i+1) ]    [ 0     ]
-  // [            |            |             |     E       | C_phib,phib ]   [ phi_b^(i+1) ]    [ 0     ]
-
+  // set matrix used for linear solver and preconditioner to ksp context
+  assert(this->linearSolver_->ksp());
   PetscErrorCode ierr;
+  ierr = KSPSetOperators(*this->linearSolver_->ksp(), this->singleSystemMatrix_, this->singleSystemMatrix_); CHKERRV(ierr);
 
-  // create temporary vector which is needed in computation of rhs
+  // set the nullspace of the matrix
+  // as we have Neumann boundary conditions, constant functions are in the nullspace of the matrix
+  MatNullSpace nullSpace;
+  ierr = MatNullSpaceCreate(data().functionSpace()->meshPartition()->mpiCommunicator(), PETSC_TRUE, 0, PETSC_NULL, &nullSpace); CHKERRV(ierr);
+  ierr = MatSetNullSpace(this->singleSystemMatrix_, nullSpace); CHKERRV(ierr);
+  ierr = MatSetNearNullSpace(this->singleSystemMatrix_, nullSpace); CHKERRV(ierr); // for multigrid methods
+  //ierr = MatNullSpaceDestroy(&nullSpace); CHKERRV(ierr);
+
+  // create temporary vector which is needed in computation of rhs, b1_ was created by setSystemMatrixSubmatrices()
   ierr = MatCreateVecs(b1_[0], &temporary_, NULL); CHKERRV(ierr);
 
   // initialize subvectors for rhs
@@ -83,33 +103,27 @@ initialize()
     ierr = MatCreateVecs(b1_[k], &this->subvectorsRightHandSide_[k], NULL); CHKERRV(ierr);
   }
 
-  // initialize subvectors for solution
-  // entries for Vm from 0 to nCompartments-1 and for phi_e at nCompartments were already set by MultidomainSolver
-  // set subvector for phi_b, the body potential
-  this->subvectorsSolution_[this->nCompartments_+1]      = dataFat_.extraCellularPotentialFat()->valuesGlobal();    // this is for phi_b
-   
-  // clear values in solution
-  ierr = VecZeroEntries(this->subvectorsSolution_[this->nCompartments_+1]); CHKERRV(ierr);
+  // set values for phi_e
+  this->subvectorsRightHandSide_[this->nCompartments_] = this->dataMultidomain_.zero()->valuesGlobal();
+  // subvectorsRightHandSide_[nCompartments_+1] has been set by initializeBorderVariables()
 
-  // re-create the nested vectors
+  // set vectors of Vm in compartments in subvectorsSolution_
+  for (int k = 0; k < this->nCompartments_; k++)
+  {
+    this->subvectorsSolution_[k] = this->dataMultidomain_.transmembranePotentialSolution(k)->valuesGlobal(0); // this is for V_mk^(i+1)
+  }
+  // set values for phi_e
+  ierr = VecDuplicate(this->dataMultidomain_.zero()->valuesGlobal(), &this->subvectorsSolution_[this->nCompartments_]); CHKERRV(ierr);
+  ierr = VecZeroEntries(this->subvectorsSolution_[this->nCompartments_]); CHKERRV(ierr);
+  // subvectorsSolution_[nCompartments_+1] has been set by initializeBorderVariables()
+
+  // create the nested Petsc Vec's
   LOG(DEBUG) << "create nested vector";
   ierr = VecCreateNest(this->rankSubset_->mpiCommunicator(), this->nCompartments_+2, NULL,
                        this->subvectorsRightHandSide_.data(), &this->nestedRightHandSide_); CHKERRV(ierr);
 
   ierr = VecCreateNest(this->rankSubset_->mpiCommunicator(), this->nCompartments_+2, NULL, 
                        this->subvectorsSolution_.data(), &this->nestedSolution_); CHKERRV(ierr);
-
-  // copy the values from a nested Petsc Vec to a single Vec that contains all entries
-  NestedMatVecUtility::createVecFromNestedVec(this->nestedRightHandSide_, this->singleRightHandSide_, data().functionSpace()->meshPartition()->rankSubset());
-
-}
-
-template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusionMuscle,typename FiniteElementMethodDiffusionFat>
-void MultidomainWithFatSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusionMuscle,FiniteElementMethodDiffusionFat>::
-callOutputWriter(int timeStepNo, double currentTime)
-{
-  // write current output values
-  this->outputWriterManager_.writeOutput(this->dataFat_, timeStepNo, currentTime);
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusionMuscle,typename FiniteElementMethodDiffusionFat>
@@ -186,18 +200,6 @@ setSystemMatrixSubmatrices(double timeStepWidth)
     this->submatricesSystemMatrix_[this->nCompartments_*this->nColumnSubmatricesSystemMatrix_ + k] = matrixOnBottomRow;
   }
 
-  // set bottom right matrix, B
-  Mat stiffnessMatrixBottomRightMuscle = this->finiteElementMethodDiffusionTotal_.data().stiffnessMatrix()->valuesGlobal();
-
-  // set on bottom right
-  this->submatricesSystemMatrix_[this->nCompartments_*this->nColumnSubmatricesSystemMatrix_ + this->nCompartments_] = stiffnessMatrixBottomRightMuscle;
-  
-  // set bottom right matrix, C
-  Mat stiffnessMatrixBottomRightFat = this->finiteElementMethodFat_.data().stiffnessMatrix()->valuesGlobal();
-
-  // set on bottom right
-  this->submatricesSystemMatrix_[(this->nCompartments_+1)*this->nColumnSubmatricesSystemMatrix_ + this->nCompartments_+1] = stiffnessMatrixBottomRightFat;
-
   // ---
   // matrices for rhs
   b1_.resize(this->nCompartments_);
@@ -240,8 +242,11 @@ solveLinearSystem()
     ierr = KSPSetInitialGuessNonzero(*this->linearSolver_->ksp(), PETSC_TRUE); CHKERRV(ierr);
   }
 
+  // transform input phi_b to entry in solution vector without shared dofs, this->subvectorsSolution_[this->nCompartments_+1]
+  copyPhiBToSolution();
+
   // compute b_k, the top right hand side entry
-  // b_k = b1_ * Vm^(i) + b2_ * phi_e^(i) 
+  // b_k = b1_ * Vm^(i) + b2_ * phi_e^(i)
   for (int k = 0; k < this->nCompartments_; k++)
   {
     Vec vm_k = this->dataMultidomain_.transmembranePotential(k)->valuesGlobal();     // this is for V_mk^(i)
@@ -254,19 +259,18 @@ solveLinearSystem()
     ierr = MatMultAdd(b2_[k], phie_k, temporary_, this->subvectorsRightHandSide_[k]); CHKERRV(ierr);   // v3 = v2 + A * v1, MatMultAdd(Mat mat,Vec v1,Vec v2,Vec v3)
   }
 
-  // copy the values from a nested Petsc Vec to a single Vec that contains all entries
+  // copy the values from the nested Petsc Vec nestedRightHandSide_ to the single Vec, singleRightHandSide_, that contains all entries
   NestedMatVecUtility::createVecFromNestedVec(this->nestedRightHandSide_, this->singleRightHandSide_, data().functionSpace()->meshPartition()->rankSubset());
 
-  // copy the values from a nested Petsc Vec to a single Vec that contains all entries
+  // copy the values from the nested Petsc Vec,nestedSolution_, to the single Vec, singleSolution_, that contains all entries
   NestedMatVecUtility::createVecFromNestedVec(this->nestedSolution_, this->singleSolution_, data().functionSpace()->meshPartition()->rankSubset());
 
-  // solve the linear system
-  // this can be done using the nested Vecs and nested Mat (nestedSolution_, nestedRightHandSide_, nestedSystemMatrix_),
-  // or the single Vecs and Mats that contain all values directly  (singleSolution_, singleRightHandSide_, singleSystemMatrix_) 
-
-
+  // Solve the linear system
+  // using single Vecs and Mats that contain all values directly  (singleSolution_, singleRightHandSide_, singleSystemMatrix_)
+  // This is better compared to using the nested Vec's, because more solvers are available for normal Vec's.
   if (this->showLinearSolverOutput_)
   {
+    // solve and show information on convergence
     this->linearSolver_->solve(this->singleRightHandSide_, this->singleSolution_, "Linear system of multidomain problem solved");
   }
   else
@@ -275,8 +279,26 @@ solveLinearSystem()
     this->linearSolver_->solve(this->singleRightHandSide_, this->singleSolution_);
   }
   
-  // copy the values back from a single Vec that contains all entries to a nested Petsc Vec
+  // copy the values back from the single Vec, singleSolution_, that contains all entries 
+  // to the nested Petsc Vec, nestedSolution_ which contains the components in subvectorsSolution_
   NestedMatVecUtility::fillNestedVec(this->singleSolution_, this->nestedSolution_);
+
+  // the vector for phi_b in nestedSolution_ contains only entries for non-border dofs, 
+  // copy all values and the border dof values to the proper phi_b which is dataFat_.extraCellularPotentialFat()->valuesGlobal()
+  copySolutionToPhiB();
+
+  LOG(DEBUG) << "after linear solver:";
+  LOG(DEBUG) << "extracellularPotentialFat: " << PetscUtility::getStringVector(dataFat_.extraCellularPotentialFat()->valuesGlobal());
+  LOG(DEBUG) << *dataFat_.extraCellularPotentialFat();
+
+}
+
+template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusionMuscle,typename FiniteElementMethodDiffusionFat>
+void MultidomainWithFatSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusionMuscle,FiniteElementMethodDiffusionFat>::
+callOutputWriter(int timeStepNo, double currentTime)
+{
+  // write current output values
+  this->outputWriterManager_.writeOutput(this->dataFat_, timeStepNo, currentTime);
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusionMuscle,typename FiniteElementMethodDiffusionFat>

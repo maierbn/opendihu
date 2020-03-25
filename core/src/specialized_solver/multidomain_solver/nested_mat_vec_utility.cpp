@@ -347,7 +347,7 @@ void createMatFromNestedMat(Mat nestedMat, Mat &singleMat, std::shared_ptr<Parti
     //ierr = MatSetFromOptions(singleMat); CHKERRV(ierr);         // either use MatSetFromOptions or MatSetUp to allocate internal data structures
     ierr = PetscObjectSetName((PetscObject)singleMat, name.c_str()); CHKERRV(ierr);
     
-    LOG(DEBUG) << "create single Mat \"" << name << "\" with size local " << nRowsLocal << "x" << nColumnsLocal
+    LOG(DEBUG) << "create single Mat " << singleMat << " \"" << name << "\" with size local " << nRowsLocal << "x" << nColumnsLocal
       << ", global " << nRowsGlobal << "x" << nColumnsGlobal << ", nNonzeros: " << nMaximumNonzerosPerRow;
   }
 

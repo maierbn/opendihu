@@ -2,6 +2,8 @@
 
 #include <Python.h>  // has to be the first included header
 
+#include <iterator>
+
 namespace TimeSteppingScheme
 {
 
@@ -108,76 +110,149 @@ findSharedNodesBetweenMuscleAndFat()
       {
         VLOG(2) << "   node is shared.";
         sharedNodes_[nodeNoLocal] = nodeNoLocalOtherMesh;
-        
-        // add dofs at node to set of border nodes of muscle mesh
-        for (int i = 0; i < FunctionSpace::nDofsPerNode(); i++)
-        {
-          dof_no_t dofNoLocal = FunctionSpace::nDofsPerNode()*nodeNoLocal + i;
-          borderDofsMuscle_.insert(dofNoLocal);
-        }
 
         // add dofs at node to set of border nodes of fat mesh
         for (int i = 0; i < FunctionSpace::nDofsPerNode(); i++)
         {
-          dof_no_t dofNoLocal = FunctionSpace::nDofsPerNode()*nodeNoLocalOtherMesh + i;
-          borderDofsFat_.insert(dofNoLocal);
+          dof_no_t dofNoLocalFat = FunctionSpace::nDofsPerNode()*nodeNoLocalOtherMesh + i;
+          borderDofsFat_.insert(dofNoLocalFat);
         }
 
         break;
       }
     }
   }
+  
+  nSharedDofsLocal_ = borderDofsFat_.size();
 
   LOG(DEBUG) << "functionSpaceMuscle: " << *functionSpaceMuscle->meshPartition();
   LOG(DEBUG) << "functionSpaceFat: " << *functionSpaceFat->meshPartition();
 
-  LOG(DEBUG) << "sharedNodes_:\n" << sharedNodes_;
-  LOG(DEBUG) << "borderDofsMuscle_:\n" << borderDofsMuscle_;
-  LOG(DEBUG) << "borderDofsFat_:\n" << borderDofsFat_;
+  LOG(DEBUG) << "sharedNodes_ (\"muscle mesh dof\": fat mesh dof):\n" << sharedNodes_;
+  LOG(DEBUG) << borderDofsFat_.size() << " borderDofsFat_:\n" << borderDofsFat_;
 
-  // fill variables borderElementDofsMuscle_ and borderElementDofsFat_
+  // globally exchange border dofs
+  int nRanks = functionSpaceFat->meshPartition()->rankSubset()->size();
+  int ownRankNo = functionSpaceFat->meshPartition()->rankSubset()->ownRankNo();
+  MPI_Comm mpiCommunicator =  functionSpaceFat->meshPartition()->rankSubset()->mpiCommunicator();
 
-  const int nDofsPerElement = FunctionSpace::nDofsPerElement();
+  std::vector<std::vector<global_no_t>> sharedNodesFatOnRanks(nRanks);   //< for every rank the shared nodes in the fat mesh global petsc numbering
+  std::vector<std::vector<PetscInt>> sharedDofsGlobalOnRanks(nRanks);
 
-  // loop over elements of muscle mesh
-  for (element_no_t elementNoLocal = 0; elementNoLocal < functionSpaceMuscle->nElementsLocal(); elementNoLocal++)
+  // store mapping between fat and muscle border dof nos for own rank
+  sharedDofsGlobalOnRanks[ownRankNo].reserve(sharedNodes_.size()*2);    // mapping between fat and muscle shared dofs 
+
+  for (std::pair<node_no_t,node_no_t> sharedNodes : sharedNodes_)
   {
-    // get indices of element-local dofs
-    std::array<dof_no_t,nDofsPerElement> dofNosLocal = functionSpaceMuscle->getElementDofNosLocal(elementNoLocal);
-
-    // check if node indices are part of sharedNodes_
-    int dofIndex = 0;
-    for (int elementalDofIndex = 0; elementalDofIndex < nDofsPerElement; elementalDofIndex++)
+    for (int i = 0; i < FunctionSpace::nDofsPerNode(); i++)
     {
-      dof_no_t dofNoLocal = dofNosLocal[elementalDofIndex];
-      if (borderDofsMuscle_.find(dofNoLocal) != borderDofsMuscle_.end())
-      {
-        if (borderElementDofsMuscle_.find(elementNoLocal) == borderElementDofsMuscle_.end())
-        {
-          borderElementDofsMuscle_[elementNoLocal] = std::array<dof_no_t,::FunctionSpace::FunctionSpaceBaseDim<2,typename FunctionSpace::BasisFunction>::nDofsPerElement()>();
-        }
-        LOG(DEBUG) << "set border element " << elementNoLocal << ", dofIndex " << dofIndex << " to " << elementalDofIndex;
-        borderElementDofsMuscle_[elementNoLocal][dofIndex++] = elementalDofIndex;
-      }
+      global_no_t dofNoFatGlobalPetsc = functionSpaceFat->meshPartition()->getDofNoGlobalPetsc(sharedNodes.second);
+      global_no_t dofNoMuscleGlobalPetsc = functionSpaceMuscle->meshPartition()->getDofNoGlobalPetsc(sharedNodes.first);
+      sharedDofsGlobalOnRanks[ownRankNo].push_back(dofNoFatGlobalPetsc);
+      sharedDofsGlobalOnRanks[ownRankNo].push_back(dofNoMuscleGlobalPetsc);
     }
   }
-  // loop over elements of fat mesh
-  for (element_no_t elementNoLocal = 0; elementNoLocal < functionSpaceFat->nElementsLocal(); elementNoLocal++)
+  
+  // store global nos from borderDofsFat_ in sharedNodesFatOnRanks[ownRankNo]
+  sharedNodesFatOnRanks[ownRankNo].reserve(borderDofsFat_.size());
+  for (dof_no_t dofNoLocalFat : borderDofsFat_)
   {
-    // get indices of element-local dofs
-    std::array<dof_no_t,nDofsPerElement> dofNosLocal = functionSpaceFat->getElementDofNosLocal(elementNoLocal);
+    global_no_t dofNoGlobalPetsc = functionSpaceFat->meshPartition()->getDofNoGlobalPetsc(dofNoLocalFat);
+    sharedNodesFatOnRanks[ownRankNo].push_back(dofNoGlobalPetsc);
+  }
 
-    // check if node indices are part of sharedNodes_
-    int dofIndex = 0;
-    for (int elementalDofIndex = 0; elementalDofIndex < nDofsPerElement; elementalDofIndex++)
+  // determine number of shared nodes on all the ranks
+  std::vector<PetscInt> nSharedNodesOnRanks(nRanks);
+  nSharedNodesOnRanks[ownRankNo] = borderDofsFat_.size();
+
+  // communicate how many shared nodes there are on every rank
+  MPIUtility::handleReturnValue(MPI_Allgather(MPI_IN_PLACE, 0, MPI_DATATYPE_NULL, nSharedNodesOnRanks.data(),
+                                              1, MPIU_INT, mpiCommunicator), "MPI_Allgather");
+
+  // communicate shared dof nos, sharedDofsGlobalOnRanks and shared nodes on fat mesh, sharedNodesFatOnRanks
+  PetscInt nEntriesTotal = 0;
+  for (int rankNo = 0; rankNo < nRanks; rankNo++)                                            
+  {
+    int nEntries = nSharedNodesOnRanks[rankNo];
+    nEntriesTotal += nEntries;
+    sharedDofsGlobalOnRanks[rankNo].resize(nEntries*2);
+    sharedNodesFatOnRanks[rankNo].resize(nEntries);
+
+    // broadcast node nos to all ranks
+    MPI_Bcast(sharedDofsGlobalOnRanks[rankNo].data(), 2*nEntries, MPIU_INT, rankNo, mpiCommunicator);
+    MPI_Bcast(sharedNodesFatOnRanks[rankNo].data(), nEntries, MPI_LONG_LONG_INT, rankNo, mpiCommunicator);
+  }
+
+  // add all received global nos to a single set
+  for (int rankNo = 0; rankNo < nRanks; rankNo++)                                            
+  {
+    // add global nos for fat mesh
+    borderDofsGlobalFat_.insert(sharedNodesFatOnRanks[rankNo].begin(), sharedNodesFatOnRanks[rankNo].end());
+
+    // add mapping from fat mesh dofs to muscle mesh dofs to a single map
+    assert(sharedDofsGlobalOnRanks[rankNo].size() == nSharedNodesOnRanks[rankNo]*2);
+    for (int entryNo = 0; entryNo < sharedDofsGlobalOnRanks[rankNo].size(); entryNo += 2)
     {
-      dof_no_t dofNoLocal = dofNosLocal[elementalDofIndex];
-      if (borderDofsFat_.find(dofNoLocal) != borderDofsFat_.end())
-      {
-        borderElementDofsFat_[elementNoLocal][dofIndex++] = elementalDofIndex;
-      }
+      fatDofToMuscleDofGlobal_.insert(std::make_pair(sharedDofsGlobalOnRanks[rankNo][entryNo], sharedDofsGlobalOnRanks[rankNo][entryNo+1]));    // (fat mesh dof, muscle mesh dof)
+      muscleDofToFatDofGlobal_.insert(std::make_pair(sharedDofsGlobalOnRanks[rankNo][entryNo+1], sharedDofsGlobalOnRanks[rankNo][entryNo]));    // (muscle mesh dof, fat mesh dof)
     }
   }
+
+  // output result
+#ifndef NDEBUG
+  LOG(DEBUG) << borderDofsGlobalFat_.size() << " borderDofsGlobalFat_:\n" << borderDofsGlobalFat_;
+  std::stringstream s;
+  for (PetscInt dofNoGlobal = 0; dofNoGlobal < this->finiteElementMethodFat_.data().functionSpace()->nDofsGlobal(); dofNoGlobal++)
+  {
+    if (borderDofsGlobalFat_.find(dofNoGlobal) != borderDofsGlobalFat_.end())
+    {
+      s << dofNoGlobal << ":shared, ";
+    }
+    else
+    {
+      s << dofNoGlobal << ":" << getDofNoGlobalFatWithoutSharedDofs(dofNoGlobal) << ", ";
+    }
+  }
+  LOG(DEBUG) << "global nos without shared dofs: " << s.str();
+
+  s.str("");
+  for (PetscInt dofNoGlobalFat : borderDofsGlobalFat_)
+  {
+    PetscInt dofNoGlobalMuscle = getDofNoGlobalMuscleFromDofNoGlobalFat(dofNoGlobalFat);
+     
+    s << dofNoGlobalFat << ":" << dofNoGlobalMuscle << ", ";
+  }
+  
+  LOG(DEBUG) << fatDofToMuscleDofGlobal_.size() << " fatDofToMuscleDofGlobal_: " << fatDofToMuscleDofGlobal_;
+  LOG(DEBUG) << muscleDofToFatDofGlobal_.size() << " muscleDofToFatDofGlobal_: " << muscleDofToFatDofGlobal_;
+  LOG(DEBUG) << borderDofsGlobalFat_.size() << " borderDofsGlobalFat_: " << borderDofsGlobalFat_;
+  LOG(DEBUG) << "border dofs fat:muscle " << s.str();
+#endif
+}
+
+template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusionMuscle,typename FiniteElementMethodDiffusionFat>
+PetscInt MultidomainWithFatSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusionMuscle,FiniteElementMethodDiffusionFat>::
+getDofNoGlobalFatWithoutSharedDofs(PetscInt dofNoGlobal)
+{
+  int nSharedBefore = std::distance(borderDofsGlobalFat_.begin(), borderDofsGlobalFat_.upper_bound(dofNoGlobal));
+  PetscInt dofNoGlobalWithoutSharedDofs = dofNoGlobal - nSharedBefore;
+  return dofNoGlobalWithoutSharedDofs;
+}
+
+template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusionMuscle,typename FiniteElementMethodDiffusionFat>
+PetscInt MultidomainWithFatSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusionMuscle,FiniteElementMethodDiffusionFat>::
+getDofNoGlobalMuscleFromDofNoGlobalFat(PetscInt dofNoGlobal)
+{
+  assert(fatDofToMuscleDofGlobal_.find(dofNoGlobal) != fatDofToMuscleDofGlobal_.end());
+  return fatDofToMuscleDofGlobal_[dofNoGlobal];
+}
+
+template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusionMuscle,typename FiniteElementMethodDiffusionFat>
+PetscInt MultidomainWithFatSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusionMuscle,FiniteElementMethodDiffusionFat>::
+getDofNoGlobalFatFromDofNoGlobalMuscle(PetscInt dofNoGlobal)
+{
+  assert(muscleDofToFatDofGlobal_.find(dofNoGlobal) != muscleDofToFatDofGlobal_.end());
+  return muscleDofToFatDofGlobal_[dofNoGlobal];
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusionMuscle,typename FiniteElementMethodDiffusionFat>
@@ -208,7 +283,7 @@ initializeBorderVariables()
   ierr = PetscObjectSetName((PetscObject) vecZero, name.c_str()); CHKERRV(ierr);
 
   // initialize size of vector
-  int nEntriesLocal = sharedNodes_.size(); 
+  int nEntriesLocal = this->finiteElementMethodFat_.data().functionSpace()->nDofsLocalWithoutGhosts() - nSharedDofsLocal_; 
   ierr = VecSetSizes(vecZero, nEntriesLocal, PETSC_DECIDE); CHKERRV(ierr);
 
   // set sparsity type and other options
@@ -221,361 +296,382 @@ initializeBorderVariables()
   this->subvectorsRightHandSide_[this->nCompartments_+1] = vecZero;
 
   // -------
-  // create matrix I_ΓM (gamma0) with ones for nodes on Γ_M within the muscle domain
-  Mat gamma0;
-  ierr = MatCreate(mpiCommunicator, &gamma0); CHKERRV(ierr);
+  // create vector for solution
+  // initialize PETSc vector object
+  Vec vecSolutionPhiB;
+  ierr = VecCreate(mpiCommunicator, &vecSolutionPhiB); CHKERRV(ierr);
 
-  // initialize size
-  int nRowsLocal = sharedNodes_.size(); 
-  int nColumnsLocalGamma0 = this->finiteElementMethodDiffusion_.functionSpace()->nDofsLocalWithoutGhosts();
-  ierr = MatSetSizes(gamma0, nRowsLocal, nColumnsLocalGamma0, PETSC_DECIDE, PETSC_DECIDE); CHKERRV(ierr);
-  ierr = MatSetType(gamma0, MATAIJ); CHKERRV(ierr);
+  // set name of vector
+  name = "phi_b";
+  ierr = PetscObjectSetName((PetscObject) vecSolutionPhiB, name.c_str()); CHKERRV(ierr);
+
+  // initialize size of vector
+  nEntriesLocal = this->finiteElementMethodFat_.data().functionSpace()->nDofsLocalWithoutGhosts() - nSharedDofsLocal_; 
+  ierr = VecSetSizes(vecSolutionPhiB, nEntriesLocal, PETSC_DECIDE); CHKERRV(ierr);
+
+  // set sparsity type and other options
+  ierr = VecSetFromOptions(vecSolutionPhiB); CHKERRV(ierr);
+
+  // set all entries to 0.0
+  ierr = VecZeroEntries(vecSolutionPhiB); CHKERRV(ierr);
+
+  // store the vector at the bottom of the solution
+  this->subvectorsSolution_[this->nCompartments_+1] = vecSolutionPhiB;
   
-  // sparse matrix: preallocation of internal data structure
-  // http://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/Mat/MATAIJ.html#MATAIJ
-  // MATAIJ = "aij" - A matrix type to be used for sparse matrices. This matrix type is identical to MATSEQAIJ when constructed with a single process communicator, and MATMPIAIJ otherwise.
-  // As a result, for single process communicators, MatSeqAIJSetPreallocation is supported, and similarly MatMPIAIJSetPreallocation is supported for communicators controlling multiple processes.
-  // It is recommended that you call both of the above preallocation routines for simplicity.
-  PetscInt nNonZerosDiagonal = 1;
-  PetscInt nNonZerosOffdiagonal = 1;
-  ierr = MatSeqAIJSetPreallocation(gamma0, nNonZerosDiagonal, NULL); CHKERRV(ierr);
-  ierr = MatMPIAIJSetPreallocation(gamma0, nNonZerosDiagonal, NULL, nNonZerosOffdiagonal, NULL); CHKERRV(ierr);
-  
-  // initialize name
-  name = "gamma0";
-  ierr = PetscObjectSetName((PetscObject)gamma0, name.c_str()); CHKERRV(ierr);
 
   // -------
-  // create matrix I_ΓM (gamma1) with ones for nodes on Γ_M within the fat domain
-  Mat gamma1;
-  ierr = MatCreate(mpiCommunicator, &gamma1); CHKERRV(ierr);
+  // create copy of matrix B_phie,phie
+  Mat originalMatrixB = this->finiteElementMethodDiffusionTotal_.data().stiffnessMatrix()->valuesGlobal();
+  Mat matrixB;
+  //ierr = MatDuplicate(originalMatrixB, MAT_COPY_VALUES, &matrixB); CHKERRV(ierr);
+  ierr = MatConvert(originalMatrixB, MATSAME, MAT_INITIAL_MATRIX, &matrixB); CHKERRV(ierr);
+
+  // initialize name
+  name = "B_phie,phie";
+  ierr = PetscObjectSetName((PetscObject)matrixB, name.c_str()); CHKERRV(ierr);
+
+  // -------
+  // create matrix c, which the original C_phib,phib matrix but without rows and columns that correspond to shared dofs between muscle and fat mesh
+  Mat originalMatrixC = this->finiteElementMethodFat_.data().stiffnessMatrix()->valuesGlobal();
   
+  // get number of allocated non-zeros of full c matrix
+  MatInfo matInfo;
+  ierr = MatGetInfo(this->finiteElementMethodFat_.data().stiffnessMatrix()->valuesGlobal(), MAT_GLOBAL_MAX, &matInfo); CHKERRV(ierr);
+  PetscInt nNonZerosDiagonal = (PetscInt)matInfo.nz_allocated;
+  
+  // create matrix
+  Mat matrixC;
+  ierr = MatCreate(mpiCommunicator, &matrixC); CHKERRV(ierr);
+
   // initialize size
-  int nColumnsLocalGamma1 = finiteElementMethodFat_.functionSpace()->nDofsLocalWithoutGhosts();
-  ierr = MatSetSizes(gamma1, nRowsLocal, nColumnsLocalGamma1, PETSC_DECIDE, PETSC_DECIDE); CHKERRV(ierr);
-  ierr = MatSetType(gamma1, MATAIJ); CHKERRV(ierr);
+  int nRowsLocal = this->finiteElementMethodFat_.data().functionSpace()->nDofsLocalWithoutGhosts() - nSharedDofsLocal_;
+  int nColumnsLocal = nRowsLocal;
+  ierr = MatSetSizes(matrixC, nRowsLocal, nColumnsLocal, PETSC_DECIDE, PETSC_DECIDE); CHKERRV(ierr);
+  ierr = MatSetType(matrixC, MATAIJ); CHKERRV(ierr);
   
   // sparse matrix: preallocation of internal data structure
   // http://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/Mat/MATAIJ.html#MATAIJ
   // MATAIJ = "aij" - A matrix type to be used for sparse matrices. This matrix type is identical to MATSEQAIJ when constructed with a single process communicator, and MATMPIAIJ otherwise.
   // As a result, for single process communicators, MatSeqAIJSetPreallocation is supported, and similarly MatMPIAIJSetPreallocation is supported for communicators controlling multiple processes.
   // It is recommended that you call both of the above preallocation routines for simplicity.
-  ierr = MatSeqAIJSetPreallocation(gamma1, nNonZerosDiagonal, NULL); CHKERRV(ierr);
-  ierr = MatMPIAIJSetPreallocation(gamma1, nNonZerosDiagonal, NULL, nNonZerosOffdiagonal, NULL); CHKERRV(ierr);
+  PetscInt nNonZerosOffdiagonal = nNonZerosDiagonal;
+  ierr = MatSeqAIJSetPreallocation(matrixC, nNonZerosDiagonal, NULL); CHKERRV(ierr);
+  ierr = MatMPIAIJSetPreallocation(matrixC, nNonZerosDiagonal, NULL, nNonZerosOffdiagonal, NULL); CHKERRV(ierr);
   
   // initialize name
-  name = "gamma1";
-  ierr = PetscObjectSetName((PetscObject)gamma1, name.c_str()); CHKERRV(ierr);
+  name = "C_phib,phib";
+  ierr = PetscObjectSetName((PetscObject)matrixC, name.c_str()); CHKERRV(ierr);
 
-  // set entries of matrices gamma0 and gamma1
-  const int nDofsPerNode = this->finiteElementMethodDiffusion_.functionSpace()->nDofsPerNode();
+  // --------
+  // create matrix D
+  Mat matrixD;
+  ierr = MatCreate(mpiCommunicator, &matrixD); CHKERRV(ierr);
 
-  PetscInt rowNoLocal = 0;
-  ierr = MatGetOwnershipRange(gamma0, &rowNoLocal, NULL); CHKERRV(ierr);
+  // initialize size
+  nRowsLocal = this->finiteElementMethodDiffusionTotal_.data().functionSpace()->nDofsLocalWithoutGhosts();
+  nColumnsLocal = this->finiteElementMethodFat_.data().functionSpace()->nDofsLocalWithoutGhosts() - nSharedDofsLocal_;
+  ierr = MatSetSizes(matrixD, nRowsLocal, nColumnsLocal, PETSC_DECIDE, PETSC_DECIDE); CHKERRV(ierr);
+  ierr = MatSetType(matrixD, MATAIJ); CHKERRV(ierr);
   
-  // loop over entries <nodeNoMuscle,nodeNoFat> that are shared nodes between the two meshes
-  for (std::pair<node_no_t,node_no_t> nodes: sharedNodes_)
-  {
-    for (int nodalDofNo = 0; nodalDofNo < nDofsPerNode; nodalDofNo++)
-    {
-      dof_no_t dofNoMuscle = nodes.first*nDofsPerNode + nodalDofNo;
-      dof_no_t dofNoFat = nodes.second*nDofsPerNode + nodalDofNo;
-      
-      ierr = MatSetValue(gamma0, rowNoLocal, dofNoMuscle, 1.0, INSERT_VALUES); CHKERRV(ierr);
-      ierr = MatSetValue(gamma1, rowNoLocal, dofNoFat, -1.0, INSERT_VALUES); CHKERRV(ierr);
+  ierr = MatSeqAIJSetPreallocation(matrixD, nNonZerosDiagonal, NULL); CHKERRV(ierr);
+  ierr = MatMPIAIJSetPreallocation(matrixD, nNonZerosDiagonal, NULL, nNonZerosOffdiagonal, NULL); CHKERRV(ierr);
+  
+  // initialize name
+  name = "D";
+  ierr = PetscObjectSetName((PetscObject)matrixD, name.c_str()); CHKERRV(ierr);
 
-      rowNoLocal++;
-    }
-  }
+  // --------
+  // create matrix E
+  Mat matrixE;
+  ierr = MatCreate(mpiCommunicator, &matrixE); CHKERRV(ierr);
 
+  // initialize size
+  nRowsLocal = this->finiteElementMethodFat_.data().functionSpace()->nDofsLocalWithoutGhosts() - nSharedDofsLocal_;
+  nColumnsLocal = this->finiteElementMethodDiffusionTotal_.data().functionSpace()->nDofsLocalWithoutGhosts();
+  ierr = MatSetSizes(matrixE, nRowsLocal, nColumnsLocal, PETSC_DECIDE, PETSC_DECIDE); CHKERRV(ierr);
+  ierr = MatSetType(matrixE, MATAIJ); CHKERRV(ierr);
+  
+  ierr = MatSeqAIJSetPreallocation(matrixE, nNonZerosDiagonal, NULL); CHKERRV(ierr);
+  ierr = MatMPIAIJSetPreallocation(matrixE, nNonZerosDiagonal, NULL, nNonZerosOffdiagonal, NULL); CHKERRV(ierr);
+  
+  // initialize name
+  name = "E";
+  ierr = PetscObjectSetName((PetscObject)matrixE, name.c_str()); CHKERRV(ierr);
 
-  PetscInt nRowsGamma0, nColumnsGamma0;
-  ierr = MatGetSize(gamma0, &nRowsGamma0, &nColumnsGamma0); CHKERRV(ierr);
-  PetscInt nRowsGamma1, nColumnsGamma1;
-  ierr = MatGetSize(gamma1, &nRowsGamma1, &nColumnsGamma1); CHKERRV(ierr);
-  LOG(DEBUG) << "create gamma matrices: gamma0: " << nRowsGamma0 << "x" << nColumnsGamma0 << ", gamma1: " << nRowsGamma1 << "x" << nColumnsGamma1
-    << " set at (" << (this->nCompartments_+2) << "," << this->nCompartments_ << ") and (" << (this->nCompartments_+2) << "," << this->nCompartments_+1 << ")";
+  // output sizes for debugging
+  PetscInt nRowsMatrixB, nColumnsMatrixB;
+  PetscInt nRowsMatrixC, nColumnsMatrixC;
+  PetscInt nRowsMatrixD, nColumnsMatrixD;
+  PetscInt nRowsMatrixE, nColumnsMatrixE;
+  ierr = MatGetSize(matrixB, &nRowsMatrixB, &nColumnsMatrixB); CHKERRV(ierr);
+  ierr = MatGetSize(matrixC, &nRowsMatrixC, &nColumnsMatrixC); CHKERRV(ierr);
+  ierr = MatGetSize(matrixD, &nRowsMatrixD, &nColumnsMatrixD); CHKERRV(ierr);
+  ierr = MatGetSize(matrixE, &nRowsMatrixE, &nColumnsMatrixE); CHKERRV(ierr);
+  
+  LOG(DEBUG) << "n shared nodes local: " << sharedNodes_.size() << ", n shared dofs local: " << nSharedDofsLocal_ << ", global: " << borderDofsGlobalFat_.size() 
+    << ", create gamma matrices: matrixB: " << nRowsMatrixB << "x" << nColumnsMatrixB << ", matrixC: " << nRowsMatrixC << "x" << nColumnsMatrixC 
+    << ", matrixD: " << nRowsMatrixD << "x" << nColumnsMatrixD << ", matrixE: " << nRowsMatrixE << "x" << nColumnsMatrixE;
+
+  // compute entries
+  setEntriesBorderMatrices(originalMatrixB, originalMatrixC, matrixB, matrixC, matrixD, matrixE);
 
   // store the matrices in the system matrix
-  assert (this->nColumnSubmatricesSystemMatrix_ == this->nCompartments_+3);
-  this->submatricesSystemMatrix_[(this->nCompartments_+2)*this->nColumnSubmatricesSystemMatrix_ + this->nCompartments_] = gamma0;
-  this->submatricesSystemMatrix_[(this->nCompartments_+2)*this->nColumnSubmatricesSystemMatrix_ + this->nCompartments_ + 1] = gamma1;
-
-  // ---
-  // create matrices B_ΓM (bGamma0) and -B_ΓM (bGamma1)
-  Mat bGamma0;
-  ierr = MatCreate(mpiCommunicator, &bGamma0); CHKERRV(ierr);
-  
-  // initialize size
-  int nRowsLocalBGamma0 = this->finiteElementMethodDiffusion_.functionSpace()->nDofsLocalWithoutGhosts();
-  int nColumnsLocalBGamma0 = sharedNodes_.size();
-  ierr = MatSetSizes(bGamma0, nRowsLocalBGamma0, nColumnsLocalBGamma0, PETSC_DECIDE, PETSC_DECIDE); CHKERRV(ierr);
-  ierr = MatSetType(bGamma0, MATAIJ); CHKERRV(ierr);
-
-  // initialize memory with number of nonzeros
-  const int nDofsPerBasis = ::FunctionSpace::FunctionSpaceBaseDim<1,typename FunctionSpace::BasisFunction>::nDofsPerElement();
-  const int nOverlaps = (nDofsPerBasis*2 - 1) * nDofsPerNode;   // number of nodes of 2 neighbouring 1D elements (=number of ansatz functions in support of center ansatz function)
-  nNonZerosDiagonal = std::pow(nOverlaps, 2);
-  nNonZerosOffdiagonal = nNonZerosDiagonal;
-    
-  ierr = MatSeqAIJSetPreallocation(bGamma0, nNonZerosDiagonal, NULL); CHKERRV(ierr);
-  ierr = MatMPIAIJSetPreallocation(bGamma0, nNonZerosDiagonal, NULL, nNonZerosOffdiagonal, NULL); CHKERRV(ierr);
-  
-  // initialize name
-  name = "bGamma0";
-  ierr = PetscObjectSetName((PetscObject)bGamma0, name.c_str()); CHKERRV(ierr);
-
-  // create matrix -B_ΓM
-  Mat bGamma1;
-  ierr = MatCreate(mpiCommunicator, &bGamma1); CHKERRV(ierr);
-  
-  // initialize size
-  int nRowsLocalBGamma1 = this->finiteElementMethodFat_.functionSpace()->nDofsLocalWithoutGhosts();
-  ierr = MatSetSizes(bGamma1, nRowsLocalBGamma1, nColumnsLocalBGamma0, PETSC_DECIDE, PETSC_DECIDE); CHKERRV(ierr);
-  ierr = MatSetType(bGamma1, MATAIJ); CHKERRV(ierr);
-  ierr = MatSeqAIJSetPreallocation(bGamma1, nNonZerosDiagonal, NULL); CHKERRV(ierr);
-  ierr = MatMPIAIJSetPreallocation(bGamma1, nNonZerosDiagonal, NULL, nNonZerosOffdiagonal, NULL); CHKERRV(ierr);
-  
-  // initialize name
-  name = "bGamma1";
-  ierr = PetscObjectSetName((PetscObject)bGamma1, name.c_str()); CHKERRV(ierr);
-
-
-  LOG(DEBUG) << "nNonZerosDiagonal: " << nNonZerosDiagonal << ", nNonZerosOffdiagonal: " << nNonZerosOffdiagonal;
-
-  // compute B_ΓM and -B_ΓM (note that bGamma0 != -bGamma1, they use different meshes)
-  computeBorderMatrices(bGamma0, bGamma1);
-
-  // store in submatrices of system matrix
-  this->submatricesSystemMatrix_[(this->nCompartments_)*this->nColumnSubmatricesSystemMatrix_ + this->nCompartments_ + 2] = bGamma0;
-  this->submatricesSystemMatrix_[(this->nCompartments_+1)*this->nColumnSubmatricesSystemMatrix_ + this->nCompartments_ + 2] = bGamma1;
+  this->submatricesSystemMatrix_[(this->nCompartments_+0)*this->nColumnSubmatricesSystemMatrix_ + this->nCompartments_+0] = matrixB;
+  this->submatricesSystemMatrix_[(this->nCompartments_+1)*this->nColumnSubmatricesSystemMatrix_ + this->nCompartments_+1] = matrixC;
+  this->submatricesSystemMatrix_[(this->nCompartments_+0)*this->nColumnSubmatricesSystemMatrix_ + this->nCompartments_+1] = matrixD;
+  this->submatricesSystemMatrix_[(this->nCompartments_+1)*this->nColumnSubmatricesSystemMatrix_ + this->nCompartments_+0] = matrixE;
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusionMuscle,typename FiniteElementMethodDiffusionFat>
 void MultidomainWithFatSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusionMuscle,FiniteElementMethodDiffusionFat>::
-computeBorderMatrices(Mat bGamma0, Mat bGamma1)
+setEntriesBorderMatrices(Mat originalMatrixB, Mat originalMatrixC, Mat matrixB, Mat matrixC, Mat matrixD, Mat matrixE)
 {
-  using MuscleFunctionSpace = typename FiniteElementMethodDiffusionMuscle::FunctionSpace;
-  using FatFunctionSpace = typename FiniteElementMethodDiffusionFat::FunctionSpace;
-  std::shared_ptr<MuscleFunctionSpace> functionSpaceMuscle = this->finiteElementMethodDiffusion_.functionSpace();
-  std::shared_ptr<FatFunctionSpace> functionSpaceFat = finiteElementMethodFat_.functionSpace();
-  
-  // define shortcuts for integrator and basis
-  typedef Quadrature::TensorProduct<2,Quadrature::Gauss<3>> Quadrature2D;
-  const int nDofsPerElement = FunctionSpace::nDofsPerElement();
-  const int nDofsPerElement2D = ::FunctionSpace::FunctionSpaceBaseDim<2,typename FunctionSpace::BasisFunction>::nDofsPerElement();
-  typedef MathUtility::Matrix<nDofsPerElement,nDofsPerElement2D> EvaluationsType;
-  typedef std::array<
-            EvaluationsType,
-            Quadrature2D::numberEvaluations()
-          > EvaluationsArrayType;     // evaluations[nGP^D][nDofs][nDofs]
-
-  // ---------------------------------------------------------------
-  // bGamma0_kj = ∫_ΓM ψj*φk dx, loop ever elements of muscle mesh
-  // initialize values to zero
   PetscErrorCode ierr;
-  // loop over elements of muscle mesh
-  for (element_no_t elementNo = 0; elementNo < functionSpaceMuscle->nElementsLocal(); elementNo++)
+  MPI_Comm mpiCommunicator = this->dataMultidomain_.functionSpace()->meshPartition()->mpiCommunicator();
+  PetscInt nColumnsGlobal = this->dataMultidomain_.functionSpace()->nDofsGlobal();
+
+  // iterate over non-zero entries of the matrix originalMatrixC, this has to be done by creating the local sub matrix from which only the non-zero entries can be retrieved by MatGetRow
+  PetscInt rowNoGlobalBegin = 0;
+  PetscInt rowNoGlobalEnd = 0;
+  ierr = MatGetOwnershipRange(originalMatrixC, &rowNoGlobalBegin, &rowNoGlobalEnd); CHKERRV(ierr);
+
+  PetscInt nRowsLocal = rowNoGlobalEnd - rowNoGlobalBegin;
+
+  // create index set indicating all rows of originalMatrixC that are stored locally, in global numbering
+  IS indexSetRows[1];
+  ISCreateStride(mpiCommunicator, nRowsLocal, rowNoGlobalBegin, 1, &indexSetRows[0]);
+
+  // create index set indicating all columns of originalMatrixC that are stored locally (which are also all global columns), in global numbering
+  IS indexSetColumns[1];
+  ISCreateStride(mpiCommunicator, nColumnsGlobal, 0, 1, &indexSetColumns[0]);
+  
+  Mat *localSubMatrix;
+  ierr = MatCreateSubMatrices(originalMatrixC, 1, indexSetRows, indexSetColumns, MAT_INITIAL_MATRIX, &localSubMatrix); CHKERRV(ierr);
+
+  PetscInt nRowsLocalSubMatrix = 0;
+  PetscInt nColumnsLocalSubMatrix = 0;
+  ierr = MatGetSize(localSubMatrix[0], &nRowsLocalSubMatrix, &nColumnsLocalSubMatrix); CHKERRV(ierr);
+
+  // loop over rows of originalMatrixC
+  for (PetscInt rowNoGlobal = rowNoGlobalBegin; rowNoGlobal < rowNoGlobalEnd; rowNoGlobal++)
   {
-    if (borderElementDofsMuscle_.find(elementNo) != borderElementDofsMuscle_.end())
+    PetscInt rowNoLocal = rowNoGlobal - rowNoGlobalBegin;
+    
+    // transfer row from nested mat to singleMat
+    // get non-zero values of current row
+    PetscInt nNonzeroEntriesInRow;
+    const PetscInt *columnIndices;
+    const double *values;
+    ierr = MatGetRow(localSubMatrix[0], rowNoLocal, &nNonzeroEntriesInRow, &columnIndices, &values); CHKERRV(ierr);
+
+    bool currentRowDofIsBorder = borderDofsFat_.find(rowNoLocal) != borderDofsFat_.end();
+
+    // loop over columns
+    for (int columnIndex = 0; columnIndex < nNonzeroEntriesInRow; columnIndex++)
     {
-      std::array<dof_no_t,nDofsPerElement> dofNosLocal = functionSpaceMuscle->getElementDofNosLocal(elementNo);
+      PetscInt columnNoGlobal = columnIndices[columnIndex];
+      double value = values[columnIndex];
 
-      // loop over all dofs in the element
-      for (int i = 0; i < nDofsPerElement; i++)
+      bool currentColumnDofIsBorder = borderDofsGlobalFat_.find(columnNoGlobal) != borderDofsGlobalFat_.end();
+
+      // if the current row is a shared dof
+      if (currentRowDofIsBorder)
       {
-        // loop over the dofs in the element that are on the border
-        for (int jIndex = 0; jIndex < nDofsPerElement2D; jIndex++)
+        // if the current column is a shared dof
+        if (currentColumnDofIsBorder)
         {
-          int j = borderElementDofsMuscle_[elementNo][jIndex];
-          dof_no_t dofNoLocalJ = dofNosLocal[j];
+          PetscInt rowNoGlobalMuscle = getDofNoGlobalMuscleFromDofNoGlobalFat(rowNoGlobal);
+          PetscInt columnNoGlobalMuscle = getDofNoGlobalMuscleFromDofNoGlobalFat(columnNoGlobal);
 
-          LOG(DEBUG) << "bGamma0(" << dofNosLocal[i] << "," << dofNoLocalJ << ") = 0";
-          ierr = MatSetValue(bGamma0, dofNosLocal[i], dofNoLocalJ, 0, INSERT_VALUES); CHKERRV(ierr);
+          // add the matrix entry of C to matrix B
+          ierr = MatSetValue(matrixB, rowNoGlobalMuscle, columnNoGlobalMuscle, value, ADD_VALUES); CHKERRV(ierr);
+        }
+        else 
+        {
+          // the current entry if from a shared row but not shared column
+          PetscInt columnNoGlobalWithoutSharedDofs = getDofNoGlobalFatWithoutSharedDofs(columnNoGlobal);
+          PetscInt rowNoGlobalMuscle = getDofNoGlobalMuscleFromDofNoGlobalFat(rowNoGlobal);
+
+          // set the entry in matrix D
+          ierr = MatSetValue(matrixD, rowNoGlobalMuscle, columnNoGlobalWithoutSharedDofs, value, INSERT_VALUES); CHKERRV(ierr);
+        }
+      }
+      else 
+      {
+        // if the current row is not a shared dof
+        
+        // if the current column is a shared dof
+        if (currentColumnDofIsBorder)
+        {
+          // the current entry if from a shared row but not shared column
+          PetscInt rowNoGlobalWithoutSharedDofs = getDofNoGlobalFatWithoutSharedDofs(rowNoGlobal);
+          PetscInt columnNoGlobalMuscle = getDofNoGlobalMuscleFromDofNoGlobalFat(columnNoGlobal);
+
+          // set the entry in matrix E
+          ierr = MatSetValue(matrixE, rowNoGlobalWithoutSharedDofs, columnNoGlobalMuscle, value, INSERT_VALUES); CHKERRV(ierr);
+        }
+        else 
+        {
+          // neither the row dof nor the column dof is shared, set the value in the new C matrix
+          PetscInt rowNoGlobalWithoutSharedDofs = getDofNoGlobalFatWithoutSharedDofs(rowNoGlobal);
+          PetscInt columnNoGlobalWithoutSharedDofs = getDofNoGlobalFatWithoutSharedDofs(columnNoGlobal);
+
+          // set the entry in matrix C
+          ierr = MatSetValue(matrixC, rowNoGlobalWithoutSharedDofs, columnNoGlobalWithoutSharedDofs, value, INSERT_VALUES); CHKERRV(ierr);
         }
       }
     }
   }
 
-  ierr = MatAssemblyBegin(bGamma0, MAT_FLUSH_ASSEMBLY); CHKERRV(ierr);
-  ierr = MatAssemblyEnd(bGamma0, MAT_FLUSH_ASSEMBLY); CHKERRV(ierr);
+  // assembly of parallel matrices
+  ierr = MatAssemblyBegin(matrixB, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
+  ierr = MatAssemblyBegin(matrixC, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
+  ierr = MatAssemblyBegin(matrixD, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
+  ierr = MatAssemblyBegin(matrixE, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
+  ierr = MatAssemblyEnd(matrixB, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
+  ierr = MatAssemblyEnd(matrixC, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
+  ierr = MatAssemblyEnd(matrixD, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
+  ierr = MatAssemblyEnd(matrixE, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
 
-  // setup arrays used for integration
-  std::array<Vec2, Quadrature2D::numberEvaluations()> samplingPoints = Quadrature2D::samplingPoints();
-  EvaluationsArrayType evaluationsArray{};
+  LOG(DEBUG) << "setEntriesBorderMatrices";
+  LOG(DEBUG) << "B: " << matrixB << ", C: " << matrixC << ", D: " << matrixD << ", E: " << matrixE;
 
-  // set entries in the matrix
-  // loop over elements
-  for (element_no_t elementNo = 0; elementNo < functionSpaceMuscle->nElementsLocal(); elementNo++)
+  if (VLOG_IS_ON(1))
   {
-    if (borderElementDofsMuscle_.find(elementNo) == borderElementDofsMuscle_.end())
-      continue;
-
-    // get the face
-    Mesh::face_t face = functionSpaceMuscle->getFaceFromElementalDofNos(borderElementDofsMuscle_[elementNo]);
-
-    LOG(DEBUG) << "In computation of bGamma0, element " << elementNo << ", face " << Mesh::getString(face);
-
-    // get indices of element-local dofs
-    std::array<dof_no_t,nDofsPerElement> dofNosLocal = functionSpaceMuscle->getElementDofNosLocal(elementNo);
-
-    // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
-    std::array<Vec3,FunctionSpace::nDofsPerElement()> geometry;
-    functionSpaceMuscle->getElementGeometry(elementNo, geometry);
-
-    // compute integral
-    for (unsigned int samplingPointIndex = 0; samplingPointIndex < samplingPoints.size(); samplingPointIndex++)
-    {
-      // evaluate function to integrate at samplingPoints[i*2], write value to evaluations[i]
-      Vec2 xiSurface = samplingPoints[samplingPointIndex];
-      Vec3 xi = Mesh::getXiOnFace(face, xiSurface);
-
-      // compute the 3xD jacobian of the parameter space to world space mapping
-      auto jacobian = FunctionSpace::computeJacobian(geometry, xi);
-      
-      EvaluationsType evaluations;
-
-      // get the factor in the integral that arises from the change in integration domain from world to coordinate space
-      double integrationFactor = MathUtility::computeIntegrationFactor<3>(jacobian);
-
-      // loop over pairs of basis functions and evaluation integrand at xi
-      // loop over all dofs in the element
-      for (int i = 0; i < nDofsPerElement; i++)
-      {
-        // loop over the dofs in the element that are on the border
-        for (int jIndex = 0; jIndex < nDofsPerElement2D; jIndex++)
-        {
-          int j = borderElementDofsMuscle_[elementNo][jIndex];
-          
-          double integrand = FunctionSpace::phi(i,xi) * FunctionSpace::phi(j,xi) * integrationFactor;
-          
-          evaluationsArray[samplingPointIndex](i, j) = integrand;
-        }
-      }
-    }  // function evaluations
-
-    // integrate all values for the (i,j) dof pairs at once
-    EvaluationsType integratedValues = Quadrature2D::computeIntegral(evaluationsArray);
-
-    // perform integration and add to entry in rhs vector
-    for (int i = 0; i < nDofsPerElement; i++)
-    {
-      for (int jIndex = 0; jIndex < nDofsPerElement2D; jIndex++)
-      {
-        int j = borderElementDofsMuscle_[elementNo][jIndex];
-        
-        // integrate value and set entry in discretization matrix
-        double integratedValue = integratedValues(i, j);
-
-        ierr = MatSetValue(bGamma0, dofNosLocal[i], dofNosLocal[j], integratedValue, ADD_VALUES); CHKERRV(ierr);
-      }  // j
-    }  // i
-  }  // elementNo
-
-  // merge local changes in parallel and assemble the matrix (MatAssemblyBegin, MatAssemblyEnd)
-  ierr = MatAssemblyBegin(bGamma0, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
-  ierr = MatAssemblyEnd(bGamma0, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
-
-  // ---------------------------------------------------------------
-  // bGamma1_kj = -∫_ΓM ψj*φk dx, loop ever elements of fat mesh
-  // initialize values to zero
-  // loop over elements of muscle mesh
-  for (element_no_t elementNo = 0; elementNo < functionSpaceFat->nElementsLocal(); elementNo++)
-  {
-    if (borderElementDofsFat_.find(elementNo) != borderElementDofsFat_.end())
-    {
-      std::array<dof_no_t,nDofsPerElement> dofNosLocal = functionSpaceFat->getElementDofNosLocal(elementNo);
-
-      // loop over all dofs in the element
-      for (int i = 0; i < nDofsPerElement; i++)
-      {
-        // loop over the dofs in the element that are on the border
-        for (int jIndex = 0; jIndex < nDofsPerElement2D; jIndex++)
-        {
-          int j = borderElementDofsFat_[elementNo][jIndex];
-          dof_no_t dofNoLocalJ = dofNosLocal[j];
-
-          ierr = MatSetValue(bGamma1, dofNosLocal[i], dofNoLocalJ, 0, INSERT_VALUES); CHKERRV(ierr);
-        }
-      }
-    }
+    VLOG(1) << "B: " << matrixB << ", " << PetscUtility::getStringMatrix(matrixB);
+    VLOG(1) << "C: " << matrixC << ", " << PetscUtility::getStringMatrix(matrixC);
+    VLOG(1) << "D: " << matrixD << ", " << PetscUtility::getStringMatrix(matrixD);
+    VLOG(1) << "E: " << matrixE << ", " << PetscUtility::getStringMatrix(matrixE);
   }
-
-  ierr = MatAssemblyBegin(bGamma1, MAT_FLUSH_ASSEMBLY); CHKERRV(ierr);
-  ierr = MatAssemblyEnd(bGamma1, MAT_FLUSH_ASSEMBLY); CHKERRV(ierr);
-
-  // set entries in the matrix
-  // loop over elements
-  for (element_no_t elementNo = 0; elementNo < functionSpaceFat->nElementsLocal(); elementNo++)
-  {
-    if (borderElementDofsFat_.find(elementNo) == borderElementDofsFat_.end())
-      continue;
-
-    // get the face
-    Mesh::face_t face = functionSpaceFat->getFaceFromElementalDofNos(borderElementDofsFat_[elementNo]);
-
-    LOG(DEBUG) << "In computation of bGamma1, element " << elementNo << ", face " << Mesh::getString(face);
-
-    // get indices of element-local dofs
-    std::array<dof_no_t,nDofsPerElement> dofNosLocal = functionSpaceFat->getElementDofNosLocal(elementNo);
-
-    // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
-    std::array<Vec3,FunctionSpace::nDofsPerElement()> geometry;
-    functionSpaceFat->getElementGeometry(elementNo, geometry);
-
-    // compute integral
-    for (unsigned int samplingPointIndex = 0; samplingPointIndex < samplingPoints.size(); samplingPointIndex++)
-    {
-      // evaluate function to integrate at samplingPoints[i*2], write value to evaluations[i]
-      Vec2 xiSurface = samplingPoints[samplingPointIndex];
-      Vec3 xi = Mesh::getXiOnFace(face, xiSurface);
-
-      // compute the 3xD jacobian of the parameter space to world space mapping
-      auto jacobian = FunctionSpace::computeJacobian(geometry, xi);
-      
-      EvaluationsType evaluations;
-
-      // get the factor in the integral that arises from the change in integration domain from world to coordinate space
-      double integrationFactor = MathUtility::computeIntegrationFactor<3>(jacobian);
-
-      // loop over pairs of basis functions and evaluation integrand at xi
-      // loop over all dofs in the element
-      for (int i = 0; i < nDofsPerElement; i++)
-      {
-        // loop over the dofs in the element that are on the border
-        for (int jIndex = 0; jIndex < nDofsPerElement2D; jIndex++)
-        {
-          int j = borderElementDofsFat_[elementNo][jIndex];
-          
-          double integrand = FunctionSpace::phi(i,xi) * FunctionSpace::phi(j,xi) * integrationFactor;
-          
-          evaluationsArray[samplingPointIndex](i, j) = integrand;
-        }
-      }
-    }  // function evaluations
-
-    // integrate all values for the (i,j) dof pairs at once
-    EvaluationsType integratedValues = Quadrature2D::computeIntegral(evaluationsArray);
-
-    // perform integration and add to entry in rhs vector
-    for (int i = 0; i < nDofsPerElement; i++)
-    {
-      for (int jIndex = 0; jIndex < nDofsPerElement2D; jIndex++)
-      {
-        int j = borderElementDofsFat_[elementNo][jIndex];
-        
-        // integrate value and set entry in discretization matrix
-        double integratedValue = -integratedValues(i, j);
-
-        ierr = MatSetValue(bGamma1, dofNosLocal[i], dofNosLocal[j], integratedValue, ADD_VALUES); CHKERRV(ierr);
-      }  // j
-    }  // i
-  }  // elementNo
-
-  // merge local changes in parallel and assemble the matrix (MatAssemblyBegin, MatAssemblyEnd)
-  ierr = MatAssemblyBegin(bGamma1, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
-  ierr = MatAssemblyEnd(bGamma1, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
 }
 
+template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusionMuscle,typename FiniteElementMethodDiffusionFat>
+void MultidomainWithFatSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusionMuscle,FiniteElementMethodDiffusionFat>::
+copyPhiBToSolution()
+{
+  // get entries from: dataFat_.extraCellularPotentialFat()->valuesGlobal()
+  // set entries in:  this->subvectorsSolution_[this->nCompartments_+1]
+  // discard the entries for shared dofs
+
+  Vec phiB = dataFat_.extraCellularPotentialFat()->valuesGlobal();
+  Vec solution = this->subvectorsSolution_[this->nCompartments_+1];
+
+  // get the local range that is stored on this rank for phiB
+  PetscInt dofNoGlobalBegin, dofNoGlobalEnd;
+  PetscErrorCode ierr;
+  ierr = VecGetOwnershipRange(phiB, &dofNoGlobalBegin, &dofNoGlobalEnd); CHKERRV(ierr);
+
+  PetscInt nEntriesLocal = dofNoGlobalEnd - dofNoGlobalBegin;
+
+  // get all values in phiB
+  std::vector<PetscInt> indices(nEntriesLocal);
+  std::iota(indices.begin(), indices.end(), dofNoGlobalBegin);
+  std::vector<double> values(nEntriesLocal);
+  ierr = VecGetValues(phiB, nEntriesLocal, indices.data(), values.data()); CHKERRV(ierr);
+
+  // loop over local entries of fat
+  for (PetscInt dofNoGlobal = dofNoGlobalBegin; dofNoGlobal < dofNoGlobalEnd; dofNoGlobal++)
+  {
+    PetscInt dofNoLocalFat = dofNoGlobal - dofNoGlobalBegin;
+
+    // if dof is not shared
+    if (borderDofsFat_.find(dofNoLocalFat) == borderDofsFat_.end())
+    {
+      // set the value in the solution
+      double value = values[dofNoLocalFat];
+      PetscInt dofNoGlobalWithoutSharedDofs = getDofNoGlobalFatWithoutSharedDofs(dofNoGlobal);
+      ierr = VecSetValue(solution, dofNoGlobalWithoutSharedDofs, value, INSERT_VALUES); CHKERRV(ierr);
+    }
+  }
+
+  // global assembly of solution Vec
+  ierr = VecAssemblyBegin(solution); CHKERRV(ierr);
+  ierr = VecAssemblyEnd(solution); CHKERRV(ierr);
+
+  LOG(DEBUG) << "copyPhiBToSolution: get from phi_b and set in solution";
+  LOG(DEBUG) << "borderDofsFat_: " << borderDofsFat_;
+  LOG(DEBUG) << "phi_b: " << PetscUtility::getStringVector(phiB);
+  LOG(DEBUG) << "solution: " << PetscUtility::getStringVector(solution);
+}
+
+template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusionMuscle,typename FiniteElementMethodDiffusionFat>
+void MultidomainWithFatSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusionMuscle,FiniteElementMethodDiffusionFat>::
+copySolutionToPhiB()
+{
+  // get entries from: this->subvectorsSolution_[this->nCompartments_+1]  (phi_b) (does not contain values for shared dofs)
+  // and:              this->subvectorsSolution_[this->nCompartments_]    (phi_e) (only get the shared dof values from here)
+  // set entries in:  dataFat_.extraCellularPotentialFat()->valuesGlobal()
+
+  Vec phiB = this->subvectorsSolution_[this->nCompartments_+1];
+  Vec phiE = this->subvectorsSolution_[this->nCompartments_];
+  Vec result = dataFat_.extraCellularPotentialFat()->valuesGlobal();
+
+  // get the local range that of phiB is stored on this rank for result
+  PetscInt dofNoGlobalBeginPhiB, dofNoGlobalEndPhiB;
+  PetscErrorCode ierr;
+  ierr = VecGetOwnershipRange(phiB, &dofNoGlobalBeginPhiB, &dofNoGlobalEndPhiB); CHKERRV(ierr);
+
+  PetscInt nEntriesLocal = dofNoGlobalEndPhiB - dofNoGlobalBeginPhiB;
+
+  // get all values in phiB
+  std::vector<PetscInt> indicesPhiB(nEntriesLocal);
+  std::iota(indicesPhiB.begin(), indicesPhiB.end(), dofNoGlobalBeginPhiB);
+  std::vector<double> valuesPhiB(nEntriesLocal);
+  
+  ierr = VecGetValues(phiB, nEntriesLocal, indicesPhiB.data(), valuesPhiB.data()); CHKERRV(ierr);
+
+  // get the local range of phiE that is stored on this rank for result
+  PetscInt dofNoGlobalBeginPhiE, dofNoGlobalEndPhiE;
+  ierr = VecGetOwnershipRange(phiE, &dofNoGlobalBeginPhiE, &dofNoGlobalEndPhiE); CHKERRV(ierr);
+  nEntriesLocal = dofNoGlobalEndPhiE - dofNoGlobalBeginPhiE;
+
+  // get all values in phiE
+  std::vector<PetscInt> indicesPhiE(nEntriesLocal);
+  std::iota(indicesPhiE.begin(), indicesPhiE.end(), dofNoGlobalBeginPhiE);
+  std::vector<double> valuesPhiE(nEntriesLocal);
+
+  ierr = VecGetValues(phiE, nEntriesLocal, indicesPhiE.data(), valuesPhiE.data()); CHKERRV(ierr);
+
+  PetscInt dofNoGlobalBeginFat, dofNoGlobalEndFat;
+  ierr = VecGetOwnershipRange(result, &dofNoGlobalBeginFat, &dofNoGlobalEndFat); CHKERRV(ierr);
+
+  LOG(DEBUG) << "phiB: [" << dofNoGlobalBeginPhiB << "," << dofNoGlobalEndPhiB << "]";
+  LOG(DEBUG) << "phiE: [" << dofNoGlobalBeginPhiE << "," << dofNoGlobalEndPhiE << "]";
+  LOG(DEBUG) << "result: [" << dofNoGlobalBeginFat << "," << dofNoGlobalEndFat << "]";
+
+  // loop over local entries of result which is on the fat mesh
+  for (PetscInt dofNoGlobalFat = dofNoGlobalBeginFat; dofNoGlobalFat < dofNoGlobalEndFat; dofNoGlobalFat++)
+  {
+    PetscInt dofNoLocalFat = dofNoGlobalFat - dofNoGlobalBeginFat;
+
+    // if dof is shared, use value from phiE
+    if (borderDofsFat_.find(dofNoLocalFat) != borderDofsFat_.end())
+    {
+      // set the value in the result
+      PetscInt dofNoGlobalMuscle = getDofNoGlobalMuscleFromDofNoGlobalFat(dofNoGlobalFat);
+      PetscInt dofNoLocalMuscle = dofNoGlobalMuscle - dofNoGlobalBeginPhiE;
+      double value = valuesPhiE[dofNoLocalMuscle];
+      ierr = VecSetValue(result, dofNoGlobalFat, value, INSERT_VALUES); CHKERRV(ierr);
+    }
+    else 
+    {
+      // if dof is not shared, use value from phiB
+      PetscInt dofNoGlobalFatWithoutSharedDofs = getDofNoGlobalFatWithoutSharedDofs(dofNoGlobalFat);
+      PetscInt dofNoLocalFat = dofNoGlobalFatWithoutSharedDofs - dofNoGlobalBeginPhiB;
+      double value = valuesPhiB[dofNoLocalFat];
+      ierr = VecSetValue(result, dofNoGlobalFat, value, INSERT_VALUES); CHKERRV(ierr);
+    }
+  }
+
+  // global assembly of result Vec
+  ierr = VecAssemblyBegin(result); CHKERRV(ierr);
+  ierr = VecAssemblyEnd(result); CHKERRV(ierr);
+
+  LOG(DEBUG) << "copySolutionToPhiB: from phi_b and phi_e get result = whole phi_b";
+  LOG(DEBUG) << "borderDofsFat_: " << borderDofsFat_;
+  LOG(DEBUG) << "phi_b (without shared dofs): " << PetscUtility::getStringVector(phiB);
+  LOG(DEBUG) << "phi_e (with shared dofs): " << PetscUtility::getStringVector(phiE);
+  LOG(DEBUG) << "result: " << PetscUtility::getStringVector(result);
+}
 
 } // namespace TimeSteppingScheme

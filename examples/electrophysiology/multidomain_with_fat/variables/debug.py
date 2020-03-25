@@ -11,6 +11,7 @@ sigma_e_xf = 3.35           # [mS/cm] conductivity in extracellular space, cross
 
 Am = 500.0                  # [cm^-1] surface area to volume ratio
 Cm = 0.58                   # [uF/cm^2] membrane capacitance, (1 = fast twitch, 0.58 = slow twitch)
+Am = 10.0  # set Am lower such that there is more diffusion
 # diffusion prefactor = Conductivity/(Am*Cm)
 
 # timing and activation parameters
@@ -41,10 +42,10 @@ firing_times_file = "../../input/MU_firing_times_immediately.txt"
 
 
 # stride for sampling the 3D elements from the fiber data
-sampling_stride_x = 1
-sampling_stride_y = 1
-sampling_stride_z = 20
-#sampling_stride_z = 50   # faster, but stimulus does not propagate
+sampling_stride_x = 3
+sampling_stride_y = 3
+#sampling_stride_z = 20
+sampling_stride_z = 50   # faster, but stimulus does not propagate
 
 # other options
 paraview_output = True

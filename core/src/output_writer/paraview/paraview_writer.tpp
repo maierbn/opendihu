@@ -155,7 +155,7 @@ outputFile(std::string filename, FieldVariablesForOutputWriterType fieldVariable
     file.close();
     
     // register file at SeriesWriter to be included in the "*.vtk.series" JSON file
-    Paraview::seriesWriter().registerNewFile(s.str(), currentTime);
+    Paraview::seriesWriter().registerNewFile(std::string(s.str()), currentTime);
 
     // write serial slave file
     s.str("");
@@ -427,7 +427,7 @@ outputFile(std::string filename, FieldVariablesForOutputWriterType fieldVariable
     file.close();
     
     // register file at SeriesWriter to be included in the "*.vtk.series" JSON file
-    Paraview::seriesWriter().registerNewFile(s.str(), currentTime);
+    Paraview::seriesWriter().registerNewFile(std::string(s.str()), currentTime);
 
     // write serial slave file
     s.str("");
@@ -657,7 +657,7 @@ outputFile(std::string filename, FieldVariablesForOutputWriterType fieldVariable
     << "</VTKFile>" << std::endl;
     
   // register file at SeriesWriter to be included in the "*.vtk.series" JSON file
-  Paraview::seriesWriter().registerNewFile(s.str(), currentTime);
+  Paraview::seriesWriter().registerNewFile(std::string(s.str()), currentTime);
 
 }
   

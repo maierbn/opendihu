@@ -57,9 +57,6 @@ public:
   //! initialize and set nCompartments_
   void initialize(int nCompartments);
 
-  //! set the subvectors solution data
-  void setSubvectorsSolution(const std::vector<Vec> &subvectorsSolution);
-
   //! print all stored data to stdout
   void print();
 

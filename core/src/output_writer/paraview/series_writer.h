@@ -1,7 +1,11 @@
 #pragma once
 
+#include <Python.h>  // has to be the first included header
+
 #include <iostream>
-#include <vector>
+#include <memory>
+#include <string>
+#include <map>
 
 namespace OutputWriter
 {
@@ -27,15 +31,13 @@ public:
 
 protected:
 
-  struct SeriesEntry{
-    std::string filename;
-    double time;
+  struct SeriesFile
+  {
+    std::string filename;       //< name of the series file
+    std::string fileContents;   //< file contents except the last "]}"
   };
 
-  std::string filename_;                     //< filename of the series file
-  std::vector<SeriesEntry> seriesEntries_;   //< all entries of the series file
-
-  std::string fileContents_;                 //< file contents except the last "]}"
+  std::map<std::string,SeriesFile> seriesFiles_;   // all series files  
 };
 
 } // namespace

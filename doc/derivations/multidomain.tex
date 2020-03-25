@@ -611,20 +611,23 @@ With the body potential, $\bfphi_b$, and for $M_\text{mu}=1$ motor unit, we get 
     \end{array}\right]\\[4mm]
     \Leftrightarrow
     \quad 
-    \left[\begin{array}{@{}c|c|c@{}}
-      \bfA_{V_m,V_m} & \bfB_{V_m,\phi_e}\\[2mm]
-      \bfB_{\phi_e,V_m} & \bfB_{\phi_e,\phi_e} & \bfC_{\phi_b,\phi_b}\\[2mm]\hline
-      & \bfI_{\Gamma_M} & -\bfI_{\Gamma_M}
+    \left[\begin{array}{@{}c|c|c|c@{}}
+      \bfA_{V_m,V_m} & \bfB_{V_m,\phi_e} & &\\[2mm]
+      \bfB_{\phi_e,V_m} & \bfB_{\phi_e,\phi_e} & &\bfB_{\Gamma_M} \\[2mm] \hline
+      &&\bfC_{\phi_b,\phi_b} & -\bfB_{\Gamma_M}\\[2mm]\hline
+      & \bfI_{\Gamma_M} & -\bfI_{\Gamma_M} &\\[2mm]
     \end{array}\right]
     \left[\begin{array}{@{}c@{}}
       V_{m}^{(i+1)}  \\[2mm]\hline 
       \bfphi_{e}^{(i+1)} \\[2mm]\hline
-      \bfphi_{b}^{(i+1)} 
+      \bfphi_{b}^{(i+1)}  \\[2mm]\hline
+      \bfq^{(i+1)}
     \end{array}\right]
     = 
     \left[\begin{array}{@{}c@{}}
       \bfb_{V_m}^{(i+1)} \\[2mm]
       \bfzero\\\hline
+      \bfzero\\\hline 
       \bfzero
     \end{array}\right]
   \end{array},
@@ -636,6 +639,7 @@ where
     \bfB_{V_m,\phi_e} = \dfrac{1}{A_m^k\,C_m^k}\theta\,\bfK_{\bfsigma_i^k},\\[4mm]
     \bfB_{\phi_e,V_m} = f_r^k \,\bfK_{\bfsigma_i^k},\\[4mm]
     \bfB_{\phi_e,\phi_e} = \bfK_{\bfsigma_e + \bfsigma_i},\\[4mm]
+    \bfB_{\Gamma_B,kj} = \ds\int_{\Gamma_M} \psi_j\,\varphi_k \,\d\bfx,\\[4mm]
     \bfC_{\phi_b,\phi_b} = \bfK_{\bfsigma_b},\\[4mm]
     \bfI_{\Gamma_M} \text{ containing 1 entries for boundary dofs},\\[4mm]
     \bfb_{V_m}^{(i+1)} = \big((\theta-1)\, \dfrac{1}{A_m^k\,C_m^k}\bfK_{\bfsigma_i^k} - \dfrac{1}{dt}\bfM\big) \bfV_m^{(i)} 

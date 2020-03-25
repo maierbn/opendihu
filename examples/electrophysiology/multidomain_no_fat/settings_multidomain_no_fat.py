@@ -185,7 +185,7 @@ def set_specific_states(n_nodes_global, time_step_no, current_time, states, comp
             for i in range(n_nodes_x):
               if x_index_center-1 <= i <= x_index_center+1:
                 key = ((i,j,k),0,0)        # key: ((x,y,z),nodal_dof_index,state_no)
-                states[key] = 40.0
+                states[key] = 20.0
                 #print("set states at ({},{},{}) to 40".format(i,j,k))
 
     #print("states: {}".format(states))
@@ -273,8 +273,8 @@ config = {
       "dumpFilename":       "",
     },
     "activationSolver": {
-      "relativeTolerance":  1e-10,
-      "absoluteTolerance":  1e-10,         # 1e-10 absolute tolerance of the residual          
+      "relativeTolerance":  1e-15,
+      "absoluteTolerance":  1e-15,         # 1e-10 absolute tolerance of the residual          
       "maxIterations":      1e3,
       "solverType":         "gmres",
       "preconditionerType": "none",

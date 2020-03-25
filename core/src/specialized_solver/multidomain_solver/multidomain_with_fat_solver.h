@@ -20,6 +20,7 @@ public:
     typename FiniteElementMethodDiffusionMuscle::FunctionSpace,
     typename FiniteElementMethodDiffusionFat::FunctionSpace
   > DataFat;
+  typedef typename FiniteElementMethodDiffusionMuscle::FunctionSpace FunctionSpace;
 
   //! constructor
   MultidomainWithFatSolver(DihuContext context);
@@ -47,10 +48,17 @@ protected:
   //! initialize the last entry of the rhs and the two matrices I_ΓM and -I_ΓM that contains 1's for dof on the border between muscle and fat mesh
   void initializeBorderVariables();
 
+  //! compute the two matrices bGamma0 and bGamma1, B_ΓM and -B_ΓM
+  void computeBorderMatrices(Mat bGamma0, Mat bGamma1);
+
   DataFat dataFat_;  //< the data object of the multidomain solver with fat, which stores all field variables and matrices
   FiniteElementMethodDiffusionFat finiteElementMethodFat_;   //< the finite element object that is used for the Laplace problem of the potential flow, needed for the fiber directions
 
   std::map<node_no_t,node_no_t> sharedNodes_;   //< the node nos that are shared between the muscle mesh (key) and the fat mesh (value)
+  std::set<dof_no_t> borderDofsMuscle_;         //< all dofs with no in the muscle mesh on the border ΓM
+  std::set<dof_no_t> borderDofsFat_;            //< all dofs with no in the fat mesh on the border ΓM
+  std::map<element_no_t,std::array<dof_no_t,::FunctionSpace::FunctionSpaceBaseDim<2,typename FunctionSpace::BasisFunction>::nDofsPerElement()>> borderElementDofsMuscle_;  //< the elements and the adjacent dofs of the border Γ_M
+  std::map<element_no_t,std::array<dof_no_t,::FunctionSpace::FunctionSpaceBaseDim<2,typename FunctionSpace::BasisFunction>::nDofsPerElement()>> borderElementDofsFat_;     //< the elements and the adjacent dofs of the border Γ_M
 
   std::vector<Mat> b1_;          //< b1^k = ((θ-1)*1/(Am^k*Cm^k)*K_sigmai^k - 1/dt*M), first factor matrix for rhs entry b, for compartment k, total: b = b1_ * Vm^(i) + b2_ * phi_e^(i)
   std::vector<Mat> b2_;          //< b2^k = (θ-1)*K_sigmai^k, second factor matrix for rhs entry b, for compartment k, total: b = b1_ * Vm^(i) + b2_ * phi_e^(i) 
@@ -62,3 +70,4 @@ protected:
 }  // namespace
 
 #include "specialized_solver/multidomain_solver/multidomain_with_fat_solver.tpp"
+#include "specialized_solver/multidomain_solver/multidomain_with_fat_border_matrices.tpp"

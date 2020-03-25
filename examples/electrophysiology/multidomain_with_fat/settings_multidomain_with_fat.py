@@ -116,6 +116,7 @@ multidomain_solver = {
   "inputIsGlobal":                    True,                               # if values and dofs correspond to the global numbering
   "showLinearSolverOutput":           False,                              # if convergence information of the linear solver in every timestep should be printed, this is a lot of output for fast computations
   "compartmentRelativeFactors":       variables.relative_factors.tolist(),          # list of lists of the factors for every dof, because "inputIsGlobal": True, this contains the global dofs
+  "theta":                            0.5,                                # weighting factor of implicit term in Crank-Nicolson scheme, 0.5 gives the classic, 2nd-order Crank-Nicolson scheme, 1.0 gives implicit euler
   "PotentialFlow": {
     "FiniteElementMethod" : {  
       "meshName":                     "3Dmesh",

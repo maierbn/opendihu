@@ -77,9 +77,10 @@ advanceTimeSpan()
     //dataMultidomain_.subcellularStates(0)->extractComponent(0, dataMultidomain_.transmembranePotential(0));
     LOG(DEBUG) << *dataMultidomain_.transmembranePotential(0);
 
-    if (this->timeStepWidthOfSystemMatrix_ != this->timeStepWidth_)
+    if (fabs(this->timeStepWidthOfSystemMatrix_ - this->timeStepWidth_) / this->timeStepWidth_ > 1e-4)
     {
-      LOG(WARNING) << "In multidomain solver, timestep width changed from " << this->timeStepWidthOfSystemMatrix_ << " to " << timeStepWidth_ << ", need to recreate system matrix.";
+      LOG(WARNING) << "In multidomain solver, timestep width changed from " << this->timeStepWidthOfSystemMatrix_ << " to " << timeStepWidth_
+        << " (relative: " << fabs(this->timeStepWidthOfSystemMatrix_ - this->timeStepWidth_) / this->timeStepWidth_ << ", need to recreate system matrix.";
       this->timeStepWidthOfSystemMatrix_ = this->timeStepWidth_;
       setSystemMatrixSubmatrices(this->timeStepWidthOfSystemMatrix_);
       createSystemMatrix();
@@ -219,7 +220,12 @@ initialize()
   // initialize system matrix
   this->timeStepWidthOfSystemMatrix_ = this->timeStepWidth_;
   setSystemMatrixSubmatrices(this->timeStepWidthOfSystemMatrix_);
-  createSystemMatrix();
+
+  bool isSystemMatrixInitialized = nColumnSubmatricesSystemMatrix_ == nCompartments_+1;
+
+  // only create nested submatrix here, if this is normal multidomain without fat layer
+  if (isSystemMatrixInitialized)
+    createSystemMatrix();
 
   LOG(DEBUG) << "initialize linear solver";
 
@@ -233,18 +239,21 @@ initialize()
 
   LOG(DEBUG) << "set system matrix to linear solver";
 
-  // set matrix used for linear solver and preconditioner to ksp context
-  assert(this->linearSolver_->ksp());
-  PetscErrorCode ierr;
-  ierr = KSPSetOperators(*this->linearSolver_->ksp(), singleSystemMatrix_, singleSystemMatrix_); CHKERRV(ierr);
+  if (isSystemMatrixInitialized)
+  {
+    // set matrix used for linear solver and preconditioner to ksp context
+    assert(this->linearSolver_->ksp());
+    PetscErrorCode ierr;
+    ierr = KSPSetOperators(*this->linearSolver_->ksp(), singleSystemMatrix_, singleSystemMatrix_); CHKERRV(ierr);
 
-  // set the nullspace of the matrix
-  // as we have Neumann boundary conditions, constant functions are in the nullspace of the matrix
-  MatNullSpace nullSpace;
-  ierr = MatNullSpaceCreate(data().functionSpace()->meshPartition()->mpiCommunicator(), PETSC_TRUE, 0, PETSC_NULL, &nullSpace); CHKERRV(ierr);
-  ierr = MatSetNullSpace(singleSystemMatrix_, nullSpace); CHKERRV(ierr);
-  ierr = MatSetNearNullSpace(singleSystemMatrix_, nullSpace); CHKERRV(ierr); // for multigrid methods
-  //ierr = MatNullSpaceDestroy(&nullSpace); CHKERRV(ierr);
+    // set the nullspace of the matrix
+    // as we have Neumann boundary conditions, constant functions are in the nullspace of the matrix
+    MatNullSpace nullSpace;
+    ierr = MatNullSpaceCreate(data().functionSpace()->meshPartition()->mpiCommunicator(), PETSC_TRUE, 0, PETSC_NULL, &nullSpace); CHKERRV(ierr);
+    ierr = MatSetNullSpace(singleSystemMatrix_, nullSpace); CHKERRV(ierr);
+    ierr = MatSetNearNullSpace(singleSystemMatrix_, nullSpace); CHKERRV(ierr); // for multigrid methods
+    //ierr = MatNullSpaceDestroy(&nullSpace); CHKERRV(ierr);
+  }
 
   // initialize rhs and solution vector
   subvectorsRightHandSide_.resize(nCompartments_+1);
@@ -260,17 +269,21 @@ initialize()
   // set values for phi_e
   subvectorsRightHandSide_[nCompartments_] = dataMultidomain_.zero()->valuesGlobal();
   subvectorsSolution_[nCompartments_] = dataMultidomain_.extraCellularPotential()->valuesGlobal();
+  PetscErrorCode ierr;
   ierr = VecZeroEntries(subvectorsSolution_[nCompartments_]); CHKERRV(ierr);
 
   //dataMultidomain_.setSubvectorsSolution(subvectorsSolution_);
 
-  // create the nested vectors
-  LOG(DEBUG) << "create nested vector";
-  ierr = VecCreateNest(this->rankSubset_->mpiCommunicator(), nCompartments_+1, NULL, subvectorsRightHandSide_.data(), &nestedRightHandSide_); CHKERRV(ierr);
-  ierr = VecCreateNest(this->rankSubset_->mpiCommunicator(), nCompartments_+1, NULL, subvectorsSolution_.data(), &nestedSolution_); CHKERRV(ierr);
+  if (isSystemMatrixInitialized)
+  {
+    // create the nested vectors
+    LOG(DEBUG) << "create nested vector";
+    ierr = VecCreateNest(this->rankSubset_->mpiCommunicator(), nCompartments_+1, NULL, subvectorsRightHandSide_.data(), &nestedRightHandSide_); CHKERRV(ierr);
+    ierr = VecCreateNest(this->rankSubset_->mpiCommunicator(), nCompartments_+1, NULL, subvectorsSolution_.data(), &nestedSolution_); CHKERRV(ierr);
 
-  // copy the values from a nested Petsc Vec to a single Vec that contains all entries
-  NestedMatVecUtility::createVecFromNestedVec(nestedRightHandSide_, singleRightHandSide_, data().functionSpace()->meshPartition()->rankSubset());
+    // copy the values from a nested Petsc Vec to a single Vec that contains all entries
+    NestedMatVecUtility::createVecFromNestedVec(nestedRightHandSide_, singleRightHandSide_, data().functionSpace()->meshPartition()->rankSubset());
+  }
 
   LOG(DEBUG) << "initialization done";
   this->initialized_ = true;
@@ -497,9 +510,32 @@ template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodD
 void MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
 createSystemMatrix()
 {
-  // delete previous matrix if set
   PetscErrorCode ierr;
-  ierr = MatDestroy(&nestedSystemMatrix_); CHKERRV(ierr);
+  assert(submatricesSystemMatrix_.size() == nColumnSubmatricesSystemMatrix_*nColumnSubmatricesSystemMatrix_);
+
+#ifndef NDEBUG
+  LOG(DEBUG) << "nested matrix with " << nColumnSubmatricesSystemMatrix_ << "x" << nColumnSubmatricesSystemMatrix_ << " submatrices, nCompartments_=" << nCompartments_;
+
+  // output dimensions of submatrices for debugging
+  for (int rowNo = 0; rowNo < nColumnSubmatricesSystemMatrix_; rowNo++)
+  {
+    for (int columnNo = 0; columnNo < nColumnSubmatricesSystemMatrix_; columnNo++)
+    {
+      Mat subMatrix = submatricesSystemMatrix_[rowNo*nColumnSubmatricesSystemMatrix_ + columnNo];
+      
+      if (!subMatrix)
+      {
+        LOG(DEBUG) << "submatrix (" << rowNo << "," << columnNo << ") is empty (NULL)";
+      }
+      else
+      {
+        PetscInt nRows, nColumns;
+        ierr = MatGetSize(subMatrix, &nRows, &nColumns); CHKERRV(ierr);
+        LOG(DEBUG) << "submatrix (" << rowNo << "," << columnNo << ") is " << nRows << "x" << nColumns;
+      }
+    }
+  }
+#endif
 
   // create nested matrix
   ierr = MatCreateNest(this->rankSubset_->mpiCommunicator(),

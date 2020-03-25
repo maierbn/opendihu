@@ -16,7 +16,7 @@ public:
 
   //! constructor, create square sparse matrix
   PartitionedPetscMat(std::shared_ptr<Partition::MeshPartition<RowsFunctionSpaceType>> meshPartition,
-                      int nComponents, int diagonalNonZeros, int offdiagonalNonZeros, std::string name);
+                      int nComponents, int nNonZerosDiagonal, int nNonZerosOffdiagonal, std::string name);
 
   //! constructor, create square dense matrix
   PartitionedPetscMat(std::shared_ptr<Partition::MeshPartition<RowsFunctionSpaceType>> meshPartition,
@@ -25,7 +25,7 @@ public:
   //! constructor, create non-square sparse matrix
   PartitionedPetscMat(std::shared_ptr<Partition::MeshPartition<RowsFunctionSpaceType>> meshPartitionRows,
                       std::shared_ptr<Partition::MeshPartition<ColumnsFunctionSpaceType>> meshPartitionColumns,
-                      int nComponents, int diagonalNonZeros, int offdiagonalNonZeros, std::string name);
+                      int nComponents, int nNonZerosDiagonal, int nNonZerosOffdiagonal, std::string name);
 
   //! constructor, create non-square dense matrix
   PartitionedPetscMat(std::shared_ptr<Partition::MeshPartition<RowsFunctionSpaceType>> meshPartitionRows,

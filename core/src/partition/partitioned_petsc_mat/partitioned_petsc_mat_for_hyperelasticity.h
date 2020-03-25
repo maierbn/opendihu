@@ -39,7 +39,7 @@ public:
   //! constructor, create square sparse matrix, the number of entries is given by partitionedPetscVecForHyperelasticity
   PartitionedPetscMatForHyperelasticity(
     std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,nDisplacementComponents>> partitionedPetscVecForHyperelasticity,
-    int diagonalNonZeros, int offdiagonalNonZeros,
+    int nNonZerosDiagonal, int nNonZerosOffdiagonal,
     std::string name);
 
   //! this is the only special set function to set entries in the jacobian matrix.

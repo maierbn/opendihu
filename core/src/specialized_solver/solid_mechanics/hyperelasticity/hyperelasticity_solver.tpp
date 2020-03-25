@@ -335,11 +335,11 @@ HyperelasticitySolver<Term,nDisplacementComponents>::
 createPartitionedPetscMat(std::string name)
 {
   // determine number of non zero entries in matrix
-  int diagonalNonZeros, offdiagonalNonZeros;
-  ::Data::FiniteElementsBase<DisplacementsFunctionSpace,1>::getPetscMemoryParameters(diagonalNonZeros, offdiagonalNonZeros);
+  int nNonZerosDiagonal, nNonZerosOffdiagonal;
+  ::Data::FiniteElementsBase<DisplacementsFunctionSpace,1>::getPetscMemoryParameters(nNonZerosDiagonal, nNonZerosOffdiagonal);
 
   return std::make_shared<MatHyperelasticity>(
-    combinedVecSolution_, 4*diagonalNonZeros, 4*offdiagonalNonZeros, name);
+    combinedVecSolution_, 4*nNonZerosDiagonal, 4*nNonZerosOffdiagonal, name);
 }
 
 

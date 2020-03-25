@@ -331,10 +331,10 @@ void createMatFromNestedMat(Mat nestedMat, Mat &singleMat, std::shared_ptr<Parti
     // MATAIJ = "aij" - A matrix type to be used for sparse matrices. This matrix type is identical to MATSEQAIJ when constructed with a single process communicator, and MATMPIAIJ otherwise.
     // As a result, for single process communicators, MatSeqAIJSetPreallocation is supported, and similarly MatMPIAIJSetPreallocation is supported for communicators controlling multiple processes.
     // It is recommended that you call both of the above preallocation routines for simplicity.
-    PetscInt diagonalNonZeros = nMaximumNonzerosPerRow;
-    PetscInt offdiagonalNonZeros = nMaximumNonzerosPerRow;
-    ierr = MatSeqAIJSetPreallocation(singleMat, diagonalNonZeros, NULL); CHKERRV(ierr);
-    ierr = MatMPIAIJSetPreallocation(singleMat, diagonalNonZeros, NULL, offdiagonalNonZeros, NULL); CHKERRV(ierr);
+    PetscInt nNonZerosDiagonal = nMaximumNonzerosPerRow;
+    PetscInt nNonZerosOffdiagonal = nMaximumNonzerosPerRow;
+    ierr = MatSeqAIJSetPreallocation(singleMat, nNonZerosDiagonal, NULL); CHKERRV(ierr);
+    ierr = MatMPIAIJSetPreallocation(singleMat, nNonZerosDiagonal, NULL, nNonZerosOffdiagonal, NULL); CHKERRV(ierr);
     
     // get name of first sub Mat
     std::string name;

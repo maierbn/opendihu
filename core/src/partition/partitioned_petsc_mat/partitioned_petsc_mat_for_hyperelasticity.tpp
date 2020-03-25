@@ -4,7 +4,7 @@ template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpace
 PartitionedPetscMatForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,nDisplacementComponents>::
 PartitionedPetscMatForHyperelasticity(
     std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,nDisplacementComponents>> partitionedPetscVecForHyperelasticity,
-    int diagonalNonZeros, int offdiagonalNonZeros,
+    int nNonZerosDiagonal, int nNonZerosOffdiagonal,
     std::string name
 ) : PartitionedPetscMatOneComponent<FunctionSpace::Generic>(
 
@@ -12,14 +12,14 @@ PartitionedPetscMatForHyperelasticity(
   DihuContext::meshManager()->createGenericFunctionSpace(
     partitionedPetscVecForHyperelasticity->nEntriesLocal(), partitionedPetscVecForHyperelasticity->meshPartition(), std::string("genericMeshForMatrix")+name)->meshPartition(),
 
-  diagonalNonZeros, offdiagonalNonZeros, name
+  nNonZerosDiagonal, nNonZerosOffdiagonal, name
 ),
 partitionedPetscVecForHyperelasticity_(partitionedPetscVecForHyperelasticity)
 {
 
 /*
  PartitionedPetscMatOneComponent(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>>> meshPartition,
-                                  int diagonalNonZeros, int offdiagonalNonZeros, std::string name);
+                                  int nNonZerosDiagonal, int nNonZerosOffdiagonal, std::string name);
  */
 }
 

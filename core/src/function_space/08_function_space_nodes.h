@@ -5,6 +5,7 @@
 #include <array>
 #include "control/types.h"
 #include "function_space/07_function_space_faces.h"
+#include "function_space/00_function_space_base_dim.h"
 #include "mesh/mesh.h"
 
 namespace FunctionSpace
@@ -25,6 +26,8 @@ public:
   std::array<dof_no_t,FunctionSpaceFunction<MeshType,BasisFunctionType>::nNodesPerElement()>
   getElementNodeNos(element_no_t elementNo) const;
 
+  //! get the face that is defined by the dof nos in the element
+  Mesh::face_t getFaceFromElementalDofNos(std::array<int,FunctionSpaceBaseDim<MeshType::dim()-1,BasisFunctionType>::nDofsPerElement()> elementalDofNos);
 };
 
 /** Partial specialization for CompletePolynomials which do not need nodes and thus have no nodes functionality.

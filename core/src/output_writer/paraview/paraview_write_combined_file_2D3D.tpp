@@ -780,6 +780,12 @@ void Paraview::writeCombinedUnstructuredGridFile(const FieldVariablesForOutputWr
 
   Control::PerformanceMeasurement::stop("durationParaview3DWrite");
   MPIUtility::handleReturnValue(MPI_File_close(&fileHandle), "MPI_File_close");
+
+  // register file at SeriesWriter to be included in the "*.vtk.series" JSON file
+  if (ownRankNo == 0)
+  {
+    Paraview::seriesWriter().registerNewFile(filenameStr, this->currentTime_);
+  }
 }
 
 

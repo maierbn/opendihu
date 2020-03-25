@@ -14,9 +14,12 @@
 #include <mesh/structured_deformable.h>
 #include <mesh/unstructured_deformable.h>
 #include <mesh/mesh.h>
+#include "output_writer/paraview/series_writer.h"
 
 namespace OutputWriter
 {
+
+SeriesWriter Paraview::seriesWriter_;
 
 Paraview::Paraview(DihuContext context, PythonConfig settings, std::shared_ptr<Partition::RankSubset> rankSubset) :
   Generic(context, settings, rankSubset)
@@ -104,5 +107,9 @@ std::string Paraview::convertToAscii(const std::vector<int> &vector, bool fixedF
 }
 #endif
 
+SeriesWriter &Paraview::seriesWriter()
+{
+  return Paraview::seriesWriter_;
+}
 
 }  // namespace

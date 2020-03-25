@@ -16,7 +16,7 @@ template<int D, typename BasisFunctionType, typename FieldVariablesForOutputWrit
 void ParaviewWriter<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>, BasisFunctionType>, FieldVariablesForOutputWriterType>::
 outputFile(std::string filename, FieldVariablesForOutputWriterType fieldVariables, std::string meshName, 
            std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>, BasisFunctionType>> mesh,
-           int nFieldVariablesOfMesh, PythonConfig specificSettings)
+           int nFieldVariablesOfMesh, PythonConfig specificSettings, double currentTime)
 {
   // write a RectilinearGrid
 
@@ -153,6 +153,9 @@ outputFile(std::string filename, FieldVariablesForOutputWriterType fieldVariable
       << "</VTKFile>" << std::endl;
 
     file.close();
+    
+    // register file at SeriesWriter to be included in the "*.vtk.series" JSON file
+    Paraview::seriesWriter().registerNewFile(s.str(), currentTime);
 
     // write serial slave file
     s.str("");
@@ -295,7 +298,7 @@ template<int D, typename BasisFunctionType, typename FieldVariablesForOutputWrit
 void ParaviewWriter<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>, BasisFunctionType>, FieldVariablesForOutputWriterType>::
 outputFile(std::string filename, FieldVariablesForOutputWriterType fieldVariables, std::string meshName, 
            std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>, BasisFunctionType>> mesh,
-           int nFieldVariablesOfMesh, PythonConfig specificSettings)
+           int nFieldVariablesOfMesh, PythonConfig specificSettings, double currentTime)
 {
   // write a StructuredGrid
 
@@ -422,6 +425,9 @@ outputFile(std::string filename, FieldVariablesForOutputWriterType fieldVariable
       << "</VTKFile>" << std::endl;
 
     file.close();
+    
+    // register file at SeriesWriter to be included in the "*.vtk.series" JSON file
+    Paraview::seriesWriter().registerNewFile(s.str(), currentTime);
 
     // write serial slave file
     s.str("");
@@ -502,7 +508,7 @@ template<int D, typename BasisFunctionType, typename FieldVariablesForOutputWrit
 void ParaviewWriter<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FieldVariablesForOutputWriterType>::
 outputFile(std::string filename, FieldVariablesForOutputWriterType fieldVariables, std::string meshName, 
            std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>> mesh,
-           int nFieldVariablesOfMesh, PythonConfig specificSettings)
+           int nFieldVariablesOfMesh, PythonConfig specificSettings, double currentTime)
 {
   // write an UnstructuredGrid
   // determine file name
@@ -649,6 +655,10 @@ outputFile(std::string filename, FieldVariablesForOutputWriterType fieldVariable
     << std::string(2, '\t') << "</Piece>" << std::endl
     << std::string(1, '\t') << "</UnstructuredGrid>" << std::endl
     << "</VTKFile>" << std::endl;
+    
+  // register file at SeriesWriter to be included in the "*.vtk.series" JSON file
+  Paraview::seriesWriter().registerNewFile(s.str(), currentTime);
+
 }
   
 }  // namespace

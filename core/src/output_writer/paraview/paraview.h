@@ -7,6 +7,7 @@
 #include "control/types.h"
 #include "output_writer/generic.h"
 #include "output_writer/paraview/poly_data_properties_for_mesh.h"
+#include "output_writer/paraview/series_writer.h"
 
 namespace OutputWriter
 {
@@ -77,6 +78,9 @@ public:
   static std::string convertToAscii(const std::vector<int> &vector, bool humanReadable);
 #endif
 
+  //! return a reference to the series writer
+  static SeriesWriter &seriesWriter();
+
 protected:
 
   /** one VTKPiece is the XML element that will be output as <Piece></Piece>. It is created from one or multiple opendihu meshes
@@ -136,6 +140,8 @@ protected:
   std::map<std::string, int> nCellsPreviousRanks3D_;   ///< sum of number of cells on other processes with lower rank no., for vtu file
   std::map<std::string, int> nPointsPreviousRanks3D_;  ///< sum of number of points on other processes with lower rank no., for vtu file
   std::map<int,int> nPointsGlobal3D_ ;                 ///< total number of points on all ranks, for vtu file, key is the callIdentifier
+  
+  static SeriesWriter seriesWriter_;                   ///< the global SeriesWriter object that writes "*.vtk.series" file which contain all written filenames and times
 };
 
 } // namespace

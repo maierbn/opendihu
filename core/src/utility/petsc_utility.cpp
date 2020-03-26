@@ -95,6 +95,24 @@ void setVector(const std::vector<double> &vectorValues, Vec& vector)
   VecAssemblyEnd(vector);
 }
 
+void createVector(Vec& vector, int nEntries, std::string name)
+{
+  PetscErrorCode ierr;
+  // create PETSc vector object
+  ierr = VecCreate(PETSC_COMM_WORLD, &vector);  CHKERRV(ierr);
+
+  if (name != "")
+  {
+    ierr = PetscObjectSetName((PetscObject)vector, name.c_str()); CHKERRV(ierr);
+  }
+
+  // initialize size of vector
+  ierr = VecSetSizes(vector, PETSC_DECIDE, nEntries); CHKERRV(ierr);
+
+  // set sparsity type and other options
+  ierr = VecSetFromOptions(vector);  CHKERRV(ierr);
+}
+
 std::string getStringMatrixVector(const Mat& matrix, const Vec& vector)
 {
 #ifdef NDEBUG
@@ -243,22 +261,62 @@ std::string getStringVector(const Vec& vector)
 #ifdef NDEBUG
   return std::string("");
 #else
-  std::vector<double> vectorValues;
-  getVectorEntries(vector, vectorValues);
+  PetscErrorCode ierr;
+  VecType type;
+  ierr = VecGetType(vector, &type); CHKERRABORT(MPI_COMM_WORLD,ierr);
 
-  PetscInt nEntries;
-  VecGetLocalSize(vector, &nEntries);
-
-  const double zeroTolerance = 1e-15;
-
-  std::stringstream s;
-  s << "(" << nEntries << " entries) ";
-  for (PetscInt i=0; i<nEntries; i++)
+  if (std::string(type) == std::string(VECNEST))
   {
-    s << std::setprecision(9) << (fabs(vectorValues[i]) < zeroTolerance? 0.0 : vectorValues[i]) << " ";
+    PetscInt nSubvectors = 0;
+    Vec *subVectors;
+    ierr = VecNestGetSubVecs(vector, &nSubvectors, &subVectors); CHKERRABORT(MPI_COMM_WORLD,ierr);
+    
+    std::stringstream s;
+    s << "(nested Vec with " << nSubvectors << " sub vecs) ";
+    for (int subVecNo = 0; subVecNo < nSubvectors; subVecNo++)
+    {
+      if (subVectors[subVecNo])
+      {
+        std::vector<double> vectorValues;
+        getVectorEntries(subVectors[subVecNo], vectorValues);
+        
+        PetscInt nEntries;
+        ierr = VecGetLocalSize(subVectors[subVecNo], &nEntries); CHKERRABORT(MPI_COMM_WORLD,ierr);
+      
+        const double zeroTolerance = 1e-15;
+      
+        s << " subVec " << subVecNo << " with " << nEntries << " local entries: ";
+        for (PetscInt i = 0; i < nEntries; i++)
+        {
+          s << std::setprecision(9) << (fabs(vectorValues[i]) < zeroTolerance? 0.0 : vectorValues[i]) << " ";
+        }
+      }
+      else
+      {
+        s << " subVec " << subVecNo << " is NULL ";
+      }
+    }
+    return s.str();
   }
+  else 
+  {
+    std::vector<double> vectorValues;
+    getVectorEntries(vector, vectorValues);
 
-  return s.str();
+    PetscInt nEntries;
+    VecGetLocalSize(vector, &nEntries);
+
+    const double zeroTolerance = 1e-15;
+
+    std::stringstream s;
+    s << "(" << nEntries << " local entries) ";
+    for (PetscInt i=0; i<nEntries; i++)
+    {
+      s << std::setprecision(9) << (fabs(vectorValues[i]) < zeroTolerance? 0.0 : vectorValues[i]) << " ";
+    }
+
+    return s.str();
+  }
 #endif
 }
 

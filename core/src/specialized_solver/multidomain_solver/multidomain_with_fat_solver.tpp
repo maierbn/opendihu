@@ -43,6 +43,12 @@ initialize()
 
   // get θ value for Crank-Nicolson scheme
   theta_ = this->specificSettings_.getOptionDouble("theta", 0.5, PythonUtility::Positive);
+  useLumpedMassMatrix_ = this->specificSettings_.getOptionBool("useLumpedMassMatrix", true);
+  enableFatComputation_ = this->specificSettings_.getOptionBool("enableFatComputation", true);
+  if (!enableFatComputation_)
+  {
+    LOG(WARNING) << this->specificSettings_ << "[\"enableFatComputation\"] is set to false. This will disable the fat layer computation.";
+  }
 
   DihuContext::solverStructureVisualizer()->setOutputConnectorData(this->getOutputConnectorData());
 
@@ -111,9 +117,12 @@ initialize()
   for (int k = 0; k < this->nCompartments_; k++)
   {
     this->subvectorsSolution_[k] = this->dataMultidomain_.transmembranePotentialSolution(k)->valuesGlobal(0); // this is for V_mk^(i+1)
+    ierr = VecDuplicate(this->subvectorsSolution_[k], &this->subvectorsRightHandSide_[k]); CHKERRV(ierr);
+    ierr = VecZeroEntries(this->subvectorsRightHandSide_[k]); CHKERRV(ierr);
   }
+  
   // set values for phi_e
-  ierr = VecDuplicate(this->dataMultidomain_.zero()->valuesGlobal(), &this->subvectorsSolution_[this->nCompartments_]); CHKERRV(ierr);
+  this->subvectorsSolution_[this->nCompartments_] = this->dataMultidomain_.extraCellularPotential()->valuesGlobal();
   ierr = VecZeroEntries(this->subvectorsSolution_[this->nCompartments_]); CHKERRV(ierr);
   // subvectorsSolution_[nCompartments_+1] has been set by initializeBorderVariables()
 
@@ -130,9 +139,11 @@ template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodD
 void MultidomainWithFatSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusionMuscle,FiniteElementMethodDiffusionFat>::
 setSystemMatrixSubmatrices(double timeStepWidth)
 {
+  LOG(INFO) << "dt of system matrix: " << timeStepWidth;
   assert(this->finiteElementMethodDiffusionTotal_.data().stiffnessMatrix());
   assert(this->finiteElementMethodDiffusion_.data().stiffnessMatrix());
   assert(this->finiteElementMethodFat_.data().stiffnessMatrix());
+  PetscErrorCode ierr;
 
   // initialize number of submatrix rows in the system matrix
   this->nColumnSubmatricesSystemMatrix_ = this->nCompartments_+1+1;
@@ -154,7 +165,16 @@ setSystemMatrixSubmatrices(double timeStepWidth)
   Mat stiffnessMatrix = this->finiteElementMethodDiffusion_.data().stiffnessMatrix()->valuesGlobal();
   Mat massMatrix = this->finiteElementMethodDiffusion_.data().massMatrix()->valuesGlobal();
 
-  PetscErrorCode ierr;
+  Mat minusDtMInv;   // matrix -dt*M^-1 with which to scale the matrix equations of the compartments if option useLumpedMassMatrix_ is set
+  if (useLumpedMassMatrix_)
+  {
+    Mat inverseLumpedMassMatrix = this->finiteElementMethodDiffusion_.data().inverseLumpedMassMatrix()->valuesGlobal();
+    
+    // compute minusDtMInv = -dt*M^-1
+    ierr = MatConvert(inverseLumpedMassMatrix, MATSAME, MAT_INITIAL_MATRIX, &minusDtMInv); CHKERRV(ierr);
+    ierr = MatScale(minusDtMInv, -timeStepWidth); CHKERRV(ierr);
+  }
+
   // set all submatrices
   for (int k = 0; k < this->nCompartments_; k++)
   {
@@ -171,6 +191,14 @@ setSystemMatrixSubmatrices(double timeStepWidth)
     // scale matrix on right column with prefactor
     ierr = MatScale(matrixOnRightColumn, prefactor); CHKERRV(ierr);
 
+    if (useLumpedMassMatrix_)
+    {
+      // in this formulation the matrix B is B = -dt*theta/(Am*Cm)*M^-1*K
+      Mat result;
+      ierr = MatMatMult(minusDtMInv, matrixOnRightColumn, MAT_INITIAL_MATRIX, PETSC_DEFAULT, &result); CHKERRV(ierr);
+      matrixOnRightColumn = result;
+    }
+
     // set on right column of the system matrix
     this->submatricesSystemMatrix_[k*this->nColumnSubmatricesSystemMatrix_ + this->nCompartments_] = matrixOnRightColumn;
 
@@ -180,9 +208,20 @@ setSystemMatrixSubmatrices(double timeStepWidth)
     Mat matrixOnDiagonalBlock;
     ierr = MatConvert(matrixOnRightColumn, MATSAME, MAT_INITIAL_MATRIX, &matrixOnDiagonalBlock); CHKERRV(ierr);
 
-    // add scaled mass matrix, -1/dt*M,  AXPY: Y = a*X + Y  MatAXPY(Y,a,X,SAME_NONZERO_PATTERN)
-    prefactor = -1/timeStepWidth;
-    ierr = MatAXPY(matrixOnDiagonalBlock, prefactor, massMatrix, SAME_NONZERO_PATTERN); CHKERRV(ierr);
+    if (useLumpedMassMatrix_)
+    {
+      // in this formulation the matrix A is A = -dt*theta/(Amk*Cmk)*M^-1*K + I, with B = -dt*theta/(Amk*Cmk)*M^-1*K this becomes A = B + I
+      // add identity
+      ierr = MatShift(matrixOnDiagonalBlock, 1); CHKERRV(ierr);
+    }
+    else 
+    {
+      // in this formulation the matrix A is A = theta/(Amk*Cmk)*K - 1/dt*M, with B = theta/(Am*Cm)*K this becomes A = B - 1/dt*M
+
+      // add scaled mass matrix, -1/dt*M,  AXPY: Y = a*X + Y  MatAXPY(Y,a,X,SAME_NONZERO_PATTERN)
+      prefactor = -1/timeStepWidth;
+      ierr = MatAXPY(matrixOnDiagonalBlock, prefactor, massMatrix, SAME_NONZERO_PATTERN); CHKERRV(ierr);
+    }
 
     // set on diagonal
     this->submatricesSystemMatrix_[k*this->nColumnSubmatricesSystemMatrix_ + k] = matrixOnDiagonalBlock;
@@ -215,18 +254,38 @@ setSystemMatrixSubmatrices(double timeStepWidth)
     double prefactor = (theta_ - 1) / (this->am_[k]*this->cm_[k]);
     ierr = MatScale(b1_[k], prefactor); CHKERRV(ierr);
 
-    // add scaled mass matrix, -1/dt*M,  AXPY: Y = a*X + Y  MatAXPY(Y,a,X,SAME_NONZERO_PATTERN)
-    prefactor = -1/timeStepWidth;
-    ierr = MatAXPY(b1_[k], prefactor, massMatrix, SAME_NONZERO_PATTERN); CHKERRV(ierr);
-
+    if (useLumpedMassMatrix_)
+    {
+      // in this formulation we have b1_[k] = -dt*(θ-1)/(Am^k*Cm^k)*M^{-1}*K_sigmai^k + I
+      Mat result;
+      ierr = MatMatMult(minusDtMInv, b1_[k], MAT_INITIAL_MATRIX, PETSC_DEFAULT, &result); CHKERRV(ierr);
+      b1_[k] = result;
+      
+      // add identity
+      ierr = MatShift(b1_[k], 1); CHKERRV(ierr);
+    }
+    else 
+    {
+      // add scaled mass matrix, -1/dt*M,  AXPY: Y = a*X + Y  MatAXPY(Y,a,X,SAME_NONZERO_PATTERN)
+      prefactor = -1/timeStepWidth;
+      ierr = MatAXPY(b1_[k], prefactor, massMatrix, SAME_NONZERO_PATTERN); CHKERRV(ierr);
+    }
 
     // set b2_ = (θ-1)*K_sigmai^k
     ierr = MatConvert(stiffnessMatrix, MATSAME, MAT_INITIAL_MATRIX, &b2_[k]); CHKERRV(ierr);
     
+    if (useLumpedMassMatrix_)
+    {
+      // in this formulation we have b2_[k] = -dt*(θ-1)*M^{-1}*K_sigmai^k
+      Mat result;
+      ierr = MatMatMult(minusDtMInv, b2_[k], MAT_INITIAL_MATRIX, PETSC_DEFAULT, &result); CHKERRV(ierr);
+      b2_[k] = result;
+    }
+
     prefactor = theta_ - 1;
     ierr = MatScale(b2_[k], prefactor); CHKERRV(ierr);
   }
-} 
+}
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusionMuscle,typename FiniteElementMethodDiffusionFat>
 void MultidomainWithFatSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusionMuscle,FiniteElementMethodDiffusionFat>::
@@ -264,6 +323,12 @@ solveLinearSystem()
 
   // copy the values from the nested Petsc Vec,nestedSolution_, to the single Vec, singleSolution_, that contains all entries
   NestedMatVecUtility::createVecFromNestedVec(this->nestedSolution_, this->singleSolution_, data().functionSpace()->meshPartition()->rankSubset());
+
+  if (VLOG_IS_ON(1))
+  {
+    VLOG(1) << "this->nestedRightHandSide_: " << PetscUtility::getStringVector(this->nestedRightHandSide_);
+    VLOG(1) << "this->singleRightHandSide_: " << PetscUtility::getStringVector(this->singleRightHandSide_);
+  }
 
   // Solve the linear system
   // using single Vecs and Mats that contain all values directly  (singleSolution_, singleRightHandSide_, singleSystemMatrix_)

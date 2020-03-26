@@ -24,8 +24,8 @@ public:
   //! perform the solve
   void solve(Vec rightHandSide, Vec solution, std::string message="");
 
-  // dump files containing rhs and system matrix
-  void dumpMatrixRightHandSide(Vec rightHandSide);
+  // dump files containing rhs, solution and system matrix
+  void dumpMatrixRightHandSideSolution(Vec rightHandSide, Vec solution);
 
 protected:
 

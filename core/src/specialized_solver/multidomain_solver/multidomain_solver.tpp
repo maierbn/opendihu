@@ -349,6 +349,7 @@ template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodD
 void MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
 setSystemMatrixSubmatrices(double timeStepWidth)
 {
+  LOG(INFO) << "dt of system matrix: " << timeStepWidth;
   // initialize the number of rows, this will already be set when the method is called for the inherited class MultidomainWithFatSolver
   if (nColumnSubmatricesSystemMatrix_ == 0)
     nColumnSubmatricesSystemMatrix_ = nCompartments_+1;
@@ -529,7 +530,7 @@ createSystemMatrixFromSubmatrices()
       
       if (!subMatrix)
       {
-        LOG(DEBUG) << "submatrix (" << rowNo << "," << columnNo << ") is " << subMatrix << ", empty (NULL)";
+        LOG(DEBUG) << "submatrix (" << rowNo << "," << columnNo << ") is empty (NULL)";
       }
       else
       {
@@ -540,7 +541,7 @@ createSystemMatrixFromSubmatrices()
         ierr = PetscObjectGetName((PetscObject)subMatrix, (const char **)&cName); CHKERRV(ierr);
         name = cName;
         
-        LOG(DEBUG) << "submatrix (" << rowNo << "," << columnNo << ") is " << subMatrix << ", \"" << name << "\" (" << nRows << "x" << nColumns << ")";
+        LOG(DEBUG) << "submatrix (" << rowNo << "," << columnNo << ") is \"" << name << "\" (" << nRows << "x" << nColumns << ")";
       }
     }
   }

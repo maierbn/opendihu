@@ -108,7 +108,7 @@ postprocessSolution()
   this->data_.updateGeometry(displacementsScalingFactor_, usePressureOutputWriter);
 
   // dump files containing rhs and system matrix
-  nonlinearSolver_->dumpMatrixRightHandSide(solverVariableResidual_);
+  nonlinearSolver_->dumpMatrixRightHandSideSolution(solverVariableResidual_, solverVariableSolution_);
 
 
 #ifndef NDEBUG

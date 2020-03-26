@@ -242,6 +242,7 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
                 commandSuggestions << "  " << argv[0] << " " << line << std::endl;
               }
             }
+            ret = system("rm a");
           }
           if (commandSuggestions.str().empty())
           {

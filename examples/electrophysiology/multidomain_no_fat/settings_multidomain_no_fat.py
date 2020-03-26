@@ -18,10 +18,10 @@ Cm = 0.58               # membrane capacitance [uF/cm^2]
 end_time = 4000.0                   # [ms] end time of the simulation
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
 dt_0D = 3e-3                        # [ms] timestep width of ODEs (1e-3)
-dt_1D = 1e-3                        # [ms] timestep width of diffusion (1e-3)
-dt_3D = 3e-3                        # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
+dt_splitting = 3e-3                 # [ms] timestep width of splitting
 output_timestep = 1e-1              # [ms] timestep for output files
 
+solver_tolerance = 1e-10
 #Am = 0.2   # mesh_small
 #Am = 0.1
 
@@ -37,12 +37,10 @@ fiber_file = "../../input/left_biceps_brachii_7x7fibers.bin"
 
 # stride which points to select for the 3D mesh, along the muscle (z-direction)
 sampling_stride_z = 20
-#sampling_stride_z = 100  # faster
+
 
 cellml_file = "../../input/hodgkin_huxley_1952.c"
-
 fiber_distribution_file = "../../input/MU_fibre_distribution_3780.txt"
-
 #firing_times_file = "../../input/MU_firing_times_real.txt"
 firing_times_file = "../../input/MU_firing_times_immediately.txt"
 
@@ -52,7 +50,15 @@ motor_units = [
   {"fiber_no": 30, "standard_deviation": 20.0, "maximum": 0.4},
   {"fiber_no": 40, "standard_deviation": 30.0, "maximum": 0.6},
 ]
-#motor_units = motor_units[0:2]
+
+
+# for debugging use the following, non-physiological values. This produces a fast simulation
+Am = 1.0
+sampling_stride_z = 74
+motor_units = motor_units[0:2]    # only 2 motor units
+solver_tolerance = 1e-10
+
+
 n_compartments = len(motor_units)
 
 # own MPI rank no and number of MPI ranks
@@ -212,7 +218,7 @@ multidomain_solver = {
   "solverName":                       "activationSolver",                 # reference to the solver used for the global linear system of the multidomain eq.
   "initialGuessNonzero":              True,                               # if the initial guess for the 3D system should be set as the solution of the previous timestep, this only makes sense for iterative solvers
   "inputIsGlobal":                    True,                               # if values and dofs correspond to the global numbering
-  "showLinearSolverOutput":           False,                              # if convergence information of the linear solver in every timestep should be printed, this is a lot of output for fast computations
+  "showLinearSolverOutput":           True,                              # if convergence information of the linear solver in every timestep should be printed, this is a lot of output for fast computations
   "compartmentRelativeFactors":       relative_factors.tolist(),          # list of lists of the factors for every dof, because "inputIsGlobal": True, this contains the global dofs
   "PotentialFlow": {
     "FiniteElementMethod" : {  
@@ -246,7 +252,7 @@ multidomain_solver = {
   },
   
   "OutputWriter" : [
-    {"format": "Paraview", "outputInterval": (int)(1./dt_1D*output_timestep), "filename": "out/output", "binary": True, "fixedFormat": False, "combineFiles": True},
+    {"format": "Paraview", "outputInterval": (int)(1./dt_0D*output_timestep), "filename": "out/output", "binary": True, "fixedFormat": False, "combineFiles": True},
     #{"format": "ExFile", "filename": "out/fiber_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "sphereSize": "0.02*0.02*0.02"},
     #{"format": "PythonFile", "filename": "out/fiber_"+str(i), "outputInterval": int(1./dt_1D*output_timestep), "binary":True, "onlyNodalValues":True},
   ]
@@ -274,17 +280,17 @@ config = {
     },
     "activationSolver": {
       "relativeTolerance":  1e-15,
-      "absoluteTolerance":  1e-15,         # 1e-10 absolute tolerance of the residual          
+      "absoluteTolerance":  solver_tolerance,         # 1e-10 absolute tolerance of the residual          
       "maxIterations":      1e3,
       "solverType":         "gmres",
       "preconditionerType": "none",
       "dumpFormat":         "matlab",
-      "dumpFilename":       "",
+      "dumpFilename":       "out/no",
     }
   },
   "StrangSplitting": {
-    "timeStepWidth":          dt_3D,  # 1e-1
-    "logTimeStepWidthAsKey":  "dt_3D",
+    "timeStepWidth":          dt_splitting,  # 1e-1
+    "logTimeStepWidthAsKey":  "dt_splitting",
     "durationLogKey":         "duration_total",
     "timeStepOutputInterval": 100,
     "endTime":                end_time,
@@ -346,7 +352,7 @@ config = {
       "MultidomainSolver" : multidomain_solver,
       "OutputSurface": {        # version for fibers_emg_2d_output
         "OutputWriter": [
-          {"format": "Paraview", "outputInterval": (int)(1./dt_1D*output_timestep), "filename": "out/surface", "binary": True, "fixedFormat": False, "combineFiles": True},
+          {"format": "Paraview", "outputInterval": (int)(1./dt_0D*output_timestep), "filename": "out/surface", "binary": True, "fixedFormat": False, "combineFiles": True},
         ],
         "face": "1-",
         "MultidomainSolver" : multidomain_solver,

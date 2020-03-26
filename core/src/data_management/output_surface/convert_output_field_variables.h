@@ -75,7 +75,7 @@ struct ConvertFieldVariable<std::shared_ptr<FieldVariable::FieldVariable<Functio
         if (ownRankInvolvedInOutputForFace)
           ownRankInvolvedInOutput = true;
 
-        LOG(DEBUG) <<  "i=" << i << "/" << faces.size() << ", initialize field variable \"" << fieldVariable2D->name() << "\", values: " << fieldVariable2D->partitionedPetscVec();
+        VLOG(1) <<  "i=" << i << "/" << faces.size() << ", initialize field variable \"" << fieldVariable2D->name() << "\", values: " << fieldVariable2D->partitionedPetscVec();
         i++;
       }
     }
@@ -86,7 +86,7 @@ struct ConvertFieldVariable<std::shared_ptr<FieldVariable::FieldVariable<Functio
       // fill vector with field variables
       for (int i = 0; i < faces.size(); i++)
       {
-        LOG(DEBUG) << "i=" << i << "/" << faces.size() << ", use field variable \""
+        VLOG(1) << "i=" << i << "/" << faces.size() << ", use field variable \""
           << fieldVariables2D[i]->name() << "\", values: " << fieldVariables2D[i]->partitionedPetscVec();
 
         // this just updates the values, which dofs to use is already stored inside the field variable

@@ -247,6 +247,7 @@ else:
   else:
     env.MergeFlags('-Ofast')   # fastest with GNU and Intel
     if env["gprof"]:
+      print("Adding flags for gprof.")
       env.Append(LINKFLAGS = "-pg")   # add gprof flags for linker
       env.MergeFlags('-pg -g')
   

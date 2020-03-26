@@ -647,6 +647,33 @@ where
   \end{array}
 \end{equation*}
 
+This matrix can be condensed and takes the form
+\begin{equation*}
+  \begin{array}{lll}
+    \Leftrightarrow
+    \quad 
+    \left[\begin{array}{@{}c|c|c@{}}
+      \bfA_{V_m,V_m} & \bfB_{V_m,\phi_e} & \\[2mm]
+      \bfB_{\phi_e,V_m} & \bfB_{\phi_e,\phi_e} & \bfD \\[2mm] \hline
+      &\bfE &\bfC_{\phi_b,\phi_b}\\[2mm]
+    \end{array}\right]
+    \left[\begin{array}{@{}c@{}}
+      V_{m}^{(i+1)}  \\[2mm]\hline 
+      \bfphi_{e}^{(i+1)} \\[2mm]\hline
+      \hat{\bfphi}_{b}^{(i+1)}
+    \end{array}\right]
+    = 
+    \left[\begin{array}{@{}c@{}}
+      \bfb_{V_m}^{(i+1)} \\[2mm]
+      \bfzero\\\hline
+      \bfzero
+    \end{array}\right]
+  \end{array}.
+\end{equation*}
+Here, $\bfD$ and $\bfE$ contain entries for the dofs in the elements that are adajacent to the border dofs. The size of the last row and column of the system matrix is the number of dofs in the fat domain, without the border dofs, as they are already included in the second column and row.
+
+$\hat{\bfphi}_{b}^{(i+1)}$ is the vector of body potential without dofs on the border.
+
 %\subsubsection{Flux boundary conditions}
 
 %\begin{equation*}
@@ -657,7 +684,6 @@ where
   %\end{array}
 %\end{equation*}
 
-\subsection{Summary}
 
 % -------------- Literaturseite --------------------
 \newpage

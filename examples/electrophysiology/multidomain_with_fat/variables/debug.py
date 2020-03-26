@@ -1,4 +1,4 @@
-
+# debugging scenario that produces a fast simulation, not really physiological conditions (Am is too high therefore more diffusion than normal)
 # scenario name for log file
 scenario_name = "debug"
 
@@ -11,7 +11,8 @@ sigma_e_xf = 3.35           # [mS/cm] conductivity in extracellular space, cross
 
 Am = 500.0                  # [cm^-1] surface area to volume ratio
 Cm = 0.58                   # [uF/cm^2] membrane capacitance, (1 = fast twitch, 0.58 = slow twitch)
-Am = 10.0  # set Am lower such that there is more diffusion
+
+Am = 1.0  # set Am lower such that there is more diffusion
 # diffusion prefactor = Conductivity/(Am*Cm)
 
 # timing and activation parameters
@@ -25,12 +26,12 @@ motor_units = [
   {"fiber_no": 30, "standard_deviation": 20.0, "maximum": 0.4, "activation_start_time": 0.0, "stimulation_frequency": 10.0,},
   {"fiber_no": 40, "standard_deviation": 30.0, "maximum": 0.6, "activation_start_time": 0.0, "stimulation_frequency": 10.0,},
 ]
-motor_units = motor_units[0:2]
+motor_units = motor_units[0:2]  # only two motor units
 
 end_time = 4000.0                   # [ms] end time of the simulation
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
-dt_0D = 3e-3                        # [ms] timestep width of ODEs (2e-3)
-dt_splitting = 3e-3                 # [ms] overall timestep width of strang splitting (4e-3)
+dt_0D = 3e-3                        # [ms] timestep width of ODEs (3e-3)
+dt_splitting = 3e-3                 # [ms] overall timestep width of strang splitting (3e-3)
 output_timestep = 2e-1              # [ms] timestep for output big files of 3D EMG, 100
 output_timestep = 1e-1              # [ms] timestep for output big files of 3D EMG, 100
 
@@ -42,10 +43,11 @@ firing_times_file = "../../input/MU_firing_times_immediately.txt"
 
 
 # stride for sampling the 3D elements from the fiber data
-sampling_stride_x = 3
-sampling_stride_y = 3
-#sampling_stride_z = 20
-sampling_stride_z = 50   # faster, but stimulus does not propagate
+sampling_stride_x = 1
+sampling_stride_y = 1
+sampling_stride_z = 74   # faster, but stimulus does not propagate
+sampling_stride_fat = 2
+
 
 # other options
 paraview_output = True

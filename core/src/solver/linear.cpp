@@ -243,17 +243,24 @@ std::shared_ptr<KSP> Linear::ksp()
   return ksp_;
 }
 
-void Linear::dumpMatrixRightHandSide(Vec rightHandSide)
+void Linear::dumpMatrixRightHandSideSolution(Vec rightHandSide, Vec solution)
 {
   // dump files containing rhs and system matrix
   if (!dumpFilename_.empty())
   {
     PetscUtility::dumpVector(dumpFilename_+std::string("_rhs"), dumpFormat_, rightHandSide, mpiCommunicator_);
+    PetscUtility::dumpVector(dumpFilename_+std::string("_solution"), dumpFormat_, solution, mpiCommunicator_);
 
+    // get matrix
     Mat matrix;
     Mat preconditionerMatrix;
     KSPGetOperators(*ksp_, &matrix, &preconditionerMatrix);
+    
     PetscUtility::dumpMatrix(dumpFilename_+std::string("_matrix"), dumpFormat_, matrix, mpiCommunicator_);
+    if (matrix != preconditionerMatrix)
+    {
+      PetscUtility::dumpMatrix(dumpFilename_+std::string("_preconditioner_matrix"), dumpFormat_, matrix, mpiCommunicator_);
+    }
   }
 }
 
@@ -261,15 +268,15 @@ void Linear::solve(Vec rightHandSide, Vec solution, std::string message)
 {
   PetscErrorCode ierr;
 
-  // dump files
-  dumpMatrixRightHandSide(rightHandSide);
-
   Control::PerformanceMeasurement::start(this->durationLogKey_);
 
   // solve the system
   ierr = KSPSolve(*ksp_, rightHandSide, solution); CHKERRV(ierr);
 
   Control::PerformanceMeasurement::stop(this->durationLogKey_);
+
+  // dump files of rhs, solution and system matrix for debugging
+  dumpMatrixRightHandSideSolution(rightHandSide, solution);
 
   // determine meta data
   PetscInt numberOfIterations = 0;
@@ -307,8 +314,10 @@ void Linear::solve(Vec rightHandSide, Vec solution, std::string message)
     ierr = VecNorm(*residual_, NORM_2, &residualNorm); CHKERRV(ierr);
   }
 
+  // output message
   if (message != "")
   {
+    // example for output: "Linear system of multidomain problem solved in 373 iterations, 3633 dofs, residual norm 9.471e-11: KSP_CONVERGED_ATOL: residual 2-norm less than abstol"
     LOG(INFO) << message << " in " << numberOfIterations << " iterations, " << nDofsGlobal << " dofs, residual norm " << residualNorm
       << ": " << PetscUtility::getStringLinearConvergedReason(convergedReason);
   }

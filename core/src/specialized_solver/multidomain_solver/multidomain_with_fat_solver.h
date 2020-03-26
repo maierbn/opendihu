@@ -80,7 +80,9 @@ protected:
   std::vector<Mat> b2_;          //< b2^k = (θ-1)*K_sigmai^k, second factor matrix for rhs entry b, for compartment k, total: b = b1_ * Vm^(i) + b2_ * phi_e^(i) 
   Vec temporary_;                //< temporary vector that can be multiplied right by b1_
 
-  double theta_; // θ value for Crank-Nicolson scheme
+  double theta_;                 //< θ value for Crank-Nicolson scheme
+  bool useLumpedMassMatrix_;     //< if the formulation with lumped mass matrix should be used
+  bool enableFatComputation_;    //< if the computation of the fat layer should be enabled, if not the values are set to 0
 };
 
 }  // namespace

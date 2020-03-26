@@ -23,19 +23,20 @@ findSharedNodesBetweenMuscleAndFat()
   const int nDofsPerNode = MuscleFunctionSpace::nDofsPerNode();
   assert(nDofsPerNode == FatFunctionSpace::nDofsPerNode());
 
-  std::vector<std::vector<Vec3>> nodePositions(2);
-  std::vector<std::vector<std::pair<Vec3,node_no_t>>> nodePositionsNodes(2);  // the node positions with nodes for every submesh
+  std::array<std::vector<Vec3>,2> nodePositions;                            // the node positions of the muscle and the fat mesh
+  std::array<std::vector<std::pair<Vec3,node_no_t>>,2> nodePositionsNodes;  // the node positions with nodes for every submesh
+  std::array<node_no_t,2> nNodesLocalWithoutGhosts = {functionSpaceMuscle->nNodesLocalWithoutGhosts(), functionSpaceFat->nNodesLocalWithoutGhosts()};
 
   // get geometry fields for function spaces
-  functionSpaceMuscle->geometryField().getValuesWithGhosts(nodePositions[0]);
-  functionSpaceFat->geometryField().getValuesWithGhosts(nodePositions[1]);
+  functionSpaceMuscle->geometryField().getValuesWithoutGhosts(nodePositions[0]);
+  functionSpaceFat->geometryField().getValuesWithoutGhosts(nodePositions[1]);
 
 
-  // iterate over submeshes and save all node positions
+  // iterate over muscle and fat mesh and save all node positions
   for(int i = 0; i < 2; i++)
   {
     // store node positions with local node nos
-    for (node_no_t nodeNoLocal = 0; nodeNoLocal < functionSpaceMuscle->nNodesLocalWithGhosts(); nodeNoLocal++)
+    for (node_no_t nodeNoLocal = 0; nodeNoLocal < nNodesLocalWithoutGhosts[i]; nodeNoLocal++)
     {
       nodePositionsNodes[i].push_back(std::make_pair(nodePositions[i][nodeNoLocal*nDofsPerNode + 0], nodeNoLocal));
     }
@@ -95,6 +96,9 @@ findSharedNodesBetweenMuscleAndFat()
       Vec3 nodePositionOtherMesh = nodePositionsNodes[indexOtherMesh][k].first;
       node_no_t nodeNoLocalOtherMesh = nodePositionsNodes[indexOtherMesh][k].second;
 
+      assert (nodeNoLocal < functionSpaceMuscle->nNodesLocalWithoutGhosts());
+      assert (nodeNoLocalOtherMesh < functionSpaceFat->nNodesLocalWithoutGhosts());
+
       if (nodePositionOtherMesh[0] > position[0]+nodePositionEqualTolerance)
       {
         VLOG(2) << "  node k: " << k << ", nodeNo: " << nodeNoLocalOtherMesh << ", position: " << nodePositionOtherMesh
@@ -122,14 +126,21 @@ findSharedNodesBetweenMuscleAndFat()
       }
     }
   }
-  
+
   nSharedDofsLocal_ = borderDofsFat_.size();
 
   LOG(DEBUG) << "functionSpaceMuscle: " << *functionSpaceMuscle->meshPartition();
   LOG(DEBUG) << "functionSpaceFat: " << *functionSpaceFat->meshPartition();
 
-  LOG(DEBUG) << "sharedNodes_ (\"muscle mesh dof\": fat mesh dof):\n" << sharedNodes_;
+  LOG(DEBUG) << sharedNodes_.size() << "sharedNodes_ (\"muscle mesh dof\": fat mesh dof):\n" << sharedNodes_;
   LOG(DEBUG) << borderDofsFat_.size() << " borderDofsFat_:\n" << borderDofsFat_;
+  
+  LOG(DEBUG) << "n dofs muscle (global): " << functionSpaceMuscle->nDofsGlobal() << " (local without ghosts: " 
+    << functionSpaceMuscle->nDofsLocalWithoutGhosts() << ", local with ghosts: " << functionSpaceMuscle->nDofsLocalWithGhosts() << ")";
+  LOG(DEBUG) << "n dofs fat (global): " << functionSpaceFat->nDofsGlobal() << " (local without ghosts: " 
+    << functionSpaceFat->nDofsLocalWithoutGhosts() << ", local with ghosts: " << functionSpaceFat->nDofsLocalWithGhosts() << ")";
+  LOG(DEBUG) << "n shared dofs (global): " << borderDofsGlobalFat_.size() << " (local: " << nSharedDofsLocal_ << ")";
+
 
   // globally exchange border dofs
   int nRanks = functionSpaceFat->meshPartition()->rankSubset()->size();
@@ -146,8 +157,14 @@ findSharedNodesBetweenMuscleAndFat()
   {
     for (int i = 0; i < FunctionSpace::nDofsPerNode(); i++)
     {
-      global_no_t dofNoFatGlobalPetsc = functionSpaceFat->meshPartition()->getDofNoGlobalPetsc(sharedNodes.second);
-      global_no_t dofNoMuscleGlobalPetsc = functionSpaceMuscle->meshPartition()->getDofNoGlobalPetsc(sharedNodes.first);
+      dof_no_t dofNoLocalFat = sharedNodes.second*FunctionSpace::nDofsPerNode() + i;
+      dof_no_t dofNoLocalMuscle = sharedNodes.first*FunctionSpace::nDofsPerNode() + i;
+
+      LOG(DEBUG) << "dofNoLocal fat: " << dofNoLocalFat << ", muscle: " << dofNoLocalMuscle;
+
+      global_no_t dofNoFatGlobalPetsc = functionSpaceFat->meshPartition()->getDofNoGlobalPetsc(dofNoLocalFat);
+      global_no_t dofNoMuscleGlobalPetsc = functionSpaceMuscle->meshPartition()->getDofNoGlobalPetsc(dofNoLocalMuscle);
+
       sharedDofsGlobalOnRanks[ownRankNo].push_back(dofNoFatGlobalPetsc);
       sharedDofsGlobalOnRanks[ownRankNo].push_back(dofNoMuscleGlobalPetsc);
     }
@@ -332,7 +349,25 @@ initializeBorderVariables()
 
   // -------
   // create matrix c, which the original C_phib,phib matrix but without rows and columns that correspond to shared dofs between muscle and fat mesh
-  Mat originalMatrixC = this->finiteElementMethodFat_.data().stiffnessMatrix()->valuesGlobal();
+  Mat originalMatrixC;
+  if (enableFatComputation_)
+  {
+    originalMatrixC = this->finiteElementMethodFat_.data().stiffnessMatrix()->valuesGlobal();
+  }
+  else
+  {
+    // if the fat layer should not be computed, this is for debugging if the option "enableFatComputation" is set to False, set originalMatrixC to be the identity
+    ierr = MatConvert(this->finiteElementMethodFat_.data().stiffnessMatrix()->valuesGlobal(), MATSAME, MAT_INITIAL_MATRIX, &originalMatrixC); CHKERRV(ierr);
+    ierr = MatZeroEntries(originalMatrixC); CHKERRV(ierr);
+    ierr = MatShift(originalMatrixC, 1.0); CHKERRV(ierr);
+  }
+
+  PetscInt nRows, nColumns;
+  ierr = MatGetSize(originalMatrixC, &nRows, &nColumns); CHKERRV(ierr);
+  LOG(DEBUG) << "originalMatrixC: " << nRows << "x" << nColumns;
+  LOG(DEBUG) << "n dofs muscle (global): " << this->finiteElementMethodDiffusionTotal_.data().functionSpace()->nDofsGlobal() << " (local: " << this->finiteElementMethodDiffusionTotal_.data().functionSpace()->nDofsLocalWithoutGhosts() << ")";
+  LOG(DEBUG) << "n dofs fat (global): " << this->finiteElementMethodFat_.data().functionSpace()->nDofsGlobal() << " (local: " << this->finiteElementMethodFat_.data().functionSpace()->nDofsLocalWithoutGhosts() << ")";
+  LOG(DEBUG) << "n shared dofs (global): " << borderDofsGlobalFat_.size() << " (local: " << nSharedDofsLocal_ << ")";
   
   // get number of allocated non-zeros of full c matrix
   MatInfo matInfo;
@@ -427,8 +462,19 @@ void MultidomainWithFatSolver<FiniteElementMethodPotentialFlow,FiniteElementMeth
 setEntriesBorderMatrices(Mat originalMatrixB, Mat originalMatrixC, Mat matrixB, Mat matrixC, Mat matrixD, Mat matrixE)
 {
   PetscErrorCode ierr;
-  MPI_Comm mpiCommunicator = this->dataMultidomain_.functionSpace()->meshPartition()->mpiCommunicator();
-  PetscInt nColumnsGlobal = this->dataMultidomain_.functionSpace()->nDofsGlobal();
+  MPI_Comm mpiCommunicator = this->dataFat_.functionSpace()->meshPartition()->mpiCommunicator();
+  PetscInt nColumnsGlobal = this->dataFat_.functionSpace()->nDofsGlobal();
+
+#ifndef NDEBUG
+  PetscInt nColumnsOriginalMatrixC = 0;
+  ierr = MatGetSize(originalMatrixC, NULL, &nColumnsOriginalMatrixC); CHKERRV(ierr);
+  assert(nColumnsOriginalMatrixC == nColumnsGlobal);
+
+  PetscInt nRowsMatrixC = 0;
+  PetscInt nColumnsMatrixC = 0;
+  ierr = MatGetSize(matrixC, &nRowsMatrixC, &nColumnsMatrixC); CHKERRV(ierr);
+  LOG(DEBUG) << "size of matrix C: " << nRowsMatrixC << "x" << nColumnsMatrixC;
+#endif  
 
   // iterate over non-zero entries of the matrix originalMatrixC, this has to be done by creating the local sub matrix from which only the non-zero entries can be retrieved by MatGetRow
   PetscInt rowNoGlobalBegin = 0;
@@ -452,12 +498,14 @@ setEntriesBorderMatrices(Mat originalMatrixB, Mat originalMatrixC, Mat matrixB, 
   PetscInt nColumnsLocalSubMatrix = 0;
   ierr = MatGetSize(localSubMatrix[0], &nRowsLocalSubMatrix, &nColumnsLocalSubMatrix); CHKERRV(ierr);
 
+  LOG(DEBUG) << "originalMatrixC has " << nRowsLocal << " local rows: [" << rowNoGlobalBegin << "," << rowNoGlobalEnd 
+    << "], local submatrix is " << nRowsLocalSubMatrix << "x" << nColumnsLocalSubMatrix;
+
   // loop over rows of originalMatrixC
   for (PetscInt rowNoGlobal = rowNoGlobalBegin; rowNoGlobal < rowNoGlobalEnd; rowNoGlobal++)
   {
     PetscInt rowNoLocal = rowNoGlobal - rowNoGlobalBegin;
     
-    // transfer row from nested mat to singleMat
     // get non-zero values of current row
     PetscInt nNonzeroEntriesInRow;
     const PetscInt *columnIndices;
@@ -466,6 +514,14 @@ setEntriesBorderMatrices(Mat originalMatrixB, Mat originalMatrixC, Mat matrixB, 
 
     bool currentRowDofIsBorder = borderDofsFat_.find(rowNoLocal) != borderDofsFat_.end();
 
+    std::stringstream s;
+    // loop over columns
+    for (int columnIndex = 0; columnIndex < nNonzeroEntriesInRow; columnIndex++)
+    {
+      s << columnIndices[columnIndex] << " ";
+    }
+    VLOG(1) << "  row " << rowNoGlobal << " has " << nNonzeroEntriesInRow << " entries at " << s.str();
+
     // loop over columns
     for (int columnIndex = 0; columnIndex < nNonzeroEntriesInRow; columnIndex++)
     {
@@ -473,6 +529,8 @@ setEntriesBorderMatrices(Mat originalMatrixB, Mat originalMatrixC, Mat matrixB, 
       double value = values[columnIndex];
 
       bool currentColumnDofIsBorder = borderDofsGlobalFat_.find(columnNoGlobal) != borderDofsGlobalFat_.end();
+
+      VLOG(2) << "C[" << rowNoGlobal << "," << columnNoGlobal << "] = " << value;
 
       // if the current row is a shared dof
       if (currentRowDofIsBorder)
@@ -484,7 +542,8 @@ setEntriesBorderMatrices(Mat originalMatrixB, Mat originalMatrixC, Mat matrixB, 
           PetscInt columnNoGlobalMuscle = getDofNoGlobalMuscleFromDofNoGlobalFat(columnNoGlobal);
 
           // add the matrix entry of C to matrix B
-          ierr = MatSetValue(matrixB, rowNoGlobalMuscle, columnNoGlobalMuscle, value, ADD_VALUES); CHKERRV(ierr);
+          if (enableFatComputation_)
+            ierr = MatSetValue(matrixB, rowNoGlobalMuscle, columnNoGlobalMuscle, value, ADD_VALUES); CHKERRV(ierr);
         }
         else 
         {
@@ -515,6 +574,9 @@ setEntriesBorderMatrices(Mat originalMatrixB, Mat originalMatrixC, Mat matrixB, 
           // neither the row dof nor the column dof is shared, set the value in the new C matrix
           PetscInt rowNoGlobalWithoutSharedDofs = getDofNoGlobalFatWithoutSharedDofs(rowNoGlobal);
           PetscInt columnNoGlobalWithoutSharedDofs = getDofNoGlobalFatWithoutSharedDofs(columnNoGlobal);
+
+          //LOG(DEBUG) << "fat full: (" << rowNoGlobal << "," << columnNoGlobal << ")/([" << rowNoGlobalBegin << "," << rowNoGlobalEnd << "]," << nColumnsGlobal 
+          //  << ") without shared: (" << rowNoGlobalWithoutSharedDofs << "," << columnNoGlobalWithoutSharedDofs << ")/(" << nRowsMatrixC << "," << nColumnsMatrixC << ")";
 
           // set the entry in matrix C
           ierr = MatSetValue(matrixC, rowNoGlobalWithoutSharedDofs, columnNoGlobalWithoutSharedDofs, value, INSERT_VALUES); CHKERRV(ierr);
@@ -549,11 +611,11 @@ template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodD
 void MultidomainWithFatSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusionMuscle,FiniteElementMethodDiffusionFat>::
 copyPhiBToSolution()
 {
-  // get entries from: dataFat_.extraCellularPotentialFat()->valuesGlobal()
+  // get entries from: dataFat_.extraCellularPotentialFat()->valuesGlobal(0)
   // set entries in:  this->subvectorsSolution_[this->nCompartments_+1]
   // discard the entries for shared dofs
 
-  Vec phiB = dataFat_.extraCellularPotentialFat()->valuesGlobal();
+  Vec phiB = dataFat_.extraCellularPotentialFat()->valuesGlobal(0);
   Vec solution = this->subvectorsSolution_[this->nCompartments_+1];
 
   // get the local range that is stored on this rank for phiB
@@ -600,11 +662,11 @@ copySolutionToPhiB()
 {
   // get entries from: this->subvectorsSolution_[this->nCompartments_+1]  (phi_b) (does not contain values for shared dofs)
   // and:              this->subvectorsSolution_[this->nCompartments_]    (phi_e) (only get the shared dof values from here)
-  // set entries in:  dataFat_.extraCellularPotentialFat()->valuesGlobal()
+  // set entries in:  dataFat_.extraCellularPotentialFat()->valuesGlobal(0)
 
   Vec phiB = this->subvectorsSolution_[this->nCompartments_+1];
   Vec phiE = this->subvectorsSolution_[this->nCompartments_];
-  Vec result = dataFat_.extraCellularPotentialFat()->valuesGlobal();
+  Vec result = dataFat_.extraCellularPotentialFat()->valuesGlobal(0);
 
   // get the local range that of phiB is stored on this rank for result
   PetscInt dofNoGlobalBeginPhiB, dofNoGlobalEndPhiB;

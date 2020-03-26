@@ -76,6 +76,7 @@ n_subdomains_z = 1
 sampling_stride_x = 1
 sampling_stride_y = 1
 sampling_stride_z = 50
+sampling_stride_fat = 1
 
 # scenario name for log file
 scenario_name = ""

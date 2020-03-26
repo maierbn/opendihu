@@ -157,7 +157,7 @@ for k in range(n_sampled_points_3D_in_own_subdomain_z):
   #print("{}: sampling_stride_z: {}, k: {}, z: {}/{}".format(rank_no, variables.sampling_stride_z, k, z_point_index, variables.z_point_index_end))
   
   # loop over points of the fat layer mesh in y direction
-  for j in range(n_points_y):
+  for j in range(0,n_points_y,variables.sampling_stride_fat):
     y_point_index = j
     
     # loop over the points in x direction of the fat layer mesh, this corresponds to x and negative y direction of the 3D mesh (see figure above in the code)
@@ -223,7 +223,8 @@ for (index_x, index_y, index_z) in fat_mesh_node_indices:
   fat_mesh_node_positions_local.append(point)
   
 # local size
-fat_mesh_n_points = [fat_mesh_n_points_x, n_points_y, n_sampled_points_3D_in_own_subdomain_z]
+n_sampled_points_y = len(range(0,n_points_y,variables.sampling_stride_fat))
+fat_mesh_n_points = [fat_mesh_n_points_x, n_sampled_points_y, n_sampled_points_3D_in_own_subdomain_z]
 fat_mesh_n_elements = [fat_mesh_n_points[0]-1, fat_mesh_n_points[1]-1, fat_mesh_n_points[2]-1]
 
 # regarding x direction, if in interior of fat mesh (i.e., not bottom right subdomain), adjust number of elements in x direction (which is in negative y direction)
@@ -235,7 +236,7 @@ if variables.own_subdomain_coordinate_z != variables.n_subdomains_z - 1:
           
 # store values to be used in postprocess callback function
 variables.fat_mesh_n_points_local = fat_mesh_n_points
-variables.fat_mesh_n_points_global = [variables.n_points_3D_mesh_global_x+variables.n_points_3D_mesh_global_y-1, n_points_y, variables.n_points_3D_mesh_global_z]
+variables.fat_mesh_n_points_global = [variables.n_points_3D_mesh_global_x+variables.n_points_3D_mesh_global_y-1, n_sampled_points_y, variables.n_points_3D_mesh_global_z]
 variables.fat_mesh_index_offset = [n_points_on_previous_ranks_sampled_x, 0, n_points_on_previous_ranks_sampled_z]
 
 # debugging output
@@ -417,7 +418,7 @@ def set_specific_states(n_nodes_global, time_step_no, current_time, states, comp
             for i in range(n_nodes_x):
               if x_index_center-1 <= i <= x_index_center+1:
                 key = ((i,j,k),0,0)        # key: ((x,y,z),nodal_dof_index,state_no)
-                states[key] = 40.0
+                states[key] = variables.vm_value_stimulated
                 #print("set states at ({},{},{}) to 40".format(i,j,k))
 
     #print("states: {}".format(states))

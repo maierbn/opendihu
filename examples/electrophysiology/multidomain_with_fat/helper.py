@@ -30,7 +30,7 @@ if not os.path.exists(variables.relative_factors_file):
 result = create_partitioned_meshes_for_settings(
     variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, 
     variables.fiber_file, variables.load_fiber_data,
-    variables.sampling_stride_x, variables.sampling_stride_y, variables.sampling_stride_z, variables.generate_quadratic_3d_mesh, False, False)
+    variables.sampling_stride_x, variables.sampling_stride_y, variables.sampling_stride_z, variables.generate_linear_3d_mesh, variables.generate_quadratic_3d_mesh, False, False)
 [variables.meshes, variables.own_subdomain_coordinate_x, variables.own_subdomain_coordinate_y, variables.own_subdomain_coordinate_z, variables.n_fibers_x, variables.n_fibers_y, variables.n_points_whole_fiber] = result
   
 variables.n_subdomains_xy = variables.n_subdomains_x * variables.n_subdomains_y
@@ -100,10 +100,10 @@ if False:
 #
 
 # determine number of nodes of the 3Dmesh
-n_elements_3D_mesh = variables.meshes["3Dmesh"]["nElements"]
-n_points_3D_x = n_elements_3D_mesh[0]
-n_points_3D_y = n_elements_3D_mesh[1]
-n_points_3D_z = n_elements_3D_mesh[2]
+n_elements_3D_mesh_linear = variables.meshes["3Dmesh"]["nElements"]
+n_points_3D_x = n_elements_3D_mesh_linear[0]
+n_points_3D_y = n_elements_3D_mesh_linear[1]
+n_points_3D_z = n_elements_3D_mesh_linear[2]
 
 # if the own subdomain is at the (x+) border
 if variables.own_subdomain_coordinate_x == variables.n_subdomains_x - 1:
@@ -118,7 +118,7 @@ if variables.own_subdomain_coordinate_z == variables.n_subdomains_z - 1:
   n_points_3D_z += 1
 
 if False:
-  print("{}: 3Dmesh has {} local node positions ({} x {} x {} = {}), nElements: {}".format(rank_no, len(variables.meshes["3Dmesh"]["nodePositions"]), n_points_3D_x, n_points_3D_y, n_points_3D_z, n_points_3D_x*n_points_3D_y*n_points_3D_z, n_elements_3D_mesh))
+  print("{}: 3Dmesh has {} local node positions ({} x {} x {} = {}), nElements: {}".format(rank_no, len(variables.meshes["3Dmesh"]["nodePositions"]), n_points_3D_x, n_points_3D_y, n_points_3D_z, n_points_3D_x*n_points_3D_y*n_points_3D_z, n_elements_3D_mesh_linear))
 
 # determine nodes of the fat layer mesh
 fat_mesh_node_indices = []

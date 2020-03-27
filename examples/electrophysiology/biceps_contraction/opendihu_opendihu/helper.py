@@ -65,7 +65,7 @@ variables.load_fiber_data = False   # load all local node positions from fiber_f
 result = create_partitioned_meshes_for_settings(
     variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, 
     variables.fiber_file, variables.load_fiber_data,
-    variables.sampling_stride_x, variables.sampling_stride_y, variables.sampling_stride_z, variables.generate_quadratic_3d_mesh)
+    variables.sampling_stride_x, variables.sampling_stride_y, variables.sampling_stride_z, variables.generate_linear_3d_mesh, variables.generate_quadratic_3d_mesh)
 [variables.meshes, variables.own_subdomain_coordinate_x, variables.own_subdomain_coordinate_y, variables.own_subdomain_coordinate_z, variables.n_fibers_x, variables.n_fibers_y, variables.n_points_whole_fiber] = result
   
 variables.n_subdomains_xy = variables.n_subdomains_x * variables.n_subdomains_y
@@ -74,6 +74,7 @@ variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
 # create mappings between meshes
 #variables.mappings_between_meshes = {"MeshFiber_{}".format(i) : "3Dmesh" for i in range(variables.n_fibers_total)}
 variables.mappings_between_meshes = {"MeshFiber_{}".format(i) : {"name": "3Dmesh", "xiTolerance": 1e-3} for i in range(variables.n_fibers_total)}
+variables.mappings_between_meshes = {"MeshFiber_{}".format(i) : {"name": "3Dmesh_quadratic", "xiTolerance": 0.8} for i in range(variables.n_fibers_total)}  # a higher tolerance includes more fiber dofs that may be almost out of the 3D mesh
 
 # set output writer    
 variables.output_writer_fibers = []

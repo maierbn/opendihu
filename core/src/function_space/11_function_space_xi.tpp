@@ -56,7 +56,7 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType:
   {
     VLOG(2) << " xi0 = " << xi << ", residuum: " << residuum << " (norm: " << sqrt(residuumNormSquared) << ")";
   }
-
+  std::array<double,MeshType::dim()> initialXi(xi);
   for (int iterationNo = 0; iterationNo < N_NEWTON_ITERATIONS && residuumNormSquared > MathUtility::sqr(RESIDUUM_NORM_TOLERANCE); iterationNo++)
   {
     Tensor2<D> inverseJacobian = this->getInverseJacobian(geometryValues, elementNo, xi);
@@ -75,9 +75,10 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType:
   if (residuumNormSquared > MathUtility::sqr(RESIDUUM_NORM_TOLERANCE))
   {
     std::array<double,MeshType::dim()> bestXi;
+    xi = initialXi;
     double bestResidual = std::numeric_limits<double>::max();
 
-    for (int iterationNo = 0; iterationNo < N_NEWTON_ITERATIONS && residuumNormSquared > MathUtility::sqr(RESIDUUM_NORM_TOLERANCE); iterationNo++)
+    for (int iterationNo = 0; iterationNo < 2*N_NEWTON_ITERATIONS && residuumNormSquared > MathUtility::sqr(RESIDUUM_NORM_TOLERANCE); iterationNo++)
     {
       Tensor2<D> inverseJacobian = this->getInverseJacobian(geometryValues, elementNo, xi);
       xi += inverseJacobian * MathUtility::transformToD<D,3>(residuum);

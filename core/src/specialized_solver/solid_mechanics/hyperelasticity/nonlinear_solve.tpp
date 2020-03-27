@@ -418,16 +418,31 @@ evaluateNonlinearFunction(Vec x, Vec f)
 {
   //VLOG(1) << "evaluateNonlinearFunction at " << getString(x);
 
+  // determine if Vecs need to be backed up and instead x,f should take the place of solverVariableSolution_,solverVariableResidual_
+  // this happens in computation of the numeric jacobian
   bool backupVecs = f != solverVariableResidual_ || x != solverVariableSolution_;
 
   //VLOG(1) << "backupVecs: " << backupVecs;
 
-  // backup the values of solverVariableSolution_ and solverVariableResidual_ to be able to work with them now
+  Vec backupSolution;
+  Vec backupResidual;
   if (backupVecs)
   {
-    // this happens in computation of the numeric jacobian
-    VecSwap(x, solverVariableSolution_);
-    VecSwap(f, solverVariableResidual_);
+    // backup the Vecs of solverVariableSolution_ and solverVariableResidual_
+    backupSolution = combinedVecSolution_->valuesGlobal();
+    backupResidual = combinedVecResidual_->valuesGlobal();
+    
+    // assign x and f to the variables solverVariableSolution_ and solverVariableResidual_
+    combinedVecSolution_->valuesGlobalReference() = x;
+    solverVariableSolution_ = x;
+    
+    combinedVecResidual_->valuesGlobalReference() = f;
+    solverVariableResidual_ = f;
+
+    // the following would have done the same, but gives the following error, when Petsc is compiled in debug mode:
+    // PETSC ERROR: VecSetErrorIfLocked() line 556 in /store/software/opendihu/dependencies/petsc/src/petsc-3.12.3/include/petscvec.h  Vec is already locked for read-only or read/write access, argument # 1
+    //VecSwap(x, solverVariableSolution_);
+    //VecSwap(f, solverVariableResidual_);
   }
 
   // set the solverVariableSolution_ values in displacements, velocities and pressure, this is needed for materialComputeResidual
@@ -438,11 +453,16 @@ evaluateNonlinearFunction(Vec x, Vec f)
 
   //VLOG(1) << "solverVariableResidual_: " << combinedVecResidual_->getString();
 
-  // restore the values of solverVariableSolution_ and solverVariableResidual_ to their original values
+  // restore the values of solverVariableSolution_ and solverVariableResidual_ to their original pointer
   if (backupVecs)
   {
-    VecSwap(x, solverVariableSolution_);
-    VecSwap(f, solverVariableResidual_);
+    combinedVecSolution_->valuesGlobalReference() = backupSolution;
+    combinedVecResidual_->valuesGlobalReference() = backupResidual;
+    solverVariableSolution_ = combinedVecSolution_->valuesGlobal();
+    solverVariableResidual_ = combinedVecResidual_->valuesGlobal();
+
+    //VecSwap(x, solverVariableSolution_);
+    //VecSwap(f, solverVariableResidual_);
   }
   //VLOG(1) << "f: " << getString(f);
 }

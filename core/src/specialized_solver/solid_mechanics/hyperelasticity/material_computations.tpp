@@ -21,10 +21,15 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
 
   const bool outputFiles = false;
 
-  // assert that data representation is global
-  assert(combinedVecResidual_->currentRepresentation() == Partition::values_representation_t::representationCombinedGlobal);
-  assert(combinedVecSolution_->currentRepresentation() == Partition::values_representation_t::representationCombinedGlobal);
-
+  if (communicateGhosts)
+  {
+    // assert that data representation is global
+    if (combinedVecResidual_->currentRepresentation() != Partition::values_representation_t::representationCombinedGlobal)
+      LOG(ERROR) << "Representation is " << combinedVecResidual_->getCurrentRepresentationString();
+    assert(combinedVecResidual_->currentRepresentation() == Partition::values_representation_t::representationCombinedGlobal);
+    assert(combinedVecSolution_->currentRepresentation() == Partition::values_representation_t::representationCombinedGlobal);
+  }
+  
   // get pointer to function space
   std::shared_ptr<DisplacementsFunctionSpace> displacementsFunctionSpace = this->data_.displacementsFunctionSpace();
   std::shared_ptr<PressureFunctionSpace> pressureFunctionSpace = this->data_.pressureFunctionSpace();

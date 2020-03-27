@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <chrono>
 
 #include "easylogging++.h"
 #include "semt/Semt.h"
@@ -13,7 +14,7 @@
 #include "opendihu.h"
 
 using namespace std;
-
+/*
 struct FiberPointData
 {
   Vc::double_v values[8];
@@ -60,9 +61,18 @@ protected:
 
   std::vector<int> v_;
 };
-
-int main(int argc, char *argv[])
+*/
+double gen()
 {
+  double d = rand()*1e-5;
+  if (rand()%2 == 0)
+  {
+    return -d;
+  }
+  return d;
+}
+int main(int argc, char *argv[])
+{/*
   LOG(DEBUG) << "debug" << f(1);
   LOG(INFO) << "info" << f(2);
   VLOG(1) << "vlog1 " << f(3);
@@ -71,6 +81,106 @@ int main(int argc, char *argv[])
   cout << "double vector size: " << Vc::double_v::size() << ", float vector size: " << Vc::float_v::size() << endl;
   
   // test Vc
+  
+  Vc::array<double,14> data;
+  std::iota(data.begin(), data.end(), 10);
+  
+  LOG(INFO) << "data: " << data;
+  //auto indexes = Vc::double_v::IndexType::IndexesFromZero();
+  auto indexes = Vc::double_v([](int n) { return n; });
+  Vc::double_v gathered = data[indexes];  // gathered == [0, 1, 2, ...]
+  LOG(INFO) << "gathered: " << gathered;
+  
+  //Vc::double_v gathered2 = data[Vc::IndexesFromZero];  // gathered == [0, 1, 2, ...]
+  //LOG(DEBUG) << "gathered2: " << gathered2;
+  
+  auto indexes2 = Vc::double_v([](int n) { return n+1; });
+  LOG(INFO) << StringUtility::demangle(typeid(indexes2).name());
+  Vc::double_v gathered3 = data[indexes2];  // gathered == [0, 1, 2, ...]
+  LOG(INFO) << "indexes2: " << indexes2 << ", gathered3: " << gathered3 << ",";
+
+  for (int i = 0; i < int(ceil((float)data.size() / Vc::double_v::size())); i++)
+  {
+    auto indexes = Vc::double_v([&i](int n) { return i*Vc::double_v::size() + n; });
+    Vc::double_v v = data[indexes];
+    LOG(INFO) << "indexes: " << indexes << ", v: " << v;
+  }*/
+
+  // measurement
+  const long long N = 1e5;
+  Vc::array<double,N> valuesA;
+  Vc::array<double,N> valuesB;
+  std::array<double,N> valuesArrayA;
+  std::array<double,N> valuesArrayB;
+  
+  for (long long i = 0; i < N; i++)
+  {
+    valuesA[i] = (double)(gen());
+    valuesB[i] = (double)(gen());
+    valuesArrayA[i] = valuesA[i];
+    valuesArrayB[i] = valuesB[i];
+  }
+  
+  Vc::double_v cc = 0;
+  
+	auto start0 = chrono::steady_clock::now();
+
+  const long long nEntries = int(ceil((float)valuesA.size() / Vc::double_v::size()));
+  for (long long i = 0; i < nEntries; i++)
+  {
+    auto indexes = Vc::double_v([&i](int n) { return i*Vc::double_v::size() + n; });
+    Vc::double_v a = valuesA[indexes];
+    Vc::double_v b = valuesB[indexes];
+    cc += a*b;
+    //LOG(INFO) << "indexes: " << indexes << ", v: " << v;
+  }
+  
+  double result = 0;
+  for (long long i = 0; i < Vc::double_v::size(); i++)
+  {
+    result += cc[i];
+  }
+  
+	auto end0 = chrono::steady_clock::now();
+  
+  LOG(INFO) << "resulta: " << result;
+	auto start1 = chrono::steady_clock::now();
+  
+  result = 0;
+  for (long long i = 0; i < valuesA.size(); i++)
+  {
+    result += valuesArrayA[i] * valuesArrayB[i];
+  }
+  LOG(INFO) << "resultb: " << result;
+  
+	auto end1 = chrono::steady_clock::now();
+
+    
+  LOG(INFO) << "duration Vc : " << chrono::duration_cast<chrono::microseconds>(end0 - start0).count();
+  LOG(INFO) << "duration std: " << chrono::duration_cast<chrono::microseconds>(end1 - start1).count();
+
+  /*
+  Vc::Memory<Vc::double_v, 11> memory;
+  std::iota(memory.begin(), memory.end(), 10);
+  LOG(INFO) << memory;
+  
+  // scalar access:
+  for (int i = 0; i < memory.entriesCount(); ++i) {
+      double x = memory[i]; // read
+      memory[i] = 2*x;     // write
+  }
+  // more explicit alternative:
+  for (int i = 0; i < memory.entriesCount(); ++i) {
+      double x = memory.scalar(i); // read
+      memory.scalar(i) = 2*x;     // write
+  }
+  // vector access:
+  for (int i = 0; i < memory.vectorsCount(); ++i) {
+      Vc::double_v x = memory.vector(i); // read
+      memory.vector(i) = 2*x;       // write
+  }
+  LOG(INFO) << memory;
+  
   int nFiberPoints = 100;
   int nVcVectors = (nFiberPoints + Vc::double_v::Size - 1) / Vc::double_v::Size;
 
@@ -79,13 +189,13 @@ int main(int argc, char *argv[])
   for (int i = 0; i < nVcVectors; i++)
   {
     values[i].values[0] = 8.0;
-  }
+  }*/
   
-  for (int i = 0; i < 256; i++)
+/*  for (int i = 0; i < 256; i++)
   {
     std::cout << i << ":  " << char(i) << std::endl;
   }
-
+*/
   //Vc::Memory<FiberPointData> data(nFiberPoints);
   
   // test SEMT 

@@ -626,6 +626,17 @@ containsNanOrInf()
   return false;
 }
 
+template<typename FunctionSpaceType, int nComponents, int nComponentsDirichletBc>
+Vec &PartitionedPetscVecWithDirichletBc<FunctionSpaceType, nComponents, nComponentsDirichletBc>::
+valuesGlobalReference()
+{
+  if (this->currentRepresentation_ != Partition::values_representation_t::representationCombinedGlobal)
+  {
+    LOG(FATAL) << "Calling valuesGlobalReference() when representation is not combined-global, but " << this->getCurrentRepresentationString();
+  }
+  return vectorCombinedWithoutDirichletDofsGlobal_;
+}
+
 //! output the vector to stream, for debugging
 template<typename FunctionSpaceType, int nComponents, int nComponentsDirichletBc>
 void PartitionedPetscVecWithDirichletBc<FunctionSpaceType, nComponents, nComponentsDirichletBc>::

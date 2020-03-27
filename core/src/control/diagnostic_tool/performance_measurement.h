@@ -43,6 +43,10 @@ public:
 
   //! get the value of a parameter that was previously set, empty string if parameter is not present
   static std::string getParameter(std::string key);
+
+  //! get a measured total duration with given measurementName, or 0.0 if the measurement does not (yet) exist
+  static double getDuration(std::string measurementName);
+
 private:
 
   //! parse some system information

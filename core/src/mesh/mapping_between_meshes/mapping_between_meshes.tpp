@@ -17,12 +17,14 @@ MappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSourc
   maxAllowedXiTolerance_(xiTolerance)
 {
   // create the mapping
-
   Control::PerformanceMeasurement::start("durationComputeMappingBetweenMeshes");
 
   const dof_no_t nDofsLocalSource = functionSpaceSource->nDofsLocalWithoutGhosts();
   const dof_no_t nDofsLocalTarget = functionSpaceTarget->nDofsLocalWithoutGhosts();
   const int nDofsPerTargetElement = FunctionSpaceTargetType::nDofsPerElement();
+
+  LOG(DEBUG) << "create MappingBetweenMeshes \"" << functionSpaceSource->meshName() << "\" and \""
+        << functionSpaceTarget->meshName() << "\" xiTolerance: " << xiTolerance;
 
   element_no_t elementNo = 0;
   int ghostMeshNo = 0;
@@ -41,11 +43,12 @@ MappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSourc
   //VLOG(1) << "target meshPartition: " << *functionSpaceTarget->meshPartition();
   //VLOG(1) << "geometryField: " << functionSpaceTarget->geometryField();
 
-  double xiToleranceBase = 1e-2;    // internal tolerance is 1e-3
-
-  bool mappingSucceeded = true;
+  if (xiTolerance <= 0)
+    xiTolerance = 1e-2;
+    
   bool startSearchInCurrentElement = false;
   int nSourceDofsOutsideTargetMesh = 0;
+  double residual;
 
   // visualization for 1D-1D: s=source, t=target
   // t--s--------t-----s-----t
@@ -62,44 +65,18 @@ MappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSourc
     //dof_no_t sourceDofNoGlobal = functionSpaceTarget->meshPartition()->getDofNoGlobalPetsc(sourceDofNoLocal);
     Vec3 position = functionSpaceSource->getGeometry(sourceDofNoLocal);
 
-    double xiTolerance = xiToleranceBase;
-    int nTries = 0;
-    int nTriesMax = 3;
-    int startElementNo = elementNo;
-    for(nTries = 0; nTries < nTriesMax; nTries++)
+    // find element no in the target mesh where the position is
+    if (functionSpaceTarget->findPosition(position, elementNo, ghostMeshNo, xi, startSearchInCurrentElement, residual, xiTolerance))
     {
-      // find element no in the target mesh where the position is
-      elementNo = startElementNo;
-      if (functionSpaceTarget->findPosition(position, elementNo, ghostMeshNo, xi, startSearchInCurrentElement, xiTolerance))
-      {
-        // If there was no prescribed maxAllowedXiTolerance_, set the new xiTolerance to the value from which the current search succeeded,
-        // because it is assumed the the current two meshes are located to each other so mismatching that this tolerance is enough.
-        if (maxAllowedXiTolerance_ == 0)
-        {
-          xiToleranceBase = xiTolerance;
-        }
-
-        targetMappingInfo.mapThisDof = true;
-        break;
-      }
-      else
-      {
-        xiTolerance *= 2;
-        // if there was no element found, increase tolerance for the local coordinate of the element, xi, for which the point is considered to be inside the element
-        if (maxAllowedXiTolerance_ != 0 && xiTolerance > maxAllowedXiTolerance_)
-        {
-          break;
-        }
-        LOG(DEBUG) << "Try again with xiTolerance = " << xiTolerance;
-      }
+      targetMappingInfo.mapThisDof = true;
+      VLOG(1) << "found at xi=" << xi << ", elementNo: " << elementNo << ", xiTolerance=" << xiTolerance << ", residual: " << residual;
     }
-
-    if (nTries == nTriesMax || (maxAllowedXiTolerance_ != 0 && xiTolerance > maxAllowedXiTolerance_))
+    else
     {
       LOG(DEBUG) << "In mapping between meshes \"" << functionSpaceSource->meshName() << "\" and \""
         << functionSpaceTarget->meshName() << "\", source dof local " << sourceDofNoLocal
         << " of mesh \"" << functionSpaceSource->meshName() << "\" at position " << position << " is outside of target mesh \""
-        << functionSpaceTarget->meshName() << "\" with tolerance " << xiTolerance << ".";
+        << functionSpaceTarget->meshName() << "\" with tolerance " << xiTolerance << ". Try increasing parameter \"xiTolerance\".";
 
       nSourceDofsOutsideTargetMesh++;
       targetMappingInfo.mapThisDof = false;
@@ -118,7 +95,7 @@ MappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSourc
       VLOG(3) << "   phi_" << targetDofIndex << "(" << xi << ")=" << functionSpaceTarget->phi(targetDofIndex, xi);
       double phiContribution = functionSpaceTarget->phi(targetDofIndex, xi);
 
-      // if phi is close to zero, set to 1e-14
+      // if phi is close to zero, set to 1e-14, this is practically zero, but it is still possible to divide by it in case the dof does not get any other contribution
       if (fabs(phiContribution) < 1e-14)
       {
         if (phiContribution >= 0)
@@ -134,7 +111,7 @@ MappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSourc
       {
         dof_no_t targetDofNoLocal = targetDofNos[targetDofIndex];
 
-        // if this dof is local, store inforamtion thta this target dof will get a value in the mapping, i.e. there is a source dof the influences the mapped value of the target dof
+        // if this dof is local, store information that this target dof will get a value in the mapping, i.e. there is a source dof that influences the mapped value of the target dof
         if (targetDofNoLocal < nDofsLocalTarget)
         {
           targetDofIsMappedTo[targetDofNoLocal] = true;
@@ -143,6 +120,7 @@ MappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSourc
 
       targetMappingInfo.targetElements[0].scalingFactors[targetDofIndex] = phiContribution;
     }
+    
 
     targetMappingInfo_[sourceDofNoLocal] = targetMappingInfo;
 
@@ -208,13 +186,12 @@ MappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSourc
           Vec3 position = functionSpaceTarget->getGeometry(targetDofNoLocal);
           element_no_t sourceElementNo = 0;
           bool startSearchInCurrentElement = false;
-          double xiTolerance = 1e-2;
           std::array<double,FunctionSpaceSourceType::dim()> xiSource;
 
           //LOG(DEBUG) << "target (el." << targetElementNoLocal << ",index" << targetDofIndex << ") dof " << targetDofNoLocal << ", position: " << position
           //  << " is not mapped, now find element in source function space";
 
-          if (functionSpaceSource->findPosition(position, sourceElementNo, ghostMeshNo, xiSource, startSearchInCurrentElement, xiTolerance))
+          if (functionSpaceSource->findPosition(position, sourceElementNo, ghostMeshNo, xiSource, startSearchInCurrentElement, residual, xiTolerance))
           {
             // get dofs of this source element
             std::array<dof_no_t,FunctionSpaceSourceType::nDofsPerElement()> sourceDofNos = functionSpaceSource->getElementDofNosLocal(sourceElementNo);
@@ -270,16 +247,11 @@ MappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSourc
 
   Control::PerformanceMeasurement::stop("durationComputeMappingBetweenMeshes");
 
-  if (!mappingSucceeded)
+  if (nSourceDofsOutsideTargetMesh > 0)
   {
-    LOG(ERROR) << "Could not create mapping between meshes \"" << functionSpaceSource->meshName() << "\" and \""
-      << functionSpaceTarget->meshName() << "\".";
-    LOG(FATAL) << "end";
-  }
-  else
-  {
-    LOG(DEBUG) << "Successfully initialized mapping between meshes \"" << functionSpaceSource->meshName() << "\" and \""
-      << functionSpaceTarget->meshName() << "\", " << nSourceDofsOutsideTargetMesh << "/" << nDofsLocalSource << " source dofs are outside the target mesh.";
+    LOG(INFO) << "Successfully initialized mapping between meshes \"" << functionSpaceSource->meshName() << "\" and \""
+      << functionSpaceTarget->meshName() << "\", " << nSourceDofsOutsideTargetMesh << "/" << nDofsLocalSource << " source dofs are outside the target mesh. "
+      << "\"xiTolerance\": " << xiTolerance << ", total duration of all mappings: " << Control::PerformanceMeasurement::getDuration("durationComputeMappingBetweenMeshes") << " s";
   }
 }
 
@@ -441,6 +413,13 @@ mapHighToLowDimension(
     VLOG(1) << "extracted source values: " << sourceValues;
   }
 
+#ifndef NDEBUG
+  VecD<nComponents> previousTargetValue;
+  VecD<FunctionSpaceSourceType::dim()> previousXi;
+  element_no_t previousSourceElementNoLocal;
+  std::array<double,FunctionSpaceSourceType::nDofsPerElement()> previousScalingFactors;
+#endif
+
   // visualization for 1D-1D: s=source, t=target
   // s--t--------s-----t-----s
 
@@ -469,13 +448,34 @@ mapHighToLowDimension(
     VecD<nComponents> targetValue = sourceValues * targetElement.scalingFactors / scalingFactorsSum;
     fieldVariableTarget.setValue(targetDofNoLocal, targetValue);
 
+#ifndef NDEBUG
+    if (targetDofNoLocal > 0)
+    {
+      double differenceToPrevious = MathUtility::distance<nComponents>(targetValue, previousTargetValue);
+      LOG(INFO) << "  target dof " << targetDofNoLocal << ", source element no local: " << sourceElementNoLocal << " differenceToPrevious=" << differenceToPrevious;
+      if (differenceToPrevious > 1)
+      {
+        LOG(WARNING) << "In mapping " << fieldVariableSource.name() << " (" << fieldVariableSource.functionSpace()->meshName()
+          << ") -> " << fieldVariableTarget.name() << " (" << fieldVariableTarget.functionSpace()->meshName() << "), differenceToPrevious=" << differenceToPrevious;
+        LOG(WARNING) << "  target dof " << targetDofNoLocal << ", source element no local: " << sourceElementNoLocal
+        << ", " << sourceValues.size() << " sourceValues: " << sourceValues
+        << ",\n scaling factors: " << targetElement.scalingFactors << " (scalingFactorsSum=" << scalingFactorsSum << "),\n previous target value: " << previousTargetValue
+        << ", target value: " << targetValue << ", previous source element: " << previousSourceElementNoLocal
+        << "\npreviousScalingFactors: " << previousScalingFactors;
+      }
+    }
     if (VLOG_IS_ON(2))
     {
       VLOG(2)
         << "  target dof " << targetDofNoLocal << ", source element no local: " << sourceElementNoLocal
         << ", sourceValues: " << sourceValues
-        << ", scaling factors: " << targetElement.scalingFactors << ", target value: " << targetValue;
+        << ", scaling factors: " << targetElement.scalingFactors << " (scalingFactorsSum=" << scalingFactorsSum << "), target value: " << targetValue;
     }
+    // store quantities from last dof for debugging output
+    previousTargetValue = targetValue;
+    previousSourceElementNoLocal = sourceElementNoLocal;
+    previousScalingFactors = targetElement.scalingFactors;
+#endif
   }
 }
 

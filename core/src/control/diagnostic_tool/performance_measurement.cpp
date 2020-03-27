@@ -111,6 +111,14 @@ std::string PerformanceMeasurement::getParameter(std::string key)
   return parameters_[key];
 }
 
+double PerformanceMeasurement::getDuration(std::string measurementName)
+{
+  if (measurements_.find(measurementName) == measurements_.end())
+    return 0.0;
+
+  return measurements_[measurementName].totalDuration;
+}
+
 template<>
 void PerformanceMeasurement::measureError<double>(std::string name, double differenceVector)
 {

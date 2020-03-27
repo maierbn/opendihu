@@ -54,7 +54,7 @@ void MappingBetweenMeshesManager::storeMappingsBetweenMeshes()
           stringPath << specificSettings_.getStringPath();
           stringPath << "[\"" << value << "\"]";
           std::string targetMeshToMapTo = PythonUtility::getOptionString(value, "name", stringPath.str(), "");
-          double xiTolerance = PythonUtility::getOptionDouble(value, "xiTolerance", stringPath.str(), 0.1);
+          double xiTolerance = PythonUtility::getOptionDouble(value, "xiTolerance", stringPath.str(), 0.1);    // 0.1 was tested to be reasonable, the actual tolerance in computation of the xi values of points inside elements is independent of this value
 
           VLOG(1) << "Store mapping between mesh \"" << key << "\" and " << targetMeshToMapTo << " with xiTolerance " << xiTolerance;
 

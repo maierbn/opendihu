@@ -54,4 +54,15 @@ void writePoint(T &file, Vec3 &point)
   }
 }
 
+template<int D>
+double distance(const VecD<D> node1, const VecD<D> node2)
+{
+  double result = 0;
+  for (int componentNo = 0; componentNo < D; componentNo++)
+  {
+    result += sqr(node1[componentNo]-node2[componentNo]);
+  }
+  return sqrt(result);
+}
+
 }  // namespace

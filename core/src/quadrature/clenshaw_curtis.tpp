@@ -17,7 +17,7 @@ constexpr int ClenshawCurtis<NumberIntegrationPoints>::numberEvaluations()
 template<unsigned int NumberIntegrationPoints>
 template<typename ValueType>
 ValueType ClenshawCurtis<NumberIntegrationPoints>::
-computeIntegral(const typename Vc::array<ValueType,ClenshawCurtis<NumberIntegrationPoints>::numberEvaluations()> &evaluations)
+computeIntegral(const typename std::array<ValueType,ClenshawCurtis<NumberIntegrationPoints>::numberEvaluations()> &evaluations)
 {
   return ClenshawCurtis<NumberIntegrationPoints>::template computeIntegral<ValueType>(evaluations.begin());
 }
@@ -26,7 +26,7 @@ computeIntegral(const typename Vc::array<ValueType,ClenshawCurtis<NumberIntegrat
 template<>
 template<typename ValueType>
 ValueType ClenshawCurtis<1>::
-computeIntegral(const typename Vc::array<ValueType,1>::const_iterator evaluationsIter)
+computeIntegral(const typename std::array<ValueType,1>::const_iterator evaluationsIter)
 {
   ValueType result{};
   result = *evaluationsIter;
@@ -37,7 +37,7 @@ computeIntegral(const typename Vc::array<ValueType,1>::const_iterator evaluation
 template<unsigned int NumberIntegrationPoints>
 template<typename ValueType>
 ValueType ClenshawCurtis<NumberIntegrationPoints>::
-computeIntegral(const typename Vc::array<ValueType,ClenshawCurtis<NumberIntegrationPoints>::numberEvaluations()>::const_iterator evaluationsIter)
+computeIntegral(const typename std::array<ValueType,ClenshawCurtis<NumberIntegrationPoints>::numberEvaluations()>::const_iterator evaluationsIter)
 {
   ValueType result{};
   const Vc::array<double,NumberIntegrationPoints> weights = quadratureWeights();

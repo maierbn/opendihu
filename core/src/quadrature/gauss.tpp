@@ -14,7 +14,7 @@ constexpr int Gauss<NumberGaussPoints>::numberEvaluations()
 template<unsigned int NumberGaussPoints>
 template<typename ValueType>
 ValueType Gauss<NumberGaussPoints>::
-computeIntegral(const typename Vc::array<ValueType,Gauss<NumberGaussPoints>::numberEvaluations()> &evaluations)
+computeIntegral(const typename std::array<ValueType,Gauss<NumberGaussPoints>::numberEvaluations()> &evaluations)
 {
   return Gauss<NumberGaussPoints>::template computeIntegral<ValueType>(evaluations.begin());
 }
@@ -23,7 +23,7 @@ computeIntegral(const typename Vc::array<ValueType,Gauss<NumberGaussPoints>::num
 template<>
 template<typename ValueType>
 ValueType Gauss<1>::
-computeIntegral(const typename Vc::array<ValueType,1>::const_iterator evaluationsIter)
+computeIntegral(const typename std::array<ValueType,1>::const_iterator evaluationsIter)
 {
   ValueType result{};
   result = *evaluationsIter;
@@ -34,7 +34,7 @@ computeIntegral(const typename Vc::array<ValueType,1>::const_iterator evaluation
 template<unsigned int NumberGaussPoints>
 template<typename ValueType>
 ValueType Gauss<NumberGaussPoints>::
-computeIntegral(const typename Vc::array<ValueType,Gauss<NumberGaussPoints>::numberEvaluations()>::const_iterator evaluationsIter)
+computeIntegral(const typename std::array<ValueType,Gauss<NumberGaussPoints>::numberEvaluations()>::const_iterator evaluationsIter)
 {
   ValueType result{};
   const Vc::array<double,NumberGaussPoints> weights = quadratureWeights();

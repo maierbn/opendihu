@@ -31,12 +31,12 @@ public:
   //! Compute the integral from evaluations at the integration points.
   //! If a std::array is given for ValueType, compute separate integrals for each component with the same integration points for all.
   template<typename ValueType>
-  static ValueType computeIntegral(const typename Vc::array<ValueType,ClenshawCurtis<NumberIntegrationPoints>::numberEvaluations()>::const_iterator evaluations);
+  static ValueType computeIntegral(const typename std::array<ValueType,ClenshawCurtis<NumberIntegrationPoints>::numberEvaluations()>::const_iterator evaluations);
   
   //! Compute the integral from evaluations at the integration points.
   //! If a std::array is given for ValueType, compute separate integrals for each component with the same integration points for all.
   template<typename ValueType>
-  static ValueType computeIntegral(const typename Vc::array<ValueType,ClenshawCurtis<NumberIntegrationPoints>::numberEvaluations()> &evaluations);
+  static ValueType computeIntegral(const typename std::array<ValueType,ClenshawCurtis<NumberIntegrationPoints>::numberEvaluations()> &evaluations);
 };
 
 }  // namespace

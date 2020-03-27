@@ -16,7 +16,7 @@ constexpr int NewtonCotes<NumberIntegrationPoints>::numberEvaluations()
 template<unsigned int NumberIntegrationPoints>
 template<typename ValueType>
 ValueType NewtonCotes<NumberIntegrationPoints>::
-computeIntegral(const typename Vc::array<ValueType,NewtonCotes<NumberIntegrationPoints>::numberEvaluations()> &evaluations)
+computeIntegral(const typename std::array<ValueType,NewtonCotes<NumberIntegrationPoints>::numberEvaluations()> &evaluations)
 {
   return NewtonCotes<NumberIntegrationPoints>::template computeIntegral<ValueType>(evaluations.begin());
 }
@@ -25,7 +25,7 @@ computeIntegral(const typename Vc::array<ValueType,NewtonCotes<NumberIntegration
 template<>
 template<typename ValueType>
 ValueType NewtonCotes<1>::
-computeIntegral(const typename Vc::array<ValueType,1>::const_iterator evaluationsIter)
+computeIntegral(const typename std::array<ValueType,1>::const_iterator evaluationsIter)
 {
   ValueType result{};
   result = *evaluationsIter;
@@ -36,7 +36,7 @@ computeIntegral(const typename Vc::array<ValueType,1>::const_iterator evaluation
 template<unsigned int NumberIntegrationPoints>
 template<typename ValueType>
 ValueType NewtonCotes<NumberIntegrationPoints>::
-computeIntegral(const typename Vc::array<ValueType,NewtonCotes<NumberIntegrationPoints>::numberEvaluations()>::const_iterator evaluationsIter)
+computeIntegral(const typename std::array<ValueType,NewtonCotes<NumberIntegrationPoints>::numberEvaluations()>::const_iterator evaluationsIter)
 {
   ValueType result{};
   const Vc::array<double,NumberIntegrationPoints> weights = quadratureWeights();

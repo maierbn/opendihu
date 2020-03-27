@@ -29,12 +29,12 @@ public:
   //! Compute the integral from evaluations at the gauss points.
   //! If a std::array is given for ValueType, compute separate integrals for each component with the same gauss points for all.
   template<typename ValueType>
-  static ValueType computeIntegral(const typename Vc::array<ValueType,Gauss<NumberGaussPoints>::numberEvaluations()>::const_iterator evaluations);
+  static ValueType computeIntegral(const typename std::array<ValueType,Gauss<NumberGaussPoints>::numberEvaluations()>::const_iterator evaluations);
 
   //! Compute the integral from evaluations at the gauss points.
   //! If a std::array is given for ValueType, compute separate integrals for each component with the same gauss points for all.
   template<typename ValueType>
-  static ValueType computeIntegral(const typename Vc::array<ValueType,Gauss<NumberGaussPoints>::numberEvaluations()> &evaluations);
+  static ValueType computeIntegral(const typename std::array<ValueType,Gauss<NumberGaussPoints>::numberEvaluations()> &evaluations);
 };
 
 }  // namespace

@@ -481,25 +481,27 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
       [n_sampled_points_in_subdomain_y(subdomain_coordinate_y) for subdomain_coordinate_y in range(variables.n_subdomains_y)],\
       [n_sampled_points_in_subdomain_z(subdomain_coordinate_z) for subdomain_coordinate_z in range(variables.n_subdomains_z)]))
       
+    print("{}: own subdomain coordinates: ({},{},{})/({},{},{})".format(rank_no, own_subdomain_coordinate_x, own_subdomain_coordinate_y, own_subdomain_coordinate_z, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z))
     print("{}: 3Dmesh           nElements: {} nRanks: {} len(nodePositions): {} ".format(rank_no, variables.n_elements_3D_mesh, meshes["3Dmesh_quadratic"]["nRanks"], len(node_positions_3d_mesh)))
     print("{}: 3Dmesh_quadratic nElements: {} nRanks: {}".format(rank_no, meshes["3Dmesh_quadratic"]["nElements"], meshes["3Dmesh_quadratic"]["nRanks"]))
     
 
+  # compute helper variables for output and checking if partitioning is valid
+  if quadratic_3d_mesh:
+    n_elements_3D_global_x = (int)((variables.n_points_3D_mesh_global_x-1)/2)
+    n_elements_3D_global_y = (int)((variables.n_points_3D_mesh_global_y-1)/2)
+    n_elements_3D_global_z = (int)((variables.n_points_3D_mesh_global_z-1)/2)
+    n_elements_3D_local = variables.n_elements_3D_mesh_quadratic[0] * variables.n_elements_3D_mesh_quadratic[1] * variables.n_elements_3D_mesh_quadratic[2]
+  else:
+    n_elements_3D_global_x = (int)(variables.n_points_3D_mesh_global_x-1)
+    n_elements_3D_global_y = (int)(variables.n_points_3D_mesh_global_y-1)
+    n_elements_3D_global_z = (int)(variables.n_points_3D_mesh_global_z-1)
+    n_elements_3D_local = variables.n_elements_3D_mesh[0] * variables.n_elements_3D_mesh[1] * variables.n_elements_3D_mesh[2]
+  n_elements_3D_global = n_elements_3D_global_x * n_elements_3D_global_y * n_elements_3D_global_z
+  variables.n_subdomains = variables.n_subdomains_x * variables.n_subdomains_y * variables.n_subdomains_z
+      
   # output information about partitioning on rank 0
   if rank_no == 0:      
-    # compute helper variables only for output
-    if quadratic_3d_mesh:
-      n_elements_3D_global_x = (int)((variables.n_points_3D_mesh_global_x-1)/2)
-      n_elements_3D_global_y = (int)((variables.n_points_3D_mesh_global_y-1)/2)
-      n_elements_3D_global_z = (int)((variables.n_points_3D_mesh_global_z-1)/2)
-      n_elements_3D_local = variables.n_elements_3D_mesh_quadratic[0] * variables.n_elements_3D_mesh_quadratic[1] * variables.n_elements_3D_mesh_quadratic[2]
-    else:
-      n_elements_3D_global_x = (int)(variables.n_points_3D_mesh_global_x-1)
-      n_elements_3D_global_y = (int)(variables.n_points_3D_mesh_global_y-1)
-      n_elements_3D_global_z = (int)(variables.n_points_3D_mesh_global_z-1)
-      n_elements_3D_local = variables.n_elements_3D_mesh[0] * variables.n_elements_3D_mesh[1] * variables.n_elements_3D_mesh[2]
-    n_elements_3D_global = n_elements_3D_global_x * n_elements_3D_global_y * n_elements_3D_global_z
-      
     n_states_cellml = 4
     if "shorten" in variables.cellml_file:
       n_states_cellml = 57
@@ -533,6 +535,23 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
       print("                 3D bidomain: {:10d}  (per process: {})".format(n_points_3D_mesh_global, n_sampled_points_in_own_subdomain_x*n_sampled_points_in_own_subdomain_y*n_sampled_points_in_own_subdomain_z))
       print("                       total: {:10d}  (per process: {})".format(variables.n_fibers_total*variables.n_points_whole_fiber*n_states_cellml+n_points_3D_mesh_global, variables.n_fibers_per_subdomain_x*variables.n_fibers_per_subdomain_y*n_points_in_subdomain_z(own_subdomain_coordinate_z)*n_states_cellml+n_sampled_points_in_own_subdomain_x*n_sampled_points_in_own_subdomain_y*n_sampled_points_in_own_subdomain_z))
 
+  # exit if number of elements is <= 0 on any rank
+  if quadratic_3d_mesh:
+    if variables.n_elements_3D_mesh_quadratic[0] <= 0 or variables.n_elements_3D_mesh_quadratic[1] <= 0 or variables.n_elements_3D_mesh_quadratic[2] <= 0:
+      print("\nError! When partitioning {}x{}x{} quadratic 3D elements to {}x{}x{}={} ranks, rank {} gets {}x{}x{}={} elements (subdomain coordinates (0-based): ({},{},{})/({},{},{})).\nDecrease number of processes or increase mesh size.\n".
+      format(n_elements_3D_global_x, n_elements_3D_global_y, n_elements_3D_global_z, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, variables.n_subdomains,
+      rank_no, variables.n_elements_3D_mesh[0], variables.n_elements_3D_mesh[1], variables.n_elements_3D_mesh[2], n_elements_3D_local,
+      own_subdomain_coordinate_x, own_subdomain_coordinate_y, own_subdomain_coordinate_z, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z))
+      quit()
+  else:
+    if variables.n_elements_3D_mesh_quadratic[0] <= 0 or variables.n_elements_3D_mesh_quadratic[1] <= 0 or variables.n_elements_3D_mesh_quadratic[2] <= 0:
+      print("\nError! When partitioning {}x{}x{} 3D elements to {}x{}x{}={} ranks, rank {} gets {}x{}x{}={} elements (subdomain coordinates (0-based): ({},{},{})/({},{},{})).\nDecrease number of processes or increase mesh size.\n".
+      format(n_elements_3D_global_x, n_elements_3D_global_y, n_elements_3D_global_z, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, variables.n_subdomains,
+      rank_no, variables.n_elements_3D_mesh[0], variables.n_elements_3D_mesh[1], variables.n_elements_3D_mesh[2], n_elements_3D_local,
+      own_subdomain_coordinate_x, own_subdomain_coordinate_y, own_subdomain_coordinate_z, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z))
+      quit()
+    
+    
   ###############################
   # determine 1D meshes of variables.fibers
 

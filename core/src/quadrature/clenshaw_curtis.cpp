@@ -1,6 +1,6 @@
 #include "quadrature/clenshaw_curtis.h"
 
-#include <array>
+#include <Vc/Vc>
 #include <cmath>
 
 namespace Quadrature
@@ -8,18 +8,18 @@ namespace Quadrature
 
 // 1 ClenshawCurtis point
 template<>
-std::array<double, 1> ClenshawCurtis<1>::
+Vc::array<double, 1> ClenshawCurtis<1>::
 samplingPoints()
 {
-  return std::array<double, 1>{0.5};
+  return Vc::array<double, 1>{0.5};
 }
 
 // 2 ClenshawCurtis points
 template<>
-std::array<double, 2> ClenshawCurtis<2>::
+Vc::array<double, 2> ClenshawCurtis<2>::
 samplingPoints()
 {
-  return std::array<double, 2>{
+  return Vc::array<double, 2>{
     0.,
       1.
   };
@@ -27,10 +27,10 @@ samplingPoints()
 
 // 3 ClenshawCurtis points
 template<>
-std::array<double, 3> ClenshawCurtis<3>::
+Vc::array<double, 3> ClenshawCurtis<3>::
 samplingPoints()
 {
-  return std::array<double, 3>{
+  return Vc::array<double, 3>{
     0.,
       0.5,
       1.
@@ -39,10 +39,10 @@ samplingPoints()
 
 // 4 ClenshawCurtis points
 template<>
-std::array<double, 4> ClenshawCurtis<4>::
+Vc::array<double, 4> ClenshawCurtis<4>::
 samplingPoints()
 {
-  return std::array<double, 4>{
+  return Vc::array<double, 4>{
     0.,
       0.25,
       0.75,
@@ -52,10 +52,10 @@ samplingPoints()
 
 // 5 ClenshawCurtis points
 template<>
-std::array<double, 5> ClenshawCurtis<5>::
+Vc::array<double, 5> ClenshawCurtis<5>::
 samplingPoints()
 {
-  return std::array<double, 5>{
+  return Vc::array<double, 5>{
     0.,
       (-0.7071067811865475 + 1.) / 2.,
       0.5,
@@ -66,10 +66,10 @@ samplingPoints()
 
 // 7 ClenshawCurtis points
 template<>
-std::array<double, 6> ClenshawCurtis<6>::
+Vc::array<double, 6> ClenshawCurtis<6>::
 samplingPoints()
 {
-  return std::array<double, 6>{
+  return Vc::array<double, 6>{
     0.,
       0.095491502812526274,
       0.34549150281252627,
@@ -81,10 +81,10 @@ samplingPoints()
 
 // 7 ClenshawCurtis points
 template<>
-std::array<double, 7> ClenshawCurtis<7>::
+Vc::array<double, 7> ClenshawCurtis<7>::
 samplingPoints()
 {
-  return std::array<double, 7>{
+  return Vc::array<double, 7>{
     0.,
       0.066987298107780646,
       0.24999999999999994,
@@ -97,10 +97,10 @@ samplingPoints()
 
 // 64 ClenshawCurtis points
 template<>
-std::array<double, 64> ClenshawCurtis<64>::
+Vc::array<double, 64> ClenshawCurtis<64>::
 samplingPoints()
 {
-  return std::array<double, 64>{
+  return Vc::array<double, 64>{
     0.,
       0.00062153939053882779,
       0.0024846123172992951,
@@ -168,4 +168,169 @@ samplingPoints()
   };
 }
 
-} // namespace
+// -----------
+// quadrature weights
+
+// 1 ClenshawCurtis point
+template<>
+const Vc::array<double, 1> ClenshawCurtis<1>::
+quadratureWeights()
+{
+  return Vc::array<double, 1>{1.0};
+}
+
+// 2 ClenshawCurtis points
+template<>
+const Vc::array<double, 2> ClenshawCurtis<2>::
+quadratureWeights()
+{
+  return Vc::array<double, 2>{
+    1.,
+    1.
+  };
+}
+
+// 3 ClenshawCurtis points
+template<>
+const Vc::array<double, 3> ClenshawCurtis<3>::
+quadratureWeights()
+{
+  return Vc::array<double, 3>{
+    1./3.,
+    4./3., 
+    1./3.
+  };
+}
+
+// 4 ClenshawCurtis points
+template<>
+const Vc::array<double, 4> ClenshawCurtis<4>::
+quadratureWeights()
+{
+  return Vc::array<double, 4>{
+    1./9.,
+    8./9.,
+    8./9.,
+    1./9.
+  };
+}
+
+// 5 ClenshawCurtis points
+template<>
+const Vc::array<double, 5> ClenshawCurtis<5>::
+quadratureWeights()
+{
+  return Vc::array<double, 5>{
+    0.0666666666666666, 
+    0.5333333333333333, 
+    0.7999999999999999, 
+    0.5333333333333333, 
+    0.0666666666666666
+  };
+}
+
+// 6 ClenshawCurtis points
+template<>
+const Vc::array<double, 6> ClenshawCurtis<6>::
+quadratureWeights()
+{
+  return Vc::array<double, 6>{
+    0.040000000000000008,
+    0.36074304120001122,
+    0.59925695879998886,
+    0.59925695879998875,
+    0.36074304120001133,
+    0.040000000000000008
+  };
+}
+
+// 7 ClenshawCurtis points
+template<>
+const Vc::array<double, 7> ClenshawCurtis<7>::
+quadratureWeights()
+{
+  return Vc::array<double, 7>{
+    0.028571428571428577,
+    0.2539682539682539,
+    0.45714285714285713,
+    0.52063492063492056,
+    0.4571428571428573,
+    0.2539682539682539,
+    0.028571428571428577
+  };
+}
+
+// 64 ClenshawCurtis points
+template<>
+const Vc::array<double, 64> ClenshawCurtis<64>::
+quadratureWeights()
+{
+  return Vc::array<double, 64>{
+    0.00025195263290501448,
+    0.0024268255770913318,
+    0.0049856828009972485,
+    0.0074221088952156119,
+    0.0098867917339801568,
+    0.012301075649320037,
+    0.01470112902792591,
+    0.017053372663619865,
+    0.01937142575637869,
+    0.021635087608271566,
+    0.02384983935834243,
+    0.026001385652925597,
+    0.028091483494470625,
+    0.030109091643713892,
+    0.032054068367475069,
+    0.033917467729185892,
+    0.035698154368101788,
+    0.037388704313403007,
+    0.038987496746689054,
+    0.040488323162672368,
+    0.041889389342280314,
+    0.04318553037633184,	
+    0.044374982977791189,
+    0.045453526843574302,
+    0.046419569176223564,
+    0.047269776669786039,
+    0.048002824246101541,
+    0.048616232217200656,
+    0.049109010480342288,
+    0.049479514061046455,
+    0.049727132112596689,
+    0.049851044314039916,
+    0.049851044314039916,
+    0.049727132112596689,
+    0.049479514061046455,
+    0.049109010480342288,
+    0.048616232217200663,
+    0.048002824246101548,
+    0.047269776669786052,
+    0.046419569176223564,
+    0.045453526843574309,
+    0.044374982977791223,
+    0.04318553037633184,
+    0.041889389342280314,
+    0.040488323162672389,
+    0.038987496746689033,
+    0.037388704313403021,
+    0.035698154368101795,
+    0.033917467729185878,
+    0.032054068367475076,
+    0.030109091643713896,
+    0.028091483494470638,
+    0.026001385652925594,
+    0.02384983935834243,
+    0.021635087608271566,
+    0.019371425756378676,
+    0.017053372663619868,
+    0.014701129027925933,
+    0.012301075649320059,
+    0.0098867917339801534,
+    0.0074221088952156266,
+    0.0049856828009972511,
+    0.0024268255770913526,
+    0.00025195263290501448,
+  };
+}
+
+}  // namespace

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Python.h>  // has to be the first included header
-#include <array>
+#include <Vc/Vc>
 #include <type_traits>
 
 #include "quadrature/quadrature.h"
@@ -23,17 +23,20 @@ public:
   static constexpr int numberEvaluations();
 
   //! return the sampling points, i.e. clenshaw-curtis points that are needed for the quadrature. The list may not be in ascending order, but the order matches the order required in integrate
-  static std::array<double, NumberIntegrationPoints> samplingPoints();
+  static Vc::array<double, NumberIntegrationPoints> samplingPoints();
+
+  //! return the quadrature weights
+  static const Vc::array<double, NumberIntegrationPoints> quadratureWeights();
 
   //! Compute the integral from evaluations at the integration points.
   //! If a std::array is given for ValueType, compute separate integrals for each component with the same integration points for all.
   template<typename ValueType>
-  static ValueType computeIntegral(const typename std::array<ValueType,ClenshawCurtis<NumberIntegrationPoints>::numberEvaluations()>::const_iterator evaluations);
+  static ValueType computeIntegral(const typename Vc::array<ValueType,ClenshawCurtis<NumberIntegrationPoints>::numberEvaluations()>::const_iterator evaluations);
   
   //! Compute the integral from evaluations at the integration points.
   //! If a std::array is given for ValueType, compute separate integrals for each component with the same integration points for all.
   template<typename ValueType>
-  static ValueType computeIntegral(const typename std::array<ValueType,ClenshawCurtis<NumberIntegrationPoints>::numberEvaluations()> &evaluations);
+  static ValueType computeIntegral(const typename Vc::array<ValueType,ClenshawCurtis<NumberIntegrationPoints>::numberEvaluations()> &evaluations);
 };
 
 }  // namespace

@@ -1,6 +1,6 @@
 #include "quadrature/gauss.h"
 
-#include <array>
+#include <Vc/Vc>
 
 namespace Quadrature
 {
@@ -14,7 +14,7 @@ constexpr int Gauss<NumberGaussPoints>::numberEvaluations()
 template<unsigned int NumberGaussPoints>
 template<typename ValueType>
 ValueType Gauss<NumberGaussPoints>::
-computeIntegral(const typename std::array<ValueType,Gauss<NumberGaussPoints>::numberEvaluations()> &evaluations)
+computeIntegral(const typename Vc::array<ValueType,Gauss<NumberGaussPoints>::numberEvaluations()> &evaluations)
 {
   return Gauss<NumberGaussPoints>::template computeIntegral<ValueType>(evaluations.begin());
 }
@@ -23,7 +23,7 @@ computeIntegral(const typename std::array<ValueType,Gauss<NumberGaussPoints>::nu
 template<>
 template<typename ValueType>
 ValueType Gauss<1>::
-computeIntegral(const typename std::array<ValueType,1>::const_iterator evaluationsIter)
+computeIntegral(const typename Vc::array<ValueType,1>::const_iterator evaluationsIter)
 {
   ValueType result{};
   result = *evaluationsIter;
@@ -34,10 +34,10 @@ computeIntegral(const typename std::array<ValueType,1>::const_iterator evaluatio
 template<unsigned int NumberGaussPoints>
 template<typename ValueType>
 ValueType Gauss<NumberGaussPoints>::
-computeIntegral(const typename std::array<ValueType,Gauss<NumberGaussPoints>::numberEvaluations()>::const_iterator evaluationsIter)
+computeIntegral(const typename Vc::array<ValueType,Gauss<NumberGaussPoints>::numberEvaluations()>::const_iterator evaluationsIter)
 {
   ValueType result{};
-  const std::array<double,NumberGaussPoints> weights = quadratureWeights();
+  const Vc::array<double,NumberGaussPoints> weights = quadratureWeights();
   for (int i = 0; i < NumberGaussPoints; i++)
   {
     result += weights[i] * (*(evaluationsIter+i));

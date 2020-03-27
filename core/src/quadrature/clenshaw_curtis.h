@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Python.h>  // has to be the first included header
-#include <Vc/Vc>
+#include <array>
 #include <type_traits>
 
 #include "quadrature/quadrature.h"
@@ -23,10 +23,10 @@ public:
   static constexpr int numberEvaluations();
 
   //! return the sampling points, i.e. clenshaw-curtis points that are needed for the quadrature. The list may not be in ascending order, but the order matches the order required in integrate
-  static Vc::array<double, NumberIntegrationPoints> samplingPoints();
+  static std::array<double, NumberIntegrationPoints> samplingPoints();
 
   //! return the quadrature weights
-  static const Vc::array<double, NumberIntegrationPoints> quadratureWeights();
+  static const std::array<double, NumberIntegrationPoints> quadratureWeights();
 
   //! Compute the integral from evaluations at the integration points.
   //! If a std::array is given for ValueType, compute separate integrals for each component with the same integration points for all.

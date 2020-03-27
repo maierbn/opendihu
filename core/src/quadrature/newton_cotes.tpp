@@ -2,7 +2,7 @@
 
 #include "quadrature/newton_cotes.h"
 
-#include <Vc/Vc>
+#include <array>
 
 namespace Quadrature
 {
@@ -39,7 +39,7 @@ ValueType NewtonCotes<NumberIntegrationPoints>::
 computeIntegral(const typename std::array<ValueType,NewtonCotes<NumberIntegrationPoints>::numberEvaluations()>::const_iterator evaluationsIter)
 {
   ValueType result{};
-  const Vc::array<double,NumberIntegrationPoints> weights = quadratureWeights();
+  const std::array<double,NumberIntegrationPoints> weights = quadratureWeights();
   for (int i = 0; i < NumberIntegrationPoints; i++)
   {
     result += weights[i] * (*(evaluationsIter+i));

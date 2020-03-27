@@ -1,7 +1,7 @@
 #include "specialized_solver/solid_mechanics/hyperelasticity/hyperelasticity_solver.h"
 
 #include <Python.h>  // has to be the first included header
-#include <Vc/Vc>
+#include <array>
 
 #include "equation/mooney_rivlin_incompressible.h"
 
@@ -52,7 +52,7 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
   std::array<EvaluationsPressureType, QuadratureDD::numberEvaluations()> evaluationsArrayPressure{};
 
   // setup arrays used for integration
-  Vc::array<Vec3, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
+  std::array<Vec3, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
 
   // set values to zero
   if (communicateGhosts)
@@ -492,7 +492,7 @@ materialComputeExternalVirtualWorkDead()
     std::array<EvaluationsType, QuadratureDD::numberEvaluations()> evaluationsArray{};
 
     // setup arrays used for integration
-    Vc::array<Vec3, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
+    std::array<Vec3, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
 
     // initialize variables
     functionSpace->geometryField().setRepresentationGlobal();
@@ -601,7 +601,7 @@ materialAddAccelerationTermAndVelocityEquation(bool communicateGhosts)
   std::array<EvaluationsType, QuadratureDD::numberEvaluations()> evaluationsArray{};
 
   // setup arrays used for integration
-  Vc::array<Vec3, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
+  std::array<Vec3, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
 
   // loop over elements
   for (element_no_t elementNoLocal = 0; elementNoLocal < functionSpace->nElementsLocal(); elementNoLocal++)
@@ -795,7 +795,7 @@ materialComputeJacobian()
   std::array<EvaluationsUVType, QuadratureDD::numberEvaluations()> evaluationsArrayUV{};
 
   // setup arrays used for integration
-  Vc::array<Vec3, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
+  std::array<Vec3, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
 
   // loop over elements
   for (int elementNoLocal = 0; elementNoLocal < nElementsLocal; elementNoLocal++)

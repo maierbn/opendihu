@@ -1,6 +1,6 @@
 #include "quadrature/gauss.h"
 
-#include <Vc/Vc>
+#include <array>
 #include <cmath>
 
 namespace Quadrature
@@ -8,18 +8,18 @@ namespace Quadrature
 
 // 1 Gauss point
 template<>
-Vc::array<double, 1> Gauss<1>::
+std::array<double, 1> Gauss<1>::
 samplingPoints()
 {
-  return Vc::array<double, 1>{0.5};
+  return std::array<double, 1>{0.5};
 }
 
 // 2 Gauss points
 template<>
-Vc::array<double, 2> Gauss<2>::
+std::array<double, 2> Gauss<2>::
 samplingPoints()
 {
-  return Vc::array<double, 2>{
+  return std::array<double, 2>{
     (-1./sqrt(3.)+1)/2.,
     (+1./sqrt(3.)+1)/2.,
   };
@@ -27,10 +27,10 @@ samplingPoints()
 
 // 3 Gauss points
 template<>
-Vc::array<double, 3> Gauss<3>::
+std::array<double, 3> Gauss<3>::
 samplingPoints()
 {
-  return Vc::array<double, 3>{
+  return std::array<double, 3>{
     (-sqrt(3./5)+1)/2.,
     1./2,
     (+sqrt(3./5)+1)/2.,
@@ -39,10 +39,10 @@ samplingPoints()
 
 // 4 Gauss points
 template<>
-Vc::array<double, 4> Gauss<4>::
+std::array<double, 4> Gauss<4>::
 samplingPoints()
 {
-  return Vc::array<double, 4>{
+  return std::array<double, 4>{
     (-sqrt(3./7+2./7*sqrt(6./5))+1)/2.,
     (-sqrt(3./7-2./7*sqrt(6./5))+1)/2.,
     (+sqrt(3./7-2./7*sqrt(6./5))+1)/2.,
@@ -52,10 +52,10 @@ samplingPoints()
 
 // 5 Gauss points
 template<>
-Vc::array<double, 5> Gauss<5>::
+std::array<double, 5> Gauss<5>::
 samplingPoints()
 {
-  return Vc::array<double, 5>{
+  return std::array<double, 5>{
     (-1./3*sqrt(5+2.*sqrt(10./7))+1)/2.,
     (-1./3*sqrt(5-2.*sqrt(10./7))+1)/2.,
     1./2.,
@@ -66,10 +66,10 @@ samplingPoints()
 
 // 7 Gauss points
 template<>
-Vc::array<double,6> Gauss<6>::
+std::array<double,6> Gauss<6>::
 samplingPoints()
 {
-  return Vc::array<double,6>{
+  return std::array<double,6>{
     (0.6612093864662645+1)/2.,
     (-0.6612093864662645+1)/2.,
     (-0.2386191860831969+1)/2.,
@@ -81,10 +81,10 @@ samplingPoints()
 
 // 7 Gauss points
 template<>
-Vc::array<double,7> Gauss<7>::
+std::array<double,7> Gauss<7>::
 samplingPoints()
 {
-  return Vc::array<double,7>{
+  return std::array<double,7>{
     (0.0000000000000000+1)/2.,
     (0.4058451513773972+1)/2.,
     (-0.4058451513773972+1)/2.,
@@ -97,10 +97,10 @@ samplingPoints()
 
 // 8 Gauss points
 template<>
-Vc::array<double,8> Gauss<8>::
+std::array<double,8> Gauss<8>::
 samplingPoints()
 {
-  return Vc::array<double,8>{
+  return std::array<double,8>{
     (-0.1834346424956498+1.)/2.,
     (0.1834346424956498+1.)/2.,
     (-0.5255324099163290+1.)/2.,
@@ -114,10 +114,10 @@ samplingPoints()
 
 // 10 Gauss points
 template<>
-Vc::array<double,10> Gauss<10>::
+std::array<double,10> Gauss<10>::
 samplingPoints()
 {
-  return Vc::array<double,10>{
+  return std::array<double,10>{
     (-0.1488743389816312+1.)/2.,
     (0.1488743389816312+1.)/2.,
     (-0.4333953941292472+1.)/2.,
@@ -133,10 +133,10 @@ samplingPoints()
 
 // 12 Gauss points
 template<>
-Vc::array<double,12> Gauss<12>::
+std::array<double,12> Gauss<12>::
 samplingPoints()
 {
-  return Vc::array<double,12>{
+  return std::array<double,12>{
     (-0.1252334085114689+1.)/2.,
     (0.1252334085114689+1.)/2.,
     (-0.3678314989981802+1.)/2.,
@@ -154,10 +154,10 @@ samplingPoints()
 
 // 16 Gauss points
 template<>
-Vc::array<double,16> Gauss<16>::
+std::array<double,16> Gauss<16>::
 samplingPoints()
 {
-  return Vc::array<double,16>{
+  return std::array<double,16>{
     (-0.0950125098376374+1.)/2.,
     (0.0950125098376374+1.)/2.,
     (-0.2816035507792589+1.)/2.,
@@ -179,10 +179,10 @@ samplingPoints()
 
 // 20 Gauss points
 template<>
-Vc::array<double,20> Gauss<20>::
+std::array<double,20> Gauss<20>::
 samplingPoints()
 {
-  return Vc::array<double,20>{
+  return std::array<double,20>{
     (-0.0765265211334973+1.)/2.,
     (0.0765265211334973+1.)/2.,
     (-0.2277858511416451+1.)/2.,
@@ -208,10 +208,10 @@ samplingPoints()
 
 // 24 Gauss points
 template<>
-Vc::array<double,24> Gauss<24>::
+std::array<double,24> Gauss<24>::
 samplingPoints()
 {
-  return Vc::array<double,24>{
+  return std::array<double,24>{
     (0.1279381953467522+1.)/2.,
     (0.0640568928626056+1.)/2.,
     (-0.1911188674736163+1.)/2.,
@@ -242,11 +242,11 @@ samplingPoints()
 
 // 64 Gauss points
 template<>
-Vc::array<double,64> Gauss<64>::
+std::array<double,64> Gauss<64>::
 samplingPoints()
 {
   // source: https://pomax.github.io/bezierinfo/legendre-gauss.html
-  return Vc::array<double,64>{
+  return std::array<double,64>{
     (-0.0243502926634244+1)/2.,
     (0.0243502926634244+1)/2.,
     (-0.0729931217877990+1)/2.,
@@ -319,18 +319,18 @@ samplingPoints()
 
 // 1 Gauss point
 template<>
-const Vc::array<double, 1> Gauss<1>::
+const std::array<double, 1> Gauss<1>::
 quadratureWeights()
 {
-  return Vc::array<double, 1>{1.0};
+  return std::array<double, 1>{1.0};
 }
 
 // 2 Gauss points
 template<>
-const Vc::array<double, 2> Gauss<2>::
+const std::array<double, 2> Gauss<2>::
 quadratureWeights()
 {
-  return Vc::array<double, 2>{
+  return std::array<double, 2>{
     1/2.,
     1/2.,
   };
@@ -338,10 +338,10 @@ quadratureWeights()
 
 // 3 Gauss points
 template<>
-const Vc::array<double, 3> Gauss<3>::
+const std::array<double, 3> Gauss<3>::
 quadratureWeights()
 {
-  return Vc::array<double, 3>{
+  return std::array<double, 3>{
     5./18, 
     4./9.,
     5./18,
@@ -350,10 +350,10 @@ quadratureWeights()
 
 // 4 Gauss points
 template<>
-const Vc::array<double, 4> Gauss<4>::
+const std::array<double, 4> Gauss<4>::
 quadratureWeights()
 {
-  return Vc::array<double, 4>{
+  return std::array<double, 4>{
     (18.-sqrt(30.))/36./2.,
     (18.+sqrt(30.))/36./2.,
     (18.+sqrt(30.))/36./2.,
@@ -363,10 +363,10 @@ quadratureWeights()
 
 // 5 Gauss points
 template<>
-const Vc::array<double, 5> Gauss<5>::
+const std::array<double, 5> Gauss<5>::
 quadratureWeights()
 {
-  return Vc::array<double, 5>{
+  return std::array<double, 5>{
     (322.-13.*sqrt(70.))/900./2.,
     (322.+13.*sqrt(70.))/900./2.,
     128./225./2.,
@@ -377,10 +377,10 @@ quadratureWeights()
 
 // 6 Gauss points
 template<>
-const Vc::array<double,6> Gauss<6>::
+const std::array<double,6> Gauss<6>::
 quadratureWeights()
 {
-  return Vc::array<double,6>{
+  return std::array<double,6>{
     0.3607615730481386/2.,
     0.3607615730481386/2.,
     0.4679139345726910/2.,
@@ -392,10 +392,10 @@ quadratureWeights()
 
 // 7 Gauss points
 template<>
-const Vc::array<double,7> Gauss<7>::
+const std::array<double,7> Gauss<7>::
 quadratureWeights()
 {
-  return Vc::array<double,7>{
+  return std::array<double,7>{
     0.4179591836734694/2.,
     0.3818300505051189/2.,
     0.3818300505051189/2.,
@@ -408,10 +408,10 @@ quadratureWeights()
 
 // 8 Gauss points
 template<>
-const Vc::array<double,8> Gauss<8>::
+const std::array<double,8> Gauss<8>::
 quadratureWeights()
 {
-  return Vc::array<double,8>{
+  return std::array<double,8>{
     0.3626837833783620/2.,
     0.3626837833783620/2.,  
     0.3137066458778873/2.,  
@@ -425,10 +425,10 @@ quadratureWeights()
 
 // 10 Gauss points
 template<>
-const Vc::array<double,10> Gauss<10>::
+const std::array<double,10> Gauss<10>::
 quadratureWeights()
 {
-  return Vc::array<double,10>{
+  return std::array<double,10>{
     0.2955242247147529/2.,  
     0.2955242247147529/2.,  
     0.2692667193099963/2.,  
@@ -444,10 +444,10 @@ quadratureWeights()
 
 // 12 Gauss points
 template<>
-const Vc::array<double,12> Gauss<12>::
+const std::array<double,12> Gauss<12>::
 quadratureWeights()
 {
-  return Vc::array<double,12>{
+  return std::array<double,12>{
     0.2491470458134028/2.,  
     0.2491470458134028/2.,  
     0.2334925365383548/2.,  
@@ -465,10 +465,10 @@ quadratureWeights()
 
 // 16 Gauss points
 template<>
-const Vc::array<double,16> Gauss<16>::
+const std::array<double,16> Gauss<16>::
 quadratureWeights()
 {
-  return Vc::array<double,16>{
+  return std::array<double,16>{
     0.1894506104550685/2.,  
     0.1894506104550685/2.,  
     0.1826034150449236/2.,  
@@ -490,10 +490,10 @@ quadratureWeights()
 
 // 20 Gauss points
 template<>
-const Vc::array<double,20> Gauss<20>::
+const std::array<double,20> Gauss<20>::
 quadratureWeights()
 {
-  return Vc::array<double,20>{
+  return std::array<double,20>{
     0.1527533871307258/2.,  
     0.1527533871307258/2.,  
     0.1491729864726037/2.,  
@@ -519,10 +519,10 @@ quadratureWeights()
 
 // 24 Gauss points
 template<>
-const Vc::array<double,24> Gauss<24>::
+const std::array<double,24> Gauss<24>::
 quadratureWeights()
 {
-  return Vc::array<double,24>{
+  return std::array<double,24>{
     0.1279381953467522/2.,  
     0.1279381953467522/2.,
     0.1258374563468283/2.,  
@@ -552,11 +552,11 @@ quadratureWeights()
 
 // 64 Gauss points
 template<>
-const Vc::array<double,64> Gauss<64>::
+const std::array<double,64> Gauss<64>::
 quadratureWeights()
 {
   // source: https://pomax.github.io/bezierinfo/legendre-gauss.html
-  return Vc::array<double,64>{
+  return std::array<double,64>{
     0.0486909570091397/2.,
     0.0486909570091397/2.,
     0.0485754674415034/2.,

@@ -1,6 +1,6 @@
 #include "quadrature/clenshaw_curtis.h"
 
-#include <Vc/Vc>
+#include <array>
 #include <cmath>
 
 namespace Quadrature
@@ -8,18 +8,18 @@ namespace Quadrature
 
 // 1 ClenshawCurtis point
 template<>
-Vc::array<double, 1> ClenshawCurtis<1>::
+std::array<double, 1> ClenshawCurtis<1>::
 samplingPoints()
 {
-  return Vc::array<double, 1>{0.5};
+  return std::array<double, 1>{0.5};
 }
 
 // 2 ClenshawCurtis points
 template<>
-Vc::array<double, 2> ClenshawCurtis<2>::
+std::array<double, 2> ClenshawCurtis<2>::
 samplingPoints()
 {
-  return Vc::array<double, 2>{
+  return std::array<double, 2>{
     0.,
       1.
   };
@@ -27,10 +27,10 @@ samplingPoints()
 
 // 3 ClenshawCurtis points
 template<>
-Vc::array<double, 3> ClenshawCurtis<3>::
+std::array<double, 3> ClenshawCurtis<3>::
 samplingPoints()
 {
-  return Vc::array<double, 3>{
+  return std::array<double, 3>{
     0.,
       0.5,
       1.
@@ -39,10 +39,10 @@ samplingPoints()
 
 // 4 ClenshawCurtis points
 template<>
-Vc::array<double, 4> ClenshawCurtis<4>::
+std::array<double, 4> ClenshawCurtis<4>::
 samplingPoints()
 {
-  return Vc::array<double, 4>{
+  return std::array<double, 4>{
     0.,
       0.25,
       0.75,
@@ -52,10 +52,10 @@ samplingPoints()
 
 // 5 ClenshawCurtis points
 template<>
-Vc::array<double, 5> ClenshawCurtis<5>::
+std::array<double, 5> ClenshawCurtis<5>::
 samplingPoints()
 {
-  return Vc::array<double, 5>{
+  return std::array<double, 5>{
     0.,
       (-0.7071067811865475 + 1.) / 2.,
       0.5,
@@ -66,10 +66,10 @@ samplingPoints()
 
 // 7 ClenshawCurtis points
 template<>
-Vc::array<double, 6> ClenshawCurtis<6>::
+std::array<double, 6> ClenshawCurtis<6>::
 samplingPoints()
 {
-  return Vc::array<double, 6>{
+  return std::array<double, 6>{
     0.,
       0.095491502812526274,
       0.34549150281252627,
@@ -81,10 +81,10 @@ samplingPoints()
 
 // 7 ClenshawCurtis points
 template<>
-Vc::array<double, 7> ClenshawCurtis<7>::
+std::array<double, 7> ClenshawCurtis<7>::
 samplingPoints()
 {
-  return Vc::array<double, 7>{
+  return std::array<double, 7>{
     0.,
       0.066987298107780646,
       0.24999999999999994,
@@ -97,10 +97,10 @@ samplingPoints()
 
 // 64 ClenshawCurtis points
 template<>
-Vc::array<double, 64> ClenshawCurtis<64>::
+std::array<double, 64> ClenshawCurtis<64>::
 samplingPoints()
 {
-  return Vc::array<double, 64>{
+  return std::array<double, 64>{
     0.,
       0.00062153939053882779,
       0.0024846123172992951,
@@ -173,18 +173,18 @@ samplingPoints()
 
 // 1 ClenshawCurtis point
 template<>
-const Vc::array<double, 1> ClenshawCurtis<1>::
+const std::array<double, 1> ClenshawCurtis<1>::
 quadratureWeights()
 {
-  return Vc::array<double, 1>{1.0};
+  return std::array<double, 1>{1.0};
 }
 
 // 2 ClenshawCurtis points
 template<>
-const Vc::array<double, 2> ClenshawCurtis<2>::
+const std::array<double, 2> ClenshawCurtis<2>::
 quadratureWeights()
 {
-  return Vc::array<double, 2>{
+  return std::array<double, 2>{
     1.,
     1.
   };
@@ -192,10 +192,10 @@ quadratureWeights()
 
 // 3 ClenshawCurtis points
 template<>
-const Vc::array<double, 3> ClenshawCurtis<3>::
+const std::array<double, 3> ClenshawCurtis<3>::
 quadratureWeights()
 {
-  return Vc::array<double, 3>{
+  return std::array<double, 3>{
     1./3.,
     4./3., 
     1./3.
@@ -204,10 +204,10 @@ quadratureWeights()
 
 // 4 ClenshawCurtis points
 template<>
-const Vc::array<double, 4> ClenshawCurtis<4>::
+const std::array<double, 4> ClenshawCurtis<4>::
 quadratureWeights()
 {
-  return Vc::array<double, 4>{
+  return std::array<double, 4>{
     1./9.,
     8./9.,
     8./9.,
@@ -217,10 +217,10 @@ quadratureWeights()
 
 // 5 ClenshawCurtis points
 template<>
-const Vc::array<double, 5> ClenshawCurtis<5>::
+const std::array<double, 5> ClenshawCurtis<5>::
 quadratureWeights()
 {
-  return Vc::array<double, 5>{
+  return std::array<double, 5>{
     0.0666666666666666, 
     0.5333333333333333, 
     0.7999999999999999, 
@@ -231,10 +231,10 @@ quadratureWeights()
 
 // 6 ClenshawCurtis points
 template<>
-const Vc::array<double, 6> ClenshawCurtis<6>::
+const std::array<double, 6> ClenshawCurtis<6>::
 quadratureWeights()
 {
-  return Vc::array<double, 6>{
+  return std::array<double, 6>{
     0.040000000000000008,
     0.36074304120001122,
     0.59925695879998886,
@@ -246,10 +246,10 @@ quadratureWeights()
 
 // 7 ClenshawCurtis points
 template<>
-const Vc::array<double, 7> ClenshawCurtis<7>::
+const std::array<double, 7> ClenshawCurtis<7>::
 quadratureWeights()
 {
-  return Vc::array<double, 7>{
+  return std::array<double, 7>{
     0.028571428571428577,
     0.2539682539682539,
     0.45714285714285713,
@@ -262,10 +262,10 @@ quadratureWeights()
 
 // 64 ClenshawCurtis points
 template<>
-const Vc::array<double, 64> ClenshawCurtis<64>::
+const std::array<double, 64> ClenshawCurtis<64>::
 quadratureWeights()
 {
-  return Vc::array<double, 64>{
+  return std::array<double, 64>{
     0.00025195263290501448,
     0.0024268255770913318,
     0.0049856828009972485,

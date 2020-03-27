@@ -1,6 +1,6 @@
 #include "quadrature/gauss.h"
 
-#include <Vc/Vc>
+#include <array>
 
 namespace Quadrature
 {
@@ -37,7 +37,7 @@ ValueType Gauss<NumberGaussPoints>::
 computeIntegral(const typename std::array<ValueType,Gauss<NumberGaussPoints>::numberEvaluations()>::const_iterator evaluationsIter)
 {
   ValueType result{};
-  const Vc::array<double,NumberGaussPoints> weights = quadratureWeights();
+  const std::array<double,NumberGaussPoints> weights = quadratureWeights();
   for (int i = 0; i < NumberGaussPoints; i++)
   {
     result += weights[i] * (*(evaluationsIter+i));

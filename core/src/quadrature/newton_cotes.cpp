@@ -1,26 +1,26 @@
 #include "quadrature/newton_cotes.h"
 
-#include <Vc/Vc>
+#include <array>
 #include <cmath>
 
 namespace Quadrature
 {
 // 1 NewtonCotes point --> rectangle
 template<>
-Vc::array<double, 1> NewtonCotes<1>::
+std::array<double, 1> NewtonCotes<1>::
 samplingPoints()
 {
-  return Vc::array<double, 1>{
+  return std::array<double, 1>{
     0.5
   };
 }
 
 // 2 NewtonCotes points --> trapezoidal
 template<>
-Vc::array<double, 2> NewtonCotes<2>::
+std::array<double, 2> NewtonCotes<2>::
 samplingPoints()
 {
-  return Vc::array<double, 2>{
+  return std::array<double, 2>{
     0.,
     1.
   };
@@ -28,10 +28,10 @@ samplingPoints()
 
 // 3 NewtonCotes points --> simpson
 template<>
-Vc::array<double, 3> NewtonCotes<3>::
+std::array<double, 3> NewtonCotes<3>::
 samplingPoints()
 {
-  return Vc::array<double, 3>{
+  return std::array<double, 3>{
     0., 
       0.5, 
       1.
@@ -40,10 +40,10 @@ samplingPoints()
 
 // 4 NewtonCotes points --> 3/8
 template<>
-Vc::array<double, 4> NewtonCotes<4>::
+std::array<double, 4> NewtonCotes<4>::
 samplingPoints()
 {
-  return Vc::array<double, 4>{
+  return std::array<double, 4>{
     0., 
       (1. / 3.), 
       (2. / 3.), 
@@ -53,10 +53,10 @@ samplingPoints()
 
 // 5 NewtonCotes points
 template<>
-Vc::array<double, 5> NewtonCotes<5>::
+std::array<double, 5> NewtonCotes<5>::
 samplingPoints()
 {
-  return Vc::array<double, 5>{
+  return std::array<double, 5>{
     0.,
       1./4.,
       2./4.,
@@ -67,10 +67,10 @@ samplingPoints()
 
 // 6 NewtonCotes points
 template<>
-Vc::array<double, 6> NewtonCotes<6>::
+std::array<double, 6> NewtonCotes<6>::
   samplingPoints()
 {
-  return Vc::array<double, 6>{
+  return std::array<double, 6>{
     0.,
       1./5.,
       2./5.,
@@ -82,10 +82,10 @@ Vc::array<double, 6> NewtonCotes<6>::
 
 // 7 NewtonCotes points
 template<>
-Vc::array<double, 7> NewtonCotes<7>::
+std::array<double, 7> NewtonCotes<7>::
 samplingPoints()
 {
-  return Vc::array<double, 7>{
+  return std::array<double, 7>{
     0.,
       1./6.,
       2./6.,
@@ -98,10 +98,10 @@ samplingPoints()
 
 // 8 NewtonCotes points
 template<>
-Vc::array<double, 8> NewtonCotes<8>::
+std::array<double, 8> NewtonCotes<8>::
 samplingPoints()
 {
-  return Vc::array<double, 8>{
+  return std::array<double, 8>{
     0.,
       1. / 7.,
       2. / 7.,
@@ -118,20 +118,20 @@ samplingPoints()
 
 // 1 NewtonCotes point --> rectangle
 template<>
-const Vc::array<double, 1> NewtonCotes<1>::
+const std::array<double, 1> NewtonCotes<1>::
 quadratureWeights()
 {
-  return Vc::array<double, 1>{
+  return std::array<double, 1>{
     1.0
   };
 }
 
 // 2 NewtonCotes points --> trapezoidal
 template<>
-const Vc::array<double, 2> NewtonCotes<2>::
+const std::array<double, 2> NewtonCotes<2>::
 quadratureWeights()
 {
-  return Vc::array<double, 2>{
+  return std::array<double, 2>{
     1./2,
     1./2
   };
@@ -139,10 +139,10 @@ quadratureWeights()
 
 // 3 NewtonCotes points --> simpson
 template<>
-const Vc::array<double, 3> NewtonCotes<3>::
+const std::array<double, 3> NewtonCotes<3>::
 quadratureWeights()
 {
-  return Vc::array<double, 3>{
+  return std::array<double, 3>{
     1./6.,
     2./3., 
     1./6.
@@ -151,10 +151,10 @@ quadratureWeights()
 
 // 4 NewtonCotes points --> 3/8
 template<>
-const Vc::array<double, 4> NewtonCotes<4>::
+const std::array<double, 4> NewtonCotes<4>::
 quadratureWeights()
 {
-  return Vc::array<double, 4>{
+  return std::array<double, 4>{
     1./8.,
     3./8.,
     3./8.,
@@ -164,10 +164,10 @@ quadratureWeights()
 
 // 5 NewtonCotes points
 template<>
-const Vc::array<double, 5> NewtonCotes<5>::
+const std::array<double, 5> NewtonCotes<5>::
 quadratureWeights()
 {
-  return Vc::array<double, 5>{
+  return std::array<double, 5>{
     7./90.,
     16./45.,
     2./15.,
@@ -178,10 +178,10 @@ quadratureWeights()
 
 // 6 NewtonCotes points
 template<>
-const Vc::array<double, 6> NewtonCotes<6>::
+const std::array<double, 6> NewtonCotes<6>::
   quadratureWeights()
 {
-  return Vc::array<double, 6>{
+  return std::array<double, 6>{
     19./288.,
     25./96.,
     25./144.,
@@ -193,10 +193,10 @@ const Vc::array<double, 6> NewtonCotes<6>::
 
 // 7 NewtonCotes points
 template<>
-const Vc::array<double, 7> NewtonCotes<7>::
+const std::array<double, 7> NewtonCotes<7>::
 quadratureWeights()
 {
-  return Vc::array<double, 7>{
+  return std::array<double, 7>{
     41./840.,
     9./35.,
     9./280.,
@@ -209,10 +209,10 @@ quadratureWeights()
 
 // 8 NewtonCotes points
 template<>
-const Vc::array<double, 8> NewtonCotes<8>::
+const std::array<double, 8> NewtonCotes<8>::
 quadratureWeights()
 {
-  return Vc::array<double, 8>{
+  return std::array<double, 8>{
     751./17280.,
     3577./17280.,
     49./640., 

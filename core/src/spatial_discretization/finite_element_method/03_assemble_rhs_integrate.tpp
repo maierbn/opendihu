@@ -4,7 +4,7 @@
 #include <memory>
 #include <vector>
 #include <petscsys.h>
-#include <Vc/Vc>
+#include <array>
 
 #include "quadrature/tensor_product.h"
 #include "function_space/function_space.h"
@@ -53,7 +53,7 @@ multiplyRightHandSideWithMassMatrix()
   rightHandSide->zeroGhostBuffer();
 
   // setup arrays used for integration
-  Vc::array<std::array<double,D>, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
+  std::array<std::array<double,D>, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
   EvaluationsArrayType evaluationsArray{};
 
   LOG(DEBUG) << "1D integration with " << QuadratureType::numberEvaluations() << " evaluations";

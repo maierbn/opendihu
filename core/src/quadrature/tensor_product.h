@@ -3,7 +3,7 @@
 #include <Python.h>  // has to be the first included header
 #include <type_traits>
 #include <cmath>
-#include <Vc/Vc>
+#include <array>
 
 #include "quadrature/quadrature.h"
 
@@ -35,7 +35,7 @@ public:
   static ValueType computeIntegral(const std::array<ValueType, TensorProductBase<1,Quadrature>::numberEvaluations()> &evaluations);
 
   //! get the sampling points, i.e. points where the function needs to be evaluated
-  static Vc::array<std::array<double,1>, TensorProductBase<1,Quadrature>::numberEvaluations()> samplingPoints();
+  static std::array<std::array<double,1>, TensorProductBase<1,Quadrature>::numberEvaluations()> samplingPoints();
 };
 
 // partial specialization for 2D
@@ -48,7 +48,7 @@ public:
   static ValueType computeIntegral(const std::array<ValueType, TensorProductBase<2,Quadrature>::numberEvaluations()> &evaluations);
 
   //! get the sampling points, i.e. points where the function needs to be evaluated
-  static Vc::array<Vec2, TensorProductBase<2,Quadrature>::numberEvaluations()> samplingPoints();
+  static std::array<Vec2, TensorProductBase<2,Quadrature>::numberEvaluations()> samplingPoints();
 };
 
 // partial specialization for 3D
@@ -61,7 +61,7 @@ public:
   static ValueType computeIntegral(const std::array<ValueType, TensorProductBase<3,Quadrature>::numberEvaluations()> &evaluations);
 
   //! get the sampling points, i.e. points where the function needs to be evaluated
-  static Vc::array<Vec3, TensorProductBase<3,Quadrature>::numberEvaluations()> samplingPoints();
+  static std::array<Vec3, TensorProductBase<3,Quadrature>::numberEvaluations()> samplingPoints();
 };
 
 } // namespace

@@ -72,7 +72,7 @@ setMassMatrix()
   massMatrix->assembly(MAT_FLUSH_ASSEMBLY);
 
   // setup arrays used for integration
-  Vc::array<std::array<double,D>, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
+  std::array<std::array<double,D>, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
   EvaluationsArrayType evaluationsArray{};
 
   LOG(DEBUG) << "1D integration with " << QuadratureType::numberEvaluations() << " evaluations";

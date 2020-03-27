@@ -3,7 +3,7 @@
 
 #include "quadrature/clenshaw_curtis.h"
 
-#include <Vc/Vc>
+#include <array>
 
 namespace Quadrature
 {
@@ -40,7 +40,7 @@ ValueType ClenshawCurtis<NumberIntegrationPoints>::
 computeIntegral(const typename std::array<ValueType,ClenshawCurtis<NumberIntegrationPoints>::numberEvaluations()>::const_iterator evaluationsIter)
 {
   ValueType result{};
-  const Vc::array<double,NumberIntegrationPoints> weights = quadratureWeights();
+  const std::array<double,NumberIntegrationPoints> weights = quadratureWeights();
   for (int i = 0; i < NumberIntegrationPoints; i++)
   {
     result += weights[i] * (*(evaluationsIter+i));

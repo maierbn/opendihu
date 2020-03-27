@@ -14,10 +14,10 @@ numberEvaluations()
 
 // 1D sampling points
 template<typename Quadrature>
-Vc::array<Vc::array<double,1>,TensorProductBase<1,Quadrature>::numberEvaluations()> TensorProduct<1,Quadrature>::
+Vc::array<std::array<double,1>,TensorProductBase<1,Quadrature>::numberEvaluations()> TensorProduct<1,Quadrature>::
 samplingPoints()
 {
-  Vc::array<Vc::array<double,1>,TensorProductBase<1,Quadrature>::numberEvaluations()> samplingPoints;
+  Vc::array<std::array<double,1>,TensorProductBase<1,Quadrature>::numberEvaluations()> samplingPoints;
   Vc::array<double, Quadrature::numberEvaluations()> samplingPoints1D = Quadrature::samplingPoints();
   for (int x=0; x<Quadrature::numberEvaluations(); x++)
   {
@@ -28,18 +28,18 @@ samplingPoints()
 
 // 2D sampling points
 template<typename Quadrature>
-Vc::array<Vc::array<double,2>,TensorProductBase<2,Quadrature>::numberEvaluations()> TensorProduct<2,Quadrature>::
+Vc::array<Vec2,TensorProductBase<2,Quadrature>::numberEvaluations()> TensorProduct<2,Quadrature>::
 samplingPoints()
 {
-  Vc::array<Vc::array<double,2>,TensorProductBase<2,Quadrature>::numberEvaluations()> samplingPoints;
+  Vc::array<Vec2,TensorProductBase<2,Quadrature>::numberEvaluations()> samplingPoints;
   Vc::array<double, Quadrature::numberEvaluations()> samplingPoints1D = Quadrature::samplingPoints();
 
   int samplingPointNo = 0;
-  for (int y=0; y<Quadrature::numberEvaluations(); y++)
+  for (int j = 0; j < Quadrature::numberEvaluations(); j++)
   {
-    for (int x=0; x<Quadrature::numberEvaluations(); x++, samplingPointNo++)
+    for (int i = 0; i < Quadrature::numberEvaluations(); i++, samplingPointNo++)
     {
-      samplingPoints[samplingPointNo] = {samplingPoints1D[x], samplingPoints1D[y]};
+      samplingPoints[samplingPointNo] = {samplingPoints1D[i], samplingPoints1D[j]};   // x y
     }
   }
   return samplingPoints;
@@ -47,20 +47,20 @@ samplingPoints()
 
 // 3D sampling points
 template<typename Quadrature>
-Vc::array<Vc::array<double,3>,TensorProductBase<3,Quadrature>::numberEvaluations()> TensorProduct<3,Quadrature>::
+Vc::array<Vec3,TensorProductBase<3,Quadrature>::numberEvaluations()> TensorProduct<3,Quadrature>::
 samplingPoints()
 {
-  Vc::array<Vc::array<double,3>,TensorProductBase<3,Quadrature>::numberEvaluations()> samplingPoints;
+  Vc::array<Vec3,TensorProductBase<3,Quadrature>::numberEvaluations()> samplingPoints;
   Vc::array<double, Quadrature::numberEvaluations()> samplingPoints1D = Quadrature::samplingPoints();
 
   int samplingPointNo = 0;
-  for (int z=0; z<Quadrature::numberEvaluations(); z++)
+  for (int k = 0; k < Quadrature::numberEvaluations(); k++)
   {
-    for (int y=0; y<Quadrature::numberEvaluations(); y++)
+    for (int j = 0; j < Quadrature::numberEvaluations(); j++)
     {
-      for (int x=0; x<Quadrature::numberEvaluations(); x++, samplingPointNo++)
+      for (int i = 0; i < Quadrature::numberEvaluations(); i++, samplingPointNo++)
       {
-        samplingPoints[samplingPointNo] = {samplingPoints1D[x], samplingPoints1D[y], samplingPoints1D[z]};
+        samplingPoints[samplingPointNo] = {samplingPoints1D[i], samplingPoints1D[j], samplingPoints1D[k]};  // x y z
       }
     }
   }
@@ -71,7 +71,7 @@ samplingPoints()
 template<typename Quadrature>
 template<typename ValueType>
 ValueType TensorProduct<1,Quadrature>::
-computeIntegral(const Vc::array<ValueType, TensorProductBase<1,Quadrature>::numberEvaluations()> &evaluations)
+computeIntegral(const std::array<ValueType, TensorProductBase<1,Quadrature>::numberEvaluations()> &evaluations)
 {
   return Quadrature::computeIntegral(evaluations);
 }
@@ -80,7 +80,7 @@ computeIntegral(const Vc::array<ValueType, TensorProductBase<1,Quadrature>::numb
 template<typename Quadrature>
 template<typename ValueType>
 ValueType TensorProduct<2,Quadrature>::
-computeIntegral(const Vc::array<ValueType, TensorProductBase<2,Quadrature>::numberEvaluations()> &evaluations)
+computeIntegral(const std::array<ValueType, TensorProductBase<2,Quadrature>::numberEvaluations()> &evaluations)
 {
   const Vc::array<double,Quadrature::numberEvaluations()> weights = Quadrature::quadratureWeights();
 
@@ -112,7 +112,7 @@ computeIntegral(const Vc::array<ValueType, TensorProductBase<2,Quadrature>::numb
 template<typename Quadrature>
 template<typename ValueType>
 ValueType TensorProduct<3,Quadrature>::
-computeIntegral(const Vc::array<ValueType, TensorProductBase<3,Quadrature>::numberEvaluations()> &evaluations)
+computeIntegral(const std::array<ValueType, TensorProductBase<3,Quadrature>::numberEvaluations()> &evaluations)
 {
   const Vc::array<double,Quadrature::numberEvaluations()> weights = Quadrature::quadratureWeights();
 

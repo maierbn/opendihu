@@ -1,6 +1,7 @@
 #include "spatial_discretization/finite_element_method/04_rhs.h"
 
-#include <Python.h>
+#include <Python.h>  // has to be the first included header
+#include <Vc/Vc>
 
 namespace SpatialDiscretization
 {
@@ -48,7 +49,7 @@ setRightHandSide()
   }
 
   // setup arrays used for integration
-  std::array<std::array<double,D>, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
+  Vc::array<std::array<double,D>, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
   EvaluationsArrayType evaluationsArray{};
 
   // set entries in rhs vector

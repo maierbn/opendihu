@@ -8,6 +8,8 @@
 #include "quadrature/tensor_product.h"
 #include "mesh/surface_mesh.h"
 
+#include <Vc/Vc>
+
 namespace SpatialDiscretization
 {
 
@@ -54,7 +56,7 @@ initializeRhs()
             QuadratureSurface::numberEvaluations()
           > EvaluationsArraySurfaceType;     // evaluations[nGP^D](nDofs*D)
 
-  std::array<std::array<double,D-1>, QuadratureSurface::numberEvaluations()> samplingPointsSurface = QuadratureSurface::samplingPoints();
+  Vc::array<std::array<double,D-1>, QuadratureSurface::numberEvaluations()> samplingPointsSurface = QuadratureSurface::samplingPoints();
   EvaluationsArraySurfaceType evaluationsArraySurface;
 
 

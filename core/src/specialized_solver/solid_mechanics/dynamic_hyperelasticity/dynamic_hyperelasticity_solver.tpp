@@ -329,7 +329,7 @@ initializeMassMatrix()
   massMatrix_->assembly(MAT_FLUSH_ASSEMBLY);
 
   // setup arrays used for integration
-  std::array<std::array<double,D>, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
+  Vc::array<std::array<double,D>, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
   EvaluationsArrayType evaluationsArray{};
 
   // set entries in massMatrix_
@@ -472,7 +472,7 @@ addDamping(std::shared_ptr<VecHyperelasticity> v, std::shared_ptr<VecHyperelasti
   damping->zeroGhostBuffer();
 
   // setup arrays used for integration
-  std::array<std::array<double,D>, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
+  Vc::array<std::array<double,D>, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
   EvaluationsArrayType evaluationsArray{};
 
   // set entries in massMatrix_

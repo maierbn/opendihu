@@ -1,9 +1,10 @@
 #include "spatial_discretization/finite_element_method/01_matrix.h"
 
-#include <Python.h>
+#include <Python.h>  // has to be the first included header
 #include <memory>
 #include <vector>
 #include <petscsys.h>
+#include <Vc/Vc>
 
 #include "quadrature/tensor_product.h"
 #include "function_space/function_space.h"
@@ -100,7 +101,7 @@ setStiffnessMatrix()
   }
 
   // setup arrays used for integration
-  std::array<std::array<double,D>, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
+  Vc::array<std::array<double,D>, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
   EvaluationsArrayType evaluationsArray{};
 
   LOG(DEBUG) << "1D integration with " << QuadratureType::numberEvaluations() << " evaluations";

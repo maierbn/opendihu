@@ -108,8 +108,8 @@ dt_0D = 1e-3                        # [ms] timestep width of ODEs (1e-3)
 dt_1D = 1e-3                        # [ms] timestep width of diffusion (1e-3)
 dt_splitting = 1e-3                 # [ms] overall timestep width of strang splitting (1e-3)
 dt_3D = 1e0                        # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
-output_timestep_fibers = 1e0       # [ms] timestep for fiber output, 0.5
-output_timestep_3D = 1e0              # [ms] timestep for output of fibers and mechanics, should be a multiple of dt_3D
+output_timestep_fibers = 4e0       # [ms] timestep for fiber output, 0.5
+output_timestep_3D = 4e0              # [ms] timestep for output of fibers and mechanics, should be a multiple of dt_3D
 
 
 # input files

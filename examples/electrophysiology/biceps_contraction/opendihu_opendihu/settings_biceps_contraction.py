@@ -72,6 +72,8 @@ if variables.n_subdomains is not None:
   variables.n_subdomains_y = variables.n_subdomains[1]
   variables.n_subdomains_z = variables.n_subdomains[2]
   
+variables.n_subdomains = variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z
+
 # automatically initialize partitioning if it has not been set
 if n_ranks != variables.n_subdomains:
   

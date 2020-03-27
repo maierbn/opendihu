@@ -248,7 +248,7 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
   try:
     fiber_file_handle = open(fiber_file, "rb")
   except:
-    print("Error: Could not open fiber file \"{}\"".format(fiber_file))
+    print("\033[0;31mError: Could not open fiber file \"{}\".\033[0m".format(fiber_file))
     quit()
 
   # parse fibers from a binary fiber file that was created by parallel_fiber_estimation
@@ -284,13 +284,13 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
     variables.granularity = 2
     
     if variables.n_fibers_x % 2 == 0:
-      print("Error: Quadratic mesh is requested but number of fibers in x direction ({}) is even. It has to be odd.".format(variables.n_fibers_x))
+      print("\033[0;31mError: Quadratic mesh is requested but number of fibers in x direction ({}) is even. It has to be odd.\033[0m".format(variables.n_fibers_x))
       quit()
     if variables.n_fibers_y % 2 == 0:
-      print("Error: Quadratic mesh is requested but number of fibers in y direction ({}) is even. It has to be odd.".format(variables.n_fibers_y))
+      print("\033[0;31mError: Quadratic mesh is requested but number of fibers in y direction ({}) is even. It has to be odd.\033[0m".format(variables.n_fibers_y))
       quit()
     if variables.n_points_whole_fiber % 2 == 0:
-      print("Error: Quadratic mesh is requested but number of points for fiber in z direction ({}) is even. It has to be odd.".format(variables.n_points_whole_fiber))
+      print("\033[0;31mError: Quadratic mesh is requested but number of points for fiber in z direction ({}) is even. It has to be odd.\033[0m".format(variables.n_points_whole_fiber))
       quit()
       
   # parse whole fiber file, only if enabled
@@ -310,7 +310,7 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
   # compute partitioning
   if rank_no == 0:
     if n_ranks != variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z:
-      print("\n\nError! Number of ranks {} does not match given partitioning {} x {} x {} = {}.\n\n".format(n_ranks, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z))
+      print("\n\n\033[1;31;40mError! Number of ranks {} does not match given partitioning {} x {} x {} = {}.\n\n\033[0m".format(n_ranks, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z))
       quit()
     
   # compute average number of points per subdomain, the actual number is equal to this or +1
@@ -325,10 +325,10 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
     variables.n_points_per_subdomain_z = (int)((variables.n_points_whole_fiber / variables.n_subdomains_z) // 2 * 2)
     
   if variables.n_fibers_per_subdomain_x == 0 or variables.n_fibers_per_subdomain_y == 0:
-    print("Error: Cannot partition {}x{} fibers into {}x{} subdomains.".format(variables.n_fibers_x, variables.n_fibers_y, variables.n_subdomains_x, variables.n_subdomains_y))
+    print("\033[0;31mError: Cannot partition {}x{} fibers into {}x{} subdomains.\033[0m".format(variables.n_fibers_x, variables.n_fibers_y, variables.n_subdomains_x, variables.n_subdomains_y))
     quit()
   if variables.n_points_per_subdomain_z == 0:
-    print("Error: Cannot partition {} points per fibers into {} subdomains.".format(variables.n_points_per_subdomain_z, variables.n_subdomains_z))
+    print("\033[0;31mError: Cannot partition {} points per fibers into {} subdomains.\033[0m".format(variables.n_points_per_subdomain_z, variables.n_subdomains_z))
     quit()
 
   #####################
@@ -405,7 +405,7 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
           
           difference = np.linalg.norm(np.array(reference_point) - np.array(point))
           if difference > 1e-3:
-            print("Error, point does not match: reference_point: ", reference_point, ", point: ", point)
+            print("\033[0;31mError, point does not match: reference_point: ", reference_point, ", point: ", point, "\033[0m")
             quit()
           node_positions_3d_mesh.append(point)
             
@@ -452,7 +452,7 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
   if quadratic_3d_mesh:
     
     if variables.n_elements_3D_mesh[0] % 2 != 0 or variables.n_elements_3D_mesh[1] % 2 != 0 or variables.n_elements_3D_mesh[2] % 2 != 0:
-      print("Error, local number of elements (n_elements_3D_mesh) is not even as needed for quadratic elements: {}".format(variables.n_elements_3D_mesh))
+      print("\033[0;31mError, local number of elements (n_elements_3D_mesh) is not even as needed for quadratic elements: {}\033[0m".format(variables.n_elements_3D_mesh))
       quit()
     
     variables.n_elements_3D_mesh_quadratic = [(int)(variables.n_elements_3D_mesh[0]/2), (int)(variables.n_elements_3D_mesh[1]/2), (int)(variables.n_elements_3D_mesh[2]/2)]
@@ -538,14 +538,14 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
   # exit if number of elements is <= 0 on any rank
   if quadratic_3d_mesh:
     if variables.n_elements_3D_mesh_quadratic[0] <= 0 or variables.n_elements_3D_mesh_quadratic[1] <= 0 or variables.n_elements_3D_mesh_quadratic[2] <= 0:
-      print("\nError! When partitioning {}x{}x{} quadratic 3D elements to {}x{}x{}={} ranks, rank {} gets {}x{}x{}={} elements (subdomain coordinates (0-based): ({},{},{})/({},{},{})).\nDecrease number of processes or increase mesh size.\n".
+      print("\n\033[0;31mError! When partitioning {}x{}x{} quadratic 3D elements to {}x{}x{}={} ranks, rank {} gets {}x{}x{}={} elements (subdomain coordinates (0-based): ({},{},{})/({},{},{})).\nDecrease number of processes or increase mesh size.\n\033[0m".
       format(n_elements_3D_global_x, n_elements_3D_global_y, n_elements_3D_global_z, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, variables.n_subdomains,
       rank_no, variables.n_elements_3D_mesh[0], variables.n_elements_3D_mesh[1], variables.n_elements_3D_mesh[2], n_elements_3D_local,
       own_subdomain_coordinate_x, own_subdomain_coordinate_y, own_subdomain_coordinate_z, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z))
       quit()
   else:
     if variables.n_elements_3D_mesh_quadratic[0] <= 0 or variables.n_elements_3D_mesh_quadratic[1] <= 0 or variables.n_elements_3D_mesh_quadratic[2] <= 0:
-      print("\nError! When partitioning {}x{}x{} 3D elements to {}x{}x{}={} ranks, rank {} gets {}x{}x{}={} elements (subdomain coordinates (0-based): ({},{},{})/({},{},{})).\nDecrease number of processes or increase mesh size.\n".
+      print("\n\033[0;31mError! When partitioning {}x{}x{} 3D elements to {}x{}x{}={} ranks, rank {} gets {}x{}x{}={} elements (subdomain coordinates (0-based): ({},{},{})/({},{},{})).\nDecrease number of processes or increase mesh size.\n\033[0m".
       format(n_elements_3D_global_x, n_elements_3D_global_y, n_elements_3D_global_z, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, variables.n_subdomains,
       rank_no, variables.n_elements_3D_mesh[0], variables.n_elements_3D_mesh[1], variables.n_elements_3D_mesh[2], n_elements_3D_local,
       own_subdomain_coordinate_x, own_subdomain_coordinate_y, own_subdomain_coordinate_z, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z))
@@ -617,7 +617,7 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
             print("fibers[i]: ",variables.fibers[i][variables.fiber_start_node_no:variables.fiber_start_node_no+10])
             
           if np.linalg.norm(np.array(variables.fibers[i][variables.fiber_start_node_no:variables.fiber_start_node_no+n_fiber_elements_on_subdomain]) - np.array(fiber_node_positions[0:n_fiber_elements_on_subdomain])) > 1e-3:
-            print("mismatch fiber node positions!")
+            print("\033[0;31mmismatch fiber node positions!\033[0m")
             quit()
             
         else:   # add command at which position the node data in the binary file can be found, the c++ core will load the data

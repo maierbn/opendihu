@@ -133,6 +133,9 @@ initialize()
 
   ierr = VecCreateNest(this->rankSubset_->mpiCommunicator(), this->nCompartments_+2, NULL, 
                        this->subvectorsSolution_.data(), &this->nestedSolution_); CHKERRV(ierr);
+
+  // write initial meshes
+  callOutputWriter(0, 0.0);
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusionMuscle,typename FiniteElementMethodDiffusionFat>

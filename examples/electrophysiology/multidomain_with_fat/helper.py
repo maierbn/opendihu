@@ -18,7 +18,7 @@ n_ranks = (int)(sys.argv[-1])
 variables.n_subdomains = variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z
 
 if variables.n_subdomains != n_ranks:
-  print("\n\nError! Number of ranks {} does not match given partitioning {} x {} x {} = {}.\n\n".format(n_ranks, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z))
+  print("\n\n\033[0;31mError! Number of ranks {} does not match given partitioning {} x {} x {} = {}.\033[0m\n\n".format(n_ranks, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z))
   quit()
 
 variables.relative_factors_file = "{}.compartment_relative_factors".format(os.path.basename(variables.fiber_file))
@@ -43,7 +43,7 @@ variables.n_compartments = len(variables.motor_units)
 try:
   fat_mesh_file_handle = open(variables.fat_mesh_file, "rb")
 except:
-  print("Error: Could not open fat mesh file \"{}\"".format(variables.fat_mesh_file))
+  print("\033[0;31mError: Could not open fat mesh file \"{}\"\033[0m".format(variables.fat_mesh_file))
   quit()
 
 # parse file header to extract mesh dimensions
@@ -553,7 +553,7 @@ def compute_compartment_relative_factors(mesh_node_positions, fiber_data, motor_
         
         
         gaussian = scipy.stats.norm(loc = 0., scale = motor_unit["standard_deviation"])
-        value = gaussian.pdf(distance)*motor_unit["maximum"]
+        value = gaussian.pdf(distance)*motor_unit["standard_deviation"]*np.sqrt(2*np.pi)*motor_unit["maximum"]
         relative_factors[motor_unit_no][node_no] += value
         #print("motor unit {}, fiber {}, distance {}, value {}".format(motor_unit_no, fiber_no, distance, value))
   
@@ -567,18 +567,18 @@ variables.relative_factors_file = "{}.compartment_relative_factors".format(os.pa
 if os.path.exists(variables.relative_factors_file):
   with open(variables.relative_factors_file, "rb") as f:
     if rank_no == 0:
-      print("load relative factors from file \"{}\"".format(variables.relative_factors_file))
+      print("Load relative factors, f_r, from file \"{}\"".format(variables.relative_factors_file))
     variables.relative_factors = pickle.load(f, encoding='latin1')
 
 else:
   if n_ranks != 1:
-    print("Error: compartment relative factors have not yet been created. To do this, you have to run the program with 1 process.")
+    print("\033[0;31mError: Compartment relative factors, f_r, have not yet been created. Restart the program with 1 process then it will be done.\033[0m")
     quit()
   
   try:
     fiber_file_handle = open(variables.fiber_file, "rb")
   except:
-    print("Error: Could not open fiber file \"{}\"".format(variables.fiber_file))
+    print("\033[0;31mError: Could not open fiber file \"{}\"\033[0m".format(variables.fiber_file))
     quit()
 
   # parse fibers from a binary fiber file that was created by parallel_fiber_estimation
@@ -598,7 +598,7 @@ else:
   variables.n_fibers_total = parameters[0]
   variables.n_points_whole_fiber = parameters[1]
 
-  print("loading fibers for initializing compartment relative factors")
+  print("Loading fibers for initializing compartment relative factors.")
   print("  n fibers:              {} ({} x {})".format(variables.n_fibers_total, variables.n_fibers_x, variables.n_fibers_y))
   print("  n points per fiber:    {}".format(variables.n_points_whole_fiber))
     
@@ -616,9 +616,10 @@ else:
     fiber_data.append(fiber)
   
   mesh_node_positions = variables.meshes["3Dmesh"]["nodePositions"]
+  print("Computing the relative MU factors, f_r, for {} motor units and {} mesh nodes. This may take a while ...".format(len(variables.motor_units), len(mesh_node_positions)))
   variables.relative_factors = compute_compartment_relative_factors(mesh_node_positions, fiber_data, variables.motor_units)
   if rank_no == 0:
-    print("save relative factors to file \"{}\"".format(variables.relative_factors_file))
+    print("Save relative factors to file \"{}\".".format(variables.relative_factors_file))
     with open(variables.relative_factors_file, "wb") as f:
       pickle.dump(variables.relative_factors, f)
 

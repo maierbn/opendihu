@@ -31,6 +31,7 @@ motor_units = motor_units[0:2]  # only two motor units
 end_time = 4000.0                   # [ms] end time of the simulation
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
 dt_0D = 3e-3                        # [ms] timestep width of ODEs (3e-3)
+dt_multidomain = dt_0D              # [ms] timestep width of multidomain
 dt_splitting = 3e-3                 # [ms] overall timestep width of strang splitting (3e-3)
 output_timestep = 2e-1              # [ms] timestep for output big files of 3D EMG, 100
 output_timestep = 1e-1              # [ms] timestep for output big files of 3D EMG, 100

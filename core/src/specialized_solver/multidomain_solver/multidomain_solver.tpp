@@ -1,6 +1,7 @@
 #include "specialized_solver/multidomain_solver/multidomain_solver.h"
 
 #include <Python.h>  // has to be the first included header
+#include <iomanip>
 
 #include "utility/python_utility.h"
 #include "utility/petsc_utility.h"
@@ -80,7 +81,7 @@ advanceTimeSpan()
     if (fabs(this->timeStepWidthOfSystemMatrix_ - this->timeStepWidth_) / this->timeStepWidth_ > 1e-4)
     {
       LOG(WARNING) << "In multidomain solver, timestep width changed from " << this->timeStepWidthOfSystemMatrix_ << " to " << timeStepWidth_
-        << " (relative: " << fabs(this->timeStepWidthOfSystemMatrix_ - this->timeStepWidth_) / this->timeStepWidth_ << ", need to recreate system matrix.";
+        << " (relative: " << std::showpos << 100*(this->timeStepWidthOfSystemMatrix_ - this->timeStepWidth_) / this->timeStepWidth_ << std::noshowpos << "%), need to recreate system matrix.";
       this->timeStepWidthOfSystemMatrix_ = this->timeStepWidth_;
       setSystemMatrixSubmatrices(this->timeStepWidthOfSystemMatrix_);
       createSystemMatrixFromSubmatrices();
@@ -144,6 +145,9 @@ initialize()
 
   initializeObjects();
   initializeMatricesAndVectors();
+
+  // write initial meshes
+  callOutputWriter(0, 0.0);
 
   LOG(DEBUG) << "initialization done";
   this->initialized_ = true;

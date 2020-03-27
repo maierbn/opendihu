@@ -64,7 +64,7 @@ if n_ranks != variables.n_subdomains:
   # create all possible partitionings to the given number of ranks
   optimal_value = n_ranks**(1/3)
   possible_partitionings = []
-  for i in range(1,n_ranks):
+  for i in range(1,n_ranks+1):
     for j in [1]:
       if i*j <= n_ranks and n_ranks % (i*j) == 0:
         k = (int)(n_ranks / (i*j))
@@ -74,7 +74,7 @@ if n_ranks != variables.n_subdomains:
   # if no possible partitioning was found
   if len(possible_partitionings) == 0:
     if rank_no == 0:
-      print("\n\nError! Number of ranks {} does not match given partitioning {} x {} x {} = {} and no automatic partitioning could be done.\n\n".format(n_ranks, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z))
+      print("\n\n\033[0;31mError! Number of ranks {} does not match given partitioning {} x {} x {} = {} and no automatic partitioning could be done.\n\n\033[0m".format(n_ranks, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z))
     quit()
     
   # select the partitioning with the lowest value of performance which is the best
@@ -90,6 +90,7 @@ if n_ranks != variables.n_subdomains:
 if rank_no == 0:
   print("scenario_name: {},  n_subdomains: {} {} {},  n_ranks: {},  end_time: {}".format(variables.scenario_name, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, n_ranks, variables.end_time))
   print("dt_0D:           {:0.0e}".format(variables.dt_0D))
+  print("dt_multidomain:  {:0.0e}".format(variables.dt_multidomain))
   print("dt_splitting:    {:0.0e}".format(variables.dt_splitting))
   print("fiber_file:              {}".format(variables.fiber_file))
   print("fat_mesh_file:           {}".format(variables.fat_mesh_file))
@@ -108,7 +109,7 @@ multidomain_solver = {
   "nCompartments":                    variables.n_compartments,           # number of compartments
   "am":                               [variables.get_am(mu_no) for mu_no in range(variables.n_compartments)],   # Am parameter for every motor unit (ration of surface to volume of fibers)
   "cm":                               [variables.get_cm(mu_no) for mu_no in range(variables.n_compartments)],   # Cm parameter for every motor unit (capacitance of the cellular membrane)
-  "timeStepWidth":                    variables.dt_0D,                    # time step width of the subcellular problem
+  "timeStepWidth":                    variables.dt_multidomain,           # time step width of the subcellular problem
   "endTime":                          variables.end_time,                 # end time, this is not relevant because it will be overridden by the splitting scheme
   "timeStepOutputInterval":           100,                                # how often the output timestep should be printed
   "solverName":                       "activationSolver",                 # reference to the solver used for the global linear system of the multidomain eq.
@@ -116,7 +117,7 @@ multidomain_solver = {
   "inputIsGlobal":                    True,                               # if values and dofs correspond to the global numbering
   "showLinearSolverOutput":           True,                               # if convergence information of the linear solver in every timestep should be printed, this is a lot of output for fast computations
   "useLumpedMassMatrix":              False,                               # which formulation to use, the formulation with lumped mass matrix (True) is more stable but approximative, the other formulation (False) is exact but needs more iterations
-  "enableFatComputation":             False,                               # disabling the computation of the fat layer is only for debugging and speeds up computation. If set to False, the respective matrix is set to the identity
+  "enableFatComputation":             True,                               # disabling the computation of the fat layer is only for debugging and speeds up computation. If set to False, the respective matrix is set to the identity
   "compartmentRelativeFactors":       variables.relative_factors.tolist(),     # list of lists of the factors for every dof, because "inputIsGlobal": True, this contains the global dofs
   "theta":                            1.0,                                # weighting factor of implicit term in Crank-Nicolson scheme, 0.5 gives the classic, 2nd-order Crank-Nicolson scheme, 1.0 gives implicit euler
   "PotentialFlow": {
@@ -161,7 +162,7 @@ multidomain_solver = {
   },
   
   "OutputWriter" : [
-    {"format": "Paraview", "outputInterval": (int)(1./variables.dt_0D*variables.output_timestep), "filename": "out/output", "binary": True, "fixedFormat": False, "combineFiles": True},
+    {"format": "Paraview", "outputInterval": (int)(1./variables.dt_multidomain*variables.output_timestep), "filename": "out/output", "binary": True, "fixedFormat": False, "combineFiles": True},
     #{"format": "ExFile", "filename": "out/fiber_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "sphereSize": "0.02*0.02*0.02"},
     #{"format": "PythonFile", "filename": "out/fiber_"+str(i), "outputInterval": int(1./dt_1D*output_timestep), "binary":True, "onlyNodalValues":True},
   ]
@@ -255,7 +256,7 @@ config = {
       "MultidomainSolver" : multidomain_solver,
       "OutputSurface": {        # version for fibers_emg_2d_output
         "OutputWriter": [
-          {"format": "Paraview", "outputInterval": (int)(1./variables.dt_splitting*variables.output_timestep), "filename": "out/surface", "binary": True, "fixedFormat": False, "combineFiles": True},
+          {"format": "Paraview", "outputInterval": (int)(1./variables.dt_multidomain*variables.output_timestep), "filename": "out/surface", "binary": True, "fixedFormat": False, "combineFiles": True},
         ],
         "face": "1-",
         "MultidomainSolver" : multidomain_solver,

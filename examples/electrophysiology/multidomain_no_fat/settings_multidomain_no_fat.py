@@ -18,6 +18,7 @@ Cm = 0.58               # membrane capacitance [uF/cm^2]
 end_time = 4000.0                   # [ms] end time of the simulation
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
 dt_0D = 3e-3                        # [ms] timestep width of ODEs (1e-3)
+dt_multidomain = 3e-3               # [ms] timestep width of multidomain solver
 dt_splitting = 3e-3                 # [ms] timestep width of splitting
 output_timestep = 1e-1              # [ms] timestep for output files
 
@@ -212,7 +213,7 @@ multidomain_solver = {
   "nCompartments":                    n_compartments,                     # number of compartments
   "am":                               Am,                                 # Am parameter (ration of surface to volume of fibers)
   "cm":                               Cm,                                 # Cm parameter (capacitance of the cellular membrane)
-  "timeStepWidth":                    dt_0D,                              # time step width of the subcellular problem
+  "timeStepWidth":                    dt_multidomain,                     # time step width of the diffusion, i.e. the global linear system in the multidomain solver
   "endTime":                          end_time,                           # end time, this is not relevant because it will be overridden by the splitting scheme
   "timeStepOutputInterval":           100,                                # how often the output timestep should be printed
   "solverName":                       "activationSolver",                 # reference to the solver used for the global linear system of the multidomain eq.
@@ -252,7 +253,7 @@ multidomain_solver = {
   },
   
   "OutputWriter" : [
-    {"format": "Paraview", "outputInterval": (int)(1./dt_0D*output_timestep), "filename": "out/output", "binary": True, "fixedFormat": False, "combineFiles": True},
+    {"format": "Paraview", "outputInterval": (int)(1./dt_multidomain*output_timestep), "filename": "out/output", "binary": True, "fixedFormat": False, "combineFiles": True},
     #{"format": "ExFile", "filename": "out/fiber_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "sphereSize": "0.02*0.02*0.02"},
     #{"format": "PythonFile", "filename": "out/fiber_"+str(i), "outputInterval": int(1./dt_1D*output_timestep), "binary":True, "onlyNodalValues":True},
   ]
@@ -352,7 +353,7 @@ config = {
       "MultidomainSolver" : multidomain_solver,
       "OutputSurface": {        # version for fibers_emg_2d_output
         "OutputWriter": [
-          {"format": "Paraview", "outputInterval": (int)(1./dt_0D*output_timestep), "filename": "out/surface", "binary": True, "fixedFormat": False, "combineFiles": True},
+          {"format": "Paraview", "outputInterval": (int)(1./dt_multidomain*output_timestep), "filename": "out/surface", "binary": True, "fixedFormat": False, "combineFiles": True},
         ],
         "face": "1-",
         "MultidomainSolver" : multidomain_solver,

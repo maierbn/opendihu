@@ -186,10 +186,10 @@ findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::ar
     if(GLOBAL_DEBUG)LOG(INFO) << "(" << this->meshPartition_->nElementsLocal(0) << "x" << this->meshPartition_->nElementsLocal(1) << ")";
 
   int nElementsVisited = 0;
-  for (element_no_t currentElementNo = elementNoLocalStart; currentElementNo != elementNoLocalEnd && nElementsVisited > 0; currentElementNo++, nElementsVisited++)
+  for (element_no_t currentElementNo = elementNoLocalStart; currentElementNo != elementNoLocalEnd || nElementsVisited == 0; currentElementNo++, nElementsVisited++)
   {
     nElementsVisited++;
-    
+
     // restart with element 0
     if (currentElementNo == nElements)
     {

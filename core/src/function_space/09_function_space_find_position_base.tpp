@@ -220,6 +220,7 @@ findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::ar
       if (excessivityScore < 1e-12)
       {
         VLOG(1) << "findPosition: pointIsInElement returned true, found at xi=" << xi << ", elementNo: " << elementNoLocal << ", excessivityScore=" << excessivityScore << ", use it";
+        elementNoLocal = currentElementNo;
         return true;
       }
       else 

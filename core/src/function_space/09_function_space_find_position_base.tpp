@@ -224,13 +224,13 @@ findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::ar
       // otherwise look in neighbouring elements for a better fit
       if (excessivityScore < 1e-12)
       {
-        VLOG(1) << "findPosition: pointIsInElement returned true, found at xi=" << xi << ", elementNo: " << elementNoLocal << ", excessivityScore=" << excessivityScore << ", use it";
+        if(GLOBAL_DEBUG)LOG(INFO) << "findPosition: pointIsInElement returned true, found at xi=" << xi << ", elementNo: " << elementNoLocal << ", excessivityScore=" << excessivityScore << ", use it";
         elementNoLocal = currentElementNo;
         return true;
       }
       else 
       {
-        VLOG(2) << "findPosition: pointIsInElement returned true, found at xi=" << xi << ", elementNo: " << currentElementNo << ", excessivityScore=" << excessivityScore << ", save and check neighbouring elements";
+        if(GLOBAL_DEBUG)LOG(INFO) << "findPosition: pointIsInElement returned true, found at xi=" << xi << ", elementNo: " << currentElementNo << ", excessivityScore=" << excessivityScore << ", save and check neighbouring elements";
         // save element as the best one so far, but also check neighbouring elements
         if (excessivityScore < excessivityScoreBest)
         {

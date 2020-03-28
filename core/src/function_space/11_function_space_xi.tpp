@@ -10,7 +10,7 @@ namespace FunctionSpace
 {
 
 //const double POINT_IN_ELEMENT_EPSILON = 1e-4;    // (1e-5 is too small)
-const int N_NEWTON_ITERATIONS = 32;    // (7) (4) (5) number of newton iterations to find out if a point is inside an element
+const int N_NEWTON_ITERATIONS = 16;    // (7) (4) (5) number of newton iterations to find out if a point is inside an element
 const double RESIDUUM_NORM_TOLERANCE = 1e-4;  // 1e-4^2 is 1e-8, usually it takes 2-3 iterations to reach 1e-2
  
 // general implementation
@@ -18,6 +18,14 @@ template<typename MeshType,typename BasisFunctionType,typename DummyForTraits>
 bool FunctionSpaceXi<MeshType,BasisFunctionType,DummyForTraits>::
 pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType::dim()> &xi, double &residual, double xiTolerance)
 {
+  // This method computes the xi coordinates in the element-local coordinate system [0,1]^D of the point p and 
+  // then checks if the point is inside the element with given xiTolerance (then returns true).
+  // This is accomplished by a simple inversion of the mapping Phi(xi) = point using a Newton scheme.
+  // However, there are a lot of tweaks to ensure convergence also for almost singular mappings, as well as ensuring good performance.
+  // The algorithm is basically two steps: First, do the normal Newton scheme for maximum N_NEWTON_ITERATIONS iterations until the inversion converged by RESIDUUM_NORM_TOLERANCE.
+  // In 99% of all cases this is sufficient. In some cases the inversion is still not solved. For those cases, repeat the Newton solve
+  // with special reset operations, at the end use the best xi value that was found during the search, not the one of the last iteration.
+  
   // timing measurements are disabled, they showed that 'computeApproximateXiForPoint' makes sense and is faster than just initializing the initial guess to 0
 #if 0 
   static double durationApproximation = 0.0;
@@ -50,14 +58,51 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType:
 
   VLOG(2) << "point " << point << ", geometryValues: " << geometryValues;
 
+  std::array<double,MeshType::dim()> xiPrevious = xi;
+
   // compute initial residuum
   Vec3 residuum = point - this->template interpolateValueInElement<3>(geometryValues, xi);
   double residuumNormSquared = MathUtility::normSquared<3>(residuum);
+  double residuumNormSquaredPrevious = residuumNormSquared;
+  
   if (VLOG_IS_ON(2))
   {
     VLOG(2) << " xi0 = " << xi << ", residuum: " << residuum << " (norm: " << sqrt(residuumNormSquared) << ")";
   }
 
+  // initialize the increment for xi if the Newton step fails
+  std::array<std::array<double,MeshType::dim()>,6> xiStep{};
+  VLOG(2) << " xiStep uninit: " << xiStep;
+  if (MeshType::dim() == 3)
+  {
+    xiStep[0][0] = 0.01;
+    xiStep[1][1] = 0.01;
+    xiStep[2][2] = 0.01;
+    xiStep[3][0] = -0.01;
+    xiStep[4][1] = -0.01;
+    xiStep[5][2] = -0.01;
+  }
+  else if (MeshType::dim() == 2)
+  {
+    xiStep[0][0] = 0.01;
+    xiStep[1][1] = 0.01;
+    xiStep[2][0] = -0.01;
+    xiStep[3][1] = -0.01;
+    xiStep[4][0] = 0.01;
+    xiStep[4][1] = 0.01;
+    xiStep[5][0] = -0.01;
+    xiStep[5][1] = -0.01;
+  }
+  else if (MeshType::dim() == 1)
+  {
+    xiStep[0][0] = 0.01;
+    xiStep[1][0] = -0.01;
+    xiStep[2][0] = 0.01;
+    xiStep[3][0] = -0.01;
+    xiStep[4][0] = 0.01;
+    xiStep[5][0] = -0.01;
+  }
+  VLOG(2) << " xiStep: " << xiStep;
   int nIterations = 0;
 
   // while the residuum norm is above the tolerance
@@ -73,9 +118,24 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType:
     residuum = point - this->template interpolateValueInElement<3>(geometryValues, xi);
     residuumNormSquared = MathUtility::normSquared<3>(residuum);
     
-    if (VLOG_IS_ON(2))
+    // if the residuum value jumped more than 1000 in one step, discard current step and restart with a slightly different xi value
+    if (residuumNormSquared - residuumNormSquaredPrevious > 1000)
     {
-      VLOG(2) << " xi_" << iterationNo << " = "  << xi << ", residuum: " << residuum << " (norm: " << sqrt(residuumNormSquared) << ")";
+      VLOG(2) << "jump in norm " << residuumNormSquaredPrevious << " -> " << residuumNormSquared << ", xi: " << xi;
+
+      xi = xiPrevious + xiStep[iterationNo%6];
+      residuum = point - this->template interpolateValueInElement<3>(geometryValues, xi);
+      residuumNormSquared = MathUtility::normSquared<3>(residuum);
+
+      VLOG(2) << "reset to xi=" << xi << ", norm: " << residuumNormSquared;
+    }
+    
+    residuumNormSquaredPrevious = residuumNormSquared;
+    xiPrevious = xi;
+
+    if (VLOG_IS_ON(3))   // extra if because of sqrt
+    {
+      VLOG(3) << " xi_" << iterationNo << " = "  << xi << ", residuum: " << residuum << " (norm: " << sqrt(residuumNormSquared) << ")";
     }
   }
   residual = residuumNormSquared;
@@ -95,58 +155,74 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType:
   // if the norm is not good, i.e. the solution was not found in the previous loop
   if (residuumNormSquared > MathUtility::sqr(RESIDUUM_NORM_TOLERANCE))
   {
-    // if solution was not found but it seems to be in the current element, it is worth computing the exact value xi
-    // iterate further and note the best found xi on the way
-    if (pointIsInElement)
+    // if current value for residuum is bad, restart completely
+    if (residuumNormSquared > 1)
     {
-#ifndef NDEBUG
-      std::vector<double> residualValues;
-      double initialResidual = residuumNormSquared;
-#endif
-      // variables for the best value of xi with the lowest residual norm that was found
-      std::array<double,MeshType::dim()> bestXi;
-      double bestResidual = std::numeric_limits<double>::max();
+      // for 3D mesh and linear Lagrange basis function compute approximate xi by heuristic, else set to 0.5
+      this->computeApproximateXiForPoint(point, elementNo, xi);
+          
+      // compute initial residuum
+      residuum = point - this->template interpolateValueInElement<3>(geometryValues, xi);
+      residuumNormSquared = MathUtility::normSquared<3>(residuum);
+      residuumNormSquaredPrevious = residuumNormSquared;
+    }
+    
+    // iterate further and note the best found xi on the way
+    double initialResidual = residuumNormSquared;
+    
+    // variables for the best value of xi with the lowest residual norm that was found
+    std::array<double,MeshType::dim()> bestXi = xi;
+    double bestResidual = residuumNormSquared;
+    VLOG(2) << "point not found yet, restart with Xi=" << xi << ", bestResidual: " << bestResidual;
 
-      // Again, do a lot of iterations to get closer to the correct xi value. This occurs rarely.
-      // Note, increasing thet number of iterations further has no significant effect. For the cases where this loop is required, the Newton scheme kind of fails,
-      // the residual drops step by step and then in one single step increases sharply.
-      for (int iterationNo = 0; iterationNo < 2*N_NEWTON_ITERATIONS && residuumNormSquared > MathUtility::sqr(RESIDUUM_NORM_TOLERANCE); iterationNo++, nIterations++)
+
+    // Again, do a lot of iterations to get closer to the correct xi value. This occurs rarely.
+    // Note, increasing thet number of iterations further has no significant effect. For the cases where this loop is required, the Newton scheme kind of fails,
+    // the residual drops step by step and then in one single step increases sharply.
+    for (int iterationNo = 0; iterationNo < 2*N_NEWTON_ITERATIONS && residuumNormSquared > MathUtility::sqr(RESIDUUM_NORM_TOLERANCE); iterationNo++, nIterations++)
+    {
+      // perform Newton step
+      Tensor2<D> inverseJacobian = this->getInverseJacobian(geometryValues, elementNo, xi);
+      xi += inverseJacobian * MathUtility::transformToD<D,3>(residuum);
+
+      // compute residuum
+      residuum = point - this->template interpolateValueInElement<3>(geometryValues, xi);
+      residuumNormSquared = MathUtility::normSquared<3>(residuum);
+      
+      // if the residuum value jumped more than 1000 in one step, discard current step and restart with a slightly different xi value
+      if (residuumNormSquared - residuumNormSquaredPrevious > 1000)
       {
-        // perform Newton step
-        Tensor2<D> inverseJacobian = this->getInverseJacobian(geometryValues, elementNo, xi);
-        xi += inverseJacobian * MathUtility::transformToD<D,3>(residuum);
+        VLOG(2) << "jump in norm " << residuumNormSquaredPrevious << " -> " << residuumNormSquared << ", xi: " << xi;
 
-        // compute residuum
+        xi = xiPrevious + xiStep[iterationNo%6];
         residuum = point - this->template interpolateValueInElement<3>(geometryValues, xi);
         residuumNormSquared = MathUtility::normSquared<3>(residuum);
-#ifndef NDEBUG
-        residualValues.push_back(residuumNormSquared);
-#endif
 
-        if (residuumNormSquared < bestResidual)
-        {
-          bestResidual = residuumNormSquared;
-          bestXi = xi;
-        }
-
-        if (VLOG_IS_ON(2))
-        {
-          VLOG(2) << " xi_" << iterationNo << " = "  << xi << ", residuum: " << residuum << " (norm: " << sqrt(residuumNormSquared) << ")";
-        }
+        VLOG(2) << "reset to xi=" << xi << ", norm: " << residuumNormSquared;
       }
 
-      // Use the best values that were found during the iterations. This is usually not the value from the last iteration.
-      xi = bestXi;
-      residual = bestResidual;
-      residuumNormSquared = bestResidual;
+      if (residuumNormSquared < bestResidual)
+      {
+        bestResidual = residuumNormSquared;
+        bestXi = xi;
+      }
 
-#ifndef NDEBUG
-      LOG(DEBUG) << "pointIsInElement point: " << point << ", elementNo: " << elementNo
-        << ", residual improved from " << initialResidual << " to " << residual << ", xi: " << xi;
-      LOG(DEBUG) << "residual values: " << residualValues;
-#endif
+      residuumNormSquaredPrevious = residuumNormSquared;
+      xiPrevious = xi;
 
+      if (VLOG_IS_ON(3))
+      {
+        VLOG(3) << " xi_" << iterationNo << " = "  << xi << ", residuum: " << residuum << " (norm: " << sqrt(residuumNormSquared) << ")";
+      }
     }
+
+    // Use the best values that were found during the iterations. This is usually not the value from the last iteration.
+    xi = bestXi;
+    residual = bestResidual;
+    residuumNormSquared = bestResidual;
+
+    VLOG(2) << "pointIsInElement point: " << point << ", elementNo: " << elementNo
+      << ", residual improved from " << initialResidual << " to " << residual << ", xi: " << xi;
 
     // check if point is inside the element by looking at the value of xi
     pointIsInElement = true;

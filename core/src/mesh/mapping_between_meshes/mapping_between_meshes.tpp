@@ -77,6 +77,7 @@ MappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSourc
         << functionSpaceTarget->meshName() << "\", source dof local " << sourceDofNoLocal
         << " of mesh \"" << functionSpaceSource->meshName() << "\" at position " << position << " is outside of target mesh \""
         << functionSpaceTarget->meshName() << "\" with tolerance " << xiTolerance << ". Try increasing parameter \"xiTolerance\".";
+      LOG(INFO) << "position: " << position << ", startSearchInCurrentElement: " << startSearchInCurrentElement << ", xi: " << xi << ", residual: " << residual << ", elementNo: " << elementNo;
 
       nSourceDofsOutsideTargetMesh++;
       targetMappingInfo.mapThisDof = false;

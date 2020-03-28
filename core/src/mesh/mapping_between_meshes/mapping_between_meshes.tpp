@@ -3,6 +3,7 @@
 #include "control/diagnostic_tool/performance_measurement.h"
 
 #include "utility/vector_operators.h"
+#include "control/dihu_context.h"
 
 namespace Mesh
 {
@@ -52,6 +53,7 @@ MappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSourc
 
   // visualization for 1D-1D: s=source, t=target
   // t--s--------t-----s-----t
+  GLOBAL_DEBUG=false;
 
   // loop over all local dofs of the source functionSpace
   for (dof_no_t sourceDofNoLocal = 0; sourceDofNoLocal != nDofsLocalSource; sourceDofNoLocal++)
@@ -64,6 +66,9 @@ MappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSourc
 
     //dof_no_t sourceDofNoGlobal = functionSpaceTarget->meshPartition()->getDofNoGlobalPetsc(sourceDofNoLocal);
     Vec3 position = functionSpaceSource->getGeometry(sourceDofNoLocal);
+
+if (sourceDofNoLocal == 0)GLOBAL_DEBUG=true;
+else GLOBAL_DEBUG=false;
 
     // find element no in the target mesh where the position is
     if (functionSpaceTarget->findPosition(position, elementNo, ghostMeshNo, xi, startSearchInCurrentElement, residual, xiTolerance))

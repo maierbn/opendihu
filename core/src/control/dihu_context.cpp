@@ -43,6 +43,8 @@
 #include "ExecutableSupport.hpp"
 #endif
 
+bool GLOBAL_DEBUG = false;
+
 std::shared_ptr<Mesh::Manager> DihuContext::meshManager_ = nullptr;
 //std::shared_ptr<Solver::Manager> DihuContext::solverManager_ = nullptr;
 std::map<int, std::shared_ptr<Solver::Manager>> DihuContext::solverManagerForThread_;

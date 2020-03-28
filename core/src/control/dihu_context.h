@@ -18,6 +18,7 @@
 #include "partition/partition_manager.h"
 #include "control/python_config/python_config.h"
 
+extern bool GLOBAL_DEBUG;
 // forward declaration
 namespace Mesh { class Manager; }
 namespace Solver { class Manager; }

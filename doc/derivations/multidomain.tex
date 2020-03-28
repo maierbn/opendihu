@@ -674,6 +674,34 @@ Here, $\bfD$ and $\bfE$ contain entries for the dofs in the elements that are ad
 
 $\hat{\bfphi}_{b}^{(i+1)}$ is the vector of body potential without dofs on the border.
 
+\subsection{Summary}
+\begin{equation*}
+  \begin{array}{lll}
+    \left[\begin{array}{@{}ccc|c|c@{}}
+      \bfA^1_{V_m,V_m} & & &\bfB^1_{V_m,\phi_e} & \\[2mm]
+      &\bfA^2_{V_m,V_m} &  &\bfB^2_{V_m,\phi_e} & \\[2mm]
+      &&\bfA^k_{V_m,V_m}  &\bfB^k_{V_m,\phi_e} & \\[2mm]
+      \bfB^1_{\phi_e,V_m} & \bfB^2_{\phi_e,V_m} & \bfB^k_{\phi_e,V_m} & \bfB_{\phi_e,\phi_e} & \bfD \\[2mm] \hline
+      &&&\bfE &\bfC_{\phi_b,\phi_b}\\[2mm]
+    \end{array}\right]
+    \left[\begin{array}{@{}c@{}}
+      V_{m}^{1,(i+1)}  \\[2mm]
+      V_{m}^{2,(i+1)}  \\[2mm]
+      V_{m}^{k,(i+1)}  \\[2mm]\hline 
+      \bfphi_{e}^{(i+1)} \\[2mm]\hline
+      \hat{\bfphi}_{b}^{(i+1)}
+    \end{array}\right]
+    = 
+    \left[\begin{array}{@{}c@{}}
+      \bfb_{V_m}^{1,(i+1)} \\[2mm]
+      \bfb_{V_m}^{2,(i+1)} \\[2mm]
+      \bfb_{V_m}^{k,(i+1)} \\[2mm]
+      \bfzero\\\hline
+      \bfzero
+    \end{array}\right]
+  \end{array}.
+\end{equation*}
+
 %\subsubsection{Flux boundary conditions}
 
 %\begin{equation*}

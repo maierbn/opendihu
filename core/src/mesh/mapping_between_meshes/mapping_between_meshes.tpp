@@ -73,7 +73,7 @@ MappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSourc
     }
     else
     {
-      LOG(DEBUG) << "In mapping between meshes \"" << functionSpaceSource->meshName() << "\" and \""
+      LOG(INFO) << "In mapping between meshes \"" << functionSpaceSource->meshName() << "\" and \""
         << functionSpaceTarget->meshName() << "\", source dof local " << sourceDofNoLocal
         << " of mesh \"" << functionSpaceSource->meshName() << "\" at position " << position << " is outside of target mesh \""
         << functionSpaceTarget->meshName() << "\" with tolerance " << xiTolerance << ". Try increasing parameter \"xiTolerance\".";

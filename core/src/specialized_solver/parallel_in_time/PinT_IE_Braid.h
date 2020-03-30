@@ -126,12 +126,6 @@ my_BufUnpack(braid_App           app,
              braid_Vector       *u_ptr,
              braid_BufferStatus  bstatus);
 
-
-/*--------------------------------------------------------------------------
- * my_Residual, my_Coarsen and my_Refine are advanced XBraid options, ignore
- * them until you understand the rest of the driver.
- *--------------------------------------------------------------------------*/
-
 int
 my_Residual(braid_App        app,
             braid_Vector     ustop,
@@ -151,4 +145,3 @@ my_Interp(braid_App              app,
           braid_Vector           cu,
           braid_Vector          *fu_ptr,
           braid_CoarsenRefStatus status);
-          

@@ -1,10 +1,13 @@
+// most important parallel-in-time functions for XBraid
+// PinT is initialized in PinT_IE.tpp
+// more functions in PinT_IE_lib.h
+
 
 #include "specialized_solver/parallel_in_time/PinT_IE_Braid.h"
 
 #include "specialized_solver/parallel_in_time/PinT_IE_lib.h"
 #include "data_management/specialized_solver/PinT_IE.h"
 
-// #include "time_stepping_scheme/implicit_euler.h"
 
 /* create and allocate a vector */
 void
@@ -41,10 +44,6 @@ int my_Step(braid_App        app,
    solver=log2(u->size - 1);
    assert(solver < (*app->implicitEulerSolvers).size());
 
-   // printf("%d\n", level);
-   // printf("%d\n", u->size);
-   // printf("%d\n", n);
-
    /* XBraid forcing */
 
    if(fstop != NULL)
@@ -55,13 +54,6 @@ int my_Step(braid_App        app,
       }
    }
 
-   // Vec V; //create vector V with the given values of u
-   // VecCreateSeqWithArray(PETSC_COMM_SELF, 1, u->size, u->values,&V);
-   // // VecCreateMPIWithArray(app->comm, 1, u->size, PETSC_DECIDE, u->values,&V);
-   // VecAssemblyBegin(V);
-   // VecAssemblyEnd(V);
-
-   
    // get alias variables
    std::shared_ptr<typename _braid_App_struct::NestedSolver> implicitEulerSolver = (*app->implicitEulerSolvers)[solver];
    std::shared_ptr<typename Data::PinT<typename _braid_App_struct::NestedSolver::FunctionSpace>::ScalarFieldVariableType> solution = implicitEulerSolver->data().solution();
@@ -78,35 +70,31 @@ int my_Step(braid_App        app,
    implicitEulerSolver->setNumberTimeSteps(1);
    implicitEulerSolver->setSystemMatrix((tstop-tstart)/1);
 
+   // Debug Options
    LOG(DEBUG) << "--------------------------------------------------------------";
    LOG(DEBUG) << "level: " << level << ", solver: " << solver << ", size: " << u->size << ", t: [" << tstart << "," << tstop << "], before implicit euler:" << *solution;
-   PetscRealView(u->size, u->values, 0);
-   // VecView(implicitEulerSolver->data().solution()->valuesGlobal(), 	PETSC_VIEWER_STDOUT_SELF);
 
-   LOG(DEBUG) << "system matrix of solver: " << *implicitEulerSolver->dataImplicit().systemMatrix();
-   //MatView(implicitEulerSolver->dataImplicit().systemMatrix()->valuesGlobal(), PETSC_VIEWER_STDOUT_SELF);
+   // PetscRealView(u->size, u->values, 0);
+   // VecView(implicitEulerSolver->data().solution()->valuesGlobal(), 	PETSC_VIEWER_STDOUT_SELF);
+   // LOG(DEBUG) << "system matrix of solver: " << *implicitEulerSolver->dataImplicit().systemMatrix();
+   // MatView(implicitEulerSolver->dataImplicit().systemMatrix()->valuesGlobal(), PETSC_VIEWER_STDOUT_SELF);
+
 
    // run solver
    implicitEulerSolver->advanceTimeSpan();
-   // VecView(implicitEulerSolver->data().solution()->valuesGlobal(), 	PETSC_VIEWER_STDOUT_SELF);
 
-   // functions for debugging:
-   // VecView((*app->implicitEulerSolvers)[0]->data().solution()->valuesGlobal(), 	PETSC_VIEWER_STDOUT_SELF);
+   // Debug Options
+   // VecView(implicitEulerSolver->data().solution()->valuesGlobal(), 	PETSC_VIEWER_STDOUT_SELF);
    // PetscRealView(6, u->values, 0);
 
-   // put the calculated solution into braid vector u
-   // VecGetArray(&(*(implicitEulerSolver->data().solution()->valuesGlobal())),&(u->values));
-   // VecGetArray(&(*(implicitEulerSolver->data().solution()->valuesGlobal())),&help);
-   // u->values=help;
-   // VecRestoreArray(&(*(implicitEulerSolver->data().solution()->valuesGlobal())),&help);
+   // Get values for braid which were calculated by implicitEulerSolver
    ierr = VecGetValues(solution->valuesGlobal(), u->size, solution->functionSpace()->meshPartition()->dofNosLocal().data(), u->values); CHKERRQ(ierr);
 
-   
+
    deltaT = tstop - tstart;
    deltaX = (app->xstop - app->xstart) / (ustop->size - 1.0);
 
    LOG(DEBUG) << "solved for t: [" << tstart << "," << tstop << "], deltaT: " << deltaT << ", deltaX: " << deltaX << ", size: " << u->size << " solution: " << *solution;
-   PetscRealView(u->size, u->values, 0);
 
    /* Store info on space-time grids visited during the simulation */
    (app->sc_info)[ (2*level) ] = deltaX;
@@ -125,48 +113,42 @@ my_Init(braid_App     app,
         braid_Vector *u_ptr)
 {
    my_Vector *u;
-   int    i;
    int nspace = (app->nspace);
-   double deltaX = (app->xstop - app->xstart) / (nspace - 1.0);
+   // int    i;
+   // double deltaX = (app->xstop - app->xstart) / (nspace - 1.0);
 
    /* Allocate vector */
    create_vector(&u, nspace);
 
-   /* Initialize vector (with correct boundary conditions) */
-   if(t == 0.0)
-   {
-      /* Get the solution at time t=0 */
-      get_solution(u->values, u->size, 0.0, app->xstart, deltaX);
-   }
-   else
-   {
-      /* Use random values for u(t>0), this measures asymptotic convergence rate */
-      for(i=0; i < nspace; i++)
-      {
-         (u->values)[i] = ((double)braid_Rand())/braid_RAND_MAX;
-      }
-   }
-   // (u->values)[0] =2;
-   // (u->values)[1] =2;
-   // (u->values)[2] =4;
-   // (u->values)[3] =5;
-   // (u->values)[4] =2;
-   // (u->values)[5] =2;
+   // Different way to initialize
+   // /* Initialize vector (with correct boundary conditions) */
+   // if(t == 0.0)
+   // {
+   //    /* Get the solution at time t=0 */
+   //    get_solution(u->values, u->size, 0.0, app->xstart, deltaX);
+   // }
+   // else
+   // {
+   //    /* Use random values for u(t>0), this measures asymptotic convergence rate */
+   //    for(i=0; i < nspace; i++)
+   //    {
+   //       (u->values)[i] = ((double)braid_Rand())/braid_RAND_MAX;
+   //    }
+   // }
+
    PetscInt solver;
    solver=log2(nspace - 1);
    assert(solver < (*app->implicitEulerSolvers).size());
 
    std::shared_ptr<typename _braid_App_struct::NestedSolver> implicitEulerSolver = (*app->implicitEulerSolvers)[solver];
    std::shared_ptr<typename Data::PinT<typename _braid_App_struct::NestedSolver::FunctionSpace>::ScalarFieldVariableType> solution = implicitEulerSolver->data().solution();
-   
+
    PetscErrorCode ierr;
    ierr = VecGetValues(solution->valuesGlobal(), u->size, solution->functionSpace()->meshPartition()->dofNosLocal().data(), u->values); CHKERRQ(ierr);
 
    LOG(DEBUG) << "--------------------------------------------------------------";
    LOG(DEBUG) << "set initial values: " << *solution;
 
-   //VecGetArray(implicitEulerSolver->data().solution()->valuesGlobal(),&u->values);
-   //VecRestoreArray(implicitEulerSolver->data().solution()->valuesGlobal(),&u->values);
    *u_ptr = u;
 
    return 0;
@@ -253,13 +235,13 @@ my_Access(braid_App          app,
    braid_AccessStatusGetDone(astatus, &done);
 
    /* Print solution to file if simulation is over */
-   if(done)
-   {
-      MPI_Comm_rank( (app->comm), &rank);
-      sprintf(filename, "%s.%07d.%05d", "PinT_diffusion.out", index, rank);
-      save_solution(filename, u->values, u->size, app->xstart,
-            app->xstop, app->ntime, app->tstart, app->tstop);
-   }
+   // if(done)
+   // {
+   //    MPI_Comm_rank( (app->comm), &rank);
+   //    sprintf(filename, "%s.%07d.%05d", "PinT_diffusion.out", index, rank);
+   //    save_solution(filename, u->values, u->size, app->xstart,
+   //          app->xstop, app->ntime, app->tstart, app->tstop);
+   // }
 
    /* IF on the finest level AND print_level is high enough AND at the final time,
     * THEN print out the discretization error */
@@ -324,12 +306,6 @@ my_BufUnpack(braid_App           app,
 
    return 0;
 }
-
-
-/*--------------------------------------------------------------------------
- * my_Residual, my_Coarsen and my_Refine are advanced XBraid options, ignore
- * them until you understand the rest of the driver.
- *--------------------------------------------------------------------------*/
 
 int
 my_Residual(braid_App        app,

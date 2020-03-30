@@ -23,12 +23,12 @@ public:
 
   //! advance simulation by the given time span [startTime_, endTime_] with given numberTimeSteps, data in solution is used, afterwards new data is in solution
   void advanceTimeSpan();
-  
+
   //! precomputes the integration matrix A=I-dtM^(-1)K for the implicit euler scheme
   void setSystemMatrix(double timeStepWidth);
-   
+
 protected:
-  
+  double initialTimeStepWidth_ =0; // variable for SetSystemMatrix to check whether we need to build a new one
 };
 
 }  // namespace

@@ -26,7 +26,7 @@ void ImplicitEuler<DiscretizableInTimeType>::advanceTimeSpan()
 
   // compute timestep width
   double timeSpan = this->endTime_ - this->startTime_;
-  
+
   LOG(DEBUG) << "ImplicitEuler::advanceTimeSpan, timeSpan=" << timeSpan<< ", timeStepWidth=" << this->timeStepWidth_
     << " n steps: " << this->numberTimeSteps_ << ", time span: [" << this->startTime_ << "," << this->endTime_ << "]";
 
@@ -34,20 +34,20 @@ void ImplicitEuler<DiscretizableInTimeType>::advanceTimeSpan()
 
   // loop over time steps
   double currentTime = this->startTime_;
-  
+
   for (int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
   {
     if (timeStepNo % this->timeStepOutputInterval_ == 0 && timeStepNo > 0)
     {
       LOG(INFO) << "Implicit Euler, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
     }
-    
+
     VLOG(1) << "initial solution (" << this->data_->solution() << "): " << *this->data_->solution();
 
     // advance simulation time
     timeStepNo++;
     currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
-    
+
     // adjust rhs vector, set prescribed dofs to prescribed values, such that boundary conditions are satisfied
     this->dirichletBoundaryConditions_->applyInRightHandSide(this->data_->solution(), this->dataImplicit_->boundaryConditionsRightHandSideSummand());
 
@@ -55,8 +55,9 @@ void ImplicitEuler<DiscretizableInTimeType>::advanceTimeSpan()
 
     // advance computed value
     // solve A*u^{t+1} = u^{t} for u^{t+1} where A is the system matrix, solveLinearSystem(b,x)
+
     this->solveLinearSystem(solution, solution);
-    
+
     if (VLOG_IS_ON(1))
     {
       VLOG(1) << "new solution (" << this->data_->solution() << "): " << *this->data_->solution();
@@ -68,7 +69,7 @@ void ImplicitEuler<DiscretizableInTimeType>::advanceTimeSpan()
 
     // write current output values
     this->outputWriterManager_.writeOutput(*this->dataImplicit_, timeStepNo, currentTime);
-    
+
     // start duration measurement
     if (this->durationLogKey_ != "")
       Control::PerformanceMeasurement::start(this->durationLogKey_);
@@ -87,27 +88,32 @@ setSystemMatrix(double timeStepWidth)
   LOG(TRACE) << "setSystemMatrix(timeStepWidth=" << timeStepWidth << ")";
 
   // compute the system matrix (I - dt*M^{-1}K) where M^{-1} is the lumped mass matrix
-  
+  if (timeStepWidth==initialTimeStepWidth_)
+    return;
+  LOG(DEBUG) << "New SystemMatrix is created";
+  initialTimeStepWidth_=timeStepWidth;
   Mat &inverseLumpedMassMatrix = this->discretizableInTime_.data().inverseLumpedMassMatrix()->valuesGlobal();
   Mat &stiffnessMatrix = this->discretizableInTime_.data().stiffnessMatrix()->valuesGlobal();
   Mat systemMatrix;
-  
+
   PetscErrorCode ierr;
-  
+
   // compute systemMatrix = M^{-1}K
   // the result matrix is created by MatMatMult
   ierr = MatMatMult(inverseLumpedMassMatrix, stiffnessMatrix, MAT_INITIAL_MATRIX, PETSC_DEFAULT, &systemMatrix);
   this->dataImplicit_->initializeSystemMatrix(systemMatrix);
-  
+
   // scale systemMatrix by -dt, systemMatrix = -dt*M^{-1}K
+
   ierr = MatScale(this->dataImplicit_->systemMatrix()->valuesGlobal(), -timeStepWidth); CHKERRV(ierr);
-  
+
   // add 1 on the diagonal: systemMatrix = I - dt*M^{-1}K
   ierr = MatShift(this->dataImplicit_->systemMatrix()->valuesGlobal(), 1.0); CHKERRV(ierr);
-  
+
   this->dataImplicit_->systemMatrix()->assembly(MAT_FINAL_ASSEMBLY);
-  
-  //VLOG(1) << *this->dataImplicit_->systemMatrix();
+
+  // PinT needs to SetOperators for each grid: improvement: try to do that in initialize
+  ierr = KSPSetOperators(*(this->linearSolver_->ksp()), systemMatrix, systemMatrix); CHKERRV(ierr);
 }
 
 } // namespace TimeSteppingScheme

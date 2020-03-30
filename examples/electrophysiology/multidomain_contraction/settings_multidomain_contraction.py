@@ -208,6 +208,20 @@ config = {
       "preconditionerType": "none",
       "dumpFormat":         "matlab",
       "dumpFilename":       "",
+    },
+    "mechanicsSolver": {   # solver for the dynamic mechanics problem
+      "relativeTolerance":  1e-5,           # 1e-10 relative tolerance of the linear solver
+      "absoluteTolerance":  1e-10,          # 1e-10 absolute tolerance of the residual of the linear solver
+      "solverType":         "preonly",      # type of the linear solver: cg groppcg pipecg pipecgrr cgne nash stcg gltr richardson chebyshev gmres tcqmr fcg pipefcg bcgs ibcgs fbcgs fbcgsr bcgsl cgs tfqmr cr pipecr lsqr preonly qcg bicg fgmres pipefgmres minres symmlq lgmres lcd gcr pipegcr pgmres dgmres tsirm cgls
+      "preconditionerType": "lu",           # type of the preconditioner
+      "maxIterations":       1e4,           # maximum number of iterations in the linear solver
+      "snesMaxFunctionEvaluations": 1e8,    # maximum number of function iterations
+      "snesMaxIterations":   10,            # maximum number of iterations in the nonlinear solver
+      "snesRelativeTolerance": 1e-5,        # relative tolerance of the nonlinear solver
+      "snesAbsoluteTolerance": 1e-5,        # absolute tolerance of the nonlinear solver
+      "snesLineSearchType": "l2",           # type of linesearch, possible values: "bt" "nleqerr" "basic" "l2" "cp" "ncglinear"
+      "dumpFilename":        "",            # dump system matrix and right hand side after every solve
+      "dumpFormat":          "matlab",      # default, ascii, matlab
     }
   },
   "Coupling": {

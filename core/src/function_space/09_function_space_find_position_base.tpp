@@ -28,7 +28,7 @@ findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::ar
   element_no_t elementNoBest = 0;
   std::array<double,MeshType::dim()> xiBest;
   double excessivityScoreBest = std::numeric_limits<double>::max();
-  double residualBest;
+  double residualBest = 0;
   bool elementFound = false;
 
   if (startSearchInCurrentElement)

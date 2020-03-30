@@ -100,7 +100,8 @@ initialize()
   TimeSteppingScheme::TimeSteppingScheme::initialize();
 
   // add this solver to the solvers diagram, which is a SVG file that will be created at the end of the simulation.
-  DihuContext::solverStructureVisualizer()->addSolver("MyNewTimesteppingSolver");
+  DihuContext::solverStructureVisualizer()->addSolver("MyNewTimesteppingSolver", true);   // hasInternalConnectionToFirstNestedSolver=true (the last argument) means output connector data is shared with the first subsolver
+  // if you have your own output connector data rather than the one of the subsolver, call "addSolver" with false as second argument
 
   // indicate in solverStructureVisualizer that now a child solver will be initialized
   DihuContext::solverStructureVisualizer()->beginChild();
@@ -136,7 +137,7 @@ run()
 {
   // The run method should not be changed. It is the method that gets called directly from the example main file.
   // If this solver itself is nested in other solvers or coupling schemes,
-  // run() will not be called, but the surrounding solver will call initialize() and advanceTimeSpan().
+  // run() will not be called, but the enclosing solver will call initialize() and advanceTimeSpan().
   initialize();
 
   advanceTimeSpan();

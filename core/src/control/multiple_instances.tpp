@@ -286,7 +286,7 @@ initialize()
   }
 
   // add this solver to the solvers diagram
-  DihuContext::solverStructureVisualizer()->addSolver("MultipleInstances");
+  DihuContext::solverStructureVisualizer()->addSolver("MultipleInstances", true);   // hasInternalConnectionToFirstNestedSolver=true (the last argument) means output connector data is shared with the first subsolver
   DihuContext::solverStructureVisualizer()->beginChild();
 
   double progress = 0;

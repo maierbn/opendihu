@@ -97,7 +97,7 @@ public:
   //! set a new time interval that will be simulated by next call to advanceTimeSpan.
   void setTimeSpan(double startTime, double endTime);
 
-  //! get the output connector data, to be used for a surrounding solver
+  //! get the output connector data, to be used for an enclosing solver
   std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
 
   //! get a reference to the nested solvers

@@ -75,7 +75,6 @@ sigma_xf = 0                # [mS/cm] conductivity in cross-fiber direction (xf)
 sigma_e_f = 6.7             # [mS/cm] conductivity in extracellular space, fiber direction (f)
 sigma_e_xf = 3.35           # [mS/cm] conductivity in extracellular space, cross-fiber direction (xf) / transverse
 
-Conductivity = 3.828      # [mS/cm] sigma, conductivity
 Am = 500.0                  # [cm^-1] surface area to volume ratio
 Cm = 0.58                   # [uF/cm^2] membrane capacitance, (1 = fast twitch, 0.58 = slow twitch)
 # diffusion prefactor = Conductivity/(Am*Cm)
@@ -107,19 +106,19 @@ end_time = 4000.0                   # [ms] end time of the simulation
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
 stimulation_frequency_jitter = 0    # [-] jitter in percent of the frequency, added and substracted to the stimulation_frequency after each stimulation
 dt_0D = 1e-3                        # [ms] timestep width of ODEs (1e-3)
-dt_multidomain = 1e-2               # [ms] timestep width of the multidomain solver, i.e. the diffusion
-dt_splitting = 1e-3                 # [ms] overall timestep width of strang splitting between 0D and multidomain (1e-3)
+dt_multidomain = 1e-3               # [ms] timestep width of the multidomain solver, i.e. the diffusion
+dt_splitting = dt_multidomain       # [ms] timestep width of strang splitting between 0D and multidomain, this is the same as the dt_multidomain, because we do not want to subcycle for the diffusion part
 dt_elasticity = 1e0                 # [ms] time step width of elasticity solver
 output_timestep_fibers = 4e0        # [ms] timestep for fiber output, 0.5
 output_timestep_3D = 4e0            # [ms] timestep for output of fibers and mechanics, should be a multiple of dt_3D
 
 # input files
-fiber_file = "../../../input/left_biceps_brachii_9x9fibers.bin"
-#fiber_file = "../../../input/left_biceps_brachii_13x13fibers.bin"
+fiber_file = "../../input/left_biceps_brachii_9x9fibers.bin"
+#fiber_file = "../../input/left_biceps_brachii_13x13fibers.bin"
 fat_mesh_file = fiber_file + "_fat.bin"
-firing_times_file = "../../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
-fiber_distribution_file = "../../../input/MU_fibre_distribution_10MUs.txt"
-cellml_file             = "../../../input/new_slow_TK_2014_12_08.c"
+firing_times_file = "../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
+fiber_distribution_file = "../../input/MU_fibre_distribution_10MUs.txt"
+cellml_file             = "../../input/new_slow_TK_2014_12_08.c"
 
 # stride for sampling the 3D elements from the fiber data
 # a higher number leads to less 3D elements
@@ -135,27 +134,27 @@ exfile_output = False
 python_output = False
 disable_firing_output = False
 
+# debuggung version, smaller example
+motor_units = motor_units[0:2]  # only 2 motor units
+
 # functions, here, Am, Cm and Conductivity are constant for all fibers and MU's
-def get_am(fiber_no, mu_no):
+def get_am(mu_no):
   # get radius in cm, 1 μm = 1e-6 m = 1e-4*1e-2 m = 1e-4 cm
   r = motor_units[mu_no]["radius"]*1e-4
   # cylinder surface: A = 2*π*r*l, V = cylinder volume: π*r^2*l, Am = A/V = 2*π*r*l / (π*r^2*l) = 2/r
   return 2./r
   #return Am
 
-def get_cm(fiber_no, mu_no):
+def get_cm(mu_no):
   return Cm
   
-def get_conductivity(fiber_no, mu_no):
-  return Conductivity
-
-def get_specific_states_call_frequency(fiber_no, mu_no):
+def get_specific_states_call_frequency(mu_no):
   stimulation_frequency = motor_units[mu_no % len(motor_units)]["stimulation_frequency"]
   return stimulation_frequency*1e-3
 
-def get_specific_states_frequency_jitter(fiber_no, mu_no):
+def get_specific_states_frequency_jitter(mu_no):
   #return 0
   return motor_units[mu_no % len(motor_units)]["jitter"]
 
-def get_specific_states_call_enable_begin(fiber_no, mu_no):
+def get_specific_states_call_enable_begin(mu_no):
   return motor_units[mu_no % len(motor_units)]["activation_start_time"]*1e3

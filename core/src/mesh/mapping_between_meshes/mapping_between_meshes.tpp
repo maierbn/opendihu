@@ -417,7 +417,6 @@ mapHighToLowDimension(
 
 #ifndef NDEBUG
   VecD<nComponents> previousTargetValue;
-  VecD<FunctionSpaceSourceType::dim()> previousXi;
   element_no_t previousSourceElementNoLocal;
   std::array<double,FunctionSpaceSourceType::nDofsPerElement()> previousScalingFactors;
 #endif

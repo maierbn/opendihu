@@ -50,8 +50,6 @@ initialize()
     LOG(WARNING) << this->specificSettings_ << "[\"enableFatComputation\"] is set to false. This will disable the fat layer computation.";
   }
 
-  DihuContext::solverStructureVisualizer()->setOutputConnectorData(this->getOutputConnectorData());
-
   // initialize sharedNodes_ i.e. the border nodes that are shared between muscle and fat mesh
   findSharedNodesBetweenMuscleAndFat();
 

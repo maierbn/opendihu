@@ -13,6 +13,7 @@
 #include <petscdraw.h>
 #include <petscvec.h>
 
+
 template<class NestedSolver>
 PinT<NestedSolver>::
 PinT(DihuContext context) :
@@ -30,6 +31,7 @@ PinT(DihuContext context) :
 
   LOG(DEBUG) << "myOption: " << myOption;
 }
+
 
 template<class NestedSolver>
 void PinT<NestedSolver>::
@@ -55,16 +57,21 @@ initialize()
   MPI_Comm communicatorTotal = MPI_COMM_WORLD;
   MPI_Comm communicatorX;
   MPI_Comm communicatorT;
-  
+
   int nRanksInSpace = this->specificSettings_.getOptionInt("nRanksInSpace", 1, PythonUtility::Positive);
-  braid_SplitCommworld(&communicatorTotal, nRanksInSpace, &communicatorX, &communicatorT);
+  // braid_SplitCommworld(&communicatorTotal, nRanksInSpace, &communicatorX, &communicatorT);
+  //
+  // // create rankSubset and assign to partitionManager, to be used by all further created meshes and solvers
+  // rankSubsetX_ = std::make_shared<Partition::RankSubset>(communicatorX);
+  // DihuContext::partitionManager()->setRankSubsetForNextCreatedPartitioning(rankSubsetX_);
+  // int size;
+  // MPI_Comm_size(communicatorX, &size);
+  //
+  // LOG(DEBUG) << "rankSubsetX: " << size;
+  // LOG(DEBUG) << "rankSubsetX: " << *rankSubsetX_;
 
-  // create rankSubset and assign to partitionManager, to be used by all further created meshes and solvers
-  rankSubsetX_ = std::make_shared<Partition::RankSubset>(communicatorX);
-  //DihuContext::partitionManager()->setRankSubsetForNextCreatedPartitioning(rankSubsetX_);
-
-  LOG(DEBUG) << "rankSubsetX: " << *rankSubsetX_;
-
+  int test;
+  test = 0;
   // loop over parsed config objects of implicit eulers
   for (int i = 0; i < implicitEulerConfigs.size(); i++)
   {
@@ -77,15 +84,27 @@ initialize()
 
     LOG(DEBUG) << "implicitEulerContext: " << implicitEulerContext.getPythonConfig();
 
+    if (test == 0) {
+      if (i==0){
+        braid_SplitCommworld(&communicatorTotal, 1, &communicatorX, &communicatorT);
 
+        // create rankSubset and assign to partitionManager, to be used by all further created meshes and solvers
+        rankSubsetX_ = std::make_shared<Partition::RankSubset>(communicatorX);
+        DihuContext::partitionManager()->setRankSubsetForNextCreatedPartitioning(rankSubsetX_);
+      }
+      else {
+        // create rank subset
+        braid_SplitCommworld(&communicatorTotal, nRanksInSpace, &communicatorX, &communicatorT);
+
+        // create rankSubset and assign to partitionManager, to be used by all further created meshes and solvers
+        rankSubsetX_ = std::make_shared<Partition::RankSubset>(communicatorX);
+        DihuContext::partitionManager()->setRankSubsetForNextCreatedPartitioning(rankSubsetX_);
+        test=1;
+      }
+    }
     // create rank subset
-    //std::shared_ptr<RankSubset> nextRankSubet = std::make_shared<RankSubset>();
-
-    //template<typename Iter>
-    //RankSubset(Iter ranksBegin, Iter ranksEnd, std::shared_ptr<RankSubset> parentRankSubset = nullptr);
-
-    //DihuContext::partitionManager()->setRankSubsetForNextCreatedPartitioning(nextRankSubset);
-
+    std::shared_ptr<Partition::RankSubset> nextRankSubset = std::make_shared<Partition::RankSubset>(communicatorX);
+    DihuContext::partitionManager()->setRankSubsetForNextCreatedPartitioning(nextRankSubset);
 
     implicitEulerSolvers_.push_back(
       std::make_shared<NestedSolver>(implicitEulerContext)
@@ -95,7 +114,7 @@ initialize()
       std::make_shared<Data>(implicitEulerContext)
     );
 
-    LOG(DEBUG) << "initialize implicit EUler for i = " << i;
+    LOG(DEBUG) << "initialize implicit Euler for i = " << i;
 
     implicitEulerSolvers_.back()->initialize();
 
@@ -133,10 +152,13 @@ run()
   // initialize settings
   PinT_initialize();
 
+  // initialize implicit solvers
+  initialize();
+
   braid_Core    core;
   my_App       *app;
   // MPI_Comm      comm, comm_x, comm_t;
-  MPI_Comm comm;
+  MPI_Comm communicatorTotal;
   // int           i, rank, arg_index;
   int           i, rank;
   double        loglevels;
@@ -149,9 +171,9 @@ run()
   PetscInt     nspace        =  this->nspace_+1;
 
 
-  /* Define XBraid parameters
-   * See -help message for descriptions */
-  int       max_levels    = 3;
+  // Define XBraid parameters
+
+  int       max_levels    = 5;
   int       nrelax        = 1;
   int       skip          = 0;
   double    tol           = 1.0e-07;
@@ -162,16 +184,16 @@ run()
   int       scoarsen      = 1;
   int       res           = 0;
   int       wrapper_tests = 0;
-  int       print_level   = 3;
+  int       print_level   = 2;
   int       access_level  = 1;
   int       use_sequential= 1;
 
-  comm   = MPI_COMM_WORLD;
-  MPI_Comm_rank(comm, &rank);
+  communicatorTotal   = MPI_COMM_WORLD;
+  MPI_Comm_rank(communicatorTotal, &rank);
 
   app = (my_App *) malloc(sizeof(my_App));
   (app->g)             = (double*) malloc( nspace*sizeof(double) );
-  (app->comm)          = comm;
+  (app->comm)          = communicatorTotal;
   (app->tstart)        = tstart;
   (app->tstop)         = tstop;
   (app->ntime)         = ntime;
@@ -188,12 +210,9 @@ run()
   }
 
   /* Initialize Braid */
-  braid_Init(MPI_COMM_WORLD, comm, tstart, tstop, ntime, app,
+  braid_Init(MPI_COMM_WORLD, communicatorTotal, tstart, tstop, ntime, app,
          my_Step, my_Init, my_Clone, my_Free, my_Sum, my_SpatialNorm,
          my_Access, my_BufSize, my_BufPack, my_BufUnpack, &core);
-
-  // initialize implicit solvers
-  initialize();
 
   /* The first step before running simulations, is always to verify the wrapper tests */
   if(wrapper_tests)
@@ -259,66 +278,6 @@ run()
   free( app->sc_info);
   free( app->g);
   free( app );
-
-  /* Finalize MPI */
-  // MPI_Finalize();
-
-  // hässlicher Versuch das Ergebnis zu vergleichen, noch nicht fertig
-
-  // call the nested solver
-  // Vec test1 = implicitEulerSolvers_[5]->data().solution()->valuesGlobal();
-  // Vec U; //create vector V with the given values of u
-  // PetscReal blub[33];
-  // blub[0]=2;
-  // blub[1]=2;
-  // blub[2]=4;
-  // blub[3]=5;
-  // blub[4]=2;
-  // blub[5]=2;
-  // blub[6]=2;
-  // blub[7]=2;
-  // blub[8]=2;
-  // blub[9]=2;
-  // blub[10]=2;
-  // blub[11]=2;
-  // blub[12]=2;
-  // blub[13]=2;
-  // blub[14]=2;
-  // blub[15]=2;
-  // blub[16]=2;
-  // blub[17]=2;
-  // blub[18]=2;
-  // blub[19]=2;
-  // blub[20]=2;
-  // blub[21]=2;
-  // blub[22]=2;
-  // blub[23]=2;
-  // blub[24]=2;
-  // blub[25]=2;
-  // blub[26]=2;
-  // blub[27]=2;
-  // blub[28]=2;
-  // blub[29]=2;
-  // blub[30]=2;
-  // blub[31]=2;
-  // blub[32]=2;
-  //
-  // PetscInt numbers[]={1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32};
-  // VecDuplicate(test1, &U);
-  // VecSetValues(U,33,numbers,blub,INSERT_VALUES);
-  // VecAssemblyBegin(U);
-  // VecAssemblyEnd(U);
-  // VecView(test1, 	PETSC_VIEWER_STDOUT_SELF);
-  // // VecView(implicitEulerSolvers_[5]->data().solution()->valuesGlobal(), 	PETSC_VIEWER_STDOUT_SELF);
-  // implicitEulerSolvers_[5]->data().solution()->valuesGlobal()=U;
-  // // VecView(implicitEulerSolvers_[5]->data().solution()->valuesGlobal(), 	PETSC_VIEWER_STDOUT_SELF);
-  // implicitEulerSolvers_[5]->setTimeSpan(0.0, 5.0);
-  // implicitEulerSolvers_[5]->run();
-  // Vec test2 = implicitEulerSolvers_[5]->data().solution()->valuesGlobal();
-  // VecView(test2, 	PETSC_VIEWER_STDOUT_SELF);
-  // // VecView(implicitEulerSolvers_[5]->data().solution()->valuesGlobal(), 	PETSC_VIEWER_STDOUT_SELF);
-  // VecAXPY(test2, -1, test1);
-  // VecView(test2, 	PETSC_VIEWER_STDOUT_SELF);
 
   // do something else
   //executeMyHelperMethod();

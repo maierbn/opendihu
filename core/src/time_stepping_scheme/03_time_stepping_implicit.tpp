@@ -32,6 +32,9 @@ initialize()
   TimeSteppingSchemeOde<DiscretizableInTimeType>::initialize();
   LOG(TRACE) << "TimeSteppingImplicit::initialize";
 
+  // initialize the linear solver that is used for solving the implicit system
+  initializeLinearSolver();
+
   // compute the system matrix
   this->setSystemMatrix(this->timeStepWidth_);
 
@@ -40,15 +43,11 @@ initialize()
   this->dirichletBoundaryConditions_->applyInSystemMatrix(this->dataImplicit_->systemMatrix(), this->dataImplicit_->systemMatrix(),
                                                           this->dataImplicit_->boundaryConditionsRightHandSideSummand());
 
-  // initialize the linear solver that is used for solving the implicit system
-  initializeLinearSolver();
-  
   // set matrix used for linear system and preconditioner to ksp context
   Mat &systemMatrix = this->dataImplicit_->systemMatrix()->valuesGlobal();
   assert(this->ksp_);
   PetscErrorCode ierr;
   ierr = KSPSetOperators(*ksp_, systemMatrix, systemMatrix); CHKERRV(ierr);
-  
   this->initialized_ = true;
 }
 
@@ -82,9 +81,12 @@ solveLinearSystem(Vec &input, Vec &output)
 {
   // solve systemMatrix*output = input for output
   Mat &systemMatrix = this->dataImplicit_->systemMatrix()->valuesGlobal();
-  
+
   PetscUtility::checkDimensionsMatrixVector(systemMatrix, input);
-  
+
+  // // PinT needs to SetOperators for each grid: improvement: try to do that in initialize
+  // PetscErrorCode ierr = KSPSetOperators(*(linearSolver_->ksp()), systemMatrix, systemMatrix); CHKERRV(ierr);
+
   if (VLOG_IS_ON(1))
   {
     linearSolver_->solve(input, output, "Linear system of implicit time stepping solved");
@@ -98,18 +100,18 @@ solveLinearSystem(Vec &input, Vec &output)
 template<typename DiscretizableInTimeType>
 void TimeSteppingImplicit<DiscretizableInTimeType>::
 initializeLinearSolver()
-{ 
+{
   LOG(DEBUG) << "initializeLinearSolver, linearSolver_ == nullptr: " << (linearSolver_ == nullptr);
   if (linearSolver_ == nullptr)
   {
     LOG(DEBUG) << "Implicit time stepping: initialize linearSolver";
-    
+
     // retrieve linear solver
     linearSolver_ = this->context_.solverManager()->template solver<Solver::Linear>(
       this->specificSettings_, this->data_->functionSpace()->meshPartition()->mpiCommunicator());
     ksp_ = linearSolver_->ksp();
   }
-  else 
+  else
   {
     VLOG(2) << ": linearSolver_ already set";
   }

@@ -24,57 +24,57 @@ std::shared_ptr<SolverType> Manager::solver(PythonConfig settings, MPI_Comm mpiC
     solvers_[mpiCommunicator] = std::map<std::string, std::shared_ptr<Solver>>();
   }
 //
-//   // if solver has already been created earlier
-//   if (settings.hasKey("solverName"))
-//   {
-//     std::string solverName = settings.getOptionString("solverName", "");
-//
-//     if (hasSolver(solverName, mpiCommunicator))
-//     {
-//       LOG(DEBUG) << "Solver with solverName \"" << solverName << "\" requested and found, type is "
-//         << StringUtility::demangle(typeid(solvers_[mpiCommunicator][solverName]).name());
-//
-//       return std::static_pointer_cast<SolverType>(solvers_[mpiCommunicator][solverName]);
-//     }
-//     else if (solverConfiguration_.find(solverName) != solverConfiguration_.end())
-//     {
-//       // solver was preconfigured, do nothing specific here, created standard solver
-//       LOG(DEBUG) << "Solver configuration for \"" << solverName << "\" requested and found, create solver. "
-//         << "Type is " << StringUtility::demangle(typeid(SolverType).name()) << ".";
-//
-//       std::shared_ptr<SolverType> solver = std::make_shared<SolverType>(solverConfiguration_.at(solverName), mpiCommunicator, solverName);
-//
-//       solvers_[mpiCommunicator][solverName] = solver;
-//
-//       LOG(DEBUG) << "Stored under key \"" << solverName << "\".";
-//       return std::static_pointer_cast<SolverType>(solvers_[mpiCommunicator][solverName]);
-//     }
-//     else
-//     {
-//       LOG(ERROR) << "Config contains reference to solver with solverName \"" << solverName << "\" but no such solver was defined.";
-//     }
-//   }
-//   else
-//   {
-//     VLOG(1) << "Config does not contain solverName.";
-//   }
+  // if solver has already been created earlier
+  if (settings.hasKey("solverName"))
+  {
+    std::string solverName = settings.getOptionString("solverName", "");
+
+    if (hasSolver(solverName, mpiCommunicator))
+    {
+      LOG(DEBUG) << "Solver with solverName \"" << solverName << "\" requested and found, type is "
+        << StringUtility::demangle(typeid(solvers_[mpiCommunicator][solverName]).name());
+
+      return std::static_pointer_cast<SolverType>(solvers_[mpiCommunicator][solverName]);
+    }
+    else if (solverConfiguration_.find(solverName) != solverConfiguration_.end())
+    {
+      // solver was preconfigured, do nothing specific here, created standard solver
+      LOG(DEBUG) << "Solver configuration for \"" << solverName << "\" requested and found, create solver. "
+        << "Type is " << StringUtility::demangle(typeid(SolverType).name()) << ".";
+
+      std::shared_ptr<SolverType> solver = std::make_shared<SolverType>(solverConfiguration_.at(solverName), mpiCommunicator, solverName);
+
+      solvers_[mpiCommunicator][solverName] = solver;
+
+      LOG(DEBUG) << "Stored under key \"" << solverName << "\".";
+      return std::static_pointer_cast<SolverType>(solvers_[mpiCommunicator][solverName]);
+    }
+    else
+    {
+      LOG(ERROR) << "Config contains reference to solver with solverName \"" << solverName << "\" but no such solver was defined.";
+    }
+  }
+  else
+  {
+    VLOG(1) << "Config does not contain solverName.";
+  }
 
   // check if there is a matching solver already stored
   // loop over all stored solvers
-  // for (auto &solver: solvers_[mpiCommunicator])
-  // {
-  //   // check if type matches
-  //   if (std::dynamic_pointer_cast<SolverType>(solver.second))
-  //   {
-  //     // check if config is the  same
-  //     if (solver.second->configEquals(settings))
-  //     {
-  //       LOG(DEBUG) << "Solver \"" << solver.first << "\" matches settings.";
-  //       VLOG(1) << "Solver \"" << solver.first << "\" matches settings.";
-  //       return std::static_pointer_cast<SolverType>(solver.second);
-  //     }
-  //   }
-  // }
+  for (auto &solver: solvers_[mpiCommunicator])
+  {
+    // check if type matches
+    if (std::dynamic_pointer_cast<SolverType>(solver.second))
+    {
+      // check if config is the  same
+      if (solver.second->configEquals(settings))
+      {
+        LOG(DEBUG) << "Solver \"" << solver.first << "\" matches settings.";
+        VLOG(1) << "Solver \"" << solver.first << "\" matches settings.";
+        return std::static_pointer_cast<SolverType>(solver.second);
+      }
+    }
+  }
 
 
   // create new solver, store as anonymous object

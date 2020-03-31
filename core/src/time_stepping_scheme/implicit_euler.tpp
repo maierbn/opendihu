@@ -88,14 +88,21 @@ setSystemMatrix(double timeStepWidth)
   LOG(TRACE) << "setSystemMatrix(timeStepWidth=" << timeStepWidth << ")";
 
   // compute the system matrix (I - dt*M^{-1}K) where M^{-1} is the lumped mass matrix
-
   // Only setSystemMatrix for new timeStepWidth; double comparison
   if ( fabs(timeStepWidth - initialTimeStepWidth_) < 0.0001 )
     {
     return;
   }
+  if (this->linearSolver_ != nullptr)
+  {
+    this->context_.solverManager()->deleteSolver(this->linearSolver_->name());
+  }
+  this->linearSolver_ = this->context_.solverManager()->template solver<Solver::Linear>(
+    this->specificSettings_, this->data_->functionSpace()->meshPartition()->mpiCommunicator());
+  this->ksp_ = this->linearSolver_->ksp();
+
   LOG(DEBUG) << "New SystemMatrix is created";
-  
+
   initialTimeStepWidth_=timeStepWidth;
   Mat &inverseLumpedMassMatrix = this->discretizableInTime_.data().inverseLumpedMassMatrix()->valuesGlobal();
   Mat &stiffnessMatrix = this->discretizableInTime_.data().stiffnessMatrix()->valuesGlobal();

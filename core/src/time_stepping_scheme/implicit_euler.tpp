@@ -88,9 +88,14 @@ setSystemMatrix(double timeStepWidth)
   LOG(TRACE) << "setSystemMatrix(timeStepWidth=" << timeStepWidth << ")";
 
   // compute the system matrix (I - dt*M^{-1}K) where M^{-1} is the lumped mass matrix
-  if (timeStepWidth==initialTimeStepWidth_)
+
+  // Only setSystemMatrix for new timeStepWidth; double comparison
+  if ( fabs(timeStepWidth - initialTimeStepWidth_) < 0.0001 )
+    {
     return;
+  }
   LOG(DEBUG) << "New SystemMatrix is created";
+  
   initialTimeStepWidth_=timeStepWidth;
   Mat &inverseLumpedMassMatrix = this->discretizableInTime_.data().inverseLumpedMassMatrix()->valuesGlobal();
   Mat &stiffnessMatrix = this->discretizableInTime_.data().stiffnessMatrix()->valuesGlobal();

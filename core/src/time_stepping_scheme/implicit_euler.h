@@ -28,7 +28,7 @@ public:
   void setSystemMatrix(double timeStepWidth);
 
 protected:
-  double initialTimeStepWidth_ =0; // variable for SetSystemMatrix to check whether we need to build a new one
+  double initialTimeStepWidth_ = 0; // variable for SetSystemMatrix; checks whether Systemmatrix was set already
 };
 
 }  // namespace

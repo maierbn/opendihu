@@ -119,5 +119,8 @@ precice0:
 biceps_contraction:	
 	cd examples/electrophysiology/biceps_contraction/opendihu_opendihu && python ../../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
 
+multidomain_contraction:	
+	cd examples/electrophysiology/multidomain_contraction && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+
 laplace2d_split:
 	cd examples/laplace/laplace2d_split && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG

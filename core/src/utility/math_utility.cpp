@@ -551,6 +551,24 @@ bool isSubsequenceOf(std::vector<int> a, std::vector<int> b, size_t &subsequence
   return true;
 }
 
+template<>
+bool equals<1>(std::array<double,1> a, std::array<double,1> b, double tolerance)
+{
+  return fabs(a[0] - b[0]) <= tolerance;
+}
+
+template<>
+bool equals<2>(std::array<double,2> a, std::array<double,2> b, double tolerance)
+{
+  return fabs(a[0] - b[0]) <= tolerance && fabs(a[1] - b[1]) <= tolerance;
+}
+
+template<>
+bool equals<3>(std::array<double,3> a, std::array<double,3> b, double tolerance)
+{
+  return fabs(a[0] - b[0]) <= tolerance && fabs(a[1] - b[1]) <= tolerance && fabs(a[2] - b[2]) <= tolerance;
+}
+
 int permutation(int i, int j, int k)
 {
   if ((i==1 && j==2 && k==3) || (i==2 && j==3 && k==1) || (i==3 && j==1 && k==2))

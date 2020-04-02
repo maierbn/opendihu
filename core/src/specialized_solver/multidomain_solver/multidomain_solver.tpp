@@ -31,6 +31,7 @@ MultidomainSolver(DihuContext context) :
   nCompartments_ = this->specificSettings_.getOptionInt("nCompartments", 1, PythonUtility::NonNegative);
   initialGuessNonzero_ = this->specificSettings_.getOptionBool("initialGuessNonzero", true);
   showLinearSolverOutput_ = this->specificSettings_.getOptionBool("showLinearSolverOutput", true);
+  constructPreconditionerMatrix_ = this->specificSettings_.getOptionBool("constructPreconditionerMatrix", true);
 
   // create finiteElement objects for diffusion in compartments
   finiteElementMethodDiffusionCompartment_.reserve(nCompartments_);
@@ -42,6 +43,7 @@ MultidomainSolver(DihuContext context) :
   singleSystemMatrix_ = PETSC_NULL;
   singleSolution_ = PETSC_NULL;
   singleRightHandSide_ = PETSC_NULL;
+  singlePreconditionerMatrix_ = PETSC_NULL;
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
@@ -261,7 +263,7 @@ initializeMatricesAndVectors()
   // set matrix used for linear solver and preconditioner to ksp context
   assert(this->linearSolver_->ksp());
   PetscErrorCode ierr;
-  ierr = KSPSetOperators(*this->linearSolver_->ksp(), singleSystemMatrix_, singleSystemMatrix_); CHKERRV(ierr);
+  ierr = KSPSetOperators(*this->linearSolver_->ksp(), singleSystemMatrix_, singlePreconditionerMatrix_); CHKERRV(ierr);
 
   // set the nullspace of the matrix
   // as we have Neumann boundary conditions, constant functions are in the nullspace of the matrix
@@ -557,6 +559,70 @@ createSystemMatrixFromSubmatrices()
 
   // create a single Mat object from the nested Mat
   NestedMatVecUtility::createMatFromNestedMat(nestedSystemMatrix_, singleSystemMatrix_, data().functionSpace()->meshPartition()->rankSubset());
+
+  if (constructPreconditionerMatrix_)
+  {
+    this->submatricesPreconditionerMatrix_ = submatricesSystemMatrix_;
+
+    // set offdiagonal matrices to NULL
+    for (int rowNo = 0; rowNo < nColumnSubmatricesSystemMatrix_; rowNo++)
+    {
+      for (int columnNo = 0; columnNo < nColumnSubmatricesSystemMatrix_; columnNo++)
+      {
+        int index = rowNo*nColumnSubmatricesSystemMatrix_ + columnNo;
+
+        bool isOnDiagonal = columnNo == rowNo;
+        bool isSymmetricOffDiagonal = (rowNo == nCompartments_+1 && columnNo == nCompartments_) || (rowNo == nCompartments_ && columnNo == nCompartments_+1);
+
+        if (!isOnDiagonal && !isSymmetricOffDiagonal)
+        {
+          submatricesPreconditionerMatrix_[index] = NULL;
+        }
+      }
+    }
+#ifndef NDEBUG
+  LOG(DEBUG) << "preconditioner: nested matrix with " << nColumnSubmatricesSystemMatrix_ << "x" << nColumnSubmatricesSystemMatrix_ << " submatrices, nCompartments_=" << nCompartments_;
+
+  // output dimensions of submatrices for debugging
+  for (int rowNo = 0; rowNo < nColumnSubmatricesSystemMatrix_; rowNo++)
+  {
+    for (int columnNo = 0; columnNo < nColumnSubmatricesSystemMatrix_; columnNo++)
+    {
+      Mat subMatrix = submatricesPreconditionerMatrix_[rowNo*nColumnSubmatricesSystemMatrix_ + columnNo];
+      
+      if (!subMatrix)
+      {
+        LOG(DEBUG) << "preconditioner submatrix (" << rowNo << "," << columnNo << ") is empty (NULL)";
+      }
+      else
+      {
+        PetscInt nRows, nColumns;
+        ierr = MatGetSize(subMatrix, &nRows, &nColumns); CHKERRV(ierr);
+        std::string name;
+        char *cName;
+        ierr = PetscObjectGetName((PetscObject)subMatrix, (const char **)&cName); CHKERRV(ierr);
+        name = cName;
+        
+        LOG(DEBUG) << "preconditioner submatrix (" << rowNo << "," << columnNo << ") is \"" << name << "\" (" << nRows << "x" << nColumns << ")";
+      }
+    }
+  }
+#endif
+
+
+    Mat nestedPreconditionerMatrix;
+
+    // create nested matrix
+    ierr = MatCreateNest(this->rankSubset_->mpiCommunicator(),
+                        nColumnSubmatricesSystemMatrix_, NULL, nColumnSubmatricesSystemMatrix_, NULL, submatricesPreconditionerMatrix_.data(), &nestedPreconditionerMatrix); CHKERRV(ierr);
+
+    // create a single Mat object from the nested Mat
+    NestedMatVecUtility::createMatFromNestedMat(nestedPreconditionerMatrix, singlePreconditionerMatrix_, data().functionSpace()->meshPartition()->rankSubset());
+  }
+  else 
+  {
+    singlePreconditionerMatrix_ = singleSystemMatrix_;
+  }
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>

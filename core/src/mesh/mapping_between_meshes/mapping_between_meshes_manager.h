@@ -132,11 +132,11 @@ public:
   template<typename FieldVariableTargetType>
   void finalizeMappingLowToHigh(std::shared_ptr<FieldVariableTargetType> fieldVariableTarget);
 
-  //! Add and initialize a mapping between meshes, this can be called in the code in initialize, when it is clear, that this mapping will be needed
-  //! If it is not clear, whether it will be needed, call initializeMappingsBetweenMeshes instead.
+  //! get the mapping from source mesh to target mesh, create it if it does not yet exist
   template<typename FunctionSpaceSourceType, typename FunctionSpaceTargetType>
-  std::shared_ptr<MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>>
-    createMappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSource, std::shared_ptr<FunctionSpaceTargetType> functionSpaceTarget);
+  std::shared_ptr<MappingBetweenMeshes<typename FunctionSpaceSourceType::FunctionSpace, typename FunctionSpaceTargetType::FunctionSpace>>
+  mappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSource,
+                       std::shared_ptr<FunctionSpaceTargetType> functionSpaceTarget);
 
   //! Simplified methods that call the other methods
 
@@ -166,8 +166,11 @@ protected:
   //! indicate that on the mesh with name, "initialize()" has been called and now check if mappingsBetweenMeshes_ can be initialized
   void checkInitializeMappingBetweenMeshes(std::string name);
 
-  //! get the mapping from source mesh to target mesh
-  std::shared_ptr<MappingBetweenMeshesBase> mappingBetweenMeshes(std::string sourceMeshName, std::string targetMeshName);
+  //! Add and initialize a mapping between meshes, this can be called in the code in initialize, when it is clear, that this mapping will be needed
+  //! If it is not clear, whether it will be needed, call initializeMappingsBetweenMeshes instead.
+  template<typename FunctionSpaceSourceType, typename FunctionSpaceTargetType>
+  std::shared_ptr<MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>>
+    createMappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSource, std::shared_ptr<FunctionSpaceTargetType> functionSpaceTarget);
 
   PythonConfig specificSettings_;    ///< python object containing the value of the python config dict with corresponding key, for meshManager
 

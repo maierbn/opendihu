@@ -87,11 +87,14 @@ void MappingBetweenMeshesManager::
 map(std::shared_ptr<FieldVariableSourceType> fieldVariableSource, int componentNoSource,
     std::shared_ptr<FieldVariableTargetType> &fieldVariableTarget, int componentNoTarget, bool avoidCopyIfPossible)
 {
-  VLOG(1) << "map " << fieldVariableSource->name() << "." << componentNoSource << " (dim " << FieldVariableSourceType::FunctionSpace::dim() << ", "
+  LOG(DEBUG) << "map " << fieldVariableSource->name() << "." << componentNoSource << " (dim " << FieldVariableSourceType::FunctionSpace::dim() << ", "
     << FieldVariableSourceType::nComponents() << " components total)"
     << " -> " << fieldVariableTarget->name() << "." << componentNoTarget << " (dim " << FieldVariableTargetType::FunctionSpace::dim() << ", "
     << FieldVariableTargetType::nComponents() << " components total)"
     << "), avoidCopyIfPossible: " << avoidCopyIfPossible;
+
+  LOG(DEBUG) << "source geometry: " << fieldVariableSource->functionSpace()->geometryField();
+  LOG(DEBUG) << "target geometry: " << fieldVariableTarget->functionSpace()->geometryField();
 
   // assert that both or none of the componentNos are -1
   assert((componentNoSource == -1) == (componentNoTarget == -1));
@@ -204,6 +207,10 @@ map(std::shared_ptr<FieldVariableSourceType> fieldVariableSource, int componentN
     }
   }
 
+  LOG(DEBUG) << "before mapping:";
+  LOG(DEBUG) << "source geometry: " << fieldVariableSource->functionSpace()->geometryField();
+  LOG(DEBUG) << "target geometry: " << fieldVariableTarget->functionSpace()->geometryField();
+
   VLOG(1) << "map mesh " << fieldVariableSource->functionSpace()->meshName() << " -> " << fieldVariableTarget->functionSpace()->meshName();
 
   // The values could not be copied, call the appropriate mapping
@@ -243,6 +250,16 @@ prepareMapping(std::shared_ptr<FieldVariableSourceType> fieldVariableSource,
   {
     return;
   }
+
+  // Make sure that mapping exists or is created before the call to prepareMappingLowToHigh(), because this will zero the values. 
+  // When the geometry field is mapped, the mapping cannot be initialized with the geometry field values zeroed out.
+  std::string sourceMeshName = fieldVariableSource->functionSpace()->meshName();
+  std::string targetMeshName = fieldVariableTarget->functionSpace()->meshName();
+
+  mappingBetweenMeshes<typename FieldVariableSourceType::FunctionSpace, typename FieldVariableTargetType::FunctionSpace>(
+    fieldVariableSource->functionSpace(), fieldVariableTarget->functionSpace()
+  );
+
 
   // prepareMapping is needed
   prepareMappingLowToHigh(fieldVariableTarget);

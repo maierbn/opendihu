@@ -27,7 +27,7 @@ void MappingBetweenMeshesManager::initializeMappingsBetweenMeshes(const std::sha
 
   if (mappingsBetweenMeshes_.find(sourceMeshName) != mappingsBetweenMeshes_.end())
   {
-    LOG(DEBUG) << "\"" << functionSpace1->meshName() << "\" declared";
+    LOG(DEBUG) << "key \"" << functionSpace1->meshName() << "\" exists";
     if (mappingsBetweenMeshes_[sourceMeshName].find(targetMeshName) != mappingsBetweenMeshes_[sourceMeshName].end())
     {
       if (mappingsBetweenMeshes_[sourceMeshName][targetMeshName].mapping == nullptr)
@@ -51,7 +51,7 @@ void MappingBetweenMeshesManager::initializeMappingsBetweenMeshes(const std::sha
   }
   else
   {
-    LOG(DEBUG) << "\"" << functionSpace1->meshName() << "\" not declared";
+    LOG(DEBUG) << "key \"" << functionSpace1->meshName() << "\" does not exist";
   }
 
   sourceMeshName = functionSpace2->meshName();
@@ -59,7 +59,7 @@ void MappingBetweenMeshesManager::initializeMappingsBetweenMeshes(const std::sha
 
   if (mappingsBetweenMeshes_.find(sourceMeshName) != mappingsBetweenMeshes_.end())
   {
-    LOG(DEBUG) << "\"" << functionSpace2->meshName() << "\" declared";
+    LOG(DEBUG) << "key \"" << functionSpace2->meshName() << "\" exists";
     if (mappingsBetweenMeshes_[sourceMeshName].find(targetMeshName) != mappingsBetweenMeshes_[sourceMeshName].end())
     {
       if (mappingsBetweenMeshes_[sourceMeshName][targetMeshName].mapping == nullptr)
@@ -83,7 +83,7 @@ void MappingBetweenMeshesManager::initializeMappingsBetweenMeshes(const std::sha
   }
   else
   {
-    LOG(DEBUG) << "\"" << functionSpace2->meshName() << "\" not declared";
+    LOG(DEBUG) << "key \"" << functionSpace2->meshName() << "\" does not exist";
   }
 }
 
@@ -106,6 +106,44 @@ createMappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpac
 
   return std::static_pointer_cast<MappingBetweenMeshes<FunctionSpaceSourceType,FunctionSpaceTargetType>>(
     this->mappingsBetweenMeshes_[sourceMeshName][targetMeshName].mapping);
+}
+
+template<typename FunctionSpaceSourceType, typename FunctionSpaceTargetType>
+std::shared_ptr<MappingBetweenMeshes<typename FunctionSpaceSourceType::FunctionSpace, typename FunctionSpaceTargetType::FunctionSpace>> MappingBetweenMeshesManager::
+mappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSource,
+                     std::shared_ptr<FunctionSpaceTargetType> functionSpaceTarget)
+{
+  typedef MappingBetweenMeshes<typename FunctionSpaceSourceType::FunctionSpace, typename FunctionSpaceTargetType::FunctionSpace> MappingType;
+
+  assert(functionSpaceSource);
+  assert(functionSpaceTarget);
+
+  // get mesh names
+  std::string sourceMeshName = functionSpaceSource->meshName();
+  std::string targetMeshName = functionSpaceTarget->meshName();
+
+  // check if the mapping exists already
+  if (mappingsBetweenMeshes_.find(sourceMeshName) != mappingsBetweenMeshes_.end())
+  {
+    if (mappingsBetweenMeshes_[sourceMeshName].find(targetMeshName) != mappingsBetweenMeshes_[sourceMeshName].end())
+    {
+      std::shared_ptr<MappingBetweenMeshesBase> mappingBase = mappingsBetweenMeshes_[sourceMeshName][targetMeshName].mapping;
+      return std::static_pointer_cast<MappingType>(mappingBase);
+    }
+  }
+
+  // mapping between meshes has not yet been created, create now
+  // if it does not yet exist, output message and create it
+  LOG(DEBUG) << "Mapping from mesh \"" << sourceMeshName << "\" to \"" << targetMeshName
+    << "\" was not initialized. Initializing now. Specify MappingsBetweenMeshes { \"" << sourceMeshName << "\" : \"" << targetMeshName << "\" } as top level object of the python config. "
+    << "(It could be that this was done, but because of MultipleInstances in the OperatorSplitting or Coupling, only the first mesh mapping got initialized.)";
+
+  // create the mapping
+  std::shared_ptr<MappingType> mapping;
+  mapping = createMappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>(
+    functionSpaceSource, functionSpaceTarget
+  );
+  return mapping;
 }
 
 //! prepare a mapping to the fieldVariableTarget, this zeros the targetFactorSum for the field variable
@@ -178,27 +216,7 @@ struct MapLowToHighDimensionAllComponents<FieldVariableSourceType, FieldVariable
     );
   }
 
-};/*
-
-template<typename FieldVariableSourceType, typename FieldVariableTargetType>
-struct MapLowToHighDimensionAllComponents<FieldVariableSourceType,FieldVariableTargetType,
-  typename std::enable_if<FieldVariableSourceType::nComponents() != FieldVariableTargetType::nComponents(),int>::type
->
-{
-  // helper function, does nothing
-  template<typename T1, typename T2>
-  static void call(
-    T1 mapping,
-    std::shared_ptr<FieldVariableSourceType> fieldVariableSource, std::shared_ptr<FieldVariableTargetType> fieldVariableTarget,
-    T2 targetFactorSum)
-  {
-    LOG(FATAL) << "Number of components of field variables does not match"
-      << "(" << FieldVariableSourceType::nComponents() << " != " << FieldVariableTargetType::nComponents() << "),"
-      << " but a mapping between all components was requested.";
-  }
-
-};*/
-
+};
 
 //! map data from the source to the target field variable. This has to be called between prepareMapping and finalizeMapping, can be called multiple times with different source meshes.
 template<typename FieldVariableSourceType, typename FieldVariableTargetType>
@@ -214,27 +232,9 @@ mapLowToHighDimension(std::shared_ptr<FieldVariableSourceType> fieldVariableSour
 
   typedef MappingBetweenMeshes<typename FieldVariableSourceType::FunctionSpace, typename FieldVariableTargetType::FunctionSpace> MappingType;
 
-  std::shared_ptr<MappingType> mapping = nullptr;
-
-  // try to get the stored mapping if it exists
-  std::shared_ptr<MappingBetweenMeshesBase> mappingBase = mappingBetweenMeshes(sourceMeshName, targetMeshName);
-
-  // if it exists, convert back to MappingType
-  if (mappingBase)
-  {
-    mapping = std::static_pointer_cast<MappingType>(mappingBase);
-  }
-  else
-  {
-    // if it does not yet exist, output message and create it
-    LOG(DEBUG) << "Mapping from mesh \"" << sourceMeshName << "\" to \"" << targetMeshName
-      << "\" was not initialized. Initializing now. Specify MappingsBetweenMeshes { \"" << sourceMeshName << "\" : \"" << targetMeshName << "\" } as top level object of the python config. "
-      << "(It could be that this was done, but because of MultipleInstances in the OperatorSplitting or Coupling, only the first mesh mapping got initialized.)";
-
-    mapping = createMappingBetweenMeshes<typename FieldVariableSourceType::FunctionSpace, typename FieldVariableTargetType::FunctionSpace>(
-      fieldVariableSource->functionSpace(), fieldVariableTarget->functionSpace()
-    );
-  }
+  std::shared_ptr<MappingType> mapping = mappingBetweenMeshes<typename FieldVariableSourceType::FunctionSpace, typename FieldVariableTargetType::FunctionSpace>(
+    fieldVariableSource->functionSpace(), fieldVariableTarget->functionSpace()
+  );
 
   Control::PerformanceMeasurement::start("durationMap");
 
@@ -316,27 +316,9 @@ mapHighToLowDimension(std::shared_ptr<FieldVariableSourceType> fieldVariableSour
   // here the mapping is defined with first FunctionSpace being the target function space and second FunctionSpace being the source function space.
   typedef MappingBetweenMeshes<typename FieldVariableTargetType::FunctionSpace, typename FieldVariableSourceType::FunctionSpace> MappingType;
 
-  std::shared_ptr<MappingType> mapping = nullptr;
-
-  // try to get the stored mapping if it exists
-  std::shared_ptr<MappingBetweenMeshesBase> mappingBase = mappingBetweenMeshes(targetMeshName, sourceMeshName);
-
-  // if it exists, convert back to MappingType
-  if (mappingBase)
-  {
-    mapping = std::static_pointer_cast<MappingType>(mappingBase);
-  }
-  else
-  {
-    // if it does not yet exist, output message and create it
-    LOG(DEBUG) << "Mapping from mesh \"" << targetMeshName << "\" to \"" << sourceMeshName
-      << "\" was not initialized. Initializing now. Specify MappingsBetweenMeshes { \"" << targetMeshName << "\" : \"" << sourceMeshName << "\" } as top level object of the python config. "
-      << "(It could be that this was done, but because of MultipleInstances in the OperatorSplitting or Coupling, only the first mesh mapping got initialized.)";
-
-    mapping = createMappingBetweenMeshes<typename FieldVariableTargetType::FunctionSpace, typename FieldVariableSourceType::FunctionSpace>(
-      fieldVariableTarget->functionSpace(), fieldVariableSource->functionSpace()
-    );
-  }
+  std::shared_ptr<MappingType> mapping = mappingBetweenMeshes<typename FieldVariableTargetType::FunctionSpace, typename FieldVariableSourceType::FunctionSpace>(
+    fieldVariableTarget->functionSpace(), fieldVariableSource->functionSpace()
+  );
 
   Control::PerformanceMeasurement::start("durationMap");
 

@@ -17,12 +17,12 @@ namespace FunctionSpace
 /** FunctionSpace derives from the mesh and adds functionality to get dof and node numbers, phi and gradient.
  */
 template<typename MeshType,typename BasisFunctionType>
-class FunctionSpace : public FunctionSpaceXi<MeshType,BasisFunctionType>
+class FunctionSpace : public FunctionSpacePointInElement<MeshType,BasisFunctionType>
 {
 public:
 
   //! inherit constructor
-  using FunctionSpaceXi<MeshType,BasisFunctionType>::FunctionSpaceXi;
+  using FunctionSpacePointInElement<MeshType,BasisFunctionType>::FunctionSpacePointInElement;
 
   typedef MeshType Mesh;
   typedef BasisFunctionType BasisFunction;
@@ -44,12 +44,12 @@ public:
  */
 template<typename MeshType,int D,int order>
 class FunctionSpace<MeshType, BasisFunction::CompletePolynomialOfDimensionAndOrder<D,order>> :
-  public FunctionSpaceXi<MeshType, BasisFunction::CompletePolynomialOfDimensionAndOrder<MeshType::dim(),order>>
+  public FunctionSpacePointInElement<MeshType, BasisFunction::CompletePolynomialOfDimensionAndOrder<MeshType::dim(),order>>
 {
 public:
 
   //! inherit constructor
-  using FunctionSpaceXi<MeshType, BasisFunction::CompletePolynomialOfDimensionAndOrder<MeshType::dim(),order>>::FunctionSpaceXi;
+  using FunctionSpacePointInElement<MeshType, BasisFunction::CompletePolynomialOfDimensionAndOrder<MeshType::dim(),order>>::FunctionSpacePointInElement;
 
   typedef MeshType Mesh;
   typedef BasisFunction::CompletePolynomialOfDimensionAndOrder<D,order> BasisFunction;

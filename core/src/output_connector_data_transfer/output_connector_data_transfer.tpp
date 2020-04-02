@@ -151,7 +151,9 @@ void SolutionVectorMapping<
   // transfer geometry field if it was set in transferableSolutionData1
   if (transferableSolutionData1->geometryField && !transferableSolutionData2->variable1.empty())
   {
-    LOG(DEBUG) << "transfer geometry field";
+    LOG(DEBUG) << "transfer geometry field, " << transferableSolutionData1->geometryField->functionSpace()->meshName() << " -> "
+       << transferableSolutionData2->variable1[0].values->functionSpace()->meshName();
+    LOG(DEBUG) << StringUtility::demangle(typeid(FunctionSpaceType1).name()) << " -> " << StringUtility::demangle(typeid(FunctionSpaceType2).name());
 
     // get source field variable, this is the same for all fibers
     typedef FieldVariable::FieldVariable<FunctionSpaceType1,3> FieldVariableSource;
@@ -160,9 +162,15 @@ void SolutionVectorMapping<
     std::shared_ptr<FieldVariableSource> geometryFieldSource = transferableSolutionData1->geometryField;
     std::shared_ptr<FieldVariableTarget> geometryFieldTarget = std::make_shared<FieldVariableTarget>(transferableSolutionData2->variable1[0].values->functionSpace()->geometryField());
 
+    LOG(DEBUG) << "geometryFieldSource: " << *geometryFieldSource;
+    LOG(DEBUG) << "geometryFieldTarget: " << *geometryFieldTarget;
 
     // perform the mapping
     DihuContext::meshManager()->template prepareMapping<FieldVariableSource,FieldVariableTarget>(geometryFieldSource, geometryFieldTarget);
+
+    LOG(DEBUG) << "after prepareMapping";
+    LOG(DEBUG) << "geometryFieldSource: " << *geometryFieldSource;
+    LOG(DEBUG) << "geometryFieldTarget: " << *geometryFieldTarget;
 
     // map the whole geometry field (all components), do not avoid copy
     DihuContext::meshManager()->template map<FieldVariableSource,FieldVariableTarget>(geometryFieldSource, -1, geometryFieldTarget, -1, false);

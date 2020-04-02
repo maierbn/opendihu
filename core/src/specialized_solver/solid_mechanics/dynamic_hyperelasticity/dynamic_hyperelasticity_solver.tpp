@@ -9,8 +9,8 @@
 namespace TimeSteppingScheme
 {
 
-template<typename Term>
-DynamicHyperelasticitySolver<Term>::
+template<typename Term,typename MeshType>
+DynamicHyperelasticitySolver<Term,MeshType>::
 DynamicHyperelasticitySolver(DihuContext context) :
   TimeSteppingScheme(context["DynamicHyperelasticitySolver"]), hyperelasticitySolver_(context, "DynamicHyperelasticitySolver"), data_(context_)
 {
@@ -23,8 +23,8 @@ DynamicHyperelasticitySolver(DihuContext context) :
   this->outputWriterManager_.initialize(this->context_["dynamic"], this->context_["dynamic"].getPythonConfig());
 }
 
-template<typename Term>
-void DynamicHyperelasticitySolver<Term>::
+template<typename Term,typename MeshType>
+void DynamicHyperelasticitySolver<Term,MeshType>::
 initialize()
 {
   TimeSteppingScheme::initialize();
@@ -79,8 +79,8 @@ initialize()
   //hyperelasticitySolver_.debug();
 }
 
-template<typename Term>
-void DynamicHyperelasticitySolver<Term>::
+template<typename Term,typename MeshType>
+void DynamicHyperelasticitySolver<Term,MeshType>::
 callUpdateDirichletBoundaryConditionsFunction(double t)
 {
   if (pythonUpdateDirichletBoundaryConditionsFunction_ == NULL)
@@ -117,8 +117,8 @@ callUpdateDirichletBoundaryConditionsFunction(double t)
   Py_CLEAR(arglist);
 }
 
-template<typename Term>
-void DynamicHyperelasticitySolver<Term>::
+template<typename Term,typename MeshType>
+void DynamicHyperelasticitySolver<Term,MeshType>::
 setInitialValues()
 {
   // set initial values as given in settings, or set to zero if not given
@@ -192,8 +192,8 @@ setInitialValues()
   //uvp_->setRepresentationGlobal();
 }
 
-template<typename Term>
-void DynamicHyperelasticitySolver<Term>::
+template<typename Term,typename MeshType>
+void DynamicHyperelasticitySolver<Term,MeshType>::
 advanceTimeSpan()
 {
   // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
@@ -255,8 +255,8 @@ advanceTimeSpan()
     Control::PerformanceMeasurement::stop(this->durationLogKey_);
 }
 
-template<typename Term>
-void DynamicHyperelasticitySolver<Term>::
+template<typename Term,typename MeshType>
+void DynamicHyperelasticitySolver<Term,MeshType>::
 run()
 {
   // initialize everything
@@ -265,15 +265,15 @@ run()
   this->advanceTimeSpan();
 }
 
-template<typename Term>
-typename DynamicHyperelasticitySolver<Term>::Data &DynamicHyperelasticitySolver<Term>::
+template<typename Term,typename MeshType>
+typename DynamicHyperelasticitySolver<Term,MeshType>::Data &DynamicHyperelasticitySolver<Term,MeshType>::
 data()
 {
   return data_;
 }
 
-template<typename Term>
-typename DynamicHyperelasticitySolver<Term>::HyperelasticitySolverType &DynamicHyperelasticitySolver<Term>::
+template<typename Term,typename MeshType>
+typename DynamicHyperelasticitySolver<Term,MeshType>::HyperelasticitySolverType &DynamicHyperelasticitySolver<Term,MeshType>::
 hyperelasticitySolver()
 {
   return hyperelasticitySolver_;
@@ -282,8 +282,8 @@ hyperelasticitySolver()
 
 /*
 
-template<typename Term>
-void DynamicHyperelasticitySolver<Term>::
+template<typename Term,typename MeshType>
+void DynamicHyperelasticitySolver<Term,MeshType>::
 initializeMassMatrix()
 {
   LOG(TRACE) << "init mass matrix";
@@ -402,8 +402,8 @@ initializeMassMatrix()
   LOG(DEBUG) << *inverseLumpedMassMatrix_;
 }
 
-template<typename Term>
-void DynamicHyperelasticitySolver<Term>::
+template<typename Term,typename MeshType>
+void DynamicHyperelasticitySolver<Term,MeshType>::
 computeAcceleration(std::shared_ptr<VecHyperelasticity> u, std::shared_ptr<VecHyperelasticity> v, std::shared_ptr<VecHyperelasticity> a)
 {
   assert(u);
@@ -440,8 +440,8 @@ computeAcceleration(std::shared_ptr<VecHyperelasticity> u, std::shared_ptr<VecHy
   ierr = MatMult(inverseLumpedMassMatrix_->valuesGlobal(), temp_[0]->valuesGlobal(), a->valuesGlobal()); CHKERRV(ierr);
 }
 
-template<typename Term>
-void DynamicHyperelasticitySolver<Term>::
+template<typename Term,typename MeshType>
+void DynamicHyperelasticitySolver<Term,MeshType>::
 addDamping(std::shared_ptr<VecHyperelasticity> v, std::shared_ptr<VecHyperelasticity> damping)
 {
   LOG(TRACE) << "addDamping";
@@ -531,8 +531,8 @@ addDamping(std::shared_ptr<VecHyperelasticity> v, std::shared_ptr<VecHyperelasti
   LOG(DEBUG) << "damping: " << *damping;
 }
 
-template<typename Term>
-void DynamicHyperelasticitySolver<Term>::
+template<typename Term,typename MeshType>
+void DynamicHyperelasticitySolver<Term,MeshType>::
 computeRungeKutta4()
 {
   PetscErrorCode ierr;
@@ -610,8 +610,8 @@ computeRungeKutta4()
   //hyperelasticitySolver_.solveForDisplacements(temp_[8], u_);
 }
 
-template<typename Term>
-void DynamicHyperelasticitySolver<Term>::
+template<typename Term,typename MeshType>
+void DynamicHyperelasticitySolver<Term,MeshType>::
 computeExplicitEuler()
 {
   PetscErrorCode ierr;

@@ -307,12 +307,17 @@ variables.meshes["3DFatMesh"] = {
 
 if False:
   print("settings 3DFatMesh: ")
-  with open("3DFatMesh_{}".format(rank_no),"w") as f:
-    f.write(str(variables.meshes["3DFatMesh"]))
+  #print(str(variables.meshes["3Dmesh"]))
+  with open("3Dmesh_{}".format(rank_no),"w") as f:
+    f.write(str(variables.meshes["3Dmesh"]))
 
 # create mappings between meshes
 #variables.mappings_between_meshes = {"MeshFiber_{}".format(i) : "3Dmesh" for i in range(variables.n_fibers_total)}
-variables.mappings_between_meshes = {"MeshFiber_{}".format(i) : {"name": "3Dmesh", "xiTolerance": 1e-3} for i in range(variables.n_fibers_total)}
+#variables.mappings_between_meshes = {"MeshFiber_{}".format(i) : {"name": "3Dmesh", "xiTolerance": 1e-3} for i in range(variables.n_fibers_total)}
+variables.mappings_between_meshes = {"3Dmesh": "3Dmesh_quadratic"}
+#variables.mappings_between_meshes.update({"3Dmesh_quadratic": "3Dmesh"})
+
+print("created meshes {}".format(list(variables.meshes.keys())))
 
 # set output writer, this example doesn't use this, it defines the output writers directly in the settings file, but the code is left here in case we want to use it later when tidying up
 if False:  
@@ -561,8 +566,6 @@ variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
 # set boundary conditions for the elasticity
 [mx, my, mz] = variables.meshes["3Dmesh_quadratic"]["nPointsGlobal"]
 [nx, ny, nz] = variables.meshes["3Dmesh_quadratic"]["nElements"]
-
-variables.fiber_mesh_names = [mesh_name for mesh_name in variables.meshes.keys() if "MeshFiber" in mesh_name]
 
 # set Dirichlet BC at top nodes for linear elasticity problem, fix muscle at top
 variables.elasticity_dirichlet_bc = {}

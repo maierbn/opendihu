@@ -176,7 +176,7 @@ multidomain_solver = {
   },
   
   "OutputWriter" : [
-    {"format": "Paraview", "outputInterval": (int)(1./variables.dt_multidomain*variables.output_timestep), "filename": "out/output", "binary": True, "fixedFormat": False, "combineFiles": True},
+    {"format": "Paraview", "outputInterval": (int)(1./variables.dt_multidomain*variables.output_timestep_multidomain), "filename": "out/"+variables.scenario_name+"/multidomain", "binary": True, "fixedFormat": False, "combineFiles": True},
     #{"format": "ExFile", "filename": "out/fiber_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "sphereSize": "0.02*0.02*0.02"},
     #{"format": "PythonFile", "filename": "out/fiber_"+str(i), "outputInterval": int(1./dt_1D*output_timestep), "binary":True, "onlyNodalValues":True},
   ]
@@ -189,7 +189,7 @@ config = {
     "partitioning":         [variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z]
   },
   "Meshes":                variables.meshes,
-  "MappingsBetweenMeshes": variables.mappings_between_meshes,
+  "MappingsBetweenMeshes": {"3Dmesh": "3Dmesh_quadratic", "3Dmesh_quadratic": "3Dmesh"},
   "Solvers": {
     "potentialFlowSolver": {
       "relativeTolerance":  1e-10,
@@ -293,7 +293,7 @@ config = {
           "MultidomainSolver" : multidomain_solver,
           "OutputSurface": {        # version for fibers_emg_2d_output
             "OutputWriter": [
-              {"format": "Paraview", "outputInterval": (int)(1./variables.dt_multidomain*variables.output_timestep), "filename": "out/surface", "binary": True, "fixedFormat": False, "combineFiles": True},
+              {"format": "Paraview", "outputInterval": (int)(1./variables.dt_multidomain*variables.output_timestep), "filename": "out/"+variables.scenario_name+"/surface", "binary": True, "fixedFormat": False, "combineFiles": True},
             ],
             "face": "1-",
             "MultidomainSolver" : multidomain_solver,
@@ -330,7 +330,8 @@ config = {
           # mesh
           "inputMeshIsGlobal":          True,                     # the mesh is given locally
           "meshName":                   "3Dmesh_quadratic",       # name of the 3D mesh, it is defined under "Meshes" at the beginning of this config
-          "fiberMeshNames":             variables.fiber_mesh_names,  # fiber meshes that will be used to determine the fiber direction
+          "fiberMeshNames":             [],                       # fiber meshes that will be used to determine the fiber direction, there are no fibers in multidomain, so this is empty
+          "fiberDirection":             [0,0,1],                  # if fiberMeshNames is empty, directly set the constant fiber direction, in element coordinate system
     
           # solving
           "solverName":                 "mechanicsSolver",         # name of the nonlinear solver configuration, it is defined under "Solvers" at the beginning of this config

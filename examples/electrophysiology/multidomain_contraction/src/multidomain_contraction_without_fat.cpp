@@ -44,9 +44,7 @@ int main(int argc, char *argv[])
         >
       >
     >,
-    MuscleContractionSolver<
-      Mesh::CompositeOfDimension<3>
-    >
+    MuscleContractionSolver<>
   > problem(settings);
   
   problem.run();

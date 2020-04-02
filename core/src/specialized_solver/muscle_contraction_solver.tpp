@@ -6,7 +6,8 @@
 #include "utility/math_utility.h"
 #include "control/diagnostic_tool/solver_structure_visualizer.h"
 
-MuscleContractionSolver::
+template<typename MeshType>
+MuscleContractionSolver<MeshType>::
 MuscleContractionSolver(DihuContext context) :
   Runnable(),
   ::TimeSteppingScheme::TimeSteppingScheme(context["MuscleContractionSolver"]),
@@ -35,7 +36,8 @@ MuscleContractionSolver(DihuContext context) :
   pmax_ = this->specificSettings_.getOptionDouble("Pmax", 1.0, PythonUtility::Positive);
 }
 
-void MuscleContractionSolver::
+template<typename MeshType>
+void MuscleContractionSolver<MeshType>::
 advanceTimeSpan()
 {
   // This method computes some time steps of the simulation by running a for loop over the time steps.
@@ -51,7 +53,7 @@ advanceTimeSpan()
   LOG_N_TIMES(3,INFO) << "durationComputeMappingBetweenMeshes: " << Control::PerformanceMeasurement::getDuration("durationComputeMappingBetweenMeshes");
 
   // output for debugging
-  LOG(DEBUG) << "MuscleContractionSolver::advanceTimeSpan, timeSpan=" << timeSpan<< ", timeStepWidth=" << this->timeStepWidth_
+  LOG(DEBUG) << "MuscleContractionSolver<MeshType>::advanceTimeSpan, timeSpan=" << timeSpan<< ", timeStepWidth=" << this->timeStepWidth_
     << " n steps: " << this->numberTimeSteps_;
 
   // loop over time steps
@@ -107,7 +109,8 @@ advanceTimeSpan()
     Control::PerformanceMeasurement::stop(this->durationLogKey_);
 }
 
-void MuscleContractionSolver::
+template<typename MeshType>
+void MuscleContractionSolver<MeshType>::
 initialize()
 {
   // only initialize once
@@ -182,7 +185,8 @@ initialize()
   initialized_ = true;
 }
 
-void MuscleContractionSolver::
+template<typename MeshType>
+void MuscleContractionSolver<MeshType>::
 run()
 {
   initialize();
@@ -190,7 +194,8 @@ run()
   advanceTimeSpan();
 }
 
-void MuscleContractionSolver::
+template<typename MeshType>
+void MuscleContractionSolver<MeshType>::
 reset()
 {
   if (isDynamic_)
@@ -201,7 +206,8 @@ reset()
   // "uninitialize" everything
 }
 
-void MuscleContractionSolver::
+template<typename MeshType>
+void MuscleContractionSolver<MeshType>::
 computeLambda()
 {
   typedef typename DynamicHyperelasticitySolverType::HyperelasticitySolverType::DisplacementsFieldVariableType DisplacementsFieldVariableType;
@@ -279,7 +285,8 @@ computeLambda()
   lambdaDotVariable->startGhostManipulation();
 }
 
-void MuscleContractionSolver::
+template<typename MeshType>
+void MuscleContractionSolver<MeshType>::
 computeActiveStress()
 {
   LOG(DEBUG) << "computeActiveStress";
@@ -364,7 +371,8 @@ computeActiveStress()
   activePK2StressVariable->startGhostManipulation();
 }
 
-typename MuscleContractionSolver::Data &MuscleContractionSolver::
+template<typename MeshType>
+typename MuscleContractionSolver<MeshType>::Data &MuscleContractionSolver<MeshType>::
 data()
 {
   return data_;
@@ -372,7 +380,8 @@ data()
 
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
 //! the transfer is done by the output_connector_data_transfer class
-std::shared_ptr<typename MuscleContractionSolver::OutputConnectorDataType> MuscleContractionSolver::
+template<typename MeshType>
+std::shared_ptr<typename MuscleContractionSolver<MeshType>::OutputConnectorDataType> MuscleContractionSolver<MeshType>::
 getOutputConnectorData()
 {
   return data_.getOutputConnectorData();

@@ -38,10 +38,11 @@ MappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSourc
   if (VLOG_IS_ON(1))
   {
     VLOG(1) << "create mapping " << functionSpaceSource->meshName() << " -> " << functionSpaceTarget->meshName();
-    VLOG(1) << "geometry: " << functionSpaceSource->geometryField();
+    VLOG(1) << "source geometry: " << functionSpaceSource->geometryField();
+    VLOG(1) << "target geometry: " << functionSpaceTarget->geometryField();
+    VLOG(1) << "target meshPartition: " << *functionSpaceTarget->meshPartition();
   }
 
-  //VLOG(1) << "target meshPartition: " << *functionSpaceTarget->meshPartition();
   //VLOG(1) << "geometryField: " << functionSpaceTarget->geometryField();
 
   if (xiTolerance <= 0)
@@ -157,7 +158,9 @@ MappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSourc
 
   if (FunctionSpaceSourceType::dim() >= FunctionSpaceTargetType::dim() && nTargetDofsNotMapped > 0)
   {
-    LOG(DEBUG) << nTargetDofsNotMapped << " target dofs have no source dofs that would contribute values. Source FunctionSpace dim: "
+    LOG(DEBUG) << "mapping \"" << functionSpaceSource->meshName() << "\" -> \""
+      << functionSpaceTarget->meshName() << "\":" << nTargetDofsNotMapped << " target dofs have no source dofs " 
+      << "that would contribute values. Source FunctionSpace dim: "
       << FunctionSpaceSourceType::dim() << " >= target FunctionSpace dim: " << FunctionSpaceTargetType::dim() << ". Now fixing.";
 
     std::set<dof_no_t> targetDofNoLocalNotFixed;    // collect all dofs that are still not fixed

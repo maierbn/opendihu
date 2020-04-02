@@ -8,8 +8,8 @@
 namespace SpatialDiscretization
 {
 
-template<typename Term,int nDisplacementComponents>
-void HyperelasticitySolver<Term,nDisplacementComponents>::
+template<typename Term,typename MeshType, int nDisplacementComponents>
+void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 materialComputeInternalVirtualWork(bool communicateGhosts)
 {
   // compute Wint in solverVariableResidual_
@@ -339,8 +339,8 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
   // now, solverVariableResidual_, which is the globalValues() of combinedVecResidual_, contains δW_int
 }
 
-template<typename Term,int nDisplacementComponents>
-void HyperelasticitySolver<Term,nDisplacementComponents>::
+template<typename Term,typename MeshType, int nDisplacementComponents>
+void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 materialComputeResidual(double loadFactor)
 {
   // This computes the residual, i.e. the nonlinear function to be solved.
@@ -448,8 +448,8 @@ materialComputeResidual(double loadFactor)
   assert(combinedVecSolution_->currentRepresentation() == Partition::values_representation_t::representationCombinedGlobal);
 }
 
-template<typename Term,int nDisplacementComponents>
-void HyperelasticitySolver<Term,nDisplacementComponents>::
+template<typename Term,typename MeshType, int nDisplacementComponents>
+void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 materialComputeExternalVirtualWorkDead()
 {
   // compute δW_ext,dead = int_Ω B^L * phi^L * phi^M * δu^M dx + int_∂Ω T^L * phi^L * phi^M * δu^M dS
@@ -571,8 +571,8 @@ materialComputeExternalVirtualWorkDead()
   //combinedVecExternalVirtualWorkDead_->startGhostManipulation();
 }
 
-template<typename Term,int nDisplacementComponents>
-void HyperelasticitySolver<Term,nDisplacementComponents>::
+template<typename Term,typename MeshType, int nDisplacementComponents>
+void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 materialAddAccelerationTermAndVelocityEquation(bool communicateGhosts)
 {
   assert (nDisplacementComponents == 6);
@@ -756,8 +756,8 @@ materialAddAccelerationTermAndVelocityEquation(bool communicateGhosts)
   //combinedVecExternalVirtualWorkDead_->startGhostManipulation();
 }
 
-template<typename Term,int nDisplacementComponents>
-void HyperelasticitySolver<Term,nDisplacementComponents>::
+template<typename Term,typename MeshType, int nDisplacementComponents>
+void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 materialComputeJacobian()
 {
   // analytic jacobian combinedMatrixJacobian_
@@ -1284,8 +1284,8 @@ materialComputeJacobian()
   combinedMatrixJacobian_->assembly(MAT_FINAL_ASSEMBLY);
 }
 
-template<typename Term,int nDisplacementComponents>
-Tensor2<3> HyperelasticitySolver<Term,nDisplacementComponents>::
+template<typename Term,typename MeshType, int nDisplacementComponents>
+Tensor2<3> HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 computeDeformationGradient(const std::array<Vec3,DisplacementsFunctionSpace::nDofsPerElement()> &displacements,
                            const Tensor2<3> &inverseJacobianMaterial,
                            const std::array<double, 3> xi
@@ -1345,8 +1345,8 @@ computeDeformationGradient(const std::array<Vec3,DisplacementsFunctionSpace::nDo
   return deformationGradient;
 }
 
-template<typename Term,int nDisplacementComponents>
-Tensor2<3> HyperelasticitySolver<Term,nDisplacementComponents>::
+template<typename Term,typename MeshType, int nDisplacementComponents>
+Tensor2<3> HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 computeDeformationGradientTimeDerivative(const std::array<Vec3,DisplacementsFunctionSpace::nDofsPerElement()> &velocities,
                            const Tensor2<3> &inverseJacobianMaterial,
                            const std::array<double, 3> xi
@@ -1403,8 +1403,8 @@ computeDeformationGradientTimeDerivative(const std::array<Vec3,DisplacementsFunc
   return deformationGradientTimeDerivative;
 }
 
-template<typename Term,int nDisplacementComponents>
-Tensor2<3> HyperelasticitySolver<Term,nDisplacementComponents>::
+template<typename Term,typename MeshType, int nDisplacementComponents>
+Tensor2<3> HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 computeRightCauchyGreenTensor(const Tensor2<3> &deformationGradient)
 {
   // compute C = F^T*F where F is the deformationGradient and C is the right Cauchy-Green Tensor
@@ -1430,8 +1430,8 @@ computeRightCauchyGreenTensor(const Tensor2<3> &deformationGradient)
   return rightCauchyGreenTensor;
 }
 
-template<typename Term,int nDisplacementComponents>
-std::array<double,5> HyperelasticitySolver<Term,nDisplacementComponents>::
+template<typename Term,typename MeshType, int nDisplacementComponents>
+std::array<double,5> HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 computeInvariants(const Tensor2<3> &rightCauchyGreen, const double rightCauchyGreenDeterminant, const Vec3 fiberDirection)
 {
   std::array<double,5> invariants;
@@ -1503,8 +1503,8 @@ computeInvariants(const Tensor2<3> &rightCauchyGreen, const double rightCauchyGr
   return invariants;
 }
 
-template<typename Term,int nDisplacementComponents>
-std::array<double,5> HyperelasticitySolver<Term,nDisplacementComponents>::
+template<typename Term,typename MeshType, int nDisplacementComponents>
+std::array<double,5> HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 computeReducedInvariants(const std::array<double,5> invariants, const double deformationGradientDeterminant)
 {
   std::array<double,5> reducedInvariants;
@@ -1538,8 +1538,8 @@ computeReducedInvariants(const std::array<double,5> invariants, const double def
   return reducedInvariants;
 }
 
-template<typename Term,int nDisplacementComponents>
-Tensor2<3> HyperelasticitySolver<Term,nDisplacementComponents>::
+template<typename Term,typename MeshType, int nDisplacementComponents>
+Tensor2<3> HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 computePK2Stress(const double pressure,                             //< [in] pressure value p
                  const Tensor2<3> &rightCauchyGreen,                //< [in] C
                  const Tensor2<3> &inverseRightCauchyGreen,         //< [in] C^{-1}
@@ -1730,8 +1730,8 @@ computePK2Stress(const double pressure,                             //< [in] pre
   return pK2Stress;
 }
 
-template<typename Term,int nDisplacementComponents>
-void HyperelasticitySolver<Term,nDisplacementComponents>::
+template<typename Term,typename MeshType, int nDisplacementComponents>
+void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 computePK2StressField()
 {
   //LOG(TRACE) << "computePK2StressField";
@@ -1899,9 +1899,9 @@ computePK2StressField()
   this->data_.deformationGradientTimeDerivative()->startGhostManipulation();
 }
 
-template<typename Term,int nDisplacementComponents>
+template<typename Term,typename MeshType, int nDisplacementComponents>
 //! compute the material elasticity tensor
-void HyperelasticitySolver<Term,nDisplacementComponents>::
+void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 computeElasticityTensor(const Tensor2<3> &rightCauchyGreen,         //< [in] C
                         const Tensor2<3> &inverseRightCauchyGreen,  //< [in] C^{-1}
                         double deformationGradientDeterminant,      //< [in] J = det(F)
@@ -2198,8 +2198,8 @@ computeElasticityTensor(const Tensor2<3> &rightCauchyGreen,         //< [in] C
   }
 }
 
-template<typename Term,int nDisplacementComponents>
-Tensor2<3> HyperelasticitySolver<Term,nDisplacementComponents>::
+template<typename Term,typename MeshType, int nDisplacementComponents>
+Tensor2<3> HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 computePSbar(const Tensor2<3> &fictitiousPK2Stress, const Tensor2<3> &rightCauchyGreen)
 {
   // only needed for debugging in materialTesting

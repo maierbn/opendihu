@@ -100,6 +100,10 @@ const double PI = 3.14159265358979323846;
 //! check if vector b is a subsequence of a, i.e. is contained in a
 bool isSubsequenceOf(std::vector<int> a, std::vector<int> b, size_t &subsequenceAStartPos);
 
+//! check if the two vectors have equal entries
+template<int D>
+bool equals(std::array<double,D> a, std::array<double,D> b, double tolerance=1e-15);
+
 //! rotate the matrix such that unit vector (1,0,0) now points to directionVector, directionVector does not need to be normalized
 template<int D>
 void rotateMatrix(Matrix<D,D> &matrix, Vec3 directionVector);

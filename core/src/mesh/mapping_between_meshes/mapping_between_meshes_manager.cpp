@@ -76,15 +76,4 @@ void MappingBetweenMeshesManager::storeMappingsBetweenMeshes()
   }
 }
 
-std::shared_ptr<MappingBetweenMeshesBase> MappingBetweenMeshesManager::mappingBetweenMeshes(std::string sourceMeshName, std::string targetMeshName)
-{
-  if (mappingsBetweenMeshes_.find(sourceMeshName) == mappingsBetweenMeshes_.end())
-    return nullptr;
-
-  if (mappingsBetweenMeshes_[sourceMeshName].find(targetMeshName) == mappingsBetweenMeshes_[sourceMeshName].end())
-    return nullptr;
-
-  return mappingsBetweenMeshes_[sourceMeshName][targetMeshName].mapping;
-}
-
 } // namespace

@@ -73,7 +73,7 @@ findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::ar
 
     // point is not in current element, consider the neighbouring elements and ghost meshes
 
-    VLOG(2) << "point is not in current element, now check neighbouring elements";
+    VLOG(2) << "point is not in current element " << elementNoLocal << " or startSearchInCurrentElement is false (" << startSearchInCurrentElement << "), now check neighbouring elements";
 
     // search in the current submesh
     element_no_t elementOnMeshNoLocal = 0;

@@ -90,12 +90,14 @@ protected:
   Vec nestedSolution_;                        //< nested Petsc Vec, solution vector
   Vec nestedRightHandSide_;                   //< nested Petsc Vec, rhs
   Mat singleSystemMatrix_;                    //< non-nested Petsc Mat that contains all entries, the system matrix
+  Mat singlePreconditionerMatrix_;            //< non-nested Petsc Mat that contains the preconditioner matrix
   Vec singleSolution_;                        //< non-nested Petsc Vec, solution vector
   Vec singleRightHandSide_;                   //< non-nested Petsc Vec, distributed rhs
 
   std::vector<Vec> subvectorsRightHandSide_;  //< the sub vectors that are used in the nested vector nestedRightHandSide_
   std::vector<Vec> subvectorsSolution_;       //< the sub vectors that are used in the nested vector nestedSolution_
   std::vector<Mat> submatricesSystemMatrix_;  //< the sub matrices of the whole system matrix
+  std::vector<Mat> submatricesPreconditionerMatrix_;  //< the sub matrices of the matrix used as preconditioner
   int nColumnSubmatricesSystemMatrix_;           //< number of rows of nested submatrices in the system matrix
 
   std::vector<double> am_, cm_;  //< the Am and Cm prefactors for the compartments, Am = surface-volume ratio, Cm = capacitance
@@ -103,6 +105,7 @@ protected:
   bool showLinearSolverOutput_;  //< if convergence information of the linear solver in every timestep should be printed
   int lastNumberOfIterations_;   //< the number of iterations that were needed the last time to solve the linear system
   double timeStepWidthOfSystemMatrix_;        //< the timestep width that was used to setup the system matrix
+  bool constructPreconditionerMatrix_;        //< if the symmetric preconditioner matrix should be set up
 };
 
 }  // namespace

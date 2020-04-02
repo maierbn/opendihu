@@ -156,15 +156,16 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
     // initialize PETSc
     PetscInitialize(&argc, &argv, NULL, "This is an opendihu application.");
 
-    // set number of threads to use to 1
-    //omp_set_num_threads(1);
-    //LOG(DEBUG) << "set number of threads to 1";
     LOG(INFO) << "This is " << versionText() << ", " << metaText();
 
     // output process ID
     int pid = getpid();
     LOG(DEBUG) << "PID " << pid;
 
+    // set number of threads to use to 1
+    omp_set_num_threads(1);
+    LOG(DEBUG) << "set number of threads to 1";
+    
     // parallel debugging barrier
     bool enableDebuggingBarrier = false;
     PetscErrorCode ierr = PetscOptionsHasName(NULL, NULL, "-pause", (PetscBool *)&enableDebuggingBarrier); CHKERRV(ierr);

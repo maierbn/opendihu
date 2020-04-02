@@ -300,7 +300,7 @@ bool operator==(const std::vector<T> &vector1, const std::vector<T> &vector2)
 {
   if (vector1.size() != vector2.size())
     return false;
-  for (int i=0; i<vector1.size(); i++)
+  for (int i = 0; i < vector1.size(); i++)
     if (vector1[i] != vector2[i])
       return false;
   return true;

@@ -34,8 +34,7 @@ dt_elasticity = 1e0                 # [ms] time step width of elasticity solver
 output_timestep = 1e0               # [ms] timestep for output files
 activation_start_time = 0           # [ms] time when to start checking for stimulation
 output_timestep_surface = 0.1       # [ms] timestep for python callback, which is electrode measurement output
-output_timestep_electrodes = 0.1    # [ms] timestep for electrode output files
-output_timestep_fibers = 0.1        # [ms] timestep for fiber output, 0.5
+output_timestep_multidomain = 0.1   # [ms] timestep for multidomain output files
 output_timestep_3D_emg = 0.1        # [ms] timestep for output big files of 3D EMG, 100
 
 # input files

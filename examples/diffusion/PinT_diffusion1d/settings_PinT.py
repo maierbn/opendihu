@@ -12,6 +12,7 @@ config = {
      "solverType": "gmres",          # the solver type, refer to PETSc documentation about implemented solvers and preconditioners (https://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/KSP/KSPType.html)
      "preconditionerType": "none",   # the preconditioner type (https://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/PC/PCType.html#PCType)
      "relativeTolerance": 1e-15,     # the relative tolerance of the linear solver
+     "absoluteTolerance": 1e-10,     # absolute tolerance of the linear solver
      "maxIterations": 1e4,           # maximum number of iterations of the linear solver
      "dumpFilename": "",             # a filename to dump the system matrix and rhs in every timestep, "" to disable
      "dumpFormat": "matlab",         # the file format of the dump file, "matlab", "ascii" or "default"
@@ -27,11 +28,11 @@ config = {
     }
   for k in range(n)
   },
-  "PinT": {        # this is the name of the solver, as given in the constructor to the timestepping object
+  "PinTIE": {        # this is the name of the solver, as given in the constructor to the timestepping object
     "tstart": 0,                    # Start time
     "tstop": 100,                     # End time
-    "ntime": 100,                      # number of time steps
-    "nspace":   64,
+    "ntime": 10,                      # number of time steps
+    "nspace":   32,
     "Initial Guess": [2,2,4,5,2,2,2,0],
     "option1": "blabla",              # another example option that is parsed in the data object
     "nRanksInSpace": 1,            # number of processes that compute the spatial domain in parallel
@@ -57,8 +58,8 @@ config = {
         },
         "OutputWriter" : [
           # {"format": "Paraview", "outputInterval": 1, "filename": "out", "binary": "false", "fixedFormat": False, "onlyNodalValues": True},
-          {"format": "PythonFile", "filename": "out/diffusion1d_PinT", "outputInterval": 10000, "binary":False, "onlyNodalValues": True}
-        ],
+          {"format": "PythonFile", "filename": "out/diffusion1d_PinT", "outputInterval": 1, "binary":False, "onlyNodalValues": True}
+        ]if j == 9 else [],
       }
     } for j in range(n)],
   },

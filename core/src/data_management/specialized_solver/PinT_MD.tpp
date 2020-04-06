@@ -1,4 +1,4 @@
-#include "data_management/specialized_solver/PinT_IE.h"
+#include "data_management/specialized_solver/PinT_MD.h"
 
 #include "easylogging++.h"
 
@@ -10,14 +10,14 @@ namespace Data
 {
 
 template<typename FunctionSpaceType>
-PinTIE<FunctionSpaceType>::
-PinTIE(DihuContext context) :
+PinTMD<FunctionSpaceType>::
+PinTMD(DihuContext context) :
   Data<FunctionSpaceType>::Data(context)
 {
 }
 
 template<typename FunctionSpaceType>
-void PinTIE<FunctionSpaceType>::
+void PinTMD<FunctionSpaceType>::
 initialize()
 {
   // call initialize of base class
@@ -40,7 +40,7 @@ initialize()
 }
 
 template<typename FunctionSpaceType>
-void PinTIE<FunctionSpaceType>::
+void PinTMD<FunctionSpaceType>::
 createPetscObjects()
 {
   assert(this->functionSpace_);
@@ -52,21 +52,21 @@ createPetscObjects()
 
 // ... add a "getter" method for each fieldvariable with the same name as the field variable (but without underscore)
 template<typename FunctionSpaceType>
-std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> PinTIE<FunctionSpaceType>::
+std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> PinTMD<FunctionSpaceType>::
 solution()
 {
   return this->solution_;
 }
 
 template<typename FunctionSpaceType>
-std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> PinTIE<FunctionSpaceType>::
+std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> PinTMD<FunctionSpaceType>::
 fieldVariableB()
 {
   return this->fieldVariableB_;
 }
 
 template<typename FunctionSpaceType>
-void PinTIE<FunctionSpaceType>::
+void PinTMD<FunctionSpaceType>::
 setSolutionVariable(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> solution)
 {
   // Store the solution field variable that was given as argument.
@@ -76,7 +76,7 @@ setSolutionVariable(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceTy
 
 
 template<typename FunctionSpaceType>
-std::shared_ptr<typename PinTIE<FunctionSpaceType>::OutputConnectorDataType> PinTIE<FunctionSpaceType>::
+std::shared_ptr<typename PinTMD<FunctionSpaceType>::OutputConnectorDataType> PinTMD<FunctionSpaceType>::
 getOutputConnectorData()
 {
   // return the output connector data object
@@ -84,7 +84,7 @@ getOutputConnectorData()
 }
 
 template<typename FunctionSpaceType>
-typename PinTIE<FunctionSpaceType>::FieldVariablesForOutputWriter PinTIE<FunctionSpaceType>::
+typename PinTMD<FunctionSpaceType>::FieldVariablesForOutputWriter PinTMD<FunctionSpaceType>::
 getFieldVariablesForOutputWriter()
 {
   // these field variables will be written to output files by the output writer

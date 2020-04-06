@@ -1,6 +1,6 @@
 # Diffusion 1D
 
-n = 256   # number of elements
+n = 32   # number of elements
 
 config = {
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
@@ -16,13 +16,13 @@ config = {
     }
   },
   "ImplicitEuler" : {
-     "numberTimeSteps": 10000,
+     "numberTimeSteps": 100000,
      "startTime": 0.0,
      "endTime": 100,
      "initialValues": [2,2,4,5,2,2,2,0,0],    # the initial values
      "dirichletBoundaryConditions": {}, # Dirichlet boundary conditions as dict
      "inputMeshIsGlobal": True,         # initial values and BC's are given for all dofs, even if executed in parallel
-     "timeStepOutputInterval": 1,       # how often to print the current timestep to console
+     "timeStepOutputInterval": 100000,       # how often to print the current timestep to console
      "nAdditionalFieldVariables": 0,    # for more complex nested solvers, the number of additional field variables that will be transferred without being touched
      "solverName": "linearSolver",      # the solver to use, referes to what was defined under "Solvers"
 
@@ -38,7 +38,7 @@ config = {
      },
      "OutputWriter" : [
        #{"format": "Paraview", "outputInterval": 1, "filename": "out", "binaryOutput": "false", "fixedFormat": False, "onlyNodalValues": True},
-       {"format": "PythonFile", "filename": "out/diffusion1d_implicit", "outputInterval": 10000, "binary":False, "onlyNodalValues": True}
+       {"format": "PythonFile", "filename": "out/diffusion1d_implicit", "outputInterval": 100000, "binary":False, "onlyNodalValues": True}
      ]
   }
 }

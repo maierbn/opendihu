@@ -16,7 +16,7 @@ namespace Data
 /**  The datastructures used for "Parallel in TIme with Implicit Euler".
   */
 template<typename FunctionSpaceType>
-class PinTIE : public Data<FunctionSpaceType>
+class PinTMD : public Data<FunctionSpaceType>
 {
 public:
 
@@ -33,7 +33,7 @@ public:
   typedef OutputConnectorData<FunctionSpaceType,1,1> OutputConnectorDataType;
 
   //! constructor
-  PinTIE(DihuContext context);
+  PinTMD(DihuContext context);
 
   //! return a reference to solution
   std::shared_ptr<ScalarFieldVariableType> solution();
@@ -82,4 +82,4 @@ private:
 
 } // namespace Data
 
-#include "data_management/specialized_solver/PinT_IE.tpp"
+#include "data_management/specialized_solver/PinT_MD.tpp"

@@ -7,6 +7,8 @@
 #include "time_stepping_scheme/implicit_euler.h"
 #include "control/dihu_context.h"
 
+#include "specialized_solver/parallel_in_time/ImplicitEuler/PinT_IE_Braid.h"
+
 /** This is a template class that developers can copy and adjust to create their own solver.
  *  This solver is static, i.e. has no timestepping. For a dynamic solver, refer to the other template, "my_new_timestepping_solver.h".
  *  There are also the files "data_management/my_new_static_solver.{h,cpp}" that need to be adjusted.
@@ -76,10 +78,21 @@ protected:
 
   bool initialized_;                          //< if initialize() was already called
 
-  double tstart_;
-  double tstop_;
-  int ntime_;
-  int nspace_;
+  double tstart_ = 0.0;
+  double tstop_ = 1.0;
+  int ntime_ = 10;
+  int nspace_ = 8;
+  double xstart_ = 0.0;
+  double xstop_ = 4.0;
+
+  MPI_Comm communicatorTotal_= MPI_COMM_WORLD;
+
+  // Braid variables
+  braid_Core    core_;
+  my_App       *app_;
+  int print_level_   = 2;
+  int max_levels_    = 3;
+
 };
 } // namespace ParallelInTime
 #include "specialized_solver/parallel_in_time/ImplicitEuler/PinT_IE.tpp"

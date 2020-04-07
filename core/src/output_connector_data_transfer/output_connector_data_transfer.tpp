@@ -162,15 +162,8 @@ void SolutionVectorMapping<
     std::shared_ptr<FieldVariableSource> geometryFieldSource = transferableSolutionData1->geometryField;
     std::shared_ptr<FieldVariableTarget> geometryFieldTarget = std::make_shared<FieldVariableTarget>(transferableSolutionData2->variable1[0].values->functionSpace()->geometryField());
 
-    LOG(DEBUG) << "geometryFieldSource: " << *geometryFieldSource;
-    LOG(DEBUG) << "geometryFieldTarget: " << *geometryFieldTarget;
-
     // perform the mapping
     DihuContext::meshManager()->template prepareMapping<FieldVariableSource,FieldVariableTarget>(geometryFieldSource, geometryFieldTarget);
-
-    LOG(DEBUG) << "after prepareMapping";
-    LOG(DEBUG) << "geometryFieldSource: " << *geometryFieldSource;
-    LOG(DEBUG) << "geometryFieldTarget: " << *geometryFieldTarget;
 
     // map the whole geometry field (all components), do not avoid copy
     DihuContext::meshManager()->template map<FieldVariableSource,FieldVariableTarget>(geometryFieldSource, -1, geometryFieldTarget, -1, false);

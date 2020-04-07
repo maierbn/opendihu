@@ -103,6 +103,7 @@ motor_units = [
 # timing parameters
 # -----------------
 end_time = 0.008                   # [ms] end time of the simulation
+end_time = 4000.0
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
 stimulation_frequency_jitter = 0    # [-] jitter in percent of the frequency, added and substracted to the stimulation_frequency after each stimulation
 dt_0D = 1e-3                        # [ms] timestep width of ODEs (1e-3)
@@ -110,7 +111,7 @@ dt_multidomain = 1e-3               # [ms] timestep width of the multidomain sol
 dt_splitting = dt_multidomain       # [ms] timestep width of strang splitting between 0D and multidomain, this is the same as the dt_multidomain, because we do not want to subcycle for the diffusion part
 dt_elasticity = 4e-3                 # [ms] time step width of elasticity solver
 output_timestep_multidomain = 1e-3        # [ms] timestep for fiber output, 0.5
-output_timestep_3D = 1e-3            # [ms] timestep for output of fibers and mechanics, should be a multiple of dt_3D
+output_timestep_3D = 4e-3            # [ms] timestep for output of fibers and mechanics, should be a multiple of dt_3D
 
 # input files
 fiber_file = "../../input/left_biceps_brachii_9x9fibers.bin"

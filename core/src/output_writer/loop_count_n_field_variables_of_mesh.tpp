@@ -50,11 +50,11 @@ countNFieldVariablesOfMesh(CurrentFieldVariableType currentFieldVariable, std::s
 // element i is of vector type
 template<typename VectorType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
-countNFieldVariablesOfMesh(VectorType currentFieldVariableVector, std::string meshName,
+countNFieldVariablesOfMesh(VectorType currentFIeldVariableGradient, std::string meshName,
                            int &nFieldVariablesOfMesh)
 {
-  VLOG(2) << "count number of field variables in vector with size " << currentFieldVariableVector.size();
-  for (auto& currentFieldVariable : currentFieldVariableVector)
+  VLOG(2) << "count number of field variables in vector with size " << currentFIeldVariableGradient.size();
+  for (auto& currentFieldVariable : currentFIeldVariableGradient)
   {
     // call function on all vector entries
     if (countNFieldVariablesOfMesh<typename VectorType::value_type>(currentFieldVariable, meshName, nFieldVariablesOfMesh))

@@ -78,7 +78,7 @@ parseFromSettings(PythonConfig settings)
     for (int nodeIndex = 0; nodeIndex < this->nNodesPerElement(); nodeIndex++)
     {
        // extract the node positions, e.g. [1,0] (global node no., version no.) or just 1 (only global node no., version no. defaults to 0)
-       std::array<int,2> elementNode = PythonUtility::convertFromPython<std::array<int,2>>::get(pyElementNodes[nodeIndex], {0,0});
+       std::array<int,2> elementNode = PythonUtility::convertFromPython<std::array<int,2>>::get(pyElementNodes[nodeIndex], {0,0}, false);
 
        VLOG(1) << "   elementNode " << elementNode;
 

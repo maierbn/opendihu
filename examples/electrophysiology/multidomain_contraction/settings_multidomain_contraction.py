@@ -189,7 +189,16 @@ config = {
     "partitioning":         [variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z]
   },
   "Meshes":                variables.meshes,
-  "MappingsBetweenMeshes": {"3Dmesh": "3Dmesh_quadratic", "3Dmesh_quadratic": "3Dmesh"},
+  "MappingsBetweenMeshes": {
+    "3Dmesh": "3Dmesh_quadratic",                         # mappings to be used without composite meshes
+    "3Dmesh": "3Dmesh_quadratic+3DFatMesh_quadratic",     # mapping from multidomain to elasticity mesh, for transferring γ
+    "3Dmesh_quadratic+3DFatMesh_quadratic": [
+       {"name": "3Dmesh",    "xiTolerance": 0.01, "enableWarnings": False, "compositeUseOnlyInitializedMappings": True},    # mapping uses mappings of submeshes (i.e. 3Dmesh_quadratic->3Dmesh)
+       {"name": "3DFatMesh", "xiTolerance": 0.01, "enableWarnings": False, "compositeUseOnlyInitializedMappings": True},    # mapping uses mappings of submeshes (i.e. 3DFatMesh_quadratic->3DFatMesh)    
+    ],
+    "3Dmesh_quadratic": "3Dmesh",           
+    "3DFatMesh_quadratic": "3DFatMesh", 
+  },
   "Solvers": {
     "potentialFlowSolver": {
       "relativeTolerance":  1e-10,
@@ -220,6 +229,7 @@ config = {
       "snesRelativeTolerance": 1e-5,        # relative tolerance of the nonlinear solver
       "snesAbsoluteTolerance": 1e-5,        # absolute tolerance of the nonlinear solver
       "snesLineSearchType": "l2",           # type of linesearch, possible values: "bt" "nleqerr" "basic" "l2" "cp" "ncglinear"
+      "snesRebuildJacobianFrequency": 2,    # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
       "dumpFilename":        "",            # dump system matrix and right hand side after every solve
       "dumpFormat":          "matlab",      # default, ascii, matlab
     }
@@ -309,6 +319,7 @@ config = {
         "OutputWriter" : [
           {"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_3D), "filename": "out/" + variables.scenario_name + "/mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
         ],
+        "mapGeometryToMeshes":          ["3Dmesh","3DFatMesh"],    # the mesh names of the meshes that will get the geometry transferred
         "dynamic":                      True,                      # if the dynamic solid mechanics solver should be used, else it computes the quasi-static problem
         
         # the actual solid mechanics solver, this is either "DynamicHyperelasticitySolver" or "HyperelasticitySolver", depending on the value of "dynamic"
@@ -329,7 +340,7 @@ config = {
           
           # mesh
           "inputMeshIsGlobal":          True,                     # the mesh is given locally
-          "meshName":                   "3Dmesh_quadratic",       # name of the 3D mesh, it is defined under "Meshes" at the beginning of this config
+          "meshName":                   ["3Dmesh_quadratic", "3DFatMesh_quadratic"],       # name of the 3D mesh, it is defined under "Meshes" at the beginning of this config
           "fiberMeshNames":             [],                       # fiber meshes that will be used to determine the fiber direction, there are no fibers in multidomain, so this is empty
           "fiberDirection":             [0,0,1],                  # if fiberMeshNames is empty, directly set the constant fiber direction, in element coordinate system
     

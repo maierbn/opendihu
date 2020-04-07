@@ -123,7 +123,8 @@ parseBoundaryConditions(PythonConfig settings, std::shared_ptr<FunctionSpaceType
       node_no_t nodeNoLocal = boundaryCondition.first / nDofsPerNode;
       node_no_t nNodesLocal = functionSpace->nNodesLocalWithoutGhosts();
       LOG(ERROR) << "Boundary condition specified for index " << boundaryCondition.first << " (node " << nodeNoLocal << "), "
-        << "but there are only " << functionSpace->nDofsLocalWithoutGhosts() << " local dofs (" << nNodesLocal << " nodes)";
+        << "but there are only " << functionSpace->nDofsLocalWithoutGhosts() << " local dofs (" << nNodesLocal << " nodes).\nFunctionSpaceType: "
+        << StringUtility::demangle(typeid(FunctionSpaceType).name());
     }
 
     boundaryConditions.push_back(boundaryCondition);

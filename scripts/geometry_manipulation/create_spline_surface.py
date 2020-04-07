@@ -98,7 +98,9 @@ if __name__ == "__main__":
   try:
     f = open(output_pickle_filename,"rb")
     surface = pickle.load(f)
-  except:
+  except Exception as e:
+    
+    print("Create rings because pickle file {} does not yet exist.".format(output_pickle_filename))
     # create surface
 
     write_output_mesh = False

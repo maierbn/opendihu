@@ -33,7 +33,10 @@ MuscleContractionSolver(DihuContext context) :
   // initialize output writers
   this->outputWriterManager_.initialize(this->context_, this->specificSettings_);
 
+  // parse options
   pmax_ = this->specificSettings_.getOptionDouble("Pmax", 1.0, PythonUtility::Positive);
+
+  this->specificSettings_.template getOptionVector<std::string>("mapGeometryToMeshes", meshNamesOfGeometryToMapTo_);
 }
 
 template<typename MeshType>
@@ -107,6 +110,8 @@ advanceTimeSpan()
   // stop duration measurement
   if (this->durationLogKey_ != "")
     Control::PerformanceMeasurement::stop(this->durationLogKey_);
+
+  mapGeometryToGivenMeshes();
 }
 
 template<typename MeshType>
@@ -158,6 +163,8 @@ initialize()
   // now call initialize, data will then create all variables (Petsc Vec's)
   data_.initialize();
 
+  bool setGeometryFieldForTransfer = meshNamesOfGeometryToMapTo_.empty();
+
   if (isDynamic_)
   {
     typename DynamicHyperelasticitySolverType::HyperelasticitySolverType &hyperelasticitySolver = dynamicHyperelasticitySolver_->hyperelasticitySolver();
@@ -167,7 +174,8 @@ initialize()
                             dynamicHyperelasticitySolver_->data().velocities(),
                             hyperelasticitySolver.data().activePK2Stress(),
                             hyperelasticitySolver.data().pK2Stress(),
-                            hyperelasticitySolver.data().fiberDirection());
+                            hyperelasticitySolver.data().fiberDirection(), 
+                            setGeometryFieldForTransfer);
   }
   else
   {
@@ -176,7 +184,8 @@ initialize()
                             staticHyperelasticitySolver_->data().velocities(),
                             staticHyperelasticitySolver_->data().activePK2Stress(),
                             staticHyperelasticitySolver_->data().pK2Stress(),
-                            staticHyperelasticitySolver_->data().fiberDirection());
+                            staticHyperelasticitySolver_->data().fiberDirection(),
+                            setGeometryFieldForTransfer);
   }
 
   // set the outputConnectorData for the solverStructureVisualizer to appear in the solver diagram
@@ -369,6 +378,79 @@ computeActiveStress()
   activePK2StressVariable->zeroGhostBuffer();
   activePK2StressVariable->finishGhostManipulation();
   activePK2StressVariable->startGhostManipulation();
+}
+
+template<typename MeshType>
+void MuscleContractionSolver<MeshType>::
+mapGeometryToGivenMeshes()
+{
+  if (this->durationLogKey_ != "")
+    Control::PerformanceMeasurement::stop(this->durationLogKey_+std::string("_map_geometry"));
+
+  LOG(DEBUG) << "mapGeometryToGivenMeshes: meshNamesOfGeometryToMapTo: " << meshNamesOfGeometryToMapTo_;
+  if (!meshNamesOfGeometryToMapTo_.empty())
+  {
+    using SourceFunctionSpaceType = typename StaticHyperelasticitySolverType::DisplacementsFunctionSpace;
+    using SourceFieldVariableType = FieldVariable::FieldVariable<SourceFunctionSpaceType,3>;
+    
+    assert(data_.functionSpace());
+
+    // get source field variable
+    std::shared_ptr<SourceFieldVariableType> geometryFieldSource = std::make_shared<SourceFieldVariableType>(data_.functionSpace()->geometryField());
+
+    // loop over all given mesh names to which we should transfer the geometry
+    for (std::string meshName : meshNamesOfGeometryToMapTo_)
+    {
+      // for first order meshes
+      using TargetFunctionSpaceType1 = ::FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>,BasisFunction::LagrangeOfOrder<1>>;
+      using TargetFieldVariableType1 = FieldVariable::FieldVariable<TargetFunctionSpaceType1,3>;
+      
+      // if the mesh name corresponds to a linear mesh
+      if (this->context_.meshManager()->hasFunctionSpaceOfType<TargetFunctionSpaceType1>(meshName))
+      {
+        // get target geometry field variable
+        std::shared_ptr<TargetFieldVariableType1> geometryFieldTarget = std::make_shared<TargetFieldVariableType1>(
+          this->context_.meshManager()->functionSpace<TargetFunctionSpaceType1>(meshName)->geometryField());
+
+        LOG(DEBUG) << "transfer geometry field to linear mesh, " << geometryFieldSource->functionSpace()->meshName() << " -> "
+          << geometryFieldTarget->functionSpace()->meshName();
+        LOG(DEBUG) << StringUtility::demangle(typeid(SourceFunctionSpaceType).name()) << " -> " << StringUtility::demangle(typeid(TargetFunctionSpaceType1).name());
+
+        // perform the mapping
+        DihuContext::meshManager()->template prepareMapping<SourceFieldVariableType,TargetFieldVariableType1>(geometryFieldSource, geometryFieldTarget);
+
+        // map the whole geometry field (all components), do not avoid copy
+        DihuContext::meshManager()->template map<SourceFieldVariableType,TargetFieldVariableType1>(geometryFieldSource, -1, geometryFieldTarget, -1, false);
+        DihuContext::meshManager()->template finalizeMapping<SourceFieldVariableType,TargetFieldVariableType1>(geometryFieldSource, geometryFieldTarget);
+      }
+
+      // for second order meshes
+      using TargetFunctionSpaceType2 = ::FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>,BasisFunction::LagrangeOfOrder<2>>;
+      using TargetFieldVariableType2 = FieldVariable::FieldVariable<TargetFunctionSpaceType2,3>;
+      
+      // if the mesh name corresponds to a quadratic mesh
+      if (this->context_.meshManager()->hasFunctionSpaceOfType<TargetFunctionSpaceType2>(meshName))
+      {
+        // get target geometry field variable
+        std::shared_ptr<TargetFieldVariableType2> geometryFieldTarget = std::make_shared<TargetFieldVariableType2>(
+          this->context_.meshManager()->functionSpace<TargetFunctionSpaceType2>(meshName)->geometryField());
+
+        LOG(DEBUG) << "transfer geometry field to quadratic mesh, " << geometryFieldSource->functionSpace()->meshName() << " -> "
+          << geometryFieldTarget->functionSpace()->meshName();
+        LOG(DEBUG) << StringUtility::demangle(typeid(SourceFunctionSpaceType).name()) << " -> " << StringUtility::demangle(typeid(TargetFunctionSpaceType2).name());
+
+        // perform the mapping
+        DihuContext::meshManager()->template prepareMapping<SourceFieldVariableType,TargetFieldVariableType2>(geometryFieldSource, geometryFieldTarget);
+
+        // map the whole geometry field (all components), do not avoid copy
+        DihuContext::meshManager()->template map<SourceFieldVariableType,TargetFieldVariableType2>(geometryFieldSource, -1, geometryFieldTarget, -1, false);
+        DihuContext::meshManager()->template finalizeMapping<SourceFieldVariableType,TargetFieldVariableType2>(geometryFieldSource, geometryFieldTarget);
+      }
+    }
+  }
+
+  if (this->durationLogKey_ != "")
+    Control::PerformanceMeasurement::stop(this->durationLogKey_+std::string("_map_geometry"));
 }
 
 template<typename MeshType>

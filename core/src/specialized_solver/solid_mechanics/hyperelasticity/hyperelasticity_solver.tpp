@@ -131,39 +131,7 @@ initialize()
   // create function space / mesh, the geometry is from the settings
   displacementsFunctionSpace_ = context_.meshManager()->functionSpace<DisplacementsFunctionSpace>(specificSettings_);
 
-  // create 3D function space with linear basis functions
-  std::vector<Vec3> nodePositionsLinearMesh;
-
-  // loop over nodes of quadratic function space and extract nodes for linear function space
-  for (node_no_t nodeIndexZ = 0; nodeIndexZ < displacementsFunctionSpace_->meshPartition()->nNodesLocalWithoutGhosts(2); nodeIndexZ++)
-  {
-    for (node_no_t nodeIndexY = 0; nodeIndexY < displacementsFunctionSpace_->meshPartition()->nNodesLocalWithoutGhosts(1); nodeIndexY++)
-    {
-      for (node_no_t nodeIndexX = 0; nodeIndexX < displacementsFunctionSpace_->meshPartition()->nNodesLocalWithoutGhosts(0); nodeIndexX++)
-      {
-        node_no_t nodeNoLocal = nodeIndexZ*displacementsFunctionSpace_->meshPartition()->nNodesLocalWithoutGhosts(1)*displacementsFunctionSpace_->meshPartition()->nNodesLocalWithoutGhosts(0)
-          + nodeIndexY*displacementsFunctionSpace_->meshPartition()->nNodesLocalWithoutGhosts(0) + nodeIndexX;
-
-        dof_no_t dofNoLocal = nodeNoLocal;   // no Hermite, i.e. no multiple dofs per node
-
-        if (nodeIndexX % 2 == 0 && nodeIndexY % 2 == 0 && nodeIndexZ % 2 == 0)
-        {
-          nodePositionsLinearMesh.push_back(displacementsFunctionSpace_->geometryField().getValue(dofNoLocal));
-        }
-      }
-    }
-  }
-
-  std::array<element_no_t,3> nElementsPerCoordinateDirection;
-  std::array<int,3> nRanksPerCoordinateDirection;
-
-  for (int i = 0; i < 3; i++)
-  {
-    nElementsPerCoordinateDirection[i] = displacementsFunctionSpace_->meshPartition()->nElementsLocal(i);
-    nRanksPerCoordinateDirection[i] = displacementsFunctionSpace_->meshPartition()->nRanks(i);
-  }
-
-  pressureFunctionSpace_ = context_.meshManager()->createFunctionSpace<PressureFunctionSpace>("pressureFunctionSpace",nodePositionsLinearMesh, nElementsPerCoordinateDirection, nRanksPerCoordinateDirection);
+  pressureFunctionSpace_ = PressureFunctionSpaceCreator<typename PressureFunctionSpace::Mesh>::createPressureFunctionSpace(context_.meshManager(), displacementsFunctionSpace_);
 
   // initialize the data object
   // store mesh in data
@@ -243,7 +211,11 @@ initializeFiberDirections()
   {
     Vec3 fiberDirection = this->specificSettings_.template getOptionArray<double,3>("fiberDirection", Vec3{0,0,1});
 
-    std::vector<Vec3> fiberDirections(this->displacementsFunctionSpace_->nDofsLocalWithoutGhosts(), fiberDirection);
+    LOG(DEBUG) << "displacements field variable type data: " << StringUtility::demangle(typeid(typename Data::DisplacementsFieldVariableType).name());
+    LOG(DEBUG) << "displacements function space type: " << StringUtility::demangle(typeid(DisplacementsFunctionSpace).name());
+    LOG(DEBUG) << "displacements function space mesh partition: " << *this->displacementsFunctionSpace_->meshPartition();
+
+    std::vector<Vec3> fiberDirections(this->displacementsFunctionSpace_->nDofsLocalWithGhosts(), fiberDirection);
     this->data_.fiberDirection()->setValues(this->displacementsFunctionSpace_->meshPartition()->dofNosLocal(), fiberDirections);
   }
   else

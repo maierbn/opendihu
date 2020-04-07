@@ -131,3 +131,4 @@ public:
 }  // namespace
 
 #include "mesh/mesh_manager/mesh_manager.tpp"
+#include "mesh/mapping_between_meshes/02_mapping_between_meshes_composite.tpp"

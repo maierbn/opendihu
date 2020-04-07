@@ -725,22 +725,25 @@ writeDiagramFile(std::string filename)
   // only produce file on rank 0
   if (DihuContext::ownRankNoCommWorld() == 0)
   {
-    std::string diagram = getDiagram();
-
-    // output diagram to a text file
-    std::ofstream file;
-    OutputWriter::Generic::openFile(file, filename);
-
-    if (!file.is_open())
+    if (!filename.empty())
     {
-      LOG(FATAL) << "Could not write to file \"" << filename << "\".";
+      std::string diagram = getDiagram();
+
+      // output diagram to a text file
+      std::ofstream file;
+      OutputWriter::Generic::openFile(file, filename);
+
+      if (!file.is_open())
+      {
+        LOG(FATAL) << "Could not write to file \"" << filename << "\".";
+      }
+
+      // output diagram text
+      file << diagram;
+      file.close();
+
+      LOG(INFO) << "File \"" << filename << "\" written.";
     }
-
-    // output diagram text
-    file << diagram;
-    file.close();
-
-    LOG(INFO) << "File \"" << filename << "\" written.";
   }
 
   LOG(DEBUG) << "SolverStructureVisualizer::clear data";

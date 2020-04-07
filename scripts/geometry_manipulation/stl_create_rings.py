@@ -129,9 +129,12 @@ def create_loop(z_value, stl_mesh, loop):
   The output loop is a list of edges.
   :param z_value: z level of all extracted points
   :param stl_mesh: the mesh as stl.mesh object
-  :param loop: this is the output, this list will contain edges [p0,1]
+  :param loop: this is the output, this list will contain edges [p0,p1]
   """
   debug = False
+
+  if debug:
+    print(" z_value: {}, n points: {}".format(len(stl_mesh.points)))
 
   # loop over all triangles in mesh
   for (no,p) in enumerate(stl_mesh.points):
@@ -166,7 +169,7 @@ def create_loop(z_value, stl_mesh, loop):
       # append edge to loop
       if not edge_is_already_in_loop:
         if debug:
-          print(" add edge ",edge," to loop no ", loop_no)
+          print(" add edge ",edge," to loop")
         #print(", prev: ", loop, "->", 
         loop.append(edge)
         #print(loop
@@ -273,6 +276,27 @@ def create_rings(input_filename, bottom_clip, top_clip, n_loops, write_output_me
   n_is_inside_2 = 0
 
   n_triangles = len(stl_mesh.points)
+  
+  # determine bounding box of mesh
+  bounding_box_zmin = np.inf
+  bounding_box_zmax = -np.inf
+  # loop over triangles in mesh
+  for p in stl_mesh.points:
+    # p contains the 9 entries [p1x p1y p1z p2x p2y p2z p3x p3y p3z] of the triangle with corner points (p1,p2,p3)
+
+    p1 = np.array(p[0:3])
+    p2 = np.array(p[3:6])
+    p3 = np.array(p[6:9])
+    
+    bounding_box_zmin = min(bounding_box_zmin,p1[2],p2[2],p3[2])
+    bounding_box_zmax = max(bounding_box_zmax,p1[2],p2[2],p3[2])
+  
+  if bottom_clip < bounding_box_zmin:
+    print("Adjusting bottom_clip from {} to {} to match the mesh.".format(bottom_clip,bounding_box_zmin))
+    bottom_clip = bounding_box_zmin
+  if top_clip > bounding_box_zmax:
+    print("Adjusting top_clip from {} to {} to match the mesh.".format(top_clip,bounding_box_zmax))
+    top_clip = bounding_box_zmax
   
   # disturb values a tiny bit to avoid singularities
   eps1 = 1.234e-2

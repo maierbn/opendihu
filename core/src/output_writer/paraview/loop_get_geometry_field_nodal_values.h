@@ -42,14 +42,14 @@ loopGetGeometryFieldNodalValues(const FieldVariablesForOutputWriterType &fieldVa
  */
 template<typename VectorType, typename FieldVariablesForOutputWriterType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
-getGeometryFieldNodalValues(VectorType currentFieldVariableVector, const FieldVariablesForOutputWriterType &fieldVariables, std::set<std::string> meshNames,
+getGeometryFieldNodalValues(VectorType currentFIeldVariableGradient, const FieldVariablesForOutputWriterType &fieldVariables, std::set<std::string> meshNames,
                             std::vector<double> &values);
 
 /** Loop body for a tuple element
  */
 template<typename VectorType, typename FieldVariablesForOutputWriterType>
 typename std::enable_if<TypeUtility::isTuple<VectorType>::value, bool>::type
-getGeometryFieldNodalValues(VectorType currentFieldVariableVector, const FieldVariablesForOutputWriterType &fieldVariables, std::set<std::string> meshNames,
+getGeometryFieldNodalValues(VectorType currentFIeldVariableGradient, const FieldVariablesForOutputWriterType &fieldVariables, std::set<std::string> meshNames,
                             std::vector<double> &values);
 
 /**  Loop body for a pointer element

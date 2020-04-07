@@ -30,7 +30,7 @@ namespace Partition
  *
  *  The composite mesh appears like a normal structured mesh except it does not have the coordinate dependent methods.
  *  Internally, a composite numbering is created that avoids duplicate=shared nodes. For every duplicate node, the dofs are only included once.
- *  The initialization of this numbering involves communication of ghost node no with the neighbours.
+ *  The initialization of this numbering involves communication of ghost node nos with the neighbours.
  */
 template<int D, typename BasisFunctionType>
 class MeshPartition<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,Mesh::CompositeOfDimension<D>> :
@@ -146,10 +146,10 @@ public:
   //! from a local node no in the composite numbering get the subMeshNo and the no in the submesh-based numbering, works also for ghost nodes
   void getSubMeshNoAndNodeNoLocal(node_no_t nodeNoLocal, int &subMeshNo, node_no_t &nodeOnMeshNoLocal) const;
 
-  //! for the local node no in the composite numbering return all sub meshes and the corresponding local node nos in non-composite numbering of this node. This may be multiple if the node is shared.o
+  //! for the local node no in the composite numbering return all sub meshes and the corresponding local node nos in non-composite numbering of this node. This may be multiple if the node is shared.
   void getSubMeshesWithNodes(node_no_t nodeNoLocal, std::vector<std::pair<int,node_no_t>> &subMeshesWithNodes) const;
 
-  //! from the submesh no and the local node no in the submesh numbering get the local node no in the composite numbering
+  //! from the submesh no and the local node no in the submesh numbering get the local node no in the composite numbering and if it is a shared node (nodeIsSharedAndRemovedInCurrentMesh)
   node_no_t getNodeNoLocalFromSubmesh(int subMeshNo, node_no_t nodeNoDuplicateOnSubmesh, bool &nodeIsSharedAndRemovedInCurrentMesh) const;
 
   //! from the submesh no and the local element no in the submesh numbering get the local element no in the composite numbering

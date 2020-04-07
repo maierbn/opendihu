@@ -7,7 +7,8 @@ template<typename FunctionSpaceType, int nComponents, int nComponentsDirichletBc
 void PartitionedPetscVecWithDirichletBc<FunctionSpaceType, nComponents, nComponentsDirichletBc>::
 initialize(int offsetInGlobalNumberingPerRank)
 {
-  LOG(DEBUG) << "\"" << this->name_ << "\" PartitionedPetscVecWithDirichletBc createVector with " << nComponents << "," << nComponentsDirichletBc << " components, size local: " << this->meshPartition_->nNodesLocalWithoutGhosts()
+  LOG(DEBUG) << "\"" << this->name_ << "\" PartitionedPetscVecWithDirichletBc createVector with " << nComponents << "," << nComponentsDirichletBc 
+    << " components, size local: " << this->meshPartition_->nNodesLocalWithoutGhosts()
     << ", global: " << this->meshPartition_->nNodesGlobal() << ", offsetInGlobalNumberingPerRank: " << offsetInGlobalNumberingPerRank
     << ", ghost dof nos global/petsc: " << this->meshPartition_->ghostDofNosGlobalPetsc();
 
@@ -54,11 +55,15 @@ initialize(int offsetInGlobalNumberingPerRank)
   // setup non-bc numberings (local and global) for non-ghost dofs, also store boundaryConditionValues_ and isPrescribed_ for non-ghost dofs
   global_no_t dofNoNonBcGlobal = nonBcDofNoGlobalBegin_;
 
+  VLOG(1) << "nEntriesLocal_: " << nEntriesLocal_ << ", nEntriesGlobal_: " << nEntriesGlobal_ << ", nonBcDofNoGlobalBegin_: " << nonBcDofNoGlobalBegin_;
+  
   // loop over components
   for (int componentNo = 0; componentNo < nComponentsDirichletBc; componentNo++)
   {
     std::vector<dof_no_t>::const_iterator boundaryConditionDofLocalNosIter = dirichletBoundaryConditions_->boundaryConditionsByComponent()[componentNo].dofNosLocal.begin();
     std::vector<double>::const_iterator boundaryConditionValuesIter = dirichletBoundaryConditions_->boundaryConditionsByComponent()[componentNo].values.begin();
+
+    LOG(DEBUG) << "number of boundary conditions for component " << componentNo << ": " << dirichletBoundaryConditions_->boundaryConditionsByComponent()[componentNo].values.size();
 
     dofNoLocalToDofNoNonBcGlobal_[componentNo].resize(nDofsLocalWithGhosts);
     dofNoLocalToDofNoNonBcLocal_[componentNo].resize(nDofsLocalWithGhosts);
@@ -68,16 +73,16 @@ initialize(int offsetInGlobalNumberingPerRank)
     // loop over local dofs
     for (dof_no_t dofNoLocal = 0; dofNoLocal < nDofsLocalWithoutGhosts; dofNoLocal++)
     {
-      VLOG(1) << "componentNo " << componentNo << " dofǸoLocal " << dofNoLocal;
+      VLOG(2) << "componentNo " << componentNo << " dofNoLocal " << dofNoLocal;
 
       // if dof has bc
       if (boundaryConditionDofLocalNosIter != dirichletBoundaryConditions_->boundaryConditionsByComponent()[componentNo].dofNosLocal.end())
       {
-        VLOG(1) << " next bc: " << *boundaryConditionDofLocalNosIter;
+        VLOG(2) << " next bc: " << *boundaryConditionDofLocalNosIter;
 
         if (*boundaryConditionDofLocalNosIter == dofNoLocal)
         {
-          VLOG(1) << " -> is bc";
+          VLOG(2) << " -> is bc";
 
           dofNoLocalToDofNoNonBcGlobal_[componentNo][dofNoLocal] = -1;
           dofNoLocalToDofNoNonBcLocal_[componentNo][dofNoLocal] = -1;
@@ -89,7 +94,7 @@ initialize(int offsetInGlobalNumberingPerRank)
           continue;
         }
       }
-      VLOG(1) << " is no bc, assign new no. " << dofNoNonBcGlobal;
+      VLOG(2) << " is no bc, assign new no. " << dofNoNonBcGlobal;
 
       // here, dofNoLocal is a non-BC dof
       dofNoLocalToDofNoNonBcGlobal_[componentNo][dofNoLocal] = dofNoNonBcGlobal;
@@ -116,12 +121,16 @@ initialize(int offsetInGlobalNumberingPerRank)
   *  std::map<int, DofsRequest> requestDofsFromRanks_;
   */
 
+  LOG(DEBUG) << "loop over ghost nodes";
   for (dof_no_t dofNoLocal = nDofsLocalWithoutGhosts; dofNoLocal < this->meshPartition_->nDofsLocalWithGhosts(); dofNoLocal++)
   {
     global_no_t dofNoGlobalPetsc = this->meshPartition_->getDofNoGlobalPetsc(dofNoLocal);
 
     // if the current dof is a ghost dof on the own rank (should be)
     node_no_t nodeNoLocal = dofNoLocal / FunctionSpaceType::nDofsPerNode();
+
+    VLOG(1) << "dofNoLocal: " << dofNoLocal << "/[" << nDofsLocalWithoutGhosts << "," << this->meshPartition_->nDofsLocalWithGhosts() << "] nodeNoLocal: " << nodeNoLocal << ", dofNoGlobalPetsc: " << dofNoGlobalPetsc;
+
     int neighbourRankNo = 0;
     if (!this->meshPartition_->isNonGhost(nodeNoLocal, neighbourRankNo))
     {
@@ -130,6 +139,7 @@ initialize(int offsetInGlobalNumberingPerRank)
     }
     else
     {
+      LOG(DEBUG) << "isNonGhost returned true, neighbourRankNo: " << neighbourRankNo;
       LOG(FATAL) << "ghost dof not recognized as ghost dof (isNonGhost is errorneous)";
     }
   }

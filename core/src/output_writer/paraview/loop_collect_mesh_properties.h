@@ -45,7 +45,7 @@ loopCollectMeshProperties(const FieldVariablesForOutputWriterType &fieldVariable
  */
 template<typename VectorType, typename FieldVariablesForOutputWriterType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
-collectMeshProperties(VectorType currentFieldVariableVector, const FieldVariablesForOutputWriterType &fieldVariables,
+collectMeshProperties(VectorType currentFIeldVariableGradient, const FieldVariablesForOutputWriterType &fieldVariables,
                       std::map<std::string,PolyDataPropertiesForMesh> &meshProperties,
                       std::vector<std::string> &meshNamesVector, int i);
 
@@ -53,7 +53,7 @@ collectMeshProperties(VectorType currentFieldVariableVector, const FieldVariable
  */
 template<typename VectorType, typename FieldVariablesForOutputWriterType>
 typename std::enable_if<TypeUtility::isTuple<VectorType>::value, bool>::type
-collectMeshProperties(VectorType currentFieldVariableVector, const FieldVariablesForOutputWriterType &fieldVariables,
+collectMeshProperties(VectorType currentFIeldVariableGradient, const FieldVariablesForOutputWriterType &fieldVariables,
                       std::map<std::string,PolyDataPropertiesForMesh> &meshProperties,
                       std::vector<std::string> &meshNamesVector, int i);
 

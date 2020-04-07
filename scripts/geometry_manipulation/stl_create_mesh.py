@@ -331,7 +331,7 @@ def sample_border_points(loop, length, n_points, target_x, last_loop_start_point
   # determine start point
   center_point = sum(loop)/len(loop)
   if target_x is None:
-    target_x = 0   # plane x=target_x on which the start point will lie, it has to be ensured, that all rings touch this plane
+    target_x = 0.5*(loop[0][0]+loop[-1][0])   # plane x=target_x on which the start point will lie, it has to be ensured, that all rings touch this plane
   
   if debug:
     print("sample_border_points, loop with {} points, length: {}, sample {} points, target_x: {}, h: {}, last_loop_start_point:{}\n".format(len(loop), length, n_points, target_x, h, last_loop_start_point))
@@ -491,8 +491,12 @@ def sample_border_points(loop, length, n_points, target_x, last_loop_start_point
     loop_iteration_no += 1
     if loop_iteration_no == 2*len(loop):
       print("Warning: target plane y={} does not intersect loop, center_point: {}!".format(target_x, center_point))
-      target_x = center_point[0]
+      target_x = None
       loop_iteration_no = 0
+      last_loop_start_point = loop[0]
+      
+      # restart with last_loop_start_point set to the first point in the loop
+      return sample_border_points(loop, length, n_points, target_x, last_loop_start_point)
     
   if debug:
     p0 = border_points[0]
@@ -549,7 +553,7 @@ def rings_to_border_points(loops, n_points):
     if not loop:
       continue
     
-    # determine target_x
+    # determine target_x, the start point of the loop will lie on the plane x=target_x
     center_points = []
     smoothing_width = min(loop_no, len(sorted_loops)-loop_no-1, 5)
     for i in range(-smoothing_width,smoothing_width+1):
@@ -609,6 +613,9 @@ def create_planar_mesh(border_points, loop_no, n_points, \
   if debugging_stl_output:
     [out_triangulation_world_space, markers_border_points_world_space, out_triangulation_parametric_space, grid_triangles_world_space, grid_triangles_parametric_space,\
       markers_grid_points_parametric_space, markers_grid_points_world_space] = stl_triangle_lists
+    
+  if len(border_points) != n_points:
+    print("\nError in create_planar_mesh, n_points: {}, but {} border points given.\n border points: {}\n".format(n_points, len(border_points), border_points))
     
   # triangulate surface in world space
   points = np.reshape(border_points,(n_points,3))
@@ -1530,7 +1537,7 @@ def create_planar_mesh(border_points, loop_no, n_points, \
       return n_ccw >= 3
       
     def does_overlap(p0,p1p2,p3p4):
-      """ check if the triangles [p2 p0 p1] and [p4 p0 p3] overap """
+      """ check if the triangles [p2 p0 p1] and [p4 p0 p3] overlap """
       [p1,p2] = p1p2
       [p3,p4] = p3p4
       a14 = oriented_angle(-p0+p1,-p0+p4) 
@@ -1710,9 +1717,9 @@ def create_planar_mesh(border_points, loop_no, n_points, \
     factor = (extent_x*extent_y)/2 * 5e-3
     
     # try to resolve self-intersecting quadrilaterals
-    # loop over elements
-    for i in range(1,n_grid_points_x-2):
-      for j in range(1,n_grid_points_y-2):
+    # loop over all elements
+    for i in range(0,n_grid_points_x-1):
+      for j in range(0,n_grid_points_y-1):
         # p2 p3
         # p0 p1
         
@@ -1722,13 +1729,23 @@ def create_planar_mesh(border_points, loop_no, n_points, \
         p3 = grid_points_world_space_improved[(j+1)%n_grid_points_y*n_grid_points_x+(i+1)%n_grid_points_x]
   
         if not is_properly_oriented(p0,p1,p2,p3):
-          print("self intersection: p0=np.array({}); p1=np.array({}); p2=np.array({}); p3=np.array({}); ".format(p0,p1,p2,p3))
+          if output_fix:
+            print("self intersection: p0=np.array([{},{},{}]); p1=np.array([{},{},{}]); p2=np.array([{},{},{}]); p3=np.array([{},{},{}]) # {}+{}+{}+{}<3".format(p0[0],p0[1],p0[2],p1[0],p1[1],p1[2],p2[0],p2[1],p2[2],p3[0],p3[1],p3[2],(1 if ccw(p0,p1,p3) else 0),(1 if ccw(p1,p3,p2) else 0),(1 if ccw(p3,p2,p0) else 0),(1 if ccw(p2,p0,p1) else 0)))
+          else:
+            print("self intersection")
           
           indices = [(i,j),(i+1,j),(i,j+1),(i+1,j+1)]
           
           # loop over 4 points of element
           for k in range(4):
             (ii,jj) = indices[k]
+            
+            # do not consider border points, they cannot be changed
+            if ii <= 0 or jj <= 0 or ii >= n_grid_points_x-1 or jj >= n_grid_points_y-1:
+              continue
+            
+            if output_fix:
+              print("({},{})/({},{})".format(ii,jj,n_grid_points_x,n_grid_points_y))
             
             p = grid_points_world_space_improved[jj*n_grid_points_x+ii]
             p_old = np.array(p)
@@ -1778,13 +1795,15 @@ def create_planar_mesh(border_points, loop_no, n_points, \
               plt.savefig("out/{}_{}_areference_out_{}_{}.png".format(i,j,k,s))
                             
             n_tries = 0
+            size_factor = factor
             p_changed = np.array(p)
-            while (does_overlap(p_changed,[p1,p3],[p7,p5]) \
-              or not is_properly_oriented(p0,p1,p7,p_changed) or not is_properly_oriented(p1,p2,p_changed,p3) \
+            while (\
+              not is_properly_oriented(p0,p1,p7,p_changed) or not is_properly_oriented(p1,p2,p_changed,p3) \
               or not is_properly_oriented(p7,p_changed,p6,p5) or not is_properly_oriented(p_changed,p3,p5,p4)) \
-              and n_tries < 100:
+              and n_tries < 200:
               
-              p_changed = p + np.array([(random.random()-0.5)*factor, (random.random()-0.5)*factor, 0])
+              p_changed = p + np.array([(random.random()-0.5)*size_factor, (random.random()-0.5)*size_factor, 0])
+              size_factor *= 1.05    # 1.05**200 = 17292
               
               if output_fix:
                 plt.figure()
@@ -1807,8 +1826,8 @@ def create_planar_mesh(border_points, loop_no, n_points, \
                 plt.plot([p7[0],p_changed[0]], [p7[1],p_changed[1]], 'k-')
                 
                 s = ""
-                if does_overlap(p,[p1,p3],[p7,p5]):
-                  s += "e"
+                #if does_overlap(p,[p1,p3],[p7,p5]):
+                #  s += "e"
                 if not is_properly_oriented(p0,p1,p7,p_changed):
                   s += "f"
                 if not is_properly_oriented(p1,p2,p_changed,p3):
@@ -1818,15 +1837,18 @@ def create_planar_mesh(border_points, loop_no, n_points, \
                 if not is_properly_oriented(p_changed,p3,p5,p4):
                   s += "i"
                 
-                plt.savefig("out/{}_{}_out_{}_{}_{}.png".format(i,j,k,n_tries,s))
+                plt.savefig("out/{}_{}_out_{}_{}_{}_{}.png".format(i,j,k,n_tries,size_factor,s))
+                plt.close()
                 
               n_tries += 1
             
-            if n_tries < 10:
-              #print("successfully resolved self-intersection")
+            if n_tries < 200:
+              print("successfully resolved self-intersection after {} iterations".format(n_tries))
               grid_points_world_space_improved[jj*n_grid_points_x+ii] = p_changed
               
               break
+            else:
+              print("self-intersection was not resolved after {} iterations".format(n_tries))
           
           if output_fix:
             p0 = grid_points_world_space_improved[j*n_grid_points_x+i]

@@ -22,87 +22,25 @@ findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::ar
   // set starting no to 0 if it was not given and is thus arbitrarily initialized
   if (elementNoLocal < 0 || elementNoLocal >= nElements)
     elementNoLocal = 0;
-
+  
+  // get the submesh of the given elementNoLocal
   int subMeshOfElementSubmeshNo = 0;
+  element_no_t elementOnMeshNoLocal = 0;
+  this->meshPartition_->getSubMeshNoAndElementNoLocal(elementNoLocal, subMeshOfElementSubmeshNo, elementOnMeshNoLocal);
 
-  // if the search should start in the current element given by elementNoLocal
-  if (startSearchInCurrentElement)
-  {
-    FunctionSpaceStructuredFindPositionBase<MeshType,BasisFunctionType> *functionSpace = this;
-
-    // check if point is already in current element
-    if (functionSpace->pointIsInElement(point, elementNoLocal, xi, residual, xiTolerance))
-    {
-
-      // debugging output
-      if (VLOG_IS_ON(2) && MeshType::dim() == 3)
-      {
-        // check for element size
-        const int nDofsPerElement = FunctionSpace<MeshType,BasisFunctionType>::nDofsPerElement();
-        std::array<Vec3,nDofsPerElement> elementalNodePositions;
-        this->geometryField().getElementValues(elementNoLocal, elementalNodePositions);
-
-        // get bounding box of element
-        double xMin = elementalNodePositions[0][0];
-        double xMax = elementalNodePositions[0][0];
-        double yMin = elementalNodePositions[0][1];
-        double yMax = elementalNodePositions[0][1];
-        double zMin = elementalNodePositions[0][2];
-        double zMax = elementalNodePositions[0][2];
-
-        for (Vec3 &elementalNodePosition : elementalNodePositions)
-        {
-          xMin = std::min(xMin, elementalNodePosition[0]);
-          xMax = std::max(xMax, elementalNodePosition[0]);
-          yMin = std::min(yMin, elementalNodePosition[1]);
-          yMax = std::max(yMax, elementalNodePosition[1]);
-          zMin = std::min(zMin, elementalNodePosition[2]);
-          zMax = std::max(zMax, elementalNodePosition[2]);
-        }
-
-        //double xLength = xMax - xMin;
-        //double yLength = yMax - yMin;
-        //douuble zLength = zMax - zMin;
-
-        VLOG(1) << "point " << point << " is in element " << elementNoLocal << ", which has "
-          << "bounding box x: [" << xMin << "," << xMax << "], y: [" << yMin << "," << yMax << "], z: [" << zMin << "," << zMax << "]";
-      }
-
-      return true;
-    }
-
-    // point is not in current element, consider the neighbouring elements and ghost meshes
-
-    VLOG(2) << "point is not in current element " << elementNoLocal << " or startSearchInCurrentElement is false (" << startSearchInCurrentElement << "), now check neighbouring elements";
-
-    // search in the current submesh
-    element_no_t elementOnMeshNoLocal = 0;
-    this->meshPartition_->getSubMeshNoAndElementNoLocal(elementNoLocal, subMeshOfElementSubmeshNo, elementOnMeshNoLocal);
-
-    bool nodeFound = this->subFunctionSpaces_[subMeshOfElementSubmeshNo]->findPosition(point, elementOnMeshNoLocal, ghostMeshNo, xi,
-                                                                                       startSearchInCurrentElement, residual, xiTolerance);
-    if (nodeFound)
-    {
-      // transform elementOnMeshNoLocal, which is the element local no in the subMesh based numbering to the composite numbering
-      elementNoLocal = this->meshPartition_->getElementNoLocalFromSubmesh(subMeshOfElementSubmeshNo, elementOnMeshNoLocal);
-
-      return true;
-    }
-    else
-    {
-      VLOG(2) << "(returning from recursion), Point was not found in the entire submesh no " << subMeshOfElementSubmeshNo << ", xi: " << xi << ", now check all elements";
-    }
-  }
+  bool firstIteration = true;
 
   // search among all elements in submeshes other than subMeshNo (because it was already searched there)
-  for (int subMeshNo = 0; subMeshNo < this->subFunctionSpaces_.size(); subMeshNo++)
+  for (int subMeshNo = subMeshOfElementSubmeshNo; subMeshNo != subMeshOfElementSubmeshNo || firstIteration; subMeshNo++)
   {
-    if (subMeshNo == subMeshOfElementSubmeshNo)
-      continue;
+    if (subMeshNo == this->subFunctionSpaces_.size())
+    {
+      subMeshNo = 0;
+    }
 
     element_no_t elementOnMeshNoLocal = 0;
     bool nodeFound = this->subFunctionSpaces_[subMeshNo]->findPosition(point, elementOnMeshNoLocal, ghostMeshNo, xi,
-                                                                       false, residual, xiTolerance);
+                                                                       startSearchInCurrentElement, residual, xiTolerance);
     if (nodeFound)
     {
       // transform elementOnMeshNoLocal, which is the element local no in the subMesh based numbering to the composite numbering
@@ -110,6 +48,11 @@ findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::ar
 
       return true;
     }
+
+    // if point was not found in first submesh, do not start from the given element no in the next submesh
+    startSearchInCurrentElement = false;
+
+    firstIteration = false;
   }
 
   VLOG(1) << "Could not find any containing element";

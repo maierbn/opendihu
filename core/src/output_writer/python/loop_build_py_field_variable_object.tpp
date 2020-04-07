@@ -97,10 +97,10 @@ buildPyFieldVariableObject(CurrentFieldVariableType currentFieldVariable, int &f
 // element i is of vector type
 template<typename VectorType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
-buildPyFieldVariableObject(VectorType currentFieldVariableVector, int &fieldVariableIndex, std::string meshName,
+buildPyFieldVariableObject(VectorType currentFIeldVariableGradient, int &fieldVariableIndex, std::string meshName,
                            PyObject *pyData, bool onlyNodalValues, std::shared_ptr<Mesh::Mesh> &mesh)
 {
-  for (auto& currentFieldVariable : currentFieldVariableVector)
+  for (auto& currentFieldVariable : currentFIeldVariableGradient)
   {
     // call function on all vector entries
     if (buildPyFieldVariableObject<typename VectorType::value_type>(currentFieldVariable, fieldVariableIndex, meshName, pyData, onlyNodalValues, mesh))

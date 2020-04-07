@@ -132,6 +132,11 @@ public:
   template<typename FieldVariableTargetType>
   void finalizeMappingLowToHigh(std::shared_ptr<FieldVariableTargetType> fieldVariableTarget);
 
+  //! check if the mapping from source to target mesh exists
+  template<typename FunctionSpaceSourceType, typename FunctionSpaceTargetType>  
+  bool hasMappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSource,
+                               std::shared_ptr<FunctionSpaceTargetType> functionSpaceTarget);
+
   //! get the mapping from source mesh to target mesh, create it if it does not yet exist
   template<typename FunctionSpaceSourceType, typename FunctionSpaceTargetType>
   std::shared_ptr<MappingBetweenMeshes<typename FunctionSpaceSourceType::FunctionSpace, typename FunctionSpaceTargetType::FunctionSpace>>
@@ -163,6 +168,9 @@ protected:
   //! create MappingBetweenMeshes objects from the config and store them under mappingsBetweenMeshes_
   void storeMappingsBetweenMeshes();
 
+  //! create a single MappingBetweenMeshes object, targetMeshPy still needs to be parsed
+  void storeMappingBetweenMeshes(std::string sourceMeshName, PyObject *targetMeshPy);
+
   //! indicate that on the mesh with name, "initialize()" has been called and now check if mappingsBetweenMeshes_ can be initialized
   void checkInitializeMappingBetweenMeshes(std::string name);
 
@@ -178,6 +186,8 @@ protected:
   {
     std::shared_ptr<MappingBetweenMeshesBase> mapping;   //< the actual mapping between the two meshes
     double xiTolerance;         //< the xiTolerance setting, 0 for disabled
+    bool enableWarnings;        //< if warnings should be shown if source dofs are outside the target mesh with the given xi tolerance
+    bool compositeUseOnlyInitializedMappings;   //< if for composite source meshes the mapping should be created from also defined mappings from the sub meshes
   };
 
   std::map<std::string, std::shared_ptr<FieldVariable::FieldVariableBase>> targetFactorSum_;    ///< for every target function space the field variable which accumulates the interpolation factors

@@ -31,22 +31,19 @@
  */
 
 template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType, int nDisplacementComponents = 3>
-class PartitionedPetscMatForHyperelasticity :
+class PartitionedPetscMatForHyperelasticityBase :
   public PartitionedPetscMatOneComponent<FunctionSpace::Generic, FunctionSpace::Generic>
 {
 public:
 
   //! constructor, create square sparse matrix, the number of entries is given by partitionedPetscVecForHyperelasticity
-  PartitionedPetscMatForHyperelasticity(
+  PartitionedPetscMatForHyperelasticityBase(
     std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,nDisplacementComponents>> partitionedPetscVecForHyperelasticity,
     int nNonZerosDiagonal, int nNonZerosOffdiagonal,
     std::string name);
 
   //! this is the only special set function to set entries in the jacobian matrix.
   void setValue(int componentNoRow, PetscInt row, int componentNoColumn, PetscInt column, PetscScalar value, InsertMode mode);
-
-  //! output the matrix to the file in globalNatural ordering, it has the same form regardless of number of ranks and therefore can be used to compare output with different ranks
-  void dumpMatrixGlobalNatural(std::string filename);
 
   //! get a submatrix of this matrix. If nDisplacementComponents == 6, rowVariableNo and columnVariableNo can be 0,1 or 2 to select U,V or P.
   //! If the matrix does not contain velocities and nDisplacementComponents == 3, rowVariableNo and columnVariableNo can be 0 or 1.
@@ -57,6 +54,39 @@ protected:
 
   std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,nDisplacementComponents>>
     partitionedPetscVecForHyperelasticity_;     //< one instance of the corresponding PartitionedPetscVecForHyperelasticity class, which handles all numbering
+};
+
+/** Class that adds possibility to dump matrix
+ *  This is only possible for structured meshes, not for composite structured meshes
+ */
+template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType, int nDisplacementComponents = 3>
+class PartitionedPetscMatForHyperelasticity :
+  public PartitionedPetscMatForHyperelasticityBase<DisplacementsFunctionSpaceType, PressureFunctionSpaceType, nDisplacementComponents>
+{
+public:
+  using PartitionedPetscMatForHyperelasticityBase<DisplacementsFunctionSpaceType, PressureFunctionSpaceType, nDisplacementComponents>::PartitionedPetscMatForHyperelasticityBase;
+
+  //! output the matrix to the file in globalNatural ordering, it has the same form regardless of number of ranks and therefore can be used to compare output with different ranks
+  void dumpMatrixGlobalNatural(std::string filename){}
+};
+
+/** class that adds possibility to dump matrix, only for structured meshes, not composite meshes
+ */
+template<typename PressureFunctionSpaceType, int nDisplacementComponents>
+class PartitionedPetscMatForHyperelasticity<
+  FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>,BasisFunction::LagrangeOfOrder<2>>,
+  PressureFunctionSpaceType,
+  nDisplacementComponents
+> :
+  public PartitionedPetscMatForHyperelasticityBase<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>,BasisFunction::LagrangeOfOrder<2>>, PressureFunctionSpaceType, nDisplacementComponents>
+{
+public:
+  typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>,BasisFunction::LagrangeOfOrder<2>> DisplacementsFunctionSpaceType;
+
+  using PartitionedPetscMatForHyperelasticityBase<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>,BasisFunction::LagrangeOfOrder<2>>, PressureFunctionSpaceType, nDisplacementComponents>::PartitionedPetscMatForHyperelasticityBase;
+
+  //! output the matrix to the file in globalNatural ordering, it has the same form regardless of number of ranks and therefore can be used to compare output with different ranks
+  void dumpMatrixGlobalNatural(std::string filename);
 };
 
 #include "partition/partitioned_petsc_mat/partitioned_petsc_mat_for_hyperelasticity.tpp"

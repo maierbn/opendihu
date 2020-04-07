@@ -41,14 +41,14 @@ loopOutputPointData(const FieldVariablesForOutputWriterType &fieldVariables, std
  */
 template<typename VectorType, typename FieldVariablesForOutputWriterType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
-outputPointData(VectorType currentFieldVariableVector, const FieldVariablesForOutputWriterType &fieldVariables, std::string meshName, 
+outputPointData(VectorType currentFIeldVariableGradient, const FieldVariablesForOutputWriterType &fieldVariables, std::string meshName, 
                 std::ofstream &file, bool binaryOutput, bool fixedFormat, bool onlyParallelDatasetElement);
 
 /** Loop body for a tuple element
  */
 template<typename VectorType, typename FieldVariablesForOutputWriterType>
 typename std::enable_if<TypeUtility::isTuple<VectorType>::value, bool>::type
-outputPointData(VectorType currentFieldVariableVector, const FieldVariablesForOutputWriterType &fieldVariables, std::string meshName, 
+outputPointData(VectorType currentFIeldVariableGradient, const FieldVariablesForOutputWriterType &fieldVariables, std::string meshName, 
                 std::ofstream &file, bool binaryOutput, bool fixedFormat, bool onlyParallelDatasetElement);
 
  /**  Loop body for a pointer element

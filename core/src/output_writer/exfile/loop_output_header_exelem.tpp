@@ -48,10 +48,10 @@ outputHeaderExelem(CurrentFieldVariableType currentFieldVariable, int &fieldVari
 // element i is of vector type
 template<typename VectorType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
-outputHeaderExelem(VectorType currentFieldVariableVector, int &fieldVariableIndex, std::string meshName, 
+outputHeaderExelem(VectorType currentFIeldVariableGradient, int &fieldVariableIndex, std::string meshName, 
                    std::ostream &stream, element_no_t currentFieldVariableGlobalNo)
 {
-  for (auto& currentFieldVariable : currentFieldVariableVector)
+  for (auto& currentFieldVariable : currentFIeldVariableGradient)
   {
     // call function on all vector entries
     if (outputHeaderExelem<typename VectorType::value_type>(currentFieldVariable, fieldVariableIndex, meshName, stream, currentFieldVariableGlobalNo))

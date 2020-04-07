@@ -38,7 +38,7 @@ loopCheckIfNewExelemHeaderNecessary(const FieldVariablesForOutputWriterType &fie
  */
 template<typename VectorType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
-checkIfNewExelemHeaderNecessary(VectorType currentFieldVariableVector, std::string meshName, 
+checkIfNewExelemHeaderNecessary(VectorType currentFIeldVariableGradient, std::string meshName, 
                                 element_no_t currentFieldVariableGlobalNo, bool &newHeaderNecessary);
 
 
@@ -46,7 +46,7 @@ checkIfNewExelemHeaderNecessary(VectorType currentFieldVariableVector, std::stri
  */
 template<typename VectorType>
 typename std::enable_if<TypeUtility::isTuple<VectorType>::value, bool>::type
-checkIfNewExelemHeaderNecessary(VectorType currentFieldVariableVector, std::string meshName, 
+checkIfNewExelemHeaderNecessary(VectorType currentFIeldVariableGradient, std::string meshName, 
                                 element_no_t currentFieldVariableGlobalNo, bool &newHeaderNecessary);
 
  /**  Loop body for a pointer element

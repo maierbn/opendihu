@@ -18,7 +18,7 @@ struct ExtractComponentShared
 
 template<typename FieldVariableSourceType, typename FieldVariableTargetType>
 struct ExtractComponentShared<FieldVariableSourceType,FieldVariableTargetType,
-  typename std::enable_if<FieldVariableTargetType::nComponents() == 1 && FieldVariableSourceType::FunctionSpace::dim() == FieldVariableTargetType::FunctionSpace::dim() 
+  typename std::enable_if<FieldVariableTargetType::nComponents() == 1 && std::is_same<typename FieldVariableSourceType::FunctionSpace,typename FieldVariableTargetType::FunctionSpace>::value
      && std::is_same<typename FieldVariableSourceType::FunctionSpace::BasisFunction,typename FieldVariableTargetType::FunctionSpace::BasisFunction>::value,void>::type
 >
 {
@@ -43,7 +43,7 @@ struct ExtractComponentCopy
 
 template<typename FieldVariableSourceType, typename FieldVariableTargetType>
 struct ExtractComponentCopy<FieldVariableSourceType,FieldVariableTargetType,
-  typename std::enable_if<FieldVariableTargetType::nComponents() == 1 && FieldVariableSourceType::FunctionSpace::dim() == FieldVariableTargetType::FunctionSpace::dim() 
+  typename std::enable_if<FieldVariableTargetType::nComponents() == 1 && std::is_same<typename FieldVariableSourceType::FunctionSpace,typename FieldVariableTargetType::FunctionSpace>::value
      && std::is_same<typename FieldVariableSourceType::FunctionSpace::BasisFunction,typename FieldVariableTargetType::FunctionSpace::BasisFunction>::value,void>::type
 >
 {
@@ -67,8 +67,7 @@ struct RestoreExtractedComponent
 
 template<typename FieldVariableSourceType, typename FieldVariableTargetType>
 struct RestoreExtractedComponent<FieldVariableSourceType,FieldVariableTargetType,
-  typename std::enable_if<FieldVariableTargetType::FunctionSpace::dim() == FieldVariableSourceType::FunctionSpace::dim() 
-     && std::is_same<typename FieldVariableSourceType::FunctionSpace::BasisFunction,typename FieldVariableTargetType::FunctionSpace::BasisFunction>::value,void>::type
+  typename std::enable_if<std::is_same<typename FieldVariableSourceType::FunctionSpace,typename FieldVariableTargetType::FunctionSpace>::value,void>::type
 >
 {
   static void call(std::shared_ptr<FieldVariableSourceType> fieldVariableSource, std::shared_ptr<FieldVariableTargetType> fieldVariableTarget, int componentNoTarget)

@@ -147,6 +147,9 @@ class FunctionSpaceDofsNodes<Mesh::CompositeOfDimension<D>,BasisFunctionType> :
   public std::enable_shared_from_this<FunctionSpaceDofsNodes<Mesh::CompositeOfDimension<D>,BasisFunctionType>>
 {
 public:
+
+  using FunctionSpaceGeometry<Mesh::CompositeOfDimension<D>,BasisFunctionType>::FunctionSpaceGeometry;
+
   //! constructor from sub function spaces, it is possible to create a basisOnMesh object without geometry field, e.g. for the lower order mesh of a mixed formulation
   FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager,
                          std::vector<std::shared_ptr<FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>> subFunctionSpaces, bool noGeometryField=false);

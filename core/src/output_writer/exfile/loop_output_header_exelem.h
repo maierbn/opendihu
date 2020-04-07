@@ -41,14 +41,14 @@ loopOutputHeaderExelem(const FieldVariablesForOutputWriterType &fieldVariables, 
  */
 template<typename VectorType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
-outputHeaderExelem(VectorType currentFieldVariableVector, int &fieldVariableIndex, std::string meshName, 
+outputHeaderExelem(VectorType currentFIeldVariableGradient, int &fieldVariableIndex, std::string meshName, 
                    std::ostream &stream, element_no_t currentFieldVariableGlobalNo);
 
 /** Loop body for a tuple element
  */
 template<typename VectorType>
 typename std::enable_if<TypeUtility::isTuple<VectorType>::value, bool>::type
-outputHeaderExelem(VectorType currentFieldVariableVector, int &fieldVariableIndex, std::string meshName, 
+outputHeaderExelem(VectorType currentFIeldVariableGradient, int &fieldVariableIndex, std::string meshName, 
                    std::ostream &stream, element_no_t currentFieldVariableGlobalNo);
 
  /**  Loop body for a pointer element

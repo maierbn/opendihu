@@ -41,9 +41,9 @@ collectMeshNames(CurrentFieldVariableType currentFieldVariable, std::set<std::st
 // element i is of vector type
 template<typename VectorType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
-collectMeshNames(VectorType currentFieldVariableVector, std::set<std::string> &meshNames)
+collectMeshNames(VectorType currentFIeldVariableGradient, std::set<std::string> &meshNames)
 {
-  for (auto& currentFieldVariable : currentFieldVariableVector)
+  for (auto& currentFieldVariable : currentFIeldVariableGradient)
   {
     // call function on all vector entries
     if (collectMeshNames<typename VectorType::value_type>(currentFieldVariable, meshNames))

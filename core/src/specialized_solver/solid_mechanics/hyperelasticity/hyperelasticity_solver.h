@@ -12,6 +12,7 @@
 #include "output_writer/manager.h"
 #include "spatial_discretization/boundary_conditions/dirichlet_boundary_conditions.h"
 #include "spatial_discretization/boundary_conditions/neumann_boundary_conditions.h"
+#include "specialized_solver/solid_mechanics/hyperelasticity/pressure_function_space_creator.h"
 
 namespace SpatialDiscretization
 {

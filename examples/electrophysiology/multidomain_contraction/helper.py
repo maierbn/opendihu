@@ -305,17 +305,30 @@ variables.meshes["3DFatMesh"] = {
   "logKey": "3DFatMesh"
 }
 
+fat_mesh_quadratic_n_elements = [
+  fat_mesh_n_elements[0]/2,
+  fat_mesh_n_elements[1]/2,
+  fat_mesh_n_elements[2]/2
+]
+
+print("fat_mesh_n_elements:           {}".format(fat_mesh_n_elements))
+print("fat_mesh_quadratic_n_elements: {}".format(fat_mesh_quadratic_n_elements))
+
+variables.meshes["3DFatMesh_quadratic"] = {
+  "nElements": fat_mesh_quadratic_n_elements,
+  "nRanks": fat_mesh_n_ranks,
+  "rankNos": variables.fat_global_rank_nos,
+  "nodePositions": fat_mesh_node_positions_local,
+  "inputMeshIsGlobal": False,
+  "setHermiteDerivatives": False,
+  "logKey": "3DFatMesh_quadratic"
+}
+
 if False:
   print("settings 3DFatMesh: ")
   #print(str(variables.meshes["3Dmesh"]))
   with open("3Dmesh_{}".format(rank_no),"w") as f:
     f.write(str(variables.meshes["3Dmesh"]))
-
-# create mappings between meshes
-#variables.mappings_between_meshes = {"MeshFiber_{}".format(i) : "3Dmesh" for i in range(variables.n_fibers_total)}
-#variables.mappings_between_meshes = {"MeshFiber_{}".format(i) : {"name": "3Dmesh", "xiTolerance": 1e-3} for i in range(variables.n_fibers_total)}
-variables.mappings_between_meshes = {"3Dmesh": "3Dmesh_quadratic"}
-#variables.mappings_between_meshes.update({"3Dmesh_quadratic": "3Dmesh"})
 
 print("created meshes {}".format(list(variables.meshes.keys())))
 

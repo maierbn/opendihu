@@ -12,6 +12,7 @@ Nonlinear::Nonlinear(PythonConfig specificSettings, MPI_Comm mpiCommunicator, st
   snesRelativeTolerance_ = this->specificSettings_.getOptionDouble("snesRelativeTolerance", 1e-10, PythonUtility::Positive);
   snesMaxIterations_ = this->specificSettings_.getOptionDouble("snesMaxIterations", 50, PythonUtility::Positive);
   snesMaxFunctionEvaluations_ = this->specificSettings_.getOptionDouble("snesMaxFunctionEvaluations", 1000, PythonUtility::Positive);
+  snesRebuildJacobianFrequency_ = this->specificSettings_.getOptionDouble("snesRebuildJacobianFrequency", 5);
   snesLineSearchType_ = this->specificSettings_.getOptionString("snesLineSearchType", "l2");
 
   // assert that snesLineSearchType_ has a valid type: https://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/SNES/SNESLineSearchType.html#SNESLineSearchType
@@ -28,6 +29,9 @@ Nonlinear::Nonlinear(PythonConfig specificSettings, MPI_Comm mpiCommunicator, st
 
   // PetscErrorCode  SNESSetTolerances(SNES snes,PetscReal abstol,PetscReal rtol,PetscReal stol,PetscInt maxit,PetscInt maxf)
   ierr = SNESSetTolerances(*snes_, snesAbsoluteTolerance_, snesRelativeTolerance_, PETSC_DEFAULT, snesMaxIterations_, snesMaxFunctionEvaluations_); CHKERRV(ierr);
+
+  // set option how often jacobian will be recomputed
+  ierr = SNESSetLagJacobian(*snes_, snesRebuildJacobianFrequency_); CHKERRV(ierr);
 
   // set options from command line as specified by PETSc
   ierr = SNESSetFromOptions(*snes_); CHKERRV(ierr);

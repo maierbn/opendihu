@@ -1,6 +1,6 @@
 #pragma once
 
-#include "field_variable/08_field_variable_vector.h"
+#include "field_variable/08_field_variable_gradient.h"
 
 namespace FieldVariable
 {
@@ -9,18 +9,18 @@ namespace FieldVariable
  */
 template<typename FunctionSpaceType,int nComponents>
 class FieldVariableComposite :
-  public FieldVariableVector<FunctionSpaceType,nComponents>
+  public FIeldVariableGradient<FunctionSpaceType,nComponents>
 {
 public:
   //! inherited constructor
-  using FieldVariableVector<FunctionSpaceType,nComponents>::FieldVariableVector;
+  using FIeldVariableGradient<FunctionSpaceType,nComponents>::FIeldVariableGradient;
 };
 
 /** Partial specialization for field variable with composite mesh
  */
 template<int D,typename BasisFunctionType,int nComponents>
 class FieldVariableComposite<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,nComponents> :
-  public FieldVariableVector<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,nComponents>
+  public FIeldVariableGradient<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,nComponents>
 {
 public:
 
@@ -28,7 +28,7 @@ public:
   typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>, BasisFunctionType> SubFunctionSpaceType;
 
   //! inherited constructor
-  using FieldVariableVector<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,nComponents>::FieldVariableVector;
+  using FIeldVariableGradient<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,nComponents>::FIeldVariableGradient;
 
   //! split this field variables into field variables for the sub function space and set the corresponding values
   void getSubFieldVariables(std::vector<std::shared_ptr<FieldVariable<SubFunctionSpaceType, nComponents>>> &subFieldVariables);

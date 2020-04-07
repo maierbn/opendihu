@@ -21,9 +21,10 @@ basename=${filename%.stl}     # left_triceps_brachii
 
 # define directories
 current_directory=$(pwd)
-parallel_fiber_estimation_directory=$(pwd)/../../parallel_fiber_estimation
 opendihu_directory=$(pwd)/../../..
-pyod=$opendihu_directory/dependencies/python/install/bin/python3
+parallel_fiber_estimation_directory=${opendihu_directory}/examples/fiber_tracing/parallel_fiber_estimation
+stl_utility_directory=${opendihu_directory}/scripts/stl_utility
+pyod=${opendihu_directory}/dependencies/python/install/bin/python3
 
 mkdir -p processed_meshes
 
@@ -36,7 +37,7 @@ echo ""
 echo "--- Scale mesh from mm to cm."
 if [[ ! -f "original_meshes/cm_${basename}.stl" ]]; then
   echo "create file \"original_meshes/cm_${basename}.stl\""
-  $pyod ./stl_utility/scale_stl.py ${input_file} original_meshes/cm_${basename}.stl 0.1 0.1 0.1
+  $pyod ${stl_utility_directory}/scale_stl.py ${input_file} original_meshes/cm_${basename}.stl 0.1 0.1 0.1
 else
   echo "File \"original_meshes/cm_${basename}.stl\" already exists, do not create again."
 fi
@@ -46,24 +47,24 @@ echo ""
 echo "--- Remove inside triangles, this will take long"
 if [[ ! -f "processed_meshes/${basename}_01_no_inside_triangles.stl" ]]; then
   echo "create file \"processed_meshes/${basename}_01_no_inside_triangles.stl\""
-  $pyod ./stl_utility/remove_inside_triangles.py original_meshes/cm_${basename}.stl processed_meshes/${basename}_01_no_inside_triangles.stl
+  $pyod ${stl_utility_directory}/remove_inside_triangles.py original_meshes/cm_${basename}.stl processed_meshes/${basename}_01_no_inside_triangles.stl
 else
   echo "File \"processed_meshes/${basename}_01_no_inside_triangles.stl\" already exists, do not create again."
 fi
-$pyod ./stl_utility/stl_to_binary.py \
+$pyod ${stl_utility_directory}/stl_to_binary.py \
   processed_meshes/${basename}_01_no_inside_triangles.stl \
   processed_meshes/${basename}_02_no_inside_triangles_binary.stl
 
 # move mesh such that bottom is at 0
 echo ""
 echo "--- Move geometry such that bottom is at z=0."
-bottom_bounding_box_value=`./stl_utility/get_bottom_bounding_box_value.py processed_meshes/${basename}_02_no_inside_triangles_binary.stl`
+bottom_bounding_box_value=`${stl_utility_directory}/get_bottom_bounding_box_value.py processed_meshes/${basename}_02_no_inside_triangles_binary.stl`
 echo "Bottom bounding box value is ${bottom_bounding_box_value}"
 
 translate_value=`python -c "print(-${bottom_bounding_box_value})"`
 echo "Negative bottom bounding box value is ${translate_value}"  # 63.5
 
-$pyod ./stl_utility/translate_stl.py \
+$pyod ${stl_utility_directory}/translate_stl.py \
   processed_meshes/${basename}_02_no_inside_triangles_binary.stl \
   processed_meshes/${basename}_03_bottom_at_zero.stl \
   0 0 ${translate_value}

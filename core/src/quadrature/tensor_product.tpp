@@ -9,7 +9,8 @@ template<unsigned int D, typename Quadrature>
 constexpr int TensorProductBase<D,Quadrature>::
 numberEvaluations()
 {
-  return MathUtility::pow(Quadrature::numberEvaluations(),D);
+  // compile-time power function
+  return MathUtility::powConst(Quadrature::numberEvaluations(),D);
 }
 
 // 1D sampling points

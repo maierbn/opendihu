@@ -43,6 +43,9 @@ public:
   void setValue(int componentNo, PetscInt row, PetscInt col, PetscScalar value, InsertMode mode);
 
   //! wrapper of MatSetValues for a single value, sets a local value in the matrix
+  void setValue(int componentNo, Vc::int_v row, Vc::int_v columns, PetscScalar value, InsertMode mode);
+
+  //! wrapper of MatSetValues for a single value, sets a local value in the matrix
   template<int nComponents>
   void setValue(PetscInt row, PetscInt col, std::array<double,nComponents> value, InsertMode mode);
 

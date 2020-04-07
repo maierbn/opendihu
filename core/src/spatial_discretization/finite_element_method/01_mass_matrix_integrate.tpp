@@ -33,11 +33,18 @@ setMassMatrix()
   typedef Quadrature::TensorProduct<D,QuadratureType> QuadratureDD;
   const int nDofsPerElement = FunctionSpaceType::nDofsPerElement();
   const int nUnknowsPerElement = nDofsPerElement*nComponents;
-  typedef MathUtility::Matrix<nUnknowsPerElement,nUnknowsPerElement> EvaluationsType;
+  typedef MathUtility::Matrix<nUnknowsPerElement,nUnknowsPerElement,double_v_t> EvaluationsType;
   typedef std::array<
             EvaluationsType,
             QuadratureDD::numberEvaluations()
           > EvaluationsArrayType;     // evaluations[nGP^D][nDofs][nDofs]
+
+  // setup arrays used for integration
+  std::array<std::array<double,D>, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
+  EvaluationsArrayType evaluationsArray{};
+
+  LOG(DEBUG) << "1D integration with " << QuadratureType::numberEvaluations() << " evaluations";
+  LOG(DEBUG) << D << "D integration with " << QuadratureDD::numberEvaluations() << " evaluations";
 
   // initialize variables
   std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> massMatrix = this->data_.massMatrix();
@@ -46,11 +53,31 @@ setMassMatrix()
   functionSpace->geometryField().setRepresentationGlobal();
   functionSpace->geometryField().startGhostManipulation();   // ensure that local ghost values of geometry field are set
 
+  element_no_t nElementsLocal = functionSpace->nElementsLocal();
+
   // initialize values to zero
-  // loop over elements
-  for (element_no_t elementNo = 0; elementNo < functionSpace->nElementsLocal(); elementNo++)
+  // loop over elements, always 4 elements at once using the vectorized functions
+  for (int elementNoLocal = 0; elementNoLocal < nElementsLocal; elementNoLocal += nVcComponents)
   {
-    std::array<dof_no_t,nDofsPerElement> dofNosLocal = functionSpace->getElementDofNosLocal(elementNo);
+
+#ifdef USE_VC
+    // get indices of elementNos that should be handled in the current iterations,
+    // this is, e.g.
+    //    [10,11,12,13,-1,-1,-1,-1] (if nVcComponents==4 and nElementsLocal > 13)
+    // or [10,11,12,-1,-1,-1,-1,-1] (if nVcComponents==4 and nElementsLocal == 13)
+
+    dof_no_v_t elementNoLocalv([elementNoLocal, nElementsLocal](int i)
+    {
+      return (i >= nVcComponents || elementNoLocal+i >= nElementsLocal? -1: elementNoLocal+i);
+    });
+
+    // here, elementNoLocalv is the list of indices of the current iteration, e.g. [10,11,12,13,-1,-1,-1,-1]
+    // elementNoLocal is the first entry of elementNoLocalv
+#else
+    int elementNoLocalv = elementNoLocal;
+#endif
+
+    std::array<dof_no_v_t,nDofsPerElement> dofNosLocal = functionSpace->getElementDofNosLocal(elementNoLocalv);
 
     for (int i = 0; i < nDofsPerElement; i++)
     {
@@ -71,23 +98,33 @@ setMassMatrix()
   }
   massMatrix->assembly(MAT_FLUSH_ASSEMBLY);
 
-  // setup arrays used for integration
-  std::array<std::array<double,D>, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
-  EvaluationsArrayType evaluationsArray{};
-
-  LOG(DEBUG) << "1D integration with " << QuadratureType::numberEvaluations() << " evaluations";
-  LOG(DEBUG) << D << "D integration with " << QuadratureDD::numberEvaluations() << " evaluations";
-
   // set entries in massMatrix
-  // loop over elements
-  for (element_no_t elementNo = 0; elementNo < functionSpace->nElementsLocal(); elementNo++)
+  // loop over elements, always 4 elements at once using the vectorized functions
+  for (int elementNoLocal = 0; elementNoLocal < nElementsLocal; elementNoLocal += nVcComponents)
   {
+
+#ifdef USE_VC
+    // get indices of elementNos that should be handled in the current iterations,
+    // this is, e.g.
+    //    [10,11,12,13,-1,-1,-1,-1] (if nVcComponents==4 and nElementsLocal > 13)
+    // or [10,11,12,-1,-1,-1,-1,-1] (if nVcComponents==4 and nElementsLocal == 13)
+
+    dof_no_v_t elementNoLocalv([elementNoLocal, nElementsLocal](int i)
+    {
+      return (i >= nVcComponents || elementNoLocal+i >= nElementsLocal? -1: elementNoLocal+i);
+    });
+
+    // here, elementNoLocalv is the list of indices of the current iteration, e.g. [10,11,12,13,-1,-1,-1,-1]
+    // elementNoLocal is the first entry of elementNoLocalv
+#else
+    int elementNoLocalv = elementNoLocal;
+#endif
     // get indices of element-local dofs
-    std::array<dof_no_t,nDofsPerElement> dofNosLocal = functionSpace->getElementDofNosLocal(elementNo);
+    std::array<dof_no_v_t,nDofsPerElement> dofNosLocal = functionSpace->getElementDofNosLocal(elementNoLocalv);
 
     // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
-    std::array<Vec3,FunctionSpaceType::nDofsPerElement()> geometry;
-    functionSpace->getElementGeometry(elementNo, geometry);
+    std::array<Vec3_v_t,FunctionSpaceType::nDofsPerElement()> geometry;
+    functionSpace->getElementGeometry(elementNoLocalv, geometry);
 
     // compute integral
     for (unsigned int samplingPointIndex = 0; samplingPointIndex < samplingPoints.size(); samplingPointIndex++)
@@ -99,7 +136,7 @@ setMassMatrix()
       auto jacobian = FunctionSpaceType::computeJacobian(geometry, xi);
 
       // get evaluations of integrand which is defined in another class
-      evaluationsArray[samplingPointIndex] = IntegrandMassMatrix<D,EvaluationsType,FunctionSpaceType,nComponents,Term>::evaluateIntegrand(jacobian,xi);
+      evaluationsArray[samplingPointIndex] = IntegrandMassMatrix<D,EvaluationsType,FunctionSpaceType,nComponents,double_v_t,dof_no_v_t,Term>::evaluateIntegrand(jacobian,xi);
 
     }  // function evaluations
 
@@ -116,15 +153,23 @@ setMassMatrix()
           for (int columnComponentNo = 0; columnComponentNo < nComponents; columnComponentNo++)
           {
             // integrate value and set entry in discretization matrix
-            double integratedValue = integratedValues(i*nComponents + rowComponentNo, j*nComponents + columnComponentNo);
+            double_v_t integratedValue = integratedValues(i*nComponents + rowComponentNo, j*nComponents + columnComponentNo);
             int componentNo = rowComponentNo*nComponents + columnComponentNo;
 
-            massMatrix->setValue(componentNo, dofNosLocal[i], dofNosLocal[j], integratedValue, ADD_VALUES);
+            // get local dof no
+            dof_no_v_t dofINoLocal = dofNosLocal[i];
+            dof_no_v_t dofJNoLocal = dofNosLocal[j];
+
+            // add the entry in the stiffness matrix, for all dofs of the vectorized values at once,
+            // i.e. K_dofINoLocal[0],dofJNoLocal[0] = value[0]
+            // i.e. K_dofINoLocal[1],dofJNoLocal[1] = value[1], etc.
+            // Note that K_dofINoLocal[0],dofJNoLocal[1] would be potentially zero, the contributions are considered element-wise
+            massMatrix->setValue(componentNo, dofINoLocal, dofJNoLocal, integratedValue, ADD_VALUES);
           }
         }
       }  // j
     }  // i
-  }  // elementNo
+  }  // elementNoLocalv
 
   // merge local changes in parallel and assemble the matrix (MatAssemblyBegin, MatAssemblyEnd)
   massMatrix->assembly(MAT_FINAL_ASSEMBLY);

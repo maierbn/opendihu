@@ -282,7 +282,7 @@ postprocessStreamlines(std::vector<std::vector<Vec3>> &streamlines)
           {
             Vec3 currentPoint = (*pointsIter)*scalingFactor;
             // sum up length since last element started
-            length += MathUtility::length<3>(currentPoint - lastPoint);
+            length += MathUtility::length(currentPoint - lastPoint);
             
             VLOG(1) << "old streamline interval " << lastPoint << " - " << currentPoint << ", new lentgh: " << length << " (targetElementLength=" << targetElementLength_ << ")";
             
@@ -292,7 +292,7 @@ postprocessStreamlines(std::vector<std::vector<Vec3>> &streamlines)
               Vec3 point = (1. - alpha) * previousStreamlinePoint + alpha * currentPoint;
              
               VLOG(1) << "  length is too big, alpha=" << alpha << ", take intermediate point " << point
-                << ", distance to previous point " << previousStreamlinePoint << ": " << MathUtility::length<3>(point - previousStreamlinePoint);
+                << ", distance to previous point " << previousStreamlinePoint << ": " << MathUtility::length(point - previousStreamlinePoint);
               
               newStreamline.push_back(point);
               

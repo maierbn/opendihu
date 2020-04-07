@@ -305,7 +305,7 @@ getElementValues(element_no_t elementNoLocal,
 #endif
   assert(elementNoLocal >= 0 && elementNoLocal < this->functionSpace_->nElementsLocal());
   assert(this->values_);
-  
+
   const int nDofsPerElement = FunctionSpaceType::nDofsPerElement();
   std::array<PetscInt,nDofsPerElement> indices;
   std::array<double,nDofsPerElement*nComponents> result;
@@ -319,7 +319,7 @@ getElementValues(element_no_t elementNoLocal,
     {
       indices[dofIndex] = this->functionSpace_->getDofNo(elementNoLocal, dofIndex);
     }
-    
+
     // get the values for the current component
     this->values_->getValues(componentIndex, nDofsPerElement, indices.data(), result.data() + componentIndex*nDofsPerElement);
   }
@@ -333,6 +333,57 @@ getElementValues(element_no_t elementNoLocal,
     {
       values[dofIndex][componentIndex] = result[componentIndex*nDofsPerElement + dofIndex];
       //VLOG(2) << "getElementValues element " << elementNoLocal << ", dofIndex " << dofIndex << " componentIndex " << componentIndex << " value: " << values[dofIndex][componentIndex];
+    }
+  }
+}
+
+//! vectorized version of getElementValues
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
+getElementValues(Vc::int_v elementNoLocal,
+                 std::array<std::array<Vc::double_v,nComponents>,FunctionSpaceType::nDofsPerElement()> &values) const
+{
+  assert(this->functionSpace_);
+  assert(this->values_);
+
+  const int nVcComponents = Vc::double_v::size();
+  const int nDofsPerElement = FunctionSpaceType::nDofsPerElement();
+
+  std::array<PetscInt, nDofsPerElement*nVcComponents> indices;
+  std::array<Vc::double_v, nDofsPerElement*nComponents> result;
+
+  VLOG(2) << "getElementValues (vectorized) element " << elementNoLocal << ", nComponents=" << nComponents << ", nDofsPerElement=" << nDofsPerElement << ", nVcComponents: " << nVcComponents;
+
+  // prepare lookup indices for PETSc vector values_
+  for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
+  {
+    for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
+    {
+      for (int vcComponent = 0; vcComponent < nVcComponents; vcComponent++)
+      {
+        if (elementNoLocal[vcComponent] == -1)
+          indices[dofIndex*nVcComponents + vcComponent] = 0;    // set index to 0, then here the dof 0 is retrieved and also further used in computation but it is discarded later in setValue
+        else
+          indices[dofIndex*nVcComponents + vcComponent] = this->functionSpace_->getDofNo(elementNoLocal[vcComponent], dofIndex);
+        //LOG(DEBUG) << "    element " << elementNoLocal[vcComponent] << " dof " << dofIndex << ": indices[" << dofIndex*nVcComponents + vcComponent << "]: " << indices[dofIndex*nVcComponents + vcComponent];
+      }
+    }
+
+    // get the values for the current component
+    this->values_->getValues(componentIndex, nDofsPerElement*nVcComponents, indices.data(), (double *)&result[componentIndex*nDofsPerElement]);
+
+    //LOG(DEBUG) << "component " << componentIndex << ", get " << nDofsPerElement << " values at " << indices << ", result (starting at index " << componentIndex*nDofsPerElement << "): " << result;
+
+  }
+
+  // copy result to output values
+  for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
+  {
+    for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
+    {
+      values[dofIndex][componentIndex] = result[componentIndex*nDofsPerElement + dofIndex];
+
+      //LOG(DEBUG) << "dof " << dofIndex << " component " << componentIndex << " value " << result[componentIndex*nDofsPerElement + dofIndex] << " -> " << values[dofIndex][componentIndex];
     }
   }
 }
@@ -519,13 +570,64 @@ setValue(dof_no_t dofLocalNo, const std::array<double,nComponents> &value, Inser
 {
   assert(this->values_);
 
-  // prepare lookup indices for PETSc vector values_
+  // loop over components and set single value for each component
   for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
   {
     this->values_->setValues(componentIndex, 1, &dofLocalNo, value.data()+componentIndex, petscInsertMode);
   }
 
   // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. finishGhostManipulation must be called
+}
+
+//! set a single dof (all components), after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
+setValue(Vc::int_v dofLocalNo, const std::array<Vc::double_v,nComponents> &value, InsertMode petscInsertMode)
+{
+  // loop over components and set vectorized value for each component
+  for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
+  {
+    this->setValue(componentIndex, dofLocalNo, value[componentIndex], petscInsertMode);
+  }
+}
+
+//! set a given component of Vc::double_v::size() dofs with the vectorized value, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
+setValue(int componentNo, Vc::int_v dofLocalNo, Vc::double_v value, InsertMode petscInsertMode)
+{
+  assert(this->values_);
+
+  // count number of non-negative indices in dofLocalNo, it is assumed that they occur all before the negative indices
+  int nEntries = Vc::double_v::size() - Vc::isnegative(dofLocalNo).count();
+
+  // store Vc vectors in order to get the raw memory
+  std::array<double,Vc::double_v::size()> data;
+  value.store(data.data(),Vc::Aligned);      // if this crashes, remove Vc::Aligned, then also in partitioned_petsc_mat_one_component_structured
+
+  std::array<int,Vc::double_v::size()> indices;
+  dofLocalNo.store(indices.data(),Vc::Aligned);      // if this crashes, remove Vc::Aligned, then also in partitioned_petsc_mat_one_component_structured
+
+  this->values_->setValues(componentNo, nEntries, indices.data(), data.data(), petscInsertMode);
+}
+
+//! set a given component of Vc::double_v::size() dofs with the same value
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
+setValue(int componentNo, Vc::int_v dofLocalNo, double value, InsertMode petscInsertMode)
+{
+  assert(this->values_);
+  std::array<double,Vc::double_v::size()> data;
+  data.fill(value);
+
+  // store Vc vectors in order to get the raw memory
+  std::array<int,Vc::double_v::size()> indices;
+  dofLocalNo.store(indices.data(),Vc::Aligned);      // if this crashes, remove Vc::Aligned, then also in partitioned_petsc_mat_one_component_structured
+
+  // count number of non-negative indices in dofLocalNo, it is assumed that they occur all before the negative indices
+  int nEntries = Vc::double_v::size() - Vc::isnegative(dofLocalNo).count();
+
+  this->values_->setValues(componentNo, nEntries, indices.data(), data.data(), petscInsertMode);
 }
 
 template<typename FunctionSpaceType, int nComponents>

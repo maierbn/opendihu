@@ -58,6 +58,9 @@ public:
   //! wrapper to the PETSc VecSetValue, acting on the local data or global data, the row is local dof no
   void setValue(int componentNo, PetscInt row, PetscScalar value, InsertMode mode = INSERT_VALUES);
 
+  //! wrapper to the PETSc VecSetValue, acting on the local data or global data, the row is local dof no
+  void setValue(int componentNo, Vc::int_v row, Vc::double_v value, InsertMode mode = INSERT_VALUES);
+
   //! wrapper to the PETSc VecGetValues, acting on the local data or global data, the indices ix are the local dof nos
   void getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[]) const;
 

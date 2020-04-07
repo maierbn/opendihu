@@ -58,6 +58,58 @@ setValue(int componentNoRow, PetscInt row, int componentNoColumn, PetscInt colum
 
 template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType, int nDisplacementComponents>
 void PartitionedPetscMatForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,nDisplacementComponents>::
+setValue(int componentNoRow, Vc::int_v row, int componentNoColumn, Vc::int_v column, PetscScalar value, InsertMode mode)
+{
+  // loop over rows
+  for (int rowIndex = 0; rowIndex < Vc::double_v::size(); rowIndex++)
+  {
+    if (row[rowIndex] == -1)
+      break;
+
+    // loop over columns
+    for (int columnIndex = 0; columnIndex < Vc::double_v::size(); columnIndex++)
+    {
+      if (column[columnIndex] == -1)
+        break;
+
+      // call the normal, scalar setValue
+      this->setValue(componentNoRow, row[rowIndex], componentNoColumn, column[columnIndex], value, mode);
+    }
+  }
+}
+
+template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType, int nDisplacementComponents>
+void PartitionedPetscMatForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,nDisplacementComponents>::
+setValue(int componentNoRow, Vc::int_v rows, int componentNoColumn, PetscInt col, Vc::double_v values, InsertMode mode)
+{
+  // loop over rows
+  for (int rowIndex = 0; rowIndex < Vc::double_v::size(); rowIndex++)
+  {
+    if (rows[rowIndex] == -1)
+      break;
+
+    // call the normal, scalar setValue
+    this->setValue(componentNoRow, rows[rowIndex], componentNoColumn, col, values[rowIndex], mode);
+  }
+}
+
+template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType, int nDisplacementComponents>
+void PartitionedPetscMatForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,nDisplacementComponents>::
+setValue(int componentNoRow, PetscInt row, int componentNoColumn, Vc::int_v columns, Vc::double_v values, InsertMode mode)
+{
+  // loop over columns
+  for (int columnIndex = 0; columnIndex < Vc::double_v::size(); columnIndex++)
+  {
+    if (columns[columnIndex] == -1)
+      break;
+
+    // call the normal, scalar setValue
+    this->setValue(componentNoRow, row, componentNoColumn, columns[columnIndex], values[columnIndex], mode);
+  }
+}
+
+template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType, int nDisplacementComponents>
+void PartitionedPetscMatForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,nDisplacementComponents>::
 dumpMatrixGlobalNatural(std::string filename)
 {
   VLOG(1) << "dumpMatrixGlobalNatural, name: " << this->name_;

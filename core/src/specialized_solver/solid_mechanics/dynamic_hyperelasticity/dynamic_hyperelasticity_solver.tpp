@@ -497,7 +497,7 @@ addDamping(std::shared_ptr<VecHyperelasticity> v, std::shared_ptr<VecHyperelasti
 
       // get evaluations of integrand which is defined in another class
       evaluationsArray[samplingPointIndex]
-        = SpatialDiscretization::IntegrandMassMatrix<D,EvaluationsType,DisplacementsFunctionSpace,1,Term>::evaluateIntegrand(jacobian,xi) * viscosity_;
+        = SpatialDiscretization::IntegrandMassMatrix<D,EvaluationsType,DisplacementsFunctionSpace,1,double_v_t,dof_no_v_t,Term>::evaluateIntegrand(jacobian,xi) * viscosity_;
 
     }  // function evaluations
 

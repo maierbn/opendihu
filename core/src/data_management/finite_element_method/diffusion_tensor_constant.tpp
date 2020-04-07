@@ -43,4 +43,12 @@ diffusionTensor(element_no_t elementNoLocal, const std::array<double,FunctionSpa
   return this->diffusionTensor_.value(elementNoLocal);
 }
 
+//! return diffusion tensor, vectorized version
+template<typename FunctionSpaceType>
+const MathUtility::Matrix<FunctionSpaceType::dim(),FunctionSpaceType::dim(),Vc::double_v> &DiffusionTensorConstant<FunctionSpaceType>::
+diffusionTensor(Vc::int_v elementNoLocal, const std::array<double,FunctionSpaceType::dim()> xi) const
+{
+  return this->diffusionTensor_.value(elementNoLocal);
+}
+
 }  // namespace

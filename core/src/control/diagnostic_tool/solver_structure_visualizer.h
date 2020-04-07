@@ -34,7 +34,6 @@ public:
   //! indicate the end of the current child
   void endChild();
 
-  //! TODO update outputConnection after it has been initialize after the first transfers, or use pointer
   //! add the output connection information between two children to the current solver
   void addOutputConnection(std::shared_ptr<OutputConnection> outputConnection);
 

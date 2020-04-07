@@ -21,7 +21,7 @@
  *
  */
 template <typename FunctionSpaceType, typename ValueType>
-class SpatialParameter
+class SpatialParameterBase
 {
 public:
 
@@ -45,6 +45,35 @@ protected:
   bool inputMeshIsGlobal_;          //< if the input is given for all global element numbers
 };
 
+/* actual class*/
+template <typename FunctionSpaceType, typename ValueType>
+class SpatialParameter :
+  public SpatialParameterBase<FunctionSpaceType,ValueType>{};
+
+//! partial specialization for double values
+template <typename FunctionSpaceType>
+class SpatialParameter<FunctionSpaceType,double> :
+  public SpatialParameterBase<FunctionSpaceType,double>
+{
+public:
+
+  using SpatialParameterBase<FunctionSpaceType,double>::value;
+
+  //! the value of the parameter in the given element
+  Vc::double_v value(Vc::int_v elementNoLocal) const;
+
+};
+
+//! partial specialization for Matrix values
+template <typename FunctionSpaceType, int nRows, int nColumns>
+class SpatialParameter<FunctionSpaceType,MathUtility::Matrix<nRows,nColumns>> :
+  public SpatialParameterBase<FunctionSpaceType,MathUtility::Matrix<nRows,nColumns>>
+{
+public:
+
+  //! the value of the parameter in the given element
+  MathUtility::Matrix<nRows,nColumns,Vc::double_v> value(Vc::int_v elementNoLocal) const;
+};
 
 /** helper class that sets the indices to the values */
 template<typename FunctionSpaceType, typename ValueType>
@@ -67,5 +96,62 @@ public:
   static void set(std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>> functionSpace, bool inputMeshIsGlobal, std::string path,
                   std::vector<ValueType> &values, std::vector<int> &valueIndices);
 };
+
+/** Specialize the default allocator for the SpatialParameter struct to use the aligned allocated provided by Vc.
+ *  This could also be done by Vc_DECLARE_ALLOCATOR(<class>), but not here because of the template parameters.
+ */
+namespace std
+{
+template <typename FunctionSpaceType, typename ValueType>
+class allocator<SpatialParameterBase<FunctionSpaceType,ValueType>> :
+  public ::Vc::Allocator<SpatialParameterBase<FunctionSpaceType,ValueType>>
+{
+public:
+  template <typename U>
+  struct rebind
+  {
+    typedef ::std::allocator<U> other;
+  };
+};
+
+template <typename FunctionSpaceType, typename ValueType>
+class allocator<SpatialParameter<FunctionSpaceType,ValueType>> :
+  public ::Vc::Allocator<SpatialParameter<FunctionSpaceType,ValueType>>
+{
+public:
+  template <typename U>
+  struct rebind
+  {
+    typedef ::std::allocator<U> other;
+  };
+};
+
+template <typename FunctionSpaceType>
+class allocator<SpatialParameter<FunctionSpaceType,double>> :
+  public ::Vc::Allocator<SpatialParameter<FunctionSpaceType,double>>
+{
+public:
+  template <typename U>
+  struct rebind
+  {
+    typedef ::std::allocator<U> other;
+  };
+};
+
+template <typename FunctionSpaceType, int nRows, int nColumns>
+class allocator<SpatialParameter<FunctionSpaceType,MathUtility::Matrix<nRows,nColumns>>> :
+  public ::Vc::Allocator<SpatialParameter<FunctionSpaceType,MathUtility::Matrix<nRows,nColumns>>>
+{
+public:
+  template <typename U>
+  struct rebind
+  {
+    typedef ::std::allocator<U> other;
+  };
+};
+
+
+}
+
 
 #include "control/python_config/spatial_parameter.tpp"

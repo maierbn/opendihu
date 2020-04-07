@@ -1,3 +1,5 @@
+// parallel-in-time (XBraid) Implicit Euler Solver ()
+
 #include "specialized_solver/parallel_in_time/MultiDomain/PinT_MD.h"
 
 #include <omp.h>
@@ -5,7 +7,8 @@
 
 #include <braid.h>
 #include "specialized_solver/parallel_in_time/MultiDomain/PinT_MD_Braid.h"
-#include "specialized_solver/parallel_in_time/MultiDomain/PinT_MD_lib.h"
+#include "specialized_solver/parallel_in_time/PinT_lib.h"
+#include "specialized_solver/parallel_in_time/PinT_fun.h"
 
 #include <petscdm.h>
 #include <petscdmda.h>
@@ -56,12 +59,12 @@ initialize()
   }
 
   // split MPI communicator, create communicators with rank numbering in x domain
-  MPI_Comm communicatorTotal = MPI_COMM_WORLD;
+  // MPI_Comm communicatorTotal = MPI_COMM_WORLD;
   MPI_Comm communicatorX;
   MPI_Comm communicatorT;
 
   int nRanksInSpace = this->specificSettings_.getOptionInt("nRanksInSpace", 1, PythonUtility::Positive);
-  // braid_SplitCommworld(&communicatorTotal, nRanksInSpace, &communicatorX, &communicatorT);
+  // braid_SplitCommworld(&communicatorTotal_, nRanksInSpace, &communicatorX, &communicatorT);
   //
   // // create rankSubset and assign to partitionManager, to be used by all further created meshes and solvers
   // rankSubsetX_ = std::make_shared<Partition::RankSubset>(communicatorX);
@@ -88,7 +91,7 @@ initialize()
 
     if (test == 0) {
       if (i==0){
-        braid_SplitCommworld(&communicatorTotal, 1, &communicatorX, &communicatorT);
+        braid_SplitCommworld(&communicatorTotal_, 1, &communicatorX, &communicatorT);
 
         // create rankSubset and assign to partitionManager, to be used by all further created meshes and solvers
         rankSubsetX_ = std::make_shared<Partition::RankSubset>(communicatorX);
@@ -96,7 +99,7 @@ initialize()
       }
       else {
         // create rank subset
-        braid_SplitCommworld(&communicatorTotal, nRanksInSpace, &communicatorX, &communicatorT);
+        braid_SplitCommworld(&communicatorTotal_, nRanksInSpace, &communicatorX, &communicatorT);
 
         // create rankSubset and assign to partitionManager, to be used by all further created meshes and solvers
         rankSubsetX_ = std::make_shared<Partition::RankSubset>(communicatorX);
@@ -142,6 +145,8 @@ initialize()
 
   LOG(DEBUG) << "n: " << implicitEulerSolvers_.size();
 
+  // initialize PinT
+  PinT_initialize();
   // here is the space to initialize anything else that is needed for your solver
   // for example, initialize Braid here (not like this)
   initialized_ = true;
@@ -151,31 +156,19 @@ template<class NestedSolver>
 void PinTMD<NestedSolver>::
 run()
 {
-  // initialize settings
-  PinT_initialize();
 
-  // initialize implicit solvers
+
+  // initialize
   initialize();
 
-  braid_Core    core;
-  my_App       *app;
-  // MPI_Comm      comm, comm_x, comm_t;
-  MPI_Comm communicatorTotal;
-  // int           i, rank, arg_index;
-  int           i, rank;
-  double        loglevels;
-
-  PetscReal    tstart        =  this->tstart_;
-  PetscReal    tstop         =  this->tstop_;
-  PetscInt     ntime         =  this->ntime_;
-  PetscReal    xstart        =  0.0;
-  PetscReal    xstop         =  4;
+  int          rank;
+  double       loglevels;
   PetscInt     nspace        =  this->nspace_+1;
 
 
   // Define XBraid parameters
 
-  int       max_levels    = 3;
+  // int       max_levels    = 3;
   int       nrelax        = 1;
   int       skip          = 0;
   double    tol           = 1.0e-07;
@@ -186,35 +179,12 @@ run()
   int       scoarsen      = 1;
   int       res           = 0;
   int       wrapper_tests = 0;
-  int       print_level   = 2;
+  // int       print_level   = 2;
   int       access_level  = 1;
   int       use_sequential= 1;
 
-  communicatorTotal   = MPI_COMM_WORLD;
-  MPI_Comm_rank(communicatorTotal, &rank);
-
-  app = (my_App *) malloc(sizeof(my_App));
-  (app->g)             = (double*) malloc( nspace*sizeof(double) );
-  (app->comm)          = communicatorTotal;
-  (app->tstart)        = tstart;
-  (app->tstop)         = tstop;
-  (app->ntime)         = ntime;
-  (app->xstart)        = xstart;
-  (app->xstop)         = xstop;
-  (app->nspace)        = nspace;
-  (app->print_level)   = print_level;
-  (app->implicitEulerSolvers)        = &this->implicitEulerSolvers_;
-
-  /* Initialize storage for sc_info, for tracking space-time grids visited during the simulation */
-  app->sc_info = (double*) malloc( 2*max_levels*sizeof(double) );
-  for( i = 0; i < 2*max_levels; i++) {
-     app->sc_info[i] = -1.0;
-  }
-
-  /* Initialize Braid */
-  braid_Init(MPI_COMM_WORLD, communicatorTotal, tstart, tstop, ntime, app,
-         my_Step, my_Init, my_Clone, my_Free, my_Sum, my_SpatialNorm,
-         my_Access, my_BufSize, my_BufPack, my_BufUnpack, &core);
+  // communicatorTotal   = MPI_COMM_WORLD;
+  MPI_Comm_rank(communicatorTotal_, &rank);
 
   /* The first step before running simulations, is always to verify the wrapper tests */
   if(wrapper_tests)
@@ -230,26 +200,26 @@ run()
   else
   {
      /* Scale tol by domain */
-     tol = tol/( sqrt((tstop - tstart)/(ntime-1))*sqrt((xstop - xstart)/(nspace-1)) );
+     tol = tol/( sqrt((tstop_ - tstart_)/(ntime_-1))*sqrt((xstop_ - xstart_)/(nspace-1)) );
 
      /* Set Braid options */
-     braid_SetPrintLevel( core, print_level);
-     braid_SetAccessLevel( core, access_level);
-     braid_SetMaxLevels(core, max_levels);
-     braid_SetMinCoarse( core, min_coarse );
-     braid_SetSkip(core, skip);
-     braid_SetNRelax(core, -1, nrelax);
-     braid_SetAbsTol(core, tol);
-     braid_SetCFactor(core, -1, cfactor);
-     braid_SetMaxIter(core, max_iter);
-     braid_SetSeqSoln(core, use_sequential);
+     braid_SetPrintLevel( core_, print_level_);
+     braid_SetAccessLevel( core_, access_level);
+     braid_SetMaxLevels(core_, max_levels_);
+     braid_SetMinCoarse( core_, min_coarse );
+     braid_SetSkip(core_, skip);
+     braid_SetNRelax(core_, -1, nrelax);
+     braid_SetAbsTol(core_, tol);
+     braid_SetCFactor(core_, -1, cfactor);
+     braid_SetMaxIter(core_, max_iter);
+     braid_SetSeqSoln(core_, use_sequential);
      if (fmg)
      {
-        braid_SetFMG(core);
+        braid_SetFMG(core_);
      }
      if (res)
      {
-        braid_SetResidual(core, my_Residual);
+        braid_SetResidual(core_, my_Residual);
      }
      loglevels = log2(nspace - 1.0);
      if ( scoarsen && ( fabs(loglevels - round(loglevels)) > 1e-10 ))
@@ -263,23 +233,23 @@ run()
      }
      else if (scoarsen)
      {
-        braid_SetSpatialCoarsen(core, my_Coarsen);
-        braid_SetSpatialRefine(core,  my_Interp);
+        braid_SetSpatialCoarsen(core_, my_Coarsen);
+        braid_SetSpatialRefine(core_,  my_Interp);
      }
 
-     braid_Drive(core);
+     braid_Drive(core_);
 
      /* Print accumulated info on space-time grids visited during the simulation */
-     if( (print_level > 0) && (rank == 0))
+     if( (print_level_ > 0) && (rank == 0))
      {
-        print_sc_info(app->sc_info, max_levels);
+        print_sc_info(app_->sc_info, max_levels_);
      }
   }
   /* Clean up */
-  braid_Destroy(core);
-  free( app->sc_info);
-  free( app->g);
-  free( app );
+  braid_Destroy(core_);
+  free( app_->sc_info);
+  free( app_->g);
+  free( app_ );
 
   // do something else
   //executeMyHelperMethod();
@@ -333,10 +303,10 @@ void PinTMD<NestedSolver>::
 PinT_initialize()
 {
   // initialize time stepping values
-  tstart_ = 0.0;
-  tstop_ = 1.0;
-  ntime_ = 10;
-  nspace_=8;
+  // tstart_ = 0.0;
+  // tstop_ = 1.0;
+  // ntime_ = 10;
+  // nspace_=8;
   // PetscReal *initialGuess_=[2,2,4,5,2,2];
   if (specificSettings_.hasKey("tstart"))
     tstart_ = specificSettings_.getOptionDouble("tstart", 0.0);
@@ -346,6 +316,32 @@ PinT_initialize()
     ntime_ = specificSettings_.getOptionDouble("ntime", 1.0, PythonUtility::Positive);
   if (specificSettings_.hasKey("nspace"))
     nspace_ = specificSettings_.getOptionDouble("nspace", 1.0, PythonUtility::Positive);
+
+  int       nspace        = this->nspace_+1;
+
+  app_ = (my_App *) malloc(sizeof(my_App));
+  (app_->g)             = (double*) malloc( nspace*sizeof(double) );
+  (app_->comm)          = communicatorTotal_;
+  (app_->tstart)        = tstart_;
+  (app_->tstop)         = tstop_;
+  (app_->ntime)         = ntime_;
+  (app_->xstart)        = xstart_;
+  (app_->xstop)         = xstop_;
+  (app_->nspace)        = nspace;
+  (app_->print_level)   = print_level_;
+  (app_->implicitEulerSolvers)        = &this->implicitEulerSolvers_;
+
+  /* Initialize storage for sc_info, for tracking space-time grids visited during the simulation */
+  app_->sc_info = (double*) malloc( 2*max_levels_*sizeof(double) );
+  for(int i = 0; i < 2*max_levels_; i++) {
+     app_->sc_info[i] = -1.0;
+  }
+
+  /* Initialize Braid */
+  braid_Init(MPI_COMM_WORLD, communicatorTotal_, tstart_, tstop_, ntime_, app_,
+         my_Step, my_Init, my_Clone, my_Free, my_Sum, my_SpatialNorm,
+         my_Access, my_BufSize, my_BufPack, my_BufUnpack, &core_);
+
 }
 
 template<class NestedSolver>

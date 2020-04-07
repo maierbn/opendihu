@@ -1,3 +1,5 @@
+// parallel-in-time (XBraid) Implicit Euler Solver (PinTIE)
+
 #pragma once
 
 #include <Python.h>  // has to be the first included header
@@ -7,15 +9,7 @@
 #include "time_stepping_scheme/implicit_euler.h"
 #include "control/dihu_context.h"
 
-#include "specialized_solver/parallel_in_time/ImplicitEuler/PinT_IE_Braid.h"
-
-/** This is a template class that developers can copy and adjust to create their own solver.
- *  This solver is static, i.e. has no timestepping. For a dynamic solver, refer to the other template, "my_new_timestepping_solver.h".
- *  There are also the files "data_management/my_new_static_solver.{h,cpp}" that need to be adjusted.
- *  At the end, add an #include to this file in "opendihu.h".
- *
- *  Briefly explain what your solver does in this comment section.
-  */
+#include "specialized_solver/parallel_in_time/PinT_fun.h"
 
 namespace ParallelInTime {
 template<class NestedSolver>

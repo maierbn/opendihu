@@ -1,3 +1,5 @@
+// parallel-in-time (XBraid) Implicit Euler Solver (PinTIE)
+
 #include "specialized_solver/parallel_in_time/ImplicitEuler/PinT_IE.h"
 
 #include <omp.h>
@@ -5,7 +7,8 @@
 
 #include <braid.h>
 #include "specialized_solver/parallel_in_time/ImplicitEuler/PinT_IE_Braid.h"
-#include "specialized_solver/parallel_in_time/ImplicitEuler/PinT_IE_lib.h"
+#include "specialized_solver/parallel_in_time/PinT_lib.h"
+#include "specialized_solver/parallel_in_time/PinT_fun.h"
 
 #include <petscdm.h>
 #include <petscdmda.h>

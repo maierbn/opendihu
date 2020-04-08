@@ -564,6 +564,9 @@ template<typename MeshType,typename BasisFunctionType>
 global_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 getDofNoGlobalPetsc(dof_no_t dofNoLocal) const
 {
+  assert(dofNoLocal >= 0);
+  assert(dofNoLocal < nDofsLocalWithGhosts());
+
   PetscInt dofNoGlobal;
   PetscErrorCode ierr;
   if (localToGlobalPetscMappingDofs_)

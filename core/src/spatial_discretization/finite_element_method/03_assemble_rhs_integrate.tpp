@@ -4,6 +4,7 @@
 #include <memory>
 #include <vector>
 #include <petscsys.h>
+#include <array>
 
 #include "quadrature/tensor_product.h"
 #include "function_space/function_space.h"

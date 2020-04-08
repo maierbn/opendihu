@@ -31,15 +31,18 @@ public:
   //! return the sampling points, i.e. newton-cotes points that are needed for the quadrature. The list may not be in ascending order, but the order matches the order required in integrate
   static std::array<double, NumberIntegrationPoints> samplingPoints();
 
+  //! return the quadrature weights
+  static const std::array<double, NumberIntegrationPoints> quadratureWeights();
+
   //! Compute the integral from evaluations at the integration points.
   //! If a std::array is given for ValueType, compute separate integrals for each component with the same integration points for all.
   template<typename ValueType>
-  static ValueType computeIntegral(const typename std::array<ValueType,numberEvaluations()>::const_iterator evaluations);
+  static ValueType computeIntegral(const typename std::array<ValueType,NewtonCotes<NumberIntegrationPoints>::numberEvaluations()>::const_iterator evaluations);
   
   //! Compute the integral from evaluations at the integration points.
   //! If a std::array is given for ValueType, compute separate integrals for each component with the same integration points for all.
   template<typename ValueType>
-  static ValueType computeIntegral(const typename std::array<ValueType,numberEvaluations()> &evaluations);
+  static ValueType computeIntegral(const typename std::array<ValueType,NewtonCotes<NumberIntegrationPoints>::numberEvaluations()> &evaluations);
 };
 
 } // namespace

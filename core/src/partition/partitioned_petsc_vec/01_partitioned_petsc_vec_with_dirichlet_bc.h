@@ -85,6 +85,9 @@ public:
   //! get the Petsc Vec that contains all components but no values for dirichlet BC dofs
   Vec &valuesGlobal();
 
+  //! get a reference to the global Vec, by which it is possible to change the Vec
+  Vec &valuesGlobalReference();
+
   //! get the index in the internal vector in local numbering, from componentNo and local dof no
   dof_no_t nonBCDofNoLocal(int componentNo, dof_no_t localDofNo) const;
 

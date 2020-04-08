@@ -8,6 +8,8 @@
 #include "quadrature/tensor_product.h"
 #include "mesh/surface_mesh.h"
 
+#include <array>
+
 namespace SpatialDiscretization
 {
 

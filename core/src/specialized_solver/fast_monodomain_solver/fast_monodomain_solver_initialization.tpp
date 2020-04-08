@@ -2,6 +2,7 @@
 
 #include "partition/rank_subset.h"
 #include "control/diagnostic_tool/stimulation_logging.h"
+#include <Vc/Vc>
 
 template<int nStates, int nIntermediates, typename DiffusionTimeSteppingScheme>
 FastMonodomainSolverBase<nStates,nIntermediates,DiffusionTimeSteppingScheme>::

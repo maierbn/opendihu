@@ -2,6 +2,7 @@
 
 #include <Python.h>  // has to be the first included header
 #include <array>
+//#include <Vc/Vc>
 
 namespace MathUtility
 {
@@ -11,6 +12,7 @@ namespace MathUtility
 template<int nRows, int nColumns>
 struct Matrix :
   public std::array<double, nRows*nColumns>
+  //public Vc::array<double, nRows*nColumns>
 {
   //std::array<double, nRows*nColumns> data;   ///< the data member containing the entries in row-major order
 

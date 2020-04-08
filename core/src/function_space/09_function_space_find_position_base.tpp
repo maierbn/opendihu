@@ -6,6 +6,7 @@
 
 #include "easylogging++.h"
 #include "mesh/face_t.h"
+#include "control/dihu_context.h"
 
 namespace FunctionSpace
 {
@@ -13,19 +14,26 @@ namespace FunctionSpace
 // structured mesh
 template<typename MeshType, typename BasisFunctionType>
 bool FunctionSpaceStructuredFindPositionBase<MeshType,BasisFunctionType>::
-findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::array<double,MeshType::dim()> &xi, bool startSearchInCurrentElement, double xiTolerance)
+findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::array<double,MeshType::dim()> &xi, bool startSearchInCurrentElement, double &residual, double xiTolerance)
 {
   const element_no_t nElements = this->nElementsLocal();
-  VLOG(2) << "findPosition, elementNoLocal: " << elementNoLocal << ", ghostMeshNo: " << ghostMeshNo
+  if(GLOBAL_DEBUG)LOG(INFO) << "findPosition, elementNoLocal: " << elementNoLocal << ", ghostMeshNo: " << ghostMeshNo
     << ", startSearchInCurrentElement: " << startSearchInCurrentElement << ", xiTolerance: " << xiTolerance << ", xi: " << xi;
 
   // set starting no to 0 if it was not given and is thus arbitrarily initialized
   if (elementNoLocal < 0 || elementNoLocal >= nElements)
     elementNoLocal = 0;
 
+  // variables to store the best found element so far
+  element_no_t elementNoBest = 0;
+  std::array<double,MeshType::dim()> xiBest;
+  double excessivityScoreBest = std::numeric_limits<double>::max();
+  double residualBest;
+  bool elementFound = false;
+
   if (startSearchInCurrentElement)
   {
-    VLOG(2) << "findPosition: startSearchInCurrentElement";
+    if(GLOBAL_DEBUG)LOG(INFO) << "findPosition: startSearchInCurrentElement";
 
     FunctionSpaceStructuredFindPositionBase<MeshType,BasisFunctionType> *functionSpace = this;
 
@@ -44,8 +52,9 @@ findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::ar
     assert(functionSpace);
 
     // check if point is already in current element
-    if (functionSpace->pointIsInElement(point, elementNoLocal, xi, xiTolerance))
+    if (functionSpace->pointIsInElement(point, elementNoLocal, xi, residual, xiTolerance))
     {
+      elementFound = true;
 
       // debugging output
       if (VLOG_IS_ON(2) && MeshType::dim() == 3)
@@ -80,39 +89,107 @@ findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::ar
         VLOG(1) << "point " << point << " is in element " << elementNoLocal << ", which has "
           << "bounding box x: [" << xMin << "," << xMax << "], y: [" << yMin << "," << yMax << "], z: [" << zMin << "," << zMax << "]";
       }
+      
+      // check if point is really inside the element by a tigher tolerance
+      double excessivityScore = 0;      // lower means more inside the element, <= 0 equals really totally inside the element, then (0 < xi < 1)
+      for (int i = 0; i < MeshType::dim(); i++)
+      {
+        excessivityScore = std::max({excessivityScore, xi[i] - 1.0, 0.0 - xi[i]});
+      }
 
-      return true;
+      
+      // if the point is really inside the element even with the tight tolerance, return true,
+      // otherwise look in neighbouring elements for a better fit
+      if (excessivityScore < 1e-12)
+      {
+        VLOG(1) << "findPosition: pointIsInElement returned true, found at xi=" << xi << ", elementNo: " << elementNoLocal << ", excessivityScore=" << excessivityScore << ", use it";
+        return true;
+      }
+      else 
+      {
+        VLOG(1) << "findPosition: pointIsInElement returned true, found at xi=" << xi << ", elementNo: " << elementNoLocal << ", excessivityScore=" << excessivityScore << ", save and check neighbouring elements";
+        
+        if (excessivityScore < excessivityScoreBest)
+        {
+          // save element as the best one so far, but also check neighbouring elements
+          elementNoBest = elementNoLocal;
+          xiBest = xi;
+          residualBest = residual;
+          excessivityScoreBest = excessivityScore;
+        }
+      }
     }
 
     // point is not in current element, consider the neighbouring elements and ghost meshes
 
-    VLOG(2) << "point is not in current element, now check neighbouring elements";
+    VLOG(1) << "point is not in current element, now check neighbouring elements";
 
     // set the neighbouring element nos, also considering ghost meshes
-    if (this->checkNeighbouringElements(point, elementNoLocal, ghostMeshNo, xi))
+    if (this->checkNeighbouringElements(point, elementNoLocal, ghostMeshNo, xi, residual))
     {
-      return true;
+      elementFound = true;
+
+      // determine excessivity score of point found in neighbouring elements 
+      double excessivityScore = 0;      // lower means more inside the element, <= 0 equals really totally inside the element, then (0 < xi < 1)
+      for (int i = 0; i < MeshType::dim(); i++)
+      {
+        excessivityScore = std::max({excessivityScore, xi[i] - 1.0, 0.0 - xi[i]});
+      }
+
+      if(GLOBAL_DEBUG)LOG(INFO) << "findPosition: checkNeighbouringElements returned true, found at xi=" << xi << ", elementNo: " << elementNoLocal << ", excessivityScore=" << excessivityScore;
+
+      if (excessivityScore < excessivityScoreBest)
+      {
+        if(GLOBAL_DEBUG)LOG(INFO) << "findPosition: use the one found (of neighbour element)";
+
+        // the element of the neighbour was better, use it
+        return true;
+      }
+      else 
+      {
+        if(GLOBAL_DEBUG)LOG(INFO) << "findPosition: use previously found, that is better";
+        
+        // use previously found element which is better
+        xi = xiBest;
+        residual = residualBest;
+        elementNoLocal = elementNoBest;
+        return true;
+      }
     }
     else
     {
-      VLOG(2) << "point was also not found among neighbouring elements (including ghost meshes), xi: " << xi << ", now check all elements";
+      if(GLOBAL_DEBUG)LOG(INFO) << "point was also not found among neighbouring elements (including ghost meshes), xi: " << xi << ", now check all elements";
     }
+  }
+
+  if (elementFound)
+  {
+    elementNoLocal = elementNoBest;
+    xi = xiBest;
+    residual = residualBest;
+    
+    if(GLOBAL_DEBUG)LOG(INFO) << "findPosition: element was found earlier with xi=" << xi << ", elementNo: " << elementNoLocal << ", excessivityScore=" << excessivityScoreBest << ", use it.";
+
+    return true;
   }
 
   // search among all elements
 
   // look in every element, starting at elementNoLocal-2
   element_no_t elementNoLocalStart = (elementNoLocal - 2 + nElements) % nElements;
-  element_no_t elementNoLocalEnd = (elementNoLocal - 3 + nElements) % nElements;
+  element_no_t elementNoLocalEnd = elementNoLocalStart;
 
-  VLOG(3) << "elementNoLocalStart: " << elementNoLocalStart << ", elementNoLocalEnd: " << elementNoLocalEnd << ", nElements: " << nElements;
+  if(GLOBAL_DEBUG)LOG(INFO) << "elementNoLocalStart: " << elementNoLocalStart << ", elementNoLocalEnd: " << elementNoLocalEnd << ", nElements: " << nElements;
   if (this->dim() == 3)
-    VLOG(3) << "(" << this->meshPartition_->nElementsLocal(0) << "x" << this->meshPartition_->nElementsLocal(1) << "x" << this->meshPartition_->nElementsLocal(2) << ")";
+    if(GLOBAL_DEBUG)LOG(INFO) << "(" << this->meshPartition_->nElementsLocal(0) << "x" << this->meshPartition_->nElementsLocal(1) << "x" << this->meshPartition_->nElementsLocal(2) << ")";
   if (this->dim() == 2)
-    VLOG(3) << "(" << this->meshPartition_->nElementsLocal(0) << "x" << this->meshPartition_->nElementsLocal(1) << ")";
+    if(GLOBAL_DEBUG)LOG(INFO) << "(" << this->meshPartition_->nElementsLocal(0) << "x" << this->meshPartition_->nElementsLocal(1) << ")";
 
-  for (element_no_t currentElementNo = elementNoLocalStart; currentElementNo != elementNoLocalEnd; currentElementNo++)
+  int nElementsVisited = 0;
+  for (element_no_t currentElementNo = elementNoLocalStart; currentElementNo != elementNoLocalEnd || nElementsVisited == 0; currentElementNo++, nElementsVisited++)
   {
+    nElementsVisited++;
+
     // restart with element 0
     if (currentElementNo == nElements)
     {
@@ -121,10 +198,13 @@ findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::ar
         break;
     }
 
-    VLOG(4) << "check element " << currentElementNo;
+    if(GLOBAL_DEBUG)LOG(INFO) << "check element " << currentElementNo;
 
-    if (this->pointIsInElement(point, currentElementNo, xi, xiTolerance))
+    // check if point is already in current element
+    if (this->pointIsInElement(point, currentElementNo, xi, residual, xiTolerance))
     {
+      elementFound = true;
+
       if (startSearchInCurrentElement)
       {
 #ifndef NDEBUG
@@ -136,17 +216,48 @@ findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::ar
 #endif
       }
 
-      elementNoLocal = currentElementNo;
-      ghostMeshNo = -1;   // not a ghost mesh
-
-      return true;
-    }
-    else
-    {
-      VLOG(4) << " no (xi=" << xi << ")";
+      // check if point is really inside the element by a tigher tolerance
+      double excessivityScore = 0;      // lower means more inside the element, <= 0 equals really totally inside the element, then (0 < xi < 1)
+      for (int i = 0; i < MeshType::dim(); i++)
+      {
+        excessivityScore = std::max({excessivityScore, xi[i] - 1.0, 0.0 - xi[i]});
+      }
+      
+      // if the point is really inside the element even with the tight tolerance, return true,
+      // otherwise look in neighbouring elements for a better fit
+      if (excessivityScore < 1e-12)
+      {
+        if(GLOBAL_DEBUG)LOG(INFO) << "findPosition: pointIsInElement returned true, found at xi=" << xi << ", elementNo: " << elementNoLocal << ", excessivityScore=" << excessivityScore << ", use it";
+        elementNoLocal = currentElementNo;
+        return true;
+      }
+      else 
+      {
+        if(GLOBAL_DEBUG)LOG(INFO) << "findPosition: pointIsInElement returned true, found at xi=" << xi << ", elementNo: " << currentElementNo << ", excessivityScore=" << excessivityScore << ", save and check neighbouring elements";
+        // save element as the best one so far, but also check neighbouring elements
+        if (excessivityScore < excessivityScoreBest)
+        {
+          elementNoBest = currentElementNo;
+          xiBest = xi;
+          residualBest = residual;
+          excessivityScoreBest = excessivityScore;
+          ghostMeshNo = -1;   // not a ghost mesh
+        }
+      }
     }
   }
 
+  if (elementFound)
+  {
+    elementNoLocal = elementNoBest;
+    xi = xiBest;
+    residual = residualBest;
+    
+    if(GLOBAL_DEBUG)LOG(INFO) << "findPosition: element was found earlier with xi=" << xi << ", elementNo: " << elementNoLocal << ", excessivityScore=" << excessivityScoreBest << ", use it.";
+
+    return true;
+  }
+  
   // if point was still not found, search in ghost meshes
   for (int face = (int)Mesh::face_t::face0Minus; face <= (int)Mesh::face_t::face2Plus; face++)
   {
@@ -154,7 +265,7 @@ findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::ar
     if (ghostMesh_[face] != nullptr)
     {
       VLOG(3) << "   ghost mesh " << Mesh::getString((Mesh::face_t)face) << " is set";
-      if (ghostMesh_[face]->findPosition(point, elementNoLocal, ghostMeshNo, xi, false))
+      if (ghostMesh_[face]->findPosition(point, elementNoLocal, ghostMeshNo, xi, false, residual))
       {
         VLOG(3) << "   point found in ghost mesh " << Mesh::getString((Mesh::face_t)face) << ", element " << elementNoLocal << ", xi " << xi;
         ghostMeshNo = face;
@@ -171,7 +282,7 @@ findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::ar
     }
   }
 
-  VLOG(1) << "Could not find any containing element (streamline ends)";
+  if(GLOBAL_DEBUG)LOG(INFO) << "Could not find any containing element (streamline ends)";
   return false;
 }
 

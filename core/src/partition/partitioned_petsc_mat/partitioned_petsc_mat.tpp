@@ -5,7 +5,7 @@
 template<typename RowsFunctionSpaceType, typename ColumnsFunctionSpaceType>
 PartitionedPetscMat<RowsFunctionSpaceType,ColumnsFunctionSpaceType>::
 PartitionedPetscMat(std::shared_ptr<Partition::MeshPartition<RowsFunctionSpaceType>> meshPartition,
-                    int nComponents, int diagonalNonZeros, int offdiagonalNonZeros, std::string name): nComponents_(nComponents)
+                    int nComponents, int nNonZerosDiagonal, int nNonZerosOffdiagonal, std::string name): nComponents_(nComponents)
 {
   std::string matrixName = name;
 
@@ -21,8 +21,8 @@ PartitionedPetscMat(std::shared_ptr<Partition::MeshPartition<RowsFunctionSpaceTy
       matrixName = nameStr.str();
     }
 
-    //matrixComponents_.push_back(PartitionedPetscMatOneComponent<RowsFunctionSpaceType,ColumnsFunctionSpaceType>(meshPartition, diagonalNonZeros, offdiagonalNonZeros, name));
-    matrixComponents_.emplace_back(meshPartition, diagonalNonZeros, offdiagonalNonZeros, matrixName);
+    //matrixComponents_.push_back(PartitionedPetscMatOneComponent<RowsFunctionSpaceType,ColumnsFunctionSpaceType>(meshPartition, nNonZerosDiagonal, nNonZerosOffdiagonal, name));
+    matrixComponents_.emplace_back(meshPartition, nNonZerosDiagonal, nNonZerosOffdiagonal, matrixName);
   }
   createMatNest();
 }
@@ -56,7 +56,7 @@ template<typename RowsFunctionSpaceType, typename ColumnsFunctionSpaceType>
 PartitionedPetscMat<RowsFunctionSpaceType,ColumnsFunctionSpaceType>::
   PartitionedPetscMat(std::shared_ptr<Partition::MeshPartition<RowsFunctionSpaceType>> meshPartitionRows,
                       std::shared_ptr<Partition::MeshPartition<ColumnsFunctionSpaceType>> meshPartitionColumns,
-                      int nComponents, int diagonalNonZeros, int offdiagonalNonZeros, std::string name): nComponents_(nComponents)
+                      int nComponents, int nNonZerosDiagonal, int nNonZerosOffdiagonal, std::string name): nComponents_(nComponents)
 {
   std::string matrixName = name;
   // create nComponents matrix components by calling the constructor
@@ -71,7 +71,7 @@ PartitionedPetscMat<RowsFunctionSpaceType,ColumnsFunctionSpaceType>::
       matrixName = nameStr.str();
     }
 
-    matrixComponents_.emplace_back(meshPartitionRows, meshPartitionColumns, diagonalNonZeros, offdiagonalNonZeros, name);
+    matrixComponents_.emplace_back(meshPartitionRows, meshPartitionColumns, nNonZerosDiagonal, nNonZerosOffdiagonal, name);
   }
   createMatNest();
 }

@@ -460,7 +460,10 @@ transfer(const std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType1,nCom
       for (int fiberIndexJ = 0; fiberIndexJ < (*transferableSolutionData2)[fiberIndexI]->size(); fiberIndexJ++)
       {
         // map from transferableSolutionData1->geometryField to transferableSolutionData2->variable1[0]->geometryField
+<<<<<<< HEAD
 
+=======
+>>>>>>> solid_mechanics
         std::shared_ptr<FieldVariableTarget> geometryFieldTarget = std::make_shared<FieldVariableTarget>((*(*transferableSolutionData2)[fiberIndexI])[fiberIndexJ]->variable1[0].values->functionSpace()->geometryField());
 
         // map the whole geometry field (all components), do not avoid copy

@@ -4,11 +4,11 @@
 template<int D, typename BasisFunctionType>
 PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>>::
 PartitionedPetscMatOneComponent(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>>> meshPartition,
-                                int diagonalNonZeros, int offdiagonalNonZeros, std::string name) :
+                                int nNonZerosDiagonal, int nNonZerosOffdiagonal, std::string name) :
   PartitionedPetscMatOneComponentBase<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>(meshPartition, meshPartition, name)
 {
   MatType matrixType = MATAIJ;  // sparse matrix type
-  createMatrix(matrixType, diagonalNonZeros, offdiagonalNonZeros);
+  createMatrix(matrixType, nNonZerosDiagonal, nNonZerosOffdiagonal);
 }
 
 //! constructor, create square dense matrix
@@ -27,11 +27,11 @@ template<int D, typename BasisFunctionType>
 PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>>::
 PartitionedPetscMatOneComponent(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>> meshPartitionRows,
                                 std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>> meshPartitionColumns,
-                                int diagonalNonZeros, int offdiagonalNonZeros, std::string name) :
+                                int nNonZerosDiagonal, int nNonZerosOffdiagonal, std::string name) :
   PartitionedPetscMatOneComponentBase<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>(meshPartitionRows, meshPartitionColumns, name)
 {
   MatType matrixType = MATAIJ;  // sparse matrix type
-  createMatrix(matrixType, diagonalNonZeros, offdiagonalNonZeros);
+  createMatrix(matrixType, nNonZerosDiagonal, nNonZerosOffdiagonal);
 }
 
 //! constructor, create non-square dense matrix
@@ -63,7 +63,7 @@ PartitionedPetscMatOneComponent(std::shared_ptr<Partition::MeshPartition<Functio
 //! create a distributed Petsc matrix, according to the given partition
 template<int D, typename BasisFunctionType>
 void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>>::
-createMatrix(MatType matrixType, int diagonalNonZeros, int offdiagonalNonZeros)
+createMatrix(MatType matrixType, int nNonZerosDiagonal, int nNonZerosOffdiagonal)
 {
   PetscErrorCode ierr;
   
@@ -73,7 +73,7 @@ createMatrix(MatType matrixType, int diagonalNonZeros, int offdiagonalNonZeros)
   dof_no_t nRowDofs = this->meshPartitionRows_->nDofs();
   dof_no_t nColumnDofs = this->meshPartitionColumns_->nDofs();
   //ierr = MatCreateAIJ(rankSubset_->mpiCommunicator(), partition.(), partition.(), n, n,
-  //                    diagonalNonZeros, NULL, offdiagonalNonZeros, NULL, &matrix); CHKERRV(ierr);
+  //                    nNonZerosDiagonal, NULL, nNonZerosOffdiagonal, NULL, &matrix); CHKERRV(ierr);
   
   ierr = MatCreate(this->meshPartitionRows_->mpiCommunicator(), &this->matrix_); CHKERRV(ierr);
   ierr = MatSetSizes(this->matrix_, nRowDofs, nColumnDofs, nRowDofs, nColumnDofs); CHKERRV(ierr);
@@ -99,8 +99,8 @@ createMatrix(MatType matrixType, int diagonalNonZeros, int offdiagonalNonZeros)
     // MATAIJ = "aij" - A matrix type to be used for sparse matrices. This matrix type is identical to MATSEQAIJ when constructed with a single process communicator, and MATMPIAIJ otherwise.
     // As a result, for single process communicators, MatSeqAIJSetPreallocation is supported, and similarly MatMPIAIJSetPreallocation is supported for communicators controlling multiple processes.
     // It is recommended that you call both of the above preallocation routines for simplicity.
-    ierr = MatMPIAIJSetPreallocation(this->matrix_, diagonalNonZeros, NULL, offdiagonalNonZeros, NULL); CHKERRV(ierr);
-    ierr = MatSeqAIJSetPreallocation(this->matrix_, diagonalNonZeros, NULL); CHKERRV(ierr);
+    ierr = MatMPIAIJSetPreallocation(this->matrix_, nNonZerosDiagonal, NULL, nNonZerosOffdiagonal, NULL); CHKERRV(ierr);
+    ierr = MatSeqAIJSetPreallocation(this->matrix_, nNonZerosDiagonal, NULL); CHKERRV(ierr);
   }
 }
 

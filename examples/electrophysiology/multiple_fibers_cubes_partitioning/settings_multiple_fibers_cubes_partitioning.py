@@ -174,7 +174,7 @@ config = {
                   
                   # optimization parameters
                   "optimizationType":                       "vc",                                           # "vc", "simd", "openmp" type of generated optimizated source file
-                  "approximateExponentialFunction":         False,                                           # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
+                  "approximateExponentialFunction":         True,                                           # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
                   "compilerFlags":                          "-fPIC -O3 -march=native -shared ",             # compiler flags used to compile the optimized model code
                   "maximumNumberOfThreads":                 0,                                              # if optimizationType is "openmp", the maximum number of threads to use. Default value 0 means no restriction.
                   
@@ -271,8 +271,8 @@ config["RepeatedCall"] = {
   "MultipleInstances": copy.deepcopy(config["MultipleInstances"]),
   "fiberDistributionFile":    variables.fiber_distribution_file,   # for FastMonodomainSolver, e.g. MU_fibre_distribution_3780.txt
   "firingTimesFile":          variables.firing_times_file,         # for FastMonodomainSolver, e.g. MU_firing_times_real.txt
-  "onlyComputeIfHasBeenStimulated": False,                          # only compute fibers after they have been stimulated for the first time
-  "disableComputationWhenStatesAreCloseToEquilibrium": False,       # optimization where states that are close to their equilibrium will not be computed again
+  "onlyComputeIfHasBeenStimulated": True,                          # only compute fibers after they have been stimulated for the first time
+  "disableComputationWhenStatesAreCloseToEquilibrium": True,       # optimization where states that are close to their equilibrium will not be computed again
   "valueForStimulatedPoint":  variables.vm_value_stimulated,       # to which value of Vm the stimulated node should be set
 }
 

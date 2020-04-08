@@ -48,6 +48,8 @@ advanceTimeSpan()
   // compute time span of this method
   double timeSpan = this->endTime_ - this->startTime_;
 
+  LOG_N_TIMES(3,INFO) << "durationComputeMappingBetweenMeshes: " << Control::PerformanceMeasurement::getDuration("durationComputeMappingBetweenMeshes");
+
   // output for debugging
   LOG(DEBUG) << "MuscleContractionSolver::advanceTimeSpan, timeSpan=" << timeSpan<< ", timeStepWidth=" << this->timeStepWidth_
     << " n steps: " << this->numberTimeSteps_;

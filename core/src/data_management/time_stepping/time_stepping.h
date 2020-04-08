@@ -97,7 +97,7 @@ protected:
 
 private:
   //! get maximum number of expected non-zeros in the system matrix
-  void getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros);
+  void getPetscMemoryParameters(int &nNonZerosDiagonal, int &nNonZerosOffdiagonal);
 
 };
 

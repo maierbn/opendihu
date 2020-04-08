@@ -492,6 +492,12 @@ void Paraview::writePolyDataFile(const FieldVariablesForOutputWriterType &fieldV
   Control::PerformanceMeasurement::stop("durationParaview1DWrite");
 
   MPIUtility::handleReturnValue(MPI_File_close(&fileHandle), "MPI_File_close");
+
+  // register file at SeriesWriter to be included in the "*.vtk.series" JSON file
+  if (ownRankNo == 0)
+  {
+    Paraview::seriesWriter().registerNewFile(filenameStr, this->currentTime_);
+  }
 }
 
 } // namespace

@@ -130,6 +130,47 @@ void Linear::parseSolverTypes()
   // parse preconditioner type
   preconditionerType_ = this->specificSettings_.getOptionString("preconditionerType", "none");
   
+
+  // all pc types: https://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/PC/PCType.html
+  pcType_ = PCNONE;
+  if (preconditionerType_ == "jacobi")
+  {
+    pcType_ = PCJACOBI;
+  }
+  else if (preconditionerType_ == "sor")
+  {
+    pcType_ = PCSOR;
+  }
+  else if (preconditionerType_ == "lu")
+  {
+    pcType_ = PCLU;
+  }
+  else if (preconditionerType_ == "ilu")
+  {
+    pcType_ = PCILU;
+  }
+  else if (preconditionerType_ == "gamg")
+  {
+    pcType_ = PCGAMG;
+  }
+  else if (preconditionerType_ == "pcmg")
+  {
+    pcType_ = PCMG;
+  }
+  // the hypre boomeramg as the only solver does not provide the correct solution 
+  else if (preconditionerType_ == "pchypre" && kspType_ != KSPPREONLY)
+  {
+    pcType_ = PCHYPRE;
+  }
+  else if (preconditionerType_ == "none")
+  {
+    pcType_ = PCNONE;
+  }
+  else if (preconditionerType_ != "none" && preconditionerType_ != "")
+  {
+    pcType_ = preconditionerType_.c_str();
+  }
+  
   // all ksp types: https://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/KSP/KSPType.html#KSPType
   kspType_ = KSPGMRES;
   if (solverType_ == "richardson")
@@ -186,46 +227,6 @@ void Linear::parseSolverTypes()
     kspType_ = solverType_.c_str();
   }
 
-  // all pc types: https://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/PC/PCType.html
-  pcType_ = PCNONE;
-  if (preconditionerType_ == "jacobi")
-  {
-    pcType_ = PCJACOBI;
-  }
-  else if (preconditionerType_ == "sor")
-  {
-    pcType_ = PCSOR;
-  }
-  else if (preconditionerType_ == "lu")
-  {
-    pcType_ = PCLU;
-  }
-  else if (preconditionerType_ == "ilu")
-  {
-    pcType_ = PCILU;
-  }
-  else if (preconditionerType_ == "gamg")
-  {
-    pcType_ = PCGAMG;
-  }
-  else if (preconditionerType_ == "pcmg")
-  {
-    pcType_ = PCMG;
-  }
-  // the hypre boomeramg as the only solver does not provide the correct solution 
-  else if (preconditionerType_ == "pchypre" && kspType_ != KSPPREONLY)
-  {
-    pcType_ = PCHYPRE;
-  }
-  else if (preconditionerType_ == "none")
-  {
-    pcType_ = PCNONE;
-  }
-  else if (preconditionerType_ != "none" && preconditionerType_ != "")
-  {
-    pcType_ = preconditionerType_.c_str();
-  }
-
   std::stringstream optionKey;
   optionKey << this->name_ << "_solverType";
   Control::PerformanceMeasurement::setParameter(optionKey.str(), solverType_);
@@ -242,17 +243,24 @@ std::shared_ptr<KSP> Linear::ksp()
   return ksp_;
 }
 
-void Linear::dumpMatrixRightHandSide(Vec rightHandSide)
+void Linear::dumpMatrixRightHandSideSolution(Vec rightHandSide, Vec solution)
 {
   // dump files containing rhs and system matrix
   if (!dumpFilename_.empty())
   {
     PetscUtility::dumpVector(dumpFilename_+std::string("_rhs"), dumpFormat_, rightHandSide, mpiCommunicator_);
+    PetscUtility::dumpVector(dumpFilename_+std::string("_solution"), dumpFormat_, solution, mpiCommunicator_);
 
+    // get matrix
     Mat matrix;
     Mat preconditionerMatrix;
     KSPGetOperators(*ksp_, &matrix, &preconditionerMatrix);
+    
     PetscUtility::dumpMatrix(dumpFilename_+std::string("_matrix"), dumpFormat_, matrix, mpiCommunicator_);
+    if (matrix != preconditionerMatrix)
+    {
+      PetscUtility::dumpMatrix(dumpFilename_+std::string("_preconditioner_matrix"), dumpFormat_, matrix, mpiCommunicator_);
+    }
   }
 }
 
@@ -260,15 +268,15 @@ void Linear::solve(Vec rightHandSide, Vec solution, std::string message)
 {
   PetscErrorCode ierr;
 
-  // dump files
-  dumpMatrixRightHandSide(rightHandSide);
-
   Control::PerformanceMeasurement::start(this->durationLogKey_);
 
   // solve the system
   ierr = KSPSolve(*ksp_, rightHandSide, solution); CHKERRV(ierr);
 
   Control::PerformanceMeasurement::stop(this->durationLogKey_);
+
+  // dump files of rhs, solution and system matrix for debugging
+  dumpMatrixRightHandSideSolution(rightHandSide, solution);
 
   // determine meta data
   PetscInt numberOfIterations = 0;
@@ -306,8 +314,10 @@ void Linear::solve(Vec rightHandSide, Vec solution, std::string message)
     ierr = VecNorm(*residual_, NORM_2, &residualNorm); CHKERRV(ierr);
   }
 
+  // output message
   if (message != "")
   {
+    // example for output: "Linear system of multidomain problem solved in 373 iterations, 3633 dofs, residual norm 9.471e-11: KSP_CONVERGED_ATOL: residual 2-norm less than abstol"
     LOG(INFO) << message << " in " << numberOfIterations << " iterations, " << nDofsGlobal << " dofs, residual norm " << residualNorm
       << ": " << PetscUtility::getStringLinearConvergedReason(convergedReason);
   }

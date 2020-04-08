@@ -64,7 +64,7 @@ motor_units = [
 end_time = 4000.0                      # [ms] end time of the simulation
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
 stimulation_frequency_jitter = 0    # [-] jitter in percent of the frequency, added and substracted to the stimulation_frequency after each stimulation
-output_timestep = 1e-1               # [ms] timestep for output files, 0.5
+output_timestep = 3               # [ms] timestep for output files, 0.5
 dt_0D = 1e-3                        # [ms] timestep width of ODEs
 dt_1D = 1e-3                        # [ms] timestep width of diffusion
 dt_splitting = 1e-3                 # [ms] overall timestep width of strang splitting
@@ -74,8 +74,8 @@ paraview_output = True
 adios_output = False
 exfile_output = False
 python_output = False
-fiber_file = "../../input/left_biceps_brachii_1x1fibers.bin"
-fiber_file = "../../input/left_biceps_brachii_9x9fibers.bin"
+#fiber_file = "../../input/left_biceps_brachii_1x1fibers.bin"
+fiber_file = "../../input/left_biceps_brachii_37x37fibers.bin"
 firing_times_file="../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
 fiber_distribution_file="../../input/MU_fibre_distribution_10MUs.txt"
 cellml_file = "../../input/new_slow_TK_2014_12_08.c"
@@ -84,8 +84,8 @@ cellml_file = "../../input/new_slow_TK_2014_12_08.c"
 def get_am(fiber_no, mu_no):
   r = motor_units[mu_no]["radius"]*1e-4
   # cylinder surface: A = 2*π*r*l, V = cylinder volume: π*r^2*l, Am = A/V = 2*π*r*l / (π*r^2*l) = 2/r
-  #return 2./r
-  return Am
+  return 2./r
+  #return Am
 
 def get_cm(fiber_no, mu_no):
   return Cm
@@ -94,12 +94,10 @@ def get_conductivity(fiber_no, mu_no):
   return Conductivity
 
 def get_specific_states_call_frequency(fiber_no, mu_no):
-  #stimulation_frequency = motor_units[mu_no % len(motor_units)]["stimulation_frequency"]
-  #return stimulation_frequency*1e-3
-  return stimulation_frequency
+  stimulation_frequency = motor_units[mu_no % len(motor_units)]["stimulation_frequency"]
+  return stimulation_frequency*1e-3
 
 def get_specific_states_frequency_jitter(fiber_no, mu_no):
-  return 0
   return motor_units[mu_no % len(motor_units)]["jitter"]
 
 def get_specific_states_call_enable_begin(fiber_no, mu_no):

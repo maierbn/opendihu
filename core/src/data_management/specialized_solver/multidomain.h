@@ -57,9 +57,6 @@ public:
   //! initialize and set nCompartments_
   void initialize(int nCompartments);
 
-  //! set the subvectors solution data
-  void setSubvectorsSolution(const std::vector<Vec> &subvectorsSolution);
-
   //! print all stored data to stdout
   void print();
 
@@ -74,7 +71,8 @@ public:
     std::shared_ptr<FieldVariableType>,              // solution of laplace potential flow
     std::shared_ptr<FieldVariableType>,              // extra-cellular potential
     std::vector<std::shared_ptr<FieldVariableType>>,              // transmembranePotentials
-    std::vector<std::shared_ptr<FieldVariableType>>              // compartmentRelativeFactors
+    std::vector<std::shared_ptr<FieldVariableType>>,              // compartmentRelativeFactors
+    std::shared_ptr<FieldVariableType>                   // relativeFactorTotal
   > FieldVariablesForOutputWriter;
 
   //! get pointers to all field variables that can be written by output writers

@@ -13,7 +13,7 @@ namespace FunctionSpace
 // composite mesh
 template<int D,typename BasisFunctionType>
 bool FunctionSpaceStructuredFindPositionBase<Mesh::CompositeOfDimension<D>,BasisFunctionType>::
-findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::array<double,MeshType::dim()> &xi, bool startSearchInCurrentElement, double xiTolerance)
+findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::array<double,MeshType::dim()> &xi, bool startSearchInCurrentElement, double &residual, double xiTolerance)
 {
   const element_no_t nElements = this->nElementsLocal();
   VLOG(2) << "findPosition, elementNoLocal: " << elementNoLocal << ", ghostMeshNo: " << ghostMeshNo
@@ -31,7 +31,7 @@ findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::ar
     FunctionSpaceStructuredFindPositionBase<MeshType,BasisFunctionType> *functionSpace = this;
 
     // check if point is already in current element
-    if (functionSpace->pointIsInElement(point, elementNoLocal, xi, xiTolerance))
+    if (functionSpace->pointIsInElement(point, elementNoLocal, xi, residual, xiTolerance))
     {
 
       // debugging output
@@ -80,7 +80,7 @@ findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::ar
     this->meshPartition_->getSubMeshNoAndElementNoLocal(elementNoLocal, subMeshOfElementSubmeshNo, elementOnMeshNoLocal);
 
     bool nodeFound = this->subFunctionSpaces_[subMeshOfElementSubmeshNo]->findPosition(point, elementOnMeshNoLocal, ghostMeshNo, xi,
-                                                                                       startSearchInCurrentElement, xiTolerance);
+                                                                                       startSearchInCurrentElement, residual, xiTolerance);
     if (nodeFound)
     {
       // transform elementOnMeshNoLocal, which is the element local no in the subMesh based numbering to the composite numbering
@@ -102,7 +102,7 @@ findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::ar
 
     element_no_t elementOnMeshNoLocal = 0;
     bool nodeFound = this->subFunctionSpaces_[subMeshNo]->findPosition(point, elementOnMeshNoLocal, ghostMeshNo, xi,
-                                                                       false, xiTolerance);
+                                                                       false, residual, xiTolerance);
     if (nodeFound)
     {
       // transform elementOnMeshNoLocal, which is the element local no in the subMesh based numbering to the composite numbering

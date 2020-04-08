@@ -104,7 +104,7 @@ initializeSlotInformation(const Data::OutputConnectorData<FunctionSpaceType1,nCo
   // iterate over the first vector of variables
   for (int i = 0; i < transferableSolutionData1.variable1.size(); i++)
   {
-    LOG(DEBUG) << "i=" << i;
+    VLOG(1) << "i=" << i;
 
     // call getSlotInformation, which outputs the warnings
     int fromVectorNo = 0;
@@ -128,7 +128,7 @@ initializeSlotInformation(const Data::OutputConnectorData<FunctionSpaceType1,nCo
       // loop over other connections of this variable
       for (int i2 = i+1; i2 < transferableSolutionData1.variable1.size(); i2++)
       {
-        LOG(DEBUG) << "i2=" << i2;
+        VLOG(1) << "i2=" << i2;
 
         int fromVectorNo = 0;
         int fromVectorIndex = i2;
@@ -159,7 +159,7 @@ initializeSlotInformation(const Data::OutputConnectorData<FunctionSpaceType1,nCo
     // set in all entries of the first field variable avoidCopyIfPossible=false
     for (int i = 0; i < transferableSolutionData1.variable1.size(); i++)
     {
-      LOG(DEBUG) << " i=" << i;
+      VLOG(1) << " i=" << i;
 
       int fromVectorNo = 0;
       int fromVectorIndex = i;
@@ -186,7 +186,7 @@ initializeSlotInformation(const Data::OutputConnectorData<FunctionSpaceType1,nCo
   // iterate over the first vector of variables
   for (int i = 0; i < transferableSolutionData1.variable2.size(); i++)
   {
-    LOG(DEBUG) << "i=" << i;
+    VLOG(1) << "i=" << i;
 
     // call getSlotInformation, which outputs the warnings
     int fromVectorNo = 1;
@@ -210,7 +210,7 @@ initializeSlotInformation(const Data::OutputConnectorData<FunctionSpaceType1,nCo
       // loop over other connections of this variable
       for (int i2 = i+1; i2 < transferableSolutionData1.variable2.size(); i2++)
       {
-        LOG(DEBUG) << "i2=" << i2;
+        VLOG(1) << "i2=" << i2;
 
         int fromVectorNo = 1;
         int fromVectorIndex = i2;
@@ -241,7 +241,7 @@ initializeSlotInformation(const Data::OutputConnectorData<FunctionSpaceType1,nCo
     // set in all entries of the first field variable avoidCopyIfPossible=false
     for (int i = 0; i < transferableSolutionData1.variable2.size(); i++)
     {
-      LOG(DEBUG) << " i=" << i;
+      VLOG(1) << " i=" << i;
 
       int fromVectorNo = 1;
       int fromVectorIndex = i;
@@ -269,7 +269,7 @@ initializeSlotInformation(const Data::OutputConnectorData<FunctionSpaceType1,nCo
   // iterate over the first vector of variables
   for (int i = 0; i < transferableSolutionData2.variable1.size(); i++)
   {
-    LOG(DEBUG) << "i=" << i;
+    VLOG(1) << "i=" << i;
 
     // call getSlotInformation, which outputs the warnings
     int fromVectorNo = 0;
@@ -293,7 +293,7 @@ initializeSlotInformation(const Data::OutputConnectorData<FunctionSpaceType1,nCo
       // loop over other connections of this variable
       for (int i2 = i+1; i2 < transferableSolutionData2.variable1.size(); i2++)
       {
-        LOG(DEBUG) << "i2=" << i2;
+        VLOG(1) << "i2=" << i2;
 
         int fromVectorNo = 0;
         int fromVectorIndex = i2;
@@ -324,7 +324,7 @@ initializeSlotInformation(const Data::OutputConnectorData<FunctionSpaceType1,nCo
     // set in all entries of the first field variable avoidCopyIfPossible=false
     for (int i = 0; i < transferableSolutionData2.variable1.size(); i++)
     {
-      LOG(DEBUG) << " i=" << i;
+      VLOG(1) << " i=" << i;
 
       int fromVectorNo = 0;
       int fromVectorIndex = i;
@@ -352,7 +352,7 @@ initializeSlotInformation(const Data::OutputConnectorData<FunctionSpaceType1,nCo
   // iterate over the first vector of variables
   for (int i = 0; i < transferableSolutionData2.variable2.size(); i++)
   {
-    LOG(DEBUG) << "i=" << i;
+    VLOG(1) << "i=" << i;
 
     // call getSlotInformation, which outputs the warnings
     int fromVectorNo = 1;
@@ -376,7 +376,7 @@ initializeSlotInformation(const Data::OutputConnectorData<FunctionSpaceType1,nCo
       // loop over other connections of this variable
       for (int i2 = i+1; i2 < transferableSolutionData2.variable2.size(); i2++)
       {
-        LOG(DEBUG) << "i2=" << i2;
+        VLOG(1) << "i2=" << i2;
 
         int fromVectorNo = 1;
         int fromVectorIndex = i2;
@@ -407,7 +407,7 @@ initializeSlotInformation(const Data::OutputConnectorData<FunctionSpaceType1,nCo
     // set in all entries of the first field variable avoidCopyIfPossible=false
     for (int i = 0; i < transferableSolutionData2.variable2.size(); i++)
     {
-      LOG(DEBUG) << " i=" << i;
+      VLOG(1) << " i=" << i;
 
       int fromVectorNo = 1;
       int fromVectorIndex = i;

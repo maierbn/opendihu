@@ -53,9 +53,10 @@ traceStreamline(Vec3 startingPoint, double direction, std::vector<Vec3> &points)
     }
 
     VLOG(1) << "startSearchInCurrentElement=" << startSearchInCurrentElement << ", elementNo: " << elementNo << " ghostMeshNo: " << ghostMeshNo;
+    double residual;
 
     // look for the element and xi value of the currentPoint, also considers ghost meshes if they are set
-    bool positionFound = functionSpace_->findPosition(currentPoint, elementNo, ghostMeshNo, xi, startSearchInCurrentElement);
+    bool positionFound = functionSpace_->findPosition(currentPoint, elementNo, ghostMeshNo, xi, startSearchInCurrentElement, residual);
 
     // if no position was found, the streamline exits the domain
     if (!positionFound)

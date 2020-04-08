@@ -86,7 +86,7 @@ if n_ranks != variables.n_subdomains:
   # create all possible partitionings to the given number of ranks
   optimal_value = n_ranks**(1/3)
   possible_partitionings = []
-  for i in range(1,n_ranks):
+  for i in range(1,n_ranks+1):
     for j in [1]:
       if i*j <= n_ranks and n_ranks % (i*j) == 0:
         k = (int)(n_ranks / (i*j))
@@ -96,7 +96,7 @@ if n_ranks != variables.n_subdomains:
   # if no possible partitioning was found
   if len(possible_partitionings) == 0:
     if rank_no == 0:
-      print("\n\nError! Number of ranks {} does not match given partitioning {} x {} x {} = {} and no automatic partitioning could be done.\n\n".format(n_ranks, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z))
+      print("\n\n\033[0;31mError! Number of ranks {} does not match given partitioning {} x {} x {} = {} and no automatic partitioning could be done.\n\n\033[0m".format(n_ranks, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z))
     quit()
     
   # select the partitioning with the lowest value of performance which is the best

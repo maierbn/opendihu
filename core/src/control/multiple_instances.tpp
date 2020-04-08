@@ -281,6 +281,7 @@ initialize()
   {
     outputInitializeThisInstance_ = true;
     outputInitialize_ = false;
+    el::Loggers::removeFlag(el::LoggingFlag::NewLineForContainer);
     LOG(INFO) << "Initialize " << nInstancesComputedGlobally_ << " global instances (" << nInstancesLocal_ << " local).";
   }
 
@@ -320,6 +321,7 @@ initialize()
   {
     std::cout << "\b\b\b\bdone." << std::endl;
   }
+  el::Loggers::addFlag(el::LoggingFlag::NewLineForContainer);
 
   
   data_.setInstancesData(instancesLocal_);

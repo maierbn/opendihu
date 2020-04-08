@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Python.h>  // has to be the first included header
+#include <array>
 #include <Vc/Vc>
 
 #include "control/multiple_instances.h"

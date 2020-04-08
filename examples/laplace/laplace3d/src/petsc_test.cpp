@@ -126,8 +126,8 @@ int testPlain(int argc, char *argv[])
 
   Mat mat;
 
-  int diagonalNonZeros = 27;
-  int offdiagonalNonZeros = 27;
+  int nNonZerosDiagonal = 27;
+  int nNonZerosOffdiagonal = 27;
 
   dof_no_t nRowsLocal = nDofsLocalWithoutGhosts;
   dof_no_t nRowsGlobal = nDofsGlobal;
@@ -136,7 +136,7 @@ int testPlain(int argc, char *argv[])
   dof_no_t nColumnsGlobal = nDofsGlobal;
 
   //ierr = MatCreateAIJ(rankSubset_->mpiCommunicator(), partition.(), partition.(), n, n,
-  //                    diagonalNonZeros, NULL, offdiagonalNonZeros, NULL, &matrix); CHKERRQ(ierr);
+  //                    nNonZerosDiagonal, NULL, nNonZerosOffdiagonal, NULL, &matrix); CHKERRQ(ierr);
 
   // parallel API
   //ierr = DMSetMatrixPreallocateOnly(this->dm_, PETSC_TRUE); CHKERRQ(ierr);  // do not fill zero entries when DMCreateMatrix is called
@@ -162,9 +162,9 @@ int testPlain(int argc, char *argv[])
   // MATAIJ = "aij" - A matrix type to be used for sparse matrices. This matrix type is identical to MATSEQAIJ when constructed with a single process communicator, and MATMPIAIJ otherwise.
   // As a result, for single process communicators, MatSeqAIJSetPreallocation is supported, and similarly MatMPIAIJSetPreallocation is supported for communicators controlling multiple processes.
   // It is recommended that you call both of the above preallocation routines for simplicity.
-  ierr = MatSeqAIJSetPreallocation(mat, diagonalNonZeros, NULL); CHKERRQ(ierr);
-  ierr = MatMPIAIJSetPreallocation(mat, diagonalNonZeros, NULL, offdiagonalNonZeros, NULL); CHKERRQ(ierr);
-  LOG(DEBUG) << "Mat SetPreallocation, diagonalNonZeros: " << diagonalNonZeros << ", offdiagonalNonZeros: " << offdiagonalNonZeros;
+  ierr = MatSeqAIJSetPreallocation(mat, nNonZerosDiagonal, NULL); CHKERRQ(ierr);
+  ierr = MatMPIAIJSetPreallocation(mat, nNonZerosDiagonal, NULL, nNonZerosOffdiagonal, NULL); CHKERRQ(ierr);
+  LOG(DEBUG) << "Mat SetPreallocation, nNonZerosDiagonal: " << nNonZerosDiagonal << ", nNonZerosOffdiagonal: " << nNonZerosOffdiagonal;
 
   // set values
   std::vector<int> rowIndices, columnIndices;
@@ -407,7 +407,7 @@ int testPartitioned(int argc, char *argv[])
   /*
    *
   PartitionedPetscMat(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>> meshPartition,
-                      int nComponents, int diagonalNonZeros, int offdiagonalNonZeros, std::string name);
+                      int nComponents, int nNonZerosDiagonal, int nNonZerosOffdiagonal, std::string name);
 
    */
   PartitionedPetscMat<FunctionSpaceType> mat(meshPartition, 1, 27, 27, "stiffnessMatrix");
@@ -695,7 +695,7 @@ int testFieldVariables(int argc, char *argv[])
   /*
    *
   PartitionedPetscMat(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>> meshPartition,
-                      int nComponents, int diagonalNonZeros, int offdiagonalNonZeros, std::string name);
+                      int nComponents, int nNonZerosDiagonal, int nNonZerosOffdiagonal, std::string name);
 
    */
   PartitionedPetscMat<FunctionSpaceType> mat(meshPartition, 1, 27, 27, "stiffnessMatrix");

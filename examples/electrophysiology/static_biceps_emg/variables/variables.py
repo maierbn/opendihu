@@ -77,6 +77,7 @@ n_subdomains_z = 1
 sampling_stride_x = 2
 sampling_stride_y = 2
 sampling_stride_z = 50
+sampling_stride_fat = 1
 
 # scenario name for log file
 scenario_name = ""
@@ -133,7 +134,6 @@ n_fibers_per_subdomain_y = None
 n_points_per_subdomain_z = None
 z_point_index_start = None
 z_point_index_end = None
-n_elements_3D_mesh = None
 meshes = None
 potential_flow_dirichlet_bc = None
 use_elasticity_dirichlet_bc = None
@@ -141,6 +141,7 @@ use_elasticity_neumann_bc = None
 fibers_on_own_rank = None
 n_fiber_nodes_on_subdomain = None
 fiber_start_node_no = None
+generate_linear_3d_mesh = True
 generate_quadratic_3d_mesh = False
 fat_mesh_n_points = None
 fat_mesh_n_points_global = None

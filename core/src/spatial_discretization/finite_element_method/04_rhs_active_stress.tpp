@@ -1,6 +1,7 @@
 #include "spatial_discretization/finite_element_method/04_rhs.h"
 
-#include <Python.h>
+#include <Python.h>  // has to be the first included header
+#include <array>
 
 namespace SpatialDiscretization
 {

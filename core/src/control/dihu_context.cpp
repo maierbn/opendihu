@@ -43,6 +43,8 @@
 #include "ExecutableSupport.hpp"
 #endif
 
+bool GLOBAL_DEBUG = false;
+
 std::shared_ptr<Mesh::Manager> DihuContext::meshManager_ = nullptr;
 //std::shared_ptr<Solver::Manager> DihuContext::solverManager_ = nullptr;
 std::map<int, std::shared_ptr<Solver::Manager>> DihuContext::solverManagerForThread_;
@@ -242,6 +244,7 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
                 commandSuggestions << "  " << argv[0] << " " << line << std::endl;
               }
             }
+            ret = system("rm a");
           }
           if (commandSuggestions.str().empty())
           {

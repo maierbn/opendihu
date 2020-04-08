@@ -7,13 +7,13 @@
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
 PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
 PartitionedPetscMatOneComponent(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>>> meshPartition,
-                                int diagonalNonZeros, int offdiagonalNonZeros, std::string name) :
+                                int nNonZerosDiagonal, int nNonZerosOffdiagonal, std::string name) :
   PartitionedPetscMatOneComponentBase<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>>(meshPartition, meshPartition, name)
 {
   VLOG(1) << "create PartitionedPetscMatOneComponent<structured> (square sparse matrix) from meshPartition " << meshPartition;
 
   MatType matrixType = MATAIJ;  // sparse matrix type
-  createMatrix(matrixType, diagonalNonZeros, offdiagonalNonZeros);
+  createMatrix(matrixType, nNonZerosDiagonal, nNonZerosOffdiagonal);
 }
 
 //! constructor, create square dense matrix
@@ -33,14 +33,14 @@ template<typename MeshType, typename BasisFunctionType, typename ColumnsFunction
 PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
 PartitionedPetscMatOneComponent(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>>> meshPartitionRows,
                                 std::shared_ptr<Partition::MeshPartition<ColumnsFunctionSpaceType>> meshPartitionColumns,
-                                int diagonalNonZeros, int offdiagonalNonZeros, std::string name) :
+                                int nNonZerosDiagonal, int nNonZerosOffdiagonal, std::string name) :
   PartitionedPetscMatOneComponentBase<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>(meshPartitionRows, meshPartitionColumns, name)
 {
   VLOG(1) << "create PartitionedPetscMatOneComponent<structured> (non-square sparse matrix) "
     << "from meshPartition rows: " << meshPartitionRows << ", columns: " << meshPartitionColumns;
 
   MatType matrixType = MATAIJ;  // sparse matrix type
-  createMatrix(matrixType, diagonalNonZeros, offdiagonalNonZeros);
+  createMatrix(matrixType, nNonZerosDiagonal, nNonZerosOffdiagonal);
 }
 
 //! constructor, create non-square matrix
@@ -87,7 +87,7 @@ PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunct
 //! create a distributed Petsc matrix, according to the given partition
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
 void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
-createMatrix(MatType matrixType, int diagonalNonZeros, int offdiagonalNonZeros)
+createMatrix(MatType matrixType, int nNonZerosDiagonal, int nNonZerosOffdiagonal)
 {
   PetscErrorCode ierr;
   
@@ -101,7 +101,7 @@ createMatrix(MatType matrixType, int diagonalNonZeros, int offdiagonalNonZeros)
   dof_no_t nColumnsGlobal = this->meshPartitionColumns_->nNodesGlobal() * nColumnDofsPerNode;
 
   //ierr = MatCreateAIJ(rankSubset_->mpiCommunicator(), partition.(), partition.(), n, n,
-  //                    diagonalNonZeros, NULL, offdiagonalNonZeros, NULL, &matrix); CHKERRV(ierr);
+  //                    nNonZerosDiagonal, NULL, nNonZerosOffdiagonal, NULL, &matrix); CHKERRV(ierr);
 
   assert(this->meshPartitionRows_);
   assert(this->meshPartitionColumns_);
@@ -135,9 +135,9 @@ createMatrix(MatType matrixType, int diagonalNonZeros, int offdiagonalNonZeros)
     // MATAIJ = "aij" - A matrix type to be used for sparse matrices. This matrix type is identical to MATSEQAIJ when constructed with a single process communicator, and MATMPIAIJ otherwise.
     // As a result, for single process communicators, MatSeqAIJSetPreallocation is supported, and similarly MatMPIAIJSetPreallocation is supported for communicators controlling multiple processes.
     // It is recommended that you call both of the above preallocation routines for simplicity.
-    ierr = MatSeqAIJSetPreallocation(this->globalMatrix_, diagonalNonZeros, NULL); CHKERRV(ierr);
-    ierr = MatMPIAIJSetPreallocation(this->globalMatrix_, diagonalNonZeros, NULL, offdiagonalNonZeros, NULL); CHKERRV(ierr);
-    LOG(DEBUG) << "Mat SetPreallocation, diagonalNonZeros: " << diagonalNonZeros << ", offdiagonalNonZeros: " << offdiagonalNonZeros;
+    ierr = MatSeqAIJSetPreallocation(this->globalMatrix_, nNonZerosDiagonal, NULL); CHKERRV(ierr);
+    ierr = MatMPIAIJSetPreallocation(this->globalMatrix_, nNonZerosDiagonal, NULL, nNonZerosOffdiagonal, NULL); CHKERRV(ierr);
+    LOG(DEBUG) << "Mat SetPreallocation, nNonZerosDiagonal: " << nNonZerosDiagonal << ", nNonZerosOffdiagonal: " << nNonZerosOffdiagonal;
   }
 
   createLocalMatrix();

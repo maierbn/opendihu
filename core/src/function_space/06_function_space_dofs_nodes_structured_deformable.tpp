@@ -375,8 +375,17 @@ setGeometryFieldValues()
 
   if (this->nNodesLocalWithoutGhosts()*3 > localNodePositions_.size())
   {
+    std::stringstream dimensionsString;
+    if (D >= 1)
+      dimensionsString << this->meshPartition_->nNodesLocalWithoutGhosts(0);
+    if (D >= 2)
+      dimensionsString << "x" << this->meshPartition_->nNodesLocalWithoutGhosts(1);
+    if (D == 3)
+      dimensionsString << "x" << this->meshPartition_->nNodesLocalWithoutGhosts(2);
+
     LOG(FATAL) << "Given number of node positions (" << localNodePositions_.size() << ", i.e. " << localNodePositions_.size()/3
-      << " points) is smaller than required number (" << this->nNodesLocalWithGhosts()*3 << ", i.e. " << this->nNodesLocalWithoutGhosts() << " points)";
+      << " points) is smaller than required number (" << this->nNodesLocalWithGhosts()*3 << ", i.e. " << this->nNodesLocalWithoutGhosts() 
+      << " points), for mesh \"" << this->meshName() << "\", dimension: " << dimensionsString.str();
   }
 
   int geometryValuesIndex = 0;

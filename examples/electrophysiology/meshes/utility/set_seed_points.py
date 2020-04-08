@@ -9,6 +9,8 @@ import sys
 import numpy as np
 import os
 import pickle
+import struct
+import datetime
 
 muscle_fiber_filename = ""
 tracing_mesh_filename = ""

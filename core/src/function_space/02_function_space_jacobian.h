@@ -59,6 +59,7 @@ public:
         {
           LOG(DEBUG) << "You are using Hermite polynomials, check if geometry is specified correctly using also the derivative dofs!";
         }
+        LOG(FATAL) << "end";
         break;
       }
     }

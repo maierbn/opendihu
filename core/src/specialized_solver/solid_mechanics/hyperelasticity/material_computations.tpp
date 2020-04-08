@@ -1741,6 +1741,9 @@ computePK2StressField()
   this->data_.deformationGradient()->zeroGhostBuffer();
   this->data_.deformationGradientTimeDerivative()->zeroGhostBuffer();
 
+  this->data_.geometryReference()->setRepresentationGlobal();
+  this->data_.geometryReference()->startGhostManipulation();
+
   // get pointer to function space
   std::shared_ptr<DisplacementsFunctionSpace> displacementsFunctionSpace = this->data_.displacementsFunctionSpace();
   std::shared_ptr<PressureFunctionSpace> pressureFunctionSpace = this->data_.pressureFunctionSpace();

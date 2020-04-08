@@ -393,12 +393,12 @@ mapLowToHighDimension(
       {
         dofNosLocal[dofIndex] = fieldVariableTarget.functionSpace()->getDofNo(targetElementNoLocal, dofIndex);
 
-        if (dofNosLocal[dofIndex] >= fieldVariableTarget.functionSpace()->nDofsLocalWithoutGhosts() 
-            || dofNosLocal[dofIndex] >= targetFactorSum.functionSpace()->nDofsLocalWithoutGhosts())
+        if (dofNosLocal[dofIndex] >= fieldVariableTarget.functionSpace()->nDofsLocalWithGhosts() 
+            || dofNosLocal[dofIndex] >= targetFactorSum.functionSpace()->nDofsLocalWithGhosts())
         {
           LOG(FATAL) << "Dof no " << dofNosLocal[dofIndex] << " out of range, \"" << fieldVariableTarget.functionSpace()->meshName() << "\" has "
-            << fieldVariableTarget.functionSpace()->nDofsLocalWithoutGhosts() << " local dofs, \"" << targetFactorSum.functionSpace()->meshName() << "\" has "
-            << targetFactorSum.functionSpace()->nDofsLocalWithoutGhosts() << " local dofs. Mapping "
+            << fieldVariableTarget.functionSpace()->nDofsLocalWithGhosts() << " local dofs with ghosts, \"" << targetFactorSum.functionSpace()->meshName() << "\" has "
+            << targetFactorSum.functionSpace()->nDofsLocalWithGhosts() << " local dofs with ghosts. Mapping "
             << fieldVariableSource.name() << " (" << fieldVariableSource.functionSpace()->meshName()
             << ") -> " << fieldVariableTarget.name() << " (" << fieldVariableTarget.functionSpace()->meshName() << "), targetElementNoLocal: " 
             << targetElementNoLocal << "/" << fieldVariableTarget.functionSpace()->nElementsLocal() << ", dofIndex: " << dofIndex << "/" << nDofsPerTargetElement;

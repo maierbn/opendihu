@@ -110,12 +110,12 @@ echo "--- Create pickle mesh"
 
 cd $opendihu_directory/examples/fiber_tracing/streamline_tracer/scripts
 
-# arguments <input_stl_file> <output_pickle_file> <output_bin_file> <min_z> <max_z> <n_points_x> <n_points_z> [--only_preprocessing]
+# arguments <input_stl_file> <output_pickle_file> <output_bin_file> <min_z> <max_z> <n_points_x> <n_points_z> [--only-stage-1]
 ./create_mesh.sh \
   ${current_directory}/processed_meshes/${basename}_04_tendon1_box.stl \
   ${current_directory}/processed_meshes/${basename}_05_tendon1.pickle \
   ${current_directory}/processed_meshes/${basename}_05_tendon1.bin \
-  $zmin $zmax 5 10 
+  $zmin $zmax 5 10  --only-stage-1
   
 
 echo ""

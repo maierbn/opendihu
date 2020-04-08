@@ -70,7 +70,7 @@ n_grid_points_x=$(python -c "print($n_points_x+1)")
 # usage: ./create_mesh.py [<triangulation_type> [<parametric_space_shape> [<n_points_x> [<n_grid_points_x> [<improve_mesh> [<pickle output filename> <bin output filename>]]]]]]
 $pyod ${basedir}/scripts/utility/create_mesh.py $triangulation_type $parametric_space_shape $n_points_x $n_grid_points_x 1 $pickle_output_file $bin_output_file
 
-if [ "$7" = "--only-stage-1" ]; then
+if [ "$8" = "--only-stage-1" ]; then
 echo "Preprocessing complete, files ${pickle_output_file} and ${bin_output_file} were created, now exit."
 exit
 fi

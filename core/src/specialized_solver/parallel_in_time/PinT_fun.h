@@ -21,10 +21,6 @@
 #include <petscdraw.h>
 #include <petscvec.h>
 
-/*--------------------------------------------------------------------------
- * My App and Vector structures
- *--------------------------------------------------------------------------*/
-/* can put anything in my app and name it anything as well */
 typedef struct _braid_App_struct
 {
   MPI_Comm  comm;
@@ -38,22 +34,36 @@ typedef struct _braid_App_struct
   double *  g;            /* temporary vector for inversions and mat-vecs */
   double *  sc_info;      /* Runtime information that tracks the space-time grids visited */
   int       print_level;  /* Level of output desired by user (see the -help message below) */
-
+  
   typedef  TimeSteppingScheme::ImplicitEuler<
     SpatialDiscretization::FiniteElementMethod<
-      Mesh::StructuredRegularFixedOfDimension<1>,
+     Mesh::StructuredRegularFixedOfDimension<1>,
       BasisFunction::LagrangeOfOrder<>,
       Quadrature::None,
       Equation::Dynamic::IsotropicDiffusion
     >
-  > NestedSolver;
+  > NestedSolverIE;
 
   std::vector<
     std::shared_ptr<
-      NestedSolver
+      NestedSolverIE
     >
   > *implicitEulerSolvers;   //< vector of nested solvers (implicit euler) for solution on different grids
 
+  typedef  TimeSteppingScheme::ImplicitEuler<
+    SpatialDiscretization::FiniteElementMethod<
+     Mesh::StructuredRegularFixedOfDimension<1>,
+      BasisFunction::LagrangeOfOrder<>,
+      Quadrature::None,
+      Equation::Dynamic::IsotropicDiffusion
+    >
+  > NestedSolverMD;
+
+  std::vector<
+    std::shared_ptr<
+      NestedSolverMD
+    >
+  > *MultiDomainSolvers;   //< vector of nested solvers (implicit euler) for solution on different grids
 } my_App;
 
 /* Can put anything in my vector and name it anything as well */
@@ -68,11 +78,6 @@ typedef struct _braid_Vector_struct
 void
 create_vector(my_Vector **u,
               int size);
-
-int
-my_Init(braid_App     app,
-        double        t,
-        braid_Vector *u_ptr);
 
 int
 my_Clone(braid_App     app,

@@ -19,8 +19,8 @@
 namespace ParallelInTime
 {
 
-template<class NestedSolver>
-PinTMD<NestedSolver>::
+template<class NestedSolverMD>
+PinTMD<NestedSolverMD>::
 PinTMD(DihuContext context) :
   Runnable(),
   context_(context["PinTMD"]), initialized_(false)
@@ -38,24 +38,24 @@ PinTMD(DihuContext context) :
 }
 
 
-template<class NestedSolver>
-void PinTMD<NestedSolver>::
+template<class NestedSolverMD>
+void PinTMD<NestedSolverMD>::
 initialize()
 {
   // make sure that we initialize only once, in the next call, initialized_ is true
   if (initialized_)
     return;
 
-  std::vector<PyObject *> implicitEulerConfigs;
+  std::vector<PyObject *> MultiDomainConfigs;
 
-  PyObject *implicitEulerConfig = this->specificSettings_.template getOptionListBegin<PyObject *>("TimeSteppingScheme");
+  PyObject *MultiDomainConfig = this->specificSettings_.template getOptionListBegin<PyObject *>("TimeSteppingScheme");
 
   // loop over other entries of list
   for (;
     !this->specificSettings_.getOptionListEnd("TimeSteppingScheme");
-    this->specificSettings_.template getOptionListNext<PyObject *>("TimeSteppingScheme", implicitEulerConfig))
+    this->specificSettings_.template getOptionListNext<PyObject *>("TimeSteppingScheme", MultiDomainConfig))
   {
-    implicitEulerConfigs.push_back(implicitEulerConfig);
+    MultiDomainConfigs.push_back(MultiDomainConfig);
   }
 
   // split MPI communicator, create communicators with rank numbering in x domain
@@ -78,16 +78,16 @@ initialize()
   int test;
   test = 0;
   // loop over parsed config objects of implicit eulers
-  for (int i = 0; i < implicitEulerConfigs.size(); i++)
+  for (int i = 0; i < MultiDomainConfigs.size(); i++)
   {
     LOG(DEBUG) << "i = " << i;
 
-    PyObject *implicitEulerConfig = implicitEulerConfigs[i];
+    PyObject *MultiDomainConfig = MultiDomainConfigs[i];
 
-    LOG(DEBUG) << "implicitEulerConfig: " << implicitEulerConfig;
-    DihuContext implicitEulerContext = context_.createSubContext(implicitEulerConfig);
+    LOG(DEBUG) << "MultiDomainConfig: " << MultiDomainConfig;
+    DihuContext MultiDomainContext = context_.createSubContext(MultiDomainConfig);
 
-    LOG(DEBUG) << "implicitEulerContext: " << implicitEulerContext.getPythonConfig();
+    LOG(DEBUG) << "MultiDomainContext: " << MultiDomainContext.getPythonConfig();
 
     if (test == 0) {
       if (i==0){
@@ -96,6 +96,7 @@ initialize()
         // create rankSubset and assign to partitionManager, to be used by all further created meshes and solvers
         rankSubsetX_ = std::make_shared<Partition::RankSubset>(communicatorX);
         DihuContext::partitionManager()->setRankSubsetForNextCreatedPartitioning(rankSubsetX_);
+        test=1;
       }
       else {
         // create rank subset
@@ -104,30 +105,29 @@ initialize()
         // create rankSubset and assign to partitionManager, to be used by all further created meshes and solvers
         rankSubsetX_ = std::make_shared<Partition::RankSubset>(communicatorX);
         DihuContext::partitionManager()->setRankSubsetForNextCreatedPartitioning(rankSubsetX_);
-        test=1;
       }
     }
     // create rank subset
     std::shared_ptr<Partition::RankSubset> nextRankSubset = std::make_shared<Partition::RankSubset>(communicatorX);
     DihuContext::partitionManager()->setRankSubsetForNextCreatedPartitioning(nextRankSubset);
 
-    implicitEulerSolvers_.push_back(
-      std::make_shared<NestedSolver>(implicitEulerContext)
+    MultiDomainSolvers_.push_back(
+      std::make_shared<NestedSolverMD>(MultiDomainContext)
     );
 
     data_.push_back(
-      std::make_shared<Data>(implicitEulerContext)
+      std::make_shared<Data>(MultiDomainContext)
     );
 
     LOG(DEBUG) << "initialize implicit Euler for i = " << i;
 
-    implicitEulerSolvers_.back()->initialize();
+    MultiDomainSolvers_.back()->initialize();
 
     // In order to initialize the data object and actuall create all variables, we first need to assign a function space to the data object.
     // A function space object of type FunctionSpace<MeshType,BasisFunctionType> (see "function_space/function_space.h")
     // is an object that stores the mesh (e.g., all nodes and elements) as well as the basis function (e.g. linear Lagrange basis functions).
-    // The NestedSolver solver already created a function space that we should use. We already have a typedef "FunctionSpace" that is the class of NestedSolver's function space type.
-    std::shared_ptr<FunctionSpace> functionSpace = implicitEulerSolvers_.back()->data().functionSpace();
+    // The NestedSolverMD solver already created a function space that we should use. We already have a typedef "FunctionSpace" that is the class of NestedSolverMD's function space type.
+    std::shared_ptr<FunctionSpace> functionSpace = MultiDomainSolvers_.back()->data().functionSpace();
 
     // Pass the function space to the data object. data_ stores field variables.
     // It needs to know the number of nodes and degrees of freedom (dof) from the function space in order to create the vectors with the right size.
@@ -138,12 +138,12 @@ initialize()
     // now call initialize, data will then create all variables (Petsc Vec's)
     data_.back()->initialize();
 
-    // it is also possible to pass some field variables from the data of the NestedSolver to own data object
-    data_.back()->setSolutionVariable(implicitEulerSolvers_.back()->data().solution());
+    // it is also possible to pass some field variables from the data of the NestedSolverMD to own data object
+    data_.back()->setSolutionVariable(MultiDomainSolvers_.back()->data().solution());
   };
 
 
-  LOG(DEBUG) << "n: " << implicitEulerSolvers_.size();
+  LOG(DEBUG) << "n: " << MultiDomainSolvers_.size();
 
   // initialize PinT
   PinT_initialize();
@@ -152,8 +152,8 @@ initialize()
   initialized_ = true;
 }
 
-template<class NestedSolver>
-void PinTMD<NestedSolver>::
+template<class NestedSolverMD>
+void PinTMD<NestedSolverMD>::
 run()
 {
 
@@ -258,16 +258,16 @@ run()
   this->outputWriterManager_.writeOutput(*this->data_.back());
 }
 
-template<class NestedSolver>
-void PinTMD<NestedSolver>::
+template<class NestedSolverMD>
+void PinTMD<NestedSolverMD>::
 reset()
 {
   initialized_ = false;
   // "uninitialize" everything
 }
 
-template<class NestedSolver>
-void PinTMD<NestedSolver>::
+template<class NestedSolverMD>
+void PinTMD<NestedSolverMD>::
 executeMyHelperMethod()
 {/*
   // this is the template for an own private method
@@ -284,22 +284,22 @@ executeMyHelperMethod()
   // get a field variable from data object:
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace,1>> fieldVariableB = data_.fieldVariableB();
 
-  // copy the solution from the nestedSolver_ to fieldVariableB.
+  // copy the solution from the NestedSolverMD_ to fieldVariableB.
   ierr = VecCopy(solution, fieldVariableB->valuesGlobal()); CHKERRV(ierr);
 
   // add 1.0 to every entry in fieldVariableA, this already updates fieldVariableA in data because it is a pointer. There is no need to copy the values back.
   ierr = VecShift(fieldVariableB->valuesGlobal(), 1.0); CHKERRV(ierr);
 
-  // // For example you can also get the stiffness matrix of the nestedSolver_
-  // std::shared_ptr<PartitionedPetscMat<FunctionSpace>> stiffnessMatrix = nestedSolver_.data().stiffnessMatrix();
+  // // For example you can also get the stiffness matrix of the NestedSolverMD_
+  // std::shared_ptr<PartitionedPetscMat<FunctionSpace>> stiffnessMatrix = NestedSolverMD_.data().stiffnessMatrix();
   // Mat m = stiffnessMatrix->valuesGlobal();
   //
   // // e.g. add identity to m
   // ierr = MatShift(m, 1.0); CHKERRV(ierr);*/
 }
 
-template<class NestedSolver>
-void PinTMD<NestedSolver>::
+template<class NestedSolverMD>
+void PinTMD<NestedSolverMD>::
 PinT_initialize()
 {
   // initialize time stepping values
@@ -329,7 +329,7 @@ PinT_initialize()
   (app_->xstop)         = xstop_;
   (app_->nspace)        = nspace;
   (app_->print_level)   = print_level_;
-  (app_->implicitEulerSolvers)        = &this->implicitEulerSolvers_;
+  (app_->MultiDomainSolvers)        = &this->MultiDomainSolvers_;
 
   /* Initialize storage for sc_info, for tracking space-time grids visited during the simulation */
   app_->sc_info = (double*) malloc( 2*max_levels_*sizeof(double) );
@@ -344,26 +344,26 @@ PinT_initialize()
 
 }
 
-template<class NestedSolver>
-typename PinTMD<NestedSolver>::Data &PinTMD<NestedSolver>::
+template<class NestedSolverMD>
+typename PinTMD<NestedSolverMD>::Data &PinTMD<NestedSolverMD>::
 data()
 {
   // get a reference to the data object
   return data_.back();
 
-  // The nestedSolver_ object also has a data object, we could also directly use this and avoid having an own data object:
-  //  return nestedSolver_.data();
+  // The NestedSolverMD_ object also has a data object, we could also directly use this and avoid having an own data object:
+  //  return NestedSolverMD_.data();
 }
 
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
 //! the transfer is done by the output_connector_data_transfer class
-template<class NestedSolver>
-std::shared_ptr<typename PinTMD<NestedSolver>::OutputConnectorDataType> PinTMD<NestedSolver>::
+template<class NestedSolverMD>
+std::shared_ptr<typename PinTMD<NestedSolverMD>::OutputConnectorDataType> PinTMD<NestedSolverMD>::
 getOutputConnectorData()
 {
   //! This is relevant only, if this solver is part of a splitting or coupling scheme. Then this method returns the values/variables that will be
-  // transferred to the other solvers. We can just reuse the values of the nestedSolver_.
-  return implicitEulerSolvers_.back()->getOutputConnectorData();
+  // transferred to the other solvers. We can just reuse the values of the NestedSolverMD_.
+  return MultiDomainSolvers_.back()->getOutputConnectorData();
 }
 
 } //namespace ParallelInTime

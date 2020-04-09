@@ -19,8 +19,8 @@
 namespace ParallelInTime
 {
 
-template<class NestedSolver>
-PinTIE<NestedSolver>::
+template<class NestedSolverIE>
+PinTIE<NestedSolverIE>::
 PinTIE(DihuContext context) :
   Runnable(),
   context_(context["PinTIE"]), initialized_(false)
@@ -38,8 +38,8 @@ PinTIE(DihuContext context) :
 }
 
 
-template<class NestedSolver>
-void PinTIE<NestedSolver>::
+template<class NestedSolverIE>
+void PinTIE<NestedSolverIE>::
 initialize()
 {
   // make sure that we initialize only once, in the next call, initialized_ is true
@@ -112,7 +112,7 @@ initialize()
     DihuContext::partitionManager()->setRankSubsetForNextCreatedPartitioning(nextRankSubset);
 
     implicitEulerSolvers_.push_back(
-      std::make_shared<NestedSolver>(implicitEulerContext)
+      std::make_shared<NestedSolverIE>(implicitEulerContext)
     );
 
     data_.push_back(
@@ -126,7 +126,7 @@ initialize()
     // In order to initialize the data object and actuall create all variables, we first need to assign a function space to the data object.
     // A function space object of type FunctionSpace<MeshType,BasisFunctionType> (see "function_space/function_space.h")
     // is an object that stores the mesh (e.g., all nodes and elements) as well as the basis function (e.g. linear Lagrange basis functions).
-    // The NestedSolver solver already created a function space that we should use. We already have a typedef "FunctionSpace" that is the class of NestedSolver's function space type.
+    // The NestedSolverIE solver already created a function space that we should use. We already have a typedef "FunctionSpace" that is the class of NestedSolverIE's function space type.
     std::shared_ptr<FunctionSpace> functionSpace = implicitEulerSolvers_.back()->data().functionSpace();
 
     // Pass the function space to the data object. data_ stores field variables.
@@ -138,7 +138,7 @@ initialize()
     // now call initialize, data will then create all variables (Petsc Vec's)
     data_.back()->initialize();
 
-    // it is also possible to pass some field variables from the data of the NestedSolver to own data object
+    // it is also possible to pass some field variables from the data of the NestedSolverIE to own data object
     data_.back()->setSolutionVariable(implicitEulerSolvers_.back()->data().solution());
   };
 
@@ -152,8 +152,8 @@ initialize()
   initialized_ = true;
 }
 
-template<class NestedSolver>
-void PinTIE<NestedSolver>::
+template<class NestedSolverIE>
+void PinTIE<NestedSolverIE>::
 run()
 {
 
@@ -258,16 +258,16 @@ run()
   this->outputWriterManager_.writeOutput(*this->data_.back());
 }
 
-template<class NestedSolver>
-void PinTIE<NestedSolver>::
+template<class NestedSolverIE>
+void PinTIE<NestedSolverIE>::
 reset()
 {
   initialized_ = false;
   // "uninitialize" everything
 }
 
-template<class NestedSolver>
-void PinTIE<NestedSolver>::
+template<class NestedSolverIE>
+void PinTIE<NestedSolverIE>::
 executeMyHelperMethod()
 {/*
   // this is the template for an own private method
@@ -284,22 +284,22 @@ executeMyHelperMethod()
   // get a field variable from data object:
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace,1>> fieldVariableB = data_.fieldVariableB();
 
-  // copy the solution from the nestedSolver_ to fieldVariableB.
+  // copy the solution from the NestedSolverIE_ to fieldVariableB.
   ierr = VecCopy(solution, fieldVariableB->valuesGlobal()); CHKERRV(ierr);
 
   // add 1.0 to every entry in fieldVariableA, this already updates fieldVariableA in data because it is a pointer. There is no need to copy the values back.
   ierr = VecShift(fieldVariableB->valuesGlobal(), 1.0); CHKERRV(ierr);
 
-  // // For example you can also get the stiffness matrix of the nestedSolver_
-  // std::shared_ptr<PartitionedPetscMat<FunctionSpace>> stiffnessMatrix = nestedSolver_.data().stiffnessMatrix();
+  // // For example you can also get the stiffness matrix of the NestedSolverIE_
+  // std::shared_ptr<PartitionedPetscMat<FunctionSpace>> stiffnessMatrix = NestedSolverIE_.data().stiffnessMatrix();
   // Mat m = stiffnessMatrix->valuesGlobal();
   //
   // // e.g. add identity to m
   // ierr = MatShift(m, 1.0); CHKERRV(ierr);*/
 }
 
-template<class NestedSolver>
-void PinTIE<NestedSolver>::
+template<class NestedSolverIE>
+void PinTIE<NestedSolverIE>::
 PinT_initialize()
 {
   // initialize time stepping values
@@ -344,25 +344,25 @@ PinT_initialize()
 
 }
 
-template<class NestedSolver>
-typename PinTIE<NestedSolver>::Data &PinTIE<NestedSolver>::
+template<class NestedSolverIE>
+typename PinTIE<NestedSolverIE>::Data &PinTIE<NestedSolverIE>::
 data()
 {
   // get a reference to the data object
   return data_.back();
 
-  // The nestedSolver_ object also has a data object, we could also directly use this and avoid having an own data object:
-  //  return nestedSolver_.data();
+  // The NestedSolverIE_ object also has a data object, we could also directly use this and avoid having an own data object:
+  //  return NestedSolverIE_.data();
 }
 
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
 //! the transfer is done by the output_connector_data_transfer class
-template<class NestedSolver>
-std::shared_ptr<typename PinTIE<NestedSolver>::OutputConnectorDataType> PinTIE<NestedSolver>::
+template<class NestedSolverIE>
+std::shared_ptr<typename PinTIE<NestedSolverIE>::OutputConnectorDataType> PinTIE<NestedSolverIE>::
 getOutputConnectorData()
 {
   //! This is relevant only, if this solver is part of a splitting or coupling scheme. Then this method returns the values/variables that will be
-  // transferred to the other solvers. We can just reuse the values of the nestedSolver_.
+  // transferred to the other solvers. We can just reuse the values of the NestedSolverIE_.
   return implicitEulerSolvers_.back()->getOutputConnectorData();
 }
 

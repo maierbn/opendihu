@@ -26,3 +26,8 @@ int my_Step(braid_App        app,
             braid_Vector     fstop,
             braid_Vector     u,
             braid_StepStatus status);
+
+int
+my_Init(braid_App     app,
+        double        t,
+        braid_Vector *u_ptr);

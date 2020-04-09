@@ -38,8 +38,8 @@ int my_Step(braid_App        app,
    }
 
    // get alias variables
-   std::shared_ptr<typename _braid_App_struct::NestedSolver> implicitEulerSolver = (*app->implicitEulerSolvers)[solver];
-   std::shared_ptr<typename Data::PinTIE<typename _braid_App_struct::NestedSolver::FunctionSpace>::ScalarFieldVariableType> solution = implicitEulerSolver->data().solution();
+   std::shared_ptr<typename _braid_App_struct::NestedSolverIE> implicitEulerSolver = (*app->implicitEulerSolvers)[solver];
+   std::shared_ptr<typename Data::PinTIE<typename _braid_App_struct::NestedSolverIE::FunctionSpace>::ScalarFieldVariableType> solution = implicitEulerSolver->data().solution();
    assert(u->size == solution->nDofsGlobal());
 
    // Set the initial guess for the solver
@@ -94,6 +94,53 @@ int my_Step(braid_App        app,
 
    /* no refinement */
    braid_StepStatusSetRFactor(status, 1);
+
+   return 0;
+}
+
+int
+my_Init(braid_App     app,
+        double        t,
+        braid_Vector *u_ptr)
+{
+   my_Vector *u;
+   int nspace = (app->nspace);
+   // int    i;
+   // double deltaX = (app->xstop - app->xstart) / (nspace - 1.0);
+
+   /* Allocate vector */
+   create_vector(&u, nspace);
+
+   // Different way to initialize
+   // /* Initialize vector (with correct boundary conditions) */
+   // if(t == 0.0)
+   // {
+   //    /* Get the solution at time t=0 */
+   //    get_solution(u->values, u->size, 0.0, app->xstart, deltaX);
+   // }
+   // else
+   // {
+   //    /* Use random values for u(t>0), this measures asymptotic convergence rate */
+   //    for(i=0; i < nspace; i++)
+   //    {
+   //       (u->values)[i] = ((double)braid_Rand())/braid_RAND_MAX;
+   //    }
+   // }
+
+   PetscInt solver;
+   solver=log2(nspace - 1);
+   assert(solver < (*app->implicitEulerSolvers).size());
+
+   std::shared_ptr<typename _braid_App_struct::NestedSolverIE> implicitEulerSolver = (*app->implicitEulerSolvers)[solver];
+   std::shared_ptr<typename Data::PinTIE<typename _braid_App_struct::NestedSolverIE::FunctionSpace>::ScalarFieldVariableType> solution = implicitEulerSolver->data().solution();
+
+   PetscErrorCode ierr;
+   ierr = VecGetValues(solution->valuesGlobal(), u->size, solution->functionSpace()->meshPartition()->dofNosLocal().data(), u->values); CHKERRQ(ierr);
+
+   LOG(DEBUG) << "--------------------------------------------------------------";
+   LOG(DEBUG) << "set initial values: " << *solution;
+
+   *u_ptr = u;
 
    return 0;
 }

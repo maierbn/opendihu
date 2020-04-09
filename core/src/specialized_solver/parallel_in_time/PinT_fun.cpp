@@ -4,8 +4,6 @@
 #include "specialized_solver/parallel_in_time/PinT_fun.h"
 
 #include "specialized_solver/parallel_in_time/PinT_lib.h"
-#include "data_management/specialized_solver/PinT_IE.h"
-
 
 /* create and allocate a vector */
 void
@@ -15,53 +13,6 @@ create_vector(my_Vector **u,
    (*u) = (my_Vector *) malloc(sizeof(my_Vector));
    ((*u)->size)   = size;
    ((*u)->values) = (double *) malloc(size*sizeof(double));
-}
-
-int
-my_Init(braid_App     app,
-        double        t,
-        braid_Vector *u_ptr)
-{
-   my_Vector *u;
-   int nspace = (app->nspace);
-   // int    i;
-   // double deltaX = (app->xstop - app->xstart) / (nspace - 1.0);
-
-   /* Allocate vector */
-   create_vector(&u, nspace);
-
-   // Different way to initialize
-   // /* Initialize vector (with correct boundary conditions) */
-   // if(t == 0.0)
-   // {
-   //    /* Get the solution at time t=0 */
-   //    get_solution(u->values, u->size, 0.0, app->xstart, deltaX);
-   // }
-   // else
-   // {
-   //    /* Use random values for u(t>0), this measures asymptotic convergence rate */
-   //    for(i=0; i < nspace; i++)
-   //    {
-   //       (u->values)[i] = ((double)braid_Rand())/braid_RAND_MAX;
-   //    }
-   // }
-
-   PetscInt solver;
-   solver=log2(nspace - 1);
-   assert(solver < (*app->implicitEulerSolvers).size());
-
-   std::shared_ptr<typename _braid_App_struct::NestedSolver> implicitEulerSolver = (*app->implicitEulerSolvers)[solver];
-   std::shared_ptr<typename Data::PinTIE<typename _braid_App_struct::NestedSolver::FunctionSpace>::ScalarFieldVariableType> solution = implicitEulerSolver->data().solution();
-
-   PetscErrorCode ierr;
-   ierr = VecGetValues(solution->valuesGlobal(), u->size, solution->functionSpace()->meshPartition()->dofNosLocal().data(), u->values); CHKERRQ(ierr);
-
-   LOG(DEBUG) << "--------------------------------------------------------------";
-   LOG(DEBUG) << "set initial values: " << *solution;
-
-   *u_ptr = u;
-
-   return 0;
 }
 
 int

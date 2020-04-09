@@ -12,17 +12,17 @@
 #include "specialized_solver/parallel_in_time/PinT_fun.h"
 
 namespace ParallelInTime {
-template<class NestedSolver>
+template<class NestedSolverMD>
 class PinTMD :
   public Runnable
 {
 public:
-  //! make the FunctionSpace of the NestedSolver class available
-  typedef typename NestedSolver::FunctionSpace FunctionSpace;
+  //! make the FunctionSpace of the NestedSolverMD class available
+  typedef typename NestedSolverMD::FunctionSpace FunctionSpace;
 
   //! define the type of the data object,
-  //typedef typename NestedSolver::Data Data;   // either, if you do not need your own data object, use the data object of NestedSolver
-  typedef ::Data::PinTMD<typename NestedSolver::FunctionSpace> Data;   // or, define your own data class, stored under "data_management/my_new_static_solver.h"
+  //typedef typename NestedSolverMD::Data Data;   // either, if you do not need your own data object, use the data object of NestedSolverMD
+  typedef ::Data::PinTMD<typename NestedSolverMD::FunctionSpace> Data;   // or, define your own data class, stored under "data_management/my_new_static_solver.h"
 
   //! Define the type of data that will be transferred between solvers when there is a coupling scheme.
   //! Usually you define this type in the "Data" class and reuse it here.
@@ -60,9 +60,9 @@ protected:
 
   std::vector<
     std::shared_ptr<
-      NestedSolver
+      NestedSolverMD
     >
-  > implicitEulerSolvers_;   //< vector of nested solvers (implicit euler) for solution on different grids
+  > MultiDomainSolvers_;   //< vector of nested solvers (implicit euler) for solution on different grids
 
   std::vector<
     std::shared_ptr<Data>

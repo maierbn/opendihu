@@ -96,6 +96,7 @@ initialize()
         // create rankSubset and assign to partitionManager, to be used by all further created meshes and solvers
         rankSubsetX_ = std::make_shared<Partition::RankSubset>(communicatorX);
         DihuContext::partitionManager()->setRankSubsetForNextCreatedPartitioning(rankSubsetX_);
+        test=1;
       }
       else {
         // create rank subset
@@ -104,7 +105,6 @@ initialize()
         // create rankSubset and assign to partitionManager, to be used by all further created meshes and solvers
         rankSubsetX_ = std::make_shared<Partition::RankSubset>(communicatorX);
         DihuContext::partitionManager()->setRankSubsetForNextCreatedPartitioning(rankSubsetX_);
-        test=1;
       }
     }
     // create rank subset

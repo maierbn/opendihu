@@ -58,7 +58,7 @@ b  = 1.075e-2               # [N/cm^2] anisotropy parameter
 d  = 9.1733                 # [-] anisotropy parameter
 
 # for debugging, b = 0 leads to normal Mooney-Rivlin
-#b = 0
+b = 0
 
 material_parameters = [c1, c2, b, d]   # material parameters
 pmax = 7.3                  # [N/cm^2] maximum isometric active stress
@@ -102,6 +102,7 @@ motor_units = [
 
 # timing parameters
 # -----------------
+end_time = 0.008                   # [ms] end time of the simulation
 end_time = 4000.0
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
 stimulation_frequency_jitter = 0    # [-] jitter in percent of the frequency, added and substracted to the stimulation_frequency after each stimulation
@@ -122,9 +123,9 @@ cellml_file             = "../../input/new_slow_TK_2014_12_08.c"
 
 # stride for sampling the 3D elements from the fiber data
 # a higher number leads to less 3D elements
-sampling_stride_x = 1
-sampling_stride_y = 1
-sampling_stride_z = 20
+sampling_stride_x = 2
+sampling_stride_y = 2
+sampling_stride_z = 74
 sampling_stride_fat = 1
 
 # other options

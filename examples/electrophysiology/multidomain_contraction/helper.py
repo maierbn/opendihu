@@ -311,8 +311,8 @@ fat_mesh_quadratic_n_elements = [
   fat_mesh_n_elements[2]/2
 ]
 
-print("fat_mesh_n_elements:           {}".format(fat_mesh_n_elements))
-print("fat_mesh_quadratic_n_elements: {}".format(fat_mesh_quadratic_n_elements))
+#print("fat_mesh_n_elements:           {}".format(fat_mesh_n_elements))
+#print("fat_mesh_quadratic_n_elements: {}".format(fat_mesh_quadratic_n_elements))
 
 variables.meshes["3DFatMesh_quadratic"] = {
   "nElements": fat_mesh_quadratic_n_elements,
@@ -474,11 +474,14 @@ def set_specific_states(n_nodes_global, time_step_no, current_time, states, comp
     x_index_center = (int)(n_nodes_x/2)
     
     for k in range(n_nodes_z):
-      if z_index_center-1 <= k <= z_index_center+1:
+      if z_index_center-1 <= k <= z_index_center+1:  # use only 3 nodes in z direction from center
         for j in range(n_nodes_y):
-          if y_index_center-1 <= j <= y_index_center+1:
+          #if y_index_center-1 <= j <= y_index_center+1:  # use only 3 nodes in y direction from center
+          if True:                                        # use all nodes
             for i in range(n_nodes_x):
-              if x_index_center-1 <= i <= x_index_center+1:
+              #if x_index_center-1 <= i <= x_index_center+1:  # use only 3 nodes in x direction from center
+              if True:                                        # use all nodes
+                
                 key = ((i,j,k),0,0)        # key: ((x,y,z),nodal_dof_index,state_no)
                 states[key] = variables.vm_value_stimulated
                 #print("set states at ({},{},{}) to 40".format(i,j,k))

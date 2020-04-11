@@ -330,7 +330,7 @@ if False:
   with open("3Dmesh_{}".format(rank_no),"w") as f:
     f.write(str(variables.meshes["3Dmesh"]))
 
-print("created meshes {}".format(list(variables.meshes.keys())))
+#print("created meshes {}".format(list(variables.meshes.keys())))
 
 # set output writer, this example doesn't use this, it defines the output writers directly in the settings file, but the code is left here in case we want to use it later when tidying up
 if False:  

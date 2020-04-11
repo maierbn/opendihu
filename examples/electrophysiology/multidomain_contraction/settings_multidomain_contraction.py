@@ -191,7 +191,8 @@ config = {
   "Meshes":                variables.meshes,
   "MappingsBetweenMeshes": {
     "3Dmesh": "3Dmesh_quadratic",                         # mappings to be used without composite meshes
-    "3Dmesh": "3Dmesh_quadratic+3DFatMesh_quadratic",     # mapping from multidomain to elasticity mesh, for transferring γ
+    "3Dmesh":
+       {"name": "3Dmesh_quadratic+3DFatMesh_quadratic", "xiTolerance": 0.01, "enableWarnings": True, "compositeUseOnlyInitializedMappings": True},     # mapping from multidomain to elasticity mesh, for transferring γ
     "3Dmesh_quadratic+3DFatMesh_quadratic": [
        {"name": "3Dmesh",    "xiTolerance": 0.01, "enableWarnings": False, "compositeUseOnlyInitializedMappings": True},    # mapping uses mappings of submeshes (i.e. 3Dmesh_quadratic->3Dmesh)
        {"name": "3DFatMesh", "xiTolerance": 0.01, "enableWarnings": False, "compositeUseOnlyInitializedMappings": True},    # mapping uses mappings of submeshes (i.e. 3DFatMesh_quadratic->3DFatMesh)    

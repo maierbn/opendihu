@@ -167,10 +167,20 @@ MappingBetweenMeshesImplementation(std::shared_ptr<FunctionSpaceSourceType> func
       }
     }
 
-    if (FunctionSpaceSourceType::dim() >= FunctionSpaceTargetType::dim() && nTargetDofsNotMapped > 0)
+    if (FunctionSpaceSourceType::dim() >= FunctionSpaceTargetType::dim() && nTargetDofsNotMapped > 0 && compositeUseOnlyInitializedMappings)
     {
       LOG(DEBUG) << "mapping \"" << functionSpaceSource->meshName() << "\" -> \""
-        << functionSpaceTarget->meshName() << "\":" << nTargetDofsNotMapped << " target dofs have no source dofs " 
+        << functionSpaceTarget->meshName() << "\", source FunctionSpace dim: "
+        << FunctionSpaceSourceType::dim() << " >= target FunctionSpace dim: " << FunctionSpaceTargetType::dim() << ", "
+        << nTargetDofsNotMapped << " target dofs of " << nDofsLocalTarget << " have no source dofs that would contribute values. "
+        << "But option \"compositeUseOnlyInitializedMappings\" is set to True, therefore not fixing the missing target dofs (might from another submesh)";
+    }
+
+    if (FunctionSpaceSourceType::dim() >= FunctionSpaceTargetType::dim() && nTargetDofsNotMapped > 0 && !compositeUseOnlyInitializedMappings)
+    {
+      LOG(DEBUG) << "mapping \"" << functionSpaceSource->meshName() << "\" -> \""
+        << functionSpaceTarget->meshName() << "\":" << nTargetDofsNotMapped << " target dofs of " << nDofsLocalTarget 
+        << " have no source dofs " 
         << "that would contribute values. Source FunctionSpace dim: "
         << FunctionSpaceSourceType::dim() << " >= target FunctionSpace dim: " << FunctionSpaceTargetType::dim() << ". Now fixing.";
 
@@ -234,7 +244,18 @@ MappingBetweenMeshesImplementation(std::shared_ptr<FunctionSpaceSourceType> func
                 double phiContribution = functionSpaceSource->phi(sourceDofIndex, xiSource);
                 targetElement.scalingFactors[targetDofIndex] = phiContribution;
 
-                targetMappingInfo_[sourceDofNoLocal].targetElements.push_back(targetElement);
+                try 
+                {
+                  targetMappingInfo_[sourceDofNoLocal].targetElements.push_back(targetElement);
+                }
+                catch (...)
+                {
+                  LOG(ERROR) << "Could allocate memory while creation of mapping \"" << functionSpaceSource->meshName() << "\" -> \""
+                    << functionSpaceTarget->meshName() << "\":" << nTargetDofsNotMapped << " target dofs of " << nDofsLocalTarget 
+                    << " have no source dofs that would contribute values. Source FunctionSpace dim: "
+                    << FunctionSpaceSourceType::dim() << " >= target FunctionSpace dim: " << FunctionSpaceTargetType::dim();
+                  break;
+                }
 
                 //LOG(DEBUG) << "add scaling Factor " << phiContribution << " at targetDofIndex " << targetDofIndex << " of targetELement " << targetElementNoLocal
                 //  << ", now, source dof " << sourceDofNoLocal << " has " << targetMappingInfo_[sourceDofNoLocal].targetElements.size() << " target elements.";

@@ -149,6 +149,15 @@ setValue(int componentNo, Vc::int_v rows, Vc::int_v columns, PetscScalar value, 
 //! wrapper of MatSetValues for a single value, sets a local value in the matrix
 template<typename RowsFunctionSpaceType, typename ColumnsFunctionSpaceType>
 void PartitionedPetscMat<RowsFunctionSpaceType,ColumnsFunctionSpaceType>::
+setValue(int componentNo, Vc::int_v rows, Vc::int_v columns, Vc::double_v values, InsertMode mode)
+{
+  assert(0 <= componentNo && componentNo < matrixComponents_.size());
+  matrixComponents_[componentNo].setValue(rows, columns, values, mode);
+}
+
+//! wrapper of MatSetValues for a single value, sets a local value in the matrix
+template<typename RowsFunctionSpaceType, typename ColumnsFunctionSpaceType>
+void PartitionedPetscMat<RowsFunctionSpaceType,ColumnsFunctionSpaceType>::
 setValue(PetscInt row, PetscInt col, PetscScalar value, InsertMode mode)
 {
   setValue(0, row, col, value, mode);

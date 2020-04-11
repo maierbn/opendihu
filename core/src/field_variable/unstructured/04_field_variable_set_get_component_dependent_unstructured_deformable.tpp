@@ -136,7 +136,7 @@ setValue(const Vc::int_v &dofLocalNo, const Vc::double_v &value, InsertMode pets
   int nEntries = Vc::double_v::size() - Vc::isnegative(dofLocalNo).count();
 /*
   std::array<int,Vc::double_v::size()> indices;
-  dofLocalNo.store(indices.data(),Vc::Aligned);      // if this crashes, remove Vc::Aligned, then also in partitioned_petsc_mat_one_component_structured
+  dofLocalNo.store(indices.data());
 
   this->values_->setValues(0, nEntries, indices.data(), (double *)&value, petscInsertMode);
 */
@@ -156,7 +156,7 @@ setValue(const Vc::int_v &dofLocalNo, double value, InsertMode petscInsertMode)
 /*
   // store Vc vectors in order to get the raw memory
   std::array<int,Vc::double_v::size()> indices;
-  dofLocalNo.store(indices.data(),Vc::Aligned);      // if this crashes, remove Vc::Aligned, then also in partitioned_petsc_mat_one_component_structured
+  dofLocalNo.store(indices.data());
 */
   // count number of non-negative indices in dofLocalNo, it is assumed that they occur all before the negative indices
   int nEntries = Vc::double_v::size() - Vc::isnegative(dofLocalNo).count();

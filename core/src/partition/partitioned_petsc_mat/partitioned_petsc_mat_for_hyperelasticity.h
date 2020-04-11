@@ -49,11 +49,8 @@ public:
   //! Set the given values to all rows and columns of the respective components
   void setValue(int componentNoRow, Vc::int_v row, int componentNoColumn, Vc::int_v column, PetscScalar value, InsertMode mode);
 
-  //! wrapper of MatSetValues for a single vectorized value, sets a local value in the matrix
-  void setValue(int componentNoRow, Vc::int_v rows, int componentNoColumn, PetscInt col, Vc::double_v values, InsertMode mode);
-
-  //! wrapper of MatSetValues for a single vectorized value, sets a local value in the matrix
-  void setValue(int componentNoRow, PetscInt row, int componentNoColumn, Vc::int_v columns, Vc::double_v values, InsertMode mode);
+  //! wrapper of MatSetValues for a vectorized value, sets matrix[rows[i],columns[i]] = values[i] for i = 1,..,Vc::double_v::size(), i.e. not matrix[rows[i],columns[j]] = ...
+  void setValue(int componentNoRow, Vc::int_v rows, int componentNoColumn, Vc::int_v columns, Vc::double_v values, InsertMode mode);
 
   //! output the matrix to the file in globalNatural ordering, it has the same form regardless of number of ranks and therefore can be used to compare output with different ranks
   void dumpMatrixGlobalNatural(std::string filename);

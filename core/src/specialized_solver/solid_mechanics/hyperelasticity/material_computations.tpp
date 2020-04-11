@@ -838,10 +838,10 @@ materialComputeJacobian()
   typedef Quadrature::TensorProduct<D,Quadrature::Gauss<3>> QuadratureDD;   // quadratic*quadratic = 4th order polynomial, 3 gauss points = 2*3-1 = 5th order exact
 
   // define types to hold evaluations of integrand
-  typedef std::array<std::array<double_v_t,nVcComponents>, nUnknowsPerElement*nUnknowsPerElement> EvaluationsDisplacementsType;
+  typedef std::array<double_v_t, nUnknowsPerElement*nUnknowsPerElement> EvaluationsDisplacementsType;
   std::array<EvaluationsDisplacementsType, QuadratureDD::numberEvaluations()> evaluationsArrayDisplacements{};
 
-  typedef std::array<std::array<double_v_t,nVcComponents>, nPressureDofsPerElement*nUnknowsPerElement> EvaluationsPressureType;     // for vectorized types we have a term consisting of a product like f(dof_i)*g(dof_j), where dof is each a different vectorized variable for 4 entries. So we compute in total 16 entries f(dof_i[a])*g(dof_j[b]),a,b=1..4 For this we need std::array<Vc::double_v,4>
+  typedef std::array<double_v_t, nPressureDofsPerElement*nUnknowsPerElement> EvaluationsPressureType;
   std::array<EvaluationsPressureType, QuadratureDD::numberEvaluations()> evaluationsArrayPressure{};
 
   typedef std::array<double, nDisplacementsDofsPerElement*nDisplacementsDofsPerElement> EvaluationsUVType;   // for vectorized types, phi_L*phi_M is the same for all elements, therefore double and not double_v_t
@@ -1102,78 +1102,70 @@ materialComputeJacobian()
           {
             for (int bComponent = 0; bComponent < D; bComponent++)     // lower-case b in derivation, index over displacements components
             {
-              for (int bVcComponent = 0; bVcComponent < nVcComponents; bVcComponent++)      // loop over the 4 dofs of M (bDof,bComponent) that will be computed at once
+              double_v_t integrand = 0.0;
+
+              for (int bInternal = 0; bInternal < D; bInternal++)     // capital B in derivation
               {
-                double_v_t integrand = 0.0;
-
-                for (int bInternal = 0; bInternal < D; bInternal++)     // capital B in derivation
+                for (int dInternal = 0; dInternal < D; dInternal++)     // capital D in derivation
                 {
-                  for (int dInternal = 0; dInternal < D; dInternal++)     // capital D in derivation
+                  // compute integrand phi_La,B * tilde{k}_abBD * phi_Mb,D
+
+                  // ----------------------------
+                  // compute derivatives of phi
+                  double_v_t dphiL_dXB = 0.0;
+                  double_v_t dphiM_dXD = 0.0;
+
+                  // helper index k for multiplication with inverse Jacobian
+                  for (int k = 0; k < D; k++)
                   {
-                    // compute integrand phi_La,B * tilde{k}_abBD * phi_Mb,D
+                    // (column-major storage) gradPhi[L][k] = dphi_L / dxi_k
+                    // gradPhi[column][row] = gradPhi[dofIndex][k] = dphi_dofIndex/dxi_k, columnIdx = dofIndex, rowIdx = which direction
 
-                    // ----------------------------
-                    // compute derivatives of phi
-                    double_v_t dphiL_dXB = 0.0;
-                    double_v_t dphiM_dXD = 0.0;
+                    // compute dphiL/dXB from dphiL/dxik and dxik/dXB
+                    const double dphiL_dxik = gradPhi[aDof][k];    // dphi_L/dxik
+                    const double_v_t dxik_dXB = inverseJacobianMaterial[bInternal][k];  // inverseJacobianMaterial[B][k] = J^{-1}_kB = dxi_k/dX_B
 
-                    // helper index k for multiplication with inverse Jacobian
-                    for (int k = 0; k < D; k++)
+                    dphiL_dXB += dphiL_dxik * dxik_dXB;
+
+                    // compute dphiM/dXD from dphiM/dxik and dxik/dXD
+                    const double dphiM_dxik = gradPhi[bDof][k];    // dphi_M/dxik
+                    const double_v_t dxik_dXD = inverseJacobianMaterial[dInternal][k];  // inverseJacobianMaterial[D][k] = J^{-1}_kD = dxi_k/dX_D
+
+                    dphiM_dXD += dphiM_dxik * dxik_dXD;
+                  }   // k
+
+                  const double_v_t sBD = pK2Stress[dInternal][bInternal];
+                  const int delta_ab = (aComponent == bComponent? 1 : 0);
+
+                  double_v_t k_abBD = delta_ab * sBD;
+
+                  for (int cInternal = 0; cInternal < D; cInternal++)     // capital C in derivation
+                  {
+                    for (int aInternal = 0; aInternal < D; aInternal++)     // capital A in derivation
                     {
-                      // (column-major storage) gradPhi[L][k] = dphi_L / dxi_k
-                      // gradPhi[column][row] = gradPhi[dofIndex][k] = dphi_dofIndex/dxi_k, columnIdx = dofIndex, rowIdx = which direction
+                      const double_v_t faA = deformationGradient[aInternal][aComponent];
+                      const double_v_t fbC = deformationGradient[cInternal][bComponent];
 
-                      // compute dphiL/dXB from dphiL/dxik and dxik/dXB
-                      const double dphiL_dxik = gradPhi[aDof][k];    // dphi_L/dxik
-                      const double_v_t dxik_dXB = inverseJacobianMaterial[bInternal][k];  // inverseJacobianMaterial[B][k] = J^{-1}_kB = dxi_k/dX_B
+                      const double_v_t cABCD = elasticityTensor[dInternal][cInternal][bInternal][aInternal];  // get c_{ABCD}
 
-                      dphiL_dXB += dphiL_dxik * dxik_dXB;
+                      k_abBD += faA * fbC * cABCD;
+                    }   // A
+                  }   // C
 
-                      // compute dphiM/dXD from dphiM/dxik and dxik/dXD
-                      const double dphiM_dxik = gradPhi[bDof][k];    // dphi_M/dxik
-                      const double_v_t dxik_dXD = inverseJacobianMaterial[dInternal][k];  // inverseJacobianMaterial[D][k] = J^{-1}_kD = dxi_k/dX_D
+                  integrand += dphiL_dXB * k_abBD * dphiM_dXD;
 
-                      dphiM_dXD += dphiM_dxik * dxik_dXD;
-                    }   // k
+                }  // D
+              }  // B
 
-                    const double_v_t sBD = pK2Stress[dInternal][bInternal];
-                    const int delta_ab = (aComponent == bComponent? 1 : 0);
+              VLOG(2) << "   (L,a)=(" << aDof << "," << aComponent << "), integrand: " << integrand;
 
-                    double_v_t k_abBD = delta_ab * sBD;
+              // compute index of degree of freedom and component (result vector index)
+              const int j = aDof*D + aComponent;
+              const int i = bDof*D + bComponent;
+              const int index = j*nUnknowsPerElement + i;
 
-                    for (int cInternal = 0; cInternal < D; cInternal++)     // capital C in derivation
-                    {
-                      for (int aInternal = 0; aInternal < D; aInternal++)     // capital A in derivation
-                      {
-                        const double_v_t faA = deformationGradient[aInternal][aComponent];
-#ifdef USE_VC
-                        const double fbC = deformationGradient[cInternal][bComponent][bVcComponent];
-#else
-                        const double fbC = deformationGradient[cInternal][bComponent];
-#endif
-
-                        const double_v_t cABCD = elasticityTensor[dInternal][cInternal][bInternal][aInternal];  // get c_{ABCD}
-
-                        k_abBD += faA * fbC * cABCD;
-                      }   // A
-                    }   // C
-
-                    integrand += dphiL_dXB * k_abBD * dphiM_dXD;
-
-                  }  // D
-                }  // B
-
-                VLOG(2) << "   (L,a)=(" << aDof << "," << aComponent << "), integrand: " << integrand;
-
-                // compute index of degree of freedom and component (result vector index)
-                const int j = aDof*D + aComponent;
-                const int i = bDof*D + bComponent;
-                const int index = j*nUnknowsPerElement + i;
-
-                // store integrand in evaluations array
-                evaluationsArrayDisplacements[samplingPointIndex][index][bVcComponent] = integrand;
-
-              } // bVcComponent
+              // store integrand in evaluations array
+              evaluationsArrayDisplacements[samplingPointIndex][index] = integrand;
 
             }  // b, bComponent
           }   // M, bDof
@@ -1189,50 +1181,44 @@ materialComputeJacobian()
         {
           for (int aComponent = 0; aComponent < D; aComponent++)           // a
           {
-            for (int aVcComponent = 0; aVcComponent < nVcComponents; aVcComponent++)      // loop over the 4 dofs of M (aDof,aComponent) that will be computed at once
+            double_v_t fInv_Ba_dphiM_dXB = 0.0;
+
+            for (int bInternal = 0; bInternal < D; bInternal++)     // capital B in derivation
             {
-              double_v_t fInv_Ba_dphiM_dXB = 0.0;
+              // compute derivatives of phi
+              double_v_t dphiM_dXB = 0.0;
 
-              for (int bInternal = 0; bInternal < D; bInternal++)     // capital B in derivation
+              // helper index k for multiplication with inverse Jacobian
+              for (int k = 0; k < D; k++)
               {
-                // compute derivatives of phi
-                double_v_t dphiM_dXB = 0.0;
+                // (column-major storage) gradPhi[L][k] = dphi_L / dxi_k
+                // gradPhi[column][row] = gradPhi[dofIndex][k] = dphi_dofIndex/dxi_k, columnIdx = dofIndex, rowIdx = which direction
 
-                // helper index k for multiplication with inverse Jacobian
-                for (int k = 0; k < D; k++)
-                {
-                  // (column-major storage) gradPhi[L][k] = dphi_L / dxi_k
-                  // gradPhi[column][row] = gradPhi[dofIndex][k] = dphi_dofIndex/dxi_k, columnIdx = dofIndex, rowIdx = which direction
+                // compute dphiM/dXB from dphiM/dxik and dxik/dXB
+                const double dphiM_dxik = gradPhi[aDof][k];    // dphi_M/dxik
+                const double_v_t dxik_dXB = inverseJacobianMaterial[bInternal][k];  // inverseJacobianMaterial[B][k] = J^{-1}_kB = dxi_k/dX_B
 
-                  // compute dphiM/dXB from dphiM/dxik and dxik/dXB
-                  const double dphiM_dxik = gradPhi[aDof][k];    // dphi_M/dxik
-                  const double_v_t dxik_dXB = inverseJacobianMaterial[bInternal][k];  // inverseJacobianMaterial[B][k] = J^{-1}_kB = dxi_k/dX_B
+                dphiM_dXB += dphiM_dxik * dxik_dXB;
+              }   // k
 
-                  dphiM_dXB += dphiM_dxik * dxik_dXB;
-                }   // k
+              const double_v_t fInv_Ba = inverseDeformationGradient[aComponent][bInternal];
 
-#ifdef USE_VC
-                const double fInv_Ba = inverseDeformationGradient[aComponent][bInternal][aVcComponent];
-#else
-                const double fInv_Ba = inverseDeformationGradient[aComponent][bInternal];
-#endif
-                fInv_Ba_dphiM_dXB += fInv_Ba * dphiM_dXB;
-              }
+              fInv_Ba_dphiM_dXB += fInv_Ba * dphiM_dXB;
+            }
 
-              // compute integrand J * psi_L * (F^-1)_Ba * phi_Ma,B
+            // compute integrand J * psi_L * (F^-1)_Ba * phi_Ma,B
 
-              const double_v_t psiL = pressureFunctionSpace->phi(lDof,xi);
-              const double_v_t integrand = deformationGradientDeterminant * psiL * fInv_Ba_dphiM_dXB;
+            const double_v_t psiL = pressureFunctionSpace->phi(lDof,xi);
+            const double_v_t integrand = deformationGradientDeterminant * psiL * fInv_Ba_dphiM_dXB;
 
-              // compute index of degree of freedom and component (result vector index)
-              const int j = lDof;
-              const int i = aDof*D + aComponent;
-              const int index = j*nUnknowsPerElement + i;
+            // compute index of degree of freedom and component (result vector index)
+            const int j = lDof;
+            const int i = aDof*D + aComponent;
+            const int index = j*nUnknowsPerElement + i;
 
-              // store integrand in evaluations array
-              evaluationsArrayPressure[samplingPointIndex][index][aVcComponent] = integrand;
+            // store integrand in evaluations array
+            evaluationsArrayPressure[samplingPointIndex][index] = integrand;
 
-            }  // aVcComponent
           }  // a
         }  // M
       }  // L
@@ -1282,34 +1268,27 @@ materialComputeJacobian()
         {
           for (int bComponent = 0; bComponent < D; bComponent++)           // b
           {
-            for (int bVcComponent = 0; bVcComponent < nVcComponents; bVcComponent++)      // loop over the 4 dofs of M (bDof,bComponent) that will be computed at once
-            {
-              // compute index of degree of freedom and component for array of integrated values
-              const int j = aDof*D + aComponent;
-              const int i = bDof*D + bComponent;
-              const int index = j*nUnknowsPerElement + i;
+            // compute index of degree of freedom and component for array of integrated values
+            const int j = aDof*D + aComponent;
+            const int i = bDof*D + bComponent;
+            const int index = j*nUnknowsPerElement + i;
 
-              // integrate value and set entry
-              double_v_t integratedValue = integratedValuesDisplacements[index][bVcComponent];
+            // integrate value and set entry
+            double_v_t integratedValue = integratedValuesDisplacements[index];
 
-              // get local dof no, aDof is the dof within the element, dofNoLocal is the dof within the local subdomain
-              dof_no_v_t dofANoLocal = dofNosLocal[aDof];
-#ifdef USE_VC
-              dof_no_t dofBNoLocal = dofNosLocal[bDof][bVcComponent];
-#else
-              dof_no_t dofBNoLocal = dofNosLocal[bDof];
-#endif
+            // get local dof no, aDof is the dof within the element, dofNoLocal is the dof within the local subdomain
+            dof_no_v_t dofANoLocal = dofNosLocal[aDof];
+            dof_no_v_t dofBNoLocal = dofNosLocal[bDof];
 
-              VLOG(1) << "  result entry (L,a)=(" <<aDof<< "," <<aComponent<< "), (M,b)=(" <<bDof<< "," <<bComponent<< ") "
-                << ", dof (" << dofANoLocal << "," << dofBNoLocal << ")"
-                << ", integrated value: " <<integratedValue;
-              //VLOG(1) << "  jacobian[" << displacementsFunctionSpace->meshPartition()->getDofNoGlobalPetsc(dofANoLocal) << "," << aComponent << "; "
-              //  << displacementsFunctionSpace->meshPartition()->getDofNoGlobalPetsc(dofBNoLocal) << "," << bComponent << "] = " << integratedValue;
+            VLOG(1) << "  result entry (L,a)=(" <<aDof<< "," <<aComponent<< "), (M,b)=(" <<bDof<< "," <<bComponent<< ") "
+              << ", dof (" << dofANoLocal << "," << dofBNoLocal << ")"
+              << ", integrated value: " <<integratedValue;
+            //VLOG(1) << "  jacobian[" << displacementsFunctionSpace->meshPartition()->getDofNoGlobalPetsc(dofANoLocal) << "," << aComponent << "; "
+            //  << displacementsFunctionSpace->meshPartition()->getDofNoGlobalPetsc(dofBNoLocal) << "," << bComponent << "] = " << integratedValue;
 
-              // parameters: componentNoRow, dofNoLocalRow, componentNoColumn, dofNoLocalColumn, value
-              combinedMatrixJacobian_->setValue(aComponent, dofANoLocal, bComponent, dofBNoLocal, integratedValue, ADD_VALUES);
+            // parameters: componentNoRow, dofNoLocalRow, componentNoColumn, dofNoLocalColumn, value
+            combinedMatrixJacobian_->setValue(aComponent, dofANoLocal, bComponent, dofBNoLocal, integratedValue, ADD_VALUES);
 
-            }  // bVcComponent
           }  // bComponent
         }  // bDof
       }  // aComponent
@@ -1323,35 +1302,28 @@ materialComputeJacobian()
       {
         for (int aComponent = 0; aComponent < D; aComponent++)           // a
         {
-          for (int aVcComponent = 0; aVcComponent < nVcComponents; aVcComponent++)      // loop over the 4 dofs of M (aDof,aComponent) that will be computed at once
-          {
-            // compute index of degree of freedom and component for array of integrated values
-            const int j = lDof;
-            const int i = aDof*D + aComponent;
-            const int index = j*nUnknowsPerElement + i;
+          // compute index of degree of freedom and component for array of integrated values
+          const int j = lDof;
+          const int i = aDof*D + aComponent;
+          const int index = j*nUnknowsPerElement + i;
 
-            // get result of quadrature
-            double_v_t integratedValue = integratedValuesPressure[index][aVcComponent];
+          // get result of quadrature
+          double_v_t integratedValue = integratedValuesPressure[index];
 
-            // get local dof no, aDof is the dof within the element, dofNoLocal is the dof within the local subdomain
-            dof_no_v_t dofLNoLocal = dofNosLocalPressure[lDof];     // dof with respect to pressure function space
-#ifdef USE_VC
-            dof_no_t dofMNoLocal = dofNosLocal[aDof][aVcComponent];  // dof with respect to displacements function space
-#else
-            dof_no_t dofMNoLocal = dofNosLocal[aDof];             // dof with respect to displacements function space
-#endif
+          // get local dof no, aDof is the dof within the element, dofNoLocal is the dof within the local subdomain
+          dof_no_v_t dofLNoLocal = dofNosLocalPressure[lDof];     // dof with respect to pressure function space
+          dof_no_v_t dofMNoLocal = dofNosLocal[aDof];  // dof with respect to displacements function space
 
-            // set entry in lower left submatrix
+          // set entry in lower left submatrix
 
-            const int pressureDofNo = nDisplacementComponents;  // 3 or 6, depending if static or dynamic problem
+          const int pressureDofNo = nDisplacementComponents;  // 3 or 6, depending if static or dynamic problem
 
-            // parameters: componentNoRow, dofNoLocalRow, componentNoColumn, dofNoLocalColumn, value
-            combinedMatrixJacobian_->setValue(pressureDofNo, dofLNoLocal, aComponent, dofMNoLocal, integratedValue, ADD_VALUES);
+          // parameters: componentNoRow, dofNoLocalRow, componentNoColumn, dofNoLocalColumn, value
+          combinedMatrixJacobian_->setValue(pressureDofNo, dofLNoLocal, aComponent, dofMNoLocal, integratedValue, ADD_VALUES);
 
-            // set entry in upper right submatrix
-            combinedMatrixJacobian_->setValue(aComponent, dofMNoLocal, pressureDofNo, dofLNoLocal, integratedValue, ADD_VALUES);
+          // set entry in upper right submatrix
+          combinedMatrixJacobian_->setValue(aComponent, dofMNoLocal, pressureDofNo, dofLNoLocal, integratedValue, ADD_VALUES);
 
-          }  // aVcComponent
         }  // aComponent
       }  // aDof
     }  // lDof

@@ -205,7 +205,7 @@ setStiffnessMatrix()
           for (int columnComponentNo = 0; columnComponentNo < nComponents; columnComponentNo++)
           {
             // integrate value and set entry in stiffness matrix
-            double_v_t integratedValue = integratedValues(i*nComponents + rowComponentNo, j*nComponents + columnComponentNo)[jVcComponentNo];
+            double_v_t integratedValue = integratedValues(i*nComponents + rowComponentNo, j*nComponents + columnComponentNo);
             double_v_t value = -integratedValue;
             int componentNo = rowComponentNo*nComponents + columnComponentNo;
 

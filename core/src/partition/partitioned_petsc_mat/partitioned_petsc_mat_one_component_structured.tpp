@@ -221,7 +221,7 @@ void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,Basis
 setValue(Vc::int_v rows, Vc::int_v columns, Vc::double_v values, InsertMode mode)
 {
   std::array<double,Vc::double_v::size()> data;
-  values.store(data.data(),Vc::Aligned);      // if this crashes, remove Vc::Aligned, then also in partitioned_petsc_mat_one_component_unstructured
+  values.store(data.data());
 
   // this wraps the standard PETSc MatSetValue on the local matrix
   PetscErrorCode ierr;

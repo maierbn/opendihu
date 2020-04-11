@@ -66,6 +66,9 @@ public:
   //! get the values corresponding to all element-local dofs for all components
   void getElementValues(element_no_t elementNoLocal, std::array<std::array<double,nComponents>,FunctionSpaceType::nDofsPerElement()> &values) const;
 
+  //! get the values corresponding to all element-local dofs for all components, vectorized version for Vc::double_v::size() elements at once
+  void getElementValues(Vc::int_v elementNoLocal, std::array<std::array<Vc::double_v,nComponents>,FunctionSpaceType::nDofsPerElement()> &values) const;
+
   //! for a specific component, get a single value from local dof no.
   double getValue(int componentNo, node_no_t dofLocalNo) const;
 

@@ -36,8 +36,7 @@ void MappingBetweenMeshesManager::storeMappingBetweenMeshes(std::string sourceMe
   else if (PyDict_Check(targetMeshPy))
   {
     std::stringstream stringPath;
-    stringPath << specificSettings_.getStringPath();
-    stringPath << "[\"" << targetMeshPy << "\"]";
+    stringPath << "[\"MappingsBetweenMeshes\"][\"" << sourceMeshName << "\"]";
 
     // parse the name of the target mesh
     std::string targetMeshToMapTo = PythonUtility::getOptionString(targetMeshPy, "name", stringPath.str(), "");

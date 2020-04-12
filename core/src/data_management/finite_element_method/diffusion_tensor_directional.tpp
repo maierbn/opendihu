@@ -75,7 +75,9 @@ diffusionTensor(element_no_v_t elementNoLocal, const std::array<double,FunctionS
   VecD<3,double_v_t> directionVector = functionSpace->template interpolateValueInElement<3>(elementalValues, xi);
 
   if (!MathUtility::isFinite(directionVector[0]) || !MathUtility::isFinite(directionVector[1]) || !MathUtility::isFinite(directionVector[2]))
-    directionVector = Vec3({0.0,0.0,1.0});
+  {
+    directionVector = VecD<3,double_v_t>({0.0,0.0,1.0});
+  }
 
   MathUtility::Matrix<D,D,double_v_t> diffusionTensor = this->diffusionTensor_.value(elementNoLocal);
 

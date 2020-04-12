@@ -384,9 +384,9 @@ double_v1_t applyTransformation(const std::array<double_v1_t,9> &transformationM
   double_v1_t result;
 
   // rename input values
-  const double_v3_t v11 = vector1[0];
-  const double_v3_t v12 = vector1[1];
-  const double_v3_t v13 = vector1[2];
+  const double_v2_t v11 = vector1[0];
+  const double_v2_t v12 = vector1[1];
+  const double_v2_t v13 = vector1[2];
   const double_v3_t v21 = vector2[0];
   const double_v3_t v22 = vector2[1];
   const double_v3_t v23 = vector2[2];
@@ -414,8 +414,8 @@ double_v1_t applyTransformation(const std::array<double_v1_t,4> &transformationM
   double_v1_t result;
 
   // rename input values
-  const double_v3_t v11 = vector1[0];
-  const double_v3_t v12 = vector1[1];
+  const double_v2_t v11 = vector1[0];
+  const double_v2_t v12 = vector1[1];
   const double_v3_t v21 = vector2[0];
   const double_v3_t v22 = vector2[1];
   // 0 1
@@ -432,53 +432,52 @@ double_v1_t applyTransformation(const std::array<double_v1_t,4> &transformationM
   return result;
 }
 
-template<int D, typename double_v_t>
-void rotateMatrix(Matrix<D,D,double_v_t> &matrix, VecD<D,double_v_t> directionVector)
+template<typename double_v_t>
+void rotateMatrix(Matrix<2,2,double_v_t> &matrix, VecD<2,double_v_t> directionVector)
 {
-  if (D == 2)
+  // derivation in compute_rotation_tensor.py
+  const double_v_t b1 = directionVector[0];
+  const double_v_t b2 = directionVector[1];
+
+  Matrix<2,2,double_v_t> rotationMatrix(
   {
-    // derivation in compute_rotation_tensor.py
-    const double_v_t b1 = directionVector[0];
-    const double_v_t b2 = directionVector[1];
+    b1, -b2,
+    b2, -b1
+  });
 
-    Matrix<2,2,double_v_t> rotationMatrix(
-    {
-      b1, -b2,
-      b2, -b1
-    });
-
-    const double_v_t determinant = (b1 - b2)*(b1 + b2);  // b1^2 - b2^2
-    Matrix<2,2,double_v_t> rotationMatrixInverse(
-    {
-      b1/determinant, -b2/determinant,
-      b2/determinant, -b1/determinant
-    });
-
-    matrix = rotationMatrixInverse * matrix * rotationMatrix;
-  }
-  else if (D == 3)
+  const double_v_t determinant = (b1 - b2)*(b1 + b2);  // b1^2 - b2^2
+  Matrix<2,2,double_v_t> rotationMatrixInverse(
   {
-    const double_v_t b1 = directionVector[0];
-    const double_v_t b2 = directionVector[1];
-    const double_v_t b3 = directionVector[2];
+    b1/determinant, -b2/determinant,
+    b2/determinant, -b1/determinant
+  });
 
-    Matrix<3,3,double_v_t> basis(
-    {
-      // normalized(b)                       normalized(e_3 x b)                        normalized(b x e_3 x b)
-      b1/sqrt(sqr(b1) + sqr(b2) + sqr(b3)),  -b2/sqrt(sqr(b1) + sqr(b2)),               -b1*b3/sqrt(sqr(b1)*sqr(b3) + sqr(b2)*sqr(b3) + sqr(sqr(b1) + sqr(b2))),
-      b2/sqrt(sqr(b1) + sqr(b2) + sqr(b3)),   b1/sqrt(sqr(b1) + sqr(b2)),               -b2*b3/sqrt(sqr(b1)*sqr(b3) + sqr(b2)*sqr(b3) + sqr(sqr(b1) + sqr(b2))),
-      b3/sqrt(sqr(b1) + sqr(b2) + sqr(b3)),                            0,  (sqr(b1) + sqr(b2))/sqrt(sqr(b1)*sqr(b3) + sqr(b2)*sqr(b3) + sqr(sqr(b1) + sqr(b2)))
-    });
+  matrix = rotationMatrixInverse * matrix * rotationMatrix;
+}
 
-    Matrix<3,3,double_v_t> basis_T(
-    {
-      basis(0,0), basis(1,0), basis(2,0),
-      basis(0,1), basis(1,1), basis(2,1),
-      basis(0,2), basis(1,2), basis(2,2)
-    });
+template<typename double_v_t>
+void rotateMatrix(Matrix<3,3,double_v_t> &matrix, VecD<3,double_v_t> directionVector)
+{
+  const double_v_t b1 = directionVector[0];
+  const double_v_t b2 = directionVector[1];
+  const double_v_t b3 = directionVector[2];
 
-    matrix = basis * matrix * basis_T;
-  }
+  Matrix<3,3,double_v_t> basis(
+  {
+    // normalized(b)                       normalized(e_3 x b)                        normalized(b x e_3 x b)
+    b1/sqrt(sqr(b1) + sqr(b2) + sqr(b3)),  -b2/sqrt(sqr(b1) + sqr(b2)),               -b1*b3/sqrt(sqr(b1)*sqr(b3) + sqr(b2)*sqr(b3) + sqr(sqr(b1) + sqr(b2))),
+    b2/sqrt(sqr(b1) + sqr(b2) + sqr(b3)),   b1/sqrt(sqr(b1) + sqr(b2)),               -b2*b3/sqrt(sqr(b1)*sqr(b3) + sqr(b2)*sqr(b3) + sqr(sqr(b1) + sqr(b2))),
+    b3/sqrt(sqr(b1) + sqr(b2) + sqr(b3)),                            0,  (sqr(b1) + sqr(b2))/sqrt(sqr(b1)*sqr(b3) + sqr(b2)*sqr(b3) + sqr(sqr(b1) + sqr(b2)))
+  });
+
+  Matrix<3,3,double_v_t> basis_T(
+  {
+    basis(0,0), basis(1,0), basis(2,0),
+    basis(0,1), basis(1,1), basis(2,1),
+    basis(0,2), basis(1,2), basis(2,2)
+  });
+
+  matrix = basis * matrix * basis_T;
 }
 
 

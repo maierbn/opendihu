@@ -165,8 +165,12 @@ template<int D>
 bool equals(std::array<double,D> a, std::array<double,D> b, double tolerance=1e-15);
 
 //! rotate the matrix such that unit vector (1,0,0) now points to directionVector, directionVector does not need to be normalized
-template<int D, typename double_v_t>
-void rotateMatrix(Matrix<D,D,double_v_t> &matrix, VecD<3,double_v_t> directionVector);
+template<typename double_v_t>
+void rotateMatrix(Matrix<2,2,double_v_t> &matrix, VecD<2,double_v_t> directionVector);
+//! rotate the matrix such that unit vector (1,0,0) now points to directionVector, directionVector does not need to be normalized
+
+template<typename double_v_t>
+void rotateMatrix(Matrix<3,3,double_v_t> &matrix, VecD<3,double_v_t> directionVector);
 
 //! compute the inverse Phi mapping, i.e. get the xi0, xi1 coordinates of a point in a quadrilateral
 void quadrilateralGetPointCoordinates(const std::array<Vec3,4> quadrilateral, const Vec3 point, Vec2 &xi);

@@ -114,7 +114,7 @@ evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,1,Term> &data, co
 {
   EvaluationsType evaluations;
 
-  MathUtility::Matrix<3,3,double_v_t> diffusionTensor = data.diffusionTensor(elementNoLocal, xi);
+  MathUtility::Matrix<3,3,double_v_t> diffusionTensor = data.template diffusionTensor<double_v_t,element_no_v_t>(elementNoLocal, xi);
 
   // compute the combined 3x3 transformation diffusion matrix T = J^{-1} A J^{-T} and the absolute of the determinant of the jacobian
   double_v_t determinant;
@@ -147,7 +147,7 @@ evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,1,Term> &data, co
       double_v_t integrand = MathUtility::applyTransformation(transformationDiffusionMatrix, gradPhi[i], gradPhi[j]) * MathUtility::abs(determinant);
 
 #ifndef NDEBUG
-      if (!std::isfinite(integrand))
+      if (!MathUtility::isFinite(integrand))
       {
         LOG(ERROR) << "Value entry (" << i << "," << j << ") in stiffness matrix is nan or inf (" << integrand << "). ";
         std::stringstream s, s2;

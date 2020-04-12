@@ -73,13 +73,13 @@ setPetscMatrix(Mat &mat)
 }
 
 template<int nRows, int nColumns, typename double_v_t>
+template<typename double_v2_t>
 std::array<double_v_t,nRows> Matrix<nRows,nColumns,double_v_t>::
-operator*(const std::array<double_v_t,nColumns> &vector)
+operator*(const std::array<double_v2_t,nColumns> &vector)
 {
   std::array<double_v_t,nRows> result({0});
   for (int columnIndex = 0; columnIndex < nColumns; columnIndex++)
   {
-//#pragma omp simd
     for (int rowIndex = 0; rowIndex < nRows; rowIndex++)
     {
       result[rowIndex] += this->operator()(rowIndex, columnIndex) * vector[columnIndex];

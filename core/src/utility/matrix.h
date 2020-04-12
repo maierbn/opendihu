@@ -55,9 +55,20 @@ struct Matrix :
   void setPetscMatrix(Mat &mat);
 
   //! matrix*vector multiplication
-  std::array<double_v_t,nRows> operator*(const std::array<double_v_t,nColumns> &vector);
+  template<typename double_v2_t>
+  std::array<double_v_t,nRows> operator*(const std::array<double_v2_t,nColumns> &vector);
 
 };
+
+// type traits to find out if a type is a std::array<> or a Matrix<>
+template<typename T>
+struct isArrayOrMatrix : std::false_type {};
+
+template<int nRows, int nColumns, typename double_v_t>
+struct isArrayOrMatrix<Matrix<nRows,nColumns,double_v_t>> : std::true_type {};
+
+template<typename double_v_t, std::size_t N>
+struct isArrayOrMatrix<std::array<double_v_t,N>> : std::true_type {};
 
 } // namespace
 

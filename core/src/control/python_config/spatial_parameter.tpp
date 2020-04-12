@@ -27,7 +27,29 @@ initialize(PythonConfig specificSettings, std::string keyString, ValueType defau
   {
     if (PyList_Check(pyObject) || PyDict_Check(pyObject))
     {
-      values_ = PythonUtility::convertFromPython<std::vector<ValueType>>::get(pyObject);
+
+      // if the type is Matrix or array and only one list is given, this is interpreted as constant matrix for all elements (instead of different scalar values for the elements)
+      if (PyList_Check(pyObject) && MathUtility::isArrayOrMatrix<ValueType>::value)
+      {
+
+        if (PyList_Size(pyObject) > 0)
+        {
+          // if the first item is scalar
+          PyObject *firstItem = PyList_GetItem(pyObject,0);
+          if (!PyList_Check(firstItem))
+          {
+            LOG(DEBUG) << path.str() << " interpreting list as a single matrix entry of type " << StringUtility::demangle(typeid(ValueType).name());
+
+            values_.push_back(PythonUtility::convertFromPython<ValueType>::get(pyObject));
+          }
+        }
+      }
+
+      // if the above was not the case, interpret given values as list of different values for the elements
+      if (values_.empty())
+      {
+        values_ = PythonUtility::convertFromPython<std::vector<ValueType>>::get(pyObject);
+      }
 
       // set indices in valueIndices_ according to the number of values that were present in the config
       SetValueNos<FunctionSpaceType,ValueType>::set(functionSpace, inputMeshIsGlobal_, path.str(), values_, valueIndices_);
@@ -105,12 +127,12 @@ value(Vc::int_v elementNoLocal) const
     int elementNo = elementNoLocal[vcComponentNo];
     if (elementNo != -1)
     {
-      int index = this->valueIndices_[elementNoLocal];
+      int index = this->valueIndices_[elementNo];
       for (int rowNo = 0; rowNo < nRows; rowNo++)
       {
         for (int columnNo = 0; columnNo < nColumns; columnNo++)
         {
-          result(rowNo,columnNo)[vcComponentNo] = this->values_[index](rowNo,columnNo)[vcComponentNo];
+          result(rowNo,columnNo)[vcComponentNo] = this->values_[index](rowNo,columnNo);
         }
       }
     }

@@ -64,7 +64,7 @@ setStiffnessMatrix()
   for (int elementNoLocal = 0; elementNoLocal < nElementsLocal; elementNoLocal += nVcComponents)
   {
 
-#ifdef USE_VC
+#ifdef USE_VECTORIZED_FE_MATRIX_ASSEMBLY
     // get indices of elementNos that should be handled in the current iterations,
     // this is, e.g.
     //    [10,11,12,13,-1,-1,-1,-1] (if nVcComponents==4 and nElementsLocal > 13)
@@ -112,7 +112,7 @@ setStiffnessMatrix()
   for (int elementNoLocal = 0; elementNoLocal < nElementsLocal; elementNoLocal += nVcComponents)
   {
 
-#ifdef USE_VC
+#ifdef USE_VECTORIZED_FE_MATRIX_ASSEMBLY
     // get indices of elementNos that should be handled in the current iterations,
     // this is, e.g.
     //    [10,11,12,13,-1,-1,-1,-1] (if nVcComponents==4 and nElementsLocal > 13)

@@ -79,7 +79,7 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
   for (int elementNoLocal = 0; elementNoLocal < nElementsLocal; elementNoLocal += nVcComponents)
   {
 
-#ifdef USE_VC
+#ifdef USE_VECTORIZED_FE_MATRIX_ASSEMBLY
     // get indices of elementNos that should be handled in the current iterations,
     // this is, e.g.
     //    [10,11,12,13,-1,-1,-1,-1] (if nVcComponents==4 and nElementsLocal > 13)
@@ -630,7 +630,7 @@ materialAddAccelerationTermAndVelocityEquation(bool communicateGhosts)
   for (int elementNoLocal = 0; elementNoLocal < nElementsLocal; elementNoLocal += nVcComponents)
   {
 
-#ifdef USE_VC
+#ifdef USE_VECTORIZED_FE_MATRIX_ASSEMBLY
     // get indices of elementNos that should be handled in the current iterations,
     // this is, e.g.
     //    [10,11,12,13,-1,-1,-1,-1] (if nVcComponents==4 and nElementsLocal > 13)
@@ -778,7 +778,7 @@ materialAddAccelerationTermAndVelocityEquation(bool communicateGhosts)
         double_v_t residuum = 1.0 / this->timeStepWidth_ * (newDisplacement - oldDisplacement) - newVelocity;
 
         // only set value if current dof is local, we must not set dof values here, even when "INSERT_VALUES" is used, because the dof values would still be summed up by finishGhostManipulation() (even though it is INSERT_VALUES and not ADD_VALUES)
-#ifdef USE_VC
+#ifdef USE_VECTORIZED_FE_MATRIX_ASSEMBLY
         for (int vcComponentNo = 0; vcComponentNo < Vc::double_v::size(); vcComponentNo++)
         {
           if (dofNoLocal[vcComponentNo] != -1 && dofNoLocal[vcComponentNo] < functionSpace->nDofsLocalWithoutGhosts())
@@ -854,7 +854,7 @@ materialComputeJacobian()
   for (int elementNoLocal = 0; elementNoLocal < nElementsLocal; elementNoLocal += nVcComponents)
   {
 
-#ifdef USE_VC
+#ifdef USE_VECTORIZED_FE_MATRIX_ASSEMBLY
     // get indices of elementNos that should be handled in the current iterations,
     // this is, e.g.
     //    [10,11,12,13,-1,-1,-1,-1] (if nVcComponents==4 and nElementsLocal > 13)
@@ -974,7 +974,7 @@ materialComputeJacobian()
   for (int elementNoLocal = 0; elementNoLocal < nElementsLocal; elementNoLocal += nVcComponents)
   {
 
-#ifdef USE_VC
+#ifdef USE_VECTORIZED_FE_MATRIX_ASSEMBLY
     // get indices of elementNos that should be handled in the current iterations,
     // this is, e.g.
     //    [10,11,12,13,-1,-1,-1,-1] (if nVcComponents==4 and nElementsLocal > 13)
@@ -1847,7 +1847,7 @@ computePK2StressField()
   for (int elementNoLocal = 0; elementNoLocal < nElementsLocal; elementNoLocal += nVcComponents)
   {
 
-#ifdef USE_VC
+#ifdef USE_VECTORIZED_FE_MATRIX_ASSEMBLY
     // get indices of elementNos that should be handled in the current iterations,
     // this is, e.g.
     //    [10,11,12,13,-1,-1,-1,-1] (if nVcComponents==4 and nElementsLocal > 13)

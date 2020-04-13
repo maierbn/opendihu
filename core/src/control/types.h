@@ -5,7 +5,7 @@
 #include <petscmat.h>
 #include <Vc/Vc>
 
-#define USE_VC     // if the vectorized implementation of integrating the stiffness and mass matrices should be used
+//#define USE_VECTORIZED_FE_MATRIX_ASSEMBLY     // if the vectorized implementation of integrating the stiffness and mass matrices should be used
 
 // define types for element, node and dof numbering, for the local numberings
 typedef PetscInt node_no_t;               // type to hold value of node no or number of nodes
@@ -35,7 +35,7 @@ using Tensor4 = std::array<std::array<std::array<std::array<double_v_t,D>,D>,D>,
 // define data types,
 // - either the vectorized version with Vc::double_v, which contains 4 double values. Then everything is computed for 4 consecutive elements at once
 // - or use the normal, non-vectorized version. Then, normal double types are used.
-#ifdef USE_VC
+#ifdef USE_VECTORIZED_FE_MATRIX_ASSEMBLY
 
 // implementation with explicit SIMD vectorization
 const int nVcComponents = Vc::double_v::size();   //< number of components that will be computed at once

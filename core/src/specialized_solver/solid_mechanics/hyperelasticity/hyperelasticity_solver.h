@@ -14,8 +14,6 @@
 #include "spatial_discretization/boundary_conditions/neumann_boundary_conditions.h"
 #include "specialized_solver/solid_mechanics/hyperelasticity/expression_helper.h"
 
-#define USE_VC   // if the vectorized implementation should be used
-
 namespace SpatialDiscretization
 {
 

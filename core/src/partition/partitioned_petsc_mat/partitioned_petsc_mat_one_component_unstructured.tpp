@@ -134,7 +134,7 @@ setValue(Vc::int_v rows, Vc::int_v columns, PetscScalar value, InsertMode mode)
       PetscInt columnNo = columns[vcComponentNo];
       if (columnNo != -1)
       {
-        ierr = MatSetValuesLocal(this->matrix_, 1, &rowNo, 1, &columnNo, &value, mode); CHKERRV(ierr);
+        ierr = MatSetValues(this->matrix_, 1, &rowNo, 1, &columnNo, &value, mode); CHKERRV(ierr);
       }
     }
   }
@@ -157,7 +157,7 @@ setValue(Vc::int_v rows, Vc::int_v columns, Vc::double_v values, InsertMode mode
       PetscInt columnNo = columns[vcComponentNo];
       if (columnNo != -1)
       {
-        ierr = MatSetValuesLocal(this->matrix_, 1, &rowNo, 1, &columnNo, &(data[vcComponentNo]), mode); CHKERRV(ierr);
+        ierr = MatSetValues(this->matrix_, 1, &rowNo, 1, &columnNo, &(data[vcComponentNo]), mode); CHKERRV(ierr);
       }
     }
   }

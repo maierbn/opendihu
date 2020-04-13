@@ -21,7 +21,7 @@ if variables.n_subdomains != n_ranks:
   print("\n\n\033[0;31mError! Number of ranks {} does not match given partitioning {} x {} x {} = {}.\033[0m\n\n".format(n_ranks, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z))
   quit()
 
-variables.relative_factors_file = "{}.compartment_relative_factors".format(os.path.basename(variables.fiber_file))
+variables.relative_factors_file = "{}.{}_compartments_relative_factors".format(len(variables.motor_units), os.path.basename(variables.fiber_file))
 if not os.path.exists(variables.relative_factors_file):
   variables.load_fiber_data = True
   
@@ -564,7 +564,6 @@ def compute_compartment_relative_factors(mesh_node_positions, fiber_data, motor_
 
 ####################################
 # load relative factors for motor units
-variables.relative_factors_file = "{}.compartment_relative_factors".format(os.path.basename(variables.fiber_file))
 
 # determine relative factor fields fr(x) for compartments
 if os.path.exists(variables.relative_factors_file):

@@ -61,7 +61,7 @@ parser.add_argument('-vmodule',                              help='Enable verbos
 parser.add_argument('-pause',                                help='Stop at parallel debugging barrier', action="store_true")
 
 # parse command line arguments and assign values to variables module
-args = parser.parse_args(args=sys.argv[:-2], namespace=variables)
+args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
 
 # initialize some dependend variables
 if variables.n_subdomains is not None:
@@ -103,8 +103,8 @@ if n_ranks != variables.n_subdomains:
 if rank_no == 0:
   print("scenario_name: {},  n_subdomains: {} {} {},  n_ranks: {},  end_time: {}".format(variables.scenario_name, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, n_ranks, variables.end_time))
   print("dt_0D:           {:0.0e}".format(variables.dt_0D))
-  print("dt_multidomain:  {:0.0e}".format(variables.dt_multidomain))
-  print("dt_splitting:    {:0.0e}".format(variables.dt_splitting))
+  print("dt_multidomain:  {:0.0e}    multidomain solver:         {}".format(variables.dt_multidomain, variables.multidomain_solver_type))
+  print("dt_splitting:    {:0.0e}    multidomain preconditioner: {}".format(variables.dt_splitting, variables.multidomain_preconditioner_type))
   print("dt_elasticity:   {:0.0e}".format(variables.dt_elasticity))
   print("fiber_file:              {}".format(variables.fiber_file))
   print("fat_mesh_file:           {}".format(variables.fat_mesh_file))
@@ -126,7 +126,7 @@ multidomain_solver = {
   "timeStepWidth":                    variables.dt_multidomain,           # time step width of the subcellular problem
   "endTime":                          variables.end_time,                 # end time, this is not relevant because it will be overridden by the splitting scheme
   "timeStepOutputInterval":           100,                                # how often the output timestep should be printed
-  "solverName":                       "activationSolver",                 # reference to the solver used for the global linear system of the multidomain eq.
+  "solverName":                       "multidomainLinearSolver",          # reference to the solver used for the global linear system of the multidomain eq.
   "initialGuessNonzero":              True,                               # if the initial guess for the 3D system should be set as the solution of the previous timestep, this only makes sense for iterative solvers
   "inputIsGlobal":                    True,                               # if values and dofs correspond to the global numbering
   "showLinearSolverOutput":           True,                               # if convergence information of the linear solver in every timestep should be printed, this is a lot of output for fast computations
@@ -134,6 +134,8 @@ multidomain_solver = {
   "enableFatComputation":             True,                               # disabling the computation of the fat layer is only for debugging and speeds up computation. If set to False, the respective matrix is set to the identity
   "compartmentRelativeFactors":       variables.relative_factors.tolist(),     # list of lists of the factors for every dof, because "inputIsGlobal": True, this contains the global dofs
   "theta":                            1.0,                                # weighting factor of implicit term in Crank-Nicolson scheme, 0.5 gives the classic, 2nd-order Crank-Nicolson scheme, 1.0 gives implicit euler
+  "constructPreconditionerMatrix":    True,                               # if the diagonal blocks of the system matrix should be used as preconditioner matrix
+  "durationLogKey":                   "duration_multidomain",             # key for duration in log.csv file
   "PotentialFlow": {
     "FiniteElementMethod" : {  
       "meshName":                     "3Dmesh",
@@ -147,7 +149,7 @@ multidomain_solver = {
   "Activation": {
     "FiniteElementMethod" : {  
       "meshName":                     "3Dmesh",
-      "solverName":                   "activationSolver",
+      "solverName":                   "multidomainLinearSolver",
       "prefactor":                    1.0,
       "inputMeshIsGlobal":            True,
       "dirichletBoundaryConditions":  {},
@@ -167,7 +169,7 @@ multidomain_solver = {
   "Fat": {
     "FiniteElementMethod" : {  
       "meshName":                     "3DFatMesh",
-      "solverName":                   "activationSolver",
+      "solverName":                   "multidomainLinearSolver",
       "prefactor":                    0.4,
       "inputMeshIsGlobal":            True,
       "dirichletBoundaryConditions":  {},
@@ -210,12 +212,12 @@ config = {
       "dumpFormat":         "default",
       "dumpFilename":       "",
     },
-    "activationSolver": {
+    "multidomainLinearSolver": {
       "relativeTolerance":  1e-15,
       "absoluteTolerance":  1e-10,         # 1e-10 absolute tolerance of the residual          
       "maxIterations":      1e4,
-      "solverType":         "gmres",
-      "preconditionerType": "none",
+      "solverType":         variables.multidomain_solver_type,
+      "preconditionerType": variables.multidomain_preconditioner_type,
       "dumpFormat":         "matlab",
       "dumpFilename":       "",
     },
@@ -326,7 +328,7 @@ config = {
         # the actual solid mechanics solver, this is either "DynamicHyperelasticitySolver" or "HyperelasticitySolver", depending on the value of "dynamic"
         "DynamicHyperelasticitySolver": {
           "timeStepWidth":              variables.dt_elasticity,           # time step width 
-          "durationLogKey":             "nonlinear",               # key to find duration of this solver in the log file
+          "durationLogKey":             "duration_mechanics",               # key to find duration of this solver in the log file
           "timeStepOutputInterval":     1,                         # how often the current time step should be printed to console
           
           "materialParameters":         variables.material_parameters,  # material parameters of the Mooney-Rivlin material

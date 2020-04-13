@@ -93,7 +93,7 @@ parser.add_argument('--rank_reordering',                     help='Enable rank r
 parser.add_argument('--use_elasticity',                   help='Enable linear elasticity', action="store_true")
 
 # parse command line arguments and assign values to variables module
-args = parser.parse_args(args=sys.argv[:-2], namespace=variables)
+args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
 
 # initialize some dependend variables
 if variables.n_subdomains is not None:

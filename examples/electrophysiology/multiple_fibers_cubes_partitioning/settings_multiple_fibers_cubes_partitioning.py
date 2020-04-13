@@ -82,7 +82,7 @@ parser.add_argument('-pause',                                help='Stop at paral
 parser.add_argument('--n_fibers_y',                          help='Number of fibers when simulating a cuboid example.',        type=int, default=variables.n_fibers_y)
 
 # parse command line arguments and assign values to variables module
-args = parser.parse_args(args=sys.argv[:-2], namespace=variables)
+args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
 
 # initialize some dependend variables
 if variables.n_subdomains is not None:

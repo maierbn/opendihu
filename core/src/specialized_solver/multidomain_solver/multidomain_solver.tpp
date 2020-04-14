@@ -265,6 +265,23 @@ initializeMatricesAndVectors()
   PetscErrorCode ierr;
   ierr = KSPSetOperators(*this->linearSolver_->ksp(), singleSystemMatrix_, singlePreconditionerMatrix_); CHKERRV(ierr);
 
+  PC pc;
+  ierr = KSPGetPC(*linearSolver_->ksp(), &pc); CHKERRV(ierr);
+  
+  // set block information for block jacobi preconditioner
+  // check, if block jacobi preconditioner is selected
+  PetscBool useBlockJacobiPreconditioner;
+  PetscObjectTypeCompare((PetscObject)pc, PCBJACOBI, &useBlockJacobiPreconditioner);
+  if (useBlockJacobiPreconditioner)
+  {
+    // PCBJacobiSetTotalBlocks(PC pc, PetscInt nBlocks, const PetscInt lengthsOfBlocks[])
+    PetscInt nBlocks = nColumnSubmatricesSystemMatrix_;
+
+    // set sizes of all blocks to the number of dofs in the muscle domain
+    std::vector<PetscInt> lengthsOfBlocks(nBlocks, dataMultidomain_.functionSpace()->nDofsGlobal());
+    ierr = PCBJacobiSetTotalBlocks(pc, nColumnSubmatricesSystemMatrix_, lengthsOfBlocks.data()); CHKERRV(ierr);
+  }
+
   // set the nullspace of the matrix
   // as we have Neumann boundary conditions, constant functions are in the nullspace of the matrix
   MatNullSpace nullSpace;

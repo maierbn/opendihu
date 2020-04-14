@@ -69,6 +69,9 @@ MathUtility::Matrix<nRows,nColumns,double_v1_t> operator*(MathUtility::Matrix<nR
   return result;
 }
 
+// extra operator* when compiled with USE_VECTORIZED_FE_MATRIX_ASSEMBLY
+#ifdef USE_VECTORIZED_FE_MATRIX_ASSEMBLY
+
 //! matrix*scalar multiplication
 template<int nRows, int nColumns, typename double_v1_t>
 MathUtility::Matrix<nRows,nColumns,double_v1_t> operator*(MathUtility::Matrix<nRows,nColumns,double_v1_t> matrix, double lambda)
@@ -82,6 +85,8 @@ MathUtility::Matrix<nRows,nColumns,double_v1_t> operator*(MathUtility::Matrix<nR
   }
   return result;
 }
+
+#endif
 
 //! matrix-matrix multiplication
 template<int nRows, int nColumns, int nColumns2, typename double_v_t>

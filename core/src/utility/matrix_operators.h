@@ -27,9 +27,14 @@ MathUtility::Matrix<nRows,nColumns,double_v2_t> operator*(double_v1_t lambda, Ma
 template<int nRows, int nColumns, typename double_v1_t>
 MathUtility::Matrix<nRows,nColumns,double_v1_t> operator*(MathUtility::Matrix<nRows,nColumns,double_v1_t> matrix, double_v1_t lambda);
 
+// extra operator* when compiled with USE_VECTORIZED_FE_MATRIX_ASSEMBLY
+#ifdef USE_VECTORIZED_FE_MATRIX_ASSEMBLY
+
 //! matrix*scalar multiplication
 template<int nRows, int nColumns, typename double_v1_t>
 MathUtility::Matrix<nRows,nColumns,double_v1_t> operator*(MathUtility::Matrix<nRows,nColumns,double_v1_t> matrix, double lambda);
+
+#endif
 
 //! matrix-matrix multiplication
 template<int nRows, int nColumns, int nColumns2, typename double_v_t>

@@ -50,12 +50,18 @@ typedef struct _braid_App_struct
     >
   > *implicitEulerSolvers;   //< vector of nested solvers (implicit euler) for solution on different grids
 
-  typedef  TimeSteppingScheme::ImplicitEuler<
+  typedef TimeSteppingScheme::MultidomainSolver<
     SpatialDiscretization::FiniteElementMethod<
-     Mesh::StructuredRegularFixedOfDimension<1>,
-      BasisFunction::LagrangeOfOrder<>,
-      Quadrature::None,
-      Equation::Dynamic::IsotropicDiffusion
+      Mesh::StructuredDeformableOfDimension<3>,
+      BasisFunction::LagrangeOfOrder<1>,
+      Quadrature::Gauss<3>,
+      Equation::Static::Laplace
+    >,
+    SpatialDiscretization::FiniteElementMethod<
+      Mesh::StructuredDeformableOfDimension<3>,
+      BasisFunction::LagrangeOfOrder<1>,
+      Quadrature::Gauss<5>,
+      Equation::Dynamic::DirectionalDiffusion
     >
   > NestedSolverMD;
 

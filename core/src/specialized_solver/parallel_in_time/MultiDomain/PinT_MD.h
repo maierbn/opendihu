@@ -6,7 +6,8 @@
 
 #include "interfaces/runnable.h"
 #include "data_management/specialized_solver/PinT_MD.h"   // adjust this include
-#include "time_stepping_scheme/implicit_euler.h"
+// #include "time_stepping_scheme/implicit_euler.h"
+#include "specialized_solver/multidomain_solver/multidomain_solver.h"
 #include "control/dihu_context.h"
 
 #include "specialized_solver/parallel_in_time/PinT_fun.h"
@@ -39,6 +40,10 @@ public:
 
   //! reset state of this object, such that a new initialize() is necessary ("uninitialize")
   void reset();
+
+  void setTimeSpan(double tstart, double tstop);
+
+  void advanceTimeSpan();
 
   //! return the data object, with the call to this method the output writers get the data to create their output files
   Data &data();

@@ -139,7 +139,7 @@ initialize()
     data_.back()->initialize();
 
     // it is also possible to pass some field variables from the data of the NestedSolverMD to own data object
-    data_.back()->setSolutionVariable(MultiDomainSolvers_.back()->data().solution());
+    // data_.back()->setSolutionVariable(MultiDomainSolvers_.back()->data().solution());
   };
 
 
@@ -349,7 +349,7 @@ typename PinTMD<NestedSolverMD>::Data &PinTMD<NestedSolverMD>::
 data()
 {
   // get a reference to the data object
-  return data_.back();
+  return *data_.back();
 
   // The NestedSolverMD_ object also has a data object, we could also directly use this and avoid having an own data object:
   //  return NestedSolverMD_.data();
@@ -365,5 +365,34 @@ getOutputConnectorData()
   // transferred to the other solvers. We can just reuse the values of the NestedSolverMD_.
   return MultiDomainSolvers_.back()->getOutputConnectorData();
 }
+
+template<class NestedSolverMD>
+void PinTMD<NestedSolverMD>::
+setTimeSpan(double tstart, double tstop)
+{
+  
+  (app_->tstart)        = tstart;
+  (app_->tstop)         = tstop;
+
+  //if (timeStepWidth_ > endTime_-startTime_)
+  //{
+  //  LOG(DEBUG) << "time span [" << startTime << "," << endTime << "], reduce timeStepWidth from " << timeStepWidth_ << " to " << endTime_-startTime_;
+  //  timeStepWidth_ = endTime_-startTime_;
+  //}
+
+  /* Initialize Braid */
+  braid_Init(MPI_COMM_WORLD, communicatorTotal_, tstart_, tstop_, ntime_, app_,
+         my_Step, my_Init, my_Clone, my_Free, my_Sum, my_SpatialNorm,
+         my_Access, my_BufSize, my_BufPack, my_BufUnpack, &core_);
+
+}
+
+template<class NestedSolverMD>
+void PinTMD<NestedSolverMD>::
+advanceTimeSpan()
+{
+  run();
+}
+
 
 } //namespace ParallelInTime

@@ -600,15 +600,20 @@ setValue(int componentNo, Vc::int_v dofLocalNo, Vc::double_v value, InsertMode p
 
   // count number of non-negative indices in dofLocalNo, it is assumed that they occur all before the negative indices
   int nEntries = Vc::double_v::size() - Vc::isnegative(dofLocalNo).count();
-
+/*
   // store Vc vectors in order to get the raw memory
   std::array<double,Vc::double_v::size()> data;
-  value.store(data.data());
+//  for (int i = 0; i < Vc::double_v::size(); i++)
+//    data[i] = value[i];
+  
+  value.store(data.data(),Vc::Aligned);
 
-  std::array<int,Vc::double_v::size()> indices;
+  std::array<int,Vc::int_v::size()> indices;
   dofLocalNo.store(indices.data());
-
-  this->values_->setValues(componentNo, nEntries, indices.data(), data.data(), petscInsertMode);
+  VLOG(1) << "setValue(componentNo=" << componentNo << ", dofLocalNo=" << dofLocalNo << ", value=" << value << ")";
+  VLOG(1) << "indices: " << indices << ", data: " << data;
+*/
+  this->values_->setValues(componentNo, nEntries, (PetscInt *)&dofLocalNo, (double *)&value, petscInsertMode);
 }
 
 //! set a given component of Vc::double_v::size() dofs with the same value
@@ -621,7 +626,7 @@ setValue(int componentNo, Vc::int_v dofLocalNo, double value, InsertMode petscIn
   data.fill(value);
 
   // store Vc vectors in order to get the raw memory
-  std::array<int,Vc::double_v::size()> indices;
+  std::array<int,Vc::int_v::size()> indices;
   dofLocalNo.store(indices.data());
 
   // count number of non-negative indices in dofLocalNo, it is assumed that they occur all before the negative indices

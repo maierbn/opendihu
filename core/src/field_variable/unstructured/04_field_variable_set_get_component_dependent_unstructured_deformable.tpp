@@ -134,12 +134,6 @@ setValue(const Vc::int_v &dofLocalNo, const Vc::double_v &value, InsertMode pets
 
   // count number of non-negative indices in dofLocalNo, it is assumed that they occur all before the negative indices
   int nEntries = Vc::double_v::size() - Vc::isnegative(dofLocalNo).count();
-/*
-  std::array<int,Vc::double_v::size()> indices;
-  dofLocalNo.store(indices.data());
-
-  this->values_->setValues(0, nEntries, indices.data(), (double *)&value, petscInsertMode);
-*/
   this->values_->setValues(0, nEntries, (PetscInt *)&dofLocalNo, (double *)&value, petscInsertMode);
 
   // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. finishGhostManipulation must be called
@@ -153,15 +147,9 @@ setValue(const Vc::int_v &dofLocalNo, double value, InsertMode petscInsertMode)
   assert(this->values_);
   std::array<double,Vc::double_v::size()> data;
   data.fill(value);
-/*
-  // store Vc vectors in order to get the raw memory
-  std::array<int,Vc::double_v::size()> indices;
-  dofLocalNo.store(indices.data());
-*/
+  
   // count number of non-negative indices in dofLocalNo, it is assumed that they occur all before the negative indices
   int nEntries = Vc::double_v::size() - Vc::isnegative(dofLocalNo).count();
-
-  //this->values_->setValues(0, nEntries, indices.data(), data.data(), petscInsertMode);
 
   this->values_->setValues(0, nEntries, (PetscInt *)&dofLocalNo, data.data(), petscInsertMode);
   // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. finishGhostManipulation must be called

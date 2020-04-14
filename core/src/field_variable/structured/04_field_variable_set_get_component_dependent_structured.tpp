@@ -40,17 +40,17 @@ getElementValues(Vc::int_v elementNoLocal, std::array<Vc::double_v,FunctionSpace
 
   for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
   {
-    for (int vcComponent = 0; vcComponent < nVcComponents; vcComponent++)
+    for (int vcComponentNo = 0; vcComponentNo < nVcComponents; vcComponentNo++)
     {
-      if (elementNoLocal[vcComponent] == -1)
-        indices[dofIndex*nVcComponents + vcComponent] = 0;     // set index to 0, then here the dof 0 is retrieved and also further used in computation but it is discarded later in setValue
+      if (elementNoLocal[vcComponentNo] == -1)
+        indices[dofIndex*nVcComponents + vcComponentNo] = 0;     // set index to 0, then here the dof 0 is retrieved and also further used in computation but it is discarded later in setValue
       else
-        indices[dofIndex*nVcComponents + vcComponent] = this->functionSpace_->getDofNo(elementNoLocal[vcComponent], dofIndex);
+        indices[dofIndex*nVcComponents + vcComponentNo] = this->functionSpace_->getDofNo(elementNoLocal[vcComponentNo], dofIndex);
     }
   }
 
   // get the values for the current component
-  this->values_->getValues(0, nDofsPerElement*nVcComponents, indices.data(), (double *)&result[nDofsPerElement]);
+  this->values_->getValues(0, nDofsPerElement*nVcComponents, indices.data(), (double *)result.data());
 
   // copy result to output values
   for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
@@ -130,14 +130,7 @@ void FieldVariableSetGetComponent<FunctionSpaceType,1>::
 setValue(const Vc::int_v &dofLocalNo, const Vc::double_v &value, InsertMode petscInsertMode)
 {
   assert(this->values_);
-  /*
-  std::array<double,Vc::double_v::size()> data;
-  value.store(data.data());
-
-  // store Vc vectors in order to get the raw memory
-  std::array<int,Vc::double_v::size()> indices;
-  dofLocalNo.store(indices.data());
-*/
+  
   // count number of non-negative indices in dofLocalNo, it is assumed that they occur all before the negative indices
   int nEntries = Vc::double_v::size() - Vc::isnegative(dofLocalNo).count();
 
@@ -156,18 +149,9 @@ setValue(const Vc::int_v &dofLocalNo, double value, InsertMode petscInsertMode)
 
   std::array<double,Vc::double_v::size()> data;
   data.fill(value);
-/*
-  // store Vc vectors in order to get the raw memory
-  std::array<int,Vc::double_v::size()> indices;
-  dofLocalNo.store(indices.data());
-*/
+  
   // count number of non-negative indices in dofLocalNo, it is assumed that they occur all before the negative indices
   int nEntries = Vc::double_v::size() - Vc::isnegative(dofLocalNo).count();
-/*
-  Vc::double_v vectorizedValue = value;
-  this->values_->setValues(0, nEntries, indices.data(), data.data(), petscInsertMode);
-  // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. finishGhostManipulation must be called
-  */
 
   this->values_->setValues(0, nEntries, (PetscInt *)&dofLocalNo, data.data(), petscInsertMode);
 }

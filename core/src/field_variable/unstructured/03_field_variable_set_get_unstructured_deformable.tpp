@@ -477,17 +477,17 @@ void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
 setValue(int componentNo, Vc::int_v dofLocalNo, Vc::double_v value, InsertMode petscInsertMode)
 {
   assert(this->values_);
-  std::array<double,Vc::double_v::size()> data;
+  /*std::array<double,Vc::double_v::size()> data;
   value.store(data.data());
 
   // store Vc vectors in order to get the raw memory
   std::array<int,Vc::double_v::size()> indices;
   dofLocalNo.store(indices.data());
-
+*/
   // count number of non-negative indices in dofLocalNo, it is assumed that they occur all before the negative indices
   int nEntries = Vc::double_v::size() - Vc::isnegative(dofLocalNo).count();
 
-  this->values_->setValues(componentNo, nEntries, indices.data(), data.data(), petscInsertMode);
+  this->values_->setValues(componentNo, nEntries, (PetscInt *)&dofLocalNo, (double *)&value, petscInsertMode);
 }
 
 //! set a given component of Vc::double_v::size() dofs with the same value
@@ -496,17 +496,17 @@ void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
 setValue(int componentNo, Vc::int_v dofLocalNo, double value, InsertMode petscInsertMode)
 {
   assert(this->values_);
-  std::array<double,Vc::double_v::size()> data;
+/*  std::array<double,Vc::double_v::size()> data;
   data.fill(value);
 
   // store Vc vectors in order to get the raw memory
   std::array<int,Vc::double_v::size()> indices;
   dofLocalNo.store(indices.data());
-
+*/
   // count number of non-negative indices in dofLocalNo, it is assumed that they occur all before the negative indices
   int nEntries = Vc::double_v::size() - Vc::isnegative(dofLocalNo).count();
 
-  this->values_->setValues(componentNo, nEntries, indices.data(), data.data(), petscInsertMode);
+  this->values_->setValues(componentNo, nEntries, (PetscInt *)&dofLocalNo, (double *)&value, petscInsertMode);
 }
 
 

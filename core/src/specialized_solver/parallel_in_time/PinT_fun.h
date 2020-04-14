@@ -9,6 +9,7 @@
 #include "spatial_discretization/finite_element_method/finite_element_method.h"
 #include "basis_function/lagrange.h"
 #include "mesh/structured_regular_fixed.h"
+#include "specialized_solver/multidomain_solver/multidomain_solver.h"
 
 #include <stdlib.h>
 #include <stdio.h>

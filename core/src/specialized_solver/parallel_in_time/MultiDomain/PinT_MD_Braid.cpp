@@ -13,6 +13,25 @@ int my_Step(braid_App        app,
             braid_Vector     u,
             braid_StepStatus status)
 {
+
+  /*
+  // use the following methods of the wrapper, instead of VecSetValues and VecGetValues
+
+  // get the number of local solution values
+  int nSolutionValuesLocal = MultiDomainSolver.nSolutionValuesLocal();
+
+  // allocate a vector to hold all solution values (do this only once, for efficiency!)
+  std::vector<double> values(nSolutionValuesLocal);
+
+  // get the current solution values (at the end of my_Step)
+  MultiDomainSolver.getSolution(values.data());
+  LOG(INFO) << "number of values: " << nSolutionValuesLocal << ", values: " << values;
+
+  // set the current solution values (at the beginning of my_Step)
+  MultiDomainSolver.setSolution(values.data());
+
+  */
+#if 0
    PetscReal tstart;             /* current time */
    PetscReal tstop;              /* evolve to this time*/
    PetscInt level, i, solver;
@@ -94,7 +113,7 @@ int my_Step(braid_App        app,
 
    /* no refinement */
    braid_StepStatusSetRFactor(status, 1);
-
+#endif
    return 0;
 }
 
@@ -103,6 +122,7 @@ my_Init(braid_App     app,
         double        t,
         braid_Vector *u_ptr)
 {
+#if 0
    my_Vector *u;
    int nspace = (app->nspace);
    // int    i;
@@ -141,6 +161,6 @@ my_Init(braid_App     app,
    LOG(DEBUG) << "set initial values: " << *solution;
 
    *u_ptr = u;
-
+#endif
    return 0;
 }

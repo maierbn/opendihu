@@ -42,6 +42,9 @@ public:
   //! initialize components of the simulation
   void initialize();
 
+  //! set a new system matrix with the given time step width
+  void updateSystemMatrix(double timeStepWidth, bool enableWarning);
+
   //! run the simulation
   void run();
 

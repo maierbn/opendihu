@@ -78,15 +78,9 @@ advanceTimeSpan()
     //dataMultidomain_.subcellularStates(0)->extractComponent(0, dataMultidomain_.transmembranePotential(0));
     LOG(DEBUG) << *dataMultidomain_.transmembranePotential(0);
 
-    if (fabs(this->timeStepWidthOfSystemMatrix_ - this->timeStepWidth_) / this->timeStepWidth_ > 1e-4)
-    {
-      LOG(WARNING) << "In multidomain solver, timestep width changed from " << this->timeStepWidthOfSystemMatrix_ << " to " << timeStepWidth_
-        << " (relative: " << std::showpos << 100*(this->timeStepWidthOfSystemMatrix_ - this->timeStepWidth_) / this->timeStepWidth_ << std::noshowpos << "%), need to recreate system matrix.";
-      this->timeStepWidthOfSystemMatrix_ = this->timeStepWidth_;
-      setSystemMatrixSubmatrices(this->timeStepWidthOfSystemMatrix_);
-      createSystemMatrixFromSubmatrices();
-    }
-  
+    // rebuild the system matrix if the timestep width changed
+    updateSystemMatrix(this->timeStepWidth_, true);
+
     // advance diffusion
     VLOG(1) << "---- diffusion term";
 
@@ -250,11 +244,7 @@ void MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffu
 initializeMatricesAndVectors()
 {
   // initialize system matrix
-  this->timeStepWidthOfSystemMatrix_ = this->timeStepWidth_;
-  setSystemMatrixSubmatrices(this->timeStepWidthOfSystemMatrix_);
-
-  // create nested submatrix
-  createSystemMatrixFromSubmatrices();
+  updateSystemMatrix(this->timeStepWidth_, false);
 
   LOG(DEBUG) << "set system matrix to linear solver";
 
@@ -294,7 +284,6 @@ initializeMatricesAndVectors()
 
   // copy the values from a nested Petsc Vec to a single Vec that contains all entries
   NestedMatVecUtility::createVecFromNestedVec(nestedRightHandSide_, singleRightHandSide_, data().functionSpace()->meshPartition()->rankSubset());
-
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
@@ -557,6 +546,29 @@ createSystemMatrixFromSubmatrices()
 
   // create a single Mat object from the nested Mat
   NestedMatVecUtility::createMatFromNestedMat(nestedSystemMatrix_, singleSystemMatrix_, data().functionSpace()->meshPartition()->rankSubset());
+}
+
+template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
+void MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
+updateSystemMatrix(double timeStepWidth, bool enableWarning)
+{
+  if (fabs(this->timeStepWidthOfSystemMatrix_ - timeStepWidth) / timeStepWidth > 1e-4)
+  {
+    if (enableWarning)
+    {
+      LOG(WARNING) << "In multidomain solver, timestep width changed from " << this->timeStepWidthOfSystemMatrix_ << " to " << timeStepWidth_
+        << " (relative: " << std::showpos << 100*(this->timeStepWidthOfSystemMatrix_ - timeStepWidth) / timeStepWidth << std::noshowpos << "%), need to recreate system matrix.";
+    }
+
+    // store time step width of current system matrix
+    this->timeStepWidthOfSystemMatrix_ = timeStepWidth;
+
+    // initialize the sub matrices of the nested system matrix
+    setSystemMatrixSubmatrices(this->timeStepWidthOfSystemMatrix_);
+
+    // create the nested and the single system matrix
+    createSystemMatrixFromSubmatrices();
+  }
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>

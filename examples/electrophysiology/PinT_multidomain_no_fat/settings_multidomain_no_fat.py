@@ -54,11 +54,12 @@ motor_units = [
 
 
 # for debugging use the following, non-physiological values. This produces a fast simulation
-Am = 1.0
-sampling_stride_z = 74
-motor_units = motor_units[0:2]    # only 2 motor units
-solver_tolerance = 1e-10
-
+if True:
+  end_time = 0.1
+  Am = 1.0
+  sampling_stride_z = 74
+  motor_units = motor_units[0:2]    # only 2 motor units
+  solver_tolerance = 1e-10
 
 n_compartments = len(motor_units)
 
@@ -102,13 +103,6 @@ if "hodgkin_huxley" in cellml_file:
   parameters_initial_values = [0.0]                         # initial value for stimulation current
   nodal_stimulation_current = 40.                           # not used
   vm_value_stimulated = 20.                                 # to which value of Vm the stimulated node should be set (option "valueForStimulatedPoint" of FastMonodomainSolver)
-  
-  #Cm = 1.0
-
-# for debugging
-#n_compartments = 1
-#relative_factors = np.ones((n_compartments, len(mesh_node_positions)))   # each row is one compartment
-#print("DEBUG settings")
 
 # debugging output
 if rank_no == 0:
@@ -286,7 +280,7 @@ config = {
       "solverType":         "gmres",
       "preconditionerType": "none",
       "dumpFormat":         "matlab",
-      "dumpFilename":       "out/no",
+      "dumpFilename":       "",
     }
   },
   "StrangSplitting": {

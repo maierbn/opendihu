@@ -71,6 +71,8 @@ class SpatialParameter<FunctionSpaceType,MathUtility::Matrix<nRows,nColumns>> :
 {
 public:
 
+  using SpatialParameterBase<FunctionSpaceType,MathUtility::Matrix<nRows,nColumns>>::value;
+
   //! the value of the parameter in the given element
   MathUtility::Matrix<nRows,nColumns,Vc::double_v> value(Vc::int_v elementNoLocal) const;
 };

@@ -103,7 +103,7 @@ double normSquared<3>(const Vec3_v node)
 template<>
 double acos<double>(double value)
 {
-  return acos(value);
+  return std::acos(value);
 }
 
 template<>

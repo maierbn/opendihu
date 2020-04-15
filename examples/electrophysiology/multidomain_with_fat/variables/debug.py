@@ -22,16 +22,16 @@ Am = 1.0  # set Am lower such that there is more diffusion
 #   fiber_no: center MU around this fiber, create f_r as gaussion from standard_deviation and maximum
 
 motor_units = [
-  {"fiber_no": 10, "standard_deviation": 20.0, "maximum": 0.5, "activation_start_time": 0.0, "stimulation_frequency": 10.0,},
-  {"fiber_no": 30, "standard_deviation": 20.0, "maximum": 0.4, "activation_start_time": 0.0, "stimulation_frequency": 10.0,},
-  {"fiber_no": 40, "standard_deviation": 30.0, "maximum": 0.6, "activation_start_time": 0.0, "stimulation_frequency": 10.0,},
+  {"fiber_no": 10, "standard_deviation": 0.2, "maximum": 0.5, "activation_start_time": 0.0, "stimulation_frequency": 10.0,},
+  {"fiber_no": 30, "standard_deviation": 0.2, "maximum": 0.4, "activation_start_time": 0.0, "stimulation_frequency": 10.0,},
+  {"fiber_no": 40, "standard_deviation": 0.3, "maximum": 0.6, "activation_start_time": 0.0, "stimulation_frequency": 10.0,},
 ]
 motor_units = motor_units[0:2]  # only two motor units
 
 # solvers
 # -------
 multidomain_solver_type = "gmres"          # solver for the multidomain problem
-multidomain_preconditioner_type = "ilu"   # preconditioner
+multidomain_preconditioner_type = "none"   # preconditioner
 
 # set initial guess to zero for direct solver
 initial_guess_nonzero = "lu" not in multidomain_solver_type 

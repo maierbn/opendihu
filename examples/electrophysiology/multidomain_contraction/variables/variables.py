@@ -55,7 +55,7 @@ paraview_output = False             # If the paraview output writer should be en
 adios_output = False                # If the MegaMol/ADIOS output writer should be enabled
 python_output = False               # If the Python output writer should be enabled
 exfile_output = False               # If the Exfile output writer should be enabled
-
+initial_guess_nonzero = True        # if the initial guess of the multidomain solver should be set to the previous values, this is only possible if an iterative solver is used
 
 # motor unit stimulation times
 firing_times_file = "../../input/MU_firing_times_real.txt"

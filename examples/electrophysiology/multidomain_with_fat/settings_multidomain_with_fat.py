@@ -118,7 +118,7 @@ multidomain_solver = {
   "endTime":                          variables.end_time,                 # end time, this is not relevant because it will be overridden by the splitting scheme
   "timeStepOutputInterval":           100,                                # how often the output timestep should be printed
   "solverName":                       "multidomainLinearSolver",          # reference to the solver used for the global linear system of the multidomain eq.
-  "initialGuessNonzero":              True,                               # if the initial guess for the 3D system should be set as the solution of the previous timestep, this only makes sense for iterative solvers
+  "initialGuessNonzero":              variables.initial_guess_nonzero,    # if the initial guess for the 3D system should be set as the solution of the previous timestep, this only makes sense for iterative solvers
   "inputIsGlobal":                    True,                               # if values and dofs correspond to the global numbering
   "showLinearSolverOutput":           True,                               # if convergence information of the linear solver in every timestep should be printed, this is a lot of output for fast computations
   "useLumpedMassMatrix":              False,                               # which formulation to use, the formulation with lumped mass matrix (True) is more stable but approximative, the other formulation (False) is exact but needs more iterations

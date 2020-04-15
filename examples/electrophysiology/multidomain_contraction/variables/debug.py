@@ -109,6 +109,9 @@ multidomain_preconditioner_type = "gamg"   # preconditioner
 
 scenario_name = "{}_{}_".format(multidomain_solver_type,multidomain_preconditioner_type)
 
+# set initial guess to zero for direct solver
+initial_guess_nonzero = "lu" not in multidomain_solver_type 
+
 # timing parameters
 # -----------------
 end_time = 0.01                   # [ms] end time of the simulation

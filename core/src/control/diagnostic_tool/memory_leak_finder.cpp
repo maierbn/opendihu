@@ -17,7 +17,7 @@ long long int MemoryLeakFinder::nBytesIncreaseSinceLastCheck()
   double totalUserTime;
   PerformanceMeasurement::getMemoryConsumption(pageSize, virtualMemorySize, residentSetSize, dataSize, totalUserTime);
 
-  long long increment = currentMemoryConsumption_ - residentSetSize;
+  long long increment = residentSetSize - currentMemoryConsumption_;
   currentMemoryConsumption_ = residentSetSize;
 
   return increment;

@@ -117,7 +117,7 @@ dt_multidomain = 1e-3               # [ms] timestep width of the multidomain sol
 dt_splitting = dt_multidomain       # [ms] timestep width of strang splitting between 0D and multidomain, this is the same as the dt_multidomain, because we do not want to subcycle for the diffusion part
 dt_elasticity = 1e-3                # [ms] time step width of elasticity solver
 output_timestep_multidomain = 1     # [ms] timestep for fiber output, 0.5
-output_timestep_3D = 1              # [ms] timestep for output of fibers and mechanics, should be a multiple of dt_3D
+output_timestep_3D = 1              # [ms] timestep for output of mechanics, should be a multiple of dt_elasticity
 
 # input files
 fiber_file = "../../input/left_biceps_brachii_9x9fibers.bin"

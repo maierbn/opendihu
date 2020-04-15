@@ -54,7 +54,7 @@ parser.add_argument('--adios_output',                        help='Enable the Me
 parser.add_argument('--fiber_file',                          help='The filename of the file that contains the fiber data.', default=variables.fiber_file)
 parser.add_argument('--firing_times_file',                   help='The filename of the file that contains the cellml model.', default=variables.firing_times_file)
 parser.add_argument('--end_time', '--tend', '-t',            help='The end simulation time.',                    type=float, default=variables.end_time)
-parser.add_argument('--output_timestep',                     help='The timestep for writing outputs.',           type=float, default=variables.output_timestep_multidomain)
+parser.add_argument('--output_timestep_multidomain',         help='The timestep for writing outputs.',           type=float, default=variables.output_timestep_multidomain)
 parser.add_argument('--v',                                   help='Enable full verbosity in c++ code')
 parser.add_argument('-v',                                    help='Enable verbosity level in c++ code', action="store_true")
 parser.add_argument('-vmodule',                              help='Enable verbosity level for given file in c++ code')
@@ -306,7 +306,7 @@ config = {
           "MultidomainSolver" : multidomain_solver,
           "OutputSurface": {        # version for fibers_emg_2d_output
             "OutputWriter": [
-              {"format": "Paraview", "outputInterval": (int)(1./variables.dt_multidomain*variables.output_timestep), "filename": "out/"+variables.scenario_name+"/surface", "binary": True, "fixedFormat": False, "combineFiles": True},
+              {"format": "Paraview", "outputInterval": (int)(1./variables.dt_multidomain*variables.output_timestep_multidomain), "filename": "out/"+variables.scenario_name+"/surface", "binary": True, "fixedFormat": False, "combineFiles": True},
             ],
             "face": "1-",
             "MultidomainSolver" : multidomain_solver,

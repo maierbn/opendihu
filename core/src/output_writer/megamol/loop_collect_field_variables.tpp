@@ -97,11 +97,11 @@ collectFieldVariables(TupleType currentFieldVariableTuple, std::string meshName,
 // element i is of vector type
 template<typename VectorType, typename FunctionSpaceType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
-collectFieldVariables(VectorType currentFIeldVariableGradient, std::string meshName,
+collectFieldVariables(VectorType currentFieldVariableGradient, std::string meshName,
                       std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> &geometryField,
                       std::vector<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>> &scalarFieldVariables)
 {
-  for (auto& currentFieldVariable : currentFIeldVariableGradient)
+  for (auto& currentFieldVariable : currentFieldVariableGradient)
   {
     // call function on all vector entries
     if (collectFieldVariables<typename VectorType::value_type>(

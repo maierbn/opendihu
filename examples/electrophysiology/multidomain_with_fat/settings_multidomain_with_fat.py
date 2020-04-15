@@ -46,6 +46,11 @@ parser.add_argument('--n_subdomains', nargs=3,               help='Number of sub
 parser.add_argument('--n_subdomains_x', '-x',                help='Number of subdomains in x direction.',        type=int, default=variables.n_subdomains_x)
 parser.add_argument('--n_subdomains_y', '-y',                help='Number of subdomains in y direction.',        type=int, default=variables.n_subdomains_y)
 parser.add_argument('--n_subdomains_z', '-z',                help='Number of subdomains in z direction.',        type=int, default=variables.n_subdomains_z)
+parser.add_argument('--paraview_output',                     help='Enable the paraview output writer.',          default=variables.paraview_output, action='store_true')
+parser.add_argument('--adios_output',                        help='Enable the MegaMol/ADIOS output writer.',          default=variables.adios_output, action='store_true')
+parser.add_argument('--firing_times_file',                   help='The filename of the file that contains the cellml model.', default=variables.firing_times_file)
+parser.add_argument('--end_time', '--tend', '-t',            help='The end simulation time.',                    type=float, default=variables.end_time)
+parser.add_argument('--output_timestep',                     help='The timestep for writing outputs.',           type=float, default=variables.output_timestep)
 
 # parse command line arguments and assign values to variables module
 args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
@@ -90,8 +95,8 @@ if n_ranks != variables.n_subdomains:
 if rank_no == 0:
   print("scenario_name: {},  n_subdomains: {} {} {},  n_ranks: {},  end_time: {}".format(variables.scenario_name, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, n_ranks, variables.end_time))
   print("dt_0D:           {:0.0e}".format(variables.dt_0D))
-  print("dt_multidomain:  {:0.0e}".format(variables.dt_multidomain))
-  print("dt_splitting:    {:0.0e}".format(variables.dt_splitting))
+  print("dt_multidomain:  {:0.0e}    multidomain solver:         {}".format(variables.dt_multidomain, variables.multidomain_solver_type))
+  print("dt_splitting:    {:0.0e}    multidomain preconditioner: {}".format(variables.dt_splitting, variables.multidomain_preconditioner_type))
   print("fiber_file:              {}".format(variables.fiber_file))
   print("fat_mesh_file:           {}".format(variables.fat_mesh_file))
   print("cellml_file:             {}".format(variables.cellml_file))
@@ -112,15 +117,16 @@ multidomain_solver = {
   "timeStepWidth":                    variables.dt_multidomain,           # time step width of the subcellular problem
   "endTime":                          variables.end_time,                 # end time, this is not relevant because it will be overridden by the splitting scheme
   "timeStepOutputInterval":           100,                                # how often the output timestep should be printed
-  "solverName":                       "activationSolver",                 # reference to the solver used for the global linear system of the multidomain eq.
-  "initialGuessNonzero":              True,                               # if the initial guess for the 3D system should be set as the solution of the previous timestep, this only makes sense for iterative solvers
+  "solverName":                       "multidomainLinearSolver",          # reference to the solver used for the global linear system of the multidomain eq.
+  "initialGuessNonzero":              variables.initial_guess_nonzero,    # if the initial guess for the 3D system should be set as the solution of the previous timestep, this only makes sense for iterative solvers
   "inputIsGlobal":                    True,                               # if values and dofs correspond to the global numbering
   "showLinearSolverOutput":           True,                               # if convergence information of the linear solver in every timestep should be printed, this is a lot of output for fast computations
   "useLumpedMassMatrix":              False,                               # which formulation to use, the formulation with lumped mass matrix (True) is more stable but approximative, the other formulation (False) is exact but needs more iterations
   "enableFatComputation":             True,                               # disabling the computation of the fat layer is only for debugging and speeds up computation. If set to False, the respective matrix is set to the identity
-  "constructPreconditionerMatrix":    True,                               # set up a preconditioner matrix that contains the matrices and the diagonal and is symmetric   
   "compartmentRelativeFactors":       variables.relative_factors.tolist(),     # list of lists of the factors for every dof, because "inputIsGlobal": True, this contains the global dofs
   "theta":                            1.0,                                # weighting factor of implicit term in Crank-Nicolson scheme, 0.5 gives the classic, 2nd-order Crank-Nicolson scheme, 1.0 gives implicit euler
+  "constructPreconditionerMatrix":    True,                               # if the diagonal blocks of the system matrix should be used as preconditioner matrix
+  "durationLogKey":                   "duration_multidomain",             # key for duration in log.csv file
   "PotentialFlow": {
     "FiniteElementMethod" : {  
       "meshName":                     "3Dmesh",
@@ -134,7 +140,7 @@ multidomain_solver = {
   "Activation": {
     "FiniteElementMethod" : {  
       "meshName":                     "3Dmesh",
-      "solverName":                   "activationSolver",
+      "solverName":                   "multidomainLinearSolver",
       "prefactor":                    1.0,
       "inputMeshIsGlobal":            True,
       "dirichletBoundaryConditions":  {},
@@ -154,7 +160,7 @@ multidomain_solver = {
   "Fat": {
     "FiniteElementMethod" : {  
       "meshName":                     "3DFatMesh",
-      "solverName":                   "activationSolver",
+      "solverName":                   "multidomainLinearSolver",
       "prefactor":                    0.4,
       "inputMeshIsGlobal":            True,
       "dirichletBoundaryConditions":  {},
@@ -187,12 +193,12 @@ config = {
       "dumpFormat":         "default",
       "dumpFilename":       "",
     },
-    "activationSolver": {
+    "multidomainLinearSolver": {
       "relativeTolerance":  1e-15,
-      "absoluteTolerance":  1e-10,         # 1e-10 absolute tolerance of the residual          
+      "absoluteTolerance":  1e-15,         # 1e-10 absolute tolerance of the residual          
       "maxIterations":      1e4,
-      "solverType":         "gmres",
-      "preconditionerType": "none",
+      "solverType":         variables.multidomain_solver_type,
+      "preconditionerType": variables.multidomain_preconditioner_type,
       "dumpFormat":         "matlab",
       "dumpFilename":       "",
     }
@@ -265,8 +271,6 @@ config = {
     }
   }
 }
-
-print("Linear solver type: {}".format(config["Solvers"]["activationSolver"]["solverType"]))
 
 # stop timer and calculate how long parsing lasted
 if rank_no == 0:

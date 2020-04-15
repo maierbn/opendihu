@@ -18,9 +18,8 @@ diffusion_solver_type = "cg"        # solver and preconditioner for the diffusio
 diffusion_preconditioner_type = "none"      # preconditioner
 potential_flow_solver_type = "gmres"        # solver and preconditioner for an initial Laplace flow on the domain, from which fiber directions are determined
 potential_flow_preconditioner_type = "none" # preconditioner
-emg_solver_type = "cg"              # solver and preconditioner for the 3D static Bidomain equation that solves the intra-muscular EMG signal
-emg_preconditioner_type = "none"    # preconditioner
-emg_initial_guess_nonzero = False   # If the initial guess for the emg linear system should be set to the previous solution
+multidomain_solver_type = "gmres"          # solver for the multidomain problem
+multidomain_preconditioner_type = "none"   # preconditioner
 
 # timing parameters
 # -----------------
@@ -59,7 +58,7 @@ paraview_output = False             # If the paraview output writer should be en
 adios_output = False                # If the MegaMol/ADIOS output writer should be enabled
 python_output = False               # If the Python output writer should be enabled
 exfile_output = False               # If the Exfile output writer should be enabled
-
+initial_guess_nonzero = True        # if the initial guess of the multidomain solver should be set to the previous values, this is only possible if an iterative solver is used
 
 # motor unit stimulation times
 firing_times_file = "../../input/MU_firing_times_real.txt"
@@ -135,8 +134,6 @@ z_point_index_start = None
 z_point_index_end = None
 meshes = None
 potential_flow_dirichlet_bc = None
-use_elasticity_dirichlet_bc = None
-use_elasticity_neumann_bc = None
 fibers_on_own_rank = None
 n_fiber_nodes_on_subdomain = None
 fiber_start_node_no = None

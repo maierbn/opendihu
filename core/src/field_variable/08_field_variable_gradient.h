@@ -11,7 +11,7 @@ namespace FieldVariable
 /** General field variable with != 1 components. A field variable is defined on a FunctionSpace, i.e. knows mesh type and basis function type.
  */
 template<typename FunctionSpaceType,int nComponents,typename Mesh=typename FunctionSpaceType::Mesh>
-class FIeldVariableGradient :
+class FieldVariableGradient :
   public FieldVariableSetGet<FunctionSpaceType,nComponents>
 {
 public:
@@ -24,7 +24,7 @@ public:
  * Scalar field variables can compute a gradient field.
  */
 template<typename FunctionSpaceType>
-class FIeldVariableGradient<FunctionSpaceType,1,::Mesh::isStructured<typename FunctionSpaceType::Mesh>> :
+class FieldVariableGradient<FunctionSpaceType,1,::Mesh::isStructured<typename FunctionSpaceType::Mesh>> :
   public FieldVariableSetGet<FunctionSpaceType,1>
 {
 public:
@@ -42,7 +42,7 @@ public:
  * Scalar field variables can compute a gradient field.
  */
 template<typename FunctionSpaceType>
-class FIeldVariableGradient<FunctionSpaceType,1,::Mesh::UnstructuredDeformableOfDimension<FunctionSpaceType::dim()>> :
+class FieldVariableGradient<FunctionSpaceType,1,::Mesh::UnstructuredDeformableOfDimension<FunctionSpaceType::dim()>> :
   public FieldVariableSetGet<FunctionSpaceType,1>
 {
 public:

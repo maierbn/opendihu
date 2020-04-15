@@ -52,10 +52,10 @@ checkIfNewExelemHeaderNecessary(CurrentFieldVariableType currentFieldVariable, s
 // element i is of vector type
 template<typename VectorType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
-checkIfNewExelemHeaderNecessary(VectorType currentFIeldVariableGradient, std::string meshName, 
+checkIfNewExelemHeaderNecessary(VectorType currentFieldVariableGradient, std::string meshName, 
                                 element_no_t currentFieldVariableGlobalNo, bool &newHeaderNecessary)
 {
-  for (auto& currentFieldVariable : currentFIeldVariableGradient)
+  for (auto& currentFieldVariable : currentFieldVariableGradient)
   {
     // call function on all vector entries
     if (checkIfNewExelemHeaderNecessary<typename VectorType::value_type>(currentFieldVariable, meshName, currentFieldVariableGlobalNo, newHeaderNecessary))

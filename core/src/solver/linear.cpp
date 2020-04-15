@@ -3,6 +3,7 @@
 #include "utility/python_utility.h"
 #include "control/diagnostic_tool/performance_measurement.h"
 #include "partition/partitioned_petsc_mat/partitioned_petsc_mat.h"
+#include "control/diagnostic_tool/memory_leak_finder.h"
 
 namespace Solver
 {
@@ -270,9 +271,15 @@ void Linear::solve(Vec rightHandSide, Vec solution, std::string message)
 
   Control::PerformanceMeasurement::start(this->durationLogKey_);
 
+  // reset memory count in MemoryLeakFinder
+  Control::MemoryLeakFinder::nBytesIncreaseSinceLastCheck();
+
   // solve the system
   ierr = KSPSolve(*ksp_, rightHandSide, solution); CHKERRV(ierr);
 
+  // output a warning if the memory increased by over 1 MB
+  Control::MemoryLeakFinder::warnIfMemoryConsumptionIncreases("In Linear::solve, after KSPSolve");
+    
   Control::PerformanceMeasurement::stop(this->durationLogKey_);
 
   // dump files of rhs, solution and system matrix for debugging
@@ -313,12 +320,12 @@ void Linear::solve(Vec rightHandSide, Vec solution, std::string message)
     // compute norm of residual
     ierr = VecNorm(*residual_, NORM_2, &residualNorm); CHKERRV(ierr);
   }
-
+  
   // output message
   if (message != "")
   {
     // example for output: "Linear system of multidomain problem solved in 373 iterations, 3633 dofs, residual norm 9.471e-11: KSP_CONVERGED_ATOL: residual 2-norm less than abstol"
-    LOG(INFO) << message << " in " << numberOfIterations << " iterations, " << nDofsGlobal << " dofs, residual norm " << residualNorm
+    LOG(INFO) << ksp_ << "," << rightHandSide << "," << solution << ": " << message << " in " << numberOfIterations << " iterations, " << nDofsGlobal << " dofs, residual norm " << residualNorm
       << ": " << PetscUtility::getStringLinearConvergedReason(convergedReason);
   }
 

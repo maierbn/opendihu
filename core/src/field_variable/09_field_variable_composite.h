@@ -9,18 +9,18 @@ namespace FieldVariable
  */
 template<typename FunctionSpaceType,int nComponents>
 class FieldVariableComposite :
-  public FIeldVariableGradient<FunctionSpaceType,nComponents>
+  public FieldVariableGradient<FunctionSpaceType,nComponents>
 {
 public:
   //! inherited constructor
-  using FIeldVariableGradient<FunctionSpaceType,nComponents>::FIeldVariableGradient;
+  using FieldVariableGradient<FunctionSpaceType,nComponents>::FieldVariableGradient;
 };
 
 /** Partial specialization for field variable with composite mesh
  */
 template<int D,typename BasisFunctionType,int nComponents>
 class FieldVariableComposite<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,nComponents> :
-  public FIeldVariableGradient<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,nComponents>
+  public FieldVariableGradient<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,nComponents>
 {
 public:
 
@@ -28,7 +28,7 @@ public:
   typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>, BasisFunctionType> SubFunctionSpaceType;
 
   //! inherited constructor
-  using FIeldVariableGradient<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,nComponents>::FIeldVariableGradient;
+  using FieldVariableGradient<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,nComponents>::FieldVariableGradient;
 
   //! split this field variables into field variables for the sub function space and set the corresponding values
   void getSubFieldVariables(std::vector<std::shared_ptr<FieldVariable<SubFunctionSpaceType, nComponents>>> &subFieldVariables);
@@ -41,6 +41,10 @@ public:
 
   //! initialize the subFieldVariables_ vector or update the value if it was already initialized, such that subFieldVariable() gets the most recent values
   void updateSubFieldVariables();
+
+  //! fill the gradient field with the gradient values in world coordinates of this field variable. This is only possible for scalar fields.
+  void computeGradientField(std::shared_ptr<FieldVariable<::FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>, FunctionSpaceType::dim()>> gradientField,
+                            std::shared_ptr<FieldVariable<::FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,1>> jacobianConditionNumber = nullptr);
 
 protected:
 

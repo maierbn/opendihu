@@ -383,7 +383,7 @@ solveLinearSystem()
     // solve without showing output
     this->linearSolver_->solve(this->singleRightHandSide_, this->singleSolution_);
   }
-  
+
   // copy the values back from the single Vec, singleSolution_, that contains all entries 
   // to the nested Petsc Vec, nestedSolution_ which contains the components in subvectorsSolution_
   NestedMatVecUtility::fillNestedVec(this->singleSolution_, this->nestedSolution_);

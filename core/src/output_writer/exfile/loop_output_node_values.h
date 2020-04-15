@@ -38,14 +38,14 @@ loopOutputNodeValues(const FieldVariablesForOutputWriterType &fieldVariables, st
  */
 template<typename VectorType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
-outputNodeValues(VectorType currentFIeldVariableGradient, std::string meshName, 
+outputNodeValues(VectorType currentFieldVariableGradient, std::string meshName, 
                  std::ostream &stream, node_no_t nodeGlobalNo);
 
 /** Loop body for a tuple element
  */
 template<typename VectorType>
 typename std::enable_if<TypeUtility::isTuple<VectorType>::value, bool>::type
-outputNodeValues(VectorType currentFIeldVariableGradient, std::string meshName, 
+outputNodeValues(VectorType currentFieldVariableGradient, std::string meshName, 
                  std::ostream &stream, node_no_t nodeGlobalNo);
 
  /**  Loop body for a pointer element

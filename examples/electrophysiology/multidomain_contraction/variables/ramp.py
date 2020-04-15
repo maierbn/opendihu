@@ -99,16 +99,23 @@ motor_units = [
   {"fiber_no": 50, "standard_deviation": 2.0, "maximum": 0.2, "radius": 72.00, "activation_start_time": 1.6, "stimulation_frequency": 8.32,  "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
   {"fiber_no": 25, "standard_deviation": 2.0, "maximum": 0.2, "radius": 80.00, "activation_start_time": 1.8, "stimulation_frequency": 7.66,  "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},    # high number of fibers
 ]
+# solvers
+# -------
+multidomain_solver_type = "gmres"          # solver for the multidomain problem
+multidomain_preconditioner_type = "ilu"   # preconditioner
+
+# set initial guess to zero for direct solver
+initial_guess_nonzero = "lu" not in multidomain_solver_type 
 
 # timing parameters
 # -----------------
-end_time = 4000.0
+end_time = 4000.0                   # [ms] end time of the simulation
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
 stimulation_frequency_jitter = 0    # [-] jitter in percent of the frequency, added and substracted to the stimulation_frequency after each stimulation
 dt_0D = 1e-3                        # [ms] timestep width of ODEs (1e-3)
 dt_multidomain = 1e-3               # [ms] timestep width of the multidomain solver, i.e. the diffusion
 dt_splitting = dt_multidomain       # [ms] timestep width of strang splitting between 0D and multidomain, this is the same as the dt_multidomain, because we do not want to subcycle for the diffusion part
-dt_elasticity = 4e-3                # [ms] time step width of elasticity solver
+dt_elasticity = 1e-3                # [ms] time step width of elasticity solver
 output_timestep_multidomain = 1     # [ms] timestep for fiber output, 0.5
 output_timestep_3D = 1              # [ms] timestep for output of fibers and mechanics, should be a multiple of dt_3D
 
@@ -134,7 +141,7 @@ exfile_output = False
 python_output = False
 disable_firing_output = False
 
-# debuggung version, smaller example
+# debugging version, smaller example
 motor_units = motor_units[0:2]  # only 2 motor units
 
 # functions, here, Am, Cm and Conductivity are constant for all fibers and MU's

@@ -105,8 +105,12 @@ multidomain_solver_type = "gmres"          # solver for the multidomain problem
 multidomain_preconditioner_type = "ilu"   # preconditioner
 
 multidomain_preconditioner_type = "bjacobi"   # preconditioner
+multidomain_preconditioner_type = "gamg"   # preconditioner
 
-scenario_name = "{}_{}".format(multidomain_solver_type,multidomain_preconditioner_type)
+scenario_name = "{}_{}_".format(multidomain_solver_type,multidomain_preconditioner_type)
+
+# set initial guess to zero for direct solver
+initial_guess_nonzero = "lu" not in multidomain_solver_type 
 
 # timing parameters
 # -----------------

@@ -22,17 +22,21 @@ if variables.n_subdomains != n_ranks:
   print("\n\n\033[0;31mError! Number of ranks {} does not match given partitioning {} x {} x {} = {}.\033[0m\n\n".format(n_ranks, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z))
   quit()
 
-variables.relative_factors_file = "compartments_relative_factors.{}.{}mus_partitioning{}x{}x{}".\
+variables.relative_factors_file = "compartments_relative_factors.{}.{}_mus_partitioning_{}x{}x{}".\
   format(os.path.basename(variables.fiber_file),len(variables.motor_units),variables.n_subdomains_x,variables.n_subdomains_y,variables.n_subdomains_z)
-if not os.path.exists(variables.relative_factors_file):
-  variables.load_fiber_data = True
+
+include_global_node_positions = False
+if not os.path.exists(variables.relative_factors_file) and rank_no == 0:
+  include_global_node_positions = True
+
   
 #############################
 # create the partitioning using the script in create_partitioned_meshes_for_settings.py
 result = create_partitioned_meshes_for_settings(
     variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, 
     variables.fiber_file, variables.load_fiber_data,
-    variables.sampling_stride_x, variables.sampling_stride_y, variables.sampling_stride_z, variables.generate_linear_3d_mesh, variables.generate_quadratic_3d_mesh, False, False)
+    variables.sampling_stride_x, variables.sampling_stride_y, variables.sampling_stride_z, variables.generate_linear_3d_mesh, variables.generate_quadratic_3d_mesh,
+    fiber_set_rank_nos=False, have_fibers=False, include_global_node_positions=include_global_node_positions)
 [variables.meshes, variables.own_subdomain_coordinate_x, variables.own_subdomain_coordinate_y, variables.own_subdomain_coordinate_z, variables.n_fibers_x, variables.n_fibers_y, variables.n_points_whole_fiber] = result
   
 variables.n_subdomains_xy = variables.n_subdomains_x * variables.n_subdomains_y
@@ -466,28 +470,28 @@ if rank_no == 0 and not variables.disable_firing_output:
   print("    Time  MU compartments")
   n_stimulated_mus = 0
   n_not_stimulated_mus = 0
-  variables.fibers = []
+  stimulated_fibers = []
   last_time = 0
   last_mu_no = first_stimulation_info[0][1]
   for stimulation_info in first_stimulation_info:
     mu_no = stimulation_info[1]
     fiber_no = stimulation_info[0]
     if mu_no == last_mu_no:
-      variables.fibers.append(fiber_no)
+      stimulated_fibers.append(fiber_no)
     else:
       if last_time is not None:
-        if len(variables.fibers) > 10:
-          print("{:8.2f} {:3} {} (only showing first 10, {} total)".format(last_time,last_mu_no,str(variables.fibers[0:10]),len(variables.fibers)))
+        if len(stimulated_fibers) > 10:
+          print("{:8.2f} {:3} {} (only showing first 10, {} total)".format(last_time,last_mu_no,str(stimulated_fibers[0:10]),len(stimulated_fibers)))
         else:
-          print("{:8.2f} {:3} {}".format(last_time,last_mu_no,str(variables.fibers)))
+          print("{:8.2f} {:3} {}".format(last_time,last_mu_no,str(stimulated_fibers)))
         n_stimulated_mus += 1
       else:
-        if len(variables.fibers) > 10:
-          print("  never stimulated: MU {:3}, fibers {} (only showing first 10, {} total)".format(last_mu_no,str(variables.fibers[0:10]),len(variables.fibers)))
+        if len(stimulated_fibers) > 10:
+          print("  never stimulated: MU {:3}, fibers {} (only showing first 10, {} total)".format(last_mu_no,str(stimulated_fibers[0:10]),len(stimulated_fibers)))
         else:
-          print("  never stimulated: MU {:3}, fibers {}".format(last_mu_no,str(variables.fibers)))
+          print("  never stimulated: MU {:3}, fibers {}".format(last_mu_no,str(stimulated_fibers)))
         n_not_stimulated_mus += 1
-      variables.fibers = [fiber_no]
+      stimulated_fibers = [fiber_no]
 
     last_time = stimulation_info[2]
     last_mu_no = mu_no
@@ -572,49 +576,10 @@ if not os.path.exists(variables.relative_factors_file):
 
   # the file does not yet exist, create it on rank 0
   if rank_no == 0: 
-    try:
-      fiber_file_handle = open(variables.fiber_file, "rb")
-    except:
-      print("\033[0;31mError: Could not open fiber file \"{}\"\033[0m".format(variables.fiber_file))
-      quit()
-
-    # parse fibers from a binary fiber file that was created by parallel_fiber_estimation
-    # parse file header to extract number of fibers
-    bytes_raw = fiber_file_handle.read(32)
-    header_str = struct.unpack('32s', bytes_raw)[0]
-    header_length_raw = fiber_file_handle.read(4)
-    header_length = struct.unpack('i', header_length_raw)[0]
-
-    # parse parameters in the file
-    parameters = []
-    for i in range(int(header_length/4.) - 1):
-      double_raw = fiber_file_handle.read(4)
-      value = struct.unpack('i', double_raw)[0]
-      parameters.append(value)
     
-    variables.n_fibers_total = parameters[0]
-    variables.n_points_whole_fiber = parameters[1]
-
-    print("Loading fibers for initializing compartment relative factors.")
-    print("  n fibers:              {} ({} x {})".format(variables.n_fibers_total, variables.n_fibers_x, variables.n_fibers_y))
-    print("  n points per fiber:    {}".format(variables.n_points_whole_fiber))
-      
-    # parse whole fiber file, only if enabled
-    fiber_data = []
-    for fiber_index in range(variables.n_fibers_total):
-      fiber = []
-      for point_no in range(variables.n_points_whole_fiber):
-        point = []
-        for i in range(3):
-          double_raw = fiber_file_handle.read(8)
-          value = struct.unpack('d', double_raw)[0]
-          point.append(value)
-        fiber.append(point)
-      fiber_data.append(fiber)
-    
-    mesh_node_positions = variables.meshes["3Dmesh"]["nodePositions"]
-    print("Computing the relative MU factors, f_r, for {} motor units and {} mesh nodes. This may take a while ...".format(len(variables.motor_units), len(mesh_node_positions)))
-    variables.relative_factors = compute_compartment_relative_factors(mesh_node_positions, fiber_data, variables.motor_units)
+    mesh_node_positions = variables.meshes["3Dmesh"]["globalNodePositions"]
+    print("Computing the relative MU factors, f_r, for {} motor units and {} mesh nodes, {} fibers. This may take a while ...".format(len(variables.motor_units), len(mesh_node_positions), len(variables.fibers)))
+    variables.relative_factors = compute_compartment_relative_factors(mesh_node_positions, variables.fibers, variables.motor_units)
     if rank_no == 0:
       print("Save relative factors to file \"{}\".".format(variables.relative_factors_file))
       with open(variables.relative_factors_file, "wb") as f:

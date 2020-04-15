@@ -15,14 +15,23 @@ Cm = 0.58                   # [uF/cm^2] membrane capacitance, (1 = fast twitch, 
 
 # timing and activation parameters
 # -----------------
-# motor unit parameters
-# stimulation frequency in [Hz], activation_start_time in [s]
-#   fiber_no: center MU around this fiber, create f_r as gaussion from standard_deviation and maximum
-
+# motor units from paper Klotz2019 "Modelling the electrical activity of skeletal muscle tissue using a multi‐domain approach"
+import random
+random.seed(0)  # ensure that random numbers are the same on every rank
+#   fiber_no: center MU around this fiber
+#   standard_deviation [cm], maximum[-]: create f_r as gaussion with standard_deviation and maximum around the fiber given in fiber_no
+#   radius: [μm], activation_start_time: [s], stimulation frequency [Hz], jitter [-]
 motor_units = [
-  {"fiber_no": 10, "standard_deviation": 20.0, "maximum": 0.5, "activation_start_time": 0.0, "stimulation_frequency": 10.0,},
-  {"fiber_no": 30, "standard_deviation": 20.0, "maximum": 0.4, "activation_start_time": 0.0, "stimulation_frequency": 10.0,},
-  {"fiber_no": 40, "standard_deviation": 30.0, "maximum": 0.6, "activation_start_time": 0.0, "stimulation_frequency": 10.0,},
+  {"fiber_no": 10, "standard_deviation": 2.0, "maximum": 0.2, "radius": 40.00, "activation_start_time": 0.0, "stimulation_frequency": 23.92, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},    # low number of fibers
+  {"fiber_no": 20, "standard_deviation": 2.0, "maximum": 0.2, "radius": 42.35, "activation_start_time": 0.2, "stimulation_frequency": 23.36, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
+  {"fiber_no": 30, "standard_deviation": 2.0, "maximum": 0.2, "radius": 45.00, "activation_start_time": 0.4, "stimulation_frequency": 23.32, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
+  {"fiber_no": 40, "standard_deviation": 2.0, "maximum": 0.2, "radius": 48.00, "activation_start_time": 0.6, "stimulation_frequency": 22.46, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
+  {"fiber_no": 55, "standard_deviation": 2.0, "maximum": 0.2, "radius": 51.42, "activation_start_time": 0.8, "stimulation_frequency": 20.28, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
+  {"fiber_no": 60, "standard_deviation": 2.0, "maximum": 0.2, "radius": 55.38, "activation_start_time": 1.0, "stimulation_frequency": 16.32, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
+  {"fiber_no": 70, "standard_deviation": 2.0, "maximum": 0.2, "radius": 60.00, "activation_start_time": 1.2, "stimulation_frequency": 12.05, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
+  {"fiber_no": 80, "standard_deviation": 2.0, "maximum": 0.2, "radius": 65.45, "activation_start_time": 1.4, "stimulation_frequency": 10.03, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
+  {"fiber_no": 50, "standard_deviation": 2.0, "maximum": 0.2, "radius": 72.00, "activation_start_time": 1.6, "stimulation_frequency": 8.32,  "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
+  {"fiber_no": 25, "standard_deviation": 2.0, "maximum": 0.2, "radius": 80.00, "activation_start_time": 1.8, "stimulation_frequency": 7.66,  "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},    # high number of fibers
 ]
 
 end_time = 4000.0                   # [ms] end time of the simulation
@@ -32,6 +41,7 @@ dt_multidomain = 3e-3               # [ms] timestep width of multidomain solver
 dt_splitting = 3e-3                 # [ms] overall timestep width of strang splitting (3e-3)
 output_timestep = 2e-1              # [ms] timestep for output big files of 3D EMG, 100
 output_timestep = 1                 # [ms] timestep for output big files of 3D EMG, 100
+#end_time = 1e-2
 
 # input files
 cellml_file = "../../input/hodgkin_huxley_1952.c"
@@ -43,7 +53,7 @@ firing_times_file = "../../input/MU_firing_times_immediately.txt"
 # stride for sampling the 3D elements from the fiber data
 sampling_stride_x = 1
 sampling_stride_y = 1
-sampling_stride_z = 20   # faster, but stimulus does not propagate
+sampling_stride_z = 20
 sampling_stride_fat = 1
 
 

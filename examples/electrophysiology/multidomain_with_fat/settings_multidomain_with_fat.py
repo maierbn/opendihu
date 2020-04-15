@@ -195,7 +195,7 @@ config = {
     },
     "multidomainLinearSolver": {
       "relativeTolerance":  1e-15,
-      "absoluteTolerance":  1e-10,         # 1e-10 absolute tolerance of the residual          
+      "absoluteTolerance":  1e-15,         # 1e-10 absolute tolerance of the residual          
       "maxIterations":      1e4,
       "solverType":         variables.multidomain_solver_type,
       "preconditionerType": variables.multidomain_preconditioner_type,

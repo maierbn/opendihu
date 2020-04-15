@@ -7,6 +7,7 @@ import pickle
 import sys,os
 import struct
 import argparse
+import time
 sys.path.insert(0, '..')
 import variables    # file variables.py
 from create_partitioned_meshes_for_settings import *   # file create_partitioned_meshes_for_settings
@@ -21,7 +22,8 @@ if variables.n_subdomains != n_ranks:
   print("\n\n\033[0;31mError! Number of ranks {} does not match given partitioning {} x {} x {} = {}.\033[0m\n\n".format(n_ranks, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z))
   quit()
 
-variables.relative_factors_file = "{}.{}_compartments_relative_factors".format(os.path.basename(variables.fiber_file),len(variables.motor_units))
+variables.relative_factors_file = "compartments_relative_factors.{}.{}mus_partitioning{}x{}x{}".\
+  format(os.path.basename(variables.fiber_file),len(variables.motor_units),variables.n_subdomains_x,variables.n_subdomains_y,variables.n_subdomains_z)
 if not os.path.exists(variables.relative_factors_file):
   variables.load_fiber_data = True
   
@@ -566,64 +568,70 @@ def compute_compartment_relative_factors(mesh_node_positions, fiber_data, motor_
 # load relative factors for motor units
 
 # determine relative factor fields fr(x) for compartments
+if not os.path.exists(variables.relative_factors_file):
+
+  # the file does not yet exist, create it on rank 0
+  if rank_no == 0: 
+    try:
+      fiber_file_handle = open(variables.fiber_file, "rb")
+    except:
+      print("\033[0;31mError: Could not open fiber file \"{}\"\033[0m".format(variables.fiber_file))
+      quit()
+
+    # parse fibers from a binary fiber file that was created by parallel_fiber_estimation
+    # parse file header to extract number of fibers
+    bytes_raw = fiber_file_handle.read(32)
+    header_str = struct.unpack('32s', bytes_raw)[0]
+    header_length_raw = fiber_file_handle.read(4)
+    header_length = struct.unpack('i', header_length_raw)[0]
+
+    # parse parameters in the file
+    parameters = []
+    for i in range(int(header_length/4.) - 1):
+      double_raw = fiber_file_handle.read(4)
+      value = struct.unpack('i', double_raw)[0]
+      parameters.append(value)
+    
+    variables.n_fibers_total = parameters[0]
+    variables.n_points_whole_fiber = parameters[1]
+
+    print("Loading fibers for initializing compartment relative factors.")
+    print("  n fibers:              {} ({} x {})".format(variables.n_fibers_total, variables.n_fibers_x, variables.n_fibers_y))
+    print("  n points per fiber:    {}".format(variables.n_points_whole_fiber))
+      
+    # parse whole fiber file, only if enabled
+    fiber_data = []
+    for fiber_index in range(variables.n_fibers_total):
+      fiber = []
+      for point_no in range(variables.n_points_whole_fiber):
+        point = []
+        for i in range(3):
+          double_raw = fiber_file_handle.read(8)
+          value = struct.unpack('d', double_raw)[0]
+          point.append(value)
+        fiber.append(point)
+      fiber_data.append(fiber)
+    
+    mesh_node_positions = variables.meshes["3Dmesh"]["nodePositions"]
+    print("Computing the relative MU factors, f_r, for {} motor units and {} mesh nodes. This may take a while ...".format(len(variables.motor_units), len(mesh_node_positions)))
+    variables.relative_factors = compute_compartment_relative_factors(mesh_node_positions, fiber_data, variables.motor_units)
+    if rank_no == 0:
+      print("Save relative factors to file \"{}\".".format(variables.relative_factors_file))
+      with open(variables.relative_factors_file, "wb") as f:
+        pickle.dump(variables.relative_factors, f)
+  else:
+    # wait until file is created on rank 0
+    while not os.path.exists(variables.relative_factors_file):
+      time.sleep(1)
+
 if os.path.exists(variables.relative_factors_file):
   with open(variables.relative_factors_file, "rb") as f:
     if rank_no == 0:
       print("Load relative factors, f_r, from file \"{}\"".format(variables.relative_factors_file))
     variables.relative_factors = pickle.load(f, encoding='latin1')
-
 else:
-  if n_ranks != 1:
-    print("\033[0;31mError: Compartment relative factors, f_r, have not yet been created. Restart the program with 1 process then it will be done.\033[0m")
-    quit()
-  
-  try:
-    fiber_file_handle = open(variables.fiber_file, "rb")
-  except:
-    print("\033[0;31mError: Could not open fiber file \"{}\"\033[0m".format(variables.fiber_file))
-    quit()
-
-  # parse fibers from a binary fiber file that was created by parallel_fiber_estimation
-  # parse file header to extract number of fibers
-  bytes_raw = fiber_file_handle.read(32)
-  header_str = struct.unpack('32s', bytes_raw)[0]
-  header_length_raw = fiber_file_handle.read(4)
-  header_length = struct.unpack('i', header_length_raw)[0]
-
-  # parse parameters in the file
-  parameters = []
-  for i in range(int(header_length/4.) - 1):
-    double_raw = fiber_file_handle.read(4)
-    value = struct.unpack('i', double_raw)[0]
-    parameters.append(value)
-  
-  variables.n_fibers_total = parameters[0]
-  variables.n_points_whole_fiber = parameters[1]
-
-  print("Loading fibers for initializing compartment relative factors.")
-  print("  n fibers:              {} ({} x {})".format(variables.n_fibers_total, variables.n_fibers_x, variables.n_fibers_y))
-  print("  n points per fiber:    {}".format(variables.n_points_whole_fiber))
-    
-  # parse whole fiber file, only if enabled
-  fiber_data = []
-  for fiber_index in range(variables.n_fibers_total):
-    fiber = []
-    for point_no in range(variables.n_points_whole_fiber):
-      point = []
-      for i in range(3):
-        double_raw = fiber_file_handle.read(8)
-        value = struct.unpack('d', double_raw)[0]
-        point.append(value)
-      fiber.append(point)
-    fiber_data.append(fiber)
-  
-  mesh_node_positions = variables.meshes["3Dmesh"]["nodePositions"]
-  print("Computing the relative MU factors, f_r, for {} motor units and {} mesh nodes. This may take a while ...".format(len(variables.motor_units), len(mesh_node_positions)))
-  variables.relative_factors = compute_compartment_relative_factors(mesh_node_positions, fiber_data, variables.motor_units)
-  if rank_no == 0:
-    print("Save relative factors to file \"{}\".".format(variables.relative_factors_file))
-    with open(variables.relative_factors_file, "wb") as f:
-      pickle.dump(variables.relative_factors, f)
+  print("\033[0;31mError: Could not load relative factors file \"{}\"\033[0m".format(variables.relative_factors_file))
+  quit()
 
 # debugging output
 if rank_no == 0:

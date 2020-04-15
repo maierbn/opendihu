@@ -325,7 +325,7 @@ void Linear::solve(Vec rightHandSide, Vec solution, std::string message)
   if (message != "")
   {
     // example for output: "Linear system of multidomain problem solved in 373 iterations, 3633 dofs, residual norm 9.471e-11: KSP_CONVERGED_ATOL: residual 2-norm less than abstol"
-    LOG(INFO) << message << " in " << numberOfIterations << " iterations, " << nDofsGlobal << " dofs, residual norm " << residualNorm
+    LOG(INFO) << ksp_ << "," << rightHandSide << "," << solution << ": " << message << " in " << numberOfIterations << " iterations, " << nDofsGlobal << " dofs, residual norm " << residualNorm
       << ": " << PetscUtility::getStringLinearConvergedReason(convergedReason);
   }
 

@@ -18,11 +18,21 @@ Generic::Generic(DihuContext context, PythonConfig specificSettings, std::shared
 
   outputInterval_ = specificSettings_.getOptionInt("outputInterval", 1, PythonUtility::Positive);
   formatString_ = specificSettings_.getOptionString("format", "Callback");
+  std::string fileNumbering = specificSettings_.getOptionString("fileNumbering", "incremental");
 
   // determine filename base
   if (formatString_ != "Callback")
   {
     filenameBase_ = specificSettings_.getOptionString("filename", "out");
+  }
+
+  if (fileNumbering == "incremental") {
+    fileNumbering_ = file_numbering_incremental;
+  } else if (fileNumbering == "timeStepIndex") {
+    fileNumbering_ = file_numbering_by_time_step_index;
+  } else {
+    fileNumbering_ = file_numbering_incremental;
+    LOG(ERROR) << "Unknown option for \"fileNumbering\": \"" <<fileNumbering<< "\". Use one of \"incremental\" or \"timeStepIndex\". Falling back to \"incremental\".";
   }
 }
 

@@ -110,7 +110,7 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
       // compute the 3xD jacobian of the parameter space to world space mapping
       Tensor2<D> jacobianParameterSpace = MathUtility::transformToDxD<D,D>(FunctionSpaceType::computeJacobian(geometryValues, xi));
       double jacobianDeterminant;
-      Tensor2<D> inverseJacobianParameterSpace = MathUtility::computeInverse(jacobianParameterSpace, jacobianDeterminant);
+      Tensor2<D> inverseJacobianParameterSpace = MathUtility::template computeInverse<double>(jacobianParameterSpace, jacobianDeterminant);
 
       // estimate condition value of jacobian
       double conditionNumber = MathUtility::estimateConditionNumber(jacobianParameterSpace, inverseJacobianParameterSpace);
@@ -329,7 +329,7 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
       // compute the 3xD jacobian of the parameter space to world space mapping
       Tensor2<D> jacobianParameterSpace = MathUtility::transformToDxD<D,D>(FunctionSpaceType::computeJacobian(geometryValues, xi));
       double jacobianDeterminant;
-      Tensor2<D> inverseJacobianParameterSpace = MathUtility::computeInverse<D>(jacobianParameterSpace, jacobianDeterminant);
+      Tensor2<D> inverseJacobianParameterSpace = MathUtility::template computeInverse<double>(jacobianParameterSpace, jacobianDeterminant);
 
       // estimate condition value of jacobian
       double conditionNumber = MathUtility::estimateConditionNumber(jacobianParameterSpace, inverseJacobianParameterSpace);

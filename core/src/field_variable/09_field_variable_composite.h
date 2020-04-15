@@ -43,8 +43,8 @@ public:
   void updateSubFieldVariables();
 
   //! fill the gradient field with the gradient values in world coordinates of this field variable. This is only possible for scalar fields.
-  void computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSpaceType::dim()>> gradientField,
-                            std::shared_ptr<FieldVariable<FunctionSpaceType,1>> jacobianConditionNumber = nullptr);
+  void computeGradientField(std::shared_ptr<FieldVariable<::FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>, FunctionSpaceType::dim()>> gradientField,
+                            std::shared_ptr<FieldVariable<::FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,1>> jacobianConditionNumber = nullptr);
 
 protected:
 

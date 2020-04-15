@@ -23,13 +23,13 @@ long long int MemoryLeakFinder::nBytesIncreaseSinceLastCheck()
   return increment;
 }
 
-void MemoryLeakFinder::warnIfMemoryConsumptionIncreases()
+void MemoryLeakFinder::warnIfMemoryConsumptionIncreases(std::string message)
 {
   long long increase = nBytesIncreaseSinceLastCheck();
 
   if (increase > 1024*1024)
   {
-    LOG(WARNING) << "Memory consumption increased by " << increase << " B to " << currentMemoryConsumption_ << " B.";
+    LOG(WARNING) << message << ": Memory consumption increased by " << increase << " B to " << currentMemoryConsumption_ << " B.";
   }
 }
 

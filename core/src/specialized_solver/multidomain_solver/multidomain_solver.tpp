@@ -88,8 +88,7 @@ advanceTimeSpan()
       setSystemMatrixSubmatrices(this->timeStepWidthOfSystemMatrix_);
       createSystemMatrixFromSubmatrices();
     }
-    Control::MemoryLeakFinder::warnIfMemoryConsumptionIncreases("At beginning of MultidomainSolver advanceTimeSpan");
-
+    
   
     // advance diffusion
     VLOG(1) << "---- diffusion term";
@@ -97,8 +96,6 @@ advanceTimeSpan()
     // solve A*u^{t+1} = u^{t} for u^{t+1} where A is the system matrix, solveLinearSystem(b,x)
     this->solveLinearSystem();
 
-    Control::MemoryLeakFinder::warnIfMemoryConsumptionIncreases("At MultidomainSolver after solverLinearSystem");
-    
     LOG(DEBUG) << " Vm[k=0]: ";
     //dataMultidomain_.subcellularStates(0)->extractComponent(0, dataMultidomain_.transmembranePotential(0));
     LOG(DEBUG) << *dataMultidomain_.transmembranePotentialSolution(0);
@@ -118,8 +115,6 @@ advanceTimeSpan()
       Control::PerformanceMeasurement::start(this->durationLogKey_);
   }
   
-  Control::MemoryLeakFinder::warnIfMemoryConsumptionIncreases("At end of MultidomainSolver");
-
   // stop duration measurement
   if (this->durationLogKey_ != "")
     Control::PerformanceMeasurement::stop(this->durationLogKey_);

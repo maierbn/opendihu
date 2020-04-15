@@ -29,10 +29,10 @@ void MemoryLeakFinder::warnIfMemoryConsumptionIncreases(std::string message)
   bool firstCall = currentMemoryConsumption_ == 0;
   long long increase = nBytesIncreaseSinceLastCheck();
 
-  if (increase > 1024*1024 && !firstCall)
+  if (increase >= 1024*1024 && !firstCall)
   {
-    LOG(WARNING) << message << ": Memory consumption increased by " << std::scientific << (double)(increase) << " B to "
-      << std::scientific << (double)(currentMemoryConsumption_) << " B.";
+    LOG(WARNING) << message << ": Memory consumption increased by " << increase/(1024*1024) << " MB to "
+      << currentMemoryConsumption_/(1024*1024) << " MB.";
   }
 }
 

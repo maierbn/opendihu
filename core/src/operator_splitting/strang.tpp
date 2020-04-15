@@ -3,7 +3,6 @@
 #include "utility/python_utility.h"
 #include "data_management/time_stepping/time_stepping.h"
 #include "data_management/output_connector_data.h"
-#include "control/diagnostic_tool/memory_leak_finder.h"
 
 namespace OperatorSplitting
 {
@@ -26,8 +25,6 @@ advanceTimeSpan()
   // compute timestep width
   double timeSpan = this->endTime_ - this->startTime_;
 
-  Control::MemoryLeakFinder::warnIfMemoryConsumptionIncreases();
-
   LOG(DEBUG) << "  Strang::advanceTimeSpan: timeSpan=[" << this->startTime_<< "," << this->endTime_<< "]"
     << ", n steps: " << this->numberTimeSteps_<< ", timeStepWidth=" << this->timeStepWidth_;
 
@@ -47,8 +44,6 @@ advanceTimeSpan()
 
   for (int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
   {
-    Control::MemoryLeakFinder::warnIfMemoryConsumptionIncreases("At beginning of strang splitting");
-
     // compute midTime once per step to reuse it. [currentTime, midTime=currentTime+0.5*timeStepWidth, currentTime+timeStepWidth]
     midTime = currentTime + 0.5 * this->timeStepWidth_;
 
@@ -78,8 +73,6 @@ advanceTimeSpan()
       Control::PerformanceMeasurement::start(this->logKeyTransfer12_);
     }
 
-    Control::MemoryLeakFinder::warnIfMemoryConsumptionIncreases("Strang splitting, after scheme 1a");
-
     // --------------- data transfer 1->2 -------------------------
     LOG(DEBUG) << "  Strang: transfer timeStepping1 -> timeStepping2";
 
@@ -96,8 +89,6 @@ advanceTimeSpan()
       Control::PerformanceMeasurement::start(this->logKeyTimeStepping2AdvanceTimeSpan_);
     }
 
-    Control::MemoryLeakFinder::warnIfMemoryConsumptionIncreases("Strang splitting, after transfer 1->2");
-
     // --------------- time stepping 2, time span = [0,dt] -------------------------
     LOG(DEBUG) << "  Strang: timeStepping2 (complete) advanceTimeSpan [" << currentTime << ", " << currentTime+this->timeStepWidth_<< "]";
 
@@ -112,8 +103,6 @@ advanceTimeSpan()
       Control::PerformanceMeasurement::stop(this->logKeyTimeStepping2AdvanceTimeSpan_);
       Control::PerformanceMeasurement::start(this->logKeyTransfer21_);
     }
-    
-    Control::MemoryLeakFinder::warnIfMemoryConsumptionIncreases("Strang splitting, after scheme 2");
 
     // --------------- data transfer 2->1 -------------------------
     LOG(DEBUG) << "  Strang: transfer timeStepping2 -> timeStepping1";
@@ -130,8 +119,6 @@ advanceTimeSpan()
       Control::PerformanceMeasurement::stop(this->logKeyTransfer21_);
       Control::PerformanceMeasurement::start(this->logKeyTimeStepping1AdvanceTimeSpan_);
     }
-    
-    Control::MemoryLeakFinder::warnIfMemoryConsumptionIncreases("Strang splitting, after transfer 2->1");
 
     // --------------- time stepping 1, time span = [midTime,dt] -------------------------
     LOG(DEBUG) << "  Strang: timeStepping1 (second half) advanceTimeSpan [" << midTime << ", " << currentTime+this->timeStepWidth_<< "]";
@@ -145,8 +132,6 @@ advanceTimeSpan()
     {
       Control::PerformanceMeasurement::stop(this->logKeyTimeStepping1AdvanceTimeSpan_);
     }
-
-    Control::MemoryLeakFinder::warnIfMemoryConsumptionIncreases("Strang splitting, after scheme 1b");
 
     /* option 1. (implemented)
      * no need to transfer data again, since next operator splitting step will start with timeStepping1 (which has the actual data).

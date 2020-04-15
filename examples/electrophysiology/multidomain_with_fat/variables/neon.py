@@ -49,8 +49,8 @@ stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in f
 dt_0D = 3e-3                        # [ms] timestep width of ODEs (1e-3)
 dt_multidomain = 3e-3               # [ms] timestep width of the multidomain solver
 dt_splitting = 3e-3                 # [ms] overall timestep width of strang splitting (3e-3)
-output_timestep = 2e-1              # [ms] timestep for output big files of 3D EMG, 100
-output_timestep = 1                 # [ms] timestep for output big files of 3D EMG, 100
+output_timestep_multidomain = 2e-1  # [ms] timestep for multidomain output
+output_timestep_multidomain = 1     # [ms] timestep for multidomain output
 #end_time = 1e-2
 
 # input files

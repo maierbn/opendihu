@@ -47,6 +47,9 @@ public:
   //! get a measured total duration with given measurementName, or 0.0 if the measurement does not (yet) exist
   static double getDuration(std::string measurementName);
 
+  //! get the page size in KB and the current memory consumption in bytes, for virtual memory, resident set, and data memory
+  static void getMemoryConsumption(int &pageSize, long long &virtualMemorySize, long long &residentSetSize, long long &dataSize, double &totalUserTime);
+
 private:
 
   //! parse some system information

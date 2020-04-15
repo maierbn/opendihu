@@ -624,6 +624,20 @@ def compute_compartment_relative_factors(mesh_node_positions, fiber_data, motor_
   #if rank_no == 0:
   #  print("determine relative factors for {} motor units:\n{}".format(n_compartments, motor_units))
 
+  # determine approximate diameter of muscle at every point is z direction
+  diameters = []
+    
+  # loop over points in z direction
+  n_points_z = len(fiber_data[0])
+  for k in range(n_points_z):
+    # get point on first and last fiber
+    point0 = np.array(fiber_data[0][k])
+    point1 = np.array(fiber_data[-1][k])
+    
+    # their distance is an approximation for the diameter
+    distance = np.linalg.norm(point0 - point1)
+    diameters.append(distance)
+
   # create data structure with 0
   relative_factors = np.zeros((n_compartments, len(mesh_node_positions)))   # each row is one compartment
 
@@ -639,18 +653,18 @@ def compute_compartment_relative_factors(mesh_node_positions, fiber_data, motor_
       if fiber_no >= len(fiber_data):
         print("Error with motor unit {}, only {} fibers available".format(motor_unit, len(fiber_data)))
       else:
-        max_distance = None
-        for fiber_point in fiber_data[fiber_no]:
+        min_distance = None
+        for k,fiber_point in enumerate(fiber_data[fiber_no]):
           d = np.array(fiber_point) - node_position
           distance = np.inner(d,d)
-          if max_distance is None or distance < max_distance:
-            max_distance = distance
+          if min_distance is None or distance < min_distance:
+            min_distance = distance
             #print("node_position {}, fiber_point {}, d={}, |d|={}".format(node_position, fiber_point, d, np.sqrt(distance)))
         
-        distance = np.sqrt(max_distance)
+        distance = np.sqrt(min_distance)
         
         
-        gaussian = scipy.stats.norm(loc = 0., scale = motor_unit["standard_deviation"])
+        gaussian = scipy.stats.norm(loc = 0., scale = motor_unit["standard_deviation"]*diameters[k])
         value = gaussian.pdf(distance)*motor_unit["standard_deviation"]*np.sqrt(2*np.pi)*motor_unit["maximum"]
         relative_factors[motor_unit_no][node_no] += value
         #print("motor unit {}, fiber {}, distance {}, value {}".format(motor_unit_no, fiber_no, distance, value))

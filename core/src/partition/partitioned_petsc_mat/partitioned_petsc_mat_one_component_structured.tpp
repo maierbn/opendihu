@@ -138,6 +138,9 @@ createMatrix(MatType matrixType, int nNonZerosDiagonal, int nNonZerosOffdiagonal
     ierr = MatSeqAIJSetPreallocation(this->globalMatrix_, nNonZerosDiagonal, NULL); CHKERRV(ierr);
     ierr = MatMPIAIJSetPreallocation(this->globalMatrix_, nNonZerosDiagonal, NULL, nNonZerosOffdiagonal, NULL); CHKERRV(ierr);
     LOG(DEBUG) << "Mat SetPreallocation, nNonZerosDiagonal: " << nNonZerosDiagonal << ", nNonZerosOffdiagonal: " << nNonZerosOffdiagonal;
+
+    // strictly do not allow new entries that are not covered by preallocation
+    ierr = MatSetOption(this->globalMatrix_, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_TRUE); CHKERRV(ierr);
   }
 
   createLocalMatrix();

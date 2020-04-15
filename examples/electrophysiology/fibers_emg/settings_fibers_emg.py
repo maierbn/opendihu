@@ -77,6 +77,7 @@ parser.add_argument('--fiber_file',                          help='The filename 
 parser.add_argument('--cellml_file',                         help='The filename of the file that contains the cellml model.', default=variables.cellml_file)
 parser.add_argument('--fiber_distribution_file',             help='The filename of the file that contains the MU firing times.', default=variables.fiber_distribution_file)
 parser.add_argument('--firing_times_file',                   help='The filename of the file that contains the cellml model.', default=variables.firing_times_file)
+parser.add_argument('--stimulation_frequency',               help='Stimulations per ms. Each stimulation corresponds to one line in the firing_times_file.', default=variables.stimulation_frequency)
 parser.add_argument('--end_time', '--tend', '-t',            help='The end simulation time.',                    type=float, default=variables.end_time)
 parser.add_argument('--output_timestep',                     help='The timestep for writing outputs.',           type=float, default=variables.output_timestep)
 parser.add_argument('--dt_0D',                               help='The timestep for the 0D model.',              type=float, default=variables.dt_0D)
@@ -87,10 +88,10 @@ parser.add_argument('--disable_firing_output',               help='Disables the 
 parser.add_argument('--v',                                   help='Enable full verbosity in c++ code')
 parser.add_argument('-v',                                    help='Enable verbosity level in c++ code', action="store_true")
 parser.add_argument('-vmodule',                              help='Enable verbosity level for given file in c++ code')
-parser.add_argument('-on_error_attach_debugger',                              help='Enable verbosity level for given file in c++ code')
+parser.add_argument('-on_error_attach_debugger',             help='Enable verbosity level for given file in c++ code')
 parser.add_argument('-pause',                                help='Stop at parallel debugging barrier', action="store_true")
 parser.add_argument('--rank_reordering',                     help='Enable rank reordering in the c++ code', action="store_true")
-parser.add_argument('--use_elasticity',                   help='Enable linear elasticity', action="store_true")
+parser.add_argument('--use_elasticity',                      help='Enable linear elasticity', action="store_true")
 
 # parse command line arguments and assign values to variables module
 args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
@@ -194,7 +195,7 @@ config = {
       "solverType":         variables.emg_solver_type,
       "preconditionerType": variables.emg_preconditioner_type,
       "dumpFilename":       "",
-      "dumpFormat":         "matlab",
+      "dumpFormat":         "ascii",
     },
     "linearElasticitySolver": {   # solver for linear elasticity
       "relativeTolerance":  1e-1

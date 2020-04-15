@@ -35,8 +35,8 @@ motor_units = [
 ]
 # solvers
 # -------
-multidomain_solver_type = "gmres"          # solver for the multidomain problem
-multidomain_preconditioner_type = "ilu"   # preconditioner
+multidomain_solver_type = "lu"          # solver for the multidomain problem
+multidomain_preconditioner_type = "none"   # preconditioner
 
 # set initial guess to zero for direct solver
 initial_guess_nonzero = "lu" not in multidomain_solver_type 
@@ -50,7 +50,7 @@ dt_0D = 3e-3                        # [ms] timestep width of ODEs (1e-3)
 dt_multidomain = 3e-3               # [ms] timestep width of the multidomain solver
 dt_splitting = 3e-3                 # [ms] overall timestep width of strang splitting (3e-3)
 output_timestep_multidomain = 2e-1  # [ms] timestep for multidomain output
-output_timestep_multidomain = 1     # [ms] timestep for multidomain output
+output_timestep_multidomain = 5     # [ms] timestep for multidomain output
 #end_time = 1e-2
 
 # input files

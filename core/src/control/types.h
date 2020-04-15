@@ -5,7 +5,7 @@
 #include <petscmat.h>
 #include <Vc/Vc>
 
-//#define USE_VECTORIZED_FE_MATRIX_ASSEMBLY     // if the vectorized implementation of integrating the stiffness and mass matrices should be used
+#define USE_VECTORIZED_FE_MATRIX_ASSEMBLY     // if the vectorized implementation of integrating the stiffness and mass matrices should be used
 
 // define types for element, node and dof numbering, for the local numberings
 typedef PetscInt node_no_t;               // type to hold value of node no or number of nodes

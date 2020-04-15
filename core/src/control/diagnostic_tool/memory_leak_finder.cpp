@@ -1,6 +1,7 @@
 #include "control/diagnostic_tool/memory_leak_finder.h"
 
 #include "control/diagnostic_tool/performance_measurement.h"
+#include <iomanip>
 
 namespace Control
 {
@@ -30,7 +31,8 @@ void MemoryLeakFinder::warnIfMemoryConsumptionIncreases(std::string message)
 
   if (increase > 1024*1024 && !firstCall)
   {
-    LOG(WARNING) << message << ": Memory consumption increased by " << increase << " B to " << currentMemoryConsumption_ << " B.";
+    LOG(WARNING) << message << ": Memory consumption increased by " << std::scientific << increase << " B to "
+      << std::scientific << currentMemoryConsumption_ << " B.";
   }
 }
 

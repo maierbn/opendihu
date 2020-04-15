@@ -63,10 +63,10 @@ output(CurrentFieldVariableType currentFieldVariable, const FieldVariablesForOut
 // element i is of vector type
 template<typename VectorType, typename FieldVariablesForOutputWriterType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
-output(VectorType currentFIeldVariableGradient, const FieldVariablesForOutputWriterType &fieldVariables, std::string meshName, 
+output(VectorType currentFieldVariableGradient, const FieldVariablesForOutputWriterType &fieldVariables, std::string meshName, 
        PythonConfig specificSettings, MegaMolWriterContext &megaMolWriterContext)
 {
-  for (auto& currentFieldVariable : currentFIeldVariableGradient)
+  for (auto& currentFieldVariable : currentFieldVariableGradient)
   {
     // call function on all vector entries
     if (output<typename VectorType::value_type,FieldVariablesForOutputWriterType>(

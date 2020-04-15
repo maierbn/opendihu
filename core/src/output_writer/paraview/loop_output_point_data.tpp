@@ -50,10 +50,10 @@ outputPointData(CurrentFieldVariableType currentFieldVariable, const FieldVariab
 // Elementent i is of vector type
 template<typename VectorType, typename FieldVariablesForOutputWriterType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
-outputPointData(VectorType currentFIeldVariableGradient, const FieldVariablesForOutputWriterType &fieldVariables, std::string meshName, 
+outputPointData(VectorType currentFieldVariableGradient, const FieldVariablesForOutputWriterType &fieldVariables, std::string meshName, 
                 std::ofstream &file, bool binaryOutput, bool fixedFormat, bool onlyParallelDatasetElement)
 {
-  for (auto& currentFieldVariable : currentFIeldVariableGradient)
+  for (auto& currentFieldVariable : currentFieldVariableGradient)
   {
     // call function on all vector entries
     if (outputPointData<typename VectorType::value_type,FieldVariablesForOutputWriterType>(currentFieldVariable, fieldVariables, meshName, file, binaryOutput, fixedFormat, onlyParallelDatasetElement))

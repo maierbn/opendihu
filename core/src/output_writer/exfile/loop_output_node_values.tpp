@@ -84,10 +84,10 @@ outputNodeValues(CurrentFieldVariableType currentFieldVariable, std::string mesh
 // element i is of vector type
 template<typename VectorType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
-outputNodeValues(VectorType currentFIeldVariableGradient, std::string meshName,
+outputNodeValues(VectorType currentFieldVariableGradient, std::string meshName,
                  std::ostream &stream, node_no_t nodeGlobalNo)
 {
-  for (auto& currentFieldVariable : currentFIeldVariableGradient)
+  for (auto& currentFieldVariable : currentFieldVariableGradient)
   {
     // call function on all vector entries
     if (outputNodeValues<typename VectorType::value_type>(currentFieldVariable, meshName, stream, nodeGlobalNo))

@@ -113,11 +113,11 @@ collectMeshProperties(CurrentFieldVariableType currentFieldVariable, const Field
 // element i is of vector type
 template<typename VectorType, typename FieldVariablesForOutputWriterType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
-collectMeshProperties(VectorType currentFIeldVariableGradient, const FieldVariablesForOutputWriterType &fieldVariables,
+collectMeshProperties(VectorType currentFieldVariableGradient, const FieldVariablesForOutputWriterType &fieldVariables,
                       std::map<std::string,PolyDataPropertiesForMesh> &meshProperties,
                       std::vector<std::string> &meshNamesVector, int i)
 {
-  for (auto& currentFieldVariable : currentFIeldVariableGradient)
+  for (auto& currentFieldVariable : currentFieldVariableGradient)
   {
     // call function on all vector entries
     if (collectMeshProperties<typename VectorType::value_type,FieldVariablesForOutputWriterType>(

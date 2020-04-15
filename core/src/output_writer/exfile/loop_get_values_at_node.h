@@ -39,14 +39,14 @@ loopGetValuesAtNode(const FieldVariablesForOutputWriterType &fieldVariables, std
  */
 template<typename VectorType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
-getValuesAtNode(VectorType currentFIeldVariableGradient, std::string meshName, 
+getValuesAtNode(VectorType currentFieldVariableGradient, std::string meshName, 
                 element_no_t currentNodeGlobalNo, std::vector<double> &valuesAtNode);
 
 /** Loop body for a tuple element
  */
 template<typename VectorType>
 typename std::enable_if<TypeUtility::isTuple<VectorType>::value, bool>::type
-getValuesAtNode(VectorType currentFIeldVariableGradient, std::string meshName, 
+getValuesAtNode(VectorType currentFieldVariableGradient, std::string meshName, 
                 element_no_t currentNodeGlobalNo, std::vector<double> &valuesAtNode);
 
  /**  Loop body for a pointer element

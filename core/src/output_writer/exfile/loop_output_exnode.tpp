@@ -57,10 +57,10 @@ outputExnode(CurrentFieldVariableType currentFieldVariable, const FieldVariables
 // Elementent i is of vector type
 template<typename VectorType, typename FieldVariablesForOutputWriterType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
-outputExnode(VectorType currentFIeldVariableGradient, const FieldVariablesForOutputWriterType &fieldVariables, std::string meshName, 
+outputExnode(VectorType currentFieldVariableGradient, const FieldVariablesForOutputWriterType &fieldVariables, std::string meshName, 
              std::ofstream &file)
 {
-  for (auto& currentFieldVariable : currentFIeldVariableGradient)
+  for (auto& currentFieldVariable : currentFieldVariableGradient)
   {
     // call function on all vector entries
     if (outputExnode<typename VectorType::value_type,FieldVariablesForOutputWriterType>(currentFieldVariable, fieldVariables, meshName, file))

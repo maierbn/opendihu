@@ -13,7 +13,7 @@ const int CONDITION_TOLERANCE = 25;    // condition number value, if the conditi
 // structured mesh
 //! compute the gradient field
 template<typename FunctionSpaceType>
-void FIeldVariableGradient<FunctionSpaceType,1,::Mesh::isStructured<typename FunctionSpaceType::Mesh>>::
+void FieldVariableGradient<FunctionSpaceType,1,::Mesh::isStructured<typename FunctionSpaceType::Mesh>>::
 computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSpaceType::dim()>> gradientField,
                      std::shared_ptr<FieldVariable<FunctionSpaceType,1>> jacobianConditionNumberField)
 {
@@ -249,7 +249,7 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
 // unstructured mesh
 //! compute the gradient field
 template<typename FunctionSpaceType>
-void FIeldVariableGradient<FunctionSpaceType,1,::Mesh::UnstructuredDeformableOfDimension<FunctionSpaceType::dim()>>::
+void FieldVariableGradient<FunctionSpaceType,1,::Mesh::UnstructuredDeformableOfDimension<FunctionSpaceType::dim()>>::
 computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSpaceType::dim()>> gradientField,
                      std::shared_ptr<FieldVariable<FunctionSpaceType,1>> jacobianConditionNumberField)
 {

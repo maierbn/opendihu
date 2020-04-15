@@ -126,4 +126,20 @@ updateSubFieldVariables()
   }
 }
 
+//! compute the gradient field
+template<int D,typename BasisFunctionType,int nComponents>
+void FieldVariableComposite<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,nComponents>::
+computeGradientField(std::shared_ptr<FieldVariable<typename FieldVariableComposite<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,nComponents>::FunctionSpaceType, FunctionSpaceType::dim()>> gradientField,
+                     std::shared_ptr<FieldVariable<typename FieldVariableComposite<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,nComponents>::FunctionSpaceType,1>> jacobianConditionNumberField)
+{
+  // loop over sub field variables
+  int subFieldVariableNo = 0;
+  for (std::shared_ptr<FieldVariable<SubFunctionSpaceType,nComponents>> subFieldVariable : subFieldVariables_)
+  {
+    subFieldVariable->computeGradientField(gradientField->subFieldVariable(subFieldVariableNo), jacobianConditionNumberField->subFieldVariable(subFieldVariableNo));
+
+    subFieldVariableNo++;
+  }
+}
+
 } // namespace

@@ -42,7 +42,7 @@ loopCollectFieldVariables(const FieldVariablesForOutputWriterType &fieldVariable
  */
 template<typename VectorType, typename FunctionSpaceType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
-collectFieldVariables(VectorType currentFIeldVariableGradient, std::string meshName,
+collectFieldVariables(VectorType currentFieldVariableGradient, std::string meshName,
                       std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> &geometryField,
                       std::vector<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>> &scalarFieldVariables);
 
@@ -50,7 +50,7 @@ collectFieldVariables(VectorType currentFIeldVariableGradient, std::string meshN
  */
 template<typename TupleType, typename FunctionSpaceType>
 typename std::enable_if<TypeUtility::isTuple<TupleType>::value, bool>::type
-collectFieldVariables(TupleType currentFIeldVariableGradient, std::string meshName,
+collectFieldVariables(TupleType currentFieldVariableGradient, std::string meshName,
                       std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> &geometryField,
                       std::vector<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>> &scalarFieldVariables);
 

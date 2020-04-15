@@ -39,14 +39,14 @@ loopCountNFieldVariablesOfMesh(const FieldVariablesForOutputWriterType &fieldVar
  */
 template<typename VectorType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
-countNFieldVariablesOfMesh(VectorType currentFIeldVariableGradient, std::string meshName, 
+countNFieldVariablesOfMesh(VectorType currentFieldVariableGradient, std::string meshName, 
                            int &nFieldVariablesOfMesh);
 
 /** Loop body for a vector element
  */
 template<typename VectorType>
 typename std::enable_if<TypeUtility::isTuple<VectorType>::value, bool>::type
-countNFieldVariablesOfMesh(VectorType currentFIeldVariableGradient, std::string meshName, 
+countNFieldVariablesOfMesh(VectorType currentFieldVariableGradient, std::string meshName, 
                            int &nFieldVariablesOfMesh);
 
  /**  Loop body for a pointer element

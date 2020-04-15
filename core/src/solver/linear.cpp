@@ -273,11 +273,15 @@ void Linear::solve(Vec rightHandSide, Vec solution, std::string message)
   // solve the system
   ierr = KSPSolve(*ksp_, rightHandSide, solution); CHKERRV(ierr);
 
+  Control::MemoryLeakFinder::warnIfMemoryConsumptionIncreases("In Linear::solve, after KSPSolve");
+    
   Control::PerformanceMeasurement::stop(this->durationLogKey_);
 
   // dump files of rhs, solution and system matrix for debugging
   dumpMatrixRightHandSideSolution(rightHandSide, solution);
 
+  Control::MemoryLeakFinder::warnIfMemoryConsumptionIncreases("In Linear::solve, after dumpMatrixRightHandSideSolution");
+  
   // determine meta data
   PetscInt numberOfIterations = 0;
   PetscReal residualNorm = 0.0;
@@ -313,6 +317,8 @@ void Linear::solve(Vec rightHandSide, Vec solution, std::string message)
     // compute norm of residual
     ierr = VecNorm(*residual_, NORM_2, &residualNorm); CHKERRV(ierr);
   }
+  
+  Control::MemoryLeakFinder::warnIfMemoryConsumptionIncreases("In Linear::solve, after compute residual");
 
   // output message
   if (message != "")

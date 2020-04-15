@@ -25,6 +25,7 @@ struct FiberPointBuffers
 };
 
 /** Specialize the default allocator for the FiberPointBuffers struct to use the aligned allocated provided by Vc.
+ *  This could also be done by Vc_DECLARE_ALLOCATOR(<class>), but not here because of the template parameter nStates.
  */
 namespace std
 {

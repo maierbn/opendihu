@@ -42,8 +42,18 @@ public:
     int nNonZerosDiagonal, int nNonZerosOffdiagonal,
     std::string name);
 
-  //! this is the only special set function to set entries in the jacobian matrix.
+  //! this is the only special set function to set entries in the jacobian matrix (apart from the vectorized version, below).
   void setValue(int componentNoRow, PetscInt row, int componentNoColumn, PetscInt column, PetscScalar value, InsertMode mode);
+
+  //! this is the only special set function to set entries in the jacobian matrix (apart from the non-vectorized version, above).
+  //! Set the given values to all rows and columns of the respective components
+  void setValue(int componentNoRow, Vc::int_v row, int componentNoColumn, Vc::int_v column, PetscScalar value, InsertMode mode);
+
+  //! wrapper of MatSetValues for a vectorized value, sets matrix[rows[i],columns[i]] = values[i] for i = 1,..,Vc::double_v::size(), i.e. not matrix[rows[i],columns[j]] = ...
+  void setValue(int componentNoRow, Vc::int_v rows, int componentNoColumn, Vc::int_v columns, Vc::double_v values, InsertMode mode);
+
+  //! output the matrix to the file in globalNatural ordering, it has the same form regardless of number of ranks and therefore can be used to compare output with different ranks
+  void dumpMatrixGlobalNatural(std::string filename);
 
   //! get a submatrix of this matrix. If nDisplacementComponents == 6, rowVariableNo and columnVariableNo can be 0,1 or 2 to select U,V or P.
   //! If the matrix does not contain velocities and nDisplacementComponents == 3, rowVariableNo and columnVariableNo can be 0 or 1.

@@ -112,7 +112,7 @@ initializeRhs()
 
       // compute the 3xD jacobian of the parameter space to world space mapping
       std::array<Vec3,D-1> jacobian = FunctionSpaceSurface::computeJacobian(geometrySurface, xiSurface);
-      double integrationFactor = MathUtility::computeIntegrationFactor<D-1>(jacobian);
+      double integrationFactor = MathUtility::computeIntegrationFactor(jacobian);
 
       VLOG(1) << "   jacobian: " << jacobian;
 

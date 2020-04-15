@@ -56,6 +56,36 @@ setValue(int componentNoRow, PetscInt row, int componentNoColumn, PetscInt colum
   ierr = MatSetValues(this->globalMatrix_, 1, &row, 1, &column, &value, mode); CHKERRV(ierr);
 }
 
+template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType, int nDisplacementComponents>
+void PartitionedPetscMatForHyperelasticityBase<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,nDisplacementComponents>::
+setValue(int componentNoRow, Vc::int_v row, int componentNoColumn, Vc::int_v column, PetscScalar value, InsertMode mode)
+{
+  // loop over rows
+  for (int vcComponentNo = 0; vcComponentNo < Vc::double_v::size(); vcComponentNo++)
+  {
+    if (row[vcComponentNo] == -1 || column[vcComponentNo] == -1)
+      break;
+
+    // call the normal, scalar setValue
+    this->setValue(componentNoRow, row[vcComponentNo], componentNoColumn, column[vcComponentNo], value, mode);
+  }
+}
+
+template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType, int nDisplacementComponents>
+void PartitionedPetscMatForHyperelasticityBase<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,nDisplacementComponents>::
+setValue(int componentNoRow, Vc::int_v row, int componentNoColumn, Vc::int_v column, Vc::double_v value, InsertMode mode)
+{
+  // loop over rows
+  for (int vcComponentNo = 0; vcComponentNo < Vc::double_v::size(); vcComponentNo++)
+  {
+    if (row[vcComponentNo] == -1 || column[vcComponentNo] == -1)
+      break;
+
+    // call the normal, scalar setValue
+    this->setValue(componentNoRow, row[vcComponentNo], componentNoColumn, column[vcComponentNo], value[vcComponentNo], mode);
+  }
+}
+
 template<typename PressureFunctionSpaceType, int nDisplacementComponents>
 void PartitionedPetscMatForHyperelasticity<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>,BasisFunction::LagrangeOfOrder<2>>,PressureFunctionSpaceType,nDisplacementComponents>::
 dumpMatrixGlobalNatural(std::string filename)

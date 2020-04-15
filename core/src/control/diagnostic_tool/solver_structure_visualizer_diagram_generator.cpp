@@ -93,6 +93,7 @@ generateDiagramRecursion(std::stringstream &result, std::vector<std::vector<int>
       //LOG(DEBUG) << "current Result [" << currentResult << "] contains " << currentLineNo << " line breaks";
       slotLineNos.push_back(currentLineNo);
     }
+
     result << lineStart.str() << "│\n";
   }
 

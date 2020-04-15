@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
     Vc::double_v v = data[indexes];
     LOG(INFO) << "indexes: " << indexes << ", v: " << v;
   }*/
-
+#if 0
   // measurement
   const long long N = 1e5;
   Vc::array<double,N> valuesA;
@@ -158,6 +158,42 @@ int main(int argc, char *argv[])
     
   LOG(INFO) << "duration Vc : " << chrono::duration_cast<chrono::microseconds>(end0 - start0).count();
   LOG(INFO) << "duration std: " << chrono::duration_cast<chrono::microseconds>(end1 - start1).count();
+#endif
+  
+  typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<2>,BasisFunction::LagrangeOfOrder<2>> DisplacementsFunctionSpace;
+  
+  // create a function space
+  std::string pythonConfig = "config = {}";
+  DihuContext settings(argc, argv, pythonConfig);
+  
+  // create dummy node positions 
+  std::vector<Vec3> nodePositions(5*7);
+  std::array<element_no_t,2> nElementsPerCoordinateDirection{3,2}; 
+  
+  // create mesh by meshManager
+  std::array<int,2> nRanks({1,1});  // this is completely serial
+  
+  std::shared_ptr<DisplacementsFunctionSpace> displacementsFunctionSpace = DihuContext::meshManager()->template createFunctionSpace<DisplacementsFunctionSpace>("name", nodePositions, nElementsPerCoordinateDirection, nRanks);
+  
+  const int nDisplacementsDofsPerElement = DisplacementsFunctionSpace::nDofsPerElement();
+  const int nElementsLocal = displacementsFunctionSpace->nElementsLocal();
+  
+  
+  // loop over elements
+  for (int elementNoLocal = 0; elementNoLocal < nElementsLocal; elementNoLocal += Vc::double_v::size())
+  {
+    Vc::int_v elementNoLocalv([elementNoLocal, nElementsLocal](int i)
+    {
+      return (i >= Vc::double_v::size() || elementNoLocal+i >= nElementsLocal? -1: elementNoLocal+i); 
+    });
+  
+    // get indices of element-local dofs
+    
+    std::array<Vc::int_v,nDisplacementsDofsPerElement> dofNosLocalv = displacementsFunctionSpace->getElementDofNosLocal(elementNoLocalv);
+    
+    LOG(INFO) << "element " << elementNoLocalv << ", type: " << StringUtility::demangle(typeid(decltype(elementNoLocalv)).name());
+    LOG(INFO) << "dofNosLocal: " << dofNosLocalv;
+  }
 
   /*
   Vc::Memory<Vc::double_v, 11> memory;

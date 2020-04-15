@@ -50,7 +50,13 @@ public:
 
   //! wrapper of MatSetValues for a single value, sets a local value in the matrix
   void setValue(PetscInt row, PetscInt col, PetscScalar value, InsertMode mode);
-  
+
+  //! wrapper of MatSetValues for a single value, sets a local value in the matrix
+  void setValue(Vc::int_v rows, Vc::int_v columns, PetscScalar value, InsertMode mode);
+
+  //! wrapper of MatSetValues for a single vectorized value, sets a local value in the matrix
+  void setValue(Vc::int_v rows, Vc::int_v columns, Vc::double_v values, InsertMode mode);
+
   //! wrapper of MatSetValues for a single value, sets a local value in the matrix
   void setValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], const PetscScalar v[], InsertMode addv);
   
@@ -134,6 +140,12 @@ public:
   //! wrapper of MatSetValues for a single value, sets a local value in the matrix
   void setValue(PetscInt row, PetscInt col, PetscScalar value, InsertMode mode);
   
+  //! wrapper of MatSetValues for a single value, sets a local value in the matrix
+  void setValue(Vc::int_v rows, Vc::int_v columns, PetscScalar value, InsertMode mode);
+
+  //! wrapper of MatSetValues for a single value, sets a local value in the matrix
+  void setValue(Vc::int_v rows, Vc::int_v columns, Vc::double_v values, InsertMode mode);
+
   //! wrapper of MatSetValues for a single value, sets a local value in the matrix
   void setValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], const PetscScalar v[], InsertMode addv);
 

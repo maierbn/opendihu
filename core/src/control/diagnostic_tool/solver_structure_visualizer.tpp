@@ -33,6 +33,16 @@ setOutputConnectorData(std::shared_ptr<Data::OutputConnectorData<FunctionSpaceTy
     currentSolver_->outputSlots.back().variableNo = 1;
   }
 
+  // if the geometry is set, also add it to the list
+  if (outputConnectorData->geometryField)
+  {
+    currentSolver_->outputSlots.emplace_back();
+    currentSolver_->outputSlots.back().fieldVariableName = "(geometry)";
+    currentSolver_->outputSlots.back().componentName = "(geometry)";
+    currentSolver_->outputSlots.back().nComponents = 3;
+    currentSolver_->outputSlots.back().variableNo = 1;
+  }
+
   // loop over ComponentOfFieldVariable entries as variable2 in outputConnectorData
   for (int i = 0; i < outputConnectorData->variable2.size(); i++)
   {

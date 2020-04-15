@@ -10,6 +10,7 @@
 #include "mesh/surface_mesh.h"
 #include "basis_function/lagrange.h"
 #include "function_space/function_space_generic.h"
+#include <Vc/Vc>
 
 namespace FunctionSpace
 {
@@ -32,6 +33,10 @@ public:
   //! return an array of all dof nos. of the element, including ghost dofs (local dof nos)
   std::array<dof_no_t,FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement()>
   getElementDofNosLocal(element_no_t elementNo) const;
+
+  //! vectorized version of getElementDofNosLocal
+  std::array<Vc::int_v,FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement()>
+  getElementDofNosLocal(Vc::int_v elementNo) const;
 
   //! fill a vector of all local dof nos. of the element, without ghost dofs
   void getElementDofNosLocalWithoutGhosts(element_no_t elementNo, std::vector<dof_no_t> &dofNosLocal) const;

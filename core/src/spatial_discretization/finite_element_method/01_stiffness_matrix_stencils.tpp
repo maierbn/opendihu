@@ -8,8 +8,8 @@
 #include "mesh/structured_regular_fixed.h"
 #include "basis_function/lagrange.h"
 
-#include <Python.h>
 #include <memory>
+#include <functional>
 
 #include "spatial_discretization/spatial_discretization.h"
 #include "interfaces/runnable.h"
@@ -41,7 +41,8 @@ setStiffnessMatrix()
   const double elementLength = functionSpace->meshWidth();
 
   double integralFactor = 1./elementLength;
-  const double prefactor = this->prefactor_.value(0);  // prefactor value is constant over the domain
+  double prefactor;
+  this->prefactor_.getValue((element_no_t)0, prefactor);  // prefactor value is constant over the domain
 
   integralFactor = prefactor*integralFactor;
 
@@ -126,7 +127,8 @@ setStiffnessMatrix()
   }
 
   double integralFactor = 1.;
-  const double prefactor = this->prefactor_.value(0);  // prefactor value is constant over the domain
+  double prefactor;
+  this->prefactor_.getValue(0, prefactor);  // prefactor value is constant over the domain
 
   integralFactor = prefactor*integralFactor;
 
@@ -158,7 +160,7 @@ setStiffnessMatrix()
     {1./6, -2./3}
   };
 
-  auto dofIndex = [&functionSpace](int x, int y)
+  std::function<node_no_t(int,int)> dofIndex = [&functionSpace](int x, int y) -> node_no_t
   {
     return functionSpace->getNodeNo(std::array<int,2>({x,y}));  // nDofsPerNode == 1
   };
@@ -348,7 +350,8 @@ setStiffnessMatrix()
   }
 
   double integralFactor = elementLength0;
-  const double prefactor = this->prefactor_.value(0);  // prefactor value is constant over the domain
+  double prefactor;
+  this->prefactor_.getValue(0, prefactor);  // prefactor value is constant over the domain
 
   integralFactor = prefactor*integralFactor;
 

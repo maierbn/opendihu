@@ -309,6 +309,8 @@ extractLocalDofsWithoutGhosts(std::vector<T> &values) const
     // loop over local nodes of the submeshes, also including removed nodes
     for (node_no_t nodeNoLocal = 0; nodeNoLocal < subFunctionSpaces_[subMeshNo]->nNodesLocalWithoutGhosts(); nodeNoLocal++)
     {
+      assert(meshAndNodeNoLocalToNodeNoNonDuplicateGlobal_[subMeshNo].size() > nodeNoLocal);
+
       // if currently considered node is not removed
       if (meshAndNodeNoLocalToNodeNoNonDuplicateGlobal_[subMeshNo][nodeNoLocal] != -1)
       {

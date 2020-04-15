@@ -274,6 +274,15 @@ extractLocalDofsWithoutGhosts(std::vector<T> &vector) const
   }
   else if (MeshType::dim() == 3)
   {
+    if (vector.size() < ((beginNodeGlobalNatural(2) + nNodesLocalWithoutGhosts(2)-1)*nNodesGlobal(1)*nNodesGlobal(0)
+      + (beginNodeGlobalNatural(1) + nNodesLocalWithoutGhosts(1)-1)*nNodesGlobal(0) + beginNodeGlobalNatural(0) + nNodesLocalWithoutGhosts(0))*nDofsPerNode)
+    {
+      LOG(FATAL) << "vector.size(): " << vector.size() << ", expected: " << ((beginNodeGlobalNatural(2) + nNodesLocalWithoutGhosts(2)-1)*nNodesGlobal(1)*nNodesGlobal(0)
+        + (beginNodeGlobalNatural(1) + nNodesLocalWithoutGhosts(1)-1)*nNodesGlobal(0) + beginNodeGlobalNatural(0) + nNodesLocalWithoutGhosts(0))*nDofsPerNode
+        << ", nNodesLocalWithoutGhosts: " << nNodesLocalWithoutGhosts(0) << "," << nNodesLocalWithoutGhosts(1) << "," << nNodesLocalWithoutGhosts(2)
+        << ", nNodesGlobal: " << nNodesGlobal(0) << "," << nNodesGlobal(1) << "," << nNodesGlobal(2) << ", nDofsLocalWithoutGhosts: " << nDofsLocalWithoutGhosts();        
+    }
+
     assert(vector.size() >= ((beginNodeGlobalNatural(2) + nNodesLocalWithoutGhosts(2)-1)*nNodesGlobal(1)*nNodesGlobal(0)
       + (beginNodeGlobalNatural(1) + nNodesLocalWithoutGhosts(1)-1)*nNodesGlobal(0) + beginNodeGlobalNatural(0) + nNodesLocalWithoutGhosts(0))*nDofsPerNode);
     for (global_no_t k = beginNodeGlobalNatural(2); k < beginNodeGlobalNatural(2) + nNodesLocalWithoutGhosts(2); k++)
@@ -291,6 +300,8 @@ extractLocalDofsWithoutGhosts(std::vector<T> &vector) const
     }
   }
   
+  assert(resultIndex == nDofsLocalWithoutGhosts());
+
   // store values
   vector.assign(result.begin(), result.end());
 }

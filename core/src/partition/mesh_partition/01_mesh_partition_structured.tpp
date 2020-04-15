@@ -277,7 +277,7 @@ extractLocalDofsWithoutGhosts(std::vector<T> &vector) const
     if (vector.size() < ((beginNodeGlobalNatural(2) + nNodesLocalWithoutGhosts(2)-1)*nNodesGlobal(1)*nNodesGlobal(0)
       + (beginNodeGlobalNatural(1) + nNodesLocalWithoutGhosts(1)-1)*nNodesGlobal(0) + beginNodeGlobalNatural(0) + nNodesLocalWithoutGhosts(0))*nDofsPerNode)
     {
-      LOG(FATAL) << "vector.size(): " << vector.size() << ", expected: " << ((beginNodeGlobalNatural(2) + nNodesLocalWithoutGhosts(2)-1)*nNodesGlobal(1)*nNodesGlobal(0)
+      LOG(FATAL) << "In extractLocalDofsWithoutGhosts, vector.size(): " << vector.size() << ", expected: " << ((beginNodeGlobalNatural(2) + nNodesLocalWithoutGhosts(2)-1)*nNodesGlobal(1)*nNodesGlobal(0)
         + (beginNodeGlobalNatural(1) + nNodesLocalWithoutGhosts(1)-1)*nNodesGlobal(0) + beginNodeGlobalNatural(0) + nNodesLocalWithoutGhosts(0))*nDofsPerNode
         << ", nNodesLocalWithoutGhosts: " << nNodesLocalWithoutGhosts(0) << "," << nNodesLocalWithoutGhosts(1) << "," << nNodesLocalWithoutGhosts(2)
         << ", nNodesGlobal: " << nNodesGlobal(0) << "," << nNodesGlobal(1) << "," << nNodesGlobal(2) << ", nDofsLocalWithoutGhosts: " << nDofsLocalWithoutGhosts();        

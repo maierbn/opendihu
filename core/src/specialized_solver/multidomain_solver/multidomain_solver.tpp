@@ -339,13 +339,21 @@ initializeCompartmentRelativeFactors()
     // if parsed node positions in vector localNodePositions_ actually contains global node positions, extract local positions
     if (inputIsGlobal)
     {
+      if (values.size() != dataMultidomain_.functionSpace()->nDofsGlobal())
+      {
+        LOG(FATAL) << "In MultidomainSolver, \"compartmentRelativeFactors\" for compartment " << k << " of " << nComportments_ << " contains "
+          << values.size() << " entries, but the mesh \"" << dataMultidomain_.functionSpace()->meshName() << "\" has "
+          << dataMultidomain_.functionSpace()->nDofsGlobal() << " global dofs and \"inputIsGlobal\" is True.";
+      }
+
       dataMultidomain_.functionSpace()->meshPartition()->extractLocalDofsWithoutGhosts(values);
     }
 
     if (values.size() < dataMultidomain_.compartmentRelativeFactor(k)->nDofsLocalWithoutGhosts())
     {
-      LOG(FATAL) << "\"compartmentRelativeFactors\" for compartment " << k << " contains only " << values.size() << " entries, "
-        << dataMultidomain_.compartmentRelativeFactor(k)->nDofsLocalWithoutGhosts() << " are needed.";
+      LOG(FATAL) << "In MultidomainSolver, \"compartmentRelativeFactors\" for compartment " << k << " of " << nComportments_ 
+        << " contains only " << values.size() << " entries, but the mesh \"" << dataMultidomain_.compartmentRelativeFactor(k)->functionSpace()->meshName() << "\""
+        << " has " << dataMultidomain_.compartmentRelativeFactor(k)->nDofsLocalWithoutGhosts() << " local dofs.";
     }
 
     dataMultidomain_.compartmentRelativeFactor(k)->setValuesWithoutGhosts(values);

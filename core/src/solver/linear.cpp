@@ -102,12 +102,18 @@ void Linear::setupKsp(KSP ksp)
     
     ierr = PCMGSetCycleType(pc, cycleType); CHKERRV(ierr);    
   }
-  
   // set Hypre Options from Python config
-  if (pcType_ == std::string (PCHYPRE))
+  else if (pcType_ == std::string(PCHYPRE))
   {
     std::string hypreOptions = this->specificSettings_.getOptionString("hypreOptions", "-pc_hypre_type boomeramg");
     PetscOptionsInsertString(NULL,hypreOptions.c_str());
+  }
+  // if one of the hypre preconditioners is in preconditionerType_, set pcType_ to HYPRE and set the chosen preconditioner as -pc_hypre_type
+  else if (preconditionerType_ == "euclid" || preconditionerType_ == "pilut" || preconditionerType_ == "parasails" 
+    || preconditionerType_ == "boomerang" || preconditionerType_ == "ams" || preconditionerType_ == "ads")
+  {
+    pcType_ = PCHYPRE;
+    ierr = PCHYPRESetType(pc, preconditionerType_.c_str()); CHKERRV(ierr);
   }
   
   if (pcType_ ==  std::string(PCMG))

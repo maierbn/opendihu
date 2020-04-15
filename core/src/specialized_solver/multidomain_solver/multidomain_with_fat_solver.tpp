@@ -344,8 +344,6 @@ solveLinearSystem()
   // transform input phi_b to entry in solution vector without shared dofs, this->subvectorsSolution_[this->nCompartments_+1]
   copyPhiBToSolution();
 
-  Control::MemoryLeakFinder::warnIfMemoryConsumptionIncreases("At MultidomainSolver in solverLinearSystem, after copyPhiBToSolution");
-
   // compute b_k, the top right hand side entry
   // b_k = b1_ * Vm^(i) + b2_ * phi_e^(i)
   for (int k = 0; k < this->nCompartments_; k++)
@@ -360,17 +358,11 @@ solveLinearSystem()
     ierr = MatMultAdd(b2_[k], phie_k, temporary_, this->subvectorsRightHandSide_[k]); CHKERRV(ierr);   // v3 = v2 + A * v1, MatMultAdd(Mat mat,Vec v1,Vec v2,Vec v3)
   }
 
-  Control::MemoryLeakFinder::warnIfMemoryConsumptionIncreases("At MultidomainSolver in solverLinearSystem, after MatMult");
-
   // copy the values from the nested Petsc Vec nestedRightHandSide_ to the single Vec, singleRightHandSide_, that contains all entries
   NestedMatVecUtility::createVecFromNestedVec(this->nestedRightHandSide_, this->singleRightHandSide_, data().functionSpace()->meshPartition()->rankSubset());
 
-  Control::MemoryLeakFinder::warnIfMemoryConsumptionIncreases("At MultidomainSolver in solverLinearSystem, after create single rhs");
-
   // copy the values from the nested Petsc Vec,nestedSolution_, to the single Vec, singleSolution_, that contains all entries
   NestedMatVecUtility::createVecFromNestedVec(this->nestedSolution_, this->singleSolution_, data().functionSpace()->meshPartition()->rankSubset());
-
-  Control::MemoryLeakFinder::warnIfMemoryConsumptionIncreases("At MultidomainSolver in solverLinearSystem, after create single solution");
 
   if (VLOG_IS_ON(1))
   {
@@ -392,19 +384,13 @@ solveLinearSystem()
     this->linearSolver_->solve(this->singleRightHandSide_, this->singleSolution_);
   }
 
-  Control::MemoryLeakFinder::warnIfMemoryConsumptionIncreases("At MultidomainSolver in solverLinearSystem, after solve");
-  
   // copy the values back from the single Vec, singleSolution_, that contains all entries 
   // to the nested Petsc Vec, nestedSolution_ which contains the components in subvectorsSolution_
   NestedMatVecUtility::fillNestedVec(this->singleSolution_, this->nestedSolution_);
 
-  Control::MemoryLeakFinder::warnIfMemoryConsumptionIncreases("At MultidomainSolver in solverLinearSystem, after fillNestedVec for nestedSolution");
-
   // the vector for phi_b in nestedSolution_ contains only entries for non-border dofs, 
   // copy all values and the border dof values to the proper phi_b which is dataFat_.extraCellularPotentialFat()->valuesGlobal()
   copySolutionToPhiB();
-
-  Control::MemoryLeakFinder::warnIfMemoryConsumptionIncreases("At MultidomainSolver in solverLinearSystem, after copySolutionToPhiB");
 
   LOG(DEBUG) << "after linear solver:";
   LOG(DEBUG) << "extracellularPotentialFat: " << PetscUtility::getStringVector(dataFat_.extraCellularPotentialFat()->valuesGlobal());

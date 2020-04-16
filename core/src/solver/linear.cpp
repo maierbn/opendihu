@@ -282,7 +282,7 @@ void Linear::dumpMatrixRightHandSideSolution(Vec rightHandSide, Vec solution)
   }
 }
 
-void Linear::solve(Vec rightHandSide, Vec solution, std::string message)
+bool Linear::solve(Vec rightHandSide, Vec solution, std::string message)
 {
   PetscErrorCode ierr;
 
@@ -292,7 +292,7 @@ void Linear::solve(Vec rightHandSide, Vec solution, std::string message)
   Control::MemoryLeakFinder::nBytesIncreaseSinceLastCheck();
 
   // solve the system
-  ierr = KSPSolve(*ksp_, rightHandSide, solution); CHKERRV(ierr);
+  ierr = KSPSolve(*ksp_, rightHandSide, solution); CHKERRQ(ierr);
 
   // output a warning if the memory increased by over 1 MB
   Control::MemoryLeakFinder::warnIfMemoryConsumptionIncreases("In Linear::solve, after KSPSolve");
@@ -307,12 +307,12 @@ void Linear::solve(Vec rightHandSide, Vec solution, std::string message)
   PetscReal residualNorm = 0.0;
   PetscInt nDofsGlobal = 0;
 
-  ierr = KSPGetIterationNumber(*ksp_, &numberOfIterations); CHKERRV(ierr);
-  ierr = KSPGetResidualNorm(*ksp_, &residualNorm); CHKERRV(ierr);
+  ierr = KSPGetIterationNumber(*ksp_, &numberOfIterations); CHKERRQ(ierr);
+  ierr = KSPGetResidualNorm(*ksp_, &residualNorm); CHKERRQ(ierr);
 
   KSPConvergedReason convergedReason;
-  ierr = KSPGetConvergedReason(*ksp_, &convergedReason); CHKERRV(ierr);
-  ierr = VecGetSize(rightHandSide, &nDofsGlobal); CHKERRV(ierr);
+  ierr = KSPGetConvergedReason(*ksp_, &convergedReason); CHKERRQ(ierr);
+  ierr = VecGetSize(rightHandSide, &nDofsGlobal); CHKERRQ(ierr);
 
   // compute residual norm
   if (kspType_ == KSPPREONLY && (pcType_ == PCLU || pcType_ == PCILU))
@@ -324,18 +324,18 @@ void Linear::solve(Vec rightHandSide, Vec solution, std::string message)
       residual_ = std::make_shared<Vec>();    ///< residual vector for direct solvers
 
       Mat systemMatrix;
-      ierr = KSPGetOperators(*ksp_, &systemMatrix, NULL); CHKERRV(ierr);
-      ierr = MatCreateVecs(systemMatrix, &(*temporaryVectorRight_), &(*temporaryVectorLeft_)); CHKERRV(ierr);
+      ierr = KSPGetOperators(*ksp_, &systemMatrix, NULL); CHKERRQ(ierr);
+      ierr = MatCreateVecs(systemMatrix, &(*temporaryVectorRight_), &(*temporaryVectorLeft_)); CHKERRQ(ierr);
 
       LOG(DEBUG) << "create temporary vectors";
     }
     LOG(DEBUG) << "compute residual";
 
     // compute residual
-    ierr = KSPBuildResidual(*ksp_, *temporaryVectorLeft_, *temporaryVectorRight_, &(*residual_)); CHKERRV(ierr);
+    ierr = KSPBuildResidual(*ksp_, *temporaryVectorLeft_, *temporaryVectorRight_, &(*residual_)); CHKERRQ(ierr);
 
     // compute norm of residual
-    ierr = VecNorm(*residual_, NORM_2, &residualNorm); CHKERRV(ierr);
+    ierr = VecNorm(*residual_, NORM_2, &residualNorm); CHKERRQ(ierr);
   }
   
   // output message
@@ -350,6 +350,9 @@ void Linear::solve(Vec rightHandSide, Vec solution, std::string message)
   Control::PerformanceMeasurement::setParameter(nIterationsLogKey_, numberOfIterations);
   Control::PerformanceMeasurement::setParameter(residualNormLogKey_, residualNorm);
   Control::PerformanceMeasurement::countNumber(nIterationsTotalLogKey_, numberOfIterations);
+
+  // if convergedReason > 0 then it converged
+  return convergedReason > 0;
 }
 
 }   //namespace

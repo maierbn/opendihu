@@ -185,7 +185,7 @@ setSystemMatrixSubmatrices(double timeStepWidth)
 
     VLOG(2) << "k=" << k << ", am: " << this->am_[k] << ", cm: " << this->cm_[k] << ", prefactor: " << prefactor;
 
-    // matrix B
+    // matrix B on right column
     // create matrix as theta/(Am*Cm)*K
     Mat matrixOnRightColumn;
     ierr = MatConvert(stiffnessMatrix, MATSAME, MAT_INITIAL_MATRIX, &matrixOnRightColumn); CHKERRV(ierr);

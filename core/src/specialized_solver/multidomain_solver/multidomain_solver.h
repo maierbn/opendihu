@@ -105,7 +105,7 @@ protected:
   bool showLinearSolverOutput_;  //< if convergence information of the linear solver in every timestep should be printed
   int lastNumberOfIterations_;   //< the number of iterations that were needed the last time to solve the linear system
   double timeStepWidthOfSystemMatrix_;        //< the timestep width that was used to setup the system matrix
-  bool constructPreconditionerMatrix_;        //< if the symmetric preconditioner matrix should be set up
+  bool useSymmetricPreconditionerMatrix_;        //< if the symmetric preconditioner matrix should be set up
 };
 
 }  // namespace

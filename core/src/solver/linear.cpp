@@ -113,8 +113,8 @@ void Linear::setupKsp(KSP ksp)
   // set Hypre Options from Python config
   else if (pcType_ == std::string(PCHYPRE))
   {
-    std::string hypreOptions = this->specificSettings_.getOptionString("hypreOptions", "-pc_hypre_type boomeramg");
-    PetscOptionsInsertString(NULL,hypreOptions.c_str());
+    std::string hypreOptions = this->specificSettings_.getOptionString("hypreOptions", "");
+    PetscOptionsInsertString(NULL, hypreOptions.c_str());
     
     // if one of the hypre preconditioners is in preconditionerType_, pcType_ was set to HYPRE, now set the chosen preconditioner as -pc_hypre_type
     if (preconditionerType_ == "euclid" || preconditionerType_ == "pilut" || preconditionerType_ == "parasails" 

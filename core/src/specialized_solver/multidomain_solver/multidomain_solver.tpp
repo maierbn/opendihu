@@ -31,7 +31,12 @@ MultidomainSolver(DihuContext context) :
   nCompartments_ = this->specificSettings_.getOptionInt("nCompartments", 1, PythonUtility::NonNegative);
   initialGuessNonzero_ = this->specificSettings_.getOptionBool("initialGuessNonzero", true);
   showLinearSolverOutput_ = this->specificSettings_.getOptionBool("showLinearSolverOutput", true);
-  constructPreconditionerMatrix_ = this->specificSettings_.getOptionBool("constructPreconditionerMatrix", true);
+
+  if (this->specificSettings_.hasKey("constructPreconditionerMatrix"))
+  {
+    LOG(ERROR) << this->specificSettings_ << " option \"constructPreconditionerMatrix\" has been renamed to \"useSymmetricPreconditionerMatrix\".";
+  }
+  useSymmetricPreconditionerMatrix_ = this->specificSettings_.getOptionBool("useSymmetricPreconditionerMatrix", true);
 
   // create finiteElement objects for diffusion in compartments
   finiteElementMethodDiffusionCompartment_.reserve(nCompartments_);
@@ -608,7 +613,7 @@ createSystemMatrixFromSubmatrices()
   // create a single Mat object from the nested Mat
   NestedMatVecUtility::createMatFromNestedMat(nestedSystemMatrix_, singleSystemMatrix_, data().functionSpace()->meshPartition()->rankSubset());
 
-  if (constructPreconditionerMatrix_)
+  if (useSymmetricPreconditionerMatrix_)
   {
     this->submatricesPreconditionerMatrix_ = submatricesSystemMatrix_;
 

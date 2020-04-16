@@ -20,6 +20,8 @@ Linear::Linear(PythonConfig specificSettings, MPI_Comm mpiCommunicator, std::str
   }
 
   mpiCommunicator_ = mpiCommunicator;
+
+  parseOptions();
 }
 
 void Linear::parseOptions()

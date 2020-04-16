@@ -733,7 +733,7 @@ solveLinearSystem()
   bool hasSolverConverged = false;
 
   // try up to three times to solve the system
-  for (int solveNo = 0; solveNo < 3; solveNo++)
+  for (int solveNo = 0; solveNo < 5; solveNo++)
   {
     // copy the values from a nested Petsc Vec to a single Vec that contains all entries
     NestedMatVecUtility::createVecFromNestedVec(nestedSolution_, singleSolution_, data().functionSpace()->meshPartition()->rankSubset());
@@ -748,7 +748,13 @@ solveLinearSystem()
       hasSolverConverged = this->linearSolver_->solve(singleRightHandSide_, singleSolution_);
     }
     if (hasSolverConverged)
+    {
       break;
+    }
+    else
+    {
+      LOG(WARNING) << "Solver has not converged, try again " << solveNo << "/3";
+    }
   }
   
   // copy the values back from a single Vec that contains all entries to a nested Petsc Vec

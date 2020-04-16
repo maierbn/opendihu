@@ -31,6 +31,7 @@ MultidomainSolver(DihuContext context) :
   nCompartments_ = this->specificSettings_.getOptionInt("nCompartments", 1, PythonUtility::NonNegative);
   initialGuessNonzero_ = this->specificSettings_.getOptionBool("initialGuessNonzero", true);
   showLinearSolverOutput_ = this->specificSettings_.getOptionBool("showLinearSolverOutput", true);
+  updateSystemMatrixEveryTimestep_ = this->specificSettings_.getOptionBool("updateSystemMatrixEveryTimestep", false);
 
   if (this->specificSettings_.hasKey("constructPreconditionerMatrix"))
   {
@@ -77,10 +78,6 @@ advanceTimeSpan()
         << " (linear solver iterations: " << lastNumberOfIterations_ << ")";
     }
 
-    // advance simulation time
-    timeStepNo++;
-    currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
-
     LOG(DEBUG) << " Vm: ";
     //dataMultidomain_.subcellularStates(0)->extractComponent(0, dataMultidomain_.transmembranePotential(0));
     LOG(DEBUG) << *dataMultidomain_.transmembranePotential(0);
@@ -89,11 +86,19 @@ advanceTimeSpan()
     {
       LOG(WARNING) << "In multidomain solver, timestep width changed from " << this->timeStepWidthOfSystemMatrix_ << " to " << timeStepWidth_
         << " (relative: " << std::showpos << 100*(this->timeStepWidthOfSystemMatrix_ - this->timeStepWidth_) / this->timeStepWidth_ << std::noshowpos << "%), need to recreate system matrix.";
+      
       this->timeStepWidthOfSystemMatrix_ = this->timeStepWidth_;
       setSystemMatrixSubmatrices(this->timeStepWidthOfSystemMatrix_);
       createSystemMatrixFromSubmatrices();
     }
+    else if (this->updateSystemMatrixEveryTimestep_ && timeStepNo == 0)
+    {
+      updateSystemMatrix();
+    }
     
+    // advance simulation time
+    timeStepNo++;
+    currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
   
     // advance diffusion
     VLOG(1) << "---- diffusion term";
@@ -676,6 +681,32 @@ createSystemMatrixFromSubmatrices()
   {
     singlePreconditionerMatrix_ = singleSystemMatrix_;
   }
+}
+
+template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
+void MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
+updateSystemMatrix()
+{
+  // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
+  if (this->durationLogKey_ != "")
+    Control::PerformanceMeasurement::start(this->durationLogKey_+std::string("_reassemble"));
+
+  // assemble stiffness and mass matrices again
+  this->finiteElementMethodDiffusion_.setStiffnessMatrix();
+  this->finiteElementMethodDiffusion_.setMassMatrix();
+  this->finiteElementMethodDiffusion_.setInverseLumpedMassMatrix();
+  
+  this->finiteElementMethodDiffusionTotal_.setStiffnessMatrix();
+
+  // compute new entries for submatrices, except B,C,D and E
+  setSystemMatrixSubmatrices(this->timeStepWidthOfSystemMatrix_);
+  
+  // create the system matrix again
+  createSystemMatrixFromSubmatrices();
+
+  // stop duration measurement
+  if (this->durationLogKey_ != "")
+    Control::PerformanceMeasurement::stop(this->durationLogKey_+std::string("_reassemble"));
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>

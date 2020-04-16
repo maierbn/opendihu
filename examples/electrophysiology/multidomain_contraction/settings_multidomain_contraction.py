@@ -55,10 +55,14 @@ parser.add_argument('--fiber_file',                          help='The filename 
 parser.add_argument('--firing_times_file',                   help='The filename of the file that contains the cellml model.', default=variables.firing_times_file)
 parser.add_argument('--end_time', '--tend', '-t',            help='The end simulation time.',                    type=float, default=variables.end_time)
 parser.add_argument('--output_timestep_multidomain',         help='The timestep for writing outputs.',           type=float, default=variables.output_timestep_multidomain)
-parser.add_argument('--v',                                   help='Enable full verbosity in c++ code')
-parser.add_argument('-v',                                    help='Enable verbosity level in c++ code', action="store_true")
-parser.add_argument('-vmodule',                              help='Enable verbosity level for given file in c++ code')
-parser.add_argument('-pause',                                help='Stop at parallel debugging barrier', action="store_true")
+parser.add_argument('--multidomain_solver_type',             help='Solver for multidomain system.',              default=variables.multidomain_solver_type)
+parser.add_argument('--multidomain_preconditioner_type',     help='Preconditioner for multidomain system.',      default=variables.multidomain_preconditioner_type)
+parser.add_argument('--multidomain_relative_tolerance',      help='relative residual tol. for multidomain solver.',           type=float, default=variables.multidomain_relative_tolerance)
+parser.add_argument('--multidomain_absolute_tolerance',      help='absolute residual tol. for multidomain solver.',           type=float, default=variables.multidomain_absolute_tolerance)
+parser.add_argument('--theta',                               help='parameter of Crank-Nicholson in multidomain system.',      type=float, default=variables.theta)
+parser.add_argument('--use_lumped_mass_matrix',              help='If the formulation with lumbed mass matrix should be used.',           default=variables.use_lumped_mass_matrix, action='store_true')
+parser.add_argument('--use_symmetric_preconditioner_matrix', help='If the preconditioner matrix should be symmetric (only diagnoal part of system matrix).',  default=variables.use_symmetric_preconditioner_matrix, action='store_true')
+parser.add_argument('--initial_guess_nonzero',               help='If the initial guess to the linear solver should be the last solution.',  default=variables.initial_guess_nonzero, action='store_true')
 
 # parse command line arguments and assign values to variables module
 args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
@@ -102,9 +106,9 @@ if n_ranks != variables.n_subdomains:
 # output information of run
 if rank_no == 0:
   print("scenario_name: {},  n_subdomains: {} {} {},  n_ranks: {},  end_time: {}".format(variables.scenario_name, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, n_ranks, variables.end_time))
-  print("dt_0D:           {:0.0e}".format(variables.dt_0D))
-  print("dt_multidomain:  {:0.0e}    multidomain solver:         {}".format(variables.dt_multidomain, variables.multidomain_solver_type))
-  print("dt_splitting:    {:0.0e}    multidomain preconditioner: {}".format(variables.dt_splitting, variables.multidomain_preconditioner_type))
+  print("dt_0D:           {:0.0e}    multidomain solver:         {}, lumped mass matrix: {}".format(variables.dt_0D, variables.multidomain_solver_type, variables.use_lumped_mass_matrix))
+  print("dt_multidomain:  {:0.0e}    multidomain preconditioner: {}, symmetric precond.: {}".format(variables.dt_multidomain, variables.multidomain_preconditioner_type, variables.use_symmetric_preconditioner_matrix))
+  print("dt_splitting:    {:0.0e}    theta: {}, solver tolerances, abs: {}, rel: {}".format(variables.dt_splitting, variables.theta, variables.multidomain_absolute_tolerance, variables.multidomain_relative_tolerance))
   print("dt_elasticity:   {:0.0e}".format(variables.dt_elasticity))
   print("fiber_file:              {}".format(variables.fiber_file))
   print("fat_mesh_file:           {}".format(variables.fat_mesh_file))
@@ -120,22 +124,28 @@ from helper import *
 
 # settings for the multidomain solver
 multidomain_solver = {
-  "nCompartments":                    variables.n_compartments,           # number of compartments
+  "timeStepWidth":                    variables.dt_multidomain,             # time step width of the subcellular problem
+  "endTime":                          variables.end_time,                   # end time, this is not relevant because it will be overridden by the splitting scheme
+  "timeStepOutputInterval":           100,                                  # how often the output timestep should be printed
+  "durationLogKey":                   "duration_multidomain",               # key for duration in log.csv file
+  
+  # material parameters for the compartments
+  "nCompartments":                    variables.n_compartments,             # number of compartments
+  "compartmentRelativeFactors":       variables.relative_factors.tolist(),  # list of lists of the factors for every dof, because "inputIsGlobal": True, this contains the global dofs
+  "inputIsGlobal":                    True,                                 # if values and dofs correspond to the global numbering
   "am":                               [variables.get_am(mu_no) for mu_no in range(variables.n_compartments)],   # Am parameter for every motor unit (ration of surface to volume of fibers)
   "cm":                               [variables.get_cm(mu_no) for mu_no in range(variables.n_compartments)],   # Cm parameter for every motor unit (capacitance of the cellular membrane)
-  "timeStepWidth":                    variables.dt_multidomain,           # time step width of the subcellular problem
-  "endTime":                          variables.end_time,                 # end time, this is not relevant because it will be overridden by the splitting scheme
-  "timeStepOutputInterval":           100,                                # how often the output timestep should be printed
-  "solverName":                       "multidomainLinearSolver",          # reference to the solver used for the global linear system of the multidomain eq.
-  "initialGuessNonzero":              variables.initial_guess_nonzero,    # if the initial guess for the 3D system should be set as the solution of the previous timestep, this only makes sense for iterative solvers
-  "inputIsGlobal":                    True,                               # if values and dofs correspond to the global numbering
-  "showLinearSolverOutput":           True,                               # if convergence information of the linear solver in every timestep should be printed, this is a lot of output for fast computations
-  "useLumpedMassMatrix":              False,                               # which formulation to use, the formulation with lumped mass matrix (True) is more stable but approximative, the other formulation (False) is exact but needs more iterations
-  "enableFatComputation":             True,                               # disabling the computation of the fat layer is only for debugging and speeds up computation. If set to False, the respective matrix is set to the identity
-  "compartmentRelativeFactors":       variables.relative_factors.tolist(),     # list of lists of the factors for every dof, because "inputIsGlobal": True, this contains the global dofs
-  "theta":                            1.0,                                # weighting factor of implicit term in Crank-Nicolson scheme, 0.5 gives the classic, 2nd-order Crank-Nicolson scheme, 1.0 gives implicit euler
-  "useSymmetricPreconditionerMatrix": True,                               # if the diagonal blocks of the system matrix should be used as preconditioner matrix
-  "durationLogKey":                   "duration_multidomain",             # key for duration in log.csv file
+  
+  # solver options
+  "solverName":                       "multidomainLinearSolver",            # reference to the solver used for the global linear system of the multidomain eq.
+  "theta":                            variables.theta,                      # weighting factor of implicit term in Crank-Nicolson scheme, 0.5 gives the classic, 2nd-order Crank-Nicolson scheme, 1.0 gives implicit euler
+  "useLumpedMassMatrix":              variables.use_lumped_mass_matrix,     # which formulation to use, the formulation with lumped mass matrix (True) is more stable but approximative, the other formulation (False) is exact but needs more iterations
+  "useSymmetricPreconditionerMatrix": variables.use_symmetric_preconditioner_matrix,    # if the diagonal blocks of the system matrix should be used as preconditioner matrix
+  "initialGuessNonzero":              variables.initial_guess_nonzero,      # if the initial guess for the 3D system should be set as the solution of the previous timestep, this only makes sense for iterative solvers
+  "enableFatComputation":             True,                                 # disabling the computation of the fat layer is only for debugging and speeds up computation. If set to False, the respective matrix is set to the identity
+  "showLinearSolverOutput":           variables.show_linear_solver_output,  # if convergence information of the linear solver in every timestep should be printed, this is a lot of output for fast computations
+  "updateSystemMatrixEveryTimestep":  True,                                 # if this multidomain solver will update the system matrix in every first timestep, us this only if the geometry changed, e.g. by contraction
+  
   "PotentialFlow": {
     "FiniteElementMethod" : {  
       "meshName":                     "3Dmesh",

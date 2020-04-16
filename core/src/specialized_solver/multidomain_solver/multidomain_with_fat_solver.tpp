@@ -375,6 +375,44 @@ setInformationToPreconditioner()
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusionMuscle,typename FiniteElementMethodDiffusionFat>
 void MultidomainWithFatSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusionMuscle,FiniteElementMethodDiffusionFat>::
+updateSystemMatrix()
+{
+  // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
+  if (this->durationLogKey_ != "")
+    Control::PerformanceMeasurement::start(this->durationLogKey_+std::string("_reassemble"));
+
+  // assemble stiffness and mass matrices again
+  this->finiteElementMethodDiffusion_.setStiffnessMatrix();
+  this->finiteElementMethodDiffusion_.setMassMatrix();
+  
+  if (useLumpedMassMatrix_)
+  {
+    this->finiteElementMethodDiffusion_.setInverseLumpedMassMatrix();
+  }
+  
+  this->finiteElementMethodFat_.setStiffnessMatrix();
+  this->finiteElementMethodDiffusionTotal_.setStiffnessMatrix();
+
+  // compute new entries for submatrices, except B,C,D and E
+  setSystemMatrixSubmatrices(this->timeStepWidthOfSystemMatrix_);
+  
+  // also compute new entries for the matrices B, C, D and E
+  updateBorderMatrices();
+
+  // create the system matrix again
+  this->createSystemMatrixFromSubmatrices();
+
+  // stop duration measurement
+  if (this->durationLogKey_ != "")
+  {
+    Control::PerformanceMeasurement::stop(this->durationLogKey_+std::string("_reassemble"));
+
+    LOG(INFO) << "Rebuilt multidomain system matrix in " << Control::PerformanceMeasurement::getDuration(this->durationLogKey_+std::string("_reassemble"), false) << "s.";
+  }
+}
+
+template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusionMuscle,typename FiniteElementMethodDiffusionFat>
+void MultidomainWithFatSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusionMuscle,FiniteElementMethodDiffusionFat>::
 solveLinearSystem()
 {
   VLOG(1) << "in solveLinearSystem";

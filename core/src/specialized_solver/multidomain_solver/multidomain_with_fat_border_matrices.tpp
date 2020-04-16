@@ -609,6 +609,25 @@ setEntriesBorderMatrices(Mat originalMatrixB, Mat originalMatrixC, Mat matrixB, 
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusionMuscle,typename FiniteElementMethodDiffusionFat>
 void MultidomainWithFatSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusionMuscle,FiniteElementMethodDiffusionFat>::
+updateBorderMatrices()
+{
+  // this method computes the entries again, after the geometry has updated by the contraction
+
+  Mat originalMatrixB = this->finiteElementMethodDiffusionTotal_.data().stiffnessMatrix()->valuesGlobal();
+  Mat originalMatrixC = this->finiteElementMethodFat_.data().stiffnessMatrix()->valuesGlobal();
+
+  // store the matrices in the system matrix
+  Mat &matrixB = this->submatricesSystemMatrix_[(this->nCompartments_+0)*this->nColumnSubmatricesSystemMatrix_ + this->nCompartments_+0];
+  Mat &matrixC = this->submatricesSystemMatrix_[(this->nCompartments_+1)*this->nColumnSubmatricesSystemMatrix_ + this->nCompartments_+1];
+  Mat &matrixD = this->submatricesSystemMatrix_[(this->nCompartments_+0)*this->nColumnSubmatricesSystemMatrix_ + this->nCompartments_+1];
+  Mat &matrixE = this->submatricesSystemMatrix_[(this->nCompartments_+1)*this->nColumnSubmatricesSystemMatrix_ + this->nCompartments_+0];
+
+  // compute entries
+  setEntriesBorderMatrices(originalMatrixB, originalMatrixC, matrixB, matrixC, matrixD, matrixE);
+}
+
+template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusionMuscle,typename FiniteElementMethodDiffusionFat>
+void MultidomainWithFatSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusionMuscle,FiniteElementMethodDiffusionFat>::
 copyPhiBToSolution()
 {
   // get entries from: dataFat_.extraCellularPotentialFat()->valuesGlobal(0)

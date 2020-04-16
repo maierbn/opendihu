@@ -33,6 +33,9 @@ public:
 
 protected:
 
+  //! update the system matrix after the geometry has changed, this is done in advanceTimeSpan, if the option "updateSystemMatrixEveryTimestep" is True
+  virtual void updateSystemMatrix() override;
+
   //! call the output writer on the data object
   virtual void callOutputWriter(int timeStepNo, double currentTime);
 
@@ -50,6 +53,9 @@ protected:
 
   //! compute the entries of the matrices B,C,D and E from the stiffness matrix of the muscle mesh
   void setEntriesBorderMatrices(Mat originalMatrixB, Mat originalMatrixC, Mat matrixB, Mat matrixC, Mat matrixD, Mat matrixE);
+
+  //! compute th entries of the matrices B,C,D and E from the stiffness matrix of the muscle mesh again, the matrices have to exist already, this is used after geometry update
+  void updateBorderMatrices();
 
   //! transform the numbering from normal global dof nos to a numbering that skips the shared dofs between muscle and fat mesh
   PetscInt getDofNoGlobalFatWithoutSharedDofs(PetscInt dofNoGlobal);

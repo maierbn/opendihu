@@ -111,12 +111,15 @@ std::string PerformanceMeasurement::getParameter(std::string key)
   return parameters_[key];
 }
 
-double PerformanceMeasurement::getDuration(std::string measurementName)
+double PerformanceMeasurement::getDuration(std::string measurementName, bool accumulated)
 {
   if (measurements_.find(measurementName) == measurements_.end())
     return 0.0;
 
-  return measurements_[measurementName].totalDuration;
+  if (accumulated || measurements_[measurementName].nTimeSpans <= 1)
+    return measurements_[measurementName].totalDuration;
+  else 
+    return measurements_[measurementName].totalDuration / measurements_[measurementName].nTimeSpans;
 }
 
 template<>

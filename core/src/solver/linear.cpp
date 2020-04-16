@@ -118,7 +118,7 @@ void Linear::setupKsp(KSP ksp)
     
     // if one of the hypre preconditioners is in preconditionerType_, pcType_ was set to HYPRE, now set the chosen preconditioner as -pc_hypre_type
     if (preconditionerType_ == "euclid" || preconditionerType_ == "pilut" || preconditionerType_ == "parasails" 
-      || preconditionerType_ == "boomerang" || preconditionerType_ == "ams" || preconditionerType_ == "ads")
+      || preconditionerType_ == "boomeramg" || preconditionerType_ == "ams" || preconditionerType_ == "ads")
     {
       ierr = PCHYPRESetType(pc, preconditionerType_.c_str()); CHKERRV(ierr);
       

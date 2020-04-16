@@ -44,8 +44,8 @@ public:
   //! get the value of a parameter that was previously set, empty string if parameter is not present
   static std::string getParameter(std::string key);
 
-  //! get a measured total duration with given measurementName, or 0.0 if the measurement does not (yet) exist
-  static double getDuration(std::string measurementName);
+  //! get a measured total duration with given measurementName, or 0.0 if the measurement does not (yet) exist, accumulated: if the total sum should be return, if false the average
+  static double getDuration(std::string measurementName, bool accumulated=true);
 
   //! get the page size in KB and the current memory consumption in bytes, for virtual memory, resident set, and data memory
   static void getMemoryConsumption(int &pageSize, long long &virtualMemorySize, long long &residentSetSize, long long &dataSize, double &totalUserTime);

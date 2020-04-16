@@ -107,13 +107,15 @@ void Linear::setupKsp(KSP ksp)
   {
     std::string hypreOptions = this->specificSettings_.getOptionString("hypreOptions", "-pc_hypre_type boomeramg");
     PetscOptionsInsertString(NULL,hypreOptions.c_str());
-  }
-  // if one of the hypre preconditioners is in preconditionerType_, set pcType_ to HYPRE and set the chosen preconditioner as -pc_hypre_type
-  else if (preconditionerType_ == "euclid" || preconditionerType_ == "pilut" || preconditionerType_ == "parasails" 
-    || preconditionerType_ == "boomerang" || preconditionerType_ == "ams" || preconditionerType_ == "ads")
-  {
-    pcType_ = PCHYPRE;
-    ierr = PCHYPRESetType(pc, preconditionerType_.c_str()); CHKERRV(ierr);
+    
+    // if one of the hypre preconditioners is in preconditionerType_, pcType_ was set to HYPRE, now set the chosen preconditioner as -pc_hypre_type
+    if (preconditionerType_ == "euclid" || preconditionerType_ == "pilut" || preconditionerType_ == "parasails" 
+      || preconditionerType_ == "boomerang" || preconditionerType_ == "ams" || preconditionerType_ == "ads")
+    {
+      ierr = PCHYPRESetType(pc, preconditionerType_.c_str()); CHKERRV(ierr);
+      
+      LOG(DEBUG) << "set pc_hypre_type to " << preconditionerType_;
+    }
   }
   
   if (pcType_ ==  std::string(PCMG))
@@ -165,7 +167,13 @@ void Linear::parseSolverTypes()
     pcType_ = PCMG;
   }
   // the hypre boomeramg as the only solver does not provide the correct solution 
-  else if (preconditionerType_ == "pchypre" && kspType_ != KSPPREONLY)
+  else if (preconditionerType_ == "pchypre")
+  {
+    pcType_ = PCHYPRE;
+  }
+  // if one of the hypre preconditioners is in preconditionerType_, set pcType_ to HYPRE and set the chosen preconditioner as -pc_hypre_type
+  else if (preconditionerType_ == "euclid" || preconditionerType_ == "pilut" || preconditionerType_ == "parasails" 
+    || preconditionerType_ == "boomerang" || preconditionerType_ == "ams" || preconditionerType_ == "ads")
   {
     pcType_ = PCHYPRE;
   }

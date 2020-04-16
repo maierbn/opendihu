@@ -38,16 +38,18 @@ motor_units = [
 # solvers
 # -------
 multidomain_solver_type = "gmres"          # solver for the multidomain problem
-multidomain_preconditioner_type = "bjacobi"   # preconditioner
-multidomain_preconditioner_type = "euclid"   # preconditioner
+#multidomain_preconditioner_type = "bjacobi"   # preconditioner
+multidomain_preconditioner_type = "boomeramg"   # preconditioner
+#multidomain_preconditioner_type = "euclid"   # preconditioner
 
 # set initial guess to zero for direct solver
 initial_guess_nonzero = "lu" not in multidomain_solver_type 
 
+# if using boomeramg, tolerances cannot be as low as 1e-10, otherwise it becomes unstable
 multidomain_absolute_tolerance = 1e-15    # absolute residual tolerance for the multidomain solver
-multidomain_relative_tolerance = 1e-15    # absolute residual tolerance for the multidomain solver
-theta = 0.5                               # weighting factor of implicit term in Crank-Nicolson scheme, 0.5 gives the classic, 2nd-order Crank-Nicolson scheme, 1.0 gives implicit euler
-use_symmetric_preconditioner_matrix = True    # if the diagonal blocks of the system matrix should be used as preconditioner matrix
+multidomain_relative_tolerance = 1e-15    # relative residual tolerance for the multidomain solver
+theta = 1.0                               # weighting factor of implicit term in Crank-Nicolson scheme, 0.5 gives the classic, 2nd-order Crank-Nicolson scheme, 1.0 gives implicit euler
+use_symmetric_preconditioner_matrix = True   # if the diagonal blocks of the system matrix should be used as preconditioner matrix
 use_lumped_mass_matrix = False            # which formulation to use, the formulation with lumped mass matrix (True) is more stable but approximative, the other formulation (False) is exact but needs more iterations
 
 # timing parameters

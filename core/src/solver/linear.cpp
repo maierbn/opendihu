@@ -144,6 +144,8 @@ void Linear::setupKsp(KSP ksp)
         coordinates.push_back(nodePosition[i]);
     }
 
+    LOG(INFO) << "set coordinates to preconditioner, " << nodePositions_.size() << " node positions: " << coordinates;
+
     ierr = PCSetCoordinates(pc, 3, coordinates.size(), coordinates.data()); CHKERRV(ierr);
   }
 

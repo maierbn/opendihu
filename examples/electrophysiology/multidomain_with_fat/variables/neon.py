@@ -60,6 +60,8 @@ output_timestep_multidomain = 2e-1  # [ms] timestep for multidomain output
 output_timestep_multidomain = 1     # [ms] timestep for multidomain output
 #end_time = 1e-2
 
+scenario_name = "{}_{}_dt{}_atol{}_rtol{}_theta{}_sym{}_lump{}".format(multidomain_solver_type, multidomain_preconditioner_type, dt_splitting, multidomain_absolute_tolerance, multidomain_relative_tolerance, theta, use_symmetric_preconditioner_matrix, use_lumped_mass_matrix)
+
 # input files
 cellml_file = "../../input/hodgkin_huxley_1952.c"
 fiber_file = "../../input/left_biceps_brachii_9x9fibers.bin"

@@ -422,7 +422,7 @@ solveLinearSystem()
   if (this->initialGuessNonzero_)
   {
     LOG(DEBUG) << "set initial guess nonzero";
-    ierr = KSPSetInitialGuessNonzero(*this->linearSolver_->ksp(), PETSC_TRUE); CHKERRV(ierr);
+    ierr = KSPSetInitialGuessNonzero(*this->linearSolver_->ksp(), PETSC_TRUE); CHKERRQ(ierr);
   }
 
   // transform input phi_b to entry in solution vector without shared dofs, this->subvectorsSolution_[this->nCompartments_+1]
@@ -436,36 +436,50 @@ solveLinearSystem()
     Vec phie_k = this->dataMultidomain_.extraCellularPotential()->valuesGlobal();    // this is phi_ek^(i)
 
     // compute temporary_ = b1_[k]*vm_k
-    ierr = MatMult(b1_[k], vm_k, temporary_); CHKERRV(ierr);   // y = Ax
+    ierr = MatMult(b1_[k], vm_k, temporary_); CHKERRQ(ierr);   // y = Ax
 
     // compute b_k = temporary_ + b2_[k]*phie_k = b1_[k]*vm_k + b2_[k]*phie_k
-    ierr = MatMultAdd(b2_[k], phie_k, temporary_, this->subvectorsRightHandSide_[k]); CHKERRV(ierr);   // v3 = v2 + A * v1, MatMultAdd(Mat mat,Vec v1,Vec v2,Vec v3)
+    ierr = MatMultAdd(b2_[k], phie_k, temporary_, this->subvectorsRightHandSide_[k]); CHKERRQ(ierr);   // v3 = v2 + A * v1, MatMultAdd(Mat mat,Vec v1,Vec v2,Vec v3)
   }
 
   // copy the values from the nested Petsc Vec nestedRightHandSide_ to the single Vec, singleRightHandSide_, that contains all entries
   NestedMatVecUtility::createVecFromNestedVec(this->nestedRightHandSide_, this->singleRightHandSide_, data().functionSpace()->meshPartition()->rankSubset());
 
-  // copy the values from the nested Petsc Vec,nestedSolution_, to the single Vec, singleSolution_, that contains all entries
-  NestedMatVecUtility::createVecFromNestedVec(this->nestedSolution_, this->singleSolution_, data().functionSpace()->meshPartition()->rankSubset());
+  bool hasSolverConverged = false;
 
-  if (VLOG_IS_ON(1))
+  // try up to three times to solve the system
+  for (int solveNo = 0; solveNo < 5; solveNo++)
   {
-    VLOG(1) << "this->nestedRightHandSide_: " << PetscUtility::getStringVector(this->nestedRightHandSide_);
-    VLOG(1) << "this->singleRightHandSide_: " << PetscUtility::getStringVector(this->singleRightHandSide_);
-  }
+    // copy the values from the nested Petsc Vec,nestedSolution_, to the single Vec, singleSolution_, that contains all entries
+    NestedMatVecUtility::createVecFromNestedVec(this->nestedSolution_, this->singleSolution_, data().functionSpace()->meshPartition()->rankSubset());
 
-  // Solve the linear system
-  // using single Vecs and Mats that contain all values directly  (singleSolution_, singleRightHandSide_, singleSystemMatrix_)
-  // This is better compared to using the nested Vec's, because more solvers are available for normal Vec's.
-  if (this->showLinearSolverOutput_)
-  {
-    // solve and show information on convergence
-    this->linearSolver_->solve(this->singleRightHandSide_, this->singleSolution_, "Linear system of multidomain problem solved");
-  }
-  else
-  {
-    // solve without showing output
-    this->linearSolver_->solve(this->singleRightHandSide_, this->singleSolution_);
+    if (VLOG_IS_ON(1))
+    {
+      VLOG(1) << "this->nestedRightHandSide_: " << PetscUtility::getStringVector(this->nestedRightHandSide_);
+      VLOG(1) << "this->singleRightHandSide_: " << PetscUtility::getStringVector(this->singleRightHandSide_);
+    }
+
+    // Solve the linear system
+    // using single Vecs and Mats that contain all values directly  (singleSolution_, singleRightHandSide_, singleSystemMatrix_)
+    // This is better compared to using the nested Vec's, because more solvers are available for normal Vec's.
+    if (this->showLinearSolverOutput_)
+    {
+      // solve and show information on convergence
+      hasSolverConverged = this->linearSolver_->solve(this->singleRightHandSide_, this->singleSolution_, "Linear system of multidomain problem solved");
+    }
+    else
+    {
+      // solve without showing output
+      hasSolverConverged = this->linearSolver_->solve(this->singleRightHandSide_, this->singleSolution_);
+    }
+    if (hasSolverConverged)
+    {
+      break;
+    }
+    else
+    {
+      LOG(WARNING) << "Solver has not converged, try again " << solveNo << "/5";
+    }
   }
 
   // copy the values back from the single Vec, singleSolution_, that contains all entries 

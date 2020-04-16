@@ -422,7 +422,7 @@ solveLinearSystem()
   if (this->initialGuessNonzero_)
   {
     LOG(DEBUG) << "set initial guess nonzero";
-    ierr = KSPSetInitialGuessNonzero(*this->linearSolver_->ksp(), PETSC_TRUE); CHKERRQ(ierr);
+    ierr = KSPSetInitialGuessNonzero(*this->linearSolver_->ksp(), PETSC_TRUE); CHKERRV(ierr);
   }
 
   // transform input phi_b to entry in solution vector without shared dofs, this->subvectorsSolution_[this->nCompartments_+1]
@@ -436,10 +436,10 @@ solveLinearSystem()
     Vec phie_k = this->dataMultidomain_.extraCellularPotential()->valuesGlobal();    // this is phi_ek^(i)
 
     // compute temporary_ = b1_[k]*vm_k
-    ierr = MatMult(b1_[k], vm_k, temporary_); CHKERRQ(ierr);   // y = Ax
+    ierr = MatMult(b1_[k], vm_k, temporary_); CHKERRV(ierr);   // y = Ax
 
     // compute b_k = temporary_ + b2_[k]*phie_k = b1_[k]*vm_k + b2_[k]*phie_k
-    ierr = MatMultAdd(b2_[k], phie_k, temporary_, this->subvectorsRightHandSide_[k]); CHKERRQ(ierr);   // v3 = v2 + A * v1, MatMultAdd(Mat mat,Vec v1,Vec v2,Vec v3)
+    ierr = MatMultAdd(b2_[k], phie_k, temporary_, this->subvectorsRightHandSide_[k]); CHKERRV(ierr);   // v3 = v2 + A * v1, MatMultAdd(Mat mat,Vec v1,Vec v2,Vec v3)
   }
 
   // copy the values from the nested Petsc Vec nestedRightHandSide_ to the single Vec, singleRightHandSide_, that contains all entries

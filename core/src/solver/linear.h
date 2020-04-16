@@ -25,8 +25,8 @@ public:
   //! return the KSP object that is used for solving
   std::shared_ptr<KSP> ksp();
 
-  //! perform the solve
-  void solve(Vec rightHandSide, Vec solution, std::string message="");
+  //! perform the solve, @return: if the solution succeeded
+  bool solve(Vec rightHandSide, Vec solution, std::string message="");
 
   //! dump files containing rhs, solution and system matrix
   void dumpMatrixRightHandSideSolution(Vec rightHandSide, Vec solution);

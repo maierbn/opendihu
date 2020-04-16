@@ -35,6 +35,8 @@ activation_start_time = 0           # [ms] time when to start checking for stimu
 output_timestep_surface = 0.1       # [ms] timestep for python callback, which is electrode measurement output
 output_timestep_electrodes = 0.1    # [ms] timestep for electrode output files
 output_timestep_multidomain = 0.1   # [ms] timestep for multidomain
+multidomain_absolute_tolerance = 1e-15 # absolute residual tolerance for the multidomain solver
+multidomain_relative_tolerance = 1e-15 # absolute residual tolerance for the multidomain solver
 
 # input files
 # -----------
@@ -58,6 +60,10 @@ adios_output = False                # If the MegaMol/ADIOS output writer should 
 python_output = False               # If the Python output writer should be enabled
 exfile_output = False               # If the Exfile output writer should be enabled
 initial_guess_nonzero = True        # if the initial guess of the multidomain solver should be set to the previous values, this is only possible if an iterative solver is used
+theta = 0.5                         # weighting factor of implicit term in Crank-Nicolson scheme, 0.5 gives the classic, 2nd-order Crank-Nicolson scheme, 1.0 gives implicit euler
+use_symmetric_preconditioner_matrix = True    # if the diagonal blocks of the system matrix should be used as preconditioner matrix
+use_lumped_mass_matrix = False      # which formulation to use, the formulation with lumped mass matrix (True) is more stable but approximative, the other formulation (False) is exact but needs more iterations
+show_linear_solver_output = True    # if convergence information of the linear solver in every timestep should be printed, this is a lot of output for fast computations
 
 # motor unit stimulation times
 firing_times_file = "../../input/MU_firing_times_real.txt"

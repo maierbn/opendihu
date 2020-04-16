@@ -134,7 +134,7 @@ multidomain_solver = {
   "enableFatComputation":             True,                               # disabling the computation of the fat layer is only for debugging and speeds up computation. If set to False, the respective matrix is set to the identity
   "compartmentRelativeFactors":       variables.relative_factors.tolist(),     # list of lists of the factors for every dof, because "inputIsGlobal": True, this contains the global dofs
   "theta":                            1.0,                                # weighting factor of implicit term in Crank-Nicolson scheme, 0.5 gives the classic, 2nd-order Crank-Nicolson scheme, 1.0 gives implicit euler
-  "constructPreconditionerMatrix":    True,                               # if the diagonal blocks of the system matrix should be used as preconditioner matrix
+  "useSymmetricPreconditionerMatrix": True,                               # if the diagonal blocks of the system matrix should be used as preconditioner matrix
   "durationLogKey":                   "duration_multidomain",             # key for duration in log.csv file
   "PotentialFlow": {
     "FiniteElementMethod" : {  

@@ -52,9 +52,6 @@ initialize()
   // initialize sharedNodes_ i.e. the border nodes that are shared between muscle and fat mesh
   findSharedNodesBetweenMuscleAndFat();
 
-  // initialize linear solver, set block information in preconditioner for block jacobi and node positions for MG preconditioners
-  initializeLinearSolver();
-
   // system to be solved (here for nCompartments_=3):
   //
   // [A^1_Vm,Vm   |            |             | B^1_Vm,phie |             ]   [ V^1_m^(i+1) ]    [b^1^(i)]  <── n rows: number of dofs in muscle mesh
@@ -96,6 +93,9 @@ initialize()
   ierr = MatSetNullSpace(this->singleSystemMatrix_, nullSpace); CHKERRV(ierr);
   ierr = MatSetNearNullSpace(this->singleSystemMatrix_, nullSpace); CHKERRV(ierr); // for multigrid methods
   //ierr = MatNullSpaceDestroy(&nullSpace); CHKERRV(ierr);
+
+  // set block information in preconditioner for block jacobi and node positions for MG preconditioners
+  setInformationToPreconditioner();
 
   // create temporary vector which is needed in computation of rhs, b1_ was created by setSystemMatrixSubmatrices()
   ierr = MatCreateVecs(b1_[0], &temporary_, NULL); CHKERRV(ierr);
@@ -291,45 +291,8 @@ setSystemMatrixSubmatrices(double timeStepWidth)
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusionMuscle,typename FiniteElementMethodDiffusionFat>
 void MultidomainWithFatSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusionMuscle,FiniteElementMethodDiffusionFat>::
-initializeLinearSolver()
+setInformationToPreconditioner()
 {
-  LOG(DEBUG) << "initialize linear solver";
-
-  // initialize linear solver
-  if (this->linearSolver_ == nullptr)
-  {
-    // set the local node positions for the preconditioner
-    int nDofsPerNode = this->dataMultidomain_.functionSpace()->nDofsPerNode();
-    int nNodesLocalMuscle = this->dataMultidomain_.functionSpace()->nNodesLocalWithoutGhosts();
-    int nNodesLocalFat = this->dataFat_.functionSpace()->nNodesLocalWithoutGhosts() - sharedNodes_.size();
-    
-    std::vector<Vec3> nodePositionsForPreconditioner;
-    nodePositionsForPreconditioner.reserve(nNodesLocalMuscle + nNodesLocalFat);
-
-    // loop over muscle nodes and add their node positions
-    for (dof_no_t dofNoLocal = 0; dofNoLocal < nNodesLocalMuscle*nDofsPerNode; dofNoLocal++)
-    {
-      Vec3 nodePosition = this->dataMultidomain_.functionSpace()->getGeometry(dofNoLocal);
-      nodePositionsForPreconditioner.push_back(nodePosition);
-    }
-
-    // loop over fat nodes and add their node positions
-    for (dof_no_t dofNoLocal = 0; dofNoLocal < nNodesLocalFat*nDofsPerNode; dofNoLocal++)
-    {
-      // if current fat dof is not shared
-      if (borderDofsFat_.find(dofNoLocal) == borderDofsFat_.end())
-      {
-        Vec3 nodePosition = this->dataFat_.functionSpace()->getGeometry(dofNoLocal);
-        nodePositionsForPreconditioner.push_back(nodePosition);
-      }
-    }
-    assert(nodePositionsForPreconditioner.size() == nNodesLocalMuscle+nNodesLocalFat);
-    
-    // create or get linear solver object
-    this->linearSolver_ = this->context_.solverManager()->template solver<Solver::Linear>(
-      this->specificSettings_, this->rankSubset_->mpiCommunicator(), nodePositionsForPreconditioner);
-  }
-
   // set block information in preconditioner, if it is of type block jacobi
   PetscErrorCode ierr;
   PC pc;
@@ -370,6 +333,44 @@ initializeLinearSolver()
 
     ierr = PCBJacobiSetTotalBlocks(pc, this->nColumnSubmatricesSystemMatrix_, lengthsOfBlocks.data()); CHKERRV(ierr);
   }
+
+  // set node positions
+
+  // set the local node positions for the preconditioner
+  int nNodesLocalMuscle = this->dataMultidomain_.functionSpace()->nNodesLocalWithoutGhosts();
+  int nNodesLocalFat = this->dataFat_.functionSpace()->nNodesLocalWithoutGhosts() - nSharedDofsLocal_;
+  
+  std::vector<double> nodePositionCoordinatesForPreconditioner;
+  nodePositionCoordinatesForPreconditioner.reserve(3*(nNodesLocalMuscle + nNodesLocalFat));
+
+  // loop over muscle nodes and add their node positions
+  for (dof_no_t dofNoLocalMuscle = 0; dofNoLocalMuscle < this->dataMultidomain_.functionSpace()->nDofsLocalWithoutGhosts(); dofNoLocalMuscle++)
+  {
+    Vec3 nodePosition = this->dataMultidomain_.functionSpace()->getGeometry(dofNoLocalMuscle);
+  
+    // add the coordinates
+    for (int i = 0; i < 3; i++)
+      nodePositionCoordinatesForPreconditioner.push_back(nodePosition[i]);
+  }
+  
+  // loop over fat nodes and add their node positions
+  for (dof_no_t dofNoLocalFat = 0; dofNoLocalFat < this->dataFat_.functionSpace()->nDofsLocalWithoutGhosts(); dofNoLocalFat++)
+  {
+    // if current fat dof is not shared
+    if (borderDofsFat_.find(dofNoLocalFat) == borderDofsFat_.end())
+    {
+      Vec3 nodePosition = this->dataFat_.functionSpace()->getGeometry(dofNoLocalFat);
+      
+      // add the coordinates
+      for (int i = 0; i < 3; i++)
+        nodePositionCoordinatesForPreconditioner.push_back(nodePosition[i]);
+    }
+  }
+  assert(nodePositionCoordinatesForPreconditioner.size() == 3*(nNodesLocalMuscle+nNodesLocalFat));
+
+  LOG(DEBUG) << "set coordinates to preconditioner, " << nodePositionCoordinatesForPreconditioner.size() << " node coordinates";
+
+  ierr = PCSetCoordinates(pc, 3, nodePositionCoordinatesForPreconditioner.size(), nodePositionCoordinatesForPreconditioner.data()); CHKERRV(ierr);
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusionMuscle,typename FiniteElementMethodDiffusionFat>

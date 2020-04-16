@@ -16,14 +16,6 @@ namespace Solver
 template<typename SolverType>
 std::shared_ptr<SolverType> Manager::solver(PythonConfig settings, MPI_Comm mpiCommunicator)
 {
-  std::vector<Vec3> nodePositionsLocal;
-  return solver<SolverType>(settings, mpiCommunicator, nodePositionsLocal);
-}
-
-//! return previously created solver or create on the fly
-template<typename SolverType>
-std::shared_ptr<SolverType> Manager::solver(PythonConfig settings, MPI_Comm mpiCommunicator, const std::vector<Vec3> &nodePositionsLocal)
-{
   LOG(TRACE) << "Manager::solver";
 
   // if there is not yet an entry for the mpi communicator, create an empty one
@@ -53,10 +45,6 @@ std::shared_ptr<SolverType> Manager::solver(PythonConfig settings, MPI_Comm mpiC
       // create new solver object
       std::shared_ptr<SolverType> solver = std::make_shared<SolverType>(solverConfiguration_.at(solverName), mpiCommunicator, solverName);
       
-      // set local node positions if given
-      if (!nodePositionsLocal.empty())
-        solver->setLocalNodePositions(nodePositionsLocal);
-  
       // initialize solver
       solver->initialize();
 
@@ -102,10 +90,6 @@ std::shared_ptr<SolverType> Manager::solver(PythonConfig settings, MPI_Comm mpiC
   // create new solver object
   std::shared_ptr<SolverType> solver = std::make_shared<SolverType>(settings, mpiCommunicator, anonymousName.str());
   
-  // set local node positions if given
-  if (!nodePositionsLocal.empty())
-    solver->setLocalNodePositions(nodePositionsLocal);
-
   // initialize solver
   solver->initialize();
 

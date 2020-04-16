@@ -31,9 +31,6 @@ public:
   //! dump files containing rhs, solution and system matrix
   void dumpMatrixRightHandSideSolution(Vec rightHandSide, Vec solution);
 
-  //! provide local node positions for preconditioner that needs geometry information, this has to be called before initialize
-  void setLocalNodePositions(const std::vector<Vec3> &nodePositions);
-
 protected:
 
   //! parse options from settings
@@ -67,8 +64,6 @@ protected:
 
   std::string solverType_;              //< the type of the solver as given in the settings
   std::string preconditionerType_;      //< the type of the preconditioner, as given in the settings
-
-  std::vector<Vec3> nodePositions_;     //< node positions of the system, to be used by a preconditioner that needs geometry information  
 };
 
 }  // namespace

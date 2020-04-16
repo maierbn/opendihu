@@ -25,7 +25,8 @@ evaluateIntegrand(const std::array<VecD<3,double_v_t>,D> &jacobian, const std::a
       for (int componentNo = 0; componentNo < nComponents; componentNo++)
       {
         double_v_t integrand = FunctionSpaceType::phi(i,xi) * FunctionSpaceType::phi(j,xi) * integrationFactor;
-        LOG(DEBUG) << "    integrationFactor " << integrationFactor << ", jacobian: " << jacobian << ", integrationFactor: " << integrationFactor << " -> " << integrand;
+        
+        VLOG(1) << "    integrationFactor " << integrationFactor << ", jacobian: " << jacobian << ", integrationFactor: " << integrationFactor << " -> " << integrand;
         evaluations(i*nComponents + componentNo, j*nComponents + componentNo) = integrand;
       }
     }

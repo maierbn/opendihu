@@ -128,8 +128,6 @@ double_v_t computeIntegrationFactor(const std::array<VecD<3,double_v_t>,3> &jaco
 
   double_v_t determinant = m11*m22*m33 - m11*m23*m32 - m12*m21*m33 + m12*m23*m31 + m13*m21*m32 - m13*m22*m31;
 
-  LOG(DEBUG) << "3D integration factor, m11:" << m11 << ", m21: " << m21 << ", m32: " << m32 << ", determinant: " << determinant << ", abs: " << abs(determinant);
-
   return abs(determinant);
 }
 

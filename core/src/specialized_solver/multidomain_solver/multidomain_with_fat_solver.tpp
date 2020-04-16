@@ -95,45 +95,8 @@ initialize()
   ierr = MatSetNearNullSpace(this->singleSystemMatrix_, nullSpace); CHKERRV(ierr); // for multigrid methods
   //ierr = MatNullSpaceDestroy(&nullSpace); CHKERRV(ierr);
 
-  // set block information in preconditioner, if it is of type block jacobi
-  PC pc;
-  ierr = KSPGetPC(*this->linearSolver_->ksp(), &pc); CHKERRV(ierr);
-  
-  // set block information for block jacobi preconditioner
-  // check, if block jacobi preconditioner is selected
-  PetscBool useBlockJacobiPreconditioner;
-  PetscObjectTypeCompare((PetscObject)pc, PCBJACOBI, &useBlockJacobiPreconditioner);
-  if (useBlockJacobiPreconditioner)
-  {
-    // PCBJacobiSetTotalBlocks(PC pc, PetscInt nBlocks, const PetscInt lengthsOfBlocks[])
-    PetscInt nBlocks = this->nColumnSubmatricesSystemMatrix_;
-
-    // set sizes of all blocks to the number of dofs in the muscle domain
-    std::vector<PetscInt> lengthsOfBlocks(nBlocks, this->dataMultidomain_.functionSpace()->nDofsGlobal());
-    
-    // set last block size
-    PetscInt nRowsGlobalLastSubMatrix;
-    ierr = MatGetSize(this->submatricesSystemMatrix_[MathUtility::sqr(this->nColumnSubmatricesSystemMatrix_)-1], &nRowsGlobalLastSubMatrix, NULL); CHKERRV(ierr);
-    lengthsOfBlocks[nBlocks-1] = nRowsGlobalLastSubMatrix;
-
-    // assert that size matches global matrix size
-    PetscInt nRowsGlobal, nColumnsGlobal;
-    ierr = MatGetSize(this->singleSystemMatrix_, &nRowsGlobal, &nColumnsGlobal); CHKERRV(ierr);
-    PetscInt size = 0;
-    for (PetscInt blockSize : lengthsOfBlocks)
-      size += blockSize;
-
-    LOG(INFO) << "block jacobi preconditioner, lengthsOfBlocks: " << lengthsOfBlocks << ", system matrix size: " << nRowsGlobal << "x" << nColumnsGlobal;
-
-    if (size != nRowsGlobal || size != nColumnsGlobal)
-    {
-      LOG(FATAL) << "Block lengths of block jacobi preconditioner do not sum up to the system matrix size.";
-    }
-    assert(size == nRowsGlobal);
-    assert(size == nColumnsGlobal);
-
-    ierr = PCBJacobiSetTotalBlocks(pc, this->nColumnSubmatricesSystemMatrix_, lengthsOfBlocks.data()); CHKERRV(ierr);
-  }
+  // set block information in preconditioner for block jacobi and node positions for MG preconditioners
+  setInformationToPreconditioner();
 
   // create temporary vector which is needed in computation of rhs, b1_ was created by setSystemMatrixSubmatrices()
   ierr = MatCreateVecs(b1_[0], &temporary_, NULL); CHKERRV(ierr);
@@ -325,6 +288,88 @@ setSystemMatrixSubmatrices(double timeStepWidth)
     prefactor = theta_ - 1;
     ierr = MatScale(b2_[k], prefactor); CHKERRV(ierr);
   }
+}
+
+template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusionMuscle,typename FiniteElementMethodDiffusionFat>
+void MultidomainWithFatSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusionMuscle,FiniteElementMethodDiffusionFat>::
+setInformationToPreconditioner()
+{
+  // set block information in preconditioner, if it is of type block jacobi
+  PetscErrorCode ierr;
+  PC pc;
+  ierr = KSPGetPC(*this->linearSolver_->ksp(), &pc); CHKERRV(ierr);
+  
+  // set block information for block jacobi preconditioner
+  // check, if block jacobi preconditioner is selected
+  PetscBool useBlockJacobiPreconditioner;
+  PetscObjectTypeCompare((PetscObject)pc, PCBJACOBI, &useBlockJacobiPreconditioner);
+  if (useBlockJacobiPreconditioner)
+  {
+    // PCBJacobiSetTotalBlocks(PC pc, PetscInt nBlocks, const PetscInt lengthsOfBlocks[])
+    PetscInt nBlocks = this->nColumnSubmatricesSystemMatrix_;
+
+    // set sizes of all blocks to the number of dofs in the muscle domain
+    std::vector<PetscInt> lengthsOfBlocks(nBlocks, this->dataMultidomain_.functionSpace()->nDofsGlobal());
+    
+    // set last block size
+    PetscInt nRowsGlobalLastSubMatrix;
+    ierr = MatGetSize(this->submatricesSystemMatrix_[MathUtility::sqr(this->nColumnSubmatricesSystemMatrix_)-1], &nRowsGlobalLastSubMatrix, NULL); CHKERRV(ierr);
+    lengthsOfBlocks[nBlocks-1] = nRowsGlobalLastSubMatrix;
+
+    // assert that size matches global matrix size
+    PetscInt nRowsGlobal, nColumnsGlobal;
+    ierr = MatGetSize(this->singleSystemMatrix_, &nRowsGlobal, &nColumnsGlobal); CHKERRV(ierr);
+    PetscInt size = 0;
+    for (PetscInt blockSize : lengthsOfBlocks)
+      size += blockSize;
+
+    LOG(INFO) << "block jacobi preconditioner, lengthsOfBlocks: " << lengthsOfBlocks << ", system matrix size: " << nRowsGlobal << "x" << nColumnsGlobal;
+
+    if (size != nRowsGlobal || size != nColumnsGlobal)
+    {
+      LOG(FATAL) << "Block lengths of block jacobi preconditioner do not sum up to the system matrix size.";
+    }
+    assert(size == nRowsGlobal);
+    assert(size == nColumnsGlobal);
+
+    ierr = PCBJacobiSetTotalBlocks(pc, this->nColumnSubmatricesSystemMatrix_, lengthsOfBlocks.data()); CHKERRV(ierr);
+  }
+
+  // set the local node positions for the preconditioner
+  int nDofsPerNode = this->dataMultidomain_.functionSpace()->nDofsPerNode();
+  int nNodesLocalMuscle = this->dataMultidomain_.functionSpace()->nNodesLocalWithoutGhosts();
+  int nNodesLocalFat = this->dataFat_.functionSpace()->nNodesLocalWithoutGhosts() - sharedNodes_.size();
+  
+  std::vector<PetscReal> nodePositionsForPreconditioner;
+  nodePositionsForPreconditioner.reserve(3*(nNodesLocalMuscle + nNodesLocalFat));
+
+  // loop over muscle nodes and add their node positions
+  for (dof_no_t dofNoLocal = 0; dofNoLocal < nNodesLocalMuscle*nDofsPerNode; dofNoLocal++)
+  {
+    Vec3 nodePosition = this->dataMultidomain_.functionSpace()->getGeometry(dofNoLocal);
+    
+    // store node coordinates
+    for (int i = 0; i < 3; i++)
+      nodePositionsForPreconditioner.push_back(nodePosition[i]);
+  }
+
+  // loop over fat nodes and add their node positions
+  for (dof_no_t dofNoLocal = 0; dofNoLocal < nNodesLocalFat*nDofsPerNode; dofNoLocal++)
+  {
+    // if current fat dof is not shared
+    if (borderDofsFat_.find(dofNoLocal) == borderDofsFat_.end())
+    {
+      Vec3 nodePosition = this->dataFat_.functionSpace()->getGeometry(dofNoLocal);
+      
+      // store node coordinates
+      for (int i = 0; i < 3; i++)
+        nodePositionsForPreconditioner.push_back(nodePosition[i]);
+    }
+  }
+  assert(nodePositionsForPreconditioner.size() == 3*(nNodesLocalMuscle+nNodesLocalFat));
+
+  // set node positions in pc object
+  ierr = PCSetCoordinates(pc, 3, nodePositionsForPreconditioner.size(), nodePositionsForPreconditioner.data()); CHKERRV(ierr);
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusionMuscle,typename FiniteElementMethodDiffusionFat>

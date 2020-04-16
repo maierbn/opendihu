@@ -283,6 +283,24 @@ initializeMatricesAndVectors()
     ierr = PCBJacobiSetTotalBlocks(pc, nColumnSubmatricesSystemMatrix_, lengthsOfBlocks.data()); CHKERRV(ierr);
   }
 
+  // set the local node positions for the preconditioner
+  int nDofsPerNode = dataMultidomain_.functionSpace()->nDofsPerNode();
+  int nNodesLocal = dataMultidomain_.functionSpace()->nNodesLocalWithoutGhosts();
+  
+  std::vector<PetscReal> nodePositionsForPreconditioner;
+  nodePositionsForPreconditioner.reserve(3*nNodesLocal);
+
+  // loop over muscle nodes and add their node positions
+  for (dof_no_t dofNoLocal = 0; dofNoLocal < nNodesLocal*nDofsPerNode; dofNoLocal++)
+  {
+    Vec3 nodePosition = dataMultidomain_.functionSpace()->getGeometry(dofNoLocal);
+  
+    // store node coordinates
+    for (int i = 0; i < 3; i++)
+      nodePositionsForPreconditioner.push_back(nodePosition[i]);
+  }
+  ierr = PCSetCoordinates(pc, 3, nodePositionsForPreconditioner.size(), nodePositionsForPreconditioner.data()); CHKERRV(ierr);
+
   // set the nullspace of the matrix
   // as we have Neumann boundary conditions, constant functions are in the nullspace of the matrix
   MatNullSpace nullSpace;

@@ -16,7 +16,8 @@ Nonlinear::Nonlinear(PythonConfig specificSettings, MPI_Comm mpiCommunicator, st
   snesLineSearchType_ = this->specificSettings_.getOptionString("snesLineSearchType", "l2");
 
   // assert that snesLineSearchType_ has a valid type: https://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/SNES/SNESLineSearchType.html#SNESLineSearchType
-  if (snesLineSearchType_ != "bt" && snesLineSearchType_ != "nleqerr" && snesLineSearchType_ != "basic" && snesLineSearchType_ != "l2" && snesLineSearchType_ != "cp" && snesLineSearchType_ != "shell" && snesLineSearchType_ != "ncglinear")
+  if (snesLineSearchType_ != "bt" && snesLineSearchType_ != "nleqerr" && snesLineSearchType_ != "basic" && snesLineSearchType_ != "l2"
+      && snesLineSearchType_ != "cp" && snesLineSearchType_ != "shell" && snesLineSearchType_ != "ncglinear")
   {
     LOG(ERROR) << this->specificSettings_ << "[\"snesLineSearchType\"] has invalid value \"" << snesLineSearchType_ << "\". "
       << "Allowed values are \"bt\" \"nleqerr\" \"basic\" \"l2\" \"cp\" \"ncglinear\". Now using default value \"l2\".";
@@ -40,16 +41,17 @@ Nonlinear::Nonlinear(PythonConfig specificSettings, MPI_Comm mpiCommunicator, st
   SNESLineSearch linesearch;
   ierr = SNESGetLineSearch(*snes_, &linesearch); CHKERRV(ierr);
 
-  //! set line search type from settings
+  // set line search type from settings
   ierr = SNESLineSearchSetType(linesearch, (SNESLineSearchType)snesLineSearchType_.c_str()); CHKERRV(ierr);
 
-  //! override line search settings from command line
+  // override line search settings from command line
   ierr = SNESLineSearchSetFromOptions(linesearch); CHKERRV(ierr);
 
   // extract linear solver context
   ksp_ = std::make_shared<KSP>();
   ierr = SNESGetKSP (*snes_, ksp_.get()); CHKERRV(ierr);
 
+  // set options of the KSP object
   this->setupKsp(*this->ksp_);
 }
 

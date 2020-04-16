@@ -20,7 +20,10 @@ Linear::Linear(PythonConfig specificSettings, MPI_Comm mpiCommunicator, std::str
   }
 
   mpiCommunicator_ = mpiCommunicator;
+}
 
+void Linear::parseOptions()
+{
   // parse options
   relativeTolerance_ = this->specificSettings_.getOptionDouble("relativeTolerance", 1e-5, PythonUtility::Positive);
   absoluteTolerance_ = this->specificSettings_.getOptionDouble("absoluteTolerance", 0, PythonUtility::NonNegative);  // 0 means disabled
@@ -29,13 +32,6 @@ Linear::Linear(PythonConfig specificSettings, MPI_Comm mpiCommunicator, std::str
   //parse information to use for dumping matrices and vectors
   dumpFormat_ = this->specificSettings_.getOptionString("dumpFormat", "default");
   dumpFilename_ = this->specificSettings_.getOptionString("dumpFilename", "");
-
-  // set up KSP object
-  //KSP *ksp;
-  ksp_ = std::make_shared<KSP>();
-  PetscErrorCode ierr = KSPCreate(mpiCommunicator_, ksp_.get()); CHKERRV(ierr);
-
-  setupKsp(*this->ksp_);
 
   // prepare log keys to log number of iterations and residual norm
   std::stringstream nIterationsLogKey;
@@ -49,6 +45,16 @@ Linear::Linear(PythonConfig specificSettings, MPI_Comm mpiCommunicator, std::str
   std::stringstream nIterationsTotalLogKey;
   nIterationsTotalLogKey << "nIterationsTotal_" << name_;
   nIterationsTotalLogKey_ = nIterationsTotalLogKey.str();
+}
+
+void Linear::initialize()
+{
+  // set up KSP object
+  ksp_ = std::make_shared<KSP>();
+  PetscErrorCode ierr = KSPCreate(mpiCommunicator_, ksp_.get()); CHKERRV(ierr);
+  KSP ksp = *ksp_;
+
+  setupKsp(ksp);
 }
 
 void Linear::setupKsp(KSP ksp)
@@ -121,6 +127,22 @@ void Linear::setupKsp(KSP ksp)
   if (pcType_ ==  std::string(PCMG))
   {
     //TODO
+  }
+
+  // set node positions if given
+  if (!nodePositions_.empty())
+  {
+    // convert the node positions vector to a vector of scalar coordinates
+    std::vector<PetscReal> coordinates;
+    coordinates.reserve(nodePositions_.size()*3);
+
+    for (Vec3 nodePosition : nodePositions_)
+    {
+      for (int i = 0; i < 3; i++)
+        coordinates.push_back(nodePosition[i]);
+    }
+
+    ierr = PCSetCoordinates(pc, 3, coordinates.size(), coordinates.data()); CHKERRV(ierr);
   }
 
   // set options from command line, this overrides the python config
@@ -279,6 +301,11 @@ void Linear::dumpMatrixRightHandSideSolution(Vec rightHandSide, Vec solution)
   }
 }
 
+void Linear::setLocalNodePositions(const std::vector<Vec3> &nodePositions)
+{
+  nodePositions_ = nodePositions;
+}
+
 void Linear::solve(Vec rightHandSide, Vec solution, std::string message)
 {
   PetscErrorCode ierr;
@@ -339,7 +366,7 @@ void Linear::solve(Vec rightHandSide, Vec solution, std::string message)
   if (message != "")
   {
     // example for output: "Linear system of multidomain problem solved in 373 iterations, 3633 dofs, residual norm 9.471e-11: KSP_CONVERGED_ATOL: residual 2-norm less than abstol"
-    LOG(INFO) << ksp_ << "," << rightHandSide << "," << solution << ": " << message << " in " << numberOfIterations << " iterations, " << nDofsGlobal << " dofs, residual norm " << residualNorm
+    LOG(INFO) << message << " in " << numberOfIterations << " iterations, " << nDofsGlobal << " dofs, residual norm " << residualNorm
       << ": " << PetscUtility::getStringLinearConvergedReason(convergedReason);
   }
 

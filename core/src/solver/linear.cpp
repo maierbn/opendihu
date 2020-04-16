@@ -125,29 +125,6 @@ void Linear::setupKsp(KSP ksp)
       LOG(DEBUG) << "set pc_hypre_type to " << preconditionerType_;
     }
   }
-  
-  if (pcType_ ==  std::string(PCMG))
-  {
-    //TODO
-  }
-
-  // set node positions if given
-  if (!nodePositions_.empty())
-  {
-    // convert the node positions vector to a vector of scalar coordinates
-    std::vector<PetscReal> coordinates;
-    coordinates.reserve(nodePositions_.size()*3);
-
-    for (Vec3 nodePosition : nodePositions_)
-    {
-      for (int i = 0; i < 3; i++)
-        coordinates.push_back(nodePosition[i]);
-    }
-
-    LOG(INFO) << "set coordinates to preconditioner, " << nodePositions_.size() << " node positions: " << coordinates;
-
-    ierr = PCSetCoordinates(pc, 3, coordinates.size(), coordinates.data()); CHKERRV(ierr);
-  }
 
   // set options from command line, this overrides the python config
   ierr = PCSetFromOptions(pc); CHKERRV(ierr);
@@ -303,11 +280,6 @@ void Linear::dumpMatrixRightHandSideSolution(Vec rightHandSide, Vec solution)
       PetscUtility::dumpMatrix(dumpFilename_+std::string("_preconditioner_matrix"), dumpFormat_, matrix, mpiCommunicator_);
     }
   }
-}
-
-void Linear::setLocalNodePositions(const std::vector<Vec3> &nodePositions)
-{
-  nodePositions_ = nodePositions;
 }
 
 void Linear::solve(Vec rightHandSide, Vec solution, std::string message)

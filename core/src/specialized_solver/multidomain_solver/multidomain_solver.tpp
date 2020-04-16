@@ -146,8 +146,8 @@ initialize()
   if (this->initialized_)
     return;
 
-  initializeObjects();
-  initializeMatricesAndVectors();
+  initializeObjects();              // this is also called by MultidomainWithFatSolver
+  initializeMatricesAndVectors();   // this is not called by MultidomainWithFatSolver
 
   // write initial meshes
   callOutputWriter(0, 0.0);
@@ -236,22 +236,36 @@ initializeObjects()
   this->specificSettings_.getOptionVector("am", nCompartments_, am_);
   this->specificSettings_.getOptionVector("cm", nCompartments_, cm_);
   LOG(DEBUG) << "Am: " << am_ << ", Cm: " << cm_;
-
-  LOG(DEBUG) << "initialize linear solver";
-
-  // initialize linear solver
-  if (linearSolver_ == nullptr)
-  {
-    // retrieve linear solver
-    linearSolver_ = this->context_.solverManager()->template solver<Solver::Linear>(
-      this->specificSettings_, this->rankSubset_->mpiCommunicator());
-  }
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
 void MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
 initializeMatricesAndVectors()
 {
+  LOG(DEBUG) << "initialize linear solver";
+
+  // initialize linear solver
+  if (linearSolver_ == nullptr)
+  {
+    // set the local node positions for the preconditioner
+    int nDofsPerNode = dataMultidomain_.functionSpace()->nDofsPerNode();
+    int nNodesLocal = dataMultidomain_.functionSpace()->nNodesLocalWithoutGhosts();
+    
+    std::vector<Vec3> nodePositionsForPreconditioner;
+    nodePositionsForPreconditioner.reserve(nNodesLocal);
+
+    // loop over muscle nodes and add their node positions
+    for (dof_no_t dofNoLocal = 0; dofNoLocal < nNodesLocal*nDofsPerNode; dofNoLocal++)
+    {
+      Vec3 nodePosition = dataMultidomain_.functionSpace()->getGeometry(dofNoLocal);
+      nodePositionsForPreconditioner.push_back(nodePosition);
+    }
+    
+    // create or get linear solver object
+    linearSolver_ = this->context_.solverManager()->template solver<Solver::Linear>(
+      this->specificSettings_, this->rankSubset_->mpiCommunicator(), nodePositionsForPreconditioner);
+  }
+  
   // initialize system matrix
   this->timeStepWidthOfSystemMatrix_ = this->timeStepWidth_;
   setSystemMatrixSubmatrices(this->timeStepWidthOfSystemMatrix_);
@@ -282,24 +296,6 @@ initializeMatricesAndVectors()
     std::vector<PetscInt> lengthsOfBlocks(nBlocks, dataMultidomain_.functionSpace()->nDofsGlobal());
     ierr = PCBJacobiSetTotalBlocks(pc, nColumnSubmatricesSystemMatrix_, lengthsOfBlocks.data()); CHKERRV(ierr);
   }
-
-  // set the local node positions for the preconditioner
-  int nDofsPerNode = dataMultidomain_.functionSpace()->nDofsPerNode();
-  int nNodesLocal = dataMultidomain_.functionSpace()->nNodesLocalWithoutGhosts();
-  
-  std::vector<PetscReal> nodePositionsForPreconditioner;
-  nodePositionsForPreconditioner.reserve(3*nNodesLocal);
-
-  // loop over muscle nodes and add their node positions
-  for (dof_no_t dofNoLocal = 0; dofNoLocal < nNodesLocal*nDofsPerNode; dofNoLocal++)
-  {
-    Vec3 nodePosition = dataMultidomain_.functionSpace()->getGeometry(dofNoLocal);
-  
-    // store node coordinates
-    for (int i = 0; i < 3; i++)
-      nodePositionsForPreconditioner.push_back(nodePosition[i]);
-  }
-  ierr = PCSetCoordinates(pc, 3, nodePositionsForPreconditioner.size(), nodePositionsForPreconditioner.data()); CHKERRV(ierr);
 
   // set the nullspace of the matrix
   // as we have Neumann boundary conditions, constant functions are in the nullspace of the matrix

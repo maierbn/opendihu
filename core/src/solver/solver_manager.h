@@ -25,6 +25,10 @@ public:
   template<typename SolverType>
   std::shared_ptr<SolverType> solver(PythonConfig settings, MPI_Comm mpiCommunicator);
 
+  //! return previously created solver or create on the fly, providing local node positions to the preconditioner
+  template<typename SolverType>
+  std::shared_ptr<SolverType> solver(PythonConfig settings, MPI_Comm mpiCommunicator, const std::vector<Vec3> &nodePositionsLocal);
+
   //! check if a solver with the given name and mpiCommunicator is stored
   bool hasSolver(std::string solverName, MPI_Comm mpiCommunicator);
 

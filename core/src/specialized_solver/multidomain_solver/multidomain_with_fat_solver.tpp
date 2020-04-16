@@ -445,19 +445,20 @@ solveLinearSystem()
   // copy the values from the nested Petsc Vec nestedRightHandSide_ to the single Vec, singleRightHandSide_, that contains all entries
   NestedMatVecUtility::createVecFromNestedVec(this->nestedRightHandSide_, this->singleRightHandSide_, data().functionSpace()->meshPartition()->rankSubset());
 
+  // copy the values from the nested Petsc Vec,nestedSolution_, to the single Vec, singleSolution_, that contains all entries
+  NestedMatVecUtility::createVecFromNestedVec(this->nestedSolution_, this->singleSolution_, data().functionSpace()->meshPartition()->rankSubset());
+
+  if (VLOG_IS_ON(1))
+  {
+    VLOG(1) << "this->nestedRightHandSide_: " << PetscUtility::getStringVector(this->nestedRightHandSide_);
+    VLOG(1) << "this->singleRightHandSide_: " << PetscUtility::getStringVector(this->singleRightHandSide_);
+  }
+  
   bool hasSolverConverged = false;
 
   // try up to three times to solve the system
   for (int solveNo = 0; solveNo < 5; solveNo++)
   {
-    // copy the values from the nested Petsc Vec,nestedSolution_, to the single Vec, singleSolution_, that contains all entries
-    NestedMatVecUtility::createVecFromNestedVec(this->nestedSolution_, this->singleSolution_, data().functionSpace()->meshPartition()->rankSubset());
-
-    if (VLOG_IS_ON(1))
-    {
-      VLOG(1) << "this->nestedRightHandSide_: " << PetscUtility::getStringVector(this->nestedRightHandSide_);
-      VLOG(1) << "this->singleRightHandSide_: " << PetscUtility::getStringVector(this->singleRightHandSide_);
-    }
 
     // Solve the linear system
     // using single Vecs and Mats that contain all values directly  (singleSolution_, singleRightHandSide_, singleSystemMatrix_)

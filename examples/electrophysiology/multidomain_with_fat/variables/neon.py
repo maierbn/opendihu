@@ -36,8 +36,9 @@ motor_units = [
 ]
 # solvers
 # -------
-multidomain_solver_type = "lu"          # solver for the multidomain problem
-multidomain_preconditioner_type = "none"   # preconditioner
+multidomain_solver_type = "gmres"          # solver for the multidomain problem
+multidomain_preconditioner_type = "bjacobi"   # preconditioner
+multidomain_preconditioner_type = "euclid"   # preconditioner
 
 # set initial guess to zero for direct solver
 initial_guess_nonzero = "lu" not in multidomain_solver_type 
@@ -47,9 +48,9 @@ initial_guess_nonzero = "lu" not in multidomain_solver_type
 # -----------------
 end_time = 4000.0                   # [ms] end time of the simulation
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
-dt_0D = 3e-3                        # [ms] timestep width of ODEs (1e-3)
-dt_multidomain = 3e-3               # [ms] timestep width of the multidomain solver
-dt_splitting = 3e-3                 # [ms] overall timestep width of strang splitting (3e-3)
+dt_0D = 1e-3                        # [ms] timestep width of ODEs (1e-3)
+dt_multidomain = 1e-3               # [ms] timestep width of the multidomain solver
+dt_splitting = 1e-3                 # [ms] overall timestep width of strang splitting (3e-3)
 output_timestep_multidomain = 2e-1  # [ms] timestep for multidomain output
 output_timestep_multidomain = 5     # [ms] timestep for multidomain output
 #end_time = 1e-2
@@ -57,6 +58,7 @@ output_timestep_multidomain = 5     # [ms] timestep for multidomain output
 # input files
 cellml_file = "../../input/hodgkin_huxley_1952.c"
 fiber_file = "../../input/left_biceps_brachii_9x9fibers.bin"
+fiber_file = "../../input/left_biceps_brachii_13x13fibers.bin"
 fat_mesh_file = fiber_file + "_fat.bin"
 firing_times_file = "../../input/MU_firing_times_immediately.txt"
 
@@ -98,4 +100,5 @@ def get_specific_states_frequency_jitter(mu_no):
   return motor_units[mu_no % len(motor_units)]["jitter"]
 
 def get_specific_states_call_enable_begin(mu_no):
-  return motor_units[mu_no % len(motor_units)]["activation_start_time"]*1e3
+  return 0  # start directly
+  #return motor_units[mu_no % len(motor_units)]["activation_start_time"]*1e3

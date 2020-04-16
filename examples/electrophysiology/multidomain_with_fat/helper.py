@@ -543,10 +543,29 @@ def compute_compartment_relative_factors(mesh_node_positions, fiber_data, motor_
   for k in range(n_points_z):
     # get point on first and last fiber
     point0 = np.array(fiber_data[0][k])
-    point1 = np.array(fiber_data[-1][k])
+    point4 = np.array(fiber_data[(variables.n_fibers_x-1)//2][k])
+    point1 = np.array(fiber_data[variables.n_fibers_x-1][k])
+    point2 = np.array(fiber_data[-variables.n_fibers_x][k])
+    point5 = np.array(fiber_data[(-variables.n_fibers_x)//2][k])
+    point3 = np.array(fiber_data[-1][k])
     
     # their distance is an approximation for the diameter
-    distance = np.linalg.norm(point0 - point1)
+    distance01 = np.linalg.norm(point0 - point1)
+    distance02 = np.linalg.norm(point0 - point2)
+    distance03 = np.linalg.norm(point0 - point3)
+    distance04 = np.linalg.norm(point0 - point4)
+    distance05 = np.linalg.norm(point0 - point5)
+    distance12 = np.linalg.norm(point1 - point2)
+    distance13 = np.linalg.norm(point1 - point3)
+    distance14 = np.linalg.norm(point1 - point4)
+    distance15 = np.linalg.norm(point1 - point5)
+    distance23 = np.linalg.norm(point2 - point3)
+    distance24 = np.linalg.norm(point2 - point4)
+    distance25 = np.linalg.norm(point2 - point5)
+    distance34 = np.linalg.norm(point3 - point4)
+    distance35 = np.linalg.norm(point3 - point5)
+    distance45 = np.linalg.norm(point4 - point5)
+    distance = max(distance01,distance02,distance03,distance04,distance05,distance12,distance13,distance14,distance15,distance23,distance24,distance25,distance34,distance35,distance45)
     diameters.append(distance)
 
   # create data structure with 0

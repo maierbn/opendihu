@@ -103,7 +103,7 @@ motor_units = [
 # solvers
 # -------
 multidomain_solver_type = "gmres"          # solver for the multidomain problem
-multidomain_preconditioner_type = "ilu"   # preconditioner
+multidomain_preconditioner_type = "pilut"   # preconditioner
 
 # set initial guess to zero for direct solver
 initial_guess_nonzero = "lu" not in multidomain_solver_type 
@@ -143,7 +143,7 @@ python_output = False
 disable_firing_output = False
 
 # debugging version, smaller example
-motor_units = motor_units[0:2]  # only 2 motor units
+#motor_units = motor_units[0:2]  # only 2 motor units
 
 # functions, here, Am, Cm and Conductivity are constant for all fibers and MU's
 def get_am(mu_no):

@@ -176,7 +176,7 @@ void Linear::parseSolverTypes()
   }
   // if one of the hypre preconditioners is in preconditionerType_, set pcType_ to HYPRE and set the chosen preconditioner as -pc_hypre_type
   else if (preconditionerType_ == "euclid" || preconditionerType_ == "pilut" || preconditionerType_ == "parasails" 
-    || preconditionerType_ == "boomerang" || preconditionerType_ == "ams" || preconditionerType_ == "ads")
+    || preconditionerType_ == "boomeramg" || preconditionerType_ == "ams" || preconditionerType_ == "ads")
   {
     pcType_ = PCHYPRE;
   }

@@ -93,6 +93,11 @@ sampling_stride_y = 1
 sampling_stride_z = 50
 sampling_stride_fat = 1
 
+# how much of the multidomain mesh is used for elasticity
+sampling_factor_elasticity_x = 0.5    
+sampling_factor_elasticity_y = 0.5
+sampling_factor_elasticity_z = 0.5
+
 # scenario name for log file
 scenario_name = ""
 

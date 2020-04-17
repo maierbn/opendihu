@@ -312,9 +312,9 @@ variables.meshes["3DFatMesh"] = {
 }
 
 fat_mesh_quadratic_n_elements = [
-  fat_mesh_n_elements[0]/2,
-  fat_mesh_n_elements[1]/2,
-  fat_mesh_n_elements[2]/2
+  int(fat_mesh_n_elements[0]/2),
+  int(fat_mesh_n_elements[1]/2),
+  int(fat_mesh_n_elements[2]/2)
 ]
 
 #print("fat_mesh_n_elements:           {}".format(fat_mesh_n_elements))
@@ -336,8 +336,217 @@ if False:
   with open("3Dmesh_{}".format(rank_no),"w") as f:
     f.write(str(variables.meshes["3Dmesh"]))
 
-#print("created meshes {}".format(list(variables.meshes.keys())))
+# coarsen quadratic meshes for elasticity
+# -------------------------------------------
+# At this point, we have the following meshes: 3Dmesh, 3Dmesh_quadratic, 3DFatMesh, 3DFatMesh_quadratic.
+# (3Dmesh and 3Dmesh_quadratic) and also (3DFatMesh and 3DFatMesh_quadratic) share nodes, the linear elements are simply part of the quadratic elements and the partitioning is the same.
+# Now, we coarsen the quadratic meshes which will be used for elasticity, because we do not need so much resolution.
 
+for original_quadratic_mesh_name in ["3Dmesh_quadratic", "3DFatMesh_quadratic"]:
+  n_elements_original_quadratic_mesh = variables.meshes[original_quadratic_mesh_name]["nElements"]
+
+  # determine number of elements
+  n_elements_aim_x = int(np.round(n_elements_original_quadratic_mesh[0] * (float)(variables.sampling_factor_elasticity_x)))
+  n_elements_aim_y = int(np.round(n_elements_original_quadratic_mesh[1] * (float)(variables.sampling_factor_elasticity_y)))
+  n_elements_aim_z = int(np.round(n_elements_original_quadratic_mesh[2] * (float)(variables.sampling_factor_elasticity_z)))
+
+  # crop to constraints, at least 1 element, maximum the available number
+  n_elements_aim_x = min(n_elements_original_quadratic_mesh[0], max(1, n_elements_aim_x))
+  n_elements_aim_y = min(n_elements_original_quadratic_mesh[1], max(1, n_elements_aim_y))
+  n_elements_aim_z = min(n_elements_original_quadratic_mesh[2], max(1, n_elements_aim_z))
+
+  import itertools
+  # select nodes such that `n_elements_aim` quadratic 1D elements will be produced and they have their center point in the middle, e.g. not nodes [0,2,3,  5,6] (because element [0,2,3] is not good) but [0,2,4,  5,6] (element [0,2,4] is better)
+  node_indices_to_use_x = [int(np.round(x))*2 for x in np.linspace(0, n_elements_original_quadratic_mesh[0], n_elements_aim_x+1)]
+  node_indices_to_use_x = [(node_indices_to_use_x[i], int(0.5*(node_indices_to_use_x[i]+node_indices_to_use_x[i+1]))) for i in range(len(node_indices_to_use_x)-1)] + [(n_elements_original_quadratic_mesh[0]*2,)]
+  node_indices_to_use_x = list(itertools.chain(*node_indices_to_use_x))
+
+  node_indices_to_use_y = [int(np.round(y))*2 for y in np.linspace(0, n_elements_original_quadratic_mesh[1], n_elements_aim_y+1)]
+  node_indices_to_use_y = [(node_indices_to_use_y[i], int(0.5*(node_indices_to_use_y[i]+node_indices_to_use_y[i+1]))) for i in range(len(node_indices_to_use_y)-1)] + [(n_elements_original_quadratic_mesh[1]*2,)]
+  node_indices_to_use_y = list(itertools.chain(*node_indices_to_use_y))
+
+  node_indices_to_use_z = [int(np.round(z))*2 for z in np.linspace(0, n_elements_original_quadratic_mesh[2], n_elements_aim_z+1)]
+  node_indices_to_use_z = [(node_indices_to_use_z[i], int(0.5*(node_indices_to_use_z[i]+node_indices_to_use_z[i+1]))) for i in range(len(node_indices_to_use_z)-1)] + [(n_elements_original_quadratic_mesh[2]*2,)]
+  node_indices_to_use_z = list(itertools.chain(*node_indices_to_use_z))
+
+  # determine number of nodes of the 3Dmesh_quadratic
+  n_points_local_original_quadratic_mesh_x = 2*n_elements_original_quadratic_mesh[0]
+  n_points_local_original_quadratic_mesh_y = 2*n_elements_original_quadratic_mesh[1]
+  n_points_local_original_quadratic_mesh_z = 2*n_elements_original_quadratic_mesh[2]
+  n_points_local_new_quadratic_mesh_x = n_elements_aim_x
+  n_points_local_new_quadratic_mesh_y = n_elements_aim_y
+  n_points_local_new_quadratic_mesh_z = n_elements_aim_z
+
+  # if the own subdomain is at the (x+) border
+  if variables.own_subdomain_coordinate_x == variables.n_subdomains_x - 1:
+    n_points_local_original_quadratic_mesh_x += 1
+    n_points_local_new_quadratic_mesh_x += 1
+
+  # if the own subdomain is at the (y+) border
+  if variables.own_subdomain_coordinate_y == variables.n_subdomains_y - 1:
+    n_points_local_original_quadratic_mesh_y += 1
+    n_points_local_new_quadratic_mesh_y += 1
+    
+  # if the own subdomain is at the (z+) border
+  if variables.own_subdomain_coordinate_z == variables.n_subdomains_z - 1:
+    n_points_local_original_quadratic_mesh_z += 1
+    n_points_local_new_quadratic_mesh_z += 1
+
+  print("{}: mesh {}".format(rank_no, original_quadratic_mesh_name))
+  print("{}: nElements old: {} x {} x {}".format(rank_no, n_elements_original_quadratic_mesh[0], n_elements_original_quadratic_mesh[1], n_elements_original_quadratic_mesh[2]))
+  print("{}: nElements new: {} x {} x {}".format(rank_no, n_elements_aim_x, n_elements_aim_y, n_elements_aim_z))
+  print("{}: n points old: {} x {} x {} = {}".format(rank_no, n_points_local_original_quadratic_mesh_x, n_points_local_original_quadratic_mesh_y, n_points_local_original_quadratic_mesh_z, n_points_local_original_quadratic_mesh_x*n_points_local_original_quadratic_mesh_y*n_points_local_original_quadratic_mesh_z))
+  
+  # collect new node positions from old node positions
+  # the indices of the nodes that should be used are in node_indices_to_use_{x,y,z}
+  mesh_quadratic_node_positions_local = variables.meshes[original_quadratic_mesh_name]["nodePositions"]
+  
+  print("{}: n node positions old: {}".format(rank_no, len(mesh_quadratic_node_positions_local[1])))
+  
+  node_positions_are_as_file_and_offset = isinstance(mesh_quadratic_node_positions_local[0], str)
+  
+  points_local_new_quadratic_mesh = []
+  for node_index_z in node_indices_to_use_z:
+    if node_index_z >= n_points_local_original_quadratic_mesh_z:
+      break
+    
+    for node_index_y in node_indices_to_use_y:
+      if node_index_y >= n_points_local_original_quadratic_mesh_y:
+        break
+    
+      for node_index_x in node_indices_to_use_x:
+        if node_index_x >= n_points_local_original_quadratic_mesh_x:
+          break
+          
+        index = node_index_z*n_points_local_original_quadratic_mesh_y*n_points_local_original_quadratic_mesh_x + node_index_y*n_points_local_original_quadratic_mesh_x + node_index_x
+        
+        #print("index {},{},{} = {}".format(node_index_x, node_index_y, node_index_z, index))
+        
+        # if fiber data was not loaded, the variable mesh_quadratic_node_positions_local is of type ['filename', [(filepos, length), ...]]
+        if node_positions_are_as_file_and_offset:
+          point = mesh_quadratic_node_positions_local[1][index]
+        else:
+          point = mesh_quadratic_node_positions_local[index]
+          
+        points_local_new_quadratic_mesh.append(point)
+  n_points_new = len(points_local_new_quadratic_mesh)
+  print("{}: n points new: {} x {} x {} = {}".format(rank_no,len(node_indices_to_use_x),len(node_indices_to_use_y),len(node_indices_to_use_z),n_points_new))
+ 
+  if node_positions_are_as_file_and_offset:
+    points_local_new_quadratic_mesh = [mesh_quadratic_node_positions_local[0], points_local_new_quadratic_mesh]
+
+  # determine global number of nodes and elements, this is only exact for the 3Dmesh_quadratic
+  n_points_global_new_quadratic_mesh_x = 0
+  n_points_global_new_quadratic_mesh_y = 0
+  n_points_global_new_quadratic_mesh_z = 0
+  n_elements_global_new_quadratic_mesh_x = 0
+  n_elements_global_new_quadratic_mesh_y = 0
+  n_elements_global_new_quadratic_mesh_z = 0
+  
+  # loop over subdomains in x direction
+  for subdomain_coordinate_x in range(variables.n_subdomains_x):
+    n_elements_x = n_sampled_points_in_subdomain_x(subdomain_coordinate_x)
+    if subdomain_coordinate_x == variables.n_subdomains_x-1:
+      n_elements_x -= 1
+    n_elements_global_new_quadratic_mesh_x += n_elements_x
+
+    # determine number of elements
+    n_elements_new_x = int(np.round(n_elements_x * float(variables.sampling_factor_elasticity_x)))
+    n_elements_new_x = min(n_elements_x, max(1, n_elements_new_x))
+    
+    n_points_new_x = n_elements_new_x
+    if subdomain_coordinate_x == variables.n_subdomains_x-1:
+      n_points_new_x += 1
+    n_points_global_new_quadratic_mesh_x += n_points_new_x
+      
+  # loop over subdomains in y direction
+  for subdomain_coordinate_y in range(variables.n_subdomains_y):
+    n_elements_y = n_sampled_points_in_subdomain_y(subdomain_coordinate_y)
+    if subdomain_coordinate_y == variables.n_subdomains_y-1:
+      n_elements_y -= 1
+    n_elements_global_new_quadratic_mesh_y += n_elements_y
+
+    # determine number of elements
+    n_elements_new_y = int(np.round(n_elements_y * float(variables.sampling_factor_elasticity_y)))
+    n_elements_new_y = min(n_elements_y, max(1, n_elements_new_y))
+    
+    n_points_new_y = n_elements_new_y
+    if subdomain_coordinate_y == variables.n_subdomains_y-1:
+      n_points_new_y += 1
+    n_points_global_new_quadratic_mesh_y += n_points_new_y
+      
+  # loop over subdomains in z direction
+  for subdomain_coordinate_z in range(variables.n_subdomains_z):
+    n_elements_z = n_sampled_points_in_subdomain_z(subdomain_coordinate_z)
+    if subdomain_coordinate_z == variables.n_subdomains_z-1:
+      n_elements_z -= 1
+    n_elements_global_new_quadratic_mesh_z += n_elements_z
+
+    # determine number of elements
+    n_elements_new_z = int(np.round(n_elements_z * float(variables.sampling_factor_elasticity_z)))
+    n_elements_new_z = min(n_elements_z, max(1, n_elements_new_z))
+    
+    n_points_new_z = n_elements_new_z
+    if subdomain_coordinate_z == variables.n_subdomains_z-1:
+      n_points_new_z += 1
+    n_points_global_new_quadratic_mesh_z += n_points_new_z
+
+  # set name of new mesh
+  if original_quadratic_mesh_name == "3Dmesh_quadratic":
+    elasticity_mesh_name = "3Dmesh_elasticity_quadratic"
+  elif original_quadratic_mesh_name == "3DFatMesh_quadratic":
+    elasticity_mesh_name = "3DFatMesh_elasticity_quadratic"
+
+  variables.meshes[elasticity_mesh_name] = {
+    "nElements":              [n_elements_aim_x, n_elements_aim_y, n_elements_aim_z],
+    "nRanks":                 variables.meshes[original_quadratic_mesh_name]["nRanks"],
+    "nodePositions":          points_local_new_quadratic_mesh,
+    "inputMeshIsGlobal":      False,
+    "setHermiteDerivatives":  False,
+    "logKey":                 elasticity_mesh_name,
+    
+    # set information on how many nodes there are in the 3D mesh, this is not needed for the opendihu core but might be useful in some settings script or for debugging
+    "nPointsLocal":           [n_points_local_new_quadratic_mesh_x, n_points_local_new_quadratic_mesh_y, n_points_local_new_quadratic_mesh_z],
+    "nPointsGlobal":          [n_points_global_new_quadratic_mesh_x, n_points_global_new_quadratic_mesh_y, n_points_global_new_quadratic_mesh_z],
+    "nElementsGlobal":        [n_elements_global_new_quadratic_mesh_x, n_elements_global_new_quadratic_mesh_y, n_elements_global_new_quadratic_mesh_z]
+  }
+  
+  if "rankNos" in variables.meshes[original_quadratic_mesh_name]:
+    variables.meshes[elasticity_mesh_name]["rankNos"] = variables.meshes[original_quadratic_mesh_name]["rankNos"]
+
+variables.meshes["3DFatMesh_elasticity_quadratic"]["nPointsGlobal"] = [
+  variables.meshes["3Dmesh_elasticity_quadratic"]["nPointsGlobal"][0] + variables.meshes["3Dmesh_elasticity_quadratic"]["nPointsGlobal"][1]-1,  # number in x direction + number in y direction -1 (corner point)
+  variables.meshes["3Dmesh_elasticity_quadratic"]["nPointsGlobal"][1],
+  variables.meshes["3Dmesh_quadratic"]["nPointsGlobal"][2] * variables.sampling_factor_elasticity_z
+]  
+
+# output information about partitioning on rank 0
+if rank_no == 0 or True:      
+  print("()  sub-sampling 3D elasticity mesh with factors {}, {}, {} ".format(rank_no, variables.sampling_factor_elasticity_x, variables.sampling_factor_elasticity_y, variables.sampling_factor_elasticity_z))
+  
+  n_points_global_elasticity_mesh = variables.meshes["3Dmesh_elasticity_quadratic"]["nPointsGlobal"]
+  n_points_local_elasticity_mesh = variables.meshes["3Dmesh_elasticity_quadratic"]["nPointsLocal"]
+  n_elements_global_elasticity_mesh = variables.meshes["3Dmesh_elasticity_quadratic"]["nElementsGlobal"]
+  n_elements_local_elasticity_mesh = variables.meshes["3Dmesh_elasticity_quadratic"]["nElements"]
+  n_points_global_elasticity_fat_mesh = variables.meshes["3DFatMesh_elasticity_quadratic"]["nPointsGlobal"]
+  n_points_local_elasticity_fat_mesh = variables.meshes["3DFatMesh_elasticity_quadratic"]["nPointsLocal"]
+  n_elements_local_elasticity_fat_mesh = variables.meshes["3DFatMesh_elasticity_quadratic"]["nElements"]
+  print("   elasticity quadratic 3D meshes:")
+  print("{}  muscle:             nodes global: {} x {} x {} = {}, local: {} x {} x {} = {}".format(rank_no, 
+    n_points_global_elasticity_mesh[0], n_points_global_elasticity_mesh[1], n_points_global_elasticity_mesh[2], n_points_global_elasticity_mesh[0]*n_points_global_elasticity_mesh[1]*n_points_global_elasticity_mesh[2],
+    n_points_local_elasticity_mesh[0], n_points_local_elasticity_mesh[1], n_points_local_elasticity_mesh[2], n_points_local_elasticity_mesh[0]*n_points_local_elasticity_mesh[1]*n_points_local_elasticity_mesh[2]))
+  print("{}                   elements global: {} x {} x {} = {}, local: {} x {} x {} = {}".format(rank_no, 
+    n_elements_global_elasticity_mesh[0], n_elements_global_elasticity_mesh[1], n_elements_global_elasticity_mesh[2], n_elements_global_elasticity_mesh[0]*n_elements_global_elasticity_mesh[1]*n_elements_global_elasticity_mesh[2],
+    n_elements_local_elasticity_fat_mesh[0], n_elements_local_elasticity_fat_mesh[1], n_elements_local_elasticity_fat_mesh[2], n_elements_local_elasticity_fat_mesh[0]*n_elements_local_elasticity_fat_mesh[1]*n_elements_local_elasticity_fat_mesh[2]))
+  print("{}  fat and skin layer: nodes global (estimate): {} x {} x {} = {}, local: {} x {} x {} = {}".format(rank_no, 
+    n_points_global_elasticity_fat_mesh[0], n_points_global_elasticity_fat_mesh[1], n_points_global_elasticity_fat_mesh[2], n_points_global_elasticity_fat_mesh[0]*n_points_global_elasticity_fat_mesh[1]*n_points_global_elasticity_fat_mesh[2],
+    n_points_local_elasticity_fat_mesh[0], n_points_local_elasticity_fat_mesh[1], n_points_local_elasticity_fat_mesh[2], n_points_local_elasticity_fat_mesh[0]*n_points_local_elasticity_fat_mesh[1]*n_points_local_elasticity_fat_mesh[2]))
+  print("{}                   elements local: {} x {} x {} = {}".format(rank_no, 
+    n_elements_local_elasticity_fat_mesh[0], n_elements_local_elasticity_fat_mesh[1], n_elements_local_elasticity_fat_mesh[2], n_elements_local_elasticity_fat_mesh[0]*n_elements_local_elasticity_fat_mesh[1]*n_elements_local_elasticity_fat_mesh[2]))
+
+#print("created meshes {}".format(list(variables.meshes.keys())))
+# set output writers
+# ---------------------------
 # set output writer, this example doesn't use this, it defines the output writers directly in the settings file, but the code is left here in case we want to use it later when tidying up
 if False:  
   variables.output_writer_fibers = []
@@ -586,8 +795,10 @@ variables.n_subdomains_xy = variables.n_subdomains_x * variables.n_subdomains_y
 variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
   
 # set boundary conditions for the elasticity
-[mx, my, mz] = variables.meshes["3Dmesh_quadratic"]["nPointsGlobal"]
-[nx, ny, nz] = variables.meshes["3Dmesh_quadratic"]["nElements"]
+# Note, we have a composite mesh, consisting of 3Dmesh_elasticity_quadratic and 3DFatMesh_elasticity_quadratic and this composite mesh has a numbering that goes over all dofs.
+# The following works because we index the first sub mesh and there first mesh of a composite mesh always has all own dofs with their normal no.s. (The 2nd mesh has the shared dofs to the first mesh removed in the numbering, i.e. they are not counted twice).
+[mx, my, mz] = variables.meshes["3Dmesh_elasticity_quadratic"]["nPointsGlobal"]
+[nx, ny, nz] = variables.meshes["3Dmesh_elasticity_quadratic"]["nElementsGlobal"]
 
 # set Dirichlet BC at top nodes for linear elasticity problem, fix muscle at top
 variables.elasticity_dirichlet_bc = {}
@@ -602,14 +813,7 @@ for i in range(mx):
 # fix corner completely
 variables.elasticity_dirichlet_bc[(mz-1)*mx*my + 0] = [0.0,0.0,0.0,None,None,None]
 
-    
 # Neumann BC at bottom nodes, traction downwards
-nx = n_points_3D_mesh_linear_global_x-1
-ny = n_points_3D_mesh_linear_global_y-1
-nz = n_points_3D_mesh_linear_global_z-1
-variables.nx = nx
-variables.ny = ny
-variables.nz = nz
 variables.elasticity_neumann_bc = [{"element": 0*nx*ny + j*nx + i, "constantVector": variables.bottom_traction, "face": "2-"} for j in range(ny) for i in range(nx)]
 #variables.elasticity_neumann_bc = []
 
@@ -702,7 +906,7 @@ else:
   quit()
 
 # debugging output
-if rank_no == 0:
+if rank_no == 0 and not variables.disable_firing_output:
   for i,factors_list in enumerate(variables.relative_factors.tolist()):
     print("MU {}, maximum fr: {}".format(i,max(factors_list)))
 

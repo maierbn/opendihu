@@ -104,8 +104,25 @@ motor_units = [
 ]
 # solvers
 # -------
+# potential flow
+potential_flow_solver_type = "gmres"        # solver and preconditioner for an initial Laplace flow on the domain, from which fiber directions are determined
+potential_flow_preconditioner_type = "none" # preconditioner
+
+# multidomain
 multidomain_solver_type = "gmres"          # solver for the multidomain problem
-multidomain_preconditioner_type = "pilut"   # preconditioner
+multidomain_preconditioner_type = "euclid"   # preconditioner
+multidomain_absolute_tolerance = 1e-15 # absolute residual tolerance for the multidomain solver
+multidomain_relative_tolerance = 1e-15 # absolute residual tolerance for the multidomain solver
+
+# elasticity
+elasticity_solver_type = "preonly"
+elasticity_preconditioner_type = "lu"
+snes_max_iterations = 10                  # maximum number of iterations in the nonlinear solver
+snes_rebuild_jacobian_frequency = 2       # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
+snes_relative_tolerance = 1e-5      # relative tolerance of the nonlinear solver
+snes_absolute_tolerance = 1e-5      # absolute tolerance of the nonlinear solver
+relative_tolerance = 1e-5           # relative tolerance of the residual of the linear solver
+absolute_tolerance = 1e-10          # absolute tolerance of the residual of the linear solver
 
 # set initial guess to zero for direct solver
 initial_guess_nonzero = "lu" not in multidomain_solver_type 
@@ -126,7 +143,7 @@ dt_multidomain = 1e-3               # [ms] timestep width of the multidomain sol
 dt_splitting = dt_multidomain       # [ms] timestep width of strang splitting between 0D and multidomain, this is the same as the dt_multidomain, because we do not want to subcycle for the diffusion part
 dt_elasticity = 1e-3                # [ms] time step width of elasticity solver
 output_timestep_multidomain = 1     # [ms] timestep for fiber output, 0.5
-output_timestep_3D = 1              # [ms] timestep for output of mechanics, should be a multiple of dt_elasticity
+output_timestep_elasticity = 1      # [ms] timestep for elasticity output files
 
 # input files
 fiber_file = "../../input/left_biceps_brachii_9x9fibers.bin"

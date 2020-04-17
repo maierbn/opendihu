@@ -109,7 +109,7 @@ if rank_no == 0:
   print("dt_0D:           {:0.0e}    multidomain solver:         {}, lumped mass matrix: {}".format(variables.dt_0D, variables.multidomain_solver_type, variables.use_lumped_mass_matrix))
   print("dt_multidomain:  {:0.0e}    multidomain preconditioner: {}, symmetric precond.: {}".format(variables.dt_multidomain, variables.multidomain_preconditioner_type, variables.use_symmetric_preconditioner_matrix))
   print("dt_splitting:    {:0.0e}    theta: {}, solver tolerances, abs: {}, rel: {}".format(variables.dt_splitting, variables.theta, variables.multidomain_absolute_tolerance, variables.multidomain_relative_tolerance))
-  print("dt_elasticity:   {:0.0e}".format(variables.dt_elasticity))
+  print("dt_elasticity:   {:0.0e}    elasticity solver: {}, preconditioner: {}".format(variables.dt_elasticity, variables.elasticity_solver_type, variables.elasticity_preconditioner_type))
   print("fiber_file:              {}".format(variables.fiber_file))
   print("fat_mesh_file:           {}".format(variables.fat_mesh_file))
   print("cellml_file:             {}".format(variables.cellml_file))
@@ -126,7 +126,7 @@ from helper import *
 multidomain_solver = {
   "timeStepWidth":                    variables.dt_multidomain,             # time step width of the subcellular problem
   "endTime":                          variables.end_time,                   # end time, this is not relevant because it will be overridden by the splitting scheme
-  "timeStepOutputInterval":           100,                                  # how often the output timestep should be printed
+  "timeStepOutputInterval":           1,                                  # how often the output timestep should be printed
   "durationLogKey":                   "duration_multidomain",               # key for duration in log.csv file
   
   # material parameters for the compartments
@@ -188,9 +188,9 @@ multidomain_solver = {
   },
   
   "OutputWriter" : [
-    {"format": "Paraview", "outputInterval": (int)(1./variables.dt_multidomain*variables.output_timestep_multidomain), "filename": "out/"+variables.scenario_name+"/multidomain", "binary": True, "fixedFormat": False, "combineFiles": True},
-    #{"format": "ExFile", "filename": "out/fiber_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "sphereSize": "0.02*0.02*0.02"},
-    #{"format": "PythonFile", "filename": "out/fiber_"+str(i), "outputInterval": int(1./dt_1D*output_timestep), "binary":True, "onlyNodalValues":True},
+    {"format": "Paraview", "outputInterval": (int)(1./variables.dt_multidomain*variables.output_timestep_multidomain), "filename": "out/"+variables.scenario_name+"/multidomain", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"},
+    #{"format": "ExFile", "filename": "out/fiber_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "sphereSize": "0.02*0.02*0.02", "fileNumbering": "incremental"},
+    #{"format": "PythonFile", "filename": "out/fiber_"+str(i), "outputInterval": int(1./dt_1D*output_timestep), "binary":True, "onlyNodalValues":True, "fileNumbering": "incremental"},
   ]
 }
   
@@ -202,15 +202,15 @@ config = {
   },
   "Meshes":                variables.meshes,
   "MappingsBetweenMeshes": {
-    "3Dmesh": "3Dmesh_quadratic",                         # mappings to be used without composite meshes
+    "3Dmesh": "3Dmesh_elasticity_quadratic",                         # mappings to be used without composite meshes
     "3Dmesh":
-       {"name": "3Dmesh_quadratic+3DFatMesh_quadratic", "xiTolerance": 0.01, "enableWarnings": True, "compositeUseOnlyInitializedMappings": True},     # mapping from multidomain to elasticity mesh, for transferring γ
-    "3Dmesh_quadratic+3DFatMesh_quadratic": [
-       {"name": "3Dmesh",    "xiTolerance": 0.01, "enableWarnings": False, "compositeUseOnlyInitializedMappings": True},    # mapping uses mappings of submeshes (i.e. 3Dmesh_quadratic->3Dmesh)
-       {"name": "3DFatMesh", "xiTolerance": 0.01, "enableWarnings": False, "compositeUseOnlyInitializedMappings": True},    # mapping uses mappings of submeshes (i.e. 3DFatMesh_quadratic->3DFatMesh)    
+       {"name": "3Dmesh_elasticity_quadratic+3DFatMesh_elasticity_quadratic", "xiTolerance": 0.01, "enableWarnings": True, "compositeUseOnlyInitializedMappings": True},     # mapping from multidomain to elasticity mesh, for transferring γ
+    "3Dmesh_elasticity_quadratic+3DFatMesh_elasticity_quadratic": [
+       {"name": "3Dmesh",    "xiTolerance": 0.01, "enableWarnings": False, "compositeUseOnlyInitializedMappings": True},    # mapping uses mappings of submeshes (i.e. 3Dmesh_elasticity_quadratic->3Dmesh)
+       {"name": "3DFatMesh", "xiTolerance": 0.01, "enableWarnings": False, "compositeUseOnlyInitializedMappings": True},    # mapping uses mappings of submeshes (i.e. 3DFatMesh_elasticity_quadratic->3DFatMesh)    
     ],
-    "3Dmesh_quadratic": "3Dmesh",           
-    "3DFatMesh_quadratic": "3DFatMesh", 
+    "3Dmesh_elasticity_quadratic": "3Dmesh",           
+    "3DFatMesh_elasticity_quadratic": "3DFatMesh", 
   },
   "Solvers": {
     "potentialFlowSolver": {
@@ -223,28 +223,29 @@ config = {
       "dumpFilename":       "",
     },
     "multidomainLinearSolver": {
-      "relativeTolerance":  1e-15,
-      "absoluteTolerance":  1e-15,         # 1e-15 absolute tolerance of the residual          
+      "relativeTolerance":  variables.multidomain_relative_tolerance,
+      "absoluteTolerance":  variables.multidomain_absolute_tolerance,     # absolute tolerance of the residual          
       "maxIterations":      1e4,
       "solverType":         variables.multidomain_solver_type,
       "preconditionerType": variables.multidomain_preconditioner_type,
+      "hypreOptions":       "",                                           # additional options if a hypre preconditioner is selected
       "dumpFormat":         "matlab",
       "dumpFilename":       "",
     },
     "mechanicsSolver": {   # solver for the dynamic mechanics problem
-      "relativeTolerance":  1e-5,           # 1e-10 relative tolerance of the linear solver
-      "absoluteTolerance":  1e-10,          # 1e-10 absolute tolerance of the residual of the linear solver
-      "solverType":         "preonly",      # type of the linear solver: cg groppcg pipecg pipecgrr cgne nash stcg gltr richardson chebyshev gmres tcqmr fcg pipefcg bcgs ibcgs fbcgs fbcgsr bcgsl cgs tfqmr cr pipecr lsqr preonly qcg bicg fgmres pipefgmres minres symmlq lgmres lcd gcr pipegcr pgmres dgmres tsirm cgls
-      "preconditionerType": "lu",           # type of the preconditioner
-      "maxIterations":       1e4,           # maximum number of iterations in the linear solver
-      "snesMaxFunctionEvaluations": 1e8,    # maximum number of function iterations
-      "snesMaxIterations":   10,            # maximum number of iterations in the nonlinear solver
-      "snesRelativeTolerance": 1e-5,        # relative tolerance of the nonlinear solver
-      "snesAbsoluteTolerance": 1e-5,        # absolute tolerance of the nonlinear solver
-      "snesLineSearchType": "l2",           # type of linesearch, possible values: "bt" "nleqerr" "basic" "l2" "cp" "ncglinear"
-      "snesRebuildJacobianFrequency": 2,    # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
-      "dumpFilename":        "",            # dump system matrix and right hand side after every solve
-      "dumpFormat":          "matlab",      # default, ascii, matlab
+      "relativeTolerance":   variables.snes_relative_tolerance,           # 1e-10 relative tolerance of the linear solver
+      "absoluteTolerance":   variables.snes_absolute_tolerance,           # 1e-10 absolute tolerance of the residual of the linear solver
+      "solverType":          variables.elasticity_solver_type,            # type of the linear solver
+      "preconditionerType":  variables.elasticity_preconditioner_type,    # type of the preconditioner
+      "maxIterations":       1e4,                                         # maximum number of iterations in the linear solver
+      "snesMaxFunctionEvaluations": 1e8,                                  # maximum number of function iterations
+      "snesMaxIterations":   variables.snes_max_iterations,               # maximum number of iterations in the nonlinear solver
+      "snesRelativeTolerance": variables.snes_relative_tolerance,         # relative tolerance of the nonlinear solver
+      "snesAbsoluteTolerance": variables.snes_absolute_tolerance,         # absolute tolerance of the nonlinear solver
+      "snesLineSearchType": "l2",                                         # type of linesearch, possible values: "bt" "nleqerr" "basic" "l2" "cp" "ncglinear"
+      "snesRebuildJacobianFrequency": variables.snes_rebuild_jacobian_frequency,    # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
+      "dumpFilename":        "",                                          # dump system matrix and right hand side after every solve
+      "dumpFormat":          "matlab",                                    # default, ascii, matlab
     }
   },
   "Coupling": {
@@ -330,7 +331,7 @@ config = {
         "timeStepOutputInterval":       100,                       # do not output time steps
         "Pmax": variables.pmax,                                    # maximum PK2 active stress
         "OutputWriter" : [
-          {"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_3D), "filename": "out/" + variables.scenario_name + "/mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
+          {"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/" + variables.scenario_name + "/mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles": True, "fileNumbering": "incremental"},
         ],
         "mapGeometryToMeshes":          ["3Dmesh","3DFatMesh"],    # the mesh names of the meshes that will get the geometry transferred
         "dynamic":                      True,                      # if the dynamic solid mechanics solver should be used, else it computes the quasi-static problem
@@ -353,7 +354,7 @@ config = {
           
           # mesh
           "inputMeshIsGlobal":          True,                     # the mesh is given locally
-          "meshName":                   ["3Dmesh_quadratic", "3DFatMesh_quadratic"],       # name of the 3D mesh, it is defined under "Meshes" at the beginning of this config
+          "meshName":                   ["3Dmesh_elasticity_quadratic", "3DFatMesh_elasticity_quadratic"],       # name of the 3D mesh, it is defined under "Meshes" at the beginning of this config
           "fiberMeshNames":             [],                       # fiber meshes that will be used to determine the fiber direction, there are no fibers in multidomain, so this is empty
           "fiberDirection":             [0,0,1],                  # if fiberMeshNames is empty, directly set the constant fiber direction, in element coordinate system
     
@@ -395,7 +396,7 @@ config = {
           "dynamic": {    # output of the dynamic solver, has additional virtual work values 
             "OutputWriter" : [   # output files for displacements function space (quadratic elements)
               #{"format": "Paraview", "outputInterval": int(output_interval/dt), "filename": "out/dynamic", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
-              {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/virtual_work", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
+              #{"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/virtual_work", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
             ],
           },
           # 4. output writer for debugging, outputs files after each load increment, the geometry is not changed but u and v are written

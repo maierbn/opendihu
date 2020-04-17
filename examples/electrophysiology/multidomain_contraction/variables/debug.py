@@ -102,16 +102,31 @@ motor_units = [
 ]
 # solvers
 # -------
-multidomain_solver_type = "gmres"          # solver for the multidomain problem
-multidomain_preconditioner_type = "ilu"   # preconditioner
+# potential flow
+potential_flow_solver_type = "gmres"        # solver and preconditioner for an initial Laplace flow on the domain, from which fiber directions are determined
+potential_flow_preconditioner_type = "none" # preconditioner
 
-multidomain_preconditioner_type = "bjacobi"   # preconditioner
-multidomain_preconditioner_type = "gamg"   # preconditioner
+# multidomain
+multidomain_absolute_tolerance = 1e-15 # absolute residual tolerance for the multidomain solver
+multidomain_relative_tolerance = 1e-15 # absolute residual tolerance for the multidomain solver
+
+multidomain_solver_type = "gmres"          # solver for the multidomain problem
+multidomain_preconditioner_type = "pilut"   # preconditioner
 
 scenario_name = "{}_{}_".format(multidomain_solver_type,multidomain_preconditioner_type)
 
 # set initial guess to zero for direct solver
 initial_guess_nonzero = "lu" not in multidomain_solver_type 
+
+# elasticity
+elasticity_solver_type = "preonly"
+elasticity_preconditioner_type = "lu"
+snes_max_iterations = 10                  # maximum number of iterations in the nonlinear solver
+snes_rebuild_jacobian_frequency = 2       # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
+snes_relative_tolerance = 1e-5      # relative tolerance of the nonlinear solver
+snes_absolute_tolerance = 1e-5      # absolute tolerance of the nonlinear solver
+relative_tolerance = 1e-5           # relative tolerance of the residual of the linear solver
+absolute_tolerance = 1e-10          # absolute tolerance of the residual of the linear solver
 
 # timing parameters
 # -----------------

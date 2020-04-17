@@ -105,14 +105,14 @@ motor_units = [
 # solvers
 # -------
 multidomain_solver_type = "gmres"          # solver for the multidomain problem
-multidomain_preconditioner_type = "pilut"   # preconditioner
+multidomain_preconditioner_type = "euclid"   # preconditioner
 
 # set initial guess to zero for direct solver
 initial_guess_nonzero = "lu" not in multidomain_solver_type 
 
 multidomain_absolute_tolerance = 1e-15    # absolute residual tolerance for the multidomain solver
 multidomain_relative_tolerance = 1e-15    # absolute residual tolerance for the multidomain solver
-theta = 0.5                               # weighting factor of implicit term in Crank-Nicolson scheme, 0.5 gives the classic, 2nd-order Crank-Nicolson scheme, 1.0 gives implicit euler
+theta = 1.0                               # weighting factor of implicit term in Crank-Nicolson scheme, 0.5 gives the classic, 2nd-order Crank-Nicolson scheme, 1.0 gives implicit euler
 use_symmetric_preconditioner_matrix = True    # if the diagonal blocks of the system matrix should be used as preconditioner matrix
 use_lumped_mass_matrix = False            # which formulation to use, the formulation with lumped mass matrix (True) is more stable but approximative, the other formulation (False) is exact but needs more iterations
 
@@ -129,8 +129,8 @@ output_timestep_multidomain = 1     # [ms] timestep for fiber output, 0.5
 output_timestep_3D = 1              # [ms] timestep for output of mechanics, should be a multiple of dt_elasticity
 
 # input files
-fiber_file = "../../input/left_biceps_brachii_9x9fibers.bin"
-#fiber_file = "../../input/left_biceps_brachii_13x13fibers.bin"
+#fiber_file = "../../input/left_biceps_brachii_9x9fibers.bin"
+fiber_file = "../../input/left_biceps_brachii_13x13fibers.bin"
 fat_mesh_file = fiber_file + "_fat.bin"
 firing_times_file = "../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
 fiber_distribution_file = "../../input/MU_fibre_distribution_10MUs.txt"

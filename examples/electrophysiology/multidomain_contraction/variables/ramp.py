@@ -115,8 +115,8 @@ multidomain_absolute_tolerance = 1e-15 # absolute residual tolerance for the mul
 multidomain_relative_tolerance = 1e-15 # absolute residual tolerance for the multidomain solver
 
 # elasticity
-elasticity_solver_type = "preonly"
-elasticity_preconditioner_type = "lu"
+elasticity_solver_type = "gmres"
+elasticity_preconditioner_type = "euclid"
 snes_max_iterations = 10                  # maximum number of iterations in the nonlinear solver
 snes_rebuild_jacobian_frequency = 2       # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
 snes_relative_tolerance = 1e-5      # relative tolerance of the nonlinear solver
@@ -127,9 +127,7 @@ absolute_tolerance = 1e-10          # absolute tolerance of the residual of the 
 # set initial guess to zero for direct solver
 initial_guess_nonzero = "lu" not in multidomain_solver_type 
 
-multidomain_absolute_tolerance = 1e-15    # absolute residual tolerance for the multidomain solver
-multidomain_relative_tolerance = 1e-15    # absolute residual tolerance for the multidomain solver
-theta = 0.5                               # weighting factor of implicit term in Crank-Nicolson scheme, 0.5 gives the classic, 2nd-order Crank-Nicolson scheme, 1.0 gives implicit euler
+theta = 1.0                               # weighting factor of implicit term in Crank-Nicolson scheme, 0.5 gives the classic, 2nd-order Crank-Nicolson scheme, 1.0 gives implicit euler
 use_symmetric_preconditioner_matrix = True    # if the diagonal blocks of the system matrix should be used as preconditioner matrix
 use_lumped_mass_matrix = False            # which formulation to use, the formulation with lumped mass matrix (True) is more stable but approximative, the other formulation (False) is exact but needs more iterations
 
@@ -146,8 +144,8 @@ output_timestep_multidomain = 1     # [ms] timestep for fiber output, 0.5
 output_timestep_elasticity = 1      # [ms] timestep for elasticity output files
 
 # input files
-fiber_file = "../../input/left_biceps_brachii_9x9fibers.bin"
-#fiber_file = "../../input/left_biceps_brachii_13x13fibers.bin"
+#fiber_file = "../../input/left_biceps_brachii_9x9fibers.bin"
+fiber_file = "../../input/left_biceps_brachii_13x13fibers.bin"
 fat_mesh_file = fiber_file + "_fat.bin"
 firing_times_file = "../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
 fiber_distribution_file = "../../input/MU_fibre_distribution_10MUs.txt"

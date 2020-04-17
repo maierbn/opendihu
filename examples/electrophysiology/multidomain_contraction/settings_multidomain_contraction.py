@@ -109,7 +109,7 @@ if rank_no == 0:
   print("dt_0D:           {:0.0e}    multidomain solver:         {}, lumped mass matrix: {}".format(variables.dt_0D, variables.multidomain_solver_type, variables.use_lumped_mass_matrix))
   print("dt_multidomain:  {:0.0e}    multidomain preconditioner: {}, symmetric precond.: {}".format(variables.dt_multidomain, variables.multidomain_preconditioner_type, variables.use_symmetric_preconditioner_matrix))
   print("dt_splitting:    {:0.0e}    theta: {}, solver tolerances, abs: {}, rel: {}".format(variables.dt_splitting, variables.theta, variables.multidomain_absolute_tolerance, variables.multidomain_relative_tolerance))
-  print("dt_elasticity:   {:0.0e}".format(variables.dt_elasticity))
+  print("dt_elasticity:   {:0.0e}    elasticity solver: {}, preconditioner: {}".format(variables.dt_elasticity, variables.elasticity_solver_type, variables.elasticity_preconditioner_type))
   print("fiber_file:              {}".format(variables.fiber_file))
   print("fat_mesh_file:           {}".format(variables.fat_mesh_file))
   print("cellml_file:             {}".format(variables.cellml_file))
@@ -202,15 +202,15 @@ config = {
   },
   "Meshes":                variables.meshes,
   "MappingsBetweenMeshes": {
-    "3Dmesh": "3Dmesh_quadratic",                         # mappings to be used without composite meshes
+    "3Dmesh": "3Dmesh_elasticity_quadratic",                         # mappings to be used without composite meshes
     "3Dmesh":
-       {"name": "3Dmesh_quadratic+3DFatMesh_quadratic", "xiTolerance": 0.01, "enableWarnings": True, "compositeUseOnlyInitializedMappings": True},     # mapping from multidomain to elasticity mesh, for transferring γ
-    "3Dmesh_quadratic+3DFatMesh_quadratic": [
-       {"name": "3Dmesh",    "xiTolerance": 0.01, "enableWarnings": False, "compositeUseOnlyInitializedMappings": True},    # mapping uses mappings of submeshes (i.e. 3Dmesh_quadratic->3Dmesh)
-       {"name": "3DFatMesh", "xiTolerance": 0.01, "enableWarnings": False, "compositeUseOnlyInitializedMappings": True},    # mapping uses mappings of submeshes (i.e. 3DFatMesh_quadratic->3DFatMesh)    
+       {"name": "3Dmesh_elasticity_quadratic+3DFatMesh_elasticity_quadratic", "xiTolerance": 0.01, "enableWarnings": True, "compositeUseOnlyInitializedMappings": True},     # mapping from multidomain to elasticity mesh, for transferring γ
+    "3Dmesh_elasticity_quadratic+3DFatMesh_elasticity_quadratic": [
+       {"name": "3Dmesh",    "xiTolerance": 0.01, "enableWarnings": False, "compositeUseOnlyInitializedMappings": True},    # mapping uses mappings of submeshes (i.e. 3Dmesh_elasticity_quadratic->3Dmesh)
+       {"name": "3DFatMesh", "xiTolerance": 0.01, "enableWarnings": False, "compositeUseOnlyInitializedMappings": True},    # mapping uses mappings of submeshes (i.e. 3DFatMesh_elasticity_quadratic->3DFatMesh)    
     ],
-    "3Dmesh_quadratic": "3Dmesh",           
-    "3DFatMesh_quadratic": "3DFatMesh", 
+    "3Dmesh_elasticity_quadratic": "3Dmesh",           
+    "3DFatMesh_elasticity_quadratic": "3DFatMesh", 
   },
   "Solvers": {
     "potentialFlowSolver": {
@@ -354,7 +354,7 @@ config = {
           
           # mesh
           "inputMeshIsGlobal":          True,                     # the mesh is given locally
-          "meshName":                   ["3Dmesh_quadratic", "3DFatMesh_quadratic"],       # name of the 3D mesh, it is defined under "Meshes" at the beginning of this config
+          "meshName":                   ["3Dmesh_elasticity_quadratic", "3DFatMesh_elasticity_quadratic"],       # name of the 3D mesh, it is defined under "Meshes" at the beginning of this config
           "fiberMeshNames":             [],                       # fiber meshes that will be used to determine the fiber direction, there are no fibers in multidomain, so this is empty
           "fiberDirection":             [0,0,1],                  # if fiberMeshNames is empty, directly set the constant fiber direction, in element coordinate system
     

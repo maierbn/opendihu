@@ -160,12 +160,17 @@ sampling_stride_y = 1
 sampling_stride_z = 20
 sampling_stride_fat = 1
 
+# how much of the multidomain mesh is used for elasticity
+sampling_factor_elasticity_x = 0.5    
+sampling_factor_elasticity_y = 0.5
+sampling_factor_elasticity_z = 0.5
+
 # other options
 paraview_output = True
 adios_output = False
 exfile_output = False
 python_output = False
-disable_firing_output = False
+disable_firing_output = True        # show output in console about motor units
 
 # debugging version, smaller example
 #motor_units = motor_units[0:2]  # only 2 motor units

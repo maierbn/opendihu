@@ -21,6 +21,7 @@
 extern bool GLOBAL_DEBUG;
 // forward declaration
 namespace Mesh { class Manager; }
+namespace MappingBetweenMeshes { class Manager; }
 namespace Solver { class Manager; }
 namespace Partition { class RankSubset; }
 class SolverStructureVisualizer;
@@ -65,6 +66,9 @@ public:
   //! return the mesh manager object that contains all meshes
   static std::shared_ptr<Mesh::Manager> meshManager();
 
+  //! return the mappingBetweenMeshesManager manager object that contains all mappings between meshes
+  static std::shared_ptr<MappingBetweenMeshes::Manager> mappingBetweenMeshesManager();
+
   //! return the solver manager object that contains all solvers
   std::shared_ptr<Solver::Manager> solverManager() const;
 
@@ -96,7 +100,8 @@ public:
 
 #ifdef HAVE_MEGAMOL
   //! get the zmq socket that can be used to send messages to MegaMol
-  std::shared_ptr<zmq::socket_t> zmqSocket() const;
+  std::shared_ptr<zmq::socket_t> zmqSocket() const;static std::shared_ptr<SolverStructureVisualizer>       solverStructureVisualizer_;    //< object that collects information about all nested solvers and produces a diagram, also with data connections
+
 #endif
 
   //! destructor
@@ -129,14 +134,13 @@ private:
 
   PythonConfig pythonConfig_;                         //< the top level python config dictionary of the current context (i.e. may be a sub-dict of the global config)
   std::shared_ptr<Partition::RankSubset> rankSubset_; //< the ranks that collectively run the code where this context is valid
-
-  static std::shared_ptr<Mesh::Manager> meshManager_; //< object that saves all meshes that are used
-//  static std::shared_ptr<Solver::Manager> solverManager_; //< object that saves all solver configurations that are used
-  static std::map<int, std::shared_ptr<Solver::Manager>> solverManagerForThread_;  //< object that saves all solver configurations that are used, different for each thread
-
-  static std::shared_ptr<Partition::Manager> partitionManager_;                    //< partition manager object that creates and manages partitionings
-  static std::shared_ptr<SolverStructureVisualizer> solverStructureVisualizer_;    //< object that collects information about all nested solvers and produces a diagram, also with data connections
-
+  
+  // global singletons
+  static std::shared_ptr<Mesh::Manager>                   meshManager_;                   //< object that saves all meshes that are used
+  static std::shared_ptr<MappingBetweenMeshes::Manager>   mappingBetweenMeshesManager_;   //< object that store all mappings between meshes
+  static std::shared_ptr<Solver::Manager>                 solverManager_;                 //< object that saves all solver configurations that are used
+  static std::shared_ptr<Partition::Manager>              partitionManager_;              //< partition manager object that creates and manages partitionings
+  
   static int nRanksCommWorld_;                        //< number of ranks in MPI_COMM_WORLD
   static int ownRankNoCommWorld_;                     //< the own rank no in MPI_COMM_WORLD, using MPI_COMM_WORLD should be avoided in the program, instead use this global variable
   static bool initialized_;                           //< if MPI, Petsc and easyloggingPP is already initialized. This needs to be done only once in the program.
@@ -145,6 +149,7 @@ private:
   static std::shared_ptr<std::thread> megamolThread_; //< thread that runs megamol
   static std::vector<char *> megamolArgv_;            //< the arguments use for the megamol instance
   static std::vector<std::string> megamolArguments_;  //< the string data of the megamol arguments
+  static std::shared_ptr<SolverStructureVisualizer>       solverStructureVisualizer_;    //< object that collects information about all nested solvers and produces a diagram, also with data connections
   static std::string solverStructureDiagramFile_;     //< filename of a file produced by solverStructureVisualizer_
   bool doNotFinalizeMpi_;                             //< when the last object gets destroyed, either MPI_Finalize() is called (should be used) or MPI_Barrier (only needed in testcases where MPI context needs to be used for the next test cases)
 

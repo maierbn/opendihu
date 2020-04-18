@@ -98,8 +98,9 @@ initializeSampledPoints()
       Vec2 xi;
 
       double residual;
-      //findPosition(Vec3 point, element_no_t &elementNo, int &ghostMeshNo, std::array<double,D> &xi, bool startSearchInCurrentElement, double &residual, double xiTolerance)
-      bool pointFound = functionSpaces_[functionSpaceNo]->findPosition(point, elementNoLocal, ghostMeshNo, xi, true, residual);
+      bool searchedAllElements;
+      //findPosition(Vec3 point, element_no_t &elementNo, int &ghostMeshNo, std::array<double,D> &xi, bool startSearchInCurrentElement, double &residual, bool &searchedAllElements, double xiTolerance)
+      bool pointFound = functionSpaces_[functionSpaceNo]->findPosition(point, elementNoLocal, ghostMeshNo, xi, true, residual, searchedAllElements);
 
 
       if (pointFound)

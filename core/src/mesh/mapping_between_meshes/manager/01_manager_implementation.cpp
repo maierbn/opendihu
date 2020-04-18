@@ -1,20 +1,19 @@
-#include "mesh/mapping_between_meshes/mapping_between_meshes_manager.h"
+#include "mesh/mapping_between_meshes/manager/01_manager_implementation.h"
 
 #include "function_space/function_space.h"
 #include "mesh/structured_regular_fixed.h"
 #include "mesh/unstructured_deformable.h"
 
-namespace Mesh
+namespace MappingBetweenMeshes
 {
 
-MappingBetweenMeshesManager::MappingBetweenMeshesManager(PythonConfig specificSettings) :
-  specificSettings_(specificSettings)
+ManagerImplementation::ManagerImplementation(PythonConfig specificSettings) :
+  ManagerLog(specificSettings)
 {
-  LOG(TRACE) << "MeshMappingBetweenMeshesManager constructor";
-  storeMappingsBetweenMeshes();
+  storeMappingsBetweenMeshes(specificSettings);
 }
 
-void MappingBetweenMeshesManager::storeMappingBetweenMeshes(std::string sourceMeshName, PyObject *targetMeshPy)
+void ManagerImplementation::storeMappingBetweenMeshes(std::string sourceMeshName, PyObject *targetMeshPy)
 {
   if (PyUnicode_Check(targetMeshPy))
   {
@@ -30,7 +29,11 @@ void MappingBetweenMeshesManager::storeMappingBetweenMeshes(std::string sourceMe
       mappingWithSettings.xiTolerance = 0.0;
       mappingWithSettings.enableWarnings = true;
       mappingWithSettings.compositeUseOnlyInitializedMappings = false;
+      mappingWithSettings.isEnabledFixUnmappedDofs = true;
       mappingsBetweenMeshes_[sourceMeshName].insert(std::pair<std::string,MappingWithSettings>(targetMeshToMapTo,mappingWithSettings));
+
+      // log event, to be included in the log file
+      addLogEntryMapping(sourceMeshName, targetMeshToMapTo, mappingLogEntry_t::logEvent_t::eventParseSettings);
     }
   }
   else if (PyDict_Check(targetMeshPy))
@@ -47,6 +50,7 @@ void MappingBetweenMeshesManager::storeMappingBetweenMeshes(std::string sourceMe
     // parse if warnings should be shown
     bool enableWarnings = PythonUtility::getOptionBool(targetMeshPy, "enableWarnings", stringPath.str(), true);
     bool compositeUseOnlyInitializedMappings = PythonUtility::getOptionBool(targetMeshPy, "compositeUseOnlyInitializedMappings", stringPath.str(), false);
+    bool isEnabledFixUnmappedDofs = PythonUtility::getOptionBool(targetMeshPy, "fixUnmappedDofs", stringPath.str(), true);
 
     VLOG(1) << "Store mapping between mesh \"" << sourceMeshName << "\" and " << targetMeshToMapTo << " with xiTolerance " << xiTolerance;
 
@@ -59,7 +63,11 @@ void MappingBetweenMeshesManager::storeMappingBetweenMeshes(std::string sourceMe
       mappingWithSettings.xiTolerance = xiTolerance;
       mappingWithSettings.enableWarnings = enableWarnings;
       mappingWithSettings.compositeUseOnlyInitializedMappings = compositeUseOnlyInitializedMappings;
+      mappingWithSettings.isEnabledFixUnmappedDofs = isEnabledFixUnmappedDofs;
       mappingsBetweenMeshes_[sourceMeshName].insert(std::pair<std::string,MappingWithSettings>(targetMeshToMapTo,mappingWithSettings));
+
+      // log event, to be included in the log file
+      addLogEntryMapping(sourceMeshName, targetMeshToMapTo, mappingLogEntry_t::logEvent_t::eventParseSettings);
     }
   }
   else
@@ -69,23 +77,23 @@ void MappingBetweenMeshesManager::storeMappingBetweenMeshes(std::string sourceMe
   }
 }
 
-void MappingBetweenMeshesManager::storeMappingsBetweenMeshes()
+void ManagerImplementation::storeMappingsBetweenMeshes(PythonConfig specificSettings)
 {
-  LOG(TRACE) << "MeshMappingBetweenMeshesManager::storeMappingsBetweenMeshes";
+  LOG(TRACE) << "MeshManagerImplementation::storeMappingsBetweenMeshes";
 
   // retrieve python settings object
-  if (specificSettings_.pyObject())
+  if (specificSettings.pyObject())
   {
     // if the python setting contain the key "MappingsBetweenMeshes"
     std::string keyString("MappingsBetweenMeshes");
-    if (specificSettings_.hasKey(keyString))
+    if (specificSettings.hasKey(keyString))
     {
       // loop over the dict
       std::pair<std::string, PyObject *> dictItem
-        = specificSettings_.getOptionDictBegin<std::string, PyObject *>(keyString);
+        = specificSettings.getOptionDictBegin<std::string, PyObject *>(keyString);
 
-      for (; !specificSettings_.getOptionDictEnd(keyString);
-          specificSettings_.getOptionDictNext<std::string, PyObject *>(keyString, dictItem))
+      for (; !specificSettings.getOptionDictEnd(keyString);
+          specificSettings.getOptionDictNext<std::string, PyObject *>(keyString, dictItem))
       {
         std::string key = dictItem.first;
         PyObject *value = dictItem.second;
@@ -109,6 +117,10 @@ void MappingBetweenMeshesManager::storeMappingsBetweenMeshes()
         }
       }
     }
+  }
+  else 
+  {
+    LOG(ERROR) << "specificSettings is not set";
   }
 }
 

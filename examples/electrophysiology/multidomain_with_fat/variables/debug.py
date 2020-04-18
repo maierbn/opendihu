@@ -30,8 +30,10 @@ motor_units = motor_units[0:2]  # only two motor units
 
 # solvers
 # -------
-multidomain_solver_type = "gmres"         # solver for the multidomain problem
+multidomain_solver_type = "cg"         # solver for the multidomain problem
 multidomain_preconditioner_type = "euclid"   # preconditioner
+multidomain_alternative_solver_type = "lu"           # alternative solver, used when normal solver diverges
+multidomain_alternative_preconditioner_type = "none"     # preconditioner of the alternative solver
 
 theta = 0.5                               # weighting factor of implicit term in Crank-Nicolson scheme, 0.5 gives the classic, 2nd-order Crank-Nicolson scheme, 1.0 gives implicit euler
 use_symmetric_preconditioner_matrix = True    # if the diagonal blocks of the system matrix should be used as preconditioner matrix, (True means more iterations in the solver but faster preconditioner)

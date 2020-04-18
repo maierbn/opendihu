@@ -42,6 +42,9 @@ multidomain_solver_type = "gmres"          # solver for the multidomain problem
 multidomain_preconditioner_type = "boomeramg"   # preconditioner
 #multidomain_preconditioner_type = "euclid"   # preconditioner
 
+multidomain_alternative_solver_type = "gmres"            # alternative solver, used when normal solver diverges
+multidomain_alternative_preconditioner_type = "euclid"    # preconditioner of the alternative solver
+
 # set initial guess to zero for direct solver
 initial_guess_nonzero = "lu" not in multidomain_solver_type 
 

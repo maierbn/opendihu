@@ -14,11 +14,13 @@ namespace FunctionSpace
 // structured mesh
 template<typename MeshType, typename BasisFunctionType>
 bool FunctionSpaceStructuredFindPositionBase<MeshType,BasisFunctionType>::
-findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::array<double,MeshType::dim()> &xi, bool startSearchInCurrentElement, double &residual, double xiTolerance)
+findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::array<double,MeshType::dim()> &xi, bool startSearchInCurrentElement, double &residual, bool &searchedAllElements, double xiTolerance)
 {
   const element_no_t nElements = this->nElementsLocal();
   VLOG(1) << "findPosition(" << point << ", elementNoLocal: " << elementNoLocal << ", ghostMeshNo: " << ghostMeshNo
     << ", startSearchInCurrentElement: " << startSearchInCurrentElement << ", xiTolerance: " << xiTolerance << ", xi: " << xi << ")";
+
+  searchedAllElements = false;
 
   // set starting no to 0 if it was not given and is thus arbitrarily initialized
   if (elementNoLocal < 0 || elementNoLocal >= nElements)
@@ -175,6 +177,7 @@ findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::ar
   }
 
   // search among all elements
+  searchedAllElements = true;
 
   // look in every element, starting at elementNoLocal-2
   element_no_t elementNoLocalStart = (elementNoLocal - 2 + nElements) % nElements;
@@ -267,7 +270,8 @@ findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::ar
     if (ghostMesh_[face] != nullptr)
     {
       VLOG(3) << "   ghost mesh " << Mesh::getString((Mesh::face_t)face) << " is set";
-      if (ghostMesh_[face]->findPosition(point, elementNoLocal, ghostMeshNo, xi, false, residual))
+      bool ghostSearchedAllElements = false;
+      if (ghostMesh_[face]->findPosition(point, elementNoLocal, ghostMeshNo, xi, false, residual, ghostSearchedAllElements))
       {
         VLOG(3) << "   point found in ghost mesh " << Mesh::getString((Mesh::face_t)face) << ", element " << elementNoLocal << ", xi " << xi;
         ghostMeshNo = face;

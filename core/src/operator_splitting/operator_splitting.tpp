@@ -80,7 +80,7 @@ initialize()
 
   LOG(DEBUG) << "initialize mappings between meshes \"" << timeStepping1_.data().functionSpace()->meshName() << "\" and \""
     << timeStepping2_.data().functionSpace()->meshName() << "\".";
-  context_.meshManager()->initializeMappingsBetweenMeshes<typename TimeStepping1::FunctionSpace,typename TimeStepping2::FunctionSpace>(
+  context_.mappingBetweenMeshesManager()->initializeMappingsBetweenMeshes<typename TimeStepping1::FunctionSpace,typename TimeStepping2::FunctionSpace>(
     timeStepping1_.data().functionSpace(), timeStepping2_.data().functionSpace());
 
   // log endTime parameters

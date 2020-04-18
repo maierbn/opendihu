@@ -81,18 +81,21 @@ initialize()
   // as nested Petsc Mat and also the single Mat, this->singleSystemMatrix_ 
   this->createSystemMatrixFromSubmatrices();
 
-  // set matrix used for linear solver and preconditioner to ksp context
-  assert(this->linearSolver_->ksp());
-  PetscErrorCode ierr;
-  ierr = KSPSetOperators(*this->linearSolver_->ksp(), this->singleSystemMatrix_, this->singlePreconditionerMatrix_); CHKERRV(ierr);
-
   // set the nullspace of the matrix
   // as we have Neumann boundary conditions, constant functions are in the nullspace of the matrix
   MatNullSpace nullSpace;
+  PetscErrorCode ierr;
   ierr = MatNullSpaceCreate(data().functionSpace()->meshPartition()->mpiCommunicator(), PETSC_TRUE, 0, PETSC_NULL, &nullSpace); CHKERRV(ierr);
   ierr = MatSetNullSpace(this->singleSystemMatrix_, nullSpace); CHKERRV(ierr);
   ierr = MatSetNearNullSpace(this->singleSystemMatrix_, nullSpace); CHKERRV(ierr); // for multigrid methods
   //ierr = MatNullSpaceDestroy(&nullSpace); CHKERRV(ierr);
+
+  // set matrix used for linear solver and preconditioner to ksp context
+  assert(this->linearSolver_->ksp());
+  ierr = KSPSetOperators(*this->linearSolver_->ksp(), this->singleSystemMatrix_, this->singlePreconditionerMatrix_); CHKERRV(ierr);
+
+  if (this->alternativeLinearSolver_)
+    ierr = KSPSetOperators(*this->alternativeLinearSolver_->ksp(), this->singleSystemMatrix_, this->singlePreconditionerMatrix_); CHKERRV(ierr);
 
   // set block information in preconditioner for block jacobi and node positions for MG preconditioners
   setInformationToPreconditioner();
@@ -371,6 +374,14 @@ setInformationToPreconditioner()
   LOG(DEBUG) << "set coordinates to preconditioner, " << nodePositionCoordinatesForPreconditioner.size() << " node coordinates";
 
   ierr = PCSetCoordinates(pc, 3, nodePositionCoordinatesForPreconditioner.size(), nodePositionCoordinatesForPreconditioner.data()); CHKERRV(ierr);
+
+  // initialize preconditioner of alternative linear solver
+  if (this->alternativeLinearSolver_)
+  {
+    PC pc;
+    ierr = KSPGetPC(*this->alternativeLinearSolver_->ksp(), &pc); CHKERRV(ierr);
+    ierr = PCSetCoordinates(pc, 3, nodePositionCoordinatesForPreconditioner.size(), nodePositionCoordinatesForPreconditioner.data()); CHKERRV(ierr);
+  }
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusionMuscle,typename FiniteElementMethodDiffusionFat>
@@ -445,9 +456,6 @@ solveLinearSystem()
   // copy the values from the nested Petsc Vec nestedRightHandSide_ to the single Vec, singleRightHandSide_, that contains all entries
   NestedMatVecUtility::createVecFromNestedVec(this->nestedRightHandSide_, this->singleRightHandSide_, data().functionSpace()->meshPartition()->rankSubset());
 
-  // copy the values from the nested Petsc Vec,nestedSolution_, to the single Vec, singleSolution_, that contains all entries
-  NestedMatVecUtility::createVecFromNestedVec(this->nestedSolution_, this->singleSolution_, data().functionSpace()->meshPartition()->rankSubset());
-
   if (VLOG_IS_ON(1))
   {
     VLOG(1) << "this->nestedRightHandSide_: " << PetscUtility::getStringVector(this->nestedRightHandSide_);
@@ -459,6 +467,11 @@ solveLinearSystem()
   // try up to three times to solve the system
   for (int solveNo = 0; solveNo < 5; solveNo++)
   {
+    if (solveNo == 0 || solveNo == 1)
+    {
+      // copy the values from the nested Petsc Vec,nestedSolution_, to the single Vec, singleSolution_, that contains all entries
+      NestedMatVecUtility::createVecFromNestedVec(this->nestedSolution_, this->singleSolution_, data().functionSpace()->meshPartition()->rankSubset());
+    }
 
     // Solve the linear system
     // using single Vecs and Mats that contain all values directly  (singleSolution_, singleRightHandSide_, singleSystemMatrix_)
@@ -466,12 +479,18 @@ solveLinearSystem()
     if (this->showLinearSolverOutput_)
     {
       // solve and show information on convergence
-      hasSolverConverged = this->linearSolver_->solve(this->singleRightHandSide_, this->singleSolution_, "Linear system of multidomain problem solved");
+      if (solveNo == 0)
+        hasSolverConverged = this->linearSolver_->solve(this->singleRightHandSide_, this->singleSolution_, "Linear system of multidomain problem solved");
+      else
+        hasSolverConverged = this->alternativeLinearSolver_->solve(this->singleRightHandSide_, this->singleSolution_, "Linear system of multidomain problem solved");
     }
     else
     {
       // solve without showing output
-      hasSolverConverged = this->linearSolver_->solve(this->singleRightHandSide_, this->singleSolution_);
+      if (solveNo == 0)
+        hasSolverConverged = this->linearSolver_->solve(this->singleRightHandSide_, this->singleSolution_);
+      else
+        hasSolverConverged = this->alternativeLinearSolver_->solve(this->singleRightHandSide_, this->singleSolution_);
     }
     if (hasSolverConverged)
     {
@@ -479,7 +498,10 @@ solveLinearSystem()
     }
     else
     {
-      LOG(WARNING) << "Solver has not converged, try again " << solveNo << "/5";
+      if (this->alternativeLinearSolver_)
+        LOG(WARNING) << "Solver has not converged, try again with alternative linear solver " << solveNo << "/5";
+      else
+        LOG(WARNING) << "Solver has not converged, try again " << solveNo << "/5";
     }
   }
 

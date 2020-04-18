@@ -196,21 +196,25 @@ multidomain_solver = {
   
 config = {
   "scenarioName":          variables.scenario_name,
-  "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
-  "meta": {                 # additional fields that will appear in the log
+  "solverStructureDiagramFile":     "solver_structure.txt",               # output file of a diagram that shows data connection between solvers
+  "mappingsBetweenMeshesLogFile":   "mappings_between_meshes_log.txt",    # log file for mappings 
+  "meta": {                                                               # additional fields that will appear in the log
     "partitioning":         [variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z]
   },
   "Meshes":                variables.meshes,
   "MappingsBetweenMeshes": {
-    "3Dmesh": "3Dmesh_elasticity_quadratic",                         # mappings to be used without composite meshes
-    "3Dmesh":
-       {"name": "3Dmesh_elasticity_quadratic+3DFatMesh_elasticity_quadratic", "xiTolerance": 0.01, "enableWarnings": True, "compositeUseOnlyInitializedMappings": True},     # mapping from multidomain to elasticity mesh, for transferring γ
-    "3Dmesh_elasticity_quadratic+3DFatMesh_elasticity_quadratic": [
-       {"name": "3Dmesh",    "xiTolerance": 0.01, "enableWarnings": False, "compositeUseOnlyInitializedMappings": True},    # mapping uses mappings of submeshes (i.e. 3Dmesh_elasticity_quadratic->3Dmesh)
-       {"name": "3DFatMesh", "xiTolerance": 0.01, "enableWarnings": False, "compositeUseOnlyInitializedMappings": True},    # mapping uses mappings of submeshes (i.e. 3DFatMesh_elasticity_quadratic->3DFatMesh)    
+    "3Dmesh": [
+       {"name": "3Dmesh_elasticity_quadratic",                                "xiTolerance": 0.01, "enableWarnings": True, "compositeUseOnlyInitializedMappings": True, "fixUnmappedDofs": True},
+       {"name": "3Dmesh_elasticity_quadratic+3DFatMesh_elasticity_quadratic", "xiTolerance": 0.01, "enableWarnings": True, "compositeUseOnlyInitializedMappings": True, "fixUnmappedDofs": False},     # mapping from multidomain to elasticity mesh, for transferring γ
     ],
-    "3Dmesh_elasticity_quadratic": "3Dmesh",           
-    "3DFatMesh_elasticity_quadratic": "3DFatMesh", 
+    "3DFatMesh":  [
+       {"name": "3DFatMesh_elasticity_quadratic",                             "xiTolerance": 0.01, "enableWarnings": True, "compositeUseOnlyInitializedMappings": True, "fixUnmappedDofs": True},
+       {"name": "3Dmesh_elasticity_quadratic+3DFatMesh_elasticity_quadratic", "xiTolerance": 0.01, "enableWarnings": True, "compositeUseOnlyInitializedMappings": True, "fixUnmappedDofs": False},     # mapping from multidomain to elasticity mesh, for transferring γ
+    ],
+    "3Dmesh_elasticity_quadratic+3DFatMesh_elasticity_quadratic": [
+       {"name": "3Dmesh",    "xiTolerance": 0.01, "enableWarnings": False, "compositeUseOnlyInitializedMappings": True, "fixUnmappedDofs": True},    # mapping uses mappings of submeshes (i.e. 3Dmesh_elasticity_quadratic->3Dmesh)
+       {"name": "3DFatMesh", "xiTolerance": 0.01, "enableWarnings": False, "compositeUseOnlyInitializedMappings": True, "fixUnmappedDofs": True},    # mapping uses mappings of submeshes (i.e. 3DFatMesh_elasticity_quadratic->3DFatMesh)    
+    ],
   },
   "Solvers": {
     "potentialFlowSolver": {

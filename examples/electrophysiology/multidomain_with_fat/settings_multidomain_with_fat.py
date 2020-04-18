@@ -108,8 +108,8 @@ if variables.initial_guess_nonzero is None:
 # output information of run
 if rank_no == 0:
   print("scenario_name: {},  n_subdomains: {} {} {},  n_ranks: {},  end_time: {}".format(variables.scenario_name, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, n_ranks, variables.end_time))
-  print("dt_0D:           {:0.0e}    multidomain solver:         {}, lumped mass matrix: {}, initial guess: {}".format(variables.dt_0D, variables.multidomain_solver_type, variables.use_lumped_mass_matrix, "0" if not variables.initial_guess_nonzero else "previous solution"))
-  print("dt_multidomain:  {:0.0e}    multidomain preconditioner: {}, symmetric precond.: {}".format(variables.dt_multidomain, variables.multidomain_preconditioner_type, variables.use_symmetric_preconditioner_matrix))
+  print("dt_0D:           {:0.0e}    multidomain solver:         {} ({}), lumped mass matrix: {}, initial guess: {}".format(variables.dt_0D, variables.multidomain_solver_type, variables.multidomain_alternative_solver_type, variables.use_lumped_mass_matrix, "0" if not variables.initial_guess_nonzero else "previous solution"))
+  print("dt_multidomain:  {:0.0e}    multidomain preconditioner: {} ({}), symmetric precond.: {}".format(variables.dt_multidomain, variables.multidomain_preconditioner_type, variables.multidomain_alternative_preconditioner_type, variables.use_symmetric_preconditioner_matrix))
   print("dt_splitting:    {:0.0e}    theta: {}, solver tolerances, abs: {}, rel: {}".format(variables.dt_splitting, variables.theta, variables.multidomain_absolute_tolerance, variables.multidomain_relative_tolerance))
   print("fiber_file:              {}".format(variables.fiber_file))
   print("fat_mesh_file:           {}".format(variables.fat_mesh_file))
@@ -139,6 +139,7 @@ multidomain_solver = {
   
   # solver options
   "solverName":                       "multidomainLinearSolver",            # reference to the solver used for the global linear system of the multidomain eq.
+  "alternativeSolverName":            "multidomainAlternativeLinearSolver", # reference to the alternative solver, which is used when the normal solver diverges
   "theta":                            variables.theta,                      # weighting factor of implicit term in Crank-Nicolson scheme, 0.5 gives the classic, 2nd-order Crank-Nicolson scheme, 1.0 gives implicit euler
   "useLumpedMassMatrix":              variables.use_lumped_mass_matrix,     # which formulation to use, the formulation with lumped mass matrix (True) is more stable but approximative, the other formulation (False) is exact but needs more iterations
   "useSymmetricPreconditionerMatrix": variables.use_symmetric_preconditioner_matrix,    # if the diagonal blocks of the system matrix should be used as preconditioner matrix
@@ -198,6 +199,7 @@ multidomain_solver = {
 config = {
   "scenarioName":          variables.scenario_name,
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
+  "mappingsBetweenMeshesLogFile":   "mappings_between_meshes.txt",   # log file for mappings between meshes
   "meta": {                 # additional fields that will appear in the log
     "partitioning":         [variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z]
   },
@@ -216,9 +218,19 @@ config = {
     "multidomainLinearSolver": {
       "relativeTolerance":  variables.multidomain_relative_tolerance,
       "absoluteTolerance":  variables.multidomain_absolute_tolerance,         # 1e-10 absolute tolerance of the residual          
-      "maxIterations":      1e5,
+      "maxIterations":      1e3,
       "solverType":         variables.multidomain_solver_type,
       "preconditionerType": variables.multidomain_preconditioner_type,
+      "hypreOptions":       "",                                   # additional options if a hypre preconditioner is selected
+      "dumpFormat":         "matlab",
+      "dumpFilename":       "",
+    },
+    "multidomainAlternativeLinearSolver": {                                   # the alternative solver is used when the normal solver diverges
+      "relativeTolerance":  variables.multidomain_relative_tolerance,
+      "absoluteTolerance":  variables.multidomain_absolute_tolerance,         # 1e-10 absolute tolerance of the residual          
+      "maxIterations":      1e4,
+      "solverType":         variables.multidomain_alternative_solver_type,
+      "preconditionerType": variables.multidomain_alternative_preconditioner_type,
       "hypreOptions":       "",                                   # additional options if a hypre preconditioner is selected
       "dumpFormat":         "matlab",
       "dumpFilename":       "",

@@ -98,7 +98,7 @@ class Manager : public ManagerImplementation
 {
 public:
   //! constructor
-  using ManagerImplementation::ManagerImplementation(PythonConfig specificSettings);
+  using ManagerImplementation::ManagerImplementation;
 
   //! check if a MappingBetweenMeshes object need to be created and initialized
   //! FunctionSpace1Type should be the lower dimension function space, FunctionSpace2Type the higher dimension function space

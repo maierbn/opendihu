@@ -37,7 +37,8 @@ public:
 
   //! constructor, the function spaces need to be initialized
   MappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSource, std::shared_ptr<FunctionSpaceTargetType> functionSpaceTarget, 
-                                double xiTolerance=0, bool enableWarnings=true, bool compositeUseOnlyInitializedMappings=false);
+                      double xiTolerance=0, bool enableWarnings=true, bool compositeUseOnlyInitializedMappings=false,
+                      bool isEnabledFixUnmappedDofs=true);
 };
 
 }  // namespace

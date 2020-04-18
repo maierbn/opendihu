@@ -5,6 +5,8 @@
 namespace MappingBetweenMeshes
 {
 
+std::string ManagerLog::logFilename_;                                   //< filename of a log file that contains information about which mappings were created and used
+std::vector<ManagerLog::mappingLogEntry_t> ManagerLog::logEntries_;     //< all entries that will be written to the log file
 
 ManagerLog::ManagerLog(PythonConfig specificSettings) :
   specificSettings_(specificSettings)
@@ -48,6 +50,19 @@ void ManagerLog::addLogEntryMapping(std::string meshNameSource, std::string mesh
   logEntries_.push_back(logEntry);
 }
 
+//! add a message
+void ManagerLog::addLogMessage(std::string message)
+{
+  mappingLogEntry_t logEntry;
+  logEntry.logEvent = mappingLogEntry_t::logEvent_t::eventMessage;
+  logEntry.message = message;
+  logEntry.nMappedSourceMeshes = 0;
+  logEntry.nRepetitions = 0;
+
+  // add entry to logs
+  logEntries_.push_back(logEntry);
+}
+
 std::string ManagerLog::produceLogContents()
 {
   std::stringstream log;
@@ -74,7 +89,7 @@ std::string ManagerLog::produceLogContents()
       else 
         log << " component " << logEntry.componentNoFrom;
       
-      log << " (mesh \"" << logEntry.meshNameFrom << "\" (" << logEntry.dimensionalityFrom << "D) ";
+      log << " mesh \"" << logEntry.meshNameFrom << "\" (" << logEntry.dimensionalityFrom << "D) ";
       
       if (logEntry.nMappedSourceMeshes > 1)
         log << " [and other field variables/meshes, in total " << logEntry.nMappedSourceMeshes << " ]";
@@ -85,7 +100,7 @@ std::string ManagerLog::produceLogContents()
       else 
         log << " component " << logEntry.componentNoTo;
 
-      log << " (mesh \"" << logEntry.meshNameTo << "\" (" << logEntry.dimensionalityTo << "D)";
+      log << " mesh \"" << logEntry.meshNameTo << "\" (" << logEntry.dimensionalityTo << "D)";
       
       if (logEntry.logEvent == mappingLogEntry_t::logEvent_t::eventMapForward)
       {
@@ -98,6 +113,9 @@ std::string ManagerLog::produceLogContents()
           "\"" << logEntry.meshNameFrom << "\" (" << logEntry.dimensionalityFrom << "D)";
       }
       break;
+
+    case mappingLogEntry_t::logEvent_t::eventMessage:
+      log << logEntry.message;
     }
     if (logEntry.nRepetitions > 0)
     {

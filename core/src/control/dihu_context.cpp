@@ -78,6 +78,7 @@ void handleSignal(int signalNo)
   Control::PerformanceMeasurement::writeLogFile();
   Control::StimulationLogging::writeLogFile();
   DihuContext::writeSolverStructureDiagram();
+  MappingBetweenMeshes::Manager::writeLogFile();
 
   int rankNo = DihuContext::ownRankNoCommWorld();
   LOG(INFO) << "Rank " << rankNo << " received signal " << sys_siglist[signalNo]
@@ -503,6 +504,7 @@ DihuContext::~DihuContext()
     writeSolverStructureDiagram();
     Control::StimulationLogging::writeLogFile();
     Control::PerformanceMeasurement::writeLogFile();
+    MappingBetweenMeshes::Manager::writeLogFile();
 
     // After a call to MPI_Finalize we cannot call MPI_Initialize() anymore.
     // This is only a problem when the code is tested with the GoogleTest framework, because then we want to run multiple tests in one executable.

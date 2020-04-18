@@ -5,6 +5,8 @@
 #include "utility/vector_operators.h"
 #include "control/dihu_context.h"
 #include "mesh/type_traits.h"
+#include "mesh/mapping_between_meshes/manager/02_manager.h"
+#include "mesh/mapping_between_meshes/manager/target_element_no_estimator.h"
 
 namespace MappingBetweenMeshes
 {
@@ -13,7 +15,8 @@ template<typename FunctionSpaceSourceType, typename FunctionSpaceTargetType>
 MappingBetweenMeshesImplementation<FunctionSpaceSourceType, FunctionSpaceTargetType>::
 MappingBetweenMeshesImplementation(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSource,
                      std::shared_ptr<FunctionSpaceTargetType> functionSpaceTarget,
-                     double xiTolerance, bool enableWarnings, bool compositeUseOnlyInitializedMappings) :
+                     double xiTolerance, bool enableWarnings, bool compositeUseOnlyInitializedMappings,
+                     bool isEnabledFixUnmappedDofs) :
   functionSpaceSource_(functionSpaceSource),
   functionSpaceTarget_(functionSpaceTarget),
   maxAllowedXiTolerance_(xiTolerance)
@@ -39,6 +42,7 @@ MappingBetweenMeshesImplementation(std::shared_ptr<FunctionSpaceSourceType> func
     int ghostMeshNo = 0;
     std::array<double,FunctionSpaceTargetType::dim()> xi;
 
+    TargetElementNoEstimator<FunctionSpaceSourceType,FunctionSpaceTargetType> targetElementNoEstimator(functionSpaceSource_, functionSpaceTarget_);
     targetMappingInfo_.resize(nDofsLocalSource);
 
     std::vector<bool> targetDofIsMappedTo(nDofsLocalTarget, false);   //< for every target dof if it will get a value from any source dof
@@ -59,6 +63,8 @@ MappingBetweenMeshesImplementation(std::shared_ptr<FunctionSpaceSourceType> func
     bool startSearchInCurrentElement = false;
     int nSourceDofsOutsideTargetMesh = 0;
     double residual;
+    bool searchedAllElements = false;
+    int nTimesSearchedAllElements = 0;
 
     // visualization for 1D-1D: s=source, t=target
     // t--s--------t-----s-----t
@@ -70,15 +76,21 @@ MappingBetweenMeshesImplementation(std::shared_ptr<FunctionSpaceSourceType> func
       targetDof_t targetMappingInfo;
       targetMappingInfo.targetElements.resize(1);
 
-      // get node position of the source dof
+      // in the special case where two 3D meshes are mapped onto each other and one mesh is a superset of the other, update the elementNo to the exact no
+      targetElementNoEstimator.estimateElementNo(sourceDofNoLocal, elementNo);
 
+      // get node position of the source dof
       //dof_no_t sourceDofNoGlobal = functionSpaceTarget->meshPartition()->getDofNoGlobalPetsc(sourceDofNoLocal);
       Vec3 position = functionSpaceSource->getGeometry(sourceDofNoLocal);
 
       // find element no in the target mesh where the position is
-      if (functionSpaceTarget->findPosition(position, elementNo, ghostMeshNo, xi, startSearchInCurrentElement, residual, xiTolerance))
+      if (functionSpaceTarget->findPosition(position, elementNo, ghostMeshNo, xi, startSearchInCurrentElement, residual, searchedAllElements, xiTolerance))
       {
         targetMappingInfo.mapThisDof = true;
+
+        if (searchedAllElements)
+          nTimesSearchedAllElements++;
+
         VLOG(1) << "found at xi=" << xi << ", elementNo: " << elementNo << ", xiTolerance=" << xiTolerance << ", residual: " << residual;
       }
       else
@@ -135,7 +147,6 @@ MappingBetweenMeshesImplementation(std::shared_ptr<FunctionSpaceSourceType> func
         targetMappingInfo.targetElements[0].scalingFactors[targetDofIndex] = phiContribution;
       }
       
-
       targetMappingInfo_[sourceDofNoLocal] = targetMappingInfo;
 
       if (VLOG_IS_ON(2))
@@ -154,132 +165,20 @@ MappingBetweenMeshesImplementation(std::shared_ptr<FunctionSpaceSourceType> func
       startSearchInCurrentElement = true;
     }
 
+    if (nTimesSearchedAllElements > 1)
+    {
+      // add log message, to be included in the log file
+      std::stringstream logMessage;
+      logMessage << "number of dofs in source mesh: " << nDofsLocalSource << ", number of dofs in target mesh: " << nDofsLocalTarget
+        << ", iterated " << nTimesSearchedAllElements << " times over the whole target mesh";
+
+      DihuContext::mappingBetweenMeshesManager()->addLogMessage(logMessage.str());
+    }
+
     // find target dofs that do not appear in any targetMappingInfo and therefore will so far not receive any value when mapping from source to target
-
-    // count number of target dofs that have no source dof mapped
-    int nTargetDofsNotMapped = 0;
-
-    for (dof_no_t targetDofNoLocal = 0; targetDofNoLocal < nDofsLocalTarget; targetDofNoLocal++)
+    if (isEnabledFixUnmappedDofs)
     {
-      if (!targetDofIsMappedTo[targetDofNoLocal])
-      {
-        nTargetDofsNotMapped++;
-      }
-    }
-
-    if (FunctionSpaceSourceType::dim() >= FunctionSpaceTargetType::dim() && nTargetDofsNotMapped > 0 && compositeUseOnlyInitializedMappings)
-    {
-      LOG(DEBUG) << "mapping \"" << functionSpaceSource->meshName() << "\" -> \""
-        << functionSpaceTarget->meshName() << "\", source FunctionSpace dim: "
-        << FunctionSpaceSourceType::dim() << " >= target FunctionSpace dim: " << FunctionSpaceTargetType::dim() << ", "
-        << nTargetDofsNotMapped << " target dofs of " << nDofsLocalTarget << " have no source dofs that would contribute values. "
-        << "But option \"compositeUseOnlyInitializedMappings\" is set to True, therefore not fixing the missing target dofs (might from another submesh)";
-    }
-
-    if (FunctionSpaceSourceType::dim() >= FunctionSpaceTargetType::dim() && nTargetDofsNotMapped > 0 && !compositeUseOnlyInitializedMappings)
-    {
-      LOG(DEBUG) << "mapping \"" << functionSpaceSource->meshName() << "\" -> \""
-        << functionSpaceTarget->meshName() << "\":" << nTargetDofsNotMapped << " target dofs of " << nDofsLocalTarget 
-        << " have no source dofs " 
-        << "that would contribute values. Source FunctionSpace dim: "
-        << FunctionSpaceSourceType::dim() << " >= target FunctionSpace dim: " << FunctionSpaceTargetType::dim() << ". Now fixing.";
-
-      std::set<dof_no_t> targetDofNoLocalNotFixed;    // collect all dofs that are still not fixed
-
-      // loop over all elements in the target function space
-      for (element_no_t targetElementNoLocal = 0; targetElementNoLocal < functionSpaceTarget->nElementsLocal(); targetElementNoLocal++)
-      {
-        std::array<dof_no_t,FunctionSpaceTargetType::nDofsPerElement()> targetDofNos = functionSpaceTarget->getElementDofNosLocal(targetElementNoLocal);
-
-        // loop over dofs of target element
-        for (int targetDofIndex = 0; targetDofIndex < nDofsPerTargetElement; targetDofIndex++)
-        {
-          dof_no_t targetDofNoLocal = targetDofNos[targetDofIndex];
-
-          // if this is a ghost dof, do not handle it
-          if (targetDofNoLocal >= nDofsLocalTarget)
-            continue;
-
-          Vec3 position = functionSpaceTarget->getGeometry(targetDofNoLocal);
-          LOG(DEBUG) << " e" << targetElementNoLocal << " i" << targetDofIndex << ", targetDofIsMappedTo[" << targetDofNoLocal << "]: " << targetDofIsMappedTo[targetDofNoLocal] << ", position: " << position;
-
-          // if target dof is not being mapped to by any source dof, simply initiate interpolation of the source mesh to this dof
-          if (!targetDofIsMappedTo[targetDofNoLocal])
-          {
-            // get one element of the target dof
-
-            // find element and xi position in source mesh where target dof is located
-            Vec3 position = functionSpaceTarget->getGeometry(targetDofNoLocal);
-            element_no_t sourceElementNo = 0;
-            bool startSearchInCurrentElement = false;
-            std::array<double,FunctionSpaceSourceType::dim()> xiSource;
-
-            //LOG(DEBUG) << "target (el." << targetElementNoLocal << ",index" << targetDofIndex << ") dof " << targetDofNoLocal << ", position: " << position
-            //  << " is not mapped, now find element in source function space";
-
-            if (functionSpaceSource->findPosition(position, sourceElementNo, ghostMeshNo, xiSource, startSearchInCurrentElement, residual, xiTolerance))
-            {
-              // get dofs of this source element
-              std::array<dof_no_t,FunctionSpaceSourceType::nDofsPerElement()> sourceDofNos = functionSpaceSource->getElementDofNosLocal(sourceElementNo);
-
-              LOG(DEBUG) << "at position " << position << " found source element " << sourceElementNo << ", xi " << xiSource << ", with dofs " << sourceDofNos;
-
-              // loop over all the source dofs that will contribute to the value of the target dof
-              for (int sourceDofIndex = 0; sourceDofIndex != FunctionSpaceSourceType::nDofsPerElement(); sourceDofIndex++)
-              {
-                dof_no_t sourceDofNoLocal = sourceDofNos[sourceDofIndex];
-
-                // create new entry for the targetMappingInfo_[sourceDofNoLocal]
-                typename targetDof_t::element_t targetElement;
-
-                // set element no
-                targetElement.elementNoLocal = targetElementNoLocal;
-
-                // set scaling factors
-                for (int i = 0; i < FunctionSpaceTargetType::nDofsPerElement(); i++)
-                {
-                  targetElement.scalingFactors[i] = 0;
-                }
-
-                double phiContribution = functionSpaceSource->phi(sourceDofIndex, xiSource);
-                targetElement.scalingFactors[targetDofIndex] = phiContribution;
-
-                try 
-                {
-                  targetMappingInfo_[sourceDofNoLocal].targetElements.push_back(targetElement);
-                }
-                catch (...)
-                {
-                  LOG(ERROR) << "Could allocate memory while creation of mapping \"" << functionSpaceSource->meshName() << "\" -> \""
-                    << functionSpaceTarget->meshName() << "\":" << nTargetDofsNotMapped << " target dofs of " << nDofsLocalTarget 
-                    << " have no source dofs that would contribute values. Source FunctionSpace dim: "
-                    << FunctionSpaceSourceType::dim() << " >= target FunctionSpace dim: " << FunctionSpaceTargetType::dim();
-                  break;
-                }
-
-                //LOG(DEBUG) << "add scaling Factor " << phiContribution << " at targetDofIndex " << targetDofIndex << " of targetELement " << targetElementNoLocal
-                //  << ", now, source dof " << sourceDofNoLocal << " has " << targetMappingInfo_[sourceDofNoLocal].targetElements.size() << " target elements.";
-
-              }
-
-              // now the target dof is fixed
-              targetDofIsMappedTo[targetDofNoLocal] = true;
-            }
-            else
-            {
-              LOG(DEBUG) << "Could not find element of source dof for position " << position;
-              targetDofNoLocalNotFixed.insert(targetDofNoLocal);
-            }
-          }
-        }
-      }
-      LOG(DEBUG) << "after fixing target dofs by source mesh interpolation, " << targetDofNoLocalNotFixed.size()
-        << " remaining targetDofNoLocalNotFixed: " << targetDofNoLocalNotFixed;
-    }
-    else
-    {
-      LOG(DEBUG) << nTargetDofsNotMapped << " target dofs have no source dofs that would contribute values. Source FunctionSpace dim: "
-        << FunctionSpaceSourceType::dim() << ", target FunctionSpace dim: " << FunctionSpaceTargetType::dim() << ".";
+      fixUnmappedDofs(functionSpaceSource, functionSpaceTarget, xiTolerance, compositeUseOnlyInitializedMappings, targetDofIsMappedTo);
     }
 
     Control::PerformanceMeasurement::stop("durationComputeMappingBetweenMeshes");
@@ -293,6 +192,164 @@ MappingBetweenMeshesImplementation(std::shared_ptr<FunctionSpaceSourceType> func
     }
   }
 }
+
+template<typename FunctionSpaceSourceType, typename FunctionSpaceTargetType>
+void MappingBetweenMeshesImplementation<FunctionSpaceSourceType, FunctionSpaceTargetType>::
+fixUnmappedDofs(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSource,
+                std::shared_ptr<FunctionSpaceTargetType> functionSpaceTarget,
+                double xiTolerance, bool compositeUseOnlyInitializedMappings, const std::vector<bool> &targetDofIsMappedTo)
+{
+  const dof_no_t nDofsLocalTarget = functionSpaceTarget->nDofsLocalWithoutGhosts();
+  const int nDofsPerTargetElement = FunctionSpaceTargetType::nDofsPerElement();
+
+  // count number of target dofs that have no source dof mapped
+  int nTargetDofsNotMapped = 0;
+
+  for (dof_no_t targetDofNoLocal = 0; targetDofNoLocal < nDofsLocalTarget; targetDofNoLocal++)
+  {
+    if (!targetDofIsMappedTo[targetDofNoLocal])
+    {
+      nTargetDofsNotMapped++;
+    }
+  }
+
+  if (FunctionSpaceSourceType::dim() >= FunctionSpaceTargetType::dim() && nTargetDofsNotMapped > 0 && compositeUseOnlyInitializedMappings)
+  {
+    LOG(DEBUG) << "mapping \"" << functionSpaceSource->meshName() << "\" -> \""
+      << functionSpaceTarget->meshName() << "\", source FunctionSpace dim: "
+      << FunctionSpaceSourceType::dim() << " >= target FunctionSpace dim: " << FunctionSpaceTargetType::dim() << ", "
+      << nTargetDofsNotMapped << " target dofs of " << nDofsLocalTarget << " have no source dofs that would contribute values. "
+      << "But option \"compositeUseOnlyInitializedMappings\" is set to True, therefore not fixing the missing target dofs (might from another submesh)";
+
+    // add log message, to be included in the log file
+    std::stringstream logMessage;
+    logMessage << nTargetDofsNotMapped << " target dofs of " << nDofsLocalTarget << " have no source dofs that would contribute values. \n"
+      << "But option \"compositeUseOnlyInitializedMappings\" is set to True, therefore not fixing the missing target dofs (might from another submesh)";
+
+    DihuContext::mappingBetweenMeshesManager()->addLogMessage(logMessage.str());
+  }
+
+  if (FunctionSpaceSourceType::dim() >= FunctionSpaceTargetType::dim() && nTargetDofsNotMapped > 0 && !compositeUseOnlyInitializedMappings)
+  {
+    LOG(DEBUG) << "mapping \"" << functionSpaceSource->meshName() << "\" -> \""
+      << functionSpaceTarget->meshName() << "\":" << nTargetDofsNotMapped << " target dofs of " << nDofsLocalTarget
+      << " have no source dofs "
+      << "that would contribute values. Source FunctionSpace dim: "
+      << FunctionSpaceSourceType::dim() << " >= target FunctionSpace dim: " << FunctionSpaceTargetType::dim() << ". Now fixing.";
+
+    std::set<dof_no_t> targetDofNoLocalNotFixed;    // collect all dofs that are still not fixed
+    int nTimesSearchedAllElements = 0;
+
+    // loop over all elements in the target function space
+    for (element_no_t targetElementNoLocal = 0; targetElementNoLocal < functionSpaceTarget->nElementsLocal(); targetElementNoLocal++)
+    {
+      std::array<dof_no_t,FunctionSpaceTargetType::nDofsPerElement()> targetDofNos = functionSpaceTarget->getElementDofNosLocal(targetElementNoLocal);
+
+      // loop over dofs of target element
+      for (int targetDofIndex = 0; targetDofIndex < nDofsPerTargetElement; targetDofIndex++)
+      {
+        dof_no_t targetDofNoLocal = targetDofNos[targetDofIndex];
+
+        // if this is a ghost dof, do not handle it
+        if (targetDofNoLocal >= nDofsLocalTarget)
+          continue;
+
+        Vec3 position = functionSpaceTarget->getGeometry(targetDofNoLocal);
+        LOG(DEBUG) << " e" << targetElementNoLocal << " i" << targetDofIndex << ", targetDofIsMappedTo[" << targetDofNoLocal << "]: " << targetDofIsMappedTo[targetDofNoLocal] << ", position: " << position;
+
+        // if target dof is not being mapped to by any source dof, simply initiate interpolation of the source mesh to this dof
+        if (!targetDofIsMappedTo[targetDofNoLocal])
+        {
+          // get one element of the target dof
+
+          // find element and xi position in source mesh where target dof is located
+          Vec3 position = functionSpaceTarget->getGeometry(targetDofNoLocal);
+          element_no_t sourceElementNo = 0;
+          bool startSearchInCurrentElement = false;
+          std::array<double,FunctionSpaceSourceType::dim()> xiSource;
+          int ghostMeshNo = 0;
+          double residual;
+          bool searchedAllElements = false;
+
+          //LOG(DEBUG) << "target (el." << targetElementNoLocal << ",index" << targetDofIndex << ") dof " << targetDofNoLocal << ", position: " << position
+          //  << " is not mapped, now find element in source function space";
+          if (functionSpaceSource->findPosition(position, sourceElementNo, ghostMeshNo, xiSource, startSearchInCurrentElement, residual, searchedAllElements, xiTolerance))
+          {
+            if (searchedAllElements)
+              nTimesSearchedAllElements++;
+
+            // get dofs of this source element
+            std::array<dof_no_t,FunctionSpaceSourceType::nDofsPerElement()> sourceDofNos = functionSpaceSource->getElementDofNosLocal(sourceElementNo);
+
+            LOG(DEBUG) << "at position " << position << " found source element " << sourceElementNo << ", xi " << xiSource << ", with dofs " << sourceDofNos;
+
+            // loop over all the source dofs that will contribute to the value of the target dof
+            for (int sourceDofIndex = 0; sourceDofIndex != FunctionSpaceSourceType::nDofsPerElement(); sourceDofIndex++)
+            {
+              dof_no_t sourceDofNoLocal = sourceDofNos[sourceDofIndex];
+
+              // create new entry for the targetMappingInfo_[sourceDofNoLocal]
+              typename targetDof_t::element_t targetElement;
+
+              // set element no
+              targetElement.elementNoLocal = targetElementNoLocal;
+
+              // set scaling factors
+              for (int i = 0; i < FunctionSpaceTargetType::nDofsPerElement(); i++)
+              {
+                targetElement.scalingFactors[i] = 0;
+              }
+
+              double phiContribution = functionSpaceSource->phi(sourceDofIndex, xiSource);
+              targetElement.scalingFactors[targetDofIndex] = phiContribution;
+
+              try
+              {
+                targetMappingInfo_[sourceDofNoLocal].targetElements.push_back(targetElement);
+              }
+              catch (...)
+              {
+                LOG(ERROR) << "Could allocate memory while creation of mapping \"" << functionSpaceSource->meshName() << "\" -> \""
+                  << functionSpaceTarget->meshName() << "\":" << nTargetDofsNotMapped << " target dofs of " << nDofsLocalTarget
+                  << " have no source dofs that would contribute values. Source FunctionSpace dim: "
+                  << FunctionSpaceSourceType::dim() << " >= target FunctionSpace dim: " << FunctionSpaceTargetType::dim();
+                break;
+              }
+
+              //LOG(DEBUG) << "add scaling Factor " << phiContribution << " at targetDofIndex " << targetDofIndex << " of targetELement " << targetElementNoLocal
+              //  << ", now, source dof " << sourceDofNoLocal << " has " << targetMappingInfo_[sourceDofNoLocal].targetElements.size() << " target elements.";
+
+            }
+
+            // now the target dof is fixed
+            //targetDofIsMappedTo[targetDofNoLocal] = true;
+          }
+          else
+          {
+            LOG(DEBUG) << "Could not find element of source dof for position " << position;
+            targetDofNoLocalNotFixed.insert(targetDofNoLocal);
+          }
+        }
+      }
+    }
+    LOG(DEBUG) << "after fixing target dofs by source mesh interpolation, " << targetDofNoLocalNotFixed.size()
+      << " remaining targetDofNoLocalNotFixed: " << targetDofNoLocalNotFixed;
+
+    // add log message, to be included in the log file
+    std::stringstream logMessage;
+    logMessage << nTargetDofsNotMapped << " target dofs of " << nDofsLocalTarget << " had no source dofs that would contribute values."
+      << "Option \"gixUnmappedDofs\" is set to True. After source mesh interpolation, " << targetDofNoLocalNotFixed.size() << " target dofs are still unmapped. "
+      << "nTimesSearchedAllElements: " << nTimesSearchedAllElements;
+
+    DihuContext::mappingBetweenMeshesManager()->addLogMessage(logMessage.str());
+  }
+  else
+  {
+    LOG(DEBUG) << nTargetDofsNotMapped << " target dofs have no source dofs that would contribute values. Source FunctionSpace dim: "
+      << FunctionSpaceSourceType::dim() << ", target FunctionSpace dim: " << FunctionSpaceTargetType::dim() << ".";
+  }
+}
+
 
 template<typename FunctionSpaceSourceType, typename FunctionSpaceTargetType>
   template<int nComponentsSource, int nComponentsTarget>

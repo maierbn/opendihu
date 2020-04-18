@@ -28,10 +28,15 @@ createMappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpac
   double xiTolerance = this->mappingsBetweenMeshes_[sourceMeshName][targetMeshName].xiTolerance;
   bool enableWarnings = this->mappingsBetweenMeshes_[sourceMeshName][targetMeshName].enableWarnings;
   bool compositeUseOnlyInitializedMappings = this->mappingsBetweenMeshes_[sourceMeshName][targetMeshName].compositeUseOnlyInitializedMappings;
+  bool isEnabledFixUnmappedDofs = this->mappingsBetweenMeshes_[sourceMeshName][targetMeshName].isEnabledFixUnmappedDofs;
+
+  LOG(INFO) << "create MappingBetweenMeshes \"" << sourceMeshName << "\" (" << FunctionSpaceSourceType::dim() << "D, " << functionSpaceSource->nNodesGlobal() << " nodes) -> \""
+     << targetMeshName << "\" (" << FunctionSpaceTargetType::dim() << "D, " << functionSpaceTarget->nNodesGlobal() << " nodes), xiTolerance: " << xiTolerance;
 
   // create the mapping under the given source and target mesh names
   this->mappingsBetweenMeshes_[sourceMeshName][targetMeshName].mapping = std::static_pointer_cast<MappingBetweenMeshesBase>(
-    std::make_shared<MappingBetweenMeshes<FunctionSpaceSourceType,FunctionSpaceTargetType>>(functionSpaceSource, functionSpaceTarget, xiTolerance, enableWarnings, compositeUseOnlyInitializedMappings)
+    std::make_shared<MappingBetweenMeshes<FunctionSpaceSourceType,FunctionSpaceTargetType>>(functionSpaceSource, functionSpaceTarget,
+                                                                                            xiTolerance, enableWarnings, compositeUseOnlyInitializedMappings, isEnabledFixUnmappedDofs)
   );
 
   // log event, to be included in the log file

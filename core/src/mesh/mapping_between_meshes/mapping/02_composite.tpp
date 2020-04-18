@@ -13,10 +13,11 @@ namespace MappingBetweenMeshes
 template<int D, typename BasisFunctionType, typename FunctionSpaceTargetType>
 MappingBetweenMeshes<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>, FunctionSpaceTargetType>::
 MappingBetweenMeshes(std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>> functionSpaceSource,
-                              std::shared_ptr<FunctionSpaceTargetType> functionSpaceTarget,
-                              double xiTolerance, bool enableWarnings, bool compositeUseOnlyInitializedMappings) :
+                     std::shared_ptr<FunctionSpaceTargetType> functionSpaceTarget,
+                     double xiTolerance, bool enableWarnings, bool compositeUseOnlyInitializedMappings,
+                     bool isEnabledFixUnmappedDofs) :
   MappingBetweenMeshesImplementation<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>, FunctionSpaceTargetType>(
-    functionSpaceSource, functionSpaceTarget, xiTolerance, enableWarnings, compositeUseOnlyInitializedMappings)
+    functionSpaceSource, functionSpaceTarget, xiTolerance, enableWarnings, compositeUseOnlyInitializedMappings, isEnabledFixUnmappedDofs)
 {
   if (compositeUseOnlyInitializedMappings)
   {

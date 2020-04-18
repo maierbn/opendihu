@@ -30,7 +30,8 @@ public:
 
   //! constructor, the function spaces need to be initialized
   MappingBetweenMeshesImplementation(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSource, std::shared_ptr<FunctionSpaceTargetType> functionSpaceTarget, 
-                       double xiTolerance=0, bool enableWarnings=true, bool compositeUseOnlyInitializedMappings=false);
+                                     double xiTolerance=0, bool enableWarnings=true, bool compositeUseOnlyInitializedMappings=false,
+                                     bool isEnabledFixUnmappedDofs=true);
 
   //! map data between a single component of the field variables in the source and target function spaces
   template<int nComponentsSource, int nComponentsTarget>
@@ -74,6 +75,11 @@ public:
 
 protected:
 
+  //! add mapping to the target that have so far no contribution from any source dof, by interpolating the source mesh
+  void fixUnmappedDofs(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSource,
+                       std::shared_ptr<FunctionSpaceTargetType> functionSpaceTarget,
+                       double xiTolerance, bool compositeUseOnlyInitializedMappings, const std::vector<bool> &targetDofIsMappedTo);
+
   std::shared_ptr<FunctionSpaceSourceType> functionSpaceSource_;   ///< the function space of the mesh from which to map data
   std::shared_ptr<FunctionSpaceTargetType> functionSpaceTarget_;   ///< the function space of the mesh to which to map data
 
@@ -84,4 +90,5 @@ protected:
 
 }  // namespace
 
-#include "mesh/mapping_between_meshes/mapping/01_implementation.tpp"
+// the include is contained in mesh/mapping_between_meshes/manager/02_manager.h
+//#include "mesh/mapping_between_meshes/mapping/01_implementation.tpp"

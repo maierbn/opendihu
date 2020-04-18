@@ -56,7 +56,7 @@ public:
 protected:
 
   //! create MappingBetweenMeshes objects from the config and store them under mappingsBetweenMeshes_
-  void storeMappingsBetweenMeshes();
+  void storeMappingsBetweenMeshes(PythonConfig specificSettings);
 
   //! create a single MappingBetweenMeshes object, targetMeshPy still needs to be parsed
   void storeMappingBetweenMeshes(std::string sourceMeshName, PyObject *targetMeshPy);
@@ -78,6 +78,7 @@ protected:
     double xiTolerance;         //< the xiTolerance setting, 0 for disabled
     bool enableWarnings;        //< if warnings should be shown if source dofs are outside the target mesh with the given xi tolerance
     bool compositeUseOnlyInitializedMappings;   //< if for composite source meshes the mapping should be created from also defined mappings from the sub meshes
+    bool isEnabledFixUnmappedDofs;              //< if the unmapped dofs in the target mesh should be fixed by interpolating in the source mesh
   };
 
   std::map<std::string, std::shared_ptr<FieldVariable::FieldVariableBase>> targetFactorSum_;  //< for every target function space the field variable which accumulates the interpolation factors

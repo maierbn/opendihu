@@ -255,6 +255,13 @@ initializeObjects()
     // create or get linear solver object
     this->linearSolver_ = this->context_.solverManager()->template solver<Solver::Linear>(
       this->specificSettings_, this->rankSubset_->mpiCommunicator());
+
+    // initialize the alternative linear solver that is used when thet linearSolver_ diverges
+    if (this->specificSettings_.hasKey("alternativeSolverName"))
+    {
+      this->alternativeLinearSolver_ = this->context_.solverManager()->template solver<Solver::Linear>(
+        this->specificSettings_, this->rankSubset_->mpiCommunicator(), "alternativeSolverName");
+    }
   }
 }
 
@@ -276,7 +283,6 @@ initializeMatricesAndVectors()
   // set matrix used for linear solver and preconditioner to ksp context
   assert(this->linearSolver_->ksp());
   PetscErrorCode ierr;
-  ierr = KSPSetOperators(*this->linearSolver_->ksp(), singleSystemMatrix_, singlePreconditionerMatrix_); CHKERRV(ierr);
 
   PC pc;
   ierr = KSPGetPC(*linearSolver_->ksp(), &pc); CHKERRV(ierr);
@@ -322,6 +328,8 @@ initializeMatricesAndVectors()
   ierr = MatSetNullSpace(singleSystemMatrix_, nullSpace); CHKERRV(ierr);
   ierr = MatSetNearNullSpace(singleSystemMatrix_, nullSpace); CHKERRV(ierr); // for multigrid methods
   //ierr = MatNullSpaceDestroy(&nullSpace); CHKERRV(ierr);
+
+  ierr = KSPSetOperators(*this->linearSolver_->ksp(), singleSystemMatrix_, singlePreconditionerMatrix_); CHKERRV(ierr);
 
   // initialize rhs and solution vector
   subvectorsRightHandSide_.resize(nCompartments_+1);
@@ -376,7 +384,9 @@ initializeCompartmentRelativeFactors()
       {
         LOG(FATAL) << "In MultidomainSolver, \"compartmentRelativeFactors\" for compartment " << k << " of " << nCompartments_ << " contains "
           << values.size() << " entries, but the mesh \"" << dataMultidomain_.functionSpace()->meshName() << "\" has "
-          << dataMultidomain_.functionSpace()->nDofsGlobal() << " global dofs and \"inputIsGlobal\" is True.";
+          << dataMultidomain_.functionSpace()->nDofsGlobal() << " global dofs and \"inputIsGlobal\" is True.\n"
+          << "Depending on how you pass the values in the python settings, maybe delete and recreate the \"compartments_relative_factors*\" files?\n"
+          << "(Note this is a guess, the C++ code does not know which example you're in or what you're doing in the python scripts.)";
       }
 
       dataMultidomain_.functionSpace()->meshPartition()->extractLocalDofsWithoutGhosts(values);
@@ -386,7 +396,9 @@ initializeCompartmentRelativeFactors()
     {
       LOG(FATAL) << "In MultidomainSolver, \"compartmentRelativeFactors\" for compartment " << k << " of " << nCompartments_ 
         << " contains only " << values.size() << " entries, but the mesh \"" << dataMultidomain_.compartmentRelativeFactor(k)->functionSpace()->meshName() << "\""
-        << " has " << dataMultidomain_.compartmentRelativeFactor(k)->nDofsLocalWithoutGhosts() << " local dofs.";
+        << " has " << dataMultidomain_.compartmentRelativeFactor(k)->nDofsLocalWithoutGhosts() << " local dofs.\n"
+        << "Depending on how you pass the values in the python settings, maybe delete and recreate the \"compartments_relative_factors*\" files?\n"
+        << "(Note this is a guess, the C++ code does not know which example you're in or what you're doing in the python scripts.)";
     }
 
     dataMultidomain_.compartmentRelativeFactor(k)->setValuesWithoutGhosts(values);

@@ -147,3 +147,4 @@ protected:
 #include "mesh/mapping_between_meshes/manager/02_manager.tpp"
 #include "mesh/mapping_between_meshes/manager/02_manager_mapping.tpp"
 #include "mesh/mapping_between_meshes/mapping/02_composite.tpp"
+#include "mesh/mapping_between_meshes/mapping/01_implementation.tpp"

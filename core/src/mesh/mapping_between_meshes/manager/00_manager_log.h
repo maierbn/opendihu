@@ -7,6 +7,8 @@
 #include "field_variable/00_field_variable_base.h"
 #include "control/python_config/python_config.h"
 
+#include <iostream>
+
 namespace MappingBetweenMeshes
 {
   
@@ -17,7 +19,10 @@ public:
   ManagerLog(PythonConfig specificSettings);
 
   //! produce the resulting file, only if solverAddingEnabled_
-  void writeLogFile();
+  static void writeLogFile();
+
+  //! add a message
+  void addLogMessage(std::string message);
 
 protected:
 
@@ -37,13 +42,15 @@ protected:
 
     int nMappedSourceMeshes;              //< number of source meshes that were mapped to the target mesh between calls to prepareMapping() and finalizeMapping()
     int nRepetitions;                     //< how often this action was repeated in sequence
+    std::string message;                  //< if logEvent == eventMessage, the message to be shown
     
     enum logEvent_t
     {
       eventParseSettings,                 //< a mapping between "from" and "to" was read from the settings
       eventCreateMapping,                 //< a mapping between "from" and "to" was created
       eventMapForward,                    //< mapping was performed between "from" and "to", using the corresponding mapping
-      eventMapReverse                     //< mapping was performed between "from" and "to", using the reverse direction of the reverse mapping
+      eventMapReverse,                    //< mapping was performed between "from" and "to", using the reverse direction of the reverse mapping
+      eventMessage                        //< additional message to be displayed at the current location in the log
     }
     logEvent;
   };
@@ -62,15 +69,14 @@ protected:
   //! add a log entry when a new mapping is created or initialized
   void addLogEntryMapping(std::string meshNameSource, std::string meshNameTarget, mappingLogEntry_t::logEvent_t logEvent);
 
-
   //! create the contents of the log file as string, from the logEntries_ variable
-  std::string produceLogContents();
+  static std::string produceLogContents();
 
-  PythonConfig specificSettings_;               //< python object containing the value of the python config dict with corresponding key, for meshManager
-  std::string logFilename_;                     //< filename of a log file that contains information about which mappings were created and used
-  int mappedSourceMeshesCounter_;               //< variable that will be reset in prepareMapping, incremented in map() for every mesh and read out in finalizeMapping() to set the value of nMappedSourceMeshes for the log
+  PythonConfig specificSettings_;         //< python object containing the value of the python config dict with corresponding key, for meshManager
+  static std::string logFilename_;        //< filename of a log file that contains information about which mappings were created and used
+  int mappedSourceMeshesCounter_;         //< variable that will be reset in prepareMapping, incremented in map() for every mesh and read out in finalizeMapping() to set the value of nMappedSourceMeshes for the log
   
-  std::vector<mappingLogEntry_t> logEntries_;   //< all entries that will be written to the log file
+  static std::vector<mappingLogEntry_t> logEntries_;   //< all entries that will be written to the log file
 };
 
 }  // namespace

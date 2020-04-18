@@ -93,8 +93,11 @@ determineMappingAlgorithm(
     {
       if (fieldVariableSource->functionSpace()->meshName() == fieldVariableTarget->functionSpace()->meshName())
       {
+        LOG(DEBUG) << "determineMappingAlgorithm, " << fieldVariableSource->functionSpace()->meshName() << " the same mesh";
         return;
       }
+
+      LOG(DEBUG) << "determineMappingAlgorithm, " << fieldVariableSource->functionSpace()->meshName() << "->" << fieldVariableTarget->functionSpace()->meshName();
     }
   }
 
@@ -111,6 +114,9 @@ determineMappingAlgorithm(
       hasMappingBetweenMeshes<typename FieldVariableTargetType::FunctionSpace, typename FieldVariableSourceType::FunctionSpace>(
         fieldVariableTarget->functionSpace(), fieldVariableSource->functionSpace()
       );
+
+
+    LOG(DEBUG) << "determineMappingAlgorithm dim equal, isMappingSourceToTargetAvailable: " << isMappingSourceToTargetAvailable << ", isMappingTargetToSourceAvailable: " << isMappingTargetToSourceAvailable;
 
     // only use the inverse mapping if only this direction has been initialized an the other direction has not
     if (!isMappingSourceToTargetAvailable && isMappingTargetToSourceAvailable)
@@ -140,6 +146,8 @@ determineMappingAlgorithm(
     // this is the mapping that needs prepareMapping and finalizeMapping, it is the more natural one (linear/bilinear/trilinear)
     mapLowToHigh = true;
   }
+  LOG(DEBUG) << "determineMappingAlgorithm result: mapHighToLow=" << mapHighToLow << ", mapLowToHigh=" << mapLowToHigh;
+
 }
 
 //! Simplified methods
@@ -389,7 +397,7 @@ finalizeMapping(std::shared_ptr<FieldVariableSourceType> fieldVariableSource,
   {
     addLogEntryFieldVariable(fieldVariableSource, componentNoSource, fieldVariableTarget, componentNoTarget, mappingLogEntry_t::logEvent_t::eventMapForward);
   }
-  else 
+  else if (mapHighToLow)
   {
     addLogEntryFieldVariable(fieldVariableSource, componentNoSource, fieldVariableTarget, componentNoTarget, mappingLogEntry_t::logEvent_t::eventMapReverse);
   }

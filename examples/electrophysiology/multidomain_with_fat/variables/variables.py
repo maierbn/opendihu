@@ -20,6 +20,8 @@ potential_flow_solver_type = "gmres"        # solver and preconditioner for an i
 potential_flow_preconditioner_type = "none" # preconditioner
 multidomain_solver_type = "gmres"          # solver for the multidomain problem
 multidomain_preconditioner_type = "none"   # preconditioner
+multidomain_alternative_solver_type = "gmres"            # alternative solver, used when normal solver diverges
+multidomain_alternative_preconditioner_type = "none"     # preconditioner of the alternative solver
 
 # timing parameters
 # -----------------

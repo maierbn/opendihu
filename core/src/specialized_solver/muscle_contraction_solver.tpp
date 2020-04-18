@@ -417,11 +417,11 @@ mapGeometryToGivenMeshes()
         LOG(DEBUG) << StringUtility::demangle(typeid(SourceFunctionSpaceType).name()) << " -> " << StringUtility::demangle(typeid(TargetFunctionSpaceType1).name());
 
         // perform the mapping
-        DihuContext::meshManager()->template prepareMapping<SourceFieldVariableType,TargetFieldVariableType1>(geometryFieldSource, geometryFieldTarget);
+        DihuContext::mappingBetweenMeshesManager()->template prepareMapping<SourceFieldVariableType,TargetFieldVariableType1>(geometryFieldSource, geometryFieldTarget);
 
         // map the whole geometry field (all components), do not avoid copy
-        DihuContext::meshManager()->template map<SourceFieldVariableType,TargetFieldVariableType1>(geometryFieldSource, -1, geometryFieldTarget, -1, false);
-        DihuContext::meshManager()->template finalizeMapping<SourceFieldVariableType,TargetFieldVariableType1>(geometryFieldSource, geometryFieldTarget);
+        DihuContext::mappingBetweenMeshesManager()->template map<SourceFieldVariableType,TargetFieldVariableType1>(geometryFieldSource, geometryFieldTarget, -1, -1, false);
+        DihuContext::mappingBetweenMeshesManager()->template finalizeMapping<SourceFieldVariableType,TargetFieldVariableType1>(geometryFieldSource, geometryFieldTarget, -1, -1, false);
       }
 
       // for second order meshes
@@ -440,11 +440,11 @@ mapGeometryToGivenMeshes()
         LOG(DEBUG) << StringUtility::demangle(typeid(SourceFunctionSpaceType).name()) << " -> " << StringUtility::demangle(typeid(TargetFunctionSpaceType2).name());
 
         // perform the mapping
-        DihuContext::meshManager()->template prepareMapping<SourceFieldVariableType,TargetFieldVariableType2>(geometryFieldSource, geometryFieldTarget);
+        DihuContext::mappingBetweenMeshesManager()->template prepareMapping<SourceFieldVariableType,TargetFieldVariableType2>(geometryFieldSource, geometryFieldTarget);
 
         // map the whole geometry field (all components), do not avoid copy
-        DihuContext::meshManager()->template map<SourceFieldVariableType,TargetFieldVariableType2>(geometryFieldSource, -1, geometryFieldTarget, -1, false);
-        DihuContext::meshManager()->template finalizeMapping<SourceFieldVariableType,TargetFieldVariableType2>(geometryFieldSource, geometryFieldTarget);
+        DihuContext::mappingBetweenMeshesManager()->template map<SourceFieldVariableType,TargetFieldVariableType2>(geometryFieldSource, geometryFieldTarget, -1, -1, false);
+        DihuContext::mappingBetweenMeshesManager()->template finalizeMapping<SourceFieldVariableType,TargetFieldVariableType2>(geometryFieldSource, geometryFieldTarget, -1, -1, false);
       }
     }
   }

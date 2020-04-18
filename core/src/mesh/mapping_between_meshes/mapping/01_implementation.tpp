@@ -1,4 +1,4 @@
-#include "mesh/mapping_between_meshes/01_mapping_between_meshes_implementation.h"
+#include "mesh/mapping_between_meshes/mapping/01_implementation.h"
 
 #include "control/diagnostic_tool/performance_measurement.h"
 
@@ -6,7 +6,7 @@
 #include "control/dihu_context.h"
 #include "mesh/type_traits.h"
 
-namespace Mesh
+namespace MappingBetweenMeshes
 {
 
 template<typename FunctionSpaceSourceType, typename FunctionSpaceTargetType>
@@ -19,7 +19,7 @@ MappingBetweenMeshesImplementation(std::shared_ptr<FunctionSpaceSourceType> func
   maxAllowedXiTolerance_(xiTolerance)
 {
   // for composite meshes if the option compositeUseOnlyInitializedMappings is set, do not create the mapping here
-  if (isComposite<std::shared_ptr<FunctionSpaceSourceType>>::value && compositeUseOnlyInitializedMappings)
+  if (Mesh::isComposite<std::shared_ptr<FunctionSpaceSourceType>>::value && compositeUseOnlyInitializedMappings)
   {
     LOG(DEBUG) << "Do not initialize mapping here, it will be done in the child class from existing mappings of the sub meshes of the composite mesh.";
   }

@@ -1,6 +1,6 @@
-#include "mesh/mapping_between_meshes/mapping_between_meshes_manager.h"
+#include "mesh/mapping_between_meshes/manager/01_manager.h"
 
-namespace Mesh
+namespace MappingBetweenMeshes
 {
 
 /** helper classes */
@@ -76,15 +76,49 @@ struct RestoreExtractedComponent<FieldVariableSourceType,FieldVariableTargetType
   };
 };
 
+template<typename FieldVariableSourceType, typename FieldVariableTargetType>
+void Manager::
+determineMappingAlgorithm(
+    std::shared_ptr<FieldVariableSourceType> fieldVariableSource,
+    std::shared_ptr<FieldVariableTargetType> fieldVariableTarget,
+    int componentNoSource, int componentNoTarget, bool avoidCopyIfPossible,
+    bool &mapLowToHigh, bool &mapHighToLow)
+{
+  mapLowToHigh = false;
+  mapHighToLow = false;
+
+  // if the function space is the same
+  if (FieldVariableSourceType::FunctionSpace::dim() == FieldVariableTargetType::FunctionSpace::dim())
+  {
+    if (fieldVariableSource && fieldVariableTarget)
+    {
+      if (fieldVariableSource->functionSpace()->meshName() == fieldVariableTarget->functionSpace()->meshName())
+      {
+        return;
+      }
+    }
+  }
+
+  // if the dimensionality of source and target function space is the same
+  if (FieldVariableSourceType::FunctionSpace::dim() > FieldVariableTargetType::FunctionSpace::dim())
+  {
+    mapHighToLow = true;
+  }
+  else
+  {
+    mapLowToHigh = true;
+  }
+}
 
 //! Simplified methods
 
 //! map between meshes of any dimensionality,
 //! if the field variables share the same function space, do no mapping at all, but copy the values
 template<typename FieldVariableSourceType, typename FieldVariableTargetType>
-void MappingBetweenMeshesManager::
-map(std::shared_ptr<FieldVariableSourceType> fieldVariableSource, int componentNoSource,
-    std::shared_ptr<FieldVariableTargetType> &fieldVariableTarget, int componentNoTarget, bool avoidCopyIfPossible)
+void Manager::
+map(std::shared_ptr<FieldVariableSourceType> fieldVariableSource,
+    std::shared_ptr<FieldVariableTargetType> &fieldVariableTarget,
+    int componentNoSource, int componentNoTarget, bool avoidCopyIfPossible)
 {
   LOG(DEBUG) << "map " << fieldVariableSource->name() << "." << componentNoSource << " (dim " << FieldVariableSourceType::FunctionSpace::dim() << ", "
     << FieldVariableSourceType::nComponents() << " components total)"
@@ -232,60 +266,57 @@ map(std::shared_ptr<FieldVariableSourceType> fieldVariableSource, int componentN
 
 //! prepare the mapping for meshes of any dimensionality, this can be called even if not needed
 template<typename FieldVariableSourceType, typename FieldVariableTargetType>
-void MappingBetweenMeshesManager::
+void Manager::
 prepareMapping(std::shared_ptr<FieldVariableSourceType> fieldVariableSource,
                std::shared_ptr<FieldVariableTargetType> fieldVariableTarget)
 {
-  // check if prepareMapping is needed
-  if (FieldVariableSourceType::FunctionSpace::dim() == FieldVariableTargetType::FunctionSpace::dim())
+  bool mapLowToHigh = false;
+  bool mapHighToLow = false;
+  determineMappingAlgorithm(fieldVariableSource, fieldVariableTarget, -1, -1, true, mapLowToHigh, mapHighToLow);
+
+  if (mapLowToHigh || mapHighToLow)
   {
-    // check if the function space is also the same (i.e., same mesh)
-    if (fieldVariableSource->functionSpace()->meshName() == fieldVariableTarget->functionSpace()->meshName())
+    if (fieldVariableSource && fieldVariableTarget)
     {
-      return;
+      // Make sure that mapping exists or is created before the call to prepareMappingLowToHigh(), because this will zero the values. 
+      // When the geometry field is mapped, the mapping cannot be initialized with the geometry field values zeroed out.
+      std::string sourceMeshName = fieldVariableSource->functionSpace()->meshName();
+      std::string targetMeshName = fieldVariableTarget->functionSpace()->meshName();
+
+      mappingBetweenMeshes<typename FieldVariableSourceType::FunctionSpace, typename FieldVariableTargetType::FunctionSpace>(
+        fieldVariableSource->functionSpace(), fieldVariableTarget->functionSpace()
+      );
     }
   }
-  else if (FieldVariableSourceType::FunctionSpace::dim() > FieldVariableTargetType::FunctionSpace::dim())
-  {
-    return;
-  }
-
-  // Make sure that mapping exists or is created before the call to prepareMappingLowToHigh(), because this will zero the values. 
-  // When the geometry field is mapped, the mapping cannot be initialized with the geometry field values zeroed out.
-  std::string sourceMeshName = fieldVariableSource->functionSpace()->meshName();
-  std::string targetMeshName = fieldVariableTarget->functionSpace()->meshName();
-
-  mappingBetweenMeshes<typename FieldVariableSourceType::FunctionSpace, typename FieldVariableTargetType::FunctionSpace>(
-    fieldVariableSource->functionSpace(), fieldVariableTarget->functionSpace()
-  );
-
 
   // prepareMapping is needed
-  prepareMappingLowToHigh(fieldVariableTarget);
+  if (mapLowToHigh)
+  {
+    prepareMappingLowToHigh(fieldVariableTarget);
+  }
+  else if (mapHighToLow)
+  {
+    fieldVariableTarget->zeroEntries();
+    fieldVariableTarget->zeroGhostBuffer();
+  }
 }
 
 //! finalize the mapping for meshes of any dimensionality, this can be called even if not needed
 template<typename FieldVariableSourceType, typename FieldVariableTargetType>
-void MappingBetweenMeshesManager::
+void Manager::
 finalizeMapping(std::shared_ptr<FieldVariableSourceType> fieldVariableSource,
-                std::shared_ptr<FieldVariableTargetType> fieldVariableTarget, int componentNoTarget)
+                std::shared_ptr<FieldVariableTargetType> fieldVariableTarget,
+                int componentNoSource, int componentNoTarget, bool avoidCopyIfPossible)
 {
-  // check if finalizeMapping is needed
-  if (FieldVariableSourceType::FunctionSpace::dim() == FieldVariableTargetType::FunctionSpace::dim())
-  {
-    // check if the function space is also the same (i.e., same mesh)
-    if (fieldVariableSource->functionSpace()->meshName() == fieldVariableTarget->functionSpace()->meshName())
-    {
-      return;
-    }
-  }
-  else if (FieldVariableSourceType::FunctionSpace::dim() > FieldVariableTargetType::FunctionSpace::dim())
-  {
-    return;
-  }
+  bool mapLowToHigh = false;
+  bool mapHighToLow = false;
+  determineMappingAlgorithm(fieldVariableSource, fieldVariableTarget, -1, -1, true, mapLowToHigh, mapHighToLow);
 
   // finalizeMapping is needed
-  finalizeMappingLowToHigh(fieldVariableTarget, componentNoTarget);
+  if (mapLowToHigh)
+  {
+    finalizeMappingLowToHigh(fieldVariableTarget, componentNoTarget);
+  }
 }
 
 

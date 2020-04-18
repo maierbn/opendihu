@@ -12,7 +12,7 @@ namespace FieldVariable
   class FieldVariable;
 }
 
-namespace Mesh
+namespace MappingBetweenMeshes
 {
 
 class MappingBetweenMeshesBase{};
@@ -21,7 +21,7 @@ class MappingBetweenMeshesBase{};
  * This is a mapping between two meshes, e.g. one 1D fiber mesh and one 3D mesh.
  * The mapping mapLowToHighDimension is from source mesh (lower dimensionality) to target mesh (higher dimensionality).
  * The mapping mapHighToLowDimension is from FunctionSpaceTargetType to FunctionSpaceSourceType.
- * Also read the more detailed description of the MappingBetweenMeshesManager class.
+ * Also read the more detailed description of the MappingBetweenMeshes::Manager class.
  */
 template<typename FunctionSpaceSourceType, typename FunctionSpaceTargetType>
 class MappingBetweenMeshesImplementation : public MappingBetweenMeshesBase
@@ -84,4 +84,4 @@ protected:
 
 }  // namespace
 
-#include "mesh/mapping_between_meshes/01_mapping_between_meshes_implementation.tpp"
+#include "mesh/mapping_between_meshes/mapping/01_implementation.tpp"

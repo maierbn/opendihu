@@ -1,20 +1,20 @@
-#include "mesh/mapping_between_meshes/mapping_between_meshes_manager.h"
+#include "mesh/mapping_between_meshes/manager/00_manager_implementation.h"
 
 #include "function_space/function_space.h"
 #include "mesh/structured_regular_fixed.h"
 #include "mesh/unstructured_deformable.h"
 
-namespace Mesh
+namespace MappingBetweenMeshes
 {
 
-MappingBetweenMeshesManager::MappingBetweenMeshesManager(PythonConfig specificSettings) :
+ManagerImplementation::ManagerImplementation(PythonConfig specificSettings) :
   specificSettings_(specificSettings)
 {
-  LOG(TRACE) << "MeshMappingBetweenMeshesManager constructor";
+  LOG(TRACE) << "MeshManagerImplementation constructor";
   storeMappingsBetweenMeshes();
 }
 
-void MappingBetweenMeshesManager::storeMappingBetweenMeshes(std::string sourceMeshName, PyObject *targetMeshPy)
+void ManagerImplementation::storeMappingBetweenMeshes(std::string sourceMeshName, PyObject *targetMeshPy)
 {
   if (PyUnicode_Check(targetMeshPy))
   {
@@ -69,9 +69,9 @@ void MappingBetweenMeshesManager::storeMappingBetweenMeshes(std::string sourceMe
   }
 }
 
-void MappingBetweenMeshesManager::storeMappingsBetweenMeshes()
+void ManagerImplementation::storeMappingsBetweenMeshes()
 {
-  LOG(TRACE) << "MeshMappingBetweenMeshesManager::storeMappingsBetweenMeshes";
+  LOG(TRACE) << "MeshManagerImplementation::storeMappingsBetweenMeshes";
 
   // retrieve python settings object
   if (specificSettings_.pyObject())

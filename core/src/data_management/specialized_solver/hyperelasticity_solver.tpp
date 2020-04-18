@@ -91,7 +91,7 @@ velocitiesPreviousTimestep()
 
 //! field variable of fiber direction
 template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term>
-std::shared_ptr<typename QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::DisplacementsFieldVariableType> QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::
+std::shared_ptr<typename QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::DisplacementsFieldVariableType> &QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::
 fiberDirection()
 {
   return this->fiberDirection_;

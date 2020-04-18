@@ -361,15 +361,15 @@ prepareMapping(std::shared_ptr<FieldVariableSourceType> fieldVariableSource,
   }
 
   // prepareMapping is needed
-  if (mapLowToHigh)
+  //if (mapLowToHigh)
   {
     prepareMappingLowToHigh(fieldVariableTarget);
   }
-  else if (mapHighToLow)
+  /*else if (mapHighToLow)
   {
     fieldVariableTarget->zeroEntries();
     fieldVariableTarget->zeroGhostBuffer();
-  }
+  }*/
 
   // reset counter of mapped meshes for log
   mappedSourceMeshesCounter_ = 0;

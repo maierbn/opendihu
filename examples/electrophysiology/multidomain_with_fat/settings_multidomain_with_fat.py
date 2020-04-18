@@ -99,10 +99,16 @@ if n_ranks != variables.n_subdomains:
       variables.n_subdomains_y = possible_partitionings[i][1]
       variables.n_subdomains_z = possible_partitionings[i][2]
 
+if variables.scenario_name is None:
+  variables.scenario_name = "{}_{}_dt{}_atol{}_rtol{}_theta{}_sym{}_lump{}_{}mus".format(variables.multidomain_solver_type, variables.multidomain_preconditioner_type, variables.dt_splitting, variables.multidomain_absolute_tolerance, variables.multidomain_relative_tolerance, variables.theta, variables.use_symmetric_preconditioner_matrix, variables.use_lumped_mass_matrix, len(variables.motor_units))
+
+if variables.initial_guess_nonzero is None:
+  variables.initial_guess_nonzero = variables.multidomain_preconditioner_type != "lu"
+
 # output information of run
 if rank_no == 0:
   print("scenario_name: {},  n_subdomains: {} {} {},  n_ranks: {},  end_time: {}".format(variables.scenario_name, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, n_ranks, variables.end_time))
-  print("dt_0D:           {:0.0e}    multidomain solver:         {}, lumped mass matrix: {}".format(variables.dt_0D, variables.multidomain_solver_type, variables.use_lumped_mass_matrix))
+  print("dt_0D:           {:0.0e}    multidomain solver:         {}, lumped mass matrix: {}, initial guess: {}".format(variables.dt_0D, variables.multidomain_solver_type, variables.use_lumped_mass_matrix, "0" if not variables.initial_guess_nonzero else "previous solution"))
   print("dt_multidomain:  {:0.0e}    multidomain preconditioner: {}, symmetric precond.: {}".format(variables.dt_multidomain, variables.multidomain_preconditioner_type, variables.use_symmetric_preconditioner_matrix))
   print("dt_splitting:    {:0.0e}    theta: {}, solver tolerances, abs: {}, rel: {}".format(variables.dt_splitting, variables.theta, variables.multidomain_absolute_tolerance, variables.multidomain_relative_tolerance))
   print("fiber_file:              {}".format(variables.fiber_file))
@@ -210,7 +216,7 @@ config = {
     "multidomainLinearSolver": {
       "relativeTolerance":  variables.multidomain_relative_tolerance,
       "absoluteTolerance":  variables.multidomain_absolute_tolerance,         # 1e-10 absolute tolerance of the residual          
-      "maxIterations":      1e4,
+      "maxIterations":      1e5,
       "solverType":         variables.multidomain_solver_type,
       "preconditionerType": variables.multidomain_preconditioner_type,
       "hypreOptions":       "",                                   # additional options if a hypre preconditioner is selected

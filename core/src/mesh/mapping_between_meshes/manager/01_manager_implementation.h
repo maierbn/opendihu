@@ -4,6 +4,7 @@
 #include <map>
 #include <vector>
 
+#include "mesh/mapping_between_meshes/manager/00_manager_log.h"
 #include "mesh/mapping_between_meshes/mapping/01_implementation.h"
 #include "mesh/mapping_between_meshes/mapping/02_composite.h"
 #include "field_variable/00_field_variable_base.h"
@@ -11,7 +12,7 @@
 namespace MappingBetweenMeshes
 {
   
-class ManagerImplementation
+class ManagerImplementation : public ManagerLog
 {
 public:
   //! constructor
@@ -37,6 +38,7 @@ public:
 
   //! map complete data (all components) from source field variable to the target field variable.
   //! Dimensionality source function space >= dimensionality target function space (e.g. 3D -> 1D)
+  //! Internally, this uses the mapping from target to source function space.
   //! If componentNoSource and componentNoTarget are both -1, map the whole field variable with all components
   template<typename FieldVariableSourceType, typename FieldVariableTargetType>
   void mapHighToLowDimension(std::shared_ptr<FieldVariableSourceType> fieldVariableSource, int componentNoSource,
@@ -68,7 +70,7 @@ protected:
   std::shared_ptr<MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>>
     createMappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSource, std::shared_ptr<FunctionSpaceTargetType> functionSpaceTarget);
 
-  PythonConfig specificSettings_;    ///< python object containing the value of the python config dict with corresponding key, for meshManager
+  PythonConfig specificSettings_;    //< python object containing the value of the python config dict with corresponding key, for meshManager
 
   struct MappingWithSettings
   {
@@ -78,10 +80,10 @@ protected:
     bool compositeUseOnlyInitializedMappings;   //< if for composite source meshes the mapping should be created from also defined mappings from the sub meshes
   };
 
-  std::map<std::string, std::shared_ptr<FieldVariable::FieldVariableBase>> targetFactorSum_;    ///< for every target function space the field variable which accumulates the interpolation factors
-  std::map<std::string, std::map<std::string, MappingWithSettings>> mappingsBetweenMeshes_;  ///<["key mesh from"]["key mesh to"] mapping between meshes
+  std::map<std::string, std::shared_ptr<FieldVariable::FieldVariableBase>> targetFactorSum_;  //< for every target function space the field variable which accumulates the interpolation factors
+  std::map<std::string, std::map<std::string, MappingWithSettings>> mappingsBetweenMeshes_;   //<["key mesh from"]["key mesh to"] mapping between meshes
 };
 
 }  // namespace
 
-#include "mesh/mapping_between_meshes/manager/00_manager_implementation.tpp"
+#include "mesh/mapping_between_meshes/manager/01_manager_implementation.tpp"

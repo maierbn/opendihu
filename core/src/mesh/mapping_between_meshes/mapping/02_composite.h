@@ -42,6 +42,6 @@ public:
 
 }  // namespace
 
-// the following include is in mapping_between_meshes/manager/01_manager.h to prevent cyclic dependencies
+// the following include is in mapping_between_meshes/manager/02_manager.h to prevent cyclic dependencies
 //#include "mesh/mapping_between_meshes/mapping/02_composite.tpp"
 

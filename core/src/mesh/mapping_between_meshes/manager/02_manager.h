@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "mesh/mapping_between_meshes/mapping/02_composite.h"
-#include "mesh/mapping_between_meshes/manager/00_manager_implementation.h"
+#include "mesh/mapping_between_meshes/manager/01_manager_implementation.h"
 #include "field_variable/00_field_variable_base.h"
 
 namespace MappingBetweenMeshes
@@ -131,6 +131,7 @@ public:
   void finalizeMapping(std::shared_ptr<FieldVariableSourceType> fieldVariableSource,
                        std::shared_ptr<FieldVariableTargetType> fieldVariableTarget, 
                        int componentNoSource, int componentNoTarget, bool avoidCopyIfPossible);
+
 protected:
   
   //! determine which mapping to perform (mapLowToHigh or mapHighToLow or none)
@@ -138,12 +139,11 @@ protected:
   void determineMappingAlgorithm(
     std::shared_ptr<FieldVariableSourceType> fieldVariableSource,
     std::shared_ptr<FieldVariableTargetType> fieldVariableTarget,
-    int componentNoSource, int componentNoTarget, bool avoidCopyIfPossible,
     bool &mapLowToHigh, bool &mapHighToLow);
 };
 
 }  // namespace
 
-#include "mesh/mapping_between_meshes/manager/01_manager.tpp"
-#include "mesh/mapping_between_meshes/manager/01_manager_mapping.tpp"
+#include "mesh/mapping_between_meshes/manager/02_manager.tpp"
+#include "mesh/mapping_between_meshes/manager/02_manager_mapping.tpp"
 #include "mesh/mapping_between_meshes/mapping/02_composite.tpp"

@@ -1,4 +1,4 @@
-#include "mesh/mapping_between_meshes/manager/00_manager_implementation.h"
+#include "mesh/mapping_between_meshes/manager/01_manager_implementation.h"
 
 #include <memory>
 
@@ -33,6 +33,9 @@ createMappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpac
   this->mappingsBetweenMeshes_[sourceMeshName][targetMeshName].mapping = std::static_pointer_cast<MappingBetweenMeshesBase>(
     std::make_shared<MappingBetweenMeshes<FunctionSpaceSourceType,FunctionSpaceTargetType>>(functionSpaceSource, functionSpaceTarget, xiTolerance, enableWarnings, compositeUseOnlyInitializedMappings)
   );
+
+  // log event, to be included in the log file
+  addLogEntryMapping(functionSpaceSource, functionSpaceTarget, mappingLogEntry_t::logEvent_t::eventCreateMapping);
 
   return std::static_pointer_cast<MappingBetweenMeshes<FunctionSpaceSourceType,FunctionSpaceTargetType>>(
     this->mappingsBetweenMeshes_[sourceMeshName][targetMeshName].mapping);

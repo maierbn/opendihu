@@ -1,4 +1,4 @@
-#include "mesh/mapping_between_meshes/manager/00_manager_implementation.h"
+#include "mesh/mapping_between_meshes/manager/01_manager_implementation.h"
 
 #include "function_space/function_space.h"
 #include "mesh/structured_regular_fixed.h"
@@ -8,9 +8,8 @@ namespace MappingBetweenMeshes
 {
 
 ManagerImplementation::ManagerImplementation(PythonConfig specificSettings) :
-  specificSettings_(specificSettings)
+  ManagerLog(specificSettings)
 {
-  LOG(TRACE) << "MeshManagerImplementation constructor";
   storeMappingsBetweenMeshes();
 }
 
@@ -31,6 +30,9 @@ void ManagerImplementation::storeMappingBetweenMeshes(std::string sourceMeshName
       mappingWithSettings.enableWarnings = true;
       mappingWithSettings.compositeUseOnlyInitializedMappings = false;
       mappingsBetweenMeshes_[sourceMeshName].insert(std::pair<std::string,MappingWithSettings>(targetMeshToMapTo,mappingWithSettings));
+
+      // log event, to be included in the log file
+      addLogEntryMapping(sourceMeshName, targetMeshToMapTo, mappingLogEntry_t::logEvent_t::eventParseSettings);
     }
   }
   else if (PyDict_Check(targetMeshPy))
@@ -60,6 +62,9 @@ void ManagerImplementation::storeMappingBetweenMeshes(std::string sourceMeshName
       mappingWithSettings.enableWarnings = enableWarnings;
       mappingWithSettings.compositeUseOnlyInitializedMappings = compositeUseOnlyInitializedMappings;
       mappingsBetweenMeshes_[sourceMeshName].insert(std::pair<std::string,MappingWithSettings>(targetMeshToMapTo,mappingWithSettings));
+
+      // log event, to be included in the log file
+      addLogEntryMapping(sourceMeshName, targetMeshToMapTo, mappingLogEntry_t::logEvent_t::eventParseSettings);
     }
   }
   else

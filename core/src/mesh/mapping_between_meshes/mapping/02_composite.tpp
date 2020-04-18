@@ -5,7 +5,7 @@
 #include "utility/vector_operators.h"
 #include "control/dihu_context.h"
 #include "mesh/mesh_manager/mesh_manager.h"
-#include "mesh/mapping_between_meshes/manager/01_manager.h"
+#include "mesh/mapping_between_meshes/manager/02_manager.h"
 
 namespace MappingBetweenMeshes
 {

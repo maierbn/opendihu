@@ -3,7 +3,7 @@
 #include <Python.h>  // has to be the first included header
 #include <memory>
 #include "field_variable/interface.h"
-//#include "function_space/function_space.h"
+#include "easylogging++.h"
 
 namespace FieldVariable
 {

@@ -479,7 +479,7 @@ solveLinearSystem()
     if (this->showLinearSolverOutput_)
     {
       // solve and show information on convergence
-      if (solveNo == 0)
+      if (solveNo == 0 || !this->alternativeLinearSolver_)
         hasSolverConverged = this->linearSolver_->solve(this->singleRightHandSide_, this->singleSolution_, "Linear system of multidomain problem solved");
       else
         hasSolverConverged = this->alternativeLinearSolver_->solve(this->singleRightHandSide_, this->singleSolution_, "Linear system of multidomain problem solved");
@@ -487,7 +487,7 @@ solveLinearSystem()
     else
     {
       // solve without showing output
-      if (solveNo == 0)
+      if (solveNo == 0 || !this->alternativeLinearSolver_)
         hasSolverConverged = this->linearSolver_->solve(this->singleRightHandSide_, this->singleSolution_);
       else
         hasSolverConverged = this->alternativeLinearSolver_->solve(this->singleRightHandSide_, this->singleSolution_);

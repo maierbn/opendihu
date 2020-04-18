@@ -91,7 +91,7 @@ MappingBetweenMeshesImplementation(std::shared_ptr<FunctionSpaceSourceType> func
         if (searchedAllElements)
           nTimesSearchedAllElements++;
 
-        VLOG(1) << "found at xi=" << xi << ", elementNo: " << elementNo << ", xiTolerance=" << xiTolerance << ", residual: " << residual;
+        VLOG(1) << "found at xi=" << xi << ", elementNo: " << elementNo << ", xiTolerance=" << xiTolerance << ", searchedAllElements: " << searchedAllElements << ", residual: " << residual;
       }
       else
       {

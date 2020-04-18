@@ -37,6 +37,8 @@ findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::ar
     if (subMeshNo == this->subFunctionSpaces_.size())
     {
       subMeshNo = 0;
+      if (subMeshNo == subMeshOfElementSubmeshNo)
+        break;
     }
 
     bool nodeFound = this->subFunctionSpaces_[subMeshNo]->findPosition(point, elementOnMeshNoLocal, ghostMeshNo, xi,

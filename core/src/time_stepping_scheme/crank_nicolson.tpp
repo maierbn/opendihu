@@ -57,6 +57,9 @@ void CrankNicolson<DiscretizableInTimeType>::advanceTimeSpan()
     // solve A*u^{t+1} = u^{t} for u^{t+1} where A is the system matrix, solveLinearSystem(b,x)
     this->solveLinearSystem(systemRightHandSide, solution);
     
+    // check if the solution contains Nans or Inf values
+    this->checkForNanInf(timeStepNo, currentTime);
+
     VLOG(1) << *this->data_->solution();
 
     // stop duration measurement

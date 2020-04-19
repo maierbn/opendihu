@@ -68,6 +68,9 @@ void RepeatedCall<Solver>::advanceTimeSpan()
     // advance solver
     this->solver_.advanceTimeSpan();
 
+    // check if the solution contains Nans or Inf values
+    this->checkForNanInf(timeStepNo, currentTime);
+
     // advance simulation time
     timeStepNo++;
     currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;

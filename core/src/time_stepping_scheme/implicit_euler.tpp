@@ -62,6 +62,9 @@ void ImplicitEuler<DiscretizableInTimeType>::advanceTimeSpan()
       VLOG(1) << "new solution (" << this->data_->solution() << "): " << *this->data_->solution();
     }
 
+    // check if the solution contains Nans or Inf values
+    this->checkForNanInf(timeStepNo, currentTime);
+
     // stop duration measurement
     if (this->durationLogKey_ != "")
       Control::PerformanceMeasurement::stop(this->durationLogKey_);

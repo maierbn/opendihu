@@ -16,6 +16,8 @@ TimeSteppingScheme(context[name]), initialized_(false), name_(name)
   // get python config
   this->specificSettings_ = this->context_.getPythonConfig();
 
+  checkForNanInf_ = this->specificSettings_.getOptionBool("checkForNanInf", false);
+
   // initialize output writers
   this->outputWriterManager_.initialize(context_, this->specificSettings_);
 }
@@ -98,6 +100,21 @@ run()
 
   // do simulations
   this->advanceTimeSpan();
+}
+
+template<typename FunctionSpaceType, int nComponents>
+void TimeSteppingSchemeOdeBase<FunctionSpaceType, nComponents>::
+checkForNanInf(int timeStepNo, double currentTime)
+{
+  if (checkForNanInf_)
+  {
+    if (this->data_->solution()->containsNanOrInf())
+    {
+      LOG(ERROR) << "In " << name_ << ", timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime << ": Solution contains Nan or Inf. "
+        << "This probably means that the timestep width, " << this->timeStepWidth_ << " is too high.";
+      LOG(ERROR) << *this->data_->solution();
+    }
+  }
 }
 
 template<typename FunctionSpaceType, int nComponents>

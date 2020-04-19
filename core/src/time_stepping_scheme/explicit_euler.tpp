@@ -67,14 +67,8 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
     // apply the prescribed boundary condition values
     this->applyBoundaryConditions();
 
-#ifndef NDEBUG
-    if (this->data_->solution()->containsNanOrInf())
-    {
-      LOG(ERROR) << "At time " << currentTime << ", in ExplicitEuler method: Solution contains Nan or Inf. This probably means that the timestep width, "
-        << this->timeStepWidth_ << " is too high. Note, this expensive check is only performed when compiled for debug target.";
-      LOG(ERROR) << *this->data_->solution();
-    }
-#endif
+    // check if the solution contains Nans or Inf values
+    this->checkForNanInf(timeStepNo, currentTime);
 
     // stop duration measurement
     if (this->durationLogKey_ != "")

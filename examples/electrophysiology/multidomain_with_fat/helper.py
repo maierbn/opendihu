@@ -539,8 +539,8 @@ def compute_compartment_relative_factors(mesh_node_positions, fiber_data, motor_
   diameters_full_mesh = []
     
   # loop over points in z direction
-  approximate_stride_z = float(n_points_3D_z) / variables.n_points_whole_fiber
-  print("sampled mesh: {},{},{}, orginal mesh: n_points_z: {}, n fibers: {} ".format(n_points_3D_x, n_points_3D_y, n_points_3D_z, n_points_z, len(fiber_data)))
+  approximate_stride_z = float(n_points_3D_mesh_global_z) / variables.n_points_whole_fiber
+  print("sampled mesh: {},{},{}, orginal mesh: n_points_z: {}, n fibers: {} ".format(n_points_3D_mesh_global_x, n_points_3D_mesh_global_y, n_points_3D_mesh_global_z, n_points_z, len(fiber_data)))
   print("mesh has {} node positions, approximate_stride_z: {}".format(len(mesh_node_positions), approximate_stride_z))
   
   # loop over length of muscle in full mesh (fibers)
@@ -579,7 +579,7 @@ def compute_compartment_relative_factors(mesh_node_positions, fiber_data, motor_
   for node_no,node_position in enumerate(mesh_node_positions):
     node_position = np.array(node_position)
     
-    z_index_sampled_mesh = int(float(node_no) / (n_points_3D_x*n_points_3D_y))
+    z_index_sampled_mesh = int(float(node_no) / (n_points_3D_mesh_global_x*n_points_3D_mesh_global_y))
     z_index_full_mesh = int(z_index_sampled_mesh * approximate_stride_z)
     z_index_full_mesh = max(0, min(variables.n_points_whole_fiber, z_index_full_mesh))
     

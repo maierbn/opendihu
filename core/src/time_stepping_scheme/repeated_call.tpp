@@ -57,7 +57,7 @@ void RepeatedCall<Solver>::advanceTimeSpan()
   double currentTime = this->startTime_;
   for (int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
   {
-    if (timeStepNo % this->timeStepOutputInterval_ == 0 && timeStepNo > 0)
+    if (timeStepNo % this->timeStepOutputInterval_ == 0 && (this->timeStepOutputInterval_ <= 10 || timeStepNo > 0))  // show first timestep only if timeStepOutputInterval is <= 10
     {
       LOG(INFO) << "RepeatedCall, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
     }

@@ -64,7 +64,7 @@ advanceTimeSpan()
   for (int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
   {
     // in defined intervals (settings "timeStepOutputInterval") print out the current timestep
-    if (timeStepNo % this->timeStepOutputInterval_ == 0 && timeStepNo > 0)
+    if (timeStepNo % this->timeStepOutputInterval_ == 0 && (this->timeStepOutputInterval_ <= 10 || timeStepNo > 0))  // show first timestep only if timeStepOutputInterval is <= 10
     {
       LOG(INFO) << "MuscleContractionSolver, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
     }

@@ -21,6 +21,7 @@ void Heun<DiscretizableInTime>::initialize()
 
   this->data_ = std::make_shared<Data::TimeSteppingHeun<typename DiscretizableInTime::FunctionSpace, DiscretizableInTime::nComponents()>>(this->context_);  // create data object for heun
 
+  // initialize already writes the first output file
   TimeSteppingSchemeOde<DiscretizableInTime>::initialize();
 }
 

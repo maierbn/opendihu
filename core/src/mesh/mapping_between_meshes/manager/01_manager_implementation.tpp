@@ -92,9 +92,11 @@ mappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSourc
 //! prepare a mapping to the fieldVariableTarget, this zeros the targetFactorSum for the field variable
 template<typename FieldVariableTargetType>
 void ManagerImplementation::
-prepareMappingLowToHigh(std::shared_ptr<FieldVariableTargetType> fieldVariableTarget)
+prepareMappingLowToHigh(std::shared_ptr<FieldVariableTargetType> fieldVariableTarget, int componentNoTarget)
 {
   Control::PerformanceMeasurement::start("durationMapPrepare");
+
+  VLOG(1) << "prepareMappingLowToHigh, fieldVariableTarget: " << fieldVariableTarget->name() << " componentNoTarget: " << componentNoTarget;
 
   std::string fieldVariableTargetName = fieldVariableTarget->name();
   // std::map<std::string, std::shared_ptr<FieldVariable::FieldVariableBase>> targetFactorSum_;
@@ -116,13 +118,34 @@ prepareMappingLowToHigh(std::shared_ptr<FieldVariableTargetType> fieldVariableTa
   std::shared_ptr<FieldVariable::FieldVariable<typename FieldVariableTargetType::FunctionSpace,1>> targetFactorSum
     = std::static_pointer_cast<FieldVariable::FieldVariable<typename FieldVariableTargetType::FunctionSpace,1>>(targetFactorSum_[targetFactorSumName]);
 
+  VLOG(1) << "prepareMappingLowToHigh, set all entries of " << targetFactorSum->name() << " and " << fieldVariableTarget->name() << " to 0";
+
   // set all entries to 0
   targetFactorSum->zeroEntries();
   targetFactorSum->zeroGhostBuffer();
-  fieldVariableTarget->zeroEntries();
-  fieldVariableTarget->zeroGhostBuffer();
+
+  // zero the entries of the component that will be set
+  zeroTargetFieldVariable(fieldVariableTarget, componentNoTarget);
 
   Control::PerformanceMeasurement::stop("durationMapPrepare");
+}
+
+template<typename FieldVariableTargetType>
+void ManagerImplementation::
+zeroTargetFieldVariable(std::shared_ptr<FieldVariableTargetType> fieldVariableTarget, int componentNoTarget)
+{
+  // zero the entries of the component that will be set
+  if (componentNoTarget == -1)
+  {
+    fieldVariableTarget->zeroEntries();
+  }
+  else 
+  {
+    int nDofsLocalWithoutGhosts = fieldVariableTarget->functionSpace()->nDofsLocalWithoutGhosts();
+    std::vector<double> zeros(nDofsLocalWithoutGhosts, 0);
+    fieldVariableTarget->setValuesWithoutGhosts(componentNoTarget, zeros, INSERT_VALUES);
+  }
+  fieldVariableTarget->zeroGhostBuffer();
 }
 
 // helper function, calls the map function of the mapping if field variables have same number of components
@@ -302,6 +325,8 @@ finalizeMappingLowToHigh(std::shared_ptr<FieldVariableTargetType> fieldVariableT
     return;
   }
 
+  VLOG(1) << "finalizeMappingLowToHigh, fieldVariableTarget: " << fieldVariableTarget->name() << ", componentNoTarget: " << componentNoTarget;
+
   Control::PerformanceMeasurement::start("durationMapFinalize");
 
   std::string targetFactorSumName = fieldVariableTarget->functionSpace()->meshName()+std::string("_")+fieldVariableTarget->name();
@@ -368,7 +393,7 @@ finalizeMappingLowToHigh(std::shared_ptr<FieldVariableTargetType> fieldVariableT
     }
   }
 
-  VLOG(1) << "low to high, targetValues: " << targetValues;
+  VLOG(1) << "low to high, set targetValues: " << targetValues;
 
   // set the computed values
   fieldVariableTarget->setValuesWithoutGhosts(componentNoTarget, targetValues);
@@ -382,6 +407,8 @@ void ManagerImplementation::
 finalizeMappingLowToHigh(std::shared_ptr<FieldVariableTargetType> fieldVariableTarget)
 {
   Control::PerformanceMeasurement::start("durationMapFinalize");
+
+  VLOG(1) << "finalizeMappingLowToHigh, fieldVariableTarget: " << fieldVariableTarget->name();
 
   // assert that targetFactorSum_ field variable exists, this should have been created by prepareMapping()
   std::string targetFactorSumName = fieldVariableTarget->functionSpace()->meshName()+std::string("_")+fieldVariableTarget->name();
@@ -442,7 +469,7 @@ finalizeMappingLowToHigh(std::shared_ptr<FieldVariableTargetType> fieldVariableT
     }
   }
 
-  VLOG(1) << "low to high all, targetValues: " << targetValues;
+  VLOG(1) << "low to high all, set targetValues: " << targetValues;
 
   // set the computed values
   fieldVariableTarget->setValuesWithoutGhosts(targetValues);

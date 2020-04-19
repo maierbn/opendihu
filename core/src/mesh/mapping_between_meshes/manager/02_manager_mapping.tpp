@@ -339,7 +339,7 @@ map(std::shared_ptr<FieldVariableSourceType> fieldVariableSource,
 template<typename FieldVariableSourceType, typename FieldVariableTargetType>
 void Manager::
 prepareMapping(std::shared_ptr<FieldVariableSourceType> fieldVariableSource,
-               std::shared_ptr<FieldVariableTargetType> fieldVariableTarget)
+               std::shared_ptr<FieldVariableTargetType> fieldVariableTarget, int componentNoTarget)
 {
   bool mapLowToHigh = false;
   bool mapHighToLow = false;
@@ -360,16 +360,16 @@ prepareMapping(std::shared_ptr<FieldVariableSourceType> fieldVariableSource,
     }
   }
 
-  // prepareMapping is needed
-  //if (mapLowToHigh)
+  // prepareMapping is needed only if mapLowToHigh is called
+  if (mapLowToHigh)
   {
-    prepareMappingLowToHigh(fieldVariableTarget);
+    prepareMappingLowToHigh(fieldVariableTarget, componentNoTarget);
   }
-  /*else if (mapHighToLow)
+  else if (mapHighToLow)
   {
-    fieldVariableTarget->zeroEntries();
-    fieldVariableTarget->zeroGhostBuffer();
-  }*/
+    // zero entries in component of target field variable
+    zeroTargetFieldVariable(fieldVariableTarget, componentNoTarget);
+  }
 
   // reset counter of mapped meshes for log
   mappedSourceMeshesCounter_ = 0;

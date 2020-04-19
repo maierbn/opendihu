@@ -115,7 +115,7 @@ public:
   //! prepare the mapping for meshes of any dimensionality, this can be called even if not needed
   template<typename FieldVariableSourceType, typename FieldVariableTargetType>
   void prepareMapping(std::shared_ptr<FieldVariableSourceType> fieldVariableSource,
-                      std::shared_ptr<FieldVariableTargetType> fieldVariableTarget);
+                      std::shared_ptr<FieldVariableTargetType> fieldVariableTarget, int componentNoTarget);
 
   //! map between meshes of any dimensionality,
   //! if the field variables share the same function space, do no mapping at all, but copy the values

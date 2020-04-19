@@ -240,7 +240,7 @@ initializeFiberDirections()
 
     // prepare the target mesh for the mapping, set all factors to zero
     std::shared_ptr<FieldVariable::FieldVariable<FiberFunctionSpace,3>> direction;
-    DihuContext::mappingBetweenMeshesManager()->template prepareMapping<SourceFunctionSpaceType,TargetFunctionSpaceType>(direction, this->data_.fiberDirection());
+    DihuContext::mappingBetweenMeshesManager()->template prepareMapping<SourceFunctionSpaceType,TargetFunctionSpaceType>(direction, this->data_.fiberDirection(), -1);
 
     // loop over fiber mesh names
     for (int fiberNo = 0; fiberNo < fiberMeshNames.size(); fiberNo++)

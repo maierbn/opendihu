@@ -26,7 +26,7 @@ public:
 
   //! prepare a mapping to the fieldVariableTarget, this zeros the targetFactorsSum for the field variable
   template<typename FieldVariableTargetType>
-  void prepareMappingLowToHigh(std::shared_ptr<FieldVariableTargetType> fieldVariableTarget);
+  void prepareMappingLowToHigh(std::shared_ptr<FieldVariableTargetType> fieldVariableTarget, int componentNoTarget);
 
   //! map data from on component of the source field variable to one component of the target field variable.
   //! Dimensionality source function space <= dimensionality target function space (e.g. 1D -> 3D)
@@ -69,6 +69,10 @@ protected:
   template<typename FunctionSpaceSourceType, typename FunctionSpaceTargetType>
   std::shared_ptr<MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>>
     createMappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSource, std::shared_ptr<FunctionSpaceTargetType> functionSpaceTarget);
+
+  //! set the component of the target field variable to all zero (if it is a component), or all components (if componentNoTarget == -1)
+  template<typename FieldVariableTargetType>
+  void zeroTargetFieldVariable(std::shared_ptr<FieldVariableTargetType> fieldVariableTarget, int componentNoTarget);
 
   PythonConfig specificSettings_;    //< python object containing the value of the python config dict with corresponding key, for meshManager
 

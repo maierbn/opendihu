@@ -28,6 +28,9 @@ public:
   //! perform the solve, @return: if the solution succeeded
   bool solve(Vec rightHandSide, Vec solution, std::string message="");
 
+  //! return the number of iterations of the last solve
+  int lastNumberOfIterations();
+
   //! dump files containing rhs, solution and system matrix
   void dumpMatrixRightHandSideSolution(Vec rightHandSide, Vec solution);
 
@@ -46,6 +49,7 @@ protected:
   double relativeTolerance_;   //< relative solver tolerance of the residuum norm relative to the initial value of the residual norm
   double absoluteTolerance_;   //< absolute solver tolerance of the residuum norm
   long int maxIterations_;     //< maximum number of iterations
+  int lastNumberOfIterations_; //< the number of iterations of the previous solve
 
   std::string dumpFormat_;     //< format to use for dumping matrices and vectors
   std::string dumpFilename_;   //< filename used for dumping matrices and vectors, empty for no dump

@@ -303,11 +303,10 @@ bool Linear::solve(Vec rightHandSide, Vec solution, std::string message)
   dumpMatrixRightHandSideSolution(rightHandSide, solution);
 
   // determine meta data
-  PetscInt numberOfIterations = 0;
   PetscReal residualNorm = 0.0;
   PetscInt nDofsGlobal = 0;
 
-  ierr = KSPGetIterationNumber(*ksp_, &numberOfIterations); CHKERRQ(ierr);
+  ierr = KSPGetIterationNumber(*ksp_, &lastNumberOfIterations_); CHKERRQ(ierr);
   ierr = KSPGetResidualNorm(*ksp_, &residualNorm); CHKERRQ(ierr);
 
   KSPConvergedReason convergedReason;
@@ -342,17 +341,22 @@ bool Linear::solve(Vec rightHandSide, Vec solution, std::string message)
   if (message != "")
   {
     // example for output: "Linear system of multidomain problem solved in 373 iterations, 3633 dofs, residual norm 9.471e-11: KSP_CONVERGED_ATOL: residual 2-norm less than abstol"
-    LOG(INFO) << message << " in " << numberOfIterations << " iterations, " << nDofsGlobal << " dofs, residual norm " << residualNorm
+    LOG(INFO) << message << " in " << lastNumberOfIterations_ << " iterations, " << nDofsGlobal << " dofs, residual norm " << residualNorm
       << ": " << PetscUtility::getStringLinearConvergedReason(convergedReason);
   }
 
   // store parameter values to be logged
-  Control::PerformanceMeasurement::setParameter(nIterationsLogKey_, numberOfIterations);
+  Control::PerformanceMeasurement::setParameter(nIterationsLogKey_, lastNumberOfIterations_);
   Control::PerformanceMeasurement::setParameter(residualNormLogKey_, residualNorm);
-  Control::PerformanceMeasurement::countNumber(nIterationsTotalLogKey_, numberOfIterations);
+  Control::PerformanceMeasurement::countNumber(nIterationsTotalLogKey_, lastNumberOfIterations_);
 
   // if convergedReason > 0 then it converged
   return convergedReason > 0;
+}
+
+int Linear::lastNumberOfIterations()
+{
+  return lastNumberOfIterations_;
 }
 
 }   //namespace

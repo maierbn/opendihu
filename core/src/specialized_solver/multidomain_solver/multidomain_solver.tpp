@@ -768,6 +768,9 @@ solveLinearSystem()
       LOG(WARNING) << "Solver has not converged, try again " << solveNo << "/3";
     }
   }
+
+  // store the last number of iterations
+  lastNumberOfIterations_ = this->linearSolver_->lastNumberOfIterations();
   
   // copy the values back from a single Vec that contains all entries to a nested Petsc Vec
   NestedMatVecUtility::fillNestedVec(singleSolution_, nestedSolution_);

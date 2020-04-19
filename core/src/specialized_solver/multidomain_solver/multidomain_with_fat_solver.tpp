@@ -505,6 +505,9 @@ solveLinearSystem()
     }
   }
 
+  // store the last number of iterations
+  this->lastNumberOfIterations_ = this->linearSolver_->lastNumberOfIterations();
+
   // copy the values back from the single Vec, singleSolution_, that contains all entries 
   // to the nested Petsc Vec, nestedSolution_ which contains the components in subvectorsSolution_
   NestedMatVecUtility::fillNestedVec(this->singleSolution_, this->nestedSolution_);

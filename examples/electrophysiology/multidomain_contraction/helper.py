@@ -524,8 +524,8 @@ variables.meshes["3DFatMesh_elasticity_quadratic"]["nPointsGlobal"] = [
 ]  
 
 # output information about partitioning on rank 0
-if rank_no == 0 or True:      
-  print("()  sub-sampling 3D elasticity mesh with factors {}, {}, {} ".format(rank_no, variables.sampling_factor_elasticity_x, variables.sampling_factor_elasticity_y, variables.sampling_factor_elasticity_z))
+if rank_no == 0:      
+  print("{}  sub-sampling 3D elasticity mesh with factors {}, {}, {} ".format(rank_no, variables.sampling_factor_elasticity_x, variables.sampling_factor_elasticity_y, variables.sampling_factor_elasticity_z))
   
   n_points_global_elasticity_mesh = variables.meshes["3Dmesh_elasticity_quadratic"]["nPointsGlobal"]
   n_points_local_elasticity_mesh = variables.meshes["3Dmesh_elasticity_quadratic"]["nPointsLocal"]

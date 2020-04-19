@@ -523,7 +523,18 @@ if "rankNos" in variables.meshes["3Dmesh_quadratic"]:
 # -------------------
 # determine number of elements in fat elasticity mesh, x and z direction which is adjacent to the muscle mesh
 # (in the analogous part for 3Dmesh, this is called n_elements_aim)
-n_elements_elasticity_fat_mesh_x = n_elements_aim_x + n_elements_aim_y
+# on the top portion of the muscle mesh
+if variables.own_subdomain_coordinate_y == variables.n_subdomains_y - 1:
+  n_elements_elasticity_fat_mesh_x = n_elements_aim_x
+  
+  # on the top right corner
+  if variables.own_subdomain_coordinate_x == variables.n_subdomains_x - 1:
+    n_elements_elasticity_fat_mesh_x = n_elements_aim_x + n_elements_aim_y
+
+# on the right border but not the corner
+elif variables.own_subdomain_coordinate_x == variables.n_subdomains_x - 1:
+  n_elements_elasticity_fat_mesh_x = n_elements_aim_y
+  
 n_elements_elasticity_fat_mesh_z = n_elements_aim_z
 
 # determine number of elements in y direction

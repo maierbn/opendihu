@@ -539,7 +539,7 @@ def compute_compartment_relative_factors(mesh_node_positions, fiber_data, motor_
   diameters_full_mesh = []
     
   # loop over points in z direction
-  approximate_stride_z = float(n_points_3D_mesh_global_z) / variables.n_points_whole_fiber
+  approximate_stride_z = variables.n_points_whole_fiber / float(n_points_3D_mesh_global_z)
   print("sampled mesh: {},{},{}, orginal mesh: n_points_z: {}, n fibers: {} ".format(n_points_3D_mesh_global_x, n_points_3D_mesh_global_y, n_points_3D_mesh_global_z, n_points_z, len(fiber_data)))
   print("mesh has {} node positions, approximate_stride_z: {}".format(len(mesh_node_positions), approximate_stride_z))
   

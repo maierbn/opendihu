@@ -109,16 +109,10 @@ potential_flow_solver_type = "gmres"        # solver and preconditioner for an i
 potential_flow_preconditioner_type = "none" # preconditioner
 
 # multidomain
+multidomain_solver_type = "gmres"          # solver for the multidomain problem
+multidomain_preconditioner_type = "euclid"   # preconditioner
 multidomain_absolute_tolerance = 1e-15 # absolute residual tolerance for the multidomain solver
 multidomain_relative_tolerance = 1e-15 # absolute residual tolerance for the multidomain solver
-
-multidomain_solver_type = "gmres"          # solver for the multidomain problem
-multidomain_preconditioner_type = "pilut"   # preconditioner
-
-scenario_name = "{}_{}_".format(multidomain_solver_type,multidomain_preconditioner_type)
-
-# set initial guess to zero for direct solver
-initial_guess_nonzero = "lu" not in multidomain_solver_type 
 
 # elasticity
 elasticity_solver_type = "preonly"
@@ -150,8 +144,9 @@ output_timestep_multidomain = 1e-2   # [ms] timestep for fiber output, 0.5
 output_timestep_3D = dt_elasticity   # [ms] timestep for output of mechanics, should be a multiple of dt_elasticity
 
 # input files
-fiber_file = "../../input/left_biceps_brachii_9x9fibers.bin"
+#fiber_file = "../../input/left_biceps_brachii_9x9fibers.bin"
 #fiber_file = "../../input/left_biceps_brachii_13x13fibers.bin"
+fiber_file = "../../input/small_5x5x11.bin"
 fat_mesh_file = fiber_file + "_fat.bin"
 firing_times_file = "../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
 fiber_distribution_file = "../../input/MU_fibre_distribution_10MUs.txt"
@@ -159,9 +154,9 @@ cellml_file             = "../../input/new_slow_TK_2014_12_08.c"
 
 # stride for sampling the 3D elements from the fiber data
 # a higher number leads to less 3D elements
-sampling_stride_x = 2
-sampling_stride_y = 2
-sampling_stride_z = 74
+sampling_stride_x = 1 #2
+sampling_stride_y = 1 #2
+sampling_stride_z = 1 #74
 sampling_stride_fat = 1
 
 # how much of the multidomain mesh is used for elasticity
@@ -175,7 +170,8 @@ paraview_output = True
 adios_output = False
 exfile_output = False
 python_output = False
-disable_firing_output = False
+states_output = True
+disable_firing_output = True        # show output in console about motor units
 
 # debugging version, smaller example
 motor_units = motor_units[0:2]  # only 2 motor units

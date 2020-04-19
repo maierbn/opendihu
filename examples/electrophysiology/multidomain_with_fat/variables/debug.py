@@ -30,36 +30,43 @@ motor_units = motor_units[0:2]  # only two motor units
 
 # solvers
 # -------
-multidomain_solver_type = "cg"         # solver for the multidomain problem
+multidomain_solver_type = "gmres"          # solver for the multidomain problem
+#multidomain_preconditioner_type = "bjacobi"   # preconditioner
+#multidomain_preconditioner_type = "boomeramg"   # preconditioner
 multidomain_preconditioner_type = "euclid"   # preconditioner
-multidomain_alternative_solver_type = "lu"           # alternative solver, used when normal solver diverges
-multidomain_alternative_preconditioner_type = "none"     # preconditioner of the alternative solver
 
-theta = 0.5                               # weighting factor of implicit term in Crank-Nicolson scheme, 0.5 gives the classic, 2nd-order Crank-Nicolson scheme, 1.0 gives implicit euler
-use_symmetric_preconditioner_matrix = True    # if the diagonal blocks of the system matrix should be used as preconditioner matrix, (True means more iterations in the solver but faster preconditioner)
-use_lumped_mass_matrix = False             # which formulation to use, the formulation with lumped mass matrix (True) is more stable but approximative, the other formulation (False) is exact but needs more iterations
+multidomain_alternative_solver_type = "gmres"            # alternative solver, used when normal solver diverges
+multidomain_alternative_preconditioner_type = "none"    # preconditioner of the alternative solver
 
 # set initial guess to zero for direct solver
 initial_guess_nonzero = "lu" not in multidomain_solver_type 
 
+# if using boomeramg, tolerances cannot be as low as 1e-10, otherwise it becomes unstable
 multidomain_absolute_tolerance = 1e-15    # absolute residual tolerance for the multidomain solver
-multidomain_relative_tolerance = 1e-15    # absolute residual tolerance for the multidomain solver
-theta = 0.5                               # weighting factor of implicit term in Crank-Nicolson scheme, 0.5 gives the classic, 2nd-order Crank-Nicolson scheme, 1.0 gives implicit euler
-use_symmetric_preconditioner_matrix = True    # if the diagonal blocks of the system matrix should be used as preconditioner matrix
+multidomain_relative_tolerance = 1e-15    # relative residual tolerance for the multidomain solver
+theta = 1.0                               # weighting factor of implicit term in Crank-Nicolson scheme, 0.5 gives the classic, 2nd-order Crank-Nicolson scheme, 1.0 gives implicit euler
+use_symmetric_preconditioner_matrix = True   # if the diagonal blocks of the system matrix should be used as preconditioner matrix
 use_lumped_mass_matrix = False            # which formulation to use, the formulation with lumped mass matrix (True) is more stable but approximative, the other formulation (False) is exact but needs more iterations
 
 # timing parameters
 # -----------------
 end_time = 4000.0                   # [ms] end time of the simulation
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
-dt_0D = 1e-3                        # [ms] timestep width of ODEs (3e-3)
-dt_multidomain = dt_0D              # [ms] timestep width of multidomain
-dt_splitting = dt_multidomain       # [ms] overall timestep width of strang splitting (3e-3)
-output_timestep_multidomain = 1e-1  # [ms] timestep for multidomain output
+dt_0D = 1e-3                        # [ms] timestep width of ODEs (1e-3)
+dt_multidomain = 1e-3               # [ms] timestep width of the multidomain solver
+dt_splitting = 1e-3                 # [ms] overall timestep width of strang splitting (3e-3)
+output_timestep_multidomain = 2e-1  # [ms] timestep for multidomain output
+output_timestep_multidomain = 5     # [ms] timestep for multidomain output
+output_timestep_multidomain = 1e-2  # [ms] timestep for multidomain output
+output_timestep_0D_states = 2e-3    # [ms] timestep for output files of 0D subcellular model states
+end_time = 1e-2
+
+scenario_name = "{}_{}_dt{}_atol{}_rtol{}_theta{}_sym{}_lump{}".format(multidomain_solver_type, multidomain_preconditioner_type, dt_splitting, multidomain_absolute_tolerance, multidomain_relative_tolerance, theta, use_symmetric_preconditioner_matrix, use_lumped_mass_matrix)
 
 # input files
 cellml_file = "../../input/hodgkin_huxley_1952.c"
-fiber_file = "../../input/left_biceps_brachii_7x7fibers.bin"
+#fiber_file = "../../input/left_biceps_brachii_7x7fibers.bin"
+fiber_file = "../../input/small_5x5x11.bin"
 fat_mesh_file = fiber_file + "_fat.bin"
 firing_times_file = "../../input/MU_firing_times_immediately.txt"
 
@@ -68,20 +75,24 @@ firing_times_file = "../../input/MU_firing_times_immediately.txt"
 # a higher number leads to less 3D elements
 sampling_stride_x = 1
 sampling_stride_y = 1
-sampling_stride_z = 74   # faster, but stimulus does not propagate
-sampling_stride_fat = 2
-
+sampling_stride_z = 1 #74   # faster, but stimulus does not propagate
+sampling_stride_fat = 1
 
 # other options
 paraview_output = True
 adios_output = False
 exfile_output = False
 python_output = False
+states_output = True
 disable_firing_output = False
 
 # functions, here, Am, Cm and Conductivity are constant for all fibers and MU's
 def get_am(mu_no):
-  return Am
+  # get radius in cm, 1 μm = 1e-6 m = 1e-4*1e-2 m = 1e-4 cm
+  r = motor_units[mu_no]["radius"]*1e-4
+  # cylinder surface: A = 2*π*r*l, V = cylinder volume: π*r^2*l, Am = A/V = 2*π*r*l / (π*r^2*l) = 2/r
+  return 2./r
+  #return Am
 
 def get_cm(mu_no):
   return motor_units[mu_no % len(motor_units)]["cm"]

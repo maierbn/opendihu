@@ -575,7 +575,7 @@ def compute_compartment_relative_factors(mesh_node_positions, fiber_data, motor_
   for node_no,node_position in enumerate(mesh_node_positions):
     node_position = np.array(node_position)
     
-    z_index = int((float)node_no / n_points_z)
+    z_index = int((float)(node_no) / n_points_z)
     
     # loop over motor units
     for motor_unit_no,motor_unit in enumerate(motor_units):
@@ -588,7 +588,7 @@ def compute_compartment_relative_factors(mesh_node_positions, fiber_data, motor_
         min_distance = None
         z_start = max(0,z_index - 10)
         z_end = min(n_points_z, z_index + 10)
-        for k,fiber_point in enumerate(fiber_data[fiber_no][z_start,z_end):
+        for k,fiber_point in enumerate(fiber_data[fiber_no][z_start:z_end]):
           d = np.array(fiber_point) - node_position
           distance = np.inner(d,d)
           if min_distance is None or distance < min_distance:

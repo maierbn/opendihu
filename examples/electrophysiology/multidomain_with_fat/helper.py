@@ -539,13 +539,12 @@ def compute_compartment_relative_factors(mesh_node_positions, fiber_data, motor_
   diameters_full_mesh = []
     
   # loop over points in z direction
-  n_points_z = len(fiber_data[0])
-  approximate_stride_z = n_points_z / variables.n_points_whole_fiber
-  print("n_points_z: {}, n fibers: {} ".format(n_points_z, len(fiber_data)))
+  approximate_stride_z = float(n_points_3D_z) / variables.n_points_whole_fiber
+  print("sampled mesh: {},{},{}, orginal mesh: n_points_z: {}, n fibers: {} ".format(n_points_3D_x, n_points_3D_y, n_points_3D_z, n_points_z, len(fiber_data)))
   print("mesh has {} node positions, approximate_stride_z: {}".format(len(mesh_node_positions), approximate_stride_z))
   
   # loop over length of muscle in full mesh (fibers)
-  for k in range(n_points_z):
+  for k in range(variables.n_points_whole_fiber):
     # get point on first and last fiber
     point0 = np.array(fiber_data[0][k])
     point4 = np.array(fiber_data[(variables.n_fibers_x-1)//2][k])
@@ -598,7 +597,7 @@ def compute_compartment_relative_factors(mesh_node_positions, fiber_data, motor_
       min_distance = None
       z_start = max(0, z_index_full_mesh - int(approximate_stride_z*3))
       z_end = min(variables.n_points_whole_fiber, z_index_full_mesh + int(approximate_stride_z*3))
-      #print("n_points_z: {}, check range {},{}: {}".format(n_points_z,z_start,z_end,fiber_data[fiber_no][z_start:z_end]))
+      #print("n_points_z: {}, check range {},{}: {}".format(variables.n_points_whole_fiber,z_start,z_end,fiber_data[fiber_no][z_start:z_end]))
       
       # determine closest point in the fiber to current node
       # loop over full fibers
@@ -612,7 +611,7 @@ def compute_compartment_relative_factors(mesh_node_positions, fiber_data, motor_
       
       distance = np.sqrt(min_distance)
       
-      gaussian = scipy.stats.norm(loc = 0., scale = motor_unit["standard_deviation"] * diameters[z_index_full_mesh])
+      gaussian = scipy.stats.norm(loc = 0., scale = motor_unit["standard_deviation"] * diameters_full_mesh[z_index_full_mesh])
       value = gaussian.pdf(distance) * motor_unit["standard_deviation"] * np.sqrt(2*np.pi) * motor_unit["maximum"]
       relative_factors[motor_unit_no][node_no] += value
       #print("motor unit {}, fiber {}, distance {}, value {}".format(motor_unit_no, fiber_no, distance, value))

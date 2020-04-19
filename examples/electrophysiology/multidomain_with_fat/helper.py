@@ -585,7 +585,8 @@ def compute_compartment_relative_factors(mesh_node_positions, fiber_data, motor_
       fiber_no = motor_unit["fiber_no"]
       if fiber_no >= len(fiber_data):
         new_fiber_no = fiber_no % len(fiber_data)
-        print("\033[0;31mError with motor unit {}, only {} fibers available, now setting to {}.\033[0m".format(motor_unit, len(fiber_data), new_fiber_no))
+        if node_no == 0:
+          print("\033[0;31mError with motor unit {} around fiber {}, only {} fibers available, now using fiber {} % {} = {} instead.\033[0m".format(motor_unit_no, fiber_no, len(fiber_data), fiber_no, len(fiber_data), new_fiber_no))
         fiber_no = new_fiber_no
       
       min_distance = None

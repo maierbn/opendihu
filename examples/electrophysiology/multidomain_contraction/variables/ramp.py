@@ -102,6 +102,8 @@ motor_units = [
   {"fiber_no": 50, "standard_deviation": 0.2, "maximum": 0.2, "radius": 72.00, "cm": 1.00, "activation_start_time": 1.6, "stimulation_frequency": 8.32,  "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
   {"fiber_no": 25, "standard_deviation": 0.2, "maximum": 0.2, "radius": 80.00, "cm": 1.00, "activation_start_time": 1.8, "stimulation_frequency": 7.66,  "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},    # high number of fibers
 ]
+#motor_units=motor_units[0:1]
+
 # solvers
 # -------
 # potential flow
@@ -111,6 +113,10 @@ potential_flow_preconditioner_type = "none" # preconditioner
 # multidomain
 multidomain_solver_type = "gmres"          # solver for the multidomain problem
 multidomain_preconditioner_type = "euclid"   # preconditioner
+
+multidomain_alternative_solver_type = "gmres"            # alternative solver, used when normal solver diverges
+multidomain_alternative_preconditioner_type = "euclid"    # preconditioner of the alternative solver
+
 multidomain_absolute_tolerance = 1e-15 # absolute residual tolerance for the multidomain solver
 multidomain_relative_tolerance = 1e-15 # absolute residual tolerance for the multidomain solver
 
@@ -128,7 +134,7 @@ absolute_tolerance = 1e-10          # absolute tolerance of the residual of the 
 initial_guess_nonzero = "lu" not in multidomain_solver_type 
 
 theta = 1.0                               # weighting factor of implicit term in Crank-Nicolson scheme, 0.5 gives the classic, 2nd-order Crank-Nicolson scheme, 1.0 gives implicit euler
-use_symmetric_preconditioner_matrix = True    # if the diagonal blocks of the system matrix should be used as preconditioner matrix
+use_symmetric_preconditioner_matrix = True   # if the diagonal blocks of the system matrix should be used as preconditioner matrix
 use_lumped_mass_matrix = False            # which formulation to use, the formulation with lumped mass matrix (True) is more stable but approximative, the other formulation (False) is exact but needs more iterations
 
 # timing parameters
@@ -136,23 +142,24 @@ use_lumped_mass_matrix = False            # which formulation to use, the formul
 end_time = 4000.0                   # [ms] end time of the simulation
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
 stimulation_frequency_jitter = 0    # [-] jitter in percent of the frequency, added and substracted to the stimulation_frequency after each stimulation
-dt_0D = 1e-3                        # [ms] timestep width of ODEs (1e-3)
-dt_multidomain = 1e-3               # [ms] timestep width of the multidomain solver, i.e. the diffusion
+dt_0D = 3e-3                        # [ms] timestep width of ODEs (1e-3)
+dt_multidomain = 3e-3               # [ms] timestep width of the multidomain solver, i.e. the diffusion
 dt_splitting = dt_multidomain       # [ms] timestep width of strang splitting between 0D and multidomain, this is the same as the dt_multidomain, because we do not want to subcycle for the diffusion part
-dt_elasticity = 1e-3                # [ms] time step width of elasticity solver
-output_timestep_multidomain = 1e-3     # [ms] timestep for fiber output, 0.5
+dt_elasticity = 3e-3                # [ms] time step width of elasticity solver
+output_timestep_multidomain = 2e-1     # [ms] timestep for fiber output, 0.5
 output_timestep_elasticity = 1e-3      # [ms] timestep for elasticity output files
 
 # input files
-#fiber_file = "../../input/left_biceps_brachii_9x9fibers.bin"
+cellml_file = "../../input/new_slow_TK_2014_12_08.c"
+fiber_file = "../../input/left_biceps_brachii_9x9fibers.bin"
 fiber_file = "../../input/left_biceps_brachii_13x13fibers.bin"
 fat_mesh_file = fiber_file + "_fat.bin"
 firing_times_file = "../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
 fiber_distribution_file = "../../input/MU_fibre_distribution_10MUs.txt"
-cellml_file             = "../../input/new_slow_TK_2014_12_08.c"
 
 # stride for sampling the 3D elements from the fiber data
 # a higher number leads to less 3D elements
+# If you change this, delete the compartment_relative_factors.* files, they have to be generated again.
 sampling_stride_x = 1
 sampling_stride_y = 1
 sampling_stride_z = 20
@@ -169,11 +176,9 @@ paraview_output = True
 adios_output = False
 exfile_output = False
 python_output = False
-states_output = True
-disable_firing_output = True        # show output in console about motor units
-
-# debugging version, smaller example
-#motor_units = motor_units[0:2]  # only 2 motor units
+states_output = False    # if also the subcellular states should be output, this produces large files, set output_timestep_0D_states
+show_linear_solver_output = True    # if every solve of multidomain diffusion should be printed
+disable_firing_output = False   # if information about firing of MUs should be printed
 
 # functions, here, Am, Cm and Conductivity are constant for all fibers and MU's
 def get_am(mu_no):

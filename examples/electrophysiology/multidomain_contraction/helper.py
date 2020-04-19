@@ -910,13 +910,33 @@ def compute_compartment_relative_factors(mesh_node_positions, fiber_data, motor_
     
   # loop over points in z direction
   n_points_z = len(fiber_data[0])
+  n_points_xy = len(fiber_data)
   for k in range(n_points_z):
     # get point on first and last fiber
     point0 = np.array(fiber_data[0][k])
-    point1 = np.array(fiber_data[-1][k])
+    point4 = np.array(fiber_data[(variables.n_fibers_x-1)//2][k])
+    point1 = np.array(fiber_data[variables.n_fibers_x-1][k])
+    point2 = np.array(fiber_data[-variables.n_fibers_x][k])
+    point5 = np.array(fiber_data[(-variables.n_fibers_x)//2][k])
+    point3 = np.array(fiber_data[-1][k])
     
     # their distance is an approximation for the diameter
-    distance = np.linalg.norm(point0 - point1)
+    distance01 = np.linalg.norm(point0 - point1)
+    distance02 = np.linalg.norm(point0 - point2)
+    distance03 = np.linalg.norm(point0 - point3)
+    distance04 = np.linalg.norm(point0 - point4)
+    distance05 = np.linalg.norm(point0 - point5)
+    distance12 = np.linalg.norm(point1 - point2)
+    distance13 = np.linalg.norm(point1 - point3)
+    distance14 = np.linalg.norm(point1 - point4)
+    distance15 = np.linalg.norm(point1 - point5)
+    distance23 = np.linalg.norm(point2 - point3)
+    distance24 = np.linalg.norm(point2 - point4)
+    distance25 = np.linalg.norm(point2 - point5)
+    distance34 = np.linalg.norm(point3 - point4)
+    distance35 = np.linalg.norm(point3 - point5)
+    distance45 = np.linalg.norm(point4 - point5)
+    distance = max(distance01,distance02,distance03,distance04,distance05,distance12,distance13,distance14,distance15,distance23,distance24,distance25,distance34,distance35,distance45)
     diameters.append(distance)
 
   # create data structure with 0
@@ -926,30 +946,38 @@ def compute_compartment_relative_factors(mesh_node_positions, fiber_data, motor_
   for node_no,node_position in enumerate(mesh_node_positions):
     node_position = np.array(node_position)
     
+    z_index = int((float)(node_no) / n_points_xy)
+    
     # loop over motor units
     for motor_unit_no,motor_unit in enumerate(motor_units):
       
       # find point on fiber that is closest to current node
       fiber_no = motor_unit["fiber_no"]
       if fiber_no >= len(fiber_data):
-        print("Error with motor unit {}, only {} fibers available".format(motor_unit, len(fiber_data)))
-      else:
-        min_distance = None
-        for k,fiber_point in enumerate(fiber_data[fiber_no]):
-          d = np.array(fiber_point) - node_position
-          distance = np.inner(d,d)
-          if min_distance is None or distance < min_distance:
-            min_distance = distance
-            #print("node_position {}, fiber_point {}, d={}, |d|={}".format(node_position, fiber_point, d, np.sqrt(distance)))
-        
-        distance = np.sqrt(min_distance)
-        
-        
-        gaussian = scipy.stats.norm(loc = 0., scale = motor_unit["standard_deviation"]*diameters[k])
-        value = gaussian.pdf(distance)*motor_unit["standard_deviation"]*np.sqrt(2*np.pi)*motor_unit["maximum"]
-        relative_factors[motor_unit_no][node_no] += value
-        #print("motor unit {}, fiber {}, distance {}, value {}".format(motor_unit_no, fiber_no, distance, value))
-  
+        new_fiber_no = fiber_no % len(fiber_data)
+        if node_no == 0:
+          print("\033[0;31mError with motor unit {} around fiber {}, only {} fibers available, now using fiber {} % {} = {} instead.\033[0m".format(motor_unit_no, fiber_no, len(fiber_data), fiber_no, len(fiber_data), new_fiber_no))
+        fiber_no = new_fiber_no
+      
+      min_distance = None
+      z_start = max(0,z_index - 10)
+      z_end = min(n_points_z, z_index + 10)
+      #print("n_points_z: {}, check range {},{}: {}".format(n_points_z,z_start,z_end,fiber_data[fiber_no][z_start:z_end]))
+      for k,fiber_point in enumerate(fiber_data[fiber_no][z_start:z_end]):
+        d = np.array(fiber_point) - node_position
+        distance = np.inner(d,d)
+        if min_distance is None or distance < min_distance:
+          min_distance = distance
+          #print("node_position {}, fiber_point {}, d={}, |d|={}".format(node_position, fiber_point, d, np.sqrt(distance)))
+      
+      distance = np.sqrt(min_distance)
+      
+      
+      gaussian = scipy.stats.norm(loc = 0., scale = motor_unit["standard_deviation"]*diameters[k])
+      value = gaussian.pdf(distance)*motor_unit["standard_deviation"]*np.sqrt(2*np.pi)*motor_unit["maximum"]
+      relative_factors[motor_unit_no][node_no] += value
+      #print("motor unit {}, fiber {}, distance {}, value {}".format(motor_unit_no, fiber_no, distance, value))
+
   return relative_factors
 
 ####################################

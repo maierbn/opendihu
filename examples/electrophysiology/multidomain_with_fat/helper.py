@@ -641,7 +641,7 @@ else:
   quit()
 
 # debugging output
-if rank_no == 0:
+if rank_no == 0 and not variables.disable_firing_output:
   for i,factors_list in enumerate(variables.relative_factors.tolist()):
     print("MU {}, maximum fr: {}".format(i,max(factors_list)))
 

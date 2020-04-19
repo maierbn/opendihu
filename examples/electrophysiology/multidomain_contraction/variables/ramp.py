@@ -140,8 +140,8 @@ dt_0D = 1e-3                        # [ms] timestep width of ODEs (1e-3)
 dt_multidomain = 1e-3               # [ms] timestep width of the multidomain solver, i.e. the diffusion
 dt_splitting = dt_multidomain       # [ms] timestep width of strang splitting between 0D and multidomain, this is the same as the dt_multidomain, because we do not want to subcycle for the diffusion part
 dt_elasticity = 1e-3                # [ms] time step width of elasticity solver
-output_timestep_multidomain = 1     # [ms] timestep for fiber output, 0.5
-output_timestep_elasticity = 1      # [ms] timestep for elasticity output files
+output_timestep_multidomain = 1e-3     # [ms] timestep for fiber output, 0.5
+output_timestep_elasticity = 1e-3      # [ms] timestep for elasticity output files
 
 # input files
 #fiber_file = "../../input/left_biceps_brachii_9x9fibers.bin"
@@ -160,8 +160,8 @@ sampling_stride_fat = 1
 
 # how much of the multidomain mesh is used for elasticity
 sampling_factor_elasticity_x = 0.5    
-sampling_factor_elasticity_y = 0.5
-sampling_factor_elasticity_z = 0.5
+sampling_factor_elasticity_y = 0.05
+sampling_factor_elasticity_z = 0.05
 
 # other options
 paraview_output = True

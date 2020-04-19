@@ -256,9 +256,10 @@ config = {
             "logTimeStepWidthAsKey":        "dt_0D",
             "durationLogKey":               "duration_0D",
             "initialValues":                [],
-            "timeStepOutputInterval":       1e4,
+            "timeStepOutputInterval":       1,
             "inputMeshIsGlobal":            True,
             "dirichletBoundaryConditions":  {},
+            "checkForNanInf":               True,             # check if the solution vector contains nan or +/-inf values, if yes, an error is printed. This is a time-consuming check.
             "nAdditionalFieldVariables":    0,
                 
             "CellML" : {

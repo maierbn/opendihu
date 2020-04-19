@@ -559,8 +559,8 @@ if variables.own_subdomain_coordinate_y == variables.n_subdomains_y - 1:
 elif variables.own_subdomain_coordinate_x == variables.n_subdomains_x - 1:
   node_indices_to_use_fat_x = list(reversed(node_indices_to_use_y))
   
-print("{}: x-y-coord: ({},{})/({},{}), node indices in x direction, old x: {} y: {}, new: {}".format(rank_no, variables.own_subdomain_coordinate_x, variables.own_subdomain_coordinate_y, variables.n_subdomains_x, variables.n_subdomains_y, \
-  node_indices_to_use_x,node_indices_to_use_y,node_indices_to_use_fat_x))
+#print("{}: x-y-coord: ({},{})/({},{}), node indices in x direction, old x: {} y: {}, new: {}".format(rank_no, variables.own_subdomain_coordinate_x, variables.own_subdomain_coordinate_y, variables.n_subdomains_x, variables.n_subdomains_y, \
+#  node_indices_to_use_x,node_indices_to_use_y,node_indices_to_use_fat_x))
 
 
 # in y direction, select nodes

@@ -309,7 +309,10 @@ config = {
                   
                   "meshName":                               "3Dmesh",                                       # use the linear mesh, it was partitioned by the helper.py script which called opendihu/scripts/create_partitioned_meshes_for_settings.py
                   "stimulationLogFilename":                 "out/stimulation.log",
-                }
+                },
+                "OutputWriter" : [
+                  {"format": "Paraview", "outputInterval": (int)(1./variables.dt_multidomain*variables.output_timestep_multidomain), "filename": "out/" + variables.scenario_name + "/0D_states", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"}
+                ] if variables.states_output else []
               }
             } for compartment_no in range(variables.n_compartments)]
           },

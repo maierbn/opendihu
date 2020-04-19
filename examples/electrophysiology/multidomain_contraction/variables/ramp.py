@@ -116,7 +116,7 @@ multidomain_relative_tolerance = 1e-15 # absolute residual tolerance for the mul
 
 # elasticity
 elasticity_solver_type = "gmres"
-elasticity_preconditioner_type = "euclid"
+elasticity_preconditioner_type = "none"
 snes_max_iterations = 10                  # maximum number of iterations in the nonlinear solver
 snes_rebuild_jacobian_frequency = 2       # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
 snes_relative_tolerance = 1e-5      # relative tolerance of the nonlinear solver
@@ -160,8 +160,8 @@ sampling_stride_fat = 1
 
 # how much of the multidomain mesh is used for elasticity
 sampling_factor_elasticity_x = 0.5    
-sampling_factor_elasticity_y = 0.05
-sampling_factor_elasticity_z = 0.05
+sampling_factor_elasticity_y = 0.5
+sampling_factor_elasticity_z = 0.1
 sampling_factor_elasticity_fat_y = 0.5
 
 # other options
@@ -169,6 +169,7 @@ paraview_output = True
 adios_output = False
 exfile_output = False
 python_output = False
+states_output = True
 disable_firing_output = True        # show output in console about motor units
 
 # debugging version, smaller example

@@ -23,6 +23,9 @@ multidomain_preconditioner_type = "none"   # preconditioner
 multidomain_alternative_solver_type = "gmres"            # alternative solver, used when normal solver diverges
 multidomain_alternative_preconditioner_type = "none"     # preconditioner of the alternative solver
 
+multidomain_absolute_tolerance = 1e-15 # absolute residual tolerance for the multidomain solver
+multidomain_relative_tolerance = 1e-15 # absolute residual tolerance for the multidomain solver
+
 # timing parameters
 # -----------------
 end_time = 1000.0                   # [ms] end time of the simulation
@@ -37,8 +40,7 @@ activation_start_time = 0           # [ms] time when to start checking for stimu
 output_timestep_surface = 0.1       # [ms] timestep for python callback, which is electrode measurement output
 output_timestep_electrodes = 0.1    # [ms] timestep for electrode output files
 output_timestep_multidomain = 0.1   # [ms] timestep for multidomain
-multidomain_absolute_tolerance = 1e-15 # absolute residual tolerance for the multidomain solver
-multidomain_relative_tolerance = 1e-15 # absolute residual tolerance for the multidomain solver
+output_timestep_0D_states = 0.1     # [ms] timestep for output files of 0D subcellular model states
 
 # input files
 # -----------

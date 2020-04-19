@@ -39,11 +39,11 @@ motor_units = [
 # -------
 multidomain_solver_type = "gmres"          # solver for the multidomain problem
 #multidomain_preconditioner_type = "bjacobi"   # preconditioner
-multidomain_preconditioner_type = "boomeramg"   # preconditioner
-#multidomain_preconditioner_type = "euclid"   # preconditioner
+#multidomain_preconditioner_type = "boomeramg"   # preconditioner
+multidomain_preconditioner_type = "euclid"   # preconditioner
 
 multidomain_alternative_solver_type = "gmres"            # alternative solver, used when normal solver diverges
-multidomain_alternative_preconditioner_type = "euclid"    # preconditioner of the alternative solver
+multidomain_alternative_preconditioner_type = "none"    # preconditioner of the alternative solver
 
 # set initial guess to zero for direct solver
 initial_guess_nonzero = "lu" not in multidomain_solver_type 
@@ -64,7 +64,9 @@ dt_multidomain = 1e-3               # [ms] timestep width of the multidomain sol
 dt_splitting = 1e-3                 # [ms] overall timestep width of strang splitting (3e-3)
 output_timestep_multidomain = 2e-1  # [ms] timestep for multidomain output
 output_timestep_multidomain = 5     # [ms] timestep for multidomain output
-#end_time = 1e-2
+output_timestep_multidomain = 1e-2  # [ms] timestep for multidomain output
+output_timestep_0D_states = 2e-3    # [ms] timestep for output files of 0D subcellular model states
+end_time = 1e-2
 
 scenario_name = "{}_{}_dt{}_atol{}_rtol{}_theta{}_sym{}_lump{}".format(multidomain_solver_type, multidomain_preconditioner_type, dt_splitting, multidomain_absolute_tolerance, multidomain_relative_tolerance, theta, use_symmetric_preconditioner_matrix, use_lumped_mass_matrix)
 
@@ -74,6 +76,7 @@ fiber_file = "../../input/left_biceps_brachii_9x9fibers.bin"
 fiber_file = "../../input/left_biceps_brachii_13x13fibers.bin"
 fat_mesh_file = fiber_file + "_fat.bin"
 firing_times_file = "../../input/MU_firing_times_immediately.txt"
+firing_times_file = "../../input/MU_firing_times_always.txt"
 
 
 # stride for sampling the 3D elements from the fiber data
@@ -88,6 +91,7 @@ paraview_output = True
 adios_output = False
 exfile_output = False
 python_output = False
+states_output = True
 disable_firing_output = False
 
 # functions, here, Am, Cm and Conductivity are constant for all fibers and MU's

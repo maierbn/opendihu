@@ -287,7 +287,10 @@ config = {
               
               "meshName":                               "3Dmesh",
               "stimulationLogFilename":                 "out/stimulation.log",
-            }
+            },
+						"OutputWriter" : [
+              {"format": "Paraview", "outputInterval": (int)(1./variables.dt_0D*variables.output_timestep_0D_states), "filename": "out/" + variables.scenario_name + "/0D_states_compartment_{}".format(compartment_no), "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"}
+            ] if variables.states_output else []
           }
         } for compartment_no in range(variables.n_compartments)]
       },

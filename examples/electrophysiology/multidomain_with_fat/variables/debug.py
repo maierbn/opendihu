@@ -17,14 +17,24 @@ Am = 1.0  # set Am lower such that there is more diffusion
 
 # timing and activation parameters
 # -----------------
-# motor unit parameters
-# stimulation frequency in [Hz], activation_start_time in [s]
-#   fiber_no: center MU around this fiber, create f_r as gaussion from standard_deviation and maximum
-
+import random
+random.seed(0)  # ensure that random numbers are the same on every rank
+#   fiber_no: center MU around this fiber
+#   standard_deviation [-]: relative to muscle diameter, 
+#   maximum [-]: create f_r as gaussian with standard_deviation and maximum around the fiber given in fiber_no
+#   radius: [μm], activation_start_time: [s], stimulation frequency [Hz], jitter [-]
+# exponential distribution: low number of fibers per MU, slow twitch (type I), activated first --> high number of fibers per MU, fast twitch (type II), activated last -->
 motor_units = [
-  {"fiber_no": 10, "standard_deviation": 0.2, "maximum": 0.5, "activation_start_time": 0.0, "stimulation_frequency": 10.0, "cm": 0.58},
-  {"fiber_no": 30, "standard_deviation": 0.2, "maximum": 0.4, "activation_start_time": 0.0, "stimulation_frequency": 10.0, "cm": 0.58},
-  {"fiber_no": 40, "standard_deviation": 0.3, "maximum": 0.6, "activation_start_time": 0.0, "stimulation_frequency": 10.0, "cm": 0.58},
+  {"fiber_no": 10, "standard_deviation": 0.2, "maximum": 0.2, "radius": 40.00, "cm": 0.58, "activation_start_time": 0.0, "stimulation_frequency": 23.92, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},    # low number of fibers
+  {"fiber_no": 20, "standard_deviation": 0.2, "maximum": 0.2, "radius": 42.35, "cm": 0.58, "activation_start_time": 0.2, "stimulation_frequency": 23.36, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
+  {"fiber_no": 30, "standard_deviation": 0.2, "maximum": 0.2, "radius": 45.00, "cm": 0.58, "activation_start_time": 0.4, "stimulation_frequency": 23.32, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
+  {"fiber_no": 40, "standard_deviation": 0.2, "maximum": 0.2, "radius": 48.00, "cm": 0.58, "activation_start_time": 0.6, "stimulation_frequency": 22.46, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
+  {"fiber_no": 55, "standard_deviation": 0.2, "maximum": 0.2, "radius": 51.42, "cm": 0.58, "activation_start_time": 0.8, "stimulation_frequency": 20.28, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
+  {"fiber_no": 60, "standard_deviation": 0.2, "maximum": 0.2, "radius": 55.38, "cm": 0.58, "activation_start_time": 1.0, "stimulation_frequency": 16.32, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
+  {"fiber_no": 70, "standard_deviation": 0.2, "maximum": 0.2, "radius": 60.00, "cm": 0.58, "activation_start_time": 1.2, "stimulation_frequency": 12.05, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
+  {"fiber_no": 80, "standard_deviation": 0.2, "maximum": 0.2, "radius": 65.45, "cm": 1.00, "activation_start_time": 1.4, "stimulation_frequency": 10.03, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
+  {"fiber_no": 50, "standard_deviation": 0.2, "maximum": 0.2, "radius": 72.00, "cm": 1.00, "activation_start_time": 1.6, "stimulation_frequency": 8.32,  "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
+  {"fiber_no": 25, "standard_deviation": 0.2, "maximum": 0.2, "radius": 80.00, "cm": 1.00, "activation_start_time": 1.8, "stimulation_frequency": 7.66,  "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},    # high number of fibers
 ]
 motor_units = motor_units[0:2]  # only two motor units
 
@@ -64,7 +74,8 @@ end_time = 1e-2
 scenario_name = "{}_{}_dt{}_atol{}_rtol{}_theta{}_sym{}_lump{}".format(multidomain_solver_type, multidomain_preconditioner_type, dt_splitting, multidomain_absolute_tolerance, multidomain_relative_tolerance, theta, use_symmetric_preconditioner_matrix, use_lumped_mass_matrix)
 
 # input files
-cellml_file = "../../input/hodgkin_huxley_1952.c"
+#cellml_file = "../../input/hodgkin_huxley_1952.c"
+cellml_file = "../../input/new_slow_TK_2014_12_08.c"
 #fiber_file = "../../input/left_biceps_brachii_7x7fibers.bin"
 fiber_file = "../../input/small_5x5x11.bin"
 fat_mesh_file = fiber_file + "_fat.bin"

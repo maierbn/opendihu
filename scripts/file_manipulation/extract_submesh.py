@@ -31,9 +31,6 @@ else:
   print("usage: extract_submesh.py <input filename> <output filename> <x_begin> <x_end> <y_begin> <y_end> <z_begin> <z_end>")
   quit()
 
-if len(sys.argv) >= 4:
-  n_fibers_x_extract = (int)(sys.argv[3])
-  
 offset = -1  # -1 means compute
 if len(sys.argv) >= 5:
   offset = (int)(sys.argv[4])
@@ -104,9 +101,9 @@ with open(input_filename, "rb") as infile:
       fiber.append(point)
     fibers.append(fiber)
   
-  if x_begin > n_fibers_x or x_end > n_fibers_x \
-    or y_begin > n_fibers_y or y_end > n_fibers_y \
-    or z_begin > n_fibers_z or z_end > n_fibers_z:
+  if x_begin >= n_fibers_x or x_end > n_fibers_x \
+    or y_begin >= n_fibers_y or y_end > n_fibers_y \
+    or z_begin >= n_points_whole_fiber or z_end > n_points_whole_fiber:
     print("Error, selected range does not match mesh in input file.")
     quit()
   
@@ -119,7 +116,7 @@ with open(input_filename, "rb") as infile:
     outfile.write(header_length_raw)
      
     # write parameter[0]: n_fibers_total
-    n_fibers = n_fibers_x_extract * n_fibers_x_extract
+    n_fibers = n_points_extracted_x * n_points_extracted_y
     outfile.write(struct.pack('i', n_fibers))
     
     # write parameter[1]: n_points_extracted_z

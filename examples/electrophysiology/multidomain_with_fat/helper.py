@@ -540,7 +540,9 @@ def compute_compartment_relative_factors(mesh_node_positions, fiber_data, motor_
     
   # loop over points in z direction
   n_points_z = len(fiber_data[0])
-  n_points_xy = len(fiber_data)
+  n_points_xy = variables.n_fibers_x*variables.n_fibers_y
+  print("n_points_z: {}, n_points_xy: {} n fibers: {} ".format(n_points_z, n_points_xy, len(fiber_data)))
+  print("mesh has {} node positions, n_points_z*n_points_xy={} ".format(len(mesh_node_positions), n_points_z*n_points_xy))
   for k in range(n_points_z):
     # get point on first and last fiber
     point0 = np.array(fiber_data[0][k])

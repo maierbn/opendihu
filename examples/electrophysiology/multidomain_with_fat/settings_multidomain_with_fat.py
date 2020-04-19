@@ -127,7 +127,7 @@ from helper import *
 multidomain_solver = {
   "timeStepWidth":                    variables.dt_multidomain,             # time step width of the subcellular problem
   "endTime":                          variables.end_time,                   # end time, this is not relevant because it will be overridden by the splitting scheme
-  "timeStepOutputInterval":           1,                                  # how often the output timestep should be printed
+  "timeStepOutputInterval":           100,                                  # how often the output timestep should be printed
   "durationLogKey":                   "duration_multidomain",               # key for duration in log.csv file
   
   # material parameters for the compartments
@@ -240,7 +240,7 @@ config = {
     "timeStepWidth":          variables.dt_splitting,
     "logTimeStepWidthAsKey":  "dt_splitting",
     "durationLogKey":         "duration_total",
-    "timeStepOutputInterval": 1,
+    "timeStepOutputInterval": 100,
     "endTime":                variables.end_time,
     "connectedSlotsTerm1To2": [0],          # CellML V_mk (0) <=> Multidomain V_mk^(i) (0)
     "connectedSlotsTerm2To1": [None, 0],    # Multidomain V_mk^(i+1) (1) -> CellML V_mk (0)
@@ -256,7 +256,7 @@ config = {
             "logTimeStepWidthAsKey":        "dt_0D",
             "durationLogKey":               "duration_0D",
             "initialValues":                [],
-            "timeStepOutputInterval":       1,
+            "timeStepOutputInterval":       100,
             "inputMeshIsGlobal":            True,
             "dirichletBoundaryConditions":  {},
             "checkForNanInf":               True,             # check if the solution vector contains nan or +/-inf values, if yes, an error is printed. This is a time-consuming check.

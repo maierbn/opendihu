@@ -404,6 +404,15 @@ updateSystemMatrix()
   this->finiteElementMethodFat_.setStiffnessMatrix();
   this->finiteElementMethodDiffusionTotal_.setStiffnessMatrix();
 
+  LOG(DEBUG) << "rebuild system matrix";
+  static int counter = 0;
+  std::stringstream s; 
+  s << counter;
+
+  PetscUtility::dumpMatrix(s.str()+"finiteElementMethodDiffusion_stiffness", "matlab", this->finiteElementMethodDiffusion_.data().stiffnessMatrix()->valuesGlobal(), MPI_COMM_WORLD);
+  PetscUtility::dumpMatrix(s.str()+"finiteElementMethodDiffusion_mass", "matlab", this->finiteElementMethodDiffusion_.data().massMatrix()->valuesGlobal(), MPI_COMM_WORLD);
+  PetscUtility::dumpMatrix(s.str()+"finiteElementMethodFat_stiffness", "matlab", this->finiteElementMethodFat_.data().stiffnessMatrix()->valuesGlobal(), MPI_COMM_WORLD);
+
   // compute new entries for submatrices, except B,C,D and E
   setSystemMatrixSubmatrices(this->timeStepWidthOfSystemMatrix_);
   
@@ -412,6 +421,19 @@ updateSystemMatrix()
 
   // create the system matrix again
   this->createSystemMatrixFromSubmatrices();
+
+  for (int i = 0; i < this->submatricesSystemMatrix_.size(); i++)
+  {
+    if (this->submatricesSystemMatrix_[i])
+    {
+      std::stringstream name;
+      name << s.str() << "_submatrix_" << i;
+      PetscUtility::dumpMatrix(name.str(), "matlab", this->submatricesSystemMatrix_[i], MPI_COMM_WORLD);
+    }
+  }
+
+  PetscUtility::dumpMatrix(s.str()+"new_system_matrix", "matlab", this->singleSystemMatrix_, MPI_COMM_WORLD);
+  counter++;
 
   // stop duration measurement
   if (this->durationLogKey_ != "")

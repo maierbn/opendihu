@@ -113,6 +113,7 @@ checkForNanInf(int timeStepNo, double currentTime)
       LOG(ERROR) << "In " << name_ << ", timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime << ": Solution contains Nan or Inf. "
         << "This probably means that the timestep width, " << this->timeStepWidth_ << " is too high.";
       LOG(ERROR) << *this->data_->solution();
+      LOG(FATAL) << "Abort because of nan or inf in solution. Set option \"checkForNanInf\": False to avoid this.";
     }
   }
 }

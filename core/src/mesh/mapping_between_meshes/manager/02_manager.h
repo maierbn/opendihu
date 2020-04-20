@@ -134,7 +134,7 @@ public:
 
 protected:
   
-  //! determine which mapping to perform (mapLowToHigh or mapHighToLow or none)
+  //! determine which mapping to perform (mapLowToHigh or mapHighToLow or none). It will set one or none of the two bools.
   template<typename FieldVariableSourceType, typename FieldVariableTargetType>
   void determineMappingAlgorithm(
     std::shared_ptr<FieldVariableSourceType> fieldVariableSource,

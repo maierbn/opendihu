@@ -345,18 +345,25 @@ prepareMapping(std::shared_ptr<FieldVariableSourceType> fieldVariableSource,
   bool mapHighToLow = false;
   determineMappingAlgorithm(fieldVariableSource, fieldVariableTarget, mapLowToHigh, mapHighToLow);
 
-  if (mapLowToHigh || mapHighToLow)
+  if (fieldVariableSource && fieldVariableTarget)
   {
-    if (fieldVariableSource && fieldVariableTarget)
+    if (mapLowToHigh)
     {
       // Make sure that mapping exists or is created before the call to prepareMappingLowToHigh(), because this will zero the values. 
       // When the geometry field is mapped, the mapping cannot be initialized with the geometry field values zeroed out.
-      std::string sourceMeshName = fieldVariableSource->functionSpace()->meshName();
-      std::string targetMeshName = fieldVariableTarget->functionSpace()->meshName();
-
       mappingBetweenMeshes<typename FieldVariableSourceType::FunctionSpace, typename FieldVariableTargetType::FunctionSpace>(
         fieldVariableSource->functionSpace(), fieldVariableTarget->functionSpace()
       );
+    }
+    else if (mapHighToLow)
+    {
+      // internally, this uses the mapping from second to first argument function space.
+      // Make sure that mapping exists or is created before the call to prepareMappingLowToHigh(), because this will zero the values. 
+      // When the geometry field is mapped, the mapping cannot be initialized with the geometry field values zeroed out.
+      mappingBetweenMeshes<typename FieldVariableTargetType::FunctionSpace, typename FieldVariableSourceType::FunctionSpace>(
+        fieldVariableTarget->functionSpace(), fieldVariableSource->functionSpace()
+      );
+
     }
   }
 

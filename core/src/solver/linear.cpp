@@ -120,7 +120,11 @@ void Linear::setupKsp(KSP ksp)
     if (preconditionerType_ == "euclid" || preconditionerType_ == "pilut" || preconditionerType_ == "parasails" 
       || preconditionerType_ == "boomeramg" || preconditionerType_ == "ams" || preconditionerType_ == "ads")
     {
+#if defined(PETSC_HAVE_HYPRE)
       ierr = PCHYPRESetType(pc, preconditionerType_.c_str()); CHKERRV(ierr);
+#else
+      LOG(ERROR) << "Petsc is not compiled with HYPRE!";
+#endif
       
       LOG(DEBUG) << "set pc_hypre_type to " << preconditionerType_;
     }

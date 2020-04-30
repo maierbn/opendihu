@@ -67,16 +67,20 @@ return EXIT_SUCCESS;
       install_on_krypton = True
       
     # Setup the build handler.
-    if os.environ.get("PE_ENV") is not None:
-    #if os.environ.get("LIBSCI_BASE_DIR") is not None:
-    #  self.libs = ["sci_cray_mpi_mp"]
-      #if os.environ.get("PE_ENV") == "GNU":
-      #  self.libs = ["sci_gnu_71_mpi_mp"]
-      #  print("{} environment detected, using \"{}\" for LAPACK".format(os.environ.get("PE_ENV"), self.libs[0]))
-      #else:
-      #  print("WARNING: The PE environment seems to be {}, not GNU, this is not supported".format(os.environ.get("PE_ENV")))
-      print("Hazelhen detected, PrgEnv {}\nDo not do anything for LAPACK, because it is assumed that all flags are set correctly by the compiler wrapper CC.".format(os.environ.get("PE_ENV")))
-
+    
+    # on hawk, use LAPACK from the MKL package
+    if os.environ.get("SITE_PLATFORM_NAME") is not None:  
+      
+      # on hawk, we have lapack provided by the MKL package
+      self.set_build_handler([
+        'mkdir -p ${PREFIX}',
+        'mkdir -p ${PREFIX}/include && ln -s ' + os.environ.get("MKLROOT") + '/include/mkl_lapacke.h ${PREFIX}/include/lapacke.h',
+      ])
+      self.download_url = None   # nothing to download
+      
+      self.libs = [["mkl_intel_lp64","mkl_sequential","mkl_core","m"]]
+      self.headers = ["lapacke.h"]
+    
     elif False:
       # reference blas, make based, only static libraries
       self.set_build_handler([

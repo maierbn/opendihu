@@ -40,7 +40,7 @@ check_example(){
     
   # measured duration
   END=$(date +%s.%N)
-  DIFF=$(python -c "print $END - $START")
+  DIFF=$(python -c "print($END - $START)")
     
   # depending on success of compilation output message to log files
   if [ $RESULT -eq 0 ]; then
@@ -78,7 +78,7 @@ if [ $SUCCESS = "0" ]; then
 fi
 
 END_TOTAL=$(date +%s.%N)
-DIFF_TOTAL=$(python -c "print $END_TOTAL - $START_TOTAL")
+DIFF_TOTAL=$(python -c "print($END_TOTAL - $START_TOTAL)")
 
 # output end message
 echo "done after $(date -u -d @$DIFF_TOTAL +%T)"

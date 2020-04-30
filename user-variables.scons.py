@@ -124,8 +124,7 @@ try:
     print("on hawk load the following modules: \"module load adios2/2.5.0 cmake python mkl petsc/3.12.2-int32-shared\"")
 
     MPI_DIR = os.environ["MPT_ROOT"]
-    #LAPACK_DIR = os.environ["MKLROOT"]
-    LAPACK_DOWNLOAD = True
+    LAPACK_DOWNLOAD = False
     PETSC_DOWNLOAD = False
     PETSC_DIR = os.environ["PETSC_ROOT"]
     PYTHONPACKAGES_DOWNLOAD = False

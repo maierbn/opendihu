@@ -75,6 +75,7 @@ return EXIT_SUCCESS;
       self.set_build_handler([
         'mkdir -p ${PREFIX}',
         'mkdir -p ${PREFIX}/include && ln -s ' + os.environ.get("MKLROOT") + '/include/mkl_lapacke.h ${PREFIX}/include/lapacke.h',
+        'mkdir -p ${PREFIX}/include && ln -s ' + os.environ.get("MKLROOT") + '/include/mkl_cblas.h ${PREFIX}/include/cblas.h',
       ])
       self.download_url = None   # nothing to download
       

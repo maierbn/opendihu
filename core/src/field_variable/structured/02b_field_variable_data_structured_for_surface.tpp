@@ -5,7 +5,7 @@
 
 #include "partition/rank_subset.h"
 #include "mesh/mesh_manager/mesh_manager.h"
-#include "mesh/mapping_between_meshes/mapping_between_meshes.h"
+#include "mesh/mapping_between_meshes/mapping/02_composite.h"
 
 namespace FieldVariable
 {

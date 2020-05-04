@@ -58,15 +58,18 @@ protected:
   //! read initial values from settings and set field accordingly
   void setInitialValues();
 
+  //! check if the current solution contains nan or inf values, if so, output an error
+  void checkForNanInf(int timeStepNo, double currentTime);
+
   //! prepare the discretizableInTime object for the following call to getOutputConnectorData()
   virtual void prepareForGetOutputConnectorData() = 0;
 
-  std::shared_ptr<Data> data_;     ///< data object that holds all PETSc vectors and matrices
+  std::shared_ptr<Data> data_;     //< data object that holds all PETSc vectors and matrices
 
-  bool initialized_;     ///< if initialize() was already called
-  std::string name_;     ///< the name given to this time stepping scheme
-  double prefactor_;     ///< a factor with which the result is multiplied when the data is used in a splitting scheme
-
+  bool initialized_;     //< if initialize() was already called
+  std::string name_;     //< the name given to this time stepping scheme
+  double prefactor_;     //< a factor with which the result is multiplied when the data is used in a splitting scheme
+  bool checkForNanInf_;  //< if the solution should be checked for nan and inf values
 };
 
 }  // namespace

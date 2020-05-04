@@ -85,8 +85,9 @@ protected:
   FiniteElementMethodDiffusion finiteElementMethodDiffusion_;   //< the finite element object that is used for the diffusion with diffusion tensor sigma_i, without prefactor
   FiniteElementMethodDiffusion finiteElementMethodDiffusionTotal_;   //< the finite element object that is used for the diffusion with diffusion tensor (sigma_i + sigma_e), bottom right block of system matrix
 
-  std::shared_ptr<Solver::Linear> linearSolver_;   //< the linear solver used for solving the system
-  std::shared_ptr<Partition::RankSubset> rankSubset_;  //< the rankSubset for all involved ranks
+  std::shared_ptr<Solver::Linear> linearSolver_;              //< the linear solver used for solving the system
+  std::shared_ptr<Solver::Linear> alternativeLinearSolver_;   //< the linear solver used when the first solver diverges
+  std::shared_ptr<Partition::RankSubset> rankSubset_;         //< the rankSubset for all involved ranks
 
   int nCompartments_;                         //< the number of instances of the diffusion problem, or the number of motor units
   Mat nestedSystemMatrix_;                    //< nested Petsc Mat, the system matrix which has more components than dofs, later this should be placed inside the data object

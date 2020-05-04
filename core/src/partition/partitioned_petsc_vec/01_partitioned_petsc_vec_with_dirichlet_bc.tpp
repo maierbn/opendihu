@@ -630,7 +630,7 @@ containsNanOrInf()
     // loop over values and check if they are neither nan nor inf
     for (int i = 0; i < values.size(); i++)
     {
-      if (!std::isfinite(values[i]))
+      if (!std::isfinite(values[i]) || fabs(values[i]) > 1e+75)
       {
         LOG(ERROR) << "containsNanOrInf(): value " << i << "/" << values.size() << ", component " << componentNo << "/" << nComponents << ": " << values[i];
         return true;

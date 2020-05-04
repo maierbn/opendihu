@@ -21,6 +21,7 @@ n_nodes_per_fiber = 2*(n_nodes_per_fiber//2)+1   # make number odd
 
 config = {
   "solverStructureDiagramFile": "solver_structure.txt",
+  "mappingsBetweenMeshesLogFile": "",
   "scenarioName": "72 220 splines 2,2,2 improve",
   "Solvers": {
     "linearSolver": {
@@ -58,7 +59,7 @@ config = {
       "prefactor": 1.0,
     },
     "OutputWriter" : [
-      {"format": "Paraview", "outputInterval": 1, "filename": "out/biceps", "binary": True, "fixedFormat": False, "combineFiles": False},
+      {"format": "Paraview", "outputInterval": 1, "filename": "out/biceps", "binary": True, "fixedFormat": False, "combineFiles": False, "fileNumbering": "incremental"},
       #{"format": "Paraview", "outputInterval": 1, "filename": "out/txt", "binary": False, "fixedFormat": False, "combineFiles": False},
       #{"format": "ExFile", "filename": "out/"+name, "outputInterval": 2, "sphereSize": "0.005*0.005*0.01"},
       #{"format": "PythonFile", "filename": "out/"+name, "binary":False, "onlyNodalValues":True},

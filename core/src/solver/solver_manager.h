@@ -23,7 +23,7 @@ public:
 
   //! return previously created solver or create on the fly
   template<typename SolverType>
-  std::shared_ptr<SolverType> solver(PythonConfig settings, MPI_Comm mpiCommunicator);
+  std::shared_ptr<SolverType> solver(PythonConfig settings, MPI_Comm mpiCommunicator, std::string solverNameKey = "solverName");
 
   //! check if a solver with the given name and mpiCommunicator is stored
   bool hasSolver(std::string solverName, MPI_Comm mpiCommunicator);

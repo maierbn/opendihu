@@ -1,34 +1,36 @@
-#include "mesh/mapping_between_meshes/02_mapping_between_meshes_composite.h"
+#include "mesh/mapping_between_meshes/mapping/02_composite.h"
 
 #include "control/diagnostic_tool/performance_measurement.h"
 
 #include "utility/vector_operators.h"
 #include "control/dihu_context.h"
 #include "mesh/mesh_manager/mesh_manager.h"
+#include "mesh/mapping_between_meshes/manager/02_manager.h"
 
-namespace Mesh
+namespace MappingBetweenMeshes
 {
 
 template<int D, typename BasisFunctionType, typename FunctionSpaceTargetType>
-MappingBetweenMeshes<FunctionSpace::FunctionSpace<CompositeOfDimension<D>,BasisFunctionType>, FunctionSpaceTargetType>::
-MappingBetweenMeshes(std::shared_ptr<FunctionSpace::FunctionSpace<CompositeOfDimension<D>,BasisFunctionType>> functionSpaceSource,
+MappingBetweenMeshes<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>, FunctionSpaceTargetType>::
+MappingBetweenMeshes(std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>> functionSpaceSource,
                      std::shared_ptr<FunctionSpaceTargetType> functionSpaceTarget,
-                     double xiTolerance, bool enableWarnings, bool compositeUseOnlyInitializedMappings) :
-  MappingBetweenMeshesImplementation<FunctionSpace::FunctionSpace<CompositeOfDimension<D>,BasisFunctionType>, FunctionSpaceTargetType>(
-    functionSpaceSource, functionSpaceTarget, xiTolerance, enableWarnings, compositeUseOnlyInitializedMappings)
+                     double xiTolerance, bool enableWarnings, bool compositeUseOnlyInitializedMappings,
+                     bool isEnabledFixUnmappedDofs) :
+  MappingBetweenMeshesImplementation<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>, FunctionSpaceTargetType>(
+    functionSpaceSource, functionSpaceTarget, xiTolerance, enableWarnings, compositeUseOnlyInitializedMappings, isEnabledFixUnmappedDofs)
 {
   if (compositeUseOnlyInitializedMappings)
   {
     LOG(DEBUG) << "Composite mesh \"" << this->functionSpaceSource_->meshName() << "\", mapping to \"" << this->functionSpaceTarget_->meshName() << "\".";
-    typedef FunctionSpace::FunctionSpace<StructuredDeformableOfDimension<D>,BasisFunctionType> SubFunctionSpaceType;
+    typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType> SubFunctionSpaceType;
 
     // get the sub function spaces of the composite function spaces
     const std::vector<std::shared_ptr<SubFunctionSpaceType>> &sourceSubFunctionSpaces
       = this->functionSpaceSource_->subFunctionSpaces();
 
     // make types available    
-    typedef typename MappingBetweenMeshesImplementation<FunctionSpace::FunctionSpace<CompositeOfDimension<D>,BasisFunctionType>, FunctionSpaceTargetType>::targetDof_t targetDof_t;
-    typedef typename MappingBetweenMeshesImplementation<FunctionSpace::FunctionSpace<CompositeOfDimension<D>,BasisFunctionType>, FunctionSpaceTargetType>::targetDof_t::element_t element_t;
+    typedef typename MappingBetweenMeshesImplementation<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>, FunctionSpaceTargetType>::targetDof_t targetDof_t;
+    typedef typename MappingBetweenMeshesImplementation<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>, FunctionSpaceTargetType>::targetDof_t::element_t element_t;
 
     targetDof_t newTargetDof;
     newTargetDof.mapThisDof = false;
@@ -38,14 +40,14 @@ MappingBetweenMeshes(std::shared_ptr<FunctionSpace::FunctionSpace<CompositeOfDim
     for (int subMeshNo = 0; subMeshNo < sourceSubFunctionSpaces.size(); subMeshNo++)
     {
       // get current sub meshes
-      std::shared_ptr<FunctionSpace::FunctionSpace<StructuredDeformableOfDimension<D>,BasisFunctionType>> subFunctionSpace = sourceSubFunctionSpaces[subMeshNo];
+      std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>> subFunctionSpace = sourceSubFunctionSpaces[subMeshNo];
 
       // if the mapping exists
-      if (DihuContext::meshManager()->hasMappingBetweenMeshes<SubFunctionSpaceType,FunctionSpaceTargetType>(subFunctionSpace, this->functionSpaceTarget_))
+      if (DihuContext::mappingBetweenMeshesManager()->hasMappingBetweenMeshes<SubFunctionSpaceType,FunctionSpaceTargetType>(subFunctionSpace, this->functionSpaceTarget_))
       {
         // get the mapping
         std::shared_ptr<MappingBetweenMeshes<SubFunctionSpaceType,FunctionSpaceTargetType>> mapping 
-          = DihuContext::meshManager()->mappingBetweenMeshes<SubFunctionSpaceType,FunctionSpaceTargetType>(subFunctionSpace, this->functionSpaceTarget_);
+          = DihuContext::mappingBetweenMeshesManager()->mappingBetweenMeshes<SubFunctionSpaceType,FunctionSpaceTargetType>(subFunctionSpace, this->functionSpaceTarget_);
 
         LOG(DEBUG) << "add information from mapping \"" << subFunctionSpace->meshName() << "\"->\"" << this->functionSpaceTarget_->meshName() << "\" to mapping "
           << "\"" << this->functionSpaceSource_->meshName() << "\"->\"" << this->functionSpaceTarget_->meshName() << "\".";

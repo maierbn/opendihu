@@ -97,6 +97,7 @@ sampling_stride_fat = 1
 sampling_factor_elasticity_x = 0.5    
 sampling_factor_elasticity_y = 0.5
 sampling_factor_elasticity_z = 0.5
+sampling_factor_elasticity_fat_y = 0.5
 
 # scenario name for log file
 scenario_name = ""

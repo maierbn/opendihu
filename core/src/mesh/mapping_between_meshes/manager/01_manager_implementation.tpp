@@ -1,4 +1,4 @@
-#include "mesh/mapping_between_meshes/mapping_between_meshes_manager.h"
+#include "mesh/mapping_between_meshes/manager/01_manager_implementation.h"
 
 #include <memory>
 
@@ -8,81 +8,11 @@
 #include "utility/vector_operators.h"
 #include "partition/partitioned_petsc_vec/values_representation.h"
 
-namespace Mesh
+namespace MappingBetweenMeshes
 {
-
-template<typename FunctionSpace1Type, typename FunctionSpace2Type>
-void MappingBetweenMeshesManager::initializeMappingsBetweenMeshes(const std::shared_ptr<FunctionSpace1Type> functionSpace1, const std::shared_ptr<FunctionSpace2Type> functionSpace2)
-{
-  LOG(DEBUG) << "initializeMappingsBetweenMeshes source: \"" << functionSpace1->meshName() << "\" target: \"" << functionSpace2->meshName() << "\".";
-
-  assert(FunctionSpace1Type::dim() <= FunctionSpace2Type::dim());   // the first mesh has to be lower dimensional than the second (or equal).
-
-  // check if mapping functionSpace1 -> functionSpace2 is defined in config
-  std::string sourceMeshName = functionSpace1->meshName();
-  std::string targetMeshName = functionSpace2->meshName();
-
-  if (mappingsBetweenMeshes_.find(sourceMeshName) != mappingsBetweenMeshes_.end())
-  {
-    LOG(DEBUG) << "key \"" << functionSpace1->meshName() << "\" exists";
-    if (mappingsBetweenMeshes_[sourceMeshName].find(targetMeshName) != mappingsBetweenMeshes_[sourceMeshName].end())
-    {
-      if (mappingsBetweenMeshes_[sourceMeshName][targetMeshName].mapping == nullptr)
-      {
-        LOG(DEBUG) << "\"" << functionSpace1->meshName() << "\" -> \"" << functionSpace2->meshName() << "\" declared, but not yet created, create mapping";
-
-        // create the mapping from functionSpace1 to functionSpace2
-        createMappingBetweenMeshes(functionSpace1, functionSpace2);
-      }
-      else
-      {
-        LOG(DEBUG) << "\"" << functionSpace1->meshName() << "\" -> \"" << functionSpace2->meshName() << "\" exists.";
-      }
-    }
-    else
-    {
-      LOG(DEBUG) << "\"" << functionSpace1->meshName() << "\" -> \"" << functionSpace2->meshName() << "\" not declared";
-    }
-  }
-  else
-  {
-    LOG(DEBUG) << "key \"" << functionSpace1->meshName() << "\" does not exist";
-  }
-
-  // change source and target mesh and initialize the reverse direction
-  sourceMeshName = functionSpace2->meshName();
-  targetMeshName = functionSpace1->meshName();
-
-  if (mappingsBetweenMeshes_.find(sourceMeshName) != mappingsBetweenMeshes_.end())
-  {
-    LOG(DEBUG) << "key \"" << functionSpace2->meshName() << "\" exists";
-    if (mappingsBetweenMeshes_[sourceMeshName].find(targetMeshName) != mappingsBetweenMeshes_[sourceMeshName].end())
-    {
-      if (mappingsBetweenMeshes_[sourceMeshName][targetMeshName].mapping == nullptr)
-      {
-        LOG(DEBUG) << "\"" << functionSpace2->meshName() << "\" -> \"" << functionSpace1->meshName() << "\" declared, but not yet created, create mapping";
-
-        // create the mapping from functionSpace2 to functionSpace1
-        createMappingBetweenMeshes(functionSpace2, functionSpace1);
-      }
-      else
-      {
-        LOG(DEBUG) << "\"" << functionSpace1->meshName() << "\" -> \"" << functionSpace2->meshName() << "\" exists.";
-      }
-    }
-    else
-    {
-      LOG(DEBUG) << "\"" << functionSpace2->meshName() << "\" -> \"" << functionSpace1->meshName() << "\" not declared";
-    }
-  }
-  else
-  {
-    LOG(DEBUG) << "key \"" << functionSpace2->meshName() << "\" does not exist";
-  }
-}
 
 template<typename FunctionSpaceSourceType, typename FunctionSpaceTargetType>
-std::shared_ptr<MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>> MappingBetweenMeshesManager::
+std::shared_ptr<MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>> ManagerImplementation::
 createMappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSource, std::shared_ptr<FunctionSpaceTargetType> functionSpaceTarget)
 {
   std::string sourceMeshName = functionSpaceSource->meshName();
@@ -98,18 +28,26 @@ createMappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpac
   double xiTolerance = this->mappingsBetweenMeshes_[sourceMeshName][targetMeshName].xiTolerance;
   bool enableWarnings = this->mappingsBetweenMeshes_[sourceMeshName][targetMeshName].enableWarnings;
   bool compositeUseOnlyInitializedMappings = this->mappingsBetweenMeshes_[sourceMeshName][targetMeshName].compositeUseOnlyInitializedMappings;
+  bool isEnabledFixUnmappedDofs = this->mappingsBetweenMeshes_[sourceMeshName][targetMeshName].isEnabledFixUnmappedDofs;
+
+  LOG(INFO) << "create MappingBetweenMeshes \"" << sourceMeshName << "\" (" << FunctionSpaceSourceType::dim() << "D, " << functionSpaceSource->nNodesGlobal() << " nodes) -> \""
+     << targetMeshName << "\" (" << FunctionSpaceTargetType::dim() << "D, " << functionSpaceTarget->nNodesGlobal() << " nodes), xiTolerance: " << xiTolerance;
 
   // create the mapping under the given source and target mesh names
   this->mappingsBetweenMeshes_[sourceMeshName][targetMeshName].mapping = std::static_pointer_cast<MappingBetweenMeshesBase>(
-    std::make_shared<MappingBetweenMeshes<FunctionSpaceSourceType,FunctionSpaceTargetType>>(functionSpaceSource, functionSpaceTarget, xiTolerance, enableWarnings, compositeUseOnlyInitializedMappings)
+    std::make_shared<MappingBetweenMeshes<FunctionSpaceSourceType,FunctionSpaceTargetType>>(functionSpaceSource, functionSpaceTarget,
+                                                                                            xiTolerance, enableWarnings, compositeUseOnlyInitializedMappings, isEnabledFixUnmappedDofs)
   );
+
+  // log event, to be included in the log file
+  addLogEntryMapping(functionSpaceSource, functionSpaceTarget, mappingLogEntry_t::logEvent_t::eventCreateMapping);
 
   return std::static_pointer_cast<MappingBetweenMeshes<FunctionSpaceSourceType,FunctionSpaceTargetType>>(
     this->mappingsBetweenMeshes_[sourceMeshName][targetMeshName].mapping);
 }
 
 template<typename FunctionSpaceSourceType, typename FunctionSpaceTargetType>
-std::shared_ptr<MappingBetweenMeshes<typename FunctionSpaceSourceType::FunctionSpace, typename FunctionSpaceTargetType::FunctionSpace>> MappingBetweenMeshesManager::
+std::shared_ptr<MappingBetweenMeshes<typename FunctionSpaceSourceType::FunctionSpace, typename FunctionSpaceTargetType::FunctionSpace>> ManagerImplementation::
 mappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSource,
                      std::shared_ptr<FunctionSpaceTargetType> functionSpaceTarget)
 {
@@ -151,35 +89,14 @@ mappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSourc
   return mapping;
 }
 
-template<typename FunctionSpaceSourceType, typename FunctionSpaceTargetType>
-bool MappingBetweenMeshesManager::
-hasMappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSource,
-                        std::shared_ptr<FunctionSpaceTargetType> functionSpaceTarget)
-{
-  assert(functionSpaceSource);
-  assert(functionSpaceTarget);
-
-  // get mesh names
-  std::string sourceMeshName = functionSpaceSource->meshName();
-  std::string targetMeshName = functionSpaceTarget->meshName();
-
-  // check if the mapping exist
-  if (mappingsBetweenMeshes_.find(sourceMeshName) != mappingsBetweenMeshes_.end())
-  {
-    if (mappingsBetweenMeshes_[sourceMeshName].find(targetMeshName) != mappingsBetweenMeshes_[sourceMeshName].end())
-    {
-      return true;
-    }
-  }
-  return false;
-}
-
 //! prepare a mapping to the fieldVariableTarget, this zeros the targetFactorSum for the field variable
 template<typename FieldVariableTargetType>
-void MappingBetweenMeshesManager::
-prepareMappingLowToHigh(std::shared_ptr<FieldVariableTargetType> fieldVariableTarget)
+void ManagerImplementation::
+prepareMappingLowToHigh(std::shared_ptr<FieldVariableTargetType> fieldVariableTarget, int componentNoTarget)
 {
   Control::PerformanceMeasurement::start("durationMapPrepare");
+
+  VLOG(1) << "prepareMappingLowToHigh, fieldVariableTarget: " << fieldVariableTarget->name() << " componentNoTarget: " << componentNoTarget;
 
   std::string fieldVariableTargetName = fieldVariableTarget->name();
   // std::map<std::string, std::shared_ptr<FieldVariable::FieldVariableBase>> targetFactorSum_;
@@ -201,13 +118,34 @@ prepareMappingLowToHigh(std::shared_ptr<FieldVariableTargetType> fieldVariableTa
   std::shared_ptr<FieldVariable::FieldVariable<typename FieldVariableTargetType::FunctionSpace,1>> targetFactorSum
     = std::static_pointer_cast<FieldVariable::FieldVariable<typename FieldVariableTargetType::FunctionSpace,1>>(targetFactorSum_[targetFactorSumName]);
 
+  VLOG(1) << "prepareMappingLowToHigh, set all entries of " << targetFactorSum->name() << " and " << fieldVariableTarget->name() << " to 0";
+
   // set all entries to 0
   targetFactorSum->zeroEntries();
   targetFactorSum->zeroGhostBuffer();
-  fieldVariableTarget->zeroEntries();
-  fieldVariableTarget->zeroGhostBuffer();
+
+  // zero the entries of the component that will be set
+  zeroTargetFieldVariable(fieldVariableTarget, componentNoTarget);
 
   Control::PerformanceMeasurement::stop("durationMapPrepare");
+}
+
+template<typename FieldVariableTargetType>
+void ManagerImplementation::
+zeroTargetFieldVariable(std::shared_ptr<FieldVariableTargetType> fieldVariableTarget, int componentNoTarget)
+{
+  // zero the entries of the component that will be set
+  if (componentNoTarget == -1)
+  {
+    fieldVariableTarget->zeroEntries();
+  }
+  else 
+  {
+    int nDofsLocalWithoutGhosts = fieldVariableTarget->functionSpace()->nDofsLocalWithoutGhosts();
+    std::vector<double> zeros(nDofsLocalWithoutGhosts, 0);
+    fieldVariableTarget->setValuesWithoutGhosts(componentNoTarget, zeros, INSERT_VALUES);
+  }
+  fieldVariableTarget->zeroGhostBuffer();
 }
 
 // helper function, calls the map function of the mapping if field variables have same number of components
@@ -249,7 +187,7 @@ struct MapLowToHighDimensionAllComponents<FieldVariableSourceType, FieldVariable
 
 //! map data from the source to the target field variable. This has to be called between prepareMapping and finalizeMapping, can be called multiple times with different source meshes.
 template<typename FieldVariableSourceType, typename FieldVariableTargetType>
-void MappingBetweenMeshesManager::
+void ManagerImplementation::
 mapLowToHighDimension(std::shared_ptr<FieldVariableSourceType> fieldVariableSource, int componentNoSource,
                       std::shared_ptr<FieldVariableTargetType> fieldVariableTarget, int componentNoTarget)
 {
@@ -261,7 +199,7 @@ mapLowToHighDimension(std::shared_ptr<FieldVariableSourceType> fieldVariableSour
 
   typedef MappingBetweenMeshes<typename FieldVariableSourceType::FunctionSpace, typename FieldVariableTargetType::FunctionSpace> MappingType;
 
-  std::shared_ptr<MappingType> mapping = mappingBetweenMeshes<typename FieldVariableSourceType::FunctionSpace, typename FieldVariableTargetType::FunctionSpace>(
+  std::shared_ptr<MappingType> mapping = this->mappingBetweenMeshes<typename FieldVariableSourceType::FunctionSpace, typename FieldVariableTargetType::FunctionSpace>(
     fieldVariableSource->functionSpace(), fieldVariableTarget->functionSpace()
   );
 
@@ -339,7 +277,7 @@ struct MapHighToLowDimensionAllComponents<FieldVariableSourceType,FieldVariableT
 
 //! map specific componentNo. This has to be called between prepareMapping and finalizeMapping, can be called multiple times with different source meshes.
 template<typename FieldVariableSourceType, typename FieldVariableTargetType>
-void MappingBetweenMeshesManager::
+void ManagerImplementation::
 mapHighToLowDimension(std::shared_ptr<FieldVariableSourceType> fieldVariableSource, int componentNoSource,
                       std::shared_ptr<FieldVariableTargetType> fieldVariableTarget, int componentNoTarget)
 {
@@ -352,7 +290,7 @@ mapHighToLowDimension(std::shared_ptr<FieldVariableSourceType> fieldVariableSour
   // here the mapping is defined with first FunctionSpace being the target function space and second FunctionSpace being the source function space.
   typedef MappingBetweenMeshes<typename FieldVariableTargetType::FunctionSpace, typename FieldVariableSourceType::FunctionSpace> MappingType;
 
-  std::shared_ptr<MappingType> mapping = mappingBetweenMeshes<typename FieldVariableTargetType::FunctionSpace, typename FieldVariableSourceType::FunctionSpace>(
+  std::shared_ptr<MappingType> mapping = this->mappingBetweenMeshes<typename FieldVariableTargetType::FunctionSpace, typename FieldVariableSourceType::FunctionSpace>(
     fieldVariableTarget->functionSpace(), fieldVariableSource->functionSpace()
   );
 
@@ -378,7 +316,7 @@ mapHighToLowDimension(std::shared_ptr<FieldVariableSourceType> fieldVariableSour
 
 //! finalize the mapping to the fieldVariableTarget, this computes the final values at the dofs from the accumulated values by dividing by the targetFactorSums
 template<typename FieldVariableTargetType>
-void MappingBetweenMeshesManager::
+void ManagerImplementation::
 finalizeMappingLowToHigh(std::shared_ptr<FieldVariableTargetType> fieldVariableTarget, int componentNoTarget)
 {
   if (componentNoTarget == -1)
@@ -386,6 +324,8 @@ finalizeMappingLowToHigh(std::shared_ptr<FieldVariableTargetType> fieldVariableT
     finalizeMappingLowToHigh(fieldVariableTarget);
     return;
   }
+
+  VLOG(1) << "finalizeMappingLowToHigh, fieldVariableTarget: " << fieldVariableTarget->name() << ", componentNoTarget: " << componentNoTarget;
 
   Control::PerformanceMeasurement::start("durationMapFinalize");
 
@@ -453,7 +393,7 @@ finalizeMappingLowToHigh(std::shared_ptr<FieldVariableTargetType> fieldVariableT
     }
   }
 
-  VLOG(1) << "low to high, targetValues: " << targetValues;
+  VLOG(1) << "low to high, set targetValues: " << targetValues;
 
   // set the computed values
   fieldVariableTarget->setValuesWithoutGhosts(componentNoTarget, targetValues);
@@ -463,10 +403,12 @@ finalizeMappingLowToHigh(std::shared_ptr<FieldVariableTargetType> fieldVariableT
 
 //! finalize the mapping to the fieldVariableTarget, this computes the final values at the dofs from the accumulated values by dividing by the targetFactorSums
 template<typename FieldVariableTargetType>
-void MappingBetweenMeshesManager::
+void ManagerImplementation::
 finalizeMappingLowToHigh(std::shared_ptr<FieldVariableTargetType> fieldVariableTarget)
 {
   Control::PerformanceMeasurement::start("durationMapFinalize");
+
+  VLOG(1) << "finalizeMappingLowToHigh, fieldVariableTarget: " << fieldVariableTarget->name();
 
   // assert that targetFactorSum_ field variable exists, this should have been created by prepareMapping()
   std::string targetFactorSumName = fieldVariableTarget->functionSpace()->meshName()+std::string("_")+fieldVariableTarget->name();
@@ -527,7 +469,7 @@ finalizeMappingLowToHigh(std::shared_ptr<FieldVariableTargetType> fieldVariableT
     }
   }
 
-  VLOG(1) << "low to high all, targetValues: " << targetValues;
+  VLOG(1) << "low to high all, set targetValues: " << targetValues;
 
   // set the computed values
   fieldVariableTarget->setValuesWithoutGhosts(targetValues);

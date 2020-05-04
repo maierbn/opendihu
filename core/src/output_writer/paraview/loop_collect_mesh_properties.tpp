@@ -72,7 +72,7 @@ collectMeshProperties(CurrentFieldVariableType currentFieldVariable, const Field
   global_no_t nCells;    ///< the number of VTK "cells", i.e. "Lines" or "Polys", which is the opendihu number of "elements"
   std::vector<node_no_t> nNodesLocalWithGhosts;   ///< local number of nodes including ghosts, for all dimensions
 
-  std::vector<std::pair<std::string,int>> pointDataArrays;   ///< <name,nComponents> of PointData DataArray elements
+  std::vector<PointData> pointDataArrays;   ///< <name,nComponents> of PointData DataArray elements
   */
   int dimensionality = currentFieldVariable->functionSpace()->dim();
   meshProperties[meshName].dimensionality = dimensionality;
@@ -104,7 +104,12 @@ collectMeshProperties(CurrentFieldVariableType currentFieldVariable, const Field
 
   if (!currentFieldVariable->isGeometryField())
   {
-    meshProperties[meshName].pointDataArrays.push_back(std::pair<std::string,int>(currentFieldVariable->name(),currentFieldVariable->nComponents()));
+    PolyDataPropertiesForMesh::DataArrayName dataArrayName;
+    dataArrayName.name = currentFieldVariable->name();
+    dataArrayName.nComponents = currentFieldVariable->nComponents();
+    dataArrayName.componentNames = std::vector<std::string>(currentFieldVariable->componentNames().begin(), currentFieldVariable->componentNames().end());
+
+    meshProperties[meshName].pointDataArrays.push_back(dataArrayName);
   }
 
   return false;  // do not break iteration over field variables

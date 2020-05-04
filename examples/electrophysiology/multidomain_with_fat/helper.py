@@ -535,12 +535,16 @@ def compute_compartment_relative_factors(mesh_node_positions, fiber_data, motor_
   #if rank_no == 0:
   #  print("determine relative factors for {} motor units:\n{}".format(n_compartments, motor_units))
 
-  # determine approximate diameter of muscle at every point is z direction
-  diameters = []
+  # determine approximate diameter of muscle at every point in z direction
+  diameters_full_mesh = []
     
   # loop over points in z direction
-  n_points_z = len(fiber_data[0])
-  for k in range(n_points_z):
+  approximate_stride_z = variables.n_points_whole_fiber / float(n_points_3D_mesh_global_z)
+  #print("sampled mesh: {},{},{}, orginal mesh: n_points_z: {}, n fibers: {} ".format(n_points_3D_mesh_global_x, n_points_3D_mesh_global_y, n_points_3D_mesh_global_z, n_points_z, len(fiber_data)))
+  #print("mesh has {} node positions, approximate_stride_z: {}".format(len(mesh_node_positions), approximate_stride_z))
+  
+  # loop over length of muscle in full mesh (fibers)
+  for k in range(variables.n_points_whole_fiber):
     # get point on first and last fiber
     point0 = np.array(fiber_data[0][k])
     point4 = np.array(fiber_data[(variables.n_fibers_x-1)//2][k])
@@ -566,14 +570,18 @@ def compute_compartment_relative_factors(mesh_node_positions, fiber_data, motor_
     distance35 = np.linalg.norm(point3 - point5)
     distance45 = np.linalg.norm(point4 - point5)
     distance = max(distance01,distance02,distance03,distance04,distance05,distance12,distance13,distance14,distance15,distance23,distance24,distance25,distance34,distance35,distance45)
-    diameters.append(distance)
+    diameters_full_mesh.append(distance)
 
   # create data structure with 0
   relative_factors = np.zeros((n_compartments, len(mesh_node_positions)))   # each row is one compartment
 
-  # loop over nodes of mesh
+  # loop over nodes of sampled mesh
   for node_no,node_position in enumerate(mesh_node_positions):
     node_position = np.array(node_position)
+    
+    z_index_sampled_mesh = int(float(node_no) / (n_points_3D_mesh_global_x*n_points_3D_mesh_global_y))
+    z_index_full_mesh = int(z_index_sampled_mesh * approximate_stride_z)
+    z_index_full_mesh = max(0, min(variables.n_points_whole_fiber, z_index_full_mesh))
     
     # loop over motor units
     for motor_unit_no,motor_unit in enumerate(motor_units):
@@ -581,24 +589,33 @@ def compute_compartment_relative_factors(mesh_node_positions, fiber_data, motor_
       # find point on fiber that is closest to current node
       fiber_no = motor_unit["fiber_no"]
       if fiber_no >= len(fiber_data):
-        print("Error with motor unit {}, only {} fibers available".format(motor_unit, len(fiber_data)))
-      else:
-        min_distance = None
-        for k,fiber_point in enumerate(fiber_data[fiber_no]):
-          d = np.array(fiber_point) - node_position
-          distance = np.inner(d,d)
-          if min_distance is None or distance < min_distance:
-            min_distance = distance
-            #print("node_position {}, fiber_point {}, d={}, |d|={}".format(node_position, fiber_point, d, np.sqrt(distance)))
+        new_fiber_no = fiber_no % len(fiber_data)
+        if node_no == 0:
+          print("\033[0;31mError with motor unit {} around fiber {}, only {} fibers available, now using fiber {} % {} = {} instead.\033[0m".format(motor_unit_no, fiber_no, len(fiber_data), fiber_no, len(fiber_data), new_fiber_no))
+        fiber_no = new_fiber_no
+      
+      min_distance = None
+      z_start = max(0, z_index_full_mesh - int(approximate_stride_z*3))
+      z_end = min(variables.n_points_whole_fiber, z_index_full_mesh + int(approximate_stride_z*3))
+      #print("n_points_z: {}, check range {},{}: {}".format(variables.n_points_whole_fiber,z_start,z_end,fiber_data[fiber_no][z_start:z_end]))
+      
+      # determine closest point in the fiber to current node
+      # loop over full fibers
+      for k,fiber_point in enumerate(fiber_data[fiber_no][z_start:z_end]):
         
-        distance = np.sqrt(min_distance)
-        
-        
-        gaussian = scipy.stats.norm(loc = 0., scale = motor_unit["standard_deviation"]*diameters[k])
-        value = gaussian.pdf(distance)*motor_unit["standard_deviation"]*np.sqrt(2*np.pi)*motor_unit["maximum"]
-        relative_factors[motor_unit_no][node_no] += value
-        #print("motor unit {}, fiber {}, distance {}, value {}".format(motor_unit_no, fiber_no, distance, value))
-  
+        d = np.array(fiber_point) - node_position
+        distance = np.inner(d,d)
+        if min_distance is None or distance < min_distance:
+          min_distance = distance
+          #print("node_position {}, fiber_point {}, d={}, |d|={}".format(node_position, fiber_point, d, np.sqrt(distance)))
+      
+      distance = np.sqrt(min_distance)
+      
+      gaussian = scipy.stats.norm(loc = 0., scale = motor_unit["standard_deviation"] * diameters_full_mesh[z_index_full_mesh])
+      value = gaussian.pdf(distance) * motor_unit["standard_deviation"] * np.sqrt(2*np.pi) * motor_unit["maximum"]
+      relative_factors[motor_unit_no][node_no] += value
+      #print("motor unit {}, fiber {}, distance {}, value {}".format(motor_unit_no, fiber_no, distance, value))
+
   return relative_factors
 
 ####################################
@@ -632,7 +649,7 @@ else:
   quit()
 
 # debugging output
-if rank_no == 0:
+if rank_no == 0 and not variables.disable_firing_output:
   for i,factors_list in enumerate(variables.relative_factors.tolist()):
     print("MU {}, maximum fr: {}".format(i,max(factors_list)))
 

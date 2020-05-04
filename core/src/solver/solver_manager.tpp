@@ -14,7 +14,7 @@ namespace Solver
 
 //! return previously created solver or create on the fly
 template<typename SolverType>
-std::shared_ptr<SolverType> Manager::solver(PythonConfig settings, MPI_Comm mpiCommunicator)
+std::shared_ptr<SolverType> Manager::solver(PythonConfig settings, MPI_Comm mpiCommunicator, std::string solverNameKey)
 {
   LOG(TRACE) << "Manager::solver";
 
@@ -25,9 +25,9 @@ std::shared_ptr<SolverType> Manager::solver(PythonConfig settings, MPI_Comm mpiC
   }
 
   // if solver has already been created earlier
-  if (settings.hasKey("solverName"))
+  if (settings.hasKey(solverNameKey))
   {
-    std::string solverName = settings.getOptionString("solverName", "");
+    std::string solverName = settings.getOptionString(solverNameKey, "");
     
     if (hasSolver(solverName, mpiCommunicator))
     {

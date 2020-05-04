@@ -232,11 +232,15 @@ initializeFiberDirections()
       LOG(DEBUG) << "create mapping  1D fiber -> 3D: \"" << fiberFunctionSpace->meshName() << "\" -> \"" << this->displacementsFunctionSpace_->meshName() << "\".";
 
       // initialize mapping 1D fiber -> 3D
-      context_.meshManager()->mappingBetweenMeshes<FiberFunctionSpace,DisplacementsFunctionSpace>(fiberFunctionSpace, this->displacementsFunctionSpace_);
+      DihuContext::mappingBetweenMeshesManager()->mappingBetweenMeshes<FiberFunctionSpace,DisplacementsFunctionSpace>(fiberFunctionSpace, this->displacementsFunctionSpace_);
     }
 
+    using SourceFunctionSpaceType = FieldVariable::FieldVariable<FiberFunctionSpace,3>;
+    using TargetFunctionSpaceType = DisplacementsFieldVariableType;
+
     // prepare the target mesh for the mapping, set all factors to zero
-    DihuContext::meshManager()->template prepareMappingLowToHigh<DisplacementsFieldVariableType>(this->data_.fiberDirection());
+    std::shared_ptr<FieldVariable::FieldVariable<FiberFunctionSpace,3>> direction;
+    DihuContext::mappingBetweenMeshesManager()->template prepareMapping<SourceFunctionSpaceType,TargetFunctionSpaceType>(direction, this->data_.fiberDirection(), -1);
 
     // loop over fiber mesh names
     for (int fiberNo = 0; fiberNo < fiberMeshNames.size(); fiberNo++)
@@ -248,8 +252,7 @@ initializeFiberDirections()
 
       // define direction field variable on the fiber that will store the direction of the fiber
       std::vector<std::string> components({"x","y","z"});
-      std::shared_ptr<FieldVariable::FieldVariable<FiberFunctionSpace,3>> direction
-        = fiberFunctionSpace->createFieldVariable<3>("direction", components);
+      direction = fiberFunctionSpace->createFieldVariable<3>("direction", components);
 
       // set values of direction field variable
       int nDofsLocalWithoutGhosts = fiberFunctionSpace->nDofsLocalWithoutGhosts();
@@ -273,12 +276,12 @@ initializeFiberDirections()
 
 
       // transfer direction values from 1D fibers to 3D field, -1 means all components
-      DihuContext::meshManager()->mapLowToHighDimension<FieldVariable::FieldVariable<FiberFunctionSpace,3>, DisplacementsFieldVariableType>(
-        direction, -1, this->data_.fiberDirection(), -1);
+      DihuContext::mappingBetweenMeshesManager()->map<SourceFunctionSpaceType,TargetFunctionSpaceType>(
+        direction, this->data_.fiberDirection(), -1, -1, false);
     }
 
     // finalize the mapping to the target mesh, compute final values by dividing by the factors
-    DihuContext::meshManager()->template finalizeMappingLowToHigh<DisplacementsFieldVariableType>(this->data_.fiberDirection());
+    DihuContext::mappingBetweenMeshesManager()->template finalizeMapping<SourceFunctionSpaceType,TargetFunctionSpaceType>(direction, this->data_.fiberDirection(), -1, -1, false);
   }
 
   LOG(DEBUG) << "normalize fiber direction";

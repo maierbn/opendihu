@@ -24,6 +24,7 @@
 #include "output_writer/python_file/python_file.h"
 #include "output_writer/exfile/exfile.h"
 #include "mesh/mesh_manager/mesh_manager.h"
+#include "mesh/mapping_between_meshes/manager/02_manager.h"
 #include "solver/solver_manager.h"
 #include "partition/partition_manager.h"
 #include "control/diagnostic_tool/stimulation_logging.h"
@@ -43,27 +44,31 @@
 #include "ExecutableSupport.hpp"
 #endif
 
-bool GLOBAL_DEBUG = false;
+bool GLOBAL_DEBUG = false;        //< use this variable to hack in debugging output that should only be visible in certain conditions. Do not commit these hacks!
 
-std::shared_ptr<Mesh::Manager> DihuContext::meshManager_ = nullptr;
-//std::shared_ptr<Solver::Manager> DihuContext::solverManager_ = nullptr;
-std::map<int, std::shared_ptr<Solver::Manager>> DihuContext::solverManagerForThread_;
-std::shared_ptr<Partition::Manager> DihuContext::partitionManager_ = nullptr;
-std::shared_ptr<SolverStructureVisualizer> DihuContext::solverStructureVisualizer_ = nullptr;
-std::string DihuContext::solverStructureDiagramFile_ = "";
-std::string DihuContext::pythonScriptText_ = "";
+// global singleton objects
+std::shared_ptr<MappingBetweenMeshes::Manager>  DihuContext::mappingBetweenMeshesManager_ = nullptr;
+std::shared_ptr<Mesh::Manager>                  DihuContext::meshManager_                 = nullptr;
+std::shared_ptr<Solver::Manager>                DihuContext::solverManager_               = nullptr;
+std::shared_ptr<Partition::Manager>             DihuContext::partitionManager_            = nullptr;
+std::shared_ptr<SolverStructureVisualizer>      DihuContext::solverStructureVisualizer_   = nullptr;
 
+// other global variables that are needed in static methods
+std::string DihuContext::solverStructureDiagramFile_ = "";              //< filename of the solver structure diagram file
+std::string DihuContext::pythonScriptText_ = "";                        //< the python settings text
+
+// megamol variables
 std::shared_ptr<std::thread> DihuContext::megamolThread_ = nullptr;
 std::vector<char *> DihuContext::megamolArgv_;
 std::vector<std::string> DihuContext::megamolArguments_;
 
 #ifdef HAVE_ADIOS
-std::shared_ptr<adios2::ADIOS> DihuContext::adios_ = nullptr;  ///< adios context option
+std::shared_ptr<adios2::ADIOS> DihuContext::adios_ = nullptr;           //< adios context option
 #endif
 bool DihuContext::initialized_ = false;
-int DihuContext::nObjects_ = 0;   ///< number of objects of DihuContext, if the last object gets destroyed, call MPI_Finalize
-int DihuContext::nRanksCommWorld_ = 0;   ///< number of MPI ranks in MPI_COMM_WORLD
-int DihuContext::ownRankNoCommWorld_ = 0;  ///< own MPI rank no in MPI_COMM_WORLD
+int DihuContext::nObjects_ = 0;                                         //< number of objects of DihuContext, if the last object gets destroyed, call MPI_Finalize
+int DihuContext::nRanksCommWorld_ = 0;                                  //< number of MPI ranks in MPI_COMM_WORLD
+int DihuContext::ownRankNoCommWorld_ = 0;                               //< own MPI rank no in MPI_COMM_WORLD
 
 void handleSignal(int signalNo)
 {
@@ -73,6 +78,7 @@ void handleSignal(int signalNo)
   Control::PerformanceMeasurement::writeLogFile();
   Control::StimulationLogging::writeLogFile();
   DihuContext::writeSolverStructureDiagram();
+  MappingBetweenMeshes::Manager::writeLogFile();
 
   int rankNo = DihuContext::ownRankNoCommWorld();
   LOG(INFO) << "Rank " << rankNo << " received signal " << sys_siglist[signalNo]
@@ -142,27 +148,30 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
     // initialize MPI, this is necessary to be able to call PetscFinalize without MPI shutting down
     MPI_Init(&argc, &argv);
 
-    rankSubset_ = std::make_shared<Partition::RankSubset>();   // create rankSubset with all ranks, i.e. MPI_COMM_WORLD
+    // create rankSubset with all ranks, i.e. MPI_COMM_WORLD
+    rankSubset_ = std::make_shared<Partition::RankSubset>();   
 
+    // initial global variables that will be returned by the static methods nRanksCommWorld() and ownRankNoCommWorld()
     nRanksCommWorld_ = rankSubset_->size();
     ownRankNoCommWorld_ = rankSubset_->ownRankNo();
 
-    // load configuration from file if it exits
+    // initialize the logging output formats of easylogging++
     initializeLogging(argc, argv);
 
-    // configure PETSc to abort on errorm
+    // configure PETSc to abort on error
     PetscOptionsSetValue(NULL, "-on_error_abort", "");
 
     // initialize PETSc
     PetscInitialize(&argc, &argv, NULL, "This is an opendihu application.");
 
+    // print header text to console
     LOG(INFO) << "This is " << versionText() << ", " << metaText();
 
-    // output process ID
+    // output process ID in debug
     int pid = getpid();
     LOG(DEBUG) << "PID " << pid;
 
-    // set number of threads to use to 1
+    // set number of OpenMP threads to use to 1
     omp_set_num_threads(1);
     LOG(DEBUG) << "set number of threads to 1";
     
@@ -175,7 +184,7 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
       MPIUtility::gdbParallelDebuggingBarrier();
     }
 
-    // register signal handler functions on various signals. This enforces dumping of the log file
+    // register signal handler functions on various signals. This enforces dumping of the log file even if the program crashes.
     struct sigaction signalHandler;
 
     signalHandler.sa_handler = handleSignal;
@@ -227,11 +236,12 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
         }
         else
         {
-          // look for settings.py files
+          // look for any other settings.py files to output a message with a suggestion
           std::stringstream commandSuggestions;
           int ret = system("ls ../settings*.py > a");
           if (ret == 0)
           {
+            // parse contents of ls command
             std::ifstream file("a", std::ios::in|std::ios::binary);
             if (file.is_open())
             {
@@ -245,6 +255,7 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
                 commandSuggestions << "  " << argv[0] << " " << line << std::endl;
               }
             }
+            // remove temporary file `a`
             ret = system("rm a");
           }
           if (commandSuggestions.str().empty())
@@ -293,14 +304,12 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
     VLOG(2) << "create meshManager_";
     meshManager_ = std::make_shared<Mesh::Manager>(pythonConfig_);
     meshManager_->setPartitionManager(partitionManager_);
+    mappingBetweenMeshesManager_ = std::make_shared<MappingBetweenMeshes::Manager>(pythonConfig_);
   }
   
-  if (solverManagerForThread_.empty())
+  if (!solverManager_)
   {
-    VLOG(2) << "create solverManagerForThread_";
-    // create solver manager for thread 0
-    solverManagerForThread_[0] = std::make_shared<Solver::Manager>(pythonConfig_);
-    solverManagerForThread_[1] = std::make_shared<Solver::Manager>(pythonConfig_);
+    solverManager_ = std::make_shared<Solver::Manager>(pythonConfig_);
   }
 
   if (!solverStructureVisualizer_)
@@ -323,6 +332,8 @@ DihuContext::DihuContext(int argc, char *argv[], std::string pythonSettings, boo
     PythonUtility::printDict(pythonConfig_.pyObject());
   }
 
+  // initialize global singletons
+  // they are first set to nullptr to allow break points on their destruction (happens in unit tests)
   partitionManager_ = nullptr;
   partitionManager_ = std::make_shared<Partition::Manager>(pythonConfig_);
   
@@ -330,10 +341,13 @@ DihuContext::DihuContext(int argc, char *argv[], std::string pythonSettings, boo
   meshManager_ = nullptr;
   meshManager_ = std::make_shared<Mesh::Manager>(pythonConfig_);
   meshManager_->setPartitionManager(partitionManager_);
+
+  mappingBetweenMeshesManager_ = nullptr;
+  mappingBetweenMeshesManager_ = std::make_shared<MappingBetweenMeshes::Manager>(pythonConfig_);
   
-  // create solver manager for thread 0
-  solverManagerForThread_.clear();
-  solverManagerForThread_[0] = std::make_shared<Solver::Manager>(pythonConfig_);
+  // create solver manager
+  solverManager_ = nullptr;
+  solverManager_ = std::make_shared<Solver::Manager>(pythonConfig_);
   
 }
 
@@ -414,9 +428,19 @@ std::shared_ptr<Mesh::Manager> DihuContext::meshManager()
   return meshManager_;
 }
 
+std::shared_ptr<MappingBetweenMeshes::Manager> DihuContext::mappingBetweenMeshesManager()
+{
+  return mappingBetweenMeshesManager_;
+}
+
 std::shared_ptr<Partition::Manager> DihuContext::partitionManager()
 {
   return partitionManager_;
+}
+
+std::shared_ptr<Solver::Manager> DihuContext::solverManager() const
+{
+  return solverManager_;
 }
 
 std::shared_ptr<SolverStructureVisualizer> DihuContext::solverStructureVisualizer()
@@ -430,27 +454,6 @@ void DihuContext::writeSolverStructureDiagram()
     solverStructureVisualizer_->writeDiagramFile(solverStructureDiagramFile_);
 }
 
-std::shared_ptr<Solver::Manager> DihuContext::solverManager() const
-{
-  // get number of omp threads
-  //int nThreads = omp_get_num_threads();
-  int threadId = omp_get_thread_num();
-  
-  if (solverManagerForThread_.find(threadId) == solverManagerForThread_.end())
-  {
-    VLOG(1) << "create solver manager for thread " << threadId;
-    // create solver manager
-    solverManagerForThread_[threadId] = std::make_shared<Solver::Manager>(pythonConfig_);
-    
-    VLOG(1) << "(done)";
-  }
-  else 
-  {
-    VLOG(1) << "solver manager for thread " << threadId << " exists";
-  }
-  
-  return solverManagerForThread_[threadId];
-}
 
 #ifdef HAVE_ADIOS
 std::shared_ptr<adios2::ADIOS> DihuContext::adios() const
@@ -501,6 +504,7 @@ DihuContext::~DihuContext()
     writeSolverStructureDiagram();
     Control::StimulationLogging::writeLogFile();
     Control::PerformanceMeasurement::writeLogFile();
+    MappingBetweenMeshes::Manager::writeLogFile();
 
     // After a call to MPI_Finalize we cannot call MPI_Initialize() anymore.
     // This is only a problem when the code is tested with the GoogleTest framework, because then we want to run multiple tests in one executable.

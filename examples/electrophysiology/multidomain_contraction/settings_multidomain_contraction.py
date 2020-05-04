@@ -196,21 +196,21 @@ multidomain_solver = {
   
 config = {
   "scenarioName":          variables.scenario_name,
-  "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
-  "meta": {                 # additional fields that will appear in the log
+  "solverStructureDiagramFile":     "solver_structure.txt",               # output file of a diagram that shows data connection between solvers
+  "mappingsBetweenMeshesLogFile":   "mappings_between_meshes_log.txt",    # log file for mappings 
+  "meta": {                                                               # additional fields that will appear in the log
     "partitioning":         [variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z]
   },
   "Meshes":                variables.meshes,
   "MappingsBetweenMeshes": {
-    "3Dmesh": "3Dmesh_elasticity_quadratic",                         # mappings to be used without composite meshes
-    "3Dmesh":
-       {"name": "3Dmesh_elasticity_quadratic+3DFatMesh_elasticity_quadratic", "xiTolerance": 0.01, "enableWarnings": True, "compositeUseOnlyInitializedMappings": True},     # mapping from multidomain to elasticity mesh, for transferring γ
-    "3Dmesh_elasticity_quadratic+3DFatMesh_elasticity_quadratic": [
-       {"name": "3Dmesh",    "xiTolerance": 0.01, "enableWarnings": False, "compositeUseOnlyInitializedMappings": True},    # mapping uses mappings of submeshes (i.e. 3Dmesh_elasticity_quadratic->3Dmesh)
-       {"name": "3DFatMesh", "xiTolerance": 0.01, "enableWarnings": False, "compositeUseOnlyInitializedMappings": True},    # mapping uses mappings of submeshes (i.e. 3DFatMesh_elasticity_quadratic->3DFatMesh)    
+    "3Dmesh": [
+       {"name": "3Dmesh_elasticity_quadratic",                                 "xiTolerance": 0.1, "enableWarnings": True, "compositeUseOnlyInitializedMappings": True, "fixUnmappedDofs": True},
+       {"name": "3Dmesh_elasticity_quadratic+3DFatMesh_elasticity_quadratic",  "xiTolerance": 0.1, "enableWarnings": False, "compositeUseOnlyInitializedMappings": True, "fixUnmappedDofs": True},    # mapping uses mappings of submeshes (i.e. 3Dmesh_elasticity_quadratic->3Dmesh)
     ],
-    "3Dmesh_elasticity_quadratic": "3Dmesh",           
-    "3DFatMesh_elasticity_quadratic": "3DFatMesh", 
+    "3DFatMesh":  [
+       {"name": "3DFatMesh_elasticity_quadratic",                              "xiTolerance": 0.1, "enableWarnings": True, "compositeUseOnlyInitializedMappings": True, "fixUnmappedDofs": True},
+       {"name": "3Dmesh_elasticity_quadratic+3DFatMesh_elasticity_quadratic",  "xiTolerance": 0.1, "enableWarnings": False, "compositeUseOnlyInitializedMappings": True, "fixUnmappedDofs": True},    # mapping uses mappings of submeshes (i.e. 3Dmesh_elasticity_quadratic->3Dmesh)
+    ]
   },
   "Solvers": {
     "potentialFlowSolver": {
@@ -244,6 +244,7 @@ config = {
       "snesAbsoluteTolerance": variables.snes_absolute_tolerance,         # absolute tolerance of the nonlinear solver
       "snesLineSearchType": "l2",                                         # type of linesearch, possible values: "bt" "nleqerr" "basic" "l2" "cp" "ncglinear"
       "snesRebuildJacobianFrequency": variables.snes_rebuild_jacobian_frequency,    # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
+      "hypreOptions":        "",                                          # additional options for the hypre solvers could be given here
       "dumpFilename":        "",                                          # dump system matrix and right hand side after every solve
       "dumpFormat":          "matlab",                                    # default, ascii, matlab
     }
@@ -280,6 +281,7 @@ config = {
                 "timeStepOutputInterval":       1e4,
                 "inputMeshIsGlobal":            True,
                 "dirichletBoundaryConditions":  {},
+                "checkForNanInf":               True,             # check if the solution vector contains nan or +/-inf values, if yes, an error is printed. This is a time-consuming check.
                 "nAdditionalFieldVariables":    0,
                     
                 "CellML" : {
@@ -308,7 +310,10 @@ config = {
                   
                   "meshName":                               "3Dmesh",                                       # use the linear mesh, it was partitioned by the helper.py script which called opendihu/scripts/create_partitioned_meshes_for_settings.py
                   "stimulationLogFilename":                 "out/stimulation.log",
-                }
+                },
+                "OutputWriter" : [
+                  {"format": "Paraview", "outputInterval": (int)(1./variables.dt_multidomain*variables.output_timestep_multidomain), "filename": "out/" + variables.scenario_name + "/0D_states", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"}
+                ] if variables.states_output else []
               }
             } for compartment_no in range(variables.n_compartments)]
           },
@@ -381,7 +386,7 @@ config = {
           "OutputWriter" : [
             
             # Paraview files
-            #{"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/u", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
+            {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/u", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
             
             # Python callback function "postprocess"
             #{"format": "PythonCallback", "outputInterval": 1, "callback": postprocess, "onlyNodalValues":True, "filename": ""},
@@ -389,20 +394,20 @@ config = {
           # 2. additional output writer that writes also the hydrostatic pressure
           "pressure": {   # output files for pressure function space (linear elements), contains pressure values, as well as displacements and velocities
             "OutputWriter" : [
-              #{"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/p", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
+              #{"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/p", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
             ]
           },
           # 3. additional output writer that writes virtual work terms
           "dynamic": {    # output of the dynamic solver, has additional virtual work values 
             "OutputWriter" : [   # output files for displacements function space (quadratic elements)
-              #{"format": "Paraview", "outputInterval": int(output_interval/dt), "filename": "out/dynamic", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
-              #{"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/virtual_work", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
+              {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/dynamic", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+              #{"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/virtual_work", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
             ],
           },
           # 4. output writer for debugging, outputs files after each load increment, the geometry is not changed but u and v are written
           "LoadIncrements": {   
             "OutputWriter" : [
-              #{"format": "Paraview", "outputInterval": 1, "filename": "out/load_increments", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
+              #{"format": "Paraview", "outputInterval": 1, "filename": "out/load_increments", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
             ]
           },
         }

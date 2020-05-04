@@ -99,11 +99,17 @@ if n_ranks != variables.n_subdomains:
       variables.n_subdomains_y = possible_partitionings[i][1]
       variables.n_subdomains_z = possible_partitionings[i][2]
 
+if variables.scenario_name is None:
+  variables.scenario_name = "{}_{}_dt{}_atol{}_rtol{}_theta{}_sym{}_lump{}_{}mus".format(variables.multidomain_solver_type, variables.multidomain_preconditioner_type, variables.dt_splitting, variables.multidomain_absolute_tolerance, variables.multidomain_relative_tolerance, variables.theta, variables.use_symmetric_preconditioner_matrix, variables.use_lumped_mass_matrix, len(variables.motor_units))
+
+if variables.initial_guess_nonzero is None:
+  variables.initial_guess_nonzero = variables.multidomain_preconditioner_type != "lu"
+
 # output information of run
 if rank_no == 0:
   print("scenario_name: {},  n_subdomains: {} {} {},  n_ranks: {},  end_time: {}".format(variables.scenario_name, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, n_ranks, variables.end_time))
-  print("dt_0D:           {:0.0e}    multidomain solver:         {}, lumped mass matrix: {}".format(variables.dt_0D, variables.multidomain_solver_type, variables.use_lumped_mass_matrix))
-  print("dt_multidomain:  {:0.0e}    multidomain preconditioner: {}, symmetric precond.: {}".format(variables.dt_multidomain, variables.multidomain_preconditioner_type, variables.use_symmetric_preconditioner_matrix))
+  print("dt_0D:           {:0.0e}    multidomain solver:         {} ({}), lumped mass matrix: {}, initial guess: {}".format(variables.dt_0D, variables.multidomain_solver_type, variables.multidomain_alternative_solver_type, variables.use_lumped_mass_matrix, "0" if not variables.initial_guess_nonzero else "previous solution"))
+  print("dt_multidomain:  {:0.0e}    multidomain preconditioner: {} ({}), symmetric precond.: {}".format(variables.dt_multidomain, variables.multidomain_preconditioner_type, variables.multidomain_alternative_preconditioner_type, variables.use_symmetric_preconditioner_matrix))
   print("dt_splitting:    {:0.0e}    theta: {}, solver tolerances, abs: {}, rel: {}".format(variables.dt_splitting, variables.theta, variables.multidomain_absolute_tolerance, variables.multidomain_relative_tolerance))
   print("fiber_file:              {}".format(variables.fiber_file))
   print("fat_mesh_file:           {}".format(variables.fat_mesh_file))
@@ -121,7 +127,7 @@ from helper import *
 multidomain_solver = {
   "timeStepWidth":                    variables.dt_multidomain,             # time step width of the subcellular problem
   "endTime":                          variables.end_time,                   # end time, this is not relevant because it will be overridden by the splitting scheme
-  "timeStepOutputInterval":           1,                                  # how often the output timestep should be printed
+  "timeStepOutputInterval":           100,                                  # how often the output timestep should be printed
   "durationLogKey":                   "duration_multidomain",               # key for duration in log.csv file
   
   # material parameters for the compartments
@@ -133,13 +139,14 @@ multidomain_solver = {
   
   # solver options
   "solverName":                       "multidomainLinearSolver",            # reference to the solver used for the global linear system of the multidomain eq.
+  "alternativeSolverName":            "multidomainAlternativeLinearSolver", # reference to the alternative solver, which is used when the normal solver diverges
   "theta":                            variables.theta,                      # weighting factor of implicit term in Crank-Nicolson scheme, 0.5 gives the classic, 2nd-order Crank-Nicolson scheme, 1.0 gives implicit euler
   "useLumpedMassMatrix":              variables.use_lumped_mass_matrix,     # which formulation to use, the formulation with lumped mass matrix (True) is more stable but approximative, the other formulation (False) is exact but needs more iterations
   "useSymmetricPreconditionerMatrix": variables.use_symmetric_preconditioner_matrix,    # if the diagonal blocks of the system matrix should be used as preconditioner matrix
   "initialGuessNonzero":              variables.initial_guess_nonzero,      # if the initial guess for the 3D system should be set as the solution of the previous timestep, this only makes sense for iterative solvers
   "enableFatComputation":             True,                                 # disabling the computation of the fat layer is only for debugging and speeds up computation. If set to False, the respective matrix is set to the identity
   "showLinearSolverOutput":           variables.show_linear_solver_output,  # if convergence information of the linear solver in every timestep should be printed, this is a lot of output for fast computations
-  "updateSystemMatrixEveryTimestep":  False,                                # if this multidomain solver will update the system matrix in every first timestep, us this only if the geometry changed, e.g. by contraction
+  "updateSystemMatrixEveryTimestep":  True,                                # if this multidomain solver will update the system matrix in every first timestep, us this only if the geometry changed, e.g. by contraction
   
   "PotentialFlow": {
     "FiniteElementMethod" : {  
@@ -192,6 +199,7 @@ multidomain_solver = {
 config = {
   "scenarioName":          variables.scenario_name,
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
+  "mappingsBetweenMeshesLogFile":   "mappings_between_meshes.txt",   # log file for mappings between meshes
   "meta": {                 # additional fields that will appear in the log
     "partitioning":         [variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z]
   },
@@ -210,9 +218,19 @@ config = {
     "multidomainLinearSolver": {
       "relativeTolerance":  variables.multidomain_relative_tolerance,
       "absoluteTolerance":  variables.multidomain_absolute_tolerance,         # 1e-10 absolute tolerance of the residual          
-      "maxIterations":      1e4,
+      "maxIterations":      1e3,
       "solverType":         variables.multidomain_solver_type,
       "preconditionerType": variables.multidomain_preconditioner_type,
+      "hypreOptions":       "",                                   # additional options if a hypre preconditioner is selected
+      "dumpFormat":         "matlab",
+      "dumpFilename":       "",
+    },
+    "multidomainAlternativeLinearSolver": {                                   # the alternative solver is used when the normal solver diverges
+      "relativeTolerance":  variables.multidomain_relative_tolerance,
+      "absoluteTolerance":  variables.multidomain_absolute_tolerance,         # 1e-10 absolute tolerance of the residual          
+      "maxIterations":      1e4,
+      "solverType":         variables.multidomain_alternative_solver_type,
+      "preconditionerType": variables.multidomain_alternative_preconditioner_type,
       "hypreOptions":       "",                                   # additional options if a hypre preconditioner is selected
       "dumpFormat":         "matlab",
       "dumpFilename":       "",
@@ -222,7 +240,7 @@ config = {
     "timeStepWidth":          variables.dt_splitting,
     "logTimeStepWidthAsKey":  "dt_splitting",
     "durationLogKey":         "duration_total",
-    "timeStepOutputInterval": 1,
+    "timeStepOutputInterval": 100,
     "endTime":                variables.end_time,
     "connectedSlotsTerm1To2": [0],          # CellML V_mk (0) <=> Multidomain V_mk^(i) (0)
     "connectedSlotsTerm2To1": [None, 0],    # Multidomain V_mk^(i+1) (1) -> CellML V_mk (0)
@@ -238,9 +256,10 @@ config = {
             "logTimeStepWidthAsKey":        "dt_0D",
             "durationLogKey":               "duration_0D",
             "initialValues":                [],
-            "timeStepOutputInterval":       1e4,
+            "timeStepOutputInterval":       100,
             "inputMeshIsGlobal":            True,
             "dirichletBoundaryConditions":  {},
+            "checkForNanInf":               True,             # check if the solution vector contains nan or +/-inf values, if yes, an error is printed. This is a time-consuming check.
             "nAdditionalFieldVariables":    0,
                 
             "CellML" : {
@@ -269,7 +288,10 @@ config = {
               
               "meshName":                               "3Dmesh",
               "stimulationLogFilename":                 "out/stimulation.log",
-            }
+            },
+						"OutputWriter" : [
+              {"format": "Paraview", "outputInterval": (int)(1./variables.dt_0D*variables.output_timestep_0D_states), "filename": "out/" + variables.scenario_name + "/0D_states_compartment_{}".format(compartment_no), "binary": False, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"}
+            ] if variables.states_output else []
           }
         } for compartment_no in range(variables.n_compartments)]
       },

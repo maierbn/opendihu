@@ -128,6 +128,7 @@ except:
 pd.set_option('display.max_rows', 500)
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.width', 1000)
+pd.set_option('display.max_colwidth', 100)
 
 def merge_dicts(x, y):
   z = x.copy()   # start with x's keys and values

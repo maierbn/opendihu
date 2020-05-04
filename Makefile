@@ -63,10 +63,10 @@ fibers:
 	cd testing/system_testing/tests/fibers &&  python ../../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
 
 hodgkin_huxley:
-	cd examples/electrophysiology/hodgkin_huxley && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+	cd examples/electrophysiology/monodomain/hodgkin_huxley && python ../../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
 
 shorten:
-	cd examples/electrophysiology/shorten && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+	cd examples/electrophysiology/monodomain/shorten && python ../../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
 
 cellml:
 	cd examples/electrophysiology/cellml && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG

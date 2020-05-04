@@ -8,7 +8,8 @@
 import os
 
 # get the directory where opendihu is installed (the top level directory of opendihu)
-opendihu_home = os.environ.get('OPENDIHU_HOME') or "../../.."
+
+opendihu_home = os.environ.get('OPENDIHU_HOME') or "../../../.."
 
 # set path where the "SConscript" file is located (set to current path)
 path_where_to_call_sconscript = Dir('.').srcnode().abspath

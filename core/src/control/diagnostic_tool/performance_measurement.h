@@ -60,20 +60,20 @@ private:
     //! constructor
     Measurement();
 
-    double start;   ///< last start point in time
-    double totalDuration;   ///< sum of previous measurements
-    int nTimeSpans;     ///< the number of measurements that lead to the total time in totalDuration
+    double start;   //< last start point in time
+    double totalDuration;   //< sum of previous measurements
+    int nTimeSpans;     //< the number of measurements that lead to the total time in totalDuration
 
-    double totalError;  ///< sum of all errors
-    int nErrors;        ///< number of summands of totalError
+    double totalError;  //< sum of all errors
+    int nErrors;        //< number of summands of totalError
   };
 
-  static std::map<std::string, Measurement> measurements_;   ///< the currently stored measurements
-  static std::map<std::string, int> sums_;   ///< the currently stored sums
-  static std::map<std::string,std::string> parameters_;   ///< arbitrary parameters that will be stored in the log
+  static std::map<std::string, Measurement> measurements_;   //< the currently stored measurements
+  static std::map<std::string, int> sums_;   //< the currently stored sums
+  static std::map<std::string,std::string> parameters_;   //< arbitrary parameters that will be stored in the log
 
-  static std::shared_ptr<std::thread> perfThread_;  ///< thread used to execute perf which measures FLOPS
-  static int perfThreadHandle_;   ///< handle of the perf thread
+  static std::shared_ptr<std::thread> perfThread_;  //< thread used to execute perf which measures FLOPS
+  static int perfThreadHandle_;   //< handle of the perf thread
 };
 
 template<>

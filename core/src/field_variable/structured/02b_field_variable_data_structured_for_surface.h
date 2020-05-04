@@ -53,7 +53,7 @@ protected:
   // for a 3D numbering scheme with x*y*z numbers (e.g. dofs or ranks), get the surface dofs for face
   void getSurfaceNumbers(const std::array<node_no_t,3> size, int nDofsPerNode, Mesh::face_t face, std::vector<node_no_t> &surfaceNumbers);
 
-  std::vector<dof_no_t> surfaceDofs_;   ///< local dof nos of the 3D field variable that specify the surface
+  std::vector<dof_no_t> surfaceDofs_;   //< local dof nos of the 3D field variable that specify the surface
 
 };
 

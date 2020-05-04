@@ -48,7 +48,7 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
   const int D = FunctionSpaceType::dim();
 
   const dof_no_t nDofsWithGhosts = this->functionSpace_->nDofsLocalWithGhosts();
-  std::vector<int> nAdjacentElements(nDofsWithGhosts, 0);   ///< the number of elements that are adjacent to the node
+  std::vector<int> nAdjacentElements(nDofsWithGhosts, 0);   //< the number of elements that are adjacent to the node
 
   // count number evaluations for every dof
   // loop over elements
@@ -268,7 +268,7 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
   const int D = FunctionSpaceType::dim();
 
   const dof_no_t nDofsWithGhosts = this->functionSpace_->nDofsLocalWithGhosts();
-  std::vector<int> nAdjacentElements(nDofsWithGhosts, 0);   ///< the number of elements that are adjacent to the node
+  std::vector<int> nAdjacentElements(nDofsWithGhosts, 0);   //< the number of elements that are adjacent to the node
 
   // count number evaluations for every dof
   // loop over elements

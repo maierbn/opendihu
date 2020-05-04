@@ -65,19 +65,19 @@ protected:
   //! communicate all nodal values to rank 0 to be written to the febio input file
   void communicateNodeValues(std::vector<double> &nodePositionValuesGlobal);
 
-  DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
+  DihuContext context_;    //< object that contains the python config for the current context and the global singletons meshManager and solverManager
 
-  OutputWriter::Manager outputWriterManager_; ///< manager object holding all output writer
-  Data data_;                 ///< data object
+  OutputWriter::Manager outputWriterManager_; //< manager object holding all output writer
+  Data data_;                 //< data object
 
-  std::string durationLogKey_;   ///< key with with the duration of the computation is written to the performance measurement log
+  std::string durationLogKey_;   //< key with with the duration of the computation is written to the performance measurement log
 
-  PythonConfig specificSettings_;    ///< python object containing the value of the python config dict with corresponding key
-  double preLoadFactor_;            ///< factor of force that is applied in axial direction of the muscle
-  double activationFactor_;         ///< factor with which to multiply activation
+  PythonConfig specificSettings_;    //< python object containing the value of the python config dict with corresponding key
+  double preLoadFactor_;            //< factor of force that is applied in axial direction of the muscle
+  double activationFactor_;         //< factor with which to multiply activation
 
-  double endTime_;     ///< end time of current time step
-  bool initialized_;   ///< if initialize() was already called
+  double endTime_;     //< end time of current time step
+  bool initialized_;   //< if initialize() was already called
 };
 
 }  // namespace

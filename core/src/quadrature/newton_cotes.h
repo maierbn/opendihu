@@ -23,7 +23,7 @@ template<unsigned int NumberIntegrationPoints>
 class NewtonCotes : public Quadrature
 {
 public:
-  typedef NewtonCotes<NumberIntegrationPoints> HighOrderQuadrature;   ///< this defines the own class, to be able to generalize code to mixed quadrature
+  typedef NewtonCotes<NumberIntegrationPoints> HighOrderQuadrature;   //< this defines the own class, to be able to generalize code to mixed quadrature
 
   //! return the number of evaluations that are needed for a 1D quadrature
   static constexpr int numberEvaluations();

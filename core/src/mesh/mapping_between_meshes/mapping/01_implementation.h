@@ -80,11 +80,11 @@ protected:
                        std::shared_ptr<FunctionSpaceTargetType> functionSpaceTarget,
                        double xiTolerance, bool compositeUseOnlyInitializedMappings, const std::vector<bool> &targetDofIsMappedTo);
 
-  std::shared_ptr<FunctionSpaceSourceType> functionSpaceSource_;   ///< the function space of the mesh from which to map data
-  std::shared_ptr<FunctionSpaceTargetType> functionSpaceTarget_;   ///< the function space of the mesh to which to map data
+  std::shared_ptr<FunctionSpaceSourceType> functionSpaceSource_;   //< the function space of the mesh from which to map data
+  std::shared_ptr<FunctionSpaceTargetType> functionSpaceTarget_;   //< the function space of the mesh to which to map data
 
 
-  std::vector<targetDof_t> targetMappingInfo_;  ///< [localDofNo source functionSpace (low dim)] information where in the target (high dim) to store the value from local dof No of the source (low dim)
+  std::vector<targetDof_t> targetMappingInfo_;  //< [localDofNo source functionSpace (low dim)] information where in the target (high dim) to store the value from local dof No of the source (low dim)
   double maxAllowedXiTolerance_;    //< the maximum tolerance in the parameter space (threshold for xi) by which a node is considered still inside the element
 };
 

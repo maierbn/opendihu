@@ -28,7 +28,7 @@ public:
   const MathUtility::Matrix<FunctionSpaceType::dim(),FunctionSpaceType::dim(),Vc::double_v> diffusionTensor(Vc::int_v elementNoLocal, const std::array<double,FunctionSpaceType::dim()> xi) const;
 
 private:
-  SpatialParameter<FunctionSpaceType,MathUtility::Matrix<FunctionSpaceType::dim(),FunctionSpaceType::dim()>> diffusionTensor_;  ///< the diffusion/conductivity tensor A in an equation ∇•A∇ = f
+  SpatialParameter<FunctionSpaceType,MathUtility::Matrix<FunctionSpaceType::dim(),FunctionSpaceType::dim()>> diffusionTensor_;  //< the diffusion/conductivity tensor A in an equation ∇•A∇ = f
 };
 
 }  // namespace

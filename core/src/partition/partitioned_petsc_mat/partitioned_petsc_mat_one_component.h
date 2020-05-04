@@ -101,8 +101,8 @@ protected:
   //! set the global to local mapping at the global matrix and create the local submatrix
   void createLocalMatrix();
 
-  Mat globalMatrix_;   ///< the global Petsc matrix, access using MatSetValuesLocal() with local indices (not used here) or via the localMatrix (this one is used)
-  Mat localMatrix_;    ///< a local submatrix that holds all rows and columns for the local dofs with ghosts
+  Mat globalMatrix_;   //< the global Petsc matrix, access using MatSetValuesLocal() with local indices (not used here) or via the localMatrix (this one is used)
+  Mat localMatrix_;    //< a local submatrix that holds all rows and columns for the local dofs with ghosts
 };
 
 /** Partial specialization for unstructured meshes. This is completely serial, there are no parallel matrices.
@@ -187,7 +187,7 @@ protected:
   //! create a distributed Petsc matrix, according to the given partition
   void createMatrix(MatType matrixType, int nNonZerosDiagonal, int nNonZerosOffdiagonal);
   
-  Mat matrix_;   ///< the single Petsc matrix (global = local)
+  Mat matrix_;   //< the single Petsc matrix (global = local)
 };
 
 template<typename FunctionSpaceType>

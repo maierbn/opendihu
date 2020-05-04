@@ -36,7 +36,7 @@ private:
   //! initializes the vectors and stiffness matrix with size
   void createPetscObjects();
 
-  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> rhs_;  ///< the rhs vector contribution from Neumann BC
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> rhs_;  //< the rhs vector contribution from Neumann BC
 
 };
 }  // namespace

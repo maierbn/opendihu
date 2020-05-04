@@ -47,7 +47,7 @@ public:
                          std::array<element_no_t, D> nElements, std::array<double, D> physicalExtent,
                          const std::array<int,D> nRanksPerCoordinateDirection, bool inputMeshIsGlobal=true);
 
-  typedef FieldVariable::FieldVariable<FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,3> GeometryFieldType;  ///< the class typename of the geometry field variable
+  typedef FieldVariable::FieldVariable<FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,3> GeometryFieldType;  //< the class typename of the geometry field variable
 
   //! get mesh width (=distance between nodes) of the given coordinate direction
   double meshWidth() const;
@@ -60,8 +60,8 @@ protected:
   //! compute the meshWidth_ from physicalExtent_
   void computeMeshWidth();
   
-  std::array<double,D> physicalExtent_;   ///< geometrical "size" of the mesh, i.e. length x width x height
-  double meshWidth_;   ///< uniform mesh width, i.e. distance between nodes (not elements for quadratic element), this is a copy of the value which is stored in this->geometryField_
+  std::array<double,D> physicalExtent_;   //< geometrical "size" of the mesh, i.e. length x width x height
+  double meshWidth_;   //< uniform mesh width, i.e. distance between nodes (not elements for quadratic element), this is a copy of the value which is stored in this->geometryField_
 };
 
 /** Partial specialization for StructuredDeformable mesh
@@ -86,7 +86,7 @@ public:
   FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, const std::vector<double> &nodePositionsFromBinaryFile, const std::vector<Vec3> &nodePositions,
                          const std::array<element_no_t,D> nElementsPerCoordinateDirection, const std::array<int,D> nRanksPerCoordinateDirection);
 
-  typedef FieldVariable::FieldVariable<FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>,3> GeometryFieldType;  ///< the class typename of the geometry field variable
+  typedef FieldVariable::FieldVariable<FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>,3> GeometryFieldType;  //< the class typename of the geometry field variable
 
   //! initialize geometry
   virtual void initialize();

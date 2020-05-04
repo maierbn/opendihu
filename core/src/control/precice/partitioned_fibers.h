@@ -69,7 +69,7 @@ protected:
   double currentTimeStepWidth_;               //< current time step width of the solver
   double normalTimeStepWidth_;                //< the normal standard timestep width to use
 
-  int timeStepOutputInterval_;    ///< time step number and time is output every timeStepOutputInterval_ time steps
+  int timeStepOutputInterval_;    //< time step number and time is output every timeStepOutputInterval_ time steps
 
   std::vector<int> preciceVertexIds_;         //< the vertex ids in precice of the geometry values
 

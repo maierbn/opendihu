@@ -43,8 +43,8 @@ public:
   bool operator==(const ElementToDofMapping &rhs);
 
 private:
-  std::vector<std::vector<dof_no_t>> elementDofs_;  ///< for every element the list of dofs
-  dof_no_t nDofs_ = 0;            ///< total number of dofs
+  std::vector<std::vector<dof_no_t>> elementDofs_;  //< for every element the list of dofs
+  dof_no_t nDofs_ = 0;            //< total number of dofs
 };
 
 } // namespace

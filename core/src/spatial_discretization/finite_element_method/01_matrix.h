@@ -142,7 +142,7 @@ public:
   void setInverseLumpedMassMatrix();
 };
 
-extern bool outputAssemble3DStiffnessMatrix_;   ///< if the message about assembly of the 3D stiffness matrix was printed
+extern bool outputAssemble3DStiffnessMatrix_;   //< if the message about assembly of the 3D stiffness matrix was printed
 
 
 } // namespace

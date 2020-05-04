@@ -43,8 +43,8 @@ public:
   std::shared_ptr<HighOrderFunctionSpaceType> highOrderFunctionSpace();
 
 private:
-  std::shared_ptr<LowOrderFunctionSpaceType> lowOrderFunctionSpace_;     ///< the FunctionSpace object for the low order basis
-  std::shared_ptr<HighOrderFunctionSpaceType> highOrderFunctionSpace_;   ///< the FunctionSpace object for the high order basis
+  std::shared_ptr<LowOrderFunctionSpaceType> lowOrderFunctionSpace_;     //< the FunctionSpace object for the low order basis
+  std::shared_ptr<HighOrderFunctionSpaceType> highOrderFunctionSpace_;   //< the FunctionSpace object for the high order basis
 };
 
 } // namespace

@@ -67,12 +67,12 @@ collectMeshProperties(CurrentFieldVariableType currentFieldVariable, const Field
   //LOG(DEBUG) << "field variable \"" << currentFieldVariable->name() << "\", mesh \"" << meshName << "\".";
 
   /*
-  int dimensionality;    ///< D=1: object is a VTK "Line", D=2, D=3: object should be represented by an unstructured grid
-  global_no_t nPoints;   ///< the number of points needed for representing the mesh
-  global_no_t nCells;    ///< the number of VTK "cells", i.e. "Lines" or "Polys", which is the opendihu number of "elements"
-  std::vector<node_no_t> nNodesLocalWithGhosts;   ///< local number of nodes including ghosts, for all dimensions
+  int dimensionality;    //< D=1: object is a VTK "Line", D=2, D=3: object should be represented by an unstructured grid
+  global_no_t nPoints;   //< the number of points needed for representing the mesh
+  global_no_t nCells;    //< the number of VTK "cells", i.e. "Lines" or "Polys", which is the opendihu number of "elements"
+  std::vector<node_no_t> nNodesLocalWithGhosts;   //< local number of nodes including ghosts, for all dimensions
 
-  std::vector<PointData> pointDataArrays;   ///< <name,nComponents> of PointData DataArray elements
+  std::vector<PointData> pointDataArrays;   //< <name,nComponents> of PointData DataArray elements
   */
   int dimensionality = currentFieldVariable->functionSpace()->dim();
   meshProperties[meshName].dimensionality = dimensionality;

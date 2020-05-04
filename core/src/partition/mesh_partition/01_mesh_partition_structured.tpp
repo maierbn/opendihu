@@ -313,11 +313,11 @@ refine(std::array<int,MeshType::dim()> refinementFactor)
   LOG(DEBUG) << "refine mesh partition by refinementFactors " << refinementFactor;
   for (int i = 0; i < MeshType::dim(); i++)
   {
-    beginElementGlobal_[i] *= refinementFactor[i];   ///< global element no.s of the lower left front corner of the domain
-    nElementsLocal_[i] *= refinementFactor[i];     ///< local size, i.e. number of nodes in the coordinate directions of the local portion
-    nElementsGlobal_[i] *= refinementFactor[i];    ///< global number of elements in the coodinate directions
+    beginElementGlobal_[i] *= refinementFactor[i];   //< global element no.s of the lower left front corner of the domain
+    nElementsLocal_[i] *= refinementFactor[i];     //< local size, i.e. number of nodes in the coordinate directions of the local portion
+    nElementsGlobal_[i] *= refinementFactor[i];    //< global number of elements in the coodinate directions
 
-    ///< the sizes of different partitions in each coordinate direction, i.e. localSizesOnPartitions_[0] is (width partition #0, width partition #1, ...)
+    //< the sizes of different partitions in each coordinate direction, i.e. localSizesOnPartitions_[0] is (width partition #0, width partition #1, ...)
     for (int partitionIndex = 0; partitionIndex < localSizesOnPartitions_[i].size(); partitionIndex++)
     {
       localSizesOnPartitions_[i][partitionIndex] *= refinementFactor[i];

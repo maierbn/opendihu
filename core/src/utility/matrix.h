@@ -14,7 +14,7 @@ struct Matrix :
   public std::array<double_v_t, nRows*nColumns>
   //public Vc::array<double, nRows*nColumns>
 {
-  //std::array<double, nRows*nColumns> data;   ///< the data member containing the entries in row-major order
+  //std::array<double, nRows*nColumns> data;   //< the data member containing the entries in row-major order
 
   // -------- constructors -------------
   //! default empty constructor

@@ -28,14 +28,14 @@ private:
 
   struct FilenameWithElementAndNodeCount
   {
-    std::string filename;  ///< the filename 
-    element_no_t nElements;  ///< the number of elements 
-    node_no_t nNodes;   ///< the number of nodes
-    std::string meshName;  ///< the mesh name
-    int dimensionality;   ///< the dimensionality of the mesh, i.e. 1, 2 or 3
+    std::string filename;  //< the filename 
+    element_no_t nElements;  //< the number of elements 
+    node_no_t nNodes;   //< the number of nodes
+    std::string meshName;  //< the mesh name
+    int dimensionality;   //< the dimensionality of the mesh, i.e. 1, 2 or 3
   };
   
-  std::map<double,std::vector<FilenameWithElementAndNodeCount>> filenamesWithElementAndNodeCount_;   ///< for a given simulation time the filenames without suffix of all previously output exelem files
+  std::map<double,std::vector<FilenameWithElementAndNodeCount>> filenamesWithElementAndNodeCount_;   //< for a given simulation time the filenames without suffix of all previously output exelem files
 };
 
 } // namespace

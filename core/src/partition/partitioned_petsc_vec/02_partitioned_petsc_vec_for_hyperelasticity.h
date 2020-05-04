@@ -73,7 +73,7 @@ protected:
   //! do the additional initalization after the initialization of the parent class, that accounts also for the pressure component
   void initializeForPressure();
 
-  std::shared_ptr<Partition::MeshPartition<PressureFunctionSpaceType>> meshPartitionPressure_;   ///< the mesh partition for the pressure function space, which has a lower degree of ansatz function than the displacement function space
+  std::shared_ptr<Partition::MeshPartition<PressureFunctionSpaceType>> meshPartitionPressure_;   //< the mesh partition for the pressure function space, which has a lower degree of ansatz function than the displacement function space
   int componentNoPressure_ = nComponents;     //< which of the component is dedicated for the pressure, this is the last component
 };
 

@@ -123,8 +123,8 @@ public:
 
 protected:
 
-  PyObject *pythonConfig_;    ///< the python config dictionary of the current context (i.e. may be a sub-dict of the global config)
-  std::vector<std::string> path_;   ///< the key words of the python config down to the current scope
+  PyObject *pythonConfig_;    //< the python config dictionary of the current context (i.e. may be a sub-dict of the global config)
+  std::vector<std::string> path_;   //< the key words of the python config down to the current scope
 };
 
 //! output operator

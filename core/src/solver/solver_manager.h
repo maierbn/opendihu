@@ -38,11 +38,11 @@ private:
   //! store settings for all solvers that are specified in specificSettings_
   void storePreconfiguredSolvers();
 
-  PythonConfig specificSettings_;    ///< python object containing the value of the python config dict with corresponding key
-  int numberAnonymousSolvers_;     ///< how many inline solvers without a given name in the python config are contained in solvers_. These have a key "anonymous<no>"
+  PythonConfig specificSettings_;    //< python object containing the value of the python config dict with corresponding key
+  int numberAnonymousSolvers_;     //< how many inline solvers without a given name in the python config are contained in solvers_. These have a key "anonymous<no>"
 
-  std::map<std::string, PythonConfig> solverConfiguration_;         ///< the python dicts for the solvers that were defined under "Solvers"
-  std::map<MPI_Comm, std::map<std::string, std::shared_ptr<Solver>>> solvers_;    ///< for the mpi communcator the solvers with their string key
+  std::map<std::string, PythonConfig> solverConfiguration_;         //< the python dicts for the solvers that were defined under "Solvers"
+  std::map<MPI_Comm, std::map<std::string, std::shared_ptr<Solver>>> solvers_;    //< for the mpi communcator the solvers with their string key
 };
 
 } // namespace

@@ -66,13 +66,13 @@ public:
 
   //! field variables that will be output by outputWriters
   typedef std::tuple<
-    std::shared_ptr<GradientFieldVariableType>,     // geometry
-    std::shared_ptr<GradientFieldVariableType>,     // fiberDirection
-    std::shared_ptr<FieldVariableType>,              // solution of laplace potential flow
-    std::shared_ptr<FieldVariableType>,              // extra-cellular potential
-    std::vector<std::shared_ptr<FieldVariableType>>,              // transmembranePotentials
-    std::vector<std::shared_ptr<FieldVariableType>>,              // compartmentRelativeFactors
-    std::shared_ptr<FieldVariableType>                   // relativeFactorTotal
+    std::shared_ptr<GradientFieldVariableType>,       // geometry
+    std::shared_ptr<GradientFieldVariableType>,       // fiberDirection
+    std::shared_ptr<FieldVariableType>,               // solution of laplace potential flow
+    std::shared_ptr<FieldVariableType>,               // extra-cellular potential
+    std::vector<std::shared_ptr<FieldVariableType>>,  // transmembranePotentials
+    std::vector<std::shared_ptr<FieldVariableType>>,  // compartmentRelativeFactors
+    std::shared_ptr<FieldVariableType>                // relativeFactorTotal
   > FieldVariablesForOutputWriter;
 
   //! get pointers to all field variables that can be written by output writers
@@ -83,18 +83,18 @@ private:
   //! initializes the vectors with size
   void createPetscObjects() override;
 
-  int nCompartments_;     ///< number of compartments i.e. motor units
-  std::shared_ptr<FieldVariableType> flowPotential_; ///< the direction of fibers
-  std::shared_ptr<GradientFieldVariableType> fiberDirection_; ///< the direction of fibers
-  std::vector<std::shared_ptr<FieldVariableType>> transmembranePotentialSolution_;  ///< the Vm^(i+1) for the next timestep, this holds the solution in the linear solver which must be different from the rhs vector
-  std::vector<std::shared_ptr<FieldVariableType>> transmembranePotential_;  ///< the Vm^(i) value (transmembrane potential)
-  std::vector<std::shared_ptr<FieldVariableType>> compartmentRelativeFactor_;  ///< the relative factor f_r of the given compartment, at each point
-  std::shared_ptr<FieldVariableType> relativeFactorTotal_;  ///< relative factor for phi_e, (1 + sum_k f_r^k), at each point
-  std::shared_ptr<FieldVariableType> extraCellularPotential_;  ///< the phi_e value which is the extra-cellular potential
-  std::shared_ptr<FieldVariableType> zero_;  ///< a field variable with constant value of zero, needed for the nested rhs vector
-  //std::vector<Vec> subvectorsSolution_;   ///< a vector of the Petsc vecs that are used during computation
+  int nCompartments_;                                                               //< number of compartments i.e. motor units
+  std::shared_ptr<FieldVariableType> flowPotential_;                                //< the direction of fibers
+  std::shared_ptr<GradientFieldVariableType> fiberDirection_;                       //< the direction of fibers
+  std::vector<std::shared_ptr<FieldVariableType>> transmembranePotentialSolution_;  //< the Vm^(i+1) for the next timestep, this holds the solution in the linear solver which must be different from the rhs vector
+  std::vector<std::shared_ptr<FieldVariableType>> transmembranePotential_;          //< the Vm^(i) value (transmembrane potential)
+  std::vector<std::shared_ptr<FieldVariableType>> compartmentRelativeFactor_;       //< the relative factor f_r of the given compartment, at each point
+  std::shared_ptr<FieldVariableType> relativeFactorTotal_;                          //< relative factor for phi_e, (1 + sum_k f_r^k), at each point
+  std::shared_ptr<FieldVariableType> extraCellularPotential_;                       //< the phi_e value which is the extra-cellular potential
+  std::shared_ptr<FieldVariableType> zero_;                                         //< a field variable with constant value of zero, needed for the nested rhs vector
+  //std::vector<Vec> subvectorsSolution_;                                           //< a vector of the Petsc vecs that are used during computation
 
-  std::shared_ptr<OutputConnectorDataType> outputConnectorData_;    ///< the object that stores all components of field variables that will be transferred to other solvers
+  std::shared_ptr<OutputConnectorDataType> outputConnectorData_;                    //< the object that stores all components of field variables that will be transferred to other solvers
 
 };
 

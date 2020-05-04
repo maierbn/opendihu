@@ -44,13 +44,13 @@ void Paraview::writePolyDataFile(const FieldVariablesForOutputWriterType &fieldV
   /*
   struct PolyDataPropertiesForMesh
   {
-    int dimensionality;    ///< D=1: object is a VTK "Line", D=2, D=3: object is a VTK "Poly"
-    global_no_t nPointsLocal;   ///< the number of points needed for representing the mesh, local value of rank
-    global_no_t nCellsLocal;    ///< the number of VTK "cells", i.e. "Lines" or "Polys", which is the opendihu number of "elements", local value of rank
-    global_no_t nPointsGlobal;   ///< the number of points needed for representing the mesh, global value of all rank
-    global_no_t nCellsGlobal;    ///< the number of VTK "cells", i.e. "Lines" or "Polys", which is the opendihu number of "elements", global value of all ranks
+    int dimensionality;    //< D=1: object is a VTK "Line", D=2, D=3: object is a VTK "Poly"
+    global_no_t nPointsLocal;   //< the number of points needed for representing the mesh, local value of rank
+    global_no_t nCellsLocal;    //< the number of VTK "cells", i.e. "Lines" or "Polys", which is the opendihu number of "elements", local value of rank
+    global_no_t nPointsGlobal;   //< the number of points needed for representing the mesh, global value of all rank
+    global_no_t nCellsGlobal;    //< the number of VTK "cells", i.e. "Lines" or "Polys", which is the opendihu number of "elements", global value of all ranks
 
-    std::vector<PolyDataPropertiesForMesh::DataArrayName> pointDataArrays;   ///< <name,nComponents> of PointData DataArray elements
+    std::vector<PolyDataPropertiesForMesh::DataArrayName> pointDataArrays;   //< <name,nComponents> of PointData DataArray elements
   };
 */
 
@@ -59,11 +59,11 @@ void Paraview::writePolyDataFile(const FieldVariablesForOutputWriterType &fieldV
   /*
   struct VTKPiece
   {
-    std::set<std::string> meshNamesCombinedMeshes;   ///< the meshNames of the combined meshes, or only one meshName if it is not a merged mesh
-    PolyDataPropertiesForMesh properties;   ///< the properties of the merged mesh
+    std::set<std::string> meshNamesCombinedMeshes;   //< the meshNames of the combined meshes, or only one meshName if it is not a merged mesh
+    PolyDataPropertiesForMesh properties;   //< the properties of the merged mesh
 
-    std::string firstScalarName;   ///< name of the first scalar field variable of the mesh
-    std::string firstVectorName;   ///< name of the first non-scalar field variable of the mesh
+    std::string firstScalarName;   //< name of the first scalar field variable of the mesh
+    std::string firstVectorName;   //< name of the first non-scalar field variable of the mesh
 
     //! constructor, initialize nPoints and nCells to 0
     VTKPiece()

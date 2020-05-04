@@ -16,7 +16,7 @@ Conductivity = 3.828    # sigma, conductivity [mS/cm]
 Am = 500.0              # surface area to volume ratio [cm^-1]
 Cm = 0.58               # membrane capacitance [uF/cm^2]
 innervation_zone_width = 0.  # cm
-cellml_file = "../../input/hodgkin_huxley_1952.c"
+cellml_file = "../../../input/hodgkin_huxley_1952.c"
 solver_type = "gmres"
 
 # timing parameters
@@ -32,17 +32,17 @@ dt_3D = dt_1D                      # overall timestep width of splitting
 output_timestep = 1e-1            # timestep for output files
 
 # input files
-#cellml_file = "../../input/shorten_ocallaghan_davidson_soboleva_2007.c"
-#cellml_file = "../../input/shorten.cpp"
-cellml_file = "../../input/hodgkin_huxley_1952.c"
+#cellml_file = "../../../input/shorten_ocallaghan_davidson_soboleva_2007.c"
+#cellml_file = "../../../input/shorten.cpp"
+cellml_file = "../../../input/hodgkin_huxley_1952.c"
 
-#fibre_file = "../../input/laplace3d_structured_quadratic"
-fibre_file = "../../input/laplace3d_structured_linear"
-#fibre_file = "../../input1000/laplace3d_structured_quadratic"
+#fibre_file = "../../../input/laplace3d_structured_quadratic"
+fibre_file = "../../../input/laplace3d_structured_linear"
+#fibre_file = "../../../input1000/laplace3d_structured_quadratic"
 
-fibre_distribution_file = "../../input/MU_fibre_distribution_3780.txt"
-firing_times_file = "../../input/MU_firing_times_real.txt"
-#firing_times_file = "../../input/MU_firing_times_immediately.txt"
+fibre_distribution_file = "../../../input/MU_fibre_distribution_3780.txt"
+firing_times_file = "../../../input/MU_firing_times_real.txt"
+#firing_times_file = "../../../input/MU_firing_times_immediately.txt"
 
 # import needed packages
 import sys

@@ -1,7 +1,10 @@
 # Electrophysiology
-# Monodomain with Hodgkin-Huxley model as rhs. This also demonstrates how to pass on intermediate values to the diffusion solver.
-# The paraview output files will include the selected intermediate values no. 0,1 and 2 of the CellML problem. 
+# Monodomain with Hodgkin-Huxley model as rhs. This also demonstrates how use output writers and how to pass on intermediate values to the diffusion solver.
+# The paraview output files "strang_*.vtp" of the output writer under diffusion will include the selected intermediate values no. 0,1 and 2 of the CellML problem. 
 # Adjust "intermediatesForTransfer" and "statesForTransfer" to select different states, adjust "connectedSlotsTerm1To2" and connectedSlotsTerm2To1 accordingly.
+# There are two more output writers, one directly in the CellML adapter (produces cellml_*.vtp) which writes all states and all intermediates,
+# and a second in the Heun solver, which writes all states ("states_*.py)
+# 
 #
 # parameters: [<scenario_name>]
 
@@ -16,7 +19,7 @@ Conductivity = 3.828    # sigma, conductivity [mS/cm]
 Am = 500.0              # surface area to volume ratio [cm^-1]
 Cm = 0.58               # membrane capacitance [uF/cm^2]
 innervation_zone_width = 0.  # cm
-cellml_file = "../../input/hodgkin_huxley_1952.c"
+cellml_file = "../../../input/hodgkin_huxley_1952.c"
 solver_type = "gmres"
 
 print("prefactor: {}".format(Conductivity/(Am*Cm)))
@@ -34,17 +37,17 @@ dt_splitting = dt_1D                      # overall timestep width of splitting
 output_timestep = 1e0            # timestep for output files
 
 # input files
-#cellml_file = "../../input/shorten_ocallaghan_davidson_soboleva_2007.c"
-#cellml_file = "../../input/shorten.cpp"
-cellml_file = "../../input/hodgkin_huxley_1952.c"
+#cellml_file = "../../../input/shorten_ocallaghan_davidson_soboleva_2007.c"
+#cellml_file = "../../../input/shorten.cpp"
+cellml_file = "../../../input/hodgkin_huxley_1952.c"
 
-#fibre_file = "../../input/laplace3d_structured_quadratic"
-fibre_file = "../../input/laplace3d_structured_linear"
-#fibre_file = "../../input1000/laplace3d_structured_quadratic"
+#fibre_file = "../../../input/laplace3d_structured_quadratic"
+fibre_file = "../../../input/laplace3d_structured_linear"
+#fibre_file = "../../../input1000/laplace3d_structured_quadratic"
 
-fibre_distribution_file = "../../input/MU_fibre_distribution_3780.txt"
-firing_times_file = "../../input/MU_firing_times_real.txt"
-#firing_times_file = "../../input/MU_firing_times_immediately.txt"
+fibre_distribution_file = "../../../input/MU_fibre_distribution_3780.txt"
+firing_times_file = "../../../input/MU_firing_times_real.txt"
+#firing_times_file = "../../../input/MU_firing_times_immediately.txt"
 
 # import needed packages
 import sys
@@ -196,6 +199,7 @@ def callback(data, shape, nEntries, dim, timeStepNo, currentTime, null):
 config = {
   "scenarioName": scenario_name,
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
+  "mappingsBetweenMeshesLogFile":   None,
   "Meshes": {
     "MeshFiber": {
       "nElements": n_elements,
@@ -217,23 +221,24 @@ config = {
   },
   "StrangSplitting": {
     #"numberTimeSteps": 1,
-    "timeStepWidth": dt_splitting,  # 1e-1
-    "endTime": end_time,
+    "timeStepWidth":          dt_splitting,  # 1e-1
+    "endTime":                end_time,
     "connectedSlotsTerm1To2": [0,1,2,3,4],   # Transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion), slots 1-3: intermediates that should only be transferred to Diffusion because of the output writer (such that they will be included in the output files), not for actual computation.
     "connectedSlotsTerm2To1": [0,1,2,3,4],   # Transfer the same values back. Use None for slots that should not be connected. In case of the intermediates it is good to have them connected both directions, 1->2 and 2->1, only then copying will be avoided (variables are reused) because it is asserted that Term 2 does not change the values.
-    "logTimeStepWidthAsKey": "dt_splitting",
-    "durationLogKey": "duration_total",
+    "logTimeStepWidthAsKey":  "dt_splitting",
+    "durationLogKey":         "duration_total",
     "timeStepOutputInterval": 1000,
     "Term1": {      # CellML
       "Heun" : {
-        "timeStepWidth": dt_0D,  # 5e-5
-        "initialValues": [],
-        "timeStepOutputInterval": 1e4,
-        "logTimeStepWidthAsKey": "dt_0D",
-        "durationLogKey": "duration_0D",
-        "inputMeshIsGlobal": True,
-        "dirichletBoundaryConditions": {},
-        "nAdditionalFieldVariables": 0,
+        "timeStepWidth":                dt_0D,  # 5e-5
+        "initialValues":                [],
+        "timeStepOutputInterval":       1e4,
+        "logTimeStepWidthAsKey":        "dt_0D",
+        "durationLogKey":               "duration_0D",
+        "inputMeshIsGlobal":            True,
+        "dirichletBoundaryConditions":  {},
+        "nAdditionalFieldVariables":    0,
+        "checkForNanInf":               True,                                                    
         
         "CellML" : {
           "modelFilename":                          cellml_file,                          # input C++ source file or cellml XML file
@@ -265,10 +270,16 @@ config = {
           
           "meshName":                               "MeshFiber",
           "stimulationLogFilename":                 "out/stimulation.log",                          # a file that will contain the times of stimulations
+          
+          # output writer for states, intermediates and parameters
+          "OutputWriter" : [
+            {"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/cellml", "binary": True, "onlyNodalValues": True, "fixedFormat": True, "combineFiles": True, "fileNumbering": "incremental"},
+          ],
         },
         
+        # output writer only for states
         "OutputWriter" : [
-          {"format": "PythonFile", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/states", "binary": True, "onlyNodalValues": True},
+          {"format": "PythonFile", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/states", "binary": True, "onlyNodalValues": True, "fileNumbering": "incremental"},
         ],
       },
     },
@@ -284,6 +295,7 @@ config = {
         "dirichletBoundaryConditions": {},
         "nAdditionalFieldVariables": 5,
         "solverName": "implicitSolver",
+        "checkForNanInf": False,
         
         "FiniteElementMethod" : {
           "meshName": "MeshFiber",
@@ -291,9 +303,11 @@ config = {
           "solverName": "implicitSolver",
           "inputMeshIsGlobal": True,
         },
+        
+        # output writer only for the diffusion variable (i.e. state "Vm")
         "OutputWriter" : [
-          {"format": "PythonFile", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/strang", "binary": True, "onlyNodalValues": False},
-          {"format": "Paraview",   "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/strang", "binary": True, "fixedFormat": False, "combineFiles": True},
+          {"format": "PythonFile", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/strang", "binary": True, "onlyNodalValues": False, "fileNumbering": "incremental"},
+          {"format": "Paraview",   "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/strang", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"},
           #{"format": "ExFile", "filename": "out/fibre", "outputInterval": 1e5, "sphereSize": "0.02*0.02*0.02"},
         ],
       },

@@ -24,8 +24,8 @@ stimulation_frequency = 100*1e-3   # [Hz]*1e-3 = [ms^-1]
 frequency_jitter = 0.1
 call_enable_begin = 15.0  # [s]*1e3 = [ms]
 
-fiber_distribution_file = "../../input/MU_fibre_distribution_10MUs.txt"
-firing_times_file = "../../input/MU_firing_times_always.txt"
+fiber_distribution_file = "../../../input/MU_fibre_distribution_10MUs.txt"
+firing_times_file = "../../../input/MU_firing_times_always.txt"
 
 # load MU distribution and firing times
 fiber_distribution = np.genfromtxt(fiber_distribution_file, delimiter=" ")
@@ -130,7 +130,7 @@ config = {
                   "nAdditionalFieldVariables":   0,
                     
                   "CellML" : {
-                    "modelFilename":                         "../../input/hodgkin_huxley_1952.c",                          # input C++ source file or cellml XML file
+                    "modelFilename":                         "../../../input/hodgkin_huxley_1952.c",                          # input C++ source file or cellml XML file
                     "compilerFlags":                          "-fPIC -O3 -march=native -shared ",
                     "optimizationType":                       "vc",                       # "vc", "simd", "openmp" type of generated optimizated source file
                     "approximateExponentialFunction":         True,                      # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024

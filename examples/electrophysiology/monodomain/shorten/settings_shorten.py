@@ -37,16 +37,16 @@ output_timestep = 3             # timestep for output files
 #output_timestep = 1e-1             # timestep for output files
 
 # input files
-#cellml_file = "../../input/shorten_ocallaghan_davidson_soboleva_2007.c"
-#cellml_file = "../../input/shorten_ocallaghan_davidson_soboleva_2007.cellml"
-#cellml_file = "../../input/shorten.cpp"
-#cellml_file = "../../input/hodgkin_huxley_1952.c"
-cellml_file = "../../input/new_slow_TK_2014_12_08.c"
+#cellml_file = "../../../input/shorten_ocallaghan_davidson_soboleva_2007.c"
+#cellml_file = "../../../input/shorten_ocallaghan_davidson_soboleva_2007.cellml"
+#cellml_file = "../../../input/shorten.cpp"
+#cellml_file = "../../../input/hodgkin_huxley_1952.c"
+cellml_file = "../../../input/new_slow_TK_2014_12_08.c"
 
-fiber_distribution_file = "../../input/MU_fibre_distribution_3780.txt"
-#firing_times_file = "../../input/MU_firing_times_real.txt"
-#firing_times_file = "../../input/MU_firing_times_immediately.txt"
-firing_times_file = "../../input/MU_firing_times_always.txt"
+fiber_distribution_file = "../../../input/MU_fibre_distribution_3780.txt"
+#firing_times_file = "../../../input/MU_firing_times_real.txt"
+#firing_times_file = "../../../input/MU_firing_times_immediately.txt"
+firing_times_file = "../../../input/MU_firing_times_always.txt"
 
 # parse command line options (scenario name)
 scenario_name = ""

@@ -29,6 +29,7 @@ print("element_size: {}, number of elements per fiber: {}".format(element_size, 
 config = {
   "scenarioName": "7x7fibers",
   "solverStructureDiagramFile": "solver_structure.txt",
+  "mappingsBetweenMeshesLogFile": "",
   "Solvers": {
     "linearSolver": {
       "relativeTolerance": 1e-4,
@@ -68,7 +69,7 @@ config = {
       "inputMeshIsGlobal": True,
     },
     "OutputWriter" : [
-      {"format": "Paraview", "outputInterval": 1, "filename": "out/biceps", "binary": True, "fixedFormat": False, "combineFiles": False},
+      {"format": "Paraview", "outputInterval": 1, "filename": "out/biceps", "binary": True, "fixedFormat": False, "combineFiles": False, "fileNumbering": "incremental"},
       #{"format": "Paraview", "outputInterval": 1, "filename": "out/txt", "binary": False, "fixedFormat": False, "combineFiles": False},
       #{"format": "ExFile", "filename": "out/"+name, "outputInterval": 2, "sphereSize": "0.005*0.005*0.01"},
       #{"format": "PythonFile", "filename": "out/"+name, "binary":False, "onlyNodalValues":True},

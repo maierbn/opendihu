@@ -128,7 +128,7 @@ def set_parameters_null(n_nodes_global, time_step_no, current_time, parameters, 
 def set_parameters(n_nodes_global, time_step_no, current_time, parameters, dof_nos_global, fibre_no):
   
   # determine if fibre gets stimulated at the current time
-  is_fiber_gets_stimulated = fiber_gets_stimulated(fibre_no, stimulation_frequency, current_time)
+  is_fiber_gets_stimulated = fiber_gets_stimulated(fibre_no, variables.stimulation_frequency, current_time)
   
   # determine nodes to stimulate (center node, left and right neighbour)
   innervation_zone_width_n_nodes = innervation_zone_width*100  # 100 nodes per cm
@@ -165,7 +165,7 @@ def set_parameters(n_nodes_global, time_step_no, current_time, parameters, dof_n
 def set_specific_parameters(n_nodes_global, time_step_no, current_time, parameters, fibre_no):
   
   # determine if fibre gets stimulated at the current time
-  is_fiber_gets_stimulated = fiber_gets_stimulated(fibre_no, stimulation_frequency, current_time)
+  is_fiber_gets_stimulated = fiber_gets_stimulated(fibre_no, variables.stimulation_frequency, current_time)
   
   # determine nodes to stimulate (center node, left and right neighbour)
   innervation_zone_width_n_nodes = innervation_zone_width*100  # 100 nodes per cm
@@ -191,7 +191,7 @@ def set_specific_parameters(n_nodes_global, time_step_no, current_time, paramete
 def set_specific_states(n_nodes_global, time_step_no, current_time, states, fibre_no):
   
   # determine if fibre gets stimulated at the current time
-  is_fiber_gets_stimulated = fiber_gets_stimulated(fibre_no, stimulation_frequency, current_time)
+  is_fiber_gets_stimulated = fiber_gets_stimulated(fibre_no, variables.stimulation_frequency, current_time)
 
   if is_fiber_gets_stimulated:  
     # determine nodes to stimulate (center node, left and right neighbour)

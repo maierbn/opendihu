@@ -4,7 +4,7 @@
 # Input is one stl file of the geometry that was extracted from cmgui.
 # Multiple files with different number of fibers are created as *.bin files that can directly be used by opendihu.
 # In order to visualize a bin file, run `examine_bin_fibers.py <filename.bin>`
- 
+
 input_file=original_meshes/left_triceps_brachii.stl
 # if you change the input file, you probably also have to experiment with the bottom_z and top_z clipping parameters for the muscle 
 
@@ -77,11 +77,15 @@ echo "--- Create a spline surface of the geometry"
 
 # create spline surface
 cd $opendihu_directory/scripts/geometry_manipulation
-$pyod ./create_spline_surface.py \
-  ${current_directory}/processed_meshes/${basename}_03_bottom_at_zero.stl \
-  ${current_directory}/processed_meshes/${basename}_04_spline_surface.stl \
-  ${current_directory}/processed_meshes/${basename}_04_spline_surface.pickle \
-  $bottom_z_clip $top_z_clip
+if [[ ! -f "${current_directory}/processed_meshes/${basename}_04_spline_surface.pickle" ]]; then
+  $pyod ./create_spline_surface.py \
+    ${current_directory}/processed_meshes/${basename}_03_bottom_at_zero.stl \
+    ${current_directory}/processed_meshes/${basename}_04_spline_surface.stl \
+    ${current_directory}/processed_meshes/${basename}_04_spline_surface.pickle \
+    $bottom_z_clip $top_z_clip
+else
+  echo "file processed_meshes/${basename}_04_spline_surface.pickle already exists"
+fi
 
 echo ""
 echo "--- Compile opendihu"
@@ -124,9 +128,20 @@ $pyod $opendihu_directory/scripts/file_manipulation/translate_bin_fibers.py \
   ${current_directory}/processed_meshes/${basename}_05_9x9fibers.bin \
   ${current_directory}/processed_meshes/${basename}_06_9x9fibers_original_position.bin \
   0 0 ${bottom_bounding_box_value}
-  
-cp ${current_directory}/processed_meshes/${basename}_06_7x7fibers_original_position.bin ${current_directory}/processed_meshes/${basename}_7x7fibers.bin
-cp ${current_directory}/processed_meshes/${basename}_06_9x9fibers_original_position.bin ${current_directory}/processed_meshes/${basename}_9x9fibers.bin
+
+echo ""
+echo "--- Reverse the numbering in y direction"
+$pyod $opendihu_directory/scripts/file_manipulation/reverse_y_order_bin_fibers.py \
+  ${current_directory}/processed_meshes/${basename}_06_7x7fibers_original_position.bin \
+  ${current_directory}/processed_meshes/${basename}_07_7x7fibers_y_reversed.bin 
+
+$pyod $opendihu_directory/scripts/file_manipulation/reverse_y_order_bin_fibers.py \
+  ${current_directory}/processed_meshes/${basename}_06_9x9fibers_original_position.bin \
+  ${current_directory}/processed_meshes/${basename}_07_9x9fibers_y_reversed.bin 
+
+# rename the fibers to their final name
+cp ${current_directory}/processed_meshes/${basename}_07_7x7fibers_y_reversed.bin ${current_directory}/processed_meshes/${basename}_7x7fibers.bin
+cp ${current_directory}/processed_meshes/${basename}_07_9x9fibers_y_reversed.bin ${current_directory}/processed_meshes/${basename}_9x9fibers.bin
 
 cd $current_directory
 # refine the given, serially created file with 7x7 fibers

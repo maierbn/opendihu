@@ -173,3 +173,4 @@ $pyod $opendihu_directory/scripts/create_fat_layer.py ${basename}_67x67fibers.bi
 $pyod $opendihu_directory/scripts/create_fat_layer.py ${basename}_109x109fibers.bin
 
 cd $current_directory
+

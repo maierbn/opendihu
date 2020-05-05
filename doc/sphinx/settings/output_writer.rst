@@ -66,6 +66,12 @@ A common practice to compute outputInterval is to write
   
 where ``dt`` is the timestep width of the scheme in seconds and ``output_timestep`` is the output interval in seconds. Then files are generated every ``output_timestep`` seconds of simulation time. Note the cast to ``int`` to get an integer value.
 
+fileNumbering
+---------------
+*Default: "incremental"*
+
+Defines how the output files should be numbered. With ``"incremental"`` the files get incremental number suffixes starting from 0. With ``"timeStepIndex"`` the file suffix corresponds to the time step index.  This means that the suffixes are not incremental if ``outputInterval`` does not equal 1. The index is counted on a per-integrator basis. That means, that each time a time step is performed with a specific integrator, the index for that integrater increases.
+
 Paraview
 ------------
 `Paraview <https://www.paraview.org/>`_ is a postprocessing tool that can efficiently handle large data and can also be executed in parallel. It supports file formats that can also be handled by the `Visualization Toolkit <https://vtk.org/>`_ (*VTK*). The output files can be ASCII-based or binary. Separate files for every process or combined files can be written and parsed by Paraview.

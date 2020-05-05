@@ -43,7 +43,16 @@ bool Generic::prepareWrite(DataType& data, int timeStepNo, double currentTime, i
     s << filenameBase_;
     if (timeStepNo != -1)
     {
-      s << "_" << std::setw(7) << std::setfill('0') << outputFileNo_;   // use a continuous counter for the output file
+      switch (fileNumbering_) {
+      case file_numbering_incremental:
+        s << "_" << std::setw(7) << std::setfill('0') << outputFileNo_;   // use a continuous counter for the output file
+        break;
+      case file_numbering_by_time_step_index:
+        s << "_" << std::setw(7) << std::setfill('0') << (writeCallCount_-1);   // 0 based: first call corresponts to 0
+        break;
+      default:
+        LOG(ERROR) << "BUG: Unknown file numbering '" << fileNumbering_ << "'. This should not happen.";
+      }
     }
     outputFileNo_++;
     filenameBaseWithNo_ = s.str();

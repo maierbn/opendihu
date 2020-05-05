@@ -80,7 +80,7 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType:
   
   if (VLOG_IS_ON(2))
   {
-    VLOG(2) << " xi0 = " << xi << ", residuum: " << residuum << " (norm: " << sqrt(residuumNormSquared) << ")";
+    VLOG(2) << " xi0 = " << xi << ", initial residuum: " << residuum << " (norm: " << sqrt(residuumNormSquared) << ")";
   }
 
   // initialize the increment for xi if the Newton step fails
@@ -294,7 +294,7 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType:
     LOG(INFO) << "total: " << (durationNewton+durationApproximation) / nMeasurements;
   }
 #endif  
-  VLOG(2) << "  " << (pointIsInElement? "inside" : "outside");
+  VLOG(2) << "  xi: " << xi << ", residual: " << residual << ", residuumNormSquared: " << residuumNormSquared << " -> " << (pointIsInElement? "inside" : "outside");
   
   return pointIsInElement;
 }
@@ -708,7 +708,7 @@ pointIsOutsideBoundingBox(Vec3 point, const std::array<Vec3,FunctionSpaceFunctio
   }
 
   // tolerance has to be at least 1e-9 or higher
-  const double eps = 1e-9;
+  const double eps = 1e-5;
   if (point[0] < xmin-eps || point[0] > xmax+eps || point[1] < ymin-eps || point[1] > ymax+eps || point[2] < zmin-eps || point[2] > zmax+eps)
   {
     VLOG(2) << "point " << point << " is outside bounding box [" << xmin << "," << xmax << "]x[" << ymin << "," << ymax << "]x[" << zmin << "," << zmax << "], diff: " 

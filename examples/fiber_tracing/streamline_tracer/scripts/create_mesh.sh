@@ -5,7 +5,7 @@
 #
 # arguments <input_stl_file> <output_pickle_file> <output_bin_file> <min_z> <max_z> <n_points_x> <n_points_z> [--only-stage-1]
 #
-# if --only_preprocessing is set, only the 3D mesh will be created and no streamlines will be traced.
+# if --only-stage-1 is set, only the 3D mesh will be created and no streamlines will be traced.
 
 if [ "$#" -lt "6" ]; then
   echo "$# usage: <input_stl_file> <output_pickle_file> <min_z> <max_z> <n_points_x> <n_points_z> [--only-stage-1]"
@@ -68,6 +68,7 @@ mv rings_created rings
 n_grid_points_x=$(python -c "print($n_points_x+1)")
 
 # usage: ./create_mesh.py [<triangulation_type> [<parametric_space_shape> [<n_points_x> [<n_grid_points_x> [<improve_mesh> [<pickle output filename> <bin output filename>]]]]]]
+echo $pyod ${basedir}/scripts/utility/create_mesh.py $triangulation_type $parametric_space_shape $n_points_x $n_grid_points_x 1 $pickle_output_file $bin_output_file
 $pyod ${basedir}/scripts/utility/create_mesh.py $triangulation_type $parametric_space_shape $n_points_x $n_grid_points_x 1 $pickle_output_file $bin_output_file
 
 if [ "$8" = "--only-stage-1" ]; then

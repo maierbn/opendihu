@@ -220,8 +220,8 @@ with open(bin_output_filename, "wb") as outfile:
         point = node_positions[k*n_fibers_x*n_fibers_y + j*n_fibers_x + i]
         
         # store point
-        for i in range(3):
-          double_raw = struct.pack('d', point[i])
+        for ii in range(3):
+          double_raw = struct.pack('d', point[ii])
           outfile.write(double_raw)
           
   print("Saved {}x{}={} fibers with {} points each to \"{}\".".format(n_fibers_x, n_fibers_y, n_fibers_x*n_fibers_y, n_points_whole_fiber, bin_output_filename))
@@ -244,6 +244,7 @@ def write_stl(triangles, outfile, description):
   print("saved {} triangles to \"{}\" ({})".format(n_triangles,outfile,description))
 
 if debugging_stl_output:
+  print("current working directory: {}".format(os.getcwd()))
   write_stl(markers_border_points_world_space,   "out/mesh_02_border_points_w.stl", "border points")
   write_stl(out_triangulation_world_space,       "out/mesh_03_triangulation_w.stl", "triangulation world space")
   write_stl(out_triangulation_parametric_space,  "out/mesh_04_triangulation_p.stl", "triangulation parametric space")

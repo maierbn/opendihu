@@ -101,9 +101,18 @@ seed_points = []
 for j in range(n_fibers_y):
   for i in range(n_fibers_x):
     if is_bottom:
-      seed_points.append(streamline[j*n_fibers_x + i][0])
+      k = 0
+      mesh_index = k*n_fibers_x*n_fibers_y + j*n_fibers_x + i
+      point = streamlines[j*n_fibers_x + i][0]
+      #point[2] -= 1e-10
     else:
-      seed_points.append(streamline[j*n_fibers_x + i][-1])
+      k = n_points_whole_fiber-1
+      mesh_index = k*n_fibers_x*n_fibers_y + j*n_fibers_x + i
+      point = streamlines[j*n_fibers_x + i][-1]
+      #point[2] += 1e-10
+      
+    print("  add point ({},{},{}), index {}, p: {}".format(i,j,k,mesh_index,point))
+    seed_points.append(point)
   
 # set seed points
 
@@ -115,7 +124,7 @@ with open(tracing_mesh_filename, 'rb') as f:
   data["seed_points"] = seed_points
   
   # write out data
-  print("Write seed points in filename: \"{}\"".format(output_filename))
+  print("Write seed points to file: \"{}\"".format(output_filename))
   with open(output_filename, 'wb') as f:
     pickle.dump(data, f)
   

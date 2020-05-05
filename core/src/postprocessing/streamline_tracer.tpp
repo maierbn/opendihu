@@ -181,6 +181,8 @@ postprocessStreamlines(std::vector<std::vector<Vec3>> &streamlines)
  
   // compute length of each streamline 
   int i = 0;
+  int nEmptyStreamlines = 0;
+
   // loop over streamlines
   for (std::vector<std::vector<Vec3>>::iterator streamlinesIter = streamlines.begin(); streamlinesIter != streamlines.end(); streamlinesIter++, i++)
   {
@@ -200,9 +202,13 @@ postprocessStreamlines(std::vector<std::vector<Vec3>> &streamlines)
       firstPoint = false;
       lastPoint = *pointsIter;
     }
+
+    if (streamlinesIter->size() < 2)
+      nEmptyStreamlines++;
   }
   
   LOG(DEBUG) << " lengths of streamlines: " << lengths;
+  LOG(INFO) << nEmptyStreamlines << " of " << streamlines.size() << " streamlines are invalid.";
   
   // sort length
   std::vector<double> lengthsSorted(lengths);

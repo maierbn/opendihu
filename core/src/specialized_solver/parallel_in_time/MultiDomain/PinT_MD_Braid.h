@@ -21,13 +21,13 @@
 #include <petscdraw.h>
 #include <petscvec.h>
 
-int my_Step(braid_App        app,
+int my_Step_MD(braid_App        app,
             braid_Vector     ustop,
             braid_Vector     fstop,
             braid_Vector     u,
             braid_StepStatus status);
 
 int
-my_Init(braid_App     app,
+my_Init_MD(braid_App     app,
         double        t,
         braid_Vector *u_ptr);

@@ -8,6 +8,7 @@ import sys,os
 import struct
 sys.path.insert(0, "..")
 
+NumberOfMultiDomainSolvers = 14;
 # global parameters
 PMax = 7.3              # maximum stress [N/cm^2]
 Conductivity = 3.828    # sigma, conductivity [mS/cm]
@@ -54,11 +55,12 @@ motor_units = [
 
 
 # for debugging use the following, non-physiological values. This produces a fast simulation
-Am = 1.0
-sampling_stride_z = 74
-motor_units = motor_units[0:2]    # only 2 motor units
-solver_tolerance = 1e-10
-
+if True:
+  end_time = 0.1
+  Am = 1.0
+  sampling_stride_z = 74
+  motor_units = motor_units[0:2]    # only 2 motor units
+  solver_tolerance = 1e-10
 
 n_compartments = len(motor_units)
 
@@ -102,13 +104,6 @@ if "hodgkin_huxley" in cellml_file:
   parameters_initial_values = [0.0]                         # initial value for stimulation current
   nodal_stimulation_current = 40.                           # not used
   vm_value_stimulated = 20.                                 # to which value of Vm the stimulated node should be set (option "valueForStimulatedPoint" of FastMonodomainSolver)
-  
-  #Cm = 1.0
-
-# for debugging
-#n_compartments = 1
-#relative_factors = np.ones((n_compartments, len(mesh_node_positions)))   # each row is one compartment
-#print("DEBUG settings")
 
 # debugging output
 if rank_no == 0:
@@ -223,17 +218,17 @@ multidomain_solver = {
   "compartmentRelativeFactors":       relative_factors.tolist(),          # list of lists of the factors for every dof, because "inputIsGlobal": True, this contains the global dofs
   "PotentialFlow": {
     "FiniteElementMethod" : {  
-      "meshName":                     "mesh",
+      "meshName":                     "mesh_{}".format(k),
       "solverName":                   "potentialFlowSolver",
       "prefactor":                    1.0,
       "dirichletBoundaryConditions":  potential_flow_bc,
       "neumannBoundaryConditions":    [],
       "inputMeshIsGlobal":            True,
-    },
+    } for k in range(NumberOfMultiDomainSolvers)
   },
   "Activation": {
     "FiniteElementMethod" : {  
-      "meshName":                     "mesh",
+      "meshName":                     "mesh_{}".format(k),
       "solverName":                   "activationSolver",
       "prefactor":                    1.0,
       "inputMeshIsGlobal":            True,
@@ -249,7 +244,7 @@ multidomain_solver = {
         0, 6.7, 0,
         0, 0, 6.7,
       ]],
-    },
+    } for k in range(NumberOfMultiDomainSolvers)
   },
   
   "OutputWriter" : [
@@ -258,16 +253,18 @@ multidomain_solver = {
     #{"format": "PythonFile", "filename": "out/fiber_"+str(i), "outputInterval": int(1./dt_1D*output_timestep), "binary":True, "onlyNodalValues":True},
   ]
 }
-  
+#new=[]
+#new=[elements / 2 for elements in n_linear_elements_per_coordinate_direction]
 config = {
   "solverStructureDiagramFile": "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "Meshes": {
-    "mesh": {
+    "mesh_{}".format(k): {
       "nElements":             n_linear_elements_per_coordinate_direction,
       "nodePositions":         mesh_node_positions,
       "inputMeshIsGlobal":     True,
       "setHermiteDerivatives": False
     }
+  for k in range(NumberOfMultiDomainSolvers)
   },
   "Solvers": {
     "potentialFlowSolver": {
@@ -286,80 +283,81 @@ config = {
       "solverType":         "gmres",
       "preconditionerType": "none",
       "dumpFormat":         "matlab",
-      "dumpFilename":       "out/no",
+      "dumpFilename":       "",
     }
   },
-  "StrangSplitting": {
-    "timeStepWidth":          dt_splitting,  # 1e-1
-    "logTimeStepWidthAsKey":  "dt_splitting",
-    "durationLogKey":         "duration_total",
-    "timeStepOutputInterval": 100,
-    "endTime":                end_time,
-    "connectedSlotsTerm1To2": [0],          # CellML V_mk (0) <=> Multidomain V_mk^(i) (0)
-    "connectedSlotsTerm2To1": [None, 0],    # Multidomain V_mk^(i+1) (1) -> CellML V_mk (0)
+  "PinTMD": {
+    "tstart": 0,                    # Start time
+    "tstop": end_time,                     # End time
+    "ntime": 10,                      # number of time steps
+    "nspace":   8231,
+    "Initial Guess": [2,2,4,5,2,2,2,0],
+    "option1": "blabla",              # another example option that is parsed in the data object
+    "nRanksInSpace": 3,            # number of processes that compute the spatial domain in parallel
+    "TimeSteppingScheme": [
+    {
+      "StrangSplitting": {
+        #"timeStepWidth":          dt_splitting,  # 1e-1
+        "timeStepWidth": 1,
+        "logTimeStepWidthAsKey":  "dt_splitting",
+        "durationLogKey":         "duration_total",
+        "timeStepOutputInterval": 100,
+        "endTime":                end_time,
+        "connectedSlotsTerm1To2": [0],          # CellML V_mk (0) <=> Multidomain V_mk^(i) (0)
+        "connectedSlotsTerm2To1": [None, 0],    # Multidomain V_mk^(i+1) (1) -> CellML V_mk (0)
 
-    "Term1": {      # CellML
-      "MultipleInstances": {
-        "nInstances": n_compartments,  
-        "instances": [        # settings for each motor unit, `i` is the index of the motor unit
-        {
-          "ranks": list(range(n_ranks)),
-          "Heun" : {
-            "timeStepWidth": dt_0D,  # 5e-5
-            "logTimeStepWidthAsKey":        "dt_0D",
-            "durationLogKey":               "duration_0D",
-            "initialValues":                [],
-            "timeStepOutputInterval":       1e4,
-            "inputMeshIsGlobal":            True,
-            "dirichletBoundaryConditions":  {},
-            "nAdditionalFieldVariables":    0,
-                
-            "CellML" : {
-              "modelFilename":                          cellml_file,                            # input C++ source file or cellml XML file
-              "initializeStatesToEquilibrium":          False,                                  # if the equilibrium values of the states should be computed before the simulation starts
-              "initializeStatesToEquilibriumTimestepWidth": 1e-4,                               # if initializeStatesToEquilibrium is enable, the timestep width to use to solve the equilibrium equation
-              
-              # optimization parameters
-              "optimizationType":                       "vc",                                   # "vc", "simd", "openmp" type of generated optimizated source file
-              "approximateExponentialFunction":         True,                                   # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
-              "compilerFlags":                          "-fPIC -O3 -march=native -shared ",     # compiler flags used to compile the optimized model code
-              "maximumNumberOfThreads":                 0,                                      # if optimizationType is "openmp", the maximum number of threads to use. Default value 0 means no restriction.
-              
-              # stimulation callbacks
-              #"statesInitialValues": [],
-              "setSpecificStatesFunction":              set_specific_states,                    # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
-              "setSpecificStatesCallInterval":          int(1./stimulation_frequency/dt_0D),    # set_specific_states should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
-              "setSpecificStatesCallFrequency":         0,                                      # set_specific_states should be called  stimulation_frequency times per ms
-              "setSpecificStatesFrequencyJitter":       0,                                      # random value to add or substract to setSpecificStatesCallFrequency every stimulation, this is to add random jitter to the frequency
-              "setSpecificStatesRepeatAfterFirstCall":  0.01,                                   # [ms] simulation time span for which the setSpecificStates callback will be called after a call was triggered
-              "setSpecificStatesCallEnableBegin":       0,                                      # [ms] first time when to call setSpecificStates
-              "additionalArgument":                     compartment_no,                         # the compartment no is the last argument to set_specific_states function such that it knows which compartments to stimulate when
-              #"setParametersFunction":                 set_parameters,                         # callback function that sets parameters like stimulation current
-              #"setParametersCallInterval":             int(1./stimulation_frequency/dt_0D),    # set_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
-              #"setParametersFunctionAdditionalParameter": compartment_no,
+        "Term1": {      # CellML
+          "MultipleInstances": {
+            "nInstances": n_compartments,  
+            "instances": [        # settings for each motor unit, `i` is the index of the motor unit
+            {
+              "ranks": list(range(n_ranks)),
+              "Heun" : {
+                "timeStepWidth": dt_0D,  # 5e-5
+                "logTimeStepWidthAsKey":        "dt_0D",
+                "durationLogKey":               "duration_0D",
+                "initialValues":                [],
+                "timeStepOutputInterval":       1e4,
+                "inputMeshIsGlobal":            True,
+                "dirichletBoundaryConditions":  {},
+                "nAdditionalFieldVariables":    0,
+                    
+                "CellML" : {
+                  "modelFilename":                          cellml_file,                            # input C++ source file or cellml XML file
+                  "initializeStatesToEquilibrium":          False,                                  # if the equilibrium values of the states should be computed before the simulation starts
+                  "initializeStatesToEquilibriumTimestepWidth": 1e-4,                               # if initializeStatesToEquilibrium is enable, the timestep width to use to solve the equilibrium equation
+                  
+                  # optimization parameters
+                  "optimizationType":                       "vc",                                   # "vc", "simd", "openmp" type of generated optimizated source file
+                  "approximateExponentialFunction":         True,                                   # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
+                  "compilerFlags":                          "-fPIC -O3 -march=native -shared ",     # compiler flags used to compile the optimized model code
+                  "maximumNumberOfThreads":                 0,                                      # if optimizationType is "openmp", the maximum number of threads to use. Default value 0 means no restriction.
+                  
+                  # stimulation callbacks
+                  #"statesInitialValues": [],
+                  "setSpecificStatesFunction":              set_specific_states,                    # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
+                  "setSpecificStatesCallInterval":          int(1./stimulation_frequency/dt_0D),    # set_specific_states should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
+                  "setSpecificStatesCallFrequency":         0,                                      # set_specific_states should be called  stimulation_frequency times per ms
+                  "setSpecificStatesFrequencyJitter":       0,                                      # random value to add or substract to setSpecificStatesCallFrequency every stimulation, this is to add random jitter to the frequency
+                  "setSpecificStatesRepeatAfterFirstCall":  0.01,                                   # [ms] simulation time span for which the setSpecificStates callback will be called after a call was triggered
+                  "setSpecificStatesCallEnableBegin":       0,                                      # [ms] first time when to call setSpecificStates
+                  "additionalArgument":                     compartment_no,                         # the compartment no is the last argument to set_specific_states function such that it knows which compartments to stimulate when
+                  #"setParametersFunction":                 set_parameters,                         # callback function that sets parameters like stimulation current
+                  #"setParametersCallInterval":             int(1./stimulation_frequency/dt_0D),    # set_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
+                  #"setParametersFunctionAdditionalParameter": compartment_no,
 
-              # parameters to the cellml model
-              "mappings":                               mappings,
-              "parametersInitialValues":                parameters_initial_values,              #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
-              
-              "meshName": "mesh",
-              "stimulationLogFilename": "out/stimulation.log",
-            }
-          }
-        } for compartment_no in range(n_compartments)]
-      },
-    },
-    "Term2": {     # Diffusion, i.e. Multidomain
-      "PinTMD": {        # this is the name of the solver, as given in the constructor to the timestepping object
-        "tstart": 0,                    # Start time
-        "tstop": 100,                     # End time
-        "ntime": 10,                      # number of time steps
-        "nspace":   32,
-        "Initial Guess": [2,2,4,5,2,2,2,0],
-        "option1": "blabla",              # another example option that is parsed in the data object
-        "nRanksInSpace": 1,            # number of processes that compute the spatial domain in parallel
-        "TimeSteppingScheme": [
-        {
+                  # parameters to the cellml model
+                  "mappings":                               mappings,
+                  "parametersInitialValues":                parameters_initial_values,              #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
+                  
+                  "meshName": "mesh_{}".format(j),
+                  "stimulationLogFilename": "out/stimulation.log",
+                }
+              }
+            } for compartment_no in range(n_compartments)]
+          },
+        },
+        "Term2": {     # Diffusion, i.e. Multidomain
           "MultidomainSolver" : multidomain_solver,
           "OutputSurface": {        # version for fibers_emg_2d_output
             "OutputWriter": [
@@ -368,9 +366,9 @@ config = {
             "face": "1-",
             "MultidomainSolver" : multidomain_solver,
           }
-        } for j in range(n)],
-      }
-    }
+        }
+      } 
+    } for j in range (NumberOfMultiDomainSolvers)] 
   }
 }
 

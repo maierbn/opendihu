@@ -45,7 +45,7 @@ initialize()
   // make sure that we initialize only once, in the next call, initialized_ is true
   if (initialized_)
     return;
-
+  /*
   std::vector<PyObject *> MultiDomainConfigs;
 
   PyObject *MultiDomainConfig = this->specificSettings_.template getOptionListBegin<PyObject *>("TimeSteppingScheme");
@@ -57,60 +57,67 @@ initialize()
   {
     MultiDomainConfigs.push_back(MultiDomainConfig);
   }
+  */
+  pid_t pid = getpid();
+  printf("pid: %lun", pid);
+  
+  PyObject *MultiDomainConfig = this->specificSettings_.template getOptionListBegin<PyObject *>("TimeSteppingScheme");
+  for (;
+  !this->specificSettings_.getOptionListEnd("TimeSteppingScheme");
+  this->specificSettings_.template getOptionListNext<PyObject *>("TimeSteppingScheme", MultiDomainConfig)){}
 
   // split MPI communicator, create communicators with rank numbering in x domain
   // MPI_Comm communicatorTotal = MPI_COMM_WORLD;
-  MPI_Comm communicatorX;
-  MPI_Comm communicatorT;
 
   int nRanksInSpace = this->specificSettings_.getOptionInt("nRanksInSpace", 1, PythonUtility::Positive);
-  // braid_SplitCommworld(&communicatorTotal_, nRanksInSpace, &communicatorX, &communicatorT);
-  //
-  // // create rankSubset and assign to partitionManager, to be used by all further created meshes and solvers
-  // rankSubsetX_ = std::make_shared<Partition::RankSubset>(communicatorX);
-  // DihuContext::partitionManager()->setRankSubsetForNextCreatedPartitioning(rankSubsetX_);
+  braid_SplitCommworld(&communicatorTotal_, nRanksInSpace, &communicatorX_, &communicatorT_);
+  
+  // create rankSubset and assign to partitionManager, to be used by all further created meshes and solvers
+  rankSubsetX_ = std::make_shared<Partition::RankSubset>(communicatorX_);
+  DihuContext::partitionManager()->setRankSubsetForNextCreatedPartitioning(rankSubsetX_);
   // int size;
   // MPI_Comm_size(communicatorX, &size);
   //
   // LOG(DEBUG) << "rankSubsetX: " << size;
   // LOG(DEBUG) << "rankSubsetX: " << *rankSubsetX_;
 
-  int test;
-  test = 0;
+  //int test;
+  //test = 0;
   // loop over parsed config objects of implicit eulers
+  /*
   for (int i = 0; i < MultiDomainConfigs.size(); i++)
   {
     LOG(DEBUG) << "i = " << i;
 
     PyObject *MultiDomainConfig = MultiDomainConfigs[i];
-
-    LOG(DEBUG) << "MultiDomainConfig: " << MultiDomainConfig;
+  */
+    //LOG(DEBUG) << "MultiDomainConfig: " << MultiDomainConfig;
     DihuContext MultiDomainContext = context_.createSubContext(MultiDomainConfig);
 
-    LOG(DEBUG) << "MultiDomainContext: " << MultiDomainContext.getPythonConfig();
+    //LOG(DEBUG) << "MultiDomainContext: " << MultiDomainContext.getPythonConfig();
 
-    if (test == 0) {
-      if (i==0){
-        braid_SplitCommworld(&communicatorTotal_, 1, &communicatorX, &communicatorT);
-
-        // create rankSubset and assign to partitionManager, to be used by all further created meshes and solvers
-        rankSubsetX_ = std::make_shared<Partition::RankSubset>(communicatorX);
-        DihuContext::partitionManager()->setRankSubsetForNextCreatedPartitioning(rankSubsetX_);
-        test=1;
-      }
-      else {
-        // create rank subset
-        braid_SplitCommworld(&communicatorTotal_, nRanksInSpace, &communicatorX, &communicatorT);
-
-        // create rankSubset and assign to partitionManager, to be used by all further created meshes and solvers
-        rankSubsetX_ = std::make_shared<Partition::RankSubset>(communicatorX);
-        DihuContext::partitionManager()->setRankSubsetForNextCreatedPartitioning(rankSubsetX_);
-      }
-    }
+    //if (test == 0) {
+    //  if (i==0){
+    //    braid_SplitCommworld(&communicatorTotal_, 1, &communicatorX, &communicatorT);
+    //
+    //    // create rankSubset and assign to partitionManager, to be used by all further created meshes and solvers
+    //    rankSubsetX_ = std::make_shared<Partition::RankSubset>(communicatorX);
+    //    DihuContext::partitionManager()->setRankSubsetForNextCreatedPartitioning(rankSubsetX_);
+    //    test=1;
+    //  }
+    //  else {
+    //    // create rank subset
+    //    braid_SplitCommworld(&communicatorTotal_, nRanksInSpace, &communicatorX, &communicatorT);
+    //
+    //    // create rankSubset and assign to partitionManager, to be used by all further created meshes and solvers
+    //    rankSubsetX_ = std::make_shared<Partition::RankSubset>(communicatorX);
+    //    DihuContext::partitionManager()->setRankSubsetForNextCreatedPartitioning(rankSubsetX_);
+    //  }
+    //}
     // create rank subset
-    std::shared_ptr<Partition::RankSubset> nextRankSubset = std::make_shared<Partition::RankSubset>(communicatorX);
+    std::shared_ptr<Partition::RankSubset> nextRankSubset = std::make_shared<Partition::RankSubset>(communicatorX_);
     DihuContext::partitionManager()->setRankSubsetForNextCreatedPartitioning(nextRankSubset);
-
+  
     MultiDomainSolvers_.push_back(
       std::make_shared<NestedSolverMD>(MultiDomainContext)
     );
@@ -119,28 +126,39 @@ initialize()
       std::make_shared<Data>(MultiDomainContext)
     );
 
-    LOG(DEBUG) << "initialize implicit Euler for i = " << i;
+    //LOG(DEBUG) << "initialize multidomain for i = " << i;
 
     MultiDomainSolvers_.back()->initialize();
+  
+
+  //MultiDomainSolvers_[0](std::make_shared<NestedSolverMD>(MultiDomainContext));
+  //MultiDomainSolvers_[0](std::make_shared<Data>(MultiDomainContext));
+  //MultiDomainSolvers_[0]->initialize();
+
 
     // In order to initialize the data object and actuall create all variables, we first need to assign a function space to the data object.
     // A function space object of type FunctionSpace<MeshType,BasisFunctionType> (see "function_space/function_space.h")
     // is an object that stores the mesh (e.g., all nodes and elements) as well as the basis function (e.g. linear Lagrange basis functions).
     // The NestedSolverMD solver already created a function space that we should use. We already have a typedef "FunctionSpace" that is the class of NestedSolverMD's function space type.
-    std::shared_ptr<FunctionSpace> functionSpace = MultiDomainSolvers_.back()->data().functionSpace();
+    //std::shared_ptr<FunctionSpace> functionSpace = MultiDomainSolvers_.back()->data().functionSpace();
+    std::shared_ptr<FunctionSpace> functionSpace = MultiDomainSolvers_[0]->data().functionSpace();
 
     // Pass the function space to the data object. data_ stores field variables.
     // It needs to know the number of nodes and degrees of freedom (dof) from the function space in order to create the vectors with the right size.
-    data_.back()->setFunctionSpace(functionSpace);
+    //data_.back()->setFunctionSpace(functionSpace);
+    data_[0]->setFunctionSpace(functionSpace);
 
 
-    LOG(DEBUG) << "initialize data for i = " << i;
+
+    //LOG(DEBUG) << "initialize data for i = " << i;
     // now call initialize, data will then create all variables (Petsc Vec's)
-    data_.back()->initialize();
+    //data_.back()->initialize();
+    data_[0]->initialize();
+
 
     // it is also possible to pass some field variables from the data of the NestedSolverMD to own data object
     // data_.back()->setSolutionVariable(MultiDomainSolvers_.back()->data().solution());
-  };
+  //};
 
 
   LOG(DEBUG) << "n: " << MultiDomainSolvers_.size();
@@ -164,6 +182,7 @@ run()
   int          rank;
   double       loglevels;
   PetscInt     nspace        =  this->nspace_+1;
+  nspace = this->MultiDomainSolvers_[0]->nSolutionValuesLocal();
 
 
   // Define XBraid parameters
@@ -193,9 +212,9 @@ run()
      /*braid_SplitCommworld(&comm, 1, &comm_x, &comm_t);*/
 
      /*braid_TestAll(app, comm_x, stdout, 0.0, (tstop-tstart)/ntime,
-                   2*(tstop-tstart)/ntime, my_Init, my_Free, my_Clone,
+                   2*(tstop-tstart)/ntime, my_Init_MD, my_Free, my_Clone,
                    my_Sum, my_SpatialNorm, my_BufSize, my_BufPack,
-                   my_BufUnpack, my_Coarsen, my_Interp, my_Residual, my_Step); */
+                   my_BufUnpack, my_Coarsen, my_Interp, my_Residual, my_Step_MD); */
   }
   else
   {
@@ -236,6 +255,8 @@ run()
         braid_SetSpatialCoarsen(core_, my_Coarsen);
         braid_SetSpatialRefine(core_,  my_Interp);
      }
+
+     LOG(DEBUG) << "........................";
 
      braid_Drive(core_);
 
@@ -318,6 +339,7 @@ PinT_initialize()
     nspace_ = specificSettings_.getOptionDouble("nspace", 1.0, PythonUtility::Positive);
 
   int       nspace        = this->nspace_+1;
+  nspace = this->MultiDomainSolvers_[0]->nSolutionValuesLocal();
 
   app_ = (my_App *) malloc(sizeof(my_App));
   (app_->g)             = (double*) malloc( nspace*sizeof(double) );
@@ -331,6 +353,14 @@ PinT_initialize()
   (app_->print_level)   = print_level_;
   (app_->MultiDomainSolvers)        = &this->MultiDomainSolvers_;
 
+  LOG(DEBUG) << "tstart" << app_->tstart;
+  LOG(DEBUG) << "tstart_" << tstart_;
+  LOG(DEBUG) << "MS" << app_->MultiDomainSolvers;
+  LOG(DEBUG) << "MS_" << &this->MultiDomainSolvers_;
+  LOG(DEBUG) << "Cloene" << *my_Clone;
+  LOG(DEBUG) << "InitMD" << *my_Init_MD;
+  LOG(DEBUG) << "Sum" << *my_Sum;
+
   /* Initialize storage for sc_info, for tracking space-time grids visited during the simulation */
   app_->sc_info = (double*) malloc( 2*max_levels_*sizeof(double) );
   for(int i = 0; i < 2*max_levels_; i++) {
@@ -338,8 +368,8 @@ PinT_initialize()
   }
 
   /* Initialize Braid */
-  braid_Init(MPI_COMM_WORLD, communicatorTotal_, tstart_, tstop_, ntime_, app_,
-         my_Step, my_Init, my_Clone, my_Free, my_Sum, my_SpatialNorm,
+  braid_Init(communicatorTotal_, communicatorT_, tstart_, tstop_, ntime_, app_,
+         my_Step_MD, my_Init_MD, my_Clone, my_Free, my_Sum, my_SpatialNorm,
          my_Access, my_BufSize, my_BufPack, my_BufUnpack, &core_);
 
 }
@@ -366,33 +396,33 @@ getOutputConnectorData()
   return MultiDomainSolvers_.back()->getOutputConnectorData();
 }
 
-template<class NestedSolverMD>
-void PinTMD<NestedSolverMD>::
-setTimeSpan(double tstart, double tstop)
-{
+// template<class NestedSolverMD>
+// void PinTMD<NestedSolverMD>::
+// setTimeSpan(double tstart, double tstop)
+// {
   
-  (app_->tstart)        = tstart;
-  (app_->tstop)         = tstop;
+//   (app_->tstart)        = tstart;
+//   (app_->tstop)         = tstop;
 
-  //if (timeStepWidth_ > endTime_-startTime_)
-  //{
-  //  LOG(DEBUG) << "time span [" << startTime << "," << endTime << "], reduce timeStepWidth from " << timeStepWidth_ << " to " << endTime_-startTime_;
-  //  timeStepWidth_ = endTime_-startTime_;
-  //}
+//   //if (timeStepWidth_ > endTime_-startTime_)
+//   //{
+//   //  LOG(DEBUG) << "time span [" << startTime << "," << endTime << "], reduce timeStepWidth from " << timeStepWidth_ << " to " << endTime_-startTime_;
+//   //  timeStepWidth_ = endTime_-startTime_;
+//   //}
 
-  /* Initialize Braid */
-  braid_Init(MPI_COMM_WORLD, communicatorTotal_, tstart_, tstop_, ntime_, app_,
-         my_Step, my_Init, my_Clone, my_Free, my_Sum, my_SpatialNorm,
-         my_Access, my_BufSize, my_BufPack, my_BufUnpack, &core_);
+//   /* Initialize Braid */
+//   braid_Init(MPI_COMM_WORLD, communicatorTotal_, tstart_, tstop_, ntime_, app_,
+//          my_Step_MD, my_Init_MD, my_Clone, my_Free, my_Sum, my_SpatialNorm,
+//          my_Access, my_BufSize, my_BufPack, my_BufUnpack, &core_);
 
-}
+// }
 
-template<class NestedSolverMD>
-void PinTMD<NestedSolverMD>::
-advanceTimeSpan()
-{
-  run();
-}
+// template<class NestedSolverMD>
+// void PinTMD<NestedSolverMD>::
+// advanceTimeSpan()
+// {
+//   run();
+// }
 
 
 } //namespace ParallelInTime

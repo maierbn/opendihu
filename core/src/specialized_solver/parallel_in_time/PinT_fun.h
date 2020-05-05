@@ -5,11 +5,16 @@
 
 #include <braid.h>
 
+#include "time_stepping_scheme/heun.h"
 #include "time_stepping_scheme/implicit_euler.h"
 #include "spatial_discretization/finite_element_method/finite_element_method.h"
 #include "basis_function/lagrange.h"
 #include "mesh/structured_regular_fixed.h"
 #include "specialized_solver/multidomain_solver/multidomain_solver.h"
+#include "operator_splitting/strang.h"
+#include "control/multiple_instances.h"
+#include "specialized_solver/parallel_in_time/MultiDomain/multidomain_wrapper.h"
+
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -35,6 +40,7 @@ typedef struct _braid_App_struct
   double *  g;            /* temporary vector for inversions and mat-vecs */
   double *  sc_info;      /* Runtime information that tracks the space-time grids visited */
   int       print_level;  /* Level of output desired by user (see the -help message below) */
+  typedef Mesh::StructuredDeformableOfDimension<3> MeshType;
   
   typedef  TimeSteppingScheme::ImplicitEuler<
     SpatialDiscretization::FiniteElementMethod<
@@ -51,18 +57,30 @@ typedef struct _braid_App_struct
     >
   > *implicitEulerSolvers;   //< vector of nested solvers (implicit euler) for solution on different grids
 
-  typedef TimeSteppingScheme::MultidomainSolver<
-    SpatialDiscretization::FiniteElementMethod<
-      Mesh::StructuredDeformableOfDimension<3>,
-      BasisFunction::LagrangeOfOrder<1>,
-      Quadrature::Gauss<3>,
-      Equation::Static::Laplace
-    >,
-    SpatialDiscretization::FiniteElementMethod<
-      Mesh::StructuredDeformableOfDimension<3>,
-      BasisFunction::LagrangeOfOrder<1>,
-      Quadrature::Gauss<5>,
-      Equation::Dynamic::DirectionalDiffusion
+  typedef MultidomainWrapper<
+    OperatorSplitting::Strang<
+      Control::MultipleInstances<
+        TimeSteppingScheme::Heun<
+          CellmlAdapter<
+            4,9,  // nStates,nIntermediates: 57,1 = Shorten, 4,9 = Hodgkin Huxley
+            FunctionSpace::FunctionSpace<MeshType,BasisFunction::LagrangeOfOrder<1>>  // same function space as for anisotropic diffusion
+          >
+        >
+      >,
+      TimeSteppingScheme::MultidomainSolver<              // multidomain
+        SpatialDiscretization::FiniteElementMethod<       //FEM for initial potential flow, fibre directions
+          MeshType,
+          BasisFunction::LagrangeOfOrder<1>,
+          Quadrature::Gauss<3>,
+          Equation::Static::Laplace
+        >,
+        SpatialDiscretization::FiniteElementMethod<   // anisotropic diffusion
+          MeshType,
+          BasisFunction::LagrangeOfOrder<1>,
+          Quadrature::Gauss<5>,
+          Equation::Dynamic::DirectionalDiffusion
+        >
+      >
     >
   > NestedSolverMD;
 

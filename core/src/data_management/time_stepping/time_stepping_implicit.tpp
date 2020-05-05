@@ -51,12 +51,13 @@ void TimeSteppingImplicit<FunctionSpaceType,nComponents>::
 initializeSystemMatrix(Mat &systemMatrix)
 {
   // if the systemMatrix_ is already initialized do not initialize again
-  if (this->systemMatrix_)
-  {
-    LOG(WARNING) << "Initialize system matrix again. Previous system matrix: " << *this->systemMatrix_;
-  }
+  //if (this->systemMatrix_)
+  //{
+  //  LOG(WARNING) << "Initialize system matrix again. Previous system matrix: " << *this->systemMatrix_;
+  //}
 
   // the PETSc matrix object is created outside by MatMatMult
+
   std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> partition = this->functionSpace_->meshPartition();
   this->systemMatrix_ = std::make_shared<PartitionedPetscMat<FunctionSpaceType>>(partition, systemMatrix, "systemMatrix");
 }

@@ -87,7 +87,8 @@ my_Access(braid_App          app,
           braid_AccessStatus astatus)
 {
    // int        index, rank, level, done;
-   // char       filename[255];
+   int rank;
+   char       filename[255];
    int        index, level, done;
    double     t, error;
 
@@ -97,13 +98,13 @@ my_Access(braid_App          app,
    braid_AccessStatusGetDone(astatus, &done);
 
    /* Print solution to file if simulation is over */
-   // if(done)
-   // {
-   //    MPI_Comm_rank( (app->comm), &rank);
-   //    sprintf(filename, "%s.%07d.%05d", "PinT_diffusion.out", index, rank);
-   //    save_solution(filename, u->values, u->size, app->xstart,
-   //          app->xstop, app->ntime, app->tstart, app->tstop);
-   // }
+   if(done)
+   {
+      MPI_Comm_rank( (app->comm), &rank);
+      sprintf(filename, "%s.%07d.%05d", "PinT_diffusion.out", index, rank);
+      save_solution(filename, u->values, u->size, app->xstart,
+            app->xstop, app->ntime, app->tstart, app->tstop);
+   }
 
    /* IF on the finest level AND print_level is high enough AND at the final time,
     * THEN print out the discretization error */

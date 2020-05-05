@@ -80,6 +80,8 @@ protected:
   double xstop_ = 4.0;
 
   MPI_Comm communicatorTotal_= MPI_COMM_WORLD;
+  MPI_Comm communicatorX_;
+  MPI_Comm communicatorT_;
 
   // Braid variables
   braid_Core    core_;

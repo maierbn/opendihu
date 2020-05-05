@@ -116,7 +116,6 @@ setSystemMatrix(double timeStepWidth)
   this->dataImplicit_->initializeSystemMatrix(systemMatrix);
 
   // scale systemMatrix by -dt, systemMatrix = -dt*M^{-1}K
-
   ierr = MatScale(this->dataImplicit_->systemMatrix()->valuesGlobal(), -timeStepWidth); CHKERRV(ierr);
 
   // add 1 on the diagonal: systemMatrix = I - dt*M^{-1}K

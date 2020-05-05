@@ -1,6 +1,6 @@
 # Diffusion 1D
 
-n = 32   # number of elements
+n = 17   # number of elements
 
 config = {
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
@@ -16,7 +16,7 @@ config = {
     }
   },
   "ImplicitEuler" : {
-     "numberTimeSteps": 100000,
+     "numberTimeSteps": 10,
      "startTime": 0.0,
      "endTime": 100,
      "initialValues": [2,2,4,5,2,2,2,0,0],    # the initial values
@@ -38,7 +38,7 @@ config = {
      },
      "OutputWriter" : [
        #{"format": "Paraview", "outputInterval": 1, "filename": "out", "binaryOutput": "false", "fixedFormat": False, "onlyNodalValues": True},
-       {"format": "PythonFile", "filename": "out/diffusion1d_implicit", "outputInterval": 100000, "binary":False, "onlyNodalValues": True}
+       {"format": "PythonFile", "filename": "out/diffusion1d_implicit", "outputInterval": 1, "binary":False, "onlyNodalValues": True}
      ]
   }
 }

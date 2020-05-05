@@ -20,14 +20,18 @@ config = {
   },
   # for k in range (n):
   "Meshes":{
-    "mesh_{}".format(k): {
-      "nElements": (2 ** (k)),                 # number of elements
-      # "nElements": 32,                 # number of elements
-      "physicalExtent": 4.0,          # the physical size of the domain
-      "inputMeshIsGlobal": True,      # boundary conditions are given as global indices
-    }
-  for k in range(n)
-  },
+          #"mesh_0": {
+          #  "nElements": 2,                 # number of elements
+          #  "physicalExtent": 4.0,          # the physical size of the domain
+          #  "inputMeshIsGlobal": True,      # boundary conditions are given as global indices
+          #},
+           "mesh_{}".format(k): {
+              "nElements": [(2 ** (k))] if k > 1 else [2],                 # number of elements
+              # "nElements": 32,                 # number of elements
+              "physicalExtent": 4.0,          # the physical size of the domain
+              "inputMeshIsGlobal": True,      # boundary conditions are given as global indices
+            } for k in range(n)
+        },
   "PinTIE": {        # this is the name of the solver, as given in the constructor to the timestepping object
     "tstart": 0,                    # Start time
     "tstop": 100,                     # End time
@@ -35,7 +39,7 @@ config = {
     "nspace":   32,
     "Initial Guess": [2,2,4,5,2,2,2,0],
     "option1": "blabla",              # another example option that is parsed in the data object
-    "nRanksInSpace": 1,            # number of processes that compute the spatial domain in parallel
+    "nRanksInSpace": 2,            # number of processes that compute the spatial domain in parallel
     "TimeSteppingScheme": [
     {
       "ImplicitEuler": {
@@ -59,7 +63,7 @@ config = {
         "OutputWriter" : [
           # {"format": "Paraview", "outputInterval": 1, "filename": "out", "binary": "false", "fixedFormat": False, "onlyNodalValues": True},
           {"format": "PythonFile", "filename": "out/diffusion1d_PinT", "outputInterval": 1, "binary":False, "onlyNodalValues": True}
-        ]if j == 9 else [],
+        ]if j == 20 else [],
       }
     } for j in range(n)],
   },

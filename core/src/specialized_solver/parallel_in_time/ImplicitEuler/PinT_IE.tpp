@@ -4,6 +4,7 @@
 
 #include <omp.h>
 #include <sstream>
+//#include <mpi.h>
 
 #include <braid.h>
 #include "specialized_solver/parallel_in_time/ImplicitEuler/PinT_IE_Braid.h"
@@ -15,6 +16,8 @@
 #include <petscts.h>
 #include <petscdraw.h>
 #include <petscvec.h>
+
+#include <iostream>
 
 namespace ParallelInTime
 {
@@ -60,23 +63,20 @@ initialize()
 
   // split MPI communicator, create communicators with rank numbering in x domain
   // MPI_Comm communicatorTotal = MPI_COMM_WORLD;
-  MPI_Comm communicatorX;
-  MPI_Comm communicatorT;
 
   int nRanksInSpace = this->specificSettings_.getOptionInt("nRanksInSpace", 1, PythonUtility::Positive);
-  // braid_SplitCommworld(&communicatorTotal_, nRanksInSpace, &communicatorX, &communicatorT);
-  //
-  // // create rankSubset and assign to partitionManager, to be used by all further created meshes and solvers
-  // rankSubsetX_ = std::make_shared<Partition::RankSubset>(communicatorX);
-  // DihuContext::partitionManager()->setRankSubsetForNextCreatedPartitioning(rankSubsetX_);
+  braid_SplitCommworld(&communicatorTotal_, nRanksInSpace, &communicatorX_, &communicatorT_);
+
+  // create rankSubset and assign to partitionManager, to be used by all further created meshes and solvers
+  rankSubsetX_ = std::make_shared<Partition::RankSubset>(communicatorX_);
+  DihuContext::partitionManager()->setRankSubsetForNextCreatedPartitioning(rankSubsetX_);
+
   // int size;
   // MPI_Comm_size(communicatorX, &size);
   //
   // LOG(DEBUG) << "rankSubsetX: " << size;
   // LOG(DEBUG) << "rankSubsetX: " << *rankSubsetX_;
 
-  int test;
-  test = 0;
   // loop over parsed config objects of implicit eulers
   for (int i = 0; i < implicitEulerConfigs.size(); i++)
   {
@@ -89,32 +89,33 @@ initialize()
 
     LOG(DEBUG) << "implicitEulerContext: " << implicitEulerContext.getPythonConfig();
 
-    if (test == 0) {
-      if (i==0){
-        braid_SplitCommworld(&communicatorTotal_, 1, &communicatorX, &communicatorT);
+    
+     //if (i==0){
+     //  braid_SplitCommworld(&communicatorTotal_, 1, &communicatorX_, &communicatorT_);
 
-        // create rankSubset and assign to partitionManager, to be used by all further created meshes and solvers
-        rankSubsetX_ = std::make_shared<Partition::RankSubset>(communicatorX);
-        DihuContext::partitionManager()->setRankSubsetForNextCreatedPartitioning(rankSubsetX_);
-        test=1;
-      }
-      else {
-        // create rank subset
-        braid_SplitCommworld(&communicatorTotal_, nRanksInSpace, &communicatorX, &communicatorT);
+       // create rankSubset and assign to partitionManager, to be used by all further created meshes and solvers
+     //  rankSubsetX_ = std::make_shared<Partition::RankSubset>(communicatorX_);
+     //  DihuContext::partitionManager()->setRankSubsetForNextCreatedPartitioning(rankSubsetX_);
+     //}
+     //else {
+      // create rank subset
+     // braid_SplitCommworld(&communicatorTotal_, nRanksInSpace, &communicatorX_, &communicatorT_);
+      // create rankSubset and assign to partitionManager, to be used by all further created meshes and solvers
+     //  rankSubsetX_ = std::make_shared<Partition::RankSubset>(communicatorX_);
+     //  DihuContext::partitionManager()->setRankSubsetForNextCreatedPartitioning(rankSubsetX_);
+     //}
 
-        // create rankSubset and assign to partitionManager, to be used by all further created meshes and solvers
-        rankSubsetX_ = std::make_shared<Partition::RankSubset>(communicatorX);
-        DihuContext::partitionManager()->setRankSubsetForNextCreatedPartitioning(rankSubsetX_);
-      }
-    }
     // create rank subset
-    std::shared_ptr<Partition::RankSubset> nextRankSubset = std::make_shared<Partition::RankSubset>(communicatorX);
+    std::shared_ptr<Partition::RankSubset> nextRankSubset = std::make_shared<Partition::RankSubset>(communicatorX_);
     DihuContext::partitionManager()->setRankSubsetForNextCreatedPartitioning(nextRankSubset);
 
+    //LOG(DEBUG) << rankSubsetX_;
+    //LOG(DEBUG) << nextRankSubset;
+    LOG(DEBUG) << "5";
     implicitEulerSolvers_.push_back(
       std::make_shared<NestedSolverIE>(implicitEulerContext)
     );
-
+    LOG(DEBUG) << "6";
     data_.push_back(
       std::make_shared<Data>(implicitEulerContext)
     );
@@ -181,7 +182,7 @@ run()
   int       wrapper_tests = 0;
   // int       print_level   = 2;
   int       access_level  = 1;
-  int       use_sequential= 1;
+  int       use_sequential= 0;
 
   // communicatorTotal   = MPI_COMM_WORLD;
   MPI_Comm_rank(communicatorTotal_, &rank);
@@ -190,12 +191,12 @@ run()
   if(wrapper_tests)
   {
      /* Create spatial communicator for wrapper-tests */
-     /*braid_SplitCommworld(&comm, 1, &comm_x, &comm_t);*/
+     // braid_SplitCommworld(&communicatorTotal_, 1, &communicatorX_, &communicatorT_);
 
-     /*braid_TestAll(app, comm_x, stdout, 0.0, (tstop-tstart)/ntime,
-                   2*(tstop-tstart)/ntime, my_Init, my_Free, my_Clone,
-                   my_Sum, my_SpatialNorm, my_BufSize, my_BufPack,
-                   my_BufUnpack, my_Coarsen, my_Interp, my_Residual, my_Step); */
+     // braid_TestAll(app_, communicatorX_, stdout, 0.0, (tstop_-tstart_)/ntime_,
+     //              2*(tstop_-tstart_)/ntime_, my_Init, my_Free, my_Clone,
+     //              my_Sum, my_SpatialNorm, my_BufSize, my_BufPack,
+     //              my_BufUnpack, my_Coarsen, my_Interp, my_Residual, my_Step);
   }
   else
   {
@@ -251,11 +252,15 @@ run()
   free( app_->g);
   free( app_ );
 
+  MPI_Barrier(communicatorTotal_);
   // do something else
   //executeMyHelperMethod();
 
   // write current output values using the output writers
+  if (rank==0)
+  {
   this->outputWriterManager_.writeOutput(*this->data_.back());
+  }
 }
 
 template<class NestedSolverIE>
@@ -321,7 +326,7 @@ PinT_initialize()
 
   app_ = (my_App *) malloc(sizeof(my_App));
   (app_->g)             = (double*) malloc( nspace*sizeof(double) );
-  (app_->comm)          = communicatorTotal_;
+  (app_->comm)          = communicatorX_;
   (app_->tstart)        = tstart_;
   (app_->tstop)         = tstop_;
   (app_->ntime)         = ntime_;
@@ -338,7 +343,7 @@ PinT_initialize()
   }
 
   /* Initialize Braid */
-  braid_Init(MPI_COMM_WORLD, communicatorTotal_, tstart_, tstop_, ntime_, app_,
+  braid_Init(communicatorTotal_, communicatorT_, tstart_, tstop_, ntime_, app_,
          my_Step, my_Init, my_Clone, my_Free, my_Sum, my_SpatialNorm,
          my_Access, my_BufSize, my_BufPack, my_BufUnpack, &core_);
 

@@ -4,7 +4,7 @@
 
 #include "interfaces/runnable.h"
 #include "time_stepping_scheme/00_time_stepping_scheme.h"
-#include "data_management/specialized_solver/my_new_timestepping_solver.h"   // adjust this include
+#include "data_management/specialized_solver/PinT_MD.h"   // adjust this include
 
 /** A wrapper around the multidomain_no_fat scheme to be used within the parallel in time class.
  *  A valid class for StringSplittingMultidomain would be:

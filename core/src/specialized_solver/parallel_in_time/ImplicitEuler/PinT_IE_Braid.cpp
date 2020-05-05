@@ -1,5 +1,6 @@
 // specific functions for XBraid with Implicit Euler
 // defines my_Step (integration step)
+//#include <mpi.h>
 
 #include "specialized_solver/parallel_in_time/ImplicitEuler/PinT_IE_Braid.h"
 
@@ -40,13 +41,39 @@ int my_Step(braid_App        app,
    // get alias variables
    std::shared_ptr<typename _braid_App_struct::NestedSolverIE> implicitEulerSolver = (*app->implicitEulerSolvers)[solver];
    std::shared_ptr<typename Data::PinTIE<typename _braid_App_struct::NestedSolverIE::FunctionSpace>::ScalarFieldVariableType> solution = implicitEulerSolver->data().solution();
+
    assert(u->size == solution->nDofsGlobal());
 
    // Set the initial guess for the solver
    PetscErrorCode ierr;
-   ierr = VecSetValues(solution->valuesGlobal(), u->size, solution->functionSpace()->meshPartition()->dofNosLocal().data(), u->values, INSERT_VALUES); CHKERRQ(ierr);
+   //ierr = VecSetValues(solution->valuesGlobal(), u->size, solution->functionSpace()->meshPartition()->dofNosLocal().data(), u->values, INSERT_VALUES); CHKERRQ(ierr);
+   //VecAssemblyBegin(solution->valuesGlobal());
+   //VecAssemblyEnd(solution->valuesGlobal());
+
+   //VecView(implicitEulerSolver->data().solution()->valuesGlobal(), PETSC_VIEWER_STDOUT_WORLD);
+
+   PetscInt iterator;
+   int istarti, iendi, itotal;
+   itotal = iendi-istarti;
+   VecGetOwnershipRange(solution->valuesGlobal(),&istarti,&iendi);
+   //for (iterator=0; iterator<u->size; iterator++) {std::cout<<u->values[iterator] << "/n";}
+   for (iterator=istarti; iterator<iendi; iterator++) {VecSetValues(solution->valuesGlobal(), 1, &iterator, &u->values[iterator], INSERT_VALUES);}
+   MPI_Barrier(app->comm);
    VecAssemblyBegin(solution->valuesGlobal());
    VecAssemblyEnd(solution->valuesGlobal());
+
+   //VecView(implicitEulerSolver->data().solution()->valuesGlobal(), PETSC_VIEWER_STDOUT_WORLD);
+   //int rank, size;
+   //size=0;
+   //MPI_Comm_size(app->comm, &size);
+   //if (size > 1)
+  // {
+   //   MPI_Comm_rank(app->comm, &rank);
+   //   MPI_Bcast(u->values, itotal, MPI_DOUBLE, rank, app->comm);
+   //   MPI_Barrier(app->comm);
+   //}
+
+
 
    // set time span for the solver, which is calculated by braid status
    implicitEulerSolver->setTimeSpan(tstart, tstop);
@@ -72,22 +99,22 @@ int my_Step(braid_App        app,
    // PetscInt blub;
    // VecGetLocalSize(solution->valuesGlobal(), &blub);
    // LOG(DEBUG) << blub;
+   int istart, iend;
+   VecGetOwnershipRange(solution->valuesGlobal(),&istart,&iend);
 
    // Get values for braid which were calculated by implicitEulerSolver
-   ierr = VecGetValues(solution->valuesGlobal(), u->size, solution->functionSpace()->meshPartition()->dofNosLocal().data(), u->values); CHKERRQ(ierr);
-//    PetscScalar ** val;
-//    LOG(DEBUG)<<"test";
-//    ierr = VecGetArray(solution->valuesGlobal(), val); CHKERRQ(ierr);
-//    LOG(DEBUG)<<"test1";
-//    u->values = *val;
-//    LOG(DEBUG)<<"test2";
-//    ierr = VecRestoreArray(solution->valuesGlobal(), val); CHKERRQ(ierr);
-// LOG(DEBUG)<<"test3";
+   PetscScalar arr;
+   for (iterator=istart; iterator<iend; iterator++) {VecGetValues(solution->valuesGlobal(), 1, &iterator, &arr); u->values[iterator]=arr;}
+   //MPI_Barrier(app->comm);
+   //ierr = VecGetValues(solution->valuesGlobal(), u->size, solution->functionSpace()->meshPartition()->dofNosLocal().data(), u->values); CHKERRQ(ierr);
+
+   //for (iterator=0; iterator<u->size; iterator++) {std::cout<<u->values[iterator] << "/n";}
    deltaT = tstop - tstart;
    deltaX = (app->xstop - app->xstart) / (ustop->size - 1.0);
 
    LOG(DEBUG) << "solved for t: [" << tstart << "," << tstop << "], deltaT: " << deltaT << ", deltaX: " << deltaX << ", size: " << u->size << " solution: " << *solution;
 
+   //VecView(implicitEulerSolver->data().solution()->valuesGlobal(), PETSC_VIEWER_STDOUT_WORLD);
    /* Store info on space-time grids visited during the simulation */
    (app->sc_info)[ (2*level) ] = deltaX;
    (app->sc_info)[ (2*level) + 1] = deltaT;
@@ -134,8 +161,14 @@ my_Init(braid_App     app,
    std::shared_ptr<typename _braid_App_struct::NestedSolverIE> implicitEulerSolver = (*app->implicitEulerSolvers)[solver];
    std::shared_ptr<typename Data::PinTIE<typename _braid_App_struct::NestedSolverIE::FunctionSpace>::ScalarFieldVariableType> solution = implicitEulerSolver->data().solution();
 
-   PetscErrorCode ierr;
-   ierr = VecGetValues(solution->valuesGlobal(), u->size, solution->functionSpace()->meshPartition()->dofNosLocal().data(), u->values); CHKERRQ(ierr);
+   PetscScalar a ; 
+   int istart, iend, iterator;
+   VecGetOwnershipRange(solution->valuesGlobal(),&istart,&iend);
+   LOG(DEBUG) <<istart << ".." << iend;
+   for (iterator=istart; iterator<iend; iterator++) {VecGetValues(solution->valuesGlobal(), 1, &iterator, &a); u->values [iterator]=a;}
+   //for (iterator=istart; iterator<iend; iterator++) {u->values[iterator]=0;}
+   //ierr = VecGetValues(solution->valuesGlobal(), u->size, solution->functionSpace()->meshPartition()->dofNosLocal().data(), u->values); CHKERRQ(ierr);
+   //MPI_Barrier(app->comm);
 
    LOG(DEBUG) << "--------------------------------------------------------------";
    LOG(DEBUG) << "set initial values: " << *solution;

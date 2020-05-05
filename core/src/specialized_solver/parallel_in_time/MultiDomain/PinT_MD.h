@@ -41,9 +41,9 @@ public:
   //! reset state of this object, such that a new initialize() is necessary ("uninitialize")
   void reset();
 
-  void setTimeSpan(double tstart, double tstop);
+  // void setTimeSpan(double tstart, double tstop);
 
-  void advanceTimeSpan();
+  // void advanceTimeSpan();
 
   //! return the data object, with the call to this method the output writers get the data to create their output files
   Data &data();
@@ -85,6 +85,8 @@ protected:
   double xstop_ = 4.0;
 
   MPI_Comm communicatorTotal_= MPI_COMM_WORLD;
+  MPI_Comm communicatorX_;
+  MPI_Comm communicatorT_;
 
   // Braid variables
   braid_Core    core_;

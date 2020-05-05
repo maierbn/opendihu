@@ -67,21 +67,21 @@ public:
 
 protected:
 
-  DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
-  OutputWriter::Manager outputWriterManager_; ///< manager object holding all output writer
-  int timeStepOutputInterval_;    ///< time step number and time is output every timeStepOutputInterval_ time steps
+  DihuContext context_;             //< object that contains the python config for the current context and the global singletons meshManager and solverManager
+  OutputWriter::Manager outputWriterManager_; //< manager object holding all output writer
+  int timeStepOutputInterval_;      //< time step number and time is output every timeStepOutputInterval_ time steps
 
-  double startTime_;        ///< start time of time interval to be simulated by call to advance
-  double endTime_;          ///< end time of simulation
+  double startTime_;                //< start time of time interval to be simulated by call to advance
+  double endTime_;                  //< end time of simulation
 
-  int numberTimeSteps_;     ///< number of time steps in simulation time, this one is always used to compute the real timeStepWidth
+  int numberTimeSteps_;             //< number of time steps in simulation time, this one is always used to compute the real timeStepWidth
 
-  bool isTimeStepWidthSignificant_;   ///< if time step width will be used to determine number of steps
-  double timeStepWidth_;        ///< a timeStepWidth value that is used to compute the number of time steps
-  std::string durationLogKey_;   ///< the key under which the duration of the time stepping is saved in the log
+  bool isTimeStepWidthSignificant_; //< if time step width will be used to determine number of steps
+  double timeStepWidth_;            //< a timeStepWidth value that is used to compute the number of time steps
+  std::string durationLogKey_;      //< the key under which the duration of the time stepping is saved in the log
 
-  PythonConfig specificSettings_;    ///< python object containing the value of the python config dict with corresponding key
-  bool initialized_;      ///< if initialize() was already called
+  PythonConfig specificSettings_;   //< python object containing the value of the python config dict with corresponding key
+  bool initialized_;                //< if initialize() was already called
 };
 
 }  // namespace

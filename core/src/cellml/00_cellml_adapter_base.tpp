@@ -162,8 +162,8 @@ initialize()
   // parametersUsedAsIntermediate, parametersUsedAsConstant,
 
   // add explicitely defined parameters that replace intermediates and constants
-  std::vector<int> parametersUsedAsIntermediate;  ///< explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array
-  std::vector<int> parametersUsedAsConstant;  ///< explicitely defined parameters that will be copied to constants, this vector contains the indices of the constants
+  std::vector<int> parametersUsedAsIntermediate;  //< explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array
+  std::vector<int> parametersUsedAsConstant;      //< explicitely defined parameters that will be copied to constants, this vector contains the indices of the constants
 
   std::vector<int> &statesForTransfer = data_.statesForTransfer();
   std::vector<int> &intermediatesForTransfer = data_.intermediatesForTransfer();
@@ -507,7 +507,7 @@ setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2
   {
 
     // initialize states
-    if (this->specificSettings_.hasKey("statesInitialValues"))
+    if (this->specificSettings_.hasKey("statesInitialValues") && !this->specificSettings_.isEmpty("statesInitialValues"))
     {
       LOG(DEBUG) << "set initial values from config";
 

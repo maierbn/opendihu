@@ -127,7 +127,7 @@ getCoordinatesGlobal(node_no_t nodeNoLocal) const
           else
           {
             // domain has back (y+) and top (z+) ghost nodes
-            if (nodeNoLocal < nNodesLocalWithoutGhosts() + nNodesLocalWithoutGhosts(0)*nNodesLocalWithoutGhosts(1))
+            if (nodeNoLocal < nNodesLocalWithoutGhosts() + nNodesLocalWithoutGhosts(0)*nNodesLocalWithoutGhosts(2))
             {
               // ghost is on back plane
               global_no_t ghostNo = nodeNoLocal - nNodesLocalWithoutGhosts();
@@ -138,7 +138,7 @@ getCoordinatesGlobal(node_no_t nodeNoLocal) const
             else
             {
               // ghost is on top plane
-              global_no_t ghostNo = nodeNoLocal - nNodesLocalWithoutGhosts() - nNodesLocalWithoutGhosts(0)*nNodesLocalWithoutGhosts(1);
+              global_no_t ghostNo = nodeNoLocal - nNodesLocalWithoutGhosts() - nNodesLocalWithoutGhosts(0)*nNodesLocalWithoutGhosts(2);
               coordinates[0] = beginNodeGlobalNatural(0) + ghostNo % nNodesLocalWithoutGhosts(0);
               coordinates[1] = beginNodeGlobalNatural(1) + ghostNo / nNodesLocalWithoutGhosts(0);
               coordinates[2] = beginNodeGlobalNatural(2) + nNodesLocalWithGhosts(2) - 1;

@@ -43,7 +43,8 @@ bool Generic::prepareWrite(DataType& data, int timeStepNo, double currentTime, i
     s << filenameBase_;
     if (timeStepNo != -1)
     {
-      switch (fileNumbering_) {
+      switch (fileNumbering_) 
+      {
       case file_numbering_incremental:
         s << "_" << std::setw(7) << std::setfill('0') << outputFileNo_;   // use a continuous counter for the output file
         break;

@@ -29,8 +29,11 @@ if ".py" in sys.argv[0]:
   variables.__dict__.update(custom_variables.__dict__)
   sys.argv = sys.argv[1:]     # remove first argument, which now has already been parsed
 else:
-  print("Error, please specify variables file, e.g:\n ./biceps_contraction ../settings_biceps_contraction.py ramp.py")
+  print("Error: no variables file was specified, e.g:\n ./biceps_contraction ../settings_biceps_contraction.py ramp.py")
   exit(0)
+
+# -------------- begin user parameters ----------------
+# -------------- end user parameters ----------------
 
 # define command line arguments
 parser = argparse.ArgumentParser(description='static_biceps_emg')
@@ -61,7 +64,7 @@ parser.add_argument('-vmodule',                              help='Enable verbos
 parser.add_argument('-pause',                                help='Stop at parallel debugging barrier', action="store_true")
 
 # parse command line arguments and assign values to variables module
-args = parser.parse_args(args=sys.argv[:-2], namespace=variables)
+args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
 
 # initialize some dependend variables
 if variables.n_subdomains is not None:
@@ -69,6 +72,36 @@ if variables.n_subdomains is not None:
   variables.n_subdomains_y = variables.n_subdomains[1]
   variables.n_subdomains_z = variables.n_subdomains[2]
   
+variables.n_subdomains = variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z
+
+# automatically initialize partitioning if it has not been set
+if n_ranks != variables.n_subdomains:
+  
+  # create all possible partitionings to the given number of ranks
+  optimal_value = n_ranks**(1/3)
+  possible_partitionings = []
+  for i in range(1,n_ranks+1):
+    for j in range(1,n_ranks+1):
+      if i*j <= n_ranks and n_ranks % (i*j) == 0:
+        k = (int)(n_ranks / (i*j))
+        performance = (k-optimal_value)**2 + (j-optimal_value)**2 + 1.1*(i-optimal_value)**2
+        possible_partitionings.append([i,j,k,performance])
+        
+  # if no possible partitioning was found
+  if len(possible_partitionings) == 0:
+    if rank_no == 0:
+      print("\n\n\033[0;31mError! Number of ranks {} does not match given partitioning {} x {} x {} = {} and no automatic partitioning could be done.\n\n\033[0m".format(n_ranks, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z))
+    quit()
+    
+  # select the partitioning with the lowest value of performance which is the best
+  lowest_performance = possible_partitionings[0][3]+1
+  for i in range(len(possible_partitionings)):
+    if possible_partitionings[i][3] < lowest_performance:
+      lowest_performance = possible_partitionings[i][3]
+      variables.n_subdomains_x = possible_partitionings[i][0]
+      variables.n_subdomains_y = possible_partitionings[i][1]
+      variables.n_subdomains_z = possible_partitionings[i][2]
+
 # output information of run
 if rank_no == 0:
   print("scenario_name: {},  n_subdomains: {} {} {},  n_ranks: {},  end_time: {}".format(variables.scenario_name, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, n_ranks, variables.end_time))
@@ -78,7 +111,6 @@ if rank_no == 0:
   print("dt_3D:           {:0.0e}, paraview_output: {}".format(variables.dt_3D, variables.paraview_output))
   print("output_timestep: {:0.0e}  stimulation_frequency: {} 1/ms = {} Hz".format(variables.output_timestep, variables.stimulation_frequency, variables.stimulation_frequency*1e3))
   print("fiber_file:              {}".format(variables.fiber_file))
-  print("fat_mesh_file:           {}".format(variables.fat_mesh_file))
   print("cellml_file:             {}".format(variables.cellml_file))
   print("fiber_distribution_file: {}".format(variables.fiber_distribution_file))
   print("firing_times_file:       {}".format(variables.firing_times_file))
@@ -95,19 +127,31 @@ from helper import *
 variables.n_subdomains_xy = variables.n_subdomains_x * variables.n_subdomains_y
 variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
 
+if False:
+  for subdomain_coordinate_y in range(variables.n_subdomains_y):
+    for subdomain_coordinate_x in range(variables.n_subdomains_x):
+      
+      print("subdomain (x{},y{}) ranks: {} n fibers in subdomain: x{},y{}".format(subdomain_coordinate_x, subdomain_coordinate_y, 
+        list(range(subdomain_coordinate_y*variables.n_subdomains_x + subdomain_coordinate_x, n_ranks, variables.n_subdomains_x*variables.n_subdomains_y)),
+        n_fibers_in_subdomain_x(subdomain_coordinate_x), n_fibers_in_subdomain_y(subdomain_coordinate_y)))
 
-print(variables.meshes["3dmesh_quadratic"])
+      for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y)):
+        for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x)):
+          print("({},{}) n instances: {}".format(fiber_in_subdomain_coordinate_x,fiber_in_subdomain_coordinate_y,
+              n_fibers_in_subdomain_x(subdomain_coordinate_x)*n_fibers_in_subdomain_y(subdomain_coordinate_y)))
+
 
 # define the config dict
 config = {
   "scenarioName":          variables.scenario_name,
-  "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
+  "solverStructureDiagramFile":     "out/solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "Meshes":                variables.meshes,
   "MappingsBetweenMeshes": variables.mappings_between_meshes,
   "Solvers": {
     "diffusionTermSolver": {# solver for the implicit timestepping scheme of the diffusion time step
       "maxIterations":      1e4,
       "relativeTolerance":  1e-10,
+      "absoluteTolerance":  1e-10,         # 1e-10 absolute tolerance of the residual          
       "solverType":         variables.diffusion_solver_type,
       "preconditionerType": variables.diffusion_preconditioner_type,
       "dumpFilename":       "",   # "out/dump_"
@@ -115,6 +159,7 @@ config = {
     },
     "potentialFlowSolver": {# solver for the initial potential flow, that is needed to estimate fiber directions for the bidomain equation
       "relativeTolerance":  1e-10,
+      "absoluteTolerance":  1e-10,         # 1e-10 absolute tolerance of the residual          
       "maxIterations":      1e4,
       "solverType":         variables.potential_flow_solver_type,
       "preconditionerType": variables.potential_flow_preconditioner_type,
@@ -122,16 +167,19 @@ config = {
       "dumpFormat":         "matlab",
     },
     "mechanicsSolver": {   # solver for the dynamic mechanics problem
-      "relativeTolerance":  1e-10,          # 1e-10 relative tolerance of the linear solver
+      "relativeTolerance":  1e-5,           # 1e-10 relative tolerance of the linear solver
+      "absoluteTolerance":  1e-10,          # 1e-10 absolute tolerance of the residual of the linear solver
       "solverType":         "preonly",      # type of the linear solver: cg groppcg pipecg pipecgrr cgne nash stcg gltr richardson chebyshev gmres tcqmr fcg pipefcg bcgs ibcgs fbcgs fbcgsr bcgsl cgs tfqmr cr pipecr lsqr preonly qcg bicg fgmres pipefgmres minres symmlq lgmres lcd gcr pipegcr pgmres dgmres tsirm cgls
       "preconditionerType": "lu",           # type of the preconditioner
       "maxIterations":       1e4,           # maximum number of iterations in the linear solver
       "snesMaxFunctionEvaluations": 1e8,    # maximum number of function iterations
       "snesMaxIterations":   10,            # maximum number of iterations in the nonlinear solver
-      "snesRelativeTolerance": 1e-10,       # relative tolerance of the nonlinear solver
+      "snesRelativeTolerance": 1e-5,        # relative tolerance of the nonlinear solver
       "snesAbsoluteTolerance": 1e-5,        # absolute tolerance of the nonlinear solver
-      "dumpFilename":        "",
-      "dumpFormat":          "matlab",
+      "snesLineSearchType": "l2",           # type of linesearch, possible values: "bt" "nleqerr" "basic" "l2" "cp" "ncglinear"
+      "snesRebuildJacobianFrequency": 2,    # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
+      "dumpFilename":        "",            # dump system matrix and right hand side after every solve
+      "dumpFormat":          "matlab",      # default, ascii, matlab
     }
   },
   "Coupling": {
@@ -157,8 +205,8 @@ config = {
             "durationLogKey":         "duration_monodomain",
             "timeStepOutputInterval": 100,
             "endTime":                variables.dt_splitting,
-            "connectedSlotsTerm1To2": [0],   # transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion)
-            "connectedSlotsTerm2To1": [0],   # transfer the same back, this avoids data copy
+            "connectedSlotsTerm1To2": [0,1,2],   # transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion)
+            "connectedSlotsTerm2To1": [0,None,2],   # transfer the same back, this avoids data copy
 
             "Term1": {      # CellML, i.e. reaction term of Monodomain equation
               "MultipleInstances": {
@@ -178,11 +226,20 @@ config = {
                     "nAdditionalFieldVariables":    0,
                       
                     "CellML" : {
-                      "modelFilename":                          variables.cellml_file,                          # input C++ source file, can be either generated by OpenCMISS or OpenCOR from cellml model
-                      "compilerFlags":                          "-fPIC -O3 -march=native -shared -g -ggdb ",
-                      "optimizationType":                       "vc",                # "vc", "simd", "openmp" type of generated optimizated source file
-                      "approximateExponentialFunction":         False,
-                      #"statesInitialValues":                   [],
+                      "modelFilename":                          variables.cellml_file,                          # input C++ source file or cellml XML file
+                      #"statesInitialValues":                   [],                                             # if given, the initial values for the the states of one instance
+                      "statesInitialValues":                    variables.states_initial_values,                # initial values for new_slow_TK
+                      "initializeStatesToEquilibrium":          False,                                          # if the equilibrium values of the states should be computed before the simulation starts
+                      "initializeStatesToEquilibriumTimestepWidth": 1e-4,                                       # if initializeStatesToEquilibrium is enable, the timestep width to use to solve the equilibrium equation
+                      
+                      # optimization parameters
+                      "optimizationType":                       "vc",                                           # "vc", "simd", "openmp" type of generated optimizated source file
+                      "approximateExponentialFunction":         True,                                           # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
+                      "compilerFlags":                          "-fPIC -O3 -march=native -shared ",             # compiler flags used to compile the optimized model code
+                      "maximumNumberOfThreads":                 0,                                              # if optimizationType is "openmp", the maximum number of threads to use. Default value 0 means no restriction.
+                      
+                      # stimulation callbacks
+                      #"libraryFilename":                       "cellml_simd_lib.so",                           # compiled library
                       #"setSpecificParametersFunction":         set_specific_parameters,                        # callback function that sets parameters like stimulation current
                       #"setSpecificParametersCallInterval":     int(1./variables.stimulation_frequency/variables.dt_0D),         # set_specific_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
                       "setSpecificStatesFunction":              set_specific_states,                                             # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
@@ -192,15 +249,14 @@ config = {
                       "setSpecificStatesFrequencyJitter":       variables.get_specific_states_frequency_jitter(fiber_no, motor_unit_no), # random value to add or substract to setSpecificStatesCallFrequency every stimulation, this is to add random jitter to the frequency
                       "setSpecificStatesRepeatAfterFirstCall":  0.01,                                                            # [ms] simulation time span for which the setSpecificStates callback will be called after a call was triggered
                       "setSpecificStatesCallEnableBegin":       variables.get_specific_states_call_enable_begin(fiber_no, motor_unit_no),# [ms] first time when to call setSpecificStates
-                      "additionalArgument":                     fiber_no,
-                      "intermediatesForTransfer":               variables.output_intermediate_index,            # which intermediate values to use in further computation
-                      "statesForTransfer":                      variables.output_state_index,                   # which state values to use in further computation, Shorten / Hodgkin Huxley: state 0 = Vm
+                      "additionalArgument":                     fiber_no,                                       # last argument that will be passed to the callback functions set_specific_states, set_specific_parameters, etc.
                       
-                      "parametersUsedAsIntermediate":           variables.parameters_used_as_intermediate,      #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
-                      "parametersUsedAsConstant":               variables.parameters_used_as_constant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
+                      # parameters to the cellml model
+                      "mappings":                               variables.mappings,                             # mappings between parameters and intermediates/constants and between outputConnectorSlots and states, intermediates or parameters, they are defined in helper.py
                       "parametersInitialValues":                variables.parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
+                      
                       "meshName":                               "MeshFiber_{}".format(fiber_no),
-                      "stimulationLogFilename":                 "out/stimulation.log",
+                      "stimulationLogFilename":                 "out/stimulation.log",                          # a file that will contain the times of stimulations
                     },      
                     "OutputWriter" : [
                       {"format": "Paraview", "outputInterval": 1, "filename": "out/" + variables.scenario_name + "/0D_states({},{})".format(fiber_in_subdomain_coordinate_x,fiber_in_subdomain_coordinate_y), "binary": True, "fixedFormat": False, "combineFiles": True}
@@ -219,7 +275,7 @@ config = {
                 "instances": 
                 [{
                   "ranks":                         list(range(variables.n_subdomains_z)),    # these rank nos are local nos to the outer instance of MultipleInstances, i.e. from 0 to number of ranks in z direction
-                  "ImplicitEuler" : {
+                  "CrankNicolson" : {
                     "initialValues":               [],
                     #"numberTimeSteps":            1,
                     "timeStepWidth":               variables.dt_1D,  # 1e-5
@@ -229,10 +285,11 @@ config = {
                     "dirichletBoundaryConditions": {},                                       # old Dirichlet BC that are not used in FastMonodomainSolver: {0: -75.0036, -1: -75.0036},
                     "inputMeshIsGlobal":           True,
                     "solverName":                  "diffusionTermSolver",
-                    "nAdditionalFieldVariables":   1,
+                    "nAdditionalFieldVariables":   2,
                     "FiniteElementMethod" : {
                       "maxIterations":             1e4,
                       "relativeTolerance":         1e-10,
+                      "absoluteTolerance":         1e-10,         # 1e-10 absolute tolerance of the residual                          
                       "inputMeshIsGlobal":         True,
                       "meshName":                  "MeshFiber_{}".format(fiber_no),
                       "prefactor":                 get_diffusion_prefactor(fiber_no, motor_unit_no),  # resolves to Conductivity / (Am * Cm)
@@ -259,6 +316,9 @@ config = {
       },
       "fiberDistributionFile":    variables.fiber_distribution_file,   # for FastMonodomainSolver, e.g. MU_fibre_distribution_3780.txt
       "firingTimesFile":          variables.firing_times_file,         # for FastMonodomainSolver, e.g. MU_firing_times_real.txt
+      "onlyComputeIfHasBeenStimulated": True,                          # only compute fibers after they have been stimulated for the first time
+      "disableComputationWhenStatesAreCloseToEquilibrium": True,       # optimization where states that are close to their equilibrium will not be computed again      
+      "valueForStimulatedPoint":  variables.vm_value_stimulated,       # to which value of Vm the stimulated node should be set      
     },
     "Term2": {        # solid mechanics
       "MuscleContractionSolver": {
@@ -266,8 +326,11 @@ config = {
         "timeStepOutputInterval":       100,                       # do not output time steps
         "Pmax": variables.pmax,                                    # maximum PK2 active stress
         "OutputWriter" : [
-          {"format": "Paraview", "outputInterval": 1, "filename": "out/" + variables.scenario_name + "/mechanics", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
+          {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D), "filename": "out/" + variables.scenario_name + "/mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
         ],
+        "dynamic":                      True,                      # if the dynamic solid mechanics solver should be used, else it computes the quasi-static problem
+        
+        # the actual solid mechanics solver, this is either "DynamicHyperelasticitySolver" or "HyperelasticitySolver", depending on the value of "dynamic"
         "DynamicHyperelasticitySolver": {
           "timeStepWidth":              variables.dt_3D,           # time step width 
           "durationLogKey":             "nonlinear",               # key to find duration of this solver in the log file
@@ -284,26 +347,35 @@ config = {
           # if useAnalyticJacobian,useNumericJacobian and dumpDenseMatlabVariables all all three true, the analytic and numeric jacobian matrices will get compared to see if there are programming errors for the analytic jacobian
           
           # mesh
-          "inputMeshIsGlobal":          False,                     # the mesh is given locally
+          "inputMeshIsGlobal":          True,                     # the mesh is given locally
           "meshName":                   "3Dmesh_quadratic",        # name of the 3D mesh, it is defined under "Meshes" at the beginning of this config
+          "fiberMeshNames":             variables.fiber_mesh_names,  # fiber meshes that will be used to determine the fiber direction, for multidomain there are no fibers so this would be empty list
+          #"fiberDirection":             [0,0,1],                  # if fiberMeshNames is empty, directly set the constant fiber direction, in element coordinate system
+    
+          # solving
           "solverName":                 "mechanicsSolver",         # name of the nonlinear solver configuration, it is defined under "Solvers" at the beginning of this config
+          #"loadFactors":                [0.5, 1.0],                # load factors for every timestep
+          "loadFactors":                [],                        # no load factors, solve problem directly
+          "nNonlinearSolveCalls":       1,                         # how often the nonlinear solve should be repeated
           
           # boundary and initial conditions
           "dirichletBoundaryConditions": variables.elasticity_dirichlet_bc,   # the initial Dirichlet boundary conditions that define values for displacements u and velocity v
           "neumannBoundaryConditions":   variables.elasticity_neumann_bc,     # Neumann boundary conditions that define traction forces on surfaces of elements
+          "divideNeumannBoundaryConditionValuesByTotalArea": True,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
           "updateDirichletBoundaryConditionsFunction": None,                  # function that updates the dirichlet BCs while the simulation is running
           "updateDirichletBoundaryConditionsFunctionCallInterval": 1,         # every which step the update function should be called, 1 means every time step
           
-          "initialValuesDisplacements":  [[0.0,0.0,0.0] for _ in range((2*variables.nx+1) * (2*variables.ny+1) * (2*variables.nz+1))],     # the initial values for the displacements, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
-          "initialValuesVelocities":     [[0.0,0.0,0.0] for _ in range((2*variables.nx+1) * (2*variables.ny+1) * (2*variables.nz+1))],     # the initial values for the velocities, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
-          "constantBodyForce":           variables.constant_body_force,                 # a constant force that acts on the whole body, e.g. for gravity
+          "initialValuesDisplacements":  [[0.0,0.0,0.0] for _ in range(mx*my*mz)],     # the initial values for the displacements, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
+          "initialValuesVelocities":     [[0.0,0.0,0.0] for _ in range(mx*my*mz)],     # the initial values for the velocities, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
+          "extrapolateInitialGuess":     True,                                # if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
+          "constantBodyForce":           variables.constant_body_force,       # a constant force that acts on the whole body, e.g. for gravity
           
           # define which file formats should be written
           # 1. main output writer that writes output files using the quadratic elements function space. Writes displacements, velocities and PK2 stresses.
           "OutputWriter" : [
             
             # Paraview files
-            #{"format": "Paraview", "outputInterval": 1, "filename": "out/u", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
+            #{"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/u", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
             
             # Python callback function "postprocess"
             #{"format": "PythonCallback", "outputInterval": 1, "callback": postprocess, "onlyNodalValues":True, "filename": ""},
@@ -311,21 +383,28 @@ config = {
           # 2. additional output writer that writes also the hydrostatic pressure
           "pressure": {   # output files for pressure function space (linear elements), contains pressure values, as well as displacements and velocities
             "OutputWriter" : [
-              #{"format": "Paraview", "outputInterval": 1, "filename": "out/p", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
+              #{"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/p", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
             ]
           },
           # 3. additional output writer that writes virtual work terms
           "dynamic": {    # output of the dynamic solver, has additional virtual work values 
             "OutputWriter" : [   # output files for displacements function space (quadratic elements)
               #{"format": "Paraview", "outputInterval": int(output_interval/dt), "filename": "out/dynamic", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
-              #{"format": "Paraview", "outputInterval": 1, "filename": "out/dynamic", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
+              {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/virtual_work", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
             ],
-          }
+          },
+          # 4. output writer for debugging, outputs files after each load increment, the geometry is not changed but u and v are written
+          "LoadIncrements": {   
+            "OutputWriter" : [
+              #{"format": "Paraview", "outputInterval": 1, "filename": "out/load_increments", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
+            ]
+          },
         }
       }
     }
   }
 }
+
 
 # stop timer and calculate how long parsing lasted
 if rank_no == 0:

@@ -121,20 +121,24 @@ try:
     MPI_DIR = os.environ["MPI_HOME"]
   
   elif "hawk" in os.environ["SITE_PLATFORM_NAME"]:
-    print("on hawk")
+    print("on hawk load the following modules: \"module load adios2/2.5.0 cmake python mkl petsc/3.12.2-int32-shared\"")
+
     MPI_DIR = os.environ["MPT_ROOT"]
-    MPI_IGNORE_MPICC
-    LAPACK_DIR = os.environ["SCALAPACK_ROOT"]
     LAPACK_DOWNLOAD = False
     PETSC_DOWNLOAD = False
     PETSC_DIR = os.environ["PETSC_ROOT"]
     PYTHONPACKAGES_DOWNLOAD = False
-    GOOGLETEST_DOWNLOAD = False  
-    XBRAID_DOWNLOAD = False
+    GOOGLETEST_DOWNLOAD = True 
+    XBRAID_DOWNLOAD = True
     ADIOS_DOWNLOAD = False
     ADIOS_DIR = os.environ["ADIOS2_ROOT"]
-    cc = "mpicc -cc=gcc"
+    cc = "mpicc -cc="+os.environ["CC"]
     CC = "mpicxx -cxx=g++ -ftemplate-backtrace-limit=0"   
+    CC = "mpicxx -cxx="+os.environ["CXX"]+" -ftemplate-backtrace-limit=0"   
+#    cc = "icc"
+#    CC = "icpc "  
+#    cc = "clang"
+#    CC = "clang++"
 except:
   pass
 
@@ -144,7 +148,7 @@ if False:
   MPI_DOWNLOAD = True
   MPI_IGNORE_MPICC = True    # this downloads and builds openmpi
 
-PETSC_DEBUG = True            # this enables debugging flags such that valgrind memcheck can track MPI errors
+#PETSC_DEBUG = True            # this enables debugging flags such that valgrind memcheck can track MPI errors
 
 # specialized settings for supercomputer (HazelHen)
 import os

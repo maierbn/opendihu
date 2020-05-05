@@ -9,13 +9,13 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
 {
   struct GhostValues
   {
-    std::vector<double> nodePositionValues;   ///< the values of the node positions of the ghost elements, in sequential order like [x,x,x,x, ... y,y,y,y ... z,z,z,...]
-    std::vector<double> solutionValues;      ///< values of solution field variable inside the ghost elements
-    std::vector<double> gradientValues;      ///< values of the gradient field variable, consecutive like nodePositionValues
-    std::array<element_no_t,3> nElementsPerCoordinateDirection;   ///< size of the ghost mesh
+    std::vector<double> nodePositionValues;  //< the values of the node positions of the ghost elements, in sequential order like [x,x,x,x, ... y,y,y,y ... z,z,z,...]
+    std::vector<double> solutionValues;      //< values of solution field variable inside the ghost elements
+    std::vector<double> gradientValues;      //< values of the gradient field variable, consecutive like nodePositionValues
+    std::array<element_no_t,3> nElementsPerCoordinateDirection;   //< size of the ghost mesh
   };
-  std::array<GhostValues,4> ghostValuesBuffer;  ///< [face], data for meshes containing ghost elements for the sides, face0Minus, face0Plus, face1Minus, face1Plus
-  std::array<GhostValues,4> boundaryValues;  ///< [face], data to be send
+  std::array<GhostValues,4> ghostValuesBuffer;  //< [face], data for meshes containing ghost elements for the sides, face0Minus, face0Plus, face1Minus, face1Plus
+  std::array<GhostValues,4> boundaryValues;     //< [face], data to be send
 
   std::vector<MPI_Request> receiveRequests;
   std::vector<MPI_Request> sendRequests;

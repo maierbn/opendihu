@@ -64,6 +64,9 @@ initialize()
 
   CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::initialize();
   
+  // initialize output writers
+  this->outputWriterManager_.initialize(this->context_, this->specificSettings_, this->data().functionSpace()->meshPartition()->rankSubset());
+
   // load rhs routine
   this->initializeRhsRoutine();
 
@@ -74,6 +77,10 @@ initialize()
   if (this->specificSettings_.hasKey("prefactor"))
   {
     LOG(WARNING) << this->specificSettings_ << "[\"prefactor\"] is no longer an option! There is no more functionality to scale values during transfer.";
+  }
+  if (this->outputWriterManager_.hasOutputWriters())
+  {
+    LOG(INFO) << "CellML has output writers. This will be slow as it outputs lots of data and should only be used for debugging.";
   }
 
   this->internalTimeStepNo_ = 0;
@@ -267,6 +274,9 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
   ierr = VecRestoreArray(this->data_.intermediates()->getValuesContiguous(), &intermediatesData); CHKERRV(ierr);
 
   this->data_.restoreParameterValues();
+
+  // call output writer to write output files
+  this->outputWriterManager_.writeOutput(this->data_, this->internalTimeStepNo_, currentTime);
 
   VLOG(1) << "at end of cellml_adapter, intermediates: " << this->data_.intermediates() << " " << *this->data_.intermediates();
   this->internalTimeStepNo_++;

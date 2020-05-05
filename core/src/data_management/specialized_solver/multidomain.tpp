@@ -27,6 +27,9 @@ template<typename FunctionSpaceType>
 void Multidomain<FunctionSpaceType>::
 initialize(int nCompartments)
 {
+  if (this->initialized_)
+    return;
+    
   nCompartments_ = nCompartments;
 
   // call initialize of base class
@@ -61,15 +64,15 @@ createPetscObjects()
   for (int k = 0; k < nCompartments_; k++)
   {
     std::stringstream transmembranePotentialSolutionName;
-    transmembranePotentialSolutionName << "Vm_solution_" << k;
+    transmembranePotentialSolutionName << "Vm^(i+1)_" << k;
     this->transmembranePotentialSolution_.push_back(this->functionSpace_->template createFieldVariable<1>(transmembranePotentialSolutionName.str()));
 
     std::stringstream transmembranePotentialName;
-    transmembranePotentialName << "Vm_" << k;
+    transmembranePotentialName << "Vm^(i)_" << k;
     this->transmembranePotential_.push_back(this->functionSpace_->template createFieldVariable<1>(transmembranePotentialName.str()));
 
     std::stringstream compartmentRelativeFactorName;
-    compartmentRelativeFactorName << "fr_" << k;
+    compartmentRelativeFactorName << "f_r_" << k;
     this->compartmentRelativeFactor_.push_back(this->functionSpace_->template createFieldVariable<1>(compartmentRelativeFactorName.str()));
   }
 
@@ -77,7 +80,7 @@ createPetscObjects()
   this->fiberDirection_ = this->functionSpace_->template createFieldVariable<3>("fiberDirection");
   this->extraCellularPotential_ = this->functionSpace_->template createFieldVariable<1>("phi_e");
   this->zero_ = this->functionSpace_->template createFieldVariable<1>("zero");
-  this->relativeFactorTotal_ = this->functionSpace_->template createFieldVariable<1>("relativeFactorTotal");
+  this->relativeFactorTotal_ = this->functionSpace_->template createFieldVariable<1>("Σf_r");
 }
 
 template<typename FunctionSpaceType>
@@ -186,7 +189,7 @@ getFieldVariablesForOutputWriter()
   }
 
   return std::make_tuple(geometryField, this->fiberDirection_, this->flowPotential_, extraCellularPotential_,
-                         transmembranePotentials, compartmentRelativeFactors);
+                         transmembranePotentials, compartmentRelativeFactors, relativeFactorTotal_);
 }
 
 } // namespace

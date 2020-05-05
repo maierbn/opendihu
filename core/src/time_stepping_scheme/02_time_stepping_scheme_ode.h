@@ -22,7 +22,7 @@ class TimeSteppingSchemeOdeBaseDiscretizable:
   public TimeSteppingSchemeOdeBase<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>
 {
 public:
-  typedef DiscretizableInTimeType DiscretizableInTime_Type;
+  typedef DiscretizableInTimeType DiscretizableInTime;
   typedef typename DiscretizableInTimeType::FunctionSpace FunctionSpace;
   //typedef typename DiscretizableInTimeType::OutputConnectorDataType OutputConnectorDataType;
 
@@ -59,13 +59,13 @@ protected:
   //! prepare the discretizableInTime object for the following call to getOutputConnectorData()
   virtual void prepareForGetOutputConnectorData() override;
 
-  //int timeStepOutputInterval_;    ///< time step number and time is output every timeStepOutputInterval_ time steps
-  DiscretizableInTimeType discretizableInTime_;    ///< the object to be discretized
-  bool initialized_;     ///< if initialize() was already called
+  //int timeStepOutputInterval_;    //< time step number and time is output every timeStepOutputInterval_ time steps
+  DiscretizableInTimeType discretizableInTime_;    //< the object to be discretized
+  bool initialized_;     //< if initialize() was already called
 
   std::shared_ptr<
     SpatialDiscretization::DirichletBoundaryConditions<FunctionSpace,DiscretizableInTimeType::nComponents()>
-  > dirichletBoundaryConditions_;  ///< object that stores Dirichlet boundary condition values
+  > dirichletBoundaryConditions_;  //< object that stores Dirichlet boundary condition values
 };
 
 template<typename DiscretizableInTimeType>

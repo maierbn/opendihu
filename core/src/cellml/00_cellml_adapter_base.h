@@ -117,8 +117,8 @@ protected:
 
   std::shared_ptr<FunctionSpaceType> functionSpace_;       //< a mesh, there are as many instances of the same CellML problem as there are nodes in the mesh
   Data data_;                                              //< the data object that stores all variables, i.e. intermediates and states
-  static std::array<double,nStates_> statesInitialValues_;        //< the initial values for the states, see setInitialValues
-  static bool statesInitialValuesinitialized_;                  //< if the statesInitialValues_ variables has been initialized
+  static std::array<double,nStates_> statesInitialValues_; //< the initial values for the states, see setInitialValues
+  static bool statesInitialValuesinitialized_;             //< if the statesInitialValues_ variables has been initialized
 
   int nInstances_;                                         //< number of instances of the CellML problem. Usually it is the number of mesh nodes when a mesh is used. When running in parallel this is the local number of instances without ghosts.
   int internalTimeStepNo_ = 0;                             //< the counter how often the right hand side was called

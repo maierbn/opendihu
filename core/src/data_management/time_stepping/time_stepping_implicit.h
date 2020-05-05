@@ -56,11 +56,11 @@ private:
   //! initializes the vectors with size
   void createPetscObjects() override;
 
-  std::shared_ptr<FieldVariableType> boundaryConditionsRightHandSideSummand_; ///< what needs to be added to rhs when dirichlet boundary conditions are applied
-  std::shared_ptr<FieldVariableType> systemRightHandSide_;                    ///< the rhs vector of the implicit system
+  std::shared_ptr<FieldVariableType> boundaryConditionsRightHandSideSummand_; //< what needs to be added to rhs when dirichlet boundary conditions are applied
+  std::shared_ptr<FieldVariableType> systemRightHandSide_;                    //< the rhs vector of the implicit system
 
-  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> systemMatrix_;  ///< the system matrix for implicit time stepping
-  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> integrationMatrixRightHandSide_; ///< the integration matrix for the right hand side if required by the implicit time stepping
+  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> systemMatrix_;  //< the system matrix for implicit time stepping
+  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> integrationMatrixRightHandSide_; //< the integration matrix for the right hand side if required by the implicit time stepping
 
 
 };

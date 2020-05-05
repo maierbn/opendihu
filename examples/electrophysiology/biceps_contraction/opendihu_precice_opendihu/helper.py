@@ -65,7 +65,7 @@ variables.load_fiber_data = True   # load all local node positions from fiber_fi
 result = create_partitioned_meshes_for_settings(
     variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, 
     variables.fiber_file, variables.load_fiber_data,
-    variables.sampling_stride_x, variables.sampling_stride_y, variables.sampling_stride_z, variables.generate_quadratic_3d_mesh)
+    variables.sampling_stride_x, variables.sampling_stride_y, variables.sampling_stride_z, variables.generate_linear_3d_mesh, variables.generate_quadratic_3d_mesh)
 [variables.meshes, variables.own_subdomain_coordinate_x, variables.own_subdomain_coordinate_y, variables.own_subdomain_coordinate_z, variables.n_fibers_x, variables.n_fibers_y, variables.n_points_whole_fiber] = result
   
 variables.n_subdomains_xy = variables.n_subdomains_x * variables.n_subdomains_y
@@ -112,52 +112,66 @@ if variables.exfile_output:
   variables.output_writer_elasticity.append({"format": "Exfile", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/elasticity"})
   variables.output_writer_fibers.append({"format": "Exfile", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/fibers"})
 
-# set values for cellml model
-if "shorten" in variables.cellml_file:
-  # parameters: stimulation current I_stim, fiber stretch λ
-  variables.parameters_used_as_intermediate = [32]    # 
-  variables.parameters_used_as_constant = [65]        # fiber stretch λ, this indicates how much the fiber has stretched, 1 means no extension. CONSTANTS[65] in the shorten model
-  variables.parameters_initial_values = [0.0, 1.0]    # stimulation current I_stim, fiber stretch λ, OpenCMISS generated files: OC_KNOWN will be set by this
-  variables.nodal_stimulation_current = 1200.
-  variables.output_state_index = 0                    # use state 0 = Vm
-  variables.output_intermediate_index = []            # do not use any intermediate
-  
-elif "hodgkin_huxley" in variables.cellml_file:
+# set variable mappings for cellml model
+if "hodgkin_huxley" in variables.cellml_file:
   # parameters: I_stim
-  variables.parameters_used_as_intermediate = []
-  variables.parameters_used_as_constant = [2]
-  variables.parameters_initial_values = [0.0]
-  variables.nodal_stimulation_current = 40.
-  variables.output_state_index = 0                    # use state 0 = Vm
-  variables.output_intermediate_index = []            # do not use any intermediate
+  variables.mappings = {
+    ("parameter", 0):           ("constant", "membrane/i_Stim"),      # parameter 0 is constant 2 = I_stim
+    ("outputConnectorSlot", 0): ("state", "membrane/V"),              # expose state 0 = Vm to the operator splitting
+  }
+  variables.parameters_initial_values = [0.0]                         # initial value for stimulation current
+  variables.nodal_stimulation_current = 40.                           # not used
+  variables.vm_value_stimulated = 20.                                 # to which value of Vm the stimulated node should be set (option "valueForStimulatedPoint" of FastMonodomainSolver)
 
+elif "shorten" in variables.cellml_file:
+  # parameters: stimulation current I_stim, fiber stretch λ
+  variables.mappings = {
+    ("parameter", 0):           ("intermediate", "wal_environment/I_HH"), # parameter is intermediate 32
+    ("parameter", 1):           ("constant", "razumova/L_x"),             # parameter is constant 65, fiber stretch λ, this indicates how much the fiber has stretched, 1 means no extension
+    ("outputConnectorSlot", 0): ("state", "wal_environment/vS"),          # expose state 0 = Vm to the operator splitting
+  }
+  variables.parameters_initial_values = [0.0, 1.0]                        # stimulation current I_stim, fiber stretch λ
+  variables.nodal_stimulation_current = 1200.                             # not used
+  variables.vm_value_stimulated = 40.                                 # to which value of Vm the stimulated node should be set (option "valueForStimulatedPoint" of FastMonodomainSolver)
+  
 elif "slow_TK_2014" in variables.cellml_file:   # this is (3a, "MultiPhysStrain", old tomo mechanics) in OpenCMISS
   # parameters: I_stim, fiber stretch λ
-  variables.parameters_used_as_intermediate = []
-  variables.parameters_used_as_constant = [54, 67]     # wal_environment/I_HH = I_stim, razumova/L_S = λ
-  variables.parameters_initial_values = [0.0, 1.0]     # wal_environment/I_HH = I_stim, razumova/L_S = λ
-  variables.nodal_stimulation_current = 40. 
-  variables.output_state_index = 0                     # use state 0, wal_environment/vS = Vm
-  variables.output_intermediate_index = 12             # use intermediate 12, razumova/stress = γ
+  variables.mappings = {
+    ("parameter", 0):           ("constant", "wal_environment/I_HH"), # parameter 0 is constant 54 = I_stim
+    ("parameter", 1):           ("constant", "razumova/L_S"),         # parameter 1 is constant 67 = fiber stretch λ
+    ("outputConnectorSlot", 0): ("state", "wal_environment/vS"),      # expose state 0 = Vm to the operator splitting
+    ("outputConnectorSlot", 1): ("intermediate", "razumova/stress"),  # expose intermediate 12 = γ to the operator splitting
+  }
+  variables.parameters_initial_values = [0.0, 1.0]                    # wal_environment/I_HH = I_stim, razumova/L_S = λ
+  variables.nodal_stimulation_current = 40.                           # not used
+  variables.vm_value_stimulated = 40.                                 # to which value of Vm the stimulated node should be set (option "valueForStimulatedPoint" of FastMonodomainSolver)
   
 elif "Aliev_Panfilov_Razumova_2016_08_22" in variables.cellml_file :   # this is (3, "MultiPhysStrain", numerically more stable) in OpenCMISS, this only computes A1,A2,x1,x2 not the stress
   # parameters: I_stim, fiber stretch λ, fiber contraction velocity \dot{λ}
-  variables.parameters_used_as_intermediate = []
-  variables.parameters_used_as_constant = [0, 8, 9]    # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/velo = \dot{λ}
-  variables.parameters_initial_values = [0, 1, 0]      # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/velo = \dot{λ}
-  variables.nodal_stimulation_current = 40. 
-  variables.output_state_index = 0                     # use state 0, Aliev_Panfilov/V_m = Vm
-  variables.output_intermediate_index = []             # no intermediates are used
+  variables.mappings = {
+    ("parameter", 0):           ("constant", "Aliev_Panfilov/I_HH"),  # parameter 0 is constant 0 = I_stim
+    ("parameter", 1):           ("constant", "Razumova/l_hs"),        # parameter 1 is constant 8 = fiber stretch λ
+    ("parameter", 2):           ("constant", "Razumova/velo"),        # parameter 2 is constant 9 = fiber contraction velocity \dot{λ}
+    ("outputConnectorSlot", 0): ("state", "Aliev_Panfilov/V_m"),      # expose state 0 = Vm to the operator splitting
+    ("outputConnectorSlot", 1): ("intermediate", "Razumova/sigma"),   # expose intermediate 0 = γ to the operator splitting
+  }
+  variables.parameters_initial_values = [0, 1, 0]                     # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/velo = \dot{λ}
+  variables.nodal_stimulation_current = 40.                           # not used
+  variables.vm_value_stimulated = 40.                                 # to which value of Vm the stimulated node should be set (option "valueForStimulatedPoint" of FastMonodomainSolver)
   
 elif "Aliev_Panfilov_Razumova_Titin" in variables.cellml_file:   # this is (4, "Titin") in OpenCMISS
   # parameters: I_stim, fiber stretch λ, fiber contraction velocity \dot{λ}
-  variables.parameters_used_as_intermediate = []
-  variables.parameters_used_as_constant = [0, 11, 12]  # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/rel_velo = \dot{λ}
-  variables.parameters_initial_values = [0, 1, 0]      # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/rel_velo = \dot{λ}
-  variables.nodal_stimulation_current = 40. 
-  variables.output_state_index = 0                     # use state 0, Aliev_Panfilov/V_m = Vm
-  variables.output_intermediate_index = [4,5]          # Razumova/ActiveStress = γ, Razumova/Activation = α 
-  
+  variables.mappings = {
+    ("parameter", 0):           ("constant", "Aliev_Panfilov/I_HH"),  # parameter 0 is constant 0 = I_stim
+    ("parameter", 1):           ("constant", "Razumova/l_hs"),        # parameter 1 is constant 11 = fiber stretch λ
+    ("parameter", 2):           ("constant", "Razumova/rel_velo"),    # parameter 2 is constant 12 = fiber contraction velocity \dot{λ}
+    ("outputConnectorSlot", 0): ("state", "Aliev_Panfilov/V_m"),      # expose state 0 = Vm to the operator splitting
+    ("outputConnectorSlot", 1): ("intermediate", "Razumova/ActiveStress"),   # expose intermediate 4 = γ to the operator splitting
+    ("outputConnectorSlot", 2): ("intermediate", "Razumova/Activation"),     # expose intermediate 5 = α to the operator splitting
+  }
+  variables.parameters_initial_values = [0, 1, 0]                     # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/rel_velo = \dot{λ}
+  variables.nodal_stimulation_current = 40.                           # not used
+  variables.vm_value_stimulated = 40.                                 # to which value of Vm the stimulated node should be set (option "valueForStimulatedPoint" of FastMonodomainSolver)
 
 # callback functions
 # --------------------------
@@ -297,28 +311,28 @@ if rank_no == 0 and not variables.disable_firing_output:
   print("    Time  MU fibers")
   n_stimulated_mus = 0
   n_not_stimulated_mus = 0
-  variables.fibers = []
+  stimulated_fibers = []
   last_time = 0
   last_mu_no = first_stimulation_info[0][1]
   for stimulation_info in first_stimulation_info:
     mu_no = stimulation_info[1]
     fiber_no = stimulation_info[0]
     if mu_no == last_mu_no:
-      variables.fibers.append(fiber_no)
+      stimulated_fibers.append(fiber_no)
     else:
       if last_time is not None:
-        if len(variables.fibers) > 10:
-          print("{:8.2f} {:3} {} (only showing first 10, {} total)".format(last_time,last_mu_no,str(variables.fibers[0:10]),len(variables.fibers)))
+        if len(stimulated_fibers) > 10:
+          print("{:8.2f} {:3} {} (only showing first 10, {} total)".format(last_time,last_mu_no,str(stimulated_fibers[0:10]),len(stimulated_fibers)))
         else:
-          print("{:8.2f} {:3} {}".format(last_time,last_mu_no,str(variables.fibers)))
+          print("{:8.2f} {:3} {}".format(last_time,last_mu_no,str(stimulated_fibers)))
         n_stimulated_mus += 1
       else:
-        if len(variables.fibers) > 10:
-          print("  never stimulated: MU {:3}, fibers {} (only showing first 10, {} total)".format(last_mu_no,str(variables.fibers[0:10]),len(variables.fibers)))
+        if len(stimulated_fibers) > 10:
+          print("  never stimulated: MU {:3}, fibers {} (only showing first 10, {} total)".format(last_mu_no,str(stimulated_fibers[0:10]),len(stimulated_fibers)))
         else:
-          print("  never stimulated: MU {:3}, fibers {}".format(last_mu_no,str(variables.fibers)))
+          print("  never stimulated: MU {:3}, fibers {}".format(last_mu_no,str(stimulated_fibers)))
         n_not_stimulated_mus += 1
-      variables.fibers = [fiber_no]
+      stimulated_fibers = [fiber_no]
 
     last_time = stimulation_info[2]
     last_mu_no = mu_no

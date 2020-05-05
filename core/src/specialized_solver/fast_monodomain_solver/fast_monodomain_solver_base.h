@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Python.h>  // has to be the first included header
+#include <array>
 #include <Vc/Vc>
 
 #include "control/multiple_instances.h"
@@ -24,6 +25,7 @@ struct FiberPointBuffers
 };
 
 /** Specialize the default allocator for the FiberPointBuffers struct to use the aligned allocated provided by Vc.
+ *  This could also be done by Vc_DECLARE_ALLOCATOR(<class>), but not here because of the template parameter nStates.
  */
 namespace std
 {
@@ -43,7 +45,7 @@ public:
 /** The implementation of a monodomain solver as used in the fibers_emg example, number of states and intermediates is templated.
  *  This class contains all functionality except the reaction term. Deriving classes only need to implement compute0D.
   */
-template<int nStates, int nIntermediates>
+template<int nStates, int nIntermediates, typename DiffusionTimeSteppingScheme>
 class FastMonodomainSolverBase : public Runnable
 {
 public:
@@ -58,15 +60,6 @@ public:
     FiberFunctionSpace
   > CellmlAdapterType;
 
-  typedef TimeSteppingScheme::ImplicitEuler<          // fiber diffusion, note that implicit euler gives lower error in this case than crank nicolson
-    SpatialDiscretization::FiniteElementMethod<
-      Mesh::StructuredDeformableOfDimension<1>,
-      BasisFunction::LagrangeOfOrder<1>,
-      Quadrature::Gauss<2>,
-      Equation::Dynamic::IsotropicDiffusion
-    >
-  > ImplicitEuler;
-
   typedef Control::MultipleInstances<                       // fibers
     OperatorSplitting::Strang<
       Control::MultipleInstances<
@@ -75,7 +68,7 @@ public:
         >
       >,
       Control::MultipleInstances<
-        ImplicitEuler
+        DiffusionTimeSteppingScheme
       >
     >
   > NestedSolversType;
@@ -105,7 +98,7 @@ public:
   //! set a new time interval that will be simulated by next call to advanceTimeSpan.
   void setTimeSpan(double startTime, double endTime);
 
-  //! get the output connector data, to be used for a surrounding solver
+  //! get the output connector data, to be used for an enclosing solver
   std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
 
   //! get a reference to the nested solvers
@@ -188,7 +181,7 @@ protected:
   std::string durationLogKey0D_;                  //< duration log key for the 0D problem
   std::string durationLogKey1D_;                  //< duration log key for the 1D problem
 
-  OutputWriter::Manager outputWriterManager_;     ///< manager object holding all output writers
+  OutputWriter::Manager outputWriterManager_;     //< manager object holding all output writers
 
   std::vector<FiberData> fiberData_;  //< vector of fibers, the number of entries is the number of fibers to computed by the own rank (nFibersToCompute_)
   int nFibersToCompute_;              //< number of fibers where own rank is involved (>= n.fibers that are computed by own rank)
@@ -211,14 +204,15 @@ protected:
   std::vector<int> statesForTransfer_;          //< state no.s to transfer to other solvers within output connector data
   std::vector<int> intermediatesForTransfer_;   //< which intermediates should be transferred to other solvers as part of output connector data
   std::vector<double> parameters_;              //< parameters vector
+  double valueForStimulatedPoint_;              //< value to which the first state will be set if stimulated
 
   std::vector<std::vector<Vc::double_v>> fiberPointBuffersParameters_;        //< constant parameter values, changing parameters is not implemented
   std::vector<std::vector<Vc::double_v>> fiberPointBuffersIntermediatesForTransfer_;   //<  [fiberPointNo][intermediateToTransferNo], intermediate values to use for output connector data
 
-  void (*compute0DInstance_)(Vc::double_v [], std::vector<Vc::double_v> &, double, double, bool, bool, std::vector<Vc::double_v> &, const std::vector<int> &);   //< runtime-created and loaded function to compute one Heun step of the 0D problem
+  void (*compute0DInstance_)(Vc::double_v [], std::vector<Vc::double_v> &, double, double, bool, bool, std::vector<Vc::double_v> &, const std::vector<int> &, double);   //< runtime-created and loaded function to compute one Heun step of the 0D problem
   void (*initializeStates_)(Vc::double_v states[]);  //< runtime-created and loaded function to set all initial values for the states
 
-  bool initialized_;                  //< if initialize was already called
+  bool initialized_;                                 //< if initialize was already called
 };
 
 #include "specialized_solver/fast_monodomain_solver/fast_monodomain_solver_base.tpp"

@@ -2,6 +2,7 @@
 
 #include <Python.h>  // has to be the first included header
 #include <petscvec.h>
+#include <Vc/Vc>
 
 #include "field_variable/structured/02b_field_variable_data_structured_for_surface.h"
 #include "partition/partitioned_petsc_vec/partitioned_petsc_vec.h"
@@ -68,6 +69,9 @@ public:
   //! get the values corresponding to all element-local dofs for all components
   void getElementValues(element_no_t elementNoLocal, std::array<std::array<double,nComponents>,FunctionSpaceType::nDofsPerElement()> &values) const;
 
+  //! get the values corresponding to all element-local dofs for all components, vectorized version for Vc::double_v::size() elements at once
+  void getElementValues(Vc::int_v elementNoLocal, std::array<std::array<Vc::double_v,nComponents>,FunctionSpaceType::nDofsPerElement()> &values) const;
+
   //! for a specific component, get a single value from local dof no.
   double getValue(int componentNo, node_no_t dofLocalNo) const;
 
@@ -116,8 +120,17 @@ public:
   //! set a single dof (all components), after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
   void setValue(dof_no_t dofLocalNo, const std::array<double,nComponents> &value, InsertMode petscInsertMode=INSERT_VALUES);
 
+  //! set a single dof (all components), after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
+  void setValue(Vc::int_v dofLocalNo, const std::array<Vc::double_v,nComponents> &value, InsertMode petscInsertMode=INSERT_VALUES);
+
   //! set a single dof for a given component, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
   void setValue(int componentNo, dof_no_t dofLocalNo, double value, InsertMode petscInsertMode);
+
+  //! set a given component of Vc::double_v::size() dofs with the vectorized value, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
+  void setValue(int componentNo, Vc::int_v dofLocalNo, Vc::double_v value, InsertMode petscInsertMode=INSERT_VALUES);
+
+  //! set a given component of Vc::double_v::size() dofs with the same value
+  void setValue(int componentNo, Vc::int_v dofLocalNo, double value, InsertMode petscInsertMode=INSERT_VALUES);
 
   //! set values for the specified component for all local dofs, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
   void setValuesWithGhosts(int componentNo, const std::vector<double> &values, InsertMode petscInsertMode=INSERT_VALUES);

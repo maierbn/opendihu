@@ -106,7 +106,14 @@ prepareParameterValues()
 {
   this->parameters_->setRepresentationContiguous();
   PetscErrorCode ierr;
-  ierr = VecGetArray(this->parameters_->getValuesContiguous(), &parameterValues_); CHKERRV(ierr);
+  Vec contiguousVec = this->parameters_->getValuesContiguous();
+  ierr = VecGetArray(contiguousVec, &parameterValues_); CHKERRV(ierr);
+  
+#if 0
+  PetscInt nValues;
+  ierr = VecGetLocalSize(contiguousVec, &nValues); CHKERRV(ierr);
+  LOG(DEBUG) << "parameter values has " << nValues << " entries.";
+#endif
 }
 
 //! restore the parameterValues_ pointer, such that the field variable can be used again
@@ -169,7 +176,7 @@ getFieldVariablesForOutputWriter()
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> geometryField
     = std::make_shared<FieldVariable::FieldVariable<FunctionSpaceType,3>>(this->functionSpace_->geometryField());
 
-  return std::make_tuple(geometryField, intermediates_, states_);
+  return std::make_tuple(geometryField, intermediates_, states_, parameters_);
 }
 
 } // namespace

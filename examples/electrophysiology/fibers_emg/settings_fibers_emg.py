@@ -94,7 +94,7 @@ parser.add_argument('--rank_reordering',                     help='Enable rank r
 parser.add_argument('--use_elasticity',                      help='Enable linear elasticity', action="store_true")
 
 # parse command line arguments and assign values to variables module
-args = parser.parse_args(args=sys.argv[:-2], namespace=variables)
+args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
 
 # initialize some dependend variables
 if variables.n_subdomains is not None:
@@ -102,6 +102,36 @@ if variables.n_subdomains is not None:
   variables.n_subdomains_y = variables.n_subdomains[1]
   variables.n_subdomains_z = variables.n_subdomains[2]
   
+variables.n_subdomains = variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z
+
+# automatically initialize partitioning if it has not been set
+if n_ranks != variables.n_subdomains:
+  
+  # create all possible partitionings to the given number of ranks
+  optimal_value = n_ranks**(1/3)
+  possible_partitionings = []
+  for i in range(1,n_ranks+1):
+    for j in range(1,n_ranks+1):
+      if i*j <= n_ranks and n_ranks % (i*j) == 0:
+        k = (int)(n_ranks / (i*j))
+        performance = (k-optimal_value)**2 + (j-optimal_value)**2 + 1.1*(i-optimal_value)**2
+        possible_partitionings.append([i,j,k,performance])
+        
+  # if no possible partitioning was found
+  if len(possible_partitionings) == 0:
+    if rank_no == 0:
+      print("\n\n\033[0;31mError! Number of ranks {} does not match given partitioning {} x {} x {} = {} and no automatic partitioning could be done.\n\n\033[0m".format(n_ranks, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z))
+    quit()
+    
+  # select the partitioning with the lowest value of performance which is the best
+  lowest_performance = possible_partitionings[0][3]+1
+  for i in range(len(possible_partitionings)):
+    if possible_partitionings[i][3] < lowest_performance:
+      lowest_performance = possible_partitionings[i][3]
+      variables.n_subdomains_x = possible_partitionings[i][0]
+      variables.n_subdomains_y = possible_partitionings[i][1]
+      variables.n_subdomains_z = possible_partitionings[i][2]
+
 if variables.use_elasticity:
   variables.emg_solver_type = "cg"
   
@@ -142,6 +172,7 @@ config = {
   "Solvers": {
     "implicitSolver": {     # solver for the implicit timestepping scheme of the diffusion time step
       "relativeTolerance":  variables.diffusion_solver_reltol,
+      "absoluteTolerance":  1e-10,         # 1e-10 absolute tolerance of the residual    
       "maxIterations":      variables.diffusion_solver_maxit,
       "solverType":         variables.diffusion_solver_type,
       "preconditionerType": variables.diffusion_preconditioner_type,
@@ -150,6 +181,7 @@ config = {
     },
     "potentialFlowSolver": {# solver for the initial potential flow, that is needed to estimate fiber directions for the bidomain equation
       "relativeTolerance":  variables.potential_flow_solver_reltol,
+      "absoluteTolerance":  1e-10,         # 1e-10 absolute tolerance of the residual    
       "maxIterations":      variables.potential_flow_solver_maxit,
       "solverType":         variables.potential_flow_solver_type,
       "preconditionerType": variables.potential_flow_preconditioner_type,
@@ -158,6 +190,7 @@ config = {
     },
     "activationSolver": {   # solver for the static Bidomain equation and the EMG
       "relativeTolerance":  variables.emg_solver_reltol,
+      "absoluteTolerance":  1e-10,         # 1e-10 absolute tolerance of the residual    
       "maxIterations":      variables.emg_solver_maxit,
       "solverType":         variables.emg_solver_type,
       "preconditionerType": variables.emg_preconditioner_type,
@@ -165,7 +198,8 @@ config = {
       "dumpFormat":         "ascii",
     },
     "linearElasticitySolver": {   # solver for linear elasticity
-      "relativeTolerance":  1e-1,
+      "relativeTolerance":  1e-1
+      "absoluteTolerance":  1e-10,         # 1e-10 absolute tolerance of the residual    ,
       "maxIterations":      1e4,
       "solverType":         "gmres",
       "preconditionerType": "none",
@@ -279,6 +313,7 @@ config = {
                     "FiniteElementMethod" : {
                       "maxIterations":             1e4,
                       "relativeTolerance":         1e-10,
+                      "absoluteTolerance":         1e-10,         # 1e-10 absolute tolerance of the residual    
                       "inputMeshIsGlobal":         True,
                       "meshName":                  "MeshFiber_{}".format(fiber_no),
                       "prefactor":                 get_diffusion_prefactor(fiber_no, motor_unit_no),  # resolves to Conductivity / (Am * Cm)
@@ -307,6 +342,7 @@ config = {
       "firingTimesFile":          variables.firing_times_file,         # for FastMonodomainSolver, e.g. MU_firing_times_real.txt
       "onlyComputeIfHasBeenStimulated": True,                          # only compute fibers after they have been stimulated for the first time
       "disableComputationWhenStatesAreCloseToEquilibrium": True,       # optimization where states that are close to their equilibrium will not be computed again
+      "valueForStimulatedPoint":  variables.vm_value_stimulated,       # to which value of Vm the stimulated node should be set
     },
     "Term2": {        # Bidomain, EMG
       "StaticBidomainSolver": {       # version for fibers_emg

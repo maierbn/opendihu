@@ -12,6 +12,8 @@
 #include "output_writer/manager.h"
 #include "spatial_discretization/boundary_conditions/dirichlet_boundary_conditions.h"
 #include "spatial_discretization/boundary_conditions/neumann_boundary_conditions.h"
+#include "specialized_solver/solid_mechanics/hyperelasticity/pressure_function_space_creator.h"
+#include "specialized_solver/solid_mechanics/hyperelasticity/expression_helper.h"
 
 namespace SpatialDiscretization
 {
@@ -48,13 +50,13 @@ namespace SpatialDiscretization
  * The template parameter @param nDisplacementComponents refers to the number of non-pressure components
  * and decides if the static (3) or the dynamic (6) case should be computed.
   */
-template<typename Term = Equation::SolidMechanics::MooneyRivlinIncompressible3D, int nDisplacementComponents = 3>
+template<typename Term = Equation::SolidMechanics::MooneyRivlinIncompressible3D, typename MeshType = Mesh::StructuredDeformableOfDimension<3>, int nDisplacementComponents = 3>
 class HyperelasticitySolver :
   public Runnable
 {
 public:
-  typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunction::LagrangeOfOrder<2>> DisplacementsFunctionSpace;
-  typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunction::LagrangeOfOrder<1>> PressureFunctionSpace;
+  typedef FunctionSpace::FunctionSpace<MeshType, BasisFunction::LagrangeOfOrder<2>> DisplacementsFunctionSpace;
+  typedef FunctionSpace::FunctionSpace<MeshType, BasisFunction::LagrangeOfOrder<1>> PressureFunctionSpace;
   typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1>> FiberFunctionSpace;
 
   typedef Data::QuasiStaticHyperelasticity<PressureFunctionSpace,DisplacementsFunctionSpace,Term,Term> Data;
@@ -125,15 +127,16 @@ public:
   void debug();
 
   //! not relevant, as it does nothing. Contains a lot of commented out debugging code that is helpful to debug the analytic jacobian matrix
-  void materialTesting(const double pressure,                         //< [in] pressure value p
-                   const Tensor2<3> &rightCauchyGreen,                //< [in] C
-                   const Tensor2<3> &inverseRightCauchyGreen,         //< [in] C^{-1}
-                   const std::array<double,5> reducedInvariants,      //< [in] the reduced invariants Ibar_1, Ibar_2
-                   const double deformationGradientDeterminant,       //< [in] J = det(F)
-                   Vec3 fiberDirection,                               //< [in] a0, direction of fibers
-                   Tensor2<3> &fictitiousPK2Stress,                   //< [in] Sbar, the fictitious 2nd Piola-Kirchhoff stress tensor
-                   Tensor2<3> &pk2StressIsochoric                     //< [in] S_iso, the isochoric part of the 2nd Piola-Kirchhoff stress tensor
-                  );
+  template<typename double_v_t>
+  void materialTesting(const double_v_t pressure,                            //< [in] pressure value p
+                       const Tensor2<3,double_v_t> &rightCauchyGreen,        //< [in] C
+                       const Tensor2<3,double_v_t> &inverseRightCauchyGreen, //< [in] C^{-1}
+                       const std::array<double_v_t,5> reducedInvariants,     //< [in] the reduced invariants Ibar_1, Ibar_2
+                       const double_v_t deformationGradientDeterminant,      //< [in] J = det(F)
+                       VecD<3,double_v_t> fiberDirection,                    //< [in] a0, direction of fibers
+                       Tensor2<3,double_v_t> &fictitiousPK2Stress,           //< [in] Sbar, the fictitious 2nd Piola-Kirchhoff stress tensor
+                       Tensor2<3,double_v_t> &pk2StressIsochoric             //< [in] S_iso, the isochoric part of the 2nd Piola-Kirchhoff stress tensor
+                      );
 
   //! callback after each nonlinear iteration
   void monitorSolvingIteration(SNES snes, PetscInt its, PetscReal norm);
@@ -190,7 +193,8 @@ protected:
   void checkSolution(Vec x);
 
   //! compute δW_int, input is in this->data_.displacements() and this->data_.pressure(), output is in solverVariableResidual_
-  void materialComputeInternalVirtualWork();
+  //! @param communicateGhosts if startGhostManipulation() and finishGhostManipulation() will be called on combinedVecResidual_ inside this method, if set to false, you have to do it manually before and after this method
+  void materialComputeInternalVirtualWork(bool communicateGhosts=true);
 
   //! compute the nonlinear function F(x), x=solverVariableSolution_, F=solverVariableResidual_
   //! solverVariableResidual_[0-2] contains δW_int - δW_ext, solverVariableResidual_[3] contains int_Ω (J-1)*Ψ dV
@@ -201,58 +205,71 @@ protected:
   void materialComputeExternalVirtualWorkDead();
 
   //! add the acceleration term that is needed for the dynamic problem to δW_int - δW_ext,dead, and secondly, add the velocity/displacement equation 1/dt (u^(n+1) - u^(n)) - v^(n+1) - v^n = 0
-  void materialAddAccelerationTermAndVelocityEquation();
+  //! @param communicateGhosts if startGhostManipulation() and finishGhostManipulation() will be called on combinedVecResidual_ inside this method, if set to false, you have to do it manually before and after this method
+  void materialAddAccelerationTermAndVelocityEquation(bool communicateGhosts=true);
 
   //! compute the jacobian of the Newton scheme
   void materialComputeJacobian();
 
   //! compute the deformation gradient, F inside the current element at position xi, the value of F is still with respect to the reference configuration,
   //! the formula is F_ij = x_i,j = δ_ij + u_i,j
-  Tensor2<3> computeDeformationGradient(const std::array<Vec3,DisplacementsFunctionSpace::nDofsPerElement()> &displacements,
-                                        const Tensor2<3> &inverseJacobianMaterial,
-                                        const std::array<double, 3> xi);
+  template<typename double_v_t>
+  Tensor2<3,double_v_t> computeDeformationGradient(const std::array<VecD<3,double_v_t>,DisplacementsFunctionSpace::nDofsPerElement()> &displacements,
+                                                 const Tensor2<3,double_v_t> &inverseJacobianMaterial,
+                                                 const std::array<double,3> xi);
 
   //! compute the time velocity of the deformation gradient, Fdot inside the current element at position xi, the value of F is still with respect to the reference configuration,
   //! the formula is Fdot_ij = d/dt x_i,j = v_i,j
-  Tensor2<3> computeDeformationGradientTimeDerivative(const std::array<Vec3,DisplacementsFunctionSpace::nDofsPerElement()> &velocities,
-                                        const Tensor2<3> &inverseJacobianMaterial,
-                                        const std::array<double, 3> xi);
+  template<typename double_v_t>
+  Tensor2<3,double_v_t> computeDeformationGradientTimeDerivative(const std::array<VecD<3,double_v_t>,DisplacementsFunctionSpace::nDofsPerElement()> &velocities,
+                                                 const Tensor2<3,double_v_t> &inverseJacobianMaterial,
+                                                 const std::array<double,3> xi);
 
   //! compute the right Cauchy Green tensor, C = F^T*F. This is simply a matrix matrix multiplication
-  Tensor2<3> computeRightCauchyGreenTensor(const Tensor2<3> &deformationGradient);
+  template<typename double_v_t>
+  Tensor2<3,double_v_t> computeRightCauchyGreenTensor(const Tensor2<3,double_v_t> &deformationGradient);
 
   //! compute the invariants, [I1,I2,I3,I4,I5] where I1 = tr(C), I2 = 1/2 * (tr(C)^2 - tr(C^2)), I3 = det(C), I4 = a0•C0 a0, I5 = a0•C0^2 a0
-  std::array<double,5> computeInvariants(const Tensor2<3> &rightCauchyGreen, const double rightCauchyGreenDeterminant, const Vec3 fiberDirection);
+  template<typename double_v_t>
+  std::array<double_v_t,5> computeInvariants(const Tensor2<3,double_v_t> &rightCauchyGreen, const double_v_t rightCauchyGreenDeterminant,
+                                           const VecD<3,double_v_t> fiberDirection);
 
   //! compute the reduced invariants, [Ibar1, Ibar2]
-  std::array<double,5> computeReducedInvariants(const std::array<double,5> invariants, const double deformationGradientDeterminant);
+  template<typename double_v_t>
+  std::array<double_v_t,5> computeReducedInvariants(const std::array<double_v_t,5> invariants, const double_v_t deformationGradientDeterminant);
 
   //! compute the 2nd Piola-Kirchhoff pressure, S
-  Tensor2<3>
-  computePK2Stress(const double pressure,                           //< [in] pressure value p
-                   const Tensor2<3> &rightCauchyGreen,                //< [in] C
-                   const Tensor2<3> &inverseRightCauchyGreen,         //< [in] C^{-1}
-                   const std::array<double,5> reducedInvariants,      //< [in] the reduced invariants Ibar_1, Ibar_2
-                   const double deformationGradientDeterminant,       //< [in] J = det(F)
-                   Vec3 fiberDirection,                               //< [in] a0, direction of fibers
-                   Tensor2<3> &fictitiousPK2Stress,                   //< [out] Sbar, the fictitious 2nd Piola-Kirchhoff stress tensor
-                   Tensor2<3> &pk2StressIsochoric                     //< [out] S_iso, the isochoric part of the 2nd Piola-Kirchhoff stress tensor
+  template<typename double_v_t>
+  Tensor2<3,double_v_t>
+  computePK2Stress(const double_v_t pressure,                             //< [in] pressure value p
+                   const Tensor2<3,double_v_t> &rightCauchyGreen,         //< [in] C
+                   const Tensor2<3,double_v_t> &inverseRightCauchyGreen,  //< [in] C^{-1}
+                   const std::array<double_v_t,5> reducedInvariants,      //< [in] the reduced invariants Ibar_1, Ibar_2
+                   const double_v_t deformationGradientDeterminant,       //< [in] J = det(F)
+                   VecD<3,double_v_t> fiberDirection,                     //< [in] a0, direction of fibers
+                   Tensor2<3,double_v_t> &fictitiousPK2Stress,            //< [out] Sbar, the fictitious 2nd Piola-Kirchhoff stress tensor
+                   Tensor2<3,double_v_t> &pk2StressIsochoric              //< [out] S_iso, the isochoric part of the 2nd Piola-Kirchhoff stress tensor
                   );
 
   //! compute the PK2 stress and the deformation gradient at every node and set value in data, for output
   void computePK2StressField();
 
   //! compute the material elasticity tensor
-  void computeElasticityTensor(const Tensor2<3> &rightCauchyGreen,
-                               const Tensor2<3> &inverseRightCauchyGreen, double deformationGradientDeterminant, double pressure,
-                               std::array<double,5> reducedInvariants, const Tensor2<3> &fictitiousPK2Stress, const Tensor2<3> &pk2StressIsochoric,
-                               Vec3 fiberDirection, Tensor4<3> &fictitiousElasticityTensor, Tensor4<3> &elasticityTensorIso, Tensor4<3> &elasticityTensor);
+  template<typename double_v_t>
+  void computeElasticityTensor(const Tensor2<3,double_v_t> &rightCauchyGreen,
+                               const Tensor2<3,double_v_t> &inverseRightCauchyGreen, double_v_t deformationGradientDeterminant, double_v_t pressure,
+                               std::array<double_v_t,5> reducedInvariants, const Tensor2<3,double_v_t> &fictitiousPK2Stress,
+                               const Tensor2<3,double_v_t> &pk2StressIsochoric, VecD<3,double_v_t> fiberDirection,
+                               Tensor4<3,double_v_t> &fictitiousElasticityTensor, Tensor4<3,double_v_t> &elasticityTensorIso,
+                               Tensor4<3,double_v_t> &elasticityTensor);
 
   //! compute P : Sbar
-  Tensor2<3> computePSbar(const Tensor2<3> &fictitiousPK2Stress, const Tensor2<3> &rightCauchyGreen);
+  template<typename double_v_t>
+  Tensor2<3,double_v_t> computePSbar(const Tensor2<3,double_v_t> &fictitiousPK2Stress, const Tensor2<3,double_v_t> &rightCauchyGreen);
 
   //! compute the value of Sbar : C
-  double computeSbarC(const Tensor2<3> &Sbar, const Tensor2<3> &C);
+  template<typename double_v_t>
+  double computeSbarC(const Tensor2<3,double_v_t> &Sbar, const Tensor2<3,double_v_t> &C);
 
   DihuContext context_;                                     //< object that contains the python config for the current context and the global singletons meshManager and solverManager
 

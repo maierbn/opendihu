@@ -10,6 +10,7 @@
 #include "mesh/surface_mesh.h"
 #include "basis_function/lagrange.h"
 #include "function_space/function_space_generic.h"
+#include <Vc/Vc>
 
 namespace FunctionSpace
 {
@@ -17,12 +18,12 @@ namespace FunctionSpace
 /** FunctionSpace derives from the mesh and adds functionality to get dof and node numbers, phi and gradient.
  */
 template<typename MeshType,typename BasisFunctionType>
-class FunctionSpace : public FunctionSpaceXi<MeshType,BasisFunctionType>
+class FunctionSpace : public FunctionSpacePointInElement<MeshType,BasisFunctionType>
 {
 public:
 
   //! inherit constructor
-  using FunctionSpaceXi<MeshType,BasisFunctionType>::FunctionSpaceXi;
+  using FunctionSpacePointInElement<MeshType,BasisFunctionType>::FunctionSpacePointInElement;
 
   typedef MeshType Mesh;
   typedef BasisFunctionType BasisFunction;
@@ -32,6 +33,10 @@ public:
   //! return an array of all dof nos. of the element, including ghost dofs (local dof nos)
   std::array<dof_no_t,FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement()>
   getElementDofNosLocal(element_no_t elementNo) const;
+
+  //! vectorized version of getElementDofNosLocal
+  std::array<Vc::int_v,FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement()>
+  getElementDofNosLocal(Vc::int_v elementNo) const;
 
   //! fill a vector of all local dof nos. of the element, without ghost dofs
   void getElementDofNosLocalWithoutGhosts(element_no_t elementNo, std::vector<dof_no_t> &dofNosLocal) const;
@@ -44,12 +49,12 @@ public:
  */
 template<typename MeshType,int D,int order>
 class FunctionSpace<MeshType, BasisFunction::CompletePolynomialOfDimensionAndOrder<D,order>> :
-  public FunctionSpaceXi<MeshType, BasisFunction::CompletePolynomialOfDimensionAndOrder<MeshType::dim(),order>>
+  public FunctionSpacePointInElement<MeshType, BasisFunction::CompletePolynomialOfDimensionAndOrder<MeshType::dim(),order>>
 {
 public:
 
   //! inherit constructor
-  using FunctionSpaceXi<MeshType, BasisFunction::CompletePolynomialOfDimensionAndOrder<MeshType::dim(),order>>::FunctionSpaceXi;
+  using FunctionSpacePointInElement<MeshType, BasisFunction::CompletePolynomialOfDimensionAndOrder<MeshType::dim(),order>>::FunctionSpacePointInElement;
 
   typedef MeshType Mesh;
   typedef BasisFunction::CompletePolynomialOfDimensionAndOrder<D,order> BasisFunction;

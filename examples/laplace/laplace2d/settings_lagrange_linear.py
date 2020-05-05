@@ -28,6 +28,7 @@ config = {
     "solverType": "gmres",
     "preconditionerType": "none",
     "relativeTolerance": 1e-15,
+    "absoluteTolerance": 1e-10,         # 1e-10 absolute tolerance of the residual        
     "dumpFilename": "out/",
     "dumpFormat": "matlab",  # default, ascii, or matlab
     "maxIterations": 10000,

@@ -9,6 +9,7 @@ config = {
       "solverType": "gmres",          # the solver type, refer to PETSc documentation about implemented solvers and preconditioners (https://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/KSP/KSPType.html)
       "preconditionerType": "none",   # the preconditioner type (https://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/PC/PCType.html#PCType)
       "relativeTolerance": 1e-15,     # the relative tolerance of the linear solver
+      "absoluteTolerance": 1e-10,     # 1e-10 absolute tolerance of the residual    
       "maxIterations": 1e4,           # maximum number of iterations of the linear solver
       "dumpFilename": "",             # a filename to dump the system matrix and rhs in every timestep, "" to disable
       "dumpFormat": "matlab",         # the file format of the dump file, "matlab", "ascii" or "default"

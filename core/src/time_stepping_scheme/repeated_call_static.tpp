@@ -27,7 +27,7 @@ initialize()
   LOG(TRACE) << "RepeatedCallStatic::initialize";
 
   // add this solver to the solvers diagram
-  DihuContext::solverStructureVisualizer()->addSolver("RepeatedCall");
+  DihuContext::solverStructureVisualizer()->addSolver("RepeatedCall", true);   // hasInternalConnectionToFirstNestedSolver=true (the last argument) means output connector data is shared with the first subsolver
 
   // indicate in solverStructureVisualizer that now a child solver will be initialized
   DihuContext::solverStructureVisualizer()->beginChild();

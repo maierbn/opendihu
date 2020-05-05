@@ -62,14 +62,14 @@ for i,streamline in enumerate(fibres):
     directions[1].append(v[1])
     directions[2].append(v[2])
   
-  print "max distance: {}".format(max(distances))
-  print "min distance: {} at node {}".format(min_distance, pos_min_distance)
-  print distances[pos_min_distance-2:pos_min_distance+3]
-  print streamline[pos_min_distance-2:pos_min_distance+4]
+  print("max distance: {}".format(max(distances)))
+  print("min distance: {} at node {}".format(min_distance, pos_min_distance))
+  print(distances[pos_min_distance-2:pos_min_distance+3])
+  print(streamline[pos_min_distance-2:pos_min_distance+4])
   
   
-  print "mean distance: {}".format(np.mean(distances))
-  print "median distance: {}".format(sorted(distances)[(int)(len(distances)/2)])
+  print("mean distance: {}".format(np.mean(distances)))
+  print("median distance: {}".format(sorted(distances)[(int)(len(distances)/2)]))
   
   ax.plot([p[0] for p in streamline], [p[1] for p in streamline], [p[2] for p in streamline], 'o-')
   ax.set_title("fibre {}".format(i))

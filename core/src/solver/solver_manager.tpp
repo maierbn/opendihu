@@ -14,7 +14,7 @@ namespace Solver
 
 //! return previously created solver or create on the fly
 template<typename SolverType>
-std::shared_ptr<SolverType> Manager::solver(PythonConfig settings, MPI_Comm mpiCommunicator)
+std::shared_ptr<SolverType> Manager::solver(PythonConfig settings, MPI_Comm mpiCommunicator, std::string solverNameKey)
 {
   LOG(TRACE) << "Manager::solver";
 
@@ -25,9 +25,9 @@ std::shared_ptr<SolverType> Manager::solver(PythonConfig settings, MPI_Comm mpiC
   }
 
   // if solver has already been created earlier
-  if (settings.hasKey("solverName"))
+  if (settings.hasKey(solverNameKey))
   {
-    std::string solverName = settings.getOptionString("solverName", "");
+    std::string solverName = settings.getOptionString(solverNameKey, "");
     
     if (hasSolver(solverName, mpiCommunicator))
     {
@@ -42,7 +42,11 @@ std::shared_ptr<SolverType> Manager::solver(PythonConfig settings, MPI_Comm mpiC
       LOG(DEBUG) << "Solver configuration for \"" << solverName << "\" requested and found, create solver. "
         << "Type is " << StringUtility::demangle(typeid(SolverType).name()) << ".";
 
+      // create new solver object
       std::shared_ptr<SolverType> solver = std::make_shared<SolverType>(solverConfiguration_.at(solverName), mpiCommunicator, solverName);
+      
+      // initialize solver
+      solver->initialize();
 
       solvers_[mpiCommunicator][solverName] = solver;
 
@@ -82,7 +86,12 @@ std::shared_ptr<SolverType> Manager::solver(PythonConfig settings, MPI_Comm mpiC
   anonymousName << "anonymous" << numberAnonymousSolvers_++;
   LOG(DEBUG) << "Create new solver with type " << StringUtility::demangle(typeid(SolverType).name())
     << " and name \"" <<anonymousName.str() << "\".";
+  
+  // create new solver object
   std::shared_ptr<SolverType> solver = std::make_shared<SolverType>(settings, mpiCommunicator, anonymousName.str());
+  
+  // initialize solver
+  solver->initialize();
 
   solvers_[mpiCommunicator][anonymousName.str()] = solver;
 

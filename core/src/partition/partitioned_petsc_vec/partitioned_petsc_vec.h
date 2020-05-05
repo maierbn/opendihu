@@ -23,7 +23,8 @@ class FunctionSpace;
  * *
  *  This particular standard specialization is for non-structured meshes or no meshes and currently completely serial, 
  *  it is the placeholder as long as the partial specialization for unstructured meshes is not implemented. (It will never be)
- *  This means some of the methods here have no effect.
+ *  This means some of the methods here have no effect. Most likely you want to have a look at the partial specialization for
+ *  structured meshes, below this class.
  */
 template<typename FunctionSpaceType, int nComponents, typename = typename FunctionSpaceType::Mesh>
 class PartitionedPetscVec : 
@@ -102,13 +103,32 @@ protected:
   //! create the values vectors
   void createVector();
   
-  std::array<Vec,nComponents> values_;  ///< the (serial) Petsc vectors that contains all the data, one for each component
-  Vec valuesContiguous_ = PETSC_NULL;   ///< global vector that has all values of the components concatenated, i.e. in a "struct of arrays" memory layout
-  Vec vectorNestedGlobal_;       ///< a VecNest object containing the global values, only in used if nComponents > 1
+  std::array<Vec,nComponents> values_;  //< the (serial) Petsc vectors that contains all the data, one for each component
+  Vec valuesContiguous_ = PETSC_NULL;   //< global vector that has all values of the components concatenated, i.e. in a "struct of arrays" memory layout
+  Vec vectorNestedGlobal_;       //< a VecNest object containing the global values, only in used if nComponents > 1
 };
 
-/** This is the partial specialization for structured meshes.
- *  An own DMDA object is generated, separately from the one in MeshPartition. This object now refers to nodes (as opposite the one of MeshPartition which refers to elements). 
+/** This is the partial specialization of Petsc Vec's on a mesh for structured meshes.
+ *  This class represents the values of a field which is defined on the domain discretized by a mesh and basis function type.
+ *  The field can be scalar or have multiple components.
+ *  This means that for every degree of freedom (=node for Lagrange ansatz functions) its stores as many values as components.
+ *
+ *  This class wraps the normal Petsc Vec and mainly wraps the setValues and getValues functions.
+ *  There is one Vec per component.
+ *  There is a local and a global version of the vecs, vectorLocal_ and vectorGlobal_. The local vectors only store the values
+ *  that are on the local domain. The global vector also only stores the local values but additionally the ghost values.
+ *  The global vector is the one that should be used in any computation with Petsc functions on the data. The local vectors
+ *  will internally be used when setValues and getValues are called with local indices, whereas the global vector needs global indices.
+ *  Petsc does the data transfer between the local and the global vector and fills and accumulates the correct ghost values.
+ *
+ *  Only one of the local or global vector contain the currently valid data at any time, because they even share memory.
+ *  Which one this is is save in this->currentRepresentation_ (read the comments there). The transformations between representations
+ *  is done internally and should not be cared about from the outside of this class
+ *  (except you have to properly call startGhostManipulation() and finishGhostManipulation()).
+ *
+ *  valuesGlobal(componentNo) returns the global Petsc Vec of the given component. valuesGlobal() returns a nested Petsc Vec of all components.
+ *
+ *  Internally, an own DMDA object is generated, separately from the one in MeshPartition. This object now refers to nodes (as opposite the one of MeshPartition which refers to elements).
  *  This object is created such that it matches the partition given by the meshPartition.
  */
 template<typename MeshType, typename BasisFunctionType, int nComponents>
@@ -225,22 +245,22 @@ protected:
   //! create a distributed Petsc vector, according to partition
   void createVector();
   
-  std::shared_ptr<DM> dm_;    ///< PETSc DMDA object that stores topology information and everything needed for communication of ghost values
-  bool ghostManipulationStarted_;   ///< if startGhostManipulation() was called but not yet finishGhostManipulation(). This indicates that finishGhostManipulation() can be called next without giving an error.
+  std::shared_ptr<DM> dm_;                    //< PETSc DMDA object that stores topology information and everything needed for communication of ghost values
+  bool ghostManipulationStarted_;             //< if startGhostManipulation() was called but not yet finishGhostManipulation(). This indicates that finishGhostManipulation() can be called next without giving an error.
   
-  std::array<Vec,nComponents> vectorLocal_;   ///< local vector that holds the local Vecs, is filled by startGhostManipulation and can the be manipulated, afterwards the results need to get copied back by finishGhostManipulation
-  std::array<Vec,nComponents> vectorGlobal_;  ///< the global distributed vector that holds the actual data
-  Vec valuesContiguous_ = PETSC_NULL;   ///< global vector that has all values of the components concatenated, i.e. in a "struct of arrays" memory layout. This is never used if nComponents = 1
+  std::array<Vec,nComponents> vectorLocal_;   //< local vector that holds the local Vecs, is filled by startGhostManipulation and can the be manipulated, afterwards the results need to get copied back by finishGhostManipulation
+  std::array<Vec,nComponents> vectorGlobal_;  //< the global distributed vector that holds the actual data
+  Vec valuesContiguous_ = PETSC_NULL;         //< global vector that has all values of the components concatenated, i.e. in a "struct of arrays" memory layout. This is never used if nComponents = 1
 
-  std::vector<PetscInt> temporaryIndicesVector_;   ///< a temporary vector that will be used whenever indices are to be computed, this avoids creating and deleting local vectors which is time-consuming (found out by perftools on hazelhen)
+  std::vector<PetscInt> temporaryIndicesVector_;   //< a temporary vector that will be used whenever indices are to be computed, this avoids creating and deleting local vectors which is time-consuming (found out by perftools on hazelhen)
 
-  const double *extractedData_ = nullptr;   ///< the data array of valuesContiguous_, used when a component is extracted by extractComponentShared, then the representation is set to invalid
-  int nExtractedComponents_ = 0;            ///< how often extractComponentsShared has been called on different components, the representation is only then set from invalid back to contiguous when this pointer reached 0 again
+  const double *extractedData_ = nullptr;     //< the data array of valuesContiguous_, used when a component is extracted by extractComponentShared, then the representation is set to invalid
+  int nExtractedComponents_ = 0;              //< how often extractComponentsShared has been called on different components, the representation is only then set from invalid back to contiguous when this pointer reached 0 again
 
-  std::vector<double> savedValues_;   ///< temporary storage of values that would be overwritten by ghost value operations of the extracted field variable
-  Vec savedVectorLocal_;        ///< when this PartitionedPetscVec has nComponents=1 and extractComponentShared is called, there is no valuesContiguous_ vector in use (because it is only one component anyway, replacement is globalVector_[0]). Then the extracted field variable gets copies of the own vectorLocal_ and vectorGlobal_ set, the original pointer vectorLocal_ and vectorGlobal_ are saved in this variable and reset when restoreValuesContiguous is called.
-  Vec savedVectorGlobal_;        ///< when this PartitionedPetscVec has nComponents=1 and extractComponentShared is called, there is no valuesContiguous_ vector in use (because it is only one component anyway, replacement is globalVector_[0]). Then the extracted field variable gets copies of the own vectorLocal_ and vectorGlobal_ set, the original pointer vectorLocal_ and vectorGlobal_ are saved in this variable and reset when restoreValuesContiguous is called.
-  Vec vectorNestedGlobal_;       ///< a VecNest object containing the global values, only in used if nComponents > 1
+  std::vector<double> savedValues_;           //< temporary storage of values that would be overwritten by ghost value operations of the extracted field variable
+  Vec savedVectorLocal_;                      //< when this PartitionedPetscVec has nComponents=1 and extractComponentShared is called, there is no valuesContiguous_ vector in use (because it is only one component anyway, replacement is globalVector_[0]). Then the extracted field variable gets copies of the own vectorLocal_ and vectorGlobal_ set, the original pointer vectorLocal_ and vectorGlobal_ are saved in this variable and reset when restoreValuesContiguous is called.
+  Vec savedVectorGlobal_;                     //< when this PartitionedPetscVec has nComponents=1 and extractComponentShared is called, there is no valuesContiguous_ vector in use (because it is only one component anyway, replacement is globalVector_[0]). Then the extracted field variable gets copies of the own vectorLocal_ and vectorGlobal_ set, the original pointer vectorLocal_ and vectorGlobal_ are saved in this variable and reset when restoreValuesContiguous is called.
+  Vec vectorNestedGlobal_;                    //< a VecNest object containing the global values, only in used if nComponents > 1
 };
 
 /** This is a partial specialization for structured meshes with multiple components.

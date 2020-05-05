@@ -29,7 +29,7 @@ innervation_zone_width = 0.  # cm
 
 megamol_output_timestep = 5e-2    # timestep frequency for megamol
 
-
+# default parameter values
 class Variables:
     scenario_name = ''
     n_subdomains_z = 1
@@ -79,7 +79,7 @@ parser.add_argument('--output_timestep',                     help='The timestep 
 parser.add_argument('--dt_0D',                               help='The timestep for the 0D model.',              type=float, default=variables.dt_0D)
 parser.add_argument('--dt_1D',                               help='The timestep for the 1D model.',              type=float, default=variables.dt_1D)
 parser.add_argument('--dt_splitting',                        help='The timestep for the splitting.',             type=float, default=variables.dt_splitting)
-args = parser.parse_args(args=sys.argv[:-2], namespace=variables)
+args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
 if variables.n_subdomains is not None:
     variables.n_subdomains_x = variables.n_subdomains[0]
     variables.n_subdomains_y = variables.n_subdomains[1]
@@ -280,6 +280,7 @@ def get_instance_config(i):
           "FiniteElementMethod" : {
             "maxIterations": 1e4,
             "relativeTolerance": 1e-10,
+            "absoluteTolerance": 1e-10,         # 1e-10 absolute tolerance of the residual                
             "inputMeshIsGlobal": True,
             "meshName": "MeshFiber"+str(i),
             "prefactor": Conductivity/(Am*Cm),
@@ -436,11 +437,11 @@ config = {
   "Meshes": meshes,
   "Solvers": {
     "implicitSolver": {
-      "maxIterations": variables.diffusion_solver_maxit,
-      "relativeTolerance": variables.diffusion_solver_reltol,
-      "solverType": variables.diffusion_solver_type,
+      "maxIterations":      variables.diffusion_solver_maxit,
+      "relativeTolerance":  variables.diffusion_solver_reltol,
+      "solverType":         variables.diffusion_solver_type,
       "preconditionerType": variables.diffusion_preconditioner_type,
-      "dumpFormat": "default",
+      "dumpFormat":         "default",
       "dumpFilename": "",
     }
   },

@@ -141,6 +141,12 @@ bool PythonConfig::hasKey(std::string key) const
   return PythonUtility::hasKey(this->pythonConfig_, key);
 }
 
+//! checks if the settings contain the given key, no warning is printed
+bool PythonConfig::isEmpty(std::string key) const
+{
+  return PythonUtility::isEmpty(this->pythonConfig_, key);
+}
+
 //! return all keys of the current dict as vector of strings
 void PythonConfig::getKeys(std::vector<std::string> &keys)
 {

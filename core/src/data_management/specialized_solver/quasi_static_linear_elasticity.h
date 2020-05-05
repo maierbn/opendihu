@@ -68,10 +68,10 @@ public:
     std::declval<typename DataLinearElasticityType::FieldVariablesForOutputWriter>(),
     std::declval<std::tuple<
       std::shared_ptr<FieldVariableType>,              // activation
-      std::shared_ptr<StressFieldVariableType>,         // active stress
-      std::shared_ptr<StressFieldVariableType>,         // strain
-      std::shared_ptr<VectorFieldVariableType>,      // rightHandSideActive_
-      std::shared_ptr<VectorFieldVariableType>,      // fiberDirection
+      std::shared_ptr<StressFieldVariableType>,        // active stress
+      std::shared_ptr<StressFieldVariableType>,        // strain
+      std::shared_ptr<VectorFieldVariableType>,        // rightHandSideActive_
+      std::shared_ptr<VectorFieldVariableType>,        // fiberDirection
       std::shared_ptr<FieldVariableType>               // solution of laplace potential flow
     >>()))
    FieldVariablesForOutputWriter;
@@ -84,16 +84,16 @@ private:
   //! initializes the vectors with size
   void createPetscObjects() override;
 
-  std::shared_ptr<DataLinearElasticityType> dataLinearElasticity_;   ///< data object of the linear elasticity data class
+  std::shared_ptr<DataLinearElasticityType> dataLinearElasticity_;   //< data object of the linear elasticity data class
 
-  std::shared_ptr<FieldVariableType> activation_; ///< field variable of the activation factor field
-  std::shared_ptr<StressFieldVariableType> activeStress_; ///< field variable of the active stress in the muscle
-  std::shared_ptr<StressFieldVariableType> strain_; ///< field variable of the strain in the muscle
-  std::shared_ptr<VectorFieldVariableType> rightHandSideActive_; ///< field variable of the active stress part of rhs, f_active
-  std::shared_ptr<FieldVariableType> flowPotential_; ///< solution of the laplace flow
-  std::shared_ptr<VectorFieldVariableType> fiberDirection_; ///< the direction of fibers
+  std::shared_ptr<FieldVariableType> activation_;                 //< field variable of the activation factor field
+  std::shared_ptr<StressFieldVariableType> activeStress_;         //< field variable of the active stress in the muscle
+  std::shared_ptr<StressFieldVariableType> strain_;               //< field variable of the strain in the muscle
+  std::shared_ptr<VectorFieldVariableType> rightHandSideActive_;  //< field variable of the active stress part of rhs, f_active
+  std::shared_ptr<FieldVariableType> flowPotential_;              //< solution of the laplace flow
+  std::shared_ptr<VectorFieldVariableType> fiberDirection_;       //< the direction of fibers
 
-  std::shared_ptr<OutputConnectorDataType> outputConnectorData_;   //< the field variables that are used for transfer to other solvers
+  std::shared_ptr<OutputConnectorDataType> outputConnectorData_;  //< the field variables that are used for transfer to other solvers
 
 };
 

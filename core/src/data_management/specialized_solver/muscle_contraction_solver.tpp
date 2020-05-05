@@ -63,13 +63,19 @@ setFieldVariables(std::shared_ptr<MuscleContractionSolver<FunctionSpaceType>::Ve
                   std::shared_ptr<MuscleContractionSolver<FunctionSpaceType>::VectorFieldVariableType> velocities,
                   std::shared_ptr<MuscleContractionSolver<FunctionSpaceType>::StressFieldVariableType> activePK2Stress,
                   std::shared_ptr<MuscleContractionSolver<FunctionSpaceType>::StressFieldVariableType> pK2Stress,
-                  std::shared_ptr<MuscleContractionSolver<FunctionSpaceType>::VectorFieldVariableType> fiberDirection)
+                  std::shared_ptr<MuscleContractionSolver<FunctionSpaceType>::VectorFieldVariableType> fiberDirection,
+                  bool setGeometryFieldForTransfer)
 {
   displacements_ = displacements;
   velocities_ = velocities;
   activePK2Stress_ = activePK2Stress;
   pK2Stress_ = pK2Stress;
   fiberDirection_ = fiberDirection;
+
+  if (setGeometryFieldForTransfer)
+  {
+    outputConnectorData_->addGeometryField(std::make_shared<typename FunctionSpaceType::GeometryFieldType>(this->displacements_->functionSpace()->geometryField()));
+  }
 }
 
 template<typename FunctionSpaceType>
@@ -113,14 +119,14 @@ getFieldVariablesForOutputWriter()
 
   return std::make_tuple(
     geometryField,
-    this->lambda_,
-    this->lambdaDot_,
-    this->gamma_,
+    this->lambda_,           //< relative fiber stretch
+    this->lambdaDot_,        //< contraction velocity
+    this->gamma_,            //< gamma, the homogenized stress
     this->displacements_,    //< u, the displacements
     this->velocities_,       //< v, the velocities
     this->activePK2Stress_,  //< the symmetric PK2 stress tensor of the active contribution in Voigt notation
     this->pK2Stress_,        //< the symmetric PK2 stress tensor in Voigt notation
-    this->fiberDirection_   //< direction of fibers at current point
+    this->fiberDirection_    //< direction of fibers at current point
 
   );
 }

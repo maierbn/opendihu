@@ -14,12 +14,12 @@ template<typename FunctionSpaceType, int nComponents>
 class BoundaryConditionsBase
 {
 public:
-  typedef std::array<double,nComponents> ValueType;   ///< the type of value of one boundary condition
+  typedef std::array<double,nComponents> ValueType;   //< the type of value of one boundary condition
 
   struct ElementWithNodes
   {
-    element_no_t elementNoLocal;   ///< local element no
-    std::vector<std::pair<int,ValueType>> elementalDofIndex;   ///< the element-local dof index and the value of the boundary condition on this dof
+    element_no_t elementNoLocal;   //< local element no
+    std::vector<std::pair<int,ValueType>> elementalDofIndex;   //< the element-local dof index and the value of the boundary condition on this dof
   };
 
   struct BoundaryConditionsForComponent
@@ -66,14 +66,14 @@ protected:
   //! create the boundaryConditionsByComponent_ data structure from boundaryConditionNonGhostDofLocalNos_ and boundaryConditionValues_
   void generateBoundaryConditionsByComponent();
 
-  PythonConfig specificSettings_;            ///< the python config that contains the boundary conditions
-  std::shared_ptr<FunctionSpaceType> functionSpace_;     ///< function space for which boundary conditions are specified
+  PythonConfig specificSettings_;            //< the python config that contains the boundary conditions
+  std::shared_ptr<FunctionSpaceType> functionSpace_;     //< function space for which boundary conditions are specified
 
-  std::vector<ElementWithNodes> boundaryConditionElements_;   ///< nodes grouped by elements on which boundary conditions are specified, this includes ghost nodes
-  std::vector<dof_no_t> boundaryConditionNonGhostDofLocalNos_;        ///< vector of all local (non-ghost) boundary condition dofs, sorted
-  std::vector<ValueType> boundaryConditionValues_;               ///< vector of the local (non-ghost) prescribed values, related to boundaryConditionNonGhostDofLocalNos_
+  std::vector<ElementWithNodes> boundaryConditionElements_;   //< nodes grouped by elements on which boundary conditions are specified, this includes ghost nodes
+  std::vector<dof_no_t> boundaryConditionNonGhostDofLocalNos_;        //< vector of all local (non-ghost) boundary condition dofs, sorted
+  std::vector<ValueType> boundaryConditionValues_;               //< vector of the local (non-ghost) prescribed values, related to boundaryConditionNonGhostDofLocalNos_
 
-  std::array<BoundaryConditionsForComponent, nComponents> boundaryConditionsByComponent_;   ///< the local boundary condition data organized by component, entries are sorted by dofNoLocal, without ghost dofs
+  std::array<BoundaryConditionsForComponent, nComponents> boundaryConditionsByComponent_;   //< the local boundary condition data organized by component, entries are sorted by dofNoLocal, without ghost dofs
 
 };
 

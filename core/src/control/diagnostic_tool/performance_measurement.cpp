@@ -111,6 +111,17 @@ std::string PerformanceMeasurement::getParameter(std::string key)
   return parameters_[key];
 }
 
+double PerformanceMeasurement::getDuration(std::string measurementName, bool accumulated)
+{
+  if (measurements_.find(measurementName) == measurements_.end())
+    return 0.0;
+
+  if (accumulated || measurements_[measurementName].nTimeSpans <= 1)
+    return measurements_[measurementName].totalDuration;
+  else 
+    return measurements_[measurementName].totalDuration / measurements_[measurementName].nTimeSpans;
+}
+
 template<>
 void PerformanceMeasurement::measureError<double>(std::string name, double differenceVector)
 {
@@ -141,89 +152,102 @@ void PerformanceMeasurement::countNumber(std::string name, int number)
   iter->second += number;
 }
 
+void PerformanceMeasurement::getMemoryConsumption(int &pageSize, long long &virtualMemorySize, long long &residentSetSize, long long &dataSize, double &totalUserTime)
+{
+  // adapted from https://stackoverflow.com/questions/669438/how-to-get-memory-usage-at-runtime-using-c
+
+  std::string pid, comm, state, ppid, pgrp, session, ttyNr, tpgid, flags, minflt, cminflt, majflt, cmajflt, stime, cutime, cstime,
+    priority, nice, o, itrealvalue, starttime, size, resident, shared, text, none;
+
+  std::ifstream stream("/proc/self/stat", std::ios_base::in);
+
+  unsigned long vsize;
+  long long rss;
+  long long utime;
+  long long data;
+
+  // parse entries in /proc/self/stat
+  stream >> pid >> comm >> state >> ppid >> pgrp >> session >> ttyNr
+              >> tpgid >> flags >> minflt >> cminflt >> majflt >> cmajflt
+              >> utime >> stime >> cutime >> cstime >> priority >> nice
+              >> o >> itrealvalue >> starttime >> vsize >> rss;
+
+  stream.close();
+  stream.open("/proc/self/statm", std::ios_base::in);
+
+  // parse entries in /proc/self/statm
+  stream >> size >> resident >> shared >> text >> none >> data;
+  stream.close();
+
+  // compute final values
+  pageSize = getpagesize(); // page size in KB
+  virtualMemorySize = vsize;
+  residentSetSize = rss * pageSize;
+  dataSize = data * pageSize;
+
+  totalUserTime = (double)utime / sysconf(_SC_CLK_TCK);
+
+  // http://man7.org/linux/man-pages/man5/proc.5.html
+  /** Resident Set Size: number of pages the process has
+                      in real memory.  This is just the pages which count
+                      toward text, data, or stack space.  This does not
+                      include pages which have not been demand-loaded in,
+                      or which are swapped out.
+  */
+
+}
+
 void PerformanceMeasurement::parseStatusInformation()
 {
-   // adapted from https://stackoverflow.com/questions/669438/how-to-get-memory-usage-at-runtime-using-c
+  // get current memory consumption
+  int pageSize;
+  long long virtualMemorySize;
+  long long residentSetSize;
+  long long dataSize;
+  double totalUsertime;
 
-   std::string pid, comm, state, ppid, pgrp, session, ttyNr, tpgid, flags, minflt, cminflt, majflt, cmajflt, stime, cutime, cstime,
-     priority, nice, o, itrealvalue, starttime, size, resident, shared, text, none;
+  getMemoryConsumption(pageSize, virtualMemorySize, residentSetSize, dataSize, totalUsertime);
 
-   std::ifstream stream("/proc/self/stat", std::ios_base::in);
+  // store parameters
+  PerformanceMeasurement::setParameter("memoryPage", pageSize);
+  PerformanceMeasurement::setParameter("memoryVirtual", virtualMemorySize);
+  PerformanceMeasurement::setParameter("memoryResidentSet", residentSetSize);
+  PerformanceMeasurement::setParameter("memoryData", dataSize);
+  PerformanceMeasurement::setParameter("totalUsertime", totalUsertime);
 
-   unsigned long vsize;
-   long long rss;
-   long long utime;
-   long long data;
+  // format total user time in readable format for output
+  int minTotal = int(totalUsertime/60);
+  int hTotal = int(totalUsertime/3600);
+  int d = int(totalUsertime/(3600*24));
+  int h = hTotal - d*24;
+  int min = minTotal - h*60 - d*24*60;
+  double sDouble = totalUsertime - minTotal*60;
+  int s = int(sDouble);
+  sDouble -= s;
 
-   // parse entries in /proc/self/stat
-   stream >> pid >> comm >> state >> ppid >> pgrp >> session >> ttyNr
-               >> tpgid >> flags >> minflt >> cminflt >> majflt >> cmajflt
-               >> utime >> stime >> cutime >> cstime >> priority >> nice
-               >> o >> itrealvalue >> starttime >> vsize >> rss;
+  std::stringstream message;
+  if (d != 0)
+    message << d << "d ";
+  if (h != 0)
+    message << h << ":";
+  if (min != 0)
+  {
+    std::stringstream secondsFraction;
+    secondsFraction << std::setprecision(4) << sDouble;
+    if (h == 0)
+      message << min;
+    else
+      message << std::setw(2) << std::setfill('0') << min;
 
-   stream.close();
-   stream.open("/proc/self/statm", std::ios_base::in);
-
-   // parse entries in /proc/self/statm
-   stream >> size >> resident >> shared >> text >> none >> data;
-   stream.close();
-
-   // compute final values
-   int pageSize = getpagesize(); // page size in KB
-   long long virtualMemorySize = vsize;
-   long long residentSetSize = rss * pageSize;
-   long long dataSize = data * pageSize;
-
-   double totalUsertime = (double)utime / sysconf(_SC_CLK_TCK);
-
-   // http://man7.org/linux/man-pages/man5/proc.5.html
-   /** Resident Set Size: number of pages the process has
-                        in real memory.  This is just the pages which count
-                        toward text, data, or stack space.  This does not
-                        include pages which have not been demand-loaded in,
-                        or which are swapped out.
-   */
-
-   // store parameters
-   PerformanceMeasurement::setParameter("memoryPage", pageSize);
-   PerformanceMeasurement::setParameter("memoryVirtual", virtualMemorySize);
-   PerformanceMeasurement::setParameter("memoryResidentSet", residentSetSize);
-   PerformanceMeasurement::setParameter("memoryData", dataSize);
-   PerformanceMeasurement::setParameter("totalUsertime", totalUsertime);
-
-   // format total user time in readable format for output
-   int minTotal = int(totalUsertime/60);
-   int hTotal = int(totalUsertime/3600);
-   int d = int(totalUsertime/(3600*24));
-   int h = hTotal - d*24;
-   int min = minTotal - h*60 - d*24*60;
-   double sDouble = totalUsertime - minTotal*60;
-   int s = int(sDouble);
-   sDouble -= s;
-
-   std::stringstream message;
-   if (d != 0)
-     message << d << "d ";
-   if (h != 0)
-     message << h << ":";
-   if (min != 0)
-   {
-     std::stringstream secondsFraction;
-     secondsFraction << std::setprecision(4) << sDouble;
-     if (h == 0)
-       message << min;
-     else
-       message << std::setw(2) << std::setfill('0') << min;
-
-     message << ":" << std::setw(2) << std::setfill('0') << s << secondsFraction.str().substr(1);
-     if (h == 0)
-       message << " min";
-   }
-   else
-   {
-     message << s << "s";
-   }
-   LOG(INFO) << "Total user time: " << message.str();
+    message << ":" << std::setw(2) << std::setfill('0') << s << secondsFraction.str().substr(1);
+    if (h == 0)
+      message << " min";
+  }
+  else
+  {
+    message << s << "s";
+  }
+  LOG(INFO) << "Total user time: " << message.str();
 }
 
 } // namespace

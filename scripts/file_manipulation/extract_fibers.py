@@ -23,6 +23,9 @@ n_fibers_x_extract = 1
 if len(sys.argv) >= 3:
   input_filename = sys.argv[1]
   output_filename = sys.argv[2]
+else:
+  print("usage: extract_fibers.py <input filename> <output filename> <n_fibers_x target> [<offset>]")
+  quit()
 
 if len(sys.argv) >= 4:
   n_fibers_x_extract = (int)(sys.argv[3])
@@ -31,7 +34,7 @@ offset = -1  # -1 means compute
 if len(sys.argv) >= 5:
   offset = (int)(sys.argv[4])
   
-print("{} -> {}".format(input_filename, output_filename))
+print("input filename: {}\noutput filename: {}".format(input_filename, output_filename))
 
 with open(input_filename, "rb") as infile:
   
@@ -119,23 +122,30 @@ with open(input_filename, "rb") as infile:
      
     # write parameter[0]: n_fibers_total
     n_fibers = n_fibers_x_extract * n_fibers_x_extract
-    outfile.seek(32+4)
     outfile.write(struct.pack('i', n_fibers))
     
     # write parameter[1]: n_points_whole_fiber
-    outfile.seek(32+2*4)
     outfile.write(struct.pack('i', n_points_whole_fiber))
     
     # write parameter[2]: n_fibers_x_extract
-    outfile.seek(32+3*4)
     outfile.write(struct.pack('i', n_fibers_x_extract))
     
     # write parameter[3]: n_fibers_x_extract
-    outfile.seek(32+4*4)
     outfile.write(struct.pack('i', n_fibers_x_extract))
     
-    # write timestamp
-    outfile.seek(32+9*4)
+    # write parameter[4]:
+    outfile.write(struct.pack('i', 0))
+    
+    # write parameter[5]: n_ranks
+    outfile.write(struct.pack('i', 1))
+    
+    # write parameter[6]: n_ranks_z
+    outfile.write(struct.pack('i', 1))
+    
+    # write parameter[7]: n_fibers_per_rank
+    outfile.write(struct.pack('i', 1))
+    
+    # write parameters[8]: timestamp
     outfile.write(struct.pack('i', (int)(time.time())))
     
     # write fiber

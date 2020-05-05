@@ -69,7 +69,7 @@ private:
   int nFieldVariablesTerm1Vector2_; //< the number of slots of term 1 in vector 2
   int nFieldVariablesTerm2Vector1_; //< the number of slots of term 2 in vector 1
   int nFieldVariablesTerm2Vector2_; //< the number of slots of term 2 in vector 2
-  bool transferDirectionTerm1To2_;   //< if the current mapping is from term 1 to 2
+  bool transferDirectionTerm1To2_;  //< if the current mapping is from term 1 to 2
 
   struct Result
   {
@@ -82,7 +82,7 @@ private:
   std::array<std::array<std::vector<Result>,2>,2> slotInformation_;   // [transferDirectionTerm1To2_][fromVectorNo][fromVectorIndex], look-up table of getSlotInformation
   bool slotInformationInitialized_;          //< if slotInformation has been initialized
 
-  PythonConfig settings_;         //< the settings object
+  PythonConfig settings_;                    //< the settings object
 };
 
 #include "output_connector_data_transfer/output_connection.tpp"

@@ -22,7 +22,9 @@ from svg.path import parse_path
 from svg.path import Path, Line, Arc, CubicBezier, QuadraticBezier
 
 def get_intersecting_line_segment(triangle, z_value):
-  """ return the line segment [pa, pb] of the triangle with z_value"""
+  """ Intersect a triangle with a z plane. 
+      For a triangle T given by points p1,p2,p3 ∈ ℝ^3 and a value z, determine the the set of points P = T ∩ {p | p_z=z},
+      i.e., the line segment [pa, pb] that lies in the triangle T and on the z plane z=z_value """
 
   # barycentric coordinates
   # x(xi1,xi2) = (1-xi1-xi2)*x^{1} + xi1*x^{2} + xi2*x^{3},  xi1+xi2 <= 1, 0 <= xi1,xi2 <= 1
@@ -39,6 +41,14 @@ def get_intersecting_line_segment(triangle, z_value):
   p1z = p1[2]
   p2z = p2[2]
   p3z = p3[2]
+  
+  # if one corner point lies on the z plane
+  if abs(p1z-z_value) < 1e-12:
+    return [p1,p1]
+  if abs(p2z-z_value) < 1e-12:
+    return [p2,p2]
+  if abs(p3z-z_value) < 1e-12:
+    return [p3,p3]
 
   # if p2z == p1z swap p1 and p3 
   if p2z == p1z:
@@ -50,6 +60,8 @@ def get_intersecting_line_segment(triangle, z_value):
     p3z = p3[2]
   
   debug = False
+  
+  # for debugging, determine if the triangle has to intersect the plane, i.e. there has to be an intersection point
   has_to_intersect = False
   l = sorted([p1z, p2z, p3z, z_value])
   if l[0] != z_value and l[-1] != z_value:
@@ -79,7 +91,7 @@ def get_intersecting_line_segment(triangle, z_value):
   if debug:
     print("xi1 = m*xi2 + c with m={}, c={}".format(m,c))
   
-  # check which borders of the triangle in parameter space the line segment intersects
+  # check which of the borders of the triangle in parameter space are intersected by the line segment intersects
   intersects_xi2_equals_0 = (0 <= c <= 1)        # xi1 = c
 
   if abs(m) < 1e-12:
@@ -129,9 +141,12 @@ def create_loop(z_value, stl_mesh, loop):
   The output loop is a list of edges.
   :param z_value: z level of all extracted points
   :param stl_mesh: the mesh as stl.mesh object
-  :param loop: this is the output, this list will contain edges [p0,1]
+  :param loop: this is the output, this list will contain edges [p0,p1]
   """
   debug = False
+
+  if debug:
+    print(" z_value: {}, n points: {}".format(len(stl_mesh.points)))
 
   # loop over all triangles in mesh
   for (no,p) in enumerate(stl_mesh.points):
@@ -166,7 +181,7 @@ def create_loop(z_value, stl_mesh, loop):
       # append edge to loop
       if not edge_is_already_in_loop:
         if debug:
-          print(" add edge ",edge," to loop no ", loop_no)
+          print(" add edge ",edge," to loop")
         #print(", prev: ", loop, "->", 
         loop.append(edge)
         #print(loop
@@ -274,9 +289,30 @@ def create_rings(input_filename, bottom_clip, top_clip, n_loops, write_output_me
 
   n_triangles = len(stl_mesh.points)
   
+  # determine bounding box of mesh
+  bounding_box_zmin = np.inf
+  bounding_box_zmax = -np.inf
+  # loop over triangles in mesh
+  for p in stl_mesh.points:
+    # p contains the 9 entries [p1x p1y p1z p2x p2y p2z p3x p3y p3z] of the triangle with corner points (p1,p2,p3)
+
+    p1 = np.array(p[0:3])
+    p2 = np.array(p[3:6])
+    p3 = np.array(p[6:9])
+    
+    bounding_box_zmin = min(bounding_box_zmin,p1[2],p2[2],p3[2])
+    bounding_box_zmax = max(bounding_box_zmax,p1[2],p2[2],p3[2])
+  
+  if bottom_clip < bounding_box_zmin:
+    print("Adjusting bottom_clip from {} to {} to match the mesh.".format(bottom_clip,bounding_box_zmin))
+    bottom_clip = bounding_box_zmin
+  if top_clip > bounding_box_zmax:
+    print("Adjusting top_clip from {} to {} to match the mesh.".format(top_clip,bounding_box_zmax))
+    top_clip = bounding_box_zmax
+  
   # disturb values a tiny bit to avoid singularities
-  eps1 = 1.234e-2
-  eps2 = 5.432e-2
+  eps1 = 1e-10  # 1.234e-2
+  eps2 = 1e-10  # 5.432e-2
   bottom_clip += eps1
   top_clip -= eps2
 
@@ -341,6 +377,10 @@ def create_rings(input_filename, bottom_clip, top_clip, n_loops, write_output_me
             
     # store new loop 
     loops[loop_no] = list(new_loop)
+    
+    # adjust z value to undo artificial distortion
+    for i in range(len(loops[loop_no])):
+      loops[loop_no][i][2] = z_samples[loop_no]
         
   if debug:
     print("----------------")

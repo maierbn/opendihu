@@ -227,6 +227,10 @@
 \newcommand{\scr}{\scriptstyle}
 \renewcommand{\dfrac}[2]{\ds\frac{\ds{#1}}{\ds{#2}}\,}  % nach Bruch Abstand
 %\newcommand{\code}[1]{{\small\lstinline[columns=fixed]!#1!}}
+\newcommand\undermat[2]{%
+\makebox[0pt][l]{$\smash{\underbrace{\phantom{%
+\begin{matrix}#2\end{matrix}}}_{\text{$#1$}}}$}#2}
+
 
 \usepackage{setspace}
 \newcommand{\code}[1]{{\small\lstinline[basicstyle=\footnotesize\ttfamily]!#1!}}

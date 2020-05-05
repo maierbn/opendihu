@@ -108,12 +108,12 @@ getGradPhi(std::array<double,MeshType::dim()> xi) const
 }
 
 template<typename MeshType, typename BasisFunctionType>
-template <int nComponents>
-std::array<double,nComponents> FunctionSpaceFieldVariable<MeshType,BasisFunctionType>::
-interpolateValueInElement(std::array<std::array<double,nComponents>,FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement()> &elementalDofValues,
-                 std::array<double,MeshType::dim()> xi) const
+template <int nComponents, typename double_v_t>
+std::array<double_v_t,nComponents> FunctionSpaceFieldVariable<MeshType,BasisFunctionType>::
+interpolateValueInElement(std::array<std::array<double_v_t,nComponents>,FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement()> &elementalDofValues,
+                          std::array<double,MeshType::dim()> xi) const
 {
-  std::array<double,nComponents> result({0.0});
+  std::array<double_v_t,nComponents> result({0.0});
   for (int dofIndex = 0; dofIndex < FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement(); dofIndex++)
   {
     result += elementalDofValues[dofIndex]*this->phi(dofIndex,xi);
@@ -122,11 +122,12 @@ interpolateValueInElement(std::array<std::array<double,nComponents>,FunctionSpac
 }
 
 template<typename MeshType, typename BasisFunctionType>
-double FunctionSpaceFieldVariable<MeshType,BasisFunctionType>::
-interpolateValueInElement(std::array<double,FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement()> &elementalDofValues,
-                 std::array<double,MeshType::dim()> xi) const
+template <typename double_v_t>
+double_v_t FunctionSpaceFieldVariable<MeshType,BasisFunctionType>::
+interpolateValueInElement(std::array<double_v_t,FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement()> &elementalDofValues,
+                          std::array<double,MeshType::dim()> xi) const
 {
-  double result = 0;
+  double_v_t result = 0;
   for (int dofIndex = 0; dofIndex < FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement(); dofIndex++)
   {
     result += elementalDofValues[dofIndex]*this->phi(dofIndex,xi);
@@ -235,16 +236,17 @@ getNormal(Mesh::face_t face, element_no_t elementNoLocal, std::array<double,Mesh
 }
 
 template<typename MeshType, typename BasisFunctionType>
-Tensor2<MeshType::dim()> FunctionSpaceFieldVariable<MeshType,BasisFunctionType>::
-getInverseJacobian(std::array<Vec3,FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement()> &geometryValues, element_no_t elementNo, std::array<double,MeshType::dim()> xi)
+template<typename double_v_t, typename element_no_v_t>
+Tensor2<MeshType::dim(),double_v_t> FunctionSpaceFieldVariable<MeshType,BasisFunctionType>::
+getInverseJacobian(std::array<VecD<3,double_v_t>,FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement()> &geometryValues, element_no_v_t elementNo, std::array<double,MeshType::dim()> xi)
 {
   // define constants
   const int D = MeshType::dim();
 
   // compute the 3xD jacobian of the parameter space to world space mapping
-  Tensor2<D> jacobianParameterSpace = MathUtility::transformToDxD<D,D>(this->computeJacobian(geometryValues, xi));
-  double jacobianDeterminant;
-  Tensor2<D> inverseJacobianParameterSpace = MathUtility::computeInverse<D>(jacobianParameterSpace, jacobianDeterminant);
+  Tensor2<D,double_v_t> jacobianParameterSpace = MathUtility::transformToDxD<D,D>(this->computeJacobian(geometryValues, xi));
+  double_v_t jacobianDeterminant;
+  Tensor2<D,double_v_t> inverseJacobianParameterSpace = MathUtility::computeInverse(jacobianParameterSpace, jacobianDeterminant);
 
   return inverseJacobianParameterSpace;
 }

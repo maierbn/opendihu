@@ -40,7 +40,7 @@ private:
   //! initializes the vectors with size
   void createPetscObjects() override;
 
-  std::shared_ptr<FieldVariableType> intermediateIncrement_; ///< the additional vector for delta u*
+  std::shared_ptr<FieldVariableType> intermediateIncrement_; //< the additional vector for delta u*
   // std::shared_ptr<FieldVariableType> intermediateSolution_; // / < the additional vector for u* // don't need this anymore
 };
 

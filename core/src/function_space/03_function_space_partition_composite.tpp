@@ -24,6 +24,16 @@ FunctionSpacePartition(std::shared_ptr<Partition::Manager> partitionManager,
   // the subFunctionSpaces have been created and initialized by the mesh manager
 }
 
+//! constructor dummy with node positions vector
+template<int D,typename BasisFunctionType>
+FunctionSpacePartition<Mesh::CompositeOfDimension<D>,BasisFunctionType>::
+FunctionSpacePartition(std::shared_ptr<Partition::Manager> partitionManager, std::vector<double> &nodePositions,
+                        std::vector<std::shared_ptr<FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>> subFunctionSpaces) :
+  FunctionSpacePartitionBase<Mesh::CompositeOfDimension<D>,BasisFunctionType>::FunctionSpacePartitionBase(partitionManager, PythonConfig()),
+  subFunctionSpaces_(subFunctionSpaces)
+{
+}
+
 template<int D,typename BasisFunctionType>
 void FunctionSpacePartition<Mesh::CompositeOfDimension<D>,BasisFunctionType>::
 initialize()

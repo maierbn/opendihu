@@ -46,11 +46,11 @@ public:
 
 private:
 
-  std::vector<Mesh::face_t> faces_;     ///< one of Mesh::face_t::face2Minus and Mesh::face_t::face2Plus, for which face to extract surface (other faces are not supported)
-  std::shared_ptr<Data3D> data3d_;   ///< other data object that contains the 3D field variables
-  bool ownRankInvolvedInOutput_;     ///< if the own rank hold part of the 2D surface field variable data and thus should call the output writer for output
+  std::vector<Mesh::face_t> faces_;     //< one of Mesh::face_t::face2Minus and Mesh::face_t::face2Plus, for which face to extract surface (other faces are not supported)
+  std::shared_ptr<Data3D> data3d_;   //< other data object that contains the 3D field variables
+  bool ownRankInvolvedInOutput_;     //< if the own rank hold part of the 2D surface field variable data and thus should call the output writer for output
 
-  FieldVariablesForOutputWriter outputFieldVariables2D_;   ///< the surface field variables
+  FieldVariablesForOutputWriter outputFieldVariables2D_;   //< the surface field variables
 
   //! initializes the vectors with size
   void createPetscObjects() override;

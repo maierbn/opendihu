@@ -70,7 +70,7 @@ parser.add_argument('-vmodule',                              help='Enable verbos
 parser.add_argument('-pause',                                help='Stop at parallel debugging barrier', action="store_true")
 
 # parse command line arguments and assign values to variables module
-args = parser.parse_args(args=sys.argv[:-2], namespace=variables)
+args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
 
 # initialize some dependend variables
 if variables.n_subdomains is not None:
@@ -86,7 +86,7 @@ if n_ranks != variables.n_subdomains:
   # create all possible partitionings to the given number of ranks
   optimal_value = n_ranks**(1/3)
   possible_partitionings = []
-  for i in range(1,n_ranks):
+  for i in range(1,n_ranks+1):
     for j in [1]:
       if i*j <= n_ranks and n_ranks % (i*j) == 0:
         k = (int)(n_ranks / (i*j))
@@ -96,7 +96,7 @@ if n_ranks != variables.n_subdomains:
   # if no possible partitioning was found
   if len(possible_partitionings) == 0:
     if rank_no == 0:
-      print("\n\nError! Number of ranks {} does not match given partitioning {} x {} x {} = {} and no automatic partitioning could be done.\n\n".format(n_ranks, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z))
+      print("\n\n\033[0;31mError! Number of ranks {} does not match given partitioning {} x {} x {} = {} and no automatic partitioning could be done.\n\n\033[0m".format(n_ranks, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z))
     quit()
     
   # select the partitioning with the lowest value of performance which is the best
@@ -234,6 +234,7 @@ config = {
     "diffusionTermSolver": {# solver for the implicit timestepping scheme of the diffusion time step
       "maxIterations":      1e4,
       "relativeTolerance":  1e-10,
+      "absoluteTolerance":  1e-10,         # 1e-10 absolute tolerance of the residual    
       "solverType":         variables.diffusion_solver_type,
       "preconditionerType": variables.diffusion_preconditioner_type,
       "dumpFilename":       "",   # "out/dump_"
@@ -241,6 +242,7 @@ config = {
     },
     "potentialFlowSolver": {# solver for the initial potential flow, that is needed to estimate fiber directions for the bidomain equation
       "relativeTolerance":  1e-10,
+      "absoluteTolerance":  1e-10,         # 1e-10 absolute tolerance of the residual    
       "maxIterations":      1e4,
       "solverType":         variables.potential_flow_solver_type,
       "preconditionerType": variables.potential_flow_preconditioner_type,
@@ -249,6 +251,7 @@ config = {
     },
     "muscularEMGSolver": {   # solver for the static Bidomain equation and the EMG
       "relativeTolerance":  1e-15,
+      "absoluteTolerance":  1e-10,         # 1e-10 absolute tolerance of the residual    
       "maxIterations":      1e4,
       "solverType":         variables.emg_solver_type,
       "preconditionerType": variables.emg_preconditioner_type,
@@ -360,6 +363,7 @@ config = {
                     "FiniteElementMethod" : {
                       "maxIterations":             1e4,
                       "relativeTolerance":         1e-10,
+                      "absoluteTolerance":         1e-10,         # 1e-10 absolute tolerance of the residual    
                       "inputMeshIsGlobal":         True,
                       "meshName":                  "MeshFiber_{}".format(fiber_no),
                       "prefactor":                 get_diffusion_prefactor(fiber_no, motor_unit_no),  # resolves to Conductivity / (Am * Cm)
@@ -388,6 +392,7 @@ config = {
       "firingTimesFile":          variables.firing_times_file,         # for FastMonodomainSolver, e.g. MU_firing_times_real.txt
       "onlyComputeIfHasBeenStimulated": True,                          # only compute fibers after they have been stimulated for the first time
       "disableComputationWhenStatesAreCloseToEquilibrium": True,       # optimization where states that are close to their equilibrium will not be computed again
+      "valueForStimulatedPoint":  variables.vm_value_stimulated,       # to which value of Vm the stimulated node should be set
     },
     "Term2": {        # Bidomain, EMG
       "OutputSurface": {

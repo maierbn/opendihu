@@ -38,7 +38,7 @@ createPartitioningUnstructured(global_no_t nElementsGlobal, global_no_t nNodesGl
 // use nElementsLocal and nRanks, fill nElementsGlobal
 template<typename FunctionSpace>
 std::shared_ptr<MeshPartition<FunctionSpace>> Manager::
-createPartitioningStructuredLocal(std::array<global_no_t,FunctionSpace::dim()> &nElementsGlobal,
+createPartitioningStructuredLocal(PythonConfig specificSettings, std::array<global_no_t,FunctionSpace::dim()> &nElementsGlobal,
                                   const std::array<element_no_t,FunctionSpace::dim()> nElementsLocal,
                                   const std::array<int,FunctionSpace::dim()> nRanks, std::vector<int> rankNos)
 { 
@@ -55,23 +55,23 @@ createPartitioningStructuredLocal(std::array<global_no_t,FunctionSpace::dim()> &
   {
     // create rank subset of all available MPI ranks
     rankSubset = std::make_shared<RankSubset>();
-    LOG(DEBUG) << "create new rank subset " << *rankSubset;
+    LOG(DEBUG) << specificSettings.getStringPath() << ": create new rank subset " << *rankSubset;
   }
-  else 
+  else
   {
     // if nextRankSubset was specified, use it
     rankSubset = nextRankSubset_;
-    LOG(DEBUG) << "use previously set rankSubset " << *rankSubset;
+    LOG(DEBUG) << specificSettings.getStringPath() << ": use previously set rankSubset " << *rankSubset;
   }
 
   // if rank Nos to use were given, use them
   if (!rankNos.empty())
   {
-    LOG(DEBUG) << "rankNos option was specified: " << rankNos;
+    LOG(DEBUG) << specificSettings.getStringPath() << ": rankNos option was specified: " << rankNos;
     rankSubset = std::make_shared<RankSubset>(rankNos.begin(), rankNos.end(), rankSubset);
   }
 
-  LOG(DEBUG) << "using rankSubset " << *rankSubset;
+  LOG(DEBUG) << specificSettings.getStringPath() << ": using rankSubset " << *rankSubset;
 
   if (!rankSubset->ownRankIsContained())
   {
@@ -91,10 +91,16 @@ createPartitioningStructuredLocal(std::array<global_no_t,FunctionSpace::dim()> &
   {
     nRanksTotal *= nRanks[i];
   }
+
+  if (rankSubset->size() != nRanksTotal && !nextRankSubset_)
+  {
+    LOG(FATAL) << specificSettings.getStringPath() << ": mesh was created without `nextRankSubset_` being set by MultipleInstances. "
+      << "Therefore, it is not known which ranks should be on this mesh. However, you could set \"rankNos\".";
+  }
   
   if (nRanksSubsetCommunicator != nRanksTotal)
   {
-    LOG(ERROR) << specificSettings_.getStringPath() << ": Number of ranks (" << nRanksSubsetCommunicator << ") in rank subset does not match given nRanks in config " << nRanks << ", total " << nRanksTotal << ".";
+    LOG(ERROR) << specificSettings.getStringPath() << ": Number of ranks (" << nRanksSubsetCommunicator << ") in rank subset does not match given nRanks in config " << nRanks << ", total " << nRanksTotal << ".";
   }
   
   std::array<int,3> rankGridCoordinate({0});  // the coordinate of the current rank in the nRanks[0] x nRanks[1] x nRanks[2] grid of ranks
@@ -194,7 +200,8 @@ createPartitioningStructuredLocal(std::array<global_no_t,FunctionSpace::dim()> &
 
   if (globalSizeIsDifferent)
   {
-    LOG(FATAL) << "The specified partitioning is invalid. You set \"inputMeshIsGlobal\": False and specified "
+    LOG(FATAL) << specificSettings.getStringPath() << ": The specified partitioning is invalid. "
+      << "You set \"inputMeshIsGlobal\": False and specified "
       << "the local number of elements for each rank with \"nRanks\": " << nRanks << "\n"
       << "On rank " << rankNoSubsetCommunicator << " (rank grid coordinates " << rankGridCoordinate << ")"
       << ", the local number of elements is: " << nElementsLocal << ".\n"
@@ -239,7 +246,7 @@ createPartitioningStructuredLocal(std::array<global_no_t,FunctionSpace::dim()> &
 // use nElementsGlobal, fill nElementsLocal and nRanks
 template<typename FunctionSpace>
 std::shared_ptr<MeshPartition<FunctionSpace>> Manager::
-createPartitioningStructuredGlobal(const std::array<global_no_t,FunctionSpace::dim()> nElementsGlobal, 
+createPartitioningStructuredGlobal(PythonConfig specificSettings, const std::array<global_no_t,FunctionSpace::dim()> nElementsGlobal,
                                    std::array<element_no_t,FunctionSpace::dim()> &nElementsLocal,
                                    std::array<int,FunctionSpace::dim()> &nRanks, std::vector<int> rankNos)
 { 

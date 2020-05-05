@@ -38,6 +38,41 @@ bool PythonUtility::hasKey(const PyObject* settings, std::string keyString)
   return false;
 }
 
+//! checks if this settings is the empty list or None
+bool PythonUtility::isEmpty(const PyObject *settings, std::string keyString)
+{
+  if (settings && settings != Py_None)
+  {
+    // start critical section for python API calls
+    // PythonUtility::GlobalInterpreterLock lock;
+
+    // check if input dictionary contains the key
+    PyObject *key = PyUnicode_FromString(keyString.c_str());
+
+    if (PyDict_Contains((PyObject *)settings, key))
+    {
+      PyObject *value = PyDict_GetItem((PyObject *)settings, key);
+      Py_CLEAR(key);
+
+      if (value == Py_None)
+      {
+        return true;
+      }
+      else if (PyList_Check(value))
+      {
+        // type is a list, determine how many entries it contains
+        int listNEntries = PyList_Size(value);
+        if (listNEntries == 0)
+        {
+          return true;
+        }
+      }
+    }
+    Py_CLEAR(key);
+  }
+  return false;
+}
+
 bool PythonUtility::isTypeList(const PyObject *object)
 {
   if (object)
@@ -76,7 +111,7 @@ PyObject *PythonUtility::getOptionPyObject(const PyObject *settings, std::string
   }
   else
   {
-    LOG(WARNING) << "Dict does not contain " << pathString << "[\"" << keyString << "\"]!" << std::endl;
+    LOG(WARNING) << "" << pathString << "[\"" << keyString << "\"] not set in \"" << Control::settingsFileName << "\". Assuming default value " << getString(defaultValue);
     Py_CLEAR(key);
     return defaultValue;
   }
@@ -835,7 +870,7 @@ void PythonUtility::checkForError()
     PyObject *type = NULL, *value = NULL, *traceback = NULL;
     PyErr_Fetch(&type, &value, &traceback);
     //PyErr_GetExcInfo(&type, &value, &traceback);
-    //PyErr_NormalizeException(&type, &value, &traceback);
+    PyErr_NormalizeException(&type, &value, &traceback);
 
     if (type == NULL && value == NULL && traceback == NULL)
       LOG(INFO) << "Error indicator is not set";
@@ -895,6 +930,8 @@ void PythonUtility::checkForError()
     else
     {
       LOG(DEBUG) << "(format_exception did not return a valid result)";
+
+      LOG(ERROR) << convertFromPython<std::string>::get(strValue);
     }
 
     PyErr_Restore(type, value, traceback);

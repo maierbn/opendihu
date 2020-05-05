@@ -9,9 +9,9 @@ sigma_xf = 0                # [mS/cm] conductivity in cross-fiber direction (xf)
 sigma_e_f = 6.7             # [mS/cm] conductivity in extracellular space, fiber direction (f)
 sigma_e_xf = 3.35           # [mS/cm] conductivity in extracellular space, cross-fiber direction (xf) / transverse
 
-Conductivity = sigma_f              # sigma, conductivity [mS/cm]
-Am = 500.0                          # surface area to volume ratio [cm^-1]
-Cm = 0.58                           # [uF/cm^2] membrane capacitance, (1 = fast twitch, 0.58 = slow twitch)
+Conductivity = sigma_f      # [mS/cm] sigma, conductivity
+Am = 500.0                  # [cm^-1] surface area to volume ratio
+Cm = 0.58                   # [uF/cm^2] membrane capacitance, (1 = fast twitch, 0.58 = slow twitch)
 # diffusion prefactor = Conductivity/(Am*Cm)
 
 # timing and activation parameters
@@ -19,7 +19,7 @@ Cm = 0.58                           # [uF/cm^2] membrane capacitance, (1 = fast 
 # motor units from paper Klotz2019 "Modelling the electrical activity of skeletal muscle tissue using a multi‐domain approach"
 import random
 random.seed(0)  # ensure that random numbers are the same on every rank
-# radius: [μm], stimulation frequency [Hz], jitter [-]
+# radius: [μm], stimulation frequency [Hz], jitter [-], activation_start_time [s]
 motor_units = [
   {"radius": 40.00, "activation_start_time": 0.0, "stimulation_frequency": 23.92, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},    # low number of fibers
   {"radius": 42.35, "activation_start_time": 0.2, "stimulation_frequency": 23.36, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},

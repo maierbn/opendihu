@@ -5,7 +5,7 @@
 
 import numpy as np
 import pickle
-import sys
+import sys,os
 import struct
 import argparse
 sys.path.insert(0, '..')
@@ -65,13 +65,14 @@ if variables.n_subdomains != n_ranks:
   print("\n\nError! Number of ranks {} does not match given partitioning {} x {} x {} = {}.\n\n".format(n_ranks, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z))
   quit()
   
-variables.load_fiber_data = True   # load all local node positions from fiber_file, in order to infer partitioning for fat_layer mesh
+
+#############################variables.load_fiber_data = True   # load all local node positions from fiber_file, in order to infer partitioning for fat_layer mesh
 
 # create the partitioning using the script in create_partitioned_meshes_for_settings.py
 result = create_partitioned_meshes_for_settings(
     variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, 
     variables.fiber_file, variables.load_fiber_data,
-    variables.sampling_stride_x, variables.sampling_stride_y, variables.sampling_stride_z, variables.generate_quadratic_3d_mesh)
+    variables.sampling_stride_x, variables.sampling_stride_y, variables.sampling_stride_z, variables.generate_linear_3d_mesh, variables.generate_quadratic_3d_mesh)
 [variables.meshes, variables.own_subdomain_coordinate_x, variables.own_subdomain_coordinate_y, variables.own_subdomain_coordinate_z, variables.n_fibers_x, variables.n_fibers_y, variables.n_points_whole_fiber] = result
   
 variables.n_subdomains_xy = variables.n_subdomains_x * variables.n_subdomains_y
@@ -80,6 +81,8 @@ variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
 # set fat layer mesh
 # load file, the file is assumed to be small enough to be loaded completely by all ranks
 
+#############################
+# create fat layer mesh
 try:
   fat_mesh_file_handle = open(variables.fat_mesh_file, "rb")
 except:
@@ -91,7 +94,6 @@ bytes_raw = fat_mesh_file_handle.read(32)
 header_str = struct.unpack('32s', bytes_raw)[0]
 header_length_raw = fat_mesh_file_handle.read(4)
 header_length = struct.unpack('i', header_length_raw)[0]
-print("header_length: {}".format(header_length))
 
 # parse parameters like number of points from the fat layer mesh file
 parameters = []
@@ -141,10 +143,10 @@ if False:
 #
 
 # determine number of nodes of the 3Dmesh
-n_elements_3D_mesh = variables.meshes["3Dmesh"]["nElements"]
-n_points_3D_x = n_elements_3D_mesh[0]
-n_points_3D_y = n_elements_3D_mesh[1]
-n_points_3D_z = n_elements_3D_mesh[2]
+n_elements_3D_mesh_linear = variables.meshes["3Dmesh"]["nElements"]
+n_points_3D_x = n_elements_3D_mesh_linear[0]
+n_points_3D_y = n_elements_3D_mesh_linear[1]
+n_points_3D_z = n_elements_3D_mesh_linear[2]
 
 # if the own subdomain is at the (x+) border
 if variables.own_subdomain_coordinate_x == variables.n_subdomains_x - 1:
@@ -159,7 +161,7 @@ if variables.own_subdomain_coordinate_z == variables.n_subdomains_z - 1:
   n_points_3D_z += 1
 
 if False:
-  print("{}: 3Dmesh has {} local node positions ({} x {} x {} = {}), nElements: {}".format(rank_no, len(variables.meshes["3Dmesh"]["nodePositions"]), n_points_3D_x, n_points_3D_y, n_points_3D_z, n_points_3D_x*n_points_3D_y*n_points_3D_z, n_elements_3D_mesh))
+  print("{}: 3Dmesh has {} local node positions ({} x {} x {} = {}), nElements: {}".format(rank_no, len(variables.meshes["3Dmesh"]["nodePositions"]), n_points_3D_x, n_points_3D_y, n_points_3D_z, n_points_3D_x*n_points_3D_y*n_points_3D_z, n_elements_3D_mesh_linear))
 
 # determine nodes of the fat layer mesh
 fat_mesh_node_indices = []
@@ -203,7 +205,7 @@ for k in range(n_sampled_points_3D_in_own_subdomain_z):
   #print("{}: sampling_stride_z: {}, k: {}, z: {}/{}".format(rank_no, variables.sampling_stride_z, k, z_point_index, variables.z_point_index_end))
   
   # loop over points of the fat layer mesh in y direction
-  for j in range(n_points_y):
+  for j in range(0,n_points_y,variables.sampling_stride_fat):
     y_point_index = j
     
     # loop over the points in x direction of the fat layer mesh, this corresponds to x and negative y direction of the 3D mesh (see figure above in the code)
@@ -269,7 +271,8 @@ for (index_x, index_y, index_z) in fat_mesh_node_indices:
   fat_mesh_node_positions_local.append(point)
   
 # local size
-fat_mesh_n_points = [fat_mesh_n_points_x, n_points_y, n_sampled_points_3D_in_own_subdomain_z]
+n_sampled_points_y = len(range(0,n_points_y,variables.sampling_stride_fat))
+fat_mesh_n_points = [fat_mesh_n_points_x, n_sampled_points_y, n_sampled_points_3D_in_own_subdomain_z]
 fat_mesh_n_elements = [fat_mesh_n_points[0]-1, fat_mesh_n_points[1]-1, fat_mesh_n_points[2]-1]
 
 # regarding x direction, if in interior of fat mesh (i.e., not bottom right subdomain), adjust number of elements in x direction (which is in negative y direction)
@@ -281,7 +284,7 @@ if variables.own_subdomain_coordinate_z != variables.n_subdomains_z - 1:
           
 # store values to be used in postprocess callback function
 variables.fat_mesh_n_points_local = fat_mesh_n_points
-variables.fat_mesh_n_points_global = [variables.n_points_3D_mesh_global_x+variables.n_points_3D_mesh_global_y-1, n_points_y, variables.n_points_3D_mesh_global_z]
+variables.fat_mesh_n_points_global = [variables.n_points_3D_mesh_global_x+variables.n_points_3D_mesh_global_y-1, n_sampled_points_y, variables.n_points_3D_mesh_global_z]
 variables.fat_mesh_index_offset = [n_points_on_previous_ranks_sampled_x, 0, n_points_on_previous_ranks_sampled_z]
 
 # debugging output
@@ -401,6 +404,7 @@ if "hodgkin_huxley" in variables.cellml_file:
   }
   variables.parameters_initial_values = [0.0]                         # initial value for stimulation current
   variables.nodal_stimulation_current = 40.                           # not used
+  variables.vm_value_stimulated = 20.                                 # to which value of Vm the stimulated node should be set (option "valueForStimulatedPoint" of FastMonodomainSolver)
 
 elif "shorten" in variables.cellml_file:
   # parameters: stimulation current I_stim, fiber stretch λ
@@ -411,6 +415,7 @@ elif "shorten" in variables.cellml_file:
   }
   variables.parameters_initial_values = [0.0, 1.0]                        # stimulation current I_stim, fiber stretch λ
   variables.nodal_stimulation_current = 1200.                             # not used
+  variables.vm_value_stimulated = 40.                                 # to which value of Vm the stimulated node should be set (option "valueForStimulatedPoint" of FastMonodomainSolver)
   
 elif "slow_TK_2014" in variables.cellml_file:   # this is (3a, "MultiPhysStrain", old tomo mechanics) in OpenCMISS
   # parameters: I_stim, fiber stretch λ
@@ -422,6 +427,7 @@ elif "slow_TK_2014" in variables.cellml_file:   # this is (3a, "MultiPhysStrain"
   }
   variables.parameters_initial_values = [0.0, 1.0]                    # wal_environment/I_HH = I_stim, razumova/L_S = λ
   variables.nodal_stimulation_current = 40.                           # not used
+  variables.vm_value_stimulated = 40.                                 # to which value of Vm the stimulated node should be set (option "valueForStimulatedPoint" of FastMonodomainSolver)
   
 elif "Aliev_Panfilov_Razumova_2016_08_22" in variables.cellml_file :   # this is (3, "MultiPhysStrain", numerically more stable) in OpenCMISS, this only computes A1,A2,x1,x2 not the stress
   # parameters: I_stim, fiber stretch λ, fiber contraction velocity \dot{λ}
@@ -434,6 +440,7 @@ elif "Aliev_Panfilov_Razumova_2016_08_22" in variables.cellml_file :   # this is
   }
   variables.parameters_initial_values = [0, 1, 0]                     # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/velo = \dot{λ}
   variables.nodal_stimulation_current = 40.                           # not used
+  variables.vm_value_stimulated = 40.                                 # to which value of Vm the stimulated node should be set (option "valueForStimulatedPoint" of FastMonodomainSolver)
   
 elif "Aliev_Panfilov_Razumova_Titin" in variables.cellml_file:   # this is (4, "Titin") in OpenCMISS
   # parameters: I_stim, fiber stretch λ, fiber contraction velocity \dot{λ}
@@ -447,13 +454,16 @@ elif "Aliev_Panfilov_Razumova_Titin" in variables.cellml_file:   # this is (4, "
   }
   variables.parameters_initial_values = [0, 1, 0]                     # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/rel_velo = \dot{λ}
   variables.nodal_stimulation_current = 40.                           # not used
-  
-# callback functions
+  variables.vm_value_stimulated = 40.                                 # to which value of Vm the stimulated node should be set (option "valueForStimulatedPoint" of FastMonodomainSolver)
+
 # --------------------------
+# callback functions
 def get_motor_unit_no(fiber_no):
   return int(variables.fiber_distribution[fiber_no % len(variables.fiber_distribution)]-1)
 
 def get_diffusion_prefactor(fiber_no, mu_no):
+  diffusion_prefactor = variables.get_conductivity(fiber_no, mu_no) / (variables.get_am(fiber_no, mu_no) * variables.get_cm(fiber_no, mu_no))
+  #print("diffusion_prefactor: {}/({}*{}) = {}".format(variables.get_conductivity(fiber_no, mu_no), variables.get_am(fiber_no, mu_no), variables.get_cm(fiber_no, mu_no), diffusion_prefactor))
   return variables.get_conductivity(fiber_no, mu_no) / (variables.get_am(fiber_no, mu_no) * variables.get_cm(fiber_no, mu_no))
 
 def fiber_gets_stimulated(fiber_no, frequency, current_time):
@@ -586,28 +596,28 @@ if rank_no == 0 and not variables.disable_firing_output:
   print("    Time  MU fibers")
   n_stimulated_mus = 0
   n_not_stimulated_mus = 0
-  variables.fibers = []
+  stimulated_fibers = []
   last_time = 0
   last_mu_no = first_stimulation_info[0][1]
   for stimulation_info in first_stimulation_info:
     mu_no = stimulation_info[1]
     fiber_no = stimulation_info[0]
     if mu_no == last_mu_no:
-      variables.fibers.append(fiber_no)
+      stimulated_fibers.append(fiber_no)
     else:
       if last_time is not None:
-        if len(variables.fibers) > 10:
-          print("{:8.2f} {:3} {} (only showing first 10, {} total)".format(last_time,last_mu_no,str(variables.fibers[0:10]),len(variables.fibers)))
+        if len(stimulated_fibers) > 10:
+          print("{:8.2f} {:3} {} (only showing first 10, {} total)".format(last_time,last_mu_no,str(stimulated_fibers[0:10]),len(stimulated_fibers)))
         else:
-          print("{:8.2f} {:3} {}".format(last_time,last_mu_no,str(variables.fibers)))
+          print("{:8.2f} {:3} {}".format(last_time,last_mu_no,str(stimulated_fibers)))
         n_stimulated_mus += 1
       else:
-        if len(variables.fibers) > 10:
-          print("  never stimulated: MU {:3}, fibers {} (only showing first 10, {} total)".format(last_mu_no,str(variables.fibers[0:10]),len(variables.fibers)))
+        if len(stimulated_fibers) > 10:
+          print("  never stimulated: MU {:3}, fibers {} (only showing first 10, {} total)".format(last_mu_no,str(stimulated_fibers[0:10]),len(stimulated_fibers)))
         else:
-          print("  never stimulated: MU {:3}, fibers {}".format(last_mu_no,str(variables.fibers)))
+          print("  never stimulated: MU {:3}, fibers {}".format(last_mu_no,str(stimulated_fibers)))
         n_not_stimulated_mus += 1
-      variables.fibers = [fiber_no]
+      stimulated_fibers = [fiber_no]
 
     last_time = stimulation_info[2]
     last_mu_no = mu_no

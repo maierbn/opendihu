@@ -86,18 +86,18 @@ protected:
   //! initializes the vectors with size
   virtual void createPetscObjects();
 
-  std::shared_ptr<FieldVariableType> solution_;            //< the vector of the variable of interest
-  std::shared_ptr<FieldVariableType> increment_;        //< the vector for delta u, (note, this might be reduced in future to only a sub-part of the whole data vector if memory consumption is a problem)
-  std::vector<std::string> componentNames_;      //< names of the components of the solution and increment variables
-  std::vector<std::shared_ptr<ScalarFieldVariableType>> additionalFieldVariables_;   //< additional field variables that are not used for computation but can be passed from the discretizableInTime_ object to the surrounding solvers
+  std::shared_ptr<FieldVariableType> solution_;     //< the vector of the variable of interest
+  std::shared_ptr<FieldVariableType> increment_;    //< the vector for delta u, (note, this might be reduced in future to only a sub-part of the whole data vector if memory consumption is a problem)
+  std::vector<std::string> componentNames_;         //< names of the components of the solution and increment variables
+  std::vector<std::shared_ptr<ScalarFieldVariableType>> additionalFieldVariables_;   //< additional field variables that are not used for computation but can be passed from the discretizableInTime_ object to the enclosing solvers
   
-  std::string debuggingName_;   //< a name identifier only used for debugging
+  std::string debuggingName_;                       //< a name identifier only used for debugging
 
   std::shared_ptr<OutputConnectorDataType> outputConnectorData_;  //< the object that holds output connector data that will be transferred between solvers
 
 private:
   //! get maximum number of expected non-zeros in the system matrix
-  void getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros);
+  void getPetscMemoryParameters(int &nNonZerosDiagonal, int &nNonZerosOffdiagonal);
 
 };
 

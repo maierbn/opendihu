@@ -78,7 +78,7 @@ parseFromSettings(PythonConfig settings)
     for (int nodeIndex = 0; nodeIndex < this->nNodesPerElement(); nodeIndex++)
     {
        // extract the node positions, e.g. [1,0] (global node no., version no.) or just 1 (only global node no., version no. defaults to 0)
-       std::array<int,2> elementNode = PythonUtility::convertFromPython<std::array<int,2>>::get(pyElementNodes[nodeIndex], {0,0});
+       std::array<int,2> elementNode = PythonUtility::convertFromPython<std::array<int,2>>::get(pyElementNodes[nodeIndex], {0,0}, false);
 
        VLOG(1) << "   elementNode " << elementNode;
 
@@ -139,8 +139,8 @@ parseFromSettings(PythonConfig settings)
       /*
       struct Node
       {
-        std::vector<int> valueIndices;        ///< the indices of the dof values of this node in the exnode file node values (sub-)block (for the particular field variable/component) of the node. If there are not multiple versions, this is simply 0,1,...,ndofs-1. If there are e.g. 2 versions and 8 dofs per node, this can be 0,1,...,7 if the elements uses the 1st version, or 8,...,15 if the element uses the second version. Note, that the real index of the dofs inside the values block may be different when this is not the first component of the block.
-        std::vector<int> scaleFactorIndices;   ///< the indices of all scale factor entries for this node in the exelem element scale factors block. Thus this is kind of a node to element block mapping.
+        std::vector<int> valueIndices;        //< the indices of the dof values of this node in the exnode file node values (sub-)block (for the particular field variable/component) of the node. If there are not multiple versions, this is simply 0,1,...,ndofs-1. If there are e.g. 2 versions and 8 dofs per node, this can be 0,1,...,7 if the elements uses the 1st version, or 8,...,15 if the element uses the second version. Note, that the real index of the dofs inside the values block may be different when this is not the first component of the block.
+        std::vector<int> scaleFactorIndices;   //< the indices of all scale factor entries for this node in the exelem element scale factors block. Thus this is kind of a node to element block mapping.
       };*/
 
       // set valueIndices

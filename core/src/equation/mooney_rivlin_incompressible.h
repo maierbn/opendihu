@@ -53,10 +53,10 @@ struct TransverselyIsotropicMooneyRivlinIncompressible3D
   static constexpr auto J = VAR(2);        //< jacobian J=det F
 
   // parameters
-  static constexpr auto c1 = PARAM(0);   //< material parameter
-  static constexpr auto c2 = PARAM(1);   //< material parameter
-  static constexpr auto b = PARAM(2);   //< material parameter
-  static constexpr auto d = PARAM(3);   //< material parameter
+  static constexpr auto c1 = PARAM(0);     //< material parameter
+  static constexpr auto c2 = PARAM(1);     //< material parameter
+  static constexpr auto b = PARAM(2);      //< material parameter
+  static constexpr auto d = PARAM(3);      //< material parameter
 
   static constexpr int nMaterialParameters = 4;  //< number of material parameters
 
@@ -83,10 +83,10 @@ struct TransverselyIsotropicMooneyRivlinIncompressibleActive3D
   static constexpr auto J = VAR(2);        //< jacobian J=det F
 
   // parameters
-  static constexpr auto c1 = PARAM(0);   //< material parameter
-  static constexpr auto c2 = PARAM(1);   //< material parameter
-  static constexpr auto b = PARAM(2);   //< material parameter
-  static constexpr auto d = PARAM(3);   //< material parameter
+  static constexpr auto c1 = PARAM(0);     //< material parameter
+  static constexpr auto c2 = PARAM(1);     //< material parameter
+  static constexpr auto b = PARAM(2);      //< material parameter
+  static constexpr auto d = PARAM(3);      //< material parameter
 
   static constexpr int nMaterialParameters = 4;  //< number of material parameters
 

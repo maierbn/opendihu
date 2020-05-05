@@ -221,6 +221,9 @@ createVector()
     // set sparsity type and other options
     ierr = VecSetFromOptions(vectorGlobal_[componentNo]); CHKERRV(ierr);
     ierr = VecGhostGetLocalForm(vectorGlobal_[componentNo], &vectorLocal_[componentNo]); CHKERRV(ierr);
+
+    // ignore negative indices. This is needed when Vc::int_v contains the indices
+    ierr = VecSetOption(vectorLocal_[componentNo], VEC_IGNORE_NEGATIVE_INDICES, PETSC_TRUE); CHKERRV(ierr);
   }
 
   // createVector acts like startGhostManipulation as it also gets the local vector (VecGhostGetLocalForm) to work on.
@@ -736,6 +739,9 @@ template<typename MeshType,typename BasisFunctionType,int nComponents>
 Vec &PartitionedPetscVecNComponentsStructured<MeshType,BasisFunctionType,nComponents>::
 valuesGlobal()
 {
+  if (this->currentRepresentation_ != Partition::values_representation_t::representationGlobal)
+    setRepresentationGlobal();
+
   if (nComponents == 1)
     return valuesGlobal(0);
 

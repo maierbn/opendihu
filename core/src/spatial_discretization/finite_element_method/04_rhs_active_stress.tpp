@@ -1,6 +1,7 @@
 #include "spatial_discretization/finite_element_method/04_rhs.h"
 
-#include <Python.h>
+#include <Python.h>  // has to be the first included header
+#include <array>
 
 namespace SpatialDiscretization
 {
@@ -73,7 +74,7 @@ setRightHandSide()
 
       // compute integration factor
       const std::array<Vec3,D> jacobian = FunctionSpaceType::computeJacobian(geometryValues, xi);
-      double integrationFactor = MathUtility::computeIntegrationFactor<D>(jacobian);
+      double integrationFactor = MathUtility::computeIntegrationFactor(jacobian);
 
       Tensor2<D> inverseJacobian = functionSpace->getInverseJacobian(geometryValues, elementNoLocal, xi);
 

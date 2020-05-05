@@ -2,7 +2,7 @@
 
 //! initialize the spatial parameter from the settings, at the given parameter name "keyString"
 template <typename FunctionSpaceType, typename ValueType>
-void SpatialParameter<FunctionSpaceType,ValueType>::
+void SpatialParameterBase<FunctionSpaceType,ValueType>::
 initialize(PythonConfig specificSettings, std::string keyString, ValueType defaultValue, std::shared_ptr<FunctionSpaceType> functionSpace)
 {
   inputMeshIsGlobal_ = specificSettings.getOptionBool("inputMeshIsGlobal", true);
@@ -27,7 +27,29 @@ initialize(PythonConfig specificSettings, std::string keyString, ValueType defau
   {
     if (PyList_Check(pyObject) || PyDict_Check(pyObject))
     {
-      values_ = PythonUtility::convertFromPython<std::vector<ValueType>>::get(pyObject);
+
+      // if the type is Matrix or array and only one list is given, this is interpreted as constant matrix for all elements (instead of different scalar values for the elements)
+      if (PyList_Check(pyObject) && MathUtility::isArrayOrMatrix<ValueType>::value)
+      {
+
+        if (PyList_Size(pyObject) > 0)
+        {
+          // if the first item is scalar
+          PyObject *firstItem = PyList_GetItem(pyObject,0);
+          if (!PyList_Check(firstItem))
+          {
+            LOG(DEBUG) << path.str() << " interpreting list as a single matrix entry of type " << StringUtility::demangle(typeid(ValueType).name());
+
+            values_.push_back(PythonUtility::convertFromPython<ValueType>::get(pyObject));
+          }
+        }
+      }
+
+      // if the above was not the case, interpret given values as list of different values for the elements
+      if (values_.empty())
+      {
+        values_ = PythonUtility::convertFromPython<std::vector<ValueType>>::get(pyObject);
+      }
 
       // set indices in valueIndices_ according to the number of values that were present in the config
       SetValueNos<FunctionSpaceType,ValueType>::set(functionSpace, inputMeshIsGlobal_, path.str(), values_, valueIndices_);
@@ -43,7 +65,7 @@ initialize(PythonConfig specificSettings, std::string keyString, ValueType defau
 
 //! get the value of the parameter in the specified element
 template <typename FunctionSpaceType, typename ValueType>
-void SpatialParameter<FunctionSpaceType,ValueType>::
+void SpatialParameterBase<FunctionSpaceType,ValueType>::
 getValue(element_no_t elementNoLocal, ValueType &value) const
 {
   assert (elementNoLocal >= 0 && elementNoLocal < valueIndices_.size());
@@ -53,7 +75,7 @@ getValue(element_no_t elementNoLocal, ValueType &value) const
 
 //! the value of the parameter in the given element
 /*template <typename FunctionSpaceType, typename ValueType>
-ValueType SpatialParameter<FunctionSpaceType,ValueType>::
+ValueType SpatialParameterBase<FunctionSpaceType,ValueType>::
 value(element_no_t elementNoLocal) const
 {
   assert (elementNoLocal >= 0 && elementNoLocal < valueIndices_.size());
@@ -63,12 +85,60 @@ value(element_no_t elementNoLocal) const
 
 //! the value of the parameter in the given element
 template <typename FunctionSpaceType, typename ValueType>
-const ValueType &SpatialParameter<FunctionSpaceType,ValueType>::
+const ValueType &SpatialParameterBase<FunctionSpaceType,ValueType>::
 value(element_no_t elementNoLocal) const
 {
   assert (elementNoLocal >= 0 && elementNoLocal < valueIndices_.size());
   int index = valueIndices_[elementNoLocal];
   return values_[index];
+}
+
+//! the value of the parameter in the given element
+template <typename FunctionSpaceType>
+Vc::double_v SpatialParameter<FunctionSpaceType,double>::
+value(Vc::int_v elementNoLocal) const
+{
+  assert (elementNoLocal[0] >= 0 && elementNoLocal[0] < this->valueIndices_.size());
+  Vc::double_v result;
+
+  for (int vcComponentNo = 0; vcComponentNo < Vc::double_v::size(); vcComponentNo++)
+  {
+    int elementNo = elementNoLocal[vcComponentNo];
+    if (elementNo != -1)
+    {
+      int index = this->valueIndices_[elementNo];
+      result[vcComponentNo] = (double)this->values_[index];
+    }
+  }
+
+  return result;
+}
+
+//! the value of the parameter in the given element
+template <typename FunctionSpaceType, int nRows, int nColumns>
+MathUtility::Matrix<nRows,nColumns,Vc::double_v> SpatialParameter<FunctionSpaceType,MathUtility::Matrix<nRows,nColumns>>::
+value(Vc::int_v elementNoLocal) const
+{
+  assert (elementNoLocal[0] >= 0 && elementNoLocal[0] < this->valueIndices_.size());
+  MathUtility::Matrix<nRows,nColumns,Vc::double_v> result;
+
+  for (int vcComponentNo = 0; vcComponentNo < Vc::double_v::size(); vcComponentNo++)
+  {
+    int elementNo = elementNoLocal[vcComponentNo];
+    if (elementNo != -1)
+    {
+      int index = this->valueIndices_[elementNo];
+      for (int rowNo = 0; rowNo < nRows; rowNo++)
+      {
+        for (int columnNo = 0; columnNo < nColumns; columnNo++)
+        {
+          result(rowNo,columnNo)[vcComponentNo] = this->values_[index](rowNo,columnNo);
+        }
+      }
+    }
+  }
+
+  return result;
 }
 
 template<typename FunctionSpaceType, typename ValueType>

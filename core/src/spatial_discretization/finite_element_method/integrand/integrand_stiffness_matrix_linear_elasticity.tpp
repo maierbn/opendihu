@@ -8,23 +8,23 @@ namespace SpatialDiscretization
 {
 
 //integrand for stiffness matrix of finite elasticity
-template<int D, typename EvaluationsType,typename FunctionSpaceType,typename Term>
-EvaluationsType IntegrandStiffnessMatrix<D,EvaluationsType,FunctionSpaceType,D,Term,Equation::isLinearElasticity<Term>>::
-evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,D,Term> &data, const std::array<Vec3,D> &jacobian,
-                  element_no_t elementNoLocal, const std::array<double,D> xi)
+template<int D, typename EvaluationsType,typename FunctionSpaceType,typename double_v_t,typename element_no_v_t,typename Term>
+EvaluationsType IntegrandStiffnessMatrix<D,EvaluationsType,FunctionSpaceType,D,double_v_t,element_no_v_t,Term,Equation::isLinearElasticity<Term>>::
+evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,D,Term> &data, const std::array<VecD<3,double_v_t>,D> &jacobian,
+                  element_no_v_t elementNoLocal, const std::array<double,D> xi)
 {
   EvaluationsType evaluations{};
 
-  double integrationFactor = MathUtility::computeIntegrationFactor<D>(jacobian);
+  double_v_t integrationFactor = MathUtility::computeIntegrationFactor(jacobian);
   const int nDofsPerElement = FunctionSpaceType::nDofsPerElement();
 
   // compute gradient values in parameter space
   std::array<VecD<D>,nDofsPerElement> gradPhi = data.functionSpace()->getGradPhi(xi);
 
   // compute inverse jacobian
-  std::array<Vec3,nDofsPerElement> geometryValues;
+  std::array<VecD<3,double_v_t>,nDofsPerElement> geometryValues;
   data.functionSpace()->getElementGeometry(elementNoLocal, geometryValues);
-  Tensor2<D> inverseJacobian = data.functionSpace()->getInverseJacobian(geometryValues, elementNoLocal, xi);
+  Tensor2<D,double_v_t> inverseJacobian = data.functionSpace()->getInverseJacobian(geometryValues, elementNoLocal, xi);
 
 
   // loop over entries (La, Mb) of stiffness matrix
@@ -35,8 +35,8 @@ evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,D,Term> &data, co
       //! jacobianParameterSpace[columnIdx][rowIdx] = dX_rowIdx/dxi_columnIdx
       //! inverseJacobianParameterSpace[columnIdx][rowIdx] = dxi_rowIdx/dX_columnIdx because of inverse function theorem
 
-      VecD<D> dPhiL_dX = inverseJacobian * gradPhi[indexL];
-      VecD<D> dPhiM_dX = inverseJacobian * gradPhi[indexM];
+      VecD<D,double_v_t> dPhiL_dX = inverseJacobian * gradPhi[indexL];
+      VecD<D,double_v_t> dPhiM_dX = inverseJacobian * gradPhi[indexM];
 
       for (int a = 0; a < D; a++)
       {
@@ -47,13 +47,13 @@ evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,D,Term> &data, co
           {
             for (int d = 0; d < D; d++)
             {
-              double integrand = data.linearStiffness(a, d, b, c) * dPhiL_dX[d] * dPhiM_dX[c] * integrationFactor;
+              double_v_t integrand = data.linearStiffness(a, d, b, c) * dPhiL_dX[d] * dPhiM_dX[c] * integrationFactor;
 
               //if (a != b)
               //  LOG(DEBUG) << "abcd=" << a << b << c << d << ": stiffness=" << data.linearStiffness(a, d, b, c) << ", integrand=" << integrand
               //    << " at " << indexL << "," << indexM << " (" << indexL*D + a << "," << indexM*D + b << ")";
 
-              if (!std::isfinite(integrand))
+              if (!MathUtility::isFinite(integrand))
               {
                 LOG(ERROR) << "Entry is not finite, abcd=" << a << b << c << d << ": stiffness=" << data.linearStiffness(a, d, b, c)
                   << ", integrand=" << integrand << " at " << indexL << "," << indexM << " (" << indexL*D + a << "," << indexM*D + b << ")";

@@ -36,7 +36,7 @@ rebalance()
 
   // get information about finite element method object
   // first, define types
-  typedef typename DiffusionTimeStepping::DiscretizableInTime_Type FiniteElementMethodType;
+  typedef typename DiffusionTimeStepping::DiscretizableInTime FiniteElementMethodType;
   typedef typename FiniteElementMethodType::FunctionSpace FiberFunctionSpaceType;
   typedef typename DiffusionTimeStepping::Data::FieldVariableType DiffusionFieldVariableType;
 
@@ -840,7 +840,7 @@ rebalance()
   std::vector<int> rankNos;
   std::shared_ptr<Partition::MeshPartition<FiberFunctionSpaceType>> meshPartition
     = this->context_.partitionManager()->template createPartitioningStructuredLocal<FiberFunctionSpaceType>(
-        nElementsPerDimensionGlobal, nElementsPerDimensionLocal, nRanks, rankNos);
+        this->context_.getPythonConfig(), nElementsPerDimensionGlobal, nElementsPerDimensionLocal, nRanks, rankNos);
 
   // number of nodes on own rank after rebalancing
   int nNodesLocalWithoutGhostsNew = meshPartition->nNodesLocalWithoutGhosts();

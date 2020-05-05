@@ -412,22 +412,22 @@ initializeGhostElements()
     }
   }
 
-  VLOG(1) << "received ownGhostElements_: ";
+  LOG(DEBUG) << "received ownGhostElements_: ";
   for (typename std::vector<GhostElement>::iterator iter = ownGhostElements_.begin(); iter != ownGhostElements_.end(); iter++)
   {
-    VLOG(1) << "  non-BC: " << iter->nonBoundaryConditionDofsOfRankGlobalPetsc << ", BC: " << iter->boundaryConditionDofsGlobalPetsc
+    LOG(DEBUG) << "  non-BC dofs global: " << iter->nonBoundaryConditionDofsOfRankGlobalPetsc << ", bc dofs global: " << iter->boundaryConditionDofsGlobalPetsc
       << ", values: " << iter->boundaryConditionValues;
   }
 
   /*
    *  struct GhostElement
   {
-    std::vector<global_no_t> nonBoundaryConditionDofsOfRankGlobalPetsc;    ///< the non-BC dofs of this element, as global petsc no. that are owned by the rank with no neighbouringRankNo
-    std::vector<global_no_t> boundaryConditionDofsGlobalPetsc;      ///< the Dirichlet BC dofs of this element
-    std::vector<double> boundaryConditionValues;   ///< the prescribed value, corresponding to boundaryConditionDofsGlobalPetsc
+    std::vector<global_no_t> nonBoundaryConditionDofsOfRankGlobalPetsc;    //< the non-BC dofs of this element, as global petsc no. that are owned by the rank with no neighbouringRankNo
+    std::vector<global_no_t> boundaryConditionDofsGlobalPetsc;      //< the Dirichlet BC dofs of this element
+    std::vector<double> boundaryConditionValues;   //< the prescribed value, corresponding to boundaryConditionDofsGlobalPetsc
   };
-  std::map<int,std::vector<GhostElement>> foreignGhostElements_;   ///< ghost elements that are normal elements on this rank, key is the rankNo of the rank to send them to
-  std::vector<GhostElement> ownGhostElements_;   ///< the ghost elements for this rank
+  std::map<int,std::vector<GhostElement>> foreignGhostElements_;   //< ghost elements that are normal elements on this rank, key is the rankNo of the rank to send them to
+  std::vector<GhostElement> ownGhostElements_;   //< the ghost elements for this rank
   */
 }
 
@@ -567,8 +567,8 @@ updatePrescribedValuesFromSolution(std::shared_ptr<FieldVariable::FieldVariable<
   solution->getValuesWithoutGhosts(solutionValues);
 
   // set boundaryConditionValues_
-  // std::vector<dof_no_t> boundaryConditionNonGhostDofLocalNos_;        ///< vector of all local (non-ghost) boundary condition dofs, sorted
-  // std::vector<ValueType> boundaryConditionValues_;               ///< vector of the local (non-ghost) prescribed values, related to boundaryConditionNonGhostDofLocalNos_
+  // std::vector<dof_no_t> boundaryConditionNonGhostDofLocalNos_;        //< vector of all local (non-ghost) boundary condition dofs, sorted
+  // std::vector<ValueType> boundaryConditionValues_;               //< vector of the local (non-ghost) prescribed values, related to boundaryConditionNonGhostDofLocalNos_
 
   std::stringstream stream;
   stream << "bc = {";
@@ -588,11 +588,11 @@ updatePrescribedValuesFromSolution(std::shared_ptr<FieldVariable::FieldVariable<
 
 
   // set boundaryConditionElements_
-  // std::vector<ElementWithNodes> boundaryConditionElements_;   ///< nodes grouped by elements on which boundary conditions are specified, this includes ghost nodes
+  // std::vector<ElementWithNodes> boundaryConditionElements_;   //< nodes grouped by elements on which boundary conditions are specified, this includes ghost nodes
   // struct ElementWithNodes
   // {
-  //   element_no_t elementNoLocal;   ///< local element no
-  //   std::vector<std::pair<int,ValueType>> elementalDofIndex;   ///< the element-local dof index and the value of the boundary condition on this dof
+  //   element_no_t elementNoLocal;   //< local element no
+  //   std::vector<std::pair<int,ValueType>> elementalDofIndex;   //< the element-local dof index and the value of the boundary condition on this dof
   // };
 
   for (typename std::vector<typename BoundaryConditionsBase<FunctionSpaceType,nComponents>::ElementWithNodes>::iterator iter = this->boundaryConditionElements_.begin();
@@ -616,7 +616,7 @@ updatePrescribedValuesFromSolution(std::shared_ptr<FieldVariable::FieldVariable<
   }
 
   // set boundaryConditionsByComponent_
-  // std::array<BoundaryConditionsForComponent, nComponents> boundaryConditionsByComponent_;   ///< the local boundary condition data organized by component, entries are sorted by dofNoLocal, without ghost dofs
+  // std::array<BoundaryConditionsForComponent, nComponents> boundaryConditionsByComponent_;   //< the local boundary condition data organized by component, entries are sorted by dofNoLocal, without ghost dofs
   // struct BoundaryConditionsForComponent
   // {
   //   std::vector<dof_no_t> dofNosLocal;    // the local dof no (without ghost dofs), both vectors are sorted according to this
@@ -635,13 +635,13 @@ updatePrescribedValuesFromSolution(std::shared_ptr<FieldVariable::FieldVariable<
   }
 
   // set foreignGhostElements_
-  // std::map<int,std::vector<GhostElement>> foreignGhostElements_;   ///< ghost elements that are normal elements on this rank, key is the rankNo of the rank to send them to
-  // std::vector<GhostElement> ownGhostElements_;   ///< the ghost elements for this rank
+  // std::map<int,std::vector<GhostElement>> foreignGhostElements_;   //< ghost elements that are normal elements on this rank, key is the rankNo of the rank to send them to
+  // std::vector<GhostElement> ownGhostElements_;   //< the ghost elements for this rank
   // struct GhostElement
   // {
-  //   std::vector<global_no_t> nonBoundaryConditionDofsOfRankGlobalPetsc;    ///< the non-BC dofs of this element, as global petsc no. that are owned by the rank with no neighbouringRankNo
-  //   std::vector<global_no_t> boundaryConditionDofsGlobalPetsc;      ///< the Dirichlet BC dofs of this element
-  //   std::vector<ValueType> boundaryConditionValues;   ///< the prescribed value, corresponding to boundaryConditionDofsGlobalPetsc
+  //   std::vector<global_no_t> nonBoundaryConditionDofsOfRankGlobalPetsc;    //< the non-BC dofs of this element, as global petsc no. that are owned by the rank with no neighbouringRankNo
+  //   std::vector<global_no_t> boundaryConditionDofsGlobalPetsc;      //< the Dirichlet BC dofs of this element
+  //   std::vector<ValueType> boundaryConditionValues;   //< the prescribed value, corresponding to boundaryConditionDofsGlobalPetsc
   // };
 
   for (typename std::map<int,std::vector<GhostElement>>::iterator iter = foreignGhostElements_.begin(); iter != foreignGhostElements_.end(); iter++)
@@ -679,10 +679,10 @@ applyInSystemMatrix(const std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>
   VLOG(1) << "boundaryConditionsRightHandSideSummand: " << *boundaryConditionsRightHandSideSummand;
 
   // boundary conditions for local non-ghost dofs are stored in the following member variables:
-  // std::vector<dof_no_t> boundaryConditionNonGhostDofLocalNos_;        ///< vector of all local (non-ghost) boundary condition dofs
-  // std::vector<ValueType> boundaryConditionValues_;               ///< vector of the local prescribed values, related to boundaryConditionDofLocalNos_
+  // std::vector<dof_no_t> boundaryConditionNonGhostDofLocalNos_;        //< vector of all local (non-ghost) boundary condition dofs
+  // std::vector<ValueType> boundaryConditionValues_;               //< vector of the local prescribed values, related to boundaryConditionDofLocalNos_
 
-  // with typedef std::array<double,nComponents> ValueType;   ///< the type of value of one boundary condition
+  // with typedef std::array<double,nComponents> ValueType;   //< the type of value of one boundary condition
 
   // determine actions to be executed later, this is such that there are no duplicates
   // One action is the following:
@@ -931,8 +931,8 @@ applyInSystemMatrix(const std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>
     std::vector<global_no_> nonBoundaryConditionDofsOfRankGlobalPetsc;    // the non-BC dofs of this element, as global petsc no. that are owned by the rank with no neighbouringRankNo
     std::vector<global_no_t> boundaryConditionDofsGlobalPetsc;      // the Dirichlet BC dofs of this element
   };
-  std::map<int,std::vector<GhostElement>> foreignGhostElements_;   ///< ghost elements that are normal elements on this rank, key is the rankNo of the rank to send them to
-  std::vector<GhostElement> ownGhostElements_;   ///< the ghost elements for this rank
+  std::map<int,std::vector<GhostElement>> foreignGhostElements_;   //< ghost elements that are normal elements on this rank, key is the rankNo of the rank to send them to
+  std::vector<GhostElement> ownGhostElements_;   //< the ghost elements for this rank
   */
 
 
@@ -1020,7 +1020,7 @@ applyInVector(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nCo
   // set boundary condition dofs to prescribed values, only non-ghost dofs
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
   {
-    // std::array<std::pair<std::vector<dof_no_t>, std::vector<double>>, nComponents> boundaryConditionsByComponent_;   ///< the boundary condition data organized by component
+    // std::array<std::pair<std::vector<dof_no_t>, std::vector<double>>, nComponents> boundaryConditionsByComponent_;   //< the boundary condition data organized by component
     fieldVariable->setValues(componentNo, this->boundaryConditionsByComponent_[componentNo].dofNosLocal,
                              this->boundaryConditionsByComponent_[componentNo].values, INSERT_VALUES);
 

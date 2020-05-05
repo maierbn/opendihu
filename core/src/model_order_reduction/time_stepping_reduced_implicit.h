@@ -11,7 +11,7 @@ namespace ModelOrderReduction
   public TimeSteppingSchemeOdeReduced<TimeSteppingImplicitType>
   {
   public:
-    typedef typename TimeSteppingImplicitType::DiscretizableInTime_Type DiscretizableInTimeType;
+    typedef typename TimeSteppingImplicitType::DiscretizableInTime DiscretizableInTimeType;
     
     //! constructor
     TimeSteppingSchemeOdeReducedImplicit(DihuContext context,std::string name);
@@ -33,9 +33,9 @@ namespace ModelOrderReduction
     //! solves the linear system of equations resulting from the Implicit Euler method time discretization
     void solveLinearSystem(Vec &input, Vec &output); 
     
-    //std::shared_ptr<Data::TimeSteppingImplicit<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>> dataImplicit_;  ///< a pointer to the data_ object but of type Data::TimeSteppingImplicit
-    std::shared_ptr<Solver::Linear> linearSolver_;   ///< the linear solver used for solving the system
-    std::shared_ptr<KSP> ksp_;     ///< the ksp object of the linear solver
+    //std::shared_ptr<Data::TimeSteppingImplicit<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>> dataImplicit_;  //< a pointer to the data_ object but of type Data::TimeSteppingImplicit
+    std::shared_ptr<Solver::Linear> linearSolver_;   //< the linear solver used for solving the system
+    std::shared_ptr<KSP> ksp_;     //< the ksp object of the linear solver
     
   };
   

@@ -10,13 +10,18 @@
 namespace SpatialDiscretization
 {
 
-template<typename Term,int nDisplacementComponents>
-void HyperelasticitySolver<Term,nDisplacementComponents>::
+template<typename Term,typename MeshType, int nDisplacementComponents>
+void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 nonlinearSolve()
 {
   LOG(TRACE) << "nonlinear solve";
   LOG(DEBUG) << "initial solution: " << combinedVecSolution_->getString();
   // solve the system ∂W_int - ∂W_ext = 0 and J = 1 for displacements and pressure, result will be in solverVariableSolution_, combinedVecSolution_
+
+#ifndef NDEBUG
+  materialComputeResidual(1.0);   // compute residual with load factor 1.0
+  LOG(DEBUG) << "initial residual: " << combinedVecResidual_->getString();
+#endif
 
   if (this->durationLogKey_ != "")
     Control::PerformanceMeasurement::start(this->durationLogKey_+std::string("_durationSolve"));
@@ -83,8 +88,8 @@ nonlinearSolve()
 
 }
 
-template<typename Term,int nDisplacementComponents>
-void HyperelasticitySolver<Term,nDisplacementComponents>::
+template<typename Term,typename MeshType, int nDisplacementComponents>
+void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 postprocessSolution()
 {
   // close log file
@@ -103,7 +108,7 @@ postprocessSolution()
   this->data_.updateGeometry(displacementsScalingFactor_, usePressureOutputWriter);
 
   // dump files containing rhs and system matrix
-  nonlinearSolver_->dumpMatrixRightHandSide(solverVariableResidual_);
+  nonlinearSolver_->dumpMatrixRightHandSideSolution(solverVariableResidual_, solverVariableSolution_);
 
 
 #ifndef NDEBUG
@@ -111,8 +116,8 @@ postprocessSolution()
 #endif
 }
 
-template<typename Term,int nDisplacementComponents>
-void HyperelasticitySolver<Term,nDisplacementComponents>::
+template<typename Term,typename MeshType, int nDisplacementComponents>
+void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 monitorSolvingIteration(SNES snes, PetscInt its, PetscReal currentNorm)
 {
   // compute experimental order of convergence which is a measure for the current convergence velocity
@@ -160,8 +165,8 @@ monitorSolvingIteration(SNES snes, PetscInt its, PetscReal currentNorm)
   }
 }
 
-template<typename Term,int nDisplacementComponents>
-void HyperelasticitySolver<Term,nDisplacementComponents>::
+template<typename Term,typename MeshType, int nDisplacementComponents>
+void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 debug()
 {
   materialComputeInternalVirtualWork();
@@ -316,8 +321,8 @@ debug()
   LOG(FATAL) << "end";
 }
 
-template<typename Term,int nDisplacementComponents>
-void HyperelasticitySolver<Term,nDisplacementComponents>::
+template<typename Term,typename MeshType, int nDisplacementComponents>
+void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 initializeSolutionVariable()
 {
   // set variable to all zero and dirichlet boundary condition value
@@ -328,8 +333,8 @@ initializeSolutionVariable()
   LOG(DEBUG) << "after initialization: " << combinedVecSolution_->getString();
 }
 
-template<typename Term,int nDisplacementComponents>
-void HyperelasticitySolver<Term,nDisplacementComponents>::
+template<typename Term,typename MeshType, int nDisplacementComponents>
+void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 initializePetscCallbackFunctions()
 {
   assert(nonlinearSolver_);
@@ -407,22 +412,37 @@ initializePetscCallbackFunctions()
 
 }
 
-template<typename Term,int nDisplacementComponents>
-void HyperelasticitySolver<Term,nDisplacementComponents>::
+template<typename Term,typename MeshType, int nDisplacementComponents>
+void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 evaluateNonlinearFunction(Vec x, Vec f)
 {
   //VLOG(1) << "evaluateNonlinearFunction at " << getString(x);
 
+  // determine if Vecs need to be backed up and instead x,f should take the place of solverVariableSolution_,solverVariableResidual_
+  // this happens in computation of the numeric jacobian
   bool backupVecs = f != solverVariableResidual_ || x != solverVariableSolution_;
 
   //VLOG(1) << "backupVecs: " << backupVecs;
 
-  // backup the values of solverVariableSolution_ and solverVariableResidual_ to be able to work with them now
+  Vec backupSolution;
+  Vec backupResidual;
   if (backupVecs)
   {
-    // this happens in computation of the numeric jacobian
-    VecSwap(x, solverVariableSolution_);
-    VecSwap(f, solverVariableResidual_);
+    // backup the Vecs of solverVariableSolution_ and solverVariableResidual_
+    backupSolution = combinedVecSolution_->valuesGlobal();
+    backupResidual = combinedVecResidual_->valuesGlobal();
+    
+    // assign x and f to the variables solverVariableSolution_ and solverVariableResidual_
+    combinedVecSolution_->valuesGlobalReference() = x;
+    solverVariableSolution_ = x;
+    
+    combinedVecResidual_->valuesGlobalReference() = f;
+    solverVariableResidual_ = f;
+
+    // the following would have done the same, but gives the following error, when Petsc is compiled in debug mode:
+    // PETSC ERROR: VecSetErrorIfLocked() line 556 in /store/software/opendihu/dependencies/petsc/src/petsc-3.12.3/include/petscvec.h  Vec is already locked for read-only or read/write access, argument # 1
+    //VecSwap(x, solverVariableSolution_);
+    //VecSwap(f, solverVariableResidual_);
   }
 
   // set the solverVariableSolution_ values in displacements, velocities and pressure, this is needed for materialComputeResidual
@@ -433,17 +453,22 @@ evaluateNonlinearFunction(Vec x, Vec f)
 
   //VLOG(1) << "solverVariableResidual_: " << combinedVecResidual_->getString();
 
-  // restore the values of solverVariableSolution_ and solverVariableResidual_ to their original values
+  // restore the values of solverVariableSolution_ and solverVariableResidual_ to their original pointer
   if (backupVecs)
   {
-    VecSwap(x, solverVariableSolution_);
-    VecSwap(f, solverVariableResidual_);
+    combinedVecSolution_->valuesGlobalReference() = backupSolution;
+    combinedVecResidual_->valuesGlobalReference() = backupResidual;
+    solverVariableSolution_ = combinedVecSolution_->valuesGlobal();
+    solverVariableResidual_ = combinedVecResidual_->valuesGlobal();
+
+    //VecSwap(x, solverVariableSolution_);
+    //VecSwap(f, solverVariableResidual_);
   }
   //VLOG(1) << "f: " << getString(f);
 }
 
-template<typename Term,int nDisplacementComponents>
-void HyperelasticitySolver<Term,nDisplacementComponents>::
+template<typename Term,typename MeshType, int nDisplacementComponents>
+void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 evaluateAnalyticJacobian(Vec x, Mat jac)
 {
   // copy the values of x to the internal data vectors in this->data_
@@ -456,8 +481,8 @@ evaluateAnalyticJacobian(Vec x, Mat jac)
   //MatAssemblyEnd(jac, MAT_FINAL_ASSEMBLY);
 }
 
-template<typename Term,int nDisplacementComponents>
-void HyperelasticitySolver<Term,nDisplacementComponents>::
+template<typename Term,typename MeshType, int nDisplacementComponents>
+void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 setDisplacementsAndPressureFromCombinedVec(Vec x, std::shared_ptr<DisplacementsFieldVariableType> u,
                                            std::shared_ptr<PressureFieldVariableType> p)
 {
@@ -531,8 +556,8 @@ setDisplacementsAndPressureFromCombinedVec(Vec x, std::shared_ptr<DisplacementsF
   //VLOG(1) << *p;
 }
 
-template<typename Term,int nDisplacementComponents>
-void HyperelasticitySolver<Term,nDisplacementComponents>::
+template<typename Term,typename MeshType, int nDisplacementComponents>
+void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 setDisplacementsVelocitiesAndPressureFromCombinedVec(Vec x,
                                                      std::shared_ptr<DisplacementsFieldVariableType> u,
                                                      std::shared_ptr<DisplacementsFieldVariableType> v,
@@ -577,8 +602,8 @@ setDisplacementsVelocitiesAndPressureFromCombinedVec(Vec x,
     values.resize(nEntries);
     combinedVecSolution_->getValues(componentNo, nEntries, displacementsFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
 
-    if (VLOG_IS_ON(1))
-      VLOG(1) << "setDisplacementsVelocitiesAndPressureFromCombinedVec, " << nEntries << " u values: " << values;
+    //if (VLOG_IS_ON(1))
+      LOG(DEBUG) << "setDisplacementsVelocitiesAndPressureFromCombinedVec, " << nEntries << " u values: " << values;
 
     u->setValues(componentNo, nEntries, displacementsFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
   }
@@ -631,8 +656,8 @@ setDisplacementsVelocitiesAndPressureFromCombinedVec(Vec x,
   //VLOG(1) << *p;
 }
 
-template<typename Term,int nDisplacementComponents>
-void HyperelasticitySolver<Term,nDisplacementComponents>::
+template<typename Term,typename MeshType, int nDisplacementComponents>
+void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 setUVP(Vec x)
 {
   if (nDisplacementComponents == 3)
@@ -645,8 +670,8 @@ setUVP(Vec x)
   }
 }
 
-template<typename Term,int nDisplacementComponents>
-void HyperelasticitySolver<Term,nDisplacementComponents>::
+template<typename Term,typename MeshType, int nDisplacementComponents>
+void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 dumpJacobianMatrix(Mat jac)
 {
   if (!dumpDenseMatlabVariables_)
@@ -741,8 +766,8 @@ dumpJacobianMatrix(Mat jac)
   }
 }
 
-template<typename Term,int nDisplacementComponents>
-void HyperelasticitySolver<Term,nDisplacementComponents>::
+template<typename Term,typename MeshType, int nDisplacementComponents>
+void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 checkSolution(Vec x)
 {
   // check if function is zero
@@ -789,8 +814,8 @@ checkSolution(Vec x)
   }
 }
 
-template<typename Term,int nDisplacementComponents>
-std::string HyperelasticitySolver<Term,nDisplacementComponents>::
+template<typename Term,typename MeshType, int nDisplacementComponents>
+std::string HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 getString(Vec x)
 {
   if (x == solverVariableSolution_)

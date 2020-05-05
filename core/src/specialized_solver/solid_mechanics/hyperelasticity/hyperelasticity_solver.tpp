@@ -13,8 +13,8 @@
 namespace SpatialDiscretization
 {
 
-template<typename Term,int nDisplacementComponents>
-HyperelasticitySolver<Term,nDisplacementComponents>::
+template<typename Term,typename MeshType,int nDisplacementComponents>
+HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 HyperelasticitySolver(DihuContext context, std::string settingsKey) :
   context_(context[settingsKey]), data_(context_), pressureDataCopy_(context_), initialized_(false),
   endTime_(0), lastNorm_(0), secondLastNorm_(0), currentLoadFactor_(1.0)
@@ -74,8 +74,8 @@ HyperelasticitySolver(DihuContext context, std::string settingsKey) :
   this->outputWriterManagerLoadIncrements_.initialize(this->context_["LoadIncrements"], this->context_["LoadIncrements"].getPythonConfig());
 }
 
-template<typename Term,int nDisplacementComponents>
-void HyperelasticitySolver<Term,nDisplacementComponents>::
+template<typename Term,typename MeshType,int nDisplacementComponents>
+void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 advanceTimeSpan()
 {
   // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
@@ -100,8 +100,8 @@ advanceTimeSpan()
   this->outputWriterManagerPressure_.writeOutput(this->pressureDataCopy_, 1, endTime_);
 }
 
-template<typename Term,int nDisplacementComponents>
-void HyperelasticitySolver<Term,nDisplacementComponents>::
+template<typename Term,typename MeshType,int nDisplacementComponents>
+void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 run()
 {
   // initialize everything
@@ -111,15 +111,15 @@ run()
   this->advanceTimeSpan();
 }
 
-template<typename Term,int nDisplacementComponents>
-void HyperelasticitySolver<Term,nDisplacementComponents>::
+template<typename Term,typename MeshType,int nDisplacementComponents>
+void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 setTimeSpan(double startTime, double endTime)
 {
   endTime_ = endTime;
 }
 
-template<typename Term,int nDisplacementComponents>
-void HyperelasticitySolver<Term,nDisplacementComponents>::
+template<typename Term,typename MeshType,int nDisplacementComponents>
+void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 initialize()
 {
   if (this->initialized_)
@@ -131,39 +131,7 @@ initialize()
   // create function space / mesh, the geometry is from the settings
   displacementsFunctionSpace_ = context_.meshManager()->functionSpace<DisplacementsFunctionSpace>(specificSettings_);
 
-  // create 3D function space with linear basis functions
-  std::vector<Vec3> nodePositionsLinearMesh;
-
-  // loop over nodes of quadratic function space and extract nodes for linear function space
-  for (node_no_t nodeIndexZ = 0; nodeIndexZ < displacementsFunctionSpace_->meshPartition()->nNodesLocalWithoutGhosts(2); nodeIndexZ++)
-  {
-    for (node_no_t nodeIndexY = 0; nodeIndexY < displacementsFunctionSpace_->meshPartition()->nNodesLocalWithoutGhosts(1); nodeIndexY++)
-    {
-      for (node_no_t nodeIndexX = 0; nodeIndexX < displacementsFunctionSpace_->meshPartition()->nNodesLocalWithoutGhosts(0); nodeIndexX++)
-      {
-        node_no_t nodeNoLocal = nodeIndexZ*displacementsFunctionSpace_->meshPartition()->nNodesLocalWithoutGhosts(1)*displacementsFunctionSpace_->meshPartition()->nNodesLocalWithoutGhosts(0)
-          + nodeIndexY*displacementsFunctionSpace_->meshPartition()->nNodesLocalWithoutGhosts(0) + nodeIndexX;
-
-        dof_no_t dofNoLocal = nodeNoLocal;   // no Hermite, i.e. no multiple dofs per node
-
-        if (nodeIndexX % 2 == 0 && nodeIndexY % 2 == 0 && nodeIndexZ % 2 == 0)
-        {
-          nodePositionsLinearMesh.push_back(displacementsFunctionSpace_->geometryField().getValue(dofNoLocal));
-        }
-      }
-    }
-  }
-
-  std::array<element_no_t,3> nElementsPerCoordinateDirection;
-  std::array<int,3> nRanksPerCoordinateDirection;
-
-  for (int i = 0; i < 3; i++)
-  {
-    nElementsPerCoordinateDirection[i] = displacementsFunctionSpace_->meshPartition()->nElementsLocal(i);
-    nRanksPerCoordinateDirection[i] = displacementsFunctionSpace_->meshPartition()->nRanks(i);
-  }
-
-  pressureFunctionSpace_ = context_.meshManager()->createFunctionSpace<PressureFunctionSpace>("pressureFunctionSpace",nodePositionsLinearMesh, nElementsPerCoordinateDirection, nRanksPerCoordinateDirection);
+  pressureFunctionSpace_ = PressureFunctionSpaceCreator<typename PressureFunctionSpace::Mesh>::createPressureFunctionSpace(context_.meshManager(), displacementsFunctionSpace_);
 
   // initialize the data object
   // store mesh in data
@@ -226,73 +194,95 @@ initialize()
   this->initialized_ = true;
 }
 
-template<typename Term,int nDisplacementComponents>
-void HyperelasticitySolver<Term,nDisplacementComponents>::
+template<typename Term,typename MeshType,int nDisplacementComponents>
+void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 initializeFiberDirections()
 {
   std::vector<std::string> fiberMeshNames;
   this->specificSettings_.template getOptionVector<std::string>("fiberMeshNames", fiberMeshNames);
 
-  // loop over fiber mesh names
-  for (int fiberNo = 0; fiberNo < fiberMeshNames.size(); fiberNo++)
+  LOG(INFO) << "initializing fiber directions...";
+
+  LOG(DEBUG) << "config: " << this->specificSettings_;
+  LOG(DEBUG) << fiberMeshNames.size() << " fiberMeshNames: " << fiberMeshNames;
+
+  // if no fiber meshes were specified, use the settings fiberDirection
+  if (fiberMeshNames.empty())
   {
-    // get fiber function space
-    std::string fiberMeshName = fiberMeshNames[fiberNo];
-    LOG(DEBUG) << "fiber " << fiberNo << "/" << fiberMeshNames.size() << ", mesh \"" << fiberMeshName << "\".";
+    Vec3 fiberDirection = this->specificSettings_.template getOptionArray<double,3>("fiberDirection", Vec3{0,0,1});
 
-    std::shared_ptr<FiberFunctionSpace> fiberFunctionSpace = context_.meshManager()->functionSpace<FiberFunctionSpace>(fiberMeshName);
+    LOG(DEBUG) << "displacements field variable type data: " << StringUtility::demangle(typeid(typename Data::DisplacementsFieldVariableType).name());
+    LOG(DEBUG) << "displacements function space type: " << StringUtility::demangle(typeid(DisplacementsFunctionSpace).name());
+    LOG(DEBUG) << "displacements function space mesh partition: " << *this->displacementsFunctionSpace_->meshPartition();
 
-    LOG(DEBUG) << "create mapping";
-
-    // initialize mapping 1D fiber -> 3D
-    context_.meshManager()->createMappingBetweenMeshes<FiberFunctionSpace,DisplacementsFunctionSpace>(
-      fiberFunctionSpace, this->displacementsFunctionSpace_);
+    std::vector<Vec3> fiberDirections(this->displacementsFunctionSpace_->nDofsLocalWithGhosts(), fiberDirection);
+    this->data_.fiberDirection()->setValues(this->displacementsFunctionSpace_->meshPartition()->dofNosLocal(), fiberDirections);
   }
-
-  // prepare the target mesh for the mapping, set all factors to zero
-  DihuContext::meshManager()->template prepareMappingLowToHigh<DisplacementsFieldVariableType>(this->data_.fiberDirection());
-
-  // loop over fiber mesh names
-  for (int fiberNo = 0; fiberNo < fiberMeshNames.size(); fiberNo++)
+  else
   {
-    std::string fiberMeshName = fiberMeshNames[fiberNo];
-    LOG(DEBUG) << "mesh \"" << fiberMeshName << "\".";
-
-    std::shared_ptr<FiberFunctionSpace> fiberFunctionSpace = context_.meshManager()->functionSpace<FiberFunctionSpace>(fiberMeshName);
-
-    // define direction field variable on the fiber that will store the direction of the fiber
-    std::vector<std::string> components({"x","y","z"});
-    std::shared_ptr<FieldVariable::FieldVariable<FiberFunctionSpace,3>> direction
-      = fiberFunctionSpace->createFieldVariable<3>("direction", components);
-
-    // set values of direction field variable
-    int nDofsLocalWithoutGhosts = fiberFunctionSpace->nDofsLocalWithoutGhosts();
-    std::vector<Vec3> geometryFieldValues;
-    fiberFunctionSpace->geometryField().getValuesWithoutGhosts(geometryFieldValues);
-
-    std::vector<Vec3> directionValues(nDofsLocalWithoutGhosts);
-
-    // loop over local nodes
-    for (dof_no_t dofNoLocal = 0; dofNoLocal < nDofsLocalWithoutGhosts; dofNoLocal++)
+    // loop over fiber mesh names
+    for (int fiberNo = 0; fiberNo < fiberMeshNames.size(); fiberNo++)
     {
-      dof_no_t index0 = std::max((dof_no_t)(0), dofNoLocal-1);
-      dof_no_t index1 = std::min((dof_no_t)(nDofsLocalWithoutGhosts-1), (dof_no_t)(dofNoLocal+1));
+      // get fiber function space
+      std::string fiberMeshName = fiberMeshNames[fiberNo];
+      LOG(DEBUG) << "fiber " << fiberNo << "/" << fiberMeshNames.size() << ", mesh \"" << fiberMeshName << "\".";
 
-      // get direction of 1D fiber
-      Vec3 fiberDirection = -geometryFieldValues[index0] + geometryFieldValues[index1];
-      directionValues[dofNoLocal] = fiberDirection;
+      std::shared_ptr<FiberFunctionSpace> fiberFunctionSpace = context_.meshManager()->functionSpace<FiberFunctionSpace>(fiberMeshName);
+
+      LOG(DEBUG) << "create mapping  1D fiber -> 3D: \"" << fiberFunctionSpace->meshName() << "\" -> \"" << this->displacementsFunctionSpace_->meshName() << "\".";
+
+      // initialize mapping 1D fiber -> 3D
+      DihuContext::mappingBetweenMeshesManager()->mappingBetweenMeshes<FiberFunctionSpace,DisplacementsFunctionSpace>(fiberFunctionSpace, this->displacementsFunctionSpace_);
     }
 
-    direction->setValuesWithoutGhosts(directionValues);
+    using SourceFunctionSpaceType = FieldVariable::FieldVariable<FiberFunctionSpace,3>;
+    using TargetFunctionSpaceType = DisplacementsFieldVariableType;
+
+    // prepare the target mesh for the mapping, set all factors to zero
+    std::shared_ptr<FieldVariable::FieldVariable<FiberFunctionSpace,3>> direction;
+    DihuContext::mappingBetweenMeshesManager()->template prepareMapping<SourceFunctionSpaceType,TargetFunctionSpaceType>(direction, this->data_.fiberDirection(), -1);
+
+    // loop over fiber mesh names
+    for (int fiberNo = 0; fiberNo < fiberMeshNames.size(); fiberNo++)
+    {
+      std::string fiberMeshName = fiberMeshNames[fiberNo];
+      LOG(DEBUG) << "mesh \"" << fiberMeshName << "\".";
+
+      std::shared_ptr<FiberFunctionSpace> fiberFunctionSpace = context_.meshManager()->functionSpace<FiberFunctionSpace>(fiberMeshName);
+
+      // define direction field variable on the fiber that will store the direction of the fiber
+      std::vector<std::string> components({"x","y","z"});
+      direction = fiberFunctionSpace->createFieldVariable<3>("direction", components);
+
+      // set values of direction field variable
+      int nDofsLocalWithoutGhosts = fiberFunctionSpace->nDofsLocalWithoutGhosts();
+      std::vector<Vec3> geometryFieldValues;
+      fiberFunctionSpace->geometryField().getValuesWithoutGhosts(geometryFieldValues);
+
+      std::vector<Vec3> directionValues(nDofsLocalWithoutGhosts);
+
+      // loop over local nodes
+      for (dof_no_t dofNoLocal = 0; dofNoLocal < nDofsLocalWithoutGhosts; dofNoLocal++)
+      {
+        dof_no_t index0 = std::max((dof_no_t)(0), dofNoLocal-1);
+        dof_no_t index1 = std::min((dof_no_t)(nDofsLocalWithoutGhosts-1), (dof_no_t)(dofNoLocal+1));
+
+        // get direction of 1D fiber
+        Vec3 fiberDirection = -geometryFieldValues[index0] + geometryFieldValues[index1];
+        directionValues[dofNoLocal] = fiberDirection;
+      }
+
+      direction->setValuesWithoutGhosts(directionValues);
 
 
-    // transfer direction values from 1D fibers to 3D field, -1 means all components
-    DihuContext::meshManager()->mapLowToHighDimension<FieldVariable::FieldVariable<FiberFunctionSpace,3>, DisplacementsFieldVariableType>(
-      direction, -1, this->data_.fiberDirection(), -1);
+      // transfer direction values from 1D fibers to 3D field, -1 means all components
+      DihuContext::mappingBetweenMeshesManager()->map<SourceFunctionSpaceType,TargetFunctionSpaceType>(
+        direction, this->data_.fiberDirection(), -1, -1, false);
+    }
+
+    // finalize the mapping to the target mesh, compute final values by dividing by the factors
+    DihuContext::mappingBetweenMeshesManager()->template finalizeMapping<SourceFunctionSpaceType,TargetFunctionSpaceType>(direction, this->data_.fiberDirection(), -1, -1, false);
   }
-
-  // finalize the mapping to the target mesh, compute final values by dividing by the factors
-  DihuContext::meshManager()->template finalizeMappingLowToHigh<DisplacementsFieldVariableType>(this->data_.fiberDirection());
 
   LOG(DEBUG) << "normalize fiber direction";
 
@@ -315,11 +305,14 @@ initializeFiberDirections()
   }
 
   this->data_.fiberDirection()->setValuesWithoutGhosts(valuesLocalWithoutGhosts);
+
+  this->data_.fiberDirection()->zeroGhostBuffer();
+  this->data_.fiberDirection()->finishGhostManipulation();
 }
 
-template<typename Term,int nDisplacementComponents>
-std::shared_ptr<typename HyperelasticitySolver<Term,nDisplacementComponents>::VecHyperelasticity>
-HyperelasticitySolver<Term,nDisplacementComponents>::
+template<typename Term,typename MeshType,int nDisplacementComponents>
+std::shared_ptr<typename HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::VecHyperelasticity>
+HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 createPartitionedPetscVec(std::string name)
 {
   LOG(DEBUG) << "createPartitionedPetscVec(" << name << ")";
@@ -327,30 +320,30 @@ createPartitionedPetscVec(std::string name)
     displacementsFunctionSpace_->meshPartition(), pressureFunctionSpace_->meshPartition(), dirichletBoundaryConditions_, name);
 }
 
-template<typename Term,int nDisplacementComponents>
-std::shared_ptr<typename HyperelasticitySolver<Term,nDisplacementComponents>::MatHyperelasticity>
-HyperelasticitySolver<Term,nDisplacementComponents>::
+template<typename Term,typename MeshType,int nDisplacementComponents>
+std::shared_ptr<typename HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::MatHyperelasticity>
+HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 createPartitionedPetscMat(std::string name)
 {
   // determine number of non zero entries in matrix
-  int diagonalNonZeros, offdiagonalNonZeros;
-  ::Data::FiniteElementsBase<DisplacementsFunctionSpace,1>::getPetscMemoryParameters(diagonalNonZeros, offdiagonalNonZeros);
+  int nNonZerosDiagonal, nNonZerosOffdiagonal;
+  ::Data::FiniteElementsBase<DisplacementsFunctionSpace,1>::getPetscMemoryParameters(nNonZerosDiagonal, nNonZerosOffdiagonal);
 
   return std::make_shared<MatHyperelasticity>(
-    combinedVecSolution_, 4*diagonalNonZeros, 4*offdiagonalNonZeros, name);
+    combinedVecSolution_, 4*nNonZerosDiagonal, 4*nNonZerosOffdiagonal, name);
 }
 
 
 //! get the precomputed external virtual work
-template<typename Term,int nDisplacementComponents>
-Vec HyperelasticitySolver<Term,nDisplacementComponents>::
+template<typename Term,typename MeshType,int nDisplacementComponents>
+Vec HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 externalVirtualWork()
 {
   return externalVirtualWorkDead_;
 }
 
-template<typename Term,int nDisplacementComponents>
-void HyperelasticitySolver<Term,nDisplacementComponents>::
+template<typename Term,typename MeshType,int nDisplacementComponents>
+void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 initializePetscVariables()
 {
   /*
@@ -469,29 +462,29 @@ initializePetscVariables()
 }
 
 //! get the PartitionedPetsVec for the residual and result of the nonlinear function
-template<typename Term,int nDisplacementComponents>
-std::shared_ptr<typename HyperelasticitySolver<Term,nDisplacementComponents>::VecHyperelasticity> HyperelasticitySolver<Term,nDisplacementComponents>::
+template<typename Term,typename MeshType,int nDisplacementComponents>
+std::shared_ptr<typename HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::VecHyperelasticity> HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 combinedVecResidual()
 {
   return this->combinedVecResidual_;
 }
 
 //! get the PartitionedPetsVec for the solution
-template<typename Term,int nDisplacementComponents>
-std::shared_ptr<typename HyperelasticitySolver<Term,nDisplacementComponents>::VecHyperelasticity> HyperelasticitySolver<Term,nDisplacementComponents>::
+template<typename Term,typename MeshType,int nDisplacementComponents>
+std::shared_ptr<typename HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::VecHyperelasticity> HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 combinedVecSolution()
 {
   return this->combinedVecSolution_;
 }
 
-template<typename Term,int nDisplacementComponents>
-void HyperelasticitySolver<Term,nDisplacementComponents>::reset()
+template<typename Term,typename MeshType,int nDisplacementComponents>
+void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::reset()
 {
   this->initialized_ = false;
 }
 
-template<typename Term,int nDisplacementComponents>
-typename HyperelasticitySolver<Term,nDisplacementComponents>::Data &HyperelasticitySolver<Term,nDisplacementComponents>::
+template<typename Term,typename MeshType,int nDisplacementComponents>
+typename HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::Data &HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 data()
 {
   return data_;

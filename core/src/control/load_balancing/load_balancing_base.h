@@ -54,7 +54,7 @@ protected:
   //! check if the degrees of freedom should be redistributed among the ranks
   virtual void rebalance() = 0;
 
-  TimeStepping timeSteppingScheme_;   ///< the underlying timestepping method that is controlled by this class, e.g. Heun
+  TimeStepping timeSteppingScheme_;   //< the underlying timestepping method that is controlled by this class, e.g. Heun
 };
 
 }  // namespace

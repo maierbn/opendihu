@@ -309,6 +309,8 @@ extractLocalDofsWithoutGhosts(std::vector<T> &values) const
     // loop over local nodes of the submeshes, also including removed nodes
     for (node_no_t nodeNoLocal = 0; nodeNoLocal < subFunctionSpaces_[subMeshNo]->nNodesLocalWithoutGhosts(); nodeNoLocal++)
     {
+      assert(meshAndNodeNoLocalToNodeNoNonDuplicateGlobal_[subMeshNo].size() > nodeNoLocal);
+
       // if currently considered node is not removed
       if (meshAndNodeNoLocalToNodeNoNonDuplicateGlobal_[subMeshNo][nodeNoLocal] != -1)
       {
@@ -350,7 +352,9 @@ output(std::ostream &stream)
   {
     stream << "subMesh " << subMeshNo << "/" << nSubMeshes_ << ": ";
     subFunctionSpaces_[subMeshNo]->meshPartition()->output(stream);
+    stream << "  ";
   }
+  stream << getString();
 }
 
 //! get a vector of local dof nos, range [0,nDofsLocalWithoutGhosts] are the dofs without ghost dofs, the whole vector are the dofs with ghost dofs
@@ -387,7 +391,7 @@ isNonGhost(node_no_t nodeNoLocal, int &neighbourRankNo) const
   std::vector<std::pair<int,node_no_t>> subMeshesWithNodes;
   getSubMeshesWithNodes(nodeNoLocal, subMeshesWithNodes);
 
-  VLOG(2) << "isNonGhost, nodeNoLocal: " << nodeNoLocal << ", subMeshesWithNodes: " << subMeshesWithNodes;
+  VLOG(2) << "isNonGhost, nodeNoLocal: " << nodeNoLocal << ", subMeshesWithNodes (submesh no, node no in that submesh): " << subMeshesWithNodes;
 
   for (const std::pair<int,node_no_t> &subMeshWithNodes : subMeshesWithNodes)
   {
@@ -395,7 +399,7 @@ isNonGhost(node_no_t nodeNoLocal, int &neighbourRankNo) const
     node_no_t nodeNoLocalOnMesh = subMeshWithNodes.second;
     if (subFunctionSpaces_[subMeshNo]->meshPartition()->isNonGhost(nodeNoLocalOnMesh, neighbourRankNo))
     {
-      VLOG(2) << "yes, isNonGhost on rank " << neighbourRankNo;
+      VLOG(2) << "yes, isNonGhost on submesh " << subMeshNo << " (local node no " << nodeNoLocalOnMesh << ") on rank " << neighbourRankNo;
 
       return true;
     }
@@ -447,9 +451,12 @@ getSubMeshNoAndNodeNoLocal(node_no_t nodeNoLocal, int &subMeshNo, node_no_t &nod
   for (int subMeshIndex = 0; subMeshIndex < nSubMeshes_; subMeshIndex++)
   {
     node_no_t nNodesCurrentSubMesh = nNonDuplicateNodesWithoutGhosts_[subMeshIndex];
+    VLOG(2) << "submesh " << subMeshIndex << " has " << nNodesCurrentSubMesh << " nodes, nNodesPreviousSubMeshes: " << nNodesPreviousSubMeshes;
 
     if (nodeNoLocal < nNodesPreviousSubMeshes + nNodesCurrentSubMesh)
     {
+      VLOG(2) << "local node " << nodeNoLocal << " is on that submesh";
+
       subMeshNo = subMeshIndex;
       node_no_t nodeNoCompositeOnMeshNoLocal = nodeNoLocal - nNodesPreviousSubMeshes;
 
@@ -470,17 +477,29 @@ getSubMeshNoAndNodeNoLocal(node_no_t nodeNoLocal, int &subMeshNo, node_no_t &nod
     nNodesPreviousSubMeshes += nNodesCurrentSubMesh;
   }
 
+  VLOG(2) << "node local " << nodeNoLocal << " is a ghost node";
+
   // if we are here, the requested node is a ghost node
   assert (nNodesPreviousSubMeshes == nNodesLocalWithoutGhosts_);
 
   for (int subMeshIndex = 0; subMeshIndex < nSubMeshes_; subMeshIndex++)
   {
     node_no_t nGhostNodesCurrentSubMesh = nNonDuplicateGhostNodes_[subMeshIndex];
+    VLOG(2) << "submesh " << subMeshIndex << " has " << nGhostNodesCurrentSubMesh << " ghost nodes, nNodesPreviousSubMeshes: " << nNodesPreviousSubMeshes;
 
     if (nodeNoLocal < nNodesPreviousSubMeshes + nGhostNodesCurrentSubMesh)
     {
+      VLOG(2) << "local node " << nodeNoLocal << " is on that submesh";
+
       subMeshNo = subMeshIndex;
-      nodeOnMeshNoLocal = nodeNoLocal - nNodesPreviousSubMeshes + nRemovedNodesNonGhost_[subMeshNo];
+
+      //nodeOnMeshNoLocal = nodeNoLocal - nNodesPreviousSubMeshes + nRemovedNodesNonGhost_[subMeshNo];
+      nodeOnMeshNoLocal = nodeNoLocal - nNodesPreviousSubMeshes + nNonDuplicateNodesWithoutGhosts_[subMeshNo] + nRemovedNodesNonGhost_[subMeshNo];
+      
+      //LOG(DEBUG) << "nodeOnMeshNoLocal = " << nodeNoLocal << " - " << nNodesPreviousSubMeshes << " + " << nRemovedNodesNonGhost_[subMeshNo] << " = " << nodeOnMeshNoLocal;
+      VLOG(2) << "nodeOnMeshNoLocal = " << nodeNoLocal << " - " << nNodesPreviousSubMeshes << " + " << nNonDuplicateNodesWithoutGhosts_[subMeshNo]
+         << " + " << nRemovedNodesNonGhost_[subMeshNo] << " = " << nodeOnMeshNoLocal;
+      VLOG(2) << "nNonDuplicateNodesWithoutGhosts_: " << nNonDuplicateNodesWithoutGhosts_ << ", nRemovedNodesNonGhost_: " << nRemovedNodesNonGhost_;
       break;
     }
 
@@ -518,6 +537,8 @@ getSubMeshesWithNodes(node_no_t nodeNoLocal, std::vector<std::pair<int,node_no_t
   int subMeshNo = 0;
   node_no_t nodeOnMeshNoLocal = 0;
   getSubMeshNoAndNodeNoLocal(nodeNoLocal, subMeshNo, nodeOnMeshNoLocal);
+
+  VLOG(1) << "node local " << nodeNoLocal << " is node local " << nodeOnMeshNoLocal << " on sub mesh " << subMeshNo;
 
   subMeshesWithNodes.push_back(std::make_pair(subMeshNo, nodeOnMeshNoLocal));
 

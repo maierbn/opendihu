@@ -56,10 +56,10 @@ checkIfNewExnodeHeaderNecessary(CurrentFieldVariableType currentFieldVariable, s
 // element i is of vector type
 template<typename VectorType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
-checkIfNewExnodeHeaderNecessary(VectorType currentFieldVariableVector, std::string meshName,
+checkIfNewExnodeHeaderNecessary(VectorType currentFieldVariableGradient, std::string meshName,
                                 element_no_t currentNodeGlobalNo, bool &newHeaderNecessary)
 {
-  for (auto& currentFieldVariable : currentFieldVariableVector)
+  for (auto& currentFieldVariable : currentFieldVariableGradient)
   {
     // call function on all vector entries
     if (checkIfNewExnodeHeaderNecessary<typename VectorType::value_type>(currentFieldVariable, meshName, currentNodeGlobalNo, newHeaderNecessary))

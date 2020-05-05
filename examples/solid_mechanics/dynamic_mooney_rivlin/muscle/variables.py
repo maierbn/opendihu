@@ -31,3 +31,6 @@ fibers_on_own_rank = None
 n_fiber_nodes_on_subdomain = None
 fiber_start_node_no = None
 cellml_file = ""
+n_subdomains_x = 1
+n_subdomains_y = 1
+n_subdomains_z = 1

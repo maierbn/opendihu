@@ -135,6 +135,8 @@ template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpace
 std::string PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,nComponents>::
 getString(bool horizontal, std::string vectorName) const
 {
+  /*composite*/
+#if 0
   // do not assemble a horizontal string for console in release mode, because this is only needed for debugging output
 #ifdef NDEBUG
   if (horizontal)
@@ -480,6 +482,9 @@ getString(bool horizontal, std::string vectorName) const
     VLOG(1) << "sent pressure values: " << valuesPressure;
   }
   return result.str();
+#else
+  return std::string("");
+#endif
 }
 
 template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType, int nComponents>
@@ -579,7 +584,7 @@ containsNanOrInf()
     // loop over values and check if they are neither nan nor inf
     for (int i = 0; i < values.size(); i++)
     {
-      if (!std::isfinite(values[i]))
+      if (!std::isfinite(values[i]) || fabs(values[i]) > 1e+75)
       {
         LOG(ERROR) << "containsNanOrInf(): value " << i << "/" << values.size() << ", component " << componentNo << "/" << nComponents << ": " << values[i];
         return true;

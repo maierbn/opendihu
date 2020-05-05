@@ -42,7 +42,7 @@ loopCollectFieldVariables(const FieldVariablesForOutputWriterType &fieldVariable
  */
 template<typename VectorType, typename FunctionSpaceType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
-collectFieldVariables(VectorType currentFieldVariableVector, std::string meshName,
+collectFieldVariables(VectorType currentFieldVariableGradient, std::string meshName,
                       std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> &geometryField,
                       std::vector<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>> &scalarFieldVariables);
 
@@ -50,7 +50,7 @@ collectFieldVariables(VectorType currentFieldVariableVector, std::string meshNam
  */
 template<typename TupleType, typename FunctionSpaceType>
 typename std::enable_if<TypeUtility::isTuple<TupleType>::value, bool>::type
-collectFieldVariables(TupleType currentFieldVariableVector, std::string meshName,
+collectFieldVariables(TupleType currentFieldVariableGradient, std::string meshName,
                       std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> &geometryField,
                       std::vector<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>> &scalarFieldVariables);
 
@@ -59,7 +59,8 @@ collectFieldVariables(TupleType currentFieldVariableVector, std::string meshName
 template<typename CurrentFieldVariableType, typename FunctionSpaceType>
 typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value
                         && !Mesh::isComposite<CurrentFieldVariableType>::value
-                        && CurrentFieldVariableType::element_type::nComponents() == 1, bool>::type
+                        && CurrentFieldVariableType::element_type::nComponents() == 1
+                        && std::is_same<typename CurrentFieldVariableType::element_type::FunctionSpace, FunctionSpaceType>::value, bool>::type
 collectFieldVariables(CurrentFieldVariableType currentFieldVariable, std::string meshName,
                       std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> &geometryField,
                       std::vector<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>> &scalarFieldVariables);
@@ -69,7 +70,17 @@ collectFieldVariables(CurrentFieldVariableType currentFieldVariable, std::string
 template<typename CurrentFieldVariableType, typename FunctionSpaceType>
 typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value
                         && !Mesh::isComposite<CurrentFieldVariableType>::value
-                        && CurrentFieldVariableType::element_type::nComponents() != 1, bool>::type
+                        && CurrentFieldVariableType::element_type::nComponents() != 1
+                        && std::is_same<typename CurrentFieldVariableType::element_type::FunctionSpace, FunctionSpaceType>::value, bool>::type
+collectFieldVariables(CurrentFieldVariableType currentFieldVariable, std::string meshName,
+                      std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> &geometryField,
+                      std::vector<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>> &scalarFieldVariables);
+
+/**  Loop body for a pointer element
+ */
+template<typename CurrentFieldVariableType, typename FunctionSpaceType>
+typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value && !Mesh::isComposite<CurrentFieldVariableType>::value
+                        && !std::is_same<typename CurrentFieldVariableType::element_type::FunctionSpace, FunctionSpaceType>::value, bool>::type
 collectFieldVariables(CurrentFieldVariableType currentFieldVariable, std::string meshName,
                       std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> &geometryField,
                       std::vector<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>> &scalarFieldVariables);

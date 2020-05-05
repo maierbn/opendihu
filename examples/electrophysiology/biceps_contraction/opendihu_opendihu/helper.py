@@ -59,20 +59,22 @@ if "cuboid.bin" in variables.fiber_file:
 if rank_no == 0:
   print("diffusion solver type: {}".format(variables.diffusion_solver_type))
 
-variables.load_fiber_data = True   # load all local node positions from fiber_file, in order to infer partitioning for fat_layer mesh
+variables.load_fiber_data = False   # load all local node positions from fiber_file, in order to infer partitioning for fat_layer mesh
 
 # create the partitioning using the script in create_partitioned_meshes_for_settings.py
 result = create_partitioned_meshes_for_settings(
     variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, 
     variables.fiber_file, variables.load_fiber_data,
-    variables.sampling_stride_x, variables.sampling_stride_y, variables.sampling_stride_z, variables.generate_quadratic_3d_mesh)
+    variables.sampling_stride_x, variables.sampling_stride_y, variables.sampling_stride_z, variables.generate_linear_3d_mesh, variables.generate_quadratic_3d_mesh)
 [variables.meshes, variables.own_subdomain_coordinate_x, variables.own_subdomain_coordinate_y, variables.own_subdomain_coordinate_z, variables.n_fibers_x, variables.n_fibers_y, variables.n_points_whole_fiber] = result
   
 variables.n_subdomains_xy = variables.n_subdomains_x * variables.n_subdomains_y
 variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
 
 # create mappings between meshes
-variables.mappings_between_meshes = {"MeshFiber_{}".format(i) : "3Dmesh" for i in range(variables.n_fibers_total)}
+#variables.mappings_between_meshes = {"MeshFiber_{}".format(i) : "3Dmesh" for i in range(variables.n_fibers_total)}
+variables.mappings_between_meshes = {"MeshFiber_{}".format(i) : {"name": "3Dmesh", "xiTolerance": 1e-3} for i in range(variables.n_fibers_total)}
+variables.mappings_between_meshes = {"MeshFiber_{}".format(i) : {"name": "3Dmesh_quadratic", "xiTolerance": variables.mapping_tolerance} for i in range(variables.n_fibers_total)}  # a higher tolerance includes more fiber dofs that may be almost out of the 3D mesh
 
 # set output writer    
 variables.output_writer_fibers = []
@@ -84,80 +86,95 @@ subfolder = ""
 if variables.paraview_output:
   if variables.adios_output:
     subfolder = "paraview/"
-  variables.output_writer_emg.append({"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/emg", "binary": True, "fixedFormat": False, "combineFiles": True})
-  variables.output_writer_elasticity.append({"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/elasticity", "binary": True, "fixedFormat": False, "combineFiles": True})
-  variables.output_writer_fibers.append({"format": "Paraview", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/fibers", "binary": True, "fixedFormat": False, "combineFiles": True})
+  variables.output_writer_emg.append({"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D_emg), "filename": "out/" + subfolder + variables.scenario_name + "/emg", "binary": True, "fixedFormat": False, "combineFiles": True})
+  variables.output_writer_elasticity.append({"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D), "filename": "out/" + subfolder + variables.scenario_name + "/elasticity", "binary": True, "fixedFormat": False, "combineFiles": True})
+  variables.output_writer_fibers.append({"format": "Paraview", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep_fibers), "filename": "out/" + subfolder + variables.scenario_name + "/fibers", "binary": True, "fixedFormat": False, "combineFiles": True})
   if variables.states_output:
     variables.output_writer_0D_states.append({"format": "Paraview", "outputInterval": 1, "filename": "out/" + subfolder + variables.scenario_name + "/0D_states", "binary": True, "fixedFormat": False, "combineFiles": True})
 
 if variables.adios_output:
   if variables.paraview_output:
     subfolder = "adios/"
-  variables.output_writer_emg.append({"format": "MegaMol", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/emg", "useFrontBackBuffer": False, "combineNInstances": 1})
-  variables.output_writer_elasticity.append({"format": "MegaMol", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/elasticity", "useFrontBackBuffer": False})
-  variables.output_writer_fibers.append({"format": "MegaMol", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/fibers", "combineNInstances": variables.n_subdomains_xy, "useFrontBackBuffer": False})
-  #variables.output_writer_fibers.append({"format": "MegaMol", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep), "filename": "out/" + variables.scenario_name + "/fibers", "combineNInstances": 1, "useFrontBackBuffer": False}
+  variables.output_writer_emg.append({"format": "MegaMol", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D_emg), "filename": "out/" + subfolder + variables.scenario_name + "/emg", "useFrontBackBuffer": False, "combineNInstances": 1})
+  variables.output_writer_elasticity.append({"format": "MegaMol", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D), "filename": "out/" + subfolder + variables.scenario_name + "/elasticity", "useFrontBackBuffer": False})
+  variables.output_writer_fibers.append({"format": "MegaMol", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep_fibers), "filename": "out/" + subfolder + variables.scenario_name + "/fibers", "combineNInstances": variables.n_subdomains_xy, "useFrontBackBuffer": False})
+  #variables.output_writer_fibers.append({"format": "MegaMol", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep_fibers), "filename": "out/" + variables.scenario_name + "/fibers", "combineNInstances": 1, "useFrontBackBuffer": False}
 
 if variables.python_output:
   if variables.adios_output:
     subfolder = "python/"
-  variables.output_writer_emg.append({"format": "PythonFile", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/emg", "binary": True})
-  variables.output_writer_elasticity.append({"format": "PythonFile", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/elasticity", "binary": True})
-  variables.output_writer_fibers.append({"format": "PythonFile", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/fibers", "binary": True})
+  variables.output_writer_emg.append({"format": "PythonFile", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D_emg), "filename": "out/" + subfolder + variables.scenario_name + "/emg", "binary": True})
+  variables.output_writer_elasticity.append({"format": "PythonFile", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D), "filename": "out/" + subfolder + variables.scenario_name + "/elasticity", "binary": True})
+  variables.output_writer_fibers.append({"format": "PythonFile", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep_fibers), "filename": "out/" + subfolder + variables.scenario_name + "/fibers", "binary": True})
 
 if variables.exfile_output:
   if variables.adios_output:
     subfolder = "exfile/"
-  variables.output_writer_emg.append({"format": "Exfile", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/emg"})
-  variables.output_writer_elasticity.append({"format": "Exfile", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/elasticity"})
-  variables.output_writer_fibers.append({"format": "Exfile", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/fibers"})
+  variables.output_writer_emg.append({"format": "Exfile", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D_emg), "filename": "out/" + subfolder + variables.scenario_name + "/emg"})
+  variables.output_writer_elasticity.append({"format": "Exfile", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D), "filename": "out/" + subfolder + variables.scenario_name + "/elasticity"})
+  variables.output_writer_fibers.append({"format": "Exfile", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep_fibers), "filename": "out/" + subfolder + variables.scenario_name + "/fibers"})
 
-# set values for cellml model
-if "shorten" in variables.cellml_file:
-  # parameters: stimulation current I_stim, fiber stretch λ
-  variables.parameters_used_as_intermediate = [32]    # 
-  variables.parameters_used_as_constant = [65]        # fiber stretch λ, this indicates how much the fiber has stretched, 1 means no extension. CONSTANTS[65] in the shorten model
-  variables.parameters_initial_values = [0.0, 1.0]    # stimulation current I_stim, fiber stretch λ, OpenCMISS generated files: OC_KNOWN will be set by this
-  variables.nodal_stimulation_current = 1200.
-  variables.output_state_index = 0                    # use state 0 = Vm
-  variables.output_intermediate_index = []            # do not use any intermediate
-  
-elif "hodgkin_huxley" in variables.cellml_file:
+# set variable mappings for cellml model
+if "hodgkin_huxley" in variables.cellml_file:
   # parameters: I_stim
-  variables.parameters_used_as_intermediate = []
-  variables.parameters_used_as_constant = [2]
-  variables.parameters_initial_values = [0.0]
-  variables.nodal_stimulation_current = 40.
-  variables.output_state_index = 0                    # use state 0 = Vm
-  variables.output_intermediate_index = []            # do not use any intermediate
+  variables.mappings = {
+    ("parameter", 0):           ("constant", "membrane/i_Stim"),      # parameter 0 is constant 2 = I_stim
+    ("outputConnectorSlot", 0): ("state", "membrane/V"),              # expose state 0 = Vm to the operator splitting
+  }
+  variables.parameters_initial_values = [0.0]                         # initial value for stimulation current
+  variables.nodal_stimulation_current = 40.                           # not used
+  variables.vm_value_stimulated = 20.                                 # to which value of Vm the stimulated node should be set (option "valueForStimulatedPoint" of FastMonodomainSolver)
 
+elif "shorten" in variables.cellml_file:
+  # parameters: stimulation current I_stim, fiber stretch λ
+  variables.mappings = {
+    ("parameter", 0):           ("intermediate", "wal_environment/I_HH"), # parameter is intermediate 32
+    ("parameter", 1):           ("constant", "razumova/L_x"),             # parameter is constant 65, fiber stretch λ, this indicates how much the fiber has stretched, 1 means no extension
+    ("outputConnectorSlot", 0): ("state", "wal_environment/vS"),          # expose state 0 = Vm to the operator splitting
+  }
+  variables.parameters_initial_values = [0.0, 1.0]                        # stimulation current I_stim, fiber stretch λ
+  variables.nodal_stimulation_current = 1200.                             # not used
+  variables.vm_value_stimulated = 40.                                 # to which value of Vm the stimulated node should be set (option "valueForStimulatedPoint" of FastMonodomainSolver)
+  
 elif "slow_TK_2014" in variables.cellml_file:   # this is (3a, "MultiPhysStrain", old tomo mechanics) in OpenCMISS
   # parameters: I_stim, fiber stretch λ
-  variables.parameters_used_as_intermediate = []
-  variables.parameters_used_as_constant = [54, 67]     # wal_environment/I_HH = I_stim, razumova/L_S = λ
-  variables.parameters_initial_values = [0.0, 1.0]     # wal_environment/I_HH = I_stim, razumova/L_S = λ
-  variables.nodal_stimulation_current = 40. 
-  variables.output_state_index = 0                     # use state 0, wal_environment/vS = Vm
-  variables.output_intermediate_index = 12             # use intermediate 12, razumova/stress = γ
+  variables.mappings = {
+    ("parameter", 0):           ("constant", "wal_environment/I_HH"), # parameter 0 is constant 54 = I_stim
+    ("parameter", 1):           ("constant", "razumova/L_S"),         # parameter 1 is constant 67 = fiber stretch λ
+    ("outputConnectorSlot", 0): ("state", "wal_environment/vS"),      # expose state 0 = Vm to the operator splitting
+    ("outputConnectorSlot", 1): ("intermediate", "razumova/stress"),  # expose intermediate 12 = γ to the operator splitting
+  }
+  variables.parameters_initial_values = [0.0, 1.0]                    # wal_environment/I_HH = I_stim, razumova/L_S = λ
+  variables.nodal_stimulation_current = 40.                           # not used
+  variables.vm_value_stimulated = 40.                                 # to which value of Vm the stimulated node should be set (option "valueForStimulatedPoint" of FastMonodomainSolver)
   
 elif "Aliev_Panfilov_Razumova_2016_08_22" in variables.cellml_file :   # this is (3, "MultiPhysStrain", numerically more stable) in OpenCMISS, this only computes A1,A2,x1,x2 not the stress
   # parameters: I_stim, fiber stretch λ, fiber contraction velocity \dot{λ}
-  variables.parameters_used_as_intermediate = []
-  variables.parameters_used_as_constant = [0, 8, 9]    # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/velo = \dot{λ}
-  variables.parameters_initial_values = [0, 1, 0]      # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/velo = \dot{λ}
-  variables.nodal_stimulation_current = 40. 
-  variables.output_state_index = 0                     # use state 0, Aliev_Panfilov/V_m = Vm
-  variables.output_intermediate_index = []             # no intermediates are used
+  variables.mappings = {
+    ("parameter", 0):           ("constant", "Aliev_Panfilov/I_HH"),  # parameter 0 is constant 0 = I_stim
+    ("parameter", 1):           ("constant", "Razumova/l_hs"),        # parameter 1 is constant 8 = fiber stretch λ
+    ("parameter", 2):           ("constant", "Razumova/velo"),        # parameter 2 is constant 9 = fiber contraction velocity \dot{λ}
+    ("outputConnectorSlot", 0): ("state", "Aliev_Panfilov/V_m"),      # expose state 0 = Vm to the operator splitting
+    ("outputConnectorSlot", 1): ("intermediate", "Razumova/sigma"),   # expose intermediate 0 = γ to the operator splitting
+  }
+  variables.parameters_initial_values = [0, 1, 0]                     # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/velo = \dot{λ}
+  variables.nodal_stimulation_current = 40.                           # not used
+  variables.vm_value_stimulated = 40.                                 # to which value of Vm the stimulated node should be set (option "valueForStimulatedPoint" of FastMonodomainSolver)
   
 elif "Aliev_Panfilov_Razumova_Titin" in variables.cellml_file:   # this is (4, "Titin") in OpenCMISS
   # parameters: I_stim, fiber stretch λ, fiber contraction velocity \dot{λ}
-  variables.parameters_used_as_intermediate = []
-  variables.parameters_used_as_constant = [0, 11, 12]  # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/rel_velo = \dot{λ}
-  variables.parameters_initial_values = [0, 1, 0]      # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/rel_velo = \dot{λ}
-  variables.nodal_stimulation_current = 40. 
-  variables.output_state_index = 0                     # use state 0, Aliev_Panfilov/V_m = Vm
-  variables.output_intermediate_index = [4,5]          # Razumova/ActiveStress = γ, Razumova/Activation = α 
-  
+  variables.mappings = {
+    ("parameter", 0):           ("constant", "Aliev_Panfilov/I_HH"),  # parameter 0 is constant 0 = I_stim
+    ("parameter", 1):           ("constant", "Razumova/l_hs"),        # parameter 1 is constant 11 = fiber stretch λ
+    ("parameter", 2):           ("constant", "Razumova/rel_velo"),    # parameter 2 is constant 12 = fiber contraction velocity \dot{λ}
+    ("outputConnectorSlot", 0): ("state", "Aliev_Panfilov/V_m"),      # expose state 0 = Vm to the operator splitting
+    ("outputConnectorSlot", 1): ("intermediate", "Razumova/ActiveStress"),   # expose intermediate 4 = γ to the operator splitting
+    ("outputConnectorSlot", 2): ("intermediate", "Razumova/Activation"),     # expose intermediate 5 = α to the operator splitting
+  }
+  variables.parameters_initial_values = [0, 1, 0]                     # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/rel_velo = \dot{λ}
+  variables.nodal_stimulation_current = 40.                           # not used
+  variables.vm_value_stimulated = 40.                                 # to which value of Vm the stimulated node should be set (option "valueForStimulatedPoint" of FastMonodomainSolver)
+
 
 # callback functions
 # --------------------------
@@ -165,7 +182,9 @@ def get_motor_unit_no(fiber_no):
   return int(variables.fiber_distribution[fiber_no % len(variables.fiber_distribution)]-1)
 
 def get_diffusion_prefactor(fiber_no, mu_no):
-  return variables.get_conductivity(fiber_no, mu_no) / (variables.get_am(fiber_no, mu_no) * variables.get_cm(fiber_no, mu_no))
+  diffusion_prefactor = variables.get_conductivity(fiber_no, mu_no) / (variables.get_am(fiber_no, mu_no) * variables.get_cm(fiber_no, mu_no))
+  #print("diffusion_prefactor: {}/({}*{}) = {}".format(variables.get_conductivity(fiber_no, mu_no), variables.get_am(fiber_no, mu_no), variables.get_cm(fiber_no, mu_no), diffusion_prefactor))
+  return diffusion_prefactor
 
 def fiber_gets_stimulated(fiber_no, frequency, current_time):
   """
@@ -297,28 +316,28 @@ if rank_no == 0 and not variables.disable_firing_output:
   print("    Time  MU fibers")
   n_stimulated_mus = 0
   n_not_stimulated_mus = 0
-  variables.fibers = []
+  stimulated_fibers = []
   last_time = 0
   last_mu_no = first_stimulation_info[0][1]
   for stimulation_info in first_stimulation_info:
     mu_no = stimulation_info[1]
     fiber_no = stimulation_info[0]
     if mu_no == last_mu_no:
-      variables.fibers.append(fiber_no)
+      stimulated_fibers.append(fiber_no)
     else:
       if last_time is not None:
-        if len(variables.fibers) > 10:
-          print("{:8.2f} {:3} {} (only showing first 10, {} total)".format(last_time,last_mu_no,str(variables.fibers[0:10]),len(variables.fibers)))
+        if len(stimulated_fibers) > 10:
+          print("{:8.2f} {:3} {} (only showing first 10, {} total)".format(last_time,last_mu_no,str(stimulated_fibers[0:10]),len(stimulated_fibers)))
         else:
-          print("{:8.2f} {:3} {}".format(last_time,last_mu_no,str(variables.fibers)))
+          print("{:8.2f} {:3} {}".format(last_time,last_mu_no,str(stimulated_fibers)))
         n_stimulated_mus += 1
       else:
-        if len(variables.fibers) > 10:
-          print("  never stimulated: MU {:3}, fibers {} (only showing first 10, {} total)".format(last_mu_no,str(variables.fibers[0:10]),len(variables.fibers)))
+        if len(stimulated_fibers) > 10:
+          print("  never stimulated: MU {:3}, fibers {} (only showing first 10, {} total)".format(last_mu_no,str(stimulated_fibers[0:10]),len(stimulated_fibers)))
         else:
-          print("  never stimulated: MU {:3}, fibers {}".format(last_mu_no,str(variables.fibers)))
+          print("  never stimulated: MU {:3}, fibers {}".format(last_mu_no,str(stimulated_fibers)))
         n_not_stimulated_mus += 1
-      variables.fibers = [fiber_no]
+      stimulated_fibers = [fiber_no]
 
     last_time = stimulation_info[2]
     last_mu_no = mu_no
@@ -334,9 +353,7 @@ if rank_no == 0:
     print("\n\nError! Number of ranks {} does not match given partitioning {} x {} x {} = {}.\n\n".format(n_ranks, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z))
     quit()
   
-variables.n_fibers_per_subdomain_x = (int)(variables.n_fibers_x / variables.n_subdomains_x)
-variables.n_fibers_per_subdomain_y = (int)(variables.n_fibers_y / variables.n_subdomains_y)
-variables.n_points_per_subdomain_z = (int)(variables.n_points_whole_fiber / variables.n_subdomains_z)
+# n_fibers_per_subdomain_* is already set
 
 ####################################
 # set Dirichlet BC for the flow problem
@@ -350,10 +367,25 @@ n_points_3D_mesh_quadratic_global_x = 2*n_points_3D_mesh_linear_global_x - 1
 n_points_3D_mesh_quadratic_global_y = 2*n_points_3D_mesh_linear_global_y - 1
 n_points_3D_mesh_quadratic_global_z = 2*n_points_3D_mesh_linear_global_z - 1
  
+# set boundary conditions for the elasticity
+[mx, my, mz] = variables.meshes["3Dmesh_quadratic"]["nPointsGlobal"]
+[nx, ny, nz] = variables.meshes["3Dmesh_quadratic"]["nElements"]
+
+variables.fiber_mesh_names = [mesh_name for mesh_name in variables.meshes.keys() if "MeshFiber" in mesh_name]
+
 # set Dirichlet BC at top nodes for linear elasticity problem, fix muscle at top
 variables.elasticity_dirichlet_bc = {}
-for i in range(n_points_3D_mesh_quadratic_global_x*n_points_3D_mesh_quadratic_global_y):
-  variables.elasticity_dirichlet_bc[(n_points_3D_mesh_quadratic_global_z-1)*n_points_3D_mesh_quadratic_global_x*n_points_3D_mesh_quadratic_global_y + i] = 0.0
+for j in range(my):
+  for i in range(mx):
+    variables.elasticity_dirichlet_bc[(mz-1)*mx*my + j*mx + i] = [None,None,0.0,None,None,None]
+  
+# fix edge
+for i in range(mx):
+  variables.elasticity_dirichlet_bc[(mz-1)*mx*my + 0*mx + i] = [0.0,None,0.0,None,None,None]
+  
+# fix corner completely
+variables.elasticity_dirichlet_bc[(mz-1)*mx*my + 0] = [0.0,0.0,0.0,None,None,None]
+
     
 # Neumann BC at bottom nodes, traction downwards
 nx = n_points_3D_mesh_linear_global_x-1
@@ -364,61 +396,7 @@ variables.ny = ny
 variables.nz = nz
 variables.elasticity_neumann_bc = [{"element": 0*nx*ny + j*nx + i, "constantVector": variables.bottom_traction, "face": "2-"} for j in range(ny) for i in range(nx)]
 #variables.elasticity_neumann_bc = []
-print("n=",variables.elasticity_neumann_bc)
 
-with open("mesh","w") as f:
-  f.write(str(variables.meshes["3Dmesh_quadratic"]))
-    
-variables.constant_body_force = (0,0,-1e-5)
-    
-# sanity checking at the end, is disabled and can be copied to after the config in the real settings file
-if False:
-  # check coupling instances
-  multiple_instances = config["Coupling"]["Term1"]["MultipleInstances"]
-  n_instances = multiple_instances["nInstances"]
-  instances_size = len(multiple_instances["instances"])
-  print("n_instances: {}".format(n_instances))
-
-  print("n subdomains: {} x {}".format(variables.n_subdomains_x, variables.n_subdomains_y))
-  print("n_fibers_per_subdomain_x: {} {}".format(variables.n_fibers_per_subdomain_x, variables.n_fibers_per_subdomain_y))
-
-  for subdomain_coordinate_y in range(variables.n_subdomains_y):
-    print("n_fibers_in_subdomain_y({}) = {}".format(subdomain_coordinate_y, n_fibers_in_subdomain_y(subdomain_coordinate_y)))
-
-  print("--")
-  for subdomain_coordinate_x in range(variables.n_subdomains_x):
-    print("n_fibers_in_subdomain_x({}) = {}".format(subdomain_coordinate_x, n_fibers_in_subdomain_x(subdomain_coordinate_x)))
-  print("--")
-
-  # check fiber no
-  counter = 0
-  for subdomain_coordinate_y in range(variables.n_subdomains_y):
-    for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y)):
-      for subdomain_coordinate_x in range(variables.n_subdomains_x):
-        for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x)):
-          no = get_fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)
-          if no != counter:
-            print("error: get_fiber_no({},{},{},{}) = {}, counter = {}".format(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y,no,counter))
-          else:
-            print("   ok: get_fiber_no({},{},{},{}) = {}, counter = {}".format(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y,no,counter))
-          counter += 1
-          
-
-  if n_instances != instances_size or instances_size == 0:
-    print("Error with top-level multiple instances: nInstances: {}, size of instances: {}".format(n_instances, instances_size))
-
-  # loop over inner instances
-  for i in range(n_instances):
-    multiple_instances0 = multiple_instances["instances"][i]["StrangSplitting"]["Term1"]["MultipleInstances"]
-    n_instances0 = multiple_instances0["nInstances"]
-    instances_size0 = len(multiple_instances0["instances"])
-    
-    if n_instances0 != instances_size0 or instances_size0 == 0:
-      print("Error with Term1 {} multiple instances: nInstances: {}, size of instances: {}".format(i ,n_instances0, instances_size0))
-    
-    multiple_instances1 = multiple_instances["instances"][i]["StrangSplitting"]["Term2"]["MultipleInstances"]
-    n_instances1 = multiple_instances1["nInstances"]
-    instances_size1 = len(multiple_instances1["instances"])
-
-    if n_instances1 != instances_size1 or instances_size1 == 0:
-      print("Error with Term2 {} multiple instances: nInstances: {}, size of instances: {}".format(i, n_instances1, instances_size1))
+#with open("mesh","w") as f:
+#  f.write(str(variables.meshes["3Dmesh_quadratic"]))
+ 

@@ -31,19 +31,22 @@ dt_1D = 1.5e-3                      # [ms] timestep width of diffusion
 dt_splitting = 3e-3                 # [ms] overall timestep width of strang splitting
 dt_3D = 1e0                         # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
 output_timestep = 1e0               # [ms] timestep for output files
+output_timestep_3D_emg = 1e0        # [ms] timestep for output files
+output_timestep_3D = 1e0            # [ms] timestep for output files
+output_timestep_fibers = 1e0        # [ms] timestep for output files
 activation_start_time = 0           # [ms] time when to start checking for stimulation
 
 # input files
 # -----------
 # CellML model, Shorten or Hodgkin-Huxley
-cellml_file = "../../input/shorten_ocallaghan_davidson_soboleva_2007.c"
+cellml_file = "../../../input/shorten_ocallaghan_davidson_soboleva_2007.c"
 #cellml_file = "../../input/shorten.cpp"
 #cellml_file = "../../input/hodgkin_huxley_1952.c"
 
 # Fiber geometry, binary file
 #fiber_file = "../../input/3000fibers.bin"
 #fiber_file = "../../input/7x7fibers.bin"
-fiber_file = "../../input/13x13fibers.bin"
+fiber_file = "../../../input/13x13fibers.bin"
 #fiber_file = "../../input/49fibers.bin"
 fat_mesh_file = fiber_file + "_fat.bin"
 
@@ -57,8 +60,8 @@ exfile_output = False               # If the Exfile output writer should be enab
 
 
 # motor unit stimulation times
-fiber_distribution_file = "../../input/MU_fibre_distribution_3780.txt"
-firing_times_file = "../../input/MU_firing_times_real.txt"
+fiber_distribution_file = "../../../input/MU_fibre_distribution_3780.txt"
+firing_times_file = "../../../input/MU_firing_times_real.txt"
 #firing_times_file = "../../input/MU_firing_times_immediately.txt"
 
 # partitioning
@@ -73,6 +76,8 @@ n_subdomains_z = 1
 sampling_stride_x = 2
 sampling_stride_y = 2
 sampling_stride_z = 50
+
+mapping_tolerance = 0.1
 
 # scenario name for log file
 scenario_name = ""
@@ -129,7 +134,6 @@ n_fibers_per_subdomain_y = None
 n_points_per_subdomain_z = None
 z_point_index_start = None
 z_point_index_end = None
-n_elements_3D_mesh = None
 meshes = None
 potential_flow_dirichlet_bc = None
 elasticity_dirichlet_bc = None
@@ -137,6 +141,7 @@ elasticity_neumann_bc = None
 fibers_on_own_rank = None
 n_fiber_nodes_on_subdomain = None
 fiber_start_node_no = None
+generate_linear_3d_mesh = False
 generate_quadratic_3d_mesh = True
 rho = None
 material_parameters = None
@@ -146,3 +151,7 @@ nz = None
 constant_body_force = None
 pmax = None
 bottom_traction = None
+cellml_file = ""
+states_initial_values = []
+
+

@@ -1,6 +1,6 @@
 // specific functions for XBraid with Implicit Euler
 // defines my_Step (integration step)
-//#include <mpi.h>
+#include <mpi.h>
 
 #include "specialized_solver/parallel_in_time/ImplicitEuler/PinT_IE_Braid.h"
 
@@ -58,7 +58,7 @@ int my_Step(braid_App        app,
    VecGetOwnershipRange(solution->valuesGlobal(),&istarti,&iendi);
    //for (iterator=0; iterator<u->size; iterator++) {std::cout<<u->values[iterator] << "/n";}
    for (iterator=istarti; iterator<iendi; iterator++) {VecSetValues(solution->valuesGlobal(), 1, &iterator, &u->values[iterator], INSERT_VALUES);}
-   MPI_Barrier(app->comm);
+   //MPI_Barrier(app->comm);
    VecAssemblyBegin(solution->valuesGlobal());
    VecAssemblyEnd(solution->valuesGlobal());
 
@@ -99,14 +99,48 @@ int my_Step(braid_App        app,
    // PetscInt blub;
    // VecGetLocalSize(solution->valuesGlobal(), &blub);
    // LOG(DEBUG) << blub;
-   int istart, iend;
-   VecGetOwnershipRange(solution->valuesGlobal(),&istart,&iend);
+
+   VecScatter ctx;
+   Vec vout;
+   //if (app->testscatter == 0){
+   //   app->testscatter=u->size;
+   //   VecScatterCreateToAll(solution->valuesGlobal(),&app->vecscatter,&vout);
+   //
+   //}
+   //else if (app->testscatter!=u->size){
+   //   app->testscatter=u->size;
+   //   VecScatterDestroy(&app->vecscatter);
+   //   VecScatterCreateToAll(solution->valuesGlobal(),&app->vecscatter,&vout);
+   //
+   //}
+   VecScatterCreateToAll(solution->valuesGlobal(),&app->vecscatter,&vout);
+   // scatter as many times as you need
+   VecScatterBegin(app->vecscatter,solution->valuesGlobal(),vout,INSERT_VALUES,SCATTER_FORWARD);
+   VecScatterEnd(app->vecscatter,solution->valuesGlobal(),vout,INSERT_VALUES,SCATTER_FORWARD);
+   // destroy scatter context and local vector when no longer needed
+   double    *_a;
+   VecGetArray(vout,&_a);
+   for (i = 0; i < u->size; i++) u->values[i] = _a[i];
+   VecRestoreArray(vout,&_a);
+   VecScatterDestroy(&app->vecscatter);
+   VecDestroy(&vout);
+
+   //int istart, iend;
+   //VecGetOwnershipRange(solution->valuesGlobal(),&istart,&iend);
 
    // Get values for braid which were calculated by implicitEulerSolver
-   PetscScalar arr;
-   for (iterator=istart; iterator<iend; iterator++) {VecGetValues(solution->valuesGlobal(), 1, &iterator, &arr); u->values[iterator]=arr;}
+   //PetscScalar arr;
+   //for (iterator=istart; iterator<iend; iterator++) {VecGetValues(solution->valuesGlobal(), 1, &iterator, &arr); u->values[iterator]=arr;}
    //MPI_Barrier(app->comm);
    //ierr = VecGetValues(solution->valuesGlobal(), u->size, solution->functionSpace()->meshPartition()->dofNosLocal().data(), u->values); CHKERRQ(ierr);
+   //std::cout << "asd \n";
+   //for (iterator=0; iterator<u->size; iterator++) {std::cout << "debug"; std::cout<<u->values[iterator] << "/n";}
+   //MPI_Allreduce(MPI_IN_PLACE, u->values, u->size, MPI_DOUBLE, MPI_MAX, app->comm);
+   //MPI_Allgather(u->values, )
+   //for (iterator=istart; iterator<iend; iterator++) {std::cout << "| \n" << u->values[iterator];}
+
+   //VecScatterDestroy(&ctx);
+   //VecDestroy(&vout);
 
    //for (iterator=0; iterator<u->size; iterator++) {std::cout<<u->values[iterator] << "/n";}
    deltaT = tstop - tstart;
@@ -165,10 +199,10 @@ my_Init(braid_App     app,
    int istart, iend, iterator;
    VecGetOwnershipRange(solution->valuesGlobal(),&istart,&iend);
    LOG(DEBUG) <<istart << ".." << iend;
+   for (iterator=0; iterator<u->size; iterator++) {u->values[iterator]=0;}
    for (iterator=istart; iterator<iend; iterator++) {VecGetValues(solution->valuesGlobal(), 1, &iterator, &a); u->values [iterator]=a;}
    //for (iterator=istart; iterator<iend; iterator++) {u->values[iterator]=0;}
    //ierr = VecGetValues(solution->valuesGlobal(), u->size, solution->functionSpace()->meshPartition()->dofNosLocal().data(), u->values); CHKERRQ(ierr);
-   //MPI_Barrier(app->comm);
 
    LOG(DEBUG) << "--------------------------------------------------------------";
    LOG(DEBUG) << "set initial values: " << *solution;

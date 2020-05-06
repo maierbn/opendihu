@@ -60,7 +60,7 @@ initialize()
   */
   pid_t pid = getpid();
   printf("pid: %lun", pid);
-  
+
   PyObject *MultiDomainConfig = this->specificSettings_.template getOptionListBegin<PyObject *>("TimeSteppingScheme");
   for (;
   !this->specificSettings_.getOptionListEnd("TimeSteppingScheme");
@@ -115,8 +115,8 @@ initialize()
     //  }
     //}
     // create rank subset
-    std::shared_ptr<Partition::RankSubset> nextRankSubset = std::make_shared<Partition::RankSubset>(communicatorX_);
-    DihuContext::partitionManager()->setRankSubsetForNextCreatedPartitioning(nextRankSubset);
+    //std::shared_ptr<Partition::RankSubset> nextRankSubset = std::make_shared<Partition::RankSubset>(communicatorX_);
+    //DihuContext::partitionManager()->setRankSubsetForNextCreatedPartitioning(nextRankSubset);
   
     MultiDomainSolvers_.push_back(
       std::make_shared<NestedSolverMD>(MultiDomainContext)

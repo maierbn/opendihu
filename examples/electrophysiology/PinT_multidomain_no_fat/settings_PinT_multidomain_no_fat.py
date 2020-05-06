@@ -58,8 +58,8 @@ motor_units = [
 if True:
   end_time = 0.1
   Am = 1.0
-  sampling_stride_z = 74
-  motor_units = motor_units[0:2]    # only 2 motor units
+  sampling_stride_z = 200 #muscle 74
+  motor_units = motor_units[0:1]    # only 2 motor units [0:2]
   solver_tolerance = 1e-10
 
 n_compartments = len(motor_units)

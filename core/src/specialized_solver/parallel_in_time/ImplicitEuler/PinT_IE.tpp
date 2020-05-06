@@ -248,6 +248,8 @@ run()
   }
   /* Clean up */
   braid_Destroy(core_);
+  //VecScatterDestroy(&ctx_);
+  //VecDestroy(&vout);
   free( app_->sc_info);
   free( app_->g);
   free( app_ );
@@ -334,6 +336,8 @@ PinT_initialize()
   (app_->xstop)         = xstop_;
   (app_->nspace)        = nspace;
   (app_->print_level)   = print_level_;
+  (app_->testscatter)  = 0;
+  (app_->vecscatter)    = ctx_;
   (app_->implicitEulerSolvers)        = &this->implicitEulerSolvers_;
 
   /* Initialize storage for sc_info, for tracking space-time grids visited during the simulation */

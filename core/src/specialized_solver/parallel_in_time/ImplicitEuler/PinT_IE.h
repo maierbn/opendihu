@@ -89,6 +89,8 @@ protected:
   int print_level_   = 2;
   int max_levels_    = 3;
 
+  VecScatter ctx_;
+
 };
 } // namespace ParallelInTime
 #include "specialized_solver/parallel_in_time/ImplicitEuler/PinT_IE.tpp"

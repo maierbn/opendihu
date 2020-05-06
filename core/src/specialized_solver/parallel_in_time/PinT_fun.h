@@ -40,6 +40,8 @@ typedef struct _braid_App_struct
   double *  g;            /* temporary vector for inversions and mat-vecs */
   double *  sc_info;      /* Runtime information that tracks the space-time grids visited */
   int       print_level;  /* Level of output desired by user (see the -help message below) */
+  VecScatter vecscatter;
+  int testscatter;
   typedef Mesh::StructuredDeformableOfDimension<3> MeshType;
   
   typedef  TimeSteppingScheme::ImplicitEuler<
@@ -95,7 +97,8 @@ typedef struct _braid_App_struct
 typedef struct _braid_Vector_struct
 {
    PetscInt     size;
-   PetscReal *values;
+   //PetscReal *values;
+   double *values;
 
 } my_Vector;
 

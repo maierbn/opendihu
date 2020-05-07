@@ -26,7 +26,7 @@ config = {
           #  "inputMeshIsGlobal": True,      # boundary conditions are given as global indices
           #},
            "mesh_{}".format(k): {
-              "nElements": [(2 ** (k))] if k > 1 else [4],                 # number of elements
+              "nElements": [(2 ** (k))], #if k > 1 else [4],                 # number of elements
               # "nElements": 32,                 # number of elements
               "physicalExtent": 4.0,          # the physical size of the domain
               "inputMeshIsGlobal": True,      # boundary conditions are given as global indices
@@ -35,11 +35,11 @@ config = {
   "PinTIE": {        # this is the name of the solver, as given in the constructor to the timestepping object
     "tstart": 0,                    # Start time
     "tstop": 100,                     # End time
-    "ntime": 100,                      # number of time steps
+    "ntime": 10000,                      # number of time steps
     "nspace":   128,
-    "Initial Guess": [2,2,4,5,2,2,2,0],
+    "Initial Guess": [2,2,4,5,2,2,2,0, 2,2,4,5,2,2,2,0,2,2,4,5,2,2,2,0,2,2,4,5,2,2,2,0],
     "option1": "blabla",              # another example option that is parsed in the data object
-    "nRanksInSpace": 2,            # number of processes that compute the spatial domain in parallel
+    "nRanksInSpace": 1,            # number of processes that compute the spatial domain in parallel
     "TimeSteppingScheme": [
     {
       "ImplicitEuler": {
@@ -47,7 +47,7 @@ config = {
         "startTime":0.0,
         "endTime": j,
         # "timeStepWidth": 1,
-        "initialValues": [2,2,4,5,2,2,2,0],    # the initial values
+        "initialValues": [2,2,4,5,2,2,2,0, 2,2,4,5,2,2,2,0,2,2,4,5,2,2,2,0,2,2,4,5,2,2,2,0],    # the initial values
         "dirichletBoundaryConditions": {}, # Dirichlet boundary conditions as dict
         "inputMeshIsGlobal": True,         # initial values and BC's are given for all dofs, even if executed in parallel
         "timeStepOutputInterval": 1,       # how often to print the current timestep to console

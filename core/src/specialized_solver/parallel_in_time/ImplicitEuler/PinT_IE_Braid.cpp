@@ -100,8 +100,8 @@ int my_Step(braid_App        app,
    // VecGetLocalSize(solution->valuesGlobal(), &blub);
    // LOG(DEBUG) << blub;
 
-   VecScatter ctx;
-   Vec vout;
+   //VecScatter ctx;
+   //Vec vout;
    //if (app->testscatter == 0){
    //   app->testscatter=u->size;
    //   VecScatterCreateToAll(solution->valuesGlobal(),&app->vecscatter,&vout);
@@ -113,17 +113,17 @@ int my_Step(braid_App        app,
    //   VecScatterCreateToAll(solution->valuesGlobal(),&app->vecscatter,&vout);
    //
    //}
-   VecScatterCreateToAll(solution->valuesGlobal(),&app->vecscatter,&vout);
+   //VecScatterCreateToAll(solution->valuesGlobal(),&app->vecscatter,&vout);
    // scatter as many times as you need
-   VecScatterBegin(app->vecscatter,solution->valuesGlobal(),vout,INSERT_VALUES,SCATTER_FORWARD);
-   VecScatterEnd(app->vecscatter,solution->valuesGlobal(),vout,INSERT_VALUES,SCATTER_FORWARD);
+   //VecScatterBegin(app->vecscatter,solution->valuesGlobal(),vout,INSERT_VALUES,SCATTER_FORWARD);
+   //VecScatterEnd(app->vecscatter,solution->valuesGlobal(),vout,INSERT_VALUES,SCATTER_FORWARD);
    // destroy scatter context and local vector when no longer needed
-   double    *_a;
-   VecGetArray(vout,&_a);
-   for (i = 0; i < u->size; i++) u->values[i] = _a[i];
-   VecRestoreArray(vout,&_a);
-   VecScatterDestroy(&app->vecscatter);
-   VecDestroy(&vout);
+   //double    *_a;
+   //VecGetArray(vout,&_a);
+   //for (i = 0; i < u->size; i++) u->values[i] = _a[i];
+   //VecRestoreArray(vout,&_a);
+   //VecScatterDestroy(&app->vecscatter);
+   //VecDestroy(&vout);
 
    //int istart, iend;
    //VecGetOwnershipRange(solution->valuesGlobal(),&istart,&iend);
@@ -132,7 +132,7 @@ int my_Step(braid_App        app,
    //PetscScalar arr;
    //for (iterator=istart; iterator<iend; iterator++) {VecGetValues(solution->valuesGlobal(), 1, &iterator, &arr); u->values[iterator]=arr;}
    //MPI_Barrier(app->comm);
-   //ierr = VecGetValues(solution->valuesGlobal(), u->size, solution->functionSpace()->meshPartition()->dofNosLocal().data(), u->values); CHKERRQ(ierr);
+   ierr = VecGetValues(solution->valuesGlobal(), u->size, solution->functionSpace()->meshPartition()->dofNosLocal().data(), u->values); CHKERRQ(ierr);
    //std::cout << "asd \n";
    //for (iterator=0; iterator<u->size; iterator++) {std::cout << "debug"; std::cout<<u->values[iterator] << "/n";}
    //MPI_Allreduce(MPI_IN_PLACE, u->values, u->size, MPI_DOUBLE, MPI_MAX, app->comm);

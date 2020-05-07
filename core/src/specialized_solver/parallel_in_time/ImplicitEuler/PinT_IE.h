@@ -87,7 +87,7 @@ protected:
   braid_Core    core_;
   my_App       *app_;
   int print_level_   = 2;
-  int max_levels_    = 5;
+  int max_levels_    = 3;
 
   VecScatter ctx_;
 

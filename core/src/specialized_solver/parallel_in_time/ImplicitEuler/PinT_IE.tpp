@@ -177,7 +177,7 @@ run()
   int       max_iter      = 30;
   int       min_coarse    = 3;
   int       fmg           = 0;
-  int       scoarsen      = 1;
+  int       scoarsen      = 0;
   int       res           = 0;
   int       wrapper_tests = 0;
   // int       print_level   = 2;

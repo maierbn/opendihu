@@ -164,8 +164,8 @@ with open(input_filename, "rb") as infile:
           point = fiber[point_no]
           
           # parse point
-          for i in range(3):
-            double_raw = struct.pack('d', point[i])
+          for component_no in range(3):
+            double_raw = struct.pack('d', point[component_no])
             outfile.write(double_raw)
             
     print("File {} written.".format(output_filename))

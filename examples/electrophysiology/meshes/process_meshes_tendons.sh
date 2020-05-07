@@ -109,40 +109,58 @@ echo "--- Create pickle mesh"
 
 cd $opendihu_directory/examples/fiber_tracing/streamline_tracer/scripts
 
+if false; then
 # arguments <input_stl_file> <output_pickle_file> <output_bin_file> <min_z> <max_z> <n_points_x> <n_points_z> [--only-stage-1]
 ./create_mesh.sh \
   ${current_directory}/processed_meshes/${basename}_04_tendon1_box.stl \
-  ${current_directory}/processed_meshes/${basename}_05_tendon1.pickle \
-  ${current_directory}/processed_meshes/${basename}_05_tendon1.bin \
-  $zmin $zmax 9 9  --only-stage-1
+  ${current_directory}/processed_meshes/${basename}_05_tendon1_9x9.pickle \
+  ${current_directory}/processed_meshes/${basename}_05_tendon1_9x9.bin \
+  $zmin $zmax 8 8 --only-stage-1
 
 # transform the bin file to a vts file for debugging
 echo ""
 echo "--- for debugging, create vts file which can be viewed by ParaView"
-cp ${current_directory}/processed_meshes/${basename}_05_tendon1.bin ${current_directory}/processed_meshes/${basename}_06_tendon1.bin
+cp ${current_directory}/processed_meshes/${basename}_05_tendon1_9x9.bin ${current_directory}/processed_meshes/${basename}_06_tendon1_9x9.bin
 $pyod ${opendihu_directory}/scripts/file_manipulation/examine_bin_fibers.py \
-  ${current_directory}/processed_meshes/${basename}_06_tendon1.bin
+  ${current_directory}/processed_meshes/${basename}_06_tendon1_9x9.bin
+
+fi
+
+echo ""
+echo "--- move tendon file back to original position"
+  
+# move tendon file back to original position
+$pyod ${opendihu_directory}/scripts/file_manipulation/translate_bin_fibers.py \
+  ${current_directory}/processed_meshes/${basename}_06_tendon1_9x9.bin \
+  ${current_directory}/processed_meshes/${basename}_07_tendon1_9x9_original_position.bin \
+  0 0 ${bottom_bounding_box_value}
+
+echo ""
+echo "--- Reverse the numbering in y direction"
+$pyod $opendihu_directory/scripts/file_manipulation/reverse_y_order_bin_fibers.py \
+  ${current_directory}/processed_meshes/${basename}_07_tendon1_9x9_original_position.bin \
+  ${current_directory}/processed_meshes/${basename}_08_tendon1_9x9_y_reversed.bin 
+
+echo ""
+echo "--- adjust top layer of nodes of tendon to match muscle file"
+muscle_fibers_file=${opendihu_directory}/examples/electrophysiology/input/left_biceps_brachii_9x9fibers.bin
+
+# set_nodes_to_match_other_mesh.py <input_filename mesh where to change nodes> <input_filename mesh to which to adapt> <output filename> <is_bottom if change bottom layer of mesh else top layer>
+$pyod ${current_directory}/utility/set_nodes_to_match_other_mesh.py \
+  ${current_directory}/processed_meshes/${basename}_08_tendon1_9x9_y_reversed.bin \
+  ${muscle_fibers_file} \
+  ${current_directory}/processed_meshes/${basename}_09_tendon1_9x9.bin\
+  0
+
+# transform the bin file to a vts file for debugging
+echo ""
+echo "--- for debugging, create vts file which can be viewed by ParaView"
+$pyod ${opendihu_directory}/scripts/file_manipulation/examine_bin_fibers.py \
+  ${current_directory}/processed_meshes/${basename}_08_tendon1_9x9_y_reversed.bin
+$pyod ${opendihu_directory}/scripts/file_manipulation/examine_bin_fibers.py \
+  ${current_directory}/processed_meshes/${basename}_09_tendon1_9x9.bin
 
 exit
-echo ""
-echo "--- prepare (translate) muscle fibers file which will later provide the seed points for the tendon"
-muscle_fibers_file=${opendihu_directory}/examples/electrophysiology/input/left_biceps_brachii_9x9fibers.bin
-  
-# move muscle fibers file in the same way as the fibers
-$pyod ${opendihu_directory}/scripts/file_manipulation/translate_bin_fibers.py \
-  ${muscle_fibers_file} \
-  ${current_directory}/processed_meshes/${basename}_07_muscle.bin \
-  0 0 ${translate_value}
-
-echo ""
-echo "--- Set seed points from muscle fibers"
-# extract bottom nodes of fiber mesh
-# arguments: set_seed_points.py <muscle_fiber_filename> <tracing_mesh_filename> <output filename> <is_bottom>
-$pyod ${current_directory}/utility/set_seed_points.py \
-  ${current_directory}/processed_meshes/${basename}_07_muscle.bin \
-  ${current_directory}/processed_meshes/${basename}_05_tendon1.pickle \
-  ${current_directory}/processed_meshes/${basename}_08_tendon1_seed_points.pickle \
-  1
   
 # ---- c++ part, streamline tracing ------
 

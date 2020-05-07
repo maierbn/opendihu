@@ -86,8 +86,8 @@ with open(output_filename, "wb") as outfile:
         point = node_positions[k*n_fibers_x*n_fibers_y + j*n_fibers_x + i]
         
         # store point
-        for i in range(3):
-          double_raw = struct.pack('d', point[i])
+        for component_no in range(3):
+          double_raw = struct.pack('d', point[component_no])
           outfile.write(double_raw)
           
   print("Saved {}x{}={} fibers with {} points each to \"{}\".".format(n_fibers_x, n_fibers_y, n_fibers_x*n_fibers_y, n_points_whole_fiber, output_filename))

@@ -83,6 +83,12 @@ void handleSignal(int signalNo)
   int rankNo = DihuContext::ownRankNoCommWorld();
   LOG(INFO) << "Rank " << rankNo << " received signal " << sys_siglist[signalNo]
     << " (" << signalNo << "): " << signalName;
+
+  if (signalNo == SIGBUS)
+  {
+    LOG(ERROR) << "Available memory was exceeded.";
+  }
+
   if (signalNo != SIGRTMIN)
   {
     MPI_Abort(MPI_COMM_WORLD,0);

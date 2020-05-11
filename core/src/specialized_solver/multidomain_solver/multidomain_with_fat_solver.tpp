@@ -332,10 +332,10 @@ setInformationToPreconditioner()
         {
           int partitionIndex = meshPartitionMuscle->convertRankNoToPartitionIndex(coordinateDirection, rankNo);
           nNodesLocalWithoutGhosts *= meshPartitionMuscle->nNodesLocalWithoutGhosts(coordinateDirection, partitionIndex);
-          LOG(INFO) << "  mus block " << blockIndex << " rank " << rankNo << " dim " << coordinateDirection << ": *" << meshPartitionMuscle->nNodesLocalWithoutGhosts(coordinateDirection, rankNo) << " -> " << nNodesLocalWithoutGhosts;
+          VLOG(1) << "  block " << blockIndex << " rank " << rankNo << " dim " << coordinateDirection << ": *" << meshPartitionMuscle->nNodesLocalWithoutGhosts(coordinateDirection, rankNo) << " -> " << nNodesLocalWithoutGhosts;
         }
 
-        LOG(INFO) << "-> lengthsOfBlocks[" << rankNo*this->nColumnSubmatricesSystemMatrix_ + blockIndex << "] = " << nNodesLocalWithoutGhosts;
+        VLOG(1) << "-> lengthsOfBlocks[" << rankNo*this->nColumnSubmatricesSystemMatrix_ + blockIndex << "] = " << nNodesLocalWithoutGhosts;
         lengthsOfBlocks[rankNo*this->nColumnSubmatricesSystemMatrix_ + blockIndex] = nNodesLocalWithoutGhosts;
       }
     }
@@ -360,7 +360,7 @@ setInformationToPreconditioner()
     for (PetscInt blockSize : lengthsOfBlocks)
       size += blockSize;
 
-    LOG(INFO) << "block jacobi preconditioner, lengthsOfBlocks: " << lengthsOfBlocks << ", system matrix size: " << nRowsGlobal << "x" << nColumnsGlobal;
+    LOG(DEBUG) << "block jacobi preconditioner, lengthsOfBlocks: " << lengthsOfBlocks << ", system matrix size: " << nRowsGlobal << "x" << nColumnsGlobal;
 
     if (size != nRowsGlobal || size != nColumnsGlobal)
     {

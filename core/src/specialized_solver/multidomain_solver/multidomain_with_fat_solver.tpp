@@ -307,7 +307,72 @@ setInformationToPreconditioner()
   PetscObjectTypeCompare((PetscObject)pc, PCBJACOBI, &useBlockJacobiPreconditioner);
   if (useBlockJacobiPreconditioner)
   {
+    // smaller blocks
+#if 1
+    int nRanks = this->dataMultidomain_.functionSpace()->meshPartition()->rankSubset()->size();
+    PetscInt nMatrixBlocks = this->nColumnSubmatricesSystemMatrix_*nRanks;
+    
+    std::shared_ptr<Partition::MeshPartition<FunctionSpace>> meshPartitionMuscle = this->dataMultidomain_.functionSpace()->meshPartition();
+    std::shared_ptr<Partition::MeshPartition<typename FiniteElementMethodDiffusionFat::FunctionSpace>> meshPartitionFat = this->finiteElementMethodFat_.data().functionSpace()->meshPartition();
+
+    // set sizes of all blocks to the number of dofs in the muscle domain
+    std::vector<PetscInt> lengthsOfBlocks(nMatrixBlocks, this->dataMultidomain_.functionSpace()->nDofsLocalWithoutGhosts());
+    
+    // loop over ranks
+    for (int rankNo = 0; rankNo < nRanks; rankNo++)
+    {
+      // loop over matrix blocks
+      for (int blockIndex = 0; blockIndex < this->nColumnSubmatricesSystemMatrix_; blockIndex++)
+      {
+        // get local size of block on the current rank
+        // for muscle mesh block
+        if (blockIndex < this->nColumnSubmatricesSystemMatrix_-1)
+        {
+          // determine number of local nodes (= dofs) for rank rankNo
+          int nNodesLocalWithoutGhosts = 1;
+          for (int coordinateDirection = 0; coordinateDirection < 3; coordinateDirection++)
+          {
+            nNodesLocalWithoutGhosts *= meshPartitionMuscle->nNodesLocalWithoutGhosts(coordinateDirection, rankNo);
+          }
+
+          lengthsOfBlocks[rankNo*this->nColumnSubmatricesSystemMatrix_ + blockIndex] = nNodesLocalWithoutGhosts;
+        }
+        else 
+        {
+          // for fat mesh block
+          // determine number of local nodes (= dofs) for rank rankNo
+          int nNodesLocalWithoutGhosts = 1;
+          for (int coordinateDirection = 0; coordinateDirection < 3; coordinateDirection++)
+          {
+            nNodesLocalWithoutGhosts *= meshPartitionFat->nNodesLocalWithoutGhosts(coordinateDirection, rankNo);
+          }
+
+          lengthsOfBlocks[rankNo*this->nColumnSubmatricesSystemMatrix_ + blockIndex] = nNodesLocalWithoutGhosts;
+        }
+      }
+    }
+
+    // assert that size matches global matrix size
+    PetscInt nRowsGlobal, nColumnsGlobal;
+    ierr = MatGetSize(this->singleSystemMatrix_, &nRowsGlobal, &nColumnsGlobal); CHKERRV(ierr);
+    PetscInt size = 0;
+    for (PetscInt blockSize : lengthsOfBlocks)
+      size += blockSize;
+
+    LOG(INFO) << "block jacobi preconditioner, lengthsOfBlocks: " << lengthsOfBlocks << ", system matrix size: " << nRowsGlobal << "x" << nColumnsGlobal;
+
+    if (size != nRowsGlobal || size != nColumnsGlobal)
+    {
+      LOG(FATAL) << "Block lengths of block jacobi preconditioner do not sum up to the system matrix size.";
+    }
+    assert(size == nRowsGlobal);
+    assert(size == nColumnsGlobal);
+
     // PCBJacobiSetTotalBlocks(PC pc, PetscInt nBlocks, const PetscInt lengthsOfBlocks[])
+    ierr = PCBJacobiSetTotalBlocks(pc, this->nColumnSubmatricesSystemMatrix_, lengthsOfBlocks.data()); CHKERRV(ierr);
+
+#else
+    // big blocks
     PetscInt nBlocks = this->nColumnSubmatricesSystemMatrix_;
 
     // set sizes of all blocks to the number of dofs in the muscle domain
@@ -334,7 +399,10 @@ setInformationToPreconditioner()
     assert(size == nRowsGlobal);
     assert(size == nColumnsGlobal);
 
+    // PCBJacobiSetTotalBlocks(PC pc, PetscInt nBlocks, const PetscInt lengthsOfBlocks[])
     ierr = PCBJacobiSetTotalBlocks(pc, this->nColumnSubmatricesSystemMatrix_, lengthsOfBlocks.data()); CHKERRV(ierr);
+#endif
+
   }
 
   // set node positions

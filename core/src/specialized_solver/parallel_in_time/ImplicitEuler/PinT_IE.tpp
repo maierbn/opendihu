@@ -176,7 +176,7 @@ run()
   int       cfactor       = 2;
   int       max_iter      = 50;
   int       min_coarse    = 3;
-  int       fmg           = 0;
+  int       fmg           = 1;
   int       scoarsen      = 0;
   int       res           = 0;
   int       wrapper_tests = 0;

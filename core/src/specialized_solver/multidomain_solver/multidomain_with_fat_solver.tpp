@@ -332,7 +332,8 @@ setInformationToPreconditioner()
           int nNodesLocalWithoutGhosts = 1;
           for (int coordinateDirection = 0; coordinateDirection < 3; coordinateDirection++)
           {
-            nNodesLocalWithoutGhosts *= meshPartitionMuscle->nNodesLocalWithoutGhosts(coordinateDirection, rankNo);
+            int partitionIndex = meshPartitionMuscle->convertRankNoToPartitionIndex(coordinateDirection, rankNo);
+            nNodesLocalWithoutGhosts *= meshPartitionMuscle->nNodesLocalWithoutGhosts(coordinateDirection, partitionIndex);
             LOG(INFO) << "  mus block " << blockIndex << " rank " << rankNo << " dim " << coordinateDirection << ": *" << meshPartitionMuscle->nNodesLocalWithoutGhosts(coordinateDirection, rankNo) << " -> " << nNodesLocalWithoutGhosts;
           }
 
@@ -346,7 +347,8 @@ setInformationToPreconditioner()
           int nNodesLocalWithoutGhosts = 1;
           for (int coordinateDirection = 0; coordinateDirection < 3; coordinateDirection++)
           {
-            nNodesLocalWithoutGhosts *= meshPartitionFat->nNodesLocalWithoutGhosts(coordinateDirection, rankNo);
+            int partitionIndex = meshPartitionMuscle->convertRankNoToPartitionIndex(coordinateDirection, rankNo);
+            nNodesLocalWithoutGhosts *= meshPartitionFat->nNodesLocalWithoutGhosts(coordinateDirection, partitionIndex);
             LOG(INFO) << "  fat block " << blockIndex << " rank " << rankNo << " dim " << coordinateDirection << ": *" << meshPartitionMuscle->nNodesLocalWithoutGhosts(coordinateDirection, rankNo) << " -> " << nNodesLocalWithoutGhosts;
           }
 

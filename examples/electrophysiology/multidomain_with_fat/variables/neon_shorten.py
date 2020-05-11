@@ -40,9 +40,9 @@ motor_units = [
 # solvers
 # -------
 multidomain_solver_type = "gmres"          # solver for the multidomain problem
-#multidomain_preconditioner_type = "bjacobi"   # preconditioner
+multidomain_preconditioner_type = "bjacobi"   # preconditioner
 #multidomain_preconditioner_type = "boomeramg"   # preconditioner
-multidomain_preconditioner_type = "euclid"   # preconditioner
+#multidomain_preconditioner_type = "euclid"   # preconditioner
 
 multidomain_alternative_solver_type = "gmres"            # alternative solver, used when normal solver diverges
 multidomain_alternative_preconditioner_type = "euclid"    # preconditioner of the alternative solver

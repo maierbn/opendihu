@@ -58,10 +58,11 @@ b  = 1.075e-2               # [N/cm^2] anisotropy parameter
 d  = 9.1733                 # [-] anisotropy parameter
 
 # for debugging, b = 0 leads to normal Mooney-Rivlin
-#b = 0
+b = 0
 
 material_parameters = [c1, c2, b, d]   # material parameters
 pmax = 7.3                  # [N/cm^2] maximum isometric active stress
+pmax = 1./1000
 
 # load
 constant_body_force = (0,0,-9.81e-4)   # [cm/ms^2], gravity constant for the body force
@@ -102,7 +103,7 @@ motor_units = [
   {"fiber_no": 50, "standard_deviation": 0.2, "maximum": 0.2, "radius": 72.00, "cm": 1.00, "activation_start_time": 1.6, "stimulation_frequency": 8.32,  "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
   {"fiber_no": 25, "standard_deviation": 0.2, "maximum": 0.2, "radius": 80.00, "cm": 1.00, "activation_start_time": 1.8, "stimulation_frequency": 7.66,  "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},    # high number of fibers
 ]
-#motor_units=motor_units[0:1]
+motor_units=motor_units[0:1]
 
 # solvers
 # -------
@@ -142,12 +143,12 @@ use_lumped_mass_matrix = False            # which formulation to use, the formul
 end_time = 4000.0                   # [ms] end time of the simulation
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
 stimulation_frequency_jitter = 0    # [-] jitter in percent of the frequency, added and substracted to the stimulation_frequency after each stimulation
-dt_0D = 3e-3                        # [ms] timestep width of ODEs (1e-3)
-dt_multidomain = 3e-3               # [ms] timestep width of the multidomain solver, i.e. the diffusion
+dt_0D = 1e-3                        # [ms] timestep width of ODEs (1e-3)
+dt_multidomain = 1e-3               # [ms] timestep width of the multidomain solver, i.e. the diffusion
 dt_splitting = dt_multidomain       # [ms] timestep width of strang splitting between 0D and multidomain, this is the same as the dt_multidomain, because we do not want to subcycle for the diffusion part
-dt_elasticity = 3e-3                # [ms] time step width of elasticity solver
-output_timestep_multidomain = 2e-1     # [ms] timestep for fiber output, 0.5
-output_timestep_elasticity = 1e-3      # [ms] timestep for elasticity output files
+dt_elasticity = 1e-1                # [ms] time step width of elasticity solver
+output_timestep_multidomain = dt_multidomain     # [ms] timestep for fiber output, 0.5
+output_timestep_elasticity = dt_elasticity      # [ms] timestep for elasticity output files
 
 # input files
 cellml_file = "../../input/new_slow_TK_2014_12_08.c"
@@ -155,6 +156,7 @@ fiber_file = "../../input/left_biceps_brachii_9x9fibers.bin"
 fiber_file = "../../input/left_biceps_brachii_13x13fibers.bin"
 fat_mesh_file = fiber_file + "_fat.bin"
 firing_times_file = "../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
+firing_times_file = "../../input/MU_firing_times_never.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
 fiber_distribution_file = "../../input/MU_fibre_distribution_10MUs.txt"
 
 # stride for sampling the 3D elements from the fiber data
@@ -162,7 +164,7 @@ fiber_distribution_file = "../../input/MU_fibre_distribution_10MUs.txt"
 # If you change this, delete the compartment_relative_factors.* files, they have to be generated again.
 sampling_stride_x = 1
 sampling_stride_y = 1
-sampling_stride_z = 20
+sampling_stride_z = 2 #20
 sampling_stride_fat = 1
 
 # how much of the multidomain mesh is used for elasticity
@@ -176,7 +178,7 @@ paraview_output = True
 adios_output = False
 exfile_output = False
 python_output = False
-states_output = False    # if also the subcellular states should be output, this produces large files, set output_timestep_0D_states
+states_output = True    # if also the subcellular states should be output, this produces large files, set output_timestep_0D_states
 show_linear_solver_output = True    # if every solve of multidomain diffusion should be printed
 disable_firing_output = False   # if information about firing of MUs should be printed
 

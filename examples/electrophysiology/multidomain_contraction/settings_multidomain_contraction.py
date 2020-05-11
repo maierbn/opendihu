@@ -144,7 +144,7 @@ multidomain_solver = {
   "initialGuessNonzero":              variables.initial_guess_nonzero,      # if the initial guess for the 3D system should be set as the solution of the previous timestep, this only makes sense for iterative solvers
   "enableFatComputation":             True,                                 # disabling the computation of the fat layer is only for debugging and speeds up computation. If set to False, the respective matrix is set to the identity
   "showLinearSolverOutput":           variables.show_linear_solver_output,  # if convergence information of the linear solver in every timestep should be printed, this is a lot of output for fast computations
-  "updateSystemMatrixEveryTimestep":  True,                                 # if this multidomain solver will update the system matrix in every first timestep, us this only if the geometry changed, e.g. by contraction
+  "updateSystemMatrixEveryTimestep":  False,                                 # if this multidomain solver will update the system matrix in every first timestep, us this only if the geometry changed, e.g. by contraction
   
   "PotentialFlow": {
     "FiniteElementMethod" : {  
@@ -310,7 +310,14 @@ config = {
                   
                   "meshName":                               "3Dmesh",                                       # use the linear mesh, it was partitioned by the helper.py script which called opendihu/scripts/create_partitioned_meshes_for_settings.py
                   "stimulationLogFilename":                 "out/stimulation.log",
+  
+                  # output writer for states, intermediates and parameters                
+									"OutputWriter" : [
+                    {"format": "Paraview", "outputInterval": (int)(1./variables.dt_0D*variables.output_timestep_multidomain), "filename": "out/" + variables.scenario_name + "/0D_all", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"}
+                  ] if variables.states_output else []
                 },
+
+                # output writer for states
                 "OutputWriter" : [
                   {"format": "Paraview", "outputInterval": (int)(1./variables.dt_multidomain*variables.output_timestep_multidomain), "filename": "out/" + variables.scenario_name + "/0D_states", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"}
                 ] if variables.states_output else []

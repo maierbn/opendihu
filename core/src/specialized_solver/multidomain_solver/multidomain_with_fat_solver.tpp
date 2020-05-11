@@ -342,8 +342,8 @@ setInformationToPreconditioner()
 
     // set entries for block of fat meh
     Mat matrixC = this->submatricesSystemMatrix_[MathUtility::sqr(this->nColumnSubmatricesSystemMatrix_)-1];
-    PetscInt **matrixCOwnershipRanges;
-    ierr = MatGetOwnershipRanges(matrixC, matrixCOwnershipRanges); CHKERRV(ierr);
+    const PetscInt *matrixCOwnershipRanges;
+    ierr = MatGetOwnershipRanges(matrixC, &matrixCOwnershipRanges); CHKERRV(ierr);
 
     // loop over ranks
     for (int rankNo = 0; rankNo < nRanks; rankNo++)

@@ -321,42 +321,37 @@ setInformationToPreconditioner()
     // loop over ranks
     for (int rankNo = 0; rankNo < nRanks; rankNo++)
     {
-      // loop over matrix blocks
-      for (int blockIndex = 0; blockIndex < this->nColumnSubmatricesSystemMatrix_; blockIndex++)
+      // loop over matrix blocks of muscle mesh, not the fat mesh
+      for (int blockIndex = 0; blockIndex < this->nColumnSubmatricesSystemMatrix_-1; blockIndex++)
       {
         // get local size of block on the current rank
         // for muscle mesh block
-        if (blockIndex < this->nColumnSubmatricesSystemMatrix_-1)
+        // determine number of local nodes (= dofs) for rank rankNo
+        int nNodesLocalWithoutGhosts = 1;
+        for (int coordinateDirection = 0; coordinateDirection < 3; coordinateDirection++)
         {
-          // determine number of local nodes (= dofs) for rank rankNo
-          int nNodesLocalWithoutGhosts = 1;
-          for (int coordinateDirection = 0; coordinateDirection < 3; coordinateDirection++)
-          {
-            int partitionIndex = meshPartitionMuscle->convertRankNoToPartitionIndex(coordinateDirection, rankNo);
-            nNodesLocalWithoutGhosts *= meshPartitionMuscle->nNodesLocalWithoutGhosts(coordinateDirection, partitionIndex);
-            LOG(INFO) << "  mus block " << blockIndex << " rank " << rankNo << " dim " << coordinateDirection << ": *" << meshPartitionMuscle->nNodesLocalWithoutGhosts(coordinateDirection, rankNo) << " -> " << nNodesLocalWithoutGhosts;
-          }
-
-          LOG(INFO) << "-> lengthsOfBlocks[" << rankNo*this->nColumnSubmatricesSystemMatrix_ + blockIndex << "] = " << nNodesLocalWithoutGhosts;
-          lengthsOfBlocks[rankNo*this->nColumnSubmatricesSystemMatrix_ + blockIndex] = nNodesLocalWithoutGhosts;
+          int partitionIndex = meshPartitionMuscle->convertRankNoToPartitionIndex(coordinateDirection, rankNo);
+          nNodesLocalWithoutGhosts *= meshPartitionMuscle->nNodesLocalWithoutGhosts(coordinateDirection, partitionIndex);
+          LOG(INFO) << "  mus block " << blockIndex << " rank " << rankNo << " dim " << coordinateDirection << ": *" << meshPartitionMuscle->nNodesLocalWithoutGhosts(coordinateDirection, rankNo) << " -> " << nNodesLocalWithoutGhosts;
         }
-        else 
-        {
-          // for fat mesh block
-          // determine number of local nodes (= dofs) for rank rankNo
-          int nNodesLocalWithoutGhosts = 1;
-          for (int coordinateDirection = 0; coordinateDirection < 3; coordinateDirection++)
-          {
-            int partitionIndex = meshPartitionMuscle->convertRankNoToPartitionIndex(coordinateDirection, rankNo);
-            nNodesLocalWithoutGhosts *= meshPartitionFat->nNodesLocalWithoutGhosts(coordinateDirection, partitionIndex);
-            LOG(INFO) << "  fat block " << blockIndex << " rank " << rankNo << " dim " << coordinateDirection << ": *" << meshPartitionMuscle->nNodesLocalWithoutGhosts(coordinateDirection, rankNo) << " -> " << nNodesLocalWithoutGhosts;
-          }
 
-          LOG(INFO) << "-> lengthsOfBlocks[" << rankNo*this->nColumnSubmatricesSystemMatrix_ + blockIndex << "] = " << nNodesLocalWithoutGhosts;
-          lengthsOfBlocks[rankNo*this->nColumnSubmatricesSystemMatrix_ + blockIndex] = nNodesLocalWithoutGhosts;
-        }
+        LOG(INFO) << "-> lengthsOfBlocks[" << rankNo*this->nColumnSubmatricesSystemMatrix_ + blockIndex << "] = " << nNodesLocalWithoutGhosts;
+        lengthsOfBlocks[rankNo*this->nColumnSubmatricesSystemMatrix_ + blockIndex] = nNodesLocalWithoutGhosts;
       }
     }
+
+    // set entries for block of fat meh
+    Mat matrixC = this->submatricesSystemMatrix_[MathUtility::sqr(this->nColumnSubmatricesSystemMatrix_)-1];
+    PetscInt **matrixCOwnershipRanges;
+    ierr = MatGetOwnershipRanges(matrixC, matrixCOwnershipRanges); CHKERRV(ierr);
+
+    // loop over ranks
+    for (int rankNo = 0; rankNo < nRanks; rankNo++)
+    {
+      int nRowsLocalCurrentRank = matrixCOwnershipRanges[rankNo+1] - matrixCOwnershipRanges[rankNo];
+      lengthsOfBlocks[rankNo*this->nColumnSubmatricesSystemMatrix_ + this->nColumnSubmatricesSystemMatrix_-1] = nRowsLocalCurrentRank;
+    }
+    
 
     // assert that size matches global matrix size
     PetscInt nRowsGlobal, nColumnsGlobal;

@@ -369,7 +369,8 @@ setInformationToPreconditioner()
 
     if (size != nRowsGlobal || size != nColumnsGlobal)
     {
-      LOG(FATAL) << "Block lengths of block jacobi preconditioner do not sum up to the system matrix size.";
+      LOG(FATAL) << "Block lengths of block jacobi preconditioner do not sum up to the system matrix size. Sum of block lengths: " << size << ", dimension of system matrix: "
+        << nRowsGlobal << "x" << nColumnsGlobal;
     }
     assert(size == nRowsGlobal);
     assert(size == nColumnsGlobal);

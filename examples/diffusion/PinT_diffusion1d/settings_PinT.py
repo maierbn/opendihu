@@ -26,7 +26,7 @@ config = {
           #  "inputMeshIsGlobal": True,      # boundary conditions are given as global indices
           #},
            "mesh_{}".format(k): {
-              "nElements": [(2 ** (k))], #if k > 1 else [4],                 # number of elements
+              "nElements": [(2 ** (k))] if k > 0 else [2],                 # number of elements
               # "nElements": 32,                 # number of elements
               "physicalExtent": 4.0,          # the physical size of the domain
               "inputMeshIsGlobal": True,      # boundary conditions are given as global indices
@@ -35,8 +35,8 @@ config = {
   "PinTIE": {        # this is the name of the solver, as given in the constructor to the timestepping object
     "tstart": 0,                    # Start time
     "tstop": 100,                     # End time
-    "ntime": 10000,                      # number of time steps
-    "nspace":   128,
+    "ntime": 1000000,                      # number of time steps
+    "nspace":   32,
     "Initial Guess": [2,2,4,5,2,2,2,0, 2,2,4,5,2,2,2,0,2,2,4,5,2,2,2,0,2,2,4,5,2,2,2,0],
     "option1": "blabla",              # another example option that is parsed in the data object
     "nRanksInSpace": 1,            # number of processes that compute the spatial domain in parallel

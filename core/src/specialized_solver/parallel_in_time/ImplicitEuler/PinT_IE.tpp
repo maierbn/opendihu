@@ -8,8 +8,8 @@
 
 #include <braid.h>
 #include "specialized_solver/parallel_in_time/ImplicitEuler/PinT_IE_Braid.h"
-#include "specialized_solver/parallel_in_time/PinT_lib.h"
-#include "specialized_solver/parallel_in_time/PinT_fun.h"
+#include "specialized_solver/parallel_in_time/ImplicitEuler/PinT_lib_IE.h"
+#include "specialized_solver/parallel_in_time/ImplicitEuler/PinT_fun_IE.h"
 
 #include <petscdm.h>
 #include <petscdmda.h>
@@ -64,7 +64,7 @@ initialize()
   // split MPI communicator, create communicators with rank numbering in x domain
   // MPI_Comm communicatorTotal = MPI_COMM_WORLD;
 
-  int nRanksInSpace = this->specificSettings_.getOptionInt("nRanksInSpace", 1, PythonUtility::Positive);
+  nRanksInSpace = this->specificSettings_.getOptionInt("nRanksInSpace", 1, PythonUtility::Positive);
   braid_SplitCommworld(&communicatorTotal_, nRanksInSpace, &communicatorX_, &communicatorT_);
 
   // create rankSubset and assign to partitionManager, to be used by all further created meshes and solvers
@@ -174,7 +174,7 @@ run()
   int       skip          = 0;
   double    tol           = 1.0e-07;
   int       cfactor       = 2;
-  int       max_iter      = 30;
+  int       max_iter      = 50;
   int       min_coarse    = 3;
   int       fmg           = 0;
   int       scoarsen      = 0;
@@ -220,7 +220,7 @@ run()
      }
      if (res)
      {
-        braid_SetResidual(core_, my_Residual);
+        //braid_SetResidual(core_, my_Residual);
      }
      loglevels = log2(nspace - 1.0);
      if ( scoarsen && ( fabs(loglevels - round(loglevels)) > 1e-10 ))
@@ -234,8 +234,8 @@ run()
      }
      else if (scoarsen)
      {
-        braid_SetSpatialCoarsen(core_, my_Coarsen);
-        braid_SetSpatialRefine(core_,  my_Interp);
+        //braid_SetSpatialCoarsen(core_, my_Coarsen);
+        //braid_SetSpatialRefine(core_,  my_Interp);
      }
 
      braid_Drive(core_);
@@ -251,7 +251,7 @@ run()
   //VecScatterDestroy(&ctx_);
   //VecDestroy(&vout);
   free( app_->sc_info);
-  free( app_->g);
+  //free( app_->g);
   free( app_ );
 
   MPI_Barrier(communicatorTotal_);
@@ -327,7 +327,7 @@ PinT_initialize()
   int       nspace        = this->nspace_+1;
 
   app_ = (my_App *) malloc(sizeof(my_App));
-  (app_->g)             = (double*) malloc( nspace*sizeof(double) );
+  //(app_->g)             = (double*) malloc( nspace*sizeof(double) );
   (app_->comm)          = communicatorX_;
   (app_->tstart)        = tstart_;
   (app_->tstop)         = tstop_;
@@ -336,8 +336,8 @@ PinT_initialize()
   (app_->xstop)         = xstop_;
   (app_->nspace)        = nspace;
   (app_->print_level)   = print_level_;
-  (app_->testscatter)  = 0;
-  (app_->vecscatter)    = ctx_;
+  //(app_->testscatter)  = 0;
+  //(app_->vecscatter)    = ctx_;
   (app_->implicitEulerSolvers)        = &this->implicitEulerSolvers_;
 
   /* Initialize storage for sc_info, for tracking space-time grids visited during the simulation */

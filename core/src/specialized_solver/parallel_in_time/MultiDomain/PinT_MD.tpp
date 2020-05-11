@@ -7,8 +7,8 @@
 
 #include <braid.h>
 #include "specialized_solver/parallel_in_time/MultiDomain/PinT_MD_Braid.h"
-#include "specialized_solver/parallel_in_time/PinT_lib.h"
-#include "specialized_solver/parallel_in_time/PinT_fun.h"
+#include "specialized_solver/parallel_in_time/MultiDomain/PinT_lib_MD.h"
+#include "specialized_solver/parallel_in_time/MultiDomain/PinT_fun_MD.h"
 
 #include <petscdm.h>
 #include <petscdmda.h>
@@ -59,7 +59,7 @@ initialize()
   }
   */
   pid_t pid = getpid();
-  printf("pid: %lun", pid);
+  printf("pid: %d", pid);
 
   PyObject *MultiDomainConfig = this->specificSettings_.template getOptionListBegin<PyObject *>("TimeSteppingScheme");
   for (;
@@ -72,6 +72,8 @@ initialize()
   int nRanksInSpace = this->specificSettings_.getOptionInt("nRanksInSpace", 1, PythonUtility::Positive);
   braid_SplitCommworld(&communicatorTotal_, nRanksInSpace, &communicatorX_, &communicatorT_);
   
+  PinT_initialize();
+
   // create rankSubset and assign to partitionManager, to be used by all further created meshes and solvers
   rankSubsetX_ = std::make_shared<Partition::RankSubset>(communicatorX_);
   DihuContext::partitionManager()->setRankSubsetForNextCreatedPartitioning(rankSubsetX_);
@@ -115,8 +117,8 @@ initialize()
     //  }
     //}
     // create rank subset
-    //std::shared_ptr<Partition::RankSubset> nextRankSubset = std::make_shared<Partition::RankSubset>(communicatorX_);
-    //DihuContext::partitionManager()->setRankSubsetForNextCreatedPartitioning(nextRankSubset);
+    std::shared_ptr<Partition::RankSubset> nextRankSubset = std::make_shared<Partition::RankSubset>(communicatorX_);
+    DihuContext::partitionManager()->setRankSubsetForNextCreatedPartitioning(nextRankSubset);
   
     MultiDomainSolvers_.push_back(
       std::make_shared<NestedSolverMD>(MultiDomainContext)
@@ -140,20 +142,20 @@ initialize()
     // A function space object of type FunctionSpace<MeshType,BasisFunctionType> (see "function_space/function_space.h")
     // is an object that stores the mesh (e.g., all nodes and elements) as well as the basis function (e.g. linear Lagrange basis functions).
     // The NestedSolverMD solver already created a function space that we should use. We already have a typedef "FunctionSpace" that is the class of NestedSolverMD's function space type.
-    //std::shared_ptr<FunctionSpace> functionSpace = MultiDomainSolvers_.back()->data().functionSpace();
-    std::shared_ptr<FunctionSpace> functionSpace = MultiDomainSolvers_[0]->data().functionSpace();
+    std::shared_ptr<FunctionSpace> functionSpace = MultiDomainSolvers_.back()->data().functionSpace();
+    //std::shared_ptr<FunctionSpace> functionSpace = MultiDomainSolvers_[0]->data().functionSpace();
 
     // Pass the function space to the data object. data_ stores field variables.
     // It needs to know the number of nodes and degrees of freedom (dof) from the function space in order to create the vectors with the right size.
-    //data_.back()->setFunctionSpace(functionSpace);
-    data_[0]->setFunctionSpace(functionSpace);
+    data_.back()->setFunctionSpace(functionSpace);
+    //data_[0]->setFunctionSpace(functionSpace);
 
 
 
     //LOG(DEBUG) << "initialize data for i = " << i;
     // now call initialize, data will then create all variables (Petsc Vec's)
-    //data_.back()->initialize();
-    data_[0]->initialize();
+    data_.back()->initialize();
+    //data_[0]->initialize();
 
 
     // it is also possible to pass some field variables from the data of the NestedSolverMD to own data object
@@ -182,7 +184,7 @@ run()
   int          rank;
   double       loglevels;
   PetscInt     nspace        =  this->nspace_+1;
-  nspace = this->MultiDomainSolvers_[0]->nSolutionValuesLocal();
+  //nspace = this->MultiDomainSolvers_[0]->nSolutionValuesLocal();
 
 
   // Define XBraid parameters
@@ -238,7 +240,7 @@ run()
      }
      if (res)
      {
-        braid_SetResidual(core_, my_Residual);
+        braid_SetResidual(core_, my_Residual_MD);
      }
      loglevels = log2(nspace - 1.0);
      if ( scoarsen && ( fabs(loglevels - round(loglevels)) > 1e-10 ))
@@ -252,8 +254,8 @@ run()
      }
      else if (scoarsen)
      {
-        braid_SetSpatialCoarsen(core_, my_Coarsen);
-        braid_SetSpatialRefine(core_,  my_Interp);
+        braid_SetSpatialCoarsen(core_, my_Coarsen_MD);
+        braid_SetSpatialRefine(core_,  my_Interp_MD);
      }
 
      LOG(DEBUG) << "........................";
@@ -269,7 +271,7 @@ run()
   /* Clean up */
   braid_Destroy(core_);
   free( app_->sc_info);
-  free( app_->g);
+  //free( app_->g);
   free( app_ );
 
   // do something else
@@ -339,10 +341,10 @@ PinT_initialize()
     nspace_ = specificSettings_.getOptionDouble("nspace", 1.0, PythonUtility::Positive);
 
   int       nspace        = this->nspace_+1;
-  nspace = this->MultiDomainSolvers_[0]->nSolutionValuesLocal();
+  //nspace = this->MultiDomainSolvers_[0]->nSolutionValuesLocal();
 
   app_ = (my_App *) malloc(sizeof(my_App));
-  (app_->g)             = (double*) malloc( nspace*sizeof(double) );
+  //(app_->g)             = (double*) malloc( nspace*sizeof(double) );
   (app_->comm)          = communicatorTotal_;
   (app_->tstart)        = tstart_;
   (app_->tstop)         = tstop_;
@@ -353,14 +355,6 @@ PinT_initialize()
   (app_->print_level)   = print_level_;
   (app_->MultiDomainSolvers)        = &this->MultiDomainSolvers_;
 
-  LOG(DEBUG) << "tstart" << app_->tstart;
-  LOG(DEBUG) << "tstart_" << tstart_;
-  LOG(DEBUG) << "MS" << app_->MultiDomainSolvers;
-  LOG(DEBUG) << "MS_" << &this->MultiDomainSolvers_;
-  LOG(DEBUG) << "Cloene" << *my_Clone;
-  LOG(DEBUG) << "InitMD" << *my_Init_MD;
-  LOG(DEBUG) << "Sum" << *my_Sum;
-
   /* Initialize storage for sc_info, for tracking space-time grids visited during the simulation */
   app_->sc_info = (double*) malloc( 2*max_levels_*sizeof(double) );
   for(int i = 0; i < 2*max_levels_; i++) {
@@ -369,8 +363,8 @@ PinT_initialize()
 
   /* Initialize Braid */
   braid_Init(communicatorTotal_, communicatorT_, tstart_, tstop_, ntime_, app_,
-         my_Step_MD, my_Init_MD, my_Clone, my_Free, my_Sum, my_SpatialNorm,
-         my_Access, my_BufSize, my_BufPack, my_BufUnpack, &core_);
+         my_Step_MD, my_Init_MD, my_Clone_MD, my_Free_MD, my_Sum_MD, my_SpatialNorm_MD,
+         my_Access_MD, my_BufSize_MD, my_BufPack_MD, my_BufUnpack_MD, &core_);
 
 }
 

@@ -10,7 +10,7 @@
 #include "specialized_solver/multidomain_solver/multidomain_solver.h"
 #include "control/dihu_context.h"
 
-#include "specialized_solver/parallel_in_time/PinT_fun.h"
+#include "specialized_solver/parallel_in_time/MultiDomain/PinT_fun_MD.h"
 
 namespace ParallelInTime {
 template<class NestedSolverMD>

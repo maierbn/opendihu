@@ -3,8 +3,8 @@
 
 #include "specialized_solver/parallel_in_time/MultiDomain/PinT_MD_Braid.h"
 
-#include "specialized_solver/parallel_in_time/PinT_fun.h"
-#include "specialized_solver/parallel_in_time/PinT_lib.h"
+#include "specialized_solver/parallel_in_time/MultiDomain/PinT_fun_MD.h"
+#include "specialized_solver/parallel_in_time/MultiDomain/PinT_lib_MD.h"
 #include "data_management/specialized_solver/PinT_MD.h"
 
 int my_Step_MD(braid_App        app,
@@ -142,7 +142,7 @@ my_Init_MD(braid_App     app,
    int nspace = (app->nspace);
    //int    i;
    // double deltaX = (app->xstop - app->xstart) / (nspace - 1.0);
-   create_vector(&u, nspace);
+   create_vector_MD(&u, nspace);
    //for(i=0; i < nspace; i++)
    //    {
    //       (u->values)[i] = ((double)braid_Rand())/braid_RAND_MAX;

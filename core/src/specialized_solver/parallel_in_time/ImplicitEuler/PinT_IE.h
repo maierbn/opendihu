@@ -9,7 +9,7 @@
 #include "time_stepping_scheme/implicit_euler.h"
 #include "control/dihu_context.h"
 
-#include "specialized_solver/parallel_in_time/PinT_fun.h"
+#include "specialized_solver/parallel_in_time/ImplicitEuler/PinT_fun_IE.h"
 
 namespace ParallelInTime {
 template<class NestedSolverIE>
@@ -87,7 +87,9 @@ protected:
   braid_Core    core_;
   my_App       *app_;
   int print_level_   = 2;
-  int max_levels_    = 3;
+  int max_levels_    = 5;
+
+  int nRanksInSpace;
 
   VecScatter ctx_;
 

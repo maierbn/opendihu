@@ -1,13 +1,13 @@
 // most important parallel-in-time structures and functions for XBraid
 // more functions in PinT_lib.h
 
-#include "specialized_solver/parallel_in_time/PinT_fun.h"
+#include "specialized_solver/parallel_in_time/MultiDomain/PinT_fun_MD.h"
 
-#include "specialized_solver/parallel_in_time/PinT_lib.h"
+#include "specialized_solver/parallel_in_time/MultiDomain/PinT_lib_MD.h"
 
 /* create and allocate a vector */
 void
-create_vector(my_Vector **u,
+create_vector_MD(my_Vector **u,
               int size)
 {
    (*u) = (my_Vector *) malloc(sizeof(my_Vector));
@@ -16,7 +16,7 @@ create_vector(my_Vector **u,
 }
 
 int
-my_Clone(braid_App     app,
+my_Clone_MD(braid_App     app,
          braid_Vector  u,
          braid_Vector *v_ptr)
 {
@@ -24,7 +24,7 @@ my_Clone(braid_App     app,
    int size = (u->size);
    int i;
 
-   create_vector(&v, size);
+   create_vector_MD(&v, size);
    for (i = 0; i < size; i++)
    {
       (v->values)[i] = (u->values)[i];
@@ -35,7 +35,7 @@ my_Clone(braid_App     app,
 }
 
 int
-my_Free(braid_App    app,
+my_Free_MD(braid_App    app,
         braid_Vector u)
 {
    free(u->values);
@@ -45,7 +45,7 @@ my_Free(braid_App    app,
 }
 
 int
-my_Sum(braid_App     app,
+my_Sum_MD(braid_App     app,
        double        alpha,
        braid_Vector  x,
        double        beta,
@@ -64,7 +64,7 @@ my_Sum(braid_App     app,
 
 
 int
-my_SpatialNorm(braid_App     app,
+my_SpatialNorm_MD(braid_App     app,
                braid_Vector  u,
                double       *norm_ptr)
 {
@@ -82,7 +82,7 @@ my_SpatialNorm(braid_App     app,
 }
 
 int
-my_Access(braid_App          app,
+my_Access_MD(braid_App          app,
           braid_Vector       u,
           braid_AccessStatus astatus)
 {
@@ -119,7 +119,7 @@ my_Access(braid_App          app,
 }
 
 int
-my_BufSize(braid_App           app,
+my_BufSize_MD(braid_App           app,
            int                 *size_ptr,
            braid_BufferStatus  bstatus)
 {
@@ -129,7 +129,7 @@ my_BufSize(braid_App           app,
 }
 
 int
-my_BufPack(braid_App           app,
+my_BufPack_MD(braid_App           app,
            braid_Vector        u,
            void               *buffer,
            braid_BufferStatus  bstatus)
@@ -149,7 +149,7 @@ my_BufPack(braid_App           app,
 }
 
 int
-my_BufUnpack(braid_App           app,
+my_BufUnpack_MD(braid_App           app,
              void               *buffer,
              braid_Vector       *u_ptr,
              braid_BufferStatus  bstatus)
@@ -159,7 +159,7 @@ my_BufUnpack(braid_App           app,
    int        i, size;
 
    size = dbuffer[0];
-   create_vector(&u, size);
+   create_vector_MD(&u, size);
 
    for (i = 0; i < size; i++)
    {
@@ -171,39 +171,39 @@ my_BufUnpack(braid_App           app,
 }
 
 int
-my_Residual(braid_App        app,
+my_Residual_MD(braid_App        app,
             braid_Vector     ustop,
             braid_Vector     r,
             braid_StepStatus status)
 {
-   double tstart;             /* current time */
-   double tstop;              /* evolve to this time*/
-   int i;
-   double x, deltaX, deltaT;
+   // double tstart;             /* current time */
+   // double tstop;              /* evolve to this time*/
+   // int i;
+   // double x, deltaX, deltaT;
 
-   braid_StepStatusGetTstartTstop(status, &tstart, &tstop);
-   deltaT = tstop - tstart;
-   deltaX = (app->xstop - app->xstart) / (ustop->size - 1.0);
+   // braid_StepStatusGetTstartTstop(status, &tstart, &tstop);
+   // deltaT = tstop - tstart;
+   // deltaX = (app->xstop - app->xstart) / (ustop->size - 1.0);
 
-   /* Set up matrix stencil for 1D heat equation*/
-   compute_stencil(deltaX, deltaT, app->matrix);
+   // /* Set up matrix stencil for 1D heat equation*/
+   // compute_stencil(deltaX, deltaT, app->matrix);
 
-   /* Residual r = A*xstop - r - forcing - boundary
-    *   note: there are no boundary terms here */
-   matvec_tridiag(ustop->values, app->g, ustop->size, app->matrix);
-   x = app->xstart;
-   for(i = 0; i < r->size; i++)
-   {
-      r->values[i] = app->g[i] - r->values[i] - deltaT*forcing(tstop, x);
-      x = x + deltaX;
-   }
+   // /* Residual r = A*xstop - r - forcing - boundary
+   //  *   note: there are no boundary terms here */
+   // matvec_tridiag(ustop->values, app->g, ustop->size, app->matrix);
+   // x = app->xstart;
+   // for(i = 0; i < r->size; i++)
+   // {
+   //    r->values[i] = app->g[i] - r->values[i] - deltaT*forcing(tstop, x);
+   //    x = x + deltaX;
+   // }
 
    return 0;
 }
 
 /* Bilinear Coarsening */
 int
-my_Coarsen(braid_App              app,
+my_Coarsen_MD(braid_App              app,
            braid_Vector           fu,
            braid_Vector          *cu_ptr,
            braid_CoarsenRefStatus status)
@@ -220,13 +220,13 @@ my_Coarsen(braid_App              app,
    if( level < floor(log2(app->nspace)) - 1 )
    {
       csize = ((fu->size) - 1)/2 + 1;
-      create_vector(&v, csize);
+      create_vector_MD(&v, csize);
       coarsen_1D(v->values, fu->values, csize, fu->size);
    }
    else
    {
       /* No coarsening, clone the vector */
-      my_Clone(app, fu, &v);
+      my_Clone_MD(app, fu, &v);
    }
 
    *cu_ptr = v;
@@ -236,7 +236,7 @@ my_Coarsen(braid_App              app,
 
 /* Bilinear interpolation */
 int
-my_Interp(braid_App              app,
+my_Interp_MD(braid_App              app,
           braid_Vector           cu,
           braid_Vector          *fu_ptr,
           braid_CoarsenRefStatus status)
@@ -253,16 +253,17 @@ my_Interp(braid_App              app,
    if( level < floor(log2(app->nspace)) - 1 )
    {
       fsize = (cu->size - 1)*2 + 1;
-      create_vector(&v, fsize);
+      create_vector_MD(&v, fsize);
       interpolate_1D(cu->values, v->values, cu->size, fsize);
    }
    else
    {
       /* No refinement, clone the vector */
-      my_Clone(app, cu, &v);
+      my_Clone_MD(app, cu, &v);
    }
 
-   *fu_ptr = v;
+*fu_ptr = v;
 
    return 0;
 }
+

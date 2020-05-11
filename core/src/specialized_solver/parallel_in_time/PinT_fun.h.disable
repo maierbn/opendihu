@@ -96,16 +96,18 @@ typedef struct _braid_App_struct
 /* Can put anything in my vector and name it anything as well */
 typedef struct _braid_Vector_struct
 {
-   PetscInt     size;
+   //PetscInt     size;
    //PetscReal *values;
-   double *values;
+   //double *values;
+   Vec values;
 
 } my_Vector;
 
 /* create and allocate a vector */
 void
 create_vector(my_Vector **u,
-              int size);
+              int size,
+              braid_App app);
 
 int
 my_Clone(braid_App     app,
@@ -150,22 +152,22 @@ my_BufUnpack(braid_App           app,
              braid_Vector       *u_ptr,
              braid_BufferStatus  bstatus);
 
-int
-my_Residual(braid_App        app,
-            braid_Vector     ustop,
-            braid_Vector     r,
-            braid_StepStatus status);
+// int
+// my_Residual(braid_App        app,
+//             braid_Vector     ustop,
+//             braid_Vector     r,
+//             braid_StepStatus status);
 
-/* Bilinear Coarsening */
-int
-my_Coarsen(braid_App              app,
-           braid_Vector           fu,
-           braid_Vector          *cu_ptr,
-           braid_CoarsenRefStatus status);
+// /* Bilinear Coarsening */
+// int
+// my_Coarsen(braid_App              app,
+//            braid_Vector           fu,
+//            braid_Vector          *cu_ptr,
+//            braid_CoarsenRefStatus status);
 
-/* Bilinear interpolation */
-int
-my_Interp(braid_App              app,
-          braid_Vector           cu,
-          braid_Vector          *fu_ptr,
-          braid_CoarsenRefStatus status);
+// /* Bilinear interpolation */
+// int
+// my_Interp(braid_App              app,
+//           braid_Vector           cu,
+//           braid_Vector          *fu_ptr,
+//           braid_CoarsenRefStatus status);

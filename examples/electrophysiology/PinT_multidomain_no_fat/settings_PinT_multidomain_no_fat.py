@@ -8,7 +8,7 @@ import sys,os
 import struct
 sys.path.insert(0, "..")
 
-NumberOfMultiDomainSolvers = 14;
+NumberOfMultiDomainSolvers = 9
 # global parameters
 PMax = 7.3              # maximum stress [N/cm^2]
 Conductivity = 3.828    # sigma, conductivity [mS/cm]
@@ -30,7 +30,7 @@ solver_tolerance = 1e-10
 # input files, these are old files, better use "left_biceps_brachii_*"
 #fiber_file = "../input/scaled_mesh_tiny"
 #fiber_file = "../input/scaled_mesh_small"
-fiber_file = "../input/scaled_mesh_normal"
+#fiber_file = "../input/scaled_mesh_normal"
 #fiber_file = "../input/scaled_mesh_big"
 
 #fiber_file = "../input/laplace3d_structured_linear"
@@ -58,15 +58,15 @@ motor_units = [
 if True:
   end_time = 0.1
   Am = 1.0
-  sampling_stride_z = 200 #muscle 74
-  motor_units = motor_units[0:1]    # only 2 motor units [0:2]
+  sampling_stride_z = 200 #muscle 74 200
+  motor_units = motor_units[0:2]    # only 2 motor units [0:2] [0:1]
   solver_tolerance = 1e-10
 
 n_compartments = len(motor_units)
 
 # own MPI rank no and number of MPI ranks
 rank_no = (int)(sys.argv[-2])
-n_ranks = (int)(sys.argv[-1])
+n_ranks = 1#(int)(sys.argv[-1])
 
 # load MU distribution and firing times
 fiber_distribution = np.genfromtxt(fiber_distribution_file, delimiter=" ")
@@ -228,7 +228,7 @@ multidomain_solver = {
   },
   "Activation": {
     "FiniteElementMethod" : {  
-      "meshName":                     "mesh_{}".format(k),
+      "meshName":                     "mesh_{}".format(i),
       "solverName":                   "activationSolver",
       "prefactor":                    1.0,
       "inputMeshIsGlobal":            True,
@@ -244,7 +244,7 @@ multidomain_solver = {
         0, 6.7, 0,
         0, 0, 6.7,
       ]],
-    } for k in range(NumberOfMultiDomainSolvers)
+    } for i in range(NumberOfMultiDomainSolvers)
   },
   
   "OutputWriter" : [
@@ -258,13 +258,13 @@ multidomain_solver = {
 config = {
   "solverStructureDiagramFile": "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "Meshes": {
-    "mesh_{}".format(k): {
+    "mesh_{}".format(l): {
       "nElements":             n_linear_elements_per_coordinate_direction,
       "nodePositions":         mesh_node_positions,
       "inputMeshIsGlobal":     True,
       "setHermiteDerivatives": False
     }
-  for k in range(NumberOfMultiDomainSolvers)
+  for l in range(NumberOfMultiDomainSolvers)
   },
   "Solvers": {
     "potentialFlowSolver": {
@@ -293,7 +293,7 @@ config = {
     "nspace":   8231,
     "Initial Guess": [2,2,4,5,2,2,2,0],
     "option1": "blabla",              # another example option that is parsed in the data object
-    "nRanksInSpace": 3,            # number of processes that compute the spatial domain in parallel
+    "nRanksInSpace": 1,            # number of processes that compute the spatial domain in parallel
     "TimeSteppingScheme": [
     {
       "StrangSplitting": {
@@ -311,7 +311,7 @@ config = {
             "nInstances": n_compartments,  
             "instances": [        # settings for each motor unit, `i` is the index of the motor unit
             {
-              "ranks": list(range(n_ranks)),
+              "ranks": rank_no, #list(range(n_ranks)),
               "Heun" : {
                 "timeStepWidth": dt_0D,  # 5e-5
                 "logTimeStepWidthAsKey":        "dt_0D",

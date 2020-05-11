@@ -9,7 +9,7 @@ Import('env')     # import Environment object from calling SConstruct
 
 # if the option no_tests was given, quit the script
 if not env['no_examples']:
-      
+
   # create the main executable
   env.Program(target = 'PinT_multidomain', source = "src/PinT_multidomain.cpp")
   #env.Program(target = 'multidomain_with_wrapper', source = "src/multidomain_with_wrapper.cpp")

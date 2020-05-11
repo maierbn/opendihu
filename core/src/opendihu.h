@@ -44,7 +44,7 @@
 #include "specialized_solver/my_new_solver/my_new_static_solver.h"
 #include "specialized_solver/my_new_solver/my_new_timestepping_solver.h"
 #include "specialized_solver/parallel_in_time/ImplicitEuler/PinT_IE.h"
-#include "specialized_solver/parallel_in_time/MultiDomain/PinT_MD.h"
+//#include "specialized_solver/parallel_in_time/MultiDomain/PinT_MD.h"
 #include "specialized_solver/parallel_in_time/MultiDomain/multidomain_wrapper.h"
 #include "specialized_solver/muscle_contraction_solver.h"
 #include "time_stepping_scheme/heun_adaptive.h"

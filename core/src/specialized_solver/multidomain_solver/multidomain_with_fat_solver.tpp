@@ -303,9 +303,11 @@ setInformationToPreconditioner()
   
   // set block information for block jacobi preconditioner
   // check, if block jacobi preconditioner is selected
-  PetscBool useBlockJacobiPreconditioner;
+  PetscBool useBlockJacobiPreconditioner, useBlockGSPreconditioner;
   PetscObjectTypeCompare((PetscObject)pc, PCBJACOBI, &useBlockJacobiPreconditioner);
-  if (useBlockJacobiPreconditioner)
+  PetscObjectTypeCompare((PetscObject)pc, PCSOR, &useBlockGSPreconditioner);
+
+  if (useBlockJacobiPreconditioner || useBlockGSPreconditioner)
   {
     // smaller blocks
 #if 1

@@ -333,8 +333,10 @@ setInformationToPreconditioner()
           for (int coordinateDirection = 0; coordinateDirection < 3; coordinateDirection++)
           {
             nNodesLocalWithoutGhosts *= meshPartitionMuscle->nNodesLocalWithoutGhosts(coordinateDirection, rankNo);
+            LOG(INFO) << "  mus block " << blockIndex << " rank " << rankNo << " dim " << coordinateDirection << ": *" << meshPartitionMuscle->nNodesLocalWithoutGhosts(coordinateDirection, rankNo) << " -> " << nNodesLocalWithoutGhosts;
           }
 
+          LOG(INFO) << "-> lengthsOfBlocks[" << rankNo*this->nColumnSubmatricesSystemMatrix_ + blockIndex << "] = " << nNodesLocalWithoutGhosts;
           lengthsOfBlocks[rankNo*this->nColumnSubmatricesSystemMatrix_ + blockIndex] = nNodesLocalWithoutGhosts;
         }
         else 
@@ -345,8 +347,10 @@ setInformationToPreconditioner()
           for (int coordinateDirection = 0; coordinateDirection < 3; coordinateDirection++)
           {
             nNodesLocalWithoutGhosts *= meshPartitionFat->nNodesLocalWithoutGhosts(coordinateDirection, rankNo);
+            LOG(INFO) << "  fat block " << blockIndex << " rank " << rankNo << " dim " << coordinateDirection << ": *" << meshPartitionMuscle->nNodesLocalWithoutGhosts(coordinateDirection, rankNo) << " -> " << nNodesLocalWithoutGhosts;
           }
 
+          LOG(INFO) << "-> lengthsOfBlocks[" << rankNo*this->nColumnSubmatricesSystemMatrix_ + blockIndex << "] = " << nNodesLocalWithoutGhosts;
           lengthsOfBlocks[rankNo*this->nColumnSubmatricesSystemMatrix_ + blockIndex] = nNodesLocalWithoutGhosts;
         }
       }
@@ -473,6 +477,7 @@ updateSystemMatrix()
   this->finiteElementMethodDiffusionTotal_.setStiffnessMatrix();
 
   LOG(DEBUG) << "rebuild system matrix";
+#ifdef DUMP_REBUILT_SYSTEM_MATRIX
   static int counter = 0;
   std::stringstream s; 
   s << counter;
@@ -480,6 +485,7 @@ updateSystemMatrix()
   PetscUtility::dumpMatrix(s.str()+"finiteElementMethodDiffusion_stiffness", "matlab", this->finiteElementMethodDiffusion_.data().stiffnessMatrix()->valuesGlobal(), MPI_COMM_WORLD);
   PetscUtility::dumpMatrix(s.str()+"finiteElementMethodDiffusion_mass", "matlab", this->finiteElementMethodDiffusion_.data().massMatrix()->valuesGlobal(), MPI_COMM_WORLD);
   PetscUtility::dumpMatrix(s.str()+"finiteElementMethodFat_stiffness", "matlab", this->finiteElementMethodFat_.data().stiffnessMatrix()->valuesGlobal(), MPI_COMM_WORLD);
+#endif
 
   // compute new entries for submatrices, except B,C,D and E
   setSystemMatrixSubmatrices(this->timeStepWidthOfSystemMatrix_);
@@ -489,6 +495,8 @@ updateSystemMatrix()
 
   // create the system matrix again
   this->createSystemMatrixFromSubmatrices();
+
+#ifdef DUMP_REBUILT_SYSTEM_MATRIX
 
   for (int i = 0; i < this->submatricesSystemMatrix_.size(); i++)
   {
@@ -502,6 +510,7 @@ updateSystemMatrix()
 
   PetscUtility::dumpMatrix(s.str()+"new_system_matrix", "matlab", this->singleSystemMatrix_, MPI_COMM_WORLD);
   counter++;
+#endif
 
   // stop duration measurement
   if (this->durationLogKey_ != "")

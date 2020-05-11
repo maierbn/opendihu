@@ -57,14 +57,16 @@ multidomain_relative_tolerance = 1e-15    # relative residual tolerance for the 
 theta = 1.0                               # weighting factor of implicit term in Crank-Nicolson scheme, 0.5 gives the classic, 2nd-order Crank-Nicolson scheme, 1.0 gives implicit euler
 use_symmetric_preconditioner_matrix = True   # if the diagonal blocks of the system matrix should be used as preconditioner matrix
 use_lumped_mass_matrix = False            # which formulation to use, the formulation with lumped mass matrix (True) is more stable but approximative, the other formulation (False) is exact but needs more iterations
+multidomain_max_iterations = 1e3                         # maximum number of iterations
+multidomain_alternative_solver_max_iterations = 1e4      # maximum number of iterations of the alternative solver
 
 # timing parameters
 # -----------------
 end_time = 4000.0                   # [ms] end time of the simulation
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
-dt_0D = 1e-1                        # [ms] timestep width of ODEs (1e-3)
-dt_multidomain = 1e-1               # [ms] timestep width of the multidomain solver
-dt_splitting = 1e-1                 # [ms] overall timestep width of strang splitting (3e-3)
+dt_0D = 1e-3                        # [ms] timestep width of ODEs (1e-3)
+dt_multidomain = 1e-3               # [ms] timestep width of the multidomain solver
+dt_splitting = 1e-3                 # [ms] overall timestep width of strang splitting (3e-3)
 output_timestep_multidomain = dt_multidomain  # [ms] timestep for multidomain output
 output_timestep_0D_states = dt_0D    # [ms] timestep for output files of 0D subcellular model states
 end_time = 40*dt_0D

@@ -66,7 +66,8 @@ n_compartments = len(motor_units)
 
 # own MPI rank no and number of MPI ranks
 rank_no = (int)(sys.argv[-2])
-n_ranks = 1#(int)(sys.argv[-1])
+n_ranks = (int)(sys.argv[-1])
+n_ranks_space = 1
 
 # load MU distribution and firing times
 fiber_distribution = np.genfromtxt(fiber_distribution_file, delimiter=" ")
@@ -290,10 +291,10 @@ config = {
     "tstart": 0,                    # Start time
     "tstop": end_time,                     # End time
     "ntime": 10,                      # number of time steps
-    "nspace":   8231,
+    "nspace":   3135,
     "Initial Guess": [2,2,4,5,2,2,2,0],
     "option1": "blabla",              # another example option that is parsed in the data object
-    "nRanksInSpace": 1,            # number of processes that compute the spatial domain in parallel
+    "nRanksInSpace": n_ranks_space,            # number of processes that compute the spatial domain in parallel
     "TimeSteppingScheme": [
     {
       "StrangSplitting": {
@@ -311,7 +312,7 @@ config = {
             "nInstances": n_compartments,  
             "instances": [        # settings for each motor unit, `i` is the index of the motor unit
             {
-              "ranks": rank_no, #list(range(n_ranks)),
+              "ranks": list(range(n_ranks_space)),
               "Heun" : {
                 "timeStepWidth": dt_0D,  # 5e-5
                 "logTimeStepWidthAsKey":        "dt_0D",

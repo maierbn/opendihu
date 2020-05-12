@@ -50,6 +50,9 @@ RankSubset::RankSubset(Iter ranksBegin, Iter ranksEnd, std::shared_ptr<RankSubse
   VLOG(1) << "RankSubset constructor from rank list " << rankNo_ << ", ownRankParentCommunicator=" << ownRankParentCommunicator
     << ", color=" << color << ", orderKey: " << orderKey;
 
+LOG(DEBUG) << "RankSubset constructor from rank list " << rankNo_ << ", ownRankParentCommunicator=" << ownRankParentCommunicator
+    << ", color=" << color << ", orderKey: " << orderKey;
+
   // create new communicator which contains all ranks that have the same value of color (and not MPI_UNDEFINED)
   MPIUtility::handleReturnValue(MPI_Comm_split(parentCommunicator, color, orderKey, &mpiCommunicator_), "MPI_Comm_split");
 
@@ -58,6 +61,8 @@ RankSubset::RankSubset(Iter ranksBegin, Iter ranksEnd, std::shared_ptr<RankSubse
   {
     int nRanksInCommunicator;
     MPIUtility::handleReturnValue(MPI_Comm_size(mpiCommunicator_, &nRanksInCommunicator));
+    LOG(DEBUG) << "nRanksInCommunicator" << nRanksInCommunicator;
+    LOG(DEBUG) << "rankNo_.size()" << rankNo_.size();
     if (nRanksInCommunicator != rankNo_.size())
     {
       if (nRanksInCommunicator < rankNo_.size())

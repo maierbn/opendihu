@@ -260,11 +260,13 @@ createPartitioningStructuredGlobal(PythonConfig specificSettings, const std::arr
   {
     // create rank subset of all available MPI ranks
     rankSubset = std::make_shared<RankSubset>();
+    LOG(DEBUG) << "why";
   }
   else 
   {
     // if nextRankSubset was specified, use it
     rankSubset = nextRankSubset_;
+    LOG(DEBUG) << "this one better";
   }
   
   // if rank Nos to use were given, use them

@@ -94,7 +94,7 @@ initialize()
     PyObject *MultiDomainConfig = MultiDomainConfigs[i];
   */
     //LOG(DEBUG) << "MultiDomainConfig: " << MultiDomainConfig;
-    DihuContext MultiDomainContext = context_.createSubContext(MultiDomainConfig);
+    DihuContext MultiDomainContext = context_.createSubContext(MultiDomainConfig, rankSubsetX_);
 
     //LOG(DEBUG) << "MultiDomainContext: " << MultiDomainContext.getPythonConfig();
 

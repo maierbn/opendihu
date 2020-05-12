@@ -15,7 +15,20 @@ Manager::Manager(PythonConfig specificSettings) : specificSettings_(specificSett
 
 void Manager::setRankSubsetForNextCreatedPartitioning(std::shared_ptr<RankSubset> nextRankSubset)
 {
+  if (nextRankSubset != nullptr)
+  {
+    LOG(DEBUG) << "Assign new nextRankSubset: " << *nextRankSubset;
+  }
+  else
+  {
+    LOG(DEBUG) << "Assign new nextRankSubset to be nullptr";
+  }
   nextRankSubset_ = nextRankSubset;
+}
+
+std::shared_ptr<RankSubset> Manager::nextRankSubset()
+{
+  return nextRankSubset_;
 }
 
 //! store the ranks which should be used for collective MPI operations

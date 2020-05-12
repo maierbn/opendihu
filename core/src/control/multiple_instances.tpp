@@ -45,6 +45,9 @@ MultipleInstances(DihuContext context) :
   //LOG(DEBUG) << "MultipleInstances constructor, settings: ";
   //PythonUtility::printDict(specificSettings_.pyObject());
   
+  // save the value of nextRankSubset to be restored after this constructor is done
+  std::shared_ptr<Partition::RankSubset> initialNextRankSubset = this->context_.partitionManager()->nextRankSubset();
+
   // extract the number of instances
   nInstances_ = specificSettings_.getOptionInt("nInstances", 1, PythonUtility::Positive);
 
@@ -187,9 +190,7 @@ MultipleInstances(DihuContext context) :
   }
 
   // create the rank list with all computed instances
-  LOG(DEBUG) << "11111";
   rankSubsetAllComputedInstances_ = std::make_shared<Partition::RankSubset>(ranksAllComputedInstances.begin(), ranksAllComputedInstances.end());
-  LOG(DEBUG) << "2222";
   VLOG(1) << "rankSubsetAllComputedInstances: " << *rankSubsetAllComputedInstances_;
 
   // store the rank subset of all instances to partition manager, such that it can be retrived when the instances are generated
@@ -226,8 +227,8 @@ MultipleInstances(DihuContext context) :
     Control::PerformanceMeasurement::setParameter(logKey.str(), nInstancesLocal_);
   }
 
-  // clear rank subset for next created partitioning
-  this->context_.partitionManager()->setRankSubsetForNextCreatedPartitioning(nullptr);
+  // restore rank subset as it was beforehand, to be used by the next created partitioning
+  this->context_.partitionManager()->setRankSubsetForNextCreatedPartitioning(initialNextRankSubset);
 }
 
 template<typename TimeSteppingScheme>

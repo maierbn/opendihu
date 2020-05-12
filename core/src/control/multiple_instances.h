@@ -14,8 +14,13 @@
 namespace Control
 {
 
-/** This class holds multiple instances of the template type, e.g. for having multiple fibers, which are each as in example electrophysiology
-  */
+/** This class holds multiple instances of the template type, e.g. for having multiple fibers, which are each as in example electrophysiology.
+ *
+ *  Whenever a new partitioning of a mesh is computed, the PartitionManager::nextRankSubset() is used, if it was set.
+ *  If it was not set, a new RankSubset will be created based on MPI_COMM_WORLD (in partitionManager). The MultipleInstances structure uses this mechanism
+ *  to create rank subsets for the instances that involve different ranks. Therefore MultipleInstances sets potentially different values
+ *  of nextRankSubset for each instance. After the last instance was initialized, the nextRankSubset that was set initially will be restored.
+ */
 template<class TimeSteppingScheme>
 class MultipleInstances: public Runnable
 {

@@ -63,7 +63,10 @@ public:
 
   //! ranks which should be used for collective MPI operations
   std::shared_ptr<RankSubset> rankSubsetForCollectiveOperations();
-  
+
+  //! return current nextRankSubset
+  std::shared_ptr<RankSubset> nextRankSubset();
+
 private:
  
   PythonConfig specificSettings_;  ///< the settings object for the partition manager

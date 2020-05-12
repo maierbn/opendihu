@@ -61,6 +61,8 @@ initialize()
   pid_t pid = getpid();
   printf("pid: %d", pid);
 
+
+  // parse all settings in TimeSteppingScheme
   PyObject *MultiDomainConfig = this->specificSettings_.template getOptionListBegin<PyObject *>("TimeSteppingScheme");
   for (;
   !this->specificSettings_.getOptionListEnd("TimeSteppingScheme");
@@ -72,11 +74,16 @@ initialize()
   int nRanksInSpace = this->specificSettings_.getOptionInt("nRanksInSpace", 1, PythonUtility::Positive);
   braid_SplitCommworld(&communicatorTotal_, nRanksInSpace, &communicatorX_, &communicatorT_);
   
-  PinT_initialize();
+  //PinT_initialize();
+
+  LOG(DEBUG) << "before creation of rank subset X";
 
   // create rankSubset and assign to partitionManager, to be used by all further created meshes and solvers
   rankSubsetX_ = std::make_shared<Partition::RankSubset>(communicatorX_);
   DihuContext::partitionManager()->setRankSubsetForNextCreatedPartitioning(rankSubsetX_);
+
+  LOG(DEBUG) << "nextRankSubset: " << *DihuContext::partitionManager()->nextRankSubset();
+
   // int size;
   // MPI_Comm_size(communicatorX, &size);
   //
@@ -93,8 +100,13 @@ initialize()
 
     PyObject *MultiDomainConfig = MultiDomainConfigs[i];
   */
+
+    LOG(DEBUG) << "create sub context";
+
     //LOG(DEBUG) << "MultiDomainConfig: " << MultiDomainConfig;
     DihuContext MultiDomainContext = context_.createSubContext(MultiDomainConfig, rankSubsetX_);
+
+    LOG(DEBUG) << "nextRankSubset: " << *DihuContext::partitionManager()->nextRankSubset();
 
     //LOG(DEBUG) << "MultiDomainContext: " << MultiDomainContext.getPythonConfig();
 
@@ -116,19 +128,26 @@ initialize()
     //    DihuContext::partitionManager()->setRankSubsetForNextCreatedPartitioning(rankSubsetX_);
     //  }
     //}
+    LOG(DEBUG) << "create new MultidomainSolver";
     // create rank subset
-    std::shared_ptr<Partition::RankSubset> nextRankSubset = std::make_shared<Partition::RankSubset>(communicatorX_);
-    DihuContext::partitionManager()->setRankSubsetForNextCreatedPartitioning(nextRankSubset);
+    //std::shared_ptr<Partition::RankSubset> nextRankSubset = std::make_shared<Partition::RankSubset>(communicatorX_);
+    ///DihuContext::partitionManager()->setRankSubsetForNextCreatedPartitioning(nextRankSubset);
   
     MultiDomainSolvers_.push_back(
       std::make_shared<NestedSolverMD>(MultiDomainContext)
     );
+
+    LOG(DEBUG) << "nextRankSubset: " << *DihuContext::partitionManager()->nextRankSubset();
+
+    LOG(DEBUG) << "puskh bvack multidomain context";
 
     data_.push_back(
       std::make_shared<Data>(MultiDomainContext)
     );
 
     //LOG(DEBUG) << "initialize multidomain for i = " << i;
+
+    LOG(DEBUG) << "initialize MultidomainSolvers";
 
     MultiDomainSolvers_.back()->initialize();
   
@@ -137,7 +156,7 @@ initialize()
   //MultiDomainSolvers_[0](std::make_shared<Data>(MultiDomainContext));
   //MultiDomainSolvers_[0]->initialize();
 
-
+    LOG(DEBUG) << "retrieve functionSpace";
     // In order to initialize the data object and actuall create all variables, we first need to assign a function space to the data object.
     // A function space object of type FunctionSpace<MeshType,BasisFunctionType> (see "function_space/function_space.h")
     // is an object that stores the mesh (e.g., all nodes and elements) as well as the basis function (e.g. linear Lagrange basis functions).
@@ -150,7 +169,7 @@ initialize()
     data_.back()->setFunctionSpace(functionSpace);
     //data_[0]->setFunctionSpace(functionSpace);
 
-
+    LOG(DEBUG) << "initialize data";
 
     //LOG(DEBUG) << "initialize data for i = " << i;
     // now call initialize, data will then create all variables (Petsc Vec's)

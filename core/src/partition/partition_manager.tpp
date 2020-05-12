@@ -258,15 +258,15 @@ createPartitioningStructuredGlobal(PythonConfig specificSettings, const std::arr
   // if no nextRankSubset was specified, use all available ranks
   if (nextRankSubset_ == nullptr)
   {
+    LOG(DEBUG) << "in createPartitioningStructuredGlobal, nextRankSubset_ was not given, therefore constructing a new rank subset from MPI_COMM_WORLD";
+
     // create rank subset of all available MPI ranks
     rankSubset = std::make_shared<RankSubset>();
-    LOG(DEBUG) << "why";
   }
   else 
   {
     // if nextRankSubset was specified, use it
     rankSubset = nextRankSubset_;
-    LOG(DEBUG) << "this one better";
   }
   
   // if rank Nos to use were given, use them

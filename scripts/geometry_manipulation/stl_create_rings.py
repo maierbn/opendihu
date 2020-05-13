@@ -197,26 +197,30 @@ def order_loop(loop, first_point):
   :return: a list of points
   """
   
-  debug = False
+  debug = True
   
   # fill new loop starting with first_point, ordered by consecutive edges
   new_loop = [first_point]
   
   if debug:
     print("")
-    print("order_loop(loop={},first_point={})".format(loop,first_point))
+    #print("order_loop(loop={},first_point={})".format(loop,first_point))
     print("first point: ", first_point)
+  
+  points_with_single_adjacent_edge = []
   
   previous_end_point = first_point
   current_end_point = first_point
   
-  while len(new_loop) < len(loop)+1:
+  while len(new_loop) < len(loop)+2:
       
     next_point_found = False
       
     # iterate over points in old loop
     for edge in loop:
+      
       if np.allclose(current_end_point, edge[0]) and not np.allclose(previous_end_point, edge[1]):
+        # add edge p0->p1 to new_loop
         new_loop.append(edge[1])
         previous_end_point = current_end_point
         current_end_point = edge[1]
@@ -226,6 +230,7 @@ def order_loop(loop, first_point):
           print("add point ",edge[1],", new length of loop: ",len(new_loop),", expected final length: ",len(loop)+1)
           
       elif np.allclose(current_end_point, edge[1]) and not np.allclose(previous_end_point, edge[0]):
+        # add edge p1->p0 to new_loop
         new_loop.append(edge[0])
         previous_end_point = current_end_point
         current_end_point = edge[0]
@@ -234,37 +239,53 @@ def order_loop(loop, first_point):
         if debug:
           print("add point ",edge[0],", new length of loop: ",len(new_loop),", expected final length: ",len(loop)+1)
         
-    # if the end point is again the start point, finish the loop. Note if by now still len(new_loop) < len(loop)+1 holds, there might be a different (distinct) loop for this z position which is discarded.
-    if np.allclose(current_end_point, first_point):
-      if debug:
-        print("start point reached")
-      break
-      
     if not next_point_found:
       if debug: 
         print("no point found that continues loop")
       
-      # look for closest point and use that as next one
+      # detect points that have only one adjacent edge, if not already done
+      if len(points_with_single_adjacent_edge) == 0:
+        
+        # iterate over points in old loop
+        for edge in loop:
+          for p in edge:
+            n_adjacent_edges = 0
+            # iterate over all edges
+            for edge2 in loop:
+              if np.allclose(p, edge2[0]) or np.allclose(p, edge2[1]):
+                n_adjacent_edges += 1
+              if n_adjacent_edges >= 2:
+                break
+            if n_adjacent_edges == 1:
+              points_with_single_adjacent_edge.append(p)
+      
+      # now, points_with_single_adjacent_edge contains all points that have only a single adjacent edge
+      
+      # look for closest such point and use that as next one
       minimum_distance = None
       
       closest_point = None
-      # iterate over points in old loop
-      for edge in loop:
-        # consider both points of current edge
-        for point in [edge[0], edge[1]]:
-          # do not allow last edge to be selected again
-          if not np.allclose(current_end_point, point) and not np.allclose(previous_end_point, point) :
-            distance = np.linalg.norm(point - current_end_point)
-            if minimum_distance is None or distance < minimum_distance:
-              minimum_distance = distance
-              closest_point = point
+      # iterate over points in points_with_single_adjacent_edge
+      for point in points_with_single_adjacent_edge:
+        # do not allow last edge to be selected again
+        if not np.allclose(current_end_point, point) and not np.allclose(previous_end_point, point) :
+          distance = np.linalg.norm(point - current_end_point)
+          if minimum_distance is None or distance < minimum_distance:
+            minimum_distance = distance
+            closest_point = point
           
       new_loop.append(closest_point)
       previous_end_point = current_end_point
       current_end_point = closest_point
       if debug: 
         print("use closest point {} with a distance of {} to the current point".format(closest_point, minimum_distance))
-        
+       
+    # if the end point is again the start point, finish the loop. Note if by now still len(new_loop) < len(loop)+1 holds, there might be a different (distinct) loop for this z position which is discarded.
+    if np.allclose(current_end_point, first_point):
+      if debug:
+        print("start point reached")
+      break
+       
       #print("Error: Loop for z={} could not be closed. Maybe there are triangles missing?".format(loop[0][0][2]))
       #break
   return new_loop

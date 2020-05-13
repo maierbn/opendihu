@@ -32,7 +32,6 @@ mkdir -p processed_meshes
 # the z values are the negative image number from visual human male, i.e. from image 290 (shoulder) down to 635 (ellbow)
 # slices have thickness of 1mm
 
-if false; then
 # scale mesh from mm to cm, i.e. scale coordinates by factor 0.1
 echo ""
 echo "--- Scale mesh from mm to cm."
@@ -46,7 +45,7 @@ fi
 # remove inside triangles
 echo ""
 echo "--- Remove inside triangles, this will take long"
-if [[ ! -f "processed_meshes/${basename}_01_no_inside_triangles.stl" ]]; then
+if [[ ! -f "processed_meshes/${basename}_01_no_inside_triangles.stl" ]] && [[ ! -f "processed_meshes/${basename}_02_no_inside_triangles_binary.stl" ]]; then
   echo "create file \"processed_meshes/${basename}_01_no_inside_triangles.stl\""
   $pyod ${stl_utility_directory}/remove_inside_triangles.py original_meshes/cm_${basename}.stl processed_meshes/${basename}_01_no_inside_triangles.stl
 else
@@ -56,7 +55,6 @@ $pyod ${stl_utility_directory}/stl_to_binary.py \
   processed_meshes/${basename}_01_no_inside_triangles.stl \
   processed_meshes/${basename}_02_no_inside_triangles_binary.stl
 
-fi
 # move mesh such that bottom is at 0
 echo ""
 echo "--- Move geometry such that bottom is at z=0."
@@ -73,7 +71,11 @@ $pyod ${stl_utility_directory}/translate_stl.py \
 
 # up to here it was the same as process_meshes_biceps.sh
 
+# ------------------------------------------------------------
 # tendon 1
+# bottom tendon
+# ------------------------------------------------------------
+if false; then
 xmin=-inf
 xmax=inf
 ymin=-inf
@@ -83,7 +85,7 @@ zmax=7.2
 
 # extract part for first tendon (bottom part of muscle-tendon mesh)
 echo ""
-echo "-- Extract tendon 1"
+echo "-- Extract tendon 1 (bottom)"
 $pyod ${stl_utility_directory}/stl_extract_cuboid.py \
   processed_meshes/${basename}_03_bottom_at_zero.stl \
   processed_meshes/${basename}_04_tendon1_box.stl \
@@ -109,7 +111,6 @@ echo "--- Create pickle mesh"
 
 cd $opendihu_directory/examples/fiber_tracing/streamline_tracer/scripts
 
-if false; then
 # arguments <input_stl_file> <output_pickle_file> <output_bin_file> <min_z> <max_z> <n_points_x> <n_points_z> [--only-stage-1]
 ./create_mesh.sh \
   ${current_directory}/processed_meshes/${basename}_04_tendon1_box.stl \
@@ -124,7 +125,6 @@ cp ${current_directory}/processed_meshes/${basename}_05_tendon1_9x9.bin ${curren
 $pyod ${opendihu_directory}/scripts/file_manipulation/examine_bin_fibers.py \
   ${current_directory}/processed_meshes/${basename}_06_tendon1_9x9.bin
 
-fi
 
 echo ""
 echo "--- move tendon file back to original position"
@@ -137,10 +137,11 @@ $pyod ${opendihu_directory}/scripts/file_manipulation/translate_bin_fibers.py \
 
 echo ""
 echo "--- Reverse the numbering in y direction"
-$pyod $opendihu_directory/scripts/file_manipulation/reverse_y_order_bin_fibers.py \
+$pyod ${opendihu_directory}/scripts/file_manipulation/reverse_y_order_bin_fibers.py \
   ${current_directory}/processed_meshes/${basename}_07_tendon1_9x9_original_position.bin \
-  ${current_directory}/processed_meshes/${basename}_08_tendon1_9x9_y_reversed.bin 
+  ${current_directory}/processed_meshes/${basename}_08_tendon1_9x9_y_reversed.bin
 
+if false; then
 echo ""
 echo "--- adjust top layer of nodes of tendon to match muscle file"
 muscle_fibers_file=${opendihu_directory}/examples/electrophysiology/input/left_biceps_brachii_9x9fibers.bin
@@ -151,6 +152,8 @@ $pyod ${current_directory}/utility/set_nodes_to_match_other_mesh.py \
   ${muscle_fibers_file} \
   ${current_directory}/processed_meshes/${basename}_09_tendon1_9x9.bin\
   0
+  
+fi
 
 # transform the bin file to a vts file for debugging
 echo ""
@@ -159,9 +162,8 @@ $pyod ${opendihu_directory}/scripts/file_manipulation/examine_bin_fibers.py \
   ${current_directory}/processed_meshes/${basename}_08_tendon1_9x9_y_reversed.bin
 $pyod ${opendihu_directory}/scripts/file_manipulation/examine_bin_fibers.py \
   ${current_directory}/processed_meshes/${basename}_09_tendon1_9x9.bin
-
-exit
   
+if false; then
 # ---- c++ part, streamline tracing ------
 
 echo ""
@@ -213,10 +215,10 @@ $pyod $opendihu_directory/scripts/file_manipulation/translate_bin_fibers.py \
   0 0 ${bottom_bounding_box_value}
   
   
+fi
+  fi # -- if false tendon 1
 cd $current_directory
-  
-exit
-  
+
 # ----------------------------
 # tendon 2, a and b parts
 xmin=-inf
@@ -273,141 +275,60 @@ $pyod ${stl_utility_directory}/rotate_stl.py \
   0 18 0 $rotation_point
 
 echo ""
-echo "--- Move the file back to original position"
-
-# move the fibers in the fibers.bin file back to their original position
-$pyod ${stl_utility_directory}/translate_stl.py \
-  processed_meshes/${basename}_06_tendon2a_box4.stl \
-  processed_meshes/${basename}_07_tendon2a_original_position.stl \
-  0 0 ${bottom_bounding_box_value}
-  
-echo ""
-echo "--- Move the file back to original position"
-
-# move the fibers in the fibers.bin file back to their original position
-$pyod ${stl_utility_directory}/translate_stl.py \
-  processed_meshes/${basename}_06_tendon2b_box4.stl \
-  processed_meshes/${basename}_07_tendon2b_original_position.stl \
-  0 0 ${bottom_bounding_box_value}
-
-# do not create spline surfaces because this does not work so well for the upper tendon
-
-echo ""
-echo "--- Create a spline surface of the geometry"
-
-if false; then
-
-# create spline surface
-cd $opendihu_directory/scripts/geometry_manipulation
-$pyod ./create_spline_surface.py \
-  ${current_directory}/processed_meshes/${basename}_07_tendon2a_original_position.stl \
-  ${current_directory}/processed_meshes/${basename}_04_tendon2a_spline_surface.stl \
-  ${current_directory}/processed_meshes/${basename}_04_tendon2a_spline_surface.pickle \
-  -inf inf
-
-# create spline surface
-cd $opendihu_directory/scripts/geometry_manipulation
-$pyod ./create_spline_surface.py \
-  ${current_directory}/processed_meshes/${basename}_07_tendon2b_original_position.stl \
-  ${current_directory}/processed_meshes/${basename}_04_tendon2b_spline_surface.stl \
-  ${current_directory}/processed_meshes/${basename}_04_tendon2b_spline_surface.pickle \
-  -inf inf
-
-cd $current_directory
-
-fi
-
-echo ""
 echo "--- Create pickle mesh"
 
 cd $opendihu_directory/examples/fiber_tracing/streamline_tracer/scripts
 
-# arguments <input_stl_file> <output_pickle_file> <output_bin_file> <min_z> <max_z> <n_points_x> <n_points_z> [--only_preprocessing]
+# arguments <input_stl_file> <output_pickle_file> <output_bin_file> <min_z> <max_z> <n_points_x> <n_points_z> [--only-stage-1]
+echo " --- for tendon2a"
+#./create_mesh.sh \
+#  ${current_directory}/processed_meshes/${basename}_06_tendon2a_box4.stl \
+#  ${current_directory}/processed_meshes/${basename}_07_tendon2a_9x9.pickle \
+#  ${current_directory}/processed_meshes/${basename}_07_tendon2a_9x9.bin \
+#  $zmin $zmax 8 8 --only-stage-1
+
+echo " --- for tendon2b"  
 ./create_mesh.sh \
-  ${current_directory}/processed_meshes/${basename}_04_tendon1_box.stl \
-  ${current_directory}/processed_meshes/${basename}_05_tendon1.pickle \
-  ${current_directory}/processed_meshes/${basename}_05_tendon1.bin \
-  $zmin $zmax 5 10 
+  ${current_directory}/processed_meshes/${basename}_06_tendon2b_box4.stl \
+  ${current_directory}/processed_meshes/${basename}_07_tendon2b_9x9.pickle \
+  ${current_directory}/processed_meshes/${basename}_07_tendon2b_9x9.bin \
+  $zmin $zmax 8 8 --only-stage-1
+
+# transform the bin file to a vts file for debugging
+echo ""
+echo "--- for debugging, create vts file which can be viewed by ParaView"
+cp ${current_directory}/processed_meshes/${basename}_07_tendon2a_9x9.bin ${current_directory}/processed_meshes/${basename}_08_tendon2a_9x9.bin
+$pyod ${opendihu_directory}/scripts/file_manipulation/examine_bin_fibers.py \
+  ${current_directory}/processed_meshes/${basename}_08_tendon2a_9x9.bin
+cp ${current_directory}/processed_meshes/${basename}_07_tendon2b_9x9.bin ${current_directory}/processed_meshes/${basename}_08_tendon2b_9x9.bin
+$pyod ${opendihu_directory}/scripts/file_manipulation/examine_bin_fibers.py \
+  ${current_directory}/processed_meshes/${basename}_08_tendon2b_9x9.bin
+
+echo ""
+echo "--- move tendon file back to original position"
   
-
-todo ab hier
-
-mithilfe von streamline_tracer, run_biceps.sh mesh erzeugen, dann tracen
-
-exit
-
-echo ""
-echo "--- Compile opendihu"
-cd $opendihu_directory
-scons no_tests=TRUE
-
-echo ""
-echo "--- Compile parallel fiber estimation"
-cd $parallel_fiber_estimation_directory
-scons
-
-cd build_release
-
-echo ""
-echo "--- Generate 7x7 and 9x9 fibers.bin file"
-#read -p "Press enter to continue"
-
-
-if [[ ! -f "${current_directory}/processed_meshes/${basename}_05_7x7fibers.bin" ]]; then
-  echo "./generate ../settings_generate_7x7.py ${current_directory}/processed_meshes/${basename}_04_spline_surface.pickle ${current_directory}/processed_meshes/${basename}_05_0x0fibers.bin 7.2 22 0.01"
-  ./generate ../settings_generate_7x7.py \
-    ${current_directory}/processed_meshes/${basename}_04_spline_surface.pickle \
-    ${current_directory}/processed_meshes/${basename}_05_0x0fibers.bin \
-    $bottom_z_clip $top_z_clip $element_length
-else
-  echo "file processed_meshes/${basename}_05_7x7fibers.bin already exists"
-fi
-
-cp ${current_directory}/processed_meshes/${basename}_05_7x7fibers.no_boundary.bin ${current_directory}/processed_meshes/${basename}_05_7x7fibers.bin
-
-echo ""
-echo "--- Move the fibers file back to original position"
-# move the fibers in the fibers.bin file back to their original position
-$pyod $opendihu_directory/scripts/file_manipulation/translate_bin_fibers.py \
-  ${current_directory}/processed_meshes/${basename}_05_7x7fibers.bin \
-  ${current_directory}/processed_meshes/${basename}_06_7x7fibers_original_position.bin \
+# move tendon file back to original position
+$pyod ${opendihu_directory}/scripts/file_manipulation/translate_bin_fibers.py \
+  ${current_directory}/processed_meshes/${basename}_08_tendon2a_9x9.bin \
+  ${current_directory}/processed_meshes/${basename}_09_tendon2a_9x9_original_position.bin \
   0 0 ${bottom_bounding_box_value}
-  
-$pyod $opendihu_directory/scripts/file_manipulation/translate_bin_fibers.py \
-  ${current_directory}/processed_meshes/${basename}_05_9x9fibers.bin \
-  ${current_directory}/processed_meshes/${basename}_06_9x9fibers_original_position.bin \
-  0 0 ${bottom_bounding_box_value}
-  
-cp ${current_directory}/processed_meshes/${basename}_06_7x7fibers_original_position.bin ${current_directory}/processed_meshes/${basename}_7x7fibers.bin
-cp ${current_directory}/processed_meshes/${basename}_06_9x9fibers_original_position.bin ${current_directory}/processed_meshes/${basename}_9x9fibers.bin
 
-cd $current_directory
-# refine the given, serially created file with 7x7 fibers
+# move tendon file back to original position
+$pyod ${opendihu_directory}/scripts/file_manipulation/translate_bin_fibers.py \
+  ${current_directory}/processed_meshes/${basename}_08_tendon2b_9x9.bin \
+  ${current_directory}/processed_meshes/${basename}_09_tendon2b_9x9_original_position.bin \
+  0 0 ${bottom_bounding_box_value}
 
 echo ""
-echo "--- Refine fibers file to create more dense fibers"
+echo "--- Reverse the numbering in y direction"
+$pyod ${opendihu_directory}/scripts/file_manipulation/reverse_y_order_bin_fibers.py \
+  ${current_directory}/processed_meshes/${basename}_09_tendon2a_9x9_original_position.bin \
+  ${current_directory}/processed_meshes/${basename}_10_tendon2a_y_reversed.bin
+cp ${current_directory}/processed_meshes/${basename}_10_tendon2a_y_reversed.bin ${current_directory}/processed_meshes/${basename}_tendon2a.bin
 
-# input fiber
-input=${current_directory}/processed_meshes/${basename}_7x7fibers.bin
-
-${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 1 $input $bottom_z_clip $top_z_clip $element_length    # 13
-${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 3 $input $bottom_z_clip $top_z_clip $element_length     # 25
-${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 5 $input $bottom_z_clip $top_z_clip $element_length     # 37
-${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 10 $input $bottom_z_clip $top_z_clip $element_length     # 67
-${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 17 $input $bottom_z_clip $top_z_clip $element_length     # 109
-${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 30 $input $bottom_z_clip $top_z_clip $element_length     # 187
-${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 45 $input $bottom_z_clip $top_z_clip $element_length     # 277
-${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 70 $input $bottom_z_clip $top_z_clip $element_length     # 427
-${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 86 $input $bottom_z_clip $top_z_clip $element_length     # 523
-
-# create fat layer meshes
-cd $current_directory/processed_meshes
-$pyod $opendihu_directory/scripts/create_fat_layer.py ${basename}_7x7fibers.bin
-$pyod $opendihu_directory/scripts/create_fat_layer.py ${basename}_9x9fibers.bin
-$pyod $opendihu_directory/scripts/create_fat_layer.py ${basename}_13x13fibers.bin
-$pyod $opendihu_directory/scripts/create_fat_layer.py ${basename}_25x25fibers.bin
-$pyod $opendihu_directory/scripts/create_fat_layer.py ${basename}_37x37fibers.bin
-$pyod $opendihu_directory/scripts/create_fat_layer.py ${basename}_67x67fibers.bin
-$pyod $opendihu_directory/scripts/create_fat_layer.py ${basename}_109x109fibers.bin
+$pyod ${opendihu_directory}/scripts/file_manipulation/reverse_y_order_bin_fibers.py \
+  ${current_directory}/processed_meshes/${basename}_09_tendon2b_9x9_original_position.bin \
+  ${current_directory}/processed_meshes/${basename}_10_tendon2b_y_reversed.bin
+cp ${current_directory}/processed_meshes/${basename}_10_tendon2b_y_reversed.bin ${current_directory}/processed_meshes/${basename}_tendon2b.bin
 
 cd $current_directory

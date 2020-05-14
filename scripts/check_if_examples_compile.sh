@@ -56,15 +56,24 @@ check_example(){
 # number of parallel jobs to build examples
 N=$(expr `nproc` / 2)
 i=0
+i_end=$(python -c "print($N-1)")    # i_end = N-1
+
+echo "Compile all examples, using N=$N processes" | tee -a $WORKDIR/compile_examples_log.txt
 
 # loop over all subdirectories of examples
 for directory in $EXAMPLE_PATH/**/*; do
   if [ -d "$directory" ]; then
     if [ -f "$directory/SConstruct" ]; then
 
-      # only run with N processes in parallel
-      ((i=i%N)); ((i++==0)) && wait
+      # only run with N processes in parallel,
+      # wait if i == N-1
+      if [ "$i" -eq "$i_end" ]; then 
+        wait
+      fi
 
+      i=$(python -c "print(($i+1)%$N)")   # advance i by one and wrap around
+      
+      # check if example in current directory compiles
       check_example "$directory" &
     fi
   fi

@@ -75,7 +75,7 @@ $pyod ${stl_utility_directory}/translate_stl.py \
 # tendon 1
 # bottom tendon
 # ------------------------------------------------------------
-if false; then
+
 xmin=-inf
 xmax=inf
 ymin=-inf
@@ -141,7 +141,7 @@ $pyod ${opendihu_directory}/scripts/file_manipulation/reverse_y_order_bin_fibers
   ${current_directory}/processed_meshes/${basename}_07_tendon1_9x9_original_position.bin \
   ${current_directory}/processed_meshes/${basename}_08_tendon1_9x9_y_reversed.bin
 
-if false; then
+if false; then   # disable because fiber tracing is not used up to now
 echo ""
 echo "--- adjust top layer of nodes of tendon to match muscle file"
 muscle_fibers_file=${opendihu_directory}/examples/electrophysiology/input/left_biceps_brachii_9x9fibers.bin
@@ -163,7 +163,7 @@ $pyod ${opendihu_directory}/scripts/file_manipulation/examine_bin_fibers.py \
 $pyod ${opendihu_directory}/scripts/file_manipulation/examine_bin_fibers.py \
   ${current_directory}/processed_meshes/${basename}_09_tendon1_9x9.bin
   
-if false; then
+if false; then   # disabled because we don't do fiber tracing for now
 # ---- c++ part, streamline tracing ------
 
 echo ""
@@ -214,13 +214,17 @@ $pyod $opendihu_directory/scripts/file_manipulation/translate_bin_fibers.py \
   ${current_directory}/processed_meshes/${basename}_10_tendon1_traced_fibers_original_position.bin \
   0 0 ${bottom_bounding_box_value}
   
+fi  # endif streamline tracing
+
+# copy resulting mesh to input folder
+cp ${current_directory}/processed_meshes/${basename}_08_tendon1_9x9_y_reversed.bin ${current_directory}/processed_meshes/${basename}_tendon1.bin
   
-fi
-  fi # -- if false tendon 1
 cd $current_directory
 
-# ----------------------------
-# tendon 2, a and b parts
+# ------------------------------------------------------------
+# tendons 2a and 2b
+# top tendons
+# ------------------------------------------------------------
 xmin=-inf
 xmax=inf
 ymin=-inf
@@ -332,3 +336,9 @@ $pyod ${opendihu_directory}/scripts/file_manipulation/reverse_y_order_bin_fibers
 cp ${current_directory}/processed_meshes/${basename}_10_tendon2b_y_reversed.bin ${current_directory}/processed_meshes/${basename}_tendon2b.bin
 
 cd $current_directory
+
+
+# copy resulting meshes to input folder
+cp ${current_directory}/processed_meshes/${basename}_tendon1.bin ${opendihu_directory}/examples/electrophysiology/input
+cp ${current_directory}/processed_meshes/${basename}_tendon2a.bin ${opendihu_directory}/examples/electrophysiology/input
+cp ${current_directory}/processed_meshes/${basename}_tendon2b.bin ${opendihu_directory}/examples/electrophysiology/input

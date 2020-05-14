@@ -197,7 +197,7 @@ def order_loop(loop, first_point):
   :return: a list of points
   """
   
-  debug = True
+  debug = False
   
   # fill new loop starting with first_point, ordered by consecutive edges
   new_loop = [first_point]

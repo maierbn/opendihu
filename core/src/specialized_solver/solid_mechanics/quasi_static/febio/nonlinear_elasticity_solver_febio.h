@@ -9,9 +9,13 @@
 namespace TimeSteppingScheme
 {
 
-/** A specialized solver for 3D linear elasticity, as quasi-static timestepping scheme (a new static solution every timestep)
-  */
-class QuasiStaticNonlinearElasticitySolverFebio :
+/** A specialized solver for 3D linear elasticity, incompressible Mooney-Rivlin.
+ *  This class simply computes the static problem. The activation for a muscle material is ignored in this class.
+ * 
+ *  This is also the base class for QuasiStaticNonlinearElasticitySolverFebio. The 
+ *  QuasiStaticNonlinearElasticitySolverFebio class computes the quasi static problem using the febio muscle material in a timestepping scheme.
+ */
+class NonlinearElasticitySolverFebio :
   public Runnable
 {
 public:
@@ -21,7 +25,7 @@ public:
   typedef Data::OutputConnectorDataType OutputConnectorDataType;
 
   //! constructor
-  QuasiStaticNonlinearElasticitySolverFebio(DihuContext context);
+  NonlinearElasticitySolverFebio(DihuContext context, std::string solverName="NonlinearElasticitySolverFebio");
 
   //! advance simulation by the given time span, data in solution is used, afterwards new data is in solution
   void advanceTimeSpan();
@@ -48,10 +52,13 @@ public:
   //! output the given data for debugging
   std::string getString(std::shared_ptr<OutputConnectorDataType> data);
 
+  //! determine if febio2 was installed and is available on the command line
+  bool isFebioAvailable();
+
 protected:
 
   //! create the febio_input.feb file which contains the problem for febio to solve
-  void createFebioInputFile();
+  virtual void createFebioInputFile();
 
   //! load the file that was created by the febio simulation
   void loadFebioOutputFile();
@@ -68,14 +75,18 @@ protected:
   DihuContext context_;    //< object that contains the python config for the current context and the global singletons meshManager and solverManager
 
   OutputWriter::Manager outputWriterManager_; //< manager object holding all output writer
-  Data data_;                 //< data object
+  Data data_;                               //< data object
 
-  std::string durationLogKey_;   //< key with with the duration of the computation is written to the performance measurement log
+  std::string durationLogKey_;              //< key with with the duration of the computation is written to the performance measurement log
+  std::string solverName_;                  //< the name of the config, i.e. "NonlinearElasticitySolverFebio" or "QuasiStaticNonlinearElasticitySolverFebio"
+  std::string problemDescription_;          //< text to appear in the febio input file
+  std::string problemTitle_;                //< title to appear in the febio input file
 
-  PythonConfig specificSettings_;    //< python object containing the value of the python config dict with corresponding key
-  double preLoadFactor_;            //< factor of force that is applied in axial direction of the muscle
-  double activationFactor_;         //< factor with which to multiply activation
-
+  PythonConfig specificSettings_;           //< python object containing the value of the python config dict with corresponding key
+  double force_;                    //< factor of force that is applied in axial direction of the muscle
+  double activationFactor_;                 //< factor with which to multiply activation
+  std::vector<double> materialParameters_;  //< the material parameters c0, c1 and k for Mooney-Rivlin material
+  
   double endTime_;     //< end time of current time step
   bool initialized_;   //< if initialize() was already called
 };

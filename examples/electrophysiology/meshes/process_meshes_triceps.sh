@@ -131,7 +131,7 @@ $pyod $opendihu_directory/scripts/file_manipulation/translate_bin_fibers.py \
 
 echo ""
 echo "--- Reverse the numbering in y direction"
-$pyod $opendihu_directory/scripts/file_manipulation/reverse_y_order_bin_fibers.py \
+$pyod $opendihu_directory/scripts/file_manipulation/reverse_x_order_bin_fibers.py \
   ${current_directory}/processed_meshes/${basename}_06_7x7fibers_original_position.bin \
   ${current_directory}/processed_meshes/${basename}_07_7x7fibers_y_reversed.bin 
 

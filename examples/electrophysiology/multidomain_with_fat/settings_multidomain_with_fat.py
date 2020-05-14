@@ -105,10 +105,13 @@ if variables.scenario_name is None:
 if variables.initial_guess_nonzero is None:
   variables.initial_guess_nonzero = variables.multidomain_preconditioner_type != "lu"
 
+if variables.multidomain_preconditioner_type == "boomeramg":
+  variables.multidomain_max_iterations = 100        # if boomeramg has bad convergence, abort after 100 iterations and use alternative preconditioner
+
 # output information of run
 if rank_no == 0:
   print("scenario_name: {},  n_subdomains: {} {} {},  n_ranks: {},  end_time: {}".format(variables.scenario_name, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, n_ranks, variables.end_time))
-  print("dt_0D:           {:0.0e}    multidomain solver:         {} ({}), lumped mass matrix: {}, initial guess: {}".format(variables.dt_0D, variables.multidomain_solver_type, variables.multidomain_alternative_solver_type, variables.use_lumped_mass_matrix, "0" if not variables.initial_guess_nonzero else "previous solution"))
+  print("dt_0D:           {:0.0e}    multidomain solver:         {} it. of {} ({} it. of {}), lumped mass matrix: {}, initial guess: {}".format(variables.dt_0D, int(variables.multidomain_max_iterations), variables.multidomain_solver_type, int(variables.multidomain_alternative_solver_max_iterations), variables.multidomain_alternative_solver_type, variables.use_lumped_mass_matrix, "0" if not variables.initial_guess_nonzero else "previous solution"))
   print("dt_multidomain:  {:0.0e}    multidomain preconditioner: {} ({}), symmetric precond.: {}".format(variables.dt_multidomain, variables.multidomain_preconditioner_type, variables.multidomain_alternative_preconditioner_type, variables.use_symmetric_preconditioner_matrix))
   print("dt_splitting:    {:0.0e}    theta: {}, solver tolerances, abs: {}, rel: {}".format(variables.dt_splitting, variables.theta, variables.multidomain_absolute_tolerance, variables.multidomain_relative_tolerance))
   print("fiber_file:              {}".format(variables.fiber_file))
@@ -146,7 +149,7 @@ multidomain_solver = {
   "initialGuessNonzero":              variables.initial_guess_nonzero,      # if the initial guess for the 3D system should be set as the solution of the previous timestep, this only makes sense for iterative solvers
   "enableFatComputation":             True,                                 # disabling the computation of the fat layer is only for debugging and speeds up computation. If set to False, the respective matrix is set to the identity
   "showLinearSolverOutput":           variables.show_linear_solver_output,  # if convergence information of the linear solver in every timestep should be printed, this is a lot of output for fast computations
-  "updateSystemMatrixEveryTimestep":  True,                                # if this multidomain solver will update the system matrix in every first timestep, us this only if the geometry changed, e.g. by contraction
+  "updateSystemMatrixEveryTimestep":  False,                                # if this multidomain solver will update the system matrix in every first timestep, us this only if the geometry changed, e.g. by contraction
   
   "PotentialFlow": {
     "FiniteElementMethod" : {  
@@ -218,17 +221,17 @@ config = {
     "multidomainLinearSolver": {
       "relativeTolerance":  variables.multidomain_relative_tolerance,
       "absoluteTolerance":  variables.multidomain_absolute_tolerance,         # 1e-10 absolute tolerance of the residual          
-      "maxIterations":      1e3,
+      "maxIterations":      variables.multidomain_max_iterations,             # maximum number of iterations
       "solverType":         variables.multidomain_solver_type,
       "preconditionerType": variables.multidomain_preconditioner_type,
-      "hypreOptions":       "",                                   # additional options if a hypre preconditioner is selected
+      "hypreOptions":       "-pc_hypre_boomeramg_strong_threshold 0.7",       # additional options if a hypre preconditioner is selected
       "dumpFormat":         "matlab",
       "dumpFilename":       "",
     },
     "multidomainAlternativeLinearSolver": {                                   # the alternative solver is used when the normal solver diverges
       "relativeTolerance":  variables.multidomain_relative_tolerance,
       "absoluteTolerance":  variables.multidomain_absolute_tolerance,         # 1e-10 absolute tolerance of the residual          
-      "maxIterations":      1e4,
+      "maxIterations":      variables.multidomain_alternative_solver_max_iterations,   # maximum number of iterations
       "solverType":         variables.multidomain_alternative_solver_type,
       "preconditionerType": variables.multidomain_alternative_preconditioner_type,
       "hypreOptions":       "",                                   # additional options if a hypre preconditioner is selected

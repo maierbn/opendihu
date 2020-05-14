@@ -303,11 +303,80 @@ setInformationToPreconditioner()
   
   // set block information for block jacobi preconditioner
   // check, if block jacobi preconditioner is selected
-  PetscBool useBlockJacobiPreconditioner;
+  PetscBool useBlockJacobiPreconditioner, useBlockGSPreconditioner;
   PetscObjectTypeCompare((PetscObject)pc, PCBJACOBI, &useBlockJacobiPreconditioner);
-  if (useBlockJacobiPreconditioner)
+  PetscObjectTypeCompare((PetscObject)pc, PCSOR, &useBlockGSPreconditioner);
+
+  if (useBlockJacobiPreconditioner || useBlockGSPreconditioner)
   {
+    // smaller blocks
+#if 1
+    int nRanks = this->dataMultidomain_.functionSpace()->meshPartition()->rankSubset()->size();
+    PetscInt nMatrixBlocks = this->nColumnSubmatricesSystemMatrix_*nRanks;
+    
+    std::shared_ptr<Partition::MeshPartition<FunctionSpace>> meshPartitionMuscle = this->dataMultidomain_.functionSpace()->meshPartition();
+    std::shared_ptr<Partition::MeshPartition<typename FiniteElementMethodDiffusionFat::FunctionSpace>> meshPartitionFat = this->finiteElementMethodFat_.data().functionSpace()->meshPartition();
+
+    // set sizes of all blocks to the number of dofs in the muscle domain
+    std::vector<PetscInt> lengthsOfBlocks(nMatrixBlocks, this->dataMultidomain_.functionSpace()->nDofsLocalWithoutGhosts());
+    
+    // loop over ranks
+    for (int rankNo = 0; rankNo < nRanks; rankNo++)
+    {
+      // loop over matrix blocks of muscle mesh, not the fat mesh
+      for (int blockIndex = 0; blockIndex < this->nColumnSubmatricesSystemMatrix_-1; blockIndex++)
+      {
+        // get local size of block on the current rank
+        // for muscle mesh block
+        // determine number of local nodes (= dofs) for rank rankNo
+        int nNodesLocalWithoutGhosts = 1;
+        for (int coordinateDirection = 0; coordinateDirection < 3; coordinateDirection++)
+        {
+          int partitionIndex = meshPartitionMuscle->convertRankNoToPartitionIndex(coordinateDirection, rankNo);
+          nNodesLocalWithoutGhosts *= meshPartitionMuscle->nNodesLocalWithoutGhosts(coordinateDirection, partitionIndex);
+          VLOG(1) << "  block " << blockIndex << " rank " << rankNo << " dim " << coordinateDirection << ": *" << meshPartitionMuscle->nNodesLocalWithoutGhosts(coordinateDirection, rankNo) << " -> " << nNodesLocalWithoutGhosts;
+        }
+
+        VLOG(1) << "-> lengthsOfBlocks[" << rankNo*this->nColumnSubmatricesSystemMatrix_ + blockIndex << "] = " << nNodesLocalWithoutGhosts;
+        lengthsOfBlocks[rankNo*this->nColumnSubmatricesSystemMatrix_ + blockIndex] = nNodesLocalWithoutGhosts;
+      }
+    }
+
+    // set entries for block of fat meh
+    Mat matrixC = this->submatricesSystemMatrix_[MathUtility::sqr(this->nColumnSubmatricesSystemMatrix_)-1];
+    const PetscInt *matrixCOwnershipRanges;
+    ierr = MatGetOwnershipRanges(matrixC, &matrixCOwnershipRanges); CHKERRV(ierr);
+
+    // loop over ranks
+    for (int rankNo = 0; rankNo < nRanks; rankNo++)
+    {
+      int nRowsLocalCurrentRank = matrixCOwnershipRanges[rankNo+1] - matrixCOwnershipRanges[rankNo];
+      lengthsOfBlocks[rankNo*this->nColumnSubmatricesSystemMatrix_ + this->nColumnSubmatricesSystemMatrix_-1] = nRowsLocalCurrentRank;
+    }
+    
+
+    // assert that size matches global matrix size
+    PetscInt nRowsGlobal, nColumnsGlobal;
+    ierr = MatGetSize(this->singleSystemMatrix_, &nRowsGlobal, &nColumnsGlobal); CHKERRV(ierr);
+    PetscInt size = 0;
+    for (PetscInt blockSize : lengthsOfBlocks)
+      size += blockSize;
+
+    LOG(DEBUG) << "block jacobi preconditioner, lengthsOfBlocks: " << lengthsOfBlocks << ", system matrix size: " << nRowsGlobal << "x" << nColumnsGlobal;
+
+    if (size != nRowsGlobal || size != nColumnsGlobal)
+    {
+      LOG(FATAL) << "Block lengths of block jacobi preconditioner do not sum up to the system matrix size. Sum of block lengths: " << size << ", dimension of system matrix: "
+        << nRowsGlobal << "x" << nColumnsGlobal;
+    }
+    assert(size == nRowsGlobal);
+    assert(size == nColumnsGlobal);
+
     // PCBJacobiSetTotalBlocks(PC pc, PetscInt nBlocks, const PetscInt lengthsOfBlocks[])
+    ierr = PCBJacobiSetTotalBlocks(pc, this->nColumnSubmatricesSystemMatrix_, lengthsOfBlocks.data()); CHKERRV(ierr);
+
+#else
+    // big blocks
     PetscInt nBlocks = this->nColumnSubmatricesSystemMatrix_;
 
     // set sizes of all blocks to the number of dofs in the muscle domain
@@ -334,7 +403,10 @@ setInformationToPreconditioner()
     assert(size == nRowsGlobal);
     assert(size == nColumnsGlobal);
 
+    // PCBJacobiSetTotalBlocks(PC pc, PetscInt nBlocks, const PetscInt lengthsOfBlocks[])
     ierr = PCBJacobiSetTotalBlocks(pc, this->nColumnSubmatricesSystemMatrix_, lengthsOfBlocks.data()); CHKERRV(ierr);
+#endif
+
   }
 
   // set node positions
@@ -405,6 +477,7 @@ updateSystemMatrix()
   this->finiteElementMethodDiffusionTotal_.setStiffnessMatrix();
 
   LOG(DEBUG) << "rebuild system matrix";
+#ifdef DUMP_REBUILT_SYSTEM_MATRIX
   static int counter = 0;
   std::stringstream s; 
   s << counter;
@@ -412,6 +485,7 @@ updateSystemMatrix()
   PetscUtility::dumpMatrix(s.str()+"finiteElementMethodDiffusion_stiffness", "matlab", this->finiteElementMethodDiffusion_.data().stiffnessMatrix()->valuesGlobal(), MPI_COMM_WORLD);
   PetscUtility::dumpMatrix(s.str()+"finiteElementMethodDiffusion_mass", "matlab", this->finiteElementMethodDiffusion_.data().massMatrix()->valuesGlobal(), MPI_COMM_WORLD);
   PetscUtility::dumpMatrix(s.str()+"finiteElementMethodFat_stiffness", "matlab", this->finiteElementMethodFat_.data().stiffnessMatrix()->valuesGlobal(), MPI_COMM_WORLD);
+#endif
 
   // compute new entries for submatrices, except B,C,D and E
   setSystemMatrixSubmatrices(this->timeStepWidthOfSystemMatrix_);
@@ -421,6 +495,8 @@ updateSystemMatrix()
 
   // create the system matrix again
   this->createSystemMatrixFromSubmatrices();
+
+#ifdef DUMP_REBUILT_SYSTEM_MATRIX
 
   for (int i = 0; i < this->submatricesSystemMatrix_.size(); i++)
   {
@@ -434,6 +510,7 @@ updateSystemMatrix()
 
   PetscUtility::dumpMatrix(s.str()+"new_system_matrix", "matlab", this->singleSystemMatrix_, MPI_COMM_WORLD);
   counter++;
+#endif
 
   // stop duration measurement
   if (this->durationLogKey_ != "")

@@ -110,13 +110,14 @@ echo ""
 echo "--- Create pickle mesh"
 
 cd $opendihu_directory/examples/fiber_tracing/streamline_tracer/scripts
+n_points_z=9
 
 # arguments <input_stl_file> <output_pickle_file> <output_bin_file> <min_z> <max_z> <n_points_x> <n_points_z> [--only-stage-1]
 ./create_mesh.sh \
   ${current_directory}/processed_meshes/${basename}_04_tendon1_box.stl \
   ${current_directory}/processed_meshes/${basename}_05_tendon1_9x9.pickle \
   ${current_directory}/processed_meshes/${basename}_05_tendon1_9x9.bin \
-  $zmin $zmax 8 8 --only-stage-1
+  $zmin $zmax 8 $n_points_z --only-stage-1
 
 # transform the bin file to a vts file for debugging
 echo ""
@@ -283,20 +284,22 @@ echo "--- Create pickle mesh"
 
 cd $opendihu_directory/examples/fiber_tracing/streamline_tracer/scripts
 
+n_points_z=9
+
 # arguments <input_stl_file> <output_pickle_file> <output_bin_file> <min_z> <max_z> <n_points_x> <n_points_z> [--only-stage-1]
 echo " --- for tendon2a"
-#./create_mesh.sh \
-#  ${current_directory}/processed_meshes/${basename}_06_tendon2a_box4.stl \
-#  ${current_directory}/processed_meshes/${basename}_07_tendon2a_9x9.pickle \
-#  ${current_directory}/processed_meshes/${basename}_07_tendon2a_9x9.bin \
-#  $zmin $zmax 8 8 --only-stage-1
+./create_mesh.sh \
+  ${current_directory}/processed_meshes/${basename}_06_tendon2a_box4.stl \
+  ${current_directory}/processed_meshes/${basename}_07_tendon2a_9x9.pickle \
+  ${current_directory}/processed_meshes/${basename}_07_tendon2a_9x9.bin \
+  $zmin $zmax 8 $n_points_z --only-stage-1
 
 echo " --- for tendon2b"  
 ./create_mesh.sh \
   ${current_directory}/processed_meshes/${basename}_06_tendon2b_box4.stl \
   ${current_directory}/processed_meshes/${basename}_07_tendon2b_9x9.pickle \
   ${current_directory}/processed_meshes/${basename}_07_tendon2b_9x9.bin \
-  $zmin $zmax 8 8 --only-stage-1
+  $zmin $zmax 8 $n_points_z --only-stage-1
 
 # transform the bin file to a vts file for debugging
 echo ""

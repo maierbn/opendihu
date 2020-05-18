@@ -120,7 +120,7 @@ void ManagerImplementation::storeMappingsBetweenMeshes(PythonConfig specificSett
   }
   else 
   {
-    LOG(ERROR) << "specificSettings is not set";
+    LOG(WARNING) << "specificSettings is not set, this is probably in a unit test";
   }
 }
 

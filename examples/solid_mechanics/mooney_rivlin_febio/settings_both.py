@@ -12,7 +12,7 @@ nx = 2    # 2
 ny = 2    # 2
 nz = 5    # 5
 
-#physical_extent = [1, 1, 5]
+#physical_extent = [1, 1, 1]
 physical_extent = [4, 4, 5]
 
 # number of nodes
@@ -95,7 +95,8 @@ def compare_result(data):
   with open("rms", "w") as f:
     f.write(str(error_rms))
 
-
+# ---------------------
+# config for opendihu
 config = {
   "scenarioName": "3d_box",
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
@@ -169,7 +170,8 @@ config = {
   },
 }
 
-
+# ---------------------
+# config for febio
 import numpy as np
 import sys, os
 
@@ -186,7 +188,7 @@ nz = 5    # 5
 config2 = {
   "NonlinearElasticitySolverFebio": {
     "durationLogKey": "febio",
-    "force": force*(physical_extent[0]*physical_extent[1]),                # factor of force that is applied in axial direction of the muscle
+    "force": force,                     # factor of force that is applied in axial direction of the muscle
     "materialParameters": material_parameters,   # c0, c1, k for Ψ = c0 * (I1-3) + c1 * (I2-3) + 1/2*k*(log(J))^2
     
     # mesh

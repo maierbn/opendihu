@@ -39,7 +39,7 @@ if not env['no_tests']:
                 'src/1_rank/composite_mesh.cpp',
                 'src/utility.cpp']
 
-    #src_files = ['src/1_rank/composite_mesh.cpp', 'src/1_rank/main.cpp', 'src/utility.cpp']
+    #src_files = ['src/1_rank/solid_mechanics.cpp', 'src/1_rank/main.cpp', 'src/utility.cpp']
     #print ""
     #print "WARNING: only compiling tests ",src_files
 

@@ -268,8 +268,8 @@ config = {
   },
   "NonlinearElasticitySolverFebio": {
     "durationLogKey": "febio",
-    "force": force*(physical_extent[0]*physical_extent[1]),                # factor of force that is applied in axial direction of the muscle
-    "materialParameters": material_parameters,   # c0, c1, k for Ψ = c0 * (I1-3) + c1 * (I2-3) + 1/2*k*(log(J))^2
+    "force": force,                                       # factor of force that is applied in axial direction of the muscle
+    "materialParameters": material_parameters,            # c0, c1, k for Ψ = c0 * (I1-3) + c1 * (I2-3) + 1/2*k*(log(J))^2
     
     "meshName":             "3Dmesh_quadratic",           # mesh with quadratic Lagrange ansatz functions
     "inputMeshIsGlobal":    True,                         # boundary conditions are specified in global numberings, whereas the mesh is given in local numbering 

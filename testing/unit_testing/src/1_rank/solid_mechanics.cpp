@@ -187,7 +187,7 @@ physical_extent = [2, 2, 5]
 config = {
   "NonlinearElasticitySolverFebio": {
     "durationLogKey": "febio",
-    "force": force*(physical_extent[0]*physical_extent[1]),                # factor of force that is applied in axial direction of the muscle
+    "force": force,                # factor of force that is applied in axial direction of the muscle
     "materialParameters": material_parameters,   # c0, c1, k for Ψ = c0 * (I1-3) + c1 * (I2-3) + 1/2*k*(log(J))^2
     
     # mesh
@@ -441,7 +441,7 @@ physical_extent = [4, 4, 5]
 config = {
   "NonlinearElasticitySolverFebio": {
     "durationLogKey": "febio",
-    "force": force*(physical_extent[0]*physical_extent[1]),                # factor of force that is applied in axial direction of the muscle
+    "force": force,                # factor of force that is applied in axial direction of the muscle
     "materialParameters": material_parameters,   # c0, c1, k for Ψ = c0 * (I1-3) + c1 * (I2-3) + 1/2*k*(log(J))^2
     
     # mesh

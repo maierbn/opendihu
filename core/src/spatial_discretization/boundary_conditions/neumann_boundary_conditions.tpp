@@ -206,15 +206,6 @@ initializeRhs()
     }  // dofIndex
   } // elementGlobalNo
 
-  std::vector<double> values;
-  this->data_.rhs()->getValuesWithoutGhosts(2,values);
-  double sum = 0;
-  for (int i = 0; i < values.size(); i++)
-  {
-    sum += values[i];
-  }
-  LOG(DEBUG) << "rhs values: " << values << ", sum: " << sum;
-
   // allreduce surface area
   double surfaceAreaGlobal;
   MPI_Comm mpiCommunicator = this->data_.functionSpace()->meshPartition()->rankSubset()->mpiCommunicator();

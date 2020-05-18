@@ -9,16 +9,13 @@
 
 int main(int argc, char *argv[])
 {
-  // Solves nonlinear hyperelasticity (Mooney-Rivlin) using the built-in solver with the muscle geometry
+  // Solves nonlinear hyperelasticity (Mooney-Rivlin) using the Febio solver
   
   // initialize everything, handle arguments and parse settings from input file
   DihuContext settings(argc, argv);
   
   // define problem
-  TimeSteppingScheme::DynamicHyperelasticitySolver<
-    Equation::SolidMechanics::HyperelasticTendon
-    //Equation::SolidMechanics::TransverselyIsotropicMooneyRivlinIncompressible3D
-  > problem(settings);
+  TimeSteppingScheme::NonlinearElasticitySolverFebio problem(settings);
   
   // run problem
   problem.run();

@@ -22,9 +22,20 @@ c1 = 3.176e-10              # [N/cm^2]
 c2 = 1.813                  # [N/cm^2]
 b  = 1.075e-2               # [N/cm^2] anisotropy parameter
 d  = 9.1733                 # [-] anisotropy parameter
-variables.material_parameters = [c1, c2, b, d]   # material parameters
+variables.material_parameters = [c1, c2, b, d]   # material parameters for Mooney-Rivlin
 
-pmax = 7.3                  # [N/cm^2] maximum isometric active stress
+# material parameters for tendon material
+c = 9.98                    # [N/cm^2=kPa]
+ca = 14.92                  # [-]
+ct = 14.7                   # [-]
+cat = 9.64                  # [-]
+ctt = 11.24                 # [-]
+mu = 3.76                   # [N/cm^2=kPa]
+k1 = 42.217e3               # [N/cm^2=kPa]
+k2 = 411.360e3              # [N/cm^2=kPa]
+variables.material_parameters = [c, ca, ct, cat, ctt, mu, k1, k2]
+
+pmax = 7.3                  # [N/cm^2=kPa] maximum isometric active stress
 
 variables.constant_body_force = (0,0,-9.81e-4)   # [cm/ms^2], gravity constant for the body force
 variables.force = 1.0       # [N]

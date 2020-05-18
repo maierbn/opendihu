@@ -47,6 +47,9 @@ public:
   std::shared_ptr<FieldVariableTypeTensor> cauchyStress();
 
   //! return the field variable
+  std::shared_ptr<FieldVariableTypeTensor> pk2Stress();
+
+  //! return the field variable
   std::shared_ptr<FieldVariableTypeTensor> greenLagrangeStrain();
 
   //! return the field variable
@@ -68,6 +71,7 @@ public:
       std::shared_ptr<FieldVariableTypeVector>,        // displacements
       std::shared_ptr<FieldVariableTypeVector>,        // reactionForce
       std::shared_ptr<FieldVariableTypeTensor>,        // cauchyStress
+      std::shared_ptr<FieldVariableTypeTensor>,        // PK2-Stress
       std::shared_ptr<FieldVariableTypeTensor>,        // greenLagrangeStrain
       std::shared_ptr<FieldVariableType>               // relativeVolume
     >
@@ -85,6 +89,7 @@ private:
   std::shared_ptr<FieldVariableTypeVector> referenceGeometry_;    //< field variable of the geometry value
   std::shared_ptr<FieldVariableTypeVector> displacements_;        //< field variable of the displacements
   std::shared_ptr<FieldVariableTypeVector> reactionForce_;        //< field variable of the reaction forces
+  std::shared_ptr<FieldVariableTypeTensor> pk2Stress_;            //< field variable of the 2nd Piola-Kirchhoff stress, S
   std::shared_ptr<FieldVariableTypeTensor> cauchyStress_;         //< field variable of the Cauchy stress, sigma
   std::shared_ptr<FieldVariableTypeTensor> greenLagrangeStrain_;  //< field variable of the Green-Lagrange strain, E
   std::shared_ptr<FieldVariableType> relativeVolume_;             //< field variable of the relative volume (determinant of deformation gradient)

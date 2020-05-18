@@ -38,7 +38,7 @@ initialize(int offsetInGlobalNumberingPerRank)
     nEntriesLocal_ += nNonBcDofsWithoutGhosts_[componentNo];
   }
 
-  // add space for pressure components, this is only !=0 for PartitionedPetscVecForHyperelasticity
+  // add space for pressure components, this is only !=0 for PartitionedPetscVecForHyperelasticity for incompressible formulation
   nDofsLocal_ = nEntriesLocal_;
   nEntriesLocal_ += offsetInGlobalNumberingPerRank;
 

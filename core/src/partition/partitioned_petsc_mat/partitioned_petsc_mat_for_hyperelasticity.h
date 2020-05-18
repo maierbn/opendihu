@@ -17,20 +17,31 @@
  *
  *  The template parameter nDisplacementComponents specifies the number of displacement components and therefore equals 3.
  *
- *  The matrix has the following structure if nDisplacementComponents == 3:
+ *  For incompressible formulation, where p is an unknown:
+ *    The matrix has the following structure if nDisplacementComponents == 3:
  *
- *  (UU UP)   | 3 rows per dof
- *  (PU PP)   | 1 row per dof
+ *    (UU UP)   | 3 rows per dof
+ *    (PU PP)   | 1 row per dof
  *
- *  The matrix has the following structure if nDisplacementComponents == 6:
+ *    The matrix has the following structure if nDisplacementComponents == 6:
  *
- *  (UU UV UP)   | 3 rows per dof
- *  (VU VV VP)   | 3 rows per dof
- *  (PU PV PP)   | 1 row per dof
+ *    (UU UV UP)   | 3 rows per dof
+ *    (VU VV VP)   | 3 rows per dof
+ *    (PU PV PP)   | 1 row per dof
+ *
+ * For compressible formulation:
+ *    The matrix has the following structure if nDisplacementComponents == 3:
+ *
+ *    (UU)   | 3 rows per dof
+ *
+ *    The matrix has the following structure if nDisplacementComponents == 6:
+ *
+ *    (UU UV)   | 3 rows per dof
+ *    (VU VV)   | 3 rows per dof
  *
  */
 
-template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType, int nDisplacementComponents = 3>
+template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType, typename Term, int nDisplacementComponents = 3>
 class PartitionedPetscMatForHyperelasticityBase :
   public PartitionedPetscMatOneComponent<FunctionSpace::Generic, FunctionSpace::Generic>
 {
@@ -38,7 +49,7 @@ public:
 
   //! constructor, create square sparse matrix, the number of entries is given by partitionedPetscVecForHyperelasticity
   PartitionedPetscMatForHyperelasticityBase(
-    std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,nDisplacementComponents>> partitionedPetscVecForHyperelasticity,
+    std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,Term,nDisplacementComponents>> partitionedPetscVecForHyperelasticity,
     int nNonZerosDiagonal, int nNonZerosOffdiagonal,
     std::string name);
 
@@ -62,19 +73,19 @@ public:
 
 protected:
 
-  std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,nDisplacementComponents>>
+  std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,Term,nDisplacementComponents>>
     partitionedPetscVecForHyperelasticity_;     //< one instance of the corresponding PartitionedPetscVecForHyperelasticity class, which handles all numbering
 };
 
 /** Class that adds possibility to dump matrix
  *  This is only possible for structured meshes, not for composite structured meshes
  */
-template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType, int nDisplacementComponents = 3>
+template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType, typename Term, int nDisplacementComponents = 3>
 class PartitionedPetscMatForHyperelasticity :
-  public PartitionedPetscMatForHyperelasticityBase<DisplacementsFunctionSpaceType, PressureFunctionSpaceType, nDisplacementComponents>
+  public PartitionedPetscMatForHyperelasticityBase<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,Term,nDisplacementComponents>
 {
 public:
-  using PartitionedPetscMatForHyperelasticityBase<DisplacementsFunctionSpaceType, PressureFunctionSpaceType, nDisplacementComponents>::PartitionedPetscMatForHyperelasticityBase;
+  using PartitionedPetscMatForHyperelasticityBase<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,Term,nDisplacementComponents>::PartitionedPetscMatForHyperelasticityBase;
 
   //! output the matrix to the file in globalNatural ordering, it has the same form regardless of number of ranks and therefore can be used to compare output with different ranks
   void dumpMatrixGlobalNatural(std::string filename){}
@@ -82,18 +93,19 @@ public:
 
 /** class that adds possibility to dump matrix, only for structured meshes, not composite meshes
  */
-template<typename PressureFunctionSpaceType, int nDisplacementComponents>
+template<typename PressureFunctionSpaceType, typename Term, int nDisplacementComponents>
 class PartitionedPetscMatForHyperelasticity<
   FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>,BasisFunction::LagrangeOfOrder<2>>,
   PressureFunctionSpaceType,
+  Term,
   nDisplacementComponents
 > :
-  public PartitionedPetscMatForHyperelasticityBase<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>,BasisFunction::LagrangeOfOrder<2>>, PressureFunctionSpaceType, nDisplacementComponents>
+  public PartitionedPetscMatForHyperelasticityBase<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>,BasisFunction::LagrangeOfOrder<2>>, PressureFunctionSpaceType, Term, nDisplacementComponents>
 {
 public:
   typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>,BasisFunction::LagrangeOfOrder<2>> DisplacementsFunctionSpaceType;
 
-  using PartitionedPetscMatForHyperelasticityBase<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>,BasisFunction::LagrangeOfOrder<2>>, PressureFunctionSpaceType, nDisplacementComponents>::PartitionedPetscMatForHyperelasticityBase;
+  using PartitionedPetscMatForHyperelasticityBase<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>,BasisFunction::LagrangeOfOrder<2>>, PressureFunctionSpaceType, Term, nDisplacementComponents>::PartitionedPetscMatForHyperelasticityBase;
 
   //! output the matrix to the file in globalNatural ordering, it has the same form regardless of number of ranks and therefore can be used to compare output with different ranks
   void dumpMatrixGlobalNatural(std::string filename);

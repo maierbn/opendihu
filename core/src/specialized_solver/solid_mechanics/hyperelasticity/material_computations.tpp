@@ -138,6 +138,9 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
       // jacobianMaterial[columnIdx][rowIdx] = dX_rowIdx/dxi_columnIdx
       // inverseJacobianMaterial[columnIdx][rowIdx] = dxi_rowIdx/dX_columnIdx because of inverse function theorem
 
+      // get the factor in the integral that arises from the change in integration domain from world to parameter space
+      double_v_t integrationFactor = MathUtility::abs(jacobianDeterminant); // MathUtility::computeIntegrationFactor(jacobianMaterial);
+
       // F
       Tensor2_v_t<D> deformationGradient = this->computeDeformationGradient(displacementsValues, inverseJacobianMaterial, xi);
       double_v_t deformationGradientDeterminant = MathUtility::computeDeterminant(deformationGradient);  // J
@@ -161,9 +164,9 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
       //! compute 2nd Piola-Kirchhoff stress tensor S = 2*dPsi/dC and the fictitious PK2 Stress Sbar
       Tensor2_v_t<D> fictitiousPK2Stress;   // Sbar
       Tensor2_v_t<D> pk2StressIsochoric;    // S_iso
-      Tensor2_v_t<D> pK2Stress = this->computePK2Stress(pressure, rightCauchyGreen, inverseRightCauchyGreen, reducedInvariants, deformationGradientDeterminant, fiberDirection,
-                                                       fictitiousPK2Stress, pk2StressIsochoric
-                                                    );
+      Tensor2_v_t<D> pK2Stress = this->computePK2Stress(pressure, rightCauchyGreen, inverseRightCauchyGreen, invariants, reducedInvariants,
+                                                        deformationGradientDeterminant, fiberDirection,
+                                                        fictitiousPK2Stress, pk2StressIsochoric);
 
       // add active stress contribution if this material has this
       if (Term::usesActiveStress)
@@ -275,26 +278,35 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
           VLOG(2) << "   (L,a)=(" << aDof << "," << aComponent << "), integrand: " << integrand;
 
           // store integrand in evaluations array
-          evaluationsArrayDisplacements[samplingPointIndex][i] = integrand;
+          evaluationsArrayDisplacements[samplingPointIndex][i] = integrand * integrationFactor;
 
         }  // a
       }  // L
 
-      // loop over basis functions and evaluate integrand at xi for pressure part ((J-1)*psi)
-      for (int dofIndex = 0; dofIndex < nPressureDofsPerElement; dofIndex++)           // index over dofs in element, L in derivation
+      // for the incompressible formulation, also integrate the incompressibility constraint
+      if (Term::isIncompressible)
       {
-        const double phiL = pressureFunctionSpace->phi(dofIndex, xi);
-        const double_v_t integrand = (deformationGradientDeterminant - 1.0) * phiL;     // (J-1) * phi_L
+        // loop over basis functions and evaluate integrand at xi for pressure part ((J-1)*psi)
+        for (int dofIndex = 0; dofIndex < nPressureDofsPerElement; dofIndex++)           // index over dofs in element, L in derivation
+        {
+          const double phiL = pressureFunctionSpace->phi(dofIndex, xi);
+          const double_v_t integrand = (deformationGradientDeterminant - 1.0) * phiL;     // (J-1) * phi_L
 
-        // store integrand in evaluations array
-        evaluationsArrayPressure[samplingPointIndex][dofIndex] = integrand;
-      }  // L
+          // store integrand in evaluations array
+          evaluationsArrayPressure[samplingPointIndex][dofIndex] = integrand * integrationFactor;
+        }  // L
+      }
 
     }  // function evaluations
 
     // integrate all values for result vector entries at once
     EvaluationsDisplacementsType integratedValuesDisplacements = QuadratureDD::computeIntegral(evaluationsArrayDisplacements);
-    EvaluationsPressureType integratedValuesPressure = QuadratureDD::computeIntegral(evaluationsArrayPressure);
+
+    EvaluationsPressureType integratedValuesPressure;
+    if (Term::isIncompressible)
+    {
+      integratedValuesPressure = QuadratureDD::computeIntegral(evaluationsArrayPressure);
+    }
 
     // get indices of element-local dofs
     std::array<dof_no_v_t,nDisplacementsDofsPerElement> dofNosLocal = displacementsFunctionSpace->getElementDofNosLocal(elementNoLocalv);
@@ -325,28 +337,31 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
       }  // aComponent
     }  // aDof
 
-
+    // only for the incompressible formulation, also integrate the incompressibility constraint
     // add entries in result vector for pressure
-    // loop over indices of unknows (aDof,aComponent)
-    for (int aDof = 0; aDof < nPressureDofsPerElement; aDof++)      // L
+    if (Term::isIncompressible)
     {
-      // get integrated value
-      double_v_t integratedValue = integratedValuesPressure[aDof];
+      // loop over indices of unknows (aDof,aComponent)
+      for (int aDof = 0; aDof < nPressureDofsPerElement; aDof++)      // L
+      {
+        // get integrated value
+        double_v_t integratedValue = integratedValuesPressure[aDof];
 
-      // get local dof no, aDof is the dof within the element, dofNoLocal is the dof within the local subdomain
-      dof_no_v_t dofNoLocal = pressureDofNosLocal[aDof];
+        // get local dof no, aDof is the dof within the element, dofNoLocal is the dof within the local subdomain
+        dof_no_v_t dofNoLocal = pressureDofNosLocal[aDof];
 
-      // set value of result vector
-      const int pressureDofNo = nDisplacementComponents;  // 3 or 6, depending if static or dynamic problem
-      combinedVecResidual_->setValue(pressureDofNo, dofNoLocal, integratedValue, ADD_VALUES);
+        // set value of result vector
+        const int pressureDofNo = nDisplacementComponents;  // 3 or 6, depending if static or dynamic problem
+        combinedVecResidual_->setValue(pressureDofNo, dofNoLocal, integratedValue, ADD_VALUES);
 
-      //if (VLOG_IS_ON(1))
-      //{
-      //  global_no_t dofNoGlobalPetsc = pressureFunctionSpace->meshPartition()->getDofNoGlobalPetsc(dofNoLocal);
-      //  VLOG(1) << "p: add value " << integratedValue << " at dofNoGlobalPetsc: " << dofNoGlobalPetsc;
-      //}
-    }
-  }  // elementNoLocal
+        //if (VLOG_IS_ON(1))
+        //{
+        //  global_no_t dofNoGlobalPetsc = pressureFunctionSpace->meshPartition()->getDofNoGlobalPetsc(dofNoLocal);
+        //  VLOG(1) << "p: add value " << integratedValue << " at dofNoGlobalPetsc: " << dofNoGlobalPetsc;
+        //}
+      }
+    }  // elementNoLocal
+  }
 
   // assemble result vector
   if (communicateGhosts)
@@ -918,54 +933,57 @@ materialComputeJacobian()
       }  // a
     }  // L
 
-    // initialize top right and bottom left sub matrices to zero
-    // loop over indices of unknows aDof,(bDof,bComponent) or L,(M,b)
-    for (int lDof = 0; lDof < nPressureDofsPerElement; lDof++)           // L
+    // initialize top right and bottom left sub matrices to zero, those entries are only present for the incompressible formulation
+    if (Term::isIncompressible)
     {
-      for (int aDof = 0; aDof < nDisplacementsDofsPerElement; aDof++)    // M
+      // loop over indices of unknows aDof,(bDof,bComponent) or L,(M,b)
+      for (int lDof = 0; lDof < nPressureDofsPerElement; lDof++)           // L
       {
-        for (int aComponent = 0; aComponent < D; aComponent++)           // a
+        for (int aDof = 0; aDof < nDisplacementsDofsPerElement; aDof++)    // M
         {
-          // get local dof no, aDof is the dof within the element, dofNoLocal is the dof within the local subdomain
-          dof_no_v_t dofLNoLocal = dofNosLocalPressure[lDof];     // dof with respect to pressure function space
-          dof_no_v_t dofMNoLocal = dofNosLocal[aDof];             // dof with respect to displacements function space
+          for (int aComponent = 0; aComponent < D; aComponent++)           // a
+          {
+            // get local dof no, aDof is the dof within the element, dofNoLocal is the dof within the local subdomain
+            dof_no_v_t dofLNoLocal = dofNosLocalPressure[lDof];     // dof with respect to pressure function space
+            dof_no_v_t dofMNoLocal = dofNosLocal[aDof];             // dof with respect to displacements function space
 
-          const int pressureDofNo = nDisplacementComponents;  // 3 or 6, depending if static or dynamic problem
+            const int pressureDofNo = nDisplacementComponents;  // 3 or 6, depending if static or dynamic problem
 
-          // set entry in lower left submatrix
-          // parameters: componentNoRow, dofNoLocalRow, componentNoColumn, dofNoLocalColumn, value
-          combinedMatrixJacobian_->setValue(pressureDofNo, dofLNoLocal, aComponent, dofMNoLocal, 0.0, INSERT_VALUES);
+            // set entry in lower left submatrix
+            // parameters: componentNoRow, dofNoLocalRow, componentNoColumn, dofNoLocalColumn, value
+            combinedMatrixJacobian_->setValue(pressureDofNo, dofLNoLocal, aComponent, dofMNoLocal, 0.0, INSERT_VALUES);
 
-          // set entry in upper right submatrix
-          combinedMatrixJacobian_->setValue(aComponent, dofMNoLocal, pressureDofNo, dofLNoLocal, 0.0, INSERT_VALUES);
+            // set entry in upper right submatrix
+            combinedMatrixJacobian_->setValue(aComponent, dofMNoLocal, pressureDofNo, dofLNoLocal, 0.0, INSERT_VALUES);
 
-        }  // aComponent
-      }  // aDof
-    }  // lDof
+          }  // aComponent
+        }  // aDof
+      }  // lDof
 
+      // loop over diagonal matrix entries in p-part (bottom right submatrix), set diagonal entries to 0
+      // This allocates nonzero entries and sets them to zero. It is needed for the solver.
 
-    // loop over diagonal matrix entries in p-part (bottom right submatrix), set diagonal entries to 0
-    // This allocates nonzero entries and sets them to zero. It is needed for the solver.
+      // The direct solvers are not able to solve the saddle point problem in serial execution, add an artifical regularization term.
+      double epsilon = 1e-12;
 
-    // The direct solvers are not able to solve the saddle point problem in serial execution, add an artifical regularization term.
-    double epsilon = 1e-12;
+      // or parallel execution everything is fine and we do not need regularization
+      if (this->data_.functionSpace()->meshPartition()->nRanks() > 1)
+        epsilon = 0;
 
-    // or parallel execution everything is fine and we do not need regularization
-    if (this->data_.functionSpace()->meshPartition()->nRanks() > 1)
-      epsilon = 0;
+      for (int lDof = 0; lDof < nPressureDofsPerElement; lDof++)           // L
+      {
+        const int pressureDofNo = nDisplacementComponents;  // 3 or 6, depending if static or dynamic problem
 
-    for (int lDof = 0; lDof < nPressureDofsPerElement; lDof++)           // L
-    {
-      const int pressureDofNo = nDisplacementComponents;  // 3 or 6, depending if static or dynamic problem
+        dof_no_v_t dofLNoLocal = dofNosLocalPressure[lDof];     // dof with respect to pressure function space
+        combinedMatrixJacobian_->setValue(pressureDofNo, dofLNoLocal, pressureDofNo, dofLNoLocal, epsilon, INSERT_VALUES);
+      }
+    }  // elementNoLocal
 
-      dof_no_v_t dofLNoLocal = dofNosLocalPressure[lDof];     // dof with respect to pressure function space
-      combinedMatrixJacobian_->setValue(pressureDofNo, dofLNoLocal, pressureDofNo, dofLNoLocal, epsilon, INSERT_VALUES);
-    }
-  }  // elementNoLocal
+    // set diagonal to zero, this would be correct but for some reason the solvers do not like systems with zero diagonal, therefore epsilon was set on the diagonal
+    //PetscErrorCode ierr;
+    //ierr = MatDiagonalSet(combinedMatrixJacobian_->valuesGlobal(), zeros_, INSERT_VALUES); CHKERRV(ierr);
 
-  // set diagonal to zero, this would be correct but for some reason the solvers do not like systems with zero diagonal, therefore epsilon was set on the diagonal
-  //PetscErrorCode ierr;
-  //ierr = MatDiagonalSet(combinedMatrixJacobian_->valuesGlobal(), zeros_, INSERT_VALUES); CHKERRV(ierr);
+  }  // if Term::isIncompressible
 
   // allow switching between stiffnessMatrix->setValue(... INSERT_VALUES) and ADD_VALUES
   combinedMatrixJacobian_->assembly(MAT_FLUSH_ASSEMBLY);
@@ -1002,7 +1020,8 @@ materialComputeJacobian()
     //LOG(DEBUG) << "elementNoLocal " << elementNoLocal << ", displacementsValues: " << displacementsValues;
 
     std::array<double_v_t,nPressureDofsPerElement> pressureValuesCurrentElement;
-    this->data_.pressure()->getElementValues(elementNoLocalv, pressureValuesCurrentElement);
+    if (Term::isIncompressible)
+      this->data_.pressure()->getElementValues(elementNoLocalv, pressureValuesCurrentElement);
 
     std::array<Vec3_v_t,nDisplacementsDofsPerElement> elementalDirectionValues;
     this->data_.fiberDirection()->getElementValues(elementNoLocalv, elementalDirectionValues);
@@ -1021,6 +1040,9 @@ materialComputeJacobian()
       // jacobianMaterial[columnIdx][rowIdx] = dX_rowIdx/dxi_columnIdx
       // inverseJacobianMaterial[columnIdx][rowIdx] = dxi_rowIdx/dX_columnIdx because of inverse function theorem
 
+      // get the factor in the integral that arises from the change in integration domain from world to parameter space
+      double_v_t integrationFactor = MathUtility::abs(jacobianDeterminant);   //MathUtility::computeIntegrationFactor(jacobianMaterial);
+
       Tensor2_v_t<D> deformationGradient = this->computeDeformationGradient(displacementsValues, inverseJacobianMaterial, xi);    // F
       double_v_t deformationGradientDeterminant;    // J
       Tensor2_v_t<D> inverseDeformationGradient = MathUtility::computeInverse(deformationGradient, deformationGradientDeterminant);  // F^-1
@@ -1035,18 +1057,20 @@ materialComputeJacobian()
 
       // invariants
       std::array<double_v_t,5> invariants = this->computeInvariants(rightCauchyGreen, rightCauchyGreenDeterminant, fiberDirection);  // I_1, I_2, I_3
-      std::array<double_v_t,5> reducedInvariants = this->computeReducedInvariants(invariants, deformationGradientDeterminant); // Ibar_1, Ibar_2
+      std::array<double_v_t,5> reducedInvariants = this->computeReducedInvariants(invariants, deformationGradientDeterminant); // Ibar_1, ..., Ibar_5
 
       // pressure is the separately interpolated pressure for mixed formulation
-      double_v_t pressure = pressureFunctionSpace->interpolateValueInElement(pressureValuesCurrentElement, xi);
+      double_v_t pressure = 0;
+      if (Term::isIncompressible)
+        pressure = pressureFunctionSpace->interpolateValueInElement(pressureValuesCurrentElement, xi);
 
       // Pk2 stress tensor S = S_vol + S_iso (p.234)
       //! compute 2nd Piola-Kirchhoff stress tensor S = 2*dPsi/dC and the fictitious PK2 Stress Sbar
       Tensor2_v_t<D> fictitiousPK2Stress;   // Sbar
       Tensor2_v_t<D> pk2StressIsochoric;    // S_iso
-      Tensor2_v_t<D> pK2Stress = this->computePK2Stress(pressure, rightCauchyGreen, inverseRightCauchyGreen, reducedInvariants, deformationGradientDeterminant, fiberDirection,
-                                                      fictitiousPK2Stress, pk2StressIsochoric
-                                                    );
+      Tensor2_v_t<D> pK2Stress = this->computePK2Stress(pressure, rightCauchyGreen, inverseRightCauchyGreen, invariants, reducedInvariants,
+                                                        deformationGradientDeterminant, fiberDirection,
+                                                        fictitiousPK2Stress, pk2StressIsochoric);
 
       std::array<Vec3,nDisplacementsDofsPerElement> gradPhi = displacementsFunctionSpace->getGradPhi(xi);
       // (column-major storage) gradPhi[L][a] = dphi_L / dxi_a
@@ -1056,7 +1080,7 @@ materialComputeJacobian()
       Tensor4_v_t<D> elasticityTensor;
       Tensor4_v_t<D> fictitiousElasticityTensor;
       Tensor4_v_t<3> elasticityTensorIso;
-      computeElasticityTensor(rightCauchyGreen, inverseRightCauchyGreen, deformationGradientDeterminant, pressure, reducedInvariants, fictitiousPK2Stress, pk2StressIsochoric, fiberDirection,
+      computeElasticityTensor(rightCauchyGreen, inverseRightCauchyGreen, deformationGradientDeterminant, pressure, invariants, reducedInvariants, fictitiousPK2Stress, pk2StressIsochoric, fiberDirection,
                               fictitiousElasticityTensor, elasticityTensorIso, elasticityTensor);
 
       // test if implementation of S is correct
@@ -1165,63 +1189,65 @@ materialComputeJacobian()
               const int index = j*nUnknowsPerElement + i;
 
               // store integrand in evaluations array
-              evaluationsArrayDisplacements[samplingPointIndex][index] = integrand;
+              evaluationsArrayDisplacements[samplingPointIndex][index] = integrand * integrationFactor;
 
             }  // b, bComponent
           }   // M, bDof
         }  // a, aComponent
       }  // L, aDof
 
-      // add contributions of submatrix up and pu (lower left and upper right)
-
-      // loop over indices of unknows aDof,(bDof,bComponent) or L,(M,b)
-      for (int lDof = 0; lDof < nPressureDofsPerElement; lDof++)           // L
+      // add contributions of submatrix up and pu (lower left and upper right), only for incompressible formulation
+      if (Term::isIncompressible)
       {
-        for (int aDof = 0; aDof < nDisplacementsDofsPerElement; aDof++)    // M
+        // loop over indices of unknows aDof,(bDof,bComponent) or L,(M,b)
+        for (int lDof = 0; lDof < nPressureDofsPerElement; lDof++)           // L
         {
-          for (int aComponent = 0; aComponent < D; aComponent++)           // a
+          for (int aDof = 0; aDof < nDisplacementsDofsPerElement; aDof++)    // M
           {
-            double_v_t fInv_Ba_dphiM_dXB = 0.0;
-
-            for (int bInternal = 0; bInternal < D; bInternal++)     // capital B in derivation
+            for (int aComponent = 0; aComponent < D; aComponent++)           // a
             {
-              // compute derivatives of phi
-              double_v_t dphiM_dXB = 0.0;
+              double_v_t fInv_Ba_dphiM_dXB = 0.0;
 
-              // helper index k for multiplication with inverse Jacobian
-              for (int k = 0; k < D; k++)
+              for (int bInternal = 0; bInternal < D; bInternal++)     // capital B in derivation
               {
-                // (column-major storage) gradPhi[L][k] = dphi_L / dxi_k
-                // gradPhi[column][row] = gradPhi[dofIndex][k] = dphi_dofIndex/dxi_k, columnIdx = dofIndex, rowIdx = which direction
+                // compute derivatives of phi
+                double_v_t dphiM_dXB = 0.0;
 
-                // compute dphiM/dXB from dphiM/dxik and dxik/dXB
-                const double dphiM_dxik = gradPhi[aDof][k];    // dphi_M/dxik
-                const double_v_t dxik_dXB = inverseJacobianMaterial[bInternal][k];  // inverseJacobianMaterial[B][k] = J^{-1}_kB = dxi_k/dX_B
+                // helper index k for multiplication with inverse Jacobian
+                for (int k = 0; k < D; k++)
+                {
+                  // (column-major storage) gradPhi[L][k] = dphi_L / dxi_k
+                  // gradPhi[column][row] = gradPhi[dofIndex][k] = dphi_dofIndex/dxi_k, columnIdx = dofIndex, rowIdx = which direction
 
-                dphiM_dXB += dphiM_dxik * dxik_dXB;
-              }   // k
+                  // compute dphiM/dXB from dphiM/dxik and dxik/dXB
+                  const double dphiM_dxik = gradPhi[aDof][k];    // dphi_M/dxik
+                  const double_v_t dxik_dXB = inverseJacobianMaterial[bInternal][k];  // inverseJacobianMaterial[B][k] = J^{-1}_kB = dxi_k/dX_B
 
-              const double_v_t fInv_Ba = inverseDeformationGradient[aComponent][bInternal];
+                  dphiM_dXB += dphiM_dxik * dxik_dXB;
+                }   // k
 
-              fInv_Ba_dphiM_dXB += fInv_Ba * dphiM_dXB;
-            }
+                const double_v_t fInv_Ba = inverseDeformationGradient[aComponent][bInternal];
 
-            // compute integrand J * psi_L * (F^-1)_Ba * phi_Ma,B
+                fInv_Ba_dphiM_dXB += fInv_Ba * dphiM_dXB;
+              }
 
-            const double_v_t psiL = pressureFunctionSpace->phi(lDof,xi);
-            const double_v_t integrand = deformationGradientDeterminant * psiL * fInv_Ba_dphiM_dXB;
+              // compute integrand J * psi_L * (F^-1)_Ba * phi_Ma,B
 
-            // compute index of degree of freedom and component (result vector index)
-            const int j = lDof;
-            const int i = aDof*D + aComponent;
-            const int index = j*nUnknowsPerElement + i;
+              const double_v_t psiL = pressureFunctionSpace->phi(lDof,xi);
+              const double_v_t integrand = deformationGradientDeterminant * psiL * fInv_Ba_dphiM_dXB;
 
-            // store integrand in evaluations array
-            evaluationsArrayPressure[samplingPointIndex][index] = integrand;
+              // compute index of degree of freedom and component (result vector index)
+              const int j = lDof;
+              const int i = aDof*D + aComponent;
+              const int index = j*nUnknowsPerElement + i;
 
-          }  // a
-        }  // M
-      }  // L
+              // store integrand in evaluations array
+              evaluationsArrayPressure[samplingPointIndex][index] = integrand * integrationFactor;
+
+            }  // a
+          }  // M
+        }  // L
+      }  // if incompressible
 
       // add contributions of submatrix uv (top-center, only for dynamic problem)
       if (nDisplacementComponents == 6)
@@ -1237,7 +1263,7 @@ materialComputeJacobian()
             const int index = lDof*nDisplacementsDofsPerElement + mDof;
 
             // store integrand in evaluations array
-            evaluationsArrayUV[samplingPointIndex][index] = integrand;
+            evaluationsArrayUV[samplingPointIndex][index] = integrand * integrationFactor;
           }   // M, mDof
         }   // L, lDof
 
@@ -1246,7 +1272,13 @@ materialComputeJacobian()
 
     // integrate all values for result vector entries at once
     EvaluationsDisplacementsType integratedValuesDisplacements = QuadratureDD::computeIntegral(evaluationsArrayDisplacements);
-    EvaluationsPressureType integratedValuesPressure = QuadratureDD::computeIntegral(evaluationsArrayPressure);
+
+    EvaluationsPressureType integratedValuesPressure;
+    if (Term::isIncompressible)
+    {
+      integratedValuesPressure = QuadratureDD::computeIntegral(evaluationsArrayPressure);
+    }
+
     EvaluationsUVType integratedValuesUV;
     if (nDisplacementComponents == 6)
     {
@@ -1294,39 +1326,42 @@ materialComputeJacobian()
       }  // aComponent
     }  // aDof
 
-    // add entries in result stiffness matrix for pressure (lower left and upper right parts, symmetric)
-    // loop over indices of unknows aDof,(bDof,bComponent) or L,(M,b)
-    for (int lDof = 0; lDof < nPressureDofsPerElement; lDof++)           // L
+    // add entries in result stiffness matrix for pressure (lower left and upper right parts, up and pu, symmetric), only for incompressible formulation
+    if (Term::isIncompressible)
     {
-      for (int aDof = 0; aDof < nDisplacementsDofsPerElement; aDof++)    // M
+      // loop over indices of unknows aDof,(bDof,bComponent) or L,(M,b)
+      for (int lDof = 0; lDof < nPressureDofsPerElement; lDof++)           // L
       {
-        for (int aComponent = 0; aComponent < D; aComponent++)           // a
+        for (int aDof = 0; aDof < nDisplacementsDofsPerElement; aDof++)    // M
         {
-          // compute index of degree of freedom and component for array of integrated values
-          const int j = lDof;
-          const int i = aDof*D + aComponent;
-          const int index = j*nUnknowsPerElement + i;
+          for (int aComponent = 0; aComponent < D; aComponent++)           // a
+          {
+            // compute index of degree of freedom and component for array of integrated values
+            const int j = lDof;
+            const int i = aDof*D + aComponent;
+            const int index = j*nUnknowsPerElement + i;
 
-          // get result of quadrature
-          double_v_t integratedValue = integratedValuesPressure[index];
+            // get result of quadrature
+            double_v_t integratedValue = integratedValuesPressure[index];
 
-          // get local dof no, aDof is the dof within the element, dofNoLocal is the dof within the local subdomain
-          dof_no_v_t dofLNoLocal = dofNosLocalPressure[lDof];     // dof with respect to pressure function space
-          dof_no_v_t dofMNoLocal = dofNosLocal[aDof];  // dof with respect to displacements function space
+            // get local dof no, aDof is the dof within the element, dofNoLocal is the dof within the local subdomain
+            dof_no_v_t dofLNoLocal = dofNosLocalPressure[lDof];     // dof with respect to pressure function space
+            dof_no_v_t dofMNoLocal = dofNosLocal[aDof];  // dof with respect to displacements function space
 
-          // set entry in lower left submatrix
+            // set entry in lower left submatrix
 
-          const int pressureDofNo = nDisplacementComponents;  // 3 or 6, depending if static or dynamic problem
+            const int pressureDofNo = nDisplacementComponents;  // 3 or 6, depending if static or dynamic problem
 
-          // parameters: componentNoRow, dofNoLocalRow, componentNoColumn, dofNoLocalColumn, value
-          combinedMatrixJacobian_->setValue(pressureDofNo, dofLNoLocal, aComponent, dofMNoLocal, integratedValue, ADD_VALUES);
+            // parameters: componentNoRow, dofNoLocalRow, componentNoColumn, dofNoLocalColumn, value
+            combinedMatrixJacobian_->setValue(pressureDofNo, dofLNoLocal, aComponent, dofMNoLocal, integratedValue, ADD_VALUES);
 
-          // set entry in upper right submatrix
-          combinedMatrixJacobian_->setValue(aComponent, dofMNoLocal, pressureDofNo, dofLNoLocal, integratedValue, ADD_VALUES);
+            // set entry in upper right submatrix
+            combinedMatrixJacobian_->setValue(aComponent, dofMNoLocal, pressureDofNo, dofLNoLocal, integratedValue, ADD_VALUES);
 
-        }  // aComponent
-      }  // aDof
-    }  // lDof
+          }  // aComponent
+        }  // aDof
+      }  // lDof
+    }
 
     // add entries in resulting stiffness matrix for submatrix uv (top-center, only for dynamic problem)
     if (nDisplacementComponents == 6)
@@ -1369,993 +1404,6 @@ materialComputeJacobian()
   }  // local elements
 
   combinedMatrixJacobian_->assembly(MAT_FINAL_ASSEMBLY);
-}
-
-template<typename Term,typename MeshType, int nDisplacementComponents>
-template<typename double_v_t>
-Tensor2<3,double_v_t> HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
-computeDeformationGradient(const std::array<VecD<3,double_v_t>,DisplacementsFunctionSpace::nDofsPerElement()> &displacements,
-                           const Tensor2<3,double_v_t> &inverseJacobianMaterial,
-                           const std::array<double, 3> xi
-                          )
-{
-  // compute the deformation gradient x_i,j = δ_ij + u_i,j
-  // where j is dimensionColumn and i is component of the used Vec3's
-
-
-  VLOG(3) << "compute deformation gradient Fij, displacements: " << displacements;
-
-  const int D = 3;
-  Tensor2<D,double_v_t> deformationGradient;
-
-  const int nDofsPerElement = DisplacementsFunctionSpace::nDofsPerElement();
-
-  // loop over dimension, i.e. columns of deformation gradient, j
-  for (int dimensionColumn = 0; dimensionColumn < 3; dimensionColumn++)
-  {
-    // compute du_i/dX_dimensionColumn for all i at once
-    VecD<3,double_v_t> du_dX({0});    // vector contains entries for all i, du_dXj with j = dimensionColumn
-
-    VLOG(3) << " j = " << dimensionColumn;
-
-    // loop over dof no., M
-    for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
-    {
-      VLOG(3) << "  M = " << dofIndex;
-
-      // compute dphi_dofIndex/dX_dimensionColumn
-      double_v_t dphi_dX = 0;
-      for (int l = 0; l < 3; l++)
-      {
-        VLOG(3) << "   l = " << l;
-        double_v_t dphi_dxil = DisplacementsFunctionSpace::dphi_dxi(dofIndex, l, xi);
-        double_v_t dxil_dX = inverseJacobianMaterial[dimensionColumn][l];     // inverseJacobianMaterial[j][l] = J_lj = dxi_l/dX_j
-
-        VLOG(3) << "     dphi_dxil = " << dphi_dxil << ", dxil_dX = " << dxil_dX;
-
-        // multiply dphi/dxi with dxi/dX to obtain dphi/dX
-        dphi_dX += dphi_dxil * dxil_dX;
-      }
-      VLOG(3) << "   dphi_dX = " << dphi_dX;
-
-      VLOG(3) << "   displ_M: " << displacements[dofIndex];
-      du_dX += dphi_dX * displacements[dofIndex];   // vector-valued addition
-    }
-    VLOG(3) << " du_dXj: " << du_dX;
-
-    deformationGradient[dimensionColumn] = du_dX;
-
-    // add Kronecker delta to obtain x_i,j = delta_ij + u_i,j
-    deformationGradient[dimensionColumn][dimensionColumn] += 1;
-  }
-
-  VLOG(3) << "deformationGradient: " << deformationGradient;
-  return deformationGradient;
-}
-
-template<typename Term,typename MeshType, int nDisplacementComponents>
-template<typename double_v_t>
-Tensor2<3,double_v_t> HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
-computeDeformationGradientTimeDerivative(const std::array<VecD<3,double_v_t>,DisplacementsFunctionSpace::nDofsPerElement()> &velocities,
-                                         const Tensor2<3,double_v_t> &inverseJacobianMaterial,
-                                         const std::array<double, 3> xi
-                                        )
-{
-  // compute the time derivative of the deformation gradient d(x_i,j)/dt = d/dt(δ_ij + u_i,j) = v_i,j
-  // where j is dimensionColumn and i is component of the used Vec3's
-
-
-  VLOG(3) << "compute deformation gradient time derivative Fdot_ij, velocities: " << velocities;
-
-  const int D = 3;
-  Tensor2<D,double_v_t> deformationGradientTimeDerivative;
-
-  const int nDofsPerElement = DisplacementsFunctionSpace::nDofsPerElement();
-
-  // loop over dimension, i.e. columns of deformation gradient, j
-  for (int dimensionColumn = 0; dimensionColumn < 3; dimensionColumn++)
-  {
-    // compute du_i/dX_dimensionColumn for all i at once
-    VecD<3,double_v_t> du_dX({0});    // vector contains entries for all i, du_dXj with j = dimensionColumn
-
-    VLOG(3) << " j = " << dimensionColumn;
-
-    // loop over dof no., M
-    for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
-    {
-      VLOG(3) << "  M = " << dofIndex;
-
-      // compute dphi_dofIndex/dX_dimensionColumn
-      double_v_t dphi_dX = 0;
-      for (int l = 0; l < 3; l++)
-      {
-        VLOG(3) << "   l = " << l;
-        double_v_t dphi_dxil = DisplacementsFunctionSpace::dphi_dxi(dofIndex, l, xi);
-        double_v_t dxil_dX = inverseJacobianMaterial[dimensionColumn][l];     // inverseJacobianMaterial[j][l] = J_lj = dxi_l/dX_j
-
-        VLOG(3) << "     dphi_dxil = " << dphi_dxil << ", dxil_dX = " << dxil_dX;
-
-        // multiply dphi/dxi with dxi/dX to obtain dphi/dX
-        dphi_dX += dphi_dxil * dxil_dX;
-      }
-      VLOG(3) << "   dphi_dX = " << dphi_dX;
-
-      VLOG(3) << "   displ_M: " << velocities[dofIndex];
-      du_dX += dphi_dX * velocities[dofIndex];   // vector-valued addition
-    }
-    VLOG(3) << " du_dXj: " << du_dX;
-
-    deformationGradientTimeDerivative[dimensionColumn] = du_dX;
-  }
-
-  VLOG(3) << "deformationGradientTimeDerivative: " << deformationGradientTimeDerivative;
-  return deformationGradientTimeDerivative;
-}
-
-template<typename Term,typename MeshType, int nDisplacementComponents>
-template<typename double_v_t>
-Tensor2<3,double_v_t> HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
-computeRightCauchyGreenTensor(const Tensor2<3,double_v_t> &deformationGradient)
-{
-  // compute C = F^T*F where F is the deformationGradient and C is the right Cauchy-Green Tensor
-  // the quantities are 3x3 tensors for the 3D case
-  Tensor2<3,double_v_t> rightCauchyGreenTensor({std::array<double_v_t,3>({0})});
-
-  // C_ji
-  // loop over dimension, i.e. columns of right cauchy green tensor, i
-  for (int dimensionColumn = 0; dimensionColumn < 3; dimensionColumn++)
-  {
-    // loop over row of tensor, j
-    for (int dimensionRow = 0; dimensionRow < 3; dimensionRow++)
-    {
-      for (int k = 0; k < 3; k++)
-      {
-        // C_cr = C_rc += (F^T)_ck * F_kr = F_kc * F_kr
-        rightCauchyGreenTensor[dimensionColumn][dimensionRow] +=
-          deformationGradient[dimensionColumn][k] * deformationGradient[dimensionRow][k];
-      }
-    }
-  }
-
-  return rightCauchyGreenTensor;
-}
-
-template<typename Term,typename MeshType, int nDisplacementComponents>
-template<typename double_v_t>
-std::array<double_v_t,5> HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
-computeInvariants(const Tensor2<3,double_v_t> &rightCauchyGreen, const double_v_t rightCauchyGreenDeterminant, const VecD<3,double_v_t> fiberDirection)
-{
-  std::array<double_v_t,5> invariants;
-
-  // I1 = tr(C)
-  invariants[0] = 0.0;
-  for (int i = 0; i < 3; i++)
-  {
-    invariants[0] += rightCauchyGreen[i][i];
-  }
-
-  // tr(C^2)
-  double_v_t traceC2 = 0;
-  for (int i = 0; i < 3; i++)
-  {
-    for (int j = 0; j < 3; j++)
-    {
-      traceC2 += rightCauchyGreen[i][j] * rightCauchyGreen[j][i];
-    }
-  }
-
-  // I2 = 1/2 * (tr(C)^2 - tr(C^2))
-  invariants[1] = 0.5 * (MathUtility::sqr(invariants[0]) - traceC2);
-
-  // I3 = det(C)
-  invariants[2] = rightCauchyGreenDeterminant;
-
-  // for a transversely isotropic material that also has 4th and 5th invariant
-  if (Term::usesFiberDirection)
-  {
-    // I4 = a0 • C a0;
-    double_v_t a0Ca0 = 0;
-    for (int i = 0; i < 3; i++)
-    {
-      double_v_t ca0_i = 0;
-      for (int j = 0; j < 3; j++)
-      {
-        ca0_i += rightCauchyGreen[j][i] * fiberDirection[j];
-      }
-      a0Ca0 += fiberDirection[i] * ca0_i;
-    }
-
-    invariants[3] = a0Ca0;
-
-    // I5 = a0 • C^2 a0;
-
-    double_v_t a0C2a0 = 0;
-    for (int i = 0; i < 3; i++)
-    {
-      double_v_t c2a0_i = 0;
-      for (int j = 0; j < 3; j++)
-      {
-        // compute C^2
-        double_v_t c2_ij = 0;
-        for (int k = 0; k < 3; k++)
-        {
-          // C^2_ij = C_ik * C_kj
-          c2_ij += rightCauchyGreen[k][i] * rightCauchyGreen[j][k];
-        }
-        c2a0_i += c2_ij * fiberDirection[j];
-      }
-      a0C2a0 += fiberDirection[i] * c2a0_i;
-    }
-
-    invariants[4] = a0C2a0;
-    //LOG(DEBUG) << "computed I4: " << invariants[3] << ", I5: " << invariants[4] << ", a0: " << fiberDirection;
-  }
-
-  return invariants;
-}
-
-template<typename Term,typename MeshType, int nDisplacementComponents>
-template<typename double_v_t>
-std::array<double_v_t,5> HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
-computeReducedInvariants(const std::array<double_v_t,5> invariants, const double_v_t deformationGradientDeterminant)
-{
-  std::array<double_v_t,5> reducedInvariants;
-
-  // 3D: Fbar = J^{-1/3}*F such that det(Fbar) = 1
-  // 2D: Fbar = J^{-1/2}*F such that det(Fbar) = 1
-
-  // 3D: Cbar = J^{-2/3}*C such that det(Cbar) = 1
-  // 2D: Cbar = J^{-2/2}*C = J^{-1}*C = J^{-1}*F^T*F = J^{-1}*J^{1/2}*J^{1/2}*Fbar^T*Fbar = Fbar^T*Fbar such that det(Cbar) = 1
-
-  double factor23 = -2./3;
-  double factor43 = -4./3;
-
-  // for 2D, not used here
-#if 0
-  factor23 = -1./2;
-  factor43 = -2./2;
-#endif
-
-  reducedInvariants[0] = MathUtility::pow(deformationGradientDeterminant, factor23) * invariants[0];
-  reducedInvariants[1] = MathUtility::pow(deformationGradientDeterminant, factor43) * invariants[1];
-
-  // for a transversely isotropic material that also has 4th and 5th invariant
-  if (Term::usesFiberDirection)
-  {
-    reducedInvariants[2] = 1;  // not used, because I3 = det C = 1 constant
-    reducedInvariants[3] = MathUtility::pow(deformationGradientDeterminant, factor23) * invariants[3];
-    reducedInvariants[4] = MathUtility::pow(deformationGradientDeterminant, factor43) * invariants[4];
-  }
-
-  return reducedInvariants;
-}
-
-template<typename Term,typename MeshType, int nDisplacementComponents>
-template<typename double_v_t>
-Tensor2<3,double_v_t> HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
-computePK2Stress(const double_v_t pressure,                             //< [in] pressure value p
-                 const Tensor2<3,double_v_t> &rightCauchyGreen,         //< [in] C
-                 const Tensor2<3,double_v_t> &inverseRightCauchyGreen,  //< [in] C^{-1}
-                 const std::array<double_v_t,5> reducedInvariants,      //< [in] the reduced invariants Ibar_1, Ibar_2
-                 const double_v_t deformationGradientDeterminant,       //< [in] J = det(F)
-                 VecD<3,double_v_t> fiberDirection,                     //< [in] a0, direction of fibers
-                 Tensor2<3,double_v_t> &fictitiousPK2Stress,            //< [out] Sbar, the fictitious 2nd Piola-Kirchhoff stress tensor
-                 Tensor2<3,double_v_t> &pk2StressIsochoric              //< [out] S_iso, the isochoric part of the 2nd Piola-Kirchhoff stress tensor
-                )
-{
-  // compute the PK2 stress tensor as S=2*dPsi/dC
-  // for explanation see pdf document
-  auto dPsi_dIbar1Expression = SEMT::deriv_t(Term::strainEnergyDensityFunctionIsochoric, Term::Ibar1);
-  auto dPsi_dIbar2Expression = SEMT::deriv_t(Term::strainEnergyDensityFunctionIsochoric, Term::Ibar2);
-
-  std::vector<double_v_t> reducedInvariantsVector(reducedInvariants.begin(), reducedInvariants.end());
-
-  const double_v_t dPsi_dIbar1 = ExpressionHelper<double_v_t>::apply(dPsi_dIbar1Expression, reducedInvariantsVector);
-  const double_v_t dPsi_dIbar2 = ExpressionHelper<double_v_t>::apply(dPsi_dIbar2Expression, reducedInvariantsVector);
-
-  const double_v_t Ibar1 = reducedInvariants[0];
-  const double_v_t J = deformationGradientDeterminant;
-
-  double factor23 = -2./3;
-  double_v_t factor1 = 2*(dPsi_dIbar1 + Ibar1*dPsi_dIbar2);
-  double_v_t factor2 = -2*dPsi_dIbar2;
-  double_v_t factorJ23 = MathUtility::pow(J, factor23);
-
-  Tensor2<3,double_v_t> pK2Stress;
-
-  // compute fictitiousPK2Stress:
-  // Sbar = factor1*I + factor2*Cbar, Cbar = J^{-2/3}*C
-
-  // row index
-  for (int i=0; i<3; i++)
-  {
-    // column index
-    for (int j=0; j<3; j++)
-    {
-      int delta_ij = (i == j? 1 : 0);
-      const double_v_t cBar = factorJ23 * rightCauchyGreen[j][i];
-      fictitiousPK2Stress[j][i] = factor1 * delta_ij + factor2 * cBar;
-
-      //if (i == j)
-      //LOG(DEBUG) << "  C_" << i << j << " = " << rightCauchyGreen[j][i] << ", J=" << J << ", factorJ23 = " << factorJ23 << ", SBar_" << i << j << ": " << fictitiousPK2Stress[j][i]
-      //     << " = " << factor1 << " * " << delta_ij << " + " << factor2 << "*" << cBar;
-    }
-  }
-
-  //LOG(DEBUG) << "in computePK2Stress, factor1: " << factor1 << ", factor2: " << factor2 << ", C: " << rightCauchyGreen << ", Sbar: " << fictitiousPK2Stress << ", reducedInvariants: " << reducedInvariants;
-
-  // add term for 4th invariant
-  if (Term::usesFiberDirection)
-  {
-    auto dPsi_dIbar4Expression = SEMT::deriv_t(Term::strainEnergyDensityFunctionIsochoric, Term::Ibar4);
-    const double_v_t dPsi_dIbar4 = ExpressionHelper<double_v_t>::apply(dPsi_dIbar4Expression, reducedInvariantsVector);
-    double_v_t factor4 = 2*dPsi_dIbar4;
-
-    for (int i=0; i<3; i++)     // alternative indices: A
-    {
-      // column index
-      for (int j=0; j<3; j++)     // alternative indices: B
-      {
-        fictitiousPK2Stress[j][i] += factor4 * fiberDirection[i] * fiberDirection[j];
-      }
-    }
-
-    //LOG(DEBUG) << "fiberDirection: " << fiberDirection << ", factor4: " << factor4
-    //  << ", dPsi_dIbar4Expression: " << dPsi_dIbar4Expression << ", invariants: " << reducedInvariantsVector;
-  }
-
-  // add term for 5th invariant (not implemented)
-
-  // Holzapfel p.234
-  // S = S_vol + S_iso
-  // S_vol = J*p*C^-1
-  // S_iso = 2*dPsi_iso/dC = J^(-2/3) P : Sbar   (P = II - 1/3(C^{-1} dyad C): Holzapfel p.229)
-  // pSbar = P : Sbar, P: 4th order tensor, Sbar: 2nd order tensor, note: A:B = A_ijkl*B_kl*e_i dyad e_j
-
-  // compute S = S_vol + S_iso
-  // row index
-  for (int i=0; i<3; i++)     // alternative indices: A
-  {
-    // column index
-    for (int j=0; j<3; j++)     // alternative indices: B
-    {
-      // volumetric stress
-      const double_v_t sVol = J * pressure * inverseRightCauchyGreen[j][i];         // S_vol = J * p * C^{-1}_AB
-
-      // compute P : Sbar
-      double_v_t pSbar = 0;
-      // row index
-      for (int k=0; k<3; k++)        // alternative indices: C
-      {
-        const int delta_ik = (i == k? 1 : 0);
-
-        // column index
-        for (int l=0; l<3; l++)            // alternative indices: D
-        {
-          const int delta_jl = (j == l? 1 : 0);
-
-          // this is a non-symmetric version for Ii but it is also correct, the symmetric version would be given by Ii = (δ_AC*δ_BD + δ_AD*δ_BC) / 2
-          const int Ii = delta_ik * delta_jl;
-          const double_v_t Cc = inverseRightCauchyGreen[j][i] * rightCauchyGreen[l][k];     // CC = C^{-1}_AB * C_CD
-          const double_v_t Pp = (Ii - 1./3 * Cc);
-
-          //LOG(DEBUG) << "    PP_" << i << j << k << l << " = " << Pp << " = " << Ii << "-1/3*" << Cc << " (" << inverseRightCauchyGreen[j][i] << "," << rightCauchyGreen[l][k] << "), Ii: " << Ii;
-
-          pSbar += Pp * fictitiousPK2Stress[l][k];
-        }
-      }
-
-
-      // isochoric stress
-      const double_v_t sIso = factorJ23 * pSbar;
-      pk2StressIsochoric[j][i] = sIso;
-      //LOG(DEBUG) << "    PSbar_" << i << j << ": " << pSbar << ", J^-2/3: " << factorJ23 << ", Siso_" << i << j << ": " << sIso;
-
-      // total stress is sum of volumetric and isochoric part, sVol = J*p*C^{-1}_AB, sIso = j^{-2/3}*(Ii-1/3*Cc)*Sbar
-      pK2Stress[j][i] = sVol + sIso;
-
-      // debugging
-      //pK2Stress[j][i] = sIso;
-
-      //VLOG(2) << "set pk2Stress_" << i << j << " = " << pK2Stress[j][i];
-
-      //if (i == j)
-      //  LOG(DEBUG) << "  ccs: " << ccs << " C:Sbar: " << cSbar << ", factorJ23: " << factorJ23 << ", Svol_" << i << j << " = " << sVol << ", Siso_" << i << j << " = " << sIso << ", S = " << pK2Stress[j][i];
-    }  // j
-  }  // i
-
-  //for debugging, check symmetry of PK2 stress and if it is correct according to Mooney-Rivlin formula
-  if (VLOG_IS_ON(2))
-  {
-    const double_v_t errorTolerance = 1e-14;
-    bool pK2IsSymmetric = true;
-    for (int a=0; a<3; a++)
-    {
-      for (int b=0; b<3; b++)
-      {
-        if (Vc::any_of(MathUtility::abs(pK2Stress[a][b] - pK2Stress[b][a]) > errorTolerance))
-        {
-          LOG(ERROR) << "pK2Stress[" <<a<< "][" <<b<< "] != pK2Stress[" <<b<< "][" <<a<< "] (" <<pK2Stress[b][a]<< " != " <<pK2Stress[a][b]<< ")";
-          pK2IsSymmetric = false;
-        }
-      }
-    }
-    if (pK2IsSymmetric)
-      VLOG(2) << "PK2 stress tensor is symmetric!";
-
-    // check if PK2 is the same as from explicit formula for Mooney-Rivlin (p.249)
-
-    // explicit formula in Holzapfel p.249
-
-    double factor23 = -2./3;
-    const double_v_t factorJ23 = MathUtility::pow(deformationGradientDeterminant, factor23);
-
-    const double c0 = SEMT::Parameter<0>::get_value();
-    const double c1 = SEMT::Parameter<1>::get_value();
-    //const double c0 = PARAM(0).get_value();   //< material parameter
-    //const double c1 = PARAM(1).get_value();   //< material parameter
-
-    const double_v_t Ibar1 = reducedInvariants[0];
-
-    const double_v_t gamma1 = 2*(c0 + c1*Ibar1);
-    const double_v_t gamma2 = -2*c1;
-
-    bool mismatch = false;
-    for (int a = 0; a < 3; a++)
-    {
-      for (int b = 0; b < 3; b++)
-      {
-        const int delta_ab = (a == b? 1 : 0);
-        double_v_t cBar = factorJ23 * rightCauchyGreen[b][a];
-        double_v_t sBar = gamma1*delta_ab + gamma2*cBar;
-
-        if (Vc::any_of(MathUtility::abs(sBar - fictitiousPK2Stress[b][a]) > errorTolerance))
-        {
-          LOG(ERROR) << "mismatch in Sbar_" << a << b << ": derived: " << fictitiousPK2Stress << ", Mooney Rivlin explicit formula: " << sBar;
-          mismatch = true;
-        }
-      }
-    }
-    if (!mismatch)
-      LOG_N_TIMES(2,DEBUG) << "Sbar is correct!";
-  }
-
-  return pK2Stress;
-}
-
-template<typename Term,typename MeshType, int nDisplacementComponents>
-void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
-computePK2StressField()
-{
-  //LOG(TRACE) << "computePK2StressField";
-
-  //this->data_.pK2Stress()->startGhostManipulation();
-  this->data_.pK2Stress()->zeroGhostBuffer();
-  this->data_.deformationGradient()->zeroGhostBuffer();
-  this->data_.deformationGradientTimeDerivative()->zeroGhostBuffer();
-
-  this->data_.geometryReference()->setRepresentationGlobal();
-  this->data_.geometryReference()->startGhostManipulation();
-
-  // get pointer to function space
-  std::shared_ptr<DisplacementsFunctionSpace> displacementsFunctionSpace = this->data_.displacementsFunctionSpace();
-  std::shared_ptr<PressureFunctionSpace> pressureFunctionSpace = this->data_.pressureFunctionSpace();
-
-  const int D = 3;  // dimension
-  const int nDisplacementsDofsPerElement = DisplacementsFunctionSpace::nDofsPerElement();
-  const int nPressureDofsPerElement = PressureFunctionSpace::nDofsPerElement();
-  const int nElementsLocal = displacementsFunctionSpace->nElementsLocal();
-
-  // loop over elements, always 4 elements at once using the vectorized functions
-  for (int elementNoLocal = 0; elementNoLocal < nElementsLocal; elementNoLocal += nVcComponents)
-  {
-
-#ifdef USE_VECTORIZED_FE_MATRIX_ASSEMBLY
-    // get indices of elementNos that should be handled in the current iterations,
-    // this is, e.g.
-    //    [10,11,12,13,-1,-1,-1,-1] (if nVcComponents==4 and nElementsLocal > 13)
-    // or [10,11,12,-1,-1,-1,-1,-1] (if nVcComponents==4 and nElementsLocal == 13)
-
-    dof_no_v_t elementNoLocalv([elementNoLocal, nElementsLocal](int i)
-    {
-      return (i >= nVcComponents || elementNoLocal+i >= nElementsLocal? -1: elementNoLocal+i);
-    });
-
-    // here, elementNoLocalv is the list of indices of the current iteration, e.g. [10,11,12,13,-1,-1,-1,-1]
-    // elementNoLocal is the first entry of elementNoLocalv
-#else
-    int elementNoLocalv = elementNoLocal;
-#endif
-
-    // get geometry field of reference configuration
-    std::array<Vec3_v_t,nDisplacementsDofsPerElement> geometryReferenceValues;
-    this->data_.geometryReference()->getElementValues(elementNoLocalv, geometryReferenceValues);
-
-    // get displacements field values for element
-    std::array<Vec3_v_t,nDisplacementsDofsPerElement> displacementsValues;
-    this->data_.displacements()->getElementValues(elementNoLocalv, displacementsValues);
-
-    // get displacements field values for element
-    std::array<Vec3_v_t,nDisplacementsDofsPerElement> velocitiesValues;
-    this->data_.velocities()->getElementValues(elementNoLocalv, velocitiesValues);
-
-    std::array<double_v_t,nPressureDofsPerElement> pressureValuesCurrentElement;
-    this->data_.pressure()->getElementValues(elementNoLocalv, pressureValuesCurrentElement);
-
-    std::array<Vec3_v_t,nDisplacementsDofsPerElement> elementalDirectionValues;
-    this->data_.fiberDirection()->getElementValues(elementNoLocalv, elementalDirectionValues);
-
-    // get indices of element-local dofs
-    std::array<dof_no_v_t,27> dofNosLocal = this->displacementsFunctionSpace_->getElementDofNosLocal(elementNoLocalv);
-
-    //LOG(DEBUG) << "el " << elementNoLocal << ", geometryRef: " << geometryReferenceValues << ", displacements: " << displacementsValues << ", p: " << pressureValuesCurrentElement;
-
-    // loop over nodes of this element
-    for (int elementalNodeNo = 0; elementalNodeNo < 27; elementalNodeNo++)
-    {
-      dof_no_v_t dofNoLocal = dofNosLocal[elementalNodeNo];
-
-      // get parameter values of current sampling point
-      int indexX = elementalNodeNo % 3;
-      int indexY = int((elementalNodeNo % 9) / 3);
-      int indexZ = int(elementalNodeNo / 9);
-      Vec3 xi({});
-
-      switch (indexX)
-      {
-      case 0:
-        xi[0] = 0.0;
-        break;
-      case 1:
-        xi[0] = 0.5;
-        break;
-      case 2:
-        xi[0] = 1.0;
-        break;
-      };
-      switch (indexY)
-      {
-      case 0:
-        xi[1] = 0.0;
-        break;
-      case 1:
-        xi[1] = 0.5;
-        break;
-      case 2:
-        xi[1] = 1.0;
-        break;
-      };
-      switch (indexZ)
-      {
-      case 0:
-        xi[2] = 0.0;
-        break;
-      case 1:
-        xi[2] = 0.5;
-        break;
-      case 2:
-        xi[2] = 1.0;
-        break;
-      };
-
-      // compute the 3x3 jacobian of the parameter space to world space mapping
-      Tensor2_v_t<D> jacobianMaterial = DisplacementsFunctionSpace::computeJacobian(geometryReferenceValues, xi);
-      double_v_t jacobianDeterminant;
-      Tensor2_v_t<D> inverseJacobianMaterial = MathUtility::computeInverse(jacobianMaterial, jacobianDeterminant);
-
-      // jacobianMaterial[columnIdx][rowIdx] = dX_rowIdx/dxi_columnIdx
-      // inverseJacobianMaterial[columnIdx][rowIdx] = dxi_rowIdx/dX_columnIdx because of inverse function theorem
-
-      // F
-      Tensor2_v_t<D> deformationGradient = this->computeDeformationGradient(displacementsValues, inverseJacobianMaterial, xi);
-
-      double_v_t deformationGradientDeterminant = MathUtility::computeDeterminant(deformationGradient);  // J
-
-      // compute Fdot values
-      Tensor2_v_t<D> Fdot = computeDeformationGradientTimeDerivative(velocitiesValues, inverseJacobianMaterial, xi);
-
-      // store F values
-      std::array<double_v_t,9> deformationGradientValues;
-      std::array<double_v_t,9> deformationGradientTimeDerivativeValues;
-      for (int j = 0; j < 3; j++)
-      {
-        for (int i = 0; i < 3; i++)
-        {
-          // row-major
-          deformationGradientValues[j*3+i] = deformationGradient[j][i];
-          deformationGradientTimeDerivativeValues[j*3+i] = Fdot[j][i];
-        }
-      }
-      this->data_.deformationGradient()->setValue(dofNoLocal, deformationGradientValues, INSERT_VALUES);
-      this->data_.deformationGradientTimeDerivative()->setValue(dofNoLocal, deformationGradientTimeDerivativeValues, INSERT_VALUES);
-
-
-      Tensor2_v_t<D> rightCauchyGreen = this->computeRightCauchyGreenTensor(deformationGradient);  // C = F^T*F
-
-      double_v_t rightCauchyGreenDeterminant;   // J^2
-      Tensor2_v_t<D> inverseRightCauchyGreen = MathUtility::computeSymmetricInverse(rightCauchyGreen, rightCauchyGreenDeterminant);  // C^-1
-
-      // fiber direction
-      Vec3_v_t fiberDirection = displacementsFunctionSpace->template interpolateValueInElement<3>(elementalDirectionValues, xi);
-
-      // invariants
-      std::array<double_v_t,5> invariants = this->computeInvariants(rightCauchyGreen, rightCauchyGreenDeterminant, fiberDirection);  // I_1, I_2, I_3, I_4, I_5
-      std::array<double_v_t,5> reducedInvariants = this->computeReducedInvariants(invariants, deformationGradientDeterminant); // Ibar_1, Ibar_2, Ibar_4, Ibar_5
-
-      // pressure is the separately interpolated pressure for mixed formulation
-      double_v_t pressure = pressureFunctionSpace->interpolateValueInElement(pressureValuesCurrentElement, xi);
-
-      // Pk2 stress tensor S = S_vol + S_iso (p.234)
-      //! compute 2nd Piola-Kirchhoff stress tensor S = 2*dPsi/dC and the fictitious PK2 Stress Sbar
-      Tensor2_v_t<D> fictitiousPK2Stress;   // Sbar
-      Tensor2_v_t<D> pk2StressIsochoric;    // S_iso
-      Tensor2_v_t<D> pK2Stress = this->computePK2Stress(pressure, rightCauchyGreen, inverseRightCauchyGreen, reducedInvariants, deformationGradientDeterminant, fiberDirection,
-                                                      fictitiousPK2Stress, pk2StressIsochoric
-                                                    );
-
-
-      std::array<double_v_t,6> valuesInVoigtNotation({pK2Stress[0][0], pK2Stress[1][1], pK2Stress[2][2], pK2Stress[0][1], pK2Stress[1][2], pK2Stress[0][2]});
-
-      //LOG(DEBUG) << "node " << dofNoLocal << " pk2: " << valuesInVoigtNotation;
-      this->data_.pK2Stress()->setValue(dofNoLocal, valuesInVoigtNotation, INSERT_VALUES);
-    }
-  }
-  this->data_.pK2Stress()->zeroGhostBuffer();
-  this->data_.pK2Stress()->finishGhostManipulation();
-  this->data_.pK2Stress()->startGhostManipulation();
-
-  this->data_.deformationGradient()->zeroGhostBuffer();
-  this->data_.deformationGradient()->finishGhostManipulation();
-  this->data_.deformationGradient()->startGhostManipulation();
-
-  this->data_.deformationGradientTimeDerivative()->zeroGhostBuffer();
-  this->data_.deformationGradientTimeDerivative()->finishGhostManipulation();
-  this->data_.deformationGradientTimeDerivative()->startGhostManipulation();
-}
-
-//! compute the material elasticity tensor
-template<typename Term,typename MeshType, int nDisplacementComponents>
-template<typename double_v_t>
-void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
-computeElasticityTensor(const Tensor2<3,double_v_t> &rightCauchyGreen,         //< [in] C
-                        const Tensor2<3,double_v_t> &inverseRightCauchyGreen,  //< [in] C^{-1}
-                        double_v_t deformationGradientDeterminant,             //< [in] J = det(F)
-                        double_v_t pressure,                                   //< [in] pressure value p
-                        std::array<double_v_t,5> reducedInvariants,            //< [in] the reduced invariants Ibar_1, Ibar_2
-                        const Tensor2<3,double_v_t> &fictitiousPK2Stress,      //< [in] Sbar, the fictitious 2nd Piola-Kirchhoff stress tensor
-                        const Tensor2<3,double_v_t> &pk2StressIsochoric,       //< [in] S_iso, the isochoric part of the 2nd Piola-Kirchhoff stress tensor
-                        VecD<3,double_v_t> fiberDirection,                     //< [in] a0, direction of fibers
-                        Tensor4<3,double_v_t> &fictitiousElasticityTensor,     //< [out] fictitious Elasticity tensor CCbar_{ABCD}
-                        Tensor4<3,double_v_t> &elasticityTensorIso,            //< [out] CCiso_{ABCD}
-                        Tensor4<3,double_v_t> &elasticityTensor                //< [out] elasticity tensor CC_{ABCD}
-                       )
-{
-  // compute the elasticity tensor as CC=2*dS(C)/dC
-  // for explanation see pdf document
-  const int D = 3;
-
-  // compute preliminary variables that are independent of the indices a,b,c,d
-  auto dPsi_dIbar1Expression = SEMT::deriv_t(Term::strainEnergyDensityFunctionIsochoric, Term::Ibar1);
-  auto dPsi_dIbar2Expression = SEMT::deriv_t(Term::strainEnergyDensityFunctionIsochoric, Term::Ibar2);
-
-  auto d2Psi_dIbar1Ibar1Expression = SEMT::deriv_t(dPsi_dIbar1Expression, Term::Ibar1);
-  auto d2Psi_dIbar1Ibar2Expression = SEMT::deriv_t(dPsi_dIbar1Expression, Term::Ibar2);
-  auto d2Psi_dIbar2Ibar2Expression = SEMT::deriv_t(dPsi_dIbar2Expression, Term::Ibar2);
-
-  std::vector<double_v_t> reducedInvariantsVector(reducedInvariants.begin(), reducedInvariants.end());
-
-  //const double dPsi_dIbar1 = dPsi_dIbar1Expression.apply(reducedInvariantsVector);
-  const double_v_t dPsi_dIbar2       = ExpressionHelper<double_v_t>::apply(dPsi_dIbar2Expression, reducedInvariantsVector);
-  const double_v_t d2Psi_dIbar1Ibar1 = ExpressionHelper<double_v_t>::apply(d2Psi_dIbar1Ibar1Expression, reducedInvariantsVector);
-  const double_v_t d2Psi_dIbar1Ibar2 = ExpressionHelper<double_v_t>::apply(d2Psi_dIbar1Ibar2Expression, reducedInvariantsVector);
-  const double_v_t d2Psi_dIbar2Ibar2 = ExpressionHelper<double_v_t>::apply(d2Psi_dIbar2Ibar2Expression, reducedInvariantsVector);
-
-  const double_v_t Ibar1 = reducedInvariants[0];
-
-  // formula for C_iso: Holzapfel "Nonlinear Solid Mechanics" p.255
-  // formula for C_bar: Holzapfel "Nonlinear Solid Mechanics" p.262
-  // compute factors for Cbar
-  const double_v_t factor1 = 4*(d2Psi_dIbar1Ibar1 + 2*Ibar1*d2Psi_dIbar1Ibar2 + dPsi_dIbar2 + MathUtility::sqr(Ibar1)*d2Psi_dIbar2Ibar2);
-  const double_v_t factor2 = -4*(d2Psi_dIbar1Ibar2 + Ibar1*d2Psi_dIbar2Ibar2);
-  const double_v_t factor3 = 4*d2Psi_dIbar2Ibar2;
-  const double_v_t factor4 = -4*dPsi_dIbar2;
-
-  if (false)
-  {
-    LOG(DEBUG) << "elasticity tensor, Ψ: " << Term::strainEnergyDensityFunctionIsochoric;
-    LOG(DEBUG) << "∂Ψ/∂Ibar1: " << dPsi_dIbar1Expression;
-    LOG(DEBUG) << "∂Ψ/∂Ibar2: " << dPsi_dIbar2Expression << " = " << dPsi_dIbar2;
-    LOG(DEBUG) << "∂2Ψ/(∂Ibar1 ∂Ibar1): " << d2Psi_dIbar1Ibar1Expression << " = " << d2Psi_dIbar1Ibar1;
-    LOG(DEBUG) << "∂2Ψ/(∂Ibar1 ∂Ibar1): " << d2Psi_dIbar1Ibar2Expression << " = " << d2Psi_dIbar1Ibar2;
-    LOG(DEBUG) << "∂2Ψ/(∂Ibar1 ∂Ibar1): " << d2Psi_dIbar2Ibar2Expression << " = " << d2Psi_dIbar2Ibar2;
-    LOG(DEBUG) << "factor1: " << factor1;
-    LOG(DEBUG) << "factor2: " << factor2;
-    LOG(DEBUG) << "factor3: " << factor3;
-    LOG(DEBUG) << "factor4: " << factor4;
-  }
-
-  const double_v_t J = deformationGradientDeterminant;
-
-  const double_v_t factorJ23 = MathUtility::pow(J,-2./3);   // J^{-2/3}
-  const double_v_t factorJ43 = MathUtility::pow(J,-4./3);   // J^{-4/3}
-
-  // distinct entries, only those have to be computed as the rest is symmetric
-  const int indices[21][4] = {
-    {0,0,0,0},{0,1,0,0},{0,2,0,0},{1,1,0,0},{1,2,0,0},{2,2,0,0},{0,1,0,1},{0,2,0,1},{1,1,0,1},{1,2,0,1},
-    {2,2,0,1},{0,2,0,2},{1,1,0,2},{1,2,0,2},{2,2,0,2},{1,1,1,1},{1,2,1,1},{2,2,1,1},{1,2,1,2},{2,2,1,2},
-    {2,2,2,2}
-  };
-
-  // to compute all entries and verify the symmetry, use the following code (needs further adjustments at  the loop boundaries: "entryNo<21" -> "entryNo<81")
-#if 0
-  int indices[81][4];
-
-  int entryNo = 0;
-  for (int a = 0; a < D; a++)
-  {
-    for (int b = 0; b < D; b++)
-    {
-      for (int c = 0; c < D; c++)
-      {
-        for (int d = 0; d < D; d++, entryNo++)
-        {
-          indices[entryNo][0] = a;
-          indices[entryNo][1] = b;
-          indices[entryNo][2] = c;
-          indices[entryNo][3] = d;
-        }
-      }
-    }
-  }
-  assert(entryNo == 81);
-#endif
-
-  // loop over distinct entries in elasticity tensor
-  for (int entryNo = 0; entryNo < 21; entryNo++)
-  {
-    // get indices of current entry
-    const int a = indices[entryNo][0];
-    const int b = indices[entryNo][1];
-    const int c = indices[entryNo][2];
-    const int d = indices[entryNo][3];
-
-    const double_v_t cInv_ab = inverseRightCauchyGreen[b][a];
-    const double_v_t cInv_cd = inverseRightCauchyGreen[d][c];
-
-    // compute C_vol
-    const double_v_t cInvDotCInv = 0.5 * (inverseRightCauchyGreen[c][a] * inverseRightCauchyGreen[d][b] + inverseRightCauchyGreen[d][a] * inverseRightCauchyGreen[c][b]);
-
-    const double_v_t cInvDyadCInv = inverseRightCauchyGreen[b][a] * inverseRightCauchyGreen[d][c];
-    const double_v_t jp = deformationGradientDeterminant * pressure;
-
-    const double_v_t cVol = jp * cInvDyadCInv - 2 * jp * cInvDotCInv;
-
-    // compute C_iso
-    //                          ab  ef     gh   cd
-    // compute contribution from  P : Cbar : P^T
-    double_v_t pCbarPT_abcd = 0.0;
-
-    for (int g = 0; g < D; g++)
-    {
-      for (int h = 0; h < D; h++)
-      {
-        int delta_gh = (g == h? 1 : 0);
-
-        double_v_t pCbar_abgh = 0;
-        const double_v_t c_gh = rightCauchyGreen[h][g];
-
-        for (int e = 0; e < D; e++)
-        {
-          int delta_eh = (e == h? 1 : 0);
-          int delta_eg = (e == g? 1 : 0);
-
-          for (int f = 0; f < D; f++)
-          {
-            int delta_fg = (f == g? 1 : 0);
-            int delta_fh = (f == h? 1 : 0);
-            int delta_ef = (e == f? 1 : 0);
-            const double_v_t c_ef = rightCauchyGreen[f][e];
-
-            int iI_efgh = delta_eg * delta_fh;
-            int iIbar_efgh = delta_eh * delta_fg;
-
-            // symmetric version
-            double_v_t sS_efgh = 0.5 * (iI_efgh + iIbar_efgh);
-
-            const double_v_t summand1 = factor1 * delta_ef * delta_gh;
-            const double_v_t summand2 = factor2 * (delta_ef * factorJ23*c_gh + factorJ23*c_ef * delta_gh);
-            const double_v_t summand3 = factor3 * factorJ23*c_ef * factorJ23*c_gh;
-            const double_v_t summand4 = factor4 * sS_efgh;
-
-            double_v_t sum = summand1 + summand2 + summand3 + summand4;
-
-            // terms for 4th invariant
-            if (Term::usesFiberDirection)
-            {
-              auto dPsi_dIbar4Expression = SEMT::deriv_t(Term::strainEnergyDensityFunctionIsochoric, Term::Ibar4);
-
-              auto d2Psi_dIbar1Ibar4Expression = SEMT::deriv_t(dPsi_dIbar1Expression, Term::Ibar4);
-              auto d2Psi_dIbar2Ibar4Expression = SEMT::deriv_t(dPsi_dIbar2Expression, Term::Ibar4);
-              auto d2Psi_dIbar4Ibar4Expression = SEMT::deriv_t(dPsi_dIbar4Expression, Term::Ibar4);
-
-              const double_v_t d2Psi_dIbar1Ibar4 = ExpressionHelper<double_v_t>::apply(d2Psi_dIbar1Ibar4Expression, reducedInvariantsVector);
-              const double_v_t d2Psi_dIbar2Ibar4 = ExpressionHelper<double_v_t>::apply(d2Psi_dIbar2Ibar4Expression, reducedInvariantsVector);
-              const double_v_t d2Psi_dIbar4Ibar4 = ExpressionHelper<double_v_t>::apply(d2Psi_dIbar4Ibar4Expression, reducedInvariantsVector);
-
-              const double_v_t factor5 = 4*(d2Psi_dIbar1Ibar4 + Ibar1 * d2Psi_dIbar2Ibar4);
-              const double_v_t factor6 = -4*d2Psi_dIbar2Ibar4;
-              const double_v_t factor7 = 4*d2Psi_dIbar4Ibar4;
-
-              const double_v_t summand5 = factor5 * (delta_ef       * fiberDirection[g] * fiberDirection[h] + fiberDirection[e] * fiberDirection[f] * delta_gh);
-              const double_v_t summand6 = factor6 * (factorJ23*c_ef * fiberDirection[g] * fiberDirection[h] + fiberDirection[e] * fiberDirection[f] * factorJ23*c_gh);
-              const double_v_t summand7 = factor7 * fiberDirection[e] * fiberDirection[f] * fiberDirection[g] * fiberDirection[h];
-
-              sum += summand5 + summand6 + summand7;
-
-              // terms for 5th invariant are not implemented, this means that the strain energy function can only depend on Ibar4
-            }
-
-            const double_v_t ccBar_efgh = factorJ43 * sum;
-
-            //LOG(DEBUG) << "     CCBar_" << e << f << g << h << ": " << factorJ43 << "*(" << summand1 << "+" << summand2 << "+" << summand3 << "+" << summand4 << "), summand4 = " << factor4 << "*" << sS_efgh;
-
-            fictitiousElasticityTensor[h][g][f][e] = ccBar_efgh;
-
-            int delta_ae = (a == e? 1 : 0);
-            int delta_bf = (b == f? 1 : 0);
-
-            const double_v_t iI_abef = delta_ae * delta_bf;
-            const double_v_t p_abef = iI_abef - 1./D*cInv_ab*c_ef;
-
-            pCbar_abgh += p_abef * ccBar_efgh;
-
-          }  // f
-        }  // e
-
-        int delta_cg = (c == g? 1 : 0);
-        int delta_dh = (d == h? 1 : 0);
-        const double_v_t iI_cdgh = delta_cg * delta_dh;
-
-        const double_v_t p_cdgh = iI_cdgh - 1./D*cInv_cd*c_gh;     // (P^T)_ghcd = P_cdgh
-
-        const double_v_t pT_ghcd = p_cdgh;
-
-        pCbarPT_abcd += pCbar_abgh * pT_ghcd;
-
-      }  // h
-    }  // g
-
-    // compute contribution from  2/3*J^{-2/3}*Sbar : C P_tilde
-    double_v_t sBarC_abcd = 0.;
-    for (int g = 0; g < D; g++)
-    {
-      for (int h = 0; h < D; h++)
-      {
-        sBarC_abcd += fictitiousPK2Stress[h][g] * rightCauchyGreen[h][g];
-      }  // h
-    }  // g
-
-    const double_v_t pTilde_abcd = cInvDotCInv - 1./3 * cInvDyadCInv;
-
-    const double_v_t sBarCP_abcd = 2./3. * factorJ23 * sBarC_abcd * pTilde_abcd;
-
-    // compute contribution from -2./3*(CInv dyad Siso + Siso dyad CInv)
-    const double_v_t cInvSiso = -2./3 * (cInv_ab * pk2StressIsochoric[d][c] + pk2StressIsochoric[b][a] * cInv_cd);
-
-    // compute C_iso
-    const double_v_t cIso = pCbarPT_abcd + sBarCP_abcd + cInvSiso;
-
-    //LOG(DEBUG) << a<<b<<c<<d<<": compute CCIso: " << cIso << ": " << pCbarPT_abcd << "," << sBarCP_abcd << "," << cInvSiso;
-
-#if 0
-    // store entry in CCIso, this is only returned from this method for debugging purposes, only for use in materialTesting
-    // therefore it can be omitted here
-    elasticityTensorIso[d][c][b][a] = cIso;
-    elasticityTensorIso[c][d][b][a] = cIso;
-    elasticityTensorIso[d][c][a][b] = cIso;
-    elasticityTensorIso[c][d][a][b] = cIso;
-    elasticityTensorIso[b][a][d][c] = cIso;
-    elasticityTensorIso[a][b][d][c] = cIso;
-    elasticityTensorIso[b][a][c][d] = cIso;
-    elasticityTensorIso[a][b][c][d] = cIso;
-#endif
-    // compute C
-    const double_v_t c_abcd = cVol + cIso;
-
-    // debugging
-    //const double_v_t c_abcd = cIso;
-
-    // store entry, store all symmetric entries at once, because tensor has major and minor symmetries (CC_abcd = CC_cdab and CC_abcd = CC_bacd)
-    elasticityTensor[d][c][b][a] = c_abcd;
-    elasticityTensor[c][d][b][a] = c_abcd;
-    elasticityTensor[d][c][a][b] = c_abcd;
-    elasticityTensor[c][d][a][b] = c_abcd;
-    elasticityTensor[b][a][d][c] = c_abcd;
-    elasticityTensor[a][b][d][c] = c_abcd;
-    elasticityTensor[b][a][c][d] = c_abcd;
-    elasticityTensor[a][b][c][d] = c_abcd;
-  }
-
-  // verify major and minor symmetries of elasticity tensor
-  if (VLOG_IS_ON(1))
-  {
-  //LOG_N_TIMES(2,DEBUG) << "elasticityTensor: " << elasticityTensor;
-
-    const double_v_t errorTolerance = 1e-12;
-    std::string name("C");
-    for (int a = 0; a < 3; a++)
-    {
-      for (int b = 0; b < 3; b++)
-      {
-        for (int c = 0; c < 3; c++)
-        {
-          for (int d = 0; d < 3; d++)
-          {
-            if (Vc::any_of(MathUtility::abs(elasticityTensor[a][b][c][d] - elasticityTensor[b][a][c][d]) > errorTolerance))
-            {
-              LOG(ERROR) << name << "[" <<a<< "][" <<b<< "][" << c<< "][" << d<< "] != " << name << "[" <<b<< "][" <<a<< "][" << c<< "][" << d<< "] (" <<elasticityTensor[b][a][c][d]<< " != " <<elasticityTensor[a][b][c][d]<< ") - minor symmetry violated" << std::endl;
-            }
-            if (Vc::any_of(MathUtility::abs(elasticityTensor[a][b][c][d] - elasticityTensor[a][b][d][c]) > errorTolerance))
-            {
-              LOG(ERROR) << name << "[" <<a<< "][" <<b<< "][" << c<< "][" << d<< "] != " << name << "[" <<a<< "][" <<b<< "][" << d<< "][" << c<< "] (" <<elasticityTensor[a][b][d][c]<< " != " <<elasticityTensor[a][b][c][d]<< ") - minor symmetry violated" << std::endl;
-            }
-            if (Vc::any_of(MathUtility::abs(elasticityTensor[a][b][c][d] - elasticityTensor[c][d][a][b]) > errorTolerance))
-            {
-              LOG(ERROR) << name << "[" <<a<< "][" <<b<< "][" << c<< "][" << d<< "] != " << name << "[" << c<< "][" << d<< "][" <<a<< "][" <<b<< "] (" <<elasticityTensor[c][d][a][b]<< " != " <<elasticityTensor[a][b][c][d]<< ") - major symmetry violated" << std::endl;
-            }
-          }
-        }
-      }
-    }
-    LOG_N_TIMES(2,DEBUG) << "elasticity tensor checked for minor symmetries";
-    //LOG(DEBUG) << "elasticity tensor checked for minor symmetries";
-  }
-}
-
-template<typename Term,typename MeshType, int nDisplacementComponents>
-template<typename double_v_t>
-Tensor2<3,double_v_t> HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
-computePSbar(const Tensor2<3,double_v_t> &fictitiousPK2Stress, const Tensor2<3,double_v_t> &rightCauchyGreen)
-{
-  // only needed for debugging in materialTesting
-  double_v_t determinant;
-  Tensor2<3,double_v_t> inverseRightCauchyGreen = MathUtility::computeInverse<3>(rightCauchyGreen, determinant);
-
-  //ab cd
-  //  P : Sbar
-  Tensor2<3,double_v_t> PSbar;
-  for (int a = 0; a < 3; a++)
-  {
-    for (int b = 0; b < 3; b++)
-    {
-      double_v_t cInv_ab = inverseRightCauchyGreen[b][a];
-
-      double_v_t psbar_ab = 0;
-      for (int c = 0; c < 3; c++)
-      {
-        int delta_ac = (a == c? 1 : 0);
-        for (int d = 0; d < 3; d++)
-        {
-          int delta_bd = (b == d? 1 : 0);
-          const double_v_t ii_abcd = delta_ac * delta_bd;
-
-          double_v_t c_cd = rightCauchyGreen[d][c];
-
-          double_v_t p_abcd = ii_abcd - 1./3*cInv_ab * c_cd;
-
-          //LOG(DEBUG) << "  .PP_" << a << b << c << d << ": " << p_abcd << "=" << ii_abcd << "-1/3*" << cInv_ab * c_cd << " (" << cInv_ab << "," << c_cd << "), Ii: " << ii_abcd;
-
-          const double_v_t sBar_cd = fictitiousPK2Stress[d][c];
-          psbar_ab += p_abcd * sBar_cd;
-        }
-      }
-
-
-      //LOG(DEBUG) << " PSBar_" << a << b << ": " << psbar_ab;
-      PSbar[b][a] = psbar_ab;
-    }
-  }
-  return PSbar;
 }
 
 } // namespace

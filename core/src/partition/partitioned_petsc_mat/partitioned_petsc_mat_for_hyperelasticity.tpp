@@ -1,9 +1,9 @@
 #include "partition/partitioned_petsc_mat/partitioned_petsc_mat_for_hyperelasticity.h"
 
-template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType, int nDisplacementComponents>
-PartitionedPetscMatForHyperelasticityBase<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,nDisplacementComponents>::
+template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType, typename Term, int nDisplacementComponents>
+PartitionedPetscMatForHyperelasticityBase<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,Term,nDisplacementComponents>::
 PartitionedPetscMatForHyperelasticityBase(
-    std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,nDisplacementComponents>> partitionedPetscVecForHyperelasticity,
+    std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,Term,nDisplacementComponents>> partitionedPetscVecForHyperelasticity,
     int nNonZerosDiagonal, int nNonZerosOffdiagonal,
     std::string name
 ) : PartitionedPetscMatOneComponent<FunctionSpace::Generic>(
@@ -23,8 +23,8 @@ partitionedPetscVecForHyperelasticity_(partitionedPetscVecForHyperelasticity)
  */
 }
 
-template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType, int nDisplacementComponents>
-void PartitionedPetscMatForHyperelasticityBase<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,nDisplacementComponents>::
+template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType, typename Term, int nDisplacementComponents>
+void PartitionedPetscMatForHyperelasticityBase<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,Term,nDisplacementComponents>::
 setValue(int componentNoRow, PetscInt row, int componentNoColumn, PetscInt column, PetscScalar value, InsertMode mode)
 {
   if (VLOG_IS_ON(2))
@@ -41,8 +41,16 @@ setValue(int componentNoRow, PetscInt row, int componentNoColumn, PetscInt colum
     return;
   }
 
-  assert(componentNoRow < nDisplacementComponents+1);
-  assert(componentNoColumn < nDisplacementComponents+1);  //  < 4
+  if (Term::isIncompressible)
+  {
+    assert(componentNoRow < nDisplacementComponents+1);
+    assert(componentNoColumn < nDisplacementComponents+1);  //  < 4
+  }
+  else
+  {
+    assert(componentNoRow < nDisplacementComponents);
+    assert(componentNoColumn < nDisplacementComponents);  //  < 3
+  }
 
   //assert(row < this->meshPartitionRows_->nDofsLocalWithGhosts());
   //assert(column < this->meshPartitionColumns_->nDofsLocalWithGhosts());
@@ -56,8 +64,8 @@ setValue(int componentNoRow, PetscInt row, int componentNoColumn, PetscInt colum
   ierr = MatSetValues(this->globalMatrix_, 1, &row, 1, &column, &value, mode); CHKERRV(ierr);
 }
 
-template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType, int nDisplacementComponents>
-void PartitionedPetscMatForHyperelasticityBase<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,nDisplacementComponents>::
+template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType, typename Term, int nDisplacementComponents>
+void PartitionedPetscMatForHyperelasticityBase<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,Term,nDisplacementComponents>::
 setValue(int componentNoRow, Vc::int_v row, int componentNoColumn, Vc::int_v column, PetscScalar value, InsertMode mode)
 {
   // loop over rows
@@ -71,8 +79,8 @@ setValue(int componentNoRow, Vc::int_v row, int componentNoColumn, Vc::int_v col
   }
 }
 
-template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType, int nDisplacementComponents>
-void PartitionedPetscMatForHyperelasticityBase<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,nDisplacementComponents>::
+template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType, typename Term, int nDisplacementComponents>
+void PartitionedPetscMatForHyperelasticityBase<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,Term,nDisplacementComponents>::
 setValue(int componentNoRow, Vc::int_v row, int componentNoColumn, Vc::int_v column, Vc::double_v value, InsertMode mode)
 {
   // loop over rows
@@ -86,8 +94,8 @@ setValue(int componentNoRow, Vc::int_v row, int componentNoColumn, Vc::int_v col
   }
 }
 
-template<typename PressureFunctionSpaceType, int nDisplacementComponents>
-void PartitionedPetscMatForHyperelasticity<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>,BasisFunction::LagrangeOfOrder<2>>,PressureFunctionSpaceType,nDisplacementComponents>::
+template<typename PressureFunctionSpaceType, typename Term, int nDisplacementComponents>
+void PartitionedPetscMatForHyperelasticity<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>,BasisFunction::LagrangeOfOrder<2>>,PressureFunctionSpaceType,Term,nDisplacementComponents>::
 dumpMatrixGlobalNatural(std::string filename)
 {
   VLOG(1) << "dumpMatrixGlobalNatural, name: " << this->name_;
@@ -104,8 +112,12 @@ dumpMatrixGlobalNatural(std::string filename)
   std::shared_ptr<Partition::MeshPartition<DisplacementsFunctionSpaceType>> meshPartition =
     this->partitionedPetscVecForHyperelasticity_->meshPartition();
 
-  std::shared_ptr<Partition::MeshPartition<PressureFunctionSpaceType>> meshPartitionPressure =
-    this->partitionedPetscVecForHyperelasticity_->meshPartitionPressure();
+  std::shared_ptr<Partition::MeshPartition<PressureFunctionSpaceType>> meshPartitionPressure;
+
+  if (Term::isIncompressible)
+  {
+    meshPartitionPressure = this->partitionedPetscVecForHyperelasticity_->meshPartitionPressure();
+  }
 
   Mat matrix = this->globalMatrix_;
 
@@ -118,11 +130,16 @@ dumpMatrixGlobalNatural(std::string filename)
   PetscErrorCode ierr;
 
   global_no_t nDisplacementDofsGlobal = meshPartition->nDofsGlobal();
-
-  global_no_t nPressureDofsGlobal = meshPartitionPressure->nDofsGlobal();
-
   dof_no_t nDisplacementDofsLocal = meshPartition->nDofsLocalWithoutGhosts();
-  dof_no_t nPressureDofsLocal = meshPartitionPressure->nDofsLocalWithoutGhosts();
+
+  global_no_t nPressureDofsGlobal = 0;
+  dof_no_t nPressureDofsLocal = 0;
+
+  if (Term::isIncompressible)
+  {
+    nPressureDofsGlobal = meshPartitionPressure->nDofsGlobal();
+    nPressureDofsLocal = meshPartitionPressure->nDofsLocalWithoutGhosts();
+  }
 
   // get global matrix sizes
   nRowsGlobal = nDisplacementComponents*nDisplacementDofsGlobal + nPressureDofsGlobal;
@@ -189,7 +206,8 @@ dumpMatrixGlobalNatural(std::string filename)
               matrixGlobalNonBc.data(), sizesOnRanks.data(), offsets.data(), MPI_DOUBLE, 0, meshPartition->mpiCommunicator());
 
   // gather number of local dofs
-  const int nComponents = nDisplacementComponents+1;
+  const int nComponents = nDisplacementComponents + (Term::isIncompressible? 1: 0);
+
   std::vector<PetscInt> nDofsLocalRanks(nRanks*2);   // nDisplacementDofs, nPressureDofs for every rank
 
   std::vector<PetscInt> nDofsLocal{nDisplacementDofsLocal, nPressureDofsLocal};
@@ -472,20 +490,36 @@ dumpMatrixGlobalNatural(std::string filename)
 }
 
 //! get a submatrix of the upper left part (only displacements)
-template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType, int nDisplacementComponents>
-Mat PartitionedPetscMatForHyperelasticityBase<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,nDisplacementComponents>::
+template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType, typename Term, int nDisplacementComponents>
+Mat PartitionedPetscMatForHyperelasticityBase<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,Term,nDisplacementComponents>::
 getSubmatrix(int rowVariableNo, int columnVariableNo)
 {
   // assert that rowVariableNo and columnVariableNo have valid values
-  if (nDisplacementComponents == 3)
+  if (nDisplacementComponents == 3) // for static problem, there is a submatrix for u (and potentially p)
   {
-    assert(rowVariableNo >= 0 && rowVariableNo < 2);
-    assert(columnVariableNo >= 0 && columnVariableNo < 2);
+    if (Term::isIncompressible)
+    {
+      assert(rowVariableNo >= 0 && rowVariableNo < 2);
+      assert(columnVariableNo >= 0 && columnVariableNo < 2);
+    }
+    else
+    {
+      assert(rowVariableNo == 0);
+      assert(columnVariableNo == 0);
+    }
   }
-  else if (nDisplacementComponents == 6)
+  else if (nDisplacementComponents == 6)    // for dynamic problem, there are submatrices for u,v (and potentially p)
   {
-    assert(rowVariableNo >= 0 && rowVariableNo < 3);
-    assert(columnVariableNo >= 0 && columnVariableNo < 3);
+    if (Term::isIncompressible)
+    {
+      assert(rowVariableNo >= 0 && rowVariableNo < 3);
+      assert(columnVariableNo >= 0 && columnVariableNo < 3);
+    }
+    else
+    {
+      assert(rowVariableNo >= 0 && rowVariableNo < 2);
+      assert(columnVariableNo >= 0 && columnVariableNo < 2);
+    }
   }
 
   MPI_Comm mpiCommunicator = this->partitionedPetscVecForHyperelasticity_->meshPartition()->mpiCommunicator();

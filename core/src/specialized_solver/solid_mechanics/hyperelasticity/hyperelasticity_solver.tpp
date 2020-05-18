@@ -33,6 +33,7 @@ HyperelasticitySolver(DihuContext context, std::string settingsKey) :
   useNumericJacobian_   = this->specificSettings_.getOptionBool("useNumericJacobian", true);
   nNonlinearSolveCalls_ = this->specificSettings_.getOptionInt("nNonlinearSolveCalls", 1, PythonUtility::Positive);
 
+  // parse constant body force, a value of "None" yields the default value, (0,0,0)
   constantBodyForce_ = this->specificSettings_.template getOptionArray<double,3>("constantBodyForce", Vec3{0.0,0.0,0.0});
 
   if (!useAnalyticJacobian_ && !useNumericJacobian_)
@@ -46,9 +47,9 @@ HyperelasticitySolver(DihuContext context, std::string settingsKey) :
 
   LOG(DEBUG) << "HyperelasticitySolver: parsed parameters " << materialParameters_;
 
-  if (materialParameters_.size() < Term::nMaterialParameters)
+  if (materialParameters_.size() != Term::nMaterialParameters)
   {
-    LOG(FATAL) << "Not enough material parameters specified. Specified parameters: " << materialParameters_.size()
+    LOG(FATAL) << "A wrong number of material parameters was specified. Specified parameters: " << materialParameters_.size()
       << " (" << materialParameters_ << "), needed parameters by " << StringUtility::demangle(typeid(Term).name()) << ": "
       << Term::nMaterialParameters;
   }

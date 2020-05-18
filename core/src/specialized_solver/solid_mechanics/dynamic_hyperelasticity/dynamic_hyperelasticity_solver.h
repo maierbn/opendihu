@@ -25,8 +25,8 @@ public:
   typedef typename HyperelasticitySolverType::DisplacementsFunctionSpace DisplacementsFunctionSpace;
   typedef typename HyperelasticitySolverType::PressureFunctionSpace PressureFunctionSpace;
 
-  typedef PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace,6> VecHyperelasticity;
-  typedef PartitionedPetscMatForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace,6> MatHyperelasticity;
+  typedef PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace,Term,6> VecHyperelasticity;
+  typedef PartitionedPetscMatForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace,Term,6> MatHyperelasticity;
 
   typedef Data::DynamicHyperelasticitySolver<DisplacementsFunctionSpace> Data;
 

@@ -513,7 +513,8 @@ setDisplacementsAndPressureFromCombinedVec(Vec x, std::shared_ptr<DisplacementsF
   if (!u && !p)
   {
     u = this->data_.displacements();
-    p = this->data_.pressure();
+    if (Term::isIncompressible)
+      p = this->data_.pressure();   // p is only needed for incompressible formulation
   }
 
   // set displacement entries
@@ -591,7 +592,9 @@ setDisplacementsVelocitiesAndPressureFromCombinedVec(Vec x,
   {
     u = this->data_.displacements();
     v = this->data_.velocities();
-    p = this->data_.pressure();
+
+    if (Term::isIncompressible)
+      p = this->data_.pressure();   // p is only needed for incompressible formulation
   }
 
   // set displacement entries
@@ -730,6 +733,8 @@ dumpJacobianMatrix(Mat jac)
         int nRows = 2;
         if (nDisplacementComponents == 6)
           nRows = 3;
+        if (!Term::isIncompressible)    // compressible formulation does not have pressure component
+          nRows--;
 
         for (int i = 0; i < nRows; i++)
         {
@@ -753,7 +758,6 @@ dumpJacobianMatrix(Mat jac)
         if (norm1 > 1)
           LOG(ERROR) << "norm mismatch";
       }
-
     }
     else
     {
@@ -773,7 +777,9 @@ checkSolution(Vec x)
   // check if function is zero
   evaluateNonlinearFunction(x, solverVariableResidual_);
 
-  for (int componentNo = 0; componentNo < 4; componentNo++)
+  int nComponents = (Term::isIncompressible? 4 : 3);
+
+  for (int componentNo = 0; componentNo < nComponents; componentNo++)
   {
     int nEntries = displacementsFunctionSpace_->nDofsLocalWithoutGhosts();
     std::vector<double> values;
@@ -783,7 +789,7 @@ checkSolution(Vec x)
       values.resize(nEntries);
       combinedVecResidual_->getValues(componentNo, nEntries, displacementsFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
     }
-    else if (componentNo == 3)
+    else if (componentNo == 3 && Term::isIncompressible)
     {
       nEntries = pressureFunctionSpace_->nDofsLocalWithoutGhosts();
       values.resize(nEntries);

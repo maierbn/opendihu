@@ -68,7 +68,7 @@ advanceTimeSpan()
     Control::PerformanceMeasurement::stop(this->durationLogKey_);
 
   // write current output values
-  this->outputWriterManager_.writeOutput(this->data_, 0, endTime_);
+  this->outputWriterManager_.writeOutput(this->data_, 1, endTime_);
 }
 
 bool NonlinearElasticitySolverFebio::
@@ -146,12 +146,12 @@ createFebioInputFile()
   //    << "\t\t<restart file=\"dump.out\">1</restart>" << "\n"
       << "\t\t<time_steps>10</time_steps>" << "\n"
       << "\t\t<step_size>0.1</step_size>" << "\n"
-      << "\t\t<max_refs>15</max_refs> <!-- Max number of stiffness reformations -->" << "\n"
-      << "\t\t<max_ups>10</max_ups>   <!-- Max number of BFGS/Broyden stiffness updates --> " << "\n"
-      << "\t\t<dtol>0.001</dtol>      <!-- Convergence tolerance on displacement -->" << "\n"
-      << "\t\t<etol>0.01</etol>       <!-- Convergence tolerance on energy -->" << "\n"
+      << "\t\t<max_refs>100</max_refs> <!-- (15) Max number of stiffness reformations -->" << "\n"
+      << "\t\t<max_ups>10</max_ups>   <!-- (10) Max number of BFGS/Broyden stiffness updates --> " << "\n"
+      << "\t\t<dtol>1e-10</dtol>      <!-- (0.001) Convergence tolerance on displacement -->" << "\n"
+      << "\t\t<etol>1e-10</etol>       <!-- (0.01) Convergence tolerance on energy -->" << "\n"
       << "\t\t<rtol>0</rtol>          <!-- Convergence tolerance on residual, 0=disabled-->" << "\n"
-      << "\t\t<lstol>0.9</lstol>      <!-- Convergence tolerance on line search -->" << "\n"
+      << "\t\t<lstol>1e-10</lstol>      <!-- (0.9) Convergence tolerance on line search -->" << "\n"
       << "\t\t<analysis type=\"static\"></analysis>" << "\n"
       << "\t\t<time_stepper>" << "\n"
       << "\t\t\t<dtmin>0.01</dtmin>" << "\n"
@@ -208,7 +208,7 @@ createFebioInputFile()
     int nNodesY = this->data_.functionSpace()->nNodesGlobal(1);
     int nNodesZ = this->data_.functionSpace()->nNodesGlobal(2);
 
-    int nElementsXY = (nNodesX+1)*(nNodesY+1);
+    int nElementsXY = (nNodesX-1)*(nNodesY-1);
 
     // fix x direction for left row
     for (int j = 0; j < nNodesY; j++)
@@ -281,6 +281,8 @@ createFebioInputFile()
     fileContents << "\t\t</force>" << "\n"
       << "\t</Loads>" << "\n";
 
+    LOG(DEBUG) << "force: " << force_ << "/" << nElementsXY << " = " << force_/nElementsXY << " nElementsXY: " << nElementsXY;
+
     fileContents << "\t<LoadData>" << "\n"
       << "\t\t<loadcurve id=\"1\"> <!-- for activation -->" << "\n"
       << "\t\t\t<loadpoint>0,0</loadpoint>" << "\n"
@@ -306,7 +308,7 @@ createFebioInputFile()
 
       // available variables: https://help.febio.org/FEBio/FEBio_um_2_9/index.html Sec. 3.17.1.2 and 3.17.1.3
       << "\t\t\t<node_data file=\"febio_geometry_output.txt\" format=\"%i,%g,%g,%g,%g,%g,%g,%g,%g,%g\" data=\"x;y;z;ux;uy;uz;Rx;Ry;Rz\"/>" << "\n"
-      << "\t\t\t<element_data file=\"febio_stress_output.txt\" format=\"%i,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g\" data=\"sx;sy;sz;sxy;syz;sxz;Ex;Ey;Ez;Exy;Eyz;Exz;J\"/>" << "\n"
+      << "\t\t\t<element_data file=\"febio_stress_output.txt\" format=\"%i,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g\" data=\"sx;sy;sz;sxy;syz;sxz;Ex;Ey;Ez;Exy;Eyz;Exz;J;Fxx;Fxy;Fxz;Fyx;Fyy;Fyz;Fzx;Fzy;Fzz\"/>" << "\n"
       << "\t\t</logfile>" << "\n"
       << "\t</Output>" << "\n"
       << "</febio_spec>" << "\n";
@@ -451,6 +453,7 @@ loadFebioOutputFile()
     }
   }
 
+  this->data_.pk2Stress()->zeroEntries();
   this->data_.cauchyStress()->zeroEntries();
   this->data_.greenLagrangeStrain()->zeroEntries();
   this->data_.relativeVolume()->zeroEntries();
@@ -474,7 +477,7 @@ loadFebioOutputFile()
     {
       std::array<dof_no_t,FunctionSpace::nNodesPerElement()> elementNodeNos = data_.functionSpace()->getElementNodeNos(elementNoLocal);
 
-      // sx;sy;sz;sxy;syz;sxz;Ex;Ey;Ez;Exy;Eyz;Exz;J
+      // sx;sy;sz;sxy;syz;sxz;Ex;Ey;Ez;Exy;Eyz;Exz;J;Fxx,Fxy,Fxz;Fyx;Fyy;Fyz;Fzx;Fzy;Fzz
       double sx  = atof(StringUtility::extractUntil(line, ",").c_str());
       double sy  = atof(StringUtility::extractUntil(line, ",").c_str());
       double sz  = atof(StringUtility::extractUntil(line, ",").c_str());
@@ -487,9 +490,31 @@ loadFebioOutputFile()
       double Exy = atof(StringUtility::extractUntil(line, ",").c_str());
       double Eyz = atof(StringUtility::extractUntil(line, ",").c_str());
       double Exz = atof(StringUtility::extractUntil(line, ",").c_str());
-      double J   = atof(line.c_str());
+      double J   = atof(StringUtility::extractUntil(line, ",").c_str());
+      double Fxx = atof(StringUtility::extractUntil(line, ",").c_str());
+      double Fxy = atof(StringUtility::extractUntil(line, ",").c_str());
+      double Fxz = atof(StringUtility::extractUntil(line, ",").c_str());
+      double Fyx = atof(StringUtility::extractUntil(line, ",").c_str());
+      double Fyy = atof(StringUtility::extractUntil(line, ",").c_str());
+      double Fyz = atof(StringUtility::extractUntil(line, ",").c_str());
+      double Fzx = atof(StringUtility::extractUntil(line, ",").c_str());
+      double Fzy = atof(StringUtility::extractUntil(line, ",").c_str());
+      double Fzz = atof(line.c_str());
+
+      // compute 2nd Piola-Kirchhoff stress, S, from Cauchy stress, σ
+      // S = J F^-1 σ F^-T
+      Tensor2<3> cauchyStress{Vec3{sx,sxy,sxz}, Vec3{sxy, sy, syz}, Vec3{sxz, syz, sz}};
+      Tensor2<3> deformationGradient{Vec3{Fxx, Fyx, Fzx}, Vec3{Fxy, Fyy, Fzy}, Vec3{Fxz, Fyz, Fzz}};
+      double determinant = 0;
+      Tensor2<3> inverseDeformationGradient = MathUtility::computeInverse(deformationGradient, determinant);
+
+      Tensor2<3> deformationGradientCofactor = MathUtility::computeCofactorMatrix<3>(deformationGradient);  // cof(M) = det(M) * M^{-T}
+      Tensor2<3> pk2Stress = inverseDeformationGradient * cauchyStress * deformationGradientCofactor;
 
       LOG(DEBUG) << "local element " << elementNoLocal << " of " << this->data_.functionSpace()->nElementsLocal() << ", " << FunctionSpace::nNodesPerElement() << " elementNodeNos: " << elementNodeNos;
+
+      LOG(DEBUG) << "F: " << deformationGradient << ", J: " << J << "=" << determinant;
+      LOG(DEBUG) << "pk2Stress = " << pk2Stress << " = " << inverseDeformationGradient << "*" << cauchyStress << "*" << deformationGradientCofactor;
 
       for (node_no_t elementalNodeNo = 0; elementalNodeNo < FunctionSpace::nNodesPerElement(); elementalNodeNo++)
       {
@@ -498,6 +523,7 @@ loadFebioOutputFile()
         if (nodeNoLocal >= this->data_.functionSpace()->nNodesLocalWithoutGhosts())
           continue;
 
+        this->data_.pk2Stress()->setValue(nodeNoLocal, std::array<double,6>{pk2Stress[0][0],pk2Stress[1][1],pk2Stress[2][2],pk2Stress[1][0],pk2Stress[2][1],pk2Stress[2][0]}, ADD_VALUES);
         this->data_.cauchyStress()->setValue(nodeNoLocal, std::array<double,6>{sx,sy,sz,sxy,syz,sxz}, ADD_VALUES);
         this->data_.greenLagrangeStrain()->setValue(nodeNoLocal, std::array<double,6>{Ex,Ey,Ez,Exy,Eyz,Exz}, ADD_VALUES);
         this->data_.relativeVolume()->setValue(nodeNoLocal, J, ADD_VALUES);
@@ -526,6 +552,11 @@ loadFebioOutputFile()
   // loop over nodes
   for (node_no_t nodeNoLocal = 0; nodeNoLocal < data_.functionSpace()->nNodesLocalWithoutGhosts(); nodeNoLocal++)
   {
+    // PK2 stress
+    std::array<double,6> pk2StressValues = this->data_.pk2Stress()->getValue(nodeNoLocal);
+    pk2StressValues /= nSummands[nodeNoLocal];
+    this->data_.pk2Stress()->setValue(nodeNoLocal, pk2StressValues, INSERT_VALUES);
+
     // cauchy stress
     std::array<double,6> cauchyStressValues = this->data_.cauchyStress()->getValue(nodeNoLocal);
     cauchyStressValues /= nSummands[nodeNoLocal];

@@ -66,8 +66,8 @@ public:
   typedef FieldVariable::FieldVariable<PressureFunctionSpace,1> PressureFieldVariableType;
   typedef FieldVariable::FieldVariable<DisplacementsFunctionSpace,6> StressFieldVariableType;
 
-  typedef PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace,nDisplacementComponents> VecHyperelasticity;
-  typedef PartitionedPetscMatForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace,nDisplacementComponents> MatHyperelasticity;
+  typedef PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace,Term,nDisplacementComponents> VecHyperelasticity;
+  typedef PartitionedPetscMatForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace,Term,nDisplacementComponents> MatHyperelasticity;
 
   //! constructor
   HyperelasticitySolver(DihuContext context, std::string settingsKey = "HyperelasticitySolver");
@@ -229,7 +229,7 @@ protected:
   template<typename double_v_t>
   Tensor2<3,double_v_t> computeRightCauchyGreenTensor(const Tensor2<3,double_v_t> &deformationGradient);
 
-  //! compute the invariants, [I1,I2,I3,I4,I5] where I1 = tr(C), I2 = 1/2 * (tr(C)^2 - tr(C^2)), I3 = det(C), I4 = a0•C0 a0, I5 = a0•C0^2 a0
+  //! compute the invariants, [I1,I2,I3,I4,I5] where I1 = tr(C), I2 = 1/2 * (tr(C)^2 - tr(C^2)), I3 = det(C), I4 = a0•C a0, I5 = a0•C^2 a0
   template<typename double_v_t>
   std::array<double_v_t,5> computeInvariants(const Tensor2<3,double_v_t> &rightCauchyGreen, const double_v_t rightCauchyGreenDeterminant,
                                            const VecD<3,double_v_t> fiberDirection);
@@ -241,10 +241,11 @@ protected:
   //! compute the 2nd Piola-Kirchhoff pressure, S
   template<typename double_v_t>
   Tensor2<3,double_v_t>
-  computePK2Stress(const double_v_t pressure,                             //< [in] pressure value p
+  computePK2Stress(double_v_t &pressure,                                  //< [in/out] pressure value p
                    const Tensor2<3,double_v_t> &rightCauchyGreen,         //< [in] C
                    const Tensor2<3,double_v_t> &inverseRightCauchyGreen,  //< [in] C^{-1}
-                   const std::array<double_v_t,5> reducedInvariants,      //< [in] the reduced invariants Ibar_1, Ibar_2
+                   const std::array<double_v_t,5> invariants,             //< [in] the strain invariants I_1, ..., I_5
+                   const std::array<double_v_t,5> reducedInvariants,      //< [in] the reduced invariants Ibar_1, ..., Ibar_5
                    const double_v_t deformationGradientDeterminant,       //< [in] J = det(F)
                    VecD<3,double_v_t> fiberDirection,                     //< [in] a0, direction of fibers
                    Tensor2<3,double_v_t> &fictitiousPK2Stress,            //< [out] Sbar, the fictitious 2nd Piola-Kirchhoff stress tensor
@@ -258,7 +259,7 @@ protected:
   template<typename double_v_t>
   void computeElasticityTensor(const Tensor2<3,double_v_t> &rightCauchyGreen,
                                const Tensor2<3,double_v_t> &inverseRightCauchyGreen, double_v_t deformationGradientDeterminant, double_v_t pressure,
-                               std::array<double_v_t,5> reducedInvariants, const Tensor2<3,double_v_t> &fictitiousPK2Stress,
+                               std::array<double_v_t,5> invariants, std::array<double_v_t,5> reducedInvariants, const Tensor2<3,double_v_t> &fictitiousPK2Stress,
                                const Tensor2<3,double_v_t> &pk2StressIsochoric, VecD<3,double_v_t> fiberDirection,
                                Tensor4<3,double_v_t> &fictitiousElasticityTensor, Tensor4<3,double_v_t> &elasticityTensorIso,
                                Tensor4<3,double_v_t> &elasticityTensor);
@@ -331,6 +332,7 @@ protected:
 
 #include "specialized_solver/solid_mechanics/hyperelasticity/hyperelasticity_solver.tpp"
 #include "specialized_solver/solid_mechanics/hyperelasticity/material_computations.tpp"
+#include "specialized_solver/solid_mechanics/hyperelasticity/material_computations_auxiliary.tpp"
 #include "specialized_solver/solid_mechanics/hyperelasticity/material_computations_wrappers.tpp"
 #include "specialized_solver/solid_mechanics/hyperelasticity/nonlinear_solve.tpp"
 #include "specialized_solver/solid_mechanics/hyperelasticity/material_testing.tpp"

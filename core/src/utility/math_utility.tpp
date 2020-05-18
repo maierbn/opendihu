@@ -103,9 +103,11 @@ double_v_t computeIntegrationFactor(const std::array<VecD<3,double_v_t>,2> &jaco
   const double_v_t m22 = jacobian[1][1];
   const double_v_t m32 = jacobian[1][2];
 
+  /*
   LOG(DEBUG) << "2D integration factor, m11:" << m11 << ", m21: " << m21 << ", m32: " << m32 << ", sqr(m11*m22): " << sqr(m11*m22) << ", sqrt "  << sqr(m11*m22) + sqr(m11*m32) - 2*m11*m12*m21*m22 - 2*m11*m12*m31*m32
     + sqr(m12*m21) + sqr(m12*m31) + sqr(m21*m32) - 2*m21*m22*m31*m32 + sqr(m22*m31) << ", result: " << sqrt(sqr(m11*m22) + sqr(m11*m32) - 2*m11*m12*m21*m22 - 2*m11*m12*m31*m32
     + sqr(m12*m21) + sqr(m12*m31) + sqr(m21*m32) - 2*m21*m22*m31*m32 + sqr(m22*m31));
+    */
 
   return sqrt(sqr(m11*m22) + sqr(m11*m32) - 2*m11*m12*m21*m22 - 2*m11*m12*m31*m32
     + sqr(m12*m21) + sqr(m12*m31) + sqr(m21*m32) - 2*m21*m22*m31*m32 + sqr(m22*m31));

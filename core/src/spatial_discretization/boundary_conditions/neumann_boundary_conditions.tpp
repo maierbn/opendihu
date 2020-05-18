@@ -206,6 +206,15 @@ initializeRhs()
     }  // dofIndex
   } // elementGlobalNo
 
+  std::vector<double> values;
+  this->data_.rhs()->getValuesWithoutGhosts(2,values);
+  double sum = 0;
+  for (int i = 0; i < values.size(); i++)
+  {
+    sum += values[i];
+  }
+  LOG(DEBUG) << "rhs values: " << values << ", sum: " << sum;
+
   // allreduce surface area
   double surfaceAreaGlobal;
   MPI_Comm mpiCommunicator = this->data_.functionSpace()->meshPartition()->rankSubset()->mpiCommunicator();
@@ -219,7 +228,10 @@ initializeRhs()
   if (this->divideNeumannBoundaryConditionValuesByTotalArea_)
   {
     PetscErrorCode ierr;
-    ierr = VecScale(this->data_.rhs()->valuesGlobal(), 1./surfaceAreaGlobal); CHKERRV(ierr);
+    for (int componentNo = 0; componentNo < nComponents; componentNo++)
+    {
+      ierr = VecScale(this->data_.rhs()->valuesGlobal(componentNo), 1./surfaceAreaGlobal); CHKERRV(ierr);
+    }
   }
 
   VLOG(1) << "after initializeRhs, rhs: " << *this->data_.rhs();

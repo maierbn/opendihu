@@ -630,10 +630,25 @@ void Paraview::writeCombinedUnstructuredGridFile(const FieldVariablesForOutputWr
 
     // set up string for component names
     std::stringstream componentNames;
+    bool isComponentNamesSet = false;
     for (int componentNo = 0; componentNo < pointDataArrayIter->nComponents; componentNo++)
     {
-      componentNames << "ComponentName" << componentNo << "=\"" << pointDataArrayIter->componentNames[componentNo] << "\" ";
+      // get component name of the current component
+      std::string componentName = pointDataArrayIter->componentNames[componentNo];
+
+      componentNames << "ComponentName" << componentNo << "=\"" << componentName << "\" ";
+
+      // check if it is equal to simply the componentNo, if no component name was explicitly specify they have names "0", "1", ...
+      std::stringstream trivialComponentName;
+      trivialComponentName << componentNo;
+
+      if (componentName != trivialComponentName.str())
+        isComponentNamesSet = true;
     }
+
+    // if there were no real component names set, do not include them in the VTK file
+    if (!isComponentNamesSet)
+      componentNames.str("");
 
     // write normal data element
     outputFileParts[outputFilePartNo] << std::string(4, '\t') << "<DataArray "

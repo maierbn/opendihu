@@ -110,6 +110,29 @@ MathUtility::Matrix<nRows,nColumns2,double_v_t> operator*(MathUtility::Matrix<nR
   return result;
 }
 
+//! matrix-matrix multiplication for Tensor2
+template<long unsigned int D, typename double_v_t>
+Tensor2<D,double_v_t> operator*(const Tensor2<D,double_v_t> &matrix1, const Tensor2<D,double_v_t> &matrix2)
+{
+  Tensor2<D,double_v_t> result;
+
+  // row no
+  for (int i = 0; i < D; i++)
+  {
+    // column no
+    for (int j = 0; j < D; j++)
+    {
+      result[j][i] = 0;
+
+      for (int k = 0; k < D; k++)
+      {
+        result[j][i] += matrix1[k][i] * matrix2[j][k];
+      }
+    }
+  }
+  return result;
+
+}
 
 template<int nRows, int nColumns, typename double_v_t>
 std::ostream &operator<<(std::ostream &stream, MathUtility::Matrix<nRows,nColumns,double_v_t> &matrix)

@@ -40,6 +40,10 @@ MathUtility::Matrix<nRows,nColumns,double_v1_t> operator*(MathUtility::Matrix<nR
 template<int nRows, int nColumns, int nColumns2, typename double_v_t>
 MathUtility::Matrix<nRows,nColumns2,double_v_t> operator*(MathUtility::Matrix<nRows,nColumns,double_v_t> matrix1, MathUtility::Matrix<nColumns,nColumns2,double_v_t> matrix2);
 
+//! matrix-matrix multiplication for Tensor2
+template<long unsigned int D, typename double_v_t>
+Tensor2<D,double_v_t> operator*(const Tensor2<D,double_v_t> &matrix1, const Tensor2<D,double_v_t> &matrix2);
+
 //! output array content to stream
 template<int nRows, int nColumns, typename double_v_t>
 std::ostream &operator<<(std::ostream &stream, MathUtility::Matrix<nRows,nColumns,double_v_t> &matrix);

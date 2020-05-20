@@ -366,14 +366,14 @@ my_Access(braid_App          app,
    /* Print solution to file if simulation is over */
    if(done)
    {
-      MPI_Comm_rank( (app->comm), &rank);
-      sprintf(filename, "%s.%07d.%05d", "PinT_diffusion.out", index, rank);
-      PetscScalar    *array;
-      VecGetSize(u->values, &size);
-      VecGetArray(u->values, &array);
-      save_solution(filename, array, size, app->xstart,
-            app->xstop, app->ntime, app->tstart, app->tstop);
-      VecRestoreArray(u->values, &array);
+      //MPI_Comm_rank( (app->comm), &rank);
+      //sprintf(filename, "%s.%07d.%05d", "PinT_diffusion.out", index, rank);
+      //PetscScalar    *array;
+      //VecGetSize(u->values, &size);
+      //VecGetArray(u->values, &array);
+      //save_solution(filename, array, size, app->xstart,
+      //      app->xstop, app->ntime, app->tstart, app->tstop);
+      //VecRestoreArray(u->values, &array);
    }
 
    /* IF on the finest level AND print_level is high enough AND at the final time,

@@ -38,7 +38,7 @@ config = {
      },
      "OutputWriter" : [
        #{"format": "Paraview", "outputInterval": 1, "filename": "out", "binaryOutput": "false", "fixedFormat": False, "onlyNodalValues": True},
-       {"format": "PythonFile", "filename": "out/diffusion1d_implicit", "outputInterval": 1, "binary":False, "onlyNodalValues": True}
+       {"format": "PythonFile", "filename": "out/diffusion1d_implicit", "outputInterval": 1000000, "binary":False, "onlyNodalValues": True}
      ]
   }
 }

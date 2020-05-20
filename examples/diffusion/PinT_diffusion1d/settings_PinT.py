@@ -3,7 +3,7 @@
 
 import numpy as np
 
-n = 9   # number of elements
+n = 11   # number of elements
 
 config = {
 "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers

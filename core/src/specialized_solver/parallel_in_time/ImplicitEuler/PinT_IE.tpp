@@ -49,8 +49,8 @@ initialize()
   if (initialized_)
     return;
 
- pid_t pid = getpid();
-  printf("pid: %d", pid);
+ //pid_t pid = getpid();
+ // printf("pid: %d", pid);
 
   //std::this_thread::sleep_for (std::chrono::seconds(30));
 
@@ -183,7 +183,7 @@ run()
   int       max_iter      = 50;
   int       min_coarse    = 3;
   int       fmg           = 0;
-  int       scoarsen      = 1;
+  int       scoarsen      = 0;
   int       res           = 0;
   int       wrapper_tests = 0;
   // int       print_level   = 2;

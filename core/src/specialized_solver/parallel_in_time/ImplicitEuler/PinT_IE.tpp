@@ -49,6 +49,12 @@ initialize()
   if (initialized_)
     return;
 
+ pid_t pid = getpid();
+  printf("pid: %d", pid);
+
+  //std::this_thread::sleep_for (std::chrono::seconds(30));
+
+
   std::vector<PyObject *> implicitEulerConfigs;
 
   PyObject *implicitEulerConfig = this->specificSettings_.template getOptionListBegin<PyObject *>("TimeSteppingScheme");
@@ -176,8 +182,8 @@ run()
   int       cfactor       = 2;
   int       max_iter      = 50;
   int       min_coarse    = 3;
-  int       fmg           = 1;
-  int       scoarsen      = 0;
+  int       fmg           = 0;
+  int       scoarsen      = 1;
   int       res           = 0;
   int       wrapper_tests = 0;
   // int       print_level   = 2;
@@ -234,8 +240,8 @@ run()
      }
      else if (scoarsen)
      {
-        //braid_SetSpatialCoarsen(core_, my_Coarsen);
-        //braid_SetSpatialRefine(core_,  my_Interp);
+        braid_SetSpatialCoarsen(core_, my_Coarsen);
+        braid_SetSpatialRefine(core_,  my_Interp);
      }
 
      braid_Drive(core_);
@@ -325,6 +331,12 @@ PinT_initialize()
     nspace_ = specificSettings_.getOptionDouble("nspace", 1.0, PythonUtility::Positive);
 
   int       nspace        = this->nspace_+1;
+  PetscInt solver;
+  solver=log2(nspace - 1);
+  std::shared_ptr<typename _braid_App_struct::NestedSolverIE> *implicitEulerSolver = &this->implicitEulerSolvers_[solver];
+  DMDACreate1d(communicatorX_, DM_BOUNDARY_NONE, nspace, 1, 1, NULL, &dm_);
+  VecSetDM((*implicitEulerSolver)->data().solution()->valuesGlobal(), dm_);
+  DMSetUp(dm_);
 
   app_ = (my_App *) malloc(sizeof(my_App));
   //(app_->g)             = (double*) malloc( nspace*sizeof(double) );
@@ -336,6 +348,7 @@ PinT_initialize()
   (app_->xstop)         = xstop_;
   (app_->nspace)        = nspace;
   (app_->print_level)   = print_level_;
+  (app_->dm)            = dm_;
   //(app_->testscatter)  = 0;
   //(app_->vecscatter)    = ctx_;
   (app_->implicitEulerSolvers)        = &this->implicitEulerSolvers_;

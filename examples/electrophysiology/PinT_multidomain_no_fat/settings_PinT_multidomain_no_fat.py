@@ -67,7 +67,7 @@ n_compartments = len(motor_units)
 # own MPI rank no and number of MPI ranks
 rank_no = (int)(sys.argv[-2])
 n_ranks = (int)(sys.argv[-1])
-n_ranks_space = 1
+n_ranks_space = 2
 
 # load MU distribution and firing times
 fiber_distribution = np.genfromtxt(fiber_distribution_file, delimiter=" ")
@@ -249,7 +249,7 @@ multidomain_solver = {
   },
   
   "OutputWriter" : [
-    {"format": "Paraview", "outputInterval": (int)(1./dt_multidomain*output_timestep), "filename": "out/output", "binary": True, "fixedFormat": False, "combineFiles": True},
+    #{"format": "Paraview", "outputInterval": (int)(1./dt_multidomain*output_timestep), "filename": "out/output", "binary": True, "fixedFormat": False, "combineFiles": True},
     #{"format": "ExFile", "filename": "out/fiber_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "sphereSize": "0.02*0.02*0.02"},
     #{"format": "PythonFile", "filename": "out/fiber_"+str(i), "outputInterval": int(1./dt_1D*output_timestep), "binary":True, "onlyNodalValues":True},
   ]
@@ -291,7 +291,7 @@ config = {
     "tstart": 0,                    # Start time
     "tstop": end_time,                     # End time
     "ntime": 10,                      # number of time steps
-    "nspace":   3135,
+    "nspace":   1567,#8235, #3135,
     "Initial Guess": [2,2,4,5,2,2,2,0],
     "option1": "blabla",              # another example option that is parsed in the data object
     "nRanksInSpace": n_ranks_space,            # number of processes that compute the spatial domain in parallel
@@ -362,7 +362,7 @@ config = {
           "MultidomainSolver" : multidomain_solver,
           "OutputSurface": {        # version for fibers_emg_2d_output
             "OutputWriter": [
-              {"format": "Paraview", "outputInterval": (int)(1./dt_multidomain*output_timestep), "filename": "out/surface", "binary": True, "fixedFormat": False, "combineFiles": True},
+              {},#"format": "Paraview", "outputInterval": (int)(1./dt_multidomain*output_timestep), "filename": "out/surface", "binary": True, "fixedFormat": False, "combineFiles": True},
             ],
             "face": "1-",
             "MultidomainSolver" : multidomain_solver,

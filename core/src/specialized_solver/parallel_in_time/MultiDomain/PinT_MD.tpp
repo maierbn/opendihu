@@ -61,6 +61,7 @@ initialize()
   pid_t pid = getpid();
   printf("pid: %d", pid);
 
+  std::this_thread::sleep_for (std::chrono::seconds(30));
 
   // parse all settings in TimeSteppingScheme
   PyObject *MultiDomainConfig = this->specificSettings_.template getOptionListBegin<PyObject *>("TimeSteppingScheme");
@@ -203,7 +204,7 @@ run()
   int          rank;
   double       loglevels;
   PetscInt     nspace        =  this->nspace_+1;
-  //nspace = this->MultiDomainSolvers_[0]->nSolutionValuesLocal();
+  nspace = this->MultiDomainSolvers_[0]->nSolutionValuesLocal();
 
 
   // Define XBraid parameters
@@ -360,7 +361,7 @@ PinT_initialize()
     nspace_ = specificSettings_.getOptionDouble("nspace", 1.0, PythonUtility::Positive);
 
   int       nspace        = this->nspace_+1;
-  //nspace = this->MultiDomainSolvers_[0]->nSolutionValuesLocal();
+  nspace = this->MultiDomainSolvers_[0]->nSolutionValuesLocal();
 
   app_ = (my_App *) malloc(sizeof(my_App));
   //(app_->g)             = (double*) malloc( nspace*sizeof(double) );

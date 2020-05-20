@@ -299,7 +299,7 @@ int my_Step(braid_App        app,
    implicitEulerSolver->advanceTimeSpan();
 
    VecCopy(solution->valuesGlobal(), u->values);
-
+   //VecView(u->values, PETSC_VIEWER_STDOUT_WORLD);
    // Debug Options
    // VecView(implicitEulerSolver->data().solution()->valuesGlobal(), 	PETSC_VIEWER_STDOUT_SELF);
    // PetscRealView(6, u->values, 0);
@@ -424,15 +424,13 @@ my_Init(braid_App     app,
    //LOG(DEBUG) << &size;
    //LOG(DEBUG) << &lsize;
    //VecView(solution->valuesGlobal(), 	PETSC_VIEWER_STDOUT_WORLD);
-   MPI_Comm asd;
-   int huhu;
-   PetscObjectGetComm((PetscObject) solution->valuesGlobal(), &asd);
-   MPI_Comm_size(asd, &huhu);
-   LOG(DEBUG)<< "asfhjsajfkhsafjsafa \n" << huhu;
-   //if (huhu==2){
+
+   
    VecDuplicate(solution->valuesGlobal(), &u->values);
    VecCopy(solution->valuesGlobal(), u->values);
-   //}
+   //DMCreateGlobalVector(app->dm, &u->values);
+
+
 
    LOG(DEBUG) << "--------------------------------------------------------------";
    //LOG(DEBUG) << "set initial values: " << *solution;

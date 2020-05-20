@@ -38,6 +38,7 @@ typedef struct _braid_App_struct
   int       nspace;
   double *  sc_info;      /* Runtime information that tracks the space-time grids visited */
   int       print_level;  /* Level of output desired by user (see the -help message below) */
+  DM dm;
   typedef Mesh::StructuredDeformableOfDimension<3> MeshType;
   
   typedef  TimeSteppingScheme::ImplicitEuler<
@@ -122,16 +123,16 @@ my_BufUnpack(braid_App           app,
 //             braid_Vector     r,
 //             braid_StepStatus status);
 
-// /* Bilinear Coarsening */
-// int
-// my_Coarsen(braid_App              app,
-//            braid_Vector           fu,
-//            braid_Vector          *cu_ptr,
-//            braid_CoarsenRefStatus status);
+/* Bilinear Coarsening */
+int
+my_Coarsen(braid_App              app,
+           braid_Vector           fu,
+           braid_Vector          *cu_ptr,
+           braid_CoarsenRefStatus status);
 
-// /* Bilinear interpolation */
-// int
-// my_Interp(braid_App              app,
-//           braid_Vector           cu,
-//           braid_Vector          *fu_ptr,
-//           braid_CoarsenRefStatus status);
+/* Bilinear interpolation */
+int
+my_Interp(braid_App              app,
+          braid_Vector           cu,
+          braid_Vector          *fu_ptr,
+          braid_CoarsenRefStatus status);

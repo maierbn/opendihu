@@ -91,7 +91,7 @@ protected:
 
   int nRanksInSpace;
 
-  VecScatter ctx_;
+  DM dm_;
 
 };
 } // namespace ParallelInTime

@@ -256,8 +256,8 @@ interpolate_1D(double * cvalues,
    }
 
    /* Boundary Conditions */
-   (fvalues)[0] = cvalues[0];
-   (fvalues)[fsize-1] = cvalues[csize-1];
+   //(fvalues)[0] = cvalues[0];
+   //(fvalues)[fsize-1] = cvalues[csize-1];
 }
 
 /* Bilinear coarsening from grid size 2^{k1} + 1
@@ -277,10 +277,35 @@ coarsen_1D(double * cvalues,
    }
 
    /* Boundary Conditions */
-   cvalues[0] = fvalues[0];
-   cvalues[csize-1] = fvalues[fsize-1];
+   //cvalues[0] = fvalues[0];
+   //cvalues[csize-1] = fvalues[fsize-1];
 }
 
+void
+create_coarsen_mat(int size_v,
+                   int size_fu,
+                   Mat CM)
+{
+   int i;
+   MatStencil     row,col[3];
+   PetscScalar    v[3];
+
+   for (i=0; i<size_v; i++) {
+    row.i = i;
+    if (i==0 || i==size_v-1) {
+      v[0] = 1;
+      MatSetValuesStencil(CM,1,&row,1,&row,v,INSERT_VALUES);
+     } else {
+      v[0]  = 0.5;col[0].i = i-1;
+      v[1]  = 0.25;col[1].i = row.i;
+      v[2]  = 0.5;col[2].i = i+1;
+      MatSetValuesStencil(CM,1,&row,3,col,v,INSERT_VALUES);
+    }
+  }
+  MatAssemblyBegin(CM,MAT_FINAL_ASSEMBLY);
+  MatAssemblyEnd(CM,MAT_FINAL_ASSEMBLY);
+  MatView(CM, PETSC_VIEWER_STDOUT_WORLD);
+}
 
 /*--------------------------------------------------------------------------
  * Helper routines for output

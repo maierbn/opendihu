@@ -19,7 +19,7 @@ MultidomainSolver(DihuContext context) :
   TimeSteppingScheme(context["MultidomainSolver"]),
   dataMultidomain_(this->context_), finiteElementMethodPotentialFlow_(this->context_["PotentialFlow"]),
   finiteElementMethodDiffusion_(this->context_["Activation"]), finiteElementMethodDiffusionTotal_(this->context_["Activation"]),
-  rankSubset_(std::make_shared<Partition::RankSubset>()), nColumnSubmatricesSystemMatrix_(0)
+  rankSubset_(DihuContext::partitionManager()->nextRankSubset()), nColumnSubmatricesSystemMatrix_(0)
 {
   // get python config
   this->specificSettings_ = this->context_.getPythonConfig();

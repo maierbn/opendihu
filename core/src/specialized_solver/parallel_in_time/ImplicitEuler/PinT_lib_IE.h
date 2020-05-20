@@ -99,6 +99,9 @@ coarsen_1D(double * cvalues,
            int      csize,
            int      fsize);
 
+void create_coarsen_mat(int size_v,
+                        int size_fu,
+                        Mat CM);
 
 /*--------------------------------------------------------------------------
  * Helper routines for output

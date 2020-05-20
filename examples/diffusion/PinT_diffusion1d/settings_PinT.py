@@ -34,9 +34,9 @@ config = {
         },
   "PinTIE": {        # this is the name of the solver, as given in the constructor to the timestepping object
     "tstart": 0,                    # Start time
-    "tstop": 100,                     # End time
-    "ntime": 1000000,                      # number of time steps
-    "nspace":   32,
+    "tstop": 10,                     # End time
+    "ntime": 1028,                      # number of time steps
+    "nspace":   1028,
     "Initial Guess": [2,2,4,5,2,2,2,0, 2,2,4,5,2,2,2,0,2,2,4,5,2,2,2,0,2,2,4,5,2,2,2,0],
     "option1": "blabla",              # another example option that is parsed in the data object
     "nRanksInSpace": 1,            # number of processes that compute the spatial domain in parallel

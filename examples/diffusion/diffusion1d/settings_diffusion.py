@@ -1,6 +1,6 @@
 # Diffusion 1D
 
-n = 1028   # number of elements
+n = 1024   # number of elements
 
 config = {
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
@@ -16,7 +16,7 @@ config = {
     }
   },
   "ImplicitEuler" : {
-     "numberTimeSteps": 1028,
+     "numberTimeSteps": 1024,
      "startTime": 0.0,
      "endTime": 10,
      "initialValues": [2,2,4,5,2,2,2,0, 2,2,4,5,2,2,2,0,2,2,4,5,2,2,2,0,2,2,4,5,2,2,2,0],    # the initial values

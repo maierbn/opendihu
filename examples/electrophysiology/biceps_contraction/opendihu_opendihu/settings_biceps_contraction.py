@@ -64,7 +64,7 @@ parser.add_argument('-vmodule',                              help='Enable verbos
 parser.add_argument('-pause',                                help='Stop at parallel debugging barrier', action="store_true")
 
 # parse command line arguments and assign values to variables module
-args = parser.parse_args(args=sys.argv[:-2], namespace=variables)
+args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
 
 # initialize some dependend variables
 if variables.n_subdomains is not None:
@@ -177,6 +177,7 @@ config = {
       "snesRelativeTolerance": 1e-5,        # relative tolerance of the nonlinear solver
       "snesAbsoluteTolerance": 1e-5,        # absolute tolerance of the nonlinear solver
       "snesLineSearchType": "l2",           # type of linesearch, possible values: "bt" "nleqerr" "basic" "l2" "cp" "ncglinear"
+      "snesRebuildJacobianFrequency": 2,    # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
       "dumpFilename":        "",            # dump system matrix and right hand side after every solve
       "dumpFormat":          "matlab",      # default, ascii, matlab
     }
@@ -348,7 +349,8 @@ config = {
           # mesh
           "inputMeshIsGlobal":          True,                     # the mesh is given locally
           "meshName":                   "3Dmesh_quadratic",        # name of the 3D mesh, it is defined under "Meshes" at the beginning of this config
-          "fiberMeshNames":             variables.fiber_mesh_names,  # fiber meshes that will be used to determine the fiber direction
+          "fiberMeshNames":             variables.fiber_mesh_names,  # fiber meshes that will be used to determine the fiber direction, for multidomain there are no fibers so this would be empty list
+          #"fiberDirection":             [0,0,1],                  # if fiberMeshNames is empty, directly set the constant fiber direction, in element coordinate system
     
           # solving
           "solverName":                 "mechanicsSolver",         # name of the nonlinear solver configuration, it is defined under "Solvers" at the beginning of this config

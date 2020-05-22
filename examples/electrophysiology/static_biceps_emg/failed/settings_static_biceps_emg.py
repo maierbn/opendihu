@@ -65,7 +65,7 @@ parser.add_argument('-vmodule',                              help='Enable verbos
 parser.add_argument('-pause',                                help='Stop at parallel debugging barrier', action="store_true")
 
 # parse command line arguments and assign values to variables module
-args = parser.parse_args(args=sys.argv[:-2], namespace=variables)
+args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
 
 # initialize some dependend variables
 if variables.n_subdomains is not None:

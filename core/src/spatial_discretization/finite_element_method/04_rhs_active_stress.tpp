@@ -74,7 +74,7 @@ setRightHandSide()
 
       // compute integration factor
       const std::array<Vec3,D> jacobian = FunctionSpaceType::computeJacobian(geometryValues, xi);
-      double integrationFactor = MathUtility::computeIntegrationFactor<D>(jacobian);
+      double integrationFactor = MathUtility::computeIntegrationFactor(jacobian);
 
       Tensor2<D> inverseJacobian = functionSpace->getInverseJacobian(geometryValues, elementNoLocal, xi);
 

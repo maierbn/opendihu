@@ -57,6 +57,9 @@ public:
 
 protected:
 
+  //! update the system matrix after the geometry has changed, this is done in advanceTimeSpan, if the option "updateSystemMatrixEveryTimestep" is True
+  virtual void updateSystemMatrix();
+
   //! call the output writer on the data object
   virtual void callOutputWriter(int timeStepNo, double currentTime);
 
@@ -85,20 +88,23 @@ protected:
   FiniteElementMethodDiffusion finiteElementMethodDiffusion_;   //< the finite element object that is used for the diffusion with diffusion tensor sigma_i, without prefactor
   FiniteElementMethodDiffusion finiteElementMethodDiffusionTotal_;   //< the finite element object that is used for the diffusion with diffusion tensor (sigma_i + sigma_e), bottom right block of system matrix
 
-  std::shared_ptr<Solver::Linear> linearSolver_;   //< the linear solver used for solving the system
-  std::shared_ptr<Partition::RankSubset> rankSubset_;  //< the rankSubset for all involved ranks
+  std::shared_ptr<Solver::Linear> linearSolver_;              //< the linear solver used for solving the system
+  std::shared_ptr<Solver::Linear> alternativeLinearSolver_;   //< the linear solver used when the first solver diverges
+  std::shared_ptr<Partition::RankSubset> rankSubset_;         //< the rankSubset for all involved ranks
 
   int nCompartments_;                         //< the number of instances of the diffusion problem, or the number of motor units
   Mat nestedSystemMatrix_;                    //< nested Petsc Mat, the system matrix which has more components than dofs, later this should be placed inside the data object
   Vec nestedSolution_;                        //< nested Petsc Vec, solution vector
   Vec nestedRightHandSide_;                   //< nested Petsc Vec, rhs
   Mat singleSystemMatrix_;                    //< non-nested Petsc Mat that contains all entries, the system matrix
+  Mat singlePreconditionerMatrix_;            //< non-nested Petsc Mat that contains the preconditioner matrix
   Vec singleSolution_;                        //< non-nested Petsc Vec, solution vector
   Vec singleRightHandSide_;                   //< non-nested Petsc Vec, distributed rhs
 
   std::vector<Vec> subvectorsRightHandSide_;  //< the sub vectors that are used in the nested vector nestedRightHandSide_
   std::vector<Vec> subvectorsSolution_;       //< the sub vectors that are used in the nested vector nestedSolution_
   std::vector<Mat> submatricesSystemMatrix_;  //< the sub matrices of the whole system matrix
+  std::vector<Mat> submatricesPreconditionerMatrix_;  //< the sub matrices of the matrix used as preconditioner
   int nColumnSubmatricesSystemMatrix_;           //< number of rows of nested submatrices in the system matrix
 
   std::vector<double> am_, cm_;  //< the Am and Cm prefactors for the compartments, Am = surface-volume ratio, Cm = capacitance
@@ -106,6 +112,8 @@ protected:
   bool showLinearSolverOutput_;  //< if convergence information of the linear solver in every timestep should be printed
   int lastNumberOfIterations_;   //< the number of iterations that were needed the last time to solve the linear system
   double timeStepWidthOfSystemMatrix_;        //< the timestep width that was used to setup the system matrix
+  bool useSymmetricPreconditionerMatrix_;     //< if the symmetric preconditioner matrix should be set up
+  bool updateSystemMatrixEveryTimestep_;      //< if the system matrix will be rebuild every first time step, this is needed if the geometry changes
 };
 
 }  // namespace

@@ -190,8 +190,8 @@ with open(input_filename, "rb") as infile:
           point = result_mesh[k*result_n_points_x*result_n_points_y + j*result_n_points_x + i]
           
           # parse point
-          for p in range(3):
-            double_raw = struct.pack('d', point[p])
+          for component_no in range(3):
+            double_raw = struct.pack('d', point[component_no])
             outfile.write(double_raw)
             
     print("File {} written.".format(output_filename))

@@ -364,6 +364,20 @@ setValue(int componentNo, PetscInt row, PetscScalar value, InsertMode mode)
   }
 }
 
+//! wrapper to the PETSc VecSetValue, acting on the local data or global data, the row is local dof no
+template<typename FunctionSpaceType, int nComponents, int nComponentsDirichletBc>
+void PartitionedPetscVecWithDirichletBc<FunctionSpaceType, nComponents, nComponentsDirichletBc>::
+setValue(int componentNo, Vc::int_v row, Vc::double_v value, InsertMode mode)
+{
+  // loop over rows and set non-vectorized values
+  for (int rowIndex = 0; rowIndex < Vc::double_v::size(); rowIndex++)
+  {
+    if (row[rowIndex] == -1)
+      break;
+    this->setValue(componentNo, row[rowIndex], value[rowIndex], mode);
+  }
+}
+
 //! wrapper to the PETSc VecGetValues, acting only on the local data, the indices ix are the local dof nos
 template<typename FunctionSpaceType, int nComponents, int nComponentsDirichletBc>
 void PartitionedPetscVecWithDirichletBc<FunctionSpaceType, nComponents, nComponentsDirichletBc>::
@@ -616,7 +630,7 @@ containsNanOrInf()
     // loop over values and check if they are neither nan nor inf
     for (int i = 0; i < values.size(); i++)
     {
-      if (!std::isfinite(values[i]))
+      if (!std::isfinite(values[i]) || fabs(values[i]) > 1e+75)
       {
         LOG(ERROR) << "containsNanOrInf(): value " << i << "/" << values.size() << ", component " << componentNo << "/" << nComponents << ": " << values[i];
         return true;

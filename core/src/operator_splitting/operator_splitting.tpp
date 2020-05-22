@@ -47,7 +47,7 @@ initialize()
   LOG(TRACE) << "  OperatorSplitting::initialize";
 
   // add this solver to the solvers diagram, which is a SVG file that will be created at the end of the simulation.
-  DihuContext::solverStructureVisualizer()->addSolver(schemeName_);
+  DihuContext::solverStructureVisualizer()->addSolver(schemeName_, true);   // hasInternalConnectionToFirstNestedSolver=true (the last argument) means output connector data is shared with the first subsolver
 
   TimeSteppingScheme::initialize();
   timeStepOutputInterval_ = specificSettings_.getOptionInt("timeStepOutputInterval", 100, PythonUtility::Positive);
@@ -80,17 +80,17 @@ initialize()
 
   LOG(DEBUG) << "initialize mappings between meshes \"" << timeStepping1_.data().functionSpace()->meshName() << "\" and \""
     << timeStepping2_.data().functionSpace()->meshName() << "\".";
-  context_.meshManager()->initializeMappingsBetweenMeshes<typename TimeStepping1::FunctionSpace,typename TimeStepping2::FunctionSpace>(
+  context_.mappingBetweenMeshesManager()->initializeMappingsBetweenMeshes<typename TimeStepping1::FunctionSpace,typename TimeStepping2::FunctionSpace>(
     timeStepping1_.data().functionSpace(), timeStepping2_.data().functionSpace());
 
   // log endTime parameters
   Control::PerformanceMeasurement::setParameter("endTime", endTime_);
 
   // compose logging keys
-  logKeyTimeStepping1AdvanceTimeSpan_ = this->durationLogKey_ + std::string("_advanceTimeSpan1");  ///< key for logging of the duration of the advanceTimeSpan() call of timeStepping1
-  logKeyTimeStepping2AdvanceTimeSpan_ = this->durationLogKey_ + std::string("_advanceTimeSpan2");  ///< key for logging of the duration of the advanceTimeSpan() call of timeStepping2
-  logKeyTransfer12_ = this->durationLogKey_ + std::string("_transfer12");  ///< key for logging of the duration of data transfer from timestepping 1 to 2
-  logKeyTransfer21_ = this->durationLogKey_ + std::string("_transfer21");  ///< key for logging of the duration of data transfer from timestepping 2 to 1
+  logKeyTimeStepping1AdvanceTimeSpan_ = this->durationLogKey_ + std::string("_advanceTimeSpan1");  //< key for logging of the duration of the advanceTimeSpan() call of timeStepping1
+  logKeyTimeStepping2AdvanceTimeSpan_ = this->durationLogKey_ + std::string("_advanceTimeSpan2");  //< key for logging of the duration of the advanceTimeSpan() call of timeStepping2
+  logKeyTransfer12_ = this->durationLogKey_ + std::string("_transfer12");  //< key for logging of the duration of data transfer from timestepping 1 to 2
+  logKeyTransfer21_ = this->durationLogKey_ + std::string("_transfer21");  //< key for logging of the duration of data transfer from timestepping 2 to 1
 
   // set the outputConnection information about how the slots are connected to appear in the solver diagram
   DihuContext::solverStructureVisualizer()->addOutputConnection(outputConnection_);

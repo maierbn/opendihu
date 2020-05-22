@@ -57,7 +57,7 @@ protected:
   Solver solver_;                     //< the contained solver object
 
   bool initialized_ = false;          //< if this object is initialized
-  DataSurface data_;  //< data object
+  DataSurface data_;                  //< data object
   bool ownRankInvolvedInOutput_;      //< if the own rank should call the output writer, because surface meshes are output, it can be that the surface is only contained on a subset of ranks
   std::shared_ptr<Partition::RankSubset> rankSubset_;  //< the ranks that are involved in computing the surface
   int timeStepNo_;                    //< time step no for output writer

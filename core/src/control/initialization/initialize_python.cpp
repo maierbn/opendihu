@@ -317,4 +317,6 @@ void DihuContext::parseGlobalParameters()
 
   // filename for solver structure diagram
   solverStructureDiagramFile_ = pythonConfig_.getOptionString("solverStructureDiagramFile", "solver_structure.txt");
+  if (solverStructureDiagramFile_ == "None")
+    solverStructureDiagramFile_ = "";
 }

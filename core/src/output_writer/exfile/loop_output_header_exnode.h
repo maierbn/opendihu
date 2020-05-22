@@ -39,14 +39,14 @@ loopOutputHeaderExnode(const FieldVariablesForOutputWriterType &fieldVariables, 
  */
 template<typename VectorType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
-outputHeaderExnode(VectorType currentFieldVariableVector, int &fieldVariableIndex, std::string meshName, 
+outputHeaderExnode(VectorType currentFieldVariableGradient, int &fieldVariableIndex, std::string meshName, 
                    std::ostream &stream, node_no_t currentNodeGlobalNo, int &valueIndex);
 
 /** Loop body for a tuple element
  */
 template<typename VectorType>
 typename std::enable_if<TypeUtility::isTuple<VectorType>::value, bool>::type
-outputHeaderExnode(VectorType currentFieldVariableVector, int &fieldVariableIndex, std::string meshName, 
+outputHeaderExnode(VectorType currentFieldVariableGradient, int &fieldVariableIndex, std::string meshName, 
                    std::ostream &stream, node_no_t currentNodeGlobalNo, int &valueIndex);
 
  /**  Loop body for a pointer element

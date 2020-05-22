@@ -14,7 +14,6 @@ MultidomainWithFatSolver(DihuContext context) :
 {
 }
 
-
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusionMuscle,typename FiniteElementMethodDiffusionFat>
 void MultidomainWithFatSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusionMuscle,FiniteElementMethodDiffusionFat>::
 initialize()
@@ -50,11 +49,8 @@ initialize()
     LOG(WARNING) << this->specificSettings_ << "[\"enableFatComputation\"] is set to false. This will disable the fat layer computation.";
   }
 
-  DihuContext::solverStructureVisualizer()->setOutputConnectorData(this->getOutputConnectorData());
-
   // initialize sharedNodes_ i.e. the border nodes that are shared between muscle and fat mesh
   findSharedNodesBetweenMuscleAndFat();
-
 
   // system to be solved (here for nCompartments_=3):
   //
@@ -85,18 +81,24 @@ initialize()
   // as nested Petsc Mat and also the single Mat, this->singleSystemMatrix_ 
   this->createSystemMatrixFromSubmatrices();
 
-  // set matrix used for linear solver and preconditioner to ksp context
-  assert(this->linearSolver_->ksp());
-  PetscErrorCode ierr;
-  ierr = KSPSetOperators(*this->linearSolver_->ksp(), this->singleSystemMatrix_, this->singleSystemMatrix_); CHKERRV(ierr);
-
   // set the nullspace of the matrix
   // as we have Neumann boundary conditions, constant functions are in the nullspace of the matrix
   MatNullSpace nullSpace;
+  PetscErrorCode ierr;
   ierr = MatNullSpaceCreate(data().functionSpace()->meshPartition()->mpiCommunicator(), PETSC_TRUE, 0, PETSC_NULL, &nullSpace); CHKERRV(ierr);
   ierr = MatSetNullSpace(this->singleSystemMatrix_, nullSpace); CHKERRV(ierr);
   ierr = MatSetNearNullSpace(this->singleSystemMatrix_, nullSpace); CHKERRV(ierr); // for multigrid methods
   //ierr = MatNullSpaceDestroy(&nullSpace); CHKERRV(ierr);
+
+  // set matrix used for linear solver and preconditioner to ksp context
+  assert(this->linearSolver_->ksp());
+  ierr = KSPSetOperators(*this->linearSolver_->ksp(), this->singleSystemMatrix_, this->singlePreconditionerMatrix_); CHKERRV(ierr);
+
+  if (this->alternativeLinearSolver_)
+    ierr = KSPSetOperators(*this->alternativeLinearSolver_->ksp(), this->singleSystemMatrix_, this->singlePreconditionerMatrix_); CHKERRV(ierr);
+
+  // set block information in preconditioner for block jacobi and node positions for MG preconditioners
+  setInformationToPreconditioner();
 
   // create temporary vector which is needed in computation of rhs, b1_ was created by setSystemMatrixSubmatrices()
   ierr = MatCreateVecs(b1_[0], &temporary_, NULL); CHKERRV(ierr);
@@ -186,7 +188,7 @@ setSystemMatrixSubmatrices(double timeStepWidth)
 
     VLOG(2) << "k=" << k << ", am: " << this->am_[k] << ", cm: " << this->cm_[k] << ", prefactor: " << prefactor;
 
-    // matrix B
+    // matrix B on right column
     // create matrix as theta/(Am*Cm)*K
     Mat matrixOnRightColumn;
     ierr = MatConvert(stiffnessMatrix, MATSAME, MAT_INITIAL_MATRIX, &matrixOnRightColumn); CHKERRV(ierr);
@@ -292,6 +294,235 @@ setSystemMatrixSubmatrices(double timeStepWidth)
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusionMuscle,typename FiniteElementMethodDiffusionFat>
 void MultidomainWithFatSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusionMuscle,FiniteElementMethodDiffusionFat>::
+setInformationToPreconditioner()
+{
+  // set block information in preconditioner, if it is of type block jacobi
+  PetscErrorCode ierr;
+  PC pc;
+  ierr = KSPGetPC(*this->linearSolver_->ksp(), &pc); CHKERRV(ierr);
+  
+  // set block information for block jacobi preconditioner
+  // check, if block jacobi preconditioner is selected
+  PetscBool useBlockJacobiPreconditioner, useBlockGSPreconditioner;
+  PetscObjectTypeCompare((PetscObject)pc, PCBJACOBI, &useBlockJacobiPreconditioner);
+  PetscObjectTypeCompare((PetscObject)pc, PCSOR, &useBlockGSPreconditioner);
+
+  if (useBlockJacobiPreconditioner || useBlockGSPreconditioner)
+  {
+    // smaller blocks
+#if 1
+    int nRanks = this->dataMultidomain_.functionSpace()->meshPartition()->rankSubset()->size();
+    PetscInt nMatrixBlocks = this->nColumnSubmatricesSystemMatrix_*nRanks;
+    
+    std::shared_ptr<Partition::MeshPartition<FunctionSpace>> meshPartitionMuscle = this->dataMultidomain_.functionSpace()->meshPartition();
+    std::shared_ptr<Partition::MeshPartition<typename FiniteElementMethodDiffusionFat::FunctionSpace>> meshPartitionFat = this->finiteElementMethodFat_.data().functionSpace()->meshPartition();
+
+    // set sizes of all blocks to the number of dofs in the muscle domain
+    std::vector<PetscInt> lengthsOfBlocks(nMatrixBlocks, this->dataMultidomain_.functionSpace()->nDofsLocalWithoutGhosts());
+    
+    // loop over ranks
+    for (int rankNo = 0; rankNo < nRanks; rankNo++)
+    {
+      // loop over matrix blocks of muscle mesh, not the fat mesh
+      for (int blockIndex = 0; blockIndex < this->nColumnSubmatricesSystemMatrix_-1; blockIndex++)
+      {
+        // get local size of block on the current rank
+        // for muscle mesh block
+        // determine number of local nodes (= dofs) for rank rankNo
+        int nNodesLocalWithoutGhosts = 1;
+        for (int coordinateDirection = 0; coordinateDirection < 3; coordinateDirection++)
+        {
+          int partitionIndex = meshPartitionMuscle->convertRankNoToPartitionIndex(coordinateDirection, rankNo);
+          nNodesLocalWithoutGhosts *= meshPartitionMuscle->nNodesLocalWithoutGhosts(coordinateDirection, partitionIndex);
+          VLOG(1) << "  block " << blockIndex << " rank " << rankNo << " dim " << coordinateDirection << ": *" << meshPartitionMuscle->nNodesLocalWithoutGhosts(coordinateDirection, rankNo) << " -> " << nNodesLocalWithoutGhosts;
+        }
+
+        VLOG(1) << "-> lengthsOfBlocks[" << rankNo*this->nColumnSubmatricesSystemMatrix_ + blockIndex << "] = " << nNodesLocalWithoutGhosts;
+        lengthsOfBlocks[rankNo*this->nColumnSubmatricesSystemMatrix_ + blockIndex] = nNodesLocalWithoutGhosts;
+      }
+    }
+
+    // set entries for block of fat meh
+    Mat matrixC = this->submatricesSystemMatrix_[MathUtility::sqr(this->nColumnSubmatricesSystemMatrix_)-1];
+    const PetscInt *matrixCOwnershipRanges;
+    ierr = MatGetOwnershipRanges(matrixC, &matrixCOwnershipRanges); CHKERRV(ierr);
+
+    // loop over ranks
+    for (int rankNo = 0; rankNo < nRanks; rankNo++)
+    {
+      int nRowsLocalCurrentRank = matrixCOwnershipRanges[rankNo+1] - matrixCOwnershipRanges[rankNo];
+      lengthsOfBlocks[rankNo*this->nColumnSubmatricesSystemMatrix_ + this->nColumnSubmatricesSystemMatrix_-1] = nRowsLocalCurrentRank;
+    }
+    
+
+    // assert that size matches global matrix size
+    PetscInt nRowsGlobal, nColumnsGlobal;
+    ierr = MatGetSize(this->singleSystemMatrix_, &nRowsGlobal, &nColumnsGlobal); CHKERRV(ierr);
+    PetscInt size = 0;
+    for (PetscInt blockSize : lengthsOfBlocks)
+      size += blockSize;
+
+    LOG(DEBUG) << "block jacobi preconditioner, lengthsOfBlocks: " << lengthsOfBlocks << ", system matrix size: " << nRowsGlobal << "x" << nColumnsGlobal;
+
+    if (size != nRowsGlobal || size != nColumnsGlobal)
+    {
+      LOG(FATAL) << "Block lengths of block jacobi preconditioner do not sum up to the system matrix size. Sum of block lengths: " << size << ", dimension of system matrix: "
+        << nRowsGlobal << "x" << nColumnsGlobal;
+    }
+    assert(size == nRowsGlobal);
+    assert(size == nColumnsGlobal);
+
+    // PCBJacobiSetTotalBlocks(PC pc, PetscInt nBlocks, const PetscInt lengthsOfBlocks[])
+    ierr = PCBJacobiSetTotalBlocks(pc, this->nColumnSubmatricesSystemMatrix_, lengthsOfBlocks.data()); CHKERRV(ierr);
+
+#else
+    // big blocks
+    PetscInt nBlocks = this->nColumnSubmatricesSystemMatrix_;
+
+    // set sizes of all blocks to the number of dofs in the muscle domain
+    std::vector<PetscInt> lengthsOfBlocks(nBlocks, this->dataMultidomain_.functionSpace()->nDofsGlobal());
+    
+    // set last block size
+    PetscInt nRowsGlobalLastSubMatrix;
+    ierr = MatGetSize(this->submatricesSystemMatrix_[MathUtility::sqr(this->nColumnSubmatricesSystemMatrix_)-1], &nRowsGlobalLastSubMatrix, NULL); CHKERRV(ierr);
+    lengthsOfBlocks[nBlocks-1] = nRowsGlobalLastSubMatrix;
+
+    // assert that size matches global matrix size
+    PetscInt nRowsGlobal, nColumnsGlobal;
+    ierr = MatGetSize(this->singleSystemMatrix_, &nRowsGlobal, &nColumnsGlobal); CHKERRV(ierr);
+    PetscInt size = 0;
+    for (PetscInt blockSize : lengthsOfBlocks)
+      size += blockSize;
+
+    LOG(INFO) << "block jacobi preconditioner, lengthsOfBlocks: " << lengthsOfBlocks << ", system matrix size: " << nRowsGlobal << "x" << nColumnsGlobal;
+
+    if (size != nRowsGlobal || size != nColumnsGlobal)
+    {
+      LOG(FATAL) << "Block lengths of block jacobi preconditioner do not sum up to the system matrix size.";
+    }
+    assert(size == nRowsGlobal);
+    assert(size == nColumnsGlobal);
+
+    // PCBJacobiSetTotalBlocks(PC pc, PetscInt nBlocks, const PetscInt lengthsOfBlocks[])
+    ierr = PCBJacobiSetTotalBlocks(pc, this->nColumnSubmatricesSystemMatrix_, lengthsOfBlocks.data()); CHKERRV(ierr);
+#endif
+
+  }
+
+  // set node positions
+
+  // set the local node positions for the preconditioner
+  int nNodesLocalMuscle = this->dataMultidomain_.functionSpace()->nNodesLocalWithoutGhosts();
+  int nNodesLocalFat = this->dataFat_.functionSpace()->nNodesLocalWithoutGhosts() - nSharedDofsLocal_;
+  
+  std::vector<double> nodePositionCoordinatesForPreconditioner;
+  nodePositionCoordinatesForPreconditioner.reserve(3*(nNodesLocalMuscle + nNodesLocalFat));
+
+  // loop over muscle nodes and add their node positions
+  for (dof_no_t dofNoLocalMuscle = 0; dofNoLocalMuscle < this->dataMultidomain_.functionSpace()->nDofsLocalWithoutGhosts(); dofNoLocalMuscle++)
+  {
+    Vec3 nodePosition = this->dataMultidomain_.functionSpace()->getGeometry(dofNoLocalMuscle);
+  
+    // add the coordinates
+    for (int i = 0; i < 3; i++)
+      nodePositionCoordinatesForPreconditioner.push_back(nodePosition[i]);
+  }
+  
+  // loop over fat nodes and add their node positions
+  for (dof_no_t dofNoLocalFat = 0; dofNoLocalFat < this->dataFat_.functionSpace()->nDofsLocalWithoutGhosts(); dofNoLocalFat++)
+  {
+    // if current fat dof is not shared
+    if (borderDofsFat_.find(dofNoLocalFat) == borderDofsFat_.end())
+    {
+      Vec3 nodePosition = this->dataFat_.functionSpace()->getGeometry(dofNoLocalFat);
+      
+      // add the coordinates
+      for (int i = 0; i < 3; i++)
+        nodePositionCoordinatesForPreconditioner.push_back(nodePosition[i]);
+    }
+  }
+  assert(nodePositionCoordinatesForPreconditioner.size() == 3*(nNodesLocalMuscle+nNodesLocalFat));
+
+  LOG(DEBUG) << "set coordinates to preconditioner, " << nodePositionCoordinatesForPreconditioner.size() << " node coordinates";
+
+  ierr = PCSetCoordinates(pc, 3, nodePositionCoordinatesForPreconditioner.size(), nodePositionCoordinatesForPreconditioner.data()); CHKERRV(ierr);
+
+  // initialize preconditioner of alternative linear solver
+  if (this->alternativeLinearSolver_)
+  {
+    PC pc;
+    ierr = KSPGetPC(*this->alternativeLinearSolver_->ksp(), &pc); CHKERRV(ierr);
+    ierr = PCSetCoordinates(pc, 3, nodePositionCoordinatesForPreconditioner.size(), nodePositionCoordinatesForPreconditioner.data()); CHKERRV(ierr);
+  }
+}
+
+template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusionMuscle,typename FiniteElementMethodDiffusionFat>
+void MultidomainWithFatSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusionMuscle,FiniteElementMethodDiffusionFat>::
+updateSystemMatrix()
+{
+  // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
+  if (this->durationLogKey_ != "")
+    Control::PerformanceMeasurement::start(this->durationLogKey_+std::string("_reassemble"));
+
+  // assemble stiffness and mass matrices again
+  this->finiteElementMethodDiffusion_.setStiffnessMatrix();
+  this->finiteElementMethodDiffusion_.setMassMatrix();
+  
+  if (useLumpedMassMatrix_)
+  {
+    this->finiteElementMethodDiffusion_.setInverseLumpedMassMatrix();
+  }
+  
+  this->finiteElementMethodFat_.setStiffnessMatrix();
+  this->finiteElementMethodDiffusionTotal_.setStiffnessMatrix();
+
+  LOG(DEBUG) << "rebuild system matrix";
+#ifdef DUMP_REBUILT_SYSTEM_MATRIX
+  static int counter = 0;
+  std::stringstream s; 
+  s << counter;
+
+  PetscUtility::dumpMatrix(s.str()+"finiteElementMethodDiffusion_stiffness", "matlab", this->finiteElementMethodDiffusion_.data().stiffnessMatrix()->valuesGlobal(), MPI_COMM_WORLD);
+  PetscUtility::dumpMatrix(s.str()+"finiteElementMethodDiffusion_mass", "matlab", this->finiteElementMethodDiffusion_.data().massMatrix()->valuesGlobal(), MPI_COMM_WORLD);
+  PetscUtility::dumpMatrix(s.str()+"finiteElementMethodFat_stiffness", "matlab", this->finiteElementMethodFat_.data().stiffnessMatrix()->valuesGlobal(), MPI_COMM_WORLD);
+#endif
+
+  // compute new entries for submatrices, except B,C,D and E
+  setSystemMatrixSubmatrices(this->timeStepWidthOfSystemMatrix_);
+  
+  // also compute new entries for the matrices B, C, D and E
+  updateBorderMatrices();
+
+  // create the system matrix again
+  this->createSystemMatrixFromSubmatrices();
+
+#ifdef DUMP_REBUILT_SYSTEM_MATRIX
+
+  for (int i = 0; i < this->submatricesSystemMatrix_.size(); i++)
+  {
+    if (this->submatricesSystemMatrix_[i])
+    {
+      std::stringstream name;
+      name << s.str() << "_submatrix_" << i;
+      PetscUtility::dumpMatrix(name.str(), "matlab", this->submatricesSystemMatrix_[i], MPI_COMM_WORLD);
+    }
+  }
+
+  PetscUtility::dumpMatrix(s.str()+"new_system_matrix", "matlab", this->singleSystemMatrix_, MPI_COMM_WORLD);
+  counter++;
+#endif
+
+  // stop duration measurement
+  if (this->durationLogKey_ != "")
+  {
+    Control::PerformanceMeasurement::stop(this->durationLogKey_+std::string("_reassemble"));
+
+    LOG(INFO) << "Rebuilt multidomain system matrix in " << Control::PerformanceMeasurement::getDuration(this->durationLogKey_+std::string("_reassemble"), false) << "s.";
+  }
+}
+
+template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusionMuscle,typename FiniteElementMethodDiffusionFat>
+void MultidomainWithFatSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusionMuscle,FiniteElementMethodDiffusionFat>::
 solveLinearSystem()
 {
   VLOG(1) << "in solveLinearSystem";
@@ -324,29 +555,58 @@ solveLinearSystem()
   // copy the values from the nested Petsc Vec nestedRightHandSide_ to the single Vec, singleRightHandSide_, that contains all entries
   NestedMatVecUtility::createVecFromNestedVec(this->nestedRightHandSide_, this->singleRightHandSide_, data().functionSpace()->meshPartition()->rankSubset());
 
-  // copy the values from the nested Petsc Vec,nestedSolution_, to the single Vec, singleSolution_, that contains all entries
-  NestedMatVecUtility::createVecFromNestedVec(this->nestedSolution_, this->singleSolution_, data().functionSpace()->meshPartition()->rankSubset());
-
   if (VLOG_IS_ON(1))
   {
     VLOG(1) << "this->nestedRightHandSide_: " << PetscUtility::getStringVector(this->nestedRightHandSide_);
     VLOG(1) << "this->singleRightHandSide_: " << PetscUtility::getStringVector(this->singleRightHandSide_);
   }
-
-  // Solve the linear system
-  // using single Vecs and Mats that contain all values directly  (singleSolution_, singleRightHandSide_, singleSystemMatrix_)
-  // This is better compared to using the nested Vec's, because more solvers are available for normal Vec's.
-  if (this->showLinearSolverOutput_)
-  {
-    // solve and show information on convergence
-    this->linearSolver_->solve(this->singleRightHandSide_, this->singleSolution_, "Linear system of multidomain problem solved");
-  }
-  else
-  {
-    // solve without showing output
-    this->linearSolver_->solve(this->singleRightHandSide_, this->singleSolution_);
-  }
   
+  bool hasSolverConverged = false;
+
+  // try up to three times to solve the system
+  for (int solveNo = 0; solveNo < 5; solveNo++)
+  {
+    if (solveNo == 0 || solveNo == 1)
+    {
+      // copy the values from the nested Petsc Vec,nestedSolution_, to the single Vec, singleSolution_, that contains all entries
+      NestedMatVecUtility::createVecFromNestedVec(this->nestedSolution_, this->singleSolution_, data().functionSpace()->meshPartition()->rankSubset());
+    }
+
+    // Solve the linear system
+    // using single Vecs and Mats that contain all values directly  (singleSolution_, singleRightHandSide_, singleSystemMatrix_)
+    // This is better compared to using the nested Vec's, because more solvers are available for normal Vec's.
+    if (this->showLinearSolverOutput_)
+    {
+      // solve and show information on convergence
+      if (solveNo == 0 || !this->alternativeLinearSolver_)
+        hasSolverConverged = this->linearSolver_->solve(this->singleRightHandSide_, this->singleSolution_, "Linear system of multidomain problem solved");
+      else
+        hasSolverConverged = this->alternativeLinearSolver_->solve(this->singleRightHandSide_, this->singleSolution_, "Linear system of multidomain problem solved");
+    }
+    else
+    {
+      // solve without showing output
+      if (solveNo == 0 || !this->alternativeLinearSolver_)
+        hasSolverConverged = this->linearSolver_->solve(this->singleRightHandSide_, this->singleSolution_);
+      else
+        hasSolverConverged = this->alternativeLinearSolver_->solve(this->singleRightHandSide_, this->singleSolution_);
+    }
+    if (hasSolverConverged)
+    {
+      break;
+    }
+    else
+    {
+      if (this->alternativeLinearSolver_)
+        LOG(WARNING) << "Solver has not converged, try again with alternative linear solver " << solveNo << "/5";
+      else
+        LOG(WARNING) << "Solver has not converged, try again " << solveNo << "/5";
+    }
+  }
+
+  // store the last number of iterations
+  this->lastNumberOfIterations_ = this->linearSolver_->lastNumberOfIterations();
+
   // copy the values back from the single Vec, singleSolution_, that contains all entries 
   // to the nested Petsc Vec, nestedSolution_ which contains the components in subvectorsSolution_
   NestedMatVecUtility::fillNestedVec(this->singleSolution_, this->nestedSolution_);

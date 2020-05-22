@@ -51,9 +51,9 @@ public:
 
 protected:
 
-  std::string meshName_;  ///< the name of this mesh, which can be given in the python config and is the key by which the mesh is stored in Mesh::Manager
-  PythonConfig specificSettings_;  ///< the python object of the settings for this mesh
-  bool initialized_;   ///< if the mesh is already initialized
+  std::string meshName_;            //< the name of this mesh, which can be given in the python config and is the key by which the mesh is stored in Mesh::Manager
+  PythonConfig specificSettings_;   //< the python object of the settings for this mesh
+  bool initialized_;                //< if the mesh is already initialized
 };
 
 /**

@@ -77,6 +77,8 @@ sampling_stride_x = 2
 sampling_stride_y = 2
 sampling_stride_z = 50
 
+mapping_tolerance = 0.1
+
 # scenario name for log file
 scenario_name = ""
 

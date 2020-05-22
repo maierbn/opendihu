@@ -122,23 +122,30 @@ with open(input_filename, "rb") as infile:
      
     # write parameter[0]: n_fibers_total
     n_fibers = n_fibers_x_extract * n_fibers_x_extract
-    outfile.seek(32+4)
     outfile.write(struct.pack('i', n_fibers))
     
     # write parameter[1]: n_points_whole_fiber
-    outfile.seek(32+2*4)
     outfile.write(struct.pack('i', n_points_whole_fiber))
     
     # write parameter[2]: n_fibers_x_extract
-    outfile.seek(32+3*4)
     outfile.write(struct.pack('i', n_fibers_x_extract))
     
     # write parameter[3]: n_fibers_x_extract
-    outfile.seek(32+4*4)
     outfile.write(struct.pack('i', n_fibers_x_extract))
     
-    # write timestamp
-    outfile.seek(32+9*4)
+    # write parameter[4]:
+    outfile.write(struct.pack('i', 0))
+    
+    # write parameter[5]: n_ranks
+    outfile.write(struct.pack('i', 1))
+    
+    # write parameter[6]: n_ranks_z
+    outfile.write(struct.pack('i', 1))
+    
+    # write parameter[7]: n_fibers_per_rank
+    outfile.write(struct.pack('i', 1))
+    
+    # write parameters[8]: timestamp
     outfile.write(struct.pack('i', (int)(time.time())))
     
     # write fiber
@@ -157,8 +164,8 @@ with open(input_filename, "rb") as infile:
           point = fiber[point_no]
           
           # parse point
-          for i in range(3):
-            double_raw = struct.pack('d', point[i])
+          for component_no in range(3):
+            double_raw = struct.pack('d', point[component_no])
             outfile.write(double_raw)
             
     print("File {} written.".format(output_filename))

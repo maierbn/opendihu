@@ -19,7 +19,7 @@ template<typename ValueType, int nComponents>
 struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
 {
   //! convert a python object to its corresponding c type, with type checking, if conversion is not possible, use defaultValue
-  static std::array<ValueType,nComponents> get(PyObject *object, std::array<ValueType,nComponents> defaultValue)
+  static std::array<ValueType,nComponents> get(PyObject *object, std::array<ValueType,nComponents> defaultValue, bool enableWarnings = true)
   {
     // start critical section for python API calls
     // PythonUtility::GlobalInterpreterLock lock;
@@ -42,7 +42,7 @@ struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
         result[i] = defaultValue[i];
       }
 
-      if (iEnd < nComponents)
+      if (iEnd < nComponents && enableWarnings)
       {
         LOG(WARNING) << "Python list only contains " << iEnd << " values, but " << nComponents << " are required. Filling rest with default values."
           << " Parsed values: " << result;
@@ -66,7 +66,7 @@ struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
         result[i] = defaultValue[i];
       }
 
-      if (iEnd < nComponents)
+      if (iEnd < nComponents && enableWarnings)
       {
         LOG(WARNING) << "Python tuple only contains " << iEnd << " values, but " << nComponents << " are required. Filling rest with default values."
           << " Parsed values: " << result;
@@ -98,7 +98,7 @@ struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
       result[0] = valueDouble;
       std::copy(defaultValue.begin()+1, defaultValue.end(), result.begin()+1);
 
-      if (nComponents > 1)
+      if (nComponents > 1 && enableWarnings)
       {
         LOG(WARNING) << "Expected python list with " << nComponents << " entries, but only a single value was found. Filling rest with default values."
           << " Parsed values: " << result;
@@ -122,7 +122,7 @@ template<typename ValueType, global_no_t nComponents>
 struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
 {
   //! convert a python object to its corresponding c type, with type checking, if conversion is not possible, use defaultValue
-  static std::array<ValueType,nComponents> get(PyObject *object, std::array<ValueType,nComponents> defaultValue)
+  static std::array<ValueType,nComponents> get(PyObject *object, std::array<ValueType,nComponents> defaultValue, bool enableWarnings = true)
   {
     // start critical section for python API calls
     // PythonUtility::GlobalInterpreterLock lock;
@@ -144,7 +144,7 @@ struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
       {
         result[i] = defaultValue[i];
       }
-      if (iEnd < nComponents)
+      if (iEnd < nComponents && enableWarnings)
       {
         LOG(WARNING) << "Python list only contains " << iEnd << " values, but " << nComponents << " are required. Filling rest with default values."
           << " Parsed values: " << result;
@@ -166,7 +166,7 @@ struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
       {
         result[i] = defaultValue[i];
       }
-      if (iEnd < nComponents)
+      if (iEnd < nComponents && enableWarnings)
       {
         LOG(WARNING) << "Python tuple only contains " << iEnd << " values, but " << nComponents << " are required. Filling rest with default values."
           << " Parsed values: " << result;
@@ -198,7 +198,7 @@ struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
       result[0] = valueDouble;
       std::copy(defaultValue.begin()+1, defaultValue.end(), result.begin()+1);
 
-      if (nComponents > 1)
+      if (nComponents > 1 && enableWarnings)
       {
         LOG(WARNING) << "Expected python list with " << nComponents << " entries, but only a single value was found. Filling rest with default values."
           << " Parsed values: " << result;
@@ -222,7 +222,7 @@ template<typename ValueType, unsigned long nComponents>
 struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
 {
   //! convert a python object to its corresponding c type, with type checking, if conversion is not possible, use defaultValue
-  static std::array<ValueType,nComponents> get(PyObject *object, std::array<ValueType,nComponents> defaultValue)
+  static std::array<ValueType,nComponents> get(PyObject *object, std::array<ValueType,nComponents> defaultValue, bool enableWarnings = true)
   {
     // start critical section for python API calls
     // PythonUtility::GlobalInterpreterLock lock;
@@ -244,7 +244,7 @@ struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
       {
         result[i] = defaultValue[i];
       }
-      if (iEnd < nComponents)
+      if (iEnd < nComponents && enableWarnings)
       {
         LOG(WARNING) << "Python list only contains " << iEnd << " values, but " << nComponents << " are required. Filling rest with default values."
           << " Parsed values: " << result;
@@ -266,7 +266,7 @@ struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
       {
         result[i] = defaultValue[i];
       }
-      if (iEnd < nComponents)
+      if (iEnd < nComponents && enableWarnings)
       {
         LOG(WARNING) << "Python tuple only contains " << iEnd << " values, but " << nComponents << " are required. Filling rest with default values."
           << " Parsed values: " << result;
@@ -298,7 +298,7 @@ struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
       result[0] = valueDouble;
       std::copy(defaultValue.begin()+1, defaultValue.end(), result.begin()+1);
 
-      if (nComponents > 1)
+      if (nComponents > 1 && enableWarnings)
       {
         LOG(WARNING) << "Expected python list with " << nComponents << " entries, but only a single value was found. Filling rest with default values."
           << " Parsed values: " << result;

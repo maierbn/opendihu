@@ -20,7 +20,7 @@ traceStreamline(Vec3 startingPoint, double direction, std::vector<Vec3> &points)
   element_no_t elementNo = 0;
   int ghostMeshNo = -1;
   std::array<double,(unsigned long int)3> xi;
-  std::shared_ptr<FunctionSpace> functionSpace = functionSpace_;  ///< the function space to use, this can be set to one of the ghost meshes
+  std::shared_ptr<FunctionSpace> functionSpace = functionSpace_;  //< the function space to use, this can be set to one of the ghost meshes
   
   // There are 2 implementations of streamline tracing.
   // The first one (useGradientField_) uses a precomputed gradient field that is interpolated linearly and the second uses the gradient directly from the Laplace solution_ field.
@@ -54,9 +54,10 @@ traceStreamline(Vec3 startingPoint, double direction, std::vector<Vec3> &points)
 
     VLOG(1) << "startSearchInCurrentElement=" << startSearchInCurrentElement << ", elementNo: " << elementNo << " ghostMeshNo: " << ghostMeshNo;
     double residual;
+    bool searchedAllElements;
 
     // look for the element and xi value of the currentPoint, also considers ghost meshes if they are set
-    bool positionFound = functionSpace_->findPosition(currentPoint, elementNo, ghostMeshNo, xi, startSearchInCurrentElement, residual);
+    bool positionFound = functionSpace_->findPosition(currentPoint, elementNo, ghostMeshNo, xi, startSearchInCurrentElement, residual, searchedAllElements);
 
     // if no position was found, the streamline exits the domain
     if (!positionFound)

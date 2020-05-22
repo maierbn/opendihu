@@ -29,7 +29,7 @@ parser.add_argument('--n_subdomains_z', '-z',                help='Number of sub
 parser.add_argument('-vmodule', help='ignore')
 
 # parse command line arguments and assign values to variables module
-args = parser.parse_args(args=sys.argv[:-2], namespace=variables)
+args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
 
 # partitioning
 # ------------

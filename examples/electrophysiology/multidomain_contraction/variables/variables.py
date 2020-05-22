@@ -14,13 +14,25 @@ innervation_zone_width = 0.         # not used [cm], this will later be used to 
 
 # solvers
 # -------
-diffusion_solver_type = "cg"        # solver and preconditioner for the diffusion part of the Monodomain equation
-diffusion_preconditioner_type = "none"      # preconditioner
+# potential flow
 potential_flow_solver_type = "gmres"        # solver and preconditioner for an initial Laplace flow on the domain, from which fiber directions are determined
 potential_flow_preconditioner_type = "none" # preconditioner
-emg_solver_type = "cg"              # solver and preconditioner for the 3D static Bidomain equation that solves the intra-muscular EMG signal
-emg_preconditioner_type = "none"    # preconditioner
-emg_initial_guess_nonzero = False   # If the initial guess for the emg linear system should be set to the previous solution
+
+# multidomain
+multidomain_solver_type = "gmres"          # solver for the multidomain problem
+multidomain_preconditioner_type = "none"   # preconditioner
+multidomain_absolute_tolerance = 1e-15 # absolute residual tolerance for the multidomain solver
+multidomain_relative_tolerance = 1e-15 # absolute residual tolerance for the multidomain solver
+
+# elasticity
+elasticity_solver_type = "preonly"
+elasticity_preconditioner_type = "lu"
+snes_max_iterations = 10                  # maximum number of iterations in the nonlinear solver
+snes_rebuild_jacobian_frequency = 2       # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
+snes_relative_tolerance = 1e-5      # relative tolerance of the nonlinear solver
+snes_absolute_tolerance = 1e-5      # absolute tolerance of the nonlinear solver
+relative_tolerance = 1e-5           # relative tolerance of the residual of the linear solver
+absolute_tolerance = 1e-10          # absolute tolerance of the residual of the linear solver
 
 # timing parameters
 # -----------------
@@ -33,10 +45,8 @@ dt_splitting = 3e-3                 # [ms] overall timestep width of strang spli
 dt_elasticity = 1e0                 # [ms] time step width of elasticity solver
 output_timestep = 1e0               # [ms] timestep for output files
 activation_start_time = 0           # [ms] time when to start checking for stimulation
-output_timestep_surface = 0.1       # [ms] timestep for python callback, which is electrode measurement output
-output_timestep_electrodes = 0.1    # [ms] timestep for electrode output files
-output_timestep_fibers = 0.1        # [ms] timestep for fiber output, 0.5
-output_timestep_3D_emg = 0.1        # [ms] timestep for output big files of 3D EMG, 100
+output_timestep_multidomain = 0.1   # [ms] timestep for multidomain output files
+output_timestep_elasticity = 0.1    # [ms] timestep for elasticity output files
 
 # input files
 # -----------
@@ -59,7 +69,11 @@ paraview_output = False             # If the paraview output writer should be en
 adios_output = False                # If the MegaMol/ADIOS output writer should be enabled
 python_output = False               # If the Python output writer should be enabled
 exfile_output = False               # If the Exfile output writer should be enabled
-
+initial_guess_nonzero = True        # if the initial guess of the multidomain solver should be set to the previous values, this is only possible if an iterative solver is used
+theta = 0.5                         # weighting factor of implicit term in Crank-Nicolson scheme, 0.5 gives the classic, 2nd-order Crank-Nicolson scheme, 1.0 gives implicit euler
+use_symmetric_preconditioner_matrix = True    # if the diagonal blocks of the system matrix should be used as preconditioner matrix
+use_lumped_mass_matrix = False      # which formulation to use, the formulation with lumped mass matrix (True) is more stable but approximative, the other formulation (False) is exact but needs more iterations
+show_linear_solver_output = True    # if convergence information of the linear solver in every timestep should be printed, this is a lot of output for fast computations
 
 # motor unit stimulation times
 firing_times_file = "../../input/MU_firing_times_real.txt"
@@ -78,6 +92,12 @@ sampling_stride_x = 1
 sampling_stride_y = 1
 sampling_stride_z = 50
 sampling_stride_fat = 1
+
+# how much of the multidomain mesh is used for elasticity
+sampling_factor_elasticity_x = 0.5    
+sampling_factor_elasticity_y = 0.5
+sampling_factor_elasticity_z = 0.5
+sampling_factor_elasticity_fat_y = 0.5
 
 # scenario name for log file
 scenario_name = ""

@@ -21,6 +21,7 @@ void Heun<DiscretizableInTime>::initialize()
 
   this->data_ = std::make_shared<Data::TimeSteppingHeun<typename DiscretizableInTime::FunctionSpace, DiscretizableInTime::nComponents()>>(this->context_);  // create data object for heun
 
+  // initialize already writes the first output file
   TimeSteppingSchemeOde<DiscretizableInTime>::initialize();
 }
 
@@ -50,7 +51,7 @@ void Heun<DiscretizableInTime>::advanceTimeSpan()
   double currentTime = this->startTime_;
   for (int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
   {
-    if (timeStepNo % this->timeStepOutputInterval_ == 0 && timeStepNo > 0)
+    if (timeStepNo % this->timeStepOutputInterval_ == 0 && (this->timeStepOutputInterval_ <= 10 || timeStepNo > 0))  // show first timestep only if timeStepOutputInterval is <= 10
     {
       LOG(INFO) << "Heun, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
     }
@@ -89,15 +90,8 @@ void Heun<DiscretizableInTime>::advanceTimeSpan()
 
     VLOG(1) << "final solution (" << this->data_->solution() << "): " << *this->data_->solution();
 
-    // check if the solution contains Nans or Inf values, only in debug target
-#ifndef NDEBUG
-    if (this->data_->solution()->containsNanOrInf())
-    {
-      LOG(ERROR) << "At time " << currentTime << ", in Heun method: Solution contains Nan or Inf. This probably means that the timestep width, "
-        << this->timeStepWidth_ << " is too high. Note, this expensive check is only performed when compiled for debug target.";
-      LOG(ERROR) << *this->data_->solution();
-    }
-#endif
+    // check if the solution contains Nans or Inf values
+    this->checkForNanInf(timeStepNo, currentTime);
 
     // advance simulation time
     timeStepNo++;

@@ -62,9 +62,9 @@ void SolutionVectorMapping<
         << fieldVariable2->name() << "[" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible;
 
       // perform the mapping
-      DihuContext::meshManager()->template prepareMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2);
-      DihuContext::meshManager()->template map<FieldVariable1,FieldVariable2>(fieldVariable1, componentNo1, fieldVariable2, componentNo2, avoidCopyIfPossible);
-      DihuContext::meshManager()->template finalizeMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2);
+      DihuContext::mappingBetweenMeshesManager()->template prepareMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2, componentNo2);
+      DihuContext::mappingBetweenMeshesManager()->template map<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2, componentNo1, componentNo2, avoidCopyIfPossible);
+      DihuContext::mappingBetweenMeshesManager()->template finalizeMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2, componentNo1, componentNo2, avoidCopyIfPossible);
     }
     else
     {
@@ -78,9 +78,9 @@ void SolutionVectorMapping<
         << fieldVariable2->name() << "[" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible;
 
       // perform the mapping
-      DihuContext::meshManager()->template prepareMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2);
-      DihuContext::meshManager()->template map<FieldVariable1,FieldVariable2>(fieldVariable1, componentNo1, fieldVariable2, componentNo2, avoidCopyIfPossible);
-      DihuContext::meshManager()->template finalizeMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2);
+      DihuContext::mappingBetweenMeshesManager()->template prepareMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2, componentNo2);
+      DihuContext::mappingBetweenMeshesManager()->template map<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2, componentNo1, componentNo2, avoidCopyIfPossible);
+      DihuContext::mappingBetweenMeshesManager()->template finalizeMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2, componentNo1, componentNo2, avoidCopyIfPossible);
     }
   }
 
@@ -127,9 +127,9 @@ void SolutionVectorMapping<
         << fieldVariable2->name() << "[" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible;
 
       // perform the mapping
-      DihuContext::meshManager()->template prepareMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2);
-      DihuContext::meshManager()->template map<FieldVariable1,FieldVariable2>(fieldVariable1, componentNo1, fieldVariable2, componentNo2, avoidCopyIfPossible);
-      DihuContext::meshManager()->template finalizeMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2);
+      DihuContext::mappingBetweenMeshesManager()->template prepareMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2, componentNo2);
+      DihuContext::mappingBetweenMeshesManager()->template map<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2, componentNo1, componentNo2, avoidCopyIfPossible);
+      DihuContext::mappingBetweenMeshesManager()->template finalizeMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2, componentNo1, componentNo2, avoidCopyIfPossible);
     }
     else
     {
@@ -142,16 +142,18 @@ void SolutionVectorMapping<
         << fieldVariable2->name() << "[" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible;
 
       // perform the mapping
-      DihuContext::meshManager()->template prepareMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2);
-      DihuContext::meshManager()->template map<FieldVariable1,FieldVariable2>(fieldVariable1, componentNo1, fieldVariable2, componentNo2, avoidCopyIfPossible);
-      DihuContext::meshManager()->template finalizeMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2);
+      DihuContext::mappingBetweenMeshesManager()->template prepareMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2, componentNo2);
+      DihuContext::mappingBetweenMeshesManager()->template map<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2, componentNo1, componentNo2, avoidCopyIfPossible);
+      DihuContext::mappingBetweenMeshesManager()->template finalizeMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2, componentNo1, componentNo2, avoidCopyIfPossible);
     }
   }
 
   // transfer geometry field if it was set in transferableSolutionData1
   if (transferableSolutionData1->geometryField && !transferableSolutionData2->variable1.empty())
   {
-    LOG(DEBUG) << "transfer geometry field";
+    LOG(DEBUG) << "transfer geometry field, " << transferableSolutionData1->geometryField->functionSpace()->meshName() << " -> "
+       << transferableSolutionData2->variable1[0].values->functionSpace()->meshName();
+    LOG(DEBUG) << StringUtility::demangle(typeid(FunctionSpaceType1).name()) << " -> " << StringUtility::demangle(typeid(FunctionSpaceType2).name());
 
     // get source field variable, this is the same for all fibers
     typedef FieldVariable::FieldVariable<FunctionSpaceType1,3> FieldVariableSource;
@@ -160,13 +162,12 @@ void SolutionVectorMapping<
     std::shared_ptr<FieldVariableSource> geometryFieldSource = transferableSolutionData1->geometryField;
     std::shared_ptr<FieldVariableTarget> geometryFieldTarget = std::make_shared<FieldVariableTarget>(transferableSolutionData2->variable1[0].values->functionSpace()->geometryField());
 
-
     // perform the mapping
-    DihuContext::meshManager()->template prepareMapping<FieldVariableSource,FieldVariableTarget>(geometryFieldSource, geometryFieldTarget);
+    DihuContext::mappingBetweenMeshesManager()->template prepareMapping<FieldVariableSource,FieldVariableTarget>(geometryFieldSource, geometryFieldTarget, -1);
 
-    // map the whole geometry field (all components), do not avoid copy
-    DihuContext::meshManager()->template map<FieldVariableSource,FieldVariableTarget>(geometryFieldSource, -1, geometryFieldTarget, -1, false);
-    DihuContext::meshManager()->template finalizeMapping<FieldVariableSource,FieldVariableTarget>(geometryFieldSource, geometryFieldTarget);
+    // map the whole geometry field (all components, -1), do not avoid copy
+    DihuContext::mappingBetweenMeshesManager()->template map<FieldVariableSource,FieldVariableTarget>(geometryFieldSource, geometryFieldTarget, -1, -1, false);
+    DihuContext::mappingBetweenMeshesManager()->template finalizeMapping<FieldVariableSource,FieldVariableTarget>(geometryFieldSource, geometryFieldTarget, -1, -1, false);
   }
 
   VLOG(1) << "at the end of output_connector_data_transfer_cellml.";

@@ -64,9 +64,9 @@ public:
   //! the transfer is done by the output_connector_data_transfer class
   std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
 
-  typedef FunctionSpaceType FunctionSpace;   ///< the FunctionSpace type needed for time stepping scheme
+  typedef FunctionSpaceType FunctionSpace;   //< the FunctionSpace type needed for time stepping scheme
 
-  friend class StiffnessMatrixTester;    ///< a class used for testing
+  friend class StiffnessMatrixTester;    //< a class used for testing
 protected:
 
   //! do nothing, needed for initialize of base class that is overridden anyway
@@ -81,8 +81,8 @@ protected:
   //! solves the linear system of equations resulting from the Implicit Euler method time discretization
   void solveLinearSystem(Vec &input, Vec &output);
   
-  std::shared_ptr<Solver::Linear> linearSolver_;   ///< the linear solver used for inverting the mass matrix
-  std::shared_ptr<KSP> ksp_;                       ///< the linear solver context
+  std::shared_ptr<Solver::Linear> linearSolver_;   //< the linear solver used for inverting the mass matrix
+  std::shared_ptr<KSP> ksp_;                       //< the linear solver context
   
 };
 

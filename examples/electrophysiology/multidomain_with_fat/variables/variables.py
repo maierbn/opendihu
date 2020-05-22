@@ -14,13 +14,19 @@ innervation_zone_width = 0.         # not used [cm], this will later be used to 
 
 # solvers
 # -------
-diffusion_solver_type = "cg"        # solver and preconditioner for the diffusion part of the Monodomain equation
+diffusion_solver_type = "cg"                # solver and preconditioner for the diffusion part of the Monodomain equation
 diffusion_preconditioner_type = "none"      # preconditioner
 potential_flow_solver_type = "gmres"        # solver and preconditioner for an initial Laplace flow on the domain, from which fiber directions are determined
 potential_flow_preconditioner_type = "none" # preconditioner
-emg_solver_type = "cg"              # solver and preconditioner for the 3D static Bidomain equation that solves the intra-muscular EMG signal
-emg_preconditioner_type = "none"    # preconditioner
-emg_initial_guess_nonzero = False   # If the initial guess for the emg linear system should be set to the previous solution
+multidomain_solver_type = "gmres"           # solver for the multidomain problem
+multidomain_preconditioner_type = "none"    # preconditioner
+multidomain_alternative_solver_type = "gmres"            # alternative solver, used when normal solver diverges
+multidomain_alternative_preconditioner_type = "none"     # preconditioner of the alternative solver
+multidomain_max_iterations = 1e3                         # maximum number of iterations
+multidomain_alternative_solver_max_iterations = 1e4      # maximum number of iterations of the alternative solver
+      
+multidomain_absolute_tolerance = 1e-15      # absolute residual tolerance for the multidomain solver
+multidomain_relative_tolerance = 1e-15      # absolute residual tolerance for the multidomain solver
 
 # timing parameters
 # -----------------
@@ -35,8 +41,8 @@ output_timestep = 1e0               # [ms] timestep for output files
 activation_start_time = 0           # [ms] time when to start checking for stimulation
 output_timestep_surface = 0.1       # [ms] timestep for python callback, which is electrode measurement output
 output_timestep_electrodes = 0.1    # [ms] timestep for electrode output files
-output_timestep_fibers = 0.1        # [ms] timestep for fiber output, 0.5
-output_timestep_3D_emg = 0.1        # [ms] timestep for output big files of 3D EMG, 100
+output_timestep_multidomain = 0.1   # [ms] timestep for multidomain
+output_timestep_0D_states = 0.1     # [ms] timestep for output files of 0D subcellular model states
 
 # input files
 # -----------
@@ -59,7 +65,11 @@ paraview_output = False             # If the paraview output writer should be en
 adios_output = False                # If the MegaMol/ADIOS output writer should be enabled
 python_output = False               # If the Python output writer should be enabled
 exfile_output = False               # If the Exfile output writer should be enabled
-
+initial_guess_nonzero = True        # if the initial guess of the multidomain solver should be set to the previous values, this is only possible if an iterative solver is used
+theta = 0.5                         # weighting factor of implicit term in Crank-Nicolson scheme, 0.5 gives the classic, 2nd-order Crank-Nicolson scheme, 1.0 gives implicit euler
+use_symmetric_preconditioner_matrix = True    # if the diagonal blocks of the system matrix should be used as preconditioner matrix
+use_lumped_mass_matrix = False      # which formulation to use, the formulation with lumped mass matrix (True) is more stable but approximative, the other formulation (False) is exact but needs more iterations
+show_linear_solver_output = True    # if convergence information of the linear solver in every timestep should be printed, this is a lot of output for fast computations
 
 # motor unit stimulation times
 firing_times_file = "../../input/MU_firing_times_real.txt"
@@ -135,8 +145,6 @@ z_point_index_start = None
 z_point_index_end = None
 meshes = None
 potential_flow_dirichlet_bc = None
-use_elasticity_dirichlet_bc = None
-use_elasticity_neumann_bc = None
 fibers_on_own_rank = None
 n_fiber_nodes_on_subdomain = None
 fiber_start_node_no = None

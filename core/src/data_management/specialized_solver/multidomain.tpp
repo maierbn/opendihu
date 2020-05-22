@@ -27,6 +27,9 @@ template<typename FunctionSpaceType>
 void Multidomain<FunctionSpaceType>::
 initialize(int nCompartments)
 {
+  if (this->initialized_)
+    return;
+    
   nCompartments_ = nCompartments;
 
   // call initialize of base class
@@ -61,11 +64,11 @@ createPetscObjects()
   for (int k = 0; k < nCompartments_; k++)
   {
     std::stringstream transmembranePotentialSolutionName;
-    transmembranePotentialSolutionName << "Vm_solution_" << k;
+    transmembranePotentialSolutionName << "Vm^(i+1)_" << k;
     this->transmembranePotentialSolution_.push_back(this->functionSpace_->template createFieldVariable<1>(transmembranePotentialSolutionName.str()));
 
     std::stringstream transmembranePotentialName;
-    transmembranePotentialName << "Vm_" << k;
+    transmembranePotentialName << "Vm^(i)_" << k;
     this->transmembranePotential_.push_back(this->functionSpace_->template createFieldVariable<1>(transmembranePotentialName.str()));
 
     std::stringstream compartmentRelativeFactorName;

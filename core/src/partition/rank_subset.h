@@ -60,12 +60,12 @@ public:
 
 protected:
  
-  std::set<int> rankNo_;  ///< the list of ranks
-  int ownRankNo_;             ///< own rank id of this rankSubset
-  MPI_Comm mpiCommunicator_;    ///< the MPI communicator that contains only the ranks of this rank subset
-  std::string communicatorName_;   ///< name of the communicator for debugging output
-  int nCommunicatorsSplit_;    ///< the number how often MPI_COMM_SPLIT was called on the current communicator
-  bool isWorldCommunicator_;           ///< if this rank subset correspondes to the MPI_COMM_WORLD
+  std::set<int> rankNo_;  //< the list of ranks
+  int ownRankNo_;             //< own rank id of this rankSubset
+  MPI_Comm mpiCommunicator_;    //< the MPI communicator that contains only the ranks of this rank subset
+  std::string communicatorName_;   //< name of the communicator for debugging output
+  int nCommunicatorsSplit_;    //< the number how often MPI_COMM_SPLIT was called on the current communicator
+  bool isWorldCommunicator_;           //< if this rank subset correspondes to the MPI_COMM_WORLD
 };
 
 extern int nWorldCommunicatorsSplit;

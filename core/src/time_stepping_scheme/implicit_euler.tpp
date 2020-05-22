@@ -37,7 +37,7 @@ void ImplicitEuler<DiscretizableInTimeType>::advanceTimeSpan()
 
   for (int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
   {
-    if (timeStepNo % this->timeStepOutputInterval_ == 0 && timeStepNo > 0)
+    if (timeStepNo % this->timeStepOutputInterval_ == 0 && (this->timeStepOutputInterval_ <= 10 || timeStepNo > 0))  // show first timestep only if timeStepOutputInterval is <= 10
     {
       LOG(INFO) << "Implicit Euler, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
     }
@@ -62,6 +62,9 @@ void ImplicitEuler<DiscretizableInTimeType>::advanceTimeSpan()
     {
       VLOG(1) << "new solution (" << this->data_->solution() << "): " << *this->data_->solution();
     }
+
+    // check if the solution contains Nans or Inf values
+    this->checkForNanInf(timeStepNo, currentTime);
 
     // stop duration measurement
     if (this->durationLogKey_ != "")

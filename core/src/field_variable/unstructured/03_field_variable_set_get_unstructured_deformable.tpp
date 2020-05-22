@@ -227,6 +227,51 @@ getElementValues(element_no_t elementNo, std::array<std::array<double,nComponent
   }
 }
 
+//! vectorized version of getElementValues
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
+getElementValues(Vc::int_v elementNoLocal,
+                 std::array<std::array<Vc::double_v,nComponents>,FunctionSpaceType::nDofsPerElement()> &values) const
+{
+  assert(this->functionSpace_);
+  assert(this->values_);
+
+  const int nVcComponents = Vc::double_v::size();
+  const int nDofsPerElement = FunctionSpaceType::nDofsPerElement();
+
+  std::array<PetscInt, nDofsPerElement*nVcComponents> indices;
+  std::array<Vc::double_v, nDofsPerElement*nComponents> result;
+
+  VLOG(2) << "getElementValues (vectorized) element " << elementNoLocal << ", nComponents=" << nComponents << ", nDofsPerElement=" << nDofsPerElement;
+
+  // prepare lookup indices for PETSc vector values_
+  for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
+  {
+    for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
+    {
+      for (int vcComponent = 0; vcComponent < nVcComponents; vcComponent++)
+      {
+        if (elementNoLocal[vcComponent] == -1)
+          indices[dofIndex*nVcComponents + vcComponent] = 0;   // set index to 0, then here the dof 0 is retrieved and also further used in computation but it is discarded later in setValue
+        else
+          indices[dofIndex*nVcComponents + vcComponent] = this->functionSpace_->getDofNo(elementNoLocal[vcComponent], dofIndex);
+      }
+    }
+
+    // get the values for the current component
+    this->values_->getValues(componentIndex, nDofsPerElement*nVcComponents, indices.data(), (double *)&result[componentIndex*nDofsPerElement]);
+  }
+
+  // copy result to output values
+  for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
+  {
+    for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
+    {
+      values[dofIndex][componentIndex] = result[componentIndex*nDofsPerElement + dofIndex];
+    }
+  }
+}
+
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
 setValues(int componentNo, Vec petscVector)
@@ -396,7 +441,7 @@ setValue(dof_no_t dofLocalNo, const std::array<double,nComponents> &value, Inser
 {
   assert(this->values_);
   
-  // prepare lookup indices for PETSc vector values_
+  // loop over components and set single value for each component
   for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
   {
     LOG(DEBUG) << "set value of \"" << this->name_ << "\" for component " << componentIndex << " to " << value[componentIndex];
@@ -408,11 +453,60 @@ setValue(dof_no_t dofLocalNo, const std::array<double,nComponents> &value, Inser
 
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
+setValue(Vc::int_v dofLocalNo, const std::array<Vc::double_v,nComponents> &value, InsertMode petscInsertMode)
+{
+  // loop over components and set vectorized value for each component
+  for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
+  {
+    this->setValue(componentIndex, dofLocalNo, value[componentIndex], petscInsertMode);
+  }
+}
+
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
 setValue(int componentNo, dof_no_t dofLocalNo, double value, InsertMode petscInsertMode)
 {
   assert(this->values_);
 
   this->values_->setValues(componentNo, 1, &dofLocalNo, &value, petscInsertMode);
+}
+
+//! set a given component of Vc::double_v::size() dofs with the vectorized value, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
+setValue(int componentNo, Vc::int_v dofLocalNo, Vc::double_v value, InsertMode petscInsertMode)
+{
+  assert(this->values_);
+  /*std::array<double,Vc::double_v::size()> data;
+  value.store(data.data());
+
+  // store Vc vectors in order to get the raw memory
+  std::array<int,Vc::double_v::size()> indices;
+  dofLocalNo.store(indices.data());
+*/
+  // count number of non-negative indices in dofLocalNo, it is assumed that they occur all before the negative indices
+  int nEntries = Vc::double_v::size() - Vc::isnegative(dofLocalNo).count();
+
+  this->values_->setValues(componentNo, nEntries, (PetscInt *)&dofLocalNo, (double *)&value, petscInsertMode);
+}
+
+//! set a given component of Vc::double_v::size() dofs with the same value
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
+setValue(int componentNo, Vc::int_v dofLocalNo, double value, InsertMode petscInsertMode)
+{
+  assert(this->values_);
+/*  std::array<double,Vc::double_v::size()> data;
+  data.fill(value);
+
+  // store Vc vectors in order to get the raw memory
+  std::array<int,Vc::double_v::size()> indices;
+  dofLocalNo.store(indices.data());
+*/
+  // count number of non-negative indices in dofLocalNo, it is assumed that they occur all before the negative indices
+  int nEntries = Vc::double_v::size() - Vc::isnegative(dofLocalNo).count();
+
+  this->values_->setValues(componentNo, nEntries, (PetscInt *)&dofLocalNo, (double *)&value, petscInsertMode);
 }
 
 

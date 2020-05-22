@@ -122,6 +122,49 @@ setValue(PetscInt row, PetscInt col, PetscScalar value, InsertMode mode)
 
 template<int D, typename BasisFunctionType>
 void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>>::
+setValue(Vc::int_v rows, Vc::int_v columns, PetscScalar value, InsertMode mode)
+{
+  // this wraps the standard PETSc MatSetValue on the local matrix
+  PetscErrorCode ierr;
+  for (int vcComponentNo = 0; vcComponentNo < Vc::double_v::size(); vcComponentNo++)
+  {
+    PetscInt rowNo = rows[vcComponentNo];
+    if (rowNo != -1)
+    {
+      PetscInt columnNo = columns[vcComponentNo];
+      if (columnNo != -1)
+      {
+        ierr = MatSetValues(this->matrix_, 1, &rowNo, 1, &columnNo, &value, mode); CHKERRV(ierr);
+      }
+    }
+  }
+}
+
+template<int D, typename BasisFunctionType>
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>>::
+setValue(Vc::int_v rows, Vc::int_v columns, Vc::double_v values, InsertMode mode)
+{
+  std::array<double,Vc::double_v::size()> data;
+  values.store(data.data());
+
+  // this wraps the standard PETSc MatSetValue on the local matrix
+  PetscErrorCode ierr;
+  for (int vcComponentNo = 0; vcComponentNo < Vc::double_v::size(); vcComponentNo++)
+  {
+    PetscInt rowNo = rows[vcComponentNo];
+    if (rowNo != -1)
+    {
+      PetscInt columnNo = columns[vcComponentNo];
+      if (columnNo != -1)
+      {
+        ierr = MatSetValues(this->matrix_, 1, &rowNo, 1, &columnNo, &(data[vcComponentNo]), mode); CHKERRV(ierr);
+      }
+    }
+  }
+}
+
+template<int D, typename BasisFunctionType>
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>>::
 setValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], const PetscScalar v[], InsertMode addv)
 {
   if (VLOG_IS_ON(2))

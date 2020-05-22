@@ -18,5 +18,5 @@ public:
   //std::shared_ptr<SolutionVectorMapping> solutionVectorMapping();
 
 protected:
-  //std::shared_ptr<SolutionVectorMapping> solutionVectorMapping_;   ///< the solution vector mapping object that contains information if for further computation only a subset of the stored entries in the data_.solution vector will be needed
+  //std::shared_ptr<SolutionVectorMapping> solutionVectorMapping_;   //< the solution vector mapping object that contains information if for further computation only a subset of the stored entries in the data_.solution vector will be needed
 };

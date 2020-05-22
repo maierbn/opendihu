@@ -26,6 +26,8 @@ The following pages contain all settings that are possible to specify for the di
    settings/output_surface
    settings/quasi_static_linear_elasticity_solver
    settings/static_bidomain_solver
+   settings/hyperelasticity
+   settings/dynamic_hyperelasticity
    
 .. Indices and tables
   ==================

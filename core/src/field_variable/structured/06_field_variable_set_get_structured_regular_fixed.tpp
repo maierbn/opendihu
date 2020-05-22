@@ -583,6 +583,38 @@ getElementValues(element_no_t elementNoLocal, std::array<std::array<double,nComp
   this->template getValues<nDofsPerElement>(elementDofs, values);
 }
 
+
+//! get the values corresponding to all element-local dofs for all components, vectorized version for Vc::double_v::size() elements at once
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetRegularFixed<FunctionSpaceType,nComponents>::
+getElementValues(Vc::int_v elementNoLocal, std::array<std::array<Vc::double_v,nComponents>,FunctionSpaceType::nDofsPerElement()> &resultValues) const
+{
+  const int nDofsPerElement = FunctionSpaceType::nDofsPerElement();
+
+  // call getElementValues for all vc component
+  // loop over elements of the vectorized elementNoLocal
+  for (int vcComponentNo = 0; vcComponentNo < Vc::double_v::size(); vcComponentNo++)
+  {
+    // get the element
+    dof_no_t elementNo = elementNoLocal[vcComponentNo];
+    if (elementNo == -1)
+      break;
+
+    // call the scalar getElementValues
+    std::array<std::array<double,nComponents>,nDofsPerElement> elementValues;
+    this->getElementValues(elementNo, elementValues);
+
+    // copy the result to the output parameter
+    for (int elementalDofIndex = 0; elementalDofIndex < nDofsPerElement; elementalDofIndex++)
+    {
+      for (int componentNo = 0; componentNo < nComponents; componentNo++)
+      {
+        resultValues[elementalDofIndex][componentNo][vcComponentNo] = elementValues[elementalDofIndex][componentNo];
+      }
+    }
+  }
+}
+
 template<typename FunctionSpaceType, int nComponents>
 double FieldVariableSetGetRegularFixed<FunctionSpaceType,nComponents>::
 getGeometryFieldHermiteDerivative(int nodeLocalDofIndex, int componentNo) const

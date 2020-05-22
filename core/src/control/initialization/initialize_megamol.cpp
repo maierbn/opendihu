@@ -11,8 +11,8 @@
 #endif
 
 #ifdef HAVE_MEGAMOL
-std::shared_ptr<zmq::context_t> DihuContext::zmqContext_;  ///< the 0mq context
-std::shared_ptr<zmq::socket_t> DihuContext::zmqSocket_;  ///< a socket that is connected to one megamol
+std::shared_ptr<zmq::context_t> DihuContext::zmqContext_;  //< the 0mq context
+std::shared_ptr<zmq::socket_t> DihuContext::zmqSocket_;  //< a socket that is connected to one megamol
 #endif
 
 void DihuContext::initializeAdios(int argc, char *argv[])

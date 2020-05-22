@@ -86,10 +86,10 @@ void Paraview::writeCombinedUnstructuredGridFile(const FieldVariablesForOutputWr
         {
           for (int j = 0; j < polyDataPropertiesForMesh.pointDataArrays.size(); j++)
           {
-            if (vtkPiece3D_.properties.pointDataArrays[j].first != polyDataPropertiesForMesh.pointDataArrays[j].first)  // if the name of the jth field variable is different
+            if (vtkPiece3D_.properties.pointDataArrays[j].name != polyDataPropertiesForMesh.pointDataArrays[j].name)  // if the name of the jth field variable is different
             {
               LOG(DEBUG) << "Mesh " << meshName << " cannot be combined with " << vtkPiece3D_.meshNamesCombinedMeshes << ". Field variable names mismatch for "
-                << meshName << " (there is \"" << vtkPiece3D_.properties.pointDataArrays[j].first << "\" instead of \"" << polyDataPropertiesForMesh.pointDataArrays[j].first << "\")";
+                << meshName << " (there is \"" << vtkPiece3D_.properties.pointDataArrays[j].name << "\" instead of \"" << polyDataPropertiesForMesh.pointDataArrays[j].name << "\")";
               combineMesh = false;
             }
           }
@@ -237,15 +237,15 @@ void Paraview::writeCombinedUnstructuredGridFile(const FieldVariablesForOutputWr
   std::string firstScalarName;
   std::string firstVectorName;
 
-  for (std::vector<std::pair<std::string,int>>::iterator iter = polyDataPropertiesForMesh.pointDataArrays.begin(); iter != polyDataPropertiesForMesh.pointDataArrays.end(); iter++)
+  for (std::vector<PolyDataPropertiesForMesh::DataArrayName>::iterator iter = polyDataPropertiesForMesh.pointDataArrays.begin(); iter != polyDataPropertiesForMesh.pointDataArrays.end(); iter++)
   {
-    if (iter->second == 1 && firstScalarName.empty())
+    if (iter->nComponents == 3 && firstVectorName.empty())
     {
-      firstScalarName = iter->first;
+      firstVectorName = iter->name;
     }
-    if (iter->second != 1 && firstVectorName.empty())
+    else if (firstScalarName.empty())
     {
-      firstVectorName = iter->first;
+      firstScalarName = iter->name;
     }
 
     if (!firstScalarName.empty() && firstVectorName.empty())
@@ -511,7 +511,7 @@ void Paraview::writeCombinedUnstructuredGridFile(const FieldVariablesForOutputWr
       std::stringstream pointDataArraysNames;
       for (int i = 0; i < polyDataPropertiesForMesh.pointDataArrays.size(); i++)
       {
-        pointDataArraysNames << polyDataPropertiesForMesh.pointDataArrays[i].first << " ";
+        pointDataArraysNames << polyDataPropertiesForMesh.pointDataArrays[i].name << " ";
       }
       LOG(DEBUG) << "pointDataArraysNames: " <<  pointDataArraysNames.str();
       LOG(DEBUG) << "FieldVariablesForOutputWriterType: " << StringUtility::demangle(typeid(FieldVariablesForOutputWriterType).name());
@@ -524,7 +524,12 @@ void Paraview::writeCombinedUnstructuredGridFile(const FieldVariablesForOutputWr
   if (!meshPropertiesInitialized)
   {
     // add field variable "partitioning" with 1 component
-    polyDataPropertiesForMesh.pointDataArrays.push_back(std::pair<std::string,int>("partitioning", 1));
+    PolyDataPropertiesForMesh::DataArrayName dataArrayName;
+    dataArrayName.name = "partitioning";
+    dataArrayName.nComponents = 1;
+    dataArrayName.componentNames = std::vector<std::string>(1, "rankNo");
+
+    polyDataPropertiesForMesh.pointDataArrays.push_back(dataArrayName);
   }
 
   // set data for partitioning field variable
@@ -537,13 +542,12 @@ void Paraview::writeCombinedUnstructuredGridFile(const FieldVariablesForOutputWr
     std::vector<double> buffer;
 
     // loop over all field variables
-    for (std::vector<std::pair<std::string,int>>::iterator pointDataArrayIter = polyDataPropertiesForMesh.pointDataArrays.begin(); pointDataArrayIter != polyDataPropertiesForMesh.pointDataArrays.end(); pointDataArrayIter++)
+    for (std::vector<PolyDataPropertiesForMesh::DataArrayName>::iterator pointDataArrayIter = polyDataPropertiesForMesh.pointDataArrays.begin(); pointDataArrayIter != polyDataPropertiesForMesh.pointDataArrays.end(); pointDataArrayIter++)
     {
       // if it is a 2D vector field
-      if (pointDataArrayIter->second == 2)
+      if (pointDataArrayIter->nComponents == 2)
       {
-
-        std::vector<double> &values = fieldVariableValues[pointDataArrayIter->first];
+        std::vector<double> &values = fieldVariableValues[pointDataArrayIter->name];
 
         // copy all values to a buffer
         buffer.assign(values.begin(), values.end());
@@ -617,18 +621,42 @@ void Paraview::writeCombinedUnstructuredGridFile(const FieldVariablesForOutputWr
   outputFileParts[outputFilePartNo] << ">" << std::endl;
 
   // loop over field variables (PointData)
-  for (std::vector<std::pair<std::string,int>>::iterator pointDataArrayIter = polyDataPropertiesForMesh.pointDataArrays.begin(); pointDataArrayIter != polyDataPropertiesForMesh.pointDataArrays.end(); pointDataArrayIter++)
+  for (std::vector<PolyDataPropertiesForMesh::DataArrayName>::iterator pointDataArrayIter = polyDataPropertiesForMesh.pointDataArrays.begin(); pointDataArrayIter != polyDataPropertiesForMesh.pointDataArrays.end(); pointDataArrayIter++)
   {
     // paraview cannot handle 2D vector fields without warnings, so set 3D vector fields
-    int nComponentsParaview = pointDataArrayIter->second;
+    int nComponentsParaview = pointDataArrayIter->nComponents;
     if (nComponentsParaview == 2)
       nComponentsParaview = 3;
 
+    // set up string for component names
+    std::stringstream componentNames;
+    bool isComponentNamesSet = false;
+    for (int componentNo = 0; componentNo < pointDataArrayIter->nComponents; componentNo++)
+    {
+      // get component name of the current component
+      std::string componentName = pointDataArrayIter->componentNames[componentNo];
+
+      componentNames << "ComponentName" << componentNo << "=\"" << componentName << "\" ";
+
+      // check if it is equal to simply the componentNo, if no component name was explicitly specify they have names "0", "1", ...
+      std::stringstream trivialComponentName;
+      trivialComponentName << componentNo;
+
+      if (componentName != trivialComponentName.str())
+        isComponentNamesSet = true;
+    }
+
+    // if there were no real component names set, do not include them in the VTK file
+    if (!isComponentNamesSet)
+      componentNames.str("");
+
     // write normal data element
     outputFileParts[outputFilePartNo] << std::string(4, '\t') << "<DataArray "
-        << "Name=\"" << pointDataArrayIter->first << "\" "
-        << "type=\"" << (pointDataArrayIter->first == "partitioning"? "Int32" : "Float32") << "\" "
-        << "NumberOfComponents=\"" << nComponentsParaview << "\" format=\"" << (binaryOutput_? "binary" : "ascii")
+        << "Name=\"" << pointDataArrayIter->name << "\" "
+        << "type=\"" << (pointDataArrayIter->name == "partitioning"? "Int32" : "Float32") << "\" "
+        << "NumberOfComponents=\"" << nComponentsParaview << "\" "
+        << componentNames.str()
+        << " format=\"" << (binaryOutput_? "binary" : "ascii")
         << "\" >" << std::endl << std::string(5, '\t');
 
     // at this point the data of the field variable is missing
@@ -716,16 +744,16 @@ void Paraview::writeCombinedUnstructuredGridFile(const FieldVariablesForOutputWr
 
   // write field variables
   // loop over field variables
-  for (std::vector<std::pair<std::string,int>>::iterator pointDataArrayIter = polyDataPropertiesForMesh.pointDataArrays.begin();
+  for (std::vector<PolyDataPropertiesForMesh::DataArrayName>::iterator pointDataArrayIter = polyDataPropertiesForMesh.pointDataArrays.begin();
       pointDataArrayIter != polyDataPropertiesForMesh.pointDataArrays.end(); pointDataArrayIter++)
   {
-    assert(fieldVariableValues.find(pointDataArrayIter->first) != fieldVariableValues.end());
+    assert(fieldVariableValues.find(pointDataArrayIter->name) != fieldVariableValues.end());
 
-    VLOG(1) << "write vector for field variable \"" << pointDataArrayIter->first << "\".";
+    VLOG(1) << "write vector for field variable \"" << pointDataArrayIter->name << "\".";
 
     // write values
-    bool writeFloatsAsInt = pointDataArrayIter->first == "partitioning";    // for partitioning, convert float values to integer values for output
-    writeCombinedValuesVector(fileHandle, ownRankNo, fieldVariableValues[pointDataArrayIter->first], callIdentifier++, writeFloatsAsInt);
+    bool writeFloatsAsInt = pointDataArrayIter->name == "partitioning";    // for partitioning, convert float values to integer values for output
+    writeCombinedValuesVector(fileHandle, ownRankNo, fieldVariableValues[pointDataArrayIter->name], callIdentifier++, writeFloatsAsInt);
 
     // write next xml constructs
     writeAsciiDataShared(fileHandle, ownRankNo, outputFileParts[outputFilePartNo].str());

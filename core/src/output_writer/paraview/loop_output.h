@@ -42,14 +42,14 @@ loopOutput(const FieldVariablesForOutputWriterType &fieldVariables, const AllFie
  */
 template<typename VectorType, typename FieldVariablesForOutputWriterType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
-output(VectorType currentFieldVariableVector, const FieldVariablesForOutputWriterType &fieldVariables, std::string meshName, 
+output(VectorType currentFieldVariableGradient, const FieldVariablesForOutputWriterType &fieldVariables, std::string meshName, 
        std::string filename, PythonConfig specificSettings, double currentTime);
 
 /** Loop body for a tuple element
  */
 template<typename VectorType, typename FieldVariablesForOutputWriterType>
 typename std::enable_if<TypeUtility::isTuple<VectorType>::value, bool>::type
-output(VectorType currentFieldVariableVector, const FieldVariablesForOutputWriterType &fieldVariables, std::string meshName, 
+output(VectorType currentFieldVariableGradient, const FieldVariablesForOutputWriterType &fieldVariables, std::string meshName, 
        std::string filename, PythonConfig specificSettings, double currentTime);
 
  /**  Loop body for a pointer element

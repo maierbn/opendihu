@@ -67,7 +67,8 @@ public:
   typedef std::tuple<
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>>,     // geometry
     std::shared_ptr<FieldVariableIntermediates>,     // intermediates
-    std::shared_ptr<FieldVariableStates>              // states
+    std::shared_ptr<FieldVariableStates>,            // states
+    std::shared_ptr<FieldVariableIntermediates>          // parameters
   > FieldVariablesForOutputWriter;
 
   //! get pointers to all field variables that can be written by output writers

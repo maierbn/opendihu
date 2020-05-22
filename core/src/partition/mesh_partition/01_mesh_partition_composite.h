@@ -30,7 +30,7 @@ namespace Partition
  *
  *  The composite mesh appears like a normal structured mesh except it does not have the coordinate dependent methods.
  *  Internally, a composite numbering is created that avoids duplicate=shared nodes. For every duplicate node, the dofs are only included once.
- *  The initialization of this numbering involves communication of ghost node no with the neighbours.
+ *  The initialization of this numbering involves communication of ghost node nos with the neighbours.
  */
 template<int D, typename BasisFunctionType>
 class MeshPartition<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,Mesh::CompositeOfDimension<D>> :
@@ -146,10 +146,10 @@ public:
   //! from a local node no in the composite numbering get the subMeshNo and the no in the submesh-based numbering, works also for ghost nodes
   void getSubMeshNoAndNodeNoLocal(node_no_t nodeNoLocal, int &subMeshNo, node_no_t &nodeOnMeshNoLocal) const;
 
-  //! for the local node no in the composite numbering return all sub meshes and the corresponding local node nos in non-composite numbering of this node. This may be multiple if the node is shared.o
+  //! for the local node no in the composite numbering return all sub meshes and the corresponding local node nos in non-composite numbering of this node. This may be multiple if the node is shared.
   void getSubMeshesWithNodes(node_no_t nodeNoLocal, std::vector<std::pair<int,node_no_t>> &subMeshesWithNodes) const;
 
-  //! from the submesh no and the local node no in the submesh numbering get the local node no in the composite numbering
+  //! from the submesh no and the local node no in the submesh numbering get the local node no in the composite numbering and if it is a shared node (nodeIsSharedAndRemovedInCurrentMesh)
   node_no_t getNodeNoLocalFromSubmesh(int subMeshNo, node_no_t nodeNoDuplicateOnSubmesh, bool &nodeIsSharedAndRemovedInCurrentMesh) const;
 
   //! from the submesh no and the local element no in the submesh numbering get the local element no in the composite numbering
@@ -181,13 +181,13 @@ protected:
   //! create a string of information about locally shared nodes
   std::string getStringSharedNodesInformation();
 
-  int nSubMeshes_;                //< number of sub function spaces, = subFunctionSpaces_.size()
+  int nSubMeshes_;                   //< number of sub function spaces, = subFunctionSpaces_.size()
   const std::vector<std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>> &subFunctionSpaces_;
 
   std::vector<std::map<node_no_t,std::pair<int,node_no_t>>> removedSharedNodes_;   //< removedSharedNodes_[meshNo][nodeNo] = <sameAsInMeshNo,nodeNoOfThatMesh> nodes that are shared between function spaces, they appear only once in the second function space and are removed there (not included in the composite mapping)
 
-  element_no_t nElementsLocal_;   //< local number of elements of all meshes combined
-  global_no_t nElementsGlobal_;   //< global number of elements of all meshes combined
+  element_no_t nElementsLocal_;      //< local number of elements of all meshes combined
+  global_no_t nElementsGlobal_;      //< global number of elements of all meshes combined
   global_no_t elementNoGlobalBegin_; //< first global element no of the local domain
 
   node_no_t nNodesSharedLocal_;      //< number of non-ghost nodes that are shared/removed, the number of distinct nodes is the total number of all subFunctionSpaces minus this value
@@ -213,16 +213,16 @@ protected:
   // mappings from local numbering in every submesh to the composite numbering
   std::vector<std::vector<node_no_t>> meshAndNodeNoLocalToNodeNoNonDuplicateGlobal_;   //< mapping from submesh no and local node no to the composite numbering used for the whole mesh, for local nodes with ghosts, -1 for removed nodes
   std::vector<std::vector<node_no_t>> meshAndNodeNoLocalToNodeNoNonDuplicateLocal_;    //< mapping from submesh no and local node no to the local number of the composite node numbering, also for ghost nodes
-  std::vector<std::vector<bool>> isDuplicate_;                //< for every local node no, if the node has a prescribed Dirichlet BC value
+  std::vector<std::vector<bool>> isDuplicate_;                                             //< for every local node no, if the node has a prescribed Dirichlet BC value
   std::vector<std::pair<int,node_no_t>> nodeNoNonDuplicateLocalToMeshAndDuplicateLocal_;   //< mapping from non-duplicate local number to submesh no and local node no on the submesh
 
   std::vector<PetscInt> nonDuplicateGhostNodeNosGlobal_;  //< duplicate-free ghost nodes in duplicate-free global indexing, needed to create Petsc Vecs
 
   // ------------- everything below is initialized in createLocalDofOrderings()
-  std::vector<node_no_t> onlyNodalDofLocalNos_;       //< vector of local dofs of the nodes, not including derivatives for Hermite
-  std::vector<PetscInt> ghostDofNosGlobalPetsc_;      //< vector of global/petsc dof nos of the ghost nodes which are stored on the local partition
+  std::vector<node_no_t> onlyNodalDofLocalNos_;           //< vector of local dofs of the nodes, not including derivatives for Hermite
+  std::vector<PetscInt> ghostDofNosGlobalPetsc_;          //< vector of global/petsc dof nos of the ghost nodes which are stored on the local partition
 
-  ISLocalToGlobalMapping localToGlobalPetscMappingDofs_;   //< local to global mapping for nodes
+  ISLocalToGlobalMapping localToGlobalPetscMappingDofs_;  //< local to global mapping for nodes
 
 };
 

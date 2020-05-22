@@ -103,9 +103,9 @@ protected:
   //! create the values vectors
   void createVector();
   
-  std::array<Vec,nComponents> values_;  ///< the (serial) Petsc vectors that contains all the data, one for each component
-  Vec valuesContiguous_ = PETSC_NULL;   ///< global vector that has all values of the components concatenated, i.e. in a "struct of arrays" memory layout
-  Vec vectorNestedGlobal_;       ///< a VecNest object containing the global values, only in used if nComponents > 1
+  std::array<Vec,nComponents> values_;  //< the (serial) Petsc vectors that contains all the data, one for each component
+  Vec valuesContiguous_ = PETSC_NULL;   //< global vector that has all values of the components concatenated, i.e. in a "struct of arrays" memory layout
+  Vec vectorNestedGlobal_;       //< a VecNest object containing the global values, only in used if nComponents > 1
 };
 
 /** This is the partial specialization of Petsc Vec's on a mesh for structured meshes.
@@ -245,22 +245,22 @@ protected:
   //! create a distributed Petsc vector, according to partition
   void createVector();
   
-  std::shared_ptr<DM> dm_;    ///< PETSc DMDA object that stores topology information and everything needed for communication of ghost values
-  bool ghostManipulationStarted_;   ///< if startGhostManipulation() was called but not yet finishGhostManipulation(). This indicates that finishGhostManipulation() can be called next without giving an error.
+  std::shared_ptr<DM> dm_;                    //< PETSc DMDA object that stores topology information and everything needed for communication of ghost values
+  bool ghostManipulationStarted_;             //< if startGhostManipulation() was called but not yet finishGhostManipulation(). This indicates that finishGhostManipulation() can be called next without giving an error.
   
-  std::array<Vec,nComponents> vectorLocal_;   ///< local vector that holds the local Vecs, is filled by startGhostManipulation and can the be manipulated, afterwards the results need to get copied back by finishGhostManipulation
-  std::array<Vec,nComponents> vectorGlobal_;  ///< the global distributed vector that holds the actual data
-  Vec valuesContiguous_ = PETSC_NULL;   ///< global vector that has all values of the components concatenated, i.e. in a "struct of arrays" memory layout. This is never used if nComponents = 1
+  std::array<Vec,nComponents> vectorLocal_;   //< local vector that holds the local Vecs, is filled by startGhostManipulation and can the be manipulated, afterwards the results need to get copied back by finishGhostManipulation
+  std::array<Vec,nComponents> vectorGlobal_;  //< the global distributed vector that holds the actual data
+  Vec valuesContiguous_ = PETSC_NULL;         //< global vector that has all values of the components concatenated, i.e. in a "struct of arrays" memory layout. This is never used if nComponents = 1
 
-  std::vector<PetscInt> temporaryIndicesVector_;   ///< a temporary vector that will be used whenever indices are to be computed, this avoids creating and deleting local vectors which is time-consuming (found out by perftools on hazelhen)
+  std::vector<PetscInt> temporaryIndicesVector_;   //< a temporary vector that will be used whenever indices are to be computed, this avoids creating and deleting local vectors which is time-consuming (found out by perftools on hazelhen)
 
-  const double *extractedData_ = nullptr;   ///< the data array of valuesContiguous_, used when a component is extracted by extractComponentShared, then the representation is set to invalid
-  int nExtractedComponents_ = 0;            ///< how often extractComponentsShared has been called on different components, the representation is only then set from invalid back to contiguous when this pointer reached 0 again
+  const double *extractedData_ = nullptr;     //< the data array of valuesContiguous_, used when a component is extracted by extractComponentShared, then the representation is set to invalid
+  int nExtractedComponents_ = 0;              //< how often extractComponentsShared has been called on different components, the representation is only then set from invalid back to contiguous when this pointer reached 0 again
 
-  std::vector<double> savedValues_;   ///< temporary storage of values that would be overwritten by ghost value operations of the extracted field variable
-  Vec savedVectorLocal_;        ///< when this PartitionedPetscVec has nComponents=1 and extractComponentShared is called, there is no valuesContiguous_ vector in use (because it is only one component anyway, replacement is globalVector_[0]). Then the extracted field variable gets copies of the own vectorLocal_ and vectorGlobal_ set, the original pointer vectorLocal_ and vectorGlobal_ are saved in this variable and reset when restoreValuesContiguous is called.
-  Vec savedVectorGlobal_;        ///< when this PartitionedPetscVec has nComponents=1 and extractComponentShared is called, there is no valuesContiguous_ vector in use (because it is only one component anyway, replacement is globalVector_[0]). Then the extracted field variable gets copies of the own vectorLocal_ and vectorGlobal_ set, the original pointer vectorLocal_ and vectorGlobal_ are saved in this variable and reset when restoreValuesContiguous is called.
-  Vec vectorNestedGlobal_;       ///< a VecNest object containing the global values, only in used if nComponents > 1
+  std::vector<double> savedValues_;           //< temporary storage of values that would be overwritten by ghost value operations of the extracted field variable
+  Vec savedVectorLocal_;                      //< when this PartitionedPetscVec has nComponents=1 and extractComponentShared is called, there is no valuesContiguous_ vector in use (because it is only one component anyway, replacement is globalVector_[0]). Then the extracted field variable gets copies of the own vectorLocal_ and vectorGlobal_ set, the original pointer vectorLocal_ and vectorGlobal_ are saved in this variable and reset when restoreValuesContiguous is called.
+  Vec savedVectorGlobal_;                     //< when this PartitionedPetscVec has nComponents=1 and extractComponentShared is called, there is no valuesContiguous_ vector in use (because it is only one component anyway, replacement is globalVector_[0]). Then the extracted field variable gets copies of the own vectorLocal_ and vectorGlobal_ set, the original pointer vectorLocal_ and vectorGlobal_ are saved in this variable and reset when restoreValuesContiguous is called.
+  Vec vectorNestedGlobal_;                    //< a VecNest object containing the global values, only in used if nComponents > 1
 };
 
 /** This is a partial specialization for structured meshes with multiple components.

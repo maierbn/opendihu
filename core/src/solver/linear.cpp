@@ -3,6 +3,7 @@
 #include "utility/python_utility.h"
 #include "control/diagnostic_tool/performance_measurement.h"
 #include "partition/partitioned_petsc_mat/partitioned_petsc_mat.h"
+#include "control/diagnostic_tool/memory_leak_finder.h"
 
 namespace Solver
 {
@@ -20,6 +21,11 @@ Linear::Linear(PythonConfig specificSettings, MPI_Comm mpiCommunicator, std::str
 
   mpiCommunicator_ = mpiCommunicator;
 
+  parseOptions();
+}
+
+void Linear::parseOptions()
+{
   // parse options
   relativeTolerance_ = this->specificSettings_.getOptionDouble("relativeTolerance", 1e-5, PythonUtility::Positive);
   absoluteTolerance_ = this->specificSettings_.getOptionDouble("absoluteTolerance", 0, PythonUtility::NonNegative);  // 0 means disabled
@@ -28,13 +34,6 @@ Linear::Linear(PythonConfig specificSettings, MPI_Comm mpiCommunicator, std::str
   //parse information to use for dumping matrices and vectors
   dumpFormat_ = this->specificSettings_.getOptionString("dumpFormat", "default");
   dumpFilename_ = this->specificSettings_.getOptionString("dumpFilename", "");
-
-  // set up KSP object
-  //KSP *ksp;
-  ksp_ = std::make_shared<KSP>();
-  PetscErrorCode ierr = KSPCreate(mpiCommunicator_, ksp_.get()); CHKERRV(ierr);
-
-  setupKsp(*this->ksp_);
 
   // prepare log keys to log number of iterations and residual norm
   std::stringstream nIterationsLogKey;
@@ -48,6 +47,16 @@ Linear::Linear(PythonConfig specificSettings, MPI_Comm mpiCommunicator, std::str
   std::stringstream nIterationsTotalLogKey;
   nIterationsTotalLogKey << "nIterationsTotal_" << name_;
   nIterationsTotalLogKey_ = nIterationsTotalLogKey.str();
+}
+
+void Linear::initialize()
+{
+  // set up KSP object
+  ksp_ = std::make_shared<KSP>();
+  PetscErrorCode ierr = KSPCreate(mpiCommunicator_, ksp_.get()); CHKERRV(ierr);
+  KSP ksp = *ksp_;
+
+  setupKsp(ksp);
 }
 
 void Linear::setupKsp(KSP ksp)
@@ -101,17 +110,24 @@ void Linear::setupKsp(KSP ksp)
     
     ierr = PCMGSetCycleType(pc, cycleType); CHKERRV(ierr);    
   }
-  
   // set Hypre Options from Python config
-  if (pcType_ == std::string (PCHYPRE))
+  else if (pcType_ == std::string(PCHYPRE))
   {
-    std::string hypreOptions = this->specificSettings_.getOptionString("hypreOptions", "-pc_hypre_type boomeramg");
-    PetscOptionsInsertString(NULL,hypreOptions.c_str());
-  }
-  
-  if (pcType_ ==  std::string(PCMG))
-  {
-    //TODO
+    std::string hypreOptions = this->specificSettings_.getOptionString("hypreOptions", "");
+    PetscOptionsInsertString(NULL, hypreOptions.c_str());
+    
+    // if one of the hypre preconditioners is in preconditionerType_, pcType_ was set to HYPRE, now set the chosen preconditioner as -pc_hypre_type
+    if (preconditionerType_ == "euclid" || preconditionerType_ == "pilut" || preconditionerType_ == "parasails" 
+      || preconditionerType_ == "boomeramg" || preconditionerType_ == "ams" || preconditionerType_ == "ads")
+    {
+#if defined(PETSC_HAVE_HYPRE)
+      ierr = PCHYPRESetType(pc, preconditionerType_.c_str()); CHKERRV(ierr);
+#else
+      LOG(ERROR) << "Petsc is not compiled with HYPRE!";
+#endif
+      
+      LOG(DEBUG) << "set pc_hypre_type to " << preconditionerType_;
+    }
   }
 
   // set options from command line, this overrides the python config
@@ -158,7 +174,13 @@ void Linear::parseSolverTypes()
     pcType_ = PCMG;
   }
   // the hypre boomeramg as the only solver does not provide the correct solution 
-  else if (preconditionerType_ == "pchypre" && kspType_ != KSPPREONLY)
+  else if (preconditionerType_ == "pchypre")
+  {
+    pcType_ = PCHYPRE;
+  }
+  // if one of the hypre preconditioners is in preconditionerType_, set pcType_ to HYPRE and set the chosen preconditioner as -pc_hypre_type
+  else if (preconditionerType_ == "euclid" || preconditionerType_ == "pilut" || preconditionerType_ == "parasails" 
+    || preconditionerType_ == "boomeramg" || preconditionerType_ == "ams" || preconditionerType_ == "ads")
   {
     pcType_ = PCHYPRE;
   }
@@ -264,68 +286,81 @@ void Linear::dumpMatrixRightHandSideSolution(Vec rightHandSide, Vec solution)
   }
 }
 
-void Linear::solve(Vec rightHandSide, Vec solution, std::string message)
+bool Linear::solve(Vec rightHandSide, Vec solution, std::string message)
 {
   PetscErrorCode ierr;
 
   Control::PerformanceMeasurement::start(this->durationLogKey_);
 
-  // solve the system
-  ierr = KSPSolve(*ksp_, rightHandSide, solution); CHKERRV(ierr);
+  // reset memory count in MemoryLeakFinder
+  Control::MemoryLeakFinder::nBytesIncreaseSinceLastCheck();
 
+  // solve the system
+  ierr = KSPSolve(*ksp_, rightHandSide, solution); CHKERRQ(ierr);
+
+  // output a warning if the memory increased by over 1 MB
+  Control::MemoryLeakFinder::warnIfMemoryConsumptionIncreases("In Linear::solve, after KSPSolve");
+    
   Control::PerformanceMeasurement::stop(this->durationLogKey_);
 
   // dump files of rhs, solution and system matrix for debugging
   dumpMatrixRightHandSideSolution(rightHandSide, solution);
 
   // determine meta data
-  PetscInt numberOfIterations = 0;
   PetscReal residualNorm = 0.0;
   PetscInt nDofsGlobal = 0;
 
-  ierr = KSPGetIterationNumber(*ksp_, &numberOfIterations); CHKERRV(ierr);
-  ierr = KSPGetResidualNorm(*ksp_, &residualNorm); CHKERRV(ierr);
+  ierr = KSPGetIterationNumber(*ksp_, &lastNumberOfIterations_); CHKERRQ(ierr);
+  ierr = KSPGetResidualNorm(*ksp_, &residualNorm); CHKERRQ(ierr);
 
   KSPConvergedReason convergedReason;
-  ierr = KSPGetConvergedReason(*ksp_, &convergedReason); CHKERRV(ierr);
-  ierr = VecGetSize(rightHandSide, &nDofsGlobal); CHKERRV(ierr);
+  ierr = KSPGetConvergedReason(*ksp_, &convergedReason); CHKERRQ(ierr);
+  ierr = VecGetSize(rightHandSide, &nDofsGlobal); CHKERRQ(ierr);
 
   // compute residual norm
   if (kspType_ == KSPPREONLY && (pcType_ == PCLU || pcType_ == PCILU))
   {
     if (!residual_)
     {
-      temporaryVectorLeft_ = std::make_shared<Vec>();     ///< temporary vector for computation of residual for direct solvers
-      temporaryVectorRight_ = std::make_shared<Vec>();    ///< temporary vector for computation of residual for direct solvers
-      residual_ = std::make_shared<Vec>();    ///< residual vector for direct solvers
+      temporaryVectorLeft_ = std::make_shared<Vec>();     //< temporary vector for computation of residual for direct solvers
+      temporaryVectorRight_ = std::make_shared<Vec>();    //< temporary vector for computation of residual for direct solvers
+      residual_ = std::make_shared<Vec>();    //< residual vector for direct solvers
 
       Mat systemMatrix;
-      ierr = KSPGetOperators(*ksp_, &systemMatrix, NULL); CHKERRV(ierr);
-      ierr = MatCreateVecs(systemMatrix, &(*temporaryVectorRight_), &(*temporaryVectorLeft_)); CHKERRV(ierr);
+      ierr = KSPGetOperators(*ksp_, &systemMatrix, NULL); CHKERRQ(ierr);
+      ierr = MatCreateVecs(systemMatrix, &(*temporaryVectorRight_), &(*temporaryVectorLeft_)); CHKERRQ(ierr);
 
       LOG(DEBUG) << "create temporary vectors";
     }
     LOG(DEBUG) << "compute residual";
 
     // compute residual
-    ierr = KSPBuildResidual(*ksp_, *temporaryVectorLeft_, *temporaryVectorRight_, &(*residual_)); CHKERRV(ierr);
+    ierr = KSPBuildResidual(*ksp_, *temporaryVectorLeft_, *temporaryVectorRight_, &(*residual_)); CHKERRQ(ierr);
 
     // compute norm of residual
-    ierr = VecNorm(*residual_, NORM_2, &residualNorm); CHKERRV(ierr);
+    ierr = VecNorm(*residual_, NORM_2, &residualNorm); CHKERRQ(ierr);
   }
-
+  
   // output message
   if (message != "")
   {
     // example for output: "Linear system of multidomain problem solved in 373 iterations, 3633 dofs, residual norm 9.471e-11: KSP_CONVERGED_ATOL: residual 2-norm less than abstol"
-    LOG(INFO) << message << " in " << numberOfIterations << " iterations, " << nDofsGlobal << " dofs, residual norm " << residualNorm
+    LOG(INFO) << message << " in " << lastNumberOfIterations_ << " iterations, " << nDofsGlobal << " dofs, residual norm " << residualNorm
       << ": " << PetscUtility::getStringLinearConvergedReason(convergedReason);
   }
 
   // store parameter values to be logged
-  Control::PerformanceMeasurement::setParameter(nIterationsLogKey_, numberOfIterations);
+  Control::PerformanceMeasurement::setParameter(nIterationsLogKey_, lastNumberOfIterations_);
   Control::PerformanceMeasurement::setParameter(residualNormLogKey_, residualNorm);
-  Control::PerformanceMeasurement::countNumber(nIterationsTotalLogKey_, numberOfIterations);
+  Control::PerformanceMeasurement::countNumber(nIterationsTotalLogKey_, lastNumberOfIterations_);
+
+  // if convergedReason > 0 then it converged
+  return convergedReason > 0;
+}
+
+int Linear::lastNumberOfIterations()
+{
+  return lastNumberOfIterations_;
 }
 
 }   //namespace

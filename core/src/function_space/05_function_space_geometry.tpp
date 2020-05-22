@@ -30,6 +30,19 @@ getElementGeometry(element_no_t elementNoLocal, std::array<Vec3, FunctionSpaceBa
   this->geometryField_->getElementValues(elementNoLocal, values);
 }
 
+//! get all geometry entries for an element
+template<typename MeshType,typename BasisFunctionType,typename DummyForTraits>
+void FunctionSpaceGeometry<MeshType,BasisFunctionType,DummyForTraits>::
+getElementGeometry(Vc::int_v elementNoLocal, std::array<Vec3_v, FunctionSpaceBaseDim<MeshType::dim(),BasisFunctionType>::nDofsPerElement()> &values)
+{
+  // assert that geometry field variable is set
+  assert (this->geometryField_);
+  assert (elementNoLocal[0] >= 0);
+  assert (elementNoLocal[0] < this->nElementsLocal());
+
+  this->geometryField_->getElementValues(elementNoLocal, values);
+}
+
 template<typename MeshType,typename BasisFunctionType,typename DummyForTraits>
 void FunctionSpaceGeometry<MeshType,BasisFunctionType,DummyForTraits>::
 extractSurfaceGeometry(const std::array<Vec3, FunctionSpaceBaseDim<MeshType::dim(),BasisFunctionType>::nDofsPerElement()> &geometryVolume, Mesh::face_t face,

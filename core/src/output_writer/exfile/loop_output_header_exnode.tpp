@@ -47,10 +47,10 @@ outputHeaderExnode(CurrentFieldVariableType currentFieldVariable, int &fieldVari
 // element i is of vector type
 template<typename VectorType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
-outputHeaderExnode(VectorType currentFieldVariableVector, int &fieldVariableIndex, std::string meshName, 
+outputHeaderExnode(VectorType currentFieldVariableGradient, int &fieldVariableIndex, std::string meshName, 
                    std::ostream &stream, node_no_t currentNodeGlobalNo, int &valueIndex)
 {
-  for (auto& currentFieldVariable : currentFieldVariableVector)
+  for (auto& currentFieldVariable : currentFieldVariableGradient)
   {
     // call function on all vector entries
     if (outputHeaderExnode<typename VectorType::value_type>(currentFieldVariable, fieldVariableIndex, meshName, stream, currentNodeGlobalNo, valueIndex))

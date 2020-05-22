@@ -57,10 +57,10 @@ output(CurrentFieldVariableType currentFieldVariable, const FieldVariablesForOut
 // element i is of vector type
 template<typename VectorType, typename FieldVariablesForOutputWriterType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
-output(VectorType currentFieldVariableVector, const FieldVariablesForOutputWriterType &fieldVariables, std::string meshName, 
+output(VectorType currentFieldVariableGradient, const FieldVariablesForOutputWriterType &fieldVariables, std::string meshName, 
        std::string filename, PythonConfig specificSettings, double currentTime)
 {
-  for (auto& currentFieldVariable : currentFieldVariableVector)
+  for (auto& currentFieldVariable : currentFieldVariableGradient)
   {
     // call function on all vector entries
     if (output<typename VectorType::value_type,FieldVariablesForOutputWriterType>(currentFieldVariable, fieldVariables, meshName, filename, specificSettings, currentTime))

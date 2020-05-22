@@ -41,14 +41,14 @@ loopOutputExelem(const FieldVariablesForOutputWriterType &fieldVariables, const 
  */
 template<typename VectorType, typename FieldVariablesForOutputWriterType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
-outputExelem(VectorType currentFieldVariableVector, const FieldVariablesForOutputWriterType &fieldVariables, std::string meshName, 
+outputExelem(VectorType currentFieldVariableGradient, const FieldVariablesForOutputWriterType &fieldVariables, std::string meshName, 
              std::ofstream &file, std::shared_ptr<Mesh::Mesh> &mesh);
 
 /** Loop body for a tuple element
  */
 template<typename VectorType, typename FieldVariablesForOutputWriterType>
 typename std::enable_if<TypeUtility::isTuple<VectorType>::value, bool>::type
-outputExelem(VectorType currentFieldVariableVector, const FieldVariablesForOutputWriterType &fieldVariables, std::string meshName, 
+outputExelem(VectorType currentFieldVariableGradient, const FieldVariablesForOutputWriterType &fieldVariables, std::string meshName, 
              std::ofstream &file, std::shared_ptr<Mesh::Mesh> &mesh);
 
  /**  Loop body for a pointer element

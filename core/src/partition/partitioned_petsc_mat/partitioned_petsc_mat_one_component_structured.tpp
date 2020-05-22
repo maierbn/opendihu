@@ -138,6 +138,9 @@ createMatrix(MatType matrixType, int nNonZerosDiagonal, int nNonZerosOffdiagonal
     ierr = MatSeqAIJSetPreallocation(this->globalMatrix_, nNonZerosDiagonal, NULL); CHKERRV(ierr);
     ierr = MatMPIAIJSetPreallocation(this->globalMatrix_, nNonZerosDiagonal, NULL, nNonZerosOffdiagonal, NULL); CHKERRV(ierr);
     LOG(DEBUG) << "Mat SetPreallocation, nNonZerosDiagonal: " << nNonZerosDiagonal << ", nNonZerosOffdiagonal: " << nNonZerosOffdiagonal;
+
+    // strictly do not allow new entries that are not covered by preallocation
+    ierr = MatSetOption(this->globalMatrix_, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_TRUE); CHKERRV(ierr);
   }
 
   createLocalMatrix();
@@ -194,6 +197,49 @@ setValue(PetscInt row, PetscInt col, PetscScalar value, InsertMode mode)
   // this wraps the standard PETSc MatSetValue on the local matrix
   PetscErrorCode ierr;
   ierr = MatSetValuesLocal(this->localMatrix_, 1, &row, 1, &col, &value, mode); CHKERRV(ierr);
+}
+
+template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
+setValue(Vc::int_v rows, Vc::int_v columns, PetscScalar value, InsertMode mode)
+{
+  // this wraps the standard PETSc MatSetValue on the local matrix
+  PetscErrorCode ierr;
+  for (int vcComponentNo = 0; vcComponentNo < Vc::double_v::size(); vcComponentNo++)
+  {
+    PetscInt rowNo = rows[vcComponentNo];
+    if (rowNo != -1)
+    {
+      PetscInt columnNo = columns[vcComponentNo];
+      if (columnNo != -1)
+      {
+        ierr = MatSetValuesLocal(this->localMatrix_, 1, &rowNo, 1, &columnNo, &value, mode); CHKERRV(ierr);
+      }
+    }
+  }
+}
+
+template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
+setValue(Vc::int_v rows, Vc::int_v columns, Vc::double_v values, InsertMode mode)
+{
+  std::array<double,Vc::double_v::size()> data;
+  values.store(data.data());
+
+  // this wraps the standard PETSc MatSetValue on the local matrix
+  PetscErrorCode ierr;
+  for (int vcComponentNo = 0; vcComponentNo < Vc::double_v::size(); vcComponentNo++)
+  {
+    PetscInt rowNo = rows[vcComponentNo];
+    if (rowNo != -1)
+    {
+      PetscInt columnNo = columns[vcComponentNo];
+      if (columnNo != -1)
+      {
+        ierr = MatSetValuesLocal(this->localMatrix_, 1, &rowNo, 1, &columnNo, &(data[vcComponentNo]), mode); CHKERRV(ierr);
+      }
+    }
+  }
 }
 
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>

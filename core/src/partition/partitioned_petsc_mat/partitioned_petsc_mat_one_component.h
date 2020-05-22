@@ -50,7 +50,13 @@ public:
 
   //! wrapper of MatSetValues for a single value, sets a local value in the matrix
   void setValue(PetscInt row, PetscInt col, PetscScalar value, InsertMode mode);
-  
+
+  //! wrapper of MatSetValues for a single value, sets a local value in the matrix
+  void setValue(Vc::int_v rows, Vc::int_v columns, PetscScalar value, InsertMode mode);
+
+  //! wrapper of MatSetValues for a single vectorized value, sets a local value in the matrix
+  void setValue(Vc::int_v rows, Vc::int_v columns, Vc::double_v values, InsertMode mode);
+
   //! wrapper of MatSetValues for a single value, sets a local value in the matrix
   void setValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], const PetscScalar v[], InsertMode addv);
   
@@ -95,8 +101,8 @@ protected:
   //! set the global to local mapping at the global matrix and create the local submatrix
   void createLocalMatrix();
 
-  Mat globalMatrix_;   ///< the global Petsc matrix, access using MatSetValuesLocal() with local indices (not used here) or via the localMatrix (this one is used)
-  Mat localMatrix_;    ///< a local submatrix that holds all rows and columns for the local dofs with ghosts
+  Mat globalMatrix_;   //< the global Petsc matrix, access using MatSetValuesLocal() with local indices (not used here) or via the localMatrix (this one is used)
+  Mat localMatrix_;    //< a local submatrix that holds all rows and columns for the local dofs with ghosts
 };
 
 /** Partial specialization for unstructured meshes. This is completely serial, there are no parallel matrices.
@@ -134,6 +140,12 @@ public:
   //! wrapper of MatSetValues for a single value, sets a local value in the matrix
   void setValue(PetscInt row, PetscInt col, PetscScalar value, InsertMode mode);
   
+  //! wrapper of MatSetValues for a single value, sets a local value in the matrix
+  void setValue(Vc::int_v rows, Vc::int_v columns, PetscScalar value, InsertMode mode);
+
+  //! wrapper of MatSetValues for a single value, sets a local value in the matrix
+  void setValue(Vc::int_v rows, Vc::int_v columns, Vc::double_v values, InsertMode mode);
+
   //! wrapper of MatSetValues for a single value, sets a local value in the matrix
   void setValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], const PetscScalar v[], InsertMode addv);
 
@@ -175,7 +187,7 @@ protected:
   //! create a distributed Petsc matrix, according to the given partition
   void createMatrix(MatType matrixType, int nNonZerosDiagonal, int nNonZerosOffdiagonal);
   
-  Mat matrix_;   ///< the single Petsc matrix (global = local)
+  Mat matrix_;   //< the single Petsc matrix (global = local)
 };
 
 template<typename FunctionSpaceType>

@@ -31,6 +31,13 @@ MultidomainSolver(DihuContext context) :
   nCompartments_ = this->specificSettings_.getOptionInt("nCompartments", 1, PythonUtility::NonNegative);
   initialGuessNonzero_ = this->specificSettings_.getOptionBool("initialGuessNonzero", true);
   showLinearSolverOutput_ = this->specificSettings_.getOptionBool("showLinearSolverOutput", true);
+  updateSystemMatrixEveryTimestep_ = this->specificSettings_.getOptionBool("updateSystemMatrixEveryTimestep", false);
+
+  if (this->specificSettings_.hasKey("constructPreconditionerMatrix"))
+  {
+    LOG(ERROR) << this->specificSettings_ << " option \"constructPreconditionerMatrix\" has been renamed to \"useSymmetricPreconditionerMatrix\".";
+  }
+  useSymmetricPreconditionerMatrix_ = this->specificSettings_.getOptionBool("useSymmetricPreconditionerMatrix", true);
 
   // create finiteElement objects for diffusion in compartments
   finiteElementMethodDiffusionCompartment_.reserve(nCompartments_);
@@ -42,6 +49,7 @@ MultidomainSolver(DihuContext context) :
   singleSystemMatrix_ = PETSC_NULL;
   singleSolution_ = PETSC_NULL;
   singleRightHandSide_ = PETSC_NULL;
+  singlePreconditionerMatrix_ = PETSC_NULL;
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
@@ -64,29 +72,40 @@ advanceTimeSpan()
   // loop over time steps
   for (int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
   {
-    if (timeStepNo % this->timeStepOutputInterval_ == 0 && timeStepNo > 0)
+    if (timeStepNo % this->timeStepOutputInterval_ == 0 && (this->timeStepOutputInterval_ <= 10 || timeStepNo > 0))  // show first timestep only if timeStepOutputInterval is <= 10
     {
       LOG(INFO) << "Multidomain diffusion, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime
         << " (linear solver iterations: " << lastNumberOfIterations_ << ")";
+    }
+
+    LOG(DEBUG) << " Vm: ";
+    //dataMultidomain_.subcellularStates(0)->extractComponent(0, dataMultidomain_.transmembranePotential(0));
+    LOG(DEBUG) << *dataMultidomain_.transmembranePotential(0);
+
+    if (fabs(this->timeStepWidthOfSystemMatrix_ - this->timeStepWidth_) / this->timeStepWidth_ > 1e-4)
+    {
+      LOG(WARNING) << "In multidomain solver, timestep width changed from " << this->timeStepWidthOfSystemMatrix_ << " to " << timeStepWidth_
+        << " (relative: " << std::showpos << 100*(this->timeStepWidthOfSystemMatrix_ - this->timeStepWidth_) / this->timeStepWidth_ << std::noshowpos << "%), need to recreate system matrix.";
+
+      this->timeStepWidthOfSystemMatrix_ = this->timeStepWidth_;
+      setSystemMatrixSubmatrices(this->timeStepWidthOfSystemMatrix_);
+      createSystemMatrixFromSubmatrices();
+    }
+    else if (this->updateSystemMatrixEveryTimestep_ && timeStepNo == 0)
+    {
+      updateSystemMatrix();
     }
 
     // advance simulation time
     timeStepNo++;
     currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
 
-    LOG(DEBUG) << " Vm: ";
-    //dataMultidomain_.subcellularStates(0)->extractComponent(0, dataMultidomain_.transmembranePotential(0));
-    LOG(DEBUG) << *dataMultidomain_.transmembranePotential(0);
-
-    // rebuild the system matrix if the timestep width changed
-    updateSystemMatrix(this->timeStepWidth_, true);
-
     // advance diffusion
     VLOG(1) << "---- diffusion term";
 
     // solve A*u^{t+1} = u^{t} for u^{t+1} where A is the system matrix, solveLinearSystem(b,x)
     this->solveLinearSystem();
-    
+
     LOG(DEBUG) << " Vm[k=0]: ";
     //dataMultidomain_.subcellularStates(0)->extractComponent(0, dataMultidomain_.transmembranePotential(0));
     LOG(DEBUG) << *dataMultidomain_.transmembranePotentialSolution(0);
@@ -137,8 +156,8 @@ initialize()
   if (this->initialized_)
     return;
 
-  initializeObjects();
-  initializeMatricesAndVectors();
+  initializeObjects();              // this is also called by MultidomainWithFatSolver
+  initializeMatricesAndVectors();   // this is not called by MultidomainWithFatSolver
 
   // write initial meshes
   callOutputWriter(0, 0.0);
@@ -228,14 +247,21 @@ initializeObjects()
   this->specificSettings_.getOptionVector("cm", nCompartments_, cm_);
   LOG(DEBUG) << "Am: " << am_ << ", Cm: " << cm_;
 
+  // initialize linear solver
   LOG(DEBUG) << "initialize linear solver";
 
-  // initialize linear solver
-  if (linearSolver_ == nullptr)
+  if (this->linearSolver_ == nullptr)
   {
-    // retrieve linear solver
-    linearSolver_ = this->context_.solverManager()->template solver<Solver::Linear>(
+    // create or get linear solver object
+    this->linearSolver_ = this->context_.solverManager()->template solver<Solver::Linear>(
       this->specificSettings_, this->rankSubset_->mpiCommunicator());
+
+    // initialize the alternative linear solver that is used when thet linearSolver_ diverges
+    if (this->specificSettings_.hasKey("alternativeSolverName"))
+    {
+      this->alternativeLinearSolver_ = this->context_.solverManager()->template solver<Solver::Linear>(
+        this->specificSettings_, this->rankSubset_->mpiCommunicator(), "alternativeSolverName");
+    }
   }
 }
 
@@ -243,6 +269,8 @@ template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodD
 void MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
 initializeMatricesAndVectors()
 {
+  LOG(DEBUG) << "initialize linear solver";
+
   // initialize system matrix
   updateSystemMatrix(this->timeStepWidth_, false);
 
@@ -251,7 +279,43 @@ initializeMatricesAndVectors()
   // set matrix used for linear solver and preconditioner to ksp context
   assert(this->linearSolver_->ksp());
   PetscErrorCode ierr;
-  ierr = KSPSetOperators(*this->linearSolver_->ksp(), singleSystemMatrix_, singleSystemMatrix_); CHKERRV(ierr);
+
+  PC pc;
+  ierr = KSPGetPC(*linearSolver_->ksp(), &pc); CHKERRV(ierr);
+
+  // set block information for block jacobi preconditioner
+  // check, if block jacobi preconditioner is selected
+  PetscBool useBlockJacobiPreconditioner;
+  PetscObjectTypeCompare((PetscObject)pc, PCBJACOBI, &useBlockJacobiPreconditioner);
+  if (useBlockJacobiPreconditioner)
+  {
+    // PCBJacobiSetTotalBlocks(PC pc, PetscInt nBlocks, const PetscInt lengthsOfBlocks[])
+    PetscInt nBlocks = nColumnSubmatricesSystemMatrix_;
+
+    // set sizes of all blocks to the number of dofs in the muscle domain
+    std::vector<PetscInt> lengthsOfBlocks(nBlocks, dataMultidomain_.functionSpace()->nDofsGlobal());
+    ierr = PCBJacobiSetTotalBlocks(pc, nColumnSubmatricesSystemMatrix_, lengthsOfBlocks.data()); CHKERRV(ierr);
+  }
+
+  // set the local node positions for the preconditioner
+  int nDofsPerNode = dataMultidomain_.functionSpace()->nDofsPerNode();
+  int nNodesLocal = dataMultidomain_.functionSpace()->nNodesLocalWithoutGhosts();
+
+  std::vector<double> nodePositionCoordinatesForPreconditioner;
+  nodePositionCoordinatesForPreconditioner.reserve(3*nNodesLocal);
+
+  // loop over muscle nodes and add their node positions
+  for (dof_no_t dofNoLocal = 0; dofNoLocal < nNodesLocal*nDofsPerNode; dofNoLocal++)
+  {
+    Vec3 nodePosition = dataMultidomain_.functionSpace()->getGeometry(dofNoLocal);
+
+    // add the coordinates
+    for (int i = 0; i < 3; i++)
+      nodePositionCoordinatesForPreconditioner.push_back(nodePosition[i]);
+  }
+
+  LOG(DEBUG) << "set coordinates to preconditioner, " << nodePositionCoordinatesForPreconditioner.size() << " node coordinates";
+  ierr = PCSetCoordinates(pc, 3, nodePositionCoordinatesForPreconditioner.size(), nodePositionCoordinatesForPreconditioner.data()); CHKERRV(ierr);
 
   // set the nullspace of the matrix
   // as we have Neumann boundary conditions, constant functions are in the nullspace of the matrix
@@ -260,6 +324,8 @@ initializeMatricesAndVectors()
   ierr = MatSetNullSpace(singleSystemMatrix_, nullSpace); CHKERRV(ierr);
   ierr = MatSetNearNullSpace(singleSystemMatrix_, nullSpace); CHKERRV(ierr); // for multigrid methods
   //ierr = MatNullSpaceDestroy(&nullSpace); CHKERRV(ierr);
+
+  ierr = KSPSetOperators(*this->linearSolver_->ksp(), singleSystemMatrix_, singlePreconditionerMatrix_); CHKERRV(ierr);
 
   // initialize rhs and solution vector
   subvectorsRightHandSide_.resize(nCompartments_+1);
@@ -309,13 +375,25 @@ initializeCompartmentRelativeFactors()
     // if parsed node positions in vector localNodePositions_ actually contains global node positions, extract local positions
     if (inputIsGlobal)
     {
+      if (values.size() != dataMultidomain_.functionSpace()->nDofsGlobal())
+      {
+        LOG(FATAL) << "In MultidomainSolver, \"compartmentRelativeFactors\" for compartment " << k << " of " << nCompartments_ << " contains "
+          << values.size() << " entries, but the mesh \"" << dataMultidomain_.functionSpace()->meshName() << "\" has "
+          << dataMultidomain_.functionSpace()->nDofsGlobal() << " global dofs and \"inputIsGlobal\" is True.\n"
+          << "Depending on how you pass the values in the python settings, maybe delete and recreate the \"compartments_relative_factors*\" files?\n"
+          << "(Note this is a guess, the C++ code does not know which example you're in or what you're doing in the python scripts.)";
+      }
+
       dataMultidomain_.functionSpace()->meshPartition()->extractLocalDofsWithoutGhosts(values);
     }
 
     if (values.size() < dataMultidomain_.compartmentRelativeFactor(k)->nDofsLocalWithoutGhosts())
     {
-      LOG(FATAL) << "\"compartmentRelativeFactors\" for compartment " << k << " contains only " << values.size() << " entries, "
-        << dataMultidomain_.compartmentRelativeFactor(k)->nDofsLocalWithoutGhosts() << " are needed.";
+      LOG(FATAL) << "In MultidomainSolver, \"compartmentRelativeFactors\" for compartment " << k << " of " << nCompartments_
+        << " contains only " << values.size() << " entries, but the mesh \"" << dataMultidomain_.compartmentRelativeFactor(k)->functionSpace()->meshName() << "\""
+        << " has " << dataMultidomain_.compartmentRelativeFactor(k)->nDofsLocalWithoutGhosts() << " local dofs.\n"
+        << "Depending on how you pass the values in the python settings, maybe delete and recreate the \"compartments_relative_factors*\" files?\n"
+        << "(Note this is a guess, the C++ code does not know which example you're in or what you're doing in the python scripts.)";
     }
 
     dataMultidomain_.compartmentRelativeFactor(k)->setValuesWithoutGhosts(values);
@@ -346,7 +424,7 @@ setSystemMatrixSubmatrices(double timeStepWidth)
   // initialize the number of rows, this will already be set when the method is called for the inherited class MultidomainWithFatSolver
   if (nColumnSubmatricesSystemMatrix_ == 0)
     nColumnSubmatricesSystemMatrix_ = nCompartments_+1;
-    
+
   this->submatricesSystemMatrix_.resize(MathUtility::sqr(nColumnSubmatricesSystemMatrix_),NULL);
 
   LOG(TRACE) << "setSystemMatrix";
@@ -425,7 +503,7 @@ setSystemMatrixSubmatrices(double timeStepWidth)
     // create matrix as copy of stiffnessMatrix
     Mat matrixOnBottomRow;
     ierr = MatConvert(stiffnessMatrixWithPrefactor, MATSAME, MAT_INITIAL_MATRIX, &matrixOnBottomRow); CHKERRV(ierr);
-    
+
 #if 0
     // debugging test, gives slightly different results due to approximation of test
     Mat test;
@@ -520,7 +598,7 @@ createSystemMatrixFromSubmatrices()
     for (int columnNo = 0; columnNo < nColumnSubmatricesSystemMatrix_; columnNo++)
     {
       Mat subMatrix = submatricesSystemMatrix_[rowNo*nColumnSubmatricesSystemMatrix_ + columnNo];
-      
+
       if (!subMatrix)
       {
         LOG(DEBUG) << "submatrix (" << rowNo << "," << columnNo << ") is empty (NULL)";
@@ -533,7 +611,7 @@ createSystemMatrixFromSubmatrices()
         char *cName;
         ierr = PetscObjectGetName((PetscObject)subMatrix, (const char **)&cName); CHKERRV(ierr);
         name = cName;
-        
+
         LOG(DEBUG) << "submatrix (" << rowNo << "," << columnNo << ") is \"" << name << "\" (" << nRows << "x" << nColumns << ")";
       }
     }
@@ -546,6 +624,96 @@ createSystemMatrixFromSubmatrices()
 
   // create a single Mat object from the nested Mat
   NestedMatVecUtility::createMatFromNestedMat(nestedSystemMatrix_, singleSystemMatrix_, data().functionSpace()->meshPartition()->rankSubset());
+
+  if (useSymmetricPreconditionerMatrix_)
+  {
+    this->submatricesPreconditionerMatrix_ = submatricesSystemMatrix_;
+
+    // set offdiagonal matrices to NULL
+    for (int rowNo = 0; rowNo < nColumnSubmatricesSystemMatrix_; rowNo++)
+    {
+      for (int columnNo = 0; columnNo < nColumnSubmatricesSystemMatrix_; columnNo++)
+      {
+        int index = rowNo*nColumnSubmatricesSystemMatrix_ + columnNo;
+
+        bool isOnDiagonal = columnNo == rowNo;
+        bool isSymmetricOffDiagonal = (rowNo == nCompartments_+1 && columnNo == nCompartments_) || (rowNo == nCompartments_ && columnNo == nCompartments_+1);
+
+        if (!isOnDiagonal && !isSymmetricOffDiagonal)
+        {
+          submatricesPreconditionerMatrix_[index] = NULL;
+        }
+      }
+    }
+#ifndef NDEBUG
+  LOG(DEBUG) << "preconditioner: nested matrix with " << nColumnSubmatricesSystemMatrix_ << "x" << nColumnSubmatricesSystemMatrix_ << " submatrices, nCompartments_=" << nCompartments_;
+
+  // output dimensions of submatrices for debugging
+  for (int rowNo = 0; rowNo < nColumnSubmatricesSystemMatrix_; rowNo++)
+  {
+    for (int columnNo = 0; columnNo < nColumnSubmatricesSystemMatrix_; columnNo++)
+    {
+      Mat subMatrix = submatricesPreconditionerMatrix_[rowNo*nColumnSubmatricesSystemMatrix_ + columnNo];
+
+      if (!subMatrix)
+      {
+        LOG(DEBUG) << "preconditioner submatrix (" << rowNo << "," << columnNo << ") is empty (NULL)";
+      }
+      else
+      {
+        PetscInt nRows, nColumns;
+        ierr = MatGetSize(subMatrix, &nRows, &nColumns); CHKERRV(ierr);
+        std::string name;
+        char *cName;
+        ierr = PetscObjectGetName((PetscObject)subMatrix, (const char **)&cName); CHKERRV(ierr);
+        name = cName;
+
+        LOG(DEBUG) << "preconditioner submatrix (" << rowNo << "," << columnNo << ") is \"" << name << "\" (" << nRows << "x" << nColumns << ")";
+      }
+    }
+  }
+#endif
+
+
+    Mat nestedPreconditionerMatrix;
+
+    // create nested matrix
+    ierr = MatCreateNest(this->rankSubset_->mpiCommunicator(),
+                        nColumnSubmatricesSystemMatrix_, NULL, nColumnSubmatricesSystemMatrix_, NULL, submatricesPreconditionerMatrix_.data(), &nestedPreconditionerMatrix); CHKERRV(ierr);
+
+    // create a single Mat object from the nested Mat
+    NestedMatVecUtility::createMatFromNestedMat(nestedPreconditionerMatrix, singlePreconditionerMatrix_, data().functionSpace()->meshPartition()->rankSubset());
+  }
+  else
+  {
+    singlePreconditionerMatrix_ = singleSystemMatrix_;
+  }
+}
+
+template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
+void MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
+updateSystemMatrix()
+{
+  // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
+  if (this->durationLogKey_ != "")
+    Control::PerformanceMeasurement::start(this->durationLogKey_+std::string("_reassemble"));
+
+  // assemble stiffness and mass matrices again
+  this->finiteElementMethodDiffusion_.setStiffnessMatrix();
+  this->finiteElementMethodDiffusion_.setMassMatrix();
+  this->finiteElementMethodDiffusion_.setInverseLumpedMassMatrix();
+
+  this->finiteElementMethodDiffusionTotal_.setStiffnessMatrix();
+
+  // compute new entries for submatrices, except B,C,D and E
+  setSystemMatrixSubmatrices(this->timeStepWidthOfSystemMatrix_);
+
+  // create the system matrix again
+  createSystemMatrixFromSubmatrices();
+
+  // stop duration measurement
+  if (this->durationLogKey_ != "")
+    Control::PerformanceMeasurement::stop(this->durationLogKey_+std::string("_reassemble"));
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
@@ -588,24 +756,40 @@ solveLinearSystem()
   // copy the values from a nested Petsc Vec to a single Vec that contains all entries
   NestedMatVecUtility::createVecFromNestedVec(nestedRightHandSide_, singleRightHandSide_, data().functionSpace()->meshPartition()->rankSubset());
 
-  // copy the values from a nested Petsc Vec to a single Vec that contains all entries
-  NestedMatVecUtility::createVecFromNestedVec(nestedSolution_, singleSolution_, data().functionSpace()->meshPartition()->rankSubset());
-
   // solve the linear system
   // this can be done using the nested Vecs and nested Mat (nestedSolution_, nestedRightHandSide_, nestedSystemMatrix_),
-  // or the single Vecs and Mats that contain all values directly  (singleSolution_, singleRightHandSide_, singleSystemMatrix_) 
+  // or the single Vecs and Mats that contain all values directly  (singleSolution_, singleRightHandSide_, singleSystemMatrix_)
 
+  bool hasSolverConverged = false;
 
-  if (showLinearSolverOutput_)
+  // try up to three times to solve the system
+  for (int solveNo = 0; solveNo < 5; solveNo++)
   {
-    this->linearSolver_->solve(singleRightHandSide_, singleSolution_, "Linear system of multidomain problem solved");
+    // copy the values from a nested Petsc Vec to a single Vec that contains all entries
+    NestedMatVecUtility::createVecFromNestedVec(nestedSolution_, singleSolution_, data().functionSpace()->meshPartition()->rankSubset());
+
+    if (showLinearSolverOutput_)
+    {
+      hasSolverConverged = this->linearSolver_->solve(singleRightHandSide_, singleSolution_, "Linear system of multidomain problem solved");
+    }
+    else
+    {
+      // solve without showing output
+      hasSolverConverged = this->linearSolver_->solve(singleRightHandSide_, singleSolution_);
+    }
+    if (hasSolverConverged)
+    {
+      break;
+    }
+    else
+    {
+      LOG(WARNING) << "Solver has not converged, try again " << solveNo << "/3";
+    }
   }
-  else
-  {
-    // solve without showing output
-    this->linearSolver_->solve(singleRightHandSide_, singleSolution_);
-  }
-  
+
+  // store the last number of iterations
+  lastNumberOfIterations_ = this->linearSolver_->lastNumberOfIterations();
+
   // copy the values back from a single Vec that contains all entries to a nested Petsc Vec
   NestedMatVecUtility::fillNestedVec(singleSolution_, nestedSolution_);
 }

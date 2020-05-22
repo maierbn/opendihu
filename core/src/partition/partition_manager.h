@@ -69,10 +69,10 @@ public:
 
 private:
  
-  PythonConfig specificSettings_;  ///< the settings object for the partition manager
+  PythonConfig specificSettings_;  //< the settings object for the partition manager
   
-  std::shared_ptr<RankSubset> nextRankSubset_;   ///< rank subset that will be used for the next partitioning that will be created
-  std::shared_ptr<RankSubset> rankSubsetForCollectiveOperations_;    ///< the ranks which should be used for collective MPI operations
+  std::shared_ptr<RankSubset> nextRankSubset_;   //< rank subset that will be used for the next partitioning that will be created
+  std::shared_ptr<RankSubset> rankSubsetForCollectiveOperations_;    //< the ranks which should be used for collective MPI operations
 };
 
 }  // namespace

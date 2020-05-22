@@ -39,14 +39,14 @@ loopGetFirstFieldVariableOfMesh(const FieldVariablesForOutputWriterType &fieldVa
  */
 template<typename VectorType, typename FieldVariableType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
-getFirstFieldVariableOfMesh(VectorType currentFieldVariableVector, std::string meshName,
+getFirstFieldVariableOfMesh(VectorType currentFieldVariableGradient, std::string meshName,
                                 std::shared_ptr<FieldVariableType> &firstFieldVariableOfMesh);
 
 /** Loop body for a tuple element
  */
 template<typename VectorType, typename FieldVariableType>
 typename std::enable_if<TypeUtility::isTuple<VectorType>::value, bool>::type
-getFirstFieldVariableOfMesh(VectorType currentFieldVariableVector, std::string meshName,
+getFirstFieldVariableOfMesh(VectorType currentFieldVariableGradient, std::string meshName,
                                 std::shared_ptr<FieldVariableType> &firstFieldVariableOfMesh);
 
  /**  Loop body for a pointer element

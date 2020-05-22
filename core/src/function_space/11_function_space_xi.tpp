@@ -4,6 +4,7 @@
 #include <array>
 #include "easylogging++.h"
 #include "function_space/00_function_space_base_dim.h"
+#include "utility/math_utility.h"
 #include <chrono>
 
 namespace FunctionSpace
@@ -15,7 +16,7 @@ const double RESIDUUM_NORM_TOLERANCE = 1e-4;  // 1e-4^2 is 1e-8, usually it take
  
 // general implementation
 template<typename MeshType,typename BasisFunctionType,typename DummyForTraits>
-bool FunctionSpaceXi<MeshType,BasisFunctionType,DummyForTraits>::
+bool FunctionSpacePointInElement<MeshType,BasisFunctionType,DummyForTraits>::
 pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType::dim()> &xi, double &residual, double xiTolerance)
 {
   // This method computes the xi coordinates in the element-local coordinate system [0,1]^D of the point p and 
@@ -58,6 +59,18 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType:
 
   VLOG(2) << "point " << point << ", geometryValues: " << geometryValues;
 
+  if (this->pointIsOutsideBoundingBox(point, geometryValues))
+  {
+    VLOG(2) << "point " << point << " is outside bounding box";
+    return false;
+  }
+
+  if (this->pointIsNodePosition(point, geometryValues, xi))
+  {
+    VLOG(2) << "point " << point << " is a node position of the element";
+    return true;
+  }
+
   std::array<double,MeshType::dim()> xiPrevious = xi;
 
   // compute initial residuum
@@ -67,7 +80,7 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType:
   
   if (VLOG_IS_ON(2))
   {
-    VLOG(2) << " xi0 = " << xi << ", residuum: " << residuum << " (norm: " << sqrt(residuumNormSquared) << ")";
+    VLOG(2) << " xi0 = " << xi << ", initial residuum: " << residuum << " (norm: " << sqrt(residuumNormSquared) << ")";
   }
 
   // initialize the increment for xi if the Newton step fails
@@ -281,14 +294,14 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType:
     LOG(INFO) << "total: " << (durationNewton+durationApproximation) / nMeasurements;
   }
 #endif  
-  VLOG(2) << "  " << (pointIsInElement? "inside" : "outside");
+  VLOG(2) << "  xi: " << xi << ", residual: " << residual << ", residuumNormSquared: " << residuumNormSquared << " -> " << (pointIsInElement? "inside" : "outside");
   
   return pointIsInElement;
 }
 
 // regular fixed 1D
 template<typename BasisFunctionType>
-bool FunctionSpaceXi<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunctionType>::
+bool FunctionSpacePointInElement<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunctionType>::
 pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,1> &xi, double &residual, double xiTolerance)
 {
   const int nDofsPerElement = FunctionSpaceBaseDim<1,BasisFunctionType>::nDofsPerElement();  //=2
@@ -304,7 +317,7 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,1> &xi, d
 
 // regular fixed 2D
 template<typename BasisFunctionType>
-bool FunctionSpaceXi<Mesh::StructuredRegularFixedOfDimension<2>, BasisFunctionType>::
+bool FunctionSpacePointInElement<Mesh::StructuredRegularFixedOfDimension<2>, BasisFunctionType>::
 pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,2> &xi, double &residual, double xiTolerance)
 {
   const int nDofsPerElement = FunctionSpaceBaseDim<2,BasisFunctionType>::nDofsPerElement();
@@ -321,7 +334,7 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,2> &xi, d
 
 // regular fixed 3D
 template<typename BasisFunctionType>
-bool FunctionSpaceXi<Mesh::StructuredRegularFixedOfDimension<3>, BasisFunctionType>::
+bool FunctionSpacePointInElement<Mesh::StructuredRegularFixedOfDimension<3>, BasisFunctionType>::
 pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,3> &xi, double &residual, double xiTolerance)
 {
   const int nDofsPerElement = FunctionSpaceBaseDim<3,BasisFunctionType>::nDofsPerElement();
@@ -339,7 +352,7 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,3> &xi, d
 
 // 1D deformable meshes and linear shape function
 template<typename MeshType>
-bool FunctionSpaceXi<MeshType, BasisFunction::LagrangeOfOrder<1>, Mesh::isDeformableWithDim<1,MeshType>>::
+bool FunctionSpacePointInElement<MeshType, BasisFunction::LagrangeOfOrder<1>, Mesh::isDeformableWithDim<1,MeshType>>::
 pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,1> &xi, double &residual, double xiTolerance)
 {
   //const int nDofsPerElement = FunctionSpaceBaseDim<1,BasisFunction::LagrangeOfOrder<1>>::nDofsPerElement();  //=2
@@ -363,7 +376,7 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,1> &xi, d
 /*
 // 2D deformable meshes and linear shape function
 template<typename MeshType>
-bool FunctionSpaceXi<MeshType, BasisFunction::LagrangeOfOrder<1>, Mesh::isDeformableWithDim<2,MeshType>>::
+bool FunctionSpacePointInElement<MeshType, BasisFunction::LagrangeOfOrder<1>, Mesh::isDeformableWithDim<2,MeshType>>::
 pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,2> &xi, double xiTolerance)
 {
   //const int nDofsPerElement = FunctionSpaceBaseDim<2,BasisFunction::LagrangeOfOrder<1>>::nDofsPerElement();  //=4
@@ -434,7 +447,7 @@ pointIsInTetrahedron(Vec3 point, std::array<Vec3,4> tetrahedron, std::array<bool
 // 3D deformable meshes and linear shape function
 template<typename MeshType>
 bool ComputeXiApproximation<MeshType, BasisFunction::LagrangeOfOrder<1>, Mesh::isDeformableWithDim<3,MeshType>>::
-pointIsInElementQuick(Vec3 point, std::array<Vec3, FunctionSpaceBaseDim<3,BasisFunction::LagrangeOfOrder<1>>::nDofsPerElement()> &geometryValues)
+pointIsInElementQuick(Vec3 point, const std::array<Vec3, FunctionSpaceBaseDim<3,BasisFunction::LagrangeOfOrder<1>>::nDofsPerElement()> &geometryValues) const
 {
   VLOG(3) << "pointIsInElementQuick, point " << point << ", element " << geometryValues;
 
@@ -670,6 +683,82 @@ computeApproximateXiForPoint(Vec3 point, element_no_t elementNo, std::array<doub
 
   if (nSummands != 0)
     xi /= nSummands;
+}
+
+template<typename MeshType,typename BasisFunctionType>
+bool FunctionSpaceXi<MeshType,BasisFunctionType>::
+pointIsOutsideBoundingBox(Vec3 point, const std::array<Vec3,FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement()> &geometryValues) const
+{
+  double xmin = geometryValues[0][0];
+  double xmax = geometryValues[0][0];
+  double ymin = geometryValues[0][1];
+  double ymax = geometryValues[0][1];
+  double zmin = geometryValues[0][2];
+  double zmax = geometryValues[0][2];
+
+  // loop over all geometryValues and find out bounding box values
+  for (int i = 1; i < geometryValues.size(); i++)
+  {
+    xmin = std::min(xmin, geometryValues[i][0]);
+    xmax = std::max(xmax, geometryValues[i][0]);
+    ymin = std::min(ymin, geometryValues[i][1]);
+    ymax = std::max(ymax, geometryValues[i][1]);
+    zmin = std::min(zmin, geometryValues[i][2]);
+    zmax = std::max(zmax, geometryValues[i][2]);
+  }
+
+  // tolerance has to be at least 1e-9 or higher
+  const double eps = 1e-5;
+  if (point[0] < xmin-eps || point[0] > xmax+eps || point[1] < ymin-eps || point[1] > ymax+eps || point[2] < zmin-eps || point[2] > zmax+eps)
+  {
+    VLOG(2) << "point " << point << " is outside bounding box [" << xmin << "," << xmax << "]x[" << ymin << "," << ymax << "]x[" << zmin << "," << zmax << "], diff: " 
+    "[" << point[0]-xmin << "," << xmax-point[0] << "]x[" << point[1]-ymin << "," << ymax-point[1] << "]x[" << point[2]-zmin << "," << zmax-point[2] << "], eps=" << eps;
+    return true;
+  }
+  return false;
+}
+
+template<typename MeshType,typename BasisFunctionType>
+bool FunctionSpaceXi<MeshType,BasisFunctionType>::
+pointIsNodePosition(Vec3 point, const std::array<Vec3,FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement()> &geometryValues, std::array<double,MeshType::dim()> &xi) const
+{
+  // loop over all geometryValues
+  int nNodesPerDimensionX = FunctionSpaceBaseDim<1,BasisFunctionType>::nNodesPerElement();
+  int nNodesPerDimensionY = FunctionSpaceBaseDim<1,BasisFunctionType>::nNodesPerElement();
+  int nNodesPerDimensionZ = FunctionSpaceBaseDim<1,BasisFunctionType>::nNodesPerElement();
+
+  const int D = MeshType::dim();
+  
+  if (D <= 2)
+    nNodesPerDimensionZ = 1;
+  
+  if (D == 1)
+    nNodesPerDimensionY = 1;
+
+  int index = 0;
+  for (int k = 0; k < nNodesPerDimensionZ; k++)
+  {
+    for (int j = 0; j < nNodesPerDimensionY; j++)
+    {
+      for (int i = 0; i < nNodesPerDimensionX; i++, index++)
+      {
+        if (MathUtility::template equals<3>((const Vec3)geometryValues[index], (const Vec3)point, 1e-6))
+        {
+          xi[0] = (double)i / (nNodesPerDimensionX-1);
+          if (D >= 2)
+            xi[1] = (double)j / (nNodesPerDimensionY-1);
+          if (D == 3)
+            xi[2] = (double)k / (nNodesPerDimensionZ-1);
+          return true;
+        }
+        else 
+        {
+          VLOG(2) << "point " << point << " is not equal to node at " << index << " (" << i << "," << j << "," << k << ") " << geometryValues[index];
+        }
+      }
+    }
+  }
+  return false;
 }
 
 } // namespace

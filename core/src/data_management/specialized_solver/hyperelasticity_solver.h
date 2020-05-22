@@ -70,7 +70,7 @@ public:
   std::shared_ptr<StressFieldVariableType> activePK2Stress();
 
   //! field variable of fiber direction
-  std::shared_ptr<DisplacementsFieldVariableType> fiberDirection();
+  std::shared_ptr<DisplacementsFieldVariableType> &fiberDirection();
 
 
   //! initialize

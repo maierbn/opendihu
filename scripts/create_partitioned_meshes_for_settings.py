@@ -137,7 +137,8 @@ def n_sampled_points_in_subdomain_z(subdomain_coordinate_z):
 # this is the main function that creates the meshes and partitioning
 def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_subdomains_z, 
                                            fiber_file, load_fiber_data, sampling_stride_x, sampling_stride_y, sampling_stride_z, 
-                                           generate_linear_3d_mesh=False, generate_quadratic_3d_mesh=False, fiber_set_rank_nos=False, have_fibers=True):
+                                           generate_linear_3d_mesh=False, generate_quadratic_3d_mesh=False, fiber_set_rank_nos=False, 
+                                           have_fibers=True, include_global_node_positions=False):
   """
   Parse the binary fiber geometry file and creates 1D fiber meshes and a 3D mesh (linear or quadratic elements for the 3D mesh)
   It create the `meshes` Dict that can directly be used in the Python config like: 
@@ -167,7 +168,8 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
     "nodePositions":         node_positions_3d_mesh,           # all local node positions
     "inputMeshIsGlobal":     False,                            # `False` means that only locale nodes and elements are provided
     "setHermiteDerivatives": False,
-    "logKey": "3Dmesh"
+    "logKey":                "3Dmesh",
+    "globalNodePositions":   [...],                            # only if option include_global_node_positions is True
   }
   and/or (if generate_quadratic_3d_mesh):
   meshes["3Dmesh_quadratic"] = {
@@ -190,28 +192,29 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
   
   This means that all quantities like, e.g. the local 3D node positions can be retrieved by meshes["3Dmesh"]["nodePositions"] and so on.
   
-  :param n_subdomains_x: number of subdomains in x direction.
-  :param n_subdomains_y: number of subdomains in y direction
-  :param n_subdomains_z: number of subdomains in z direction, i.e. the number of subdivisions per fiber. 
-                         The z direction is the direction of the fibers along the muscle.
-                         the product n_subdomains_x*n_subdomains_y*n_subdomains_z has to equal the number of processes
+  :param n_subdomains_x:  number of subdomains in x direction.
+  :param n_subdomains_y:  number of subdomains in y direction
+  :param n_subdomains_z:  number of subdomains in z direction, i.e. the number of subdivisions per fiber. 
+                          The z direction is the direction of the fibers along the muscle.
+                          the product n_subdomains_x*n_subdomains_y*n_subdomains_z has to equal the number of processes
   :param fiber_file: file name of the fiber file "*.bin" which contains fiber geometry in 3D space. The file has a pickle format.
   :param load_fiber_data: If the actual geometry data should be read from the file and the node positions placed in the generated meshes Dict. 
                           If this is true, the node positions will be in the mesh config.
                           If this is false, it inserts the filename and the position/offset in the file where the geometry data is present.
                           This information is later used by the C++ code to read the file in parallel. This is necessary for very large runs,
                           where the file has to be parsed in parallel and not already here in the python script.
-  :param sampling_stride_x: Grid point stride in x direction to make the 3D mesh coarser than the grid points of the 1D fibers.
-                            E.g. 2 means there will be 2 fibers per 3D element in x-direction on average.
-                            (Or 3 if you want, two of them are on the edges of the 3D elements, one is along the center)
-  :param sampling_stride_y: Grid point stride in y direction to make the 3D mesh coarser than the grid points of the 1D fibers.
-  :param sampling_stride_z: Grid point stride in z direction to make the 3D mesh coarser than the grid points of the 1D fibers.
-                            E.g. 20 means that there will be 20 mesh nodes of the 1D mesh per 3D element. 
-                            The z direction is the direction of the fibers along the muscle.
+  :param sampling_stride_x:   Grid point stride in x direction to make the 3D mesh coarser than the grid points of the 1D fibers.
+                              E.g. 2 means there will be 2 fibers per 3D element in x-direction on average.
+                              (Or 3 if you want, two of them are on the edges of the 3D elements, one is along the center)
+  :param sampling_stride_y:   Grid point stride in y direction to make the 3D mesh coarser than the grid points of the 1D fibers.
+  :param sampling_stride_z:   Grid point stride in z direction to make the 3D mesh coarser than the grid points of the 1D fibers.
+                              E.g. 20 means that there will be 20 mesh nodes of the 1D mesh per 3D element. 
+                              The z direction is the direction of the fibers along the muscle.
   :param generate_linear_3d_mesh: Whether to create the linear mesh (under "3Dmesh")
   :param generate_quadratic_3d_mesh: Whether to create the quadratic mesh (under "3Dmesh_quadratic")
-  :param fiber_set_rank_nos: If the "rankNos" option of the fiber meshes should be set to the ranks that take part in the computation of the fiber.
-  :param have_fibers:        If fiber meshes should be created.
+  :param fiber_set_rank_nos:  If the "rankNos" option of the fiber meshes should be set to the ranks that take part in the computation of the fiber.
+  :param have_fibers:         If fiber meshes should be created.
+  :param include_global_node_positions: If the global node positions for the "3Dmesh" should be added under the key "globalNodePositions"
   
   :return: a list of the following entries:
   [meshes, own_subdomain_coordinate_x, own_subdomain_coordinate_y, own_subdomain_coordinate_z, n_fibers_x, n_fibers_y, n_points_whole_fiber],
@@ -298,7 +301,7 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
       quit()
       
   # parse whole fiber file, only if enabled
-  if load_fiber_data:
+  if load_fiber_data or include_global_node_positions:
     variables.fibers = []
     for fiber_index in range(variables.n_fibers_total):
       fiber = []
@@ -447,6 +450,47 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
       "setHermiteDerivatives": False,
       "logKey": "3Dmesh"
     }
+    
+    # add all global node positions of all ranks
+    if include_global_node_positions:
+      
+      meshes["3Dmesh"]["globalNodePositions"] = []
+      
+      # ---- loop over subdomains and nodes in subdomains in z direction ----
+      for subdomain_coordinate_z in range(variables.n_subdomains_z):
+        z_point_index_start = n_points_in_previous_subdomains_z(subdomain_coordinate_z)
+        z_point_index_end = z_point_index_start + n_points_in_subdomain_z(subdomain_coordinate_z)
+        
+        # loop over z point indices
+        for k in range(n_sampled_points_in_subdomain_z(subdomain_coordinate_z)):
+          z_point_index = z_point_index_start + k*variables.sampling_stride_z
+          if subdomain_coordinate_z == variables.n_subdomains_z-1 and k == n_sampled_points_in_subdomain_z(subdomain_coordinate_z)-1:
+            z_point_index = z_point_index_end-1
+          
+          # ---- loop over subdomains and nodes in subdomains in y direction ----
+          for subdomain_coordinate_y in range(variables.n_subdomains_y):
+            # loop over fiber in y-direction
+            for j in range(n_sampled_points_in_subdomain_y(subdomain_coordinate_y)):
+              fiber_in_subdomain_coordinate_y = j*variables.sampling_stride_y
+              # on border subdomain set last node positions to be the border nodes (it could be that they are not yet the outermost nodes because of sampling_stride)
+              if subdomain_coordinate_y == variables.n_subdomains_y-1 and j == n_sampled_points_in_subdomain_y(subdomain_coordinate_y)-1:
+                fiber_in_subdomain_coordinate_y = n_fibers_in_subdomain_y(subdomain_coordinate_y)-1
+                  
+              # ---- loop over subdomains and nodes in subdomains in x direction ----
+              for subdomain_coordinate_x in range(variables.n_subdomains_x):
+                # loop over fiber in x-direction
+                for i in range(n_sampled_points_in_subdomain_x(subdomain_coordinate_x)):
+                  fiber_in_subdomain_coordinate_x = i*variables.sampling_stride_x
+                  # on border subdomain set last node positions to be the border nodes (it could be that they are not yet the outermost nodes because of sampling_stride)
+                  if subdomain_coordinate_x == variables.n_subdomains_x-1 and i == n_sampled_points_in_subdomain_x(subdomain_coordinate_x)-1:
+                    fiber_in_subdomain_coordinate_x = n_fibers_in_subdomain_x(subdomain_coordinate_x)-1
+                  
+                  # get fiber no
+                  fiber_index = get_fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)
+                  
+                  point = variables.fibers[fiber_index][z_point_index]
+            
+                  meshes["3Dmesh"]["globalNodePositions"].append(point)
   
   variables.n_points_3D_mesh_global_x = sum([n_sampled_points_in_subdomain_x(subdomain_coordinate_x) for subdomain_coordinate_x in range(variables.n_subdomains_x)])
   variables.n_points_3D_mesh_global_y = sum([n_sampled_points_in_subdomain_y(subdomain_coordinate_y) for subdomain_coordinate_y in range(variables.n_subdomains_y)])
@@ -562,11 +606,11 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
     
     
   ###############################
-  # determine 1D meshes of variables.fibers
+  # determine 1D meshes of fibers
 
   if have_fibers:
 
-    # fiber nos of the variables.fibers that are handled on the own subdomain
+    # fiber nos of the fibers that are handled on the own subdomain
     variables.fibers_on_own_rank = [get_fiber_no(own_subdomain_coordinate_x, own_subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y) \
       for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(own_subdomain_coordinate_y)) \
       for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(own_subdomain_coordinate_x))]
@@ -667,7 +711,7 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
           print("{}: fiber {} gets rank_nos {}".format(rank_no,i,rank_nos))
         
       else:
-        # for variables.fibers that are not computed on own rank, set empty lists for node positions and number of elements
+        # for fibers that are not computed on own rank, set empty lists for node positions and number of elements
         fiber_node_positions = []
         n_fiber_elements_on_subdomain = []
 

@@ -44,8 +44,11 @@ public:
   //! get the value of a parameter that was previously set, empty string if parameter is not present
   static std::string getParameter(std::string key);
 
-  //! get a measured total duration with given measurementName, or 0.0 if the measurement does not (yet) exist
-  static double getDuration(std::string measurementName);
+  //! get a measured total duration with given measurementName, or 0.0 if the measurement does not (yet) exist, accumulated: if the total sum should be return, if false the average
+  static double getDuration(std::string measurementName, bool accumulated=true);
+
+  //! get the page size in KB and the current memory consumption in bytes, for virtual memory, resident set, and data memory
+  static void getMemoryConsumption(int &pageSize, long long &virtualMemorySize, long long &residentSetSize, long long &dataSize, double &totalUserTime);
 
 private:
 
@@ -57,20 +60,20 @@ private:
     //! constructor
     Measurement();
 
-    double start;   ///< last start point in time
-    double totalDuration;   ///< sum of previous measurements
-    int nTimeSpans;     ///< the number of measurements that lead to the total time in totalDuration
+    double start;   //< last start point in time
+    double totalDuration;   //< sum of previous measurements
+    int nTimeSpans;     //< the number of measurements that lead to the total time in totalDuration
 
-    double totalError;  ///< sum of all errors
-    int nErrors;        ///< number of summands of totalError
+    double totalError;  //< sum of all errors
+    int nErrors;        //< number of summands of totalError
   };
 
-  static std::map<std::string, Measurement> measurements_;   ///< the currently stored measurements
-  static std::map<std::string, int> sums_;   ///< the currently stored sums
-  static std::map<std::string,std::string> parameters_;   ///< arbitrary parameters that will be stored in the log
+  static std::map<std::string, Measurement> measurements_;   //< the currently stored measurements
+  static std::map<std::string, int> sums_;   //< the currently stored sums
+  static std::map<std::string,std::string> parameters_;   //< arbitrary parameters that will be stored in the log
 
-  static std::shared_ptr<std::thread> perfThread_;  ///< thread used to execute perf which measures FLOPS
-  static int perfThreadHandle_;   ///< handle of the perf thread
+  static std::shared_ptr<std::thread> perfThread_;  //< thread used to execute perf which measures FLOPS
+  static int perfThreadHandle_;   //< handle of the perf thread
 };
 
 template<>

@@ -33,6 +33,9 @@ public:
 
 protected:
 
+  //! update the system matrix after the geometry has changed, this is done in advanceTimeSpan, if the option "updateSystemMatrixEveryTimestep" is True
+  virtual void updateSystemMatrix() override;
+
   //! call the output writer on the data object
   virtual void callOutputWriter(int timeStepNo, double currentTime);
 
@@ -51,6 +54,9 @@ protected:
   //! compute the entries of the matrices B,C,D and E from the stiffness matrix of the muscle mesh
   void setEntriesBorderMatrices(Mat originalMatrixB, Mat originalMatrixC, Mat matrixB, Mat matrixC, Mat matrixD, Mat matrixE);
 
+  //! compute th entries of the matrices B,C,D and E from the stiffness matrix of the muscle mesh again, the matrices have to exist already, this is used after geometry update
+  void updateBorderMatrices();
+
   //! transform the numbering from normal global dof nos to a numbering that skips the shared dofs between muscle and fat mesh
   PetscInt getDofNoGlobalFatWithoutSharedDofs(PetscInt dofNoGlobal);
   
@@ -65,6 +71,9 @@ protected:
 
   // ! copy the results from the linear solve in solution, which contains non-shared dofs, to the phi_b field variable in dataFat_, the missing values for the shared dofs are taken from phi_e
   void copySolutionToPhiB();
+
+  //! set in the Petsc preconditioner object the information about matrix blocks for block jacobi and the node positions (PCSetCoordinates)
+  void setInformationToPreconditioner();
 
   DataFat dataFat_;  //< the data object of the multidomain solver with fat, which stores all field variables and matrices
   FiniteElementMethodDiffusionFat finiteElementMethodFat_;   //< the finite element object that is used for the Laplace problem of the potential flow, needed for the fiber directions

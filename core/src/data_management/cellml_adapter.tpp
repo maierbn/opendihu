@@ -176,7 +176,7 @@ getFieldVariablesForOutputWriter()
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> geometryField
     = std::make_shared<FieldVariable::FieldVariable<FunctionSpaceType,3>>(this->functionSpace_->geometryField());
 
-  return std::make_tuple(geometryField, intermediates_, states_);
+  return std::make_tuple(geometryField, intermediates_, states_, parameters_);
 }
 
 } // namespace

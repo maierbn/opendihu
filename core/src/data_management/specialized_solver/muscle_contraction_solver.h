@@ -70,12 +70,14 @@ public:
   //! get pointers to all field variables that can be written by output writers
   FieldVariablesForOutputWriter getFieldVariablesForOutputWriter();
 
-  //! set field variables from that were created outside
+  //! set field variables that were created outside of this object
+  //! @param setGeometryFieldForTransfer: if the geometry field should be transferred via the output connector slots
   void setFieldVariables(std::shared_ptr<MuscleContractionSolver<FunctionSpaceType>::VectorFieldVariableType> displacements,
                   std::shared_ptr<MuscleContractionSolver<FunctionSpaceType>::VectorFieldVariableType> velocities,
                   std::shared_ptr<MuscleContractionSolver<FunctionSpaceType>::StressFieldVariableType> activePK2Stress,
                   std::shared_ptr<MuscleContractionSolver<FunctionSpaceType>::StressFieldVariableType> pK2Stress,
-                  std::shared_ptr<MuscleContractionSolver<FunctionSpaceType>::VectorFieldVariableType> fiberDirection);
+                  std::shared_ptr<MuscleContractionSolver<FunctionSpaceType>::VectorFieldVariableType> fiberDirection,
+                  bool setGeometryFieldForTransfer);
 
 private:
 

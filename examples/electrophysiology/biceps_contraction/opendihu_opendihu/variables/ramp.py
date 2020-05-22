@@ -126,6 +126,11 @@ sampling_stride_x = 2
 sampling_stride_y = 2
 sampling_stride_z = 74
 
+# Tolerance value in the element coordinate system of the 3D elements, [0,1]^3
+# when a fiber point is still considered part of the element.
+# Try to increase this such that all mappings have all points.
+mapping_tolerance = 0.5
+
 # other options
 paraview_output = True
 adios_output = False

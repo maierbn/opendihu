@@ -29,7 +29,7 @@ solver_tolerance = 1e-10
 # input files, these are old files, better use "left_biceps_brachii_*"
 #fiber_file = "../input/scaled_mesh_tiny"
 #fiber_file = "../input/scaled_mesh_small"
-fiber_file = "../input/scaled_mesh_normal"
+#fiber_file = "../input/scaled_mesh_normal"
 #fiber_file = "../input/scaled_mesh_big"
 
 #fiber_file = "../input/laplace3d_structured_linear"
@@ -54,10 +54,11 @@ motor_units = [
 
 
 # for debugging use the following, non-physiological values. This produces a fast simulation
-Am = 1.0
-sampling_stride_z = 74
+#end_time = 0.1 #???
+#Am = 1.0
+#sampling_stride_z = 200 #74
 motor_units = motor_units[0:2]    # only 2 motor units motor_units = motor_units[0:2]
-solver_tolerance = 1e-10
+#solver_tolerance = 1e-10
 
 
 n_compartments = len(motor_units)
@@ -253,7 +254,7 @@ multidomain_solver = {
   },
   
   "OutputWriter" : [
-    {"format": "Paraview", "outputInterval": (int)(1./dt_multidomain*output_timestep), "filename": "out/output", "binary": True, "fixedFormat": False, "combineFiles": True},
+    #{"format": "Paraview", "outputInterval": (int)(1./dt_multidomain*output_timestep), "filename": "out/output", "binary": True, "fixedFormat": False, "combineFiles": True},
     #{"format": "ExFile", "filename": "out/fiber_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "sphereSize": "0.02*0.02*0.02"},
     #{"format": "PythonFile", "filename": "out/fiber_"+str(i), "outputInterval": int(1./dt_1D*output_timestep), "binary":True, "onlyNodalValues":True},
   ]

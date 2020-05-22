@@ -55,19 +55,20 @@ motor_units = [
 
 
 # for debugging use the following, non-physiological values. This produces a fast simulation
-if True:
-  end_time = 0.1
-  Am = 1.0
-  sampling_stride_z = 200 #muscle 74 200
-  motor_units = motor_units[0:2]    # only 2 motor units [0:2] [0:1]
-  solver_tolerance = 1e-10
+#if True:
+#end_time = 0.1
+end_time = 0.1
+Am = 1.0
+sampling_stride_z = 200 #muscle 74 200
+motor_units = motor_units[0:2]    # only 2 motor units [0:2] [0:1]
+solver_tolerance = 1e-10
 
 n_compartments = len(motor_units)
 
 # own MPI rank no and number of MPI ranks
 rank_no = (int)(sys.argv[-2])
 n_ranks = (int)(sys.argv[-1])
-n_ranks_space = 2
+n_ranks_space = 1
 
 # load MU distribution and firing times
 fiber_distribution = np.genfromtxt(fiber_distribution_file, delimiter=" ")
@@ -215,7 +216,7 @@ multidomain_solver = {
   "solverName":                       "activationSolver",                 # reference to the solver used for the global linear system of the multidomain eq.
   "initialGuessNonzero":              True,                               # if the initial guess for the 3D system should be set as the solution of the previous timestep, this only makes sense for iterative solvers
   "inputIsGlobal":                    True,                               # if values and dofs correspond to the global numbering
-  "showLinearSolverOutput":           True,                              # if convergence information of the linear solver in every timestep should be printed, this is a lot of output for fast computations
+  "showLinearSolverOutput":           False,                              # if convergence information of the linear solver in every timestep should be printed, this is a lot of output for fast computations
   "compartmentRelativeFactors":       relative_factors.tolist(),          # list of lists of the factors for every dof, because "inputIsGlobal": True, this contains the global dofs
   "PotentialFlow": {
     "FiniteElementMethod" : {  
@@ -289,7 +290,7 @@ config = {
   },
   "PinTMD": {
     "tstart": 0,                    # Start time
-    "tstop": end_time,                     # End time
+    "tstop": 400,         #end_time            # End time
     "ntime": 10,                      # number of time steps
     "nspace":   1567,#8235, #3135,
     "Initial Guess": [2,2,4,5,2,2,2,0],

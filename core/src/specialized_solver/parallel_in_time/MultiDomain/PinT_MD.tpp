@@ -58,10 +58,10 @@ initialize()
     MultiDomainConfigs.push_back(MultiDomainConfig);
   }
   */
-  pid_t pid = getpid();
-  printf("pid: %d", pid);
+  //pid_t pid = getpid();
+  //printf("pid: %d", pid);
 
-  std::this_thread::sleep_for (std::chrono::seconds(30));
+  //std::this_thread::sleep_for (std::chrono::seconds(30));
 
   // parse all settings in TimeSteppingScheme
   PyObject *MultiDomainConfig = this->specificSettings_.template getOptionListBegin<PyObject *>("TimeSteppingScheme");

@@ -107,7 +107,11 @@ LOG(DEBUG) << "RankSubset constructor from rank list " << rankNo_ << ", ownRankP
     int oldCommunicatorNameLength = 0;
     MPIUtility::handleReturnValue(MPI_Comm_get_name(parentCommunicator, oldCommunicatorNameStr.data(), &oldCommunicatorNameLength), "MPI_Comm_get_name");
 
-    std::string oldCommunicatorName(oldCommunicatorNameStr.begin(), oldCommunicatorNameStr.begin()+oldCommunicatorNameLength);
+    std::string oldCommunicatorName;
+    if (oldCommunicatorNameLength > 0)
+    {
+      oldCommunicatorName = std::string(oldCommunicatorNameStr.begin(), oldCommunicatorNameStr.begin()+oldCommunicatorNameLength);
+    }
     VLOG(1) << "oldCommunicatorName: " << oldCommunicatorName;
 
     // define new name

@@ -285,9 +285,10 @@ config = {
       "absoluteTolerance":  solver_tolerance,         # 1e-10 absolute tolerance of the residual          
       "maxIterations":      1e3,
       "solverType":         "gmres",
-      "preconditionerType": "none",
+      "preconditionerType": "euclid",
       "dumpFormat":         "matlab",
-      "dumpFilename":       "out/no",
+      #"dumpFilename":       "out/no",
+      "dumpFilename":       "",
     }
   },
   "StrangSplitting": {

@@ -46,6 +46,9 @@ MultidomainSolver(DihuContext context) :
     finiteElementMethodDiffusionCompartment_.emplace_back(this->context_["Activation"]);
   }
 
+  if (rankSubset_ == nullptr)
+    rankSubset_ = std::make_shared<Partition::RankSubset>();
+
   singleSystemMatrix_ = PETSC_NULL;
   singleSolution_ = PETSC_NULL;
   singleRightHandSide_ = PETSC_NULL;

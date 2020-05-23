@@ -144,7 +144,7 @@ template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodD
 void MultidomainWithFatSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusionMuscle,FiniteElementMethodDiffusionFat>::
 setSystemMatrixSubmatrices(double timeStepWidth)
 {
-  LOG(INFO) << "dt of system matrix: " << timeStepWidth;
+  //LOG(INFO) << "dt of system matrix: " << timeStepWidth;
   assert(this->finiteElementMethodDiffusionTotal_.data().stiffnessMatrix());
   assert(this->finiteElementMethodDiffusion_.data().stiffnessMatrix());
   assert(this->finiteElementMethodFat_.data().stiffnessMatrix());

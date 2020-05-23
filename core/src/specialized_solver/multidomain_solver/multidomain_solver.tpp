@@ -84,8 +84,8 @@ advanceTimeSpan()
 
     if (fabs(this->timeStepWidthOfSystemMatrix_ - this->timeStepWidth_) / this->timeStepWidth_ > 1e-4)
     {
-      LOG(WARNING) << "In multidomain solver, timestep width changed from " << this->timeStepWidthOfSystemMatrix_ << " to " << timeStepWidth_
-        << " (relative: " << std::showpos << 100*(this->timeStepWidthOfSystemMatrix_ - this->timeStepWidth_) / this->timeStepWidth_ << std::noshowpos << "%), need to recreate system matrix.";
+      //LOG(WARNING) << "In multidomain solver, timestep width changed from " << this->timeStepWidthOfSystemMatrix_ << " to " << timeStepWidth_
+      //  << " (relative: " << std::showpos << 100*(this->timeStepWidthOfSystemMatrix_ - this->timeStepWidth_) / this->timeStepWidth_ << std::noshowpos << "%), need to recreate system matrix.";
 
       this->timeStepWidthOfSystemMatrix_ = this->timeStepWidth_;
       setSystemMatrixSubmatrices(this->timeStepWidthOfSystemMatrix_);
@@ -420,7 +420,7 @@ template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodD
 void MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
 setSystemMatrixSubmatrices(double timeStepWidth)
 {
-  LOG(INFO) << "dt of system matrix: " << timeStepWidth;
+  //LOG(INFO) << "dt of system matrix: " << timeStepWidth;
   // initialize the number of rows, this will already be set when the method is called for the inherited class MultidomainWithFatSolver
   if (nColumnSubmatricesSystemMatrix_ == 0)
     nColumnSubmatricesSystemMatrix_ = nCompartments_+1;
@@ -724,8 +724,8 @@ updateSystemMatrix(double timeStepWidth, bool enableWarning)
   {
     if (enableWarning)
     {
-      LOG(WARNING) << "In multidomain solver, timestep width changed from " << this->timeStepWidthOfSystemMatrix_ << " to " << timeStepWidth_
-        << " (relative: " << std::showpos << 100*(this->timeStepWidthOfSystemMatrix_ - timeStepWidth) / timeStepWidth << std::noshowpos << "%), need to recreate system matrix.";
+      //LOG(WARNING) << "In multidomain solver, timestep width changed from " << this->timeStepWidthOfSystemMatrix_ << " to " << timeStepWidth_
+      //  << " (relative: " << std::showpos << 100*(this->timeStepWidthOfSystemMatrix_ - timeStepWidth) / timeStepWidth << std::noshowpos << "%), need to recreate system matrix.";
     }
 
     // store time step width of current system matrix

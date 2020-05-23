@@ -39,7 +39,7 @@ void ImplicitEuler<DiscretizableInTimeType>::advanceTimeSpan()
   {
     if (timeStepNo % this->timeStepOutputInterval_ == 0 && (this->timeStepOutputInterval_ <= 10 || timeStepNo > 0))  // show first timestep only if timeStepOutputInterval is <= 10
     {
-      LOG(INFO) << "Implicit Euler, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
+      //LOG(INFO) << "Implicit Euler, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
     }
 
     VLOG(1) << "initial solution (" << this->data_->solution() << "): " << *this->data_->solution();

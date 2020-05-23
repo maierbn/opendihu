@@ -1,0 +1,65 @@
+// Result of computation of equilibrium values for the states by opendihu on 2020/2/29 10:17:12
+// Number of iterations: 10000000, dt: 0.0015625
+// Maximum ∂u/∂t = 0.0424747 for state 28
+// (If this is a high value, it indicates that the equilibrium was not fully reached.)
+
+state[0] = -81.0764;      // residuum: 3.15938e-05
+state[1] = -81.0242;      // residuum: 3.15353e-05
+state[2] = 7.25855;       // residuum: 5.68619e-06
+state[3] = 150.928;       // residuum: 8.35682e-07
+state[4] = 6.13908;       // residuum: 6.17603e-06
+state[5] = 12.6374;       // residuum: -1.47599e-06
+state[6] = 131.485;       // residuum: -6.32827e-06
+state[7] = 132.853;       // residuum: -5.28277e-06
+state[8] = 0.00809159;    // residuum: 3.64949e-08
+state[9] = 0.995921;      // residuum: -1.75548e-08
+state[10] = 0.0312117;    // residuum: 1.24321e-07
+state[11] = 0.546801;     // residuum: -1.38705e-06
+state[12] = 0.784615;     // residuum: 2.4679e-06
+state[13] = 0.0081521;    // residuum: 3.66904e-08
+state[14] = 0.995806;     // residuum: -1.75609e-08
+state[15] = 0.0314177;    // residuum: 1.24859e-07
+state[16] = 0.544509;     // residuum: -1.38556e-06
+state[17] = 0.783771;     // residuum: 2.46109e-06
+state[18] = 1.75163e-06;  // residuum: -4.00303e-13
+state[19] = 5.90311e-06;  // residuum: 8.99306e-12
+state[20] = 7.46021e-06;  // residuum: 2.44353e-11
+state[21] = 4.19024e-06;  // residuum: 2.1066e-11
+state[22] = 8.82585e-07;  // residuum: 5.98339e-12
+state[23] = 0.875814;     // residuum: -2.00151e-07
+state[24] = 0.118062;     // residuum: 1.79861e-07
+state[25] = 0.00596817;   // residuum: 1.95483e-08
+state[26] = 0.000134088;  // residuum: 6.74112e-10
+state[27] = 1.12971e-06;  // residuum: 7.65874e-12
+state[28] = -1580.24;     // residuum: -0.0424747
+state[29] = 0.0284811;    // residuum: 1.03878e-10
+state[30] = 53.9751;      // residuum: -0.000155227
+state[31] = 0.0284799;    // residuum: 1.12482e-10
+state[32] = 1687.43;      // residuum: 6.75303e-06
+state[33] = 2.98746;      // residuum: 1.14811e-08
+state[34] = 615;          // residuum: 0
+state[35] = 615;          // residuum: 0
+state[36] = 811;          // residuum: 0
+state[37] = 811;          // residuum: 0
+state[38] = 1283.85;      // residuum: -0.00354258
+state[39] = 17808.2;      // residuum: 3.0347e-05
+state[40] = 0.107779;     // residuum: 4.13345e-10
+state[41] = 0.107778;     // residuum: 4.25442e-10
+state[42] = 7243.03;      // residuum: 2.78907e-10
+state[43] = 7243.03;      // residuum: -2.48627e-10
+state[44] = 756.867;      // residuum: -1.79604e-10
+state[45] = 756.867;      // residuum: -1.81993e-10
+state[46] = 956.975;      // residuum: 1.93437e-10
+state[47] = 956.975;      // residuum: 2.43856e-10
+state[48] = 0.0343446;    // residuum: 2.67835e-10
+state[49] = 0.0102602;    // residuum: 7.95239e-11
+state[50] = 0.0136077;    // residuum: 1.06353e-10
+state[51] = 0.0314302;    // residuum: 2.45945e-10
+state[52] = 0.00312304;   // residuum: 2.44381e-11
+state[53] = 0.00249843;   // residuum: 1.95519e-11
+state[54] = 0.213378;     // residuum: -6.67943e-07
+state[55] = 0.228239;     // residuum: -1.38375e-06
+state[56] = 2.8029e-10;   // residuum: -1.57379e-13
+
+  Line to copy for settings:
+  "statesInitialValues": [-81.0764, -81.0242, 7.25855, 150.928, 6.13908, 12.6374, 131.485, 132.853, 0.00809159, 0.995921, 0.0312117, 0.546801, 0.784615, 0.0081521, 0.995806, 0.0314177, 0.544509, 0.783771, 1.75163e-06, 5.90311e-06, 7.46021e-06, 4.19024e-06, 8.82585e-07, 0.875814, 0.118062, 0.00596817, 0.000134088, 1.12971e-06, -1580.24, 0.0284811, 53.9751, 0.0284799, 1687.43, 2.98746, 615, 615, 811, 811, 1283.85, 17808.2, 0.107779, 0.107778, 7243.03, 7243.03, 756.867, 756.867, 956.975, 956.975, 0.0343446, 0.0102602, 0.0136077, 0.0314302, 0.00312304, 0.00249843, 0.213378, 0.228239, 2.8029e-10],

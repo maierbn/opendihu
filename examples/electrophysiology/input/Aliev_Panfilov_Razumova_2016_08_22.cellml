@@ -1,0 +1,726 @@
+<?xml version='1.0'?>
+<model name="Razumova_Fv" xmlns="http://www.cellml.org/cellml/1.0#" xmlns:cellml="http://www.cellml.org/cellml/1.0#">
+    <units name="millisecond">
+        <unit prefix="milli" units="second"/>
+    </units>
+    <units name="per_millisecond">
+        <unit exponent="-1" prefix="milli" units="second"/>
+    </units>
+    <units name="micrometer">
+        <unit prefix="micro" units="meter"/>
+    </units>
+    <units name="micrometer_per_millisecond">
+        <unit prefix="micro" units="meter"/>
+        <unit exponent="-1" prefix="milli" units="second"/>
+    </units>
+    <units name="joule_per_kelvin">
+        <unit units="joule"/>
+        <unit exponent="-1" units="kelvin"/>
+    </units>
+    <component name="environment">
+        <variable name="time" public_interface="out" units="millisecond"/>
+    </component>
+    <component name="Aliev_Panfilov">
+        <variable name="time" public_interface="in" units="millisecond"/>
+        <variable initial_value="0" name="V_m" units="dimensionless"/>
+        <variable initial_value="20" name="r" public_interface="out" units="dimensionless"/>
+        <!--        <variable name="I_HH" units="dimensionless"/>-->
+        <variable initial_value="0.0" name="I_HH" private_interface="out" units="dimensionless"/>
+        <variable initial_value="128" name="k" units="dimensionless"/>
+        <variable initial_value="0.15" name="a" units="dimensionless"/>
+        <variable initial_value="0.002" name="e_0" units="dimensionless"/>
+        <variable initial_value="0.2" name="m_1" units="dimensionless"/>
+        <variable initial_value="0.3" name="m_2" units="dimensionless"/>
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+                <eq/>
+                <apply>
+                    <diff/>
+                    <bvar>
+                        <ci>time</ci>
+                    </bvar>
+                    <ci>V_m</ci>
+                </apply>
+                <apply>
+                    <plus/>
+                    <apply>
+                        <minus/>
+                        <apply>
+                            <times/>
+                            <apply>
+                                <minus/>
+                                <ci>k</ci>
+                            </apply>
+                            <ci>V_m</ci>
+                            <apply>
+                                <minus/>
+                                <ci>V_m</ci>
+                                <ci>a</ci>
+                            </apply>
+                            <apply>
+                                <minus/>
+                                <ci>V_m</ci>
+                                <cn cellml:units="dimensionless">1</cn>
+                            </apply>
+                        </apply>
+                        <apply>
+                            <times/>
+                            <ci>V_m</ci>
+                            <ci>r</ci>
+                        </apply>
+                    </apply>
+                    <ci>I_HH</ci>
+                </apply>
+            </apply>
+            <apply>
+                <eq/>
+                <apply>
+                    <diff/>
+                    <bvar>
+                        <ci>time</ci>
+                    </bvar>
+                    <ci>r</ci>
+                </apply>
+                <apply>
+                    <times/>
+                    <apply>
+                        <plus/>
+                        <ci>e_0</ci>
+                        <apply>
+                            <divide/>
+                            <apply>
+                                <times/>
+                                <ci>m_1</ci>
+                                <ci>r</ci>
+                            </apply>
+                            <apply>
+                                <plus/>
+                                <ci>m_2</ci>
+                                <ci>V_m</ci>
+                            </apply>
+                        </apply>
+                    </apply>
+                    <apply>
+                        <minus/>
+                        <apply>
+                            <minus/>
+                            <ci>r</ci>
+                        </apply>
+                        <apply>
+                            <times/>
+                            <ci>k</ci>
+                            <ci>V_m</ci>
+                            <apply>
+                                <minus/>
+                                <apply>
+                                    <minus/>
+                                    <ci>V_m</ci>
+                                    <ci>a</ci>
+                                </apply>
+                                <cn cellml:units="dimensionless">1</cn>
+                            </apply>
+                        </apply>
+                    </apply>
+                </apply>
+            </apply>
+        </math>
+    </component>
+    <component name="Razumova">
+        <variable name="time" public_interface="in" units="millisecond"/>
+        <variable initial_value="0.0001" name="D" units="dimensionless"/>
+        <variable initial_value="0.0001" name="A_1" units="dimensionless"/>
+        <variable initial_value="0.0001" name="A_2" units="dimensionless"/>
+        <variable initial_value="1e-16" name="x_1" units="micrometer"/>
+        <variable initial_value="8e-3" name="x_2" units="micrometer"/>
+        <variable initial_value="8e-3" name="x_0" units="micrometer"/>
+        <variable initial_value="1" name="R_T" units="dimensionless"/>
+        <variable name="R_off" units="dimensionless"/>
+        <!-- r is a meassure for the calcium concentration - import from Aliev-Panfilov Model-->
+        <variable initial_value="0" name="r" public_interface="in" units="dimensionless"/>
+        <!-- Import fibre-stretch and velocity from Continuum-Mechanic Model-->
+        <variable initial_value="1" name="l_hs" units="micrometer"/>
+        <variable initial_value="0" name="velo" units="micrometer_per_millisecond"/>
+        <variable name="velo_scaled" units="micrometer_per_millisecond"/>
+        <variable initial_value="1e-4" name="velo_max" units="dimensionless"/>
+        <!-- Reaction Rates-->
+        <variable name="k_on" units="per_millisecond"/>
+        <variable name="k_off" units="per_millisecond"/>
+        <variable name="f" units="per_millisecond"/>
+        <variable name="f_prime" units="per_millisecond"/>
+        <variable name="h" units="per_millisecond"/>
+        <variable name="h_prime" units="per_millisecond"/>
+        <variable name="g" units="per_millisecond"/>
+        <variable name="g_prime" units="per_millisecond"/>
+        <!-- Initial Reaction Rates (per millisecond)-->
+        <variable initial_value="0" name="k_0_on" units="per_millisecond"/>
+        <variable initial_value="100e-3" name="k_0_off" units="per_millisecond"/>
+        <variable initial_value="120e-3" name="k_Ca_on" units="per_millisecond"/>
+        <variable initial_value="50e-3" name="k_Ca_off" units="per_millisecond"/>
+        <variable initial_value="4e-3" name="g_0" units="per_millisecond"/>
+        <variable initial_value="50e-3" name="f_0" units="per_millisecond"/>
+        <variable initial_value="8e-3" name="h_0" units="per_millisecond"/>
+        <variable initial_value="400e-3" name="f_prime0" units="per_millisecond"/>
+        <variable initial_value="6e-3" name="h_prime0" units="per_millisecond"/>
+        <variable initial_value="3.5400e-13" name="g_prime0" units="per_millisecond"/>
+        <!-- Model Parameters     -->
+        <variable name="sigma" units="dimensionless"/>
+        <variable name="lambda_A1" units="dimensionless"/>
+        <variable name="lambda_A2" units="dimensionless"/>
+        <variable initial_value="26" name="Ca_50" units="dimensionless"/>
+        <variable initial_value="3.2" name="nu" units="dimensionless"/>
+        <!-- Energetic/Thermodynamic Model Contstraints-->
+        <variable initial_value="9.1362e-20" name="E_ATP" units="joule"/>
+        <variable initial_value="1.38e-23" name="kappa" units="joule_per_kelvin"/>
+        <variable initial_value="310" name="T" units="kelvin"/>
+        <!-- Scaling Parameters Slow Twitch -->
+        <variable initial_value="0.925" name="k_on_rel" units="dimensionless"/>
+        <variable initial_value="0.143" name="k_off_rel" units="dimensionless"/>
+        <variable initial_value="1.35" name="alpha" units="dimensionless"/>
+        <!-- Scaling Parameters Fast Twitch -->
+        <!-- var k_on_rel: dimensionless {init: 0.19};
+ var k_off_rel: dimensionless {init: 0.9};
+ var alpha: dimensionless {init: 1.35};-->
+        <!-- var F: dimensionless;
+ var dummy: newton_millisecond_per_m2 {init: 0.0};-->
+        <!-- Algebraic equations -->
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+                <eq/>
+                <ci>sigma</ci>
+                <piecewise>
+                    <piece>
+                        <cn cellml:units="dimensionless">1</cn>
+                        <apply>
+                            <gt/>
+                            <ci>x_2</ci>
+                            <ci>x_0</ci>
+                        </apply>
+                    </piece>
+                    <piece>
+                        <cn cellml:units="dimensionless">8</cn>
+                        <apply>
+                            <lt/>
+                            <ci>x_2</ci>
+                            <ci>x_0</ci>
+                        </apply>
+                    </piece>
+                    <otherwise>
+                        <cn cellml:units="dimensionless">0</cn>
+                    </otherwise>
+                </piecewise>
+            </apply>
+            <apply>
+                <eq/>
+                <ci>lambda_A1</ci>
+                <apply>
+                    <divide/>
+                    <ci>A_1</ci>
+                    <ci>R_T</ci>
+                </apply>
+            </apply>
+            <apply>
+                <eq/>
+                <ci>lambda_A2</ci>
+                <apply>
+                    <divide/>
+                    <ci>A_2</ci>
+                    <ci>R_T</ci>
+                </apply>
+            </apply>
+            <!-- Calculate Reaction Rates-->
+            <apply>
+                <eq/>
+                <ci>k_on</ci>
+                <apply>
+                    <times/>
+                    <ci>k_on_rel</ci>
+                    <apply>
+                        <plus/>
+                        <ci>k_0_on</ci>
+                        <apply>
+                            <divide/>
+                            <apply>
+                                <times/>
+                                <apply>
+                                    <minus/>
+                                    <ci>k_Ca_on</ci>
+                                    <ci>k_0_on</ci>
+                                </apply>
+                                <ci>r</ci>
+                            </apply>
+                            <apply>
+                                <plus/>
+                                <ci>r</ci>
+                                <ci>Ca_50</ci>
+                            </apply>
+                        </apply>
+                    </apply>
+                </apply>
+            </apply>
+            <apply>
+                <eq/>
+                <ci>k_off</ci>
+                <apply>
+                    <times/>
+                    <ci>k_off_rel</ci>
+                    <apply>
+                        <plus/>
+                        <ci>k_0_off</ci>
+                        <apply>
+                            <divide/>
+                            <apply>
+                                <times/>
+                                <apply>
+                                    <minus/>
+                                    <ci>k_Ca_off</ci>
+                                    <ci>k_0_off</ci>
+                                </apply>
+                                <ci>r</ci>
+                            </apply>
+                            <apply>
+                                <plus/>
+                                <ci>r</ci>
+                                <ci>Ca_50</ci>
+                            </apply>
+                        </apply>
+                    </apply>
+                </apply>
+            </apply>
+            <apply>
+                <eq/>
+                <ci>f</ci>
+                <apply>
+                    <times/>
+                    <ci>alpha</ci>
+                    <ci>f_0</ci>
+                    <apply>
+                        <power/>
+                        <apply>
+                            <plus/>
+                            <cn cellml:units="dimensionless">1</cn>
+                            <apply>
+                                <times/>
+                                <ci>lambda_A1</ci>
+                                <apply>
+                                    <minus/>
+                                    <apply>
+                                        <exp/>
+                                        <apply>
+                                            <times/>
+                                            <apply>
+                                                <divide/>
+                                                <ci>x_1</ci>
+                                                <ci>x_0</ci>
+                                            </apply>
+                                            <apply>
+                                                <minus/>
+                                                <ci>nu</ci>
+                                                <cn cellml:units="dimensionless">1</cn>
+                                            </apply>
+                                        </apply>
+                                    </apply>
+                                    <cn cellml:units="dimensionless">1</cn>
+                                </apply>
+                            </apply>
+                            <apply>
+                                <times/>
+                                <ci>lambda_A2</ci>
+                                <apply>
+                                    <minus/>
+                                    <apply>
+                                        <exp/>
+                                        <apply>
+                                            <times/>
+                                            <apply>
+                                                <divide/>
+                                                <ci>x_2</ci>
+                                                <ci>x_0</ci>
+                                            </apply>
+                                            <apply>
+                                                <minus/>
+                                                <ci>nu</ci>
+                                                <cn cellml:units="dimensionless">1</cn>
+                                            </apply>
+                                        </apply>
+                                    </apply>
+                                    <cn cellml:units="dimensionless">1</cn>
+                                </apply>
+                            </apply>
+                        </apply>
+                        <cn cellml:units="dimensionless">2</cn>
+                    </apply>
+                </apply>
+            </apply>
+            <apply>
+                <eq/>
+                <ci>f_prime</ci>
+                <apply>
+                    <times/>
+                    <ci>alpha</ci>
+                    <ci>f_prime0</ci>
+                    <apply>
+                        <exp/>
+                        <apply>
+                            <times/>
+                            <ci>sigma</ci>
+                            <apply>
+                                <power/>
+                                <ci>x_1</ci>
+                                <cn cellml:units="dimensionless">2</cn>
+                            </apply>
+                        </apply>
+                    </apply>
+                </apply>
+            </apply>
+            <apply>
+                <eq/>
+                <ci>h</ci>
+                <apply>
+                    <times/>
+                    <ci>alpha</ci>
+                    <ci>h_0</ci>
+                    <apply>
+                        <exp/>
+                        <apply>
+                            <times/>
+                            <ci>sigma</ci>
+                            <apply>
+                                <power/>
+                                <ci>x_1</ci>
+                                <cn cellml:units="dimensionless">2</cn>
+                            </apply>
+                        </apply>
+                    </apply>
+                </apply>
+            </apply>
+            <apply>
+                <eq/>
+                <ci>h_prime</ci>
+                <apply>
+                    <times/>
+                    <ci>alpha</ci>
+                    <ci>h_prime0</ci>
+                    <apply>
+                        <exp/>
+                        <apply>
+                            <minus/>
+                            <apply>
+                                <times/>
+                                <ci>sigma</ci>
+                                <apply>
+                                    <power/>
+                                    <ci>x_2</ci>
+                                    <cn cellml:units="dimensionless">2</cn>
+                                </apply>
+                            </apply>
+                            <apply>
+                                <times/>
+                                <ci>sigma</ci>
+                                <apply>
+                                    <power/>
+                                    <ci>x_1</ci>
+                                    <cn cellml:units="dimensionless">2</cn>
+                                </apply>
+                            </apply>
+                        </apply>
+                    </apply>
+                </apply>
+            </apply>
+            <apply>
+                <eq/>
+                <ci>g</ci>
+                <apply>
+                    <times/>
+                    <ci>alpha</ci>
+                    <ci>g_0</ci>
+                    <apply>
+                        <exp/>
+                        <apply>
+                            <times/>
+                            <ci>sigma</ci>
+                            <apply>
+                                <power/>
+                                <apply>
+                                    <minus/>
+                                    <ci>x_2</ci>
+                                    <ci>x_0</ci>
+                                </apply>
+                                <cn cellml:units="dimensionless">2</cn>
+                            </apply>
+                        </apply>
+                    </apply>
+                </apply>
+            </apply>
+            <apply>
+                <eq/>
+                <ci>g_prime</ci>
+                <apply>
+                    <times/>
+                    <apply>
+                        <divide/>
+                        <apply>
+                            <times/>
+                            <ci>f</ci>
+                            <ci>h</ci>
+                            <ci>g</ci>
+                        </apply>
+                        <apply>
+                            <times/>
+                            <ci>f_prime</ci>
+                            <ci>h_prime</ci>
+                        </apply>
+                    </apply>
+                    <apply>
+                        <exp/>
+                        <apply>
+                            <divide/>
+                            <apply>
+                                <minus/>
+                                <ci>E_ATP</ci>
+                            </apply>
+                            <apply>
+                                <times/>
+                                <ci>kappa</ci>
+                                <ci>T</ci>
+                            </apply>
+                        </apply>
+                    </apply>
+                </apply>
+            </apply>
+            <!-- Model ODEs and Conservation Law of State Occupation Numbers-->
+            <apply>
+                <eq/>
+                <ci>R_off</ci>
+                <apply>
+                    <minus/>
+                    <apply>
+                        <minus/>
+                        <apply>
+                            <minus/>
+                            <ci>R_T</ci>
+                            <ci>A_1</ci>
+                        </apply>
+                        <ci>A_2</ci>
+                    </apply>
+                    <ci>D</ci>
+                </apply>
+            </apply>
+            <apply>
+                <eq/>
+                <apply>
+                    <diff/>
+                    <bvar>
+                        <ci>time</ci>
+                    </bvar>
+                    <ci>D</ci>
+                </apply>
+                <apply>
+                    <minus/>
+                    <apply>
+                        <plus/>
+                        <apply>
+                            <times/>
+                            <ci>k_on</ci>
+                            <ci>R_off</ci>
+                        </apply>
+                        <apply>
+                            <times/>
+                            <ci>f_prime</ci>
+                            <ci>A_1</ci>
+                        </apply>
+                        <apply>
+                            <times/>
+                            <ci>g</ci>
+                            <ci>A_2</ci>
+                        </apply>
+                    </apply>
+                    <apply>
+                        <times/>
+                        <apply>
+                            <plus/>
+                            <ci>k_off</ci>
+                            <ci>f</ci>
+                            <ci>g_prime</ci>
+                        </apply>
+                        <ci>D</ci>
+                    </apply>
+                </apply>
+            </apply>
+            <apply>
+                <eq/>
+                <apply>
+                    <diff/>
+                    <bvar>
+                        <ci>time</ci>
+                    </bvar>
+                    <ci>A_1</ci>
+                </apply>
+                <apply>
+                    <minus/>
+                    <apply>
+                        <plus/>
+                        <apply>
+                            <times/>
+                            <ci>f</ci>
+                            <ci>D</ci>
+                        </apply>
+                        <apply>
+                            <times/>
+                            <ci>h_prime</ci>
+                            <ci>A_2</ci>
+                        </apply>
+                    </apply>
+                    <apply>
+                        <times/>
+                        <apply>
+                            <plus/>
+                            <ci>f_prime</ci>
+                            <ci>h</ci>
+                        </apply>
+                        <ci>A_1</ci>
+                    </apply>
+                </apply>
+            </apply>
+            <apply>
+                <eq/>
+                <apply>
+                    <diff/>
+                    <bvar>
+                        <ci>time</ci>
+                    </bvar>
+                    <ci>A_2</ci>
+                </apply>
+                <apply>
+                    <plus/>
+                    <apply>
+                        <minus/>
+                        <apply>
+                            <times/>
+                            <ci>h</ci>
+                            <ci>A_1</ci>
+                        </apply>
+                        <apply>
+                            <times/>
+                            <apply>
+                                <plus/>
+                                <ci>h_prime</ci>
+                                <ci>g</ci>
+                            </apply>
+                            <ci>A_2</ci>
+                        </apply>
+                    </apply>
+                    <apply>
+                        <times/>
+                        <ci>g_prime</ci>
+                        <ci>D</ci>
+                    </apply>
+                </apply>
+            </apply>
+            <!--ode(x_1, time) = -f*D/A_1*x_1-h_prime*A_2/A_1*x_1+0{dimensionless};
+ode(x_2, time) = -h*A_1/A_2*(x_2-x_0)+0{dimensionless};-->
+            <apply>
+                <eq/>
+                <ci>velo_scaled</ci>
+                <apply>
+                    <times/>
+                    <ci>velo</ci>
+                    <ci>velo_max</ci>
+                </apply>
+            </apply>
+            <apply>
+                <eq/>
+                <apply>
+                    <diff/>
+                    <bvar>
+                        <ci>time</ci>
+                    </bvar>
+                    <ci>x_1</ci>
+                </apply>
+                <apply>
+                    <plus/>
+                    <apply>
+                        <minus/>
+                        <apply>
+                            <times/>
+                            <apply>
+                                <divide/>
+                                <apply>
+                                    <times/>
+                                    <apply>
+                                        <minus/>
+                                        <ci>f</ci>
+                                    </apply>
+                                    <ci>D</ci>
+                                </apply>
+                                <ci>A_1</ci>
+                            </apply>
+                            <ci>x_1</ci>
+                        </apply>
+                        <apply>
+                            <times/>
+                            <apply>
+                                <divide/>
+                                <apply>
+                                    <times/>
+                                    <ci>h_prime</ci>
+                                    <ci>A_2</ci>
+                                </apply>
+                                <ci>A_1</ci>
+                            </apply>
+                            <ci>x_1</ci>
+                        </apply>
+                    </apply>
+                    <ci>velo_scaled</ci>
+                </apply>
+            </apply>
+            <apply>
+                <eq/>
+                <apply>
+                    <diff/>
+                    <bvar>
+                        <ci>time</ci>
+                    </bvar>
+                    <ci>x_2</ci>
+                </apply>
+                <apply>
+                    <plus/>
+                    <apply>
+                        <times/>
+                        <apply>
+                            <divide/>
+                            <apply>
+                                <times/>
+                                <apply>
+                                    <minus/>
+                                    <ci>h</ci>
+                                </apply>
+                                <ci>A_1</ci>
+                            </apply>
+                            <ci>A_2</ci>
+                        </apply>
+                        <apply>
+                            <minus/>
+                            <ci>x_2</ci>
+                            <ci>x_0</ci>
+                        </apply>
+                    </apply>
+                    <ci>velo_scaled</ci>
+                </apply>
+            </apply>
+        </math>
+        <!-- F = A_1*x_1+A_2*x_2;-->
+    </component>
+    <connection>
+        <map_components component_1="Aliev_Panfilov" component_2="environment"/>
+        <map_variables variable_1="time" variable_2="time"/>
+    </connection>
+    <connection>
+        <map_components component_1="Razumova" component_2="environment"/>
+        <map_variables variable_1="time" variable_2="time"/>
+    </connection>
+    <connection>
+        <map_components component_1="Razumova" component_2="Aliev_Panfilov"/>
+        <map_variables variable_1="r" variable_2="r"/>
+    </connection>
+</model>
+

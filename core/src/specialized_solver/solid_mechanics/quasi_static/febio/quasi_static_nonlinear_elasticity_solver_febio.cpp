@@ -228,18 +228,18 @@ createFebioInputFile()
       << "\t\t<logfile>" << "\n"
 
       // available variables: https://help.febio.org/FEBio/FEBio_um_2_9/index.html Sec. 3.17.1.2 and 3.17.1.3
-      << "\t\t\t<node_data file=\"febio_geometry_output.txt\" format=\"%i,%g,%g,%g,%g,%g,%g,%g,%g,%g\" data=\"x;y;z;ux;uy;uz;Rx;Ry;Rz\"/>" << "\n"
-      << "\t\t\t<element_data file=\"febio_stress_output.txt\" format=\"%i,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g\" data=\"sx;sy;sz;sxy;syz;sxz;Ex;Ey;Ez;Exy;Eyz;Exz;J;Fxx;Fxy;Fxz;Fyx;Fyy;Fyz;Fzx;Fzy;Fzz\"/>" << "\n"
+      << "\t\t\t<node_data file=\"febio3_geometry_output.txt\" format=\"%i,%g,%g,%g,%g,%g,%g,%g,%g,%g\" data=\"x;y;z;ux;uy;uz;Rx;Ry;Rz\"/>" << "\n"
+      << "\t\t\t<element_data file=\"febio3_stress_output.txt\" format=\"%i,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g\" data=\"sx;sy;sz;sxy;syz;sxz;Ex;Ey;Ez;Exy;Eyz;Exz;J;Fxx;Fxy;Fxz;Fyx;Fyy;Fyz;Fzx;Fzy;Fzz\"/>" << "\n"
       << "\t\t</logfile>" << "\n"
       << "\t</Output>" << "\n"
       << "</febio_spec>" << "\n";
 
 
-    std::ofstream file("febio_input.feb");
+    std::ofstream file("febio3_input.feb");
 
     if (!file.is_open())
     {
-      LOG(ERROR) << "Could not write to file \"febio_input.feb\".";
+      LOG(ERROR) << "Could not write to file \"febio3_input.feb\".";
     }
 
     file << fileContents.str();

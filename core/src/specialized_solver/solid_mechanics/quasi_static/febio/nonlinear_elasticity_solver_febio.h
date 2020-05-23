@@ -86,6 +86,8 @@ protected:
   double force_;                    //< factor of force that is applied in axial direction of the muscle
   double activationFactor_;                 //< factor with which to multiply activation
   std::vector<double> materialParameters_;  //< the material parameters c0, c1 and k for Mooney-Rivlin material
+  std::vector<element_no_t> tractionElementNos_;     //< element nos of elements that will have traction
+  Vec3 tractionVector_;                     //< the traction vector to apply on the traction surfaces
   
   double endTime_;     //< end time of current time step
   bool initialized_;   //< if initialize() was already called

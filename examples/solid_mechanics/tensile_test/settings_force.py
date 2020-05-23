@@ -268,8 +268,7 @@ config = {
   },
   "NonlinearElasticitySolverFebio": {
     "durationLogKey": "febio",
-    "tractionVector": traction_vector,                    # traction vector that is applied
-    "tractionElementNos": [(nz-1)*nx*ny + j*nx + i for j in range(ny) for i in range(nx)],    # elements on which traction is applied
+    "force": force,                                       # factor of force that is applied in axial direction of the muscle
     "materialParameters": material_parameters,            # c0, c1, k for Ψ = c0 * (I1-3) + c1 * (I2-3) + 1/2*k*(log(J))^2
     
     "meshName":             "3Dmesh_quadratic",           # mesh with quadratic Lagrange ansatz functions

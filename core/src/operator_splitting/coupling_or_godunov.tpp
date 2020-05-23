@@ -66,15 +66,15 @@ advanceTimeSpan()
     // set transfer direction 1->2
     this->outputConnection_->setTransferDirection(true);
 
-    // transfer actual values
-    std::shared_ptr<typename TimeStepping1::OutputConnectorDataType> solutionTimeStepping1 = this->timeStepping1_.getOutputConnectorData();
-
     if (VLOG_IS_ON(1))
-      VLOG(1) << "  timeStepping1_.getOutputConnectorData(): " << solutionTimeStepping1;
+      VLOG(1) << "  before transfer 1->2 timeStepping1_.getOutputConnectorData(): " << this->timeStepping1_.getOutputConnectorData();
 
     // transfer to timestepping2_
     SolutionVectorMapping<typename TimeStepping1::OutputConnectorDataType, typename TimeStepping2::OutputConnectorDataType>::
-      transfer(solutionTimeStepping1, this->timeStepping2_.getOutputConnectorData(), *this->outputConnection_);
+      transfer(this->timeStepping1_.getOutputConnectorData(), this->timeStepping2_.getOutputConnectorData(), *this->outputConnection_);
+
+    if (VLOG_IS_ON(1))
+      VLOG(1) << "  after transfer 1->2 timeStepping2_.getOutputConnectorData(): " << this->timeStepping2_.getOutputConnectorData();
 
     if (this->durationLogKey_ != "")
     {
@@ -100,12 +100,19 @@ advanceTimeSpan()
     // --------------- data transfer 2->1 -------------------------
     LOG(DEBUG) << "  CouplingOrGodunov: transfer timeStepping2 -> timeStepping1";
 
-    // set transfer direction 1->2
+    // set transfer direction 2->1
     this->outputConnection_->setTransferDirection(false);
+
+    if (VLOG_IS_ON(1))
+      VLOG(1) << "  before transfer 2->1: timeStepping2_.getOutputConnectorData(): " << this->timeStepping2_.getOutputConnectorData();
 
     // transfer to timestepping1_
     SolutionVectorMapping<typename TimeStepping2::OutputConnectorDataType, typename TimeStepping1::OutputConnectorDataType>::
       transfer(this->timeStepping2_.getOutputConnectorData(), this->timeStepping1_.getOutputConnectorData(), *this->outputConnection_);
+
+    if (VLOG_IS_ON(1))
+      VLOG(1) << "  after transfer 2->1: timeStepping1_.getOutputConnectorData(): " << this->timeStepping1_.getOutputConnectorData();
+
 
     if (this->durationLogKey_ != "")
     {

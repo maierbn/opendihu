@@ -28,8 +28,8 @@ public:
   typedef typename Data::OutputConnectorDataType OutputConnectorDataType;
 
   typedef ::SpatialDiscretization::FiniteElementMethod<       //FEM for initial potential flow, fiber directions
-        Mesh::StructuredDeformableOfDimension<3>,
-        BasisFunction::LagrangeOfOrder<1>,
+        typename FunctionSpace::Mesh,
+        typename FunctionSpace::BasisFunction,
         Quadrature::Gauss<3>,
         Equation::Static::Laplace
   > FiniteElementMethodPotentialFlow;
@@ -67,22 +67,26 @@ protected:
   // from the activation scalar field (symbol gamma), compute the active stress tensor field in fiber direction
   void computeActiveStress();
 
-  DihuContext context_;    //< object that contains the python config for the current context and the global singletons meshManager and solverManager
+  DihuContext context_;             //< object that contains the python config for the current context and the global singletons meshManager and solverManager
 
   OutputWriter::Manager outputWriterManager_; //< manager object holding all output writer
-  Data data_;                 //< data object
+  Data data_;                       //< data object
 
   FiniteElementMethodPotentialFlow finiteElementMethodPotentialFlow_;   //< the finite element object that is used for the Laplace problem of the potential flow, needed for the fiber directions
-  FiniteElementMethod finiteElementMethodLinearElasticity_;   //< the finite element object that solves the linear elasticity equation
+  FiniteElementMethod finiteElementMethodLinearElasticity_;             //< the finite element object that solves the linear elasticity equation
 
-  std::string durationLogKey_;   //< key with with the duration of the computation is written to the performance measurement log
+  std::string durationLogKey_;      //< key with with the duration of the computation is written to the performance measurement log
 
-  bool initialized_;   //< if this object was already initialized
-  PythonConfig specificSettings_;    //< python object containing the value of the python config dict with corresponding key
-  double endTime_;     //< end time of current time step
-  double maximumActiveStress_;    //< parameter value of the maximum active stress, this is the scaling factor of the activation value to get the active stress tensor
-  double strainScalingCurveWidth_;   //< width of a parabola that scales the stress dependend on the relative sarcomere length
-  double scalingFactor_;      //< factor with which to scale the displacement
+  SpatialParameter<FunctionSpace,MathUtility::Matrix<3,3,double>> anisotropyTensor_;      //< the tensor that defines the anisotropy in the material model
+
+  bool initialized_;                //< if this object was already initialized
+  PythonConfig specificSettings_;   //< python object containing the value of the python config dict with corresponding key
+  double endTime_;                  //< end time of current time step
+  double maximumActiveStress_;      //< parameter value of the maximum active stress, this is the scaling factor of the activation value to get the active stress tensor
+  double strainScalingCurveWidth_;  //< width of a parabola that scales the stress dependend on the relative sarcomere length
+  double scalingFactor_;            //< factor with which to scale the displacement
+  Vec3 fiberDirection_;             //< direction of fibers, needed for anisotropy of material
+  bool usePotentialFlowForFiberDirection_;   //< if a computation of a potential flow should be used for determining the fiber direction
 };
 
 }  // namespace

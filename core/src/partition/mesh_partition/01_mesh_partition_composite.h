@@ -73,6 +73,9 @@ public:
   //! number of nodes in total
   global_no_t nNodesGlobal() const;
   
+  //! return the number of nodes per coordinate direction, for the first submesh
+  global_no_t nNodesGlobal(int coordinateDirection) const;
+
   //! get the number of nodes in the global Petsc ordering that are in partitions prior to the own rank
   global_no_t beginNodeGlobalPetsc() const;
 
@@ -130,6 +133,9 @@ public:
   //! get the global dof nos of the ghost dofs in the local partition
   const std::vector<PetscInt> &ghostDofNosGlobalPetsc() const;
   
+  //! get a vector of global natural dof nos of the locally stored non-ghost dofs, needed for setParameters callback function in cellml adapter
+  void getDofNosGlobalNatural(std::vector<global_no_t> &dofNosGlobalNatural) const;
+
   //! check if the given dof is owned by the own rank, then return true, if not, neighbourRankNo is set to the rank by which the dof is owned
   bool isNonGhost(node_no_t nodeNoLocal, int &neighbourRankNo) const;
 

@@ -210,6 +210,7 @@ map(std::shared_ptr<FieldVariableSourceType> fieldVariableSource,
               {
                 VLOG(1) << "Field variable is already the same";
               }
+              return;
             }
             else if (fieldVariableSource->isExtractComponentSharedPossible(componentNoSource))
             {

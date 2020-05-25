@@ -291,37 +291,6 @@ def set_specific_states(n_nodes_global, time_step_no, current_time, states, fibe
     for node_no_global in nodes_to_stimulate_global:
       states[(node_no_global,0,0)] = 20.0   # key: ((x,y,z),nodal_dof_index,state_no)
 
-# callback function for artifical stress values, instead of monodomain
-def set_stress_values(n_dofs_global, n_nodes_global_per_coordinate_direction, time_step_no, current_time, values, global_natural_dofs, fiber_no):
-    # n_dofs_global:       (int) global number of dofs in the mesh where to set the values
-    # n_nodes_global_per_coordinate_direction (list of ints)   [mx, my, mz] number of global nodes in each coordinate direction. 
-    #                       For composite meshes, the values are only for the first submesh, for other meshes sum(...) equals n_dofs_global
-    # time_step_no:        (int)   current time step number
-    # current_time:        (float) the current simulation time
-    # values:              (list of floats) all current local values of the field variable, if there are multiple components, they are stored in struct-of-array memory layout 
-    #                       i.e. [point0_component0, point0_component1, ... pointN_component0, point1_component0, point1_component1, ...]
-    #                       After the call, these values will be assigned to the field variable.
-    # global_natural_dofs  (list of ints) for every local dof no. the dof no. in global natural ordering
-    # additional_argument: The value of the option "additionalArgument", can be any Python object.
-    
-    # loop over nodes in fiber
-    for local_dof_no in range(len(values)):
-      # get the global no. of the current dof
-      global_dof_no = global_natural_dofs[local_dof_no]
-      
-      n_nodes_per_fiber = n_nodes_global_per_coordinate_direction[0]
-      
-      k = global_dof_no
-      N = n_nodes_per_fiber
-      
-      if k > N/2:
-        k = N/2 - k
-      else:
-        k = k - N/2
-      
-      values[local_dof_no] = 0.1*np.sin((current_time/100 + 0.2*k/N + 0.1*fiber_no/variables.n_fibers_total) * 2*np.pi) ** 2
-      
-
 # load MU distribution and firing times
 variables.fiber_distribution = np.genfromtxt(variables.fiber_distribution_file, delimiter=" ")
 variables.firing_times = np.genfromtxt(variables.firing_times_file)

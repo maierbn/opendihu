@@ -7,6 +7,11 @@
 
 Import('env')     # import Environment object from calling SConstruct
 
-#env.Program(target = "biceps_contraction", source = "src/biceps_contraction.cpp")
-env.Program(target = "biceps_contraction_no_cell", source = "src/biceps_contraction_no_cell.cpp")
-#env.Program(target = "biceps_contraction_notfast", source = "src/biceps_contraction_notfast.cpp")
+# if the option no_tests was given, quit the script
+if not env['no_examples']:
+    
+  # create the main executable
+#  env.Program(target = 'biceps_contraction', source = "src/biceps_contraction.cpp")
+#  env.Program(target = 'biceps_contraction_no_cell', source = "src/biceps_contraction_no_cell.cpp")
+#  env.Program(target = 'tendon', source = "src/tendon.cpp")
+  env.Program(target = 'biconc_precice.cpp', source = "src/biconc_precice.cpp")

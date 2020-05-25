@@ -65,10 +65,10 @@ public:
   //! set the solution variable if it is initialized externally, such as in a timestepping scheme
   void setSolutionVariable(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> solution);
 
-  //! return reference to a stiffness matrix
+  //! return reference to the stiffness matrix
   std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> stiffnessMatrix();
 
-  //! return reference to a stiffness matrix, this matrix stays the initial stifness matrix and will not be changed for boundary conditions
+  //! return reference to the stiffness matrix, this matrix stays the initial stifness matrix and will not be changed for boundary conditions
   std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> stiffnessMatrixWithoutBc();
 
   //! get the mass matrix

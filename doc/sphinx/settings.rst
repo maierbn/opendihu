@@ -28,7 +28,8 @@ The following pages contain all settings that are possible to specify for the di
    settings/static_bidomain_solver
    settings/hyperelasticity
    settings/dynamic_hyperelasticity
-   
+   settings/prescribed_values
+  
 .. Indices and tables
   ==================
 

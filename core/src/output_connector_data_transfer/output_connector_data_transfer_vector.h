@@ -36,31 +36,39 @@ public:
 
 /** Transfer between a normal entry and a vector, the first entry of the vector is used
  */
-template<typename OutputConnectorDataType1, typename OutputConnectorDataType2>
+template<typename FunctionSpaceType1, int nComponents1a, int nComponents1b, typename FunctionSpaceType2, int nComponents2a, int nComponents2b>
 class SolutionVectorMapping<
-  OutputConnectorDataType1,
-  std::vector<std::shared_ptr<OutputConnectorDataType2>>
+  std::vector<std::shared_ptr<
+    Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>
+  >>,
+  Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>
 >
 {
 public:
   //! transfer the data from transferableSolutionData1 to transferableSolutionData2, as efficient as possible, where there are multiple slots that could be transferred (e.g. at cellmlAdapter), use the one specified by transferSlotName
-  static void transfer(const std::shared_ptr<OutputConnectorDataType1> transferableSolutionData1,
-                       std::shared_ptr<std::vector<std::shared_ptr<OutputConnectorDataType2>>> transferableSolutionData2,
+  static void transfer(const std::shared_ptr<std::vector<std::shared_ptr<
+                         Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>
+                       >>> transferableSolutionData1,
+                       std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>> transferableSolutionData2,
                        OutputConnection &outputConnection);
 };
 
 /** Transfer between a normal entry and a vector, the first entry of the vector is used
  */
-template<typename OutputConnectorDataType1, typename OutputConnectorDataType2>
+template<typename FunctionSpaceType1, int nComponents1a, int nComponents1b, typename FunctionSpaceType2, int nComponents2a, int nComponents2b>
 class SolutionVectorMapping<
-  std::vector<std::shared_ptr<OutputConnectorDataType1>>,
-  OutputConnectorDataType2
+  Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>,
+  std::vector<std::shared_ptr<
+    Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>
+  >>
 >
 {
 public:
   //! transfer the data from transferableSolutionData1 to transferableSolutionData2, as efficient as possible, where there are multiple slots that could be transferred (e.g. at cellmlAdapter), use the one specified by transferSlotName
-  static void transfer(const std::shared_ptr<std::vector<std::shared_ptr<OutputConnectorDataType1>>> transferableSolutionData1,
-                       std::shared_ptr<OutputConnectorDataType2> transferableSolutionData2,
+  static void transfer(const std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>> transferableSolutionData1,
+                       std::shared_ptr<std::vector<std::shared_ptr<
+                         Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>
+                       >>> transferableSolutionData2,
                        OutputConnection &outputConnection);
 };
 

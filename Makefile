@@ -124,3 +124,9 @@ multidomain_contraction:
 
 laplace2d_split:
 	cd examples/laplace/laplace2d_split && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+
+linear_elasticity_with_activation:
+	cd examples/solid_mechanics/linear_elasticity/with_fiber_activation && python ../../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+
+tensile_test:
+	cd examples/solid_mechanics/tensile_test && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG

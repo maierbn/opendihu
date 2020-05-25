@@ -131,6 +131,7 @@ callPythonSetParametersFunction(int nInstances, int timeStepNo, double currentTi
   // create list of global dof nos if it does not already exist
   if (pyGlobalNaturalDofsList_ == nullptr)
   {
+    // get a vector of global natural dof nos of the locally stored non-ghost dofs, needed for setParameters callback function in cellml adapter
     std::vector<global_no_t> dofNosGlobalNatural;
     this->functionSpace_->meshPartition()->getDofNosGlobalNatural(dofNosGlobalNatural);
     pyGlobalNaturalDofsList_ = PythonUtility::convertToPythonList(dofNosGlobalNatural);

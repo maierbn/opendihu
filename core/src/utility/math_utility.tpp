@@ -462,22 +462,68 @@ void rotateMatrix(Matrix<3,3,double_v_t> &matrix, VecD<3,double_v_t> directionVe
   const double_v_t b2 = directionVector[1];
   const double_v_t b3 = directionVector[2];
 
-  Matrix<3,3,double_v_t> basis(
-  {
-    // normalized(b)                       normalized(e_3 x b)                        normalized(b x e_3 x b)
-    b1/sqrt(sqr(b1) + sqr(b2) + sqr(b3)),  -b2/sqrt(sqr(b1) + sqr(b2)),               -b1*b3/sqrt(sqr(b1)*sqr(b3) + sqr(b2)*sqr(b3) + sqr(sqr(b1) + sqr(b2))),
-    b2/sqrt(sqr(b1) + sqr(b2) + sqr(b3)),   b1/sqrt(sqr(b1) + sqr(b2)),               -b2*b3/sqrt(sqr(b1)*sqr(b3) + sqr(b2)*sqr(b3) + sqr(sqr(b1) + sqr(b2))),
-    b3/sqrt(sqr(b1) + sqr(b2) + sqr(b3)),                            0,  (sqr(b1) + sqr(b2))/sqrt(sqr(b1)*sqr(b3) + sqr(b2)*sqr(b3) + sqr(sqr(b1) + sqr(b2)))
-  });
+  const double_v_t bNorm = sqrt(sqr(b1) + sqr(b2) + sqr(b3));     // |b|
+  const double_v_t e3bNorm = sqrt(sqr(b1) + sqr(b2));             // |e_3 x b|
+  const double_v_t be3bNorm = sqrt(sqr(b1)*sqr(b3) + sqr(b2)*sqr(b3) + sqr(sqr(b1) + sqr(b2)));   // |b x (e_3 x b)|
 
-  Matrix<3,3,double_v_t> basis_T(
+  if (MathUtility::abs(bNorm) < 1e-15)
   {
-    basis(0,0), basis(1,0), basis(2,0),
-    basis(0,1), basis(1,1), basis(2,1),
-    basis(0,2), basis(1,2), basis(2,2)
-  });
+    LOG(ERROR) << "Trying to transform a matrix to direction vector " << directionVector;
+    return;
+  }
 
-  matrix = basis * matrix * basis_T;
+  // if one of the new basis vectors is zero (this happens, if directionVector == [0,0,1]), use e2 instead of e3
+  if (MathUtility::abs(e3bNorm) < 1e-15 || MathUtility::abs(be3bNorm) < 1e-15)
+  {
+    const double_v_t e2bNorm = sqrt(sqr(b3) + sqr(b1));             // |e_2 x b|
+    const double_v_t be2bNorm = sqrt(sqr(b1)*sqr(b2) + sqr(sqr(b1)*sqr(b3)) + sqr(b2) + sqr(b3));   // |b x (e_3 x b)|
+
+    if (MathUtility::abs(e2bNorm) < 1e-15 || MathUtility::abs(be2bNorm) < 1e-15)
+    {
+      LOG(ERROR) << "Trying to transform a matrix to direction vector " << directionVector;
+      return;
+    }
+
+    // use e_2
+
+    Matrix<3,3,double_v_t> basis(
+    {
+      // normalized(b)    normalized(e_2 x b)   normalized(b x e_2 x b)
+      b1/bNorm,            b3/e2bNorm,                       -b1*b2/be2bNorm,
+      b2/bNorm,                     0,          (sqr(b1) + sqr(b3))/be2bNorm,
+      b3/bNorm,           -b1/e2bNorm,                       -b2*b3/be2bNorm
+    });
+
+    Matrix<3,3,double_v_t> basis_T(
+    {
+      basis(0,0), basis(1,0), basis(2,0),
+      basis(0,1), basis(1,1), basis(2,1),
+      basis(0,2), basis(1,2), basis(2,2)
+    });
+
+    matrix = basis * matrix * basis_T;
+  }
+  else
+  {
+    // use e_3
+
+    Matrix<3,3,double_v_t> basis(
+    {
+      // normalized(b)    normalized(e_3 x b)   normalized(b x e_3 x b)
+      b1/bNorm,           -b2/e3bNorm,                       -b1*b3/be3bNorm,
+      b2/bNorm,            b1/e3bNorm,                       -b2*b3/be3bNorm,
+      b3/bNorm,                     0,          (sqr(b1) + sqr(b2))/be3bNorm
+    });
+
+    Matrix<3,3,double_v_t> basis_T(
+    {
+      basis(0,0), basis(1,0), basis(2,0),
+      basis(0,1), basis(1,1), basis(2,1),
+      basis(0,2), basis(1,2), basis(2,2)
+    });
+
+    matrix = basis * matrix * basis_T;
+  }
 }
 
 

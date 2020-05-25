@@ -168,6 +168,8 @@ The following keywords in the python dictionary are recognized:
 
 The items ``# <mesh>``, ``# <solver>`` and ``# <output writer>`` are placeholders for :doc:`/settings/mesh`, :doc:`/settings/solver` and :doc:`/settings/output_writer`.
 
+.. _femesh:
+
 <mesh>
 ^^^^^^^^^^^^^
 The mesh defines the node positions and therefore the geometry. The number and location of the degrees of freedom (dofs) is dependent on the ``Mesh`` and ``BasisFunction`` classes in the C++ instantiation. Details on dofs and how to specify the geometry is given on the :doc:`/settings/mesh` page.
@@ -228,13 +230,13 @@ The first option is useful to reuse meshes that only need to be defined once.
 ^^^^^^^^^^^^^
 The solver is the solver of the linear system 
 
-.. math:
+.. math::
   K u = f,
 
 with stiffness matrix :math:`K`, vector of unknowns, :math:`u` and right hand side :math:`f`. This is needed when the Laplace or Poisson problem is solved (by calling ``run()`` of the object). Furthermore, in an explicit Euler timestepping of the diffusion equation we compute
 
-.. math:
-  u^{t+1} = u^{t} + dt M^{-1} K u_{t}
+.. math::
+  u^{(t+1)} = u^{(t)} + dt M^{-1} K u_{t}
 
 For this also the linear solver is used.
 

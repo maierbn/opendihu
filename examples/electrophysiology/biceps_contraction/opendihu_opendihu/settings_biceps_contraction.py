@@ -145,6 +145,7 @@ if False:
 config = {
   "scenarioName":          variables.scenario_name,
   "solverStructureDiagramFile":     "out/solver_structure.txt",     # output file of a diagram that shows data connection between solvers
+  "mappingsBetweenMeshesLogFile":   "out/mappings_between_meshes.txt",  # log file of when mappings between meshes occur
   "Meshes":                variables.meshes,
   "MappingsBetweenMeshes": variables.mappings_between_meshes,
   "Solvers": {
@@ -214,16 +215,17 @@ config = {
                 "nInstances":         n_fibers_in_subdomain_x(subdomain_coordinate_x)*n_fibers_in_subdomain_y(subdomain_coordinate_y),
                 "instances": 
                 [{
-                  "ranks":                          list(range(variables.n_subdomains_z)),    # these rank nos are local nos to the outer instance of MultipleInstances, i.e. from 0 to number of ranks in z direction
+                  "ranks":                          list(range(variables.n_subdomains_z)),   # these rank nos are local nos to the outer instance of MultipleInstances, i.e. from 0 to number of ranks in z direction
                   "Heun" : {
-                    "timeStepWidth":                variables.dt_0D,  # 5e-5
-                    "logTimeStepWidthAsKey":        "dt_0D",
-                    "durationLogKey":               "duration_0D",
-                    "initialValues":                [],
-                    "timeStepOutputInterval":       1e4,
-                    "inputMeshIsGlobal":            True,
-                    "dirichletBoundaryConditions":  {},
-                    "nAdditionalFieldVariables":    0,
+                    "timeStepWidth":                variables.dt_0D,                         # timestep width of 0D problem
+                    "logTimeStepWidthAsKey":        "dt_0D",                                 # key under which the time step width will be written to the log file
+                    "durationLogKey":               "duration_0D",                           # log key of duration for this solver
+                    "timeStepOutputInterval":       1e4,                                     # how often to print the current timestep
+                    "initialValues":                [],                                      # no initial values are specified
+                    "dirichletBoundaryConditions":  {},                                      # no Dirichlet boundary conditions are specified
+                    "inputMeshIsGlobal":            True,                                    # the boundary conditions and initial values would be given as global numbers
+                    "checkForNanInf":               True,                                    # abort execution if the solution contains nan or inf values
+                    "nAdditionalFieldVariables":    0,                                       # number of additional field variables
                       
                     "CellML" : {
                       "modelFilename":                          variables.cellml_file,                          # input C++ source file or cellml XML file
@@ -274,26 +276,25 @@ config = {
                 "nInstances": n_fibers_in_subdomain_x(subdomain_coordinate_x)*n_fibers_in_subdomain_y(subdomain_coordinate_y),
                 "instances": 
                 [{
-                  "ranks":                         list(range(variables.n_subdomains_z)),    # these rank nos are local nos to the outer instance of MultipleInstances, i.e. from 0 to number of ranks in z direction
+                  "ranks":                         list(range(variables.n_subdomains_z)),   # these rank nos are local nos to the outer instance of MultipleInstances, i.e. from 0 to number of ranks in z direction
                   "CrankNicolson" : {
-                    "initialValues":               [],
+                    "initialValues":               [],                                      # no initial values are given
                     #"numberTimeSteps":            1,
-                    "timeStepWidth":               variables.dt_1D,  # 1e-5
-                    "logTimeStepWidthAsKey":       "dt_1D",
-                    "durationLogKey":              "duration_1D",
-                    "timeStepOutputInterval":      1e4,
-                    "dirichletBoundaryConditions": {},                                       # old Dirichlet BC that are not used in FastMonodomainSolver: {0: -75.0036, -1: -75.0036},
-                    "inputMeshIsGlobal":           True,
-                    "solverName":                  "diffusionTermSolver",
-                    "nAdditionalFieldVariables":   2,
+                    "timeStepWidth":               variables.dt_1D,                         # timestep width for the diffusion problem
+                    "logTimeStepWidthAsKey":       "dt_1D",                                 # key under which the time step width will be written to the log file
+                    "durationLogKey":              "duration_1D",                           # log key of duration for this solver
+                    "timeStepOutputInterval":      1e4,                                     # how often to print the current timestep
+                    "dirichletBoundaryConditions": {},                                      # old Dirichlet BC that are not used in FastMonodomainSolver: {0: -75.0036, -1: -75.0036},
+                    "inputMeshIsGlobal":           True,                                    # initial values would be given as global numbers
+                    "solverName":                  "diffusionTermSolver",                   # reference to the linear solver
+                    "nAdditionalFieldVariables":   2,                                       # number of additional field variables that will be written to the output file, here for stress
+                    "checkForNanInf":              True,                                    # abort execution if the solution contains nan or inf values
+                    
                     "FiniteElementMethod" : {
-                      "maxIterations":             1e4,
-                      "relativeTolerance":         1e-10,
-                      "absoluteTolerance":         1e-10,         # 1e-10 absolute tolerance of the residual                          
                       "inputMeshIsGlobal":         True,
                       "meshName":                  "MeshFiber_{}".format(fiber_no),
-                      "prefactor":                 get_diffusion_prefactor(fiber_no, motor_unit_no),  # resolves to Conductivity / (Am * Cm)
                       "solverName":                "diffusionTermSolver",
+                      "prefactor":                 get_diffusion_prefactor(fiber_no, motor_unit_no),  # resolves to Conductivity / (Am * Cm)
                     },
                     "OutputWriter" : [
                       #{"format": "Paraview", "outputInterval": int(1./variables.dt_1D*variables.output_timestep), "filename": "out/fiber_"+str(fiber_no), "binary": True, "fixedFormat": False, "combineFiles": True},
@@ -324,10 +325,11 @@ config = {
       "MuscleContractionSolver": {
         "numberTimeSteps":              1,                         # only use 1 timestep per interval
         "timeStepOutputInterval":       100,                       # do not output time steps
-        "Pmax": variables.pmax,                                    # maximum PK2 active stress
+        "Pmax":                         variables.pmax,            # maximum PK2 active stress
         "OutputWriter" : [
-          {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D), "filename": "out/" + variables.scenario_name + "/mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
+          {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D), "filename": "out/" + variables.scenario_name + "/mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
         ],
+        "mapGeometryToMeshes":          [],                        # the mesh names of the meshes that will get the geometry transferred
         "dynamic":                      True,                      # if the dynamic solid mechanics solver should be used, else it computes the quasi-static problem
         
         # the actual solid mechanics solver, this is either "DynamicHyperelasticitySolver" or "HyperelasticitySolver", depending on the value of "dynamic"
@@ -375,7 +377,7 @@ config = {
           "OutputWriter" : [
             
             # Paraview files
-            #{"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/u", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
+            #{"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/u", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
             
             # Python callback function "postprocess"
             #{"format": "PythonCallback", "outputInterval": 1, "callback": postprocess, "onlyNodalValues":True, "filename": ""},
@@ -383,20 +385,20 @@ config = {
           # 2. additional output writer that writes also the hydrostatic pressure
           "pressure": {   # output files for pressure function space (linear elements), contains pressure values, as well as displacements and velocities
             "OutputWriter" : [
-              #{"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/p", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
+              #{"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/p", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
             ]
           },
           # 3. additional output writer that writes virtual work terms
           "dynamic": {    # output of the dynamic solver, has additional virtual work values 
             "OutputWriter" : [   # output files for displacements function space (quadratic elements)
-              #{"format": "Paraview", "outputInterval": int(output_interval/dt), "filename": "out/dynamic", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
-              {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/virtual_work", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
+              #{"format": "Paraview", "outputInterval": int(output_interval/dt), "filename": "out/dynamic", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+              {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/virtual_work", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
             ],
           },
           # 4. output writer for debugging, outputs files after each load increment, the geometry is not changed but u and v are written
           "LoadIncrements": {   
             "OutputWriter" : [
-              #{"format": "Paraview", "outputInterval": 1, "filename": "out/load_increments", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
+              #{"format": "Paraview", "outputInterval": 1, "filename": "out/load_increments", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
             ]
           },
         }

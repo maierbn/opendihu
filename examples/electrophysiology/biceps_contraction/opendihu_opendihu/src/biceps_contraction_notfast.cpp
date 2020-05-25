@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
         >
       >
     >,
-    MuscleContractionSolver
+    MuscleContractionSolver<>
   > problem(settings);
   
   // run problem

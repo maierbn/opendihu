@@ -23,7 +23,7 @@ public:
   void initialize(const Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b> &transferableSolutionData1,
                   const Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b> &transferableSolutionData2);
 
-  //! set current tranfer direction that will be taken into account for mapTo
+  //! set current transfer direction that will be taken into account for mapTo
   void setTransferDirection(bool term1To2);
 
   //! get the information to which slot the slot (fromVectorNo, fromIndex) should be mapped, @return: if there was no error, if it returns false, do not perform this mapping as the slot is not connected

@@ -7,11 +7,12 @@
 namespace SpatialDiscretization
 {
 
-template<typename Term,int nDisplacementComponents>
-double HyperelasticitySolver<Term,nDisplacementComponents>::
-computeSbarC(const Tensor2<3> &Sbar, const Tensor2<3> &C)
+template<typename Term,typename MeshType, int nDisplacementComponents>
+template<typename double_v_t>
+double HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+computeSbarC(const Tensor2<3,double_v_t> &Sbar, const Tensor2<3,double_v_t> &C)
 {
-  double SbarC = 0;
+  double_v_t SbarC = 0;
   for (int a = 0; a < 3; a++)
   {
     for (int b = 0; b < 3; b++)
@@ -22,18 +23,21 @@ computeSbarC(const Tensor2<3> &Sbar, const Tensor2<3> &C)
   return SbarC;
 }
 
-template<typename Term,int nDisplacementComponents>
-void HyperelasticitySolver<Term,nDisplacementComponents>::
-materialTesting(const double pressure,                           //< [in] pressure value p
-                const Tensor2<3> &rightCauchyGreen,                //< [in] C
-                const Tensor2<3> &inverseRightCauchyGreen,         //< [in] C^{-1}
-                const std::array<double,5> reducedInvariants,      //< [in] the reduced invariants Ibar_1, Ibar_2
-                const double deformationGradientDeterminant,       //< [in] J = det(F)
-                Vec3 fiberDirection,                               //< [in] a0, direction of fibers
-                Tensor2<3> &fictitiousPK2Stress,                   //< [in] Sbar, the fictitious 2nd Piola-Kirchhoff stress tensor
-                Tensor2<3> &pk2StressIsochoric                    //< [in] S_iso, the isochoric part of the 2nd Piola-Kirchhoff stress tensor
+template<typename Term,typename MeshType, int nDisplacementComponents>
+template<typename double_v_t>
+void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+materialTesting(const double_v_t pressure,                           //< [in] pressure value p
+                const Tensor2<3,double_v_t> &rightCauchyGreen,                //< [in] C
+                const Tensor2<3,double_v_t> &inverseRightCauchyGreen,         //< [in] C^{-1}
+                const std::array<double_v_t,5> reducedInvariants,      //< [in] the reduced invariants Ibar_1, Ibar_2
+                const double_v_t deformationGradientDeterminant,       //< [in] J = det(F)
+                VecD<3,double_v_t> fiberDirection,                               //< [in] a0, direction of fibers
+                Tensor2<3,double_v_t> &fictitiousPK2Stress,                   //< [in] Sbar, the fictitious 2nd Piola-Kirchhoff stress tensor
+                Tensor2<3,double_v_t> &pk2StressIsochoric                    //< [in] S_iso, the isochoric part of the 2nd Piola-Kirchhoff stress tensor
                )
 {
+  // note, this is implemented for double_v_t == double
+
 #if 0
   LOG(DEBUG) << "materialTesting, parameters: " << this->materialParameters_ << ", C: " << rightCauchyGreen;
 

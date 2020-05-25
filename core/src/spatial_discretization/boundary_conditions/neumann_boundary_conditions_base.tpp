@@ -75,7 +75,9 @@ initialize(PythonConfig specificSettings, std::shared_ptr<FunctionSpaceType> fun
 
       if (elementNoGlobal < 0 || elementNoGlobal >= functionSpace->nElementsGlobal())
       {
-        LOG(ERROR) << "In Neumann boundary conditions, global element no. " << elementNoGlobal << " is invalid (global number of elements: " << functionSpace->nElementsGlobal() << ")";
+        LOG(ERROR) << "In Neumann boundary conditions, global element no. " << elementNoGlobal << " is invalid "
+          << "(mesh \"" << functionSpace->meshName() << "\" has global number of elements: " << functionSpace->nElementsGlobal() << "). \n" 
+          << "Note, you can use negative indices to count from the end, if needed.";
         continue;
       }
       item.elementNoGlobal = elementNoGlobal;

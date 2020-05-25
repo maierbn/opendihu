@@ -77,15 +77,15 @@ protected:
   //! modify the rhs to incorporate dirichlet boundary conditions
   virtual void applyBoundaryConditions() = 0;
 
-  DihuContext context_;                     //< object that contains the python config for the current context and the global singletons meshManager and solverManager
-  Data data_;                               //< data object that holds all PETSc vectors and matrices
-  PythonConfig specificSettings_;           //< python object containing the value of the python config dict with corresponding key
+  DihuContext context_;                       //< object that contains the python config for the current context and the global singletons meshManager and solverManager
+  Data data_;                                 //< data object that holds all PETSc vectors and matrices
+  PythonConfig specificSettings_;             //< python object containing the value of the python config dict with corresponding key
   OutputWriter::Manager outputWriterManager_; //< manager object holding all output writer
   SpatialParameter<FunctionSpaceType,double> prefactor_;      //< the prefactor paramater that can be different for every element
 
-  bool updatePrescribedValuesFromSolution_ = false;   //< this is an option, where the prescribed values of DirichletBC are changed before the solve() to the values that are then stored in solution, i.e. the initial values
+  bool updatePrescribedValuesFromSolution_ = false;           //< this is an option, where the prescribed values of DirichletBC are changed before the solve() to the values that are then stored in solution, i.e. the initial values
 
-  bool initialized_;                        //< if initialize was already called on this object, then further calls to initialize() have no effect
+  bool initialized_;                          //< if initialize was already called on this object, then further calls to initialize() have no effect
 };
 
 /** class that provides extra initialize methods, depending on Term

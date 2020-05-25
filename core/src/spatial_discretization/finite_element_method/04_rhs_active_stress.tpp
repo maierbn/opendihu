@@ -1,6 +1,7 @@
 #include "spatial_discretization/finite_element_method/04_rhs.h"
 
-#include <Python.h>
+#include <Python.h>  // has to be the first included header
+#include <array>
 
 namespace SpatialDiscretization
 {
@@ -40,6 +41,7 @@ setRightHandSide()
   rightHandSide->setRepresentationGlobal();
   rightHandSide->startGhostManipulation();
 
+  // if there is the extra vector that will hold rhs_active
   if (rightHandSideActive)
   {
     rightHandSideActive->zeroEntries();
@@ -73,7 +75,7 @@ setRightHandSide()
 
       // compute integration factor
       const std::array<Vec3,D> jacobian = FunctionSpaceType::computeJacobian(geometryValues, xi);
-      double integrationFactor = MathUtility::computeIntegrationFactor<D>(jacobian);
+      double integrationFactor = MathUtility::computeIntegrationFactor(jacobian);
 
       Tensor2<D> inverseJacobian = functionSpace->getInverseJacobian(geometryValues, elementNoLocal, xi);
 
@@ -92,7 +94,17 @@ setRightHandSide()
           for (int b = 0; b < D; b++)
           {
             double sigma_ab = activeStressValues[dofIndexL][a*D + b];
-            entryLa += gradPhiWorldSpace[b] * sigma_ab;
+            double gradPhi = gradPhiWorldSpace[b];
+
+            // active stress only contracts
+            // If grad phi is positive, this means extension in the muscle tissue.
+            // If ε>0, there is no value of the active stress. The virtual work -δW_ext = δW_int = σ_active : ε is therefore zero.
+            // If ε<0, we have contraction. There exists a virtual work -δW_ext = δW_int = σ_active : ε.
+            if (gradPhi < 0)
+            {
+              entryLa += gradPhi * sigma_ab;
+            }
+            VLOG(2) << "     " << samplingPointIndex << "," << dofIndexL << ", sigma_" << a << b << ": " << sigma_ab << ", grad phi: " << gradPhiWorldSpace[b];
           }
           evaluationsArray[samplingPointIndex][dofIndexL*nComponents + a] = entryLa * integrationFactor;
         }
@@ -102,15 +114,26 @@ setRightHandSide()
     // integrate all values at once
     EvaluationsType integratedValues = QuadratureDD::computeIntegral(evaluationsArray);
 
+
+    VLOG(1) << "         evaluationsArray: " << evaluationsArray;
+    VLOG(1) << "         integratedValues: " << integratedValues;
+
     // perform integration and add to entry in rhs vector
     for (int dofIndexL = 0; dofIndexL < nDofsPerElement; dofIndexL++)
     {
+      int k = int(dofNosLocal[dofIndexL] / (this->data_.functionSpace()->meshPartition()->nNodesGlobal(0) * this->data_.functionSpace()->meshPartition()->nNodesGlobal(1)));
+      VLOG(1) << "node k: " << k << ", f: " << integratedValues[dofIndexL*nComponents + 0] << " "
+        << integratedValues[dofIndexL*nComponents + 1] << " " << integratedValues[dofIndexL*nComponents + 2]
+        << ", sigma: " << activeStressValues[dofIndexL][MathUtility::sqr(nComponents)-1];
+
       // loop over components
       for (int componentNo = 0; componentNo < nComponents; componentNo++)
       {
-        double value = -integratedValues[dofIndexL*nComponents + componentNo];
+        // there is no minus sign here
+        double value = integratedValues[dofIndexL*nComponents + componentNo];
 
-        LOG(DEBUG) << "rhs, dof " << dofNosLocal[dofIndexL] << ", component " << componentNo << ", add value " << value;
+        VLOG(1) << "active rhs, dof " << dofNosLocal[dofIndexL] << ", component " << componentNo
+          << ", add value " << value << " active stress: " << activeStressValues;
         rightHandSide->setValue(componentNo, dofNosLocal[dofIndexL], value, ADD_VALUES);
         if(rightHandSideActive)
           rightHandSideActive->setValue(componentNo, dofNosLocal[dofIndexL], value, ADD_VALUES);
@@ -122,8 +145,6 @@ setRightHandSide()
   rightHandSide->finishGhostManipulation();
   if (rightHandSideActive)
     rightHandSideActive->finishGhostManipulation();
-  LOG(DEBUG) << "set rhs: " << *rightHandSide;
-
 }
 
 }  // namespace

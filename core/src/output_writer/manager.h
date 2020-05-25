@@ -41,7 +41,7 @@ protected:
   //! helper function that creates an outputWriter
   void createOutputWriterFromSettings(DihuContext context, PythonConfig settings, std::shared_ptr<Partition::RankSubset> rankSubset);
 
-  std::list<std::shared_ptr<Generic>> outputWriter_;    ///< list of active output writers
+  std::list<std::shared_ptr<Generic>> outputWriter_;    //< list of active output writers
 };
 
 }  // namespace OutputWriter

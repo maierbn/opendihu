@@ -123,7 +123,8 @@ parseBoundaryConditions(PythonConfig settings, std::shared_ptr<FunctionSpaceType
       node_no_t nodeNoLocal = boundaryCondition.first / nDofsPerNode;
       node_no_t nNodesLocal = functionSpace->nNodesLocalWithoutGhosts();
       LOG(ERROR) << "Boundary condition specified for index " << boundaryCondition.first << " (node " << nodeNoLocal << "), "
-        << "but there are only " << functionSpace->nDofsLocalWithoutGhosts() << " local dofs (" << nNodesLocal << " nodes)";
+        << "but there are only " << functionSpace->nDofsLocalWithoutGhosts() << " local dofs (" << nNodesLocal << " nodes).\nFunctionSpaceType: "
+        << StringUtility::demangle(typeid(FunctionSpaceType).name());
     }
 
     boundaryConditions.push_back(boundaryCondition);
@@ -189,11 +190,11 @@ parseBoundaryConditionsForElements(std::string boundaryConditionsConfigKey)
   // determine elements with nodes that have prescribed boundary conditions, store them in the vector boundaryConditionElements_,
   // which is organized by local elements
   element_no_t lastBoundaryConditionElement = -1;
-  std::set<dof_no_t> boundaryConditionNonGhostDofLocalNosSet;   ///< same data as in boundaryConditionNonGhostDofLocalNos_, but as set
-  std::set<dof_no_t> boundaryConditionGhostDofLocalNosSet;   ///< same data as in boundaryConditionGhostDofLocalNos_, but as set
+  std::set<dof_no_t> boundaryConditionNonGhostDofLocalNosSet;   //< same data as in boundaryConditionNonGhostDofLocalNos_, but as set
+  std::set<dof_no_t> boundaryConditionGhostDofLocalNosSet;   //< same data as in boundaryConditionGhostDofLocalNos_, but as set
 
-  std::vector<std::pair<int,ValueType>> boundaryConditionsNonGhost_;   ///< boundary condition dof nos and values for non-ghost dofs, used to collect values and sort them afterwards
-  std::vector<std::pair<int,ValueType>> boundaryConditionsGhost_;      ///< boundary condition dof nos and values for ghost dofs, used  to collect values and sort them afterwards
+  std::vector<std::pair<int,ValueType>> boundaryConditionsNonGhost_;   //< boundary condition dof nos and values for non-ghost dofs, used to collect values and sort them afterwards
+  std::vector<std::pair<int,ValueType>> boundaryConditionsGhost_;      //< boundary condition dof nos and values for ghost dofs, used  to collect values and sort them afterwards
 
   // loop over all local elements
   for (element_no_t elementNoLocal = 0; elementNoLocal < functionSpace_->nElementsLocal(); elementNoLocal++)
@@ -340,11 +341,11 @@ generateBoundaryConditionsByComponent()
   //    std::vector<dof_no_t> dofsLocal;
   //    std::vector<double> values;
   //  };
-  //  std::array<BoundaryConditionsForComponent, nComponents> boundaryConditionsByComponent_;   ///< the boundary condition data organized by component
+  //  std::array<BoundaryConditionsForComponent, nComponents> boundaryConditionsByComponent_;   //< the boundary condition data organized by component
 
   // from the two data structures
-  //   std::vector<dof_no_t> boundaryConditionNonGhostDofLocalNos_;        ///< vector of all local (non-ghost) boundary condition dofs
-  //   std::vector<ValueType> boundaryConditionValues_;               ///< vector of the local prescribed values, related to boundaryConditionNonGhostDofLocalNos_
+  //   std::vector<dof_no_t> boundaryConditionNonGhostDofLocalNos_;        //< vector of all local (non-ghost) boundary condition dofs
+  //   std::vector<ValueType> boundaryConditionValues_;               //< vector of the local prescribed values, related to boundaryConditionNonGhostDofLocalNos_
 
   // The boundaryConditionValues_ vector can contain NaN values, where in the config None was set.
   // This indicates that these dofs should not be set as Dirichlet boundary conditions.

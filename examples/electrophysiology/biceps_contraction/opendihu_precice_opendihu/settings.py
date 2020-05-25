@@ -120,7 +120,7 @@ parser.add_argument('-vmodule',                              help='Enable verbos
 parser.add_argument('-pause',                                help='Stop at parallel debugging barrier', action="store_true")
 
 # parse command line arguments and assign values to variables module
-args = parser.parse_args(args=sys.argv[:-2], namespace=variables)
+args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
 
 # initialize some dependend variables
 if variables.n_subdomains is not None:
@@ -168,6 +168,7 @@ config = {
     "diffusionTermSolver": {# solver for the implicit timestepping scheme of the diffusion time step
       "maxIterations":      1e4,
       "relativeTolerance":  1e-10,
+      "absoluteTolerance":  1e-10,         # 1e-10 absolute tolerance of the residual          
       "solverType":         variables.diffusion_solver_type,
       "preconditionerType": variables.diffusion_preconditioner_type,
       "dumpFilename":       "",   # "out/dump_"
@@ -175,6 +176,7 @@ config = {
     },
     "potentialFlowSolver": {# solver for the initial potential flow, that is needed to estimate fiber directions for the bidomain equation
       "relativeTolerance":  1e-10,
+      "absoluteTolerance":  1e-10,         # 1e-10 absolute tolerance of the residual    
       "maxIterations":      1e4,
       "solverType":         variables.potential_flow_solver_type,
       "preconditionerType": variables.potential_flow_preconditioner_type,
@@ -183,6 +185,7 @@ config = {
     },
     "mechanicsSolver": {   # solver for the dynamic mechanics problem
       "relativeTolerance":  1e-10,          # 1e-10 relative tolerance of the linear solver
+      "absoluteTolerance":  1e-10,          # 1e-10 absolute tolerance of the residual of the linear solver       
       "solverType":         "preonly",      # type of the linear solver: cg groppcg pipecg pipecgrr cgne nash stcg gltr richardson chebyshev gmres tcqmr fcg pipefcg bcgs ibcgs fbcgs fbcgsr bcgsl cgs tfqmr cr pipecr lsqr preonly qcg bicg fgmres pipefgmres minres symmlq lgmres lcd gcr pipegcr pgmres dgmres tsirm cgls
       "preconditionerType": "lu",           # type of the preconditioner
       "maxIterations":       1e4,           # maximum number of iterations in the linear solver
@@ -296,6 +299,7 @@ config = {
                   "FiniteElementMethod" : {
                     "maxIterations":             1e4,
                     "relativeTolerance":         1e-10,
+                    "absoluteTolerance":         1e-10,         # 1e-10 absolute tolerance of the residual                        
                     "inputMeshIsGlobal":         True,
                     "meshName":                  "MeshFiber_{}".format(fiber_no),
                     "prefactor":                 get_diffusion_prefactor(fiber_no, motor_unit_no),  # resolves to Conductivity / (Am * Cm)
@@ -324,6 +328,7 @@ config = {
     "firingTimesFile":          variables.firing_times_file,         # for FastMonodomainSolver, e.g. MU_firing_times_real.txt
     "onlyComputeIfHasBeenStimulated": True,                          # only compute fibers after they have been stimulated for the first time
     "disableComputationWhenStatesAreCloseToEquilibrium": True,       # optimization where states that are close to their equilibrium will not be computed again
+    "valueForStimulatedPoint":  variables.vm_value_stimulated,       # to which value of Vm the stimulated node should be set    
   },
   "MuscleContraction": {        # solid mechanics
     "preciceConfigFilename":          "../precice-config.xml",   # the preCICE configuration file

@@ -18,7 +18,7 @@ public:
 
 protected:
 
-  PythonConfig specificSettings_;         //< the python settings from which the diffusion tensors are parsed
+  PythonConfig specificSettings_;                         //< the python settings from which the diffusion tensors are parsed
   std::shared_ptr<FunctionSpaceType> dataFunctionSpace_;  //< the function space of the data class, this cannot be named functionSpace_ because the Data class has a variable with this name
 };
 

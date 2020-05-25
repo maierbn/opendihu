@@ -31,7 +31,7 @@ initialize()
   // initialize() will be called before the simulation starts.
 
   // add this solver to the solvers diagram, which is a SVG file that will be created at the end of the simulation.
-  DihuContext::solverStructureVisualizer()->addSolver("PreciceAdapter::PartitionedFibers");
+  DihuContext::solverStructureVisualizer()->addSolver("PreciceAdapter::PartitionedFibers", true);   // hasInternalConnectionToFirstNestedSolver=true (the last argument) means output connector data is shared with the first subsolver
 
   // indicate in solverStructureVisualizer that now a child solver will be initialized
   DihuContext::solverStructureVisualizer()->beginChild();
@@ -217,7 +217,7 @@ run()
     // set the timestep width in the solver
     nestedSolver_.setTimeSpan(currentSimulationTime, currentSimulationTime+currentTimeStepWidth_);
 
-    if (timeStepNo % this->timeStepOutputInterval_ == 0 && timeStepNo > 0)
+    if (timeStepNo % this->timeStepOutputInterval_ == 0 && (this->timeStepOutputInterval_ <= 10 || timeStepNo > 0))  // show first timestep only if timeStepOutputInterval is <= 10
     {
       LOG(INFO) << "PartitionedFibers, timestep " << timeStepNo << ", t=" << currentSimulationTime
         << ", dt: " << currentTimeStepWidth_;

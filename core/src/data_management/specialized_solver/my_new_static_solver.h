@@ -75,7 +75,7 @@ private:
   std::shared_ptr<ScalarFieldVariableType> solution_;         //< the solution of the laplace problem
   std::shared_ptr<ScalarFieldVariableType> fieldVariableB_;   //< .. add a description of field variable B here!
 
-  std::shared_ptr<OutputConnectorDataType> outputConnectorData_;    ///< the object that stores all components of field variables that will be transferred to other solvers
+  std::shared_ptr<OutputConnectorDataType> outputConnectorData_;    //< the object that stores all components of field variables that will be transferred to other solvers
 
   // define all needed field variables or other data
 };

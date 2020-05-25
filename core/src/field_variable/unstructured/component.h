@@ -100,15 +100,15 @@ public:
   void output(std::ostream &stream) const;
 
 private:
-  std::shared_ptr<PartitionedPetscVec<FunctionSpaceType,nComponents>> values_;    ///< vector of all values, the first components of all dofs, then the 2nd component of all dofs, etc.
-  int componentIndex_; ///< index of the current component for this field variable, starts with 0, important for interpreting values_
+  std::shared_ptr<PartitionedPetscVec<FunctionSpaceType,nComponents>> values_;    //< vector of all values, the first components of all dofs, then the 2nd component of all dofs, etc.
+  int componentIndex_;                                          //< index of the current component for this field variable, starts with 0, important for interpreting values_
 
-  std::string name_;    ///< identifier of the component, e.g. 'x'
-  std::string exfileBasisFunctionSpecification_;   ///< the basis function specification in the exelem file, e.g. c.Hermite*c.Hermite*c.Hermite
-  element_no_t nElements_;      ///< number of elements
-  std::shared_ptr<ElementToDofMapping> elementToDofMapping_;   ///< mapping from element-local dof-indices to dof numbers
-  std::shared_ptr<NodeToDofMapping> nodeToDofMapping_;   ///< mapping from nodes to dof numbers
-  std::shared_ptr<ExfileRepresentation> exfileRepresentation_; ///< indexing for exelem file
+  std::string name_;                                            //< identifier of the component, e.g. 'x'
+  std::string exfileBasisFunctionSpecification_;                //< the basis function specification in the exelem file, e.g. c.Hermite*c.Hermite*c.Hermite
+  element_no_t nElements_;                                      //< number of elements
+  std::shared_ptr<ElementToDofMapping> elementToDofMapping_;    //< mapping from element-local dof-indices to dof numbers
+  std::shared_ptr<NodeToDofMapping> nodeToDofMapping_;          //< mapping from nodes to dof numbers
+  std::shared_ptr<ExfileRepresentation> exfileRepresentation_;  //< indexing for exelem file
 };
 
 // output operator

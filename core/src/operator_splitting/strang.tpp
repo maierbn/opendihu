@@ -47,7 +47,7 @@ advanceTimeSpan()
     // compute midTime once per step to reuse it. [currentTime, midTime=currentTime+0.5*timeStepWidth, currentTime+timeStepWidth]
     midTime = currentTime + 0.5 * this->timeStepWidth_;
 
-    if (timeStepNo % this->timeStepOutputInterval_ == 0 && timeStepNo > 0)
+    if (timeStepNo % this->timeStepOutputInterval_ == 0 && (this->timeStepOutputInterval_ <= 10 || timeStepNo > 0))  // show first timestep only if timeStepOutputInterval is <= 10
     {
       LOG(INFO) << "Strang, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
     }
@@ -77,11 +77,11 @@ advanceTimeSpan()
     LOG(DEBUG) << "  Strang: transfer timeStepping1 -> timeStepping2";
 
     // set transfer direction 1->2
-    this->outputConnection_.setTransferDirection(true);
+    this->outputConnection_->setTransferDirection(true);
 
     // transfer to timestepping2_
     SolutionVectorMapping<typename TimeStepping1::OutputConnectorDataType, typename TimeStepping2::OutputConnectorDataType>::
-      transfer(this->timeStepping1_.getOutputConnectorData(), this->timeStepping2_.getOutputConnectorData(), this->outputConnection_);
+      transfer(this->timeStepping1_.getOutputConnectorData(), this->timeStepping2_.getOutputConnectorData(), *this->outputConnection_);
 
     if (this->durationLogKey_ != "")
     {
@@ -108,11 +108,11 @@ advanceTimeSpan()
     LOG(DEBUG) << "  Strang: transfer timeStepping2 -> timeStepping1";
 
     // set transfer direction 2->1
-    this->outputConnection_.setTransferDirection(false);
+    this->outputConnection_->setTransferDirection(false);
 
     // scale solution in timeStepping2 and transfer to timestepping1_
     SolutionVectorMapping<typename TimeStepping2::OutputConnectorDataType, typename TimeStepping1::OutputConnectorDataType>::
-      transfer(this->timeStepping2_.getOutputConnectorData(), this->timeStepping1_.getOutputConnectorData(), this->outputConnection_);
+      transfer(this->timeStepping2_.getOutputConnectorData(), this->timeStepping1_.getOutputConnectorData(), *this->outputConnection_);
 
     if (this->durationLogKey_ != "")
     {
@@ -149,7 +149,7 @@ advanceTimeSpan()
     LOG(DEBUG) << "  Strang: transfer timeStepping1 -> timeStepping2";
 
     // set transfer direction 1->2
-    this->outputConnection_.setTransferDirection(true);
+    this->outputConnection_->setTransferDirection(true);
 
     // transfer to timestepping2_
     SolutionVectorMapping<typename TimeStepping1::OutputConnectorDataType, typename TimeStepping2::OutputConnectorDataType>::

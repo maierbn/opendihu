@@ -84,6 +84,14 @@ nNodesGlobal() const
   return nNodesGlobal_;
 }
 
+template<int D, typename BasisFunctionType>
+global_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,Mesh::CompositeOfDimension<D>>::
+nNodesGlobal(int coordinateDirection) const
+{
+  assert (nSubMeshes_ > 0);
+  return subFunctionSpaces_[0]->nNodesGlobal(coordinateDirection);
+}
+
 //! get the number of nodes in the global Petsc ordering that are in partitions prior to the own rank
 template<int D, typename BasisFunctionType>
 global_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,Mesh::CompositeOfDimension<D>>::
@@ -250,6 +258,41 @@ getDofNoLocal(global_no_t dofNoGlobalPetsc, bool &isLocal) const
   return getNodeNoLocal(nodeNoGlobalPetsc, isLocal) * nDofsPerNode + nodalDofIndex;
 }
 
+//! get a vector of global natural dof nos of the locally stored non-ghost dofs, needed for setParameters callback function in cellml adapter
+template<int D, typename BasisFunctionType>
+void MeshPartition<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,Mesh::CompositeOfDimension<D>>::
+getDofNosGlobalNatural(std::vector<global_no_t> &dofNosGlobalNatural) const
+{
+  dofNosGlobalNatural.resize(this->nDofsLocalWithoutGhosts());
+  int nDofsPerNode = FunctionSpaceType::nDofsPerNode();
+
+  // loop over submeshes
+  for (int subMeshNo = 0; subMeshNo < nSubMeshes_; subMeshNo++)
+  {
+    std::vector<global_no_t> dofNosGlobalNaturalSubMesh;
+    subFunctionSpaces_[subMeshNo]->meshPartition()->getDofNosGlobalNatural(dofNosGlobalNaturalSubMesh);
+
+    // add global natural dofs of submesh to vector
+    // loop over local dofs of submesh
+
+    // loop over local nodes of the submeshes, also including removed nodes
+    for (node_no_t nodeNoLocal = 0; nodeNoLocal < subFunctionSpaces_[subMeshNo]->nNodesLocalWithoutGhosts(); nodeNoLocal++)
+    {
+      // if currently considered node is not removed
+      if (meshAndNodeNoLocalToNodeNoNonDuplicateGlobal_[subMeshNo][nodeNoLocal] != -1)
+      {
+        node_no_t nodeNoNonDuplicateLocal = meshAndNodeNoLocalToNodeNoNonDuplicateLocal_[subMeshNo][nodeNoLocal];
+
+        for (int nodalDofIndex = 0; nodalDofIndex < nDofsPerNode; nodalDofIndex++)
+        {
+          dof_no_t dofNoNonDuplicateLocal = nodeNoNonDuplicateLocal*nDofsPerNode + nodalDofIndex;
+          dofNosGlobalNatural[dofNoNonDuplicateLocal] = dofNosGlobalNaturalSubMesh[nodeNoLocal*nDofsPerNode + nodalDofIndex];
+        }
+      }
+    }
+  }
+}
+
 //! from a vector of values of global/natural node numbers remove all that are non-local, nComponents consecutive values for each dof are assumed
 template<int D, typename BasisFunctionType>
 template <typename T>
@@ -309,6 +352,8 @@ extractLocalDofsWithoutGhosts(std::vector<T> &values) const
     // loop over local nodes of the submeshes, also including removed nodes
     for (node_no_t nodeNoLocal = 0; nodeNoLocal < subFunctionSpaces_[subMeshNo]->nNodesLocalWithoutGhosts(); nodeNoLocal++)
     {
+      assert(meshAndNodeNoLocalToNodeNoNonDuplicateGlobal_[subMeshNo].size() > nodeNoLocal);
+
       // if currently considered node is not removed
       if (meshAndNodeNoLocalToNodeNoNonDuplicateGlobal_[subMeshNo][nodeNoLocal] != -1)
       {
@@ -350,7 +395,9 @@ output(std::ostream &stream)
   {
     stream << "subMesh " << subMeshNo << "/" << nSubMeshes_ << ": ";
     subFunctionSpaces_[subMeshNo]->meshPartition()->output(stream);
+    stream << "  ";
   }
+  stream << getString();
 }
 
 //! get a vector of local dof nos, range [0,nDofsLocalWithoutGhosts] are the dofs without ghost dofs, the whole vector are the dofs with ghost dofs
@@ -387,7 +434,7 @@ isNonGhost(node_no_t nodeNoLocal, int &neighbourRankNo) const
   std::vector<std::pair<int,node_no_t>> subMeshesWithNodes;
   getSubMeshesWithNodes(nodeNoLocal, subMeshesWithNodes);
 
-  VLOG(2) << "isNonGhost, nodeNoLocal: " << nodeNoLocal << ", subMeshesWithNodes: " << subMeshesWithNodes;
+  VLOG(2) << "isNonGhost, nodeNoLocal: " << nodeNoLocal << ", subMeshesWithNodes (submesh no, node no in that submesh): " << subMeshesWithNodes;
 
   for (const std::pair<int,node_no_t> &subMeshWithNodes : subMeshesWithNodes)
   {
@@ -395,7 +442,7 @@ isNonGhost(node_no_t nodeNoLocal, int &neighbourRankNo) const
     node_no_t nodeNoLocalOnMesh = subMeshWithNodes.second;
     if (subFunctionSpaces_[subMeshNo]->meshPartition()->isNonGhost(nodeNoLocalOnMesh, neighbourRankNo))
     {
-      VLOG(2) << "yes, isNonGhost on rank " << neighbourRankNo;
+      VLOG(2) << "yes, isNonGhost on submesh " << subMeshNo << " (local node no " << nodeNoLocalOnMesh << ") on rank " << neighbourRankNo;
 
       return true;
     }
@@ -447,9 +494,12 @@ getSubMeshNoAndNodeNoLocal(node_no_t nodeNoLocal, int &subMeshNo, node_no_t &nod
   for (int subMeshIndex = 0; subMeshIndex < nSubMeshes_; subMeshIndex++)
   {
     node_no_t nNodesCurrentSubMesh = nNonDuplicateNodesWithoutGhosts_[subMeshIndex];
+    VLOG(2) << "submesh " << subMeshIndex << " has " << nNodesCurrentSubMesh << " nodes, nNodesPreviousSubMeshes: " << nNodesPreviousSubMeshes;
 
     if (nodeNoLocal < nNodesPreviousSubMeshes + nNodesCurrentSubMesh)
     {
+      VLOG(2) << "local node " << nodeNoLocal << " is on that submesh";
+
       subMeshNo = subMeshIndex;
       node_no_t nodeNoCompositeOnMeshNoLocal = nodeNoLocal - nNodesPreviousSubMeshes;
 
@@ -470,17 +520,29 @@ getSubMeshNoAndNodeNoLocal(node_no_t nodeNoLocal, int &subMeshNo, node_no_t &nod
     nNodesPreviousSubMeshes += nNodesCurrentSubMesh;
   }
 
+  VLOG(2) << "node local " << nodeNoLocal << " is a ghost node";
+
   // if we are here, the requested node is a ghost node
   assert (nNodesPreviousSubMeshes == nNodesLocalWithoutGhosts_);
 
   for (int subMeshIndex = 0; subMeshIndex < nSubMeshes_; subMeshIndex++)
   {
     node_no_t nGhostNodesCurrentSubMesh = nNonDuplicateGhostNodes_[subMeshIndex];
+    VLOG(2) << "submesh " << subMeshIndex << " has " << nGhostNodesCurrentSubMesh << " ghost nodes, nNodesPreviousSubMeshes: " << nNodesPreviousSubMeshes;
 
     if (nodeNoLocal < nNodesPreviousSubMeshes + nGhostNodesCurrentSubMesh)
     {
+      VLOG(2) << "local node " << nodeNoLocal << " is on that submesh";
+
       subMeshNo = subMeshIndex;
-      nodeOnMeshNoLocal = nodeNoLocal - nNodesPreviousSubMeshes + nRemovedNodesNonGhost_[subMeshNo];
+
+      //nodeOnMeshNoLocal = nodeNoLocal - nNodesPreviousSubMeshes + nRemovedNodesNonGhost_[subMeshNo];
+      nodeOnMeshNoLocal = nodeNoLocal - nNodesPreviousSubMeshes + nNonDuplicateNodesWithoutGhosts_[subMeshNo] + nRemovedNodesNonGhost_[subMeshNo];
+      
+      //LOG(DEBUG) << "nodeOnMeshNoLocal = " << nodeNoLocal << " - " << nNodesPreviousSubMeshes << " + " << nRemovedNodesNonGhost_[subMeshNo] << " = " << nodeOnMeshNoLocal;
+      VLOG(2) << "nodeOnMeshNoLocal = " << nodeNoLocal << " - " << nNodesPreviousSubMeshes << " + " << nNonDuplicateNodesWithoutGhosts_[subMeshNo]
+         << " + " << nRemovedNodesNonGhost_[subMeshNo] << " = " << nodeOnMeshNoLocal;
+      VLOG(2) << "nNonDuplicateNodesWithoutGhosts_: " << nNonDuplicateNodesWithoutGhosts_ << ", nRemovedNodesNonGhost_: " << nRemovedNodesNonGhost_;
       break;
     }
 
@@ -518,6 +580,8 @@ getSubMeshesWithNodes(node_no_t nodeNoLocal, std::vector<std::pair<int,node_no_t
   int subMeshNo = 0;
   node_no_t nodeOnMeshNoLocal = 0;
   getSubMeshNoAndNodeNoLocal(nodeNoLocal, subMeshNo, nodeOnMeshNoLocal);
+
+  VLOG(1) << "node local " << nodeNoLocal << " is node local " << nodeOnMeshNoLocal << " on sub mesh " << subMeshNo;
 
   subMeshesWithNodes.push_back(std::make_pair(subMeshNo, nodeOnMeshNoLocal));
 

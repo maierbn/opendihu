@@ -16,7 +16,7 @@ public:
 
   //! constructor, create square sparse matrix
   PartitionedPetscMat(std::shared_ptr<Partition::MeshPartition<RowsFunctionSpaceType>> meshPartition,
-                      int nComponents, int diagonalNonZeros, int offdiagonalNonZeros, std::string name);
+                      int nComponents, int nNonZerosDiagonal, int nNonZerosOffdiagonal, std::string name);
 
   //! constructor, create square dense matrix
   PartitionedPetscMat(std::shared_ptr<Partition::MeshPartition<RowsFunctionSpaceType>> meshPartition,
@@ -25,7 +25,7 @@ public:
   //! constructor, create non-square sparse matrix
   PartitionedPetscMat(std::shared_ptr<Partition::MeshPartition<RowsFunctionSpaceType>> meshPartitionRows,
                       std::shared_ptr<Partition::MeshPartition<ColumnsFunctionSpaceType>> meshPartitionColumns,
-                      int nComponents, int diagonalNonZeros, int offdiagonalNonZeros, std::string name);
+                      int nComponents, int nNonZerosDiagonal, int nNonZerosOffdiagonal, std::string name);
 
   //! constructor, create non-square dense matrix
   PartitionedPetscMat(std::shared_ptr<Partition::MeshPartition<RowsFunctionSpaceType>> meshPartitionRows,
@@ -41,6 +41,12 @@ public:
 
   //! wrapper of MatSetValues for a single value, sets a local value in the matrix
   void setValue(int componentNo, PetscInt row, PetscInt col, PetscScalar value, InsertMode mode);
+
+  //! wrapper of MatSetValues for a single value, sets a local value in the matrix
+  void setValue(int componentNo, Vc::int_v row, Vc::int_v columns, PetscScalar value, InsertMode mode);
+
+  //! wrapper of MatSetValues for a single value, sets a local value in the matrix
+  void setValue(int componentNo, Vc::int_v row, Vc::int_v columns, Vc::double_v value, InsertMode mode);
 
   //! wrapper of MatSetValues for a single value, sets a local value in the matrix
   template<int nComponents>
@@ -119,9 +125,9 @@ protected:
   void createMatNest();
 
   std::vector<PartitionedPetscMatOneComponent<RowsFunctionSpaceType,ColumnsFunctionSpaceType>> matrixComponents_; // submatrices for nComponents_^2 (row major)
-  Mat matNest_;    ///< nested matrix of MatNest type that contains the submatrices
+  Mat matNest_;    //< nested matrix of MatNest type that contains the submatrices
 
-  int nComponents_;  ///< number of components of the field variable that can be right-multiplied with this matrix, number of submatrices is nComponents_^2
+  int nComponents_;  //< number of components of the field variable that can be right-multiplied with this matrix, number of submatrices is nComponents_^2
 };
 
 template<typename FunctionSpaceType>

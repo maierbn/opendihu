@@ -46,6 +46,7 @@ config = {
   "Solvers": {
     "fatEMGSolver": {       # solver for the Laplace equation, conduction through fat layer
       "relativeTolerance":  1e-5,
+      "absoluteTolerance": 1e-10,         # 1e-10 absolute tolerance of the residual          
       "maxIterations":      1e4,
       "solverType":         "lu",
       "preconditionerType": "none",

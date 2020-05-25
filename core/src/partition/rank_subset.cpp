@@ -229,7 +229,7 @@ std::ostream &operator<<(std::ostream &stream, RankSubset rankSubset)
         stream << "*";
       stream << *iterRank;
     }
-    stream << ")";
+    stream << "), ownRankNo: " << rankSubset.ownRankNo() << "/" << rankSubset.size();
   }
   return stream;
 }

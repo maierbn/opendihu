@@ -178,7 +178,16 @@ std::array<ValueType, D> PythonUtility::getOptionArray(PyObject* settings, std::
     {
       // extract the value of the key and check its type
       PyObject *value = PyDict_GetItem((PyObject *)settings, key);
-      result = PythonUtility::convertFromPython<std::array<ValueType,D>>::get(value, defaultValue);
+
+      // if the value is `None`, use default value
+      if (value == Py_None)
+      {
+        result = defaultValue;
+      }
+      else
+      {
+        result = PythonUtility::convertFromPython<std::array<ValueType,D>>::get(value, defaultValue);
+      }
     }
     else
     {

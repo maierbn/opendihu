@@ -2,9 +2,10 @@
 
 #include "partition/rank_subset.h"
 #include "control/diagnostic_tool/stimulation_logging.h"
+#include <Vc/Vc>
 
-template<int nStates, int nIntermediates>
-FastMonodomainSolverBase<nStates,nIntermediates>::
+template<int nStates, int nIntermediates, typename DiffusionTimeSteppingScheme>
+FastMonodomainSolverBase<nStates,nIntermediates,DiffusionTimeSteppingScheme>::
 FastMonodomainSolverBase(const DihuContext &context) :
   specificSettings_(context.getPythonConfig()), nestedSolvers_(context),
   initialized_(false)
@@ -13,16 +14,26 @@ FastMonodomainSolverBase(const DihuContext &context) :
   this->outputWriterManager_.initialize(context, specificSettings_);
 }
 
-template<int nStates, int nIntermediates>
-void FastMonodomainSolverBase<nStates,nIntermediates>::
+template<int nStates, int nIntermediates, typename DiffusionTimeSteppingScheme>
+void FastMonodomainSolverBase<nStates,nIntermediates,DiffusionTimeSteppingScheme>::
 initialize()
 {
   // only initialize once
   if (initialized_)
     return;
 
+  if (!std::is_same<DiffusionTimeSteppingScheme,
+        TimeSteppingScheme::ImplicitEuler<typename DiffusionTimeSteppingScheme::DiscretizableInTime>
+      >::value
+     && !std::is_same<DiffusionTimeSteppingScheme,
+        TimeSteppingScheme::CrankNicolson<typename DiffusionTimeSteppingScheme::DiscretizableInTime>
+      >::value)
+  {
+    LOG(FATAL) << "Timestepping scheme of diffusion in FastMonodomainSolver must be either ImplicitEuler or CrankNicolson!";
+  }
+
   // add this solver to the solvers diagram, which is a SVG file that will be created at the end of the simulation.
-  DihuContext::solverStructureVisualizer()->addSolver("FastMonodomainSolver");
+  DihuContext::solverStructureVisualizer()->addSolver("FastMonodomainSolver", true);   // hasInternalConnectionToFirstNestedSolver=true (the last argument) means output connector data is shared with the first subsolver
 
   // indicate in solverStructureVisualizer that now a child solver will be initialized
   DihuContext::solverStructureVisualizer()->beginChild();
@@ -38,6 +49,7 @@ initialize()
   firingTimesFilename_ = specificSettings_.getOptionString("firingTimesFile", "");
   onlyComputeIfHasBeenStimulated_ = specificSettings_.getOptionBool("onlyComputeIfHasBeenStimulated", true);
   disableComputationWhenStatesAreCloseToEquilibrium_ = specificSettings_.getOptionBool("disableComputationWhenStatesAreCloseToEquilibrium", true);
+  valueForStimulatedPoint_ = specificSettings_.getOptionDouble("valueForStimulatedPoint", 20.0);
 
   // output warning if there are output writers
   if (this->outputWriterManager_.hasOutputWriters())
@@ -210,11 +222,15 @@ initialize()
   statesForTransfer_ = cellmlAdapter.statesForTransfer();
   intermediatesForTransfer_ = cellmlAdapter.intermediatesForTransfer();
 
+
   int nInstancesLocalCellml;
   int nIntermediatesLocalCellml;
   int nParametersPerInstance;
   cellmlAdapter.getNumbers(nInstancesLocalCellml, nIntermediatesLocalCellml, nParametersPerInstance);
-  std::vector<double> &cellMLParameters = *cellmlAdapter.cellmlSourceCodeGenerator().parameters();   //< contains all parameters for all instances, in struct of array ordering (p0inst0, p0inst1, p0inst2,...)
+
+  // make parameterValues() of cellmlAdapter.data() available
+  cellmlAdapter.data().prepareParameterValues();
+  double *parameterValues = cellmlAdapter.data().parameterValues();   //< contains nIntermediates parameters for all instances, in struct of array ordering (p0inst0, p0inst1, p0inst2,...)
 
   int nVcVectors = (nInstancesToCompute_ + Vc::double_v::Size - 1) / Vc::double_v::Size;
 
@@ -231,9 +247,14 @@ initialize()
 
     for (int j=0; j<nParametersPerInstance; j++)
     {
-      fiberPointBuffersParameters_[i][j] = cellMLParameters[j*nInstancesLocalCellml];
+      fiberPointBuffersParameters_[i][j] = parameterValues[j*nIntermediatesLocalCellml];    // note, the stride in parameterValues is "nIntermediatesLocalCellml", not "nParametersPerInstance"
+
+      VLOG(1) << "fiberPointBuffersParameters_ buffer no " << i << ", parameter no " << j << ", value: " <<  fiberPointBuffersParameters_[i][j];
     }
   }
+
+  // close raw array representation of parameterValues() of cellmlAdapter.data()
+  cellmlAdapter.data().restoreParameterValues();
 
   LOG(DEBUG) << nInstancesToCompute_ << " instances to compute, " << nVcVectors
     << " Vc vectors, size of double_v: " << Vc::double_v::Size << ", "
@@ -279,7 +300,8 @@ initialize()
           LOG(WARNING) << "There are " << statesForTransfer_.size() << " statesForTransfer specified in StrangSplitting, "
             << " but the diffusion solver has only " << variable1.size() << " slots to get these states. "
             << "This means that state no. " << statesForTransfer_[stateIndex] << ", \"" << name << "\" cannot be transferred." << std::endl
-            << "Maybe you need to increase \"nAdditionalFieldVariables\" in \"ImplicitEuler\" or reduce the number of entries in \"statesForTransfer\".";
+            << "Maybe you need to increase \"nAdditionalFieldVariables\" in the diffusion solver (\"ImplicitEuler\" or \"CrankNicolson\") "
+            << "or reduce the number of entries in \"statesForTransfer\".";
         }
         else
         {
@@ -309,7 +331,8 @@ initialize()
           LOG(WARNING) << "There are " << intermediatesForTransfer_.size() << " intermediatesForTransfer specified in StrangSplitting, "
             << " but the diffusion solver has only " << variable2.size() << " slots to get these intermediates. "
             << "This means that intermediate no. " << intermediatesForTransfer_[intermediateIndex] << ", \"" << name << "\" cannot be transferred." << std::endl
-            << "Maybe you need to increase \"nAdditionalFieldVariables\" in \"ImplicitEuler\" or reduce the number of entries in \"intermediatesForTransfer\".";
+            << "Maybe you need to increase \"nAdditionalFieldVariables\" in  the diffusion solver (\"ImplicitEuler\" or \"CrankNicolson\") "
+            << "or reduce the number of entries in \"intermediatesForTransfer\".";
 
         }
         else
@@ -326,8 +349,8 @@ initialize()
   initialized_ = true;
 }
 
-template<int nStates, int nIntermediates>
-void FastMonodomainSolverBase<nStates,nIntermediates>::
+template<int nStates, int nIntermediates, typename DiffusionTimeSteppingScheme>
+void FastMonodomainSolverBase<nStates,nIntermediates,DiffusionTimeSteppingScheme>::
 initializeCellMLSourceFile()
 {
   // parse options
@@ -439,7 +462,7 @@ initializeCellMLSourceFile()
   // load the rhs library
   void *handle = CellmlAdapterType::loadRhsLibraryGetHandle(libraryFilename);
 
-  compute0DInstance_ = (void (*)(Vc::double_v [], std::vector<Vc::double_v> &, double, double, bool, bool, std::vector<Vc::double_v> &, const std::vector<int> &)) dlsym(handle, "compute0DInstance");
+  compute0DInstance_ = (void (*)(Vc::double_v [], std::vector<Vc::double_v> &, double, double, bool, bool, std::vector<Vc::double_v> &, const std::vector<int> &, double)) dlsym(handle, "compute0DInstance");
   initializeStates_ = (void (*)(Vc::double_v states[])) dlsym(handle, "initializeStates");
 
   LOG(DEBUG) << "compute0DInstance_: " << (compute0DInstance_==nullptr? "no" : "yes") << ", initializeStates_: " << (initializeStates_==nullptr? "no" : "yes");

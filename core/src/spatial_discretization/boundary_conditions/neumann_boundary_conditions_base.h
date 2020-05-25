@@ -39,11 +39,11 @@ public:
    */
   struct ElementWithFaces
   {
-    element_no_t elementNoLocal;   //< the local no of the element
+    element_no_t elementNoLocal;                                     //< the local no of the element
 
-    Mesh::face_t face;              //< face on which the Neumann BC is applied
+    Mesh::face_t face;                                               //< face on which the Neumann BC is applied
     std::vector<std::pair<dof_no_t, VecD<nComponents>>> dofVectors;  //< <surface-local dof no, value>, nComponents == FunctionSpaceType::dim() for traction boundary condition or nComponents = 1 for flux BC
-    std::vector<dof_no_t> surfaceDofs;    //< dof nos of the volume element that correspond to the face / surface. These are different from the dofs in dofsVector which are numbered for the surface only, surfaceDofs are in the numbering of the volume element.
+    std::vector<dof_no_t> surfaceDofs;                               //< dof nos of the volume element that correspond to the face / surface. These are different from the dofs in dofsVector which are numbered for the surface only, surfaceDofs are in the numbering of the volume element.
     // note, for flux BC, dofVectors[i].second is a VecD<1>
   };
 
@@ -57,8 +57,8 @@ protected:
   //! if elementNoLocal is != -1, it will be used as value for the local element no, otherwise the value is parsed from config
   virtual ElementWithFaces parseElementWithFaces(PythonConfig specificSettings, std::shared_ptr<FunctionSpaceType> functionSpace, element_no_t elementNoLocal) = 0;
 
-  std::shared_ptr<FunctionSpaceType> functionSpace_;   /// the function space of the computational mesh (not the edges/faces) in which the Neumann bc are set
-  std::vector<ElementWithFaces> boundaryConditionElements_;    /// elements with prescribed Neumman boundary condition values
+  std::shared_ptr<FunctionSpaceType> functionSpace_;          //< the function space of the computational mesh (not the edges/faces) in which the Neumann bc are set
+  std::vector<ElementWithFaces> boundaryConditionElements_;   //< elements with prescribed Neumman boundary condition values
 
   bool divideNeumannBoundaryConditionValuesByTotalArea_;      //< if the value in dofVectors is to be divided by the total area of the surface of all elements that have neumann bc
 

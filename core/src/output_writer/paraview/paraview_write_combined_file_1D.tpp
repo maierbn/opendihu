@@ -44,13 +44,13 @@ void Paraview::writePolyDataFile(const FieldVariablesForOutputWriterType &fieldV
   /*
   struct PolyDataPropertiesForMesh
   {
-    int dimensionality;    ///< D=1: object is a VTK "Line", D=2, D=3: object is a VTK "Poly"
-    global_no_t nPointsLocal;   ///< the number of points needed for representing the mesh, local value of rank
-    global_no_t nCellsLocal;    ///< the number of VTK "cells", i.e. "Lines" or "Polys", which is the opendihu number of "elements", local value of rank
-    global_no_t nPointsGlobal;   ///< the number of points needed for representing the mesh, global value of all rank
-    global_no_t nCellsGlobal;    ///< the number of VTK "cells", i.e. "Lines" or "Polys", which is the opendihu number of "elements", global value of all ranks
+    int dimensionality;    //< D=1: object is a VTK "Line", D=2, D=3: object is a VTK "Poly"
+    global_no_t nPointsLocal;   //< the number of points needed for representing the mesh, local value of rank
+    global_no_t nCellsLocal;    //< the number of VTK "cells", i.e. "Lines" or "Polys", which is the opendihu number of "elements", local value of rank
+    global_no_t nPointsGlobal;   //< the number of points needed for representing the mesh, global value of all rank
+    global_no_t nCellsGlobal;    //< the number of VTK "cells", i.e. "Lines" or "Polys", which is the opendihu number of "elements", global value of all ranks
 
-    std::vector<std::pair<std::string,int>> pointDataArrays;   ///< <name,nComponents> of PointData DataArray elements
+    std::vector<PolyDataPropertiesForMesh::DataArrayName> pointDataArrays;   //< <name,nComponents> of PointData DataArray elements
   };
 */
 
@@ -59,11 +59,11 @@ void Paraview::writePolyDataFile(const FieldVariablesForOutputWriterType &fieldV
   /*
   struct VTKPiece
   {
-    std::set<std::string> meshNamesCombinedMeshes;   ///< the meshNames of the combined meshes, or only one meshName if it is not a merged mesh
-    PolyDataPropertiesForMesh properties;   ///< the properties of the merged mesh
+    std::set<std::string> meshNamesCombinedMeshes;   //< the meshNames of the combined meshes, or only one meshName if it is not a merged mesh
+    PolyDataPropertiesForMesh properties;   //< the properties of the merged mesh
 
-    std::string firstScalarName;   ///< name of the first scalar field variable of the mesh
-    std::string firstVectorName;   ///< name of the first non-scalar field variable of the mesh
+    std::string firstScalarName;   //< name of the first scalar field variable of the mesh
+    std::string firstVectorName;   //< name of the first non-scalar field variable of the mesh
 
     //! constructor, initialize nPoints and nCells to 0
     VTKPiece()
@@ -119,10 +119,10 @@ void Paraview::writePolyDataFile(const FieldVariablesForOutputWriterType &fieldV
         {
           for (int j = 0; j < iter->second.pointDataArrays.size(); j++)
           {
-            if (vtkPiece1D_.properties.pointDataArrays[j].first != iter->second.pointDataArrays[j].first)  // if the name of the jth field variable is different
+            if (vtkPiece1D_.properties.pointDataArrays[j].name != iter->second.pointDataArrays[j].name)  // if the name of the jth field variable is different
             {
               LOG(DEBUG) << "Mesh " << meshName << " cannot be combined with " << vtkPiece1D_.meshNamesCombinedMeshes << ". Field variable names mismatch for "
-                << meshName << " (there is \"" << vtkPiece1D_.properties.pointDataArrays[j].first << "\" instead of \"" << iter->second.pointDataArrays[j].first << "\")";
+                << meshName << " (there is \"" << vtkPiece1D_.properties.pointDataArrays[j].name << "\" instead of \"" << iter->second.pointDataArrays[j].name << "\")";
               combineMesh = false;
             }
           }
@@ -173,7 +173,12 @@ void Paraview::writePolyDataFile(const FieldVariablesForOutputWriterType &fieldV
   if (!meshPropertiesInitialized)
   {
     // add field variable "partitioning" with 1 component
-    vtkPiece1D_.properties.pointDataArrays.push_back(std::pair<std::string,int>("partitioning", 1));
+    PolyDataPropertiesForMesh::DataArrayName dataArrayName;
+    dataArrayName.name = "partitioning";
+    dataArrayName.nComponents = 1;
+    dataArrayName.componentNames = std::vector<std::string>(1,"rankNo");
+
+    vtkPiece1D_.properties.pointDataArrays.push_back(dataArrayName);
   }
 
   // determine filename, broadcast from rank 0
@@ -254,7 +259,7 @@ void Paraview::writePolyDataFile(const FieldVariablesForOutputWriterType &fieldV
     std::stringstream pointDataArraysNames;
     for (int i = 0; i < vtkPiece1D_.properties.pointDataArrays.size(); i++)
     {
-      pointDataArraysNames << vtkPiece1D_.properties.pointDataArrays[i].first << " ";
+      pointDataArraysNames << vtkPiece1D_.properties.pointDataArrays[i].name << " ";
     }
     LOG(DEBUG) << "pointDataArraysNames: " <<  pointDataArraysNames.str();
   }
@@ -270,13 +275,13 @@ void Paraview::writePolyDataFile(const FieldVariablesForOutputWriterType &fieldV
 #endif
 
   // check if field variable names have changed since last initialization
-  for (std::vector<std::pair<std::string,int>>::iterator pointDataArrayIter = vtkPiece1D_.properties.pointDataArrays.begin();
+  for (std::vector<PolyDataPropertiesForMesh::DataArrayName>::iterator pointDataArrayIter = vtkPiece1D_.properties.pointDataArrays.begin();
        pointDataArrayIter != vtkPiece1D_.properties.pointDataArrays.end(); pointDataArrayIter++)
   {
-    LOG(DEBUG) << "  field variable \"" << pointDataArrayIter->first << "\".";
+    LOG(DEBUG) << "  field variable \"" << pointDataArrayIter->name << "\".";
 
     // if there is a field variable with a name that was not present when vtkPiece1D_ was created
-    if (fieldVariableValues.find(pointDataArrayIter->first) == fieldVariableValues.end())
+    if (fieldVariableValues.find(pointDataArrayIter->name) == fieldVariableValues.end())
     {
       LOG(DEBUG) << "Field variable names have changed, reinitialize Paraview output writer.";
 
@@ -348,13 +353,37 @@ void Paraview::writePolyDataFile(const FieldVariablesForOutputWriterType &fieldV
   outputFileParts[outputFilePartNo] << ">" << std::endl;
 
   // loop over field variables (PointData)
-  for (std::vector<std::pair<std::string,int>>::iterator pointDataArrayIter = vtkPiece1D_.properties.pointDataArrays.begin(); pointDataArrayIter != vtkPiece1D_.properties.pointDataArrays.end(); pointDataArrayIter++)
+  for (std::vector<PolyDataPropertiesForMesh::DataArrayName>::iterator pointDataArrayIter = vtkPiece1D_.properties.pointDataArrays.begin(); pointDataArrayIter != vtkPiece1D_.properties.pointDataArrays.end(); pointDataArrayIter++)
   {
+    // set up string for component names
+    std::stringstream componentNames;
+    bool isComponentNamesSet = false;
+    for (int componentNo = 0; componentNo < pointDataArrayIter->nComponents; componentNo++)
+    {
+      // get component name of the current component
+      std::string componentName = pointDataArrayIter->componentNames[componentNo];
+
+      componentNames << "ComponentName" << componentNo << "=\"" << componentName << "\" ";
+
+      // check if it is equal to simply the componentNo, if no component name was explicitly specify they have names "0", "1", ...
+      std::stringstream trivialComponentName;
+      trivialComponentName << componentNo;
+
+      if (componentName != trivialComponentName.str())
+        isComponentNamesSet = true;
+    }
+
+    // if there were no real component names set, do not include them in the VTK file
+    if (!isComponentNamesSet)
+      componentNames.str("");
+
     // write normal data element
     outputFileParts[outputFilePartNo] << std::string(4, '\t') << "<DataArray "
-        << "Name=\"" << pointDataArrayIter->first << "\" "
-        << "type=\"" << (pointDataArrayIter->first == "partitioning"? "Int32" : "Float32") << "\" "
-        << "NumberOfComponents=\"" << pointDataArrayIter->second << "\" format=\"" << (binaryOutput_? "binary" : "ascii")
+        << "Name=\"" << pointDataArrayIter->name << "\" "
+        << "type=\"" << (pointDataArrayIter->name == "partitioning"? "Int32" : "Float32") << "\" "
+        << "NumberOfComponents=\"" << pointDataArrayIter->nComponents << "\" "
+        << componentNames.str()
+        << "format=\"" << (binaryOutput_? "binary" : "ascii")
         << "\" >" << std::endl << std::string(5, '\t');
 
     // at this point the data of the field variable is missing
@@ -438,14 +467,14 @@ void Paraview::writePolyDataFile(const FieldVariablesForOutputWriterType &fieldV
   // write field variables
   // loop over field variables
   int fieldVariableNo = 0;
-  for (std::vector<std::pair<std::string,int>>::iterator pointDataArrayIter = vtkPiece1D_.properties.pointDataArrays.begin();
+  for (std::vector<PolyDataPropertiesForMesh::DataArrayName>::iterator pointDataArrayIter = vtkPiece1D_.properties.pointDataArrays.begin();
        pointDataArrayIter != vtkPiece1D_.properties.pointDataArrays.end(); pointDataArrayIter++, fieldVariableNo++)
   {
-    assert(fieldVariableValues.find(pointDataArrayIter->first) != fieldVariableValues.end());
+    assert(fieldVariableValues.find(pointDataArrayIter->name) != fieldVariableValues.end());
 
     // write values
-    bool writeFloatsAsInt = pointDataArrayIter->first == "partitioning";    // for partitioning, convert float values to integer values for output
-    writeCombinedValuesVector(fileHandle, ownRankNo, fieldVariableValues[pointDataArrayIter->first], fieldVariableNo, writeFloatsAsInt);
+    bool writeFloatsAsInt = pointDataArrayIter->name == "partitioning";    // for partitioning, convert float values to integer values for output
+    writeCombinedValuesVector(fileHandle, ownRankNo, fieldVariableValues[pointDataArrayIter->name], fieldVariableNo, writeFloatsAsInt);
 
     // write next xml constructs
     writeAsciiDataShared(fileHandle, ownRankNo, outputFileParts[outputFilePartNo].str());
@@ -492,6 +521,12 @@ void Paraview::writePolyDataFile(const FieldVariablesForOutputWriterType &fieldV
   Control::PerformanceMeasurement::stop("durationParaview1DWrite");
 
   MPIUtility::handleReturnValue(MPI_File_close(&fileHandle), "MPI_File_close");
+
+  // register file at SeriesWriter to be included in the "*.vtk.series" JSON file
+  if (ownRankNo == 0)
+  {
+    Paraview::seriesWriter().registerNewFile(filenameStr, this->currentTime_);
+  }
 }
 
 } // namespace

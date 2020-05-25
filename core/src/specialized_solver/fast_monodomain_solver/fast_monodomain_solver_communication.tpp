@@ -4,15 +4,21 @@
 #include "control/diagnostic_tool/stimulation_logging.h"
 
 //! get element lengths and vmValues from the other ranks
-template<int nStates, int nIntermediates>
-void FastMonodomainSolverBase<nStates,nIntermediates>::
+template<int nStates, int nIntermediates, typename DiffusionTimeSteppingScheme>
+void FastMonodomainSolverBase<nStates,nIntermediates,DiffusionTimeSteppingScheme>::
 fetchFiberData()
 {
   VLOG(1) << "fetchFiberData";
   std::vector<typename NestedSolversType::TimeSteppingSchemeType> &instances = nestedSolvers_.instancesLocal();
 
-  // loop over fibers and communicate element lengths and initial values to the ranks that participate in computing
+  CellmlAdapterType &cellmlAdapter = instances[0].timeStepping1().instancesLocal()[0].discretizableInTime();
 
+  int nInstancesLocalCellml;
+  int nIntermediatesLocalCellml;
+  int nParametersPerInstance;
+  cellmlAdapter.getNumbers(nInstancesLocalCellml, nIntermediatesLocalCellml, nParametersPerInstance);
+
+  // loop over fibers and communicate element lengths and initial values to the ranks that participate in computing
   int fiberNo = 0;
   int fiberDataNo = 0;
   for (int i = 0; i < instances.size(); i++)
@@ -44,12 +50,16 @@ fetchFiberData()
       std::vector<int> nElementsOnRanks(rankSubset->size());
       std::vector<int> nDofsOnRanks(rankSubset->size());
       std::vector<int> offsetsOnRanks(rankSubset->size());
+      std::vector<int> nParametersOnRanks(rankSubset->size());
+      std::vector<int> parameterOffsetsOnRanks(rankSubset->size());
 
       double *elementLengthsReceiveBuffer = nullptr;
       double *vmValuesReceiveBuffer = nullptr;
+      std::vector<double> parametersReceiveBuffer(fiberFunctionSpace->nDofsGlobal()*nParametersPerInstance);
 
       if (computingRank == rankSubset->ownRankNo())
       {
+        // allocate buffers
         fiberData_[fiberDataNo].elementLengths.resize(fiberFunctionSpace->nElementsGlobal());
         fiberData_[fiberDataNo].vmValues.resize(fiberFunctionSpace->nDofsGlobal());
 
@@ -66,6 +76,8 @@ fetchFiberData()
         nElementsOnRanks[rankNo] = fiberFunctionSpace->meshPartition()->nNodesLocalWithGhosts(0, rankNo) - 1;
         offsetsOnRanks[rankNo] = fiberFunctionSpace->meshPartition()->beginNodeGlobalNatural(0, rankNo);
         nDofsOnRanks[rankNo] = fiberFunctionSpace->meshPartition()->nNodesLocalWithoutGhosts(0, rankNo);
+        parameterOffsetsOnRanks[rankNo] = fiberFunctionSpace->meshPartition()->beginNodeGlobalNatural(0, rankNo) * nParametersPerInstance;
+        nParametersOnRanks[rankNo] = fiberFunctionSpace->meshPartition()->nNodesLocalWithoutGhosts(0, rankNo) * nParametersPerInstance;
       }
 
       // int MPI_Gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
@@ -78,15 +90,85 @@ fetchFiberData()
                   elementLengthsReceiveBuffer, nElementsOnRanks.data(), offsetsOnRanks.data(),
                   MPI_DOUBLE, computingRank, mpiCommunicator);
 
-      // communicate Vm values
+      // get own vm values
       std::vector<double> vmValuesLocal;
       innerInstances[j].data().solution()->getValuesWithoutGhosts(0, vmValuesLocal);
 
+      // communicate Vm values
       LOG(DEBUG) << "Gatherv of values to rank " << computingRank << ", sizes: " << nDofsOnRanks << ", offsets: " << offsetsOnRanks << ", local values " << vmValuesLocal;
 
       MPI_Gatherv(vmValuesLocal.data(), fiberFunctionSpace->nDofsLocalWithoutGhosts(), MPI_DOUBLE,
                   vmValuesReceiveBuffer, nDofsOnRanks.data(), offsetsOnRanks.data(),
                   MPI_DOUBLE, computingRank, mpiCommunicator);
+
+      // communicate parameter values
+      // get own parameter values
+
+      // get the data_.parameters() raw pointer
+      innerInstances[j].discretizableInTime().data().prepareParameterValues();
+
+      double *parameterValuesLocal = innerInstances[j].discretizableInTime().data().parameterValues();  
+      // size of this array is fiberFunctionSpace->nDofsLocalWithoutGhosts() * nIntermediates
+      // parameterValuesLocal has struct of array memory layout with space for a total of nIntermediates_ parameters [i0p0, i1p0, i2p0, ... i0p1, i1p1, i2p1, ...]
+
+      // only the actual parameter values should be sent, not the rest of the parameters buffer
+      // therefore allocate a send buffer with the according size
+      int nParametersLocal = nParametersPerInstance * fiberFunctionSpace->nDofsLocalWithoutGhosts();
+      std::vector<double> parametersSendBuffer(nParametersLocal);
+
+      // loop over the actual parameter values for every dof
+      for (int dofNoLocal = 0; dofNoLocal < fiberFunctionSpace->nDofsLocalWithoutGhosts(); dofNoLocal++)
+      {
+        for (int parameterNo = 0; parameterNo < nParametersPerInstance; parameterNo++)
+        {
+          // store parameter values to send buffer
+          parametersSendBuffer[dofNoLocal*nParametersPerInstance + parameterNo] = parameterValuesLocal[parameterNo*fiberFunctionSpace->nDofsLocalWithoutGhosts() + dofNoLocal];
+        }
+      }
+
+      if (VLOG_IS_ON(1))
+      {
+        VLOG(1) << "Gatherv of parameters to rank " << computingRank << ", send buffer: " << parametersSendBuffer << " contains " << nParametersLocal << " parameters "
+          << " " << nParametersPerInstance << " per instances with " << fiberFunctionSpace->nDofsLocalWithoutGhosts() << " local instances.";
+      }
+
+      // send data
+      MPI_Gatherv(parametersSendBuffer.data(), nParametersLocal, MPI_DOUBLE,
+                  parametersReceiveBuffer.data(), nParametersOnRanks.data(), parameterOffsetsOnRanks.data(),
+                  MPI_DOUBLE, computingRank, mpiCommunicator);
+
+      // store result from parametersReceiveBuffer (for current fiber) to fiberPointBuffersParameters_ (for a vc vector)
+      // loop over number of instances of the problem on the current fiber
+      if (computingRank == rankSubset->ownRankNo())
+      {
+        int nInstancesOnFiber = fiberData_[fiberDataNo].vmValues.size();
+
+        for (int instanceNo = 0; instanceNo < nInstancesOnFiber; instanceNo++)
+        {
+          // compute indices for fiberPointBuffersParameters_
+          global_no_t valueIndexAllFibers = fiberData_[fiberDataNo].valuesOffset + instanceNo;
+
+
+          global_no_t pointBuffersNo = valueIndexAllFibers / Vc::double_v::Size;
+          int entryNo = valueIndexAllFibers % Vc::double_v::Size;
+
+          //LOG(DEBUG) << "valueIndexAllFibers: " << valueIndexAllFibers << ", (" << pointBuffersNo << "," << entryNo << ")";
+
+          // set all received parameter values for the current instance in the correct slot in the vc vector of the current pointBuffer compute buffer
+          for (int parameterNo = 0; parameterNo < nParametersPerInstance; parameterNo++)
+          {
+            fiberPointBuffersParameters_[pointBuffersNo][parameterNo][entryNo] = parametersReceiveBuffer[instanceNo*nParametersPerInstance + parameterNo];
+          }
+
+          if (entryNo == Vc::double_v::Size-1)
+          {
+            LOG(DEBUG) << "stored " << nParametersPerInstance << " parameters in buffer no " << pointBuffersNo << ": " << fiberPointBuffersParameters_[pointBuffersNo];
+          }
+        }
+      }
+
+      // get the data_.parameters() raw pointer
+      innerInstances[j].discretizableInTime().data().restoreParameterValues();
 
       // increase index for fiberData_ struct
       if (computingRank == rankSubset->ownRankNo())
@@ -112,8 +194,8 @@ fetchFiberData()
 }
 
 //! send vmValues data from fiberData_ back to the fibers where it belongs to and set in the respective field variable
-template<int nStates, int nIntermediates>
-void FastMonodomainSolverBase<nStates,nIntermediates>::
+template<int nStates, int nIntermediates, typename DiffusionTimeSteppingScheme>
+void FastMonodomainSolverBase<nStates,nIntermediates,DiffusionTimeSteppingScheme>::
 updateFiberData()
 {
   // copy Vm and other states/intermediates from compute buffers to fiberData_

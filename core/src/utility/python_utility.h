@@ -30,6 +30,9 @@ public:
   //! checks if the settings contain the given key, no warning is printed
   static bool hasKey(const PyObject *settings, std::string key);
 
+  //! checks if this settings is the empty list or None
+  static bool isEmpty(const PyObject *settings, std::string key);
+
   //! checks if the object is a python list
   static bool isTypeList(const PyObject *object);
 
@@ -147,6 +150,9 @@ public:
   //! create a python list out of the long vector
   static PyObject *convertToPythonList(unsigned int nEntries, double *data);
 
+  //! create a python list from a double *
+  static PyObject *convertToPythonList(double *value, int nValues);
+
   //! convert a PyUnicode object to a std::string
   static std::string pyUnicodeToString(PyObject *object);
 
@@ -175,7 +181,7 @@ public:
     //static std::map<int, int> nGilsThreads_;
     //PyThreadState *mainThreadState_;
     
-    //static std::recursive_mutex mutex_;  ///< mutex for critical section
+    //static std::recursive_mutex mutex_;  //< mutex for critical section
     //static std::unique_lock<std::recursive_mutex> lock_;
     
     //static bool lockInitialized_;
@@ -184,11 +190,11 @@ public:
   
 private:
 
-  static PyObject *itemList;    ///< list of items (key,value) for dictionary,  to use for getOptionDictBegin, getOptionDictEnd, getOptionDictNext
-  static int itemListIndex;     ///< current index of itemList
+  static PyObject *itemList;    //< list of items (key,value) for dictionary,  to use for getOptionDictBegin, getOptionDictEnd, getOptionDictNext
+  static int itemListIndex;     //< current index of itemList
 
-  static PyObject *list;      ///< python list to use for getOptionListBegin, getOptionListEnd, getOptionListNext
-  static int listIndex;       ///< current index for list
+  static PyObject *list;        //< python list to use for getOptionListBegin, getOptionListEnd, getOptionListNext
+  static int listIndex;         //< current index for list
 };
 
 //! output python object

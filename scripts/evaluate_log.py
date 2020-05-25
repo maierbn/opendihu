@@ -128,6 +128,7 @@ except:
 pd.set_option('display.max_rows', 500)
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.width', 1000)
+pd.set_option('display.max_colwidth', 100)
 
 def merge_dicts(x, y):
   z = x.copy()   # start with x's keys and values
@@ -223,6 +224,8 @@ column_shortnames = {
   "duration_1D": "1D",
   "duration_init": "duration_init",
   "duration_bidomain": "bidomain",
+  "duration_mechanics": "mechanics",
+  "duration_multidomain": "multidomain",
   "durationAssembleBoundaryConditions": "initBC",
   "durationSetStiffnessMatrix": "stiffness",
   "durationComputeMappingBetweenMeshes": "compMap",
@@ -235,10 +238,10 @@ column_shortnames = {
 }
 
 # define columns for table and plot (long names)
-columns_to_print = ["meta_partitioning", "totalUsertime", "duration_total", "duration_0D", "duration_1D", "duration_bidomain", "duration_init", "durationOnlyWrite", "memoryResidentSet", "n"]
-columns_to_plot = ["duration_total", "duration_init", "durationOnlyWrite", "duration_0D", "duration_1D", "duration_bidomain"]
+columns_to_print = ["meta_partitioning", "totalUsertime", "duration_total", "duration_0D", "duration_1D", "duration_bidomain", "duration_multidomain", "duration_mechanics", "duration_init", "durationOnlyWrite", "memoryResidentSet", "n"]
+columns_to_plot = ["duration_total", "duration_init", "durationOnlyWrite", "duration_0D", "duration_1D", "duration_bidomain", "duration_multidomain", "duration_mechanics"]
 
-plot_labels = ["total", "initialization", "write VTK files", "1D model", "0D model", "3D model"]
+plot_labels = ["total", "initialization", "write VTK files", "0D model", "1D model", "3D model"]
 
 title = input_filename
 output(df, title, columns_to_print, columns_to_plot, plot_labels)

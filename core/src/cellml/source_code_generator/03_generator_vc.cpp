@@ -421,7 +421,7 @@ generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunc
   // add declaration of algebraic variables
   sourceCode << std::endl;
   const int nVcVectors = (int)(ceil((double)this->nInstances_ / Vc::double_v::Size));
-  const int nParametersPerInstance = this->parameters_->size() / this->nInstances_;
+  const int nParametersPerInstance = this->nIntermediates_;
 
   sourceCode << std::endl
     << "  const int nInstances = " << this->nInstances_ << ";\n"
@@ -554,6 +554,8 @@ generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunc
   std::stringstream s;
   s << "-lVc -I\"" << OPENDIHU_HOME << "/dependencies/vc/install/include\" "
     << "-L\"" << OPENDIHU_HOME << "/dependencies/vc/install/lib\" ";
+  if (std::string(CXX_COMPILER_COMMAND) == std::string("g++"))
+    s << "-std=c++14";
   additionalCompileFlags_ = s.str();
   compilerCommand_ = CXX_COMPILER_COMMAND;
   sourceFileSuffix_ = ".cpp";
@@ -603,7 +605,7 @@ generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateE
     << "// compute one Heun step\n"
     << "#ifdef __cplusplus\n" << "extern \"C\"\n" << "#endif\n" << std::endl
     << "void compute0DInstance(Vc::double_v states[], std::vector<Vc::double_v> &parameters, double currentTime, double timeStepWidth, bool stimulate,\n"
-    << "                       bool storeIntermediatesForTransfer, std::vector<Vc::double_v> &intermediatesForTransfer, const std::vector<int> &intermediatesForTransferIndices) \n"
+    << "                       bool storeIntermediatesForTransfer, std::vector<Vc::double_v> &intermediatesForTransfer, const std::vector<int> &intermediatesForTransferIndices, double valueForStimulatedPoint) \n"
     << "{\n"
     << "  // assert that Vc::double_v::Size is the same as in opendihu, otherwise there will be problems\n"
     << "  if (Vc::double_v::Size != " << Vc::double_v::Size << ")\n"
@@ -614,14 +616,15 @@ generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateE
     << "    exit(1);\n"
     << "  }\n\n"
     << "  // define constants\n";
-    /*
-    << R"(  std::cout << "currentTime=" << currentTime << ", timeStepWidth=" << timeStepWidth << ", stimulate=" << stimulate << std::endl;)" << "\n"
-    << R"(  std::cout << "states[0]=" << states[0][0] << "," << states[0][1] << "," << states[0][2] << "," << states[0][3] << "," << std::endl;)" << "\n"
+    
+/*    << R"(  std::cout << "currentTime=" << currentTime << ", timeStepWidth=" << timeStepWidth << ", stimulate=" << stimulate << std::endl;)" << "\n" */
+/*    << R"(  std::cout << "states[0]=" << states[0][0] << "," << states[0][1] << "," << states[0][2] << "," << states[0][3] << "," << std::endl;)" << "\n"
     << R"(  std::cout << "states[1]=" << states[1][0] << "," << states[1][1] << "," << states[1][2] << "," << states[1][3] << "," << std::endl;)" << "\n"
     << R"(  std::cout << "states[2]=" << states[2][0] << "," << states[2][1] << "," << states[2][2] << "," << states[2][3] << "," << std::endl;)" << "\n"
-    << R"(  std::cout << "states[3]=" << states[3][0] << "," << states[3][1] << "," << states[3][2] << "," << states[3][3] << "," << std::endl;)" << "\n"
-    << R"(  std::cout << "parameters[0]=" << parameters[0][0] << "," << parameters[0][1] << "," << parameters[0][2] << "," << parameters[0][3] << "," << std::endl;)" << "\n";
-*/
+    << R"(  std::cout << "states[3]=" << states[3][0] << "," << states[3][1] << "," << states[3][2] << "," << states[3][3] << "," << std::endl;)" << "\n"*/
+/*    << R"(  std::cout << "parameters[0]=" << parameters[0][0] << "," << parameters[0][1] << "," << parameters[0][2] << "," << parameters[0][3] << "," << std::endl;)" << "\n"
+    << R"(  std::cout << "parameters[1]=" << parameters[1][0] << "," << parameters[1][1] << "," << parameters[1][2] << "," << parameters[1][3] << "," << std::endl;)" << "\n";*/
+
   // add assignments of constant values
   for (std::string constantAssignmentsLine : constantAssignments_)
   {
@@ -721,7 +724,7 @@ generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateE
   {
     for (int i = 0; i < std::min(3,(int)Vc::double_v::Size); i++)
     {
-      intermediateState0[i] = 20.0;
+      intermediateState0[i] = valueForStimulatedPoint;
     }
   }
 
@@ -815,7 +818,7 @@ generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateE
   {
     for (int i = 0; i < std::min(3,(int)Vc::double_v::Size); i++)
     {
-      states[0][i] = 20.0;
+      states[0][i] = valueForStimulatedPoint;
     }
   }
 
@@ -874,6 +877,8 @@ generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateE
   std::stringstream s;
   s << "-lVc -I\"" << OPENDIHU_HOME << "/dependencies/vc/install/include\" "
     << "-L\"" << OPENDIHU_HOME << "/dependencies/vc/install/lib\" ";
+  if (std::string(CXX_COMPILER_COMMAND) == std::string("g++"))
+    s << "-std=c++14";
   additionalCompileFlags_ = s.str();
   compilerCommand_ = CXX_COMPILER_COMMAND;
   sourceFileSuffix_ = ".cpp";

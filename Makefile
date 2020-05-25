@@ -63,10 +63,10 @@ fibers:
 	cd testing/system_testing/tests/fibers &&  python ../../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
 
 hodgkin_huxley:
-	cd examples/electrophysiology/hodgkin_huxley && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+	cd examples/electrophysiology/monodomain/hodgkin_huxley && python ../../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
 
 shorten:
-	cd examples/electrophysiology/shorten && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+	cd examples/electrophysiology/monodomain/shorten && python ../../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
 
 cellml:
 	cd examples/electrophysiology/cellml && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
@@ -116,5 +116,17 @@ static_biceps_emg:
 precice0:	
 	cd examples/electrophysiology/biceps_contraction/opendihu_precice_opendihu && python ../../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
 
+biceps_contraction:	
+	cd examples/electrophysiology/biceps_contraction/opendihu_opendihu && python ../../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+
+multidomain_contraction:	
+	cd examples/electrophysiology/multidomain_contraction && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+
 laplace2d_split:
 	cd examples/laplace/laplace2d_split && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+
+linear_elasticity_with_activation:
+	cd examples/solid_mechanics/linear_elasticity/with_fiber_activation && python ../../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+
+tensile_test:
+	cd examples/solid_mechanics/tensile_test && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG

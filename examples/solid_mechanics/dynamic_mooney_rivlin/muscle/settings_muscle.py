@@ -1,4 +1,5 @@
-# isotropic Mooney Rivlin
+# Transversely-isotropic Mooney Rivlin on a muscle geometry
+# Note, this is not possible to be run in parallel because the fibers cannot be initialized without MultipleInstances class.
 import sys, os
 import numpy as np
 import pickle
@@ -17,7 +18,7 @@ fiber_file = "../../../../electrophysiology/input/left_biceps_brachii_13x13fiber
 #fiber_file = "../../../../electrophysiology/input/left_biceps_brachii_7x7fibers.bin"
 #fiber_file = "../../../../electrophysiology/input/left_biceps_brachii_7x7fibers.bin"
 
-load_fiber_data = True             # If the fiber geometry data should be loaded completely in the python script. If True, this reads the binary file and assigns the node positions in the config. If False, the C++ code will read the binary file and only extract the local node positions. This is more performant for highly parallel runs.
+load_fiber_data = False             # If the fiber geometry data should be loaded completely in the python script. If True, this reads the binary file and assigns the node positions in the config. If False, the C++ code will read the binary file and only extract the local node positions. This is more performant for highly parallel runs.
 
 # define command line arguments
 parser = argparse.ArgumentParser(description='fibers_emg')
@@ -25,9 +26,10 @@ parser.add_argument('--n_subdomains', nargs=3,               help='Number of sub
 parser.add_argument('--n_subdomains_x', '-x',                help='Number of subdomains in x direction.',        type=int, default=variables.n_subdomains_x)
 parser.add_argument('--n_subdomains_y', '-y',                help='Number of subdomains in y direction.',        type=int, default=variables.n_subdomains_y)
 parser.add_argument('--n_subdomains_z', '-z',                help='Number of subdomains in z direction.',        type=int, default=variables.n_subdomains_z)
+parser.add_argument('-vmodule', help='ignore')
 
 # parse command line arguments and assign values to variables module
-args = parser.parse_args(args=sys.argv[:-2], namespace=variables)
+args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
 
 # partitioning
 # ------------
@@ -45,15 +47,15 @@ if rank_no == 0:
     
 # stride for sampling the 3D elements from the fiber data
 # here any number is possible
-sampling_stride_x = 7
-sampling_stride_y = 7
-sampling_stride_z = 500
+sampling_stride_x = 2
+sampling_stride_y = 2
+sampling_stride_z = 74
 
 # create the partitioning using the script in create_partitioned_meshes_for_settings.py
 result = create_partitioned_meshes_for_settings(
     variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, 
     fiber_file, load_fiber_data,
-    sampling_stride_x, sampling_stride_y, sampling_stride_z, True)
+    sampling_stride_x, sampling_stride_y, sampling_stride_z, True, True)
 
 #parse result
 [variables.meshes, variables.own_subdomain_coordinate_x, variables.own_subdomain_coordinate_y, variables.own_subdomain_coordinate_z, variables.n_fibers_x, variables.n_fibers_y, variables.n_points_whole_fiber] = result
@@ -91,7 +93,7 @@ bottom_traction = [0.0,0.0,0.0]        # [N]
 
 
 # boundary conditions (for quadratic elements)
-[mx, my, mz] = variables.meshes["3Dmesh_quadratic"]["nPointsLocal"]
+[mx, my, mz] = variables.meshes["3Dmesh_quadratic"]["nPointsGlobal"]
 [nx, ny, nz] = variables.meshes["3Dmesh_quadratic"]["nElements"]
 
 fiber_mesh_names = [mesh_name for mesh_name in variables.meshes.keys() if "MeshFiber" in mesh_name]
@@ -109,17 +111,16 @@ for i in range(mx):
 # fix corner completely
 elasticity_dirichlet_bc[(mz-1)*mx*my + 0] = [0.0,0.0,0.0,None,None,None]
 
-print("elasticity_dirichlet_bc: {}".format(elasticity_dirichlet_bc))
+#print("elasticity_dirichlet_bc: {}".format(elasticity_dirichlet_bc))
        
 # Neumann BC at bottom nodes, traction downwards
 elasticity_neumann_bc = [{"element": 0*nx*ny + j*nx + i, "constantVector": bottom_traction, "face": "2-"} for j in range(ny) for i in range(nx)]
 
-# Neumann boundary conditions, specify upward force for top elements, slightly in y-direction
-#neumann_bc = [{"element": (nz-1)*nx*ny + j*nx + i, "constantVector": bottom_traction, "face": "2+"} for j in range(ny) for i in range(nx)]
-
 dt = 50e0         # [ms] time step width
 end_time = 10000
 output_interval = dt
+
+print("nRanks: ",variables.meshes["3Dmesh_quadratic"]["nRanks"])
 
 if False:
   # node positions in cm for 2,2,3 nodes
@@ -212,20 +213,21 @@ config = {
     
     # mesh
     "meshName": "3Dmesh_quadratic",     # mesh with quadratic Lagrange ansatz functions
-    "inputMeshIsGlobal": False,         # boundary conditions are specified in global numberings
+    "inputMeshIsGlobal": True,          # boundary conditions are specified in global numberings, whereas the mesh is given in local numberings
     
     "fiberMeshNames": fiber_mesh_names,   # fiber meshes that will be used to determine the fiber direction
     
     # nonlinear solver
-    "relativeTolerance": 1e-5,         # 1e-10 relative tolerance of the linear solver
+    "relativeTolerance": 1e-5,          # 1e-10 relative tolerance of the linear solver
+    "absoluteTolerance": 1e-10,         # 1e-10 absolute tolerance of the residual of the linear solver       
     "solverType": "preonly",            # type of the linear solver: cg groppcg pipecg pipecgrr cgne nash stcg gltr richardson chebyshev gmres tcqmr fcg pipefcg bcgs ibcgs fbcgs fbcgsr bcgsl cgs tfqmr cr pipecr lsqr preonly qcg bicg fgmres pipefgmres minres symmlq lgmres lcd gcr pipegcr pgmres dgmres tsirm cgls
     "preconditionerType": "lu",         # type of the preconditioner
     "maxIterations": 1e4,               # maximum number of iterations in the linear solver
     "snesMaxFunctionEvaluations": 1e8,  # maximum number of function iterations
     "snesMaxIterations": 10,            # maximum number of iterations in the nonlinear solver
-    "snesRelativeTolerance": 1e-5,     # relative tolerance of the nonlinear solver
-    "snesLineSearchType": "l2",        # type of linesearch, possible values: "bt" "nleqerr" "basic" "l2" "cp" "ncglinear"
-    "snesAbsoluteTolerance": 1e-5,     # absolute tolerance of the nonlinear solver
+    "snesRelativeTolerance": 1e-5,      # relative tolerance of the nonlinear solver
+    "snesLineSearchType": "l2",         # type of linesearch, possible values: "bt" "nleqerr" "basic" "l2" "cp" "ncglinear"
+    "snesAbsoluteTolerance": 1e-5,      # absolute tolerance of the nonlinear solver
     
     #"dumpFilename": "out/r{}/m".format(sys.argv[-1]),   # dump system matrix and right hand side after every solve
     "dumpFilename": "",         # dump disabled
@@ -262,7 +264,7 @@ config = {
     "dynamic": {    # output of the dynamic solver, has additional virtual work values 
       "OutputWriter" : [   # output files for displacements function space (quadratic elements)
         #{"format": "Paraview", "outputInterval": int(output_interval/dt), "filename": "out/dynamic", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
-        #{"format": "Paraview", "outputInterval": 1, "filename": "out/dynamic", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
+        {"format": "Paraview", "outputInterval": 1, "filename": "out/dynamic", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
       ],
     },
     # output writer for debugging, outputs files after each load increment, the geometry is not changed but u and v are written

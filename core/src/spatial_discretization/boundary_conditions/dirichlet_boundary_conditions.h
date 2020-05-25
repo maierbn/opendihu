@@ -66,15 +66,15 @@ protected:
 
   struct GhostElement
   {
-    std::vector<global_no_t> nonBoundaryConditionDofsOfRankGlobalPetsc;    ///< the non-BC dofs of this element, as global petsc no. that are owned by the rank with no neighbouringRankNo
-    std::vector<global_no_t> boundaryConditionDofsGlobalPetsc;     ///< the Dirichlet BC dofs of this element
-    std::vector<ValueType> boundaryConditionValues;                ///< the prescribed value, corresponding to boundaryConditionDofsGlobalPetsc
+    std::vector<global_no_t> nonBoundaryConditionDofsOfRankGlobalPetsc;    //< the non-BC dofs of this element, as global petsc no. that are owned by the rank with no neighbouringRankNo
+    std::vector<global_no_t> boundaryConditionDofsGlobalPetsc;     //< the Dirichlet BC dofs of this element
+    std::vector<ValueType> boundaryConditionValues;                //< the prescribed value, corresponding to boundaryConditionDofsGlobalPetsc
   };
   
-  std::map<int,std::vector<GhostElement>> foreignGhostElements_;   ///< ghost elements that are normal elements on this rank, key is the rankNo of the rank to send them to
-  std::vector<GhostElement> ownGhostElements_;                     ///< the ghost elements for this rank
+  std::map<int,std::vector<GhostElement>> foreignGhostElements_;   //< ghost elements that are normal elements on this rank, key is the rankNo of the rank to send them to
+  std::vector<GhostElement> ownGhostElements_;                     //< the ghost elements for this rank
 
-  std::vector<std::pair<int,int>> nElementsFromRanks_;             ///< helper variable, (foreignRank,nElements), number of elements to receive from foreignRank, will be initialized by initializeGhostElements() and used by updateOwnGhostElements().
+  std::vector<std::pair<int,int>> nElementsFromRanks_;             //< helper variable, (foreignRank,nElements), number of elements to receive from foreignRank, will be initialized by initializeGhostElements() and used by updateOwnGhostElements().
 };
 
 } // namespace

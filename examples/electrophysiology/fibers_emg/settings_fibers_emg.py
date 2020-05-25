@@ -52,48 +52,49 @@ if ".py" in sys.argv[0]:
 
 # define command line arguments
 parser = argparse.ArgumentParser(description='fibers_emg')
-parser.add_argument('--scenario_name',                       help='The name to identify this run in the log.',   default=variables.scenario_name)
-parser.add_argument('--n_subdomains', nargs=3,               help='Number of subdomains in x,y,z direction.',    type=int)
-parser.add_argument('--n_subdomains_x', '-x',                help='Number of subdomains in x direction.',        type=int, default=variables.n_subdomains_x)
-parser.add_argument('--n_subdomains_y', '-y',                help='Number of subdomains in y direction.',        type=int, default=variables.n_subdomains_y)
-parser.add_argument('--n_subdomains_z', '-z',                help='Number of subdomains in z direction.',        type=int, default=variables.n_subdomains_z)
-parser.add_argument('--diffusion_solver_type',               help='The solver for the diffusion.',               default=variables.diffusion_solver_type, choices=["gmres","cg","lu","gamg","richardson","chebyshev","cholesky","jacobi","sor","preonly"])
-parser.add_argument('--diffusion_preconditioner_type',       help='The preconditioner for the diffusion.',       default=variables.diffusion_preconditioner_type, choices=["jacobi","sor","lu","ilu","gamg","none"])
-parser.add_argument('--diffusion_solver_reltol',             help='Ralative tolerance for diffusion solver',     type=float, default=variables.diffusion_solver_reltol)
-parser.add_argument('--diffusion_solver_maxit',              help='Maximum number of iterations for diffusion solver', type=int, default=variables.diffusion_solver_maxit)
-parser.add_argument('--potential_flow_solver_type',          help='The solver for the potential flow (non-spd matrix).', default=variables.potential_flow_solver_type, choices=["gmres","cg","lu","gamg","richardson","chebyshev","cholesky","jacobi","sor","preonly"])
-parser.add_argument('--potential_flow_preconditioner_type',  help='The preconditioner for the potential flow.',  default=variables.potential_flow_preconditioner_type, choices=["jacobi","sor","lu","ilu","gamg","none"])
+parser.add_argument('--scenario_name',                       help='The name to identify this run in the log.',            default=variables.scenario_name)
+parser.add_argument('--n_subdomains', nargs=3,               help='Number of subdomains in x,y,z direction.',             type=int)
+parser.add_argument('--n_subdomains_x', '-x',                help='Number of subdomains in x direction.',                 type=int, default=variables.n_subdomains_x)
+parser.add_argument('--n_subdomains_y', '-y',                help='Number of subdomains in y direction.',                 type=int, default=variables.n_subdomains_y)
+parser.add_argument('--n_subdomains_z', '-z',                help='Number of subdomains in z direction.',                 type=int, default=variables.n_subdomains_z)
+parser.add_argument('--diffusion_solver_type',               help='The solver for the diffusion.',                        default=variables.diffusion_solver_type, choices=["gmres","cg","lu","gamg","richardson","chebyshev","cholesky","jacobi","sor","preonly"])
+parser.add_argument('--diffusion_preconditioner_type',       help='The preconditioner for the diffusion.',                default=variables.diffusion_preconditioner_type, choices=["jacobi","sor","lu","ilu","gamg","none"])
+parser.add_argument('--diffusion_solver_reltol',             help='Ralative tolerance for diffusion solver',              type=float, default=variables.diffusion_solver_reltol)
+parser.add_argument('--diffusion_solver_maxit',              help='Maximum number of iterations for diffusion solver',    type=int, default=variables.diffusion_solver_maxit)
+parser.add_argument('--potential_flow_solver_type',          help='The solver for the potential flow (non-spd matrix).',  default=variables.potential_flow_solver_type, choices=["gmres","cg","lu","gamg","richardson","chebyshev","cholesky","jacobi","sor","preonly"])
+parser.add_argument('--potential_flow_preconditioner_type',  help='The preconditioner for the potential flow.',           default=variables.potential_flow_preconditioner_type, choices=["jacobi","sor","lu","ilu","gamg","none"])
 parser.add_argument('--potential_flow_solver_maxit',         help='Maximum number of iterations for potential flow solver', type=int, default=variables.potential_flow_solver_maxit)
-parser.add_argument('--potential_flow_solver_reltol',        help='Relative tolerance for potential flow solver', type=float, default=variables.potential_flow_solver_reltol)
-parser.add_argument('--emg_solver_type',                     help='The solver for the static bidomain.',         default=variables.emg_solver_type)
-#parser.add_argument('--emg_solver_type',                    help='The solver for the static bidomain.',         default=variables.emg_solver_type, choices=["gmres","cg","lu","gamg","richardson","chebyshev","cholesky","jacobi","sor","preonly"])
-parser.add_argument('--emg_preconditioner_type',             help='The preconditioner for the static bidomain.', default=variables.emg_preconditioner_type, choices=["jacobi","sor","lu","ilu","gamg","none"])
-parser.add_argument('--emg_solver_maxit',                    help='Maximum number of iterations for activation solver', type=int, default=variables.emg_solver_maxit)
-parser.add_argument('--emg_solver_reltol',                   help='Ralative tolerance for activation solver',    type=float, default=variables.diffusion_solver_reltol)
+parser.add_argument('--potential_flow_solver_reltol',        help='Relative tolerance for potential flow solver',         type=float, default=variables.potential_flow_solver_reltol)
+parser.add_argument('--emg_solver_type',                     help='The solver for the static bidomain.',                  default=variables.emg_solver_type)
+#parser.add_argument('--emg_solver_type',                    help='The solver for the static bidomain.',                  default=variables.emg_solver_type, choices=["gmres","cg","lu","gamg","richardson","chebyshev","cholesky","jacobi","sor","preonly"])
+parser.add_argument('--emg_preconditioner_type',             help='The preconditioner for the static bidomain.',          default=variables.emg_preconditioner_type, choices=["jacobi","sor","lu","ilu","gamg","none"])
+parser.add_argument('--emg_solver_maxit',                    help='Maximum number of iterations for activation solver',   type=int, default=variables.emg_solver_maxit)
+parser.add_argument('--emg_solver_reltol',                   help='Ralative tolerance for activation solver',             type=float, default=variables.diffusion_solver_reltol)
 parser.add_argument('--emg_initial_guess_nonzero',           help='If the initial guess for the emg linear system should be set to the previous solution.', default=variables.emg_initial_guess_nonzero, action='store_true')
-parser.add_argument('--paraview_output',                     help='Enable the paraview output writer.',          default=variables.paraview_output, action='store_true')
-parser.add_argument('--adios_output',                        help='Enable the MegaMol/ADIOS output writer.',          default=variables.adios_output, action='store_true')
+parser.add_argument('--paraview_output',                     help='Enable the paraview output writer.',                   default=variables.paraview_output, action='store_true')
+parser.add_argument('--adios_output',                        help='Enable the MegaMol/ADIOS output writer.',              default=variables.adios_output, action='store_true')
 parser.add_argument('--fiber_file',                          help='The filename of the file that contains the fiber data.', default=variables.fiber_file)
 parser.add_argument('--cellml_file',                         help='The filename of the file that contains the cellml model.', default=variables.cellml_file)
 parser.add_argument('--fiber_distribution_file',             help='The filename of the file that contains the MU firing times.', default=variables.fiber_distribution_file)
 parser.add_argument('--firing_times_file',                   help='The filename of the file that contains the cellml model.', default=variables.firing_times_file)
-parser.add_argument('--end_time', '--tend', '-t',            help='The end simulation time.',                    type=float, default=variables.end_time)
-parser.add_argument('--output_timestep',                     help='The timestep for writing outputs.',           type=float, default=variables.output_timestep)
-parser.add_argument('--dt_0D',                               help='The timestep for the 0D model.',              type=float, default=variables.dt_0D)
-parser.add_argument('--dt_1D',                               help='The timestep for the 1D model.',              type=float, default=variables.dt_1D)
-parser.add_argument('--dt_splitting',                        help='The timestep for the splitting.',             type=float, default=variables.dt_splitting)
+parser.add_argument('--stimulation_frequency',               help='Stimulations per ms. Each stimulation corresponds to one line in the firing_times_file.', default=variables.stimulation_frequency)
+parser.add_argument('--end_time', '--tend', '-t',            help='The end simulation time.',                             type=float, default=variables.end_time)
+parser.add_argument('--output_timestep',                     help='The timestep for writing outputs.',                    type=float, default=variables.output_timestep)
+parser.add_argument('--dt_0D',                               help='The timestep for the 0D model.',                       type=float, default=variables.dt_0D)
+parser.add_argument('--dt_1D',                               help='The timestep for the 1D model.',                       type=float, default=variables.dt_1D)
+parser.add_argument('--dt_splitting',                        help='The timestep for the splitting.',                      type=float, default=variables.dt_splitting)
 parser.add_argument('--dt_3D',                               help='The timestep for the 3D model, either bidomain or mechanics.', type=float, default=variables.dt_3D)
-parser.add_argument('--disable_firing_output',               help='Disables the initial list of fiber firings.', default=variables.disable_firing_output, action='store_true')
+parser.add_argument('--disable_firing_output',               help='Disables the initial list of fiber firings.',          default=variables.disable_firing_output, action='store_true')
 parser.add_argument('--v',                                   help='Enable full verbosity in c++ code')
-parser.add_argument('-v',                                    help='Enable verbosity level in c++ code', action="store_true")
+parser.add_argument('-v',                                    help='Enable verbosity level in c++ code',                   action="store_true")
 parser.add_argument('-vmodule',                              help='Enable verbosity level for given file in c++ code')
-parser.add_argument('-on_error_attach_debugger',                              help='Enable verbosity level for given file in c++ code')
-parser.add_argument('-pause',                                help='Stop at parallel debugging barrier', action="store_true")
-parser.add_argument('--rank_reordering',                     help='Enable rank reordering in the c++ code', action="store_true")
-parser.add_argument('--use_elasticity',                   help='Enable linear elasticity', action="store_true")
+parser.add_argument('-on_error_attach_debugger',             help='Enable verbosity level for given file in c++ code')
+parser.add_argument('-pause',                                help='Stop at parallel debugging barrier',                   action="store_true")
+parser.add_argument('--rank_reordering',                     help='Enable rank reordering in the c++ code',               action="store_true")
+parser.add_argument('--use_elasticity',                      help='Enable linear elasticity',                             action="store_true")
 
 # parse command line arguments and assign values to variables module
-args = parser.parse_args(args=sys.argv[:-2], namespace=variables)
+args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
 
 # initialize some dependend variables
 if variables.n_subdomains is not None:
@@ -101,6 +102,36 @@ if variables.n_subdomains is not None:
   variables.n_subdomains_y = variables.n_subdomains[1]
   variables.n_subdomains_z = variables.n_subdomains[2]
   
+variables.n_subdomains = variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z
+
+# automatically initialize partitioning if it has not been set
+if n_ranks != variables.n_subdomains:
+  
+  # create all possible partitionings to the given number of ranks
+  optimal_value = n_ranks**(1/3)
+  possible_partitionings = []
+  for i in range(1,n_ranks+1):
+    for j in range(1,n_ranks+1):
+      if i*j <= n_ranks and n_ranks % (i*j) == 0:
+        k = (int)(n_ranks / (i*j))
+        performance = (k-optimal_value)**2 + (j-optimal_value)**2 + 1.1*(i-optimal_value)**2
+        possible_partitionings.append([i,j,k,performance])
+        
+  # if no possible partitioning was found
+  if len(possible_partitionings) == 0:
+    if rank_no == 0:
+      print("\n\n\033[0;31mError! Number of ranks {} does not match given partitioning {} x {} x {} = {} and no automatic partitioning could be done.\n\n\033[0m".format(n_ranks, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z))
+    quit()
+    
+  # select the partitioning with the lowest value of performance which is the best
+  lowest_performance = possible_partitionings[0][3]+1
+  for i in range(len(possible_partitionings)):
+    if possible_partitionings[i][3] < lowest_performance:
+      lowest_performance = possible_partitionings[i][3]
+      variables.n_subdomains_x = possible_partitionings[i][0]
+      variables.n_subdomains_y = possible_partitionings[i][1]
+      variables.n_subdomains_z = possible_partitionings[i][2]
+
 if variables.use_elasticity:
   variables.emg_solver_type = "cg"
   
@@ -133,6 +164,7 @@ variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
 config = {
   "scenarioName":                   variables.scenario_name,    # scenario name which will appear in the log file
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
+  "mappingsBetweenMeshesLogFile":   "out/mappings_between_meshes.txt",     # output file that contains a log about creation of mappings between meshes
   "meta": {                 # additional fields that will appear in the log
     "partitioning": [variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z]
   },
@@ -141,6 +173,7 @@ config = {
   "Solvers": {
     "implicitSolver": {     # solver for the implicit timestepping scheme of the diffusion time step
       "relativeTolerance":  variables.diffusion_solver_reltol,
+      "absoluteTolerance":  1e-10,         # 1e-10 absolute tolerance of the residual    
       "maxIterations":      variables.diffusion_solver_maxit,
       "solverType":         variables.diffusion_solver_type,
       "preconditionerType": variables.diffusion_preconditioner_type,
@@ -149,6 +182,7 @@ config = {
     },
     "potentialFlowSolver": {# solver for the initial potential flow, that is needed to estimate fiber directions for the bidomain equation
       "relativeTolerance":  variables.potential_flow_solver_reltol,
+      "absoluteTolerance":  1e-10,         # 1e-10 absolute tolerance of the residual    
       "maxIterations":      variables.potential_flow_solver_maxit,
       "solverType":         variables.potential_flow_solver_type,
       "preconditionerType": variables.potential_flow_preconditioner_type,
@@ -157,14 +191,16 @@ config = {
     },
     "activationSolver": {   # solver for the static Bidomain equation and the EMG
       "relativeTolerance":  variables.emg_solver_reltol,
+      "absoluteTolerance":  1e-10,         # 1e-10 absolute tolerance of the residual    
       "maxIterations":      variables.emg_solver_maxit,
       "solverType":         variables.emg_solver_type,
       "preconditionerType": variables.emg_preconditioner_type,
       "dumpFilename":       "",
-      "dumpFormat":         "matlab",
+      "dumpFormat":         "ascii",
     },
     "linearElasticitySolver": {   # solver for linear elasticity
       "relativeTolerance":  1e-1,
+      "absoluteTolerance":  1e-10,         # 1e-10 absolute tolerance of the residual    ,
       "maxIterations":      1e4,
       "solverType":         "gmres",
       "preconditionerType": "none",
@@ -212,6 +248,7 @@ config = {
                     "initialValues":                [],
                     "timeStepOutputInterval":       1e4,
                     "inputMeshIsGlobal":            True,
+                    "checkForNanInf":               False,
                     "dirichletBoundaryConditions":  {},
                     "nAdditionalFieldVariables":    0,
                       
@@ -232,7 +269,7 @@ config = {
                       #"setSpecificParametersFunction":         set_specific_parameters,                        # callback function that sets parameters like stimulation current
                       #"setSpecificParametersCallInterval":     int(1./variables.stimulation_frequency/variables.dt_0D),         # set_specific_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
                       "setSpecificStatesFunction":              set_specific_states,                                             # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
-                      #"setSpecificStatesCallInterval":         2*int(1./variables.stimulation_frequency/variables.dt_0D),       # set_specific_states should be called variables.stimulation_frequency times per ms, the factor 2 is needed because every Heun step includes two calls to rhs
+                      #"setSpecificStatesCallInterval":          2*int(1./variables.stimulation_frequency/variables.dt_0D),       # set_specific_states should be called variables.stimulation_frequency times per ms, the factor 2 is needed because every Heun step includes two calls to rhs
                       "setSpecificStatesCallInterval":          0,                                                               # 0 means disabled
                       "setSpecificStatesCallFrequency":         variables.get_specific_states_call_frequency(fiber_no, motor_unit_no),   # set_specific_states should be called variables.stimulation_frequency times per ms
                       "setSpecificStatesFrequencyJitter":       variables.get_specific_states_frequency_jitter(fiber_no, motor_unit_no), # random value to add or substract to setSpecificStatesCallFrequency every stimulation, this is to add random jitter to the frequency
@@ -274,10 +311,12 @@ config = {
                     "dirichletBoundaryConditions": {},                                       # old Dirichlet BC that are not used in FastMonodomainSolver: {0: -75.0036, -1: -75.0036},
                     "inputMeshIsGlobal":           True,
                     "solverName":                  "implicitSolver",
+                    "checkForNanInf":              False,
                     "nAdditionalFieldVariables":   1 if variables.use_elasticity else 0,
                     "FiniteElementMethod" : {
                       "maxIterations":             1e4,
                       "relativeTolerance":         1e-10,
+                      "absoluteTolerance":         1e-10,         # 1e-10 absolute tolerance of the residual    
                       "inputMeshIsGlobal":         True,
                       "meshName":                  "MeshFiber_{}".format(fiber_no),
                       "prefactor":                 get_diffusion_prefactor(fiber_no, motor_unit_no),  # resolves to Conductivity / (Am * Cm)
@@ -306,6 +345,7 @@ config = {
       "firingTimesFile":          variables.firing_times_file,         # for FastMonodomainSolver, e.g. MU_firing_times_real.txt
       "onlyComputeIfHasBeenStimulated": True,                          # only compute fibers after they have been stimulated for the first time
       "disableComputationWhenStatesAreCloseToEquilibrium": True,       # optimization where states that are close to their equilibrium will not be computed again
+      "valueForStimulatedPoint":  variables.vm_value_stimulated,       # to which value of Vm the stimulated node should be set
     },
     "Term2": {        # Bidomain, EMG
       "StaticBidomainSolver": {       # version for fibers_emg
@@ -423,7 +463,7 @@ config = {
         "durationLogKey": "febio",
         "meshName":       "3Dmesh",
         "activationFactor": 1e-5,
-        "preLoadFactor": 100,
+        "force":            100,     # force on top of muscle
         "OutputWriter" : variables.output_writer_elasticity,
       }
     }

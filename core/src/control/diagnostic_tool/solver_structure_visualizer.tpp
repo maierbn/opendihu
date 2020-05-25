@@ -18,15 +18,28 @@ setOutputConnectorData(std::shared_ptr<Data::OutputConnectorData<FunctionSpaceTy
     return;
   }
 
+  currentSolver_->outputSlots.clear();
+
   // loop over ComponentOfFieldVariable entries as variable1 in outputConnectorData
   for (int i = 0; i < outputConnectorData->variable1.size(); i++)
   {
     Data::ComponentOfFieldVariable<FunctionSpaceType,nComponents1> &entry = outputConnectorData->variable1[i];
 
+    // add the given field variable components to outputSlots
     currentSolver_->outputSlots.emplace_back();
     currentSolver_->outputSlots.back().fieldVariableName = entry.values->name();
     currentSolver_->outputSlots.back().componentName = entry.values->componentName(entry.componentNo);
     currentSolver_->outputSlots.back().nComponents = nComponents1;
+    currentSolver_->outputSlots.back().variableNo = 1;
+  }
+
+  // if the geometry is set, also add it to the list
+  if (outputConnectorData->geometryField)
+  {
+    currentSolver_->outputSlots.emplace_back();
+    currentSolver_->outputSlots.back().fieldVariableName = "(geometry)";
+    currentSolver_->outputSlots.back().componentName = "(geometry)";
+    currentSolver_->outputSlots.back().nComponents = 3;
     currentSolver_->outputSlots.back().variableNo = 1;
   }
 
@@ -35,6 +48,7 @@ setOutputConnectorData(std::shared_ptr<Data::OutputConnectorData<FunctionSpaceTy
   {
     Data::ComponentOfFieldVariable<FunctionSpaceType,nComponents2> &entry = outputConnectorData->variable2[i];
 
+    // add the given field variable components to outputSlots
     currentSolver_->outputSlots.emplace_back();
     currentSolver_->outputSlots.back().fieldVariableName = entry.values->name();
     currentSolver_->outputSlots.back().componentName = entry.values->componentName(entry.componentNo);

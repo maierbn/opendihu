@@ -39,7 +39,7 @@ opendihu_home = Dir('.').srcnode().abspath  # opendihu home directory is where t
 #
 sconsconfig.select(
     packages.MPI(required=True),       # This searches for the MPI implementation
-    packages.LAPACK(required=True),    # This downloads and compiles OpenBLAS which implements the interfaces of both LAPACK and BLAS
+    packages.LAPACK(required=False),   # This downloads and compiles OpenBLAS which implements the interfaces of both LAPACK and BLAS. It is only needed for the svg utility for MOR, which is currently not really required
     #packages.bison(required=False),   # parser generater needed by PTScotch which is needed by MUMPS which is needed by Petsc
     #packages.flex(required=False),    # "Fast Lexical Analyzer" needed by PTScotch which is needed by MUMPS which is needed by Petsc
     packages.PETSc(required=True),     # Petsc depends on LAPACK/BLAS and bison
@@ -78,7 +78,7 @@ vars = Variables(['user-variables.scons.py','../user-variables.scons.py'], varia
 # specify type and default value for recognized variables
 vars.Add(EnumVariable('BUILD_TYPE', 'The build type, according to that different compiler options will be set. '\
                       '(Shortcuts: ''d'',''r'',''rd''=''dr'', ''p'')', 'release', 
-                      allowed_values=('debug', 'release', 'releasewithdebuginfo', 'preprocess'), ignorecase = 2, 
+                      allowed_values=('debug', 'release', 'releasewithdebuginfo', 'preprocess', 'assembly'), ignorecase = 2, 
                       map={'d':'debug', 'r':'release', 'rd':'releasewithdebuginfo', 'dr':'releasewithdebuginfo', 'p':'preprocess'}))
 vars.Add(BoolVariable('travis_ci', 'Do not compile and run tests, but compile all examples.', 0))
 vars.Add(BoolVariable('no_tests', 'Do not compile and run tests.', 0))
@@ -232,6 +232,11 @@ elif env["BUILD_TYPE"] == "preprocess":
   variant_dir = os.path.join(path_where_to_call_sconscript,'preprocess')         # output folder for build
   env.MergeFlags('-DDEBUG -O2 -ggdb3 -g3 -DELPP_DISABLE_DEBUG_LOGS -DELPP_DISABLE_VERBOSE_LOGS -DELPP_DISABLE_TRACE_LOGS -E -C -P ')   # gcc flags, will be sorted automatically into linker and compiler flags
 
+elif env["BUILD_TYPE"] == "assembly":
+  # do the assembly
+  variant_dir = os.path.join(path_where_to_call_sconscript,'assembly')         # output folder for build
+  env.MergeFlags('-DDEBUG -S -fverbose-asm -g -O2 -DELPP_DISABLE_DEBUG_LOGS -DELPP_DISABLE_VERBOSE_LOGS -DELPP_DISABLE_TRACE_LOGS ')   # gcc flags, will be sorted automatically into linker and compiler flags
+
 else:
   # release build
   variant_dir = os.path.join(path_where_to_call_sconscript,'build_release')         # output folder for build
@@ -247,8 +252,10 @@ else:
   else:
     env.MergeFlags('-Ofast')   # fastest with GNU and Intel
     if env["gprof"]:
+      print("Adding flags for gprof.")
       env.Append(LINKFLAGS = "-pg")   # add gprof flags for linker
       env.MergeFlags('-pg -g')
+    #env.MergeFlags('')
   
   if env["USE_CRAY_PAT"]:
     print("USE_CRAY_PAT=True: Compiling with -DHAVE_PAT (uses PAT_region_begin())\n")

@@ -60,7 +60,7 @@ namespace ModelOrderReduction
     TimeSteppingType fullTimestepping_;
     std::shared_ptr<OutputConnectorDataType> outputConnectorData_;
 
-    bool initialized_;     ///< if initialize() was already called
+    bool initialized_;     //< if initialize() was already called
 
   };
   

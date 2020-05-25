@@ -23,7 +23,7 @@ public:
   void initialize(const Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b> &transferableSolutionData1,
                   const Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b> &transferableSolutionData2);
 
-  //! set current tranfer direction that will be taken into account for mapTo
+  //! set current transfer direction that will be taken into account for mapTo
   void setTransferDirection(bool term1To2);
 
   //! get the information to which slot the slot (fromVectorNo, fromIndex) should be mapped, @return: if there was no error, if it returns false, do not perform this mapping as the slot is not connected
@@ -44,6 +44,12 @@ public:
   const std::vector<Connector> &connectorTerm2To1() const;
 private:
 
+  //! initialize the slotInformation_ variable
+  template<typename FunctionSpaceType1, int nComponents1a, int nComponents1b, typename FunctionSpaceType2, int nComponents2a, int nComponents2b>
+  void initializeSlotInformation(const Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b> &transferableSolutionData1,
+                                 const Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b> &transferableSolutionData2);
+
+
   //! assemble some debugging information to the mapping that will be displayed on error
   std::string getDebugInformation() const;
 
@@ -63,7 +69,7 @@ private:
   int nFieldVariablesTerm1Vector2_; //< the number of slots of term 1 in vector 2
   int nFieldVariablesTerm2Vector1_; //< the number of slots of term 2 in vector 1
   int nFieldVariablesTerm2Vector2_; //< the number of slots of term 2 in vector 2
-  bool transferDirectionTerm1To2_;   //< if the current mapping is from term 1 to 2
+  bool transferDirectionTerm1To2_;  //< if the current mapping is from term 1 to 2
 
   struct Result
   {
@@ -76,7 +82,7 @@ private:
   std::array<std::array<std::vector<Result>,2>,2> slotInformation_;   // [transferDirectionTerm1To2_][fromVectorNo][fromVectorIndex], look-up table of getSlotInformation
   bool slotInformationInitialized_;          //< if slotInformation has been initialized
 
-  PythonConfig settings_;         //< the settings object
+  PythonConfig settings_;                    //< the settings object
 };
 
 #include "output_connector_data_transfer/output_connection.tpp"

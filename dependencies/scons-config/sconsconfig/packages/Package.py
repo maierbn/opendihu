@@ -195,7 +195,7 @@ class Package(object):
     #ctx.Log("ctx.env.items: "+str(ctx.env.items())+"\n")
     
     # Check if the user requested to download this package.
-    if self.have_any_options(env, upp + '_DOWNLOAD', 'DOWNLOAD_ALL', upp + '_REBUILD') and self.download_url:
+    if self.have_any_options(env, upp + '_DOWNLOAD', 'DOWNLOAD_ALL', upp + '_REBUILD'):
 
       # Perform the auto-management of this package.
       res = self.auto(ctx)
@@ -273,7 +273,7 @@ class Package(object):
         # env.Exit(1)
 
     else:
-      ctx.Log('No options found, trying empty location.\n')
+      ctx.Log('None of the options \"' + upp + '_DOWNLOAD\", \"DOWNLOAD_ALL\", \"' + upp + '_REBUILD\", \"' + upp + '_DIR\", \"' + upp + '_INC_DIR\", \"' + upp + '_LIB_DIR\", \"' + upp + '_LIBS\" found. Search in current location \".\".\n')
       self.base_dir = "."
       res = self.try_libs(ctx, libs, extra_libs, **kwargs)
 
@@ -460,7 +460,7 @@ class Package(object):
     ctx.Log("Downloading into " + base_dir + "\n")
 
     # Setup the filename and build directory name and destination directory.
-    if self.download_url == "":
+    if self.download_url == "" or self.download_url is None:
       filename = ""
     else:
       filename = self.download_url[self.download_url.rfind('/') + 1:]
@@ -493,7 +493,10 @@ class Package(object):
 
     # Move into the build directory. Most archives will place themselves
     # in a single directory which we should then move into.
-    os.chdir(unpack_dir)
+    try:
+      os.chdir(unpack_dir)
+    except:
+      pass
     entries = os.listdir('.')
     if len(entries) == 1:
       if (os.path.isdir(entries[0])):
@@ -974,60 +977,77 @@ class Package(object):
   # return True or False
   def try_headers(self, ctx, inc_dirs, **kwargs):
     ctx.Log('Trying to find headers in %s\n'%repr(inc_dirs))
-    found_headers = True
     new_inc_dirs = []
-    for (i,hdr) in enumerate(self.headers):
-      found = False
-      for path in inc_dirs:
-        hdr_path = os.path.join(path, hdr)
-        ctx.Log(' ' + hdr_path + ' ... ')
-        if os.path.exists(hdr_path) and not os.path.isfile(hdr_path):
-          ctx.Log('(is directory) ')
-          
-        if os.path.exists(hdr_path) and os.path.isfile(hdr_path):
-          ctx.Log('yes.\n')
-          found = True
-          break
-          
-        # remove leading "../" and see if file is there
-        if hdr_path.find("../") == 0:
-          new_hdr_path = hdr_path[3:]
-          new_path = path[3:]
-          ctx.Log('no.\n')
-          ctx.Log(' ' + new_hdr_path + ' ... ')
-          if os.path.exists(new_hdr_path):
-            #new_inc_dirs.append(new_path)
-            ctx.Log('(yes, here it is, but this directory is not considered)\n')
-            #found = True
-            break
-          
-        ctx.Log('no.\n')
-        
-        # look in subdirectories
-        for (subpath, subdirectories, files) in os.walk(path):
-            
-          new_path = os.path.join(path, subpath)
-          hdr_path = os.path.join(new_path, hdr)
+    
+    # if the entries in headers is only a single list, make it a list of listst
+    if self.headers:
+      if not isinstance(self.headers[0], list):
+        self.headers = [self.headers]
+    
+    # here, self.headers is e.g. [["lapacke.h"], ["mkl_lapacke.h"]]
+    found_headers = False
+    for headers_option in self.headers:
+      found_headers = True
+    
+      ctx.Log('Try headers ' + str(headers_option) + '\n')
+    
+      for (i,hdr) in enumerate(headers_option):
+        found = False
+        for path in inc_dirs:
+          hdr_path = os.path.join(path, hdr)
           ctx.Log(' ' + hdr_path + ' ... ')
-          
           if os.path.exists(hdr_path) and not os.path.isfile(hdr_path):
             ctx.Log('(is directory) ')
             
           if os.path.exists(hdr_path) and os.path.isfile(hdr_path):
             ctx.Log('yes.\n')
-            new_inc_dirs.append(new_path)
             found = True
             break
+            
+          # remove leading "../" and see if file is there
+          if hdr_path.find("../") == 0:
+            new_hdr_path = hdr_path[3:]
+            new_path = path[3:]
+            ctx.Log('no.\n')
+            ctx.Log(' ' + new_hdr_path + ' ... ')
+            if os.path.exists(new_hdr_path):
+              #new_inc_dirs.append(new_path)
+              ctx.Log('(yes, here it is, but this directory is not considered)\n')
+              #found = True
+              break
+            
           ctx.Log('no.\n')
+          
+          # look in subdirectories
+          for (subpath, subdirectories, files) in os.walk(path):
+              
+            new_path = os.path.join(path, subpath)
+            hdr_path = os.path.join(new_path, hdr)
+            ctx.Log(' ' + hdr_path + ' ... ')
+            
+            if os.path.exists(hdr_path) and not os.path.isfile(hdr_path):
+              ctx.Log('(is directory) ')
+              
+            if os.path.exists(hdr_path) and os.path.isfile(hdr_path):
+              ctx.Log('yes.\n')
+              new_inc_dirs.append(new_path)
+              found = True
+              break
+            ctx.Log('no.\n')
+          
+          if found:
+            break
         
-        if found:
+        if not found:
+          ctx.Log('Failed to find ' + hdr + '\n')
+          found_headers = False
           break
         
-      if not found:
-        ctx.Log('Failed to find ' + hdr + '\n')
-        found_headers = False
+      if found_headers:
         break
         
+      
+      
     if new_inc_dirs:
       ctx.Log('add more inc_dirs: '+str(inc_dirs))
     

@@ -8,6 +8,8 @@
 #include "quadrature/tensor_product.h"
 #include "mesh/surface_mesh.h"
 
+#include <array>
+
 namespace SpatialDiscretization
 {
 
@@ -110,7 +112,7 @@ initializeRhs()
 
       // compute the 3xD jacobian of the parameter space to world space mapping
       std::array<Vec3,D-1> jacobian = FunctionSpaceSurface::computeJacobian(geometrySurface, xiSurface);
-      double integrationFactor = MathUtility::computeIntegrationFactor<D-1>(jacobian);
+      double integrationFactor = MathUtility::computeIntegrationFactor(jacobian);
 
       VLOG(1) << "   jacobian: " << jacobian;
 
@@ -217,7 +219,10 @@ initializeRhs()
   if (this->divideNeumannBoundaryConditionValuesByTotalArea_)
   {
     PetscErrorCode ierr;
-    ierr = VecScale(this->data_.rhs()->valuesGlobal(), 1./surfaceAreaGlobal); CHKERRV(ierr);
+    for (int componentNo = 0; componentNo < nComponents; componentNo++)
+    {
+      ierr = VecScale(this->data_.rhs()->valuesGlobal(componentNo), 1./surfaceAreaGlobal); CHKERRV(ierr);
+    }
   }
 
   VLOG(1) << "after initializeRhs, rhs: " << *this->data_.rhs();

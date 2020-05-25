@@ -14,14 +14,15 @@
  * This solver encapsulates the DynamicHyperelasticitySolver or HyperelasticitySolver (static). Which one to use can be chosen at runtime in the config.
  * This class adds functionality to compute and transfer active stresses, fiber stretches and contraction velocity and so on.
  */
+template<typename MeshType=Mesh::StructuredDeformableOfDimension<3>>
 class MuscleContractionSolver :
   public Runnable,
   public TimeSteppingScheme::TimeSteppingScheme
 {
 public:
   typedef Equation::SolidMechanics::TransverselyIsotropicMooneyRivlinIncompressibleActive3D Term;
-  typedef ::TimeSteppingScheme::DynamicHyperelasticitySolver<Term> DynamicHyperelasticitySolverType;
-  typedef ::SpatialDiscretization::HyperelasticitySolver<Term> StaticHyperelasticitySolverType;
+  typedef ::TimeSteppingScheme::DynamicHyperelasticitySolver<Term,MeshType> DynamicHyperelasticitySolverType;
+  typedef ::SpatialDiscretization::HyperelasticitySolver<Term,MeshType> StaticHyperelasticitySolverType;
 
   //! make the DisplacementsFunctionSpace of the DynamicHyperelasticitySolver class available
   typedef typename DynamicHyperelasticitySolverType::DisplacementsFunctionSpace FunctionSpace;
@@ -64,6 +65,9 @@ protected:
   //! compute λ and λ_dot for data transfer
   void computeLambda();
 
+  //! update the geometry at the given meshes, map the own geometry field to the meshes
+  void mapGeometryToGivenMeshes();
+
   std::shared_ptr<DynamicHyperelasticitySolverType> dynamicHyperelasticitySolver_;   //< the dynamic hyperelasticity solver that solves for the dynamic contraction
   std::shared_ptr<StaticHyperelasticitySolverType> staticHyperelasticitySolver_;     //< the static hyperelasticity solver that can be used for quasi-static solution
 
@@ -72,6 +76,9 @@ protected:
 
   double pmax_;   //< settings of "Pmax" maximum active stress of the muscle
   bool isDynamic_;  //< if the dynamic formulation or the quasi-static formulation is used
+  std::vector<std::string> meshNamesOfGeometryToMapTo_;   //< a list of mesh names which will get updated with the geometry
 
   bool initialized_;   //< if initialize was already called
 };
+
+#include "specialized_solver/muscle_contraction_solver.tpp"

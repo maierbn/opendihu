@@ -58,6 +58,9 @@ public:
   //! wrapper to the PETSc VecSetValue, acting on the local data or global data, the row is local dof no
   void setValue(int componentNo, PetscInt row, PetscScalar value, InsertMode mode = INSERT_VALUES);
 
+  //! wrapper to the PETSc VecSetValue, acting on the local data or global data, the row is local dof no
+  void setValue(int componentNo, Vc::int_v row, Vc::double_v value, InsertMode mode = INSERT_VALUES);
+
   //! wrapper to the PETSc VecGetValues, acting on the local data or global data, the indices ix are the local dof nos
   void getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[]) const;
 
@@ -84,6 +87,9 @@ public:
 
   //! get the Petsc Vec that contains all components but no values for dirichlet BC dofs
   Vec &valuesGlobal();
+
+  //! get a reference to the global Vec, by which it is possible to change the Vec
+  Vec &valuesGlobalReference();
 
   //! get the index in the internal vector in local numbering, from componentNo and local dof no
   dof_no_t nonBCDofNoLocal(int componentNo, dof_no_t localDofNo) const;
@@ -133,25 +139,25 @@ protected:
   Vec vectorCombinedWithoutDirichletDofsGlobal_;  //< the values of all components in "struct of array" ordering, Dirichlet BC dofs are left out. This is accessed using global ordering.
   Vec vectorCombinedWithoutDirichletDofsLocal_;   //< the values of all components in "struct of array" ordering, Dirichlet BC dofs are left out. This is accessed using local ordering.
 
-  std::array<int,nComponents> nNonBcDofsWithoutGhosts_;  //< the local without ghosts number of entries in the vector, without the Dirichlet BC dofs
+  std::array<int,nComponents> nNonBcDofsWithoutGhosts_;     //< the local without ghosts number of entries in the vector, without the Dirichlet BC dofs
   int nNonBcDofsGhosts_;              //< number of ghost values
   int nEntriesLocal_;                 //< the local number of entries in the vector, without Ghost dofs
   int nEntriesGlobal_;                //< the global number of entries in the vector, without the Dirichlet BC dofs
   global_no_t nonBcDofNoGlobalBegin_; //< the first no in the non-bc global numbering
   int nDofsLocal_;                    //< same as nEntriesLocal_ (needed for PartitionedPetscVecForHyperelasticity)
 
-  std::vector<PetscInt> nonBcGhostDofNosGlobal_;  //< non-bc ghost dofs in non-bc global indexing
+  std::vector<PetscInt> nonBcGhostDofNosGlobal_;            //< non-bc ghost dofs in non-bc global indexing
 
-  std::vector<std::pair<int,int>> nDofRequestedFromRanks_;   //< (foreignRank,nDofs), number of dofs requested by and to be send to foreignRank
-  std::vector<std::vector<int>> requestedDofsGlobalPetsc_;   //< indexing same as in nDofRequestedFromRanks_, the requested dofs from that rank
+  std::vector<std::pair<int,int>> nDofRequestedFromRanks_;  //< (foreignRank,nDofs), number of dofs requested by and to be send to foreignRank
+  std::vector<std::vector<int>> requestedDofsGlobalPetsc_;  //< indexing same as in nDofRequestedFromRanks_, the requested dofs from that rank
 
   struct DofsRequest
   {
-    std::vector<global_no_t> dofNosGlobalPetsc;   //< global dof no
-    std::vector<dof_no_t> dofNosLocal;            //< local dof no on own rank
+    std::vector<global_no_t> dofNosGlobalPetsc;             //< global dof no
+    std::vector<dof_no_t> dofNosLocal;                      //< local dof no on own rank
   };
 
-  std::map<int, DofsRequest> requestDofsFromRanks_;    //< for some other ranks which dofs are requested from them
+  std::map<int, DofsRequest> requestDofsFromRanks_;         //< for some other ranks which dofs are requested from them
 
   std::array<std::vector<dof_no_t>,nComponents> dofNoLocalToDofNoNonBcGlobal_;   //< mapping from component no and local dof no to the numbering used for the combined vector, for local dofs with ghosts
   std::array<std::vector<dof_no_t>,nComponents> dofNoLocalToDofNoNonBcLocal_;    //< mapping from component no and local dof no to the local number of the non-bc dof numbering

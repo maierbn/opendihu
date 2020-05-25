@@ -30,7 +30,10 @@ initialize()
   // call initialize of base class
   Data<FunctionSpaceType>::initialize();
 
+  // initialize the output connector slots
   outputConnectorData_ = std::make_shared<OutputConnectorDataType>();
+
+  // there is only one slot: the activation field variable
   outputConnectorData_->addFieldVariable(this->activation_);
   outputConnectorData_->addGeometryField(std::make_shared<VectorFieldVariableType>(this->functionSpace_->geometryField()));
 }
@@ -43,9 +46,12 @@ createPetscObjects()
 
   assert(this->functionSpace_);
 
+  std::vector<std::string> componentNames({"xx", "xy", "xz", "yx", "yy", "yz", "zx", "zy", "zz"});
+
+  // create all field variables that are needed
   this->activation_ = this->functionSpace_->template createFieldVariable<1>("activation");
-  this->activeStress_ = this->functionSpace_->template createFieldVariable<9>("activeStress");
-  this->strain_ = this->functionSpace_->template createFieldVariable<9>("strain");
+  this->activeStress_ = this->functionSpace_->template createFieldVariable<9>("activeStress", componentNames);
+  this->strain_ = this->functionSpace_->template createFieldVariable<9>("strain", componentNames);
   this->flowPotential_ = this->functionSpace_->template createFieldVariable<1>("flowPotential");
   this->rightHandSideActive_ = this->functionSpace_->template createFieldVariable<3>("rightHandSideActive");
   this->fiberDirection_ = this->functionSpace_->template createFieldVariable<3>("fiberDirection");
@@ -56,6 +62,8 @@ std::shared_ptr<typename QuasiStaticLinearElasticity<DataLinearElasticityType>::
 QuasiStaticLinearElasticity<DataLinearElasticityType>::
 activation()
 {
+  // get the most recent pointer to the field variable from the output connector slot, it may have changed because of sharing of the field variable
+  this->activation_ = this->outputConnectorData_->variable1[0].values;
   return this->activation_;
 }
 
@@ -120,6 +128,7 @@ template<typename DataLinearElasticityType>
 void QuasiStaticLinearElasticity<DataLinearElasticityType>::
 debug()
 {
+  return;
   std::shared_ptr<VectorFieldVariableType> solution = this->dataLinearElasticity_->solution();
 
   int nValues = solution->nDofsLocalWithoutGhosts();

@@ -38,6 +38,9 @@ getNodalValues(CurrentFieldVariableType currentFieldVariable, const FieldVariabl
   VLOG(1) << "field variable " << StringUtility::demangle(typeid(currentFieldVariable).name()) << " name \"" << currentFieldVariable->name()
     << "\", is geometry: " << currentFieldVariable->isGeometryField() << ", values size: " << values.size();
 
+  if (!currentFieldVariable->functionSpace())
+    return false;
+
   // if mesh name is one of the specified meshNames (and it is not a geometry field)
   if (meshNames.find(currentFieldVariable->functionSpace()->meshName()) != meshNames.end()
     && !currentFieldVariable->isGeometryField())
@@ -78,7 +81,7 @@ getNodalValues(CurrentFieldVariableType currentFieldVariable, const FieldVariabl
 
     // create entry for field variable name if it does not exist and reserve enough space for all values
     values[fieldVariableName].reserve(values[fieldVariableName].size() + componentValues[0].size()*nComponents);
-    LOG(DEBUG) << "add \"" << fieldVariableName << "\".";
+    LOG(DEBUG) << "get nodal values of \"" << fieldVariableName << "\" (" << currentFieldVariable << ").";
 
     // copy values in consecutive order (x y z x y z) to output
     for (int i = 0; i < componentValues[0].size(); i++)
@@ -97,10 +100,10 @@ getNodalValues(CurrentFieldVariableType currentFieldVariable, const FieldVariabl
 // element i is of vector type
 template<typename VectorType, typename FieldVariablesForOutputWriterType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
-getNodalValues(VectorType currentFieldVariableVector, const FieldVariablesForOutputWriterType &fieldVariables, std::set<std::string> meshNames,
+getNodalValues(VectorType currentFieldVariableGradient, const FieldVariablesForOutputWriterType &fieldVariables, std::set<std::string> meshNames,
                std::map<std::string,std::vector<double>> &values)
 {
-  for (auto& currentFieldVariable : currentFieldVariableVector)
+  for (auto& currentFieldVariable : currentFieldVariableGradient)
   {
     // call function on all vector entries
     if (getNodalValues<typename VectorType::value_type,FieldVariablesForOutputWriterType>(currentFieldVariable, fieldVariables, meshNames, values))

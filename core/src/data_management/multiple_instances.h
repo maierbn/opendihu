@@ -53,7 +53,7 @@ protected:
   //! initializes the vectors with size
   virtual void createPetscObjects();
 
-  std::vector<std::shared_ptr<BaseDataType>> instancesData_;    ///< the data objects of all instances
+  std::vector<std::shared_ptr<BaseDataType>> instancesData_;    //< the data objects of all instances
 };
 
 } // namespace Data

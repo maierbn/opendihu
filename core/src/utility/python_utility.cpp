@@ -38,6 +38,41 @@ bool PythonUtility::hasKey(const PyObject* settings, std::string keyString)
   return false;
 }
 
+//! checks if this settings is the empty list or None
+bool PythonUtility::isEmpty(const PyObject *settings, std::string keyString)
+{
+  if (settings && settings != Py_None)
+  {
+    // start critical section for python API calls
+    // PythonUtility::GlobalInterpreterLock lock;
+
+    // check if input dictionary contains the key
+    PyObject *key = PyUnicode_FromString(keyString.c_str());
+
+    if (PyDict_Contains((PyObject *)settings, key))
+    {
+      PyObject *value = PyDict_GetItem((PyObject *)settings, key);
+      Py_CLEAR(key);
+
+      if (value == Py_None)
+      {
+        return true;
+      }
+      else if (PyList_Check(value))
+      {
+        // type is a list, determine how many entries it contains
+        int listNEntries = PyList_Size(value);
+        if (listNEntries == 0)
+        {
+          return true;
+        }
+      }
+    }
+    Py_CLEAR(key);
+  }
+  return false;
+}
+
 bool PythonUtility::isTypeList(const PyObject *object)
 {
   if (object)
@@ -76,7 +111,7 @@ PyObject *PythonUtility::getOptionPyObject(const PyObject *settings, std::string
   }
   else
   {
-    LOG(ERROR) << "Dict does not contain " << pathString << "[\"" << keyString << "\"]!" << std::endl;
+    LOG(WARNING) << "" << pathString << "[\"" << keyString << "\"] not set in \"" << Control::settingsFileName << "\". Assuming default value " << getString(defaultValue);
     Py_CLEAR(key);
     return defaultValue;
   }
@@ -830,12 +865,12 @@ void PythonUtility::checkForError()
 
   if (PyErr_Occurred())
   {
-    LOG(ERROR) << "Python exception";
+    //LOG(ERROR) << "Python exception";
 
     PyObject *type = NULL, *value = NULL, *traceback = NULL;
     PyErr_Fetch(&type, &value, &traceback);
     //PyErr_GetExcInfo(&type, &value, &traceback);
-    //PyErr_NormalizeException(&type, &value, &traceback);
+    PyErr_NormalizeException(&type, &value, &traceback);
 
     if (type == NULL && value == NULL && traceback == NULL)
       LOG(INFO) << "Error indicator is not set";
@@ -843,12 +878,12 @@ void PythonUtility::checkForError()
     PyObject* strType = PyObject_Str(type);
     PyObject* reprType = PyObject_Repr(type);
     if (strType != NULL && reprType != NULL)
-      LOG(INFO) << "type: " << convertFromPython<std::string>::get(strType) << ", " << convertFromPython<std::string>::get(reprType);
+      LOG(DEBUG) << "type: " << convertFromPython<std::string>::get(strType) << ", " << convertFromPython<std::string>::get(reprType);
 
     PyObject* strValue = PyObject_Str(value);
     PyObject* reprValue = PyObject_Repr(value);
     if (strValue != NULL && reprValue != NULL)
-      LOG(ERROR) << convertFromPython<std::string>::get(strValue);
+      LOG(DEBUG) << convertFromPython<std::string>::get(strValue);
 
     Py_XDECREF(strType);
     Py_XDECREF(strValue);
@@ -895,6 +930,8 @@ void PythonUtility::checkForError()
     else
     {
       LOG(DEBUG) << "(format_exception did not return a valid result)";
+
+      LOG(ERROR) << convertFromPython<std::string>::get(strValue);
     }
 
     PyErr_Restore(type, value, traceback);
@@ -907,11 +944,28 @@ PyObject *PythonUtility::convertToPythonList(std::vector<double> &data)
 {
   // start critical section for python API calls
   // PythonUtility::GlobalInterpreterLock lock;
-  
+
   PyObject *result = PyList_New((Py_ssize_t)data.size());
   for (unsigned int i=0; i<data.size(); i++)
   {
     PyObject *item = PyFloat_FromDouble(data[i]);
+    PyList_SetItem(result, (Py_ssize_t)i, item);    // steals reference to item
+  }
+  return result;    // return value: new reference
+}
+
+PyObject *PythonUtility::convertToPythonList(double *value, int nValues)
+{
+  // start critical section for python API calls
+  // PythonUtility::GlobalInterpreterLock lock;
+  
+
+  //! create a python list from a double *
+
+  PyObject *result = PyList_New((Py_ssize_t)nValues);
+  for (unsigned int i = 0; i < nValues; i++)
+  {
+    PyObject *item = PyFloat_FromDouble(*(value+i));
     PyList_SetItem(result, (Py_ssize_t)i, item);    // steals reference to item
   }
   return result;    // return value: new reference

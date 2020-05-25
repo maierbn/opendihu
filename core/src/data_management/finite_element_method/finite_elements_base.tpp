@@ -57,28 +57,28 @@ reset()
 
 template<typename FunctionSpaceType, int nComponents>
 void FiniteElementsBase<FunctionSpaceType,nComponents>::
-getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros)
+getPetscMemoryParameters(int &nNonZerosDiagonal, int &nNonZerosOffdiagonal)
 {
   const int D = FunctionSpaceType::dim();
   const int nDofsPerNode = FunctionSpace::FunctionSpaceBaseDim<1,typename FunctionSpaceType::BasisFunction>::nDofsPerNode();
   const int nDofsPerBasis = FunctionSpace::FunctionSpaceBaseDim<1,typename FunctionSpaceType::BasisFunction>::nDofsPerElement();
   const int nOverlaps = (nDofsPerBasis*2 - 1) * nDofsPerNode;   // number of nodes of 2 neighbouring 1D elements (=number of ansatz functions in support of center ansatz function)
 
-  // due to PETSc storage diagonalNonZeros and offdiagonalNonZeros should be both set to the maximum number of non-zero entries per row
+  // due to PETSc storage nNonZerosDiagonal and nNonZerosOffdiagonal should be both set to the maximum number of non-zero entries per row
 
   switch (D)
   {
   case 1:
-    diagonalNonZeros = nOverlaps;
-    offdiagonalNonZeros = diagonalNonZeros;
+    nNonZerosDiagonal = nOverlaps;
+    nNonZerosOffdiagonal = nNonZerosDiagonal;
     break;
   case 2:
-    diagonalNonZeros = pow(nOverlaps, 2) + 16;   // because of boundary conditions there can be more entries, which are all zero, but stored as non-zero
-    offdiagonalNonZeros = diagonalNonZeros;
+    nNonZerosDiagonal = pow(nOverlaps, 2) + 16;   // because of boundary conditions there can be more entries, which are all zero, but stored as non-zero
+    nNonZerosOffdiagonal = nNonZerosDiagonal;
     break;
   case 3:
-    diagonalNonZeros = pow(nOverlaps, 3);
-    offdiagonalNonZeros = diagonalNonZeros;
+    nNonZerosDiagonal = pow(nOverlaps, 3);
+    nNonZerosOffdiagonal = nNonZerosDiagonal;
     break;
   };
 }
@@ -102,17 +102,17 @@ createPetscObjects()
   // create PETSc matrix object
 
   // PETSc MatCreateAIJ parameters
-  int diagonalNonZeros = 3;   // number of nonzeros per row in DIAGONAL portion of local submatrix (same value is used for all local rows)
-  int offdiagonalNonZeros = 0;   //  number of nonzeros per row in the OFF-DIAGONAL portion of local submatrix (same value is used for all local rows)
+  int nNonZerosDiagonal = 3;   // number of nonzeros per row in DIAGONAL portion of local submatrix (same value is used for all local rows)
+  int nNonZerosOffdiagonal = 0;   //  number of nonzeros per row in the OFF-DIAGONAL portion of local submatrix (same value is used for all local rows)
 
-  getPetscMemoryParameters(diagonalNonZeros, offdiagonalNonZeros);
+  getPetscMemoryParameters(nNonZerosDiagonal, nNonZerosOffdiagonal);
 
   LOG(DEBUG) << "d=" << this->functionSpace_->dimension()
-    << ", number of diagonal non-zeros: " << diagonalNonZeros << ", number of off-diagonal non-zeros: " <<offdiagonalNonZeros;
+    << ", number of diagonal non-zeros: " << nNonZerosDiagonal << ", number of off-diagonal non-zeros: " <<nNonZerosOffdiagonal;
 
   LOG(DEBUG) << "create new stiffnessMatrix";
-  this->stiffnessMatrix_ = std::make_shared<PartitionedPetscMat<FunctionSpaceType>>(meshPartition, nComponents, diagonalNonZeros, offdiagonalNonZeros, "stiffnessMatrix");
-  this->stiffnessMatrixWithoutBc_ = std::make_shared<PartitionedPetscMat<FunctionSpaceType>>(meshPartition, nComponents, diagonalNonZeros, offdiagonalNonZeros, "stiffnessMatrixWithoutBc");
+  this->stiffnessMatrix_ = std::make_shared<PartitionedPetscMat<FunctionSpaceType>>(meshPartition, nComponents, nNonZerosDiagonal, nNonZerosOffdiagonal, "stiffnessMatrix");
+  this->stiffnessMatrixWithoutBc_ = std::make_shared<PartitionedPetscMat<FunctionSpaceType>>(meshPartition, nComponents, nNonZerosDiagonal, nNonZerosOffdiagonal, "stiffnessMatrixWithoutBc");
 }
 
 template<typename FunctionSpaceType, int nComponents>
@@ -234,13 +234,13 @@ initializeMassMatrix()
   // create PETSc matrix object
 
   // PETSc MatCreateAIJ parameters
-  int diagonalNonZeros = 3;   // number of nonzeros per row in DIAGONAL portion of local submatrix (same value is used for all local rows)
-  int offdiagonalNonZeros = 0;   //  number of nonzeros per row in the OFF-DIAGONAL portion of local submatrix (same value is used for all local rows)
+  int nNonZerosDiagonal = 3;   // number of nonzeros per row in DIAGONAL portion of local submatrix (same value is used for all local rows)
+  int nNonZerosOffdiagonal = 0;   //  number of nonzeros per row in the OFF-DIAGONAL portion of local submatrix (same value is used for all local rows)
 
-  getPetscMemoryParameters(diagonalNonZeros, offdiagonalNonZeros);
+  getPetscMemoryParameters(nNonZerosDiagonal, nNonZerosOffdiagonal);
 
   std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> partition = this->functionSpace_->meshPartition();
-  this->massMatrix_ = std::make_shared<PartitionedPetscMat<FunctionSpaceType>>(partition, nComponents, diagonalNonZeros, offdiagonalNonZeros, "massMatrix");
+  this->massMatrix_ = std::make_shared<PartitionedPetscMat<FunctionSpaceType>>(partition, nComponents, nNonZerosDiagonal, nNonZerosOffdiagonal, "massMatrix");
 }
 
 template<typename FunctionSpaceType, int nComponents>
@@ -254,14 +254,14 @@ initializeInverseLumpedMassMatrix()
   // create PETSc matrix object
 
   // PETSc MatCreateAIJ parameters
-  int diagonalNonZeros = 3;   // number of nonzeros per row in DIAGONAL portion of local submatrix (same value is used for all local rows)
-  int offdiagonalNonZeros = 0;   //  number of nonzeros per row in the OFF-DIAGONAL portion of local submatrix (same value is used for all local rows)
+  int nNonZerosDiagonal = 3;   // number of nonzeros per row in DIAGONAL portion of local submatrix (same value is used for all local rows)
+  int nNonZerosOffdiagonal = 0;   //  number of nonzeros per row in the OFF-DIAGONAL portion of local submatrix (same value is used for all local rows)
 
-  getPetscMemoryParameters(diagonalNonZeros, offdiagonalNonZeros);
+  getPetscMemoryParameters(nNonZerosDiagonal, nNonZerosOffdiagonal);
 
   assert(this->functionSpace_);
   std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> partition = this->functionSpace_->meshPartition();
-  this->inverseLumpedMassMatrix_ = std::make_shared<PartitionedPetscMat<FunctionSpaceType>>(partition, nComponents, diagonalNonZeros, offdiagonalNonZeros, "inverseLumpedMassMatrix");
+  this->inverseLumpedMassMatrix_ = std::make_shared<PartitionedPetscMat<FunctionSpaceType>>(partition, nComponents, nNonZerosDiagonal, nNonZerosOffdiagonal, "inverseLumpedMassMatrix");
 }
 
 template<typename FunctionSpaceType, int nComponents>

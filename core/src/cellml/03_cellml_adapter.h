@@ -29,7 +29,7 @@ class CellmlAdapter :
 public:
 
   //! this class needs to define a function space in which its solution variables live. This does not matter at all for a CellML problem, therefore Generic is sufficient. But when using in an operator splitting with FEM as second operator part, it has to be compatible to that and thus needs to be set correctly.
-  typedef FunctionSpaceType FunctionSpace;   ///< FunctionSpace type
+  typedef FunctionSpaceType FunctionSpace;   //< FunctionSpace type
 
   //! constructor from context object
   CellmlAdapter(DihuContext context);
@@ -74,7 +74,7 @@ public:
   void prepareForGetOutputConnectorData();
 
   //! the FastMonodomainSolver accesses the internals of CellmlAdapter
-  template<int a, int b> friend class FastMonodomainSolverBase;
+  template<int a, int b, typename c> friend class FastMonodomainSolverBase;
 
 protected:
   //! compute equilibrium of states for option "initializeStatesToEquilibrium"

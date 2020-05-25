@@ -28,6 +28,13 @@ public:
   //! return the field variable that stores all states
   std::shared_ptr<FieldVariableStates> states();
 
+  //! return the field variable that stores all parameters
+  std::shared_ptr<FieldVariableIntermediates> parameters();
+
+  //! get a raw r/w memory pointer to the values of the parameters field variable, to be used in the rhs function
+  //! the array pointed to by this pointer contains parameter values for all instances, nIntermediates parameters for each instance, in struct-of-array memory layout
+  double *parameterValues();
+
   //! initialize data structures
   void initialize();
 
@@ -37,8 +44,11 @@ public:
   //! give the names of all intermediates, will be called before initialize()
   void setIntermediateNames(const std::vector<std::string> &intermediateNames);
 
-  //! return a reference to the parameters vector
-  std::shared_ptr<std::vector<double>> parameters();
+  //! get the parameteValues_ pointer from the parameters field variable, then the field variable can no longer be used until restoreParameterValues() gets called
+  void prepareParameterValues();
+
+  //! restore the parameterValues_ pointer, such that the field variable can be used again
+  void restoreParameterValues();
 
   //! return a reference to statesForTransfer_
   std::vector<int> &statesForTransfer();
@@ -57,7 +67,8 @@ public:
   typedef std::tuple<
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>>,     // geometry
     std::shared_ptr<FieldVariableIntermediates>,     // intermediates
-    std::shared_ptr<FieldVariableStates>              // states
+    std::shared_ptr<FieldVariableStates>,            // states
+    std::shared_ptr<FieldVariableIntermediates>          // parameters
   > FieldVariablesForOutputWriter;
 
   //! get pointers to all field variables that can be written by output writers
@@ -73,7 +84,8 @@ private:
 
   std::shared_ptr<FieldVariableIntermediates> intermediates_;   //< intermediates field variable
   std::shared_ptr<FieldVariableStates> states_;                 //< states field variable, this is a shared pointer with the timestepping scheme, which own the actual variable (creates it)
-  std::shared_ptr<std::vector<double>> parameters_;             //< parameter values
+  std::shared_ptr<FieldVariableIntermediates> parameters_;      //< parameters field variable, the number of components is equal or less than the number of intermediates in order to not have to specify the number of parameters at compile time. This possibly creates a vector that is too large which is not harmful.
+  double *parameterValues_;                                     //< a pointer to the data of the parameters_ Petsc Vec of the field variable
   std::vector<std::string> intermediateNames_;                  //< component names of the intermediates field variable
 
   std::shared_ptr<OutputConnectorDataType> outputConnectorData_;//< the object that holds all components of field variables that will be transferred to other solvers

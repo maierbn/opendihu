@@ -59,9 +59,9 @@ private:
   //! initializes the vectors with size
   void createPetscObjects() override;
 
-  std::shared_ptr<FieldVariableType> activation_; ///< field variable of the activation factor field
-  std::shared_ptr<StressFieldVariableType> activeStress_; ///< field variable of the active stress in the muscle
-  std::shared_ptr<VectorFieldVariableType> displacement_; ///< field variable of the displacement
+  std::shared_ptr<FieldVariableType> activation_; //< field variable of the activation factor field
+  std::shared_ptr<StressFieldVariableType> activeStress_; //< field variable of the active stress in the muscle
+  std::shared_ptr<VectorFieldVariableType> displacement_; //< field variable of the displacement
 
 };
 

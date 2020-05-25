@@ -38,55 +38,6 @@ CellmlAdapter(const CellmlAdapter &rhs, std::shared_ptr<FunctionSpace> functionS
 
   this->functionSpace_ = functionSpace;
   this->outputWriterManager_ = rhs.outputWriterManager_;
-
-  return;
-
-  // copy member variables from rhs
-  this->specificSettings_ = rhs.specificSettings_;
-  this->setParameters_ = rhs.setParameters_;
-  this->setSpecificParameters_ = rhs.setSpecificParameters_;
-  this->setSpecificStates_ = rhs.setSpecificStates_;
-  this->handleResult_ = rhs.handleResult_;
-  this->pythonSetParametersFunction_ = rhs.pythonSetParametersFunction_;
-  this->pythonSetSpecificParametersFunction_ = rhs.pythonSetSpecificParametersFunction_;
-  this->pythonSetSpecificStatesFunction_ = rhs.pythonSetSpecificStatesFunction_;
-  this->pythonHandleResultFunction_ = rhs.pythonHandleResultFunction_;
-  this->pySetFunctionAdditionalParameter_ = rhs.pySetFunctionAdditionalParameter_;
-  this->pyHandleResultFunctionAdditionalParameter_ = rhs.pyHandleResultFunctionAdditionalParameter_;
-  this->pyGlobalNaturalDofsList_ = rhs.pyGlobalNaturalDofsList_;
-
-  this->nInstances_ = this->functionSpace_->nNodesLocalWithoutGhosts();
-  assert(this->nInstances_ > 1);
-
-  // copy member variables from rhs
-  this->parametersUsedAsIntermediate_ = rhs.parametersUsedAsIntermediate_;
-  this->parametersUsedAsConstant_ = rhs.parametersUsedAsConstant_;
-  this->stateNames_ = rhs.stateNames_;
-  this->intermediateNames_ = rhs.intermediateNames_;
-
-  this->sourceFilename_ = rhs.sourceFilename_;
-  this->nIntermediates_ = rhs.nIntermediates_;
-  this->nIntermediatesInSource_ = rhs.nIntermediatesInSource_;
-  this->nParameters_ = rhs.nParameters_;
-  this->nConstants_ = rhs.nConstants_;
-  this->internalTimeStepNo_ = rhs.internalTimeStepNo_;
-  this->inputFileTypeOpenCMISS_ = rhs.inputFileTypeOpenCMISS_;
-
-  // allocate data vectors
-  //this->intermediates_.resize(this->nIntermediates_*this->nInstances_);
-  this->data_.parameters()->resize(this->nParameters_*this->nInstances_);
-
-  // copy rhs parameter values to parameters, it is assumed that the parameters are the same for every instance
-  for (int instanceNo = 0; instanceNo < this->nInstances_; instanceNo++)
-  {
-    for (int j = 0; j < this->nParameters_; j++)
-    {
-      this->data_.parameters()[j*this->nInstances_ + instanceNo] = rhs.parameters_[j];
-    }
-  }
-
-  LOG(DEBUG) << "Initialize CellML with nInstances = " << this->nInstances_ << ", nParameters_ = " << this->nParameters_
-    << ", nStates = " << nStates << ", nIntermediates = " << this->nIntermediates();
 }
 
 template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
@@ -113,6 +64,9 @@ initialize()
 
   CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::initialize();
   
+  // initialize output writers
+  this->outputWriterManager_.initialize(this->context_, this->specificSettings_, this->data().functionSpace()->meshPartition()->rankSubset());
+
   // load rhs routine
   this->initializeRhsRoutine();
 
@@ -123,6 +77,10 @@ initialize()
   if (this->specificSettings_.hasKey("prefactor"))
   {
     LOG(WARNING) << this->specificSettings_ << "[\"prefactor\"] is no longer an option! There is no more functionality to scale values during transfer.";
+  }
+  if (this->outputWriterManager_.hasOutputWriters())
+  {
+    LOG(INFO) << "CellML has output writers. This will be slow as it outputs lots of data and should only be used for debugging.";
   }
 
   this->internalTimeStepNo_ = 0;
@@ -170,6 +128,9 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
   ierr = VecGetSize(output, &nRates); CHKERRV(ierr);
   ierr = VecGetLocalSize(this->data_.intermediates()->getValuesContiguous(), &nIntermediates); CHKERRV(ierr);
 
+  // get parameterValues_ vector
+  this->data_.prepareParameterValues();
+
   //double intermediatesData[101];
 
   VLOG(1) << "intermediates array has " << nIntermediates << " entries";
@@ -200,7 +161,7 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
     // PythonUtility::GlobalInterpreterLock lock;
     
     VLOG(1) << "call setParameters";
-    this->setParameters_((void *)this, this->nInstances_, this->internalTimeStepNo_, currentTime, *this->data_.parameters());
+    this->setParameters_((void *)this, this->nInstances_, this->internalTimeStepNo_, currentTime, this->data_.parameterValues(), this->cellmlSourceCodeGenerator_.nParameters());
   }
 
   // get new values for parameters, call callback function of python config
@@ -210,7 +171,7 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
     // PythonUtility::GlobalInterpreterLock lock;
 
     VLOG(1) << "call setSpecificParameters";
-    this->setSpecificParameters_((void *)this, this->nInstances_, this->internalTimeStepNo_, currentTime, *this->data_.parameters());
+    this->setSpecificParameters_((void *)this, this->nInstances_, this->internalTimeStepNo_, currentTime, this->data_.parameterValues(), this->cellmlSourceCodeGenerator_.nParameters());
   }
 
   VLOG(1) << "currentTime: " << currentTime << ", lastCallSpecificStatesTime_: " << this->lastCallSpecificStatesTime_
@@ -285,12 +246,11 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
   //              this          STATES, RATES, WANTED,                KNOWN
   if (this->rhsRoutine_)
   {
-    VLOG(1) << "call rhsRoutine_ with " << nIntermediates << " intermediates, " << this->data_.parameters()->size() << " parameters";
-    VLOG(2) << "parameters: " << this->data_.parameters();
+    VLOG(1) << "call rhsRoutine_ with " << nIntermediates << " intermediates";
 
     //Control::PerformanceMeasurement::start("rhsEvaluationTime");  // commented out because it takes too long in this very inner loop
     // call actual rhs routine from cellml code
-    this->rhsRoutine_((void *)this, currentTime, states, rates, intermediatesData, this->data_.parameters()->data());
+    this->rhsRoutine_((void *)this, currentTime, states, rates, intermediatesData, this->data_.parameterValues());
     //Control::PerformanceMeasurement::stop("rhsEvaluationTime");
   }
 
@@ -312,6 +272,11 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
   ierr = VecRestoreArray(input, &states); CHKERRV(ierr);
   ierr = VecRestoreArray(output, &rates); CHKERRV(ierr);
   ierr = VecRestoreArray(this->data_.intermediates()->getValuesContiguous(), &intermediatesData); CHKERRV(ierr);
+
+  this->data_.restoreParameterValues();
+
+  // call output writer to write output files
+  this->outputWriterManager_.writeOutput(this->data_, this->internalTimeStepNo_, currentTime);
 
   VLOG(1) << "at end of cellml_adapter, intermediates: " << this->data_.intermediates() << " " << *this->data_.intermediates();
   this->internalTimeStepNo_++;
@@ -382,22 +347,22 @@ initializeToEquilibriumValues(std::array<double,nStates_> &statesInitialValues)
   for (int iterationNo = 0; iterationNo < nInterations; iterationNo++)
   {
     // compute k1 = f(t, u)
-    this->rhsRoutineSingleInstance_((void *)this, currentTime, u.data(), k1.data(), intermediates.data(), this->data_.parameters()->data());
+    this->rhsRoutineSingleInstance_((void *)this, currentTime, u.data(), k1.data(), intermediates.data(), this->data_.parameterValues());
 
     // compute k2 = f(t+dt/2, u+dt/2.*k1)
     for (int stateNo = 0; stateNo < nStates_; stateNo++)
       u2[stateNo] = u[stateNo] + dt/2. * k1[stateNo];
-    this->rhsRoutineSingleInstance_((void *)this, currentTime+dt/2., u2.data(), k2.data(), intermediates.data(), this->data_.parameters()->data());
+    this->rhsRoutineSingleInstance_((void *)this, currentTime+dt/2., u2.data(), k2.data(), intermediates.data(), this->data_.parameterValues());
 
     // compute k3 = f(t+dt/2, u+dt/2.*k2)
     for (int stateNo = 0; stateNo < nStates_; stateNo++)
       u3[stateNo] = u[stateNo] + dt/2. * k2[stateNo];
-    this->rhsRoutineSingleInstance_((void *)this, currentTime+dt/2., u3.data(), k3.data(), intermediates.data(), this->data_.parameters()->data());
+    this->rhsRoutineSingleInstance_((void *)this, currentTime+dt/2., u3.data(), k3.data(), intermediates.data(), this->data_.parameterValues());
 
     // compute k4 = f(t+dt, u+dt*k3)
     for (int stateNo = 0; stateNo < nStates_; stateNo++)
       u4[stateNo] = u[stateNo] + dt * k3[stateNo];
-    this->rhsRoutineSingleInstance_((void *)this, currentTime+dt, u4.data(), k4.data(), intermediates.data(), this->data_.parameters()->data());
+    this->rhsRoutineSingleInstance_((void *)this, currentTime+dt, u4.data(), k4.data(), intermediates.data(), this->data_.parameterValues());
 
     // compute u += dt/6 * (k1 + 2*k2 + 2*k3 + k4)
     maximumIncrement = 0;

@@ -286,7 +286,7 @@ bool Manager::hasFunctionSpaceOfType(std::string meshName)
     }
     else
     {
-      LOG(WARNING) << "Mesh \"" << meshName << "\" is stored but under a type that is different from "
+      LOG(DEBUG) << "Mesh \"" << meshName << "\" is stored but under a type that is different from "
         << StringUtility::demangle(typeid(FunctionSpaceType).name()) << ". A new mesh will be created instead.";
       // This warning could be if in an operator splitting setup for Cellml adapter the functionType is set differently from the one in the FEM.
     }
@@ -312,8 +312,9 @@ createGenericFunctionSpace(int nEntries, std::shared_ptr<Partition::MeshPartitio
     nElements[0] = nEntries;
   }
 
-  LOG(DEBUG) << "createGenericFunctionSpace, nEntries: " << nEntries << ", hasFullNumberOfNodes: "
-    << "["  << meshPartition->hasFullNumberOfNodes(0) << ", "  << meshPartition->hasFullNumberOfNodes(1) << ", "  << meshPartition->hasFullNumberOfNodes(2) << "], nElements: " << nElements;
+  LOG(DEBUG) << "createGenericFunctionSpace, nEntries: " << nEntries;
+  // << ", hasFullNumberOfNodes: "
+  //  << "["  << meshPartition->hasFullNumberOfNodes(0) << ", "  << meshPartition->hasFullNumberOfNodes(1) << ", "  << meshPartition->hasFullNumberOfNodes(2) << "], nElements: " << nElements;
 
   std::array<double, 1> physicalExtent({0.0});
   std::array<int, 1> nRanksPerCoordinateDirection({meshPartition->nRanks()});

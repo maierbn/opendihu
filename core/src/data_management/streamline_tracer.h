@@ -66,12 +66,12 @@ protected:
   //! initializes the vectors with size
   virtual void createPetscObjects();
 
-  std::shared_ptr<BaseDataType> baseData_;    ///< the data object that holds the field frorm which stream lines are generated
-  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> gradient_;    ///< the gradient field of the solution field variable
+  std::shared_ptr<BaseDataType> baseData_;    //< the data object that holds the field frorm which stream lines are generated
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> gradient_;    //< the gradient field of the solution field variable
 
-  std::vector<std::shared_ptr<FieldVariableFiberGeometry>> fiberGeometry_;   ///< geometry fields of fibers
+  std::vector<std::shared_ptr<FieldVariableFiberGeometry>> fiberGeometry_;   //< geometry fields of fibers
   
-  int fiberNo_ = 0; ///< counter for names of generated fibers
+  int fiberNo_ = 0; //< counter for names of generated fibers
 };
 
 } // namespace Data

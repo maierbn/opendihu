@@ -426,20 +426,32 @@ if dimension == 1:
 if dimension == 2:
   
   field_variable_names = py_reader.get_field_variable_names(data[0])
+
+  solution_name = "solution"
+  if "solution" not in field_variable_names:
+    for field_variable_name in field_variable_names:
+      if field_variable_name != "geometry":
+        component_names = py_reader.get_component_names(data[0], field_variable_name)
+        if len(component_names) == 1:
+          solution_name = field_variable_name
+          break
+          
+  component_names = py_reader.get_component_names(data[0], solution_name)
+  solution_component = component_names[0]
   
   # classical 2D scalar field variables, like in Laplace eq.
-  if "solution" in field_variable_names:
+  if "displacements" not in field_variable_names:
     
     debug = False
     
-    min_value, max_value = py_reader.get_min_max(data, "solution", "0")
+    min_value, max_value = py_reader.get_min_max(data, solution_name, solution_component)
     min_x, max_x = py_reader.get_min_max(data, "geometry", "x")
     min_y, max_y = py_reader.get_min_max(data, "geometry", "y")
     
     print( "value range: [{}, {}]".format(min_value, max_value))
     
     # prepare plot
-    fig = plt.figure()
+    fig = plt.figure(1)
 
     margin = abs(max_value - min_value) * 0.1
     ax = fig.add_subplot(111, projection='3d', xlim=(min_x, max_x), ylim=(min_y, max_y), zlim=(min_value-margin, max_value+margin))
@@ -518,7 +530,7 @@ if dimension == 2:
       ax.clear()
       
       # display data
-      solution_shaped = py_reader.get_values(data[i], "solution", "0")
+      solution_shaped = py_reader.get_values(data[i], solution_name, solution_component)
       
       try:
         Z = np.reshape(solution_shaped, nEntries)
@@ -551,7 +563,7 @@ if dimension == 2:
       if 'currentTime' in data[i]:
         current_time = data[i]['currentTime']
         
-      if timestep == -1:
+      if timestep == -1 or timestep == 0 or timestep == 1:
         text.set_text("t = {}".format(current_time))
       else:
         text.set_text("timestep {}/{}, t = {}".format(timestep, max_timestep, current_time))
@@ -571,14 +583,19 @@ if dimension == 2:
       anim.save("anim.mp4")
       
       # create plot with first and last dataset
-      fig = plt.figure(figsize=(5,10))
-      ax = fig.add_subplot(211, projection='3d', xlim=(min_x, max_x), ylim=(min_y, max_y), zlim=(min_value-margin, max_value+margin))
+      fig2 = plt.figure(2,figsize=(5,10))
+      ax2 = fig2.add_subplot(211, projection='3d', xlim=(min_x, max_x), ylim=(min_y, max_y), zlim=(min_value-margin, max_value+margin))
+      
+      ax1 = ax
       
       # plot first dataset
+      ax = ax2
       plot0, = animate(0)
       
       # plot last dataset
-      ax = fig.add_subplot(212, projection='3d', xlim=(min_x, max_x), ylim=(min_y, max_y), zlim=(min_value-margin, max_value+margin))
+      ax2 = fig2.add_subplot(212, projection='3d', xlim=(min_x, max_x), ylim=(min_y, max_y), zlim=(min_value-margin, max_value+margin))
+    
+      fig2.suptitle('first and last timesteps')
     
       i = len(data)-1
       if 'timeStepNo' in data[i]:
@@ -586,12 +603,12 @@ if dimension == 2:
       if 'currentTime' in data[i]:
         current_time = data[i]['currentTime']
         
+      ax = ax2
       plot1, = animate(i)
       
-      text = plt.figtext(0.15,0.85,"timestep",size=20)
-      text.set_text("timesteps 0 and {}".format(timestep))
+      ax = ax1
       
-      ax = plt.gca()
+      #ax = plt.gca()
       #ax.add_line(line0)
       #ax.add_line(line1)
       plt.legend()

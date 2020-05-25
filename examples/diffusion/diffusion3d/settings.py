@@ -28,6 +28,7 @@ config = {
       "nElements": [nx,ny,nz],
       "physicalExtent": [4.0*nx,4.0*ny,4.0*nz],
       "relativeTolerance": 1e-15,
+      "absoluteTolerance": 1e-10,         # 1e-10 absolute tolerance of the residual    
       "prefactor": 0.1,
       "inputMeshIsGlobal": True,
       "maxIterations": 10000,

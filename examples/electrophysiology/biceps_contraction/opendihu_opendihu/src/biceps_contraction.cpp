@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
             >
           >,
           Control::MultipleInstances<
-            TimeSteppingScheme::ImplicitEuler<          // fiber diffusion, note that implicit euler gives lower error in this case than crank nicolson
+            TimeSteppingScheme::CrankNicolson<          // fiber diffusion
               SpatialDiscretization::FiniteElementMethod<
                 Mesh::StructuredDeformableOfDimension<1>,
                 BasisFunction::LagrangeOfOrder<1>,
@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
         >
       >
     >,
-    MuscleContractionSolver
+    MuscleContractionSolver<>
   > problem(settings);
   
   // run problem

@@ -60,7 +60,7 @@ createPetscObjects()
   outputConnectorData_ = std::make_shared<OutputConnectorDataType>();
   outputConnectorData_->addFieldVariable(this->solution_);
 
-  // create additional field variables that appear as output connector slots and can be connected to discretizableInTime_ and surrounding solvers
+  // create additional field variables that appear as output connector slots and can be connected to discretizableInTime_ and enclosing solvers
   int nAdditionalFieldVariables = this->context_.getPythonConfig().getOptionInt("nAdditionalFieldVariables", 0, PythonUtility::NonNegative);
   additionalFieldVariables_.resize(nAdditionalFieldVariables);
 

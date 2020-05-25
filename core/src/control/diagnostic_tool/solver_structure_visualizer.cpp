@@ -15,9 +15,10 @@ SolverStructureVisualizer::SolverStructureVisualizer()
   nDisableCalls_ = 0;
 }
 
-void SolverStructureVisualizer::addSolver(std::string name)
+void SolverStructureVisualizer::addSolver(std::string name, bool hasInternalConnectionToFirstNestedSolver)
 {
-  LOG(DEBUG) << "SolverStructureVisualizer::addSolver(\"" <<  name << "\") under \"" << currentSolver_->parent->name << "\", nDisableCalls_: " << nDisableCalls_ << ", enabled: " << enabled_  << ", currently at \"" << currentSolver_->name << "\".";
+  LOG(DEBUG) << "SolverStructureVisualizer::addSolver(\"" <<  name << "\",hasInternalConnectionToFirstNestedSolver=" << hasInternalConnectionToFirstNestedSolver 
+    << ") under \"" << currentSolver_->parent->name << "\", nDisableCalls_: " << nDisableCalls_ << ", enabled: " << enabled_  << ", currently at \"" << currentSolver_->name << "\".";
 
   if (!enabled_)
     return;
@@ -31,6 +32,7 @@ void SolverStructureVisualizer::addSolver(std::string name)
       << " overwrites solver name \"" << currentSolver_->name << "\".";
   }
   currentSolver_->name = name;
+  currentSolver_->hasInternalConnectionToFirstNestedSolver = hasInternalConnectionToFirstNestedSolver;
 
   LOG(DEBUG) << "addSolver \"" << name << "\".";
 }
@@ -77,25 +79,45 @@ void SolverStructureVisualizer::endChild()
 }
 
 //! add the output connection information between two children to the current solver
-void SolverStructureVisualizer::addOutputConnection(OutputConnection &outputConnection)
+void SolverStructureVisualizer::addOutputConnection(std::shared_ptr<OutputConnection> outputConnection)
 {
-  LOG(DEBUG) << "SolverStructureVisualizer::addOutputConnection() nDisableCalls_: " << nDisableCalls_ << ", enabled: " << enabled_ << ", currently at \"" << currentSolver_->name << "\".";
+  if (currentSolver_)
+    LOG(DEBUG) << "SolverStructureVisualizer::addOutputConnection() nDisableCalls_: " << nDisableCalls_ << ", enabled: " << enabled_ << ", currently at \"" << currentSolver_->name << "\".";
 
   if (!enabled_)
     return;
 
+  currentSolver_->outputConnection = outputConnection;
+}
+
+void SolverStructureVisualizer::parseOutputConnection(std::shared_ptr<solver_t> currentSolver)
+{
+  VLOG(1) << "parseOutputConnection";
+
+  if (!currentSolver->outputConnection)
+  {
+    VLOG(1) << "output connection not set";
+    return;
+  }
+
+  LOG(DEBUG) << "currentSolver->outputConnection: " << currentSolver->outputConnection;
+
+  currentSolver->outputConnections.clear();
+
   // get output connector data from outputConnection
-  const std::vector<OutputConnection::Connector> &connectorTerm1To2 = outputConnection.connectorTerm1To2();
-  const std::vector<OutputConnection::Connector> &connectorTerm2To1 = outputConnection.connectorTerm2To1();
+  const std::vector<OutputConnection::Connector> &connectorTerm1To2 = currentSolver->outputConnection->connectorTerm1To2();
+  const std::vector<OutputConnection::Connector> &connectorTerm2To1 = currentSolver->outputConnection->connectorTerm2To1();
 
   // loop over connectors from term1 to term2
   for (int i = 0; i < connectorTerm1To2.size(); i++)
   {
+    LOG(DEBUG) << "term1 -> term2 i=" << i << ", map to " << connectorTerm1To2[i].index << ", avoidCopyIfPossible: " << connectorTerm1To2[i].avoidCopyIfPossible;
+
     // if connector is not open
     if (connectorTerm1To2[i].index != -1)
     {
-      solver_t::OutputConnection outputConnection;
-      outputConnection.type = solver_t::OutputConnection::ab;
+      solver_t::OutputConnectionRepresentation outputConnection;
+      outputConnection.type = solver_t::OutputConnectionRepresentation::ab;
       outputConnection.fromSlot = i;
       outputConnection.toSlot = connectorTerm1To2[i].index;
 
@@ -107,28 +129,30 @@ void SolverStructureVisualizer::addOutputConnection(OutputConnection &outputConn
           // if the connection type is to avoid copies in both directions
           if (connectorTerm1To2[i].avoidCopyIfPossible && connectorTerm2To1[outputConnection.toSlot].avoidCopyIfPossible)
           {
-            outputConnection.type = solver_t::OutputConnection::bidirectionalReuse;
+            outputConnection.type = solver_t::OutputConnectionRepresentation::bidirectionalReuse;
           }
           else
           {
-            outputConnection.type = solver_t::OutputConnection::bidirectionalCopy;
+            outputConnection.type = solver_t::OutputConnectionRepresentation::bidirectionalCopy;
           }
         }
       }
 
       // add parsed output connection
-      currentSolver_->outputConnections.push_back(outputConnection);
+      currentSolver->outputConnections.push_back(outputConnection);
     }
   }
 
   // loop over connectors from term2 to term1
   for (int i = 0; i < connectorTerm2To1.size(); i++)
   {
+    LOG(DEBUG) << "term2 -> term1 i=" << i << ", map to " << connectorTerm2To1[i].index << ", avoidCopyIfPossible: " << connectorTerm2To1[i].avoidCopyIfPossible;
+
     // if connector is not open
     if (connectorTerm2To1[i].index != -1)
     {
-      solver_t::OutputConnection outputConnection;
-      outputConnection.type = solver_t::OutputConnection::ba;
+      solver_t::OutputConnectionRepresentation outputConnection;
+      outputConnection.type = solver_t::OutputConnectionRepresentation::ba;
       outputConnection.fromSlot = i;
       outputConnection.toSlot = connectorTerm2To1[i].index;
 
@@ -140,20 +164,20 @@ void SolverStructureVisualizer::addOutputConnection(OutputConnection &outputConn
           // if the connection type is to avoid copies in both directions
           if (connectorTerm2To1[i].avoidCopyIfPossible && connectorTerm1To2[outputConnection.toSlot].avoidCopyIfPossible)
           {
-            outputConnection.type = solver_t::OutputConnection::bidirectionalReuse;
+            outputConnection.type = solver_t::OutputConnectionRepresentation::bidirectionalReuse;
           }
           else
           {
-            outputConnection.type = solver_t::OutputConnection::bidirectionalCopy;
+            outputConnection.type = solver_t::OutputConnectionRepresentation::bidirectionalCopy;
           }
         }
       }
 
       // add parsed output connection
-      if (outputConnection.type != solver_t::OutputConnection::bidirectionalReuse
-          && outputConnection.type != solver_t::OutputConnection::bidirectionalCopy)
+      if (outputConnection.type != solver_t::OutputConnectionRepresentation::bidirectionalReuse
+          && outputConnection.type != solver_t::OutputConnectionRepresentation::bidirectionalCopy)
       {
-        currentSolver_->outputConnections.push_back(outputConnection);
+        currentSolver->outputConnections.push_back(outputConnection);
       }
     }
   }
@@ -177,4 +201,34 @@ void SolverStructureVisualizer::disable()
   nDisableCalls_++;
 
   LOG(DEBUG) << "SolverStructureVisualizer::disable() nDisableCalls_: " << nDisableCalls_ << ", enabled: " << enabled_ << ", currently at \"" << currentSolver_->name << "\".";
+}
+
+//! produce the resulting file
+std::string SolverStructureVisualizer::
+getDiagram()
+{
+  if (!enabled_)
+    return std::string("");
+
+  std::string diagram;
+
+  // only produce file on rank 0
+  if (DihuContext::ownRankNoCommWorld() == 0)
+  {
+
+    // collect all information
+
+    // set to root of nested solvers to start printing from there
+    DiagramGenerator diagramGenerator;
+    diagramGenerator.initialize(solverRoot_);
+
+    if (solverRoot_)
+      LOG(DEBUG) << "SolverStructureVisualizer::getDiagram() nDisableCalls_: " << nDisableCalls_ << ", enabled: " << enabled_ << ", currently at \"" << solverRoot_->name << "\".";
+
+    // call generateDiagram on the nested solvers
+    diagram = diagramGenerator.generateFinalDiagram();
+
+  }
+
+  return diagram;
 }

@@ -1,5 +1,7 @@
 #include "data_management/specialized_solver/hyperelasticity_solver.h"
 
+#include "specialized_solver/solid_mechanics/hyperelasticity/pressure_function_space_creator.h"
+
 namespace Data
 {
 
@@ -89,7 +91,7 @@ velocitiesPreviousTimestep()
 
 //! field variable of fiber direction
 template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term>
-std::shared_ptr<typename QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::DisplacementsFieldVariableType> QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::
+std::shared_ptr<typename QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::DisplacementsFieldVariableType> &QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::
 fiberDirection()
 {
   return this->fiberDirection_;
@@ -188,30 +190,14 @@ updateGeometry(double scalingFactor, bool updateLinearVariables)
     std::vector<Vec3> velocityValues;
     this->velocities_->getValuesWithGhosts(velocityValues);
 
-    node_no_t nNodesLocal[3] = {
-      this->displacementsFunctionSpace_->meshPartition()->nNodesLocalWithGhosts(0),
-      this->displacementsFunctionSpace_->meshPartition()->nNodesLocalWithGhosts(1),
-      this->displacementsFunctionSpace_->meshPartition()->nNodesLocalWithGhosts(2)
-    };
+    std::vector<Vec3> linearMeshDisplacementValues;
+    std::vector<Vec3> linearMeshVelocityValues;
 
-    std::vector<Vec3> linearMeshDisplacementValues(this->pressureFunctionSpace_->meshPartition()->nNodesLocalWithGhosts());
-    std::vector<Vec3> linearMeshVelocityValues(this->pressureFunctionSpace_->meshPartition()->nNodesLocalWithGhosts());
-    int linearMeshIndex = 0;
-
-    // loop over linear nodes in the quadratic mesh
-    for (int k = 0; k < nNodesLocal[2]; k+=2)
-    {
-      for (int j = 0; j < nNodesLocal[1]; j+=2)
-      {
-        for (int i = 0; i < nNodesLocal[0]; i+=2, linearMeshIndex++)
-        {
-          int index = k*nNodesLocal[0]*nNodesLocal[1] + j*nNodesLocal[0] + i;
-
-          linearMeshDisplacementValues[linearMeshIndex] = displacementValues[index];
-          linearMeshVelocityValues[linearMeshIndex] = velocityValues[index];
-        }
-      }
-    }
+    ::SpatialDiscretization::PressureFunctionSpaceCreator<typename PressureFunctionSpace::Mesh>::extractPressureFunctionSpaceValues(
+      this->displacementsFunctionSpace_, this->pressureFunctionSpace_, displacementValues, linearMeshDisplacementValues);
+    
+    ::SpatialDiscretization::PressureFunctionSpaceCreator<typename PressureFunctionSpace::Mesh>::extractPressureFunctionSpaceValues(
+      this->displacementsFunctionSpace_, this->pressureFunctionSpace_, velocityValues, linearMeshVelocityValues);
 
     displacementsLinearMesh_->setValuesWithGhosts(linearMeshDisplacementValues, INSERT_VALUES);
     velocitiesLinearMesh_->setValuesWithGhosts(linearMeshVelocityValues, INSERT_VALUES);

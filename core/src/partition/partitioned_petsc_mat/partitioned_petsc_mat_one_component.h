@@ -25,7 +25,7 @@ class PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,Basi
 public:
   //! constructor, create square sparse matrix
   PartitionedPetscMatOneComponent(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>>> meshPartition,
-                                  int diagonalNonZeros, int offdiagonalNonZeros, std::string name);
+                                  int nNonZerosDiagonal, int nNonZerosOffdiagonal, std::string name);
 
   //! constructor, create square dense matrix
   PartitionedPetscMatOneComponent(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>>> meshPartition,
@@ -34,7 +34,7 @@ public:
   //! constructor, create non-square sparse matrix
   PartitionedPetscMatOneComponent(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>>> meshPartitionRows,
                                   std::shared_ptr<Partition::MeshPartition<ColumnsFunctionSpaceType>> meshPartitionColumns,
-                                  int diagonalNonZeros, int offdiagonalNonZeros, std::string name);
+                                  int nNonZerosDiagonal, int nNonZerosOffdiagonal, std::string name);
 
   //! constructor, create non-square dense matrix
   PartitionedPetscMatOneComponent(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>>> meshPartitionRows,
@@ -50,7 +50,13 @@ public:
 
   //! wrapper of MatSetValues for a single value, sets a local value in the matrix
   void setValue(PetscInt row, PetscInt col, PetscScalar value, InsertMode mode);
-  
+
+  //! wrapper of MatSetValues for a single value, sets a local value in the matrix
+  void setValue(Vc::int_v rows, Vc::int_v columns, PetscScalar value, InsertMode mode);
+
+  //! wrapper of MatSetValues for a single vectorized value, sets a local value in the matrix
+  void setValue(Vc::int_v rows, Vc::int_v columns, Vc::double_v values, InsertMode mode);
+
   //! wrapper of MatSetValues for a single value, sets a local value in the matrix
   void setValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], const PetscScalar v[], InsertMode addv);
   
@@ -90,13 +96,13 @@ public:
 protected:
   
   //! create a distributed Petsc matrix, according to the given partition
-  void createMatrix(MatType matrixType, int diagonalNonZeros, int offdiagonalNonZeros);
+  void createMatrix(MatType matrixType, int nNonZerosDiagonal, int nNonZerosOffdiagonal);
 
   //! set the global to local mapping at the global matrix and create the local submatrix
   void createLocalMatrix();
 
-  Mat globalMatrix_;   ///< the global Petsc matrix, access using MatSetValuesLocal() with local indices (not used here) or via the localMatrix (this one is used)
-  Mat localMatrix_;    ///< a local submatrix that holds all rows and columns for the local dofs with ghosts
+  Mat globalMatrix_;   //< the global Petsc matrix, access using MatSetValuesLocal() with local indices (not used here) or via the localMatrix (this one is used)
+  Mat localMatrix_;    //< a local submatrix that holds all rows and columns for the local dofs with ghosts
 };
 
 /** Partial specialization for unstructured meshes. This is completely serial, there are no parallel matrices.
@@ -111,7 +117,7 @@ class PartitionedPetscMatOneComponent<
 public:
   //! constructor, create square sparse matrix
   PartitionedPetscMatOneComponent(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>> meshPartition,
-                                  int diagonalNonZeros, int offdiagonalNonZeros, std::string name);
+                                  int nNonZerosDiagonal, int nNonZerosOffdiagonal, std::string name);
 
   //! constructor, create square dense matrix
   PartitionedPetscMatOneComponent(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>> meshPartition,
@@ -120,7 +126,7 @@ public:
   //! constructor, create non-square sparse matrix
   PartitionedPetscMatOneComponent(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>> meshPartitionRows,
                                   std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>> meshPartitionColumns,
-                                  int diagonalNonZeros, int offdiagonalNonZeros, std::string name);
+                                  int nNonZerosDiagonal, int nNonZerosOffdiagonal, std::string name);
 
   //! constructor, create non-square dense matrix
   PartitionedPetscMatOneComponent(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>> meshPartitionRows,
@@ -134,6 +140,12 @@ public:
   //! wrapper of MatSetValues for a single value, sets a local value in the matrix
   void setValue(PetscInt row, PetscInt col, PetscScalar value, InsertMode mode);
   
+  //! wrapper of MatSetValues for a single value, sets a local value in the matrix
+  void setValue(Vc::int_v rows, Vc::int_v columns, PetscScalar value, InsertMode mode);
+
+  //! wrapper of MatSetValues for a single value, sets a local value in the matrix
+  void setValue(Vc::int_v rows, Vc::int_v columns, Vc::double_v values, InsertMode mode);
+
   //! wrapper of MatSetValues for a single value, sets a local value in the matrix
   void setValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], const PetscScalar v[], InsertMode addv);
 
@@ -173,9 +185,9 @@ public:
 protected:
   
   //! create a distributed Petsc matrix, according to the given partition
-  void createMatrix(MatType matrixType, int diagonalNonZeros, int offdiagonalNonZeros);
+  void createMatrix(MatType matrixType, int nNonZerosDiagonal, int nNonZerosOffdiagonal);
   
-  Mat matrix_;   ///< the single Petsc matrix (global = local)
+  Mat matrix_;   //< the single Petsc matrix (global = local)
 };
 
 template<typename FunctionSpaceType>

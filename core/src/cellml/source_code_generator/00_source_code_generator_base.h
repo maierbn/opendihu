@@ -13,7 +13,7 @@ class CellmlSourceCodeGeneratorBase
 {
 public:
   //! constructor
-  CellmlSourceCodeGeneratorBase(std::shared_ptr<std::vector<double>> parameters);
+  CellmlSourceCodeGeneratorBase();
 
   //! initialize the intermediateNames, stateNames and constantNames by parsing the source code. There will be an error if the number of states/intermediates does not match
   void initializeNames(std::string inputFilename, int nInstances, int nStates, int nIntermediates);
@@ -21,7 +21,7 @@ public:
   //! initialize all variables, parses the source code
   void initializeSourceCode(
     const std::vector<int> &parametersUsedAsIntermediate, const std::vector<int> &parametersUsedAsConstant,
-    std::vector<double> &parametersInitialValues
+    std::vector<double> &parametersInitialValues, int maximumNumberOfParameters, double *parameterValues
   );
 
   //! generate the source file according to optimizationType
@@ -43,9 +43,6 @@ public:
 
   //! get the number of parameters
   const int nParameters() const;
-
-  //! get a reference to the parameters, this allows to change the parameters
-  std::shared_ptr<std::vector<double>> parameters();
 
   //! get the source filename of the initial file (which is inputFilename in initialize)
   const std::string sourceFilename() const;
@@ -123,7 +120,6 @@ protected:
 
   std::vector<int> parametersUsedAsIntermediate_;  //< explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array
   std::vector<int> parametersUsedAsConstant_;  //< explicitely defined parameters that will be copied to constants, this vector contains the indices of the constants
-  std::shared_ptr<std::vector<double>> parameters_;            //< vector of nParameters_*nInstances_ values that will be provided to CellML by the code, given by python config, CellML name: known
 
   std::vector<std::string> stateNames_;        //< the names for the states as given in the input source file
   std::vector<std::string> intermediateNames_; //< the names for the intermediates as given in the input source file

@@ -104,16 +104,17 @@ with open(input_filename, "rb") as infile:
   print("n valid: {}, n invalid: {}".format(n_streamlines_valid, n_streamlines_invalid))
   
   # create mesh, oriented in x and z direction along fibers, in y direction normal to muscle belly
-  x_stride = 2
-  z_stride = 50
+  # set the sampling stride to 1, the mesh will be sampled by the script that does the partitioning in the simulation
+  x_stride = 1
+  z_stride = 1
   y_size = 5
-  thickness = 10.0
+  thickness = 1.0  #[cm]
   
   result_n_points_x = len(range(0, n_fibers_x+n_fibers_y-1, x_stride))
   result_n_points_y = y_size
   
   # for z range, ensure that last value is contained
-  z_range = range(0, n_points_whole_fiber, z_stride)+([n_points_whole_fiber-1] if (n_points_whole_fiber-1)%z_stride !=0 else [])
+  z_range = list(range(0, n_points_whole_fiber, z_stride))+([n_points_whole_fiber-1] if (n_points_whole_fiber-1)%z_stride !=0 else [])
   result_n_points_z = len(z_range)
   result_n_points = result_n_points_x * result_n_points_y * result_n_points_z
   
@@ -189,8 +190,8 @@ with open(input_filename, "rb") as infile:
           point = result_mesh[k*result_n_points_x*result_n_points_y + j*result_n_points_x + i]
           
           # parse point
-          for p in range(3):
-            double_raw = struct.pack('d', point[p])
+          for component_no in range(3):
+            double_raw = struct.pack('d', point[component_no])
             outfile.write(double_raw)
             
     print("File {} written.".format(output_filename))

@@ -15,18 +15,18 @@ namespace TimeSteppingScheme
  *  Furthermore, an integration scheme for 2nd order ODEs is needed. This is given by leap frog integration.
  *
  */
-template<typename Term = Equation::SolidMechanics::MooneyRivlinIncompressible3D>
+template<typename Term = Equation::SolidMechanics::MooneyRivlinIncompressible3D, typename MeshType = Mesh::StructuredDeformableOfDimension<3>>
 class DynamicHyperelasticitySolver :
   public TimeSteppingScheme
 {
 public:
 
-  typedef SpatialDiscretization::HyperelasticitySolver<Term,6> HyperelasticitySolverType;    // the hyperelasticity solver that solves the nonlinear problem, 6 non-pressure components (u and v)
+  typedef SpatialDiscretization::HyperelasticitySolver<Term,MeshType,6> HyperelasticitySolverType;    // the hyperelasticity solver that solves the nonlinear problem, 6 non-pressure components (u and v)
   typedef typename HyperelasticitySolverType::DisplacementsFunctionSpace DisplacementsFunctionSpace;
   typedef typename HyperelasticitySolverType::PressureFunctionSpace PressureFunctionSpace;
 
-  typedef PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace,6> VecHyperelasticity;
-  typedef PartitionedPetscMatForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace,6> MatHyperelasticity;
+  typedef PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace,Term,6> VecHyperelasticity;
+  typedef PartitionedPetscMatForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace,Term,6> MatHyperelasticity;
 
   typedef Data::DynamicHyperelasticitySolver<DisplacementsFunctionSpace> Data;
 

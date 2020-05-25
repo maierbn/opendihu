@@ -5,8 +5,8 @@
 namespace SpatialDiscretization
 {
 
-template<typename Term,int nDisplacementComponents>
-void HyperelasticitySolver<Term,nDisplacementComponents>::
+template<typename Term,typename MeshType, int nDisplacementComponents>
+void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 materialComputeInternalVirtualWork(
   std::shared_ptr<VecHyperelasticity> displacements,
   std::shared_ptr<VecHyperelasticity> internalVirtualWork
@@ -32,8 +32,8 @@ materialComputeInternalVirtualWork(
   VecSwap(result, solverVariableResidual_); CHKERRV(ierr);
 }
 
-template<typename Term,int nDisplacementComponents>
-void HyperelasticitySolver<Term,nDisplacementComponents>::
+template<typename Term,typename MeshType, int nDisplacementComponents>
+void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 solveForDisplacements(
   std::shared_ptr<VecHyperelasticity> externalVirtualWork,
   std::shared_ptr<VecHyperelasticity> displacements
@@ -56,8 +56,8 @@ solveForDisplacements(
   ierr = VecSwap(result, solverVariableSolution_); CHKERRV(ierr);
 }
 
-template<typename Term,int nDisplacementComponents>
-void HyperelasticitySolver<Term,nDisplacementComponents>::
+template<typename Term,typename MeshType, int nDisplacementComponents>
+void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 solveDynamicProblem(
   std::shared_ptr<VecHyperelasticity> displacementsVelocitiesPressure, bool isFirstTimeStep,
   Vec internalVirtualWork, Vec &externalVirtualWorkDead, Vec accelerationTerm
@@ -152,9 +152,12 @@ solveDynamicProblem(
     combinedVecSolution_->finishGhostManipulation();
 
     this->data_.displacements()->zeroGhostBuffer();
-    this->data_.velocities()->zeroGhostBuffer();
     this->data_.displacements()->finishGhostManipulation();
+    this->data_.velocities()->zeroGhostBuffer();
     this->data_.velocities()->finishGhostManipulation();
+
+    this->data_.displacements()->startGhostManipulation();
+    this->data_.velocities()->startGhostManipulation();
 
     LOG(DEBUG) << "extrapolateInitialGuess: initial values: " << getString(solverVariableSolution_);
   }

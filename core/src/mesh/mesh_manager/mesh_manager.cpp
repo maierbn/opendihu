@@ -8,8 +8,7 @@ namespace Mesh
 {
 
 Manager::Manager(PythonConfig specificSettings) :
-  MappingBetweenMeshesManager::MappingBetweenMeshesManager(specificSettings),
-  partitionManager_(nullptr), numberAnonymousMeshes_(0)
+  partitionManager_(nullptr), specificSettings_(specificSettings), numberAnonymousMeshes_(0)
 {
   LOG(TRACE) << "MeshManager constructor";
   storePreconfiguredMeshes();
@@ -23,7 +22,7 @@ void Manager::setPartitionManager(std::shared_ptr<Partition::Manager> partitionM
 void Manager::storePreconfiguredMeshes()
 {
   LOG(TRACE) << "MeshManager::storePreconfiguredMeshes";
-  if (specificSettings_.pyObject())
+  if (this->specificSettings_.pyObject())
   {
     std::string keyString("Meshes");
     if (specificSettings_.hasKey("Meshes"))

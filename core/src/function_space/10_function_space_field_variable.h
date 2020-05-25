@@ -44,12 +44,13 @@ public:
   getGradPhi(std::array<double,MeshType::dim()> xi) const;
 
   //! interpolate the nComponents values within an element at the given xi position using the basis functions
-  template <int nComponents>
-  std::array<double,nComponents> interpolateValueInElement(std::array<std::array<double,nComponents>,FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement()> &elementalDofValues,
-                                                  std::array<double,MeshType::dim()> xi) const;
+  template <int nComponents, typename double_v_t>
+  std::array<double_v_t,nComponents> interpolateValueInElement(std::array<std::array<double_v_t,nComponents>,FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement()> &elementalDofValues,
+                                                           std::array<double,MeshType::dim()> xi) const;
 
   //! interpolate the value within an element at the given xi position using the basis functions
-  double interpolateValueInElement(std::array<double,FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement()> &elementalDofValues,
+  template <typename double_v_t>
+  double_v_t interpolateValueInElement(std::array<double_v_t,FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement()> &elementalDofValues,
                                    std::array<double,MeshType::dim()> xi) const;
 
   //! interpolate the gradient of a scalar field within an element at the given xi position using the basis functions
@@ -69,8 +70,10 @@ public:
   //! The following properties of the jacobian hold:
   //! jacobianParameterSpace[columnIdx][rowIdx] = dX_rowIdx/dxi_columnIdx
   //! inverseJacobianParameterSpace[columnIdx][rowIdx] = dxi_rowIdx/dX_columnIdx because of inverse function theorem
-  Tensor2<MeshType::dim()> getInverseJacobian(std::array<Vec3,FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement()> &geometryValues, element_no_t elementNo, std::array<double,MeshType::dim()> xi);
-  
+  template<typename double_v_t, typename element_no_v_t>
+  Tensor2<MeshType::dim(),double_v_t> getInverseJacobian(std::array<VecD<3,double_v_t>,FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement()> &geometryValues,
+                                                         element_no_v_t elementNo, std::array<double,MeshType::dim()> xi);
+
   //! Compute the inverseJacobian that is needed to transform a gradient vector from parameter space to world space, for an element at a xi position.
   //! The following properties of the jacobian hold:
   //! jacobianParameterSpace[columnIdx][rowIdx] = dX_rowIdx/dxi_columnIdx

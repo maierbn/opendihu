@@ -54,9 +54,11 @@ activation_start_time = 0           # [ms] time when to start checking for stimu
 # other options
 paraview_output = True
 use_elasticity = True
+generate_linear_3d_mesh = True
 generate_quadratic_3d_mesh = False
 states_output = False                # output states of the 0D problem in a separate file
 
+# how to sample the 3D mesh for contraction from the fiber meshes, higher values mean coarser meshes
 sampling_stride_x = 10
 sampling_stride_y = 10
 sampling_stride_z = 100

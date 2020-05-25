@@ -281,11 +281,12 @@ initialize()
   {
     outputInitializeThisInstance_ = true;
     outputInitialize_ = false;
+    el::Loggers::removeFlag(el::LoggingFlag::NewLineForContainer);
     LOG(INFO) << "Initialize " << nInstancesComputedGlobally_ << " global instances (" << nInstancesLocal_ << " local).";
   }
 
   // add this solver to the solvers diagram
-  DihuContext::solverStructureVisualizer()->addSolver("MultipleInstances");
+  DihuContext::solverStructureVisualizer()->addSolver("MultipleInstances", true);   // hasInternalConnectionToFirstNestedSolver=true (the last argument) means output connector data is shared with the first subsolver
   DihuContext::solverStructureVisualizer()->beginChild();
 
   double progress = 0;
@@ -320,6 +321,7 @@ initialize()
   {
     std::cout << "\b\b\b\bdone." << std::endl;
   }
+  el::Loggers::addFlag(el::LoggingFlag::NewLineForContainer);
 
   
   data_.setInstancesData(instancesLocal_);

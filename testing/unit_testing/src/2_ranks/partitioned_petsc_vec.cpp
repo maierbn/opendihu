@@ -365,8 +365,9 @@ config = {
 
   dirichletBoundaryConditions->initialize(settings.getPythonConfig(), displacementsFunctionSpace, "dirichletBoundaryConditions");
 
-  std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>> vec0
-    = std::make_shared<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>>(
+  using Term = Equation::SolidMechanics::MooneyRivlinIncompressible3D;
+  std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,Term>> vec0
+    = std::make_shared<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,Term>>(
     displacementsFunctionSpace->meshPartition(), pressureFunctionSpace->meshPartition(), dirichletBoundaryConditions, "up");
 
   vec0->zeroEntries();
@@ -520,8 +521,9 @@ config = {
 
   dirichletBoundaryConditions->initialize(settings.getPythonConfig(), displacementsFunctionSpace, "dirichletBoundaryConditions");
 
-  std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>> vec0
-    = std::make_shared<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>>(
+  using Term = Equation::SolidMechanics::MooneyRivlinIncompressible3D;
+  std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,Term>> vec0
+    = std::make_shared<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,Term>>(
     displacementsFunctionSpace->meshPartition(), pressureFunctionSpace->meshPartition(), dirichletBoundaryConditions, "up");
 
   vec0->zeroEntries();

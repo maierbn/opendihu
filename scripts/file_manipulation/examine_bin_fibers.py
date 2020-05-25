@@ -46,6 +46,7 @@ with open(input_filename, "rb") as infile:
   
   header_length_raw = infile.read(4)
   header_length = struct.unpack('i', header_length_raw)[0]
+  print("header_length: {}".format(header_length))
   #header_length = 32+8
   parameters = []
   for i in range(int(header_length/4) - 1):

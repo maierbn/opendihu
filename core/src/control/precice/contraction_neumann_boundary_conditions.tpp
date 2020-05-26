@@ -6,17 +6,17 @@ namespace PreciceAdapter
 {
 
 template<class NestedSolver>
-MuscleContraction<NestedSolver>::
-MuscleContraction(DihuContext context) :
+ContractionNeumannBoundaryConditions<NestedSolver>::
+ContractionNeumannBoundaryConditions(DihuContext context) :
   Runnable(),
-  context_(context["MuscleContraction"]), nestedSolver_(this->context_), initialized_(false)
+  context_(context["ContractionNeumannBoundaryConditions"]), nestedSolver_(this->context_), initialized_(false)
 {
   // get python settings object from context
   this->specificSettings_ = this->context_.getPythonConfig();
 }
 
 template<class NestedSolver>
-void MuscleContraction<NestedSolver>::
+void ContractionNeumannBoundaryConditions<NestedSolver>::
 initialize()
 {
 #ifdef HAVE_PRECICE
@@ -28,7 +28,7 @@ initialize()
   // initialize() will be called before the simulation starts.
 
   // add this solver to the solvers diagram, which is a SVG file that will be created at the end of the simulation.
-  DihuContext::solverStructureVisualizer()->addSolver("PreciceAdapter::MuscleContraction", true);   // hasInternalConnectionToFirstNestedSolver=true (the last argument) means output connector data is shared with the first subsolver
+  DihuContext::solverStructureVisualizer()->addSolver("PreciceAdapter::ContractionNeumannBoundaryConditions", true);   // hasInternalConnectionToFirstNestedSolver=true (the last argument) means output connector data is shared with the first subsolver
 
   // indicate in solverStructureVisualizer that now a child solver will be initialized
   DihuContext::solverStructureVisualizer()->beginChild();
@@ -45,7 +45,7 @@ initialize()
   outputConnectorSlotIdGamma_ = this->specificSettings_.getOptionInt("outputConnectorSlotIdGamma", 2, PythonUtility::Positive);
 
   // initialize precice
-  const std::string solverName = "MuscleContraction";
+  const std::string solverName = "ContractionNeumannBoundaryConditions";
   const std::string configFileName = this->specificSettings_.getOptionString("preciceConfigFilename", "../precice-config.xml");
 
   int rankNo = nestedSolver_.data().functionSpace()->meshPartition()->rankSubset()->ownRankNo();
@@ -54,7 +54,7 @@ initialize()
   preciceSolverInterface_ = std::make_unique<precice::SolverInterface>(solverName, configFileName, rankNo, nRanks);
 
   // store the node positions to precice
-  std::string meshName = "MuscleContractionMesh";
+  std::string meshName = "TendonMesh";
   preciceMeshId_ = preciceSolverInterface_->getMeshID(meshName);
 
   std::shared_ptr<::FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, ::BasisFunction::LagrangeOfOrder<2>>> functionSpace
@@ -76,20 +76,18 @@ initialize()
   }
 
   LOG(DEBUG) << "setMeshVertices to precice, " << 3*nDofsLocalWithoutGhosts << " values";
+
+  //preciceSolverInterface_->setMeshVertices(preciceMeshId_, int size, double* positions, int* ids);
   preciceSolverInterface_->setMeshVertices(preciceMeshId_, nDofsLocalWithoutGhosts, geometryValuesPrecice.data(), preciceVertexIds_.data());
 
   LOG(DEBUG) << "precice defined vertexIds: " << preciceVertexIds_;
 
   // initialize data ids
-  preciceDataIdGeometry_  = preciceSolverInterface_->getDataID("Geometry",  preciceMeshId_);
-  preciceDataIdGamma_     = preciceSolverInterface_->getDataID("Gamma",     preciceMeshId_);
-  //preciceDataIdLambda_    = preciceSolverInterface_->getDataID("Lambda",    preciceMeshId_);
-  //preciceDataIdLambdaDot_ = preciceSolverInterface_->getDataID("LambdaDot", preciceMeshId_);
+  preciceDataIdDisplacements_ = preciceSolverInterface_->getDataID("Displacements", preciceMeshId_);
+  preciceDataIdTraction_      = preciceSolverInterface_->getDataID("Traction",      preciceMeshId_);
 
-  LOG(DEBUG) << "data id geometry: " << preciceDataIdGeometry_;
-  LOG(DEBUG) << "data id gamma: " << preciceDataIdGamma_;
-
-  //preciceSolverInterface_->setMeshVertices(preciceMeshId_, int size, double* positions, int* ids);
+  LOG(DEBUG) << "data id displacements: " << preciceDataIdDisplacements_;
+  LOG(DEBUG) << "data id traction: " << preciceDataIdTraction_;
 
   maximumPreciceTimestepSize_ = preciceSolverInterface_->initialize();
 
@@ -104,7 +102,7 @@ initialize()
 }
 
 template<class NestedSolver>
-void MuscleContraction<NestedSolver>::
+void ContractionNeumannBoundaryConditions<NestedSolver>::
 run()
 {
 #ifdef HAVE_PRECICE
@@ -171,7 +169,7 @@ run()
 #ifdef HAVE_PRECICE
 
 template<class NestedSolver>
-void MuscleContraction<NestedSolver>::
+void ContractionNeumannBoundaryConditions<NestedSolver>::
 preciceReadData()
 {
   if (!preciceSolverInterface_->isReadDataAvailable())
@@ -195,7 +193,7 @@ preciceReadData()
 }
 
 template<class NestedSolver>
-void MuscleContraction<NestedSolver>::
+void ContractionNeumannBoundaryConditions<NestedSolver>::
 preciceWriteData()
 {
   if (!preciceSolverInterface_->isWriteDataRequired(timeStepWidth_))
@@ -239,7 +237,7 @@ preciceWriteData()
 #endif
 
 template<class NestedSolver>
-void MuscleContraction<NestedSolver>::
+void ContractionNeumannBoundaryConditions<NestedSolver>::
 reset()
 {
   nestedSolver_.reset();
@@ -249,7 +247,7 @@ reset()
 }
 
 template<class NestedSolver>
-typename MuscleContraction<NestedSolver>::Data &MuscleContraction<NestedSolver>::
+typename ContractionNeumannBoundaryConditions<NestedSolver>::Data &ContractionNeumannBoundaryConditions<NestedSolver>::
 data()
 {
   // get a reference to the data object
@@ -259,7 +257,7 @@ data()
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
 //! the transfer is done by the output_connector_data_transfer class
 template<class NestedSolver>
-std::shared_ptr<typename MuscleContraction<NestedSolver>::OutputConnectorDataType> MuscleContraction<NestedSolver>::
+std::shared_ptr<typename ContractionNeumannBoundaryConditions<NestedSolver>::OutputConnectorDataType> ContractionNeumannBoundaryConditions<NestedSolver>::
 getOutputConnectorData()
 {
   //! This is relevant only, if this solver is part of a splitting or coupling scheme. Then this method returns the values/variables that will be

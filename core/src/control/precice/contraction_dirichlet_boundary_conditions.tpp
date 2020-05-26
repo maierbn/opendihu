@@ -42,8 +42,6 @@ initialize()
   // set the outputConnectorData for the solverStructureVisualizer to appear in the solver diagram
   DihuContext::solverStructureVisualizer()->setOutputConnectorData(getOutputConnectorData());
 
-  outputConnectorSlotIdGamma_ = this->specificSettings_.getOptionInt("outputConnectorSlotIdGamma", 2, PythonUtility::Positive);
-
   // initialize precice
   const std::string solverName = "ContractionDirichletBoundaryConditions";
   const std::string configFileName = this->specificSettings_.getOptionString("preciceConfigFilename", "../precice-config.xml");
@@ -54,7 +52,7 @@ initialize()
   preciceSolverInterface_ = std::make_unique<precice::SolverInterface>(solverName, configFileName, rankNo, nRanks);
 
   // store the node positions to precice
-  std::string meshName = "ContractionDirichletBoundaryConditionsMesh";
+  std::string meshName = "MuscleMesh";
   preciceMeshId_ = preciceSolverInterface_->getMeshID(meshName);
 
   std::shared_ptr<::FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, ::BasisFunction::LagrangeOfOrder<2>>> functionSpace
@@ -75,21 +73,20 @@ initialize()
     }
   }
 
+
   LOG(DEBUG) << "setMeshVertices to precice, " << 3*nDofsLocalWithoutGhosts << " values";
+
+  //preciceSolverInterface_->setMeshVertices(preciceMeshId_, int size, double* positions, int* ids);
   preciceSolverInterface_->setMeshVertices(preciceMeshId_, nDofsLocalWithoutGhosts, geometryValuesPrecice.data(), preciceVertexIds_.data());
 
   LOG(DEBUG) << "precice defined vertexIds: " << preciceVertexIds_;
 
   // initialize data ids
-  preciceDataIdGeometry_  = preciceSolverInterface_->getDataID("Geometry",  preciceMeshId_);
-  preciceDataIdGamma_     = preciceSolverInterface_->getDataID("Gamma",     preciceMeshId_);
-  //preciceDataIdLambda_    = preciceSolverInterface_->getDataID("Lambda",    preciceMeshId_);
-  //preciceDataIdLambdaDot_ = preciceSolverInterface_->getDataID("LambdaDot", preciceMeshId_);
+  preciceDataIdDisplacements_ = preciceSolverInterface_->getDataID("Displacements", preciceMeshId_);
+  preciceDataIdTraction_      = preciceSolverInterface_->getDataID("Traction",      preciceMeshId_);
 
-  LOG(DEBUG) << "data id geometry: " << preciceDataIdGeometry_;
-  LOG(DEBUG) << "data id gamma: " << preciceDataIdGamma_;
-
-  //preciceSolverInterface_->setMeshVertices(preciceMeshId_, int size, double* positions, int* ids);
+  LOG(DEBUG) << "data id displacements: " << preciceDataIdDisplacements_;
+  LOG(DEBUG) << "data id traction: " << preciceDataIdTraction_;
 
   maximumPreciceTimestepSize_ = preciceSolverInterface_->initialize();
 
@@ -153,9 +150,7 @@ run()
 
     // write data to precice
     // data to send:
-    // - geometry
-    // - lambda (todo)
-    // - lambdaDot (todo)
+    // -
     preciceWriteData();
 
     LOG(DEBUG) << "precice::advance(" << timeStepWidth << "), maximumPreciceTimestepSize_: " << maximumPreciceTimestepSize_;

@@ -658,7 +658,10 @@ class Package(object):
       sys.stdout.flush()
 
   def auto_build(self, ctx, install_dir, source_dir, dependencies_dir):
-    sys.stdout.write('  Building package {}, this could take a while ... \n'.format(self.name))
+    sys.stdout.write('  Building package {}, this could take a while ... (like really long!) \n'.format(self.name))
+    if self.name  == "Python":
+      sys.stdout.write('  Note, building package {}, takes REALLY long so be patient! \n'.format(self.name))
+      
     sys.stdout.flush()
     ctx.Log("Building package in " + install_dir + "\n")
 

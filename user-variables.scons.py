@@ -1,4 +1,4 @@
-# Configuration for scons build system
+#i Configuration for scons build system
 #
 # For each package the following variables are available:
 # <PACKAGE>_DIR         Location of the package, must contain subfolders "include" and "lib" or "lib64" with header and library files.
@@ -15,87 +15,172 @@
 # 3. Specify <PACKAGE>_INC_DIR and <PACKAGE>_LIB_DIR to point to the header and library directories. They are usually named "include" and "lib".
 # 4. Set <PACKAGE>_DOWNLOAD=True or additionally <PACKAGE>_REDOWNLOAD=True to let the build system download and install everything on their own.
 
-# LAPACK, includes also BLAS, current OpenBLAS is used
-LAPACK_DOWNLOAD=True
+# set compiler to use
+# cc = "gcc"   # c compiler
+# CC = "g++"   # c++ compiler
+cc = "/afs/.mathe/home/cmcs/share/environment-modules/Packages/gcc/7.2.0/bin/gcc"   # c compiler
+CC = "/afs/.mathe/home/cmcs/share/environment-modules/Packages/gcc/7.2.0/bin/g++"   # c++ compiler
+mpiCC = "/afs/.mathematik.uni-stuttgart.de/home/cmcs/share/environment-modules/Packages/openmpi/4.0.1/7.2.0/bin/mpic++"
+mpicc = "/afs/.mathematik.uni-stuttgart.de/home/cmcs/share/environment-modules/Packages/openmpi/4.0.1/7.2.0/bin/mpicc"
 
-# PETSc
+cmake="cmake"
+
+# LAPACK, includes also BLAS, OpenBLAS is used
+LAPACK_DOWNLOAD = True
+
+# PETSc, this downloads and installs MUMPS (direct solver package) and its dependencies PT-Scotch, SCAlapack, ParMETIS, METIS
+PETSC_DIR="/usr/local/home/kraemer/software/opendihu2/dependencies/petsc/install"
 PETSC_DOWNLOAD=True
-#PETSC_REDOWNLOAD=True
+PETSC_REDOWNLOAD =True
+PETSC_REBUILD=True
 
-# Python
-PYTHON_DOWNLOAD=True    # This downloads and uses Python, use it to be independent of an eventual system python
-PYTHON_REDOWNLOAD=False
+# Python 3.6
+PYTHON_DOWNLOAD = True    # This downloads and uses Python, use it to be independent of an eventual system python
 
-# Numpy
-CYTHON_DOWNLOAD=True
-NUMPYC_DOWNLOAD=True
+# Python packages - they are now all combined with the option PYTHONPACKAGES_DOWNLOAD
+PYTHONPACKAGES_DOWNLOAD = True
 
-# SciPy
-SCIPY_DOWNLOAD=True
+# Base64, encoding library for binary vtk (paraview) output files
+BASE64_DOWNLOAD = True
 
-# Matplotlib and other python dependencies
-BZIP2_DOWNLOAD=True
-MATPLOTLIB_DOWNLOAD=True
-NUMPYSTL_DOWNLOAD=True
-SVGPATH_DOWNLOAD=True
+# Google Test, testing framework, not needed on Hazelhen
+GOOGLETEST_DOWNLOAD = True
 
-# Base64
-BASE64_DOWNLOAD=True
+# SEMT, library for symbolic differentiation
+SEMT_DOWNLOAD = True
 
-# Google Test
-GOOGLETEST_DOWNLOAD=True
-#GOOGLETEST_REDOWNLOAD=True
+# EasyLoggingPP, provides logging facilities
+EASYLOGGINGPP_DOWNLOAD = True
 
-# SEMT
-SEMT_DOWNLOAD=True
-#SEMT_REDOWNLOAD=True  # you can comment out this, once it has reinstalled SEMT. This is only needed for the travis CI test cases which use an older docker container for the builds.
+# ADIOS2, adaptable I/O library, needed for interfacing MegaMol
+ADIOS_DOWNLOAD = True
 
-# EasyLoggingPP
-EASYLOGGINGPP_DOWNLOAD=True
-#EASYLOGGINGPP_REDOWNLOAD=True
+# MegaMol, visualization framework of VISUS, optional, needs ADIOS2
+MEGAMOL_DOWNLOAD = False    # install MegaMol from official git repo, but needed is the private repo, ask for access to use MegaMol with opendihu
+
+# Vc, vectorization types and C++ utility to produce vectorized code
+VC_DOWNLOAD = True
+
+# xbraid, used for parallel-in time methods
+XBRAID_DOWNLOAD = True
+
+# OpenCOR, utility view CellML models and to convert them from xml format to c code
+OPENCOR_DOWNLOAD =True
 
 # MPI
-# MPI is normally detected using mpicc. If this is not available, you can provide the MPI_DIR as usual.
-MPI_DIR="/usr/lib/openmpi"    # standard path for ubuntu 16.04
-#MPI_DIR="/usr/lib64/mpich/"
+# MPI is normally detected by runnig the mpicc command. If this is not available, you can provide the MPI_DIR as usual.
+#MPI_DIR = "/usr/lib/openmpi"    # standard path for openmpi on ubuntu 16.04
+#MPI_DIR = "/usr/lib/x86_64-linux-gnu/openmpi/"
+MPI_DIR = "/afs/.mathematik.uni-stuttgart.de/home/cmcs/share/environment-modules/Packages/openmpi/4.0.1/7.2.0/"
 
-# automatically set MPI_DIR for ubuntu 18.04
+# chaste and dependencies
+have_chaste = False
+VTK_DOWNLOAD = have_chaste
+HDF5_DOWNLOAD = have_chaste
+XERCESC_DOWNLOAD = have_chaste
+XSD_DOWNLOAD = have_chaste
+#BOOST_DOWNLOAD = have_chaste
+BOOST_DOWNLOAD = False
+CHASTE_DOWNLOAD = have_chaste
+
+# automatically set MPI_DIR for other systems, like ubuntu 18.04 and Debian
 try:
   import lsb_release
   lsb_info = lsb_release.get_lsb_information()   # get information about ubuntu version, if available
   if "RELEASE" in lsb_info:
     if lsb_info["RELEASE"] == "18.04":
-      MPI_DIR="/usr/lib/x86_64-linux-gnu/openmpi"   # this is the path for ubuntu 18.04
+      MPI_DIR="/usr/lib/x86_64-linux-gnu/openmpi"   # this is the standard path on ubuntu 18.04
+except:
+  pass
 
+try:
+  import platform
+  if 'debian' in platform.dist():
+    MPI_DIR="/usr/lib/x86_64-linux-gnu/openmpi"    # path for debian (on Aaron's workstation)
+except:
+  pass
+
+try:
   # use value of environment variable 'MPI_HOME' if it is set
   import os
   if os.environ.get("MPI_HOME") is not None:
     MPI_DIR = os.environ.get("MPI_HOME")
     
-  # for Travis CI build MPI ourselves
+  # for Travis CI, build MPI ourselves
   if os.environ.get("TRAVIS") is not None:
     print "Travis CI detected, del MPI_DIR"
     del MPI_DIR
     MPI_DOWNLOAD=True
+  
+  # on neon use custom cmake
+  import socket
+  if socket.gethostname() == "neon" or socket.gethostname() == "helium" or "argon" in socket.gethostname():
+    if os.path.isfile("/home/maierbn/software/cmake/cmake-3.13.3-Linux-x86_64/bin/cmake"):
+      cmake="/home/maierbn/software/cmake/cmake-3.13.3-Linux-x86_64/bin/cmake"
 
+  if "sgscl" in socket.gethostname():
+    MPI_DIR="/scratch-nfs/maierbn/openmpi/install-3.1"
+  
+  elif "lead" in socket.gethostname():
+    MPI_DIR = os.environ["MPI_HOME"]
+  
+  elif "hawk" in os.environ["SITE_PLATFORM_NAME"]:
+    print("on hawk")
+    MPI_DIR = os.environ["MPT_ROOT"]
+    MPI_IGNORE_MPICC
+    LAPACK_DIR = os.environ["SCALAPACK_ROOT"]
+    LAPACK_DOWNLOAD = False
+    PETSC_DOWNLOAD = False
+    PETSC_DIR = os.environ["PETSC_ROOT"]
+    PYTHONPACKAGES_DOWNLOAD = False
+    GOOGLETEST_DOWNLOAD = False  
+    XBRAID_DOWNLOAD = False
+    ADIOS_DOWNLOAD = False
+    ADIOS_DIR = os.environ["ADIOS2_ROOT"]
+    cc = "mpicc -cc=gcc"
+    CC = "mpicxx -cxx=g++ -ftemplate-backtrace-limit=0"   
 except:
   pass
 
-# other variables for hazelhen
-import os
-if os.environ.get("SITE_PLATFORM_NAME") == "hazelhen":
-  MPI_DIR = os.environ.get("CRAY_MPICH_DIR")
-  LAPACK_DOWNLOAD = False
-  LAPACK_DIR = os.environ.get("CRAY_LIBSCI_PREFIX_DIR")
-  PETSC_DOWNLOAD = False
-  PETSC_DIR = os.environ.get("PETSC_DIR")
+# download and build debugging MPI version
+if False:
+  del MPI_DIR
+  MPI_DOWNLOAD = True
+  MPI_IGNORE_MPICC = True    # this downloads and builds openmpi
 
-# module restore opendihu
-# or 
-#   module swap PrgEnv-cray/6.0.4 PrgEnv-gnu
+PETSC_DEBUG = True            # this enables debugging flags such that valgrind memcheck can track MPI errors
+
+# specialized settings for supercomputer (HazelHen)
+import os
+if os.environ.get("PE_ENV") is not None:  # if on hazelhen
+  cc = "cc"   # C compiler wrapper
+  CC = "CC"   # C++ compiler wrapper
+  mpiCC = "CC"  # mpi C++ compiler wrapper
+  cmake = "/lustre/cray/ws8/ws/icbbnmai-opendihu1/cmake/cmake-3.13.2-Linux-x86_64/bin/cmake"
+
+  # use cray-pat for profiling
+  USE_CRAY_PAT = False
+
+  # use -hpl option with cray compiler to create an optimization program library
+  USE_HPL = False
+
+  # do not use googletest
+  GOOGLETEST_DOWNLOAD = False  
+
+  # do not use buggy python packages
+  PYTHONPACKAGES_DOWNLOAD = False
+
+  #MPI_DIR = os.environ.get("CRAY_MPICH_DIR")
+  #LAPACK_DOWNLOAD = False
+  #LAPACK_DIR = os.environ.get("CRAY_LIBSCI_PREFIX_DIR")
+  #PETSC_DOWNLOAD = False
+  #PETSC_DIR = os.environ.get("PETSC_DIR")
+#else:
+#  print("...no more changes.")
+#Steps for getting started on HazelHen
+#   module swap PrgEnv-cray/6.0.4 PrgEnv-gnu  # to switch to GNU programming environment, however also Intel and Cray environments work
 #   module load cray-libsci
 #   module load cray-petsc  (or cray-petsc-64 for big data)
-
 
 
 

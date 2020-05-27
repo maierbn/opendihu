@@ -146,6 +146,7 @@ public:
     std::shared_ptr<DisplacementsFieldVariableType>,  // current geometry field
     std::shared_ptr<DisplacementsFieldVariableType>,  // displacements_
     std::shared_ptr<DisplacementsFieldVariableType>,  // velocities_
+    std::shared_ptr<DisplacementsFieldVariableType>,  // material traction
     std::shared_ptr<StressFieldVariableType>         // pK2Stress_
   >
   FieldVariablesForOutputWriter;

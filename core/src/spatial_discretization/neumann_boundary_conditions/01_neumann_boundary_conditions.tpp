@@ -216,7 +216,7 @@ initializeRhs()
   VLOG(1) << "before finishGhostManipulation, rhs: " << *this->data_.rhs();
   this->data_.rhs()->finishGhostManipulation();
 
-  if (this->divideNeumannBoundaryConditionValuesByTotalArea_)
+  if (this->divideNeumannBoundaryConditionValuesByTotalArea_ && fabs(surfaceAreaGlobal) > 1e-12)
   {
     PetscErrorCode ierr;
     for (int componentNo = 0; componentNo < nComponents; componentNo++)

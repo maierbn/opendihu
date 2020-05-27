@@ -54,6 +54,24 @@ def update_dirichlet_boundary_conditions(t):
 
   return dirichlet_bc
 
+# Function to update Neumann boundary conditions over time
+def update_neumann_boundary_conditions(t):
+  
+  # Neumann boundary conditions
+  k = 0
+  factor = np.sin(t/10. * 2*np.pi)*0.1
+  neumann_bc = [{"element": k*nx*ny + j*nx + i, "constantVector": [factor,0,0], "face": "2-"} for j in range(ny) for i in range(nx)]
+  #neumann_bc = []
+
+  config = {
+    "inputMeshIsGlobal": True,
+    "divideNeumannBoundaryConditionValuesByTotalArea": False,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
+    "neumannBoundaryConditions": neumann_bc
+  }
+  
+  print("update neumann bc for t={}: {}".format(t,config))
+  return config
+
 # Function to postprocess the output
 # This function gets periodically called by the running simulation. 
 # It provides all current variables for each node: geometry (position), u, v, stress
@@ -69,9 +87,8 @@ def postprocess(result):
   # parse variables
   field_variables = result["data"]
   
-  # output all field variables for debugging
-  for i,f in enumerate(field_variables):
-    print(i,field_variables[i]["name"])
+  #for f in field_variables:
+  #print(f["name"])
   
   # field_variables[0] is the geometry
   # field_variables[1] is the displacements u
@@ -224,9 +241,9 @@ config = {
     "neumannBoundaryConditions":   neumann_bc,                          # Neumann boundary conditions that define traction forces on surfaces of elements
     "divideNeumannBoundaryConditionValuesByTotalArea": True,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
     
-    "updateDirichletBoundaryConditionsFunction":  update_dirichlet_boundary_conditions,  # function that updates the Dirichlet BCs while the simulation is running
+    "updateDirichletBoundaryConditionsFunction":  None,  # function that updates the Dirichlet BCs while the simulation is running
     "updateDirichletBoundaryConditionsFunctionCallInterval": 1,                          # every which step the update function should be called, 1 means every time step
-    "updateNeumannBoundaryConditionsFunction":    None,                                  # function that updates the Neumann BCs while the simulation is running
+    "updateNeumannBoundaryConditionsFunction":    update_neumann_boundary_conditions,    # function that updates the Neumann BCs while the simulation is running
     "updateNeumannBoundaryConditionsFunctionCallInterval": 1,                            # every which step the update function should be called, 1 means every time step
     
     "initialValuesDisplacements": [[0.0,0.0,0.0] for _ in range((2*nx+1) * (2*ny+1) * (2*nz+1))],     # the initial values for the displacements, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
@@ -239,10 +256,10 @@ config = {
     "OutputWriter" : [
       
       # Paraview files
-      {"format": "Paraview", "outputInterval": 1, "filename": "out/u", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+      {"format": "Paraview", "outputInterval": 1, "filename": "out/u", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
       
       # Python callback function "postprocess" (at the top of this scritpt)
-      {"format": "PythonCallback", "outputInterval": 1, "callback": postprocess, "onlyNodalValues":True, "filename": "", "fileNumbering": "incremental"},
+      #{"format": "PythonCallback", "outputInterval": 1, "callback": postprocess, "onlyNodalValues":True, "filename": "", "fileNumbering": "incremental"},
     ],
     # 2. additional output writer that writes also the hydrostatic pressure
     "pressure": {   # output files for pressure function space (linear elements), contains pressure values, as well as displacements and velocities
@@ -254,7 +271,7 @@ config = {
     "dynamic": {    # output of the dynamic solver, has additional virtual work values 
       "OutputWriter" : [   # output files for displacements function space (quadratic elements)
         #{"format": "Paraview", "outputInterval": int(output_interval/dt), "filename": "out/dynamic", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
-        #{"format": "Paraview", "outputInterval": 1, "filename": "out/dynamic", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+        #{"format": "Paraview", "outputInterval": 1, "filename": "out/dynamic", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
       ],
     },
     # 4. output writer for debugging, outputs files after each load increment, the geometry is not changed but u and v are written

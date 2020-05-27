@@ -305,6 +305,7 @@ getFieldVariablesForOutputWriter()
     std::shared_ptr<DisplacementsFieldVariableType>(std::make_shared<typename DisplacementsFunctionSpace::GeometryFieldType>(this->displacementsFunctionSpace_->geometryField())), // geometry
     std::shared_ptr<DisplacementsFieldVariableType>(this->displacements_),              // displacements_
     std::shared_ptr<DisplacementsFieldVariableType>(this->velocities_),              // velocities_
+    std::shared_ptr<DisplacementsFieldVariableType>(this->materialTraction_),              // materialTraction_
     std::shared_ptr<StressFieldVariableType>(this->pK2Stress_)         // pK2Stress_
   );
 

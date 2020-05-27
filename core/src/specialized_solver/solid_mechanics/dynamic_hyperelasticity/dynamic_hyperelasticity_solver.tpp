@@ -76,6 +76,7 @@ initialize()
   // parse updateNeumannBoundaryConditionsFunction
   if (this->specificSettings_.hasKey("updateNeumannBoundaryConditionsFunction"))
   {
+    LOG(DEBUG) << "parse updateNeumannBoundaryConditionsFunction";
     PyObject *object = this->specificSettings_.getOptionPyObject("updateNeumannBoundaryConditionsFunction");
     if (object == Py_None)
     {
@@ -85,6 +86,7 @@ initialize()
     {
       pythonUpdateNeumannBoundaryConditionsFunction_ = this->specificSettings_.getOptionFunction("updateNeumannBoundaryConditionsFunction");
       updateNeumannBoundaryConditionsFunctionCallInterval_ = this->specificSettings_.getOptionInt("updateNeumannBoundaryConditionsFunctionCallInterval", 1, PythonUtility::Positive);
+      LOG(DEBUG) << "interval: " << updateNeumannBoundaryConditionsFunctionCallInterval_;
     }
   }
 
@@ -159,6 +161,8 @@ callUpdateNeumannBoundaryConditionsFunction(double t)
   PyObject *arglist = Py_BuildValue("(d)", t);
   PyObject *returnValue = PyObject_CallObject(pythonUpdateNeumannBoundaryConditionsFunction_, arglist);
 
+  PythonUtility::checkForError();
+
   // if there was an error while executing the function, print the error message
   if (returnValue == NULL)
     PyErr_Print();
@@ -168,7 +172,7 @@ callUpdateNeumannBoundaryConditionsFunction(double t)
   std::shared_ptr<NeumannBoundaryConditionsType> newNeumannBoundaryConditions = std::make_shared<NeumannBoundaryConditionsType>(this->context_);
   newNeumannBoundaryConditions->initialize(returnValue, this->data_.functionSpace(), "neumannBoundaryConditions");
 
-  hyperelasticitySolver_->updateNeumannBoundaryConditions(newNeumannBoundaryConditions);
+  hyperelasticitySolver_.updateNeumannBoundaryConditions(newNeumannBoundaryConditions);
 
   // decrement reference counters for python objects
   Py_CLEAR(returnValue);
@@ -301,6 +305,9 @@ advanceTimeSpan()
 
     // potentially update DirichletBC by calling "updateDirichletBoundaryConditionsFunction"
     callUpdateDirichletBoundaryConditionsFunction(currentTime);
+
+    // potentially update NeumannBC by calling "updateNeumannBoundaryConditionsFunction"
+    callUpdateNeumannBoundaryConditionsFunction(currentTime);
 
     // start duration measurement
     if (this->durationLogKey_ != "")

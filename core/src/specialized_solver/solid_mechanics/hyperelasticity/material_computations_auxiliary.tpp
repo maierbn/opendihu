@@ -603,6 +603,9 @@ computePK2StressField()
 
   //this->data_.pK2Stress()->startGhostManipulation();
   this->data_.pK2Stress()->zeroGhostBuffer();
+  this->data_.materialTraction()->zeroGhostBuffer();
+  this->data_.materialTraction()->zeroEntries();
+
   this->data_.deformationGradient()->zeroGhostBuffer();
   this->data_.deformationGradientTimeDerivative()->zeroGhostBuffer();
 
@@ -770,11 +773,41 @@ computePK2StressField()
 
       //LOG(DEBUG) << "node " << dofNoLocal << " pk2: " << valuesInVoigtNotation;
       this->data_.pK2Stress()->setValue(dofNoLocal, valuesInVoigtNotation, INSERT_VALUES);
+
+      // compute surface traction
+      // get normal
+      if (indexZ == 0)
+      {
+        // bottom node
+        Vec3 normal = displacementsFunctionSpace->getNormal(Mesh::face_t::face2Minus, elementNoLocal, xi);
+
+        // compute traction by Cauchy theorem T = S n
+        Vec3 traction = pK2Stress * normal;
+
+        // set value in material traction
+        this->data_.materialTraction()->setValue(dofNoLocal, traction, INSERT_VALUES);
+
+      }
+      else if (indexZ == 2)
+      {
+        // top node
+        Vec3 normal = displacementsFunctionSpace->getNormal(Mesh::face_t::face2Plus, elementNoLocal, xi);
+
+        // compute traction by Cauchy theorem T = S n
+        Vec3 traction = pK2Stress * normal;
+
+        // set value in material traction
+        this->data_.materialTraction()->setValue(dofNoLocal, traction, INSERT_VALUES);
+      }
     }
   }
   this->data_.pK2Stress()->zeroGhostBuffer();
   this->data_.pK2Stress()->finishGhostManipulation();
   this->data_.pK2Stress()->startGhostManipulation();
+
+  this->data_.materialTraction()->zeroGhostBuffer();
+  this->data_.materialTraction()->finishGhostManipulation();
+  this->data_.materialTraction()->startGhostManipulation();
 
   this->data_.deformationGradient()->zeroGhostBuffer();
   this->data_.deformationGradient()->finishGhostManipulation();

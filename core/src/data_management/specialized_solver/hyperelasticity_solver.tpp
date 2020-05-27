@@ -36,6 +36,7 @@ createPetscObjects()
   velocities_                    = this->displacementsFunctionSpace_->template createFieldVariable<3>("v", displacementsComponentNames);
   velocitiesPreviousTimestep_    = this->displacementsFunctionSpace_->template createFieldVariable<3>("v_previous", displacementsComponentNames);
   fiberDirection_                = this->displacementsFunctionSpace_->template createFieldVariable<3>("fiberDirection", displacementsComponentNames);
+  materialTraction_              = this->displacementsFunctionSpace_->template createFieldVariable<3>("T (material traction)", displacementsComponentNames);
   displacementsLinearMesh_       = this->pressureFunctionSpace_->template createFieldVariable<3>("uLin", displacementsComponentNames);     //< u, the displacements
   velocitiesLinearMesh_          = this->pressureFunctionSpace_->template createFieldVariable<3>("vLin", displacementsComponentNames);     //< v, the velocities
   pressure_                      = this->pressureFunctionSpace_->template createFieldVariable<1>("p");     //<  p, the pressure variable
@@ -95,6 +96,14 @@ std::shared_ptr<typename QuasiStaticHyperelasticityBase<PressureFunctionSpace,Di
 fiberDirection()
 {
   return this->fiberDirection_;
+}
+
+//! field variable of material traction
+template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term>
+std::shared_ptr<typename QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::DisplacementsFieldVariableType> QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::
+materialTraction()
+{
+  return this->materialTraction_;
 }
 
 //! field variable displacements u but on the linear mesh
@@ -279,8 +288,9 @@ getFieldVariablesForOutputWriter()
     std::shared_ptr<DisplacementsFieldVariableType>(this->displacements_),              // displacements_
     std::shared_ptr<DisplacementsFieldVariableType>(this->velocities_),              // velocities_
     std::shared_ptr<StressFieldVariableType>(this->pK2Stress_),         // pK2Stress_
-    std::shared_ptr<StressFieldVariableType>(this->activePK2Stress_),         // actievPK2Stress_
-    std::shared_ptr<DisplacementsFieldVariableType>(this->fiberDirection_)
+    std::shared_ptr<StressFieldVariableType>(this->activePK2Stress_),         // activePK2Stress_
+    std::shared_ptr<DisplacementsFieldVariableType>(this->fiberDirection_),
+    std::shared_ptr<DisplacementsFieldVariableType>(this->materialTraction_)
   );
 }
 

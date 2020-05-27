@@ -782,6 +782,9 @@ def set_specific_states(n_nodes_global, time_step_no, current_time, states, comp
     #print("n_nodes: ({},{},{})".format(n_nodes_x, n_nodes_y, n_nodes_z))
     #print("n_nodes_global: {}, time_step_no: {}, current_time: {}, compartment_no: {}".format(n_nodes_global, time_step_no, current_time, compartment_no))
     #wait = input("Press any key to continue...")
+
+def set_dummy_stress(n_dofs_global, time_step_no, current_time, values, global_natural_dofs, compartment_no):
+  pass
   
 # for debugging output show when the first 20 fibers will fire
 if rank_no == 0 and not variables.disable_firing_output:

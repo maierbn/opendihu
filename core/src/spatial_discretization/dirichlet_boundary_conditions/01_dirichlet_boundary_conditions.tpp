@@ -1,4 +1,4 @@
-#include "spatial_discretization/boundary_conditions/dirichlet_boundary_conditions.h"
+#include "spatial_discretization/dirichlet_boundary_conditions/01_dirichlet_boundary_conditions.h"
 
 #include "easylogging++.h"
 #include "utility/python_utility.h"
@@ -19,7 +19,7 @@ initializeGhostElements()
 
   // determine own ghost elements that can be send to other ranks
   // loop over elements that have nodes with prescribed boundary conditions, only for those the integral term is non-zero
-  for (typename std::vector<typename DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::ElementWithNodes>::const_iterator iter = this->boundaryConditionElements_.cbegin();
+  for (typename std::vector<typename DirichletDirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::ElementWithNodes>::const_iterator iter = this->boundaryConditionElements_.cbegin();
        iter != this->boundaryConditionElements_.cend(); iter++)
   {
     element_no_t elementNoLocal = iter->elementNoLocal;
@@ -595,7 +595,7 @@ updatePrescribedValuesFromSolution(std::shared_ptr<FieldVariable::FieldVariable<
   //   std::vector<std::pair<int,ValueType>> elementalDofIndex;   //< the element-local dof index and the value of the boundary condition on this dof
   // };
 
-  for (typename std::vector<typename BoundaryConditionsBase<FunctionSpaceType,nComponents>::ElementWithNodes>::iterator iter = this->boundaryConditionElements_.begin();
+  for (typename std::vector<typename DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::ElementWithNodes>::iterator iter = this->boundaryConditionElements_.begin();
        iter != this->boundaryConditionElements_.end(); iter++)
   {
     // get all values of this element
@@ -675,7 +675,7 @@ applyInSystemMatrix(const std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>
                     bool systemMatrixAlreadySet
                    )
 {
-  LOG(TRACE) << "DirichletBoundaryConditionsBase::applyInSystemMatrix, systemMatrixAlreadySet: " << systemMatrixAlreadySet;
+  LOG(TRACE) << "DirichletDirichletBoundaryConditionsBase::applyInSystemMatrix, systemMatrixAlreadySet: " << systemMatrixAlreadySet;
   VLOG(1) << "boundaryConditionsRightHandSideSummand: " << *boundaryConditionsRightHandSideSummand;
 
   // boundary conditions for local non-ghost dofs are stored in the following member variables:
@@ -695,7 +695,7 @@ applyInSystemMatrix(const std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>
   const int nDofsPerElement = FunctionSpaceType::nDofsPerElement();
 
   // loop over elements that have nodes with prescribed boundary conditions, only for those the integral term is non-zero
-  for (typename std::vector<typename DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::ElementWithNodes>::const_iterator iter = this->boundaryConditionElements_.cbegin();
+  for (typename std::vector<typename DirichletDirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::ElementWithNodes>::const_iterator iter = this->boundaryConditionElements_.cbegin();
        iter != this->boundaryConditionElements_.cend(); iter++)
   {
     // get dofs of element (with and without ghosts), at least some of the dofs of this element are prescribed Dirchlet boundary condition values
@@ -1012,7 +1012,7 @@ applyInSystemMatrix(const std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>
 }
 
 template<typename FunctionSpaceType,int nComponents>
-void DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::
+void DirichletDirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::
 applyInVector(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> fieldVariable)
 {
   //fieldVariable->setValues(this->boundaryConditionNonGhostDofLocalNos_, this->boundaryConditionValues_);
@@ -1036,7 +1036,7 @@ void DirichletBoundaryConditions<FunctionSpaceType,nComponents>::
 applyInRightHandSide(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> rightHandSide,
                      std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> boundaryConditionsRightHandSideSummand)
 {
-  LOG(TRACE) << "DirichletBoundaryConditionsBase::applyInRightHandSide";
+  LOG(TRACE) << "DirichletDirichletBoundaryConditionsBase::applyInRightHandSide";
   //LOG(DEBUG) << "applyInRightHandSide: rightHandSide=" << *rightHandSide;
   //LOG(DEBUG) << "boundaryConditionsRightHandSideSummand=" << *boundaryConditionsRightHandSideSummand;
 

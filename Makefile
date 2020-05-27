@@ -130,3 +130,6 @@ linear_elasticity_with_activation:
 
 tensile_test:
 	cd examples/solid_mechanics/tensile_test && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+
+precice1:
+	cd examples/electrophysiology/biceps_contraction/opendihu_precice_with_tendons && python ../../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG

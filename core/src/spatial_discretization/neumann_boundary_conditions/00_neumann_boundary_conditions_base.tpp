@@ -1,4 +1,4 @@
-#include "spatial_discretization/boundary_conditions/neumann_boundary_conditions_base.h"
+#include "spatial_discretization/neumann_boundary_conditions/00_neumann_boundary_conditions_base.h"
 
 #include "easylogging++.h"
 #include "utility/python_utility.h"
@@ -11,7 +11,7 @@ namespace SpatialDiscretization
 //constructor
 template<typename FunctionSpaceType,typename QuadratureType,int nComponents>
 NeumannBoundaryConditionsBase<FunctionSpaceType,QuadratureType,nComponents>::NeumannBoundaryConditionsBase(DihuContext context) :
-  BoundaryConditionsBase<FunctionSpaceType, nComponents>::BoundaryConditionsBase(context), data_(context)
+  data_(context)
 {
 }
 

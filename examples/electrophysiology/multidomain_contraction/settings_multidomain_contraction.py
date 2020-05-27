@@ -335,13 +335,21 @@ config = {
             "MultidomainSolver" : multidomain_solver,
           }
         }
-      }
+      },
+      "PrescribedValues": {   # this is for dummy_contraction.cpp
+        "meshName":                               "3Dmesh",                                       # use the linear mesh, it was partitioned by the helper.py script which called opendihu/scripts/create_partitioned_meshes_for_settings.py
+        "additionalArgument":                     compartment_no,
+        "fieldVariables1": [
+          {"name": "stress", "callback": set_dummy_stress},
+        ],
+        "fieldVariables2":                        None,
+      },
     },
     "Term2": {        # solid mechanics
       "MuscleContractionSolver": {
         "numberTimeSteps":              1,                         # only use 1 timestep per interval
         "timeStepOutputInterval":       100,                       # do not output time steps
-        "Pmax": variables.pmax,                                    # maximum PK2 active stress
+        "Pmax":                         variables.pmax,            # maximum PK2 active stress
         "OutputWriter" : [
           {"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/" + variables.scenario_name + "/mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles": True, "fileNumbering": "incremental"},
         ],

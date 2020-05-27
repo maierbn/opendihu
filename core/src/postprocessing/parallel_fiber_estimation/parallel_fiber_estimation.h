@@ -9,7 +9,8 @@
 #include "interfaces/runnable.h"
 #include "data_management/parallel_fiber_estimation.h"
 #include "quadrature/gauss.h"
-#include "spatial_discretization/boundary_conditions/neumann_boundary_conditions.h"
+#include "spatial_discretization/neumann_boundary_conditions/01_neumann_boundary_conditions.h"
+#include "spatial_discretization/dirichlet_boundary_conditions/01_dirichlet_boundary_conditions.h"
 
 namespace Postprocessing
 {

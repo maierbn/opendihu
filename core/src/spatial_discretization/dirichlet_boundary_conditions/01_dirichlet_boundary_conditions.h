@@ -4,7 +4,7 @@
 #include <vector>
 #include <memory>
 
-#include "spatial_discretization/boundary_conditions/boundary_conditions_base.h"
+#include "spatial_discretization/dirichlet_boundary_conditions/00_dirichlet_boundary_conditions_base.h"
 #include "partition/partitioned_petsc_mat/partitioned_petsc_mat.h"
 
 namespace SpatialDiscretization
@@ -14,13 +14,13 @@ namespace SpatialDiscretization
  *  In the python settings, the Dirichlet BC's need to be specified also for ghost dofs, when inputMeshIsGlobal=False.
   */
 template<typename FunctionSpaceType, int nComponents>
-class DirichletBoundaryConditionsBase :
-  public BoundaryConditionsBase<FunctionSpaceType, nComponents>
+class DirichletDirichletBoundaryConditionsBase :
+  public DirichletBoundaryConditionsBase<FunctionSpaceType, nComponents>
 {
 public:
 
   //! use constructor of base class
-  using BoundaryConditionsBase<FunctionSpaceType, nComponents>::BoundaryConditionsBase;
+  using DirichletBoundaryConditionsBase<FunctionSpaceType, nComponents>::DirichletBoundaryConditionsBase;
 
   //! set the Dirichlet boundary condition dofs to the values
   void applyInVector(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> fieldVariable);
@@ -28,12 +28,12 @@ public:
 
 template<typename FunctionSpaceType, int nComponents>
 class DirichletBoundaryConditions :
-  public DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>
+  public DirichletDirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>
 {
 public:
 
   //! use constructor of base class
-  using DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::DirichletBoundaryConditionsBase;
+  using DirichletDirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::DirichletDirichletBoundaryConditionsBase;
 
   typedef std::array<double,nComponents> ValueType;
 
@@ -79,4 +79,4 @@ protected:
 
 } // namespace
 
-#include "spatial_discretization/boundary_conditions/dirichlet_boundary_conditions.tpp"
+#include "spatial_discretization/dirichlet_boundary_conditions/01_dirichlet_boundary_conditions.tpp"

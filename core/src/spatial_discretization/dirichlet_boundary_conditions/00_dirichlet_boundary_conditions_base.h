@@ -11,7 +11,7 @@ namespace SpatialDiscretization
  *  The static method parseBoundaryConditions parses BC for field variables with any number of components.
   */
 template<typename FunctionSpaceType, int nComponents>
-class BoundaryConditionsBase
+class DirichletBoundaryConditionsBase
 {
 public:
   typedef std::array<double,nComponents> ValueType;   //< the type of value of one boundary condition
@@ -29,7 +29,7 @@ public:
   };
 
   //! constructor
-  BoundaryConditionsBase(DihuContext context);
+  DirichletBoundaryConditionsBase(DihuContext context);
 
   //! initialize data structures by parsing boundary conditions from python config, keys "dirichletBoundaryConditions" or "neumannBoundaryConditions"
   virtual void initialize(PythonConfig specificSettings, std::shared_ptr<FunctionSpaceType> functionSpace,
@@ -38,6 +38,10 @@ public:
   //! initialize directly from given vectors
   void initialize(std::shared_ptr<FunctionSpaceType> functionSpace, std::vector<ElementWithNodes> &boundaryConditionElements,
                   std::vector<dof_no_t> &boundaryConditionNonGhostDofLocalNos, std::vector<ValueType> &boundaryConditionValues);
+
+  //! add boundary conditions to the currently present boundary conditions
+  //! @param overwriteBcOnSameDof if existing bc dofs that are also in the ones to set newly should be overwritten, else they are not touched
+  void addBoundaryConditions(std::vector<ElementWithNodes> &boundaryConditionElements, bool overwriteBcOnSameDof);
 
   //! get a reference to the vector of bc local dofs
   const std::vector<dof_no_t> &boundaryConditionNonGhostDofLocalNos() const;
@@ -66,23 +70,23 @@ protected:
   //! create the boundaryConditionsByComponent_ data structure from boundaryConditionNonGhostDofLocalNos_ and boundaryConditionValues_
   void generateBoundaryConditionsByComponent();
 
-  PythonConfig specificSettings_;            //< the python config that contains the boundary conditions
-  std::shared_ptr<FunctionSpaceType> functionSpace_;     //< function space for which boundary conditions are specified
+  PythonConfig specificSettings_;                               //< the python config that contains the boundary conditions
+  std::shared_ptr<FunctionSpaceType> functionSpace_;            //< function space for which boundary conditions are specified
 
-  std::vector<ElementWithNodes> boundaryConditionElements_;   //< nodes grouped by elements on which boundary conditions are specified, this includes ghost nodes
-  std::vector<dof_no_t> boundaryConditionNonGhostDofLocalNos_;        //< vector of all local (non-ghost) boundary condition dofs, sorted
-  std::vector<ValueType> boundaryConditionValues_;               //< vector of the local (non-ghost) prescribed values, related to boundaryConditionNonGhostDofLocalNos_
+  std::vector<ElementWithNodes> boundaryConditionElements_;     //< nodes grouped by elements on which boundary conditions are specified, this includes ghost nodes
+  std::vector<dof_no_t> boundaryConditionNonGhostDofLocalNos_;  //< vector of all local (non-ghost) boundary condition dofs, sorted
+  std::vector<ValueType> boundaryConditionValues_;              //< vector of the local (non-ghost) prescribed values, related to boundaryConditionNonGhostDofLocalNos_
 
   std::array<BoundaryConditionsForComponent, nComponents> boundaryConditionsByComponent_;   //< the local boundary condition data organized by component, entries are sorted by dofNoLocal, without ghost dofs
 
 };
 
 template<typename FunctionSpaceType, int nComponents>
-std::ostream &operator<<(std::ostream &stream, const typename BoundaryConditionsBase<FunctionSpaceType,nComponents>::BoundaryConditionsForComponent &rhs);
+std::ostream &operator<<(std::ostream &stream, const typename DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::BoundaryConditionsForComponent &rhs);
 
 template<typename FunctionSpaceType, int nComponents>
-std::ostream &operator<<(std::ostream &stream, const typename BoundaryConditionsBase<FunctionSpaceType,nComponents>::ElementWithNodes &rhs);
+std::ostream &operator<<(std::ostream &stream, const typename DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::ElementWithNodes &rhs);
 
 } // namespace
 
-#include "spatial_discretization/boundary_conditions/boundary_conditions_base.tpp"
+#include "spatial_discretization/dirichlet_boundary_conditions/00_dirichlet_boundary_conditions_base.tpp"

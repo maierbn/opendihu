@@ -26,7 +26,7 @@ class ContractionDirichletBoundaryConditions :
 {
 public:
   //! make the FunctionSpace of the NestedSolver class available
-  typedef typename NestedSolver::FunctionSpace FunctionSpace;
+  typedef typename NestedSolver::TimeStepping2Type::FunctionSpace FunctionSpace;
 
   //! define the type of the data object,
   typedef typename NestedSolver::Data Data;   // either, if you do not need your own data object, use the data object of NestedSolver
@@ -56,6 +56,9 @@ public:
 
 protected:
 
+  //! initialize dirichlet boundary conditions of the hyperelasticity solver, set all Dirichlet boundary condition values that will be needed later to vector (0,0,0)
+  void initializeDirichletBoundaryConditions();
+
 #ifdef HAVE_PRECICE
   //! read the data from the other partiticipant
   void preciceReadData();
@@ -63,26 +66,32 @@ protected:
   //! write the data to the other partiticipant
   void preciceWriteData();
 
-  std::unique_ptr<precice::SolverInterface> preciceSolverInterface_;  //< the precice solver interface that makes all preCICE functionality accessible
+  std::unique_ptr<precice::SolverInterface> preciceSolverInterfaceBottom_;  //< the precice solver interface that makes all preCICE functionality accessible
 #endif
 
   DihuContext context_;                       //< object that contains the python config for the current context and the global singletons meshManager and solverManager
   PythonConfig specificSettings_;             //< python object containing the value of the python config dict with corresponding key
 
   NestedSolver nestedSolver_;                 //< the nested solver that is controlled by this class
+  std::shared_ptr<FunctionSpace> functionSpace_; //< 3D function space of displacements
 
   double maximumPreciceTimestepSize_;         //< maximum timestep size that precice will allow for the current time step
   double timeStepWidth_;                      //< timestep width of the solver
 
-  std::vector<int> preciceVertexIds_;         //< the vertex ids in precice of the geometry values
-  int preciceMeshId_;                         //< mesh ID of precice of the mesh that contains all nodes
-
+  std::vector<int> preciceVertexIdsBottom_;   //< the vertex ids in precice of the geometry values at the bottom of the mesh
+  int preciceMeshIdBottom_;                   //< mesh ID of precice of the mesh that contains all nodes
   int preciceDataIdDisplacements_;            //< data ID of precice of the displacements field to be exchanged
+  int preciceDataIdVelocity_;                 //< data ID of precice of the velocity field to be exchanged
   int preciceDataIdTraction_;                 //< data ID of precice of the traction field to be exchanged
+
+  int nNodesBottomSurfaceLocal_;              //< number of nodes on the bottom surface where the tendon is coupled
+
+  std::vector<double> tractionValuesBottom_;  //< traction values to be transferred, in array-of-struct order (x,y,z,x,y,z,...)
+  std::vector<double> tractionValuesTop_;     //< traction values to be transferred
 
   bool initialized_;                          //< if initialize() was already called
 };
 
 }  // namespace
 
-#include "control/precice/muscle_contraction.tpp"
+#include "control/precice/contraction_dirichlet_boundary_conditions.tpp"

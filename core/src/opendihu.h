@@ -7,6 +7,8 @@
 #include "control/load_balancing/load_balancing.h"
 #include "control/precice/partitioned_fibers.h"
 #include "control/precice/muscle_contraction.h"
+#include "control/precice/contraction_dirichlet_boundary_conditions.h"
+#include "control/precice/contraction_neumann_boundary_conditions.h"
 
 #include "basis_function/lagrange.h"
 #include "basis_function/hermite.h"

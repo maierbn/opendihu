@@ -4,7 +4,7 @@
 #include <vector>
 #include <memory>
 
-#include "spatial_discretization/boundary_conditions/boundary_conditions_base.h"
+#include "spatial_discretization/dirichlet_boundary_conditions/00_dirichlet_boundary_conditions_base.h"
 #include "data_management/neumann_boundary_conditions.h"
 
 namespace SpatialDiscretization
@@ -14,8 +14,7 @@ namespace SpatialDiscretization
  *  nComponents == FunctionSpaceType::dim() for traction boundary condition or nComponents = 1 for flux BC
   */
 template<typename FunctionSpaceType, typename QuadratureType, int nComponents>
-class NeumannBoundaryConditionsBase :
-  public BoundaryConditionsBase<FunctionSpaceType, nComponents>
+class NeumannBoundaryConditionsBase
 {
 public:
 
@@ -26,7 +25,7 @@ public:
 
   //! parse config and extract boundary conditions specified under the given key, store in boundaryConditionElements_
   void initialize(PythonConfig specificSettings, std::shared_ptr<FunctionSpaceType> functionSpace,
-                  std::string boundaryConditionsConfigKey) override;
+                  std::string boundaryConditionsConfigKey="neumannBoundaryConditions");
 
   //! initialize directly
   void initialize(std::shared_ptr<FunctionSpaceType> functionSpace, const std::vector<ElementWithFaces> &boundaryConditionElements);
@@ -67,4 +66,4 @@ protected:
 
 } // namespace
 
-#include "spatial_discretization/boundary_conditions/neumann_boundary_conditions_base.tpp"
+#include "spatial_discretization/neumann_boundary_conditions/00_neumann_boundary_conditions_base.tpp"

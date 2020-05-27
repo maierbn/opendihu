@@ -48,6 +48,8 @@ public:
   //! get a reference to the underlying HyperelasticitySolver which has the material formulation and the nonlinear solver
   HyperelasticitySolverType &hyperelasticitySolver();
 
+  //! set new dirichlet boundary condition values
+  void updateDirichletBoundaryConditions(std::vector<std::pair<global_no_t,std::array<double,6>>> newDirichletBCValues);
 
 private:
 
@@ -56,6 +58,9 @@ private:
 
   //! call the callback function to update dirichlet boundary condition values
   void callUpdateDirichletBoundaryConditionsFunction(double t);
+
+  //! call the callback function to update Neumann boundary condition values
+  void callUpdateNeumannBoundaryConditionsFunction(double t);
 
   HyperelasticitySolverType hyperelasticitySolver_;  //< hyperelasticity solver that solver the static problem
   Data data_;
@@ -69,9 +74,13 @@ private:
 
   bool inputMeshIsGlobal_;                      //< value of the setting "inputMeshIsGlobal", if the new dirichletBC values are given in global or local numbering
 
-  PyObject *pythonUpdateDirichletBoundaryConditionsFunction_;       //< the callback function
-  int updateDirichletBoundaryConditionsFunctionCallInterval_;       //< the interval with which the function will be called
-  int updateDirichletBoundaryConditionsFunctionCallCount_ = 0;      //< the counter of number of call to the updateDirichletBoundaryConditionsFunction
+  PyObject *pythonUpdateDirichletBoundaryConditionsFunction_;     //< the callback function
+  int updateDirichletBoundaryConditionsFunctionCallInterval_;     //< the interval with which the function will be called
+  int updateDirichletBoundaryConditionsFunctionCallCount_ = 0;    //< the counter of number of call to the updateDirichletBoundaryConditionsFunction
+
+  PyObject *pythonUpdateNeumannBoundaryConditionsFunction_;       //< the callback function
+  int updateNeumannBoundaryConditionsFunctionCallInterval_;       //< the interval with which the function will be called
+  int updateNeumannBoundaryConditionsFunctionCallCount_ = 0;      //< the counter of number of call to the updateNeumannBoundaryConditionsFunction
 };
 
 }  // namespace

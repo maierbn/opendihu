@@ -7,7 +7,7 @@
 #include "function_space/function_space.h"
 #include "mesh/type_traits.h"
 #include "partition/partitioned_petsc_vec/01_partitioned_petsc_vec_with_dirichlet_bc.h"
-#include "spatial_discretization/boundary_conditions/dirichlet_boundary_conditions.h"
+#include "spatial_discretization/dirichlet_boundary_conditions/01_dirichlet_boundary_conditions.h"
 
 /** This vector is an extension of PartitionedPetscVecWithDirichletBc (read the description there).
  *  In its standard version (nComponents == 3), it is a combined vector of 3 displacements components and 1 pressure component.

@@ -4,7 +4,7 @@
 #include <vector>
 #include <memory>
 
-#include "spatial_discretization/boundary_conditions/neumann_boundary_conditions_base.h"
+#include "spatial_discretization/neumann_boundary_conditions/00_neumann_boundary_conditions_base.h"
 #include "data_management/neumann_boundary_conditions.h"
 
 namespace SpatialDiscretization
@@ -68,7 +68,7 @@ public:
 
 protected:
 
-  //! parse an object of type ElementWithFaces frorm python config,
+  //! parse an object of type ElementWithFaces from python config,
   //! example values:  {"element": 1, "face": "0+", "dofVectors:", {0: [tmax,0,0], 1: [tmax,0,0], 2: [tmax,0,0], 3: [tmax,0,0]}}
   //! if elementNoLocal is != -1, it will be used as value for the local element no, otherwise the value is parsed from config
   virtual ElementWithFaces parseElementWithFaces(PythonConfig specificSettings, std::shared_ptr<FunctionSpaceType> functionSpace, element_no_t elementNoLocal) override;
@@ -93,7 +93,7 @@ protected:
   // initialize the rhs in data, this is called by initialize()
   virtual void initializeRhs();
 
-  //! parse an object of type ElementWithFaces frorm python config,
+  //! parse an object of type ElementWithFaces from python config,
   //! example values:  {"element": 1, "face": "0+", "dofVectors:", {0: [tmax,0,0], 1: [tmax,0,0], 2: [tmax,0,0], 3: [tmax,0,0]}}
   //! if elementNoLocal is != -1, it will be used as value for the local element no, otherwise the value is parsed from config
   virtual ElementWithFaces parseElementWithFaces(PythonConfig specificSettings, std::shared_ptr<FunctionSpaceType> functionSpace, element_no_t elementNoLocal) override;
@@ -104,4 +104,4 @@ protected:
 
 } // namespace
 
-#include "spatial_discretization/boundary_conditions/neumann_boundary_conditions.tpp"
+#include "spatial_discretization/neumann_boundary_conditions/01_neumann_boundary_conditions.tpp"

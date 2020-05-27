@@ -1,4 +1,4 @@
-#include "spatial_discretization/boundary_conditions/boundary_conditions_base.h"
+#include "spatial_discretization/dirichlet_boundary_conditions/00_dirichlet_boundary_conditions_base.h"
 
 #include "easylogging++.h"
 #include "utility/python_utility.h"
@@ -10,19 +10,19 @@ namespace SpatialDiscretization
 
 
 template<typename FunctionSpaceType,int nComponents>
-BoundaryConditionsBase<FunctionSpaceType,nComponents>::
-BoundaryConditionsBase(DihuContext context) : specificSettings_(NULL)
+DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::
+DirichletBoundaryConditionsBase(DihuContext context) : specificSettings_(NULL)
 {
-  LOG(DEBUG) << " create new boundary conditions object.";
+  LOG(DEBUG) << " create new dirichlet boundary conditions object.";
 }
 
 template<typename FunctionSpaceType,int nComponents>
-void BoundaryConditionsBase<FunctionSpaceType,nComponents>::
+void DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::
 initialize(PythonConfig specificSettings, std::shared_ptr<FunctionSpaceType> functionSpace, std::string boundaryConditionsConfigKey)
 {
   functionSpace_ = functionSpace;
 
-  LOG(DEBUG) << "BoundaryConditionsBase::initialize, use functionSpace_: " << functionSpace_->meshName();
+  LOG(DEBUG) << "DirichletBoundaryConditionsBase::initialize, use functionSpace_: " << functionSpace_->meshName();
 
   specificSettings_ = specificSettings;
   printDebuggingInfo();
@@ -34,29 +34,34 @@ initialize(PythonConfig specificSettings, std::shared_ptr<FunctionSpaceType> fun
 
   // parse new boundary condition dofs and values
   parseBoundaryConditionsForElements(boundaryConditionsConfigKey);
+
+  // fill auxiliary ghost element data structures, this is only needed for Dirichlet boundary conditions on scalar fields
   this->initializeGhostElements();
 }
 
 template<typename FunctionSpaceType,int nComponents>
-void BoundaryConditionsBase<FunctionSpaceType,nComponents>::
-initialize(std::shared_ptr<FunctionSpaceType> functionSpace, std::vector<BoundaryConditionsBase<FunctionSpaceType,nComponents>::ElementWithNodes> &boundaryConditionElements,
-                std::vector<dof_no_t> &boundaryConditionNonGhostDofLocalNos, std::vector<ValueType> &boundaryConditionValues)
+void DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::
+initialize(std::shared_ptr<FunctionSpaceType> functionSpace, std::vector<DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::ElementWithNodes> &boundaryConditionElements,
+           std::vector<dof_no_t> &boundaryConditionNonGhostDofLocalNos, std::vector<ValueType> &boundaryConditionValues)
 {
   functionSpace_ = functionSpace;
 
-  LOG(DEBUG) << "BoundaryConditionsBase::initialize, use functionSpace_: " << functionSpace_->meshName();
+  LOG(DEBUG) << "DirichletBoundaryConditionsBase::initialize, use functionSpace_: " << functionSpace_->meshName();
 
   boundaryConditionElements_ = boundaryConditionElements;
   boundaryConditionNonGhostDofLocalNos_ = boundaryConditionNonGhostDofLocalNos;
   boundaryConditionValues_ = boundaryConditionValues;
+
+  // create the boundaryConditionsByComponent_ data structure from boundaryConditionNonGhostDofLocalNos_ and boundaryConditionValues_
   generateBoundaryConditionsByComponent();
   printDebuggingInfo();
 
+  // fill auxiliary ghost element data structures, this is only needed for Dirichlet boundary conditions on scalar fields
   this->initializeGhostElements();
 }
 
 template<typename FunctionSpaceType,int nComponents>
-void BoundaryConditionsBase<FunctionSpaceType,nComponents>::
+void DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::
 printDebuggingInfo()
 {
   if (VLOG_IS_ON(1))
@@ -72,7 +77,7 @@ printDebuggingInfo()
 }
 
 template<typename FunctionSpaceType,int nComponents>
-void BoundaryConditionsBase<FunctionSpaceType,nComponents>::
+void DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::
 parseBoundaryConditions(PythonConfig settings, std::shared_ptr<FunctionSpaceType> functionSpace, std::string boundaryConditionsConfigKey,
                         std::vector<std::pair<int,std::array<double,nComponents>>> &boundaryConditions)
 {
@@ -136,7 +141,7 @@ parseBoundaryConditions(PythonConfig settings, std::shared_ptr<FunctionSpaceType
 }
 
 template<typename FunctionSpaceType,int nComponents>
-void BoundaryConditionsBase<FunctionSpaceType,nComponents>::
+void DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::
 parseBoundaryConditionsForElements(std::string boundaryConditionsConfigKey)
 {
   LOG(TRACE) << "parseBoundaryConditionsForElements, functionSpace: " <<  functionSpace_->meshName()
@@ -191,10 +196,8 @@ parseBoundaryConditionsForElements(std::string boundaryConditionsConfigKey)
   // which is organized by local elements
   element_no_t lastBoundaryConditionElement = -1;
   std::set<dof_no_t> boundaryConditionNonGhostDofLocalNosSet;   //< same data as in boundaryConditionNonGhostDofLocalNos_, but as set
-  std::set<dof_no_t> boundaryConditionGhostDofLocalNosSet;   //< same data as in boundaryConditionGhostDofLocalNos_, but as set
 
-  std::vector<std::pair<int,ValueType>> boundaryConditionsNonGhost_;   //< boundary condition dof nos and values for non-ghost dofs, used to collect values and sort them afterwards
-  std::vector<std::pair<int,ValueType>> boundaryConditionsGhost_;      //< boundary condition dof nos and values for ghost dofs, used  to collect values and sort them afterwards
+  std::vector<std::pair<int,ValueType>> boundaryConditionsNonGhost;   //< boundary condition dof nos and values for non-ghost dofs, used to collect values and sort them afterwards
 
   // loop over all local elements
   for (element_no_t elementNoLocal = 0; elementNoLocal < functionSpace_->nElementsLocal(); elementNoLocal++)
@@ -276,22 +279,11 @@ parseBoundaryConditionsForElements(std::string boundaryConditionsConfigKey)
           // if the dof is non-ghost
           if (dofLocalNo < functionSpace_->nDofsLocalWithoutGhosts())
           {
-            // if dofLocalNo is not already contained in boundaryConditionGhostDofLocalNos_
+            // if dofLocalNo is not already contained in boundaryConditionsNonGhost
             if (boundaryConditionNonGhostDofLocalNosSet.find(dofLocalNo) == boundaryConditionNonGhostDofLocalNosSet.end())
             {
               boundaryConditionNonGhostDofLocalNosSet.insert(dofLocalNo);
-              boundaryConditionsNonGhost_.push_back(std::pair<int,ValueType>(dofLocalNo, boundaryConditionValue));
-            }
-          }
-          else 
-          {
-            // if the dof is a ghost-dof
-            
-            // if dofLocalNo is not already contained in boundaryConditionGhostDofLocalNos_
-            if (boundaryConditionGhostDofLocalNosSet.find(dofLocalNo) == boundaryConditionGhostDofLocalNosSet.end())
-            {
-              boundaryConditionGhostDofLocalNosSet.insert(dofLocalNo);
-              boundaryConditionsGhost_.push_back(std::pair<int,ValueType>(dofLocalNo, boundaryConditionValue));
+              boundaryConditionsNonGhost.push_back(std::pair<int,ValueType>(dofLocalNo, boundaryConditionValue));
             }
           }
         }
@@ -300,28 +292,25 @@ parseBoundaryConditionsForElements(std::string boundaryConditionsConfigKey)
   }
   
   // sort list according to dof no.s
-  std::sort(boundaryConditionsNonGhost_.begin(), boundaryConditionsNonGhost_.end(), [&](std::pair<int,ValueType> a, std::pair<int,ValueType> b)
-  {
-    return a.first < b.first;
-  });
-  std::sort(boundaryConditionsGhost_.begin(), boundaryConditionsGhost_.end(), [&](std::pair<int,ValueType> a, std::pair<int,ValueType> b)
+  std::sort(boundaryConditionsNonGhost.begin(), boundaryConditionsNonGhost.end(), [&](std::pair<int,ValueType> a, std::pair<int,ValueType> b)
   {
     return a.first < b.first;
   });
 
   // transfer data to other data structure
-  boundaryConditionNonGhostDofLocalNos_.reserve(boundaryConditionsNonGhost_.size());
-  boundaryConditionValues_.reserve(boundaryConditionsNonGhost_.size());
+  boundaryConditionNonGhostDofLocalNos_.reserve(boundaryConditionsNonGhost.size());
+  boundaryConditionValues_.reserve(boundaryConditionsNonGhost.size());
   
-  for (typename std::vector<std::pair<int,ValueType>>::iterator iter = boundaryConditionsNonGhost_.begin(); iter != boundaryConditionsNonGhost_.end(); iter++)
+  for (typename std::vector<std::pair<int,ValueType>>::iterator iter = boundaryConditionsNonGhost.begin(); iter != boundaryConditionsNonGhost.end(); iter++)
   {
     boundaryConditionNonGhostDofLocalNos_.push_back(iter->first);
     boundaryConditionValues_.push_back(iter->second);
   }
   
+  // create the boundaryConditionsByComponent_ data structure from boundaryConditionNonGhostDofLocalNos_ and boundaryConditionValues_
   generateBoundaryConditionsByComponent();
 
-  LOG(DEBUG) << "boundaryConditionsNonGhost_: " << boundaryConditionsNonGhost_
+  LOG(DEBUG) << "boundaryConditionsNonGhost: " << boundaryConditionsNonGhost
     << ", boundaryConditionNonGhostDofLocalNos: " << boundaryConditionNonGhostDofLocalNos_
     << ", boundaryConditionValues: " << boundaryConditionValues_ << ", boundaryConditionsByComponent_: ";
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
@@ -332,7 +321,7 @@ parseBoundaryConditionsForElements(std::string boundaryConditionsConfigKey)
 }
 
 template<typename FunctionSpaceType,int nComponents>
-void BoundaryConditionsBase<FunctionSpaceType,nComponents>::
+void DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::
 generateBoundaryConditionsByComponent()
 {
   // fill the data structure
@@ -385,9 +374,124 @@ generateBoundaryConditionsByComponent()
   }
 }
 
+//! add boundary conditions to the currently present boundary conditions
+template<typename FunctionSpaceType,int nComponents>
+void DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::
+addBoundaryConditions(std::vector<ElementWithNodes> &boundaryConditionElements, bool overwriteBcOnSameDof)
+{
+  // merge boundaryConditionElements into boundaryConditionElements_
+
+  // loop over given boundaryConditionElements_
+  for (const ElementWithNodes &elementWithNodes : boundaryConditionElements)
+  {
+    // find corresponding element in boundaryConditionElements_
+    bool elementFound = false;
+    for (ElementWithNodes &existingElementWithNodes : boundaryConditionElements_)
+    {
+      // if the element was found
+      if (existingElementWithNodes.elementNoLocal == elementWithNodes.elementNoLocal)
+      {
+        // loop over elemental dof indices and add all entries
+        // std::vector<std::pair<int,ValueType>> elementalDofIndex;
+        for (const std::pair<int,ValueType> &elementalDofIndex : elementWithNodes.elementalDofIndex)
+        {
+          bool elementalDofIndexFound = false;
+          for (std::pair<int,ValueType> existingElementalDofIndex : existingElementWithNodes.elementalDofIndex)
+          {
+            // if the dof already has a bc prescribed
+            if (existingElementalDofIndex.first == elementalDofIndex.first)
+            {
+              // if the bc values should be overwritten
+              if (overwriteBcOnSameDof)
+              {
+                existingElementalDofIndex.second = elementalDofIndex.second;
+              }
+
+              elementalDofIndexFound = true;
+              break;
+            }
+          }
+
+          if (!elementalDofIndexFound)
+          {
+            existingElementWithNodes.elementalDofIndex.push_back(elementalDofIndex);
+          }
+        }
+
+        elementFound = true;
+        break;
+      }
+    }
+
+    // if element was not existent yet, add it
+    if (!elementFound)
+    {
+      // add element
+      boundaryConditionElements_.push_back(elementWithNodes);
+    }
+  }
+
+  // clear previous boundary condition values and create anew
+  boundaryConditionNonGhostDofLocalNos_.clear();
+  boundaryConditionValues_.clear();
+
+  std::set<dof_no_t> boundaryConditionNonGhostDofLocalNosSet;         //< same data as in boundaryConditionNonGhostDofLocalNos_, but as set
+  std::vector<std::pair<int,ValueType>> boundaryConditionsNonGhost;   //< boundary condition dof nos and values for non-ghost dofs, used to collect values and sort them afterwards
+
+  // create boundaryConditionNonGhostDofLocalNos_ and boundaryConditionValues_ from boundaryConditionValues_
+  // loop over existing boundaryConditionElements_
+  for (const ElementWithNodes &elementWithNodes : boundaryConditionElements_)
+  {
+    int elementNoLocal = elementWithNodes.elementNoLocal;
+
+    // loop over elemental dof indices
+    for (const std::pair<int,ValueType> &elementalDofIndexAndValues : elementWithNodes.elementalDofIndex)
+    {
+      int elementalDofIndex = elementalDofIndexAndValues.first;
+      ValueType boundaryConditionValue = elementalDofIndexAndValues.second;
+
+      // also store localDofNo
+      dof_no_t dofLocalNo = functionSpace_->getDofNo(elementNoLocal, elementalDofIndex);
+
+      // if the dof is non-ghost
+      if (dofLocalNo < functionSpace_->nDofsLocalWithoutGhosts())
+      {
+        // if dofLocalNo is not already contained in boundaryConditionGhostDofLocalNos_
+        if (boundaryConditionNonGhostDofLocalNosSet.find(dofLocalNo) == boundaryConditionNonGhostDofLocalNosSet.end())
+        {
+          boundaryConditionNonGhostDofLocalNosSet.insert(dofLocalNo);
+          boundaryConditionsNonGhost.push_back(std::pair<int,ValueType>(dofLocalNo, boundaryConditionValue));
+        }
+      }
+    }
+  }
+
+  // sort list according to dof no.s
+  std::sort(boundaryConditionsNonGhost.begin(), boundaryConditionsNonGhost.end(), [&](std::pair<int,ValueType> a, std::pair<int,ValueType> b)
+  {
+    return a.first < b.first;
+  });
+
+  // transfer data to other data structure
+  boundaryConditionNonGhostDofLocalNos_.reserve(boundaryConditionsNonGhost.size());
+  boundaryConditionValues_.reserve(boundaryConditionsNonGhost.size());
+
+  for (typename std::vector<std::pair<int,ValueType>>::iterator iter = boundaryConditionsNonGhost.begin(); iter != boundaryConditionsNonGhost.end(); iter++)
+  {
+    boundaryConditionNonGhostDofLocalNos_.push_back(iter->first);
+    boundaryConditionValues_.push_back(iter->second);
+  }
+
+  // create the boundaryConditionsByComponent_ data structure from boundaryConditionNonGhostDofLocalNos_ and boundaryConditionValues_
+  generateBoundaryConditionsByComponent();
+
+  // fill auxiliary ghost element data structures, this is only needed for Dirichlet boundary conditions on scalar fields
+  this->initializeGhostElements();
+}
+
 //! get a reference to the vector of bc local dofs
 template<typename FunctionSpaceType,int nComponents>
-const std::vector<dof_no_t> &BoundaryConditionsBase<FunctionSpaceType,nComponents>::
+const std::vector<dof_no_t> &DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::
 boundaryConditionNonGhostDofLocalNos() const
 {
   return boundaryConditionNonGhostDofLocalNos_;
@@ -395,7 +499,7 @@ boundaryConditionNonGhostDofLocalNos() const
 
 //! get a reference to the vector of bc local dofs
 template<typename FunctionSpaceType,int nComponents>
-const std::vector<typename BoundaryConditionsBase<FunctionSpaceType,nComponents>::ValueType> &BoundaryConditionsBase<FunctionSpaceType,nComponents>::
+const std::vector<typename DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::ValueType> &DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::
 boundaryConditionValues() const
 {
   return boundaryConditionValues_;
@@ -403,21 +507,21 @@ boundaryConditionValues() const
 
 //! get the boundary conditions data organized by component
 template<typename FunctionSpaceType,int nComponents>
-const std::array<typename BoundaryConditionsBase<FunctionSpaceType,nComponents>::BoundaryConditionsForComponent, nComponents> &BoundaryConditionsBase<FunctionSpaceType,nComponents>::
+const std::array<typename DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::BoundaryConditionsForComponent, nComponents> &DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::
 boundaryConditionsByComponent() const
 {
   return boundaryConditionsByComponent_;
 }
 
 template<typename FunctionSpaceType, int nComponents>
-std::ostream &operator<<(std::ostream &stream, const typename BoundaryConditionsBase<FunctionSpaceType,nComponents>::BoundaryConditionsForComponent rhs)
+std::ostream &operator<<(std::ostream &stream, const typename DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::BoundaryConditionsForComponent rhs)
 {
   stream << "{dofNos: " << rhs.dofNosLocal << ", values: " << rhs.values << "}";
   return stream;
 }
 
 template<typename FunctionSpaceType, int nComponents>
-std::ostream &operator<<(std::ostream &stream, const typename BoundaryConditionsBase<FunctionSpaceType,nComponents>::ElementWithNodes rhs)
+std::ostream &operator<<(std::ostream &stream, const typename DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::ElementWithNodes rhs)
 {
   stream << "{el." << rhs.elementNoLocal << ", (dof,v):" << rhs.elementalDofIndex << "}";
   return stream;

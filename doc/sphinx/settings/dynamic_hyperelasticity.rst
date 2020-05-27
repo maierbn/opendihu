@@ -18,6 +18,8 @@ Where ``Material`` is a class that describes the used constitutive equations at 
 Python settings
 -----------------
 
+In the following all possible options for the dynamic hyperelasticity solver are listed. They are explained by the comments. Most of them are also present in the :doc:`HyperelasticitySolver <hyperelasticity>`.
+
 .. code-block:: python
 
   "DynamicHyperelasticitySolver": {
@@ -71,6 +73,8 @@ Python settings
     "divideNeumannBoundaryConditionValuesByTotalArea": True,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
     "updateDirichletBoundaryConditionsFunction": None,                  # function that updates the dirichlet BCs while the simulation is running
     "updateDirichletBoundaryConditionsFunctionCallInterval": 1,         # every which step the update function should be called, 1 means every time step
+    "updateNeumannBoundaryConditionsFunction": None,                    # function that updates the Neumann BCs while the simulation is running
+    "updateNeumannBoundaryConditionsFunctionCallInterval": 1,           # every which step the update function should be called, 1 means every time step
     
     "initialValuesDisplacements":  [[0.0,0.0,0.0] for _ in range(mx*my*mz)],     # the initial values for the displacements, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
     "initialValuesVelocities":     [[0.0,0.0,0.0] for _ in range(mx*my*mz)],     # the initial values for the velocities, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
@@ -107,3 +111,78 @@ Python settings
       ]
     },
   }
+  
+  
+`updateDirichletBoundaryConditionsFunction` (optional)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This is a callback function that will be called regularly, in the interval given by the parameter `updateDirichletBoundaryConditionsFunctionCallInterval`. 
+It allows to set new values for the Dirichlet boundary conditions, i.e. prescribed displacements and velocities. Set it to `None` to disable the callback.
+
+The call function has the following form:
+
+.. code-block:: python
+
+  dirichlet_bc = {}
+  dirichlet_bc[2] = 1   # prescribed dof 2 to value 1
+
+  # Function to update dirichlet boundary conditions over time, t.
+  # This function returns "dirichlet_bc". Only those entries can be updated that were also initially set.
+  def update_dirichlet_boundary_conditions(t):
+    
+    dirichlet_bc[2] = 4   # change prescribed value of dof 2 to be value 4
+    return dirichlet_bc
+
+The only given argument, ``t``, is the current simulation time. The return value has to be a dict in the format that fits the parameter `dirichletBoundaryConditions`.
+It is recommended to use a global variable, e.g. named ``dirichlet_bc``, that holds such a dict with all Dirichlet boundary conditions. 
+Then, in the callback function, this variable is modified and returned.
+
+Only the entries which were initially set can be modified. The reason for this is, that the prescribed dofs affect the matrix structure and the system matrix will not be reformed every time this callback was called, because this would be too expensive.
+
+`updateDirichletBoundaryConditionsFunctionCallInterval` (optional)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This option is the interval in which the callback function `updateDirichletBoundaryConditionsFunction` will be called. Only if `updateDirichletBoundaryConditionsFunction` was given in the config, this option is mandatory.
+
+
+`updateNeumannBoundaryConditionsFunction` (optional)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This is a callback function that will be called regularly, in the interval given by the parameter `updateDirichletBoundaryConditionsFunctionCallInterval`. 
+It allows to set new Neumann boundary conditions, i.e. surface traction values. Set it to `None` to disable the callback.
+
+The callback function has the following form:
+
+.. code-block:: python
+
+  # Function to update Neumann boundary conditions over time
+  def update_neumann_boundary_conditions(t):
+    
+    # Neumann boundary conditions
+    k = 0
+    factor = np.sin(t/10. * 2*np.pi)*0.1
+    neumann_bc = [{"element": k*nx*ny + j*nx + i, "constantVector": [factor,0,0], "face": "2-"} for j in range(ny) for i in range(nx)]
+    #neumann_bc = []
+
+    config = {
+      "inputMeshIsGlobal": True,
+      "divideNeumannBoundaryConditionValuesByTotalArea": False,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
+      "neumannBoundaryConditions": neumann_bc
+    }
+    
+    print("update neumann bc for t={}: {}".format(t,config))
+    return config
+
+The only given argument, ``t``, is the current simulation time. The return value has to be a config dict in the format shown above.
+The options `"inputMeshIsGlobal"`, `"divideNeumannBoundaryConditionValuesByTotalArea"` and `"neumannBoundaryConditions"` have the same meaning as in the normal `config`.
+ 
+This means the value of "neumannBoundaryConditions" has the usual list format for Neumann boundary conditions.
+
+Changing Neumann boundary condition values only affects the right hand side of the mechanics problem. Therefore, any number of Neumann Bc values can be set, unlike in the Dirichlet BC callback. Previous Neumann boundary conditions are deleted.
+
+`updateNeumannBoundaryConditionsFunctionCallInterval` (optional)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This option is the interval in which the callback function `updateNeumannBoundaryConditionsFunction` will be called.
+Only if `updateNeumannBoundaryConditionsFunction` was given in the config, this option is mandatory.
+
+
+
+
+

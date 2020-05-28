@@ -68,7 +68,7 @@ Note that only explicit timestepping schemes are possible, which is current ``Ti
     # stimulation callbacks
     #"setSpecificParametersFunction":         set_specific_parameters,                        # callback function that sets parameters like stimulation current
     #"setSpecificParametersCallInterval":     int(1./variables.stimulation_frequency/variables.dt_0D),         # set_specific_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
-    "setSpecificStatesFunction":              set_specific_states,                                             # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
+    "setSpecificStatesFunction":              set_specific_states,                                             # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setSpecificParameters
     #"setSpecificStatesCallInterval":         2*int(1./variables.stimulation_frequency/variables.dt_0D),       # set_specific_states should be called variables.stimulation_frequency times per ms, the factor 2 is needed because every Heun step includes two calls to rhs
     "setSpecificStatesCallInterval":          0,                                                               # 0 means disabled
     "setSpecificStatesCallFrequency":         variables.get_specific_states_call_frequency(fiber_no, motor_unit_no),   # set_specific_states should be called variables.stimulation_frequency times per ms
@@ -99,7 +99,7 @@ Note that only explicit timestepping schemes are possible, which is current ``Ti
     # stimulation callbacks
     #"setSpecificParametersFunction":         set_specific_parameters,                # callback function that sets parameters like stimulation current
     #"setSpecificParametersCallInterval":     int(1./stimulation_frequency/dt_0D),    # set_specific_parameters should be called every 1/stimulation_frequency seconds
-    "setSpecificStatesFunction":              set_specific_states,                    # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
+    "setSpecificStatesFunction":              set_specific_states,                    # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setSpecificParameters
     #"setSpecificStatesCallInterval":         2*int(1./stimulation_frequency/dt_0D),  # set_specific_states should be called stimulation_frequency times per ms, the factor 2 is needed because every Heun step includes two calls to rhs
     "setSpecificStatesCallInterval":          0,                                      # call intervall of the set_specific_states function, 0 means use setSpecificStatesCallFrequency instead
     "setSpecificStatesCallFrequency":         get_specific_states_call_frequency,     # set_specific_states should be called stimulation_frequency times per ms
@@ -194,42 +194,6 @@ They can be used, e.g., to stimulate a subcellular model at specific times.
 The different callback functions and their time step interval by which the functions will be called are listed below. 
 All of them will get the value of the option *additionalArgument* as its last argument. Like this it is possible to distinguish different instances in the functions when *CellMLAdapter* is nested inside *MultipleInstances*. This is the case for multiple fibers, where the *additionalArgument* can be the fiber number.
 
-*setParametersFunction* and *setParametersCallInterval*
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Callback function and time step interval by which the function will be called.
-This function can change all parameters and has the following signature:
-
-.. code-block:: python
-
-  def set_parameters(n_dofs_global, timestep_no, current_time, parameters, dof_nos_global_natural, additional_argument):
-    # n_dofs_global: (int) global number of dofs in the mesh, i.e. number of CellML instances to be computed
-    # timestep_no:   (int) current time step number, advances by the value of "setParametersCallInterval"
-    # current_time:  (float) the current simulation time
-    # parameters:    list of floats: [instance0p0, instance0p1, ... instance0pN, instance1p0, instance1p1, ...]
-    #                The nParameters*nInstances parameter values (KNOWN values) to all instances, this list can be altered inside
-    #                this function and will take effect in the CellML model
-    # dof_nos_global_natural: list of ints: [dofNo0, dofNo1, ...] 
-    #                For the local dofs the gobal numbers in global natural ordering. This are all dofs on this rank for 
-    #                which the parameters are given. See the example below.
-    # additional_argument: The value of the option "additionalArgument", can be any Python object.
-
-
-.. _callbackmesh:
-.. figure:: images/callback_mesh.svg
-  :width: 50%
-  :align: center
-  
-  Example mesh with two subdomains and global natural ordering of the nodes.
-
-
-For example, consider a mesh as in :numref:`callbackmesh` where a CellML model is computed on each node. The mesh is partitioned to two subdomains.
-Rank 0 computes the grey nodes, rank 1 computes the blue nodes. The global natural ordering is given in the figure.
-
-Then, on rank 0, ``dof_nos_global_natural`` will contain the list ``[0,1,4,5,8,9]`` and on rank 1, the list will be  ``[2,3,6,7,10,11]``. 
-This shows to which global nodes the values in the `parameters` list correspond. With this information, the callback function could decide which parameters to update.
-
-This callback function is slower than `setSpecificParametersFunction`.
-
 *setSpecificParametersFunction* and *setSpecificParametersCallInterval*
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Callback function and time step interval by which the function will be called.
@@ -251,6 +215,19 @@ This function can change some parameters and has the following signature:
     # nodal_dof_index is the dof number of the node, usually 0. Only for Hermite ansatz functions it can be higher.
     # parameter_no is the parameter number to set 
     # value is the new parameter value
+
+.. _callbackmesh:
+.. figure:: images/callback_mesh.svg
+  :width: 50%
+  :align: center
+  
+  Example mesh with two subdomains and global natural ordering of the nodes.
+
+For example, consider a mesh as in :numref:`callbackmesh` where a CellML model is computed on each node. The mesh is partitioned to two subdomains.
+Rank 0 computes the grey nodes, rank 1 computes the blue nodes. The global natural ordering is given in the figure.
+
+Then, on rank 0, ``dof_nos_global_natural`` will contain the list ``[0,1,4,5,8,9]`` and on rank 1, the list will be  ``[2,3,6,7,10,11]``. 
+This shows to which global nodes the values in the `parameters` list correspond. With this information, the callback function could decide which parameters to update.
 
 *setSpecificStatesFunction* and *setSpecificStatesCallInterval*
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

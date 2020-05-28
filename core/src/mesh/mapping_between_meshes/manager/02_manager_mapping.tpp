@@ -203,7 +203,7 @@ map(std::shared_ptr<FieldVariableSourceType> fieldVariableSource,
               // This means that the target field variable pointer can be set to the source field variable pointer.
               if ((long long)(fieldVariableSource.get()) != (long long)(fieldVariableTarget.get()))
               {
-                VLOG(1) << "set target pointer to source pointer";
+                VLOG(1) << "set target pointer to source pointer, name \"" << fieldVariableTarget->name() << "\" to \"" << fieldVariableSource->name() << "\"";
                 fieldVariableTarget = std::dynamic_pointer_cast<FieldVariableTargetType>(fieldVariableSource);
               }
               else
@@ -226,6 +226,19 @@ map(std::shared_ptr<FieldVariableSourceType> fieldVariableSource,
               //fieldVariableSource->extractComponentShared(componentNoSource, fieldVariableTarget);
               ExtractComponentShared<FieldVariableSourceType,FieldVariableTargetType>::call(componentNoSource, fieldVariableSource, fieldVariableTarget);
 
+              // if target field variable is "additionalFieldVariable", also set the name from the source field variable
+              if (fieldVariableTarget->name().find("additionalFieldVariable") != std::string::npos)
+              {
+                std::stringstream name;
+                name << fieldVariableSource->name() << "." << fieldVariableSource->componentName(componentNoSource);
+                VLOG(1) << "(1) rename target field variable from \"" << fieldVariableTarget->name() << "\" to \"" << name.str() << "\".";
+                fieldVariableTarget->setName(name.str());
+              }
+              else
+              {
+                VLOG(1) << "(1) do not rename target field variable \"" << fieldVariableTarget->name();
+              }
+
               VLOG(1) << "source representation: " << fieldVariableSource->partitionedPetscVec()->getCurrentRepresentationString();
 
               return;
@@ -244,7 +257,14 @@ map(std::shared_ptr<FieldVariableSourceType> fieldVariableSource,
               // if target field variable is "additionalFieldVariable", also set the name from the source field variable
               if (fieldVariableTarget->name().find("additionalFieldVariable") != std::string::npos)
               {
-                fieldVariableTarget->setName(fieldVariableSource->name());
+                std::stringstream name;
+                name << fieldVariableSource->name() << "." << fieldVariableSource->componentName(componentNoSource);
+                VLOG(1) << "(2) rename target field variable from \"" << fieldVariableTarget->name() << "\" to \"" << name.str() << "\".";
+                fieldVariableTarget->setName(name.str());
+              }
+              else
+              {
+                VLOG(1) << "(2) do not rename target field variable \"" << fieldVariableTarget->name();
               }
 
               VLOG(1) << "source representation: " << fieldVariableSource->partitionedPetscVec()->getCurrentRepresentationString();
@@ -275,6 +295,20 @@ map(std::shared_ptr<FieldVariableSourceType> fieldVariableSource,
           ierr = VecCopy(fieldVariableSource->valuesGlobal(componentNoSource), fieldVariableTarget->valuesGlobal(componentNoTarget)); CHKERRV(ierr);
         }
       }
+
+      // if target field variable is "additionalFieldVariable", also set the name from the source field variable
+      if (fieldVariableTarget->name().find("additionalFieldVariable") != std::string::npos)
+      {
+       std::stringstream name;
+        name << fieldVariableSource->name() << "." << fieldVariableSource->componentName(componentNoSource);
+        VLOG(1) << "(1) rename target field variable from \"" << fieldVariableTarget->name() << "\" to \"" << name.str() << "\".";
+        fieldVariableTarget->setName(name.str());
+      }
+      else
+      {
+        VLOG(1) << "(3) do not rename target field variable \"" << fieldVariableTarget->name();
+      }
+
       VLOG(1) << "source (" << fieldVariableSource << "): " << *fieldVariableSource;
       VLOG(1) << "target (" << fieldVariableTarget << "): " << *fieldVariableTarget;
       return;

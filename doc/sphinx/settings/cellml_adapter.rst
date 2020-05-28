@@ -366,16 +366,19 @@ as well as the connection of `outputConnectorSlots` to `states`, `intermediates`
       ("outputConnectorSlot", 0): ("state", "wal_environment/vS"),
       ("outputConnectorSlot", 1): ("state", 5),  
       ("outputConnectorSlot", 2): ("state", "potassium_channel_n_gate/n"),
+      ("outputConnectorSlot", 2): "potassium_channel_n_gate/n",             # alternative
       ("outputConnectorSlot", 3): ("intermediate", "leakage_current/i_L"),
+      ("outputConnectorSlot", 3): "leakage_current/i_L",                    # alternative
       ("outputConnectorSlot", 4): ("parameter", 0),
     }
     
 The value of `mappings` is a Python Dict. Each key is either ``("parameter", 0)`` or ``("outputConnectorSlot", 0)``, where ``0`` can be any integer number.
-The value that corresponds to the key is a two-element tuple of the form 
+The value that corresponds to the key is a two-element tuple or string of the form 
 
-``("name", "cellml name")`` or ``("name", 0)`` 
+``("name", "cellml name")`` or ``("name", 0)`` or ``"cellml name"``
 
 where ``"name"`` has to be either ``"constant"``, ``"state"``, ``"intermediate"`` or ``"parameter"``, the ``"cellml name"`` is the name of the variable in the CellML model in the form ``"componentName/variableName"`` and ``0`` can be any valid index. This means, it is possible to identify, e.g. a state by its name as well as by its index in the C code file.
+If there is no tuple but only the "cellml name", it will determine automatically if it is a `state`, `intermediate` or `constant` by searching among all available cellml names.
 
 For the parameters, the index must start with `0` and increase by one for all further parameters. As already mentioned, the mapped variable for a parameter can be an `"intermediate"` or a `"constant"`. The beginning of the parameters list must all map to intermediates and the rest must map to constants. I.e., every constant must be mapped to a parameter with lower index than all the parameters that are mapped to intermediates. The specified mappings will internally be transferred to the ``parametersUsedAsIntermediate`` and ``parametersUsedAsConstant`` lists that can otherwise also be set directly by these options.
 

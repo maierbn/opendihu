@@ -77,6 +77,16 @@ public:
   template<int a, int b, typename c> friend class FastMonodomainSolverBase;
 
 protected:
+
+  //! check if the callback function "setSpecificParameters" needs to be called and if so, execute the call
+  void checkCallbackParameters(double currentTime);
+
+  //! check if the callback function "setSpecificStates" needs to be called and if so, execute the call
+  void checkCallbackStates(double currentTime, double *statesLocal);
+
+  //! check if the callback function "handleResult" needs to be called and if so, execute the call
+  void checkCallbackIntermediates(double currentTime, double *statesLocal, double *intermediatesLocal);
+
   //! compute equilibrium of states for option "initializeStatesToEquilibrium"
   void initializeToEquilibriumValues(std::array<double,nStates_> &statesInitialValues);
 };

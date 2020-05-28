@@ -218,14 +218,127 @@ initializeMappings(std::vector<int> &parametersUsedAsIntermediate, std::vector<i
     const std::vector<std::string> &stateNames = cellmlSourceCodeGenerator_.stateNames();
     const std::vector<std::string> &constantNames = cellmlSourceCodeGenerator_.constantNames();
 
-    using EntryTypePython = std::pair<std::string,PyObject *>;
 
-    std::pair<EntryTypePython,EntryTypePython> item = this->specificSettings_.template getOptionDictBegin<EntryTypePython,EntryTypePython>("mappings");
+    // -----------------------------
+    // parse all entries of "mappings" to tupleEntries of the following form
+    /*
+    "mappings": {
+      ("parameter",0): ("state","membrane/V"),
+      ("parameter",1): ("intermediate","razumova/activestress"),
+      ("parameter",2): ("constant",0),
+      ("outputConnectorSlot",0): ("parameter",0),
+      ("outputConnectorSlot",1): "razumova/l_hs",       #<-- this will be converted now
+    }
+    */
+    using EntryTypePython = std::pair<std::string,PyObject *>;
+    std::vector<std::pair<EntryTypePython,EntryTypePython>> tupleEntries;
+
+    std::pair<PyObject *,PyObject *> item = this->specificSettings_.template getOptionDictBegin<PyObject *,PyObject *>("mappings");
 
     for (;!this->specificSettings_.getOptionDictEnd("mappings");
-         this->specificSettings_.template getOptionDictNext<EntryTypePython,EntryTypePython>("mappings",item))
+         this->specificSettings_.template getOptionDictNext<PyObject *,PyObject *>("mappings",item))
     {
-      EntryTypePython entries[2] = {item.first, item.second};
+      EntryTypePython firstTuple;
+      EntryTypePython secondTuple;
+
+      if (PyTuple_Check(item.first))
+      {
+        firstTuple = PythonUtility::convertFromPython<EntryTypePython>::get(item.first);
+      }
+      else
+      {
+        std::string name = PythonUtility::convertFromPython<std::string>::get(item.first);
+
+        // find if the string is a intermediate name given in intermediateNames
+        std::vector<std::string>::const_iterator pos = std::find(intermediateNames.begin(), intermediateNames.end(), name);
+        if (pos != intermediateNames.end())
+        {
+          firstTuple.first = "intermediate";
+          firstTuple.second = PythonUtility::convertToPython<std::string>::get(name);
+        }
+        else
+        {
+          std::vector<std::string>::const_iterator pos = std::find(stateNames.begin(), stateNames.end(), name);
+          if (pos != stateNames.end())
+          {
+            firstTuple.first = "state";
+            firstTuple.second = PythonUtility::convertToPython<std::string>::get(name);
+          }
+          else
+          {
+            std::vector<std::string>::const_iterator pos = std::find(constantNames.begin(), constantNames.end(), name);
+            if (pos != constantNames.end())
+            {
+              firstTuple.first = "constant";
+              firstTuple.second = PythonUtility::convertToPython<std::string>::get(name);
+            }
+            else
+            {
+              LOG(ERROR) << "In mappings, name \"" << name << "\" is neither state, intermediate nor constant.";
+            }
+          }
+        }
+      }
+
+
+      if (PyTuple_Check(item.second))
+      {
+        secondTuple = PythonUtility::convertFromPython<EntryTypePython>::get(item.second);
+      }
+      else
+      {
+        std::string name = PythonUtility::convertFromPython<std::string>::get(item.second);
+
+        // find if the string is a intermediate name given in intermediateNames
+        std::vector<std::string>::const_iterator pos = std::find(intermediateNames.begin(), intermediateNames.end(), name);
+        if (pos != intermediateNames.end())
+        {
+          secondTuple.first = "intermediate";
+          secondTuple.second = PythonUtility::convertToPython<std::string>::get(name);
+        }
+        else
+        {
+          std::vector<std::string>::const_iterator pos = std::find(stateNames.begin(), stateNames.end(), name);
+          if (pos != stateNames.end())
+          {
+            secondTuple.first = "state";
+            secondTuple.second = PythonUtility::convertToPython<std::string>::get(name);
+          }
+          else
+          {
+            std::vector<std::string>::const_iterator pos = std::find(constantNames.begin(), constantNames.end(), name);
+            if (pos != constantNames.end())
+            {
+              secondTuple.first = "constant";
+              secondTuple.second = PythonUtility::convertToPython<std::string>::get(name);
+            }
+            else
+            {
+              LOG(ERROR) << "In mappings, name \"" << name << "\" is neither state, intermediate nor constant.";
+            }
+          }
+        }
+      }
+
+      tupleEntries.push_back(std::pair<EntryTypePython,EntryTypePython>(firstTuple, secondTuple));
+    }
+
+    // -----------------------------
+    // parse the strings in the entries and convert them to stateNo, intermediateNo or constantNo
+    /*
+    "mappings": {
+      ("parameter",0): ("state","membrane/V"),                      #<-- this will be converted now
+      ("parameter",1): ("intermediate","razumova/activestress"),    #<-- this will be converted now
+      ("parameter",2): ("constant",0),
+      ("outputConnectorSlot",0): ("parameter",0),
+      ("outputConnectorSlot",1): ("intermediate", "razumova/l_hs"), #<-- this will be converted now
+    }
+    */
+    // result is settings for statesForTransfer, intermediatesForTransfer and parametersForTransfer
+
+    for (std::pair<EntryTypePython,EntryTypePython> &tupleEntry : tupleEntries)
+    {
+      EntryTypePython entries[2] = {tupleEntry.first, tupleEntry.second};
       std::vector<std::pair<std::string,int>> entriesWithNos;
 
       // parse the strings in the entries and convert them to stateNo, intermediateNo or constantNo
@@ -264,7 +377,7 @@ initializeMappings(std::vector<int> &parametersUsedAsIntermediate, std::vector<i
 
           entriesWithNos.push_back(std::make_pair(entry.first, stateNo));
         }
-        else if (entry.first == "intermediate")
+        else if (entry.first == "intermediate" || entry.first == "algebraic")
         {
           int intermediateNo = 0;
           std::string intermediateName = PythonUtility::convertFromPython<std::string>::get(entry.second);
@@ -343,7 +456,7 @@ initializeMappings(std::vector<int> &parametersUsedAsIntermediate, std::vector<i
 
         LOG(DEBUG) << "parameter " << parameterNo << " to \"" << entriesWithNos[1].first << "\", fieldNo " << fieldNo;
 
-        if (entriesWithNos[1].first == "intermediate")
+        if (entriesWithNos[1].first == "intermediate" || entriesWithNos[1].first == "algebraic")
         {
           // add no of the constant to parametersUsedAsIntermediate
           if (parametersUsedAsIntermediate.size() <= parameterNo)
@@ -385,7 +498,7 @@ initializeMappings(std::vector<int> &parametersUsedAsIntermediate, std::vector<i
           }
           statesForTransfer[slotNo] = fieldNo;
         }
-        else if (entriesWithNos[1].first == "intermediate")
+        else if (entriesWithNos[1].first == "intermediate" || entriesWithNos[1].first == "algebraic")
         {
           // add no of the constant to intermediatesForTransfer
           if (intermediatesForTransfer.size() <= slotNo)

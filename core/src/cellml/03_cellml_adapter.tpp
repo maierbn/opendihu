@@ -13,8 +13,6 @@
 #include "function_space/function_space.h"
 #include "control/diagnostic_tool/stimulation_logging.h"
 
-//#include <libcellml>    // libcellml not used here
-
 template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
 CellmlAdapter<nStates_,nIntermediates_,FunctionSpaceType>::
 CellmlAdapter(DihuContext context) :
@@ -70,6 +68,7 @@ initialize()
   // load rhs routine
   this->initializeRhsRoutine();
 
+  // parse the callback functions from the python config
   this->initializeCallbackFunctions();
   
   Control::PerformanceMeasurement::stop("durationInitCellml");
@@ -113,14 +112,15 @@ template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
 void CellmlAdapter<nStates_,nIntermediates_,FunctionSpaceType>::
 evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepNo, double currentTime)
 {
+  // prepare variable to work on
   // get raw pointers from Petsc data structures
-  //PetscUtility::getVectorEntries(input, states_);
-  double *states, *rates;
-  double *intermediatesData;
+  double *statesLocal;
+  double *ratesLocal;
+  double *intermediatesLocal;
   PetscErrorCode ierr;
-  ierr = VecGetArray(input, &states); CHKERRV(ierr);   // get r/w pointer to contiguous array of the data, VecRestoreArray() needs to be called afterwards
-  ierr = VecGetArray(output, &rates); CHKERRV(ierr);
-  ierr = VecGetArray(this->data_.intermediates()->getValuesContiguous(), &intermediatesData); CHKERRV(ierr);
+  ierr = VecGetArray(input, &statesLocal); CHKERRV(ierr);   // get r/w pointer to contiguous array of the data, VecRestoreArray() needs to be called afterwards
+  ierr = VecGetArray(output, &ratesLocal); CHKERRV(ierr);
+  ierr = VecGetArray(this->data_.intermediates()->getValuesContiguous(), &intermediatesLocal); CHKERRV(ierr);
 
   // get sizes of input and output Vecs
   PetscInt nStatesInput, nRates, nIntermediates = 101;
@@ -128,13 +128,8 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
   ierr = VecGetSize(output, &nRates); CHKERRV(ierr);
   ierr = VecGetLocalSize(this->data_.intermediates()->getValuesContiguous(), &nIntermediates); CHKERRV(ierr);
 
-  // get parameterValues_ vector
-  this->data_.prepareParameterValues();
-
-  //double intermediatesData[101];
-
-  VLOG(1) << "intermediates array has " << nIntermediates << " entries";
   nIntermediates = nIntermediates/this->nInstances_;
+  VLOG(1) << "intermediates array has " << nIntermediates << " entries";
 
   // check validity of sizes
   VLOG(1) << "evaluateTimesteppingRightHandSideExplicit, input nStates_: " << nStatesInput << ", output nRates: " << nRates;
@@ -146,38 +141,74 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
   }
   assert (nStatesInput == nStates_*this->nInstances_);
   assert (nRates == nStates_*this->nInstances_);
+
   if (nIntermediates != nIntermediates_)
   {
     LOG(FATAL) << "nInstances: " << this->nInstances_ << ", nIntermediates (size of vector / nInstances): " << nIntermediates << ", nIntermediates_: " << nIntermediates_;
   }
   assert (nIntermediates == nIntermediates_);
 
+  // make the parameterValues_ vector available
+  this->data_.prepareParameterValues();
+
   //LOG(DEBUG) << " evaluateTimesteppingRightHandSide: nInstances=" << this->nInstances_ << ", nStates_=" << nStates_;
-  
-  // get new values for parameters, call callback function of python config
-  if (this->setParameters_ && this->internalTimeStepNo_ % this->setParametersCallInterval_ == 0)
+
+  // handle callback functions "setSpecificParameters" and "setSpecificStates"
+  checkCallbackParameters(currentTime);
+  checkCallbackStates(currentTime, statesLocal);
+
+  // call actual rhs method
+  if (this->rhsRoutine_)
   {
-    // start critical section for python API calls
-    // PythonUtility::GlobalInterpreterLock lock;
-    
-    VLOG(1) << "call setParameters";
-    this->setParameters_((void *)this, this->nInstances_, this->internalTimeStepNo_, currentTime, this->data_.parameterValues(), this->cellmlSourceCodeGenerator_.nParameters());
+    //Control::PerformanceMeasurement::start("rhsEvaluationTime");  // commented out because it takes too long in this very inner loop
+
+    // call actual rhs routine from cellml code
+    this->rhsRoutine_((void *)this, currentTime, statesLocal, ratesLocal, intermediatesLocal, this->data_.parameterValues());
+
+    //Control::PerformanceMeasurement::stop("rhsEvaluationTime");
   }
 
+  // handle callback function "handleResult"
+  checkCallbackIntermediates(currentTime, statesLocal, intermediatesLocal);
+
+  // give control of data back to Petsc
+  ierr = VecRestoreArray(input, &statesLocal); CHKERRV(ierr);
+  ierr = VecRestoreArray(output, &ratesLocal); CHKERRV(ierr);
+  ierr = VecRestoreArray(this->data_.intermediates()->getValuesContiguous(), &intermediatesLocal); CHKERRV(ierr);
+
+  this->data_.restoreParameterValues();
+
+  // call output writer to write output files
+  this->outputWriterManager_.writeOutput(this->data_, this->internalTimeStepNo_, currentTime);
+
+  VLOG(1) << "at end of cellml_adapter, intermediates: " << this->data_.intermediates() << " " << *this->data_.intermediates();
+  this->internalTimeStepNo_++;
+}
+
+template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
+void CellmlAdapter<nStates_,nIntermediates_,FunctionSpaceType>::
+checkCallbackParameters(double currentTime)
+{
   // get new values for parameters, call callback function of python config
-  if (this->setSpecificParameters_ && this->internalTimeStepNo_ % this->setSpecificParametersCallInterval_ == 0)
+  if (this->pythonSetSpecificParametersFunction_ && this->internalTimeStepNo_ % this->setSpecificParametersCallInterval_ == 0)
   {
     // start critical section for python API calls
     // PythonUtility::GlobalInterpreterLock lock;
 
     VLOG(1) << "call setSpecificParameters";
-    this->setSpecificParameters_((void *)this, this->nInstances_, this->internalTimeStepNo_, currentTime, this->data_.parameterValues(), this->cellmlSourceCodeGenerator_.nParameters());
+    this->callPythonSetSpecificParametersFunction(this->nInstances_, this->internalTimeStepNo_, currentTime, this->data_.parameterValues(), this->cellmlSourceCodeGenerator_.nParameters());
   }
+}
+
+template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
+void CellmlAdapter<nStates_,nIntermediates_,FunctionSpaceType>::
+checkCallbackStates(double currentTime, double *statesLocal)
+{
 
   VLOG(1) << "currentTime: " << currentTime << ", lastCallSpecificStatesTime_: " << this->lastCallSpecificStatesTime_
     << ", setSpecificStatesCallFrequency_: " << this->setSpecificStatesCallFrequency_ << ", "
     << this->lastCallSpecificStatesTime_ + 1./this->setSpecificStatesCallFrequency_;
-  VLOG(1) << "this->setSpecificStates_? " << (this->setSpecificStates_? "true" : "false")
+  VLOG(1) << "this->pythonSetSpecificStatesFunction_? " << (this->pythonSetSpecificStatesFunction_? "true" : "false")
     << ", this->setSpecificStatesCallInterval_: " << this->setSpecificStatesCallInterval_ << " != 0? " << (this->setSpecificStatesCallInterval_ != 0? "true" : "false")
     << ", (this->internalTimeStepNo_ % this->setSpecificStatesCallInterval_) = " << this->internalTimeStepNo_  << " % " << this->setSpecificStatesCallInterval_
     << ", this->setSpecificStatesCallFrequency_= " << this->setSpecificStatesCallFrequency_ << " != 0.0? " << (this->setSpecificStatesCallFrequency_ != 0.0? "true" : "false")
@@ -186,8 +217,8 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
 
   bool stimulate = false;
 
-  // get new values for parameters, call callback function of python config
-  if (this->setSpecificStates_
+  // get new values for states, call callback function of python config
+  if (this->pythonSetSpecificStatesFunction_
       && (
           (this->setSpecificStatesCallInterval_ != 0 && this->internalTimeStepNo_ % this->setSpecificStatesCallInterval_ == 0)
           || (this->setSpecificStatesCallFrequency_ != 0.0 && currentTime >= this->lastCallSpecificStatesTime_ + 1./(this->setSpecificStatesCallFrequency_+this->currentJitter_)
@@ -235,53 +266,27 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
 
     VLOG(1) << "call setSpecificStates, this->internalTimeStepNo_ = " << this->internalTimeStepNo_ << ", this->setSpecificStatesCallInterval_: " << this->setSpecificStatesCallInterval_;
     VLOG(1) << "currentTime: " << currentTime << ", call setSpecificStates, this->internalTimeStepNo_ = " << this->internalTimeStepNo_ << ", this->setSpecificStatesCallInterval_: " << this->setSpecificStatesCallInterval_;
-    this->setSpecificStates_((void *)this, this->nInstances_, this->internalTimeStepNo_, currentTime, states);
+    this->callPythonSetSpecificStatesFunction(this->nInstances_, this->internalTimeStepNo_, currentTime, statesLocal);
   }
   else
   {
     currentlyStimulating = false;
   }
-
-  // call actual rhs method
-  //              this          STATES, RATES, WANTED,                KNOWN
-  if (this->rhsRoutine_)
-  {
-    VLOG(1) << "call rhsRoutine_ with " << nIntermediates << " intermediates";
-
-    //Control::PerformanceMeasurement::start("rhsEvaluationTime");  // commented out because it takes too long in this very inner loop
-    // call actual rhs routine from cellml code
-    this->rhsRoutine_((void *)this, currentTime, states, rates, intermediatesData, this->data_.parameterValues());
-    //Control::PerformanceMeasurement::stop("rhsEvaluationTime");
-  }
-
-  // handle intermediates, call callback function of python config
-  if (this->handleResult_ && this->internalTimeStepNo_ % this->handleResultCallInterval_ == 0)
-  {
-    PetscInt nStatesInput;
-    VecGetSize(input, &nStatesInput);
-
-    // start critical section for python API calls
-    // PythonUtility::GlobalInterpreterLock lock;
-    
-    VLOG(1) << "call handleResult with in total " << nStatesInput << " states, " << nIntermediates << " intermediates";
-    this->handleResult_((void *)this, this->nInstances_, this->internalTimeStepNo_, currentTime, states, intermediatesData);
-  }
-
-  //PetscUtility::setVector(rates_, output);
-  // give control of data back to Petsc
-  ierr = VecRestoreArray(input, &states); CHKERRV(ierr);
-  ierr = VecRestoreArray(output, &rates); CHKERRV(ierr);
-  ierr = VecRestoreArray(this->data_.intermediates()->getValuesContiguous(), &intermediatesData); CHKERRV(ierr);
-
-  this->data_.restoreParameterValues();
-
-  // call output writer to write output files
-  this->outputWriterManager_.writeOutput(this->data_, this->internalTimeStepNo_, currentTime);
-
-  VLOG(1) << "at end of cellml_adapter, intermediates: " << this->data_.intermediates() << " " << *this->data_.intermediates();
-  this->internalTimeStepNo_++;
 }
 
+template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
+void CellmlAdapter<nStates_,nIntermediates_,FunctionSpaceType>::
+checkCallbackIntermediates(double currentTime, double *statesLocal, double *intermediatesLocal)
+{
+  // handle resulting intermediates, call callback function of python config
+  if (this->pythonHandleResultFunction_ && this->internalTimeStepNo_ % this->handleResultCallInterval_ == 0)
+  {
+    // start critical section for python API calls
+    // PythonUtility::GlobalInterpreterLock lock;
+
+    this->callPythonHandleResultFunction(this->nInstances_, this->internalTimeStepNo_, currentTime, statesLocal, intermediatesLocal);
+  }
+}
 
 template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
 void CellmlAdapter<nStates_,nIntermediates_,FunctionSpaceType>::
@@ -291,7 +296,9 @@ prepareForGetOutputConnectorData()
   // intermediates have the correct data assigned
   LOG(DEBUG) << "Transform intermediates field variable " << this->data_.intermediates() << " to global representation in order to transfer them to other solver.";
   VLOG(1) << *this->data_.intermediates();
+
   this->data_.intermediates()->setRepresentationGlobal();
+
   VLOG(1) << *this->data_.intermediates();
 }
 

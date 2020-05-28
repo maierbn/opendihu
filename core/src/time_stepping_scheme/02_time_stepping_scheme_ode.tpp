@@ -31,6 +31,7 @@ setInitialValues()
   std::vector<double> localValues;
   
   // determine if the initial values are given as global and local array
+  /** ... */
   bool inputMeshIsGlobal = this->specificSettings_.getOptionBool("inputMeshIsGlobal", true);
   if (inputMeshIsGlobal)
   {

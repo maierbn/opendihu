@@ -128,62 +128,79 @@ void CellmlSourceCodeGeneratorBase::initializeSourceCode(
 
 void CellmlSourceCodeGeneratorBase::convertFromXmlToC()
 {
-  if (DihuContext::ownRankNoCommWorld() == 0)
+  std::string cFilename = sourceFilename_;
+
+  // open input file
+  std::ifstream file(sourceFilename_);
+
+  if (file.is_open())
   {
-    // open input file
-    std::ifstream file(sourceFilename_);
+    std::string line;
+    std::getline(file, line);
 
-    if (file.is_open())
+    if (line.find("<?xml") != std::string::npos)
     {
-      std::string line;
-      std::getline(file, line);
+      // file is an xml file
 
-      if (line.find("<?xml") != std::string::npos)
-      {
-        // file is an xml file
-
-        // create a c filename
-        std::stringstream s;
-        s << "src/" << StringUtility::extractBasename(sourceFilename_) << ".c";
-        std::string cFilename = s.str();
-
-        // check if file already exists
-        std::ifstream cFile(cFilename.c_str());
-        if (cFile.is_open())
-        {
-          LOG(DEBUG) << "C file \"" << cFilename << "\" already exists.";
-          sourceFilename_ = cFilename;
-          return;
-        }
-
-        // create src directory
-        int ret = system("mkdir -p src");
-        if (ret != 0)
-        {
-          LOG(ERROR) << "Could not create \"src\" directory.";
-        }
-
-
-        // call OpenCOR, if available
-#ifdef HAVE_OPENCOR
-        std::stringstream command;
-        command << "\"" << OPENCOR_BINARY << "\" -c CellMLTools::export \"" << sourceFilename_ << "\" \"" << OPENCOR_FORMATS_DIRECTORY << "/C.xml\" > \"" << cFilename << "\"";
-        LOG(DEBUG) << "Use opencor to convert file: \n" << command.str();
-        ret = system(command.str().c_str());
-        if (ret != 0)
-        {
-          LOG(ERROR) << "Could not convert CellML XML file to c file using OpenCOR: " << command.str();
-        }
-        else
-        {
-          sourceFilename_ = cFilename;
-        }
-#else
-        LOG(FATAL) << "OpenCOR is not available to convert XML to c files, but CellMLAdapter has an XML file as input: \"" << sourceFilename_ << "\".";
-#endif
-      }
+      // create a c filename
+      std::stringstream s;
+      s << "src/" << StringUtility::extractBasename(sourceFilename_) << ".c";
+      cFilename = s.str();
     }
   }
+
+  // check if conversion is required, this is performed on rank 0
+  bool useOpenCor = false;
+  if (DihuContext::ownRankNoCommWorld() == 0)
+  {
+    // check if file already exists
+    std::ifstream cFile(cFilename.c_str());
+    if (cFile.is_open())
+    {
+      LOG(DEBUG) << "C file \"" << cFilename << "\" already exists.";
+      sourceFilename_ = cFilename;
+    }
+    else
+    {
+
+      // create src directory
+      int ret = system("mkdir -p src");
+      if (ret != 0)
+      {
+        LOG(ERROR) << "Could not create \"src\" directory.";
+      }
+
+          // should call OpenCOR later, if available
+#ifdef HAVE_OPENCOR
+      useOpenCor = true;
+#else
+      LOG(FATAL) << "OpenCOR is not available to convert XML to c files, but CellMLAdapter has an XML file as input: \"" << sourceFilename_ << "\".";
+#endif
+    }
+  }
+
+  LOG(DEBUG) << "useOpenCor=" << useOpenCor << ", cFilename: " << cFilename << ", sourceFilename_: " << sourceFilename_;
+
+  if (useOpenCor)
+  {
+    // do conversion on rank 0
+    if (DihuContext::ownRankNoCommWorld() == 0)
+    {
+      std::stringstream command;
+      command << "\"" << OPENCOR_BINARY << "\" -c CellMLTools::export \"" << sourceFilename_ << "\" \"" << OPENCOR_FORMATS_DIRECTORY << "/C.xml\" > \"" << cFilename << "\"";
+      LOG(DEBUG) << "Use opencor to convert file: \n" << command.str();
+      int ret = system(command.str().c_str());
+      if (ret != 0)
+      {
+        LOG(FATAL) << "Could not convert CellML XML file \"" << sourceFilename_ << "\" to c file \"" << cFilename << "\" using OpenCOR: \n" << command.str();
+      }
+    }
+
+    // wait on all ranks until conversion is finished
+    MPIUtility::handleReturnValue(MPI_Barrier(DihuContext::partitionManager()->rankSubsetForCollectiveOperations()->mpiCommunicator()), "MPI_Barrier");
+  }
+
+  sourceFilename_ = cFilename;
 }
 
 void CellmlSourceCodeGeneratorBase::generateSingleInstanceCode()

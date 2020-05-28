@@ -17,12 +17,20 @@ void TimeSteppingScheme::setTimeStepWidth(double timeStepWidth)
   double epsilon = 1e-1;
   // Increase time step width by maximum of epsilon=10%.
   // Increasing time step width is potentially dangerous, because it can make the timestepping scheme unstable.
-  // Ideally changing the timestep width should not be possible at all, if it is given correctly in the config.
+  // Ideally changing the timestep width should not be necessary at all, if it is given correctly in the config.
   // Examples:
   //  t_end = 1.09, dt = 1.0 -> increase dt to 1.09, one timestep
   //  t_end = 1.11, dt = 1.0 -> decrease dt to 0.555, two timesteps
 
-  numberTimeSteps_ = std::max(1,int(std::ceil((endTime_ - startTime_) / timeStepWidth - epsilon)));
+  long double n = std::ceil((long double)(endTime_ - startTime_) / timeStepWidth - epsilon);
+  numberTimeSteps_ = std::max(1,int(n));
+
+  if (n > (double)std::numeric_limits<int>::max())
+  {
+    LOG(FATAL) << "Number of timesteps " << n << " for timeStepWidth " << timeStepWidth
+      << " in time span [" << startTime_ << "," << endTime_ << "] is too high.";
+  }
+
   setNumberTimeSteps(numberTimeSteps_);
 }
 
@@ -30,7 +38,8 @@ void TimeSteppingScheme::setNumberTimeSteps(int numberTimeSteps)
 {
   numberTimeSteps_ = numberTimeSteps;
   timeStepWidth_ = (endTime_ - startTime_) / numberTimeSteps;
-  LOG(DEBUG) << "timeStepWidth_ in setNumberTimeSteps: " << timeStepWidth_;
+  LOG(DEBUG) << "numberTimeSteps_: " << numberTimeSteps_ << ", endTime:" << endTime_
+    << ", startTime: " << startTime_ << " timeStepWidth_ in setNumberTimeSteps: " << timeStepWidth_;
 }
 
 void TimeSteppingScheme::setTimeSpan(double startTime, double endTime)
@@ -78,9 +87,9 @@ void TimeSteppingScheme::initialize()
     timeStepWidth_ = specificSettings_.getOptionDouble("timeStepWidth", 0.001, PythonUtility::Positive);
     setTimeStepWidth(timeStepWidth_);
 
-    LOG(DEBUG) << "  TimeSteppingScheme::initialize, timeStepWidth="
+    LOG(DEBUG) << "  TimeSteppingScheme::initialize, timeStepWidth in settings: "
       << specificSettings_.getOptionDouble("timeStepWidth", 0.001, PythonUtility::Positive)
-      << ", compute numberTimeSteps=" <<numberTimeSteps_;
+      << ", timeStepWidth_: " << timeStepWidth_ << ", compute numberTimeSteps=" << numberTimeSteps_;
 
     if (specificSettings_.hasKey("numberTimeSteps"))
     {

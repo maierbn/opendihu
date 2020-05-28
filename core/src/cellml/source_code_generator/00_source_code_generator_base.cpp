@@ -20,45 +20,45 @@ CellmlSourceCodeGeneratorBase::CellmlSourceCodeGeneratorBase() :
 
 }
 
-void CellmlSourceCodeGeneratorBase::initializeNames(std::string inputFilename, int nInstances, int nStates, int nIntermediates)
+void CellmlSourceCodeGeneratorBase::initializeNames(std::string inputFilename, int nInstances, int nStates, int nAlgebraics)
 {
   sourceFilename_ = inputFilename;
   nInstances_ = nInstances;
   nStates_ = nStates;
-  nIntermediates_ = nIntermediates;
+  nAlgebraics_ = nAlgebraics;
 
   stateNames_.resize(nStates);
-  intermediateNames_.resize(nIntermediates);
+  algebraicNames_.resize(nAlgebraics);
   statesInitialValues_.resize(nStates);
 
   // convert a xml file to a c file using OpenCOR, if necessary
   this->convertFromXmlToC();
 
   // get initial values from source file and parse source code
-  this->parseNamesInSourceCodeFile();   // this sets nIntermediatesInSource_
+  this->parseNamesInSourceCodeFile();   // this sets nAlgebraicsInSource_
 }
 
 void CellmlSourceCodeGeneratorBase::initializeSourceCode(
-  const std::vector<int> &parametersUsedAsIntermediate, const std::vector<int> &parametersUsedAsConstant,
+  const std::vector<int> &parametersUsedAsAlgebraic, const std::vector<int> &parametersUsedAsConstant,
   std::vector<double> &parametersInitialValues, int maximumNumberOfParameters, double *parameterValues
 )
 {
   // parametersInitialValues is the list of initial parameter values as given in the settings
   
-  parametersUsedAsIntermediate_.assign(parametersUsedAsIntermediate.begin(), parametersUsedAsIntermediate.end());
+  parametersUsedAsAlgebraic_.assign(parametersUsedAsAlgebraic.begin(), parametersUsedAsAlgebraic.end());
   parametersUsedAsConstant_.assign(parametersUsedAsConstant.begin(), parametersUsedAsConstant.end());
 
-  nParameters_ = parametersUsedAsIntermediate_.size() + parametersUsedAsConstant_.size();
+  nParameters_ = parametersUsedAsAlgebraic_.size() + parametersUsedAsConstant_.size();
 
   // nParameters_ is the number of parameters per instance as determined from mappings
 
   if (nParameters_ > maximumNumberOfParameters)
   {
-    LOG(FATAL) << "There can only be as many parameters as there are intermediates. This is an arbitrary restriction, if you need more parameters, try increasing the number of intermediates in the C++ source file."
+    LOG(FATAL) << "There can only be as many parameters as there are algebraics. This is an arbitrary restriction, if you need more parameters, try increasing the number of algebraics in the C++ source file."
       << "Now you have (" << nParameters_ << " parameters and the maximum possible number is " << maximumNumberOfParameters << ".";
   }
 
-  LOG(DEBUG) << "nParameters_: " << nParameters_ << ", parametersInitialValues.size(): " << parametersInitialValues.size() << ", nIntermediates_: " << nIntermediates_ << ", nInstances_: " << nInstances_;
+  LOG(DEBUG) << "nParameters_: " << nParameters_ << ", parametersInitialValues.size(): " << parametersInitialValues.size() << ", nAlgebraics_: " << nAlgebraics_ << ", nInstances_: " << nInstances_;
 
   // set initial values of parameters
   if (parametersInitialValues.size() == nParameters_)
@@ -69,7 +69,7 @@ void CellmlSourceCodeGeneratorBase::initializeSourceCode(
     {
       for (int j = 0; j < nParameters_; j++)
       {
-        // parameterValues has struct of array memory layout with space for a total of nIntermediates_ parameters [i0p0, i1p0, i2p0, ... i0p1, i1p1, i2p1, ...]
+        // parameterValues has struct of array memory layout with space for a total of nAlgebraics_ parameters [i0p0, i1p0, i2p0, ... i0p1, i1p1, i2p1, ...]
         parameterValues[j*nInstances_ + instanceNo] = parametersInitialValues[j];
         
         VLOG(1) << "  " << instanceNo << "," << j << " set index " << (j*nInstances_ + instanceNo) << " to value " << parametersInitialValues[j] << "=" << parameterValues[j*nInstances_ + instanceNo];
@@ -99,7 +99,7 @@ void CellmlSourceCodeGeneratorBase::initializeSourceCode(
     {
       for (int j = 0; j < nParameters_; j++)
       {
-        // parameterValues has struct of array memory layout with space for a total of nIntermediates_ parameters [i0p0, i1p0, i2p0, ... i0p1, i1p1, i2p1, ...]
+        // parameterValues has struct of array memory layout with space for a total of nAlgebraics_ parameters [i0p0, i1p0, i2p0, ... i0p1, i1p1, i2p1, ...]
         parameterValues[j*nInstances_ + instanceNo] = parametersInitialValues[j];
       }
     }
@@ -116,7 +116,7 @@ void CellmlSourceCodeGeneratorBase::initializeSourceCode(
     }
     s << ",";
   }
-  LOG(DEBUG) << "parameterValues (only up to nParameters=" << nParameters_ << " parameter, allocated space is for " << nIntermediates_ << " parameters: \n" << s.str();
+  LOG(DEBUG) << "parameterValues (only up to nParameters=" << nParameters_ << " parameter, allocated space is for " << nAlgebraics_ << " parameters: \n" << s.str();
 #endif  
   
   // parse all the source code from the model file
@@ -195,10 +195,10 @@ void CellmlSourceCodeGeneratorBase::convertFromXmlToC()
         LOG(FATAL) << "Could not convert CellML XML file \"" << sourceFilename_ << "\" to c file \"" << cFilename << "\" using OpenCOR: \n" << command.str();
       }
     }
-
-    // wait on all ranks until conversion is finished
-    MPIUtility::handleReturnValue(MPI_Barrier(DihuContext::partitionManager()->rankSubsetForCollectiveOperations()->mpiCommunicator()), "MPI_Barrier");
   }
+
+  // wait on all ranks until conversion is finished
+  MPIUtility::handleReturnValue(MPI_Barrier(DihuContext::partitionManager()->rankSubsetForCollectiveOperations()->mpiCommunicator()), "MPI_Barrier");
 
   sourceFilename_ = cFilename;
 }
@@ -216,7 +216,7 @@ void CellmlSourceCodeGeneratorBase::generateSingleInstanceCode()
     << "extern \"C\"\n"
     << "#endif\n"
     << "void computeCellMLRightHandSideSingleInstance("
-    << "void *context, double t, double *states, double *rates, double *intermediates, double *parameters)" << std::endl << "{" << std::endl;
+    << "void *context, double t, double *states, double *rates, double *algebraics, double *parameters)" << std::endl << "{" << std::endl;
 
   sourceCode << "  double VOI = t;   /* current simulation time */" << std::endl;
   sourceCode << std::endl << "  /* define constants */" << std::endl
@@ -271,9 +271,9 @@ std::vector<double> &CellmlSourceCodeGeneratorBase::statesInitialValues()
   return statesInitialValues_;
 }
 
-const std::vector<std::string> &CellmlSourceCodeGeneratorBase::intermediateNames() const
+const std::vector<std::string> &CellmlSourceCodeGeneratorBase::algebraicNames() const
 {
-  return intermediateNames_;
+  return algebraicNames_;
 }
 
 const std::vector<std::string> &CellmlSourceCodeGeneratorBase::stateNames() const

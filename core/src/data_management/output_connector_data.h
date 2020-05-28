@@ -36,7 +36,7 @@ std::ostream &operator<<(std::ostream &stream, const ComponentOfFieldVariable<Fu
 
 /** This is a general data type that can contain multiple field variables with designated components.
  *  They are used for the outputConnector of different solvers.
- *  This particular struct is, for example, used for the CellMLAdapter, where the two variables store states and intermediates to be passed to the next solver.
+ *  This particular struct is, for example, used for the CellMLAdapter, where the two variables store states and algebraics to be passed to the next solver.
  */
 template<typename FunctionSpaceType, int nComponents1, int nComponents2=1>
 struct OutputConnectorData

@@ -11,11 +11,11 @@
 
 /** Transfer between the output from cubes partitioned fibers (MultipleInstances<Strang<MultipleInstances<...) and StaticBidomainSolver
  *
- * template <int nStates, int nIntermediates, typename FunctionSpaceType>
+ * template <int nStates, int nAlgebraics, typename FunctionSpaceType>
  * struct CellMLOutputConnectorDataType
  * {
  *   Data::FieldVariableComponent<FunctionSpaceType,nStates> stateVariable;          //< one component of the states
- *   Data::FieldVariableComponent<FunctionSpaceType,nIntermediates> intermediateVariable;   //< one component of the intermediates
+ *   Data::FieldVariableComponent<FunctionSpaceType,nAlgebraics> algebraicVariable;   //< one component of the algebraics
  * };
  */
 template<typename FunctionSpaceType1, int nComponents1a, int nComponents1b, typename FunctionSpaceType2, int nComponents2a, int nComponents2b>

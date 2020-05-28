@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
   
   OperatorSplitting::Strang<
     TimeSteppingScheme::Heun<
-      CellmlAdapter<57,71>  // nStates,nIntermediates: 56,71 = Shorten, 4,9 = Hodgkin Huxley
+      CellmlAdapter<57,71>  // nStates,nAlgebraics: 56,71 = Shorten, 4,9 = Hodgkin Huxley
     >,
     TimeSteppingScheme::CrankNicolson<
       SpatialDiscretization::FiniteElementMethod<

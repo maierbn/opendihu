@@ -10,35 +10,35 @@
 #include "utility/string_utility.h"
 #include "mesh/mesh_manager/mesh_manager.h"
 
-template<int nStates, int nIntermediates_, typename FunctionSpaceType>
-CallbackHandler<nStates,nIntermediates_,FunctionSpaceType>::
+template<int nStates, int nAlgebraics_, typename FunctionSpaceType>
+CallbackHandler<nStates,nAlgebraics_,FunctionSpaceType>::
 CallbackHandler(DihuContext context, bool initializeOutputWriter) :
-  RhsRoutineHandler<nStates,nIntermediates_,FunctionSpaceType>(context, initializeOutputWriter),
+  RhsRoutineHandler<nStates,nAlgebraics_,FunctionSpaceType>(context, initializeOutputWriter),
   DiscretizableInTime(),
   pythonSetSpecificParametersFunction_(NULL), pythonSetSpecificStatesFunction_(NULL), pythonHandleResultFunction_(NULL),
   pySetFunctionAdditionalParameter_(NULL), pyHandleResultFunctionAdditionalParameter_(NULL), pyGlobalNaturalDofsList_(NULL)
 {
 }
 
-template<int nStates, int nIntermediates_, typename FunctionSpaceType>
-CallbackHandler<nStates,nIntermediates_,FunctionSpaceType>::
+template<int nStates, int nAlgebraics_, typename FunctionSpaceType>
+CallbackHandler<nStates,nAlgebraics_,FunctionSpaceType>::
 CallbackHandler(DihuContext context) :
-  RhsRoutineHandler<nStates,nIntermediates_,FunctionSpaceType>(context),
+  RhsRoutineHandler<nStates,nAlgebraics_,FunctionSpaceType>(context),
   DiscretizableInTime(),
   pythonSetSpecificParametersFunction_(NULL), pythonSetSpecificStatesFunction_(NULL), pythonHandleResultFunction_(NULL),
   pySetFunctionAdditionalParameter_(NULL), pyHandleResultFunctionAdditionalParameter_(NULL), pyGlobalNaturalDofsList_(NULL)
 {
 }
 
-template<int nStates, int nIntermediates_, typename FunctionSpaceType>
-CallbackHandler<nStates,nIntermediates_,FunctionSpaceType>::
+template<int nStates, int nAlgebraics_, typename FunctionSpaceType>
+CallbackHandler<nStates,nAlgebraics_,FunctionSpaceType>::
 ~CallbackHandler()
 {
   clearPyObjects();
 }
 
-template<int nStates, int nIntermediates_, typename FunctionSpaceType>
-void CallbackHandler<nStates,nIntermediates_,FunctionSpaceType>::
+template<int nStates, int nAlgebraics_, typename FunctionSpaceType>
+void CallbackHandler<nStates,nAlgebraics_,FunctionSpaceType>::
 clearPyObjects()
 {
   // Py_CLEAR has no effect if the variable is NULL
@@ -51,8 +51,8 @@ clearPyObjects()
   Py_CLEAR(pyGlobalNaturalDofsList_);
 }
 
-template<int nStates, int nIntermediates_, typename FunctionSpaceType>
-void CallbackHandler<nStates,nIntermediates_,FunctionSpaceType>::
+template<int nStates, int nAlgebraics_, typename FunctionSpaceType>
+void CallbackHandler<nStates,nAlgebraics_,FunctionSpaceType>::
 initializeCallbackFunctions()
 {
   if (this->specificSettings_.hasKey("setParametersFunction"))
@@ -104,8 +104,8 @@ initializeCallbackFunctions()
   }
 }
 
-template<int nStates, int nIntermediates_, typename FunctionSpaceType>
-void CallbackHandler<nStates,nIntermediates_,FunctionSpaceType>::
+template<int nStates, int nAlgebraics_, typename FunctionSpaceType>
+void CallbackHandler<nStates,nAlgebraics_,FunctionSpaceType>::
 callPythonSetSpecificParametersFunction(int nInstances, int timeStepNo, double currentTime, double *localParameters, int nParameters)
 {
   if (pythonSetSpecificParametersFunction_ == NULL)
@@ -146,7 +146,7 @@ callPythonSetSpecificParametersFunction(int nInstances, int timeStepNo, double c
       LOG(FATAL) << "In setSpecificParametersFunction: the parameters have an assignment "
           << "parameters[(coordinatesGlobal=" << coordinatesGlobal << ", nodalDofIndex=" << nodalDofIndex
           << ", parameterNo=" << parameterNo <<")] = " << value << ". But there are only " << this->cellmlSourceCodeGenerator_.nParameters()
-          << " specified. Set \"parametersUsedAsIntermediate\" and \"parametersUsedAsConstant\" appropriately.";
+          << " specified. Set \"parametersUsedAsAlgebraic\" and \"parametersUsedAsConstant\" appropriately.";
     }
 
     VLOG(1) << "coordinatesGlobal: " << coordinatesGlobal << ", nodalDofIndex: " << nodalDofIndex
@@ -177,7 +177,7 @@ callPythonSetSpecificParametersFunction(int nInstances, int timeStepNo, double c
           << " >= " << nParameters*nDofsLocalWithoutGhosts;
       }
 
-      // the local parameter array stores the parameter values in struct-of-array layout, there is space allocated for `nIntermediates` parameters, even if there are only nLocalParameters parameters
+      // the local parameter array stores the parameter values in struct-of-array layout, there is space allocated for `nAlgebraics` parameters, even if there are only nLocalParameters parameters
       *(localParameters + index) = value;
     }
   }
@@ -188,8 +188,8 @@ callPythonSetSpecificParametersFunction(int nInstances, int timeStepNo, double c
   Py_CLEAR(arglist);
 }
 
-template<int nStates, int nIntermediates_, typename FunctionSpaceType>
-void CallbackHandler<nStates,nIntermediates_,FunctionSpaceType>::
+template<int nStates, int nAlgebraics_, typename FunctionSpaceType>
+void CallbackHandler<nStates,nAlgebraics_,FunctionSpaceType>::
 callPythonSetSpecificStatesFunction(int nInstances, int timeStepNo, double currentTime, double *localStates)
 {
   if (pythonSetSpecificStatesFunction_ == NULL)
@@ -249,20 +249,20 @@ callPythonSetSpecificStatesFunction(int nInstances, int timeStepNo, double curre
   Py_CLEAR(arglist);
 }
 
-template<int nStates, int nIntermediates_, typename FunctionSpaceType>
-void CallbackHandler<nStates,nIntermediates_,FunctionSpaceType>::
+template<int nStates, int nAlgebraics_, typename FunctionSpaceType>
+void CallbackHandler<nStates,nAlgebraics_,FunctionSpaceType>::
 callPythonHandleResultFunction(int nInstances, int timeStepNo, double currentTime,
-                               double *localStates, double *intermediates)
+                               double *localStates, double *algebraics)
 {
   if (pythonHandleResultFunction_ == NULL)
     return;
 
   // compose callback function
   LOG(DEBUG) << "callPythonHandleResultFunction: nInstances: " << this->nInstances_<< ", nStates: " << nStates
-    << ", nIntermediates: " << this->nIntermediates();
+    << ", nAlgebraics: " << this->nAlgebraics();
   PyObject *statesList = PythonUtility::convertToPythonList(nStates*this->nInstances_, localStates);
-  PyObject *intermediatesList = PythonUtility::convertToPythonList(nIntermediates_*this->nInstances_, intermediates);
-  PyObject *arglist = Py_BuildValue("(i,i,d,O,O,O)", nInstances, timeStepNo, currentTime, statesList, intermediatesList, pyHandleResultFunctionAdditionalParameter_);
+  PyObject *algebraicsList = PythonUtility::convertToPythonList(nAlgebraics_*this->nInstances_, algebraics);
+  PyObject *arglist = Py_BuildValue("(i,i,d,O,O,O)", nInstances, timeStepNo, currentTime, statesList, algebraicsList, pyHandleResultFunctionAdditionalParameter_);
   PyObject *returnValue = PyObject_CallObject(pythonHandleResultFunction_, arglist);
 
   // if there was an error while executing the function, print the error message
@@ -271,20 +271,20 @@ callPythonHandleResultFunction(int nInstances, int timeStepNo, double currentTim
 
   // decrement reference counters for python objects
   Py_CLEAR(statesList);
-  Py_CLEAR(intermediatesList);
+  Py_CLEAR(algebraicsList);
   Py_CLEAR(returnValue);
   Py_CLEAR(arglist);
 }
 
-template<int nStates, int nIntermediates_, typename FunctionSpaceType>
-double CallbackHandler<nStates,nIntermediates_,FunctionSpaceType>::
+template<int nStates, int nAlgebraics_, typename FunctionSpaceType>
+double CallbackHandler<nStates,nAlgebraics_,FunctionSpaceType>::
 lastCallSpecificStatesTime()
 {
   return this->lastCallSpecificStatesTime_;
 }
 
-template<int nStates, int nIntermediates_, typename FunctionSpaceType>
-void CallbackHandler<nStates,nIntermediates_,FunctionSpaceType>::
+template<int nStates, int nAlgebraics_, typename FunctionSpaceType>
+void CallbackHandler<nStates,nAlgebraics_,FunctionSpaceType>::
 setLastCallSpecificStatesTime(double lastCallSpecificStatesTime)
 {
   this->lastCallSpecificStatesTime_ = lastCallSpecificStatesTime;

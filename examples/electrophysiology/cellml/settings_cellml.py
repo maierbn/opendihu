@@ -43,13 +43,13 @@ gamma_data = []
 vm_data = []
 
 # callback function that receives the whole result values and produces plots while the simulation is running
-def handle_result(nInstances, timeStepNo, currentTime, states, intermediates, additional_argument):
+def handle_result(nInstances, timeStepNo, currentTime, states, algebraics, additional_argument):
   #print "time step {}, t={}, nEntries: {}, dim: {}, data: {}".format(timeStepNo, currentTime, nEntries, dim, data)
   #print("time step {}, t={}".format(timeStepNo, currentTime))
-  #print("intermediates: {}".format(intermediates))
+  #print("algebraics: {}".format(algebraics))
     
   xdata.append(currentTime)
-  gamma_data.append(intermediates[0])
+  gamma_data.append(algebraics[0])
   vm_data.append(states[0]*-0.58)
   
   #print "plot xdata: {} ydata: {}".format(str(xdata), str(ydata))
@@ -116,12 +116,12 @@ config = {
       
       "stimulationLogFilename": "out/stimulation.log",          # filename of a log file that contains all stimulation events
       
-      # parameters: I_Stim, l_hs. I_Stim (the stimulation current) is used as "intermediate" no. 32, l_hs (the relative half-sarcomere-length) is used as "constant" 65.
-      "parametersUsedAsIntermediate": [32],    # list of intermediate value indices that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array.
+      # parameters: I_Stim, l_hs. I_Stim (the stimulation current) is used as "algebraic" no. 32, l_hs (the relative half-sarcomere-length) is used as "constant" 65.
+      "parametersUsedAsAlgebraic": [32],    # list of algebraic value indices that will be set by parameters. Explicitely defined parameters that will be copied to algebraics, this vector contains the indices of the algebraic array.
       "parametersUsedAsConstant":     [65],    # list of constant value indices that will be set by parameters.
       "parametersInitialValues": [1200.0, 1.0],      # initial values for all parameters: I_Stim, l_hs
       "statesForTransfer": [],                 # in case of coupled solvers the states to transfer to the other solver, here we have no coupled solvers therefore this is not relevant, state 0 = Vm, rate 28 = gamma
-      "intermediatesForTransfer": [],          # in case of coupled solvers the intermediates to transfer to the other solver, here we have no coupled solvers therefore this is not relevant
+      "algebraicsForTransfer": [],          # in case of coupled solvers the algebraics to transfer to the other solver, here we have no coupled solvers therefore this is not relevant
     },
   },
 }

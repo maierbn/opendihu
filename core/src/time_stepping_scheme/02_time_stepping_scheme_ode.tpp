@@ -134,7 +134,7 @@ initialize()
   // pass the solution field variable on to the discretizableInTime object, by this e.g. CellMLAdapter gets the solution field variable
   discretizableInTime_.setSolutionVariable(this->data_->solution());
 
-  // pass the full output connector data to the discretizableInTime object, by this e.g. CellMLAdapter can set additional intermediate variables that will be used further
+  // pass the full output connector data to the discretizableInTime object, by this e.g. CellMLAdapter can set additional algebraic variables that will be used further
   discretizableInTime_.setOutputConnectorData(this->data_->getOutputConnectorData());
 
   // parse boundary conditions, needs functionSpace set

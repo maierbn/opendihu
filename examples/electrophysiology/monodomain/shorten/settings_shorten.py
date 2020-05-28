@@ -236,7 +236,7 @@ config = {
             ("outputConnectorSlot", 0): ("state", "wal_environment/vS"),      # expose state 0 = Vm to the operator splitting
             #("outputConnectorSlot", 1): ("state", "razumova/Ca_SR1"),
             #("outputConnectorSlot", 2): ("state", "razumova/Ca_SR2"),
-            ("outputConnectorSlot", 1): ("intermediate", "razumova/stress"),  # expose intermediate 12 = γ to the operator splitting
+            ("outputConnectorSlot", 1): ("algebraic", "razumova/stress"),  # expose algebraic 12 = γ to the operator splitting
           },
           "parametersInitialValues":                [0.0,1.0],                                      #[0.0, 1.0],  # initial values for the parameters: I_Stim, l_hs
           

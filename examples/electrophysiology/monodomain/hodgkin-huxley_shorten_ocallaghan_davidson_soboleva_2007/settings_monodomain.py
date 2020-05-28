@@ -9,7 +9,7 @@
 import sys
 import numpy as np
 
-end_time = 10_000   # [ms] end time of simulation
+end_time = 100   # [ms] end time of simulation
 n_elements = 200
 #element_size = 1./100   # [cm]
 element_size = 1./100
@@ -23,9 +23,9 @@ solver_type = "gmres"
 
 # timing parameters
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
-dt_1D = 2e-5                      # timestep width of diffusion, max: 4e-4
-dt_0D = 1e-7                      # timestep width of ODEs
-dt_splitting = 2e-5                      # overall timestep width of splitting
+dt_1D = 1e-6                      # timestep width of diffusion, max: 4e-4
+dt_0D = 1e-6                      # timestep width of ODEs
+dt_splitting = 1e-6                      # overall timestep width of splitting
 
 #dt_0D = 1e-3                        # [ms] timestep width of ODEs
 #dt_1D = 1e-3                        # [ms] timestep width of diffusion

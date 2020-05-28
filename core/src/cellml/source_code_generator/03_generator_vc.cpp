@@ -397,7 +397,7 @@ generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunc
     << " * The \"optimizationType\" is \"vc\". (Other options are \"simd\" and \"openmp\".) */" << std::endl
     << "#ifdef __cplusplus\n" << "extern \"C\"\n" << "#endif\n" << std::endl
     << "void computeCellMLRightHandSide("
-    << "void *context, double t, double *states, double *rates, double *intermediates, double *parameters)" << std::endl 
+    << "void *context, double t, double *states, double *rates, double *algebraics, double *parameters)" << std::endl 
     << "{" << std::endl
     << "  // assert that Vc::double_v::Size is the same as in opendihu, otherwise there will be problems\n"
     << "  if (Vc::double_v::Size != " << Vc::double_v::Size << ")\n"
@@ -421,17 +421,17 @@ generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunc
   // add declaration of algebraic variables
   sourceCode << std::endl;
   const int nVcVectors = (int)(ceil((double)this->nInstances_ / Vc::double_v::Size));
-  const int nParametersPerInstance = this->nIntermediates_;
+  const int nParametersPerInstance = this->nAlgebraics_;
 
   sourceCode << std::endl
     << "  const int nInstances = " << this->nInstances_ << ";\n"
     << "  const int nStates = " << this->nStates_ << ";\n"
-    << "  const int nIntermediates = " << this->nIntermediates_ << ";\n"
+    << "  const int nAlgebraics = " << this->nAlgebraics_ << ";\n"
     << "  const int nParametersPerInstance = " << nParametersPerInstance << ";\n"
     << "  const int nVcVectors = " << nVcVectors << ";  // ceil(" << this->nInstances_ << " instances / VcSize " << Vc::double_v::Size << ")" << std::endl
     << "  Vc::double_v statesVc[nStates*nVcVectors];  // " << this->nStates_ << " states * " << nVcVectors << " vectors" << std::endl
     << "  Vc::double_v ratesVc[nStates*nVcVectors];   // " << this->nStates_ << " rates  * " << nVcVectors << " vectors" << std::endl
-    << "  Vc::double_v intermediatesVc[nIntermediates*nVcVectors];  // " << this->nIntermediates_ << " intermediates  * " << nVcVectors << " vectors" << std::endl
+    << "  Vc::double_v algebraicsVc[nAlgebraics*nVcVectors];  // " << this->nAlgebraics_ << " algebraics  * " << nVcVectors << " vectors" << std::endl
     << "  Vc::double_v parametersVc[nParametersPerInstance*nVcVectors];  // " << nParametersPerInstance << " parameters  * " << nVcVectors << " vectors" << std::endl
     << "\n"
     << "  // fill input vectors of states and parameters\n"
@@ -468,7 +468,7 @@ generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunc
             }
             else
             {
-              // all other variables (states, rates, intermediates, parameters) exist for every instance
+              // all other variables (states, rates, algebraics, parameters) exist for every instance
               if (expression.code == "states")
               {
                 sourceCode << "statesVc[" << expression.arrayIndex * nVcVectors << "+i]";
@@ -477,9 +477,9 @@ generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunc
               {
                 sourceCode << "ratesVc[" << expression.arrayIndex * nVcVectors << "+i]";
               }
-              else if (expression.code == "intermediates")
+              else if (expression.code == "algebraics")
               {
-                sourceCode << "intermediatesVc[" << expression.arrayIndex * nVcVectors << "+i]";
+                sourceCode << "algebraicsVc[" << expression.arrayIndex * nVcVectors << "+i]";
               }
               else if (expression.code == "parameters")
               {
@@ -520,13 +520,13 @@ generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunc
     << "        rates[rateNo*nInstances + i*Vc::double_v::Size+k] = ratesVc[rateNo*nVcVectors + i][k];\n"
     << "      }\n"
     << "\n"
-    << "  for (int intermediateNo = 0; intermediateNo < nIntermediates; intermediateNo++)\n"
+    << "  for (int algebraicNo = 0; algebraicNo < nAlgebraics; algebraicNo++)\n"
     << "    for (int i = 0; i < nVcVectors; i++)  // Vc vector no\n"
     << "      for (int k = 0; k < Vc::double_v::Size; k++)  // entry no in Vc vector \n"
     << "      {\n"
-    << "        if (intermediateNo*nInstances + i*Vc::double_v::Size+k >= nIntermediates*nInstances)\n"
+    << "        if (algebraicNo*nInstances + i*Vc::double_v::Size+k >= nAlgebraics*nInstances)\n"
     << "          continue;\n"
-    << "        intermediates[intermediateNo*nInstances + i*Vc::double_v::Size+k] = intermediatesVc[intermediateNo*nVcVectors + i][k];\n"
+    << "        algebraics[algebraicNo*nInstances + i*Vc::double_v::Size+k] = algebraicsVc[algebraicNo*nVcVectors + i][k];\n"
     << "      }\n"
     << "\n";
 
@@ -605,7 +605,7 @@ generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateE
     << "// compute one Heun step\n"
     << "#ifdef __cplusplus\n" << "extern \"C\"\n" << "#endif\n" << std::endl
     << "void compute0DInstance(Vc::double_v states[], std::vector<Vc::double_v> &parameters, double currentTime, double timeStepWidth, bool stimulate,\n"
-    << "                       bool storeIntermediatesForTransfer, std::vector<Vc::double_v> &intermediatesForTransfer, const std::vector<int> &intermediatesForTransferIndices, double valueForStimulatedPoint) \n"
+    << "                       bool storeAlgebraicsForTransfer, std::vector<Vc::double_v> &algebraicsForTransfer, const std::vector<int> &algebraicsForTransferIndices, double valueForStimulatedPoint) \n"
     << "{\n"
     << "  // assert that Vc::double_v::Size is the same as in opendihu, otherwise there will be problems\n"
     << "  if (Vc::double_v::Size != " << Vc::double_v::Size << ")\n"
@@ -657,7 +657,7 @@ generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateE
             }
             else
             {
-              // all other variables (states, rates, intermediates, parameters) exist for every instance
+              // all other variables (states, rates, algebraics, parameters) exist for every instance
               if (expression.code == "states")
               {
                 sourceCodeLine << "states[" << expression.arrayIndex << "]";
@@ -666,7 +666,7 @@ generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateE
               {
                 sourceCodeLine << "rate" << expression.arrayIndex;
               }
-              else if (expression.code == "intermediates")
+              else if (expression.code == "algebraics")
               {
                 sourceCodeLine << "algebraic" << expression.arrayIndex;
               }
@@ -706,8 +706,8 @@ generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateE
     }
   }
   sourceCode << "\n"
-    << "  // intermediate step\n"
-    << "  // compute y* = y_n + dt*rhs(y_n), y_n = state, rhs(y_n) = rate, y* = intermediateState\n";
+    << "  // algebraic step\n"
+    << "  // compute y* = y_n + dt*rhs(y_n), y_n = state, rhs(y_n) = rate, y* = algebraicState\n";
 
   for (int stateNo = 0; stateNo < this->nStates_; stateNo++)
   {
@@ -715,7 +715,7 @@ generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateE
     if (stateNo != 0)
       sourceCode << "const ";
 
-    sourceCode << "double_v intermediateState" << stateNo << " = states[" << stateNo << "] + timeStepWidth*rate" << stateNo << ";\n";
+    sourceCode << "double_v algebraicState" << stateNo << " = states[" << stateNo << "] + timeStepWidth*rate" << stateNo << ";\n";
   }
   sourceCode << "\n\n"
     << R"(
@@ -724,7 +724,7 @@ generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateE
   {
     for (int i = 0; i < std::min(3,(int)Vc::double_v::Size); i++)
     {
-      intermediateState0[i] = valueForStimulatedPoint;
+      algebraicState0[i] = valueForStimulatedPoint;
     }
   }
 
@@ -752,18 +752,18 @@ generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateE
             }
             else
             {
-              // all other variables (states, rates, intermediates, parameters) exist for every instance
+              // all other variables (states, rates, algebraics, parameters) exist for every instance
               if (expression.code == "states")
               {
-                sourceCodeLine << "intermediateState" << expression.arrayIndex;
+                sourceCodeLine << "algebraicState" << expression.arrayIndex;
               }
               else if (expression.code == "rates")
               {
-                sourceCodeLine << "intermediateRate" << expression.arrayIndex;
+                sourceCodeLine << "algebraicRate" << expression.arrayIndex;
               }
-              else if (expression.code == "intermediates")
+              else if (expression.code == "algebraics")
               {
-                sourceCodeLine << "intermediateAlgebraic" << expression.arrayIndex;
+                sourceCodeLine << "algebraicAlgebraic" << expression.arrayIndex;
               }
               else if (expression.code == "parameters")
               {
@@ -809,7 +809,7 @@ generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateE
 
   for (int stateNo = 0; stateNo < this->nStates_; stateNo++)
   {
-    sourceCode << "  states[" << stateNo << "] += 0.5*timeStepWidth*(rate" << stateNo << " + intermediateRate" << stateNo << ");\n";
+    sourceCode << "  states[" << stateNo << "] += 0.5*timeStepWidth*(rate" << stateNo << " + algebraicRate" << stateNo << ");\n";
   }
 
   sourceCode << R"(
@@ -822,30 +822,30 @@ generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateE
     }
   }
 
-  // store intermediates for transfer
-  if (storeIntermediatesForTransfer)
+  // store algebraics for transfer
+  if (storeAlgebraicsForTransfer)
   {
-    for (int i = 0; i < intermediatesForTransferIndices.size(); i++)
+    for (int i = 0; i < algebraicsForTransferIndices.size(); i++)
     {
-      const int intermediate = intermediatesForTransferIndices[i];
+      const int algebraic = algebraicsForTransferIndices[i];
 
-      switch (intermediate)
+      switch (algebraic)
       {
 )";
 
-  // loop over intermediates and generate code to copy the updated algebraic values to the intermediates
-  for (int intermediateNo = 0; intermediateNo < this->nIntermediates_; intermediateNo++)
+  // loop over algebraics and generate code to copy the updated algebraic values to the algebraics
+  for (int algebraicNo = 0; algebraicNo < this->nAlgebraics_; algebraicNo++)
   {
-    // only of the intermediate was computed and not replaced by a parameter
-    if (std::find(this->parametersUsedAsIntermediate_.begin(), this->parametersUsedAsIntermediate_.end(), intermediateNo)
-       != this->parametersUsedAsIntermediate_.end())
+    // only of the algebraic was computed and not replaced by a parameter
+    if (std::find(this->parametersUsedAsAlgebraic_.begin(), this->parametersUsedAsAlgebraic_.end(), algebraicNo)
+       != this->parametersUsedAsAlgebraic_.end())
     {
-      sourceCode << "        // case " << intermediateNo << ": is a parameter\n";
+      sourceCode << "        // case " << algebraicNo << ": is a parameter\n";
     }
     else
     {
-      sourceCode << "        case " << intermediateNo << ":\n"
-        << "          intermediatesForTransfer[i] = intermediateAlgebraic" << intermediateNo << ";\n"
+      sourceCode << "        case " << algebraicNo << ":\n"
+        << "          algebraicsForTransfer[i] = algebraicAlgebraic" << algebraicNo << ";\n"
         << "          break;\n";
     }
   }

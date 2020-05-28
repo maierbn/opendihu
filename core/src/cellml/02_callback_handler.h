@@ -16,15 +16,15 @@
  *  This class can also be computed easily in multiple instances along the nodes of a mesh.
  * 
  *  Naming:
- *   Intermediate (opendihu) = KNOWN (OpenCMISS) = Algebraic (OpenCOR)
+ *   Algebraic (opendihu) = KNOWN (OpenCMISS) = Algebraic (OpenCOR)
  *   Parameter (opendihu, OpenCMISS) = KNOWN (OpenCMISS), in OpenCOR also algebraic
  *   Constant - these are constants that are only present in the source files
  *   State: state variable
  *   Rate: the time derivative of the state variable, i.e. the increment value in an explicit Euler stepping
  */
-template <int nStates, int nIntermediates_, typename FunctionSpaceType>
+template <int nStates, int nAlgebraics_, typename FunctionSpaceType>
 class CallbackHandler :
-  public RhsRoutineHandler<nStates,nIntermediates_,FunctionSpaceType>,
+  public RhsRoutineHandler<nStates,nAlgebraics_,FunctionSpaceType>,
   public DiscretizableInTime
 {
 public:
@@ -52,7 +52,7 @@ public:
 
   //! register a callbackfunction handleResult that gets called after each new values are available
   void registerHandleResult(void (*handleResult) (void *context, int nInstances, int timeStepNo, double currentTime,
-                                                  double *states, double intermediates[]));
+                                                  double *states, double algebraics[]));
   
   //! directly call the python callback if it exists
   void callPythonSetParametersFunction(int nInstances, int timeStepNo, double currentTime, double *parameterValues, int nParameters);
@@ -64,7 +64,7 @@ public:
   void callPythonSetSpecificStatesFunction(int nInstances, int timeStepNo, double currentTime, double *states);
 
   //! directly call the python callback if it exists
-  void callPythonHandleResultFunction(int nInstances, int timeStepNo, double currentTime, double *states, double *intermediates);
+  void callPythonHandleResultFunction(int nInstances, int timeStepNo, double currentTime, double *states, double *algebraics);
 
   //! get the values of this->lastCallSpecificStatesTime
   double lastCallSpecificStatesTime();

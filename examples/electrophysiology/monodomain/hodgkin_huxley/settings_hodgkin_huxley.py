@@ -1,8 +1,8 @@
 # Electrophysiology
-# Monodomain with Hodgkin-Huxley model as rhs. This also demonstrates how use output writers and how to pass on intermediate values to the diffusion solver.
-# The paraview output files "strang_*.vtp" of the output writer under diffusion will include the selected intermediate values no. 0,1 and 2 of the CellML problem. 
-# Adjust "intermediatesForTransfer" and "statesForTransfer" to select different states, adjust "connectedSlotsTerm1To2" and connectedSlotsTerm2To1 accordingly.
-# There are two more output writers, one directly in the CellML adapter (produces cellml_*.vtp) which writes all states and all intermediates,
+# Monodomain with Hodgkin-Huxley model as rhs. This also demonstrates how use output writers and how to pass on algebraic values to the diffusion solver.
+# The paraview output files "strang_*.vtp" of the output writer under diffusion will include the selected algebraic values no. 0,1 and 2 of the CellML problem. 
+# Adjust "algebraicsForTransfer" and "statesForTransfer" to select different states, adjust "connectedSlotsTerm1To2" and connectedSlotsTerm2To1 accordingly.
+# There are two more output writers, one directly in the CellML adapter (produces cellml_*.vtp) which writes all states and all algebraics,
 # and a second in the Heun solver, which writes all states ("states_*.py)
 # 
 #
@@ -73,7 +73,7 @@ if rank_no == 0:
 if "shorten" in cellml_file:
   # parameters: stimulation current I_stim, fiber stretch λ
   mappings = {
-    ("parameter", 0):           ("intermediate", "wal_environment/I_HH"), # parameter is intermediate 32
+    ("parameter", 0):           ("algebraic", "wal_environment/I_HH"), # parameter is algebraic 32
     ("parameter", 1):           ("constant", "razumova/L_x"),             # parameter is constant 65, fiber stretch λ, this indicates how much the fiber has stretched, 1 means no extension
     ("outputConnectorSlot", 0): ("state", "wal_environment/vS"),          # expose state
 
@@ -88,7 +88,7 @@ elif "hodgkin_huxley" in cellml_file:
     ("outputConnectorSlot", 1): ("state", "sodium_channel_m_gate/m"),     # expose state 1 = m
     ("outputConnectorSlot", 2): ("state", "sodium_channel_h_gate/h"),     # expose state 2 = h
     ("outputConnectorSlot", 3): ("state", "potassium_channel_n_gate/n"),  # expose state 3 = n
-    ("outputConnectorSlot", 4): ("intermediate", "leakage_current/i_L"),  # expose algebraic 8 = leakage current
+    ("outputConnectorSlot", 4): ("algebraic", "leakage_current/i_L"),  # expose algebraic 8 = leakage current
   }
   parameters_initial_values = [0.0]
   nodal_stimulation_current = 40.
@@ -223,8 +223,8 @@ config = {
     #"numberTimeSteps": 1,
     "timeStepWidth":          dt_splitting,  # 1e-1
     "endTime":                end_time,
-    "connectedSlotsTerm1To2": [0,1,2,3,4],   # Transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion), slots 1-3: intermediates that should only be transferred to Diffusion because of the output writer (such that they will be included in the output files), not for actual computation.
-    "connectedSlotsTerm2To1": [0,1,2,3,4],   # Transfer the same values back. Use None for slots that should not be connected. In case of the intermediates it is good to have them connected both directions, 1->2 and 2->1, only then copying will be avoided (variables are reused) because it is asserted that Term 2 does not change the values.
+    "connectedSlotsTerm1To2": [0,1,2,3,4],   # Transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion), slots 1-3: algebraics that should only be transferred to Diffusion because of the output writer (such that they will be included in the output files), not for actual computation.
+    "connectedSlotsTerm2To1": [0,1,2,3,4],   # Transfer the same values back. Use None for slots that should not be connected. In case of the algebraics it is good to have them connected both directions, 1->2 and 2->1, only then copying will be avoided (variables are reused) because it is asserted that Term 2 does not change the values.
     "logTimeStepWidthAsKey":  "dt_splitting",
     "durationLogKey":         "duration_total",
     "timeStepOutputInterval": 1000,
@@ -266,12 +266,12 @@ config = {
           
           # parameters to the cellml model
           "parametersInitialValues":                parameters_initial_values,                      #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
-          "mappings":                               mappings,                                       # mappings between parameters and intermediates/constants and between outputConnectorSlots and states, intermediates or parameters, they are defined in helper.py
+          "mappings":                               mappings,                                       # mappings between parameters and algebraics/constants and between outputConnectorSlots and states, algebraics or parameters, they are defined in helper.py
           
           "meshName":                               "MeshFiber",
           "stimulationLogFilename":                 "out/stimulation.log",                          # a file that will contain the times of stimulations
           
-          # output writer for states, intermediates and parameters
+          # output writer for states, algebraics and parameters
           "OutputWriter" : [
             {"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/cellml", "binary": True, "onlyNodalValues": True, "fixedFormat": True, "combineFiles": True, "fileNumbering": "incremental"},
           ],

@@ -84,7 +84,7 @@ void SolutionVectorMapping<
     }
   }
 
-  // for the second vector of variables (the "intermediates" in case of CellMLAdapter)
+  // for the second vector of variables (the "algebraics" in case of CellMLAdapter)
   for (int i = 0; i < transferableSolutionData1->variable2.size(); i++)
   {
     int fromVectorNo = 1;

@@ -12,14 +12,14 @@
 #include "mesh/mesh_manager/mesh_manager.h"
 #include "control/diagnostic_tool/solver_structure_visualizer.h"
 
-template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
-std::array<double,nStates_> CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::statesInitialValues_;
+template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
+std::array<double,nStates_> CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::statesInitialValues_;
 
-template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
-bool CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::statesInitialValuesinitialized_ = false;
+template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
+bool CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::statesInitialValuesinitialized_ = false;
 
-template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
-CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::
+template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
+CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::
 CellmlAdapterBase(DihuContext context) :
   context_(context), specificSettings_(PythonConfig(context_.getPythonConfig(), "CellML")),
   data_(context_), cellmlSourceCodeGenerator_()
@@ -28,46 +28,46 @@ CellmlAdapterBase(DihuContext context) :
   LOG(TRACE) << "CellmlAdapterBase constructor";
 }
 
-template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
-CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::
+template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
+CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::
 CellmlAdapterBase(DihuContext context, bool initializeOutputWriter) :
   context_(context), specificSettings_(PythonConfig(context_.getPythonConfig(), "CellML")),
   data_(context_), cellmlSourceCodeGenerator_()
 {
 }
 
-template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
-CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::
+template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
+CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::
 ~CellmlAdapterBase()
 {
 }
 
-template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
-constexpr int CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::
+template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
+constexpr int CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::
 nComponents()
 {
   return nStates_;
 }
 
-template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
-constexpr int CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::
+template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
+constexpr int CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::
 nStates()
 {
   return nStates_;
 }
 
-template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
-void CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::
+template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
+void CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::
 setSolutionVariable(std::shared_ptr<FieldVariableStates> states)
 {
   this->data_.setStatesVariable(states);
 }
 
-template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
-void CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::
+template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
+void CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::
 setOutputConnectorData(std::shared_ptr<::Data::OutputConnectorData<FunctionSpaceType,nStates_>> outputConnectorDataTimeStepping)
 {
-  // add all state and intermediate values for transfer (option "intermediatesForTransfer"), which are stored in this->data_.getOutputConnectorData()
+  // add all state and algebraic values for transfer (option "algebraicsForTransfer"), which are stored in this->data_.getOutputConnectorData()
   // at the end of outputConnectorDataTimeStepping
 
   // loop over states that should be transferred
@@ -92,17 +92,17 @@ setOutputConnectorData(std::shared_ptr<::Data::OutputConnectorData<FunctionSpace
     outputConnectorDataTimeStepping->addFieldVariable(values, componentNo);
   }
 
-  // loop over intermediates that should be transferred
-  for (typename std::vector<::Data::ComponentOfFieldVariable<FunctionSpaceType,nIntermediates_>>::iterator iter
+  // loop over algebraics that should be transferred
+  for (typename std::vector<::Data::ComponentOfFieldVariable<FunctionSpaceType,nAlgebraics_>>::iterator iter
     = this->data_.getOutputConnectorData()->variable2.begin(); iter != this->data_.getOutputConnectorData()->variable2.end(); iter++)
   {
     int componentNo = iter->componentNo;
-    std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nIntermediates_>> values = iter->values;
+    std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nAlgebraics_>> values = iter->values;
 
     values->setRepresentationGlobal();
 
-    // The intermediate field variables have 'nIntermediates_' components, but the field variables in the outputConnectorDataTimeStepping object
-    // have only 1 component. Therefore, we create new field variables with 1 components each that reuse the Petsc Vec's of the intermediate field variables.
+    // The algebraic field variables have 'nAlgebraics_' components, but the field variables in the outputConnectorDataTimeStepping object
+    // have only 1 component. Therefore, we create new field variables with 1 components each that reuse the Petsc Vec's of the algebraic field variables.
 
     // get the parameters to create the new field variable
     std::string name = values->componentName(componentNo);
@@ -113,22 +113,22 @@ setOutputConnectorData(std::shared_ptr<::Data::OutputConnectorData<FunctionSpace
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> newFieldVariable
       = std::make_shared<FieldVariable::FieldVariable<FunctionSpaceType,1>>(*values, name, componentNames, reuseData);
 
-    LOG(DEBUG) << "CellmlAdapterBase::setOutputConnectorData add FieldVariable " << newFieldVariable << " for intermediate " << componentNo << "," << name;
+    LOG(DEBUG) << "CellmlAdapterBase::setOutputConnectorData add FieldVariable " << newFieldVariable << " for algebraic " << componentNo << "," << name;
 
     // add this component to outputConnector of data time stepping
     outputConnectorDataTimeStepping->addFieldVariable2(newFieldVariable);
   }
 }
 
-template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
-void CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::
+template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
+void CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::
 initialize()
 {
-  LOG(TRACE) << "CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::initialize";
+  LOG(TRACE) << "CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::initialize";
 
   if (VLOG_IS_ON(1))
   {
-    LOG(DEBUG) << "CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::initialize querying meshManager for mesh";
+    LOG(DEBUG) << "CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::initialize querying meshManager for mesh";
     LOG(DEBUG) << "specificSettings_: ";
     PythonUtility::printDict(specificSettings_.pyObject());
   }
@@ -159,33 +159,33 @@ initialize()
   specificSettings_.getOptionVector("parametersInitialValues", parametersInitialValues);
 
   // parse mappings, which initializes the following variables:
-  // parametersUsedAsIntermediate, parametersUsedAsConstant,
+  // parametersUsedAsAlgebraic, parametersUsedAsConstant,
 
-  // add explicitely defined parameters that replace intermediates and constants
-  std::vector<int> parametersUsedAsIntermediate;  //< explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array
+  // add explicitely defined parameters that replace algebraics and constants
+  std::vector<int> parametersUsedAsAlgebraic;  //< explicitely defined parameters that will be copied to algebraics, this vector contains the indices of the algebraic array
   std::vector<int> parametersUsedAsConstant;      //< explicitely defined parameters that will be copied to constants, this vector contains the indices of the constants
 
   std::vector<int> &statesForTransfer = data_.statesForTransfer();
-  std::vector<int> &intermediatesForTransfer = data_.intermediatesForTransfer();
+  std::vector<int> &algebraicsForTransfer = data_.algebraicsForTransfer();
   std::vector<int> &parametersForTransfer = data_.parametersForTransfer();
 
-  // parse the source code and initialize the names of states, intermediates and constants, which are needed for initializeMappings
-  cellmlSourceCodeGenerator_.initializeNames(modelFilename, nInstances_, nStates_, nIntermediates_);
+  // parse the source code and initialize the names of states, algebraics and constants, which are needed for initializeMappings
+  cellmlSourceCodeGenerator_.initializeNames(modelFilename, nInstances_, nStates_, nAlgebraics_);
 
-  // initialize all information from python settings key "mappings", this sets parametersUsedAsIntermediates/States and outputIntermediate/StatesIndex
-  initializeMappings(parametersUsedAsIntermediate, parametersUsedAsConstant,
-                     statesForTransfer, intermediatesForTransfer, parametersForTransfer);
+  // initialize all information from python settings key "mappings", this sets parametersUsedAsAlgebraics/States and outputAlgebraic/StatesIndex
+  initializeMappings(parametersUsedAsAlgebraic, parametersUsedAsConstant,
+                     statesForTransfer, algebraicsForTransfer, parametersForTransfer);
 
-  // initialize data, i.e. states and intermediates field variables
+  // initialize data, i.e. states and algebraics field variables
   data_.setFunctionSpace(functionSpace_);
-  data_.setIntermediateNames(cellmlSourceCodeGenerator_.intermediateNames());
+  data_.setAlgebraicNames(cellmlSourceCodeGenerator_.algebraicNames());
   data_.initialize();
 
   // get the data_.parameters() raw pointer
   data_.prepareParameterValues();
 
   // parse the source code completely and store source code, needs data initialized in order to store initial parameter values
-  cellmlSourceCodeGenerator_.initializeSourceCode(parametersUsedAsIntermediate, parametersUsedAsConstant, parametersInitialValues, nIntermediates_, data_.parameterValues());
+  cellmlSourceCodeGenerator_.initializeSourceCode(parametersUsedAsAlgebraic, parametersUsedAsConstant, parametersInitialValues, nAlgebraics_, data_.parameterValues());
 
   // restore the raw pointer of data_.parameters()
   data_.restoreParameterValues();
@@ -198,10 +198,10 @@ initialize()
 }
 
 
-template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
-void CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::
-initializeMappings(std::vector<int> &parametersUsedAsIntermediate, std::vector<int> &parametersUsedAsConstant,
-                   std::vector<int> &statesForTransfer, std::vector<int> &intermediatesForTransfer, std::vector<int> &parametersForTransfer)
+template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
+void CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::
+initializeMappings(std::vector<int> &parametersUsedAsAlgebraic, std::vector<int> &parametersUsedAsConstant,
+                   std::vector<int> &statesForTransfer, std::vector<int> &algebraicsForTransfer, std::vector<int> &parametersForTransfer)
 {
   if (this->specificSettings_.hasKey("mappings"))
   {
@@ -209,12 +209,12 @@ initializeMappings(std::vector<int> &parametersUsedAsIntermediate, std::vector<i
     /*
     "mappings": {
       ("parameter",0): ("state",0),
-      ("parameter",1): ("intermediate",0),
+      ("parameter",1): ("algebraic",0),
       ("parameter",2): ("constant",0),
       ("outputConnectorSlot",0): ("parameter",0),
     }
     */
-    const std::vector<std::string> &intermediateNames = cellmlSourceCodeGenerator_.intermediateNames();
+    const std::vector<std::string> &algebraicNames = cellmlSourceCodeGenerator_.algebraicNames();
     const std::vector<std::string> &stateNames = cellmlSourceCodeGenerator_.stateNames();
     const std::vector<std::string> &constantNames = cellmlSourceCodeGenerator_.constantNames();
 
@@ -224,7 +224,7 @@ initializeMappings(std::vector<int> &parametersUsedAsIntermediate, std::vector<i
     /*
     "mappings": {
       ("parameter",0): ("state","membrane/V"),
-      ("parameter",1): ("intermediate","razumova/activestress"),
+      ("parameter",1): ("algebraic","razumova/activestress"),
       ("parameter",2): ("constant",0),
       ("outputConnectorSlot",0): ("parameter",0),
       ("outputConnectorSlot",1): "razumova/l_hs",       #<-- this will be converted now
@@ -249,11 +249,11 @@ initializeMappings(std::vector<int> &parametersUsedAsIntermediate, std::vector<i
       {
         std::string name = PythonUtility::convertFromPython<std::string>::get(item.first);
 
-        // find if the string is a intermediate name given in intermediateNames
-        std::vector<std::string>::const_iterator pos = std::find(intermediateNames.begin(), intermediateNames.end(), name);
-        if (pos != intermediateNames.end())
+        // find if the string is a algebraic name given in algebraicNames
+        std::vector<std::string>::const_iterator pos = std::find(algebraicNames.begin(), algebraicNames.end(), name);
+        if (pos != algebraicNames.end())
         {
-          firstTuple.first = "intermediate";
+          firstTuple.first = "algebraic";
           firstTuple.second = PythonUtility::convertToPython<std::string>::get(name);
         }
         else
@@ -274,7 +274,7 @@ initializeMappings(std::vector<int> &parametersUsedAsIntermediate, std::vector<i
             }
             else
             {
-              LOG(ERROR) << "In mappings, name \"" << name << "\" is neither state, intermediate nor constant.";
+              LOG(ERROR) << "In mappings, name \"" << name << "\" is neither state, algebraic nor constant.";
             }
           }
         }
@@ -289,11 +289,11 @@ initializeMappings(std::vector<int> &parametersUsedAsIntermediate, std::vector<i
       {
         std::string name = PythonUtility::convertFromPython<std::string>::get(item.second);
 
-        // find if the string is a intermediate name given in intermediateNames
-        std::vector<std::string>::const_iterator pos = std::find(intermediateNames.begin(), intermediateNames.end(), name);
-        if (pos != intermediateNames.end())
+        // find if the string is a algebraic name given in algebraicNames
+        std::vector<std::string>::const_iterator pos = std::find(algebraicNames.begin(), algebraicNames.end(), name);
+        if (pos != algebraicNames.end())
         {
-          secondTuple.first = "intermediate";
+          secondTuple.first = "algebraic";
           secondTuple.second = PythonUtility::convertToPython<std::string>::get(name);
         }
         else
@@ -314,7 +314,7 @@ initializeMappings(std::vector<int> &parametersUsedAsIntermediate, std::vector<i
             }
             else
             {
-              LOG(ERROR) << "In mappings, name \"" << name << "\" is neither state, intermediate nor constant.";
+              LOG(ERROR) << "In mappings, name \"" << name << "\" is neither state, algebraic nor constant.";
             }
           }
         }
@@ -324,24 +324,24 @@ initializeMappings(std::vector<int> &parametersUsedAsIntermediate, std::vector<i
     }
 
     // -----------------------------
-    // parse the strings in the entries and convert them to stateNo, intermediateNo or constantNo
+    // parse the strings in the entries and convert them to stateNo, algebraicNo or constantNo
     /*
     "mappings": {
       ("parameter",0): ("state","membrane/V"),                      #<-- this will be converted now
-      ("parameter",1): ("intermediate","razumova/activestress"),    #<-- this will be converted now
+      ("parameter",1): ("algebraic","razumova/activestress"),    #<-- this will be converted now
       ("parameter",2): ("constant",0),
       ("outputConnectorSlot",0): ("parameter",0),
-      ("outputConnectorSlot",1): ("intermediate", "razumova/l_hs"), #<-- this will be converted now
+      ("outputConnectorSlot",1): ("algebraic", "razumova/l_hs"), #<-- this will be converted now
     }
     */
-    // result is settings for statesForTransfer, intermediatesForTransfer and parametersForTransfer
+    // result is settings for statesForTransfer, algebraicsForTransfer and parametersForTransfer
 
     for (std::pair<EntryTypePython,EntryTypePython> &tupleEntry : tupleEntries)
     {
       EntryTypePython entries[2] = {tupleEntry.first, tupleEntry.second};
       std::vector<std::pair<std::string,int>> entriesWithNos;
 
-      // parse the strings in the entries and convert them to stateNo, intermediateNo or constantNo
+      // parse the strings in the entries and convert them to stateNo, algebraicNo or constantNo
       for (EntryTypePython entry : entries)
       {
         if (entry.first == "parameter" || entry.first == "outputConnectorSlot")
@@ -377,33 +377,33 @@ initializeMappings(std::vector<int> &parametersUsedAsIntermediate, std::vector<i
 
           entriesWithNos.push_back(std::make_pair(entry.first, stateNo));
         }
-        else if (entry.first == "intermediate" || entry.first == "algebraic")
+        else if (entry.first == "algebraic" || entry.first == "intermediate")
         {
-          int intermediateNo = 0;
-          std::string intermediateName = PythonUtility::convertFromPython<std::string>::get(entry.second);
+          int algebraicNo = 0;
+          std::string algebraicName = PythonUtility::convertFromPython<std::string>::get(entry.second);
 
-          // if parsed string is a number, this is directly the intermediate no
-          if (!intermediateName.empty() && intermediateName.find_first_not_of("0123456789") == std::string::npos)
+          // if parsed string is a number, this is directly the algebraic no
+          if (!algebraicName.empty() && algebraicName.find_first_not_of("0123456789") == std::string::npos)
           {
-            intermediateNo = atoi(intermediateName.c_str());
+            algebraicNo = atoi(algebraicName.c_str());
           }
           else
           {
-            // find if the string is a intermediate name given in intermediateNames
-            std::vector<std::string>::const_iterator pos = std::find(intermediateNames.begin(), intermediateNames.end(), intermediateName);
-            if (pos != intermediateNames.end())
+            // find if the string is a algebraic name given in algebraicNames
+            std::vector<std::string>::const_iterator pos = std::find(algebraicNames.begin(), algebraicNames.end(), algebraicName);
+            if (pos != algebraicNames.end())
             {
-              intermediateNo = std::distance(intermediateNames.begin(),pos);
+              algebraicNo = std::distance(algebraicNames.begin(),pos);
             }
             else
             {
-              LOG(ERROR) << "In " << this->specificSettings_ << "[\"mappings\"], intermediate \"" << intermediateName << "\" is not valid. "
-                << "Valid intermediate names are: " << intermediateNames << ".\n"
-                << "You can also specify the intermediate no. instead of the name.";
+              LOG(ERROR) << "In " << this->specificSettings_ << "[\"mappings\"], algebraic \"" << algebraicName << "\" is not valid. "
+                << "Valid algebraic names are: " << algebraicNames << ".\n"
+                << "You can also specify the algebraic no. instead of the name.";
             }
           }
 
-          entriesWithNos.push_back(std::make_pair(entry.first, intermediateNo));
+          entriesWithNos.push_back(std::make_pair(entry.first, algebraicNo));
         }
         else if (entry.first == "constant")
         {
@@ -436,7 +436,7 @@ initializeMappings(std::vector<int> &parametersUsedAsIntermediate, std::vector<i
         else
         {
           LOG(FATAL) << "In " << this->specificSettings_ << "[\"mappings\"], invalid field \"" << entry.first << "\", allowed values are: "
-            << "\"parameter\", \"outputConnectorSlot\", \"state\", \"intermediate\", \"constant\".";
+            << "\"parameter\", \"outputConnectorSlot\", \"state\", \"algebraic\", \"constant\".";
         }
       }
 
@@ -452,18 +452,18 @@ initializeMappings(std::vector<int> &parametersUsedAsIntermediate, std::vector<i
       if (entriesWithNos[0].first == "parameter")
       {
         int parameterNo = entriesWithNos[0].second;    // the no. of the parameter
-        int fieldNo = entriesWithNos[1].second;        // the no. of the state, intermediate or constant
+        int fieldNo = entriesWithNos[1].second;        // the no. of the state, algebraic or constant
 
         LOG(DEBUG) << "parameter " << parameterNo << " to \"" << entriesWithNos[1].first << "\", fieldNo " << fieldNo;
 
-        if (entriesWithNos[1].first == "intermediate" || entriesWithNos[1].first == "algebraic")
+        if (entriesWithNos[1].first == "algebraic" || entriesWithNos[1].first == "algebraic")
         {
-          // add no of the constant to parametersUsedAsIntermediate
-          if (parametersUsedAsIntermediate.size() <= parameterNo)
+          // add no of the constant to parametersUsedAsAlgebraic
+          if (parametersUsedAsAlgebraic.size() <= parameterNo)
           {
-            parametersUsedAsIntermediate.resize(parameterNo+1, -1);
+            parametersUsedAsAlgebraic.resize(parameterNo+1, -1);
           }
-          parametersUsedAsIntermediate[parameterNo] = fieldNo;
+          parametersUsedAsAlgebraic[parameterNo] = fieldNo;
         }
         else if (entriesWithNos[1].first == "constant")
         {
@@ -477,7 +477,7 @@ initializeMappings(std::vector<int> &parametersUsedAsIntermediate, std::vector<i
         else
         {
           LOG(ERROR) << "In " << this->specificSettings_ << "[\"mappings\"], you can map "
-            << "paramaters only to intermediates and constants, not states.";
+            << "paramaters only to algebraics and constants, not states.";
         }
       }
       else
@@ -485,7 +485,7 @@ initializeMappings(std::vector<int> &parametersUsedAsIntermediate, std::vector<i
         // output connector slots
 
         int slotNo = entriesWithNos[0].second;    // the no. of the output connector slot
-        int fieldNo = entriesWithNos[1].second;        // the no. of the state, intermediate or constant
+        int fieldNo = entriesWithNos[1].second;        // the no. of the state, algebraic or constant
 
         LOG(DEBUG) << "output connector slot " << slotNo << " to \"" << entriesWithNos[1].first << "\", fieldNo " << fieldNo;
 
@@ -498,14 +498,14 @@ initializeMappings(std::vector<int> &parametersUsedAsIntermediate, std::vector<i
           }
           statesForTransfer[slotNo] = fieldNo;
         }
-        else if (entriesWithNos[1].first == "intermediate" || entriesWithNos[1].first == "algebraic")
+        else if (entriesWithNos[1].first == "algebraic" || entriesWithNos[1].first == "intermediate")
         {
-          // add no of the constant to intermediatesForTransfer
-          if (intermediatesForTransfer.size() <= slotNo)
+          // add no of the constant to algebraicsForTransfer
+          if (algebraicsForTransfer.size() <= slotNo)
           {
-            intermediatesForTransfer.resize(slotNo+1, -1);
+            algebraicsForTransfer.resize(slotNo+1, -1);
           }
-          intermediatesForTransfer[slotNo] = fieldNo;
+          algebraicsForTransfer[slotNo] = fieldNo;
         }
         else if (entriesWithNos[1].first == "parameter")
         {
@@ -519,21 +519,21 @@ initializeMappings(std::vector<int> &parametersUsedAsIntermediate, std::vector<i
         else
         {
           LOG(ERROR) << "In " << this->specificSettings_ << "[\"mappings\"], you can map "
-            << "outputConnectorSlots only to states, intermediates and parameters, not constants.";
+            << "outputConnectorSlots only to states, algebraics and parameters, not constants.";
         }
       }
     }
 
-    // reorder slot nos such that states go first, then intermediates, then parameters
+    // reorder slot nos such that states go first, then algebraics, then parameters
     std::vector<int> temporaryVector;
     std::copy_if(statesForTransfer.begin(), statesForTransfer.end(),
                  std::back_insert_iterator<std::vector<int>>(temporaryVector), [](int a){return a != -1;});
     statesForTransfer = temporaryVector;
 
     temporaryVector.clear();
-    std::copy_if(intermediatesForTransfer.begin(), intermediatesForTransfer.end(),
+    std::copy_if(algebraicsForTransfer.begin(), algebraicsForTransfer.end(),
                  std::back_insert_iterator<std::vector<int>>(temporaryVector), [](int a){return a != -1;});
-    intermediatesForTransfer = temporaryVector;
+    algebraicsForTransfer = temporaryVector;
 
     temporaryVector.clear();
     std::copy_if(parametersForTransfer.begin(), parametersForTransfer.end(),
@@ -542,12 +542,12 @@ initializeMappings(std::vector<int> &parametersUsedAsIntermediate, std::vector<i
 
     // create a string of parameter and contstant mappings
     std::stringstream s;
-    for (int i = 0; i < parametersUsedAsIntermediate.size(); i++)
+    for (int i = 0; i < parametersUsedAsAlgebraic.size(); i++)
     {
-      int intermediateNo = parametersUsedAsIntermediate[i];
-      if (intermediateNo != -1 && intermediateNo < nIntermediates_)
+      int algebraicNo = parametersUsedAsAlgebraic[i];
+      if (algebraicNo != -1 && algebraicNo < nAlgebraics_)
       {
-        s << "  parameter " << i << " maps to intermediate " << intermediateNo << " (\"" << intermediateNames[intermediateNo] << "\")\n";
+        s << "  parameter " << i << " maps to algebraic " << algebraicNo << " (\"" << algebraicNames[algebraicNo] << "\")\n";
       }
     }
     for (int i = 0; i < parametersUsedAsConstant.size(); i++)
@@ -560,13 +560,13 @@ initializeMappings(std::vector<int> &parametersUsedAsIntermediate, std::vector<i
     }
 
     // check that parameters are all mapped
-    for (int i = 0; i < parametersUsedAsIntermediate.size(); i++)
+    for (int i = 0; i < parametersUsedAsAlgebraic.size(); i++)
     {
-      int intermediateNo = parametersUsedAsIntermediate[i];
-      if (intermediateNo == -1 && intermediateNo < nIntermediates_)
+      int algebraicNo = parametersUsedAsAlgebraic[i];
+      if (algebraicNo == -1 && algebraicNo < nAlgebraics_)
       {
-        LOG(ERROR) << "Parameter no. " << i << " is not mapped to any intermediate. "
-          << "(Note that parameters have to be ordered in a way that the first are mapped to intermediates and the last to constants.)\n"
+        LOG(ERROR) << "Parameter no. " << i << " is not mapped to any algebraic. "
+          << "(Note that parameters have to be ordered in a way that the first are mapped to algebraics and the last to constants.)\n"
           << " Parsed mapping:\n" << s.str();
       }
     }
@@ -576,31 +576,31 @@ initializeMappings(std::vector<int> &parametersUsedAsIntermediate, std::vector<i
       int constantNo = parametersUsedAsConstant[i];
       if (constantNo == -1 && constantNo < constantNames.size())
       {
-        LOG(ERROR) << "Parameter no. " << parametersUsedAsIntermediate.size() + i << " is not mapped to any constant. "
-          << "(Note that parameters have to be ordered in a way that the first are mapped to intermediates and the last to constants.)\n"
+        LOG(ERROR) << "Parameter no. " << parametersUsedAsAlgebraic.size() + i << " is not mapped to any constant. "
+          << "(Note that parameters have to be ordered in a way that the first are mapped to algebraics and the last to constants.)\n"
           << " Parsed mapping:\n" << s.str();
       }
     }
   }
   else
   {
-    this->specificSettings_.getOptionVector("parametersUsedAsIntermediate", parametersUsedAsIntermediate);
+    this->specificSettings_.getOptionVector("parametersUsedAsAlgebraic", parametersUsedAsAlgebraic);
     this->specificSettings_.getOptionVector("parametersUsedAsConstant", parametersUsedAsConstant);
 
     this->specificSettings_.template getOptionVector<int>("statesForTransfer", statesForTransfer);
-    this->specificSettings_.template getOptionVector<int>("intermediatesForTransfer", intermediatesForTransfer);
+    this->specificSettings_.template getOptionVector<int>("algebraicsForTransfer", algebraicsForTransfer);
     this->specificSettings_.template getOptionVector<int>("parametersForTransfer", parametersForTransfer);
   }
 
-  LOG(DEBUG) << "parametersUsedAsIntermediate: " << parametersUsedAsIntermediate;
-  LOG(DEBUG) << "parametersUsedAsConstant:     " << parametersUsedAsConstant;
-  LOG(DEBUG) << "statesForTransfer:            " << statesForTransfer;
-  LOG(DEBUG) << "intermediatesForTransfer:     " << intermediatesForTransfer;
-  LOG(DEBUG) << "parametersForTransfer:        " << parametersForTransfer;
+  LOG(DEBUG) << "parametersUsedAsAlgebraic: " << parametersUsedAsAlgebraic;
+  LOG(DEBUG) << "parametersUsedAsConstant:  " << parametersUsedAsConstant;
+  LOG(DEBUG) << "statesForTransfer:         " << statesForTransfer;
+  LOG(DEBUG) << "algebraicsForTransfer:     " << algebraicsForTransfer;
+  LOG(DEBUG) << "parametersForTransfer:     " << parametersForTransfer;
 
-  if (this->specificSettings_.hasKey("outputIntermediateIndex"))
+  if (this->specificSettings_.hasKey("outputAlgebraicIndex"))
   {
-    LOG(WARNING) << specificSettings_ << "[\"outputIntermediateIndex\"] is no longer a valid option, use \"intermediatesForTransfer\" instead!";
+    LOG(WARNING) << specificSettings_ << "[\"outputAlgebraicIndex\"] is no longer a valid option, use \"algebraicsForTransfer\" instead!";
   }
 
   if (this->specificSettings_.hasKey("outputStateIndex"))
@@ -609,12 +609,12 @@ initializeMappings(std::vector<int> &parametersUsedAsIntermediate, std::vector<i
   }
 }
 
-template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
+template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
 template<typename FunctionSpaceType2>
-bool CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::
+bool CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::
 setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nStates_>> initialValues)
 {
-  LOG(TRACE) << "CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::setInitialValues";
+  LOG(TRACE) << "CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::setInitialValues";
 
   if (!statesInitialValuesinitialized_)
   {
@@ -660,74 +660,74 @@ setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2
   return true;
 }
 
-template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
-std::shared_ptr<FunctionSpaceType> CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::
+template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
+std::shared_ptr<FunctionSpaceType> CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::
 functionSpace()
 {
   return functionSpace_;
 }
 
-template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
-void CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::
-getNumbers(int& nInstances, int& nIntermediates, int& nParameters)
+template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
+void CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::
+getNumbers(int& nInstances, int& nAlgebraics, int& nParameters)
 {
   nInstances = nInstances_;
-  nIntermediates = nIntermediates_;
+  nAlgebraics = nAlgebraics_;
   nParameters = cellmlSourceCodeGenerator_.nParameters();
 }
 
-template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
-std::vector<int> &CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::
+template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
+std::vector<int> &CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::
 statesForTransfer()
 {
   return data_.statesForTransfer();
 }
 
-template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
-std::vector<int> &CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::
-intermediatesForTransfer()
+template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
+std::vector<int> &CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::
+algebraicsForTransfer()
 {
-  return data_.intermediatesForTransfer();
+  return data_.algebraicsForTransfer();
 }
 
-template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
-void CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::
+template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
+void CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::
 getStateNames(std::vector<std::string> &stateNames)
 {
   stateNames = this->cellmlSourceCodeGenerator_.stateNames();
 }
 
-template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
-typename CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::Data &CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::
+template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
+typename CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::Data &CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::
 data()
 {
   return this->data_;
 }
 
-template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
-CellmlSourceCodeGenerator &CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::
+template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
+CellmlSourceCodeGenerator &CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::
 cellmlSourceCodeGenerator()
 {
   return this->cellmlSourceCodeGenerator_;
 }
 
-template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
-PythonConfig CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::
+template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
+PythonConfig CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::
 specificSettings()
 {
   return this->specificSettings_;
 }
 
-template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
-constexpr int  CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::
-nIntermediates() const
+template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
+constexpr int  CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::
+nAlgebraics() const
 {
-  return nIntermediates_;
+  return nAlgebraics_;
 }
 
-template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
-std::shared_ptr<typename CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::OutputConnectorDataType>
-CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::
+template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
+std::shared_ptr<typename CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::OutputConnectorDataType>
+CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::
 getOutputConnectorData()
 {
   return this->data_.getOutputConnectorData();

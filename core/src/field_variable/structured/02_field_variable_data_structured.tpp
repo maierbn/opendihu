@@ -50,11 +50,13 @@ FieldVariableDataStructured(FieldVariable<FunctionSpaceType,nComponents> &rhs, s
 template<typename FunctionSpaceType, int nComponents>
 template <int nComponents2>
 FieldVariableDataStructured<FunctionSpaceType,nComponents>::
-FieldVariableDataStructured(FieldVariable<FunctionSpaceType,nComponents2> &rhs, std::string name, std::vector<std::string> componentNames, bool reuseData) :
+FieldVariableDataStructured(FieldVariable<FunctionSpaceType,nComponents2> &rhs, std::string name, std::vector<std::string> componentNames, bool reuseData, int rhsComponentNoBegin) :
   FieldVariableComponents<FunctionSpaceType,nComponents>::FieldVariableComponents()
 {
   // initialize everything from other field variable
   assert(componentNames.size() == nComponents);
+
+  VLOG(1) << "construct field variable \"" << name << "\" from other field variable \"" << rhs.name() << "\", reuseData: " << reuseData << ", rhsComponentNoBegin: " << rhsComponentNoBegin;
   std::copy(componentNames.begin(), componentNames.end(), this->componentNames_.begin());
   
   this->name_ = name;
@@ -64,13 +66,11 @@ FieldVariableDataStructured(FieldVariable<FunctionSpaceType,nComponents2> &rhs, 
   assert(this->functionSpace_);
   assert(this->functionSpace_->meshPartition());
   
-  VLOG(1) << "construct field variable \"" << name << "\" from other field variable \"" << rhs.name() << "\", reuseData: " << reuseData << ".";
-
   // create new distributed petsc vec as copy of rhs values vector
   if (rhs.partitionedPetscVec())
   {
     // if rhs is not a geometry field and therefore has a partitionedPetscVec, use that
-    this->values_ = std::make_shared<PartitionedPetscVec<FunctionSpaceType,nComponents>>(*rhs.partitionedPetscVec(), name, reuseData);
+    this->values_ = std::make_shared<PartitionedPetscVec<FunctionSpaceType,nComponents>>(*rhs.partitionedPetscVec(), name, reuseData, rhsComponentNoBegin);
   }
   else
   {

@@ -23,7 +23,7 @@ void CellmlAdapter<nStates,nAlgebraics,FunctionSpaceType>::
 initializeOutputConnectorData()
 {
   LOG(DEBUG) << "got the following states for transfer: " << statesForTransfer_ << " (states: " << this->states()
-    << "), algebraics: " << algebraicsForTransfer_;
+    << "), algebraics: " << algebraicsForTransfer_ << ", parameters: " << parametersForTransfer_;
 
   outputConnectorData_ = std::make_shared<OutputConnectorDataType>();
 

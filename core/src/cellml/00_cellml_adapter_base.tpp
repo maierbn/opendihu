@@ -86,7 +86,7 @@ setOutputConnectorData(std::shared_ptr<::Data::OutputConnectorData<FunctionSpace
 
     // The state field variables have 'nStates_' components and can be reused.
     std::string name = values->componentName(componentNo);
-    LOG(DEBUG) << "CellmlAdapterBase::setOutputConnectorData add FieldVariable " << *values << " for state " << componentNo << "," << name;
+    LOG(DEBUG) << "CellmlAdapterBase::setOutputConnectorData add FieldVariable " << *values << " (" << values->name() << ") for state " << componentNo << "," << name;
 
     // add this component to outputConnector of data time stepping
     outputConnectorDataTimeStepping->addFieldVariable(values, componentNo);
@@ -106,14 +106,15 @@ setOutputConnectorData(std::shared_ptr<::Data::OutputConnectorData<FunctionSpace
 
     // get the parameters to create the new field variable
     std::string name = values->componentName(componentNo);
-    const std::vector<std::string> componentNames{values->componentName(componentNo)};
+    const std::vector<std::string> componentNames{"0"};
     const bool reuseData = true;
 
-    // create the new field variable with only the one component
+    // create the new field variable with only the one component, the component given by componentNo
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> newFieldVariable
-      = std::make_shared<FieldVariable::FieldVariable<FunctionSpaceType,1>>(*values, name, componentNames, reuseData);
+      = std::make_shared<FieldVariable::FieldVariable<FunctionSpaceType,1>>(*values, name, componentNames, reuseData, componentNo);
 
-    LOG(DEBUG) << "CellmlAdapterBase::setOutputConnectorData add FieldVariable " << newFieldVariable << " for algebraic " << componentNo << "," << name;
+    LOG(DEBUG) << "CellmlAdapterBase::setOutputConnectorData add FieldVariable2 " << newFieldVariable << " for algebraic " << componentNo << " with name " << name
+      << ", this reuses the data from " << values->name();
 
     // add this component to outputConnector of data time stepping
     outputConnectorDataTimeStepping->addFieldVariable2(newFieldVariable);

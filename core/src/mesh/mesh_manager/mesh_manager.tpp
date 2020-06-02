@@ -97,10 +97,14 @@ std::shared_ptr<FunctionSpaceType> Manager::functionSpace(std::string meshName)
 
     if (hasFunctionSpace(meshName))
     {
+      LOG(WARNING) << "There are two meshes of different types with the name \"" << meshName
+        << "\". This is probably not intended. Creating the second mesh with name \"" << meshName << "_2\".\n"
+        << "Type of this mesh: " << StringUtility::demangle(typeid(FunctionSpaceType).name())
+        << "\nCheck if the CellMLAdapter specifies the correct FunctionSpace type (Use CellMLAdapter<nStates,nAlgebraics,FunctionSpaceType>).";
+
       std::stringstream newMeshName;
       newMeshName << meshName << "_2";
       meshName = newMeshName.str();
-      LOG(INFO) << "Create a mesh with name \"" << meshName << "\".";
     }
 
     // create new mesh and initialize
@@ -286,8 +290,9 @@ bool Manager::hasFunctionSpaceOfType(std::string meshName)
     }
     else
     {
-      LOG(DEBUG) << "Mesh \"" << meshName << "\" is stored but under a type that is different from "
+      LOG(WARNING) << "Mesh \"" << meshName << "\" is stored but under a type that is different from "
         << StringUtility::demangle(typeid(FunctionSpaceType).name()) << ". A new mesh will be created instead.";
+
       // This warning could be if in an operator splitting setup for Cellml adapter the functionType is set differently from the one in the FEM.
     }
   }

@@ -14,8 +14,6 @@ int main(int argc, char *argv[])
   // initialize everything, handle arguments and parse settings from input file
   DihuContext settings(argc, argv);
   
-  LOG(DEBUG)<<std::string(80, '=');
-  
   OperatorSplitting::Strang<
     TimeSteppingScheme::Heun<
       CellmlAdapter<44,19>  // nStates,nAlgebraics

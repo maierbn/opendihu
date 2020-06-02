@@ -221,6 +221,7 @@ config = {
     "MeshFiber": {
       "nElements":          n_elements,
       "physicalExtent":     n_elements*element_size,      # 100 elements per cm
+      "physicalOffset":     [0,0,0],
       "logKey":             "Fiber",
       "inputMeshIsGlobal":  True,
     },
@@ -244,7 +245,7 @@ config = {
     "durationLogKey":             "duration_total",
     "timeStepOutputInterval":     10000,
     "connectedSlotsTerm1To2":     {0:0, 1:1, 2:2, 3:3},   # transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion), slot 1 = stress for output writer in diffusion
-    "connectedSlotsTerm2To1":     {0:0, 1:1, 2:2, 3:3},   # transfer the same back, in order to reuse field variables
+    "connectedSlotsTerm2To1":     {0:0},   # transfer the same back, in order to reuse field variables
     
     "Term1": {      # CellML
       "Heun" : {

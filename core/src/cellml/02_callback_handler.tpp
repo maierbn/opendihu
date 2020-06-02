@@ -15,6 +15,7 @@ CallbackHandler<nStates,nAlgebraics_,FunctionSpaceType>::
 CallbackHandler(DihuContext context, bool initializeOutputWriter) :
   RhsRoutineHandler<nStates,nAlgebraics_,FunctionSpaceType>(context, initializeOutputWriter),
   DiscretizableInTime(),
+  fiberNoGlobal_(-1),
   pythonSetSpecificParametersFunction_(NULL), pythonSetSpecificStatesFunction_(NULL), pythonHandleResultFunction_(NULL),
   pySetFunctionAdditionalParameter_(NULL), pyHandleResultFunctionAdditionalParameter_(NULL), pyGlobalNaturalDofsList_(NULL)
 {
@@ -25,6 +26,7 @@ CallbackHandler<nStates,nAlgebraics_,FunctionSpaceType>::
 CallbackHandler(DihuContext context) :
   RhsRoutineHandler<nStates,nAlgebraics_,FunctionSpaceType>(context),
   DiscretizableInTime(),
+  fiberNoGlobal_(-1),
   pythonSetSpecificParametersFunction_(NULL), pythonSetSpecificStatesFunction_(NULL), pythonHandleResultFunction_(NULL),
   pySetFunctionAdditionalParameter_(NULL), pyHandleResultFunctionAdditionalParameter_(NULL), pyGlobalNaturalDofsList_(NULL)
 {
@@ -84,6 +86,15 @@ initializeCallbackFunctions()
     {
       setSpecificStatesCallInterval_ = this->specificSettings_.getOptionInt("setSpecificStatesCallInterval", 1, PythonUtility::NonNegative);
       pySetFunctionAdditionalParameter_ = this->specificSettings_.getOptionPyObject("additionalArgument", Py_None);
+
+      // try to convert the pySetFunctionAdditionalParameter_ value to an integer, to be used for the stimulation log
+      if (this->pySetFunctionAdditionalParameter_)
+      {
+        if (PyLong_Check(pySetFunctionAdditionalParameter_))
+        {
+          fiberNoGlobal_ = PythonUtility::convertFromPython<int>::get(this->pySetFunctionAdditionalParameter_);
+        }
+      }
 
       LOG(DEBUG) << "registered setSpecificStates function, call interval: " << setSpecificStatesCallInterval_;
     }
@@ -262,7 +273,14 @@ callPythonHandleResultFunction(int nInstances, int timeStepNo, double currentTim
     << ", nAlgebraics: " << this->nAlgebraics();
   PyObject *statesList = PythonUtility::convertToPythonList(nStates*this->nInstances_, localStates);
   PyObject *algebraicsList = PythonUtility::convertToPythonList(nAlgebraics_*this->nInstances_, algebraics);
-  PyObject *arglist = Py_BuildValue("(i,i,d,O,O,O)", nInstances, timeStepNo, currentTime, statesList, algebraicsList, pyHandleResultFunctionAdditionalParameter_);
+
+  std::map<std::string,std::vector<std::string>> nameInformation;
+  nameInformation["stateNames"] = this->cellmlSourceCodeGenerator_.stateNames();
+  nameInformation["algebraicNames"] = this->cellmlSourceCodeGenerator_.algebraicNames();
+
+  PyObject *nameInformationPy = PythonUtility::convertToPython<std::map<std::string,std::vector<std::string>>>::get(nameInformation);
+
+  PyObject *arglist = Py_BuildValue("(i,i,d,O,O,O,O)", nInstances, timeStepNo, currentTime, statesList, algebraicsList, nameInformationPy, pyHandleResultFunctionAdditionalParameter_);
   PyObject *returnValue = PyObject_CallObject(pythonHandleResultFunction_, arglist);
 
   // if there was an error while executing the function, print the error message

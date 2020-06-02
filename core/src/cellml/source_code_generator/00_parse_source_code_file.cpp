@@ -137,7 +137,7 @@ parseNamesInSourceCodeFile()
         << nAlgebraicsInSource_ << " algebraics, but the CellMLAdapter only supports "
         << nStates_ << " states and " << nAlgebraics_ << " algebraics." << std::endl
         << "You have to set the correct number in the c++ file and recompile. " << std::endl
-        << "(Use \" CellmlAdapter<" << nStatesInSource << "," << nAlgebraicsInSource_ << ">\".)";
+        << "(Use \"CellmlAdapter<" << nStatesInSource << "," << nAlgebraicsInSource_ << ">\".)";
     }
 
     // check number of algebraics and states in source file
@@ -145,13 +145,13 @@ parseNamesInSourceCodeFile()
     {
       LOG(WARNING) << "The CellML model \"" << sourceFilename_ << "\" needs " << nAlgebraicsInSource_ << " algebraics and CellMLAdapter supports " << nAlgebraics_
         << ". You should recompile with the correct number to avoid performance penalties." << std::endl
-        << "(Use \" CellmlAdapter<" << nStatesInSource << "," << nAlgebraicsInSource_ << ">\".)";
+        << "(Use \"CellmlAdapter<" << nStatesInSource << "," << nAlgebraicsInSource_ << ">\".)";
     }
     if (nStatesInSource != nStates_)
     {
       LOG(ERROR) << "The CellML model \"" << sourceFilename_ << "\" has " << nStatesInSource << " states and CellMLAdapter supports " << nStates_
         << ". This means the last " << nStates_ - nStatesInSource << " state(s) will have undefined values. You should recompile with the correct number of states." << std::endl
-        << "(Use \" CellmlAdapter<" << nStatesInSource << "," << nAlgebraicsInSource_ << ">\".)";
+        << "(Use \"CellmlAdapter<" << nStatesInSource << "," << nAlgebraicsInSource_ << ">\".)";
     }
   }
 }
@@ -179,6 +179,7 @@ parseSourceCodeFile()
 
     bool discardOpenBrace = false;   // if the next line consisting of only "{" should be discarded
     bool headerDone = false;         // if everything before computeRates was parsed
+    std::set<int> parsedAlgebraicAssignments;   // algebraic no.s for which a line ALGEBRAIC[no] = ... has been parsed
 
     std::string name;  // the parsed name of a specifier that follows
 
@@ -251,11 +252,6 @@ parseSourceCodeFile()
       {
         constantAssignments_.push_back(line);
       }
-      else if (line.find("void computeVariables") != std::string::npos)
-      {
-        // this is the end of the normal c source file
-        break;
-      }
       // line contains OpenCOR function head (computeRates)
       else if (line.find("computeRates") != std::string::npos)
       {
@@ -265,6 +261,20 @@ parseSourceCodeFile()
       // line contains normal assignment
       else if (line.find("ALGEBRAIC") == 0 || line.find("RATES") == 0)
       {
+
+        // check if this is an assignment of an algebraic, if this algebraic was already assigned, skip line
+        if (line.find("ALGEBRAIC[") == 0)
+        {
+          int algebraicNo = atoi(line.substr(std::string("ALGEBRAIC[").length()).c_str());
+
+          // if the assignment for this algebraic was already parsed (happens in computeVariables, where some algebraics are assigned again)
+          if (parsedAlgebraicAssignments.find(algebraicNo) != parsedAlgebraicAssignments.end())
+          {
+            // do not parse this line
+            continue;
+          }
+        }
+
         // parse line
         cellMLCode_.lines.emplace_back();
 
@@ -272,7 +282,8 @@ parseSourceCodeFile()
 
         VLOG(1) << "parse line [" << line << "] -> " << cellMLCode_.lines.back().getString();
 
-        cellMLCode_.lines.back().visitLeafs([this](code_expression_t &entry, bool isFirstVariable)
+        // replace algebraics and constants that are parameters
+        cellMLCode_.lines.back().visitLeafs([this,&parsedAlgebraicAssignments](code_expression_t &entry, bool isFirstVariable)
         {
           if (entry.type == code_expression_t::variableName)
           {
@@ -280,6 +291,10 @@ parseSourceCodeFile()
             // check if this is an assignment to a algebraic value that is actually an explicit parameter (set by parametersUsedAsAlgebraic)
             if (entry.code == "algebraics" && isFirstVariable)
             {
+              // this is a line "ALGEBRAIC[`no`] = ", save `no` to parsedAlgebraicAssignments
+              int no = entry.arrayIndex;
+              parsedAlgebraicAssignments.insert(no);
+
               for (int parameterUsedAsAlgebraic : this->parametersUsedAsAlgebraic_)
               {
                 if (entry.arrayIndex == parameterUsedAsAlgebraic)

@@ -486,6 +486,8 @@ isCurrentPointStimulated(int fiberDataNo, double currentTime, bool currentPointI
 {
   FiberData &fiberDataCurrentPoint = fiberData_[fiberDataNo];
 
+  // there is a parallel piece of code to this one in CellmlAdapter<>::checkCallbackStates, cellml/03_cellml_adapter.tpp
+
   // get time from with testing for stimulation is enabled
   const double lastStimulationCheckTime                 = fiberDataCurrentPoint.lastStimulationCheckTime;
 
@@ -514,7 +516,8 @@ isCurrentPointStimulated(int fiberDataNo, double currentTime, bool currentPointI
       << ", setSpecificStatesRepeatAfterFirstCall: " << setSpecificStatesRepeatAfterFirstCall;
 
     // if current stimulation is over
-    if (currentTime - (lastStimulationCheckTime + 1./(setSpecificStatesCallFrequency+currentJitter)) > setSpecificStatesRepeatAfterFirstCall)
+    if (setSpecificStatesRepeatAfterFirstCall != 0
+        && currentTime - (lastStimulationCheckTime + 1./(setSpecificStatesCallFrequency+currentJitter)) > setSpecificStatesRepeatAfterFirstCall)
     {
       // advance time of last call to specificStates
       LOG(DEBUG) << " old lastStimulationCheckTime: " << fiberDataCurrentPoint.lastStimulationCheckTime << ", currentJitter: " << currentJitter << ", add " << 1./(setSpecificStatesCallFrequency+currentJitter);

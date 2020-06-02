@@ -271,27 +271,53 @@ This function can be used to postprocess the result and has the following signat
 
 .. code-block:: python
 
-  def handle_result(n_instances, timestep_no, current_time, global_states, additional_argument):
-    # n_instances:         (int) global number of CellML instances to be computed
-    # timestep_no:         (int)   current time step number, advances by the value of "setSpecificParametersCallInterval"
+  def handle_result(n_instances, time_step_no, current_time, states_list, algebraics_list, name_information, additional_argument):
+    # n_instances:         (int) local number of CellML instances to be computed
+    # time_step_no:        (int)   current time step number, advances by the value of "setSpecificParametersCallInterval"
     # current_time:        (float) the current simulation time
-    # states_list:         (list of floats) all state values in struct-of-array memory layout,
+    # states_list:         (list of floats) all local state values in struct-of-array memory layout,
     #                       i.e. [instance0state0, instance1state0, ... instanceNstate0, instance0state1, instance1state1, ...]
-    # algebraics_list:  (list of floats) all algebraic values in struct-of-array memory layout, 
+    # algebraics_list:  (list of floats) all local algebraic values in struct-of-array memory layout, 
     #                       i.e. [instance0algebraic0, instance1algebraic0, ... instanceNalgebraic0, instance0algebraic1, instance1algebraic1, ...]
+    # name_information:    a map with the keys "stateNames" and "algebraicNames", contains lists of all CellML names of the states and algebraics
     # additional_argument: The value of the option "additionalArgument", can be any Python object.
 
+    
+    # asign some states to variables
+    Vm = states[name_information["stateNames"].index("membrane/V") * n_instances]
+    Ca_1 = states[name_information["stateNames"].index("razumova/Ca_1") * n_instances]
+    A_1 = states[name_information["stateNames"].index("razumova/A_1") * n_instances]
+    A_2 = states[name_information["stateNames"].index("razumova/A_2") * n_instances]
+    x_1 = states[name_information["stateNames"].index("razumova/x_1") * n_instances]
+    x_2 = states[name_information["stateNames"].index("razumova/x_2") * n_instances]
+    
+    # assign some algebraics to variables
+    active_stress = algebraics[name_information["algebraicNames"].index("razumova/activestress") * n_instances]
+    activation = algebraics[name_information["algebraicNames"].index("razumova/activation") * n_instances]
+      
+The example shows how one can access the state and algebraic variables by their name. The call to 
+
+.. code-block:: python
+
+  name_information["stateNames"].index("razumova/Ca_1")
+  
+gives the index of the state with the given name. Because the data for all locally computed instances is contained in the states array, we need to multiply this index with ``n_instances`` to get the first entry of the given state. This is now the index in ``states`` for the first instance. If the problem is monodomain on a fiber, in order to get the value at the center, use
+
+.. code-block:: python
+
+    Ca_1 = states[name_information["stateNames"].index("razumova/Ca_1") * n_instances + int(n_instances/2)]
+      
 How to specify mappings of states, algebraics and parameters
 --------------------------------------------------------------------
 
-The algebraics and constants in the CellML model can be replaced by so-called `parameters`. It is possible to define an arbitrary number of parameters (not completely arbitrary - the number has to be lower than the number of algebraics). This parameters act like constants during computation of the model. After each computation, their values can be changed either by callback functions or if they are connected via an output slot to another solver, the values are set by the other solver.
+The algebraics and constants in the CellML model can be replaced by so-called `parameters`. It is possible to define an arbitrary number of parameters (not completely arbitrary - the number has to be lower than the number of algebraics). These parameters act like constants during computation of the model. After each computation, their values can be changed either by callback functions or, if they are connected via an output slot to another solver, the values are set by the other solver.
 
 The model to be computed appears as if the specified `algebraics` and `constants` had been replaced by the respective parameters.
-This replacing relation is called `mapping` and can be defined in two different ways: the older way is by setting `parametersUsedAsAlgebraic` and `parametersUsedAsConstant`. The newer and recommended way is by using `mappings`.
+This replacement relation is called `mapping` and can be defined in two different ways: the older way is by setting `parametersUsedAsAlgebraic` and `parametersUsedAsConstant`. The newer and recommended way is by using `mappings`.
 
-Furthermore, some of the `states` and `algebraics` and can be connected to an output slot of the timestepping scheme and thereby reused by a different solver within a coupling or operator splitting scheme. Which `states` and `algebraics` to connect, can again be specified in two ways: either by `algebraicsForTransfer` and `statesForTransfer` or by `mappings`.
+Furthermore, some of the `states` and `algebraics` as well as some `parameters` can be connected to an output slot of the timestepping scheme and thereby reused by a different solver within a coupling or operator splitting scheme. Which `states`, `algebraics` and `parameters` to connect can again be specified in two ways: either by `algebraicsForTransfer` and `statesForTransfer` and `parametersForTransfer` or by `mappings`.
 
-These parameters will be explained in the following.
+These settings will be explained in the following.
 
 parametersUsedAsAlgebraic
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -349,13 +375,13 @@ as well as the connection of `outputConnectorSlots` to `states`, `algebraics` an
       ("outputConnectorSlot", 4): ("parameter", 0),
     }
     
-The value of `mappings` is a Python Dict. Each key is either ``("parameter", 0)`` or ``("outputConnectorSlot", 0)``, where ``0`` can be any integer number.
-The value that corresponds to the key is a two-element tuple or string of the form 
+The value of `mappings` is a Python Dict. Each key (left hand side) is either ``("parameter", 0)`` or ``("outputConnectorSlot", 0)``, where ``0`` can be any integer number.
+The value that corresponds to the key (right hand side) is a two-element tuple or string of the form 
 
 ``("name", "cellml name")`` or ``("name", 0)`` or ``"cellml name"``
 
 where ``"name"`` has to be either ``"constant"``, ``"state"``, ``"algebraic"`` or ``"parameter"``, the ``"cellml name"`` is the name of the variable in the CellML model in the form ``"componentName/variableName"`` and ``0`` can be any valid index. This means, it is possible to identify, e.g. a state by its name as well as by its index in the C code file.
-If there is no tuple but only the "cellml name", it will determine automatically if it is a `state`, `algebraic` or `constant` by searching among all available cellml names.
+If there is no tuple but only the "cellml name", it will be determine automatically if it is a `state`, `algebraic` or `constant` by searching among all available cellml names.
 
 For the parameters, the index must start with `0` and increase by one for all further parameters. As already mentioned, the mapped variable for a parameter can be an `"algebraic"` or a `"constant"`. The beginning of the parameters list must all map to algebraics and the rest must map to constants. I.e., every constant must be mapped to a parameter with lower index than all the parameters that are mapped to algebraics. The specified mappings will internally be transferred to the ``parametersUsedAsAlgebraic`` and ``parametersUsedAsConstant`` lists that can otherwise also be set directly by these options.
 

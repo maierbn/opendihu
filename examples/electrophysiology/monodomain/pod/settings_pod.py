@@ -88,7 +88,7 @@ fig = plt.figure(1)
 #plt.ion()
 
 # callback function that is called after integration of rhs, generates plots
-def handleResult(n_instances, time_step_no, current_time, states, algebraics, null):
+def handleResult(n_instances, time_step_no, current_time, states, algebraics, name_information, null):
   
   # collect data for every instance
   xdata = []

@@ -89,6 +89,22 @@ initialize()
   this->setSpecificStatesRepeatAfterFirstCall_ = this->specificSettings_.getOptionDouble("setSpecificStatesRepeatAfterFirstCall", 0.0);
   this->setSpecificStatesCallEnableBegin_ = this->specificSettings_.getOptionDouble("setSpecificStatesCallEnableBegin", 0.0);
 
+  // if setSpecificStatesCallFrequency_ is set to None, set to 0
+  if (this->setSpecificStatesCallFrequency_ == std::numeric_limits<double>::max())
+    this->setSpecificStatesCallFrequency_ = 0;
+
+  // if setSpecificStatesRepeatAfterFirstCall_ is set to None, set to 0
+  if (this->setSpecificStatesRepeatAfterFirstCall_ == std::numeric_limits<double>::max())
+    this->setSpecificStatesRepeatAfterFirstCall_ = 0;
+
+  if (this->setSpecificStatesCallFrequency_ != 0 && this->setSpecificStatesRepeatAfterFirstCall_ == 0)
+  {
+    LOG(FATAL) << "In " << this->specificSettings_ << ", you have set \"setSpecificStatesCallFrequency\", but not "
+      << "\"setSpecificStatesRepeatAfterFirstCall\". This is not allowed.\n"
+      << "Either set \"setSpecificStatesRepeatAfterFirstCall\" to a reasonable value or do not use \"setSpecificStatesCallFrequency\" at "
+      << "all (set to None or 0 and instead use \"setSpecificStatesCallInterval\").";
+  }
+
   // initialize the lastCallSpecificStatesTime_
   this->currentJitter_ = 0;
   this->jitterIndex_ = 0;
@@ -204,6 +220,7 @@ template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
 void CellmlAdapter<nStates_,nAlgebraics_,FunctionSpaceType>::
 checkCallbackStates(double currentTime, double *statesLocal)
 {
+  // there is a parallel piece of code to this one in FastMonodomainSolverBase<>::isCurrentPointStimulated(), specialized_solver/fast_monodomain_solver/fast_monodomain_solver_compute.tpp
 
   VLOG(1) << "currentTime: " << currentTime << ", lastCallSpecificStatesTime_: " << this->lastCallSpecificStatesTime_
     << ", setSpecificStatesCallFrequency_: " << this->setSpecificStatesCallFrequency_ << ", "
@@ -229,7 +246,8 @@ checkCallbackStates(double currentTime, double *statesLocal)
     stimulate = true;
 
     // if current stimulation is over
-    if (currentTime - (this->lastCallSpecificStatesTime_ + 1./(this->setSpecificStatesCallFrequency_+this->currentJitter_)) > this->setSpecificStatesRepeatAfterFirstCall_)
+    if (this->setSpecificStatesRepeatAfterFirstCall_ != 0
+        && currentTime - (this->lastCallSpecificStatesTime_ + 1./(this->setSpecificStatesCallFrequency_+this->currentJitter_)) > this->setSpecificStatesRepeatAfterFirstCall_)
     {
       // advance time of last call to specificStates
       this->lastCallSpecificStatesTime_ += 1./(this->setSpecificStatesCallFrequency_+this->currentJitter_);
@@ -249,19 +267,18 @@ checkCallbackStates(double currentTime, double *statesLocal)
     // PythonUtility::GlobalInterpreterLock lock;
   }
 
+  VLOG(1) << "stimulate = " << stimulate;
+
   static bool currentlyStimulating = false;
   if (stimulate)
   {
+    VLOG(1) << "currentlyStimulating: " << currentlyStimulating;
+
     // if this is the first point in time of the current stimulation, log stimulation time
     if (!currentlyStimulating)
     {
       currentlyStimulating = true;
-      int fiberNoGlobal = -1;
-      if (this->pySetFunctionAdditionalParameter_)
-      {
-        fiberNoGlobal = PythonUtility::convertFromPython<int>::get(this->pySetFunctionAdditionalParameter_);
-      }
-      Control::StimulationLogging::logStimulationBegin(currentTime, -1, fiberNoGlobal);
+      Control::StimulationLogging::logStimulationBegin(currentTime, -1, this->fiberNoGlobal_);
     }
 
     VLOG(1) << "call setSpecificStates, this->internalTimeStepNo_ = " << this->internalTimeStepNo_ << ", this->setSpecificStatesCallInterval_: " << this->setSpecificStatesCallInterval_;

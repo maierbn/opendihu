@@ -88,6 +88,7 @@ protected:
   std::vector<double> setSpecificStatesFrequencyJitter_;   //< relative jitter values: factors of setSpecificStatesCallFrequency_, random jitter to add or substract from frequency
   double currentJitter_;                          //< the absolute value of the current jitter
   int jitterIndex_;                               //< which of the stored jitter values in setSpecificStatesFrequencyJitter_ to use
+  int fiberNoGlobal_;                             //< the additionalArgument converted to an integer, interpreted as the global fiber no and used in the stimulation log
 
   double lastCallSpecificStatesTime_;             //< last time the setSpecificStates_ method was called
   double setSpecificStatesRepeatAfterFirstCall_;  //< duration of continuation of calling the setSpecificStates callback after it was triggered

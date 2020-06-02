@@ -55,7 +55,7 @@ void CellmlSourceCodeGeneratorBase::initializeSourceCode(
   if (nParameters_ > maximumNumberOfParameters)
   {
     LOG(FATAL) << "There can only be as many parameters as there are algebraics. This is an arbitrary restriction, if you need more parameters, try increasing the number of algebraics in the C++ source file."
-      << "Now you have (" << nParameters_ << " parameters and the maximum possible number is " << maximumNumberOfParameters << ".";
+      << "Now you have (" << nParameters_ << " parameters and the maximum possible number is " << maximumNumberOfParameters << ").";
   }
 
   LOG(DEBUG) << "nParameters_: " << nParameters_ << ", parametersInitialValues.size(): " << parametersInitialValues.size() << ", nAlgebraics_: " << nAlgebraics_ << ", nInstances_: " << nInstances_;
@@ -64,7 +64,7 @@ void CellmlSourceCodeGeneratorBase::initializeSourceCode(
   if (parametersInitialValues.size() == nParameters_)
   {
     LOG(DEBUG) << "parameters size is matching for one instances";
-    LOG(DEBUG) << "copy parameters which were given only for one instance to all instances";
+    LOG(DEBUG) << "copy parameters which were given only for one instance to all " << nInstances_ << " instances";
     for (int instanceNo = 0; instanceNo < nInstances_; instanceNo++)
     {
       for (int j = 0; j < nParameters_; j++)
@@ -90,8 +90,14 @@ void CellmlSourceCodeGeneratorBase::initializeSourceCode(
   }
   else 
   {
-    LOG(WARNING) << "In CellML: There should be " << nParameters_ << " parameters but " << parametersInitialValues.size()
-      << " initial values are given by \"parametersInitialValues\". Using default values 0.";
+    // here, the given number of parameters does not match the number of initial values in the settings
+
+    // output warning
+    LOG(WARNING) << "In CellML: There should be " << nParameters_
+      << " = " << parametersUsedAsAlgebraic_.size() << "+" << parametersUsedAsConstant_.size()
+      << " parameters (algebraics: " << parametersUsedAsAlgebraic_ << ", constants: " << parametersUsedAsConstant_ << "), but " << parametersInitialValues.size()
+      << " initial values are given by \"parametersInitialValues\". Using default values 0 for the rest.\n";
+
     parametersInitialValues.resize(nParameters_, 0.0);
   
     LOG(DEBUG) << "copy parameters which were given only for one instance to all instances";
@@ -104,19 +110,52 @@ void CellmlSourceCodeGeneratorBase::initializeSourceCode(
       }
     }
   }
-  
-#ifndef NDEBUG
+
+  // assemble information about parameter mappings
   std::stringstream s;
+  bool firstEntry = true;
+  int parameterIndex = 0;
+  for (int algebraicIndex : parametersUsedAsAlgebraic_)
+  {
+    if (!firstEntry)
+      s << ", ";
+    s << "\n  parameter " << parameterIndex << " maps to \"" << algebraicNames_[algebraicIndex] << "\" ("
+      << "ALGEBRAIC[" << algebraicIndex << "]), "
+      << "initial value: " << parameterValues[parameterIndex*nInstances_] << "";
+
+    firstEntry = false;
+    parameterIndex++;
+  }
+
+  for (int constantIndex : parametersUsedAsConstant_)
+  {
+    if (!firstEntry)
+      s << ", ";
+    s << "\n  parameter " << parameterIndex << " maps to \"" << constantNames_[constantIndex] << "\" ("
+      << "CONSTANTS[" << constantIndex << "]), "
+      << "initial value: " << parameterValues[parameterIndex*nInstances_] << "";
+
+    firstEntry = false;
+    parameterIndex++;
+  }
+
+  LOG(INFO) << "CellML file \"" << sourceFilename_ << "\" with "
+    << nStates_ << " states, " << nAlgebraicsInSource_
+    << " algebraics, specified " << nParameters_ << " parameters: " << s.str() << "\n";
+
+
+#ifndef NDEBUG
+  std::stringstream message;
   for (int instanceNo = 0; instanceNo < nInstances_; instanceNo++)
   {
     for (int j = 0; j < nParameters_; j++)
     {
       // parameters are given in array of struct ordering: [inst0p0, inst0p1, ... inst0pn, inst1p0, inst1p1, ...]
-      s << parameterValues[j*nInstances_ + instanceNo] << " ";
+      message << parameterValues[j*nInstances_ + instanceNo] << " ";
     }
-    s << ",";
+    message << ",";
   }
-  LOG(DEBUG) << "parameterValues (only up to nParameters=" << nParameters_ << " parameter, allocated space is for " << nAlgebraics_ << " parameters: \n" << s.str();
+  LOG(DEBUG) << "parameterValues (only up to nParameters=" << nParameters_ << " parameter, allocated space is for " << nAlgebraics_ << " parameters: \n" << message.str();
 #endif  
   
   // parse all the source code from the model file
@@ -147,6 +186,10 @@ void CellmlSourceCodeGeneratorBase::convertFromXmlToC()
       s << "src/" << StringUtility::extractBasename(sourceFilename_) << ".c";
       cFilename = s.str();
     }
+  }
+  else
+  {
+    LOG(FATAL) << "Could not open CellML file \"" << sourceFilename_ << "\".";
   }
 
   // check if conversion is required, this is performed on rank 0

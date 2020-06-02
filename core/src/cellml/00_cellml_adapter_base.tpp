@@ -230,60 +230,43 @@ initializeMappings(std::vector<int> &parametersUsedAsAlgebraic, std::vector<int>
       ("outputConnectorSlot",1): "razumova/l_hs",       #<-- this will be converted now
     }
     */
-    using EntryTypePython = std::pair<std::string,PyObject *>;
-    std::vector<std::pair<EntryTypePython,EntryTypePython>> tupleEntries;
+    using ValueTupleType = std::pair<std::string,PyObject *>;
+    using KeyTupleType = std::pair<std::string,int>;
+
+    std::vector<std::pair<KeyTupleType,ValueTupleType>> tupleEntries;
 
     std::pair<PyObject *,PyObject *> item = this->specificSettings_.template getOptionDictBegin<PyObject *,PyObject *>("mappings");
 
     for (;!this->specificSettings_.getOptionDictEnd("mappings");
          this->specificSettings_.template getOptionDictNext<PyObject *,PyObject *>("mappings",item))
     {
-      EntryTypePython firstTuple;
-      EntryTypePython secondTuple;
+      KeyTupleType keyTuple;
+      ValueTupleType valueTuple;
 
       if (PyTuple_Check(item.first))
       {
-        firstTuple = PythonUtility::convertFromPython<EntryTypePython>::get(item.first);
+        keyTuple = PythonUtility::convertFromPython<KeyTupleType>::get(item.first);
+
+        // if tuple is not parameter or outputConnectorSlot
+        if (keyTuple.first != "parameter" && keyTuple.first != "outputConnectorSlot")
+        {
+          keyTuple.first = "parameter";
+          LOG(ERROR) << this->specificSettings_ << "[\"mappings\"], key " << item.first << " is not a tuple (\"parameter\",index) "
+            << "or (\"outputConnectorSlot\",index). Assuming (\"parameter\", " << keyTuple.second << ")";
+        }
       }
       else
       {
-        std::string name = PythonUtility::convertFromPython<std::string>::get(item.first);
+        int index = PythonUtility::convertFromPython<int>::get(item.first);
+        keyTuple = std::pair<std::string,int>("parameter", index);
 
-        // find if the string is a algebraic name given in algebraicNames
-        std::vector<std::string>::const_iterator pos = std::find(algebraicNames.begin(), algebraicNames.end(), name);
-        if (pos != algebraicNames.end())
-        {
-          firstTuple.first = "algebraic";
-          firstTuple.second = PythonUtility::convertToPython<std::string>::get(name);
-        }
-        else
-        {
-          std::vector<std::string>::const_iterator pos = std::find(stateNames.begin(), stateNames.end(), name);
-          if (pos != stateNames.end())
-          {
-            firstTuple.first = "state";
-            firstTuple.second = PythonUtility::convertToPython<std::string>::get(name);
-          }
-          else
-          {
-            std::vector<std::string>::const_iterator pos = std::find(constantNames.begin(), constantNames.end(), name);
-            if (pos != constantNames.end())
-            {
-              firstTuple.first = "constant";
-              firstTuple.second = PythonUtility::convertToPython<std::string>::get(name);
-            }
-            else
-            {
-              LOG(ERROR) << "In mappings, name \"" << name << "\" is neither state, algebraic nor constant.";
-            }
-          }
-        }
+        LOG(ERROR) << this->specificSettings_ << "[\"mappings\"], key " << item.first << " is not a tuple (\"parameter\",index) "
+          << "or (\"outputConnectorSlot\",index). Assuming (\"parameter\", " << index << ")";
       }
-
 
       if (PyTuple_Check(item.second))
       {
-        secondTuple = PythonUtility::convertFromPython<EntryTypePython>::get(item.second);
+        valueTuple = PythonUtility::convertFromPython<ValueTupleType>::get(item.second);
       }
       else
       {
@@ -293,35 +276,48 @@ initializeMappings(std::vector<int> &parametersUsedAsAlgebraic, std::vector<int>
         std::vector<std::string>::const_iterator pos = std::find(algebraicNames.begin(), algebraicNames.end(), name);
         if (pos != algebraicNames.end())
         {
-          secondTuple.first = "algebraic";
-          secondTuple.second = PythonUtility::convertToPython<std::string>::get(name);
+          valueTuple.first = "algebraic";
+          valueTuple.second = PythonUtility::convertToPython<std::string>::get(name);
         }
         else
         {
           std::vector<std::string>::const_iterator pos = std::find(stateNames.begin(), stateNames.end(), name);
           if (pos != stateNames.end())
           {
-            secondTuple.first = "state";
-            secondTuple.second = PythonUtility::convertToPython<std::string>::get(name);
+            valueTuple.first = "state";
+            valueTuple.second = PythonUtility::convertToPython<std::string>::get(name);
           }
           else
           {
             std::vector<std::string>::const_iterator pos = std::find(constantNames.begin(), constantNames.end(), name);
             if (pos != constantNames.end())
             {
-              secondTuple.first = "constant";
-              secondTuple.second = PythonUtility::convertToPython<std::string>::get(name);
+              valueTuple.first = "constant";
+              valueTuple.second = PythonUtility::convertToPython<std::string>::get(name);
             }
             else
             {
-              LOG(ERROR) << "In mappings, name \"" << name << "\" is neither state, algebraic nor constant.";
+              LOG(ERROR) << this->specificSettings_ << "[\"mappings\"], name \"" << name << "\" is neither state, algebraic nor constant.\n\n"
+                << "  Valid state names are:     " << stateNames << ".\n\n"
+                << "  Valid algebraic names are: " << algebraicNames << ".\n\n"
+                << "  Valid constant names are:  " << constantNames << ".\n";
             }
           }
         }
       }
 
-      tupleEntries.push_back(std::pair<EntryTypePython,EntryTypePython>(firstTuple, secondTuple));
+      tupleEntries.push_back(std::pair<KeyTupleType,ValueTupleType>(keyTuple, valueTuple));
     }
+
+    // sort the tupleEntries by no of the key, i.e. parameter no. and output connector slot no.
+    std::sort(tupleEntries.begin(), tupleEntries.end(), [](
+      const std::pair<KeyTupleType,ValueTupleType> &a,
+      const std::pair<KeyTupleType,ValueTupleType> &b)
+    {
+      return a.first.second < b.first.second || (a.first.second == b.first.second && a.first.first.length() < b.first.first.length());
+    });
+
+    LOG(DEBUG) << "sorted tupleEntries: " << tupleEntries;
 
     // -----------------------------
     // parse the strings in the entries and convert them to stateNo, algebraicNo or constantNo
@@ -334,145 +330,120 @@ initializeMappings(std::vector<int> &parametersUsedAsAlgebraic, std::vector<int>
       ("outputConnectorSlot",1): ("algebraic", "razumova/l_hs"), #<-- this will be converted now
     }
     */
-    // result is settings for statesForTransfer, algebraicsForTransfer and parametersForTransfer
+    // result is settings for parametersUsedAsAlgebraic, statesForTransfer, algebraicsForTransfer and parametersForTransfer
+    parametersUsedAsAlgebraic.clear();
+    parametersUsedAsConstant.clear();
+    statesForTransfer.clear();
+    algebraicsForTransfer.clear();
+    parametersForTransfer.clear();
 
-    for (std::pair<EntryTypePython,EntryTypePython> &tupleEntry : tupleEntries)
+    for (std::pair<KeyTupleType,ValueTupleType> &tupleEntry : tupleEntries)
     {
-      EntryTypePython entries[2] = {tupleEntry.first, tupleEntry.second};
-      std::vector<std::pair<std::string,int>> entriesWithNos;
+      // parse value
+      ValueTupleType valueTuple = tupleEntry.second;
 
-      // parse the strings in the entries and convert them to stateNo, algebraicNo or constantNo
-      for (EntryTypePython entry : entries)
+      std::string specifier = valueTuple.first;    // state, algebraic, constant or parameter
+      int fieldNo;              // no of the state, algebraic, constant or parameter
+
+      // parse value tuple into (specifier and fieldNo)
+      if (specifier == "state")
       {
-        if (entry.first == "parameter" || entry.first == "outputConnectorSlot")
+        std::string stateName = PythonUtility::convertFromPython<std::string>::get(valueTuple.second);
+
+        // if parsed string is a number, this is directly the state no
+        if (!stateName.empty() && stateName.find_first_not_of("0123456789") == std::string::npos)
         {
-          int parameterNo = PythonUtility::convertFromPython<int>::get(entry.second);
-          entriesWithNos.push_back(std::make_pair(entry.first, parameterNo));
-        }
-        else if (entry.first == "state")
-        {
-          int stateNo = 0;
-          std::string stateName = PythonUtility::convertFromPython<std::string>::get(entry.second);
-
-          // if parsed string is a number, this is directly the state no
-          if (!stateName.empty() && stateName.find_first_not_of("0123456789") == std::string::npos)
-          {
-            stateNo = atoi(stateName.c_str());
-          }
-          else
-          {
-            // find if the string is a state name given in stateNames
-            const std::vector<std::string>::const_iterator pos = std::find(stateNames.begin(), stateNames.end(), stateName);
-            if (pos != stateNames.end())
-            {
-              stateNo = std::distance(stateNames.begin(),pos);
-            }
-            else
-            {
-              LOG(ERROR) << "In " << this->specificSettings_ << "[\"mappings\"], state \"" << stateName << "\" is not valid. "
-                << "Valid state names are: " << stateNames << ".\n"
-                << "You can also specify the state no. instead of the name.";
-            }
-          }
-
-          entriesWithNos.push_back(std::make_pair(entry.first, stateNo));
-        }
-        else if (entry.first == "algebraic" || entry.first == "intermediate")
-        {
-          int algebraicNo = 0;
-          std::string algebraicName = PythonUtility::convertFromPython<std::string>::get(entry.second);
-
-          // if parsed string is a number, this is directly the algebraic no
-          if (!algebraicName.empty() && algebraicName.find_first_not_of("0123456789") == std::string::npos)
-          {
-            algebraicNo = atoi(algebraicName.c_str());
-          }
-          else
-          {
-            // find if the string is a algebraic name given in algebraicNames
-            std::vector<std::string>::const_iterator pos = std::find(algebraicNames.begin(), algebraicNames.end(), algebraicName);
-            if (pos != algebraicNames.end())
-            {
-              algebraicNo = std::distance(algebraicNames.begin(),pos);
-            }
-            else
-            {
-              LOG(ERROR) << "In " << this->specificSettings_ << "[\"mappings\"], algebraic \"" << algebraicName << "\" is not valid. "
-                << "Valid algebraic names are: " << algebraicNames << ".\n"
-                << "You can also specify the algebraic no. instead of the name.";
-            }
-          }
-
-          entriesWithNos.push_back(std::make_pair(entry.first, algebraicNo));
-        }
-        else if (entry.first == "constant")
-        {
-          int constantNo = 0;
-          std::string constantName = PythonUtility::convertFromPython<std::string>::get(entry.second);
-
-          // if parsed string is a number, this is directly the constant no
-          if (!constantName.empty() && constantName.find_first_not_of("0123456789") == std::string::npos)
-          {
-            constantNo = atoi(constantName.c_str());
-          }
-          else
-          {
-            // find if the string is a constant name given in constantNames
-            std::vector<std::string>::const_iterator pos = std::find(constantNames.begin(), constantNames.end(), constantName);
-            if (pos != constantNames.end())
-            {
-              constantNo = std::distance(constantNames.begin(),pos);
-            }
-            else
-            {
-              LOG(ERROR) << "In " << this->specificSettings_ << "[\"mappings\"], constant \"" << constantName << "\" is not valid. "
-                << "Valid constant names are: " << constantNames << ".\n"
-                << "You can also specify the constant no. instead of the name.";
-            }
-          }
-
-          entriesWithNos.push_back(std::make_pair(entry.first, constantNo));
+          fieldNo = atoi(stateName.c_str());
         }
         else
         {
-          LOG(FATAL) << "In " << this->specificSettings_ << "[\"mappings\"], invalid field \"" << entry.first << "\", allowed values are: "
-            << "\"parameter\", \"outputConnectorSlot\", \"state\", \"algebraic\", \"constant\".";
+          // find if the string is a state name given in stateNames
+          const std::vector<std::string>::const_iterator pos = std::find(stateNames.begin(), stateNames.end(), stateName);
+          if (pos != stateNames.end())
+          {
+            fieldNo = std::distance(stateNames.begin(),pos);
+          }
+          else
+          {
+            LOG(ERROR) << "In " << this->specificSettings_ << "[\"mappings\"], state \"" << stateName << "\" is not valid. "
+              << "Valid state names are: " << stateNames << ".\n"
+              << "You can also specify the state no. (index of STATES[] array in C file) instead of the name.";
+          }
         }
       }
-
-      LOG(DEBUG) << "parsed next item, entriesWithNos: " << entriesWithNos;
-
-      // make sure that the first part is "paramater" or "outputConnectorSlot"
-      if (entriesWithNos[1].first == "parameter" || entriesWithNos[1].first == "outputConnectorSlot")
+      else if (specifier == "algebraic" || specifier == "intermediate")     // "intermediate" was the old name
       {
-        std::swap(entriesWithNos[0], entriesWithNos[1]);
+        std::string algebraicName = PythonUtility::convertFromPython<std::string>::get(valueTuple.second);
+
+        // if parsed string is a number, this is directly the algebraic no
+        if (!algebraicName.empty() && algebraicName.find_first_not_of("0123456789") == std::string::npos)
+        {
+          fieldNo = atoi(algebraicName.c_str());
+        }
+        else
+        {
+          // find if the string is a algebraic name given in algebraicNames
+          std::vector<std::string>::const_iterator pos = std::find(algebraicNames.begin(), algebraicNames.end(), algebraicName);
+          if (pos != algebraicNames.end())
+          {
+            fieldNo = std::distance(algebraicNames.begin(),pos);
+          }
+          else
+          {
+            LOG(ERROR) << "In " << this->specificSettings_ << "[\"mappings\"], algebraic \"" << algebraicName << "\" is not valid. "
+              << "Valid algebraic names are: " << algebraicNames << ".\n"
+              << "You can also specify the algebraic no. (index of ALGEBRAICS[] array in C file) instead of the name.";
+          }
+        }
       }
+      else if (specifier == "constant")
+      {
+        std::string constantName = PythonUtility::convertFromPython<std::string>::get(valueTuple.second);
+
+        // if parsed string is a number, this is directly the constant no
+        if (!constantName.empty() && constantName.find_first_not_of("0123456789") == std::string::npos)
+        {
+          fieldNo = atoi(constantName.c_str());
+        }
+        else
+        {
+          // find if the string is a constant name given in constantNames
+          std::vector<std::string>::const_iterator pos = std::find(constantNames.begin(), constantNames.end(), constantName);
+          if (pos != constantNames.end())
+          {
+            fieldNo = std::distance(constantNames.begin(),pos);
+          }
+          else
+          {
+            LOG(ERROR) << "In " << this->specificSettings_ << "[\"mappings\"], constant \"" << constantName << "\" is not valid. "
+              << "Valid constant names are: " << constantNames << ".\n"
+              << "You can also specify the constant no. (index of CONSTANTS[] array in C file) instead of the name.";
+          }
+        }
+      }
+      else
+      {
+        LOG(FATAL) << "In " << this->specificSettings_ << "[\"mappings\"], invalid field \"" << specifier << "\", allowed values are: "
+          << "\"state\", \"algebraic\", \"constant\".";
+      }
+
+      // store according to key
+      KeyTupleType keyTuple = tupleEntry.first;
 
       // handle parameter
-      if (entriesWithNos[0].first == "parameter")
+      if (keyTuple.first == "parameter")
       {
-        int parameterNo = entriesWithNos[0].second;    // the no. of the parameter
-        int fieldNo = entriesWithNos[1].second;        // the no. of the state, algebraic or constant
+        int parameterNo = keyTuple.second;    // the no. of the parameter
 
-        LOG(DEBUG) << "parameter " << parameterNo << " to \"" << entriesWithNos[1].first << "\", fieldNo " << fieldNo;
+        LOG(DEBUG) << "parameter " << parameterNo << " to \"" << valueTuple.first << "\", fieldNo " << fieldNo;
 
-        if (entriesWithNos[1].first == "algebraic" || entriesWithNos[1].first == "algebraic")
+        if (valueTuple.first == "algebraic" || valueTuple.first == "intermediate")
         {
-          // add no of the constant to parametersUsedAsAlgebraic
-          if (parametersUsedAsAlgebraic.size() <= parameterNo)
-          {
-            parametersUsedAsAlgebraic.resize(parameterNo+1, -1);
-          }
-          parametersUsedAsAlgebraic[parameterNo] = fieldNo;
+          parametersUsedAsAlgebraic.push_back(fieldNo);
         }
-        else if (entriesWithNos[1].first == "constant")
+        else if (valueTuple.first == "constant")
         {
-          // add no of the constant to parametersUsedAsConstant
-          if (parametersUsedAsConstant.size() <= parameterNo)
-          {
-            parametersUsedAsConstant.resize(parameterNo+1, -1);
-          }
-          parametersUsedAsConstant[parameterNo] = fieldNo;
+          parametersUsedAsConstant.push_back(fieldNo);
         }
         else
         {
@@ -484,61 +455,29 @@ initializeMappings(std::vector<int> &parametersUsedAsAlgebraic, std::vector<int>
       {
         // output connector slots
 
-        int slotNo = entriesWithNos[0].second;    // the no. of the output connector slot
-        int fieldNo = entriesWithNos[1].second;        // the no. of the state, algebraic or constant
+        int slotNo = keyTuple.second;    // the no. of the output connector slot
 
-        LOG(DEBUG) << "output connector slot " << slotNo << " to \"" << entriesWithNos[1].first << "\", fieldNo " << fieldNo;
+        LOG(DEBUG) << "output connector slot " << slotNo << " to \"" << valueTuple.first << "\", fieldNo " << fieldNo;
 
-        if (entriesWithNos[1].first == "state")
+        if (valueTuple.first == "state")
         {
-          // add no of the constant to statesForTransfer
-          if (statesForTransfer.size() <= slotNo)
-          {
-            statesForTransfer.resize(slotNo+1, -1);
-          }
-          statesForTransfer[slotNo] = fieldNo;
+          statesForTransfer.push_back(fieldNo);
         }
-        else if (entriesWithNos[1].first == "algebraic" || entriesWithNos[1].first == "intermediate")
+        else if (valueTuple.first == "algebraic" || valueTuple.first == "intermediate")
         {
-          // add no of the constant to algebraicsForTransfer
-          if (algebraicsForTransfer.size() <= slotNo)
-          {
-            algebraicsForTransfer.resize(slotNo+1, -1);
-          }
-          algebraicsForTransfer[slotNo] = fieldNo;
+          algebraicsForTransfer.push_back(fieldNo);
         }
-        else if (entriesWithNos[1].first == "parameter")
+        else if (valueTuple.first == "parameter")
         {
-          // add no of the constant to parametersForTransfer
-          if (parametersForTransfer.size() <= slotNo)
-          {
-            parametersForTransfer.resize(slotNo+1, -1);
-          }
-          parametersForTransfer[slotNo] = fieldNo;
+          parametersForTransfer.push_back(fieldNo);
         }
         else
         {
-          LOG(ERROR) << "In " << this->specificSettings_ << "[\"mappings\"], you can map "
-            << "outputConnectorSlots only to states, algebraics and parameters, not constants.";
+          LOG(ERROR) << "In " << this->specificSettings_ << "[\"mappings\"], you can only connect states, algebraics and parameters "
+            << "to outputConnectorSlots, not constants.";
         }
       }
     }
-
-    // reorder slot nos such that states go first, then algebraics, then parameters
-    std::vector<int> temporaryVector;
-    std::copy_if(statesForTransfer.begin(), statesForTransfer.end(),
-                 std::back_insert_iterator<std::vector<int>>(temporaryVector), [](int a){return a != -1;});
-    statesForTransfer = temporaryVector;
-
-    temporaryVector.clear();
-    std::copy_if(algebraicsForTransfer.begin(), algebraicsForTransfer.end(),
-                 std::back_insert_iterator<std::vector<int>>(temporaryVector), [](int a){return a != -1;});
-    algebraicsForTransfer = temporaryVector;
-
-    temporaryVector.clear();
-    std::copy_if(parametersForTransfer.begin(), parametersForTransfer.end(),
-                 std::back_insert_iterator<std::vector<int>>(temporaryVector), [](int a){return a != -1;});
-    parametersForTransfer = temporaryVector;
 
     // create a string of parameter and contstant mappings
     std::stringstream s;
@@ -555,32 +494,11 @@ initializeMappings(std::vector<int> &parametersUsedAsAlgebraic, std::vector<int>
       int constantNo = parametersUsedAsConstant[i];
       if (constantNo != -1 && constantNo < constantNames.size())
       {
-        s << "  parameter " << i << " maps to constant " << constantNo << " (\"" << constantNames[constantNo] << "\")\n";
+        s << "  parameter " << parametersUsedAsAlgebraic.size()+i << " maps to constant " << constantNo << " (\"" << constantNames[constantNo] << "\")\n";
       }
     }
 
-    // check that parameters are all mapped
-    for (int i = 0; i < parametersUsedAsAlgebraic.size(); i++)
-    {
-      int algebraicNo = parametersUsedAsAlgebraic[i];
-      if (algebraicNo == -1 && algebraicNo < nAlgebraics_)
-      {
-        LOG(ERROR) << "Parameter no. " << i << " is not mapped to any algebraic. "
-          << "(Note that parameters have to be ordered in a way that the first are mapped to algebraics and the last to constants.)\n"
-          << " Parsed mapping:\n" << s.str();
-      }
-    }
-
-    for (int i = 0; i < parametersUsedAsConstant.size(); i++)
-    {
-      int constantNo = parametersUsedAsConstant[i];
-      if (constantNo == -1 && constantNo < constantNames.size())
-      {
-        LOG(ERROR) << "Parameter no. " << parametersUsedAsAlgebraic.size() + i << " is not mapped to any constant. "
-          << "(Note that parameters have to be ordered in a way that the first are mapped to algebraics and the last to constants.)\n"
-          << " Parsed mapping:\n" << s.str();
-      }
-    }
+    LOG(DEBUG) << s.str();
   }
   else
   {
@@ -598,7 +516,7 @@ initializeMappings(std::vector<int> &parametersUsedAsAlgebraic, std::vector<int>
   LOG(DEBUG) << "algebraicsForTransfer:     " << algebraicsForTransfer;
   LOG(DEBUG) << "parametersForTransfer:     " << parametersForTransfer;
 
-  if (this->specificSettings_.hasKey("outputAlgebraicIndex"))
+  if (this->specificSettings_.hasKey("outputAlgebraicIndex") || this->specificSettings_.hasKey("outputIntermediateIndex"))
   {
     LOG(WARNING) << specificSettings_ << "[\"outputAlgebraicIndex\"] is no longer a valid option, use \"algebraicsForTransfer\" instead!";
   }

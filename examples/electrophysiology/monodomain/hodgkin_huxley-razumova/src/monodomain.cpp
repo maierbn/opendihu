@@ -14,11 +14,9 @@ int main(int argc, char *argv[])
   // initialize everything, handle arguments and parse settings from input file
   DihuContext settings(argc, argv);
   
-  LOG(DEBUG)<<std::string(80, '=');
-  
   OperatorSplitting::Strang<
     TimeSteppingScheme::Heun<
-      CellmlAdapter<4,9>  // nStates,nAlgebraics: 57,1 = Shorten, 4,9 = Hodgkin Huxley
+      CellmlAdapter<9,19>  // nStates,nAlgebraics
     >,
     TimeSteppingScheme::CrankNicolson<
       SpatialDiscretization::FiniteElementMethod<

@@ -16,11 +16,11 @@ int main(int argc, char *argv[])
   
   LOG(DEBUG)<<std::string(80, '=');
   
-  OperatorSplitting::Strang<
-    TimeSteppingScheme::Heun<
-      CellmlAdapter<4,9>  // nStates,nAlgebraics: 57,1 = Shorten, 4,9 = Hodgkin Huxley
+  OperatorSplitting::Godunov<
+    TimeSteppingScheme::ExplicitEuler<
+      CellmlAdapter<58,77>  // nStates,nAlgebraics: 57,1 = Shorten, 4,9 = Hodgkin Huxley
     >,
-    TimeSteppingScheme::CrankNicolson<
+    TimeSteppingScheme::ExplicitEuler<
       SpatialDiscretization::FiniteElementMethod<
         Mesh::StructuredRegularFixedOfDimension<1>,
         BasisFunction::LagrangeOfOrder<1>,

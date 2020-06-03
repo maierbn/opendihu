@@ -298,10 +298,54 @@ initializeMappings(std::vector<int> &parametersUsedAsAlgebraic, std::vector<int>
             }
             else
             {
+              std::stringstream stateNamesListing;
+              std::stringstream algebraicNamesListing;
+              std::stringstream constantNamesListing;
+
+              // compose message for state names
+              const int nColumns = 3;
+              int nPerColumn = std::ceil(double(stateNames.size())/nColumns);
+              for (int i = 0; i < nPerColumn; i++)
+              {
+                for (int j = 0; j < nColumns; j++)
+                {
+                  int index = j*nPerColumn + i;
+                  if (index < stateNames.size())
+                    stateNamesListing << stateNames[index] << std::string(40-stateNames[index].length(), ' ');
+                }
+                stateNamesListing << "\n  ";
+              }
+
+              // compose message for algebraic names
+              nPerColumn = std::ceil(double(algebraicNames.size())/nColumns);
+              for (int i = 0; i < nPerColumn; i++)
+              {
+                for (int j = 0; j < nColumns; j++)
+                {
+                  int index = j*nPerColumn + i;
+                  if (index < algebraicNames.size())
+                    algebraicNamesListing << algebraicNames[index] << std::string(40-algebraicNames[index].length(), ' ');
+                }
+                algebraicNamesListing << "\n  ";
+              }
+
+              // compose message for constant names
+              nPerColumn = std::ceil(double(constantNames.size())/nColumns);
+              for (int i = 0; i < nPerColumn; i++)
+              {
+                for (int j = 0; j < nColumns; j++)
+                {
+                  int index = j*nPerColumn + i;
+                  if (index < constantNames.size())
+                    constantNamesListing << constantNames[index] << std::string(40-constantNames[index].length(), ' ');
+                }
+                constantNamesListing << "\n  ";
+              }
+
               LOG(ERROR) << this->specificSettings_ << "[\"mappings\"], name \"" << name << "\" is neither state, algebraic nor constant.\n\n"
-                << "  Valid state names are:     " << stateNames << ".\n\n"
-                << "  Valid algebraic names are: " << algebraicNames << ".\n\n"
-                << "  Valid constant names are:  " << constantNames << ".\n";
+                << "  Valid state names are:\n  " << stateNamesListing.str() << "\n\n"
+                << "  Valid algebraic names are:\n  " << algebraicNamesListing.str() << "\n\n"
+                << "  Valid constant names are:\n  " << constantNamesListing.str() << "\n";
             }
           }
         }

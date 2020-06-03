@@ -73,6 +73,8 @@ void CellmlSourceCodeGeneratorVc::preprocessCode(std::set<std::string> &helperFu
 
                   std::string codeExponent = code.substr(posComma+1);
                   StringUtility::trim(codeExponent);
+                  // exponent can also be "- 1.0000", so remove all whitespace in the inner
+                  codeExponent.erase(std::remove(codeExponent.begin(), codeExponent.end(), ' '), codeExponent.end());
                   exponent = atoi(codeExponent.c_str());
 
                   // remove ", exponent" from code
@@ -87,6 +89,8 @@ void CellmlSourceCodeGeneratorVc::preprocessCode(std::set<std::string> &helperFu
 
                   std::string codeExponent = code.substr(posComma+1);
                   StringUtility::trim(codeExponent);
+                  // exponent can also be "- 1.0000", so remove all whitespace in the inner
+                  codeExponent.erase(std::remove(codeExponent.begin(), codeExponent.end(), ' '), codeExponent.end());
                   exponent = atoi(codeExponent.c_str());
 
                   // remove ", exponent" from code
@@ -252,7 +256,7 @@ std::string CellmlSourceCodeGeneratorVc::defineHelperFunctions(std::set<std::str
   }
 
   VLOG(1) << "after adding all necessary helperFunctions: " << helperFunctions;
-
+  
   // generate declarations
   sourceCode << "\n// helper functions\n";
   for (std::set<std::string>::iterator iter = helperFunctions.begin(); iter != helperFunctions.end(); iter++)

@@ -1,15 +1,17 @@
 # Electrophysiology
-# Monodomain with Hodgkin-Huxley model as rhs. This also demonstrates how use output writers and how to pass on algebraic values to the diffusion solver.
-# The paraview output files "strang_*.vtp" of the output writer under diffusion will include the selected algebraic values no. 0,1 and 2 of the CellML problem. 
-# Adjust "algebraicsForTransfer" and "statesForTransfer" to select different states, adjust "connectedSlotsTerm1To2" and connectedSlotsTerm2To1 accordingly.
-# There are two more output writers, one directly in the CellML adapter (produces cellml_*.vtp) which writes all states and all algebraics,
-# and a second in the Heun solver, which writes all states ("states_*.py)
-# 
+# Monodomain with Shorten model as the rhs. 
 #
 # parameters: [<scenario_name> [<dt_0D> [<dt_1D>]]]
+#
+# Plot in the "out" folder:
+# plot strang_000*
 
 import sys
 import numpy as np
+import matplotlib 
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import subprocess
 
 end_time = 100   # [ms] end time of simulation
 n_elements = 200
@@ -25,21 +27,25 @@ solver_type = "gmres"
 
 # timing parameters
 stimulation_frequency = 1000*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
-
-dt_0D = 2e-3                     # timestep width of ODEs
-dt_1D = 4e-3                     # timestep width of diffusion
+dt_0D = 4e-4                     # timestep width of ODEs
+dt_1D = 4e-4                     # timestep width of diffusion
 dt_splitting = max(dt_0D,dt_1D)  # overall timestep width of splitting
 
 output_timestep = 1e0            # timestep for output files
+handle_result_interval = int(10./dt_0D)     # interval for call to "handle_result", which directly produces png files
 
 # input files
 #cellml_file = "../../../input/shorten_ocallaghan_davidson_soboleva_2007.c"
-#cellml_file = "../../../input/shorten.cpp"
-cellml_file = "../../../input/hodgkin_huxley_1952.c"
+#cellml_file = "../../../input/shorten_ocallaghan_davidson_soboleva_2007.cellml"
+#cellml_file = "../../../input/new_slow_TK_2014_12_08.c"
+#cellml_file = "../../../input/2020_05_27_hodgkin-huxley_shorten_ocallaghan_davidson_soboleva_2007.cellml"
+cellml_file = "../../../input/2020_06_03_hodgkin-huxley_shorten_ocallaghan_davidson_soboleva_2007.cellml"     # updated initial values, at t=100ms after 1 stimulation
 
 fiber_distribution_file = "../../../input/MU_fibre_distribution_3780.txt"
 #firing_times_file = "../../../input/MU_firing_times_real.txt"
 firing_times_file = "../../../input/MU_firing_times_immediately.txt"
+firing_times_file = "../../../input/MU_firing_times_once.txt"
+#firing_times_file = "../../../input/MU_firing_times_always.txt"
 
 # parse command line options (scenario name)
 scenario_name = ""
@@ -68,18 +74,20 @@ if rank_no == 0:
   print("dt_0D: {}, dt_1D: {}, dt_splitting: {}".format(dt_0D, dt_1D, dt_splitting))
 
 # set values for cellml model
-if "hodgkin_huxley" in cellml_file:
+if "hodgkin-huxley_shorten_ocallaghan_davidson_soboleva_2007" in cellml_file:
+  # parameters: stimulation current I_stim, fiber stretch λ
   mappings = {
-    ("parameter", 0):           ("constant", "membrane/i_Stim"),      # parameter 0 is constant 2 = I_stim
-    ("outputConnectorSlot", 0): ("state", "membrane/V"),              # expose state 0 = Vm to the operator splitting
-    ("outputConnectorSlot", 1): ("state", "sodium_channel_m_gate/m"),     # expose state 1 = m
-    ("outputConnectorSlot", 2): ("state", "sodium_channel_h_gate/h"),     # expose state 2 = h
-    ("outputConnectorSlot", 3): ("state", "potassium_channel_n_gate/n"),  # expose state 3 = n
-    ("outputConnectorSlot", 4): ("algebraic", "leakage_current/i_L"),  # expose algebraic 8 = leakage current
-  }
-  parameters_initial_values = [0.0]
-  nodal_stimulation_current = 40.
-
+    ("parameter", 0):           "membrane/i_Stim",          # parameter 0 is I_stim
+    ("parameter", 1):           "razumova/l_hs",            # parameter 1 is fiber stretch λ
+    ("outputConnectorSlot", 0): "membrane/V",               # expose Vm to the operator splitting
+    ("outputConnectorSlot", 1): "razumova/Ca_1",
+    ("outputConnectorSlot", 2): "razumova/activation",      # expose activation .
+    ("outputConnectorSlot", 3): "razumova/activestress",
+   }
+  parameters_initial_values = [0.0, 1.0]
+  nodal_stimulation_current = 400.
+  
+  
 # load MU distribution and firing times
 fiber_distribution = np.genfromtxt(fiber_distribution_file, delimiter=" ")
 firing_times = np.genfromtxt(firing_times_file)
@@ -155,11 +163,72 @@ def set_specific_parameters(n_nodes_global, time_step_no, current_time, paramete
     if rank_no == 0:
       print("t: {}, stimulate fiber {} at nodes {}".format(current_time, fiber_no, nodes_to_stimulate_global))
   else:
+    print("t: {}, stimulation ends".format(current_time))
     stimulation_current = 0.
 
   for node_no_global in nodes_to_stimulate_global:
     parameters[(node_no_global,0,0)] = stimulation_current   # key: ((x,y,z),nodal_dof_index,parameter_no)
 
+# callback function that receives the whole result values and produces plots while the simulation is running
+def handle_result(n_instances, time_step_no, current_time, states, algebraics, name_information, additional_argument):
+    
+  # asign some states to variables
+  index_v = name_information["stateNames"].index("membrane/V")
+  Vm = states[index_v*n_instances + int(n_instances/2)]
+  Ca_1 = states[name_information["stateNames"].index("razumova/Ca_1")*n_instances + int(n_instances/2)]
+  
+  # assign some algebraics to variables
+  index_gamma = name_information["algebraicNames"].index("razumova/activestress")
+  active_stress = algebraics[index_gamma*n_instances + int(n_instances/2)]
+  activation = algebraics[name_information["algebraicNames"].index("razumova/activation")*n_instances + int(n_instances/2)]
+  
+  # output some values 
+  print("t: {}, Vm: {}, Ca_1: {}, gamma: {}, activation: {}".format(current_time, Vm, Ca_1, active_stress, activation))
+  
+  # output all states at the end of the simulation
+  if current_time > end_time-5 and True:
+    print("states")
+    for i in range(n_instances):
+      print("instance {}".format(i))
+      l = []
+      for state_no,state_name in enumerate(name_information["stateNames"]):
+        print("{}  {}: {}".format(state_no,state_name,states[state_no*n_instances + i]))
+        l.append(states[state_no*n_instances + i])
+      print("states as list: ",l)
+  
+  return    # <-- remove this to enable the plots
+
+  # plot values of Vm and active stress
+  xdata = [i*element_size for i in range(n_instances)]
+  vm_data = states[index_v*n_instances:(index_v+1)*n_instances]
+  active_stress_data = algebraics[index_gamma*n_instances:(index_gamma+1)*n_instances]
+  
+  plt.figure(1)
+  plt.clf()
+  plt.title("t={}".format(current_time))
+  ax1 = plt.gca()
+  ax1.plot(xdata, vm_data, 'g-', label='$V_m$')
+  ax1.set_ylim([-150, 40])
+  plt.xlabel('x [cm]')
+  plt.ylabel('$V_m$ [mV]')
+  ax2 = ax1.twinx()
+  ax2.plot(xdata, active_stress_data, 'r-', label='active stress, $\gamma$')
+  ax2.set_ylim([-0.5, 1.5])
+  plt.ylabel('$\gamma$ [-]')    
+  
+  # ask matplotlib for the plotted objects and their labels
+  lines, labels = ax1.get_legend_handles_labels()
+  lines2, labels2 = ax2.get_legend_handles_labels()
+  ax2.legend(lines + lines2, labels + labels2, loc=0)
+  plt.tight_layout()
+  
+  # output file
+  subprocess.check_call(["mkdir", "-p", "out"])   # create directory "out" if it does not exist yet
+  filename = "out/plot_{}.png".format(time_step_no)
+  print("created file \"{}\"".format(filename))
+  plt.savefig(filename)
+  
+    
 # callback function from output writer
 def callback(data, shape, nEntries, dim, timeStepNo, currentTime, null):
   pass
@@ -195,9 +264,9 @@ config = {
     "endTime":                    end_time,
     "logTimeStepWidthAsKey":      "dt_splitting",
     "durationLogKey":             "duration_total",
-    "timeStepOutputInterval":     1000,
-    "connectedSlotsTerm1To2":     {0:0, 1:1, 2:2},   # transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion), slot 1 = stress for output writer in diffusion
-    "connectedSlotsTerm2To1":     {0:0, 1:1, 2:2},   # transfer the same back, in order to reuse field variables
+    "timeStepOutputInterval":     10000,
+    "connectedSlotsTerm1To2":     {0:0, 1:1, 2:2, 3:3},   # transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion), slot 1 = stress for output writer in diffusion
+    "connectedSlotsTerm2To1":     {0:0},   # transfer the same back, in order to reuse field variables
     
     "Term1": {      # CellML
       "Heun" : {
@@ -228,7 +297,7 @@ config = {
           
           # stimulation by setting I_Stim
           "setSpecificParametersFunction":          None, #set_specific_parameters,                        # callback function that sets parameters like stimulation current
-          "setSpecificParametersCallInterval":      int(1./stimulation_frequency/dt_0D),            # set_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
+          "setSpecificParametersCallInterval":      int(1./(5*stimulation_frequency)/dt_0D),        # set_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
           
           # stimulation by setting Vm to a prescribed value
           "setSpecificStatesFunction":              set_specific_states,                            # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
@@ -239,8 +308,9 @@ config = {
           "setSpecificStatesCallEnableBegin":       0,                                              # [ms] first time when to call setSpecificStates
           
           "additionalArgument":                     0,                                              # last argument that will be passed to the callback functions set_specific_states, set_specific_parameters, etc.
-          #"handleResultFunction": handleResult,
-          #"handleResultCallInterval": 2e3,
+          "handleResultFunction":                   handle_result,                                  # callback function that prints some current values
+          "handleResultCallInterval":               handle_result_interval,                                  # call interval for handle_result callback
+          "handleResultFunctionAdditionalParameter": None,                                          # last parameter for handle_result callback
           
           # parameters to the cellml model
           "parametersInitialValues":                parameters_initial_values,                      #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
@@ -274,7 +344,7 @@ config = {
         "dirichletBoundaryConditions":  {},
         "solverName":                   "implicitSolver",
         "checkForNanInf":               True,             # check if the solution vector contains nan or +/-inf values, if yes, an error is printed. This is a time-consuming check.
-        "nAdditionalFieldVariables":    1,
+        "nAdditionalFieldVariables":    3,
         
         "FiniteElementMethod" : {
           "meshName":               "MeshFiber",

@@ -737,6 +737,10 @@ elif "hodgkin_huxley-razumova" in variables.cellml_file:   # this is (4, "Titin"
   variables.nodal_stimulation_current = 40.                           # not used
   variables.vm_value_stimulated = 20.                                 # to which value of Vm the stimulated node should be set (option "valueForStimulatedPoint" of FastMonodomainSolver)
 
+else:
+  print("\033[0;31mCellML file {} has no mappings implemented in helper.py\033[0m".format(variables.cellml_file))
+  quit()
+
 # load MU distribution and firing times
 variables.firing_times = np.genfromtxt(variables.firing_times_file)
 

@@ -158,7 +158,7 @@ fiber_file = "../../input/left_biceps_brachii_9x9fibers.bin"
 fiber_file = "../../input/left_biceps_brachii_13x13fibers.bin"
 fat_mesh_file = fiber_file + "_fat.bin"
 firing_times_file = "../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
-firing_times_file = "../../input/MU_firing_times_never.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
+firing_times_file = "../../input/MU_firing_times_once.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
 fiber_distribution_file = "../../input/MU_fibre_distribution_10MUs.txt"
 
 # stride for sampling the 3D elements from the fiber data
@@ -166,13 +166,13 @@ fiber_distribution_file = "../../input/MU_fibre_distribution_10MUs.txt"
 # If you change this, delete the compartment_relative_factors.* files, they have to be generated again.
 sampling_stride_x = 1
 sampling_stride_y = 1
-sampling_stride_z = 20
+sampling_stride_z = 50
 sampling_stride_fat = 1
 
 # how much of the multidomain mesh is used for elasticity
 sampling_factor_elasticity_x = 0.5    
 sampling_factor_elasticity_y = 0.5
-sampling_factor_elasticity_z = 0.1
+sampling_factor_elasticity_z = 0.3
 sampling_factor_elasticity_fat_y = 0.5
 
 # other options

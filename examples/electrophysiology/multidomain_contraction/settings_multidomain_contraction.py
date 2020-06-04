@@ -338,7 +338,7 @@ config = {
       },
       "PrescribedValues": {   # this is for dummy_contraction.cpp
         "meshName":                               "3Dmesh",                                       # use the linear mesh, it was partitioned by the helper.py script which called opendihu/scripts/create_partitioned_meshes_for_settings.py
-        "additionalArgument":                     compartment_no,
+        "additionalArgument":                     None,
         "fieldVariables1": [
           {"name": "stress", "callback": set_dummy_stress},
         ],

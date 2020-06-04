@@ -151,8 +151,8 @@ output_timestep_multidomain = dt_multidomain     # [ms] timestep for fiber outpu
 output_timestep_elasticity = dt_elasticity      # [ms] timestep for elasticity output files
 
 # input files
-cellml_file = "../../input/new_slow_TK_2014_12_08.c"
-#cellml_file = "../../input/hodgkin_huxley-razumova.cellml"
+#cellml_file = "../../input/new_slow_TK_2014_12_08.c"
+cellml_file = "../../input/hodgkin_huxley-razumova.cellml"
 
 fiber_file = "../../input/left_biceps_brachii_9x9fibers.bin"
 fiber_file = "../../input/left_biceps_brachii_13x13fibers.bin"
@@ -166,7 +166,7 @@ fiber_distribution_file = "../../input/MU_fibre_distribution_10MUs.txt"
 # If you change this, delete the compartment_relative_factors.* files, they have to be generated again.
 sampling_stride_x = 1
 sampling_stride_y = 1
-sampling_stride_z = 2 #20
+sampling_stride_z = 20
 sampling_stride_fat = 1
 
 # how much of the multidomain mesh is used for elasticity

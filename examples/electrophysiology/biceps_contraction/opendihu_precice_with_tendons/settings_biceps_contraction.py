@@ -360,7 +360,7 @@ config = {
         "timeStepOutputInterval":       100,                       # do not output time steps
         "Pmax":                         variables.pmax,            # maximum PK2 active stress
         "OutputWriter" : [
-          {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D), "filename": "out/" + variables.scenario_name + "/mechanics_3D", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+          {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D), "filename": "out/" + variables.scenario_name + "/mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
         ],
         "mapGeometryToMeshes":          [],                        # the mesh names of the meshes that will get the geometry transferred
         "dynamic":                      True,                      # if the dynamic solid mechanics solver should be used, else it computes the quasi-static problem
@@ -389,7 +389,7 @@ config = {
     
           # solving
           "solverName":                 "mechanicsSolver",         # name of the nonlinear solver configuration, it is defined under "Solvers" at the beginning of this config
-          #"loadFactors":                [0.5, 1.0],                # load factors for every timestep
+          #"loadFactors":                [0.25, 0.66, 1.0],                # load factors for every timestep
           "loadFactors":                [],                        # no load factors, solve problem directly
           "nNonlinearSolveCalls":       1,                         # how often the nonlinear solve should be repeated
           
@@ -425,7 +425,7 @@ config = {
           "dynamic": {    # output of the dynamic solver, has additional virtual work values 
             "OutputWriter" : [   # output files for displacements function space (quadratic elements)
               #{"format": "Paraview", "outputInterval": int(output_interval/dt), "filename": "out/dynamic", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
-              {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D), "filename": "out/"+variables.scenario_name+"/virtual_work", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+              {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D), "filename": "out/"+variables.scenario_name+"/virtual_work", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
             ],
           },
           # 4. output writer for debugging, outputs files after each load increment, the geometry is not changed but u and v are written

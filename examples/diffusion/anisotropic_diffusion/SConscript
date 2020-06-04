@@ -12,3 +12,4 @@ if not env['no_examples']:
      
   # create the main executable
   env.Program(target = 'anisotropic_diffusion2d', source = "src/anisotropic_diffusion2d.cpp")
+  env.Program(target = 'anisotropic_diffusion3d', source = "src/anisotropic_diffusion3d.cpp")

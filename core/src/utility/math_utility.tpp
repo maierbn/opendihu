@@ -5,8 +5,8 @@
 namespace MathUtility
 {
 
-const double INVERSE_REGULARIZATION_TOLERANCE = 1e-2;
-const double INVERSE_REGULARIZATION_EPSILON = 1e-2;
+const double INVERSE_REGULARIZATION_TOLERANCE = 1e-10;
+const double INVERSE_REGULARIZATION_EPSILON = 1e-10;
 
 
 template<typename double_v_t>

@@ -664,7 +664,7 @@ if False:
     variables.output_writer_fibers.append({"format": "Exfile", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep_fibers), "filename": "out/" + subfolder + variables.scenario_name + "/fibers"})
 
 # set variable mappings for cellml model
-if "hodgkin_huxley" in variables.cellml_file:
+if "hodgkin_huxley" in variables.cellml_file and "hodgkin_huxley-razumova" not in variables.cellml_file:
   # parameters: I_stim
   variables.mappings = {
     ("parameter", 0):           ("constant", "membrane/i_Stim"),      # parameter 0 is constant 2 = I_stim
@@ -723,6 +723,19 @@ elif "Aliev_Panfilov_Razumova_Titin" in variables.cellml_file:   # this is (4, "
   variables.parameters_initial_values = [0, 1, 0]                     # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/rel_velo = \dot{λ}
   variables.nodal_stimulation_current = 40.                           # not used
   variables.vm_value_stimulated = 40.                                 # to which value of Vm the stimulated node should be set (option "valueForStimulatedPoint" of FastMonodomainSolver)
+  
+elif "hodgkin_huxley-razumova" in variables.cellml_file:   # this is (4, "Titin") in OpenCMISS
+  # parameters: I_stim, fiber stretch λ, fiber contraction velocity \dot{λ}
+  variables.mappings = {
+    ("parameter", 0):           "membrane/i_Stim",          # parameter 0 is I_stim
+    ("parameter", 1):           "Razumova/l_hs",            # parameter 1 is fiber stretch λ
+    ("outputConnectorSlot", 0): "membrane/V",               # expose Vm to the operator splitting
+    ("outputConnectorSlot", 2): "Razumova/activation",      # expose activation .
+    ("outputConnectorSlot", 1): "Razumova/activestress",
+  }
+  variables.parameters_initial_values = [0, 1]
+  variables.nodal_stimulation_current = 40.                           # not used
+  variables.vm_value_stimulated = 20.                                 # to which value of Vm the stimulated node should be set (option "valueForStimulatedPoint" of FastMonodomainSolver)
 
 # load MU distribution and firing times
 variables.firing_times = np.genfromtxt(variables.firing_times_file)

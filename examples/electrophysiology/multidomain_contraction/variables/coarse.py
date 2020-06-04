@@ -1,6 +1,6 @@
 
 # scenario name for log file
-scenario_name = "ramp"
+scenario_name = "coarse"
 
 # Fixed units in cellMl models:
 # These define the unit system.
@@ -147,7 +147,7 @@ dt_0D = 1e-3                        # [ms] timestep width of ODEs (1e-3)
 dt_multidomain = 1e-3               # [ms] timestep width of the multidomain solver, i.e. the diffusion
 dt_splitting = dt_multidomain       # [ms] timestep width of strang splitting between 0D and multidomain, this is the same as the dt_multidomain, because we do not want to subcycle for the diffusion part
 dt_elasticity = 1e-1                # [ms] time step width of elasticity solver
-output_timestep_multidomain = dt_multidomain     # [ms] timestep for fiber output, 0.5
+output_timestep_multidomain = 1e-1  # [ms] timestep for fiber output, 0.5
 output_timestep_elasticity = dt_elasticity      # [ms] timestep for elasticity output files
 
 # input files

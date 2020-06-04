@@ -79,7 +79,7 @@ std::shared_ptr<FunctionSpaceType> Manager::functionSpace(std::string meshName)
 {
   LOG(DEBUG) << "querying Mesh::Manager::functionSpace, type " << StringUtility::demangle(typeid(FunctionSpaceType).name());
 
-  if (hasFunctionSpaceOfType<FunctionSpaceType>(meshName))
+  if (hasFunctionSpaceOfType<FunctionSpaceType>(meshName, true))
   {
     LOG(DEBUG) << "Mesh with meshName \"" << meshName << "\" requested, found and type matches, type is "
       << StringUtility::demangle(typeid(functionSpaces_[meshName]).name())
@@ -136,7 +136,7 @@ std::shared_ptr<FunctionSpaceType> Manager::functionSpace(std::string meshName)
 template<typename FunctionSpaceType, typename ...Args>
 std::shared_ptr<FunctionSpaceType> Manager::createFunctionSpace(std::string name, Args && ...args)
 {
-  if (hasFunctionSpaceOfType<FunctionSpaceType>(name))
+  if (hasFunctionSpaceOfType<FunctionSpaceType>(name, true))
   {
     LOG(ERROR) << "FunctionSpace with name \"" <<name << "\" already exists. Overwrite mesh.";
   }
@@ -190,7 +190,7 @@ std::shared_ptr<FunctionSpaceType> Manager::createCompositeMesh(PythonConfig set
   }
 
   // check if this mesh has already been created
-  if (hasFunctionSpaceOfType<FunctionSpaceType>(compositeName.str()))
+  if (hasFunctionSpaceOfType<FunctionSpaceType>(compositeName.str(), true))
   {
     LOG(DEBUG) << "Composite mesh with meshName \"" << compositeName.str() << "\" requested, found and type matches, type is "
       << StringUtility::demangle(typeid(functionSpaces_[compositeName.str()]).name())
@@ -252,7 +252,7 @@ template<typename FunctionSpaceType, typename ...Args>
 std::shared_ptr<FunctionSpaceType> Manager::createFunctionSpaceWithGivenMeshPartition(
   std::string name, std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> meshPartition, Args && ...args)
 {
-  if (hasFunctionSpaceOfType<FunctionSpaceType>(name))
+  if (hasFunctionSpaceOfType<FunctionSpaceType>(name, true))
   {
     LOG(ERROR) << "FunctionSpace with name \"" <<name << "\" already exists. Overwrite mesh.";
   }
@@ -277,7 +277,7 @@ std::shared_ptr<FunctionSpaceType> Manager::createFunctionSpaceWithGivenMeshPart
 }
 
 template<typename FunctionSpaceType>
-bool Manager::hasFunctionSpaceOfType(std::string meshName)
+bool Manager::hasFunctionSpaceOfType(std::string meshName, bool outputWarning)
 {
   VLOG(1) << "hasMesh(" << meshName << "): " << (functionSpaces_.find(meshName) != functionSpaces_.end());
   VLOG(1) << "meshes size: " << functionSpaces_.size();
@@ -288,7 +288,7 @@ bool Manager::hasFunctionSpaceOfType(std::string meshName)
     {
       return true;
     }
-    else
+    else if (outputWarning)
     {
       LOG(WARNING) << "Mesh \"" << meshName << "\" is stored but under a type that is different from "
         << StringUtility::demangle(typeid(FunctionSpaceType).name()) << ". A new mesh will be created instead.";

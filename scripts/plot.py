@@ -90,6 +90,7 @@ if dimension == 1:
   show_geometry = True     # if the fibre geometry should be displayed in a 3D plot in a separate axis (ax2) on top of the solution plot
   show_components = False  # if all the components of the solution should be displayed
   plot_over_time = data[0]['nElements'] == [0]   # if the plot should have time as x-axis instead of geometry
+  last_length = 0
   
   def init():
     global geometry_component, line_2D, lines_3D, line_comp, cbar, top_text, ax1, ax2, cmap, show_geometry, show_components, solution_components, solution_name, solution_component, scaling_factors
@@ -172,7 +173,8 @@ if dimension == 1:
     margin = abs(max_s - min_s) * 0.1
     ax1.set_xlim(min_x, max_x)
     ax1.set_ylim(min_s - margin, max_s + margin)
-    top_text = ax1.text(0.5,0.95,"",size=20,horizontalalignment='center',transform=ax1.transAxes)
+    top_text = ax1.text(0.5,0.94,"",size=20,horizontalalignment='center',transform=ax1.transAxes,family='monospace')
+    last_length = 0
     
     xlabel = geometry_component
     if plot_over_time:
@@ -243,14 +245,14 @@ if dimension == 1:
       ax3.set_ylim(min_value - margin, max_value + margin)
       ax3.set_ylabel('Other components')
       if len(solution_components) > 5:
-        ncol = len(solution_components)/10
+        ncol = max(1,len(solution_components)/10)
         ax3.legend(prop={'size': 6, }, ncol=ncol)
       else:
         ax3.legend()
     return top_text,
 
   def animate(i):
-    global top_text, solution_name, solution_component
+    global top_text, solution_name, solution_component, last_length
     
     ##################
     # 2D plot of main solution component
@@ -370,7 +372,11 @@ if dimension == 1:
         
       max_timestep = len(data)-1
         
-      top_text.set_text("timestep {}/{}, t = {}".format(timestep, max_timestep, current_time))
+      t = "timestep {}/{}, t = {}".format(timestep, max_timestep, current_time)
+      if last_length > len(t):
+        t += " "*(last_length-len(t))
+      last_length = len(t)
+      top_text.set_text(t)
       
     return top_text,
     
@@ -386,7 +392,10 @@ if dimension == 1:
     anim = animation.FuncAnimation(fig, animate, init_func=init,
                frames=len(data), interval=interval, blit=False)
 
-    anim.save("anim.mp4")
+    try:
+      anim.save("anim.mp4")
+    except:
+      print("An error occured during the animation.")
     
     # create plot with first and last dataset
     # plot first dataset

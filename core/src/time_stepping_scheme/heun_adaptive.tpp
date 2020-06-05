@@ -69,21 +69,21 @@ void HeunAdaptive<DiscretizableInTime>::advanceTimeSpan()
   // log info
   LOG(DEBUG) << "HeunAdaptive::advanceTimeSpan, timeSpan=" << timeSpan<< ", initial timeStepWidth=" << this->timeStepWidth_;
 
-  // we need to cast the pointer type to the derived class. Otherwise the additional intermediateIncrement()-method of the class TimeSteppingHeun won't be there:
+  // we need to cast the pointer type to the derived class. Otherwise the additional algebraicIncrement()-method of the class TimeSteppingHeun won't be there:
   std::shared_ptr<Data::TimeSteppingHeun<typename DiscretizableInTime::FunctionSpace, DiscretizableInTime::nComponents()>> dataHeun
     = std::static_pointer_cast<Data::TimeSteppingHeun<typename DiscretizableInTime::FunctionSpace, DiscretizableInTime::nComponents()>>(this->data_);
 
   // get vectors of all components in struct-of-array order, as needed by CellML (i.e. one long vector with [state0 state0 state0 ... state1 state1...]
   Vec &solution = this->data_->solution()->getValuesContiguous();
   Vec &increment = this->data_->increment()->getValuesContiguous();
-  Vec &intermediateIncrement = dataHeun->intermediateIncrement()->getValuesContiguous();
+  Vec &algebraicIncrement = dataHeun->algebraicIncrement()->getValuesContiguous();
 
   // duplicate current solutions to create same-structured vectors
   VecDuplicate(solution, &temp_solution_normal);
   VecDuplicate(solution, &temp_solution_tilde);
-  VecDuplicate(solution, &temp_solution_tilde_intermediate);
+  VecDuplicate(solution, &temp_solution_tilde_algebraic);
   VecDuplicate(increment, &temp_increment_1);
-  VecDuplicate(intermediateIncrement, &temp_increment_2);
+  VecDuplicate(algebraicIncrement, &temp_increment_2);
 
   // check for savedTimeStepWidth
   if (savedTimeStepWidth_ > 0)
@@ -131,7 +131,7 @@ void HeunAdaptive<DiscretizableInTime>::advanceTimeSpan()
         // copy current solution in temporal vectors
         VecCopy(solution, temp_solution_normal);
         VecCopy(solution, temp_solution_tilde);
-        VecCopy(solution, temp_solution_tilde_intermediate);
+        VecCopy(solution, temp_solution_tilde_algebraic);
 
         VLOG(1) << "starting from solution: " << *this->data_->solution();
 
@@ -151,12 +151,12 @@ void HeunAdaptive<DiscretizableInTime>::advanceTimeSpan()
         // now calculate reference solution consisting of 2 steps with timeStepWidth/2
         // first step
         this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
-        temp_solution_tilde_intermediate, temp_increment_1, timeStepNo, currentTime);
+        temp_solution_tilde_algebraic, temp_increment_1, timeStepNo, currentTime);
 
-        VecAXPY(temp_solution_tilde_intermediate, 0.5*this->timeStepWidth_, temp_increment_1);
+        VecAXPY(temp_solution_tilde_algebraic, 0.5*this->timeStepWidth_, temp_increment_1);
 
         this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
-        temp_solution_tilde_intermediate, temp_increment_2, timeStepNo + 1, (currentTime + 0.5*this->timeStepWidth_));
+        temp_solution_tilde_algebraic, temp_increment_2, timeStepNo + 1, (currentTime + 0.5*this->timeStepWidth_));
 
         VecAXPY(temp_increment_2, 1.0, temp_increment_1);
 
@@ -166,12 +166,12 @@ void HeunAdaptive<DiscretizableInTime>::advanceTimeSpan()
         this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
         temp_solution_tilde, temp_increment_1, timeStepNo, (currentTime + 0.5*this->timeStepWidth_));
 
-        VecCopy(temp_solution_tilde, temp_solution_tilde_intermediate);
+        VecCopy(temp_solution_tilde, temp_solution_tilde_algebraic);
 
-        VecAXPY(temp_solution_tilde_intermediate, 0.5*this->timeStepWidth_, temp_increment_1);
+        VecAXPY(temp_solution_tilde_algebraic, 0.5*this->timeStepWidth_, temp_increment_1);
 
         this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
-        temp_solution_tilde_intermediate, temp_increment_2, timeStepNo + 1, (currentTime + this->timeStepWidth_));
+        temp_solution_tilde_algebraic, temp_increment_2, timeStepNo + 1, (currentTime + this->timeStepWidth_));
 
         VecAXPY(temp_increment_2, 1.0, temp_increment_1);
 
@@ -361,7 +361,7 @@ void HeunAdaptive<DiscretizableInTime>::advanceTimeSpan()
     // copy current solution in temporal vectors
     VecCopy(solution, temp_solution_normal);
     VecCopy(solution, temp_solution_tilde);
-    VecCopy(solution, temp_solution_tilde_intermediate);
+    VecCopy(solution, temp_solution_tilde_algebraic);
 
     VLOG(1) << "starting from solution: " << *this->data_->solution();
 
@@ -381,12 +381,12 @@ void HeunAdaptive<DiscretizableInTime>::advanceTimeSpan()
     // now calculate reference solution consisting of 2 steps with timeStepWidth/2
     // first step
     this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
-    temp_solution_tilde_intermediate, temp_increment_1, timeStepNo, currentTime);
+    temp_solution_tilde_algebraic, temp_increment_1, timeStepNo, currentTime);
 
-    VecAXPY(temp_solution_tilde_intermediate, 0.5*this->timeStepWidth_, temp_increment_1);
+    VecAXPY(temp_solution_tilde_algebraic, 0.5*this->timeStepWidth_, temp_increment_1);
 
     this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
-    temp_solution_tilde_intermediate, temp_increment_2, timeStepNo + 1, (currentTime + 0.5*this->timeStepWidth_));
+    temp_solution_tilde_algebraic, temp_increment_2, timeStepNo + 1, (currentTime + 0.5*this->timeStepWidth_));
 
     VecAXPY(temp_increment_2, 1.0, temp_increment_1);
 
@@ -396,12 +396,12 @@ void HeunAdaptive<DiscretizableInTime>::advanceTimeSpan()
     this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
     temp_solution_tilde, temp_increment_1, timeStepNo, (currentTime + 0.5*this->timeStepWidth_));
 
-    VecCopy(temp_solution_tilde, temp_solution_tilde_intermediate);
+    VecCopy(temp_solution_tilde, temp_solution_tilde_algebraic);
 
-    VecAXPY(temp_solution_tilde_intermediate, 0.5*this->timeStepWidth_, temp_increment_1);
+    VecAXPY(temp_solution_tilde_algebraic, 0.5*this->timeStepWidth_, temp_increment_1);
 
     this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
-    temp_solution_tilde_intermediate, temp_increment_2, timeStepNo + 1, (currentTime + this->timeStepWidth_));
+    temp_solution_tilde_algebraic, temp_increment_2, timeStepNo + 1, (currentTime + this->timeStepWidth_));
 
     VecAXPY(temp_increment_2, 1.0, temp_increment_1);
 
@@ -462,11 +462,11 @@ void HeunAdaptive<DiscretizableInTime>::advanceTimeSpan()
       VecAXPY(solution, this->timeStepWidth_, increment);
 
       this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
-      solution, intermediateIncrement, timeStepNo + 1, currentTime + this->timeStepWidth_);
+      solution, algebraicIncrement, timeStepNo + 1, currentTime + this->timeStepWidth_);
 
-      VecAXPY(intermediateIncrement, -1.0, increment);
+      VecAXPY(algebraicIncrement, -1.0, increment);
 
-      VecAXPY(solution, 0.5*this->timeStepWidth_, intermediateIncrement);
+      VecAXPY(solution, 0.5*this->timeStepWidth_, algebraicIncrement);
 
       // apply the prescribed boundary condition values
       this->applyBoundaryConditions();
@@ -507,12 +507,12 @@ void HeunAdaptive<DiscretizableInTime>::advanceTimeSpan()
 
   this->data_->solution()->restoreValuesContiguous();
   this->data_->increment()->restoreValuesContiguous();
-  dataHeun->intermediateIncrement()->restoreValuesContiguous();
+  dataHeun->algebraicIncrement()->restoreValuesContiguous();
 
   // clean up to prevent memory leaks
   VecDestroy(&temp_solution_normal);
   VecDestroy(&temp_solution_tilde);
-  VecDestroy(&temp_solution_tilde_intermediate);
+  VecDestroy(&temp_solution_tilde_algebraic);
   VecDestroy(&temp_increment_1);
   VecDestroy(&temp_increment_2);
 

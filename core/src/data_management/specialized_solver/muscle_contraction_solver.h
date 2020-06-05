@@ -28,7 +28,7 @@ public:
   typedef FieldVariable::FieldVariable<FunctionSpaceType,6> StressFieldVariableType;     // stress tensor in Voigt notation
 
   //! define the type of output connection variables, i.e. the values that will be transferred if the solver is part of a splitting or coupling scheme
-  //! Two different field variables can be used: they must have the same function space but can have a different number of components. For example, for the CellMLAdapter, there are the "states" and the "intermediates" field variables.
+  //! Two different field variables can be used: they must have the same function space but can have a different number of components. For example, for the CellMLAdapter, there are the "states" and the "algebraics" field variables.
   //! In this example, we use twice "1" as number of components, but you could, e.g. have OutputConnectorData<FunctionSpaceType,3,4>, etc.
   //! For each field variable you can transfer an abritrary subset of their components.
   typedef OutputConnectorData<FunctionSpaceType,1,3> OutputConnectorDataType;

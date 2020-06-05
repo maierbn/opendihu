@@ -43,21 +43,21 @@ createPetscObjects()
 
   LOG(DEBUG) << "TimeSteppingHeun<FunctionSpaceType,nComponents>::createPetscObjects(" << nComponents << ")";
   
-  this->intermediateIncrement_ = this->functionSpace_->template createFieldVariable<nComponents>("intermediateIncrement");
+  this->algebraicIncrement_ = this->functionSpace_->template createFieldVariable<nComponents>("algebraicIncrement");
 }
 
 template<typename FunctionSpaceType,int nComponents>
 std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> TimeSteppingHeun<FunctionSpaceType,nComponents>::
-intermediateIncrement()
+algebraicIncrement()
 {
-  return this->intermediateIncrement_;
+  return this->algebraicIncrement_;
 }
 
 /*template<typename FunctionSpaceType,int nComponents>
 FieldVariable::FieldVariable<FunctionSpaceType,nComponents> &TimeSteppingHeun<FunctionSpaceType,nComponents>::
-intermediateSolution()
+algebraicSolution()
 {
-  return *this->intermediateSolution_;
+  return *this->algebraicSolution_;
 }*/
 
 
@@ -69,7 +69,7 @@ print() // use override in stead of extending the parents' print output.This way
     return;
 
   VLOG(4) << "======================";
-  VLOG(4) << *this->intermediateIncrement_;
+  VLOG(4) << *this->algebraicIncrement_;
   VLOG(4) << *this->increment_;
   VLOG(4) << *this->solution_;
   VLOG(4) << "======================";

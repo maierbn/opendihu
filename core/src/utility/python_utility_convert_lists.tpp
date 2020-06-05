@@ -734,7 +734,7 @@ template<typename ValueType>
 struct PythonUtility::convertToPython<std::vector<ValueType>>
 {
   //! convert a type to a python object
-  static PyObject *get(std::vector<ValueType> &value)
+  static PyObject *get(const std::vector<ValueType> &value)
   {
     PyObject *result = PyList_New(value.size());
     for (int i = 0; i < value.size(); i++)
@@ -750,7 +750,7 @@ template<typename ValueType, int nComponents>
 struct PythonUtility::convertToPython<std::array<ValueType,nComponents>>
 {
   //! convert a type to a python object
-  static PyObject *get(std::array<ValueType,nComponents> &value)
+  static PyObject *get(const std::array<ValueType,nComponents> &value)
   {
     PyObject *result = PyTuple_New(nComponents);
     for (int i = 0; i < nComponents; i++)
@@ -766,7 +766,7 @@ template<typename ValueType, global_no_t nComponents>
 struct PythonUtility::convertToPython<std::array<ValueType,nComponents>>
 {
   //! convert a type to a python object
-  static PyObject *get(std::array<ValueType,nComponents> &value)
+  static PyObject *get(const std::array<ValueType,nComponents> &value)
   {
     PyObject *result = PyTuple_New(nComponents);
     for (int i = 0; i < nComponents; i++)
@@ -782,13 +782,30 @@ template<typename ValueType, unsigned long nComponents>
 struct PythonUtility::convertToPython<std::array<ValueType,nComponents>>
 {
   //! convert a type to a python object
-  static PyObject *get(std::array<ValueType,nComponents> &value)
+  static PyObject *get(const std::array<ValueType,nComponents> &value)
   {
     PyObject *result = PyTuple_New(nComponents);
     for (int i = 0; i < nComponents; i++)
     {
       PyObject *item = PythonUtility::convertToPython<ValueType>::get(value[i]);
       PyTuple_SET_ITEM(result, (Py_ssize_t)i, item);
+    }
+    return result;
+  }
+};
+
+template<typename KeyType, typename ValueType>
+struct PythonUtility::convertToPython<std::map<KeyType,ValueType>>
+{
+  //! convert a map to a python dict
+  static PyObject *get(const std::map<KeyType,ValueType> &value)
+  {
+    PyObject *result = PyDict_New();
+    for (const std::pair<KeyType,ValueType> &entry : value)
+    {
+      PyObject *key = PythonUtility::convertToPython<KeyType>::get(entry.first);
+      PyObject *value = PythonUtility::convertToPython<ValueType>::get(entry.second);
+      PyDict_SetItem(result, key, value);
     }
     return result;
   }

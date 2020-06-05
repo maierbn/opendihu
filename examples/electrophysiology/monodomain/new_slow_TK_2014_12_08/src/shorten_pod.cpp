@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
   OperatorSplitting::Godunov<
     TimeSteppingScheme::ExplicitEuler<
       ModelOrderReduction::POD<
-        CellmlAdapter<57,1>,  // nStates,nIntermediates: 57,1 = Shorten, 4,9 = Hodgkin Huxley
+        CellmlAdapter<57,1>,  // nStates,nAlgebraics: 57,1 = Shorten, 4,9 = Hodgkin Huxley
         ModelOrderReduction::LinearPart
       >
     >,

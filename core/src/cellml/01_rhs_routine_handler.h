@@ -15,20 +15,20 @@
  * It provides a method to call the right hand side.
  *
  *  Naming:
- *   Intermediate (opendihu) = KNOWN (OpenCMISS) = Algebraic (OpenCOR)
+ *   Algebraic (opendihu) = KNOWN (OpenCMISS) = Algebraic (OpenCOR)
  *   Parameter (opendihu, OpenCMISS) = KNOWN (OpenCMISS), in OpenCOR also algebraic
  *   Constant - these are constants that are only present in the source files
  *   State: state variable
  *   Rate: the time derivative of the state variable, i.e. the increment value in an explicit Euler stepping
  */
-template <int nStates, int nIntermediates_, typename FunctionSpaceType>
+template <int nStates, int nAlgebraics_, typename FunctionSpaceType>
 class RhsRoutineHandler:
-  public CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>
+  public CellmlAdapterBase<nStates,nAlgebraics_,FunctionSpaceType>
 {
 public:
 
   //! constructor
-  using CellmlAdapterBase<nStates,nIntermediates_,FunctionSpaceType>::CellmlAdapterBase;
+  using CellmlAdapterBase<nStates,nAlgebraics_,FunctionSpaceType>::CellmlAdapterBase;
 
   //! if when using "vc" as optimizationType_, the exp() function should be approximated, this is faster
   bool approximateExponentialFunction();

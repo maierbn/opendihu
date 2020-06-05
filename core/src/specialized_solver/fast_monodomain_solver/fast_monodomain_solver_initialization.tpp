@@ -4,8 +4,8 @@
 #include "control/diagnostic_tool/stimulation_logging.h"
 #include <Vc/Vc>
 
-template<int nStates, int nIntermediates, typename DiffusionTimeSteppingScheme>
-FastMonodomainSolverBase<nStates,nIntermediates,DiffusionTimeSteppingScheme>::
+template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
+FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
 FastMonodomainSolverBase(const DihuContext &context) :
   specificSettings_(context.getPythonConfig()), nestedSolvers_(context),
   initialized_(false)
@@ -14,8 +14,8 @@ FastMonodomainSolverBase(const DihuContext &context) :
   this->outputWriterManager_.initialize(context, specificSettings_);
 }
 
-template<int nStates, int nIntermediates, typename DiffusionTimeSteppingScheme>
-void FastMonodomainSolverBase<nStates,nIntermediates,DiffusionTimeSteppingScheme>::
+template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
+void FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
 initialize()
 {
   // only initialize once
@@ -217,37 +217,37 @@ initialize()
     }
   }
 
-  // get the states and intermediates no.s to be transferred as output connector data
+  // get the states and algebraics no.s to be transferred as output connector data
   CellmlAdapterType &cellmlAdapter = instances[0].timeStepping1().instancesLocal()[0].discretizableInTime();
   statesForTransfer_ = cellmlAdapter.statesForTransfer();
-  intermediatesForTransfer_ = cellmlAdapter.intermediatesForTransfer();
+  algebraicsForTransfer_ = cellmlAdapter.algebraicsForTransfer();
 
 
   int nInstancesLocalCellml;
-  int nIntermediatesLocalCellml;
+  int nAlgebraicsLocalCellml;
   int nParametersPerInstance;
-  cellmlAdapter.getNumbers(nInstancesLocalCellml, nIntermediatesLocalCellml, nParametersPerInstance);
+  cellmlAdapter.getNumbers(nInstancesLocalCellml, nAlgebraicsLocalCellml, nParametersPerInstance);
 
   // make parameterValues() of cellmlAdapter.data() available
   cellmlAdapter.data().prepareParameterValues();
-  double *parameterValues = cellmlAdapter.data().parameterValues();   //< contains nIntermediates parameters for all instances, in struct of array ordering (p0inst0, p0inst1, p0inst2,...)
+  double *parameterValues = cellmlAdapter.data().parameterValues();   //< contains nAlgebraics parameters for all instances, in struct of array ordering (p0inst0, p0inst1, p0inst2,...)
 
   int nVcVectors = (nInstancesToCompute_ + Vc::double_v::Size - 1) / Vc::double_v::Size;
 
   fiberPointBuffers_.resize(nVcVectors);
-  fiberPointBuffersIntermediatesForTransfer_.resize(nVcVectors);
+  fiberPointBuffersAlgebraicsForTransfer_.resize(nVcVectors);
   fiberPointBuffersParameters_.resize(nVcVectors);
   fiberPointBuffersStatesAreCloseToEquilibrium_.resize(nVcVectors, not_constant);
   nFiberPointBufferStatesCloseToEquilibrium_ = 0;
 
   for (int i = 0; i < nVcVectors; i++)
   {
-    fiberPointBuffersIntermediatesForTransfer_[i].resize(intermediatesForTransfer_.size());
+    fiberPointBuffersAlgebraicsForTransfer_[i].resize(algebraicsForTransfer_.size());
     fiberPointBuffersParameters_[i].resize(nParametersPerInstance);
 
     for (int j=0; j<nParametersPerInstance; j++)
     {
-      fiberPointBuffersParameters_[i][j] = parameterValues[j*nIntermediatesLocalCellml];    // note, the stride in parameterValues is "nIntermediatesLocalCellml", not "nParametersPerInstance"
+      fiberPointBuffersParameters_[i][j] = parameterValues[j*nAlgebraicsLocalCellml];    // note, the stride in parameterValues is "nAlgebraicsLocalCellml", not "nParametersPerInstance"
 
       VLOG(1) << "fiberPointBuffersParameters_ buffer no " << i << ", parameter no " << j << ", value: " <<  fiberPointBuffersParameters_[i][j];
     }
@@ -259,7 +259,7 @@ initialize()
   LOG(DEBUG) << nInstancesToCompute_ << " instances to compute, " << nVcVectors
     << " Vc vectors, size of double_v: " << Vc::double_v::Size << ", "
     << statesForTransfer_.size()-1 << " additional states for transfer, "
-    << intermediatesForTransfer_.size() << " intermediates for transfer";
+    << algebraicsForTransfer_.size() << " algebraics for transfer";
 
   // initialize state values
   for (int i = 0; i < fiberPointBuffers_.size(); i++)
@@ -312,12 +312,12 @@ initialize()
         }
       }
 
-      // loop over intermediates to transfer
-      for (int intermediateIndex = 0; intermediateIndex < intermediatesForTransfer_.size(); intermediateIndex++, furtherDataIndex++)
+      // loop over algebraics to transfer
+      for (int algebraicIndex = 0; algebraicIndex < algebraicsForTransfer_.size(); algebraicIndex++, furtherDataIndex++)
       {
-        std::string name = cellmlAdapter.data().intermediates()->componentName(intermediatesForTransfer_[intermediateIndex]);
+        std::string name = cellmlAdapter.data().algebraics()->componentName(algebraicsForTransfer_[algebraicIndex]);
 
-        LOG(DEBUG) << "intermediateIndex " << intermediateIndex << ", intermediate " << intermediatesForTransfer_[intermediateIndex] << ", name: \"" << name << "\".";
+        LOG(DEBUG) << "algebraicIndex " << algebraicIndex << ", algebraic " << algebraicsForTransfer_[algebraicIndex] << ", name: \"" << name << "\".";
 
         assert (i < instances.size());
         assert (j < instances[i].timeStepping2().instancesLocal().size());
@@ -326,21 +326,21 @@ initialize()
         std::vector<::Data::ComponentOfFieldVariable<FiberFunctionSpace,1>> &variable2
           = instances[i].timeStepping2().instancesLocal()[j].getOutputConnectorData()->variable2;
 
-        if (intermediateIndex >= variable2.size())
+        if (algebraicIndex >= variable2.size())
         {
-          LOG(WARNING) << "There are " << intermediatesForTransfer_.size() << " intermediatesForTransfer specified in StrangSplitting, "
-            << " but the diffusion solver has only " << variable2.size() << " slots to get these intermediates. "
-            << "This means that intermediate no. " << intermediatesForTransfer_[intermediateIndex] << ", \"" << name << "\" cannot be transferred." << std::endl
+          LOG(WARNING) << "There are " << algebraicsForTransfer_.size() << " algebraicsForTransfer specified in StrangSplitting, "
+            << " but the diffusion solver has only " << variable2.size() << " slots to get these algebraics. "
+            << "This means that algebraic no. " << algebraicsForTransfer_[algebraicIndex] << ", \"" << name << "\" cannot be transferred." << std::endl
             << "Maybe you need to increase \"nAdditionalFieldVariables\" in  the diffusion solver (\"ImplicitEuler\" or \"CrankNicolson\") "
-            << "or reduce the number of entries in \"intermediatesForTransfer\".";
+            << "or reduce the number of entries in \"algebraicsForTransfer\".";
 
         }
         else
         {
-          std::shared_ptr<FieldVariable::FieldVariable<FiberFunctionSpace,1>> fieldVariableIntermediates
-            = variable2[intermediateIndex].values;
+          std::shared_ptr<FieldVariable::FieldVariable<FiberFunctionSpace,1>> fieldVariableAlgebraics
+            = variable2[algebraicIndex].values;
 
-          fieldVariableIntermediates->setName(name);
+          fieldVariableAlgebraics->setName(name);
         }
       }
     }
@@ -349,8 +349,8 @@ initialize()
   initialized_ = true;
 }
 
-template<int nStates, int nIntermediates, typename DiffusionTimeSteppingScheme>
-void FastMonodomainSolverBase<nStates,nIntermediates,DiffusionTimeSteppingScheme>::
+template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
+void FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
 initializeCellMLSourceFile()
 {
   // parse options

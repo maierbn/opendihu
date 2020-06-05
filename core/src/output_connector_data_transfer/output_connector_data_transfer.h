@@ -27,7 +27,7 @@ class SolutionVectorMapping
 {
 };
 
-/** Transfer between a pair of states and intermediates field variables from CellML, with given component numbers each, to a normal field variable with component no, both field variables have a component no. != 1
+/** Transfer between a pair of states and algebraics field variables from CellML, with given component numbers each, to a normal field variable with component no, both field variables have a component no. != 1
  *
  *   template<typename FunctionSpaceType, int nComponents1, int nComponents2>
  *   struct OutputConnectorData
@@ -38,7 +38,7 @@ class SolutionVectorMapping
  */
 template<typename FunctionSpaceType1, int nComponents1a, int nComponents1b, typename FunctionSpaceType2, int nComponents2a, int nComponents2b>
 class SolutionVectorMapping<
-  Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>,      //< intermediates and states from cellmlAdapter
+  Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>,      //< algebraics and states from cellmlAdapter
   Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>
 >
 {

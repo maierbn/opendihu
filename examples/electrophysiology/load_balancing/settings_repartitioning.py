@@ -36,13 +36,13 @@ n_ranks = (int)(sys.argv[-1])
 
 # set values for cellml model
 if "shorten" in cellml_file:
-  parameters_used_as_intermediate = [32]
+  parameters_used_as_algebraic = [32]
   parameters_used_as_constant = [65]
   parameters_initial_values = [0.0, 1.0]
   nodal_stimulation_current = 1200.
   
 elif "hodgkin_huxley" in cellml_file:
-  parameters_used_as_intermediate = []
+  parameters_used_as_algebraic = []
   parameters_used_as_constant = [2]
   parameters_initial_values = [0.0]
   nodal_stimulation_current = 40.
@@ -208,7 +208,7 @@ config = {
                 "additionalArgument": i,
                 
                 "outputStateIndex": 0,                             # state 0 = Vm, rate 28 = gamma
-                "parametersUsedAsIntermediate": parameters_used_as_intermediate,  #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
+                "parametersUsedAsAlgebraic": parameters_used_as_algebraic,  #[32],       # list of algebraic value indices, that will be set by parameters. Explicitely defined parameters that will be copied to algebraics, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
                 "parametersUsedAsConstant": parameters_used_as_constant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
                 "parametersInitialValues": parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
                 "meshName": "MeshFiber"+str(i),                    # name of the fiber mesh, i.e. either MeshFiber0 or MeshFiber1

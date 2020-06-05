@@ -81,7 +81,7 @@ def load_data(filenames):
       base_filename = filename[0:pos_2ndlast_point]
       rank_str = filename[pos_2ndlast_point+1:pos_last_point]
       #print("filename: {}, base_filename: {}, rank_str: {}".format(filename, base_filename, rank_str))
-      rank_no = (int)(rank_str)
+      #rank_no = (int)(rank_str)
     
       # find bucket in grouped_filenames with matching base_filename
       for i in range(len(grouped_filenames)):

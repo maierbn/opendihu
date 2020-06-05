@@ -14,7 +14,7 @@ A CellML model is a first-order differential-algebraic system of equations (DAE)
    \textbf{y}(t) = g(\textbf{u}(t),\hat{\textbf{c}},\hat{\textbf{p}}(t))
    
 The values :math:`\textbf{u} \in \mathbb{R}^n` are called *states* and will be integrated in time using a timestepping scheme. 
-There are also the intermediate values, :math:`\textbf{y}`, which are not integrated. 
+There are also the algebraic values, :math:`\textbf{y}`, which are not integrated. 
 A set of parameters, :math:`\hat{\textbf{p}}`, can be defined in the settings and changed over time.
 There are also constants , :math:`\hat{\textbf{c}}`, that are given in the CellML model and cannot be changed.
 
@@ -25,14 +25,14 @@ symbol                                          opendihu         OpenCOR     Ope
 =============================================== ================ =========== ========== ================== ==========================
 :math:`\textbf{u}`                              states           states      STATES     by timestepping    yes
 :math:`\frac{\partial \textbf{u}}{\partial t}`  rates            rates       RATES      yes                no
-:math:`\textbf{y}`                              intermediates    algebraic   WANTED     yes                no
+:math:`\textbf{y}`                              algebraics       algebraic   WANTED     yes                no
 :math:`\hat{\textbf{c}}`                        constants        constants   CONSTANTS  no                 no
 :math:`\hat{\textbf{p}}`                        parameters       algebraic   KNOWN      no                 yes
 =============================================== ================ =========== ========== ================== ==========================
  
 Initially the CellML model does not have any 'parameters', all values are given some defined value. 
-In opendihu, any *constants* and *intermediates* can be transformed into *parameters* and then have changing values assigned.
-This is done by the options ``parametersUsedAsIntermediate`` and ``parametersUsedAsConstant``.
+In opendihu, any *constants* and *algebraics* can be transformed into *parameters* and then have changing values assigned.
+This is done by the options ``parametersUsedAsAlgebraic`` and ``parametersUsedAsConstant``.
 
 Usage
 ----------
@@ -41,10 +41,10 @@ The following C++ code shows the typical usage inside a time stepping scheme to 
 .. code-block:: c
 
   TimeSteppingScheme::ExplicitEuler<
-    CellmlAdapter<57,1>  // nStates,nIntermediates: 57,71 = Shorten, 4,9 = Hodgkin Huxley
+    CellmlAdapter<57,1>  // nStates,nAlgebraics: 57,71 = Shorten, 4,9 = Hodgkin Huxley
   >
 
-The two template arguments of `CellmlAdapter` are the *number of states* and the *number of intermediates*.
+The two template arguments of `CellmlAdapter` are the *number of states* and the *number of algebraics*.
 This has to match the actual numbers of the CellML model that is to be computed. Consequently, when a specific model should be computed, the CellmlAdapter has be adjusted.
 
 If the numbers are not correct a corresponding error will be shown from which the correct numbers can be determined.
@@ -68,7 +68,7 @@ Note that only explicit timestepping schemes are possible, which is current ``Ti
     # stimulation callbacks
     #"setSpecificParametersFunction":         set_specific_parameters,                        # callback function that sets parameters like stimulation current
     #"setSpecificParametersCallInterval":     int(1./variables.stimulation_frequency/variables.dt_0D),         # set_specific_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
-    "setSpecificStatesFunction":              set_specific_states,                                             # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
+    "setSpecificStatesFunction":              set_specific_states,                                             # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setSpecificParameters
     #"setSpecificStatesCallInterval":         2*int(1./variables.stimulation_frequency/variables.dt_0D),       # set_specific_states should be called variables.stimulation_frequency times per ms, the factor 2 is needed because every Heun step includes two calls to rhs
     "setSpecificStatesCallInterval":          0,                                                               # 0 means disabled
     "setSpecificStatesCallFrequency":         variables.get_specific_states_call_frequency(fiber_no, motor_unit_no),   # set_specific_states should be called variables.stimulation_frequency times per ms
@@ -77,7 +77,7 @@ Note that only explicit timestepping schemes are possible, which is current ``Ti
     "setSpecificStatesCallEnableBegin":       variables.get_specific_states_call_enable_begin(fiber_no, motor_unit_no),# [ms] first time when to call setSpecificStates
     "additionalArgument":                     fiber_no,
     
-    "mappings":                               mappings,                             # mappings between parameters and intermediates/constants and between outputConnectorSlots and states, intermediates or parameters, they are defined in helper.py
+    "mappings":                               mappings,                             # mappings between parameters and algebraics/constants and between outputConnectorSlots and states, algebraics or parameters, they are defined in helper.py
     "parametersInitialValues":                parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
     
     "meshName":                               "MeshFiber_{}".format(fiber_no),
@@ -99,7 +99,7 @@ Note that only explicit timestepping schemes are possible, which is current ``Ti
     # stimulation callbacks
     #"setSpecificParametersFunction":         set_specific_parameters,                # callback function that sets parameters like stimulation current
     #"setSpecificParametersCallInterval":     int(1./stimulation_frequency/dt_0D),    # set_specific_parameters should be called every 1/stimulation_frequency seconds
-    "setSpecificStatesFunction":              set_specific_states,                    # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
+    "setSpecificStatesFunction":              set_specific_states,                    # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setSpecificParameters
     #"setSpecificStatesCallInterval":         2*int(1./stimulation_frequency/dt_0D),  # set_specific_states should be called stimulation_frequency times per ms, the factor 2 is needed because every Heun step includes two calls to rhs
     "setSpecificStatesCallInterval":          0,                                      # call intervall of the set_specific_states function, 0 means use setSpecificStatesCallFrequency instead
     "setSpecificStatesCallFrequency":         get_specific_states_call_frequency,     # set_specific_states should be called stimulation_frequency times per ms
@@ -109,14 +109,14 @@ Note that only explicit timestepping schemes are possible, which is current ``Ti
     "additionalArgument":                     fiber_no,                               # any additional value that will be given to the callback functions
     
     
-    "mappings": {                                                                     # mappings between parameters and intermediates/constants and between outputConnectorSlots and states, intermediates or parameters
+    "mappings": {                                                                     # mappings between parameters and algebraics/constants and between outputConnectorSlots and states, algebraics or parameters
       ("parameter", 0):           ("constant", "membrane/i_Stim"),                    # parameter 0 is mapped to constant with name "membrane/i_Stim"
       ("outputConnectorSlot", 0): ("state", "membrane/V"),                            # as output connector slot 0 expose state with name "membrane/V"
     },
     
-    #"intermediatesForTransfer":              [],                                    # alternative way of specifying "mappings": which intermediate values to use in further computation
+    #"algebraicsForTransfer":              [],                                    # alternative way of specifying "mappings": which algebraic values to use in further computation
     #"statesForTransfer":                     [0],                                   # alternative way of specifying "mappings": which state values to use in further computation, Shorten / Hodgkin Huxley: state 0 = Vm
-    #"parametersUsedAsIntermediate":          [32],                                  # alternative way of specifying "mappings": list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
+    #"parametersUsedAsAlgebraic":          [32],                                  # alternative way of specifying "mappings": list of algebraic value indices, that will be set by parameters. Explicitely defined parameters that will be copied to algebraics, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
     #"parametersUsedAsConstant":              [65],                                  # alternative way of specifying "mappings": list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
     "parametersInitialValues":                [0.0, 1.0],                            # initial values for the parameters, e.g. I_Stim, l_hs
     "meshName":                               "MeshFiber_{}".format(fiber_no),
@@ -194,42 +194,6 @@ They can be used, e.g., to stimulate a subcellular model at specific times.
 The different callback functions and their time step interval by which the functions will be called are listed below. 
 All of them will get the value of the option *additionalArgument* as its last argument. Like this it is possible to distinguish different instances in the functions when *CellMLAdapter* is nested inside *MultipleInstances*. This is the case for multiple fibers, where the *additionalArgument* can be the fiber number.
 
-*setParametersFunction* and *setParametersCallInterval*
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Callback function and time step interval by which the function will be called.
-This function can change all parameters and has the following signature:
-
-.. code-block:: python
-
-  def set_parameters(n_dofs_global, timestep_no, current_time, parameters, dof_nos_global_natural, additional_argument):
-    # n_dofs_global: (int) global number of dofs in the mesh, i.e. number of CellML instances to be computed
-    # timestep_no:   (int) current time step number, advances by the value of "setParametersCallInterval"
-    # current_time:  (float) the current simulation time
-    # parameters:    list of floats: [instance0p0, instance0p1, ... instance0pN, instance1p0, instance1p1, ...]
-    #                The nParameters*nInstances parameter values (KNOWN values) to all instances, this list can be altered inside
-    #                this function and will take effect in the CellML model
-    # dof_nos_global_natural: list of ints: [dofNo0, dofNo1, ...] 
-    #                For the local dofs the gobal numbers in global natural ordering. This are all dofs on this rank for 
-    #                which the parameters are given. See the example below.
-    # additional_argument: The value of the option "additionalArgument", can be any Python object.
-
-
-.. _callbackmesh:
-.. figure:: images/callback_mesh.svg
-  :width: 50%
-  :align: center
-  
-  Example mesh with two subdomains and global natural ordering of the nodes.
-
-
-For example, consider a mesh as in :numref:`callbackmesh` where a CellML model is computed on each node. The mesh is partitioned to two subdomains.
-Rank 0 computes the grey nodes, rank 1 computes the blue nodes. The global natural ordering is given in the figure.
-
-Then, on rank 0, ``dof_nos_global_natural`` will contain the list ``[0,1,4,5,8,9]`` and on rank 1, the list will be  ``[2,3,6,7,10,11]``. 
-This shows to which global nodes the values in the `parameters` list correspond. With this information, the callback function could decide which parameters to update.
-
-This callback function is slower than `setSpecificParametersFunction`.
-
 *setSpecificParametersFunction* and *setSpecificParametersCallInterval*
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Callback function and time step interval by which the function will be called.
@@ -251,6 +215,19 @@ This function can change some parameters and has the following signature:
     # nodal_dof_index is the dof number of the node, usually 0. Only for Hermite ansatz functions it can be higher.
     # parameter_no is the parameter number to set 
     # value is the new parameter value
+
+.. _callbackmesh:
+.. figure:: images/callback_mesh.svg
+  :width: 50%
+  :align: center
+  
+  Example mesh with two subdomains and global natural ordering of the nodes.
+
+For example, consider a mesh as in :numref:`callbackmesh` where a CellML model is computed on each node. The mesh is partitioned to two subdomains.
+Rank 0 computes the grey nodes, rank 1 computes the blue nodes. The global natural ordering is given in the figure.
+
+Then, on rank 0, ``dof_nos_global_natural`` will contain the list ``[0,1,4,5,8,9]`` and on rank 1, the list will be  ``[2,3,6,7,10,11]``. 
+This shows to which global nodes the values in the `parameters` list correspond. With this information, the callback function could decide which parameters to update.
 
 *setSpecificStatesFunction* and *setSpecificStatesCallInterval*
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -294,32 +271,58 @@ This function can be used to postprocess the result and has the following signat
 
 .. code-block:: python
 
-  def handle_result(n_instances, timestep_no, current_time, global_states, additional_argument):
-    # n_instances:         (int) global number of CellML instances to be computed
-    # timestep_no:         (int)   current time step number, advances by the value of "setSpecificParametersCallInterval"
+  def handle_result(n_instances, time_step_no, current_time, states_list, algebraics_list, name_information, additional_argument):
+    # n_instances:         (int) local number of CellML instances to be computed
+    # time_step_no:        (int)   current time step number, advances by the value of "setSpecificParametersCallInterval"
     # current_time:        (float) the current simulation time
-    # states_list:         (list of floats) all state values in struct-of-array memory layout,
+    # states_list:         (list of floats) all local state values in struct-of-array memory layout,
     #                       i.e. [instance0state0, instance1state0, ... instanceNstate0, instance0state1, instance1state1, ...]
-    # intermediates_list:  (list of floats) all intermediate values in struct-of-array memory layout, 
-    #                       i.e. [instance0intermediate0, instance1intermediate0, ... instanceNintermediate0, instance0intermediate1, instance1intermediate1, ...]
+    # algebraics_list:  (list of floats) all local algebraic values in struct-of-array memory layout, 
+    #                       i.e. [instance0algebraic0, instance1algebraic0, ... instanceNalgebraic0, instance0algebraic1, instance1algebraic1, ...]
+    # name_information:    a map with the keys "stateNames" and "algebraicNames", contains lists of all CellML names of the states and algebraics
     # additional_argument: The value of the option "additionalArgument", can be any Python object.
 
-How to specify mappings of states, intermediates and parameters
+    
+    # asign some states to variables
+    Vm = states[name_information["stateNames"].index("membrane/V") * n_instances]
+    Ca_1 = states[name_information["stateNames"].index("razumova/Ca_1") * n_instances]
+    A_1 = states[name_information["stateNames"].index("razumova/A_1") * n_instances]
+    A_2 = states[name_information["stateNames"].index("razumova/A_2") * n_instances]
+    x_1 = states[name_information["stateNames"].index("razumova/x_1") * n_instances]
+    x_2 = states[name_information["stateNames"].index("razumova/x_2") * n_instances]
+    
+    # assign some algebraics to variables
+    active_stress = algebraics[name_information["algebraicNames"].index("razumova/activestress") * n_instances]
+    activation = algebraics[name_information["algebraicNames"].index("razumova/activation") * n_instances]
+      
+The example shows how one can access the state and algebraic variables by their name. The call to 
+
+.. code-block:: python
+
+  name_information["stateNames"].index("razumova/Ca_1")
+  
+gives the index of the state with the given name. Because the data for all locally computed instances is contained in the states array, we need to multiply this index with ``n_instances`` to get the first entry of the given state. This is now the index in ``states`` for the first instance. If the problem is monodomain on a fiber, in order to get the value at the center, use
+
+.. code-block:: python
+
+    Ca_1 = states[name_information["stateNames"].index("razumova/Ca_1") * n_instances + int(n_instances/2)]
+      
+How to specify mappings of states, algebraics and parameters
 --------------------------------------------------------------------
 
-The intermediates and constants in the CellML model can be replaced by so-called `parameters`. It is possible to define an arbitrary number of parameters (not completely arbitrary - the number has to be lower than the number of intermediates). This parameters act like constants during computation of the model. After each computation, their values can be changed either by callback functions or if they are connected via an output slot to another solver, the values are set by the other solver.
+The algebraics and constants in the CellML model can be replaced by so-called `parameters`. It is possible to define an arbitrary number of parameters (not completely arbitrary - the number has to be lower than the number of algebraics). These parameters act like constants during computation of the model. After each computation, their values can be changed either by callback functions or, if they are connected via an output slot to another solver, the values are set by the other solver.
 
-The model to be computed appears as if the specified `intermediates` and `constants` had been replaced by the respective parameters.
-This replacing relation is called `mapping` and can be defined in two different ways: the older way is by setting `parametersUsedAsIntermediate` and `parametersUsedAsConstant`. The newer and recommended way is by using `mappings`.
+The model to be computed appears as if the specified `algebraics` and `constants` had been replaced by the respective parameters.
+This replacement relation is called `mapping` and can be defined in two different ways: the older way is by setting `parametersUsedAsAlgebraic` and `parametersUsedAsConstant`. The newer and recommended way is by using `mappings`.
 
-Furthermore, some of the `states` and `intermediates` and can be connected to an output slot of the timestepping scheme and thereby reused by a different solver within a coupling or operator splitting scheme. Which `states` and `intermediates` to connect, can again be specified in two ways: either by `intermediatesForTransfer` and `statesForTransfer` or by `mappings`.
+Furthermore, some of the `states` and `algebraics` as well as some `parameters` can be connected to an output slot of the timestepping scheme and thereby reused by a different solver within a coupling or operator splitting scheme. Which `states`, `algebraics` and `parameters` to connect can again be specified in two ways: either by `algebraicsForTransfer` and `statesForTransfer` and `parametersForTransfer` or by `mappings`.
 
-These parameters will be explained in the following.
+These settings will be explained in the following.
 
-parametersUsedAsIntermediate
+parametersUsedAsAlgebraic
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(list of int) List of intermediate numbers that will be replaced by parameters.
-There are explicitely defined parameter values that will be copied to these intermediates. 
+(list of int) List of algebraic numbers that will be replaced by parameters.
+There are explicitely defined parameter values that will be copied to these algebraics. 
 This vector contains the indices of the algebraic array. 
 Note, that these values can also be set by the ``mappings`` option, which is more clear.
 
@@ -328,9 +331,9 @@ parametersUsedAsConstant
 (list of int) List of indices, which constants in the computation will be replaced by parameters.
 Note, that these values can also be set by the ``mappings`` option, which is more clear.
 
-*intermediatesForTransfer* and *statesForTransfer*
+*algebraicsForTransfer* and *statesForTransfer*
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(list of ints) Which intermediates and states should be transferred to the other solver in either a `Coupling`, `GodunovSplitting` or `StrangSplitting`.
+(list of ints) Which algebraics and states should be transferred to the other solver in either a `Coupling`, `GodunovSplitting` or `StrangSplitting`.
 
 The total number of field variables to be transferred is the sum of the length of these two settings (+number of parameters if specified).
 
@@ -345,43 +348,46 @@ Example:
 .. code-block:: python
 
   parametersInitialValues = [1.0, 2.0, 3.0]
-  parametersUsedAsIntermediate = [5, 2]
+  parametersUsedAsAlgebraic = [5, 2]
   parametersUsedAsConstant[10]
   
-This example will compute the given CellML model with the following modifications: The intermediate/algebraic values ``intermediates[5]`` and ``intermediates[2]`` will not be computed by the model, but get the values ``1.0`` and ``2.0``. These values may be changed later using one of the callback functions.
+This example will compute the given CellML model with the following modifications: The algebraic/algebraic values ``algebraics[5]`` and ``algebraics[2]`` will not be computed by the model, but get the values ``1.0`` and ``2.0``. These values may be changed later using one of the callback functions.
 The variable ``constants[10]`` will be set to ``3.0`` and not changed.
   
 mappings
 -------------
 (dict)
-Under ``mapping`` it is possible to specify the connection of `parameters` to `intermediates` and `constants`, 
-as well as the connection of `outputConnectorSlots` to `states`, `intermediates` and `parameters`. An example is given below (the actual names are only dummies and make no sense):
+Under ``mapping`` it is possible to specify the connection of `parameters` to `algebraics` and `constants`, 
+as well as the connection of `outputConnectorSlots` to `states`, `algebraics` and `parameters`. An example is given below (the actual names are only dummies and make no sense):
   
 .. code-block:: python
 
   "mappings" : {
-      ("parameter", 0):           ("intermediate", "wal_environment/I_HH"),
+      ("parameter", 0):           ("algebraic", "wal_environment/I_HH"),
       ("parameter", 1):           ("constant", "razumova/L_x"),
       
       ("outputConnectorSlot", 0): ("state", "wal_environment/vS"),
       ("outputConnectorSlot", 1): ("state", 5),  
       ("outputConnectorSlot", 2): ("state", "potassium_channel_n_gate/n"),
-      ("outputConnectorSlot", 3): ("intermediate", "leakage_current/i_L"),
+      ("outputConnectorSlot", 2): "potassium_channel_n_gate/n",             # alternative
+      ("outputConnectorSlot", 3): ("algebraic", "leakage_current/i_L"),
+      ("outputConnectorSlot", 3): "leakage_current/i_L",                    # alternative
       ("outputConnectorSlot", 4): ("parameter", 0),
     }
     
-The value of `mappings` is a Python Dict. Each key is either ``("parameter", 0)`` or ``("outputConnectorSlot", 0)``, where ``0`` can be any integer number.
-The value that corresponds to the key is a two-element tuple of the form 
+The value of `mappings` is a Python Dict. Each key (left hand side) is either ``("parameter", 0)`` or ``("outputConnectorSlot", 0)``, where ``0`` can be any integer number.
+The value that corresponds to the key (right hand side) is a two-element tuple or string of the form 
 
-``("name", "cellml name")`` or ``("name", 0)`` 
+``("name", "cellml name")`` or ``("name", 0)`` or ``"cellml name"``
 
-where ``"name"`` has to be either ``"constant"``, ``"state"``, ``"intermediate"`` or ``"parameter"``, the ``"cellml name"`` is the name of the variable in the CellML model in the form ``"componentName/variableName"`` and ``0`` can be any valid index. This means, it is possible to identify, e.g. a state by its name as well as by its index in the C code file.
+where ``"name"`` has to be either ``"constant"``, ``"state"``, ``"algebraic"`` or ``"parameter"``, the ``"cellml name"`` is the name of the variable in the CellML model in the form ``"componentName/variableName"`` and ``0`` can be any valid index. This means, it is possible to identify, e.g. a state by its name as well as by its index in the C code file.
+If there is no tuple but only the "cellml name", it will be determine automatically if it is a `state`, `algebraic` or `constant` by searching among all available cellml names.
 
-For the parameters, the index must start with `0` and increase by one for all further parameters. As already mentioned, the mapped variable for a parameter can be an `"intermediate"` or a `"constant"`. The beginning of the parameters list must all map to intermediates and the rest must map to constants. I.e., every constant must be mapped to a parameter with lower index than all the parameters that are mapped to intermediates. The specified mappings will internally be transferred to the ``parametersUsedAsIntermediate`` and ``parametersUsedAsConstant`` lists that can otherwise also be set directly by these options.
+For the parameters, the index must start with `0` and increase by one for all further parameters. As already mentioned, the mapped variable for a parameter can be an `"algebraic"` or a `"constant"`. The beginning of the parameters list must all map to algebraics and the rest must map to constants. I.e., every constant must be mapped to a parameter with lower index than all the parameters that are mapped to algebraics. The specified mappings will internally be transferred to the ``parametersUsedAsAlgebraic`` and ``parametersUsedAsConstant`` lists that can otherwise also be set directly by these options.
 
-Also for the `"outputConnectorSlots"` there is a required order. At first, all mapped `"states"` have to be given, then all `"intermediates"` and then all `"parameters"`. 
+Also for the `"outputConnectorSlots"` there is a required order. At first, all mapped `"states"` have to be given, then all `"algebraics"` and then all `"parameters"`. 
 
-Note that the values of parameters will not be changed by the CellML model. If you need to reuse values computed within the CellML model, use states or intermediates. The purpose of connecting parameters to output slots is to allow the initial parameter value to be set by a different solver.
+Note that the values of parameters will not be changed by the CellML model. If you need to reuse values computed within the CellML model, use states or algebraics. The purpose of connecting parameters to output slots is to allow the initial parameter value to be set by a different solver.
 
 (It is also possible to reverse the left and the right side of each mapping, i.e. like ``("constant",0"):("parameter",0)``.)
 
@@ -401,7 +407,7 @@ Typical mappings and initial values of parameters by commonly used cellml models
   elif "shorten" in cellml_file:
     # parameters: stimulation current I_stim, fiber stretch λ
     mappings = {
-      ("parameter", 0):           ("intermediate", "wal_environment/I_HH"), # parameter is intermediate 32
+      ("parameter", 0):           ("algebraic", "wal_environment/I_HH"), # parameter is algebraic 32
       ("parameter", 1):           ("constant", "razumova/L_x"),             # parameter is constant 65, fiber stretch λ, this indicates how much the fiber has stretched, 1 means no extension
       ("outputConnectorSlot", 0): ("state", "wal_environment/vS"),          # expose state 0 = Vm to the operator splitting
     }
@@ -413,7 +419,7 @@ Typical mappings and initial values of parameters by commonly used cellml models
       ("parameter", 0):           ("constant", "wal_environment/I_HH"), # parameter 0 is constant 54 = I_stim
       ("parameter", 1):           ("constant", "razumova/L_S"),         # parameter 1 is constant 67 = fiber stretch λ
       ("outputConnectorSlot", 0): ("state", "wal_environment/vS"),      # expose state 0 = Vm to the operator splitting
-      ("outputConnectorSlot", 1): ("intermediate", "razumova/stress"),  # expose intermediate 12 = γ to the operator splitting
+      ("outputConnectorSlot", 1): ("algebraic", "razumova/stress"),  # expose algebraic 12 = γ to the operator splitting
     }
     parameters_initial_values = [0.0, 1.0]                    # wal_environment/I_HH = I_stim, razumova/L_S = λ
     
@@ -424,7 +430,7 @@ Typical mappings and initial values of parameters by commonly used cellml models
       ("parameter", 1):           ("constant", "Razumova/l_hs"),        # parameter 1 is constant 8 = fiber stretch λ
       ("parameter", 2):           ("constant", "Razumova/velo"),        # parameter 2 is constant 9 = fiber contraction velocity \dot{λ}
       ("outputConnectorSlot", 0): ("state", "Aliev_Panfilov/V_m"),      # expose state 0 = Vm to the operator splitting
-      ("outputConnectorSlot", 1): ("intermediate", "Razumova/sigma"),   # expose intermediate 0 = γ to the operator splitting
+      ("outputConnectorSlot", 1): ("algebraic", "Razumova/sigma"),   # expose algebraic 0 = γ to the operator splitting
     }
     parameters_initial_values = [0, 1, 0]                     # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/velo = \dot{λ}
     
@@ -435,8 +441,8 @@ Typical mappings and initial values of parameters by commonly used cellml models
       ("parameter", 1):           ("constant", "Razumova/l_hs"),        # parameter 1 is constant 11 = fiber stretch λ
       ("parameter", 2):           ("constant", "Razumova/rel_velo"),    # parameter 2 is constant 12 = fiber contraction velocity \dot{λ}
       ("outputConnectorSlot", 0): ("state", "Aliev_Panfilov/V_m"),      # expose state 0 = Vm to the operator splitting
-      ("outputConnectorSlot", 1): ("intermediate", "Razumova/ActiveStress"),   # expose intermediate 4 = γ to the operator splitting
-      ("outputConnectorSlot", 2): ("intermediate", "Razumova/Activation"),     # expose intermediate 5 = α to the operator splitting
+      ("outputConnectorSlot", 1): ("algebraic", "Razumova/ActiveStress"),   # expose algebraic 4 = γ to the operator splitting
+      ("outputConnectorSlot", 2): ("algebraic", "Razumova/Activation"),     # expose algebraic 5 = α to the operator splitting
     }
     parameters_initial_values = [0, 1, 0]                     # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/rel_velo = \dot{λ}
     

@@ -93,7 +93,7 @@ determineMappingAlgorithm(
     {
       if (fieldVariableSource->functionSpace()->meshName() == fieldVariableTarget->functionSpace()->meshName())
       {
-        LOG(DEBUG) << "determineMappingAlgorithm, " << fieldVariableSource->functionSpace()->meshName() << " the same mesh";
+        LOG(DEBUG) << "determineMappingAlgorithm, " << fieldVariableSource->functionSpace()->meshName() << " is the same mesh";
         return;
       }
 
@@ -166,8 +166,8 @@ map(std::shared_ptr<FieldVariableSourceType> fieldVariableSource,
     << FieldVariableTargetType::nComponents() << " components total)"
     << "), avoidCopyIfPossible: " << avoidCopyIfPossible;
 
-  LOG(DEBUG) << "source geometry: " << fieldVariableSource->functionSpace()->geometryField();
-  LOG(DEBUG) << "target geometry: " << fieldVariableTarget->functionSpace()->geometryField();
+  //LOG(DEBUG) << "source geometry: " << fieldVariableSource->functionSpace()->geometryField();
+  //LOG(DEBUG) << "target geometry: " << fieldVariableTarget->functionSpace()->geometryField();
 
   // assert that both or none of the componentNos are -1
   assert((componentNoSource == -1) == (componentNoTarget == -1));
@@ -180,6 +180,7 @@ map(std::shared_ptr<FieldVariableSourceType> fieldVariableSource,
     if (fieldVariableSource->functionSpace()->meshName() == fieldVariableTarget->functionSpace()->meshName())
     {
       VLOG(1) << "mesh is the same: " << fieldVariableSource->functionSpace()->meshName() << " -> " << fieldVariableTarget->functionSpace()->meshName();
+      VLOG(1) << "source representation: " << fieldVariableSource->partitionedPetscVec()->getCurrentRepresentationString();
       VLOG(1) << "target representation: " << fieldVariableTarget->partitionedPetscVec()->getCurrentRepresentationString();
 
       // if representation of fieldVariableTarget is invalid, this means that it has been extracted to another field variable
@@ -203,7 +204,7 @@ map(std::shared_ptr<FieldVariableSourceType> fieldVariableSource,
               // This means that the target field variable pointer can be set to the source field variable pointer.
               if ((long long)(fieldVariableSource.get()) != (long long)(fieldVariableTarget.get()))
               {
-                VLOG(1) << "set target pointer to source pointer";
+                VLOG(1) << "set target pointer to source pointer, name \"" << fieldVariableTarget->name() << "\" to \"" << fieldVariableSource->name() << "\"";
                 fieldVariableTarget = std::dynamic_pointer_cast<FieldVariableTargetType>(fieldVariableSource);
               }
               else
@@ -226,6 +227,19 @@ map(std::shared_ptr<FieldVariableSourceType> fieldVariableSource,
               //fieldVariableSource->extractComponentShared(componentNoSource, fieldVariableTarget);
               ExtractComponentShared<FieldVariableSourceType,FieldVariableTargetType>::call(componentNoSource, fieldVariableSource, fieldVariableTarget);
 
+              // if target field variable is "additionalFieldVariable", also set the name from the source field variable
+              if (fieldVariableTarget->name().find("additionalFieldVariable") != std::string::npos)
+              {
+                std::stringstream name;
+                name << fieldVariableSource->name() << "." << fieldVariableSource->componentName(componentNoSource);
+                VLOG(1) << "(1) rename target field variable from \"" << fieldVariableTarget->name() << "\" to \"" << name.str() << "\".";
+                fieldVariableTarget->setName(name.str());
+              }
+              else
+              {
+                VLOG(1) << "(1) do not rename target field variable \"" << fieldVariableTarget->name();
+              }
+
               VLOG(1) << "source representation: " << fieldVariableSource->partitionedPetscVec()->getCurrentRepresentationString();
 
               return;
@@ -244,7 +258,14 @@ map(std::shared_ptr<FieldVariableSourceType> fieldVariableSource,
               // if target field variable is "additionalFieldVariable", also set the name from the source field variable
               if (fieldVariableTarget->name().find("additionalFieldVariable") != std::string::npos)
               {
-                fieldVariableTarget->setName(fieldVariableSource->name());
+                std::stringstream name;
+                name << fieldVariableSource->name() << "." << fieldVariableSource->componentName(componentNoSource);
+                VLOG(1) << "(2) rename target field variable from \"" << fieldVariableTarget->name() << "\" to \"" << name.str() << "\".";
+                fieldVariableTarget->setName(name.str());
+              }
+              else
+              {
+                VLOG(1) << "(2) do not rename target field variable \"" << fieldVariableTarget->name();
               }
 
               VLOG(1) << "source representation: " << fieldVariableSource->partitionedPetscVec()->getCurrentRepresentationString();
@@ -268,13 +289,30 @@ map(std::shared_ptr<FieldVariableSourceType> fieldVariableSource,
         }
         else
         {
-          VLOG(1) << "copy one component";
+          VLOG(1) << "copy one component, source component " << componentNoSource << " to target component " << componentNoTarget;
 
           // Here, we copy the given component of fieldVariableSource to the componentNoTarget of fieldVariableTarget.
           PetscErrorCode ierr;
           ierr = VecCopy(fieldVariableSource->valuesGlobal(componentNoSource), fieldVariableTarget->valuesGlobal(componentNoTarget)); CHKERRV(ierr);
+
+          VLOG(1) << "afterwards, source representation: " << fieldVariableSource->partitionedPetscVec()->getCurrentRepresentationString();
+          VLOG(1) << "afterwards, target representation: " << fieldVariableTarget->partitionedPetscVec()->getCurrentRepresentationString();
         }
       }
+
+      // if target field variable is "additionalFieldVariable", also set the name from the source field variable
+      if (fieldVariableTarget->name().find("additionalFieldVariable") != std::string::npos)
+      {
+       std::stringstream name;
+        name << fieldVariableSource->name() << "." << fieldVariableSource->componentName(componentNoSource);
+        VLOG(1) << "(1) rename target field variable from \"" << fieldVariableTarget->name() << "\" to \"" << name.str() << "\".";
+        fieldVariableTarget->setName(name.str());
+      }
+      else
+      {
+        VLOG(1) << "(3) do not rename target field variable \"" << fieldVariableTarget->name();
+      }
+
       VLOG(1) << "source (" << fieldVariableSource << "): " << *fieldVariableSource;
       VLOG(1) << "target (" << fieldVariableTarget << "): " << *fieldVariableTarget;
       return;

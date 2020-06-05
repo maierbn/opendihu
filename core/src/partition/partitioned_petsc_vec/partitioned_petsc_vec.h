@@ -34,11 +34,11 @@ public:
   //! constructor
   PartitionedPetscVec(std::shared_ptr<Partition::MeshPartition<FunctionSpaceType,typename FunctionSpaceType::Mesh>> meshPartition, std::string name);
  
-  //! constructor, copy values from existing rhs vector or reuse Petsc Vec's from rhs vector
+  //! constructor, copy values from existing rhs vector or reuse Petsc Vec's from rhs vector, starting at rhsComponentNo
   //! @param reuseData if true, it uses the same Petsc Vec's for global and local data. If false, it creates new Petsc Vec's and copies the values.
   template<int nComponents2>
-  PartitionedPetscVec(PartitionedPetscVec<FunctionSpaceType,nComponents2> &rhs, std::string name, bool reuseData=false);
-  
+  PartitionedPetscVec(PartitionedPetscVec<FunctionSpaceType,nComponents2> &rhs, std::string name, bool reuseData=false, int rhsComponentNo=0);
+
   //! this has to be called before the vector is manipulated (i.e. VecSetValues or vecZeroEntries is called)
   void startGhostManipulation();
   
@@ -144,7 +144,7 @@ public:
   //! @param reuseData if true, it uses the same Petsc Vec's for global and local data. If false, it creates new Petsc Vec's and copies the values.
   //! reuseData should be used with care, because the internal representation will also be copied
   template<int nComponents2>
-  PartitionedPetscVecNComponentsStructured(PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents2> &rhs, std::string name, bool reuseData=false);
+  PartitionedPetscVecNComponentsStructured(PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents2> &rhs, std::string name, bool reuseData=false, int rhsComponentNoBegin=0);
  
   //! Communicates the ghost values from the global vectors to the local vector and sets the representation to local.
   //! The representation has to be global, afterwards it is set to local.

@@ -30,6 +30,7 @@ bc = {}
 
 config = {
   "scenarioName": scenario_name,
+  "logFormat": "csv",
   "Solvers": {
     "linearSolver": {
       "relativeTolerance": 1e-4,

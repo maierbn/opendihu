@@ -36,6 +36,7 @@ def set_reaction_term_values(n_dofs_global, n_nodes_global_per_coordinate_direct
   pass
 
 config = {
+  "logFormat": "csv",
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "mappingsBetweenMeshesLogFile":   "out/mappings_between_meshes.txt",  # log file for mappings between meshes
   "Meshes": {

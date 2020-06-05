@@ -269,6 +269,7 @@ for fibre_no_index in range(nInstances):
 
 i = fibre_no
 config = {
+  "logFormat": "csv",
   "Meshes": meshes,
   "instances": [get_instance_config(i) for i in range(nInstances)],
   "OutputWriter" : [

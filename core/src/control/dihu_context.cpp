@@ -56,7 +56,7 @@ std::shared_ptr<SolverStructureVisualizer>      DihuContext::solverStructureVisu
 // other global variables that are needed in static methods
 std::string DihuContext::solverStructureDiagramFile_ = "";              //< filename of the solver structure diagram file
 std::string DihuContext::pythonScriptText_ = "";                        //< the python settings text
-DihuContext::LogFormat DihuContext::logFormat_ = DihuContext::LogFormat::log_format_csv;    //< format of lines in the log file
+DihuContext::logFormat_t DihuContext::logFormat_ = DihuContext::logFormat_t::logFormatCsv;    //< format of lines in the log file
 
 // megamol variables
 std::shared_ptr<std::thread> DihuContext::megamolThread_ = nullptr;
@@ -481,13 +481,11 @@ std::shared_ptr<Partition::RankSubset> DihuContext::rankSubset() const
   return rankSubset_;
 }
 
-DihuContext::LogFormat DihuContext::logFormat()
-{
+DihuContext::logFormat_t DihuContext::logFormat() {
   return logFormat_;
 }
 
-void DihuContext::setLogFormat(DihuContext::LogFormat format)
-{
+void DihuContext::setLogFormat(DihuContext::logFormat_t format) {
   logFormat_ = format;
 }
 

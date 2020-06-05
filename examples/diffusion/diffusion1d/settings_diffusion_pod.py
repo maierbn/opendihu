@@ -3,6 +3,7 @@ n = 5   # number of elements
 k = 5   
 
 config = {
+  "logFormat": "csv",
   "ModelOrderReduction": {
     "nRowsSnapshots" : n,
     "nReducedBases" : k,

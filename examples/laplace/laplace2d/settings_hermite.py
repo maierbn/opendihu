@@ -12,6 +12,7 @@ for i in range(int(n+1)):
   bc[4*i2] = np.sin(x*np.pi)
   
 config = {
+  "logFormat":                      "csv",     # "csv" or "json", format of the lines in the log file, csv gives smaller files
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "FiniteElementMethod" : {
     "nElements": [n, m],

@@ -235,6 +235,7 @@ def callback(data, shape, nEntries, dim, timeStepNo, currentTime, null):
     
 config = {
   "scenarioName":                 scenario_name,
+  "logFormat":                    "csv",     # "csv" or "json", format of the lines in the log file, csv gives smaller files
   "solverStructureDiagramFile":   "solver_structure.txt",     # filename of file that will contain a visualization of the solver structure and data mapping
   "mappingsBetweenMeshesLogFile": "mappings_between_meshes_log.txt",    # log file for mappings 
   

@@ -118,6 +118,7 @@ variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
 # define the config dict
 config = {
   "scenarioName": variables.scenario_name,
+  "logFormat": "csv",     # "csv" or "json", format of the lines in the log file, csv gives smaller files
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "Meshes": variables.meshes,
   "Solvers": {

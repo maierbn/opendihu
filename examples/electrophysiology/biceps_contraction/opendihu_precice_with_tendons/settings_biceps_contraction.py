@@ -144,6 +144,7 @@ if False:
 # define the config dict
 config = {
   "scenarioName":          variables.scenario_name,
+  "logFormat":             "csv",
   "solverStructureDiagramFile":     "out/solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "mappingsBetweenMeshesLogFile":   "out/mappings_between_meshes.txt",  # log file of when mappings between meshes occur
   "Meshes":                variables.meshes,

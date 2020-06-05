@@ -184,6 +184,7 @@ def callback(data, shape, nEntries, dim, timeStepNo, currentTime, null):
     
 config = {
   "scenarioName": scenario_name,
+  "logFormat": "csv",
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "Meshes": {
     "MeshFiber": {

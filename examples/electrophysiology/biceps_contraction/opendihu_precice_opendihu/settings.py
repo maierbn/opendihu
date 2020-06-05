@@ -161,6 +161,7 @@ print("output_rwitrs: {}".format( variables.output_writer_fibers))
 # define the config dict
 config = {
   "scenarioName":          variables.scenario_name,
+  "logFormat":             "csv",
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "Meshes":                variables.meshes,
   "MappingsBetweenMeshes": variables.mappings_between_meshes,

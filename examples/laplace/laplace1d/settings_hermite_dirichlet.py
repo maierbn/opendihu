@@ -11,6 +11,7 @@ bc[2*n] = 0.0
 bc[2*n+1] = -1./5
 
 config = {
+  "logFormat":  "csv",
   "solverStructureDiagramFile":     "solver_structure.txt",
   "FiniteElementMethod" : {
     "nElements": n,

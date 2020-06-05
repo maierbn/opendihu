@@ -182,6 +182,7 @@ def callback(data, shape, nEntries, dim, timeStepNo, currentTime, null):
     
 config = {
   "scenarioName": scenario_name,
+  "logFormat": "csv",
   "Meshes": {
     "MeshFiber": {
       "nElements": n_elements,

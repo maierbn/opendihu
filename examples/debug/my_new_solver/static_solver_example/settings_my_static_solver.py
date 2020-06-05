@@ -19,6 +19,7 @@ for i in range(int(nx+1)):
   print("bc[{}] = {}, bc[{}] = {}".format(i, bc[i], i2, bc[i2]))
 
 config = {
+  "logFormat": "csv",
   "MyNewStaticSolver": {        # this is the name of the solver, as given in the constructor to the timestepping object
     "myOption": 42,                   # example option that is parsed in the constructor 
     "option1": "blabla",              # another example option that is parsed in the data object

@@ -26,17 +26,17 @@ Generic::Generic(DihuContext context, PythonConfig specificSettings, std::shared
     filenameBase_ = specificSettings_.getOptionString("filename", "out");
   }
 
-  if (fileNumbering == "incremental") 
+  if (fileNumbering == "incremental")
   {
-    fileNumbering_ = file_numbering_incremental;
-  } 
-  else if (fileNumbering == "timeStepIndex") 
-  {
-    fileNumbering_ = file_numbering_by_time_step_index;
+    fileNumbering_ = fileNumberingIncremental;
   }
-  else 
+  else if (fileNumbering == "timeStepIndex")
   {
-    fileNumbering_ = file_numbering_incremental;
+    fileNumbering_ = fileNumberingByTimeStepIndex;
+  }
+  else
+  {
+    fileNumbering_ = fileNumberingIncremental;
     LOG(ERROR) << "Unknown option for \"fileNumbering\": \"" <<fileNumbering<< "\". Use one of \"incremental\" or \"timeStepIndex\". Falling back to \"incremental\".";
   }
 }

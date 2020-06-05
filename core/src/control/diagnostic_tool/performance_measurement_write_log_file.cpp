@@ -46,7 +46,8 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
 
   auto logFormat = DihuContext::logFormat();
 
-  if (logFormat == DihuContext::log_format_csv) {
+  if (logFormat == DihuContext::logFormatCsv)
+  {
     filename << ".csv";
     logFileName = filename.str();
 
@@ -133,7 +134,7 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
 
 
   }
-  else if (logFormat == DihuContext::log_format_json)
+  else if (logFormat == DihuContext::logFormatJson)
   {
     filename << ".json";
     logFileName = filename.str();

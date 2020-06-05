@@ -99,6 +99,7 @@ initial_values = [initial_values_function(x0,x1) for x1 in np.linspace(0,physica
 
 
 config = {
+  "logFormat": "csv",
   "ExplicitEuler" : {
     "initialValues": initial_values,
     "numberTimeSteps": 1500,

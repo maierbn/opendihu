@@ -191,6 +191,7 @@ if False:
 
 config = {
   "scenarioName": "3d_box",
+  "logFormat":    "csv",     # "csv" or "json", format of the lines in the log file, csv gives smaller files
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "Meshes": variables.meshes,
   "DynamicHyperelasticitySolver": {

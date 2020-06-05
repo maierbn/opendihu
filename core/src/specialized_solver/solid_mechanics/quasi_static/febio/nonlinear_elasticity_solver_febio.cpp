@@ -26,7 +26,6 @@ NonlinearElasticitySolverFebio(DihuContext context, std::string solverName) :
   }
 
   // load settings
-  this->force_ = this->specificSettings_.getOptionDouble("force", 100, PythonUtility::NonNegative);
   this->activationFactor_ = 0;
 
   // parse material parameters
@@ -249,13 +248,20 @@ createFebioInputFile()
     {
       fileContents << "\t\t\t<quad4 id=\"1\">";
 
-      for (int dofIndex = 0; dofIndex < this->data_.functionSpace()->nDofsPerElement(); dofIndex++)
+      // loop over 4 top nodes of element
+      // febio  opendihu
+      //  3 2     6 7
+      //  0 1     4 5
+      std::array<int,4> dofIndices = {4,5,7,6};
+
+
+      for (int dofIndex : dofIndices)
       {
         // get global dof nos of the current element
         dof_no_t dofNoLocal = this->data_.functionSpace()->getDofNo(elementNoLocal, dofIndex);
         global_no_t dofNoGlobalPetsc = this->data_.functionSpace()->meshPartition()->getDofNoGlobalPetsc(dofNoLocal);
 
-        if (dofIndex > 0)
+        if (dofIndex > 4)
           fileContents << ", ";
         fileContents << dofNoGlobalPetsc;
       }

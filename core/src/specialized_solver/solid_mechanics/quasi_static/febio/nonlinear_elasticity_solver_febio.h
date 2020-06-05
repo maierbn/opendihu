@@ -14,6 +14,8 @@ namespace TimeSteppingScheme
  * 
  *  This is also the base class for QuasiStaticNonlinearElasticitySolverFebio. The 
  *  QuasiStaticNonlinearElasticitySolverFebio class computes the quasi static problem using the febio muscle material in a timestepping scheme.
+ *
+ *  This class produces febio files that can only be computed by febio3
  */
 class NonlinearElasticitySolverFebio :
   public Runnable
@@ -83,7 +85,6 @@ protected:
   std::string problemTitle_;                //< title to appear in the febio input file
 
   PythonConfig specificSettings_;           //< python object containing the value of the python config dict with corresponding key
-  double force_;                    //< factor of force that is applied in axial direction of the muscle
   double activationFactor_;                 //< factor with which to multiply activation
   std::vector<double> materialParameters_;  //< the material parameters c0, c1 and k for Mooney-Rivlin material
   std::vector<element_no_t> tractionElementNos_;     //< element nos of elements that will have traction

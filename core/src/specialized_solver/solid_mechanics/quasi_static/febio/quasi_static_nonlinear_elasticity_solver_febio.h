@@ -10,7 +10,9 @@
 namespace TimeSteppingScheme
 {
 
-/** A specialized solver for 3D linear elasticity, as quasi-static timestepping scheme (a new static solution every timestep)
+/** A specialized solver for 3D linear elasticity, as quasi-static timestepping scheme (a new static solution every timestep).
+ *
+ *  This class uses febio2.
   */
 class QuasiStaticNonlinearElasticitySolverFebio :
   public NonlinearElasticitySolverFebio
@@ -24,6 +26,8 @@ protected:
 
   //! create the febio_input.feb file which contains the problem for febio to solve
   virtual void createFebioInputFile() override;
+
+  double force_;                    //< factor of force that is applied in axial direction of the muscle
 };
 
 }  // namespace

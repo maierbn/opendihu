@@ -17,6 +17,7 @@ QuasiStaticNonlinearElasticitySolverFebio(DihuContext context) :
 {
   // load settings
   this->activationFactor_ = this->specificSettings_.getOptionDouble("activationFactor", 1e-5, PythonUtility::NonNegative);
+  this->force_ = this->specificSettings_.getOptionDouble("force", 100, PythonUtility::NonNegative);
 
   LOG(DEBUG) << "initialized QuasiStaticNonlinearElasticitySolverFebio";
 

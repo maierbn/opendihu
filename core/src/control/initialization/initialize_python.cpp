@@ -283,14 +283,26 @@ void DihuContext::loadPythonScript(std::string text)
 void DihuContext::parseGlobalParameters()
 {
   // parse scenario name
-  std::string scenarioName = "";
-  if (pythonConfig_.hasKey("scenarioName"))
-  {
-    scenarioName = pythonConfig_.getOptionString("scenarioName", "");
-  }
+  std::string scenarioName = pythonConfig_.getOptionString("scenarioName", "");
   Control::PerformanceMeasurement::setParameter("scenarioName", scenarioName);
 
-  // parse all keys under meta
+  // parse desired log file format
+  std::string logFormat = pythonConfig_.getOptionString("logFormat", "csv");
+  if (logFormat == "csv") {
+    // logFormat_ = log_format_csv;
+    setLogFormat(log_format_csv);
+  } else if (logFormat == "json") {
+    // logFormat_ = log_format_json;
+    setLogFormat(log_format_json);
+  } else {
+    LOG(ERROR) << "Unknown option for \"logFormat\": \"" << logFormat << "\". Use one of \"csv\" or \"json\". Falling back to \"csv\".";
+    setLogFormat(log_format_csv);
+    // logFormat_ = log_format_csv;
+  }
+
+  // parse all keys under meta and add forward them directly to the log file
+  // These parameters are not used by opendihu but can hold information that the
+  // user wants to have in the log file.
   if (pythonConfig_.hasKey("meta"))
   {
 

@@ -480,6 +480,14 @@ std::shared_ptr<Partition::RankSubset> DihuContext::rankSubset() const
   return rankSubset_;
 }
 
+DihuContext::LogFormat DihuContext::logFormat() {
+  return logFormat_;
+}
+
+void DihuContext::setLogFormat(DihuContext::LogFormat format) {
+  logFormat_ = format;
+}
+
 DihuContext DihuContext::operator[](std::string keyString)
 {
   int argc = 0;

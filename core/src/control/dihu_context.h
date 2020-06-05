@@ -93,6 +93,10 @@ public:
   //! get the rank subset of this context, this may not be the same as MPI_COMM_WORLD
   std::shared_ptr<Partition::RankSubset> rankSubset() const;
 
+  enum LogFormat {log_format_csv, log_format_json};
+  static LogFormat logFormat();
+  static void setLogFormat(LogFormat format);
+
 #ifdef HAVE_ADIOS
   //! return the adios object
   std::shared_ptr<adios2::ADIOS> adios() const;
@@ -151,6 +155,7 @@ private:
   static std::vector<std::string> megamolArguments_;  //< the string data of the megamol arguments
   static std::shared_ptr<SolverStructureVisualizer>       solverStructureVisualizer_;    //< object that collects information about all nested solvers and produces a diagram, also with data connections
   static std::string solverStructureDiagramFile_;     //< filename of a file produced by solverStructureVisualizer_
+  static LogFormat logFormat_;
   bool doNotFinalizeMpi_;                             //< when the last object gets destroyed, either MPI_Finalize() is called (should be used) or MPI_Barrier (only needed in testcases where MPI context needs to be used for the next test cases)
 
 #ifdef HAVE_ADIOS

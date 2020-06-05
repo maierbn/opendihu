@@ -169,7 +169,8 @@ MappingBetweenMeshesImplementation(std::shared_ptr<FunctionSpaceSourceType> func
     {
       // add log message, to be included in the log file
       std::stringstream logMessage;
-      logMessage << "number of dofs in source mesh: " << nDofsLocalSource << ", number of dofs in target mesh: " << nDofsLocalTarget
+      logMessage << "  number of dofs in source mesh (\"" << functionSpaceSource->meshName() << "\"): " << nDofsLocalSource
+        << ", number of dofs in target mesh (\"" << functionSpaceTarget->meshName() << "\"): " << nDofsLocalTarget
         << ", iterated " << nTimesSearchedAllElements << " times over the whole target mesh";
 
       DihuContext::mappingBetweenMeshesManager()->addLogMessage(logMessage.str());
@@ -189,6 +190,12 @@ MappingBetweenMeshesImplementation(std::shared_ptr<FunctionSpaceSourceType> func
         << functionSpaceTarget->meshName() << "\", " << nSourceDofsOutsideTargetMesh << "/" << nDofsLocalSource << " source dofs are outside the target mesh. "
         << (!enableWarnings ? "\"enableWarnings: False\"" : "\"enableWarnings: True\"")
         << " \"xiTolerance\": " << xiTolerance << ", total duration of all mappings: " << Control::PerformanceMeasurement::getDuration("durationComputeMappingBetweenMeshes") << " s";
+
+      // add log message, to be included in the log file
+      std::stringstream logMessage;
+      logMessage << "  " << nSourceDofsOutsideTargetMesh << "/" << nDofsLocalSource << " source dofs are outside the target mesh, "
+        << "total duration of all mappings: " << Control::PerformanceMeasurement::getDuration("durationComputeMappingBetweenMeshes") << " s";
+      DihuContext::mappingBetweenMeshesManager()->addLogMessage(logMessage.str());
     }
   }
 }
@@ -219,12 +226,12 @@ fixUnmappedDofs(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSource,
       << functionSpaceTarget->meshName() << "\", source FunctionSpace dim: "
       << FunctionSpaceSourceType::dim() << " >= target FunctionSpace dim: " << FunctionSpaceTargetType::dim() << ", "
       << nTargetDofsNotMapped << " target dofs of " << nDofsLocalTarget << " have no source dofs that would contribute values. "
-      << "But option \"compositeUseOnlyInitializedMappings\" is set to True, therefore not fixing the missing target dofs (might from another submesh)";
+      << "But option \"compositeUseOnlyInitializedMappings\" is set to True, therefore not fixing the missing target dofs (might be from another submesh)";
 
     // add log message, to be included in the log file
     std::stringstream logMessage;
-    logMessage << nTargetDofsNotMapped << " target dofs of " << nDofsLocalTarget << " have no source dofs that would contribute values. \n"
-      << "But option \"compositeUseOnlyInitializedMappings\" is set to True, therefore not fixing the missing target dofs (might from another submesh)";
+    logMessage << "  " << nTargetDofsNotMapped << " target dofs of " << nDofsLocalTarget << " have no source dofs that would contribute values. \n"
+      << "But option \"compositeUseOnlyInitializedMappings\" is set to True, therefore not fixing the missing target dofs (might be from another submesh)";
 
     DihuContext::mappingBetweenMeshesManager()->addLogMessage(logMessage.str());
   }
@@ -337,7 +344,7 @@ fixUnmappedDofs(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSource,
 
     // add log message, to be included in the log file
     std::stringstream logMessage;
-    logMessage << nTargetDofsNotMapped << " target dofs of " << nDofsLocalTarget << " had no source dofs that would contribute values."
+    logMessage << "  " << nTargetDofsNotMapped << " target dofs of " << nDofsLocalTarget << " had no source dofs that would contribute values."
       << "Option \"gixUnmappedDofs\" is set to True. After source mesh interpolation, " << targetDofNoLocalNotFixed.size() << " target dofs are still unmapped. "
       << "nTimesSearchedAllElements: " << nTimesSearchedAllElements;
 

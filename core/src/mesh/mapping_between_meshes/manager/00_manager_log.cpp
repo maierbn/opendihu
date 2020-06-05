@@ -72,18 +72,18 @@ std::string ManagerLog::produceLogContents()
     switch (logEntry.logEvent)
     {
     case mappingLogEntry_t::logEvent_t::eventParseSettings:
-      log << "parse settings for mapping between meshes \"" << logEntry.meshNameFrom << "\" " 
+      log << "* parse settings for mapping between meshes \"" << logEntry.meshNameFrom << "\" "
         << "-> \"" << logEntry.meshNameTo << "\"";
       break;
     
     case mappingLogEntry_t::logEvent_t::eventCreateMapping:
-      log << "create mapping between meshes \"" << logEntry.meshNameFrom << "\" (" << logEntry.dimensionalityFrom << "D) " 
+      log << "* create mapping between meshes \"" << logEntry.meshNameFrom << "\" (" << logEntry.dimensionalityFrom << "D) "
         << "-> \"" << logEntry.meshNameTo << "\" (" << logEntry.dimensionalityTo << "D)";
       break;
 
     case mappingLogEntry_t::logEvent_t::eventMapForward:
     case mappingLogEntry_t::logEvent_t::eventMapReverse:
-      log << "map from field variable \"" << logEntry.fieldVariableNameFrom << "\"";
+      log << "* map from field variable \"" << logEntry.fieldVariableNameFrom << "\"";
       if (logEntry.componentNoFrom == -1)
         log << ", all components";
       else 

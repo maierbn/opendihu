@@ -54,11 +54,11 @@ motor_units = [
 
 
 # for debugging use the following, non-physiological values. This produces a fast simulation
-#end_time = 0.1 #???
-#Am = 1.0
-#sampling_stride_z = 200 #74
+end_time = 10 #???
+Am = 1.0
+sampling_stride_z = 200 #74 200
 motor_units = motor_units[0:2]    # only 2 motor units motor_units = motor_units[0:2]
-#solver_tolerance = 1e-10
+solver_tolerance = 1e-10
 
 
 n_compartments = len(motor_units)
@@ -216,7 +216,7 @@ multidomain_solver = {
   "cm":                               Cm,                                 # Cm parameter (capacitance of the cellular membrane)
   "timeStepWidth":                    dt_multidomain,                     # time step width of the diffusion, i.e. the global linear system in the multidomain solver
   "endTime":                          end_time,                           # end time, this is not relevant because it will be overridden by the splitting scheme
-  "timeStepOutputInterval":           100,                                # how often the output timestep should be printed
+  "timeStepOutputInterval":           1,                                # how often the output timestep should be printed
   "solverName":                       "activationSolver",                 # reference to the solver used for the global linear system of the multidomain eq.
   "initialGuessNonzero":              True,                               # if the initial guess for the 3D system should be set as the solution of the previous timestep, this only makes sense for iterative solvers
   "inputIsGlobal":                    True,                               # if values and dofs correspond to the global numbering
@@ -254,9 +254,9 @@ multidomain_solver = {
   },
   
   "OutputWriter" : [
-    #{"format": "Paraview", "outputInterval": (int)(1./dt_multidomain*output_timestep), "filename": "out/output", "binary": True, "fixedFormat": False, "combineFiles": True},
-    #{"format": "ExFile", "filename": "out/fiber_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "sphereSize": "0.02*0.02*0.02"},
-    #{"format": "PythonFile", "filename": "out/fiber_"+str(i), "outputInterval": int(1./dt_1D*output_timestep), "binary":True, "onlyNodalValues":True},
+    {"format": "Paraview", "outputInterval": (int)(1./dt_multidomain*output_timestep), "filename": "out/output", "binary": True, "fixedFormat": False, "combineFiles": True},
+    #{"format": "ExFile", "filename": "out/fiber_"+str(i), "outputInterval": 1./dt_multidomain*output_timestep, "sphereSize": "0.02*0.02*0.02"},
+    #{"format": "PythonFile", "filename": "out/fiber_"+str(i), "outputInterval": int(1./dt_multidomain*output_timestep), "binary":True, "onlyNodalValues":True},
   ]
 }
   

@@ -59,8 +59,8 @@ nSolutionValuesLocal()
   int nStates = CellMLAdapterType::nStates();
   int nCompartments = multipleInstancesHeun.instancesLocal().size();
 
-  HeunType heunScheme = multipleInstancesHeun.instancesLocal().front();
-  CellMLAdapterType cellmlAdapter = heunScheme.discretizableInTime();
+  HeunType &heunScheme = multipleInstancesHeun.instancesLocal().front();
+  CellMLAdapterType &cellmlAdapter = heunScheme.discretizableInTime();
 
   int nDofsLocalWithoutGhosts = cellmlAdapter.data().functionSpace()->nDofsLocalWithoutGhosts();
   return nDofsLocalWithoutGhosts * nStates * nCompartments;
@@ -81,8 +81,8 @@ getSolution(double *result)
 
   // determine number of local dofs
   assert(!multipleInstancesHeun.instancesLocal().empty());
-  HeunType heunScheme = multipleInstancesHeun.instancesLocal().front();
-  CellMLAdapterType cellmlAdapter = heunScheme.discretizableInTime();
+  HeunType &heunScheme = multipleInstancesHeun.instancesLocal().front();
+  CellMLAdapterType &cellmlAdapter = heunScheme.discretizableInTime();
 
   int nDofsLocalWithoutGhosts = cellmlAdapter.data().functionSpace()->nDofsLocalWithoutGhosts();
 
@@ -91,8 +91,8 @@ getSolution(double *result)
   // loop over multidomain compartments
   for (int compartmentNo = 0; compartmentNo < nCompartments; compartmentNo++)
   {
-    HeunType heunScheme = multipleInstancesHeun.instancesLocal()[compartmentNo];
-    CellMLAdapterType cellmlAdapter = heunScheme.discretizableInTime();
+    HeunType &heunScheme = multipleInstancesHeun.instancesLocal()[compartmentNo];
+    CellMLAdapterType &cellmlAdapter = heunScheme.discretizableInTime();
 
     // loop over CellML states
     for (int stateNo = 0; stateNo < nStates; stateNo++)
@@ -127,8 +127,8 @@ setSolution(double *data)
 
   // determine number of local dofs
   assert(!multipleInstancesHeun.instancesLocal().empty());
-  HeunType heunScheme = multipleInstancesHeun.instancesLocal().front();
-  CellMLAdapterType cellmlAdapter = heunScheme.discretizableInTime();
+  HeunType &heunScheme = multipleInstancesHeun.instancesLocal().front();
+  CellMLAdapterType &cellmlAdapter = heunScheme.discretizableInTime();
 
   int nDofsLocalWithoutGhosts = cellmlAdapter.data().functionSpace()->nDofsLocalWithoutGhosts();
 
@@ -137,8 +137,8 @@ setSolution(double *data)
   // loop over multidomain compartments
   for (int compartmentNo = 0; compartmentNo < nCompartments; compartmentNo++)
   {
-    HeunType heunScheme = multipleInstancesHeun.instancesLocal()[compartmentNo];
-    CellMLAdapterType cellmlAdapter = heunScheme.discretizableInTime();
+    HeunType &heunScheme = multipleInstancesHeun.instancesLocal()[compartmentNo];
+    CellMLAdapterType &cellmlAdapter = heunScheme.discretizableInTime();
 
     // loop over CellML states
     for (int stateNo = 0; stateNo < nStates; stateNo++)

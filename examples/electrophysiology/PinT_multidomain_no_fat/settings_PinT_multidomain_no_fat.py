@@ -59,7 +59,7 @@ motor_units = [
 #end_time = 0.1
 end_time = 0.1
 Am = 1.0
-sampling_stride_z = 200 #muscle 74 200
+sampling_stride_z = 74 #muscle 74 200
 motor_units = motor_units[0:2]    # only 2 motor units [0:2] [0:1]
 solver_tolerance = 1e-10
 
@@ -290,7 +290,7 @@ config = {
   },
   "PinTMD": {
     "tstart": 0,                    # Start time
-    "tstop": 400,         #end_time            # End time
+    "tstop": 10,         #end_time            # End time
     "ntime": 10,                      # number of time steps
     "nspace":   1567,#8235, #3135,
     "Initial Guess": [2,2,4,5,2,2,2,0],

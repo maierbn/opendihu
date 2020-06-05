@@ -288,16 +288,18 @@ void DihuContext::parseGlobalParameters()
 
   // parse desired log file format
   std::string logFormat = pythonConfig_.getOptionString("logFormat", "csv");
-  if (logFormat == "csv") {
-    // logFormat_ = log_format_csv;
+  if (logFormat == "csv")
+  {
     setLogFormat(log_format_csv);
-  } else if (logFormat == "json") {
-    // logFormat_ = log_format_json;
+  }
+  else if (logFormat == "json")
+  {
     setLogFormat(log_format_json);
-  } else {
+  }
+  else
+  {
     LOG(ERROR) << "Unknown option for \"logFormat\": \"" << logFormat << "\". Use one of \"csv\" or \"json\". Falling back to \"csv\".";
     setLogFormat(log_format_csv);
-    // logFormat_ = log_format_csv;
   }
 
   // parse all keys under meta and add forward them directly to the log file

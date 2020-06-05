@@ -132,7 +132,9 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
     data << std::endl;
 
 
-  } else if (logFormat == DihuContext::log_format_json) {
+  }
+  else if (logFormat == DihuContext::log_format_json)
+  {
     filename << ".json";
     logFileName = filename.str();
 
@@ -173,8 +175,9 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
     }
 
     data << "}" << std::endl;
-
-  } else {
+  }
+  else
+  {
     LOG(ERROR) << "BUG: Unknown log fromat '" << DihuContext::logFormat() << "'. This should not happen. NO log file is written!";
     return;
   }

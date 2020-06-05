@@ -51,7 +51,7 @@ protected:
   std::string filenameBase_;    //< beginning of the file name for output file
   std::string filename_;        //< file name with time step number
   std::string formatString_;    //< the format option, the string as given in config, e.g. "Paraview"
-  enum {file_numbering_incremental, file_numbering_by_time_step_index} fileNumbering_; //< how the number suffix for each file schould be generated.
+  enum {fileNumberingIncremental, fileNumberingByTimeStepIndex} fileNumbering_; //< how the number suffix for each file schould be generated.
   int writeCallCount_ = 0;      //< counter of calls to write
   int outputFileNo_ = 0;        //< counter of calls to write when actually a file was written
   int outputInterval_ = 0;      //< the interval in which calls to write actually write data

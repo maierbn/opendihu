@@ -24,7 +24,7 @@ void DihuContext::initializePython(int argc, char *argv[], bool explicitConfigFi
 
   // add the emb module that captures stderr to the existing table of built-in modules
   PyImport_AppendInittab("emb", emb::PyInit_emb);
-    
+
   // initialize python
   Py_Initialize();
 
@@ -175,7 +175,7 @@ bool DihuContext::loadPythonScriptFromFile(std::string filename)
       {
         commandToSetFile << "__file__ = '" << filename << "' "<< std::endl;
       }
-      else 
+      else
       {
         commandToSetFile << "__file__ = '" << currentWorkingDirectory << "/" << filename << "' "<< std::endl;
       }
@@ -218,9 +218,9 @@ void DihuContext::loadPythonScript(std::string text)
       // get standard python path
       wchar_t *standardPythonPathWChar = Py_GetPath();
       std::wstring standardPythonPath(standardPythonPathWChar);
-      LOG(ERROR) << "Failed to import numpy. \n Python home directory: \"" << PYTHON_HOME_DIRECTORY 
+      LOG(ERROR) << "Failed to import numpy. \n Python home directory: \"" << PYTHON_HOME_DIRECTORY
         << "\", Standard python path: " << standardPythonPath;
-      
+
       wchar_t *homeWChar = Py_GetPythonHome();
       char *home = Py_EncodeLocale(homeWChar, NULL);
       LOG(ERROR) << "python home: " << home;
@@ -290,16 +290,16 @@ void DihuContext::parseGlobalParameters()
   std::string logFormat = pythonConfig_.getOptionString("logFormat", "csv");
   if (logFormat == "csv")
   {
-    setLogFormat(log_format_csv);
+    setLogFormat(logFormatCsv);
   }
   else if (logFormat == "json")
   {
-    setLogFormat(log_format_json);
+    setLogFormat(logFormatJson);
   }
   else
   {
     LOG(ERROR) << "Unknown option for \"logFormat\": \"" << logFormat << "\". Use one of \"csv\" or \"json\". Falling back to \"csv\".";
-    setLogFormat(log_format_csv);
+    setLogFormat(logFormatCsv);
   }
 
   // parse all keys under meta and add forward them directly to the log file

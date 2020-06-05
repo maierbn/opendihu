@@ -153,6 +153,7 @@ ranks = [
 
 config = {
   "scenarioName": "load_balancing",
+  "logFormat": "csv",
   # the 1D meshes for each fiber
   "Meshes": {
     "MeshFiber0":

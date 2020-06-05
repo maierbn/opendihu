@@ -103,6 +103,7 @@ variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
 # define the config dict
 config = {
   "scenarioName":          variables.scenario_name,
+  "logFormat":             "csv",
   "Meshes":                variables.meshes,
   "MappingsBetweenMeshes": variables.mappings_between_meshes,
   "Solvers": {

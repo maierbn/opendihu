@@ -76,6 +76,7 @@ def set_specific_states(n_nodes_global, time_step_no, current_time, states, fibe
 # define the config dict
 config = {
   "scenarioName": "not",
+  "logFormat": "csv",
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "Meshes": {
     "MeshFiber_0": {

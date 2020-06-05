@@ -50,6 +50,7 @@ material_parameters = [1.0, 0.0, 100.0]  # c0, c1, kappa
 #print("lambdaValue: ",lambdaValue,"> 1")
 
 config = {
+  "logFormat": "csv",
   "FiniteElementMethod" : {
     "nElements": [nx,ny,nz],
     "nodeDimension": 1,

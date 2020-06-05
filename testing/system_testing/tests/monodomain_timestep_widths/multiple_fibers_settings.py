@@ -240,6 +240,7 @@ if rank_no == 0 and False:
     print("   Fibre {} is of MU {} and will be stimulated for the first time at {}".format(fiber_no_index, get_motor_unit_no(fiber_no_index), first_stimulation))
 
 config = {
+  "logFormat": "csv",
   "solverStructureDiagramFile": "solver_structure.txt",
   "Meshes": meshes,
   "Solvers": {

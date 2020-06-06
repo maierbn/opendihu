@@ -34,6 +34,7 @@ You can look at `core/src/equation/mooney_rivlin_incompressible.h <https://githu
 
 Alternatively, a new formulation can directly be defined in the main cpp file. For this, the ``struct Material`` that is used as template parameter in the ``HyperelasticitySolver`` class has to be defined.
 It contains three parts: 
+
 * Some settings by defining ``bool`` constants
 * Definition of material parameters. Values for these are set in the python settings.
 * The strain energy function for the material.
@@ -237,6 +238,8 @@ An example for the incompressible Mooney-Rivlin material is given below:
 Python settings
 -----------------
 
+The following shows all possible options. The meaning can be learned from the comments.
+
 .. code-block:: python
 
   "HyperelasticitySolver": {
@@ -316,5 +319,13 @@ Python settings
       ]
     },
   },
-  
+
+`materialParameters`
+^^^^^^^^^^^^^^^^^^^^
+
+A list of material parameters, must match the number of parameters in the material.
+
+`boundary conditions`
+^^^^^^^^^^^^^^^^^^^^^^
+Refer to :doc:`boundary_conditions` how to specify boundary conditions and :doc:`dynamic_hyperelasticity` for the callbacks.
 

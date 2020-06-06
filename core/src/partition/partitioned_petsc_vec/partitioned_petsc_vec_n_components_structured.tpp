@@ -17,7 +17,7 @@ template<typename MeshType,typename BasisFunctionType,int nComponents>
 template<int nComponents2>
 PartitionedPetscVecNComponentsStructured<MeshType,BasisFunctionType,nComponents>::
 PartitionedPetscVecNComponentsStructured(PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents2> &rhs,
-                                         std::string name, bool reuseData) :
+                                         std::string name, bool reuseData, int rhsComponentNoBegin) :
   PartitionedPetscVecBase<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>>(rhs.meshPartition(), name)
 {
   if (reuseData && nComponents > nComponents2)
@@ -39,8 +39,12 @@ PartitionedPetscVecNComponentsStructured(PartitionedPetscVec<FunctionSpace::Func
     // loop over the components of this field variable
     for (int componentNo = 0; componentNo < std::min(nComponents,nComponents2); componentNo++)
     {
-      vectorGlobal_[componentNo] = rhs.vectorGlobal_[componentNo];
-      vectorLocal_[componentNo] = rhs.vectorLocal_[componentNo];
+      if (rhsComponentNoBegin + componentNo >= rhs.vectorGlobal_.size())
+      {
+        LOG(FATAL) << "Trying to create a partitioned petsc vec with " << nComponents << " from another one with " << nComponents2 << ", starting at component " << rhsComponentNoBegin;
+      }
+      vectorGlobal_[componentNo] = rhs.vectorGlobal_[rhsComponentNoBegin + componentNo];
+      vectorLocal_[componentNo] = rhs.vectorLocal_[rhsComponentNoBegin + componentNo];
     }
 
     valuesContiguous_ = rhs.valuesContiguous_;
@@ -71,7 +75,6 @@ PartitionedPetscVecNComponentsStructured(PartitionedPetscVec<FunctionSpace::Func
   }
 }
   
-
 //! create a distributed Petsc vector, according to partition
 template<typename MeshType,typename BasisFunctionType,int nComponents>
 void PartitionedPetscVecNComponentsStructured<MeshType,BasisFunctionType,nComponents>::

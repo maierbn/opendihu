@@ -40,6 +40,8 @@ initialize()
   outputConnectorData_->addFieldVariable(this->lambdaDot_);
   outputConnectorData_->addFieldVariable(this->gamma_);
 
+  outputConnectorData_->addFieldVariable2(this->materialTraction_);
+
   // There is addFieldVariable(...) and addFieldVariable2(...) for the two different field variable types,
   // Refer to "data_management/output_connector_data.h" for details.
 }
@@ -55,6 +57,7 @@ createPetscObjects()
   this->gamma_     = this->functionSpace_->template createFieldVariable<1>("γ");
   this->lambda_    = this->functionSpace_->template createFieldVariable<1>("λ");
   this->lambdaDot_ = this->functionSpace_->template createFieldVariable<1>("λdot");
+  this->materialTraction_ = this->functionSpace_->template createFieldVariable<3>("T");
 }
 
 template<typename FunctionSpaceType>
@@ -64,6 +67,7 @@ setFieldVariables(std::shared_ptr<MuscleContractionSolver<FunctionSpaceType>::Ve
                   std::shared_ptr<MuscleContractionSolver<FunctionSpaceType>::StressFieldVariableType> activePK2Stress,
                   std::shared_ptr<MuscleContractionSolver<FunctionSpaceType>::StressFieldVariableType> pK2Stress,
                   std::shared_ptr<MuscleContractionSolver<FunctionSpaceType>::VectorFieldVariableType> fiberDirection,
+                  std::shared_ptr<MuscleContractionSolver<FunctionSpaceType>::VectorFieldVariableType> materialTraction,
                   bool setGeometryFieldForTransfer)
 {
   displacements_ = displacements;
@@ -71,6 +75,7 @@ setFieldVariables(std::shared_ptr<MuscleContractionSolver<FunctionSpaceType>::Ve
   activePK2Stress_ = activePK2Stress;
   pK2Stress_ = pK2Stress;
   fiberDirection_ = fiberDirection;
+  materialTraction_ = materialTraction;
 
   if (setGeometryFieldForTransfer)
   {
@@ -100,6 +105,13 @@ gamma()
 }
 
 template<typename FunctionSpaceType>
+std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> MuscleContractionSolver<FunctionSpaceType>::
+materialTraction()
+{
+  return this->materialTraction_;
+}
+
+template<typename FunctionSpaceType>
 std::shared_ptr<typename MuscleContractionSolver<FunctionSpaceType>::OutputConnectorDataType> MuscleContractionSolver<FunctionSpaceType>::
 getOutputConnectorData()
 {
@@ -126,7 +138,8 @@ getFieldVariablesForOutputWriter()
     this->velocities_,       //< v, the velocities
     this->activePK2Stress_,  //< the symmetric PK2 stress tensor of the active contribution in Voigt notation
     this->pK2Stress_,        //< the symmetric PK2 stress tensor in Voigt notation
-    this->fiberDirection_    //< direction of fibers at current point
+    this->fiberDirection_,   //< direction of fibers at current point
+    this->materialTraction_   //< material traction
 
   );
 }

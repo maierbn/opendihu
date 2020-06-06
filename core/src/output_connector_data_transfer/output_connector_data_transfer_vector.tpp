@@ -69,7 +69,7 @@ void SolutionVectorMapping<
    *  "transferableSolutionData1" is of type (roughly) vector<field variables>. This results e.g. from multiple fibers.
    *  "transferableSolutionData2" is just normal field variables without a vector.
    *  Each object of type OutputConnectorData contains possibly two different types of field variables, variable1 and variable2.
-   *  For cellML, these are for storing states and intermediates.
+   *  For cellML, these are for storing states and algebraics.
    *  Now this method maps components of field variables (i.e., scalar field variables) from 1 to 2 according to the slot connections
    *  given by "outputConnection".
    *  We iterate over "1".variable1 and transfer data to "2".variable1 and "2".variable2. Then we iterate over "1".variable2
@@ -177,7 +177,7 @@ void SolutionVectorMapping<
     }
   }
 
-  // for the second vector of variables (the "intermediates" in case of CellMLAdapter)
+  // for the second vector of variables (the "algebraics" in case of CellMLAdapter)
   for (int i = 0; i < transferableSolutionData1Front->variable2.size(); i++)
   {
     int fromVectorNo = 1;
@@ -391,7 +391,7 @@ void SolutionVectorMapping<
     }
   }
 
-  // for the second vector of variables (the "intermediates" in case of CellMLAdapter)
+  // for the second vector of variables (the "algebraics" in case of CellMLAdapter)
   for (int i = 0; i < transferableSolutionData1->variable2.size(); i++)
   {
     int fromVectorNo = 1;

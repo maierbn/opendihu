@@ -47,7 +47,7 @@ SEMT_DOWNLOAD = True
 EASYLOGGINGPP_DOWNLOAD = True
 
 # ADIOS2, adaptable I/O library, needed for interfacing MegaMol
-ADIOS_DOWNLOAD = True
+ADIOS_DOWNLOAD = False
 
 # MegaMol, visualization framework of VISUS, optional, needs ADIOS2
 MEGAMOL_DOWNLOAD = False    # install MegaMol from official git repo, but needed is the private repo, ask for access to use MegaMol with opendihu
@@ -62,8 +62,8 @@ XBRAID_DOWNLOAD = True
 OPENCOR_DOWNLOAD = True
 
 # preCICE coupling library
-#LIBXML2_DOWNLOAD = True
-#PRECICE_DOWNLOAD = True
+LIBXML2_DOWNLOAD = False
+PRECICE_DOWNLOAD = False
 
 # MPI
 # MPI is normally detected by runnig the mpicc command. If this is not available, you can provide the MPI_DIR as usual.

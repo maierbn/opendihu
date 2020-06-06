@@ -41,7 +41,7 @@ public:
   
   //! check if a function space with the given name and type is stored
   template<typename FunctionSpaceType>
-  bool hasFunctionSpaceOfType(std::string meshName);
+  bool hasFunctionSpaceOfType(std::string meshName, bool outputWarning=false);
 
   //! check if a function space with the specified name is stored, the type is not checked
   bool hasFunctionSpace(std::string meshName);

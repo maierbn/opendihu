@@ -63,7 +63,7 @@ public:
   //! field variable of Fdot
   std::shared_ptr<DeformationGradientFieldVariableType> deformationGradientTimeDerivative();
 
-  //! field variable of S
+  //! field variable of S (Voigt notation sxx, syy, szz, sxy, syz, sxz)
   std::shared_ptr<StressFieldVariableType> pK2Stress();
 
   //! field variable of S_act
@@ -72,6 +72,8 @@ public:
   //! field variable of fiber direction
   std::shared_ptr<DisplacementsFieldVariableType> &fiberDirection();
 
+  //! traction in reference configuration, for z- and z+ surfaces
+  std::shared_ptr<DisplacementsFieldVariableType> materialTraction();
 
   //! initialize
   void initialize();
@@ -121,6 +123,7 @@ protected:
   std::shared_ptr<DisplacementsLinearFieldVariableType> displacementsLinearMesh_; //< the displacements u, but on the linear mesh, not the quadratic. This is an internal helper field
   std::shared_ptr<DisplacementsLinearFieldVariableType> velocitiesLinearMesh_;    //< the velocities v, but on the linear mesh, not the quadratic. This is an internal helper field
   std::shared_ptr<DisplacementsFieldVariableType> fiberDirection_;                //< interpolated direction of fibers
+  std::shared_ptr<DisplacementsFieldVariableType> materialTraction_;              //< T, the traction in reference configuration, for z- and z+ surfaces (top and bottom of mesh)
 };
 
 /** Helper class that outputs the field variables for the output writer.
@@ -143,6 +146,7 @@ public:
     std::shared_ptr<DisplacementsFieldVariableType>,  // current geometry field
     std::shared_ptr<DisplacementsFieldVariableType>,  // displacements_
     std::shared_ptr<DisplacementsFieldVariableType>,  // velocities_
+    std::shared_ptr<DisplacementsFieldVariableType>,  // material traction
     std::shared_ptr<StressFieldVariableType>         // pK2Stress_
   >
   FieldVariablesForOutputWriter;
@@ -169,7 +173,8 @@ public:
     std::shared_ptr<DisplacementsFieldVariableType>,  // velocities_
     std::shared_ptr<StressFieldVariableType>,         // pK2Stress_
     std::shared_ptr<StressFieldVariableType>,         // activePK2Stress_
-    std::shared_ptr<DisplacementsFieldVariableType>   // fiber direction
+    std::shared_ptr<DisplacementsFieldVariableType>,  // fiber direction
+    std::shared_ptr<DisplacementsFieldVariableType>   // material traction
   >
   FieldVariablesForOutputWriter;
 

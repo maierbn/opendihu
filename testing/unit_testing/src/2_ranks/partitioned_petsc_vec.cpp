@@ -10,7 +10,7 @@
 #include "../utility.h"
 #include "partition/partitioned_petsc_vec/01_partitioned_petsc_vec_with_dirichlet_bc.h"
 #include "partition/partitioned_petsc_vec/02_partitioned_petsc_vec_for_hyperelasticity.h"
-#include "spatial_discretization/boundary_conditions/dirichlet_boundary_conditions.h"
+#include "spatial_discretization/dirichlet_boundary_conditions/01_dirichlet_boundary_conditions.h"
 
 TEST(PartitionedPetscVecTest, TwoElementsBCGlobal)
 {

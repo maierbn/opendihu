@@ -5,6 +5,7 @@
 #include <Vc/Vc>
 
 #include "equation/mooney_rivlin_incompressible.h"
+#include "utility/math_utility.h"
 
 namespace SpatialDiscretization
 {
@@ -263,6 +264,17 @@ computeReducedInvariants(const std::array<double_v_t,5> invariants, const double
     reducedInvariants[2] = 1;  // not used, because I3 = det C = 1 constant
     reducedInvariants[3] = MathUtility::pow(deformationGradientDeterminant, factor23) * invariants[3];
     reducedInvariants[4] = MathUtility::pow(deformationGradientDeterminant, factor43) * invariants[4];
+  }
+
+  if (Vc::any_of(deformationGradientDeterminant <= 0))
+  {
+    LOG(ERROR) << "J=det F is negative: " << deformationGradientDeterminant << ". Result will be unphysical.\n"
+      << "For dynamic problems, reduce time step width, for static problems, add smaller \"loadFactors\" or reduce load.";
+
+    Vc::where(deformationGradientDeterminant <= 0) | reducedInvariants[0] = 3;
+    Vc::where(deformationGradientDeterminant <= 0) | reducedInvariants[1] = 0;
+    Vc::where(deformationGradientDeterminant <= 0) | reducedInvariants[3] = 3;
+    Vc::where(deformationGradientDeterminant <= 0) | reducedInvariants[4] = 0;
   }
 
   return reducedInvariants;
@@ -592,6 +604,13 @@ computePK2Stress(double_v_t &pressure,                                   //< [in
       LOG_N_TIMES(2,DEBUG) << "Sbar is correct!";
   }
 
+#ifndef NDEBUG
+  if (MathUtility::containsNanOrInf(pK2Stress))
+  {
+    LOG(FATAL) << "PK2stress contains nan: " << pK2Stress;
+  }
+#endif
+
   return pK2Stress;
 }
 
@@ -603,6 +622,9 @@ computePK2StressField()
 
   //this->data_.pK2Stress()->startGhostManipulation();
   this->data_.pK2Stress()->zeroGhostBuffer();
+  this->data_.materialTraction()->zeroGhostBuffer();
+  this->data_.materialTraction()->zeroEntries();
+
   this->data_.deformationGradient()->zeroGhostBuffer();
   this->data_.deformationGradientTimeDerivative()->zeroGhostBuffer();
 
@@ -757,6 +779,33 @@ computePK2StressField()
       // pressure is the separately interpolated pressure for mixed formulation
       double_v_t pressure = pressureFunctionSpace->interpolateValueInElement(pressureValuesCurrentElement, xi);
 
+      // checking for nans in debug mode
+#ifndef NDEBUG
+      if (MathUtility::containsNanOrInf(inverseJacobianMaterial))
+        LOG(FATAL) << "inverseJacobianMaterial contains nan: " << inverseJacobianMaterial << ", jacobianMaterial: " << jacobianMaterial;
+
+      if (MathUtility::containsNanOrInf(deformationGradient))
+        LOG(FATAL) << "deformationGradient contains nan: " << deformationGradient;
+
+      if (MathUtility::containsNanOrInf(rightCauchyGreen))
+        LOG(FATAL) << "rightCauchyGreen contains nan: " << rightCauchyGreen;
+
+      if (MathUtility::containsNanOrInf(inverseRightCauchyGreen))
+        LOG(FATAL) << "inverseRightCauchyGreen contains nan: " << inverseRightCauchyGreen;
+
+      if (MathUtility::containsNanOrInf(invariants))
+        LOG(FATAL) << "invariants contains nan: " << invariants;
+
+      if (MathUtility::containsNanOrInf(deformationGradientDeterminant))
+        LOG(FATAL) << "deformationGradientDeterminant contains nan: " << deformationGradientDeterminant;
+
+      if (MathUtility::containsNanOrInf(reducedInvariants))
+        LOG(FATAL) << "reducedInvariants contains nan: " << reducedInvariants << ", deformationGradient: " << deformationGradient << ", deformationGradientDeterminant: " << deformationGradientDeterminant;
+
+      if (MathUtility::containsNanOrInf(pressure))
+        LOG(FATAL) << "pressure contains nan: " << pressure;
+#endif
+
       // Pk2 stress tensor S = S_vol + S_iso (p.234)
       //! compute 2nd Piola-Kirchhoff stress tensor S = 2*dPsi/dC and the fictitious PK2 Stress Sbar
       Tensor2_v_t<D> fictitiousPK2Stress;   // Sbar
@@ -765,16 +814,45 @@ computePK2StressField()
                                                       fictitiousPK2Stress, pk2StressIsochoric
                                                     );
 
-
       std::array<double_v_t,6> valuesInVoigtNotation({pK2Stress[0][0], pK2Stress[1][1], pK2Stress[2][2], pK2Stress[0][1], pK2Stress[1][2], pK2Stress[0][2]});
 
-      //LOG(DEBUG) << "node " << dofNoLocal << " pk2: " << valuesInVoigtNotation;
+      //LOG(INFO) << "node " << dofNoLocal << " pk2: " << valuesInVoigtNotation;
       this->data_.pK2Stress()->setValue(dofNoLocal, valuesInVoigtNotation, INSERT_VALUES);
+
+      // compute surface traction
+      // get normal
+      if (indexZ == 0)
+      {
+        // bottom node
+        Vec3 normal = displacementsFunctionSpace->getNormal(Mesh::face_t::face2Minus, elementNoLocal, xi);
+
+        // compute traction by Cauchy theorem T = S n
+        Vec3 traction = pK2Stress * normal;
+
+        // set value in material traction
+        this->data_.materialTraction()->setValue(dofNoLocal, traction, INSERT_VALUES);
+
+      }
+      else if (indexZ == 2)
+      {
+        // top node
+        Vec3 normal = displacementsFunctionSpace->getNormal(Mesh::face_t::face2Plus, elementNoLocal, xi);
+
+        // compute traction by Cauchy theorem T = S n
+        Vec3 traction = pK2Stress * normal;
+
+        // set value in material traction
+        this->data_.materialTraction()->setValue(dofNoLocal, traction, INSERT_VALUES);
+      }
     }
   }
   this->data_.pK2Stress()->zeroGhostBuffer();
   this->data_.pK2Stress()->finishGhostManipulation();
   this->data_.pK2Stress()->startGhostManipulation();
+
+  this->data_.materialTraction()->zeroGhostBuffer();
+  this->data_.materialTraction()->finishGhostManipulation();
+  this->data_.materialTraction()->startGhostManipulation();
 
   this->data_.deformationGradient()->zeroGhostBuffer();
   this->data_.deformationGradient()->finishGhostManipulation();

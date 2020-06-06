@@ -93,10 +93,11 @@ def handle_result_hyperelasticity(result):
     # field_variables[0]: geometry
     # field_variables[1]: u
     # field_variables[2]: v
-    # field_variables[3]: PK2-Stress (Voigt), components: S_11, S_22, S_33, S_12, S_13, S_23
+    # field_variables[3]: T (material traction)
+    # field_variables[4]: PK2-Stress (Voigt), components: S_11, S_22, S_33, S_12, S_13, S_23
     
     strain = max(field_variables[1]["components"][2]["values"])
-    stress = max(field_variables[3]["components"][2]["values"])
+    stress = max(field_variables[4]["components"][2]["values"])
     
     print("nx: {}, strain: {}, stress: {}".format(nx, strain, stress))
     

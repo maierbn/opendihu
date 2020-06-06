@@ -658,7 +658,10 @@ class Package(object):
       sys.stdout.flush()
 
   def auto_build(self, ctx, install_dir, source_dir, dependencies_dir):
-    sys.stdout.write('  Building package {}, this could take a while ... \n'.format(self.name))
+    sys.stdout.write('  Building package {}, this could take a while ... (like really long!) \n'.format(self.name))
+    if self.name  == "Python":
+      sys.stdout.write('  Note, building package {}, takes REALLY long so be patient! \n'.format(self.name))
+      
     sys.stdout.flush()
     ctx.Log("Building package in " + install_dir + "\n")
 
@@ -1101,10 +1104,11 @@ class Package(object):
 
         system_inc_dirs = []
         for inc_dir in inc_sub_dirs:
-          if "pgcc" in ctx.env["cc"] or "pgcc" in ctx.env["CC"]:
+          if "pgcc" in ctx.env["cc"] or "pgcc" in ctx.env["CC"] or "/usr/include" in inc_dir:     
             system_inc_dirs.append(('-I', inc_dir))
           else:
-            system_inc_dirs.append(('-isystem', inc_dir))     # -isystem is the same is -I for gcc, except it suppresses warning (useful for dependencies)            
+            system_inc_dirs.append(('-isystem', inc_dir))     # -isystem is the same is -I for gcc, except it suppresses warning (useful for dependencies)
+            # also, -isystem /usr/include does not work properly
 
         if self.set_rpath:
           bkp = env_setup(ctx.env,

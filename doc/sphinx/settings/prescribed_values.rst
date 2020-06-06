@@ -84,7 +84,7 @@ The following example also shows, how one can iterate over the local values.
     # time_step_no:        (int)   current time step number
     # current_time:        (float) the current simulation time
     # values:              (list of floats) all current local values of the field variable, if there are multiple components, they are stored in struct-of-array memory layout 
-    #                       i.e. [point0_component0, point0_component1, ... pointN_component0, point1_component0, point1_component1, ...]
+    #                       i.e. [point0_component0, point0_component1, ... point0_componentN, point1_component0, point1_component1, ...]
     #                       After the call, these values will be assigned to the field variable.
     # global_natural_dofs  (list of ints) for every local dof no. the dof no. in global natural ordering
     # additional_argument: The value of the option "additionalArgument", can be any Python object.

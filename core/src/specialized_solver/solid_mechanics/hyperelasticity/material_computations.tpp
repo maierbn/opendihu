@@ -492,6 +492,7 @@ materialComputeExternalVirtualWorkDead()
 
   LOG(DEBUG) << "materialComputeExternalVirtualWorkDead";
 
+  combinedVecExternalVirtualWorkDead_->setRepresentationGlobal();
   combinedVecExternalVirtualWorkDead_->zeroEntries();               // clear entries to 0
   combinedVecExternalVirtualWorkDead_->startGhostManipulation();    // fill ghost buffers
 

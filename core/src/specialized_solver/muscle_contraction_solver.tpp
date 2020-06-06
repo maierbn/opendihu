@@ -174,7 +174,8 @@ initialize()
                             dynamicHyperelasticitySolver_->data().velocities(),
                             hyperelasticitySolver.data().activePK2Stress(),
                             hyperelasticitySolver.data().pK2Stress(),
-                            hyperelasticitySolver.data().fiberDirection(), 
+                            hyperelasticitySolver.data().fiberDirection(),
+                            hyperelasticitySolver.data().materialTraction(),
                             setGeometryFieldForTransfer);
   }
   else
@@ -185,6 +186,7 @@ initialize()
                             staticHyperelasticitySolver_->data().activePK2Stress(),
                             staticHyperelasticitySolver_->data().pK2Stress(),
                             staticHyperelasticitySolver_->data().fiberDirection(),
+                            staticHyperelasticitySolver_->data().materialTraction(),
                             setGeometryFieldForTransfer);
   }
 
@@ -451,6 +453,15 @@ mapGeometryToGivenMeshes()
 
   if (this->durationLogKey_ != "")
     Control::PerformanceMeasurement::stop(this->durationLogKey_+std::string("_map_geometry"));
+}
+
+
+//! get a reference to the DynamicHyperelasticitySolverType
+template<typename MeshType>
+std::shared_ptr<typename MuscleContractionSolver<MeshType>::DynamicHyperelasticitySolverType> MuscleContractionSolver<MeshType>::
+dynamicHyperelasticitySolver()
+{
+  return dynamicHyperelasticitySolver_;
 }
 
 template<typename MeshType>

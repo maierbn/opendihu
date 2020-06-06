@@ -189,6 +189,12 @@ double estimateMaximumEigenvalue(const Tensor2<3> &matrix);
 //! estimate the condition number |sigma_max/sigma_min| of the matrix
 double estimateConditionNumber(const Tensor2<3> &matrix, const Tensor2<3> &inverseMatrix);
 
+//! check if the given value contains any value > 1e+75 or nan
+bool containsNanOrInf(const double value);
+
+template<typename T, std::size_t N>
+bool containsNanOrInf(std::array<T,N> value);
+
 /** pow as constexpr function
  *  https://stackoverflow.com/a/27270730/10290071
  */

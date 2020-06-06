@@ -15,12 +15,12 @@ public:
   //! constructor
   CellmlSourceCodeGeneratorBase();
 
-  //! initialize the intermediateNames, stateNames and constantNames by parsing the source code. There will be an error if the number of states/intermediates does not match
-  void initializeNames(std::string inputFilename, int nInstances, int nStates, int nIntermediates);
+  //! initialize the algebraicNames, stateNames and constantNames by parsing the source code. There will be an error if the number of states/algebraics does not match
+  void initializeNames(std::string inputFilename, int nInstances, int nStates, int nAlgebraics);
 
   //! initialize all variables, parses the source code
   void initializeSourceCode(
-    const std::vector<int> &parametersUsedAsIntermediate, const std::vector<int> &parametersUsedAsConstant,
+    const std::vector<int> &parametersUsedAsAlgebraic, const std::vector<int> &parametersUsedAsConstant,
     std::vector<double> &parametersInitialValues, int maximumNumberOfParameters, double *parameterValues
   );
 
@@ -32,8 +32,8 @@ public:
   //! get a reference to the statesInitialValues_ variable
   std::vector<double> &statesInitialValues();
 
-  //! get a reference to the names of the intermediates variables
-  const std::vector<std::string> &intermediateNames() const;
+  //! get a reference to the names of the algebraics variables
+  const std::vector<std::string> &algebraicNames() const;
 
   //! get a reference to the names of the state variables
   const std::vector<std::string> &stateNames() const;
@@ -93,7 +93,7 @@ protected:
   void convertFromXmlToC();
 
   //! Scan the cellml source file and initialize the following:
-  //! stateNames_, intermediateNames_, nConstants_ and nIntermediatesInSource_
+  //! stateNames_, algebraicNames_, nConstants_ and nAlgebraicsInSource_
   void parseNamesInSourceCodeFile();
 
   //! Scan the given cellml source file and initialize the following:
@@ -111,18 +111,18 @@ protected:
 
   unsigned int nConstants_ = 0;                //< number of entries in the "CONSTANTS" array
   unsigned int nStates_;                       //< number of states as given in initialize
-  unsigned int nIntermediates_;                //< number of intermediates as given in initialize
-  unsigned int nIntermediatesInSource_ = 0;    //< number of intermediate values (=CellML name "wanted") in one instance of the CellML problem, as detected from the source file
+  unsigned int nAlgebraics_;                //< number of algebraics as given in initialize
+  unsigned int nAlgebraicsInSource_ = 0;    //< number of algebraic values (=CellML name "wanted") in one instance of the CellML problem, as detected from the source file
 
   std::string compilerCommand_;                //< compiler command that should be used to compile the created source file
   std::string additionalCompileFlags_;         //< additional compile flags that depend on the optimizationType, e.g. -fopenmp for "openmp"
   std::string sourceFileSuffix_;               //< suffix to use for the source file, e.g. ".c" or ".cpp"
 
-  std::vector<int> parametersUsedAsIntermediate_;  //< explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array
+  std::vector<int> parametersUsedAsAlgebraic_;  //< explicitely defined parameters that will be copied to algebraics, this vector contains the indices of the algebraic array
   std::vector<int> parametersUsedAsConstant_;  //< explicitely defined parameters that will be copied to constants, this vector contains the indices of the constants
 
   std::vector<std::string> stateNames_;        //< the names for the states as given in the input source file
-  std::vector<std::string> intermediateNames_; //< the names for the intermediates as given in the input source file
+  std::vector<std::string> algebraicNames_; //< the names for the algebraics as given in the input source file
   std::vector<std::string> constantNames_;     //< the names of the constants
 
   std::string sourceFilename_;                 //< file name of provided CellML source file

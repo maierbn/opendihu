@@ -210,33 +210,84 @@ createFebioInputFile()
     //int nNodesZ = this->data_.functionSpace()->nNodesGlobal(2);
     //int nElementsXY = (nNodesX-1)*(nNodesY-1);
 
-    // fix x direction for left row
-    for (int j = 0; j < nNodesY; j++)
+    enum {fixAll, fixFloating} dirichletBoundaryConditionsMode = fixFloating;
+    std::string dirichletBoundaryConditionsModeString = this->specificSettings_.getOptionString("dirichletBoundaryConditionsMode", "fix_all");
+
+    if (dirichletBoundaryConditionsModeString == "fix_all")
+      dirichletBoundaryConditionsMode = fixAll;
+
+    if (dirichletBoundaryConditionsMode == fixAll)
     {
-      dof_no_t dofNoLocal = j*nNodesX;
-      fileContents << "\t\t\t<node id=\"" << dofNoLocal+1 << "\" />\n";
+      // fix x direction for all
+      for (int j = 0; j < nNodesY; j++)
+      {
+        for (int i = 0; i < nNodesX; i++)
+        {
+          dof_no_t dofNoLocal = j*nNodesX + i;
+          fileContents << "\t\t\t<node id=\"" << dofNoLocal+1 << "\" />\n";
+        }
+      }
+    }
+    else
+    {
+      // fix x direction for left row
+      for (int j = 0; j < nNodesY; j++)
+      {
+        dof_no_t dofNoLocal = j*nNodesX;
+        fileContents << "\t\t\t<node id=\"" << dofNoLocal+1 << "\" />\n";
+      }
     }
 
     fileContents << "\t\t</NodeSet>\n"
       << "\t\t<NodeSet name=\"FixedDisplacementY\">\n";
 
-    // fix y direction for front row
-    for (int i = 0; i < nNodesX; i++)
+    if (dirichletBoundaryConditionsMode == fixAll)
     {
-      dof_no_t dofNoLocal = i;
-      fileContents << "\t\t\t<node id=\"" << dofNoLocal+1 << "\" />\n";
+      // fix x direction for all
+      for (int j = 0; j < nNodesY; j++)
+      {
+        for (int i = 0; i < nNodesX; i++)
+        {
+          dof_no_t dofNoLocal = j*nNodesX + i;
+          fileContents << "\t\t\t<node id=\"" << dofNoLocal+1 << "\" />\n";
+        }
+      }
+    }
+    else
+    {
+      // fix y direction for front row
+      for (int i = 0; i < nNodesX; i++)
+      {
+        dof_no_t dofNoLocal = i;
+        fileContents << "\t\t\t<node id=\"" << dofNoLocal+1 << "\" />\n";
+      }
     }
 
     fileContents << "\t\t</NodeSet>\n"
       << "\t\t<NodeSet name=\"FixedDisplacementZ\">\n";
 
-    // fix z direction for all
-    for (int j = 0; j < nNodesY; j++)
+    if (dirichletBoundaryConditionsMode == fixAll)
     {
-      for (int i = 0; i < nNodesX; i++)
+      // fix x direction for all
+      for (int j = 0; j < nNodesY; j++)
       {
-        dof_no_t dofNoLocal = j*nNodesX + i;
-        fileContents << "\t\t\t<node id=\"" << dofNoLocal+1 << "\" />\n";
+        for (int i = 0; i < nNodesX; i++)
+        {
+          dof_no_t dofNoLocal = j*nNodesX + i;
+          fileContents << "\t\t\t<node id=\"" << dofNoLocal+1 << "\" />\n";
+        }
+      }
+    }
+    else
+    {
+      // fix z direction for all
+      for (int j = 0; j < nNodesY; j++)
+      {
+        for (int i = 0; i < nNodesX; i++)
+        {
+          dof_no_t dofNoLocal = j*nNodesX + i;
+          fileContents << "\t\t\t<node id=\"" << dofNoLocal+1 << "\" />\n";
+        }
       }
     }
 
@@ -263,7 +314,7 @@ createFebioInputFile()
 
         if (dofIndex > 4)
           fileContents << ", ";
-        fileContents << dofNoGlobalPetsc;
+        fileContents << (dofNoGlobalPetsc+1);
       }
       fileContents << "</quad4>\n";
     }

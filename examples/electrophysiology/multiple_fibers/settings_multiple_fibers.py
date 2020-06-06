@@ -97,13 +97,13 @@ if rank_no == 0:
 
 # set values for cellml model
 if "shorten" in variables.cellml_file:
-  parameters_used_as_intermediate = [32]
+  parameters_used_as_algebraic = [32]
   parameters_used_as_constant = [65]
   parameters_initial_values = [0.0, 1.0]
   nodal_stimulation_current = 400.
 
 elif "hodgkin_huxley" in variables.cellml_file:
-  parameters_used_as_intermediate = []
+  parameters_used_as_algebraic = []
   parameters_used_as_constant = [2]
   parameters_initial_values = [0.0]
   nodal_stimulation_current = 40.
@@ -253,10 +253,10 @@ def get_instance_config(i):
             
             "additionalArgument": i,
             
-            "intermediatesForTransfer":  [],            # which intermediate values to use in further computation
+            "algebraicsForTransfer":  [],            # which algebraic values to use in further computation
             "statesForTransfer":   0,                   # which state values to use in further computation, Shorten / Hodgkin Huxley: state 0 = Vm
                       
-            "parametersUsedAsIntermediate": parameters_used_as_intermediate,  #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
+            "parametersUsedAsAlgebraic": parameters_used_as_algebraic,  #[32],       # list of algebraic value indices, that will be set by parameters. Explicitely defined parameters that will be copied to algebraics, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
             "parametersUsedAsConstant": parameters_used_as_constant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
             "parametersInitialValues": parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
             "meshName": "MeshFiber"+str(i),

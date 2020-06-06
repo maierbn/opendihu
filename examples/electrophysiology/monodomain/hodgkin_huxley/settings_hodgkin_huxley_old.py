@@ -1,7 +1,7 @@
 # Electrophysiology
-# Monodomain with Hodgkin-Huxley model as rhs. This also demonstrates how to pass on intermediate values to the diffusion solver.
-# The paraview output files will include the selected intermediate values no. 0,1 and 2 of the CellML problem. 
-# Adjust "intermediatesForTransfer" and "statesForTransfer" to select different states, adjust "connectedSlotsTerm1To2" and connectedSlotsTerm2To1 accordingly.
+# Monodomain with Hodgkin-Huxley model as rhs. This also demonstrates how to pass on algebraic values to the diffusion solver.
+# The paraview output files will include the selected algebraic values no. 0,1 and 2 of the CellML problem. 
+# Adjust "algebraicsForTransfer" and "statesForTransfer" to select different states, adjust "connectedSlotsTerm1To2" and connectedSlotsTerm2To1 accordingly.
 #
 # parameters: [<scenario_name>]
 
@@ -68,13 +68,13 @@ if rank_no == 0:
 
 # set values for cellml model
 if "shorten" in cellml_file:
-  parameters_used_as_intermediate = [32]
+  parameters_used_as_algebraic = [32]
   parameters_used_as_constant = [65]
   parameters_initial_values = [0.0, 1.0]
   nodal_stimulation_current = 400.
   
 elif "hodgkin_huxley" in cellml_file:
-  parameters_used_as_intermediate = []
+  parameters_used_as_algebraic = []
   parameters_used_as_constant = [2]
   parameters_initial_values = [0.0]
   nodal_stimulation_current = 40.
@@ -208,8 +208,8 @@ config = {
     #"numberTimeSteps": 1,
     "timeStepWidth": dt_splitting,  # 1e-1
     "endTime": end_time,
-    "connectedSlotsTerm1To2": [0,1,2,3],   # Transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion), slots 1-3: intermediates that should only be transferred to Diffusion because of the output writer (such that they will be included in the output files), not for actual computation.
-    "connectedSlotsTerm2To1": [0,1,2,3],   # Transfer the same values back. Use None for slots that should not be connected. In case of the intermediates it is good to have them connected both directions, 1->2 and 2->1, only then copying will be avoided (variables are reused) because it is asserted that Term 2 does not change the values.
+    "connectedSlotsTerm1To2": [0,1,2,3],   # Transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion), slots 1-3: algebraics that should only be transferred to Diffusion because of the output writer (such that they will be included in the output files), not for actual computation.
+    "connectedSlotsTerm2To1": [0,1,2,3],   # Transfer the same values back. Use None for slots that should not be connected. In case of the algebraics it is good to have them connected both directions, 1->2 and 2->1, only then copying will be avoided (variables are reused) because it is asserted that Term 2 does not change the values.
     "logTimeStepWidthAsKey": "dt_splitting",
     "durationLogKey": "duration_total",
     "timeStepOutputInterval": 1000,
@@ -243,9 +243,9 @@ config = {
           "setSpecificStatesCallFrequency": 0,        # not used
           "setSpecificStatesRepeatAfterFirstCall": 0,  # not used
           
-          "statesForTransfer":                      0,                                              # Shorten / Hodgkin Huxley: state 0 = Vm, Shorten: rate 28 = gamma, intermediate 0 = gamma (OC_WANTED[0])
-          "intermediatesForTransfer":               [0,1,2],                                              # which intermediate values to use in further computation
-          "parametersUsedAsIntermediate": parameters_used_as_intermediate,  #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
+          "statesForTransfer":                      0,                                              # Shorten / Hodgkin Huxley: state 0 = Vm, Shorten: rate 28 = gamma, algebraic 0 = gamma (OC_WANTED[0])
+          "algebraicsForTransfer":               [0,1,2],                                              # which algebraic values to use in further computation
+          "parametersUsedAsAlgebraic": parameters_used_as_algebraic,  #[32],       # list of algebraic value indices, that will be set by parameters. Explicitely defined parameters that will be copied to algebraics, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
           "parametersUsedAsConstant": parameters_used_as_constant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
           "parametersInitialValues": parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
           "meshName": "MeshFiber",

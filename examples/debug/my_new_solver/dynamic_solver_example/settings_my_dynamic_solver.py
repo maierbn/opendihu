@@ -4,6 +4,7 @@
 n = 5   # number of elements  
 
 config = {
+  "logFormat": "csv",
   "Solvers": {
     "linearSolver": {
       "solverType": "gmres",          # the solver type, refer to PETSc documentation about implemented solvers and preconditioners (https://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/KSP/KSPType.html)

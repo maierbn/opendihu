@@ -110,6 +110,7 @@ else:
 use_gradient_field = ("linear" in output_filename)
 
 config = {
+  "logFormat": "csv",
   "solverStructureDiagramFile": None,
   "Meshes": {
     "potentialFlow": {

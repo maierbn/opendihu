@@ -99,6 +99,7 @@ def compare_result(data):
 # config for opendihu
 config = {
   "scenarioName": "3d_box",
+  "logFormat":                      "csv",     # "csv" or "json", format of the lines in the log file, csv gives smaller files
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "mappingsBetweenMeshesLogFile":   "out/mappings_between_meshes.txt",  # output file for log of mappings 
   "HyperelasticitySolver": {

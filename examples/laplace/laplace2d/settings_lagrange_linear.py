@@ -14,6 +14,7 @@ for i in range(int(n+1)):
   print("bc[{}] = {}, bc[{}] = {}".format(i, bc[i], i2, bc[i2]))
 
 config = {
+  "logFormat":                      "csv",     # "csv" or "json", format of the lines in the log file, csv gives smaller files
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "FiniteElementMethod" : {
     "nElements": [n, m],

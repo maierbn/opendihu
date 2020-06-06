@@ -318,6 +318,7 @@ def get_instance_config(i):
     
 config = {
   "scenarioName": scenario_name,
+  "logFormat": "csv",
   "Meshes": {
     "MeshFiber_{}".format(i): {
       "nElements": n_nodes_per_fiber-1,

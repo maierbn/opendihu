@@ -3,6 +3,7 @@
 n = 5   # number of elements  
 
 config = {
+  "logFormat":                      "csv",
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "Solvers": {
     "linearSolver": {

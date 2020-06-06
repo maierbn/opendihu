@@ -30,6 +30,7 @@ mesh = {'nElements': [12, 6, 49], 'nRanks': [1, 1, 1], 'nodePositions': [[70.144
 rank_no = (int)(sys.argv[-2])
 
 config = {
+  "logFormat": "csv",
   "Meshes": {
     "3DFatMesh": mesh
     

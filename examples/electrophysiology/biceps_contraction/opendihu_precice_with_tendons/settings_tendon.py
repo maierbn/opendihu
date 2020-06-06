@@ -149,6 +149,7 @@ print("nRanks: ",variables.meshes["3Dmesh_quadratic"]["nRanks"])
 
 config = {
   "scenarioName":                 variables.scenario_name,      # scenario name to identify the simulation runs in the log file
+  "logFormat":                    "csv",                        # "csv" or "json", format of the lines in the log file, csv gives smaller files
   "solverStructureDiagramFile":   "solver_structure.txt",       # output file of a diagram that shows data connection between solvers
   "mappingsBetweenMeshesLogFile": "mappings_between_meshes_log.txt",    # log file for mappings 
   "Meshes":                       variables.meshes,

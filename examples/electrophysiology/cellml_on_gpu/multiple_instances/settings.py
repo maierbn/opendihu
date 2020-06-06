@@ -23,6 +23,7 @@ opiv=1*pow(2,It_value-2)
 hrciv=opiv
 
 config = {
+  "logFormat": "csv",
   "disablePrinting": False,
   "disableMatrixPrinting": False,
   "ExplicitEuler" : {

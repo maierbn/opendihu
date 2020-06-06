@@ -12,7 +12,8 @@ bc[2*n] = 0.0
 bc[2*n+1] = -1./5
 
 config = {
-  "meta": {           # Under the "meta" key you can add any values, they will appear in the log file
+  "logFormat":  "csv", # "csv" or "json", format of the lines in the log file, csv gives smaller files
+  "meta": {            # Under the "meta" key you can add any values, they will appear in the log file
     "key0": datetime.now(),
     "key1": "test",
     "key2": [0,1,2],

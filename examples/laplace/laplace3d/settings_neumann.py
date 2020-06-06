@@ -68,6 +68,7 @@ if local:
         bc.append({"element": -(nx*ny)+element_no, "constantValue": 1.0, "face": "2+"})
 
 config = {
+  "logFormat":                      "csv",     # "csv" or "json", format of the lines in the log file, csv gives smaller files
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "FiniteElementMethod" : {
     "nElements": n_elements,

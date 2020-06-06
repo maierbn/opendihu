@@ -84,7 +84,7 @@ if variables.n_subdomains is not None:
     variables.n_subdomains_x = variables.n_subdomains[0]
     variables.n_subdomains_y = variables.n_subdomains[1]
     variables.n_subdomains_z = variables.n_subdomains[2]
-n_processes_per_fiber = args.n_subdomains_z
+n_processes_per_fiber = variables.n_subdomains_z
 
 rank_no = (int)(sys.argv[-2])
 n_ranks = (int)(sys.argv[-1])
@@ -433,6 +433,7 @@ config = {
   "MegaMolArguments": "--configfile {} -p ../../input/adios_project.lua ".format(config_filename),  
   #"MegaMolArguments": "--configfile {} -p ../input/empty_view.lua ".format(config_filename),  
   "scenarioName": variables.scenario_name,
+  "logFormat": "csv",
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "Meshes": meshes,
   "Solvers": {

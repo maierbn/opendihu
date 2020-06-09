@@ -347,7 +347,7 @@ save_solution(char   *filename,
    fprintf(file, "%d\n",    size );
    fprintf(file, "%.14e\n", xstart );
    fprintf(file, "%.14e\n", xstop );
-
+   printf("%s \n","wwwwwwwwwwwww");
    for (i = 0; i < size; i++)
    {
       fprintf(file, "%.14e\n", values[i]);

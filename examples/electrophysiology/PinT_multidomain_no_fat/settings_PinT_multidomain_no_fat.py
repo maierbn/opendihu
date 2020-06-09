@@ -59,7 +59,7 @@ motor_units = [
 #end_time = 0.1
 end_time = 0.1
 Am = 1.0
-sampling_stride_z = 74 #muscle 74 200
+sampling_stride_z = 200 #muscle 74 200
 motor_units = motor_units[0:2]    # only 2 motor units [0:2] [0:1]
 solver_tolerance = 1e-10
 
@@ -290,8 +290,8 @@ config = {
   },
   "PinTMD": {
     "tstart": 0,                    # Start time
-    "tstop": 10,         #end_time            # End time
-    "ntime": 10,                      # number of time steps
+    "tstop": 100,         #end_time            # End time
+    "ntime": 1000,                      # number of time steps
     "nspace":   1567,#8235, #3135,
     "Initial Guess": [2,2,4,5,2,2,2,0],
     "option1": "blabla",              # another example option that is parsed in the data object
@@ -338,7 +338,7 @@ config = {
                   # stimulation callbacks
                   #"statesInitialValues": [],
                   "setSpecificStatesFunction":              set_specific_states,                    # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
-                  "setSpecificStatesCallInterval":          int(1./stimulation_frequency/dt_0D),    # set_specific_states should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
+                  "setSpecificStatesCallInterval":          1, #int(1./stimulation_frequency/dt_0D),    # set_specific_states should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
                   "setSpecificStatesCallFrequency":         0,                                      # set_specific_states should be called  stimulation_frequency times per ms
                   "setSpecificStatesFrequencyJitter":       0,                                      # random value to add or substract to setSpecificStatesCallFrequency every stimulation, this is to add random jitter to the frequency
                   "setSpecificStatesRepeatAfterFirstCall":  0.01,                                   # [ms] simulation time span for which the setSpecificStates callback will be called after a call was triggered

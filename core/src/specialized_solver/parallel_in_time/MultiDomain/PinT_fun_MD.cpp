@@ -104,6 +104,11 @@ my_Access_MD(braid_App          app,
       sprintf(filename, "%s.%07d.%05d", "PinT_diffusion.out", index, rank);
       save_solution(filename, u->values, u->size, app->xstart,
             app->xstop, app->ntime, app->tstart, app->tstop);
+      //std::cout << index << "index \n";
+      //for(int i = 0; i < u->size; i++)
+      //{
+      //   std::cout << "\n" << u->values[i];
+      //} 
    }
 
    /* IF on the finest level AND print_level is high enough AND at the final time,

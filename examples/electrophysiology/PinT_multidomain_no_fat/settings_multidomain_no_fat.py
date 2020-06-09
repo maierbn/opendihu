@@ -57,7 +57,7 @@ motor_units = [
 if True:
   end_time = 0.1
   Am = 1.0
-  sampling_stride_z = 74
+  sampling_stride_z = 200
   motor_units = motor_units[0:2]    # only 2 motor units
   solver_tolerance = 1e-10
 

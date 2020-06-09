@@ -84,7 +84,7 @@ int my_Step_MD(braid_App        app,
 
    // set time span for the solver, which is calculated by braid status
    MultiDomainSolver->setTimeSpan(tstart, tstop);
-   MultiDomainSolver->setNumberTimeSteps(1);
+   MultiDomainSolver->setNumberTimeSteps(10);
    MultiDomainSolver->setSystemMatrix((tstop-tstart)/1);
 
    // Debug Options
@@ -118,6 +118,7 @@ int my_Step_MD(braid_App        app,
 //    ierr = VecRestoreArray(solution->valuesGlobal(), val); CHKERRQ(ierr);
 // LOG(DEBUG)<<"test3";
    MultiDomainSolver->getSolution(u->values);
+
    deltaT = tstop - tstart;
    deltaX = (app->xstop - app->xstart) / (ustop->size - 1.0);
 

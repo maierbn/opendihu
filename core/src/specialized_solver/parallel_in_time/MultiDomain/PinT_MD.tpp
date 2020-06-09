@@ -6,6 +6,7 @@
 #include <sstream>
 
 #include <braid.h>
+#include "braid_test.h"
 #include "specialized_solver/parallel_in_time/MultiDomain/PinT_MD_Braid.h"
 #include "specialized_solver/parallel_in_time/MultiDomain/PinT_lib_MD.h"
 #include "specialized_solver/parallel_in_time/MultiDomain/PinT_fun_MD.h"
@@ -214,7 +215,7 @@ run()
   int       skip          = 0;
   double    tol           = 1.0e-07;
   int       cfactor       = 2;
-  int       max_iter      = 30;
+  int       max_iter      = 20;
   int       min_coarse    = 3;
   int       fmg           = 0;
   int       scoarsen      = 0;
@@ -222,7 +223,7 @@ run()
   int       wrapper_tests = 0;
   // int       print_level   = 2;
   int       access_level  = 1;
-  int       use_sequential= 0;
+  int       use_sequential= 1;
 
   // communicatorTotal   = MPI_COMM_WORLD;
   MPI_Comm_rank(communicatorTotal_, &rank);
@@ -233,10 +234,10 @@ run()
      /* Create spatial communicator for wrapper-tests */
      /*braid_SplitCommworld(&comm, 1, &comm_x, &comm_t);*/
 
-     /*braid_TestAll(app, comm_x, stdout, 0.0, (tstop-tstart)/ntime,
-                   2*(tstop-tstart)/ntime, my_Init_MD, my_Free, my_Clone,
-                   my_Sum, my_SpatialNorm, my_BufSize, my_BufPack,
-                   my_BufUnpack, my_Coarsen, my_Interp, my_Residual, my_Step_MD); */
+     braid_TestAll(app_, communicatorX_, stdout, 0.0, (tstop_-tstart_)/ntime_,
+                   2*(tstop_-tstart_)/ntime_, my_Init_MD, my_Free_MD, my_Clone_MD,
+                   my_Sum_MD, my_SpatialNorm_MD, my_BufSize_MD, my_BufPack_MD,
+                   my_BufUnpack_MD, my_Coarsen_MD, my_Interp_MD, my_Residual_MD, my_Step_MD);
   }
   else
   {

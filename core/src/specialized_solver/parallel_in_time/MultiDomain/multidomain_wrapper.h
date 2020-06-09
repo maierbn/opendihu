@@ -71,7 +71,7 @@ public:
   //! get a copy of the current solution as a Petsc Vec that contains all entries, i.e. all states for all multidomain compartments
   //! The layout is such that state no. increases fastest, then compartment no., then value no.
   //! [compartment0state0value0, compartment0state1value0, ..., compartment0stateNvalue0, ..., compartemen1state0value0, ..., compartemen1stateNvalue0, ..., compartment0state0value1, compartement0state1value1, ...]
-  void getSolution(double *data);
+  void getSolution(double *data, int timestepNo, double currentTime);
 
   //! copy the values given in solution back to the internal solution variables (states)
   //! @param solution This Vec should be the one that was returned by getSolutionAsVec.
@@ -114,6 +114,10 @@ public:
 protected:
 
   StrangSplittingMultidomain strangSplittingMultidomain_;   //< the underlying strang splitting scheme with multidomain
+
+  DihuContext context_;                                    //< object that contains the python config for the current context and the global singletons meshManager and solverManager
+  PythonConfig specificSettings_;                          //< python object containing the value of the python config dict with corresponding key
+  OutputWriter::Manager outputWriterManager_;              //< manager object holding all output writer
 };
 
 #include "specialized_solver/parallel_in_time/MultiDomain/multidomain_wrapper.tpp"

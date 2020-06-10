@@ -7,7 +7,8 @@ template<typename StrangSplittingMultidomain>
 MultidomainWrapper<StrangSplittingMultidomain>::
 MultidomainWrapper(DihuContext context) :
   Runnable(),
-  strangSplittingMultidomain_(context)
+  strangSplittingMultidomain_(context),
+  context_(context), specificSettings_(context_.getPythonConfig())
 {
 }
 
@@ -22,6 +23,8 @@ template<typename StrangSplittingMultidomain>
 void MultidomainWrapper<StrangSplittingMultidomain>::
 initialize()
 {
+  outputWriterManager_.initialize(this->context_, this->specificSettings_);
+
   strangSplittingMultidomain_.initialize();
 }
 
@@ -68,7 +71,7 @@ nSolutionValuesLocal()
 
 template<typename StrangSplittingMultidomain>
 void MultidomainWrapper<StrangSplittingMultidomain>::
-getSolution(double *result)
+getSolution(double *result, int timestepNo, double currentTime)
 {
   // get the first operator of the splitting
   typename StrangSplittingMultidomain::TimeStepping1Type &multipleInstancesHeun = strangSplittingMultidomain_.timeStepping1();
@@ -110,6 +113,9 @@ getSolution(double *result)
       }
     }
   }
+
+  // call output writer to write output files
+  this->outputWriterManager_.writeOutput(cellmlAdapter.data(), timestepNo, currentTime);
 }
 
 template<typename StrangSplittingMultidomain>

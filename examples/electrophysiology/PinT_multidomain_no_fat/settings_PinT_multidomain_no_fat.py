@@ -290,8 +290,8 @@ config = {
   },
   "PinTMD": {
     "tstart": 0,                    # Start time
-    "tstop": 10,         #end_time            # End time
-    "ntime": 10,                      # number of time steps
+    "tstop": 100,         #end_time            # End time
+    "ntime": 1000,                      # number of time steps
     "nspace":   1567,#8235, #3135,
     "Initial Guess": [2,2,4,5,2,2,2,0],
     "option1": "blabla",              # another example option that is parsed in the data object

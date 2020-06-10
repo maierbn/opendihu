@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
   std::vector<double> values(nSolutionValuesLocal);
   
   // get the current solution values
-  problem.getSolution(values.data());
+  problem.getSolution(values.data(), 0, 0);
   LOG(INFO) << "number of values: " << nSolutionValuesLocal << ", values: " << values;
   
   // set the current solution values

@@ -223,7 +223,7 @@ run()
   int       wrapper_tests = 0;
   // int       print_level   = 2;
   int       access_level  = 1;
-  int       use_sequential= 1;
+  int       use_sequential= 0;
 
   // communicatorTotal   = MPI_COMM_WORLD;
   MPI_Comm_rank(communicatorTotal_, &rank);

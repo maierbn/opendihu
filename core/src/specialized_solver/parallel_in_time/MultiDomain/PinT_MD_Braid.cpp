@@ -84,7 +84,7 @@ int my_Step_MD(braid_App        app,
 
    // set time span for the solver, which is calculated by braid status
    MultiDomainSolver->setTimeSpan(tstart, tstop);
-   MultiDomainSolver->setNumberTimeSteps(10);
+   MultiDomainSolver->setNumberTimeSteps(1);
    MultiDomainSolver->setSystemMatrix((tstop-tstart)/1);
 
    // Debug Options

@@ -36,7 +36,6 @@ int my_Step_MD(braid_App        app,
    PetscReal tstop;              /* evolve to this time*/
    PetscInt level, i, solver;
    PetscReal deltaX, deltaT;
-   int timestepNo = 0;
    // PetscReal * help;
 
    LOG(DEBUG) << "Braid Step!";
@@ -118,7 +117,7 @@ int my_Step_MD(braid_App        app,
 //    LOG(DEBUG)<<"test2";
 //    ierr = VecRestoreArray(solution->valuesGlobal(), val); CHKERRQ(ierr);
 // LOG(DEBUG)<<"test3";
-   MultiDomainSolver->getSolution(u->values, timestepNo, tstart);
+   MultiDomainSolver->getSolution(u->values);
 
    deltaT = tstop - tstart;
    deltaX = (app->xstop - app->xstart) / (ustop->size - 1.0);
@@ -194,7 +193,7 @@ my_Init_MD(braid_App     app,
    //for (iterator=istart; iterator<iend; iterator++) {VecGetValues(MultiDomainSolver->getSolution(), 1, &iterator, &a); u->values [iterator]=a;}
    //int iterator;
    //for (iterator=0; iterator<u->size; iterator++) {std::cout << u->values[iterator];}
-   MultiDomainSolver->getSolution(u->values, 0, 0.0);
+   MultiDomainSolver->getSolution(u->values);
    //for (iterator=0; iterator<u->size; iterator++) {std::cout << "lul" << u->values[iterator];}
    *u_ptr = u;
 

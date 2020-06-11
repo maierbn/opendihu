@@ -10,6 +10,7 @@
 #include "spatial_discretization/finite_element_method/finite_element_method.h"
 #include "basis_function/lagrange.h"
 #include "mesh/structured_regular_fixed.h"
+#include "specialized_solver/parallel_in_time/MultiDomain/PinT_fun_MD.h"
 
 #include <stdlib.h>
 #include <stdio.h>

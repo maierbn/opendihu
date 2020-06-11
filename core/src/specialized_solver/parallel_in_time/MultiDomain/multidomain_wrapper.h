@@ -71,7 +71,9 @@ public:
   //! get a copy of the current solution as a Petsc Vec that contains all entries, i.e. all states for all multidomain compartments
   //! The layout is such that state no. increases fastest, then compartment no., then value no.
   //! [compartment0state0value0, compartment0state1value0, ..., compartment0stateNvalue0, ..., compartemen1state0value0, ..., compartemen1stateNvalue0, ..., compartment0state0value1, compartement0state1value1, ...]
-  void getSolution(double *data, int timestepNo, double currentTime);
+  void getSolution(double *data);
+
+  void printSolution(double *data, int timestepNo, double currentTime);
 
   //! copy the values given in solution back to the internal solution variables (states)
   //! @param solution This Vec should be the one that was returned by getSolutionAsVec.
@@ -103,6 +105,8 @@ public:
 
   //! reset state of this object, such that a new initialize() is necessary ("uninitialize")
   void reset();
+
+  //void output(typename StrangSplittingMultidomain::TimeStepping1Type::TimeSteppingSchemeType::DiscretizableInTime cml, int timestepNo, double currentTime);
 
   //! return the data object of the timestepping scheme, with the call to this method the output writers get the data to create their output files
   Data &data();

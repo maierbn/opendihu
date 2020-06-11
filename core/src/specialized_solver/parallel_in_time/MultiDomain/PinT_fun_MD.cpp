@@ -5,6 +5,11 @@
 
 #include "specialized_solver/parallel_in_time/MultiDomain/PinT_lib_MD.h"
 
+#include "data_management/specialized_solver/PinT_MD.h"
+
+#include "specialized_solver/parallel_in_time/MultiDomain/PinT_MD_Braid.h"
+
+
 /* create and allocate a vector */
 void
 create_vector_MD(my_Vector **u,
@@ -100,10 +105,16 @@ my_Access_MD(braid_App          app,
    /* Print solution to file if simulation is over */
    if(done)
    {
-      MPI_Comm_rank( (app->comm), &rank);
-      sprintf(filename, "%s.%07d.%05d", "PinT_diffusion.out", index, rank);
-      save_solution(filename, u->values, u->size, app->xstart,
-            app->xstop, app->ntime, app->tstart, app->tstop);
+      //MPI_Comm_rank( (app->comm), &rank);
+      //sprintf(filename, "%s.%07d.%05d", "PinT_diffusion.out", index, rank);
+      //save_solution(filename, u->values, u->size, app->xstart,
+      //      app->xstop, app->ntime, app->tstart, app->tstop);
+      std::cout << "here \n";
+      //raise(SIGTRAP);
+      std::shared_ptr<typename _braid_App_struct::NestedSolverMD> MultiDomainSolver = (*app->MultiDomainSolvers)[0];
+      MultiDomainSolver->setSolution(u->values);
+      MultiDomainSolver->printSolution(u->values, index, t);
+
       //std::cout << index << "index \n";
       //for(int i = 0; i < u->size; i++)
       //{

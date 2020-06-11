@@ -290,11 +290,14 @@ config = {
   },
   "PinTMD": {
     "tstart": 0,                    # Start time
-    "tstop": 100,         #end_time            # End time
-    "ntime": 1000,                      # number of time steps
+    "tstop": 10,         #end_time            # End time
+    "ntime": 10,                      # number of time steps
     "nspace":   1567,#8235, #3135,
     "Initial Guess": [2,2,4,5,2,2,2,0],
     "option1": "blabla",              # another example option that is parsed in the data object
+    #"OutputWriter": [
+    #  {"format": "Paraview", "outputInterval": 1, "filename": "out/pint", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"},
+    #],  
     "nRanksInSpace": n_ranks_space,            # number of processes that compute the spatial domain in parallel
     "TimeSteppingScheme": [
     {
@@ -363,7 +366,7 @@ config = {
           "MultidomainSolver" : multidomain_solver,
           "OutputSurface": {        # version for fibers_emg_2d_output
             "OutputWriter": [
-              {},#"format": "Paraview", "outputInterval": (int)(1./dt_multidomain*output_timestep), "filename": "out/surface", "binary": True, "fixedFormat": False, "combineFiles": True},
+              {}, #"format": "Paraview", "outputInterval": (int)(1./dt_multidomain*output_timestep), "filename": "out/surface", "binary": True, "fixedFormat": False, "combineFiles": True},
             ],
             "face": "1-",
             "MultidomainSolver" : multidomain_solver,

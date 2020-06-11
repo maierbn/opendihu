@@ -77,8 +77,8 @@ advanceTimeSpan()
   {
     if (timeStepNo % this->timeStepOutputInterval_ == 0 && (this->timeStepOutputInterval_ <= 10 || timeStepNo > 0))  // show first timestep only if timeStepOutputInterval is <= 10
     {
-      LOG(INFO) << "Multidomain diffusion, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime
-        << " (linear solver iterations: " << lastNumberOfIterations_ << ")";
+      //LOG(INFO) << "Multidomain diffusion, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime
+      //  << " (linear solver iterations: " << lastNumberOfIterations_ << ")";
     }
 
     LOG(DEBUG) << " Vm: ";

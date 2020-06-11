@@ -5,7 +5,7 @@
 #include "utility/vector_operators.h"
 #include "control/dihu_context.h"
 #include "mesh/mesh_manager/mesh_manager.h"
-#include "mesh/mapping_between_meshes/manager/02_manager.h"
+#include "mesh/mapping_between_meshes/manager/04_manager.h"
 
 namespace MappingBetweenMeshes
 {
@@ -23,6 +23,12 @@ MappingBetweenMeshes(std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::Composit
   {
     LOG(DEBUG) << "Composite mesh \"" << this->functionSpaceSource_->meshName() << "\", mapping to \"" << this->functionSpaceTarget_->meshName() << "\".";
     typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType> SubFunctionSpaceType;
+
+    // add log message, to be included in the log file
+    std::stringstream logMessage;
+    logMessage << "  Mesh \"" << this->functionSpaceSource_->meshName() << "\" is composite and option \"compositeUseOnlyInitializedMappings\" is True, using mappings of submeshes to map to \"" << this->functionSpaceTarget_->meshName() << "\".";
+
+    DihuContext::mappingBetweenMeshesManager()->addLogMessage(logMessage.str());
 
     // get the sub function spaces of the composite function spaces
     const std::vector<std::shared_ptr<SubFunctionSpaceType>> &sourceSubFunctionSpaces
@@ -107,6 +113,12 @@ MappingBetweenMeshes(std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::Composit
       else 
       {
         LOG(DEBUG) << "No mapping \"" << subFunctionSpace->meshName() << "\"->\"" << this->functionSpaceTarget_->meshName() << "\" exists.";
+
+        // add log message, to be included in the log file
+        std::stringstream logMessage;
+        logMessage << "  No mapping \"" << subFunctionSpace->meshName() << "\"->\"" << this->functionSpaceTarget_->meshName() << "\" exists.";
+
+        DihuContext::mappingBetweenMeshesManager()->addLogMessage(logMessage.str());
       }
     }  // loop over submeshes
 

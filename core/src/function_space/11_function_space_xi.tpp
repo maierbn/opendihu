@@ -59,11 +59,11 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType:
 
   VLOG(2) << "point " << point << ", geometryValues: " << geometryValues;
 
-  if (this->pointIsOutsideBoundingBox(point, geometryValues))
+  /*if (this->pointIsOutsideBoundingBox(point, geometryValues, xiTolerance))
   {
     VLOG(2) << "point " << point << " is outside bounding box";
     return false;
-  }
+  }*/
 
   if (this->pointIsNodePosition(point, geometryValues, xi))
   {
@@ -168,6 +168,8 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType:
   // if the norm is not good, i.e. the solution was not found in the previous loop
   if (residuumNormSquared > MathUtility::sqr(RESIDUUM_NORM_TOLERANCE))
   {
+    bool stillHasInitialApproximation = false;
+
     // if current value for residuum is bad, restart completely
     if (residuumNormSquared > 1)
     {
@@ -178,19 +180,21 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType:
       residuum = point - this->template interpolateValueInElement<3>(geometryValues, xi);
       residuumNormSquared = MathUtility::normSquared<3>(residuum);
       residuumNormSquaredPrevious = residuumNormSquared;
+      stillHasInitialApproximation = true;
     }
     
     // iterate further and note the best found xi on the way
     double initialResidual = residuumNormSquared;
     
     // variables for the best value of xi with the lowest residual norm that was found
+    xi += xiStep[0];
     std::array<double,MeshType::dim()> bestXi = xi;
     double bestResidual = residuumNormSquared;
     VLOG(2) << "point not found yet, restart with Xi=" << xi << ", bestResidual: " << bestResidual;
 
 
     // Again, do a lot of iterations to get closer to the correct xi value. This occurs rarely.
-    // Note, increasing thet number of iterations further has no significant effect. For the cases where this loop is required, the Newton scheme kind of fails,
+    // Note, increasing the number of iterations further has no significant effect. For the cases where this loop is required, the Newton scheme kind of fails,
     // the residual drops step by step and then in one single step increases sharply.
     for (int iterationNo = 0; iterationNo < 2*N_NEWTON_ITERATIONS && residuumNormSquared > MathUtility::sqr(RESIDUUM_NORM_TOLERANCE); iterationNo++, nIterations++)
     {
@@ -218,6 +222,7 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType:
       {
         bestResidual = residuumNormSquared;
         bestXi = xi;
+        stillHasInitialApproximation = false;
       }
 
       residuumNormSquaredPrevious = residuumNormSquared;
@@ -245,6 +250,18 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType:
       {
         pointIsInElement = false;
       }
+    }
+
+    // if the computation failed always, set pointIsInElement to false
+    if (stillHasInitialApproximation)
+    {
+      VLOG(2) << "still has initial approximation, nothing better was found";
+      if (this->pointIsOutsideBoundingBox(point, geometryValues, xiTolerance))
+      {
+        VLOG(2) << "point " << point << " is outside bounding box";
+      }
+
+      pointIsInElement = false;
     }
   }
     
@@ -687,7 +704,7 @@ computeApproximateXiForPoint(Vec3 point, element_no_t elementNo, std::array<doub
 
 template<typename MeshType,typename BasisFunctionType>
 bool FunctionSpaceXi<MeshType,BasisFunctionType>::
-pointIsOutsideBoundingBox(Vec3 point, const std::array<Vec3,FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement()> &geometryValues) const
+pointIsOutsideBoundingBox(Vec3 point, const std::array<Vec3,FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement()> &geometryValues, double xiTolerance) const
 {
   double xmin = geometryValues[0][0];
   double xmax = geometryValues[0][0];
@@ -708,11 +725,11 @@ pointIsOutsideBoundingBox(Vec3 point, const std::array<Vec3,FunctionSpaceFunctio
   }
 
   // tolerance has to be at least 1e-9 or higher
-  const double eps = 1e-5;
+  const double eps = xiTolerance * 1./3 * (xmax - xmin + ymax - ymin + zmax - zmin);
   if (point[0] < xmin-eps || point[0] > xmax+eps || point[1] < ymin-eps || point[1] > ymax+eps || point[2] < zmin-eps || point[2] > zmax+eps)
   {
-    VLOG(2) << "point " << point << " is outside bounding box [" << xmin << "," << xmax << "]x[" << ymin << "," << ymax << "]x[" << zmin << "," << zmax << "], diff: " 
-    "[" << point[0]-xmin << "," << xmax-point[0] << "]x[" << point[1]-ymin << "," << ymax-point[1] << "]x[" << point[2]-zmin << "," << zmax-point[2] << "], eps=" << eps;
+    //VLOG(2) << "point " << point << " is outside bounding box [" << xmin << "," << xmax << "]x[" << ymin << "," << ymax << "]x[" << zmin << "," << zmax << "], diff: "
+    //"[" << point[0]-xmin << "," << xmax-point[0] << "]x[" << point[1]-ymin << "," << ymax-point[1] << "]x[" << point[2]-zmin << "," << zmax-point[2] << "], eps=" << eps;
     return true;
   }
   return false;

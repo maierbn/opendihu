@@ -1,4 +1,4 @@
-#include "mesh/mapping_between_meshes/manager/01_manager_implementation.h"
+#include "mesh/mapping_between_meshes/manager/01_manager_initialize.h"
 
 #include "function_space/function_space.h"
 #include "mesh/structured_regular_fixed.h"
@@ -7,13 +7,14 @@
 namespace MappingBetweenMeshes
 {
 
-ManagerImplementation::ManagerImplementation(PythonConfig specificSettings) :
+ManagerInitialize::ManagerInitialize(PythonConfig specificSettings) :
   ManagerLog(specificSettings)
 {
+  // parse all settings in "MappingsBetweenMeshes" and store them in mappingsBetweenMeshes_
   storeMappingsBetweenMeshes(specificSettings);
 }
 
-void ManagerImplementation::storeMappingBetweenMeshes(std::string sourceMeshName, PyObject *targetMeshPy)
+void ManagerInitialize::storeMappingBetweenMeshes(std::string sourceMeshName, PyObject *targetMeshPy)
 {
   if (PyUnicode_Check(targetMeshPy))
   {
@@ -77,9 +78,9 @@ void ManagerImplementation::storeMappingBetweenMeshes(std::string sourceMeshName
   }
 }
 
-void ManagerImplementation::storeMappingsBetweenMeshes(PythonConfig specificSettings)
+void ManagerInitialize::storeMappingsBetweenMeshes(PythonConfig specificSettings)
 {
-  LOG(TRACE) << "MeshManagerImplementation::storeMappingsBetweenMeshes";
+  LOG(TRACE) << "MeshManagerInitialize::storeMappingsBetweenMeshes";
 
   // retrieve python settings object
   if (specificSettings.pyObject())

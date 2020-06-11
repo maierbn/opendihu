@@ -25,12 +25,12 @@ protected:
 
 /** This is the partial specialization for two 3D structured meshes. It computes the target element no.
  */
-template<typename BasisFunctionType>
-class TargetElementNoEstimator<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunctionType>>
+template<typename BasisFunctionType1, typename BasisFunctionType2>
+class TargetElementNoEstimator<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunctionType1>, FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunctionType2>>
 {
 public:
-  typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunctionType> SourceFunctionSpaceType;
-  typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunctionType> TargetFunctionSpaceType;
+  typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunctionType1> SourceFunctionSpaceType;
+  typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunctionType2> TargetFunctionSpaceType;
 
   //! constructor
   TargetElementNoEstimator(std::shared_ptr<SourceFunctionSpaceType> sourceFunctionSpace, std::shared_ptr<TargetFunctionSpaceType> targetFunctionSpace);
@@ -49,12 +49,12 @@ protected:
 
 /** This is the partial specialization for two 3D structured meshes. It computes the target element no.
  */
-template<typename BasisFunctionType>
-class TargetElementNoEstimator<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<3>, BasisFunctionType>>
+template<typename BasisFunctionType1, typename BasisFunctionType2>
+class TargetElementNoEstimator<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunctionType1>, FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<3>, BasisFunctionType2>>
 {
 public:
-  typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunctionType> SourceFunctionSpaceType;
-  typedef FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<3>, BasisFunctionType> TargetFunctionSpaceType;
+  typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunctionType1> SourceFunctionSpaceType;
+  typedef FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<3>, BasisFunctionType2> TargetFunctionSpaceType;
 
   //! constructor
   TargetElementNoEstimator(std::shared_ptr<SourceFunctionSpaceType> sourceFunctionSpace, std::shared_ptr<TargetFunctionSpaceType> targetFunctionSpace);

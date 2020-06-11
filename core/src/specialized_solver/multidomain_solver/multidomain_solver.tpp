@@ -50,6 +50,7 @@ MultidomainSolver(DihuContext context) :
   singleSolution_ = PETSC_NULL;
   singleRightHandSide_ = PETSC_NULL;
   singlePreconditionerMatrix_ = PETSC_NULL;
+  lastNumberOfIterations_ = 0;
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>

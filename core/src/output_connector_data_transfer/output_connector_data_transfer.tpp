@@ -3,6 +3,7 @@
 #include <vector>
 #include <tuple>
 #include "easylogging++.h"
+#include "mesh/mapping_between_meshes/manager/04_manager.h"
 
 /** Transfer between two field variables with given component number
  */

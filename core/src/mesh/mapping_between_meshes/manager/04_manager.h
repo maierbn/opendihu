@@ -4,9 +4,7 @@
 #include <map>
 #include <vector>
 
-#include "mesh/mapping_between_meshes/mapping/02_composite.h"
-#include "mesh/mapping_between_meshes/manager/01_manager_implementation.h"
-#include "field_variable/00_field_variable_base.h"
+#include "mesh/mapping_between_meshes/manager/03_manager_implementation.h"
 
 namespace MappingBetweenMeshes
 {
@@ -102,15 +100,12 @@ public:
 
   //! check if a MappingBetweenMeshes object need to be created and initialized
   //! FunctionSpace1Type should be the lower dimension function space, FunctionSpace2Type the higher dimension function space
-  template<typename FunctionSpace1Type, typename FunctionSpace2Type>
-  void initializeMappingsBetweenMeshes(const std::shared_ptr<FunctionSpace1Type> functionSpace1, const std::shared_ptr<FunctionSpace2Type> functionSpace2);
+  using ManagerInitializeComposite::initializeMappingsBetweenMeshes;
 
   //! check if the mapping from source to target mesh exists
-  template<typename FunctionSpaceSourceType, typename FunctionSpaceTargetType>  
-  bool hasMappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSource,
-                               std::shared_ptr<FunctionSpaceTargetType> functionSpaceTarget);
+  using ManagerInitialize::hasMappingBetweenMeshes;
 
-  //! Simplified methods that call the other methods
+  //! Simplified methods that perform the mapping
 
   //! prepare the mapping for meshes of any dimensionality, this can be called even if not needed
   template<typename FieldVariableSourceType, typename FieldVariableTargetType>
@@ -144,7 +139,7 @@ protected:
 
 }  // namespace
 
-#include "mesh/mapping_between_meshes/manager/02_manager.tpp"
-#include "mesh/mapping_between_meshes/manager/02_manager_mapping.tpp"
+#include "mesh/mapping_between_meshes/manager/04_manager.tpp"
 #include "mesh/mapping_between_meshes/mapping/02_composite.tpp"
 #include "mesh/mapping_between_meshes/mapping/01_implementation.tpp"
+#include "mesh/mapping_between_meshes/mapping/00_construct.tpp"

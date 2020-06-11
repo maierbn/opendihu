@@ -13,7 +13,7 @@ namespace FunctionSpace
 // 1D
 template<typename MeshType, typename BasisFunctionType>
 bool FunctionSpaceStructuredCheckNeighbouringElements<MeshType,BasisFunctionType,Mesh::isDim<1,MeshType>>::
-checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghostMeshNo, std::array<double,MeshType::dim()> &xi, double &residual)
+checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghostMeshNo, std::array<double,MeshType::dim()> &xi, double &residual, double xiTolerance)
 {
   VLOG(1) << "checkNeighbouringElements<1D>(elementNo = " << elementNo << ", ghostMeshNo = " << ghostMeshNo << ", initial xi = " << xi;
 
@@ -25,7 +25,6 @@ checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghost
   bool elementFound = false;
 
   ghostMeshNo = -1;
-  const double xiTolerance = 1e-4;
   for (element_no_t neighbourElementNo = elementNo - 1; neighbourElementNo != elementNo + 2; neighbourElementNo++)
   {
     if (0 <= neighbourElementNo && neighbourElementNo < this->meshPartition_->nElementsLocal(0))
@@ -76,11 +75,10 @@ checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghost
 // 2D
 template<typename MeshType, typename BasisFunctionType>
 bool FunctionSpaceStructuredCheckNeighbouringElements<MeshType,BasisFunctionType,Mesh::isDim<2,MeshType>>::
-checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghostMeshNo, std::array<double,MeshType::dim()> &xi, double &residual)
+checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghostMeshNo, std::array<double,MeshType::dim()> &xi, double &residual, double xiTolerance)
 {
   VLOG(1) << "checkNeighbouringElements<2D>(elementNo = " << elementNo << ", ghostMeshNo = " << ghostMeshNo << ", initial xi = " << xi;
 
-  const double xiTolerance = 1e-4;
   static std::array<int,3> xOffset;
   static std::array<int,3> yOffset;
   const int D = 2;
@@ -347,11 +345,10 @@ checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghost
 // 3D
 template<typename MeshType, typename BasisFunctionType>
 bool FunctionSpaceStructuredCheckNeighbouringElements<MeshType,BasisFunctionType,Mesh::isDim<3,MeshType>>::
-checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghostMeshNo, std::array<double,MeshType::dim()> &xi, double &residual)
+checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghostMeshNo, std::array<double,MeshType::dim()> &xi, double &residual, double xiTolerance)
 {
-  VLOG(2) << "checkNeighbouringElements(elementNo = " << elementNo << ", ghostMeshNo = " << ghostMeshNo << ", initial xi = " << xi;
+  LOG(DEBUG) << "  " << "checkNeighbouringElements(elementNo = " << elementNo << ", ghostMeshNo = " << ghostMeshNo << ", initial xi = " << xi;
 
-  const double xiTolerance = 1e-3;  //1e-4
   static std::array<int,3> xOffset;
   static std::array<int,3> yOffset;
   static std::array<int,3> zOffset;
@@ -466,6 +463,8 @@ checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghost
   std::array<double,MeshType::dim()> xiBest; 
   double residualBest;
   double excessivityScoreBest = std::numeric_limits<double>::max();
+  LOG(DEBUG) << "intiialize excessivityScoreBest: " << excessivityScoreBest;
+
   bool elementFound = false;
 
   std::array<int,3> neighbourCoordinatesLocal;
@@ -636,7 +635,7 @@ checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghost
           neighbourElementNo = this->meshPartition_->getElementNoLocal(neighbourCoordinatesLocal);
           functionSpace = this;
           ghostMeshNo = -1;
-          VLOG(1) << "normal, neighbourElementNo: " << neighbourElementNo << " nElementsLocal: " << this->nElementsLocal() << "=" << functionSpace->nElementsLocal();
+          LOG(DEBUG) << "  " << "normal, neighbourElementNo: " << neighbourElementNo << " nElementsLocal: " << this->nElementsLocal() << "=" << functionSpace->nElementsLocal();
         }
 
         // check if point is in current neighbour element
@@ -653,7 +652,7 @@ checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghost
               excessivityScore = std::max({excessivityScore, xi[i] - 1.0, 0.0 - xi[i]});
             }
             
-            VLOG(1) << "  checkNeighbouringElements: pointIsInElement returned true, found at xi=" << xi << ", elementNo: " << neighbourElementNo << ", excessivityScore=" << excessivityScore;
+            LOG(DEBUG) << "  " << "  checkNeighbouringElements: pointIsInElement returned true, found at xi=" << xi << ", elementNo: " << neighbourElementNo << ", excessivityScore=" << excessivityScore;
 
             // if the point is really inside the element even with the tight tolerance, return true,
             // otherwise continue looking in elements for a better fit
@@ -672,13 +671,15 @@ checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghost
                 xiBest = xi;
                 ghostMeshNoBest = ghostMeshNo;
                 residualBest = residual;
+
                 excessivityScoreBest = excessivityScore;
+                LOG(DEBUG) << "set excessivityScoreBest to " << excessivityScoreBest;
               }
             }
           }
           else
           {
-            VLOG(2) << "  point is not in element " << neighbourElementNo << " (xi: " << xi << ").";
+            LOG(DEBUG) << "  point is not in element " << neighbourElementNo << " (xi: " << xi << ", residual: " << residual << ") with xiTolerance: " << xiTolerance << ".";
           }
         }
       }  // x
@@ -694,7 +695,7 @@ checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghost
     xi = xiBest;
     ghostMeshNo = ghostMeshNoBest;
     residual = residualBest;
-    VLOG(1) << "  checkNeighbouringElements: best found was xi=" << xi << ", elementNo: " << elementNo;
+    LOG(DEBUG) << "  checkNeighbouringElements: best found was xi=" << xi << ", elementNo: " << elementNo;
     return true;
   }
 

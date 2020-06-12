@@ -112,7 +112,7 @@ MappingBetweenMeshesConstruct(std::shared_ptr<FunctionSpaceSourceType> functionS
       }
       else
       {
-        if (enableWarnings || true)
+        if (enableWarnings)
         {
           LOG(INFO) << "In mapping between meshes \"" << functionSpaceSource->meshName() << "\" and \""
             << functionSpaceTarget->meshName() << "\", source dof local " << sourceDofNoLocal
@@ -191,7 +191,7 @@ MappingBetweenMeshesConstruct(std::shared_ptr<FunctionSpaceSourceType> functionS
       if (fabs(computedSourcePosition[0] - position[0]) > 1e-1 || fabs(computedSourcePosition[1] - position[1]) > 1e-1 || fabs(computedSourcePosition[2] - position[2]) > 1e-1)
         LOG(ERROR) << "mismatch " << computedSourcePosition << " != " << position << ", " << ", xi: " << xi;
 
-      LOG(INFO) << functionSpaceSource->meshName() << " dof " << sourceDofNoLocal << " value = " << position << " = " << targetPositions << " * " << targetMappingInfo.targetElements[0].scalingFactors
+      LOG(DEBUG) << functionSpaceSource->meshName() << " dof " << sourceDofNoLocal << " value = " << position << " = " << targetPositions << " * " << targetMappingInfo.targetElements[0].scalingFactors
         << ", interpolation in element " << targetMappingInfo.targetElements[0].elementNoLocal << " of " << functionSpaceTarget->meshName();
 
 

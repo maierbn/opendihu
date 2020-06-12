@@ -5,6 +5,7 @@
 #include "easylogging++.h"
 #include "function_space/00_function_space_base_dim.h"
 #include "utility/math_utility.h"
+#include "utility/nelder_mead.h"
 #include <chrono>
 
 namespace FunctionSpace
@@ -168,79 +169,59 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType:
   // if the norm is not good, i.e. the solution was not found in the previous loop
   if (residuumNormSquared > MathUtility::sqr(RESIDUUM_NORM_TOLERANCE))
   {
-    bool stillHasInitialApproximation = false;
+    // use a jacobian-free method
 
     // if current value for residuum is bad, restart completely
     if (residuumNormSquared > 1)
     {
       // for 3D mesh and linear Lagrange basis function compute approximate xi by heuristic, else set to 0.5
       this->computeApproximateXiForPoint(point, elementNo, xi);
-          
-      // compute initial residuum
-      residuum = point - this->template interpolateValueInElement<3>(geometryValues, xi);
-      residuumNormSquared = MathUtility::normSquared<3>(residuum);
-      residuumNormSquaredPrevious = residuumNormSquared;
-      stillHasInitialApproximation = true;
     }
-    
-    // iterate further and note the best found xi on the way
-    double initialResidual = residuumNormSquared;
-    
-    // variables for the best value of xi with the lowest residual norm that was found
-    xi += xiStep[0];
-    std::array<double,MeshType::dim()> bestXi = xi;
-    double bestResidual = residuumNormSquared;
-    VLOG(2) << "point not found yet, restart with Xi=" << xi << ", bestResidual: " << bestResidual;
 
+    using MathUtility::NelderMead::point_t;
+    using MathUtility::NelderMead::fun_t;
+    using MathUtility::NelderMead::optimset_t;
 
-    // Again, do a lot of iterations to get closer to the correct xi value. This occurs rarely.
-    // Note, increasing the number of iterations further has no significant effect. For the cases where this loop is required, the Newton scheme kind of fails,
-    // the residual drops step by step and then in one single step increases sharply.
-    for (int iterationNo = 0; iterationNo < 2*N_NEWTON_ITERATIONS && residuumNormSquared > MathUtility::sqr(RESIDUUM_NORM_TOLERANCE); iterationNo++, nIterations++)
+    point_t startingPoint;
+    startingPoint.x = xi.data();
+
+    point_t solution;
+
+    fun_t costFunction = [&](int n, point_t *currentPoint, const void *arguments)
     {
-      // perform Newton step
-      Tensor2<D> inverseJacobian = this->getInverseJacobian(geometryValues, elementNo, xi);
-      xi += inverseJacobian * MathUtility::transformToD<D,3>(residuum);
-
-      // compute residuum
-      residuum = point - this->template interpolateValueInElement<3>(geometryValues, xi);
-      residuumNormSquared = MathUtility::normSquared<3>(residuum);
-      
-      // if the residuum value jumped more than 1000 in one step, discard current step and restart with a slightly different xi value
-      if (residuumNormSquared - residuumNormSquaredPrevious > 1000)
+      std::array<double,D> xi;
+      for (int i = 0; i < D; i++)
       {
-        VLOG(2) << "jump in norm " << residuumNormSquaredPrevious << " -> " << residuumNormSquared << ", xi: " << xi;
-
-        xi = xiPrevious + xiStep[iterationNo%6];
-        residuum = point - this->template interpolateValueInElement<3>(geometryValues, xi);
-        residuumNormSquared = MathUtility::normSquared<3>(residuum);
-
-        VLOG(2) << "reset to xi=" << xi << ", norm: " << residuumNormSquared;
+        xi[i] = currentPoint->x[i];
       }
+      Vec3 residuum = point - this->template interpolateValueInElement<3>(geometryValues, xi);
+      double residuumNormSquared = MathUtility::normSquared<3>(residuum);
+      currentPoint->fx = residuumNormSquared;
+    };
 
-      if (residuumNormSquared < bestResidual)
-      {
-        bestResidual = residuumNormSquared;
-        bestXi = xi;
-        stillHasInitialApproximation = false;
-      }
+    // optimisation settings
+    optimset_t optimset;
+    optimset.tolx = 1e-5     // tolerance on the simplex solutions coordinates
+    optimset.tolf = 1e-5;     // tolerance on the function value
+    optimset.max_iter = 1000; // maximum number of allowed iterations
+    optimset.max_eval = 1000; // maximum number of allowed function evaluations
+    optimset.verbose = 0;     // toggle verbose output during minimization
 
-      residuumNormSquaredPrevious = residuumNormSquared;
-      xiPrevious = xi;
+    LOG(DEBUG) << "Nelder-Mead, startingPoint: " << xi;
 
-      if (VLOG_IS_ON(3))
-      {
-        VLOG(3) << " xi_" << iterationNo << " = "  << xi << ", residuum: " << residuum << " (norm: " << sqrt(residuumNormSquared) << ")";
-      }
-    }
+    // call Nelder Mead algorithm to optimize
+    MathUtility::NelderMead::optimize(D, &startingPoint, &solution,
+                                      costFunction, NULL,
+                                      &optimset);
 
-    // Use the best values that were found during the iterations. This is usually not the value from the last iteration.
-    xi = bestXi;
-    residual = bestResidual;
-    residuumNormSquared = bestResidual;
+    std::copy(solution.x, solution.x+D, xi.data());
 
-    VLOG(2) << "pointIsInElement point: " << point << ", elementNo: " << elementNo
-      << ", residual improved from " << initialResidual << " to " << residual << ", xi: " << xi;
+    // free memory
+    free(solution.x);
+
+    residual = solution.fx;
+
+    LOG(INFO) << "Nelder-Mead, result: " << xi << ", residual: " << residual;
 
     // check if point is inside the element by looking at the value of xi
     pointIsInElement = true;
@@ -251,25 +232,13 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType:
         pointIsInElement = false;
       }
     }
-
-    // if the computation failed always, set pointIsInElement to false
-    if (stillHasInitialApproximation)
-    {
-      VLOG(2) << "still has initial approximation, nothing better was found";
-      if (this->pointIsOutsideBoundingBox(point, geometryValues, xiTolerance))
-      {
-        VLOG(2) << "point " << point << " is outside bounding box";
-      }
-
-      pointIsInElement = false;
-    }
   }
     
   // if the correct value was still not found, emit a warning, but only in debug mode
 #ifndef NDEBUG
   if (pointIsInElement && residuumNormSquared > MathUtility::sqr(RESIDUUM_NORM_TOLERANCE))
   {
-    LOG(WARNING) << "pointIsInElement failed after " << 3*N_NEWTON_ITERATIONS << " iterations, point: " 
+    LOG(WARNING) << "pointIsInElement failed after " << N_NEWTON_ITERATIONS << " iterations, point: "
       << point << ", elementNo: " << elementNo << ", geometryValues: " << geometryValues << ", found xi: " 
       << xi << ", but residual: " << sqrt(residuumNormSquared) << " > " << RESIDUUM_NORM_TOLERANCE 
       << ", (" << residuumNormSquared << " > " << MathUtility::sqr(RESIDUUM_NORM_TOLERANCE) << ")";

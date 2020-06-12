@@ -225,12 +225,12 @@ mapHighToLowDimension(
     }
 
     if (fabs(scalingFactorsSum-1.0) > 1e-10)
-      LOG(INFO) << "scalingFactorsSum: " << scalingFactorsSum << ", scalingFactors: " << targetElement.scalingFactors;
+      LOG(ERROR) << "Scaling factors do not sum to 1, scalingFactorsSum: " << scalingFactorsSum << ", scalingFactors: " << targetElement.scalingFactors;
 
     VecD<nComponents> targetValue = sourceValues * targetElement.scalingFactors;
     fieldVariableTarget.setValue(targetDofNoLocal, targetValue, INSERT_VALUES);
 
-    LOG(INFO) << fieldVariableTarget.functionSpace()->meshName() << " dof " << targetDofNoLocal << " value = " << targetValue << " = " << sourceValues << " * " << targetElement.scalingFactors << ", interpolation in element " << sourceElementNoLocal << " of " << fieldVariableSource.functionSpace()->meshName();
+    LOG(DEBUG) << fieldVariableTarget.functionSpace()->meshName() << " dof " << targetDofNoLocal << " value = " << targetValue << " = " << sourceValues << " * " << targetElement.scalingFactors << ", interpolation in element " << sourceElementNoLocal << " of " << fieldVariableSource.functionSpace()->meshName();
 
 #ifdef OUTPUT_INTERPOLATION_LEAP
     if (targetDofNoLocal > 0)

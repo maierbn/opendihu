@@ -73,7 +73,7 @@ public:
   //! [compartment0state0value0, compartment0state1value0, ..., compartment0stateNvalue0, ..., compartemen1state0value0, ..., compartemen1stateNvalue0, ..., compartment0state0value1, compartement0state1value1, ...]
   void getSolution(double *data);
 
-  void printSolution(double *data, int timestepNo, double currentTime);
+  void printSolution(int timestepNo, double currentTime);
 
   //! copy the values given in solution back to the internal solution variables (states)
   //! @param solution This Vec should be the one that was returned by getSolutionAsVec.

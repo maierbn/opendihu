@@ -113,7 +113,7 @@ my_Access_MD(braid_App          app,
       //raise(SIGTRAP);
       std::shared_ptr<typename _braid_App_struct::NestedSolverMD> MultiDomainSolver = (*app->MultiDomainSolvers)[0];
       MultiDomainSolver->setSolution(u->values);
-      MultiDomainSolver->printSolution(u->values, index, t);
+      MultiDomainSolver->printSolution(index, t);
 
       //std::cout << index << "index \n";
       //for(int i = 0; i < u->size; i++)

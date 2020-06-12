@@ -23,6 +23,7 @@ template<typename StrangSplittingMultidomain>
 void MultidomainWrapper<StrangSplittingMultidomain>::
 initialize()
 {
+  LOG(INFO) << "initialize output writer for MultidomainWrapper from " << this->specificSettings_;
   outputWriterManager_.initialize(this->context_, this->specificSettings_);
 
   strangSplittingMultidomain_.initialize();
@@ -115,14 +116,14 @@ getSolution(double *result)
   }
 
   // call output writer to write output files
-  //  this->outputWriterManager_.writeOutput(cellmlAdapter.data(), timestepNo, currentTime);
+  this->outputWriterManager_.writeOutput(cellmlAdapter.data(), 0, 0.0);
 
 }
 
 
 template<typename StrangSplittingMultidomain>
 void MultidomainWrapper<StrangSplittingMultidomain>::
-printSolution(double *result, int timestepNo, double currentTime)
+printSolution(int timestepNo, double currentTime)
 {
   // get the first operator of the splitting
   typename StrangSplittingMultidomain::TimeStepping1Type &multipleInstancesHeun = strangSplittingMultidomain_.timeStepping1();
@@ -130,40 +131,10 @@ printSolution(double *result, int timestepNo, double currentTime)
   using HeunType = typename StrangSplittingMultidomain::TimeStepping1Type::TimeSteppingSchemeType;
   using CellMLAdapterType = typename HeunType::DiscretizableInTime;
 
-  int nStates = CellMLAdapterType::nStates();
-  int nCompartments = multipleInstancesHeun.instancesLocal().size();
-
   // determine number of local dofs
   assert(!multipleInstancesHeun.instancesLocal().empty());
   HeunType &heunScheme = multipleInstancesHeun.instancesLocal().front();
   CellMLAdapterType &cellmlAdapter = heunScheme.discretizableInTime();
-
-  int nDofsLocalWithoutGhosts = cellmlAdapter.data().functionSpace()->nDofsLocalWithoutGhosts();
-
-  std::vector<double> localValues;
-
-  // loop over multidomain compartments
-  for (int compartmentNo = 0; compartmentNo < nCompartments; compartmentNo++)
-  {
-    HeunType &heunScheme = multipleInstancesHeun.instancesLocal()[compartmentNo];
-    CellMLAdapterType &cellmlAdapter = heunScheme.discretizableInTime();
-
-    // loop over CellML states
-    for (int stateNo = 0; stateNo < nStates; stateNo++)
-    {
-      // get the field variable entries for the current state of the current compartment
-      localValues.clear();
-      cellmlAdapter.data().states()->getValuesWithoutGhosts(stateNo, localValues);
-
-      assert(nDofsLocalWithoutGhosts == localValues.size());
-
-      // store the values in the result vector
-      for (dof_no_t dofNoLocal = 0; dofNoLocal < nDofsLocalWithoutGhosts; dofNoLocal++)
-      {
-        result[dofNoLocal * nCompartments * nStates + compartmentNo * nStates + stateNo] = localValues[dofNoLocal];
-      }
-    }
-  }
 
   // call output writer to write output files
         std::cout << "lul \n";

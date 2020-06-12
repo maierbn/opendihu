@@ -218,6 +218,8 @@ multidomain_solver = {
   "inputIsGlobal":                    True,                               # if values and dofs correspond to the global numbering
   "showLinearSolverOutput":           False,                              # if convergence information of the linear solver in every timestep should be printed, this is a lot of output for fast computations
   "compartmentRelativeFactors":       relative_factors.tolist(),          # list of lists of the factors for every dof, because "inputIsGlobal": True, this contains the global dofs
+  "updateSystemMatrixEveryTimestep":  False,
+  "useSymmetricPreconditionerMatrix": True,
   "PotentialFlow": {
     "FiniteElementMethod" : {  
       "meshName":                     "mesh_{}".format(k),
@@ -259,6 +261,7 @@ multidomain_solver = {
 #new=[elements / 2 for elements in n_linear_elements_per_coordinate_direction]
 config = {
   "solverStructureDiagramFile": "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
+  "mappingsBetweenMeshesLogFile": "out/mappings_between_meshes.txt",
   "Meshes": {
     "mesh_{}".format(l): {
       "nElements":             n_linear_elements_per_coordinate_direction,
@@ -295,9 +298,9 @@ config = {
     "nspace":   1567,#8235, #3135,
     "Initial Guess": [2,2,4,5,2,2,2,0],
     "option1": "blabla",              # another example option that is parsed in the data object
-    #"OutputWriter": [
-    #  {"format": "Paraview", "outputInterval": 1, "filename": "out/pint", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"},
-    #],  
+    "OutputWriter": [
+      {"format": "Paraview", "outputInterval": 1, "filename": "out/pint_md", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"},
+    ],  
     "nRanksInSpace": n_ranks_space,            # number of processes that compute the spatial domain in parallel
     "TimeSteppingScheme": [
     {
@@ -326,6 +329,7 @@ config = {
                 "inputMeshIsGlobal":            True,
                 "dirichletBoundaryConditions":  {},
                 "nAdditionalFieldVariables":    0,
+                "checkForNanInf":               True,
                     
                 "CellML" : {
                   "modelFilename":                          cellml_file,                            # input C++ source file or cellml XML file
@@ -372,12 +376,12 @@ config = {
             "MultidomainSolver" : multidomain_solver,
           }
         }
-      } 
+      },
+      "OutputWriter": [
+        {"format": "Paraview", "outputInterval": 1, "filename": "out/pint", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"},
+      ]
     } for j in range (NumberOfMultiDomainSolvers)] 
   },
-  "OutputWriter": [
-    {"format": "Paraview", "outputInterval": 1, "filename": "out/pint", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"},
-  ]
 }
 
 print("Linear solver type: {}".format(config["Solvers"]["activationSolver"]["solverType"]))

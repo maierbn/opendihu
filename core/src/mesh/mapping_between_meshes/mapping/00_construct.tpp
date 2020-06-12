@@ -138,8 +138,8 @@ MappingBetweenMeshesConstruct(std::shared_ptr<FunctionSpaceSourceType> functionS
       {
         double phiContribution;
 
-        // for quadratic elements, treat as consisting of linear elements
-        if (std::is_same<typename FunctionSpaceTargetType::BasisFunction,typename BasisFunction::LagrangeOfOrder<2>>::value)
+        // for quadratic elements, treat as consisting of linear elements, this is disabled because it gives worse quality than the direct quadratic contributions
+        if (false && std::is_same<typename FunctionSpaceTargetType::BasisFunction,typename BasisFunction::LagrangeOfOrder<2>>::value)
         {
           bool sourceDofHasContributionToTargetDof = true;
           phiContribution = quadraticElementComputePhiContribution(xi, targetDofIndex, sourceDofHasContributionToTargetDof);

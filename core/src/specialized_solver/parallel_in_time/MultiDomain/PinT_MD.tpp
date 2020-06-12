@@ -299,7 +299,7 @@ run()
   //executeMyHelperMethod();
 
   // write current output values using the output writers
-  this->outputWriterManager_.writeOutput(*this->data_.back());
+  //this->outputWriterManager_.writeOutput(*this->data_.back());
 }
 
 template<class NestedSolverMD>

@@ -374,7 +374,10 @@ config = {
         }
       } 
     } for j in range (NumberOfMultiDomainSolvers)] 
-  }
+  },
+  "OutputWriter": [
+    {"format": "Paraview", "outputInterval": 1, "filename": "out/pint", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"},
+  ]
 }
 
 print("Linear solver type: {}".format(config["Solvers"]["activationSolver"]["solverType"]))

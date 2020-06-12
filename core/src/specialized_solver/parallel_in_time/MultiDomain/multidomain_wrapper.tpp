@@ -116,7 +116,7 @@ getSolution(double *result)
   }
 
   // call output writer to write output files
-  this->outputWriterManager_.writeOutput(cellmlAdapter.data(), 0, 0.0);
+  // this->outputWriterManager_.writeOutput(cellmlAdapter.data(), 0, 0.0);
 
 }
 

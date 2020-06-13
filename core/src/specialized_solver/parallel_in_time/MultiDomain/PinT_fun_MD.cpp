@@ -109,8 +109,6 @@ my_Access_MD(braid_App          app,
       //sprintf(filename, "%s.%07d.%05d", "PinT_diffusion.out", index, rank);
       //save_solution(filename, u->values, u->size, app->xstart,
       //      app->xstop, app->ntime, app->tstart, app->tstop);
-      std::cout << "here \n";
-      //raise(SIGTRAP);
       std::shared_ptr<typename _braid_App_struct::NestedSolverMD> MultiDomainSolver = (*app->MultiDomainSolvers)[0];
       MultiDomainSolver->setSolution(u->values);
       MultiDomainSolver->printSolution(index, t);

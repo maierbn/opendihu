@@ -91,8 +91,8 @@ protected:
   // Braid variables
   braid_Core    core_;
   my_App       *app_;
-  int print_level_   = 3;
-  int max_levels_    = 3;
+  int print_level_   = 2;
+  int max_levels_    = 10;
 
 };
 } // namespace ParallelInTime

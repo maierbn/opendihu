@@ -137,7 +137,6 @@ printSolution(int timestepNo, double currentTime)
   CellMLAdapterType &cellmlAdapter = heunScheme.discretizableInTime();
 
   // call output writer to write output files
-        std::cout << "lul \n";
   this->outputWriterManager_.writeOutput(cellmlAdapter.data(), timestepNo, currentTime);
 }
 

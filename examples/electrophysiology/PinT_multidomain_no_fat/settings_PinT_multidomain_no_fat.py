@@ -68,7 +68,7 @@ n_compartments = len(motor_units)
 # own MPI rank no and number of MPI ranks
 rank_no = (int)(sys.argv[-2])
 n_ranks = (int)(sys.argv[-1])
-n_ranks_space = 1
+n_ranks_space = 2
 
 # load MU distribution and firing times
 fiber_distribution = np.genfromtxt(fiber_distribution_file, delimiter=" ")
@@ -294,12 +294,12 @@ config = {
   "PinTMD": {
     "tstart": 0,                    # Start time
     "tstop": 10,         #end_time            # End time
-    "ntime": 100,                      # number of time steps
+    "ntime": 10,                      # number of time steps
     "nspace":   1567,#8235, #3135,
     "Initial Guess": [2,2,4,5,2,2,2,0],
     "option1": "blabla",              # another example option that is parsed in the data object
     "OutputWriter": [
-      {"format": "Paraview", "outputInterval": 1, "filename": "out/pint_md", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"},
+      #{"format": "Paraview", "outputInterval": 1, "filename": "out/pint_md", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"},
     ],  
     "nRanksInSpace": n_ranks_space,            # number of processes that compute the spatial domain in parallel
     "TimeSteppingScheme": [
@@ -378,7 +378,7 @@ config = {
         }
       },
       "OutputWriter": [
-        {"format": "Paraview", "outputInterval": 1, "filename": "out/pint", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"},
+        #{"format": "Paraview", "outputInterval": 1, "filename": "out/pint", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"},
       ]
     } for j in range (NumberOfMultiDomainSolvers)] 
   },

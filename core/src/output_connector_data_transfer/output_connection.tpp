@@ -3,8 +3,53 @@
 template<typename FunctionSpaceType1, int nComponents1a, int nComponents1b, typename FunctionSpaceType2, int nComponents2a, int nComponents2b>
 void OutputConnection::
 initialize(const Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b> &transferableSolutionData1,
-           const Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b> &transferableSolutionData2)
+           const Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b> &transferableSolutionData2,
+           int offsetSlotNoData1, int offsetSlotNoData2)
 {
+  offsetSlotNoData1_ = offsetSlotNoData1;
+  offsetSlotNoData2_ = offsetSlotNoData2;
+
+  // consider offsets and compute connectorTerm1To2_ and connectorTerm2To1_
+  // for example, offsetSlotNoData1_=2, offsetSlotNoData2_=1
+  //
+  // if connectorForVisualizerTerm1To2_ is:
+  // slots data1  data2
+  //       [ 0 +-->0 ] <-- handled in a previous OutputConnection object
+  //       [ 1-+   1
+  //         2---->2
+  //         3--+  3
+  //         4  +->4
+  // In this example, the OutputConnection object consideres only (global) slots 2,3,4 which become 0,1,2 for data1 and for data2 1-4 which become 0-3.
+  //
+  // this leads to connectorTerm1To2_:
+  // slots data1  data2
+  //         0---+ 0
+  //         1-+ +>1
+  //         2 |   2
+  //           +-->3
+
+  // compute connectorTerm1To2_ from connectorForVisualizerTerm1To2_
+  for (int globalSlotNo1 = offsetSlotNoData1_; globalSlotNo1 < connectorForVisualizerTerm1To2_.size(); globalSlotNo1++)
+  {
+    Connector connector = connectorForVisualizerTerm1To2_[globalSlotNo1];
+    if (connector.index >= offsetSlotNoData2_)
+    {
+      connector.index -= offsetSlotNoData2_;
+      connectorTerm1To2_.push_back(connector);
+    }
+  }
+
+  // compute connectorTerm2To1_ from connectorForVisualizerTerm2To1_
+  for (int globalSlotNo2 = offsetSlotNoData2_; globalSlotNo2 < connectorForVisualizerTerm2To1_.size(); globalSlotNo2++)
+  {
+    Connector connector = connectorForVisualizerTerm2To1_[globalSlotNo2];
+    if (connector.index >= offsetSlotNoData1_)
+    {
+      connector.index -= offsetSlotNoData1_;
+      connectorTerm2To1_.push_back(connector);
+    }
+  }
+
   if (transferDirectionTerm1To2_)
   {
     nFieldVariablesTerm1Vector1_ = transferableSolutionData1.variable1.size();
@@ -173,6 +218,8 @@ initializeSlotInformation(const Data::OutputConnectorData<FunctionSpaceType1,nCo
 
       int fromIndex = fromVectorNo*nFieldVariablesTerm1Vector1_ + fromVectorIndex;
       connectorTerm1To2_[fromIndex].avoidCopyIfPossible = false;
+      if (!connectorForVisualizerTerm1To2_.empty())
+        connectorForVisualizerTerm1To2_[fromIndex+offsetSlotNoData1_].avoidCopyIfPossible = false;
     }
   }
 
@@ -255,6 +302,8 @@ initializeSlotInformation(const Data::OutputConnectorData<FunctionSpaceType1,nCo
 
       int fromIndex = fromVectorNo*nFieldVariablesTerm1Vector1_ + fromVectorIndex;
       connectorTerm1To2_[fromIndex].avoidCopyIfPossible = false;
+      if (!connectorForVisualizerTerm1To2_.empty())
+        connectorForVisualizerTerm1To2_[fromIndex+offsetSlotNoData1_].avoidCopyIfPossible = false;
     }
   }
 
@@ -338,6 +387,8 @@ initializeSlotInformation(const Data::OutputConnectorData<FunctionSpaceType1,nCo
 
       int fromIndex = fromVectorNo*nFieldVariablesTerm2Vector1_ + fromVectorIndex;
       connectorTerm2To1_[fromIndex].avoidCopyIfPossible = false;
+      if (!connectorForVisualizerTerm2To1_.empty())
+        connectorForVisualizerTerm2To1_[fromIndex+offsetSlotNoData2_].avoidCopyIfPossible = false;
     }
   }
 
@@ -421,6 +472,8 @@ initializeSlotInformation(const Data::OutputConnectorData<FunctionSpaceType1,nCo
 
       int fromIndex = fromVectorNo*nFieldVariablesTerm2Vector1_ + fromVectorIndex;
       connectorTerm2To1_[fromIndex].avoidCopyIfPossible = false;
+      if (!connectorForVisualizerTerm2To1_.empty())
+        connectorForVisualizerTerm2To1_[fromIndex+offsetSlotNoData2_].avoidCopyIfPossible = false;
     }
   }
 

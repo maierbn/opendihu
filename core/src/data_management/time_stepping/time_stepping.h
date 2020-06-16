@@ -46,17 +46,8 @@ public:
   //! set the names of the components for the solution field variable
   void setComponentNames(std::vector<std::string> componentNames);
   
-  //! set the value of outputComponentNo, i.e. the component no. of the component of the field variable that will be transferred to the other part of the operator when an operator splitting is used
-  //void setOutputComponentNo(int outputComponentNo);
-
-  //! set the value of outputComponentNo, i.e. the component no. of the component of the field variable that will be transferred to the other part of the operator when an operator splitting is used
-  //void setPrefactor(double prefactor);
-
   //! print all stored data to stdout
   virtual void print();
-
-  //! return the number of degrees of freedom per mesh node
-  static constexpr int getNDofsPerNode();
 
   //! return the total number of degrees of freedom, this can be a multiple of the number of nodes of the mesh
   virtual dof_no_t nUnknownsLocalWithGhosts();

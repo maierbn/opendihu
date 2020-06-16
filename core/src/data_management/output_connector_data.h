@@ -26,8 +26,6 @@ struct ComponentOfFieldVariable
 
   //! get the value of the local dof no
   double getValue(dof_no_t dofNoLocal);
-
-
 };
 
 // operator used for output
@@ -46,6 +44,10 @@ struct OutputConnectorData
 
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> geometryField = nullptr;   //< geometry field to be transferred if set
 
+  //! define types of the two possible field variables
+  typedef FieldVariable::FieldVariable<FunctionSpaceType,nComponents1> FieldVariable1Type;
+  typedef FieldVariable::FieldVariable<FunctionSpaceType,nComponents2> FieldVariable2Type;
+
   //! add a component of a field variable to the vector
   void addFieldVariable(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents1>> fieldVariable, int componentNo=0);
 
@@ -54,6 +56,9 @@ struct OutputConnectorData
 
   //! assign a geometry field, this means that geometry data will be transferred
   void addGeometryField(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> geometryField);
+
+  //! get the number of slots that is contained in this OutputConnectorData, this is equal to variable1.size() + variable2.size()
+  int nSlots();
 };
 
 // operator used for output

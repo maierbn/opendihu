@@ -197,6 +197,28 @@ getDofNoLocal(global_no_t dofNoGlobalPetsc, bool &isLocal) const
   return (dof_no_t)dofNoGlobalPetsc;
 }
 
+//! get the local node no for its global coordinates
+template<int D, typename BasisFunctionType>
+node_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+getNodeNoLocal(std::array<global_no_t,D> coordinatesGlobal, bool &isOnLocalDomain) const
+{
+  // this does not make sense for unstructured meshes
+  isOnLocalDomain = true;
+  return 0;
+}
+
+//! get the local dof no for the global coordinates of the node
+template<int D, typename BasisFunctionType>
+dof_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+getDofNoLocal(std::array<global_no_t,D> coordinatesGlobal, int nodalDofIndex, bool &isOnLocalDomain) const
+{
+  node_no_t nodeNoLocal = getNodeNoLocal(coordinatesGlobal, isOnLocalDomain);
+  if (isOnLocalDomain)
+    return nodeNoLocal * FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>::nDofsPerNode() + nodalDofIndex;
+
+  return -1;
+}
+
 template<int D, typename BasisFunctionType>
 void MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
 output(std::ostream &stream)
@@ -210,6 +232,22 @@ bool MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDi
 isNonGhost(node_no_t nodeNoLocal, int &neighbourRankNo) const
 {
   return true;
+}
+
+//! get the rank on which the global natural node is located
+template<int D, typename BasisFunctionType>
+int MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+getRankOfNodeNoGlobalNatural(global_no_t nodeNoGlobalNatural) const
+{
+  return 0;
+}
+
+//! get the rank on which the global natural node is located
+template<int D, typename BasisFunctionType>
+int MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+getRankOfDofNoGlobalNatural(global_no_t dofNoGlobalNatural) const
+{
+  return 0;
 }
 
 //! get the node no in global petsc ordering from a local node no

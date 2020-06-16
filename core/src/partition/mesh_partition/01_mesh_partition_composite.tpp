@@ -258,6 +258,20 @@ getDofNoLocal(global_no_t dofNoGlobalPetsc, bool &isLocal) const
   return getNodeNoLocal(nodeNoGlobalPetsc, isLocal) * nDofsPerNode + nodalDofIndex;
 }
 
+template<int D, typename BasisFunctionType>
+node_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,Mesh::CompositeOfDimension<D>>::
+getNodeNoLocalFromGlobalNatural(global_no_t nodeNoGlobalNatural, bool &isOnLocalDomain) const
+{
+  if (nSubMeshes_ == 0)
+  {
+    isOnLocalDomain = false;
+    return 0;
+  }
+
+  // call method of first sub mesh
+  return subFunctionSpaces_[0]->meshPartition()->getNodeNoLocalFromGlobalNatural(nodeNoGlobalNatural, isOnLocalDomain);
+}
+
 //! get a vector of global natural dof nos of the locally stored non-ghost dofs, needed for setParameters callback function in cellml adapter
 template<int D, typename BasisFunctionType>
 void MeshPartition<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,Mesh::CompositeOfDimension<D>>::

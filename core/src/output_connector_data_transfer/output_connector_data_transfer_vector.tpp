@@ -12,8 +12,10 @@ void SolutionVectorMapping<
   std::vector<std::shared_ptr<OutputConnectorDataType2>>
 >::transfer(const std::shared_ptr<std::vector<std::shared_ptr<OutputConnectorDataType1>>> transferableSolutionData1,
             std::shared_ptr<std::vector<std::shared_ptr<OutputConnectorDataType2>>> transferableSolutionData2,
-            OutputConnection &outputConnection)
+            OutputConnection &outputConnection,
+            int offsetSlotNoData1, int offsetSlotNoData2)
 {
+  // debugging and error output
   LOG(DEBUG) << "transfer vector (1)";
 
   VLOG(1) << "Solution vector mapping (output_connector_data_transfer_vector.tpp)";
@@ -32,7 +34,8 @@ void SolutionVectorMapping<
     SolutionVectorMapping<OutputConnectorDataType1,OutputConnectorDataType2>::transfer(
       (*transferableSolutionData1)[i],
       (*transferableSolutionData2)[i],
-      outputConnection
+      outputConnection,
+      offsetSlotNoData1, offsetSlotNoData2
     );
   }
 
@@ -51,8 +54,10 @@ void SolutionVectorMapping<
               Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>
             >>> transferableSolutionData1,
             std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>> transferableSolutionData2,
-            OutputConnection &outputConnection)
+            OutputConnection &outputConnection,
+            int offsetSlotNoData1, int offsetSlotNoData2)
 {
+  // debugging and error output
   LOG(DEBUG) << "transfer vector (2)";
   VLOG(1) << "Solution vector mapping (output_connector_data_transfer_vector.tpp)";
 
@@ -90,7 +95,7 @@ void SolutionVectorMapping<
     = (*transferableSolutionData1)[0];
 
   // initialize output connection object
-  outputConnection.initialize(*transferableSolutionData1Front, *transferableSolutionData2);
+  outputConnection.initialize(*transferableSolutionData1Front, *transferableSolutionData2, offsetSlotNoData1, offsetSlotNoData2);
 
   // for the first vector of variables (the "states" in case of CellMLAdapter)
   for (int i = 0; i < transferableSolutionData1Front->variable1.size(); i++)
@@ -277,7 +282,8 @@ void SolutionVectorMapping<
             std::shared_ptr<std::vector<std::shared_ptr<
               Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>
             >>> transferableSolutionData2,
-            OutputConnection &outputConnection)
+            OutputConnection &outputConnection,
+            int offsetSlotNoData1, int offsetSlotNoData2)
 {
   LOG(DEBUG) << "transfer vector (3)";
   VLOG(1) << "Solution vector mapping (output_connector_data_transfer_vector.tpp)";
@@ -304,7 +310,7 @@ void SolutionVectorMapping<
     = (*transferableSolutionData2)[0];
 
   // initialize output connection object
-  outputConnection.initialize(*transferableSolutionData1, *transferableSolutionData2Front);
+  outputConnection.initialize(*transferableSolutionData1, *transferableSolutionData2Front, offsetSlotNoData1, offsetSlotNoData2);
 
   // for the first vector of variables (the "states" in case of CellMLAdapter)
   for (int i = 0; i < transferableSolutionData1->variable1.size(); i++)

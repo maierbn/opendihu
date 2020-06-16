@@ -147,7 +147,7 @@ void PythonUtility::getOptionListNext(const PyObject *settings, std::string keyS
   }
 }
 
-template<class ValueType, int D>
+template<typename ValueType, int D>
 std::array<ValueType, D> PythonUtility::getOptionArray(PyObject* settings, std::string keyString, std::string pathString,
                                                       ValueType defaultValue, ValidityCriterion validityCriterion)
 {
@@ -156,7 +156,7 @@ std::array<ValueType, D> PythonUtility::getOptionArray(PyObject* settings, std::
   return PythonUtility::getOptionArray<ValueType,D>(settings, keyString, pathString, defaultValueArray, validityCriterion);
 }
 
-template<class ValueType, int D>
+template<typename ValueType, int D>
 std::array<ValueType, D> PythonUtility::getOptionArray(PyObject* settings, std::string keyString, std::string pathString,
                                                       std::array<ValueType, D> defaultValue, ValidityCriterion validityCriterion)
 {

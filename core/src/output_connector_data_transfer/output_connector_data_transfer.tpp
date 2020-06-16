@@ -13,12 +13,12 @@ void SolutionVectorMapping<
   Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>
 >::transfer(const std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>> transferableSolutionData1,
             std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>> transferableSolutionData2,
-            OutputConnection &outputConnection)
+            OutputConnection &outputConnection, int offsetSlotNoData1, int offsetSlotNoData2)
 {
   LOG(DEBUG) << "transfer standard";
 
   // initialize output connection object
-  outputConnection.initialize(*transferableSolutionData1, *transferableSolutionData2);
+  outputConnection.initialize(*transferableSolutionData1, *transferableSolutionData2, offsetSlotNoData1, offsetSlotNoData2);
 
   typedef FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1a> FieldVariable1;
 

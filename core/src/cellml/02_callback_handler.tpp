@@ -165,7 +165,7 @@ callPythonSetSpecificParametersFunction(int nInstances, int timeStepNo, double c
 
     // tranform global coordinates to local dof no, this can be outside of the local domain
     bool isOnLocalDomain;
-    dof_no_t dofNoLocal = this->functionSpace_->getDofNoLocal(coordinatesGlobal, nodalDofIndex, isOnLocalDomain);
+    dof_no_t dofNoLocal = this->functionSpace_->meshPartition()->getDofNoLocal(coordinatesGlobal, nodalDofIndex, isOnLocalDomain);
     dof_no_t nDofsLocalWithoutGhosts = this->functionSpace_->nDofsLocalWithoutGhosts();
 
     VLOG(1) << "dofNoLocal: " << dofNoLocal << " is OnLocalDomain: " << isOnLocalDomain;
@@ -240,7 +240,7 @@ callPythonSetSpecificStatesFunction(int nInstances, int timeStepNo, double curre
 
     // tranform global coordinates to local dof no, this can be outside of the local domain
     bool isOnLocalDomain;
-    dof_no_t dofNoLocal = this->functionSpace_->getDofNoLocal(coordinatesGlobal, nodalDofIndex, isOnLocalDomain);
+    dof_no_t dofNoLocal = this->functionSpace_->meshPartition()->getDofNoLocal(coordinatesGlobal, nodalDofIndex, isOnLocalDomain);
     dof_no_t nDofsLocalWithoutGhosts = this->functionSpace_->nDofsLocalWithoutGhosts();
 
     VLOG(1) << "dofNoLocal: " << dofNoLocal << " is OnLocalDomain: " << isOnLocalDomain;

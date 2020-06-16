@@ -28,9 +28,6 @@ public:
   //! return a field variable with given name, this is not implemented for structured meshes since there are no extra stored field variables, only for unstructured meshes is it implemented and then stores field variables that were present in parsed exfiles.
   std::shared_ptr<FieldVariableBaseFunctionSpaceType> fieldVariable(std::string name);
 
-  //! get the local dof no. for the global coordinates
-  dof_no_t getDofNoLocal(std::array<global_no_t,MeshType::dim()> coordinatesGlobal, int nodalDofIndex, bool &isOnLocalDomain);
-
 protected:
   std::shared_ptr<GeometryFieldType> geometryField_ = nullptr;     //< the geometry field variable
   bool noGeometryField_ = false;                         //< This is set if there is no geometry field stored. This is only needed for solid mechanics mixed formulation where the lower order basisOnMesh does not need its own geometry information.

@@ -104,13 +104,6 @@ nUnknownsLocalWithoutGhosts()
 }
 
 template<typename FunctionSpaceType,int nComponents>
-constexpr int TimeStepping<FunctionSpaceType,nComponents>::
-getNDofsPerNode()
-{
-  return nComponents;
-}
-
-template<typename FunctionSpaceType,int nComponents>
 void TimeStepping<FunctionSpaceType,nComponents>::
 print()
 {
@@ -129,20 +122,6 @@ setComponentNames(std::vector<std::string> componentNames)
 {
   componentNames_ = componentNames;
 }
-/*
-template<typename FunctionSpaceType,int nComponents>
-void TimeStepping<FunctionSpaceType,nComponents>::
-setOutputComponentNo(int outputComponentNo)
-{
-  outputComponentNo_ = outputComponentNo;
-}
-
-template<typename FunctionSpaceType,int nComponents>
-void TimeStepping<FunctionSpaceType,nComponents>::
-setPrefactor(double prefactor)
-{
-  prefactor_ = prefactor;
-}*/
 
 template<typename FunctionSpaceType,int nComponents>
 std::shared_ptr<typename TimeStepping<FunctionSpaceType,nComponents>::OutputConnectorDataType>

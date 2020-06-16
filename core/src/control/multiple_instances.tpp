@@ -8,7 +8,7 @@
 #include <sstream>
 #include <string>
 
-#include "data_management/multiple_instances.h"
+#include "data_management/control/multiple_instances.h"
 #include "partition/partition_manager.h"
 #include "utility/mpi_utility.h"
 #include "control/diagnostic_tool/performance_measurement.h"

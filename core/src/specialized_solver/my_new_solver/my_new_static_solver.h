@@ -12,7 +12,7 @@
  *
  *  Briefly explain what your solver does in this comment section.
   */
-template<class NestedSolver>
+template<typename NestedSolver>
 class MyNewStaticSolver :
   public Runnable
 {

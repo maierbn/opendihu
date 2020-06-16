@@ -7,7 +7,7 @@
 #include "braid.h"
 #endif
 
-template<class NestedSolver>
+template<typename NestedSolver>
 MyNewStaticSolver<NestedSolver>::
 MyNewStaticSolver(DihuContext context) :
   Runnable(),
@@ -25,7 +25,7 @@ MyNewStaticSolver(DihuContext context) :
   LOG(DEBUG) << "myOption: " << myOption;
 }
 
-template<class NestedSolver>
+template<typename NestedSolver>
 void MyNewStaticSolver<NestedSolver>::
 initialize()
 {
@@ -81,7 +81,7 @@ initialize()
   initialized_ = true;
 }
 
-template<class NestedSolver>
+template<typename NestedSolver>
 void MyNewStaticSolver<NestedSolver>::
 run()
 {
@@ -100,7 +100,7 @@ run()
   this->outputWriterManager_.writeOutput(this->data_);
 }
 
-template<class NestedSolver>
+template<typename NestedSolver>
 void MyNewStaticSolver<NestedSolver>::
 reset()
 {
@@ -110,7 +110,7 @@ reset()
   // "uninitialize" everything
 }
 
-template<class NestedSolver>
+template<typename NestedSolver>
 void MyNewStaticSolver<NestedSolver>::
 executeMyHelperMethod()
 {
@@ -142,7 +142,7 @@ executeMyHelperMethod()
   ierr = MatShift(m, 1.0); CHKERRV(ierr);
 }
 
-template<class NestedSolver>
+template<typename NestedSolver>
 typename MyNewStaticSolver<NestedSolver>::Data &MyNewStaticSolver<NestedSolver>::
 data()
 {
@@ -155,7 +155,7 @@ data()
 
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
 //! the transfer is done by the output_connector_data_transfer class
-template<class NestedSolver>
+template<typename NestedSolver>
 std::shared_ptr<typename MyNewStaticSolver<NestedSolver>::OutputConnectorDataType> MyNewStaticSolver<NestedSolver>::
 getOutputConnectorData()
 {

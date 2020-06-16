@@ -123,7 +123,6 @@ namespace ModelOrderReduction
     
     assert(functionSpaceRed->meshPartition());   // assert that the function space was retrieved correctly
     this->data_->setFunctionSpace(functionSpaceRed);
-    //this->data().setOutputComponentNo(0);
     this->data_->initialize();
     
     MORBase<typename TimeSteppingType::FunctionSpace>::initialize();  

@@ -110,6 +110,9 @@ public:
   //! get the local dof no for a global petsc dof no, does not work for ghost nodes
   dof_no_t getDofNoLocal(global_no_t dofNoGlobalPetsc, bool &isLocal) const;
 
+  //! transform the global natural numbering to the local numbering, nodeNoGlobalNatural is interpreted to be for the first sub mesh
+  node_no_t getNodeNoLocalFromGlobalNatural(global_no_t nodeNoGlobalNatural, bool &isOnLocalDomain) const;
+
   //! from a vector of values of global/natural node numbers remove all that are non-local, nComponents consecutive values for each dof are assumed
   template <typename T>
   void extractLocalNodesWithoutGhosts(std::vector<T> &vector, int nComponents=1) const;

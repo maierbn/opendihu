@@ -1,4 +1,4 @@
-#include "data_management/multiple_instances.h"
+#include "data_management/control/multiple_instances.h"
 
 #include <iomanip>
 #include <iostream>
@@ -78,13 +78,6 @@ dof_no_t MultipleInstances<FunctionSpaceType,BaseDataType>::
 nUnknownsLocalWithoutGhosts()
 {
   return this->functionSpace_->nNodesLocalWithoutGhosts();
-}
-
-template<typename FunctionSpaceType,typename BaseDataType>
-constexpr int MultipleInstances<FunctionSpaceType,BaseDataType>::
-getNDofsPerNode()
-{
-  return 1;
 }
 
 template<typename FunctionSpaceType,typename BaseDataType>

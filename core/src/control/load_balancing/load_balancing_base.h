@@ -16,7 +16,7 @@ namespace Control
 /** This class implements the time stepping, after each time step rebalance() is called, which can do load balancing.
  *  The actual implementation of the rebalancing has to be done in a derived class.
   */
-template<class TimeStepping>
+template<typename TimeStepping>
 class LoadBalancingBase:
   public Runnable,
   public TimeSteppingScheme::TimeSteppingScheme

@@ -12,13 +12,13 @@ OutputConnection::OutputConnection(PythonConfig settings):
   settings.getOptionVector("connectedSlotsTerm1To2", indicesTerm1To2);
   settings.getOptionVector("connectedSlotsTerm2To1", indicesTerm2To1);
 
-  // set indices in connectorTerm1To2_ and connectorTerm2To1_
+  // set indices in connectorForVisualizerTerm1To2_ and connectorForVisualizerTerm1To2_
   for (std::vector<int>::iterator iter = indicesTerm1To2.begin(); iter != indicesTerm1To2.end(); iter++)
   {
     Connector connector;
     connector.index = *iter;
     connector.avoidCopyIfPossible = false;
-    connectorTerm1To2_.push_back(connector);
+    connectorForVisualizerTerm1To2_.push_back(connector);
   }
 
   for (std::vector<int>::iterator iter = indicesTerm2To1.begin(); iter != indicesTerm2To1.end(); iter++)
@@ -26,25 +26,32 @@ OutputConnection::OutputConnection(PythonConfig settings):
     Connector connector;
     connector.index = *iter;
     connector.avoidCopyIfPossible = false;
-    connectorTerm2To1_.push_back(connector);
+    connectorForVisualizerTerm2To1_.push_back(connector);
   }
 
   // if field variable gets mapped in both directions, set avoidCopyIfPossible to true
-  for (int i = 0; i < connectorTerm1To2_.size(); i++)
+  for (int i = 0; i < connectorForVisualizerTerm1To2_.size(); i++)
   {
-    int mappedIndex = connectorTerm1To2_[i].index;
+    int mappedIndex = connectorForVisualizerTerm1To2_[i].index;
 
     // check if other direction is mapped the same way
-    if (connectorTerm2To1_.size() > mappedIndex)
+    if (connectorForVisualizerTerm2To1_.size() > mappedIndex)
     {
-      if (connectorTerm2To1_[mappedIndex].index == i)
+      if (connectorForVisualizerTerm2To1_[mappedIndex].index == i)
       {
-        connectorTerm1To2_[i].avoidCopyIfPossible = true;
-        connectorTerm2To1_[i].avoidCopyIfPossible = true;
+        connectorForVisualizerTerm1To2_[i].avoidCopyIfPossible = true;
+        connectorForVisualizerTerm2To1_[i].avoidCopyIfPossible = true;
       }
     }
   }
+}
 
+//! copy constructor
+OutputConnection::OutputConnection(const OutputConnection &rhs) :
+  fieldVariableNamesInitialized_(false), slotInformationInitialized_(false)
+{
+  connectorForVisualizerTerm1To2_ = rhs.connectorForVisualizerTerm1To2_;
+  connectorForVisualizerTerm2To1_ = rhs.connectorForVisualizerTerm2To1_;
 }
 
 void OutputConnection::setTransferDirection(bool term1To2)
@@ -54,15 +61,15 @@ void OutputConnection::setTransferDirection(bool term1To2)
 
 
 //! get the connectors from term 1 to term 2
-const std::vector<OutputConnection::Connector> &OutputConnection::connectorTerm1To2() const
+const std::vector<OutputConnection::Connector> &OutputConnection::connectorForVisualizerTerm1To2() const
 {
-  return connectorTerm1To2_;
+  return connectorForVisualizerTerm1To2_;
 }
 
 //! get the connectors from term 2 to term 1
-const std::vector<OutputConnection::Connector> &OutputConnection::connectorTerm2To1() const
+const std::vector<OutputConnection::Connector> &OutputConnection::connectorForVisualizerTerm2To1() const
 {
-  return connectorTerm2To1_;
+  return connectorForVisualizerTerm2To1_;
 }
 
 std::string OutputConnection::getDebugInformation() const

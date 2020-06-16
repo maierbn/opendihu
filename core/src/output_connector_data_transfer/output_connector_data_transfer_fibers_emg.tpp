@@ -20,7 +20,8 @@ transfer(const std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shar
            Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>   // 1D fibers
          >>>>> transferableSolutionData1,
          std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>> transferableSolutionData2,
-         OutputConnection &outputConnection)
+         OutputConnection &outputConnection,
+         int offsetSlotNoData1, int offsetSlotNoData2)
 {
   /** Explanation: map values from transferableSolutionData1 to transferableSolutionData2.
    *  These two variables specify all slots of two terms. They contain multiple field variables and the specification of component no's.
@@ -43,7 +44,7 @@ transfer(const std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shar
     = (*(*transferableSolutionData1)[0])[0];
 
   // initialize output connection object
-  outputConnection.initialize(*transferableSolutionData1Front, *transferableSolutionData2);
+  outputConnection.initialize(*transferableSolutionData1Front, *transferableSolutionData2, offsetSlotNoData1, offsetSlotNoData2);
 
   // for the first vector of variables (the "states" in case of CellMLAdapter)
   for (int i = 0; i < transferableSolutionData1Front->variable1.size(); i++)
@@ -244,7 +245,8 @@ transfer(const std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType1,nCom
          std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shared_ptr<
            Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>   // 1D fibers
          >>>>> transferableSolutionData2,
-         OutputConnection &outputConnection)
+         OutputConnection &outputConnection,
+         int offsetSlotNoData1, int offsetSlotNoData2)
 {
   LOG(DEBUG) << "transfer fibers_emg (2)";
 
@@ -255,7 +257,7 @@ transfer(const std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType1,nCom
     = (*(*transferableSolutionData2)[0])[0];
 
   // initialize output connection object
-  outputConnection.initialize(*transferableSolutionData1, *transferableSolutionData2Front);
+  outputConnection.initialize(*transferableSolutionData1, *transferableSolutionData2Front, offsetSlotNoData1, offsetSlotNoData2);
 
   // for the first vector of variables (the "states" in case of CellMLAdapter)
   for (int i = 0; i < transferableSolutionData1->variable1.size(); i++)

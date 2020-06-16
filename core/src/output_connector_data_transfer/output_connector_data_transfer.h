@@ -46,9 +46,12 @@ public:
   //! transfer the data from transferableSolutionData1 to transferableSolutionData2, as efficient as possible, where there are multiple slots that could be transferred (e.g. at cellmlAdapter), use the one specified by transferSlotName
   static void transfer(const std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>> transferableSolutionData1,
                        std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>> transferableSolutionData2,
-                       OutputConnection &outputConnection);
+                       OutputConnection &outputConnection,
+                       int offsetSlotNoData1=0, int offsetSlotNoData2=0
+                      );
 };
 
 #include "output_connector_data_transfer/output_connector_data_transfer.tpp"
 #include "output_connector_data_transfer/output_connector_data_transfer_fibers_emg.h"
 #include "output_connector_data_transfer/output_connector_data_transfer_vector.h"
+#include "output_connector_data_transfer/output_connector_data_transfer_tuple.h"

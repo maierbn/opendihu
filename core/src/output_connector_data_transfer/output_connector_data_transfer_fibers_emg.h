@@ -34,7 +34,8 @@ public:
                          Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>   // 1D fibers
                        >>>>> transferableSolutionData1,
                        std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>> transferableSolutionData2,
-                       OutputConnection &outputConnection);
+                       OutputConnection &outputConnection,
+                       int offsetSlotNoData1=0, int offsetSlotNoData2=0);
 };
 
 template<typename FunctionSpaceType1, int nComponents1a, int nComponents1b, typename FunctionSpaceType2, int nComponents2a, int nComponents2b>
@@ -53,7 +54,8 @@ public:
                        std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shared_ptr<
                          Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>   // 1D fibers
                        >>>>> transferableSolutionData2,
-                       OutputConnection &outputConnection);
+                       OutputConnection &outputConnection,
+                       int offsetSlotNoData1=0, int offsetSlotNoData2=0);
 };
 
 #include "output_connector_data_transfer/output_connector_data_transfer_fibers_emg.tpp"

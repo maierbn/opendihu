@@ -142,6 +142,12 @@ public:
   //! check if the given dof is owned by the own rank, then return true, if not, neighbourRankNo is set to the rank by which the dof is owned
   bool isNonGhost(node_no_t nodeNoLocal, int &neighbourRankNo) const;
 
+  //! get the rank on which the global natural node is located
+  int getRankOfNodeNoGlobalNatural(global_no_t nodeNoGlobalNatural) const;
+
+  //! get the rank on which the global natural node is located
+  int getRankOfDofNoGlobalNatural(global_no_t dofNoGlobalNatural) const;
+
   //! get information about neighbouring rank and boundary elements for specified face,
   //! @param neighbourRankNo: the rank of the neighbouring process that shares the face, @param nElements: Size of one-layer mesh that contains boundary elements that touch the neighbouring process
   void getBoundaryElements(Mesh::face_t face, int &neighbourRankNo, std::array<element_no_t,D> &nBoundaryElements, std::vector<dof_no_t> &dofNos);

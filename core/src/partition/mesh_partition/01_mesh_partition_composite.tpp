@@ -272,6 +272,22 @@ getNodeNoLocalFromGlobalNatural(global_no_t nodeNoGlobalNatural, bool &isOnLocal
   return subFunctionSpaces_[0]->meshPartition()->getNodeNoLocalFromGlobalNatural(nodeNoGlobalNatural, isOnLocalDomain);
 }
 
+template<int D, typename BasisFunctionType>
+int MeshPartition<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,Mesh::CompositeOfDimension<D>>::
+getRankOfNodeNoGlobalNatural(global_no_t nodeNoGlobalNatural) const
+{
+  // call method of first sub mesh
+  return subFunctionSpaces_[0]->meshPartition()->getRankOfNodeNoGlobalNatural(nodeNoGlobalNatural);
+}
+
+template<int D, typename BasisFunctionType>
+int MeshPartition<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,Mesh::CompositeOfDimension<D>>::
+getRankOfDofNoGlobalNatural(global_no_t dofNoGlobalNatural) const
+{
+  global_no_t nodeNoGlobalNatural = dofNoGlobalNatural / FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>::nDofsPerNode();
+  return getRankOfNodeNoGlobalNatural(nodeNoGlobalNatural);
+}
+
 //! get a vector of global natural dof nos of the locally stored non-ghost dofs, needed for setParameters callback function in cellml adapter
 template<int D, typename BasisFunctionType>
 void MeshPartition<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,Mesh::CompositeOfDimension<D>>::

@@ -219,6 +219,15 @@ getDofNoLocal(std::array<global_no_t,D> coordinatesGlobal, int nodalDofIndex, bo
   return -1;
 }
 
+//! transform the global natural numbering to the local numbering
+template<int D, typename BasisFunctionType>
+dof_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+getNodeNoLocalFromGlobalNatural(global_no_t nodeNoGlobalNatural, bool &isOnLocalDomain) const
+{
+  // global natural makes no sense for unstructured meshes
+  return -1;
+}
+
 template<int D, typename BasisFunctionType>
 void MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
 output(std::ostream &stream)

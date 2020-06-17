@@ -17,8 +17,8 @@ int main(int argc, char *argv[])
       // motoneuron solver
       TimeSteppingScheme::Heun<
         CellmlAdapter<
-          4,9,  // nStates,nAlgebraics: 57,1 = Shorten, 4,9 = Hodgkin Huxley
-          FunctionSpace::FunctionSpace<MeshType,BasisFunction::LagrangeOfOrder<1>>  // same function space as for anisotropic diffusion
+          4,11,  // nStates,nAlgebraics
+          FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<1>,BasisFunction::LagrangeOfOrder<1>>  // same function space as for anisotropic diffusion
         >
       >,
       // electrophysiology solver

@@ -49,12 +49,6 @@ public:
   //! print all stored data to stdout
   virtual void print();
 
-  //! return the total number of degrees of freedom, this can be a multiple of the number of nodes of the mesh
-  virtual dof_no_t nUnknownsLocalWithGhosts();
-  
-  //! return the total number of degrees of freedom, this can be a multiple of the number of nodes of the mesh
-  virtual dof_no_t nUnknownsLocalWithoutGhosts();
-
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
   //! the transfer is done by the output_connector_data_transfer class
   std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();

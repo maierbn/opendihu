@@ -3,7 +3,7 @@
 #include "control/diagnostic_tool/solver_structure_visualizer.h"
 
 OutputConnection::OutputConnection(PythonConfig settings):
-  fieldVariableNamesInitialized_(false), slotInformationInitialized_(false), settings_(settings)
+  fieldVariableNamesInitialized_(false), transferDirectionTerm1To2_(true), slotInformationInitialized_(false), settings_(settings), subOutputConnection_(nullptr)
 {
   // parse values from settings
   std::vector<int> indicesTerm1To2;
@@ -48,7 +48,7 @@ OutputConnection::OutputConnection(PythonConfig settings):
 
 //! copy constructor
 OutputConnection::OutputConnection(const OutputConnection &rhs) :
-  fieldVariableNamesInitialized_(false), slotInformationInitialized_(false)
+  fieldVariableNamesInitialized_(false), transferDirectionTerm1To2_(true), slotInformationInitialized_(false)
 {
   connectorForVisualizerTerm1To2_ = rhs.connectorForVisualizerTerm1To2_;
   connectorForVisualizerTerm2To1_ = rhs.connectorForVisualizerTerm2To1_;
@@ -57,6 +57,8 @@ OutputConnection::OutputConnection(const OutputConnection &rhs) :
 void OutputConnection::setTransferDirection(bool term1To2)
 {
   transferDirectionTerm1To2_ = term1To2;
+  if (subOutputConnection_)
+    subOutputConnection_->setTransferDirection(term1To2);
 }
 
 
@@ -285,6 +287,8 @@ bool OutputConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
   }
 #endif
 
+  disableWarnings = true;   // do not show warnings, they would also appear if OutputConnectionDataType is a tuple, this is the case for MapDofs
+
   // fromVectorNo and toVectorNo are 0 or 1
 
 #ifndef NDEBUG
@@ -464,4 +468,9 @@ bool OutputConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
 
   // completed successfully
   return true;
+}
+
+std::shared_ptr<OutputConnection> &OutputConnection::subOutputConnection()
+{
+  return subOutputConnection_;
 }

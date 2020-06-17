@@ -22,7 +22,7 @@ getMeshPartitionBase(std::shared_ptr<OutputConnectorDataType> outputConnectorDat
     std::shared_ptr<typename OutputConnectorDataType::FieldVariable1Type> fieldVariable
       = outputConnectorData->variable1[slotNo].values;
 
-    return fieldVariable->meshPartitionBase();
+    return fieldVariable->functionSpace()->meshPartitionBase();
   }
   else
   {
@@ -31,7 +31,7 @@ getMeshPartitionBase(std::shared_ptr<OutputConnectorDataType> outputConnectorDat
     std::shared_ptr<typename OutputConnectorDataType::FieldVariable2Type> fieldVariable
       = outputConnectorData->variable2[index].values;
 
-    return fieldVariable->meshPartitionBase();
+    return fieldVariable->functionSpace()->meshPartitionBase();
   }
 }
 
@@ -289,7 +289,7 @@ getMeshPartitionBase(
     std::shared_ptr<typename OutputConnectorDataType::FieldVariable1Type> fieldVariable
       = (*(*outputConnectorData)[arrayIndex1])->variable1[slotNo].values;
 
-    return fieldVariable->meshPartitionBase();
+    return fieldVariable->functionSpace()->meshPartitionBase();
   }
   else
   {
@@ -298,7 +298,7 @@ getMeshPartitionBase(
     std::shared_ptr<typename OutputConnectorDataType::FieldVariable2Type> fieldVariable
       = (*(*outputConnectorData)[arrayIndex1])->variable2[index].values;
 
-    return fieldVariable->meshPartitionBase();
+    return fieldVariable->functionSpace()->meshPartitionBase();
   }
 }
 

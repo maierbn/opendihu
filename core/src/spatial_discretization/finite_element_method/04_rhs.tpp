@@ -30,7 +30,7 @@ setRightHandSide()
   bool inputMeshIsGlobal = this->specificSettings_.getOptionBool("inputMeshIsGlobal", true);
   if (inputMeshIsGlobal)
   {
-    global_no_t nUnknownsGlobal = this->data_.nUnknownsGlobal();
+    global_no_t nUnknownsGlobal = this->data_.functionSpace()->nDofsGlobal();
 
     this->specificSettings_.template getOptionVector<VecD<nComponents>>("rightHandSide", nUnknownsGlobal, localValues);
     this->data_.functionSpace()->meshPartition()->extractLocalDofsWithoutGhosts(localValues);

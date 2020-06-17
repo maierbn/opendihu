@@ -361,7 +361,8 @@ bool PythonUtility::getOptionBool(const PyObject *settings, std::string keyStrin
   }
   else
   {
-    LOG(WARNING) << "" << pathString << "[\"" << keyString << "\"] not set in \"" << Control::settingsFileName << "\". Assuming default value " << std::boolalpha << defaultValue << ".";
+    LOG(WARNING) << "" << pathString << "[\"" << keyString << "\"] not set in \"" << Control::settingsFileName
+      << "\". Assuming default value " << (defaultValue? "True": "False") << ".";
   }
   Py_CLEAR(key);
   return result;

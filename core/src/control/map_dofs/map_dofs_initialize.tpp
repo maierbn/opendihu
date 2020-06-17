@@ -20,14 +20,25 @@ template<typename FunctionSpaceType, typename NestedSolverType>
 void MapDofs<FunctionSpaceType,NestedSolverType>::
 initialize()
 {
+  LOG(DEBUG) << "initialize MapDofs";
+
   // parse settings
   int nAdditionalFieldVariables = this->specificSettings_.getOptionInt("nAdditionalFieldVariables", 0, PythonUtility::NonNegative);
 
   parseMappingFromSettings("beforeComputation", mappingsBeforeComputation_);
   parseMappingFromSettings("afterComputation", mappingsAfterComputation_);
 
+  // add this solver to the solvers diagram, which is an ASCII art representation that will be created at the end of the simulation.
+  DihuContext::solverStructureVisualizer()->addSolver("MapDofs", true);   // hasInternalConnectionToFirstNestedSolver=true (the last argument) means output connector data is shared with the first subsolver
+
+  // indicate in solverStructureVisualizer that now a child solver will be initialized
+  DihuContext::solverStructureVisualizer()->beginChild();
+
   // initialize solver
   nestedSolver_.initialize();
+
+  // indicate in solverStructureVisualizer that the child solver initialization is done
+  DihuContext::solverStructureVisualizer()->endChild();
 
   // create function space to use for the additional field variables
   std::shared_ptr<FunctionSpaceType> functionSpace = context_.meshManager()->functionSpace<FunctionSpaceType>(specificSettings_);
@@ -39,36 +50,83 @@ initialize()
   // prepare communication by initializing mappings
   initializeCommunication(mappingsBeforeComputation_);
   initializeCommunication(mappingsAfterComputation_);
+
+  // set the outputConnectorData for the solverStructureVisualizer to appear in the solver diagram
+  DihuContext::solverStructureVisualizer()->setOutputConnectorData(getOutputConnectorData());
+
 }
 
 template<typename FunctionSpaceType, typename NestedSolverType>
 void MapDofs<FunctionSpaceType,NestedSolverType>::
 parseMappingFromSettings(std::string settingsKey, std::vector<DofsMappingType> &mappings)
 {
-  PyObject *listPy = this->specificSettings_.getOptionPyObject("beforeComputation");
+  LOG(DEBUG) << "settingsKey " << settingsKey << ", specificSettings: " << this->specificSettings_;
+  PyObject *listPy = this->specificSettings_.getOptionPyObject(settingsKey);
+  LOG(DEBUG) << "convert to list to get size";
   std::vector<PyObject *> list = PythonUtility::convertFromPython<std::vector<PyObject *>>::get(listPy);
+  LOG(DEBUG) << "size: " << list.size();
+
+  PythonConfig mappingSpecification(this->specificSettings_, settingsKey);
+  LOG(DEBUG) << "mappingSpecification: " << mappingSpecification;
 
   // loop over items of the list under "beforeComputation" or "afterComputation"
   for (int i = 0; i < list.size(); i++)
   {
-    PythonConfig mappingSpecification(this->specificSettings_, i);
+    PythonConfig currentMappingSpecification(mappingSpecification, i);
+    LOG(DEBUG) << "i=" << i << ", currentMappingSpecification: " << mappingSpecification;
 
     DofsMappingType newDofsMapping;
 
     // parse options of this item
-    newDofsMapping.outputConnectorSlotNoFrom = mappingSpecification.getOptionInt("fromOutputConnectorSlotNo", 0, PythonUtility::NonNegative);
-    newDofsMapping.outputConnectorSlotNoTo   = mappingSpecification.getOptionInt("toOutputConnectorSlotNo",   0, PythonUtility::NonNegative);
+    newDofsMapping.outputConnectorSlotNoFrom = currentMappingSpecification.getOptionInt("fromOutputConnectorSlotNo", 0, PythonUtility::NonNegative);
+    newDofsMapping.outputConnectorSlotNoTo   = currentMappingSpecification.getOptionInt("toOutputConnectorSlotNo",   0, PythonUtility::NonNegative);
 
-    newDofsMapping.outputConnectorArrayIndexFrom = mappingSpecification.getOptionInt("fromOutputConnectorArrayIndex", 0, PythonUtility::NonNegative);
-    newDofsMapping.outputConnectorArrayIndexTo   = mappingSpecification.getOptionInt("toOutputConnectorArrayIndex",   0, PythonUtility::NonNegative);
+    newDofsMapping.outputConnectorArrayIndexFrom = currentMappingSpecification.getOptionInt("fromOutputConnectorArrayIndex", 0, PythonUtility::NonNegative);
+    newDofsMapping.outputConnectorArrayIndexTo   = currentMappingSpecification.getOptionInt("toOutputConnectorArrayIndex",   0, PythonUtility::NonNegative);
 
-    newDofsMapping.dofNoIsGlobalFrom = mappingSpecification.getOptionBool("fromDofNosIsGlobal", true);
-    newDofsMapping.dofNoIsGlobalTo   = mappingSpecification.getOptionBool("toDofNosIsGlobal",   false);
+    // parse if dof nos are given as global or local nos
+    std::string fromDofNosNumbering = currentMappingSpecification.getOptionString("fromDofNosNumbering", "global");
+    std::string toDofNosNumbering   = currentMappingSpecification.getOptionString("toDofNosNumbering",   "local");
 
-    std::string mode = mappingSpecification.getOptionString("mode", "copyLocal");
+    // parse dofNoIsGlobalFrom
+    if (fromDofNosNumbering == "global")
+    {
+      newDofsMapping.dofNoIsGlobalFrom = true;
+    }
+    else if (fromDofNosNumbering == "local")
+    {
+      newDofsMapping.dofNoIsGlobalFrom = false;
+    }
+    else
+    {
+      LOG(ERROR) << this->specificSettings_ << "[\"fromDofNosNumbering\"] is \"" << fromDofNosNumbering << ", but has to be \"global\" or \"local\". Assuming \"local\".";
+      newDofsMapping.dofNoIsGlobalFrom = false;
+    }
+
+    // parse dofNoIsGlobalTo
+    if (toDofNosNumbering == "global")
+    {
+      newDofsMapping.dofNoIsGlobalTo = true;
+    }
+    else if (toDofNosNumbering == "local")
+    {
+      newDofsMapping.dofNoIsGlobalTo = false;
+    }
+    else
+    {
+      LOG(ERROR) << this->specificSettings_ << "[\"toDofNosNumbering\"] is \"" << toDofNosNumbering << ", but has to be \"global\" or \"local\". Assuming \"local\".";
+      newDofsMapping.dofNoIsGlobalTo = false;
+    }
+
+    // parse mode
+    std::string mode = currentMappingSpecification.getOptionString("mode", "copyLocal");
     if (mode == "copyLocal")
     {
       newDofsMapping.mode = DofsMappingType::modeCopyLocal;
+    }
+    else if (mode == "copyLocalIfPositive")
+    {
+      newDofsMapping.mode = DofsMappingType::modeCopyLocalIfPositive;
     }
     else if (mode == "communicate")
     {
@@ -76,11 +134,19 @@ parseMappingFromSettings(std::string settingsKey, std::vector<DofsMappingType> &
     }
     else
     {
-      LOG(FATAL) << mappingSpecification << "[\"mode\"] is \"" << mode << "\", but allowed values are \"copyLocal\" and \"communicate\".";
+      LOG(FATAL) << currentMappingSpecification << "[\"mode\"] is \"" << mode << "\", but allowed values are "
+        <<"\"copyLocal\", \"copyLocalIfPositive\" and \"communicate\".";
     }
 
-    PyObject *object = mappingSpecification.getOptionPyObject("dofsMapping");
+    PyObject *object = currentMappingSpecification.getOptionPyObject("dofsMapping");
     newDofsMapping.dofsMapping = PythonUtility::convertFromPython<std::map<int,std::vector<int>>>::get(object);
+
+    LOG(DEBUG) << "Parsed mapping slots " << newDofsMapping.outputConnectorSlotNoFrom << " (arrayIndex " << newDofsMapping.outputConnectorArrayIndexFrom
+      << ") -> " << newDofsMapping.outputConnectorSlotNoTo << " (arrayIndex " << newDofsMapping.outputConnectorArrayIndexTo << "), dofNos "
+      << (newDofsMapping.dofNoIsGlobalFrom? "global" : "local") << " -> " << (newDofsMapping.dofNoIsGlobalTo? "global" : "local") << ", mode: " << mode;
+    LOG(DEBUG) << "dofsMapping: " << newDofsMapping.dofsMapping;
+
+    mappings.push_back(newDofsMapping);
   }
 }
 

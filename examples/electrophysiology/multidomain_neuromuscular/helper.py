@@ -1044,6 +1044,9 @@ n_motor_units = len(variables.motor_units)
 # on every rank there are as many nodes as global motor units
 variables.meshes["motoneuronMesh"] = {
   "nElements":              n_motor_units-1,
+  "physicalExtent":         n_motor_units,        # this mesh has no physical representation so this value is irrelevant
+  "physicalOffset":         [0,0,0],              # this mesh has no physical representation so this value is irrelevant
+  "nRanks":                 n_ranks,
   "inputMeshIsGlobal":      False,
   "setHermiteDerivatives":  False,
   "logKey":                 "motoneuronMesh",
@@ -1064,7 +1067,17 @@ for j in range(n_nodes_y):
     global_no = z_index_center*n_nodes_x*n_nodes_y + j*n_nodes_x + i
     junction_nodes_global_nos.append(global_no)
 
-# map from motoneuronMesh (all local nodes, local numbering) to 3Dmesh (the nodes of the junction, global numbering)
-# set the dict for the MapDofs object
-dofs_mapping = {mu_no: junction_nodes_global_nos for mu_no in range(n_motor_units)}
-    
+# specify positions of contraction and velocity "sensors", Golgi tendon organs, muscle spindles
+golgi_tendon_organ_nodes_global_nos = []
+
+# loop over all nodes, select 3x3x2 nodes
+for j in range((int)(n_nodes_y/6),n_nodes_y,(int)(n_nodes_x/3)):
+  for i in range((int)(n_nodes_x/6),n_nodes_x,(int)(n_nodes_x/3)):
+  
+    k = (int)(0.1*n_nodes_z)
+    global_no = k*n_nodes_x*n_nodes_y + j*n_nodes_x + i
+    golgi_tendon_organ_nodes_global_nos.append(global_no)
+
+    k = (int)(0.9*n_nodes_z)
+    global_no = k*n_nodes_x*n_nodes_y + j*n_nodes_x + i
+    golgi_tendon_organ_nodes_global_nos.append(global_no)

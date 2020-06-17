@@ -8,12 +8,17 @@ template<typename FunctionSpaceType, typename NestedSolverType>
 void MapDofs<FunctionSpaceType,NestedSolverType>::
 advanceTimeSpan()
 {
+  LOG(DEBUG) << "MapDofs::advanceTimeSpan, " << mappingsBeforeComputation_.size() << " mappings before computation, "
+    << mappingsAfterComputation_.size() << " mappings after computation.";
+  LOG(DEBUG) << "MapDofs::performMappings beforeComputation";
+
   // perform mapping from settings "beforeComputation"
   performMappings(mappingsBeforeComputation_);
 
   // compute the simulation in the current time span with the nested solver
   nestedSolver_.advanceTimeSpan();
 
+  LOG(DEBUG) << "MapDofs::performMappings afterComputation";
   // perform mapping from settings "afterComputation"
   performMappings(mappingsAfterComputation_);
 }
@@ -53,35 +58,72 @@ performMappings(std::vector<DofsMappingType> &mappings)
 
   for (DofsMappingType &mapping : mappings)
   {
-    std::map<int,std::vector<double>> valuesToSendToRanks;
-    std::vector<double> receivedValues;
+    LOG(DEBUG) << "MapDofs::perform mapping slots " << mapping.outputConnectorSlotNoFrom << " -> " << mapping.outputConnectorSlotNoTo << ", "
+      << (mapping.mode == DofsMappingType::modeCopyLocal? " modeCopyLocal": (mapping.mode == DofsMappingType::modeCopyLocalIfPositive? "modeCopyLocalIfPositive": " modeCommunicate"));
 
-    // get values
+    static std::map<int,std::vector<double>> valuesToSendToRanks;
+    static std::vector<double> receivedValues;
+
+    receivedValues.clear();
+
+    // get values that will be transferred
+    // loop over the ranks and the dofs that have to be send to them
     for (std::pair<int,std::vector<dof_no_t>> rankNoAndDofNosLocal : mapping.dofNosLocalOfValuesToSendToRanks)
     {
+      // get rank and dof nos
       int rankNo = rankNoAndDofNosLocal.first;
       std::vector<dof_no_t> &dofNosLocal = rankNoAndDofNosLocal.second;
 
+      // get values at those dof nos
       valuesToSendToRanks[rankNo].clear();
       slotGetValues(mapping.outputConnectorSlotNoFrom, mapping.outputConnectorArrayIndexFrom, dofNosLocal, valuesToSendToRanks[rankNo]);
     }
+
+    LOG(DEBUG) << "get values " << valuesToSendToRanks;
 
     // if communication is involved
     if (mapping.mode == DofsMappingType::modeCommunicate)
     {
       mapping.valueCommunicator.communicate(valuesToSendToRanks, receivedValues);
+
+      // set values
+      // set receivedValues at dofs receivedValueDofNosLocal
+      slotSetValues(mapping.outputConnectorSlotNoTo, mapping.outputConnectorArrayIndexTo, mapping.receivedValueDofNosLocal, receivedValues, INSERT_VALUES);
     }
-    else
+    else  if (mapping.mode == DofsMappingType::modeCopyLocal)
     {
+      // collect all values
       for (double value : valuesToSendToRanks[ownRankNo])
       {
         receivedValues.push_back(value);
       }
-    }
 
-    // set values
-    // set receivedValues at dofs receivedValueDofNosLocal
-    slotSetValues(mapping.outputConnectorSlotNoTo, mapping.outputConnectorArrayIndexTo, mapping.receivedValueDofNosLocal, receivedValues, INSERT_VALUES);
+      // set values
+      // set receivedValues at dofs receivedValueDofNosLocal
+      slotSetValues(mapping.outputConnectorSlotNoTo, mapping.outputConnectorArrayIndexTo, mapping.receivedValueDofNosLocal, receivedValues, INSERT_VALUES);
+    }
+    else if (mapping.mode == DofsMappingType::modeCopyLocalIfPositive)
+    {
+      // store dof nos for positive values in maskedDofNosLocal
+      mapping.maskedDofNosLocal.clear();
+
+      // loop over the values to be set
+      int i = 0;
+      for (std::vector<double>::iterator iter = valuesToSendToRanks[ownRankNo].begin(); iter != valuesToSendToRanks[ownRankNo].end(); iter++, i++)
+      {
+        // only consider value if it is positive
+        double value = *iter;
+
+        if (value > 0)
+        {
+          mapping.maskedDofNosLocal.push_back(mapping.receivedValueDofNosLocal[i]);
+          receivedValues.push_back(value);
+        }
+      }
+
+      // set values, only where dofs are != -1
+      slotSetValues(mapping.outputConnectorSlotNoTo, mapping.outputConnectorArrayIndexTo, mapping.maskedDofNosLocal, receivedValues, INSERT_VALUES);
+    }
   }
 }
 

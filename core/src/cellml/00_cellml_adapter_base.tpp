@@ -113,8 +113,8 @@ setOutputConnectorData(std::shared_ptr<::Data::OutputConnectorData<FunctionSpace
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> newFieldVariable
       = std::make_shared<FieldVariable::FieldVariable<FunctionSpaceType,1>>(*values, name, componentNames, reuseData, componentNo);
 
-    LOG(DEBUG) << "CellmlAdapterBase::setOutputConnectorData add FieldVariable2 " << newFieldVariable << " for algebraic " << componentNo << " with name " << name
-      << ", this reuses the data from " << values->name();
+    LOG(DEBUG) << "CellmlAdapterBase::setOutputConnectorData add FieldVariable2 " << newFieldVariable << " with name " << name << " for component no " << componentNo
+      << ", this reuses the data from \"" << values->name() << "\".";
 
     // add this component to outputConnector of data time stepping
     outputConnectorDataTimeStepping->addFieldVariable2(newFieldVariable);
@@ -134,7 +134,7 @@ initialize()
     PythonUtility::printDict(specificSettings_.pyObject());
   }
   
-  // add this solver to the solvers diagram, which is a SVG file that will be created at the end of the simulation.
+  // add this solver to the solvers diagram, which is an ASCII art representation that will be created at the end of the simulation.
   DihuContext::solverStructureVisualizer()->addSolver("CellmlAdapter");
 
   // create a mesh if there is not yet one assigned, function space FunctionSpace::Generic
@@ -170,16 +170,18 @@ initialize()
   std::vector<int> &algebraicsForTransfer = data_.algebraicsForTransfer();
   std::vector<int> &parametersForTransfer = data_.parametersForTransfer();
 
+  std::vector<std::string> parameterNames;
+
   // parse the source code and initialize the names of states, algebraics and constants, which are needed for initializeMappings
   cellmlSourceCodeGenerator_.initializeNames(modelFilename, nInstances_, nStates_, nAlgebraics_);
 
   // initialize all information from python settings key "mappings", this sets parametersUsedAsAlgebraics/States and outputAlgebraic/StatesIndex
   initializeMappings(parametersUsedAsAlgebraic, parametersUsedAsConstant,
-                     statesForTransfer, algebraicsForTransfer, parametersForTransfer);
+                     statesForTransfer, algebraicsForTransfer, parametersForTransfer, parameterNames);
 
   // initialize data, i.e. states and algebraics field variables
   data_.setFunctionSpace(functionSpace_);
-  data_.setAlgebraicNames(cellmlSourceCodeGenerator_.algebraicNames());
+  data_.setAlgebraicAndParameterNames(cellmlSourceCodeGenerator_.algebraicNames(), parameterNames);
   data_.initialize();
 
   // get the data_.parameters() raw pointer
@@ -202,7 +204,7 @@ initialize()
 template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
 void CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::
 initializeMappings(std::vector<int> &parametersUsedAsAlgebraic, std::vector<int> &parametersUsedAsConstant,
-                   std::vector<int> &statesForTransfer, std::vector<int> &algebraicsForTransfer, std::vector<int> &parametersForTransfer)
+                   std::vector<int> &statesForTransfer, std::vector<int> &algebraicsForTransfer, std::vector<int> &parametersForTransfer, std::vector<std::string> &parameterNames)
 {
   if (this->specificSettings_.hasKey("mappings"))
   {
@@ -359,7 +361,8 @@ initializeMappings(std::vector<int> &parametersUsedAsAlgebraic, std::vector<int>
       const std::pair<KeyTupleType,ValueTupleType> &a,
       const std::pair<KeyTupleType,ValueTupleType> &b)
     {
-      return a.first.second < b.first.second || (a.first.second == b.first.second && a.first.first.length() < b.first.first.length());
+      return a.first.first.length() < b.first.first.length() ||
+        (a.first.first.length() == b.first.first.length() && a.first.second < b.first.second);
     });
 
     LOG(DEBUG) << "sorted tupleEntries: " << tupleEntries;
@@ -518,8 +521,21 @@ initializeMappings(std::vector<int> &parametersUsedAsAlgebraic, std::vector<int>
         }
         else
         {
-          LOG(ERROR) << "In " << this->specificSettings_ << "[\"mappings\"], you can only connect states, algebraics and parameters "
-            << "to outputConnectorSlots, not constants.";
+          std::vector<int>::iterator parameter = std::find(parametersUsedAsConstant.begin(), parametersUsedAsConstant.end(), fieldNo);
+
+          if (parameter != parametersUsedAsConstant.end())
+          {
+            int parameterNo = parametersUsedAsAlgebraic.size() + parameter - parametersUsedAsConstant.begin();
+            parametersForTransfer.push_back(parameterNo);
+            LOG(DEBUG) << "Constant " << valueTuple.second << " was set as output connector slot " << slotNo
+              << " and is mapped to parameter " << parameterNo;
+          }
+          else
+          {
+            LOG(ERROR) << "In " << this->specificSettings_ << "[\"mappings\"], you can only connect states, algebraics and parameters "
+              << "to outputConnectorSlots, not constants (\"" << valueTuple.second << "\" is a " << valueTuple.first << "). \n"
+              << "You can use it for a slot if you define it as parameter first.";
+          }
         }
       }
     }
@@ -532,6 +548,7 @@ initializeMappings(std::vector<int> &parametersUsedAsAlgebraic, std::vector<int>
       if (algebraicNo != -1 && algebraicNo < nAlgebraics_)
       {
         s << "  parameter " << i << " maps to algebraic " << algebraicNo << " (\"" << algebraicNames[algebraicNo] << "\")\n";
+        parameterNames.push_back(algebraicNames[algebraicNo]);
       }
     }
     for (int i = 0; i < parametersUsedAsConstant.size(); i++)
@@ -540,6 +557,7 @@ initializeMappings(std::vector<int> &parametersUsedAsAlgebraic, std::vector<int>
       if (constantNo != -1 && constantNo < constantNames.size())
       {
         s << "  parameter " << parametersUsedAsAlgebraic.size()+i << " maps to constant " << constantNo << " (\"" << constantNames[constantNo] << "\")\n";
+        parameterNames.push_back(constantNames[constantNo]);
       }
     }
 

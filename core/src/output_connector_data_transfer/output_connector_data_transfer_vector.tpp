@@ -130,8 +130,8 @@ void SolutionVectorMapping<
       std::shared_ptr<FieldVariable2> &fieldVariable2 = transferableSolutionData2->variable1[toVectorIndex].values;
       int componentNo2                                = transferableSolutionData2->variable1[toVectorIndex].componentNo;
 
-      LOG(DEBUG) << "  " << fieldVariable1->name() << "[" << componentNo1 << "] -> "
-        << fieldVariable2->name() << "[" << componentNo2 << "] (" << fieldVariable2 << "), avoidCopyIfPossible: " << avoidCopyIfPossible << "(5)";
+      LOG(DEBUG) << "  " << fieldVariable1->name() << "." << fieldVariable1->componentName(componentNo1) << " [" << componentNo1 << "] -> "
+        << fieldVariable2->name() << "." << fieldVariable2->componentName(componentNo2) << " [" << componentNo2 << "] (" << fieldVariable2 << "), avoidCopyIfPossible: " << avoidCopyIfPossible << "(5)";
 
       // initialize the mapping
       DihuContext::mappingBetweenMeshesManager()->template prepareMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2, componentNo2);
@@ -158,8 +158,8 @@ void SolutionVectorMapping<
       std::shared_ptr<FieldVariable2> &fieldVariable2 = transferableSolutionData2->variable2[toVectorIndex].values;
       int componentNo2                                = transferableSolutionData2->variable2[toVectorIndex].componentNo;
 
-      LOG(DEBUG) << "  " << fieldVariable1->name() << "[" << componentNo1 << "] -> "
-        << fieldVariable2->name() << "[" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible << "(6)";
+      LOG(DEBUG) << "  " << fieldVariable1->name() << "." << fieldVariable1->componentName(componentNo1) << " [" << componentNo1 << "] -> "
+        << fieldVariable2->name() << "." << fieldVariable2->componentName(componentNo2) << " [" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible << "(6)";
 
       // initialize the mapping
       DihuContext::mappingBetweenMeshesManager()->template prepareMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2, componentNo2);
@@ -215,8 +215,8 @@ void SolutionVectorMapping<
       std::shared_ptr<FieldVariable2> &fieldVariable2 = transferableSolutionData2->variable1[toVectorIndex].values;
       int componentNo2                                = transferableSolutionData2->variable1[toVectorIndex].componentNo;
 
-      LOG(DEBUG) << "  " << fieldVariable1->name() << "[" << componentNo1 << "] -> "
-        << fieldVariable2->name() << "[" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible << "(7)";
+      LOG(DEBUG) << "  " << fieldVariable1->name() << "." << fieldVariable1->componentName(componentNo1) << " [" << componentNo1 << "] -> "
+        << fieldVariable2->name() << "." << fieldVariable2->componentName(componentNo2) << " [" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible << "(7)";
 
       // initialize the mapping
       DihuContext::mappingBetweenMeshesManager()->template prepareMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2, componentNo2);
@@ -243,8 +243,8 @@ void SolutionVectorMapping<
       std::shared_ptr<FieldVariable2> &fieldVariable2 = transferableSolutionData2->variable2[toVectorIndex].values;
       int componentNo2                                = transferableSolutionData2->variable2[toVectorIndex].componentNo;
 
-      LOG(DEBUG) << "  " << fieldVariable1->name() << "[" << componentNo1 << "] -> "
-        << fieldVariable2->name() << "[" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible << "(8)";
+      LOG(DEBUG) << "  " << fieldVariable1->name() << "." << fieldVariable1->componentName(componentNo1) << " [" << componentNo1 << "] -> "
+        << fieldVariable2->name() << "." << fieldVariable2->componentName(componentNo2) << " [" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible << "(8)";
 
       // initialize the mapping
       DihuContext::mappingBetweenMeshesManager()->template prepareMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2, componentNo2);
@@ -345,8 +345,8 @@ void SolutionVectorMapping<
       std::shared_ptr<FieldVariable2> &fieldVariable2 = transferableSolutionData2Front->variable1[toVectorIndex].values;
       int componentNo2                                = transferableSolutionData2Front->variable1[toVectorIndex].componentNo;
 
-      LOG(DEBUG) << "  " << fieldVariable1->name() << "[" << componentNo1 << "] -> "
-        << fieldVariable2->name() << "[" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible << "(9)";
+      LOG(DEBUG) << "  " << fieldVariable1->name() << "." << fieldVariable1->componentName(componentNo1) << " [" << componentNo1 << "] -> "
+        << fieldVariable2->name() << "." << fieldVariable2->componentName(componentNo2) << " [" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible << "(9)";
 
       // initialize the mapping
       DihuContext::mappingBetweenMeshesManager()->template prepareMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2, componentNo2);
@@ -373,8 +373,8 @@ void SolutionVectorMapping<
       std::shared_ptr<FieldVariable2> &fieldVariable2 = transferableSolutionData2Front->variable2[toVectorIndex].values;
       int componentNo2                                = transferableSolutionData2Front->variable2[toVectorIndex].componentNo;
 
-      LOG(DEBUG) << "  " << fieldVariable1->name() << "[" << componentNo1 << "] -> "
-        << fieldVariable2->name() << "[" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible << "(10)";
+      LOG(DEBUG) << "  " << fieldVariable1->name() << "." << fieldVariable1->componentName(componentNo1) << " [" << componentNo1 << "] -> "
+        << fieldVariable2->name() << "." << fieldVariable2->componentName(componentNo2) << " [" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible << "(10)";
 
       // initialize the mapping
       DihuContext::mappingBetweenMeshesManager()->template prepareMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2, componentNo2);
@@ -430,8 +430,8 @@ void SolutionVectorMapping<
       std::shared_ptr<FieldVariable2> &fieldVariable2 = transferableSolutionData2Front->variable1[toVectorIndex].values;
       int componentNo2                                = transferableSolutionData2Front->variable1[toVectorIndex].componentNo;
 
-      LOG(DEBUG) << "  " << fieldVariable1->name() << "[" << componentNo1 << "] -> "
-        << fieldVariable2->name() << "[" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible << "(11)";
+      LOG(DEBUG) << "  " << fieldVariable1->name() << "." << fieldVariable1->componentName(componentNo1) << " [" << componentNo1 << "] -> "
+        << fieldVariable2->name() << "." << fieldVariable2->componentName(componentNo2) << " [" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible << "(11)";
 
       // initialize the mapping
       DihuContext::mappingBetweenMeshesManager()->template prepareMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2, componentNo2);
@@ -458,8 +458,8 @@ void SolutionVectorMapping<
       std::shared_ptr<FieldVariable2> &fieldVariable2 = transferableSolutionData2Front->variable2[toVectorIndex].values;
       int componentNo2                                = transferableSolutionData2Front->variable2[toVectorIndex].componentNo;
 
-      LOG(DEBUG) << "  " << fieldVariable1->name() << "[" << componentNo1 << "] -> "
-        << fieldVariable2->name() << "[" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible << "(12)";
+      LOG(DEBUG) << "  " << fieldVariable1->name() << "." << fieldVariable1->componentName(componentNo1) << " [" << componentNo1 << "] -> "
+        << fieldVariable2->name() << "." << fieldVariable2->componentName(componentNo2) << " [" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible << "(12)";
 
       // initialize the mapping
       DihuContext::mappingBetweenMeshesManager()->template prepareMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2, componentNo2);

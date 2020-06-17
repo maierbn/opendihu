@@ -67,20 +67,6 @@ createPetscObjects()
 }
 
 template<typename FunctionSpaceType,typename BaseDataType>
-dof_no_t MultipleInstances<FunctionSpaceType,BaseDataType>::
-nUnknownsLocalWithGhosts()
-{
-  return this->functionSpace_->nNodesLocalWithGhosts();
-}
-
-template<typename FunctionSpaceType,typename BaseDataType>
-dof_no_t MultipleInstances<FunctionSpaceType,BaseDataType>::
-nUnknownsLocalWithoutGhosts()
-{
-  return this->functionSpace_->nNodesLocalWithoutGhosts();
-}
-
-template<typename FunctionSpaceType,typename BaseDataType>
 void MultipleInstances<FunctionSpaceType,BaseDataType>::
 print()
 {

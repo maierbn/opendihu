@@ -42,7 +42,7 @@ public:
   void setStatesVariable(std::shared_ptr<FieldVariableStates> states);
 
   //! give the names of all algebraics, will be called before initialize()
-  void setAlgebraicNames(const std::vector<std::string> &algebraicNames);
+  void setAlgebraicAndParameterNames(const std::vector<std::string> &algebraicNames, const std::vector<std::string> &parameterNames);
 
   //! get the parameteValues_ pointer from the parameters field variable, then the field variable can no longer be used until restoreParameterValues() gets called
   void prepareParameterValues();
@@ -87,6 +87,7 @@ private:
   std::shared_ptr<FieldVariableAlgebraics> parameters_;   //< parameters field variable, the number of components is equal or less than the number of algebraics in order to not have to specify the number of parameters at compile time. This possibly creates a vector that is too large which is not harmful.
   double *parameterValues_;                               //< a pointer to the data of the parameters_ Petsc Vec of the field variable
   std::vector<std::string> algebraicNames_;               //< component names of the algebraics field variable
+  std::vector<std::string> parameterNames_;               //< component names of the parameter field variable
 
   std::shared_ptr<OutputConnectorDataType> outputConnectorData_;//< the object that holds all components of field variables that will be transferred to other solvers
   PythonConfig specificSettings_;                               //< the settings object

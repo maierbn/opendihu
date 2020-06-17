@@ -90,20 +90,6 @@ increment()
 }
 
 template<typename FunctionSpaceType,int nComponents>
-dof_no_t TimeStepping<FunctionSpaceType,nComponents>::
-nUnknownsLocalWithGhosts()
-{
-  return this->functionSpace_->nNodesLocalWithGhosts() * nComponents;
-}
-
-template<typename FunctionSpaceType,int nComponents>
-dof_no_t TimeStepping<FunctionSpaceType,nComponents>::
-nUnknownsLocalWithoutGhosts()
-{
-  return this->functionSpace_->nNodesLocalWithoutGhosts() * nComponents;
-}
-
-template<typename FunctionSpaceType,int nComponents>
 void TimeStepping<FunctionSpaceType,nComponents>::
 print()
 {

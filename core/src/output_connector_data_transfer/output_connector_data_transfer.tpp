@@ -15,7 +15,8 @@ void SolutionVectorMapping<
             std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>> transferableSolutionData2,
             OutputConnection &outputConnection, int offsetSlotNoData1, int offsetSlotNoData2)
 {
-  LOG(DEBUG) << "transfer standard";
+  LOG(DEBUG) << "transfer standard, type1: " << FunctionSpaceType1::dim() << "D " << nComponents1a << "," << nComponents1b << " comp.,"
+    << " type2: " << FunctionSpaceType2::dim() << "D " << nComponents2a << "," << nComponents2b << "comp.";
 
   // initialize output connection object
   outputConnection.initialize(*transferableSolutionData1, *transferableSolutionData2, offsetSlotNoData1, offsetSlotNoData2);
@@ -59,8 +60,8 @@ void SolutionVectorMapping<
       int componentNo2 = transferableSolutionData2->variable1[toVectorIndex].componentNo;
       assert(fieldVariable2);
 
-      LOG(DEBUG) << "  " << fieldVariable1->name() << "[" << componentNo1 << "] -> "
-        << fieldVariable2->name() << "[" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible;
+      LOG(DEBUG) << "  " << fieldVariable1->name() << "." << fieldVariable1->componentName(componentNo1) << " [" << componentNo1 << "] -> "
+        << fieldVariable2->name() << "." << fieldVariable2->componentName(componentNo2) << " [" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible;
 
       // perform the mapping
       DihuContext::mappingBetweenMeshesManager()->template prepareMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2, componentNo2);
@@ -75,8 +76,8 @@ void SolutionVectorMapping<
       assert(fieldVariable2);
 
 
-      LOG(DEBUG) << "  " << fieldVariable1->name() << "[" << componentNo1 << "] -> "
-        << fieldVariable2->name() << "[" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible;
+      LOG(DEBUG) << "  " << fieldVariable1->name() << "." << fieldVariable1->componentName(componentNo1) << " [" << componentNo1 << "] -> "
+        << fieldVariable2->name() << "." << fieldVariable2->componentName(componentNo2) << " [" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible;
 
       // perform the mapping
       DihuContext::mappingBetweenMeshesManager()->template prepareMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2, componentNo2);
@@ -124,8 +125,8 @@ void SolutionVectorMapping<
       int componentNo2 = transferableSolutionData2->variable1[toVectorIndex].componentNo;
       assert(fieldVariable2);
 
-      LOG(DEBUG) << "  " << fieldVariable1->name() << "[" << componentNo1 << "] -> "
-        << fieldVariable2->name() << "[" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible;
+      LOG(DEBUG) << "  " << fieldVariable1->name() << "." << fieldVariable1->componentName(componentNo1) << " [" << componentNo1 << "] -> "
+        << fieldVariable2->name() << "." << fieldVariable2->componentName(componentNo2) << " [" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible;
 
       // perform the mapping
       DihuContext::mappingBetweenMeshesManager()->template prepareMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2, componentNo2);
@@ -139,8 +140,8 @@ void SolutionVectorMapping<
       int componentNo2 = transferableSolutionData2->variable2[toVectorIndex].componentNo;
       assert(fieldVariable2);
 
-      LOG(DEBUG) << "  " << fieldVariable1->name() << "[" << componentNo1 << "] -> "
-        << fieldVariable2->name() << "[" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible;
+      LOG(DEBUG) << "  " << fieldVariable1->name() << "." << fieldVariable1->componentName(componentNo1) << " [" << componentNo1 << "] -> "
+        << fieldVariable2->name() << "." << fieldVariable2->componentName(componentNo2) << " [" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible;
 
       // perform the mapping
       DihuContext::mappingBetweenMeshesManager()->template prepareMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2, componentNo2);

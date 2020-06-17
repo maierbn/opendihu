@@ -140,8 +140,9 @@ void CellmlSourceCodeGeneratorBase::initializeSourceCode(
   }
 
   LOG(INFO) << "CellML file \"" << sourceFilename_ << "\" with "
-    << nStates_ << " states, " << nAlgebraicsInSource_
-    << " algebraics, specified " << nParameters_ << " parameters: " << s.str() << "\n";
+    << nStates_ << " state" << (nStates_!=1? "s" : "") <<", " << nAlgebraicsInSource_
+    << " algebraic" << (nAlgebraicsInSource_!=1? "s" : "")
+    <<", specified " << nParameters_ << " parameter" << (nParameters_!=1? "s" : "") << ": " << s.str() << "\n";
 
 
 #ifndef NDEBUG

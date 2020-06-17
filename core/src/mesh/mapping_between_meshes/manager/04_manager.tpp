@@ -228,7 +228,8 @@ map(std::shared_ptr<FieldVariableSourceType> fieldVariableSource,
               ExtractComponentShared<FieldVariableSourceType,FieldVariableTargetType>::call(componentNoSource, fieldVariableSource, fieldVariableTarget);
 
               // if target field variable is "additionalFieldVariable", also set the name from the source field variable
-              if (fieldVariableTarget->name().find("additionalFieldVariable") != std::string::npos)
+              if (fieldVariableTarget->name().find("additionalFieldVariable") != std::string::npos
+                  || fieldVariableTarget->name().find("parameter_") != std::string::npos)
               {
                 std::stringstream name;
                 name << fieldVariableSource->name() << "." << fieldVariableSource->componentName(componentNoSource);
@@ -256,7 +257,9 @@ map(std::shared_ptr<FieldVariableSourceType> fieldVariableSource,
               ExtractComponentCopy<FieldVariableSourceType,FieldVariableTargetType>::call(componentNoSource, fieldVariableSource, fieldVariableTarget);
 
               // if target field variable is "additionalFieldVariable", also set the name from the source field variable
-              if (fieldVariableTarget->name().find("additionalFieldVariable") != std::string::npos)
+              if (fieldVariableTarget->name().find("additionalFieldVariable") != std::string::npos
+                  || fieldVariableTarget->name().find("parameter_") != std::string::npos
+              )
               {
                 std::stringstream name;
                 name << fieldVariableSource->name() << "." << fieldVariableSource->componentName(componentNoSource);
@@ -301,7 +304,8 @@ map(std::shared_ptr<FieldVariableSourceType> fieldVariableSource,
       }
 
       // if target field variable is "additionalFieldVariable", also set the name from the source field variable
-      if (fieldVariableTarget->name().find("additionalFieldVariable") != std::string::npos)
+      if (fieldVariableTarget->name().find("additionalFieldVariable") != std::string::npos
+          || fieldVariableTarget->name().find("parameter_") != std::string::npos)
       {
        std::stringstream name;
         name << fieldVariableSource->name() << "." << fieldVariableSource->componentName(componentNoSource);

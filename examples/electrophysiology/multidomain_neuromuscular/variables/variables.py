@@ -38,6 +38,7 @@ absolute_tolerance = 1e-10          # absolute tolerance of the residual of the 
 # -----------------
 end_time = 1000.0                   # [ms] end time of the simulation
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz. This is not used here.
+dt_motoneuron = 1e-3                # [ms] timestep width for motoneurons 
 dt_0D = 1e-3                        # [ms] timestep width of ODEs
 dt_1D = 1.5e-3                      # [ms] timestep width of diffusion
 dt_multidomain = 1e-2               # [ms] timestep width of multidomain
@@ -51,6 +52,7 @@ output_timestep_elasticity = 0.1    # [ms] timestep for elasticity output files
 # input files
 # -----------
 # CellML model, Shorten or Hodgkin-Huxley
+motoneuron_cellml_file = "../../input/motoneuron_hodgkin_huxley.cellml"
 #cellml_file = "../../input/shorten_ocallaghan_davidson_soboleva_2007.c"
 #cellml_file = "../../input/shorten.cpp"
 #cellml_file = "../../input/hodgkin_huxley_1952.c"

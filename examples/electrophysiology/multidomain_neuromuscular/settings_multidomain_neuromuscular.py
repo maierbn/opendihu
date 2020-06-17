@@ -251,16 +251,26 @@ config = {
     }
   },
   "Coupling": {
-    "timeStepWidth":          variables.dt_elasticity,  # 1e-1
+    "timeStepWidth":          variables.dt_elasticity,
     "logTimeStepWidthAsKey":  "dt_elasticity",
     "durationLogKey":         "duration_total",
     "timeStepOutputInterval": 1,
     "endTime":                variables.end_time,
     "connectedSlotsTerm1To2": {1:2},          # transfer gamma to MuscleContractionSolver, the receiving slots are λ, λdot, γ
     "connectedSlotsTerm2To1":  None,       # transfer nothing back
-    "Term1": {    # multidomain with motoneuron
+    
+    # Multidomain with motoneuron
+    "Term1": {
       "Coupling": {
-        "Term1": {    # motoneuron
+        "timeStepWidth":          variables.dt_stimulation_check,
+        "logTimeStepWidthAsKey":  "dt_stimulation_check",
+        "durationLogKey":         "duration_multidomain",
+        "timeStepOutputInterval": 1,
+        "connectedSlotsTerm1To2": {1:3},
+        "connectedSlotsTerm2To1": {3:1},
+        
+        # motoneuron
+        "Term1": {    
           "Heun" : {
             "timeStepWidth":                variables.dt_motoneuron,
             "logTimeStepWidthAsKey":        "dt_motoneuron",
@@ -283,15 +293,15 @@ config = {
               "compilerFlags":                          "-fPIC -O3 -march=native -shared ",             # compiler flags used to compile the optimized model code
               "maximumNumberOfThreads":                 0,                                              # if optimizationType is "openmp", the maximum number of threads to use. Default value 0 means no restriction.
               
-              # stimulation callbacks
-              "setSpecificStatesFunction":              motoneuron_set_specific_states,                                             # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
-              #"setSpecificStatesCallInterval":         2*int(1./variables.stimulation_frequency/variables.dt_0D),       # set_specific_states should be called variables.stimulation_frequency times per ms, the factor 2 is needed because every Heun step includes two calls to rhs
-              "setSpecificStatesCallInterval":          0,                                                               # 0 means disabled
-              "setSpecificStatesCallFrequency":         variables.get_specific_states_call_frequency(compartment_no),   # set_specific_states should be called variables.stimulation_frequency times per ms
-              "setSpecificStatesFrequencyJitter":       variables.get_specific_states_frequency_jitter(compartment_no), # random value to add or substract to setSpecificStatesCallFrequency every stimulation, this is to add random jitter to the frequency
-              "setSpecificStatesRepeatAfterFirstCall":  0.01,                                                            # [ms] simulation time span for which the setSpecificStates callback will be called after a call was triggered
-              "setSpecificStatesCallEnableBegin":       variables.get_specific_states_call_enable_begin(compartment_no),# [ms] first time when to call setSpecificStates
-              "additionalArgument":                     compartment_no,
+              # stimulation callbacks, motor neuron is not stimulated by a callback function, but has a constant stimulation current
+              "setSpecificStatesFunction":              None,                                           # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
+              #"setSpecificStatesCallInterval":         0,                                              # set_specific_states should be called variables.stimulation_frequency times per ms, the factor 2 is needed because every Heun step includes two calls to rhs
+              "setSpecificStatesCallInterval":          0,                                              # 0 means disabled
+              "setSpecificStatesCallFrequency":         0,                                              # set_specific_states should be called variables.stimulation_frequency times per ms
+              "setSpecificStatesFrequencyJitter":       0,                                              # random value to add or substract to setSpecificStatesCallFrequency every stimulation, this is to add random jitter to the frequency
+              "setSpecificStatesRepeatAfterFirstCall":  0.01,                                           # [ms] simulation time span for which the setSpecificStates callback will be called after a call was triggered
+              "setSpecificStatesCallEnableBegin":       0,                                              # [ms] first time when to call setSpecificStates
+              "additionalArgument":                     None,
               
               "mappings":                               variables.motoneuron_mappings,                             # mappings between parameters and algebraics/constants and between outputConnectorSlots and states, algebraics or parameters, they are defined in helper.py
               "parametersInitialValues":                variables.motoneuron_parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
@@ -301,43 +311,52 @@ config = {
 
               # output writer for states, algebraics and parameters                
               "OutputWriter" : [
-                {"format": "Paraview", "outputInterval": (int)(1./variables.dt_0D*variables.output_timestep_multidomain), "filename": "out/" + variables.scenario_name + "/0D_all", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"}
-              ] if variables.states_output else []
+                {"format": "PythonFile", "outputInterval": (int)(2./variables.dt_motoneuron*variables.output_timestep_motoneuron), "filename": "out/" + variables.scenario_name + "/motoneuron", "binary": True, "fixedFormat": False, "combineFiles": True, "onlyNodalValues": True, "fileNumbering": "incremental"}
+              ]
             },
           }
         },
-        "Term2": {    # multidomain
+        
+        # Multidomain
+        "Term2": {
           "MapDofs": {
-            "nAdditionalFieldVariables":  1,                              # number of additional field variables that are defined by this object. They have 1 component, use the templated function space and mesh given by meshName.
+            "nAdditionalFieldVariables":  2,                              # number of additional field variables that are defined by this object. They have 1 component, use the templated function space and mesh given by meshName.
             "meshName":                   "motoneuronMesh",               # the mesh on which the additional field variables will be defined
+            
+            # mapping from motoneuronMesh which contains on every rank as many nodes as there are motoneurons to the 3D domain
+            # map from motoneuronMesh (algebraics) to 3Dmesh (solution)
             "beforeComputation": [                                        # transfer/mapping of dofs that will be performed before the computation of the nested solver
-              {                                                 # map from motoneuronMesh (algebraics) to 3Dmesh (solution)
+              {                                                 
+                "fromOutputConnectorSlotNo":        3,                    # which fiber/compartment
+                "toOutputConnectorSlotNo":          0,
+                "fromOutputConnectorArrayIndex":    0,
+                "toOutputConnectorArrayIndex":      mu_no,
+                "fromDofNosNumbering":              "local",
+                "toDofNosNumbering":                "global",
+                "dofsMapping":                      {mu_no: junction_nodes_global_nos},
+                "mode":                             "copyLocalIfPositive",          # "copyLocal", "copyLocalIfPositive" or "communicate"
+              } for mu_no in range(n_motor_units)],
+            
+            # map from 3Dmesh to motoneuronMesh
+            "afterComputation": None,
+            "unused": [                                        # transfer/mapping of dofs that will be performed before the computation of the nested solver
+              {                                                 
                 "fromOutputConnectorSlotNo":        0,
-                "toOutputConnectorSlotNo":          1,
-                "fromOutputConnectorArrayIndex":    0,                    # which compartment
+                "toOutputConnectorSlotNo":          2,
+                "fromOutputConnectorArrayIndex":    0,                    # which fiber/compartment
                 "toOutputConnectorArrayIndex":      0,
-                "fromDofNosIsGlobal":               False,
-                "toDofNosIsGlobal":                 True,
-                "dofsMapping":                      {0:[1,2], 1:5},
-                "mode":                             "copyLocal",          # "copyLocal" or "communicate"
+                "fromDofNosNumbering":              "global",
+                "toDofNosNumbering":                "global",
+                "dofsMapping":                      {g_node: list(range(n_motor_units*n_ranks)) for g_node in golgi_tendon_organ_nodes_global_nos},
+                "mode":                             "communicate",          # "copyLocal", "copyLocalIfPositive" or "communicate"
               }
             ],
-            "afterComputation": [                                        # transfer/mapping of dofs that will be performed before the computation of the nested solver
-              {                                                 # map from 3Dmesh (solution) to motoneuronMesh (states)
-                "fromOutputConnectorSlotNo":        0,
-                "toOutputConnectorSlotNo":          1,
-                "fromDofNosIsGlobal":               False,
-                "toDofNosIsGlobal":                 True,
-                "dofsMapping":                      {0:[1,2], 1:5},
-                "mode":                             "communicate",          # "copyLocal" or "communicate"
-              }
-            ],
+              
             "StrangSplitting": {
               "timeStepWidth":          variables.dt_splitting,
               "logTimeStepWidthAsKey":  "dt_splitting",
               "durationLogKey":         "duration_total",
               "timeStepOutputInterval": 100,
-              "endTime":                variables.end_time,
               "connectedSlotsTerm1To2": [0],          # CellML V_mk (0) <=> Multidomain V_mk^(i) (0)
               "connectedSlotsTerm2To1": [None, 0],    # Multidomain V_mk^(i+1) (1) -> CellML V_mk (0)
 
@@ -413,8 +432,10 @@ config = {
           }
         }
       }
-    }
-    "Term2": {        # solid mechanics
+    },
+    
+    # elasticity
+    "Term2": {        
       "MuscleContractionSolver": {
         "numberTimeSteps":              1,                         # only use 1 timestep per interval
         "timeStepOutputInterval":       100,                       # do not output time steps

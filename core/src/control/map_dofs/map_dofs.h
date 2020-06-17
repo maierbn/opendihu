@@ -69,6 +69,7 @@ protected:
 
     enum {
       modeCopyLocal,
+      modeCopyLocalIfPositive,
       modeCommunicate
     } mode;                         // how to handle multiple dofs that map on a single dof
 
@@ -77,6 +78,7 @@ protected:
     ValueCommunicator valueCommunicator;            //< the object that performs the MPI communication
     std::map<int,std::vector<dof_no_t>> dofNosLocalOfValuesToSendToRanks;      //< for every rank the local dof nos of the values that will be sent to the rank
     std::vector<dof_no_t> receivedValueDofNosLocal;                            //< for the received values the local dof nos where to store the values in the field variable
+    std::vector<dof_no_t> maskedDofNosLocal;                                   //< same as receivedValueDofNosLocal, but if mode==modeCopyLocalIfPositive, the dof nos for which the value is not positive are set to -1
   };
 
   //! execute the configured mapping of dofs, this gets called before and after advanceTimeSpan of the nested solver

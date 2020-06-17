@@ -573,11 +573,12 @@ setValues(int componentNo, PetscInt ni, const PetscInt ix[], const PetscScalar y
 
     for (int i = 0; i < ni; i++)
     {
-      if (ix[i] < 0 || ix[i] >= this->meshPartition_->nDofsLocalWithGhosts())
+      // local indices can be -1, which means masked out (VecSetOption(x, VEC_IGNORE_NEGATIVE_INDICES,PETSC_TRUE) is set)
+      if (ix[i] < -1 || ix[i] >= this->meshPartition_->nDofsLocalWithGhosts())
       {
         LOG(ERROR) << "\"" << this->name_ << "\" setValues ix[" << i << "]=" << ix[i] << ", nDofsLocalWithGhosts: " << this->meshPartition_->nDofsLocalWithGhosts();
       }
-      assert(ix[i] >= 0 && ix[i] < this->meshPartition_->nDofsLocalWithGhosts());
+      assert(ix[i] >= -1 && ix[i] < this->meshPartition_->nDofsLocalWithGhosts());
     }
 #endif
 
@@ -1280,8 +1281,8 @@ output(std::ostream &stream)
         }
       }
       stream << "], ";
-      if (vector == valuesContiguous_)
-        stream << std::endl;
+      //if (vector == valuesContiguous_)
+      //  stream << std::endl;
     }
     else
     {
@@ -1310,7 +1311,7 @@ output(std::ostream &stream)
 
       if (vector == valuesContiguous_)
       {
-        stream << "]" << std::endl;
+        stream << "]";
       }
       else
       {

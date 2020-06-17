@@ -79,7 +79,7 @@ initialize()
   }
   if (this->outputWriterManager_.hasOutputWriters())
   {
-    LOG(INFO) << "CellML has output writers. This will be slow as it outputs lots of data and should only be used for debugging.";
+    LOG(INFO) << "CellML has output writers. This will be slow if it outputs lots of data and should only be used for debugging.";
   }
 
   this->internalTimeStepNo_ = 0;
@@ -311,12 +311,15 @@ prepareForGetOutputConnectorData()
 {
   // make representation of algebraics global, such that field variables in outputConnectorData that share the Petsc Vec's with
   // algebraics have the correct data assigned
-  LOG(DEBUG) << "Transform algebraics field variable " << this->data_.algebraics() << " to global representation in order to transfer them to other solver.";
-  VLOG(1) << *this->data_.algebraics();
+  LOG(DEBUG) << "Transform algebraics and parameters field variables to global representation in order to transfer them to other solver, such that extracted component-field variables in timestepping scheme have the correct values.";
 
+  VLOG(1) << *this->data_.algebraics();
   this->data_.algebraics()->setRepresentationGlobal();
-
   VLOG(1) << *this->data_.algebraics();
+
+  VLOG(1) << *this->data_.parameters();
+  this->data_.parameters()->setRepresentationGlobal();
+  VLOG(1) << *this->data_.parameters();
 }
 
 template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>

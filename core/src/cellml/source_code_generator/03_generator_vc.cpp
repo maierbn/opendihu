@@ -157,8 +157,8 @@ void CellmlSourceCodeGeneratorVc::preprocessCode(std::set<std::string> &helperFu
                   {
                     if (expression.type == code_expression_t::variableName)
                     {
-                      if (expression.code != "CONSTANTS")
-                        expressionHasVariables = true;
+                      //if (expression.code != "CONSTANTS")
+                      expressionHasVariables = true;
                     }
                   });
 

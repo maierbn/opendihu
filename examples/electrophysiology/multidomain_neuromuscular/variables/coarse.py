@@ -103,7 +103,23 @@ motor_units = [
   {"fiber_no": 50, "standard_deviation": 0.2, "maximum": 0.2, "radius": 72.00, "cm": 1.00, "activation_start_time": 1.6, "stimulation_frequency": 8.32,  "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
   {"fiber_no": 25, "standard_deviation": 0.2, "maximum": 0.2, "radius": 80.00, "cm": 1.00, "activation_start_time": 1.8, "stimulation_frequency": 7.66,  "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},    # high number of fibers
 ]
-motor_units=motor_units[0:1]
+motor_units = motor_units[0:2]  # only use 2 motor units
+motoneuron_mappings = {
+  ("parameter", 0):           "membrane/i_Stim",
+  ("parameter", 1):           "firing_threshold/V_threshold",
+  ("parameter", 2):           "firing_threshold/V_firing",
+  ("parameter", 3):           "firing_threshold/V_extern_in",
+  
+  ("outputConnectorSlot", 0): "firing_threshold/V_extern_in",
+  ("outputConnectorSlot", 1): "firing_threshold/V_extern_out",
+}
+
+
+motoneuron_stimulation_current = 5    # [mV] constant stimulation current of the motoneuron
+
+# set values for parameters: [i_Stim, V_threshold, V_firing], 
+# i_Stim = stimulation current of motoneuron, V_threshold = threshold if trans-membrane voltage is above, motoneuron fires, V_firing = value of Vm to set if motoneuron fires
+motoneuron_parameters_initial_values = [motoneuron_stimulation_current, 0, 20, -75]
 
 # solvers
 # -------
@@ -143,14 +159,18 @@ use_lumped_mass_matrix = False            # which formulation to use, the formul
 end_time = 4000.0                   # [ms] end time of the simulation
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
 stimulation_frequency_jitter = 0    # [-] jitter in percent of the frequency, added and substracted to the stimulation_frequency after each stimulation
+dt_motoneuron = 1e-3                # [ms] timestep width for motoneurons 
+dt_stimulation_check = 1e-2         # [ms] timestep width for when to check if the motoneurons stimulated 
 dt_0D = 1e-3                        # [ms] timestep width of ODEs (1e-3)
 dt_multidomain = 1e-3               # [ms] timestep width of the multidomain solver, i.e. the diffusion
 dt_splitting = dt_multidomain       # [ms] timestep width of strang splitting between 0D and multidomain, this is the same as the dt_multidomain, because we do not want to subcycle for the diffusion part
 dt_elasticity = 1e-1                # [ms] time step width of elasticity solver
 output_timestep_multidomain = 1e-1  # [ms] timestep for fiber output, 0.5
+output_timestep_motoneuron = 1e-1   # [ms] timestep for output of motoneuron
 output_timestep_elasticity = dt_elasticity      # [ms] timestep for elasticity output files
 
 # input files
+motoneuron_cellml_file = "../../input/motoneuron_hodgkin_huxley.cellml"
 #cellml_file = "../../input/new_slow_TK_2014_12_08.c"
 cellml_file = "../../input/hodgkin_huxley-razumova.cellml"
 

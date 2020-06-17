@@ -33,12 +33,6 @@ public:
   //! set the data objects of the instances
   void setInstancesData(std::vector<BaseTimesteppingType> &instances);
 
-  //! return the total number of degrees of freedom, this can be a multiple of the number of nodes of the mesh
-  virtual dof_no_t nUnknownsLocalWithGhosts();
-
-  //! return the total number of degrees of freedom, this can be a multiple of the number of nodes of the mesh
-  virtual dof_no_t nUnknownsLocalWithoutGhosts();
-
   //! field variables that will be output by outputWriters
   typedef std::tuple<std::vector<typename BaseDataType::FieldVariablesForOutputWriter>> FieldVariablesForOutputWriter;
 

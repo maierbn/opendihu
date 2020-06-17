@@ -104,7 +104,7 @@ namespace ModelOrderReduction
     
     LOG(TRACE) << "TimeSteppingSchemeOdeReduced::initialize()";
 
-    // add this solver to the solvers diagram, which is a SVG file that will be created at the end of the simulation.
+    // add this solver to the solvers diagram, which is an ASCII art representation that will be created at the end of the simulation.
     DihuContext::solverStructureVisualizer()->addSolver("ModelOrderReduction");
 
     // indicate in solverStructureVisualizer that now a child solver will be initialized

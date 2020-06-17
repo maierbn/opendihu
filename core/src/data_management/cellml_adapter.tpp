@@ -58,9 +58,10 @@ setStatesVariable(std::shared_ptr<CellmlAdapter<nStates,nAlgebraics,FunctionSpac
 
 template <int nStates, int nAlgebraics, typename FunctionSpaceType>
 void CellmlAdapter<nStates,nAlgebraics,FunctionSpaceType>::
-setAlgebraicNames(const std::vector<std::string> &algebraicNames)
+setAlgebraicAndParameterNames(const std::vector<std::string> &algebraicNames, const std::vector<std::string> &parameterNames)
 {
   algebraicNames_ = algebraicNames;
+  parameterNames_ = parameterNames;
 }
 
 template <int nStates, int nAlgebraics, typename FunctionSpaceType>
@@ -73,12 +74,20 @@ createPetscObjects()
   this->algebraics_ = this->functionSpace_->template createFieldVariable<nAlgebraics>("algebraics", algebraicNames_);
   this->algebraics_->setRepresentationContiguous();
 
-  std::vector<std::string> parameterNames(nAlgebraics);
-  for (int i = 0; i < nAlgebraics; i++)
+  std::vector<std::string> parameterNames;
+
+  for (int i = 0; i < parameterNames_.size(); i++)
   {
     std::stringstream s;
-    s << "parameter_" << i;
-    parameterNames[i] = s.str();
+    s << "(P)" << parameterNames_[i];
+    parameterNames.push_back(s.str());
+  }
+
+  for (int i = parameterNames.size(); i < nAlgebraics; i++)
+  {
+    std::stringstream s;
+    s << "unusedParameter_" << i;
+    parameterNames.push_back(s.str());
   }
 
   this->parameters_ = this->functionSpace_->template createFieldVariable<nAlgebraics>("parameters", parameterNames);
@@ -104,15 +113,24 @@ template <int nStates, int nAlgebraics, typename FunctionSpaceType>
 void CellmlAdapter<nStates,nAlgebraics,FunctionSpaceType>::
 prepareParameterValues()
 {
+  //LOG(DEBUG) << "parameters: " << *this->parameters_;
+
   this->parameters_->setRepresentationContiguous();
   PetscErrorCode ierr;
   Vec contiguousVec = this->parameters_->getValuesContiguous();
   ierr = VecGetArray(contiguousVec, &parameterValues_); CHKERRV(ierr);
-  
+
 #if 0
   PetscInt nValues;
   ierr = VecGetLocalSize(contiguousVec, &nValues); CHKERRV(ierr);
-  LOG(DEBUG) << "parameter values has " << nValues << " entries.";
+  LOG(DEBUG) << "parameter values has " << nValues << " entries: ";
+
+  if (nValues == 11)
+    counter++;
+  if (counter == 22)
+    LOG(FATAL) << "end, component 3 should not be -75 but -75.0059";
+  //for (int i = 0; i < nValues; i++)
+  //  LOG(DEBUG) << i << ": " << parameterValues_[i];
 #endif
 }
 

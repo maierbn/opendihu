@@ -65,7 +65,7 @@ public:
 
   //! initialize all information from python settings key "mappings", this sets parametersUsedAsAlgebraics/States and outputAlgebraic/StatesIndex
   void initializeMappings(std::vector<int> &parametersUsedAsAlgebraic, std::vector<int> &parametersUsedAsConstant,
-                          std::vector<int> &statesForTransfer, std::vector<int> &algebraicsForTransfer, std::vector<int> &parametersForTransfer);
+                          std::vector<int> &statesForTransfer, std::vector<int> &algebraicsForTransfer, std::vector<int> &parametersForTransfer, std::vector<std::string> &parameterNames);
 
   //! set the solution field variable in the data object, that actual data is stored in the timestepping scheme object
   void setSolutionVariable(std::shared_ptr<FieldVariableStates> states);

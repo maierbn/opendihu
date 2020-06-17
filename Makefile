@@ -9,10 +9,10 @@ python := python2.7
 #endif
 
 debug:
-	$(python) dependencies/scons/scons.py BUILD_TYPE=DEBUG -j $(shell expr `nproc` / 2)
+	$(python) dependencies/scons/scons.py BUILD_TYPE=DEBUG -j $(shell expr `nproc --all` / 2)
 
 release:
-	$(python) dependencies/scons/scons.py BUILD_TYPE=RELEASE -j $(shell expr `nproc` / 2)
+	$(python) dependencies/scons/scons.py BUILD_TYPE=RELEASE -j $(shell expr `nproc --all` / 2)
 
 clean:
 	rm -rf .sconf_temp

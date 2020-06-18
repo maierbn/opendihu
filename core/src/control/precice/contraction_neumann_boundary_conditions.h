@@ -20,7 +20,7 @@ namespace PreciceAdapter
  *  |                                                                                        |
  *  +----------------------------------------------------------------------------------------+
  */
-template<class NestedSolver>
+template<typename NestedSolver>
 class ContractionNeumannBoundaryConditions :
   public Runnable
 {

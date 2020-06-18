@@ -4,6 +4,7 @@
 
 #include "mesh/mapping_between_meshes/mapping/01_implementation.h"
 #include "mesh/composite.h"
+#include "function_space/function_space.h"
 
 namespace MappingBetweenMeshes
 {
@@ -28,7 +29,7 @@ public:
 /** Partial specialization for composite source mesh
  */
 template<int D, typename BasisFunctionType, typename FunctionSpaceTargetType>
-class MappingBetweenMeshes<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>, FunctionSpaceTargetType> : 
+class MappingBetweenMeshes<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>, FunctionSpaceTargetType> :
   public MappingBetweenMeshesImplementation<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>, FunctionSpaceTargetType>
 {
 public:
@@ -36,13 +37,29 @@ public:
   typedef FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType> FunctionSpaceSourceType;
 
   //! constructor, the function spaces need to be initialized
-  MappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSource, std::shared_ptr<FunctionSpaceTargetType> functionSpaceTarget, 
+  MappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSource, std::shared_ptr<FunctionSpaceTargetType> functionSpaceTarget,
                       double xiTolerance=0, bool enableWarnings=true, bool compositeUseOnlyInitializedMappings=false,
                       bool isEnabledFixUnmappedDofs=true);
 };
 
+/** Partial specialization for composite target mesh
+ */
+/*template<typename FunctionSpaceSourceType, int D, typename BasisFunctionType>
+class MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType> :
+  public MappingBetweenMeshesImplementation<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>, FunctionSpaceTargetType>
+{
+public:
+
+  typedef FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType> FunctionSpaceSourceType;
+
+  //! constructor, the function spaces need to be initialized
+  MappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSource, std::shared_ptr<FunctionSpaceTargetType> functionSpaceTarget,
+                      double xiTolerance=0, bool enableWarnings=true, bool compositeUseOnlyInitializedMappings=false,
+                      bool isEnabledFixUnmappedDofs=true);
+};*/
+
 }  // namespace
 
-// the following include is in mapping_between_meshes/manager/02_manager.h to prevent cyclic dependencies
+// the following include is in mapping_between_meshes/manager/04_manager.h to prevent cyclic dependencies
 //#include "mesh/mapping_between_meshes/mapping/02_composite.tpp"
 

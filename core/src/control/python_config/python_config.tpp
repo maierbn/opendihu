@@ -4,7 +4,7 @@
 #include "utility/python_utility.h"
 
 //! return the option value as array given by key in the python dictionary settings. If not found, return the defaultValue, also check if validityCriterion is met
-template<class ValueType, int D>
+template<typename ValueType, int D>
 std::array<ValueType, D> PythonConfig::
 getOptionArray(std::string keyString, std::array<ValueType, D> defaultValue,
                PythonUtility::ValidityCriterion validityCriterion) const
@@ -14,7 +14,7 @@ getOptionArray(std::string keyString, std::array<ValueType, D> defaultValue,
 }
 
 //! return the option value as array given by key in the python dictionary settings. If not found, return the defaultValue, also check if validityCriterion is met
-template<class ValueType, int D>
+template<typename ValueType, int D>
 std::array<ValueType, D> PythonConfig::
 getOptionArray(std::string keyString, ValueType defaultValue,
               PythonUtility::ValidityCriterion validityCriterion) const

@@ -8,7 +8,7 @@
 #include "interfaces/runnable.h"
 #include "interfaces/multipliable.h"
 #include "control/dihu_context.h"
-#include "data_management/multiple_instances.h"
+#include "data_management/control/multiple_instances.h"
 #include "output_writer/manager.h"
 #include "partition/mesh_partition/02_mesh_partition.h"
 
@@ -17,7 +17,7 @@ namespace Control
 
 /** This class holds multiple instances of the template type, e.g. for having multiple fibers, which are each as in example electrophysiology
   */
-template<class TimeSteppingScheme>
+template<typename TimeSteppingScheme>
 class MultipleInstances: public Runnable, public Multipliable
 {
 public:

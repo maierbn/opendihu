@@ -62,12 +62,13 @@ XBRAID_DOWNLOAD = True
 OPENCOR_DOWNLOAD = True
 
 # preCICE coupling library
-LIBXML2_DOWNLOAD = True
-PRECICE_DOWNLOAD = True
+LIBXML2_DOWNLOAD = False
+PRECICE_DOWNLOAD = False
 
 # MPI
 # MPI is normally detected by runnig the mpicc command. If this is not available, you can provide the MPI_DIR as usual.
-MPI_DIR = "/usr/lib/openmpi"    # standard path for openmpi on ubuntu 16.04
+#MPI_DIR = "/usr/lib/openmpi"    # standard path for openmpi on ubuntu 16.04
+MPI_DIR = "/usr/lib/x86_64-linux-gnu/openmpi"    # standard path for openmpi on ubuntu >18.04
 
 # chaste and dependencies
 have_chaste = False
@@ -79,13 +80,13 @@ XSD_DOWNLOAD = have_chaste
 BOOST_DOWNLOAD = False
 CHASTE_DOWNLOAD = have_chaste
 
-# automatically set MPI_DIR for other systems, like ubuntu 18.04 and Debian
+# automatically set MPI_DIR for other systems, like ubuntu 16.04 and Debian
 try:
   import lsb_release
   lsb_info = lsb_release.get_lsb_information()   # get information about ubuntu version, if available
   if "RELEASE" in lsb_info:
-    if lsb_info["RELEASE"] == "18.04":
-      MPI_DIR="/usr/lib/x86_64-linux-gnu/openmpi"   # this is the standard path on ubuntu 18.04
+    if lsb_info["RELEASE"] == "16.04":
+      MPI_DIR="/usr/lib/openmpi"   # this is the standard path on ubuntu 16.04
 except:
   pass
 

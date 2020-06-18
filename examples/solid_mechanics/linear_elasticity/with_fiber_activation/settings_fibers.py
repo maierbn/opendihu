@@ -141,6 +141,7 @@ if False:
   pp.pprint(meshes)
     
 config = {
+  "logFormat":                      "csv",            # "csv" or "json", format of the lines in the log file, csv gives smaller files
   "solverStructureDiagramFile":     "solver_structure.txt",          # output file of a diagram that shows data connection between solvers
   "mappingsBetweenMeshesLogFile":   "mappings_between_meshes.txt",   # log file for mappings between meshes
   "Meshes":                 meshes,

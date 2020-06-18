@@ -260,6 +260,7 @@ multidomain_solver = {
 }
   
 config = {
+  "logFormat":                  "csv",                      # "csv" or "json", format of the lines in the log file, csv gives smaller files
   "solverStructureDiagramFile": "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "Meshes": {
     "mesh": {

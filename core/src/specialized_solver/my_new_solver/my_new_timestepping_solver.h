@@ -14,7 +14,7 @@
  *
  *  Briefly explain what your solver does in this comment section.
   */
-template<class TimeStepping>
+template<typename TimeStepping>
 class MyNewTimesteppingSolver :
   public Runnable,
   public TimeSteppingScheme::TimeSteppingScheme

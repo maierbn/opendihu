@@ -895,7 +895,30 @@ class Package(object):
         
           # compile and run test program normally
           res = ctx.TryRun(text, self.ext)
-      
+          
+          # if this failed, prepend 'mpirun -n 1' and if that fails, 'srun -n 1'
+          if not res[0]:
+            ctx.Log("Running the test program failed, now try with prefix 'mpirun -n 1'\n")
+            
+            ok = ctx.TryLink(text, self.ext) 
+            if(ok): 
+              prog = ctx.lastTarget 
+              pname = prog.get_internal_path() 
+              output = ctx.sconf.confdir.File(os.path.basename(pname)+'.out') 
+              node = ctx.env.Command(output, prog, [ [ 'mpirun', '-n', '1', pname, ">", "${TARGET}"] ]) 
+              ok = ctx.sconf.BuildNodes(node) 
+              if ok: 
+                outputStr = output.get_contents()
+                res = (1, outputStr)
+                print("(If you are seeing MPI errors, this is because programs can only be run with `mpirun`. This is not a problem.)")
+              else:
+                ctx.Log("Running the test program with mpirun failed, now try with prefix 'srun -n 1'\n")
+                node = ctx.env.Command(output, prog, [ [ 'srun', '-n', '1', pname, ">", "${TARGET}"] ]) 
+                ok = ctx.sconf.BuildNodes(node) 
+                if ok: 
+                  outputStr = output.get_contents()
+                  res = (1, outputStr)
+                
     else:
       res = (ctx.TryLink(text, self.ext), '')
         
@@ -981,6 +1004,9 @@ class Package(object):
   def try_headers(self, ctx, inc_dirs, **kwargs):
     ctx.Log('Trying to find headers in %s\n'%repr(inc_dirs))
     new_inc_dirs = []
+    # if there are no headers to be found it is successful
+    if not self.headers:
+      return True
     
     # if the entries in headers is only a single list, make it a list of listst
     if self.headers:
@@ -1104,10 +1130,11 @@ class Package(object):
 
         system_inc_dirs = []
         for inc_dir in inc_sub_dirs:
-          if "pgcc" in ctx.env["cc"] or "pgcc" in ctx.env["CC"]:
+          if "pgcc" in ctx.env["cc"] or "pgcc" in ctx.env["CC"] or "/usr/include" in inc_dir:     
             system_inc_dirs.append(('-I', inc_dir))
           else:
-            system_inc_dirs.append(('-isystem', inc_dir))     # -isystem is the same is -I for gcc, except it suppresses warning (useful for dependencies)            
+            system_inc_dirs.append(('-isystem', inc_dir))     # -isystem is the same is -I for gcc, except it suppresses warning (useful for dependencies)
+            # also, -isystem /usr/include does not work properly
 
         if self.set_rpath:
           bkp = env_setup(ctx.env,

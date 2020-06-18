@@ -93,6 +93,7 @@ elasticity_neumann_bc = [{"element": 0*nx*ny + j*nx + i, "constantVector": botto
 
 config = {
   "scenarioName": "3d_muscle",
+  "logFormat":    "csv",     # "csv" or "json", format of the lines in the log file, csv gives smaller files
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "Meshes": variables.meshes,
   "HyperelasticitySolver": {

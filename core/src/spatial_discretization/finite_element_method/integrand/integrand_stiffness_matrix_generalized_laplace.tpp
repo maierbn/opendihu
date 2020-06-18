@@ -50,7 +50,7 @@ evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,1,Term> &data, co
   const VecD<3,double_v_t> &zetah = jacobian[1];  // second column of jacobian
 
   double_v_t integrationFactor = MathUtility::computeIntegrationFactor(jacobian);
-  MathUtility::Matrix<2,2,double_v_t> diffusionTensor = data.diffusionTensor(elementNoLocal, xi);
+  MathUtility::Matrix<2,2,double_v_t> diffusionTensor = data.template diffusionTensor<double_v_t,element_no_v_t>(elementNoLocal, xi);
   VLOG(1) << "diffusionTensor: " << diffusionTensor;
 
   double_v_t l1 = MathUtility::length(zeta1);
@@ -115,6 +115,7 @@ evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,1,Term> &data, co
   EvaluationsType evaluations;
 
   MathUtility::Matrix<3,3,double_v_t> diffusionTensor = data.template diffusionTensor<double_v_t,element_no_v_t>(elementNoLocal, xi);
+  //MathUtility::Matrix<3,3,double_v_t> diffusionTensor = data.diffusionTensor(elementNoLocal, xi);
 
   // compute the combined 3x3 transformation diffusion matrix T = J^{-1} A J^{-T} and the absolute of the determinant of the jacobian
   double_v_t determinant;

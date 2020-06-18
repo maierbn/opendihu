@@ -7,6 +7,7 @@ bc = [
   {"element": n-1, "constantValue": 1.0, "face": "0+"}
 ]
 config = {
+  "logFormat":                      "csv",
   "solverStructureDiagramFile":     "solver_structure.txt",
   "FiniteElementMethod" : {
     "nElements": n,

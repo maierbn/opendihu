@@ -7,7 +7,7 @@
 namespace PreciceAdapter
 {
 
-template<class NestedSolver>
+template<typename NestedSolver>
 ContractionNeumannBoundaryConditions<NestedSolver>::
 ContractionNeumannBoundaryConditions(DihuContext context) :
   Runnable(),
@@ -17,7 +17,7 @@ ContractionNeumannBoundaryConditions(DihuContext context) :
   this->specificSettings_ = this->context_.getPythonConfig();
 }
 
-template<class NestedSolver>
+template<typename NestedSolver>
 void ContractionNeumannBoundaryConditions<NestedSolver>::
 initialize()
 {
@@ -29,7 +29,7 @@ initialize()
 
   // initialize() will be called before the simulation starts.
 
-  // add this solver to the solvers diagram, which is a SVG file that will be created at the end of the simulation.
+  // add this solver to the solvers diagram, which is an ASCII art representation that will be created at the end of the simulation.
   DihuContext::solverStructureVisualizer()->addSolver("PreciceAdapter::ContractionNeumannBoundaryConditions", true);   // hasInternalConnectionToFirstNestedSolver=true (the last argument) means output connector data is shared with the first subsolver
 
   // indicate in solverStructureVisualizer that now a child solver will be initialized
@@ -121,7 +121,7 @@ initialize()
 #endif
 }
 
-template<class NestedSolver>
+template<typename NestedSolver>
 void ContractionNeumannBoundaryConditions<NestedSolver>::
 run()
 {
@@ -186,7 +186,7 @@ run()
 
 #ifdef HAVE_PRECICE
 
-template<class NestedSolver>
+template<typename NestedSolver>
 void ContractionNeumannBoundaryConditions<NestedSolver>::
 preciceReadData()
 {
@@ -295,7 +295,7 @@ preciceReadData()
   LOG(DEBUG) << "read data from precice complete, traction values: " << tractionValues;
 }
 
-template<class NestedSolver>
+template<typename NestedSolver>
 void ContractionNeumannBoundaryConditions<NestedSolver>::
 preciceWriteData()
 {
@@ -357,7 +357,7 @@ preciceWriteData()
 
 #endif
 
-template<class NestedSolver>
+template<typename NestedSolver>
 void ContractionNeumannBoundaryConditions<NestedSolver>::
 reset()
 {
@@ -367,7 +367,7 @@ reset()
   // "uninitialize" everything
 }
 
-template<class NestedSolver>
+template<typename NestedSolver>
 typename ContractionNeumannBoundaryConditions<NestedSolver>::Data &ContractionNeumannBoundaryConditions<NestedSolver>::
 data()
 {

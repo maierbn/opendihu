@@ -144,6 +144,7 @@ if False:
 # define the config dict
 config = {
   "scenarioName":          variables.scenario_name,
+  "logFormat":             "csv",
   "solverStructureDiagramFile":     "out/solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "mappingsBetweenMeshesLogFile":   "out/mappings_between_meshes.txt",  # log file of when mappings between meshes occur
   "Meshes":                variables.meshes,
@@ -254,7 +255,7 @@ config = {
                       "additionalArgument":                     fiber_no,                                       # last argument that will be passed to the callback functions set_specific_states, set_specific_parameters, etc.
                       
                       # parameters to the cellml model
-                      "mappings":                               variables.mappings,                             # mappings between parameters and intermediates/constants and between outputConnectorSlots and states, intermediates or parameters, they are defined in helper.py
+                      "mappings":                               variables.mappings,                             # mappings between parameters and algebraics/constants and between outputConnectorSlots and states, algebraics or parameters, they are defined in helper.py
                       "parametersInitialValues":                variables.parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
                       
                       "meshName":                               "MeshFiber_{}".format(fiber_no),                # reference to the fiber mesh
@@ -389,7 +390,7 @@ config = {
     
           # solving
           "solverName":                 "mechanicsSolver",         # name of the nonlinear solver configuration, it is defined under "Solvers" at the beginning of this config
-          #"loadFactors":                [0.5, 1.0],                # load factors for every timestep
+          #"loadFactors":                [0.25, 0.66, 1.0],                # load factors for every timestep
           "loadFactors":                [],                        # no load factors, solve problem directly
           "nNonlinearSolveCalls":       1,                         # how often the nonlinear solve should be repeated
           

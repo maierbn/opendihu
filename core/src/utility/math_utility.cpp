@@ -490,4 +490,25 @@ double estimateConditionNumber(const Tensor2<3> &matrix, const Tensor2<3> &inver
   return maximumEigenvalue / minimumEigenvalue;
 }
 
+bool containsNanOrInf(const double value)
+{
+  if (!std::isfinite(value) || fabs(value) > 1e+75 || value == std::numeric_limits<double>::max())
+  {
+    return true;
+  }
+  return false;
+}
+
+bool containsNanOrInf(const Vc::double_v value)
+{
+  for (int i = 0; i < Vc::double_v::size(); i++)
+  {
+    if (containsNanOrInf(value[i]))
+    {
+      return true;
+    }
+  }
+  return false;
+}
+
 }  // namespace

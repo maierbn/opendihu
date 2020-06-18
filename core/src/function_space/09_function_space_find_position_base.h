@@ -40,7 +40,7 @@ protected:
 
   //! check if the point is in a neighbouring element to elementNo on ghostMeshNo (-1=main mesh, 0-5=ghost mesh on respective face, 0=face0Minus, 1=face0Plus, etc.), return true if the element was found amoung the neighbours
   //! set elementNo, ghostMeshNo and xi appropriately
-  virtual bool checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghostMeshNo, std::array<double,MeshType::dim()> &xi, double &residual) = 0;
+  virtual bool checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghostMeshNo, std::array<double,MeshType::dim()> &xi, double &residual, double xiTolerance) = 0;
 
   std::array<std::shared_ptr<FunctionSpace<MeshType,BasisFunctionType>>,6> ghostMesh_;   // neighbouring functionSpaces of the local domain, i.e. containing ghost elements, this is used by findPosition
 };

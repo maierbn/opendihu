@@ -68,8 +68,12 @@ xiTolerance
 ^^^^^^^^^^^^^^
 (default: 0.1, this was tested to be reasonable)
 
-The element coordinates are called xi, e.g. for a 3D element :math:`\xi_1, \xi_2, \xi_3 \in [0,1]^3`. The tolerance specifies when a point is considered to be still inside the element, even if a xi values is >0 or >1. 
-With this tolerance, also nodes of the source mesh that are slightly outside the target mesh get a value mapped. This is useful for fiber mesh that lie exactly on the outer border of the 3D muscle mesh.
+The element coordinates are called xi, e.g. for a 3D element :math:`\xi_1, \xi_2, \xi_3 \in [0,1]^3`. The tolerance specifies when a point is considered and checked if it is still inside the element, even if it has a :math:`\xi` value <0 or >1. 
+
+A point is also inside the element for (:math:`xi` < 0 but :math:`xi` > -xiTolerance) or, analogously, (:math:`xi` > 1 but :math:`xi` < 1+xiTolerance), if the respective element is the best fit among all elements.
+This means, if the point is outside of the actual mesh, then it is treated (in the construction of the mapping between meshes) as if it were inside the nearest element.
+Thus, with this tolerance, also nodes of the source mesh that are slightly outside the target mesh get a value mapped. This is useful for fiber mesh that lie exactly on the outer border of the 3D muscle mesh.
+
 This tolerance only applies to the decision if the point is considered inside the element, not to the actual computation of the xi coordinates of the point inside the element.
 Inside the mesh (not at the border) multiple adjacent elements may claim ownership of a point because of that tolerance. Then they will be all considered and the actual xi coordinates for the point will be computed from which the element where the point is really inside will be detected.
 This means the tolerance has no effect on the error of the mapping.

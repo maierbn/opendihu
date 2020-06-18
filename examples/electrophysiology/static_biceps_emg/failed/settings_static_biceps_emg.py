@@ -103,6 +103,7 @@ variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
 # define the config dict
 config = {
   "scenarioName":          variables.scenario_name,
+  "logFormat":             "csv",
   "Meshes":                variables.meshes,
   "MappingsBetweenMeshes": variables.mappings_between_meshes,
   "Solvers": {
@@ -204,10 +205,10 @@ config = {
                       "setSpecificStatesRepeatAfterFirstCall":  0.01,                                                            # [ms] simulation time span for which the setSpecificStates callback will be called after a call was triggered
                       "setSpecificStatesCallEnableBegin":       variables.get_specific_states_call_enable_begin(fiber_no, motor_unit_no),# [ms] first time when to call setSpecificStates
                       "additionalArgument":                     fiber_no,
-                      "intermediatesForTransfer":               variables.output_intermediate_index,            # which intermediate values to use in further computation
+                      "algebraicsForTransfer":               variables.output_algebraic_index,            # which algebraic values to use in further computation
                       "statesForTransfer":                      variables.output_state_index,                   # which state values to use in further computation, Shorten / Hodgkin Huxley: state 0 = Vm
                       
-                      "parametersUsedAsIntermediate":           variables.parameters_used_as_intermediate,      #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
+                      "parametersUsedAsAlgebraic":           variables.parameters_used_as_algebraic,      #[32],       # list of algebraic value indices, that will be set by parameters. Explicitely defined parameters that will be copied to algebraics, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
                       "parametersUsedAsConstant":               variables.parameters_used_as_constant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
                       "parametersInitialValues":                variables.parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
                       "meshName":                               "MeshFiber_{}".format(fiber_no),

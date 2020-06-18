@@ -3,8 +3,12 @@
 template<typename FunctionSpaceType1, int nComponents1a, int nComponents1b, typename FunctionSpaceType2, int nComponents2a, int nComponents2b>
 void OutputConnection::
 initialize(const Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b> &transferableSolutionData1,
-           const Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b> &transferableSolutionData2)
+           const Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b> &transferableSolutionData2,
+           int offsetSlotNoData1, int offsetSlotNoData2)
 {
+  LOG(DEBUG) << "OutputConnection::initialize, " << (transferDirectionTerm1To2_? "1->2" : "2->1") << ", offsets: " << offsetSlotNoData1 << "," << offsetSlotNoData2
+    << ", initialized: " << fieldVariableNamesInitialized_;
+
   if (transferDirectionTerm1To2_)
   {
     nFieldVariablesTerm1Vector1_ = transferableSolutionData1.variable1.size();
@@ -80,6 +84,86 @@ initialize(const Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nCom
       fieldVariableNamesTerm2Vector2_.push_back(name.str());
     }
 
+    // consider offsets and compute connectorTerm1To2_ and connectorTerm2To1_
+    // for example, offsetSlotNoData1_=2, offsetSlotNoData2_=1
+    //
+    // if connectorForVisualizerTerm1To2_ is:
+    // slots data1  data2
+    //       [ 0 +-->0 ] <-- handled in a previous OutputConnection object
+    //       [ 1-+   1
+    //         2---->2
+    //         3--+  3
+    //         4  +->4
+    // In this example, the OutputConnection object consideres only (global) slots 2,3,4 which become 0,1,2 for data1 and for data2 1-4 which become 0-3.
+    //
+    // this leads to connectorTerm1To2_:
+    // slots data1  data2
+    //         0---+ 0
+    //         1-+ +>1
+    //         2 |   2
+    //           +-->3
+
+    offsetSlotNoData1_ = offsetSlotNoData1;
+    offsetSlotNoData2_ = offsetSlotNoData2;
+
+    // compute connectorTerm1To2_ from connectorForVisualizerTerm1To2_
+    for (int globalSlotNo1 = offsetSlotNoData1_; globalSlotNo1 < connectorForVisualizerTerm1To2_.size(); globalSlotNo1++)
+    {
+      Connector connector = connectorForVisualizerTerm1To2_[globalSlotNo1];
+      if (connector.index == -1)
+      {
+        connectorTerm1To2_.push_back(connector);
+      }
+      else if (connector.index >= offsetSlotNoData2_)
+      {
+        connector.index -= offsetSlotNoData2_;
+        connectorTerm1To2_.push_back(connector);
+      }
+    }
+
+    // compute connectorTerm2To1_ from connectorForVisualizerTerm2To1_
+    for (int globalSlotNo2 = offsetSlotNoData2_; globalSlotNo2 < connectorForVisualizerTerm2To1_.size(); globalSlotNo2++)
+    {
+      Connector connector = connectorForVisualizerTerm2To1_[globalSlotNo2];
+      if (connector.index == -1)
+      {
+        connectorTerm2To1_.push_back(connector);
+      }
+      else if (connector.index >= offsetSlotNoData1_)
+      {
+        connector.index -= offsetSlotNoData1_;
+        connectorTerm2To1_.push_back(connector);
+      }
+    }
+
+    LOG(DEBUG) << "offsetSlotNoData1_: " << offsetSlotNoData1_ << ", offsetSlotNoData2_: " << offsetSlotNoData2_;
+
+    LOG(DEBUG) << "connectorTerm1To2_: ";
+    int i = 0;
+    for (std::vector<Connector>::const_iterator iter = connectorTerm1To2_.begin(); iter != connectorTerm1To2_.end(); iter++, i++)
+    {
+      LOG(DEBUG) << "  " << i << ". " << iter->index << " (avoidCopyIfPossible=" << iter->avoidCopyIfPossible << ")";
+    }
+    LOG(DEBUG) << "connectorTerm2To1_: ";
+    i = 0;
+    for (std::vector<Connector>::const_iterator iter = connectorTerm2To1_.begin(); iter != connectorTerm2To1_.end(); iter++, i++)
+    {
+      LOG(DEBUG) << "  " << i << ". " << iter->index << " (avoidCopyIfPossible=" << iter->avoidCopyIfPossible << ")";
+    }
+
+    LOG(DEBUG) << "connectorForVisualizerTerm1To2_: ";
+    i = 0;
+    for (std::vector<Connector>::const_iterator iter = connectorForVisualizerTerm1To2_.begin(); iter != connectorForVisualizerTerm1To2_.end(); iter++, i++)
+    {
+      LOG(DEBUG) << "  " << i << ". " << iter->index << " (avoidCopyIfPossible=" << iter->avoidCopyIfPossible << ")";
+    }
+    LOG(DEBUG) << "connectorForVisualizerTerm2To1_: ";
+    i = 0;
+    for (std::vector<Connector>::const_iterator iter = connectorForVisualizerTerm2To1_.begin(); iter != connectorForVisualizerTerm2To1_.end(); iter++, i++)
+    {
+      LOG(DEBUG) << "  " << i << ". " << iter->index << " (avoidCopyIfPossible=" << iter->avoidCopyIfPossible << ")";
+    }
+
     initializeSlotInformation(transferableSolutionData1, transferableSolutionData2);
   }
 }
@@ -91,8 +175,6 @@ initializeSlotInformation(const Data::OutputConnectorData<FunctionSpaceType1,nCo
 {
   if (slotInformationInitialized_)
     return;
-
-  LOG(DEBUG) << "initializeSlotInformation";
 
   // variable1 from 1 to 2
   // ----------------------
@@ -173,6 +255,8 @@ initializeSlotInformation(const Data::OutputConnectorData<FunctionSpaceType1,nCo
 
       int fromIndex = fromVectorNo*nFieldVariablesTerm1Vector1_ + fromVectorIndex;
       connectorTerm1To2_[fromIndex].avoidCopyIfPossible = false;
+      if (!connectorForVisualizerTerm1To2_.empty())
+        connectorForVisualizerTerm1To2_[fromIndex+offsetSlotNoData1_].avoidCopyIfPossible = false;
     }
   }
 
@@ -255,6 +339,8 @@ initializeSlotInformation(const Data::OutputConnectorData<FunctionSpaceType1,nCo
 
       int fromIndex = fromVectorNo*nFieldVariablesTerm1Vector1_ + fromVectorIndex;
       connectorTerm1To2_[fromIndex].avoidCopyIfPossible = false;
+      if (!connectorForVisualizerTerm1To2_.empty())
+        connectorForVisualizerTerm1To2_[fromIndex+offsetSlotNoData1_].avoidCopyIfPossible = false;
     }
   }
 
@@ -338,6 +424,8 @@ initializeSlotInformation(const Data::OutputConnectorData<FunctionSpaceType1,nCo
 
       int fromIndex = fromVectorNo*nFieldVariablesTerm2Vector1_ + fromVectorIndex;
       connectorTerm2To1_[fromIndex].avoidCopyIfPossible = false;
+      if (!connectorForVisualizerTerm2To1_.empty())
+        connectorForVisualizerTerm2To1_[fromIndex+offsetSlotNoData2_].avoidCopyIfPossible = false;
     }
   }
 
@@ -421,6 +509,8 @@ initializeSlotInformation(const Data::OutputConnectorData<FunctionSpaceType1,nCo
 
       int fromIndex = fromVectorNo*nFieldVariablesTerm2Vector1_ + fromVectorIndex;
       connectorTerm2To1_[fromIndex].avoidCopyIfPossible = false;
+      if (!connectorForVisualizerTerm2To1_.empty())
+        connectorForVisualizerTerm2To1_[fromIndex+offsetSlotNoData2_].avoidCopyIfPossible = false;
     }
   }
 

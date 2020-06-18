@@ -23,6 +23,7 @@ import socket
 import platform
 
 sys.path.append("dependencies/scons-config/dist/scons_config-0.1-py2.7.egg")     # load scons_config
+#sys.path.append("dependencies/scons-config/dist/scons_config-0.1-py3.5.egg")     # load scons_config
 
 import sconsconfig
 from sconsconfig import packages, tools
@@ -62,8 +63,8 @@ sconsconfig.select(
     packages.Vc(required=True),        # The Vc types for explicit vectorization
     packages.xbraid(required=False),   # framework for multigrid in time methods 
     packages.OpenCOR(required=False),  # binary that converts CellML files from xml to c
-    packages.libxml2(required=False),  # parser for xml files, needed for precice
-    packages.precice(required=False),  # numerical coupling library
+    #packages.libxml2(required=False),  # parser for xml files, needed for precice
+    #packages.precice(required=False),  # numerical coupling library
     packages.EasyLoggingPP(required=True),   # This is the logging library, it has to be the last package to be included because it contains a source (.c) file that needs to be compiled and linked to opendihu and somehow otherwise scons-config does not work.
 )
 
@@ -107,7 +108,7 @@ vars.Save('out.py',env)
 # check for unknown variables and output warning
 unknown = vars.UnknownVariables()
 if unknown:
-  print "WARNING: Unknown variables from command line arguments or config file 'user-variables.scons.py':", unknown.keys()
+  print("WARNING: Unknown variables from command line arguments or config file 'user-variables.scons.py':", unknown.keys())
     
 # generate help text for the page `scons -h`
 Help(vars.GenerateHelpText(env))
@@ -205,7 +206,7 @@ if env["BUILD_TYPE"] == "debug":
   # debug build
   variant_dir = os.path.join(path_where_to_call_sconscript,"build_debug")           # output folder for build
   if env['CC'] != "pgcc":  # not pgi compiler
-    env.MergeFlags('-ftemplate-backtrace-limit=0 -fstack-check')
+    env.MergeFlags('-ftemplate-backtrace-limit=0')
     env.MergeFlags('-Wall -Wpedantic -Wno-sign-compare -Wno-error=sign-compare')
     env.MergeFlags('-DDEBUG -ggdb3 -g3 -Og  -DELPP_FEATURE_CRASH_LOG')   # gcc flags, will be sorted automatically into linker and compiler flags
     env.MergeFlags('-I/store/software/opendihu/dependencies/chaste/install/include/chaste/continuum_mechanics/problem')

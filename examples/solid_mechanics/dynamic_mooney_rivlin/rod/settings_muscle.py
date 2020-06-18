@@ -141,6 +141,7 @@ if len(node_positions) != expected_n_nodes:
 
 config = {
   "scenarioName": "3d_box",
+  "logFormat":    "csv",     # "csv" or "json", format of the lines in the log file, csv gives smaller files
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "Meshes": {
     "3Dmesh_quadratic": {

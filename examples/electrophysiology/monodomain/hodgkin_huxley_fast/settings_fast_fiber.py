@@ -76,6 +76,7 @@ def set_specific_states(n_nodes_global, time_step_no, current_time, states, fibe
 # define the config dict
 config = {
   "scenarioName": "not",
+  "logFormat": "csv",
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "Meshes": {
     "MeshFiber_0": {
@@ -146,8 +147,8 @@ config = {
                     "stimulationLogFilename":                 "out/stimulation_log.txt",
                     
                     "statesForTransfer":                      0,      # which state values to use in further computation, Shorten / Hodgkin Huxley: state 0 = Vm
-                    "intermediatesForTransfer":               [],      # which intermediate values to use in further computation
-                    "parametersUsedAsIntermediate":           [],     #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
+                    "algebraicsForTransfer":               [],      # which algebraic values to use in further computation
+                    "parametersUsedAsAlgebraic":           [],     #[32],       # list of algebraic value indices, that will be set by parameters. Explicitely defined parameters that will be copied to algebraics, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
                     "parametersUsedAsConstant":               [2],    #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
                     "parametersInitialValues":                [0.0],  #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
                     "meshName":                               "MeshFiber_0",

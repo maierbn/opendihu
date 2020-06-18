@@ -479,7 +479,6 @@ refineMesh(std::array<int,D> refinementFactors)
   std::shared_ptr<FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>> thisFunctionSpace
     = std::static_pointer_cast<FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>(this->shared_from_this());
 
-  this->meshPartition_->initializeDofNosLocalNaturalOrdering(thisFunctionSpace);
   const std::vector<dof_no_t> &dofNosLocalNaturalOrdering = this->meshPartition_->dofNosLocalNaturalOrdering();
 
   this->meshPartition_->refine(refinementFactors);

@@ -21,6 +21,7 @@ MeshPartition(std::array<global_no_t,MeshType::dim()> nElementsGlobal, std::shar
   }
   else if (!rankSubset->ownRankIsContained())
   {
+    // initialize degenerate mesh where own rank does not hold any nodes (only other ranks may)
     isDegenerate_ = true;
     initializeDegenerateMesh();
   }
@@ -34,6 +35,9 @@ MeshPartition(std::array<global_no_t,MeshType::dim()> nElementsGlobal, std::shar
 
     // initialize dof vectors
     this->createLocalDofOrderings();
+
+    // initialize local natural ordering if has not yet been done
+    initializeDofNosLocalNaturalOrdering();
   }
   
   LOG(DEBUG) << "nElementsLocal_: " << nElementsLocal_ << ", nElementsGlobal_: " << nElementsGlobal_
@@ -128,7 +132,11 @@ MeshPartition(std::array<node_no_t,MeshType::dim()> nElementsLocal, std::array<g
     // initialize the cached value of nDofsLocalWithoutGhosts
     this->setNDofsLocalWithoutGhosts();
 
+    // initialize dof vectors
     this->createLocalDofOrderings();
+
+    // initialize local natural ordering if has not yet been done
+    initializeDofNosLocalNaturalOrdering();
   }
 
   LOG(DEBUG) << *this;

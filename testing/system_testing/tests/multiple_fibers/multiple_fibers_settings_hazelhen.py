@@ -242,6 +242,7 @@ if rank_no == 0:
 
 config = {
   "scenarioName": "1e3_fibers_1e4_cores",
+  "logFormat": "csv",
   "Meshes": meshes,
   "Solvers": {
     "implicitSolver": {

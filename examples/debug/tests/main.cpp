@@ -105,6 +105,18 @@ int main(int argc, char *argv[])
     Vc::double_v v = data[indexes];
     LOG(INFO) << "indexes: " << indexes << ", v: " << v;
   }*/
+
+  Vc::double_v v;
+  for (int i = 0; i < Vc::double_v::size(); i++)
+  {
+    v[i] = i * (i%2==0? 1 : -1);
+  }
+  
+  Vc::double_v epsilon = 0;
+  LOG(INFO) << "epsilon: " << epsilon << ", v: " << v << ", abs: " << Vc::abs(v);
+  Vc::where(Vc::abs(v) < 2.5) | epsilon = 1;
+  LOG(INFO) << "epsilon: " << epsilon;
+
 #if 0
   // measurement
   const long long N = 1e5;

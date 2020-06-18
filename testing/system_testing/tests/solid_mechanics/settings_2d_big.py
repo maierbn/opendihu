@@ -41,6 +41,7 @@ material_parameters = [1.0, 0.0, 1.0]  # c0, c1, kappa
 # kappa = 0 means disable incompressibility and volume effects
 
 config = {
+  "logFormat": "csv",
   "FiniteElementMethod" : {
     "nElements": [nx,ny],
     "physicalExtent": [lx,ly],

@@ -5,7 +5,7 @@
 namespace PreciceAdapter
 {
 
-template<class NestedSolver>
+template<typename NestedSolver>
 ContractionDirichletBoundaryConditions<NestedSolver>::
 ContractionDirichletBoundaryConditions(DihuContext context) :
   Runnable(),
@@ -15,7 +15,7 @@ ContractionDirichletBoundaryConditions(DihuContext context) :
   this->specificSettings_ = this->context_.getPythonConfig();
 }
 
-template<class NestedSolver>
+template<typename NestedSolver>
 void ContractionDirichletBoundaryConditions<NestedSolver>::
 initialize()
 {
@@ -27,7 +27,7 @@ initialize()
 
   // initialize() will be called before the simulation starts.
 
-  // add this solver to the solvers diagram, which is a SVG file that will be created at the end of the simulation.
+  // add this solver to the solvers diagram, which is an ASCII art representation that will be created at the end of the simulation.
   DihuContext::solverStructureVisualizer()->addSolver("PreciceAdapter::ContractionDirichletBoundaryConditions", true);   // hasInternalConnectionToFirstNestedSolver=true (the last argument) means output connector data is shared with the first subsolver
 
   // indicate in solverStructureVisualizer that now a child solver will be initialized
@@ -119,7 +119,7 @@ initialize()
 #endif
 }
 
-template<class NestedSolver>
+template<typename NestedSolver>
 void ContractionDirichletBoundaryConditions<NestedSolver>::
 initializeDirichletBoundaryConditions()
 {
@@ -157,7 +157,7 @@ initializeDirichletBoundaryConditions()
   nestedSolver_.timeStepping2().dynamicHyperelasticitySolver()->hyperelasticitySolver().dirichletBoundaryConditions()->addBoundaryConditions(dirichletBoundaryConditionElements, overwriteBcOnSameDof);
 }
 
-template<class NestedSolver>
+template<typename NestedSolver>
 void ContractionDirichletBoundaryConditions<NestedSolver>::
 run()
 {
@@ -220,7 +220,7 @@ run()
 
 #ifdef HAVE_PRECICE
 
-template<class NestedSolver>
+template<typename NestedSolver>
 void ContractionDirichletBoundaryConditions<NestedSolver>::
 preciceReadData()
 {
@@ -283,7 +283,7 @@ preciceReadData()
   nestedSolver_.timeStepping2().dynamicHyperelasticitySolver()->updateDirichletBoundaryConditions(newDirichletBCValues);
 }
 
-template<class NestedSolver>
+template<typename NestedSolver>
 void ContractionDirichletBoundaryConditions<NestedSolver>::
 preciceWriteData()
 {
@@ -329,7 +329,7 @@ preciceWriteData()
 
 #endif
 
-template<class NestedSolver>
+template<typename NestedSolver>
 void ContractionDirichletBoundaryConditions<NestedSolver>::
 reset()
 {
@@ -339,7 +339,7 @@ reset()
   // "uninitialize" everything
 }
 
-template<class NestedSolver>
+template<typename NestedSolver>
 typename ContractionDirichletBoundaryConditions<NestedSolver>::Data &ContractionDirichletBoundaryConditions<NestedSolver>::
 data()
 {
@@ -349,7 +349,7 @@ data()
 
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
 //! the transfer is done by the output_connector_data_transfer class
-template<class NestedSolver>
+template<typename NestedSolver>
 std::shared_ptr<typename ContractionDirichletBoundaryConditions<NestedSolver>::OutputConnectorDataType> ContractionDirichletBoundaryConditions<NestedSolver>::
 getOutputConnectorData()
 {

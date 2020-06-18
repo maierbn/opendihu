@@ -13,12 +13,10 @@
 #include "function_space/function_space.h"
 #include "control/diagnostic_tool/stimulation_logging.h"
 
-//#include <libcellml>    // libcellml not used here
-
-template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
-CellmlAdapter<nStates_,nIntermediates_,FunctionSpaceType>::
+template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
+CellmlAdapter<nStates_,nAlgebraics_,FunctionSpaceType>::
 CellmlAdapter(DihuContext context) :
-  CallbackHandler<nStates_,nIntermediates_,FunctionSpaceType>(context),
+  CallbackHandler<nStates_,nAlgebraics_,FunctionSpaceType>(context),
   Splittable()
 {
   LOG(TRACE) << "CellmlAdapter constructor";
@@ -28,10 +26,10 @@ CellmlAdapter(DihuContext context) :
 }
 
 //! constructor from other CellmlAdapter, preserves the outputManager and context
-template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
-CellmlAdapter<nStates_,nIntermediates_,FunctionSpaceType>::
+template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
+CellmlAdapter<nStates_,nAlgebraics_,FunctionSpaceType>::
 CellmlAdapter(const CellmlAdapter &rhs, std::shared_ptr<FunctionSpace> functionSpace) :
-  CallbackHandler<nStates_,nIntermediates_,FunctionSpaceType>(rhs.context_, true),
+  CallbackHandler<nStates_,nAlgebraics_,FunctionSpaceType>(rhs.context_, true),
   Splittable()
 {
   LOG(TRACE) << "CellmlAdapter constructor from rhs";
@@ -40,29 +38,29 @@ CellmlAdapter(const CellmlAdapter &rhs, std::shared_ptr<FunctionSpace> functionS
   this->outputWriterManager_ = rhs.outputWriterManager_;
 }
 
-template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
-constexpr int CellmlAdapter<nStates_,nIntermediates_,FunctionSpaceType>::
+template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
+constexpr int CellmlAdapter<nStates_,nAlgebraics_,FunctionSpaceType>::
 nStates()
 {
   return nStates_;
 }
 
-template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
-void CellmlAdapter<nStates_,nIntermediates_,FunctionSpaceType>::
+template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
+void CellmlAdapter<nStates_,nAlgebraics_,FunctionSpaceType>::
 reset()
 {
   this->internalTimeStepNo_ = 0;
 }
   
-template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
-void CellmlAdapter<nStates_,nIntermediates_,FunctionSpaceType>::
+template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
+void CellmlAdapter<nStates_,nAlgebraics_,FunctionSpaceType>::
 initialize()
 {
-  LOG(TRACE) << "CellmlAdapter<nStates_,nIntermediates_,FunctionSpaceType>::initialize";
+  LOG(TRACE) << "CellmlAdapter<nStates_,nAlgebraics_,FunctionSpaceType>::initialize";
 
   Control::PerformanceMeasurement::start("durationInitCellml");
 
-  CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::initialize();
+  CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::initialize();
   
   // initialize output writers
   this->outputWriterManager_.initialize(this->context_, this->specificSettings_, this->data().functionSpace()->meshPartition()->rankSubset());
@@ -70,6 +68,7 @@ initialize()
   // load rhs routine
   this->initializeRhsRoutine();
 
+  // parse the callback functions from the python config
   this->initializeCallbackFunctions();
   
   Control::PerformanceMeasurement::stop("durationInitCellml");
@@ -80,7 +79,7 @@ initialize()
   }
   if (this->outputWriterManager_.hasOutputWriters())
   {
-    LOG(INFO) << "CellML has output writers. This will be slow as it outputs lots of data and should only be used for debugging.";
+    LOG(INFO) << "CellML has output writers. This will be slow if it outputs lots of data and should only be used for debugging.";
   }
 
   this->internalTimeStepNo_ = 0;
@@ -90,51 +89,63 @@ initialize()
   this->setSpecificStatesRepeatAfterFirstCall_ = this->specificSettings_.getOptionDouble("setSpecificStatesRepeatAfterFirstCall", 0.0);
   this->setSpecificStatesCallEnableBegin_ = this->specificSettings_.getOptionDouble("setSpecificStatesCallEnableBegin", 0.0);
 
+  // if setSpecificStatesCallFrequency_ is set to None, set to 0
+  if (this->setSpecificStatesCallFrequency_ == std::numeric_limits<double>::max())
+    this->setSpecificStatesCallFrequency_ = 0;
+
+  // if setSpecificStatesRepeatAfterFirstCall_ is set to None, set to 0
+  if (this->setSpecificStatesRepeatAfterFirstCall_ == std::numeric_limits<double>::max())
+    this->setSpecificStatesRepeatAfterFirstCall_ = 0;
+
+  if (this->setSpecificStatesCallFrequency_ != 0 && this->setSpecificStatesRepeatAfterFirstCall_ == 0)
+  {
+    LOG(FATAL) << "In " << this->specificSettings_ << ", you have set \"setSpecificStatesCallFrequency\", but not "
+      << "\"setSpecificStatesRepeatAfterFirstCall\". This is not allowed.\n"
+      << "Either set \"setSpecificStatesRepeatAfterFirstCall\" to a reasonable value or do not use \"setSpecificStatesCallFrequency\" at "
+      << "all (set to None or 0 and instead use \"setSpecificStatesCallInterval\").";
+  }
+
   // initialize the lastCallSpecificStatesTime_
   this->currentJitter_ = 0;
   this->jitterIndex_ = 0;
   this->lastCallSpecificStatesTime_ = this->setSpecificStatesCallEnableBegin_ - 1e-13 - 1./(this->setSpecificStatesCallFrequency_+this->currentJitter_);
 }
 
-template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
-void CellmlAdapter<nStates_,nIntermediates_,FunctionSpaceType>::
+template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
+void CellmlAdapter<nStates_,nAlgebraics_,FunctionSpaceType>::
 initializeForImplicitTimeStepping()
 {
 }
 
-template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
-void CellmlAdapter<nStates_,nIntermediates_,FunctionSpaceType>::
+template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
+void CellmlAdapter<nStates_,nAlgebraics_,FunctionSpaceType>::
 setRankSubset(Partition::RankSubset rankSubset)
 {
   // do nothing because we don't have stored data here (the data on which the computation is performed comes in evaluateTimesteppingRightHandSide from parameters) 
 }
 
-template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
-void CellmlAdapter<nStates_,nIntermediates_,FunctionSpaceType>::
+template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
+void CellmlAdapter<nStates_,nAlgebraics_,FunctionSpaceType>::
 evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepNo, double currentTime)
 {
+  // prepare variable to work on
   // get raw pointers from Petsc data structures
-  //PetscUtility::getVectorEntries(input, states_);
-  double *states, *rates;
-  double *intermediatesData;
+  double *statesLocal;
+  double *ratesLocal;
+  double *algebraicsLocal;
   PetscErrorCode ierr;
-  ierr = VecGetArray(input, &states); CHKERRV(ierr);   // get r/w pointer to contiguous array of the data, VecRestoreArray() needs to be called afterwards
-  ierr = VecGetArray(output, &rates); CHKERRV(ierr);
-  ierr = VecGetArray(this->data_.intermediates()->getValuesContiguous(), &intermediatesData); CHKERRV(ierr);
+  ierr = VecGetArray(input, &statesLocal); CHKERRV(ierr);   // get r/w pointer to contiguous array of the data, VecRestoreArray() needs to be called afterwards
+  ierr = VecGetArray(output, &ratesLocal); CHKERRV(ierr);
+  ierr = VecGetArray(this->data_.algebraics()->getValuesContiguous(), &algebraicsLocal); CHKERRV(ierr);
 
   // get sizes of input and output Vecs
-  PetscInt nStatesInput, nRates, nIntermediates = 101;
+  PetscInt nStatesInput, nRates, nAlgebraics = 101;
   ierr = VecGetSize(input, &nStatesInput); CHKERRV(ierr);
   ierr = VecGetSize(output, &nRates); CHKERRV(ierr);
-  ierr = VecGetLocalSize(this->data_.intermediates()->getValuesContiguous(), &nIntermediates); CHKERRV(ierr);
+  ierr = VecGetLocalSize(this->data_.algebraics()->getValuesContiguous(), &nAlgebraics); CHKERRV(ierr);
 
-  // get parameterValues_ vector
-  this->data_.prepareParameterValues();
-
-  //double intermediatesData[101];
-
-  VLOG(1) << "intermediates array has " << nIntermediates << " entries";
-  nIntermediates = nIntermediates/this->nInstances_;
+  nAlgebraics = nAlgebraics/this->nInstances_;
+  VLOG(1) << "algebraics array has " << nAlgebraics << " entries";
 
   // check validity of sizes
   VLOG(1) << "evaluateTimesteppingRightHandSideExplicit, input nStates_: " << nStatesInput << ", output nRates: " << nRates;
@@ -146,38 +157,75 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
   }
   assert (nStatesInput == nStates_*this->nInstances_);
   assert (nRates == nStates_*this->nInstances_);
-  if (nIntermediates != nIntermediates_)
+
+  if (nAlgebraics != nAlgebraics_)
   {
-    LOG(FATAL) << "nInstances: " << this->nInstances_ << ", nIntermediates (size of vector / nInstances): " << nIntermediates << ", nIntermediates_: " << nIntermediates_;
+    LOG(FATAL) << "nInstances: " << this->nInstances_ << ", nAlgebraics (size of vector / nInstances): " << nAlgebraics << ", nAlgebraics_: " << nAlgebraics_;
   }
-  assert (nIntermediates == nIntermediates_);
+  assert (nAlgebraics == nAlgebraics_);
+
+  // make the parameterValues_ vector available
+  this->data_.prepareParameterValues();
 
   //LOG(DEBUG) << " evaluateTimesteppingRightHandSide: nInstances=" << this->nInstances_ << ", nStates_=" << nStates_;
-  
-  // get new values for parameters, call callback function of python config
-  if (this->setParameters_ && this->internalTimeStepNo_ % this->setParametersCallInterval_ == 0)
+
+  // handle callback functions "setSpecificParameters" and "setSpecificStates"
+  checkCallbackParameters(currentTime);
+  checkCallbackStates(currentTime, statesLocal);
+
+  // call actual rhs method
+  if (this->rhsRoutine_)
   {
-    // start critical section for python API calls
-    // PythonUtility::GlobalInterpreterLock lock;
-    
-    VLOG(1) << "call setParameters";
-    this->setParameters_((void *)this, this->nInstances_, this->internalTimeStepNo_, currentTime, this->data_.parameterValues(), this->cellmlSourceCodeGenerator_.nParameters());
+    //Control::PerformanceMeasurement::start("rhsEvaluationTime");  // commented out because it takes too long in this very inner loop
+
+    // call actual rhs routine from cellml code
+    this->rhsRoutine_((void *)this, currentTime, statesLocal, ratesLocal, algebraicsLocal, this->data_.parameterValues());
+
+    //Control::PerformanceMeasurement::stop("rhsEvaluationTime");
   }
 
+  // handle callback function "handleResult"
+  checkCallbackAlgebraics(currentTime, statesLocal, algebraicsLocal);
+
+  // give control of data back to Petsc
+  ierr = VecRestoreArray(input, &statesLocal); CHKERRV(ierr);
+  ierr = VecRestoreArray(output, &ratesLocal); CHKERRV(ierr);
+  ierr = VecRestoreArray(this->data_.algebraics()->getValuesContiguous(), &algebraicsLocal); CHKERRV(ierr);
+
+  this->data_.restoreParameterValues();
+
+  // call output writer to write output files
+  this->outputWriterManager_.writeOutput(this->data_, this->internalTimeStepNo_, currentTime);
+
+  VLOG(1) << "at end of cellml_adapter, algebraics: " << this->data_.algebraics() << " " << *this->data_.algebraics();
+  this->internalTimeStepNo_++;
+}
+
+template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
+void CellmlAdapter<nStates_,nAlgebraics_,FunctionSpaceType>::
+checkCallbackParameters(double currentTime)
+{
   // get new values for parameters, call callback function of python config
-  if (this->setSpecificParameters_ && this->internalTimeStepNo_ % this->setSpecificParametersCallInterval_ == 0)
+  if (this->pythonSetSpecificParametersFunction_ && this->internalTimeStepNo_ % this->setSpecificParametersCallInterval_ == 0)
   {
     // start critical section for python API calls
     // PythonUtility::GlobalInterpreterLock lock;
 
     VLOG(1) << "call setSpecificParameters";
-    this->setSpecificParameters_((void *)this, this->nInstances_, this->internalTimeStepNo_, currentTime, this->data_.parameterValues(), this->cellmlSourceCodeGenerator_.nParameters());
+    this->callPythonSetSpecificParametersFunction(this->nInstances_, this->internalTimeStepNo_, currentTime, this->data_.parameterValues(), this->cellmlSourceCodeGenerator_.nParameters());
   }
+}
+
+template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
+void CellmlAdapter<nStates_,nAlgebraics_,FunctionSpaceType>::
+checkCallbackStates(double currentTime, double *statesLocal)
+{
+  // there is a parallel piece of code to this one in FastMonodomainSolverBase<>::isCurrentPointStimulated(), specialized_solver/fast_monodomain_solver/fast_monodomain_solver_compute.tpp
 
   VLOG(1) << "currentTime: " << currentTime << ", lastCallSpecificStatesTime_: " << this->lastCallSpecificStatesTime_
     << ", setSpecificStatesCallFrequency_: " << this->setSpecificStatesCallFrequency_ << ", "
     << this->lastCallSpecificStatesTime_ + 1./this->setSpecificStatesCallFrequency_;
-  VLOG(1) << "this->setSpecificStates_? " << (this->setSpecificStates_? "true" : "false")
+  VLOG(1) << "this->pythonSetSpecificStatesFunction_? " << (this->pythonSetSpecificStatesFunction_? "true" : "false")
     << ", this->setSpecificStatesCallInterval_: " << this->setSpecificStatesCallInterval_ << " != 0? " << (this->setSpecificStatesCallInterval_ != 0? "true" : "false")
     << ", (this->internalTimeStepNo_ % this->setSpecificStatesCallInterval_) = " << this->internalTimeStepNo_  << " % " << this->setSpecificStatesCallInterval_
     << ", this->setSpecificStatesCallFrequency_= " << this->setSpecificStatesCallFrequency_ << " != 0.0? " << (this->setSpecificStatesCallFrequency_ != 0.0? "true" : "false")
@@ -186,8 +234,8 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
 
   bool stimulate = false;
 
-  // get new values for parameters, call callback function of python config
-  if (this->setSpecificStates_
+  // get new values for states, call callback function of python config
+  if (this->pythonSetSpecificStatesFunction_
       && (
           (this->setSpecificStatesCallInterval_ != 0 && this->internalTimeStepNo_ % this->setSpecificStatesCallInterval_ == 0)
           || (this->setSpecificStatesCallFrequency_ != 0.0 && currentTime >= this->lastCallSpecificStatesTime_ + 1./(this->setSpecificStatesCallFrequency_+this->currentJitter_)
@@ -198,7 +246,8 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
     stimulate = true;
 
     // if current stimulation is over
-    if (currentTime - (this->lastCallSpecificStatesTime_ + 1./(this->setSpecificStatesCallFrequency_+this->currentJitter_)) > this->setSpecificStatesRepeatAfterFirstCall_)
+    if (this->setSpecificStatesRepeatAfterFirstCall_ != 0
+        && currentTime - (this->lastCallSpecificStatesTime_ + 1./(this->setSpecificStatesCallFrequency_+this->currentJitter_)) > this->setSpecificStatesRepeatAfterFirstCall_)
     {
       // advance time of last call to specificStates
       this->lastCallSpecificStatesTime_ += 1./(this->setSpecificStatesCallFrequency_+this->currentJitter_);
@@ -218,108 +267,86 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
     // PythonUtility::GlobalInterpreterLock lock;
   }
 
+  VLOG(1) << "stimulate = " << stimulate;
+
   static bool currentlyStimulating = false;
   if (stimulate)
   {
+    VLOG(1) << "currentlyStimulating: " << currentlyStimulating;
+
     // if this is the first point in time of the current stimulation, log stimulation time
     if (!currentlyStimulating)
     {
       currentlyStimulating = true;
-      int fiberNoGlobal = -1;
-      if (this->pySetFunctionAdditionalParameter_)
-      {
-        fiberNoGlobal = PythonUtility::convertFromPython<int>::get(this->pySetFunctionAdditionalParameter_);
-      }
-      Control::StimulationLogging::logStimulationBegin(currentTime, -1, fiberNoGlobal);
+      Control::StimulationLogging::logStimulationBegin(currentTime, -1, this->fiberNoGlobal_);
     }
 
     VLOG(1) << "call setSpecificStates, this->internalTimeStepNo_ = " << this->internalTimeStepNo_ << ", this->setSpecificStatesCallInterval_: " << this->setSpecificStatesCallInterval_;
     VLOG(1) << "currentTime: " << currentTime << ", call setSpecificStates, this->internalTimeStepNo_ = " << this->internalTimeStepNo_ << ", this->setSpecificStatesCallInterval_: " << this->setSpecificStatesCallInterval_;
-    this->setSpecificStates_((void *)this, this->nInstances_, this->internalTimeStepNo_, currentTime, states);
+    this->callPythonSetSpecificStatesFunction(this->nInstances_, this->internalTimeStepNo_, currentTime, statesLocal);
   }
   else
   {
     currentlyStimulating = false;
   }
+}
 
-  // call actual rhs method
-  //              this          STATES, RATES, WANTED,                KNOWN
-  if (this->rhsRoutine_)
+template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
+void CellmlAdapter<nStates_,nAlgebraics_,FunctionSpaceType>::
+checkCallbackAlgebraics(double currentTime, double *statesLocal, double *algebraicsLocal)
+{
+  // handle resulting algebraics, call callback function of python config
+  if (this->pythonHandleResultFunction_ && this->internalTimeStepNo_ % this->handleResultCallInterval_ == 0)
   {
-    VLOG(1) << "call rhsRoutine_ with " << nIntermediates << " intermediates";
-
-    //Control::PerformanceMeasurement::start("rhsEvaluationTime");  // commented out because it takes too long in this very inner loop
-    // call actual rhs routine from cellml code
-    this->rhsRoutine_((void *)this, currentTime, states, rates, intermediatesData, this->data_.parameterValues());
-    //Control::PerformanceMeasurement::stop("rhsEvaluationTime");
-  }
-
-  // handle intermediates, call callback function of python config
-  if (this->handleResult_ && this->internalTimeStepNo_ % this->handleResultCallInterval_ == 0)
-  {
-    PetscInt nStatesInput;
-    VecGetSize(input, &nStatesInput);
-
     // start critical section for python API calls
     // PythonUtility::GlobalInterpreterLock lock;
-    
-    VLOG(1) << "call handleResult with in total " << nStatesInput << " states, " << nIntermediates << " intermediates";
-    this->handleResult_((void *)this, this->nInstances_, this->internalTimeStepNo_, currentTime, states, intermediatesData);
+
+    this->callPythonHandleResultFunction(this->nInstances_, this->internalTimeStepNo_, currentTime, statesLocal, algebraicsLocal);
   }
-
-  //PetscUtility::setVector(rates_, output);
-  // give control of data back to Petsc
-  ierr = VecRestoreArray(input, &states); CHKERRV(ierr);
-  ierr = VecRestoreArray(output, &rates); CHKERRV(ierr);
-  ierr = VecRestoreArray(this->data_.intermediates()->getValuesContiguous(), &intermediatesData); CHKERRV(ierr);
-
-  this->data_.restoreParameterValues();
-
-  // call output writer to write output files
-  this->outputWriterManager_.writeOutput(this->data_, this->internalTimeStepNo_, currentTime);
-
-  VLOG(1) << "at end of cellml_adapter, intermediates: " << this->data_.intermediates() << " " << *this->data_.intermediates();
-  this->internalTimeStepNo_++;
 }
 
-
-template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
-void CellmlAdapter<nStates_,nIntermediates_,FunctionSpaceType>::
+template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
+void CellmlAdapter<nStates_,nAlgebraics_,FunctionSpaceType>::
 prepareForGetOutputConnectorData()
 {
-  // make representation of intermediates global, such that field variables in outputConnectorData that share the Petsc Vec's with
-  // intermediates have the correct data assigned
-  LOG(DEBUG) << "Transform intermediates field variable " << this->data_.intermediates() << " to global representation in order to transfer them to other solver.";
-  VLOG(1) << *this->data_.intermediates();
-  this->data_.intermediates()->setRepresentationGlobal();
-  VLOG(1) << *this->data_.intermediates();
+  // make representation of algebraics global, such that field variables in outputConnectorData that share the Petsc Vec's with
+  // algebraics have the correct data assigned
+  LOG(DEBUG) << "Transform algebraics and parameters field variables to global representation in order to transfer them to other solver, such that extracted component-field variables in timestepping scheme have the correct values.";
+
+  VLOG(1) << *this->data_.algebraics();
+  this->data_.algebraics()->setRepresentationGlobal();
+  VLOG(1) << *this->data_.algebraics();
+
+  VLOG(1) << *this->data_.parameters();
+  this->data_.parameters()->setRepresentationGlobal();
+  VLOG(1) << *this->data_.parameters();
 }
 
-template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
-void CellmlAdapter<nStates_,nIntermediates_,FunctionSpaceType>::
+template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
+void CellmlAdapter<nStates_,nAlgebraics_,FunctionSpaceType>::
 getComponentNames(std::vector<std::string> &stateNames)
 {
   this->getStateNames(stateNames);
 }
 
 //! return the mesh
-template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
-std::shared_ptr<FunctionSpaceType> CellmlAdapter<nStates_,nIntermediates_,FunctionSpaceType>::
+template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
+std::shared_ptr<FunctionSpaceType> CellmlAdapter<nStates_,nAlgebraics_,FunctionSpaceType>::
 functionSpace()
 {
-  return CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::functionSpace();
+  return CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::functionSpace();
 }
 
-template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
+template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
 template<typename FunctionSpaceType2>
-bool CellmlAdapter<nStates_,nIntermediates_,FunctionSpaceType>::
+bool CellmlAdapter<nStates_,nAlgebraics_,FunctionSpaceType>::
 setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nStates_>> initialValues)
 {
-  return CellmlAdapterBase<nStates_,nIntermediates_,FunctionSpaceType>::template setInitialValues<FunctionSpaceType2>(initialValues);
+  return CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::template setInitialValues<FunctionSpaceType2>(initialValues);
 }
 
-template<int nStates_, int nIntermediates_, typename FunctionSpaceType>
-void CellmlAdapter<nStates_,nIntermediates_,FunctionSpaceType>::
+template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
+void CellmlAdapter<nStates_,nAlgebraics_,FunctionSpaceType>::
 initializeToEquilibriumValues(std::array<double,nStates_> &statesInitialValues)
 {
   if (!this->rhsRoutineSingleInstance_)
@@ -335,7 +362,7 @@ initializeToEquilibriumValues(std::array<double,nStates_> &statesInitialValues)
   double dt = this->initializeStatesToEquilibriumTimestepWidth_;
   std::array<double,nStates_> previousU = statesInitialValues;
   std::array<double,nStates_> &u = statesInitialValues;
-  std::array<double,nIntermediates_> intermediates;
+  std::array<double,nAlgebraics_> algebraics;
 
   std::array<double,nStates_> k1;
   std::array<double,nStates_> u2, k2;
@@ -347,22 +374,22 @@ initializeToEquilibriumValues(std::array<double,nStates_> &statesInitialValues)
   for (int iterationNo = 0; iterationNo < nInterations; iterationNo++)
   {
     // compute k1 = f(t, u)
-    this->rhsRoutineSingleInstance_((void *)this, currentTime, u.data(), k1.data(), intermediates.data(), this->data_.parameterValues());
+    this->rhsRoutineSingleInstance_((void *)this, currentTime, u.data(), k1.data(), algebraics.data(), this->data_.parameterValues());
 
     // compute k2 = f(t+dt/2, u+dt/2.*k1)
     for (int stateNo = 0; stateNo < nStates_; stateNo++)
       u2[stateNo] = u[stateNo] + dt/2. * k1[stateNo];
-    this->rhsRoutineSingleInstance_((void *)this, currentTime+dt/2., u2.data(), k2.data(), intermediates.data(), this->data_.parameterValues());
+    this->rhsRoutineSingleInstance_((void *)this, currentTime+dt/2., u2.data(), k2.data(), algebraics.data(), this->data_.parameterValues());
 
     // compute k3 = f(t+dt/2, u+dt/2.*k2)
     for (int stateNo = 0; stateNo < nStates_; stateNo++)
       u3[stateNo] = u[stateNo] + dt/2. * k2[stateNo];
-    this->rhsRoutineSingleInstance_((void *)this, currentTime+dt/2., u3.data(), k3.data(), intermediates.data(), this->data_.parameterValues());
+    this->rhsRoutineSingleInstance_((void *)this, currentTime+dt/2., u3.data(), k3.data(), algebraics.data(), this->data_.parameterValues());
 
     // compute k4 = f(t+dt, u+dt*k3)
     for (int stateNo = 0; stateNo < nStates_; stateNo++)
       u4[stateNo] = u[stateNo] + dt * k3[stateNo];
-    this->rhsRoutineSingleInstance_((void *)this, currentTime+dt, u4.data(), k4.data(), intermediates.data(), this->data_.parameterValues());
+    this->rhsRoutineSingleInstance_((void *)this, currentTime+dt, u4.data(), k4.data(), algebraics.data(), this->data_.parameterValues());
 
     // compute u += dt/6 * (k1 + 2*k2 + 2*k3 + k4)
     maximumIncrement = 0;

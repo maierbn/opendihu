@@ -12,6 +12,7 @@ for y in range(int(0.2*n), int(0.3*n)):
 print("iv: ",iv)
 
 config = {
+  "logFormat":                      "csv",
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "Heun" : {
     "initialValues": iv,

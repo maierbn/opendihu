@@ -59,14 +59,11 @@ initialize()
   LOG(DEBUG) << "uvp_: " << uvp_->valuesGlobal();
 
   // parse updateDirichletBoundaryConditionsFunction
+  pythonUpdateDirichletBoundaryConditionsFunction_ = nullptr;
   if (this->specificSettings_.hasKey("updateDirichletBoundaryConditionsFunction"))
   {
     PyObject *object = this->specificSettings_.getOptionPyObject("updateDirichletBoundaryConditionsFunction");
-    if (object == Py_None)
-    {
-      pythonUpdateDirichletBoundaryConditionsFunction_ = nullptr;
-    }
-    else
+    if (object != Py_None)
     {
       pythonUpdateDirichletBoundaryConditionsFunction_ = this->specificSettings_.getOptionFunction("updateDirichletBoundaryConditionsFunction");
       updateDirichletBoundaryConditionsFunctionCallInterval_ = this->specificSettings_.getOptionInt("updateDirichletBoundaryConditionsFunctionCallInterval", 1, PythonUtility::Positive);
@@ -74,15 +71,12 @@ initialize()
   }
 
   // parse updateNeumannBoundaryConditionsFunction
+  pythonUpdateNeumannBoundaryConditionsFunction_ = nullptr;
   if (this->specificSettings_.hasKey("updateNeumannBoundaryConditionsFunction"))
   {
     LOG(DEBUG) << "parse updateNeumannBoundaryConditionsFunction";
     PyObject *object = this->specificSettings_.getOptionPyObject("updateNeumannBoundaryConditionsFunction");
-    if (object == Py_None)
-    {
-      pythonUpdateNeumannBoundaryConditionsFunction_ = nullptr;
-    }
-    else
+    if (object != Py_None)
     {
       pythonUpdateNeumannBoundaryConditionsFunction_ = this->specificSettings_.getOptionFunction("updateNeumannBoundaryConditionsFunction");
       updateNeumannBoundaryConditionsFunctionCallInterval_ = this->specificSettings_.getOptionInt("updateNeumannBoundaryConditionsFunctionCallInterval", 1, PythonUtility::Positive);

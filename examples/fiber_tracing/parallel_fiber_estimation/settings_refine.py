@@ -44,6 +44,7 @@ print("element_length: {}".format(element_length))
 bc = {}
 
 config = {
+  "logFormat": "csv",
   "solverStructureDiagramFile": "solver_structure.txt",
   "mappingsBetweenMeshesLogFile": "",
   "Solvers": {

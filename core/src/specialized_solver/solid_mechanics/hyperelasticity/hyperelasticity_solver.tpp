@@ -233,7 +233,7 @@ initializeFiberDirections()
       LOG(DEBUG) << "create mapping  1D fiber -> 3D: \"" << fiberFunctionSpace->meshName() << "\" -> \"" << this->displacementsFunctionSpace_->meshName() << "\".";
 
       // initialize mapping 1D fiber -> 3D
-      DihuContext::mappingBetweenMeshesManager()->mappingBetweenMeshes<FiberFunctionSpace,DisplacementsFunctionSpace>(fiberFunctionSpace, this->displacementsFunctionSpace_);
+      DihuContext::mappingBetweenMeshesManager()->template mappingBetweenMeshes<FiberFunctionSpace,DisplacementsFunctionSpace>(fiberFunctionSpace, this->displacementsFunctionSpace_);
     }
 
     using SourceFunctionSpaceType = FieldVariable::FieldVariable<FiberFunctionSpace,3>;
@@ -277,7 +277,7 @@ initializeFiberDirections()
 
 
       // transfer direction values from 1D fibers to 3D field, -1 means all components
-      DihuContext::mappingBetweenMeshesManager()->map<SourceFunctionSpaceType,TargetFunctionSpaceType>(
+      DihuContext::mappingBetweenMeshesManager()->template map<SourceFunctionSpaceType,TargetFunctionSpaceType>(
         direction, this->data_.fiberDirection(), -1, -1, false);
     }
 

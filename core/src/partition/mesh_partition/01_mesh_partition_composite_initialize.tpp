@@ -983,6 +983,7 @@ initializeGhostNodeNos()
   i = 0;
   std::vector<std::vector<int>>    requestedNodesGlobalPetscSendBuffer(nNodesRequestedFromRanks.size());
 
+  // nNodesRequestedFromRanks contains information about number of nodes to be send to the ranks
   for (const std::pair<int,std::vector<int>> &nNodesRequestedFromRank : nNodesRequestedFromRanks)
   {
     int foreignRankNo = nNodesRequestedFromRank.first;

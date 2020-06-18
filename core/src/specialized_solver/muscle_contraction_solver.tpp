@@ -389,7 +389,7 @@ mapGeometryToGivenMeshes()
   if (this->durationLogKey_ != "")
     Control::PerformanceMeasurement::stop(this->durationLogKey_+std::string("_map_geometry"));
 
-  LOG(DEBUG) << "mapGeometryToGivenMeshes: meshNamesOfGeometryToMapTo: " << meshNamesOfGeometryToMapTo_;
+  LOG(INFO) << "mapGeometryToGivenMeshes: meshNamesOfGeometryToMapTo: " << meshNamesOfGeometryToMapTo_;
   if (!meshNamesOfGeometryToMapTo_.empty())
   {
     using SourceFunctionSpaceType = typename StaticHyperelasticitySolverType::DisplacementsFunctionSpace;
@@ -399,6 +399,11 @@ mapGeometryToGivenMeshes()
 
     // get source field variable
     std::shared_ptr<SourceFieldVariableType> geometryFieldSource = std::make_shared<SourceFieldVariableType>(data_.functionSpace()->geometryField());
+
+    std::vector<Vec3> geometryValuesSource;
+    geometryFieldSource->getValuesWithoutGhosts(geometryValuesSource);
+
+    LOG(INFO) << "geometryValuesSource: " << geometryValuesSource;
 
     // loop over all given mesh names to which we should transfer the geometry
     for (std::string meshName : meshNamesOfGeometryToMapTo_)
@@ -414,9 +419,9 @@ mapGeometryToGivenMeshes()
         std::shared_ptr<TargetFieldVariableType1> geometryFieldTarget = std::make_shared<TargetFieldVariableType1>(
           this->context_.meshManager()->functionSpace<TargetFunctionSpaceType1>(meshName)->geometryField());
 
-        LOG(DEBUG) << "transfer geometry field to linear mesh, " << geometryFieldSource->functionSpace()->meshName() << " -> "
+        LOG(INFO) << "transfer geometry field to linear mesh, " << geometryFieldSource->functionSpace()->meshName() << " -> "
           << geometryFieldTarget->functionSpace()->meshName();
-        LOG(DEBUG) << StringUtility::demangle(typeid(SourceFunctionSpaceType).name()) << " -> " << StringUtility::demangle(typeid(TargetFunctionSpaceType1).name());
+        LOG(INFO) << StringUtility::demangle(typeid(SourceFunctionSpaceType).name()) << " -> " << StringUtility::demangle(typeid(TargetFunctionSpaceType1).name());
 
         // perform the mapping
         DihuContext::mappingBetweenMeshesManager()->template prepareMapping<SourceFieldVariableType,TargetFieldVariableType1>(geometryFieldSource, geometryFieldTarget, -1);
@@ -437,9 +442,9 @@ mapGeometryToGivenMeshes()
         std::shared_ptr<TargetFieldVariableType2> geometryFieldTarget = std::make_shared<TargetFieldVariableType2>(
           this->context_.meshManager()->functionSpace<TargetFunctionSpaceType2>(meshName)->geometryField());
 
-        LOG(DEBUG) << "transfer geometry field to quadratic mesh, " << geometryFieldSource->functionSpace()->meshName() << " -> "
+        LOG(INFO) << "transfer geometry field to quadratic mesh, " << geometryFieldSource->functionSpace()->meshName() << " -> "
           << geometryFieldTarget->functionSpace()->meshName();
-        LOG(DEBUG) << StringUtility::demangle(typeid(SourceFunctionSpaceType).name()) << " -> " << StringUtility::demangle(typeid(TargetFunctionSpaceType2).name());
+        LOG(INFO) << StringUtility::demangle(typeid(SourceFunctionSpaceType).name()) << " -> " << StringUtility::demangle(typeid(TargetFunctionSpaceType2).name());
 
         // perform the mapping
         DihuContext::mappingBetweenMeshesManager()->template prepareMapping<SourceFieldVariableType,TargetFieldVariableType2>(geometryFieldSource, geometryFieldTarget, -1);

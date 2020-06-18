@@ -535,7 +535,7 @@ fixInvalidFibersInFile(std::string filename)
 
     if (nFibersFixed == 0)
     {
-      LOG(DEBUG) << "No invalid fibers were fixed, i.e. file did not change. Delete intermediate file " << filenameExistingFile << ", because it is has the same contents as " << filename;
+      LOG(DEBUG) << "No invalid fibers were fixed, i.e. file did not change. Delete algebraic file " << filenameExistingFile << ", because it is has the same contents as " << filename;
       remove(filenameExistingFile.c_str());
     }
   }

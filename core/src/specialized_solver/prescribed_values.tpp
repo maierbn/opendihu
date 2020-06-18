@@ -80,7 +80,7 @@ initialize()
   // call initialize of the parent class, this parses the timestepping settings from the settings file
   TimeSteppingScheme::TimeSteppingScheme::initialize();
 
-  // add this solver to the solvers diagram, which is a SVG file that will be created at the end of the simulation.
+  // add this solver to the solvers diagram, which is an ASCII art representation that will be created at the end of the simulation.
   DihuContext::solverStructureVisualizer()->addSolver("PrescribedValues", false);   // hasInternalConnectionToFirstNestedSolver=false (the last argument) means output connector data is not shared with the first subsolver
   // if you have your own output connector data rather than the one of the subsolver, call "addSolver" with false as second argument
 

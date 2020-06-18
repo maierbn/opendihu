@@ -6,7 +6,7 @@
 namespace Control
 {
 
-template<class TimeStepping>
+template<typename TimeStepping>
 LoadBalancingBase<TimeStepping>::
 LoadBalancingBase(DihuContext context) :
   Runnable(), ::TimeSteppingScheme::TimeSteppingScheme(context["LoadBalancing"]),
@@ -14,7 +14,7 @@ LoadBalancingBase(DihuContext context) :
 {
 }
 
-template<class TimeStepping>
+template<typename TimeStepping>
 void LoadBalancingBase<TimeStepping>::
 advanceTimeSpan()
 {
@@ -54,7 +54,7 @@ advanceTimeSpan()
     Control::PerformanceMeasurement::stop(this->durationLogKey_);
 }
 
-template<class TimeStepping>
+template<typename TimeStepping>
 void LoadBalancingBase<TimeStepping>::
 initialize()
 {
@@ -64,7 +64,7 @@ initialize()
   timeSteppingScheme_.initialize();
 }
 
-template<class TimeStepping>
+template<typename TimeStepping>
 void LoadBalancingBase<TimeStepping>::
 run()
 {
@@ -73,14 +73,14 @@ run()
   advanceTimeSpan();
 }
 
-template<class TimeStepping>
+template<typename TimeStepping>
 void LoadBalancingBase<TimeStepping>::
 reset()
 {
   timeSteppingScheme_.reset();
 }
 
-template<class TimeStepping>
+template<typename TimeStepping>
 typename LoadBalancingBase<TimeStepping>::Data &LoadBalancingBase<TimeStepping>::
 data()
 {
@@ -89,7 +89,7 @@ data()
 
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
 //! the transfer is done by the output_connector_data_transfer class
-template<class TimeStepping>
+template<typename TimeStepping>
 std::shared_ptr<typename LoadBalancingBase<TimeStepping>::OutputConnectorDataType> LoadBalancingBase<TimeStepping>::
 getOutputConnectorData()
 {

@@ -77,7 +77,7 @@ public:
   //! get the inversed lumped mass matrix
   std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> inverseLumpedMassMatrix();
   
-//! get maximum number of expected non-zeros in stiffness matrix
+  //! get maximum number of expected non-zeros in stiffness matrix
   static void getPetscMemoryParameters(int &nNonZerosDiagonal, int &nNonZerosOffdiagonal);
 
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
@@ -112,22 +112,6 @@ private:
   std::shared_ptr<OutputConnectorDataType> outputConnectorData_;       //< the object that holds all output connector components of field variables
 };
 
-/*
-#include "equation/type_traits.h"
-
-template<typename FunctionSpaceType,typename Term>
-class FiniteElements<
-  FunctionSpaceType,
-  Term,
-  Equation::isSolidMechanics<Term>,
-  BasisFunction::isNotMixed<typename FunctionSpaceType::BasisFunction>
-> :
-  public Data<FunctionSpaceType>
-{
-public:
-  void tangentStiffnessMatrix();
-};
-*/
 }  // namespace
 
 #include "data_management/finite_element_method/finite_elements_base.tpp"

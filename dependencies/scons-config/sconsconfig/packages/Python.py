@@ -56,8 +56,8 @@ class Python(Package):
       #print("GCC version: {}".format(gcc_config[pos2+1:pos3+1]))
       #gcc_config = ""
    
-      # if gcc was compiled such that -fuse-linker-plugin is available, compile with optimizations
-      if "--enable-plugin" in gcc_config:        
+      # if gcc was compiled such that -fuse-linker-plugin is available, compile with optimizations, (now disabled because it takes long and sometimes fails)
+      if "--enable-plugin" in gcc_config and False:
         #print("gcc has --enable-plugin, compile python with optimizations")
         self.set_build_handler([
           'mkdir -p ${PREFIX}',

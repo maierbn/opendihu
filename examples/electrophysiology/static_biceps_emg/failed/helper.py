@@ -345,48 +345,48 @@ if variables.exfile_output:
 # set values for cellml model
 if "shorten" in variables.cellml_file:
   # parameters: stimulation current I_stim, fiber stretch λ
-  variables.parameters_used_as_intermediate = [32]    # 
+  variables.parameters_used_as_algebraic = [32]    # 
   variables.parameters_used_as_constant = [65]        # fiber stretch λ, this indicates how much the fiber has stretched, 1 means no extension. CONSTANTS[65] in the shorten model
   variables.parameters_initial_values = [0.0, 1.0]    # stimulation current I_stim, fiber stretch λ, OpenCMISS generated files: OC_KNOWN will be set by this
   variables.nodal_stimulation_current = 1200.
   variables.output_state_index = 0                    # use state 0 = Vm
-  variables.output_intermediate_index = []            # do not use any intermediate
+  variables.output_algebraic_index = []            # do not use any algebraic
   
 elif "hodgkin_huxley" in variables.cellml_file:
   # parameters: I_stim
-  variables.parameters_used_as_intermediate = []
+  variables.parameters_used_as_algebraic = []
   variables.parameters_used_as_constant = [2]
   variables.parameters_initial_values = [0.0]
   variables.nodal_stimulation_current = 40.
   variables.output_state_index = 0                    # use state 0 = Vm
-  variables.output_intermediate_index = []            # do not use any intermediate
+  variables.output_algebraic_index = []            # do not use any algebraic
 
 elif "slow_TK_2014" in variables.cellml_file:   # this is (3a, "MultiPhysStrain", old tomo mechanics) in OpenCMISS
   # parameters: I_stim, fiber stretch λ
-  variables.parameters_used_as_intermediate = []
+  variables.parameters_used_as_algebraic = []
   variables.parameters_used_as_constant = [54, 67]     # wal_environment/I_HH = I_stim, razumova/L_S = λ
   variables.parameters_initial_values = [0.0, 1.0]     # wal_environment/I_HH = I_stim, razumova/L_S = λ
   variables.nodal_stimulation_current = 40. 
   variables.output_state_index = 0                     # use state 0, wal_environment/vS = Vm
-  variables.output_intermediate_index = 12             # use intermediate 12, razumova/stress = γ
+  variables.output_algebraic_index = 12             # use algebraic 12, razumova/stress = γ
   
 elif "Aliev_Panfilov_Razumova_2016_08_22" in variables.cellml_file :   # this is (3, "MultiPhysStrain", numerically more stable) in OpenCMISS, this only computes A1,A2,x1,x2 not the stress
   # parameters: I_stim, fiber stretch λ, fiber contraction velocity \dot{λ}
-  variables.parameters_used_as_intermediate = []
+  variables.parameters_used_as_algebraic = []
   variables.parameters_used_as_constant = [0, 8, 9]    # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/velo = \dot{λ}
   variables.parameters_initial_values = [0, 1, 0]      # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/velo = \dot{λ}
   variables.nodal_stimulation_current = 40. 
   variables.output_state_index = 0                     # use state 0, Aliev_Panfilov/V_m = Vm
-  variables.output_intermediate_index = 0              # no intermediates are used
+  variables.output_algebraic_index = 0              # no algebraics are used
   
 elif "Aliev_Panfilov_Razumova_Titin" in variables.cellml_file:   # this is (4, "Titin") in OpenCMISS
   # parameters: I_stim, fiber stretch λ, fiber contraction velocity \dot{λ}
-  variables.parameters_used_as_intermediate = []
+  variables.parameters_used_as_algebraic = []
   variables.parameters_used_as_constant = [0, 11, 12]  # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/rel_velo = \dot{λ}
   variables.parameters_initial_values = [0, 1, 0]      # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/rel_velo = \dot{λ}
   variables.nodal_stimulation_current = 40. 
   variables.output_state_index = 0                     # use state 0, Aliev_Panfilov/V_m = Vm
-  variables.output_intermediate_index = [4,5]          # Razumova/ActiveStress = γ, Razumova/Activation = α 
+  variables.output_algebraic_index = [4,5]          # Razumova/ActiveStress = γ, Razumova/Activation = α 
   
 
 # callback functions
@@ -508,9 +508,9 @@ if rank_no == 0 and not variables.disable_firing_output:
   n_firing_times = np.size(variables.firing_times,0)
   for fiber_no_index in range(variables.n_fibers_total):
     if fiber_no_index % 100 == 0:
-      t_intermediate = timeit.default_timer()
-      if t_intermediate - t_start > 100:
-        print("Note: break after {}/{} fibers ({:.0f}%) because it already took {:.3f}s".format(fiber_no_index,variables.n_fibers_total,100.0*fiber_no_index/(variables.n_fibers_total-1.),t_intermediate - t_start))
+      t_algebraic = timeit.default_timer()
+      if t_algebraic - t_start > 100:
+        print("Note: break after {}/{} fibers ({:.0f}%) because it already took {:.3f}s".format(fiber_no_index,variables.n_fibers_total,100.0*fiber_no_index/(variables.n_fibers_total-1.),t_algebraic - t_start))
         break
     
     first_stimulation = None

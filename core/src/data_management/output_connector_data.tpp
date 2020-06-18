@@ -64,6 +64,13 @@ addGeometryField(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,
   geometryField = _geometryField;
 }
 
+template<typename FunctionSpaceType, int nComponents1, int nComponents2>
+int OutputConnectorData<FunctionSpaceType,nComponents1,nComponents2>::
+nSlots()
+{
+  return variable1.size() + variable2.size();
+}
+
 // operator used for output
 template<typename FunctionSpaceType, int nComponents1, int nComponents2>
 std::ostream &operator<<(std::ostream &stream, const OutputConnectorData<FunctionSpaceType,nComponents1,nComponents2> &rhs)

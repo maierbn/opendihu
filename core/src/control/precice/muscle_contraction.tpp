@@ -5,7 +5,7 @@
 namespace PreciceAdapter
 {
 
-template<class NestedSolver>
+template<typename NestedSolver>
 MuscleContraction<NestedSolver>::
 MuscleContraction(DihuContext context) :
   Runnable(),
@@ -15,7 +15,7 @@ MuscleContraction(DihuContext context) :
   this->specificSettings_ = this->context_.getPythonConfig();
 }
 
-template<class NestedSolver>
+template<typename NestedSolver>
 void MuscleContraction<NestedSolver>::
 initialize()
 {
@@ -27,7 +27,7 @@ initialize()
 
   // initialize() will be called before the simulation starts.
 
-  // add this solver to the solvers diagram, which is a SVG file that will be created at the end of the simulation.
+  // add this solver to the solvers diagram, which is an ASCII art representation that will be created at the end of the simulation.
   DihuContext::solverStructureVisualizer()->addSolver("PreciceAdapter::MuscleContraction", true);   // hasInternalConnectionToFirstNestedSolver=true (the last argument) means output connector data is shared with the first subsolver
 
   // indicate in solverStructureVisualizer that now a child solver will be initialized
@@ -103,7 +103,7 @@ initialize()
 #endif
 }
 
-template<class NestedSolver>
+template<typename NestedSolver>
 void MuscleContraction<NestedSolver>::
 run()
 {
@@ -170,7 +170,7 @@ run()
 
 #ifdef HAVE_PRECICE
 
-template<class NestedSolver>
+template<typename NestedSolver>
 void MuscleContraction<NestedSolver>::
 preciceReadData()
 {
@@ -194,7 +194,7 @@ preciceReadData()
   LOG(DEBUG) << "read data from precice complete, gamma values: " << gammaValues;
 }
 
-template<class NestedSolver>
+template<typename NestedSolver>
 void MuscleContraction<NestedSolver>::
 preciceWriteData()
 {
@@ -238,7 +238,7 @@ preciceWriteData()
 
 #endif
 
-template<class NestedSolver>
+template<typename NestedSolver>
 void MuscleContraction<NestedSolver>::
 reset()
 {
@@ -248,7 +248,7 @@ reset()
   // "uninitialize" everything
 }
 
-template<class NestedSolver>
+template<typename NestedSolver>
 typename MuscleContraction<NestedSolver>::Data &MuscleContraction<NestedSolver>::
 data()
 {
@@ -258,7 +258,7 @@ data()
 
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
 //! the transfer is done by the output_connector_data_transfer class
-template<class NestedSolver>
+template<typename NestedSolver>
 std::shared_ptr<typename MuscleContraction<NestedSolver>::OutputConnectorDataType> MuscleContraction<NestedSolver>::
 getOutputConnectorData()
 {

@@ -47,6 +47,7 @@ if local:
     bc = {-1-dof:2.0 for dof in range(4)}
 
 config = {
+  "logFormat":                      "csv",     # "csv" or "json", format of the lines in the log file, csv gives smaller files
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "OutputSurface": {
     "face": "1-",

@@ -60,20 +60,15 @@ template<typename FunctionSpaceType, typename NestedSolverType>
 void MapDofs<FunctionSpaceType,NestedSolverType>::
 parseMappingFromSettings(std::string settingsKey, std::vector<DofsMappingType> &mappings)
 {
-  LOG(DEBUG) << "settingsKey " << settingsKey << ", specificSettings: " << this->specificSettings_;
   PyObject *listPy = this->specificSettings_.getOptionPyObject(settingsKey);
-  LOG(DEBUG) << "convert to list to get size";
   std::vector<PyObject *> list = PythonUtility::convertFromPython<std::vector<PyObject *>>::get(listPy);
-  LOG(DEBUG) << "size: " << list.size();
 
   PythonConfig mappingSpecification(this->specificSettings_, settingsKey);
-  LOG(DEBUG) << "mappingSpecification: " << mappingSpecification;
 
   // loop over items of the list under "beforeComputation" or "afterComputation"
   for (int i = 0; i < list.size(); i++)
   {
     PythonConfig currentMappingSpecification(mappingSpecification, i);
-    LOG(DEBUG) << "i=" << i << ", currentMappingSpecification: " << mappingSpecification;
 
     DofsMappingType newDofsMapping;
 
@@ -99,7 +94,7 @@ parseMappingFromSettings(std::string settingsKey, std::vector<DofsMappingType> &
     }
     else
     {
-      LOG(ERROR) << this->specificSettings_ << "[\"fromDofNosNumbering\"] is \"" << fromDofNosNumbering << ", but has to be \"global\" or \"local\". Assuming \"local\".";
+      LOG(ERROR) << currentMappingSpecification << "[\"fromDofNosNumbering\"] is \"" << fromDofNosNumbering << ", but has to be \"global\" or \"local\". Assuming \"local\".";
       newDofsMapping.dofNoIsGlobalFrom = false;
     }
 
@@ -114,7 +109,7 @@ parseMappingFromSettings(std::string settingsKey, std::vector<DofsMappingType> &
     }
     else
     {
-      LOG(ERROR) << this->specificSettings_ << "[\"toDofNosNumbering\"] is \"" << toDofNosNumbering << ", but has to be \"global\" or \"local\". Assuming \"local\".";
+      LOG(ERROR) << currentMappingSpecification << "[\"toDofNosNumbering\"] is \"" << toDofNosNumbering << ", but has to be \"global\" or \"local\". Assuming \"local\".";
       newDofsMapping.dofNoIsGlobalTo = false;
     }
 
@@ -131,6 +126,12 @@ parseMappingFromSettings(std::string settingsKey, std::vector<DofsMappingType> &
     else if (mode == "communicate")
     {
       newDofsMapping.mode = DofsMappingType::modeCommunicate;
+    }
+    else if (mode == "localSetIfAboveThreshold")
+    {
+      newDofsMapping.mode = DofsMappingType::modeLocalSetIfAboveThreshold;
+      newDofsMapping.thresholdValue = currentMappingSpecification.getOptionDouble("thresholdValue", 0);
+      newDofsMapping.valueToSet = currentMappingSpecification.getOptionDouble("valueToSet", 0);
     }
     else
     {

@@ -67,9 +67,13 @@ protected:
     int outputConnectorArrayIndexFrom;   //< array index if the output connector slot consists of a vector of multiple layers, e.g. Multidomain with multiple compartments or fibers with even two nested MultipleInstances
     int outputConnectorArrayIndexTo;     //< array index if the output connector slot consists of a vector of multiple layers, e.g. Multidomain with multiple compartments or fibers with even two nested MultipleInstances
 
+    double thresholdValue;          //< if mode is "localSetIfAboveThreshold", this is the threshold, if the value is above it, set the value `valueToSet`
+    double valueToSet;              //< if mode is "localSetIfAboveThreshold", this is the value to set the target dof to, if the source dof is above thresholdValue.
+
     enum {
       modeCopyLocal,
       modeCopyLocalIfPositive,
+      modeLocalSetIfAboveThreshold,
       modeCommunicate
     } mode;                         // how to handle multiple dofs that map on a single dof
 

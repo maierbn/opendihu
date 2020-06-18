@@ -409,3 +409,90 @@ slotGetValues(
       << ", at dofs " << dofNosLocal << " get values " << values;
   }
 }
+
+// tuple
+
+template<typename OutputConnectorDataType1, typename OutputConnectorDataType2>
+int OutputConnectorDataHelper<std::tuple<std::shared_ptr<OutputConnectorDataType1>,std::shared_ptr<OutputConnectorDataType2>>>::
+nSlots(std::shared_ptr<std::tuple<std::shared_ptr<OutputConnectorDataType1>,std::shared_ptr<OutputConnectorDataType2>>> outputConnectorData)
+{
+  return OutputConnectorDataHelper<OutputConnectorDataType1>::nSlots(std::get<0>(*outputConnectorData))
+    + OutputConnectorDataHelper<OutputConnectorDataType2>::nSlots(std::get<1>(*outputConnectorData));
+}
+
+//! get the mesh partition of the field variable at the slot
+template<typename OutputConnectorDataType1, typename OutputConnectorDataType2>
+std::shared_ptr<Partition::MeshPartitionBase> OutputConnectorDataHelper<std::tuple<std::shared_ptr<OutputConnectorDataType1>,std::shared_ptr<OutputConnectorDataType2>>>::
+getMeshPartitionBase(
+  std::shared_ptr<std::tuple<std::shared_ptr<OutputConnectorDataType1>,std::shared_ptr<OutputConnectorDataType2>>> outputConnectorData,
+  int slotNo, int arrayIndex
+)
+{
+  if (!outputConnectorData)
+    return nullptr;
+
+  int nSlotsFirstTuple = OutputConnectorDataHelper<OutputConnectorDataType1>::nSlots(std::get<0>(*outputConnectorData));
+  int nSlotsSecondTuple = OutputConnectorDataHelper<OutputConnectorDataType2>::nSlots(std::get<1>(*outputConnectorData));
+
+  if (slotNo < nSlotsFirstTuple)
+  {
+    return OutputConnectorDataHelper<OutputConnectorDataType1>::getMeshPartitionBase(std::get<0>(*outputConnectorData), slotNo, arrayIndex);
+  }
+  else if (slotNo < nSlotsFirstTuple + nSlotsSecondTuple)
+  {
+    int offsetSlotNo = slotNo - nSlotsFirstTuple;
+    return OutputConnectorDataHelper<OutputConnectorDataType2>::getMeshPartitionBase(std::get<1>(*outputConnectorData), offsetSlotNo, arrayIndex);
+  }
+
+  return nullptr;
+}
+
+//! set the values at given dofs at the field variable given by slotNo
+template<typename OutputConnectorDataType1, typename OutputConnectorDataType2>
+void OutputConnectorDataHelper<std::tuple<std::shared_ptr<OutputConnectorDataType1>,std::shared_ptr<OutputConnectorDataType2>>>::
+slotSetValues(
+  std::shared_ptr<std::tuple<std::shared_ptr<OutputConnectorDataType1>,std::shared_ptr<OutputConnectorDataType2>>> outputConnectorData,
+  int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLocal, const std::vector<double> &values, InsertMode petscInsertMode
+)
+{
+  if (!outputConnectorData)
+    return;
+
+  int nSlotsFirstTuple = OutputConnectorDataHelper<OutputConnectorDataType1>::nSlots(std::get<0>(*outputConnectorData));
+  int nSlotsSecondTuple = OutputConnectorDataHelper<OutputConnectorDataType2>::nSlots(std::get<1>(*outputConnectorData));
+
+  if (slotNo < nSlotsFirstTuple)
+  {
+    OutputConnectorDataHelper<OutputConnectorDataType1>::slotSetValues(std::get<0>(*outputConnectorData), slotNo, arrayIndex, dofNosLocal, values, petscInsertMode);
+  }
+  else if (slotNo < nSlotsFirstTuple + nSlotsSecondTuple)
+  {
+    int offsetSlotNo = slotNo - nSlotsFirstTuple;
+    OutputConnectorDataHelper<OutputConnectorDataType2>::slotSetValues(std::get<1>(*outputConnectorData), offsetSlotNo, arrayIndex, dofNosLocal, values, petscInsertMode);
+  }
+}
+
+//! get the values at given dofs at the field variable given by slotNo
+template<typename OutputConnectorDataType1, typename OutputConnectorDataType2>
+void OutputConnectorDataHelper<std::tuple<std::shared_ptr<OutputConnectorDataType1>,std::shared_ptr<OutputConnectorDataType2>>>::
+slotGetValues(
+  std::shared_ptr<std::tuple<std::shared_ptr<OutputConnectorDataType1>,std::shared_ptr<OutputConnectorDataType2>>> outputConnectorData,
+  int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLocal, std::vector<double> &values
+)
+{
+  if (!outputConnectorData)
+    return;
+
+  int nSlotsFirstTuple = OutputConnectorDataHelper<OutputConnectorDataType1>::nSlots(std::get<0>(*outputConnectorData));
+  int nSlotsSecondTuple = OutputConnectorDataHelper<OutputConnectorDataType2>::nSlots(std::get<1>(*outputConnectorData));
+
+  if (slotNo < nSlotsFirstTuple)
+  {
+    OutputConnectorDataHelper<OutputConnectorDataType1>::slotGetValues(std::get<0>(*outputConnectorData), slotNo, arrayIndex, dofNosLocal, values);
+  }
+  else if (slotNo < nSlotsFirstTuple + nSlotsSecondTuple)
+  {
+    int offsetSlotNo = slotNo - nSlotsFirstTuple;
+    OutputConnectorDataHelper<OutputConnectorDataType2>::slotGetValues(std::get<1>(*outputConnectorData), offsetSlotNo, arrayIndex, dofNosLocal, values);
+  }
+}

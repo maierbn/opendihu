@@ -58,8 +58,27 @@ performMappings(std::vector<DofsMappingType> &mappings)
 
   for (DofsMappingType &mapping : mappings)
   {
-    LOG(DEBUG) << "MapDofs::perform mapping slots " << mapping.outputConnectorSlotNoFrom << " -> " << mapping.outputConnectorSlotNoTo << ", "
-      << (mapping.mode == DofsMappingType::modeCopyLocal? " modeCopyLocal": (mapping.mode == DofsMappingType::modeCopyLocalIfPositive? "modeCopyLocalIfPositive": " modeCommunicate"));
+    std::string modeString;
+    switch(mapping.mode)
+    {
+    case DofsMappingType::modeCopyLocal:
+      modeString = "modeCopyLocal";
+      break;
+
+    case DofsMappingType::modeCopyLocalIfPositive:
+      modeString = "modeCopyLocalIfPositive";
+      break;
+
+    case DofsMappingType::modeLocalSetIfAboveThreshold:
+      modeString = "modeLocalSetIfAboveThreshold";
+      break;
+
+    case DofsMappingType::modeCommunicate:
+      modeString = "modeCommunicate";
+      break;
+    }
+
+    LOG(DEBUG) << "MapDofs::perform mapping slots " << mapping.outputConnectorSlotNoFrom << " -> " << mapping.outputConnectorSlotNoTo << ", " << modeString;
 
     static std::map<int,std::vector<double>> valuesToSendToRanks;
     static std::vector<double> receivedValues;
@@ -90,7 +109,7 @@ performMappings(std::vector<DofsMappingType> &mappings)
       // set receivedValues at dofs receivedValueDofNosLocal
       slotSetValues(mapping.outputConnectorSlotNoTo, mapping.outputConnectorArrayIndexTo, mapping.receivedValueDofNosLocal, receivedValues, INSERT_VALUES);
     }
-    else  if (mapping.mode == DofsMappingType::modeCopyLocal)
+    else if (mapping.mode == DofsMappingType::modeCopyLocal)
     {
       // collect all values
       for (double value : valuesToSendToRanks[ownRankNo])
@@ -121,7 +140,31 @@ performMappings(std::vector<DofsMappingType> &mappings)
         }
       }
 
-      // set values, only where dofs are != -1
+      // set values
+      slotSetValues(mapping.outputConnectorSlotNoTo, mapping.outputConnectorArrayIndexTo, mapping.maskedDofNosLocal, receivedValues, INSERT_VALUES);
+    }
+    else if (mapping.mode == DofsMappingType::modeLocalSetIfAboveThreshold)
+    {
+      // store dof nos for positive values in maskedDofNosLocal
+      mapping.maskedDofNosLocal.clear();
+
+      // loop over the values to be set
+      int i = 0;
+      for (std::vector<double>::iterator iter = valuesToSendToRanks[ownRankNo].begin(); iter != valuesToSendToRanks[ownRankNo].end(); iter++, i++)
+      {
+        double value = *iter;
+
+        if (value > mapping.thresholdValue)
+        {
+          mapping.maskedDofNosLocal.push_back(mapping.receivedValueDofNosLocal[i]);
+          receivedValues.push_back(mapping.valueToSet);
+        }
+      }
+
+      LOG(DEBUG) << "values: " << valuesToSendToRanks[ownRankNo] << ", dofs that are above threshold " << mapping.thresholdValue
+        << ", values to be set: " << receivedValues;
+
+      // set values
       slotSetValues(mapping.outputConnectorSlotNoTo, mapping.outputConnectorArrayIndexTo, mapping.maskedDofNosLocal, receivedValues, INSERT_VALUES);
     }
   }

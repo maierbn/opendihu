@@ -47,8 +47,17 @@ public:
   //! get the connectors from term 2 to term 1
   const std::vector<Connector> &connectorForVisualizerTerm2To1() const;
 
-  //! a pointer of a second output connection, used when the OutputConnectorData is a tuple of two OutputConnectorData types and therefore a second output connection object is needed.
-  std::shared_ptr<OutputConnection> &subOutputConnection();
+  //! a pointer of a second output connection, used when the OutputConnectorData is a tuple of two OutputConnectorData types and therefore another output connection object is needed.
+  std::shared_ptr<OutputConnection> &subOutputConnection1();
+
+  //! one more pointer of a second output connection, used for transfer betwen two tuples and therefore a second output connection object is needed.
+  std::shared_ptr<OutputConnection> &subOutputConnection2();
+
+  //! one more pointer of a second output connection, used for transfer betwen two tuples and therefore a third output connection object is needed.
+  std::shared_ptr<OutputConnection> &subOutputConnection3();
+
+  //! one more pointer of a second output connection, used for transfer betwen two tuples and therefore a forth output connection object is needed.
+  std::shared_ptr<OutputConnection> &subOutputConnection4();
 
 private:
 
@@ -94,10 +103,13 @@ private:
   };
 
   std::array<std::array<std::vector<Result>,2>,2> slotInformation_;   //< [transferDirectionTerm1To2_][fromVectorNo][fromVectorIndex], look-up table of getSlotInformation
-  bool slotInformationInitialized_;          //< if slotInformation has been initialized
+  bool slotInformationInitialized_;                                   //< if slotInformation has been initialized
 
-  PythonConfig settings_;                    //< the settings object
-  std::shared_ptr<OutputConnection> subOutputConnection_;             //< a second output connection object
+  PythonConfig settings_;                                             //< the settings object
+  std::shared_ptr<OutputConnection> subOutputConnection1_;             //< a first output connection object
+  std::shared_ptr<OutputConnection> subOutputConnection2_;             //< a second output connection object
+  std::shared_ptr<OutputConnection> subOutputConnection3_;            //< a third output connection object
+  std::shared_ptr<OutputConnection> subOutputConnection4_;            //< a forth output connection object
 };
 
 #include "output_connector_data_transfer/output_connection.tpp"

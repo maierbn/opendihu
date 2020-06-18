@@ -193,7 +193,7 @@ mapHighToLowDimension(
   std::array<double,FunctionSpaceSourceType::nDofsPerElement()> previousScalingFactors;
 #endif
 
-  LOG(INFO) << "mapHighToLowDimension " << fieldVariableSource.name() << " (" << fieldVariableSource.functionSpace()->meshName()
+  LOG(DEBUG) << "mapHighToLowDimension " << fieldVariableSource.name() << " (" << fieldVariableSource.functionSpace()->meshName()
       << ") -> " << fieldVariableTarget.name() << " (" << fieldVariableTarget.functionSpace()->meshName() << ")";
 
   // this mapping direction corresponds to simple interpolation in the source mesh

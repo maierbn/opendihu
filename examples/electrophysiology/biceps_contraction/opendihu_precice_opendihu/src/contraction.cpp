@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
   
   // define problem
   PreciceAdapter::MuscleContraction<
-    MuscleContractionSolver
+    MuscleContractionSolver<>
   > problem(settings);
   
   // run problem

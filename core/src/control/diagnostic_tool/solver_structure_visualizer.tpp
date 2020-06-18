@@ -32,6 +32,7 @@ setOutputConnectorData(std::shared_ptr<Data::OutputConnectorData<FunctionSpaceTy
     currentSolver_->outputSlots.back().componentName = entry.values->componentName(entry.componentNo);
     currentSolver_->outputSlots.back().nComponents = nComponents1;
     currentSolver_->outputSlots.back().variableNo = 1;
+    currentSolver_->outputSlots.back().meshDescription = entry.values->functionSpace()->getDescription();
   }
 
   // if the geometry is set, also add it to the list
@@ -55,6 +56,7 @@ setOutputConnectorData(std::shared_ptr<Data::OutputConnectorData<FunctionSpaceTy
     currentSolver_->outputSlots.back().componentName = entry.values->componentName(entry.componentNo);
     currentSolver_->outputSlots.back().nComponents = nComponents2;
     currentSolver_->outputSlots.back().variableNo = 2;
+    currentSolver_->outputSlots.back().meshDescription = entry.values->functionSpace()->getDescription();
   }
 
   LOG(DEBUG) << "added " << currentSolver_->outputSlots.size() << " output slots";
@@ -79,7 +81,7 @@ setOutputConnectorData(std::shared_ptr<std::vector<T>> outputConnectorData, bool
 
 template<typename OutputConnectorData1, typename OutputConnectorData2>
 void SolverStructureVisualizer::
-setOutputConnectorData(std::shared_ptr<std::tuple<OutputConnectorData1,OutputConnectorData2>> outputConnectorData)
+setOutputConnectorData(std::shared_ptr<std::tuple<OutputConnectorData1,OutputConnectorData2>> outputConnectorData, bool isFromTuple)
 {
   currentSolver_->outputSlots.clear();
   setOutputConnectorData(std::get<0>(*outputConnectorData), true);

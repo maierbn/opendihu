@@ -111,8 +111,8 @@ config = {
     "logTimeStepWidthAsKey":  "dt_stimulation_check",
     "durationLogKey":         "duration_multidomain",
     "timeStepOutputInterval": 100,
-    "connectedSlotsTerm1To2": {1:1,2:2},      # slot connections between motoneuron and MapDofs object which maps values to nodes of the fiber mesh 
-    "connectedSlotsTerm2To1": {1:1,2:2},
+    "connectedSlotsTerm1To2": {1:2,2:3},      # slot connections between motoneuron and MapDofs object which maps values to nodes of the fiber mesh 
+    "connectedSlotsTerm2To1": {2:1,3:2},
     
     # motoneuron
     "Term1": {    
@@ -172,7 +172,7 @@ config = {
         # map from motoneuronMesh (algebraics) to 3Dmesh (solution)
         "beforeComputation": [                                        # transfer/mapping of dofs that will be performed before the computation of the nested solver
           {                                                 
-            "fromOutputConnectorSlotNo":        1,                    # which fiber/compartment
+            "fromOutputConnectorSlotNo":        2,                    # which fiber/compartment
             "toOutputConnectorSlotNo":          0,
             "fromOutputConnectorArrayIndex":    0,
             "toOutputConnectorArrayIndex":      0,
@@ -187,7 +187,7 @@ config = {
         "afterComputation": [                                        # transfer/mapping of dofs that will be performed before the computation of the nested solver
           {                                                 
             "fromOutputConnectorSlotNo":        0,
-            "toOutputConnectorSlotNo":          2,
+            "toOutputConnectorSlotNo":          3,
             "fromOutputConnectorArrayIndex":    0,                    # which fiber/compartment
             "toOutputConnectorArrayIndex":      0,
             "fromDofNosNumbering":              "global",
@@ -281,7 +281,7 @@ config = {
               "dirichletBoundaryConditions":  {},
               "solverName":                   "implicitSolver",
               "checkForNanInf":               True,             # check if the solution vector contains nan or +/-inf values, if yes, an error is printed. This is a time-consuming check.
-              "nAdditionalFieldVariables":    1,
+              "nAdditionalFieldVariables":    0,
               
               "FiniteElementMethod" : {
                 "meshName":               "MeshFiber",

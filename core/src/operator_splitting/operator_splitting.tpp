@@ -19,6 +19,7 @@ OperatorSplitting(DihuContext context, std::string schemeName) :
   ::TimeSteppingScheme::TimeSteppingScheme(context),
   timeStepping1_(context_[schemeName]["Term1"]),
   timeStepping2_(context_[schemeName]["Term2"]),
+  data_(context_[schemeName]),
   initialized_(false)
 {
 
@@ -47,7 +48,7 @@ initialize()
   LOG(TRACE) << "  OperatorSplitting::initialize";
 
   // add this solver to the solvers diagram, which is an ASCII art representation that will be created at the end of the simulation.
-  DihuContext::solverStructureVisualizer()->addSolver(schemeName_, true);   // hasInternalConnectionToFirstNestedSolver=true (the last argument) means output connector data is shared with the first subsolver
+  DihuContext::solverStructureVisualizer()->addSolver(schemeName_, true, true);   // hasInternalConnectionToFirstNestedSolver=true (the two last arguments) means output connector data is shared with the first and second subsolvers
 
   TimeSteppingScheme::initialize();
   timeStepOutputInterval_ = specificSettings_.getOptionInt("timeStepOutputInterval", 100, PythonUtility::Positive);
@@ -77,6 +78,9 @@ initialize()
 
   // indicate in solverStructureVisualizer that the child solver initialization is done
   DihuContext::solverStructureVisualizer()->endChild();
+
+  // initialize data object, i.e. outputConnectorData
+  data_.initialize(timeStepping1_, timeStepping2_);
 
   LOG(DEBUG) << "initialize mappings between meshes \"" << timeStepping1_.data().functionSpace()->meshName() << "\" and \""
     << timeStepping2_.data().functionSpace()->meshName() << "\".";
@@ -108,7 +112,6 @@ setRankSubset(Partition::RankSubset rankSubset)
   timeStepping1_.setRankSubset(rankSubset);
   timeStepping2_.setRankSubset(rankSubset);
 }
-
   
 template<typename TimeStepping1, typename TimeStepping2>
 void OperatorSplitting<TimeStepping1, TimeStepping2>::
@@ -138,14 +141,14 @@ std::shared_ptr<typename OperatorSplitting<TimeStepping1, TimeStepping2>::Output
 OperatorSplitting<TimeStepping1, TimeStepping2>::
 getOutputConnectorData()
 {
-  return timeStepping1_.getOutputConnectorData();
+  return data_.getOutputConnectorData();
 }
 
 template<typename TimeStepping1, typename TimeStepping2>
 typename OperatorSplitting<TimeStepping1, TimeStepping2>::Data &OperatorSplitting<TimeStepping1, TimeStepping2>::
 data()
 {
-  return timeStepping1_.data();
+  return data_;
 }
 
 //! get a reference to the first timestepping object

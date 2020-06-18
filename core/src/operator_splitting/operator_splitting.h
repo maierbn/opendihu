@@ -6,6 +6,7 @@
 #include "data_management/time_stepping/time_stepping.h"
 #include "partition/rank_subset.h"
 #include "output_connector_data_transfer/output_connector_data_transfer.h"
+#include "data_management/operator_splitting.h"
 
 namespace OperatorSplitting
 {
@@ -17,8 +18,8 @@ class OperatorSplitting :
 {
 public:
   typedef typename TimeStepping1::FunctionSpace FunctionSpace;
-  typedef typename TimeStepping1::Data Data;
-  typedef typename TimeStepping1::OutputConnectorDataType OutputConnectorDataType;  // needed when this class is itself part of an operator splitting
+  typedef Data::OperatorSplitting<TimeStepping1,TimeStepping2> Data;
+  typedef typename Data::OutputConnectorDataType OutputConnectorDataType;  // needed when this class is itself part of an operator splitting
   typedef TimeStepping1 TimeStepping1Type;
   typedef TimeStepping2 TimeStepping2Type;
 
@@ -59,6 +60,8 @@ protected:
 
   TimeStepping1 timeStepping1_;     //< the object to be discretized
   TimeStepping2 timeStepping2_;     //< the object to be discretized
+
+  Data data_;                       //< data object that stores the outputConnectorData_ object which is a tuple of both outputConnectorData objects of the timestepping schemes
 
   int timeStepOutputInterval_;      //< time step number and time is output every timeStepOutputInterval_ time steps
   std::string schemeName_;          //< the key as in the contig, i.e. "Strang" or "Godunov" or "Coupling", only for debugging outputs

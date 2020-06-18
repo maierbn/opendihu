@@ -54,6 +54,15 @@ initialize()
   // set the outputConnectorData for the solverStructureVisualizer to appear in the solver diagram
   DihuContext::solverStructureVisualizer()->setOutputConnectorData(getOutputConnectorData());
 
+  // add mappings to be visualized by solverStructureVisualizer
+  for (const DofsMappingType &mapping : mappingsBeforeComputation_)
+  {
+    DihuContext::solverStructureVisualizer()->addSlotMapping(mapping.outputConnectorSlotNoFrom, mapping.outputConnectorSlotNoTo);
+  }
+  for (const DofsMappingType &mapping : mappingsAfterComputation_)
+  {
+    DihuContext::solverStructureVisualizer()->addSlotMapping(mapping.outputConnectorSlotNoFrom, mapping.outputConnectorSlotNoTo);
+  }
 }
 
 template<typename FunctionSpaceType, typename NestedSolverType>

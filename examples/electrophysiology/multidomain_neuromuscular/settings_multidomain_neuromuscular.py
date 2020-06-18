@@ -406,7 +406,7 @@ config = {
         
                         # output writer for states, algebraics and parameters                
                         "OutputWriter" : [
-                          {"format": "Paraview", "outputInterval": (int)(1./variables.dt_0D*variables.output_timestep_multidomain), "filename": "out/" + variables.scenario_name + "/0D_all", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"}
+                          {"format": "Paraview", "outputInterval": (int)(2./variables.dt_0D*variables.output_timestep_multidomain), "filename": "out/" + variables.scenario_name + "/0D_all", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"}
                         ] if variables.states_output else []
                       },
 
@@ -491,7 +491,7 @@ config = {
           "OutputWriter" : [
             
             # Paraview files
-            {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/u", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+            #{"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/"+variables.scenario_name+"/mechanics_u", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
             
             # Python callback function "postprocess"
             #{"format": "PythonCallback", "outputInterval": 1, "callback": postprocess, "onlyNodalValues":True, "filename": ""},
@@ -505,7 +505,7 @@ config = {
           # 3. additional output writer that writes virtual work terms
           "dynamic": {    # output of the dynamic solver, has additional virtual work values 
             "OutputWriter" : [   # output files for displacements function space (quadratic elements)
-              {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/dynamic", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+              #{"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/"+variables.scenario_name+"/mechanics_dynamic", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
               #{"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/virtual_work", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
             ],
           },

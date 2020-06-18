@@ -104,15 +104,21 @@ int main(int argc, char* argv[])
         cflags = subprocess.check_output(cflags_command, shell=True)
         ldflags = subprocess.check_output(ldflags_command, shell=True)
 
+        ctx.Log("cflags: {}".format(cflags))
+        ctx.Log("ldflags: {}".format(ldflags))
+
         # remove trailing newline and leading .a
-        if cflags[-1] == '\n':
-          cflags = cflags[:-1]
-        if cflags[:2] == ".a":
-          cflags = cflags[2:]
-        if ldflags[-1] == '\n':
-          ldflags = ldflags[:-1]
-        if ldflags[:2] == ".a":
-          ldflags = ldflags[2:]
+        try:
+          if cflags[-1] == '\n':
+            cflags = cflags[:-1]
+          if cflags[:2] == ".a":
+            cflags = cflags[2:]
+          if ldflags[-1] == '\n':
+            ldflags = ldflags[:-1]
+          if ldflags[:2] == ".a":
+            ldflags = ldflags[2:]
+        except:
+          ctx.Log("A string error occured")
 
         ctx.Log("extracted cflags  from {}: \n{}\n\n".format(ctx.env["mpiCC"], cflags))
         ctx.Log("extracted ldflags from {}: \n{}\n\n".format(ctx.env["mpiCC"], ldflags))

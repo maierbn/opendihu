@@ -21,7 +21,7 @@ setRightHandSide()
 {
   LOG(TRACE) << "setRightHandSide";
 
-  dof_no_t nUnknownsLocal = this->data_.nUnknownsLocalWithoutGhosts();     // local unknows without ghosts
+  dof_no_t nUnknownsLocal = this->data_.functionSpace()->nDofsLocalWithoutGhosts()*nComponents;     // local unknows without ghosts
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> rightHandSide = this->data_.rightHandSide();
 
   std::vector<VecD<nComponents>> localValues;
@@ -30,7 +30,7 @@ setRightHandSide()
   bool inputMeshIsGlobal = this->specificSettings_.getOptionBool("inputMeshIsGlobal", true);
   if (inputMeshIsGlobal)
   {
-    global_no_t nUnknownsGlobal = this->data_.functionSpace()->nDofsGlobal();
+    global_no_t nUnknownsGlobal = this->data_.functionSpace()->nDofsGlobal()*nComponents;
 
     this->specificSettings_.template getOptionVector<VecD<nComponents>>("rightHandSide", nUnknownsGlobal, localValues);
     this->data_.functionSpace()->meshPartition()->extractLocalDofsWithoutGhosts(localValues);

@@ -38,7 +38,7 @@ template<typename TimeStepping1, typename TimeStepping2>
 typename OperatorSplitting<TimeStepping1,TimeStepping2>::FieldVariablesForOutputWriter OperatorSplitting<TimeStepping1,TimeStepping2>::
 getFieldVariablesForOutputWriter()
 {
-  return timeStepping1_->getFieldVariablesForOutputWriter();
+  return timeStepping1_->data().getFieldVariablesForOutputWriter();
 }
 
 

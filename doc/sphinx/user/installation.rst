@@ -30,7 +30,7 @@ In order to use the code for development or for more efficient runs, it is neces
 
 There are several branches. The `develop` branch contains a recent version and is more-or-less stable. The `stable` branch is always stable but does not contain the latest developments. There are also multiple feature branches.
 
-There is one `release <https://github.com/maierbn/opendihu/releases>`_ so far: version 1.0 from 15.04.2019. 
+From time to time there are `releases <https://github.com/maierbn/opendihu/releases>`_, e.g. there is version 1.0 from 15.04.2019 and newer ones.
 
 Prerequisites
 ^^^^^^^^^^^^^^
@@ -43,15 +43,16 @@ As a prerequisite, on a blank machine with ubuntu (tested on 16.04 and 18.04) yo
   sudo apt-get update && \
   sudo apt-get install -y libopenmpi-dev libx11-* python2.7 git apt-utils make software-properties-common zlib1g-dev cmake libssl-dev bison flex
 
-Because we use C++14, GCC version 5 or higher is required including the gfortran compiler. Ubuntu 16.04 has GCC 4 as default compiler chain, so you need to update to GCC 5 as follows. For Ubuntu 18.04 and later, this step is not necessary.
+Because we use C++14, **GCC version 7 or higher** is required including the gfortran compiler. 
+Ubuntu 16.04 has GCC 4 as default compiler chain, so you need to update to e.g. GCC 9 as follows. For Ubuntu 18.04 and later, this step is not necessary.
 
 .. code-block:: bash
 
   # Install GCC5 toolchain
   sudo add-apt-repository ppa:ubuntu-toolchain-r/test && \
   sudo apt-get update && \
-  sudo apt-get install -y gcc-5 g++-5 gfortran-5 && \
-  sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 60 --slave /usr/bin/g++ g++ /usr/bin/g++-5 --slave /usr/bin/gfortran gfortran /usr/bin/gfortran-5
+  sudo apt-get install -y gcc-9 g++-9 gfortran-9 && \
+  sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 60 --slave /usr/bin/g++ g++ /usr/bin/g++-9 --slave /usr/bin/gfortran gfortran /usr/bin/gfortran-9
 
 Make sure that the `gfortran` compiler is installed as well:
 
@@ -59,7 +60,7 @@ Make sure that the `gfortran` compiler is installed as well:
 
   sudo apt-get install gfortran
 
-The `scons` build system needs python2.7. Make sure that the command `python2.7` starts a python 2.7 shell. If not, you probably have to create the following symbolic link:
+The `scons` build system needs python2.7 Everything else like the python settings of example etc. use a newer python3 version. Make sure that the command `python2.7` starts a python 2.7 shell. If not, you probably have to create the following symbolic link:
 
 .. code-block:: bash
 
@@ -139,8 +140,9 @@ There are required dependencies, which need to be present in order for opendihu 
                                                                           | processes. This should be your system MPI. If you let 
                                                                           | opendihu install it for you, `OpenMPI <https://www.open-mpi.org/>`_ 
                                                                           | will be chosen.
-`LAPACK`, `BLAS`                                                  yes     | Parallel linear algebra functions, this is a prerequisite 
-                                                                          | to *PETSc*. Opendihu will install `OpenBLAS <https://github.com/xianyi/OpenBLAS/wiki>`_
+`LAPACK`, `BLAS`                                                   no     | Parallel linear algebra functions, this is used by 
+                                                                          | *PETSc* and by some model order reduction functionality. 
+                                                                          | Opendihu will install `OpenBLAS <https://github.com/xianyi/OpenBLAS/wiki>`_.
 `PETSc <https://www.mcs.anl.gov/petsc/>`_                         yes     | Low-level data structures and solvers, see their `website <https://www.mcs.anl.gov/petsc/>`_
                                                                           | for more details.
 `Python3`                                                         yes     | The `python interpreter <https://www.python.org/>`_, 
@@ -175,6 +177,16 @@ There are required dependencies, which need to be present in order for opendihu 
                                                                           | interface with opendihu, you would need a version that 
                                                                           | is not yet released. Therefore it is fine, if this is
                                                                           | not installed.
+`Vc <https://vcdevel.github.io/Vc-1.4.1/index.html>`_            yes      | A vectorization library that produces `simd` code 
+                                                                          | depending on the hardware capabilities.
+                                                                          |
+`xbraid <https://github.com/XBraid/xbraid>`_                      no      | A framework for the parallel-in-time algorithm multigrid-
+                                                                          | reduction-in-time (MGRIT)
+`OpenCOR <https://opencor.ws/>`_                                  no      | `OpenCOR` is a modelling tool for CellML models and can 
+                                                                          | convert `*.cellml` files to C code files, `*.c`. If
+                                                                          | installed, the conversion of cellml input files is 
+                                                                          | done automatically. If not, you can only input 
+                                                                          | C files of the cellml models.
 ============================================================  ========  =================================================================================== 
 
 It is recommended to not let the build system download and build `MPI`, instead you should use your local MPI installation. 

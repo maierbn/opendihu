@@ -146,24 +146,26 @@ void CellmlSourceCodeGeneratorVc::preprocessCode(std::set<std::string> &helperFu
 
                 // replace 0.00000 and 1.00000 by double_v(Vc::One) and double_v(Vc::Zero)
 
-                // only do replace if
-                bool enableReplace = true;
+                // only do replace if not both `then` and `else` contain variables
+                bool enableReplace = false;
 
                 // for k in {4,6}
                 for (int k = 4; k <= 6; k +=2)
                 {
+                  // check if the code contains variables, then it should not be replaced because it is already vectorized
                   bool expressionHasVariables = false;
                   iifFunction.treeChildren[k].visitLeafs([&expressionHasVariables](code_expression_t &expression, bool isFirstVariable)
                   {
                     if (expression.type == code_expression_t::variableName)
                     {
-                      //if (expression.code != "CONSTANTS")
-                      expressionHasVariables = true;
+                      if (expression.code != "CONSTANTS")   // a constant does not count as a variable here
+                        expressionHasVariables = true;
                     }
                   });
 
-                  if (iifFunction.treeChildren[k].type != code_expression_t::otherCode && !expressionHasVariables)
-                    enableReplace = false;
+                  if (iifFunction.treeChildren[k].type == code_expression_t::otherCode 
+                      || !expressionHasVariables)
+                    enableReplace = true;      // replacing is necessary because in the current slot there are no variables
                 }
 
                 if (enableReplace)
@@ -184,10 +186,36 @@ void CellmlSourceCodeGeneratorVc::preprocessCode(std::set<std::string> &helperFu
                       {
                         iifFunction.treeChildren[k].code = " Vc::double_v(Vc::One)";
                       }
-                      else if (atof(code.c_str()) != 0.0)
+                      else if (atof(code.c_str()) != 0.0)   // if there is numeric code, not just '('s
                       {
                         iifFunction.treeChildren[k].code = " Vc::double_v(Vc::One)*" + iifFunction.treeChildren[k].code;
                       }
+                    }
+                    else if (iifFunction.treeChildren[k].type == code_expression_t::tree)
+                    {
+                      iifFunction.treeChildren[k].visitLeafs([](code_expression_t &expression, bool isFirstVariable)
+                      {
+                        if (expression.type == code_expression_t::variableName)
+                        {
+                          if (expression.code == "CONSTANTS")
+                          {
+                            // replace a single constant
+                            std::stringstream constantCode;
+                            constantCode << " Vc::double_v(Vc::One)*CONSTANTS[" << expression.arrayIndex << "]";
+                            expression.code = constantCode.str();
+                            expression.type = code_expression_t::otherCode;
+                          }
+                        }
+                      });
+                    }
+                    else if (iifFunction.treeChildren[k].type == code_expression_t::variableName
+                             && iifFunction.treeChildren[k].code == "CONSTANTS")
+                    {
+                      // replace a single constant
+                      std::stringstream constantCode;
+                      constantCode << " Vc::double_v(Vc::One)*CONSTANTS[" << iifFunction.treeChildren[k].arrayIndex << "]";
+                      iifFunction.treeChildren[k].code = constantCode.str();
+                      iifFunction.treeChildren[k].type = code_expression_t::otherCode;
                     }
                   }
                 }

@@ -424,10 +424,41 @@ generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunc
 
   auto t = std::time(nullptr);
   auto tm = *std::localtime(&t);
-  sourceCode << std::endl << "/* This function was created by opendihu at " << StringUtility::timeToString(&tm)  //std::put_time(&tm, "%d/%m/%Y %H:%M:%S")
-    << ".\n * It is designed for " << this->nInstances_ << " instances of the CellML problem.\n "
-    << " * The \"optimizationType\" is \"vc\". (Other options are \"simd\" and \"openmp\".) */" << std::endl
-    << "#ifdef __cplusplus\n" << "extern \"C\"\n" << "#endif\n" << std::endl
+  sourceCode << std::endl << "// This function was created by opendihu at " << StringUtility::timeToString(&tm)  //std::put_time(&tm, "%d/%m/%Y %H:%M:%S")
+    << ".\n// It is designed for " << this->nInstances_ << " instances of the CellML problem.\n"
+    << "// The \"optimizationType\" is \"vc\". (Other options are \"simd\" and \"openmp\".)" << std::endl;
+    
+  if (!parametersUsedAsAlgebraic_.empty())
+  {
+    sourceCode << "// " << parametersUsedAsAlgebraic_.size() << " algebraic" << (parametersUsedAsAlgebraic_.size()==1? " is": "s are") << " replaced by parameters: ";
+    bool first = true;
+    for (int parameterUsedAsAlgebraic : parametersUsedAsAlgebraic_)
+    {
+      if (!first)
+        sourceCode << ", ";
+      sourceCode << algebraicNames_[parameterUsedAsAlgebraic];
+      first = false;
+    }
+    sourceCode << std::endl;
+  }
+  if (!parametersUsedAsConstant_.empty())
+  {
+    sourceCode << "// " << parametersUsedAsConstant_.size() << " constant" << (parametersUsedAsConstant_.size()==1? " is": "s are") << " replaced by parameters: ";
+    bool first = true;
+    for (int parameterUsedAsConstant : parametersUsedAsConstant_)
+    {
+      if (!first)
+        sourceCode << ", ";
+      sourceCode << constantNames_[parameterUsedAsConstant];
+      first = false;
+    }
+    sourceCode << std::endl;
+  }
+  sourceCode  << std::endl;
+  std::vector<int> parametersUsedAsConstant_;  //< explicitely defined parameters that will be copied to constants, this vector contains the indices of the constants
+
+    
+  sourceCode << "#ifdef __cplusplus\n" << "extern \"C\"\n" << "#endif\n" << std::endl
     << "void computeCellMLRightHandSide("
     << "void *context, double t, double *states, double *rates, double *algebraics, double *parameters)" << std::endl 
     << "{" << std::endl

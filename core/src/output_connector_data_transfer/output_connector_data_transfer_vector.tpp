@@ -115,7 +115,7 @@ void SolutionVectorMapping<
     std::shared_ptr<FieldVariable1> fieldVariable1 = transferableSolutionData1Front->variable1[fromVectorIndex].values;
     int componentNo1                               = transferableSolutionData1Front->variable1[fromVectorIndex].componentNo;
 
-    LOG(DEBUG) << "map slot from variable1, index " << fromVectorIndex
+    LOG(DEBUG) << "map slot from variable1, index " << fromVectorIndex << " (" << fieldVariable1->name() << "[" << componentNo1 << "])"
       << " to variable" << toVectorNo+1 << ", index " << toVectorIndex;
 
     if (componentNo1 < 0)
@@ -198,9 +198,9 @@ void SolutionVectorMapping<
     typedef FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1b> FieldVariable1;
 
     std::shared_ptr<FieldVariable1> fieldVariable1 = transferableSolutionData1Front->variable2[fromVectorIndex].values;
-    int componentNo1 = transferableSolutionData1Front->variable2[fromVectorIndex].componentNo;
+    int componentNo1                               = transferableSolutionData1Front->variable2[fromVectorIndex].componentNo;
 
-    LOG(DEBUG) << "map slot from variable1, index " << fromVectorIndex
+    LOG(DEBUG) << "map slot from variable1, index " << fromVectorIndex << " (" << fieldVariable1->name() << "[" << componentNo1 << "])"
       << " to variable" << toVectorNo+1 << ", index " << toVectorIndex;
 
     if (componentNo1 < 0)
@@ -328,9 +328,9 @@ void SolutionVectorMapping<
     typedef FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1a> FieldVariable1;
 
     std::shared_ptr<FieldVariable1> fieldVariable1 = transferableSolutionData1->variable1[fromVectorIndex].values;
-    int componentNo1 = transferableSolutionData1->variable1[fromVectorIndex].componentNo;
+    int componentNo1                               = transferableSolutionData1->variable1[fromVectorIndex].componentNo;
 
-    LOG(DEBUG) << "map slot from variable1, index " << fromVectorIndex
+    LOG(DEBUG) << "map slot from variable1, index " << fromVectorIndex << " (" << fieldVariable1->name() << "[" << componentNo1 << "])"
       << " to variable" << toVectorNo+1 << ", index " << toVectorIndex;
 
     if (componentNo1 < 0)

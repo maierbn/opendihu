@@ -4,6 +4,7 @@
 
 import sys
 import numpy as np
+import scipy.stats
 
 end_time = 100   # [ms] end time of simulation
 n_elements = 200
@@ -35,10 +36,11 @@ monodomain_cellml_file = "../../../input/hodgkin_huxley_1952.cellml"
 scenario_name = ""
 
 # define the variable mappings for the motoneuron model
+# After changing mappings, delete the src and lib directories in build such that the library will be created again.
 if "WSBM_1457_MN_Cisi_Kohn_2008" in motoneuron_cellml_file:
   motoneuron_mappings = {
     ("parameter", 0):           "motor_neuron/drive",   # stimulation
-    ("outputConnectorSlot", 0): "motor_neuron/V_d",     # voltage at the dendrite
+    ("outputConnectorSlot", 0): "motor_neuron/V_s",     # voltage
   }
 
   # set values for parameters: [drive]
@@ -64,6 +66,51 @@ if "hodgkin_huxley" in monodomain_cellml_file:
   }
   parameters_initial_values = [0.0]
     
+def callback_motoneuron(input_values, output_values, current_time, slot_nos, buffer):
+  """
+  Callback function that transform a number of input_values to a number of output_values.
+  This function gets called by a MapDofs object.
+  :param input_values: (list of float values) The input values from the slot as defined in the MapDofs settings.
+  :param output_values: (list of float values) Initially, this is a list of the form [None, None, ..., None] with the size matching 
+                        the number of required output values. The function should set some of the entries to a computed value.
+                        The entries that are not None will be set in the output slot at the dofs defined by MapDofs.
+  :param current_time:  Current simulation time.
+  :param slot_nos:      List of [fromSlotNo, toSlotNo, fromArrayIndex, toArrayIndex].
+  :param buffer:        A persistent helper buffer. This variable can be set to anything and will be provided back to 
+                        this function every time. Using this buffer, it is possible to implement a time delay of signals.
+  """
+  
+  # get number of input and output values
+  n_input_values = len(input_values)      # =1 here (1 motoneuron)
+  n_output_values = len(output_values)    # =3 here (3 points in neuromuscular junction)
+  
+  # initialize buffer the first time
+  if 0 not in buffer:
+    buffer[0] = None
+  
+  # determine spike by threshold
+  if input_values[0] > 20:
+    buffer[0] = current_time    # store time of last activation in buffer[0]
+    
+  # if there has been a stimulation so far
+  if buffer[0] is not None:
+    
+    # convolute Dirac delta, kernel is a shifted and scaled gaussian
+    t_delay = 10              # [ms] delay of the signal
+    gaussian_std_dev = 0.1    # [ms] width of the gaussian curve
+    convolution_kernel = lambda t: scipy.stats.norm.pdf(t, loc=t_delay, scale=gaussian_std_dev)*np.sqrt(2*np.pi)*gaussian_std_dev
+    delayed_signal = convolution_kernel(current_time - buffer[0]) * 20
+      
+    # loop over output values and set all to the computed signal, cut off at 1e-5
+    if delayed_signal > 1e-5:
+      print("motoneuron t: {}, last_activation: {}, computed delayed_signal: {}".format(current_time, buffer[0], delayed_signal))
+      for i in range(n_output_values):
+        output_values[i] = delayed_signal
+    else:
+      for i in range(n_output_values):
+        output_values[i] = None     # do not set any values
+    
+  
 config = {
   "scenarioName":                 scenario_name,
   "logFormat":                    "csv",     # "csv" or "json", format of the lines in the log file, csv gives smaller files
@@ -80,7 +127,7 @@ config = {
     },
     "motoneuronMesh": {
       "nElements" :         0 if n_ranks == 1 else n_ranks,
-      "physicalExtent":     1,
+      "physicalExtent":     0,
       "physicalOffset":     0,
       "logKey":             "motoneuron",
       "inputMeshIsGlobal":  True,
@@ -165,16 +212,19 @@ config = {
         # map from motoneuronMesh (algebraics) to 3Dmesh (solution)
         "beforeComputation": [                                        # transfer/mapping of dofs that will be performed before the computation of the nested solver
           {                                                 
-            "fromOutputConnectorSlotNo":        2,                    # which fiber/compartment
+            "fromOutputConnectorSlotNo":        2,
             "toOutputConnectorSlotNo":          0,
-            "fromOutputConnectorArrayIndex":    0,
+            "fromOutputConnectorArrayIndex":    0,                    # which fiber/compartment
             "toOutputConnectorArrayIndex":      0,
+            "mode":                             "callback",          # "copyLocal", "copyLocalIfPositive", "localSetIfAboveThreshold" or "communicate"
             "fromDofNosNumbering":              "local",
             "toDofNosNumbering":                "global",
             "dofsMapping":                      {0: [n_elements/2-1, n_elements/2, n_elements/2+1]},    # map from motoneuron 0 to 3 center elements of fiber
-            "mode":                             "localSetIfAboveThreshold",          # "copyLocal", "copyLocalIfPositive", "localSetIfAboveThreshold" or "communicate"
-            "thresholdValue":                   6,                    # if mode is "localSetIfAboveThreshold", this is the threshold, if the value is above it, set the value `valueToSet`
-            "valueToSet":                       20,                   # if mode is "localSetIfAboveThreshold", this is the value to set the target dof to, if the source dof is above thresholdValue.
+            "inputDofs":                        0,
+            "outputDofs":                       [n_elements/2-1, n_elements/2, n_elements/2+1],
+            "callback":                         callback_motoneuron,
+            #"thresholdValue":                   20,                    # if mode is "localSetIfAboveThreshold", this is the threshold, if the value is above it, set the value `valueToSet`
+            #"valueToSet":                       20,                   # if mode is "localSetIfAboveThreshold", this is the value to set the target dof to, if the source dof is above thresholdValue.
           }
         ],
         "afterComputation":             None,

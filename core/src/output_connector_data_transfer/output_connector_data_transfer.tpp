@@ -17,6 +17,7 @@ void SolutionVectorMapping<
 {
   LOG(DEBUG) << "transfer standard, type1: " << FunctionSpaceType1::dim() << "D " << nComponents1a << "," << nComponents1b << " comp.,"
     << " type2: " << FunctionSpaceType2::dim() << "D " << nComponents2a << "," << nComponents2b << "comp.";
+  LOG(DEBUG) << "transferableSolutionData1: " << transferableSolutionData1;
 
   // initialize output connection object
   outputConnection.initialize(*transferableSolutionData1, *transferableSolutionData2, offsetSlotNoData1, offsetSlotNoData2);
@@ -39,7 +40,7 @@ void SolutionVectorMapping<
     std::shared_ptr<FieldVariable1> fieldVariable1 = transferableSolutionData1->variable1[fromVectorIndex].values;
     int componentNo1 = transferableSolutionData1->variable1[fromVectorIndex].componentNo;
 
-    LOG(DEBUG) << "map slot from variable1, index " << fromVectorIndex
+    LOG(DEBUG) << "map slot from variable1, index " << fromVectorIndex << " (" << fieldVariable1->name() << "[" << componentNo1 << "])"
       << " to variable" << toVectorNo+1 << ", index " << toVectorIndex;
 
     if (componentNo1 < 0)
@@ -104,7 +105,7 @@ void SolutionVectorMapping<
     std::shared_ptr<FieldVariable1> fieldVariable1 = transferableSolutionData1->variable2[fromVectorIndex].values;
     int componentNo1 = transferableSolutionData1->variable2[fromVectorIndex].componentNo;
 
-    LOG(DEBUG) << "map slot from variable2, index " << fromVectorIndex
+    LOG(DEBUG) << "map slot from variable2, index " << fromVectorIndex << " (" << fieldVariable1->name() << "[" << componentNo1 << "])"
       << " to variable" << toVectorNo+1 << ", index " << toVectorIndex;
 
     if (componentNo1 < 0)

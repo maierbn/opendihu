@@ -62,9 +62,9 @@ transfer(const std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shar
     typedef FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1a> FieldVariable1;
 
     std::shared_ptr<FieldVariable1> fieldVariable1 = transferableSolutionData1Front->variable1[fromVectorIndex].values;
-    int componentNo1 = transferableSolutionData1Front->variable1[fromVectorIndex].componentNo;
+    int componentNo1                               = transferableSolutionData1Front->variable1[fromVectorIndex].componentNo;
 
-    LOG(DEBUG) << "map slot from variable1, index " << fromVectorIndex
+    LOG(DEBUG) << "map slot from variable1, index " << fromVectorIndex << " (" << fieldVariable1->name() << "[" << componentNo1 << "])"
       << " to variable" << toVectorNo+1 << ", index " << toVectorIndex;
 
     if (componentNo1 < 0)
@@ -77,7 +77,7 @@ transfer(const std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shar
     {
       typedef FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2a> FieldVariable2;
       std::shared_ptr<FieldVariable2> &fieldVariable2 = transferableSolutionData2->variable1[toVectorIndex].values;
-      int componentNo2 = transferableSolutionData2->variable1[toVectorIndex].componentNo;
+      int componentNo2                                = transferableSolutionData2->variable1[toVectorIndex].componentNo;
 
       LOG(DEBUG) << "  " << fieldVariable1->name() << "." << fieldVariable1->componentName(componentNo1) << " [" << componentNo1 << "] -> "
         << fieldVariable2->name() << "." << fieldVariable2->componentName(componentNo2) << " [" << componentNo2 << "] (" << fieldVariable2 << "), avoidCopyIfPossible: " << avoidCopyIfPossible << "(5)";
@@ -153,9 +153,9 @@ transfer(const std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shar
     typedef FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1b> FieldVariable1;
 
     std::shared_ptr<FieldVariable1> fieldVariable1 = transferableSolutionData1Front->variable2[fromVectorIndex].values;
-    int componentNo1 = transferableSolutionData1Front->variable2[fromVectorIndex].componentNo;
+    int componentNo1                               = transferableSolutionData1Front->variable2[fromVectorIndex].componentNo;
 
-    LOG(DEBUG) << "map slot from variable1, index " << fromVectorIndex
+    LOG(DEBUG) << "map slot from variable1, index " << fromVectorIndex << " (" << fieldVariable1->name() << "[" << componentNo1 << "])"
       << " to variable" << toVectorNo+1 << ", index " << toVectorIndex;
 
     if (componentNo1 < 0)
@@ -168,7 +168,7 @@ transfer(const std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shar
     {
       typedef FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2a> FieldVariable2;
       std::shared_ptr<FieldVariable2> &fieldVariable2 = transferableSolutionData2->variable1[toVectorIndex].values;
-      int componentNo2 = transferableSolutionData2->variable1[toVectorIndex].componentNo;
+      int componentNo2                                = transferableSolutionData2->variable1[toVectorIndex].componentNo;
 
       LOG(DEBUG) << "  " << fieldVariable1->name() << "." << fieldVariable1->componentName(componentNo1) << " [" << componentNo1 << "] -> "
         << fieldVariable2->name() << "." << fieldVariable2->componentName(componentNo2) << " [" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible << "(7)";
@@ -275,9 +275,9 @@ transfer(const std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType1,nCom
     typedef FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1a> FieldVariable1;
 
     std::shared_ptr<FieldVariable1> fieldVariable1 = transferableSolutionData1->variable1[fromVectorIndex].values;
-    int componentNo1 = transferableSolutionData1->variable1[fromVectorIndex].componentNo;
+    int componentNo1                               = transferableSolutionData1->variable1[fromVectorIndex].componentNo;
 
-    LOG(DEBUG) << "map slot from variable1, index " << fromVectorIndex
+    LOG(DEBUG) << "map slot from variable1, index " << fromVectorIndex << " (" << fieldVariable1->name() << "[" << componentNo1 << "])"
       << " to variable" << toVectorNo+1 << ", index " << toVectorIndex;
 
     if (componentNo1 < 0)
@@ -290,7 +290,7 @@ transfer(const std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType1,nCom
     {
       typedef FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2a> FieldVariable2;
       std::shared_ptr<FieldVariable2> &fieldVariable2 = transferableSolutionData2Front->variable1[toVectorIndex].values;
-      int componentNo2 = transferableSolutionData2Front->variable1[toVectorIndex].componentNo;
+      int componentNo2                                = transferableSolutionData2Front->variable1[toVectorIndex].componentNo;
 
       LOG(DEBUG) << "  " << fieldVariable1->name() << "." << fieldVariable1->componentName(componentNo1) << " [" << componentNo1 << "] -> "
         << fieldVariable2->name() << "." << fieldVariable2->componentName(componentNo2) << " [" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible << "(9)";
@@ -366,9 +366,9 @@ transfer(const std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType1,nCom
     typedef FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1b> FieldVariable1;
 
     std::shared_ptr<FieldVariable1> fieldVariable1 = transferableSolutionData1->variable2[fromVectorIndex].values;
-    int componentNo1 = transferableSolutionData1->variable2[fromVectorIndex].componentNo;
+    int componentNo1                               = transferableSolutionData1->variable2[fromVectorIndex].componentNo;
 
-    LOG(DEBUG) << "map slot from variable1, index " << fromVectorIndex
+    LOG(DEBUG) << "map slot from variable1, index " << fromVectorIndex << " (" << fieldVariable1->name() << "[" << componentNo1 << "])"
       << " to variable" << toVectorNo+1 << ", index " << toVectorIndex;
 
     if (componentNo1 < 0)
@@ -381,7 +381,7 @@ transfer(const std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType1,nCom
     {
       typedef FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2a> FieldVariable2;
       std::shared_ptr<FieldVariable2> &fieldVariable2 = transferableSolutionData2Front->variable1[toVectorIndex].values;
-      int componentNo2 = transferableSolutionData2Front->variable1[toVectorIndex].componentNo;
+      int componentNo2                                = transferableSolutionData2Front->variable1[toVectorIndex].componentNo;
 
       LOG(DEBUG) << "  " << fieldVariable1->name() << "." << fieldVariable1->componentName(componentNo1) << " [" << componentNo1 << "] -> "
         << fieldVariable2->name() << "." << fieldVariable2->componentName(componentNo2) << " [" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible << "(11)";

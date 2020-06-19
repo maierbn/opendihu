@@ -44,6 +44,7 @@ initializeOutputConnectorData()
   {
     outputConnectorData_->addFieldVariable2(this->parameters(), *iter);
   }
+  LOG(DEBUG) << "outputConnectorData: " << *outputConnectorData_;
 }
 
 template <int nStates, int nAlgebraics, typename FunctionSpaceType>

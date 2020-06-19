@@ -109,6 +109,8 @@ initialize()
   this->currentJitter_ = 0;
   this->jitterIndex_ = 0;
   this->lastCallSpecificStatesTime_ = this->setSpecificStatesCallEnableBegin_ - 1e-13 - 1./(this->setSpecificStatesCallFrequency_+this->currentJitter_);
+
+  LOG(DEBUG) << "Cellml end of initialize, " << this->sourceToCompileFilename_ << ", statesForTransfer: " << this->data_.statesForTransfer();
 }
 
 template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
@@ -144,6 +146,7 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
   ierr = VecGetSize(output, &nRates); CHKERRV(ierr);
   ierr = VecGetLocalSize(this->data_.algebraics()->getValuesContiguous(), &nAlgebraics); CHKERRV(ierr);
 
+  LOG(DEBUG) << "Cellml evaluateTimesteppingRightHandSideExplicit, " << this->sourceToCompileFilename_ << ", statesForTransfer: " << this->data_.statesForTransfer();
   nAlgebraics = nAlgebraics/this->nInstances_;
   VLOG(1) << "algebraics array has " << nAlgebraics << " entries";
 
@@ -194,6 +197,7 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
 
   this->data_.restoreParameterValues();
 
+  LOG(DEBUG) << "Cellml end of evaluateTimesteppingRightHandSideExplicit, " << this->sourceToCompileFilename_ << ", statesForTransfer: " << this->data_.statesForTransfer();
   // call output writer to write output files
   this->outputWriterManager_.writeOutput(this->data_, this->internalTimeStepNo_, currentTime);
 

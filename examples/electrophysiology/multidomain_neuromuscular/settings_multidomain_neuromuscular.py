@@ -320,14 +320,14 @@ config = {
         # Multidomain
         "Term2": {
           "MapDofs": {
-            "nAdditionalFieldVariables":  2,                              # number of additional field variables that are defined by this object. They have 1 component, use the templated function space and mesh given by meshName.
+            "nAdditionalFieldVariables":  1,                              # number of additional field variables that are defined by this object. They have 1 component, use the templated function space and mesh given by meshName.
             "meshName":                   "motoneuronMesh",               # the mesh on which the additional field variables will be defined
             
             # mapping from motoneuronMesh which contains on every rank as many nodes as there are motoneurons to the 3D domain
             # map from motoneuronMesh (algebraics) to 3Dmesh (solution)
             "beforeComputation": [                                        # transfer/mapping of dofs that will be performed before the computation of the nested solver
               {                                                 
-                "fromOutputConnectorSlotNo":        3,                    # which fiber/compartment
+                "fromOutputConnectorSlotNo":        2,                    # which fiber/compartment
                 "toOutputConnectorSlotNo":          0,
                 "fromOutputConnectorArrayIndex":    0,
                 "toOutputConnectorArrayIndex":      mu_no,

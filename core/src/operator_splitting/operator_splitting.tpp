@@ -80,6 +80,7 @@ initialize()
   DihuContext::solverStructureVisualizer()->endChild();
 
   // initialize data object, i.e. outputConnectorData
+  data_.setFunctionSpace(timeStepping1_.data().functionSpace());
   data_.initialize(timeStepping1_, timeStepping2_);
 
   LOG(DEBUG) << "initialize mappings between meshes \"" << timeStepping1_.data().functionSpace()->meshName() << "\" and \""

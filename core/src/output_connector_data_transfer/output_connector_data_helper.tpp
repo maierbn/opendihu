@@ -6,6 +6,8 @@ template<typename OutputConnectorDataType>
 int OutputConnectorDataHelper<OutputConnectorDataType>::
 nSlots(std::shared_ptr<OutputConnectorDataType> outputConnectorData)
 {
+  if (!outputConnectorData)
+    return 0;
   return outputConnectorData->nSlots();
 }
 
@@ -14,6 +16,8 @@ template<typename OutputConnectorDataType>
 std::shared_ptr<Partition::MeshPartitionBase> OutputConnectorDataHelper<OutputConnectorDataType>::
 getMeshPartitionBase(std::shared_ptr<OutputConnectorDataType> outputConnectorData, int slotNo, int arrayIndex)
 {
+  if (!outputConnectorData)
+    return nullptr;
   int nSlotsVariable1 = outputConnectorData->variable1.size();
 
   // if the slot no corresponds to a field variables stored under variable1
@@ -43,6 +47,9 @@ slotSetValues(
   int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLocal, const std::vector<double> &values, InsertMode petscInsertMode
 )
 {
+  if (!outputConnectorData)
+    return;
+
   int nSlotsVariable1 = outputConnectorData->variable1.size();
 
   // if the slot no corresponds to a field variables stored under variable1
@@ -65,7 +72,7 @@ slotSetValues(
     std::shared_ptr<typename OutputConnectorDataType::FieldVariable2Type> fieldVariable
       = outputConnectorData->variable2[index].values;
 
-    int componentNo = outputConnectorData->variable1[slotNo].componentNo;
+    int componentNo = outputConnectorData->variable2[index].componentNo;
 
     // set the values in the field variable
     LOG(DEBUG) << "slot " << slotNo << ": in fieldVariable \"" << fieldVariable->name() << "\", component " << componentNo
@@ -82,6 +89,9 @@ slotGetValues(
   int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLocal, std::vector<double> &values
 )
 {
+  if (!outputConnectorData)
+    return;
+
   int nSlotsVariable1 = outputConnectorData->variable1.size();
 
   // if the slot no corresponds to a field variables stored under variable1
@@ -105,7 +115,7 @@ slotGetValues(
     std::shared_ptr<typename OutputConnectorDataType::FieldVariable2Type> fieldVariable
       = outputConnectorData->variable2[index].values;
 
-    int componentNo = outputConnectorData->variable1[slotNo].componentNo;
+    int componentNo = outputConnectorData->variable2[index].componentNo;
 
     // get the actual values
     fieldVariable->getValues(componentNo, dofNosLocal, values);
@@ -121,6 +131,8 @@ template<typename OutputConnectorDataType>
 int OutputConnectorDataHelper<std::vector<std::shared_ptr<OutputConnectorDataType>>>::
 nSlots(std::shared_ptr<std::vector<std::shared_ptr<OutputConnectorDataType>>> outputConnectorData)
 {
+  if (!outputConnectorData)
+    return 0;
   if (!outputConnectorData->empty())
     return (*outputConnectorData)[0]->nSlots();
   return 0;
@@ -134,6 +146,8 @@ getMeshPartitionBase(
   int slotNo, int arrayIndex
 )
 {
+  if (!outputConnectorData)
+    return nullptr;
   if (outputConnectorData->size() <= arrayIndex)
     return nullptr;
 
@@ -167,6 +181,8 @@ slotSetValues(
   int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLocal, const std::vector<double> &values, InsertMode petscInsertMode
 )
 {
+  if (!outputConnectorData)
+    return;
   if (outputConnectorData->size() <= arrayIndex)
     return;
 
@@ -193,7 +209,7 @@ slotSetValues(
     std::shared_ptr<typename OutputConnectorDataType::FieldVariable2Type> fieldVariable
       = (*outputConnectorData)[arrayIndex]->variable2[index].values;
 
-    int componentNo = (*outputConnectorData)[arrayIndex]->variable1[slotNo].componentNo;
+    int componentNo = (*outputConnectorData)[arrayIndex]->variable2[index].componentNo;
 
     // set the values in the field variable
     LOG(DEBUG) << "slot " << slotNo << ", array index " << arrayIndex << ": "
@@ -211,6 +227,8 @@ slotGetValues(
   int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLocal, std::vector<double> &values
 )
 {
+  if (!outputConnectorData)
+    return;
   if (outputConnectorData->size() <= arrayIndex)
     return;
 
@@ -238,7 +256,7 @@ slotGetValues(
     std::shared_ptr<typename OutputConnectorDataType::FieldVariable2Type> fieldVariable
       = (*outputConnectorData)[arrayIndex]->variable2[index].values;
 
-    int componentNo = (*outputConnectorData)[arrayIndex]->variable1[slotNo].componentNo;
+    int componentNo = (*outputConnectorData)[arrayIndex]->variable2[index].componentNo;
 
     // get the actual values
     fieldVariable->getValues(componentNo, dofNosLocal, values);
@@ -255,6 +273,8 @@ template<typename OutputConnectorDataType>
 int OutputConnectorDataHelper<std::vector<std::shared_ptr<std::vector<std::shared_ptr<OutputConnectorDataType>>>>>::
 nSlots(std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shared_ptr<OutputConnectorDataType>>>>> outputConnectorData)
 {
+  if (!outputConnectorData)
+    return 0;
   if (!outputConnectorData->empty())
     if (!(*outputConnectorData)[0]->empty())
       return (*(*outputConnectorData)[0])[0]->nSlots();
@@ -269,6 +289,8 @@ getMeshPartitionBase(
   int slotNo, int arrayIndex
 )
 {
+  if (!outputConnectorData)
+    return nullptr;
   if (outputConnectorData->empty())
     return nullptr;
 
@@ -310,6 +332,8 @@ slotSetValues(
   int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLocal, const std::vector<double> &values, InsertMode petscInsertMode
 )
 {
+  if (!outputConnectorData)
+    return;
   if (outputConnectorData->empty())
     return;
 
@@ -330,7 +354,7 @@ slotSetValues(
     std::shared_ptr<typename OutputConnectorDataType::FieldVariable1Type> fieldVariable
       = (*(*outputConnectorData)[arrayIndex1])->variable1[slotNo].values;
 
-    int componentNo = (*(*outputConnectorData)[arrayIndex1])->variable2[index].componentNo;
+    int componentNo = (*(*outputConnectorData)[arrayIndex1])->variable1[slotNo].componentNo;
 
     // set the values in the field variable
     LOG(DEBUG) << "slot " << slotNo << ", array index " << arrayIndex << " = [" << arrayIndex1 << "," << arrayIndex2 << "]: "
@@ -363,6 +387,8 @@ slotGetValues(
   int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLocal, std::vector<double> &values
 )
 {
+  if (!outputConnectorData)
+    return;
   if (outputConnectorData->empty())
     return;
 
@@ -383,7 +409,7 @@ slotGetValues(
     std::shared_ptr<typename OutputConnectorDataType::FieldVariable1Type> fieldVariable
       = (*(*outputConnectorData)[arrayIndex1])->variable1[slotNo].values;
 
-    int componentNo = (*(*outputConnectorData)[arrayIndex1])->variable2[index].componentNo;
+    int componentNo = (*(*outputConnectorData)[arrayIndex1])->variable1[slotNo].componentNo;
 
     // get the actual values
     fieldVariable->getValues(componentNo, dofNosLocal, values);

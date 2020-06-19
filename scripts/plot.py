@@ -271,6 +271,7 @@ if dimension == 1:
     margin = abs(max_s - min_s) * 0.1
     ax1.set_ylim(min_s - margin, max_s + margin)
     top_text = ax1.text(0.5, 0.94, "", horizontalalignment='center', transform=ax1.transAxes, family='monospace')
+    plt.grid(which='major')
       
     # prepare geometry plot
     if show_geometry:

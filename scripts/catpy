@@ -31,8 +31,8 @@ else:
 solution_py_condition = lambda filename: ".py" in filename
 solution_py_files = list(np.extract(map(solution_py_condition, files), files))
 
-print "{} files".format(len(solution_py_files))
-print solution_py_files[0:min(10,len(solution_py_files))]
+print("{} files".format(len(solution_py_files)))
+print(solution_py_files[0:min(10,len(solution_py_files))])
 
 # load all files
 data = py_reader.load_data(solution_py_files)

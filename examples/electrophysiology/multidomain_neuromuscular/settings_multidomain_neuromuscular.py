@@ -266,8 +266,8 @@ config = {
         "logTimeStepWidthAsKey":  "dt_stimulation_check",
         "durationLogKey":         "duration_multidomain",
         "timeStepOutputInterval": 1,
-        "connectedSlotsTerm1To2": {1:3},
-        "connectedSlotsTerm2To1": {3:1},
+        "connectedSlotsTerm1To2": {0:5},  # {1:3}
+        "connectedSlotsTerm2To1": {5:0},
         
         # motoneuron
         "Term1": {    
@@ -327,7 +327,7 @@ config = {
             # map from motoneuronMesh (algebraics) to 3Dmesh (solution)
             "beforeComputation": [                                        # transfer/mapping of dofs that will be performed before the computation of the nested solver
               {                                                 
-                "fromOutputConnectorSlotNo":        2,                    # which fiber/compartment
+                "fromOutputConnectorSlotNo":        5,                    # which fiber/compartment
                 "toOutputConnectorSlotNo":          0,
                 "fromOutputConnectorArrayIndex":    0,
                 "toOutputConnectorArrayIndex":      mu_no,

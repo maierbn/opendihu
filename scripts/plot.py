@@ -90,16 +90,21 @@ if dimension == 1:
   show_geometry = True     # if the fibre geometry should be displayed in a 3D plot in a separate axis (ax2) on top of the solution plot
   show_components = False  # if all the components of the solution should be displayed
   plot_over_time = data[0]['nElements'] == [0]   # if the plot should have time as x-axis instead of geometry
+  min_x, max_x = py_reader.get_min_max(data, "geometry", "x")
+  min_y, max_y = py_reader.get_min_max(data, "geometry", "y")
+  min_z, max_z = py_reader.get_min_max(data, "geometry", "z")
+  if abs(min_x-max_x) < 1e-5 and abs(min_y-max_y) < 1e-5 and abs(min_z-max_z) < 1e-5:
+    plot_over_time = True
+
+  if plot_over_time:
+    print("plot over time")
+
   last_length = 0
   
   def init():
-    global geometry_component, line_2D, lines_3D, line_comp, cbar, top_text, ax1, ax2, cmap, show_geometry, show_components, solution_components, solution_name, solution_component, scaling_factors
+    global geometry_component, line_2D, lines_3D, line_comp, cbar, top_text, ax1, ax2, cmap, show_geometry, show_components, solution_components, solution_name, solution_component, scaling_factors, min_x, max_x, min_y, max_y, min_z, max_z
       
     # determine in which direction the 1D fibre extends the most
-    min_x, max_x = py_reader.get_min_max(data, "geometry", "x")
-    min_y, max_y = py_reader.get_min_max(data, "geometry", "y")
-    min_z, max_z = py_reader.get_min_max(data, "geometry", "z")
-    
     field_variable_names = py_reader.get_field_variable_names(data[0])
     
     solution_name = "solution"

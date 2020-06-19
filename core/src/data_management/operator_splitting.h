@@ -35,9 +35,16 @@ public:
   //! the transfer is done by the output_connector_data_transfer class
   std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
 
+  //! field variables that will be output by outputWriters
+  typedef typename TimeStepping1::Data::FieldVariablesForOutputWriter FieldVariablesForOutputWriter;
+
+  //! get pointers to all field variables that can be written by output writers
+  FieldVariablesForOutputWriter getFieldVariablesForOutputWriter();
+
 protected:
 
   std::shared_ptr<OutputConnectorDataType> outputConnectorData_;  //< the object that holds output connector data that will be transferred between solvers
+  std::shared_ptr<TimeStepping1> timeStepping1_;                  //< pointer to the object of type TimeStepping1
 };
 
 } // namespace Data

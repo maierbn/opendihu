@@ -21,6 +21,8 @@ initialize(TimeStepping1 &timeStepping1, TimeStepping2 &timeStepping2)
 
   std::get<0>(*outputConnectorData_) = timeStepping1.getOutputConnectorData();
   std::get<1>(*outputConnectorData_) = timeStepping2.getOutputConnectorData();
+
+  timeStepping1_ = std::make_shared<TimeStepping1>(timeStepping1);
 }
 
 template<typename TimeStepping1, typename TimeStepping2>
@@ -30,5 +32,14 @@ getOutputConnectorData()
 {
   return outputConnectorData_;
 }
+
+//! get pointers to all field variables that can be written by output writers
+template<typename TimeStepping1, typename TimeStepping2>
+typename OperatorSplitting<TimeStepping1,TimeStepping2>::FieldVariablesForOutputWriter OperatorSplitting<TimeStepping1,TimeStepping2>::
+getFieldVariablesForOutputWriter()
+{
+  return timeStepping1_->data().getFieldVariablesForOutputWriter();
+}
+
 
 } // namespace

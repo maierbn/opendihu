@@ -191,6 +191,20 @@ void SolverStructureVisualizer::addSlotMapping(int slotNoFrom, int slotNoTo)
   if (!enabled_)
     return;
 
+  // check if this mapping does not yet exist
+  bool mappingExists = false;
+  for (const solver_t::OutputConnectionRepresentation &mappingWithinSolver : currentSolver_->mappingsWithinSolver)
+  {
+    if (mappingWithinSolver.fromSlot == slotNoFrom && mappingWithinSolver.toSlot == slotNoTo)
+    {
+      mappingExists = true;
+      break;
+    }
+  }
+
+  if (mappingExists)
+    return;
+
   solver_t::OutputConnectionRepresentation mappingWithinSolver;
   mappingWithinSolver.fromSlot = slotNoFrom;
   mappingWithinSolver.toSlot = slotNoTo;

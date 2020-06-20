@@ -155,7 +155,7 @@ performMappings(std::vector<DofsMappingType> &mappings, double currentTime)
         slotGetValues(mapping.outputConnectorSlotNoFrom, mapping.outputConnectorArrayIndexFrom, dofNosLocal, valuesToSendToRanks[rankNo]);
       }
 
-      LOG(INFO) << "get values " << valuesToSendToRanks;
+      LOG(DEBUG) << "get values " << valuesToSendToRanks;
 
       // if communication is involved
       if (mapping.mode == DofsMappingType::modeCommunicate)

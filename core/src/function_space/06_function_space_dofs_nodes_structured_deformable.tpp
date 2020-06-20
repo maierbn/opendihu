@@ -268,7 +268,7 @@ parseNodePositionsFromSettings(PythonConfig specificSettings)
   {
     // if node positions are not given in settings but physicalExtent, generate node positions such that physicalExtent is reached
     std::array<double, D> physicalExtent, meshWidth, physicalOffset;
-    physicalExtent = specificSettings.getOptionArray<double, D>("physicalExtent", 1.0, PythonUtility::Positive);
+    physicalExtent = specificSettings.getOptionArray<double, D>("physicalExtent", 1.0, PythonUtility::NonNegative);
     physicalOffset = specificSettings.getOptionArray<double, D>("physicalOffset", 0.0);
 
     for (unsigned int dimNo = 0; dimNo < D; dimNo++)

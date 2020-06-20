@@ -414,9 +414,10 @@ setInformationToPreconditioner()
   // set the local node positions for the preconditioner
   int nNodesLocalMuscle = this->dataMultidomain_.functionSpace()->nNodesLocalWithoutGhosts();
   int nNodesLocalFat = this->dataFat_.functionSpace()->nNodesLocalWithoutGhosts() - nSharedDofsLocal_;
-  
+  int nNodesTotal = nNodesLocalMuscle + nNodesLocalFat;
+
   std::vector<double> nodePositionCoordinatesForPreconditioner;
-  nodePositionCoordinatesForPreconditioner.reserve(3*(nNodesLocalMuscle + nNodesLocalFat));
+  nodePositionCoordinatesForPreconditioner.reserve(3*nNodesTotal);
 
   // loop over muscle nodes and add their node positions
   for (dof_no_t dofNoLocalMuscle = 0; dofNoLocalMuscle < this->dataMultidomain_.functionSpace()->nDofsLocalWithoutGhosts(); dofNoLocalMuscle++)
@@ -441,18 +442,18 @@ setInformationToPreconditioner()
         nodePositionCoordinatesForPreconditioner.push_back(nodePosition[i]);
     }
   }
-  assert(nodePositionCoordinatesForPreconditioner.size() == 3*(nNodesLocalMuscle+nNodesLocalFat));
+  assert(nodePositionCoordinatesForPreconditioner.size() == 3*nNodesTotal);
 
-  LOG(DEBUG) << "set coordinates to preconditioner, " << nodePositionCoordinatesForPreconditioner.size() << " node coordinates";
+  LOG(DEBUG) << "set coordinates to preconditioner, " << nNodesTotal << " node coordinates";
 
-  ierr = PCSetCoordinates(pc, 3, nodePositionCoordinatesForPreconditioner.size(), nodePositionCoordinatesForPreconditioner.data()); CHKERRV(ierr);
+  ierr = PCSetCoordinates(pc, 3, nNodesTotal, nodePositionCoordinatesForPreconditioner.data()); CHKERRV(ierr);
 
   // initialize preconditioner of alternative linear solver
   if (this->alternativeLinearSolver_)
   {
     PC pc;
     ierr = KSPGetPC(*this->alternativeLinearSolver_->ksp(), &pc); CHKERRV(ierr);
-    ierr = PCSetCoordinates(pc, 3, nodePositionCoordinatesForPreconditioner.size(), nodePositionCoordinatesForPreconditioner.data()); CHKERRV(ierr);
+    ierr = PCSetCoordinates(pc, 3, nNodesTotal, nodePositionCoordinatesForPreconditioner.data()); CHKERRV(ierr);
   }
 }
 
